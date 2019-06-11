@@ -69,14 +69,14 @@ void Prescanner::Prescan(ProvenanceRange range) {
   CHECK(source != nullptr);
   start_ = source->content() + offset;
   limit_ = start_ + range.size();
-  lineStart_ = start_;
+  nextLine_ = start_;
   const bool beganInFixedForm{inFixedForm_};
   if (prescannerNesting_ > maxPrescannerNesting) {
     Say(GetProvenance(start_),
         "too many nested INCLUDE/#include files, possibly circular"_err_en_US);
     return;
   }
-  while (lineStart_ < limit_) {
+  while (nextLine_ < limit_) {
     Statement();
   }
   if (inFixedForm_ != beganInFixedForm) {
@@ -94,14 +94,14 @@ void Prescanner::Prescan(ProvenanceRange range) {
 
 void Prescanner::Statement() {
   TokenSequence tokens;
-  LineClassification line{ClassifyLine(lineStart_)};
+  LineClassification line{ClassifyLine(nextLine_)};
   switch (line.kind) {
   case LineClassification::Kind::Comment:
-    lineStart_ += line.payloadOffset;  // advance to '!' or newline
+    nextLine_ += line.payloadOffset;  // advance to '!' or newline
     NextLine();
     return;
   case LineClassification::Kind::IncludeLine:
-    FortranInclude(lineStart_ + line.payloadOffset);
+    FortranInclude(nextLine_ + line.payloadOffset);
     NextLine();
     return;
   case LineClassification::Kind::ConditionalCompilationDirective:
@@ -224,7 +224,7 @@ void Prescanner::Statement() {
 }
 
 TokenSequence Prescanner::TokenizePreprocessorDirective() {
-  CHECK(lineStart_ < limit_ && !inPreprocessorDirective_);
+  CHECK(nextLine_ < limit_ && !inPreprocessorDirective_);
   auto saveAt{at_};
   inPreprocessorDirective_ = true;
   BeginSourceLineAndAdvance();
@@ -237,13 +237,13 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
 }
 
 void Prescanner::NextLine() {
-  void *vstart{static_cast<void *>(const_cast<char *>(lineStart_))};
-  void *v{std::memchr(vstart, '\n', limit_ - lineStart_)};
+  void *vstart{static_cast<void *>(const_cast<char *>(nextLine_))};
+  void *v{std::memchr(vstart, '\n', limit_ - nextLine_)};
   if (v == nullptr) {
-    lineStart_ = limit_;
+    nextLine_ = limit_;
   } else {
     const char *nl{const_cast<const char *>(static_cast<char *>(v))};
-    lineStart_ = nl + 1;
+    nextLine_ = nl + 1;
   }
 }
 
@@ -282,26 +282,38 @@ void Prescanner::SkipToEndOfLine() {
   }
 }
 
+bool Prescanner::MustSkipToEndOfLine() const {
+  if (inFixedForm_ && column_ > fixedFormColumnLimit_ && !tabInCurrentLine_) {
+    return true;  // skip over ignored columns in right margin (73:80)
+  } else if (*at_ == '!' && !inCharLiteral_) {
+    return true;  // inline comment goes to end of source line
+  } else {
+    return false;
+  }
+}
+
 void Prescanner::NextChar() {
   CHECK(*at_ != '\n');
   ++at_, ++column_;
   if (inPreprocessorDirective_) {
     SkipCComments();
   } else {
-    bool rightMarginClip{
-        inFixedForm_ && column_ > fixedFormColumnLimit_ && !tabInCurrentLine_};
-    bool skipping{rightMarginClip || (*at_ == '!' && !inCharLiteral_)};
-    if (skipping) {
+    bool mightNeedSpace{false};
+    if (MustSkipToEndOfLine()) {
       SkipToEndOfLine();
+    } else {
+      mightNeedSpace = *at_ == '\n';
     }
     while (*at_ == '\n' || *at_ == '&') {
-      bool mightNeedSpace{*at_ == '\n' && !skipping};
-      if (inFixedForm_) {
-        if (!FixedFormContinuation(mightNeedSpace)) {
-          return;
+      bool continued{inFixedForm_ ? FixedFormContinuation(mightNeedSpace)
+                                  : FreeFormContinuation()};
+      if (continued) {
+        if (MustSkipToEndOfLine()) {
+          SkipToEndOfLine();
         }
-      } else if (!FreeFormContinuation()) {
-        return;
+        mightNeedSpace = false;
+      } else {
+        break;
       }
     }
     if (*at_ == '\t') {
@@ -317,14 +329,14 @@ void Prescanner::SkipCComments() {
         column_ += after - at_;
         // May have skipped over one or more newlines; relocate the start of
         // the next line.
-        lineStart_ = at_ = after;
+        nextLine_ = at_ = after;
         NextLine();
       } else {
         Say(GetProvenance(at_), "unclosed C-style comment"_err_en_US);
         break;
       }
     } else if (inPreprocessorDirective_ && at_[0] == '\\' && at_ + 2 < limit_ &&
-        at_[1] == '\n' && lineStart_ < limit_) {
+        at_[1] == '\n' && nextLine_ < limit_) {
       BeginSourceLineAndAdvance();
     } else {
       break;
@@ -636,21 +648,19 @@ bool Prescanner::PadOutCharacterLiteral(TokenSequence &tokens) {
 
 bool Prescanner::IsFixedFormCommentLine(const char *start) const {
   const char *p{start};
-  char ch{*p};
-  if (IsFixedFormCommentChar(ch) || ch == '%' ||  // VAX %list, %eject, &c.
-      ((ch == 'D' || ch == 'd') &&
+  if (IsFixedFormCommentChar(*p) || *p == '%' ||  // VAX %list, %eject, &c.
+      ((*p == 'D' || *p == 'd') &&
           !features_.IsEnabled(LanguageFeature::OldDebugLines))) {
     return true;
   }
   bool anyTabs{false};
   while (true) {
-    ch = *p;
-    if (ch == ' ') {
+    if (*p == ' ') {
       ++p;
-    } else if (ch == '\t') {
+    } else if (*p == '\t') {
       anyTabs = true;
       ++p;
-    } else if (ch == '0' && !anyTabs && p == start + 5) {
+    } else if (*p == '0' && !anyTabs && p == start + 5) {
       ++p;  // 0 in column 6 must treated as a space
     } else {
       break;
@@ -718,7 +728,7 @@ void Prescanner::FortranInclude(const char *firstQuote) {
         "excess characters after path name"_en_US);
   }
   std::stringstream error;
-  Provenance provenance{GetProvenance(lineStart_)};
+  Provenance provenance{GetProvenance(nextLine_)};
   AllSources &allSources{cooked_.allSources()};
   const SourceFile *currentFile{allSources.GetSourceFile(provenance)};
   if (currentFile != nullptr) {
@@ -732,7 +742,7 @@ void Prescanner::FortranInclude(const char *firstQuote) {
     Say(provenance, "INCLUDE: %s"_err_en_US, error.str());
   } else if (included->bytes() > 0) {
     ProvenanceRange includeLineRange{
-        provenance, static_cast<std::size_t>(p - lineStart_)};
+        provenance, static_cast<std::size_t>(p - nextLine_)};
     ProvenanceRange fileRange{
         allSources.AddIncludedFile(*included, includeLineRange)};
     Prescanner{*this}.Prescan(fileRange);
@@ -757,11 +767,11 @@ const char *Prescanner::IsPreprocessorDirectiveLine(const char *start) const {
 }
 
 bool Prescanner::IsNextLinePreprocessorDirective() const {
-  return IsPreprocessorDirectiveLine(lineStart_) != nullptr;
+  return IsPreprocessorDirectiveLine(nextLine_) != nullptr;
 }
 
 bool Prescanner::SkipCommentLine(bool afterAmpersand) {
-  if (lineStart_ >= limit_) {
+  if (nextLine_ >= limit_) {
     if (afterAmpersand && prescannerNesting_ > 0) {
       // A continuation marker at the end of the last line in an
       // include file inhibits the newline for that line.
@@ -770,7 +780,7 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
     }
     return false;
   }
-  auto lineClass{ClassifyLine(lineStart_)};
+  auto lineClass{ClassifyLine(nextLine_)};
   if (lineClass.kind == LineClassification::Kind::Comment) {
     NextLine();
     return true;
@@ -795,11 +805,11 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
 }
 
 const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
-  if (lineStart_ >= limit_) {
+  if (nextLine_ >= limit_) {
     return nullptr;
   }
   tabInCurrentLine_ = false;
-  char col1{*lineStart_};
+  char col1{*nextLine_};
   if (InCompilerDirective()) {
     // Must be a continued compiler directive.
     if (!IsFixedFormCommentChar(col1)) {
@@ -811,21 +821,21 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
       if (ch == '\0') {
         break;
       }
-      if (ch != ToLowerCaseLetter(lineStart_[j])) {
+      if (ch != ToLowerCaseLetter(nextLine_[j])) {
         return nullptr;
       }
     }
     for (; j < 5; ++j) {
-      if (lineStart_[j] != ' ') {
+      if (nextLine_[j] != ' ') {
         return nullptr;
       }
     }
-    char col6{lineStart_[5]};
+    char col6{nextLine_[5]};
     if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
-      if (lineStart_[6] != ' ' && mightNeedSpace) {
+      if (nextLine_[6] != ' ' && mightNeedSpace) {
         insertASpace_ = true;
       }
-      return lineStart_ + 6;
+      return nextLine_ + 6;
     }
     return nullptr;
   } else {
@@ -836,24 +846,24 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
       // Extension: '&' as continuation marker
       if (features_.ShouldWarn(
               LanguageFeature::FixedFormContinuationWithColumn1Ampersand)) {
-        Say(GetProvenance(lineStart_), "nonstandard usage"_en_US);
+        Say(GetProvenance(nextLine_), "nonstandard usage"_en_US);
       }
-      return lineStart_ + 1;
+      return nextLine_ + 1;
     }
-    if (col1 == '\t' && lineStart_[1] >= '1' && lineStart_[1] <= '9') {
+    if (col1 == '\t' && nextLine_[1] >= '1' && nextLine_[1] <= '9') {
       tabInCurrentLine_ = true;
-      return lineStart_ + 2;  // VAX extension
+      return nextLine_ + 2;  // VAX extension
     }
-    if (col1 == ' ' && lineStart_[1] == ' ' && lineStart_[2] == ' ' &&
-        lineStart_[3] == ' ' && lineStart_[4] == ' ') {
-      char col6{lineStart_[5]};
+    if (col1 == ' ' && nextLine_[1] == ' ' && nextLine_[2] == ' ' &&
+        nextLine_[3] == ' ' && nextLine_[4] == ' ') {
+      char col6{nextLine_[5]};
       if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
-        return lineStart_ + 6;
+        return nextLine_ + 6;
       }
     }
     if (delimiterNesting_ > 0) {
       if (!IsFixedFormCommentChar(col1)) {
-        return lineStart_;
+        return nextLine_;
       }
     }
   }
@@ -861,7 +871,7 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
 }
 
 const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
-  const char *p{lineStart_};
+  const char *p{nextLine_};
   if (p >= limit_) {
     return nullptr;
   }
@@ -892,7 +902,7 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
     } else if (*p == '!' || *p == '\n' || *p == '#') {
       return nullptr;
     } else if (ampersand || delimiterNesting_ > 0) {
-      if (p > lineStart_) {
+      if (p > nextLine_) {
         --p;
       } else {
         insertASpace_ = true;
@@ -917,7 +927,7 @@ bool Prescanner::FixedFormContinuation(bool mightNeedSpace) {
       NextLine();
       return true;
     }
-  } while (SkipCommentLine(false));
+  } while (SkipCommentLine(false /* not after & */));
   return false;
 }
 
