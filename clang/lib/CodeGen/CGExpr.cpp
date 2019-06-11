@@ -2463,16 +2463,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     // A DeclRefExpr for a reference initialized by a constant expression can
     // appear without being odr-used. Directly emit the constant initializer.
     VD->getAnyInitializer(VD);
-    const auto *BD = dyn_cast_or_null<BlockDecl>(CurCodeDecl);
-    if (E->isNonOdrUse() == NOUR_Constant && VD->getType()->isReferenceType() &&
-        // Do not emit if it is private OpenMP variable.
-        // FIXME: This should be handled in odr-use marking, not here.
-        !(E->refersToEnclosingVariableOrCapture() &&
-          ((CapturedStmtInfo &&
-            (LocalDeclMap.count(VD->getCanonicalDecl()) ||
-             CapturedStmtInfo->lookup(VD->getCanonicalDecl()))) ||
-           LambdaCaptureFields.lookup(VD->getCanonicalDecl()) ||
-           (BD && BD->capturesVariable(VD))))) {
+    if (E->isNonOdrUse() == NOUR_Constant && VD->getType()->isReferenceType()) {
       llvm::Constant *Val =
         ConstantEmitter(*this).emitAbstract(E->getLocation(),
                                             *VD->evaluateValue(),
