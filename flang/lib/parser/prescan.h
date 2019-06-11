@@ -171,6 +171,7 @@ private:
   const char *FreeFormContinuationLine(bool ampersand);
   bool FixedFormContinuation(bool mightNeedSpace);
   bool FreeFormContinuation();
+  bool Continuation(bool mightNeedFixedFormSpace);
   std::optional<LineClassification> IsFixedFormCompilerDirectiveLine(
       const char *) const;
   std::optional<LineClassification> IsFreeFormCompilerDirectiveLine(

@@ -304,16 +304,9 @@ void Prescanner::NextChar() {
     } else {
       mightNeedSpace = *at_ == '\n';
     }
-    while (*at_ == '\n' || *at_ == '&') {
-      bool continued{inFixedForm_ ? FixedFormContinuation(mightNeedSpace)
-                                  : FreeFormContinuation()};
-      if (continued) {
-        if (MustSkipToEndOfLine()) {
-          SkipToEndOfLine();
-        }
-        mightNeedSpace = false;
-      } else {
-        break;
+    for (; Continuation(mightNeedSpace); mightNeedSpace = false) {
+      if (MustSkipToEndOfLine()) {
+        SkipToEndOfLine();
       }
     }
     if (*at_ == '\t') {
@@ -953,6 +946,18 @@ bool Prescanner::FreeFormContinuation() {
     }
   } while (SkipCommentLine(ampersand));
   return false;
+}
+
+bool Prescanner::Continuation(bool mightNeedFixedFormSpace) {
+  if (*at_ == '\n' || *at_ == '&') {
+    if (inFixedForm_) {
+      return FixedFormContinuation(mightNeedFixedFormSpace);
+    } else {
+      return FreeFormContinuation();
+    }
+  } else {
+    return false;
+  }
 }
 
 std::optional<Prescanner::LineClassification>
