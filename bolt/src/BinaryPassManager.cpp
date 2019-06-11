@@ -201,6 +201,13 @@ PrintUCE("print-uce",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
+PrintProfileStats("print-profile-stats",
+  cl::desc("print profile quality/bias analysis"),
+  cl::ZeroOrMore,
+  cl::init(false),
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
 SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
   cl::desc("simplify conditional tail calls by removing unnecessary jumps"),
   cl::init(true),
@@ -368,6 +375,9 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
 
   // Run this pass first to use stats for the original functions.
   Manager.registerPass(llvm::make_unique<PrintProgramStats>(NeverPrint));
+
+  if (opts::PrintProfileStats)
+    Manager.registerPass(llvm::make_unique<PrintProfileStats>(NeverPrint));
 
   Manager.registerPass(llvm::make_unique<ValidateInternalCalls>(NeverPrint));
 

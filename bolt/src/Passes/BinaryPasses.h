@@ -347,6 +347,25 @@ class AssignSections : public BinaryFunctionPass {
   void runOnFunctions(BinaryContext &BC) override;
 };
 
+/// Compute and report to the user the imbalance in flow equations for all
+/// CFGs, so we can detect bad quality profile. Prints average and standard
+/// deviation of the absolute differences of outgoing flow minus incoming flow
+/// for blocks of interest (excluding prologues, epilogues, and BB frequency
+/// lower than 100).
+class PrintProfileStats : public BinaryFunctionPass {
+ public:
+  explicit PrintProfileStats(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "profile-stats";
+  }
+  bool shouldPrint(const BinaryFunction &) const override {
+    return false;
+  }
+  void runOnFunctions(BinaryContext &BC) override;
+};
+
 /// Prints a list of the top 100 functions sorted by a set of
 /// dyno stats categories.
 class PrintProgramStats : public BinaryFunctionPass {
