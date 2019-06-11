@@ -288,6 +288,7 @@ PPC64::PPC64() {
   PltRel = R_PPC64_JMP_SLOT;
   RelativeRel = R_PPC64_RELATIVE;
   IRelativeRel = R_PPC64_IRELATIVE;
+  SymbolicRel = R_PPC64_ADDR64;
   PltEntrySize = 4;
   GotBaseSymInGotPlt = false;
   GotHeaderEntriesNum = 1;

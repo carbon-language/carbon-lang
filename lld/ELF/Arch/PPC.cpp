@@ -135,6 +135,7 @@ PPC::PPC() {
   PltRel = R_PPC_JMP_SLOT;
   RelativeRel = R_PPC_RELATIVE;
   IRelativeRel = R_PPC_IRELATIVE;
+  SymbolicRel = R_PPC_ADDR32;
   GotBaseSymInGotPlt = false;
   GotHeaderEntriesNum = 3;
   GotPltHeaderEntriesNum = 0;
@@ -288,7 +289,6 @@ void PPC::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
     write16(Loc, Val);
     break;
   case R_PPC_ADDR32:
-  case R_PPC_GLOB_DAT:
   case R_PPC_REL32:
     write32(Loc, Val);
     break;
