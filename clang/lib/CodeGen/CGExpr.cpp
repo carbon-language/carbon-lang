@@ -1492,17 +1492,11 @@ CodeGenFunction::tryEmitAsConstant(DeclRefExpr *refExpr) {
 static DeclRefExpr *tryToConvertMemberExprToDeclRefExpr(CodeGenFunction &CGF,
                                                         const MemberExpr *ME) {
   if (auto *VD = dyn_cast<VarDecl>(ME->getMemberDecl())) {
-    // FIXME: Copy this from the MemberExpr once we store it there.
-    NonOdrUseReason NOUR = NOUR_None;
-    if (VD->getType()->isReferenceType() &&
-        VD->isUsableInConstantExpressions(CGF.getContext()))
-      NOUR = NOUR_Constant;
-
     // Try to emit static variable member expressions as DREs.
     return DeclRefExpr::Create(
         CGF.getContext(), NestedNameSpecifierLoc(), SourceLocation(), VD,
         /*RefersToEnclosingVariableOrCapture=*/false, ME->getExprLoc(),
-        ME->getType(), ME->getValueKind(), nullptr, nullptr, NOUR);
+        ME->getType(), ME->getValueKind(), nullptr, nullptr, ME->isNonOdrUse());
   }
   return nullptr;
 }

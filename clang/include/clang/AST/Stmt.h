@@ -479,6 +479,11 @@ protected:
     /// was resolved from an overloaded set having size greater than 1.
     unsigned HadMultipleCandidates : 1;
 
+    /// Value of type NonOdrUseReason indicating why this MemberExpr does
+    /// not constitute an odr-use of the named declaration. Meaningful only
+    /// when naming a static member.
+    unsigned NonOdrUseReason : 2;
+
     /// This is the location of the -> or . in the expression.
     SourceLocation OperatorLoc;
   };

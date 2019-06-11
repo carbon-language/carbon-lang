@@ -768,6 +768,7 @@ void ASTStmtReader::VisitMemberExpr(MemberExpr *E) {
   E->MemberExprBits.HasQualifierOrFoundDecl = HasQualifier || HasFoundDecl;
   E->MemberExprBits.HasTemplateKWAndArgsInfo = HasTemplateInfo;
   E->MemberExprBits.HadMultipleCandidates = Record.readInt();
+  E->MemberExprBits.NonOdrUseReason = Record.readInt();
   E->MemberExprBits.OperatorLoc = Record.readSourceLocation();
 
   if (HasQualifier || HasFoundDecl) {

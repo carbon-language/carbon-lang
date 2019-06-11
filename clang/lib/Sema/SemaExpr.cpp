@@ -1785,6 +1785,27 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                           TemplateArgs);
 }
 
+NonOdrUseReason Sema::getNonOdrUseReasonInCurrentContext(ValueDecl *D) {
+  // A declaration named in an unevaluated operand never constitutes an odr-use.
+  if (isUnevaluatedContext())
+    return NOUR_Unevaluated;
+
+  // C++2a [basic.def.odr]p4:
+  //   A variable x whose name appears as a potentially-evaluated expression e
+  //   is odr-used by e unless [...] x is a reference that is usable in
+  //   constant expressions.
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (VD->getType()->isReferenceType() &&
+        !(getLangOpts().OpenMP && isOpenMPCapturedDecl(D)) &&
+        VD->isUsableInConstantExpressions(Context))
+      return NOUR_Constant;
+  }
+
+  // All remaining non-variable cases constitute an odr-use. For variables, we
+  // need to wait and see how the expression is used.
+  return NOUR_None;
+}
+
 /// BuildDeclRefExpr - Build an expression that references a
 /// declaration that does not require a closure capture.
 DeclRefExpr *
@@ -1797,19 +1818,9 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
       isa<VarDecl>(D) &&
       NeedToCaptureVariable(cast<VarDecl>(D), NameInfo.getLoc());
 
-  NonOdrUseReason NOUR;
-  if (isUnevaluatedContext())
-    NOUR = NOUR_Unevaluated;
-  else if (isa<VarDecl>(D) && D->getType()->isReferenceType() &&
-           !(getLangOpts().OpenMP && isOpenMPCapturedDecl(D)) &&
-           cast<VarDecl>(D)->isUsableInConstantExpressions(Context))
-    NOUR = NOUR_Constant;
-  else
-    NOUR = NOUR_None;
-
-  DeclRefExpr *E = DeclRefExpr::Create(Context, NNS, TemplateKWLoc, D,
-                                       RefersToCapturedVariable, NameInfo, Ty,
-                                       VK, FoundD, TemplateArgs, NOUR);
+  DeclRefExpr *E = DeclRefExpr::Create(
+      Context, NNS, TemplateKWLoc, D, RefersToCapturedVariable, NameInfo, Ty,
+      VK, FoundD, TemplateArgs, getNonOdrUseReasonInCurrentContext(D));
   MarkDeclRefReferenced(E);
 
   if (getLangOpts().ObjCWeak && isa<VarDecl>(D) &&
@@ -15924,13 +15935,21 @@ static ExprResult rebuildPotentialResultsAsNonOdrUsed(Sema &S, Expr *E,
       // FIXME: Recurse to the left-hand side.
       break;
 
-    // FIXME: Track whether a MemberExpr constitutes an odr-use; bail out here
-    // if we've already marked it.
-    if (IsPotentialResultOdrUsed(ME->getMemberDecl()))
+    if (ME->isNonOdrUse() || IsPotentialResultOdrUsed(ME->getMemberDecl()))
       break;
 
-    // FIXME: Rebuild as a non-odr-use MemberExpr.
+    // Rebuild as a non-odr-use MemberExpr.
     MarkNotOdrUsed();
+    TemplateArgumentListInfo TemplateArgStorage, *TemplateArgs = nullptr;
+    if (ME->hasExplicitTemplateArgs()) {
+      ME->copyTemplateArgumentsInto(TemplateArgStorage);
+      TemplateArgs = &TemplateArgStorage;
+    }
+    return MemberExpr::Create(
+        S.Context, ME->getBase(), ME->isArrow(), ME->getOperatorLoc(),
+        ME->getQualifierLoc(), ME->getTemplateKeywordLoc(), ME->getMemberDecl(),
+        ME->getFoundDecl(), ME->getMemberNameInfo(), TemplateArgs,
+        ME->getType(), ME->getValueKind(), ME->getObjectKind(), NOUR);
     return ExprEmpty();
   }
 
@@ -16193,11 +16212,19 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
   // Sema::CheckLValueToRValueConversionOperand deals with the second part.
   // FIXME: To get the third bullet right, we need to delay this even for
   // variables that are not usable in constant expressions.
-  DeclRefExpr *DRE = dyn_cast_or_null<DeclRefExpr>(E);
+
+  // If we already know this isn't an odr-use, there's nothing more to do.
+  if (DeclRefExpr *DRE = dyn_cast_or_null<DeclRefExpr>(E))
+    if (DRE->isNonOdrUse())
+      return;
+  if (MemberExpr *ME = dyn_cast_or_null<MemberExpr>(E))
+    if (ME->isNonOdrUse())
+      return;
+
   switch (OdrUse) {
   case OdrUseContext::None:
-    assert((!DRE || DRE->isNonOdrUse() == NOUR_Unevaluated) &&
-           "missing non-odr-use marking for unevaluated operand");
+    assert((!E || isa<FunctionParmPackExpr>(E)) &&
+           "missing non-odr-use marking for unevaluated decl ref");
     break;
 
   case OdrUseContext::FormallyOdrUsed:
@@ -16206,9 +16233,6 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
     break;
 
   case OdrUseContext::Used:
-    // If we already know this isn't an odr-use, there's nothing more to do.
-    if (DRE && DRE->isNonOdrUse())
-      break;
     // If we might later find that this expression isn't actually an odr-use,
     // delay the marking.
     if (E && Var->isUsableInConstantExpressions(SemaRef.Context))
@@ -16218,9 +16242,6 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
     break;
 
   case OdrUseContext::Dependent:
-    // If we already know this isn't an odr-use, there's nothing more to do.
-    if (DRE && DRE->isNonOdrUse())
-      break;
     // If this is a dependent context, we don't need to mark variables as
     // odr-used, but we may still need to track them for lambda capture.
     // FIXME: Do we also need to do this inside dependent typeid expressions

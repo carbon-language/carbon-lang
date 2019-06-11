@@ -686,6 +686,7 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Record.AddSourceLocation(E->getMemberLoc());
   Record.push_back(E->isArrow());
   Record.push_back(E->hadMultipleCandidates());
+  Record.push_back(E->isNonOdrUse());
   Record.AddSourceLocation(E->getOperatorLoc());
 
   if (HasFoundDecl) {

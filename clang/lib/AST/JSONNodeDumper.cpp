@@ -843,6 +843,12 @@ void JSONNodeDumper::VisitMemberExpr(const MemberExpr *ME) {
   JOS.attribute("name", VD && VD->getDeclName() ? VD->getNameAsString() : "");
   JOS.attribute("isArrow", ME->isArrow());
   JOS.attribute("referencedMemberDecl", createPointerRepresentation(VD));
+  switch (ME->isNonOdrUse()) {
+  case NOUR_None: break;
+  case NOUR_Unevaluated: JOS.attribute("nonOdrUseReason", "unevaluated"); break;
+  case NOUR_Constant: JOS.attribute("nonOdrUseReason", "constant"); break;
+  case NOUR_Discarded: JOS.attribute("nonOdrUseReason", "discarded"); break;
+  }
 }
 
 void JSONNodeDumper::VisitCXXNewExpr(const CXXNewExpr *NE) {

@@ -7113,10 +7113,11 @@ ExpectedStmt ASTNodeImporter::VisitMemberExpr(MemberExpr *E) {
     ResInfo = &ToTAInfo;
   }
 
-  return MemberExpr::Create(
-      Importer.getToContext(), ToBase, E->isArrow(), ToOperatorLoc,
-      ToQualifierLoc, ToTemplateKeywordLoc, ToMemberDecl, ToFoundDecl,
-      ToMemberNameInfo, ResInfo, ToType, E->getValueKind(), E->getObjectKind());
+  return MemberExpr::Create(Importer.getToContext(), ToBase, E->isArrow(),
+                            ToOperatorLoc, ToQualifierLoc, ToTemplateKeywordLoc,
+                            ToMemberDecl, ToFoundDecl, ToMemberNameInfo,
+                            ResInfo, ToType, E->getValueKind(),
+                            E->getObjectKind(), E->isNonOdrUse());
 }
 
 ExpectedStmt

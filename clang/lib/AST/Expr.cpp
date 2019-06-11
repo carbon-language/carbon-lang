@@ -1541,7 +1541,8 @@ UnaryExprOrTypeTraitExpr::UnaryExprOrTypeTraitExpr(
 MemberExpr::MemberExpr(Expr *Base, bool IsArrow, SourceLocation OperatorLoc,
                        ValueDecl *MemberDecl,
                        const DeclarationNameInfo &NameInfo, QualType T,
-                       ExprValueKind VK, ExprObjectKind OK)
+                       ExprValueKind VK, ExprObjectKind OK,
+                       NonOdrUseReason NOUR)
     : Expr(MemberExprClass, T, VK, OK, Base->isTypeDependent(),
            Base->isValueDependent(), Base->isInstantiationDependent(),
            Base->containsUnexpandedParameterPack()),
@@ -1553,6 +1554,7 @@ MemberExpr::MemberExpr(Expr *Base, bool IsArrow, SourceLocation OperatorLoc,
   MemberExprBits.HasQualifierOrFoundDecl = false;
   MemberExprBits.HasTemplateKWAndArgsInfo = false;
   MemberExprBits.HadMultipleCandidates = false;
+  MemberExprBits.NonOdrUseReason = NOUR;
   MemberExprBits.OperatorLoc = OperatorLoc;
 }
 
@@ -1561,7 +1563,7 @@ MemberExpr *MemberExpr::Create(
     NestedNameSpecifierLoc QualifierLoc, SourceLocation TemplateKWLoc,
     ValueDecl *MemberDecl, DeclAccessPair FoundDecl,
     DeclarationNameInfo NameInfo, const TemplateArgumentListInfo *TemplateArgs,
-    QualType T, ExprValueKind VK, ExprObjectKind OK) {
+    QualType T, ExprValueKind VK, ExprObjectKind OK, NonOdrUseReason NOUR) {
   bool HasQualOrFound = QualifierLoc || FoundDecl.getDecl() != MemberDecl ||
                         FoundDecl.getAccess() != MemberDecl->getAccess();
   bool HasTemplateKWAndArgsInfo = TemplateArgs || TemplateKWLoc.isValid();
@@ -1572,8 +1574,8 @@ MemberExpr *MemberExpr::Create(
           TemplateArgs ? TemplateArgs->size() : 0);
 
   void *Mem = C.Allocate(Size, alignof(MemberExpr));
-  MemberExpr *E = new (Mem)
-      MemberExpr(Base, IsArrow, OperatorLoc, MemberDecl, NameInfo, T, VK, OK);
+  MemberExpr *E = new (Mem) MemberExpr(Base, IsArrow, OperatorLoc, MemberDecl,
+                                       NameInfo, T, VK, OK, NOUR);
 
   if (HasQualOrFound) {
     // FIXME: Wrong. We should be looking at the member declaration we found.

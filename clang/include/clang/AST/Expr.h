@@ -2780,7 +2780,8 @@ class MemberExpr final
 
   MemberExpr(Expr *Base, bool IsArrow, SourceLocation OperatorLoc,
              ValueDecl *MemberDecl, const DeclarationNameInfo &NameInfo,
-             QualType T, ExprValueKind VK, ExprObjectKind OK);
+             QualType T, ExprValueKind VK, ExprObjectKind OK,
+             NonOdrUseReason NOUR);
   MemberExpr(EmptyShell Empty)
       : Expr(MemberExprClass, Empty), Base(), MemberDecl() {}
 
@@ -2792,10 +2793,11 @@ public:
                             DeclAccessPair FoundDecl,
                             DeclarationNameInfo MemberNameInfo,
                             const TemplateArgumentListInfo *TemplateArgs,
-                            QualType T, ExprValueKind VK, ExprObjectKind OK);
+                            QualType T, ExprValueKind VK, ExprObjectKind OK,
+                            NonOdrUseReason NOUR);
 
   /// Create an implicit MemberExpr, with no location, qualifier, template
-  /// arguments, and so on.
+  /// arguments, and so on. Suitable only for non-static member access.
   static MemberExpr *CreateImplicit(const ASTContext &C, Expr *Base,
                                     bool IsArrow, ValueDecl *MemberDecl,
                                     QualType T, ExprValueKind VK,
@@ -2803,7 +2805,7 @@ public:
     return Create(C, Base, IsArrow, SourceLocation(), NestedNameSpecifierLoc(),
                   SourceLocation(), MemberDecl,
                   DeclAccessPair::make(MemberDecl, MemberDecl->getAccess()),
-                  DeclarationNameInfo(), nullptr, T, VK, OK);
+                  DeclarationNameInfo(), nullptr, T, VK, OK, NOUR_None);
   }
 
   static MemberExpr *CreateEmpty(const ASTContext &Context, bool HasQualifier,
@@ -2955,6 +2957,12 @@ public:
   /// calls to virtual method will still go through the vtable.
   bool performsVirtualDispatch(const LangOptions &LO) const {
     return LO.AppleKext || !hasQualifier();
+  }
+
+  /// Is this expression a non-odr-use reference, and if so, why?
+  /// This is only meaningful if the named member is a static member.
+  NonOdrUseReason isNonOdrUse() const {
+    return static_cast<NonOdrUseReason>(MemberExprBits.NonOdrUseReason);
   }
 
   static bool classof(const Stmt *T) {
