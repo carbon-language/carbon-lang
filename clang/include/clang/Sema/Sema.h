@@ -4185,7 +4185,7 @@ public:
   void MarkCaptureUsedInEnclosingContext(VarDecl *Capture, SourceLocation Loc,
                                          unsigned CapturingScopeIndex);
 
-  void UpdateMarkingForLValueToRValue(Expr *E);
+  ExprResult CheckLValueToRValueConversionOperand(Expr *E);
   void CleanupVarDeclMarking();
 
   enum TryCaptureKind {

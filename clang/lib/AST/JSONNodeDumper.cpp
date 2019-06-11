@@ -805,6 +805,12 @@ void JSONNodeDumper::VisitDeclRefExpr(const DeclRefExpr *DRE) {
   if (DRE->getDecl() != DRE->getFoundDecl())
     JOS.attribute("foundReferencedDecl",
                   createBareDeclRef(DRE->getFoundDecl()));
+  switch (DRE->isNonOdrUse()) {
+  case NOUR_None: break;
+  case NOUR_Unevaluated: JOS.attribute("nonOdrUseReason", "unevaluated"); break;
+  case NOUR_Constant: JOS.attribute("nonOdrUseReason", "constant"); break;
+  case NOUR_Discarded: JOS.attribute("nonOdrUseReason", "discarded"); break;
+  }
 }
 
 void JSONNodeDumper::VisitPredefinedExpr(const PredefinedExpr *PE) {
