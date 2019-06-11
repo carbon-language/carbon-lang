@@ -103,7 +103,7 @@ OPTIONS
  Select an output format; *format* may be *sysv*, *posix*, or *bsd*.  The default
  is *bsd*.
 
-.. option:: -help
+.. option:: --help, -h
 
  Print a summary of command-line options and their meanings.
 
