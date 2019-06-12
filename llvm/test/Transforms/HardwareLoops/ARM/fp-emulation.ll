@@ -1,8 +1,6 @@
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=+fp-armv8 -hardware-loops -disable-arm-loloops=false %s -S -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FP
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=+soft-float -hardware-loops -disable-arm-loloops=false %s -S -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SOFT
 
-; REQUIRES: arm
-
 ; CHECK-LABEL: test_fptosi
 ; CHECK: while.body.lr.ph:
 ; CHECK-FP: [[CMP:%[^ ]+]] = icmp ugt i32 %n, 1

@@ -1,7 +1,5 @@
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -hardware-loops -disable-arm-loloops=false %s -S -o - | FileCheck %s
 
-; REQUIRES: arm
-
 ; CHECK-LABEL: early_exit
 ; CHECK-NOT: llvm.set.loop.iterations
 ; CHECK-NOT: llvm.loop.decrement

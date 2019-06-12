@@ -1,7 +1,5 @@
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -hardware-loops -disable-arm-loloops=false %s -o - | FileCheck %s
 
-; REQUIRES: arm
-
 @g = common local_unnamed_addr global i32* null, align 4
 
 ; CHECK-LABEL: counter_too_large
