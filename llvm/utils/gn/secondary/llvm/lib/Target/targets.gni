@@ -28,6 +28,7 @@ if (llvm_targets_to_build == "host") {
     "Mips",
     "PowerPC",
     "Sparc",
+    "SystemZ",
     "WebAssembly",
     "X86",
   ]
@@ -59,6 +60,8 @@ foreach(target, llvm_targets_to_build) {
   } else if (target == "RISCV") {
     # Nothing to do.
   } else if (target == "Sparc") {
+    # Nothing to do.
+  } else if (target == "SystemZ") {
     # Nothing to do.
   } else if (target == "WebAssembly") {
     llvm_build_WebAssembly = true
