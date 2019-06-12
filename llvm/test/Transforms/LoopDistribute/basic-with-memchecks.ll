@@ -23,6 +23,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 @D = common global i32* null, align 8
 @E = common global i32* null, align 8
 
+; CHECK-LABEL: @f(
 define void @f() {
 entry:
   %a = load i32*, i32** @A, align 8
@@ -106,5 +107,69 @@ for.body:                                         ; preds = %for.body, %entry
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; Make sure there's no "Multiple reports generated" assert with a
+; volatile load, and no distribution
+
+; TODO: Distribution of volatile may be possible under some
+; circumstance, but the current implementation does not touch them.
+
+; CHECK-LABEL: @f_volatile_load(
+; CHECK: br label %for.body{{$}}
+
+; CHECK-NOT: load
+
+; CHECK: {{^}}for.body:
+; CHECK: load i32
+; CHECK: load i32
+; CHECK: load volatile i32
+; CHECK: load i32
+; CHECK: br i1 %exitcond, label %for.end, label %for.body{{$}}
+
+; CHECK-NOT: load
+
+; VECTORIZE-NOT: load <4 x i32>
+; VECTORIZE-NOT: mul <4 x i32>
+define void @f_volatile_load() {
+entry:
+  %a = load i32*, i32** @A, align 8
+  %b = load i32*, i32** @B, align 8
+  %c = load i32*, i32** @C, align 8
+  %d = load i32*, i32** @D, align 8
+  %e = load i32*, i32** @E, align 8
+  br label %for.body
+
+for.body:
+  %ind = phi i64 [ 0, %entry ], [ %add, %for.body ]
+
+  %arrayidxA = getelementptr inbounds i32, i32* %a, i64 %ind
+  %loadA = load i32, i32* %arrayidxA, align 4
+
+  %arrayidxB = getelementptr inbounds i32, i32* %b, i64 %ind
+  %loadB = load i32, i32* %arrayidxB, align 4
+
+  %mulA = mul i32 %loadB, %loadA
+
+  %add = add nuw nsw i64 %ind, 1
+  %arrayidxA_plus_4 = getelementptr inbounds i32, i32* %a, i64 %add
+  store i32 %mulA, i32* %arrayidxA_plus_4, align 4
+
+  %arrayidxD = getelementptr inbounds i32, i32* %d, i64 %ind
+  %loadD = load volatile i32, i32* %arrayidxD, align 4
+
+  %arrayidxE = getelementptr inbounds i32, i32* %e, i64 %ind
+  %loadE = load i32, i32* %arrayidxE, align 4
+
+  %mulC = mul i32 %loadD, %loadE
+
+  %arrayidxC = getelementptr inbounds i32, i32* %c, i64 %ind
+  store i32 %mulC, i32* %arrayidxC, align 4
+
+  %exitcond = icmp eq i64 %add, 20
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
   ret void
 }
