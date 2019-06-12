@@ -25,6 +25,7 @@ if (llvm_targets_to_build == "host") {
     "BPF",
     "Hexagon",
     "Lanai",
+    "Mips",
     "PowerPC",
     "Sparc",
     "WebAssembly",
@@ -50,6 +51,8 @@ foreach(target, llvm_targets_to_build) {
   } else if (target == "Hexagon") {
     # Nothing to do.
   } else if (target == "Lanai") {
+    # Nothing to do.
+  } else if (target == "Mips") {
     # Nothing to do.
   } else if (target == "PowerPC") {
     llvm_build_PowerPC = true
