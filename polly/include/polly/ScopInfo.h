@@ -49,6 +49,11 @@ class MemoryAccess;
 
 extern bool UseInstructionNames;
 
+// The maximal number of basic sets we allow during domain construction to
+// be created. More complex scops will result in very high compile time and
+// are also unlikely to result in good code
+extern int const MaxDisjunctsInDomain;
+
 /// Enumeration of assumptions Polly can take.
 enum AssumptionKind {
   ALIASING,
@@ -2028,9 +2033,6 @@ private:
   /// Return the access for the base ptr of @p MA if any.
   MemoryAccess *lookupBasePtrAccess(MemoryAccess *MA);
 
-  /// Check if the base ptr of @p MA is in the SCoP but not hoistable.
-  bool hasNonHoistableBasePtrInScop(MemoryAccess *MA, isl::union_map Writes);
-
   /// Check if @p MA can always be hoisted without execution context.
   bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
                           bool MAInvalidCtxIsEmpty,
@@ -2635,15 +2637,6 @@ public:
     return MinMaxAliasGroups;
   }
 
-  /// Return the context under which the access cannot be hoisted.
-  ///
-  /// @param Access The access to check.
-  /// @param Writes The set of all memory writes in the scop.
-  ///
-  /// @return Return the context under which the access cannot be hoisted or a
-  ///         nullptr if it cannot be hoisted at all.
-  isl::set getNonHoistableCtx(MemoryAccess *Access, isl::union_map Writes);
-
   /// Get an isl string representing the context.
   std::string getContextStr() const;
 
@@ -2715,11 +2708,6 @@ public:
 
   /// Add @p LI to the set of required invariant loads.
   void addRequiredInvariantLoad(LoadInst *LI) { DC.RequiredILS.insert(LI); }
-
-  /// Return true if and only if @p LI is a required invariant load.
-  bool isRequiredInvariantLoad(LoadInst *LI) const {
-    return getRequiredInvariantLoads().count(LI);
-  }
 
   /// Return the set of boxed (thus overapproximated) loops.
   const BoxedLoopsSetTy &getBoxedLoops() const { return DC.BoxedLoopsSet; }

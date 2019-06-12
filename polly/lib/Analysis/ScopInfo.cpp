@@ -110,21 +110,12 @@ STATISTIC(NumSingletonWrites, "Number of singleton writes after ScopInfo");
 STATISTIC(NumSingletonWritesInLoops,
           "Number of singleton writes nested in affine loops after ScopInfo");
 
-// The maximal number of basic sets we allow during domain construction to
-// be created. More complex scops will result in very high compile time and
-// are also unlikely to result in good code
-static int const MaxDisjunctsInDomain = 20;
+int const polly::MaxDisjunctsInDomain = 20;
 
 // The number of disjunct in the context after which we stop to add more
 // disjuncts. This parameter is there to avoid exponential growth in the
 // number of disjunct when adding non-convex sets to the context.
 static int const MaxDisjunctsInContext = 4;
-
-// The maximal number of dimensions we allow during invariant load construction.
-// More complex access ranges will result in very high compile time and are also
-// unlikely to result in good code. This value is very high and should only
-// trigger for corner cases (e.g., the "dct_luma" function in h264, SPEC2006).
-static int const MaxDimensionsInAccessRange = 9;
 
 static cl::opt<int>
     OptComputeOut("polly-analysis-computeout",
@@ -2993,20 +2984,6 @@ MemoryAccess *Scop::lookupBasePtrAccess(MemoryAccess *MA) {
   return BasePtrStmt->getArrayAccessOrNULLFor(PointerBaseInst);
 }
 
-bool Scop::hasNonHoistableBasePtrInScop(MemoryAccess *MA,
-                                        isl::union_map Writes) {
-  if (auto *BasePtrMA = lookupBasePtrAccess(MA)) {
-    return getNonHoistableCtx(BasePtrMA, Writes).is_null();
-  }
-
-  Value *BaseAddr = MA->getOriginalBaseAddr();
-  if (auto *BasePtrInst = dyn_cast<Instruction>(BaseAddr))
-    if (!isa<LoadInst>(BasePtrInst))
-      return contains(BasePtrInst);
-
-  return false;
-}
-
 bool Scop::buildAliasChecks(AliasAnalysis &AA) {
   if (!PollyUseRuntimeAliasChecks)
     return true;
@@ -3682,100 +3659,6 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
     addInvariantEquivClass(
         InvariantEquivClassTy{PointerSCEV, MemoryAccessList{MA}, MACtx, Ty});
   }
-}
-
-/// Check if an access range is too complex.
-///
-/// An access range is too complex, if it contains either many disjuncts or
-/// very complex expressions. As a simple heuristic, we assume if a set to
-/// be too complex if the sum of existentially quantified dimensions and
-/// set dimensions is larger than a threshold. This reliably detects both
-/// sets with many disjuncts as well as sets with many divisions as they
-/// arise in h264.
-///
-/// @param AccessRange The range to check for complexity.
-///
-/// @returns True if the access range is too complex.
-static bool isAccessRangeTooComplex(isl::set AccessRange) {
-  unsigned NumTotalDims = 0;
-
-  for (isl::basic_set BSet : AccessRange.get_basic_set_list()) {
-    NumTotalDims += BSet.dim(isl::dim::div);
-    NumTotalDims += BSet.dim(isl::dim::set);
-  }
-
-  if (NumTotalDims > MaxDimensionsInAccessRange)
-    return true;
-
-  return false;
-}
-
-isl::set Scop::getNonHoistableCtx(MemoryAccess *Access, isl::union_map Writes) {
-  // TODO: Loads that are not loop carried, hence are in a statement with
-  //       zero iterators, are by construction invariant, though we
-  //       currently "hoist" them anyway. This is necessary because we allow
-  //       them to be treated as parameters (e.g., in conditions) and our code
-  //       generation would otherwise use the old value.
-
-  auto &Stmt = *Access->getStatement();
-  BasicBlock *BB = Stmt.getEntryBlock();
-
-  if (Access->isScalarKind() || Access->isWrite() || !Access->isAffine() ||
-      Access->isMemoryIntrinsic())
-    return nullptr;
-
-  // Skip accesses that have an invariant base pointer which is defined but
-  // not loaded inside the SCoP. This can happened e.g., if a readnone call
-  // returns a pointer that is used as a base address. However, as we want
-  // to hoist indirect pointers, we allow the base pointer to be defined in
-  // the region if it is also a memory access. Each ScopArrayInfo object
-  // that has a base pointer origin has a base pointer that is loaded and
-  // that it is invariant, thus it will be hoisted too. However, if there is
-  // no base pointer origin we check that the base pointer is defined
-  // outside the region.
-  auto *LI = cast<LoadInst>(Access->getAccessInstruction());
-  if (hasNonHoistableBasePtrInScop(Access, Writes))
-    return nullptr;
-
-  isl::map AccessRelation = Access->getAccessRelation();
-  assert(!AccessRelation.is_empty());
-
-  if (AccessRelation.involves_dims(isl::dim::in, 0, Stmt.getNumIterators()))
-    return nullptr;
-
-  AccessRelation = AccessRelation.intersect_domain(Stmt.getDomain());
-  isl::set SafeToLoad;
-
-  auto &DL = getFunction().getParent()->getDataLayout();
-  if (isSafeToLoadUnconditionally(LI->getPointerOperand(), LI->getAlignment(),
-                                  DL)) {
-    SafeToLoad = isl::set::universe(AccessRelation.get_space().range());
-  } else if (BB != LI->getParent()) {
-    // Skip accesses in non-affine subregions as they might not be executed
-    // under the same condition as the entry of the non-affine subregion.
-    return nullptr;
-  } else {
-    SafeToLoad = AccessRelation.range();
-  }
-
-  if (isAccessRangeTooComplex(AccessRelation.range()))
-    return nullptr;
-
-  isl::union_map Written = Writes.intersect_range(SafeToLoad);
-  isl::set WrittenCtx = Written.params();
-  bool IsWritten = !WrittenCtx.is_empty();
-
-  if (!IsWritten)
-    return WrittenCtx;
-
-  WrittenCtx = WrittenCtx.remove_divs();
-  bool TooComplex = WrittenCtx.n_basic_set() >= MaxDisjunctsInDomain;
-  if (TooComplex || !isRequiredInvariantLoad(LI))
-    return nullptr;
-
-  addAssumption(INVARIANTLOAD, WrittenCtx, LI->getDebugLoc(), AS_RESTRICTION,
-                LI->getParent());
-  return WrittenCtx;
 }
 
 ScopArrayInfo *Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,

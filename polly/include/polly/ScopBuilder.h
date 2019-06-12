@@ -394,6 +394,23 @@ class ScopBuilder {
   /// Required inv. loads: LB[0], LB[1], (V, if it may alias with A or LB)
   void hoistInvariantLoads();
 
+  /// Return true if and only if @p LI is a required invariant load.
+  bool isRequiredInvariantLoad(LoadInst *LI) const {
+    return scop->getRequiredInvariantLoads().count(LI);
+  }
+
+  /// Check if the base ptr of @p MA is in the SCoP but not hoistable.
+  bool hasNonHoistableBasePtrInScop(MemoryAccess *MA, isl::union_map Writes);
+
+  /// Return the context under which the access cannot be hoisted.
+  ///
+  /// @param Access The access to check.
+  /// @param Writes The set of all memory writes in the scop.
+  ///
+  /// @return Return the context under which the access cannot be hoisted or a
+  ///         nullptr if it cannot be hoisted at all.
+  isl::set getNonHoistableCtx(MemoryAccess *Access, isl::union_map Writes);
+
   /// Collect loads which might form a reduction chain with @p StoreMA.
   ///
   /// Check if the stored value for @p StoreMA is a binary operator with one or
