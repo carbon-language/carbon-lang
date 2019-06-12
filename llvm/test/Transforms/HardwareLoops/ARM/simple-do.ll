@@ -2,6 +2,8 @@
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -hardware-loops -disable-arm-loloops=true %s -S -o - | FileCheck %s --check-prefix=DISABLED
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=-lob -hardware-loops %s -S -o - | FileCheck %s --check-prefix=DISABLED
 
+; REQUIRES: arm
+
 ; DISABLED-NOT: llvm.set.loop.iterations
 ; DISABLED-NOT: llvm.loop.decrement
 

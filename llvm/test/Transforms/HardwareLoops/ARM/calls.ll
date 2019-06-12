@@ -4,6 +4,7 @@
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=+mve -hardware-loops -disable-arm-loloops=false %s -S -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-MVE
 ; RUN: opt -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=+mve.fp -hardware-loops -disable-arm-loloops=false %s -S -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-MVEFP
 
+; REQUIRES: arm
 
 ; CHECK-LABEL: skip_call
 ; CHECK-NOT: call void @llvm.set.loop.iterations
