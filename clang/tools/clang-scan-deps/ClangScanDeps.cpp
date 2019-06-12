@@ -22,6 +22,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Threading.h"
+#include <mutex>
 #include <thread>
 
 using namespace clang;
