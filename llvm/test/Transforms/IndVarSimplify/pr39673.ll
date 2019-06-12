@@ -21,8 +21,7 @@ define i16 @test() {
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp ult i16 [[L2_ADD]], 2
 ; CHECK-NEXT:    br i1 [[CMP2]], label [[LOOP2]], label [[LOOP2_END:%.*]]
 ; CHECK:       loop2.end:
-; CHECK-NEXT:    [[K2_ADD_LCSSA:%.*]] = phi i16 [ [[K2_ADD]], [[LOOP2]] ]
-; CHECK-NEXT:    ret i16 [[K2_ADD_LCSSA]]
+; CHECK-NEXT:    ret i16 184
 ;
 entry:
   br label %loop1
