@@ -588,7 +588,9 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     } else if (included->bytes() > 0) {
       ProvenanceRange fileRange{
           allSources_.AddIncludedFile(*included, dir.GetProvenanceRange())};
-      Prescanner{*prescanner}.Prescan(fileRange);
+      Prescanner{*prescanner}
+          .set_encoding(included->encoding())
+          .Prescan(fileRange);
     }
   } else {
     prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),

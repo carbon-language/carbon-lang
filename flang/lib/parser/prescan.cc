@@ -31,8 +31,8 @@ static constexpr int maxPrescannerNesting{100};
 
 Prescanner::Prescanner(Messages &messages, CookedSource &cooked,
     Preprocessor &preprocessor, LanguageFeatureControl lfc)
-  : messages_{messages}, cooked_{cooked},
-    preprocessor_{preprocessor}, features_{lfc} {}
+  : messages_{messages}, cooked_{cooked}, preprocessor_{preprocessor},
+    features_{lfc}, encoding_{cooked.allSources().encoding()} {}
 
 Prescanner::Prescanner(const Prescanner &that)
   : messages_{that.messages_}, cooked_{that.cooked_},
@@ -295,6 +295,11 @@ bool Prescanner::MustSkipToEndOfLine() const {
 void Prescanner::NextChar() {
   CHECK(*at_ != '\n');
   ++at_, ++column_;
+  while (at_[0] == '\xef' && at_[1] == '\xbb' && at_[2] == '\xbf') {
+    // UTF-8 byte order mark - treat this file as UTF-8
+    at_ += 3;
+    encoding_ = Encoding::UTF_8;
+  }
   if (inPreprocessorDirective_) {
     SkipCComments();
   } else {
@@ -477,10 +482,18 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     }
     preventHollerith_ = false;
   } else if (IsLegalInIdentifier(*at_)) {
-    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
-    }
+    // Look for NC'...' prefix - legacy PGI "Kanji" NCHARACTER literal
+    char buffer[2];
+    int idChars{0};
+    do {
+      if (idChars < static_cast<int>(sizeof buffer)) {
+        buffer[idChars] = ToLowerCaseLetter(*at_);
+      }
+      ++idChars;
+    } while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_)));
     if (*at_ == '\'' || *at_ == '"') {
-      QuotedCharacterLiteral(tokens, start);
+      bool isKanji{idChars == 2 && buffer[0] == 'n' && buffer[1] == 'c'};
+      QuotedCharacterLiteral(tokens, start, isKanji);
       preventHollerith_ = false;
     } else {
       // Subtle: Don't misrecognize labeled DO statement label as Hollerith
@@ -522,7 +535,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
 }
 
 bool Prescanner::ExponentAndKind(TokenSequence &tokens) {
-  char ed = ToLowerCaseLetter(*at_);
+  char ed{ToLowerCaseLetter(*at_)};
   if (ed != 'e' && ed != 'd') {
     return false;
   }
@@ -541,7 +554,7 @@ bool Prescanner::ExponentAndKind(TokenSequence &tokens) {
 }
 
 void Prescanner::QuotedCharacterLiteral(
-    TokenSequence &tokens, const char *start) {
+    TokenSequence &tokens, const char *start, bool isKanji) {
   char quote{*at_};
   const char *end{at_ + 1};
   inCharLiteral_ = true;
@@ -549,9 +562,14 @@ void Prescanner::QuotedCharacterLiteral(
   const auto insert{[&](char ch) { EmitInsertedChar(tokens, ch); }};
   bool escape{false};
   bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
+  Encoding encoding{encoding_};
+  if (isKanji) {
+    // NC'...' - the contents are EUC_JP even if the context is not
+    encoding = Encoding::EUC_JP;
+  }
   while (true) {
     DecodedCharacter decoded{DecodeCharacter(
-        encoding_, at_, static_cast<std::size_t>(limit_ - at_))};
+        encoding, at_, static_cast<std::size_t>(limit_ - at_), escapesEnabled)};
     if (decoded.bytes <= 0) {
       Say(GetProvenanceRange(start, end),
           "Bad character in character literal"_err_en_US);
@@ -559,7 +577,9 @@ void Prescanner::QuotedCharacterLiteral(
     }
     char32_t ch{decoded.unicode};
     escape = !escape && ch == '\\' && escapesEnabled;
-    EmitQuotedChar(ch, emit, insert, false, !escapesEnabled);
+    EmitQuotedChar(ch, emit, insert, false /* don't double quotes */,
+        true /* use backslash escapes */,
+        Encoding::UTF_8 /* cooked char stream is UTF-8 only */);
     while (PadOutCharacterLiteral(tokens)) {
     }
     if (*at_ == '\n') {
@@ -613,7 +633,7 @@ void Prescanner::Hollerith(
         for (int j{0}; j < utf8.bytes; ++j) {
           EmitChar(tokens, utf8.buffer[j]);
         }
-        at_ += decoded.bytes;
+        at_ += decoded.bytes - 1;
       } else {
         Say(GetProvenanceRange(start, at_),
             "Bad character in Hollerith literal"_err_en_US);
@@ -746,7 +766,7 @@ void Prescanner::FortranInclude(const char *firstQuote) {
         provenance, static_cast<std::size_t>(p - nextLine_)};
     ProvenanceRange fileRange{
         allSources.AddIncludedFile(*included, includeLineRange)};
-    Prescanner{*this}.Prescan(fileRange);
+    Prescanner{*this}.set_encoding(included->encoding()).Prescan(fileRange);
   }
 }
 

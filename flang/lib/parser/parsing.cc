@@ -69,7 +69,6 @@ void Parsing::Prescan(const std::string &path, Options options) {
   Prescanner prescanner{messages_, cooked_, preprocessor, options.features};
   prescanner.set_fixedForm(options.isFixedForm)
       .set_fixedFormColumnLimit(options.fixedFormColumns)
-      .set_encoding(options.encoding)
       .AddCompilerDirectiveSentinel("dir$");
   if (options.features.IsEnabled(LanguageFeature::OpenMP)) {
     prescanner.AddCompilerDirectiveSentinel("$omp");
@@ -102,9 +101,7 @@ void Parsing::Parse(std::ostream *out) {
       .set_instrumentedParse(options_.instrumentedParse)
       .set_log(&log_);
   ParseState parseState{cooked_};
-  parseState.set_inFixedForm(options_.isFixedForm)
-      .set_encoding(options_.encoding)
-      .set_userState(&userState);
+  parseState.set_inFixedForm(options_.isFixedForm).set_userState(&userState);
   parseTree_ = program.Parse(parseState);
   CHECK(
       !parseState.anyErrorRecovery() || parseState.messages().AnyFatalError());

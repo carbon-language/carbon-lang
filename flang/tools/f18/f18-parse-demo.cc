@@ -446,7 +446,6 @@ int main(int argc, char *const argv[]) {
       }
     }
   }
-  driver.encoding = options.encoding;
 
   if (driver.warnOnNonstandardUsage) {
     options.features.WarnOnAllNonstandard();

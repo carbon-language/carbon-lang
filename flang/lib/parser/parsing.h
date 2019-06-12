@@ -37,7 +37,6 @@ struct Options {
   bool isFixedForm{false};
   int fixedFormColumns{72};
   LanguageFeatureControl features;
-  Encoding encoding{Encoding::UTF_8};
   std::vector<std::string> searchDirectories;
   std::vector<Predefinition> predefinitions;
   bool instrumentedParse{false};

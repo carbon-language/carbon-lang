@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,17 +60,18 @@ void SourceFile::RecordLineStarts() {
   lineStart_ = FindLineStarts(content_, bytes_);
 }
 
-// Cut down the contiguous content of a source file to skip
-// things like byte order marks.
+// Check for a Unicode byte order mark (BOM).
+// Module files all have one; so can source files.
 void SourceFile::IdentifyPayload() {
   content_ = address_;
   bytes_ = size_;
   if (content_ != nullptr) {
+    static constexpr int BOMBytes{3};
     static const char UTF8_BOM[]{"\xef\xbb\xbf"};
-    if (bytes_ >= sizeof UTF8_BOM &&
-        std::memcmp(content_, UTF8_BOM, sizeof UTF8_BOM) == 0) {
-      content_ += sizeof UTF8_BOM;
-      bytes_ -= sizeof UTF8_BOM;
+    if (bytes_ >= BOMBytes && std::memcmp(content_, UTF8_BOM, BOMBytes) == 0) {
+      content_ += BOMBytes;
+      bytes_ -= BOMBytes;
+      encoding_ = Encoding::UTF_8;
     }
   }
 }

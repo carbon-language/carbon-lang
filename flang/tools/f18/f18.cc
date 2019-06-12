@@ -452,7 +452,7 @@ int main(int argc, char *const argv[]) {
       driver.moduleFileSuffix = args.front();
       args.pop_front();
     } else if (arg == "-fno-utf-8") {
-      options.encoding = Fortran::parser::Encoding::LATIN_1;
+      driver.encoding = Fortran::parser::Encoding::LATIN_1;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -496,11 +496,10 @@ int main(int argc, char *const argv[]) {
       } else if (arg.substr(0, 2) == "-I") {
         driver.searchDirectories.push_back(arg.substr(2));
       } else if (arg == "-Mx,125,4") {  // PGI "all Kanji" mode
-        options.encoding = Fortran::parser::Encoding::EUC_JP;
+        driver.encoding = Fortran::parser::Encoding::EUC_JP;
       }
     }
   }
-  driver.encoding = options.encoding;
 
   if (driver.warnOnNonstandardUsage) {
     options.features.WarnOnAllNonstandard();
@@ -514,6 +513,7 @@ int main(int argc, char *const argv[]) {
   }
 
   Fortran::parser::AllSources allSources;
+  allSources.set_encoding(driver.encoding);
   Fortran::semantics::SemanticsContext semanticsContext{
       defaultKinds, options.features, allSources};
   semanticsContext.set_moduleDirectory(driver.moduleDirectory)

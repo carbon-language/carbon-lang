@@ -17,6 +17,7 @@
 
 #include "char-block.h"
 #include "char-buffer.h"
+#include "characters.h"
 #include "source.h"
 #include "../common/idioms.h"
 #include "../common/interval.h"
@@ -117,6 +118,11 @@ public:
 
   std::size_t size() const { return range_.size(); }
   const char &operator[](Provenance) const;
+  Encoding encoding() const { return encoding_; }
+  AllSources &set_encoding(Encoding e) {
+    encoding_ = e;
+    return *this;
+  }
 
   void PushSearchPathDirectory(std::string);
   std::string PopSearchPathDirectory();
@@ -181,6 +187,7 @@ private:
   std::map<char, Provenance> compilerInsertionProvenance_;
   std::vector<std::unique_ptr<SourceFile>> ownedSourceFiles_;
   std::vector<std::string> searchPath_;
+  Encoding encoding_{Encoding::UTF_8};
 };
 
 class CookedSource {

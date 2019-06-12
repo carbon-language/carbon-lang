@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@
 // Source file content is lightly normalized when the file is read.
 //  - Line ending markers are converted to single newline characters
 //  - A newline character is added to the last line of the file if one is needed
+//  - A Unicode byte order mark is recognized if present.
 
+#include "characters.h"
 #include <cstddef>
 #include <sstream>
 #include <string>
@@ -33,12 +35,13 @@ std::string LocateSourceFile(
 
 class SourceFile {
 public:
-  SourceFile() {}
+  explicit SourceFile(Encoding e) : encoding_{e} {}
   ~SourceFile();
   std::string path() const { return path_; }
   const char *content() const { return content_; }
   std::size_t bytes() const { return bytes_; }
   std::size_t lines() const { return lineStart_.size(); }
+  Encoding encoding() const { return encoding_; }
 
   bool Open(std::string path, std::stringstream *error);
   bool ReadStandardInput(std::stringstream *error);
@@ -62,6 +65,7 @@ private:
   std::size_t bytes_{0};
   std::vector<std::size_t> lineStart_;
   std::string normalized_;
+  Encoding encoding_{Encoding::UTF_8};
 };
 }
 #endif  // FORTRAN_PARSER_SOURCE_H_

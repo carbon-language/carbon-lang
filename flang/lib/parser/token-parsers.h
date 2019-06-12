@@ -207,70 +207,41 @@ template<class PA> inline constexpr auto bracketed(const PA &p) {
 
 // Quoted character literal constants.
 struct CharLiteralChar {
-  struct Result {
-    Result(char c, bool esc) : ch{c}, wasEscaped{esc} {}
-    static Result Bare(char c) { return Result{c, false}; }
-    static Result Escaped(char c) { return Result{c, true}; }
-    char ch;
-    bool wasEscaped;
-  };
-  using resultType = Result;
-  static std::optional<Result> Parse(ParseState &state) {
+  using resultType = char;
+  static std::optional<char> Parse(ParseState &state) {
     auto at{state.GetLocation()};
-    std::optional<const char *> och{nextCh.Parse(state)};
-    if (!och.has_value()) {
-      return std::nullopt;
-    }
-    char ch{**och};
-    if (ch == '\n') {
-      state.Say(CharBlock{at, state.GetLocation()},
-          "unclosed character constant"_err_en_US);
-      return std::nullopt;
-    }
-    if (ch != '\\') {
-      return Result::Bare(ch);
-    }
-    if (!(och = nextCh.Parse(state)).has_value()) {
-      return std::nullopt;
-    }
-    ch = **och;
-    if (ch == '\n') {
-      state.Say(CharBlock{at, state.GetLocation()},
-          "unclosed character constant"_err_en_US);
-      return std::nullopt;
-    }
-    if (std::optional<char> escChar{BackslashEscapeValue(ch)}) {
-      return Result::Escaped(*escChar);
-    }
-    if (IsOctalDigit(ch)) {
-      ch -= '0';
-      for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-        static constexpr auto octalDigit{attempt("01234567"_ch)};
-        och = octalDigit.Parse(state);
-        if (och.has_value()) {
-          ch = 8 * ch + **och - '0';
-        } else {
-          break;
-        }
-      }
-    } else if (ch == 'x' || ch == 'X') {
-      ch = 0;
-      static constexpr auto hexDigit{"0123456789abcdefABCDEF"_ch};
-      och = hexDigit.Parse(state);
-      if (och.has_value()) {
-        ch = HexadecimalDigitValue(**och);
-        static constexpr auto hexDigit2{attempt("0123456789abcdefABCDEF"_ch)};
-        och = hexDigit2.Parse(state);
-        if (och.has_value()) {
-          ch = 16 * ch + HexadecimalDigitValue(**och);
-        }
-      } else {
+    if (std::optional<const char *> cp{nextCh.Parse(state)}) {
+      if (**cp == '\n') {
+        state.Say(CharBlock{at, state.GetLocation()},
+            "Unclosed character constant"_err_en_US);
         return std::nullopt;
       }
-    } else {
-      state.Say(at, "bad escaped character"_en_US);
+      if (**cp != '\\') {
+        return **cp;
+      }
+      if (!(cp = nextCh.Parse(state)).has_value()) {
+        state.Say(CharBlock{at, state.GetLocation()},
+            "Unclosed character constant"_err_en_US);
+        return std::nullopt;
+      }
+      if (std::optional<char> escChar{BackslashEscapeValue(**cp)}) {
+        return escChar;
+      }
+      if (IsOctalDigit(**cp)) {
+        int result{**cp - '0'};
+        for (int j = (result > 3 ? 1 : 2); j-- > 0;) {
+          static constexpr auto octalDigit{attempt("01234567"_ch)};
+          if (std::optional<const char *> oct{octalDigit.Parse(state)}) {
+            result = 8 * result + **oct - '0';
+          } else {
+            break;
+          }
+        }
+        return result;
+      }
+      state.Say(at, "Bad escaped character"_err_en_US);
     }
-    return {Result::Escaped(ch)};
+    return std::nullopt;
   }
 };
 
@@ -279,14 +250,14 @@ template<char quote> struct CharLiteral {
   static std::optional<std::string> Parse(ParseState &state) {
     std::string str;
     static constexpr auto nextch{attempt(CharLiteralChar{})};
-    while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
-      if (ch->ch == quote && !ch->wasEscaped) {
+    while (std::optional<char> ch{nextch.Parse(state)}) {
+      if (*ch == quote) {
         static constexpr auto doubled{attempt(AnyOfChars{SetOfChars{quote}})};
         if (!doubled.Parse(state).has_value()) {
           return str;
         }
       }
-      str += ch->ch;
+      str += *ch;
     }
     return std::nullopt;
   }
@@ -544,7 +515,7 @@ struct HollerithLiteral {
     std::string content;
     for (auto j{*charCount}; j-- > 0;) {
       if (std::optional<int> chBytes{
-              CharacterBytes(state.GetLocation(), state.encoding())}) {
+              UTF_8CharacterBytes(state.GetLocation())}) {
         for (int bytes{*chBytes}; bytes > 0; --bytes) {
           if (std::optional<const char *> at{nextCh.Parse(state)}) {
             if (*chBytes == 1 && !isprint(**at)) {

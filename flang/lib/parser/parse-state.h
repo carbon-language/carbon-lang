@@ -44,7 +44,7 @@ public:
   ParseState(const ParseState &that)
     : p_{that.p_}, limit_{that.limit_}, context_{that.context_},
       userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
-      encoding_{that.encoding_}, anyErrorRecovery_{that.anyErrorRecovery_},
+      anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
       deferMessages_{that.deferMessages_},
       anyDeferredMessages_{that.anyDeferredMessages_},
@@ -52,7 +52,7 @@ public:
   ParseState(ParseState &&that)
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
-      inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
+      inFixedForm_{that.inFixedForm_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
       deferMessages_{that.deferMessages_},
@@ -61,7 +61,6 @@ public:
   ParseState &operator=(const ParseState &that) {
     p_ = that.p_, limit_ = that.limit_, context_ = that.context_;
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;
-    encoding_ = that.encoding_;
     anyErrorRecovery_ = that.anyErrorRecovery_;
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
@@ -73,7 +72,6 @@ public:
     p_ = that.p_, limit_ = that.limit_, messages_ = std::move(that.messages_);
     context_ = std::move(that.context_);
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;
-    encoding_ = that.encoding_;
     anyErrorRecovery_ = that.anyErrorRecovery_;
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
@@ -103,12 +101,6 @@ public:
   bool inFixedForm() const { return inFixedForm_; }
   ParseState &set_inFixedForm(bool yes = true) {
     inFixedForm_ = yes;
-    return *this;
-  }
-
-  Encoding encoding() const { return encoding_; }
-  ParseState &set_encoding(Encoding encoding) {
-    encoding_ = encoding;
     return *this;
   }
 
@@ -231,7 +223,6 @@ private:
   UserState *userState_{nullptr};
 
   bool inFixedForm_{false};
-  Encoding encoding_{Encoding::UTF_8};
   bool anyErrorRecovery_{false};
   bool anyConformanceViolation_{false};
   bool deferMessages_{false};

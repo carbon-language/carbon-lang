@@ -31,7 +31,10 @@ namespace Fortran::semantics {
 using namespace parser::literals;
 
 // The initial characters of a file that identify it as a .mod file.
-static constexpr auto magic{"!mod$ v1 sum:"};
+// The first three bytes are a Unicode byte order mark that ensures
+// that the module file is decoded as UTF-8 even if source files
+// are using another encoding.
+static constexpr auto magic{"\xef\xbb\xbf!mod$ v1 sum:"};
 
 static const SourceName *GetSubmoduleParent(const parser::Program &);
 static std::string ModFilePath(const std::string &dir, const SourceName &,
