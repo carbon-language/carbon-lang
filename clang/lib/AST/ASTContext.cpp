@@ -9804,8 +9804,11 @@ static GVALinkage basicGVALinkageForVariable(const ASTContext &Context,
       // was marked inline. MSVC 14.21.27702 headers define _Is_integral in a
       // header this way, and we don't want to emit non-discardable definitions
       // of these variables in every TU that includes <type_traits>. This
-      // behavior can be removed if the headers change to explicitly mark such
-      // variable template specializations inline.
+      // behavior is non-conforming, since another TU could use an extern
+      // template declaration for this variable, but for constexpr variables,
+      // it's unlikely for a user to want to do that. This behavior can be
+      // removed if the headers change to explicitly mark such variable template
+      // specializations inline.
       if (isa<VarTemplateSpecializationDecl>(VD) && VD->isConstexpr())
         return GVA_DiscardableODR;
 
