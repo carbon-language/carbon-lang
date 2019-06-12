@@ -121,7 +121,7 @@ OPTIONS
 
 .. option:: --print-size, -S
 
- Show symbol size instead of address.
+ Show symbol size as well as address (not applicable for Mach-O).
 
 .. option:: --size-sort
 
