@@ -134,7 +134,7 @@ OPTIONS
 .. option:: --radix=RADIX, -t
 
  Specify the radix of the symbol address(es). Values accepted d(decimal),
- x(hexadecomal) and o(octal).
+ x(hexadecimal) and o(octal).
 
 BUGS
 ----
