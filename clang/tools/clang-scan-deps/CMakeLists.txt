@@ -1,7 +1,7 @@
 set(LLVM_LINK_COMPONENTS
-    Core
-    Support
-)
+  Core
+  Support
+  )
 
 add_clang_tool(clang-scan-deps
   ClangScanDeps.cpp
