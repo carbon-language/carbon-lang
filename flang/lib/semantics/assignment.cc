@@ -486,7 +486,7 @@ int AssignmentContext::GetIntegerKind(
     return static_cast<int>(*value);
   } else {
     Say("Kind of INTEGER type must be a constant value"_err_en_US);
-    return context_.defaultKinds().GetDefaultKind(TypeCategory::Integer);
+    return context_.GetDefaultKind(TypeCategory::Integer);
   }
 }
 

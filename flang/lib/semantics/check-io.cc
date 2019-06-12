@@ -118,8 +118,7 @@ void IoChecker::Enter(const parser::IdVariable &spec) {
     return;
   }
   int kind{expr->GetType()->kind()};
-  int defaultKind{
-      context_.defaultKinds().GetDefaultKind(TypeCategory::Integer)};
+  int defaultKind{context_.GetDefaultKind(TypeCategory::Integer)};
   if (kind < defaultKind) {
     context_.Say(
         "ID kind (%d) is smaller than default INTEGER kind (%d)"_err_en_US,

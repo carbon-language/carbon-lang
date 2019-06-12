@@ -24,6 +24,7 @@
 #include "../evaluate/expression.h"
 #include "../evaluate/variable.h"
 #include "../parser/parse-tree.h"
+#include <functional>
 
 namespace Fortran::semantics {
 
@@ -71,6 +72,10 @@ const Symbol *HasCoarrayUltimateComponent(const DerivedTypeSpec &);
 // potential component of EVENT_TYPE or LOCK_TYPE from
 // ISO_FORTRAN_ENV module.
 const Symbol *HasEventOrLockPotentialComponent(const DerivedTypeSpec &);
+
+// Return an ultimate component of type that matches predicate, or nullptr.
+const Symbol *FindUltimateComponent(
+    const DerivedTypeSpec &type, std::function<bool(const Symbol &)> predicate);
 
 inline bool IsPointer(const Symbol &symbol) {
   return symbol.attrs().test(Attr::POINTER);

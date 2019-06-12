@@ -158,6 +158,7 @@ public:
 
   MaybeExpr Analyze(const parser::Expr &);
   MaybeExpr Analyze(const parser::Variable &);
+  MaybeExpr Analyze(const parser::Designator &);
 
   template<typename A> MaybeExpr Analyze(const common::Indirection<A> &x) {
     return Analyze(x.value());
@@ -238,7 +239,6 @@ protected:
   int IntegerTypeSpecKind(const parser::IntegerTypeSpec &);
 
 private:
-  MaybeExpr Analyze(const parser::Designator &);
   MaybeExpr Analyze(const parser::IntLiteralConstant &);
   MaybeExpr Analyze(const parser::SignedIntLiteralConstant &);
   MaybeExpr Analyze(const parser::RealLiteralConstant &);

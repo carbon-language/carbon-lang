@@ -105,6 +105,10 @@ SemanticsContext::SemanticsContext(
 
 SemanticsContext::~SemanticsContext() {}
 
+int SemanticsContext::GetDefaultKind(TypeCategory category) const {
+  return defaultKinds_.GetDefaultKind(category);
+}
+
 bool SemanticsContext::IsEnabled(parser::LanguageFeature feature) const {
   return languageFeatures_.IsEnabled(feature);
 }
@@ -116,13 +120,13 @@ bool SemanticsContext::ShouldWarn(parser::LanguageFeature feature) const {
 const DeclTypeSpec &SemanticsContext::MakeNumericType(
     TypeCategory category, int kind) {
   if (kind == 0) {
-    kind = defaultKinds_.GetDefaultKind(category);
+    kind = GetDefaultKind(category);
   }
   return globalScope_.MakeNumericType(category, KindExpr{kind});
 }
 const DeclTypeSpec &SemanticsContext::MakeLogicalType(int kind) {
   if (kind == 0) {
-    kind = defaultKinds_.GetDefaultKind(TypeCategory::Logical);
+    kind = GetDefaultKind(TypeCategory::Logical);
   }
   return globalScope_.MakeLogicalType(KindExpr{kind});
 }
@@ -196,6 +200,20 @@ void DoDumpSymbols(std::ostream &os, const Scope &scope, int indent) {
         os << *type << '\n';
       }
     }
+  }
+  if (!scope.equivalenceSets().empty()) {
+    PutIndent(os, indent);
+    os << "Equivalence Sets:";
+    for (const auto &set : scope.equivalenceSets()) {
+      os << ' ';
+      char sep = '(';
+      for (const auto &object : set) {
+        os << sep << object.AsFortran();
+        sep = ',';
+      }
+      os << ')';
+    }
+    os << '\n';
   }
   for (const auto &pair : scope.commonBlocks()) {
     const auto &symbol{*pair.second};

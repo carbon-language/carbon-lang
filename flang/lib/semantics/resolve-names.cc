@@ -724,6 +724,7 @@ public:
   void Post(const parser::CommonStmt::Block &);
   bool Pre(const parser::CommonBlockObject &);
   void Post(const parser::CommonBlockObject &);
+  bool Pre(const parser::EquivalenceStmt &);
   bool Pre(const parser::SaveStmt &);
 
 protected:
@@ -744,6 +745,7 @@ protected:
   bool CheckAccessibleComponent(const SourceName &, const Symbol &);
   void CheckCommonBlocks();
   void CheckSaveStmts();
+  void CheckEquivalenceSets();
   bool CheckNotInBlock(const char *);
   bool NameIsKnownOrIntrinsic(const parser::Name &);
 
@@ -773,6 +775,8 @@ private:
     bool sequence{false};  // is a sequence type
     const Symbol *type{nullptr};  // derived type being defined
   } derivedTypeInfo_;
+  // Collect equivalence sets and process at end of specification part
+  std::vector<const std::list<parser::EquivalenceObject> *> equivalenceSets_;
   // Info about common blocks in the current scope
   struct {
     Symbol *curr{nullptr};  // common block currently being processed
@@ -1264,13 +1268,11 @@ void DeclTypeSpecVisitor::Post(const parser::TypeSpec &typeSpec) {
 
 void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
-  MakeNumericType(
-      TypeCategory::Real, context().defaultKinds().doublePrecisionKind());
+  MakeNumericType(TypeCategory::Real, context().doublePrecisionKind());
 }
 void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
-  MakeNumericType(
-      TypeCategory::Complex, context().defaultKinds().doublePrecisionKind());
+  MakeNumericType(TypeCategory::Complex, context().doublePrecisionKind());
 }
 void DeclTypeSpecVisitor::MakeNumericType(TypeCategory category, int kind) {
   SetDeclTypeSpec(context().MakeNumericType(category, kind));
@@ -2723,8 +2725,8 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
     charInfo_.length = ParamValue{1};
   }
   if (!charInfo_.kind.has_value()) {
-    charInfo_.kind = KindExpr{
-        context().defaultKinds().GetDefaultKind(TypeCategory::Character)};
+    charInfo_.kind =
+        KindExpr{context().GetDefaultKind(TypeCategory::Character)};
   }
   SetDeclTypeSpec(currScope().MakeCharacterType(
       std::move(*charInfo_.length), std::move(*charInfo_.kind)));
@@ -3396,6 +3398,40 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
     return;
   }
   details->set_commonBlock(*commonBlockInfo_.curr);
+}
+
+bool DeclarationVisitor::Pre(const parser::EquivalenceStmt &x) {
+  // save equivalence sets to be processed after specification part
+  for (const std::list<parser::EquivalenceObject> &set : x.v) {
+    equivalenceSets_.push_back(&set);
+  }
+  return false;  // don't implicitly declare names yet
+}
+
+void DeclarationVisitor::CheckEquivalenceSets() {
+  EquivalenceSets equivSets{context()};
+  for (const auto *set : equivalenceSets_) {
+    const auto &source{set->front().v.value().source};
+    if (set->size() <= 1) {  // R871
+      Say(source, "Equivalence set must have more than one object"_err_en_US);
+    }
+    for (const parser::EquivalenceObject &object : *set) {
+      const auto &designator{object.v.value()};
+      // The designator was not resolved when it was encountered so do it now.
+      // AnalyzeExpr causes array sections to be changed to substrings as needed
+      Walk(designator);
+      if (AnalyzeExpr(context(), designator)) {
+        equivSets.AddToSet(designator);
+      }
+    }
+    equivSets.FinishSet(source);
+  }
+  for (auto &set : equivSets.sets()) {
+    if (!set.empty()) {
+      currScope().add_equivalenceSet(std::move(set));
+    }
+  }
+  equivalenceSets_.clear();
 }
 
 bool DeclarationVisitor::Pre(const parser::SaveStmt &x) {
@@ -4551,6 +4587,7 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
   }
   CheckSaveStmts();
   CheckCommonBlocks();
+  CheckEquivalenceSets();
 }
 
 void ResolveNamesVisitor::CheckImports() {

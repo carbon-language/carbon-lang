@@ -459,16 +459,15 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   // letter used in an exponent part (e.g., the 'E' in "6.02214E+23")
   // should agree.  In the absence of an explicit kind parameter, any exponent
   // letter determines the kind.  Otherwise, defaults apply.
-  auto &defaults{context_.defaultKinds()};
-  int defaultKind{defaults.GetDefaultKind(TypeCategory::Real)};
+  int defaultKind{context_.GetDefaultKind(TypeCategory::Real)};
   const char *end{x.real.source.end()};
   std::optional<int> letterKind;
   for (const char *p{x.real.source.begin()}; p < end; ++p) {
     if (parser::IsLetter(*p)) {
       switch (*p) {
-      case 'e': letterKind = defaults.GetDefaultKind(TypeCategory::Real); break;
-      case 'd': letterKind = defaults.doublePrecisionKind(); break;
-      case 'q': letterKind = defaults.quadPrecisionKind(); break;
+      case 'e': letterKind = context_.GetDefaultKind(TypeCategory::Real); break;
+      case 'd': letterKind = context_.doublePrecisionKind(); break;
+      case 'q': letterKind = context_.quadPrecisionKind(); break;
       default: Say("Unknown exponent letter '%c'"_err_en_US, *p);
       }
       break;
@@ -1947,7 +1946,7 @@ Expr<SubscriptInteger> ExpressionAnalyzer::AnalyzeKindSelector(
 }
 
 int ExpressionAnalyzer::GetDefaultKind(common::TypeCategory category) {
-  return context_.defaultKinds().GetDefaultKind(category);
+  return context_.GetDefaultKind(category);
 }
 
 DynamicType ExpressionAnalyzer::GetDefaultKindOfType(
@@ -2012,7 +2011,7 @@ bool ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
             parser::ToUpperCaseLetters(type->AsFortran()));
         return false;
       } else if (defaultKind) {
-        int kind{context_.defaultKinds().GetDefaultKind(category)};
+        int kind{context_.GetDefaultKind(category)};
         if (type->kind() != kind) {
           Say(at, "Must have default kind(%d) of %s type, but is %s"_err_en_US,
               kind, parser::ToUpperCaseLetters(EnumToString(category)),

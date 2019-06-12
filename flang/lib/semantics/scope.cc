@@ -25,6 +25,29 @@ namespace Fortran::semantics {
 
 Symbols<1024> Scope::allSymbols;
 
+bool EquivalenceObject::operator==(const EquivalenceObject &that) const {
+  return symbol == that.symbol && subscripts == that.subscripts;
+}
+
+bool EquivalenceObject::operator<(const EquivalenceObject &that) const {
+  return &symbol < &that.symbol ||
+      (&symbol == &that.symbol && subscripts < that.subscripts);
+}
+
+std::string EquivalenceObject::AsFortran() const {
+  std::stringstream ss;
+  ss << symbol.name().ToString();
+  if (!subscripts.empty()) {
+    char sep{'('};
+    for (auto subscript : subscripts) {
+      ss << sep << subscript;
+      sep = ',';
+    }
+    ss << ')';
+  }
+  return ss.str();
+}
+
 bool Scope::IsModule() const {
   return kind_ == Kind::Module && !symbol_->get<ModuleDetails>().isSubmodule();
 }
@@ -58,6 +81,14 @@ Symbol *Scope::FindSymbol(const SourceName &name) const {
     return nullptr;
   }
 }
+
+const std::list<EquivalenceSet> &Scope::equivalenceSets() const {
+  return equivalenceSets_;
+}
+void Scope::add_equivalenceSet(EquivalenceSet &&set) {
+  equivalenceSets_.emplace_back(std::move(set));
+}
+
 Symbol &Scope::MakeCommonBlock(const SourceName &name) {
   const auto it{commonBlocks_.find(name)};
   if (it != commonBlocks_.end()) {
@@ -225,6 +256,16 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
     const auto *symbol{pair.second};
     os << "  " << *symbol << '\n';
   }
+  if (!scope.equivalenceSets_.empty()) {
+    os << "  Equivalence Sets:\n";
+    for (const auto &set : scope.equivalenceSets_) {
+      os << "   ";
+      for (const auto &object : set) {
+        os << ' ' << object.AsFortran();
+      }
+      os << '\n';
+    }
+  }
   for (const auto &pair : scope.commonBlocks_) {
     const auto *symbol{pair.second};
     os << "  " << *symbol << '\n';
@@ -298,8 +339,7 @@ const DeclTypeSpec &Scope::InstantiateIntrinsicType(
   KindExpr copy{intrinsic->kind()};
   evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
   copy = evaluate::Fold(foldingContext, std::move(copy));
-  int kind{
-      semanticsContext.defaultKinds().GetDefaultKind(intrinsic->category())};
+  int kind{semanticsContext.GetDefaultKind(intrinsic->category())};
   if (auto value{evaluate::ToInt64(copy)}) {
     if (evaluate::IsValidKindOfIntrinsicType(intrinsic->category(), *value)) {
       kind = *value;

@@ -135,8 +135,7 @@ class NumericTypeSpec : public IntrinsicTypeSpec {
 public:
   NumericTypeSpec(TypeCategory category, KindExpr &&kind)
     : IntrinsicTypeSpec(category, std::move(kind)) {
-    CHECK(category == TypeCategory::Integer || category == TypeCategory::Real ||
-        category == TypeCategory::Complex);
+    CHECK(common::IsNumericTypeCategory(category));
   }
 };
 

@@ -276,8 +276,7 @@ bool ExprTypeKindIsDefault(
   auto dynamicType{expr.GetType()};
   return dynamicType.has_value() &&
       dynamicType->category() != common::TypeCategory::Derived &&
-      dynamicType->kind() ==
-      context.defaultKinds().GetDefaultKind(dynamicType->category());
+      dynamicType->kind() == context.GetDefaultKind(dynamicType->category());
 }
 
 const Symbol *FindFunctionResult(const Symbol &symbol) {
@@ -309,38 +308,11 @@ bool IsTeamType(const DerivedTypeSpec *derived) {
   return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
 }
 
+bool IsCoarray(const Symbol &symbol) { return symbol.Corank() > 0; }
+
 const Symbol *HasCoarrayUltimateComponent(
     const DerivedTypeSpec &derivedTypeSpec) {
-  const Symbol &symbol{derivedTypeSpec.typeSymbol()};
-  // TODO is it guaranteed that derived type symbol have a scope and is it the
-  // right scope to look into?
-  CHECK(symbol.scope());
-  for (const Symbol *componentSymbol :
-      symbol.get<DerivedTypeDetails>().OrderComponents(*symbol.scope())) {
-    CHECK(componentSymbol);
-    const ObjectEntityDetails &objectDetails{
-        componentSymbol->get<ObjectEntityDetails>()};
-    if (objectDetails.IsCoarray()) {
-      // Coarrays are ultimate components because they must be allocatable
-      // according to C746.
-      return componentSymbol;
-    }
-    if (!IsAllocatableOrPointer(*componentSymbol)) {
-      if (const DeclTypeSpec * declTypeSpec{objectDetails.type()}) {
-        if (const DerivedTypeSpec *
-            componentDerivedTypeSpec{declTypeSpec->AsDerived()}) {
-          // Avoid infinite loop, though this should not happen due to C744
-          CHECK(&symbol != &componentDerivedTypeSpec->typeSymbol());
-          if (const Symbol *
-              subcomponent{
-                  HasCoarrayUltimateComponent(*componentDerivedTypeSpec)}) {
-            return subcomponent;
-          }
-        }
-      }
-    }
-  }
-  return nullptr;
+  return FindUltimateComponent(derivedTypeSpec, IsCoarray);
 }
 
 const bool IsEventTypeOrLockType(const DerivedTypeSpec *derivedTypeSpec) {
@@ -382,4 +354,26 @@ const Symbol *HasEventOrLockPotentialComponent(
   }
   return nullptr;
 }
+
+const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
+    std::function<bool(const Symbol &)> predicate) {
+  const auto *scope{derivedTypeSpec.typeSymbol().scope()};
+  CHECK(scope);
+  for (const auto &pair : *scope) {
+    const Symbol &component{*pair.second};
+    const DeclTypeSpec *type{component.GetType()};
+    if (!type) {
+      continue;
+    }
+    const DerivedTypeSpec *derived{type->AsDerived()};
+    bool isUltimate{IsAllocatableOrPointer(component) || !derived};
+    if (const Symbol *
+        result{!isUltimate ? FindUltimateComponent(*derived, predicate)
+                           : predicate(component) ? &component : nullptr}) {
+      return result;
+    }
+  }
+  return nullptr;
+}
+
 }

@@ -127,6 +127,7 @@ set(ERROR_TESTS
   dosemantics03.f90
   expr-errors01.f90
   null01.f90
+  equivalence01.f90
 )
 
 # These test files have expected symbols in the source
@@ -142,6 +143,7 @@ set(SYMBOL_TESTS
   symbol09.f90
   symbol10.f90
   symbol11.f90
+  symbol12.f90
   kinds01.f90
   kinds03.f90
   procinterface01.f90
