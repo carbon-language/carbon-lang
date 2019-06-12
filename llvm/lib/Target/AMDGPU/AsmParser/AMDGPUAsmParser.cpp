@@ -1148,6 +1148,7 @@ private:
   bool validateMIMGD16(const MCInst &Inst);
   bool validateMIMGDim(const MCInst &Inst);
   bool validateLdsDirect(const MCInst &Inst);
+  bool validateOpSel(const MCInst &Inst);
   bool validateVOP3Literal(const MCInst &Inst) const;
   bool usesConstantBus(const MCInst &Inst, unsigned OpIdx);
   bool isInlineConstant(const MCInst &Inst, unsigned OpIdx) const;
@@ -3003,6 +3004,19 @@ bool AMDGPUAsmParser::validateSOPLiteral(const MCInst &Inst) const {
   return NumLiterals <= 1;
 }
 
+bool AMDGPUAsmParser::validateOpSel(const MCInst &Inst) {
+  const unsigned Opc = Inst.getOpcode();
+  if (Opc == AMDGPU::V_PERMLANE16_B32_gfx10 ||
+      Opc == AMDGPU::V_PERMLANEX16_B32_gfx10) {
+    int OpSelIdx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::op_sel);
+    unsigned OpSel = Inst.getOperand(OpSelIdx).getImm();
+
+    if (OpSel & ~3)
+      return false;
+  }
+  return true;
+}
+
 // VOP3 literal is only allowed in GFX10+ and only one can be used
 bool AMDGPUAsmParser::validateVOP3Literal(const MCInst &Inst) const {
   unsigned Opcode = Inst.getOpcode();
@@ -3069,6 +3083,11 @@ bool AMDGPUAsmParser::validateInstruction(const MCInst &Inst,
   if (!validateIntClampSupported(Inst)) {
     Error(IDLoc,
       "integer clamping is not supported on this GPU");
+    return false;
+  }
+  if (!validateOpSel(Inst)) {
+    Error(IDLoc,
+      "invalid op_sel operand");
     return false;
   }
   // For MUBUF/MTBUF d16 is a part of opcode, so there is nothing to validate.

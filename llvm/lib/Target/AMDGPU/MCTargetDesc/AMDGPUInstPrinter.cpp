@@ -1005,6 +1005,18 @@ void AMDGPUInstPrinter::printPackedModifier(const MCInst *MI,
 void AMDGPUInstPrinter::printOpSel(const MCInst *MI, unsigned,
                                    const MCSubtargetInfo &STI,
                                    raw_ostream &O) {
+  unsigned Opc = MI->getOpcode();
+  if (Opc == AMDGPU::V_PERMLANE16_B32_gfx10 ||
+      Opc == AMDGPU::V_PERMLANEX16_B32_gfx10) {
+    auto FIN = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src0_modifiers);
+    auto BCN = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src1_modifiers);
+    unsigned FI = !!(MI->getOperand(FIN).getImm() & SISrcMods::OP_SEL_0);
+    unsigned BC = !!(MI->getOperand(BCN).getImm() & SISrcMods::OP_SEL_0);
+    if (FI || BC)
+      O << " op_sel:[" << FI << ',' << BC << ']';
+    return;
+  }
+
   printPackedModifier(MI, " op_sel:[", SISrcMods::OP_SEL_0, O);
 }
 
