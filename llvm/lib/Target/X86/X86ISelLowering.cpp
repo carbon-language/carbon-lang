@@ -2106,11 +2106,10 @@ bool X86TargetLowering::isSafeMemOpType(MVT VT) const {
   return true;
 }
 
-bool
-X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
-                                                  unsigned,
-                                                  unsigned,
-                                                  bool *Fast) const {
+bool X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
+                                                       unsigned,
+                                                       MachineMemOperand::Flags,
+                                                       bool *Fast) const {
   if (Fast) {
     switch (VT.getSizeInBits()) {
     default:
