@@ -1778,11 +1778,10 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
   break;
   case ISD::STORE: {
     // Replace unaligned store of unaligned load with memmove.
-    StoreSDNode *ST  = cast<StoreSDNode>(N);
+    StoreSDNode *ST = cast<StoreSDNode>(N);
     if (!DCI.isBeforeLegalize() ||
-        allowsMisalignedMemoryAccesses(ST->getMemoryVT(),
-                                       ST->getAddressSpace(),
-                                       ST->getAlignment()) ||
+        allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(),
+                           ST->getMemoryVT(), *ST->getMemOperand()) ||
         ST->isVolatile() || ST->isIndexed()) {
       break;
     }
@@ -1791,12 +1790,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     unsigned StoreBits = ST->getMemoryVT().getStoreSizeInBits();
     assert((StoreBits % 8) == 0 &&
            "Store size in bits must be a multiple of 8");
-    unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(
-        ST->getMemoryVT().getTypeForEVT(*DCI.DAG.getContext()));
     unsigned Alignment = ST->getAlignment();
-    if (Alignment >= ABIAlignment) {
-      break;
-    }
 
     if (LoadSDNode *LD = dyn_cast<LoadSDNode>(ST->getValue())) {
       if (LD->hasNUsesOfValue(1, 0) && ST->getMemoryVT() == LD->getMemoryVT() &&
