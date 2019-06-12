@@ -3377,8 +3377,27 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr &MI,
         (DC >= DppCtrl::DPP_UNUSED4_FIRST && DC <= DppCtrl::DPP_UNUSED4_LAST) ||
         (DC >= DppCtrl::DPP_UNUSED5_FIRST && DC <= DppCtrl::DPP_UNUSED5_LAST) ||
         (DC >= DppCtrl::DPP_UNUSED6_FIRST && DC <= DppCtrl::DPP_UNUSED6_LAST) ||
-        (DC >= DppCtrl::DPP_UNUSED7_FIRST && DC <= DppCtrl::DPP_UNUSED7_LAST)) {
+        (DC >= DppCtrl::DPP_UNUSED7_FIRST && DC <= DppCtrl::DPP_UNUSED7_LAST) ||
+        (DC >= DppCtrl::DPP_UNUSED8_FIRST && DC <= DppCtrl::DPP_UNUSED8_LAST)) {
       ErrInfo = "Invalid dpp_ctrl value";
+      return false;
+    }
+    if (DC >= DppCtrl::WAVE_SHL1 && DC <= DppCtrl::WAVE_ROR1 &&
+        ST.getGeneration() >= AMDGPUSubtarget::GFX10) {
+      ErrInfo = "Invalid dpp_ctrl value: "
+                "wavefront shifts are not supported on GFX10+";
+      return false;
+    }
+    if (DC >= DppCtrl::BCAST15 && DC <= DppCtrl::BCAST31 &&
+        ST.getGeneration() >= AMDGPUSubtarget::GFX10) {
+      ErrInfo = "Invalid dpp_ctrl value: "
+                "broadcats are not supported on GFX10+";
+      return false;
+    }
+    if (DC >= DppCtrl::ROW_SHARE_FIRST && DC <= DppCtrl::ROW_XMASK_LAST &&
+        ST.getGeneration() < AMDGPUSubtarget::GFX10) {
+      ErrInfo = "Invalid dpp_ctrl value: "
+                "row_share and row_xmask are not supported before GFX10";
       return false;
     }
   }
