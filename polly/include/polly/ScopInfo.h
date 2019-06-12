@@ -2033,11 +2033,6 @@ private:
   /// Return the access for the base ptr of @p MA if any.
   MemoryAccess *lookupBasePtrAccess(MemoryAccess *MA);
 
-  /// Check if @p MA can always be hoisted without execution context.
-  bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
-                          bool MAInvalidCtxIsEmpty,
-                          bool NonHoistableCtxIsEmpty);
-
   /// Create an id for @p Param and store it in the ParameterIds map.
   void createParameterId(const SCEV *Param);
 
@@ -2312,9 +2307,6 @@ public:
     InvEquivClassVMap[LoadInst] = ClassRep;
   }
 
-  /// Add invariant loads listed in @p InvMAs with the domain of @p Stmt.
-  void addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs);
-
   /// Remove the metadata stored for @p Access.
   void removeAccessData(MemoryAccess *Access);
 
@@ -2338,6 +2330,12 @@ public:
   /// Return an iterator range containing the scop parameters.
   iterator_range<ParameterSetTy::iterator> parameters() const {
     return make_range(Parameters.begin(), Parameters.end());
+  }
+
+  /// Return an iterator range containing invariant accesses.
+  iterator_range<InvariantEquivClassesTy::iterator> invariantEquivClasses() {
+    return make_range(InvariantEquivClasses.begin(),
+                      InvariantEquivClasses.end());
   }
 
   /// Return whether this scop is empty, i.e. contains no statements that

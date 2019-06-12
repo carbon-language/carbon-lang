@@ -394,6 +394,14 @@ class ScopBuilder {
   /// Required inv. loads: LB[0], LB[1], (V, if it may alias with A or LB)
   void hoistInvariantLoads();
 
+  /// Add invariant loads listed in @p InvMAs with the domain of @p Stmt.
+  void addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs);
+
+  /// Check if @p MA can always be hoisted without execution context.
+  bool canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
+                          bool MAInvalidCtxIsEmpty,
+                          bool NonHoistableCtxIsEmpty);
+
   /// Return true if and only if @p LI is a required invariant load.
   bool isRequiredInvariantLoad(LoadInst *LI) const {
     return scop->getRequiredInvariantLoads().count(LI);
