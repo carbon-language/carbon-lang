@@ -4490,9 +4490,9 @@ define <16 x i16> @shuffle_v16i16_03_02_01_00_04_05_06_07_11_10_09_08_12_13_14_1
 ;
 ; AVX2OR512VL-LABEL: shuffle_v16i16_03_02_01_00_04_05_06_07_11_10_09_08_12_13_14_15_v8i16:
 ; AVX2OR512VL:       # %bb.0:
-; AVX2OR512VL-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[3,2,1,0,4,5,6,7]
-; AVX2OR512VL-NEXT:    vpshuflw {{.*#+}} xmm1 = xmm1[3,2,1,0,4,5,6,7]
+; AVX2OR512VL-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
 ; AVX2OR512VL-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX2OR512VL-NEXT:    vpshuflw {{.*#+}} ymm0 = ymm0[3,2,1,0,4,5,6,7,11,10,9,8,12,13,14,15]
 ; AVX2OR512VL-NEXT:    retq
   %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 4, i32 5, i32 6, i32 7>
   %2 = shufflevector <8 x i16> %b, <8 x i16> undef, <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 4, i32 5, i32 6, i32 7>
@@ -4510,9 +4510,9 @@ define <16 x i16> @shuffle_v16i16_00_01_02_04_07_06_05_04_08_09_10_11_15_14_13_1
 ;
 ; AVX2OR512VL-LABEL: shuffle_v16i16_00_01_02_04_07_06_05_04_08_09_10_11_15_14_13_12_v8i16:
 ; AVX2OR512VL:       # %bb.0:
-; AVX2OR512VL-NEXT:    vpshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,7,6,5,4]
-; AVX2OR512VL-NEXT:    vpshufhw {{.*#+}} xmm1 = xmm1[0,1,2,3,7,6,5,4]
+; AVX2OR512VL-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
 ; AVX2OR512VL-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX2OR512VL-NEXT:    vpshufhw {{.*#+}} ymm0 = ymm0[0,1,2,3,7,6,5,4,8,9,10,11,15,14,13,12]
 ; AVX2OR512VL-NEXT:    retq
   %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 7, i32 6, i32 5, i32 4>
   %2 = shufflevector <8 x i16> %b, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 7, i32 6, i32 5, i32 4>
