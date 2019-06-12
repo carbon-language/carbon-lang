@@ -99,7 +99,8 @@ private:
   bool CheckDesignator(const parser::Designator &);
   bool CheckDataRef(const parser::CharBlock &, const parser::DataRef &);
   bool CheckObject(const parser::Name &);
-  bool CheckBound(const parser::Expr &, bool isSubstring = false);
+  bool CheckArrayBound(const parser::Expr &);
+  bool CheckSubstringBound(const parser::Expr &, bool);
   bool IsCharacterSequenceType(const DeclTypeSpec *);
   bool IsDefaultKindNumericType(const IntrinsicTypeSpec &);
   bool IsNumericSequenceType(const DeclTypeSpec *);
@@ -114,6 +115,7 @@ private:
   struct {
     Symbol *symbol{nullptr};
     std::vector<ConstantSubscript> subscripts;
+    std::optional<ConstantSubscript> substringStart;
   } currObject_;  // equivalence object currently being constructed
 };
 

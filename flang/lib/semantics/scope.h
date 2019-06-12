@@ -33,17 +33,19 @@ using namespace parser::literals;
 
 using common::ConstantSubscript;
 
-// An equivalence object is represented by a symbol for the variable name
-// and the constant lower bound of a substring or indices of an array element.
+// An equivalence object is represented by a symbol for the variable name,
+// the indices for an array element, and the lower bound for a substring.
 struct EquivalenceObject {
-  EquivalenceObject(Symbol &symbol, std::vector<ConstantSubscript> subscripts)
-    : symbol{symbol}, subscripts{subscripts} {}
+  EquivalenceObject(Symbol &symbol, std::vector<ConstantSubscript> subscripts,
+      std::optional<ConstantSubscript> substringStart)
+    : symbol{symbol}, subscripts{subscripts}, substringStart{substringStart} {}
   bool operator==(const EquivalenceObject &) const;
   bool operator<(const EquivalenceObject &) const;
   std::string AsFortran() const;
 
   Symbol &symbol;
-  std::vector<ConstantSubscript> subscripts;  // for array elem or substring
+  std::vector<ConstantSubscript> subscripts;  // for array elem
+  std::optional<ConstantSubscript> substringStart;
 };
 using EquivalenceSet = std::vector<EquivalenceObject>;
 

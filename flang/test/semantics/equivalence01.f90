@@ -120,10 +120,14 @@ subroutine s9
   equivalence(c(n+1:n+j), i)
   !ERROR: Substring with zero length is not allowed in an equivalence set
   equivalence(c(n:1), i)
-  !ERROR: Subscript with nonconstant bound 'j-1' is not allowed in an equivalence set
+  !ERROR: Array with nonconstant subscript 'j-1' is not allowed in an equivalence set
   equivalence(d(j-1), i)
   !ERROR: Array section 'd(1:n)' is not allowed in an equivalence set
   equivalence(d(1:n), i)
+  character(4) :: a(10)
+  equivalence(c, a(10)(1:2))
+  !ERROR: 'a(10)' and 'a(10)(2:)' cannot have the same first storage unit
+  equivalence(c, a(10)(2:3))
 end
 
 subroutine s10

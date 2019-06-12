@@ -44,6 +44,9 @@ public:
       const parser::LanguageFeatureControl &, parser::AllSources &);
   ~SemanticsContext();
 
+  const common::IntrinsicTypeDefaultKinds &defaultKinds() const {
+    return defaultKinds_;
+  }
   int GetDefaultKind(TypeCategory) const;
   int doublePrecisionKind() const {
     return defaultKinds_.doublePrecisionKind();

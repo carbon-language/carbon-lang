@@ -459,15 +459,16 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   // letter used in an exponent part (e.g., the 'E' in "6.02214E+23")
   // should agree.  In the absence of an explicit kind parameter, any exponent
   // letter determines the kind.  Otherwise, defaults apply.
-  int defaultKind{context_.GetDefaultKind(TypeCategory::Real)};
+  auto &defaults{context_.defaultKinds()};
+  int defaultKind{defaults.GetDefaultKind(TypeCategory::Real)};
   const char *end{x.real.source.end()};
   std::optional<int> letterKind;
   for (const char *p{x.real.source.begin()}; p < end; ++p) {
     if (parser::IsLetter(*p)) {
       switch (*p) {
-      case 'e': letterKind = context_.GetDefaultKind(TypeCategory::Real); break;
-      case 'd': letterKind = context_.doublePrecisionKind(); break;
-      case 'q': letterKind = context_.quadPrecisionKind(); break;
+      case 'e': letterKind = defaults.GetDefaultKind(TypeCategory::Real); break;
+      case 'd': letterKind = defaults.doublePrecisionKind(); break;
+      case 'q': letterKind = defaults.quadPrecisionKind(); break;
       default: Say("Unknown exponent letter '%c'"_err_en_US, *p);
       }
       break;

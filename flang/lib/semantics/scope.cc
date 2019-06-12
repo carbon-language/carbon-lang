@@ -26,12 +26,16 @@ namespace Fortran::semantics {
 Symbols<1024> Scope::allSymbols;
 
 bool EquivalenceObject::operator==(const EquivalenceObject &that) const {
-  return symbol == that.symbol && subscripts == that.subscripts;
+  return symbol == that.symbol && subscripts == that.subscripts &&
+      substringStart == that.substringStart;
 }
 
 bool EquivalenceObject::operator<(const EquivalenceObject &that) const {
   return &symbol < &that.symbol ||
-      (&symbol == &that.symbol && subscripts < that.subscripts);
+      (&symbol == &that.symbol &&
+          (subscripts < that.subscripts ||
+              (subscripts == that.subscripts &&
+                  substringStart < that.substringStart)));
 }
 
 std::string EquivalenceObject::AsFortran() const {
@@ -44,6 +48,9 @@ std::string EquivalenceObject::AsFortran() const {
       sep = ',';
     }
     ss << ')';
+  }
+  if (substringStart) {
+    ss << '(' << *substringStart << ":)";
   }
   return ss.str();
 }

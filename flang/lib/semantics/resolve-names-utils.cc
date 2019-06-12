@@ -316,14 +316,12 @@ void EquivalenceSets::AddToSet(const parser::Designator &designator) {
     if (subscripts.empty() && symbol.IsObjectArray()) {
       // record a whole array as its first element
       for (const ShapeSpec &spec : symbol.get<ObjectEntityDetails>().shape()) {
-        if (auto &lbound{spec.lbound().GetExplicit()}) {
-          if (auto subscript{evaluate::ToInt64(*lbound)}) {
-            subscripts.push_back(*subscript);
-          }
-        }
+        auto &lbound{spec.lbound().GetExplicit().value()};
+        subscripts.push_back(evaluate::ToInt64(lbound).value());
       }
     }
-    currSet_.emplace_back(symbol, subscripts);
+    auto substringStart{currObject_.substringStart};
+    currSet_.emplace_back(symbol, subscripts, substringStart);
     PropagateSaveAttr(currSet_.back(), currSet_);
   }
   currObject_ = {};
@@ -354,7 +352,7 @@ void EquivalenceSets::FinishSet(const parser::CharBlock &source) {
 // Report an error if sym1 and sym2 cannot be in the same equivalence set.
 bool EquivalenceSets::CheckCanEquivalence(
     const parser::CharBlock &source, const Symbol &sym1, const Symbol &sym2) {
-  parser::MessageFixedText msg{"", 0};
+  std::optional<parser::MessageFixedText> msg;
   const DeclTypeSpec *type1{sym1.GetType()};
   const DeclTypeSpec *type2{sym2.GetType()};
   bool isNum1{IsNumericSequenceType(type1)};
@@ -379,8 +377,8 @@ bool EquivalenceSets::CheckCanEquivalence(
     msg = "Equivalence set cannot contain '%s' and '%s' with different types"
           " that are neither numeric nor character sequence types"_err_en_US;
   }
-  if (!msg.text().empty()) {
-    context_.Say(source, std::move(msg), sym1.name(), sym2.name());
+  if (msg) {
+    context_.Say(source, std::move(*msg), sym1.name(), sym2.name());
     return false;
   }
   return true;
@@ -430,10 +428,12 @@ bool EquivalenceSets::CheckDesignator(const parser::Designator &designator) {
             const auto &range{std::get<parser::SubstringRange>(x.t)};
             bool ok{CheckDataRef(designator.source, dataRef)};
             if (const auto &lb{std::get<0>(range.t)}) {
-              ok &= CheckBound(lb->thing.thing.value(), true);
+              ok &= CheckSubstringBound(lb->thing.thing.value(), true);
+            } else {
+              currObject_.substringStart = 1;
             }
             if (const auto &ub{std::get<1>(range.t)}) {
-              ok &= CheckBound(ub->thing.thing.value(), true);
+              ok &= CheckSubstringBound(ub->thing.thing.value(), false);
             }
             return ok;
           },
@@ -464,7 +464,7 @@ bool EquivalenceSets::CheckDataRef(
                         return false;
                       },
                       [&](const parser::IntExpr &y) {
-                        return CheckBound(y.thing.value());
+                        return CheckArrayBound(y.thing.value());
                       },
                   },
                   subscript.u);
@@ -558,7 +558,7 @@ bool EquivalenceSets::CheckObject(const parser::Name &name) {
   return true;
 }
 
-bool EquivalenceSets::CheckBound(const parser::Expr &bound, bool isSubstring) {
+bool EquivalenceSets::CheckArrayBound(const parser::Expr &bound) {
   MaybeExpr expr{
       evaluate::Fold(context_.foldingContext(), AnalyzeExpr(context_, bound))};
   if (!expr) {
@@ -573,17 +573,38 @@ bool EquivalenceSets::CheckBound(const parser::Expr &bound, bool isSubstring) {
   auto subscript{evaluate::ToInt64(*expr)};
   if (!subscript.has_value()) {
     context_.Say(bound.source,  // C8109
-        "%s with nonconstant bound '%s' is not allowed in an equivalence set"_err_en_US,
-        isSubstring ? "Substring" : "Subscript", bound.source);
-    return false;
-  }
-  if (isSubstring && currObject_.subscripts.size() == 1 &&
-      *subscript < currObject_.subscripts.front()) {
-    context_.Say(bound.source,  // C8116
-        "Substring with zero length is not allowed in an equivalence set"_err_en_US);
+        "Array with nonconstant subscript '%s' is not allowed in an equivalence set"_err_en_US,
+        bound.source);
     return false;
   }
   currObject_.subscripts.push_back(*subscript);
+  return true;
+}
+
+bool EquivalenceSets::CheckSubstringBound(
+    const parser::Expr &bound, bool isStart) {
+  MaybeExpr expr{
+      evaluate::Fold(context_.foldingContext(), AnalyzeExpr(context_, bound))};
+  if (!expr) {
+    return false;
+  }
+  auto subscript{evaluate::ToInt64(*expr)};
+  if (!subscript.has_value()) {
+    context_.Say(bound.source,  // C8109
+        "Substring with nonconstant bound '%s' is not allowed in an equivalence set"_err_en_US,
+        bound.source);
+    return false;
+  }
+  if (!isStart) {
+    auto start{currObject_.substringStart};
+    if (*subscript < (start ? *start : 1)) {
+      context_.Say(bound.source,  // C8116
+          "Substring with zero length is not allowed in an equivalence set"_err_en_US);
+      return false;
+    }
+  } else if (*subscript != 1) {
+    currObject_.substringStart = *subscript;
+  }
   return true;
 }
 
