@@ -356,7 +356,8 @@ private:
 
   bool process(MachineInstr &MI, OpenRangesSet &OpenRanges,
                VarLocInMBB &OutLocs, VarLocMap &VarLocIDs,
-               TransferMap &Transfers, bool transferChanges);
+               TransferMap &Transfers, bool transferChanges,
+               OverlapMap &OverlapFragments, VarToFragments &SeenFragments);
 
   void accumulateFragmentMap(MachineInstr &MI, VarToFragments &SeenFragments,
                              OverlapMap &OLapMap);
@@ -940,13 +941,19 @@ void LiveDebugValues::accumulateFragmentMap(MachineInstr &MI,
 /// This routine creates OpenRanges and OutLocs.
 bool LiveDebugValues::process(MachineInstr &MI, OpenRangesSet &OpenRanges,
                               VarLocInMBB &OutLocs, VarLocMap &VarLocIDs,
-                              TransferMap &Transfers, bool transferChanges) {
+                              TransferMap &Transfers, bool transferChanges,
+                              OverlapMap &OverlapFragments,
+                              VarToFragments &SeenFragments) {
   bool Changed = false;
   transferDebugValue(MI, OpenRanges, VarLocIDs);
   transferRegisterDef(MI, OpenRanges, VarLocIDs);
   if (transferChanges) {
     transferRegisterCopy(MI, OpenRanges, VarLocIDs, Transfers);
     transferSpillOrRestoreInst(MI, OpenRanges, VarLocIDs, Transfers);
+  } else {
+    // Build up a map of overlapping fragments on the first run through.
+    if (MI.isDebugValue())
+      accumulateFragmentMap(MI, SeenFragments, OverlapFragments);
   }
   Changed = transferTerminatorInst(MI, OpenRanges, OutLocs, VarLocIDs);
   return Changed;
@@ -1101,9 +1108,7 @@ bool LiveDebugValues::ExtendRanges(MachineFunction &MF) {
   for (auto &MBB : MF) {
     for (auto &MI : MBB) {
       process(MI, OpenRanges, OutLocs, VarLocIDs, Transfers,
-              dontTransferChanges);
-      if (MI.isDebugValue())
-        accumulateFragmentMap(MI, SeenFragments, OverlapFragments);
+              dontTransferChanges, OverlapFragments, SeenFragments);
     }
   }
 
@@ -1151,8 +1156,9 @@ bool LiveDebugValues::ExtendRanges(MachineFunction &MF) {
         // examine spill instructions to see whether they spill registers that
         // correspond to user variables.
         for (auto &MI : *MBB)
-          OLChanged |= process(MI, OpenRanges, OutLocs, VarLocIDs, Transfers,
-                               transferChanges);
+          OLChanged |=
+              process(MI, OpenRanges, OutLocs, VarLocIDs, Transfers,
+                      transferChanges, OverlapFragments, SeenFragments);
 
         // Add any DBG_VALUE instructions necessitated by spills.
         for (auto &TR : Transfers)
