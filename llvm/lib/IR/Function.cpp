@@ -700,7 +700,8 @@ enum IIT_Info {
   IIT_STRUCT6 = 38,
   IIT_STRUCT7 = 39,
   IIT_STRUCT8 = 40,
-  IIT_F128 = 41
+  IIT_F128 = 41,
+  IIT_VEC_ELEMENT = 42
 };
 
 static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
@@ -865,6 +866,12 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
       DecodeIITType(NextElt, Infos, OutputTable);
     return;
   }
+  case IIT_VEC_ELEMENT: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::VecElementArgument,
+                                             ArgInfo));
+    return;
+  }
   }
   llvm_unreachable("unhandled");
 }
@@ -976,6 +983,12 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
       llvm_unreachable("Expected an argument of Vector Type");
     Type *EltTy = VTy->getVectorElementType();
     return PointerType::getUnqual(EltTy);
+  }
+  case IITDescriptor::VecElementArgument: {
+    Type *Ty = Tys[D.getArgumentNumber()];
+    if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+      return VTy->getElementType();
+    llvm_unreachable("Expected an argument of Vector Type");
   }
   case IITDescriptor::VecOfAnyPtrsToElt:
     // Return the overloaded type (which determines the pointers address space)
@@ -1236,6 +1249,12 @@ static bool matchIntrinsicType(
         return true;
       return ThisArgEltTy->getElementType() !=
              ReferenceType->getVectorElementType();
+    }
+    case IITDescriptor::VecElementArgument: {
+      if (D.getArgumentNumber() >= ArgTys.size())
+        return IsDeferredCheck ? true : DeferCheck(Ty);
+      auto *ReferenceType = dyn_cast<VectorType>(ArgTys[D.getArgumentNumber()]);
+      return !ReferenceType || Ty != ReferenceType->getElementType();
     }
   }
   llvm_unreachable("unhandled");
