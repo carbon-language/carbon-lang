@@ -895,9 +895,10 @@ public:
     if (JTI == JumpTables.begin())
       return nullptr;
     --JTI;
-    if (JTI->first + JTI->second->getSize() > Address) {
+    if (JTI->first + JTI->second->getSize() > Address)
       return JTI->second;
-    }
+    if (JTI->second->getSize() == 0 && JTI->first == Address)
+      return JTI->second;
     return nullptr;
   }
 

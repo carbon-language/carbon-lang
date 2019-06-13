@@ -675,8 +675,6 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   uint64_t PCRelAddr = 0;
 
   auto Begin = Instructions.begin();
-  auto End = Instructions.end();
-
   if (BC.isAArch64()) {
     PreserveNops = BC.HasRelocations;
     // Start at the last label as an approximation of the current basic block.
@@ -693,7 +691,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
   auto Type = BC.MIB->analyzeIndirectBranch(Instruction,
                                             Begin,
-                                            End,
+                                            Instructions.end(),
                                             PtrSize,
                                             MemLocInstr,
                                             BaseRegNum,
@@ -765,50 +763,6 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   DEBUG(dbgs() << "BOLT-DEBUG: addressed memory is 0x"
                << Twine::utohexstr(ArrayStart) << '\n');
 
-  // List of possible jump targets.
-  std::vector<uint64_t> JTOffsetCandidates;
-
-  auto useJumpTableForInstruction = [&](JumpTable::JumpTableType JTType) {
-    JumpTable *JT;
-    const MCSymbol *JTLabel;
-    std::tie(JT, JTLabel) = BC.createJumpTable(*this,
-                                               ArrayStart,
-                                               JTType,
-                                               std::move(JTOffsetCandidates));
-
-    BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
-                                  JTLabel, BC.Ctx.get());
-    BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
-
-    JTSites.emplace_back(Offset, ArrayStart);
-  };
-
-  // Check if there's already a jump table registered at this address.
-  if (auto *JT = BC.getJumpTableContainingAddress(ArrayStart)) {
-    const auto JTOffset = ArrayStart - JT->getAddress();
-    if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE && JTOffset != 0) {
-        // Adjust the size of this jump table and create a new one if necessary.
-        // We cannot re-use the entries since the offsets are relative to the
-        // table start.
-        DEBUG(dbgs() << "BOLT-DEBUG: adjusting size of jump table at 0x"
-                     << Twine::utohexstr(JT->getAddress()) << '\n');
-        JT->OffsetEntries.resize(JTOffset / JT->EntrySize);
-    } else if (Type != IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
-      // Re-use the existing jump table or parts of it.
-      if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-        assert(JT->Type == JumpTable::JTT_NORMAL &&
-               "normal jump table expected");
-        Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
-      } else {
-        assert(JT->Type == JumpTable::JTT_PIC && "PIC jump table expected");
-      }
-
-      useJumpTableForInstruction(JT->Type);
-
-      return Type;
-    }
-  }
-
   auto Section = BC.getSectionForAddress(ArrayStart);
   if (!Section) {
     // No section - possibly an absolute address. Since we don't allow
@@ -826,76 +780,65 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   }
 
-  // Extract the value at the start of the array.
-  StringRef SectionContents = Section->getContents();
-  const auto EntrySize =
-    Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE ? 4 : PtrSize;
-  DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), EntrySize);
-  auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section->getAddress());
-  uint64_t Value = 0;
-  auto UpperBound = Section->getSize();
-  const auto *JumpTableBD = BC.getBinaryDataAtAddress(ArrayStart);
-  if (JumpTableBD && JumpTableBD->getSize()) {
-    UpperBound = ValueOffset + JumpTableBD->getSize();
-    assert(UpperBound <= Section->getSize() &&
-           "data object cannot cross a section boundary");
-  }
-
-  while (ValueOffset <= UpperBound - EntrySize) {
-    DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
-                 << Twine::utohexstr(getAddress() + Offset)
-                 << " is referencing address 0x"
-                 << Twine::utohexstr(Section->getAddress() + ValueOffset));
-    // Extract the value and increment the offset.
-    if (BC.isAArch64()) {
-      Value = PCRelAddr + DE.getSigned(&ValueOffset, EntrySize);
-    } else if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-      Value = ArrayStart + DE.getSigned(&ValueOffset, 4);
-    } else {
-      Value = DE.getAddress(&ValueOffset);
-    }
-    DEBUG(dbgs() << ", which contains value "
-                 << Twine::utohexstr(Value) << '\n');
-    if (Type == IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
-      if (Section->isReadOnly()) {
-        outs() << "BOLT-INFO: fixed indirect branch detected in " << *this
-               << " at 0x" << Twine::utohexstr(getAddress() + Offset)
-               << " the destination value is 0x" << Twine::utohexstr(Value)
-               << '\n';
-        TargetAddress = Value;
-        return Type;
-      }
+  if (Type == IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
+    auto Value = BC.getPointerAtAddress(ArrayStart);
+    if (!Value)
       return IndirectBranchType::UNKNOWN;
-    }
-    if (containsAddress(Value) && Value != getAddress()) {
-      // Is it possible to have a jump table with function start as an entry?
-      JTOffsetCandidates.push_back(Value - getAddress());
-      if (Type == IndirectBranchType::UNKNOWN)
-        Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
-      continue;
-    }
-    // Potentially a switch table can contain __builtin_unreachable() entry
-    // pointing just right after the function. In this case we have to check
-    // another entry. Otherwise the entry is outside of this function scope
-    // and it's not a switch table.
-    if (Value == getAddress() + getSize()) {
-      JTOffsetCandidates.push_back(getSize());
-      IgnoredBranches.emplace_back(Offset, getSize());
-    } else {
-      break;
-    }
-  }
-  if (Type == IndirectBranchType::POSSIBLE_JUMP_TABLE ||
-      Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-    assert(JTOffsetCandidates.size() > 1 &&
-           "expected more than one jump table entry");
 
-    const auto JumpTableType = Type == IndirectBranchType::POSSIBLE_JUMP_TABLE
-        ? JumpTable::JTT_NORMAL
-        : JumpTable::JTT_PIC;
-    useJumpTableForInstruction(JumpTableType);
+    if (!BC.getSectionForAddress(ArrayStart)->isReadOnly())
+      return IndirectBranchType::UNKNOWN;
+
+    outs() << "BOLT-INFO: fixed indirect branch detected in " << *this
+           << " at 0x" << Twine::utohexstr(getAddress() + Offset)
+           << " referencing data at 0x" << Twine::utohexstr(ArrayStart)
+           << " the destination value is 0x" << Twine::utohexstr(*Value)
+           << '\n';
+
+    TargetAddress = *Value;
+    return Type;
+  }
+
+  auto useJumpTableForInstruction = [&](JumpTable::JumpTableType JTType) {
+    JumpTable *JT;
+    const MCSymbol *JTLabel;
+    std::tie(JT, JTLabel) = BC.getOrCreateJumpTable(*this, ArrayStart, JTType);
+
+    BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
+                                  JTLabel, BC.Ctx.get());
+    BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
+
+    JTSites.emplace_back(Offset, ArrayStart);
+  };
+
+  // Check if there's already a jump table registered at this address.
+  // At this point, all jump tables are empty.
+  if (auto *JT = BC.getJumpTableContainingAddress(ArrayStart)) {
+    // Make sure the type of the table matches the code.
+    if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+      assert(JT->Type == JumpTable::JTT_PIC && "PIC jump table expected");
+    } else {
+      assert(JT->Type == JumpTable::JTT_NORMAL && "normal jump table expected");
+      Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
+    }
+
+    useJumpTableForInstruction(JT->Type);
 
     return Type;
+  }
+
+  const auto MemType = BC.analyzeMemoryAt(ArrayStart, *this);
+  if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+    assert(MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE &&
+           "PIC jump table heuristic failure");
+    useJumpTableForInstruction(JumpTable::JTT_PIC);
+    return Type;
+  }
+
+  if (MemType == MemoryContentsType::POSSIBLE_JUMP_TABLE) {
+    assert(Type == IndirectBranchType::UNKNOWN &&
+          "non-PIC jump table heuristic failure");
+    useJumpTableForInstruction(JumpTable::JTT_NORMAL);
+    return IndirectBranchType::POSSIBLE_JUMP_TABLE;
   }
 
   // We have a possible tail call, so let's add the value read from the possible
@@ -905,8 +848,9 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   // than the one where the indirect jump is. However, later,
   // postProcessIndirectBranches() is going to mark the function as non-simple
   // in this case.
-  if (Value && BC.getSectionForAddress(Value))
-    BC.InterproceduralReferences.insert(std::make_pair(this, Value));
+  auto Value = BC.getPointerAtAddress(ArrayStart);
+  if (Value && BC.getSectionForAddress(*Value))
+    BC.InterproceduralReferences.insert(std::make_pair(this, *Value));
 
   return IndirectBranchType::POSSIBLE_TAIL_CALL;
 }
@@ -1307,7 +1251,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             break;
           };
         }
-        // Indirect call. We only need to fix it if the operand is RIP-relative
+        // Indirect call. We only need to fix it if the operand is RIP-relative.
         if (IsSimple && MIB->hasPCRelOperand(Instruction)) {
           if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
             errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
@@ -1371,8 +1315,6 @@ add_instruction:
   updateState(State::Disassembled);
 
   postProcessEntryPoints();
-
-  postProcessJumpTables();
 }
 
 void BinaryFunction::postProcessEntryPoints() {

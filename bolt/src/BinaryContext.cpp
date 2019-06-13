@@ -286,6 +286,139 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF) {
   return std::make_pair(TargetSymbol, Addend);
 }
 
+MemoryContentsType
+BinaryContext::analyzeMemoryAt(uint64_t Address, BinaryFunction &BF) {
+  if (!isX86())
+    return MemoryContentsType::UNKNOWN;
+
+  auto Section = getSectionForAddress(Address);
+  if (!Section) {
+    // No section - possibly an absolute address. Since we don't allow
+    // internal function addresses to escape the function scope - we
+    // consider it a tail call.
+    if (opts::Verbosity > 1) {
+      errs() << "BOLT-WARNING: no section for address 0x"
+             << Twine::utohexstr(Address) << " referenced from function "
+             << BF << '\n';
+    }
+    return MemoryContentsType::UNKNOWN;
+  }
+  if (Section->isVirtual()) {
+    // The contents are filled at runtime.
+    return MemoryContentsType::UNKNOWN;
+  }
+
+  auto couldBeJumpTable = [&](const uint64_t JTAddress,
+                              JumpTable::JumpTableType Type) {
+    const auto EntrySize =
+      Type == JumpTable::JTT_PIC ? 4 : AsmInfo->getCodePointerSize();
+    auto ValueAddress = JTAddress;
+    auto UpperBound = Section->getEndAddress();
+    const auto *JumpTableBD = getBinaryDataAtAddress(JTAddress);
+    if (JumpTableBD && JumpTableBD->getSize()) {
+      UpperBound = JumpTableBD->getEndAddress();
+      assert(UpperBound <= Section->getEndAddress() &&
+             "data object cannot cross a section boundary");
+    }
+
+    while (ValueAddress <= UpperBound - EntrySize) {
+      DEBUG(dbgs() << "BOLT-DEBUG: analyzing memory at 0x"
+                   << Twine::utohexstr(ValueAddress));
+      uint64_t Value;
+      if (Type == JumpTable::JTT_PIC) {
+        Value = JTAddress + *getSignedValueAtAddress(ValueAddress, EntrySize);
+      } else {
+        Value = *getPointerAtAddress(ValueAddress);
+      }
+      DEBUG(dbgs() << ", which contains value 0x"
+                   << Twine::utohexstr(Value) << '\n');
+
+      ValueAddress += EntrySize;
+
+      // We assume that a jump table cannot have function start as an entry.
+      if (BF.containsAddress(Value) && Value != BF.getAddress())
+        return true;
+
+      // Potentially a jump table can contain __builtin_unreachable() entry
+      // pointing just right after the function. In this case we have to check
+      // another entry. Otherwise the entry is outside of this function scope
+      // and it's not a jump table.
+      if (Value == BF.getAddress() + BF.getSize())
+        continue;
+
+      return false;
+    }
+
+    return false;
+  };
+
+  // Start with checking for PIC jump table. We expect non-PIC jump tables
+  // to have high 32 bits set to 0.
+  if (couldBeJumpTable(Address, JumpTable::JTT_PIC))
+    return MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE;
+
+  if (couldBeJumpTable(Address, JumpTable::JTT_NORMAL))
+    return MemoryContentsType::POSSIBLE_JUMP_TABLE;
+
+  return MemoryContentsType::UNKNOWN;
+}
+
+void BinaryContext::populateJumpTables() {
+  for (auto JTI = JumpTables.begin(), JTE = JumpTables.end(); JTI != JTE;
+       ++JTI) {
+    auto *JT = JTI->second;
+    auto &BF = *JT->Parent;
+
+    DEBUG(dbgs() << "BOLT-DEBUG: populating jump table "
+                 << JT->getName() << '\n');
+
+    // The upper bound is defined by containing object, section limits, and
+    // the next jump table in memory.
+    auto UpperBound = JT->getSection().getEndAddress();
+    const auto *JumpTableBD = getBinaryDataAtAddress(JT->getAddress());
+    if (JumpTableBD && JumpTableBD->getSize()) {
+      assert(JumpTableBD->getEndAddress() <= UpperBound &&
+             "data object cannot cross a section boundary");
+      UpperBound = JumpTableBD->getEndAddress();
+    }
+    auto NextJTI = std::next(JTI);
+    if (NextJTI != JTE) {
+      assert (UpperBound != JT->getAddress());
+      UpperBound = std::min(NextJTI->second->getAddress(), UpperBound);
+    }
+
+    for (auto EntryAddress = JT->getAddress();
+         EntryAddress <= UpperBound - JT->EntrySize;
+         EntryAddress += JT->EntrySize) {
+      uint64_t Value;
+      if (JT->Type == JumpTable::JTT_PIC) {
+        Value = JT->getAddress() +
+                *getSignedValueAtAddress(EntryAddress, JT->EntrySize);
+      } else {
+        Value = *getPointerAtAddress(EntryAddress);
+      }
+
+      // __builtin_unreachable() case.
+      if (Value == BF.getAddress() + BF.getSize()) {
+        JT->OffsetEntries.emplace_back(Value - BF.getAddress());
+        BF.IgnoredBranches.emplace_back(Value - BF.getAddress(), BF.getSize());
+        continue;
+      }
+
+      // We assume that a jump table cannot have function start as an entry.
+      if (BF.containsAddress(Value) && Value != BF.getAddress()) {
+        JT->OffsetEntries.emplace_back(Value - BF.getAddress());
+        continue;
+      }
+
+      break;
+    }
+
+    assert(JT->OffsetEntries.size() > 1 &&
+           "expected more than one jump table entry");
+  }
+}
+
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
                                                  Twine Prefix,
                                                  uint64_t Size,
@@ -316,10 +449,9 @@ BinaryFunction *BinaryContext::createBinaryFunction(
 }
 
 std::pair<JumpTable *, const MCSymbol *>
-BinaryContext::createJumpTable(BinaryFunction &Function,
-                               uint64_t Address,
-                               JumpTable::JumpTableType Type,
-                               JumpTable::OffsetEntriesType &&OffsetEntries) {
+BinaryContext::getOrCreateJumpTable(BinaryFunction &Function,
+                                   uint64_t Address,
+                                   JumpTable::JumpTableType Type) {
   const auto JumpTableName = generateJumpTableName(Function, Address);
   if (auto *JT = getJumpTableContainingAddress(Address)) {
     assert(JT->Type == Type && "jump table types have to match");
@@ -349,14 +481,13 @@ BinaryContext::createJumpTable(BinaryFunction &Function,
 
   DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
                << JTStartLabel->getName()
-               << " in function " << Function << " with "
-               << OffsetEntries.size() << " entries\n");
+               << " in function " << Function << 'n');
 
   auto *JT = new JumpTable(JumpTableName,
                            Address,
                            EntrySize,
                            Type,
-                           std::move(OffsetEntries),
+                           {},
                            JumpTable::LabelMapType{{0, JTStartLabel}},
                            Function,
                            *getSectionForAddress(Address));

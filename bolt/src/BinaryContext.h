@@ -60,6 +60,12 @@ class BinaryFunction;
 class BinaryBasicBlock;
 class DataReader;
 
+enum class MemoryContentsType : char {
+  UNKNOWN = 0,              /// Unknown contents.
+  POSSIBLE_JUMP_TABLE,      /// Possibly a non-PIC jump table.
+  POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a PIC jump table.
+};
+
 /// Helper function to truncate a \p Value to given size in \p Bytes.
 inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
@@ -209,9 +215,10 @@ public:
     if (JTI == JumpTables.begin())
       return nullptr;
     --JTI;
-    if (JTI->first + JTI->second->getSize() > Address) {
+    if (JTI->first + JTI->second->getSize() > Address)
       return JTI->second;
-    }
+    if (JTI->second->getSize() == 0 && JTI->first == Address)
+      return JTI->second;
     return nullptr;
   }
 
@@ -292,10 +299,13 @@ public:
   /// May create an embedded jump table and return its label as the second
   /// element of the pair.
   std::pair<JumpTable *, const MCSymbol *>
-  createJumpTable(BinaryFunction &Function,
-                  uint64_t Address,
-                  JumpTable::JumpTableType Type,
-                  JumpTable::OffsetEntriesType &&OffsetEntries);
+  getOrCreateJumpTable(BinaryFunction &Function,
+                       uint64_t Address,
+                       JumpTable::JumpTableType Type);
+
+  /// After jump table locations are established, this function will populate
+  /// their OffsetEntries based on memory contents.
+  void populateJumpTables();
 
   /// Generate a unique name for jump table at a given \p Address belonging
   /// to function \p BF.
@@ -485,6 +495,10 @@ public:
   /// Return <Symbol, Addend> pair corresponding to the \p Address.
   std::pair<MCSymbol *, uint64_t> handleAddressRef(uint64_t Address,
                                                    BinaryFunction &BF);
+
+  /// Analyze memory contents at the given \p Address and return the type of
+  /// memory contents (such as a possible jump table).
+  MemoryContentsType analyzeMemoryAt(uint64_t Address, BinaryFunction &BF);
 
   /// Return a value of the global \p Symbol or an error if the value
   /// was not set.

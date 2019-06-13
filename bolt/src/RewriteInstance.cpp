@@ -2644,6 +2644,17 @@ void RewriteInstance::disassembleFunctions() {
     BC->processInterproceduralReferences();
   }
 
+  BC->populateJumpTables();
+
+  for (auto &BFI : BC->getBinaryFunctions()) {
+    BinaryFunction &Function = BFI.second;
+
+    if (!shouldDisassemble(Function))
+      continue;
+
+    Function.postProcessJumpTables();
+  }
+
   for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
 
