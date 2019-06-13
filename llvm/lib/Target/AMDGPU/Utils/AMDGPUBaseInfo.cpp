@@ -380,12 +380,17 @@ unsigned getNumSGPRBlocks(const MCSubtargetInfo *STI, unsigned NumSGPRs) {
   return NumSGPRs / getSGPREncodingGranule(STI) - 1;
 }
 
-unsigned getVGPRAllocGranule(const MCSubtargetInfo *STI) {
-  return 4;
+unsigned getVGPRAllocGranule(const MCSubtargetInfo *STI,
+                             Optional<bool> EnableWavefrontSize32) {
+  bool IsWave32 = EnableWavefrontSize32 ?
+      *EnableWavefrontSize32 :
+      STI->getFeatureBits().test(FeatureWavefrontSize32);
+  return IsWave32 ? 8 : 4;
 }
 
-unsigned getVGPREncodingGranule(const MCSubtargetInfo *STI) {
-  return getVGPRAllocGranule(STI);
+unsigned getVGPREncodingGranule(const MCSubtargetInfo *STI,
+                                Optional<bool> EnableWavefrontSize32) {
+  return getVGPRAllocGranule(STI, EnableWavefrontSize32);
 }
 
 unsigned getTotalNumVGPRs(const MCSubtargetInfo *STI) {
@@ -416,10 +421,12 @@ unsigned getMaxNumVGPRs(const MCSubtargetInfo *STI, unsigned WavesPerEU) {
   return std::min(MaxNumVGPRs, AddressableNumVGPRs);
 }
 
-unsigned getNumVGPRBlocks(const MCSubtargetInfo *STI, unsigned NumVGPRs) {
-  NumVGPRs = alignTo(std::max(1u, NumVGPRs), getVGPREncodingGranule(STI));
+unsigned getNumVGPRBlocks(const MCSubtargetInfo *STI, unsigned NumVGPRs,
+                          Optional<bool> EnableWavefrontSize32) {
+  NumVGPRs = alignTo(std::max(1u, NumVGPRs),
+                     getVGPREncodingGranule(STI, EnableWavefrontSize32));
   // VGPRBlocks is actual number of VGPR blocks minus 1.
-  return NumVGPRs / getVGPREncodingGranule(STI) - 1;
+  return NumVGPRs / getVGPREncodingGranule(STI, EnableWavefrontSize32) - 1;
 }
 
 } // end namespace IsaInfo
@@ -437,7 +444,6 @@ void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
   Header.amd_machine_version_minor = Version.Minor;
   Header.amd_machine_version_stepping = Version.Stepping;
   Header.kernel_code_entry_byte_offset = sizeof(Header);
-  // wavefront_size is specified as a power of 2: 2^6 = 64 threads.
   Header.wavefront_size = 6;
 
   // If the code object does not support indirect functions, then the value must

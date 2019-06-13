@@ -199,7 +199,12 @@ class VOP2bInstAlias <VOP2_Pseudo ps, Instruction inst,
 }
 
 multiclass VOP2bInstAliases<VOP2_Pseudo ps, VOP2_Real inst, string OpName> {
+  let WaveSizePredicate = isWave32 in {
+    def : VOP2bInstAlias<ps, inst, OpName, "vcc_lo">;
+  }
+  let WaveSizePredicate = isWave64 in {
     def : VOP2bInstAlias<ps, inst, OpName, "vcc">;
+  }
 }
 
 multiclass VOP2eInst <string opName,
@@ -234,7 +239,12 @@ class VOP2eInstAlias <VOP2_Pseudo ps, Instruction inst, string opnd> :
 }
 
 multiclass VOP2eInstAliases<VOP2_Pseudo ps, VOP2_Real inst> {
+  let WaveSizePredicate = isWave32 in {
+    def : VOP2eInstAlias<ps, inst, "vcc_lo">;
+  }
+  let WaveSizePredicate = isWave64 in {
     def : VOP2eInstAlias<ps, inst, "vcc">;
+  }
 }
 
 class VOP_MADAK <ValueType vt> : VOPProfile <[vt, vt, vt, vt]> {
@@ -953,6 +963,30 @@ let AssemblerPredicate = isGFX10Plus, DecoderNamespace = "GFX10" in {
         let DecoderNamespace = "DPP8";
       }
 
+    let WaveSizePredicate = isWave32 in {
+      def _sdwa_w32_gfx10 :
+        Base_VOP_SDWA10_Real<!cast<VOP2_SDWA_Pseudo>(opName#"_sdwa")>,
+        VOP2_SDWA9Ae<op{5-0}, !cast<VOP2_SDWA_Pseudo>(opName#"_sdwa").Pfl> {
+          VOP2_SDWA_Pseudo Ps = !cast<VOP2_SDWA_Pseudo>(opName#"_sdwa");
+          let AsmString = asmName # !subst("vcc", "vcc_lo", Ps.AsmOperands);
+          let isAsmParserOnly = 1;
+          let DecoderNamespace = "SDWA10";
+        }
+      def _dpp_w32_gfx10 :
+        VOP2_DPP16<op, !cast<VOP2_Pseudo>(opName#"_e32"), asmName> {
+          string AsmDPP = !cast<VOP2_Pseudo>(opName#"_e32").Pfl.AsmDPP16;
+          let AsmString = asmName # !subst("vcc", "vcc_lo", AsmDPP);
+          let isAsmParserOnly = 1;
+        }
+      def _dpp8_w32_gfx10 :
+        VOP2_DPP8<op, !cast<VOP2_Pseudo>(opName#"_e32"), asmName> {
+          string AsmDPP8 = !cast<VOP2_Pseudo>(opName#"_e32").Pfl.AsmDPP8;
+          let AsmString = asmName # !subst("vcc", "vcc_lo", AsmDPP8);
+          let isAsmParserOnly = 1;
+        }
+    } // End WaveSizePredicate = isWave32
+
+    let WaveSizePredicate = isWave64 in {
       def _sdwa_w64_gfx10 :
         Base_VOP_SDWA10_Real<!cast<VOP2_SDWA_Pseudo>(opName#"_sdwa")>,
         VOP2_SDWA9Ae<op{5-0}, !cast<VOP2_SDWA_Pseudo>(opName#"_sdwa").Pfl> {
@@ -973,6 +1007,7 @@ let AssemblerPredicate = isGFX10Plus, DecoderNamespace = "GFX10" in {
           let AsmString = asmName # AsmDPP8;
           let isAsmParserOnly = 1;
         }
+    } // End WaveSizePredicate = isWave64
   }
 
   //===----------------------------- VOP3Only -----------------------------===//

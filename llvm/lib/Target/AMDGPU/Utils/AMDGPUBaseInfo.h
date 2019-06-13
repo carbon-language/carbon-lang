@@ -150,10 +150,18 @@ unsigned getNumExtraSGPRs(const MCSubtargetInfo *STI, bool VCCUsed,
 unsigned getNumSGPRBlocks(const MCSubtargetInfo *STI, unsigned NumSGPRs);
 
 /// \returns VGPR allocation granularity for given subtarget \p STI.
-unsigned getVGPRAllocGranule(const MCSubtargetInfo *STI);
+///
+/// For subtargets which support it, \p EnableWavefrontSize32 should match
+/// the ENABLE_WAVEFRONT_SIZE32 kernel descriptor field.
+unsigned getVGPRAllocGranule(const MCSubtargetInfo *STI,
+                             Optional<bool> EnableWavefrontSize32 = None);
 
 /// \returns VGPR encoding granularity for given subtarget \p STI.
-unsigned getVGPREncodingGranule(const MCSubtargetInfo *STI);
+///
+/// For subtargets which support it, \p EnableWavefrontSize32 should match
+/// the ENABLE_WAVEFRONT_SIZE32 kernel descriptor field.
+unsigned getVGPREncodingGranule(const MCSubtargetInfo *STI,
+                                Optional<bool> EnableWavefrontSize32 = None);
 
 /// \returns Total number of VGPRs for given subtarget \p STI.
 unsigned getTotalNumVGPRs(const MCSubtargetInfo *STI);
@@ -171,7 +179,11 @@ unsigned getMaxNumVGPRs(const MCSubtargetInfo *STI, unsigned WavesPerEU);
 
 /// \returns Number of VGPR blocks needed for given subtarget \p STI when
 /// \p NumVGPRs are used.
-unsigned getNumVGPRBlocks(const MCSubtargetInfo *STI, unsigned NumSGPRs);
+///
+/// For subtargets which support it, \p EnableWavefrontSize32 should match the
+/// ENABLE_WAVEFRONT_SIZE32 kernel descriptor field.
+unsigned getNumVGPRBlocks(const MCSubtargetInfo *STI, unsigned NumSGPRs,
+                          Optional<bool> EnableWavefrontSize32 = None);
 
 } // end namespace IsaInfo
 

@@ -442,6 +442,7 @@ void AMDGPUInstPrinter::printVOPDst(const MCInst *MI, unsigned OpNo,
 
   printOperand(MI, OpNo, STI, O);
 
+  // Print default vcc/vcc_lo operand.
   switch (MI->getOpcode()) {
   default: break;
 
@@ -589,7 +590,8 @@ void AMDGPUInstPrinter::printDefaultVccOperand(unsigned OpNo,
                                                raw_ostream &O) {
   if (OpNo > 0)
     O << ", ";
-  printRegOperand(AMDGPU::VCC, O, MRI);
+  printRegOperand(STI.getFeatureBits()[AMDGPU::FeatureWavefrontSize64] ?
+                  AMDGPU::VCC : AMDGPU::VCC_LO, O, MRI);
   if (OpNo == 0)
     O << ", ";
 }
@@ -597,6 +599,7 @@ void AMDGPUInstPrinter::printDefaultVccOperand(unsigned OpNo,
 void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                      const MCSubtargetInfo &STI,
                                      raw_ostream &O) {
+  // Print default vcc/vcc_lo operand of VOPC.
   const MCInstrDesc &Desc = MII.get(MI->getOpcode());
   if (OpNo == 0 && (Desc.TSFlags & SIInstrFlags::VOPC) &&
       (Desc.hasImplicitDefOfPhysReg(AMDGPU::VCC) ||
@@ -680,6 +683,7 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << "/*INV_OP*/";
   }
 
+  // Print default vcc/vcc_lo operand of v_cndmask_b32_e32.
   switch (MI->getOpcode()) {
   default: break;
 
@@ -749,6 +753,7 @@ void AMDGPUInstPrinter::printOperandAndIntInputMods(const MCInst *MI,
   if (InputModifiers & SISrcMods::SEXT)
     O << ')';
 
+  // Print default vcc/vcc_lo operand of VOP2b.
   switch (MI->getOpcode()) {
   default: break;
 

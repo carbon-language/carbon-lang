@@ -94,6 +94,16 @@ GCNSubtarget::initializeSubtargetDependencies(const Triple &TT,
 
   FullFS += "+enable-prt-strict-null,"; // This is overridden by a disable in FS
 
+  // Disable mutually exclusive bits.
+  if (FS.find_lower("+wavefrontsize") != StringRef::npos) {
+    if (FS.find_lower("wavefrontsize16") == StringRef::npos)
+      FullFS += "-wavefrontsize16,";
+    if (FS.find_lower("wavefrontsize32") == StringRef::npos)
+      FullFS += "-wavefrontsize32,";
+    if (FS.find_lower("wavefrontsize64") == StringRef::npos)
+      FullFS += "-wavefrontsize64,";
+  }
+
   FullFS += FS;
 
   ParseSubtargetFeatures(GPU, FullFS);

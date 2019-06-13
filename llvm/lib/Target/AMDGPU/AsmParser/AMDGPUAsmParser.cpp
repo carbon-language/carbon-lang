@@ -375,6 +375,8 @@ public:
     return isRegOrInlineNoMods(AMDGPU::SReg_64RegClassID, MVT::i64);
   }
 
+  bool isBoolReg() const;
+
   bool isSCSrcF16() const {
     return isRegOrInlineNoMods(AMDGPU::SReg_32RegClassID, MVT::f16);
   }
@@ -615,6 +617,10 @@ public:
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const;
+
+  void addBoolRegOperands(MCInst &Inst, unsigned N) const {
+    addRegOperands(Inst, N);
+  }
 
   void addRegOrImmOperands(MCInst &Inst, unsigned N) const {
     if (isRegKind())
@@ -881,6 +887,8 @@ private:
   /// \param VCCUsed [in] Whether VCC special SGPR is reserved.
   /// \param FlatScrUsed [in] Whether FLAT_SCRATCH special SGPR is reserved.
   /// \param XNACKUsed [in] Whether XNACK_MASK special SGPR is reserved.
+  /// \param EnableWavefrontSize32 [in] Value of ENABLE_WAVEFRONT_SIZE32 kernel
+  /// descriptor field, if valid.
   /// \param NextFreeVGPR [in] Max VGPR number referenced, plus one.
   /// \param VGPRRange [in] Token range, used for VGPR diagnostics.
   /// \param NextFreeSGPR [in] Max SGPR number referenced, plus one.
@@ -889,9 +897,10 @@ private:
   /// \param SGPRBlocks [out] Result SGPR block count.
   bool calculateGPRBlocks(const FeatureBitset &Features, bool VCCUsed,
                           bool FlatScrUsed, bool XNACKUsed,
-                          unsigned NextFreeVGPR, SMRange VGPRRange,
-                          unsigned NextFreeSGPR, SMRange SGPRRange,
-                          unsigned &VGPRBlocks, unsigned &SGPRBlocks);
+                          Optional<bool> EnableWavefrontSize32, unsigned NextFreeVGPR,
+                          SMRange VGPRRange, unsigned NextFreeSGPR,
+                          SMRange SGPRRange, unsigned &VGPRBlocks,
+                          unsigned &SGPRBlocks);
   bool ParseDirectiveAMDGCNTarget();
   bool ParseDirectiveAMDHSAKernel();
   bool ParseDirectiveMajorMinor(uint32_t &Major, uint32_t &Minor);
@@ -1159,6 +1168,7 @@ private:
   bool validateMIMGDim(const MCInst &Inst);
   bool validateLdsDirect(const MCInst &Inst);
   bool validateOpSel(const MCInst &Inst);
+  bool validateVccOperand(unsigned Reg) const;
   bool validateVOP3Literal(const MCInst &Inst) const;
   bool usesConstantBus(const MCInst &Inst, unsigned OpIdx);
   bool isInlineConstant(const MCInst &Inst, unsigned OpIdx) const;
@@ -1190,6 +1200,7 @@ public:
   OperandMatchResultTy parseInterpSlot(OperandVector &Operands);
   OperandMatchResultTy parseInterpAttr(OperandVector &Operands);
   OperandMatchResultTy parseSOppBrTarget(OperandVector &Operands);
+  OperandMatchResultTy parseBoolReg(OperandVector &Operands);
 
   bool parseSwizzleOperands(const unsigned OpNum, int64_t* Op,
                             const unsigned MinVal,
@@ -1477,6 +1488,11 @@ bool AMDGPUOperand::isSDWAInt16Operand() const {
 
 bool AMDGPUOperand::isSDWAInt32Operand() const {
   return isSDWAOperand(MVT::i32);
+}
+
+bool AMDGPUOperand::isBoolReg() const {
+  return AsmParser->getFeatureBits()[AMDGPU::FeatureWavefrontSize64] ?
+    isSCSrcB64() : isSCSrcB32();
 }
 
 uint64_t AMDGPUOperand::applyInputFPModifiers(uint64_t Val, unsigned Size) const
@@ -3030,6 +3046,13 @@ bool AMDGPUAsmParser::validateOpSel(const MCInst &Inst) {
   return true;
 }
 
+// Check if VCC register matches wavefront size
+bool AMDGPUAsmParser::validateVccOperand(unsigned Reg) const {
+  auto FB = getFeatureBits();
+  return (FB[AMDGPU::FeatureWavefrontSize64] && Reg == AMDGPU::VCC) ||
+    (FB[AMDGPU::FeatureWavefrontSize32] && Reg == AMDGPU::VCC_LO);
+}
+
 // VOP3 literal is only allowed in GFX10+ and only one can be used
 bool AMDGPUAsmParser::validateVOP3Literal(const MCInst &Inst) const {
   unsigned Opcode = Inst.getOpcode();
@@ -3267,9 +3290,9 @@ bool AMDGPUAsmParser::OutOfRangeError(SMRange Range) {
 
 bool AMDGPUAsmParser::calculateGPRBlocks(
     const FeatureBitset &Features, bool VCCUsed, bool FlatScrUsed,
-    bool XNACKUsed, unsigned NextFreeVGPR, SMRange VGPRRange,
-    unsigned NextFreeSGPR, SMRange SGPRRange, unsigned &VGPRBlocks,
-    unsigned &SGPRBlocks) {
+    bool XNACKUsed, Optional<bool> EnableWavefrontSize32, unsigned NextFreeVGPR,
+    SMRange VGPRRange, unsigned NextFreeSGPR, SMRange SGPRRange,
+    unsigned &VGPRBlocks, unsigned &SGPRBlocks) {
   // TODO(scott.linder): These calculations are duplicated from
   // AMDGPUAsmPrinter::getSIProgramInfo and could be unified.
   IsaVersion Version = getIsaVersion(getSTI().getCPU());
@@ -3298,7 +3321,8 @@ bool AMDGPUAsmParser::calculateGPRBlocks(
       NumSGPRs = IsaInfo::FIXED_NUM_SGPRS_FOR_INIT_BUG;
   }
 
-  VGPRBlocks = IsaInfo::getNumVGPRBlocks(&getSTI(), NumVGPRs);
+  VGPRBlocks =
+      IsaInfo::getNumVGPRBlocks(&getSTI(), NumVGPRs, EnableWavefrontSize32);
   SGPRBlocks = IsaInfo::getNumSGPRBlocks(&getSTI(), NumSGPRs);
 
   return false;
@@ -3329,6 +3353,7 @@ bool AMDGPUAsmParser::ParseDirectiveAMDHSAKernel() {
   bool ReserveVCC = true;
   bool ReserveFlatScr = true;
   bool ReserveXNACK = hasXNACK();
+  Optional<bool> EnableWavefrontSize32;
 
   while (true) {
     while (getLexer().is(AsmToken::EndOfStatement))
@@ -3547,8 +3572,9 @@ bool AMDGPUAsmParser::ParseDirectiveAMDHSAKernel() {
   unsigned VGPRBlocks;
   unsigned SGPRBlocks;
   if (calculateGPRBlocks(getFeatureBits(), ReserveVCC, ReserveFlatScr,
-                         ReserveXNACK, NextFreeVGPR, VGPRRange, NextFreeSGPR,
-                         SGPRRange, VGPRBlocks, SGPRBlocks))
+                         ReserveXNACK, EnableWavefrontSize32, NextFreeVGPR,
+                         VGPRRange, NextFreeSGPR, SGPRRange, VGPRBlocks,
+                         SGPRBlocks))
     return true;
 
   if (!isUInt<COMPUTE_PGM_RSRC1_GRANULATED_WORKITEM_VGPR_COUNT_WIDTH>(
@@ -5384,6 +5410,15 @@ AMDGPUAsmParser::parseSOppBrTarget(OperandVector &Operands) {
 }
 
 //===----------------------------------------------------------------------===//
+// Boolean holding registers
+//===----------------------------------------------------------------------===//
+
+OperandMatchResultTy
+AMDGPUAsmParser::parseBoolReg(OperandVector &Operands) {
+  return parseReg(Operands);
+}
+
+//===----------------------------------------------------------------------===//
 // mubuf
 //===----------------------------------------------------------------------===//
 
@@ -6294,7 +6329,7 @@ void AMDGPUAsmParser::cvtDPP(MCInst &Inst, const OperandVector &Operands, bool I
     }
     AMDGPUOperand &Op = ((AMDGPUOperand &)*Operands[I]);
     // Add the register arguments
-    if (Op.isReg() && Op.getReg() == AMDGPU::VCC) {
+    if (Op.isReg() && validateVccOperand(Op.getReg())) {
       // VOP2b (v_add_u32, v_sub_u32 ...) dpp use "vcc" token.
       // Skip it.
       continue;
@@ -6437,7 +6472,8 @@ void AMDGPUAsmParser::cvtSDWA(MCInst &Inst, const OperandVector &Operands,
 
   for (unsigned E = Operands.size(); I != E; ++I) {
     AMDGPUOperand &Op = ((AMDGPUOperand &)*Operands[I]);
-    if (skipVcc && !skippedVcc && Op.isReg() && Op.getReg() == AMDGPU::VCC) {
+    if (skipVcc && !skippedVcc && Op.isReg() &&
+        (Op.getReg() == AMDGPU::VCC || Op.getReg() == AMDGPU::VCC_LO)) {
       // VOP2b (v_add_u32, v_sub_u32 ...) sdwa use "vcc" token as dst.
       // Skip it if it's 2nd (e.g. v_add_i32_sdwa v1, vcc, v2, v3)
       // or 4th (v_addc_u32_sdwa v1, vcc, v2, v3, vcc) operand.
