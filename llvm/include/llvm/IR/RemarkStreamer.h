@@ -17,6 +17,7 @@
 #include "llvm/Remarks/RemarkSerializer.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/Regex.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
 #include <vector>
@@ -57,6 +58,33 @@ public:
   /// Emit a diagnostic through the streamer.
   void emit(const DiagnosticInfoOptimizationBase &Diag);
 };
+
+template <typename ThisError>
+struct RemarkSetupErrorInfo : public ErrorInfo<ThisError> {
+  Error E;
+  RemarkSetupErrorInfo(Error E) : E(std::move(E)) {}
+  void log(raw_ostream &OS) const override { OS << E; }
+  std::error_code convertToErrorCode() const override {
+    return errorToErrorCode(E);
+  }
+};
+
+struct RemarkSetupFileError : RemarkSetupErrorInfo<RemarkSetupFileError> {
+  static char ID;
+  using RemarkSetupErrorInfo<RemarkSetupFileError>::RemarkSetupErrorInfo;
+};
+
+struct RemarkSetupPatternError : RemarkSetupErrorInfo<RemarkSetupPatternError> {
+  static char ID;
+  using RemarkSetupErrorInfo<RemarkSetupPatternError>::RemarkSetupErrorInfo;
+};
+
+/// Setup optimization remarks.
+Expected<std::unique_ptr<ToolOutputFile>>
+setupOptimizationRemarks(LLVMContext &Context, StringRef RemarksFilename,
+                         StringRef RemarksPasses, bool RemarksWithHotness,
+                         unsigned RemarksHotnessThreshold = 0);
+
 } // end namespace llvm
 
 #endif // LLVM_IR_REMARKSTREAMER_H
