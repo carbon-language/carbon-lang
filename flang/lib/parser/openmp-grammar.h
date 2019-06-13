@@ -211,10 +211,14 @@ TYPE_PARSER("DEFAULTMAP" >>
                           parenthesized(scalarIntExpr))) ||
     "TO" >> construct<OmpClause>(construct<OmpClause::To>(
                 parenthesized(nonemptyList(designator)))) ||
+    "LINK" >> construct<OmpClause>(construct<OmpClause::Link>(
+                  parenthesized(nonemptyList(designator)))) ||
     "UNIFORM" >> construct<OmpClause>(construct<OmpClause::Uniform>(
                      parenthesized(nonemptyList(name)))) ||
     "USE_DEVICE_PTR" >> construct<OmpClause>(construct<OmpClause::UseDevicePtr>(
                             parenthesized(nonemptyList(name)))) ||
+    "IS_DEVICE_PTR" >> construct<OmpClause>(construct<OmpClause::IsDevicePtr>(
+                           parenthesized(nonemptyList(name)))) ||
     "ALIGNED" >>
         construct<OmpClause>(parenthesized(Parser<OmpAlignedClause>{})) ||
     "DEFAULT" >>

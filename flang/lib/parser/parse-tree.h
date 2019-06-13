@@ -3441,15 +3441,18 @@ struct OmpClause {
   WRAPPER_CLASS(Simdlen, ScalarIntConstantExpr);
   WRAPPER_CLASS(ThreadLimit, ScalarIntExpr);
   WRAPPER_CLASS(To, std::list<Designator>);
+  WRAPPER_CLASS(Link, std::list<Designator>);
   WRAPPER_CLASS(Uniform, std::list<Name>);
   WRAPPER_CLASS(UseDevicePtr, std::list<Name>);
+  WRAPPER_CLASS(IsDevicePtr, std::list<Name>);
   std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, OmpNowait,
       Untied, Collapse, Copyin, Copyprivate, Device, DistSchedule, Final,
       Firstprivate, From, Grainsize, Lastprivate, NumTasks, NumTeams,
       NumThreads, Ordered, Priority, Private, Safelen, Shared, Simdlen,
-      ThreadLimit, To, Uniform, UseDevicePtr, OmpAlignedClause,
-      OmpDefaultClause, OmpDependClause, OmpIfClause, OmpLinearClause,
-      OmpMapClause, OmpProcBindClause, OmpReductionClause, OmpScheduleClause>
+      ThreadLimit, To, Link, Uniform, UseDevicePtr, IsDevicePtr,
+      OmpAlignedClause, OmpDefaultClause, OmpDependClause, OmpIfClause,
+      OmpLinearClause, OmpMapClause, OmpProcBindClause, OmpReductionClause,
+      OmpScheduleClause>
       u;
 };
 

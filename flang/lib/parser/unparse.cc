@@ -1992,6 +1992,11 @@ public:
     Walk(x.v, ",");
     Put(")");
   }
+  void Unparse(const OmpClause::Link &x) {
+    Word("LINK(");
+    Walk(x.v, ",");
+    Put(")");
+  }
   void Unparse(const OmpClause::Uniform &x) {
     Word("UNIFORM(");
     Walk(x.v, ",");
@@ -1999,6 +2004,11 @@ public:
   }
   void Unparse(const OmpClause::UseDevicePtr &x) {
     Word("USE_DEVICE_PTR(");
+    Walk(x.v, ",");
+    Put(")");
+  }
+  void Unparse(const OmpClause::IsDevicePtr &x) {
+    Word("IS_DEVICE_PTR(");
     Walk(x.v, ",");
     Put(")");
   }
