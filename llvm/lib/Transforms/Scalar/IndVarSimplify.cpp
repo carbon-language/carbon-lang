@@ -151,7 +151,7 @@ class IndVarSimplify {
   bool hasHardUserWithinLoop(const Loop *L, const Instruction *I) const;
 
   bool linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
-                                 const SCEV *BackedgeTakenCount,
+                                 const SCEV *ExitCount,
                                  PHINode *IndVar, SCEVExpander &Rewriter);
 
   bool sinkUnusedInvariants(Loop *L);
@@ -2382,8 +2382,7 @@ static Value *genLoopLimit(PHINode *IndVar, BasicBlock *ExitingBB,
 /// determine a loop-invariant trip count of the loop, which is actually a much
 /// broader range than just linear tests.
 bool IndVarSimplify::
-linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
-                          const SCEV *BackedgeTakenCount,
+linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB, const SCEV *ExitCount,
                           PHINode *IndVar, SCEVExpander &Rewriter) {
   assert(isLoopCounter(IndVar, L, SE));
   assert(L->getLoopLatch() && "Loop no longer in simplified form?");
@@ -2392,7 +2391,7 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
 
   // Initialize CmpIndVar and IVCount to their preincremented values.
   Value *CmpIndVar = IndVar;
-  const SCEV *IVCount = BackedgeTakenCount;
+  const SCEV *IVCount = ExitCount;
 
   // If the exiting block is the same as the backedge block, we prefer to
   // compare against the post-incremented value, otherwise we must compare
@@ -2412,10 +2411,9 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
     if (SafeToPostInc) {
       // Add one to the "backedge-taken" count to get the trip count.
       // This addition may overflow, which is valid as long as the comparison
-      // is truncated to BackedgeTakenCount->getType().
-      IVCount = SE->getAddExpr(BackedgeTakenCount,
-                               SE->getOne(BackedgeTakenCount->getType()));
-      // The BackedgeTaken expression contains the number of times that the
+      // is truncated to ExitCount->getType().
+      IVCount = SE->getAddExpr(ExitCount, SE->getOne(ExitCount->getType()));
+      // The ExitCount expression contains the number of times that the
       // backedge branches to the loop header.  This is one less than the
       // number of times the loop executes, so use the incremented indvar.
       CmpIndVar = IncVar;
@@ -2481,9 +2479,9 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
     if (isa<SCEVConstant>(ARStart) && isa<SCEVConstant>(IVCount)) {
       const APInt &Start = cast<SCEVConstant>(ARStart)->getAPInt();
       APInt Count = cast<SCEVConstant>(IVCount)->getAPInt();
-      // Note that the post-inc value of BackedgeTakenCount may have overflowed
+      // Note that the post-inc value of ExitCount may have overflowed
       // above such that IVCount is now zero.
-      if (IVCount != BackedgeTakenCount && Count == 0) {
+      if (IVCount != ExitCount && Count == 0) {
         Count = APInt::getMaxValue(Count.getBitWidth()).zext(CmpIndVarSize);
         ++Count;
       }
@@ -2710,21 +2708,21 @@ bool IndVarSimplify::run(Loop *L) {
       if (!needsLFTR(L, ExitingBB))
         continue;
 
-      const SCEV *BETakenCount = SE->getExitCount(L, ExitingBB);
-      if (isa<SCEVCouldNotCompute>(BETakenCount))
+      const SCEV *ExitCount = SE->getExitCount(L, ExitingBB);
+      if (isa<SCEVCouldNotCompute>(ExitCount))
         continue;
 
       // Better to fold to true (TODO: do so!)
-      if (BETakenCount->isZero())
+      if (ExitCount->isZero())
         continue;
       
-      PHINode *IndVar = FindLoopCounter(L, ExitingBB, BETakenCount, SE, DT);
+      PHINode *IndVar = FindLoopCounter(L, ExitingBB, ExitCount, SE, DT);
       if (!IndVar)
         continue;
       
       // Avoid high cost expansions.  Note: This heuristic is questionable in
       // that our definition of "high cost" is not exactly principled.  
-      if (Rewriter.isHighCostExpansion(BETakenCount, L))
+      if (Rewriter.isHighCostExpansion(ExitCount, L))
         continue;
       
       // Check preconditions for proper SCEVExpander operation. SCEV does not
@@ -2736,10 +2734,9 @@ bool IndVarSimplify::run(Loop *L) {
       //
       // FIXME: SCEV expansion has no way to bail out, so the caller must
       // explicitly check any assumptions made by SCEV. Brittle.
-      const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(BETakenCount);
+      const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(ExitCount);
       if (!AR || AR->getLoop()->getLoopPreheader())
-        Changed |= linearFunctionTestReplace(L, ExitingBB,
-                                             BETakenCount, IndVar,
+        Changed |= linearFunctionTestReplace(L, ExitingBB, ExitCount, IndVar,
                                              Rewriter);
     }
   }
