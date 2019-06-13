@@ -700,3 +700,28 @@ define <16 x i16> @hsub_v16i16b(<16 x i16> %a) {
   %shuf = shufflevector <16 x i16> %hop, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11, i32 8, i32 9, i32 10, i32 11>
   ret <16 x i16> %shuf
 }
+
+define <4 x float> @broadcast_haddps_v4f32(<4 x float> %a0) {
+; SSSE3-LABEL: broadcast_haddps_v4f32:
+; SSSE3:       # %bb.0:
+; SSSE3-NEXT:    haddps %xmm0, %xmm0
+; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; SSSE3-NEXT:    retq
+;
+; AVX1-LABEL: broadcast_haddps_v4f32:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vhaddps %xmm0, %xmm0, %xmm0
+; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: broadcast_haddps_v4f32:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vhaddps %xmm0, %xmm0, %xmm0
+; AVX2-NEXT:    vbroadcastss %xmm0, %xmm0
+; AVX2-NEXT:    retq
+  %1 = tail call <4 x float> @llvm.x86.sse3.hadd.ps(<4 x float> %a0, <4 x float> %a0)
+  %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> zeroinitializer
+  ret <4 x float> %2
+}
+
+declare <4 x float> @llvm.x86.sse3.hadd.ps(<4 x float>, <4 x float>)

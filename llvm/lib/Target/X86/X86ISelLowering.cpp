@@ -33266,12 +33266,15 @@ static SDValue foldShuffleOfHorizOp(SDNode *N) {
   // the result is the same as the high half. If a target shuffle is also
   // replicating low and high halves, we don't need the shuffle.
   if (Opcode == X86ISD::MOVDDUP || Opcode == X86ISD::VBROADCAST) {
-    // movddup (hadd X, X) --> hadd X, X
-    // broadcast (extract_vec_elt (hadd X, X), 0) --> hadd X, X
-    assert((HOp.getValueType() == MVT::v2f64 ||
-            HOp.getValueType() == MVT::v4f64) && HOp.getValueType() == VT &&
-           "Unexpected type for h-op");
-    return HOp;
+    if (HOp.getScalarValueSizeInBits() == 64) {
+      // movddup (hadd X, X) --> hadd X, X
+      // broadcast (extract_vec_elt (hadd X, X), 0) --> hadd X, X
+      assert((HOp.getValueType() == MVT::v2f64 ||
+        HOp.getValueType() == MVT::v4f64) && HOp.getValueType() == VT &&
+        "Unexpected type for h-op");
+      return HOp;
+    }
+    return SDValue();
   }
 
   // shuffle (hadd X, X), undef, [low half...high half] --> hadd X, X
