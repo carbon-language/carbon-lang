@@ -10,6 +10,7 @@
 #include "AMDGPUTargetTransformInfo.h"
 #include "AMDGPU.h"
 #include "SIDefines.h"
+#include "AMDGPUAsmUtils.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/BinaryFormat/ELF.h"
@@ -639,6 +640,68 @@ unsigned encodeWaitcnt(const IsaVersion &Version,
 unsigned encodeWaitcnt(const IsaVersion &Version, const Waitcnt &Decoded) {
   return encodeWaitcnt(Version, Decoded.VmCnt, Decoded.ExpCnt, Decoded.LgkmCnt);
 }
+
+//===----------------------------------------------------------------------===//
+// hwreg
+//===----------------------------------------------------------------------===//
+
+namespace Hwreg {
+
+int64_t getHwregId(const StringRef Name) {
+  for (int Id = ID_SYMBOLIC_FIRST_; Id < ID_SYMBOLIC_LAST_; ++Id) {
+    if (IdSymbolic[Id] && Name == IdSymbolic[Id])
+      return Id;
+  }
+  return ID_UNKNOWN_;
+}
+
+static unsigned getLastSymbolicHwreg(const MCSubtargetInfo &STI) {
+  if (isSI(STI) || isCI(STI) || isVI(STI))
+    return ID_SYMBOLIC_FIRST_GFX9_;
+  else if (isGFX9(STI))
+    return ID_SYMBOLIC_FIRST_GFX10_;
+  else
+    return ID_SYMBOLIC_LAST_;
+}
+
+bool isValidHwreg(int64_t Id, const MCSubtargetInfo &STI) {
+  return ID_SYMBOLIC_FIRST_ <= Id && Id < getLastSymbolicHwreg(STI) &&
+         IdSymbolic[Id];
+}
+
+bool isValidHwreg(int64_t Id) {
+  return 0 <= Id && isUInt<ID_WIDTH_>(Id);
+}
+
+bool isValidHwregOffset(int64_t Offset) {
+  return 0 <= Offset && isUInt<OFFSET_WIDTH_>(Offset);
+}
+
+bool isValidHwregWidth(int64_t Width) {
+  return 0 <= (Width - 1) && isUInt<WIDTH_M1_WIDTH_>(Width - 1);
+}
+
+int64_t encodeHwreg(int64_t Id, int64_t Offset, int64_t Width) {
+  return (Id << ID_SHIFT_) |
+         (Offset << OFFSET_SHIFT_) |
+         ((Width - 1) << WIDTH_M1_SHIFT_);
+}
+
+StringRef getHwreg(unsigned Id, const MCSubtargetInfo &STI) {
+  return isValidHwreg(Id, STI) ? IdSymbolic[Id] : "";
+}
+
+void decodeHwreg(unsigned Val, unsigned &Id, unsigned &Offset, unsigned &Width) {
+  Id = (Val & ID_MASK_) >> ID_SHIFT_;
+  Offset = (Val & OFFSET_MASK_) >> OFFSET_SHIFT_;
+  Width = ((Val & WIDTH_M1_MASK_) >> WIDTH_M1_SHIFT_) + 1;
+}
+
+} // namespace Hwreg
+
+//===----------------------------------------------------------------------===//
+//
+//===----------------------------------------------------------------------===//
 
 unsigned getInitialPSInputAddr(const Function &F) {
   return getIntegerAttribute(F, "InitialPSInputAddr", 0);

@@ -1405,25 +1405,22 @@ void AMDGPUInstPrinter::printWaitFlag(const MCInst *MI, unsigned OpNo,
 
 void AMDGPUInstPrinter::printHwreg(const MCInst *MI, unsigned OpNo,
                                    const MCSubtargetInfo &STI, raw_ostream &O) {
-  using namespace llvm::AMDGPU::Hwreg;
+  unsigned Id;
+  unsigned Offset;
+  unsigned Width;
 
-  unsigned SImm16 = MI->getOperand(OpNo).getImm();
-  const unsigned Id = (SImm16 & ID_MASK_) >> ID_SHIFT_;
-  const unsigned Offset = (SImm16 & OFFSET_MASK_) >> OFFSET_SHIFT_;
-  const unsigned Width = ((SImm16 & WIDTH_M1_MASK_) >> WIDTH_M1_SHIFT_) + 1;
+  using namespace llvm::AMDGPU::Hwreg;
+  unsigned Val = MI->getOperand(OpNo).getImm();
+  decodeHwreg(Val, Id, Offset, Width);
+  StringRef HwRegName = getHwreg(Id, STI);
 
   O << "hwreg(";
-  unsigned Last = ID_SYMBOLIC_LAST_;
-  if (AMDGPU::isSI(STI) || AMDGPU::isCI(STI) || AMDGPU::isVI(STI))
-    Last = ID_SYMBOLIC_FIRST_GFX9_;
-  else if (AMDGPU::isGFX9(STI))
-    Last = ID_SYMBOLIC_FIRST_GFX10_;
-  if (ID_SYMBOLIC_FIRST_ <= Id && Id < Last && IdSymbolic[Id]) {
-    O << IdSymbolic[Id];
+  if (!HwRegName.empty()) {
+    O << HwRegName;
   } else {
     O << Id;
   }
-  if (Width != WIDTH_M1_DEFAULT_ + 1 || Offset != OFFSET_DEFAULT_) {
+  if (Width != WIDTH_DEFAULT_ || Offset != OFFSET_DEFAULT_) {
     O << ", " << Offset << ", " << Width;
   }
   O << ')';

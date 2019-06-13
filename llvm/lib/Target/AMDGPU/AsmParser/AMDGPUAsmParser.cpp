@@ -1137,7 +1137,11 @@ private:
   };
 
   bool parseSendMsgConstruct(OperandInfoTy &Msg, OperandInfoTy &Operation, int64_t &StreamId);
-  bool parseHwregConstruct(OperandInfoTy &HwReg, int64_t &Offset, int64_t &Width);
+  bool parseHwregBody(OperandInfoTy &HwReg, int64_t &Offset, int64_t &Width);
+  void validateHwreg(const OperandInfoTy &HwReg,
+                     const int64_t Offset,
+                     const int64_t Width,
+                     const SMLoc Loc);
 
   void errorExpTgt();
   OperandMatchResultTy parseExpTgtImpl(StringRef Str, uint8_t &Val);
@@ -4496,123 +4500,94 @@ AMDGPUAsmParser::parseSWaitCntOps(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
-bool AMDGPUAsmParser::parseHwregConstruct(OperandInfoTy &HwReg, int64_t &Offset,
-                                          int64_t &Width) {
+bool
+AMDGPUOperand::isSWaitCnt() const {
+  return isImm();
+}
+
+//===----------------------------------------------------------------------===//
+// hwreg
+//===----------------------------------------------------------------------===//
+
+bool
+AMDGPUAsmParser::parseHwregBody(OperandInfoTy &HwReg,
+                                int64_t &Offset,
+                                int64_t &Width) {
   using namespace llvm::AMDGPU::Hwreg;
 
-  if (Parser.getTok().getString() != "hwreg")
-    return true;
-  Parser.Lex();
-
-  if (getLexer().isNot(AsmToken::LParen))
-    return true;
-  Parser.Lex();
-
-  if (getLexer().is(AsmToken::Identifier)) {
+  // The register may be specified by name or using a numeric code
+  if (isToken(AsmToken::Identifier) &&
+      (HwReg.Id = getHwregId(getTokenStr())) >= 0) {
     HwReg.IsSymbolic = true;
-    HwReg.Id = ID_UNKNOWN_;
-    const StringRef tok = Parser.getTok().getString();
-    int Last = ID_SYMBOLIC_LAST_;
-    if (isSI() || isCI() || isVI())
-      Last = ID_SYMBOLIC_FIRST_GFX9_;
-    else if (isGFX9())
-      Last = ID_SYMBOLIC_FIRST_GFX10_;
-    for (int i = ID_SYMBOLIC_FIRST_; i < Last; ++i) {
-      if (tok == IdSymbolic[i]) {
-        HwReg.Id = i;
-        break;
-      }
-    }
-    Parser.Lex();
-  } else {
-    HwReg.IsSymbolic = false;
-    if (getLexer().isNot(AsmToken::Integer))
-      return true;
-    if (getParser().parseAbsoluteExpression(HwReg.Id))
-      return true;
-  }
-
-  if (getLexer().is(AsmToken::RParen)) {
-    Parser.Lex();
+    lex(); // skip message name
+  } else if (!parseExpr(HwReg.Id)) {
     return false;
   }
 
-  // optional params
-  if (getLexer().isNot(AsmToken::Comma))
-    return true;
-  Parser.Lex();
-
-  if (getLexer().isNot(AsmToken::Integer))
-    return true;
-  if (getParser().parseAbsoluteExpression(Offset))
+  if (trySkipToken(AsmToken::RParen))
     return true;
 
-  if (getLexer().isNot(AsmToken::Comma))
-    return true;
-  Parser.Lex();
-
-  if (getLexer().isNot(AsmToken::Integer))
-    return true;
-  if (getParser().parseAbsoluteExpression(Width))
-    return true;
-
-  if (getLexer().isNot(AsmToken::RParen))
-    return true;
-  Parser.Lex();
-
-  return false;
+  // parse optional params
+  return
+    skipToken(AsmToken::Comma, "expected a comma or a closing parenthesis") &&
+    parseExpr(Offset) &&
+    skipToken(AsmToken::Comma, "expected a comma") &&
+    parseExpr(Width) &&
+    skipToken(AsmToken::RParen, "expected a closing parenthesis");
 }
 
-OperandMatchResultTy AMDGPUAsmParser::parseHwreg(OperandVector &Operands) {
+void
+AMDGPUAsmParser::validateHwreg(const OperandInfoTy &HwReg,
+                               const int64_t Offset,
+                               const int64_t Width,
+                               const SMLoc Loc) {
+
   using namespace llvm::AMDGPU::Hwreg;
 
-  int64_t Imm16Val = 0;
-  SMLoc S = Parser.getTok().getLoc();
-
-  switch(getLexer().getKind()) {
-    default: return MatchOperand_NoMatch;
-    case AsmToken::Integer:
-      // The operand can be an integer value.
-      if (getParser().parseAbsoluteExpression(Imm16Val))
-        return MatchOperand_NoMatch;
-      if (Imm16Val < 0 || !isUInt<16>(Imm16Val)) {
-        Error(S, "invalid immediate: only 16-bit values are legal");
-        // Do not return error code, but create an imm operand anyway and proceed
-        // to the next operand, if any. That avoids unneccessary error messages.
-      }
-      break;
-
-    case AsmToken::Identifier: {
-        OperandInfoTy HwReg(ID_UNKNOWN_);
-        int64_t Offset = OFFSET_DEFAULT_;
-        int64_t Width = WIDTH_M1_DEFAULT_ + 1;
-        if (parseHwregConstruct(HwReg, Offset, Width))
-          return MatchOperand_ParseFail;
-        if (HwReg.Id < 0 || !isUInt<ID_WIDTH_>(HwReg.Id)) {
-          if (HwReg.IsSymbolic)
-            Error(S, "invalid symbolic name of hardware register");
-          else
-            Error(S, "invalid code of hardware register: only 6-bit values are legal");
-        }
-        if (Offset < 0 || !isUInt<OFFSET_WIDTH_>(Offset))
-          Error(S, "invalid bit offset: only 5-bit values are legal");
-        if ((Width-1) < 0 || !isUInt<WIDTH_M1_WIDTH_>(Width-1))
-          Error(S, "invalid bitfield width: only values from 1 to 32 are legal");
-        Imm16Val = (HwReg.Id << ID_SHIFT_) | (Offset << OFFSET_SHIFT_) | ((Width-1) << WIDTH_M1_SHIFT_);
-      }
-      break;
+  if (HwReg.IsSymbolic && !isValidHwreg(HwReg.Id, getSTI())) {
+    Error(Loc, "specified hardware register is not supported on this GPU");
+  } else if (!isValidHwreg(HwReg.Id)) {
+    Error(Loc, "invalid code of hardware register: only 6-bit values are legal");
+  } else if (!isValidHwregOffset(Offset)) {
+    Error(Loc, "invalid bit offset: only 5-bit values are legal");
+  } else if (!isValidHwregWidth(Width)) {
+    Error(Loc, "invalid bitfield width: only values from 1 to 32 are legal");
   }
-  Operands.push_back(AMDGPUOperand::CreateImm(this, Imm16Val, S, AMDGPUOperand::ImmTyHwreg));
-  return MatchOperand_Success;
 }
 
-bool AMDGPUOperand::isSWaitCnt() const {
-  return isImm();
+OperandMatchResultTy
+AMDGPUAsmParser::parseHwreg(OperandVector &Operands) {
+  using namespace llvm::AMDGPU::Hwreg;
+
+  int64_t ImmVal = 0;
+  SMLoc Loc = getLoc();
+
+  // If parse failed, do not return error code
+  // to avoid excessive error messages.
+  if (trySkipId("hwreg", AsmToken::LParen)) {
+    OperandInfoTy HwReg(ID_UNKNOWN_);
+    int64_t Offset = OFFSET_DEFAULT_;
+    int64_t Width = WIDTH_DEFAULT_;
+    if (parseHwregBody(HwReg, Offset, Width)) {
+      validateHwreg(HwReg, Offset, Width, Loc);
+      ImmVal = encodeHwreg(HwReg.Id, Offset, Width);
+    }
+  } else if (parseExpr(ImmVal)) {
+    if (ImmVal < 0 || !isUInt<16>(ImmVal))
+      Error(Loc, "invalid immediate: only 16-bit values are legal");
+  }
+
+  Operands.push_back(AMDGPUOperand::CreateImm(this, ImmVal, Loc, AMDGPUOperand::ImmTyHwreg));
+  return MatchOperand_Success;
 }
 
 bool AMDGPUOperand::isHwreg() const {
   return isImmTy(ImmTyHwreg);
 }
+
+//===----------------------------------------------------------------------===//
+// sendmsg
+//===----------------------------------------------------------------------===//
 
 bool AMDGPUAsmParser::parseSendMsgConstruct(OperandInfoTy &Msg, OperandInfoTy &Operation, int64_t &StreamId) {
   using namespace llvm::AMDGPU::SendMsg;
