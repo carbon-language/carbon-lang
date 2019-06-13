@@ -1111,8 +1111,10 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
         MPM.addPass(InstrProfiling(*Options, false));
 
       // Build a minimal pipeline based on the semantics required by Clang,
-      // which is just that always inlining occurs.
-      MPM.addPass(AlwaysInlinerPass());
+      // which is just that always inlining occurs. Further, disable generating
+      // lifetime intrinsics to avoid enabling further optimizations during
+      // code generation.
+      MPM.addPass(AlwaysInlinerPass(/*InsertLifetimeIntrinsics=*/false));
 
       // At -O0 we directly run necessary sanitizer passes.
       if (LangOpts.Sanitize.has(SanitizerKind::LocalBounds))
