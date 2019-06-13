@@ -806,7 +806,7 @@ bool ARMTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
 
   auto IsHardwareLoopIntrinsic = [](Instruction &I) {
     if (auto *Call = dyn_cast<IntrinsicInst>(&I)) {
-      switch (Call->getCalledFunction()->getIntrinsicID()) {
+      switch (Call->getIntrinsicID()) {
       default:
         break;
       case Intrinsic::set_loop_iterations:
