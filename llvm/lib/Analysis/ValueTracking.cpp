@@ -4336,6 +4336,8 @@ bool llvm::isGuaranteedToExecuteForEveryIteration(const Instruction *I,
 }
 
 bool llvm::propagatesFullPoison(const Instruction *I) {
+  // TODO: This should include all instructions apart from phis, selects and
+  // call-like instructions.
   switch (I->getOpcode()) {
   case Instruction::Add:
   case Instruction::Sub:
