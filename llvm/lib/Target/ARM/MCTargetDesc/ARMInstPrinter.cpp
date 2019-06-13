@@ -1039,16 +1039,13 @@ void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O) {
   // (3 - the number of trailing zeros) is the number of then / else.
   unsigned Mask = MI->getOperand(OpNum).getImm();
-  unsigned Firstcond = MI->getOperand(OpNum - 1).getImm();
-  unsigned CondBit0 = Firstcond & 1;
   unsigned NumTZ = countTrailingZeros(Mask);
   assert(NumTZ <= 3 && "Invalid IT mask!");
   for (unsigned Pos = 3, e = NumTZ; Pos > e; --Pos) {
-    bool T = ((Mask >> Pos) & 1) == CondBit0;
-    if (T)
-      O << 't';
-    else
+    if ((Mask >> Pos) & 1)
       O << 'e';
+    else
+      O << 't';
   }
 }
 

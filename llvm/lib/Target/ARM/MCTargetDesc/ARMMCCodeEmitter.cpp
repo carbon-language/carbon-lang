@@ -162,6 +162,9 @@ public:
                               SmallVectorImpl<MCFixup> &Fixups,
                               const MCSubtargetInfo &STI) const;
 
+  uint32_t getITMaskOpValue(const MCInst &MI, unsigned OpIdx,
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &STI) const;
 
   /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
   /// operand.
@@ -827,6 +830,33 @@ getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
     Val |= 0x1000;
   }
   return Val;
+}
+
+/// getITMaskOpValue - Return the architectural encoding of an IT
+/// predication mask, given the MCOperand format.
+uint32_t ARMMCCodeEmitter::
+getITMaskOpValue(const MCInst &MI, unsigned OpIdx,
+                 SmallVectorImpl<MCFixup> &Fixups,
+                 const MCSubtargetInfo &STI) const {
+  const MCOperand MaskMO = MI.getOperand(OpIdx);
+  assert(MaskMO.isImm() && "Unexpected operand type!");
+
+  unsigned Mask = MaskMO.getImm();
+
+  // IT masks are encoded as a sequence of replacement low-order bits
+  // for the condition code. So if the low bit of the starting
+  // condition code is 1, then we have to flip all the bits above the
+  // terminating bit (which is the lowest 1 bit).
+  assert(OpIdx > 0 && "IT mask appears first!");
+  const MCOperand CondMO = MI.getOperand(OpIdx-1);
+  assert(CondMO.isImm() && "Unexpected operand type!");
+  if (CondMO.getImm() & 1) {
+    unsigned LowBit = Mask & -Mask;
+    unsigned BitsAboveLowBit = 0xF & (-LowBit << 1);
+    Mask ^= BitsAboveLowBit;
+  }
+
+  return Mask;
 }
 
 /// getThumbAdrLabelOpValue - Return encoding info for 8-bit immediate ADR label

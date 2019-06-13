@@ -63,22 +63,19 @@ namespace {
         return ITStates.size() == 1;
       }
 
-      // Called when decoding an IT instruction. Sets the IT state for the following
-      // instructions that for the IT block. Firstcond and Mask correspond to the
-      // fields in the IT instruction encoding.
+      // Called when decoding an IT instruction. Sets the IT state for
+      // the following instructions that for the IT block. Firstcond
+      // corresponds to the field in the IT instruction encoding; Mask
+      // is in the MCOperand format in which 1 means 'else' and 0 'then'.
       void setITState(char Firstcond, char Mask) {
         // (3 - the number of trailing zeros) is the number of then / else.
-        unsigned CondBit0 = Firstcond & 1;
         unsigned NumTZ = countTrailingZeros<uint8_t>(Mask);
         unsigned char CCBits = static_cast<unsigned char>(Firstcond & 0xf);
         assert(NumTZ <= 3 && "Invalid IT mask!");
         // push condition codes onto the stack the correct order for the pops
         for (unsigned Pos = NumTZ+1; Pos <= 3; ++Pos) {
-          bool T = ((Mask >> Pos) & 1) == CondBit0;
-          if (T)
-            ITStates.push_back(CCBits);
-          else
-            ITStates.push_back(CCBits ^ 1);
+          unsigned Else = (Mask >> Pos) & 1;
+          ITStates.push_back(CCBits ^ Else);
         }
         ITStates.push_back(CCBits);
       }
@@ -5175,6 +5172,16 @@ static DecodeStatus DecodeIT(MCInst &Inst, unsigned Insn,
 
   if (mask == 0x0)
     return MCDisassembler::Fail;
+
+  // IT masks are encoded as a sequence of replacement low-order bits
+  // for the condition code. So if the low bit of the starting
+  // condition code is 1, then we have to flip all the bits above the
+  // terminating bit (which is the lowest 1 bit).
+  if (pred & 1) {
+    unsigned LowBit = mask & -mask;
+    unsigned BitsAboveLowBit = 0xF & (-LowBit << 1);
+    mask ^= BitsAboveLowBit;
+  }
 
   Inst.addOperand(MCOperand::createImm(pred));
   Inst.addOperand(MCOperand::createImm(mask));

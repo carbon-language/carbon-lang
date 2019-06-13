@@ -90,6 +90,16 @@ static cl::opt<bool> AddBuildAttributes("arm-add-build-attributes",
 
 enum VectorLaneTy { NoLanes, AllLanes, IndexedLane };
 
+static inline unsigned extractITMaskBit(unsigned Mask, unsigned Position) {
+  // Position==0 means we're not in an IT block at all. Position==1
+  // means we want the first state bit, which is always 0 (Then).
+  // Position==2 means we want the second state bit, stored at bit 3
+  // of Mask, and so on downwards. So (5 - Position) will shift the
+  // right bit down to bit 0, including the always-0 bit at bit 4 for
+  // the mandatory initial Then.
+  return (Mask >> (5 - Position) & 1);
+}
+
 class UnwindContext {
   using Locs = SmallVector<SMLoc, 4>;
 
@@ -226,11 +236,10 @@ class ARMAsmParser : public MCTargetAsmParser {
     }
 
     // Emit the IT instruction
-    unsigned Mask = getITMaskEncoding();
     MCInst ITInst;
     ITInst.setOpcode(ARM::t2IT);
     ITInst.addOperand(MCOperand::createImm(ITState.Cond));
-    ITInst.addOperand(MCOperand::createImm(Mask));
+    ITInst.addOperand(MCOperand::createImm(ITState.Mask));
     Out.EmitInstruction(ITInst, getSTI());
 
     // Emit the conditonal instructions
@@ -288,27 +297,10 @@ class ARMAsmParser : public MCTargetAsmParser {
     return MRI->getSubReg(QReg, ARM::dsub_0);
   }
 
-  // Get the encoding of the IT mask, as it will appear in an IT instruction.
-  unsigned getITMaskEncoding() {
-    assert(inITBlock());
-    unsigned Mask = ITState.Mask;
-    unsigned TZ = countTrailingZeros(Mask);
-    if ((ITState.Cond & 1) == 0) {
-      assert(Mask && TZ <= 3 && "illegal IT mask value!");
-      Mask ^= (0xE << TZ) & 0xF;
-    }
-    return Mask;
-  }
-
   // Get the condition code corresponding to the current IT block slot.
   ARMCC::CondCodes currentITCond() {
-    unsigned MaskBit;
-    if (ITState.CurPosition == 1)
-      MaskBit = 1;
-    else
-      MaskBit = (ITState.Mask >> (5 - ITState.CurPosition)) & 1;
-
-    return MaskBit ? ITState.Cond : ARMCC::getOppositeCondition(ITState.Cond);
+    unsigned MaskBit = extractITMaskBit(ITState.Mask, ITState.CurPosition);
+    return MaskBit ? ARMCC::getOppositeCondition(ITState.Cond) : ITState.Cond;
   }
 
   // Invert the condition of the current IT block slot without changing any
@@ -338,7 +330,7 @@ class ARMAsmParser : public MCTargetAsmParser {
     // Keep any existing condition bits.
     NewMask |= ITState.Mask & (0xE << TZ);
     // Insert the new condition bit.
-    NewMask |= (Cond == ITState.Cond) << TZ;
+    NewMask |= (Cond != ITState.Cond) << TZ;
     // Move the trailing 1 down one bit.
     NewMask |= 1 << (TZ - 1);
     ITState.Mask = NewMask;
@@ -353,9 +345,10 @@ class ARMAsmParser : public MCTargetAsmParser {
     ITState.IsExplicit = false;
   }
 
-  // Create a new explicit IT block with the given condition and mask. The mask
-  // should be in the parsed format, with a 1 implying 't', regardless of the
-  // low bit of the condition.
+  // Create a new explicit IT block with the given condition and mask.
+  // The mask should be in the format used in ARMOperand and
+  // MCOperand, with a 1 implying 'e', regardless of the low bit of
+  // the condition.
   void startExplicitITBlock(ARMCC::CondCodes Cond, unsigned Mask) {
     assert(!inITBlock());
     ITState.Cond = Cond;
@@ -3355,10 +3348,10 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case k_ITCondMask: {
     static const char *const MaskStr[] = {
-      "(invalid)", "(teee)", "(tee)", "(teet)",
-      "(te)",      "(tete)", "(tet)", "(tett)",
-      "(t)",       "(ttee)", "(tte)", "(ttet)",
-      "(tt)",      "(ttte)", "(ttt)", "(tttt)"
+      "(invalid)", "(tttt)", "(ttt)", "(ttte)",
+      "(tt)",      "(ttet)", "(tte)", "(ttee)",
+      "(t)",       "(tett)", "(tet)", "(tete)",
+      "(te)",      "(teet)", "(tee)", "(teee)",
     };
     assert((ITMask.Mask & 0xf) == ITMask.Mask);
     OS << "<it-mask " << MaskStr[ITMask.Mask] << ">";
@@ -6272,11 +6265,14 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   Operands.push_back(ARMOperand::CreateToken(Mnemonic, NameLoc));
 
-  // Handle the IT instruction ITMask. Convert it to a bitmask. This
-  // is the mask as it will be for the IT encoding if the conditional
-  // encoding has a '1' as it's bit0 (i.e. 't' ==> '1'). In the case
-  // where the conditional bit0 is zero, the instruction post-processing
-  // will adjust the mask accordingly.
+  // Handle the mask for IT instructions. In ARMOperand and MCOperand,
+  // this is stored in a format independent of the condition code: the
+  // lowest set bit indicates the end of the encoding, and above that,
+  // a 1 bit indicates 'else', and an 0 indicates 'then'. E.g.
+  //    IT    -> 1000
+  //    ITx   -> x100    (ITT -> 0100, ITE -> 1100)
+  //    ITxy  -> xy10    (e.g. ITET -> 1010)
+  //    ITxyz -> xyz1    (e.g. ITEET -> 1101)
   if (Mnemonic == "it") {
     SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + 2);
     if (ITMask.size() > 3) {
@@ -6289,7 +6285,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
         return Error(Loc, "illegal IT block condition mask '" + ITMask + "'");
       }
       Mask >>= 1;
-      if (ITMask[i - 1] == 't')
+      if (ITMask[i - 1] == 'e')
         Mask |= 8;
     }
     Operands.push_back(ARMOperand::CreateITMask(Mask, Loc));
@@ -6681,11 +6677,10 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
     unsigned Cond = Inst.getOperand(0).getImm();
     unsigned Mask = Inst.getOperand(1).getImm();
 
-    // Mask hasn't been modified to the IT instruction encoding yet so
-    // conditions only allowing a 't' are a block of 1s starting at bit 3
-    // followed by all 0s. Easiest way is to just list the 4 possibilities.
-    if (Cond == ARMCC::AL && Mask != 8 && Mask != 12 && Mask != 14 &&
-        Mask != 15)
+    // Conditions only allowing a 't' are those with no set bit except
+    // the lowest-order one that indicates the end of the sequence. In
+    // other words, powers of 2.
+    if (Cond == ARMCC::AL && countPopulation(Mask) != 1)
       return Error(Loc, "unpredictable IT predicate sequence");
     break;
   }
@@ -9260,15 +9255,11 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
   }
   case ARM::ITasm:
   case ARM::t2IT: {
-    MCOperand &MO = Inst.getOperand(1);
-    unsigned Mask = MO.getImm();
-    ARMCC::CondCodes Cond = ARMCC::CondCodes(Inst.getOperand(0).getImm());
-
     // Set up the IT block state according to the IT instruction we just
     // matched.
     assert(!inITBlock() && "nested IT blocks?!");
-    startExplicitITBlock(Cond, Mask);
-    MO.setImm(getITMaskEncoding());
+    startExplicitITBlock(ARMCC::CondCodes(Inst.getOperand(0).getImm()),
+                         Inst.getOperand(1).getImm());
     break;
   }
   case ARM::t2LSLrr:
