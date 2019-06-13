@@ -5073,11 +5073,19 @@ SelectPatternResult llvm::matchSelectPattern(Value *V, Value *&LHS, Value *&RHS,
   CmpInst *CmpI = dyn_cast<CmpInst>(SI->getCondition());
   if (!CmpI) return {SPF_UNKNOWN, SPNB_NA, false};
 
+  Value *TrueVal = SI->getTrueValue();
+  Value *FalseVal = SI->getFalseValue();
+
+  return llvm::matchDecomposedSelectPattern(CmpI, TrueVal, FalseVal, LHS, RHS,
+                                            CastOp, Depth);
+}
+
+SelectPatternResult llvm::matchDecomposedSelectPattern(
+    CmpInst *CmpI, Value *TrueVal, Value *FalseVal, Value *&LHS, Value *&RHS,
+    Instruction::CastOps *CastOp, unsigned Depth) {
   CmpInst::Predicate Pred = CmpI->getPredicate();
   Value *CmpLHS = CmpI->getOperand(0);
   Value *CmpRHS = CmpI->getOperand(1);
-  Value *TrueVal = SI->getTrueValue();
-  Value *FalseVal = SI->getFalseValue();
   FastMathFlags FMF;
   if (isa<FPMathOperator>(CmpI))
     FMF = CmpI->getFastMathFlags();
