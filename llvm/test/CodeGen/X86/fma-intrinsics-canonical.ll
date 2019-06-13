@@ -810,34 +810,6 @@ entry:
   ret <4 x float> %3
 }
 
-define <4 x float> @test_mm_fmaddsub_ps_unary_fneg(<4 x float> %a, <4 x float> %b, <4 x float> %c) {
-; CHECK-FMA-LABEL: test_mm_fmaddsub_ps_unary_fneg:
-; CHECK-FMA:       # %bb.0: # %entry
-; CHECK-FMA-NEXT:    vfmaddsub213ps %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0x71,0xa6,0xc2]
-; CHECK-FMA-NEXT:    # xmm0 = (xmm1 * xmm0) +/- xmm2
-; CHECK-FMA-NEXT:    retq # encoding: [0xc3]
-;
-; CHECK-AVX512VL-LABEL: test_mm_fmaddsub_ps_unary_fneg:
-; CHECK-AVX512VL:       # %bb.0: # %entry
-; CHECK-AVX512VL-NEXT:    vfmaddsub213ps %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x71,0xa6,0xc2]
-; CHECK-AVX512VL-NEXT:    # xmm0 = (xmm1 * xmm0) +/- xmm2
-; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
-;
-; CHECK-FMA-WIN-LABEL: test_mm_fmaddsub_ps_unary_fneg:
-; CHECK-FMA-WIN:       # %bb.0: # %entry
-; CHECK-FMA-WIN-NEXT:    vmovaps (%rcx), %xmm1 # encoding: [0xc5,0xf8,0x28,0x09]
-; CHECK-FMA-WIN-NEXT:    vmovaps (%rdx), %xmm0 # encoding: [0xc5,0xf8,0x28,0x02]
-; CHECK-FMA-WIN-NEXT:    vfmaddsub213ps (%r8), %xmm1, %xmm0 # encoding: [0xc4,0xc2,0x71,0xa6,0x00]
-; CHECK-FMA-WIN-NEXT:    # xmm0 = (xmm1 * xmm0) +/- mem
-; CHECK-FMA-WIN-NEXT:    retq # encoding: [0xc3]
-entry:
-  %0 = tail call <4 x float> @llvm.fma.v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c) #2
-  %1 = fneg <4 x float> %c
-  %2 = tail call <4 x float> @llvm.fma.v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %1) #2
-  %3 = shufflevector <4 x float> %2, <4 x float> %0, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
-  ret <4 x float> %3
-}
-
 define <2 x double> @test_mm_fmaddsub_pd(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
 ; CHECK-FMA-LABEL: test_mm_fmaddsub_pd:
 ; CHECK-FMA:       # %bb.0: # %entry
@@ -861,34 +833,6 @@ define <2 x double> @test_mm_fmaddsub_pd(<2 x double> %a, <2 x double> %b, <2 x 
 entry:
   %0 = tail call <2 x double> @llvm.fma.v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c) #2
   %1 = fsub <2 x double> <double -0.000000e+00, double -0.000000e+00>, %c
-  %2 = tail call <2 x double> @llvm.fma.v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %1) #2
-  %3 = shufflevector <2 x double> %2, <2 x double> %0, <2 x i32> <i32 0, i32 3>
-  ret <2 x double> %3
-}
-
-define <2 x double> @test_mm_fmaddsub_pd_unary_fneg(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
-; CHECK-FMA-LABEL: test_mm_fmaddsub_pd_unary_fneg:
-; CHECK-FMA:       # %bb.0: # %entry
-; CHECK-FMA-NEXT:    vfmaddsub213pd %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0xf1,0xa6,0xc2]
-; CHECK-FMA-NEXT:    # xmm0 = (xmm1 * xmm0) +/- xmm2
-; CHECK-FMA-NEXT:    retq # encoding: [0xc3]
-;
-; CHECK-AVX512VL-LABEL: test_mm_fmaddsub_pd_unary_fneg:
-; CHECK-AVX512VL:       # %bb.0: # %entry
-; CHECK-AVX512VL-NEXT:    vfmaddsub213pd %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf1,0xa6,0xc2]
-; CHECK-AVX512VL-NEXT:    # xmm0 = (xmm1 * xmm0) +/- xmm2
-; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
-;
-; CHECK-FMA-WIN-LABEL: test_mm_fmaddsub_pd_unary_fneg:
-; CHECK-FMA-WIN:       # %bb.0: # %entry
-; CHECK-FMA-WIN-NEXT:    vmovapd (%rcx), %xmm1 # encoding: [0xc5,0xf9,0x28,0x09]
-; CHECK-FMA-WIN-NEXT:    vmovapd (%rdx), %xmm0 # encoding: [0xc5,0xf9,0x28,0x02]
-; CHECK-FMA-WIN-NEXT:    vfmaddsub213pd (%r8), %xmm1, %xmm0 # encoding: [0xc4,0xc2,0xf1,0xa6,0x00]
-; CHECK-FMA-WIN-NEXT:    # xmm0 = (xmm1 * xmm0) +/- mem
-; CHECK-FMA-WIN-NEXT:    retq # encoding: [0xc3]
-entry:
-  %0 = tail call <2 x double> @llvm.fma.v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c) #2
-  %1 = fneg <2 x double> %c
   %2 = tail call <2 x double> @llvm.fma.v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %1) #2
   %3 = shufflevector <2 x double> %2, <2 x double> %0, <2 x i32> <i32 0, i32 3>
   ret <2 x double> %3
