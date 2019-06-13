@@ -263,7 +263,8 @@ static const StringMap<MachineInfo> ArchMap{
     {"powerpc:common64", {ELF::EM_PPC64, true, true}},
     {"riscv:rv32", {ELF::EM_RISCV, false, true}},
     {"riscv:rv64", {ELF::EM_RISCV, true, true}},
-    {"sparc", {ELF::EM_SPARC, false, true}},
+    {"sparc", {ELF::EM_SPARC, false, false}},
+    {"sparcel", {ELF::EM_SPARC, false, true}},
     {"x86-64", {ELF::EM_X86_64, true, true}},
 };
 
