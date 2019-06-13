@@ -1028,6 +1028,10 @@ public:
       std::vector<std::unique_ptr<ScheduleDAGMutation>> &Mutations)
       const override;
 
+  bool isWave32() const {
+    return WavefrontSize == 32;
+  }
+
   /// \returns Maximum number of work groups per compute unit supported by the
   /// subtarget and limited by given \p FlatWorkGroupSize.
   unsigned getMaxWorkGroupsPerCU(unsigned FlatWorkGroupSize) const override {

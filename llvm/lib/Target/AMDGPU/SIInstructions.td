@@ -604,7 +604,12 @@ def : Pat <
   // TODO: we could add more variants for other types of conditionals
 
 def : Pat <
-  (int_amdgcn_icmp i1:$src, (i1 0), (i32 33)),
+  (i64 (int_amdgcn_icmp i1:$src, (i1 0), (i32 33))),
+  (COPY $src) // Return the SGPRs representing i1 src
+>;
+
+def : Pat <
+  (i32 (int_amdgcn_icmp i1:$src, (i1 0), (i32 33))),
   (COPY $src) // Return the SGPRs representing i1 src
 >;
 
