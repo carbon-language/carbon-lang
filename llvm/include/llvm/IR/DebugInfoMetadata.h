@@ -2561,19 +2561,19 @@ public:
 };
 
 inline bool operator==(const DIExpression::FragmentInfo &A,
-                       const struct DIExpression::FragmentInfo &B) {
+                       const DIExpression::FragmentInfo &B) {
   return std::tie(A.SizeInBits, A.OffsetInBits) ==
          std::tie(B.SizeInBits, B.OffsetInBits);
 }
 
-inline bool operator<(const struct DIExpression::FragmentInfo &A,
-                      const struct DIExpression::FragmentInfo &B) {
+inline bool operator<(const DIExpression::FragmentInfo &A,
+                      const DIExpression::FragmentInfo &B) {
   return std::tie(A.SizeInBits, A.OffsetInBits) <
          std::tie(B.SizeInBits, B.OffsetInBits);
 }
 
-template <> struct DenseMapInfo<struct DIExpression::FragmentInfo> {
-  using FragInfo = struct DIExpression::FragmentInfo;
+template <> struct DenseMapInfo<DIExpression::FragmentInfo> {
+  using FragInfo = DIExpression::FragmentInfo;
   static const uint64_t MaxVal = std::numeric_limits<uint64_t>::max();
 
   static inline FragInfo getEmptyKey() { return {MaxVal, MaxVal}; }
