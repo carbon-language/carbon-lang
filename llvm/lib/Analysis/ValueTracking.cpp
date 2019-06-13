@@ -4388,6 +4388,10 @@ const Value *llvm::getGuaranteedNonFullPoisonOp(const Instruction *I) {
       return I->getOperand(1);
 
     default:
+      // Note: It's really tempting to think that a conditional branch or
+      // switch should be listed here, but that's incorrect.  It's not
+      // branching off of poison which is UB, it is executing a side effecting
+      // instruction which follows the branch.  
       return nullptr;
   }
 }
