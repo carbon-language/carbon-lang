@@ -207,17 +207,18 @@ template<class PA> inline constexpr auto bracketed(const PA &p) {
 
 // Quoted character literal constants.
 struct CharLiteralChar {
-  using resultType = char;
-  static std::optional<char> Parse(ParseState &state) {
+  using resultType = std::pair<char, bool /* was escaped */>;
+  static std::optional<resultType> Parse(ParseState &state) {
     auto at{state.GetLocation()};
     if (std::optional<const char *> cp{nextCh.Parse(state)}) {
-      if (**cp == '\n') {
+      char ch{**cp};
+      if (ch == '\n') {
         state.Say(CharBlock{at, state.GetLocation()},
             "Unclosed character constant"_err_en_US);
         return std::nullopt;
       }
-      if (**cp != '\\') {
-        return **cp;
+      if (ch != '\\') {
+        return std::make_pair(ch, false);
       }
       if (!(cp = nextCh.Parse(state)).has_value()) {
         state.Say(CharBlock{at, state.GetLocation()},
@@ -225,10 +226,10 @@ struct CharLiteralChar {
         return std::nullopt;
       }
       if (std::optional<char> escChar{BackslashEscapeValue(**cp)}) {
-        return escChar;
+        return std::make_pair(*escChar, true);
       }
       if (IsOctalDigit(**cp)) {
-        int result{**cp - '0'};
+        char result{static_cast<char>(**cp - '0')};
         for (int j = (result > 3 ? 1 : 2); j-- > 0;) {
           static constexpr auto octalDigit{attempt("01234567"_ch)};
           if (std::optional<const char *> oct{octalDigit.Parse(state)}) {
@@ -237,7 +238,7 @@ struct CharLiteralChar {
             break;
           }
         }
-        return result;
+        return std::make_pair(result, true);
       }
       state.Say(at, "Bad escaped character"_err_en_US);
     }
@@ -250,14 +251,14 @@ template<char quote> struct CharLiteral {
   static std::optional<std::string> Parse(ParseState &state) {
     std::string str;
     static constexpr auto nextch{attempt(CharLiteralChar{})};
-    while (std::optional<char> ch{nextch.Parse(state)}) {
-      if (*ch == quote) {
+    while (auto ch{nextch.Parse(state)}) {
+      if (ch->first == quote && !ch->second) {
         static constexpr auto doubled{attempt(AnyOfChars{SetOfChars{quote}})};
         if (!doubled.Parse(state).has_value()) {
           return str;
         }
       }
-      str += *ch;
+      str += ch->first;
     }
     return std::nullopt;
   }

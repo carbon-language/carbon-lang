@@ -58,7 +58,8 @@ by a CookedSource class instance, in which:
 * except for the payload in character literals, Hollerith constants,
   and character and Hollerith edit descriptors, all letters have been
   normalized to lower case
-* all non-ASCII characters have been re-encoded in UTF-8.
+* all original non-ASCII characters in character literals have been
+  decoded, converted to UTF-8, and then formatted with escape sequences
 
 Lines in the cooked character stream can be of arbitrary length.
 

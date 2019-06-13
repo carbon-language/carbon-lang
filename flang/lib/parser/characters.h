@@ -109,7 +109,7 @@ inline constexpr char HexadecimalDigitValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
   switch (ch) {
-  // case 'a': return '\a';  // pgf90 has no \a
+  case 'a': return '\a';
   case 'b': return '\b';
   case 'f': return '\f';
   case 'n': return '\n';
@@ -125,7 +125,7 @@ inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   switch (ch) {
-  // case '\a': return 'a';  // pgf90 has no \a
+  case '\a': return 'a';
   case '\b': return 'b';
   case '\f': return 'f';
   case '\n': return 'n';
@@ -153,10 +153,9 @@ EncodedCharacter EncodeCharacter(Encoding, char32_t);
 // bytes of an encoding for a codepoint.
 template<typename NORMAL, typename INSERTED>
 void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
-    bool doubleDoubleQuotes = true, bool backslashEscapes = true,
-    Encoding encoding = Encoding::UTF_8) {
+    bool backslashEscapes = true, Encoding encoding = Encoding::UTF_8) {
   auto emitOneChar{[&](std::uint8_t ch) {
-    if (ch < ' ' || (backslashEscapes && (ch == '\\' || ch >= 0x7f))) {
+    if (ch < ' ' || ch == '\\' || (backslashEscapes && ch >= 0x7f)) {
       insert('\\');
       if (std::optional<char> escape{BackslashEscapeChar(ch)}) {
         emit(*escape);
@@ -174,12 +173,7 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
       emit(ch);
     }
   }};
-  if (ch == '"') {
-    if (doubleDoubleQuotes) {
-      insert('"');
-    }
-    emit('"');
-  } else if (ch <= 0x7f) {
+  if (ch <= 0x7f) {
     emitOneChar(ch);
   } else {
     EncodedCharacter encoded{EncodeCharacter(encoding, ch)};
@@ -190,21 +184,18 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
 }
 
 std::string QuoteCharacterLiteral(const std::string &,
-    bool doubleDoubleQuotes = true, bool backslashEscapes = true,
-    Encoding = Encoding::LATIN_1);
+    bool backslashEscapes = true, Encoding = Encoding::LATIN_1);
 std::string QuoteCharacterLiteral(const std::u16string &,
-    bool doubleDoubleQuotes = true, bool backslashEscapes = true,
-    Encoding = Encoding::EUC_JP);
+    bool backslashEscapes = true, Encoding = Encoding::EUC_JP);
 std::string QuoteCharacterLiteral(const std::u32string &,
-    bool doubleDoubleQuotes = true, bool backslashEscapes = true,
-    Encoding = Encoding::UTF_8);
+    bool backslashEscapes = true, Encoding = Encoding::UTF_8);
 
 std::optional<int> UTF_8CharacterBytes(const char *);
 std::optional<int> EUC_JPCharacterBytes(const char *);
 std::optional<int> CountCharacters(const char *, std::size_t bytes, Encoding);
 
 struct DecodedCharacter {
-  char32_t unicode{0};
+  char32_t codepoint{0};
   int bytes{0};  // signifying failure
 };
 

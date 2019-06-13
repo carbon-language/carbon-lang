@@ -189,16 +189,18 @@ public:
     if (const auto &k{std::get<std::optional<KindParam>>(x.t)}) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");
-        Put(QuoteCharacterLiteral(std::get<std::string>(x.t), true,
-            backslashEscapes_, Encoding::EUC_JP));
+        std::u16string jis;
+        for (char32_t ch : DecodeUTF_8(std::get<std::string>(x.t))) {
+          jis += static_cast<char16_t>(ch);
+        }
+        Put(QuoteCharacterLiteral(jis, backslashEscapes_, Encoding::EUC_JP));
       } else {
         Walk(*k), Put('_');
         Put(QuoteCharacterLiteral(
-            std::get<std::string>(x.t), true, backslashEscapes_));
+            std::get<std::string>(x.t), backslashEscapes_));
       }
     } else {
-      Put(QuoteCharacterLiteral(
-          std::get<std::string>(x.t), true, backslashEscapes_));
+      Put(QuoteCharacterLiteral(std::get<std::string>(x.t), backslashEscapes_));
     }
   }
   void Before(const HollerithLiteralConstant &x) {
@@ -1433,7 +1435,7 @@ public:
     std::visit(
         common::visitors{
             [&](const std::string &y) {
-              Put(QuoteCharacterLiteral(y, true, backslashEscapes_));
+              Put(QuoteCharacterLiteral(y, backslashEscapes_));
             },
             [&](const std::list<format::FormatItem> &y) {
               Walk("(", y, ",", ")");

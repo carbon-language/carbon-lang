@@ -56,8 +56,7 @@ std::ostream &ConstantBase<RESULT, VALUE>::AsFortran(std::ostream &o) const {
         Result::category == TypeCategory::Complex) {
       value.AsFortran(o, Result::kind);
     } else if constexpr (Result::category == TypeCategory::Character) {
-      o << Result::kind << '_'
-        << parser::QuoteCharacterLiteral(value, true, false);
+      o << Result::kind << '_' << parser::QuoteCharacterLiteral(value, false);
     } else if constexpr (Result::category == TypeCategory::Logical) {
       if (value.IsTrue()) {
         o << ".true.";
@@ -93,7 +92,7 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
     } else if (Rank() == 0) {
       o << Result::kind << '_';
     }
-    o << parser::QuoteCharacterLiteral(value, true /* double quotes */,
+    o << parser::QuoteCharacterLiteral(value,
         false /* avoid backslash escapes */,
         parser::Encoding::UTF_8 /* module files are UTF-8 */);
   }

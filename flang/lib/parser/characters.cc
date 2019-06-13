@@ -16,6 +16,7 @@
 #include "../common/idioms.h"
 #include <cstddef>
 #include <optional>
+#include <type_traits>
 
 namespace Fortran::parser {
 
@@ -45,22 +46,22 @@ std::optional<int> EUC_JPCharacterBytes(const char *p) {
   if (b1 <= 0x7f) {
     return 1;
   }
-  if (b1 >= 0xa1 && b1 <= 0xfe) {
+  if (b1 >= 0xa0 && b1 <= 0xfe) {
     int b2 = p[1] & 0xff;
-    if (b2 >= 0xa1 && b2 <= 0xfe) {
+    if (b2 >= 0xa0 && b2 <= 0xfe) {
       // JIS X 0208 (code set 1)
       return 2;
     }
   } else if (b1 == 0x8e) {
     int b2 = p[1] & 0xff;
-    if (b2 >= 0xa1 && b2 <= 0xdf) {
+    if (b2 >= 0xa0 && b2 <= 0xdf) {
       // upper half JIS 0201 (half-width kana, code set 2)
       return 2;
     }
   } else if (b1 == 0x8f) {
     int b2 = p[1] & 0xff;
     int b3 = p[2] & 0xff;
-    if (b2 >= 0xa1 && b2 <= 0xfe && b3 >= 0xa1 && b3 <= 0xfe) {
+    if (b2 >= 0xa0 && b2 <= 0xfe && b3 >= 0xa0 && b3 <= 0xfe) {
       // JIS X 0212 (code set 3)
       return 3;
     }
@@ -99,43 +100,35 @@ std::optional<int> CountCharacters(
 }
 
 template<typename STRING>
-std::string QuoteCharacterLiteralHelper(const STRING &str,
-    bool doubleDoubleQuotes, bool backslashEscapes, Encoding encoding) {
+std::string QuoteCharacterLiteralHelper(
+    const STRING &str, bool backslashEscapes, Encoding encoding) {
   std::string result{'"'};
   const auto emit{[&](char ch) { result += ch; }};
   for (auto ch : str) {
     using CharT = std::decay_t<decltype(ch)>;
-    if constexpr (std::is_same_v<char, CharT>) {
-      // char may be signed depending on host.
-      char32_t ch32{static_cast<unsigned char>(ch)};
-      EmitQuotedChar(
-          ch32, emit, emit, doubleDoubleQuotes, backslashEscapes, encoding);
-    } else {
-      char32_t ch32{ch};
-      EmitQuotedChar(
-          ch32, emit, emit, doubleDoubleQuotes, backslashEscapes, encoding);
+    char32_t ch32{static_cast<std::make_unsigned_t<CharT>>(ch)};
+    if (ch32 == static_cast<unsigned char>('"')) {
+      emit('"');  // double the " when it appears in the text
     }
+    EmitQuotedChar(ch32, emit, emit, backslashEscapes, encoding);
   }
   result += '"';
   return result;
 }
 
-std::string QuoteCharacterLiteral(const std::string &str,
-    bool doubleDoubleQuotes, bool backslashEscapes, Encoding encoding) {
-  return QuoteCharacterLiteralHelper(
-      str, doubleDoubleQuotes, backslashEscapes, encoding);
+std::string QuoteCharacterLiteral(
+    const std::string &str, bool backslashEscapes, Encoding encoding) {
+  return QuoteCharacterLiteralHelper(str, backslashEscapes, encoding);
 }
 
-std::string QuoteCharacterLiteral(const std::u16string &str,
-    bool doubleDoubleQuotes, bool backslashEscapes, Encoding encoding) {
-  return QuoteCharacterLiteralHelper(
-      str, doubleDoubleQuotes, backslashEscapes, encoding);
+std::string QuoteCharacterLiteral(
+    const std::u16string &str, bool backslashEscapes, Encoding encoding) {
+  return QuoteCharacterLiteralHelper(str, backslashEscapes, encoding);
 }
 
-std::string QuoteCharacterLiteral(const std::u32string &str,
-    bool doubleDoubleQuotes, bool backslashEscapes, Encoding encoding) {
-  return QuoteCharacterLiteralHelper(
-      str, doubleDoubleQuotes, backslashEscapes, encoding);
+std::string QuoteCharacterLiteral(
+    const std::u32string &str, bool backslashEscapes, Encoding encoding) {
+  return QuoteCharacterLiteralHelper(str, backslashEscapes, encoding);
 }
 
 EncodedCharacter EncodeLATIN_1(char32_t codepoint) {
@@ -228,15 +221,15 @@ DecodedCharacter DecodeEUC_JPCharacter(const char *cp, std::size_t bytes) {
   char32_t ch{*p};
   if (ch <= 0x7f) {
     return {ch, 1};
-  } else if (ch >= 0xa1 && ch <= 0xfe && bytes >= 2 && p[1] >= 0xa1 &&
+  } else if (ch >= 0xa0 && ch <= 0xfe && bytes >= 2 && p[1] >= 0xa0 &&
       p[1] <= 0xfe) {
-    ch = ((ch & 0x7f) << 8) | (p[1] & 0x7f);  // JIS X 0208
+    ch = ((ch << 8) | p[1]) & 0x7f7f;  // JIS X 0208
     return {ch, 2};
-  } else if (ch == 0x8e && bytes >= 2 && p[1] >= 0xa1 && p[1] <= 0xdf) {
+  } else if (ch == 0x8e && bytes >= 2 && p[1] >= 0xa0 && p[1] <= 0xdf) {
     return {p[1], 2};  // JIS X 0201
-  } else if (ch == 0x8f && bytes >= 3 && p[1] >= 0xa1 && p[1] <= 0xfe &&
-      p[2] >= 0xa1 && p[2] <= 0xfe) {
-    ch = (p[1] & 0x7f) << 8 | (p[1] & 0x7f);  // JIS X 0212
+  } else if (ch == 0x8f && bytes >= 3 && p[1] >= 0xa0 && p[1] <= 0xfe &&
+      p[2] >= 0xa0 && p[2] <= 0xfe) {
+    ch = ((p[1] << 8) | p[1]) & 0x7f7f;  // JIS X 0212
     return {ch, 3};
   } else {
     return {};  // not valid EUC_JP
@@ -249,9 +242,9 @@ DecodedCharacter DecodeLATIN1Character(const char *cp) {
 
 static DecodedCharacter DecodeEscapedCharacter(
     const char *cp, std::size_t bytes) {
-  if (cp[0] == '\\' && bytes > 1) {
+  if (cp[0] == '\\' && bytes >= 2) {
     if (std::optional<char> escChar{BackslashEscapeValue(cp[1])}) {
-      return {static_cast<char32_t>(*escChar), 2};
+      return {static_cast<unsigned char>(*escChar), 2};
     }
     if (IsOctalDigit(cp[1])) {
       std::size_t maxDigits{static_cast<std::size_t>(cp[1] > '3' ? 2 : 3)};
@@ -269,7 +262,7 @@ static DecodedCharacter DecodeEscapedCharacter(
           4};
     }
   }
-  return {static_cast<char32_t>(cp[0]), 1};
+  return {static_cast<unsigned char>(cp[0]), 1};
 }
 
 static DecodedCharacter DecodeEscapedCharacters(
@@ -279,20 +272,23 @@ static DecodedCharacter DecodeEscapedCharacters(
   std::size_t at{0}, len{0};
   for (; len < 4 && at < bytes; ++len) {
     DecodedCharacter code{DecodeEscapedCharacter(cp + at, bytes - at)};
-    buffer[len] = code.unicode;
+    buffer[len] = code.codepoint;
     at += code.bytes;
     count[len] = at;
   }
   DecodedCharacter code{DecodeCharacter(encoding, buffer, len, false)};
   if (code.bytes > 0) {
     code.bytes = count[code.bytes - 1];
+  } else {
+    code.codepoint = static_cast<unsigned char>(buffer[0]);
+    code.bytes = count[0];
   }
   return code;
 }
 
 DecodedCharacter DecodeCharacter(Encoding encoding, const char *cp,
     std::size_t bytes, bool backslashEscapes) {
-  if (backslashEscapes && bytes >= 1 && *cp == '\\') {
+  if (backslashEscapes && bytes >= 2 && *cp == '\\') {
     return DecodeEscapedCharacters(encoding, cp, bytes);
   } else {
     switch (encoding) {
@@ -316,7 +312,7 @@ std::u32string DecodeUTF_8(const std::string &s) {
     DecodedCharacter decoded{DecodeUTF_8Character(p, bytes)};
     if (decoded.bytes > 0) {
       if (static_cast<std::size_t>(decoded.bytes) <= bytes) {
-        result.append(1, decoded.unicode);
+        result.append(1, decoded.codepoint);
         bytes -= decoded.bytes;
         p += decoded.bytes;
         continue;
@@ -336,7 +332,7 @@ std::u16string DecodeEUC_JP(const std::string &s) {
     DecodedCharacter decoded{DecodeEUC_JPCharacter(p, bytes)};
     if (decoded.bytes > 0) {
       if (static_cast<std::size_t>(decoded.bytes) <= bytes) {
-        result.append(1, decoded.unicode);
+        result.append(1, decoded.codepoint);
         bytes -= decoded.bytes;
         p += decoded.bytes;
         continue;

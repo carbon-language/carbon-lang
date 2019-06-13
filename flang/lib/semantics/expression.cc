@@ -519,10 +519,10 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
   if (!CheckIntrinsicKind(TypeCategory::Character, kind)) {
     return std::nullopt;
   }
-  std::u32string unicode{parser::DecodeUTF_8(string)};
+  std::u32string codepoint{parser::DecodeUTF_8(string)};
   if (kind == 1) {
     std::string result;
-    for (const char32_t &ch : unicode) {
+    for (char32_t ch : codepoint) {
       if (ch <= 0xff) {
         result += static_cast<char>(ch);
       } else {
@@ -537,7 +537,7 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
         Constant<Type<TypeCategory::Character, 1>>{std::move(result)});
   } else if (kind == 2) {
     std::u16string result;
-    for (const char32_t &ch : unicode) {
+    for (char32_t ch : codepoint) {
       if (ch > 0xffff) {
         Say("Bad character in CHARACTER(KIND=2) literal"_err_en_US);
         return std::nullopt;
@@ -549,7 +549,7 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
   } else {
     CHECK(kind == 4);
     return AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 4>>{std::move(unicode)});
+        Constant<Type<TypeCategory::Character, 4>>{std::move(codepoint)});
   }
 }
 

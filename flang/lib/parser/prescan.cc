@@ -482,17 +482,13 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     }
     preventHollerith_ = false;
   } else if (IsLegalInIdentifier(*at_)) {
-    // Look for NC'...' prefix - legacy PGI "Kanji" NCHARACTER literal
-    char buffer[2];
-    int idChars{0};
     do {
-      if (idChars < static_cast<int>(sizeof buffer)) {
-        buffer[idChars] = ToLowerCaseLetter(*at_);
-      }
-      ++idChars;
-    } while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_)));
+    } while (IsLegalInIdentifier(
+        EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_))));
     if (*at_ == '\'' || *at_ == '"') {
-      bool isKanji{idChars == 2 && buffer[0] == 'n' && buffer[1] == 'c'};
+      // Look for prefix of NC'...' legacy PGI "Kanji" NCHARACTER literal
+      CharBlock prefix{tokens.CurrentOpenToken()};
+      bool isKanji{prefix.size() == 2 && prefix[0] == 'n' && prefix[1] == 'c'};
       QuotedCharacterLiteral(tokens, start, isKanji);
       preventHollerith_ = false;
     } else {
@@ -560,39 +556,43 @@ void Prescanner::QuotedCharacterLiteral(
   inCharLiteral_ = true;
   const auto emit{[&](char ch) { EmitChar(tokens, ch); }};
   const auto insert{[&](char ch) { EmitInsertedChar(tokens, ch); }};
-  bool escape{false};
   bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
   Encoding encoding{encoding_};
   if (isKanji) {
-    // NC'...' - the contents are EUC_JP even if the context is not
+    // NC'...' - the contents are always decoded as EUC_JP
     encoding = Encoding::EUC_JP;
   }
   while (true) {
     DecodedCharacter decoded{DecodeCharacter(
         encoding, at_, static_cast<std::size_t>(limit_ - at_), escapesEnabled)};
     if (decoded.bytes <= 0) {
-      Say(GetProvenanceRange(start, end),
+      Say(GetProvenanceRange(start, at_),
           "Bad character in character literal"_err_en_US);
-      break;
+      // Just eat a byte and press on.
+      decoded.codepoint = static_cast<unsigned char>(*at_);
+      decoded.bytes = 1;
     }
-    char32_t ch{decoded.unicode};
-    escape = !escape && ch == '\\' && escapesEnabled;
-    EmitQuotedChar(ch, emit, insert, false /* don't double quotes */,
-        true /* use backslash escapes */,
-        Encoding::UTF_8 /* cooked char stream is UTF-8 only */);
+    char32_t ch{decoded.codepoint};
+    if (ch == quote) {
+      if (decoded.bytes > 1) {
+        EmitChar(tokens, '\\');
+      }
+    }
+    EmitQuotedChar(
+        ch, emit, insert, true /* use backslash escapes */, Encoding::UTF_8);
     while (PadOutCharacterLiteral(tokens)) {
     }
     if (*at_ == '\n') {
       if (!inPreprocessorDirective_) {
         Say(GetProvenanceRange(start, end),
-            "incomplete character literal"_err_en_US);
+            "Incomplete character literal"_err_en_US);
       }
       break;
     }
     at_ += decoded.bytes - 1;
     end = at_ + 1;
     NextChar();
-    if (*at_ == quote && !escape) {
+    if (*at_ == quote) {
       // A doubled quote mark becomes a single instance of the quote character
       // in the literal (later).  There can be spaces between the quotes in
       // fixed form source.
@@ -629,7 +629,7 @@ void Prescanner::Hollerith(
           encoding_, at_, static_cast<std::size_t>(limit_ - at_))};
       if (decoded.bytes > 0) {
         // The cooked character stream we emit is always in UTF-8.
-        EncodedCharacter utf8{EncodeUTF_8(decoded.unicode)};
+        EncodedCharacter utf8{EncodeUTF_8(decoded.codepoint)};
         for (int j{0}; j < utf8.bytes; ++j) {
           EmitChar(tokens, utf8.buffer[j]);
         }
