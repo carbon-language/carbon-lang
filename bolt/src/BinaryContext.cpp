@@ -406,12 +406,14 @@ void BinaryContext::populateJumpTables() {
       }
 
       // We assume that a jump table cannot have function start as an entry.
-      if (BF.containsAddress(Value) && Value != BF.getAddress()) {
-        JT->OffsetEntries.emplace_back(Value - BF.getAddress());
-        continue;
-      }
+      if (!BF.containsAddress(Value) || Value == BF.getAddress())
+        break;
 
-      break;
+      // Check there's an instruction at this offset.
+      if (!BF.getInstructionAtOffset(Value - BF.getAddress()))
+        break;
+
+      JT->OffsetEntries.emplace_back(Value - BF.getAddress());
     }
 
     assert(JT->OffsetEntries.size() > 1 &&

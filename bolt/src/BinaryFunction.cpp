@@ -1351,18 +1351,7 @@ void BinaryFunction::postProcessJumpTables() {
                 "detected in function " << *this << '\n';
     }
     for (unsigned I = 0; I < JT.OffsetEntries.size(); ++I) {
-      auto Offset = JT.OffsetEntries[I];
-      if (Offset != getSize() && !getInstructionAtOffset(Offset)) {
-        DEBUG(dbgs() << "BOLT-DEBUG: truncating jump table " << JT.getName()
-                     << " at index " << I << " containing offset 0x"
-                     << Twine::utohexstr(Offset) << '\n');
-        assert(I > 1 && "jump table with a size smaller than 1 detected");
-        assert(JT.Type == JumpTable::JTT_PIC &&
-               "unexpected truncation of non-PIC jump table");
-        JT.OffsetEntries.resize(I);
-        break;
-      }
-      auto *Label = getOrCreateLocalLabel(getAddress() + Offset,
+      auto *Label = getOrCreateLocalLabel(getAddress() + JT.OffsetEntries[I],
                                           /*CreatePastEnd*/ true);
       JT.Entries.push_back(Label);
     }
