@@ -2,7 +2,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Simple test for a fuzzer. 
+// Simple test for a fuzzer.
 // Needs to find a string "FUZZxxxxxxxxxxxxMxxE", where 'x' is any byte.
 #include <assert.h>
 #include <cstddef>
@@ -39,5 +39,3 @@ __attribute__((noinline))
 bool Func2(const uint8_t *Data, size_t Size) {
   return Size >= 20 && Data[19] == 'E';
 }
-
-
