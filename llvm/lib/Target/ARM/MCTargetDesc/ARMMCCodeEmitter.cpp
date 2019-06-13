@@ -434,6 +434,13 @@ public:
   uint32_t getBFAfterTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups,
                                    const MCSubtargetInfo &STI) const;
+
+  uint32_t getVPTMaskOpValue(const MCInst &MI, unsigned OpIdx,
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const;
+  uint32_t getRestrictedCondCodeOpValue(const MCInst &MI, unsigned OpIdx,
+                                        SmallVectorImpl<MCFixup> &Fixups,
+                                        const MCSubtargetInfo &STI) const;
 };
 
 } // end anonymous namespace
@@ -520,7 +527,15 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     unsigned Reg = MO.getReg();
     unsigned RegNo = CTX.getRegisterInfo()->getEncodingValue(Reg);
 
-    // Q registers are encoded as 2x their register number.
+    // In NEON, Q registers are encoded as 2x their register number,
+    // because they're using the same indices as the D registers they
+    // overlap. In MVE, there are no 64-bit vector instructions, so
+    // the encodings all refer to Q-registers by their literal
+    // register number.
+
+    if (STI.getFeatureBits()[ARM::HasMVEIntegerOps])
+      return RegNo;
+
     switch (Reg) {
     default:
       return RegNo;
@@ -1789,6 +1804,66 @@ ARMMCCodeEmitter::getBFAfterTargetOpValue(const MCInst &MI, unsigned OpIdx,
 
   return Diff == 4;
 }
+
+uint32_t ARMMCCodeEmitter::getVPTMaskOpValue(const MCInst &MI, unsigned OpIdx,
+                                             SmallVectorImpl<MCFixup> &Fixups,
+                                             const MCSubtargetInfo &STI)const {
+  const MCOperand MO = MI.getOperand(OpIdx);
+  assert(MO.isImm() && "Unexpected operand type!");
+
+  int Value = MO.getImm();
+  int Imm = 0;
+
+  // VPT Masks are actually encoded as a series of invert/don't invert bits,
+  // rather than true/false bits.
+  unsigned PrevBit = 0;
+  for (int i = 3; i >= 0; --i) {
+    unsigned Bit = (Value >> i) & 1;
+
+    // Check if we are at the end of the mask.
+    if ((Value & ~(~0U << i)) == 0) {
+      Imm |= (1 << i);
+      break;
+    }
+
+    // Convert the bit in the mask based on the previous bit.
+    if (Bit != PrevBit)
+      Imm |= (1 << i);
+
+    PrevBit = Bit;
+  }
+
+  return Imm;
+}
+
+uint32_t ARMMCCodeEmitter::getRestrictedCondCodeOpValue(
+    const MCInst &MI, unsigned OpIdx, SmallVectorImpl<MCFixup> &Fixups,
+    const MCSubtargetInfo &STI) const {
+
+  const MCOperand MO = MI.getOperand(OpIdx);
+  assert(MO.isImm() && "Unexpected operand type!");
+
+  switch (MO.getImm()) {
+  default:
+    assert(0 && "Unexpected Condition!");
+    return 0;
+  case ARMCC::HS:
+  case ARMCC::EQ:
+    return 0;
+  case ARMCC::HI:
+  case ARMCC::NE:
+    return 1;
+  case ARMCC::GE:
+    return 4;
+  case ARMCC::LT:
+    return 5;
+  case ARMCC::GT:
+    return 6;
+  case ARMCC::LE:
+    return 7;
+  }
+}
+
 #include "ARMGenMCCodeEmitter.inc"
 
 MCCodeEmitter *llvm::createARMLEMCCodeEmitter(const MCInstrInfo &MCII,

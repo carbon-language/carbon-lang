@@ -1596,3 +1596,27 @@ void ARMInstPrinter::printComplexRotationOp(const MCInst *MI, unsigned OpNo,
   O << "#" << (Val * Angle) + Remainder;
 }
 
+void ARMInstPrinter::printVPTPredicateOperand(const MCInst *MI, unsigned OpNum,
+                                              const MCSubtargetInfo &STI,
+                                              raw_ostream &O) {
+  ARMVCC::VPTCodes CC = (ARMVCC::VPTCodes)MI->getOperand(OpNum).getImm();
+  if (CC != ARMVCC::None)
+    O << ARMVPTPredToString(CC);
+}
+
+void ARMInstPrinter::printVPTMask(const MCInst *MI, unsigned OpNum,
+                                  const MCSubtargetInfo &STI,
+                                  raw_ostream &O) {
+  // (3 - the number of trailing zeroes) is the number of them / else.
+  unsigned Mask = MI->getOperand(OpNum).getImm();
+  unsigned NumTZ = countTrailingZeros(Mask);
+  assert(NumTZ <= 3 && "Invalid VPT mask!");
+  for (unsigned Pos = 3, e = NumTZ; Pos > e; --Pos) {
+    bool T = ((Mask >> Pos) & 1) == 0;
+    if (T)
+      O << 't';
+    else
+      O << 'e';
+  }
+}
+
