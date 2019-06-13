@@ -424,7 +424,7 @@ template <> struct DenseMapInfo<LiveDebugValues::DebugVariable> {
   static bool isEqual(const DV &A, const DV &B) { return A == B; }
 };
 
-}; // namespace llvm
+} // namespace llvm
 
 //===----------------------------------------------------------------------===//
 //            Implementation
