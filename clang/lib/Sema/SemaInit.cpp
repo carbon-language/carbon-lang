@@ -7779,9 +7779,13 @@ ExprResult InitializationSequence::Perform(Sema &S,
 
     case SK_LValueToRValue: {
       assert(CurInit.get()->isGLValue() && "cannot load from a prvalue");
-      CurInit = ImplicitCastExpr::Create(S.Context, Step->Type,
-                                         CK_LValueToRValue, CurInit.get(),
-                                         /*BasePath=*/nullptr, VK_RValue);
+      // C++ [conv.lval]p3:
+      //   If T is cv std::nullptr_t, the result is a null pointer constant.
+      CastKind CK =
+          Step->Type->isNullPtrType() ? CK_NullToPointer : CK_LValueToRValue;
+      CurInit =
+          ImplicitCastExpr::Create(S.Context, Step->Type, CK, CurInit.get(),
+                                   /*BasePath=*/nullptr, VK_RValue);
       break;
     }
 
