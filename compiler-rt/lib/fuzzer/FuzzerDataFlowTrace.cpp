@@ -123,7 +123,7 @@ static Vector<uint8_t> DFTStringToVector(const std::string &DFTString) {
 static bool ParseError(const char *Err, const std::string &Line) {
   Printf("DataFlowTrace: parse error: %s: Line: %s\n", Err, Line.c_str());
   return false;
-};
+}
 
 // TODO(metzman): replace std::string with std::string_view for
 // better performance. Need to figure our how to use string_view on Windows.
