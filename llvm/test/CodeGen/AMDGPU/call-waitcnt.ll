@@ -17,7 +17,6 @@ define amdgpu_kernel void @call_memory_arg_load(i32 addrspace(3)* %ptr, i32) #0 
 ; GCN-NEXT:    s_getpc_b64 s[6:7]
 ; GCN-NEXT:    s_add_u32 s6, s6, func@rel32@lo+4
 ; GCN-NEXT:    s_addc_u32 s7, s7, func@rel32@hi+4
-; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    s_swappc_b64 s[30:31], s[6:7]
 ; GCN-NEXT:    s_endpgm
   %vgpr = load volatile i32, i32 addrspace(3)* %ptr
@@ -67,7 +66,6 @@ define amdgpu_kernel void @call_no_wait_after_call(i32 addrspace(1)* %ptr, i32) 
 ; GCN-NEXT:    s_mov_b32 s32, s33
 ; GCN-NEXT:    v_mov_b32_e32 v32, 0
 ; GCN-NEXT:    s_swappc_b64 s[30:31], s[6:7]
-; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    v_mov_b32_e32 v0, s34
 ; GCN-NEXT:    v_mov_b32_e32 v1, s35
 ; GCN-NEXT:    global_store_dword v[0:1], v32, off
@@ -91,7 +89,6 @@ define amdgpu_kernel void @call_no_wait_after_call_return_val(i32 addrspace(1)* 
 ; GCN-NEXT:    s_addc_u32 s7, s7, func.return@rel32@hi+4
 ; GCN-NEXT:    s_mov_b32 s32, s33
 ; GCN-NEXT:    s_swappc_b64 s[30:31], s[6:7]
-; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    v_mov_b32_e32 v1, s34
 ; GCN-NEXT:    v_mov_b32_e32 v2, s35
 ; GCN-NEXT:    global_store_dword v[1:2], v0, off
@@ -138,7 +135,7 @@ define void @tailcall_got_load(i32 addrspace(1)* %ptr, i32) #0 {
   ret void
 }
 
-; Need to wait for the address dependency
+; No need to wait for the load.
 define void @tail_call_memory_arg_load(i32 addrspace(3)* %ptr, i32) #0 {
 ; GCN-LABEL: tail_call_memory_arg_load:
 ; GCN:       ; %bb.0:
@@ -147,7 +144,6 @@ define void @tail_call_memory_arg_load(i32 addrspace(3)* %ptr, i32) #0 {
 ; GCN-NEXT:    s_add_u32 s6, s6, func@rel32@lo+4
 ; GCN-NEXT:    s_addc_u32 s7, s7, func@rel32@hi+4
 ; GCN-NEXT:    ds_read_b32 v0, v0
-; GCN-NEXT:    s_waitcnt lgkmcnt(0)
 ; GCN-NEXT:    s_setpc_b64 s[6:7]
   %vgpr = load volatile i32, i32 addrspace(3)* %ptr
   tail call void @func(i32 %vgpr)
