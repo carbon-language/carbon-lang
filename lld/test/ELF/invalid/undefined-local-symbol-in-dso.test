@@ -21,6 +21,6 @@ FileHeader:
 Sections:
   - Name:          .dynsym
     Info:          1
-    Type:          SHT_DYNSYM
+    Type:          SHT_SYMTAB
 DynamicSymbols:
   - Name: foo
