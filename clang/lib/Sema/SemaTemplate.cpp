@@ -2052,6 +2052,12 @@ private:
 
 void Sema::DeclareImplicitDeductionGuides(TemplateDecl *Template,
                                           SourceLocation Loc) {
+  if (CXXRecordDecl *DefRecord =
+          cast<CXXRecordDecl>(Template->getTemplatedDecl())->getDefinition()) {
+    TemplateDecl *DescribedTemplate = DefRecord->getDescribedClassTemplate();
+    Template = DescribedTemplate ? DescribedTemplate : Template;
+  }
+
   DeclContext *DC = Template->getDeclContext();
   if (DC->isDependentContext())
     return;
