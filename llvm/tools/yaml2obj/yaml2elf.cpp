@@ -489,10 +489,9 @@ void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
   else if (Name == ".dynstr")
     SHeader.sh_flags = ELF::SHF_ALLOC;
 
-  // If .dynstr section is explicitly described in the YAML
+  // If the section is explicitly described in the YAML
   // then we want to use its section address.
-  // TODO: Allow this for any explicitly described section.
-  if (YAMLSec && Name == ".dynstr")
+  if (YAMLSec)
     SHeader.sh_addr = YAMLSec->Address;
 }
 
