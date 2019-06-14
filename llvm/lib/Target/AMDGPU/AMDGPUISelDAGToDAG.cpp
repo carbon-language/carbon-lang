@@ -501,13 +501,16 @@ SDNode *AMDGPUDAGToDAGISel::glueCopyToM0(SDNode *N, SDValue Val) const {
 
   // Write max value to m0 before each load operation
 
-  SDValue M0 = Lowering.copyToM0(*CurDAG, CurDAG->getEntryNode(), SDLoc(N),
+  assert(N->getOperand(0).getValueType() == MVT::Other && "Expected chain");
+
+  SDValue M0 = Lowering.copyToM0(*CurDAG, N->getOperand(0), SDLoc(N),
                                  Val);
 
   SDValue Glue = M0.getValue(1);
 
   SmallVector <SDValue, 8> Ops;
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+  Ops.push_back(M0); // Replace the chain.
+  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i)
     Ops.push_back(N->getOperand(i));
 
   Ops.push_back(Glue);
