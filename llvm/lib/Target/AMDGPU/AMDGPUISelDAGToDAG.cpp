@@ -217,6 +217,7 @@ private:
   void SelectBRCOND(SDNode *N);
   void SelectFMAD_FMA(SDNode *N);
   void SelectATOMIC_CMP_SWAP(SDNode *N);
+  void SelectDSAppendConsume(SDNode *N, unsigned IntrID);
   void SelectINTRINSIC_W_CHAIN(SDNode *N);
 
 protected:
@@ -1980,15 +1981,7 @@ void AMDGPUDAGToDAGISel::SelectATOMIC_CMP_SWAP(SDNode *N) {
   CurDAG->RemoveDeadNode(N);
 }
 
-void AMDGPUDAGToDAGISel::SelectINTRINSIC_W_CHAIN(SDNode *N) {
-  unsigned IntrID = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
-  if ((IntrID != Intrinsic::amdgcn_ds_append &&
-       IntrID != Intrinsic::amdgcn_ds_consume) ||
-      N->getValueType(0) != MVT::i32) {
-    SelectCode(N);
-    return;
-  }
-
+void AMDGPUDAGToDAGISel::SelectDSAppendConsume(SDNode *N, unsigned IntrID) {
   // The address is assumed to be uniform, so if it ends up in a VGPR, it will
   // be copied to an SGPR with readfirstlane.
   unsigned Opc = IntrID == Intrinsic::amdgcn_ds_append ?
@@ -2024,6 +2017,23 @@ void AMDGPUDAGToDAGISel::SelectINTRINSIC_W_CHAIN(SDNode *N) {
   };
 
   CurDAG->SelectNodeTo(N, Opc, N->getVTList(), Ops);
+}
+
+void AMDGPUDAGToDAGISel::SelectINTRINSIC_W_CHAIN(SDNode *N) {
+  unsigned IntrID = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+  switch (IntrID) {
+  case Intrinsic::amdgcn_ds_append:
+  case Intrinsic::amdgcn_ds_consume: {
+    if (N->getValueType(0) != MVT::i32)
+      break;
+    SelectDSAppendConsume(N, IntrID);
+    return;
+  }
+  default:
+    break;
+  }
+
+  SelectCode(N);
 }
 
 bool AMDGPUDAGToDAGISel::SelectVOP3ModsImpl(SDValue In, SDValue &Src,
