@@ -205,7 +205,7 @@ static uint64_t ReadAddressFromDebugAddrSection(const DWARFUnit *cu,
   dw_offset_t addr_base = cu->GetAddrBase();
   lldb::offset_t offset = addr_base + index * index_size;
   return cu->GetSymbolFileDWARF()
-      ->GetDWARFContext()
+      .GetDWARFContext()
       .getOrLoadAddrData()
       .GetMaxU64(&offset, index_size);
 }

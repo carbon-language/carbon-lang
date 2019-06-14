@@ -589,10 +589,8 @@ DWARFDebugInfo *SymbolFileDWARF::DebugInfo() {
     static Timer::Category func_cat(LLVM_PRETTY_FUNCTION);
     Timer scoped_timer(func_cat, "%s this = %p", LLVM_PRETTY_FUNCTION,
                        static_cast<void *>(this));
-    if (m_context.getOrLoadDebugInfoData().GetByteSize() > 0) {
-      m_info = llvm::make_unique<DWARFDebugInfo>(m_context);
-      m_info->SetDwarfData(this);
-    }
+    if (m_context.getOrLoadDebugInfoData().GetByteSize() > 0)
+      m_info = llvm::make_unique<DWARFDebugInfo>(*this, m_context);
   }
   return m_info.get();
 }
@@ -654,8 +652,8 @@ lldb::CompUnitSP SymbolFileDWARF::ParseCompileUnit(DWARFCompileUnit &dwarf_cu) {
     // We already parsed this compile unit, had out a shared pointer to it
     cu_sp = comp_unit->shared_from_this();
   } else {
-    if (dwarf_cu.GetSymbolFileDWARF() != this) {
-      return dwarf_cu.GetSymbolFileDWARF()->ParseCompileUnit(dwarf_cu);
+    if (&dwarf_cu.GetSymbolFileDWARF() != this) {
+      return dwarf_cu.GetSymbolFileDWARF().ParseCompileUnit(dwarf_cu);
     } else if (dwarf_cu.GetOffset() == 0 && GetDebugMapSymfile()) {
       // Let the debug map create the compile unit
       cu_sp = m_debug_map_symfile->GetCompileUnit(this);
