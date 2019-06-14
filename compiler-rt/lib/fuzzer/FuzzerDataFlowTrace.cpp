@@ -42,11 +42,16 @@ bool BlockCoverage::AppendCoverage(const std::string &S) {
 bool BlockCoverage::AppendCoverage(std::istream &IN) {
   std::string L;
   while (std::getline(IN, L, '\n')) {
-    if (L.empty() || L[0] != 'C')
-      continue; // Ignore non-coverage lines.
+    if (L.empty())
+      continue;
     std::stringstream SS(L.c_str() + 1);
     size_t FunctionId  = 0;
     SS >> FunctionId;
+    if (L[0] == 'F') {
+      FunctionsWithDFT.insert(FunctionId);
+      continue;
+    }
+    if (L[0] != 'C') continue;
     Vector<uint32_t> CoveredBlocks;
     while (true) {
       uint32_t BB = 0;
@@ -87,9 +92,12 @@ Vector<double> BlockCoverage::FunctionWeights(size_t NumFunctions) const {
     auto Counters = It.second;
     assert(FunctionID < NumFunctions);
     auto &Weight = Res[FunctionID];
-    Weight = 1000.;  // this function is covered.
+    // Give higher weight if the function has a DFT.
+    Weight = FunctionsWithDFT.count(FunctionID) ? 1000. : 1;
+    // Give higher weight to functions with less frequently seen basic blocks.
     Weight /= SmallestNonZeroCounter(Counters);
-    Weight *= NumberOfUncoveredBlocks(Counters) + 1;  // make sure it's not 0.
+    // Give higher weight to functions with the most uncovered basic blocks.
+    Weight *= NumberOfUncoveredBlocks(Counters) + 1;
   }
   return Res;
 }
