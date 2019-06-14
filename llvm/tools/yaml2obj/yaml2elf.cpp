@@ -303,7 +303,8 @@ bool ELFState<ELFT>::initSectionHeaders(ELFState<ELFT> &State,
 
     SHeader.sh_name = DotShStrtab.getOffset(SecName);
     SHeader.sh_type = Sec->Type;
-    SHeader.sh_flags = Sec->Flags;
+    if (Sec->Flags)
+      SHeader.sh_flags = *Sec->Flags;
     SHeader.sh_addr = Sec->Address;
     SHeader.sh_addralign = Sec->AddressAlign;
 
@@ -424,8 +425,10 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
     SHeader.sh_link = Link;
   }
 
-  if (!IsStatic)
-    SHeader.sh_flags |= ELF::SHF_ALLOC;
+  if (YAMLSec && YAMLSec->Flags)
+    SHeader.sh_flags = *YAMLSec->Flags;
+  else if (!IsStatic)
+    SHeader.sh_flags = ELF::SHF_ALLOC;
 
   // If the symbol table section is explicitly described in the YAML
   // then we should set the fields requested.
@@ -481,14 +484,16 @@ void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
   if (YAMLSec && YAMLSec->EntSize)
     SHeader.sh_entsize = *YAMLSec->EntSize;
 
+  if (YAMLSec && YAMLSec->Flags)
+    SHeader.sh_flags = *YAMLSec->Flags;
+  else if (Name == ".dynstr")
+    SHeader.sh_flags = ELF::SHF_ALLOC;
+
   // If .dynstr section is explicitly described in the YAML
   // then we want to use its section address.
-  if (Name == ".dynstr") {
-    if (YAMLSec)
-      SHeader.sh_addr = YAMLSec->Address;
-    // We assume that .dynstr is always allocatable.
-    SHeader.sh_flags |= ELF::SHF_ALLOC;
-  }
+  // TODO: Allow this for any explicitly described section.
+  if (YAMLSec && Name == ".dynstr")
+    SHeader.sh_addr = YAMLSec->Address;
 }
 
 template <class ELFT>
