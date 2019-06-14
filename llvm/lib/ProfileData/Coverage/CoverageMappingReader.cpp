@@ -616,7 +616,7 @@ BinaryCoverageReader::createCoverageReaderFromBuffer(
       return std::move(E);
   } else
     return make_error<CoverageMapError>(coveragemap_error::malformed);
-  return Reader;
+  return std::move(Reader);
 }
 
 static Expected<std::unique_ptr<BinaryCoverageReader>>
@@ -741,7 +741,7 @@ BinaryCoverageReader::create(
     if (!ReaderOrErr)
       return ReaderOrErr.takeError();
     Readers.push_back(std::move(ReaderOrErr.get()));
-    return Readers;
+    return std::move(Readers);
   }
 
   auto BinOrErr = createBinary(ObjectBuffer);
@@ -795,14 +795,14 @@ BinaryCoverageReader::create(
       for (auto &Buffer : Ar->takeThinBuffers())
         ObjectFileBuffers.push_back(std::move(Buffer));
 
-    return Readers;
+    return std::move(Readers);
   }
 
   auto ReaderOrErr = loadBinaryFormat(std::move(Bin), Arch);
   if (!ReaderOrErr)
     return ReaderOrErr.takeError();
   Readers.push_back(std::move(ReaderOrErr.get()));
-  return Readers;
+  return std::move(Readers);
 }
 
 Error BinaryCoverageReader::readNextRecord(CoverageMappingRecord &Record) {
