@@ -97,7 +97,6 @@
 #ifndef LLVM_TRANSFORMS_IPO_ATTRIBUTOR_H
 #define LLVM_TRANSFORMS_IPO_ATTRIBUTOR_H
 
-#include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/PassManager.h"
@@ -483,8 +482,7 @@ struct BooleanState : public IntegerState {
 /// NOTE: If the state obtained via getState() is INVALID, thus if
 ///       AbstractAttribute::getState().isValidState() returns false, no
 ///       information provided by the methods of this class should be used.
-/// NOTE: The Attributor currently runs as a call graph SCC pass. Partially to
-///       this *current* choice there are certain limitations to what we can do.
+/// NOTE: The Attributor currently has certain limitations to what we can do.
 ///       As a general rule of thumb, "concrete" abstract attributes should *for
 ///       now* only perform "backward" information propagation. That means
 ///       optimistic information obtained through abstract attributes should
