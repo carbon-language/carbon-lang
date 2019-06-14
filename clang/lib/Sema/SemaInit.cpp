@@ -3282,6 +3282,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_QualificationConversionXValue:
   case SK_QualificationConversionLValue:
   case SK_AtomicConversion:
+  case SK_LValueToRValue:
   case SK_ListInitialization:
   case SK_UnwrapInitList:
   case SK_RewrapInitList:
@@ -3461,6 +3462,15 @@ void InitializationSequence::AddQualificationConversionStep(QualType Ty,
 void InitializationSequence::AddAtomicConversionStep(QualType Ty) {
   Step S;
   S.Kind = SK_AtomicConversion;
+  S.Type = Ty;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddLValueToRValueStep(QualType Ty) {
+  assert(!Ty.hasQualifiers() && "rvalues may not have qualifiers");
+
+  Step S;
+  S.Kind = SK_LValueToRValue;
   S.Type = Ty;
   Steps.push_back(S);
 }
@@ -7495,6 +7505,7 @@ ExprResult InitializationSequence::Perform(Sema &S,
   case SK_QualificationConversionXValue:
   case SK_QualificationConversionRValue:
   case SK_AtomicConversion:
+  case SK_LValueToRValue:
   case SK_ConversionSequence:
   case SK_ConversionSequenceNoNarrowing:
   case SK_ListInitialization:
@@ -7763,6 +7774,14 @@ ExprResult InitializationSequence::Perform(Sema &S,
       assert(CurInit.get()->isRValue() && "cannot convert glvalue to atomic");
       CurInit = S.ImpCastExprToType(CurInit.get(), Step->Type,
                                     CK_NonAtomicToAtomic, VK_RValue);
+      break;
+    }
+
+    case SK_LValueToRValue: {
+      assert(CurInit.get()->isGLValue() && "cannot load from a prvalue");
+      CurInit = ImplicitCastExpr::Create(S.Context, Step->Type,
+                                         CK_LValueToRValue, CurInit.get(),
+                                         /*BasePath=*/nullptr, VK_RValue);
       break;
     }
 
@@ -8985,6 +9004,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_AtomicConversion:
       OS << "non-atomic-to-atomic conversion";
+      break;
+
+    case SK_LValueToRValue:
+      OS << "load (lvalue to rvalue)";
       break;
 
     case SK_ConversionSequence:
