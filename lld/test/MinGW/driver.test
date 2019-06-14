@@ -57,6 +57,8 @@ MLLVM: -mllvm:bar -mllvm:baz
 
 RUN: ld.lld -### foo.o -m i386pep -subsystem console | FileCheck -check-prefix=SUBSYSTEM %s
 RUN: ld.lld -### foo.o -m i386pep --subsystem console | FileCheck -check-prefix=SUBSYSTEM %s
+RUN: ld.lld -### foo.o -m i386pep -subsystem=console | FileCheck -check-prefix=SUBSYSTEM %s
+RUN: ld.lld -### foo.o -m i386pep --subsystem=console | FileCheck -check-prefix=SUBSYSTEM %s
 SUBSYSTEM: -subsystem:console
 
 RUN: ld.lld -### foo.o -m i386pep --major-os-version 7 --minor-os-version 8 | FileCheck -check-prefix=SUBSYSTEM_VERSION %s

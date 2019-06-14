@@ -57,6 +57,7 @@ def out_implib_eq: Joined<["--"], "out-implib=">, Alias<out_implib>;
 def output_def: S<"output-def">, HelpText<"Output def file">;
 def shared: F<"shared">, HelpText<"Build a shared object">;
 def subs: S<"subsystem">, HelpText<"Specify subsystem">;
+def subs_eq: J<"subsystem=">, Alias<subs>;
 def stack: S<"stack">;
 def strip_all: F<"strip-all">,
     HelpText<"Omit all symbol information from the output binary">;
