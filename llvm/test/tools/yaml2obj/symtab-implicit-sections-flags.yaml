@@ -27,7 +27,7 @@ Sections:
   - Name: .symtab
     Type: SHT_SYMTAB
   - Name: .dynsym
-    Type: SHT_SYMTAB
+    Type: SHT_DYNSYM
 
 ## Check we can set arbitrary flags for .symtab/.dynsym.
 
@@ -57,7 +57,7 @@ Sections:
     Type:  SHT_SYMTAB
     Flags: [ SHF_ALLOC, SHF_STRINGS ]
   - Name:  .dynsym
-    Type:  SHT_SYMTAB
+    Type:  SHT_DYNSYM
     Flags: [ SHF_STRINGS ]
 
 ## Check no flags are set by default for .symtab when it is not

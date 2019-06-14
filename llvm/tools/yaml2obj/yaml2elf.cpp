@@ -403,7 +403,11 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
 
   zero(SHeader);
   SHeader.sh_name = DotShStrtab.getOffset(IsStatic ? ".symtab" : ".dynsym");
-  SHeader.sh_type = IsStatic ? ELF::SHT_SYMTAB : ELF::SHT_DYNSYM;
+
+  if (YAMLSec)
+    SHeader.sh_type = YAMLSec->Type;
+  else
+    SHeader.sh_type = IsStatic ? ELF::SHT_SYMTAB : ELF::SHT_DYNSYM;
 
   if (RawSec && !RawSec->Link.empty()) {
     // If the Link field is explicitly defined in the document,
@@ -467,7 +471,7 @@ void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
                                              ELFYAML::Section *YAMLSec) {
   zero(SHeader);
   SHeader.sh_name = DotShStrtab.getOffset(Name);
-  SHeader.sh_type = ELF::SHT_STRTAB;
+  SHeader.sh_type = YAMLSec ? YAMLSec->Type : ELF::SHT_STRTAB;
   SHeader.sh_addralign = YAMLSec ? (uint64_t)YAMLSec->AddressAlign : 1;
 
   ELFYAML::RawContentSection *RawSec =
