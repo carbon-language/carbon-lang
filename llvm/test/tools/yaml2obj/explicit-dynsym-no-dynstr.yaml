@@ -19,4 +19,4 @@ FileHeader:
   Machine: EM_X86_64
 Sections:
   - Name: .dynsym
-    Type: SHT_DYNSYM
+    Type: SHT_SYMTAB
