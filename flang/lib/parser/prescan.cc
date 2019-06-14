@@ -21,6 +21,7 @@
 #include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
+#include <iostream>  // TODO pmk rm
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -168,12 +169,12 @@ void Prescanner::Statement() {
   Provenance newlineProvenance{GetCurrentProvenance()};
   if (std::optional<TokenSequence> preprocessed{
           preprocessor_.MacroReplacement(tokens, *this)}) {
-    // Reprocess the preprocessed line.
+    // Reprocess the preprocessed line.  Append a newline temporarily.
     preprocessed->PutNextTokenChar('\n', newlineProvenance);
     preprocessed->CloseToken();
     const char *ppd{preprocessed->ToCharBlock().begin()};
     LineClassification ppl{ClassifyLine(ppd)};
-    preprocessed->ReopenLastToken();  // remove the newline
+    preprocessed->RemoveLastToken();  // remove the newline
     switch (ppl.kind) {
     case LineClassification::Kind::Comment: break;
     case LineClassification::Kind::IncludeLine:
@@ -183,7 +184,7 @@ void Prescanner::Statement() {
     case LineClassification::Kind::IncludeDirective:
     case LineClassification::Kind::PreprocessorDirective:
       Say(preprocessed->GetProvenanceRange(),
-          "preprocessed line resembles a preprocessor directive"_en_US);
+          "Preprocessed line resembles a preprocessor directive"_en_US);
       preprocessed->ToLowerCase().Emit(cooked_);
       break;
     case LineClassification::Kind::CompilerDirective:
@@ -483,12 +484,12 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     preventHollerith_ = false;
   } else if (IsLegalInIdentifier(*at_)) {
     do {
-    } while (IsLegalInIdentifier(
-        EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_))));
+    } while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_)));
     if (*at_ == '\'' || *at_ == '"') {
       // Look for prefix of NC'...' legacy PGI "Kanji" NCHARACTER literal
       CharBlock prefix{tokens.CurrentOpenToken()};
-      bool isKanji{prefix.size() == 2 && prefix[0] == 'n' && prefix[1] == 'c'};
+      bool isKanji{prefix.size() == 2 && ToLowerCaseLetter(prefix[0]) == 'n' &&
+          ToLowerCaseLetter(prefix[1]) == 'c'};
       QuotedCharacterLiteral(tokens, start, isKanji);
       preventHollerith_ = false;
     } else {

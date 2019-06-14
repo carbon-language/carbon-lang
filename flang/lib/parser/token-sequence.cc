@@ -61,6 +61,16 @@ std::size_t TokenSequence::SkipBlanks(std::size_t at) const {
   return tokens;  // even if at > tokens
 }
 
+void TokenSequence::RemoveLastToken() {
+  CHECK(!start_.empty());
+  CHECK(nextStart_ > start_.back());
+  std::size_t bytes{nextStart_ - start_.back()};
+  nextStart_ = start_.back();
+  start_.pop_back();
+  char_.erase(char_.begin() + nextStart_, char_.end());
+  provenances_.RemoveLastBytes(bytes);
+}
+
 void TokenSequence::Put(const TokenSequence &that) {
   if (nextStart_ < char_.size()) {
     start_.push_back(nextStart_);

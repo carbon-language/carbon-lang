@@ -186,31 +186,28 @@ public:
         x.u);
   }
   void Unparse(const CharLiteralConstant &x) {  // R724
+    Encoding encoding{encoding_};
     if (const auto &k{std::get<std::optional<KindParam>>(x.t)}) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");
-        std::u16string jis;
-        for (char32_t ch : DecodeUTF_8(std::get<std::string>(x.t))) {
-          jis += static_cast<char16_t>(ch);
-        }
-        Put(QuoteCharacterLiteral(jis, backslashEscapes_, Encoding::EUC_JP));
+        encoding = Encoding::EUC_JP;
       } else {
         Walk(*k), Put('_');
-        Put(QuoteCharacterLiteral(
-            std::get<std::string>(x.t), backslashEscapes_));
       }
-    } else {
-      Put(QuoteCharacterLiteral(std::get<std::string>(x.t), backslashEscapes_));
     }
+    Put(QuoteCharacterLiteral(
+        DecodeUTF_8(std::get<std::string>(x.t)), backslashEscapes_, encoding));
   }
-  void Before(const HollerithLiteralConstant &x) {
-    if (std::optional<std::size_t> chars{
-            CountCharacters(x.v.data(), x.v.size(), encoding_)}) {
-      Unparse(*chars);
-    } else {
-      Unparse(x.v.size());
-    }
+  void Unparse(const HollerithLiteralConstant &x) {
+    std::u32string ucs{DecodeUTF_8(x.v)};
+    Unparse(ucs.size());
     Put('H');
+    for (char32_t ch : DecodeUTF_8(x.v)) {
+      EncodedCharacter encoded{EncodeCharacter(encoding_, ch)};
+      for (int j{0}; j < encoded.bytes; ++j) {
+        Put(encoded.buffer[j]);
+      }
+    }
   }
   void Unparse(const LogicalLiteralConstant &x) {  // R725
     Put(std::get<bool>(x.t) ? ".TRUE." : ".FALSE.");

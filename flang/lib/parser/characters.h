@@ -125,7 +125,7 @@ inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   switch (ch) {
-  case '\a': return 'a';
+    //  case '\a': return 'a';  // PGF90 doesn't know \a
   case '\b': return 'b';
   case '\f': return 'f';
   case '\n': return 'n';
@@ -140,7 +140,8 @@ inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
 }
 
 struct EncodedCharacter {
-  char buffer[4];
+  static constexpr int maxEncodingBytes{6};
+  char buffer[maxEncodingBytes];
   int bytes{0};
 };
 
@@ -155,7 +156,7 @@ template<typename NORMAL, typename INSERTED>
 void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
     bool backslashEscapes = true, Encoding encoding = Encoding::UTF_8) {
   auto emitOneChar{[&](std::uint8_t ch) {
-    if (ch < ' ' || ch == '\\' || (backslashEscapes && ch >= 0x7f)) {
+    if (ch < ' ' || (backslashEscapes && (ch == '\\' || ch >= 0x7f))) {
       insert('\\');
       if (std::optional<char> escape{BackslashEscapeChar(ch)}) {
         emit(*escape);
@@ -190,9 +191,7 @@ std::string QuoteCharacterLiteral(const std::u16string &,
 std::string QuoteCharacterLiteral(const std::u32string &,
     bool backslashEscapes = true, Encoding = Encoding::UTF_8);
 
-std::optional<int> UTF_8CharacterBytes(const char *);
-std::optional<int> EUC_JPCharacterBytes(const char *);
-std::optional<int> CountCharacters(const char *, std::size_t bytes, Encoding);
+int UTF_8CharacterBytes(const char *);
 
 struct DecodedCharacter {
   char32_t codepoint{0};

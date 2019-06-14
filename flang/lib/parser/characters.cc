@@ -20,82 +20,19 @@
 
 namespace Fortran::parser {
 
-std::optional<int> UTF_8CharacterBytes(const char *p) {
+int UTF_8CharacterBytes(const char *p) {
   if ((*p & 0x80) == 0) {
     return 1;
-  }
-  if ((*p & 0xf8) == 0xf0) {
-    if ((*p & 0x07) != 0 && (p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80 &&
-        (p[3] & 0xc0) == 0x80) {
-      return 4;
-    }
-  } else if ((*p & 0xf0) == 0xe0) {
-    if ((*p & 0x0f) != 0 && (p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80) {
-      return 3;
-    }
   } else if ((*p & 0xe0) == 0xc0) {
-    if ((*p & 0x1f) != 0 && (p[1] & 0xc0) == 0x80) {
-      return 2;
-    }
-  }
-  return std::nullopt;
-}
-
-std::optional<int> EUC_JPCharacterBytes(const char *p) {
-  int b1 = *p & 0xff;
-  if (b1 <= 0x7f) {
-    return 1;
-  }
-  if (b1 >= 0xa0 && b1 <= 0xfe) {
-    int b2 = p[1] & 0xff;
-    if (b2 >= 0xa0 && b2 <= 0xfe) {
-      // JIS X 0208 (code set 1)
-      return 2;
-    }
-  } else if (b1 == 0x8e) {
-    int b2 = p[1] & 0xff;
-    if (b2 >= 0xa0 && b2 <= 0xdf) {
-      // upper half JIS 0201 (half-width kana, code set 2)
-      return 2;
-    }
-  } else if (b1 == 0x8f) {
-    int b2 = p[1] & 0xff;
-    int b3 = p[2] & 0xff;
-    if (b2 >= 0xa0 && b2 <= 0xfe && b3 >= 0xa0 && b3 <= 0xfe) {
-      // JIS X 0212 (code set 3)
-      return 3;
-    }
-  }
-  return std::nullopt;
-}
-
-static std::optional<int> One(const char *) { return 1; }
-
-static std::optional<int> (*CharacterCounter(Encoding encoding))(const char *) {
-  switch (encoding) {
-  case Encoding::UTF_8: return UTF_8CharacterBytes;
-  case Encoding::EUC_JP: return EUC_JPCharacterBytes;
-  default: return One;
-  }
-}
-
-std::optional<int> CountCharacters(
-    const char *p, std::size_t bytes, Encoding encoding) {
-  std::size_t chars{0};
-  const char *limit{p + bytes};
-  std::optional<int> (*cbf)(const char *){CharacterCounter(encoding)};
-  while (p < limit) {
-    if (std::optional<int> cb{cbf(p)}) {
-      p += *cb;
-      ++chars;
-    } else {
-      return std::nullopt;
-    }
-  }
-  if (p == limit) {
-    return chars;
+    return 2;
+  } else if ((*p & 0xf0) == 0xe0) {
+    return 3;
+  } else if ((*p & 0xf8) == 0xf0) {
+    return 4;
+  } else if ((*p & 0xfc) == 0xf8) {
+    return 5;
   } else {
-    return std::nullopt;
+    return 6;
   }
 }
 
@@ -131,10 +68,10 @@ std::string QuoteCharacterLiteral(
   return QuoteCharacterLiteralHelper(str, backslashEscapes, encoding);
 }
 
-EncodedCharacter EncodeLATIN_1(char32_t codepoint) {
-  CHECK(codepoint <= 0xff);
+EncodedCharacter EncodeLATIN_1(char32_t ucs) {
+  CHECK(ucs <= 0xff);
   EncodedCharacter result;
-  result.buffer[0] = codepoint;
+  result.buffer[0] = ucs;
   result.bytes = 1;
   return result;
 }
@@ -154,39 +91,68 @@ EncodedCharacter EncodeUTF_8(char32_t codepoint) {
     result.buffer[1] = 0x80 | ((codepoint >> 6) & 0x3f);
     result.buffer[2] = 0x80 | (codepoint & 0x3f);
     result.bytes = 3;
-  } else {
-    // UCS actually only goes up to 0x10ffff but the
-    // UTF-8 encoding handles 21 bits.
-    CHECK(codepoint <= 0x1fffff);
+  } else if (codepoint <= 0x1fffff) {
+    // UCS actually only goes up to 0x10ffff, but the
+    // UTF-8 encoding can handle 32 bits.
     result.buffer[0] = 0xf0 | (codepoint >> 18);
     result.buffer[1] = 0x80 | ((codepoint >> 12) & 0x3f);
     result.buffer[2] = 0x80 | ((codepoint >> 6) & 0x3f);
     result.buffer[3] = 0x80 | (codepoint & 0x3f);
     result.bytes = 4;
+  } else if (codepoint <= 0x3ffffff) {
+    result.buffer[0] = 0xf8 | (codepoint >> 24);
+    result.buffer[1] = 0x80 | ((codepoint >> 18) & 0x3f);
+    result.buffer[2] = 0x80 | ((codepoint >> 12) & 0x3f);
+    result.buffer[3] = 0x80 | ((codepoint >> 6) & 0x3f);
+    result.buffer[4] = 0x80 | (codepoint & 0x3f);
+    result.bytes = 5;
+  } else {
+    result.buffer[0] = 0xfc | (codepoint >> 30);
+    result.buffer[1] = 0x80 | ((codepoint >> 24) & 0x3f);
+    result.buffer[2] = 0x80 | ((codepoint >> 18) & 0x3f);
+    result.buffer[3] = 0x80 | ((codepoint >> 12) & 0x3f);
+    result.buffer[4] = 0x80 | ((codepoint >> 6) & 0x3f);
+    result.buffer[5] = 0x80 | (codepoint & 0x3f);
+    result.bytes = 6;
   }
   return result;
 }
 
-EncodedCharacter EncodeEUC_JP(char32_t codepoint) {
-  // Assume JIS X 0208 (TODO: others)
-  CHECK(codepoint <= 0x6e6e);
+// These are placeholders; the actual mapping is complicated.
+static char32_t JIS_0208ToUCS(char32_t jis) { return jis | 0x80000; }
+static char32_t JIS_0212ToUCS(char32_t jis) { return jis | 0x90000; }
+static bool IsUCSJIS_0212(char32_t ucs) { return (ucs & 0x90000) == 0x90000; }
+static char32_t UCSToJIS(char32_t ucs) { return ucs & 0xffff; }
+
+EncodedCharacter EncodeEUC_JP(char32_t ucs) {
   EncodedCharacter result;
-  if (codepoint <= 0x7f) {
-    result.buffer[0] = codepoint;
+  if (ucs <= 0x7f) {
+    result.buffer[0] = ucs;
     result.bytes = 1;
-  } else {
-    result.buffer[0] = 0x80 | (codepoint >> 8);
-    result.buffer[1] = 0x80 | (codepoint & 0x7f);
+  } else if (ucs <= 0xff) {
+    result.buffer[0] = 0x8e;  // JIS X 0201
+    result.buffer[1] = ucs;
+    result.bytes = 2;
+  } else if (IsUCSJIS_0212(ucs)) {  // JIS X 0212
+    char32_t jis{UCSToJIS(ucs)};
+    result.buffer[0] = 0x8f;
+    result.buffer[1] = 0x80 ^ (jis >> 8);
+    result.buffer[2] = 0x80 ^ jis;
+    result.bytes = 3;
+  } else {  // JIS X 0208
+    char32_t jis{UCSToJIS(ucs)};
+    result.buffer[0] = 0x80 ^ (jis >> 8);
+    result.buffer[1] = 0x80 ^ jis;
     result.bytes = 2;
   }
   return result;
 }
 
-EncodedCharacter EncodeCharacter(Encoding encoding, char32_t codepoint) {
+EncodedCharacter EncodeCharacter(Encoding encoding, char32_t ucs) {
   switch (encoding) {
-  case Encoding::LATIN_1: return EncodeLATIN_1(codepoint);
-  case Encoding::UTF_8: return EncodeUTF_8(codepoint);
-  case Encoding::EUC_JP: return EncodeEUC_JP(codepoint);
+  case Encoding::LATIN_1: return EncodeLATIN_1(ucs);
+  case Encoding::UTF_8: return EncodeUTF_8(ucs);
+  case Encoding::EUC_JP: return EncodeEUC_JP(ucs);
   default: CRASH_NO_CASE;
   }
 }
@@ -221,19 +187,18 @@ DecodedCharacter DecodeEUC_JPCharacter(const char *cp, std::size_t bytes) {
   char32_t ch{*p};
   if (ch <= 0x7f) {
     return {ch, 1};
-  } else if (ch >= 0xa0 && ch <= 0xfe && bytes >= 2 && p[1] >= 0xa0 &&
-      p[1] <= 0xfe) {
-    ch = ((ch << 8) | p[1]) & 0x7f7f;  // JIS X 0208
-    return {ch, 2};
-  } else if (ch == 0x8e && bytes >= 2 && p[1] >= 0xa0 && p[1] <= 0xdf) {
-    return {p[1], 2};  // JIS X 0201
-  } else if (ch == 0x8f && bytes >= 3 && p[1] >= 0xa0 && p[1] <= 0xfe &&
-      p[2] >= 0xa0 && p[2] <= 0xfe) {
-    ch = ((p[1] << 8) | p[1]) & 0x7f7f;  // JIS X 0212
-    return {ch, 3};
-  } else {
-    return {};  // not valid EUC_JP
+  } else if (ch == 0x8e) {
+    if (bytes >= 2) {
+      return {p[1], 2};  // JIS X 0201
+    }
+  } else if (ch == 0x8f) {  // JIS X 0212
+    if (bytes >= 3) {
+      return {JIS_0212ToUCS(((p[1] << 8) | p[2]) ^ 0x8080), 3};
+    }
+  } else if (bytes >= 2) {  // assume JIS X 0208
+    return {JIS_0208ToUCS(((ch << 8) | p[1]) ^ 0x8080), 2};
   }
+  return {};
 }
 
 DecodedCharacter DecodeLATIN1Character(const char *cp) {
@@ -267,10 +232,10 @@ static DecodedCharacter DecodeEscapedCharacter(
 
 static DecodedCharacter DecodeEscapedCharacters(
     Encoding encoding, const char *cp, std::size_t bytes) {
-  char buffer[4];
-  int count[4];
+  char buffer[EncodedCharacter::maxEncodingBytes];
+  int count[EncodedCharacter::maxEncodingBytes];
   std::size_t at{0}, len{0};
-  for (; len < 4 && at < bytes; ++len) {
+  for (; len < EncodedCharacter::maxEncodingBytes && at < bytes; ++len) {
     DecodedCharacter code{DecodeEscapedCharacter(cp + at, bytes - at)};
     buffer[len] = code.codepoint;
     at += code.bytes;
@@ -280,7 +245,7 @@ static DecodedCharacter DecodeEscapedCharacters(
   if (code.bytes > 0) {
     code.bytes = count[code.bytes - 1];
   } else {
-    code.codepoint = static_cast<unsigned char>(buffer[0]);
+    code.codepoint = buffer[0] & 0xff;
     code.bytes = count[0];
   }
   return code;

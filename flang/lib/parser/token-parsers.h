@@ -515,23 +515,18 @@ struct HollerithLiteral {
     }
     std::string content;
     for (auto j{*charCount}; j-- > 0;) {
-      if (std::optional<int> chBytes{
-              UTF_8CharacterBytes(state.GetLocation())}) {
-        for (int bytes{*chBytes}; bytes > 0; --bytes) {
-          if (std::optional<const char *> at{nextCh.Parse(state)}) {
-            if (*chBytes == 1 && !isprint(**at)) {
-              state.Say(start, "Bad character in Hollerith"_err_en_US);
-              return std::nullopt;
-            }
-            content += **at;
-          } else {
-            state.Say(start, "Insufficient characters in Hollerith"_err_en_US);
+      int chBytes{UTF_8CharacterBytes(state.GetLocation())};
+      for (int bytes{chBytes}; bytes > 0; --bytes) {
+        if (std::optional<const char *> at{nextCh.Parse(state)}) {
+          if (chBytes == 1 && !isprint(**at)) {
+            state.Say(start, "Bad character in Hollerith"_err_en_US);
             return std::nullopt;
           }
+          content += **at;
+        } else {
+          state.Say(start, "Insufficient characters in Hollerith"_err_en_US);
+          return std::nullopt;
         }
-      } else {
-        state.Say(start, "Bad multi-byte character in Hollerith"_err_en_US);
-        return std::nullopt;
       }
     }
     return content;

@@ -37,7 +37,7 @@ using preStatementType =
 using TypedExprAsFortran =
     std::function<void(std::ostream &, const evaluate::GenericExprWrapper &)>;
 
-/// Convert parsed program to out as Fortran.
+// Converts parsed program to out as Fortran.
 void Unparse(std::ostream &out, const Program &program,
     Encoding encoding = Encoding::UTF_8, bool capitalizeKeywords = true,
     bool backslashEscapes = true, preStatementType *preStatement = nullptr,
