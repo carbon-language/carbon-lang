@@ -36,8 +36,7 @@ __attribute__((noinline)) void f0(IN in) {
   }
 }
 
-__attribute__((noinline)) void fD(IN in) { f0(in); }
-__attribute__((noinline)) void fC(IN in) { if (in[2] == 'C') fD(in); }
+__attribute__((noinline)) void fC(IN in) { if (in[2] == 'C') f0(in); }
 __attribute__((noinline)) void fB(IN in) { if (in[1] == 'B') fC(in); }
 __attribute__((noinline)) void fA(IN in) { if (in[0] == 'A') fB(in); }
 
