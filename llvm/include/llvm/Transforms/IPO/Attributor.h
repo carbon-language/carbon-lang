@@ -367,6 +367,90 @@ struct AbstractState {
   virtual void indicatePessimisticFixpoint() = 0;
 };
 
+/// Simple state with integers encoding.
+///
+/// The interface ensures that the assumed bits are always a subset of the known
+/// bits. Users can only add known bits and, except through adding known bits,
+/// they can only remove assumed bits. This should guarantee monotoniticy and
+/// thereby the existence of a fixpoint (if used corretly). The fixpoint is
+/// reached when the assumed and known state/bits are equal. Users can
+/// force/inidicate a fixpoint. If an optimistic one is indicated, the known
+/// state will catch up with the assumed one, for a pessimistic fixpoint it is
+/// the other way around.
+struct IntegerState : public AbstractState {
+  /// Undrlying integer type, we assume 32 bits to be enough.
+  using base_t = uint32_t;
+
+  /// Initialize the (best) state.
+  IntegerState(base_t BestState = ~0) : Assumed(BestState) {}
+
+  /// Return the worst possible representable state.
+  static constexpr base_t getWorstState() { return 0; }
+
+  /// See AbstractState::isValidState()
+  /// NOTE: For now we simply pretend that the worst possible state is invalid.
+  bool isValidState() const override { return Assumed != getWorstState(); }
+
+  /// See AbstractState::isAtFixpoint()
+  bool isAtFixpoint() const override { return Assumed == Known; }
+
+  /// See AbstractState::indicateOptimisticFixpoint(...)
+  void indicateOptimisticFixpoint() override { Known = Assumed; }
+
+  /// See AbstractState::indicatePessimisticFixpoint(...)
+  void indicatePessimisticFixpoint() override { Assumed = Known; }
+
+  /// Return the known state encoding
+  base_t getKnown() const { return Known; }
+
+  /// Return the assumed state encoding.
+  base_t getAssumed() const { return Assumed; }
+
+  /// Return true if the bits set in \p BitsEncoding are "known bits".
+  bool isKnown(base_t BitsEncoding) const {
+    return (Known & BitsEncoding) == BitsEncoding;
+  }
+
+  /// Return true if the bits set in \p BitsEncoding are "assumed bits".
+  bool isAssumed(base_t BitsEncoding) const {
+    return (Assumed & BitsEncoding) == BitsEncoding;
+  }
+
+  /// Add the bits in \p BitsEncoding to the "known bits".
+  IntegerState &addKnownBits(base_t Bits) {
+    // Make sure we never miss any "known bits".
+    Assumed |= Bits;
+    Known |= Bits;
+    return *this;
+  }
+
+  /// Remove the bits in \p BitsEncoding from the "assumed bits" if not known.
+  IntegerState &removeAssumedBits(base_t BitsEncoding) {
+    // Make sure we never loose any "known bits".
+    Assumed = (Assumed & ~BitsEncoding) | Known;
+    return *this;
+  }
+
+  /// Keep only "assumed bits" also set in \p BitsEncoding but all known ones.
+  IntegerState &intersectAssumedBits(base_t BitsEncoding) {
+    // Make sure we never loose any "known bits".
+    Assumed = (Assumed & BitsEncoding) | Known;
+    return *this;
+  }
+
+private:
+  /// The known state encoding in an integer of type base_t.
+  base_t Known = getWorstState();
+
+  /// The assumed state encoding in an integer of type base_t.
+  base_t Assumed;
+};
+
+/// Simple wrapper for a single bit (boolean) state.
+struct BooleanState : public IntegerState {
+  BooleanState() : IntegerState(1){};
+};
+
 /// Base struct for all "concrete attribute" deductions.
 ///
 /// The abstract attribute is a minimal interface that allows the Attributor to
