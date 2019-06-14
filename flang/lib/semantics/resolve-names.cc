@@ -41,6 +41,7 @@
 #include <memory>
 #include <ostream>
 #include <set>
+#include <stack>
 
 namespace Fortran::semantics {
 
@@ -572,11 +573,12 @@ public:
   void Post(const parser::EndInterfaceStmt &);
   bool Pre(const parser::GenericSpec &);
   bool Pre(const parser::ProcedureStmt &);
+  bool Pre(const parser::GenericStmt &);
   void Post(const parser::GenericStmt &);
 
-  bool inInterfaceBlock() const { return inInterfaceBlock_; }
-  bool isGeneric() const { return genericSymbol_ != nullptr; }
-  bool isAbstract() const { return isAbstract_; }
+  bool inInterfaceBlock() const;
+  bool isGeneric() const;
+  bool isAbstract() const;
 
 protected:
   GenericDetails &GetGenericDetails();
@@ -584,9 +586,18 @@ protected:
   void CheckGenericProcedures(Symbol &);
 
 private:
-  bool inInterfaceBlock_{false};  // set when in interface block
-  bool isAbstract_{false};  // set when in abstract interface block
-  Symbol *genericSymbol_{nullptr};  // set in generic interface block
+  // A new GenericInfo is pushed for each interface block and generic stmt
+  struct GenericInfo {
+    GenericInfo(bool isInterface, bool isAbstract = false)
+      : isInterface{isInterface}, isAbstract{isAbstract} {}
+    bool isInterface;  // in interface block
+    bool isAbstract;  // in abstract interface block
+    Symbol *symbol{nullptr};  // the generic symbol being defined
+  };
+  std::stack<GenericInfo> genericInfo_;
+  const GenericInfo &GetGenericInfo() const { return genericInfo_.top(); }
+  void SetGenericSymbol(Symbol &symbol) { genericInfo_.top().symbol = &symbol; }
+
   using ProcedureKind = parser::ProcedureStmt::Kind;
   // mapping of generic to its specific proc names and kinds
   std::multimap<Symbol *, std::pair<const parser::Name *, ProcedureKind>>
@@ -1965,15 +1976,13 @@ void ModuleVisitor::ApplyDefaultAccess() {
 // InterfaceVistor implementation
 
 bool InterfaceVisitor::Pre(const parser::InterfaceStmt &x) {
-  inInterfaceBlock_ = true;
-  isAbstract_ = std::holds_alternative<parser::Abstract>(x.u);
+  bool isAbstract{std::holds_alternative<parser::Abstract>(x.u)};
+  genericInfo_.emplace(/*isInterface*/ true, isAbstract);
   return true;
 }
 
 void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
-  genericSymbol_ = nullptr;
-  inInterfaceBlock_ = false;
-  isAbstract_ = false;
+  genericInfo_.pop();
 }
 
 // Create a symbol in genericSymbol_ for this GenericSpec.
@@ -1985,57 +1994,58 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
         "Logical constant '%s' may not be used as a defined operator"_err_en_US);
     return false;
   }
-  genericSymbol_ = currScope().FindSymbol(symbolName);
-  if (genericSymbol_) {
-    if (genericSymbol_->has<DerivedTypeDetails>()) {
+  Symbol *symbol{currScope().FindSymbol(symbolName)};
+  if (symbol) {
+    if (symbol->has<DerivedTypeDetails>()) {
       // A generic and derived type with same name: create a generic symbol
       // and save derived type in it.
-      CHECK(genericSymbol_->scope()->symbol() == genericSymbol_);
+      CHECK(symbol->scope()->symbol() == symbol);
       GenericDetails details;
-      details.set_derivedType(*genericSymbol_);
-      EraseSymbol(*genericSymbol_);
-      genericSymbol_ = &MakeSymbol(symbolName);
-      genericSymbol_->set_details(details);
+      details.set_derivedType(*symbol);
+      EraseSymbol(*symbol);
+      symbol = &MakeSymbol(symbolName);
+      symbol->set_details(details);
       // preserve access attributes
-      genericSymbol_->attrs() |=
+      symbol->attrs() |=
           details.derivedType()->attrs() & Attrs{Attr::PUBLIC, Attr::PRIVATE};
-    } else if (genericSymbol_->has<UnknownDetails>()) {
+    } else if (symbol->has<UnknownDetails>()) {
       // okay
-    } else if (!genericSymbol_->IsSubprogram()) {
-      SayAlreadyDeclared(symbolName, *genericSymbol_);
-      EraseSymbol(*genericSymbol_);
-      genericSymbol_ = nullptr;
-    } else if (genericSymbol_->has<UseDetails>()) {
+    } else if (!symbol->IsSubprogram()) {
+      SayAlreadyDeclared(symbolName, *symbol);
+      EraseSymbol(*symbol);
+      symbol = nullptr;
+    } else if (symbol->has<UseDetails>()) {
       // copy the USEd symbol into this scope so we can modify it
-      const Symbol &ultimate{genericSymbol_->GetUltimate()};
-      EraseSymbol(*genericSymbol_);
-      genericSymbol_ = &CopySymbol(ultimate);
+      const Symbol &ultimate{symbol->GetUltimate()};
+      EraseSymbol(*symbol);
+      symbol = &CopySymbol(ultimate);
       if (const auto *details{ultimate.detailsIf<GenericDetails>()}) {
-        genericSymbol_->set_details(GenericDetails{details->specificProcs()});
+        symbol->set_details(GenericDetails{details->specificProcs()});
       } else if (const auto *details{ultimate.detailsIf<SubprogramDetails>()}) {
-        genericSymbol_->set_details(SubprogramDetails{*details});
+        symbol->set_details(SubprogramDetails{*details});
       } else {
         common::die("unexpected kind of symbol");
       }
     }
   }
-  if (!genericSymbol_ || genericSymbol_->has<UnknownDetails>()) {
-    genericSymbol_ = &MakeSymbol(symbolName);
-    genericSymbol_->set_details(GenericDetails{});
+  if (!symbol || symbol->has<UnknownDetails>()) {
+    symbol = &MakeSymbol(symbolName);
+    symbol->set_details(GenericDetails{});
   }
-  if (genericSymbol_->has<GenericDetails>()) {
+  if (symbol->has<GenericDetails>()) {
     // okay
-  } else if (genericSymbol_->has<SubprogramDetails>() ||
-      genericSymbol_->has<SubprogramNameDetails>()) {
+  } else if (symbol->has<SubprogramDetails>() ||
+      symbol->has<SubprogramNameDetails>()) {
     GenericDetails genericDetails;
-    genericDetails.set_specific(*genericSymbol_);
-    EraseSymbol(*genericSymbol_);
-    genericSymbol_ = &MakeSymbol(symbolName);
-    genericSymbol_->set_details(genericDetails);
+    genericDetails.set_specific(*symbol);
+    EraseSymbol(*symbol);
+    symbol = &MakeSymbol(symbolName);
+    symbol->set_details(genericDetails);
   } else {
     common::die("unexpected kind of symbol");
   }
-  info.Resolve(genericSymbol_);
+  info.Resolve(symbol);
+  SetGenericSymbol(*symbol);
   return false;
 }
 
@@ -2050,31 +2060,43 @@ bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
   return false;
 }
 
+bool InterfaceVisitor::Pre(const parser::GenericStmt &x) {
+  genericInfo_.emplace(/*isInterface*/ false);
+  return true;
+}
 void InterfaceVisitor::Post(const parser::GenericStmt &x) {
   if (auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)}) {
-    genericSymbol_->attrs().set(AccessSpecToAttr(*accessSpec));
+    GetGenericInfo().symbol->attrs().set(AccessSpecToAttr(*accessSpec));
   }
   const auto &names{std::get<std::list<parser::Name>>(x.t)};
   AddSpecificProcs(names, ProcedureKind::Procedure);
-  genericSymbol_ = nullptr;
+  genericInfo_.pop();
 }
 
+bool InterfaceVisitor::inInterfaceBlock() const {
+  return !genericInfo_.empty() && GetGenericInfo().isInterface;
+}
+bool InterfaceVisitor::isGeneric() const {
+  return !genericInfo_.empty() && GetGenericInfo().symbol != nullptr;
+}
+bool InterfaceVisitor::isAbstract() const {
+  return !genericInfo_.empty() && GetGenericInfo().isAbstract;
+}
 GenericDetails &InterfaceVisitor::GetGenericDetails() {
-  CHECK(genericSymbol_);
-  return genericSymbol_->get<GenericDetails>();
+  return GetGenericInfo().symbol->get<GenericDetails>();
 }
 
 void InterfaceVisitor::AddSpecificProcs(
     const std::list<parser::Name> &names, ProcedureKind kind) {
   for (const auto &name : names) {
-    specificProcs_.emplace(genericSymbol_, std::make_pair(&name, kind));
+    specificProcs_.emplace(
+        GetGenericInfo().symbol, std::make_pair(&name, kind));
   }
 }
 
 // By now we should have seen all specific procedures referenced by name in
 // this generic interface. Resolve those names to symbols.
 void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
-  CHECK(!genericSymbol_);
   auto &details{generic.get<GenericDetails>()};
   std::set<SourceName> namesSeen;  // to check for duplicate names
   for (const auto *symbol : details.specificProcs()) {

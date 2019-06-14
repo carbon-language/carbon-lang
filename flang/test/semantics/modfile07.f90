@@ -43,20 +43,6 @@ contains
     integer x,y
   end function
 end
-
-module m2
-  interface foo
-    procedure foo
-  end interface
-  type :: foo
-    real :: x
-  end type
-contains
-  complex function foo()
-    foo = 1.0
-  end
-end
-
 !Expect: m.mod
 !module m
 ! generic::foo=>s1,s2
@@ -90,6 +76,18 @@ end
 ! end
 !end
 
+module m2
+  interface foo
+    procedure foo
+  end interface
+  type :: foo
+    real :: x
+  end type
+contains
+  complex function foo()
+    foo = 1.0
+  end
+end
 !Expect: m2.mod
 !module m2
 ! generic::foo=>foo
@@ -100,4 +98,37 @@ end
 ! function foo()
 !  complex(4)::foo
 ! end
+!end
+
+! Test interface nested inside another interface
+module m3
+  interface g
+    subroutine s1(f)
+      interface
+        real function f(x)
+          interface
+            subroutine x()
+            end subroutine
+          end interface
+        end function
+      end interface
+    end subroutine
+  end interface
+end
+!Expect: m3.mod
+!module m3
+! generic::g=>s1
+! interface
+!  subroutine s1(f)
+!   interface
+!    function f(x)
+!     real(4)::f
+!     interface
+!      subroutine x()
+!      end
+!     end interface
+!    end
+!   end interface
+!  end
+! end interface
 !end

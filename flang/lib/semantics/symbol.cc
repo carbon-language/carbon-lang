@@ -235,7 +235,7 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
             [=](const ObjectEntityDetails &) { return has<EntityDetails>(); },
             [=](const ProcEntityDetails &) { return has<EntityDetails>(); },
             [=](const SubprogramDetails &) {
-              return has<SubprogramNameDetails>();
+              return has<SubprogramNameDetails>() || has<EntityDetails>();
             },
             [](const auto &) { return false; },
         },
