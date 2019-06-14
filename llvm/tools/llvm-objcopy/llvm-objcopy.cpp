@@ -54,7 +54,6 @@ StringRef ToolName;
 
 LLVM_ATTRIBUTE_NORETURN void error(Twine Message) {
   WithColor::error(errs(), ToolName) << Message << "\n";
-  errs().flush();
   exit(1);
 }
 
