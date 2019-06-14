@@ -193,7 +193,7 @@ public:
     unsigned Cost = 0;
 
     /// Mapping of all the operands.
-    const ValueMapping *OperandsMapping;
+    const ValueMapping *OperandsMapping = nullptr;
 
     /// Number of operands.
     unsigned NumOperands = 0;
@@ -210,15 +210,11 @@ public:
     /// The rationale is that it is more efficient for the optimizers
     /// to be able to assume that the mapping of the ith operand is
     /// at the index i.
-    ///
-    /// \pre ID != InvalidMappingID
     InstructionMapping(unsigned ID, unsigned Cost,
                        const ValueMapping *OperandsMapping,
                        unsigned NumOperands)
         : ID(ID), Cost(Cost), OperandsMapping(OperandsMapping),
           NumOperands(NumOperands) {
-      assert(getID() != InvalidMappingID &&
-             "Use the default constructor for invalid mapping");
     }
 
     /// Default constructor.

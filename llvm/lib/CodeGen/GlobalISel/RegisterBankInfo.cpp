@@ -374,11 +374,8 @@ RegisterBankInfo::getInstructionMappingImpl(
   ++NumInstructionMappingsCreated;
 
   auto &InstrMapping = MapOfInstructionMappings[Hash];
-  if (IsInvalid)
-    InstrMapping = llvm::make_unique<InstructionMapping>();
-  else
-    InstrMapping = llvm::make_unique<InstructionMapping>(
-        ID, Cost, OperandsMapping, NumOperands);
+  InstrMapping = llvm::make_unique<InstructionMapping>(
+      ID, Cost, OperandsMapping, NumOperands);
   return *InstrMapping;
 }
 
