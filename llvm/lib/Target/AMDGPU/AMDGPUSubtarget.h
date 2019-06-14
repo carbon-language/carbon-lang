@@ -337,6 +337,8 @@ protected:
   bool HasDLInsts;
   bool HasDot1Insts;
   bool HasDot2Insts;
+  bool HasDot5Insts;
+  bool HasDot6Insts;
   bool EnableSRAMECC;
   bool DoesNotSupportSRAMECC;
   bool HasNoSdstCMPX;
@@ -703,6 +705,14 @@ public:
 
   bool hasDot2Insts() const {
     return HasDot2Insts;
+  }
+
+  bool hasDot5Insts() const {
+    return HasDot5Insts;
+  }
+
+  bool hasDot6Insts() const {
+    return HasDot6Insts;
   }
 
   bool isSRAMECCEnabled() const {
