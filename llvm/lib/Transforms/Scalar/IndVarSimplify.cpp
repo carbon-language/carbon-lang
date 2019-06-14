@@ -2385,14 +2385,11 @@ bool IndVarSimplify::
 linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
                           const SCEV *BackedgeTakenCount,
                           PHINode *IndVar, SCEVExpander &Rewriter) {
-  assert(isLoopCounter(IndVar, L, SE));
-  assert(L->getLoopLatch() && "Loop no longer in simplified form?");
-  Instruction * const IncVar =
-    cast<Instruction>(IndVar->getIncomingValueForBlock(L->getLoopLatch()));
-
   // Initialize CmpIndVar and IVCount to their preincremented values.
   Value *CmpIndVar = IndVar;
   const SCEV *IVCount = BackedgeTakenCount;
+
+  assert(L->getLoopLatch() && "Loop no longer in simplified form?");
 
   // If the exiting block is the same as the backedge block, we prefer to
   // compare against the post-incremented value, otherwise we must compare
@@ -2404,10 +2401,12 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
       // to add a potentially UB introducing use.  We need to either a) show
       // the loop test we're modifying is already in post-inc form, or b) show
       // that adding a use must not introduce UB.
+      Instruction *Inc =
+        cast<Instruction>(IndVar->getIncomingValueForBlock(L->getLoopLatch()));
       ICmpInst *LoopTest = getLoopTest(L, ExitingBB);
-      SafeToPostInc = LoopTest->getOperand(0) == IncVar ||
-        LoopTest->getOperand(1) == IncVar ||
-        mustExecuteUBIfPoisonOnPathTo(IncVar, ExitingBB->getTerminator(), DT);
+      SafeToPostInc = LoopTest->getOperand(0) == Inc ||
+        LoopTest->getOperand(1) == Inc ||
+        mustExecuteUBIfPoisonOnPathTo(Inc, ExitingBB->getTerminator(), DT);
     }
     if (SafeToPostInc) {
       // Add one to the "backedge-taken" count to get the trip count.
@@ -2418,7 +2417,7 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
       // The BackedgeTaken expression contains the number of times that the
       // backedge branches to the loop header.  This is one less than the
       // number of times the loop executes, so use the incremented indvar.
-      CmpIndVar = IncVar;
+      CmpIndVar = IndVar->getIncomingValueForBlock(ExitingBB);
     }
   }
 
@@ -2434,6 +2433,7 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
   // dynamically dead IV that wraps on the first loop iteration only, which is
   // not covered by the post-inc addrec. (If the new IV was not dynamically
   // dead, it could not be poison on the first iteration in the first place.)
+  Value *IncVar = IndVar->getIncomingValueForBlock(L->getLoopLatch());
   if (auto *BO = dyn_cast<BinaryOperator>(IncVar)) {
     const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(SE->getSCEV(IncVar));
     if (BO->hasNoUnsignedWrap())
