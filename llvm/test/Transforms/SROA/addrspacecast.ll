@@ -10,12 +10,7 @@ declare void @llvm.memcpy.p1i8.p0i8.i32(i8 addrspace(1)* nocapture writeonly, i8
 define i64 @alloca_addrspacecast_bitcast(i64 %X) {
 ; CHECK-LABEL: @alloca_addrspacecast_bitcast(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[A:%.*]] = alloca [8 x i8]
-; CHECK-NEXT:    [[A_CAST:%.*]] = addrspacecast [8 x i8]* [[A]] to [8 x i8] addrspace(1)*
-; CHECK-NEXT:    [[B:%.*]] = bitcast [8 x i8] addrspace(1)* [[A_CAST]] to i64 addrspace(1)*
-; CHECK-NEXT:    store i64 [[X:%.*]], i64 addrspace(1)* [[B]]
-; CHECK-NEXT:    [[Z:%.*]] = load i64, i64 addrspace(1)* [[B]]
-; CHECK-NEXT:    ret i64 [[Z]]
+; CHECK-NEXT:    ret i64 [[X:%.*]]
 ;
 entry:
   %A = alloca [8 x i8]
@@ -29,12 +24,7 @@ entry:
 define i64 @alloca_bitcast_addrspacecast(i64 %X) {
 ; CHECK-LABEL: @alloca_bitcast_addrspacecast(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[A:%.*]] = alloca [8 x i8]
-; CHECK-NEXT:    [[A_CAST:%.*]] = bitcast [8 x i8]* [[A]] to i64*
-; CHECK-NEXT:    [[B:%.*]] = addrspacecast i64* [[A_CAST]] to i64 addrspace(1)*
-; CHECK-NEXT:    store i64 [[X:%.*]], i64 addrspace(1)* [[B]]
-; CHECK-NEXT:    [[Z:%.*]] = load i64, i64 addrspace(1)* [[B]]
-; CHECK-NEXT:    ret i64 [[Z]]
+; CHECK-NEXT:    ret i64 [[X:%.*]]
 ;
 entry:
   %A = alloca [8 x i8]
@@ -48,15 +38,7 @@ entry:
 define i64 @alloca_addrspacecast_gep(i64 %X) {
 ; CHECK-LABEL: @alloca_addrspacecast_gep(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[A_AS0:%.*]] = alloca [256 x i8], align 4
-; CHECK-NEXT:    [[GEPA_AS0:%.*]] = getelementptr [256 x i8], [256 x i8]* [[A_AS0]], i16 0, i16 32
-; CHECK-NEXT:    [[GEPA_AS0_BC:%.*]] = bitcast i8* [[GEPA_AS0]] to i64*
-; CHECK-NEXT:    store i64 [[X:%.*]], i64* [[GEPA_AS0_BC]], align 4
-; CHECK-NEXT:    [[A_AS1:%.*]] = addrspacecast [256 x i8]* [[A_AS0]] to [256 x i8] addrspace(1)*
-; CHECK-NEXT:    [[GEPA_AS1:%.*]] = getelementptr [256 x i8], [256 x i8] addrspace(1)* [[A_AS1]], i16 0, i16 32
-; CHECK-NEXT:    [[GEPA_AS1_BC:%.*]] = bitcast i8 addrspace(1)* [[GEPA_AS1]] to i64 addrspace(1)*
-; CHECK-NEXT:    [[Z:%.*]] = load i64, i64 addrspace(1)* [[GEPA_AS1_BC]], align 4
-; CHECK-NEXT:    ret i64 [[Z]]
+; CHECK-NEXT:    ret i64 [[X:%.*]]
 ;
 entry:
   %A.as0 = alloca [256 x i8], align 4
@@ -76,13 +58,7 @@ entry:
 define i64 @alloca_gep_addrspacecast(i64 %X) {
 ; CHECK-LABEL: @alloca_gep_addrspacecast(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[A_AS0:%.*]] = alloca [256 x i8], align 4
-; CHECK-NEXT:    [[GEPA_AS0:%.*]] = getelementptr [256 x i8], [256 x i8]* [[A_AS0]], i16 0, i16 32
-; CHECK-NEXT:    [[GEPA_AS0_BC:%.*]] = bitcast i8* [[GEPA_AS0]] to i64*
-; CHECK-NEXT:    store i64 [[X:%.*]], i64* [[GEPA_AS0_BC]], align 4
-; CHECK-NEXT:    [[GEPA_AS1_BC:%.*]] = addrspacecast i64* [[GEPA_AS0_BC]] to i64 addrspace(1)*
-; CHECK-NEXT:    [[Z:%.*]] = load i64, i64 addrspace(1)* [[GEPA_AS1_BC]], align 4
-; CHECK-NEXT:    ret i64 [[Z]]
+; CHECK-NEXT:    ret i64 [[X:%.*]]
 ;
 entry:
   %A.as0 = alloca [256 x i8], align 4
@@ -99,16 +75,7 @@ entry:
 define i64 @alloca_gep_addrspacecast_gep(i64 %X) {
 ; CHECK-LABEL: @alloca_gep_addrspacecast_gep(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[A_AS0:%.*]] = alloca [256 x i8], align 4
-; CHECK-NEXT:    [[GEPA_AS0:%.*]] = getelementptr [256 x i8], [256 x i8]* [[A_AS0]], i16 0, i16 32
-; CHECK-NEXT:    [[GEPA_AS0_BC:%.*]] = bitcast i8* [[GEPA_AS0]] to i64*
-; CHECK-NEXT:    store i64 [[X:%.*]], i64* [[GEPA_AS0_BC]], align 4
-; CHECK-NEXT:    [[GEPB_AS0:%.*]] = getelementptr [256 x i8], [256 x i8]* [[A_AS0]], i16 0, i16 16
-; CHECK-NEXT:    [[GEPB_AS1:%.*]] = addrspacecast i8* [[GEPB_AS0]] to i8 addrspace(1)*
-; CHECK-NEXT:    [[GEPC_AS1:%.*]] = getelementptr i8, i8 addrspace(1)* [[GEPB_AS1]], i16 16
-; CHECK-NEXT:    [[GEPC_AS1_BC:%.*]] = bitcast i8 addrspace(1)* [[GEPC_AS1]] to i64 addrspace(1)*
-; CHECK-NEXT:    [[Z:%.*]] = load i64, i64 addrspace(1)* [[GEPC_AS1_BC]], align 4
-; CHECK-NEXT:    ret i64 [[Z]]
+; CHECK-NEXT:    ret i64 [[X:%.*]]
 ;
 entry:
   %A.as0 = alloca [256 x i8], align 4
@@ -287,11 +254,6 @@ entry:
 
 define void @select_addrspacecast(i1 %a, i1 %b) {
 ; CHECK-LABEL: @select_addrspacecast(
-; CHECK-NEXT:    [[C:%.*]] = alloca i64, align 8
-; CHECK-NEXT:    [[P_0_C:%.*]] = select i1 undef, i64* [[C]], i64* [[C]]
-; CHECK-NEXT:    [[ASC:%.*]] = addrspacecast i64* [[P_0_C]] to i64 addrspace(1)*
-; CHECK-NEXT:    [[COND_IN:%.*]] = select i1 undef, i64 addrspace(1)* [[ASC]], i64 addrspace(1)* [[ASC]]
-; CHECK-NEXT:    [[COND:%.*]] = load i64, i64 addrspace(1)* [[COND_IN]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %c = alloca i64, align 8
@@ -306,9 +268,8 @@ define void @select_addrspacecast(i1 %a, i1 %b) {
 define void @select_addrspacecast_const_op(i1 %a, i1 %b) {
 ; CHECK-LABEL: @select_addrspacecast_const_op(
 ; CHECK-NEXT:    [[C:%.*]] = alloca i64, align 8
-; CHECK-NEXT:    [[P_0_C:%.*]] = select i1 undef, i64* [[C]], i64* [[C]]
-; CHECK-NEXT:    [[ASC:%.*]] = addrspacecast i64* [[P_0_C]] to i64 addrspace(1)*
-; CHECK-NEXT:    [[COND_IN:%.*]] = select i1 undef, i64 addrspace(1)* [[ASC]], i64 addrspace(1)* null
+; CHECK-NEXT:    [[C_0_ASC_SROA_CAST:%.*]] = addrspacecast i64* [[C]] to i64 addrspace(1)*
+; CHECK-NEXT:    [[COND_IN:%.*]] = select i1 undef, i64 addrspace(1)* [[C_0_ASC_SROA_CAST]], i64 addrspace(1)* null
 ; CHECK-NEXT:    [[COND:%.*]] = load i64, i64 addrspace(1)* [[COND_IN]], align 8
 ; CHECK-NEXT:    ret void
 ;
@@ -325,11 +286,8 @@ define void @select_addrspacecast_const_op(i1 %a, i1 %b) {
 
 define void @select_addrspacecast_gv(i1 %a, i1 %b) {
 ; CHECK-LABEL: @select_addrspacecast_gv(
-; CHECK-NEXT:    [[C:%.*]] = alloca i64, align 8
-; CHECK-NEXT:    [[P_0_C:%.*]] = select i1 undef, i64* [[C]], i64* [[C]]
-; CHECK-NEXT:    [[ASC:%.*]] = addrspacecast i64* [[P_0_C]] to i64 addrspace(1)*
-; CHECK-NEXT:    [[COND_IN:%.*]] = select i1 undef, i64 addrspace(1)* [[ASC]], i64 addrspace(1)* @gv
-; CHECK-NEXT:    [[COND:%.*]] = load i64, i64 addrspace(1)* [[COND_IN]], align 8
+; CHECK-NEXT:    [[COND_SROA_SPECULATE_LOAD_FALSE:%.*]] = load i64, i64 addrspace(1)* @gv, align 8
+; CHECK-NEXT:    [[COND_SROA_SPECULATED:%.*]] = select i1 undef, i64 undef, i64 [[COND_SROA_SPECULATE_LOAD_FALSE]]
 ; CHECK-NEXT:    ret void
 ;
   %c = alloca i64, align 8
