@@ -12,6 +12,7 @@ ar -q archive_32 obj1_32.o obj2_32.o
 ar -q archive_64 obj1_64.o obj2_64.o
 lipo -output universal_bin_wrapping_archives -create archive_32 archive_64
 ---
+REQUIRES: zlib
 
 RUN: llvm-profdata merge %S/Inputs/universal_bin_wrapping_archives/universal_bin_wrapping_archives.proftext -o %t.profdata
 
