@@ -1,0 +1,11 @@
+## wrong-shstrtab-type.elf-x86-64 contains .shstrtab section which has SHT_PROGBITS type.
+## Check we do not fail to dump the section headers in this case.
+
+# RUN: llvm-readobj -S %p/Inputs/wrong-shstrtab-type.elf-x86-64 | FileCheck %s --check-prefix LLVM
+# RUN: llvm-readelf -S %p/Inputs/wrong-shstrtab-type.elf-x86-64 | FileCheck %s --check-prefix GNU
+
+# LLVM:      Name: .shstrtab
+# LLVM-NEXT: Type: SHT_PROGBITS
+
+# GNU: [Nr] Name      Type
+# GNU: [ 3] .shstrtab PROGBITS

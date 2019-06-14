@@ -3004,6 +3004,22 @@ static std::string getSectionTypeString(unsigned Arch, unsigned Type) {
 }
 
 template <class ELFT>
+static StringRef getSectionName(const typename ELFT::Shdr &Sec,
+                                const ELFFile<ELFT> &Obj,
+                                ArrayRef<typename ELFT::Shdr> Sections) {
+  uint32_t Index = Obj.getHeader()->e_shstrndx;
+  if (Index == ELF::SHN_XINDEX)
+    Index = Sections[0].sh_link;
+  if (!Index) // no section string table.
+    return "";
+  if (Index >= Sections.size())
+    reportError("invalid section index");
+  StringRef Data = toStringRef(unwrapOrError(
+      Obj.template getSectionContentsAsArray<uint8_t>(&Sections[Index])));
+  return unwrapOrError(Obj.getSectionName(&Sec, Data));
+}
+
+template <class ELFT>
 void GNUStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
   unsigned Bias = ELFT::Is64Bits ? 0 : 8;
   ArrayRef<Elf_Shdr> Sections = unwrapOrError(Obj->sections());
@@ -3023,7 +3039,7 @@ void GNUStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
   size_t SectionIndex = 0;
   for (const Elf_Shdr &Sec : Sections) {
     Fields[0].Str = to_string(SectionIndex);
-    Fields[1].Str = unwrapOrError(Obj->getSectionName(&Sec));
+    Fields[1].Str = getSectionName(Sec, *Obj, Sections);
     Fields[2].Str =
         getSectionTypeString(Obj->getHeader()->e_machine, Sec.sh_type);
     Fields[3].Str =
@@ -4569,13 +4585,11 @@ void LLVMStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
   ListScope SectionsD(W, "Sections");
 
   int SectionIndex = -1;
-  for (const Elf_Shdr &Sec : unwrapOrError(Obj->sections())) {
-    ++SectionIndex;
-
-    StringRef Name = unwrapOrError(Obj->getSectionName(&Sec));
-
+  ArrayRef<Elf_Shdr> Sections = unwrapOrError(Obj->sections());
+  for (const Elf_Shdr &Sec : Sections) {
+    StringRef Name = getSectionName(Sec, *Obj, Sections);
     DictScope SectionD(W, "Section");
-    W.printNumber("Index", SectionIndex);
+    W.printNumber("Index", ++SectionIndex);
     W.printNumber("Name", Name, Sec.sh_name);
     W.printHex(
         "Type",
