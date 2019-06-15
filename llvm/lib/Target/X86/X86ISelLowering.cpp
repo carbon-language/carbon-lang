@@ -31960,7 +31960,8 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     unsigned Offset2 = V2.getConstantOperandVal(1);
     assert(((Offset1 % VT1.getVectorNumElements()) == 0 ||
             (Offset2 % VT2.getVectorNumElements()) == 0 ||
-            (Src1.getValueSizeInBits() % RootSizeInBits) == 0) &&
+            (Src1.getValueSizeInBits() % RootSizeInBits) == 0 ||
+            (Src2.getValueSizeInBits() % RootSizeInBits) == 0) &&
            "Unexpected subvector extraction");
     unsigned Scale = Src1.getValueSizeInBits() / RootSizeInBits;
 
