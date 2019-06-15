@@ -617,6 +617,12 @@ public:
     return &A != &B;
   }
 
+  /// \returns true if emitting a copy from \p Src to \p Dst is impossible.
+  bool cannotCopy(const RegisterBank &Dst, const RegisterBank &Src,
+                  unsigned Size) const {
+    return copyCost(Dst, Src, Size) == std::numeric_limits<unsigned>::max();
+  }
+
   /// Get the cost of using \p ValMapping to decompose a register. This is
   /// similar to ::copyCost, except for cases where multiple copy-like
   /// operations need to be inserted. If the register is used as a source
