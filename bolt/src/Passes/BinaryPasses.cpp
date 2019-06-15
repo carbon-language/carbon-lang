@@ -648,12 +648,12 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
               &(*II), BC.MIB->getAnnotationAs<uint32_t>(*II, "Offset")));
         }
 
-        BC.MIB->removeAllAnnotations(*II);
+        BC.MIB->stripAnnotations(*II);
       }
     }
   }
 
-  // Release all memory taken by annotations.
+  // Release all memory taken by annotations
   BC.MIB->freeAnnotations();
 
   // Reinsert preserved annotations we need during code emission.

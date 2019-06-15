@@ -18,7 +18,8 @@
 
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;
-}
+extern llvm::cl::opt<bool> NoThreads;
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -181,11 +182,14 @@ protected:
   StringRef getAnnotationName() const {
     return StringRef("StackPointerTracking");
   }
-
+  
 public:
-  StackPointerTrackingBase(const BinaryContext &BC, BinaryFunction &BF)
-      : DataflowAnalysis<Derived, std::pair<int, int>>(BC, BF) {}
+  StackPointerTrackingBase(const BinaryContext &BC, BinaryFunction &BF,
+                           MCPlusBuilder::AllocatorIdTy AllocatorId = 0)
+      : DataflowAnalysis<Derived, std::pair<int, int>>(BC, BF, AllocatorId) {}
+
   virtual ~StackPointerTrackingBase() {}
+  
   bool HasFramePointer{false};
 
   static constexpr int SUPERPOSITION = std::numeric_limits<int>::max();
@@ -197,12 +201,13 @@ class StackPointerTracking
   friend class DataflowAnalysis<StackPointerTracking, std::pair<int, int>>;
 
 public:
-  StackPointerTracking(const BinaryContext &BC, BinaryFunction &BF);
+  StackPointerTracking(const BinaryContext &BC, BinaryFunction &BF,
+                       MCPlusBuilder::AllocatorIdTy AllocatorId = 0);
   virtual ~StackPointerTracking() {}
 
   void run() {
     NamedRegionTimer T1("SPT", "Stack Pointer Tracking", "Dataflow", "Dataflow",
-                        opts::TimeOpts);
+                        opts::TimeOpts && opts::NoThreads);
     StackPointerTrackingBase<StackPointerTracking>::run();
   }
 };

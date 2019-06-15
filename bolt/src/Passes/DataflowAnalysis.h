@@ -172,6 +172,9 @@ protected:
   /// Reference to the function being analysed
   BinaryFunction &Func;
 
+  /// The id of the annotation allocator to be used
+  MCPlusBuilder::AllocatorIdTy AllocatorId = 0;
+
   /// Tracks the state at basic block start (end) if direction of the dataflow
   /// is forward (backward).
   std::unordered_map<const BinaryBasicBlock *, StateTy> StateAtBBEntry;
@@ -244,7 +247,7 @@ protected:
 
   StateTy &getOrCreateStateAt(MCInst &Point) {
     return BC.MIB->getOrCreateAnnotationAs<StateTy>(
-        Point, derived().getAnnotationIndex());
+        Point, derived().getAnnotationIndex(), AllocatorId);
   }
 
   StateTy &getOrCreateStateAt(ProgramPoint Point) {
@@ -267,8 +270,10 @@ public:
 
   /// We need the current binary context and the function that will be processed
   /// in this dataflow analysis.
-  DataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF)
-      : BC(BC), Func(BF) {}
+  DataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF,
+                   MCPlusBuilder::AllocatorIdTy AllocatorId = 0)
+      : BC(BC), Func(BF), AllocatorId(AllocatorId) {}
+
   virtual ~DataflowAnalysis() {
     cleanAnnotations();
   }
@@ -323,16 +328,16 @@ public:
   /// end.
   void run() {
     derived().preflight();
-
-    // Initialize state for all points of the function
-    for (auto &BB : Func) {
-      auto &St = getOrCreateStateAt(BB);
-      St = derived().getStartingStateAtBB(BB);
-      for (auto &Inst : BB) {
-        auto &St = getOrCreateStateAt(Inst);
-        St = derived().getStartingStateAtPoint(Inst);
+   
+      // Initialize state for all points of the function
+      for (auto &BB : Func) {
+        auto &St = getOrCreateStateAt(BB);
+        St = derived().getStartingStateAtBB(BB);
+        for (auto &Inst : BB) {
+          auto &St = getOrCreateStateAt(Inst);
+          St = derived().getStartingStateAtPoint(Inst);
+        }
       }
-    }
     assert(Func.begin() != Func.end() && "Unexpected empty function");
 
     std::queue<BinaryBasicBlock *> Worklist;

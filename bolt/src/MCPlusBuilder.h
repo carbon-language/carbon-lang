@@ -35,35 +35,50 @@
 #include <cassert>
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <set>
+#include <shared_mutex>
 #include <system_error>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace llvm {
 namespace bolt {
-
+  
 /// Different types of indirect branches encountered during disassembly.
 enum class IndirectBranchType : char {
-  UNKNOWN = 0,              /// Unable to determine type.
-  POSSIBLE_TAIL_CALL,       /// Possibly a tail call.
-  POSSIBLE_JUMP_TABLE,      /// Possibly a switch/jump table.
-  POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a jump table for PIC.
-  POSSIBLE_GOTO,            /// Possibly a gcc's computed goto.
-  POSSIBLE_FIXED_BRANCH,    /// Possibly an indirect branch to a fixed location.
+  UNKNOWN = 0,             /// Unable to determine type.
+  POSSIBLE_TAIL_CALL,      /// Possibly a tail call.
+  POSSIBLE_JUMP_TABLE,     /// Possibly a switch/jump table.
+  POSSIBLE_PIC_JUMP_TABLE, /// Possibly a jump table for PIC.
+  POSSIBLE_GOTO,           /// Possibly a gcc's computed goto.
+  POSSIBLE_FIXED_BRANCH,   /// Possibly an indirect branch to a fixed location.
 };
 
 class MCPlusBuilder {
+public:
+  using AllocatorIdTy = uint16_t;
+
 private:
-  /// Annotation instruction allocator.
-  SpecificBumpPtrAllocator<MCInst> MCInstAllocator;
+  /// A struct that represents a single annotation allocator
+  struct AnnotationAllocator {
+    SpecificBumpPtrAllocator<MCInst> MCInstAllocator;
+    BumpPtrAllocator ValueAllocator;
+    std::unordered_set<MCPlus::MCAnnotation *> AnnotationPool;
+  };
 
-  /// Annotation value allocator.
-  BumpPtrAllocator Allocator;
+  /// A set of annotation allocators
+  std::unordered_map<AllocatorIdTy, AnnotationAllocator> AnnotationAllocators;
 
-  /// Record all the annotations with non-trivial type.  To prevent leaks, these
-  /// will need destructors called when the annotation is removed or when all
-  /// annotations are destroyed.
-  std::unordered_set<MCPlus::MCAnnotation*> AnnotationPool;
+  /// A variable that is used to generate unique ids for annotation allocators
+  AllocatorIdTy MaxAllocatorId = 0;
+
+  /// Return the annotation allocator of a given id
+  AnnotationAllocator &getAnnotationAllocator(AllocatorIdTy AllocatorId) {
+    assert(AnnotationAllocators.count(AllocatorId) &&
+           "allocator not initialized");
+    return AnnotationAllocators.find(AllocatorId)->second;
+  }
 
   /// We encode Index and Value into a 64-bit immediate operand value.
   static int64_t encodeAnnotationImm(unsigned Index, int64_t Value) {
@@ -100,10 +115,12 @@ private:
     return AnnotationInst;
   }
 
-  void setAnnotationOpValue(MCInst &Inst, unsigned Index, int64_t Value) {
+  void setAnnotationOpValue(MCInst &Inst, unsigned Index, int64_t Value,
+                            AllocatorIdTy AllocatorId = 0) {
     auto *AnnotationInst = getAnnotationInst(Inst);
     if (!AnnotationInst) {
-      AnnotationInst = new (MCInstAllocator.Allocate()) MCInst();
+      auto &Allocator = getAnnotationAllocator(AllocatorId);
+      AnnotationInst = new (Allocator.MCInstAllocator.Allocate()) MCInst();
       AnnotationInst->setOpcode(TargetOpcode::ANNOTATION_LABEL);
       Inst.addOperand(MCOperand::createInst(AnnotationInst));
     }
@@ -278,7 +295,27 @@ public:
 public:
   MCPlusBuilder(const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
                 const MCRegisterInfo *RegInfo)
-    : Analysis(Analysis), Info(Info), RegInfo(RegInfo) {}
+      : Analysis(Analysis), Info(Info), RegInfo(RegInfo) {
+    // Initialize the default annotation allocator with id 0.
+    AnnotationAllocators.emplace(0, AnnotationAllocator());
+    MaxAllocatorId++;
+  }
+
+  /// Initialize a new annotation allocator and return its id.
+  AllocatorIdTy initializeNewAnnotationAllocator() {
+    AnnotationAllocators.emplace(MaxAllocatorId, AnnotationAllocator());
+    return MaxAllocatorId++;
+  }
+
+  /// Free the values allocator within the annotation allocator.
+  void freeValuesAllocator(AllocatorIdTy AllocatorId) {
+    auto &Allocator = getAnnotationAllocator(AllocatorId);
+    for (auto *Annotation : Allocator.AnnotationPool)
+      Annotation->~MCAnnotation();
+
+    Allocator.AnnotationPool.clear();
+    Allocator.ValueAllocator.Reset();
+  }
 
   virtual ~MCPlusBuilder() {
     freeAnnotations();
@@ -286,12 +323,15 @@ public:
 
   /// Free all memory allocated for annotations.
   void freeAnnotations() {
-    for (auto *Annotation : AnnotationPool) {
-      Annotation->~MCAnnotation();
+    for (auto &Element : AnnotationAllocators) {
+      auto &Allocator = Element.second;
+      for (auto *Annotation : Allocator.AnnotationPool)
+        Annotation->~MCAnnotation();
+
+      Allocator.AnnotationPool.clear();
+      Allocator.ValueAllocator.Reset();
+      Allocator.MCInstAllocator.DestroyAll();
     }
-    AnnotationPool.clear();
-    MCInstAllocator.DestroyAll();
-    Allocator.Reset();
   }
 
   using CompFuncTy = std::function<bool(const MCSymbol *, const MCSymbol *)>;
@@ -1456,8 +1496,7 @@ public:
         MCSymbolRefExpr::create(Label, MCSymbolRefExpr::VK_None, *Ctx)));
     return true;
   }
-
-
+  
   /// Return annotation index matching the \p Name.
   Optional<unsigned> getAnnotationIndex(StringRef Name) const {
     auto AI = AnnotationNameIndexMap.find(Name);
@@ -1483,25 +1522,30 @@ public:
   /// Store an annotation value on an MCInst.  This assumes the annotation
   /// is not already present.
   template <typename ValueType>
-  const ValueType &addAnnotation(MCInst &Inst,
-                                 unsigned Index,
-                                 const ValueType &Val) {
+  const ValueType &addAnnotation(MCInst &Inst, unsigned Index,
+                                 const ValueType &Val,
+                                 AllocatorIdTy AllocatorId = 0) {
     assert(!hasAnnotation(Inst, Index));
-    auto *A = new (Allocator) MCPlus::MCSimpleAnnotation<ValueType>(Val);
+    auto &Allocator = getAnnotationAllocator(AllocatorId);
+    auto *A = new (Allocator.ValueAllocator)
+        MCPlus::MCSimpleAnnotation<ValueType>(Val);
+
     if (!std::is_trivial<ValueType>::value) {
-      AnnotationPool.insert(A);
+      Allocator.AnnotationPool.insert(A);
     }
-    setAnnotationOpValue(Inst, Index, reinterpret_cast<int64_t>(A));
+    setAnnotationOpValue(Inst, Index, reinterpret_cast<int64_t>(A),
+                         AllocatorId);
     return A->getValue();
   }
 
   /// Store an annotation value on an MCInst.  This assumes the annotation
   /// is not already present.
   template <typename ValueType>
-  const ValueType &addAnnotation(MCInst &Inst,
-                                 StringRef Name,
-                                 const ValueType &Val) {
-    return addAnnotation(Inst, getOrCreateAnnotationIndex(Name), Val);
+  const ValueType &addAnnotation(MCInst &Inst, StringRef Name,
+                                 const ValueType &Val,
+                                 AllocatorIdTy AllocatorId = 0) {
+    return addAnnotation(Inst, getOrCreateAnnotationIndex(Name), Val,
+                         AllocatorId);
   }
 
   /// Get an annotation as a specific value, but if the annotation does not
@@ -1509,12 +1553,13 @@ public:
   /// Return a non-const ref so caller can freely modify its contents
   /// afterwards.
   template <typename ValueType>
-  ValueType& getOrCreateAnnotationAs(MCInst &Inst, unsigned Index) {
+  ValueType &getOrCreateAnnotationAs(MCInst &Inst, unsigned Index,
+                                     AllocatorIdTy AllocatorId = 0) {
     auto Val =
-      tryGetAnnotationAs<ValueType>(const_cast<const MCInst &>(Inst), Index);
+        tryGetAnnotationAs<ValueType>(const_cast<const MCInst &>(Inst), Index);
     if (!Val)
-      Val = addAnnotation(Inst, Index, ValueType());
-    return const_cast<ValueType&>(*Val);
+      Val = addAnnotation(Inst, Index, ValueType(), AllocatorId);
+    return const_cast<ValueType &>(*Val);
   }
 
   /// Get an annotation as a specific value, but if the annotation does not
@@ -1522,9 +1567,10 @@ public:
   /// Return a non-const ref so caller can freely modify its contents
   /// afterwards.
   template <typename ValueType>
-  ValueType& getOrCreateAnnotationAs(MCInst &Inst, StringRef Name) {
+  ValueType &getOrCreateAnnotationAs(MCInst &Inst, StringRef Name,
+                                     AllocatorIdTy AllocatorId = 0) {
     const auto Index = getOrCreateAnnotationIndex(Name);
-    return getOrCreateAnnotationAs<ValueType>(Inst, Index);
+    return getOrCreateAnnotationAs<ValueType>(Inst, Index, AllocatorId);
   }
 
   /// Get an annotation as a specific value. Assumes that the annotation exists.
@@ -1622,7 +1668,7 @@ public:
   bool removeAnnotation(MCInst &Inst, unsigned Index);
 
   /// Remove annotation associated with \p Name.
-  ///
+  /// 
   /// Return true if the annotation was removed, false if the annotation
   /// was not present.
   bool removeAnnotation(MCInst &Inst, StringRef Name) {
@@ -1631,9 +1677,6 @@ public:
       return false;
     return removeAnnotation(Inst, *Index);
   }
-
-  /// Remove all meta-data annotations from Inst.
-  void removeAllAnnotations(MCInst &Inst);
 
   /// Remove meta-data, but don't destroy it.
   void stripAnnotations(MCInst &Inst);

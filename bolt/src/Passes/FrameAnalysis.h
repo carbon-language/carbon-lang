@@ -168,7 +168,13 @@ class FrameAnalysis {
   bool restoreFrameIndex(BinaryFunction &BF);
 
   /// A store for SPT info per function
-  std::unordered_map<const BinaryFunction *, StackPointerTracking> SPTMap;
+  std::unordered_map<const BinaryFunction *,
+                     std::unique_ptr<StackPointerTracking>>
+      SPTMap;
+
+  /// A vector that stores ids of the allocators that are used in SPT
+  /// computation
+  std::vector<MCPlusBuilder::AllocatorIdTy> SPTAllocatorsId;
 
 public:
   explicit FrameAnalysis(BinaryContext &BC,
@@ -195,7 +201,6 @@ public:
   void cleanAnnotations();
 
   ~FrameAnalysis() {
-    clearSPTMap();
     cleanAnnotations();
   }
 
@@ -206,22 +211,25 @@ public:
   /// Get or create an SPT object and run the analysis
   StackPointerTracking &getSPT(BinaryFunction &BF) {
     if (!SPTMap.count(&BF)) {
-      SPTMap.emplace(&BF, StackPointerTracking(BC, BF));
+      SPTMap.emplace(&BF, std::make_unique<StackPointerTracking>(BC, BF));
       auto Iter = SPTMap.find(&BF);
       assert(Iter != SPTMap.end() && "item should exist");
-      Iter->second.run();
-      return Iter->second;
+      Iter->second->run();
+      return *Iter->second;
     }
-    
+
     auto Iter = SPTMap.find(&BF);
     assert(Iter != SPTMap.end() && "item should exist");
-    return Iter->second;
+    return *Iter->second;
   }
 
   /// Clean and de-allocate all SPT objects
   void clearSPTMap() {
-    SPTMap.clear();
+    SPTMap.clear(); 
   }
+
+  /// Perform SPT analysis for all functions in parallel
+  void preComputeSPT();
 };
 
 } // namespace bolt

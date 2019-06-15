@@ -226,39 +226,10 @@ bool MCPlusBuilder::removeAnnotation(MCInst &Inst, unsigned Index) {
     auto ImmValue = AnnotationInst->getOperand(I).getImm();
     if (extractAnnotationIndex(ImmValue) == Index) {
       AnnotationInst->erase(AnnotationInst->begin() + I);
-      auto *Annotation =
-        reinterpret_cast<MCAnnotation *>(extractAnnotationValue(ImmValue));
-      auto Itr = AnnotationPool.find(Annotation);
-      if (Itr != AnnotationPool.end()) {
-        AnnotationPool.erase(Itr);
-        Annotation->~MCAnnotation();
-      }
       return true;
     }
   }
-
   return false;
-}
-
-void MCPlusBuilder::removeAllAnnotations(MCInst &Inst) {
-  auto *AnnotationInst = getAnnotationInst(Inst);
-  if (!AnnotationInst)
-    return;
-
-  for (int I = AnnotationInst->getNumOperands() - 1; I >= 0; --I) {
-    auto ImmValue = AnnotationInst->getOperand(I).getImm();
-    AnnotationInst->erase(std::prev(AnnotationInst->end()));
-    auto *Annotation =
-      reinterpret_cast<MCAnnotation *>(extractAnnotationValue(ImmValue));
-    auto Itr = AnnotationPool.find(Annotation);
-    if (Itr != AnnotationPool.end()) {
-      AnnotationPool.erase(Itr);
-      Annotation->~MCAnnotation();
-    }
-  }
-
-  // Clear all attached MC+ info since it's no longer used.
-  Inst.erase(std::prev(Inst.end()));
 }
 
 void MCPlusBuilder::stripAnnotations(MCInst &Inst) {
@@ -279,10 +250,10 @@ MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
     const auto Imm = AnnotationInst->getOperand(I).getImm();
     const auto Index = extractAnnotationIndex(Imm);
     const auto Value = extractAnnotationValue(Imm);
-    const auto *Annotation =
-        reinterpret_cast<const MCAnnotation *>(Value);
+    const auto *Annotation = 
+            reinterpret_cast<const MCAnnotation *>(Value);
     if (Index >= MCAnnotation::kGeneric) {
-      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric]
+      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric] 
          << ": ";
       Annotation->print(OS);
     }
@@ -292,207 +263,207 @@ MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
 bool MCPlusBuilder::evaluateBranch(const MCInst &Inst, uint64_t Addr,
                                    uint64_t Size, uint64_t &Target) const {
   return Analysis->evaluateBranch(Inst, Addr, Size, Target);
-}
+  }
 
-void MCPlusBuilder::getClobberedRegs(const MCInst &Inst,
+  void MCPlusBuilder::getClobberedRegs(const MCInst &Inst,
                                        BitVector &Regs) const {
-  if (isPrefix(Inst) || isCFI(Inst))
-    return;
+    if (isPrefix(Inst) || isCFI(Inst))
+      return;
 
-  const auto &InstInfo = Info->get(Inst.getOpcode());
+    const auto &InstInfo = Info->get(Inst.getOpcode());
 
-  const auto *ImplicitDefs = InstInfo.getImplicitDefs();
-  for (unsigned I = 0, E = InstInfo.getNumImplicitDefs(); I != E; ++I) {
-    Regs |= getAliases(ImplicitDefs[I], /*OnlySmaller=*/false);
+    const auto *ImplicitDefs = InstInfo.getImplicitDefs();
+    for (unsigned I = 0, E = InstInfo.getNumImplicitDefs(); I != E; ++I) {
+      Regs |= getAliases(ImplicitDefs[I], /*OnlySmaller=*/false);
+    }
+
+    for (unsigned I = 0, E = InstInfo.getNumDefs(); I != E; ++I) {
+      const auto &Operand = Inst.getOperand(I);
+      assert(Operand.isReg());
+      Regs |= getAliases(Operand.getReg(), /*OnlySmaller=*/false);
+    }
   }
 
-  for (unsigned I = 0, E = InstInfo.getNumDefs(); I != E; ++I) {
-    const auto &Operand = Inst.getOperand(I);
-    assert(Operand.isReg());
-    Regs |= getAliases(Operand.getReg(), /*OnlySmaller=*/false);
-  }
-}
-
-void MCPlusBuilder::getTouchedRegs(const MCInst &Inst,
+  void MCPlusBuilder::getTouchedRegs(const MCInst &Inst,
                                      BitVector &Regs) const {
-  if (isPrefix(Inst) || isCFI(Inst))
-    return;
+    if (isPrefix(Inst) || isCFI(Inst))
+      return;
 
-  const auto &InstInfo = Info->get(Inst.getOpcode());
+    const auto &InstInfo = Info->get(Inst.getOpcode());
 
-  const auto *ImplicitDefs = InstInfo.getImplicitDefs();
-  for (unsigned I = 0, E = InstInfo.getNumImplicitDefs(); I != E; ++I) {
-    Regs |= getAliases(ImplicitDefs[I], /*OnlySmaller=*/false);
+    const auto *ImplicitDefs = InstInfo.getImplicitDefs();
+    for (unsigned I = 0, E = InstInfo.getNumImplicitDefs(); I != E; ++I) {
+      Regs |= getAliases(ImplicitDefs[I], /*OnlySmaller=*/false);
+    }
+    const auto *ImplicitUses = InstInfo.getImplicitUses();
+    for (unsigned I = 0, E = InstInfo.getNumImplicitUses(); I != E; ++I) {
+      Regs |= getAliases(ImplicitUses[I], /*OnlySmaller=*/false);
+    }
+
+    for (unsigned I = 0, E = Inst.getNumOperands(); I != E; ++I) {
+      if (!Inst.getOperand(I).isReg())
+        continue;
+      Regs |= getAliases(Inst.getOperand(I).getReg(), /*OnlySmaller=*/false);
+    }
   }
-  const auto *ImplicitUses = InstInfo.getImplicitUses();
-  for (unsigned I = 0, E = InstInfo.getNumImplicitUses(); I != E; ++I) {
-    Regs |= getAliases(ImplicitUses[I], /*OnlySmaller=*/false);
-  }
 
-  for (unsigned I = 0, E = Inst.getNumOperands(); I != E; ++I) {
-    if (!Inst.getOperand(I).isReg())
-      continue;
-    Regs |= getAliases(Inst.getOperand(I).getReg(), /*OnlySmaller=*/false);
-  }
-}
-
-void MCPlusBuilder::getWrittenRegs(const MCInst &Inst,
+  void MCPlusBuilder::getWrittenRegs(const MCInst &Inst,
                                      BitVector &Regs) const {
-  if (isPrefix(Inst) || isCFI(Inst))
-    return;
+    if (isPrefix(Inst) || isCFI(Inst))
+      return;
 
-  const auto &InstInfo = Info->get(Inst.getOpcode());
+    const auto &InstInfo = Info->get(Inst.getOpcode());
 
-  const auto *ImplicitDefs = InstInfo.getImplicitDefs();
-  for (unsigned I = 0, E = InstInfo.getNumImplicitDefs(); I != E; ++I) {
-    Regs |= getAliases(ImplicitDefs[I], /*OnlySmaller=*/true);
+    const auto *ImplicitDefs = InstInfo.getImplicitDefs();
+    for (unsigned I = 0, E = InstInfo.getNumImplicitDefs(); I != E; ++I) {
+      Regs |= getAliases(ImplicitDefs[I], /*OnlySmaller=*/true);
+    }
+
+    for (unsigned I = 0, E = InstInfo.getNumDefs(); I != E; ++I) {
+      const auto &Operand = Inst.getOperand(I);
+      assert(Operand.isReg());
+      Regs |= getAliases(Operand.getReg(), /*OnlySmaller=*/true);
+    }
   }
 
-  for (unsigned I = 0, E = InstInfo.getNumDefs(); I != E; ++I) {
-    const auto &Operand = Inst.getOperand(I);
-    assert(Operand.isReg());
-    Regs |= getAliases(Operand.getReg(), /*OnlySmaller=*/true);
+  void MCPlusBuilder::getUsedRegs(const MCInst &Inst, BitVector &Regs) const {
+    if (isPrefix(Inst) || isCFI(Inst))
+      return;
+
+    const auto &InstInfo = Info->get(Inst.getOpcode());
+
+    const auto *ImplicitUses = InstInfo.getImplicitUses();
+    for (unsigned I = 0, E = InstInfo.getNumImplicitUses(); I != E; ++I) {
+      Regs |= getAliases(ImplicitUses[I], /*OnlySmaller=*/true);
+    }
+
+    for (unsigned I = 0, E = Inst.getNumOperands(); I != E; ++I) {
+      if (!Inst.getOperand(I).isReg())
+        continue;
+      Regs |= getAliases(Inst.getOperand(I).getReg(), /*OnlySmaller=*/true);
+    }
   }
-}
 
-void MCPlusBuilder::getUsedRegs(const MCInst &Inst, BitVector &Regs) const {
-  if (isPrefix(Inst) || isCFI(Inst))
-    return;
-
-  const auto &InstInfo = Info->get(Inst.getOpcode());
-
-  const auto *ImplicitUses = InstInfo.getImplicitUses();
-  for (unsigned I = 0, E = InstInfo.getNumImplicitUses(); I != E; ++I) {
-    Regs |= getAliases(ImplicitUses[I], /*OnlySmaller=*/true);
+  bool MCPlusBuilder::hasDefOfPhysReg(const MCInst &MI, unsigned Reg) const {
+    const auto &InstInfo = Info->get(MI.getOpcode());
+    return InstInfo.hasDefOfPhysReg(MI, Reg, *RegInfo);
   }
 
-  for (unsigned I = 0, E = Inst.getNumOperands(); I != E; ++I) {
-    if (!Inst.getOperand(I).isReg())
-      continue;
-    Regs |= getAliases(Inst.getOperand(I).getReg(), /*OnlySmaller=*/true);
-  }
-}
-
-bool MCPlusBuilder::hasDefOfPhysReg(const MCInst &MI, unsigned Reg) const {
-  const auto &InstInfo = Info->get(MI.getOpcode());
-  return InstInfo.hasDefOfPhysReg(MI, Reg, *RegInfo);
-}
-
-bool MCPlusBuilder::hasUseOfPhysReg(const MCInst &MI, unsigned Reg) const {
-  const auto &InstInfo = Info->get(MI.getOpcode());
-  for (int I = InstInfo.NumDefs; I < InstInfo.NumOperands; ++I)
-    if (MI.getOperand(I).isReg() &&
-        RegInfo->isSubRegisterEq(Reg, MI.getOperand(I).getReg()))
-      return true;
-  if (const uint16_t *ImpUses = InstInfo.ImplicitUses)
-    for (; *ImpUses; ++ImpUses)
-      if (*ImpUses == Reg || RegInfo->isSubRegister(Reg, *ImpUses))
+  bool MCPlusBuilder::hasUseOfPhysReg(const MCInst &MI, unsigned Reg) const {
+    const auto &InstInfo = Info->get(MI.getOpcode());
+    for (int I = InstInfo.NumDefs; I < InstInfo.NumOperands; ++I)
+      if (MI.getOperand(I).isReg() &&
+          RegInfo->isSubRegisterEq(Reg, MI.getOperand(I).getReg()))
         return true;
-  return false;
-}
+    if (const uint16_t *ImpUses = InstInfo.ImplicitUses)
+      for (; *ImpUses; ++ImpUses)
+        if (*ImpUses == Reg || RegInfo->isSubRegister(Reg, *ImpUses))
+          return true;
+    return false;
+  }
 
-const BitVector &
-MCPlusBuilder::getAliases(MCPhysReg Reg,
+  const BitVector &
+  MCPlusBuilder::getAliases(MCPhysReg Reg,
                             bool OnlySmaller) const {
-  // AliasMap caches a mapping of registers to the set of registers that
-  // alias (are sub or superregs of itself, including itself).
-  static std::vector<BitVector> AliasMap;
-  static std::vector<MCPhysReg> SuperReg;
+    // AliasMap caches a mapping of registers to the set of registers that
+    // alias (are sub or superregs of itself, including itself).
+    static std::vector<BitVector> AliasMap;
+    static std::vector<MCPhysReg> SuperReg;
 
-  if (AliasMap.size() > 0) {
+    if (AliasMap.size() > 0) {
+      if (OnlySmaller)
+        return AliasMap[Reg];
+      return AliasMap[SuperReg[Reg]];
+    }
+    // Build alias map
+    for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
+      BitVector BV(RegInfo->getNumRegs(), false);
+      BV.set(I);
+      AliasMap.emplace_back(std::move(BV));
+      SuperReg.emplace_back(I);
+    }
+    std::queue<MCPhysReg> Worklist;
+    // Propagate alias info upwards
+    for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
+      Worklist.push(I);
+    }
+    while (!Worklist.empty()) {
+      MCPhysReg I = Worklist.front();
+      Worklist.pop();
+      for (MCSubRegIterator SI(I, RegInfo); SI.isValid(); ++SI) {
+        AliasMap[I] |= AliasMap[*SI];
+      }
+      for (MCSuperRegIterator SI(I, RegInfo); SI.isValid(); ++SI) {
+        Worklist.push(*SI);
+      }
+    }
+    // Propagate parent reg downwards
+    for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
+      Worklist.push(I);
+    }
+    while (!Worklist.empty()) {
+      MCPhysReg I = Worklist.front();
+      Worklist.pop();
+      for (MCSubRegIterator SI(I, RegInfo); SI.isValid(); ++SI) {
+        SuperReg[*SI] = SuperReg[I];
+        Worklist.push(*SI);
+      }
+    }
+
+    DEBUG({
+      dbgs() << "Dumping reg alias table:\n";
+      for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
+        dbgs() << "Reg " << I << ": ";
+        const BitVector &BV = AliasMap[SuperReg[I]];
+        int Idx = BV.find_first();
+        while (Idx != -1) {
+          dbgs() << Idx << " ";
+          Idx = BV.find_next(Idx);
+        }
+        dbgs() << "\n";
+      }
+    });
+
     if (OnlySmaller)
       return AliasMap[Reg];
     return AliasMap[SuperReg[Reg]];
   }
-  // Build alias map
-  for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
-    BitVector BV(RegInfo->getNumRegs(), false);
-    BV.set(I);
-    AliasMap.emplace_back(std::move(BV));
-    SuperReg.emplace_back(I);
-  }
-  std::queue<MCPhysReg> Worklist;
-  // Propagate alias info upwards
-  for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
-    Worklist.push(I);
-  }
-  while (!Worklist.empty()) {
-    MCPhysReg I = Worklist.front();
-    Worklist.pop();
-    for (MCSubRegIterator SI(I, RegInfo); SI.isValid(); ++SI) {
-      AliasMap[I] |= AliasMap[*SI];
-    }
-    for (MCSuperRegIterator SI(I, RegInfo); SI.isValid(); ++SI) {
-      Worklist.push(*SI);
-    }
-  }
-  // Propagate parent reg downwards
-  for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
-    Worklist.push(I);
-  }
-  while (!Worklist.empty()) {
-    MCPhysReg I = Worklist.front();
-    Worklist.pop();
-    for (MCSubRegIterator SI(I, RegInfo); SI.isValid(); ++SI) {
-      SuperReg[*SI] = SuperReg[I];
-      Worklist.push(*SI);
-    }
-  }
+ 
+ uint8_t
+ MCPlusBuilder::getRegSize(MCPhysReg Reg) const {
+    // SizeMap caches a mapping of registers to their sizes
+    static std::vector<uint8_t> SizeMap;
 
-  DEBUG({
-    dbgs() << "Dumping reg alias table:\n";
-    for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
-      dbgs() << "Reg " << I << ": ";
-      const BitVector &BV = AliasMap[SuperReg[I]];
-      int Idx = BV.find_first();
-      while (Idx != -1) {
-        dbgs() << Idx << " ";
-        Idx = BV.find_next(Idx);
+    if (SizeMap.size() > 0) {
+      return SizeMap[Reg];
+    }
+    SizeMap = std::vector<uint8_t>(RegInfo->getNumRegs());
+    // Build size map
+    for (auto I = RegInfo->regclass_begin(), E = RegInfo->regclass_end(); I != E;
+         ++I) {
+      for (MCPhysReg Reg : *I) {
+        SizeMap[Reg] = I->getSize();
       }
-      dbgs() << "\n";
     }
-  });
 
-  if (OnlySmaller)
-    return AliasMap[Reg];
-  return AliasMap[SuperReg[Reg]];
-}
-
-uint8_t
-MCPlusBuilder::getRegSize(MCPhysReg Reg) const {
-  // SizeMap caches a mapping of registers to their sizes
-  static std::vector<uint8_t> SizeMap;
-
-  if (SizeMap.size() > 0) {
     return SizeMap[Reg];
   }
-  SizeMap = std::vector<uint8_t>(RegInfo->getNumRegs());
-  // Build size map
-  for (auto I = RegInfo->regclass_begin(), E = RegInfo->regclass_end(); I != E;
-       ++I) {
-    for (MCPhysReg Reg : *I) {
-      SizeMap[Reg] = I->getSize();
+
+  bool MCPlusBuilder::setOperandToSymbolRef(MCInst &Inst, int OpNum,
+                                            const MCSymbol *Symbol,
+                                            int64_t Addend, MCContext *Ctx,
+                                            uint64_t RelType) const {
+    MCOperand Operand;
+    if (!Addend) {
+      Operand = MCOperand::createExpr(getTargetExprFor(
+          Inst, MCSymbolRefExpr::create(Symbol, *Ctx), *Ctx, RelType));
+    } else {
+      Operand = MCOperand::createExpr(getTargetExprFor(
+          Inst,
+          MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, *Ctx),
+                                  MCConstantExpr::create(Addend, *Ctx), *Ctx),
+          *Ctx, RelType));
     }
+    Inst.getOperand(OpNum) = Operand;
+    return true;
   }
-
-  return SizeMap[Reg];
-}
-
-bool MCPlusBuilder::setOperandToSymbolRef(MCInst &Inst, int OpNum,
-                                          const MCSymbol *Symbol,
-                                          int64_t Addend, MCContext *Ctx,
-                                          uint64_t RelType) const {
-  MCOperand Operand;
-  if (!Addend) {
-    Operand = MCOperand::createExpr(getTargetExprFor(
-        Inst, MCSymbolRefExpr::create(Symbol, *Ctx), *Ctx, RelType));
-  } else {
-    Operand = MCOperand::createExpr(getTargetExprFor(
-        Inst,
-        MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, *Ctx),
-                                MCConstantExpr::create(Addend, *Ctx), *Ctx),
-        *Ctx, RelType));
-  }
-  Inst.getOperand(OpNum) = Operand;
-  return true;
-}

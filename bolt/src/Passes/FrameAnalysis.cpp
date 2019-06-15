@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 #include "FrameAnalysis.h"
 #include "CallGraphWalker.h"
+#include "llvm/Support/ThreadPool.h"
 #include <fstream>
 
 #define DEBUG_TYPE "fa"
@@ -17,8 +18,11 @@
 using namespace llvm;
 
 namespace opts {
-extern cl::opt<bool> TimeOpts;
+extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> NoThreads;
+extern cl::opt<int> ThreadCount;
+
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 static cl::list<std::string>
@@ -29,6 +33,13 @@ static cl::list<std::string>
 static cl::opt<std::string> FrameOptFunctionNamesFile(
     "funcs-file-fop",
     cl::desc("file with list of functions to frame optimize"));
+
+static cl::opt<bool>
+TimeFA("time-fa",
+  cl::desc("time frame analysis steps"),
+  cl::ReallyHidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 bool shouldFrameOptimize(const llvm::bolt::BinaryFunction &Function) {
   if (Function.hasUnknownControlFlow())
@@ -484,6 +495,8 @@ bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
 }
 
 void FrameAnalysis::cleanAnnotations() {
+  NamedRegionTimer T("cleanannotations", "clean annotations", "FA",
+                     "FA breakdown", opts::TimeFA);
   for (auto &I : BC.getBinaryFunctions()) {
     for (auto &BB : I.second) {
       for (auto &Inst : BB) {
@@ -494,14 +507,23 @@ void FrameAnalysis::cleanAnnotations() {
   }
 }
 
-FrameAnalysis::FrameAnalysis(BinaryContext &BC,
-                             BinaryFunctionCallGraph &CG)
+FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
     : BC(BC) {
   // Position 0 of the vector should be always associated with "assume access
   // everything".
   ArgAccessesVector.emplace_back(ArgAccesses(/*AssumeEverything*/ true));
 
-  traverseCG(CG);
+  if (!opts::NoThreads) {
+    NamedRegionTimer T1("precomputespt", "pre-compute spt", "FA",
+                        "FA breakdown", opts::TimeFA);
+    preComputeSPT();
+  }
+
+  {
+    NamedRegionTimer T1("traversecg", "traverse call graph", "FA",
+                        "FA breakdown", opts::TimeFA);
+    traverseCG(CG);
+  }
 
   for (auto &I : BC.getBinaryFunctions()) {
     auto Count = I.second.getExecutionCount();
@@ -519,8 +541,8 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC,
     }
 
     {
-      NamedRegionTimer T1("restorefi", "restore frame index", "FOP",
-                          "FOP breakdown", opts::TimeOpts);
+      NamedRegionTimer T1("restorefi", "restore frame index", "FA",
+                          "FA breakdown", opts::TimeFA);
       if (!restoreFrameIndex(I.second)) {
         ++NumFunctionsFailedRestoreFI;
         auto Count = I.second.getExecutionCount();
@@ -531,7 +553,18 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC,
     }
     AnalyzedFunctions.insert(&I.second);
   }
-  clearSPTMap();
+
+  {
+    NamedRegionTimer T1("clearspt", "clear spt", "FA", "FA breakdown",
+                        opts::TimeFA);
+    clearSPTMap();
+
+    // Clean up memory allocated for annotation values
+    if (!opts::NoThreads) {
+      for (auto Id : SPTAllocatorsId)
+        BC.MIB->freeValuesAllocator(Id);
+    }
+  }
 }
 
 void FrameAnalysis::printStats() {
@@ -545,6 +578,84 @@ void FrameAnalysis::printStats() {
          << format("(%.1lf%% dyn cov)",
                    (100.0 * CountFunctionsFailedRestoreFI / CountDenominator))
          << " could not have its frame indices restored.\n";
+}
+
+void FrameAnalysis::preComputeSPT() {
+  // Create a lock that postpone execution of tasks until all allocators are
+  // initialized
+  std::shared_timed_mutex Mutex;
+  std::unique_lock<std::shared_timed_mutex> MainLock(Mutex);
+
+  auto runBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
+                      std::map<uint64_t, BinaryFunction>::iterator BlockEnd,
+                      MCPlusBuilder::AllocatorIdTy AllocId) {
+    // Wait until all tasks are created
+    std::shared_lock<std::shared_timed_mutex> Lock(Mutex);
+
+    Timer T("preComputeSPT runBlock", "preComputeSPT runBlock");
+    DEBUG(T.startTimer());
+    for (auto It = BlockBegin; It != BlockEnd; ++It) {
+      auto &BF = It->second;
+
+      if (!BF.isSimple() || !BF.hasCFG())
+        continue;
+
+      auto &SPTPtr = SPTMap.find(&BF)->second;
+      SPTPtr = std::make_unique<StackPointerTracking>(BC, BF, AllocId);
+      SPTPtr->run();
+    }
+    DEBUG(T.stopTimer());
+  };
+
+  // Make sure that the SPTMap is empty
+  assert(SPTMap.size() == 0);
+
+  // Create map entries to allow lock-free parallel execution
+  unsigned TotalCost = 0;
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    auto &BF = BFI.second;
+    if (!BF.isSimple() || !BF.hasCFG())
+      continue;
+    TotalCost += BF.size() * BF.size();
+    SPTMap.emplace(&BF, std::unique_ptr<StackPointerTracking>());
+  }
+
+  // Create an index for the SPT annotation to allow lock-free parallel
+  // execution
+  BC.MIB->getOrCreateAnnotationIndex("StackPointerTracking");
+
+  // The runtime cost of a single function is estimated by the square of its
+  // size, the load distribution tries to create blocks of equal runtime.
+  ThreadPool ThPool(opts::ThreadCount);
+  const unsigned BlocksCount = 20 * opts::ThreadCount;
+  const unsigned SingleBlockCost = TotalCost / BlocksCount;
+
+  // Split functions into tasks and run them in parallel each using its own
+  // allocator
+  auto BlockBegin = BC.getBinaryFunctions().begin();
+  unsigned CurBlockCost = 0;
+  for (auto It = BC.getBinaryFunctions().begin();
+       It != BC.getBinaryFunctions().end(); ++It) {
+    auto &BF = It->second;
+
+    if (BF.isSimple() && BF.hasCFG())
+      CurBlockCost += BF.size() * BF.size();
+
+    if (CurBlockCost >= SingleBlockCost) {
+      auto AllocId = BC.MIB->initializeNewAnnotationAllocator();
+      SPTAllocatorsId.push_back(AllocId);
+      ThPool.async(runBlock, BlockBegin, std::next(It), AllocId);
+      BlockBegin = std::next(It);
+      CurBlockCost = 0;
+    }
+  }
+  auto AllocId = BC.MIB->initializeNewAnnotationAllocator();
+  SPTAllocatorsId.push_back(AllocId);
+  ThPool.async(runBlock, BlockBegin, BC.getBinaryFunctions().end(), AllocId);
+
+  // Start executing tasks
+  MainLock.unlock();
+  ThPool.wait();
 }
 
 } // namespace bolt

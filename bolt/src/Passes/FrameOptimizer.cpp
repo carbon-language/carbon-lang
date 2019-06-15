@@ -46,8 +46,7 @@ RemoveStores("frame-opt-rm-stores",
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
-
-
+  
 } // namespace opts
 
 namespace llvm {
@@ -225,15 +224,32 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
   if (opts::FrameOptimization == FOP_NONE)
     return;
 
-  // Run FrameAnalysis pass
-  BinaryFunctionCallGraph CG = buildCallGraph(BC);
-  FrameAnalysis FA(BC, CG);
-  RegAnalysis RA(BC, &BC.getBinaryFunctions(), &CG);
+  std::unique_ptr<BinaryFunctionCallGraph> CG;
+  std::unique_ptr<FrameAnalysis> FA;
+  std::unique_ptr<RegAnalysis> RA;
+
+  {
+    NamedRegionTimer T1("callgraph", "create call graph", "FOP",
+                        "FOP breakdown", opts::TimeOpts);
+    CG = std::make_unique<BinaryFunctionCallGraph>(buildCallGraph(BC));
+  }
+
+  {
+    NamedRegionTimer T1("frameanalysis", "frame analysis", "FOP",
+                        "FOP breakdown", opts::TimeOpts);
+    FA = std::make_unique<FrameAnalysis>(BC, *CG);
+  }
+
+  {
+    NamedRegionTimer T1("reganalysis", "reg analysis", "FOP",
+                        "FOP breakdown", opts::TimeOpts);
+    RA = std::make_unique<RegAnalysis>(BC, &BC.getBinaryFunctions(), CG.get());
+  }
 
   // Our main loop: perform caller-saved register optimizations, then
   // callee-saved register optimizations (shrink wrapping).
   for (auto &I : BC.getBinaryFunctions()) {
-    if (!FA.hasFrameInfo(I.second))
+    if (!FA->hasFrameInfo(I.second))
       continue;
     // Restrict pass execution if user asked to only run on hot functions
     if (opts::FrameOptimization == FOP_HOT) {
@@ -248,12 +264,12 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     {
       NamedRegionTimer T1("removeloads", "remove loads", "FOP", "FOP breakdown",
                           opts::TimeOpts);
-      removeUnnecessaryLoads(RA, FA, BC, I.second);
+      removeUnnecessaryLoads(*RA, *FA, BC, I.second);
     }
     if (opts::RemoveStores) {
       NamedRegionTimer T1("removestores", "remove stores", "FOP",
                           "FOP breakdown", opts::TimeOpts);
-      removeUnusedStores(FA, BC, I.second);
+      removeUnusedStores(*FA, BC, I.second);
     }
     // Don't even start shrink wrapping if no profiling info is available
     if (I.second.getKnownExecutionCount() == 0)
@@ -261,8 +277,8 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     {
       NamedRegionTimer T1("movespills", "move spills", "FOP", "FOP breakdown",
                           opts::TimeOpts);
-      DataflowInfoManager Info(BC, I.second, &RA, &FA);
-      ShrinkWrapping SW(FA, BC, I.second, Info);
+      DataflowInfoManager Info(BC, I.second, RA.get(), FA.get());
+      ShrinkWrapping SW(*FA, BC, I.second, Info);
       if (SW.perform())
         FuncsChanged.insert(&I.second);
     }
@@ -276,7 +292,7 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
          << NumLoadsChangedToImm << " to use an immediate.\n"
          << "BOLT-INFO: FOP deleted " << NumLoadsDeleted << " load(s) and "
          << NumRedundantStores << " store(s).\n";
-  FA.printStats();
+  FA->printStats();
   ShrinkWrapping::printStats();
 }
 
