@@ -472,7 +472,7 @@ static void initTargetOptions(llvm::TargetOptions &Options,
   Options.EmitAddrsig = CodeGenOpts.Addrsig;
 
   if (CodeGenOpts.getSplitDwarfMode() != CodeGenOptions::NoFission)
-    Options.MCOptions.SplitDwarfFile = CodeGenOpts.SplitDwarfFile;
+    Options.MCOptions.SplitDwarfFile = CodeGenOpts.SplitDwarfOutput;
   Options.MCOptions.MCRelaxAll = CodeGenOpts.RelaxAll;
   Options.MCOptions.MCSaveTempLabels = CodeGenOpts.SaveTempLabels;
   Options.MCOptions.MCUseDwarfDirectory = !CodeGenOpts.NoDwarfDirectoryAsm;
@@ -862,9 +862,9 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
     break;
 
   default:
-    if (!CodeGenOpts.SplitDwarfFile.empty() &&
+    if (!CodeGenOpts.SplitDwarfOutput.empty() &&
         (CodeGenOpts.getSplitDwarfMode() == CodeGenOptions::SplitFileFission)) {
-      DwoOS = openOutputFile(CodeGenOpts.SplitDwarfFile);
+      DwoOS = openOutputFile(CodeGenOpts.SplitDwarfOutput);
       if (!DwoOS)
         return;
     }
@@ -1275,9 +1275,9 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
     NeedCodeGen = true;
     CodeGenPasses.add(
         createTargetTransformInfoWrapperPass(getTargetIRAnalysis()));
-    if (!CodeGenOpts.SplitDwarfFile.empty() &&
+    if (!CodeGenOpts.SplitDwarfOutput.empty() &&
         CodeGenOpts.getSplitDwarfMode() == CodeGenOptions::SplitFileFission) {
-      DwoOS = openOutputFile(CodeGenOpts.SplitDwarfFile);
+      DwoOS = openOutputFile(CodeGenOpts.SplitDwarfOutput);
       if (!DwoOS)
         return;
     }
@@ -1428,7 +1428,7 @@ static void runThinLTOBackend(ModuleSummaryIndex *CombinedIndex, Module *M,
   Conf.RemarksWithHotness = CGOpts.DiagnosticsWithHotness;
   Conf.RemarksFilename = CGOpts.OptRecordFile;
   Conf.RemarksPasses = CGOpts.OptRecordPasses;
-  Conf.DwoPath = CGOpts.SplitDwarfFile;
+  Conf.DwoPath = CGOpts.SplitDwarfOutput;
   switch (Action) {
   case Backend_EmitNothing:
     Conf.PreCodeGenModuleHook = [](size_t Task, const Module &Mod) {

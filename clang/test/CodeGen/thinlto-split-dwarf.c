@@ -10,7 +10,7 @@
 
 // RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu \
 // RUN:   -emit-obj -fthinlto-index=%t.o.thinlto.bc \
-// RUN:   -o %t.native.o -split-dwarf-file %t.native.dwo -x ir %t.o
+// RUN:   -o %t.native.o -split-dwarf-output %t.native.dwo -x ir %t.o
 
 // RUN: llvm-readobj -S %t.native.o | FileCheck --check-prefix=O %s
 // RUN: llvm-readobj -S %t.native.dwo | FileCheck --check-prefix=DWO %s

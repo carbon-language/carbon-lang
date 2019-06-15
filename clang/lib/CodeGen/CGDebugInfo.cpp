@@ -616,7 +616,7 @@ void CGDebugInfo::CreateCompileUnit() {
       CGOpts.DwarfDebugFlags, RuntimeVers,
       (CGOpts.getSplitDwarfMode() != CodeGenOptions::NoFission)
           ? ""
-          : CGOpts.SplitDwarfFile,
+          : CGOpts.SplitDwarfOutput,
       EmissionKind, DwoId, CGOpts.SplitDwarfInlining,
       CGOpts.DebugInfoForProfiling,
       CGM.getTarget().getTriple().isNVPTX()

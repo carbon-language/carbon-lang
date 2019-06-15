@@ -683,7 +683,7 @@ def version : Flag<["-"], "version">,
   HelpText<"Print the compiler version">;
 def main_file_name : Separate<["-"], "main-file-name">,
   HelpText<"Main file name to use for debug info">;
-def split_dwarf_file : Separate<["-"], "split-dwarf-file">,
+def split_dwarf_output : Separate<["-"], "split-dwarf-output">,
   HelpText<"File name to use for split dwarf debug info output">;
 
 }

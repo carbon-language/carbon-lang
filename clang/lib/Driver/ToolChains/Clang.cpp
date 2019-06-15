@@ -4110,7 +4110,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                      isa<BackendJobAction>(JA));
   const char *SplitDWARFOut;
   if (SplitDWARF) {
-    CmdArgs.push_back("-split-dwarf-file");
+    CmdArgs.push_back("-split-dwarf-output");
     SplitDWARFOut = SplitDebugName(Args, Input, Output);
     CmdArgs.push_back(SplitDWARFOut);
   }
@@ -6180,7 +6180,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   Arg *A;
   if (getDebugFissionKind(D, Args, A) == DwarfFissionKind::Split &&
       T.isOSBinFormatELF()) {
-    CmdArgs.push_back("-split-dwarf-file");
+    CmdArgs.push_back("-split-dwarf-output");
     CmdArgs.push_back(SplitDebugName(Args, Input, Output));
   }
 

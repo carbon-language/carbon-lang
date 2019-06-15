@@ -187,7 +187,7 @@ public:
 
   /// The name for the split debug info file that we'll break out. This is used
   /// in the backend for setting the name in the skeleton cu.
-  std::string SplitDwarfFile;
+  std::string SplitDwarfOutput;
 
   /// The name of the relocation model to use.
   llvm::Reloc::Model RelocationModel;
