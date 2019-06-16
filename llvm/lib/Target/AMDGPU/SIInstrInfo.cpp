@@ -5846,7 +5846,9 @@ SIInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
     { MO_GOTPCREL32_LO, "amdgpu-gotprel32-lo" },
     { MO_GOTPCREL32_HI, "amdgpu-gotprel32-hi" },
     { MO_REL32_LO, "amdgpu-rel32-lo" },
-    { MO_REL32_HI, "amdgpu-rel32-hi" }
+    { MO_REL32_HI, "amdgpu-rel32-hi" },
+    { MO_ABS32_LO, "amdgpu-abs32-lo" },
+    { MO_ABS32_HI, "amdgpu-abs32-hi" },
   };
 
   return makeArrayRef(TargetFlags);
