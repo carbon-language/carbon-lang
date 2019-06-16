@@ -17,3 +17,28 @@ void shift_by_undefined_value() {
   (void)(TCP_MAXWIN << shift_amount); // expected-warning{{The result of the left shift is undefined due to shifting by '255', which is greater or equal to the width of type 'int'}}
                                       // expected-note@-1{{The result of the left shift is undefined due to shifting by '255', which is greater or equal to the width of type 'int'}}
 }
+
+namespace array_index_tracking {
+void consume(int);
+
+int getIndex(int x) {
+  int a;
+  if (x > 0)
+    a = 3;
+  else
+    a = 2;
+  return a;
+}
+
+int getInt();
+
+void testArrayIndexTracking() {
+  int arr[10];
+
+  for (int i = 0; i < 3; ++i)
+    arr[i] = 0;
+  int x = getInt();
+  int n = getIndex(x);
+  consume(arr[n]);
+}
+} // end of namespace array_index_tracking
