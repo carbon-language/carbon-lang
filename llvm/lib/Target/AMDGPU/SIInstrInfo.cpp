@@ -1369,10 +1369,7 @@ bool SIInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
 
     MachineInstrBuilder MIB = BuildMI(MF, DL, get(AMDGPU::S_ADDC_U32), RegHi)
                                   .addReg(RegHi);
-    if (MI.getOperand(2).getTargetFlags() == SIInstrInfo::MO_NONE)
-      MIB.addImm(0);
-    else
-      MIB.add(MI.getOperand(2));
+    MIB.add(MI.getOperand(2));
 
     Bundler.append(MIB);
     finalizeBundle(MBB, Bundler.begin());
