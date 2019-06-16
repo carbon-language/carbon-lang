@@ -1740,9 +1740,10 @@ bool bugreporter::trackExpressionValue(const ExplodedNode *InputNode,
   if (const Expr *Receiver = NilReceiverBRVisitor::getNilReceiver(Inner, LVNode))
     trackExpressionValue(LVNode, Receiver, report, EnableNullFPSuppression);
 
+  // Track the index if this is an array subscript.
   if (const auto *Arr = dyn_cast<ArraySubscriptExpr>(Inner))
     trackExpressionValue(
-        LVNode, Arr->getIdx(), report, EnableNullFPSuppression);
+        LVNode, Arr->getIdx(), report, /*EnableNullFPSuppression*/ false);
 
   // See if the expression we're interested refers to a variable.
   // If so, we can track both its contents and constraints on its value.
