@@ -5221,7 +5221,7 @@ SDValue SITargetLowering::lowerImage(SDValue Op,
 }
 
 SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
-                                       SDValue Offset, SDValue GLC,
+                                       SDValue Offset, SDValue GLC, SDValue DLC,
                                        SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineMemOperand *MMO = MF.getMachineMemOperand(
@@ -5234,7 +5234,8 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
     SDValue Ops[] = {
         Rsrc,
         Offset, // Offset
-        GLC     // glc
+        GLC,
+        DLC,
     };
     return DAG.getMemIntrinsicNode(AMDGPUISD::SBUFFER_LOAD, DL,
                                    DAG.getVTList(VT), Ops, VT, MMO);
@@ -5442,9 +5443,14 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getConstant(MF.getSubtarget<GCNSubtarget>().getWavefrontSize(),
                            SDLoc(Op), MVT::i32);
   case Intrinsic::amdgcn_s_buffer_load: {
-    unsigned Cache = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-    return lowerSBuffer(VT, DL, Op.getOperand(1), Op.getOperand(2),
-                        DAG.getTargetConstant(Cache & 1, DL, MVT::i1), DAG);
+    bool IsGFX10 = Subtarget->getGeneration() >= AMDGPUSubtarget::GFX10;
+    SDValue GLC;
+    SDValue DLC = DAG.getTargetConstant(0, DL, MVT::i1);
+    if (!parseCachePolicy(Op.getOperand(3), DAG, &GLC, nullptr,
+                          IsGFX10 ? &DLC : nullptr))
+      return Op;
+    return lowerSBuffer(VT, DL, Op.getOperand(1), Op.getOperand(2), GLC, DLC,
+                        DAG);
   }
   case Intrinsic::amdgcn_fdiv_fast:
     return lowerFDIV_FAST(Op, DAG);
