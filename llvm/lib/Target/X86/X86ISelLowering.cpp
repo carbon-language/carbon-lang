@@ -31951,19 +31951,41 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
         !isa<ConstantSDNode>(V2.getOperand(1)))
       return false;
 
+    // If the src vector types aren't the same, see if we can extend
+    // one to match the other.
     SDValue Src1 = V1.getOperand(0);
     SDValue Src2 = V2.getOperand(0);
-    if (Src1.getValueType() != Src2.getValueType())
+    if ((Src1.getValueType().getScalarType() !=
+         Src2.getValueType().getScalarType()) ||
+        !DAG.getTargetLoweringInfo().isTypeLegal(Src1.getValueType()) ||
+        !DAG.getTargetLoweringInfo().isTypeLegal(Src2.getValueType()))
       return false;
+
+    unsigned Src1SizeInBits = Src1.getValueSizeInBits();
+    unsigned Src2SizeInBits = Src2.getValueSizeInBits();
+    assert(((Src1SizeInBits % Src2SizeInBits) == 0 ||
+            (Src2SizeInBits % Src1SizeInBits) == 0) &&
+           "Shuffle vector size mismatch");
+    if (Src1SizeInBits != Src2SizeInBits) {
+      if (Src1SizeInBits > Src2SizeInBits) {
+        Src2 = insertSubVector(DAG.getUNDEF(Src1.getValueType()), Src2, 0, DAG,
+                               DL, Src2SizeInBits);
+        Src2SizeInBits = Src1SizeInBits;
+      } else {
+        Src1 = insertSubVector(DAG.getUNDEF(Src2.getValueType()), Src1, 0, DAG,
+                               DL, Src1SizeInBits);
+        Src1SizeInBits = Src2SizeInBits;
+      }
+    }
 
     unsigned Offset1 = V1.getConstantOperandVal(1);
     unsigned Offset2 = V2.getConstantOperandVal(1);
-    assert(((Offset1 % VT1.getVectorNumElements()) == 0 ||
-            (Offset2 % VT2.getVectorNumElements()) == 0 ||
-            (Src1.getValueSizeInBits() % RootSizeInBits) == 0 ||
-            (Src2.getValueSizeInBits() % RootSizeInBits) == 0) &&
+    assert(((Offset1 % VT1.getVectorNumElements()) == 0 &&
+            (Offset2 % VT2.getVectorNumElements()) == 0 &&
+            (Src1SizeInBits % RootSizeInBits) == 0 &&
+            Src1SizeInBits == Src2SizeInBits) &&
            "Unexpected subvector extraction");
-    unsigned Scale = Src1.getValueSizeInBits() / RootSizeInBits;
+    unsigned Scale = Src1SizeInBits / RootSizeInBits;
 
     // Convert extraction indices to mask size.
     Offset1 /= VT1.getVectorNumElements();
