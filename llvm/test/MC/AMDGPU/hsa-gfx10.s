@@ -1,5 +1,5 @@
-// RUN: llvm-mc -triple amdgcn--amdhsa -mcpu=kaveri -mattr=-code-object-v3 -show-encoding %s | FileCheck %s --check-prefix=ASM
-// RUN: llvm-mc -filetype=obj -triple amdgcn--amdhsa -mcpu=kaveri -mattr=-code-object-v3 -show-encoding %s | llvm-readobj --symbols -S --sd | FileCheck %s --check-prefix=ELF
+// RUN: llvm-mc -triple amdgcn--amdhsa -mcpu=gfx1010 -mattr=-WavefrontSize32,+WavefrontSize64,-code-object-v3 -show-encoding %s | FileCheck %s --check-prefix=ASM
+// RUN: llvm-mc -filetype=obj -triple amdgcn--amdhsa -mcpu=gfx1010 -mattr=-WavefrontSize32,+WavefrontSize64,-code-object-v3 -show-encoding %s | llvm-readobj -symbols -s -sd | FileCheck %s --check-prefix=ELF
 
 // ELF: Section {
 // ELF: Name: .text
@@ -78,6 +78,9 @@ amd_kernel_code_t_test_all:
     compute_pgm_rsrc1_dx10_clamp = 1
     compute_pgm_rsrc1_debug_mode = 1
     compute_pgm_rsrc1_ieee_mode = 1
+    compute_pgm_rsrc1_wgp_mode = 0
+    compute_pgm_rsrc1_mem_ordered = 0
+    compute_pgm_rsrc1_fwd_progress = 1
     compute_pgm_rsrc2_scratch_en = 1
     compute_pgm_rsrc2_user_sgpr = 1
     compute_pgm_rsrc2_tgid_x_en = 1
@@ -143,6 +146,9 @@ amd_kernel_code_t_test_all:
 // ASM: enable_dx10_clamp = 1
 // ASM: debug_mode = 1
 // ASM: enable_ieee_mode = 1
+// ASM: enable_wgp_mode = 0
+// ASM: enable_mem_ordered = 0
+// ASM: enable_fwd_progress = 1
 // ASM: enable_sgpr_private_segment_wave_byte_offset = 1
 // ASM: user_sgpr_count = 1
 // ASM: enable_sgpr_workgroup_id_x = 1
@@ -213,8 +219,8 @@ amd_kernel_code_t_minimal:
 // ASM:	amd_code_version_major = 1
 // ASM:	amd_code_version_minor = 2
 // ASM:	amd_machine_kind = 1
-// ASM:	amd_machine_version_major = 7
-// ASM:	amd_machine_version_minor = 0
+// ASM:	amd_machine_version_major = 10
+// ASM:	amd_machine_version_minor = 1
 // ASM:	amd_machine_version_stepping = 0
 // ASM:	kernel_code_entry_byte_offset = 256
 // ASM:	kernel_code_prefetch_byte_size = 0
@@ -226,6 +232,9 @@ amd_kernel_code_t_minimal:
 // ASM: enable_dx10_clamp = 0
 // ASM: debug_mode = 0
 // ASM: enable_ieee_mode = 0
+// ASM: enable_wgp_mode = 1
+// ASM: enable_mem_ordered = 1
+// ASM: enable_fwd_progress = 0
 // ASM: enable_sgpr_private_segment_wave_byte_offset = 0
 // ASM: user_sgpr_count = 2
 // ASM: enable_sgpr_workgroup_id_x = 0
@@ -246,6 +255,7 @@ amd_kernel_code_t_minimal:
 // ASM:	enable_sgpr_grid_workgroup_count_x = 0
 // ASM:	enable_sgpr_grid_workgroup_count_y = 0
 // ASM:	enable_sgpr_grid_workgroup_count_z = 0
+// ASM:	enable_wavefront_size32 = 0
 // ASM:	enable_ordered_append_gds = 0
 // ASM:	private_element_size = 0
 // ASM:	is_ptr64 = 1

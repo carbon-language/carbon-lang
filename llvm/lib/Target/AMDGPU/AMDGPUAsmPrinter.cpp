@@ -361,6 +361,10 @@ uint16_t AMDGPUAsmPrinter::getAmdhsaKernelCodeProperties(
     KernelCodeProperties |=
         amdhsa::KERNEL_CODE_PROPERTY_ENABLE_SGPR_FLAT_SCRATCH_INIT;
   }
+  if (MF.getSubtarget<GCNSubtarget>().isWave32()) {
+    KernelCodeProperties |=
+        amdhsa::KERNEL_CODE_PROPERTY_ENABLE_WAVEFRONT_SIZE32;
+  }
 
   return KernelCodeProperties;
 }
@@ -1081,6 +1085,10 @@ void AMDGPUAsmPrinter::EmitPALMetadata(const MachineFunction &MF,
     MD->setSpiPsInputEna(MFI->getPSInputEnable());
     MD->setSpiPsInputAddr(MFI->getPSInputAddr());
   }
+
+  const GCNSubtarget &STM = MF.getSubtarget<GCNSubtarget>();
+  if (STM.isWave32())
+    MD->setWave32(MF.getFunction().getCallingConv());
 }
 
 // This is supposed to be log2(Size)
