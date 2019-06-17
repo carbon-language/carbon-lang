@@ -4412,6 +4412,13 @@ bool LoopVectorizationCostModel::interleavedAccessCanBeWidened(Instruction *I,
   auto *Group = getInterleavedAccessGroup(I);
   assert(Group && "Must have a group.");
 
+  // If the instruction's allocated size doesn't equal it's type size, it
+  // requires padding and will be scalarized.
+  auto &DL = I->getModule()->getDataLayout();
+  auto *ScalarTy = getMemInstValueType(I);
+  if (hasIrregularType(ScalarTy, DL, VF))
+    return false;
+
   // Check if masking is required.
   // A Group may need masking for one of two reasons: it resides in a block that
   // needs predication, or it was decided to use masking to deal with gaps.
