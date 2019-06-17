@@ -183,6 +183,16 @@ bool TargetTransformInfo::isLegalMaskedLoad(Type *DataType) const {
   return TTIImpl->isLegalMaskedLoad(DataType);
 }
 
+bool TargetTransformInfo::isLegalNTStore(Type *DataType,
+                                         unsigned Alignment) const {
+  return TTIImpl->isLegalNTStore(DataType, Alignment);
+}
+
+bool TargetTransformInfo::isLegalNTLoad(Type *DataType,
+                                        unsigned Alignment) const {
+  return TTIImpl->isLegalNTLoad(DataType, Alignment);
+}
+
 bool TargetTransformInfo::isLegalMaskedGather(Type *DataType) const {
   return TTIImpl->isLegalMaskedGather(DataType);
 }
