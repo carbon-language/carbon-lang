@@ -50,6 +50,10 @@
         "url": "http://llvm.org/svn/llvm-project/clang-tools-extra/trunk/clangd/clients/clangd-vscode/"
     },
     "contributes": {
+        "languages": [{
+            "id": "cpp",
+            "firstLine": "^\/[/*].*-\\*-\\s*C\\+\\+\\s*-\\*-.*"
+        }],
         "configuration": {
             "type": "object",
             "title": "clangd configuration",
