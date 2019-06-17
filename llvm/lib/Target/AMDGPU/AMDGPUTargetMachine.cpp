@@ -658,14 +658,15 @@ void AMDGPUPassConfig::addIRPasses() {
   disablePass(&FuncletLayoutID);
   disablePass(&PatchableFunctionID);
 
+  // This must occur before inlining, as the inliner will not look through
+  // bitcast calls.
+  addPass(createAMDGPUFixFunctionBitcastsPass());
+
   // A call to propagate attributes pass in the backend in case opt was not run.
   addPass(createAMDGPUPropagateAttributesEarlyPass(&TM));
 
   addPass(createAtomicExpandPass());
 
-  // This must occur before inlining, as the inliner will not look through
-  // bitcast calls.
-  addPass(createAMDGPUFixFunctionBitcastsPass());
 
   addPass(createAMDGPULowerIntrinsicsPass());
 
