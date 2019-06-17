@@ -1170,7 +1170,7 @@ def int_amdgcn_s_decperflevel :
 def int_amdgcn_s_getreg :
   GCCBuiltin<"__builtin_amdgcn_s_getreg">,
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty],
-  [IntrReadMem, IntrSpeculatable, ImmArg<0>]
+  [IntrInaccessibleMemOnly, IntrReadMem, IntrSpeculatable, ImmArg<0>]
 >;
 
 // int_amdgcn_s_getpc is provided to allow a specific style of position
