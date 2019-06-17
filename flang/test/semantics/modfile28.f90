@@ -29,9 +29,9 @@ end module m
 
 !Expect: m.mod
 !module m
-!character(:,4),parameter::c4=4_"Hi! 你好!"
-!character(:,1),parameter::c1=1_"Hi! ä½ å¥½!"
-!character(:,4),parameter::c4a(1_8:)=[CHARACTER(KIND=4,LEN=1)::"一","二","三","四","五"]
+!character(:,4),parameter::c4=4_"Hi! \344\275\240\345\245\275!"
+!character(:,1),parameter::c1=1_"Hi! \344\275\240\345\245\275!"
+!character(:,4),parameter::c4a(1_8:)=[CHARACTER(KIND=4,LEN=1)::"\344\270\200","\344\272\214","\344\270\211","\345\233\233","\344\272\224"]
 !integer(4),parameter::lc4=7_4
 !integer(4),parameter::lc1=11_4
 !end

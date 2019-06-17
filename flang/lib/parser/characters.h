@@ -161,13 +161,9 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
       if (std::optional<char> escape{BackslashEscapeChar(ch)}) {
         emit(*escape);
       } else {
-        // octal escape sequence
-        if (ch > 077) {
-          insert('0' + (ch >> 6));
-        }
-        if (ch > 07) {
-          insert('0' + ((ch >> 3) & 7));
-        }
+        // octal escape sequence; always emit 3 digits to avoid ambiguity
+        insert('0' + (ch >> 6));
+        insert('0' + ((ch >> 3) & 7));
         insert('0' + (ch & 7));
       }
     } else {

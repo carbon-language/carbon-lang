@@ -519,37 +519,16 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
   if (!CheckIntrinsicKind(TypeCategory::Character, kind)) {
     return std::nullopt;
   }
-  std::u32string codepoint{parser::DecodeUTF_8(string)};
   if (kind == 1) {
-    std::string result;
-    for (char32_t ch : codepoint) {
-      if (ch <= 0xff) {
-        result += static_cast<char>(ch);
-      } else {
-        // Original literal in UTF-8 source contained a byte sequence
-        // that looked like UTF-8 and got decoded as such.  Reconstruct.
-        parser::EncodedCharacter encoded{parser::EncodeUTF_8(ch)};
-        result += std::string{
-            encoded.buffer, static_cast<std::size_t>(encoded.bytes)};
-      }
-    }
     return AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 1>>{std::move(result)});
+        Constant<Type<TypeCategory::Character, 1>>{std::move(string)});
   } else if (kind == 2) {
-    std::u16string result;
-    for (char32_t ch : codepoint) {
-      if (ch > 0xffff) {
-        Say("Bad character in CHARACTER(KIND=2) literal"_err_en_US);
-        return std::nullopt;
-      }
-      result += static_cast<char16_t>(ch);
-    }
-    return AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 2>>{std::move(result)});
+    return AsGenericExpr(Constant<Type<TypeCategory::Character, 2>>{
+        parser::DecodeEUC_JP(string)});
   } else {
     CHECK(kind == 4);
-    return AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 4>>{std::move(codepoint)});
+    return AsGenericExpr(Constant<Type<TypeCategory::Character, 4>>{
+        parser::DecodeUTF_8(string)});
   }
 }
 

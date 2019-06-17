@@ -558,32 +558,11 @@ void Prescanner::QuotedCharacterLiteral(
   inCharLiteral_ = true;
   const auto emit{[&](char ch) { EmitChar(tokens, ch); }};
   const auto insert{[&](char ch) { EmitInsertedChar(tokens, ch); }};
+  bool isEscaped{false};
   bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
-  Encoding encoding{encoding_};
-  if (isKanji) {
-    // NC'...' - the contents are always decoded as EUC_JP
-    encoding = Encoding::EUC_JP;
-  } else if (encoding == Encoding::EUC_JP) {
-    encoding = Encoding::LATIN_1;  // for compatibility with tests
-  }
   while (true) {
-    DecodedCharacter decoded{DecodeCharacter(
-        encoding, at_, static_cast<std::size_t>(limit_ - at_), escapesEnabled)};
-    if (decoded.bytes <= 0) {
-      Say(GetProvenanceRange(start, at_),
-          "Bad character in character literal"_en_US);
-      // Just eat a byte and press on.
-      decoded.codepoint = static_cast<unsigned char>(*at_);
-      decoded.bytes = 1;
-    }
-    char32_t ch{decoded.codepoint};
-    if (ch == quote) {
-      if (decoded.bytes > 1) {
-        EmitChar(tokens, '\\');
-      }
-    }
-    EmitQuotedChar(
-        ch, emit, insert, true /* use backslash escapes */, Encoding::UTF_8);
+    EmitQuotedChar(static_cast<unsigned char>(*at_), emit, insert, false,
+        Encoding::LATIN_1);
     while (PadOutCharacterLiteral(tokens)) {
     }
     if (*at_ == '\n') {
@@ -593,13 +572,20 @@ void Prescanner::QuotedCharacterLiteral(
       }
       break;
     }
-    at_ += decoded.bytes - 1;
+    isEscaped = !isEscaped && *at_ == '\\';
     end = at_ + 1;
     NextChar();
     if (*at_ == quote) {
-      // A doubled quote mark becomes a single instance of the quote character
-      // in the literal (later).  There can be spaces between the quotes in
-      // fixed form source.
+      if (isEscaped) {
+        if (escapesEnabled) {
+          continue;
+        } else {
+          insert('\\');
+        }
+      }
+      // A doubled unescaped quote mark becomes a single instance of that
+      // quote character in the literal (later).  There can be spaces between
+      // the quotes in fixed form source.
       EmitChar(tokens, quote);
       inCharLiteral_ = false;  // for cases like print *, '...'!comment
       NextChar();
@@ -629,10 +615,10 @@ void Prescanner::Hollerith(
     } else {
       NextChar();
       // Multi-byte character encodings each count as single characters.
+      // The cooked character stream always uses UTF-8 for Hollerith.
       DecodedCharacter decoded{DecodeCharacter(
           encoding_, at_, static_cast<std::size_t>(limit_ - at_))};
       if (decoded.bytes > 0) {
-        // The cooked character stream we emit is always in UTF-8.
         EncodedCharacter utf8{EncodeUTF_8(decoded.codepoint)};
         for (int j{0}; j < utf8.bytes; ++j) {
           EmitChar(tokens, utf8.buffer[j]);
@@ -812,9 +798,11 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
   } else if (inPreprocessorDirective_) {
     return false;
   } else if (lineClass.kind ==
-      LineClassification::Kind::ConditionalCompilationDirective) {
+          LineClassification::Kind::ConditionalCompilationDirective ||
+      lineClass.kind == LineClassification::Kind::PreprocessorDirective) {
     // Allow conditional compilation directives (e.g., #ifdef) to affect
     // continuation lines.
+    // Allow other preprocessor directives, too, except #include.
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return true;
   } else if (afterAmpersand &&
@@ -952,7 +940,7 @@ bool Prescanner::FixedFormContinuation(bool mightNeedSpace) {
       NextLine();
       return true;
     }
-  } while (SkipCommentLine(false /* not after & */));
+  } while (SkipCommentLine(false /* not after ampersand */));
   return false;
 }
 

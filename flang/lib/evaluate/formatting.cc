@@ -92,9 +92,7 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
     } else if (Rank() == 0) {
       o << Result::kind << '_';
     }
-    o << parser::QuoteCharacterLiteral(value,
-        false /* avoid backslash escapes */,
-        parser::Encoding::UTF_8 /* module files are UTF-8 */);
+    o << parser::QuoteCharacterLiteral(value);
   }
   if (Rank() > 0) {
     o << ']';

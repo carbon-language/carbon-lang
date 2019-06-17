@@ -186,17 +186,15 @@ public:
         x.u);
   }
   void Unparse(const CharLiteralConstant &x) {  // R724
-    Encoding encoding{Encoding::LATIN_1};
     if (const auto &k{std::get<std::optional<KindParam>>(x.t)}) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");
-        encoding = Encoding::EUC_JP;
       } else {
         Walk(*k), Put('_');
       }
     }
     Put(QuoteCharacterLiteral(
-        DecodeUTF_8(std::get<std::string>(x.t)), backslashEscapes_, encoding));
+        std::get<std::string>(x.t), backslashEscapes_, Encoding::LATIN_1));
   }
   void Unparse(const HollerithLiteralConstant &x) {
     std::u32string ucs{DecodeUTF_8(x.v)};

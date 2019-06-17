@@ -230,18 +230,31 @@ struct CharLiteralChar {
         return std::make_pair(*escChar, true);
       } else if (IsOctalDigit(**cp)) {
         char result{static_cast<char>(**cp - '0')};
-        for (int j = (result > 3 ? 1 : 2); j-- > 0;) {
+        for (int j{0}; j < 2 && static_cast<unsigned char>(result) <= 037;
+             ++j) {
           static constexpr auto octalDigit{attempt("01234567"_ch)};
           if (std::optional<const char *> oct{octalDigit.Parse(state)}) {
-            result = 8 * result + **oct - '0';
+            result = 8 * result + DecimalDigitValue(**oct);
           } else {
             break;
           }
         }
         return std::make_pair(result, true);
-      } else {
-        // unknown escape - ignore the '\' (PGI compatibility)
-        return std::make_pair(static_cast<char>(1 [*cp]), true);
+      } else if (**cp == 'x' || **cp == 'X') {
+        char result{0};
+        for (int j{0}; j < 2; ++j) {
+          static constexpr auto hexadecimalDigit{
+              attempt("01234567abcdefABCDEF"_ch)};
+          if (std::optional<const char *> hex{hexadecimalDigit.Parse(state)}) {
+            result = 16 * result + HexadecimalDigitValue(**hex);
+          } else {
+            return std::nullopt;
+          }
+        }
+        return std::make_pair(result, true);
+      } else if (IsLetter(**cp)) {
+        // Unknown escape - ignore the '\' (PGI compatibility)
+        return std::make_pair(**cp, true);
       }
     }
     return std::nullopt;
