@@ -21,6 +21,7 @@
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -205,8 +206,10 @@ public:
   bool tagAlloca(IRBuilder<> &IRB, AllocaInst *AI, Value *Tag);
   Value *tagPointer(IRBuilder<> &IRB, Type *Ty, Value *PtrLong, Value *Tag);
   Value *untagPointer(IRBuilder<> &IRB, Value *PtrLong);
-  bool instrumentStack(SmallVectorImpl<AllocaInst *> &Allocas,
-                       SmallVectorImpl<Instruction *> &RetVec, Value *StackTag);
+  bool instrumentStack(
+      SmallVectorImpl<AllocaInst *> &Allocas,
+      DenseMap<AllocaInst *, std::vector<DbgDeclareInst *>> &AllocaDeclareMap,
+      SmallVectorImpl<Instruction *> &RetVec, Value *StackTag);
   bool instrumentLandingPads(SmallVectorImpl<Instruction *> &RetVec);
   Value *getNextTagWithCall(IRBuilder<> &IRB);
   Value *getStackBaseTag(IRBuilder<> &IRB);
@@ -984,6 +987,7 @@ bool HWAddressSanitizer::instrumentLandingPads(
 
 bool HWAddressSanitizer::instrumentStack(
     SmallVectorImpl<AllocaInst *> &Allocas,
+    DenseMap<AllocaInst *, std::vector<DbgDeclareInst *>> &AllocaDeclareMap,
     SmallVectorImpl<Instruction *> &RetVec, Value *StackTag) {
   // Ideally, we want to calculate tagged stack base pointer, and rewrite all
   // alloca addresses using that. Unfortunately, offsets are not known yet
@@ -1006,6 +1010,13 @@ bool HWAddressSanitizer::instrumentStack(
       Use &U = *UI++;
       if (U.getUser() != AILong)
         U.set(Replacement);
+    }
+
+    for (auto *DDI : AllocaDeclareMap.lookup(AI)) {
+      DIExpression *OldExpr = DDI->getExpression();
+      DIExpression *NewExpr = DIExpression::append(
+          OldExpr, {dwarf::DW_OP_LLVM_tag_offset, RetagMask(N)});
+      DDI->setArgOperand(2, MetadataAsValue::get(*C, NewExpr));
     }
 
     tagAlloca(IRB, AI, Tag);
@@ -1051,6 +1062,7 @@ bool HWAddressSanitizer::sanitizeFunction(Function &F) {
   SmallVector<AllocaInst*, 8> AllocasToInstrument;
   SmallVector<Instruction*, 8> RetVec;
   SmallVector<Instruction*, 8> LandingPadVec;
+  DenseMap<AllocaInst *, std::vector<DbgDeclareInst *>> AllocaDeclareMap;
   for (auto &BB : F) {
     for (auto &Inst : BB) {
       if (ClInstrumentStack)
@@ -1068,6 +1080,10 @@ bool HWAddressSanitizer::sanitizeFunction(Function &F) {
       if (isa<ReturnInst>(Inst) || isa<ResumeInst>(Inst) ||
           isa<CleanupReturnInst>(Inst))
         RetVec.push_back(&Inst);
+
+      if (auto *DDI = dyn_cast<DbgDeclareInst>(&Inst))
+        if (auto *Alloca = dyn_cast_or_null<AllocaInst>(DDI->getAddress()))
+          AllocaDeclareMap[Alloca].push_back(DDI);
 
       if (ClInstrumentLandingPads && isa<LandingPadInst>(Inst))
         LandingPadVec.push_back(&Inst);
@@ -1107,7 +1123,8 @@ bool HWAddressSanitizer::sanitizeFunction(Function &F) {
   if (!AllocasToInstrument.empty()) {
     Value *StackTag =
         ClGenerateTagsWithCalls ? nullptr : getStackBaseTag(EntryIRB);
-    Changed |= instrumentStack(AllocasToInstrument, RetVec, StackTag);
+    Changed |= instrumentStack(AllocasToInstrument, AllocaDeclareMap, RetVec,
+                               StackTag);
   }
 
   // If we split the entry block, move any allocas that were originally in the
