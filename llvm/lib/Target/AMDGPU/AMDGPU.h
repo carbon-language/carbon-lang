@@ -57,6 +57,8 @@ FunctionPass *createAMDGPUSimplifyLibCallsPass(const TargetOptions &);
 FunctionPass *createAMDGPUUseNativeCallsPass();
 FunctionPass *createAMDGPUCodeGenPreparePass();
 FunctionPass *createAMDGPUMachineCFGStructurizerPass();
+FunctionPass *createAMDGPUPropagateAttributesEarlyPass(const TargetMachine *);
+ModulePass *createAMDGPUPropagateAttributesLatePass(const TargetMachine *);
 FunctionPass *createAMDGPURewriteOutArgumentsPass();
 FunctionPass *createSIModeRegisterPass();
 
@@ -90,6 +92,12 @@ extern char &AMDGPULowerKernelArgumentsID;
 ModulePass *createAMDGPULowerKernelAttributesPass();
 void initializeAMDGPULowerKernelAttributesPass(PassRegistry &);
 extern char &AMDGPULowerKernelAttributesID;
+
+void initializeAMDGPUPropagateAttributesEarlyPass(PassRegistry &);
+extern char &AMDGPUPropagateAttributesEarlyID;
+
+void initializeAMDGPUPropagateAttributesLatePass(PassRegistry &);
+extern char &AMDGPUPropagateAttributesLateID;
 
 void initializeAMDGPURewriteOutArgumentsPass(PassRegistry &);
 extern char &AMDGPURewriteOutArgumentsID;
