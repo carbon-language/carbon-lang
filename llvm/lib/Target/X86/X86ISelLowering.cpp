@@ -17175,7 +17175,8 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, const X86Subtarget &Subtarget,
     // Insert the 128-bit vector.
     return insert128BitVector(DAG.getUNDEF(OpVT), Op, 0, DAG, dl);
   }
-  assert(OpVT.is128BitVector() && "Expected an SSE type!");
+  assert(OpVT.is128BitVector() && OpVT.isInteger() && OpVT != MVT::v2i64 &&
+         "Expected an SSE type!");
 
   // Pass through a v4i32 SCALAR_TO_VECTOR as that's what we use in tblgen.
   if (OpVT == MVT::v4i32)
