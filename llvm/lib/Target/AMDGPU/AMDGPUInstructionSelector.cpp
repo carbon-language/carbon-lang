@@ -270,8 +270,7 @@ bool AMDGPUInstructionSelector::selectG_INSERT(MachineInstr &I) const {
 
 bool AMDGPUInstructionSelector::selectG_INTRINSIC(MachineInstr &I,
                                           CodeGenCoverage &CoverageInfo) const {
-  unsigned IntrinsicID =  I.getOperand(1).getIntrinsicID();
-
+  unsigned IntrinsicID =  I.getOperand(I.getNumExplicitDefs()).getIntrinsicID();
   switch (IntrinsicID) {
   default:
     break;
