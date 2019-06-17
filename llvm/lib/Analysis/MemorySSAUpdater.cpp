@@ -482,7 +482,8 @@ void MemorySSAUpdater::removeDuplicatePhiEdgesBetween(const BasicBlock *From,
 
 void MemorySSAUpdater::cloneUsesAndDefs(BasicBlock *BB, BasicBlock *NewBB,
                                         const ValueToValueMapTy &VMap,
-                                        PhiToDefMap &MPhiMap) {
+                                        PhiToDefMap &MPhiMap,
+                                        bool CloneWasSimplified) {
   auto GetNewDefiningAccess = [&](MemoryAccess *MA) -> MemoryAccess * {
     MemoryAccess *InsnDefining = MA;
     if (MemoryUseOrDef *DefMUD = dyn_cast<MemoryUseOrDef>(InsnDefining)) {
@@ -512,10 +513,14 @@ void MemorySSAUpdater::cloneUsesAndDefs(BasicBlock *BB, BasicBlock *NewBB,
       // instructions. This occurs in LoopRotate when cloning instructions
       // from the old header to the old preheader. The cloned instruction may
       // also be a simplified Value, not an Instruction (see LoopRotate).
+      // Also in LoopRotate, even when it's an instruction, due to it being
+      // simplified, it may be a Use rather than a Def, so we cannot use MUD as
+      // template. Calls coming from updateForClonedBlockIntoPred, ensure this.
       if (Instruction *NewInsn =
               dyn_cast_or_null<Instruction>(VMap.lookup(Insn))) {
         MemoryAccess *NewUseOrDef = MSSA->createDefinedAccess(
-            NewInsn, GetNewDefiningAccess(MUD->getDefiningAccess()), MUD);
+            NewInsn, GetNewDefiningAccess(MUD->getDefiningAccess()),
+            CloneWasSimplified ? nullptr : MUD);
         MSSA->insertIntoListsForBlock(NewUseOrDef, NewBB, MemorySSA::End);
       }
     }
@@ -645,10 +650,13 @@ void MemorySSAUpdater::updateForClonedBlockIntoPred(
   // Defs from BB being used in BB will be replaced with the cloned defs from
   // VM. The uses of BB's Phi (if it exists) in BB will be replaced by the
   // incoming def into the Phi from P1.
+  // Instructions cloned into the predecessor are in practice sometimes
+  // simplified, so disable the use of the template, and create an access from
+  // scratch.
   PhiToDefMap MPhiMap;
   if (MemoryPhi *MPhi = MSSA->getMemoryAccess(BB))
     MPhiMap[MPhi] = MPhi->getIncomingValueForBlock(P1);
-  cloneUsesAndDefs(BB, P1, VM, MPhiMap);
+  cloneUsesAndDefs(BB, P1, VM, MPhiMap, /*CloneWasSimplified=*/true);
 }
 
 template <typename Iter>
