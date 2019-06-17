@@ -960,15 +960,25 @@ void MemorySSAUpdater::applyInsertUpdates(ArrayRef<CFGUpdate> Updates,
                                                  BlocksToProcess.end());
     IDFs.setDefiningBlocks(DefiningBlocks);
     IDFs.calculate(IDFBlocks);
+
+    SmallSetVector<MemoryPhi *, 4> PhisToFill;
+    // First create all needed Phis.
+    for (auto *BBIDF : IDFBlocks)
+      if (!MSSA->getMemoryAccess(BBIDF)) {
+        auto *IDFPhi = MSSA->createMemoryPhi(BBIDF);
+        InsertedPhis.push_back(IDFPhi);
+        PhisToFill.insert(IDFPhi);
+      }
+    // Then update or insert their correct incoming values.
     for (auto *BBIDF : IDFBlocks) {
-      if (auto *IDFPhi = MSSA->getMemoryAccess(BBIDF)) {
+      auto *IDFPhi = MSSA->getMemoryAccess(BBIDF);
+      assert(IDFPhi && "Phi must exist");
+      if (!PhisToFill.count(IDFPhi)) {
         // Update existing Phi.
         // FIXME: some updates may be redundant, try to optimize and skip some.
         for (unsigned I = 0, E = IDFPhi->getNumIncomingValues(); I < E; ++I)
           IDFPhi->setIncomingValue(I, GetLastDef(IDFPhi->getIncomingBlock(I)));
       } else {
-        IDFPhi = MSSA->createMemoryPhi(BBIDF);
-        InsertedPhis.push_back(IDFPhi);
         for (auto &Pair : children<GraphDiffInvBBPair>({GD, BBIDF})) {
           BasicBlock *Pi = Pair.second;
           IDFPhi->addIncoming(GetLastDef(Pi), Pi);
