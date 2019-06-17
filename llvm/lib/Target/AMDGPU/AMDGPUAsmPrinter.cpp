@@ -309,7 +309,13 @@ void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 bool AMDGPUAsmPrinter::doFinalization(Module &M) {
   CallGraphResourceInfo.clear();
 
-  if (AMDGPU::isGFX10(*getGlobalSTI())) {
+  // Pad with s_code_end to help tools and guard against instruction prefetch
+  // causing stale data in caches. Arguably this should be done by the linker,
+  // which is why this isn't done for Mesa.
+  const MCSubtargetInfo &STI = *getGlobalSTI();
+  if (AMDGPU::isGFX10(STI) &&
+      (STI.getTargetTriple().getOS() == Triple::AMDHSA ||
+       STI.getTargetTriple().getOS() == Triple::AMDPAL)) {
     OutStreamer->SwitchSection(getObjFileLowering().getTextSection());
     getTargetStreamer()->EmitCodeEnd();
   }
