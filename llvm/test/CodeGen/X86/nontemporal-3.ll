@@ -15,19 +15,31 @@ define void @test_zero_v2f64_align1(<2 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v2f64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v2f64_align1:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX-NEXT:    movntiq %rax, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: test_zero_v2f64_align1:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %xmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
 ; AVX512-NEXT:    retq
   store <2 x double> zeroinitializer, <2 x double>* %dst, align 1, !nontemporal !1
   ret void
@@ -37,19 +49,31 @@ define void @test_zero_v4f32_align1(<4 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4f32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v4f32_align1:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX-NEXT:    movntiq %rax, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: test_zero_v4f32_align1:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %xmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
 ; AVX512-NEXT:    retq
   store <4 x float> zeroinitializer, <4 x float>* %dst, align 1, !nontemporal !1
   ret void
@@ -59,19 +83,31 @@ define void @test_zero_v2i64_align1(<2 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v2i64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v2i64_align1:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX-NEXT:    movntiq %rax, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: test_zero_v2i64_align1:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %xmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
 ; AVX512-NEXT:    retq
   store <2 x i64> zeroinitializer, <2 x i64>* %dst, align 1, !nontemporal !1
   ret void
@@ -81,19 +117,31 @@ define void @test_zero_v4i32_align1(<4 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4i32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v4i32_align1:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX-NEXT:    movntiq %rax, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: test_zero_v4i32_align1:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %xmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
 ; AVX512-NEXT:    retq
   store <4 x i32> zeroinitializer, <4 x i32>* %dst, align 1, !nontemporal !1
   ret void
@@ -103,19 +151,31 @@ define void @test_zero_v8i16_align1(<8 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i16_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v8i16_align1:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX-NEXT:    movntiq %rax, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: test_zero_v8i16_align1:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %xmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
 ; AVX512-NEXT:    retq
   store <8 x i16> zeroinitializer, <8 x i16>* %dst, align 1, !nontemporal !1
   ret void
@@ -125,19 +185,31 @@ define void @test_zero_v16i8_align1(<16 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i8_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v16i8_align1:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vmovups %xmm0, (%rdi)
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX-NEXT:    movntiq %rax, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: test_zero_v16i8_align1:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %xmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
 ; AVX512-NEXT:    retq
   store <16 x i8> zeroinitializer, <16 x i8>* %dst, align 1, !nontemporal !1
   ret void
@@ -149,8 +221,16 @@ define void @test_zero_v4f64_align1(<4 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4f64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v4f64_align1:
@@ -174,8 +254,16 @@ define void @test_zero_v8f32_align1(<8 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v8f32_align1:
@@ -199,8 +287,16 @@ define void @test_zero_v4i64_align1(<4 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4i64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v4i64_align1:
@@ -224,8 +320,16 @@ define void @test_zero_v8i32_align1(<8 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v8i32_align1:
@@ -249,8 +353,16 @@ define void @test_zero_v16i16_align1(<16 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i16_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v16i16_align1:
@@ -274,8 +386,16 @@ define void @test_zero_v32i8_align1(<32 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i8_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v32i8_align1:
@@ -451,10 +571,26 @@ define void @test_zero_v8f64_align1(<8 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 48(%rdi)
-; SSE-NEXT:    movups %xmm0, 32(%rdi)
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 56(%rdi)
+; SSE-NEXT:    movntiq %rax, 48(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 40(%rdi)
+; SSE-NEXT:    movntiq %rax, 32(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v8f64_align1:
@@ -467,8 +603,30 @@ define void @test_zero_v8f64_align1(<8 x double>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v8f64_align1:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 56(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 48(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 40(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 32(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 24(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 16(%rdi)
+; AVX512-NEXT:    movq (%rsp), %rax
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <8 x double> zeroinitializer, <8 x double>* %dst, align 1, !nontemporal !1
@@ -479,10 +637,26 @@ define void @test_zero_v16f32_align1(<16 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16f32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 48(%rdi)
-; SSE-NEXT:    movups %xmm0, 32(%rdi)
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 56(%rdi)
+; SSE-NEXT:    movntiq %rax, 48(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 40(%rdi)
+; SSE-NEXT:    movntiq %rax, 32(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v16f32_align1:
@@ -495,8 +669,30 @@ define void @test_zero_v16f32_align1(<16 x float>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v16f32_align1:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 56(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 48(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 40(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 32(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 24(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 16(%rdi)
+; AVX512-NEXT:    movq (%rsp), %rax
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <16 x float> zeroinitializer, <16 x float>* %dst, align 1, !nontemporal !1
@@ -507,10 +703,26 @@ define void @test_zero_v8i64_align1(<8 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 48(%rdi)
-; SSE-NEXT:    movups %xmm0, 32(%rdi)
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 56(%rdi)
+; SSE-NEXT:    movntiq %rax, 48(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 40(%rdi)
+; SSE-NEXT:    movntiq %rax, 32(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v8i64_align1:
@@ -523,8 +735,30 @@ define void @test_zero_v8i64_align1(<8 x i64>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v8i64_align1:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 56(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 48(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 40(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 32(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 24(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 16(%rdi)
+; AVX512-NEXT:    movq (%rsp), %rax
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <8 x i64> zeroinitializer, <8 x i64>* %dst, align 1, !nontemporal !1
@@ -535,10 +769,26 @@ define void @test_zero_v16i32_align1(<16 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 48(%rdi)
-; SSE-NEXT:    movups %xmm0, 32(%rdi)
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 56(%rdi)
+; SSE-NEXT:    movntiq %rax, 48(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 40(%rdi)
+; SSE-NEXT:    movntiq %rax, 32(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v16i32_align1:
@@ -551,8 +801,30 @@ define void @test_zero_v16i32_align1(<16 x i32>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v16i32_align1:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 56(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 48(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 40(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 32(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 24(%rdi)
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512-NEXT:    movntiq %rax, 16(%rdi)
+; AVX512-NEXT:    movq (%rsp), %rax
+; AVX512-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; AVX512-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512-NEXT:    movntiq %rax, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <16 x i32> zeroinitializer, <16 x i32>* %dst, align 1, !nontemporal !1
@@ -563,10 +835,26 @@ define void @test_zero_v32i16_align1(<32 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i16_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 48(%rdi)
-; SSE-NEXT:    movups %xmm0, 32(%rdi)
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 56(%rdi)
+; SSE-NEXT:    movntiq %rax, 48(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 40(%rdi)
+; SSE-NEXT:    movntiq %rax, 32(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v32i16_align1:
@@ -587,8 +875,30 @@ define void @test_zero_v32i16_align1(<32 x i16>* %dst) nounwind {
 ;
 ; AVX512BW-LABEL: test_zero_v32i16_align1:
 ; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $128, %rsp
 ; AVX512BW-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512BW-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 56(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 48(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 40(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 32(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 24(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 16(%rdi)
+; AVX512BW-NEXT:    movq (%rsp), %rax
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; AVX512BW-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512BW-NEXT:    movntiq %rax, (%rdi)
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
   store <32 x i16> zeroinitializer, <32 x i16>* %dst, align 1, !nontemporal !1
@@ -599,10 +909,26 @@ define void @test_zero_v64i8_align1(<64 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v64i8_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
-; SSE-NEXT:    movups %xmm0, 48(%rdi)
-; SSE-NEXT:    movups %xmm0, 32(%rdi)
-; SSE-NEXT:    movups %xmm0, 16(%rdi)
-; SSE-NEXT:    movups %xmm0, (%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 56(%rdi)
+; SSE-NEXT:    movntiq %rax, 48(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 40(%rdi)
+; SSE-NEXT:    movntiq %rax, 32(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 24(%rdi)
+; SSE-NEXT:    movntiq %rax, 16(%rdi)
+; SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rax
+; SSE-NEXT:    movq -{{[0-9]+}}(%rsp), %rcx
+; SSE-NEXT:    movntiq %rcx, 8(%rdi)
+; SSE-NEXT:    movntiq %rax, (%rdi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_zero_v64i8_align1:
@@ -623,8 +949,30 @@ define void @test_zero_v64i8_align1(<64 x i8>* %dst) nounwind {
 ;
 ; AVX512BW-LABEL: test_zero_v64i8_align1:
 ; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $128, %rsp
 ; AVX512BW-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512BW-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 56(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 48(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 40(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 32(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 24(%rdi)
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rax
+; AVX512BW-NEXT:    movntiq %rax, 16(%rdi)
+; AVX512BW-NEXT:    movq (%rsp), %rax
+; AVX512BW-NEXT:    movq {{[0-9]+}}(%rsp), %rcx
+; AVX512BW-NEXT:    movntiq %rcx, 8(%rdi)
+; AVX512BW-NEXT:    movntiq %rax, (%rdi)
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
   store <64 x i8> zeroinitializer, <64 x i8>* %dst, align 1, !nontemporal !1
@@ -651,8 +999,22 @@ define void @test_zero_v8f64_align16(<8 x double>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v8f64_align16:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %xmm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm1
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm2
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm3
+; AVX512-NEXT:    vmovntps %xmm3, 48(%rdi)
+; AVX512-NEXT:    vmovntps %xmm2, 32(%rdi)
+; AVX512-NEXT:    vmovntps %xmm1, 16(%rdi)
+; AVX512-NEXT:    vmovntps %xmm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <8 x double> zeroinitializer, <8 x double>* %dst, align 16, !nontemporal !1
@@ -679,8 +1041,22 @@ define void @test_zero_v16f32_align16(<16 x float>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v16f32_align16:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %xmm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm1
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm2
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm3
+; AVX512-NEXT:    vmovntps %xmm3, 48(%rdi)
+; AVX512-NEXT:    vmovntps %xmm2, 32(%rdi)
+; AVX512-NEXT:    vmovntps %xmm1, 16(%rdi)
+; AVX512-NEXT:    vmovntps %xmm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <16 x float> zeroinitializer, <16 x float>* %dst, align 16, !nontemporal !1
@@ -707,8 +1083,22 @@ define void @test_zero_v8i64_align16(<8 x i64>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v8i64_align16:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %xmm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm1
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm2
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm3
+; AVX512-NEXT:    vmovntps %xmm3, 48(%rdi)
+; AVX512-NEXT:    vmovntps %xmm2, 32(%rdi)
+; AVX512-NEXT:    vmovntps %xmm1, 16(%rdi)
+; AVX512-NEXT:    vmovntps %xmm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <8 x i64> zeroinitializer, <8 x i64>* %dst, align 16, !nontemporal !1
@@ -735,8 +1125,22 @@ define void @test_zero_v16i32_align16(<16 x i32>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v16i32_align16:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %xmm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm1
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm2
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm3
+; AVX512-NEXT:    vmovntps %xmm3, 48(%rdi)
+; AVX512-NEXT:    vmovntps %xmm2, 32(%rdi)
+; AVX512-NEXT:    vmovntps %xmm1, 16(%rdi)
+; AVX512-NEXT:    vmovntps %xmm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <16 x i32> zeroinitializer, <16 x i32>* %dst, align 16, !nontemporal !1
@@ -771,8 +1175,22 @@ define void @test_zero_v32i16_align16(<32 x i16>* %dst) nounwind {
 ;
 ; AVX512BW-LABEL: test_zero_v32i16_align16:
 ; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $128, %rsp
 ; AVX512BW-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512BW-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512BW-NEXT:    vmovaps (%rsp), %xmm0
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm1
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm2
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm3
+; AVX512BW-NEXT:    vmovntps %xmm3, 48(%rdi)
+; AVX512BW-NEXT:    vmovntps %xmm2, 32(%rdi)
+; AVX512BW-NEXT:    vmovntps %xmm1, 16(%rdi)
+; AVX512BW-NEXT:    vmovntps %xmm0, (%rdi)
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
   store <32 x i16> zeroinitializer, <32 x i16>* %dst, align 16, !nontemporal !1
@@ -807,8 +1225,22 @@ define void @test_zero_v64i8_align16(<64 x i8>* %dst) nounwind {
 ;
 ; AVX512BW-LABEL: test_zero_v64i8_align16:
 ; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $128, %rsp
 ; AVX512BW-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512BW-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512BW-NEXT:    vmovaps (%rsp), %xmm0
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm1
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm2
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %xmm3
+; AVX512BW-NEXT:    vmovntps %xmm3, 48(%rdi)
+; AVX512BW-NEXT:    vmovntps %xmm2, 32(%rdi)
+; AVX512BW-NEXT:    vmovntps %xmm1, 16(%rdi)
+; AVX512BW-NEXT:    vmovntps %xmm0, (%rdi)
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
   store <64 x i8> zeroinitializer, <64 x i8>* %dst, align 16, !nontemporal !1
@@ -835,8 +1267,18 @@ define void @test_zero_v8f64_align32(<8 x double>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v8f64_align32:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %ymm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm1
+; AVX512-NEXT:    vmovntps %ymm1, 32(%rdi)
+; AVX512-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <8 x double> zeroinitializer, <8 x double>* %dst, align 32, !nontemporal !1
@@ -863,8 +1305,18 @@ define void @test_zero_v16f32_align32(<16 x float>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v16f32_align32:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %ymm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm1
+; AVX512-NEXT:    vmovntps %ymm1, 32(%rdi)
+; AVX512-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <16 x float> zeroinitializer, <16 x float>* %dst, align 32, !nontemporal !1
@@ -891,8 +1343,18 @@ define void @test_zero_v8i64_align32(<8 x i64>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v8i64_align32:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %ymm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm1
+; AVX512-NEXT:    vmovntps %ymm1, 32(%rdi)
+; AVX512-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <8 x i64> zeroinitializer, <8 x i64>* %dst, align 32, !nontemporal !1
@@ -919,8 +1381,18 @@ define void @test_zero_v16i32_align32(<16 x i32>* %dst) nounwind {
 ;
 ; AVX512-LABEL: test_zero_v16i32_align32:
 ; AVX512:       # %bb.0:
+; AVX512-NEXT:    pushq %rbp
+; AVX512-NEXT:    movq %rsp, %rbp
+; AVX512-NEXT:    andq $-64, %rsp
+; AVX512-NEXT:    subq $128, %rsp
 ; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512-NEXT:    vmovaps (%rsp), %ymm0
+; AVX512-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm1
+; AVX512-NEXT:    vmovntps %ymm1, 32(%rdi)
+; AVX512-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX512-NEXT:    movq %rbp, %rsp
+; AVX512-NEXT:    popq %rbp
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   store <16 x i32> zeroinitializer, <16 x i32>* %dst, align 32, !nontemporal !1
@@ -955,8 +1427,18 @@ define void @test_zero_v32i16_align32(<32 x i16>* %dst) nounwind {
 ;
 ; AVX512BW-LABEL: test_zero_v32i16_align32:
 ; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $128, %rsp
 ; AVX512BW-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512BW-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512BW-NEXT:    vmovaps (%rsp), %ymm0
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm1
+; AVX512BW-NEXT:    vmovntps %ymm1, 32(%rdi)
+; AVX512BW-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
   store <32 x i16> zeroinitializer, <32 x i16>* %dst, align 32, !nontemporal !1
@@ -991,8 +1473,18 @@ define void @test_zero_v64i8_align32(<64 x i8>* %dst) nounwind {
 ;
 ; AVX512BW-LABEL: test_zero_v64i8_align32:
 ; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $128, %rsp
 ; AVX512BW-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    vmovups %zmm0, (%rdi)
+; AVX512BW-NEXT:    vmovaps %zmm0, (%rsp)
+; AVX512BW-NEXT:    vmovaps (%rsp), %ymm0
+; AVX512BW-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm1
+; AVX512BW-NEXT:    vmovntps %ymm1, 32(%rdi)
+; AVX512BW-NEXT:    vmovntps %ymm0, (%rdi)
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
   store <64 x i8> zeroinitializer, <64 x i8>* %dst, align 32, !nontemporal !1

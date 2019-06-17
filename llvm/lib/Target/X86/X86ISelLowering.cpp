@@ -2106,10 +2106,9 @@ bool X86TargetLowering::isSafeMemOpType(MVT VT) const {
   return true;
 }
 
-bool X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
-                                                       unsigned,
-                                                       MachineMemOperand::Flags,
-                                                       bool *Fast) const {
+bool X86TargetLowering::allowsMisalignedMemoryAccesses(
+    EVT VT, unsigned, unsigned Align, MachineMemOperand::Flags Flags,
+    bool *Fast) const {
   if (Fast) {
     switch (VT.getSizeInBits()) {
     default:
@@ -2124,6 +2123,16 @@ bool X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
       break;
     // TODO: What about AVX-512 (512-bit) accesses?
     }
+  }
+  // NonTemporal vector memory ops must be aligned.
+  if (!!(Flags & MachineMemOperand::MONonTemporal) && VT.isVector()) {
+    // NT loads can only be vector aligned, so if its less aligned than the
+    // minimum vector size (which we can split the vector down to), we might as
+    // well use a regular unaligned vector load.
+    // We don't have any NT loads pre-SSE41.
+    if (!!(Flags & MachineMemOperand::MOLoad))
+      return (Align < 16 || !Subtarget.hasSSE41());
+    return false;
   }
   // Misaligned accesses of any size are always allowed.
   return true;
