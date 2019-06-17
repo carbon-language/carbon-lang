@@ -1242,8 +1242,10 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
   if (!CI.getType()->isVoidTy())
     ResultRegs = getOrCreateVRegs(CI);
 
+  // Ignore the callsite attributes. Backend code is most likely not expecting
+  // an intrinsic to sometimes have side effects and sometimes not.
   MachineInstrBuilder MIB =
-      MIRBuilder.buildIntrinsic(ID, ResultRegs, !CI.doesNotAccessMemory());
+      MIRBuilder.buildIntrinsic(ID, ResultRegs, !F->doesNotAccessMemory());
   if (isa<FPMathOperator>(CI))
     MIB->copyIRFlags(CI);
 
