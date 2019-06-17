@@ -724,6 +724,10 @@ bool TargetTransformInfo::shouldExpandReduction(const IntrinsicInst *II) const {
   return TTIImpl->shouldExpandReduction(II);
 }
 
+unsigned TargetTransformInfo::getGISelRematGlobalCost() const {
+  return TTIImpl->getGISelRematGlobalCost();
+}
+
 int TargetTransformInfo::getInstructionLatency(const Instruction *I) const {
   return TTIImpl->getInstructionLatency(I);
 }

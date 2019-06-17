@@ -572,6 +572,10 @@ public:
     return true;
   }
 
+  unsigned getGISelRematGlobalCost() const {
+    return 1;
+  }
+
 protected:
   // Obtain the minimum required size to hold the value (without the sign)
   // In case of a vector it returns the min required size for one element.

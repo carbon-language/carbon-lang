@@ -1053,6 +1053,11 @@ public:
   /// \returns True if the target wants to expand the given reduction intrinsic
   /// into a shuffle sequence.
   bool shouldExpandReduction(const IntrinsicInst *II) const;
+
+  /// \returns the size cost of rematerializing a GlobalValue address relative
+  /// to a stack reload.
+  unsigned getGISelRematGlobalCost() const;
+
   /// @}
 
 private:
@@ -1269,6 +1274,7 @@ public:
   virtual bool useReductionIntrinsic(unsigned Opcode, Type *Ty,
                                      ReductionFlags) const = 0;
   virtual bool shouldExpandReduction(const IntrinsicInst *II) const = 0;
+  virtual unsigned getGISelRematGlobalCost() const = 0;
   virtual int getInstructionLatency(const Instruction *I) = 0;
 };
 
@@ -1701,6 +1707,11 @@ public:
   bool shouldExpandReduction(const IntrinsicInst *II) const override {
     return Impl.shouldExpandReduction(II);
   }
+
+  unsigned getGISelRematGlobalCost() const override {
+    return Impl.getGISelRematGlobalCost();
+  }
+
   int getInstructionLatency(const Instruction *I) override {
     return Impl.getInstructionLatency(I);
   }
