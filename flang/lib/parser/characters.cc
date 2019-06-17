@@ -224,9 +224,12 @@ static DecodedCharacter DecodeEscapedCharacter(
       return {static_cast<char32_t>(16 * HexadecimalDigitValue(cp[2]) +
                   HexadecimalDigitValue(cp[3])),
           4};
-    } else {
-      // unknown escape - ignore the '\' (PGI compatibility)
+    } else if (IsLetter(cp[1])) {
+      // Unknown escape - ignore the '\' (PGI compatibility)
       return {static_cast<unsigned char>(cp[1]), 2};
+    } else {
+      // Not an escape character.
+      return {'\\', 1};
     }
   }
   return {static_cast<unsigned char>(cp[0]), 1};

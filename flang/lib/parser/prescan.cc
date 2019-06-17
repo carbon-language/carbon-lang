@@ -330,7 +330,9 @@ void Prescanner::SkipCComments() {
         nextLine_ = at_ = after;
         NextLine();
       } else {
-        Say(GetProvenance(at_), "unclosed C-style comment"_err_en_US);
+        // Don't emit any messages about unclosed C-style comments, because
+        // the sequence /* can appear legally in a FORMAT statement.  There's
+        // no ambiguity, since the sequence */ cannot appear legally.
         break;
       }
     } else if (inPreprocessorDirective_ && at_[0] == '\\' && at_ + 2 < limit_ &&
@@ -569,7 +571,7 @@ void Prescanner::QuotedCharacterLiteral(
         encoding, at_, static_cast<std::size_t>(limit_ - at_), escapesEnabled)};
     if (decoded.bytes <= 0) {
       Say(GetProvenanceRange(start, at_),
-          "Bad character in character literal"_err_en_US);
+          "Bad character in character literal"_en_US);
       // Just eat a byte and press on.
       decoded.codepoint = static_cast<unsigned char>(*at_);
       decoded.bytes = 1;
