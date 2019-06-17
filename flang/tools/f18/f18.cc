@@ -513,10 +513,6 @@ int main(int argc, char *const argv[]) {
   if (driver.warnOnNonstandardUsage) {
     options.features.WarnOnAllNonstandard();
   }
-  if (!options.features.IsEnabled(
-          Fortran::parser::LanguageFeature::BackslashEscapes)) {
-    driver.pgf90Args.push_back("-Mbackslash");
-  }
   if (options.features.IsEnabled(Fortran::parser::LanguageFeature::OpenMP)) {
     driver.pgf90Args.push_back("-mp");
   }

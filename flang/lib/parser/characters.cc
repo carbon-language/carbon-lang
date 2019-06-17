@@ -14,6 +14,7 @@
 
 #include "characters.h"
 #include "../common/idioms.h"
+#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <type_traits>
@@ -210,13 +211,11 @@ static DecodedCharacter DecodeEscapedCharacter(
   if (cp[0] == '\\' && bytes >= 2) {
     if (std::optional<char> escChar{BackslashEscapeValue(cp[1])}) {
       return {static_cast<unsigned char>(*escChar), 2};
-    }
-    if (IsOctalDigit(cp[1])) {
-      std::size_t maxDigits{static_cast<std::size_t>(cp[1] > '3' ? 2 : 3)};
-      std::size_t maxLen{std::max(maxDigits + 1, bytes)};
+    } else if (IsOctalDigit(cp[1])) {
+      std::size_t maxLen{std::min(std::size_t{4}, bytes)};
       char32_t code{static_cast<char32_t>(cp[1] - '0')};
       std::size_t len{2};  // so far
-      for (; len < maxLen && IsOctalDigit(cp[len]); ++len) {
+      for (; code <= 037 && len < maxLen && IsOctalDigit(cp[len]); ++len) {
         code = 8 * code + DecimalDigitValue(cp[len]);
       }
       return {code, static_cast<int>(len)};
@@ -225,6 +224,9 @@ static DecodedCharacter DecodeEscapedCharacter(
       return {static_cast<char32_t>(16 * HexadecimalDigitValue(cp[2]) +
                   HexadecimalDigitValue(cp[3])),
           4};
+    } else {
+      // unknown escape - ignore the '\' (PGI compatibility)
+      return {static_cast<unsigned char>(cp[1]), 2};
     }
   }
   return {static_cast<unsigned char>(cp[0]), 1};

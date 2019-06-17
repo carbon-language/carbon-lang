@@ -186,7 +186,7 @@ public:
         x.u);
   }
   void Unparse(const CharLiteralConstant &x) {  // R724
-    Encoding encoding{encoding_};
+    Encoding encoding{Encoding::LATIN_1};
     if (const auto &k{std::get<std::optional<KindParam>>(x.t)}) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");

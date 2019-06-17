@@ -25,6 +25,7 @@
 #include "provenance.h"
 #include "type-parsers.h"
 #include "../common/idioms.h"
+#include <cctype>
 #include <cstddef>
 #include <cstring>
 #include <functional>
@@ -227,8 +228,7 @@ struct CharLiteralChar {
       }
       if (std::optional<char> escChar{BackslashEscapeValue(**cp)}) {
         return std::make_pair(*escChar, true);
-      }
-      if (IsOctalDigit(**cp)) {
+      } else if (IsOctalDigit(**cp)) {
         char result{static_cast<char>(**cp - '0')};
         for (int j = (result > 3 ? 1 : 2); j-- > 0;) {
           static constexpr auto octalDigit{attempt("01234567"_ch)};
@@ -239,8 +239,10 @@ struct CharLiteralChar {
           }
         }
         return std::make_pair(result, true);
+      } else {
+        // unknown escape - ignore the '\' (PGI compatibility)
+        return std::make_pair(static_cast<char>(1 [*cp]), true);
       }
-      state.Say(at, "Bad escaped character"_err_en_US);
     }
     return std::nullopt;
   }
@@ -518,7 +520,7 @@ struct HollerithLiteral {
       int chBytes{UTF_8CharacterBytes(state.GetLocation())};
       for (int bytes{chBytes}; bytes > 0; --bytes) {
         if (std::optional<const char *> at{nextCh.Parse(state)}) {
-          if (chBytes == 1 && !isprint(**at)) {
+          if (chBytes == 1 && !std::isprint(**at)) {
             state.Say(start, "Bad character in Hollerith"_err_en_US);
             return std::nullopt;
           }

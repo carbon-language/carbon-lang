@@ -109,7 +109,7 @@ inline constexpr char HexadecimalDigitValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
   switch (ch) {
-  case 'a': return '\a';
+  case 'a': return std::nullopt;  // '\a';  PGF90 doesn't know \a
   case 'b': return '\b';
   case 'f': return '\f';
   case 'n': return '\n';
@@ -125,7 +125,7 @@ inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   switch (ch) {
-    //  case '\a': return 'a';  // PGF90 doesn't know \a
+  case '\a': return std::nullopt;  // 'a';  PGF90 doesn't know \a
   case '\b': return 'b';
   case '\f': return 'f';
   case '\n': return 'n';

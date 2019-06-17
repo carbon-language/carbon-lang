@@ -21,7 +21,6 @@
 #include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
-#include <iostream>  // TODO pmk rm
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -562,6 +561,8 @@ void Prescanner::QuotedCharacterLiteral(
   if (isKanji) {
     // NC'...' - the contents are always decoded as EUC_JP
     encoding = Encoding::EUC_JP;
+  } else if (encoding == Encoding::EUC_JP) {
+    encoding = Encoding::LATIN_1;  // for compatibility with tests
   }
   while (true) {
     DecodedCharacter decoded{DecodeCharacter(
