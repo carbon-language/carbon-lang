@@ -11,7 +11,7 @@
 
 ; XMM versions.
 
-define void @test_zero_v2f64_align1(<2 x double>* %dst) {
+define void @test_zero_v2f64_align1(<2 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v2f64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -33,7 +33,7 @@ define void @test_zero_v2f64_align1(<2 x double>* %dst) {
   ret void
 }
 
-define void @test_zero_v4f32_align1(<4 x float>* %dst) {
+define void @test_zero_v4f32_align1(<4 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4f32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -55,7 +55,7 @@ define void @test_zero_v4f32_align1(<4 x float>* %dst) {
   ret void
 }
 
-define void @test_zero_v2i64_align1(<2 x i64>* %dst) {
+define void @test_zero_v2i64_align1(<2 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v2i64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -77,7 +77,7 @@ define void @test_zero_v2i64_align1(<2 x i64>* %dst) {
   ret void
 }
 
-define void @test_zero_v4i32_align1(<4 x i32>* %dst) {
+define void @test_zero_v4i32_align1(<4 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4i32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -99,7 +99,7 @@ define void @test_zero_v4i32_align1(<4 x i32>* %dst) {
   ret void
 }
 
-define void @test_zero_v8i16_align1(<8 x i16>* %dst) {
+define void @test_zero_v8i16_align1(<8 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i16_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -121,7 +121,7 @@ define void @test_zero_v8i16_align1(<8 x i16>* %dst) {
   ret void
 }
 
-define void @test_zero_v16i8_align1(<16 x i8>* %dst) {
+define void @test_zero_v16i8_align1(<16 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i8_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -145,7 +145,7 @@ define void @test_zero_v16i8_align1(<16 x i8>* %dst) {
 
 ; YMM versions.
 
-define void @test_zero_v4f64_align1(<4 x double>* %dst) {
+define void @test_zero_v4f64_align1(<4 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4f64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -170,7 +170,7 @@ define void @test_zero_v4f64_align1(<4 x double>* %dst) {
   ret void
 }
 
-define void @test_zero_v8f32_align1(<8 x float>* %dst) {
+define void @test_zero_v8f32_align1(<8 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -195,7 +195,7 @@ define void @test_zero_v8f32_align1(<8 x float>* %dst) {
   ret void
 }
 
-define void @test_zero_v4i64_align1(<4 x i64>* %dst) {
+define void @test_zero_v4i64_align1(<4 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4i64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -220,7 +220,7 @@ define void @test_zero_v4i64_align1(<4 x i64>* %dst) {
   ret void
 }
 
-define void @test_zero_v8i32_align1(<8 x i32>* %dst) {
+define void @test_zero_v8i32_align1(<8 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -245,7 +245,7 @@ define void @test_zero_v8i32_align1(<8 x i32>* %dst) {
   ret void
 }
 
-define void @test_zero_v16i16_align1(<16 x i16>* %dst) {
+define void @test_zero_v16i16_align1(<16 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i16_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -270,7 +270,7 @@ define void @test_zero_v16i16_align1(<16 x i16>* %dst) {
   ret void
 }
 
-define void @test_zero_v32i8_align1(<32 x i8>* %dst) {
+define void @test_zero_v32i8_align1(<32 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i8_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -295,7 +295,7 @@ define void @test_zero_v32i8_align1(<32 x i8>* %dst) {
   ret void
 }
 
-define void @test_zero_v4f64_align16(<4 x double>* %dst) {
+define void @test_zero_v4f64_align16(<4 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4f64_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -320,7 +320,7 @@ define void @test_zero_v4f64_align16(<4 x double>* %dst) {
   ret void
 }
 
-define void @test_zero_v8f32_align16(<8 x float>* %dst) {
+define void @test_zero_v8f32_align16(<8 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f32_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -345,7 +345,7 @@ define void @test_zero_v8f32_align16(<8 x float>* %dst) {
   ret void
 }
 
-define void @test_zero_v4i64_align16(<4 x i64>* %dst) {
+define void @test_zero_v4i64_align16(<4 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v4i64_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -370,7 +370,7 @@ define void @test_zero_v4i64_align16(<4 x i64>* %dst) {
   ret void
 }
 
-define void @test_zero_v8i32_align16(<8 x i32>* %dst) {
+define void @test_zero_v8i32_align16(<8 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i32_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -395,7 +395,7 @@ define void @test_zero_v8i32_align16(<8 x i32>* %dst) {
   ret void
 }
 
-define void @test_zero_v16i16_align16(<16 x i16>* %dst) {
+define void @test_zero_v16i16_align16(<16 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i16_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -420,7 +420,7 @@ define void @test_zero_v16i16_align16(<16 x i16>* %dst) {
   ret void
 }
 
-define void @test_zero_v32i8_align16(<32 x i8>* %dst) {
+define void @test_zero_v32i8_align16(<32 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i8_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -447,7 +447,7 @@ define void @test_zero_v32i8_align16(<32 x i8>* %dst) {
 
 ; ZMM versions.
 
-define void @test_zero_v8f64_align1(<8 x double>* %dst) {
+define void @test_zero_v8f64_align1(<8 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -475,7 +475,7 @@ define void @test_zero_v8f64_align1(<8 x double>* %dst) {
   ret void
 }
 
-define void @test_zero_v16f32_align1(<16 x float>* %dst) {
+define void @test_zero_v16f32_align1(<16 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16f32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -503,7 +503,7 @@ define void @test_zero_v16f32_align1(<16 x float>* %dst) {
   ret void
 }
 
-define void @test_zero_v8i64_align1(<8 x i64>* %dst) {
+define void @test_zero_v8i64_align1(<8 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i64_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -531,7 +531,7 @@ define void @test_zero_v8i64_align1(<8 x i64>* %dst) {
   ret void
 }
 
-define void @test_zero_v16i32_align1(<16 x i32>* %dst) {
+define void @test_zero_v16i32_align1(<16 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i32_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -559,7 +559,7 @@ define void @test_zero_v16i32_align1(<16 x i32>* %dst) {
   ret void
 }
 
-define void @test_zero_v32i16_align1(<32 x i16>* %dst) {
+define void @test_zero_v32i16_align1(<32 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i16_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -595,7 +595,7 @@ define void @test_zero_v32i16_align1(<32 x i16>* %dst) {
   ret void
 }
 
-define void @test_zero_v64i8_align1(<64 x i8>* %dst) {
+define void @test_zero_v64i8_align1(<64 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v64i8_align1:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -631,7 +631,7 @@ define void @test_zero_v64i8_align1(<64 x i8>* %dst) {
   ret void
 }
 
-define void @test_zero_v8f64_align16(<8 x double>* %dst) {
+define void @test_zero_v8f64_align16(<8 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f64_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -659,7 +659,7 @@ define void @test_zero_v8f64_align16(<8 x double>* %dst) {
   ret void
 }
 
-define void @test_zero_v16f32_align16(<16 x float>* %dst) {
+define void @test_zero_v16f32_align16(<16 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16f32_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -687,7 +687,7 @@ define void @test_zero_v16f32_align16(<16 x float>* %dst) {
   ret void
 }
 
-define void @test_zero_v8i64_align16(<8 x i64>* %dst) {
+define void @test_zero_v8i64_align16(<8 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i64_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -715,7 +715,7 @@ define void @test_zero_v8i64_align16(<8 x i64>* %dst) {
   ret void
 }
 
-define void @test_zero_v16i32_align16(<16 x i32>* %dst) {
+define void @test_zero_v16i32_align16(<16 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i32_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -743,7 +743,7 @@ define void @test_zero_v16i32_align16(<16 x i32>* %dst) {
   ret void
 }
 
-define void @test_zero_v32i16_align16(<32 x i16>* %dst) {
+define void @test_zero_v32i16_align16(<32 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i16_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -779,7 +779,7 @@ define void @test_zero_v32i16_align16(<32 x i16>* %dst) {
   ret void
 }
 
-define void @test_zero_v64i8_align16(<64 x i8>* %dst) {
+define void @test_zero_v64i8_align16(<64 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v64i8_align16:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -815,7 +815,7 @@ define void @test_zero_v64i8_align16(<64 x i8>* %dst) {
   ret void
 }
 
-define void @test_zero_v8f64_align32(<8 x double>* %dst) {
+define void @test_zero_v8f64_align32(<8 x double>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8f64_align32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -843,7 +843,7 @@ define void @test_zero_v8f64_align32(<8 x double>* %dst) {
   ret void
 }
 
-define void @test_zero_v16f32_align32(<16 x float>* %dst) {
+define void @test_zero_v16f32_align32(<16 x float>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16f32_align32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -871,7 +871,7 @@ define void @test_zero_v16f32_align32(<16 x float>* %dst) {
   ret void
 }
 
-define void @test_zero_v8i64_align32(<8 x i64>* %dst) {
+define void @test_zero_v8i64_align32(<8 x i64>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v8i64_align32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -899,7 +899,7 @@ define void @test_zero_v8i64_align32(<8 x i64>* %dst) {
   ret void
 }
 
-define void @test_zero_v16i32_align32(<16 x i32>* %dst) {
+define void @test_zero_v16i32_align32(<16 x i32>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v16i32_align32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -927,7 +927,7 @@ define void @test_zero_v16i32_align32(<16 x i32>* %dst) {
   ret void
 }
 
-define void @test_zero_v32i16_align32(<32 x i16>* %dst) {
+define void @test_zero_v32i16_align32(<32 x i16>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v32i16_align32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
@@ -963,7 +963,7 @@ define void @test_zero_v32i16_align32(<32 x i16>* %dst) {
   ret void
 }
 
-define void @test_zero_v64i8_align32(<64 x i8>* %dst) {
+define void @test_zero_v64i8_align32(<64 x i8>* %dst) nounwind {
 ; SSE-LABEL: test_zero_v64i8_align32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    xorps %xmm0, %xmm0
