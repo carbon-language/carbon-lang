@@ -21110,6 +21110,42 @@ static SDValue splitVectorStore(StoreSDNode *Store, SelectionDAG &DAG) {
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Ch0, Ch1);
 }
 
+/// Scalarize a vector store, bitcasting to TargetVT to determine the scalar
+/// type.
+static SDValue scalarizeVectorStore(StoreSDNode *Store, MVT StoreVT,
+                                    SelectionDAG &DAG) {
+  SDValue StoredVal = Store->getValue();
+  assert(StoreVT.is128BitVector() &&
+         StoredVal.getValueType().is128BitVector() && "Expecting 128-bit op");
+  StoredVal = DAG.getBitcast(StoreVT, StoredVal);
+
+  // Splitting volatile memory ops is not allowed unless the operation was not
+  // legal to begin with. We are assuming the input op is legal (this transform
+  // is only used for targets with AVX).
+  if (Store->isVolatile())
+    return SDValue();
+
+  MVT StoreSVT = StoreVT.getScalarType();
+  unsigned NumElems = StoreVT.getVectorNumElements();
+  unsigned ScalarSize = StoreSVT.getStoreSize();
+  unsigned Alignment = Store->getAlignment();
+
+  SDLoc DL(Store);
+  SmallVector<SDValue, 4> Stores;
+  for (unsigned i = 0; i != NumElems; ++i) {
+    unsigned Offset = i * ScalarSize;
+    SDValue Ptr = DAG.getMemBasePlusOffset(Store->getBasePtr(), Offset, DL);
+    SDValue Scl = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, StoreSVT, StoredVal,
+                              DAG.getIntPtrConstant(i, DL));
+    SDValue Ch = DAG.getStore(Store->getChain(), DL, Scl, Ptr,
+                              Store->getPointerInfo().getWithOffset(Offset),
+                              MinAlign(Alignment, Offset),
+                              Store->getMemOperand()->getFlags());
+    Stores.push_back(Ch);
+  }
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Stores);
+}
+
 static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
                           SelectionDAG &DAG) {
   StoreSDNode *St = cast<StoreSDNode>(Op.getNode());
@@ -39639,6 +39675,15 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
       if (NumElems < 2)
         return SDValue();
       return splitVectorStore(St, DAG);
+    }
+
+    // XMM nt-stores - scalarize this to f64 nt-stores on SSE4A, else i32/i64
+    // to use MOVNTI.
+    if (VT.is128BitVector() && Subtarget.hasSSE2()) {
+      MVT NTVT = Subtarget.hasSSE4A()
+                     ? MVT::v2f64
+                     : (TLI.isTypeLegal(MVT::i64) ? MVT::v2i64 : MVT::v4i32);
+      return scalarizeVectorStore(St, NTVT, DAG);
     }
   }
 
