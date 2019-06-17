@@ -291,8 +291,8 @@ char ARMConstantIslands::ID = 0;
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void ARMConstantIslands::verify() {
-  BBInfoVector &BBInfo = BBUtils->getBBInfo();
 #ifndef NDEBUG
+  BBInfoVector &BBInfo = BBUtils->getBBInfo();
   assert(std::is_sorted(MF->begin(), MF->end(),
                         [&BBInfo](const MachineBasicBlock &LHS,
                                   const MachineBasicBlock &RHS) {
