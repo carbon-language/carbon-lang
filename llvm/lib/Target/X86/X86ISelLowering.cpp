@@ -39545,6 +39545,7 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
   EVT VT = St->getValue().getValueType();
   EVT StVT = St->getMemoryVT();
   SDLoc dl(St);
+  unsigned Alignment = St->getAlignment();
   SDValue StoredVal = St->getOperand(1);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
@@ -39595,8 +39596,6 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
                                       StoredVal->ops().slice(32, 32));
       Hi = combinevXi1ConstantToInteger(Hi, DAG);
 
-      unsigned Alignment = St->getAlignment();
-
       SDValue Ptr0 = St->getBasePtr();
       SDValue Ptr1 = DAG.getMemBasePlusOffset(Ptr0, 4, dl);
 
@@ -39629,6 +39628,18 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
       return SDValue();
 
     return splitVectorStore(St, DAG);
+  }
+
+  // Split under-aligned vector non-temporal stores.
+  if (St->isNonTemporal() && StVT == VT && Alignment < VT.getStoreSize()) {
+    // ZMM/YMM nt-stores - either it can be stored as a series of shorter
+    // vectors or the legalizer can scalarize it to use MOVNTI.
+    if (VT.is256BitVector() || VT.is512BitVector()) {
+      unsigned NumElems = VT.getVectorNumElements();
+      if (NumElems < 2)
+        return SDValue();
+      return splitVectorStore(St, DAG);
+    }
   }
 
   // Optimize trunc store (of multiple scalars) to shuffle and store.
