@@ -432,7 +432,7 @@ void AMDGPUTargetMachine::adjustPassManager(PassManagerBuilder &Builder) {
       PM.add(llvm::createAMDGPUPropagateAttributesEarlyPass(this));
       PM.add(llvm::createAMDGPUUseNativeCallsPass());
       if (LibCallSimplify)
-        PM.add(llvm::createAMDGPUSimplifyLibCallsPass(Opt));
+        PM.add(llvm::createAMDGPUSimplifyLibCallsPass(Opt, this));
   });
 
   Builder.addExtension(
