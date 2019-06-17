@@ -13,13 +13,13 @@ entry:
   %nodebug3 = alloca i8*
   %a = alloca i8*
   %b = alloca i8*
-  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 4)
+  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 32)
   call void @llvm.dbg.declare(metadata i8** %a, metadata !12, metadata !DIExpression()), !dbg !14
-  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 4)
+  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 32)
   call void @llvm.dbg.declare(metadata i8** %a, metadata !12, metadata !DIExpression()), !dbg !14
-  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 6)
+  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 96)
   call void @llvm.dbg.declare(metadata i8** %b, metadata !13, metadata !DIExpression()), !dbg !14
-  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 6)
+  ; CHECK: @llvm.dbg.declare{{.*}} !DIExpression(DW_OP_LLVM_tag_offset, 96)
   call void @llvm.dbg.declare(metadata i8** %b, metadata !13, metadata !DIExpression()), !dbg !14
   call void @g(i8** %nodebug0, i8** %nodebug1, i8** %nodebug2, i8** %nodebug3, i8** %a, i8** %b)
   ret void, !dbg !15
