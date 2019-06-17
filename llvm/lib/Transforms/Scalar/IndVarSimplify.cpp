@@ -635,9 +635,12 @@ bool IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 
         // Computing the value outside of the loop brings no benefit if it is
         // definitely used inside the loop in a way which can not be optimized
-        // away.
+        // away.  Avoid doing so unless we know we have a value which computes
+        // the ExitValue already.  TODO: This should be merged into SCEV
+        // expander to leverage its knowledge of existing expressions.
         if (ReplaceExitValue != AlwaysRepl &&
-            !isa<SCEVConstant>(ExitValue) && hasHardUserWithinLoop(L, Inst))
+            !isa<SCEVConstant>(ExitValue) && !isa<SCEVUnknown>(ExitValue) &&
+            hasHardUserWithinLoop(L, Inst))
           continue;
 
         bool HighCost = Rewriter.isHighCostExpansion(ExitValue, L, Inst);
