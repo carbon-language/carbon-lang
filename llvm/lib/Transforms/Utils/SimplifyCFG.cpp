@@ -4218,14 +4218,15 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         }
       }
     } else if (auto *SI = dyn_cast<SwitchInst>(TI)) {
-      for (auto i = SI->case_begin(), e = SI->case_end(); i != e;) {
+      SwitchInstProfUpdateWrapper SU(*SI);
+      for (auto i = SU->case_begin(), e = SU->case_end(); i != e;) {
         if (i->getCaseSuccessor() != BB) {
           ++i;
           continue;
         }
-        BB->removePredecessor(SI->getParent());
-        i = SI->removeCase(i);
-        e = SI->case_end();
+        BB->removePredecessor(SU->getParent());
+        i = SU.removeCase(i);
+        e = SU->case_end();
         Changed = true;
       }
     } else if (auto *II = dyn_cast<InvokeInst>(TI)) {
