@@ -1837,7 +1837,6 @@ define i8 @test_v16i8(<16 x i8> %a0) {
 ; AVX2-NEXT:    vpand %xmm1, %xmm0, %xmm0
 ; AVX2-NEXT:    vpackuswb %xmm0, %xmm0, %xmm1
 ; AVX2-NEXT:    vpsrlw $8, %xmm1, %xmm1
-; AVX2-NEXT:    vpmovzxbw {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
 ; AVX2-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
 ; AVX2-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX2-NEXT:    # kill: def $al killed $al killed $eax
