@@ -58,6 +58,14 @@ auto Decimal<REAL, LOG10RADIX>::FromReal(const REAL &x) -> Decimal & {
   Word word{Word::ConvertUnsigned(x.GetFraction()).value};
   SetTo(word.SHIFTL(lshift));
 
+  // The significand is now encoded in *this as an integer (D) and
+  // decimal exponent (E):  x = D * 10.**E * 2.**twoPow
+  // twoPow can be positive or negative.
+  // The goal now is to get twoPow up or down to zero, leaving us with
+  // only decimal digits and decimal exponent.  This is done by
+  // fast multiplications and divisions of D by 2 and 5.
+
+  // (5*D) * 10.**E * 2.**twoPow -> D * 10.**(E+1) * 2.**(twoPow-1)
   for (; twoPow > 0 && IsDivisibleBy<5>(); --twoPow) {
     DivideBy<5>();
     Normalize();
@@ -67,25 +75,35 @@ auto Decimal<REAL, LOG10RADIX>::FromReal(const REAL &x) -> Decimal & {
   // Scale by factors of 8, then by 2.
   static constexpr int log2FastForward{3};
   static constexpr int fastForward{1 << log2FastForward};
+
+  // D * 10.**E * 2.**twoPow -> (8*D) * 10.**E * 2.**(twoPow-3)
   for (; twoPow >= log2FastForward; twoPow -= log2FastForward) {
     MultiplyBy<fastForward>();
   }
+  // D * 10.**E * 2.**twoPow -> (2*D) * 10.**E * 2.**(twoPow-1)
   for (; twoPow > 0; --twoPow) {
     MultiplyBy<2>();
   }
+  // Now twoPow <= 0.
+
+  // (8*D) * 10.**E * 2.**twoPow -> D * 10.**E * 2.**(twoPow+3)
   for (; twoPow <= -log2FastForward && IsDivisibleBy<fastForward>();
        twoPow += log2FastForward) {
     DivideBy<fastForward>();
     Normalize();
   }
+  // (2*D) * 10.**E * 2.**twoPow -> D * 10.**E * 2.**(twoPow+1)
   for (; twoPow < 0 && IsDivisibleBy<2>(); ++twoPow) {
     DivideBy<2>();
     Normalize();
   }
+  // D * 10.**E * 2.**twoPow -> 5D * 10.**(E-1) * 2.**(twoPow+1)
   for (; twoPow < 0; ++twoPow) {
     MultiplyBy<5>();
     --exponent_;
   }
+
+  // twoPow == 0, the decimal encoding is complete.
   return *this;
 }
 
