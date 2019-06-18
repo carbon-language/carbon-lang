@@ -551,7 +551,7 @@ SymbolOrComponent CoarrayRef::GetBaseSymbolOrComponent() const {
     } else if (j == 1) {  // X%Y
       base = Component{DataRef{std::get<const Symbol *>(base)}, *symbol};
     } else {  // X%Y%Z or more
-      base = Component{DataRef{std::move(std::get<Component>(base))}, *symbol};
+      base = Component{DataRef{std::get<Component>(std::move(base))}, *symbol};
     }
     ++j;
   }

@@ -1644,7 +1644,7 @@ MaybeExpr BinaryOperationHelper(ExpressionAnalyzer &context, const PARSED &x) {
     ConformabilityCheck(context.GetContextualMessages(), std::get<0>(*both),
         std::get<1>(*both));
     return NumericOperation<OPR>(context.GetContextualMessages(),
-        std::move(std::get<0>(*both)), std::move(std::get<1>(*both)),
+        std::get<0>(std::move(*both)), std::get<1>(std::move(*both)),
         context.GetDefaultKind(TypeCategory::Real));
   }
   return std::nullopt;
@@ -1722,7 +1722,7 @@ MaybeExpr RelationHelper(
     ConformabilityCheck(context.GetContextualMessages(), std::get<0>(*both),
         std::get<1>(*both));
     return AsMaybeExpr(Relate(context.GetContextualMessages(), opr,
-        std::move(std::get<0>(*both)), std::move(std::get<1>(*both))));
+        std::get<0>(std::move(*both)), std::get<1>(std::move(*both))));
   }
   return std::nullopt;
 }

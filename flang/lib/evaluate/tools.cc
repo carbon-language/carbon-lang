@@ -142,8 +142,8 @@ std::optional<Expr<SomeComplex>> ConstructComplex(
     parser::ContextualMessages &messages, std::optional<Expr<SomeType>> &&real,
     std::optional<Expr<SomeType>> &&imaginary, int defaultRealKind) {
   if (auto parts{common::AllPresent(std::move(real), std::move(imaginary))}) {
-    return ConstructComplex(messages, std::move(std::get<0>(*parts)),
-        std::move(std::get<1>(*parts)), defaultRealKind);
+    return ConstructComplex(messages, std::get<0>(std::move(*parts)),
+        std::get<1>(std::move(*parts)), defaultRealKind);
   }
   return std::nullopt;
 }
@@ -187,8 +187,8 @@ std::optional<Expr<SomeType>> MixedComplexLeft(
     auto ri{NumericOperation<Multiply>(messages, AsGenericExpr(std::move(zi)),
         AsGenericExpr(std::move(copy)), defaultRealKind)};
     if (auto parts{common::AllPresent(std::move(rr), std::move(ri))}) {
-      return Package(ConstructComplex(messages, std::move(std::get<0>(*parts)),
-          std::move(std::get<1>(*parts)), defaultRealKind));
+      return Package(ConstructComplex(messages, std::get<0>(std::move(*parts)),
+          std::get<1>(std::move(*parts)), defaultRealKind));
     }
   } else if constexpr (RCAT == TypeCategory::Integer &&
       std::is_same_v<OPR<LargestReal>, Power<LargestReal>>) {
@@ -448,8 +448,8 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
                         : LogicalOperator::Or};
                 return Expr<LogicalResult>{
                     LogicalOperation<LogicalResult::kind>{combine,
-                        std::move(std::get<0>(*parts)),
-                        std::move(std::get<1>(*parts))}};
+                        std::get<0>(std::move(*parts)),
+                        std::get<1>(std::move(*parts))}};
               }
             }
             return std::nullopt;

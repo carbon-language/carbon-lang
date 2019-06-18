@@ -193,11 +193,11 @@ Substring ArrayElement::ConvertToSubstring() {
   auto iter{subscripts.begin()};
   CHECK(iter != subscripts.end());
   auto &triplet{std::get<SubscriptTriplet>(iter->u)};
-  SubstringRange range{
-      std::move(std::get<0>(triplet.t)), std::move(std::get<1>(triplet.t))};
   CHECK(!std::get<2>(triplet.t).has_value());
   CHECK(++iter == subscripts.end());
-  return Substring{std::move(base), std::move(range)};
+  return Substring{std::move(base),
+      SubstringRange{std::get<0>(std::move(triplet.t)),
+          std::get<1>(std::move(triplet.t))}};
 }
 
 // R1544 stmt-function-stmt

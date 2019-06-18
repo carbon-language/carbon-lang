@@ -653,7 +653,7 @@ inline auto ApplyHelperMember(
     ApplyArgs<OBJPARSER, PARSER...> &&args, std::index_sequence<J...>) ->
     typename OBJPARSER::resultType {
   ((*std::get<0>(args)).*mfp)(std::move(*std::get<J + 1>(args))...);
-  return std::move(std::get<0>(args));
+  return std::get<0>(std::move(args));
 }
 
 template<typename OBJPARSER, typename... PARSER> class ApplyMemberFunction {
