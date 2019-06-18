@@ -325,7 +325,7 @@ void ClangdServer::enumerateTweaks(PathRef File, Range Sel,
 }
 
 void ClangdServer::applyTweak(PathRef File, Range Sel, StringRef TweakID,
-                              Callback<Tweak::Effect> CB) {
+                              Callback<ResolvedEffect> CB) {
   auto Action = [Sel](decltype(CB) CB, std::string File, std::string TweakID,
                       Expected<InputsAndAST> InpAST) {
     if (!InpAST)
@@ -348,7 +348,13 @@ void ClangdServer::applyTweak(PathRef File, Range Sel, StringRef TweakID,
                                             *Effect->ApplyEdit, Style))
         Effect->ApplyEdit = std::move(*Formatted);
     }
-    return CB(std::move(*Effect));
+
+    ResolvedEffect R;
+    R.ShowMessage = std::move(Effect->ShowMessage);
+    if (Effect->ApplyEdit)
+      R.ApplyEdit =
+          replacementsToEdits(InpAST->Inputs.Contents, *Effect->ApplyEdit);
+    return CB(std::move(R));
   };
   WorkScheduler.runWithAST(
       "ApplyTweak", File,

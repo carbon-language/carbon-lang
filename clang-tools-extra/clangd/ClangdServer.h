@@ -57,6 +57,14 @@ public:
 using ClangTidyOptionsBuilder = std::function<tidy::ClangTidyOptions(
     llvm::vfs::FileSystem &, llvm::StringRef /*File*/)>;
 
+/// Like Tweak::Effect, but stores TextEdits instead of tooling::Replacements.
+/// Slightly nicer to embedders of ClangdServer.
+/// FIXME: figure out how to remove this duplication.
+struct ResolvedEffect {
+  llvm::Optional<std::string> ShowMessage;
+  llvm::Optional<std::vector<TextEdit>> ApplyEdit;
+};
+
 /// Manages a collection of source files and derived data (ASTs, indexes),
 /// and provides language-aware features such as code completion.
 ///
@@ -239,7 +247,7 @@ public:
 
   /// Apply the code tweak with a specified \p ID.
   void applyTweak(PathRef File, Range Sel, StringRef ID,
-                  Callback<Tweak::Effect> CB);
+                  Callback<ResolvedEffect> CB);
 
   /// Only for testing purposes.
   /// Waits until all requests to worker thread are finished and dumps AST for

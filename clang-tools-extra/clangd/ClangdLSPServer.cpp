@@ -491,14 +491,14 @@ void ClangdLSPServer::onCommand(const ExecuteCommandParams &Params,
 
     auto Action = [this, ApplyEdit](decltype(Reply) Reply, URIForFile File,
                                     std::string Code,
-                                    llvm::Expected<Tweak::Effect> R) {
+                                    llvm::Expected<ResolvedEffect> R) {
       if (!R)
         return Reply(R.takeError());
 
       if (R->ApplyEdit) {
         WorkspaceEdit WE;
         WE.changes.emplace();
-        (*WE.changes)[File.uri()] = replacementsToEdits(Code, *R->ApplyEdit);
+        (*WE.changes)[File.uri()] = *R->ApplyEdit;
         ApplyEdit(std::move(WE));
       }
       if (R->ShowMessage) {
