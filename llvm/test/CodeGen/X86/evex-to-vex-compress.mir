@@ -2258,8 +2258,6 @@ body: |
   $edi = VCVTTSS2SIZrr_Int                     $xmm0                                                   
   ; CHECK: $xmm0 = VMOV64toSDrr                $rdi    
   $xmm0 = VMOV64toSDZrr                        $rdi                                                    
-  ; CHECK: $xmm0 = VMOVDI2SSrm                 $rip, 1, $noreg, 0, $noreg
-  $xmm0 = VMOVDI2SSZrm                         $rip, 1, $noreg, 0, $noreg
   ; CHECK: $xmm0 = VMOVDI2SSrr                 $eax
   $xmm0 = VMOVDI2SSZrr                         $eax                                                    
   ; CHECK: VMOVSDmr                            $rdi, 1, $noreg, 0, $noreg, $xmm0
@@ -2274,8 +2272,6 @@ body: |
   $xmm0 = VMOVSDZrr_REV                        $xmm0, $xmm1
   ; CHECK: $rax = VMOVSDto64rr                 $xmm0
   $rax = VMOVSDto64Zrr                         $xmm0
-  ; CHECK: VMOVSDto64mr                        $rdi, 1, $noreg, 0, $noreg, $xmm0
-  VMOVSDto64Zmr                                $rdi, 1, $noreg, 0, $noreg, $xmm0
   ; CHECK: VMOVSSmr                            $rdi, 1, $noreg, 0, $noreg, $xmm0
   VMOVSSZmr                                    $rdi, 1, $noreg, 0, $noreg, $xmm0
   ; CHECK: $xmm0 = VMOVSSrm                    $rip, 1, $noreg, 0, $noreg
@@ -2286,8 +2282,6 @@ body: |
   $xmm0 = VMOVSSZrr                            $xmm0, $xmm1
   ; CHECK: $xmm0 = VMOVSSrr_REV                $xmm0, $xmm1
   $xmm0 = VMOVSSZrr_REV                        $xmm0, $xmm1
-  ; CHECK: VMOVSS2DImr                         $rdi, 1, $noreg, 0, $noreg, $xmm0
-  VMOVSS2DIZmr                                 $rdi, 1, $noreg, 0, $noreg, $xmm0
   ; CHECK: $eax = VMOVSS2DIrr                  $xmm0
   $eax = VMOVSS2DIZrr                          $xmm0
   ; CHECK: $xmm0 = VMOV64toPQIrr               $rdi
@@ -4646,8 +4640,6 @@ body: |
   $edi = VCVTTSS2SIZrr_Int                     $xmm16                                                     
   ; CHECK: $xmm16 = VMOV64toSDZrr              $rdi    
   $xmm16 = VMOV64toSDZrr                       $rdi                                                       
-  ; CHECK: $xmm16 = VMOVDI2SSZrm               $rip, 1, $rax, 0, $noreg
-  $xmm16 = VMOVDI2SSZrm                        $rip, 1, $rax, 0, $noreg
   ; CHECK: $xmm16 = VMOVDI2SSZrr               $eax
   $xmm16 = VMOVDI2SSZrr                        $eax                                                       
   ; CHECK: VMOVSDZmr                           $rdi, 1, $noreg, 0, $noreg, $xmm16
@@ -4662,8 +4654,6 @@ body: |
   $xmm16 = VMOVSDZrr_REV                       $xmm16, $xmm1                                                
   ; CHECK: $rax = VMOVSDto64Zrr                $xmm16
   $rax = VMOVSDto64Zrr                         $xmm16
-  ; CHECK: VMOVSDto64Zmr                       $rdi, 1, $noreg, 0, $noreg, $xmm16
-  VMOVSDto64Zmr                                $rdi, 1, $noreg, 0, $noreg, $xmm16
   ; CHECK: VMOVSSZmr                           $rdi, 1, $noreg, 0, $noreg, $xmm16
   VMOVSSZmr                                    $rdi, 1, $noreg, 0, $noreg, $xmm16
   ; CHECK: $xmm16 = VMOVSSZrm                  $rip, 1, $rax, 0, $noreg
@@ -4674,8 +4664,6 @@ body: |
   $xmm16 = VMOVSSZrr                           $xmm16, $xmm1                                                  
   ; CHECK: $xmm16 = VMOVSSZrr_REV              $xmm16, $xmm1
   $xmm16 = VMOVSSZrr_REV                       $xmm16, $xmm1                                                  
-  ; CHECK: VMOVSS2DIZmr                        $rdi, 1, $noreg, 0, $noreg, $xmm16
-  VMOVSS2DIZmr                                 $rdi, 1, $noreg, 0, $noreg, $xmm16
   ; CHECK: $eax = VMOVSS2DIZrr                 $xmm16
   $eax = VMOVSS2DIZrr                          $xmm16
   ; CHECK: $xmm16 = VMOV64toPQIZrr             $rdi
