@@ -76,6 +76,11 @@ target_link_libraries(logical-test
   FortranEvaluate
 )
 
+# GCC -fno-exceptions breaks the fenv.h interfaces needed to capture
+# IEEE exception flags (different use of the word "exception")
+# in the actual hardware floating-point status register, so ensure that
+# C++ exceptions are enabled for this test.
+set_source_files_properties(real.cc PROPERTIES COMPILE_FLAGS -fexceptions)
 add_executable(real-test
   real.cc
 )
