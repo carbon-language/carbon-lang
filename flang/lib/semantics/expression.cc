@@ -519,16 +519,17 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
   if (!CheckIntrinsicKind(TypeCategory::Character, kind)) {
     return std::nullopt;
   }
-  if (kind == 1) {
-    return AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 1>>{std::move(string)});
-  } else if (kind == 2) {
+  switch (kind) {
+  case 1:
+    return AsGenericExpr(Constant<Type<TypeCategory::Character, 1>>{
+        parser::DecodeString<parser::Encoding::LATIN_1>(string, true)});
+  case 2:
     return AsGenericExpr(Constant<Type<TypeCategory::Character, 2>>{
-        parser::DecodeEUC_JP(string)});
-  } else {
-    CHECK(kind == 4);
+        parser::DecodeString<parser::Encoding::EUC_JP>(string, true)});
+  case 4:
     return AsGenericExpr(Constant<Type<TypeCategory::Character, 4>>{
-        parser::DecodeUTF_8(string)});
+        parser::DecodeString<parser::Encoding::UTF_8>(string, true)});
+  default: CRASH_NO_CASE;
   }
 }
 

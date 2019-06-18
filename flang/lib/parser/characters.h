@@ -145,10 +145,21 @@ struct EncodedCharacter {
   int bytes{0};
 };
 
-EncodedCharacter EncodeLATIN_1(char32_t);
-EncodedCharacter EncodeUTF_8(char32_t);
-EncodedCharacter EncodeEUC_JP(char32_t);
-EncodedCharacter EncodeCharacter(Encoding, char32_t);
+template<Encoding ENCODING> EncodedCharacter EncodeCharacter(char32_t ucs);
+template<> EncodedCharacter EncodeCharacter<Encoding::LATIN_1>(char32_t);
+template<> EncodedCharacter EncodeCharacter<Encoding::EUC_JP>(char32_t);
+template<> EncodedCharacter EncodeCharacter<Encoding::UTF_8>(char32_t);
+
+EncodedCharacter EncodeCharacter(Encoding, char32_t ucs);
+
+template<Encoding ENCODING, typename STRING>
+std::string EncodeString(const STRING &);
+extern template std::string EncodeString<Encoding::LATIN_1, std::string>(
+    const std::string &);
+extern template std::string EncodeString<Encoding::EUC_JP, std::u16string>(
+    const std::u16string &);
+extern template std::string EncodeString<Encoding::UTF_8, std::u32string>(
+    const std::u32string &);
 
 // EmitQuotedChar drives callbacks "emit" and "insert" to output the
 // bytes of an encoding for a codepoint.
@@ -194,13 +205,51 @@ struct DecodedCharacter {
   int bytes{0};  // signifying failure
 };
 
-DecodedCharacter DecodeUTF_8Character(const char *, std::size_t);
-DecodedCharacter DecodeEUC_JPCharacter(const char *, std::size_t);
-DecodedCharacter DecodeLATIN1Character(const char *);
-DecodedCharacter DecodeCharacter(
-    Encoding, const char *, std::size_t, bool backslashEscapes = false);
+template<Encoding ENCODING>
+DecodedCharacter DecodeRawCharacter(const char *, std::size_t);
+template<>
+DecodedCharacter DecodeRawCharacter<Encoding::LATIN_1>(
+    const char *, std::size_t);
+template<>
+DecodedCharacter DecodeRawCharacter<Encoding::EUC_JP>(
+    const char *, std::size_t);
+template<>
+DecodedCharacter DecodeRawCharacter<Encoding::UTF_8>(const char *, std::size_t);
 
-std::u32string DecodeUTF_8(const std::string &);
-std::u16string DecodeEUC_JP(const std::string &);
+// DecodeCharacter optionally handles backslash escape sequences, too.
+template<Encoding ENCODING>
+DecodedCharacter DecodeCharacter(
+    const char *, std::size_t, bool backslashEscapes);
+extern template DecodedCharacter DecodeCharacter<Encoding::LATIN_1>(
+    const char *, std::size_t, bool);
+extern template DecodedCharacter DecodeCharacter<Encoding::EUC_JP>(
+    const char *, std::size_t, bool);
+extern template DecodedCharacter DecodeCharacter<Encoding::UTF_8>(
+    const char *, std::size_t, bool);
+
+DecodedCharacter DecodeCharacter(
+    Encoding, const char *, std::size_t, bool backslashEscapes);
+
+template<Encoding ENCODING> struct StringForEncoding;
+template<> struct StringForEncoding<Encoding::LATIN_1> {
+  using type = std::string;
+};
+template<> struct StringForEncoding<Encoding::EUC_JP> {
+  using type = std::u16string;
+};
+template<> struct StringForEncoding<Encoding::UTF_8> {
+  using type = std::u32string;
+};
+template<Encoding ENCODING>
+using StringFor = typename StringForEncoding<ENCODING>::type;
+
+template<Encoding ENCODING>
+StringFor<ENCODING> DecodeString(const std::string &, bool backslashEscapes);
+extern template std::string DecodeString<Encoding::LATIN_1>(
+    const std::string &, bool);
+extern template std::u16string DecodeString<Encoding::EUC_JP>(
+    const std::string &, bool);
+extern template std::u32string DecodeString<Encoding::UTF_8>(
+    const std::string &, bool);
 }
 #endif  // FORTRAN_PARSER_CHARACTERS_H_

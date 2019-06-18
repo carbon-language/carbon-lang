@@ -561,6 +561,17 @@ void Prescanner::QuotedCharacterLiteral(
   bool isEscaped{false};
   bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
   while (true) {
+    if (*at_ == '\\') {
+      if (escapesEnabled) {
+        isEscaped = !isEscaped;
+      } else {
+        // The parser always processes escape sequences, so don't confuse it
+        // when escapes are disabled.
+        insert('\\');
+      }
+    } else {
+      isEscaped = false;
+    }
     EmitQuotedChar(static_cast<unsigned char>(*at_), emit, insert, false,
         Encoding::LATIN_1);
     while (PadOutCharacterLiteral(tokens)) {
@@ -572,17 +583,9 @@ void Prescanner::QuotedCharacterLiteral(
       }
       break;
     }
-    isEscaped = !isEscaped && *at_ == '\\';
     end = at_ + 1;
     NextChar();
-    if (*at_ == quote) {
-      if (isEscaped) {
-        if (escapesEnabled) {
-          continue;
-        } else {
-          insert('\\');
-        }
-      }
+    if (*at_ == quote && !isEscaped) {
       // A doubled unescaped quote mark becomes a single instance of that
       // quote character in the literal (later).  There can be spaces between
       // the quotes in fixed form source.
@@ -614,12 +617,15 @@ void Prescanner::Hollerith(
       break;
     } else {
       NextChar();
-      // Multi-byte character encodings each count as single characters.
-      // The cooked character stream always uses UTF-8 for Hollerith.
+      // Each multi-byte character encoding counts as a single character.
+      // No escape sequences are recognized.
+      // Hollerith is always emitted to the cooked character
+      // stream in UTF-8.
       DecodedCharacter decoded{DecodeCharacter(
-          encoding_, at_, static_cast<std::size_t>(limit_ - at_))};
+          encoding_, at_, static_cast<std::size_t>(limit_ - at_), false)};
       if (decoded.bytes > 0) {
-        EncodedCharacter utf8{EncodeUTF_8(decoded.codepoint)};
+        EncodedCharacter utf8{
+            EncodeCharacter<Encoding::UTF_8>(decoded.codepoint)};
         for (int j{0}; j < utf8.bytes; ++j) {
           EmitChar(tokens, utf8.buffer[j]);
         }

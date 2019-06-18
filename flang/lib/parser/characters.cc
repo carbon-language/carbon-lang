@@ -69,7 +69,7 @@ std::string QuoteCharacterLiteral(
   return QuoteCharacterLiteralHelper(str, backslashEscapes, encoding);
 }
 
-EncodedCharacter EncodeLATIN_1(char32_t ucs) {
+template<> EncodedCharacter EncodeCharacter<Encoding::LATIN_1>(char32_t ucs) {
   CHECK(ucs <= 0xff);
   EncodedCharacter result;
   result.buffer[0] = ucs;
@@ -77,43 +77,43 @@ EncodedCharacter EncodeLATIN_1(char32_t ucs) {
   return result;
 }
 
-EncodedCharacter EncodeUTF_8(char32_t codepoint) {
+template<> EncodedCharacter EncodeCharacter<Encoding::UTF_8>(char32_t ucs) {
   // N.B. char32_t is unsigned
   EncodedCharacter result;
-  if (codepoint <= 0x7f) {
-    result.buffer[0] = codepoint;
+  if (ucs <= 0x7f) {
+    result.buffer[0] = ucs;
     result.bytes = 1;
-  } else if (codepoint <= 0x7ff) {
-    result.buffer[0] = 0xc0 | (codepoint >> 6);
-    result.buffer[1] = 0x80 | (codepoint & 0x3f);
+  } else if (ucs <= 0x7ff) {
+    result.buffer[0] = 0xc0 | (ucs >> 6);
+    result.buffer[1] = 0x80 | (ucs & 0x3f);
     result.bytes = 2;
-  } else if (codepoint <= 0xffff) {
-    result.buffer[0] = 0xe0 | (codepoint >> 12);
-    result.buffer[1] = 0x80 | ((codepoint >> 6) & 0x3f);
-    result.buffer[2] = 0x80 | (codepoint & 0x3f);
+  } else if (ucs <= 0xffff) {
+    result.buffer[0] = 0xe0 | (ucs >> 12);
+    result.buffer[1] = 0x80 | ((ucs >> 6) & 0x3f);
+    result.buffer[2] = 0x80 | (ucs & 0x3f);
     result.bytes = 3;
-  } else if (codepoint <= 0x1fffff) {
+  } else if (ucs <= 0x1fffff) {
     // UCS actually only goes up to 0x10ffff, but the
     // UTF-8 encoding can handle 32 bits.
-    result.buffer[0] = 0xf0 | (codepoint >> 18);
-    result.buffer[1] = 0x80 | ((codepoint >> 12) & 0x3f);
-    result.buffer[2] = 0x80 | ((codepoint >> 6) & 0x3f);
-    result.buffer[3] = 0x80 | (codepoint & 0x3f);
+    result.buffer[0] = 0xf0 | (ucs >> 18);
+    result.buffer[1] = 0x80 | ((ucs >> 12) & 0x3f);
+    result.buffer[2] = 0x80 | ((ucs >> 6) & 0x3f);
+    result.buffer[3] = 0x80 | (ucs & 0x3f);
     result.bytes = 4;
-  } else if (codepoint <= 0x3ffffff) {
-    result.buffer[0] = 0xf8 | (codepoint >> 24);
-    result.buffer[1] = 0x80 | ((codepoint >> 18) & 0x3f);
-    result.buffer[2] = 0x80 | ((codepoint >> 12) & 0x3f);
-    result.buffer[3] = 0x80 | ((codepoint >> 6) & 0x3f);
-    result.buffer[4] = 0x80 | (codepoint & 0x3f);
+  } else if (ucs <= 0x3ffffff) {
+    result.buffer[0] = 0xf8 | (ucs >> 24);
+    result.buffer[1] = 0x80 | ((ucs >> 18) & 0x3f);
+    result.buffer[2] = 0x80 | ((ucs >> 12) & 0x3f);
+    result.buffer[3] = 0x80 | ((ucs >> 6) & 0x3f);
+    result.buffer[4] = 0x80 | (ucs & 0x3f);
     result.bytes = 5;
   } else {
-    result.buffer[0] = 0xfc | (codepoint >> 30);
-    result.buffer[1] = 0x80 | ((codepoint >> 24) & 0x3f);
-    result.buffer[2] = 0x80 | ((codepoint >> 18) & 0x3f);
-    result.buffer[3] = 0x80 | ((codepoint >> 12) & 0x3f);
-    result.buffer[4] = 0x80 | ((codepoint >> 6) & 0x3f);
-    result.buffer[5] = 0x80 | (codepoint & 0x3f);
+    result.buffer[0] = 0xfc | (ucs >> 30);
+    result.buffer[1] = 0x80 | ((ucs >> 24) & 0x3f);
+    result.buffer[2] = 0x80 | ((ucs >> 18) & 0x3f);
+    result.buffer[3] = 0x80 | ((ucs >> 12) & 0x3f);
+    result.buffer[4] = 0x80 | ((ucs >> 6) & 0x3f);
+    result.buffer[5] = 0x80 | (ucs & 0x3f);
     result.bytes = 6;
   }
   return result;
@@ -125,7 +125,7 @@ static char32_t JIS_0212ToUCS(char32_t jis) { return jis | 0x90000; }
 static bool IsUCSJIS_0212(char32_t ucs) { return (ucs & 0x90000) == 0x90000; }
 static char32_t UCSToJIS(char32_t ucs) { return ucs & 0xffff; }
 
-EncodedCharacter EncodeEUC_JP(char32_t ucs) {
+template<> EncodedCharacter EncodeCharacter<Encoding::EUC_JP>(char32_t ucs) {
   EncodedCharacter result;
   if (ucs <= 0x7f) {
     result.buffer[0] = ucs;
@@ -151,14 +151,44 @@ EncodedCharacter EncodeEUC_JP(char32_t ucs) {
 
 EncodedCharacter EncodeCharacter(Encoding encoding, char32_t ucs) {
   switch (encoding) {
-  case Encoding::LATIN_1: return EncodeLATIN_1(ucs);
-  case Encoding::UTF_8: return EncodeUTF_8(ucs);
-  case Encoding::EUC_JP: return EncodeEUC_JP(ucs);
+  case Encoding::LATIN_1: return EncodeCharacter<Encoding::LATIN_1>(ucs);
+  case Encoding::EUC_JP: return EncodeCharacter<Encoding::EUC_JP>(ucs);
+  case Encoding::UTF_8: return EncodeCharacter<Encoding::UTF_8>(ucs);
   default: CRASH_NO_CASE;
   }
 }
 
-DecodedCharacter DecodeUTF_8Character(const char *cp, std::size_t bytes) {
+template<Encoding ENCODING, typename STRING>
+std::string EncodeString(const STRING &str) {
+  std::string result;
+  for (auto ch : str) {
+    char32_t uch{static_cast<std::make_unsigned_t<decltype(ch)>>(ch)};
+    EncodedCharacter encoded{EncodeCharacter<ENCODING>(uch)};
+    result.append(encoded.buffer, static_cast<std::size_t>(encoded.bytes));
+  }
+  return result;
+}
+
+template std::string EncodeString<Encoding::LATIN_1, std::string>(
+    const std::string &);
+template std::string EncodeString<Encoding::EUC_JP, std::u16string>(
+    const std::u16string &);
+template std::string EncodeString<Encoding::UTF_8, std::u32string>(
+    const std::u32string &);
+
+template<>
+DecodedCharacter DecodeRawCharacter<Encoding::LATIN_1>(
+    const char *cp, std::size_t bytes) {
+  if (bytes >= 1) {
+    return {*reinterpret_cast<const std::uint8_t *>(cp), 1};
+  } else {
+    return {};
+  }
+}
+
+template<>
+DecodedCharacter DecodeRawCharacter<Encoding::UTF_8>(
+    const char *cp, std::size_t bytes) {
   auto p{reinterpret_cast<const std::uint8_t *>(cp)};
   char32_t ch{*p};
   if (ch <= 0x7f) {
@@ -183,7 +213,9 @@ DecodedCharacter DecodeUTF_8Character(const char *cp, std::size_t bytes) {
   }
 }
 
-DecodedCharacter DecodeEUC_JPCharacter(const char *cp, std::size_t bytes) {
+template<>
+DecodedCharacter DecodeRawCharacter<Encoding::EUC_JP>(
+    const char *cp, std::size_t bytes) {
   auto p{reinterpret_cast<const std::uint8_t *>(cp)};
   char32_t ch{*p};
   if (ch <= 0x7f) {
@@ -202,10 +234,6 @@ DecodedCharacter DecodeEUC_JPCharacter(const char *cp, std::size_t bytes) {
   return {};
 }
 
-DecodedCharacter DecodeLATIN1Character(const char *cp) {
-  return {*reinterpret_cast<const std::uint8_t *>(cp), 1};
-}
-
 static DecodedCharacter DecodeEscapedCharacter(
     const char *cp, std::size_t bytes) {
   if (cp[0] == '\\' && bytes >= 2) {
@@ -213,7 +241,7 @@ static DecodedCharacter DecodeEscapedCharacter(
       return {static_cast<unsigned char>(*escChar), 2};
     } else if (IsOctalDigit(cp[1])) {
       std::size_t maxLen{std::min(std::size_t{4}, bytes)};
-      char32_t code{static_cast<char32_t>(cp[1] - '0')};
+      char32_t code{static_cast<char32_t>(DecimalDigitValue(cp[1]))};
       std::size_t len{2};  // so far
       for (; code <= 037 && len < maxLen && IsOctalDigit(cp[len]); ++len) {
         code = 8 * code + DecimalDigitValue(cp[len]);
@@ -235,8 +263,9 @@ static DecodedCharacter DecodeEscapedCharacter(
   return {static_cast<unsigned char>(cp[0]), 1};
 }
 
+template<Encoding ENCODING>
 static DecodedCharacter DecodeEscapedCharacters(
-    Encoding encoding, const char *cp, std::size_t bytes) {
+    const char *cp, std::size_t bytes) {
   char buffer[EncodedCharacter::maxEncodingBytes];
   int count[EncodedCharacter::maxEncodingBytes];
   std::size_t at{0}, len{0};
@@ -246,7 +275,7 @@ static DecodedCharacter DecodeEscapedCharacters(
     at += code.bytes;
     count[len] = at;
   }
-  DecodedCharacter code{DecodeCharacter(encoding, buffer, len, false)};
+  DecodedCharacter code{DecodeCharacter<ENCODING>(buffer, len, false)};
   if (code.bytes > 0) {
     code.bytes = count[code.bytes - 1];
   } else {
@@ -256,30 +285,43 @@ static DecodedCharacter DecodeEscapedCharacters(
   return code;
 }
 
+template<Encoding ENCODING>
+DecodedCharacter DecodeCharacter(
+    const char *cp, std::size_t bytes, bool backslashEscapes) {
+  if (backslashEscapes && bytes >= 2 && *cp == '\\') {
+    return DecodeEscapedCharacters<ENCODING>(cp, bytes);
+  } else {
+    return DecodeRawCharacter<ENCODING>(cp, bytes);
+  }
+}
+
+template DecodedCharacter DecodeCharacter<Encoding::LATIN_1>(
+    const char *, std::size_t, bool);
+template DecodedCharacter DecodeCharacter<Encoding::EUC_JP>(
+    const char *, std::size_t, bool);
+template DecodedCharacter DecodeCharacter<Encoding::UTF_8>(
+    const char *, std::size_t, bool);
+
 DecodedCharacter DecodeCharacter(Encoding encoding, const char *cp,
     std::size_t bytes, bool backslashEscapes) {
-  if (backslashEscapes && bytes >= 2 && *cp == '\\') {
-    return DecodeEscapedCharacters(encoding, cp, bytes);
-  } else {
-    switch (encoding) {
-    case Encoding::LATIN_1:
-      if (bytes >= 1) {
-        return DecodeLATIN1Character(cp);
-      } else {
-        return {};
-      }
-    case Encoding::UTF_8: return DecodeUTF_8Character(cp, bytes);
-    case Encoding::EUC_JP: return DecodeEUC_JPCharacter(cp, bytes);
-    default: CRASH_NO_CASE;
-    }
+  switch (encoding) {
+  case Encoding::LATIN_1:
+    return DecodeCharacter<Encoding::LATIN_1>(cp, bytes, backslashEscapes);
+  case Encoding::EUC_JP:
+    return DecodeCharacter<Encoding::EUC_JP>(cp, bytes, backslashEscapes);
+  case Encoding::UTF_8:
+    return DecodeCharacter<Encoding::UTF_8>(cp, bytes, backslashEscapes);
+  default: CRASH_NO_CASE;
   }
 }
 
-std::u32string DecodeUTF_8(const std::string &s) {
-  std::u32string result;
+template<Encoding ENCODING>
+StringFor<ENCODING> DecodeString(const std::string &s, bool backslashEscapes) {
+  StringFor<ENCODING> result;
   const char *p{s.c_str()};
   for (auto bytes{s.size()}; bytes != 0;) {
-    DecodedCharacter decoded{DecodeUTF_8Character(p, bytes)};
+    DecodedCharacter decoded{
+        DecodeCharacter<ENCODING>(p, bytes, backslashEscapes)};
     if (decoded.bytes > 0) {
       if (static_cast<std::size_t>(decoded.bytes) <= bytes) {
         result.append(1, decoded.codepoint);
@@ -295,24 +337,9 @@ std::u32string DecodeUTF_8(const std::string &s) {
   return result;
 }
 
-std::u16string DecodeEUC_JP(const std::string &s) {
-  std::u16string result;
-  const char *p{s.c_str()};
-  for (auto bytes{s.size()}; bytes != 0;) {
-    DecodedCharacter decoded{DecodeEUC_JPCharacter(p, bytes)};
-    if (decoded.bytes > 0) {
-      if (static_cast<std::size_t>(decoded.bytes) <= bytes) {
-        result.append(1, decoded.codepoint);
-        bytes -= decoded.bytes;
-        p += decoded.bytes;
-        continue;
-      }
-    }
-    result.append(1, static_cast<uint8_t>(*p));
-    ++p;
-    --bytes;
-  }
-  return result;
-}
-
+template std::string DecodeString<Encoding::LATIN_1>(const std::string &, bool);
+template std::u16string DecodeString<Encoding::EUC_JP>(
+    const std::string &, bool);
+template std::u32string DecodeString<Encoding::UTF_8>(
+    const std::string &, bool);
 }

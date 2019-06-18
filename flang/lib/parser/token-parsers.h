@@ -218,44 +218,18 @@ struct CharLiteralChar {
             "Unclosed character constant"_err_en_US);
         return std::nullopt;
       }
-      if (ch != '\\') {
-        return std::make_pair(ch, false);
-      }
-      if (!(cp = nextCh.Parse(state)).has_value()) {
-        state.Say(CharBlock{at, state.GetLocation()},
-            "Unclosed character constant"_err_en_US);
-        return std::nullopt;
-      }
-      if (std::optional<char> escChar{BackslashEscapeValue(**cp)}) {
-        return std::make_pair(*escChar, true);
-      } else if (IsOctalDigit(**cp)) {
-        char result{static_cast<char>(**cp - '0')};
-        for (int j{0}; j < 2 && static_cast<unsigned char>(result) <= 037;
-             ++j) {
-          static constexpr auto octalDigit{attempt("01234567"_ch)};
-          if (std::optional<const char *> oct{octalDigit.Parse(state)}) {
-            result = 8 * result + DecimalDigitValue(**oct);
-          } else {
-            break;
+      if (ch == '\\') {
+        // Most escape sequences in character literals are processed later,
+        // but we have to look for quotes here so that doubled quotes work.
+        if (std::optional<const char *> next{state.PeekAtNextChar()}) {
+          char escaped{**next};
+          if (escaped == '\'' || escaped == '"' || escaped == '\\') {
+            state.UncheckedAdvance();
+            return std::make_pair(escaped, true);
           }
         }
-        return std::make_pair(result, true);
-      } else if (**cp == 'x' || **cp == 'X') {
-        char result{0};
-        for (int j{0}; j < 2; ++j) {
-          static constexpr auto hexadecimalDigit{
-              attempt("01234567abcdefABCDEF"_ch)};
-          if (std::optional<const char *> hex{hexadecimalDigit.Parse(state)}) {
-            result = 16 * result + HexadecimalDigitValue(**hex);
-          } else {
-            return std::nullopt;
-          }
-        }
-        return std::make_pair(result, true);
-      } else if (IsLetter(**cp)) {
-        // Unknown escape - ignore the '\' (PGI compatibility)
-        return std::make_pair(**cp, true);
       }
+      return std::make_pair(ch, false);
     }
     return std::nullopt;
   }
@@ -267,7 +241,9 @@ template<char quote> struct CharLiteral {
     std::string str;
     static constexpr auto nextch{attempt(CharLiteralChar{})};
     while (auto ch{nextch.Parse(state)}) {
-      if (ch->first == quote && !ch->second) {
+      if (ch->second) {
+        str += '\\';
+      } else if (ch->first == quote) {
         static constexpr auto doubled{attempt(AnyOfChars{SetOfChars{quote}})};
         if (!doubled.Parse(state).has_value()) {
           return str;
