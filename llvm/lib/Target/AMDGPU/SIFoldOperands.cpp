@@ -516,8 +516,10 @@ void SIFoldOperands::foldOperand(
       // =>
       // %sgpr = S_MOV_B32 imm
       if (FoldingImm) {
-        if (!isEXECMaskConstantBetweenDefAndUses(
-              UseMI->getOperand(UseOpIdx).getReg(), *MRI))
+        if (execMayBeModifiedBeforeUse(*MRI,
+                                       UseMI->getOperand(UseOpIdx).getReg(),
+                                       *OpToFold.getParent(),
+                                       UseMI))
           return;
 
         UseMI->setDesc(TII->get(AMDGPU::S_MOV_B32));
@@ -527,8 +529,10 @@ void SIFoldOperands::foldOperand(
       }
 
       if (OpToFold.isReg() && TRI->isSGPRReg(*MRI, OpToFold.getReg())) {
-        if (!isEXECMaskConstantBetweenDefAndUses(
-              UseMI->getOperand(UseOpIdx).getReg(), *MRI))
+        if (execMayBeModifiedBeforeUse(*MRI,
+                                       UseMI->getOperand(UseOpIdx).getReg(),
+                                       *OpToFold.getParent(),
+                                       UseMI))
           return;
 
         // %vgpr = COPY %sgpr0
