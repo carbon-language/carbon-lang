@@ -94,7 +94,7 @@ public:
   Intent intent() const override { return Info; }
   bool hidden() const override { return true; }
 };
-REGISTER_TWEAK(ShowSelectionTree);
+REGISTER_TWEAK(ShowSelectionTree)
 
 /// Shows the layout of the RecordDecl under the cursor.
 /// Input:
@@ -132,7 +132,7 @@ public:
 private:
   const RecordDecl *Record = nullptr;
 };
-REGISTER_TWEAK(DumpRecordLayout);
+REGISTER_TWEAK(DumpRecordLayout)
 
 } // namespace
 } // namespace clangd
