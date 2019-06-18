@@ -9590,29 +9590,29 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       return true;
     }
     return false;
-  case ARM::t2VPST:
-  case ARM::t2VPTv16i8:
-  case ARM::t2VPTv8i16:
-  case ARM::t2VPTv4i32:
-  case ARM::t2VPTv16u8:
-  case ARM::t2VPTv8u16:
-  case ARM::t2VPTv4u32:
-  case ARM::t2VPTv16s8:
-  case ARM::t2VPTv8s16:
-  case ARM::t2VPTv4s32:
-  case ARM::t2VPTv4f32:
-  case ARM::t2VPTv8f16:
-  case ARM::t2VPTv16i8r:
-  case ARM::t2VPTv8i16r:
-  case ARM::t2VPTv4i32r:
-  case ARM::t2VPTv16u8r:
-  case ARM::t2VPTv8u16r:
-  case ARM::t2VPTv4u32r:
-  case ARM::t2VPTv16s8r:
-  case ARM::t2VPTv8s16r:
-  case ARM::t2VPTv4s32r:
-  case ARM::t2VPTv4f32r:
-  case ARM::t2VPTv8f16r: {
+  case ARM::MVE_VPST:
+  case ARM::MVE_VPTv16i8:
+  case ARM::MVE_VPTv8i16:
+  case ARM::MVE_VPTv4i32:
+  case ARM::MVE_VPTv16u8:
+  case ARM::MVE_VPTv8u16:
+  case ARM::MVE_VPTv4u32:
+  case ARM::MVE_VPTv16s8:
+  case ARM::MVE_VPTv8s16:
+  case ARM::MVE_VPTv4s32:
+  case ARM::MVE_VPTv4f32:
+  case ARM::MVE_VPTv8f16:
+  case ARM::MVE_VPTv16i8r:
+  case ARM::MVE_VPTv8i16r:
+  case ARM::MVE_VPTv4i32r:
+  case ARM::MVE_VPTv16u8r:
+  case ARM::MVE_VPTv8u16r:
+  case ARM::MVE_VPTv4u32r:
+  case ARM::MVE_VPTv16s8r:
+  case ARM::MVE_VPTv8s16r:
+  case ARM::MVE_VPTv4s32r:
+  case ARM::MVE_VPTv4f32r:
+  case ARM::MVE_VPTv8f16r: {
     assert(!inVPTBlock() && "Nested VPT blocks are not allowed");
     MCOperand &MO = Inst.getOperand(0);
     VPTState.Mask = MO.getImm();
