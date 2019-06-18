@@ -387,6 +387,11 @@ struct ClientCapabilities {
   /// textDocument.completion.completionItem.snippetSupport
   bool CompletionSnippets = false;
 
+  /// Client supports completions with additionalTextEdit near the cursor.
+  /// This is a clangd extension. (LSP says this is for unrelated text only).
+  /// textDocument.completion.editsNearCursor
+  bool CompletionFixes = false;
+
   /// Client supports hierarchical document symbols.
   bool HierarchicalDocumentSymbol = false;
 
