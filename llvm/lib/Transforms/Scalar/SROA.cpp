@@ -1589,6 +1589,12 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
   PointerType *TargetPtrTy = cast<PointerType>(PointerTy);
   Type *TargetTy = TargetPtrTy->getElementType();
 
+  // As `addrspacecast` is , `Ptr` (the storage pointer) may have different
+  // address space from the expected `PointerTy` (the pointer to be used).
+  // Adjust the pointer type based the original storage pointer.
+  auto AS = cast<PointerType>(Ptr->getType())->getAddressSpace();
+  PointerTy = PointerTy->getPointerTo(AS);
+
   do {
     // First fold any existing GEPs into the offset.
     while (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
