@@ -1,18 +1,3 @@
-// When `external_symbolizer_path` is empty on Darwin we fallback on using
-// dladdr as the symbolizer which means we get the symbol name
-// but no source location. The current implementation also doesn't try to
-// change the module name so we end up with the full name so we actually don't
-// need the module map here.
-
-// RUN: %clangxx_asan -O0 -g %s -o %t.executable
-// RUN: %env_asan_opts=symbolize=1,print_module_map=0,external_symbolizer_path= not %run %t.executable > %t2.log 2>&1
-// RUN: FileCheck -input-file=%t2.log -check-prefix=CHECK-PS %s
-// RUN: %asan_symbolize --force-system-symbolizer < %t2.log > %t2.fully_symbolized
-// RUN: FileCheck -input-file=%t2.fully_symbolized -check-prefix=CHECK-FS %s
-
-// Due a quirk in the way atos reports module names we have to use the module
-// map here, otherwise we don't know what the full path to the module is.
-
 // FIXME(dliew): We currently have to use module map for this test due to the atos
 // symbolizer changing the module name from an absolute path to just the file name.
 // rdar://problem/49784442
@@ -20,12 +5,12 @@
 // Simulate partial symbolication (can happen with %L specifier) by printing
 // out %L's fallback which will print the module name and offset instead of a
 // source location.
-// RUN: %clangxx_asan -O0 -g %s -o %t2.executable
-// RUN: %env_asan_opts=symbolize=1,print_module_map=1,stack_trace_format='"    #%%n %%p %%F %%M"' not %run %t.executable > %t2.log 2>&1
-// RUN: FileCheck -input-file=%t2.log -check-prefix=CHECK-PS %s
+// RUN: %clangxx_asan -O0 -g %s -o %t.executable
+// RUN: %env_asan_opts=symbolize=1,print_module_map=1,stack_trace_format='"    #%%n %%p %%F %%M"' not %run %t.executable > %t.log 2>&1
+// RUN: FileCheck -input-file=%t.log -check-prefix=CHECK-PS %s
 // Now try to full symbolicate using the module map.
-// RUN: %asan_symbolize --module-map %t2.log --force-system-symbolizer < %t2.log > %t2.fully_symbolized
-// RUN: FileCheck -input-file=%t2.fully_symbolized -check-prefix=CHECK-FS %s
+// RUN: %asan_symbolize --module-map %t.log --force-system-symbolizer < %t.log > %t.fully_symbolized
+// RUN: FileCheck -input-file=%t.fully_symbolized -check-prefix=CHECK-FS %s
 
 #include <cstdlib>
 
