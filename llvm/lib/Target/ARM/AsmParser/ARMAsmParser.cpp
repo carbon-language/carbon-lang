@@ -5933,7 +5933,8 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
   if (Mnemonic != "adcs" && Mnemonic != "bics" && Mnemonic != "movs" &&
       Mnemonic != "muls" && Mnemonic != "smlals" && Mnemonic != "smulls" &&
       Mnemonic != "umlals" && Mnemonic != "umulls" && Mnemonic != "lsls" &&
-      Mnemonic != "sbcs" && Mnemonic != "rscs") {
+      Mnemonic != "sbcs" && Mnemonic != "rscs" &&
+      !(hasMVE() && Mnemonic == "vmine")) {
     unsigned CC = ARMCondCodeFromString(Mnemonic.substr(Mnemonic.size()-2));
     if (CC != ~0U) {
       Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 2);

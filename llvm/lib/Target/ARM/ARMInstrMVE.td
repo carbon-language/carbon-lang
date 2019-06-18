@@ -642,6 +642,32 @@ def MVE_VMAXNMf16 : MVE_VMINMAXNM<"vmaxnm", "f16", 0b1, 0b0>;
 def MVE_VMINNMf32 : MVE_VMINMAXNM<"vminnm", "f32", 0b0, 0b1>;
 def MVE_VMINNMf16 : MVE_VMINMAXNM<"vminnm", "f16", 0b1, 0b1>;
 
+class MVE_VMINMAX<string iname, string suffix, bit U, bits<2> size,
+              bit bit_4, list<dag> pattern=[]>
+  : MVE_comp<NoItinerary, iname, suffix, "", pattern> {
+
+  let Inst{28} = U;
+  let Inst{25-24} = 0b11;
+  let Inst{23} = 0b0;
+  let Inst{21-20} = size{1-0};
+  let Inst{11} = 0b0;
+  let Inst{8} = 0b0;
+  let Inst{6} = 0b1;
+  let Inst{4} = bit_4;
+}
+
+multiclass MVE_VMINMAX_all_sizes<string iname, bit bit_4> {
+  def s8  : MVE_VMINMAX<iname, "s8",  0b0, 0b00, bit_4>;
+  def s16 : MVE_VMINMAX<iname, "s16", 0b0, 0b01, bit_4>;
+  def s32 : MVE_VMINMAX<iname, "s32", 0b0, 0b10, bit_4>;
+  def u8  : MVE_VMINMAX<iname, "u8",  0b1, 0b00, bit_4>;
+  def u16 : MVE_VMINMAX<iname, "u16", 0b1, 0b01, bit_4>;
+  def u32 : MVE_VMINMAX<iname, "u32", 0b1, 0b10, bit_4>;
+}
+
+defm MVE_VMAX : MVE_VMINMAX_all_sizes<"vmax", 0b0>;
+defm MVE_VMIN : MVE_VMINMAX_all_sizes<"vmin", 0b1>;
+
 // end of mve_comp instructions
 
 class MVE_VPT<string suffix, bits<2> size, dag iops, string asm, list<dag> pattern=[]>
