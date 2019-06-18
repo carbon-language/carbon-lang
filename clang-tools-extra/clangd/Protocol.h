@@ -483,6 +483,28 @@ struct InitializeParams {
 };
 bool fromJSON(const llvm::json::Value &, InitializeParams &);
 
+enum class MessageType {
+  /// An error message.
+  Error = 1,
+  /// A warning message.
+  Warning = 1,
+  /// An information message.
+  Info = 1,
+  /// A log message.
+  Log = 1,
+};
+llvm::json::Value toJSON(const MessageType &);
+
+/// The show message notification is sent from a server to a client to ask the
+/// client to display a particular message in the user interface.
+struct ShowMessageParams {
+  /// The message type.
+  MessageType type = MessageType::Info;
+  /// The actual message.
+  std::string message;
+};
+llvm::json::Value toJSON(const ShowMessageParams &);
+
 struct DidOpenTextDocumentParams {
   /// The document that was opened.
   TextDocumentItem textDocument;
@@ -740,6 +762,7 @@ struct CodeAction {
   llvm::Optional<std::string> kind;
   const static llvm::StringLiteral QUICKFIX_KIND;
   const static llvm::StringLiteral REFACTOR_KIND;
+  const static llvm::StringLiteral INFO_KIND;
 
   /// The diagnostics that this code action resolves.
   llvm::Optional<std::vector<Diagnostic>> diagnostics;
