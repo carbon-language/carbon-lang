@@ -192,15 +192,14 @@ public:
         Word("NC");
         std::u16string decoded{DecodeString<Encoding::EUC_JP>(str, true)};
         std::string encoded{EncodeString<Encoding::EUC_JP>(decoded)};
-        Put(QuoteCharacterLiteral(encoded, backslashEscapes_, Encoding::LATIN_1));
-        return;
+        Put(QuoteCharacterLiteral(encoded, backslashEscapes_));
       } else {
         Walk(*k), Put('_');
+        PutNormalized(str);
       }
+    } else {
+      PutNormalized(str);
     }
-    std::string decoded{DecodeString<Encoding::LATIN_1>(str, true)};
-    std::string encoded{EncodeString<Encoding::LATIN_1>(decoded)};
-    Put(QuoteCharacterLiteral(encoded, backslashEscapes_, Encoding::LATIN_1));
   }
   void Unparse(const HollerithLiteralConstant &x) {
     std::u32string ucs{DecodeString<Encoding::UTF_8>(x.v, false)};
@@ -1435,9 +1434,7 @@ public:
     }
     std::visit(
         common::visitors{
-            [&](const std::string &y) {
-              Put(QuoteCharacterLiteral(y, backslashEscapes_));
-            },
+            [&](const std::string &y) { PutNormalized(y); },
             [&](const std::list<format::FormatItem> &y) {
               Walk("(", y, ",", ")");
             },
@@ -2504,6 +2501,7 @@ private:
   void Put(char);
   void Put(const char *);
   void Put(const std::string &);
+  void PutNormalized(const std::string &);
   void PutKeywordLetter(char);
   void Word(const char *);
   void Word(const std::string &);
@@ -2633,6 +2631,12 @@ void UnparseVisitor::Put(const std::string &str) {
   for (char ch : str) {
     Put(ch);
   }
+}
+
+void UnparseVisitor::PutNormalized(const std::string &str) {
+  std::string decoded{DecodeString<Encoding::LATIN_1>(str, true)};
+  std::string encoded{EncodeString<Encoding::LATIN_1>(decoded)};
+  Put(QuoteCharacterLiteral(encoded, backslashEscapes_));
 }
 
 void UnparseVisitor::PutKeywordLetter(char ch) {

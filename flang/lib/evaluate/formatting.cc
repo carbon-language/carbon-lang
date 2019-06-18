@@ -56,7 +56,7 @@ std::ostream &ConstantBase<RESULT, VALUE>::AsFortran(std::ostream &o) const {
         Result::category == TypeCategory::Complex) {
       value.AsFortran(o, Result::kind);
     } else if constexpr (Result::category == TypeCategory::Character) {
-      o << Result::kind << '_' << parser::QuoteCharacterLiteral(value, false);
+      o << Result::kind << '_' << parser::QuoteCharacterLiteral(value, true);
     } else if constexpr (Result::category == TypeCategory::Logical) {
       if (value.IsTrue()) {
         o << ".true.";

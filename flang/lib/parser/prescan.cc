@@ -106,6 +106,7 @@ void Prescanner::Statement() {
     return;
   case LineClassification::Kind::ConditionalCompilationDirective:
   case LineClassification::Kind::IncludeDirective:
+  case LineClassification::Kind::DefinitionDirective:
   case LineClassification::Kind::PreprocessorDirective:
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return;
@@ -181,6 +182,7 @@ void Prescanner::Statement() {
       break;
     case LineClassification::Kind::ConditionalCompilationDirective:
     case LineClassification::Kind::IncludeDirective:
+    case LineClassification::Kind::DefinitionDirective:
     case LineClassification::Kind::PreprocessorDirective:
       Say(preprocessed->GetProvenanceRange(),
           "Preprocessed line resembles a preprocessor directive"_en_US);
@@ -487,11 +489,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     do {
     } while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_)));
     if (*at_ == '\'' || *at_ == '"') {
-      // Look for prefix of NC'...' legacy PGI "Kanji" NCHARACTER literal
-      CharBlock prefix{tokens.CurrentOpenToken()};
-      bool isKanji{prefix.size() == 2 && ToLowerCaseLetter(prefix[0]) == 'n' &&
-          ToLowerCaseLetter(prefix[1]) == 'c'};
-      QuotedCharacterLiteral(tokens, start, isKanji);
+      QuotedCharacterLiteral(tokens, start);
       preventHollerith_ = false;
     } else {
       // Subtle: Don't misrecognize labeled DO statement label as Hollerith
@@ -552,7 +550,7 @@ bool Prescanner::ExponentAndKind(TokenSequence &tokens) {
 }
 
 void Prescanner::QuotedCharacterLiteral(
-    TokenSequence &tokens, const char *start, bool isKanji) {
+    TokenSequence &tokens, const char *start) {
   char quote{*at_};
   const char *end{at_ + 1};
   inCharLiteral_ = true;
@@ -808,7 +806,8 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
       lineClass.kind == LineClassification::Kind::PreprocessorDirective) {
     // Allow conditional compilation directives (e.g., #ifdef) to affect
     // continuation lines.
-    // Allow other preprocessor directives, too, except #include.
+    // Allow other preprocessor directives, too, except #include,
+    // #define, & #undef.
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return true;
   } else if (afterAmpersand &&
@@ -1114,6 +1113,9 @@ Prescanner::LineClassification Prescanner::ClassifyLine(
       return {LineClassification::Kind::ConditionalCompilationDirective};
     } else if (std::memcmp(dir, "include", 7) == 0) {
       return {LineClassification::Kind::IncludeDirective};
+    } else if (std::memcmp(dir, "define", 6) == 0 ||
+        std::memcmp(dir, "undef", 5) == 0) {
+      return {LineClassification::Kind::DefinitionDirective};
     } else {
       return {LineClassification::Kind::PreprocessorDirective};
     }

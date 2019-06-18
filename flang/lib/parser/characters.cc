@@ -131,12 +131,12 @@ template<> EncodedCharacter EncodeCharacter<Encoding::EUC_JP>(char32_t ucs) {
     result.buffer[0] = ucs;
     result.bytes = 1;
   } else if (ucs <= 0xff) {
-    result.buffer[0] = 0x8e;  // JIS X 0201
+    result.buffer[0] = '\x8e';  // JIS X 0201
     result.buffer[1] = ucs;
     result.bytes = 2;
   } else if (IsUCSJIS_0212(ucs)) {  // JIS X 0212
     char32_t jis{UCSToJIS(ucs)};
-    result.buffer[0] = 0x8f;
+    result.buffer[0] = '\x8f';
     result.buffer[1] = 0x80 ^ (jis >> 8);
     result.buffer[2] = 0x80 ^ jis;
     result.bytes = 3;

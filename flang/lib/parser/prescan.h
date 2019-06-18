@@ -83,6 +83,7 @@ private:
       Comment,
       ConditionalCompilationDirective,
       IncludeDirective,  // #include
+      DefinitionDirective,  // #define & #undef
       PreprocessorDirective,
       IncludeLine,  // Fortran INCLUDE
       CompilerDirective,
@@ -158,8 +159,7 @@ private:
   const char *SkipCComment(const char *) const;
   bool NextToken(TokenSequence &);
   bool ExponentAndKind(TokenSequence &);
-  void QuotedCharacterLiteral(
-      TokenSequence &, const char *start, bool isKanji = false);
+  void QuotedCharacterLiteral(TokenSequence &, const char *start);
   void Hollerith(TokenSequence &, int count, const char *start);
   bool PadOutCharacterLiteral(TokenSequence &);
   bool SkipCommentLine(bool afterAmpersand);
