@@ -3917,11 +3917,18 @@ multiclass avx512_move_scalar<string asm, SDNode OpNode,
                                      (_.VT (OpNode _.RC:$src1, _.RC:$src2)),
                                      (_.VT _.RC:$src0))))],
              _.ExeDomain>, EVEX_4V, EVEX_K, Sched<[SchedWriteFShuffle.XMM]>;
-  let canFoldAsLoad = 1, isReMaterializable = 1 in
-  def rm : AVX512PI<0x10, MRMSrcMem, (outs _.FRC:$dst), (ins _.ScalarMemOp:$src),
+  let canFoldAsLoad = 1, isReMaterializable = 1 in {
+  def rm : AVX512PI<0x10, MRMSrcMem, (outs _.RC:$dst), (ins _.ScalarMemOp:$src),
              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-             [(set _.FRC:$dst, (_.ScalarLdFrag addr:$src))],
+             [(set _.RC:$dst, (_.VT (X86vzload addr:$src)))],
              _.ExeDomain>, EVEX, Sched<[WriteFLoad]>;
+  // _alt version uses FR32/FR64 register class.
+  let isCodeGenOnly = 1 in
+  def rm_alt : AVX512PI<0x10, MRMSrcMem, (outs _.FRC:$dst), (ins _.ScalarMemOp:$src),
+                 !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
+                 [(set _.FRC:$dst, (_.ScalarLdFrag addr:$src))],
+                 _.ExeDomain>, EVEX, Sched<[WriteFLoad]>;
+  }
   let mayLoad = 1, hasSideEffects = 0 in {
     let Constraints = "$src0 = $dst" in
     def rmk : AVX512PI<0x10, MRMSrcMem, (outs _.RC:$dst),
@@ -4359,20 +4366,16 @@ let Predicates = [HasAVX512] in {
   // MOVSSrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-            (COPY_TO_REGCLASS (VMOVSSZrm addr:$src), VR128X)>;
+            (VMOVSSZrm addr:$src)>;
   def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSSZrm addr:$src), VR128X)>;
-  def : Pat<(v4f32 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (VMOVSSZrm addr:$src), VR128X)>;
+            (VMOVSSZrm addr:$src)>;
 
   // MOVSDrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
+            (VMOVSDZrm addr:$src)>;
   def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
-  def : Pat<(v2f64 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
+            (VMOVSDZrm addr:$src)>;
 
   // Represent the same patterns above but in the form they appear for
   // 256-bit types

@@ -2266,6 +2266,8 @@ body: |
   VMOVSDZmr                                    $rdi, 1, $noreg, 0, $noreg, $xmm0
   ; CHECK: $xmm0 = VMOVSDrm                    $rip, 1, $noreg, 0, $noreg
   $xmm0 = VMOVSDZrm                            $rip, 1, $noreg, 0, $noreg
+  ; CHECK: $xmm0 = VMOVSDrm_alt                $rip, 1, $noreg, 0, $noreg
+  $xmm0 = VMOVSDZrm_alt                        $rip, 1, $noreg, 0, $noreg
   ; CHECK: $xmm0 = VMOVSDrr                    $xmm0, $xmm1
   $xmm0 = VMOVSDZrr                            $xmm0, $xmm1
   ; CHECK: $xmm0 = VMOVSDrr_REV                $xmm0, $xmm1
@@ -2278,6 +2280,8 @@ body: |
   VMOVSSZmr                                    $rdi, 1, $noreg, 0, $noreg, $xmm0
   ; CHECK: $xmm0 = VMOVSSrm                    $rip, 1, $noreg, 0, $noreg
   $xmm0 = VMOVSSZrm                            $rip, 1, $noreg, 0, $noreg
+  ; CHECK: $xmm0 = VMOVSSrm_alt                $rip, 1, $noreg, 0, $noreg
+  $xmm0 = VMOVSSZrm_alt                        $rip, 1, $noreg, 0, $noreg
   ; CHECK: $xmm0 = VMOVSSrr                    $xmm0, $xmm1
   $xmm0 = VMOVSSZrr                            $xmm0, $xmm1
   ; CHECK: $xmm0 = VMOVSSrr_REV                $xmm0, $xmm1
@@ -4650,6 +4654,8 @@ body: |
   VMOVSDZmr                                    $rdi, 1, $noreg, 0, $noreg, $xmm16
   ; CHECK: $xmm16 = VMOVSDZrm                  $rip, 1, $rax, 0, $noreg
   $xmm16 = VMOVSDZrm                           $rip, 1, $rax, 0, $noreg
+  ; CHECK: $xmm16 = VMOVSDZrm_alt              $rip, 1, $rax, 0, $noreg
+  $xmm16 = VMOVSDZrm_alt                       $rip, 1, $rax, 0, $noreg
   ; CHECK: $xmm16 = VMOVSDZrr                  $xmm16, $xmm1
   $xmm16 = VMOVSDZrr                           $xmm16, $xmm1                                                  
   ; CHECK: $xmm16 = VMOVSDZrr_REV              $xmm16, $xmm1
@@ -4662,6 +4668,8 @@ body: |
   VMOVSSZmr                                    $rdi, 1, $noreg, 0, $noreg, $xmm16
   ; CHECK: $xmm16 = VMOVSSZrm                  $rip, 1, $rax, 0, $noreg
   $xmm16 = VMOVSSZrm                           $rip, 1, $rax, 0, $noreg
+  ; CHECK: $xmm16 = VMOVSSZrm_alt              $rip, 1, $rax, 0, $noreg
+  $xmm16 = VMOVSSZrm_alt                       $rip, 1, $rax, 0, $noreg
   ; CHECK: $xmm16 = VMOVSSZrr                  $xmm16, $xmm1
   $xmm16 = VMOVSSZrr                           $xmm16, $xmm1                                                  
   ; CHECK: $xmm16 = VMOVSSZrr_REV              $xmm16, $xmm1

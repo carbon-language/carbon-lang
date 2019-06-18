@@ -225,16 +225,28 @@ multiclass sse12_move<RegisterClass RC, SDNode OpNode, ValueType vt,
 }
 
 // Loading from memory automatically zeroing upper bits.
-multiclass sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
+multiclass sse12_move_rm<RegisterClass RC, ValueType vt, X86MemOperand x86memop,
                          PatFrag mem_pat, string OpcodeStr, Domain d> {
-  def V#NAME#rm : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+  def V#NAME#rm : SI<0x10, MRMSrcMem, (outs VR128:$dst), (ins x86memop:$src),
                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                     [(set RC:$dst, (mem_pat addr:$src))], d>,
+                     [(set VR128:$dst, (vt (X86vzload addr:$src)))], d>,
                      VEX, VEX_LIG, Sched<[WriteFLoad]>, VEX_WIG;
-  def NAME#rm   : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+  def NAME#rm   : SI<0x10, MRMSrcMem, (outs VR128:$dst), (ins x86memop:$src),
                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                     [(set RC:$dst, (mem_pat addr:$src))], d>,
+                     [(set VR128:$dst, (vt (X86vzload addr:$src)))], d>,
                      Sched<[WriteFLoad]>;
+
+  // _alt version uses FR32/FR64 register class.
+  let isCodeGenOnly = 1 in {
+  def V#NAME#rm_alt : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+                         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                         [(set RC:$dst, (mem_pat addr:$src))], d>,
+                         VEX, VEX_LIG, Sched<[WriteFLoad]>, VEX_WIG;
+  def NAME#rm_alt   : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+                         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                         [(set RC:$dst, (mem_pat addr:$src))], d>,
+                         Sched<[WriteFLoad]>;
+  }
 }
 
 defm MOVSS : sse12_move<FR32, X86Movss, v4f32, f32mem, "movss",
@@ -243,9 +255,9 @@ defm MOVSD : sse12_move<FR64, X86Movsd, v2f64, f64mem, "movsd",
                         SSEPackedDouble, "MOVSD", UseSSE2>, XD;
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-  defm MOVSS : sse12_move_rm<FR32, f32mem, loadf32, "movss",
+  defm MOVSS : sse12_move_rm<FR32, v4f32, f32mem, loadf32, "movss",
                              SSEPackedSingle>, XS;
-  defm MOVSD : sse12_move_rm<FR64, f64mem, loadf64, "movsd",
+  defm MOVSD : sse12_move_rm<FR64, v2f64, f64mem, loadf64, "movsd",
                              SSEPackedDouble>, XD;
 }
 
@@ -254,20 +266,20 @@ let Predicates = [UseAVX] in {
   // MOVSSrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-            (COPY_TO_REGCLASS (VMOVSSrm addr:$src), VR128)>;
+            (VMOVSSrm addr:$src)>;
   def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSSrm addr:$src), VR128)>;
+            (VMOVSSrm addr:$src)>;
   def : Pat<(v4f32 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (VMOVSSrm addr:$src), VR128)>;
+            (VMOVSSrm addr:$src)>;
 
   // MOVSDrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128)>;
+            (VMOVSDrm addr:$src)>;
   def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128)>;
+            (VMOVSDrm addr:$src)>;
   def : Pat<(v2f64 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128)>;
+            (VMOVSDrm addr:$src)>;
 
   // Represent the same patterns above but in the form they appear for
   // 256-bit types
@@ -325,21 +337,17 @@ let Predicates = [UseSSE1] in {
 
   // MOVSSrm already zeros the high parts of the register.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-            (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
+            (MOVSSrm addr:$src)>;
   def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-            (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
-  def : Pat<(v4f32 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
+            (MOVSSrm addr:$src)>;
 }
 
 let Predicates = [UseSSE2] in {
   // MOVSDrm already zeros the high parts of the register.
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
+            (MOVSDrm addr:$src)>;
   def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
-  def : Pat<(v2f64 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (MOVSDrm addr:$src), VR128)>;
+            (MOVSDrm addr:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
