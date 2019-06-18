@@ -1,3 +1,4 @@
+// UNSUPPORTED: ios
 // When `external_symbolizer_path` is empty on Darwin we fallback on using
 // dladdr as the symbolizer which means we get the symbol name
 // but no source location. The current implementation also doesn't try to
