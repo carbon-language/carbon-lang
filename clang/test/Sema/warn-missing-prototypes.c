@@ -9,10 +9,16 @@ int f(int x) { return x; } // expected-warning{{no previous prototype for functi
 static int g(int x) { return x; }
 
 int h(int x) { return x; } // expected-warning{{no previous prototype for function 'h'}}
+// expected-note@-1{{declare 'static' if the function is not intended to be used outside of this translation unit}}
+// CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:1-[[@LINE-2]]:1}:"static "
 
 static int g2();
 
 int g2(int x) { return x; }
+
+extern int g3(int x) { return x; } // expected-warning{{no previous prototype for function 'g3'}}
+// expected-note@-1{{declare 'static' if the function is not intended to be used outside of this translation unit}}
+// CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-2]]:{{.*}}-[[@LINE-2]]:{{.*}}}:"{{.*}}"
 
 void test(void);
 
@@ -28,6 +34,7 @@ void test(void) {
 }
 
 int h2(int x) { return x; } // expected-warning{{no previous prototype for function 'h2'}}
+// expected-note@-1{{declare 'static' if the function is not intended to be used outside of this translation unit}}
 int h3(int x) { return x; } // expected-warning{{no previous prototype for function 'h3'}}
 int h4(int x) { return x; }
 

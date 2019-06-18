@@ -4681,6 +4681,9 @@ def warn_strict_prototypes : Warning<
 def warn_missing_variable_declarations : Warning<
   "no previous extern declaration for non-static variable %0">,
   InGroup<DiagGroup<"missing-variable-declarations">>, DefaultIgnore;
+def note_static_for_internal_linkage : Note<
+  "declare 'static' if the %select{variable|function}0 is not intended to be "
+  "used outside of this translation unit">;
 def err_static_data_member_reinitialization :
   Error<"static data member %0 already has an initializer">;
 def err_redefinition : Error<"redefinition of %0">;

@@ -11899,8 +11899,11 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
     while (prev && prev->isThisDeclarationADefinition())
       prev = prev->getPreviousDecl();
 
-    if (!prev)
+    if (!prev) {
       Diag(var->getLocation(), diag::warn_missing_variable_declarations) << var;
+      Diag(var->getTypeSpecStartLoc(), diag::note_static_for_internal_linkage)
+          << /* variable */ 0;
+    }
   }
 
   // Cache the result of checking for constant initialization.
@@ -13364,6 +13367,13 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
                         ? FixItHint::CreateInsertion(FTL.getRParenLoc(), "void")
                         : FixItHint{});
         }
+      } else {
+        Diag(FD->getTypeSpecStartLoc(), diag::note_static_for_internal_linkage)
+            << /* function */ 1
+            << (FD->getStorageClass() == SC_None
+                    ? FixItHint::CreateInsertion(FD->getTypeSpecStartLoc(),
+                                                 "static ")
+                    : FixItHint{});
       }
 
       // GNU warning -Wstrict-prototypes
