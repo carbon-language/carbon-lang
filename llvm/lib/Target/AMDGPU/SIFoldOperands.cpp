@@ -506,6 +506,41 @@ void SIFoldOperands::foldOperand(
       return;
     }
 
+    unsigned UseOpc = UseMI->getOpcode();
+    if (UseOpc == AMDGPU::V_READFIRSTLANE_B32 ||
+        (UseOpc == AMDGPU::V_READLANE_B32 &&
+         (int)UseOpIdx ==
+         AMDGPU::getNamedOperandIdx(UseOpc, AMDGPU::OpName::src0))) {
+      // %vgpr = V_MOV_B32 imm
+      // %sgpr = V_READFIRSTLANE_B32 %vgpr
+      // =>
+      // %sgpr = S_MOV_B32 imm
+      if (FoldingImm) {
+        if (!isEXECMaskConstantBetweenDefAndUses(
+              UseMI->getOperand(UseOpIdx).getReg(), *MRI))
+          return;
+
+        UseMI->setDesc(TII->get(AMDGPU::S_MOV_B32));
+        UseMI->getOperand(1).ChangeToImmediate(OpToFold.getImm());
+        UseMI->RemoveOperand(2); // Remove exec read (or src1 for readlane)
+        return;
+      }
+
+      if (OpToFold.isReg() && TRI->isSGPRReg(*MRI, OpToFold.getReg())) {
+        if (!isEXECMaskConstantBetweenDefAndUses(
+              UseMI->getOperand(UseOpIdx).getReg(), *MRI))
+          return;
+
+        // %vgpr = COPY %sgpr0
+        // %sgpr1 = V_READFIRSTLANE_B32 %vgpr
+        // =>
+        // %sgpr1 = COPY %sgpr0
+        UseMI->setDesc(TII->get(AMDGPU::COPY));
+        UseMI->RemoveOperand(2); // Remove exec read (or src1 for readlane)
+        return;
+      }
+    }
+
     const MCInstrDesc &UseDesc = UseMI->getDesc();
 
     // Don't fold into target independent nodes.  Target independent opcodes
