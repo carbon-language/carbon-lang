@@ -1,7 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -Wdocumentation -Wmissing-prototypes -verify %s
 // RUN: %clang_cc1 -fsyntax-only -Wdocumentation -Wmissing-prototypes -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 
-int f();
+int f(); // expected-note{{this declaration is not a prototype; add parameter declarations to make it one}}
+// CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:{{.*}}-[[@LINE-1]]:{{.*}}}:"{{.*}}"
 
 int f(int x) { return x; } // expected-warning{{no previous prototype for function 'f'}}
 
@@ -15,7 +16,8 @@ int g2(int x) { return x; }
 
 void test(void);
 
-int h3();
+int h3(); // expected-note{{this declaration is not a prototype; add parameter declarations to make it one}}
+// CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:{{.*}}-[[@LINE-1]]:{{.*}}}:"{{.*}}"
 int h4(int);
 int h4();
 
@@ -38,6 +40,5 @@ int f2(int x) { return x; }
 int main(void) { return 0; }
 
 void not_a_prototype_test(); // expected-note{{this declaration is not a prototype; add 'void' to make it a prototype for a zero-parameter function}}
+// CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:27-[[@LINE-1]]:27}:"void"
 void not_a_prototype_test() { } // expected-warning{{no previous prototype for function 'not_a_prototype_test'}}
-
-// CHECK: fix-it:"{{.*}}":{40:27-40:27}:"void"
