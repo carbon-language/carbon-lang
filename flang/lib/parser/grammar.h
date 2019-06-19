@@ -1799,18 +1799,12 @@ constexpr struct AndOperand {
 } andOperand;
 
 inline std::optional<Expr> AndOperand::Parse(ParseState &state) {
-  static constexpr auto op{attempt(".NOT."_tok)};
-  int complements{0};
-  while (op.Parse(state)) {
-    ++complements;
+  static constexpr auto notOp{attempt(".NOT."_tok >> andOperand)};
+  if (std::optional<Expr> negation{notOp.Parse(state)}) {
+    return Expr{Expr::NOT{std::move(*negation)}};
+  } else {
+    return level4Expr.Parse(state);
   }
-  std::optional<Expr> result{level4Expr.Parse(state)};
-  if (result.has_value()) {
-    while (complements-- > 0) {
-      result = Expr{Expr::NOT{std::move(*result)}};
-    }
-  }
-  return result;
 }
 
 // R1015 or-operand -> [or-operand and-op] and-operand
@@ -1820,7 +1814,8 @@ constexpr struct OrOperand {
   using resultType = Expr;
   constexpr OrOperand() {}
   static inline std::optional<Expr> Parse(ParseState &state) {
-    std::optional<Expr> result{andOperand.Parse(state)};
+    static constexpr auto operand{sourced(andOperand)};
+    std::optional<Expr> result{operand.Parse(state)};
     if (result) {
       auto source{result->source};
       std::function<Expr(Expr &&)> logicalAnd{[&result](Expr &&right) {

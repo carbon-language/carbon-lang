@@ -245,6 +245,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"aint", {{"a", SameReal}, MatchingDefaultKIND}, KINDReal},
     {"all", {{"mask", SameLogical, Rank::array}, OptionalDIM}, SameLogical,
         Rank::dimReduced},
+    {"allocated", {{"array", Anything, Rank::array}}, DefaultLogical},
+    {"allocated", {{"scalar", Anything, Rank::scalar}}, DefaultLogical},
     {"anint", {{"a", SameReal}, MatchingDefaultKIND}, KINDReal},
     {"any", {{"mask", SameLogical, Rank::array}, OptionalDIM}, SameLogical,
         Rank::dimReduced},
@@ -618,7 +620,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE,
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
-//   ALLOCATED, ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS,
+//   ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS,
 //   SAME_TYPE, STORAGE_SIZE
 // TODO: Type inquiry intrinsic functions - these return constants
 //  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
@@ -1384,6 +1386,40 @@ SpecificCall IntrinsicProcTable::Implementation::HandleNull(
       std::move(arguments)};
 }
 
+// Applies any semantic checks peculiar to an intrinsic.
+static bool ApplySpecificChecks(
+    SpecificCall &call, parser::ContextualMessages &messages) {
+  bool ok{true};
+  const std::string &name{call.specificIntrinsic.name};
+  if (name == "allocated") {
+    if (const auto &arg{call.arguments[0]}) {
+      if (const auto *expr{arg->UnwrapExpr()}) {
+        if (const Symbol * symbol{GetLastSymbol(*expr)}) {
+          ok = symbol->has<semantics::ObjectEntityDetails>() &&
+              symbol->attrs().test(semantics::Attr::ALLOCATABLE);
+        }
+      }
+    }
+    if (!ok) {
+      messages.Say(
+          "Argument of ALLOCATED() must be an ALLOCATABLE object or component"_err_en_US);
+    }
+  } else if (name == "present") {
+    if (const auto &arg{call.arguments[0]}) {
+      if (const auto *expr{arg->UnwrapExpr()}) {
+        if (const Symbol * symbol{UnwrapWholeSymbolDataRef(*expr)}) {
+          ok = symbol->attrs().test(semantics::Attr::OPTIONAL);
+        }
+      }
+    }
+    if (!ok) {
+      messages.Say(
+          "Argument of PRESENT() must be the name of an OPTIONAL dummy argument"_err_en_US);
+    }
+  }
+  return ok;
+};
+
 // Probe the configured intrinsic procedure pattern tables in search of a
 // match for a given procedure reference.
 std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
@@ -1417,21 +1453,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     CHECK(localBuffer.empty());
     if (auto specificCall{
             iter->second->Match(call, defaults_, arguments, localContext)}) {
-      // Apply any semantic checks peculiar to the intrinsic
-      if (call.name == "present") {
-        bool ok{false};
-        if (const auto &arg{specificCall->arguments[0]}) {
-          if (const auto *expr{arg->UnwrapExpr()}) {
-            if (const Symbol * symbol{UnwrapWholeSymbolDataRef(*expr)}) {
-              ok = symbol->attrs().test(semantics::Attr::OPTIONAL);
-            }
-          }
-        }
-        if (!ok) {
-          localMessages.Say(
-              "Argument of PRESENT() must be the name of an OPTIONAL dummy argument"_err_en_US);
-        }
-      }
+      ApplySpecificChecks(*specificCall, localMessages);
       if (finalBuffer != nullptr) {
         finalBuffer->Annex(std::move(localBuffer));
       }

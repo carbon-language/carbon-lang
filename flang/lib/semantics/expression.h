@@ -185,10 +185,10 @@ public:
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::Constant<A> &x) {
+    auto save{
+        GetFoldingContext().messages().SetLocation(FindSourceLocation(x))};
     auto result{Analyze(x.thing)};
     if (result.has_value()) {
-      auto save{
-          GetFoldingContext().messages().SetLocation(FindSourceLocation(x))};
       *result = Fold(GetFoldingContext(), std::move(*result));
       if (!IsConstantExpr(*result)) {
         SayAt(x, "Must be a constant value"_err_en_US);
