@@ -2037,15 +2037,21 @@ static ICmpInst *getLoopTest(Loop *L, BasicBlock *ExitingBB) {
   if (!LatchBlock)
     return nullptr;
 
-  BranchInst *BI = dyn_cast<BranchInst>(ExitingBB->getTerminator());
-  assert(BI && "expected exit branch");
-
+  BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
   return dyn_cast<ICmpInst>(BI->getCondition());
 }
 
 /// linearFunctionTestReplace policy. Return true unless we can show that the
 /// current exit test is already sufficiently canonical.
 static bool needsLFTR(Loop *L, BasicBlock *ExitingBB) {
+  // Avoid converting a constant or loop invariant test back to a runtime
+  // test.  This is critical for when SCEV's cached ExitCount is less precise
+  // than the current IR (such as after we've proven a particular exit is
+  // actually dead and thus the BE count never reaches our ExitCount.)
+  BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
+  if (L->isLoopInvariant(BI->getCondition()))
+    return false;
+  
   // Do LFTR to simplify the exit condition to an ICMP.
   ICmpInst *Cond = getLoopTest(L, ExitingBB);
   if (!Cond)
@@ -2247,15 +2253,12 @@ static PHINode *FindLoopCounter(Loop *L, BasicBlock *ExitingBB,
     // have originally had a concrete definition.
     if (!hasConcreteDef(Phi)) {
       // We explicitly allow unknown phis as long as they are already used by
-      // the loop test. In this case we assume that performing LFTR could not
-      // increase the number of undef users.
-      // TODO: Generalize this to allow *any* loop exit which is known to
-      // execute on each iteration
-      if (L->getExitingBlock())
-        if (ICmpInst *Cond = getLoopTest(L, ExitingBB))
-          if (Phi != getLoopPhiForCounter(Cond->getOperand(0), L) &&
-              Phi != getLoopPhiForCounter(Cond->getOperand(1), L))
-            continue;
+      // the loop exit test.  This is legal since performing LFTR could not
+      // increase the number of undef users. 
+      if (ICmpInst *Cond = getLoopTest(L, ExitingBB))
+        if (Phi != getLoopPhiForCounter(Cond->getOperand(0), L) &&
+            Phi != getLoopPhiForCounter(Cond->getOperand(1), L))
+          continue;
     }
 
     // Avoid introducing undefined behavior due to poison which didn't exist in
@@ -2701,12 +2704,8 @@ bool IndVarSimplify::run(Loop *L) {
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  
   if (!DisableLFTR) {
-    // For the moment, we only do LFTR for single exit loops.  The code is
-    // structured as it is in the expectation of generalization to multi-exit
-    // loops in the near future.  See D62625 for context.
     SmallVector<BasicBlock*, 16> ExitingBlocks;
-    if (auto *ExitingBB = L->getExitingBlock())
-      ExitingBlocks.push_back(ExitingBB);
+    L->getExitingBlocks(ExitingBlocks);
     for (BasicBlock *ExitingBB : ExitingBlocks) {
       // Can't rewrite non-branch yet.
       if (!isa<BranchInst>(ExitingBB->getTerminator()))
