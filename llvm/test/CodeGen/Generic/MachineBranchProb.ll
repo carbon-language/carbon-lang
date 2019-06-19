@@ -1,4 +1,4 @@
-; RUN: llc < %s -print-machineinstrs=expand-isel-pseudos -o /dev/null 2>&1 | FileCheck %s
+; RUN: llc < %s -print-after=finalize-isel -o /dev/null 2>&1 | FileCheck %s
 
 ; Hexagon runs passes that renumber the basic blocks, causing this test
 ; to fail.
