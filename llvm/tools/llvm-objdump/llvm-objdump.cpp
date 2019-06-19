@@ -996,10 +996,8 @@ static void dumpELFData(uint64_t SectionAddr, uint64_t Index, uint64_t End,
   int NumBytes = 0;
 
   for (; Index < End; ++Index) {
-    if (NumBytes == 0) {
+    if (NumBytes == 0)
       outs() << format("%8" PRIx64 ":", SectionAddr + Index);
-      outs() << "\t";
-    }
     Byte = Bytes.slice(Index)[0];
     outs() << format(" %02x", Byte);
     AsciiData[NumBytes] = isPrint(Byte) ? Byte : '.';
