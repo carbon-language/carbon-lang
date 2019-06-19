@@ -163,6 +163,9 @@ public:
   void addDocument(PathRef File, StringRef Contents,
                    WantDiagnostics WD = WantDiagnostics::Auto);
 
+  /// Get the contents of \p File, which should have been added.
+  llvm::StringRef getDocument(PathRef File) const;
+
   /// Remove \p File from list of tracked files, schedule a request to free
   /// resources associated with it. Pending diagnostics for closed files may not
   /// be delivered, even if requested with WantDiags::Auto or WantDiags::Yes.
