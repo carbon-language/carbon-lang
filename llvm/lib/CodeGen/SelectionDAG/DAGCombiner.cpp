@@ -7232,23 +7232,22 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
                                   /*AllowTypeMismatch*/ true))
       return DAG.getConstant(0, SDLoc(N), VT);
 
-    ConstantSDNode *N0Op0C1 = isConstOrConstSplat(InnerShiftAmt);
-    if (N1C && N0Op0C1) {
-      APInt c1 = N0Op0C1->getAPIntValue();
-      APInt c2 = N1C->getAPIntValue();
+    auto MatchInRange = [OpSizeInBits, InnerBitwidth](ConstantSDNode *LHS,
+                                                      ConstantSDNode *RHS) {
+      APInt c1 = LHS->getAPIntValue();
+      APInt c2 = RHS->getAPIntValue();
       zeroExtendToMatch(c1, c2, 1 /* Overflow Bit */);
-
-      if (c2.uge(OpSizeInBits - InnerBitwidth)) {
-        SDLoc DL(N0);
-        APInt Sum = c1 + c2;
-        if (Sum.uge(OpSizeInBits))
-          return DAG.getConstant(0, DL, VT);
-
-        return DAG.getNode(
-            ISD::SHL, DL, VT,
-            DAG.getNode(N0.getOpcode(), DL, VT, N0Op0->getOperand(0)),
-            DAG.getConstant(Sum.getZExtValue(), DL, ShiftVT));
-      }
+      return c2.uge(OpSizeInBits - InnerBitwidth) &&
+             (c1 + c2).ult(OpSizeInBits);
+    };
+    if (ISD::matchBinaryPredicate(InnerShiftAmt, N1, MatchInRange,
+                                  /*AllowUndefs*/ false,
+                                  /*AllowTypeMismatch*/ true)) {
+      SDLoc DL(N);
+      SDValue Ext = DAG.getNode(N0.getOpcode(), DL, VT, N0Op0.getOperand(0));
+      SDValue Sum = DAG.getZExtOrTrunc(InnerShiftAmt, DL, ShiftVT);
+      Sum = DAG.getNode(ISD::ADD, DL, ShiftVT, Sum, N1);
+      return DAG.getNode(ISD::SHL, DL, VT, Ext, Sum);
     }
   }
 
