@@ -38,8 +38,8 @@ bool FileCheckNumericVariable::clearValue() {
   return false;
 }
 
-Expected<uint64_t> FileCheckNumExpr::eval() const {
-  assert(LeftOp && "Evaluating an empty numeric expression");
+Expected<uint64_t> FileCheckExpression::eval() const {
+  assert(LeftOp && "Evaluating an empty expression");
   Optional<uint64_t> LeftOpValue = LeftOp->getValue();
   // Variable is undefined.
   if (!LeftOpValue)
@@ -48,7 +48,7 @@ Expected<uint64_t> FileCheckNumExpr::eval() const {
 }
 
 Expected<std::string> FileCheckNumericSubstitution::getResult() const {
-  Expected<uint64_t> EvaluatedValue = NumExpr->eval();
+  Expected<uint64_t> EvaluatedValue = Expression->eval();
   if (!EvaluatedValue)
     return EvaluatedValue.takeError();
   return utostr(*EvaluatedValue);
@@ -174,7 +174,7 @@ static uint64_t sub(uint64_t LeftOp, uint64_t RightOp) {
   return LeftOp - RightOp;
 }
 
-Expected<FileCheckNumExpr *>
+Expected<FileCheckExpression *>
 FileCheckPattern::parseBinop(StringRef &Expr, const SourceMgr &SM) const {
   Expected<FileCheckNumericVariable *> LeftParseResult =
       parseNumericVariableUse(Expr, SM);
@@ -187,7 +187,7 @@ FileCheckPattern::parseBinop(StringRef &Expr, const SourceMgr &SM) const {
   // it.
   Expr = Expr.ltrim(SpaceChars);
   if (Expr.empty())
-    return Context->makeNumExpr(add, LeftOp, 0);
+    return Context->makeExpression(add, LeftOp, 0);
   SMLoc OpLoc = SMLoc::getFromPointer(Expr.data());
   char Operator = popFront(Expr);
   binop_eval_t EvalBinop;
@@ -200,29 +200,27 @@ FileCheckPattern::parseBinop(StringRef &Expr, const SourceMgr &SM) const {
     break;
   default:
     return FileCheckErrorDiagnostic::get(
-        SM, OpLoc,
-        Twine("unsupported numeric operation '") + Twine(Operator) + "'");
+        SM, OpLoc, Twine("unsupported operation '") + Twine(Operator) + "'");
   }
 
   // Parse right operand.
   Expr = Expr.ltrim(SpaceChars);
   if (Expr.empty())
-    return FileCheckErrorDiagnostic::get(
-        SM, Expr, "missing operand in numeric expression");
+    return FileCheckErrorDiagnostic::get(SM, Expr,
+                                         "missing operand in expression");
   uint64_t RightOp;
   if (Expr.consumeInteger(10, RightOp))
     return FileCheckErrorDiagnostic::get(
-        SM, Expr, "invalid offset in numeric expression '" + Expr + "'");
+        SM, Expr, "invalid offset in expression '" + Expr + "'");
   Expr = Expr.ltrim(SpaceChars);
   if (!Expr.empty())
     return FileCheckErrorDiagnostic::get(
-        SM, Expr,
-        "unexpected characters at end of numeric expression '" + Expr + "'");
+        SM, Expr, "unexpected characters at end of expression '" + Expr + "'");
 
-  return Context->makeNumExpr(EvalBinop, LeftOp, RightOp);
+  return Context->makeExpression(EvalBinop, LeftOp, RightOp);
 }
 
-Expected<FileCheckNumExpr *> FileCheckPattern::parseNumericSubstitutionBlock(
+Expected<FileCheckExpression *> FileCheckPattern::parseNumericSubstitutionBlock(
     StringRef Expr,
     Optional<FileCheckNumericVariable *> &DefinedNumericVariable,
     const SourceMgr &SM) const {
@@ -252,10 +250,10 @@ Expected<FileCheckNumExpr *> FileCheckPattern::parseNumericSubstitutionBlock(
       return FileCheckErrorDiagnostic::get(
           SM, UseExpr,
           "unexpected string after variable definition: '" + UseExpr + "'");
-    return Context->makeNumExpr(add, nullptr, 0);
+    return Context->makeExpression(add, nullptr, 0);
   }
 
-  // Parse the numeric expression itself.
+  // Parse the expression itself.
   Expr = Expr.ltrim(SpaceChars);
   return parseBinop(Expr, SM);
 }
@@ -380,7 +378,7 @@ bool FileCheckPattern::parsePattern(StringRef PatternStr, StringRef Prefix,
       StringRef MatchRegexp;
       size_t SubstInsertIdx = RegExStr.size();
 
-      // Parse string variable or legacy numeric expression.
+      // Parse string variable or legacy expression.
       if (!IsNumBlock) {
         size_t VarEndIdx = MatchStr.find(":");
         size_t SpacePos = MatchStr.substr(0, VarEndIdx).find_first_of(" \t");
@@ -431,16 +429,16 @@ bool FileCheckPattern::parsePattern(StringRef PatternStr, StringRef Prefix,
       }
 
       // Parse numeric substitution block.
-      FileCheckNumExpr *NumExpr;
+      FileCheckExpression *Expression;
       Optional<FileCheckNumericVariable *> DefinedNumericVariable;
       if (IsNumBlock) {
-        Expected<FileCheckNumExpr *> ParseResult =
+        Expected<FileCheckExpression *> ParseResult =
             parseNumericSubstitutionBlock(MatchStr, DefinedNumericVariable, SM);
         if (!ParseResult) {
           logAllUnhandledErrors(ParseResult.takeError(), errs());
           return true;
         }
-        NumExpr = *ParseResult;
+        Expression = *ParseResult;
         if (DefinedNumericVariable) {
           IsDefinition = true;
           DefName = (*DefinedNumericVariable)->getName();
@@ -452,9 +450,8 @@ bool FileCheckPattern::parsePattern(StringRef PatternStr, StringRef Prefix,
       // Handle substitutions: [[foo]] and [[#<foo expr>]].
       if (!IsDefinition) {
         // Handle substitution of string variables that were defined earlier on
-        // the same line by emitting a backreference. Numeric expressions do
-        // not support substituting a numeric variable defined on the same
-        // line.
+        // the same line by emitting a backreference. Expressions do not
+        // support substituting a numeric variable defined on the same line.
         if (!IsNumBlock && VariableDefs.find(SubstStr) != VariableDefs.end()) {
           unsigned CaptureParenGroup = VariableDefs[SubstStr];
           if (CaptureParenGroup < 1 || CaptureParenGroup > 9) {
@@ -466,10 +463,10 @@ bool FileCheckPattern::parsePattern(StringRef PatternStr, StringRef Prefix,
           AddBackrefToRegEx(CaptureParenGroup);
         } else {
           // Handle substitution of string variables ([[<var>]]) defined in
-          // previous CHECK patterns, and substitution of numeric expressions.
+          // previous CHECK patterns, and substitution of expressions.
           FileCheckSubstitution *Substitution =
               IsNumBlock
-                  ? Context->makeNumericSubstitution(SubstStr, NumExpr,
+                  ? Context->makeNumericSubstitution(SubstStr, Expression,
                                                      SubstInsertIdx)
                   : Context->makeStringSubstitution(SubstStr, SubstInsertIdx);
           Substitutions.push_back(Substitution);
@@ -480,8 +477,9 @@ bool FileCheckPattern::parsePattern(StringRef PatternStr, StringRef Prefix,
       // Handle variable definitions: [[<def>:(...)]] and
       // [[#(...)<def>:(...)]].
       if (IsNumBlock) {
-        FileCheckNumExprMatch NumExprDef = {*DefinedNumericVariable, CurParen};
-        NumericVariableDefs[DefName] = NumExprDef;
+        FileCheckNumericVariableMatch NumericVariableDefinition = {
+            *DefinedNumericVariable, CurParen};
+        NumericVariableDefs[DefName] = NumericVariableDefinition;
         // This store is done here rather than in match() to allow
         // parseNumericVariableUse() to get the pointer to the class instance
         // of the right variable definition corresponding to a given numeric
@@ -570,9 +568,9 @@ Expected<size_t> FileCheckPattern::match(StringRef Buffer, size_t &MatchLen,
     TmpStr = RegExStr;
 
     size_t InsertOffset = 0;
-    // Substitute all string variables and numeric expressions whose values are
-    // only now known. Use of string variables defined on the same line are
-    // handled by back-references.
+    // Substitute all string variables and expressions whose values are only
+    // now known. Use of string variables defined on the same line are handled
+    // by back-references.
     for (const auto &Substitution : Substitutions) {
       // Substitute and check for failure (e.g. use of undefined variable).
       Expected<std::string> Value = Substitution->getResult();
@@ -606,7 +604,7 @@ Expected<size_t> FileCheckPattern::match(StringRef Buffer, size_t &MatchLen,
 
   // If this defines any numeric variables, remember their values.
   for (const auto &NumericVariableDef : NumericVariableDefs) {
-    const FileCheckNumExprMatch &NumericVariableMatch =
+    const FileCheckNumericVariableMatch &NumericVariableMatch =
         NumericVariableDef.getValue();
     unsigned CaptureParenGroup = NumericVariableMatch.CaptureParenGroup;
     assert(CaptureParenGroup < MatchInfo.size() && "Internal paren error");
@@ -765,13 +763,13 @@ FileCheckPatternContext::getPatternVarValue(StringRef VarName) {
   return VarIter->second;
 }
 
-FileCheckNumExpr *
-FileCheckPatternContext::makeNumExpr(binop_eval_t EvalBinop,
-                                     FileCheckNumericVariable *OperandLeft,
-                                     uint64_t OperandRight) {
-  NumExprs.push_back(llvm::make_unique<FileCheckNumExpr>(EvalBinop, OperandLeft,
-                                                         OperandRight));
-  return NumExprs.back().get();
+FileCheckExpression *
+FileCheckPatternContext::makeExpression(binop_eval_t EvalBinop,
+                                        FileCheckNumericVariable *OperandLeft,
+                                        uint64_t OperandRight) {
+  Expressions.push_back(llvm::make_unique<FileCheckExpression>(
+      EvalBinop, OperandLeft, OperandRight));
+  return Expressions.back().get();
 }
 
 template <class... Types>
@@ -791,9 +789,10 @@ FileCheckPatternContext::makeStringSubstitution(StringRef VarName,
 }
 
 FileCheckSubstitution *FileCheckPatternContext::makeNumericSubstitution(
-    StringRef Expr, FileCheckNumExpr *NumExpr, size_t InsertIdx) {
+    StringRef ExpressionStr, FileCheckExpression *Expression,
+    size_t InsertIdx) {
   Substitutions.push_back(llvm::make_unique<FileCheckNumericSubstitution>(
-      this, Expr, NumExpr, InsertIdx));
+      this, ExpressionStr, Expression, InsertIdx));
   return Substitutions.back().get();
 }
 

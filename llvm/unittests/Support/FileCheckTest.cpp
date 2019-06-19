@@ -47,12 +47,12 @@ static void expectUndefError(const Twine &ExpectedStr, Error Err) {
   });
 }
 
-TEST_F(FileCheckTest, NumExpr) {
+TEST_F(FileCheckTest, Expression) {
   FileCheckNumericVariable FooVar = FileCheckNumericVariable("FOO", 42);
-  FileCheckNumExpr NumExpr = FileCheckNumExpr(doAdd, &FooVar, 18);
+  FileCheckExpression Expression = FileCheckExpression(doAdd, &FooVar, 18);
 
   // Defined variable: eval returns right value.
-  Expected<uint64_t> Value = NumExpr.eval();
+  Expected<uint64_t> Value = Expression.eval();
   EXPECT_TRUE(static_cast<bool>(Value));
   EXPECT_EQ(60U, *Value);
 
@@ -60,7 +60,7 @@ TEST_F(FileCheckTest, NumExpr) {
   // getUndefVarName first to check that it can be called without calling
   // eval() first.
   FooVar.clearValue();
-  Error EvalError = NumExpr.eval().takeError();
+  Error EvalError = Expression.eval().takeError();
   EXPECT_TRUE(errorToBool(std::move(EvalError)));
   expectUndefError("FOO", std::move(EvalError));
 }
@@ -354,12 +354,12 @@ TEST_F(FileCheckTest, Substitution) {
   // the right value.
   FileCheckNumericVariable LineVar = FileCheckNumericVariable("@LINE", 42);
   FileCheckNumericVariable NVar = FileCheckNumericVariable("N", 10);
-  FileCheckNumExpr NumExprLine = FileCheckNumExpr(doAdd, &LineVar, 0);
-  FileCheckNumExpr NumExprN = FileCheckNumExpr(doAdd, &NVar, 3);
+  FileCheckExpression LineExpression = FileCheckExpression(doAdd, &LineVar, 0);
+  FileCheckExpression NExpression = FileCheckExpression(doAdd, &NVar, 3);
   FileCheckNumericSubstitution SubstitutionLine =
-      FileCheckNumericSubstitution(&Context, "@LINE", &NumExprLine, 12);
+      FileCheckNumericSubstitution(&Context, "@LINE", &LineExpression, 12);
   FileCheckNumericSubstitution SubstitutionN =
-      FileCheckNumericSubstitution(&Context, "N", &NumExprN, 30);
+      FileCheckNumericSubstitution(&Context, "N", &NExpression, 30);
   Expected<std::string> Value = SubstitutionLine.getResult();
   EXPECT_TRUE(static_cast<bool>(Value));
   EXPECT_EQ("42", *Value);
@@ -445,16 +445,16 @@ TEST_F(FileCheckTest, FileCheckContext) {
   Expected<StringRef> LocalVar = Cxt.getPatternVarValue(LocalVarStr);
   FileCheckPattern P = FileCheckPattern(Check::CheckPlain, &Cxt, 1);
   Optional<FileCheckNumericVariable *> DefinedNumericVariable;
-  Expected<FileCheckNumExpr *> NumExpr = P.parseNumericSubstitutionBlock(
+  Expected<FileCheckExpression *> Expression = P.parseNumericSubstitutionBlock(
       LocalNumVarRef, DefinedNumericVariable, SM);
   Expected<StringRef> EmptyVar = Cxt.getPatternVarValue(EmptyVarStr);
   Expected<StringRef> UnknownVar = Cxt.getPatternVarValue(UnknownVarStr);
   EXPECT_TRUE(static_cast<bool>(LocalVar));
   EXPECT_EQ(*LocalVar, "FOO");
-  EXPECT_TRUE(static_cast<bool>(NumExpr));
-  Expected<uint64_t> NumExprVal = (*NumExpr)->eval();
-  EXPECT_TRUE(static_cast<bool>(NumExprVal));
-  EXPECT_EQ(*NumExprVal, 18U);
+  EXPECT_TRUE(static_cast<bool>(Expression));
+  Expected<uint64_t> ExpressionVal = (*Expression)->eval();
+  EXPECT_TRUE(static_cast<bool>(ExpressionVal));
+  EXPECT_EQ(*ExpressionVal, 18U);
   EXPECT_TRUE(static_cast<bool>(EmptyVar));
   EXPECT_EQ(*EmptyVar, "");
   EXPECT_TRUE(errorToBool(UnknownVar.takeError()));
@@ -467,11 +467,11 @@ TEST_F(FileCheckTest, FileCheckContext) {
   // local variables, if it was created before. This is important because local
   // variable clearing due to --enable-var-scope happens after numeric
   // expressions are linked to the numeric variables they use.
-  EXPECT_TRUE(errorToBool((*NumExpr)->eval().takeError()));
+  EXPECT_TRUE(errorToBool((*Expression)->eval().takeError()));
   P = FileCheckPattern(Check::CheckPlain, &Cxt, 2);
-  NumExpr = P.parseNumericSubstitutionBlock(LocalNumVarRef,
-                                            DefinedNumericVariable, SM);
-  EXPECT_TRUE(errorToBool(NumExpr.takeError()));
+  Expression = P.parseNumericSubstitutionBlock(LocalNumVarRef,
+                                               DefinedNumericVariable, SM);
+  EXPECT_TRUE(errorToBool(Expression.takeError()));
   EmptyVar = Cxt.getPatternVarValue(EmptyVarStr);
   EXPECT_TRUE(errorToBool(EmptyVar.takeError()));
 
@@ -485,22 +485,22 @@ TEST_F(FileCheckTest, FileCheckContext) {
   EXPECT_TRUE(static_cast<bool>(GlobalVar));
   EXPECT_EQ(*GlobalVar, "BAR");
   P = FileCheckPattern(Check::CheckPlain, &Cxt, 3);
-  NumExpr = P.parseNumericSubstitutionBlock(GlobalNumVarRef,
-                                            DefinedNumericVariable, SM);
-  EXPECT_TRUE(static_cast<bool>(NumExpr));
-  NumExprVal = (*NumExpr)->eval();
-  EXPECT_TRUE(static_cast<bool>(NumExprVal));
-  EXPECT_EQ(*NumExprVal, 36U);
+  Expression = P.parseNumericSubstitutionBlock(GlobalNumVarRef,
+                                               DefinedNumericVariable, SM);
+  EXPECT_TRUE(static_cast<bool>(Expression));
+  ExpressionVal = (*Expression)->eval();
+  EXPECT_TRUE(static_cast<bool>(ExpressionVal));
+  EXPECT_EQ(*ExpressionVal, 36U);
 
   // Clear local variables and check global variables remain defined.
   Cxt.clearLocalVars();
   EXPECT_FALSE(errorToBool(Cxt.getPatternVarValue(GlobalVarStr).takeError()));
   P = FileCheckPattern(Check::CheckPlain, &Cxt, 4);
-  NumExpr = P.parseNumericSubstitutionBlock(GlobalNumVarRef,
-                                            DefinedNumericVariable, SM);
-  EXPECT_TRUE(static_cast<bool>(NumExpr));
-  NumExprVal = (*NumExpr)->eval();
-  EXPECT_TRUE(static_cast<bool>(NumExprVal));
-  EXPECT_EQ(*NumExprVal, 36U);
+  Expression = P.parseNumericSubstitutionBlock(GlobalNumVarRef,
+                                               DefinedNumericVariable, SM);
+  EXPECT_TRUE(static_cast<bool>(Expression));
+  ExpressionVal = (*Expression)->eval();
+  EXPECT_TRUE(static_cast<bool>(ExpressionVal));
+  EXPECT_EQ(*ExpressionVal, 36U);
 }
 } // namespace

@@ -66,10 +66,10 @@ public:
   FileCheckNumericVariable(StringRef Name, uint64_t Value)
       : Name(Name), Value(Value), DefLineNumber(0) {}
 
-  /// \returns name of that numeric variable.
+  /// \returns name of this numeric variable.
   StringRef getName() const { return Name; }
 
-  /// \returns value of this numeric variable.
+  /// \returns this variable's value.
   Optional<uint64_t> getValue() const { return Value; }
 
   /// Sets value of this numeric variable if not defined. \returns whether the
@@ -111,10 +111,10 @@ public:
   }
 };
 
-/// Class representing a numeric expression consisting of either a single
-/// numeric variable or a binary operation between a numeric variable and an
+/// Class representing an expression consisting of either a single numeric
+/// variable or a binary operation between a numeric variable and an
 /// immediate.
-class FileCheckNumExpr {
+class FileCheckExpression {
 private:
   /// Left operand.
   FileCheckNumericVariable *LeftOp;
@@ -126,13 +126,14 @@ private:
   binop_eval_t EvalBinop;
 
 public:
-  FileCheckNumExpr(binop_eval_t EvalBinop,
-                   FileCheckNumericVariable *OperandLeft, uint64_t OperandRight)
+  FileCheckExpression(binop_eval_t EvalBinop,
+                      FileCheckNumericVariable *OperandLeft,
+                      uint64_t OperandRight)
       : LeftOp(OperandLeft), RightOp(OperandRight), EvalBinop(EvalBinop) {}
 
-  /// Evaluates the value of this numeric expression, using EvalBinop to
-  /// perform the binary operation it consists of. \returns an error if the
-  /// numeric variable used is undefined, or the expression value otherwise.
+  /// Evaluates the value of this expression, using EvalBinop to perform the
+  /// binary operation it consists of. \returns an error if the numeric
+  /// variable used is undefined, or the expression value otherwise.
   Expected<uint64_t> eval() const;
 };
 
@@ -144,14 +145,13 @@ protected:
   /// Pointer to a class instance holding, among other things, the table with
   /// the values of live string variables at the start of any given CHECK line.
   /// Used for substituting string variables with the text they were defined
-  /// as. Numeric expressions are linked to the numeric variables they use at
+  /// as. Expressions are linked to the numeric variables they use at
   /// parse time and directly access the value of the numeric variable to
   /// evaluate their value.
   FileCheckPatternContext *Context;
 
   /// The string that needs to be substituted for something else. For a
-  /// string variable this is its name, otherwise this is the whole numeric
-  /// expression.
+  /// string variable this is its name, otherwise this is the whole expression.
   StringRef FromStr;
 
   // Index in RegExStr of where to do the substitution.
@@ -188,17 +188,20 @@ public:
 
 class FileCheckNumericSubstitution : public FileCheckSubstitution {
 private:
-  /// Pointer to the class representing the numeric expression whose value is
-  /// to be substituted.
-  FileCheckNumExpr *NumExpr;
+  /// Pointer to the class representing the expression whose value is to be
+  /// substituted.
+  FileCheckExpression *Expression;
 
 public:
-  FileCheckNumericSubstitution(FileCheckPatternContext *Context, StringRef Expr,
-                               FileCheckNumExpr *NumExpr, size_t InsertIdx)
-      : FileCheckSubstitution(Context, Expr, InsertIdx), NumExpr(NumExpr) {}
+  FileCheckNumericSubstitution(FileCheckPatternContext *Context,
+                               StringRef ExpressionStr,
+                               FileCheckExpression *Expression,
+                               size_t InsertIdx)
+      : FileCheckSubstitution(Context, ExpressionStr, InsertIdx),
+        Expression(Expression) {}
 
-  /// \returns a string containing the result of evaluating the numeric
-  /// expression in this substitution, or an error if evaluation failed.
+  /// \returns a string containing the result of evaluating the expression in
+  /// this substitution, or an error if evaluation failed.
   Expected<std::string> getResult() const override;
 };
 
@@ -276,10 +279,9 @@ private:
   /// pattern.
   StringMap<FileCheckNumericVariable *> GlobalNumericVariableTable;
 
-  /// Vector holding pointers to all parsed numeric expressions. Used to
-  /// automatically free the numeric expressions once they are guaranteed to no
-  /// longer be used.
-  std::vector<std::unique_ptr<FileCheckNumExpr>> NumExprs;
+  /// Vector holding pointers to all parsed expressions. Used to automatically
+  /// free the expressions once they are guaranteed to no longer be used.
+  std::vector<std::unique_ptr<FileCheckExpression>> Expressions;
 
   /// Vector holding pointers to all parsed numeric variables. Used to
   /// automatically free them once they are guaranteed to no longer be used.
@@ -308,11 +310,11 @@ public:
   void clearLocalVars();
 
 private:
-  /// Makes a new numeric expression instance and registers it for destruction
-  /// when the context is destroyed.
-  FileCheckNumExpr *makeNumExpr(binop_eval_t EvalBinop,
-                                FileCheckNumericVariable *OperandLeft,
-                                uint64_t OperandRight);
+  /// Makes a new expression instance and registers it for destruction when
+  /// the context is destroyed.
+  FileCheckExpression *makeExpression(binop_eval_t EvalBinop,
+                                      FileCheckNumericVariable *OperandLeft,
+                                      uint64_t OperandRight);
 
   /// Makes a new numeric variable and registers it for destruction when the
   /// context is destroyed.
@@ -326,9 +328,9 @@ private:
 
   /// Makes a new numeric substitution and registers it for destruction when
   /// the context is destroyed.
-  FileCheckSubstitution *makeNumericSubstitution(StringRef Expr,
-                                                 FileCheckNumExpr *NumExpr,
-                                                 size_t InsertIdx);
+  FileCheckSubstitution *
+  makeNumericSubstitution(StringRef ExpressionStr,
+                          FileCheckExpression *Expression, size_t InsertIdx);
 };
 
 /// Class to represent an error holding a diagnostic with location information
@@ -384,12 +386,12 @@ class FileCheckPattern {
   /// a fixed string to match.
   std::string RegExStr;
 
-  /// Entries in this vector represent a substitution of a string variable or a
-  /// numeric expression in the RegExStr regex at match time. For example, in
-  /// the case of a CHECK directive with the pattern "foo[[bar]]baz[[#N+1]]",
+  /// Entries in this vector represent a substitution of a string variable or
+  /// an expression in the RegExStr regex at match time. For example, in the
+  /// case of a CHECK directive with the pattern "foo[[bar]]baz[[#N+1]]",
   /// RegExStr will contain "foobaz" and we'll get two entries in this vector
   /// that tells us to insert the value of string variable "bar" at offset 3
-  /// and the value of numeric expression "N+1" at offset 6.
+  /// and the value of expression "N+1" at offset 6.
   std::vector<FileCheckSubstitution *> Substitutions;
 
   /// Maps names of string variables defined in a pattern to the number of
@@ -409,7 +411,7 @@ class FileCheckPattern {
   /// It holds the pointer to the class representing the numeric variable whose
   /// value is being defined and the number of the parenthesis group in
   /// RegExStr to capture that value.
-  struct FileCheckNumExprMatch {
+  struct FileCheckNumericVariableMatch {
     /// Pointer to class representing the numeric variable whose value is being
     /// defined.
     FileCheckNumericVariable *DefinedNumericVariable;
@@ -423,7 +425,7 @@ class FileCheckPattern {
   /// corresponding FileCheckNumericVariable class instance of all numeric
   /// variable definitions. Used to set the matched value of all those
   /// variables.
-  StringMap<FileCheckNumExprMatch> NumericVariableDefs;
+  StringMap<FileCheckNumericVariableMatch> NumericVariableDefs;
 
   /// Pointer to a class instance holding the global state shared by all
   /// patterns:
@@ -468,13 +470,12 @@ public:
                                               FileCheckPatternContext *Context,
                                               const SourceMgr &SM);
   /// Parses \p Expr for a numeric substitution block. \returns the class
-  /// representing the AST of the numeric expression whose value must be
-  /// substituted, or an error holding a diagnostic against \p SM if parsing
-  /// fails. If substitution was successful, sets \p DefinedNumericVariable to
-  /// point to the class representing the numeric variable defined in this
-  /// numeric substitution block, or None if this block does not define any
-  /// variable.
-  Expected<FileCheckNumExpr *> parseNumericSubstitutionBlock(
+  /// representing the AST of the expression whose value must be substituted,
+  /// or an error holding a diagnostic against \p SM if parsing fails. If
+  /// substitution was successful, sets \p DefinedNumericVariable to point to
+  /// the class representing the numeric variable defined in this numeric
+  /// substitution block, or None if this block does not define any variable.
+  Expected<FileCheckExpression *> parseNumericSubstitutionBlock(
       StringRef Expr,
       Optional<FileCheckNumericVariable *> &DefinedNumericVariable,
       const SourceMgr &SM) const;
@@ -537,10 +538,10 @@ private:
   Expected<FileCheckNumericVariable *>
   parseNumericVariableUse(StringRef &Expr, const SourceMgr &SM) const;
   /// Parses \p Expr for a binary operation.
-  /// \returns the class representing the binary operation of the numeric
-  /// expression, or an error holding a diagnostic against \p SM otherwise.
-  Expected<FileCheckNumExpr *> parseBinop(StringRef &Expr,
-                                          const SourceMgr &SM) const;
+  /// \returns the class representing the binary operation of the expression,
+  /// or an error holding a diagnostic against \p SM otherwise.
+  Expected<FileCheckExpression *> parseBinop(StringRef &Expr,
+                                             const SourceMgr &SM) const;
 };
 
 //===----------------------------------------------------------------------===//
