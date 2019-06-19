@@ -6079,7 +6079,6 @@ bool llvm::execMayBeModifiedBeforeUse(const MachineRegisterInfo &MRI,
                                       const MachineInstr &DefMI,
                                       const MachineInstr *UseMI) {
   assert(MRI.isSSA() && "Must be run on SSA");
-  assert(DefMI.definesRegister(VReg) && "wrong def instruction");
 
   auto *TRI = MRI.getTargetRegisterInfo();
   auto *DefBB = DefMI.getParent();
