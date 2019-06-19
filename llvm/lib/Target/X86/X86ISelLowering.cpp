@@ -5689,10 +5689,13 @@ static unsigned getOpcode_EXTEND_VECTOR_INREG(unsigned Opcode) {
   llvm_unreachable("Unknown opcode");
 }
 
-static SDValue getExtendInVec(bool Signed, const SDLoc &DL, EVT VT, SDValue In,
-                              SelectionDAG &DAG) {
+static SDValue getExtendInVec(unsigned Opcode, const SDLoc &DL, EVT VT,
+                              SDValue In, SelectionDAG &DAG) {
   EVT InVT = In.getValueType();
   assert(VT.isVector() && InVT.isVector() && "Expected vector VTs.");
+  assert((ISD::ANY_EXTEND == Opcode || ISD::SIGN_EXTEND == Opcode ||
+          ISD::ZERO_EXTEND == Opcode) &&
+         "Unknown extension opcode");
 
   // For 256-bit vectors, we only need the lower (128-bit) input half.
   // For 512-bit vectors, we only need the lower input half or quarter.
@@ -5705,13 +5708,10 @@ static SDValue getExtendInVec(bool Signed, const SDLoc &DL, EVT VT, SDValue In,
     InVT = In.getValueType();
   }
 
-  if (VT.getVectorNumElements() == InVT.getVectorNumElements())
-    return DAG.getNode(Signed ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
-                       DL, VT, In);
+  if (VT.getVectorNumElements() != InVT.getVectorNumElements())
+    Opcode = getOpcode_EXTEND_VECTOR_INREG(Opcode);
 
-  return DAG.getNode(Signed ? ISD::SIGN_EXTEND_VECTOR_INREG
-                            : ISD::ZERO_EXTEND_VECTOR_INREG,
-                     DL, VT, In);
+  return DAG.getNode(Opcode, DL, VT, In);
 }
 
 /// Returns a vector_shuffle node for an unpackl operation.
@@ -11640,7 +11640,7 @@ static SDValue lowerShuffleAsSpecificZeroOrAnyExtend(
     MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits * Scale),
                                  NumElements / Scale);
     InputV = ShuffleOffset(InputV);
-    InputV = getExtendInVec(/*Signed*/false, DL, ExtVT, InputV, DAG);
+    InputV = getExtendInVec(ISD::ZERO_EXTEND, DL, ExtVT, InputV, DAG);
     return DAG.getBitcast(VT, InputV);
   }
 
@@ -21416,13 +21416,13 @@ static SDValue LowerLoad(SDValue Op, const X86Subtarget &Subtarget,
   unsigned SizeRatio = RegSz / MemSz;
 
   if (Ext == ISD::SEXTLOAD) {
-    SDValue Sext = getExtendInVec(/*Signed*/true, dl, RegVT, SlicedVec, DAG);
+    SDValue Sext = getExtendInVec(ISD::SIGN_EXTEND, dl, RegVT, SlicedVec, DAG);
     return DAG.getMergeValues({Sext, TF}, dl);
   }
 
   if (Ext == ISD::EXTLOAD && !Subtarget.hasBWI() && RegVT == MVT::v8i64 &&
       MemVT == MVT::v8i8) {
-    SDValue Sext = getExtendInVec(/*Signed*/false, dl, RegVT, SlicedVec, DAG);
+    SDValue Sext = getExtendInVec(ISD::ZERO_EXTEND, dl, RegVT, SlicedVec, DAG);
     return DAG.getMergeValues({Sext, TF}, dl);
   }
 
@@ -27562,9 +27562,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
       assert(isTypeLegal(LoVT) && "Split VT not legal?");
 
-      bool IsSigned = N->getOpcode() == ISD::SIGN_EXTEND;
-
-      SDValue Lo = getExtendInVec(IsSigned, dl, LoVT, In, DAG);
+      SDValue Lo = getExtendInVec(N->getOpcode(), dl, LoVT, In, DAG);
 
       // We need to shift the input over by half the number of elements.
       unsigned NumElts = InVT.getVectorNumElements();
@@ -27574,7 +27572,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
         ShufMask[i] = i + HalfNumElts;
 
       SDValue Hi = DAG.getVectorShuffle(InVT, dl, In, In, ShufMask);
-      Hi = getExtendInVec(IsSigned, dl, HiVT, Hi, DAG);
+      Hi = getExtendInVec(N->getOpcode(), dl, HiVT, Hi, DAG);
 
       SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo, Hi);
       Results.push_back(Res);
