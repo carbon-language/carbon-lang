@@ -264,33 +264,16 @@ define <8 x i32> @combine_vec_shl_ext_shl0(<8 x i16> %x) {
   ret <8 x i32> %3
 }
 
-; TODO - this should fold to ZERO.
 define <8 x i32> @combine_vec_shl_ext_shl1(<8 x i16> %x) {
-; SSE2-LABEL: combine_vec_shl_ext_shl1:
-; SSE2:       # %bb.0:
-; SSE2-NEXT:    pmullw {{.*}}(%rip), %xmm0
-; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
-; SSE2-NEXT:    pslld $30, %xmm0
-; SSE2-NEXT:    xorpd %xmm1, %xmm1
-; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
-; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm1[0,1]
-; SSE2-NEXT:    retq
-;
-; SSE41-LABEL: combine_vec_shl_ext_shl1:
-; SSE41:       # %bb.0:
-; SSE41-NEXT:    pmullw {{.*}}(%rip), %xmm0
-; SSE41-NEXT:    pmovsxwd %xmm0, %xmm0
-; SSE41-NEXT:    pslld $30, %xmm0
-; SSE41-NEXT:    pxor %xmm1, %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
-; SSE41-NEXT:    pxor %xmm1, %xmm1
-; SSE41-NEXT:    retq
+; SSE-LABEL: combine_vec_shl_ext_shl1:
+; SSE:       # %bb.0:
+; SSE-NEXT:    xorps %xmm0, %xmm0
+; SSE-NEXT:    xorps %xmm1, %xmm1
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_shl_ext_shl1:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpmullw {{.*}}(%rip), %xmm0, %xmm0
-; AVX-NEXT:    vpmovsxwd %xmm0, %ymm0
-; AVX-NEXT:    vpsllvd {{.*}}(%rip), %ymm0, %ymm0
+; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = shl <8 x i16> %x, <i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7, i16 8>
   %2 = sext <8 x i16> %1 to <8 x i32>

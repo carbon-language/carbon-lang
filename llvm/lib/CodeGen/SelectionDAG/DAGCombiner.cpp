@@ -7210,19 +7210,35 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   // that are shifted out by the inner shift in the first form.  This means
   // the outer shift size must be >= the number of bits added by the ext.
   // As a corollary, we don't care what kind of ext it is.
-  if (N1C && (N0.getOpcode() == ISD::ZERO_EXTEND ||
-              N0.getOpcode() == ISD::ANY_EXTEND ||
-              N0.getOpcode() == ISD::SIGN_EXTEND) &&
+  if ((N0.getOpcode() == ISD::ZERO_EXTEND ||
+       N0.getOpcode() == ISD::ANY_EXTEND ||
+       N0.getOpcode() == ISD::SIGN_EXTEND) &&
       N0.getOperand(0).getOpcode() == ISD::SHL) {
     SDValue N0Op0 = N0.getOperand(0);
-    if (ConstantSDNode *N0Op0C1 = isConstOrConstSplat(N0Op0.getOperand(1))) {
+    SDValue InnerShiftAmt = N0Op0.getOperand(1);
+    EVT InnerVT = N0Op0.getValueType();
+    uint64_t InnerBitwidth = InnerVT.getScalarSizeInBits();
+
+    auto MatchOutOfRange = [OpSizeInBits, InnerBitwidth](ConstantSDNode *LHS,
+                                                         ConstantSDNode *RHS) {
+      APInt c1 = LHS->getAPIntValue();
+      APInt c2 = RHS->getAPIntValue();
+      zeroExtendToMatch(c1, c2, 1 /* Overflow Bit */);
+      return c2.uge(OpSizeInBits - InnerBitwidth) &&
+             (c1 + c2).uge(OpSizeInBits);
+    };
+    if (ISD::matchBinaryPredicate(InnerShiftAmt, N1, MatchOutOfRange,
+                                  /*AllowUndefs*/ false,
+                                  /*AllowTypeMismatch*/ true))
+      return DAG.getConstant(0, SDLoc(N), VT);
+
+    ConstantSDNode *N0Op0C1 = isConstOrConstSplat(InnerShiftAmt);
+    if (N1C && N0Op0C1) {
       APInt c1 = N0Op0C1->getAPIntValue();
       APInt c2 = N1C->getAPIntValue();
       zeroExtendToMatch(c1, c2, 1 /* Overflow Bit */);
 
-      EVT InnerShiftVT = N0Op0.getValueType();
-      uint64_t InnerShiftSize = InnerShiftVT.getScalarSizeInBits();
-      if (c2.uge(OpSizeInBits - InnerShiftSize)) {
+      if (c2.uge(OpSizeInBits - InnerBitwidth)) {
         SDLoc DL(N0);
         APInt Sum = c1 + c2;
         if (Sum.uge(OpSizeInBits))
