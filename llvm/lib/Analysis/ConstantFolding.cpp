@@ -1422,6 +1422,8 @@ bool llvm::canConstantFoldCallTo(const CallBase *Call, const Function *F) {
   case Intrinsic::uadd_sat:
   case Intrinsic::ssub_sat:
   case Intrinsic::usub_sat:
+  case Intrinsic::smul_fix:
+  case Intrinsic::smul_fix_sat:
   case Intrinsic::convert_from_fp16:
   case Intrinsic::convert_to_fp16:
   case Intrinsic::bitreverse:
@@ -2198,6 +2200,43 @@ static Constant *ConstantFoldScalarCall3(StringRef Name, unsigned IntrinsicID,
     }
   }
 
+  if (const auto *Op1 = dyn_cast<ConstantInt>(Operands[0])) {
+    if (const auto *Op2 = dyn_cast<ConstantInt>(Operands[1])) {
+      if (const auto *Op3 = dyn_cast<ConstantInt>(Operands[2])) {
+        switch (IntrinsicID) {
+        default: break;
+        case Intrinsic::smul_fix:
+        case Intrinsic::smul_fix_sat: {
+          // This code performs rounding towards negative infinity in case the
+          // result cannot be represented exactly for the given scale. Targets
+          // that do care about rounding should use a target hook for specifying
+          // how rounding should be done, and provide their own folding to be
+          // consistent with rounding. This is the same approach as used by
+          // DAGTypeLegalizer::ExpandIntRes_MULFIX.
+          APInt Lhs = Op1->getValue();
+          APInt Rhs = Op2->getValue();
+          unsigned Scale = Op3->getValue().getZExtValue();
+          unsigned Width = Lhs.getBitWidth();
+          assert(Scale < Width && "Illegal scale.");
+          unsigned ExtendedWidth = Width * 2;
+          APInt Product = (Lhs.sextOrSelf(ExtendedWidth) *
+                           Rhs.sextOrSelf(ExtendedWidth)).ashr(Scale);
+          if (IntrinsicID == Intrinsic::smul_fix_sat) {
+            APInt MaxValue =
+              APInt::getSignedMaxValue(Width).sextOrSelf(ExtendedWidth);
+            APInt MinValue =
+              APInt::getSignedMinValue(Width).sextOrSelf(ExtendedWidth);
+            Product = APIntOps::smin(Product, MaxValue);
+            Product = APIntOps::smax(Product, MinValue);
+          }
+          return ConstantInt::get(Ty->getContext(),
+                                  Product.sextOrTrunc(Width));
+        }
+        }
+      }
+    }
+  }
+
   if (IntrinsicID == Intrinsic::fshl || IntrinsicID == Intrinsic::fshr) {
     const APInt *C0, *C1, *C2;
     if (!getConstIntOrUndef(Operands[0], C0) ||
@@ -2304,6 +2343,13 @@ static Constant *ConstantFoldVectorCall(StringRef Name, unsigned IntrinsicID,
       if (J == 1 &&
           (IntrinsicID == Intrinsic::cttz || IntrinsicID == Intrinsic::ctlz ||
            IntrinsicID == Intrinsic::powi)) {
+        Lane[J] = Operands[J];
+        continue;
+      }
+      // These intrinsics use a scalar type for their third argument.
+      if (J == 2 &&
+          (IntrinsicID == Intrinsic::smul_fix ||
+           IntrinsicID == Intrinsic::smul_fix_sat)) {
         Lane[J] = Operands[J];
         continue;
       }
