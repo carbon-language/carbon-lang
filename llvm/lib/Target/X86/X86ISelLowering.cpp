@@ -43538,25 +43538,21 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
         return DAG.getNode(X86ISD::VFPEXT, SDLoc(N), VT, InVec.getOperand(0));
       }
     }
-    if ((InOpcode == ISD::ANY_EXTEND || InOpcode == ISD::ZERO_EXTEND ||
-         InOpcode == ISD::SIGN_EXTEND) &&
+    if ((InOpcode == ISD::ANY_EXTEND ||
+         InOpcode == ISD::ANY_EXTEND_VECTOR_INREG ||
+         InOpcode == ISD::ZERO_EXTEND ||
+         InOpcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
+         InOpcode == ISD::SIGN_EXTEND ||
+         InOpcode == ISD::SIGN_EXTEND_VECTOR_INREG) &&
         VT.is128BitVector() &&
         InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
-      unsigned ExtOp;
-      switch(InOpcode) {
-      default: llvm_unreachable("Unknown extension opcode");
+      unsigned ExtOp = InOpcode;
+      switch (InOpcode) {
       case ISD::ANY_EXTEND: ExtOp = ISD::ANY_EXTEND_VECTOR_INREG; break;
       case ISD::SIGN_EXTEND: ExtOp = ISD::SIGN_EXTEND_VECTOR_INREG; break;
       case ISD::ZERO_EXTEND: ExtOp = ISD::ZERO_EXTEND_VECTOR_INREG; break;
       }
       return DAG.getNode(ExtOp, SDLoc(N), VT, InVec.getOperand(0));
-    }
-    if ((InOpcode == ISD::ANY_EXTEND_VECTOR_INREG ||
-         InOpcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
-         InOpcode == ISD::SIGN_EXTEND_VECTOR_INREG) &&
-        VT.is128BitVector() &&
-        InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
-      return DAG.getNode(InOpcode, SDLoc(N), VT, InVec.getOperand(0));
     }
   }
 
