@@ -515,7 +515,7 @@ Constant *FoldReinterpretLoadFromConstPtr(Constant *C, Type *LoadTy,
       MapTy = Type::getInt64Ty(C->getContext());
     else if (LoadTy->isVectorTy()) {
       MapTy = PointerType::getIntNTy(C->getContext(),
-                                     DL.getTypeAllocSizeInBits(LoadTy));
+                                     DL.getTypeSizeInBits(LoadTy));
     } else
       return nullptr;
 
