@@ -963,7 +963,7 @@ void MemorySSAUpdater::applyInsertUpdates(ArrayRef<CFGUpdate> Updates,
   // Compute IDF and add Phis in all IDF blocks that do not have one.
   SmallVector<BasicBlock *, 32> IDFBlocks;
   if (!BlocksToProcess.empty()) {
-    ForwardIDFCalculator IDFs(DT);
+    ForwardIDFCalculator IDFs(DT, GD);
     SmallPtrSet<BasicBlock *, 16> DefiningBlocks(BlocksToProcess.begin(),
                                                  BlocksToProcess.end());
     IDFs.setDefiningBlocks(DefiningBlocks);
