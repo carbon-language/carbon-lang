@@ -1418,7 +1418,7 @@ static bool ApplySpecificChecks(
     }
   }
   return ok;
-};
+}
 
 // Probe the configured intrinsic procedure pattern tables in search of a
 // match for a given procedure reference.
