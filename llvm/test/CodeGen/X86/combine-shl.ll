@@ -264,6 +264,7 @@ define <8 x i32> @combine_vec_shl_ext_shl0(<8 x i16> %x) {
   ret <8 x i32> %3
 }
 
+; TODO - this should fold to ZERO.
 define <8 x i32> @combine_vec_shl_ext_shl1(<8 x i16> %x) {
 ; SSE2-LABEL: combine_vec_shl_ext_shl1:
 ; SSE2:       # %bb.0:
@@ -294,6 +295,55 @@ define <8 x i32> @combine_vec_shl_ext_shl1(<8 x i16> %x) {
   %1 = shl <8 x i16> %x, <i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7, i16 8>
   %2 = sext <8 x i16> %1 to <8 x i32>
   %3 = shl <8 x i32> %2, <i32 31, i32 31, i32 30, i32 30, i32 29, i32 29, i32 28, i32 28>
+  ret <8 x i32> %3
+}
+
+; TODO - this should fold to shl(ext(%x),c).
+define <8 x i32> @combine_vec_shl_ext_shl2(<8 x i16> %x) {
+; SSE2-LABEL: combine_vec_shl_ext_shl2:
+; SSE2:       # %bb.0:
+; SSE2-NEXT:    pmullw {{.*}}(%rip), %xmm0
+; SSE2-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; SSE2-NEXT:    psrad $16, %xmm1
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; SSE2-NEXT:    psrad $16, %xmm0
+; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [65536,131072,262144,524288]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm0[1,1,3,3]
+; SSE2-NEXT:    pmuludq %xmm2, %xmm0
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[1,1,3,3]
+; SSE2-NEXT:    pmuludq %xmm3, %xmm2
+; SSE2-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[0,2,2,3]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
+; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [1048576,2097152,4194304,8388608]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm1[1,1,3,3]
+; SSE2-NEXT:    pmuludq %xmm2, %xmm1
+; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[1,1,3,3]
+; SSE2-NEXT:    pmuludq %xmm3, %xmm2
+; SSE2-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[0,2,2,3]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: combine_vec_shl_ext_shl2:
+; SSE41:       # %bb.0:
+; SSE41-NEXT:    pmullw {{.*}}(%rip), %xmm0
+; SSE41-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; SSE41-NEXT:    pmovsxwd %xmm1, %xmm1
+; SSE41-NEXT:    pmovsxwd %xmm0, %xmm0
+; SSE41-NEXT:    pmulld {{.*}}(%rip), %xmm0
+; SSE41-NEXT:    pmulld {{.*}}(%rip), %xmm1
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: combine_vec_shl_ext_shl2:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpmullw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vpmovsxwd %xmm0, %ymm0
+; AVX-NEXT:    vpsllvd {{.*}}(%rip), %ymm0, %ymm0
+; AVX-NEXT:    retq
+  %1 = shl <8 x i16> %x, <i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7, i16 8>
+  %2 = sext <8 x i16> %1 to <8 x i32>
+  %3 = shl <8 x i32> %2, <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23>
   ret <8 x i32> %3
 }
 
