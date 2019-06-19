@@ -20,7 +20,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-CMD="${F18:-../../tools/f18/f18} -funparse-with-symbols"
+CMD="${F18:-../../../tools/f18/f18} -funparse-with-symbols"
 
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"
@@ -44,7 +44,7 @@ sed -e 's/!\([DR]EF:\)/KEEP \1/' \
   -e 's/!.*//' -e 's/ *$//' -e '/^$/d' -e 's/KEEP \([DR]EF:\)/!\1/' \
   $src > $src1
 egrep -v '^ *!' $src1 > $src2  # strip out meaningful comments
-$CMD $src2 > $src3  # compile, inserting comments for symbols
+( cd $temp; $CMD $(basename $src2) ) > $src3  # compile, inserting comments for symbols
 
 if diff -w -U999999 $src1 $src3 > $diffs; then
   echo PASS

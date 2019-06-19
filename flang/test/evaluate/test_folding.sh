@@ -35,7 +35,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-F18CC=${F18:-../../tools/f18/f18}
+F18CC=${F18:-../../../tools/f18/f18}
 CMD="$F18CC -fdebug-dump-symbols -fparse-only"
 
 if [[ $# < 1 ]]; then
@@ -66,10 +66,11 @@ actual_warnings=$temp/actwarnings.log
 expected_warnings=$temp/expwarnings.log
 warning_diffs=$temp/warnings.diff
 
-if $CMD $src > $src1 2> $messages # compile, dumping symbols
-then :
-else echo FAIL compilation
-     exit 1
+if ! ( cd $temp; $CMD $src ) > $src1 2> $messages # compile, dumping symbols
+then
+  cat $messages
+  echo FAIL compilation
+  exit 1
 fi
 
 # Get all PARAMETER declarations
