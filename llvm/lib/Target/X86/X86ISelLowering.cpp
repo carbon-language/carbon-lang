@@ -31301,19 +31301,25 @@ static bool matchUnaryShuffle(MVT MaskVT, ArrayRef<int> Mask,
     return true;
   }
 
-  // Match against a ZERO_EXTEND_VECTOR_INREG/VZEXT instruction.
+  // Match against a ANY/ZERO_EXTEND_VECTOR_INREG instruction.
   // TODO: Add 512-bit vector support (split AVX512F and AVX512BW).
   if (AllowIntDomain && ((MaskVT.is128BitVector() && Subtarget.hasSSE41()) ||
                          (MaskVT.is256BitVector() && Subtarget.hasInt256()))) {
     unsigned MaxScale = 64 / MaskEltSize;
     for (unsigned Scale = 2; Scale <= MaxScale; Scale *= 2) {
-      bool Match = true;
+      bool MatchAny = true;
+      bool MatchZero = true;
       unsigned NumDstElts = NumMaskElts / Scale;
-      for (unsigned i = 0; i != NumDstElts && Match; ++i) {
-        Match &= isUndefOrEqual(Mask[i * Scale], (int)i);
-        Match &= isUndefOrZeroInRange(Mask, (i * Scale) + 1, Scale - 1);
+      for (unsigned i = 0; i != NumDstElts && (MatchAny || MatchZero); ++i) {
+        if (!isUndefOrEqual(Mask[i * Scale], (int)i)) {
+          MatchAny = MatchZero = false;
+          break;
+        }
+        MatchAny &= isUndefInRange(Mask, (i * Scale) + 1, Scale - 1);
+        MatchZero &= isUndefOrZeroInRange(Mask, (i * Scale) + 1, Scale - 1);
       }
-      if (Match) {
+      if (MatchAny || MatchZero) {
+        assert(MatchZero && "Failed to match zext but matched aext?");
         unsigned SrcSize = std::max(128u, NumDstElts * MaskEltSize);
         MVT ScalarTy = MaskVT.isInteger() ? MaskVT.getScalarType() :
                                             MVT::getIntegerVT(MaskEltSize);
@@ -31322,10 +31328,9 @@ static bool matchUnaryShuffle(MVT MaskVT, ArrayRef<int> Mask,
         if (SrcVT.getSizeInBits() != MaskVT.getSizeInBits())
           V1 = extractSubVector(V1, 0, DAG, DL, SrcSize);
 
-        if (SrcVT.getVectorNumElements() == NumDstElts)
-          Shuffle = unsigned(ISD::ZERO_EXTEND);
-        else
-          Shuffle = unsigned(ISD::ZERO_EXTEND_VECTOR_INREG);
+        Shuffle = unsigned(MatchAny ? ISD::ANY_EXTEND : ISD::ZERO_EXTEND);
+        if (SrcVT.getVectorNumElements() != NumDstElts)
+          Shuffle = getOpcode_EXTEND_VECTOR_INREG(Shuffle);
 
         DstVT = MVT::getIntegerVT(Scale * MaskEltSize);
         DstVT = MVT::getVectorVT(DstVT, NumDstElts);
