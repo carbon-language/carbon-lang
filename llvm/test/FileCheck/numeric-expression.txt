@@ -128,3 +128,15 @@ INPUT-NUM-CONFLICT-NEXT: {{^                     \^$}}
 CLI-NUM-CONFLICT: Global defines:2:20: error: string variable with name 'STRVAR' already exists
 CLI-NUM-CONFLICT-NEXT: Global define #2: #STRVAR=42
 CLI-NUM-CONFLICT-NEXT: {{^                   \^$}}
+
+; Numeric variable definition with too big value.
+RUN: not FileCheck --check-prefix BIGVAL --input-file %s %s 2>&1 \
+RUN:   | FileCheck --strict-whitespace --check-prefix BIGVAL-MSG %s
+
+BIG VALUE
+NUMVAR: 10000000000000000000000
+BIGVAL-LABEL: BIG VALUE
+BIGVAL-NEXT: NUMVAR: [[#NUMVAR:]]
+BIGVAL-MSG: numeric-expression.txt:[[#@LINE-3]]:9: error: Unable to represent numeric value
+BIGVAL-MSG-NEXT: {{N}}UMVAR: 10000000000000000000000
+BIGVAL-MSG-NEXT: {{^        \^$}}
