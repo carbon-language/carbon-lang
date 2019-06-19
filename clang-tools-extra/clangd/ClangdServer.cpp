@@ -360,6 +360,8 @@ void ClangdServer::applyTweak(PathRef File, Range Sel, StringRef TweakID,
       if (auto Formatted = cleanupAndFormat(InpAST->Inputs.Contents,
                                             *Effect->ApplyEdit, Style))
         Effect->ApplyEdit = std::move(*Formatted);
+      else
+        elog("Failed to format replacements: {0}", Formatted.takeError());
     }
     return CB(std::move(*Effect));
   };
