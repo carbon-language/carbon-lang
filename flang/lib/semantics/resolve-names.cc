@@ -4097,8 +4097,15 @@ void ConstructVisitor::Post(const parser::SelectTypeStmt &x) {
     MakePlaceholder(*name, MiscDetails::Kind::SelectTypeAssociateName);
     association_.name = &*name;
   } else {
-    const Symbol *whole{UnwrapWholeSymbolDataRef(association_.selector.expr)};
-    if (!whole || !whole->has<ObjectEntityDetails>()) {
+    if (const Symbol *
+        whole{UnwrapWholeSymbolDataRef(association_.selector.expr)}) {
+      ConvertToObjectEntity(const_cast<Symbol &>(*whole));
+      if (!IsVariableName(*whole)) {
+        Say(association_.selector.source,  // C901
+            "Selector is not a variable"_err_en_US);
+        association_ = {};
+      }
+    } else {
       Say(association_.selector.source,  // C1157
           "Selector is not a named variable: 'associate-name =>' is required"_err_en_US);
       association_ = {};
@@ -4141,21 +4148,26 @@ void ConstructVisitor::CheckRef(const std::optional<parser::Name> &x) {
 
 // Make a symbol representing an associating entity from association_.
 Symbol *ConstructVisitor::MakeAssocEntity() {
-  if (!association_.name) {
-    return nullptr;
-  }
-  auto &symbol{MakeSymbol(*association_.name, UnknownDetails{})};
-  if (symbol.has<AssocEntityDetails>() && symbol.owner() == currScope()) {
-    Say(*association_.name,  // C1104
-        "The associate name '%s' is already used in this associate statement"_err_en_US);
+  Symbol *symbol{nullptr};
+  if (association_.name) {
+    symbol = &MakeSymbol(*association_.name, UnknownDetails{});
+    if (symbol->has<AssocEntityDetails>() && symbol->owner() == currScope()) {
+      Say(*association_.name,  // C1104
+          "The associate name '%s' is already used in this associate statement"_err_en_US);
+      return nullptr;
+    }
+  } else if (const Symbol *
+      whole{UnwrapWholeSymbolDataRef(association_.selector.expr)}) {
+    symbol = &MakeSymbol(whole->name());
+  } else {
     return nullptr;
   }
   if (auto &expr{association_.selector.expr}) {
-    symbol.set_details(AssocEntityDetails{common::Clone(*expr)});
+    symbol->set_details(AssocEntityDetails{common::Clone(*expr)});
   } else {
-    symbol.set_details(AssocEntityDetails{});
+    symbol->set_details(AssocEntityDetails{});
   }
-  return &symbol;
+  return symbol;
 }
 
 // Set the type of symbol based on the current association selector.
