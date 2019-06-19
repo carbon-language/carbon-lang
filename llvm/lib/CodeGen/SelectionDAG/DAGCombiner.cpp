@@ -7167,6 +7167,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (DAG.MaskedValueIsZero(SDValue(N, 0),
                             APInt::getAllOnesValue(OpSizeInBits)))
     return DAG.getConstant(0, SDLoc(N), VT);
+
   // fold (shl x, (trunc (and y, c))) -> (shl x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
       N1.getOperand(0).getOpcode() == ISD::AND) {
@@ -7204,7 +7205,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     }
   }
 
-  // fold (shl (ext (shl x, c1)), c2) -> (ext (shl x, (add c1, c2)))
+  // fold (shl (ext (shl x, c1)), c2) -> (shl (ext x), (add c1, c2))
   // For this to be valid, the second form must not preserve any of the bits
   // that are shifted out by the inner shift in the first form.  This means
   // the outer shift size must be >= the number of bits added by the ext.

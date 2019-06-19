@@ -233,7 +233,7 @@ define <4 x i32> @combine_vec_shl_shl_zero1(<4 x i32> %x) {
   ret <4 x i32> %2
 }
 
-; fold (shl (ext (shl x, c1)), c2) -> (ext (shl x, (add c1, c2)))
+; fold (shl (ext (shl x, c1)), c2) -> (shl (ext x), (add c1, c2))
 define <8 x i32> @combine_vec_shl_ext_shl0(<8 x i16> %x) {
 ; SSE2-LABEL: combine_vec_shl_ext_shl0:
 ; SSE2:       # %bb.0:
