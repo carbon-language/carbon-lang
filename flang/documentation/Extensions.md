@@ -69,6 +69,7 @@ Extensions, deletions, and legacy features supported by default
 * BOZ literals can be used as INTEGER values in contexts where the type is
   unambiguous (including the right hand sides of assigments and initializations
   of INTEGER entities).
+* EQUIVALENCE of numeric and character sequences (a ubiquitous extension)
 
 Extensions supported when enabled by options
 --------------------------------------------

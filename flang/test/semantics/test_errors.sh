@@ -18,7 +18,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-CMD="${F18:-../../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
+CMD="${F18:-../../../tools/f18/f18} -fdebug-resolve-names -fparse-only -Mstandard"
 
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"

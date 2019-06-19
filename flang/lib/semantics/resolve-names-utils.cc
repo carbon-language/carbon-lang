@@ -364,12 +364,24 @@ bool EquivalenceSets::CheckCanEquivalence(
     msg = "Equivalence set cannot contain '%s'"
           " with PROTECTED attribute and '%s' without"_err_en_US;
   } else if (isNum1) {
-    if (!isNum2) {  // C8110
+    if (isChar2) {
+      if (context_.ShouldWarn(
+              parser::LanguageFeature::EquivalenceNumericWithCharacter)) {
+        msg = "Equivalence set contains '%s' that is numeric sequence "
+              "type and '%s' that is character"_en_US;
+      }
+    } else if (!isNum2) {  // C8110
       msg = "Equivalence set cannot contain '%s'"
             " that is numeric sequence type and '%s' that is not"_err_en_US;
     }
   } else if (isChar1) {
-    if (!isChar2) {  // C8111
+    if (isNum2) {
+      if (context_.ShouldWarn(
+              parser::LanguageFeature::EquivalenceNumericWithCharacter)) {
+        msg = "Equivalence set contains '%s' that is character sequence "
+              "type and '%s' that is numeric"_en_US;
+      }
+    } else if (!isChar2) {  // C8111
       msg = "Equivalence set cannot contain '%s'"
             " that is character sequence type and '%s' that is not"_err_en_US;
     }
