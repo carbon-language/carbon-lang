@@ -2415,7 +2415,15 @@ void TestIteration() {
 // CHECK-NEXT:            "type": {
 // CHECK-NEXT:             "qualType": "U"
 // CHECK-NEXT:            },
-// CHECK-NEXT:            "valueCategory": "rvalue"
+// CHECK-NEXT:            "valueCategory": "rvalue",
+// CHECK-NEXT:            "field": {
+// CHECK-NEXT:             "id": "0x{{.*}}",
+// CHECK-NEXT:             "kind": "FieldDecl",
+// CHECK-NEXT:             "name": "i",
+// CHECK-NEXT:             "type": {
+// CHECK-NEXT:              "qualType": "int"
+// CHECK-NEXT:             }
+// CHECK-NEXT:            }
 // CHECK-NEXT:           },
 // CHECK-NEXT:           {
 // CHECK-NEXT:            "id": "0x{{.*}}",
@@ -2436,6 +2444,14 @@ void TestIteration() {
 // CHECK-NEXT:             "qualType": "U"
 // CHECK-NEXT:            },
 // CHECK-NEXT:            "valueCategory": "rvalue",
+// CHECK-NEXT:            "field": {
+// CHECK-NEXT:             "id": "0x{{.*}}",
+// CHECK-NEXT:             "kind": "FieldDecl",
+// CHECK-NEXT:             "name": "i",
+// CHECK-NEXT:             "type": {
+// CHECK-NEXT:              "qualType": "int"
+// CHECK-NEXT:             }
+// CHECK-NEXT:            },
 // CHECK-NEXT:            "inner": [
 // CHECK-NEXT:             {
 // CHECK-NEXT:              "id": "0x{{.*}}",
@@ -5975,4 +5991,3 @@ void TestIteration() {
 // CHECK-NEXT:   }
 // CHECK-NEXT:  ]
 // CHECK-NEXT: }
-

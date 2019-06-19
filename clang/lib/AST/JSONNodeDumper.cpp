@@ -984,6 +984,11 @@ void JSONNodeDumper::VisitConstantExpr(const ConstantExpr *CE) {
   }
 }
 
+void JSONNodeDumper::VisitInitListExpr(const InitListExpr *ILE) {
+  if (const FieldDecl *FD = ILE->getInitializedFieldInUnion())
+    JOS.attribute("field", createBareDeclRef(FD));
+}
+
 void JSONNodeDumper::VisitIntegerLiteral(const IntegerLiteral *IL) {
   JOS.attribute("value",
                 IL->getValue().toString(
