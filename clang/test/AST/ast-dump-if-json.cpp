@@ -528,6 +528,7 @@ void func(int val) {
 // CHECK-NEXT:     "qualType": "bool"
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "valueCategory": "rvalue",
+// CHECK-NEXT:    "value": "true",
 // CHECK-NEXT:    "inner": [
 // CHECK-NEXT:     {
 // CHECK-NEXT:      "id": "0x{{.*}}",

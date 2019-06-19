@@ -975,6 +975,15 @@ void JSONNodeDumper::VisitCXXTypeidExpr(const CXXTypeidExpr *CTE) {
   }
 }
 
+void JSONNodeDumper::VisitConstantExpr(const ConstantExpr *CE) {
+  if (CE->getResultAPValueKind() != APValue::None) {
+    std::string Str;
+    llvm::raw_string_ostream OS(Str);
+    CE->getAPValueResult().printPretty(OS, Ctx, CE->getType());
+    JOS.attribute("value", OS.str());
+  }
+}
+
 void JSONNodeDumper::VisitIntegerLiteral(const IntegerLiteral *IL) {
   JOS.attribute("value",
                 IL->getValue().toString(

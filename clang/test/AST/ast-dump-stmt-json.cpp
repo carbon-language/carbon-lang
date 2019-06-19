@@ -2951,6 +2951,7 @@ void TestIteration() {
 // CHECK-NEXT:         "qualType": "bool"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "value": "true",
 // CHECK-NEXT:        "inner": [
 // CHECK-NEXT:         {
 // CHECK-NEXT:          "id": "0x{{.*}}",
@@ -3150,6 +3151,7 @@ void TestIteration() {
 // CHECK-NEXT:         "qualType": "bool"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "value": "true",
 // CHECK-NEXT:        "inner": [
 // CHECK-NEXT:         {
 // CHECK-NEXT:          "id": "0x{{.*}}",
