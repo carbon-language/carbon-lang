@@ -96,6 +96,12 @@ jal s0, (0xff-99)
 jalr a0, a1, -2048
 # CHECK-ASM-AND-OBJ: jalr a0, a1, -2048
 # CHECK-ASM: encoding: [0x67,0x85,0x05,0x80]
+jalr a0, a1, ~2047
+# CHECK-ASM-AND-OBJ: jalr a0, a1, 0
+# CHECK-ASM: encoding: [0x67,0x85,0x05,0x00]
+jalr a0, a1, !1
+# CHECK-ASM-AND-OBJ: jalr a0, a1, -2048
+# CHECK-ASM: encoding: [0x67,0x85,0x05,0x80]
 jalr a0, a1, %lo(2048)
 # CHECK-ASM-AND-OBJ: jalr t2, t1, 2047
 # CHECK-ASM: encoding: [0xe7,0x03,0xf3,0x7f]
@@ -140,6 +146,12 @@ lb s3, +4(ra)
 lh t1, -2048(zero)
 # CHECK-ASM-AND-OBJ: lh t1, -2048(zero)
 # CHECK-ASM: encoding: [0x03,0x13,0x00,0x80]
+lh t1, ~2047(zero)
+# CHECK-ASM-AND-OBJ: lh t1, 0(zero)
+# CHECK-ASM: encoding: [0x03,0x13,0x00,0x00]
+lh t1, !1(zero)
+# CHECK-ASM-AND-OBJ: lh t1, -2048(zero)
+# CHECK-ASM: encoding: [0x03,0x13,0x00,0x80]
 lh t1, %lo(2048)(zero)
 # CHECK-ASM-AND-OBJ: lh sp, 2047(a0)
 # CHECK-ASM: encoding: [0x03,0x11,0xf5,0x7f]
@@ -173,6 +185,12 @@ sb a0, 2047(a2)
 # CHECK-ASM-AND-OBJ: sh t3, -2048(t5)
 # CHECK-ASM: encoding: [0x23,0x10,0xcf,0x81]
 sh t3, -2048(t5)
+# CHECK-ASM-AND-OBJ: sh t3, -2048(t5)
+# CHECK-ASM: encoding: [0x23,0x10,0xcf,0x81]
+sh t3, ~2047(t5)
+# CHECK-ASM-AND-OBJ: sh t3, 0(t5)
+# CHECK-ASM: encoding: [0x23,0x10,0xcf,0x01]
+sh t3, !1(t5)
 # CHECK-ASM-AND-OBJ: sh t3, -2048(t5)
 # CHECK-ASM: encoding: [0x23,0x10,0xcf,0x81]
 sh t3, %lo(2048)(t5)
@@ -218,6 +236,12 @@ xori tp, t1, -99
 # CHECK-ASM-AND-OBJ: ori a0, a1, -2048
 # CHECK-ASM: encoding: [0x13,0xe5,0x05,0x80]
 ori a0, a1, -2048
+# CHECK-ASM-AND-OBJ: ori a0, a1, -2048
+# CHECK-ASM: encoding: [0x13,0xe5,0x05,0x80]
+ori a0, a1, ~2047
+# CHECK-ASM-AND-OBJ: ori a0, a1, 0
+# CHECK-ASM: encoding: [0x13,0xe5,0x05,0x00]
+ori a0, a1, !1
 # CHECK-ASM-AND-OBJ: ori a0, a1, -2048
 # CHECK-ASM: encoding: [0x13,0xe5,0x05,0x80]
 ori a0, a1, %lo(2048)
@@ -313,6 +337,12 @@ unimp
 # CHECK-ASM-AND-OBJ: csrrw t0, 4095, t1
 # CHECK-ASM: encoding: [0xf3,0x12,0xf3,0xff]
 csrrw t0, 0xfff, t1
+# CHECK-ASM-AND-OBJ: csrrw s0, 4095, s1
+# CHECK-ASM: encoding: [0x73,0x94,0xf4,0xff]
+csrrw s0, ~(-4096), s1
+# CHECK-ASM-AND-OBJ: csrrw s0, fflags, s1
+# CHECK-ASM: encoding: [0x73,0x94,0x14,0x00]
+csrrw s0, !0, s1
 # CHECK-ASM-AND-OBJ: csrrs s0, cycle, zero
 # CHECK-ASM: encoding: [0x73,0x24,0x00,0xc0]
 csrrs s0, 0xc00, x0

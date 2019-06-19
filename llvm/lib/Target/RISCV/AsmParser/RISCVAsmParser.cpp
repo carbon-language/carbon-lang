@@ -1053,6 +1053,8 @@ RISCVAsmParser::parseCSRSystemRegister(OperandVector &Operands) {
   case AsmToken::LParen:
   case AsmToken::Minus:
   case AsmToken::Plus:
+  case AsmToken::Exclaim:
+  case AsmToken::Tilde:
   case AsmToken::Integer:
   case AsmToken::String: {
     if (getParser().parseExpression(Res))
@@ -1119,6 +1121,8 @@ OperandMatchResultTy RISCVAsmParser::parseImmediate(OperandVector &Operands) {
   case AsmToken::LParen:
   case AsmToken::Minus:
   case AsmToken::Plus:
+  case AsmToken::Exclaim:
+  case AsmToken::Tilde:
   case AsmToken::Integer:
   case AsmToken::String:
   case AsmToken::Identifier:
