@@ -67,6 +67,42 @@ class R600InstrInfo;
 
 namespace {
 
+static bool getConstantValue(SDValue N, uint32_t &Out) {
+  if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(N)) {
+    Out = C->getAPIntValue().getSExtValue();
+    return true;
+  }
+
+  if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N)) {
+    Out = C->getValueAPF().bitcastToAPInt().getSExtValue();
+    return true;
+  }
+
+  return false;
+}
+
+// TODO: Handle undef as zero
+static SDNode *packConstantV2I16(const SDNode *N, SelectionDAG &DAG,
+                                 bool Negate = false) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR && N->getNumOperands() == 2);
+  uint32_t LHSVal, RHSVal;
+  if (getConstantValue(N->getOperand(0), LHSVal) &&
+      getConstantValue(N->getOperand(1), RHSVal)) {
+    SDLoc SL(N);
+    uint32_t K = Negate ?
+      (-LHSVal & 0xffff) | (-RHSVal << 16) :
+      (LHSVal & 0xffff) | (RHSVal << 16);
+    return DAG.getMachineNode(AMDGPU::S_MOV_B32, SL, N->getValueType(0),
+                              DAG.getTargetConstant(K, SL, MVT::i32));
+  }
+
+  return nullptr;
+}
+
+static SDNode *packNegConstantV2I16(const SDNode *N, SelectionDAG &DAG) {
+  return packConstantV2I16(N, DAG, true);
+}
+
 /// AMDGPU specific code to select AMDGPU machine instructions for
 /// SelectionDAG operations.
 class AMDGPUDAGToDAGISel : public SelectionDAGISel {
@@ -104,7 +140,11 @@ protected:
 private:
   std::pair<SDValue, SDValue> foldFrameIndex(SDValue N) const;
   bool isNoNanSrc(SDValue N) const;
-  bool isInlineImmediate(const SDNode *N) const;
+  bool isInlineImmediate(const SDNode *N, bool Negated = false) const;
+  bool isNegInlineImmediate(const SDNode *N) const {
+    return isInlineImmediate(N, true);
+  }
+
   bool isVGPRImm(const SDNode *N) const;
   bool isUniformLoad(const SDNode *N) const;
   bool isUniformBr(const SDNode *N) const;
@@ -437,14 +477,25 @@ bool AMDGPUDAGToDAGISel::isNoNanSrc(SDValue N) const {
   return CurDAG->isKnownNeverNaN(N);
 }
 
-bool AMDGPUDAGToDAGISel::isInlineImmediate(const SDNode *N) const {
+bool AMDGPUDAGToDAGISel::isInlineImmediate(const SDNode *N,
+                                           bool Negated) const {
+  // TODO: Handle undef
+
   const SIInstrInfo *TII = Subtarget->getInstrInfo();
+  if (Negated) {
+    if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(N))
+      return TII->isInlineConstant(-C->getAPIntValue());
 
-  if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(N))
-    return TII->isInlineConstant(C->getAPIntValue());
+    if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N))
+      return TII->isInlineConstant(-C->getValueAPF().bitcastToAPInt());
 
-  if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N))
-    return TII->isInlineConstant(C->getValueAPF().bitcastToAPInt());
+  } else {
+    if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(N))
+      return TII->isInlineConstant(C->getAPIntValue());
+
+    if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N))
+      return TII->isInlineConstant(C->getValueAPF().bitcastToAPInt());
+  }
 
   return false;
 }
@@ -563,20 +614,6 @@ static unsigned selectSGPRVectorRegClassID(unsigned NumVectorElts) {
   llvm_unreachable("invalid vector size");
 }
 
-static bool getConstantValue(SDValue N, uint32_t &Out) {
-  if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(N)) {
-    Out = C->getAPIntValue().getZExtValue();
-    return true;
-  }
-
-  if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N)) {
-    Out = C->getValueAPF().bitcastToAPInt().getZExtValue();
-    return true;
-  }
-
-  return false;
-}
-
 void AMDGPUDAGToDAGISel::SelectBuildVector(SDNode *N, unsigned RegClassID) {
   EVT VT = N->getValueType(0);
   unsigned NumVectorElts = VT.getVectorNumElements();
@@ -685,12 +722,8 @@ void AMDGPUDAGToDAGISel::Select(SDNode *N) {
     unsigned NumVectorElts = VT.getVectorNumElements();
     if (VT.getScalarSizeInBits() == 16) {
       if (Opc == ISD::BUILD_VECTOR && NumVectorElts == 2) {
-        uint32_t LHSVal, RHSVal;
-        if (getConstantValue(N->getOperand(0), LHSVal) &&
-            getConstantValue(N->getOperand(1), RHSVal)) {
-          uint32_t K = LHSVal | (RHSVal << 16);
-          CurDAG->SelectNodeTo(N, AMDGPU::S_MOV_B32, VT,
-                               CurDAG->getTargetConstant(K, SDLoc(N), MVT::i32));
+        if (SDNode *Packed = packConstantV2I16(N, *CurDAG)) {
+          ReplaceNode(N, Packed);
           return;
         }
       }
