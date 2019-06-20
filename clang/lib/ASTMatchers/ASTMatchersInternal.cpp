@@ -603,8 +603,6 @@ const internal::VariadicDynCastAllOfMatcher<Decl, EnumConstantDecl>
 const internal::VariadicDynCastAllOfMatcher<Decl, CXXMethodDecl> cxxMethodDecl;
 const internal::VariadicDynCastAllOfMatcher<Decl, CXXConversionDecl>
     cxxConversionDecl;
-const internal::VariadicDynCastAllOfMatcher<Decl, CXXDeductionGuideDecl>
-    cxxDeductionGuideDecl;
 const internal::VariadicDynCastAllOfMatcher<Decl, VarDecl> varDecl;
 const internal::VariadicDynCastAllOfMatcher<Decl, FieldDecl> fieldDecl;
 const internal::VariadicDynCastAllOfMatcher<Decl, IndirectFieldDecl>
