@@ -1494,7 +1494,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
           AggValueSlot::IsDestructed,
           AggValueSlot::DoesNotNeedGCBarriers,
           AggValueSlot::IsNotAliased,
-          CGF.overlapForBaseInit(CXXRD, BaseRD, Base.isVirtual()));
+          CGF.getOverlapForBaseInit(CXXRD, BaseRD, Base.isVirtual()));
       CGF.EmitAggExpr(E->getInit(curInitIndex++), AggSlot);
 
       if (QualType::DestructionKind dtorKind =
@@ -1847,7 +1847,7 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
 }
 
 AggValueSlot::Overlap_t
-CodeGenFunction::overlapForFieldInit(const FieldDecl *FD) {
+CodeGenFunction::getOverlapForFieldInit(const FieldDecl *FD) {
   if (!FD->hasAttr<NoUniqueAddressAttr>() || !FD->getType()->isRecordType())
     return AggValueSlot::DoesNotOverlap;
 
@@ -1865,7 +1865,7 @@ CodeGenFunction::overlapForFieldInit(const FieldDecl *FD) {
   return AggValueSlot::MayOverlap;
 }
 
-AggValueSlot::Overlap_t CodeGenFunction::overlapForBaseInit(
+AggValueSlot::Overlap_t CodeGenFunction::getOverlapForBaseInit(
     const CXXRecordDecl *RD, const CXXRecordDecl *BaseRD, bool IsVirtual) {
   // If the most-derived object is a field declared with [[no_unique_address]],
   // the tail padding of any virtual base could be reused for other subobjects
