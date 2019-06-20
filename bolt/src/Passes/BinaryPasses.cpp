@@ -1292,7 +1292,7 @@ void PrintProfileStats::runOnFunctions(BinaryContext &BC) {
     double Mean = 0.0;
     for (const auto &BB : Function) {
       // Do not compute score for low frequency blocks, entry or exit blocks
-      if (IncomingMap[&BB] < 100 || OutgoingMap[&BB] == 0)
+      if (IncomingMap[&BB] < 100 || OutgoingMap[&BB] == 0 || BB.isEntryPoint())
         continue;
       ++NumBlocks;
       const double Difference = (double)OutgoingMap[&BB] - IncomingMap[&BB];

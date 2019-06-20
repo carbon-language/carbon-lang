@@ -16,6 +16,7 @@
 
 #include "BinaryFunction.h"
 #include "ExecutableFileMemoryManager.h"
+#include "Passes/Instrumentation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/MC/StringTableBuilder.h"
@@ -366,6 +367,8 @@ private:
   std::unique_ptr<DWARFRewriter> DebugInfoRewriter;
 
   std::unique_ptr<BoltAddressTranslation> BAT;
+
+  std::unique_ptr<Instrumentation> Instrumenter;
 
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.

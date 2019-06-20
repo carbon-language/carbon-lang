@@ -812,7 +812,7 @@ IndirectCallPromotion::rewriteCall(
    BinaryFunction &Function,
    BinaryBasicBlock *IndCallBlock,
    const MCInst &CallInst,
-   MCPlusBuilder::ICPdata &&ICPcode,
+   MCPlusBuilder::BlocksVectorTy &&ICPcode,
    const std::vector<MCInst *> &MethodFetchInsns
 ) const {
   // Create new basic blocks with correct code in each one first.

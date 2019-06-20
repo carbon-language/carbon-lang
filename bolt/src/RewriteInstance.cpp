@@ -93,6 +93,12 @@ extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::list<std::string> ReorderData;
 extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
 
+cl::opt<bool>
+Instrument("instrument-experimental",
+  cl::desc("instrument code to generate accurate profile data (experimental)"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 static cl::opt<bool>
 ForceToDataRelocations("force-data-relocations",
   cl::desc("force relocations to data sections to always be processed"),
@@ -1896,6 +1902,11 @@ void RewriteInstance::adjustCommandLineOptions() {
               "supported\n";
   }
 
+  if (opts::Instrument && !BC->HasRelocations) {
+    errs() << "BOLT-ERROR: instrumentation requires relocations\n";
+    exit(1);
+  }
+
   if (opts::AlignMacroOpFusion != MFT_NONE && !BC->isX86()) {
     outs() << "BOLT-INFO: disabling -align-macro-fusion on non-x86 platform\n";
     opts::AlignMacroOpFusion = MFT_NONE;
@@ -2731,6 +2742,10 @@ void RewriteInstance::postProcessFunctions() {
 void RewriteInstance::runOptimizationPasses() {
   NamedRegionTimer T("runOptimizationPasses", "run optimization passes",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
+  if (opts::Instrument) {
+    Instrumenter = llvm::make_unique<Instrumentation>();
+    Instrumenter->runOnFunctions(*BC);
+  }
   BinaryFunctionPassManager::runAllPasses(*BC);
 }
 
@@ -2889,6 +2904,8 @@ void RewriteInstance::emitSections() {
   BC->getTextSection()->setAlignment(BC->PageAlign);
 
   emitFunctions(Streamer.get());
+  if (opts::Instrument)
+    Instrumenter->emit(*BC, *Streamer.get());
 
   if (!BC->HasRelocations && opts::UpdateDebugSections)
     DebugInfoRewriter->updateDebugLineInfoForNonSimpleFunctions();
@@ -3269,9 +3286,9 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
   // Map special sections to their addresses in the output image.
   // These are the sections that we generate via MCStreamer.
   // The order is important.
-  std::vector<std::string> Sections = { ".eh_frame", ".eh_frame_old",
-                                        ".gcc_except_table",
-                                        ".rodata", ".rodata.cold" };
+  std::vector<std::string> Sections = {
+      ".eh_frame", ".eh_frame_old", ".gcc_except_table",
+      ".rodata",   ".rodata.cold",  ".bolt.instrumentation"};
   for (auto &SectionName : Sections) {
     auto Section = BC->getUniqueSectionByName(SectionName);
     if (!Section || !Section->isAllocatable() || !Section->isFinalized())
@@ -3613,6 +3630,10 @@ void RewriteInstance::patchELFPHDRTable() {
       NewPhdr.p_filesz = NewTextSegmentSize;
       NewPhdr.p_memsz = NewTextSegmentSize;
       NewPhdr.p_flags = ELF::PF_X | ELF::PF_R;
+      // FIXME: Currently instrumentation is experimental and the runtime data
+      // is emitted with code, thus everything needs to be writable
+      if (opts::Instrument)
+        NewPhdr.p_flags |= ELF::PF_W;
       NewPhdr.p_align = BC->PageAlign;
       ModdedGnuStack = true;
     } else if (!opts::UseGnuStack && Phdr.p_type == ELF::PT_DYNAMIC) {
@@ -3624,7 +3645,10 @@ void RewriteInstance::patchELFPHDRTable() {
       NewTextPhdr.p_paddr = PHDRTableAddress;
       NewTextPhdr.p_filesz = NewTextSegmentSize;
       NewTextPhdr.p_memsz = NewTextSegmentSize;
+      // FIXME: experimental instrumentation hack described above
       NewTextPhdr.p_flags = ELF::PF_X | ELF::PF_R;
+      if (opts::Instrument)
+        NewTextPhdr.p_flags |= ELF::PF_W;
       NewTextPhdr.p_align = BC->PageAlign;
       OS.write(reinterpret_cast<const char *>(&NewTextPhdr),
                sizeof(NewTextPhdr));
@@ -4580,6 +4604,12 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
                        << DE->getTag() << '\n');
           NewDE.d_un.d_ptr = NewAddress;
         }
+      }
+      // FIXME: Put the old FINI pointer as a tail call in the generated
+      // dumper function
+      if (opts::Instrument && DE->getTag() == ELF::DT_FINI) {
+        NewDE.d_un.d_ptr =
+            Instrumenter->getDumpFunction()->getOutputAddress();
       }
       break;
     case ELF::DT_FLAGS:

@@ -295,6 +295,13 @@ bool DataReader::expectAndConsumeFS() {
   return true;
 }
 
+void DataReader::consumeAllRemainingFS() {
+  while (ParsingBuf[0] == FieldSeparator) {
+    ParsingBuf = ParsingBuf.drop_front(1);
+    Col += 1;
+  }
+}
+
 bool DataReader::checkAndConsumeNewLine() {
   if (ParsingBuf[0] != '\n')
     return false;
@@ -389,12 +396,14 @@ ErrorOr<Location> DataReader::parseLocation(char EndChar,
 
   if (!expectAndConsumeFS())
     return make_error_code(llvm::errc::io_error);
+  consumeAllRemainingFS();
 
   // Read the string containing the symbol or the DSO name
   auto NameRes = parseString(FieldSeparator);
   if (std::error_code EC = NameRes.getError())
     return EC;
   StringRef Name = NameRes.get();
+  consumeAllRemainingFS();
 
   // Read the offset
   auto Offset = parseHexField(EndChar, EndNl);
@@ -410,21 +419,25 @@ ErrorOr<BranchInfo> DataReader::parseBranchInfo() {
     return EC;
   Location From = Res.get();
 
+  consumeAllRemainingFS();
   Res = parseLocation(FieldSeparator);
   if (std::error_code EC = Res.getError())
     return EC;
   Location To = Res.get();
 
+  consumeAllRemainingFS();
   auto MRes = parseNumberField(FieldSeparator);
   if (std::error_code EC = MRes.getError())
     return EC;
   int64_t NumMispreds = MRes.get();
 
+  consumeAllRemainingFS();
   auto BRes = parseNumberField(FieldSeparator, /* EndNl = */ true);
   if (std::error_code EC = BRes.getError())
     return EC;
   int64_t NumBranches = BRes.get();
 
+  consumeAllRemainingFS();
   if (!checkAndConsumeNewLine()) {
     reportError("expected end of line");
     return make_error_code(llvm::errc::io_error);
@@ -439,15 +452,18 @@ ErrorOr<MemInfo> DataReader::parseMemInfo() {
     return EC;
   Location Offset = Res.get();
 
+  consumeAllRemainingFS();
   Res = parseMemLocation(FieldSeparator);
   if (std::error_code EC = Res.getError())
     return EC;
   Location Addr = Res.get();
 
+  consumeAllRemainingFS();
   auto CountRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = CountRes.getError())
     return EC;
 
+  consumeAllRemainingFS();
   if (!checkAndConsumeNewLine()) {
     reportError("expected end of line");
     return make_error_code(llvm::errc::io_error);
@@ -462,11 +478,13 @@ ErrorOr<SampleInfo> DataReader::parseSampleInfo() {
     return EC;
   Location Address = Res.get();
 
+  consumeAllRemainingFS();
   auto BRes = parseNumberField(FieldSeparator, /* EndNl = */ true);
   if (std::error_code EC = BRes.getError())
     return EC;
   int64_t Occurrences = BRes.get();
 
+  consumeAllRemainingFS();
   if (!checkAndConsumeNewLine()) {
     reportError("expected end of line");
     return make_error_code(llvm::errc::io_error);

@@ -255,7 +255,7 @@ void BinaryBasicBlock::replaceSuccessor(BinaryBasicBlock *Succ,
                                         BinaryBasicBlock *NewSucc,
                                         uint64_t Count,
                                         uint64_t MispredictedCount) {
-  Succ->removePredecessor(this);
+  Succ->removePredecessor(this, /*Multiple=*/false);
   auto I = succ_begin();
   auto BI = BranchInfo.begin();
   for (; I != succ_end(); ++I) {
@@ -280,7 +280,7 @@ void BinaryBasicBlock::removeAllSuccessors() {
 }
 
 void BinaryBasicBlock::removeSuccessor(BinaryBasicBlock *Succ) {
-  Succ->removePredecessor(this);
+  Succ->removePredecessor(this, /*Multiple=*/false);
   auto I = succ_begin();
   auto BI = BranchInfo.begin();
   for (; I != succ_end(); ++I) {
@@ -299,13 +299,16 @@ void BinaryBasicBlock::addPredecessor(BinaryBasicBlock *Pred) {
   Predecessors.push_back(Pred);
 }
 
-void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
+void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred,
+                                         bool Multiple) {
   // Note: the predecessor could be listed multiple times.
   bool Erased{false};
   for (auto PredI = Predecessors.begin(); PredI != Predecessors.end(); ) {
     if (*PredI == Pred) {
       Erased = true;
       PredI = Predecessors.erase(PredI);
+      if (!Multiple)
+        return;
     } else {
       ++PredI;
     }

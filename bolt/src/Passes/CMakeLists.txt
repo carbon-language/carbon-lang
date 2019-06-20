@@ -15,6 +15,7 @@ add_llvm_library(LLVMBOLTPasses
   IdenticalCodeFolding.cpp
   IndirectCallPromotion.cpp
   Inliner.cpp
+  Instrumentation.cpp
   JTFootprintReduction.cpp
   LivenessAnalysis.cpp
   LongJmp.cpp

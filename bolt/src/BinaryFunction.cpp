@@ -57,6 +57,7 @@ extern bool shouldProcess(const BinaryFunction &);
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> EnableBAT;
+extern cl::opt<bool> Instrument;
 
 cl::opt<bool>
 AlignBlocks("align-blocks",
@@ -1794,7 +1795,7 @@ void BinaryFunction::postProcessCFG() {
   // translation table later. This has no cost, since annotations are allocated
   // by a bumpptr allocator and won't be released anyway until late in the
   // pipeline.
-  if (!opts::EnableBAT)
+  if (!opts::EnableBAT && !opts::Instrument)
     for (auto *BB : layout())
       for (auto &Inst : *BB)
         BC.MIB->removeAnnotation(Inst, "Offset");

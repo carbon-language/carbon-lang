@@ -364,11 +364,15 @@ public:
 
   /// Find the fallthrough successor for a block, or nullptr if there is
   /// none.
-  const BinaryBasicBlock* getFallthrough() const {
+  BinaryBasicBlock* getFallthrough() {
     if (succ_size() == 2)
       return getConditionalSuccessor(false);
     else
       return getSuccessor();
+  }
+
+  const BinaryBasicBlock *getFallthrough() const {
+    return const_cast<BinaryBasicBlock *>(this)->getFallthrough();
   }
 
   /// Return branch info corresponding to a taken branch.
@@ -753,6 +757,11 @@ public:
     return Instructions.emplace(At, std::move(NewInst));
   }
 
+  iterator insertInstruction(iterator At, MCInst &NewInst) {
+    adjustNumPseudos(NewInst, 1);
+    return Instructions.emplace(At, NewInst);
+  }
+
   /// Helper to retrieve any terminators in \p BB before \p Pos. This is used
   /// to skip CFI instructions and to retrieve the first terminator instruction
   /// in basic blocks with two terminators (conditional jump and unconditional
@@ -897,7 +906,10 @@ private:
 
   /// Remove predecessor of the basic block. Don't use directly, instead
   /// use removeSuccessor() function.
-  void removePredecessor(BinaryBasicBlock *Pred);
+  /// If \p Multiple is set to true, it will remove all predecessors that
+  /// are equal to \p Pred. Otherwise, the first instance of \p Pred found
+  /// will be removed. This only matters in awkward, redundant CFGs.
+  void removePredecessor(BinaryBasicBlock *Pred, bool Multiple=true);
 
   /// Return offset of the basic block from the function start.
   uint32_t getOffset() const {

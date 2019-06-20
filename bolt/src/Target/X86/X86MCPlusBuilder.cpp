@@ -635,6 +635,19 @@ public:
     return false;
   }
 
+  bool isUnsupportedBranch(unsigned Opcode) const override {
+    switch (Opcode) {
+    default:
+      return false;
+    case X86::LOOP:
+    case X86::LOOPE:
+    case X86::LOOPNE:
+    case X86::JECXZ:
+    case X86::JRCXZ:
+      return true;
+    }
+  }
+
   bool isLoad(const MCInst &Inst) const override {
     if (isPop(Inst))
       return true;
@@ -2697,6 +2710,22 @@ public:
     return true;
   }
 
+  bool createIncMemory(MCInst &Inst, const MCSymbol *Target,
+                       MCContext *Ctx) const override {
+
+    Inst.setOpcode(X86::INC64m);
+    Inst.clear();
+    Inst.addOperand(MCOperand::createReg(X86::RIP));        // BaseReg
+    Inst.addOperand(MCOperand::createImm(1));               // ScaleAmt
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // IndexReg
+
+    Inst.addOperand(MCOperand::createExpr(
+        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None,
+                                *Ctx)));                    // Displacement
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
+    return true;
+  }
+
   bool createIJmp32Frag(SmallVectorImpl<MCInst> &Insts,
                         const MCOperand &BaseReg, const MCOperand &Scale,
                         const MCOperand &IndexReg, const MCOperand &Offset,
@@ -3006,6 +3035,17 @@ public:
                           unsigned Size) const override {
     Inst.clear();
     unsigned NewOpcode = 0;
+    if (Reg == X86::EFLAGS) {
+      switch (Size) {
+      case 2: NewOpcode = X86::PUSHF16;  break;
+      case 4: NewOpcode = X86::PUSHF32;  break;
+      case 8: NewOpcode = X86::PUSHF64;  break;
+      default:
+        assert(false);
+      }
+      Inst.setOpcode(NewOpcode);
+      return;
+    }
     switch (Size) {
     case 2: NewOpcode = X86::PUSH16r;  break;
     case 4: NewOpcode = X86::PUSH32r;  break;
@@ -3021,6 +3061,17 @@ public:
                          unsigned Size) const override {
     Inst.clear();
     unsigned NewOpcode = 0;
+    if (Reg == X86::EFLAGS) {
+      switch (Size) {
+      case 2: NewOpcode = X86::POPF16;  break;
+      case 4: NewOpcode = X86::POPF32;  break;
+      case 8: NewOpcode = X86::POPF64;  break;
+      default:
+        assert(false);
+      }
+      Inst.setOpcode(NewOpcode);
+      return;
+    }
     switch (Size) {
     case 2: NewOpcode = X86::POP16r;  break;
     case 4: NewOpcode = X86::POP32r;  break;
@@ -3032,7 +3083,15 @@ public:
     Inst.addOperand(MCOperand::createReg(Reg));
   }
 
-  ICPdata indirectCallPromotion(
+  void createPushFlags(MCInst &Inst, unsigned Size) const override {
+    return createPushRegister(Inst, X86::EFLAGS, Size);
+  }
+
+  void createPopFlags(MCInst &Inst, unsigned Size) const override {
+    return createPopRegister(Inst, X86::EFLAGS, Size);
+  }
+
+  BlocksVectorTy indirectCallPromotion(
     const MCInst &CallInst,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &VtableSyms,
@@ -3042,7 +3101,7 @@ public:
   ) override {
     const bool IsTailCall = isTailCall(CallInst);
     const bool IsJumpTable = getJumpTable(CallInst) != 0;
-    ICPdata Results;
+    BlocksVectorTy Results;
 
     // Label for the current code block.
     MCSymbol* NextTarget = nullptr;
@@ -3106,7 +3165,7 @@ public:
           const auto Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
           if (int64_t(Addr) != int64_t(int32_t(Addr))) {
-            return ICPdata();
+            return BlocksVectorTy();
           }
           Target.addOperand(MCOperand::createImm(Addr));
         }
@@ -3172,7 +3231,7 @@ public:
           const auto Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
           if (int64_t(Addr) != int64_t(int32_t(Addr))) {
-            return ICPdata();
+            return BlocksVectorTy();
           }
           Compare.addOperand(MCOperand::createImm(Addr));
         }
@@ -3274,7 +3333,7 @@ public:
     return Results;
   }
 
-  ICPdata jumpTablePromotion(
+  BlocksVectorTy jumpTablePromotion(
     const MCInst &IJmpInst,
     const std::vector<std::pair<MCSymbol *,uint64_t>> &Targets,
     const std::vector<MCInst *> &TargetFetchInsns,
@@ -3283,9 +3342,9 @@ public:
     assert(getJumpTable(IJmpInst) != 0);
     uint16_t IndexReg = getAnnotationAs<uint16_t>(IJmpInst, "JTIndexReg");
     if (IndexReg == 0)
-      return ICPdata();
+      return BlocksVectorTy();
 
-    ICPdata Results;
+    BlocksVectorTy Results;
 
     // Label for the current code block.
     MCSymbol* NextTarget = nullptr;
@@ -3304,7 +3363,7 @@ public:
       const auto CaseIdx = Targets[i].second;
       // Immediate address is out of sign extended 32 bit range.
       if (int64_t(CaseIdx) != int64_t(int32_t(CaseIdx))) {
-        return ICPdata();
+        return BlocksVectorTy();
       }
       CompareInst.addOperand(MCOperand::createImm(CaseIdx));
       shortenInstruction(CompareInst);
@@ -3332,6 +3391,311 @@ public:
     CurBB.push_back(IJmpInst);
 
     return Results;
+  }
+
+  MultiBlocksCode createInstrumentedDataDumpCode(
+      MCSymbol *Locs,
+      MCSymbol *Descriptions,
+      MCSymbol *Strings,
+      MCSymbol *FilenameSym,
+      MCSymbol *Spaces,
+      MCSymbol *Chars,
+      size_t NumLocs,
+      MCContext *Ctx
+  ) const override {
+    std::vector<MCInst>* Code;
+    MultiBlocksCode Result;
+#define INS(x, y) Code->emplace_back(MCInstBuilder(x).y)
+#define INS_NOARGS(x) Code->emplace_back(MCInstBuilder(x))
+#define REG(x) addReg(x)
+#define IMM(x) addImm(x)
+#define EXPR(x)                                                                \
+  addExpr(MCSymbolRefExpr::create(x, MCSymbolRefExpr::VK_None, *Ctx))
+#define NOREG addReg(X86::NoRegister)
+#define BEGIN_BLOCK(x)                                                         \
+  Result.Blocks.emplace_back(std::make_pair<>(x, std::vector<MCInst>()));      \
+  Code = &Result.Blocks.back().second;                                         \
+  Result.Successors.emplace_back(nullptr);
+#define BEGIN_BLOCK_FALLTHROUGH                                                \
+  Result.Blocks.emplace_back(                                                  \
+      std::make_pair<>(Ctx->createTempSymbol(), std::vector<MCInst>()));       \
+  Code = &Result.Blocks.back().second;                                         \
+  Result.Successors.emplace_back(nullptr);
+#define SET_SUCC(x) Result.Successors.back() = x;
+
+    using namespace llvm::X86;
+
+    // I know, this got ridiculously large, we should have a better way to
+    // write our runtime library for instrumentation. At this point I think it
+    // is kind of nice to do not depend on loading an object on disk to link
+    // against the input binary, but in the future it may be inevitable.
+
+    // String buffer allocated on stack to store data sent to write()
+    const uint32_t COPY_BUFFER_SIZE = 0x1000;
+    // These constants depend on the target OS
+    const uint32_t OPEN_MODE = 0666;
+    const uint32_t OPEN_FLAGS = 0x241; // O_WRONLY|O_TRUNC|O_CREAT
+    const uint32_t SYSCALL_WRITE = 1;
+    const uint32_t SYSCALL_OPEN = 2;
+    const uint32_t SYSCALL_CLOSE = 3;
+    MCSymbol *LoopBody1 = Ctx->createTempSymbol(); // for each instrumented br
+    MCSymbol *LoopBody1_1 = Ctx->createTempSymbol(); // for each src/dst
+    MCSymbol *LoopBody1_1_1 = Ctx->createTempSymbol(); // write func name
+    MCSymbol *LoopBody1_1_2 = Ctx->createTempSymbol(); // write offset in hex
+    MCSymbol *LoopBody1_2 = Ctx->createTempSymbol(); // write branch frequency
+    MCSymbol *Loop1End = Ctx->createTempSymbol();
+
+    BEGIN_BLOCK_FALLTHROUGH;       // Start our prologue
+    //  pushq %rbx
+    INS(PUSH64r, REG(RBX));
+    //  pushq %r12
+    INS(PUSH64r, REG(R12));
+    //  pushq %r13
+    INS(PUSH64r, REG(R13));
+    //  pushq %r14
+    INS(PUSH64r, REG(R14));
+    //  pushq %r15
+    INS(PUSH64r, REG(R15));
+    //  subq $0x1000, %rsp         // Reserve space for write buffer
+    INS(SUB64ri32, REG(RSP).REG(RSP).IMM(COPY_BUFFER_SIZE));
+    //  leaq filename(%rip), %rdi
+    INS(LEA64r, REG(RDI).REG(RIP).IMM(0x1).NOREG.EXPR(FilenameSym).NOREG);
+    //  movq $0x241, %rsi          // O_WRONLY|O_TRUNC|O_CREAT
+    INS(MOV64ri32, REG(RSI).IMM(OPEN_FLAGS));
+    //  movq $0666, %rdx           // mode
+    INS(MOV64ri32, REG(RDX).IMM(OPEN_MODE));
+    //  mov  $0x2, %rax
+    INS(MOV64ri32, REG(RAX).IMM(SYSCALL_OPEN));
+    //  syscall
+    INS_NOARGS(SYSCALL);           // open()
+    //  movq %rax, %r13
+    INS(MOV64rr, REG(R13).REG(RAX));
+    //  xorq %r14, %r14            // Induction variable for main loop
+    //                             // over all intrumentation counters
+    INS(XOR64rr, REG(R14).REG(R14).REG(R14));
+    //  leaq label1(%rip), %r11    // Load start of descriptions vector
+    INS(LEA64r, REG(R11).REG(RIP).IMM(1).NOREG.EXPR(Descriptions).NOREG);
+
+    //  loopbody1:                 // Main loop
+    BEGIN_BLOCK(LoopBody1);
+    //  movq %rsp, %r15            // Reset write buffer pointer
+    INS(MOV64rr, REG(R15).REG(RSP));
+
+    //  xorq %rbx, %rbx            // Induction variable for our loop of 2
+    //                             // iterations to read From description and
+    //                             // then To description
+    INS(XOR64rr, REG(RBX).REG(RBX).REG(RBX));
+    //  loopbody1_1:
+    BEGIN_BLOCK(LoopBody1_1);
+    //  movb $0x31, (%r15)         // Write '1' and a space before func name
+    INS(MOV8mi, REG(R15).IMM(1).NOREG.IMM(0).NOREG.IMM(0x31));
+    //  incq %r15
+    INS(INC64r, REG(R15).REG(R15));
+    //  movb $0x20, (%r15)
+    INS(MOV8mi, REG(R15).IMM(1).NOREG.IMM(0).NOREG.IMM(0x20));
+    //  incq %r15
+    INS(INC64r, REG(R15).REG(R15));
+    //  leaq strings(%rip), %r12   // Load string table base
+    INS(LEA64r, REG(R12).REG(RIP).IMM(0x1).NOREG.EXPR(Strings).NOREG);
+    //  addl (%r11), %r12d         // Add string index
+    INS(ADD32rm, REG(R12D).REG(R12D).REG(R11).IMM(1).NOREG.IMM(0).NOREG);
+    //  addq $4, %r11
+    INS(ADD64ri8, REG(R11).REG(R11).IMM(4));
+
+    //  loopbody1_1_1:             // Loop over counter description string
+    //                             // copying it to our write buffer
+    BEGIN_BLOCK(LoopBody1_1_1);
+    //  mov  (%r12), %ax
+    INS(MOV8rm, REG(AX).REG(R12).IMM(1).NOREG.IMM(0).NOREG);
+    //  mov  %ax, (%r15)
+    INS(MOV8mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(AX));
+    //  incq %r15
+    INS(INC64r, REG(R15).REG(R15));
+    //  incq %r12
+    INS(INC64r, REG(R12).REG(R12));
+    //  test  %ax, %ax
+    INS(TEST8rr, REG(AX).REG(AX));
+    //  jnz loopbody1_1_1
+    INS(JNE_4, EXPR(LoopBody1_1_1));
+    SET_SUCC(LoopBody1_1_1);
+
+    BEGIN_BLOCK_FALLTHROUGH;       // Copy "        " to write buffer -- empty
+    //                             // spaces that will be overwritten with the
+    //                             // offset value in hex, right to left
+    //  decq %r15
+    INS(DEC64r, REG(R15).REG(R15));
+    //  movq spaces(%rip), %rdx
+    INS(MOV64rm, REG(RDX).REG(RIP).IMM(1).NOREG.EXPR(Spaces).NOREG);
+    //  movq %rdx, (%r15)
+    INS(MOV64mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(RDX));
+    //  addq $8, %r15
+    INS(ADD64ri8, REG(R15).REG(R15).IMM(8));
+    //  movq %rdx, (%r15)
+    INS(MOV64mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(RDX));
+    //  addq $8, %r15
+    INS(ADD64ri8, REG(R15).REG(R15).IMM(8));
+    //  movq %r15, %r12
+    INS(MOV64rr, REG(R12).REG(R15));
+    //  decq %r15
+    INS(DEC64r, REG(R15).REG(R15));
+    //  xorq %rax, %rax
+    INS(XOR64rr, REG(RAX).REG(RAX).REG(RAX));
+    //  movl (%r11), %eax
+    INS(MOV32rm, REG(EAX).REG(R11).IMM(1).NOREG.IMM(0).NOREG);
+    //  addq $4, %r11
+    INS(ADD64ri8, REG(R11).REG(R11).IMM(4));
+
+    //  loopbody1_1_2:             // Loop to print address in hexadecimal
+    BEGIN_BLOCK(LoopBody1_1_2);
+    //  decq %r15
+    INS(DEC64r, REG(R15).REG(R15));
+    //  xorq %rdx, %rdx
+    INS(XOR64rr, REG(RDX).REG(RDX).REG(RDX));
+    //  movq $0x10, %rsi
+    INS(MOV64ri32, REG(RSI).IMM(0x10));
+    //  divq %rsi
+    INS(DIV64r, REG(RSI));
+    //  leaq chars(%rip), %rdi
+    INS(LEA64r, REG(RDI).REG(RIP).IMM(1).NOREG.EXPR(Chars).NOREG);
+    //  mov  (%rdi, %rdx, 1), %cx
+    INS(MOV8rm, REG(CX).REG(RDI).IMM(1).REG(RDX).IMM(0).NOREG);
+    //  mov  %cx, (%r15)
+    INS(MOV8mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(CX));
+    //  testq %rax, %rax
+    INS(TEST64rr, REG(RAX).REG(RAX));
+    //  jnz loopbody1_1_2
+    INS(JNE_4, EXPR(LoopBody1_1_2));
+    SET_SUCC(LoopBody1_1_2);
+
+    BEGIN_BLOCK_FALLTHROUGH;
+    //  movq %r12, %r15            // Loop end (2 iteration loop for From/To)
+    INS(MOV64rr, REG(R15).REG(R12));
+    //  incq %rbx
+    INS(INC64r, REG(RBX).REG(RBX));
+    //  cmpq $2, %rbx
+    INS(CMP64ri8, REG(RBX).IMM(2));
+    //  jne loopbody1_1
+    INS(JNE_4, EXPR(LoopBody1_1));
+    SET_SUCC(LoopBody1_1);
+
+    BEGIN_BLOCK_FALLTHROUGH;       // Copy "        " to write buffer -- empty
+    //                             // spaces that will be overwritten with the
+    //                             // counter value in decimal, right to left
+    //  movb $0x30, (%r15)         // Write '0' and a space before counter val
+    //                             // representing zero mispredictions
+    INS(MOV8mi, REG(R15).IMM(1).NOREG.IMM(0).NOREG.IMM(0x30));
+    //  incq %r15
+    INS(INC64r, REG(R15).REG(R15));
+    //  movb $0x20, (%r15)
+    INS(MOV8mi, REG(R15).IMM(1).NOREG.IMM(0).NOREG.IMM(0x20));
+    //  incq %r15
+    INS(INC64r, REG(R15).REG(R15));
+    //  movq spaces(%rip), %rdx
+    INS(MOV64rm, REG(RDX).REG(RIP).IMM(1).NOREG.EXPR(Spaces).NOREG);
+    //  movq %rdx, (%r15)
+    INS(MOV64mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(RDX));
+    //  addq $8, %r15
+    INS(ADD64ri8, REG(R15).REG(R15).IMM(8));
+    //  movq %rdx, (%r15)
+    INS(MOV64mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(RDX));
+    //  addq $8, %r15
+    INS(ADD64ri8, REG(R15).REG(R15).IMM(8));
+    //  movq %r15, %r12
+    INS(MOV64rr, REG(R12).REG(R15));
+    //  leaq count1(%rip), %rdx
+    INS(LEA64r, REG(RDX).REG(RIP).IMM(1).NOREG.EXPR(Locs).NOREG);
+    //  movq (%rdx, %r14, 8), %rax // Load current instrumentation counter value
+    INS(MOV64rm, REG(RAX).REG(RDX).IMM(8).REG(R14).IMM(0).NOREG);
+    //  testq $rax, %rax
+    INS(TEST64rr, REG(RAX).REG(RAX));
+    //  je loop1end
+    INS(JE_4, EXPR(Loop1End));
+    SET_SUCC(Loop1End);
+
+    //  loopbody1_2:               // Loop to print counter value in decimal
+    BEGIN_BLOCK(LoopBody1_2);
+    //  decq %r15
+    INS(DEC64r, REG(R15).REG(R15));
+    //  xorq %rdx, %rdx
+    INS(XOR64rr, REG(RDX).REG(RDX).REG(RDX));
+    //  movq $0xa, %rsi
+    INS(MOV64ri32, REG(RSI).IMM(0xa));
+    //  divq %rsi
+    INS(DIV64r, REG(RSI));
+    //  leaq chars(%rip), %rdi
+    INS(LEA64r, REG(RDI).REG(RIP).IMM(1).NOREG.EXPR(Chars).NOREG);
+    //  mov  (%rdi, %rdx, 1), %cx
+    INS(MOV8rm, REG(CX).REG(RDI).IMM(1).REG(RDX).IMM(0).NOREG);
+    //  mov  %cx, (%r15)
+    INS(MOV8mr, REG(R15).IMM(1).NOREG.IMM(0).NOREG.REG(CX));
+    //  testq %rax, %rax
+    INS(TEST64rr, REG(RAX).REG(RAX));
+    //  jnz loopbody1_2
+    INS(JNE_4, EXPR(LoopBody1_2));
+    SET_SUCC(LoopBody1_2);
+
+    BEGIN_BLOCK_FALLTHROUGH;       // Flush write buffer to file
+    //  movb $0xa, (%r12)          // Put a '\n' at the end of write buffer
+    INS(MOV8mi, REG(R12).IMM(1).NOREG.IMM(0).NOREG.IMM(0xa));
+    //  incq %r12
+    INS(INC64r, REG(R12).REG(R12));
+    //  movq %r13, %rdi
+    INS(MOV64rr, REG(RDI).REG(R13));
+    //  movq %rsp, %rsi
+    INS(MOV64rr, REG(RSI).REG(RSP));
+    //  movq %r12, %rdx
+    INS(MOV64rr, REG(RDX).REG(R12));
+    //  subq %rsp, %rdx
+    INS(SUB64rr, REG(RDX).REG(RDX).REG(RSP));
+    //  movq $0x1, %rax
+    INS(MOV64ri32, REG(RAX).IMM(SYSCALL_WRITE));
+    //  pushq %r11
+    INS(PUSH64r, REG(R11));
+    //  syscall                    // write()
+    INS_NOARGS(SYSCALL);
+    //  popq  %r11
+    INS(POP64r, REG(R11));
+
+    //  loop1end:                  // Main loop header
+    BEGIN_BLOCK(Loop1End);
+    //  incq %r14
+    INS(INC64r, REG(R14).REG(R14));
+    //  cmp $0xXXXXXX, %r14
+    INS(CMP64ri32, REG(R14).IMM(NumLocs));
+    //  jnz loopbody1
+    INS(JNE_4, EXPR(LoopBody1));
+    SET_SUCC(LoopBody1);
+
+    BEGIN_BLOCK_FALLTHROUGH;       // Finish by closing file and returning
+    //  movq %r13, %rdi
+    INS(MOV64rr, REG(RDI).REG(R13));
+    //  mov  $0x3, %eax            // close()
+    INS(MOV32ri, REG(EAX).IMM(SYSCALL_CLOSE));
+    //  syscall
+    INS_NOARGS(SYSCALL);
+    //  addq $0x1000, %rsp
+    INS(ADD64ri32, REG(RSP).REG(RSP).IMM(0x1000));
+    //  popq  %r15
+    INS(POP64r, REG(R15));
+    //  popq  %r14
+    INS(POP64r, REG(R14));
+    //  popq  %r13
+    INS(POP64r, REG(R13));
+    //  popq  %r12
+    INS(POP64r, REG(R12));
+    //  popq  %rbx
+    INS(POP64r, REG(RBX));
+    //  ret
+    INS_NOARGS(RETQ);
+#undef INS
+#undef INS_NOARGS
+#undef REG
+#undef IMM
+#undef EXPR
+#undef NOREG
+#undef BEGIN_BLOCK
+#undef BEGIN_BLOCK_FALLTHROUGH
+    return Result;
   }
 
 };

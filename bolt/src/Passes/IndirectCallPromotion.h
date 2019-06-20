@@ -222,7 +222,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
               BinaryFunction &Function,
               BinaryBasicBlock *IndCallBlock,
               const MCInst &CallInst,
-              MCPlusBuilder::ICPdata &&ICPcode,
+              MCPlusBuilder::BlocksVectorTy &&ICPcode,
               const std::vector<MCInst *> &MethodFetchInsns) const;
 
   BinaryBasicBlock *fixCFG(BinaryContext &BC,

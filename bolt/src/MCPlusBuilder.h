@@ -334,6 +334,11 @@ public:
     return false;
   }
 
+  /// Check whether we support inverting this branch
+  virtual bool isUnsupportedBranch(unsigned Opcode) const {
+    return false;
+  }
+
   /// Return true of the instruction is of pseudo kind.
   bool isPseudo(const MCInst &Inst) const {
     return Info->get(Inst.getOpcode()).isPseudo();
@@ -355,6 +360,14 @@ public:
 
   virtual void createPopRegister(MCInst &Inst, MCPhysReg Reg,
                                  unsigned Size) const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual void createPushFlags(MCInst &Inst, unsigned Size) const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual void createPopFlags(MCInst &Inst, unsigned Size) const {
     llvm_unreachable("not implemented");
   }
 
@@ -1340,6 +1353,13 @@ public:
     return false;
   }
 
+  /// Create instruction to increment contents of target by 1
+  virtual bool createIncMemory(MCInst &Inst, const MCSymbol *Target,
+                               MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// Create a fragment of code (sequence of instructions) that load a 32-bit
   /// address from memory, zero-extends it to 64 and jump to it (indirect jump).
   virtual bool
@@ -1631,8 +1651,13 @@ public:
   /// empty vector of instructions.  The label is meant to indicate the basic
   /// block where all previous snippets are joined, i.e. the instructions that
   /// would immediate follow the original call.
-  using ICPdata = std::vector<std::pair<MCSymbol*, std::vector<MCInst>>>;
-  virtual ICPdata indirectCallPromotion(
+  using BlocksVectorTy = std::vector<std::pair<MCSymbol*, std::vector<MCInst>>>;
+  struct MultiBlocksCode {
+    BlocksVectorTy Blocks;
+    std::vector<MCSymbol*> Successors;
+  };
+
+  virtual BlocksVectorTy indirectCallPromotion(
     const MCInst &CallInst,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &VtableSyms,
@@ -1641,19 +1666,40 @@ public:
     MCContext *Ctx
   ) {
     llvm_unreachable("not implemented");
-    return ICPdata();
+    return BlocksVectorTy();
   }
 
-  virtual ICPdata jumpTablePromotion(
+  virtual BlocksVectorTy jumpTablePromotion(
     const MCInst &IJmpInst,
     const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
     const std::vector<MCInst *> &TargetFetchInsns,
     MCContext *Ctx
   ) const {
     llvm_unreachable("not implemented");
-    return ICPdata();
+    return BlocksVectorTy();
   }
 
+  /// Part of the runtime library for instrumented code, this runs at the end
+  /// of the process and writes the current instrumentation counters to a file
+  /// compatible with BOLT profile. \p Locs identifies the region in memory
+  /// where the counters are (\p NumLocs counters), \p Descriptions, the region
+  /// encoding information about each counter, which is the source of the branch
+  /// and the destination, \p Strings, the string table with function names used
+  /// in descriptions, \p FilenameSym, the profile file name to write to,
+  /// \p Chars, a 0 to F string used for printing hex/decimal numbers.
+  virtual MultiBlocksCode createInstrumentedDataDumpCode(
+      MCSymbol *Locs,
+      MCSymbol *Descriptions,
+      MCSymbol *Strings,
+      MCSymbol *FilenameSym,
+      MCSymbol *Spaces,
+      MCSymbol *Chars,
+      size_t NumLocs,
+      MCContext *Ctx
+  ) const {
+    llvm_unreachable("not implemented");
+    return MultiBlocksCode();
+  }
 };
 
 } // namespace bolt
