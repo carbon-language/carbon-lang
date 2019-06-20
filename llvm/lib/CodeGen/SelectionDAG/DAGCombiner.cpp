@@ -7259,25 +7259,27 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl (zext (srl x, C)), C) -> (zext (shl (srl x, C), C))
   // Only fold this if the inner zext has no other uses to avoid increasing
   // the total number of instructions.
-  // TODO - support non-uniform vector shift amounts.
-  if (N1C && N0.getOpcode() == ISD::ZERO_EXTEND && N0.hasOneUse() &&
+  if (N0.getOpcode() == ISD::ZERO_EXTEND && N0.hasOneUse() &&
       N0.getOperand(0).getOpcode() == ISD::SRL) {
     SDValue N0Op0 = N0.getOperand(0);
-    if (ConstantSDNode *N0Op0C1 = isConstOrConstSplat(N0Op0.getOperand(1))) {
-      if (N0Op0C1->getAPIntValue().ult(VT.getScalarSizeInBits())) {
-        uint64_t c1 = N0Op0C1->getZExtValue();
-        uint64_t c2 = N1C->getZExtValue();
-        if (c1 == c2) {
-          SDValue NewOp0 = N0.getOperand(0);
-          EVT CountVT = NewOp0.getOperand(1).getValueType();
-          SDLoc DL(N);
-          SDValue NewSHL = DAG.getNode(ISD::SHL, DL, NewOp0.getValueType(),
-                                       NewOp0,
-                                       DAG.getConstant(c2, DL, CountVT));
-          AddToWorklist(NewSHL.getNode());
-          return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N0), VT, NewSHL);
-        }
-      }
+    SDValue InnerShiftAmt = N0Op0.getOperand(1);
+    EVT InnerShiftAmtVT = N0Op0.getOperand(1).getValueType();
+
+    auto MatchEqual = [VT](ConstantSDNode *LHS, ConstantSDNode *RHS) {
+      APInt c1 = LHS->getAPIntValue();
+      APInt c2 = RHS->getAPIntValue();
+      zeroExtendToMatch(c1, c2);
+      return c1.ult(VT.getScalarSizeInBits()) && (c1 == c2);
+    };
+    if (ISD::matchBinaryPredicate(InnerShiftAmt, N1, MatchEqual,
+                                  /*AllowUndefs*/ false,
+                                  /*AllowTypeMismatch*/ true)) {
+      SDLoc DL(N);
+      EVT InnerShiftAmtVT = N0Op0.getOperand(1).getValueType();
+      SDValue NewSHL = DAG.getZExtOrTrunc(N1, DL, InnerShiftAmtVT);
+      NewSHL = DAG.getNode(ISD::SHL, DL, N0Op0.getValueType(), N0Op0, NewSHL);
+      AddToWorklist(NewSHL.getNode());
+      return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N0), VT, NewSHL);
     }
   }
 
