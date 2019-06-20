@@ -467,7 +467,7 @@ defm DS_WRXCHG_RTN_B64 : DS_1A1D_RET_mc<"ds_wrxchg_rtn_b64", VReg_64>;
 defm DS_WRXCHG2_RTN_B64 : DS_1A2D_Off8_RET_mc<"ds_wrxchg2_rtn_b64", VReg_128, VReg_64>;
 defm DS_WRXCHG2ST64_RTN_B64 : DS_1A2D_Off8_RET_mc<"ds_wrxchg2st64_rtn_b64", VReg_128, VReg_64>;
 
-let isConvergent = 1 in {
+let isConvergent = 1, usesCustomInserter = 1 in {
 def DS_GWS_INIT       : DS_GWS_1D<"ds_gws_init"> {
   let mayLoad = 0;
 }

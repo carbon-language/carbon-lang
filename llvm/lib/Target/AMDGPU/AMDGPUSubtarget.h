@@ -715,6 +715,15 @@ public:
     return getGeneration() < GFX9;
   }
 
+  // True if the hardware rewinds and replays GWS operations if a wave is
+  // preempted.
+  //
+  // If this is false, a GWS operation requires testing if a nack set the
+  // MEM_VIOL bit, and repeating if so.
+  bool hasGWSAutoReplay() const {
+    return getGeneration() >= GFX9;
+  }
+
   bool hasAddNoCarry() const {
     return AddNoCarryInsts;
   }
