@@ -105,6 +105,53 @@ define <2 x i1> @isnot_pow2or0_decrement_op_vec(<2 x i8> %x) {
   ret <2 x i1> %cmp
 }
 
+define i1 @is_pow2or0_negate_op_commute1(i32 %p) {
+; CHECK-LABEL: @is_pow2or0_negate_op_commute1(
+; CHECK-NEXT:    [[X:%.*]] = srem i32 42, [[P:%.*]]
+; CHECK-NEXT:    [[NEG:%.*]] = sub nsw i32 0, [[X]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[NEG]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[AND]], [[X]]
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %x = srem i32 42, %p ; thwart complexity-based canonicalization
+  %neg = sub i32 0, %x
+  %and = and i32 %x, %neg
+  %cmp = icmp eq i32 %and, %x
+  ret i1 %cmp
+}
+
+; x can't be <= complexity of the 'neg' but >= complexity of the 'and'.
+
+define i1 @isnot_pow2or0_negate_op_commute2(i32 %p) {
+; CHECK-LABEL: @isnot_pow2or0_negate_op_commute2(
+; CHECK-NEXT:    [[X:%.*]] = urem i32 42, [[P:%.*]]
+; CHECK-NEXT:    [[NEG:%.*]] = sub nsw i32 0, [[X]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[NEG]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i32 [[X]], [[AND]]
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %x = urem i32 42, %p ; thwart complexity-based canonicalization
+  %neg = sub i32 0, %x
+  %and = and i32 %neg, %x
+  %cmp = icmp ne i32 %x, %and
+  ret i1 %cmp
+}
+
+define i1 @isnot_pow2or0_negate_op_commute3(i32 %p) {
+; CHECK-LABEL: @isnot_pow2or0_negate_op_commute3(
+; CHECK-NEXT:    [[X:%.*]] = urem i32 42, [[P:%.*]]
+; CHECK-NEXT:    [[NEG:%.*]] = sub nsw i32 0, [[X]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[NEG]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i32 [[X]], [[AND]]
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %x = urem i32 42, %p ; thwart complexity-based canonicalization
+  %neg = sub i32 0, %x
+  %and = and i32 %x, %neg
+  %cmp = icmp ne i32 %x, %and
+  ret i1 %cmp
+}
+
 declare void @use(i32)
 
 define i1 @is_pow2or0_negate_op_extra_use1(i32 %x) {
