@@ -557,7 +557,9 @@ let SubtargetPredicate = isGFX7Plus in {
 defm DS_WRAP_RTN_B32 : DS_1A2D_RET_mc<"ds_wrap_rtn_b32", VGPR_32>;
 defm DS_CONDXCHG32_RTN_B64 : DS_1A1D_RET_mc<"ds_condxchg32_rtn_b64", VReg_64>;
 
+let isConvergent = 1, usesCustomInserter = 1 in {
 def DS_GWS_SEMA_RELEASE_ALL : DS_GWS_0D<"ds_gws_sema_release_all">;
+}
 
 let mayStore = 0 in {
 defm DS_READ_B96 : DS_1A_RET_mc<"ds_read_b96", VReg_96>;

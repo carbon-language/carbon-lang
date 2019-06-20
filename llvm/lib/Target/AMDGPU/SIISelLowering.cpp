@@ -962,7 +962,11 @@ bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     return true;
   }
   case Intrinsic::amdgcn_ds_gws_init:
-  case Intrinsic::amdgcn_ds_gws_barrier: {
+  case Intrinsic::amdgcn_ds_gws_barrier:
+  case Intrinsic::amdgcn_ds_gws_sema_v:
+  case Intrinsic::amdgcn_ds_gws_sema_br:
+  case Intrinsic::amdgcn_ds_gws_sema_p:
+  case Intrinsic::amdgcn_ds_gws_sema_release_all: {
     Info.opc = ISD::INTRINSIC_VOID;
 
     SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
@@ -2981,9 +2985,7 @@ SITargetLowering::emitGWSMemViolTestLoop(MachineInstr &MI,
   std::tie(LoopBB, RemainderBB) = splitBlockForLoop(MI, *BB, true);
 
   MachineBasicBlock::iterator I = LoopBB->end();
-
   MachineOperand *Src = TII->getNamedOperand(MI, AMDGPU::OpName::data0);
-  assert(Src && "missing operand from GWS instruction");
 
   const unsigned EncodedReg = AMDGPU::Hwreg::encodeHwreg(
     AMDGPU::Hwreg::ID_TRAPSTS, AMDGPU::Hwreg::OFFSET_MEM_VIOL, 1);
@@ -2995,7 +2997,7 @@ SITargetLowering::emitGWSMemViolTestLoop(MachineInstr &MI,
 
   // This is a pain, but we're not allowed to have physical register live-ins
   // yet. Insert a pair of copies if the VGPR0 hack is necessary.
-  if (TargetRegisterInfo::isPhysicalRegister(Src->getReg())) {
+  if (Src && TargetRegisterInfo::isPhysicalRegister(Src->getReg())) {
     unsigned Data0 = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
     BuildMI(*BB, std::next(Prev), DL, TII->get(AMDGPU::COPY), Data0)
       .add(*Src);
@@ -3722,6 +3724,7 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::DS_GWS_SEMA_V:
   case AMDGPU::DS_GWS_SEMA_BR:
   case AMDGPU::DS_GWS_SEMA_P:
+  case AMDGPU::DS_GWS_SEMA_RELEASE_ALL:
   case AMDGPU::DS_GWS_BARRIER:
     if (getSubtarget()->hasGWSAutoReplay())
       return BB;

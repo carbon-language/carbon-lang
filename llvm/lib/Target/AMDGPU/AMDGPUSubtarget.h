@@ -724,6 +724,11 @@ public:
     return getGeneration() >= GFX9;
   }
 
+  /// \returns if target has ds_gws_sema_release_all instruction.
+  bool hasGWSSemaReleaseAll() const {
+    return CIInsts;
+  }
+
   bool hasAddNoCarry() const {
     return AddNoCarryInsts;
   }
