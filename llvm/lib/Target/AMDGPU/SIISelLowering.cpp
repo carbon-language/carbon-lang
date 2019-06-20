@@ -2621,19 +2621,11 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
 
     SmallVector<SDValue, 4> CopyFromChains;
 
-    unsigned OffsetReg = Info->getScratchWaveOffsetReg();
-
     // In the HSA case, this should be an identity copy.
     SDValue ScratchRSrcReg
       = DAG.getCopyFromReg(Chain, DL, Info->getScratchRSrcReg(), MVT::v4i32);
     RegsToPass.emplace_back(AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3, ScratchRSrcReg);
     CopyFromChains.push_back(ScratchRSrcReg.getValue(1));
-
-    // TODO: Don't hardcode these registers and get from the callee function.
-    SDValue ScratchWaveOffsetReg
-      = DAG.getCopyFromReg(Chain, DL, OffsetReg, MVT::i32);
-    RegsToPass.emplace_back(AMDGPU::SGPR4, ScratchWaveOffsetReg);
-    CopyFromChains.push_back(ScratchWaveOffsetReg.getValue(1));
 
     if (!Info->isEntryFunction()) {
       // Avoid clobbering this function's FP value. In the current convention
