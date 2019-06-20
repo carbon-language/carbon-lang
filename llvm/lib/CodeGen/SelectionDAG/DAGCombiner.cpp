@@ -9840,14 +9840,13 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       N0.getOperand(0).getOpcode() == ISD::ZERO_EXTEND &&
       N0.hasOneUse()) {
     SDValue ShAmt = N0.getOperand(1);
-    unsigned ShAmtVal = cast<ConstantSDNode>(ShAmt)->getZExtValue();
     if (N0.getOpcode() == ISD::SHL) {
       SDValue InnerZExt = N0.getOperand(0);
       // If the original shl may be shifting out bits, do not perform this
       // transformation.
       unsigned KnownZeroBits = InnerZExt.getValueSizeInBits() -
         InnerZExt.getOperand(0).getValueSizeInBits();
-      if (ShAmtVal > KnownZeroBits)
+      if (cast<ConstantSDNode>(ShAmt)->getAPIntValue().ugt(KnownZeroBits))
         return SDValue();
     }
 
