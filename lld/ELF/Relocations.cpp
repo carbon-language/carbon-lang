@@ -910,19 +910,13 @@ static void processRelocAux(InputSectionBase &Sec, RelExpr Expr, RelType Type,
 
   bool CanWrite = (Sec.Flags & SHF_WRITE) || !Config->ZText;
   if (CanWrite) {
-    // FIXME Improve the way we handle absolute relocation types that will
-    // change to relative relocations. ARM has a relocation type R_ARM_TARGET1
-    // that is similar to SymbolicRel. PPC64 may have similar relocation types.
-    if ((!Sym.IsPreemptible &&
-         (Config->EMachine == EM_ARM || Config->EMachine == EM_PPC64 ||
-          Type == Target->SymbolicRel)) ||
-        Expr == R_GOT) {
-      // If this is a symbolic relocation to a non-preemptable symbol, or an
-      // R_GOT, its address is its link-time value plus load address. Represent
-      // it with a relative relocation.
+    RelType Rel = Target->getDynRel(Type);
+    if (Expr == R_GOT || (Rel == Target->SymbolicRel && !Sym.IsPreemptible)) {
       addRelativeReloc(&Sec, Offset, &Sym, Addend, Expr, Type);
       return;
-    } else if (RelType Rel = Target->getDynRel(Type)) {
+    } else if (Rel != 0) {
+      if (Config->EMachine == EM_MIPS && Rel == Target->SymbolicRel)
+        Rel = Target->RelativeRel;
       Sec.getPartition().RelaDyn->addReloc(Rel, &Sec, Offset, &Sym, Addend,
                                            R_ADDEND, Type);
 
