@@ -12,14 +12,6 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! Issue 458 -- semantic checks for a normal DO loop.  The DO variable
-! and the initial, final, and step expressions must be INTEGER if the
-! options for standard conformance and turning warnings into errors
-! are both in effect.  This test turns on the options for standards
-! conformance and turning warnings into errors.  This produces error
-! messages for the cases where REAL and DOUBLE PRECISION variables
-! and expressions are used in the DO controls.
-
 ! C1123 -- Expressions in DO CONCURRENT header cannot reference variables
 ! declared in the same header
 PROGRAM dosemantics04
@@ -35,8 +27,19 @@ PROGRAM dosemantics04
     PRINT *, "hello"
 30 END DO
 
+! Initial expression
 !ERROR: concurrent-control expression references index-name
   DO CONCURRENT (i = j:3, j=1:3)
+  END DO
+
+! Final expression
+!ERROR: concurrent-control expression references index-name
+  DO CONCURRENT (i = 1:j, j=1:3)
+  END DO
+
+! Step expression
+!ERROR: concurrent-control expression references index-name
+  DO CONCURRENT (i = 1:3:j, j=1:3)
   END DO
 
 !ERROR: concurrent-control expression references index-name

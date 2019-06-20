@@ -968,8 +968,8 @@ private:
   void SetTypeFromAssociation(Symbol &);
   void SetAttrsFromAssociation(Symbol &);
   Selector ResolveSelector(const parser::Selector &);
-  void ResolveControlExpression(const parser::ConcurrentControl &control);
-  void ResolveIndexName(const parser::Name &name);
+  void ResolveControlExpressions(const parser::ConcurrentControl &control);
+  void ResolveIndexName(const parser::ConcurrentControl &control);
 };
 
 // Walk the parse tree and resolve names to symbols.
@@ -3886,7 +3886,9 @@ ParamValue DeclarationVisitor::GetParamValue(const parser::TypeParamValue &x) {
 
 // ConstructVisitor implementation
 
-void ConstructVisitor::ResolveIndexName(const parser::Name &name) {
+void ConstructVisitor::ResolveIndexName(
+    const parser::ConcurrentControl &control) {
+  const parser::Name &name{std::get<parser::Name>(control.t)};
   auto *prev{FindSymbol(name)};
   if (prev) {
     if (prev->owner().kind() == Scope::Kind::Forall ||
@@ -3918,14 +3920,11 @@ void ConstructVisitor::ResolveIndexName(const parser::Name &name) {
   EvaluateExpr(parser::Scalar{parser::Integer{common::Clone(name)}});
 }
 
-void ConstructVisitor::ResolveControlExpression(
+void ConstructVisitor::ResolveControlExpressions(
     const parser::ConcurrentControl &control) {
-  Walk(std::get<1>(control.t));
-  Walk(std::get<2>(control.t));
-  const auto &optionalStep{std::get<3>(control.t)};
-  if (optionalStep.has_value()) {
-    Walk(optionalStep.value());
-  }
+  Walk(std::get<1>(control.t));  // Initial expression
+  Walk(std::get<2>(control.t));  // Final expression
+  Walk(std::get<3>(control.t));  // Step expression
 }
 
 // We need to make sure that all of the index-names get declared before the
@@ -3935,7 +3934,8 @@ bool ConstructVisitor::Pre(const parser::ConcurrentHeader &header) {
   BeginDeclTypeSpec();
 
   // Process the type spec, if present
-  auto &typeSpec{std::get<std::optional<parser::IntegerTypeSpec>>(header.t)};
+  const auto &typeSpec{
+      std::get<std::optional<parser::IntegerTypeSpec>>(header.t)};
   if (typeSpec.has_value()) {
     SetDeclTypeSpec(MakeNumericType(TypeCategory::Integer, typeSpec->v));
   }
@@ -3943,19 +3943,17 @@ bool ConstructVisitor::Pre(const parser::ConcurrentHeader &header) {
   // Process the index-name nodes in the ConcurrentControl nodes
   auto &controls{std::get<std::list<parser::ConcurrentControl>>(header.t)};
   for (auto &control : controls) {
-    ResolveIndexName(std::get<parser::Name>(control.t));
+    ResolveIndexName(control);
   }
 
   // Process the expressions in ConcurrentControls
   for (auto &control : controls) {
-    ResolveControlExpression(control);
+    ResolveControlExpressions(control);
   }
 
-  // Resolve the names in the scalar-mask-expr, if present
-  auto &maskExpr{std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)};
-  if (maskExpr.has_value()) {
-    Walk(maskExpr.value());
-  }
+  // Resolve the names in the scalar-mask-expr
+  Walk(std::get<std::optional<parser::ScalarLogicalExpr>>(header.t));
+
   EndDeclTypeSpec();
   return false;
 }
