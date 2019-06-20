@@ -2322,14 +2322,7 @@ public:
   }
 
   /// Determine whether a field initialization may overlap some other object.
-  AggValueSlot::Overlap_t overlapForFieldInit(const FieldDecl *FD) {
-    // FIXME: These cases can result in overlap as a result of P0840R0's
-    // [[no_unique_address]] attribute. We can still infer NoOverlap in the
-    // presence of that attribute if the field is within the nvsize of its
-    // containing class, because non-virtual subobjects are initialized in
-    // address order.
-    return AggValueSlot::DoesNotOverlap;
-  }
+  AggValueSlot::Overlap_t overlapForFieldInit(const FieldDecl *FD);
 
   /// Determine whether a base class initialization may overlap some other
   /// object.
