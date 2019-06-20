@@ -93,10 +93,7 @@ define i64 @pow2b(i32 %x) {
 
 define i32 @pow2_decrement(i32 %p) {
 ; CHECK-LABEL: @pow2_decrement(
-; CHECK-NEXT:    [[X:%.*]] = shl i32 1, [[P:%.*]]
-; CHECK-NEXT:    [[A:%.*]] = add i32 [[X]], -1
-; CHECK-NEXT:    [[R:%.*]] = and i32 [[A]], [[X]]
-; CHECK-NEXT:    ret i32 [[R]]
+; CHECK-NEXT:    ret i32 0
 ;
   %x = shl i32 1, %p
   %a = add i32 %x, -1
@@ -106,10 +103,7 @@ define i32 @pow2_decrement(i32 %p) {
 
 define <2 x i32> @pow2_decrement_commute_vec(<2 x i32> %p) {
 ; CHECK-LABEL: @pow2_decrement_commute_vec(
-; CHECK-NEXT:    [[X:%.*]] = and <2 x i32> [[P:%.*]], <i32 2048, i32 2048>
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i32> [[X]], <i32 -1, i32 -1>
-; CHECK-NEXT:    [[R:%.*]] = and <2 x i32> [[X]], [[A]]
-; CHECK-NEXT:    ret <2 x i32> [[R]]
+; CHECK-NEXT:    ret <2 x i32> zeroinitializer
 ;
   %x = and <2 x i32> %p, <i32 2048, i32 2048>
   %a = add <2 x i32> %x, <i32 -1, i32 -1>
