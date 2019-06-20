@@ -834,6 +834,10 @@ void JSONNodeDumper::VisitBlockDecl(const BlockDecl *D) {
   attributeOnlyIfTrue("capturesThis", D->capturesCXXThis());
 }
 
+void JSONNodeDumper::VisitObjCEncodeExpr(const ObjCEncodeExpr *OEE) {
+  JOS.attribute("encodedType", createQualType(OEE->getEncodedType()));
+}
+
 void JSONNodeDumper::VisitDeclRefExpr(const DeclRefExpr *DRE) {
   JOS.attribute("referencedDecl", createBareDeclRef(DRE->getDecl()));
   if (DRE->getDecl() != DRE->getFoundDecl())

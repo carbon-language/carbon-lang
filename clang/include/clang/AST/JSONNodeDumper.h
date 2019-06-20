@@ -232,6 +232,7 @@ public:
   void VisitObjCPropertyDecl(const ObjCPropertyDecl *D);
   void VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D);
   void VisitBlockDecl(const BlockDecl *D);
+  void VisitObjCEncodeExpr(const ObjCEncodeExpr *OEE);
 
   void VisitDeclRefExpr(const DeclRefExpr *DRE);
   void VisitPredefinedExpr(const PredefinedExpr *PE);
