@@ -7263,7 +7263,6 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       N0.getOperand(0).getOpcode() == ISD::SRL) {
     SDValue N0Op0 = N0.getOperand(0);
     SDValue InnerShiftAmt = N0Op0.getOperand(1);
-    EVT InnerShiftAmtVT = N0Op0.getOperand(1).getValueType();
 
     auto MatchEqual = [VT](ConstantSDNode *LHS, ConstantSDNode *RHS) {
       APInt c1 = LHS->getAPIntValue();
