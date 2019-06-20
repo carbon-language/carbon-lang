@@ -3909,7 +3909,7 @@ void ConstructVisitor::ResolveIndexName(
         *prev, "Previous declaration of '%s'"_en_US);
     return;
   } else {
-    if (auto *type{prev->GetType()}) {
+    if (const auto *type{prev->GetType()}) {
       symbol.SetType(*type);
     }
     if (prev->IsObjectArray()) {
@@ -3941,13 +3941,14 @@ bool ConstructVisitor::Pre(const parser::ConcurrentHeader &header) {
   }
 
   // Process the index-name nodes in the ConcurrentControl nodes
-  auto &controls{std::get<std::list<parser::ConcurrentControl>>(header.t)};
-  for (auto &control : controls) {
+  const auto &controls{
+      std::get<std::list<parser::ConcurrentControl>>(header.t)};
+  for (const auto &control : controls) {
     ResolveIndexName(control);
   }
 
   // Process the expressions in ConcurrentControls
-  for (auto &control : controls) {
+  for (const auto &control : controls) {
     ResolveControlExpressions(control);
   }
 
