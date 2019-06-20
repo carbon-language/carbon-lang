@@ -1071,6 +1071,23 @@ void JSONNodeDumper::VisitMaterializeTemporaryExpr(
   attributeOnlyIfTrue("boundToLValueRef", MTE->isBoundToLvalueReference());
 }
 
+void JSONNodeDumper::VisitCXXDependentScopeMemberExpr(
+    const CXXDependentScopeMemberExpr *DSME) {
+  JOS.attribute("isArrow", DSME->isArrow());
+  JOS.attribute("member", DSME->getMember().getAsString());
+  attributeOnlyIfTrue("hasTemplateKeyword", DSME->hasTemplateKeyword());
+  attributeOnlyIfTrue("hasExplicitTemplateArgs",
+                      DSME->hasExplicitTemplateArgs());
+
+  if (DSME->getNumTemplateArgs()) {
+    JOS.attributeArray("explicitTemplateArgs", [DSME, this] {
+      for (const TemplateArgumentLoc &TAL : DSME->template_arguments())
+        JOS.object(
+            [&TAL, this] { Visit(TAL.getArgument(), TAL.getSourceRange()); });
+    });
+  }
+}
+
 void JSONNodeDumper::VisitIntegerLiteral(const IntegerLiteral *IL) {
   JOS.attribute("value",
                 IL->getValue().toString(

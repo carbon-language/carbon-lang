@@ -258,6 +258,7 @@ public:
   void VisitExprWithCleanups(const ExprWithCleanups *EWC);
   void VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *BTE);
   void VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *MTE);
+  void VisitCXXDependentScopeMemberExpr(const CXXDependentScopeMemberExpr *ME);
 
   void VisitIntegerLiteral(const IntegerLiteral *IL);
   void VisitCharacterLiteral(const CharacterLiteral *CL);
