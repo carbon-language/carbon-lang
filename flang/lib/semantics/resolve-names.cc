@@ -2883,13 +2883,13 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     if (!spec.FindParameter(name)) {
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
           [&](const Symbol *symbol) { return symbol->name() == name; })};
-      CHECK(it != parameterDecls.end());
-      auto &symbol{**it};
-      const auto *details{symbol.detailsIf<TypeParamDetails>()};
-      if (details == nullptr || !details->init().has_value()) {
-        Say(typeName.source,
-            "Type parameter '%s' lacks a value and has no default"_err_en_US,
-            symbol.name());
+      if (it != parameterDecls.end()) {
+        const auto *details{(*it)->detailsIf<TypeParamDetails>()};
+        if (details == nullptr || !details->init().has_value()) {
+          Say(typeName.source,
+              "Type parameter '%s' lacks a value and has no default"_err_en_US,
+              name);
+        }
       }
     }
   }

@@ -50,3 +50,10 @@ module module1
     call type2arg(type2(0,0)(type1=type1(0)(),m=2))
   end subroutine errors
 end module module1
+
+module module2
+  !ERROR: No definition found for type parameter 'k'
+  type :: type1(k)
+  end type
+  type(type1):: x
+end module
