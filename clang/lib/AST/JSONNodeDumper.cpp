@@ -994,6 +994,38 @@ void JSONNodeDumper::VisitGenericSelectionExpr(
   attributeOnlyIfTrue("resultDependent", GSE->isResultDependent());
 }
 
+void JSONNodeDumper::VisitCXXUnresolvedConstructExpr(
+    const CXXUnresolvedConstructExpr *UCE) {
+  if (UCE->getType() != UCE->getTypeAsWritten())
+    JOS.attribute("typeAsWritten", createQualType(UCE->getTypeAsWritten()));
+  attributeOnlyIfTrue("list", UCE->isListInitialization());
+}
+
+void JSONNodeDumper::VisitCXXConstructExpr(const CXXConstructExpr *CE) {
+  CXXConstructorDecl *Ctor = CE->getConstructor();
+  JOS.attribute("ctorType", createQualType(Ctor->getType()));
+  attributeOnlyIfTrue("elidable", CE->isElidable());
+  attributeOnlyIfTrue("list", CE->isListInitialization());
+  attributeOnlyIfTrue("initializer_list", CE->isStdInitListInitialization());
+  attributeOnlyIfTrue("zeroing", CE->requiresZeroInitialization());
+  attributeOnlyIfTrue("hadMultipleCandidates", CE->hadMultipleCandidates());
+
+  switch (CE->getConstructionKind()) {
+  case CXXConstructExpr::CK_Complete:
+    JOS.attribute("constructionKind", "complete");
+    break;
+  case CXXConstructExpr::CK_Delegating:
+    JOS.attribute("constructionKind", "delegating");
+    break;
+  case CXXConstructExpr::CK_NonVirtualBase:
+    JOS.attribute("constructionKind", "non-virtual base");
+    break;
+  case CXXConstructExpr::CK_VirtualBase:
+    JOS.attribute("constructionKind", "virtual base");
+    break;
+  }
+}
+
 void JSONNodeDumper::VisitIntegerLiteral(const IntegerLiteral *IL) {
   JOS.attribute("value",
                 IL->getValue().toString(
