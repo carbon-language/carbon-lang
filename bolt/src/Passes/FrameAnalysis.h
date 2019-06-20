@@ -224,9 +224,7 @@ public:
   }
 
   /// Clean and de-allocate all SPT objects
-  void clearSPTMap() {
-    SPTMap.clear(); 
-  }
+  void clearSPTMap();
 
   /// Perform SPT analysis for all functions in parallel
   void preComputeSPT();

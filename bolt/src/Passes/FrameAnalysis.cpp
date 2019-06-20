@@ -580,6 +580,57 @@ void FrameAnalysis::printStats() {
          << " could not have its frame indices restored.\n";
 }
 
+void FrameAnalysis::clearSPTMap() {
+  if (opts::NoThreads) {
+    SPTMap.clear();
+    return;
+  }
+
+  auto clearBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
+                        std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
+    for (auto It = BlockBegin; It != BlockEnd; ++It) {
+      auto &BF = It->second;
+
+      if (!BF.isSimple() || !BF.hasCFG())
+        continue;
+
+      auto &SPTPtr = SPTMap.find(&BF)->second;
+      SPTPtr.reset();
+    }
+  };
+
+  ThreadPool ThPool(opts::ThreadCount);
+  unsigned CurId = 0;
+  auto BlockBegin = BC.getBinaryFunctions().begin();
+
+  // Functions that use the same allocator id are on the same task
+  for (auto It = BC.getBinaryFunctions().begin();
+       It != BC.getBinaryFunctions().end(); ++It) {
+    auto &BF = It->second;
+
+    if (BF.isSimple() && BF.hasCFG()) {
+      auto &SPT = getSPT(BF);
+
+      // First valid allocator id is seen
+      if (CurId == 0) {
+        BlockBegin = It;
+        CurId = SPT.getAllocatorId();
+        continue;
+      }
+
+      if (CurId != SPT.getAllocatorId()) {
+        CurId = SPT.getAllocatorId();
+        ThPool.async(clearBlock, BlockBegin, It);
+        BlockBegin = It;
+      }
+    }
+  }
+
+  ThPool.async(clearBlock, BlockBegin, BC.getBinaryFunctions().end());
+  ThPool.wait();
+  SPTMap.clear();
+}
+
 void FrameAnalysis::preComputeSPT() {
   // Create a lock that postpone execution of tasks until all allocators are
   // initialized

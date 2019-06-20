@@ -257,6 +257,11 @@ protected:
   }
 
 public:
+  /// Return the allocator id
+  unsigned getAllocatorId() {
+    return AllocatorId;
+  }
+
   /// If the direction of the dataflow is forward, operates on the last
   /// instruction of all predecessors when performing an iteration of the
   /// dataflow equation for the start of this BB.  If backwards, operates on
