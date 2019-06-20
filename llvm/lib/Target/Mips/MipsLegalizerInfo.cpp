@@ -120,6 +120,16 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
       .libcallForCartesianProduct({s64}, {s64, s32})
       .minScalar(0, s32);
 
+  // Int to FP conversion instructions
+  getActionDefinitionsBuilder(G_SITOFP)
+      .legalForCartesianProduct({s64, s32}, {s32})
+      .libcallForCartesianProduct({s64, s32}, {s64})
+      .minScalar(1, s32);
+
+  getActionDefinitionsBuilder(G_UITOFP)
+      .libcallForCartesianProduct({s64, s32}, {s64})
+      .minScalar(1, s32);
+
   computeTables();
   verify(*ST.getInstrInfo());
 }

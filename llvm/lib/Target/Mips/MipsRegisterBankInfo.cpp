@@ -182,6 +182,17 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     });
     break;
   }
+  case G_SITOFP: {
+    unsigned SizeInt = MRI.getType(MI.getOperand(1).getReg()).getSizeInBits();
+    unsigned SizeFP = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+    assert((SizeInt == 32) && "Unsupported integer size");
+    assert((SizeFP == 32 || SizeFP == 64) && "Unsupported floating point size");
+    OperandsMapping =
+        getOperandsMapping({SizeFP == 32 ? &Mips::ValueMappings[Mips::SPRIdx]
+                                         : &Mips::ValueMappings[Mips::DPRIdx],
+                            &Mips::ValueMappings[Mips::GPRIdx]});
+    break;
+  }
   case G_CONSTANT:
   case G_FRAME_INDEX:
   case G_GLOBAL_VALUE:

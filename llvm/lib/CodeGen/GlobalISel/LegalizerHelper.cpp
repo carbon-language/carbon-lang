@@ -435,12 +435,12 @@ LegalizerHelper::libcall(MachineInstr &MI) {
     // FIXME: Support other types
     unsigned FromSize = MRI.getType(MI.getOperand(1).getReg()).getSizeInBits();
     unsigned ToSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
-    if (FromSize != 32 || (ToSize != 32 && ToSize != 64))
+    if ((FromSize != 32 && FromSize != 64) || (ToSize != 32 && ToSize != 64))
       return UnableToLegalize;
     LegalizeResult Status = conversionLibcall(
         MI, MIRBuilder,
         ToSize == 64 ? Type::getDoubleTy(Ctx) : Type::getFloatTy(Ctx),
-        Type::getInt32Ty(Ctx));
+        FromSize == 32 ? Type::getInt32Ty(Ctx) : Type::getInt64Ty(Ctx));
     if (Status != Legalized)
       return Status;
     break;
