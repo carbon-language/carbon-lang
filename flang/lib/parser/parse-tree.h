@@ -963,7 +963,7 @@ struct ComponentAttrSpec {
 };
 
 // R806 null-init -> function-reference
-// TODO check that NULL is still intrinsic
+// TODO replace with semantic check on expression
 EMPTY_CLASS(NullInit);
 
 // R744 initial-data-target -> designator

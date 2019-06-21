@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "resolve-names.h"
+#include "assignment.h"
 #include "attr.h"
 #include "expression.h"
 #include "mod-file.h"
@@ -825,6 +826,9 @@ private:
   void SetSaveAttr(Symbol &);
   bool HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
   const parser::Name *FindComponent(const parser::Name *, const parser::Name &);
+  void CheckInitialDataTarget(const Symbol &, const SomeExpr &);
+  void Initialization(const parser::Name &, const parser::Initialization &,
+      bool inComponentDecl);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -2506,12 +2510,7 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   Symbol &symbol{DeclareUnknownEntity(name, attrs)};
   if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
     if (ConvertToObjectEntity(symbol)) {
-      if (auto *expr{std::get_if<parser::ConstantExpr>(&init->u)}) {
-        if (auto folded{EvaluateConvertedExpr(
-                symbol, *expr, expr->thing.value().source)}) {
-          symbol.get<ObjectEntityDetails>().set_init(std::move(*folded));
-        }
-      }
+      Initialization(name, *init, false);
     }
   } else if (attrs.test(Attr::PARAMETER)) {
     Say(name, "Missing initialization for parameter '%s'"_err_en_US);
@@ -3079,9 +3078,7 @@ void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
     auto &symbol{DeclareObjectEntity(name, attrs)};
     if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
       if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
-        if (auto *initExpr{std::get_if<parser::ConstantExpr>(&init->u)}) {
-          details->set_init(EvaluateExpr(*initExpr));
-        }
+        Initialization(name, *init, true);
       }
     }
     currScope().symbol()->get<DerivedTypeDetails>().add_component(symbol);
@@ -4482,6 +4479,94 @@ const parser::Name *DeclarationVisitor::FindComponent(
         *base, symbol, "'%s' is not an object of derived type"_err_en_US);
   }
   return nullptr;
+}
+
+// C764, C765
+void DeclarationVisitor::CheckInitialDataTarget(
+    const Symbol &pointer, const SomeExpr &expr) {
+  if (auto base{evaluate::GetBaseObject(expr)}) {
+    if (const Symbol * baseSym{base->symbol()}) {
+      const Symbol &ultimate{baseSym->GetUltimate()};
+      if (!IsAllocatable(ultimate) && ultimate.Corank() == 0 &&
+          ultimate.attrs().HasAll({Attr::TARGET, Attr::SAVE}) &&
+          evaluate::IsInitialDataTarget(expr)) {
+        // TODO: check type compatibility
+        // TODO: check non-deferred type parameter values
+        // TODO: check contiguity if pointer is CONTIGUOUS
+        if (pointer.Rank() != expr.Rank()) {
+          Say(pointer.name(),
+              "Pointer '%s' initialized with target of different rank"_err_en_US);
+        }
+        return;
+      }
+    }
+  }
+  Say(pointer.name(),
+      "Pointer '%s' initialized with invalid data target designator"_err_en_US);
+}
+
+void DeclarationVisitor::Initialization(const parser::Name &name,
+    const parser::Initialization &init, bool inComponentDecl) {
+  if (name.symbol == nullptr) {
+    return;
+  }
+  Symbol &ultimate{name.symbol->GetUltimate()};
+  if (auto *details{ultimate.detailsIf<ObjectEntityDetails>()}) {
+    // TODO: check C762 - all bounds and type parameters of component
+    // are colons or constant expressions if component is initialized
+    bool isPointer{false};
+    std::visit(
+        common::visitors{
+            [&](const parser::ConstantExpr &expr) {
+              if (inComponentDecl) {
+                // Can't convert to type of component, which might not yet
+                // be known; that's done later during instantiation.
+                if (MaybeExpr value{EvaluateExpr(expr)}) {
+                  details->set_init(std::move(*value));
+                }
+              } else {
+                if (MaybeExpr folded{EvaluateConvertedExpr(
+                        ultimate, expr, expr.thing.value().source)}) {
+                  details->set_init(std::move(*folded));
+                }
+              }
+            },
+            [&](const parser::NullInit &) {
+              isPointer = true;
+              details->set_init(SomeExpr{evaluate::NullPointer{}});
+            },
+            [&](const parser::InitialDataTarget &initExpr) {
+              isPointer = true;
+              if (MaybeExpr expr{EvaluateExpr(initExpr)}) {
+                CheckInitialDataTarget(ultimate, *expr);
+                details->set_init(std::move(*expr));
+              }
+            },
+            [&](const std::list<common::Indirection<parser::DataStmtValue>>
+                    &list) {
+              if (inComponentDecl) {
+                Say(name,
+                    "Component '%s' initialized with DATA statement values"_err_en_US);
+              } else {
+                // TODO - DATA statements and DATA-like initialization extension
+              }
+            },
+        },
+        init.u);
+    if (isPointer) {
+      if (!IsPointer(ultimate)) {
+        Say(name,
+            "Non-pointer component '%s' initialized with pointer target"_err_en_US);
+      }
+    } else {
+      if (IsPointer(ultimate)) {
+        Say(name,
+            "Object pointer component '%s' initialized with non-pointer expression"_err_en_US);
+      } else if (IsAllocatable(ultimate)) {
+        Say(name, "Allocatable component '%s' cannot be initialized"_err_en_US);
+      }
+    }
+  }
 }
 
 void ResolveNamesVisitor::HandleCall(
