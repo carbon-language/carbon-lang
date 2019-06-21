@@ -6148,7 +6148,7 @@ static DecodeStatus DecodePowerTwoOperand(MCInst &Inst, unsigned Val,
   if (Val < MinLog || Val > MaxLog)
     return MCDisassembler::Fail;
 
-  Inst.addOperand(MCOperand::createImm(1 << Val));
+  Inst.addOperand(MCOperand::createImm(1LL << Val));
   return S;
 }
 
