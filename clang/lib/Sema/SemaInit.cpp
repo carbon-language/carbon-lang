@@ -8522,8 +8522,9 @@ bool InitializationSequence::Diagnose(Sema &S,
         SourceType.getQualifiers() - NonRefType.getQualifiers();
 
     S.Diag(Kind.getLocation(), diag::err_reference_bind_drops_quals)
-      << SourceType
       << NonRefType
+      << SourceType
+      << Qualifiers::fromCVRMask(DroppedQualifiers.getCVRQualifiers())
       << DroppedQualifiers.getCVRQualifiers()
       << Args[0]->getSourceRange();
     break;
