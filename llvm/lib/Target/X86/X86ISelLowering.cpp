@@ -41023,11 +41023,9 @@ static SDValue combineAndnp(SDNode *N, SelectionDAG &DAG,
     return DAG.getConstant(0, SDLoc(N), VT);
 
   // Turn ANDNP back to AND if input is inverted.
-  if (VT.isVector() && N->getOperand(0).getOpcode() == ISD::XOR &&
-      ISD::isBuildVectorAllOnes(N->getOperand(0).getOperand(1).getNode())) {
-    return DAG.getNode(ISD::AND, SDLoc(N), VT,
-                       N->getOperand(0).getOperand(0), N->getOperand(1));
-  }
+  if (SDValue Not = IsNOT(N->getOperand(0), DAG))
+    return DAG.getNode(ISD::AND, SDLoc(N), VT, DAG.getBitcast(VT, Not),
+                       N->getOperand(1));
 
   // Attempt to recursively combine a bitmask ANDNP with shuffles.
   if (VT.isVector() && (VT.getScalarSizeInBits() % 8) == 0) {
