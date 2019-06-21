@@ -34619,12 +34619,10 @@ static SDValue combineCastedMaskArithmetic(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue createMMXBuildVector(SDValue N, SelectionDAG &DAG,
+static SDValue createMMXBuildVector(BuildVectorSDNode *BV, SelectionDAG &DAG,
                                     const X86Subtarget &Subtarget) {
-  SDLoc DL(N);
-  unsigned NumElts = N.getNumOperands();
-
-  auto *BV = cast<BuildVectorSDNode>(N);
+  SDLoc DL(BV);
+  unsigned NumElts = BV->getNumOperands();
   SDValue Splat = BV->getSplatValue();
 
   // Build MMX element from integer GPR or SSE float values.
@@ -34672,7 +34670,7 @@ static SDValue createMMXBuildVector(SDValue N, SelectionDAG &DAG,
     Ops.append(NumElts, Splat);
   } else {
     for (unsigned i = 0; i != NumElts; ++i)
-      Ops.push_back(CreateMMXElement(N.getOperand(i)));
+      Ops.push_back(CreateMMXElement(BV->getOperand(i)));
   }
 
   // Use tree of PUNPCKLs to build up general MMX vector.
@@ -34777,7 +34775,7 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
     if (N0.getOpcode() == ISD::BUILD_VECTOR &&
         (SrcVT == MVT::v2f32 || SrcVT == MVT::v2i32 || SrcVT == MVT::v4i16 ||
          SrcVT == MVT::v8i8))
-      return createMMXBuildVector(N0, DAG, Subtarget);
+      return createMMXBuildVector(cast<BuildVectorSDNode>(N0), DAG, Subtarget);
 
     // Detect bitcasts between element or subvector extraction to x86mmx.
     if ((N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
