@@ -644,6 +644,26 @@ template<typename A> semantics::Attrs GetAttrs(const A &x) {
   }
 }
 
+// GetBaseObject()
+template<typename A> std::optional<BaseObject> GetBaseObject(const A &) {
+  return std::nullopt;
+}
+template<typename T>
+std::optional<BaseObject> GetBaseObject(const Designator<T> &x) {
+  return x.GetBaseObject();
+}
+template<typename T> std::optional<BaseObject> GetBaseObject(const Expr<T> &x) {
+  return std::visit([](const auto &y) { return GetBaseObject(y); }, x.u);
+}
+template<typename A>
+std::optional<BaseObject> GetBaseObject(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return GetBaseObject(*x);
+  } else {
+    return std::nullopt;
+  }
+}
+
 // Predicate: IsAllocatableOrPointer()
 template<typename A> bool IsAllocatableOrPointer(const A &x) {
   return GetAttrs(x).HasAny(
