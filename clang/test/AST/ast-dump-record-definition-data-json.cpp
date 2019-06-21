@@ -126,6 +126,16 @@ struct DoesNotAllowConstDefaultInit {
 
 
 // CHECK:  "kind": "CXXRecordDecl",
+// CHECK-NEXT:  "name": "__NSConstantString_tag"
+// CHECK-NEXT: }
+
+
+// CHECK:  "kind": "CXXRecordDecl",
+// CHECK-NEXT:  "name": "__va_list_tag"
+// CHECK-NEXT: }
+
+
+// CHECK:  "kind": "CXXRecordDecl",
 // CHECK-NEXT:  "loc": {
 // CHECK-NEXT:   "col": 29,
 // CHECK-NEXT:   "file": "{{.*}}",
@@ -5193,4 +5203,3 @@ struct DoesNotAllowConstDefaultInit {
 // CHECK-NEXT:   }
 // CHECK-NEXT:  ]
 // CHECK-NEXT: }
-

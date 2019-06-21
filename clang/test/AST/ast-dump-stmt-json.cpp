@@ -6565,7 +6565,14 @@ void TestDependentGenericSelectionExpr(Ty T) {
 // CHECK-NEXT:           "qualType": "Ty"
 // CHECK-NEXT:          },
 // CHECK-NEXT:          "isDependent": true,
-// CHECK-NEXT:          "isInstantiationDependent": true
+// CHECK-NEXT:          "isInstantiationDependent": true,
+// CHECK-NEXT:          "depth": 0,
+// CHECK-NEXT:          "index": 0,
+// CHECK-NEXT:          "decl": {
+// CHECK-NEXT:           "id": "0x{{.*}}",
+// CHECK-NEXT:           "kind": "TemplateTypeParmDecl",
+// CHECK-NEXT:           "name": "Ty"
+// CHECK-NEXT:          }
 // CHECK-NEXT:         },
 // CHECK-NEXT:         {
 // CHECK-NEXT:          "associationKind": "case",
@@ -6685,7 +6692,14 @@ void TestDependentGenericSelectionExpr(Ty T) {
 // CHECK-NEXT:           "qualType": "Ty"
 // CHECK-NEXT:          },
 // CHECK-NEXT:          "isDependent": true,
-// CHECK-NEXT:          "isInstantiationDependent": true
+// CHECK-NEXT:          "isInstantiationDependent": true,
+// CHECK-NEXT:          "depth": 0,
+// CHECK-NEXT:          "index": 0,
+// CHECK-NEXT:          "decl": {
+// CHECK-NEXT:           "id": "0x{{.*}}",
+// CHECK-NEXT:           "kind": "TemplateTypeParmDecl",
+// CHECK-NEXT:           "name": "Ty"
+// CHECK-NEXT:          }
 // CHECK-NEXT:         },
 // CHECK-NEXT:         {
 // CHECK-NEXT:          "associationKind": "default",

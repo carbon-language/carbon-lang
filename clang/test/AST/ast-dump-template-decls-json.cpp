@@ -56,7 +56,6 @@ template <typename Uy>
 void V<Ty>::f() {}
 
 
-
 // CHECK:  "kind": "TranslationUnitDecl",
 // CHECK-NEXT:  "loc": {},
 // CHECK-NEXT:  "range": {
@@ -129,6 +128,11 @@ void V<Ty>::f() {}
 // CHECK-NEXT:      "kind": "RecordType",
 // CHECK-NEXT:      "type": {
 // CHECK-NEXT:       "qualType": "__NSConstantString_tag"
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "decl": {
+// CHECK-NEXT:       "id": "0x{{.*}}",
+// CHECK-NEXT:       "kind": "CXXRecordDecl",
+// CHECK-NEXT:       "name": "__NSConstantString_tag"
 // CHECK-NEXT:      }
 // CHECK-NEXT:     }
 // CHECK-NEXT:    ]
@@ -185,12 +189,18 @@ void V<Ty>::f() {}
 // CHECK-NEXT:      "type": {
 // CHECK-NEXT:       "qualType": "__va_list_tag [1]"
 // CHECK-NEXT:      },
+// CHECK-NEXT:      "size": 1,
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}",
 // CHECK-NEXT:        "kind": "RecordType",
 // CHECK-NEXT:        "type": {
 // CHECK-NEXT:         "qualType": "__va_list_tag"
+// CHECK-NEXT:        },
+// CHECK-NEXT:        "decl": {
+// CHECK-NEXT:         "id": "0x{{.*}}",
+// CHECK-NEXT:         "kind": "CXXRecordDecl",
+// CHECK-NEXT:         "name": "__va_list_tag"
 // CHECK-NEXT:        }
 // CHECK-NEXT:       }
 // CHECK-NEXT:      ]
@@ -2399,4 +2409,3 @@ void V<Ty>::f() {}
 // CHECK-NEXT:   }
 // CHECK-NEXT:  ]
 // CHECK-NEXT: }
-
