@@ -4286,15 +4286,6 @@ let Predicates = [HasAVX512, OptForSize] in {
              (v4i32 (VMOVSSZrr (v4i32 (AVX512_128_SET0)),
               (v4i32 (EXTRACT_SUBREG (v8i32 VR256X:$src), sub_xmm)))), sub_xmm)>;
 
-  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256X:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2f64 (VMOVSDZrr (v2f64 (AVX512_128_SET0)),
-              (v2f64 (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm)))), sub_xmm)>;
-  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256X:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2i64 (VMOVSDZrr (v2i64 (AVX512_128_SET0)),
-              (v2i64 (EXTRACT_SUBREG (v4i64 VR256X:$src), sub_xmm)))), sub_xmm)>;
-
   def : Pat<(v16f32 (X86vzmovl (v16f32 VR512:$src))),
             (SUBREG_TO_REG (i32 0),
              (v4f32 (VMOVSSZrr (v4f32 (AVX512_128_SET0)),
@@ -4303,17 +4294,6 @@ let Predicates = [HasAVX512, OptForSize] in {
             (SUBREG_TO_REG (i32 0),
              (v4i32 (VMOVSSZrr (v4i32 (AVX512_128_SET0)),
               (v4i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm)))), sub_xmm)>;
-
-  def : Pat<(v8f64 (X86vzmovl (v8f64 VR512:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2f64 (VMOVSDZrr (v2f64 (AVX512_128_SET0)),
-              (v2f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm)))), sub_xmm)>;
-
-  def : Pat<(v8i64 (X86vzmovl (v8i64 VR512:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2i64 (VMOVSDZrr (v2i64 (AVX512_128_SET0)),
-              (v2i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm)))), sub_xmm)>;
-
 }
 
 // Use 128-bit blends for OptForSpeed since BLENDs have better throughput than
@@ -4329,17 +4309,6 @@ let Predicates = [HasAVX512, OptForSpeed] in {
              (v4i32 (VPBLENDWrri (v4i32 (V_SET0)),
                           (v4i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm)),
                           (i8 3))), sub_xmm)>;
-
-  def : Pat<(v8f64 (X86vzmovl (v8f64 VR512:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2f64 (VBLENDPDrri (v2f64 (V_SET0)),
-                          (v2f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm)),
-                          (i8 1))), sub_xmm)>;
-  def : Pat<(v8i64 (X86vzmovl (v8i64 VR512:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2i64 (VPBLENDWrri (v2i64 (V_SET0)),
-                          (v2i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm)),
-                          (i8 0xf))), sub_xmm)>;
 }
 
 let Predicates = [HasAVX512] in {
@@ -4452,6 +4421,28 @@ let Predicates = [HasAVX512] in {
             (SUBREG_TO_REG (i32 0), (v4i32 (VMOVDI2PDIZrm addr:$src)), sub_xmm)>;
   def : Pat<(v8i64 (X86vzload addr:$src)),
             (SUBREG_TO_REG (i64 0), (v2i64 (VMOVQI2PQIZrm addr:$src)), sub_xmm)>;
+
+  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256X:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (v2f64 (VMOVZPQILo2PQIZrr
+                     (v2f64 (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm)))),
+             sub_xmm)>;
+  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256X:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (v2i64 (VMOVZPQILo2PQIZrr
+                     (v2i64 (EXTRACT_SUBREG (v4i64 VR256X:$src), sub_xmm)))),
+             sub_xmm)>;
+
+  def : Pat<(v8f64 (X86vzmovl (v8f64 VR512:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (v2f64 (VMOVZPQILo2PQIZrr
+                     (v2f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm)))),
+             sub_xmm)>;
+  def : Pat<(v8i64 (X86vzmovl (v8i64 VR512:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (v2i64 (VMOVZPQILo2PQIZrr
+                     (v2i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm)))),
+             sub_xmm)>;
 }
 
 //===----------------------------------------------------------------------===//

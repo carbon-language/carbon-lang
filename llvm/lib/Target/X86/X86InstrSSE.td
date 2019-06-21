@@ -312,17 +312,6 @@ let Predicates = [UseAVX, OptForSize] in {
             (SUBREG_TO_REG (i32 0),
              (v4i32 (VMOVSSrr (v4i32 (V_SET0)),
               (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src), sub_xmm)))), sub_xmm)>;
-
-  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2f64 (VMOVSDrr (v2f64 (V_SET0)),
-                       (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm)))),
-             sub_xmm)>;
-  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2i64 (VMOVSDrr (v2i64 (V_SET0)),
-                       (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm)))),
-             sub_xmm)>;
 }
 
 let Predicates = [UseSSE1] in {
@@ -4307,6 +4296,19 @@ let Predicates = [UseSSE2] in {
             (MOVZPQILo2PQIrr VR128:$src)>;
 }
 
+let Predicates = [UseAVX] in {
+  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (v2f64 (VMOVZPQILo2PQIrr
+                     (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm)))),
+             sub_xmm)>;
+  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (v2i64 (VMOVZPQILo2PQIrr
+                     (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm)))),
+             sub_xmm)>;
+}
+
 //===---------------------------------------------------------------------===//
 // SSE3 - Replicate Single FP - MOVSHDUP and MOVSLDUP
 //===---------------------------------------------------------------------===//
@@ -6319,17 +6321,6 @@ let Predicates = [HasAVX, OptForSpeed] in {
              (v4i32 (VPBLENDWrri (v4i32 (V_SET0)),
                           (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src), sub_xmm)),
                           (i8 3))), sub_xmm)>;
-
-  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2f64 (VBLENDPDrri (v2f64 (V_SET0)),
-                          (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm)),
-                          (i8 1))), sub_xmm)>;
-  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (v2i64 (VPBLENDWrri (v2i64 (V_SET0)),
-                          (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm)),
-                          (i8 0xf))), sub_xmm)>;
 }
 
 // Prefer a movss or movsd over a blendps when optimizing for size. these were
