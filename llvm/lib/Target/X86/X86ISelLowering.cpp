@@ -6706,7 +6706,6 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     return true;
   }
   case ISD::INSERT_SUBVECTOR: {
-    // Handle INSERT_SUBVECTOR(SRC0, SHUFFLE(SRC1)).
     SDValue Src = N.getOperand(0);
     SDValue Sub = N.getOperand(1);
     EVT SubVT = Sub.getValueType();
@@ -6714,12 +6713,26 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     if (!isa<ConstantSDNode>(N.getOperand(2)) ||
         !N->isOnlyUserOf(Sub.getNode()))
       return false;
+    int InsertIdx = N.getConstantOperandVal(2);
+    // Handle INSERT_SUBVECTOR(SRC0, EXTRACT_SUBVECTOR(SRC1)).
+    if (Sub.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
+        Sub.getOperand(0).getValueType() == VT &&
+        isa<ConstantSDNode>(Sub.getOperand(1))) {
+      int ExtractIdx = Sub.getConstantOperandVal(1);
+      for (int i = 0; i != (int)NumElts; ++i)
+        Mask.push_back(i);
+      for (int i = 0; i != (int)NumSubElts; ++i)
+        Mask[InsertIdx + i] = NumElts + ExtractIdx + i;
+      Ops.push_back(Src);
+      Ops.push_back(Sub.getOperand(0));
+      return true;
+    }
+    // Handle INSERT_SUBVECTOR(SRC0, SHUFFLE(SRC1)).
     SmallVector<int, 64> SubMask;
     SmallVector<SDValue, 2> SubInputs;
     if (!resolveTargetShuffleInputs(peekThroughOneUseBitcasts(Sub), SubInputs,
                                     SubMask, DAG))
       return false;
-    int InsertIdx = N.getConstantOperandVal(2);
     if (SubMask.size() != NumSubElts) {
       assert(((SubMask.size() % NumSubElts) == 0 ||
               (NumSubElts % SubMask.size()) == 0) && "Illegal submask scale");
