@@ -3,8 +3,7 @@
 
 define i32 @shl_sub_i32(i32 %x) {
 ; CHECK-LABEL: @shl_sub_i32(
-; CHECK-NEXT:    [[S:%.*]] = sub i32 31, [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = shl i32 1, [[S]]
+; CHECK-NEXT:    [[R:%.*]] = lshr i32 -2147483648, [[X:%.*]]
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %s = sub i32 31, %x
@@ -16,7 +15,7 @@ define i32 @shl_sub_multiuse_i32(i32 %x) {
 ; CHECK-LABEL: @shl_sub_multiuse_i32(
 ; CHECK-NEXT:    [[S:%.*]] = sub i32 31, [[X:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[S]])
-; CHECK-NEXT:    [[R:%.*]] = shl i32 1, [[S]]
+; CHECK-NEXT:    [[R:%.*]] = lshr i32 -2147483648, [[X]]
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %s = sub i32 31, %x
@@ -27,8 +26,7 @@ define i32 @shl_sub_multiuse_i32(i32 %x) {
 
 define i8 @shl_sub_i8(i8 %x) {
 ; CHECK-LABEL: @shl_sub_i8(
-; CHECK-NEXT:    [[S:%.*]] = sub i8 7, [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = shl i8 1, [[S]]
+; CHECK-NEXT:    [[R:%.*]] = lshr i8 -128, [[X:%.*]]
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %s = sub i8 7, %x
@@ -38,8 +36,7 @@ define i8 @shl_sub_i8(i8 %x) {
 
 define i64 @shl_sub_i64(i64 %x) {
 ; CHECK-LABEL: @shl_sub_i64(
-; CHECK-NEXT:    [[S:%.*]] = sub i64 63, [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = shl i64 1, [[S]]
+; CHECK-NEXT:    [[R:%.*]] = lshr i64 -9223372036854775808, [[X:%.*]]
 ; CHECK-NEXT:    ret i64 [[R]]
 ;
   %s = sub i64 63, %x
@@ -49,8 +46,7 @@ define i64 @shl_sub_i64(i64 %x) {
 
 define <2 x i64> @shl_sub_i64_vec(<2 x i64> %x) {
 ; CHECK-LABEL: @shl_sub_i64_vec(
-; CHECK-NEXT:    [[S:%.*]] = sub <2 x i64> <i64 63, i64 63>, [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = shl <2 x i64> <i64 1, i64 1>, [[S]]
+; CHECK-NEXT:    [[R:%.*]] = lshr <2 x i64> <i64 -9223372036854775808, i64 -9223372036854775808>, [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i64> [[R]]
 ;
   %s = sub <2 x i64> <i64 63, i64 63>, %x
