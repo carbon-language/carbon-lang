@@ -206,6 +206,27 @@ MaybeExtentExpr GetLowerBound(FoldingContext &context, const Symbol &symbol,
   return std::nullopt;
 }
 
+Shape GetLowerBounds(
+    FoldingContext &context, const Symbol &symbol, const Component *component) {
+  Shape result;
+  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    int dim{0};
+    for (const auto &shapeSpec : details->shape()) {
+      if (const auto &bound{shapeSpec.lbound().GetExplicit()}) {
+        result.emplace_back(Fold(context, common::Clone(*bound)));
+      } else if (component != nullptr) {
+        result.emplace_back(ExtentExpr{DescriptorInquiry{
+            *component, DescriptorInquiry::Field::LowerBound, dim}});
+      } else {
+        result.emplace_back(ExtentExpr{DescriptorInquiry{
+            symbol, DescriptorInquiry::Field::LowerBound, dim}});
+      }
+      ++dim;
+    }
+  }
+  return result;
+}
+
 MaybeExtentExpr GetExtent(FoldingContext &context, const Symbol &symbol,
     int dimension, const Component *component) {
   CHECK(dimension >= 0);
@@ -484,4 +505,5 @@ bool CheckConformance(parser::ContextualMessages &messages, const Shape &left,
   }
   return true;
 }
+
 }

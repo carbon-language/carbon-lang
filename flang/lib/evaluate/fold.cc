@@ -250,7 +250,8 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
     // Compute all the scalar values of the results
     std::vector<Scalar<TR>> results;
     if (TotalElementCount(shape) > 0) {
-      ConstantSubscripts index{InitialSubscripts(rank)};
+      ConstantSubscripts lbound(rank, 1);
+      ConstantSubscripts index{lbound};
       do {
         if constexpr (std::is_same_v<WrapperType<TR, TA...>,
                           ScalarFuncWithContext<TR, TA...>>) {
@@ -263,7 +264,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
               (ranks[I] ? std::get<I>(args)->At(index)
                         : std::get<I>(args)->GetScalarValue().value())...));
         }
-      } while (IncrementSubscripts(index, shape));
+      } while (IncrementSubscripts(index, shape, lbound));
     }
     // Build and return constant result
     if constexpr (TR::category == TypeCategory::Character) {
@@ -957,12 +958,20 @@ std::optional<Expr<T>> GetParameterValue(
             auto *unwrapped{UnwrapExpr<Expr<T>>(*converted)};
             CHECK(unwrapped != nullptr);
             if (auto *constant{UnwrapConstantValue<T>(*unwrapped)}) {
-              if (constant->Rank() == 0 && symbol->Rank() > 0) {
-                // scalar expansion
-                if (auto symShape{GetShape(context, *symbol)}) {
-                  if (auto extents{AsConstantExtents(*symShape)}) {
-                    *constant = constant->Reshape(std::move(*extents));
-                    CHECK(constant->Rank() == symbol->Rank());
+              if (symbol->Rank() > 0) {
+                if (constant->Rank() == 0) {
+                  // scalar expansion
+                  if (auto symShape{GetShape(context, *symbol)}) {
+                    if (auto extents{AsConstantExtents(*symShape)}) {
+                      *constant = constant->Reshape(std::move(*extents));
+                      CHECK(constant->Rank() == symbol->Rank());
+                    }
+                  }
+                }
+                if (constant->Rank() == symbol->Rank()) {
+                  if (auto lbounds{AsConstantExtents(
+                          GetLowerBounds(context, *symbol))}) {
+                    constant->set_lbounds(*std::move(lbounds));
                   }
                 }
               }
@@ -1054,15 +1063,18 @@ std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
     const Constant<T> &array,
     const std::vector<Constant<SubscriptInteger>> &subscripts) {
   const auto &shape{array.shape()};
+  const auto &lbounds{array.lbounds()};
   int rank{GetRank(shape)};
   CHECK(rank == static_cast<int>(subscripts.size()));
   std::size_t elements{1};
   ConstantSubscripts resultShape;
+  ConstantSubscripts ssLB;
   for (const auto &ss : subscripts) {
     CHECK(ss.Rank() <= 1);
     if (ss.Rank() == 1) {
       resultShape.push_back(static_cast<ConstantSubscript>(ss.size()));
       elements *= ss.size();
+      ssLB.push_back(ss.lbounds().front());
     }
   }
   ConstantSubscripts ssAt(rank, 0), at(rank, 0), tmp(1, 0);
@@ -1075,7 +1087,7 @@ std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
         at[j] = subscripts[j].GetScalarValue().value().ToInt64();
       } else {
         CHECK(k < GetRank(resultShape));
-        tmp[0] = ssAt[j] + 1;
+        tmp[0] = ssLB[j] + ssAt[j];
         at[j] = subscripts[j].At(tmp).ToInt64();
         if (increment) {
           if (++ssAt[j] == resultShape[k]) {
@@ -1086,7 +1098,7 @@ std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
         }
         ++k;
       }
-      if (at[j] < 1 || at[j] > shape[j]) {
+      if (at[j] < lbounds[j] || at[j] > lbounds[j] + shape[j]) {
         messages.Say("Subscript value (%jd) is out of range in reference "
                      "to a constant array value"_err_en_US,
             static_cast<std::intmax_t>(at[j]));
@@ -1132,7 +1144,7 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
     if (structures.empty()) {
       return std::nullopt;
     }
-    ConstantSubscripts at{InitialSubscripts(structures.shape())};
+    ConstantSubscripts at{structures.lbounds()};
     do {
       StructureConstructor scalar{structures.At(at)};
       if (auto *expr{scalar.Find(&component)}) {
@@ -1160,7 +1172,7 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
           return std::nullopt;
         }
       }
-    } while (IncrementSubscripts(at, structures.shape()));
+    } while (IncrementSubscripts(at, structures.shape(), structures.lbounds()));
     // Fold the ArrayConstructor<> into a Constant<>.
     CHECK(array);
     Expr<T> result{Fold(context, Expr<T>{std::move(*array)})};
@@ -1464,10 +1476,10 @@ std::optional<Expr<T>> AsFlatArrayConstructor(const Expr<T> &expr) {
   if (const auto *c{UnwrapConstantValue<T>(expr)}) {
     ArrayConstructor<T> result{expr};
     if (c->size() > 0) {
-      ConstantSubscripts at{InitialSubscripts(c->shape())};
+      ConstantSubscripts at{c->lbounds()};
       do {
         result.Push(Expr<T>{Constant<T>{c->At(at)}});
-      } while (IncrementSubscripts(at, c->shape()));
+      } while (IncrementSubscripts(at, c->shape(), c->lbounds()));
     }
     return std::make_optional<Expr<T>>(std::move(result));
   } else if (const auto *a{UnwrapExpr<ArrayConstructor<T>>(expr)}) {
