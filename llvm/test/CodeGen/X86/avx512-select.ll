@@ -433,3 +433,107 @@ define <16 x i16> @pr31515(<16 x i1> %a, <16 x i1> %b, <16 x i16> %c) nounwind {
   ret <16 x i16> %res
 }
 
+define <32 x i16> @pr42355_v32i16(i1 %c, <32 x i16> %x, <32 x i16> %y) {
+; X86-AVX512F-LABEL: pr42355_v32i16:
+; X86-AVX512F:       # %bb.0:
+; X86-AVX512F-NEXT:    pushl %ebp
+; X86-AVX512F-NEXT:    .cfi_def_cfa_offset 8
+; X86-AVX512F-NEXT:    .cfi_offset %ebp, -8
+; X86-AVX512F-NEXT:    movl %esp, %ebp
+; X86-AVX512F-NEXT:    .cfi_def_cfa_register %ebp
+; X86-AVX512F-NEXT:    andl $-32, %esp
+; X86-AVX512F-NEXT:    subl $32, %esp
+; X86-AVX512F-NEXT:    testb $1, 8(%ebp)
+; X86-AVX512F-NEXT:    jne .LBB14_2
+; X86-AVX512F-NEXT:  # %bb.1:
+; X86-AVX512F-NEXT:    vmovaps 40(%ebp), %ymm1
+; X86-AVX512F-NEXT:    vmovaps %ymm2, %ymm0
+; X86-AVX512F-NEXT:  .LBB14_2:
+; X86-AVX512F-NEXT:    movl %ebp, %esp
+; X86-AVX512F-NEXT:    popl %ebp
+; X86-AVX512F-NEXT:    .cfi_def_cfa %esp, 4
+; X86-AVX512F-NEXT:    retl
+;
+; X64-AVX512F-LABEL: pr42355_v32i16:
+; X64-AVX512F:       # %bb.0:
+; X64-AVX512F-NEXT:    testb $1, %dil
+; X64-AVX512F-NEXT:    jne .LBB14_2
+; X64-AVX512F-NEXT:  # %bb.1:
+; X64-AVX512F-NEXT:    vmovaps %ymm2, %ymm0
+; X64-AVX512F-NEXT:    vmovaps %ymm3, %ymm1
+; X64-AVX512F-NEXT:  .LBB14_2:
+; X64-AVX512F-NEXT:    retq
+;
+; X86-AVX512BW-LABEL: pr42355_v32i16:
+; X86-AVX512BW:       # %bb.0:
+; X86-AVX512BW-NEXT:    testb $1, {{[0-9]+}}(%esp)
+; X86-AVX512BW-NEXT:    jne .LBB14_2
+; X86-AVX512BW-NEXT:  # %bb.1:
+; X86-AVX512BW-NEXT:    vmovaps %zmm1, %zmm0
+; X86-AVX512BW-NEXT:  .LBB14_2:
+; X86-AVX512BW-NEXT:    retl
+;
+; X64-AVX512BW-LABEL: pr42355_v32i16:
+; X64-AVX512BW:       # %bb.0:
+; X64-AVX512BW-NEXT:    testb $1, %dil
+; X64-AVX512BW-NEXT:    jne .LBB14_2
+; X64-AVX512BW-NEXT:  # %bb.1:
+; X64-AVX512BW-NEXT:    vmovaps %zmm1, %zmm0
+; X64-AVX512BW-NEXT:  .LBB14_2:
+; X64-AVX512BW-NEXT:    retq
+  %a = select i1 %c, <32 x i16> %x, <32 x i16> %y
+  ret <32 x i16> %a
+}
+
+define <64 x i8> @pr42355_v64i8(i1 %c, <64 x i8> %x, <64 x i8> %y) {
+; X86-AVX512F-LABEL: pr42355_v64i8:
+; X86-AVX512F:       # %bb.0:
+; X86-AVX512F-NEXT:    pushl %ebp
+; X86-AVX512F-NEXT:    .cfi_def_cfa_offset 8
+; X86-AVX512F-NEXT:    .cfi_offset %ebp, -8
+; X86-AVX512F-NEXT:    movl %esp, %ebp
+; X86-AVX512F-NEXT:    .cfi_def_cfa_register %ebp
+; X86-AVX512F-NEXT:    andl $-32, %esp
+; X86-AVX512F-NEXT:    subl $32, %esp
+; X86-AVX512F-NEXT:    testb $1, 8(%ebp)
+; X86-AVX512F-NEXT:    jne .LBB15_2
+; X86-AVX512F-NEXT:  # %bb.1:
+; X86-AVX512F-NEXT:    vmovaps 40(%ebp), %ymm1
+; X86-AVX512F-NEXT:    vmovaps %ymm2, %ymm0
+; X86-AVX512F-NEXT:  .LBB15_2:
+; X86-AVX512F-NEXT:    movl %ebp, %esp
+; X86-AVX512F-NEXT:    popl %ebp
+; X86-AVX512F-NEXT:    .cfi_def_cfa %esp, 4
+; X86-AVX512F-NEXT:    retl
+;
+; X64-AVX512F-LABEL: pr42355_v64i8:
+; X64-AVX512F:       # %bb.0:
+; X64-AVX512F-NEXT:    testb $1, %dil
+; X64-AVX512F-NEXT:    jne .LBB15_2
+; X64-AVX512F-NEXT:  # %bb.1:
+; X64-AVX512F-NEXT:    vmovaps %ymm2, %ymm0
+; X64-AVX512F-NEXT:    vmovaps %ymm3, %ymm1
+; X64-AVX512F-NEXT:  .LBB15_2:
+; X64-AVX512F-NEXT:    retq
+;
+; X86-AVX512BW-LABEL: pr42355_v64i8:
+; X86-AVX512BW:       # %bb.0:
+; X86-AVX512BW-NEXT:    testb $1, {{[0-9]+}}(%esp)
+; X86-AVX512BW-NEXT:    jne .LBB15_2
+; X86-AVX512BW-NEXT:  # %bb.1:
+; X86-AVX512BW-NEXT:    vmovaps %zmm1, %zmm0
+; X86-AVX512BW-NEXT:  .LBB15_2:
+; X86-AVX512BW-NEXT:    retl
+;
+; X64-AVX512BW-LABEL: pr42355_v64i8:
+; X64-AVX512BW:       # %bb.0:
+; X64-AVX512BW-NEXT:    testb $1, %dil
+; X64-AVX512BW-NEXT:    jne .LBB15_2
+; X64-AVX512BW-NEXT:  # %bb.1:
+; X64-AVX512BW-NEXT:    vmovaps %zmm1, %zmm0
+; X64-AVX512BW-NEXT:  .LBB15_2:
+; X64-AVX512BW-NEXT:    retq
+  %a = select i1 %c, <64 x i8> %x, <64 x i8> %y
+  ret <64 x i8> %a
+}
+
