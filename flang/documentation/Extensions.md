@@ -70,6 +70,9 @@ Extensions, deletions, and legacy features supported by default
   unambiguous (including the right hand sides of assigments and initializations
   of INTEGER entities).
 * EQUIVALENCE of numeric and character sequences (a ubiquitous extension)
+* Values for whole anonymous parent components in structure constructors
+  (e.g., `EXTENDEDTYPE(PARENTTYPE(1,2,3))` rather than `EXTENDEDTYPE(1,2,3)`
+   or `EXTENDEDTYPE(PARENTTYPE=PARENTTYPE(1,2,3))`).
 
 Extensions supported when enabled by options
 --------------------------------------------

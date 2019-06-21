@@ -1194,8 +1194,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     return std::nullopt;
   }
   const auto &spec{*parsedType.derivedTypeSpec};
-  CHECK(spec.scope() != nullptr);
   const Symbol &typeSymbol{spec.typeSymbol()};
+  if (spec.scope() == nullptr ||
+      !typeSymbol.has<semantics::DerivedTypeDetails>()) {
+    return std::nullopt;  // error recovery
+  }
+  const auto &typeDetails{typeSymbol.get<semantics::DerivedTypeDetails>()};
+  const Symbol *parentComponent{typeDetails.GetParentComponent(*spec.scope())};
 
   if (typeSymbol.attrs().test(semantics::Attr::ABSTRACT)) {  // C796
     if (auto *msg{Say(typeName,
@@ -1232,6 +1237,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     auto &messages{GetContextualMessages()};
     auto restorer{messages.SetLocation(source)};
     const Symbol *symbol{nullptr};
+    MaybeExpr value{Analyze(expr)};
+    std::optional<DynamicType> valueType{DynamicType::From(value)};
     if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
       anyKeyword = true;
       source = kw->v.source;
@@ -1254,11 +1261,29 @@ MaybeExpr ExpressionAnalyzer::Analyze(
             "Value in structure constructor lacks a component name"_err_en_US);
         checkConflicts = false;  // stem cascade
       }
-      while (nextAnonymous != components.end()) {
+      // Here's a regrettably common extension of the standard: anonymous
+      // initialization of parent components, e.g., T(PT(1)) rather than
+      // T(1) or T(PT=PT(1)).
+      if (nextAnonymous == components.begin() && parentComponent != nullptr &&
+          valueType == DynamicType::From(*parentComponent) &&
+          context().IsEnabled(parser::LanguageFeature::AnonymousParents)) {
+        auto iter{
+            std::find(components.begin(), components.end(), parentComponent)};
+        if (iter != components.end()) {
+          symbol = parentComponent;
+          nextAnonymous = ++iter;
+          if (context().ShouldWarn(parser::LanguageFeature::AnonymousParents)) {
+            Say(source,
+                "Whole parent component '%s' in structure "
+                "constructor should not be anonymous"_en_US,
+                symbol->name());
+          }
+        }
+      }
+      while (symbol == nullptr && nextAnonymous != components.end()) {
         const Symbol *nextSymbol{*nextAnonymous++};
         if (!nextSymbol->test(Symbol::Flag::ParentComp)) {
           symbol = nextSymbol;
-          break;
         }
       }
       if (symbol == nullptr) {
@@ -1291,7 +1316,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         }
       }
       unavailable.insert(symbol->name());
-      if (MaybeExpr value{Analyze(expr)}) {
+      if (value.has_value()) {
         if (symbol->has<semantics::ProcEntityDetails>()) {
           CHECK(IsPointer(*symbol));
         } else if (symbol->has<semantics::ObjectEntityDetails>()) {
@@ -1335,11 +1360,12 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                        ConvertToType(*symbol, std::move(*value))}) {
           result.Add(*symbol, std::move(*converted));
         } else if (auto symType{DynamicType::From(symbol)}) {
-          if (auto type{DynamicType::From(value)}) {
+          if (valueType.has_value()) {
             if (auto *msg{Say(expr.source,
                     "Value in structure constructor of type %s is "
                     "incompatible with component '%s' of type %s"_err_en_US,
-                    type->AsFortran(), symbol->name(), symType->AsFortran())}) {
+                    valueType->AsFortran(), symbol->name(),
+                    symType->AsFortran())}) {
               msg->Attach(symbol->name(), "Component declaration"_en_US);
             }
           } else {
