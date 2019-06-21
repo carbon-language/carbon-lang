@@ -104,6 +104,8 @@ static constexpr TypePattern BOZ{IntType, KindCode::typeless};
 static constexpr TypePattern TEAM_TYPE{IntType, KindCode::teamType};
 static constexpr TypePattern DoublePrecision{
     RealType, KindCode::doublePrecision};
+static constexpr TypePattern DoublePrecisionComplex{
+    ComplexType, KindCode::doublePrecision};
 
 // Match any kind of some intrinsic or derived types
 static constexpr TypePattern AnyInt{IntType, KindCode::any};
@@ -252,6 +254,10 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         Rank::dimReduced},
     {"asin", {{"x", SameFloating}}, SameFloating},
     {"asinh", {{"x", SameFloating}}, SameFloating},
+    {"associated",
+        {{"pointer", Anything, Rank::known},
+            {"target", Anything, Rank::known, Optionality::optional}},
+        DefaultLogical},
     {"atan", {{"x", SameFloating}}, SameFloating},
     {"atan", {{"y", SameReal}, {"x", SameReal}}, SameReal},
     {"atan2", {{"y", SameReal}, {"x", SameReal}}, SameReal},
@@ -680,6 +686,13 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"atan2", {{"y", DefaultReal}, {"x", DefaultReal}}, DefaultReal}},
     {{"cabs", {{"a", DefaultComplex}}, DefaultReal}, "abs"},
     {{"ccos", {{"a", DefaultComplex}}, DefaultComplex}, "cos"},
+    {{"cdabs", {{"a", DoublePrecisionComplex}}, DoublePrecision}, "abs"},
+    {{"cdcos", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex}, "cos"},
+    {{"cdexp", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex}, "exp"},
+    {{"cdlog", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex}, "log"},
+    {{"cdsin", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex}, "sin"},
+    {{"cdsqrt", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex},
+        "sqrt"},
     {{"cexp", {{"a", DefaultComplex}}, DefaultComplex}, "exp"},
     {{"clog", {{"a", DefaultComplex}}, DefaultComplex}, "log"},
     {{"conjg", {{"a", DefaultComplex}}, DefaultComplex}},
@@ -694,6 +707,8 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"datan2", {{"y", DoublePrecision}, {"x", DoublePrecision}},
          DoublePrecision},
         "atan2"},
+    {{"dconjg", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex},
+        "conjg"},
     {{"dcos", {{"x", DoublePrecision}}, DoublePrecision}, "cos"},
     {{"dcosh", {{"x", DoublePrecision}}, DoublePrecision}, "cosh"},
     {{"ddim", {{"x", DoublePrecision}, {"y", DoublePrecision}},
@@ -1404,6 +1419,19 @@ static bool ApplySpecificChecks(
       messages.Say(
           "Argument of ALLOCATED() must be an ALLOCATABLE object or component"_err_en_US);
     }
+  } else if (name == "associated") {
+    if (const auto &arg{call.arguments[0]}) {
+      if (const auto *expr{arg->UnwrapExpr()}) {
+        if (const Symbol * symbol{GetLastSymbol(*expr)}) {
+          ok = symbol->attrs().test(semantics::Attr::POINTER);
+          // TODO: validate the TARGET= argument vs. the pointer
+        }
+      }
+    }
+    if (!ok) {
+      messages.Say(
+          "Arguments of ASSOCIATED() must be a POINTER and an optional valid target"_err_en_US);
+    }
   } else if (name == "present") {
     if (const auto &arg{call.arguments[0]}) {
       if (const auto *expr{arg->UnwrapExpr()}) {
@@ -1497,6 +1525,8 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
                 .functionResult.value()
                 .SetType(newType);
           }
+          // TODO test feature AdditionalIntrinsics, warn on nonstandard
+          // specifics with DoublePrecisionComplex arguments.
           return specificCall;
         } else {
           specificBuffer.Annex(std::move(localBuffer));
