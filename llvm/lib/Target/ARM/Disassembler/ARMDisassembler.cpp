@@ -6023,12 +6023,14 @@ static DecodeStatus DecodeVCVTImmOperand(MCInst &Inst, unsigned Val,
   case ARM::MVE_VCVTu16f16_fix:
     if (DecodedVal > 16)
       return MCDisassembler::Fail;
+    break;
   case ARM::MVE_VCVTf32s32_fix:
   case ARM::MVE_VCVTs32f32_fix:
   case ARM::MVE_VCVTf32u32_fix:
   case ARM::MVE_VCVTu32f32_fix:
     if (DecodedVal > 32)
       return MCDisassembler::Fail;
+    break;
   }
 
   Inst.addOperand(MCOperand::createImm(64 - Val));
