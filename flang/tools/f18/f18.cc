@@ -321,6 +321,7 @@ int main(int argc, char *const argv[]) {
   DriverOptions driver;
   const char *pgf90{getenv("F18_FC")};
   driver.pgf90Args.push_back(pgf90 ? pgf90 : "pgf90");
+  bool isPGF90{driver.pgf90Args.back().rfind("pgf90") != std::string::npos};
 
   std::list<std::string> args{argList(argc, argv)};
   std::string prefix{args.front()};
@@ -386,7 +387,7 @@ int main(int argc, char *const argv[]) {
           Fortran::parser::LanguageFeature::BackslashEscapes, false);
     } else if (arg == "-Mnobackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes);
+          Fortran::parser::LanguageFeature::BackslashEscapes, true);
     } else if (arg == "-Mstandard") {
       driver.warnOnNonstandardUsage = true;
     } else if (arg == "-fopenmp") {
@@ -400,7 +401,7 @@ int main(int argc, char *const argv[]) {
       driver.dumpCookedChars = true;
     } else if (arg == "-fbackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes);
+          Fortran::parser::LanguageFeature::BackslashEscapes, true);
     } else if (arg == "-fno-backslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes, false);
@@ -455,9 +456,8 @@ int main(int argc, char *const argv[]) {
       driver.encoding = Fortran::parser::Encoding::UTF_8;
     } else if (arg == "-flatin") {
       driver.encoding = Fortran::parser::Encoding::LATIN_1;
-    } else if (arg == "-fkanji") {
+    } else if (arg == "-fkanji" || arg == "-Mx,125,4") {
       driver.encoding = Fortran::parser::Encoding::EUC_JP;
-      driver.pgf90Args.push_back("-Mx,125,4");  // PGI "Kanji" mode
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -504,8 +504,6 @@ int main(int argc, char *const argv[]) {
         args.pop_front();
       } else if (arg.substr(0, 2) == "-I") {
         driver.searchDirectories.push_back(arg.substr(2));
-      } else if (arg == "-Mx,125,4") {  // PGI "all Kanji" mode
-        driver.encoding = Fortran::parser::Encoding::EUC_JP;
       }
     }
   }
@@ -515,6 +513,18 @@ int main(int argc, char *const argv[]) {
   }
   if (options.features.IsEnabled(Fortran::parser::LanguageFeature::OpenMP)) {
     driver.pgf90Args.push_back("-mp");
+  }
+  if (isPGF90) {
+    if (driver.encoding == Fortran::parser::Encoding::EUC_JP) {
+      driver.pgf90Args.push_back("-Mx,125,4");  // PGI "Kanji" mode
+    }
+    if (!options.features.IsEnabled(
+            Fortran::parser::LanguageFeature::BackslashEscapes)) {
+      driver.pgf90Args.push_back(
+          "-Mbackslash");  // yes, this *disables* them in pgf90
+    }
+  } else {
+    // TODO: equivalents for other Fortran compilers
   }
 
   Fortran::parser::AllSources allSources;
