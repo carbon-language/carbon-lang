@@ -6568,6 +6568,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // scalar predication operand we do not add the vector one and leave until
   // now to fix it up.
   if (CanAcceptVPTPredicationCode && Mnemonic != "vmov" &&
+      !Mnemonic.startswith("vcmp") &&
       !(Mnemonic.startswith("vcvt") && Mnemonic != "vcvta" &&
         Mnemonic != "vcvtn" && Mnemonic != "vcvtp" && Mnemonic != "vcvtm")) {
     SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Mnemonic.size() +
@@ -6683,12 +6684,12 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       Operands.insert(Operands.begin(),
                       ARMOperand::CreateToken(StringRef("vcvtn"), MLoc));
     }
-    // For vmov instructions, as mentioned earlier, we did not add the vector
+    // For vmov and vcmp, as mentioned earlier, we did not add the vector
     // predication code, since these may contain operands that require
     // special parsing.  So now we have to see if they require vector
     // predication and replace the scalar one with the vector predication
     // operand if that is the case.
-    else if (Mnemonic == "vmov" ||
+    else if (Mnemonic == "vmov" || Mnemonic.startswith("vcmp") ||
              (Mnemonic.startswith("vcvt") && !Mnemonic.startswith("vcvta") &&
               !Mnemonic.startswith("vcvtn") && !Mnemonic.startswith("vcvtp") &&
               !Mnemonic.startswith("vcvtm"))) {

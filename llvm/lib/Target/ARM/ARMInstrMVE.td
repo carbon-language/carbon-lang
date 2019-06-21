@@ -62,6 +62,8 @@ def pred_restricted_i_asmoperand : AsmOperandClass {
   let RenderMethod = "addITCondCodeOperands";
   let PredicateMethod = "isITCondCodeRestrictedI";
   let ParserMethod = "parseITCondCode";
+  let DiagnosticString = "condition code for sign-independent integer "#
+                         "comparison must be EQ or NE";
 }
 
 // VPT/VCMP restricted predicate for signed types
@@ -70,6 +72,8 @@ def pred_restricted_s_asmoperand : AsmOperandClass {
   let RenderMethod = "addITCondCodeOperands";
   let PredicateMethod = "isITCondCodeRestrictedS";
   let ParserMethod = "parseITCondCode";
+  let DiagnosticString = "condition code for signed integer "#
+                         "comparison must be EQ, NE, LT, GT, LE or GE";
 }
 
 // VPT/VCMP restricted predicate for unsigned types
@@ -78,6 +82,8 @@ def pred_restricted_u_asmoperand : AsmOperandClass {
   let RenderMethod = "addITCondCodeOperands";
   let PredicateMethod = "isITCondCodeRestrictedU";
   let ParserMethod = "parseITCondCode";
+  let DiagnosticString = "condition code for unsigned integer "#
+                         "comparison must be EQ, NE, HS or HI";
 }
 
 // VPT/VCMP restricted predicate for floating point
@@ -86,30 +92,34 @@ def pred_restricted_fp_asmoperand : AsmOperandClass {
   let RenderMethod = "addITCondCodeOperands";
   let PredicateMethod = "isITCondCodeRestrictedFP";
   let ParserMethod = "parseITCondCode";
+  let DiagnosticString = "condition code for floating-point "#
+                         "comparison must be EQ, NE, LT, GT, LE or GE";
 }
 
-def pred_basic_i : Operand<i32> {
+class VCMPPredicateOperand : Operand<i32>;
+
+def pred_basic_i : VCMPPredicateOperand {
   let PrintMethod = "printMandatoryRestrictedPredicateOperand";
   let ParserMatchClass = pred_restricted_i_asmoperand;
   let DecoderMethod = "DecodeRestrictedIPredicateOperand";
   let EncoderMethod = "getRestrictedCondCodeOpValue";
 }
 
-def pred_basic_u : Operand<i32> {
+def pred_basic_u : VCMPPredicateOperand {
   let PrintMethod = "printMandatoryRestrictedPredicateOperand";
   let ParserMatchClass = pred_restricted_u_asmoperand;
   let DecoderMethod = "DecodeRestrictedUPredicateOperand";
   let EncoderMethod = "getRestrictedCondCodeOpValue";
 }
 
-def pred_basic_s : Operand<i32> {
+def pred_basic_s : VCMPPredicateOperand {
   let PrintMethod = "printMandatoryRestrictedPredicateOperand";
   let ParserMatchClass = pred_restricted_s_asmoperand;
   let DecoderMethod = "DecodeRestrictedSPredicateOperand";
   let EncoderMethod = "getRestrictedCondCodeOpValue";
 }
 
-def pred_basic_fp : Operand<i32> {
+def pred_basic_fp : VCMPPredicateOperand {
   let PrintMethod = "printMandatoryRestrictedPredicateOperand";
   let ParserMatchClass = pred_restricted_fp_asmoperand;
   let DecoderMethod = "DecodeRestrictedFPPredicateOperand";
@@ -2252,6 +2262,147 @@ def MVE_VMINNMAf32 : MVE_VMAXMINNMA<"vminnma", "f32", 0b0, 0b1>;
 def MVE_VMINNMAf16 : MVE_VMAXMINNMA<"vminnma", "f16", 0b1, 0b1>;
 
 // end of MVE Floating Point instructions
+
+// start of MVE compares
+
+class MVE_VCMPqq<string suffix, bit bit_28, bits<2> bits_21_20,
+                 VCMPPredicateOperand predtype, list<dag> pattern=[]>
+  : MVE_p<(outs VCCR:$P0), (ins MQPR:$Qn, MQPR:$Qm, predtype:$fc),
+           NoItinerary, "vcmp", suffix, "$fc, $Qn, $Qm", vpred_n, "", pattern> {
+  // Base class for comparing two vector registers
+  bits<3> fc;
+  bits<4> Qn;
+  bits<4> Qm;
+
+  let Inst{28} = bit_28;
+  let Inst{25-22} = 0b1000;
+  let Inst{21-20} = bits_21_20;
+  let Inst{19-17} = Qn{2-0};
+  let Inst{16-13} = 0b1000;
+  let Inst{12} = fc{2};
+  let Inst{11-8} = 0b1111;
+  let Inst{7} = fc{0};
+  let Inst{6} = 0b0;
+  let Inst{5} = Qm{3};
+  let Inst{4} = 0b0;
+  let Inst{3-1} = Qm{2-0};
+  let Inst{0} = fc{1};
+
+  let Constraints = "";
+
+  // We need a custom decoder method for these instructions because of
+  // the output VCCR operand, which isn't encoded in the instruction
+  // bits anywhere (there is only one choice for it) but has to be
+  // included in the MC operands so that codegen will be able to track
+  // its data flow between instructions, spill/reload it when
+  // necessary, etc. There seems to be no way to get the Tablegen
+  // decoder to emit an operand that isn't affected by any instruction
+  // bit.
+  let DecoderMethod = "DecodeMVEVCMP<false," # predtype.DecoderMethod # ">";
+}
+
+class MVE_VCMPqqf<string suffix, bit size>
+    : MVE_VCMPqq<suffix, size, 0b11, pred_basic_fp> {
+  let Predicates = [HasMVEFloat];
+}
+
+class MVE_VCMPqqi<string suffix, bits<2> size>
+    : MVE_VCMPqq<suffix, 0b1, size, pred_basic_i> {
+  let Inst{12} = 0b0;
+  let Inst{0} = 0b0;
+}
+
+class MVE_VCMPqqu<string suffix, bits<2> size>
+    : MVE_VCMPqq<suffix, 0b1, size, pred_basic_u> {
+  let Inst{12} = 0b0;
+  let Inst{0} = 0b1;
+}
+
+class MVE_VCMPqqs<string suffix, bits<2> size>
+    : MVE_VCMPqq<suffix, 0b1, size, pred_basic_s> {
+  let Inst{12} = 0b1;
+}
+
+def MVE_VCMPf32 : MVE_VCMPqqf<"f32", 0b0>;
+def MVE_VCMPf16 : MVE_VCMPqqf<"f16", 0b1>;
+
+def MVE_VCMPi8  : MVE_VCMPqqi<"i8",  0b00>;
+def MVE_VCMPi16 : MVE_VCMPqqi<"i16", 0b01>;
+def MVE_VCMPi32 : MVE_VCMPqqi<"i32", 0b10>;
+
+def MVE_VCMPu8  : MVE_VCMPqqu<"u8",  0b00>;
+def MVE_VCMPu16 : MVE_VCMPqqu<"u16", 0b01>;
+def MVE_VCMPu32 : MVE_VCMPqqu<"u32", 0b10>;
+
+def MVE_VCMPs8  : MVE_VCMPqqs<"s8",  0b00>;
+def MVE_VCMPs16 : MVE_VCMPqqs<"s16", 0b01>;
+def MVE_VCMPs32 : MVE_VCMPqqs<"s32", 0b10>;
+
+class MVE_VCMPqr<string suffix, bit bit_28, bits<2> bits_21_20,
+                 VCMPPredicateOperand predtype, list<dag> pattern=[]>
+  : MVE_p<(outs VCCR:$P0), (ins MQPR:$Qn, GPRwithZR:$Rm, predtype:$fc),
+           NoItinerary, "vcmp", suffix, "$fc, $Qn, $Rm", vpred_n, "", pattern> {
+  // Base class for comparing a vector register with a scalar
+  bits<3> fc;
+  bits<4> Qn;
+  bits<4> Rm;
+
+  let Inst{28} = bit_28;
+  let Inst{25-22} = 0b1000;
+  let Inst{21-20} = bits_21_20;
+  let Inst{19-17} = Qn{2-0};
+  let Inst{16-13} = 0b1000;
+  let Inst{12} = fc{2};
+  let Inst{11-8} = 0b1111;
+  let Inst{7} = fc{0};
+  let Inst{6} = 0b1;
+  let Inst{5} = fc{1};
+  let Inst{4} = 0b0;
+  let Inst{3-0} = Rm{3-0};
+
+  let Constraints = "";
+  // Custom decoder method, for the same reason as MVE_VCMPqq
+  let DecoderMethod = "DecodeMVEVCMP<true," # predtype.DecoderMethod # ">";
+}
+
+class MVE_VCMPqrf<string suffix, bit size>
+    : MVE_VCMPqr<suffix, size, 0b11, pred_basic_fp> {
+  let Predicates = [HasMVEFloat];
+}
+
+class MVE_VCMPqri<string suffix, bits<2> size>
+    : MVE_VCMPqr<suffix, 0b1, size, pred_basic_i> {
+  let Inst{12} = 0b0;
+  let Inst{5} = 0b0;
+}
+
+class MVE_VCMPqru<string suffix, bits<2> size>
+    : MVE_VCMPqr<suffix, 0b1, size, pred_basic_u> {
+  let Inst{12} = 0b0;
+  let Inst{5} = 0b1;
+}
+
+class MVE_VCMPqrs<string suffix, bits<2> size>
+    : MVE_VCMPqr<suffix, 0b1, size, pred_basic_s> {
+  let Inst{12} = 0b1;
+}
+
+def MVE_VCMPf32r : MVE_VCMPqrf<"f32", 0b0>;
+def MVE_VCMPf16r : MVE_VCMPqrf<"f16", 0b1>;
+
+def MVE_VCMPi8r  : MVE_VCMPqri<"i8",  0b00>;
+def MVE_VCMPi16r : MVE_VCMPqri<"i16", 0b01>;
+def MVE_VCMPi32r : MVE_VCMPqri<"i32", 0b10>;
+
+def MVE_VCMPu8r  : MVE_VCMPqru<"u8",  0b00>;
+def MVE_VCMPu16r : MVE_VCMPqru<"u16", 0b01>;
+def MVE_VCMPu32r : MVE_VCMPqru<"u32", 0b10>;
+
+def MVE_VCMPs8r  : MVE_VCMPqrs<"s8",  0b00>;
+def MVE_VCMPs16r : MVE_VCMPqrs<"s16", 0b01>;
+def MVE_VCMPs32r : MVE_VCMPqrs<"s32", 0b10>;
+
+// end of MVE compares
 
 class MVE_VPT<string suffix, bits<2> size, dag iops, string asm, list<dag> pattern=[]>
   : MVE_MI<(outs ), iops, NoItinerary, !strconcat("vpt", "${Mk}", ".", suffix), asm, "", pattern> {

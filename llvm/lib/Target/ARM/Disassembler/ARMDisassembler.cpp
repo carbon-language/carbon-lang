@@ -509,6 +509,11 @@ static DecodeStatus DecodeExpandedImmOperand(MCInst &Inst, unsigned Val,
                                              const void *Decoder);
 static DecodeStatus DecodeMVEVCVTt1fp(MCInst &Inst, unsigned Insn,
                                       uint64_t Address, const void *Decoder);
+typedef DecodeStatus OperandDecoder(MCInst &Inst, unsigned Val,
+                                    uint64_t Address, const void *Decoder);
+template<bool scalar, OperandDecoder predicate_decoder>
+static DecodeStatus DecodeMVEVCMP(MCInst &Inst, unsigned Insn,
+                                  uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMVEOverlappingLongShift(MCInst &Inst, unsigned Insn,
                                                   uint64_t Address,
                                                   const void *Decoder);
@@ -6180,6 +6185,44 @@ static DecodeStatus DecodeMVEVCVTt1fp(MCInst &Inst, unsigned Insn, uint64_t Addr
     return MCDisassembler::Fail;
   if (!Check(S, DecodeVCVTImmOperand(Inst, imm6, Address, Decoder)))
     return MCDisassembler::Fail;
+
+  return S;
+}
+
+template<bool scalar, OperandDecoder predicate_decoder>
+static DecodeStatus DecodeMVEVCMP(MCInst &Inst, unsigned Insn, uint64_t Address,
+                                  const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+  Inst.addOperand(MCOperand::createReg(ARM::VPR));
+  unsigned Qn = fieldFromInstruction(Insn, 17, 3);
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qn, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  unsigned fc;
+
+  if (scalar) {
+    fc = fieldFromInstruction(Insn, 12, 1) << 2 |
+         fieldFromInstruction(Insn, 7, 1) |
+         fieldFromInstruction(Insn, 5, 1) << 1;
+    unsigned Rm = fieldFromInstruction(Insn, 0, 4);
+    if (!Check(S, DecodeGPRwithZRRegisterClass(Inst, Rm, Address, Decoder)))
+      return MCDisassembler::Fail;
+  } else {
+    fc = fieldFromInstruction(Insn, 12, 1) << 2 |
+         fieldFromInstruction(Insn, 7, 1) |
+         fieldFromInstruction(Insn, 0, 1) << 1;
+    unsigned Qm = fieldFromInstruction(Insn, 5, 1) << 4 |
+                  fieldFromInstruction(Insn, 1, 3);
+    if (!Check(S, DecodeMQPRRegisterClass(Inst, Qm, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
+
+  if (!Check(S, predicate_decoder(Inst, fc, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::createImm(ARMVCC::None));
+  Inst.addOperand(MCOperand::createReg(0));
+  Inst.addOperand(MCOperand::createImm(0));
 
   return S;
 }
