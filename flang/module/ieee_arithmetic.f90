@@ -81,7 +81,6 @@ module ieee_arithmetic
   ! TODO: more interfaces (_fma, &c.)
 
   private :: classify
-  private :: getSignBit
 
  contains
 
