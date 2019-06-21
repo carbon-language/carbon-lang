@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown -fms-compatibility -std=c++11 -E %s -o - | FileCheck %s --check-prefixes=CHECK,ITANIUM --implicit-check-not=:
-// RUN: %clang_cc1 -triple i386-windows -fms-compatibility -std=c++11 -E %s -o - | FileCheck %s --check-prefixes=CHECK,WINDOWS --implicit-check-not=:
+// RUN: %clang_cc1 -triple i386-unknown-unknown -fms-compatibility -std=c++11 -E -P %s -o - | FileCheck %s --check-prefixes=CHECK,ITANIUM --implicit-check-not=:
+// RUN: %clang_cc1 -triple i386-windows -fms-compatibility -std=c++11 -E -P %s -o - | FileCheck %s --check-prefixes=CHECK,WINDOWS --implicit-check-not=:
 
 #define CXX11(x) x: __has_cpp_attribute(x)
 
