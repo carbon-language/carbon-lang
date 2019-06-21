@@ -344,6 +344,7 @@ struct Derived6 : virtual public Bases... {
 // CHECK-NEXT:       "qualType": "int"
 // CHECK-NEXT:      }, 
 // CHECK-NEXT:      "valueCategory": "rvalue", 
+// CHECK-NEXT:      "value": "12",
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}", 
@@ -414,6 +415,7 @@ struct Derived6 : virtual public Bases... {
 // CHECK-NEXT:       "qualType": "int"
 // CHECK-NEXT:      }, 
 // CHECK-NEXT:      "valueCategory": "rvalue", 
+// CHECK-NEXT:      "value": "0",
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}", 
@@ -485,6 +487,7 @@ struct Derived6 : virtual public Bases... {
 // CHECK-NEXT:       "qualType": "int"
 // CHECK-NEXT:      }, 
 // CHECK-NEXT:      "valueCategory": "rvalue", 
+// CHECK-NEXT:      "value": "10",
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}", 
@@ -1569,6 +1572,7 @@ struct Derived6 : virtual public Bases... {
 // CHECK-NEXT:       "qualType": "int"
 // CHECK-NEXT:      }, 
 // CHECK-NEXT:      "valueCategory": "rvalue", 
+// CHECK-NEXT:      "value": "12",
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}", 
@@ -1639,6 +1643,7 @@ struct Derived6 : virtual public Bases... {
 // CHECK-NEXT:       "qualType": "int"
 // CHECK-NEXT:      }, 
 // CHECK-NEXT:      "valueCategory": "rvalue", 
+// CHECK-NEXT:      "value": "0",
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}", 
@@ -1710,6 +1715,7 @@ struct Derived6 : virtual public Bases... {
 // CHECK-NEXT:       "qualType": "int"
 // CHECK-NEXT:      }, 
 // CHECK-NEXT:      "valueCategory": "rvalue", 
+// CHECK-NEXT:      "value": "10",
 // CHECK-NEXT:      "inner": [
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}", 
