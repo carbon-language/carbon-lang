@@ -17937,7 +17937,8 @@ static SDValue narrowExtractedVectorBinOp(SDNode *Extract, SelectionDAG &DAG) {
   // feeding an extract subvector.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue BinOp = peekThroughBitcasts(Extract->getOperand(0));
-  if (!TLI.isBinOp(BinOp.getOpcode()) || BinOp.getNode()->getNumValues() != 1)
+  unsigned BOpcode = BinOp.getOpcode();
+  if (!TLI.isBinOp(BOpcode) || BinOp.getNode()->getNumValues() != 1)
     return SDValue();
 
   // The binop must be a vector type, so we can extract some fraction of it.
@@ -17966,7 +17967,6 @@ static SDValue narrowExtractedVectorBinOp(SDNode *Extract, SelectionDAG &DAG) {
   // Bail out if the target does not support a narrower version of the binop.
   EVT NarrowBVT = EVT::getVectorVT(*DAG.getContext(), WideBVT.getScalarType(),
                                    WideNumElts / NarrowingRatio);
-  unsigned BOpcode = BinOp.getOpcode();
   if (!TLI.isOperationLegalOrCustomOrPromote(BOpcode, NarrowBVT))
     return SDValue();
 
