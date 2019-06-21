@@ -29,7 +29,7 @@ module module1
     complex(kind=zk) :: zx = (0.,0.)
     character(kind=ck,len=len) :: cx = ' '
     logical(kind=lk) :: lx = .false.
-    real(kind=rk), pointer :: rp = NULL()
+    real(kind=rk), pointer :: rp => NULL()
     procedure(realfunc), pointer, nopass :: rfp1 => NULL()
     procedure(real), pointer, nopass :: rfp2 => NULL()
   end type scalar
