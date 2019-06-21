@@ -312,6 +312,8 @@ static DecodeStatus DecodeNEONModImmInstruction(MCInst &Inst,unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMVEModImmInstruction(MCInst &Inst,unsigned Val,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeMVEVADCInstruction(MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVSHLMaxInstruction(MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeShiftRight8Imm(MCInst &Inst, unsigned Val,
@@ -3458,6 +3460,31 @@ DecodeMVEModImmInstruction(MCInst &Inst, unsigned Insn,
   Inst.addOperand(MCOperand::createImm(ARMVCC::None));
   Inst.addOperand(MCOperand::createReg(0));
   Inst.addOperand(MCOperand::createImm(0));
+
+  return S;
+}
+
+static DecodeStatus DecodeMVEVADCInstruction(MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Qd = fieldFromInstruction(Insn, 13, 3);
+  Qd |= fieldFromInstruction(Insn, 22, 1) << 3;
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::createReg(ARM::FPSCR_NZCV));
+
+  unsigned Qn = fieldFromInstruction(Insn, 17, 3);
+  Qn |= fieldFromInstruction(Insn, 7, 1) << 3;
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  unsigned Qm = fieldFromInstruction(Insn, 1, 3);
+  Qm |= fieldFromInstruction(Insn, 5, 1) << 3;
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qm, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!fieldFromInstruction(Insn, 12, 1)) // I bit clear => need input FPSCR
+    Inst.addOperand(MCOperand::createReg(ARM::FPSCR_NZCV));
+  Inst.addOperand(MCOperand::createImm(Qd));
 
   return S;
 }

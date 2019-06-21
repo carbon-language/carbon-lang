@@ -5966,6 +5966,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
          Mnemonic == "vnege" || Mnemonic == "vnegt" ||
          Mnemonic == "vmule" || Mnemonic == "vmult" ||
          Mnemonic == "vrintne" ||
+         Mnemonic == "vcmult" || Mnemonic == "vcmule" ||
          Mnemonic.startswith("vq")))) {
     unsigned CC = ARMCondCodeFromString(Mnemonic.substr(Mnemonic.size()-2));
     if (CC != ~0U) {
@@ -6010,7 +6011,10 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
   if (isMnemonicVPTPredicable(Mnemonic, ExtraToken) && Mnemonic != "vmovlt" &&
       Mnemonic != "vshllt" && Mnemonic != "vrshrnt" && Mnemonic != "vshrnt" &&
       Mnemonic != "vqrshrunt" && Mnemonic != "vqshrunt" &&
-      Mnemonic != "vqrshrnt" && Mnemonic != "vqshrnt" && Mnemonic != "vcvt") {
+      Mnemonic != "vqrshrnt" && Mnemonic != "vqshrnt" && Mnemonic != "vmullt" &&
+      Mnemonic != "vqmovnt" && Mnemonic != "vqmovunt" &&
+      Mnemonic != "vqmovnt" && Mnemonic != "vmovnt" && Mnemonic != "vqdmullt" &&
+      Mnemonic != "vcvtt" && Mnemonic != "vcvt") {
     unsigned CC = ARMVectorCondCodeFromString(Mnemonic.substr(Mnemonic.size()-1));
     if (CC != ~0U) {
       Mnemonic = Mnemonic.slice(0, Mnemonic.size()-1);
@@ -6683,6 +6687,16 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                       ARMOperand::CreateVPTPred(ARMVCC::Else, PLoc));
       Operands.insert(Operands.begin(),
                       ARMOperand::CreateToken(StringRef("vcvtn"), MLoc));
+    } else if (Mnemonic == "vmul" && PredicationCode == ARMCC::LT &&
+               !shouldOmitVectorPredicateOperand(Mnemonic, Operands)) {
+      // Another hack, this time to distinguish between scalar predicated vmul
+      // with 'lt' predication code and the vector instruction vmullt with
+      // vector predication code "none"
+      Operands.erase(Operands.begin() + 1);
+      Operands.erase(Operands.begin());
+      SMLoc MLoc = SMLoc::getFromPointer(NameLoc.getPointer());
+      Operands.insert(Operands.begin(),
+                      ARMOperand::CreateToken(StringRef("vmullt"), MLoc));
     }
     // For vmov and vcmp, as mentioned earlier, we did not add the vector
     // predication code, since these may contain operands that require
@@ -7539,6 +7553,31 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
     if (RegList.size() < 1 || RegList.size() > 16)
       return Error(Operands[3]->getStartLoc(),
                    "list of registers must be at least 1 and at most 16");
+    break;
+  }
+  case ARM::MVE_VQDMULLs32bh:
+  case ARM::MVE_VQDMULLs32th:
+  case ARM::MVE_VCMULf32:
+  case ARM::MVE_VMULLs32bh:
+  case ARM::MVE_VMULLs32th:
+  case ARM::MVE_VMULLu32bh:
+  case ARM::MVE_VMULLu32th:
+  case ARM::MVE_VQDMLADHs32:
+  case ARM::MVE_VQDMLADHXs32:
+  case ARM::MVE_VQRDMLADHs32:
+  case ARM::MVE_VQRDMLADHXs32:
+  case ARM::MVE_VQDMLSDHs32:
+  case ARM::MVE_VQDMLSDHXs32:
+  case ARM::MVE_VQRDMLSDHs32:
+  case ARM::MVE_VQRDMLSDHXs32: {
+    if (Operands[3]->getReg() == Operands[4]->getReg()) {
+      return Error (Operands[3]->getStartLoc(),
+                    "Qd register and Qn register can't be identical");
+    }
+    if (Operands[3]->getReg() == Operands[5]->getReg()) {
+      return Error (Operands[3]->getStartLoc(),
+                    "Qd register and Qm register can't be identical");
+    }
     break;
   }
   }
