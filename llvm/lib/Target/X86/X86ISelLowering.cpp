@@ -28545,6 +28545,8 @@ bool X86TargetLowering::isVectorShiftByScalarCheap(Type *Ty) const {
 
 bool X86TargetLowering::isBinOp(unsigned Opcode) const {
   switch (Opcode) {
+  // TODO: Add more X86ISD opcodes once we have test coverage.
+  case X86ISD::ANDNP:
   case X86ISD::PMULUDQ:
   case X86ISD::FMAX:
   case X86ISD::FMIN:

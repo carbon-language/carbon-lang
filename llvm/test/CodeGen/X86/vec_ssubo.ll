@@ -840,7 +840,7 @@ define <16 x i32> @ssubo_v16i32(<16 x i32> %a0, <16 x i32> %a1, <16 x i32>* %p2)
 ; AVX1-NEXT:    vpcmpgtd %xmm1, %xmm6, %xmm4
 ; AVX1-NEXT:    vpxor %xmm5, %xmm4, %xmm4
 ; AVX1-NEXT:    vpcmpeqd %xmm11, %xmm4, %xmm11
-; AVX1-NEXT:    vinsertf128 $1, %xmm8, %ymm11, %ymm8
+; AVX1-NEXT:    vinsertf128 $1, %xmm8, %ymm11, %ymm11
 ; AVX1-NEXT:    vpsubd %xmm9, %xmm7, %xmm9
 ; AVX1-NEXT:    vpcmpgtd %xmm9, %xmm6, %xmm7
 ; AVX1-NEXT:    vpxor %xmm5, %xmm7, %xmm7
@@ -852,8 +852,8 @@ define <16 x i32> @ssubo_v16i32(<16 x i32> %a0, <16 x i32> %a1, <16 x i32>* %p2)
 ; AVX1-NEXT:    vpcmpeqd %xmm1, %xmm4, %xmm1
 ; AVX1-NEXT:    vpxor %xmm5, %xmm1, %xmm1
 ; AVX1-NEXT:    vinsertf128 $1, %xmm7, %ymm1, %ymm1
-; AVX1-NEXT:    vandnps %ymm1, %ymm8, %ymm1
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm4
+; AVX1-NEXT:    vandnps %ymm1, %ymm11, %ymm1
+; AVX1-NEXT:    vpandn %xmm7, %xmm8, %xmm4
 ; AVX1-NEXT:    vpackssdw %xmm4, %xmm1, %xmm8
 ; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm4
 ; AVX1-NEXT:    vpcmpgtd %xmm4, %xmm6, %xmm7
@@ -867,7 +867,7 @@ define <16 x i32> @ssubo_v16i32(<16 x i32> %a0, <16 x i32> %a1, <16 x i32>* %p2)
 ; AVX1-NEXT:    vpcmpgtd %xmm0, %xmm6, %xmm7
 ; AVX1-NEXT:    vpxor %xmm5, %xmm7, %xmm7
 ; AVX1-NEXT:    vpcmpeqd %xmm12, %xmm7, %xmm12
-; AVX1-NEXT:    vinsertf128 $1, %xmm11, %ymm12, %ymm11
+; AVX1-NEXT:    vinsertf128 $1, %xmm11, %ymm12, %ymm12
 ; AVX1-NEXT:    vpsubd %xmm4, %xmm1, %xmm4
 ; AVX1-NEXT:    vpcmpgtd %xmm4, %xmm6, %xmm1
 ; AVX1-NEXT:    vpxor %xmm5, %xmm1, %xmm1
@@ -879,8 +879,8 @@ define <16 x i32> @ssubo_v16i32(<16 x i32> %a0, <16 x i32> %a1, <16 x i32>* %p2)
 ; AVX1-NEXT:    vpcmpeqd %xmm0, %xmm7, %xmm0
 ; AVX1-NEXT:    vpxor %xmm5, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; AVX1-NEXT:    vandnps %ymm0, %ymm11, %ymm0
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVX1-NEXT:    vandnps %ymm0, %ymm12, %ymm0
+; AVX1-NEXT:    vpandn %xmm1, %xmm11, %xmm1
 ; AVX1-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vpacksswb %xmm8, %xmm0, %xmm1
 ; AVX1-NEXT:    vpmovsxbd %xmm1, %xmm0
