@@ -1276,6 +1276,16 @@ public:
                RegShiftedImm.SrcReg);
   }
   bool isRotImm() const { return Kind == k_RotateImmediate; }
+
+  template<unsigned Min, unsigned Max>
+  bool isPowerTwoInRange() const {
+    if (!isImm()) return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value > 0 && countPopulation((uint64_t)Value) == 1 &&
+           Value >= Min && Value <= Max;
+  }
   bool isModImm() const { return Kind == k_ModifiedImmediate; }
 
   bool isModImmNot() const {
@@ -5962,6 +5972,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
       !(hasMVE() &&
         (Mnemonic == "vmine" ||
          Mnemonic == "vshle" || Mnemonic == "vshlt" || Mnemonic == "vshllt" ||
+         Mnemonic == "vrshle" || Mnemonic == "vrshlt" ||
          Mnemonic == "vmvne" || Mnemonic == "vorne" ||
          Mnemonic == "vnege" || Mnemonic == "vnegt" ||
          Mnemonic == "vmule" || Mnemonic == "vmult" ||
@@ -5987,7 +5998,8 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
         Mnemonic == "fsts" || Mnemonic == "fcpys" || Mnemonic == "fdivs" ||
         Mnemonic == "fmuls" || Mnemonic == "fcmps" || Mnemonic == "fcmpzs" ||
         Mnemonic == "vfms" || Mnemonic == "vfnms" || Mnemonic == "fconsts" ||
-        Mnemonic == "bxns" || Mnemonic == "blxns" ||
+        Mnemonic == "bxns" || Mnemonic == "blxns" || Mnemonic == "vfmas" ||
+        Mnemonic == "vmlas" ||
         (Mnemonic == "movs" && isThumb()))) {
     Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 1);
     CarrySetting = true;
@@ -6344,6 +6356,9 @@ bool ARMAsmParser::shouldOmitVectorPredicateOperand(StringRef Mnemonic,
                                                     OperandVector &Operands) {
   if (!hasMVE() || Operands.size() < 3)
     return true;
+
+  if (Mnemonic.startswith("vctp"))
+    return false;
 
   if (Mnemonic.startswith("vmov") &&
       !(Mnemonic.startswith("vmovl") || Mnemonic.startswith("vmovn") ||

@@ -424,6 +424,10 @@ public:
                                 unsigned EncodedValue,
                                 const MCSubtargetInfo &STI) const;
 
+  uint32_t getPowerTwoOpValue(const MCInst &MI, unsigned OpIdx,
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
+
   void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
   }
@@ -1911,6 +1915,15 @@ uint32_t ARMMCCodeEmitter::getRestrictedCondCodeOpValue(
   case ARMCC::LE:
     return 7;
   }
+}
+
+uint32_t ARMMCCodeEmitter::
+getPowerTwoOpValue(const MCInst &MI, unsigned OpIdx,
+                   SmallVectorImpl<MCFixup> &Fixups,
+                   const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  assert(MO.isImm() && "Unexpected operand type!");
+  return countTrailingZeros((uint64_t)MO.getImm());
 }
 
 #include "ARMGenMCCodeEmitter.inc"

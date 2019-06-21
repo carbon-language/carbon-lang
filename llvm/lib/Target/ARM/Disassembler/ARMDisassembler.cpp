@@ -505,6 +505,10 @@ template<bool Writeback>
 static DecodeStatus DecodeVSTRVLDR_SYSREG(MCInst &Inst, unsigned Insn,
                                           uint64_t Address,
                                           const void *Decoder);
+template<unsigned MinLog, unsigned MaxLog>
+static DecodeStatus DecodePowerTwoOperand(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder);
 template <int shift>
 static DecodeStatus DecodeExpandedImmOperand(MCInst &Inst, unsigned Val,
                                              uint64_t Address,
@@ -515,6 +519,8 @@ typedef DecodeStatus OperandDecoder(MCInst &Inst, unsigned Val,
                                     uint64_t Address, const void *Decoder);
 template<bool scalar, OperandDecoder predicate_decoder>
 static DecodeStatus DecodeMVEVCMP(MCInst &Inst, unsigned Insn,
+                                  uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeMveVCTP(MCInst &Inst, unsigned Insn,
                                   uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMVEOverlappingLongShift(MCInst &Inst, unsigned Insn,
                                                   uint64_t Address,
@@ -6123,6 +6129,19 @@ static DecodeStatus DecodeVSTRVLDR_SYSREG(MCInst &Inst, unsigned Val,
   return S;
 }
 
+template<unsigned MinLog, unsigned MaxLog>
+static DecodeStatus DecodePowerTwoOperand(MCInst &Inst, unsigned Val,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  if (Val < MinLog || Val > MaxLog)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::createImm(1 << Val));
+  return S;
+}
+
 template <int shift>
 static DecodeStatus DecodeExpandedImmOperand(MCInst &Inst, unsigned Val,
                                              uint64_t Address,
@@ -6253,5 +6272,15 @@ static DecodeStatus DecodeMVEVCMP(MCInst &Inst, unsigned Insn, uint64_t Address,
   Inst.addOperand(MCOperand::createReg(0));
   Inst.addOperand(MCOperand::createImm(0));
 
+  return S;
+}
+
+static DecodeStatus DecodeMveVCTP(MCInst &Inst, unsigned Insn, uint64_t Address,
+                                  const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+  Inst.addOperand(MCOperand::createReg(ARM::VPR));
+  unsigned Rn = fieldFromInstruction(Insn, 16, 4);
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
   return S;
 }

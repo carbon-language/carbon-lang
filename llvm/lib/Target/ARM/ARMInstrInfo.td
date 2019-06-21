@@ -461,6 +461,20 @@ def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
   let ParserMatchClass = RotImmAsmOperand;
 }
 
+// Power-of-two operand for MVE VIDUP and friends, which encode
+// {1,2,4,8} as its log to base 2, i.e. as {0,1,2,3} respectively
+def MVE_VIDUP_imm_asmoperand : AsmOperandClass {
+  let Name = "VIDUP_imm";
+  let PredicateMethod = "isPowerTwoInRange<1,8>";
+  let RenderMethod = "addPowerTwoOperands";
+  let DiagnosticString = "vector increment immediate must be 1, 2, 4 or 8";
+}
+def MVE_VIDUP_imm : Operand<i32> {
+  let EncoderMethod = "getPowerTwoOpValue";
+  let DecoderMethod = "DecodePowerTwoOperand<0,3>";
+  let ParserMatchClass = MVE_VIDUP_imm_asmoperand;
+}
+
 // Vector indexing
 class MVEVectorIndexOperand<int NumLanes> : AsmOperandClass {
   let Name = "MVEVectorIndex"#NumLanes;
