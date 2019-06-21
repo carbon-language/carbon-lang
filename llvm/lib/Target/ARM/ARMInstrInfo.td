@@ -475,6 +475,28 @@ def MVE_VIDUP_imm : Operand<i32> {
   let ParserMatchClass = MVE_VIDUP_imm_asmoperand;
 }
 
+// Pair vector indexing
+class MVEPairVectorIndexOperand<string start, string end> : AsmOperandClass {
+  let Name = "MVEPairVectorIndex"#start;
+  let RenderMethod = "addMVEPairVectorIndexOperands";
+  let PredicateMethod = "isMVEPairVectorIndex<"#start#", "#end#">";
+}
+
+class MVEPairVectorIndex<string opval> : Operand<i32> {
+  let PrintMethod = "printVectorIndex";
+  let EncoderMethod = "getMVEPairVectorIndexOpValue<"#opval#">";
+  let DecoderMethod = "DecodeMVEPairVectorIndexOperand<"#opval#">";
+  let MIOperandInfo = (ops i32imm);
+}
+
+def MVEPairVectorIndex0 : MVEPairVectorIndex<"0"> {
+  let ParserMatchClass = MVEPairVectorIndexOperand<"0", "1">;
+}
+
+def MVEPairVectorIndex2 : MVEPairVectorIndex<"2"> {
+  let ParserMatchClass = MVEPairVectorIndexOperand<"2", "3">;
+}
+
 // Vector indexing
 class MVEVectorIndexOperand<int NumLanes> : AsmOperandClass {
   let Name = "MVEVectorIndex"#NumLanes;

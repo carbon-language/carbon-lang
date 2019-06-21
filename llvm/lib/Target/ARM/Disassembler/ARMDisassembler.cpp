@@ -513,6 +513,16 @@ template <int shift>
 static DecodeStatus DecodeExpandedImmOperand(MCInst &Inst, unsigned Val,
                                              uint64_t Address,
                                              const void *Decoder);
+template<unsigned start>
+static DecodeStatus DecodeMVEPairVectorIndexOperand(MCInst &Inst, unsigned Val,
+                                                    uint64_t Address,
+                                                    const void *Decoder);
+static DecodeStatus DecodeMVEVMOVQtoDReg(MCInst &Inst, unsigned Insn,
+                                         uint64_t Address,
+                                         const void *Decoder);
+static DecodeStatus DecodeMVEVMOVDRegtoQ(MCInst &Inst, unsigned Insn,
+                                         uint64_t Address,
+                                         const void *Decoder);
 static DecodeStatus DecodeMVEVCVTt1fp(MCInst &Inst, unsigned Insn,
                                       uint64_t Address, const void *Decoder);
 typedef DecodeStatus OperandDecoder(MCInst &Inst, unsigned Val,
@@ -6150,6 +6160,65 @@ static DecodeStatus DecodeExpandedImmOperand(MCInst &Inst, unsigned Val,
 
     Inst.addOperand(MCOperand::createImm(Val));
     return MCDisassembler::Success;
+}
+
+template<unsigned start>
+static DecodeStatus DecodeMVEPairVectorIndexOperand(MCInst &Inst, unsigned Val,
+                                                    uint64_t Address,
+                                                    const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  Inst.addOperand(MCOperand::createImm(start + Val));
+
+  return S;
+}
+
+static DecodeStatus DecodeMVEVMOVQtoDReg(MCInst &Inst, unsigned Insn,
+                                         uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+  unsigned Rt = fieldFromInstruction(Insn, 0, 4);
+  unsigned Rt2 = fieldFromInstruction(Insn, 16, 4);
+  unsigned Qd = ((fieldFromInstruction(Insn, 22, 1) << 3) |
+                 fieldFromInstruction(Insn, 13, 3));
+  unsigned index = fieldFromInstruction(Insn, 4, 1);
+
+  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt2, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeMVEPairVectorIndexOperand<2>(Inst, index, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeMVEPairVectorIndexOperand<0>(Inst, index, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
+}
+
+static DecodeStatus DecodeMVEVMOVDRegtoQ(MCInst &Inst, unsigned Insn,
+                                         uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+  unsigned Rt = fieldFromInstruction(Insn, 0, 4);
+  unsigned Rt2 = fieldFromInstruction(Insn, 16, 4);
+  unsigned Qd = ((fieldFromInstruction(Insn, 22, 1) << 3) |
+                 fieldFromInstruction(Insn, 13, 3));
+  unsigned index = fieldFromInstruction(Insn, 4, 1);
+
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeMQPRRegisterClass(Inst, Qd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt2, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeMVEPairVectorIndexOperand<2>(Inst, index, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeMVEPairVectorIndexOperand<0>(Inst, index, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
 }
 
 static DecodeStatus DecodeMVEOverlappingLongShift(

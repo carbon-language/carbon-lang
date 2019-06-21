@@ -459,6 +459,10 @@ public:
   uint32_t getRestrictedCondCodeOpValue(const MCInst &MI, unsigned OpIdx,
                                         SmallVectorImpl<MCFixup> &Fixups,
                                         const MCSubtargetInfo &STI) const;
+  template <unsigned size>
+  uint32_t getMVEPairVectorIndexOpValue(const MCInst &MI, unsigned OpIdx,
+                                        SmallVectorImpl<MCFixup> &Fixups,
+                                        const MCSubtargetInfo &STI) const;
 };
 
 } // end anonymous namespace
@@ -1924,6 +1928,18 @@ getPowerTwoOpValue(const MCInst &MI, unsigned OpIdx,
   const MCOperand &MO = MI.getOperand(OpIdx);
   assert(MO.isImm() && "Unexpected operand type!");
   return countTrailingZeros((uint64_t)MO.getImm());
+}
+
+template <unsigned start>
+uint32_t ARMMCCodeEmitter::
+getMVEPairVectorIndexOpValue(const MCInst &MI, unsigned OpIdx,
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const {
+  const MCOperand MO = MI.getOperand(OpIdx);
+  assert(MO.isImm() && "Unexpected operand type!");
+
+  int Value = MO.getImm();
+  return Value - start;
 }
 
 #include "ARMGenMCCodeEmitter.inc"

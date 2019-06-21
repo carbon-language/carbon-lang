@@ -3046,6 +3046,71 @@ def MVE_VCTP64 : MVE_VCTP<"64", 0b11>;
 
 // end of mve_qDest_rSrc
 
+// start of coproc mov
+
+class MVE_VMOV_64bit<dag oops, dag iops, bit to_qreg, string ops, string cstr>
+  : MVE_VMOV_lane_base<oops, !con(iops, (ins MVEPairVectorIndex2:$idx,
+                                             MVEPairVectorIndex0:$idx2)),
+                       NoItinerary, "vmov", "", ops, cstr, []> {
+  bits<5> Rt;
+  bits<5> Rt2;
+  bits<4> Qd;
+  bit idx;
+  bit idx2;
+
+  let Inst{31-23} = 0b111011000;
+  let Inst{22} = Qd{3};
+  let Inst{21} = 0b0;
+  let Inst{20} = to_qreg;
+  let Inst{19-16} = Rt2{3-0};
+  let Inst{15-13} = Qd{2-0};
+  let Inst{12-5} = 0b01111000;
+  let Inst{4} = idx2;
+  let Inst{3-0} = Rt{3-0};
+}
+
+// The assembly syntax for these instructions mentions the vector
+// register name twice, e.g.
+//
+//    vmov q2[2], q2[0], r0, r1
+//    vmov r0, r1, q2[2], q2[0]
+//
+// which needs a bit of juggling with MC operand handling.
+//
+// For the move _into_ a vector register, the MC operand list also has
+// to mention the register name twice: once as the output, and once as
+// an extra input to represent where the unchanged half of the output
+// register comes from (when this instruction is used in code
+// generation). So we arrange that the first mention of the vector reg
+// in the instruction is considered by the AsmMatcher to be the output
+// ($Qd), and the second one is the input ($QdSrc). Binding them
+// together with the existing 'tie' constraint is enough to enforce at
+// register allocation time that they have to be the same register.
+//
+// For the move _from_ a vector register, there's no way to get round
+// the fact that both instances of that register name have to be
+// inputs. They have to be the same register again, but this time, we
+// can't use a tie constraint, because that has to be between an
+// output and an input operand. So this time, we have to arrange that
+// the q-reg appears just once in the MC operand list, in spite of
+// being mentioned twice in the asm syntax - which needs a custom
+// AsmMatchConverter.
+
+def MVE_VMOV_q_rr : MVE_VMOV_64bit<(outs MQPR:$Qd),
+                                   (ins MQPR:$QdSrc, rGPR:$Rt, rGPR:$Rt2),
+                                   0b1, "$Qd$idx, $QdSrc$idx2, $Rt, $Rt2",
+                                   "$Qd = $QdSrc"> {
+  let DecoderMethod = "DecodeMVEVMOVDRegtoQ";
+}
+
+def MVE_VMOV_rr_q : MVE_VMOV_64bit<(outs rGPR:$Rt, rGPR:$Rt2), (ins MQPR:$Qd),
+                                   0b0, "$Rt, $Rt2, $Qd$idx, $Qd$idx2", ""> {
+  let DecoderMethod = "DecodeMVEVMOVQtoDReg";
+  let AsmMatchConverter = "cvtMVEVMOVQtoDReg";
+}
+
+// end of coproc mov
+
 class MVE_VPT<string suffix, bits<2> size, dag iops, string asm, list<dag> pattern=[]>
   : MVE_MI<(outs ), iops, NoItinerary, !strconcat("vpt", "${Mk}", ".", suffix), asm, "", pattern> {
   bits<3> fc;

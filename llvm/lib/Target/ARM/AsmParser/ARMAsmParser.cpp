@@ -577,6 +577,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   // Asm Match Converter Methods
   void cvtThumbMultiply(MCInst &Inst, const OperandVector &);
   void cvtThumbBranches(MCInst &Inst, const OperandVector &);
+  void cvtMVEVMOVQtoDReg(MCInst &Inst, const OperandVector &);
 
   bool validateInstruction(MCInst &Inst, const OperandVector &Ops);
   bool processInstruction(MCInst &Inst, const OperandVector &Ops, MCStreamer &Out);
@@ -1946,6 +1947,13 @@ public:
   bool isVectorIndex32() const { return isVectorIndexInRange<2>(); }
   bool isVectorIndex64() const { return isVectorIndexInRange<1>(); }
 
+  template<int PermittedValue, int OtherPermittedValue>
+  bool isMVEPairVectorIndex() const {
+    if (Kind != k_VectorIndex) return false;
+    return VectorIndex.Val == PermittedValue ||
+           VectorIndex.Val == OtherPermittedValue;
+  }
+
   bool isNEONi8splat() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -2992,6 +3000,11 @@ public:
   }
 
   void addMVEVectorIndexOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::createImm(getVectorIndex()));
+  }
+
+  void addMVEPairVectorIndexOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::createImm(getVectorIndex()));
   }
@@ -5361,6 +5374,21 @@ void ARMAsmParser::cvtThumbBranches(MCInst &Inst,
   ((ARMOperand &)*Operands[CondOp]).addCondCodeOperands(Inst, 2);
 }
 
+void ARMAsmParser::cvtMVEVMOVQtoDReg(
+  MCInst &Inst, const OperandVector &Operands) {
+
+  // mnemonic, condition code, Rt, Rt2, Qd, idx, Qd again, idx2
+  assert(Operands.size() == 8);
+
+  ((ARMOperand &)*Operands[2]).addRegOperands(Inst, 1); // Rt
+  ((ARMOperand &)*Operands[3]).addRegOperands(Inst, 1); // Rt2
+  ((ARMOperand &)*Operands[4]).addRegOperands(Inst, 1); // Qd
+  ((ARMOperand &)*Operands[5]).addMVEPairVectorIndexOperands(Inst, 1); // idx
+  // skip second copy of Qd in Operands[6]
+  ((ARMOperand &)*Operands[7]).addMVEPairVectorIndexOperands(Inst, 1); // idx2
+  ((ARMOperand &)*Operands[1]).addCondCodeOperands(Inst, 2); // condition code
+}
+
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
 bool ARMAsmParser::parseMemory(OperandVector &Operands) {
@@ -7593,6 +7621,22 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
       return Error (Operands[3]->getStartLoc(),
                     "Qd register and Qm register can't be identical");
     }
+    break;
+  }
+  case ARM::MVE_VMOV_rr_q: {
+    if (Operands[4]->getReg() != Operands[6]->getReg())
+      return Error (Operands[4]->getStartLoc(), "Q-registers must be the same");
+    if (static_cast<ARMOperand &>(*Operands[5]).getVectorIndex() !=
+        static_cast<ARMOperand &>(*Operands[7]).getVectorIndex() + 2)
+      return Error (Operands[5]->getStartLoc(), "Q-register indexes must be 2 and 0 or 3 and 1");
+    break;
+  }
+  case ARM::MVE_VMOV_q_rr: {
+    if (Operands[2]->getReg() != Operands[4]->getReg())
+      return Error (Operands[2]->getStartLoc(), "Q-registers must be the same");
+    if (static_cast<ARMOperand &>(*Operands[3]).getVectorIndex() !=
+        static_cast<ARMOperand &>(*Operands[5]).getVectorIndex() + 2)
+      return Error (Operands[3]->getStartLoc(), "Q-register indexes must be 2 and 0 or 3 and 1");
     break;
   }
   }
