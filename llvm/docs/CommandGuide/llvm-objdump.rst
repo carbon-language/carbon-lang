@@ -209,6 +209,10 @@ OPTIONS
 
   Do not skip blocks of zeroes when disassembling.
 
+.. option:: @<FILE>
+
+  Read command-line options and commands from response file `<FILE>`.
+
 MACH-O ONLY OPTIONS AND COMMANDS
 --------------------------------
 
@@ -315,10 +319,6 @@ MACH-O ONLY OPTIONS AND COMMANDS
 .. option:: --weak-bind
 
   Display weak binding information.
-
-.. option:: @<FILE>
-
-  Read command-line options and commands from response file `<FILE>`.
 
 BUGS
 ----
