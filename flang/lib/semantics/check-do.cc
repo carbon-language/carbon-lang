@@ -513,6 +513,7 @@ private:
       }
     }
   }
+
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
     // C1121 - procedures in mask must be pure
     // TODO - add the name of the impure procedure to the message
@@ -526,30 +527,33 @@ private:
       }
     }
   }
-  void CheckNoCollisions(const CS &containerA, const CS &containerB,
-      const parser::MessageFormattedText &errorMessage) const {
-    for (auto *a : containerA) {
-      for (auto *b : containerB) {
-        if (a == b) {
-          context_.Say(currentStatementSourcePosition_, errorMessage);
+
+  void CheckNoCollisions(const CS &refs, const CS &defs,
+      const parser::MessageFixedText &errorMessage) const {
+    for (const Symbol *ref : refs) {
+      for (const Symbol *def : defs) {
+        if (ref == def) {
+          context_.Say(ref->name(), errorMessage, ref->name());
           return;
         }
       }
     }
   }
+
   void HasNoReferences(
       const CS &indexNames, const parser::ScalarIntExpr &expression) const {
-    CS references{
+    const CS references{
         GatherReferencesFromExpression(expression.thing.thing.value())};
     CheckNoCollisions(references, indexNames,
-        "concurrent-control expression references index-name"_err_en_US);
+        "concurrent-control expression references index-name '%s'"_err_en_US);
   }
+
   void CheckMaskDoesNotReferenceLocal(
       const parser::ScalarLogicalExpr &mask, const CS &symbols) const {
     // C1129
     CheckNoCollisions(GatherReferencesFromExpression(mask.thing.thing.value()),
         symbols,
-        "concurrent-header mask-expr references name"
+        "concurrent-header mask-expr references name '%s'"
         " in locality-spec"_err_en_US);
   }
   void CheckLocalAndLocalInitAttributes(const CS &symbols) const {

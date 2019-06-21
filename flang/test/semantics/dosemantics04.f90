@@ -28,21 +28,21 @@ PROGRAM dosemantics04
 30 END DO
 
 ! Initial expression
-!ERROR: concurrent-control expression references index-name
+!ERROR: concurrent-control expression references index-name 'j'
   DO CONCURRENT (i = j:3, j=1:3)
   END DO
 
 ! Final expression
-!ERROR: concurrent-control expression references index-name
+!ERROR: concurrent-control expression references index-name 'j'
   DO CONCURRENT (i = 1:j, j=1:3)
   END DO
 
 ! Step expression
-!ERROR: concurrent-control expression references index-name
+!ERROR: concurrent-control expression references index-name 'j'
   DO CONCURRENT (i = 1:3:j, j=1:3)
   END DO
 
-!ERROR: concurrent-control expression references index-name
+!ERROR: concurrent-control expression references index-name 'i'
   DO CONCURRENT (INTEGER*2 :: i = 1:3, j=i:3)
   END DO
 
