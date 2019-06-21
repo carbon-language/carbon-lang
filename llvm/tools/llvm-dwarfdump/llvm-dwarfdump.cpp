@@ -220,6 +220,8 @@ static opt<bool> Verbose("verbose",
                          cat(DwarfDumpCategory));
 static alias VerboseAlias("v", desc("Alias for -verbose."), aliasopt(Verbose),
                           cat(DwarfDumpCategory));
+static cl::extrahelp
+    HelpResponse("\nPass @FILE as argument to read options from FILE.\n");
 } // namespace
 /// @}
 //===----------------------------------------------------------------------===//

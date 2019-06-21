@@ -316,6 +316,10 @@ MACH-O ONLY OPTIONS AND COMMANDS
 
   Display weak binding information.
 
+.. option:: @<FILE>
+
+  Read command-line options and commands from response file `<FILE>`.
+
 BUGS
 ----
 

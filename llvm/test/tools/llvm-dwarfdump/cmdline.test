@@ -25,6 +25,7 @@ HELP: -show-form
 HELP: -show-parents
 HELP: -statistics
 HELP: -summarize-types
+HELP: @FILE
 
 RUN: llvm-dwarfdump --version 2>&1 | FileCheck --check-prefix=VERSION %s
 VERSION: {{ version }}
