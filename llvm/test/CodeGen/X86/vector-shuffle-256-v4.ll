@@ -1514,7 +1514,6 @@ define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 define <4 x double> @insert_reg_and_zero_v4f64(double %a) {
 ; ALL-LABEL: insert_reg_and_zero_v4f64:
 ; ALL:       # %bb.0:
-; ALL-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
 ; ALL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
 ; ALL-NEXT:    retq
   %v = insertelement <4 x double> undef, double %a, i32 0
