@@ -211,6 +211,9 @@ public:
   void VisitInjectedClassNameType(const InjectedClassNameType *ICNT);
   void VisitObjCInterfaceType(const ObjCInterfaceType *OIT);
   void VisitPackExpansionType(const PackExpansionType *PET);
+  void VisitElaboratedType(const ElaboratedType *ET);
+  void VisitMacroQualifiedType(const MacroQualifiedType *MQT);
+  void VisitMemberPointerType(const MemberPointerType *MPT);
 
   void VisitNamedDecl(const NamedDecl *ND);
   void VisitTypedefDecl(const TypedefDecl *TD);

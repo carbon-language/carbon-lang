@@ -611,6 +611,26 @@ void JSONNodeDumper::VisitPackExpansionType(const PackExpansionType *PET) {
     JOS.attribute("numExpansions", *N);
 }
 
+void JSONNodeDumper::VisitElaboratedType(const ElaboratedType *ET) {
+  if (const NestedNameSpecifier *NNS = ET->getQualifier()) {
+    std::string Str;
+    llvm::raw_string_ostream OS(Str);
+    NNS->print(OS, PrintPolicy, /*ResolveTemplateArgs*/ true);
+    JOS.attribute("qualifier", OS.str());
+  }
+  if (const TagDecl *TD = ET->getOwnedTagDecl())
+    JOS.attribute("ownedTagDecl", createBareDeclRef(TD));
+}
+
+void JSONNodeDumper::VisitMacroQualifiedType(const MacroQualifiedType *MQT) {
+  JOS.attribute("macroName", MQT->getMacroIdentifier()->getName());
+}
+
+void JSONNodeDumper::VisitMemberPointerType(const MemberPointerType *MPT) {
+  attributeOnlyIfTrue("isData", MPT->isMemberDataPointer());
+  attributeOnlyIfTrue("isFunction", MPT->isMemberFunctionPointer());
+}
+
 void JSONNodeDumper::VisitNamedDecl(const NamedDecl *ND) {
   if (ND && ND->getDeclName())
     JOS.attribute("name", ND->getNameAsString());
