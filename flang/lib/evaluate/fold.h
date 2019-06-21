@@ -82,6 +82,10 @@ auto GetScalarConstantValue(const EXPR &expr) -> std::optional<Scalar<T>> {
 // constant value.
 bool IsConstantExpr(const Expr<SomeType> &);
 
+// Predicate: true when an expression is an object designator with
+// constant addressing and no vector-valued subscript.
+bool IsInitialDataTarget(const Expr<SomeType> &);
+
 // When an expression is a constant integer, ToInt64() extracts its value.
 // Ensure that the expression has been folded beforehand when folding might
 // be required.
