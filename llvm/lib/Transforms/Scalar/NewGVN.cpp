@@ -2096,7 +2096,7 @@ void NewGVN::addPredicateUsers(const PredicateBase *PB, Instruction *I) const {
 
   if (auto *PBranch = dyn_cast<PredicateBranch>(PB))
     PredicateToUsers[PBranch->Condition].insert(I);
-  else if (auto *PAssume = dyn_cast<PredicateBranch>(PB))
+  else if (auto *PAssume = dyn_cast<PredicateAssume>(PB))
     PredicateToUsers[PAssume->Condition].insert(I);
 }
 
