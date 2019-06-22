@@ -304,6 +304,11 @@ bool IsDerivedTypeFromModule(
   }
 }
 
+bool IsIsoCType(const DerivedTypeSpec *derived) {
+  return IsDerivedTypeFromModule(derived, "iso_c_binding", "c_ptr") ||
+      IsDerivedTypeFromModule(derived, "iso_c_binding", "c_funptr");
+}
+
 bool IsTeamType(const DerivedTypeSpec *derived) {
   return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
 }

@@ -556,8 +556,7 @@ bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
                   "Type-Spec in ALLOCATE must not be TEAM_TYPE from ISO_FORTRAN_ENV when an allocatable object is a coarray"_err_en_US)
               .Attach(name_.source, "'%s' is a coarray"_en_US, name_.source);
           return false;
-        } else if (IsDerivedTypeFromModule(derived, "iso_c_binding", "c_ptr") ||
-            IsDerivedTypeFromModule(derived, "iso_c_binding", "c_funptr")) {
+        } else if (IsIsoCType(derived)) {
           context
               .Say(allocateInfo_.typeSpecLoc.value(),
                   "Type-Spec in ALLOCATE must not be C_PTR or C_FUNPTR from ISO_C_BINDING when an allocatable object is a coarray"_err_en_US)
@@ -578,9 +577,7 @@ bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
                   "SOURCE or MOLD expression type must not be TEAM_TYPE from ISO_FORTRAN_ENV when an allocatable object is a coarray"_err_en_US)
               .Attach(name_.source, "'%s' is a coarray"_en_US, name_.source);
           return false;
-        } else if (IsDerivedTypeFromModule(
-                       &derived, "iso_c_binding", "c_ptr") ||
-            IsDerivedTypeFromModule(&derived, "iso_c_binding", "c_funptr")) {
+        } else if (IsIsoCType(&derived)) {
           context
               .Say(allocateInfo_.sourceExprLoc.value(),
                   "SOURCE or MOLD expression type must not be C_PTR or C_FUNPTR from ISO_C_BINDING when an allocatable object is a coarray"_err_en_US)

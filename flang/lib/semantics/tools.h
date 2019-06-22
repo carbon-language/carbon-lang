@@ -60,7 +60,10 @@ bool IsProcedurePointer(const Symbol &);
 // Is this a derived type from module with this name?
 bool IsDerivedTypeFromModule(
     const DerivedTypeSpec *derived, const char *module, const char *name);
-bool IsTeamType(const DerivedTypeSpec *derived);
+// Is this derived type TEAM_TYPE from module ISO_FORTRAN_ENV
+bool IsTeamType(const DerivedTypeSpec *);
+// Is this derived type either C_PTR or C_FUNPTR from module ISO_C_BINDING
+bool IsIsoCType(const DerivedTypeSpec *);
 const bool IsEventTypeOrLockType(const DerivedTypeSpec *);
 // Returns an ultimate component symbol that is a
 // coarray or nullptr if there are no such component.
