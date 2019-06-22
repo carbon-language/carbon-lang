@@ -1,5 +1,5 @@
 # Executable testing is not supported on Windows, since all files are considered executable
-# UNSUPPORTED: windows
+# UNSUPPORTED: system-windows
 # RUN: yaml2obj %s > %t-universal.o
 
 # RUN: chmod -x %t-universal.o
