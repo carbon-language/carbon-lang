@@ -1453,9 +1453,6 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
 }
 
 static void disassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
-  if (StartAddress >= StopAddress)
-    error("start address should be less than stop address");
-
   const Target *TheTarget = getTarget(Obj);
 
   // Package up features to be passed to target/subtarget
@@ -2115,6 +2112,9 @@ int main(int argc, char **argv) {
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
   cl::ParseCommandLineOptions(argc, argv, "llvm object file dumper\n");
+
+  if (StartAddress >= StopAddress)
+    error("start address should be less than stop address");
 
   ToolName = argv[0];
 
