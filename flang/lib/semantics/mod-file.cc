@@ -573,9 +573,7 @@ std::ostream &PutLower(std::ostream &os, const Symbol &symbol) {
 }
 
 std::ostream &PutLower(std::ostream &os, const DeclTypeSpec &type) {
-  std::stringstream s;
-  s << type;
-  return PutLower(os, s.str());
+  return PutLower(os, type.AsFortran());
 }
 
 std::ostream &PutLower(std::ostream &os, const std::string &str) {

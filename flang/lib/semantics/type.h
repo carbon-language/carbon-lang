@@ -104,6 +104,7 @@ public:
   bool operator==(const ParamValue &that) const {
     return category_ == that.category_ && expr_ == that.expr_;
   }
+  std::string AsFortran() const;
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
@@ -121,6 +122,7 @@ public:
     return category_ == x.category_ && kind_ == x.kind_;
   }
   bool operator!=(const IntrinsicTypeSpec &x) const { return !operator==(x); }
+  std::string AsFortran() const;
 
 protected:
   IntrinsicTypeSpec(TypeCategory, KindExpr &&);
@@ -151,6 +153,7 @@ public:
     : IntrinsicTypeSpec(TypeCategory::Character, std::move(kind)),
       length_{std::move(length)} {}
   const ParamValue &length() const { return length_; }
+  std::string AsFortran() const;
 
 private:
   ParamValue length_;
@@ -244,6 +247,7 @@ public:
   bool operator==(const DerivedTypeSpec &that) const {
     return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
   }
+  std::string AsFortran() const;
 
 private:
   const Symbol &typeSymbol_;
@@ -314,6 +318,8 @@ public:
     default: return nullptr;
     }
   }
+
+  std::string AsFortran() const;
 
 private:
   Category category_;

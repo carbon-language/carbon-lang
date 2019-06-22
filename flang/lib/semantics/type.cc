@@ -174,22 +174,27 @@ Scope &DerivedTypeSpec::Instantiate(
   return newScope;
 }
 
-std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
-  o << x.typeSymbol().name().ToString();
-  if (!x.parameters_.empty()) {
-    o << '(';
+std::string DerivedTypeSpec::AsFortran() const {
+  std::stringstream ss;
+  ss << typeSymbol_.name().ToString();
+  if (!parameters_.empty()) {
+    ss << '(';
     bool first = true;
-    for (const auto &[name, value] : x.parameters_) {
+    for (const auto &[name, value] : parameters_) {
       if (first) {
         first = false;
       } else {
-        o << ',';
+        ss << ',';
       }
-      o << name.ToString() << '=' << value;
+      ss << name.ToString() << '=' << value.AsFortran();
     }
-    o << ')';
+    ss << ')';
   }
-  return o;
+  return ss.str();
+}
+
+std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
+  return o << x.AsFortran();
 }
 
 Bound::Bound(int bound) : expr_{bound} {}
@@ -255,17 +260,24 @@ void ParamValue::SetExplicit(SomeIntExpr &&x) {
   expr_ = std::move(x);
 }
 
-std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
-  if (x.isAssumed()) {
-    o << '*';
-  } else if (x.isDeferred()) {
-    o << ':';
-  } else if (!x.GetExplicit()) {
-    o << "<no-expr>";
-  } else {
-    o << x.GetExplicit();
+std::string ParamValue::AsFortran() const {
+  switch (category_) {
+  case Category::Assumed: return "*";
+  case Category::Deferred: return ":";
+  case Category::Explicit:
+    if (expr_) {
+      std::stringstream ss;
+      expr_->AsFortran(ss);
+      return ss.str();
+    } else {
+      return "";
+    }
+  default: CRASH_NO_CASE;
   }
-  return o;
+}
+
+std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
+  return o << x.AsFortran();
 }
 
 IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, KindExpr &&kind)
@@ -273,22 +285,31 @@ IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, KindExpr &&kind)
   CHECK(category != TypeCategory::Derived);
 }
 
-std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
-  os << parser::ToUpperCaseLetters(common::EnumToString(x.category()));
-  if (auto k{evaluate::ToInt64(x.kind())}) {
-    return os << '(' << *k << ')';  // emit unsuffixed kind code
+static std::string KindAsFortran(const KindExpr &kind) {
+  std::stringstream ss;
+  if (auto k{evaluate::ToInt64(kind)}) {
+    ss << *k;  // emit unsuffixed kind code
   } else {
-    return os << '(' << x.kind() << ')';
+    kind.AsFortran(ss);
   }
+  return ss.str();
+}
+
+std::string IntrinsicTypeSpec::AsFortran() const {
+  return parser::ToUpperCaseLetters(common::EnumToString(category_)) + '(' +
+      KindAsFortran(kind_) + ')';
+}
+
+std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
+  return os << x.AsFortran();
+}
+
+std::string CharacterTypeSpec::AsFortran() const {
+  return "CHARACTER(" + length_.AsFortran() + ',' + KindAsFortran(kind()) + ')';
 }
 
 std::ostream &operator<<(std::ostream &os, const CharacterTypeSpec &x) {
-  os << "CHARACTER(" << x.length() << ',';
-  if (auto k{evaluate::ToInt64(x.kind())}) {
-    return os << *k << ')';  // emit unsuffixed kind code
-  } else {
-    return os << x.kind() << ')';
-  }
+  return os << x.AsFortran();
 }
 
 DeclTypeSpec::DeclTypeSpec(NumericTypeSpec &&typeSpec)
@@ -329,19 +350,21 @@ bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
   return category_ == that.category_ && typeSpec_ == that.typeSpec_;
 }
 
-std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
-  switch (x.category()) {
-  case DeclTypeSpec::Numeric: return o << x.numericTypeSpec();
-  case DeclTypeSpec::Logical: return o << x.logicalTypeSpec();
-  case DeclTypeSpec::Character: return o << x.characterTypeSpec();
-  case DeclTypeSpec::TypeDerived:
-    return o << "TYPE(" << x.derivedTypeSpec() << ')';
-  case DeclTypeSpec::ClassDerived:
-    return o << "CLASS(" << x.derivedTypeSpec() << ')';
-  case DeclTypeSpec::TypeStar: return o << "TYPE(*)";
-  case DeclTypeSpec::ClassStar: return o << "CLASS(*)";
-  default: CRASH_NO_CASE; return o;
+std::string DeclTypeSpec::AsFortran() const {
+  switch (category_) {
+  case Numeric: return numericTypeSpec().AsFortran();
+  case Logical: return logicalTypeSpec().AsFortran();
+  case Character: return characterTypeSpec().AsFortran();
+  case TypeDerived: return "TYPE(" + derivedTypeSpec().AsFortran() + ')';
+  case ClassDerived: return "CLASS(" + derivedTypeSpec().AsFortran() + ')';
+  case TypeStar: return "TYPE(*)";
+  case ClassStar: return "CLASS(*)";
+  default: CRASH_NO_CASE;
   }
+}
+
+std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
+  return o << x.AsFortran();
 }
 
 void ProcInterface::set_symbol(const Symbol &symbol) {
