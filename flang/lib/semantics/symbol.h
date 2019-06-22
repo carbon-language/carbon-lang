@@ -189,8 +189,21 @@ private:
   friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
 };
 
+// Mixin for details with passed-object dummy argument.
+class WithPassArg {
+public:
+  const SourceName *passName() const { return passName_; }
+  void set_passName(const SourceName &passName) { passName_ = &passName; }
+  const Symbol *passArg() const { return passArg_; }
+  void set_passArg(const Symbol *passArg) { passArg_ = passArg; }
+
+private:
+  const SourceName *passName_{nullptr};
+  const Symbol *passArg_{nullptr};
+};
+
 // A procedure pointer, dummy procedure, or external procedure
-class ProcEntityDetails : public EntityDetails {
+class ProcEntityDetails : public EntityDetails, public WithPassArg {
 public:
   ProcEntityDetails() = default;
   explicit ProcEntityDetails(EntityDetails &&d);
@@ -198,13 +211,10 @@ public:
   const ProcInterface &interface() const { return interface_; }
   ProcInterface &interface() { return interface_; }
   void set_interface(const ProcInterface &interface) { interface_ = interface; }
-  const std::optional<SourceName> &passName() const { return passName_; }
-  void set_passName(const SourceName &passName) { passName_ = passName; }
   inline bool HasExplicitInterface() const;
 
 private:
   ProcInterface interface_;
-  std::optional<SourceName> passName_;
   friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 
@@ -263,16 +273,13 @@ private:
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeDetails &);
 };
 
-class ProcBindingDetails {
+class ProcBindingDetails : public WithPassArg {
 public:
   explicit ProcBindingDetails(const Symbol &symbol) : symbol_{&symbol} {}
   const Symbol &symbol() const { return *symbol_; }
-  std::optional<SourceName> passName() const { return passName_; }
-  void set_passName(const SourceName &passName) { passName_ = passName; }
 
 private:
   const Symbol *symbol_;  // procedure bound to
-  std::optional<SourceName> passName_;  // name in PASS attribute
 };
 
 ENUM_CLASS(GenericKind,  // Kinds of generic-spec

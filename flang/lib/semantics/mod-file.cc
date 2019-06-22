@@ -43,7 +43,7 @@ static std::vector<const Symbol *> CollectSymbols(const Scope &);
 static void PutEntity(std::ostream &, const Symbol &);
 static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
-static void PutPassName(std::ostream &, const std::optional<SourceName> &);
+static void PutPassName(std::ostream &, const SourceName *);
 static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
 static void PutInit(std::ostream &, const MaybeExpr &);
@@ -488,7 +488,7 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
   });
 }
 
-void PutPassName(std::ostream &os, const std::optional<SourceName> &passName) {
+void PutPassName(std::ostream &os, const SourceName *passName) {
   if (passName) {
     PutLower(os << ",pass(", passName->ToString()) << ')';
   }

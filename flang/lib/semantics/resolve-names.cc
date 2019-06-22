@@ -270,7 +270,7 @@ protected:
 
 private:
   MaybeExpr bindName_;  // from BIND(C, NAME="...")
-  std::optional<SourceName> passName_;  // from PASS(...)
+  const SourceName *passName_{nullptr};  // from PASS(...)
 };
 
 // Find and create types from declaration-type-spec nodes.
@@ -1159,10 +1159,9 @@ Attrs AttrsVisitor::GetAttrs() {
   return *attrs_;
 }
 Attrs AttrsVisitor::EndAttrs() {
-  CHECK(attrs_);
-  Attrs result{*attrs_};
+  Attrs result{GetAttrs()};
   attrs_.reset();
-  passName_.reset();
+  passName_ = nullptr;
   bindName_.reset();
   return result;
 }
@@ -1216,7 +1215,7 @@ bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
 }
 bool AttrsVisitor::Pre(const parser::Pass &x) {
   if (x.v) {
-    passName_ = x.v->source;
+    passName_ = &x.v->source;
     MakePlaceholder(*x.v, MiscDetails::Kind::PassName);
   } else {
     attrs_->set(Attr::PASS);

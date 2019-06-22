@@ -27,8 +27,7 @@ std::ostream &operator<<(std::ostream &os, const parser::CharBlock &name) {
 }
 
 template<typename T>
-static void DumpOptional(
-    std::ostream &os, const char *label, const std::optional<T> &x) {
+static void DumpOptional(std::ostream &os, const char *label, const T &x) {
   if (x) {
     os << ' ' << label << ':' << *x;
   }
@@ -435,9 +434,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [&](const FinalProcDetails &) {},
           [&](const TypeParamDetails &x) {
-            if (x.type()) {
-              os << ' ' << *x.type();
-            }
+            DumpOptional(os, "type", x.type());
             os << ' ' << common::EnumToString(x.attr());
             DumpOptional(os, "init", x.init());
           },
