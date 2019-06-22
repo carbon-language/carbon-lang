@@ -201,6 +201,8 @@ public:
 
   StringRef getName() const { return Name; }
   StringRef getDescription() const { return Description; }
+
+  SmallPtrSet<Option *, 16> MemberOptions;
 };
 
 // The general Option Category (used as default category).
@@ -283,9 +285,12 @@ public:
   StringRef ArgStr;   // The argument string itself (ex: "help", "o")
   StringRef HelpStr;  // The descriptive text message for -help
   StringRef ValueStr; // String describing what the value of this option is
-  SmallVector<OptionCategory *, 1>
-      Categories;                    // The Categories this option belongs to
-  SmallPtrSet<SubCommand *, 1> Subs; // The subcommands this option belongs to.
+
+  // Return the set of OptionCategories that this Option belongs to.
+  SmallPtrSet<OptionCategory *, 1> getCategories() const;
+
+  // Return the set of SubCommands that this Option belongs to.
+  SmallPtrSet<SubCommand *, 1> getSubCommands() const;
 
   inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
     return (enum NumOccurrencesFlag)Occurrences;
@@ -317,12 +322,6 @@ public:
     return getNumOccurrencesFlag() == cl::ConsumeAfter;
   }
 
-  bool isInAllSubCommands() const {
-    return any_of(Subs, [](const SubCommand *SC) {
-      return SC == &*AllSubCommands;
-    });
-  }
-
   //-------------------------------------------------------------------------===
   // Accessor functions set by OptionModifiers
   //
@@ -336,16 +335,13 @@ public:
   void setMiscFlag(enum MiscFlags M) { Misc |= M; }
   void setPosition(unsigned pos) { Position = pos; }
   void addCategory(OptionCategory &C);
-  void addSubCommand(SubCommand &S) { Subs.insert(&S); }
 
 protected:
   explicit Option(enum NumOccurrencesFlag OccurrencesFlag,
                   enum OptionHidden Hidden)
       : NumOccurrences(0), Occurrences(OccurrencesFlag), Value(0),
         HiddenFlag(Hidden), Formatting(NormalFormatting), Misc(0),
-        FullyInitialized(false), Position(0), AdditionalVals(0) {
-    Categories.push_back(&GeneralCategory);
-  }
+        FullyInitialized(false), Position(0), AdditionalVals(0) {}
 
   inline void setNumAdditionalVals(unsigned n) { AdditionalVals = n; }
 
@@ -354,7 +350,14 @@ public:
 
   // addArgument - Register this argument with the commandline system.
   //
-  void addArgument();
+  virtual void addArgument(SubCommand &SC);
+
+  // addArgument - Only called in done() method to add default
+  // TopLevelSubCommand.
+  void addArgument() {
+    if (!FullyInitialized)
+      addArgument(*TopLevelSubCommand);
+  }
 
   /// Unregisters this option from the CommandLine system.
   ///
@@ -465,7 +468,7 @@ struct sub {
 
   sub(SubCommand &S) : Sub(S) {}
 
-  template <class Opt> void apply(Opt &O) const { O.addSubCommand(Sub); }
+  template <class Opt> void apply(Opt &O) const { O.addArgument(Sub); }
 };
 
 //===----------------------------------------------------------------------===//
@@ -1772,11 +1775,10 @@ class alias : public Option {
       error("cl::alias must have argument name specified!");
     if (!AliasFor)
       error("cl::alias must have an cl::aliasopt(option) specified!");
-    if (!Subs.empty())
-      error("cl::alias must not have cl::sub(), aliased option's cl::sub() will be used!");
-    Subs = AliasFor->Subs;
-    Categories = AliasFor->Categories;
-    addArgument();
+    for(OptionCategory *Cat: AliasFor->getCategories())
+      addCategory(*Cat);
+    for(SubCommand *SC: AliasFor->getSubCommands())
+      Option::addArgument(*SC);
   }
 
 public:
@@ -1789,6 +1791,10 @@ public:
       error("cl::alias must only have one cl::aliasopt(...) specified!");
     AliasFor = &O;
   }
+
+  // Does nothing when called via apply.  Aliases call Option::addArgument
+  // directly in the done() method to actually add the option..
+  void addArgument(SubCommand &SC) override {}
 
   template <class... Mods>
   explicit alias(const Mods &... Ms)
