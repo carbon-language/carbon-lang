@@ -57,6 +57,7 @@ bool IsProcedure(const Symbol &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
 bool IsProcedurePointer(const Symbol &);
+bool IsExtensibleType(const DerivedTypeSpec *);
 // Is this a derived type from module with this name?
 bool IsDerivedTypeFromModule(
     const DerivedTypeSpec *derived, const char *module, const char *name);

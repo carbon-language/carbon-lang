@@ -15,7 +15,7 @@
 ! C1003 - can't parenthesize function call returning procedure pointer
 module m1
   type :: dt
-    procedure(frpp), pointer :: pp
+    procedure(frpp), pointer, nopass :: pp
   end type dt
  contains
   subroutine boring

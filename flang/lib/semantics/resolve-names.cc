@@ -107,9 +107,10 @@ public:
   // Emit a message about a SourceName
   Message &Say(const SourceName &, MessageFixedText &&);
   // Emit a formatted message associated with a source location.
-  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &);
-  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &,
-      const SourceName &);
+  template<typename... A>
+  Message &Say(const SourceName &source, MessageFixedText &&msg, A &&... args) {
+    return context_->Say(source, std::move(msg), std::forward<A>(args)...);
+  }
 
 private:
   SemanticsContext *context_{nullptr};
@@ -1047,6 +1048,10 @@ private:
   void AddSubpNames(const ProgramTree &);
   bool BeginScope(const ProgramTree &);
   void ResolveSpecificationParts(ProgramTree &);
+  void FinishSpecificationParts(const ProgramTree &);
+  void FinishDerivedType(Scope &);
+  const Symbol *CheckPassArg(
+      const Symbol &, const Symbol *, const SourceName *);
 };
 
 // ImplicitRules implementation
@@ -1318,14 +1323,6 @@ Message &MessageHandler::Say(MessageFormattedText &&msg) {
 }
 Message &MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
   return Say(name, std::move(msg), name);
-}
-Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
-    const SourceName &arg1) {
-  return context_->Say(location, std::move(msg), arg1);
-}
-Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
-    const SourceName &arg1, const SourceName &arg2) {
-  return context_->Say(location, std::move(msg), arg1, arg2);
 }
 
 // ImplicitRulesVisitor implementation
@@ -4765,6 +4762,7 @@ bool ResolveNamesVisitor::Pre(const parser::ProgramUnit &x) {
   auto root{ProgramTree::Build(x)};
   SetScope(context().globalScope());
   ResolveSpecificationParts(root);
+  FinishSpecificationParts(root);
   SetScope(context().globalScope());
   ResolveExecutionParts(root);
   return false;
@@ -4867,6 +4865,146 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
     return BeginSubmodule(node.name(), node.GetParentId());
   default: CRASH_NO_CASE;
   }
+}
+
+// Perform checks that need to happen after all of the specification parts
+// but before any of the execution parts.
+void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
+  if (!node.scope()) {
+    return;  // error occurred creating scope
+  }
+  SetScope(*node.scope());
+  for (Scope &childScope : currScope().children()) {
+    if (childScope.kind() == Scope::Kind::DerivedType && childScope.symbol()) {
+      FinishDerivedType(childScope);
+    }
+  }
+  for (const auto &child : node.children()) {
+    FinishSpecificationParts(child);
+  }
+}
+
+static int FindIndexOfName(
+    const SourceName &name, std::vector<Symbol *> symbols) {
+  for (std::size_t i{0}; i < symbols.size(); ++i) {
+    if (symbols[i] && symbols[i]->name() == name) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// Perform checks on procedure bindings of this type
+void ResolveNamesVisitor::FinishDerivedType(Scope &scope) {
+  CHECK(scope.kind() == Scope::Kind::DerivedType);
+  for (auto &pair : scope) {
+    Symbol &comp{*pair.second};
+    std::visit(
+        common::visitors{
+            [&](ProcEntityDetails &x) {
+              x.set_passArg(
+                  CheckPassArg(comp, x.interface().symbol(), x.passName()));
+            },
+            [&](ProcBindingDetails &x) {
+              x.set_passArg(CheckPassArg(comp, &x.symbol(), x.passName()));
+            },
+            [](auto &x) {},
+        },
+        comp.details());
+  }
+}
+
+// Check C760, constraints on the passed-object dummy argument
+// If they all pass, return the Symbol for that argument.
+const Symbol *ResolveNamesVisitor::CheckPassArg(
+    const Symbol &proc, const Symbol *interface, const SourceName *passName) {
+  if (proc.attrs().test(Attr::NOPASS)) {
+    return nullptr;
+  }
+  const auto &name{proc.name()};
+  if (!interface) {
+    Say(name,
+        "Procedure component '%s' must have NOPASS attribute or explicit interface"_err_en_US,
+        name);
+    return nullptr;
+  }
+  const auto &dummyArgs{interface->get<SubprogramDetails>().dummyArgs()};
+  if (!passName && dummyArgs.empty()) {
+    Say(name,
+        proc.has<ProcEntityDetails>()
+            ? "Procedure component '%s' with no dummy arguments"
+              " must have NOPASS attribute"_err_en_US
+            : "Procedure binding '%s' with no dummy arguments"
+              " must have NOPASS attribute"_err_en_US,
+        name);
+    return nullptr;
+  }
+  int passArgIndex{0};
+  if (!passName) {
+    passName = &dummyArgs[0]->name();
+  } else {
+    passArgIndex = FindIndexOfName(*passName, dummyArgs);
+    if (passArgIndex < 0) {
+      Say(*passName,
+          "'%s' is not a dummy argument of procedure interface '%s'"_err_en_US,
+          *passName, interface->name());
+      return nullptr;
+    }
+  }
+  const Symbol &passArg{*dummyArgs[passArgIndex]};
+  std::optional<MessageFixedText> msg;
+  if (!passArg.has<ObjectEntityDetails>()) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " must be a data object"_err_en_US;
+  } else if (passArg.attrs().test(Attr::POINTER)) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " may not have the POINTER attribute"_err_en_US;
+  } else if (passArg.attrs().test(Attr::ALLOCATABLE)) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " may not have the ALLOCATABLE attribute"_err_en_US;
+  } else if (passArg.attrs().test(Attr::VALUE)) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " may not have the VALUE attribute"_err_en_US;
+  } else if (passArg.Rank() > 0) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " must be scalar"_err_en_US;
+  }
+  if (msg) {
+    Say(name, std::move(*msg), *passName, name);
+    return nullptr;
+  }
+  const DeclTypeSpec *type{passArg.GetType()};
+  if (!type) {
+    return nullptr;  // an error already occurred
+  }
+  const Symbol &typeSymbol{*proc.owner().GetSymbol()};
+  const DerivedTypeSpec *derived{type->AsDerived()};
+  if (!derived || derived->typeSymbol() != typeSymbol) {
+    Say(name,
+        "Passed-object dummy argument '%s' of procedure '%s'"
+        " must be of type '%s' but is '%s'"_err_en_US,
+        *passName, name, typeSymbol.name(), type->AsFortran());
+    return nullptr;
+  }
+  if (IsExtensibleType(derived) != type->IsPolymorphic()) {
+    Say(name,
+        type->IsPolymorphic()
+            ? "Passed-object dummy argument '%s' of procedure '%s'"
+              " must not be polymorphic because '%s' is not extensible"_err_en_US
+            : "Passed-object dummy argument '%s' of procedure '%s'"
+              " must polymorphic because '%s' is extensible"_err_en_US,
+        *passName, name, typeSymbol.name());
+    return nullptr;
+  }
+  for (const auto &[paramName, paramValue] : derived->parameters()) {
+    if (paramValue.isLen() && !paramValue.isAssumed()) {
+      Say(name,
+          "Passed-object dummy argument '%s' of procedure '%s'"
+          " has non-assumed length parameter '%s'"_err_en_US,
+          *passName, name, paramName);
+    }
+  }
+  return &passArg;
 }
 
 // Resolve names in the execution part of this node and its children

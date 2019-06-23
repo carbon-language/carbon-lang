@@ -30,8 +30,8 @@ module module1
     character(kind=ck,len=len) :: cx = ' '
     logical(kind=lk) :: lx = .false.
     real(kind=rk), pointer :: rp = NULL()
-    procedure(realfunc), pointer :: rfp1 => NULL()
-    procedure(real), pointer :: rfp2 => NULL()
+    procedure(realfunc), pointer, nopass :: rfp1 => NULL()
+    procedure(real), pointer, nopass :: rfp2 => NULL()
   end type scalar
  contains
   subroutine scalararg(x)

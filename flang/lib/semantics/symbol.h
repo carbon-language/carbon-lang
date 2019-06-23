@@ -21,6 +21,7 @@
 #include <functional>
 #include <list>
 #include <optional>
+#include <vector>
 
 namespace Fortran::semantics {
 
@@ -73,14 +74,14 @@ public:
     CHECK(result_ == nullptr);
     result_ = &result;
   }
-  const std::list<Symbol *> &dummyArgs() const { return dummyArgs_; }
+  const std::vector<Symbol *> &dummyArgs() const { return dummyArgs_; }
   void add_dummyArg(Symbol &symbol) { dummyArgs_.push_back(&symbol); }
   void add_alternateReturn() { dummyArgs_.push_back(nullptr); }
 
 private:
   bool isInterface_{false};  // true if this represents an interface-body
   MaybeExpr bindName_;
-  std::list<Symbol *> dummyArgs_;  // nullptr -> alternate return indicator
+  std::vector<Symbol *> dummyArgs_;  // nullptr -> alternate return indicator
   Symbol *result_{nullptr};
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
 };

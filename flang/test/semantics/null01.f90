@@ -45,10 +45,10 @@ subroutine test
     integer, pointer :: ip1(:)
   end type dt1
   type :: dt2
-    procedure(s0), pointer :: pps0
+    procedure(s0), pointer, nopass :: pps0
   end type dt2
   type :: dt3
-    procedure(s1), pointer :: pps1
+    procedure(s1), pointer, nopass :: pps1
   end type dt3
   integer :: j
   type(dt0) :: dt0x

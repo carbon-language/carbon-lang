@@ -293,6 +293,12 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
   return nullptr;
 }
 
+bool IsExtensibleType(const DerivedTypeSpec *derived) {
+  return derived && !IsIsoCType(derived) &&
+      !derived->typeSymbol().attrs().test(Attr::BIND_C) &&
+      !derived->typeSymbol().get<DerivedTypeDetails>().sequence();
+}
+
 bool IsDerivedTypeFromModule(
     const DerivedTypeSpec *derived, const char *module, const char *name) {
   if (!derived) {

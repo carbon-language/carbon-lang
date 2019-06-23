@@ -130,8 +130,9 @@ Scope &DerivedTypeSpec::Instantiate(
       // one of its parents.  Put the type parameter expression value
       // into the new scope as the initialization value for the parameter.
       if (ParamValue * paramValue{FindParameter(name)}) {
+        const TypeParamDetails &details{symbol->get<TypeParamDetails>()};
+        paramValue->set_attr(details.attr());
         if (MaybeIntExpr expr{paramValue->GetExplicit()}) {
-          const TypeParamDetails &details{symbol->get<TypeParamDetails>()};
           // Ensure that any kind type parameters with values are
           // constant by now.
           if (details.attr() == common::TypeParamAttr::Kind) {
