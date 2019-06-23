@@ -9799,8 +9799,6 @@ def: Pat<(v16i8 (trunc (v16i16 VR256X:$src))),
          (VPMOVDBZrr (v16i32 (VPMOVZXWDZrr VR256X:$src)))>;
 def: Pat<(v16i8 (trunc (loadv16i16 addr:$src))),
          (VPMOVDBZrr (v16i32 (VPMOVZXWDZrm addr:$src)))>;
-def: Pat<(store (v16i8 (trunc (v16i16 VR256X:$src))), addr:$dst),
-         (VPMOVDBZmr addr:$dst, (v16i32 (VPMOVZXWDZrr VR256X:$src)))>;
 }
 
 //===----------------------------------------------------------------------===//
