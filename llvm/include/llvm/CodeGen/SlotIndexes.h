@@ -319,10 +319,6 @@ class raw_ostream;
     using IndexList = ilist<IndexListEntry>;
     IndexList indexList;
 
-#ifdef EXPENSIVE_CHECKS
-    IndexList graveyardList;
-#endif // EXPENSIVE_CHECKS
-
     MachineFunction *mf;
 
     using Mi2IndexMap = DenseMap<const MachineInstr *, SlotIndex>;
@@ -367,9 +363,6 @@ class raw_ostream;
 
     /// Dump the indexes.
     void dump() const;
-
-    /// Renumber the index list, providing space for new instructions.
-    void renumberIndexes();
 
     /// Repair indexes after adding and removing instructions.
     void repairIndexesInRange(MachineBasicBlock *MBB,
@@ -536,29 +529,6 @@ class raw_ostream;
       return J->second;
     }
 
-    /// Returns the MBB covering the given range, or null if the range covers
-    /// more than one basic block.
-    MachineBasicBlock* getMBBCoveringRange(SlotIndex start, SlotIndex end) const {
-
-      assert(start < end && "Backwards ranges not allowed.");
-      MBBIndexIterator itr = findMBBIndex(start);
-      if (itr == MBBIndexEnd()) {
-        itr = std::prev(itr);
-        return itr->second;
-      }
-
-      // Check that we don't cross the boundary into this block.
-      if (itr->first < end)
-        return nullptr;
-
-      itr = std::prev(itr);
-
-      if (itr->first <= start)
-        return itr->second;
-
-      return nullptr;
-    }
-
     /// Insert the given machine instruction into the mapping. Returns the
     /// assigned index.
     /// If Late is set and there are null indexes between mi's neighboring
@@ -665,32 +635,6 @@ class raw_ostream;
 
       renumberIndexes(newItr);
       llvm::sort(idx2MBBMap, less_first());
-    }
-
-    /// Free the resources that were required to maintain a SlotIndex.
-    ///
-    /// Once an index is no longer needed (for instance because the instruction
-    /// at that index has been moved), the resources required to maintain the
-    /// index can be relinquished to reduce memory use and improve renumbering
-    /// performance. Any remaining SlotIndex objects that point to the same
-    /// index are left 'dangling' (much the same as a dangling pointer to a
-    /// freed object) and should not be accessed, except to destruct them.
-    ///
-    /// Like dangling pointers, access to dangling SlotIndexes can cause
-    /// painful-to-track-down bugs, especially if the memory for the index
-    /// previously pointed to has been re-used. To detect dangling SlotIndex
-    /// bugs, build with EXPENSIVE_CHECKS=1. This will cause "erased" indexes to
-    /// be retained in a graveyard instead of being freed. Operations on indexes
-    /// in the graveyard will trigger an assertion.
-    void eraseIndex(SlotIndex index) {
-      IndexListEntry *entry = index.listEntry();
-#ifdef EXPENSIVE_CHECKS
-      indexList.remove(entry);
-      graveyardList.push_back(entry);
-      entry->setPoison();
-#else
-      indexList.erase(entry);
-#endif
     }
   };
 
