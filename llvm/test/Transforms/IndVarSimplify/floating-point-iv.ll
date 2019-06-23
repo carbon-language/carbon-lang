@@ -50,7 +50,7 @@ bb:		; preds = %bb, %entry
 return:
 	ret void
 ; CHECK-LABEL: @test3(
-; CHECK: fcmp
+; CHECK: br i1 false
 }
 
 define void @test4() nounwind {
