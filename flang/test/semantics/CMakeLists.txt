@@ -129,6 +129,11 @@ set(ERROR_TESTS
   expr-errors01.f90
   null01.f90
   equivalence01.f90
+  # ${PROJECT_SOURCE_DIR}/module/ieee_arithmetic.f90 #520
+  ${PROJECT_SOURCE_DIR}/module/ieee_exceptions.f90
+  ${PROJECT_SOURCE_DIR}/module/ieee_features.f90
+  ${PROJECT_SOURCE_DIR}/module/iso_c_binding.f90
+  ${PROJECT_SOURCE_DIR}/module/iso_fortran_env.f90
 )
 
 # These test files have expected symbols in the source

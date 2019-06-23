@@ -24,12 +24,13 @@ if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"
   exit 1
 fi
-src=$srcdir/$1
+case $1 in
+(/*) src=$1 ;;
+(*) src=$srcdir/$1 ;;
+esac
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
-temp=temp-$1
-rm -rf $temp
-mkdir $temp
+temp=`mktemp -d -p .`
 [[ $KEEP ]] || trap "rm -rf $temp" EXIT
 
 log=$temp/log
