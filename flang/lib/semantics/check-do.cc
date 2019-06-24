@@ -495,7 +495,7 @@ private:
         ++count;
         if (count > 1) {
           context_.Say(currentStatementSourcePosition_,
-              "only one DEFAULT(NONE) may appear"_err_en_US);
+              "only one DEFAULT(NONE) may appear"_en_US);
           return;
         }
       }
