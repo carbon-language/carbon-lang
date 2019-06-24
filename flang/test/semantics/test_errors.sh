@@ -30,7 +30,7 @@ case $1 in
 esac
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
-temp=`mktemp -d -p .`
+temp=`mktemp -d ./tmp.XXXXXX`
 [[ $KEEP ]] || trap "rm -rf $temp" EXIT
 
 log=$temp/log
