@@ -1669,18 +1669,15 @@ void ScopeHandler::EraseSymbol(const parser::Name &name) {
 }
 
 static bool NeedsType(const Symbol &symbol) {
-  if (symbol.GetType()) {
-    return false;
-  }
-  if (auto *details{symbol.detailsIf<ProcEntityDetails>()}) {
-    if (details->interface().symbol()) {
-      return false;  // the interface determines the type
-    }
-    if (!symbol.test(Symbol::Flag::Function)) {
-      return false;  // not known to be a function
-    }
-  }
-  return true;
+  return symbol.GetType() == nullptr &&
+      std::visit(
+          common::visitors{
+              [](const EntityDetails &) { return true; },
+              [](const ObjectEntityDetails &) { return true; },
+              [](const AssocEntityDetails &) { return true; },
+              [](const auto &) { return false; },
+          },
+          symbol.details());
 }
 void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   if (NeedsType(symbol)) {
@@ -4835,22 +4832,11 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
     ResolveSpecificationParts(child);
   }
   ExecutionPartSkimmer{scope}.Walk(node.exec());
-  // Convert function results and dummy arguments to objects if we don't
-  // already known by now that they're procedures.
-  if (currScope().kind() == Scope::Kind::Subprogram) {
-    for (const auto &pair : currScope()) {
-      Symbol &symbol{*pair.second};
-      if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-        if (details->isFuncResult() || details->isDummy()) {
-          ConvertToObjectEntity(symbol);
-        }
-      }
-    }
+  PopScope();
+  // Ensure every object entity has a type:
+  for (auto &pair : *node.scope()) {
+    ApplyImplicitRules(*pair.second);
   }
-  // Subtlety: PopScope() is not called here because we want to defer
-  // conversions of other uncategorized entities into objects until after
-  // we have traversed the executable part of the subprogram.
-  SetScope(currScope().parent());
 }
 
 // Add SubprogramNameDetails symbols for contained subprograms
