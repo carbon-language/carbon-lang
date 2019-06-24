@@ -7112,7 +7112,7 @@ static SDValue LowerBuildVectorAsInsert(SDValue Op, unsigned NonZeros,
 
     // If the build vector contains zeros or our first insertion is not the
     // first index then insert into zero vector to break any register
-    // dependency else use SCALAR_TO_VECTOR/VZEXT_MOVL.
+    // dependency else use SCALAR_TO_VECTOR.
     if (First) {
       First = false;
       if (NumZero || 0 != i)
@@ -7121,7 +7121,6 @@ static SDValue LowerBuildVectorAsInsert(SDValue Op, unsigned NonZeros,
         assert(0 == i && "Expected insertion into zero-index");
         V = DAG.getAnyExtOrTrunc(Op.getOperand(i), dl, MVT::i32);
         V = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, V);
-        V = DAG.getNode(X86ISD::VZEXT_MOVL, dl, MVT::v4i32, V);
         V = DAG.getBitcast(VT, V);
         continue;
       }
@@ -7184,7 +7183,8 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
           V = NumZero ? DAG.getZExtOrTrunc(ThisElt, dl, MVT::i32)
                       : DAG.getAnyExtOrTrunc(ThisElt, dl, MVT::i32);
           V = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, V);
-          V = DAG.getNode(X86ISD::VZEXT_MOVL, dl, MVT::v4i32, V);
+          if (NumZero)
+            V = DAG.getNode(X86ISD::VZEXT_MOVL, dl, MVT::v4i32, V);
           V = DAG.getBitcast(MVT::v8i16, V);
         } else {
           V = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v8i16, V, ThisElt,
