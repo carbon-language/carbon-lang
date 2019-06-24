@@ -45,7 +45,7 @@ public:
   private:
     bool assign(Register VReg, const CCValAssign &VA, const EVT &VT);
 
-    virtual unsigned getStackAddress(const CCValAssign &VA,
+    virtual Register getStackAddress(const CCValAssign &VA,
                                      MachineMemOperand *&MMO) = 0;
 
     virtual void assignValueToReg(Register ValVReg, const CCValAssign &VA,

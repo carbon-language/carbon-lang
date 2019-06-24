@@ -111,7 +111,7 @@ static MachineFunction *getMFFromMMI(const Module *M,
   return MF;
 }
 
-static void collectCopies(SmallVectorImpl<unsigned> &Copies,
+static void collectCopies(SmallVectorImpl<Register> &Copies,
                           MachineFunction *MF) {
   for (auto &MBB : *MF)
     for (MachineInstr &MI : MBB) {
@@ -128,7 +128,7 @@ TEST(PatternMatchInstr, MatchIntConstant) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);
@@ -149,7 +149,7 @@ TEST(PatternMatchInstr, MatchBinaryOp) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);
@@ -276,7 +276,7 @@ TEST(PatternMatchInstr, MatchFPUnaryOp) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);
@@ -347,7 +347,7 @@ TEST(PatternMatchInstr, MatchExtendsTrunc) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);
@@ -403,7 +403,7 @@ TEST(PatternMatchInstr, MatchSpecificType) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);
@@ -450,7 +450,7 @@ TEST(PatternMatchInstr, MatchCombinators) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);
@@ -493,7 +493,7 @@ TEST(PatternMatchInstr, MatchMiscellaneous) {
   auto ModuleMMIPair = createDummyModule(Context, *TM, "");
   MachineFunction *MF =
       getMFFromMMI(ModuleMMIPair.first.get(), ModuleMMIPair.second.get());
-  SmallVector<unsigned, 4> Copies;
+  SmallVector<Register, 4> Copies;
   collectCopies(Copies, MF);
   MachineBasicBlock *EntryMBB = &*MF->begin();
   MachineIRBuilder B(*MF);

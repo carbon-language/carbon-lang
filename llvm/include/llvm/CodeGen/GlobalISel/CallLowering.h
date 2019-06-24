@@ -42,7 +42,7 @@ class CallLowering {
   virtual void anchor();
 public:
   struct ArgInfo {
-    unsigned Reg;
+    Register Reg;
     Type *Ty;
     ISD::ArgFlagsTy Flags;
     bool IsFixed;
@@ -77,19 +77,19 @@ public:
     /// direct SP manipulation, depending on the context. \p MPO
     /// should be initialized to an appropriate description of the
     /// address created.
-    virtual unsigned getStackAddress(uint64_t Size, int64_t Offset,
+    virtual Register getStackAddress(uint64_t Size, int64_t Offset,
                                      MachinePointerInfo &MPO) = 0;
 
     /// The specified value has been assigned to a physical register,
     /// handle the appropriate COPY (either to or from) and mark any
     /// relevant uses/defines as needed.
-    virtual void assignValueToReg(unsigned ValVReg, unsigned PhysReg,
+    virtual void assignValueToReg(Register ValVReg, Register PhysReg,
                                   CCValAssign &VA) = 0;
 
     /// The specified value has been assigned to a stack
     /// location. Load or store it there, with appropriate extension
     /// if necessary.
-    virtual void assignValueToAddress(unsigned ValVReg, unsigned Addr,
+    virtual void assignValueToAddress(Register ValVReg, Register Addr,
                                       uint64_t Size, MachinePointerInfo &MPO,
                                       CCValAssign &VA) = 0;
 
@@ -104,7 +104,7 @@ public:
       llvm_unreachable("Custom values not supported");
     }
 
-    unsigned extendRegister(unsigned ValReg, CCValAssign &VA);
+    Register extendRegister(Register ValReg, CCValAssign &VA);
 
     virtual bool assignArg(unsigned ValNo, MVT ValVT, MVT LocVT,
                            CCValAssign::LocInfo LocInfo, const ArgInfo &Info,

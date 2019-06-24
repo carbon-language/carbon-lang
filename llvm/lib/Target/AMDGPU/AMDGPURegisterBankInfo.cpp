@@ -828,14 +828,14 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
   }
   case AMDGPU::G_SEXT:
   case AMDGPU::G_ZEXT: {
-    unsigned SrcReg = MI.getOperand(1).getReg();
+    Register SrcReg = MI.getOperand(1).getReg();
     LLT SrcTy = MRI.getType(SrcReg);
     if (SrcTy != LLT::scalar(1))
       return;
 
     MachineIRBuilder B(MI);
     bool Signed = Opc == AMDGPU::G_SEXT;
-    unsigned DstReg = MI.getOperand(0).getReg();
+    Register DstReg = MI.getOperand(0).getReg();
     LLT DstTy = MRI.getType(DstReg);
     const RegisterBank *SrcBank = getRegBank(SrcReg, MRI, *TRI);
     if (SrcBank->getID() == AMDGPU::SCCRegBankID ||

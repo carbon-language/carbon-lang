@@ -195,7 +195,7 @@ bool CallLowering::handleAssignments(MachineIRBuilder &MIRBuilder,
   return true;
 }
 
-unsigned CallLowering::ValueHandler::extendRegister(unsigned ValReg,
+Register CallLowering::ValueHandler::extendRegister(Register ValReg,
                                                     CCValAssign &VA) {
   LLT LocTy{VA.getLocVT()};
   if (LocTy.getSizeInBits() == MRI.getType(ValReg).getSizeInBits())

@@ -126,7 +126,6 @@ class SrcOp {
 
 public:
   enum class SrcType { Ty_Reg, Ty_MIB, Ty_Predicate };
-  SrcOp(unsigned R) : Reg(R), Ty(SrcType::Ty_Reg) {}
   SrcOp(Register R) : Reg(R), Ty(SrcType::Ty_Reg) {}
   SrcOp(const MachineOperand &Op) : Reg(Op.getReg()), Ty(SrcType::Ty_Reg) {}
   SrcOp(const MachineInstrBuilder &MIB) : SrcMIB(MIB), Ty(SrcType::Ty_MIB) {}
@@ -158,7 +157,7 @@ public:
     llvm_unreachable("Unrecognised SrcOp::SrcType enum");
   }
 
-  unsigned getReg() const {
+  Register getReg() const {
     switch (Ty) {
     case SrcType::Ty_Predicate:
       llvm_unreachable("Not a register operand");

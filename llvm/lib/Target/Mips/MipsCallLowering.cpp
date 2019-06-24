@@ -93,7 +93,7 @@ private:
   void assignValueToReg(Register ValVReg, const CCValAssign &VA,
                         const EVT &VT) override;
 
-  unsigned getStackAddress(const CCValAssign &VA,
+  Register getStackAddress(const CCValAssign &VA,
                            MachineMemOperand *&MMO) override;
 
   void assignValueToAddress(Register ValVReg, const CCValAssign &VA) override;
@@ -134,7 +134,7 @@ void IncomingValueHandler::assignValueToReg(Register ValVReg,
                                             const EVT &VT) {
   const MipsSubtarget &STI =
       static_cast<const MipsSubtarget &>(MIRBuilder.getMF().getSubtarget());
-  unsigned PhysReg = VA.getLocReg();
+  Register PhysReg = VA.getLocReg();
   if (VT == MVT::f64 && PhysReg >= Mips::A0 && PhysReg <= Mips::A3) {
     const MipsSubtarget &STI =
         static_cast<const MipsSubtarget &>(MIRBuilder.getMF().getSubtarget());
@@ -173,7 +173,7 @@ void IncomingValueHandler::assignValueToReg(Register ValVReg,
   }
 }
 
-unsigned IncomingValueHandler::getStackAddress(const CCValAssign &VA,
+Register IncomingValueHandler::getStackAddress(const CCValAssign &VA,
                                                MachineMemOperand *&MMO) {
   MachineFunction &MF = MIRBuilder.getMF();
   unsigned Size = alignTo(VA.getValVT().getSizeInBits(), 8) / 8;
@@ -188,7 +188,7 @@ unsigned IncomingValueHandler::getStackAddress(const CCValAssign &VA,
   unsigned Align = MinAlign(TFL->getStackAlignment(), Offset);
   MMO = MF.getMachineMemOperand(MPO, MachineMemOperand::MOLoad, Size, Align);
 
-  unsigned AddrReg = MRI.createGenericVirtualRegister(LLT::pointer(0, 32));
+  Register AddrReg = MRI.createGenericVirtualRegister(LLT::pointer(0, 32));
   MIRBuilder.buildFrameIndex(AddrReg, FI);
 
   return AddrReg;
@@ -228,7 +228,7 @@ private:
   void assignValueToReg(Register ValVReg, const CCValAssign &VA,
                         const EVT &VT) override;
 
-  unsigned getStackAddress(const CCValAssign &VA,
+  Register getStackAddress(const CCValAssign &VA,
                            MachineMemOperand *&MMO) override;
 
   void assignValueToAddress(Register ValVReg, const CCValAssign &VA) override;
@@ -237,7 +237,7 @@ private:
                    ArrayRef<CCValAssign> ArgLocs, unsigned ArgLocsStartIndex,
                    Register ArgsReg, const EVT &VT) override;
 
-  unsigned extendRegister(Register ValReg, const CCValAssign &VA);
+  Register extendRegister(Register ValReg, const CCValAssign &VA);
 
   MachineInstrBuilder &MIB;
 };
@@ -274,13 +274,13 @@ void OutgoingValueHandler::assignValueToReg(Register ValVReg,
         .constrainAllUses(MIRBuilder.getTII(), *STI.getRegisterInfo(),
                           *STI.getRegBankInfo());
   } else {
-    unsigned ExtReg = extendRegister(ValVReg, VA);
+    Register ExtReg = extendRegister(ValVReg, VA);
     MIRBuilder.buildCopy(PhysReg, ExtReg);
     MIB.addUse(PhysReg, RegState::Implicit);
   }
 }
 
-unsigned OutgoingValueHandler::getStackAddress(const CCValAssign &VA,
+Register OutgoingValueHandler::getStackAddress(const CCValAssign &VA,
                                                MachineMemOperand *&MMO) {
   MachineFunction &MF = MIRBuilder.getMF();
   const TargetFrameLowering *TFL = MF.getSubtarget().getFrameLowering();
@@ -288,7 +288,7 @@ unsigned OutgoingValueHandler::getStackAddress(const CCValAssign &VA,
   LLT p0 = LLT::pointer(0, 32);
   LLT s32 = LLT::scalar(32);
   Register SPReg = MRI.createGenericVirtualRegister(p0);
-  MIRBuilder.buildCopy(SPReg, Mips::SP);
+  MIRBuilder.buildCopy(SPReg, Register(Mips::SP));
 
   Register OffsetReg = MRI.createGenericVirtualRegister(s32);
   unsigned Offset = VA.getLocMemOffset();
@@ -310,11 +310,11 @@ void OutgoingValueHandler::assignValueToAddress(Register ValVReg,
                                                 const CCValAssign &VA) {
   MachineMemOperand *MMO;
   Register Addr = getStackAddress(VA, MMO);
-  unsigned ExtReg = extendRegister(ValVReg, VA);
+  Register ExtReg = extendRegister(ValVReg, VA);
   MIRBuilder.buildStore(ExtReg, Addr, *MMO);
 }
 
-unsigned OutgoingValueHandler::extendRegister(Register ValReg,
+Register OutgoingValueHandler::extendRegister(Register ValReg,
                                               const CCValAssign &VA) {
   LLT LocTy{VA.getLocVT()};
   switch (VA.getLocInfo()) {
@@ -530,7 +530,7 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       Callee.isReg() || IsCalleeGlobalPIC ? Mips::JALRPseudo : Mips::JAL);
   MIB.addDef(Mips::SP, RegState::Implicit);
   if (IsCalleeGlobalPIC) {
-    unsigned CalleeReg =
+    Register CalleeReg =
         MF.getRegInfo().createGenericVirtualRegister(LLT::pointer(0, 32));
     MachineInstr *CalleeGlobalValue =
         MIRBuilder.buildGlobalValue(CalleeReg, Callee.getGlobal());
@@ -583,8 +583,8 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   if (IsCalleeGlobalPIC) {
     MIRBuilder.buildCopy(
-        Mips::GP,
-        MF.getInfo<MipsFunctionInfo>()->getGlobalBaseRegForGlobalISel());
+      Register(Mips::GP),
+      MF.getInfo<MipsFunctionInfo>()->getGlobalBaseRegForGlobalISel());
     MIB.addDef(Mips::GP, RegState::Implicit);
   }
   MIRBuilder.insertInstr(MIB);

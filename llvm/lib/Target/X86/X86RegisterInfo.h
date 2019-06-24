@@ -136,13 +136,13 @@ public:
   Register getFrameRegister(const MachineFunction &MF) const override;
   unsigned getPtrSizedFrameRegister(const MachineFunction &MF) const;
   unsigned getPtrSizedStackRegister(const MachineFunction &MF) const;
-  unsigned getStackRegister() const { return StackPtr; }
-  unsigned getBaseRegister() const { return BasePtr; }
+  Register getStackRegister() const { return StackPtr; }
+  Register getBaseRegister() const { return BasePtr; }
   /// Returns physical register used as frame pointer.
   /// This will always returns the frame pointer register, contrary to
   /// getFrameRegister() which returns the "base pointer" in situations
   /// involving a stack, frame and base pointer.
-  unsigned getFramePtr() const { return FramePtr; }
+  Register getFramePtr() const { return FramePtr; }
   // FIXME: Move to FrameInfok
   unsigned getSlotSize() const { return SlotSize; }
 };

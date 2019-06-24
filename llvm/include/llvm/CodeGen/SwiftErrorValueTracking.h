@@ -77,7 +77,7 @@ public:
 
   /// Get or create the swifterror value virtual register in
   /// VRegDefMap for this basic block.
-  unsigned getOrCreateVReg(const MachineBasicBlock *, const Value *);
+  Register getOrCreateVReg(const MachineBasicBlock *, const Value *);
 
   /// Set the swifterror virtual register in the VRegDefMap for this
   /// basic block.
@@ -85,12 +85,12 @@ public:
 
   /// Get or create the swifterror value virtual register for a def of a
   /// swifterror by an instruction.
-  unsigned getOrCreateVRegDefAt(const Instruction *, const MachineBasicBlock *,
+  Register getOrCreateVRegDefAt(const Instruction *, const MachineBasicBlock *,
                                 const Value *);
 
   /// Get or create the swifterror value virtual register for a use of a
   /// swifterror by an instruction.
-  unsigned getOrCreateVRegUseAt(const Instruction *, const MachineBasicBlock *,
+  Register getOrCreateVRegUseAt(const Instruction *, const MachineBasicBlock *,
                                 const Value *);
 
   /// Create initial definitions of swifterror values in the entry block of the
