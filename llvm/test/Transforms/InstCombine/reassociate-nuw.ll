@@ -3,7 +3,7 @@
 
 define i32 @reassoc_add_nuw(i32 %x) {
 ; CHECK-LABEL: @reassoc_add_nuw(
-; CHECK-NEXT:    [[ADD1:%.*]] = add i32 [[X:%.*]], 68
+; CHECK-NEXT:    [[ADD1:%.*]] = add nuw i32 [[X:%.*]], 68
 ; CHECK-NEXT:    ret i32 [[ADD1]]
 ;
   %add0 = add nuw i32 %x, 4

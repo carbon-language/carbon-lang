@@ -223,6 +223,11 @@ static bool MaintainNoSignedWrap(BinaryOperator &I, Value *B, Value *C) {
   return !Overflow;
 }
 
+static bool hasNoUnsignedWrap(BinaryOperator &I) {
+  OverflowingBinaryOperator *OBO = dyn_cast<OverflowingBinaryOperator>(&I);
+  return OBO && OBO->hasNoUnsignedWrap();
+}
+
 /// Conservatively clears subclassOptionalData after a reassociation or
 /// commutation. We preserve fast-math flags when applicable as they can be
 /// preserved.
@@ -329,14 +334,19 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(1, V);
           // Conservatively clear the optional flags, since they may not be
           // preserved by the reassociation.
-          if (MaintainNoSignedWrap(I, B, C) &&
+          bool IsNUW = hasNoUnsignedWrap(I) && hasNoUnsignedWrap(*Op0);
+          bool IsNSW = MaintainNoSignedWrap(I, B, C);
+
+          ClearSubclassDataAfterReassociation(I);
+
+          if (IsNUW)
+            I.setHasNoUnsignedWrap(true);
+
+          if (IsNSW &&
               (!Op0 || (isa<BinaryOperator>(Op0) && Op0->hasNoSignedWrap()))) {
             // Note: this is only valid because SimplifyBinOp doesn't look at
             // the operands to Op0.
-            I.clearSubclassOptionalData();
             I.setHasNoSignedWrap(true);
-          } else {
-            ClearSubclassDataAfterReassociation(I);
           }
 
           Changed = true;
