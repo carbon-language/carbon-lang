@@ -826,6 +826,69 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     MI.eraseFromParent();
     return;
   }
+  case AMDGPU::G_SEXT:
+  case AMDGPU::G_ZEXT: {
+    unsigned SrcReg = MI.getOperand(1).getReg();
+    LLT SrcTy = MRI.getType(SrcReg);
+    if (SrcTy != LLT::scalar(1))
+      return;
+
+    MachineIRBuilder B(MI);
+    bool Signed = Opc == AMDGPU::G_SEXT;
+    unsigned DstReg = MI.getOperand(0).getReg();
+    LLT DstTy = MRI.getType(DstReg);
+    const RegisterBank *SrcBank = getRegBank(SrcReg, MRI, *TRI);
+    if (SrcBank->getID() == AMDGPU::SCCRegBankID ||
+        SrcBank->getID() == AMDGPU::VCCRegBankID) {
+      const RegisterBank *DstBank = getRegBank(DstReg, MRI, *TRI);
+      unsigned DstSize = DstTy.getSizeInBits();
+
+      // 64-bit select is SGPR only
+      const bool UseSel64 = DstSize > 32 &&
+        SrcBank->getID() == AMDGPU::SCCRegBankID;
+
+      // TODO: Should s16 select be legal?
+      LLT SelType = UseSel64 ? LLT::scalar(64) : LLT::scalar(32);
+      auto True = B.buildConstant(SelType, Signed ? -1 : 1);
+      auto False = B.buildConstant(SelType, 0);
+
+      MRI.setRegBank(True.getReg(0), *DstBank);
+      MRI.setRegBank(False.getReg(0), *DstBank);
+      if (DstSize > 32 && SrcBank->getID() != AMDGPU::SCCRegBankID) {
+        auto Sel = B.buildSelect(SelType, SrcReg, True, False);
+        MRI.setRegBank(Sel.getReg(0), *DstBank);
+        B.buildMerge(DstReg, { Sel.getReg(0), Sel.getReg(0) });
+      } else if (DstSize < 32) {
+        auto Sel = B.buildSelect(SelType, SrcReg, True, False);
+        MRI.setRegBank(Sel.getReg(0), *DstBank);
+        B.buildTrunc(DstReg, Sel);
+      } else {
+        B.buildSelect(DstReg, SrcReg, True, False);
+      }
+
+      MI.eraseFromParent();
+      return;
+    }
+
+    // Fixup the case with an s1 src that isn't a condition register. Use shifts
+    // instead of introducing a compare to avoid an unnecessary condition
+    // register (and since there's no scalar 16-bit compares).
+    auto Ext = B.buildAnyExt(DstTy, SrcReg);
+    auto ShiftAmt = B.buildConstant(LLT::scalar(32), DstTy.getSizeInBits() - 1);
+    auto Shl = B.buildShl(DstTy, Ext, ShiftAmt);
+
+    if (MI.getOpcode() == AMDGPU::G_SEXT)
+      B.buildAShr(DstReg, Shl, ShiftAmt);
+    else
+      B.buildLShr(DstReg, Shl, ShiftAmt);
+
+    MRI.setRegBank(DstReg, *SrcBank);
+    MRI.setRegBank(Ext.getReg(0), *SrcBank);
+    MRI.setRegBank(ShiftAmt.getReg(0), *SrcBank);
+    MRI.setRegBank(Shl.getReg(0), *SrcBank);
+    MI.eraseFromParent();
+    return;
+  }
   case AMDGPU::G_EXTRACT_VECTOR_ELT:
     applyDefaultMapping(OpdMapper);
     executeInWaterfallLoop(MI, MRI, { 2 });
@@ -1236,19 +1299,22 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     unsigned Src = MI.getOperand(1).getReg();
     unsigned DstSize = getSizeInBits(Dst, MRI, *TRI);
     unsigned SrcSize = getSizeInBits(Src, MRI, *TRI);
-    unsigned SrcBank = getRegBankID(Src, MRI, *TRI,
-                                    SrcSize == 1 ? AMDGPU::SGPRRegBankID :
-                                    AMDGPU::VGPRRegBankID);
-    unsigned DstBank = SrcBank;
-    if (SrcSize == 1) {
-      if (SrcBank == AMDGPU::SGPRRegBankID)
-        DstBank = AMDGPU::VGPRRegBankID;
-      else
-        DstBank = AMDGPU::SGPRRegBankID;
+
+    unsigned DstBank;
+    const RegisterBank *SrcBank = getRegBank(Src, MRI, *TRI);
+    assert(SrcBank);
+    switch (SrcBank->getID()) {
+    case AMDGPU::SCCRegBankID:
+    case AMDGPU::SGPRRegBankID:
+      DstBank = AMDGPU::SGPRRegBankID;
+      break;
+    default:
+      DstBank = AMDGPU::VGPRRegBankID;
+      break;
     }
 
     OpdsMapping[0] = AMDGPU::getValueMapping(DstBank, DstSize);
-    OpdsMapping[1] = AMDGPU::getValueMapping(SrcBank, SrcSize);
+    OpdsMapping[1] = AMDGPU::getValueMapping(SrcBank->getID(), SrcSize);
     break;
   }
   case AMDGPU::G_FCMP: {
