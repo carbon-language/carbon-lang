@@ -431,8 +431,14 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           Op0->getOpcode() == Opcode && Op1->getOpcode() == Opcode &&
           match(Op0, m_OneUse(m_BinOp(m_Value(A), m_Constant(C1)))) &&
           match(Op1, m_OneUse(m_BinOp(m_Value(B), m_Constant(C2))))) {
-        BinaryOperator *NewBO = BinaryOperator::Create(Opcode, A, B);
-        if (isa<FPMathOperator>(NewBO)) {
+        bool IsNUW = hasNoUnsignedWrap(I) &&
+           hasNoUnsignedWrap(*Op0) &&
+           hasNoUnsignedWrap(*Op1);
+         BinaryOperator *NewBO = (IsNUW && Opcode == Instruction::Add) ?
+           BinaryOperator::CreateNUW(Opcode, A, B) :
+           BinaryOperator::Create(Opcode, A, B);
+
+         if (isa<FPMathOperator>(NewBO)) {
           FastMathFlags Flags = I.getFastMathFlags();
           Flags &= Op0->getFastMathFlags();
           Flags &= Op1->getFastMathFlags();
@@ -445,6 +451,8 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         // Conservatively clear the optional flags, since they may not be
         // preserved by the reassociation.
         ClearSubclassDataAfterReassociation(I);
+        if (IsNUW)
+          I.setHasNoUnsignedWrap(true);
 
         Changed = true;
         continue;

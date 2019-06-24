@@ -55,8 +55,8 @@ define i32 @no_reassoc_add_none_nuw(i32 %x) {
 
 define i32 @reassoc_x2_add_nuw(i32 %x, i32 %y) {
 ; CHECK-LABEL: @reassoc_x2_add_nuw(
-; CHECK-NEXT:    [[ADD1:%.*]] = add i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[ADD2:%.*]] = add i32 [[ADD1]], 12
+; CHECK-NEXT:    [[ADD1:%.*]] = add nuw i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[ADD2:%.*]] = add nuw i32 [[ADD1]], 12
 ; CHECK-NEXT:    ret i32 [[ADD2]]
 ;
   %add0 = add nuw i32 %x, 4
@@ -68,7 +68,7 @@ define i32 @reassoc_x2_add_nuw(i32 %x, i32 %y) {
 define i32 @reassoc_x2_mul_nuw(i32 %x, i32 %y) {
 ; CHECK-LABEL: @reassoc_x2_mul_nuw(
 ; CHECK-NEXT:    [[MUL1:%.*]] = mul i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[MUL2:%.*]] = mul i32 [[MUL1]], 45
+; CHECK-NEXT:    [[MUL2:%.*]] = mul nuw i32 [[MUL1]], 45
 ; CHECK-NEXT:    ret i32 [[MUL2]]
 ;
   %mul0 = mul nuw i32 %x, 5
