@@ -101,6 +101,7 @@ Extensions and legacy features deliberately not supported
 * `T` and `F` as abbreviations for `.TRUE.` and `.FALSE.` in DATA (PGI/XLF)
 * Use of host FORMAT labels in internal subprograms (PGI-only feature)
 * ALLOCATE(TYPE(derived)::...) as variant of correct ALLOCATE(derived::...) (PGI only)
+* Defining an explicit interface for a subprogram within itself (PGI only)
 * USE association of a procedure interface within that same procedure's definition
 * After "TYPE,EXTENDS(T1)::T2;...", the nonstandard structure constructor
   T2(T1(x)) is accepted by PGI/GNU/Intel.  Use T2(T1=T1(x)) or T2(x) instead.
