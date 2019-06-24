@@ -791,8 +791,8 @@ unsigned AMDGPULegalizerInfo::getSegmentAperture(
     4,
     MinAlign(64, StructOffset));
 
-  unsigned LoadResult = MRI.createGenericVirtualRegister(S32);
-  unsigned LoadAddr = AMDGPU::NoRegister;
+  Register LoadResult = MRI.createGenericVirtualRegister(S32);
+  Register LoadAddr;
 
   MIRBuilder.materializeGEP(LoadAddr, QueuePtr, LLT::scalar(64), StructOffset);
   MIRBuilder.buildLoad(LoadResult, LoadAddr, *MMO);
@@ -806,8 +806,8 @@ bool AMDGPULegalizerInfo::legalizeAddrSpaceCast(
 
   MIRBuilder.setInstr(MI);
 
-  unsigned Dst = MI.getOperand(0).getReg();
-  unsigned Src = MI.getOperand(1).getReg();
+  Register Dst = MI.getOperand(0).getReg();
+  Register Src = MI.getOperand(1).getReg();
 
   LLT DstTy = MRI.getType(Dst);
   LLT SrcTy = MRI.getType(Src);

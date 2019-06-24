@@ -186,7 +186,7 @@ void ARCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Special handling of DBG_VALUE instructions.
   if (MI.isDebugValue()) {
-    unsigned FrameReg = getFrameRegister(MF);
+    Register FrameReg = getFrameRegister(MF);
     MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false /*isDef*/);
     MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
     return;
@@ -219,7 +219,7 @@ void ARCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                     ObjSize, RS, SPAdj);
 }
 
-unsigned ARCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
+Register ARCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const ARCFrameLowering *TFI = getFrameLowering(MF);
   return TFI->hasFP(MF) ? ARC::FP : ARC::SP;
 }

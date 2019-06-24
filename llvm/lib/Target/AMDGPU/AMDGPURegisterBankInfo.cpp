@@ -375,7 +375,7 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
 void AMDGPURegisterBankInfo::split64BitValueForMapping(
   MachineIRBuilder &B,
-  SmallVector<unsigned, 2> &Regs,
+  SmallVector<Register, 2> &Regs,
   LLT HalfTy,
   unsigned Reg) const {
   assert(HalfTy.getSizeInBits() == 32);
@@ -396,7 +396,7 @@ void AMDGPURegisterBankInfo::split64BitValueForMapping(
 }
 
 /// Replace the current type each register in \p Regs has with \p NewTy
-static void setRegsToType(MachineRegisterInfo &MRI, ArrayRef<unsigned> Regs,
+static void setRegsToType(MachineRegisterInfo &MRI, ArrayRef<Register> Regs,
                           LLT NewTy) {
   for (unsigned Reg : Regs) {
     assert(MRI.getType(Reg).getSizeInBits() == NewTy.getSizeInBits());
@@ -445,7 +445,7 @@ void AMDGPURegisterBankInfo::executeInWaterfallLoop(
 
   // Use a set to avoid extra readfirstlanes in the case where multiple operands
   // are the same register.
-  SmallSet<unsigned, 4> SGPROperandRegs;
+  SmallSet<Register, 4> SGPROperandRegs;
   for (unsigned Op : OpIndices) {
     assert(MI.getOperand(Op).isUse());
     unsigned Reg = MI.getOperand(Op).getReg();
@@ -459,9 +459,9 @@ void AMDGPURegisterBankInfo::executeInWaterfallLoop(
     return;
 
   MachineIRBuilder B(MI);
-  SmallVector<unsigned, 4> ResultRegs;
-  SmallVector<unsigned, 4> InitResultRegs;
-  SmallVector<unsigned, 4> PhiRegs;
+  SmallVector<Register, 4> ResultRegs;
+  SmallVector<Register, 4> InitResultRegs;
+  SmallVector<Register, 4> PhiRegs;
   for (MachineOperand &Def : MI.defs()) {
     LLT ResTy = MRI.getType(Def.getReg());
     const RegisterBank *DefBank = getRegBank(Def.getReg(), MRI, *TRI);
@@ -575,7 +575,7 @@ void AMDGPURegisterBankInfo::executeInWaterfallLoop(
         }
       } else {
         LLT S32 = LLT::scalar(32);
-        SmallVector<unsigned, 8> ReadlanePieces;
+        SmallVector<Register, 8> ReadlanePieces;
 
         // The compares can be done as 64-bit, but the extract needs to be done
         // in 32-bit pieces.
@@ -732,10 +732,10 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
 
     LLT HalfTy = getHalfSizedType(DstTy);
 
-    SmallVector<unsigned, 2> DefRegs(OpdMapper.getVRegs(0));
-    SmallVector<unsigned, 1> Src0Regs(OpdMapper.getVRegs(1));
-    SmallVector<unsigned, 2> Src1Regs(OpdMapper.getVRegs(2));
-    SmallVector<unsigned, 2> Src2Regs(OpdMapper.getVRegs(3));
+    SmallVector<Register, 2> DefRegs(OpdMapper.getVRegs(0));
+    SmallVector<Register, 1> Src0Regs(OpdMapper.getVRegs(1));
+    SmallVector<Register, 2> Src1Regs(OpdMapper.getVRegs(2));
+    SmallVector<Register, 2> Src2Regs(OpdMapper.getVRegs(3));
 
     // All inputs are SGPRs, nothing special to do.
     if (DefRegs.empty()) {
@@ -781,9 +781,9 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       break;
 
     LLT HalfTy = getHalfSizedType(DstTy);
-    SmallVector<unsigned, 2> DefRegs(OpdMapper.getVRegs(0));
-    SmallVector<unsigned, 2> Src0Regs(OpdMapper.getVRegs(1));
-    SmallVector<unsigned, 2> Src1Regs(OpdMapper.getVRegs(2));
+    SmallVector<Register, 2> DefRegs(OpdMapper.getVRegs(0));
+    SmallVector<Register, 2> Src0Regs(OpdMapper.getVRegs(1));
+    SmallVector<Register, 2> Src1Regs(OpdMapper.getVRegs(2));
 
     // All inputs are SGPRs, nothing special to do.
     if (DefRegs.empty()) {

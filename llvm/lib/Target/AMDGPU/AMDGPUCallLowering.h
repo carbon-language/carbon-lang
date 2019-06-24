@@ -27,15 +27,15 @@ class AMDGPUCallLowering: public CallLowering {
 
   void lowerParameter(MachineIRBuilder &MIRBuilder, Type *ParamTy,
                       uint64_t Offset, unsigned Align,
-                      unsigned DstReg) const;
+                      Register DstReg) const;
 
  public:
   AMDGPUCallLowering(const AMDGPUTargetLowering &TLI);
 
   bool lowerReturn(MachineIRBuilder &MIRBuilder, const Value *Val,
-                   ArrayRef<unsigned> VRegs) const override;
+                   ArrayRef<Register> VRegs) const override;
   bool lowerFormalArguments(MachineIRBuilder &MIRBuilder, const Function &F,
-                            ArrayRef<unsigned> VRegs) const override;
+                            ArrayRef<Register> VRegs) const override;
   static CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool IsVarArg);
   static CCAssignFn *CCAssignFnForReturn(CallingConv::ID CC, bool IsVarArg);
 };

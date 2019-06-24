@@ -161,7 +161,7 @@ TEST(PatternMatchInstr, MatchBinaryOp) {
   bool match =
       mi_match(MIBAdd->getOperand(0).getReg(), MRI, m_GAdd(m_Reg(), m_Reg()));
   EXPECT_TRUE(match);
-  unsigned Src0, Src1, Src2;
+  Register Src0, Src1, Src2;
   match = mi_match(MIBAdd->getOperand(0).getReg(), MRI,
                    m_GAdd(m_Reg(Src0), m_Reg(Src1)));
   EXPECT_TRUE(match);
@@ -292,7 +292,7 @@ TEST(PatternMatchInstr, MatchFPUnaryOp) {
   bool match = mi_match(MIBFabs->getOperand(0).getReg(), MRI, m_GFabs(m_Reg()));
   EXPECT_TRUE(match);
 
-  unsigned Src;
+  Register Src;
   auto MIBFNeg = B.buildInstr(TargetOpcode::G_FNEG, {s32}, {Copy0s32});
   match = mi_match(MIBFNeg->getOperand(0).getReg(), MRI, m_GFNeg(m_Reg(Src)));
   EXPECT_TRUE(match);
@@ -360,7 +360,7 @@ TEST(PatternMatchInstr, MatchExtendsTrunc) {
   auto MIBAExt = B.buildAnyExt(s64, MIBTrunc);
   auto MIBZExt = B.buildZExt(s64, MIBTrunc);
   auto MIBSExt = B.buildSExt(s64, MIBTrunc);
-  unsigned Src0;
+  Register Src0;
   bool match =
       mi_match(MIBTrunc->getOperand(0).getReg(), MRI, m_GTrunc(m_Reg(Src0)));
   EXPECT_TRUE(match);
@@ -433,7 +433,7 @@ TEST(PatternMatchInstr, MatchSpecificType) {
   LLT PtrTy = LLT::pointer(0, 64);
   auto MIBIntToPtr = B.buildCast(PtrTy, Copies[0]);
   auto MIBPtrToInt = B.buildCast(s64, MIBIntToPtr);
-  unsigned Src0;
+  Register Src0;
 
   // match the ptrtoint(inttoptr reg)
   bool match = mi_match(MIBPtrToInt->getOperand(0).getReg(), MRI,
@@ -459,7 +459,7 @@ TEST(PatternMatchInstr, MatchCombinators) {
   LLT s64 = LLT::scalar(64);
   LLT s32 = LLT::scalar(32);
   auto MIBAdd = B.buildAdd(s64, Copies[0], Copies[1]);
-  unsigned Src0, Src1;
+  Register Src0, Src1;
   bool match =
       mi_match(MIBAdd->getOperand(0).getReg(), MRI,
                m_all_of(m_SpecificType(s64), m_GAdd(m_Reg(Src0), m_Reg(Src1))));

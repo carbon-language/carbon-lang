@@ -71,7 +71,7 @@ private:
   public:
     ValueToVRegInfo() = default;
 
-    using VRegListT = SmallVector<unsigned, 1>;
+    using VRegListT = SmallVector<Register, 1>;
     using OffsetListT = SmallVector<uint64_t, 1>;
 
     using const_vreg_iterator =
@@ -559,9 +559,9 @@ private:
   /// Non-aggregate types have just one corresponding VReg and the list can be
   /// used as a single "unsigned". Aggregates get flattened. If such VRegs do
   /// not exist, they are created.
-  ArrayRef<unsigned> getOrCreateVRegs(const Value &Val);
+  ArrayRef<Register> getOrCreateVRegs(const Value &Val);
 
-  unsigned getOrCreateVReg(const Value &Val) {
+  Register getOrCreateVReg(const Value &Val) {
     auto Regs = getOrCreateVRegs(Val);
     if (Regs.empty())
       return 0;

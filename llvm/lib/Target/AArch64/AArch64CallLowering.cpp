@@ -232,8 +232,8 @@ void AArch64CallLowering::splitToValueTypes(
 
 bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
                                       const Value *Val,
-                                      ArrayRef<unsigned> VRegs,
-                                      unsigned SwiftErrorVReg) const {
+                                      ArrayRef<Register> VRegs,
+                                      Register SwiftErrorVReg) const {
   auto MIB = MIRBuilder.buildInstrNoInsert(AArch64::RET_ReallyLR);
   assert(((Val && !VRegs.empty()) || (!Val && VRegs.empty())) &&
          "Return value without a vreg");
@@ -352,7 +352,7 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
 
 bool AArch64CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                                const Function &F,
-                                               ArrayRef<unsigned> VRegs) const {
+                                               ArrayRef<Register> VRegs) const {
   MachineFunction &MF = MIRBuilder.getMF();
   MachineBasicBlock &MBB = MIRBuilder.getMBB();
   MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -427,7 +427,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                                     const MachineOperand &Callee,
                                     const ArgInfo &OrigRet,
                                     ArrayRef<ArgInfo> OrigArgs,
-                                    unsigned SwiftErrorVReg) const {
+                                    Register SwiftErrorVReg) const {
   MachineFunction &MF = MIRBuilder.getMF();
   const Function &F = MF.getFunction();
   MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -495,7 +495,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     SplitArgs.clear();
 
     SmallVector<uint64_t, 8> RegOffsets;
-    SmallVector<unsigned, 8> SplitRegs;
+    SmallVector<Register, 8> SplitRegs;
     splitToValueTypes(OrigRet, SplitArgs, DL, MRI, F.getCallingConv(),
                       [&](unsigned Reg, uint64_t Offset) {
                         RegOffsets.push_back(Offset);

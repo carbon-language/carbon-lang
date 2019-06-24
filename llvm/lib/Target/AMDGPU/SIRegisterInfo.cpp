@@ -721,7 +721,7 @@ bool SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
   if (SpillToSMEM && OnlyToVGPR)
     return false;
 
-  unsigned FrameReg = getFrameRegister(*MF);
+  Register FrameReg = getFrameRegister(*MF);
 
   assert(SpillToVGPR || (SuperReg != MFI->getStackPtrOffsetReg() &&
                          SuperReg != MFI->getFrameOffsetReg() &&
@@ -914,7 +914,7 @@ bool SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
   unsigned EltSize = 4;
   unsigned ScalarLoadOp;
 
-  unsigned FrameReg = getFrameRegister(*MF);
+  Register FrameReg = getFrameRegister(*MF);
 
   const TargetRegisterClass *RC = getPhysRegClass(SuperReg);
   if (SpillToSMEM && isSGPRClass(RC)) {
@@ -1063,7 +1063,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   MachineOperand &FIOp = MI->getOperand(FIOperandNum);
   int Index = MI->getOperand(FIOperandNum).getIndex();
 
-  unsigned FrameReg = getFrameRegister(*MF);
+  Register FrameReg = getFrameRegister(*MF);
 
   switch (MI->getOpcode()) {
     // SGPR register spill
@@ -1154,7 +1154,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
           = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
 
         bool IsCopy = MI->getOpcode() == AMDGPU::V_MOV_B32_e32;
-        unsigned ResultReg = IsCopy ?
+        Register ResultReg = IsCopy ?
           MI->getOperand(0).getReg() :
           MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
 

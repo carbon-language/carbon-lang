@@ -151,7 +151,7 @@ struct OutgoingValueHandler : public CallLowering::ValueHandler {
     assert(VA.isRegLoc() && "Value should be in reg");
     assert(NextVA.isRegLoc() && "Value should be in reg");
 
-    unsigned NewRegs[] = {MRI.createGenericVirtualRegister(LLT::scalar(32)),
+    Register NewRegs[] = {MRI.createGenericVirtualRegister(LLT::scalar(32)),
                           MRI.createGenericVirtualRegister(LLT::scalar(32))};
     MIRBuilder.buildUnmerge(NewRegs, Arg.Reg);
 
@@ -232,7 +232,7 @@ void ARMCallLowering::splitToValueTypes(
 /// Lower the return value for the already existing \p Ret. This assumes that
 /// \p MIRBuilder's insertion point is correct.
 bool ARMCallLowering::lowerReturnVal(MachineIRBuilder &MIRBuilder,
-                                     const Value *Val, ArrayRef<unsigned> VRegs,
+                                     const Value *Val, ArrayRef<Register> VRegs,
                                      MachineInstrBuilder &Ret) const {
   if (!Val)
     // Nothing to do here.
@@ -257,9 +257,9 @@ bool ARMCallLowering::lowerReturnVal(MachineIRBuilder &MIRBuilder,
     ArgInfo CurArgInfo(VRegs[i], SplitEVTs[i].getTypeForEVT(Ctx));
     setArgFlags(CurArgInfo, AttributeList::ReturnIndex, DL, F);
 
-    SmallVector<unsigned, 4> Regs;
+    SmallVector<Register, 4> Regs;
     splitToValueTypes(CurArgInfo, SplitVTs, MF,
-                      [&](unsigned Reg) { Regs.push_back(Reg); });
+                      [&](Register Reg) { Regs.push_back(Reg); });
     if (Regs.size() > 1)
       MIRBuilder.buildUnmerge(Regs, VRegs[i]);
   }
@@ -273,7 +273,7 @@ bool ARMCallLowering::lowerReturnVal(MachineIRBuilder &MIRBuilder,
 
 bool ARMCallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
                                   const Value *Val,
-                                  ArrayRef<unsigned> VRegs) const {
+                                  ArrayRef<Register> VRegs) const {
   assert(!Val == VRegs.empty() && "Return value without a vreg");
 
   auto const &ST = MIRBuilder.getMF().getSubtarget<ARMSubtarget>();
@@ -386,7 +386,7 @@ struct IncomingValueHandler : public CallLowering::ValueHandler {
     assert(VA.isRegLoc() && "Value should be in reg");
     assert(NextVA.isRegLoc() && "Value should be in reg");
 
-    unsigned NewRegs[] = {MRI.createGenericVirtualRegister(LLT::scalar(32)),
+    Register NewRegs[] = {MRI.createGenericVirtualRegister(LLT::scalar(32)),
                           MRI.createGenericVirtualRegister(LLT::scalar(32))};
 
     assignValueToReg(NewRegs[0], VA.getLocReg(), VA);
@@ -421,7 +421,7 @@ struct FormalArgHandler : public IncomingValueHandler {
 
 bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                            const Function &F,
-                                           ArrayRef<unsigned> VRegs) const {
+                                           ArrayRef<Register> VRegs) const {
   auto &TLI = *getTLI<ARMTargetLowering>();
   auto Subtarget = TLI.getSubtarget();
 
@@ -453,7 +453,7 @@ bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                               AssignFn);
 
   SmallVector<ArgInfo, 8> ArgInfos;
-  SmallVector<unsigned, 4> SplitRegs;
+  SmallVector<Register, 4> SplitRegs;
   unsigned Idx = 0;
   for (auto &Arg : F.args()) {
     ArgInfo AInfo(VRegs[Idx], Arg.getType());
@@ -462,7 +462,7 @@ bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
     SplitRegs.clear();
 
     splitToValueTypes(AInfo, ArgInfos, MF,
-                      [&](unsigned Reg) { SplitRegs.push_back(Reg); });
+                      [&](Register Reg) { SplitRegs.push_back(Reg); });
 
     if (!SplitRegs.empty())
       MIRBuilder.buildMerge(VRegs[Idx], SplitRegs);
@@ -568,7 +568,7 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     if (Arg.Flags.isByVal())
       return false;
 
-    SmallVector<unsigned, 8> Regs;
+    SmallVector<Register, 8> Regs;
     splitToValueTypes(Arg, ArgInfos, MF,
                       [&](unsigned Reg) { Regs.push_back(Reg); });
 
@@ -589,9 +589,9 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       return false;
 
     ArgInfos.clear();
-    SmallVector<unsigned, 8> SplitRegs;
+    SmallVector<Register, 8> SplitRegs;
     splitToValueTypes(OrigRet, ArgInfos, MF,
-                      [&](unsigned Reg) { SplitRegs.push_back(Reg); });
+                      [&](Register Reg) { SplitRegs.push_back(Reg); });
 
     auto RetAssignFn = TLI.CCAssignFnForReturn(CallConv, IsVarArg);
     CallReturnHandler RetHandler(MIRBuilder, MRI, MIB, RetAssignFn);

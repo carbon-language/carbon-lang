@@ -42,7 +42,7 @@ unsigned SwiftErrorValueTracking::getOrCreateVReg(const MachineBasicBlock *MBB,
 }
 
 void SwiftErrorValueTracking::setCurrentVReg(const MachineBasicBlock *MBB,
-                                             const Value *Val, unsigned VReg) {
+                                             const Value *Val, Register VReg) {
   VRegDefMap[std::make_pair(MBB, Val)] = VReg;
 }
 
@@ -161,7 +161,7 @@ void SwiftErrorValueTracking::propagateVRegs() {
       auto UUseIt = VRegUpwardsUse.find(Key);
       auto VRegDefIt = VRegDefMap.find(Key);
       bool UpwardsUse = UUseIt != VRegUpwardsUse.end();
-      unsigned UUseVReg = UpwardsUse ? UUseIt->second : 0;
+      Register UUseVReg = UpwardsUse ? UUseIt->second : Register();
       bool DownwardDef = VRegDefIt != VRegDefMap.end();
       assert(!(UpwardsUse && !DownwardDef) &&
              "We can't have an upwards use but no downwards def");
@@ -238,7 +238,7 @@ void SwiftErrorValueTracking::propagateVRegs() {
       // destination virtual register number otherwise we generate a new one.
       auto &DL = MF->getDataLayout();
       auto const *RC = TLI->getRegClassFor(TLI->getPointerTy(DL));
-      unsigned PHIVReg =
+      Register PHIVReg =
           UpwardsUse ? UUseVReg : MF->getRegInfo().createVirtualRegister(RC);
       MachineInstrBuilder PHI =
           BuildMI(*MBB, MBB->getFirstNonPHI(), DLoc,

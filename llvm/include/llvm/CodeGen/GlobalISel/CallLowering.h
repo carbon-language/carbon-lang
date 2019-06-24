@@ -163,8 +163,8 @@ public:
   ///
   /// \return True if the lowering succeeds, false otherwise.
   virtual bool lowerReturn(MachineIRBuilder &MIRBuilder, const Value *Val,
-                           ArrayRef<unsigned> VRegs,
-                           unsigned SwiftErrorVReg) const {
+                           ArrayRef<Register> VRegs,
+                           Register SwiftErrorVReg) const {
     if (!supportSwiftError()) {
       assert(SwiftErrorVReg == 0 && "attempt to use unsupported swifterror");
       return lowerReturn(MIRBuilder, Val, VRegs);
@@ -175,7 +175,7 @@ public:
   /// This hook behaves as the extended lowerReturn function, but for targets
   /// that do not support swifterror value promotion.
   virtual bool lowerReturn(MachineIRBuilder &MIRBuilder, const Value *Val,
-                           ArrayRef<unsigned> VRegs) const {
+                           ArrayRef<Register> VRegs) const {
     return false;
   }
 
@@ -191,7 +191,7 @@ public:
   /// \return True if the lowering succeeded, false otherwise.
   virtual bool lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                     const Function &F,
-                                    ArrayRef<unsigned> VRegs) const {
+                                    ArrayRef<Register> VRegs) const {
     return false;
   }
 
@@ -216,7 +216,7 @@ public:
   virtual bool lowerCall(MachineIRBuilder &MIRBuilder, CallingConv::ID CallConv,
                          const MachineOperand &Callee, const ArgInfo &OrigRet,
                          ArrayRef<ArgInfo> OrigArgs,
-                         unsigned SwiftErrorVReg) const {
+                         Register SwiftErrorVReg) const {
     if (!supportSwiftError()) {
       assert(SwiftErrorVReg == 0 && "trying to use unsupported swifterror");
       return lowerCall(MIRBuilder, CallConv, Callee, OrigRet, OrigArgs);
@@ -254,8 +254,8 @@ public:
   ///
   /// \return true if the lowering succeeded, false otherwise.
   bool lowerCall(MachineIRBuilder &MIRBuilder, ImmutableCallSite CS,
-                 unsigned ResReg, ArrayRef<unsigned> ArgRegs,
-                 unsigned SwiftErrorVReg,
+                 Register ResReg, ArrayRef<Register> ArgRegs,
+                 Register SwiftErrorVReg,
                  std::function<unsigned()> GetCalleeReg) const;
 
 };

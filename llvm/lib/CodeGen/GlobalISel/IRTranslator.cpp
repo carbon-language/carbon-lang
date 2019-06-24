@@ -169,7 +169,7 @@ IRTranslator::allocateVRegs(const Value &Val) {
   return *Regs;
 }
 
-ArrayRef<unsigned> IRTranslator::getOrCreateVRegs(const Value &Val) {
+ArrayRef<Register> IRTranslator::getOrCreateVRegs(const Value &Val) {
   auto VRegsIt = VMap.findVRegs(Val);
   if (VRegsIt != VMap.vregs_end())
     return *VRegsIt->second;
@@ -363,11 +363,11 @@ bool IRTranslator::translateRet(const User &U, MachineIRBuilder &MIRBuilder) {
   if (Ret && DL->getTypeStoreSize(Ret->getType()) == 0)
     Ret = nullptr;
 
-  ArrayRef<unsigned> VRegs;
+  ArrayRef<Register> VRegs;
   if (Ret)
     VRegs = getOrCreateVRegs(*Ret);
 
-  unsigned SwiftErrorVReg = 0;
+  Register SwiftErrorVReg = 0;
   if (CLI->supportSwiftError() && SwiftError.getFunctionArg()) {
     SwiftErrorVReg = SwiftError.getOrCreateVRegUseAt(
         &RI, &MIRBuilder.getMBB(), SwiftError.getFunctionArg());
@@ -858,7 +858,7 @@ bool IRTranslator::translateLoad(const User &U, MachineIRBuilder &MIRBuilder) {
   if (DL->getTypeStoreSize(LI.getType()) == 0)
     return true;
 
-  ArrayRef<unsigned> Regs = getOrCreateVRegs(LI);
+  ArrayRef<Register> Regs = getOrCreateVRegs(LI);
   ArrayRef<uint64_t> Offsets = *VMap.getOffsets(LI);
   unsigned Base = getOrCreateVReg(*LI.getPointerOperand());
 
@@ -875,7 +875,7 @@ bool IRTranslator::translateLoad(const User &U, MachineIRBuilder &MIRBuilder) {
 
 
   for (unsigned i = 0; i < Regs.size(); ++i) {
-    unsigned Addr = 0;
+    Register Addr;
     MIRBuilder.materializeGEP(Addr, Base, OffsetTy, Offsets[i] / 8);
 
     MachinePointerInfo Ptr(LI.getPointerOperand(), Offsets[i] / 8);
@@ -899,7 +899,7 @@ bool IRTranslator::translateStore(const User &U, MachineIRBuilder &MIRBuilder) {
   if (DL->getTypeStoreSize(SI.getValueOperand()->getType()) == 0)
     return true;
 
-  ArrayRef<unsigned> Vals = getOrCreateVRegs(*SI.getValueOperand());
+  ArrayRef<Register> Vals = getOrCreateVRegs(*SI.getValueOperand());
   ArrayRef<uint64_t> Offsets = *VMap.getOffsets(*SI.getValueOperand());
   unsigned Base = getOrCreateVReg(*SI.getPointerOperand());
 
@@ -916,7 +916,7 @@ bool IRTranslator::translateStore(const User &U, MachineIRBuilder &MIRBuilder) {
   }
 
   for (unsigned i = 0; i < Vals.size(); ++i) {
-    unsigned Addr = 0;
+    Register Addr;
     MIRBuilder.materializeGEP(Addr, Base, OffsetTy, Offsets[i] / 8);
 
     MachinePointerInfo Ptr(SI.getPointerOperand(), Offsets[i] / 8);
@@ -958,7 +958,7 @@ bool IRTranslator::translateExtractValue(const User &U,
                                          MachineIRBuilder &MIRBuilder) {
   const Value *Src = U.getOperand(0);
   uint64_t Offset = getOffsetFromIndices(U, *DL);
-  ArrayRef<unsigned> SrcRegs = getOrCreateVRegs(*Src);
+  ArrayRef<Register> SrcRegs = getOrCreateVRegs(*Src);
   ArrayRef<uint64_t> Offsets = *VMap.getOffsets(*Src);
   unsigned Idx = llvm::lower_bound(Offsets, Offset) - Offsets.begin();
   auto &DstRegs = allocateVRegs(U);
@@ -975,8 +975,8 @@ bool IRTranslator::translateInsertValue(const User &U,
   uint64_t Offset = getOffsetFromIndices(U, *DL);
   auto &DstRegs = allocateVRegs(U);
   ArrayRef<uint64_t> DstOffsets = *VMap.getOffsets(U);
-  ArrayRef<unsigned> SrcRegs = getOrCreateVRegs(*Src);
-  ArrayRef<unsigned> InsertedRegs = getOrCreateVRegs(*U.getOperand(1));
+  ArrayRef<Register> SrcRegs = getOrCreateVRegs(*Src);
+  ArrayRef<Register> InsertedRegs = getOrCreateVRegs(*U.getOperand(1));
   auto InsertedIt = InsertedRegs.begin();
 
   for (unsigned i = 0; i < DstRegs.size(); ++i) {
@@ -992,9 +992,9 @@ bool IRTranslator::translateInsertValue(const User &U,
 bool IRTranslator::translateSelect(const User &U,
                                    MachineIRBuilder &MIRBuilder) {
   unsigned Tst = getOrCreateVReg(*U.getOperand(0));
-  ArrayRef<unsigned> ResRegs = getOrCreateVRegs(U);
-  ArrayRef<unsigned> Op0Regs = getOrCreateVRegs(*U.getOperand(1));
-  ArrayRef<unsigned> Op1Regs = getOrCreateVRegs(*U.getOperand(2));
+  ArrayRef<Register> ResRegs = getOrCreateVRegs(U);
+  ArrayRef<Register> Op0Regs = getOrCreateVRegs(*U.getOperand(1));
+  ArrayRef<Register> Op1Regs = getOrCreateVRegs(*U.getOperand(2));
 
   const SelectInst &SI = cast<SelectInst>(U);
   uint16_t Flags = 0;
@@ -1186,7 +1186,7 @@ void IRTranslator::getStackGuard(unsigned DstReg,
 
 bool IRTranslator::translateOverflowIntrinsic(const CallInst &CI, unsigned Op,
                                               MachineIRBuilder &MIRBuilder) {
-  ArrayRef<unsigned> ResRegs = getOrCreateVRegs(CI);
+  ArrayRef<Register> ResRegs = getOrCreateVRegs(CI);
   MIRBuilder.buildInstr(Op)
       .addDef(ResRegs[0])
       .addDef(ResRegs[1])
@@ -1539,7 +1539,7 @@ bool IRTranslator::translateInlineAsm(const CallInst &CI,
 
 unsigned IRTranslator::packRegs(const Value &V,
                                   MachineIRBuilder &MIRBuilder) {
-  ArrayRef<unsigned> Regs = getOrCreateVRegs(V);
+  ArrayRef<Register> Regs = getOrCreateVRegs(V);
   ArrayRef<uint64_t> Offsets = *VMap.getOffsets(V);
   LLT BigTy = getLLTForType(*V.getType(), *DL);
 
@@ -1558,7 +1558,7 @@ unsigned IRTranslator::packRegs(const Value &V,
 
 void IRTranslator::unpackRegs(const Value &V, unsigned Src,
                                 MachineIRBuilder &MIRBuilder) {
-  ArrayRef<unsigned> Regs = getOrCreateVRegs(V);
+  ArrayRef<Register> Regs = getOrCreateVRegs(V);
   ArrayRef<uint64_t> Offsets = *VMap.getOffsets(V);
 
   for (unsigned i = 0; i < Regs.size(); ++i)
@@ -1586,12 +1586,12 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
 
   if (!F || !F->isIntrinsic() || ID == Intrinsic::not_intrinsic) {
     bool IsSplitType = valueIsSplit(CI);
-    unsigned Res = IsSplitType ? MRI->createGenericVirtualRegister(
+    Register Res = IsSplitType ? MRI->createGenericVirtualRegister(
                                      getLLTForType(*CI.getType(), *DL))
                                : getOrCreateVReg(CI);
 
-    SmallVector<unsigned, 8> Args;
-    unsigned SwiftErrorVReg = 0;
+    SmallVector<Register, 8> Args;
+    Register SwiftErrorVReg;
     for (auto &Arg: CI.arg_operands()) {
       if (CLI->supportSwiftError() && isSwiftError(Arg)) {
         LLT Ty = getLLTForType(*Arg->getType(), *DL);
@@ -1622,7 +1622,7 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
   if (translateKnownIntrinsic(CI, ID, MIRBuilder))
     return true;
 
-  ArrayRef<unsigned> ResultRegs;
+  ArrayRef<Register> ResultRegs;
   if (!CI.getType()->isVoidTy())
     ResultRegs = getOrCreateVRegs(CI);
 
@@ -1690,8 +1690,8 @@ bool IRTranslator::translateInvoke(const User &U,
   unsigned Res = 0;
   if (!I.getType()->isVoidTy())
     Res = MRI->createGenericVirtualRegister(getLLTForType(*I.getType(), *DL));
-  SmallVector<unsigned, 8> Args;
-  unsigned SwiftErrorVReg = 0;
+  SmallVector<Register, 8> Args;
+  Register SwiftErrorVReg;
   for (auto &Arg : I.arg_operands()) {
     if (CLI->supportSwiftError() && isSwiftError(Arg)) {
       LLT Ty = getLLTForType(*Arg->getType(), *DL);
@@ -1776,7 +1776,7 @@ bool IRTranslator::translateLandingPad(const User &U,
     return false;
 
   MBB.addLiveIn(ExceptionReg);
-  ArrayRef<unsigned> ResRegs = getOrCreateVRegs(LP);
+  ArrayRef<Register> ResRegs = getOrCreateVRegs(LP);
   MIRBuilder.buildCopy(ResRegs[0], ExceptionReg);
 
   unsigned SelectorReg = TLI.getExceptionSelectorRegister(PersonalityFn);
@@ -2069,7 +2069,7 @@ void IRTranslator::finishPendingPhis() {
     SmallSet<const MachineBasicBlock *, 16> SeenPreds;
     for (unsigned i = 0; i < PI->getNumIncomingValues(); ++i) {
       auto IRPred = PI->getIncomingBlock(i);
-      ArrayRef<unsigned> ValRegs = getOrCreateVRegs(*PI->getIncomingValue(i));
+      ArrayRef<Register> ValRegs = getOrCreateVRegs(*PI->getIncomingValue(i));
       for (auto Pred : getMachinePredBBs({IRPred, PI->getParent()})) {
         if (SeenPreds.count(Pred))
           continue;
@@ -2136,7 +2136,7 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
     // Return the scalar if it is a <1 x Ty> vector.
     if (CAZ->getNumElements() == 1)
       return translate(*CAZ->getElementValue(0u), Reg);
-    SmallVector<unsigned, 4> Ops;
+    SmallVector<Register, 4> Ops;
     for (unsigned i = 0; i < CAZ->getNumElements(); ++i) {
       Constant &Elt = *CAZ->getElementValue(i);
       Ops.push_back(getOrCreateVReg(Elt));
@@ -2146,7 +2146,7 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
     // Return the scalar if it is a <1 x Ty> vector.
     if (CV->getNumElements() == 1)
       return translate(*CV->getElementAsConstant(0), Reg);
-    SmallVector<unsigned, 4> Ops;
+    SmallVector<Register, 4> Ops;
     for (unsigned i = 0; i < CV->getNumElements(); ++i) {
       Constant &Elt = *CV->getElementAsConstant(i);
       Ops.push_back(getOrCreateVReg(Elt));
@@ -2164,7 +2164,7 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
   } else if (auto CV = dyn_cast<ConstantVector>(&C)) {
     if (CV->getNumOperands() == 1)
       return translate(*CV->getOperand(0), Reg);
-    SmallVector<unsigned, 4> Ops;
+    SmallVector<Register, 4> Ops;
     for (unsigned i = 0; i < CV->getNumOperands(); ++i) {
       Ops.push_back(getOrCreateVReg(*CV->getOperand(i)));
     }
@@ -2274,7 +2274,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &CurMF) {
   EntryBB->addSuccessor(&getMBB(F.front()));
 
   // Lower the actual args into this basic block.
-  SmallVector<unsigned, 8> VRegArgs;
+  SmallVector<Register, 8> VRegArgs;
   for (const Argument &Arg: F.args()) {
     if (DL->getTypeStoreSize(Arg.getType()) == 0)
       continue; // Don't handle zero sized types.

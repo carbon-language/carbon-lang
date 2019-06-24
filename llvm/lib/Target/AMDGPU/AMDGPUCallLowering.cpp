@@ -69,7 +69,7 @@ AMDGPUCallLowering::AMDGPUCallLowering(const AMDGPUTargetLowering &TLI)
 
 bool AMDGPUCallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
                                      const Value *Val,
-                                     ArrayRef<unsigned> VRegs) const {
+                                     ArrayRef<Register> VRegs) const {
 
   MachineFunction &MF = MIRBuilder.getMF();
   MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -81,7 +81,7 @@ bool AMDGPUCallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
     return true;
   }
 
-  unsigned VReg = VRegs[0];
+  Register VReg = VRegs[0];
 
   const Function &F = MF.getFunction();
   auto &DL = F.getParent()->getDataLayout();
@@ -138,14 +138,14 @@ unsigned AMDGPUCallLowering::lowerParameterPtr(MachineIRBuilder &MIRBuilder,
 void AMDGPUCallLowering::lowerParameter(MachineIRBuilder &MIRBuilder,
                                         Type *ParamTy, uint64_t Offset,
                                         unsigned Align,
-                                        unsigned DstReg) const {
+                                        Register DstReg) const {
   MachineFunction &MF = MIRBuilder.getMF();
   const Function &F = MF.getFunction();
   const DataLayout &DL = F.getParent()->getDataLayout();
   PointerType *PtrTy = PointerType::get(ParamTy, AMDGPUAS::CONSTANT_ADDRESS);
   MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
   unsigned TypeSize = DL.getTypeStoreSize(ParamTy);
-  unsigned PtrReg = lowerParameterPtr(MIRBuilder, ParamTy, Offset);
+  Register PtrReg = lowerParameterPtr(MIRBuilder, ParamTy, Offset);
 
   MachineMemOperand *MMO =
       MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad |
@@ -195,7 +195,7 @@ static void allocateSystemSGPRs(CCState &CCInfo,
 
 bool AMDGPUCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                               const Function &F,
-                                              ArrayRef<unsigned> VRegs) const {
+                                              ArrayRef<Register> VRegs) const {
   // AMDGPU_GS and AMDGP_HS are not supported yet.
   if (F.getCallingConv() == CallingConv::AMDGPU_GS ||
       F.getCallingConv() == CallingConv::AMDGPU_HS)

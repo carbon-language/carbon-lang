@@ -51,6 +51,7 @@ namespace {
 
     RegisterSubReg(unsigned r = 0, unsigned s = 0) : R(r), S(s) {}
     RegisterSubReg(const MachineOperand &MO) : R(MO.getReg()), S(MO.getSubReg()) {}
+    RegisterSubReg(const Register &Reg) : R(Reg), S(0) {}
 
     bool operator== (const RegisterSubReg &Reg) const {
       return R == Reg.R && S == Reg.S;

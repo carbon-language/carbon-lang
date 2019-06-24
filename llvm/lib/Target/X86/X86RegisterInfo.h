@@ -133,7 +133,7 @@ public:
                            RegScavenger *RS = nullptr) const override;
 
   // Debug information queries.
-  unsigned getFrameRegister(const MachineFunction &MF) const override;
+  Register getFrameRegister(const MachineFunction &MF) const override;
   unsigned getPtrSizedFrameRegister(const MachineFunction &MF) const;
   unsigned getPtrSizedStackRegister(const MachineFunction &MF) const;
   unsigned getStackRegister() const { return StackPtr; }

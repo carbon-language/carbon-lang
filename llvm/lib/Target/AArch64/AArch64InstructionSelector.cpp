@@ -1018,9 +1018,9 @@ void AArch64InstructionSelector::materializeLargeCMVal(
   MovZ->addOperand(MF, MachineOperand::CreateImm(0));
   constrainSelectedInstRegOperands(*MovZ, TII, TRI, RBI);
 
-  auto BuildMovK = [&](unsigned SrcReg, unsigned char Flags, unsigned Offset,
-                       unsigned ForceDstReg) {
-    unsigned DstReg = ForceDstReg
+  auto BuildMovK = [&](Register SrcReg, unsigned char Flags, unsigned Offset,
+                       Register ForceDstReg) {
+    Register DstReg = ForceDstReg
                           ? ForceDstReg
                           : MRI.createVirtualRegister(&AArch64::GPR64RegClass);
     auto MovI = MIB.buildInstr(AArch64::MOVKXi).addDef(DstReg).addUse(SrcReg);

@@ -75,7 +75,7 @@ bool X86CallLowering::splitToValueTypes(const ArgInfo &OrigArg,
     return true;
   }
 
-  SmallVector<unsigned, 8> SplitRegs;
+  SmallVector<Register, 8> SplitRegs;
 
   EVT PartVT = TLI.getRegisterType(Context, VT);
   Type *PartTy = PartVT.getTypeForEVT(Context);
@@ -182,7 +182,7 @@ protected:
 
 bool X86CallLowering::lowerReturn(
     MachineIRBuilder &MIRBuilder, const Value *Val,
-    ArrayRef<unsigned> VRegs) const {
+    ArrayRef<Register> VRegs) const {
   assert(((Val && !VRegs.empty()) || (!Val && VRegs.empty())) &&
          "Return value without a vreg");
   auto MIB = MIRBuilder.buildInstrNoInsert(X86::RET).addImm(0);
@@ -205,7 +205,7 @@ bool X86CallLowering::lowerReturn(
       ArgInfo CurArgInfo = ArgInfo{VRegs[i], SplitEVTs[i].getTypeForEVT(Ctx)};
       setArgFlags(CurArgInfo, AttributeList::ReturnIndex, DL, F);
       if (!splitToValueTypes(CurArgInfo, SplitArgs, DL, MRI,
-                             [&](ArrayRef<unsigned> Regs) {
+                             [&](ArrayRef<Register> Regs) {
                                MIRBuilder.buildUnmerge(Regs, VRegs[i]);
                              }))
         return false;
@@ -321,7 +321,7 @@ protected:
 
 bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                            const Function &F,
-                                           ArrayRef<unsigned> VRegs) const {
+                                           ArrayRef<Register> VRegs) const {
   if (F.arg_empty())
     return true;
 
@@ -349,7 +349,7 @@ bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
     ArgInfo OrigArg(VRegs[Idx], Arg.getType());
     setArgFlags(OrigArg, Idx + AttributeList::FirstArgIndex, DL, F);
     if (!splitToValueTypes(OrigArg, SplitArgs, DL, MRI,
-                           [&](ArrayRef<unsigned> Regs) {
+                           [&](ArrayRef<Register> Regs) {
                              MIRBuilder.buildMerge(VRegs[Idx], Regs);
                            }))
       return false;
@@ -409,7 +409,7 @@ bool X86CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       return false;
 
     if (!splitToValueTypes(OrigArg, SplitArgs, DL, MRI,
-                           [&](ArrayRef<unsigned> Regs) {
+                           [&](ArrayRef<Register> Regs) {
                              MIRBuilder.buildUnmerge(Regs, OrigArg.Reg);
                            }))
       return false;
@@ -452,10 +452,10 @@ bool X86CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   if (OrigRet.Reg) {
     SplitArgs.clear();
-    SmallVector<unsigned, 8> NewRegs;
+    SmallVector<Register, 8> NewRegs;
 
     if (!splitToValueTypes(OrigRet, SplitArgs, DL, MRI,
-                           [&](ArrayRef<unsigned> Regs) {
+                           [&](ArrayRef<Register> Regs) {
                              NewRegs.assign(Regs.begin(), Regs.end());
                            }))
       return false;
