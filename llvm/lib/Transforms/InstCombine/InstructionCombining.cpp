@@ -590,32 +590,44 @@ Value *InstCombiner::tryFactorization(BinaryOperator &I,
     ++NumFactor;
     SimplifiedInst->takeName(&I);
 
-    // Check if we can add NSW flag to SimplifiedInst. If so, set NSW flag.
-    // TODO: Check for NUW.
+    // Check if we can add NSW/NUW flags to SimplifiedInst. If so, set them.
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(SimplifiedInst)) {
       if (isa<OverflowingBinaryOperator>(SimplifiedInst)) {
         bool HasNSW = false;
-        if (isa<OverflowingBinaryOperator>(&I))
+        bool HasNUW = false;
+        if (isa<OverflowingBinaryOperator>(&I)) {
           HasNSW = I.hasNoSignedWrap();
+          HasNUW = I.hasNoUnsignedWrap();
+        }
 
-        if (auto *LOBO = dyn_cast<OverflowingBinaryOperator>(LHS))
+        if (auto *LOBO = dyn_cast<OverflowingBinaryOperator>(LHS)) {
           HasNSW &= LOBO->hasNoSignedWrap();
+          HasNUW &= LOBO->hasNoUnsignedWrap();
+        }
 
-        if (auto *ROBO = dyn_cast<OverflowingBinaryOperator>(RHS))
+        if (auto *ROBO = dyn_cast<OverflowingBinaryOperator>(RHS)) {
           HasNSW &= ROBO->hasNoSignedWrap();
+          HasNUW &= ROBO->hasNoUnsignedWrap();
+        }
 
-        // We can propagate 'nsw' if we know that
-        //  %Y = mul nsw i16 %X, C
-        //  %Z = add nsw i16 %Y, %X
-        // =>
-        //  %Z = mul nsw i16 %X, C+1
-        //
-        // iff C+1 isn't INT_MIN
         const APInt *CInt;
         if (TopLevelOpcode == Instruction::Add &&
-            InnerOpcode == Instruction::Mul)
-          if (match(V, m_APInt(CInt)) && !CInt->isMinSignedValue())
-            BO->setHasNoSignedWrap(HasNSW);
+            InnerOpcode == Instruction::Mul) {
+          // We can propagate 'nsw' if we know that
+          //  %Y = mul nsw i16 %X, C
+          //  %Z = add nsw i16 %Y, %X
+          // =>
+          //  %Z = mul nsw i16 %X, C+1
+          //
+          // iff C+1 isn't INT_MIN
+          if (match(V, m_APInt(CInt))) {
+            if (!CInt->isMinSignedValue())
+              BO->setHasNoSignedWrap(HasNSW);
+          }
+
+          // nuw can be propagated with any constant or nuw value.
+          BO->setHasNoUnsignedWrap(HasNUW);
+        }
       }
     }
   }
