@@ -3964,7 +3964,7 @@ def int_nvvm_read_ptx_sreg_warpsize : PTXReadSRegIntrinsic_r32<"warpsize">;
 // SHUFFLE
 //
 
-// shfl.down.b32 dest, val, offset, mask_and_clamp
+// shfl.down.b32 dest, val, lane_or_offset, mask_and_clamp
 def int_nvvm_shfl_down_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.down.i32">,
@@ -3974,7 +3974,7 @@ def int_nvvm_shfl_down_f32 :
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.down.f32">,
   GCCBuiltin<"__nvvm_shfl_down_f32">;
 
-// shfl.up.b32 dest, val, offset, mask_and_clamp
+// shfl.up.b32 dest, val, lane_or_offset, mask_and_clamp
 def int_nvvm_shfl_up_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.up.i32">,
@@ -3984,7 +3984,7 @@ def int_nvvm_shfl_up_f32 :
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.up.f32">,
   GCCBuiltin<"__nvvm_shfl_up_f32">;
 
-// shfl.bfly.b32 dest, val, offset, mask_and_clamp
+// shfl.bfly.b32 dest, val, lane_or_offset, mask_and_clamp
 def int_nvvm_shfl_bfly_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.bfly.i32">,
@@ -3994,7 +3994,7 @@ def int_nvvm_shfl_bfly_f32 :
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.bfly.f32">,
   GCCBuiltin<"__nvvm_shfl_bfly_f32">;
 
-// shfl.idx.b32 dest, val, lane, mask_and_clamp
+// shfl.idx.b32 dest, val, lane_or_offset, mask_and_clamp
 def int_nvvm_shfl_idx_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.idx.i32">,
@@ -4008,7 +4008,7 @@ def int_nvvm_shfl_idx_f32 :
 // On sm_70 these don't have to be convergent, so we may eventually want to
 // implement non-convergent variant of this intrinsic.
 
-// shfl.sync.down.b32 dest, threadmask, val, offset , mask_and_clamp
+// shfl.sync.down.b32 dest, val, lane_or_offset, mask_and_clamp, threadmask
 def int_nvvm_shfl_sync_down_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.down.i32">,
@@ -4018,7 +4018,7 @@ def int_nvvm_shfl_sync_down_f32 :
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.down.f32">,
   GCCBuiltin<"__nvvm_shfl_sync_down_f32">;
 
-// shfl.sync.up.b32 dest, threadmask, val, offset, mask_and_clamp
+// shfl.sync.up.b32 dest, val, lane_or_offset, mask_and_clamp, threadmask
 def int_nvvm_shfl_sync_up_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.up.i32">,
@@ -4028,7 +4028,7 @@ def int_nvvm_shfl_sync_up_f32 :
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.up.f32">,
   GCCBuiltin<"__nvvm_shfl_sync_up_f32">;
 
-// shfl.sync.bfly.b32 dest, threadmask, val, offset, mask_and_clamp
+// shfl.sync.bfly.b32 dest, val, lane_or_offset, mask_and_clamp, threadmask
 def int_nvvm_shfl_sync_bfly_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.bfly.i32">,
@@ -4038,7 +4038,7 @@ def int_nvvm_shfl_sync_bfly_f32 :
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.bfly.f32">,
   GCCBuiltin<"__nvvm_shfl_sync_bfly_f32">;
 
-// shfl.sync.idx.b32 dest, threadmask, val, lane, mask_and_clamp
+// shfl.sync.idx.b32 dest, val, lane_or_offset, mask_and_clamp, threadmask
 def int_nvvm_shfl_sync_idx_i32 :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
             [IntrInaccessibleMemOnly, IntrConvergent], "llvm.nvvm.shfl.sync.idx.i32">,
