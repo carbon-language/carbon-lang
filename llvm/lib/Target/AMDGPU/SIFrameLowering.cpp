@@ -754,11 +754,8 @@ void SIFrameLowering::processFunctionBeforeFrameFinalized(
   const SIInstrInfo *TII = ST.getInstrInfo();
   const SIRegisterInfo &TRI = TII->getRegisterInfo();
   SIMachineFunctionInfo *FuncInfo = MF.getInfo<SIMachineFunctionInfo>();
-  bool AllSGPRSpilledToVGPRs = false;
 
   if (TRI.spillSGPRToVGPR() && FuncInfo->hasSpilledSGPRs()) {
-    AllSGPRSpilledToVGPRs = true;
-
     // Process all SGPR spills before frame offsets are finalized. Ideally SGPRs
     // are spilled to VGPRs, in which case we can eliminate the stack usage.
     //
@@ -780,8 +777,7 @@ void SIFrameLowering::processFunctionBeforeFrameFinalized(
             bool Spilled = TRI.eliminateSGPRToVGPRSpillFrameIndex(MI, FI, RS);
             (void)Spilled;
             assert(Spilled && "failed to spill SGPR to VGPR when allocated");
-          } else
-            AllSGPRSpilledToVGPRs = false;
+          }
         }
       }
     }
