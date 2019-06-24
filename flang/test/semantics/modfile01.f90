@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -36,4 +36,47 @@ end
 !type,private::u
 !end type
 !type(t)::x
+!end
+
+! Check correct modfile generation for type with private module procedure.
+
+module m2
+  private :: s1
+contains
+  subroutine s1()
+  end
+  subroutine s2()
+  end
+end
+
+!Expect: m2.mod
+!module m2
+! private::s1
+!contains
+! subroutine s1()
+! end
+! subroutine s2()
+! end
+!end
+
+module m3
+  private
+  public :: f1
+contains
+  real function f1()
+  end
+  real function f2()
+  end
+end
+
+!Expect: m3.mod
+!module m3
+! private::f2
+!contains
+! function f1()
+!  real(4)::f1
+! end
+! function f2()
+!  real(4)::f2
+! end
 !end

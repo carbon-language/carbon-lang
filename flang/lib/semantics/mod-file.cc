@@ -52,6 +52,7 @@ static void PutBound(std::ostream &, const Bound &);
 static std::ostream &PutAttrs(std::ostream &, Attrs,
     const MaybeExpr & = std::nullopt, std::string before = ","s,
     std::string after = ""s);
+static std::ostream &PutAttr(std::ostream &, Attr);
 static std::ostream &PutLower(std::ostream &, const Symbol &);
 static std::ostream &PutLower(std::ostream &, const DeclTypeSpec &);
 static std::ostream &PutLower(std::ostream &, const std::string &);
@@ -284,6 +285,11 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
     bindAttrs.set(Attr::BIND_C, true);
     attrs.set(Attr::BIND_C, false);
   }
+  if (attrs.test(Attr::PRIVATE)) {
+    PutAttr(decls_, Attr::PRIVATE) << "::";
+    PutLower(decls_, symbol) << "\n";
+    attrs.set(Attr::PRIVATE, false);
+  }
   bool isInterface{details.isInterface()};
   std::ostream &os{isInterface ? decls_ : contains_};
   if (isInterface) {
@@ -365,7 +371,7 @@ void ModFileWriter::PutUse(const Symbol &symbol) {
 void ModFileWriter::PutUseExtraAttr(
     Attr attr, const Symbol &local, const Symbol &use) {
   if (local.attrs().test(attr) && !use.attrs().test(attr)) {
-    PutLower(useExtraAttrs_, AttrToString(attr)) << "::";
+    PutAttr(useExtraAttrs_, attr) << "::";
     PutLower(useExtraAttrs_, local) << '\n';
   }
 }
@@ -552,10 +558,14 @@ std::ostream &PutAttrs(std::ostream &os, Attrs attrs, const MaybeExpr &bindName,
   for (std::size_t i{0}; i < Attr_enumSize; ++i) {
     Attr attr{static_cast<Attr>(i)};
     if (attrs.test(attr)) {
-      PutLower(os << before, AttrToString(attr)) << after;
+      PutAttr(os << before, attr) << after;
     }
   }
   return os;
+}
+
+std::ostream &PutAttr(std::ostream &os, Attr attr) {
+  return PutLower(os, AttrToString(attr));
 }
 
 std::ostream &PutLower(std::ostream &os, const Symbol &symbol) {
