@@ -1502,6 +1502,15 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
 
       break;
     }
+    case Intrinsic::amdgcn_class: {
+      unsigned SrcReg = MI.getOperand(2).getReg();
+      unsigned SrcSize = MRI.getType(SrcReg).getSizeInBits();
+      unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+      OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, DstSize);
+      OpdsMapping[2] = AMDGPU::getValueMapping(getRegBankID(SrcReg, MRI, *TRI),
+                                               SrcSize);
+      break;
+    }
     }
     break;
   }
