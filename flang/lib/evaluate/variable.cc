@@ -243,30 +243,19 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   return std::nullopt;
 }
 
-DescriptorInquiry::DescriptorInquiry(const Symbol &symbol, Field field, int dim)
-  : base_{&symbol}, field_{field}, dimension_{dim} {
-  CHECK(IsDescriptor(symbol));
-  CHECK(dim >= 0 && dim < symbol.Rank());
-}
 DescriptorInquiry::DescriptorInquiry(
-    Component &&component, Field field, int dim)
-  : base_{std::move(component)}, field_{field}, dimension_{dim} {
-  const Symbol &symbol{std::get<Component>(base_).GetLastSymbol()};
-  CHECK(IsDescriptor(symbol));
-  CHECK(dim >= 0 && dim < symbol.Rank());
+    const NamedEntity &base, Field field, int dim)
+  : base_{base}, field_{field}, dimension_{dim} {
+  const Symbol &last{base_.GetLastSymbol()};
+  CHECK(IsDescriptor(last));
+  CHECK(dim >= 0 && dim < last.Rank());
 }
-DescriptorInquiry::DescriptorInquiry(
-    SymbolOrComponent &&x, Field field, int dim)
-  : base_{std::move(x)}, field_{field}, dimension_{dim} {
-  const Symbol *symbol{std::visit(
-      common::visitors{
-          [](const Symbol *s) { return s; },
-          [](Component &c) { return &c.GetLastSymbol(); },
-      },
-      base_)};
-  CHECK(symbol != nullptr);
-  CHECK(IsDescriptor(*symbol));
-  CHECK(dim >= 0 && dim < symbol->Rank());
+
+DescriptorInquiry::DescriptorInquiry(NamedEntity &&base, Field field, int dim)
+  : base_{std::move(base)}, field_{field}, dimension_{dim} {
+  const Symbol &last{base_.GetLastSymbol()};
+  CHECK(IsDescriptor(last));
+  CHECK(dim >= 0 && dim < last.Rank());
 }
 
 // LEN()
@@ -289,14 +278,11 @@ Expr<SubscriptInteger> Component::LEN() const {
   return SymbolLEN(GetLastSymbol());
 }
 
-Expr<SubscriptInteger> ArrayRef::LEN() const {
-  return std::visit(
-      common::visitors{
-          [](const Symbol *symbol) { return SymbolLEN(*symbol); },
-          [](const Component &component) { return component.LEN(); },
-      },
-      base_);
+Expr<SubscriptInteger> NamedEntity::LEN() const {
+  return SymbolLEN(GetLastSymbol());
 }
+
+Expr<SubscriptInteger> ArrayRef::LEN() const { return base_.LEN(); }
 
 Expr<SubscriptInteger> CoarrayRef::LEN() const {
   return SymbolLEN(GetLastSymbol());
@@ -362,6 +348,12 @@ int Component::Rank() const {
   return base().Rank();
 }
 
+int NamedEntity::Rank() const {
+  return std::visit(common::visitors{[](const Symbol *s) { return s->Rank(); },
+                        [](const Component &c) { return c.Rank(); }},
+      u_);
+}
+
 int Subscript::Rank() const {
   return std::visit(
       common::visitors{
@@ -380,13 +372,11 @@ int ArrayRef::Rank() const {
   }
   if (rank > 0) {
     return rank;
+  } else if (const Component * component{base_.UnwrapComponent()}) {
+    return component->base().Rank();
+  } else {
+    return 0;
   }
-  return std::visit(
-      common::visitors{
-          [=](const Symbol *s) { return 0; },
-          [=](const Component &c) { return c.base().Rank(); },
-      },
-      base_);
 }
 
 int CoarrayRef::Rank() const {
@@ -436,32 +426,56 @@ template<typename T> int Designator<T>::Rank() const {
       u);
 }
 
-// GetBaseObject(), GetFirstSymbol(), & GetLastSymbol()
+// GetBaseObject(), GetFirstSymbol(), GetLastSymbol(), &c.
 const Symbol &Component::GetFirstSymbol() const {
   return base_.value().GetFirstSymbol();
 }
 
-const Symbol &ArrayRef::GetFirstSymbol() const {
-  return *std::visit(
+const Symbol &NamedEntity::GetFirstSymbol() const {
+  return std::visit(
       common::visitors{
-          [](const Symbol *symbol) { return symbol; },
-          [=](const Component &component) {
-            return &component.GetFirstSymbol();
+          [](const Symbol *s) -> const Symbol & { return *s; },
+          [](const Component &c) -> const Symbol & {
+            return c.GetFirstSymbol();
           },
       },
-      base_);
+      u_);
 }
 
-const Symbol &ArrayRef::GetLastSymbol() const {
-  return *std::visit(
+const Symbol &NamedEntity::GetLastSymbol() const {
+  return std::visit(
       common::visitors{
-          [](const Symbol *sym) { return sym; },
-          [=](const Component &component) {
-            return &component.GetLastSymbol();
+          [](const Symbol *s) -> const Symbol & { return *s; },
+          [](const Component &c) -> const Symbol & {
+            return c.GetLastSymbol();
           },
       },
-      base_);
+      u_);
 }
+
+const Component *NamedEntity::UnwrapComponent() const {
+  return std::visit(
+      common::visitors{
+          [](const Symbol *) -> const Component * { return nullptr; },
+          [](const Component &c) { return &c; },
+      },
+      u_);
+}
+
+Component *NamedEntity::UnwrapComponent() {
+  return std::visit(
+      common::visitors{
+          [](const Symbol *) -> Component * { return nullptr; },
+          [](Component &c) { return &c; },
+      },
+      u_);
+}
+
+const Symbol &ArrayRef::GetFirstSymbol() const {
+  return base_.GetFirstSymbol();
+}
+
+const Symbol &ArrayRef::GetLastSymbol() const { return base_.GetLastSymbol(); }
 
 const Symbol &DataRef::GetFirstSymbol() const {
   return *std::visit(
@@ -543,20 +557,20 @@ template<typename T> std::optional<DynamicType> Designator<T>::GetType() const {
   }
 }
 
-SymbolOrComponent CoarrayRef::GetBaseSymbolOrComponent() const {
-  SymbolOrComponent base{base_.front()};
+static NamedEntity AsNamedEntity(const std::vector<const Symbol *> x) {
+  NamedEntity result{*x.front()};  // asserts if empty()
   int j{0};
-  for (const Symbol *symbol : base_) {
-    if (j == 0) {  // X - already captured the symbol above
-    } else if (j == 1) {  // X%Y
-      base = Component{DataRef{std::get<const Symbol *>(base)}, *symbol};
-    } else {  // X%Y%Z or more
-      base = Component{DataRef{std::get<Component>(std::move(base))}, *symbol};
+  for (const Symbol *symbol : x) {
+    if (j++ != 0) {
+      DataRef base{result.IsSymbol() ? DataRef{result.GetLastSymbol()}
+                                     : DataRef{result.GetComponent()}};
+      result = NamedEntity{Component{std::move(base), *symbol}};
     }
-    ++j;
   }
-  return base;
+  return result;
 }
+
+NamedEntity CoarrayRef::GetBase() const { return AsNamedEntity(base_); }
 
 // Equality testing
 
@@ -565,6 +579,9 @@ bool BaseObject::operator==(const BaseObject &that) const {
 }
 bool Component::operator==(const Component &that) const {
   return base_ == that.base_ && symbol_ == that.symbol_;
+}
+bool NamedEntity::operator==(const NamedEntity &that) const {
+  return u_ == that.u_;
 }
 template<int KIND>
 bool TypeParamInquiry<KIND>::operator==(

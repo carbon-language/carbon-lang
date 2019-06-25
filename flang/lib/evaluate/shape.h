@@ -21,6 +21,7 @@
 #include "expression.h"
 #include "tools.h"
 #include "type.h"
+#include "variable.h"
 #include "../common/indirection.h"
 #include <optional>
 #include <variant>
@@ -56,14 +57,12 @@ std::optional<ConstantSubscripts> AsConstantExtents(const Shape &);
 inline int GetRank(const Shape &s) { return static_cast<int>(s.size()); }
 
 // The dimension here is zero-based, unlike DIM= arguments to many intrinsics.
-MaybeExtentExpr GetLowerBound(FoldingContext &, const Symbol &, int dimension,
-    const Component * = nullptr);
-Shape GetLowerBounds(
-    FoldingContext &, const Symbol &, const Component * = nullptr);
-MaybeExtentExpr GetExtent(FoldingContext &, const Symbol &, int dimension,
-    const Component * = nullptr);
-MaybeExtentExpr GetExtent(FoldingContext &, const Subscript &, const Symbol &,
-    int dimension, const Component * = nullptr);
+MaybeExtentExpr GetLowerBound(
+    FoldingContext &, const NamedEntity &, int dimension);
+Shape GetLowerBounds(FoldingContext &, const NamedEntity &);
+MaybeExtentExpr GetExtent(FoldingContext &, const NamedEntity &, int dimension);
+MaybeExtentExpr GetExtent(
+    FoldingContext &, const Subscript &, const NamedEntity &, int dimension);
 MaybeExtentExpr GetUpperBound(
     FoldingContext &, MaybeExtentExpr &&lower, MaybeExtentExpr &&extent);
 
@@ -97,10 +96,11 @@ public:
     return GetShape(expr.u);
   }
 
-  std::optional<Shape> GetShape(const Symbol &, const Component * = nullptr);
+  std::optional<Shape> GetShape(const Symbol &);
   std::optional<Shape> GetShape(const Symbol *);
-  std::optional<Shape> GetShape(const BaseObject &);
   std::optional<Shape> GetShape(const Component &);
+  std::optional<Shape> GetShape(const NamedEntity &);
+  std::optional<Shape> GetShape(const BaseObject &);
   std::optional<Shape> GetShape(const ArrayRef &);
   std::optional<Shape> GetShape(const CoarrayRef &);
   std::optional<Shape> GetShape(const DataRef &);

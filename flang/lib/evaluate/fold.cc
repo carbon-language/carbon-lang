@@ -59,10 +59,11 @@ common::IfNoLvalue<Expr<ResultType<A>>, A> FoldOperation(
 // Forward declarations of overloads, template instantiations, and template
 // specializations of FoldOperation() to enable mutual recursion between them.
 static Component FoldOperation(FoldingContext &, Component &&);
+static NamedEntity FoldOperation(FoldingContext &, NamedEntity &&);
 static Triplet FoldOperation(
-    FoldingContext &, Triplet &&, const Symbol &, int dim);
+    FoldingContext &, Triplet &&, const NamedEntity &, int dim);
 static Subscript FoldOperation(
-    FoldingContext &, Subscript &&, const Symbol &, int dim);
+    FoldingContext &, Subscript &&, const NamedEntity &, int dim);
 static ArrayRef FoldOperation(FoldingContext &, ArrayRef &&);
 static CoarrayRef FoldOperation(FoldingContext &, CoarrayRef &&);
 static DataRef FoldOperation(FoldingContext &, DataRef &&);
@@ -98,23 +99,31 @@ Component FoldOperation(FoldingContext &context, Component &&component) {
       component.GetLastSymbol()};
 }
 
-Triplet FoldOperation(
-    FoldingContext &context, Triplet &&triplet, const Symbol &symbol, int dim) {
+NamedEntity FoldOperation(FoldingContext &context, NamedEntity &&x) {
+  if (Component * c{x.UnwrapComponent()}) {
+    return NamedEntity{FoldOperation(context, std::move(*c))};
+  } else {
+    return std::move(x);
+  }
+}
+
+Triplet FoldOperation(FoldingContext &context, Triplet &&triplet,
+    const NamedEntity &base, int dim) {
   MaybeExtentExpr lower{triplet.lower()};
   if (!lower.has_value()) {
-    lower = GetLowerBound(context, symbol, dim);
+    lower = GetLowerBound(context, base, dim);
   }
   MaybeExtentExpr upper{triplet.upper()};
   if (!upper.has_value()) {
     upper = GetUpperBound(
-        context, common::Clone(lower), GetExtent(context, symbol, dim));
+        context, common::Clone(lower), GetExtent(context, base, dim));
   }
   return {Fold(context, std::move(lower)), Fold(context, std::move(upper)),
       Fold(context, triplet.stride())};
 }
 
 Subscript FoldOperation(FoldingContext &context, Subscript &&subscript,
-    const Symbol &symbol, int dim) {
+    const NamedEntity &base, int dim) {
   return std::visit(
       common::visitors{
           [&](IndirectSubscriptIntegerExpr &&expr) {
@@ -123,37 +132,27 @@ Subscript FoldOperation(FoldingContext &context, Subscript &&subscript,
           },
           [&](Triplet &&triplet) {
             return Subscript(
-                FoldOperation(context, std::move(triplet), symbol, dim));
+                FoldOperation(context, std::move(triplet), base, dim));
           },
       },
       std::move(subscript.u));
 }
 
 ArrayRef FoldOperation(FoldingContext &context, ArrayRef &&arrayRef) {
-  const Symbol &symbol{arrayRef.GetLastSymbol()};
+  NamedEntity base{FoldOperation(context, std::move(arrayRef.base()))};
   int dim{0};
   for (Subscript &subscript : arrayRef.subscript()) {
-    subscript = FoldOperation(context, std::move(subscript), symbol, dim++);
+    subscript = FoldOperation(context, std::move(subscript), base, dim++);
   }
-  return std::visit(
-      common::visitors{
-          [&](const Symbol *symbol) {
-            return ArrayRef{*symbol, std::move(arrayRef.subscript())};
-          },
-          [&](Component &&component) {
-            return ArrayRef{FoldOperation(context, std::move(component)),
-                std::move(arrayRef.subscript())};
-          },
-      },
-      std::move(arrayRef.base()));
+  return ArrayRef{std::move(base), std::move(arrayRef.subscript())};
 }
 
 CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
-  const Symbol &symbol{coarrayRef.GetLastSymbol()};
+  NamedEntity base{coarrayRef.GetBase()};
   std::vector<Subscript> subscript;
   int dim{0};
   for (Subscript x : coarrayRef.subscript()) {
-    subscript.emplace_back(FoldOperation(context, std::move(x), symbol, dim++));
+    subscript.emplace_back(FoldOperation(context, std::move(x), base, dim++));
   }
   std::vector<Expr<SubscriptInteger>> cosubscript;
   for (Expr<SubscriptInteger> x : coarrayRef.cosubscript()) {
@@ -570,6 +569,13 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     } else if (name == "rank") {
       // TODO assumed-rank dummy argument
       return Expr<T>{args[0].value().Rank()};
+    } else if (name == "selected_char_kind") {
+      if (const auto *chCon{
+              UnwrapExpr<Constant<TypeOf<std::string>>>(args[0])}) {
+        if (std::optional<std::string> value{chCon->GetScalarValue()}) {
+          return Expr<T>{SelectedCharKind(*value)};
+        }
+      }
     } else if (name == "selected_int_kind") {
       if (auto p{GetInt64Arg(args[0])}) {
         return Expr<T>{SelectedIntKind(*p)};
@@ -619,8 +625,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     // findloc, floor, iall, iany, iparity, ibits, image_status, index, ishftc,
     // lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
     // minloc, minval, mod, modulo, nint, not, pack, product, reduce, reshape,
-    // scan, selected_char_kind,
-    // sign, spread, sum, transfer, transpose, ubound, unpack, verify
+    // scan, sign, spread, sum, transfer, transpose, ubound, unpack, verify
   }
   return Expr<T>{std::move(funcRef)};
 }
@@ -934,18 +939,17 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
 // Get the value of a PARAMETER
 template<typename T>
 std::optional<Expr<T>> GetParameterValue(
-    FoldingContext &context, const Symbol *symbol) {
-  CHECK(symbol != nullptr);
-  if (symbol->attrs().test(semantics::Attr::PARAMETER)) {
+    FoldingContext &context, const Symbol &symbol) {
+  if (symbol.attrs().test(semantics::Attr::PARAMETER)) {
     if (const auto *object{
-            symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
+            symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       if (object->initWasValidated()) {
         const auto *constant{UnwrapConstantValue<T>(object->init())};
         CHECK(constant != nullptr);
         return Expr<T>{*constant};
       }
       if (const auto &init{object->init()}) {
-        if (auto dyType{DynamicType::From(*symbol)}) {
+        if (auto dyType{DynamicType::From(symbol)}) {
           semantics::ObjectEntityDetails *mutableObject{
               const_cast<semantics::ObjectEntityDetails *>(object)};
           auto converted{
@@ -958,26 +962,27 @@ std::optional<Expr<T>> GetParameterValue(
             auto *unwrapped{UnwrapExpr<Expr<T>>(*converted)};
             CHECK(unwrapped != nullptr);
             if (auto *constant{UnwrapConstantValue<T>(*unwrapped)}) {
-              if (symbol->Rank() > 0) {
+              if (symbol.Rank() > 0) {
                 if (constant->Rank() == 0) {
                   // scalar expansion
-                  if (auto symShape{GetShape(context, *symbol)}) {
+                  if (auto symShape{GetShape(context, symbol)}) {
                     if (auto extents{AsConstantExtents(*symShape)}) {
                       *constant = constant->Reshape(std::move(*extents));
-                      CHECK(constant->Rank() == symbol->Rank());
+                      CHECK(constant->Rank() == symbol.Rank());
                     }
                   }
                 }
-                if (constant->Rank() == symbol->Rank()) {
-                  if (auto lbounds{AsConstantExtents(
-                          GetLowerBounds(context, *symbol))}) {
+                if (constant->Rank() == symbol.Rank()) {
+                  NamedEntity base{symbol};
+                  if (auto lbounds{
+                          AsConstantExtents(GetLowerBounds(context, base))}) {
                     constant->set_lbounds(*std::move(lbounds));
                   }
                 }
               }
               mutableObject->set_init(AsGenericExpr(Expr<T>{*constant}));
               if (auto constShape{GetShape(context, *constant)}) {
-                if (auto symShape{GetShape(context, *symbol)}) {
+                if (auto symShape{GetShape(context, symbol)}) {
                   if (CheckConformance(context.messages(), *constShape,
                           *symShape, "initialization expression",
                           "PARAMETER")) {
@@ -985,30 +990,42 @@ std::optional<Expr<T>> GetParameterValue(
                     return std::move(*unwrapped);
                   }
                 } else {
-                  context.messages().Say(symbol->name(),
+                  context.messages().Say(symbol.name(),
                       "Could not determine the shape of the PARAMETER"_err_en_US);
                 }
               } else {
-                context.messages().Say(symbol->name(),
+                context.messages().Say(symbol.name(),
                     "Could not determine the shape of the initialization expression"_err_en_US);
               }
               mutableObject->set_init(std::nullopt);
             } else {
               std::stringstream ss;
               unwrapped->AsFortran(ss);
-              context.messages().Say(symbol->name(),
+              context.messages().Say(symbol.name(),
                   "Initialization expression for PARAMETER '%s' (%s) cannot be computed as a constant value"_err_en_US,
-                  symbol->name(), ss.str());
+                  symbol.name(), ss.str());
             }
           } else {
             std::stringstream ss;
             init->AsFortran(ss);
-            context.messages().Say(symbol->name(),
+            context.messages().Say(symbol.name(),
                 "Initialization expression for PARAMETER '%s' (%s) cannot be converted to its type (%s)"_err_en_US,
-                symbol->name(), ss.str(), dyType->AsFortran());
+                symbol.name(), ss.str(), dyType->AsFortran());
           }
         }
       }
+    }
+  }
+  return std::nullopt;
+}
+
+template<typename T>
+static std::optional<Constant<T>> GetFoldedParameterValue(
+    FoldingContext &context, const Symbol &symbol) {
+  if (auto value{GetParameterValue<T>(context, symbol)}) {
+    Expr<T> folded{Fold(context, std::move(*value))};
+    if (const Constant<T> *value{UnwrapConstantValue<T>(folded)}) {
+      return *value;
     }
   }
   return std::nullopt;
@@ -1018,7 +1035,7 @@ std::optional<Expr<T>> GetParameterValue(
 
 static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
     FoldingContext &context, Subscript &ss, const Symbol &symbol, int dim) {
-  ss = FoldOperation(context, std::move(ss), symbol, dim);
+  ss = FoldOperation(context, std::move(ss), NamedEntity{symbol}, dim);
   return std::visit(
       common::visitors{
           [](IndirectSubscriptIntegerExpr &expr)
@@ -1196,22 +1213,14 @@ std::optional<Constant<T>> FoldArrayRef(
       return std::nullopt;
     }
   }
-  return std::visit(
-      common::visitors{
-          [&](const Symbol *symbol) -> std::optional<Constant<T>> {
-            if (auto value{GetParameterValue<T>(context, symbol)}) {
-              Expr<T> folded{Fold(context, std::move(*value))};
-              if (const auto *array{UnwrapConstantValue<T>(folded)}) {
-                return ApplySubscripts(context.messages(), *array, subscripts);
-              }
-            }
-            return std::nullopt;
-          },
-          [&](Component &component) -> std::optional<Constant<T>> {
-            return GetConstantComponent<T>(context, component, &subscripts);
-          },
-      },
-      aRef.base());
+  if (Component * component{aRef.base().UnwrapComponent()}) {
+    return GetConstantComponent<T>(context, *component, &subscripts);
+  } else if (std::optional<Constant<T>> array{GetFoldedParameterValue<T>(
+                 context, aRef.base().GetLastSymbol())}) {
+    return ApplySubscripts(context.messages(), *array, subscripts);
+  } else {
+    return std::nullopt;
+  }
 }
 
 template<typename T>
@@ -1220,17 +1229,8 @@ std::optional<Constant<T>> GetConstantComponent(FoldingContext &context,
     const std::vector<Constant<SubscriptInteger>> *subscripts) {
   if (std::optional<Constant<SomeDerived>> structures{std::visit(
           common::visitors{
-              [&](const Symbol *symbol)
-                  -> std::optional<Constant<SomeDerived>> {
-                if (auto value{
-                        GetParameterValue<SomeDerived>(context, symbol)}) {
-                  Expr<SomeDerived> folded{Fold(context, std::move(*value))};
-                  if (const auto *structures{
-                          UnwrapConstantValue<SomeDerived>(folded)}) {
-                    return *structures;
-                  }
-                }
-                return std::nullopt;
+              [&](const Symbol *symbol) {
+                return GetFoldedParameterValue<SomeDerived>(context, *symbol);
               },
               [&](ArrayRef &aRef) {
                 return FoldArrayRef<SomeDerived>(context, aRef);
@@ -1269,11 +1269,12 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
   return std::visit(
       common::visitors{
           [&](const Symbol *symbol) {
-            if (auto constant{GetParameterValue<T>(context, symbol)}) {
-              return std::move(*constant);
-            } else {
-              return Expr<T>{std::move(designator)};
+            if (symbol != nullptr) {
+              if (auto constant{GetFoldedParameterValue<T>(context, *symbol)}) {
+                return Expr<T>{std::move(*constant)};
+              }
             }
+            return Expr<T>{std::move(designator)};
           },
           [&](ArrayRef &&aRef) {
             aRef = FoldOperation(context, std::move(aRef));
@@ -1421,31 +1422,27 @@ template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     FoldingContext &context, TypeParamInquiry<KIND> &&inquiry) {
   using IntKIND = Type<TypeCategory::Integer, KIND>;
-  if (const Symbol *const *symbol{
-          std::get_if<const Symbol *>(&inquiry.base())}) {
-    if (*symbol == nullptr) {
-      // A "bare" type parameter: replace with its value, if that's now known.
-      if (const auto *pdt{context.pdtInstance()}) {
-        if (const semantics::Scope * scope{context.pdtInstance()->scope()}) {
-          auto iter{scope->find(inquiry.parameter().name())};
-          if (iter != scope->end()) {
-            const Symbol &symbol{*iter->second};
-            const auto *details{
-                symbol.detailsIf<semantics::TypeParamDetails>()};
-            if (details && details->init().has_value()) {
-              Expr<SomeInteger> expr{*details->init()};
-              return Fold(context,
-                  Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
-                      std::move(expr))});
-            }
+  if (!inquiry.base().has_value()) {
+    // A "bare" type parameter: replace with its value, if that's now known.
+    if (const auto *pdt{context.pdtInstance()}) {
+      if (const semantics::Scope * scope{context.pdtInstance()->scope()}) {
+        auto iter{scope->find(inquiry.parameter().name())};
+        if (iter != scope->end()) {
+          const Symbol &symbol{*iter->second};
+          const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
+          if (details && details->init().has_value()) {
+            Expr<SomeInteger> expr{*details->init()};
+            return Fold(context,
+                Expr<IntKIND>{
+                    Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
           }
         }
-        if (const auto *value{pdt->FindParameter(inquiry.parameter().name())}) {
-          if (value->isExplicit()) {
-            return Fold(context,
-                Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
-                    Expr<SomeInteger>{value->GetExplicit().value()})});
-          }
+      }
+      if (const auto *value{pdt->FindParameter(inquiry.parameter().name())}) {
+        if (value->isExplicit()) {
+          return Fold(context,
+              Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
+                  Expr<SomeInteger>{value->GetExplicit().value()})});
         }
       }
     }
@@ -2304,11 +2301,11 @@ std::optional<std::int64_t> ToInt64(const Expr<SomeType> &expr) {
 // data address used to initialize a pointer with "=> x".  See C765.
 // The caller is responsible for checking the base object symbol's
 // characteristics (TARGET, SAVE, &c.) since this code can't use GetUltimate().
-template<typename A> bool IsInitialDataTarget(const A &) { return false; };
+template<typename A> bool IsInitialDataTarget(const A &) { return false; }
 template<typename... A> bool IsInitialDataTarget(const std::variant<A...> &);
 bool IsInitialDataTarget(const DataRef &);
 template<typename T> bool IsInitialDataTarget(const Expr<T> &);
-bool IsInitialDataTarget(const semantics::Symbol *s) { return true; };
+bool IsInitialDataTarget(const semantics::Symbol *s) { return true; }
 bool IsInitialDataTarget(const Component &x) {
   return IsInitialDataTarget(x.base());
 }
@@ -2348,10 +2345,10 @@ bool IsInitialDataTarget(const DataRef &x) {
 }
 bool IsInitialDataTarget(const Substring &x) {
   return IsConstantExpr(x.lower()) && IsConstantExpr(x.upper());
-};
+}
 bool IsInitialDataTarget(const ComplexPart &x) {
   return IsInitialDataTarget(x.complex());
-};
+}
 template<typename T> bool IsInitialDataTarget(const Designator<T> &x) {
   return IsInitialDataTarget(x.u);
 }

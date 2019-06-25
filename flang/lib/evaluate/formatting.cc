@@ -23,6 +23,8 @@
 
 namespace Fortran::evaluate {
 
+bool formatForPGF90{false};
+
 static void ShapeAsFortran(std::ostream &o, const ConstantSubscripts &shape) {
   if (GetRank(shape) > 1) {
     o << ",shape=";
@@ -89,7 +91,7 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
     Scalar<Result> value{values_.substr(j * length_, length_)};
     if (j > 0) {
       o << ',';
-    } else if (Rank() == 0) {
+    } else if (Rank() == 0 && (Result::kind != 1 || !formatForPGF90)) {
       o << Result::kind << '_';
     }
     o << parser::QuoteCharacterLiteral(value);
@@ -528,22 +530,25 @@ std::ostream &BaseObject::AsFortran(std::ostream &o) const {
 
 template<int KIND>
 std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
-  std::visit(
-      common::visitors{
-          [&](const Symbol *sym) {
-            if (sym != nullptr) {
-              EmitVar(o, *sym) << '%';
-            }
-          },
-          [&](const Component &comp) { EmitVar(o, comp) << '%'; },
-      },
-      base_);
+  if (base_.has_value()) {
+    return base_->AsFortran(o) << '%';
+  }
   return EmitVar(o, *parameter_);
 }
 
 std::ostream &Component::AsFortran(std::ostream &o) const {
   base_.value().AsFortran(o);
   return EmitVar(o << '%', *symbol_);
+}
+
+std::ostream &NamedEntity::AsFortran(std::ostream &o) const {
+  std::visit(
+      common::visitors{
+          [&](const Symbol *s) { EmitVar(o, *s); },
+          [&](const Component &c) { c.AsFortran(o); },
+      },
+      u_);
+  return o;
 }
 
 std::ostream &Triplet::AsFortran(std::ostream &o) const {
@@ -558,7 +563,7 @@ std::ostream &Subscript::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
-  EmitVar(o, base_);
+  base_.AsFortran(o);
   char separator{'('};
   for (const Subscript &ss : subscript_) {
     ss.AsFortran(o << separator);
@@ -608,7 +613,7 @@ std::ostream &DataRef::AsFortran(std::ostream &o) const {
 std::ostream &Substring::AsFortran(std::ostream &o) const {
   EmitVar(o, parent_) << '(';
   EmitVar(o, lower_) << ':';
-  return EmitVar(o, upper_);
+  return EmitVar(o, upper_) << ')';
 }
 
 std::ostream &ComplexPart::AsFortran(std::ostream &o) const {
@@ -637,16 +642,7 @@ std::ostream &DescriptorInquiry::AsFortran(std::ostream &o) const {
   case Field::Stride: o << "%STRIDE("; break;
   case Field::Rank: o << "rank("; break;
   }
-  std::visit(
-      common::visitors{
-          [&](const Symbol *sym) {
-            if (sym != nullptr) {
-              EmitVar(o, *sym);
-            }
-          },
-          [&](const Component &comp) { EmitVar(o, comp); },
-      },
-      base_);
+  base_.AsFortran(o);
   if (dimension_ >= 0) {
     o << ",dim=" << (dimension_ + 1);
   }

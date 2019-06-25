@@ -95,7 +95,32 @@ private:
   const Symbol *symbol_;
 };
 
-using SymbolOrComponent = std::variant<const Symbol *, Component>;
+// A NamedEntity is either a whole Symbol or a component in an instance
+// of a derived type.  It may be a descriptor.
+// TODO: this is basically a symbol with an optional DataRef base;
+// could be used to replace Component.
+class NamedEntity {
+public:
+  CLASS_BOILERPLATE(NamedEntity)
+  explicit NamedEntity(const Symbol &symbol) : u_{&symbol} {}
+  explicit NamedEntity(Component &&c) : u_{std::move(c)} {}
+
+  bool IsSymbol() const { return std::holds_alternative<const Symbol *>(u_); }
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const;
+  const Component &GetComponent() const { return std::get<Component>(u_); }
+  Component &GetComponent() { return std::get<Component>(u_); }
+  const Component *UnwrapComponent() const;  // null if just a Symbol
+  Component *UnwrapComponent();
+
+  int Rank() const;
+  Expr<SubscriptInteger> LEN() const;
+  bool operator==(const NamedEntity &) const;
+  std::ostream &AsFortran(std::ostream &) const;
+
+private:
+  std::variant<const Symbol *, Component> u_;
+};
 
 // R916 type-param-inquiry
 // N.B. x%LEN for CHARACTER is rewritten in semantics to LEN(x), which is
@@ -103,21 +128,18 @@ using SymbolOrComponent = std::variant<const Symbol *, Component>;
 // x%KIND for intrinsic types is similarly rewritten in semantics to
 // KIND(x), which is then folded to a constant value.
 // "Bare" type parameter references within a derived type definition do
-// not have base objects, and appear with null Symbol pointers for their
-// bases.
+// not have base objects.
 template<int KIND> class TypeParamInquiry {
 public:
   using Result = Type<TypeCategory::Integer, KIND>;
   CLASS_BOILERPLATE(TypeParamInquiry)
-  TypeParamInquiry(const Symbol &symbol, const Symbol &param)
-    : base_{&symbol}, parameter_{&param} {}
-  TypeParamInquiry(Component &&component, const Symbol &param)
-    : base_{std::move(component)}, parameter_{&param} {}
-  TypeParamInquiry(SymbolOrComponent &&x, const Symbol &param)
+  TypeParamInquiry(NamedEntity &&x, const Symbol &param)
+    : base_{std::move(x)}, parameter_{&param} {}
+  TypeParamInquiry(std::optional<NamedEntity> &&x, const Symbol &param)
     : base_{std::move(x)}, parameter_{&param} {}
 
-  SymbolOrComponent &base() { return base_; }
-  const SymbolOrComponent &base() const { return base_; }
+  const std::optional<NamedEntity> &base() const { return base_; }
+  std::optional<NamedEntity> &base() { return base_; }
   const Symbol &parameter() const { return *parameter_; }
 
   static constexpr int Rank() { return 0; }  // always scalar
@@ -125,7 +147,7 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  SymbolOrComponent base_{nullptr};
+  std::optional<NamedEntity> base_;
   const Symbol *parameter_;
 };
 
@@ -176,12 +198,14 @@ class ArrayRef {
 public:
   CLASS_BOILERPLATE(ArrayRef)
   ArrayRef(const Symbol &symbol, std::vector<Subscript> &&ss)
-    : base_{&symbol}, subscript_(std::move(ss)) {}
+    : base_{symbol}, subscript_(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
     : base_{std::move(c)}, subscript_(std::move(ss)) {}
+  ArrayRef(NamedEntity &&base, std::vector<Subscript> &&ss)
+    : base_{std::move(base)}, subscript_(std::move(ss)) {}
 
-  SymbolOrComponent &base() { return base_; }
-  const SymbolOrComponent &base() const { return base_; }
+  NamedEntity &base() { return base_; }
+  const NamedEntity &base() const { return base_; }
   std::vector<Subscript> &subscript() { return subscript_; }
   const std::vector<Subscript> &subscript() const { return subscript_; }
 
@@ -200,7 +224,7 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  SymbolOrComponent base_;
+  NamedEntity base_;
   std::vector<Subscript> subscript_;
 };
 
@@ -242,7 +266,7 @@ public:
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
-  SymbolOrComponent GetBaseSymbolOrComponent() const;
+  NamedEntity GetBase() const;
   Expr<SubscriptInteger> LEN() const;
   bool operator==(const CoarrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -401,12 +425,11 @@ public:
   ENUM_CLASS(Field, LowerBound, Extent, Stride, Rank)
 
   CLASS_BOILERPLATE(DescriptorInquiry)
-  DescriptorInquiry(const Symbol &, Field, int);
-  DescriptorInquiry(Component &&, Field, int);
-  DescriptorInquiry(SymbolOrComponent &&, Field, int);
+  DescriptorInquiry(const NamedEntity &, Field, int);
+  DescriptorInquiry(NamedEntity &&, Field, int);
 
-  SymbolOrComponent &base() { return base_; }
-  const SymbolOrComponent &base() const { return base_; }
+  NamedEntity &base() { return base_; }
+  const NamedEntity &base() const { return base_; }
   Field field() const { return field_; }
   int dimension() const { return dimension_; }
 
@@ -415,7 +438,7 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  SymbolOrComponent base_{nullptr};
+  NamedEntity base_;
   Field field_;
   int dimension_{0};  // zero-based
 };

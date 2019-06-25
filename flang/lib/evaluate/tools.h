@@ -612,6 +612,22 @@ struct TypeKindVisitor {
 template<typename A> const semantics::Symbol *GetLastSymbol(const A &) {
   return nullptr;
 }
+inline const semantics::Symbol *GetLastSymbol(const Symbol &x) { return &x; }
+inline const semantics::Symbol *GetLastSymbol(const Component &x) {
+  return &x.GetLastSymbol();
+}
+inline const semantics::Symbol *GetLastSymbol(const NamedEntity &x) {
+  return &x.GetLastSymbol();
+}
+inline const semantics::Symbol *GetLastSymbol(const ArrayRef &x) {
+  return &x.GetLastSymbol();
+}
+inline const semantics::Symbol *GetLastSymbol(const CoarrayRef &x) {
+  return &x.GetLastSymbol();
+}
+inline const semantics::Symbol *GetLastSymbol(const DataRef &x) {
+  return &x.GetLastSymbol();
+}
 template<typename T>
 const semantics::Symbol *GetLastSymbol(const Designator<T> &x) {
   return x.GetLastSymbol();

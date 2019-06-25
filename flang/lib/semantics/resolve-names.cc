@@ -3076,7 +3076,7 @@ void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
   }
   if (OkToAddComponent(name)) {
     auto &symbol{DeclareObjectEntity(name, attrs)};
-    if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
+    if (symbol.has<ObjectEntityDetails>()) {
       if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
         Initialization(name, *init, true);
       }

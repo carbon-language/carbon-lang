@@ -356,6 +356,7 @@ template<typename A> struct Extremum : public Operation<Extremum<A>, A, A, A> {
   const char *Prefix() const {
     return ordering == Ordering::Less ? "MIN(" : "MAX(";
   }
+  static const char *Infix() { return ","; }
   static const char *Suffix() { return ")"; }
 
   Ordering ordering{Ordering::Greater};

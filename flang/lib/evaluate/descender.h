@@ -215,6 +215,21 @@ public:
     Visit(component.GetLastSymbol());
   }
 
+  void Descend(const NamedEntity &x) {
+    if (const Component * c{x.UnwrapComponent()}) {
+      Visit(*c);
+    } else {
+      Visit(x.GetLastSymbol());
+    }
+  }
+  void Descend(NamedEntity &x) {
+    if (Component * c{x.UnwrapComponent()}) {
+      Visit(*c);
+    } else {
+      Visit(x.GetLastSymbol());
+    }
+  }
+
   template<int KIND> void Descend(const TypeParamInquiry<KIND> &inq) {
     Visit(inq.base());
     Visit(inq.parameter());

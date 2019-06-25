@@ -17,6 +17,7 @@
 #include "fold.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
+#include "../parser/characters.h"
 #include "../semantics/scope.h"
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
@@ -219,6 +220,27 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 bool SomeKind<TypeCategory::Derived>::operator==(
     const SomeKind<TypeCategory::Derived> &that) const {
   return PointeeComparison(derivedTypeSpec_, that.derivedTypeSpec_);
+}
+
+int SelectedCharKind(const std::string &s) {  // 16.9.168
+  auto lower{parser::ToLowerCaseLetters(s)};
+  auto n{lower.size()};
+  while (n > 0 && lower[0] == ' ') {
+    lower.erase(0, 1);
+    --n;
+  }
+  while (n > 0 && lower[n - 1] == ' ') {
+    lower.erase(--n, 1);
+  }
+  if (lower == "ascii") {
+    return 1;
+  } else if (lower == "jis") {
+    return 2;
+  } else if (lower == "iso_10646") {
+    return 4;
+  } else {
+    return -1;
+  }
 }
 
 class SelectedIntKindVisitor {

@@ -110,3 +110,4 @@ Extensions and legacy features deliberately not supported
 * IF (integer expression) THEN ... END IF  (PGI/Intel)
 * Comparsion of LOGICAL with ==/.EQ. rather than .EQV. (also .NEQV.) (PGI/Intel)
 * Procedure pointers in COMMON blocks (PGI/Intel)
+* Underindexing multi-dimensional arrays (e.g., A(1) rather than A(1,1)) (PGI only)

@@ -27,7 +27,6 @@ program main
   character(kind = 4, len = 128) :: chr2
 
   if (i .eq. 0) stop "Stop."
-!ERROR: Stop code must be of INTEGER or CHARACTER type
   if (i .eq. 0) stop "Stop."(1:4)
   if (i .eq. 0) stop chr1
 !ERROR: CHARACTER stop code must be of default kind

@@ -160,7 +160,7 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
 MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
   const Symbol &symbol{ref.GetLastSymbol().GetUltimate()};
   int symbolRank{symbol.Rank()};
-  int subscripts = ref.size();
+  int subscripts{static_cast<int>(ref.size())};
   if (subscripts == 0) {
     // A -> A(:,:)
     for (; subscripts < symbolRank; ++subscripts) {
@@ -173,7 +173,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
     return std::nullopt;
   } else if (subscripts == 0) {
     // nothing to check
-  } else if (Component * component{std::get_if<Component>(&ref.base())}) {
+  } else if (Component * component{ref.base().UnwrapComponent()}) {
     int baseRank{component->base().Rank()};
     if (baseRank > 0) {
       int subscriptRank{0};
@@ -591,8 +591,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
 struct TypeParamInquiryVisitor {
   using Result = std::optional<Expr<SomeInteger>>;
   using Types = IntegerTypes;
-  TypeParamInquiryVisitor(int k, SymbolOrComponent &&b, const Symbol &param)
+  TypeParamInquiryVisitor(int k, NamedEntity &&b, const Symbol &param)
     : kind{k}, base{std::move(b)}, parameter{param} {}
+  TypeParamInquiryVisitor(int k, const Symbol &param)
+    : kind{k}, parameter{param} {}
   template<typename T> Result Test() {
     if (kind == T::kind) {
       return Expr<SomeInteger>{
@@ -601,7 +603,7 @@ struct TypeParamInquiryVisitor {
     return std::nullopt;
   }
   int kind;
-  SymbolOrComponent base;
+  std::optional<NamedEntity> base;
   const Symbol &parameter;
 };
 
@@ -609,8 +611,8 @@ static std::optional<Expr<SomeInteger>> MakeBareTypeParamInquiry(
     const Symbol *symbol) {
   if (std::optional<DynamicType> dyType{DynamicType::From(symbol)}) {
     if (dyType->category() == TypeCategory::Integer) {
-      return common::SearchTypes(TypeParamInquiryVisitor{
-          dyType->kind(), SymbolOrComponent{nullptr} /* no base */, *symbol});
+      return common::SearchTypes(
+          TypeParamInquiryVisitor{dyType->kind(), *symbol});
     }
   }
   return std::nullopt;
@@ -818,15 +820,16 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayElement &ae) {
 
 // Type parameter inquiries apply to data references, but don't depend
 // on any trailing (co)subscripts.
-static SymbolOrComponent IgnoreAnySubscripts(
-    Designator<SomeDerived> &&designator) {
+static NamedEntity IgnoreAnySubscripts(Designator<SomeDerived> &&designator) {
   return std::visit(
       common::visitors{
-          [](const Symbol *symbol) { return SymbolOrComponent{symbol}; },
-          [](Component &&component) { return SymbolOrComponent{component}; },
+          [](const Symbol *symbol) { return NamedEntity{*symbol}; },
+          [](Component &&component) {
+            return NamedEntity{std::move(component)};
+          },
           [](ArrayRef &&arrayRef) { return std::move(arrayRef.base()); },
           [](CoarrayRef &&coarrayRef) {
-            return SymbolOrComponent{&coarrayRef.GetLastSymbol()};
+            return NamedEntity{coarrayRef.GetLastSymbol()};
           },
       },
       std::move(designator.u));
@@ -1897,6 +1900,7 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
       // better error reporting.
       auto save{GetContextualMessages().SetLocation(x.source)};
       result = Analyze(x.u);
+      result = Fold(GetFoldingContext(), std::move(result));
     } else {
       result = Analyze(x.u);
     }
