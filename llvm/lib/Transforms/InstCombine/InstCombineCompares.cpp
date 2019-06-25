@@ -2028,6 +2028,27 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
                         And, Constant::getNullValue(ShType));
   }
 
+  // Simplify 'shl' inequality test into 'and' equality test.
+  if (Cmp.isUnsigned() && Shl->hasOneUse()) {
+    // (X l<< C2) u<=/u> C1 iff C1+1 is power of two -> X & (~C1 l>> C2) ==/!= 0
+    if ((C + 1).isPowerOf2() &&
+        (Pred == ICmpInst::ICMP_ULE || Pred == ICmpInst::ICMP_UGT)) {
+      Value *And = Builder.CreateAnd(X, (~C).lshr(ShiftAmt->getZExtValue()));
+      return new ICmpInst(Pred == ICmpInst::ICMP_ULE ? ICmpInst::ICMP_EQ
+                                                     : ICmpInst::ICMP_NE,
+                          And, Constant::getNullValue(ShType));
+    }
+    // (X l<< C2) u</u>= C1 iff C1 is power of two -> X & (-C1 l>> C2) ==/!= 0
+    if (C.isPowerOf2() &&
+        (Pred == ICmpInst::ICMP_ULT || Pred == ICmpInst::ICMP_UGE)) {
+      Value *And =
+          Builder.CreateAnd(X, (~(C - 1)).lshr(ShiftAmt->getZExtValue()));
+      return new ICmpInst(Pred == ICmpInst::ICMP_ULT ? ICmpInst::ICMP_EQ
+                                                     : ICmpInst::ICMP_NE,
+                          And, Constant::getNullValue(ShType));
+    }
+  }
+
   // Transform (icmp pred iM (shl iM %v, N), C)
   // -> (icmp pred i(M-N) (trunc %v iM to i(M-N)), (trunc (C>>N))
   // Transform the shl to a trunc if (trunc (C>>N)) has no loss and M-N.
