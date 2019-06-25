@@ -251,7 +251,6 @@ public:
     case ARM_AM::asr: return 2;
     case ARM_AM::ror:
     case ARM_AM::rrx: return 3;
-    case ARM_AM::uxtw:
     default:
       llvm_unreachable("Invalid ShiftOpc!");
     }
