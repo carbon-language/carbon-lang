@@ -1416,9 +1416,9 @@ bool TargetLowering::SimplifyDemandedBits(
     bool IsVecInReg = Op.getOpcode() == ISD::SIGN_EXTEND_VECTOR_INREG;
 
     // If none of the top bits are demanded, convert this into an any_extend.
-    // TODO: Add SIGN_EXTEND_VECTOR_INREG - ANY_EXTEND_VECTOR_INREG fold.
-    if (DemandedBits.getActiveBits() <= InBits && !IsVecInReg) {
-      unsigned Opc = ISD::ANY_EXTEND;
+    if (DemandedBits.getActiveBits() <= InBits) {
+      unsigned Opc =
+          IsVecInReg ? ISD::ANY_EXTEND_VECTOR_INREG : ISD::ANY_EXTEND;
       if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
         return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
     }
@@ -1440,9 +1440,9 @@ bool TargetLowering::SimplifyDemandedBits(
     Known = Known.sext(BitWidth);
 
     // If the sign bit is known zero, convert this to a zero extend.
-    // TODO: Add SIGN_EXTEND_VECTOR_INREG - ZERO_EXTEND_VECTOR_INREG fold.
-    if (Known.isNonNegative() && !IsVecInReg) {
-      unsigned Opc = ISD::ZERO_EXTEND;
+    if (Known.isNonNegative()) {
+      unsigned Opc =
+          IsVecInReg ? ISD::ZERO_EXTEND_VECTOR_INREG : ISD::ZERO_EXTEND;
       if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
         return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
     }
