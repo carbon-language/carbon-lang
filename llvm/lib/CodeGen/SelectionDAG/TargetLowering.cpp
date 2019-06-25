@@ -1381,7 +1381,6 @@ bool TargetLowering::SimplifyDemandedBits(
     bool IsVecInReg = Op.getOpcode() == ISD::ZERO_EXTEND_VECTOR_INREG;
 
     // If none of the top bits are demanded, convert this into an any_extend.
-    // TODO: Add ZERO_EXTEND_VECTOR_INREG - ANY_EXTEND_VECTOR_INREG fold.
     if (DemandedBits.getActiveBits() <= InBits) {
       // If we only need the non-extended bits of the bottom element
       // then we can just bitcast to the result.
@@ -1390,11 +1389,10 @@ bool TargetLowering::SimplifyDemandedBits(
           TLO.DAG.getDataLayout().isLittleEndian())
         return TLO.CombineTo(Op, TLO.DAG.getBitcast(VT, Src));
 
-      if (!IsVecInReg) {
-        unsigned Opc = ISD::ANY_EXTEND;
-        if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
-          return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
-      }
+      unsigned Opc =
+          IsVecInReg ? ISD::ANY_EXTEND_VECTOR_INREG : ISD::ANY_EXTEND;
+      if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
+        return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
     }
 
     APInt InDemandedBits = DemandedBits.trunc(InBits);
