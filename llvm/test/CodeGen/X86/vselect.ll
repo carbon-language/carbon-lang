@@ -663,7 +663,6 @@ define i64 @vselect_any_extend_vector_inreg_crash(<8 x i8>* %x) {
 ; SSE41:       # %bb.0:
 ; SSE41-NEXT:    pmovzxbw {{.*#+}} xmm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero
 ; SSE41-NEXT:    pcmpeqw {{.*}}(%rip), %xmm0
-; SSE41-NEXT:    pmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
 ; SSE41-NEXT:    psllq $56, %xmm0
 ; SSE41-NEXT:    movl $32768, %eax # imm = 0x8000
 ; SSE41-NEXT:    movq %rax, %xmm1
