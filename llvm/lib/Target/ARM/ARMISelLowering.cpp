@@ -14476,6 +14476,7 @@ SDValue ARMTargetLowering::LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const {
   EVT DstVT = Op.getValueType();
   const unsigned DstSz = Op.getValueType().getSizeInBits();
   const unsigned SrcSz = SrcVT.getSizeInBits();
+  (void)DstSz;
   assert(DstSz < SrcSz && SrcSz <= 64 && DstSz >= 16 &&
          "Unexpected type for custom-lowering FP_ROUND");
 
