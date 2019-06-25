@@ -98,6 +98,7 @@ struct DriverOptions {
   bool debugResolveNames{false};
   bool debugSemantics{false};
   bool measureTree{false};
+  bool unparseTypedExprsToPGF90{false};
   std::vector<std::string> pgf90Args;
   const char *prefix{nullptr};
 };
@@ -274,7 +275,8 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     Unparse(tmpSource, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::parser::LanguageFeature::BackslashEscapes),
-        nullptr /* action before each statement */, &unparseExpression);
+        nullptr /* action before each statement */,
+        driver.unparseTypedExprsToPGF90 ? &unparseExpression : nullptr);
     Fortran::evaluate::formatForPGF90 = false;
   }
 
@@ -429,6 +431,8 @@ int main(int argc, char *const argv[]) {
       driver.dumpUnparse = true;
     } else if (arg == "-funparse-with-symbols") {
       driver.dumpUnparseWithSymbols = true;
+    } else if (arg == "-funparse-typed-exprs-to-pgf90") {
+      driver.unparseTypedExprsToPGF90 = true;
     } else if (arg == "-fparse-only") {
       driver.parseOnly = true;
     } else if (arg == "-c") {
