@@ -5135,6 +5135,7 @@ class t2LOL<dag oops, dag iops, string asm, string ops>
   let Predicates = [IsThumb2, HasV8_1MMainline, HasLOB];
 }
 
+let isNotDuplicable = 1 in {
 def t2WLS : t2LOL<(outs GPRlr:$LR),
                   (ins rGPR:$Rn, wlslabel_u11:$label),
                   "wls", "$LR, $Rn, $label"> {
@@ -5177,6 +5178,21 @@ def t2LE : t2LOL<(outs ), (ins lelabel_u11:$label), "le", "$label"> {
   let Inst{11} = label{0};
   let Inst{10-1} = label{10-1};
 }
+
+def t2DoLoopStart :
+  t2PseudoInst<(outs), (ins rGPR:$elts), 4, IIC_Br,
+  [(int_set_loop_iterations rGPR:$elts)]>, Sched<[WriteBr]>;
+
+def t2LoopDec :
+  t2PseudoInst<(outs GPRlr:$Rm), (ins GPRlr:$Rn, imm0_7:$size),
+               4, IIC_Br, []>, Sched<[WriteBr]>;
+
+let isBranch = 1, isTerminator = 1, hasSideEffects = 1 in
+def t2LoopEnd :
+  t2PseudoInst<(outs), (ins GPRlr:$elts, brtarget:$target),
+  8, IIC_Br, []>, Sched<[WriteBr]>;
+
+} // end isNotDuplicable
 
 class CS<string iname, bits<4> opcode, list<dag> pattern=[]>
   : V8_1MI<(outs rGPR:$Rd), (ins GPRwithZR:$Rn, GPRwithZR:$Rm, pred_noal:$fcond),
