@@ -1039,6 +1039,8 @@ public:
   bool Pre(const parser::Submodule &) { DIE("unreachable"); }
   bool Pre(const parser::BlockData &) { DIE("unreachable"); }
 
+  bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
+
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
   std::optional<Symbol::Flag> expectedProcFlag_;
@@ -1048,7 +1050,6 @@ private:
   void CheckImport(const SourceName &, const SourceName &);
   void HandleCall(Symbol::Flag, const parser::Call &);
   void HandleProcedureName(Symbol::Flag, const parser::Name &);
-  bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
   void ResolveExecutionParts(const ProgramTree &);
   void AddSubpNames(const ProgramTree &);
   bool BeginScope(const ProgramTree &);
@@ -1681,6 +1682,9 @@ static bool NeedsType(const Symbol &symbol) {
               [](const EntityDetails &) { return true; },
               [](const ObjectEntityDetails &) { return true; },
               [](const AssocEntityDetails &) { return true; },
+              [&](const ProcEntityDetails &) {
+                return symbol.test(Symbol::Flag::Function);
+              },
               [](const auto &) { return false; },
           },
           symbol.details());
@@ -4861,11 +4865,12 @@ bool ResolveNamesVisitor::Pre(const parser::ProgramUnit &x) {
   return false;
 }
 
-// Calls to dummy procedures need to record that their symbols are known
+// References to procedures need to record that their symbols are known
 // to be procedures, so that they don't get converted to objects by default.
 class ExecutionPartSkimmer {
 public:
-  explicit ExecutionPartSkimmer(Scope &s) : scope_{s} {}
+  ExecutionPartSkimmer(ResolveNamesVisitor &resolver, Scope &s)
+    : resolver_{resolver}, scope_{s} {}
 
   void Walk(const parser::ExecutionPart *exec) {
     if (exec != nullptr) {
@@ -4885,6 +4890,7 @@ public:
 private:
   void NoteCall(Symbol::Flag, const parser::Call &);
 
+  ResolveNamesVisitor &resolver_;
   Scope &scope_;
 };
 
@@ -4894,10 +4900,11 @@ void ExecutionPartSkimmer::NoteCall(
   if (const auto *name{std::get_if<parser::Name>(&designator.u)}) {
     if (Symbol * symbol{scope_.FindSymbol(name->source)}) {
       if (auto *details{symbol->detailsIf<EntityDetails>()}) {
-        if (details->isDummy()) {
+        if (resolver_.SetProcFlag(*name, *symbol, flag)) {
           symbol->set_details(ProcEntityDetails{std::move(*details)});
-          symbol->set(flag);
-          symbol->attrs().set(Attr::EXTERNAL);
+          if (symbol->IsDummy()) {
+            symbol->attrs().set(Attr::EXTERNAL);
+          }
         }
       }
     }
@@ -4921,9 +4928,9 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
   for (auto &child : node.children()) {
     ResolveSpecificationParts(child);
   }
-  ExecutionPartSkimmer{scope}.Walk(node.exec());
+  ExecutionPartSkimmer{*this, scope}.Walk(node.exec());
   PopScope();
-  // Ensure every object entity has a type:
+  // Ensure every object and function entity has a type.
   for (auto &pair : *node.scope()) {
     ApplyImplicitRules(*pair.second);
   }

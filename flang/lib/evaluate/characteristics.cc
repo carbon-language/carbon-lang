@@ -386,14 +386,21 @@ std::optional<Procedure> Procedure::Characterize(
       }
     } else {
       result.attrs.set(Procedure::Attr::ImplicitInterface);
-      if (const semantics::DeclTypeSpec * type{interface.type()}) {
-        if (auto resultType{DynamicType::From(*type)}) {
-          result.functionResult = FunctionResult{*resultType};
+      if (symbol.test(semantics::Symbol::Flag::Function)) {
+        if (const semantics::DeclTypeSpec * type{interface.type()}) {
+          if (auto resultType{DynamicType::From(*type)}) {
+            result.functionResult = FunctionResult{*resultType};
+          } else {
+            return std::nullopt;
+          }
         } else {
           return std::nullopt;
         }
       } else {
         // subroutine, not function
+        if (interface.type() != nullptr) {
+          return std::nullopt;
+        }
       }
     }
     SetProcedureAttrs(result, symbol);
