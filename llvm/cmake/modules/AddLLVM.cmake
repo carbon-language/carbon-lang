@@ -885,6 +885,7 @@ if(NOT LLVM_TOOLCHAIN_TOOLS)
     llvm-objdump
     llvm-rc
     llvm-profdata
+    llvm-symbolizer
     )
 endif()
 
