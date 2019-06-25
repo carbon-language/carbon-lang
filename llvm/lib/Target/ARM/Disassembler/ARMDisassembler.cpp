@@ -5948,10 +5948,14 @@ static DecodeStatus DecodeLOLoop(MCInst &Inst, unsigned Insn, uint64_t Address,
                                  const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
 
+  if (Inst.getOpcode() == ARM::MVE_LCTP)
+    return S;
+
   unsigned Imm = fieldFromInstruction(Insn, 11, 1) |
                  fieldFromInstruction(Insn, 1, 10) << 1;
   switch (Inst.getOpcode()) {
   case ARM::t2LEUpdate:
+  case ARM::MVE_LETP:
     Inst.addOperand(MCOperand::createReg(ARM::LR));
     Inst.addOperand(MCOperand::createReg(ARM::LR));
     LLVM_FALLTHROUGH;
@@ -5961,6 +5965,10 @@ static DecodeStatus DecodeLOLoop(MCInst &Inst, unsigned Insn, uint64_t Address,
       return MCDisassembler::Fail;
     break;
   case ARM::t2WLS:
+  case ARM::MVE_WLSTP_8:
+  case ARM::MVE_WLSTP_16:
+  case ARM::MVE_WLSTP_32:
+  case ARM::MVE_WLSTP_64:
     Inst.addOperand(MCOperand::createReg(ARM::LR));
     if (!Check(S,
                DecoderGPRRegisterClass(Inst, fieldFromInstruction(Insn, 16, 4),
@@ -5970,9 +5978,22 @@ static DecodeStatus DecodeLOLoop(MCInst &Inst, unsigned Insn, uint64_t Address,
       return MCDisassembler::Fail;
     break;
   case ARM::t2DLS:
+  case ARM::MVE_DLSTP_8:
+  case ARM::MVE_DLSTP_16:
+  case ARM::MVE_DLSTP_32:
+  case ARM::MVE_DLSTP_64:
     unsigned Rn = fieldFromInstruction(Insn, 16, 4);
     if (Rn == 0xF) {
-      return MCDisassembler::Fail;
+      // Enforce all the rest of the instruction bits in LCTP, which
+      // won't have been reliably checked based on LCTP's own tablegen
+      // record, because we came to this decode by a roundabout route.
+      uint32_t CanonicalLCTP = 0xF00FE001, SBZMask = 0x00300FFE;
+      if ((Insn & ~SBZMask) != CanonicalLCTP)
+        return MCDisassembler::Fail;   // a mandatory bit is wrong: hard fail
+      if (Insn != CanonicalLCTP)
+        Check(S, MCDisassembler::SoftFail); // an SBZ bit is wrong: soft fail
+
+      Inst.setOpcode(ARM::MVE_LCTP);
     } else {
       Inst.addOperand(MCOperand::createReg(ARM::LR));
       if (!Check(S, DecoderGPRRegisterClass(Inst,

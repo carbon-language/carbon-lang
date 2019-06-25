@@ -3895,3 +3895,106 @@ def MVE_VPST : MVE_MI<(outs ), (ins vpt_mask:$Mk), NoItinerary,
 
   let Defs = [P0];
 }
+
+def MVE_VPSEL : MVE_p<(outs MQPR:$Qd), (ins MQPR:$Qn, MQPR:$Qm), NoItinerary,
+                      "vpsel", "", "$Qd, $Qn, $Qm", vpred_n, "", []> {
+  bits<4> Qn;
+  bits<4> Qd;
+  bits<4> Qm;
+
+  let Inst{28} = 0b1;
+  let Inst{25-23} = 0b100;
+  let Inst{22} = Qd{3};
+  let Inst{21-20} = 0b11;
+  let Inst{19-17} = Qn{2-0};
+  let Inst{16} = 0b1;
+  let Inst{15-13} = Qd{2-0};
+  let Inst{12-9} = 0b0111;
+  let Inst{8} = 0b1;
+  let Inst{7} = Qn{3};
+  let Inst{6} = 0b0;
+  let Inst{5} = Qm{3};
+  let Inst{4} = 0b0;
+  let Inst{3-1} = Qm{2-0};
+  let Inst{0} = 0b1;
+}
+
+foreach suffix = ["s8", "s16", "s32", "u8", "u16", "u32",
+                  "i8", "i16", "i32",       "f16", "f32"] in
+def : MVEInstAlias<"vpsel${vp}." # suffix # "\t$Qd, $Qn, $Qm",
+                   (MVE_VPSEL MQPR:$Qd, MQPR:$Qn, MQPR:$Qm, vpred_n:$vp)>;
+
+def MVE_VPNOT : MVE_p<(outs), (ins), NoItinerary,
+                      "vpnot", "", "", vpred_n, "", []> {
+  let Inst{31-0} = 0b11111110001100010000111101001101;
+  let Unpredictable{19-17} = 0b111;
+  let Unpredictable{12} = 0b1;
+  let Unpredictable{7} = 0b1;
+  let Unpredictable{5} = 0b1;
+  let Defs = [P0];
+  let Uses = [P0];
+
+  let Constraints = "";
+}
+
+class MVE_loltp_start<dag iops, string asm, string ops, bits<2> size>
+  : t2LOL<(outs GPRlr:$LR), iops, asm, ops> {
+  bits<4> Rn;
+  let Predicates = [HasMVEInt];
+  let Inst{22} = 0b0;
+  let Inst{21-20} = size;
+  let Inst{19-16} = Rn{3-0};
+  let Inst{12} = 0b0;
+}
+
+class MVE_DLSTP<string asm, bits<2> size>
+  : MVE_loltp_start<(ins rGPR:$Rn), asm, "$LR, $Rn", size> {
+  let Inst{13} = 0b1;
+  let Inst{11-1} = 0b00000000000;
+  let Unpredictable{10-1} = 0b1111111111;
+}
+
+class MVE_WLSTP<string asm, bits<2> size>
+  : MVE_loltp_start<(ins rGPR:$Rn, wlslabel_u11:$label),
+                    asm, "$LR, $Rn, $label", size> {
+  bits<11> label;
+  let Inst{13} = 0b0;
+  let Inst{11} = label{0};
+  let Inst{10-1} = label{10-1};
+}
+
+def MVE_DLSTP_8  : MVE_DLSTP<"dlstp.8",  0b00>;
+def MVE_DLSTP_16 : MVE_DLSTP<"dlstp.16", 0b01>;
+def MVE_DLSTP_32 : MVE_DLSTP<"dlstp.32", 0b10>;
+def MVE_DLSTP_64 : MVE_DLSTP<"dlstp.64", 0b11>;
+
+def MVE_WLSTP_8  : MVE_WLSTP<"wlstp.8",  0b00>;
+def MVE_WLSTP_16 : MVE_WLSTP<"wlstp.16", 0b01>;
+def MVE_WLSTP_32 : MVE_WLSTP<"wlstp.32", 0b10>;
+def MVE_WLSTP_64 : MVE_WLSTP<"wlstp.64", 0b11>;
+
+class MVE_loltp_end<dag oops, dag iops, string asm, string ops>
+  : t2LOL<oops, iops, asm, ops> {
+  let Predicates = [HasMVEInt];
+  let Inst{22-21} = 0b00;
+  let Inst{19-16} = 0b1111;
+  let Inst{12} = 0b0;
+}
+
+def MVE_LETP : MVE_loltp_end<(outs GPRlr:$LRout),
+                             (ins GPRlr:$LRin, lelabel_u11:$label),
+                             "letp", "$LRin, $label"> {
+  bits<11> label;
+  let Inst{20} = 0b1;
+  let Inst{13} = 0b0;
+  let Inst{11} = label{0};
+  let Inst{10-1} = label{10-1};
+}
+
+def MVE_LCTP : MVE_loltp_end<(outs), (ins pred:$p), "lctp${p}", ""> {
+  let Inst{20} = 0b0;
+  let Inst{13} = 0b1;
+  let Inst{11-1} = 0b00000000000;
+  let Unpredictable{21-20} = 0b11;
+  let Unpredictable{11-1} = 0b11111111111;
+}

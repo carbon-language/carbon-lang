@@ -1013,6 +1013,18 @@ public:
     return false;
   }
 
+  // checks whether this operand is an offset suitable for the LE /
+  // LETP instructions in Arm v8.1M
+  bool isLEOffset() const {
+    if (!isImm()) return false;
+    if (isa<MCSymbolRefExpr>(Imm.Val)) return true;
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
+      int64_t Val = CE->getValue();
+      return Val < 0 && Val >= -4094 && (Val & 1) == 0;
+    }
+    return false;
+  }
+
   // checks whether this operand is a memory operand computed as an offset
   // applied to PC. the offset may have 8 bits of magnitude and is represented
   // with two bits of shift. textually it may be either [pc, #imm], #imm or
@@ -6213,6 +6225,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
          Mnemonic == "vmule" || Mnemonic == "vmult" ||
          Mnemonic == "vrintne" ||
          Mnemonic == "vcmult" || Mnemonic == "vcmule" ||
+         Mnemonic == "vpsele" || Mnemonic == "vpselt" ||
          Mnemonic.startswith("vq")))) {
     unsigned CC = ARMCondCodeFromString(Mnemonic.substr(Mnemonic.size()-2));
     if (CC != ~0U) {
@@ -6261,7 +6274,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
       Mnemonic != "vqrshrnt" && Mnemonic != "vqshrnt" && Mnemonic != "vmullt" &&
       Mnemonic != "vqmovnt" && Mnemonic != "vqmovunt" &&
       Mnemonic != "vqmovnt" && Mnemonic != "vmovnt" && Mnemonic != "vqdmullt" &&
-      Mnemonic != "vcvtt" && Mnemonic != "vcvt") {
+      Mnemonic != "vpnot" && Mnemonic != "vcvtt" && Mnemonic != "vcvt") {
     unsigned CC = ARMVectorCondCodeFromString(Mnemonic.substr(Mnemonic.size()-1));
     if (CC != ~0U) {
       Mnemonic = Mnemonic.slice(0, Mnemonic.size()-1);
@@ -6337,7 +6350,9 @@ void ARMAsmParser::getMnemonicAcceptInfo(StringRef Mnemonic,
       Mnemonic.startswith("vpt") || Mnemonic.startswith("vpst") ||
       (hasMVE() &&
        (Mnemonic.startswith("vst2") || Mnemonic.startswith("vld2") ||
-        Mnemonic.startswith("vst4") || Mnemonic.startswith("vld4")))) {
+        Mnemonic.startswith("vst4") || Mnemonic.startswith("vld4") ||
+        Mnemonic.startswith("wlstp") || Mnemonic.startswith("dlstp") ||
+        Mnemonic.startswith("letp")))) {
     // These mnemonics are never predicable
     CanAcceptPredicationCode = false;
   } else if (!isThumb()) {
@@ -6599,7 +6614,7 @@ bool ARMAsmParser::shouldOmitVectorPredicateOperand(StringRef Mnemonic,
       Mnemonic.startswith("vst2") || Mnemonic.startswith("vst4"))
     return true;
 
-  if (Mnemonic.startswith("vctp"))
+  if (Mnemonic.startswith("vctp") || Mnemonic.startswith("vpnot"))
     return false;
 
   if (Mnemonic.startswith("vmov") &&
@@ -7740,22 +7755,6 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
       return Error(Operands[1]->getStartLoc(), "instruction 'csdb' is not "
                                                "predicable, but condition "
                                                "code specified");
-    break;
-  }
-  case ARM::t2WLS: {
-    int idx = Opcode == ARM::t2WLS ? 3 : 4;
-    if (!static_cast<ARMOperand &>(*Operands[idx]).isUnsignedOffset<11, 1>())
-      return Error(Operands[idx]->getStartLoc(),
-                   "loop end is out of range or not a positive multiple of 2");
-    break;
-  }
-  case ARM::t2LEUpdate: {
-    if (Inst.getOperand(2).isImm() &&
-        !(Inst.getOperand(2).getImm() < 0 &&
-          Inst.getOperand(2).getImm() >= -4094 &&
-          (Inst.getOperand(2).getImm() & 1) == 0))
-      return Error(Operands[2]->getStartLoc(),
-                   "loop start is out of range or not a negative multiple of 2");
     break;
   }
   case ARM::t2BFi:

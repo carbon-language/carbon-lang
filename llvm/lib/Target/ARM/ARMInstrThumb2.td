@@ -372,8 +372,27 @@ def bflabel_u4  : BFLabelOp<"false", "false", "4",  "ARM::fixup_bf_branch">;
 def bflabel_s12 : BFLabelOp<"true",  "false", "12", "ARM::fixup_bfc_target">;
 def bflabel_s16 : BFLabelOp<"true",  "false", "16", "ARM::fixup_bf_target">;
 def bflabel_s18 : BFLabelOp<"true",  "false", "18", "ARM::fixup_bfl_target">;
-def wlslabel_u11 : BFLabelOp<"false", "false", "11", "ARM::fixup_wls">;
-def lelabel_u11 : BFLabelOp<"false", "true",  "11", "ARM::fixup_le">;
+
+def wlslabel_u11_asmoperand : AsmOperandClass {
+  let Name = "WLSLabel";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isUnsignedOffset<11, 1>";
+  let DiagnosticString =
+    "loop end is out of range or not a positive multiple of 2";
+}
+def wlslabel_u11 : BFLabelOp<"false", "false", "11", "ARM::fixup_wls"> {
+  let ParserMatchClass = wlslabel_u11_asmoperand;
+}
+def lelabel_u11_asmoperand : AsmOperandClass {
+  let Name = "LELabel";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isLEOffset";
+  let DiagnosticString =
+    "loop start is out of range or not a negative multiple of 2";
+}
+def lelabel_u11 : BFLabelOp<"false", "true",  "11", "ARM::fixup_le"> {
+  let ParserMatchClass = lelabel_u11_asmoperand;
+}
 
 def bfafter_target : Operand<OtherVT> {
     let EncoderMethod = "getBFAfterTargetOpValue";
