@@ -5,7 +5,7 @@
 
 %0 = type { i32, [16 x double] }
 
-; CHECK: MII = 7 MAX_II = 17
+; CHECK: MII = 8 MAX_II = 18
 
 define dso_local fastcc void @_ZN3povL9polysolveEiPdS0_() unnamed_addr #0 {
   br label %1
