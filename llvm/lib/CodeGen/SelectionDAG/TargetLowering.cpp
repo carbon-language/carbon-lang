@@ -3024,6 +3024,18 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       }
     }
 
+    // Given:
+    //   icmp eq/ne (urem %x, %y), 0
+    // Iff %x has 0 or 1 bits set, and %y has at least 2 bits set, omit 'urem':
+    //   icmp eq/ne %x, 0
+    if (N0.getOpcode() == ISD::UREM && N1C->isNullValue() &&
+        (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+      KnownBits XKnown = DAG.computeKnownBits(N0.getOperand(0));
+      KnownBits YKnown = DAG.computeKnownBits(N0.getOperand(1));
+      if (XKnown.countMaxPopulation() == 1 && YKnown.countMinPopulation() >= 2)
+        return DAG.getSetCC(dl, VT, N0.getOperand(0), N1, Cond);
+    }
+
     if (SDValue V =
             optimizeSetCCOfSignedTruncationCheck(VT, N0, N1, Cond, DCI, dl))
       return V;
