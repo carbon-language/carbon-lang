@@ -2715,19 +2715,19 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       }
 
       // If ctpop is not supported, expand a power-of-2 comparison based on it.
-      if (C1 == 1 && !isOperationLegalOrCustom(ISD::CTPOP, CTVT)) {
+      if (C1 == 1 && !isOperationLegalOrCustom(ISD::CTPOP, CTVT) &&
+          (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
         // (ctpop x) == 1 --> (x != 0) && ((x & x-1) == 0)
-        if (Cond == ISD::SETEQ) {
-          SDValue Zero = DAG.getConstant(0, dl, CTVT);
-          SDValue NegOne = DAG.getAllOnesConstant(dl, CTVT);
-          SDValue Add = DAG.getNode(ISD::ADD, dl, CTVT, CTOp, NegOne);
-          SDValue And = DAG.getNode(ISD::AND, dl, CTVT, CTOp, Add);
-          SDValue LHS = DAG.getSetCC(dl, VT, CTOp, Zero, ISD::SETNE);
-          SDValue RHS = DAG.getSetCC(dl, VT, And, Zero, ISD::SETEQ);
-          return DAG.getNode(ISD::AND, dl, VT, LHS, RHS);
-        }
-        // TODO:
         // (ctpop x) != 1 --> (x == 0) || ((x & x-1) != 0)
+        SDValue Zero = DAG.getConstant(0, dl, CTVT);
+        SDValue NegOne = DAG.getAllOnesConstant(dl, CTVT);
+        ISD::CondCode InvCond = ISD::getSetCCInverse(Cond, true);
+        SDValue Add = DAG.getNode(ISD::ADD, dl, CTVT, CTOp, NegOne);
+        SDValue And = DAG.getNode(ISD::AND, dl, CTVT, CTOp, Add);
+        SDValue LHS = DAG.getSetCC(dl, VT, CTOp, Zero, InvCond);
+        SDValue RHS = DAG.getSetCC(dl, VT, And, Zero, Cond);
+        unsigned LogicOpcode = Cond == ISD::SETEQ ? ISD::AND : ISD::OR;
+        return DAG.getNode(LogicOpcode, dl, VT, LHS, RHS);
       }
     }
 
