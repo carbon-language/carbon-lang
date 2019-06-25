@@ -326,7 +326,8 @@ void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
     EmitVisibility(GVSym, GV->getVisibility(), !GV->isDeclaration());
     EmitLinkage(GV, GVSym);
-    getTargetStreamer()->emitAMDGPULDS(GVSym, Size, Align);
+    if (auto TS = getTargetStreamer())
+      TS->emitAMDGPULDS(GVSym, Size, Align);
     return;
   }
 
