@@ -1329,6 +1329,12 @@ void BinaryFunction::postProcessEntryPoints() {
         continue;
       }
 
+      // If we are at Offset 0 and there is no instruction associated with it,
+      // this means this is an empty function. Just ignore.
+      if (Offset == 0) {
+        continue;
+      }
+
       errs() << "BOLT-WARNING: reference in the middle of instruction "
                 "detected in function " << *this
              << " at offset 0x" << Twine::utohexstr(Offset) << '\n';
