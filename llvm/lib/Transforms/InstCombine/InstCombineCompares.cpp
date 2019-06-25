@@ -3829,23 +3829,21 @@ Instruction *InstCombiner::foldICmpEquality(ICmpInst &I) {
     return new ICmpInst(Pred, A, B);
 
   // Canonicalize checking for a power-of-2-or-zero value:
-  // (A & -A) == A --> (A & (A - 1)) == 0
-  // (-A & A) == A --> (A & (A - 1)) == 0
-  // A == (A & -A) --> (A & (A - 1)) == 0
-  // A == (-A & A) --> (A & (A - 1)) == 0
-  // TODO: This could be reduced by using the ctpop intrinsic.
+  // (A & -A) == A --> ctpop(A) < 2 (four commuted variants)
+  // (-A & A) != A --> ctpop(A) > 1 (four commuted variants)
   A = nullptr;
-  if (match(Op0, m_OneUse(m_c_And(m_OneUse(m_Neg(m_Specific(Op1))),
-                                  m_Specific(Op1)))))
+  if (match(Op0, m_OneUse(m_c_And(m_Neg(m_Specific(Op1)), m_Specific(Op1)))))
     A = Op1;
-  else if (match(Op1, m_OneUse(m_c_And(m_OneUse(m_Neg(m_Specific(Op0))),
-                                       m_Specific(Op0)))))
+  else if (match(Op1,
+                 m_OneUse(m_c_And(m_Neg(m_Specific(Op0)), m_Specific(Op0)))))
     A = Op0;
+
   if (A) {
     Type *Ty = A->getType();
-    Value *Dec = Builder.CreateAdd(A, ConstantInt::getAllOnesValue(Ty));
-    Value *And = Builder.CreateAnd(A, Dec);
-    return new ICmpInst(Pred, And, ConstantInt::getNullValue(Ty));
+    CallInst *CtPop = Builder.CreateUnaryIntrinsic(Intrinsic::ctpop, A);
+    return Pred == ICmpInst::ICMP_EQ
+        ? new ICmpInst(ICmpInst::ICMP_ULT, CtPop, ConstantInt::get(Ty, 2))
+        : new ICmpInst(ICmpInst::ICMP_UGT, CtPop, ConstantInt::get(Ty, 1));
   }
 
   return nullptr;
