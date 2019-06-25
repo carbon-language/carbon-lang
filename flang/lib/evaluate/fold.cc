@@ -60,10 +60,8 @@ common::IfNoLvalue<Expr<ResultType<A>>, A> FoldOperation(
 // specializations of FoldOperation() to enable mutual recursion between them.
 static Component FoldOperation(FoldingContext &, Component &&);
 static NamedEntity FoldOperation(FoldingContext &, NamedEntity &&);
-static Triplet FoldOperation(
-    FoldingContext &, Triplet &&, const NamedEntity &, int dim);
-static Subscript FoldOperation(
-    FoldingContext &, Subscript &&, const NamedEntity &, int dim);
+static Triplet FoldOperation(FoldingContext &, Triplet &&);
+static Subscript FoldOperation(FoldingContext &, Subscript &&);
 static ArrayRef FoldOperation(FoldingContext &, ArrayRef &&);
 static CoarrayRef FoldOperation(FoldingContext &, CoarrayRef &&);
 static DataRef FoldOperation(FoldingContext &, DataRef &&);
@@ -107,23 +105,14 @@ NamedEntity FoldOperation(FoldingContext &context, NamedEntity &&x) {
   }
 }
 
-Triplet FoldOperation(FoldingContext &context, Triplet &&triplet,
-    const NamedEntity &base, int dim) {
+Triplet FoldOperation(FoldingContext &context, Triplet &&triplet) {
   MaybeExtentExpr lower{triplet.lower()};
-  if (!lower.has_value()) {
-    lower = GetLowerBound(context, base, dim);
-  }
   MaybeExtentExpr upper{triplet.upper()};
-  if (!upper.has_value()) {
-    upper = GetUpperBound(
-        context, common::Clone(lower), GetExtent(context, base, dim));
-  }
   return {Fold(context, std::move(lower)), Fold(context, std::move(upper)),
       Fold(context, triplet.stride())};
 }
 
-Subscript FoldOperation(FoldingContext &context, Subscript &&subscript,
-    const NamedEntity &base, int dim) {
+Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
   return std::visit(
       common::visitors{
           [&](IndirectSubscriptIntegerExpr &&expr) {
@@ -131,8 +120,7 @@ Subscript FoldOperation(FoldingContext &context, Subscript &&subscript,
             return Subscript(std::move(expr));
           },
           [&](Triplet &&triplet) {
-            return Subscript(
-                FoldOperation(context, std::move(triplet), base, dim));
+            return Subscript(FoldOperation(context, std::move(triplet)));
           },
       },
       std::move(subscript.u));
@@ -140,19 +128,16 @@ Subscript FoldOperation(FoldingContext &context, Subscript &&subscript,
 
 ArrayRef FoldOperation(FoldingContext &context, ArrayRef &&arrayRef) {
   NamedEntity base{FoldOperation(context, std::move(arrayRef.base()))};
-  int dim{0};
   for (Subscript &subscript : arrayRef.subscript()) {
-    subscript = FoldOperation(context, std::move(subscript), base, dim++);
+    subscript = FoldOperation(context, std::move(subscript));
   }
   return ArrayRef{std::move(base), std::move(arrayRef.subscript())};
 }
 
 CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
-  NamedEntity base{coarrayRef.GetBase()};
   std::vector<Subscript> subscript;
-  int dim{0};
   for (Subscript x : coarrayRef.subscript()) {
-    subscript.emplace_back(FoldOperation(context, std::move(x), base, dim++));
+    subscript.emplace_back(FoldOperation(context, std::move(x)));
   }
   std::vector<Expr<SubscriptInteger>> cosubscript;
   for (Expr<SubscriptInteger> x : coarrayRef.cosubscript()) {
@@ -1034,8 +1019,8 @@ static std::optional<Constant<T>> GetFoldedParameterValue(
 // Apply subscripts to a constant array
 
 static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
-    FoldingContext &context, Subscript &ss, const Symbol &symbol, int dim) {
-  ss = FoldOperation(context, std::move(ss), NamedEntity{symbol}, dim);
+    FoldingContext &context, Subscript &ss, const NamedEntity &base, int dim) {
+  ss = FoldOperation(context, std::move(ss));
   return std::visit(
       common::visitors{
           [](IndirectSubscriptIntegerExpr &expr)
@@ -1047,15 +1032,17 @@ static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
               return std::nullopt;
             }
           },
-          [](Triplet &triplet) -> std::optional<Constant<SubscriptInteger>> {
-            std::optional<ConstantSubscript> lbi{1}, ubi;
+          [&](Triplet &triplet) -> std::optional<Constant<SubscriptInteger>> {
+            auto lower{triplet.lower()}, upper{triplet.upper()};
             std::optional<ConstantSubscript> stride{ToInt64(triplet.stride())};
-            if (auto lower{triplet.lower()}) {
-              lbi = ToInt64(*lower);
+            if (!lower.has_value()) {
+              lower = GetLowerBound(context, base, dim);
             }
-            if (auto upper{triplet.upper()}) {
-              ubi = ToInt64(*upper);
+            if (!upper.has_value()) {
+              upper = GetUpperBound(context, GetLowerBound(context, base, dim),
+                  GetExtent(context, base, dim));
             }
+            auto lbi{ToInt64(lower)}, ubi{ToInt64(upper)};
             if (lbi.has_value() && ubi.has_value() && stride.has_value() &&
                 *stride != 0) {
               std::vector<SubscriptInteger::Scalar> values;
@@ -1203,11 +1190,10 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
 template<typename T>
 std::optional<Constant<T>> FoldArrayRef(
     FoldingContext &context, ArrayRef &aRef) {
-  const Symbol &symbol{aRef.GetLastSymbol()};
   std::vector<Constant<SubscriptInteger>> subscripts;
   int dim{0};
   for (Subscript &ss : aRef.subscript()) {
-    if (auto constant{GetConstantSubscript(context, ss, symbol, dim++)}) {
+    if (auto constant{GetConstantSubscript(context, ss, aRef.base(), dim++)}) {
       subscripts.emplace_back(std::move(*constant));
     } else {
       return std::nullopt;

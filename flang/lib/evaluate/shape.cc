@@ -319,7 +319,6 @@ std::optional<Shape> GetShapeHelper::GetShape(const NamedEntity &base) {
     } else {
       Shape result;
       int n{static_cast<int>(details->shape().size())};
-      // TODO pmk: worry about impure calls in "base" component subscripts
       for (int dimension{0}; dimension < n; ++dimension) {
         result.emplace_back(GetExtent(context_, base, dimension));
       }
