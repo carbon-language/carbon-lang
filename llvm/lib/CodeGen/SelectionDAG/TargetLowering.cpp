@@ -2700,17 +2700,20 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         return DAG.getSetCC(dl, VT, And, DAG.getConstant(0, dl, CTVT), CC);
       }
 
-      // (ctpop x) == 1 -> x && (x & x-1) == 0 iff ctpop is illegal.
-      if (Cond == ISD::SETEQ && C1 == 1 &&
-          !isOperationLegalOrCustom(ISD::CTPOP, CTVT)) {
-        SDValue Sub =
-            DAG.getNode(ISD::SUB, dl, CTVT, CTOp, DAG.getConstant(1, dl, CTVT));
-        SDValue And = DAG.getNode(ISD::AND, dl, CTVT, CTOp, Sub);
-        SDValue LHS = DAG.getSetCC(dl, VT, CTOp, DAG.getConstant(0, dl, CTVT),
-                                   ISD::SETUGT);
-        SDValue RHS =
-            DAG.getSetCC(dl, VT, And, DAG.getConstant(0, dl, CTVT), ISD::SETEQ);
-        return DAG.getNode(ISD::AND, dl, VT, LHS, RHS);
+      // If ctpop is not supported, expand a power-of-2 comparison based on it.
+      if (C1 == 1 && !isOperationLegalOrCustom(ISD::CTPOP, CTVT)) {
+        // (ctpop x) == 1 --> (x != 0) && ((x & x-1) == 0)
+        if (Cond == ISD::SETEQ) {
+          SDValue Zero = DAG.getConstant(0, dl, CTVT);
+          SDValue NegOne = DAG.getAllOnesConstant(dl, CTVT);
+          SDValue Add = DAG.getNode(ISD::ADD, dl, CTVT, CTOp, NegOne);
+          SDValue And = DAG.getNode(ISD::AND, dl, CTVT, CTOp, Add);
+          SDValue LHS = DAG.getSetCC(dl, VT, CTOp, Zero, ISD::SETNE);
+          SDValue RHS = DAG.getSetCC(dl, VT, And, Zero, ISD::SETEQ);
+          return DAG.getNode(ISD::AND, dl, VT, LHS, RHS);
+        }
+        // TODO:
+        // (ctpop x) != 1 --> (x == 0) || ((x & x-1) != 0)
       }
     }
 
