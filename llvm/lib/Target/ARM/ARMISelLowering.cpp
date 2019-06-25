@@ -14002,6 +14002,7 @@ ARMTargetLowering::getConstraintType(StringRef Constraint) const {
   } else if (Constraint.size() == 2) {
     switch (Constraint[0]) {
     default: break;
+    case 'T': return C_RegisterClass;
     // All 'U+' constraints are addresses.
     case 'U': return C_Memory;
     }
@@ -14047,7 +14048,8 @@ using RCPair = std::pair<unsigned, const TargetRegisterClass *>;
 
 RCPair ARMTargetLowering::getRegForInlineAsmConstraint(
     const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const {
-  if (Constraint.size() == 1) {
+  switch (Constraint.size()) {
+  case 1:
     // GCC ARM Constraint Letters
     switch (Constraint[0]) {
     case 'l': // Low regs or general regs.
@@ -14093,7 +14095,26 @@ RCPair ARMTargetLowering::getRegForInlineAsmConstraint(
         return RCPair(0U, &ARM::QPR_VFP2RegClass);
       break;
     }
+
+  case 2:
+    switch (Constraint[0]) {
+    case 'T':
+      switch (Constraint[1]) {
+      default:
+        break;
+      case 'e':
+        return RCPair(0U, &ARM::tGPREvenRegClass);
+      case 'o':
+        return RCPair(0U, &ARM::tGPROddRegClass);
+      }
+    default:
+      break;
+    }
+
+  default:
+    break;
   }
+
   if (StringRef("{cc}").equals_lower(Constraint))
     return std::make_pair(unsigned(ARM::CPSR), &ARM::CCRRegClass);
 
