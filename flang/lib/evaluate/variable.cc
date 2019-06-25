@@ -322,8 +322,9 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
       common::visitors{
           [](const Symbol *s) { return SymbolLEN(*s); },
-          [](const Component &c) { return c.LEN(); },
+          [](const common::CopyableIndirection<Component> &c) { return c.value().LEN(); },
           [](const auto &) {
+            // TODO intrinsics?
             CRASH_NO_CASE;
             return AsExpr(Constant<SubscriptInteger>{0});
           },
