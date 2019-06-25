@@ -1390,8 +1390,11 @@ bool TargetLowering::SimplifyDemandedBits(
           TLO.DAG.getDataLayout().isLittleEndian())
         return TLO.CombineTo(Op, TLO.DAG.getBitcast(VT, Src));
 
-      if (!IsVecInReg)
-        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT, Src));
+      if (!IsVecInReg) {
+        unsigned Opc = ISD::ANY_EXTEND;
+        if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
+          return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
+      }
     }
 
     APInt InDemandedBits = DemandedBits.trunc(InBits);
@@ -1414,8 +1417,11 @@ bool TargetLowering::SimplifyDemandedBits(
 
     // If none of the top bits are demanded, convert this into an any_extend.
     // TODO: Add SIGN_EXTEND_VECTOR_INREG - ANY_EXTEND_VECTOR_INREG fold.
-    if (DemandedBits.getActiveBits() <= InBits && !IsVecInReg)
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT, Src));
+    if (DemandedBits.getActiveBits() <= InBits && !IsVecInReg) {
+      unsigned Opc = ISD::ANY_EXTEND;
+      if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
+        return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
+    }
 
     APInt InDemandedBits = DemandedBits.trunc(InBits);
     APInt InDemandedElts = DemandedElts.zextOrSelf(InElts);
@@ -1435,8 +1441,11 @@ bool TargetLowering::SimplifyDemandedBits(
 
     // If the sign bit is known zero, convert this to a zero extend.
     // TODO: Add SIGN_EXTEND_VECTOR_INREG - ZERO_EXTEND_VECTOR_INREG fold.
-    if (Known.isNonNegative() && !IsVecInReg)
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Src));
+    if (Known.isNonNegative() && !IsVecInReg) {
+      unsigned Opc = ISD::ZERO_EXTEND;
+      if (!TLO.LegalOperations() || isOperationLegal(Opc, VT))
+        return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT, Src));
+    }
     break;
   }
   case ISD::ANY_EXTEND: {
