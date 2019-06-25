@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -237,8 +237,8 @@ TYPE_PARSER("DEFAULTMAP" >>
         construct<OmpClause>(parenthesized(Parser<OmpScheduleClause>{})))
 
 // [Clause, [Clause], ...]
-TYPE_PARSER(
-    construct<OmpClauseList>(many(maybe(","_tok) >> Parser<OmpClause>{})))
+TYPE_PARSER(construct<OmpClauseList>(
+    many(maybe(","_tok) >> sourced(Parser<OmpClause>{}))))
 
 // (variable | /common-block | array-sections)
 TYPE_PARSER(construct<OmpObjectList>(nonemptyList(Parser<OmpObject>{})))
@@ -478,9 +478,9 @@ TYPE_PARSER(!"!$OMP END"_tok >> "!$OMP "_tok >>
                 endOmpLine)))
 
 // Block Construct
-TYPE_PARSER(construct<OpenMPBlockConstruct>(Parser<OmpBlockDirective>{},
-    Parser<OmpClauseList>{} / endOmpLine, block,
-    Parser<OmpEndBlockDirective>{} / endOmpLine))
+TYPE_PARSER(construct<OpenMPBlockConstruct>(
+    sourced(Parser<OmpBlockDirective>{}), Parser<OmpClauseList>{} / endOmpLine,
+    block, Parser<OmpEndBlockDirective>{} / endOmpLine))
 
 TYPE_PARSER(construct<OpenMPStandaloneConstruct>(
     Parser<OmpStandaloneDirective>{}, Parser<OmpClauseList>{} / endOmpLine))
@@ -588,6 +588,6 @@ TYPE_PARSER(skipStuffBeforeStatement >> "!$OMP "_sptok >> "END"_tok >>
             indirect(Parser<OmpLoopDirective>{}) / endOmpLine)))
 
 TYPE_PARSER(construct<OpenMPLoopConstruct>(
-    Parser<OmpLoopDirective>{}, Parser<OmpClauseList>{} / endOmpLine))
+    sourced(Parser<OmpLoopDirective>{}), Parser<OmpClauseList>{} / endOmpLine))
 }
 #endif  // FORTRAN_PARSER_OPENMP_GRAMMAR_H_

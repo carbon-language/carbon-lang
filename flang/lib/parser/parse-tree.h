@@ -3445,6 +3445,7 @@ struct OmpClause {
   WRAPPER_CLASS(Uniform, std::list<Name>);
   WRAPPER_CLASS(UseDevicePtr, std::list<Name>);
   WRAPPER_CLASS(IsDevicePtr, std::list<Name>);
+  CharBlock source;
   std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, OmpNowait,
       Untied, Collapse, Copyin, Copyprivate, Device, DistSchedule, Final,
       Firstprivate, From, Grainsize, Lastprivate, NumTasks, NumTeams,
@@ -3501,6 +3502,7 @@ struct OmpBlockDirective {
   EMPTY_CLASS(Taskgroup);
   EMPTY_CLASS(Task);
   EMPTY_CLASS(Teams);
+  CharBlock source;
   std::variant<Master, Ordered, ParallelWorkshare, Parallel, TargetData,
       TargetParallel, TargetTeams, Target, Taskgroup, Task, Teams>
       u;
@@ -3650,6 +3652,7 @@ struct OmpLoopDirective {
   EMPTY_CLASS(TeamsDistributeParallelDo);
   EMPTY_CLASS(TeamsDistributeSimd);
   EMPTY_CLASS(TeamsDistribute);
+  CharBlock source;
   std::variant<DistributeParallelDoSimd, DistributeParallelDo, DistributeSimd,
       Distribute, ParallelDoSimd, ParallelDo, Do, DoSimd, Simd,
       TargetParallelDoSimd, TargetParallelDo,

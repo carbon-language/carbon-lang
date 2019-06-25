@@ -23,6 +23,7 @@
 #include "check-if-stmt.h"
 #include "check-io.h"
 #include "check-nullify.h"
+#include "check-omp-structure.h"
 #include "check-return.h"
 #include "check-stop.h"
 #include "expression.h"
@@ -83,7 +84,7 @@ using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
     ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
     DeallocateChecker, DoChecker, IfStmtChecker, IoChecker, NullifyChecker,
-    ReturnStmtChecker, StopChecker>;
+    OmpStructureChecker, ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(
     SemanticsContext &context, parser::Program &program) {

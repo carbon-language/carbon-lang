@@ -24,6 +24,7 @@ add_library(FortranSemantics
   check-if-stmt.cc
   check-io.cc
   check-nullify.cc
+  check-omp-structure.cc
   check-return.cc
   check-stop.cc
   expression.cc
