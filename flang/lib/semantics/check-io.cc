@@ -15,11 +15,82 @@
 #include "check-io.h"
 #include "expression.h"
 #include "tools.h"
+#include "../common/format.h"
 #include "../parser/tools.h"
 
 namespace Fortran::semantics {
 
 // TODO: C1234, C1235 -- defined I/O constraints
+
+class FormatErrorReporter {
+public:
+  FormatErrorReporter(SemanticsContext &context,
+      const parser::CharBlock &formatCharBlock, int errorAllowance = 3)
+    : context_{context}, formatCharBlock_{formatCharBlock},
+      errorAllowance_{errorAllowance} {}
+
+  bool Say(const common::FormatMessage &);
+
+private:
+  SemanticsContext &context_;
+  const parser::CharBlock &formatCharBlock_;
+  int errorAllowance_;  // initialized to maximum number of errors to report
+};
+
+bool FormatErrorReporter::Say(const common::FormatMessage &msg) {
+  if (!msg.isError && !context_.warnOnNonstandardUsage()) {
+    return false;
+  }
+  parser::MessageFormattedText text{
+      parser::MessageFixedText(msg.text, strlen(msg.text), msg.isError),
+      msg.arg};
+  if (formatCharBlock_.size()) {
+    // The input format is a folded expression.  Error markers span the full
+    // original unfolded expression in formatCharBlock_.
+    context_.Say(formatCharBlock_, text);
+  } else {
+    // The input format is a source expression.  Error markers have an offset
+    // and length relative to the beginning of formatCharBlock_.
+    parser::CharBlock messageCharBlock{
+        parser::CharBlock(formatCharBlock_.begin() + msg.offset, msg.length)};
+    context_.Say(messageCharBlock, text);
+  }
+  return msg.isError && --errorAllowance_ <= 0;
+}
+
+void IoChecker::Enter(
+    const parser::Statement<common::Indirection<parser::FormatStmt>> &stmt) {
+  if (!stmt.label.has_value()) {
+    context_.Say("Format statement must be labeled"_err_en_US);  // C1301
+  }
+  const char *formatStart{static_cast<const char *>(
+      std::memchr(stmt.source.begin(), '(', stmt.source.size()))};
+  parser::CharBlock reporterCharBlock{formatStart, static_cast<std::size_t>(0)};
+  FormatErrorReporter reporter{context_, reporterCharBlock};
+  auto reporterWrapper{[&](const auto &msg) { return reporter.Say(msg); }};
+  switch (context_.GetDefaultKind(TypeCategory::Character)) {
+  case 1: {
+    common::FormatValidator<char> validator{formatStart,
+        stmt.source.size() - (formatStart - stmt.source.begin()),
+        reporterWrapper};
+    validator.Check();
+    break;
+  }
+  case 2: {  // TODO: Get this to work.
+    common::FormatValidator<char16_t> validator{
+        /*???*/ nullptr, /*???*/ 0, reporterWrapper};
+    validator.Check();
+    break;
+  }
+  case 4: {  // TODO: Get this to work.
+    common::FormatValidator<char32_t> validator{
+        /*???*/ nullptr, /*???*/ 0, reporterWrapper};
+    validator.Check();
+    break;
+  }
+  default: CRASH_NO_CASE;
+  }
+}
 
 void IoChecker::Enter(const parser::ConnectSpec &spec) {
   // ConnectSpec context FileNameExpr
@@ -96,15 +167,53 @@ void IoChecker::Enter(const parser::FileUnitNumber &spec) {
 void IoChecker::Enter(const parser::Format &spec) {
   SetSpecifier(IoSpecKind::Fmt);
   flags_.set(Flag::FmtOrNml);
-  if (std::get_if<parser::Star>(&spec.u)) {
-    flags_.set(Flag::StarFmt);
-  } else if (std::get_if<parser::Label>(&spec.u)) {
-    // Format statement format should be validated elsewhere.
-    flags_.set(Flag::LabelFmt);
-  } else {
-    flags_.set(Flag::CharFmt);
-    // TODO: validate compile-time constant format -- 12.6.2.2
-  }
+  std::visit(
+      common::visitors{
+          [&](const parser::Label &) { flags_.set(Flag::LabelFmt); },
+          [&](const parser::Star &) { flags_.set(Flag::StarFmt); },
+          [&](const parser::DefaultCharExpr &format) {
+            flags_.set(Flag::CharFmt);
+            const std::optional<std::string> constantFormat{
+                GetConstExpr<std::string>(format)};
+            if (!constantFormat) {
+              return;
+            }
+            // validate constant format -- 12.6.2.2
+            bool isFolded{constantFormat->size() !=
+                format.thing.value().source.size() - 2};
+            parser::CharBlock reporterCharBlock{isFolded
+                    ? parser::CharBlock{format.thing.value().source}
+                    : parser::CharBlock{format.thing.value().source.begin() + 1,
+                          static_cast<std::size_t>(0)}};
+            FormatErrorReporter reporter{context_, reporterCharBlock};
+            auto reporterWrapper{
+                [&](const auto &msg) { return reporter.Say(msg); }};
+            switch (context_.GetDefaultKind(TypeCategory::Character)) {
+            case 1: {
+              common::FormatValidator<char> validator{constantFormat->c_str(),
+                  constantFormat->length(), reporterWrapper, stmt_};
+              validator.Check();
+              break;
+            }
+            case 2: {
+              // TODO: Get this to work.  (Maybe combine with earlier instance?)
+              common::FormatValidator<char16_t> validator{
+                  /*???*/ nullptr, /*???*/ 0, reporterWrapper, stmt_};
+              validator.Check();
+              break;
+            }
+            case 4: {
+              // TODO: Get this to work.  (Maybe combine with earlier instance?)
+              common::FormatValidator<char32_t> validator{
+                  /*???*/ nullptr, /*???*/ 0, reporterWrapper, stmt_};
+              validator.Check();
+              break;
+            }
+            default: CRASH_NO_CASE;
+            }
+          },
+      },
+      spec.u);
 }
 
 void IoChecker::Enter(const parser::IdExpr &spec) {
@@ -272,7 +381,7 @@ void IoChecker::Enter(const parser::IoUnit &spec) {
       if (!ExprTypeKindIsDefault(*expr, context_)) {
         // This may be too restrictive; other kinds may be valid.
         context_.Say(  // C1202
-            "invalid character kind for an internal file variable"_err_en_US);
+            "Invalid character kind for an internal file variable"_err_en_US);
       }
     }
     SetSpecifier(IoSpecKind::Unit);
@@ -311,7 +420,7 @@ void IoChecker::Enter(const parser::StatusExpr &spec) {
     CHECK(stmt_ == IoStmtKind::Close);
     if (s != "DELETE" && s != "KEEP") {
       context_.Say(parser::FindSourceLocation(spec),
-          "invalid STATUS value '%s'"_err_en_US, *charConst);
+          "Invalid STATUS value '%s'"_err_en_US, *charConst);
     }
   }
 }
@@ -474,7 +583,7 @@ void IoChecker::SetSpecifier(IoSpecKind specKind) {
   }
   // C1203, C1207, C1210, C1236, C1239, C1242, C1245
   if (specifierSet_.test(specKind)) {
-    context_.Say("duplicate %s specifier"_err_en_US,
+    context_.Say("Duplicate %s specifier"_err_en_US,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
   specifierSet_.set(specKind);
@@ -504,7 +613,7 @@ void IoChecker::CheckStringValue(IoSpecKind specKind, const std::string &value,
       {IoSpecKind::Dispose, {"DELETE", "KEEP"}},
   };
   if (!specValues.at(specKind).count(parser::ToUpperCaseLetters(value))) {
-    context_.Say(source, "invalid %s value '%s'"_err_en_US,
+    context_.Say(source, "Invalid %s value '%s'"_err_en_US,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)), value);
   }
 }
@@ -534,7 +643,7 @@ void IoChecker::CheckForRequiredSpecifier(
 void IoChecker::CheckForRequiredSpecifier(
     IoSpecKind specKind1, IoSpecKind specKind2) const {
   if (specifierSet_.test(specKind1) && !specifierSet_.test(specKind2)) {
-    context_.Say("if %s appears, %s must also appear"_err_en_US,
+    context_.Say("If %s appears, %s must also appear"_err_en_US,
         parser::ToUpperCaseLetters(common::EnumToString(specKind1)),
         parser::ToUpperCaseLetters(common::EnumToString(specKind2)));
   }
@@ -543,7 +652,7 @@ void IoChecker::CheckForRequiredSpecifier(
 void IoChecker::CheckForRequiredSpecifier(
     IoSpecKind specKind, bool condition, const std::string &s) const {
   if (specifierSet_.test(specKind) && !condition) {
-    context_.Say("if %s appears, %s must also appear"_err_en_US,
+    context_.Say("If %s appears, %s must also appear"_err_en_US,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)), s);
   }
 }
@@ -551,7 +660,7 @@ void IoChecker::CheckForRequiredSpecifier(
 void IoChecker::CheckForRequiredSpecifier(
     bool condition, const std::string &s, IoSpecKind specKind) const {
   if (condition && !specifierSet_.test(specKind)) {
-    context_.Say("if %s appears, %s must also appear"_err_en_US, s,
+    context_.Say("If %s appears, %s must also appear"_err_en_US, s,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
 }
@@ -559,7 +668,7 @@ void IoChecker::CheckForRequiredSpecifier(
 void IoChecker::CheckForRequiredSpecifier(bool condition1,
     const std::string &s1, bool condition2, const std::string &s2) const {
   if (condition1 && !condition2) {
-    context_.Say("if %s appears, %s must also appear"_err_en_US, s1, s2);
+    context_.Say("If %s appears, %s must also appear"_err_en_US, s1, s2);
   }
 }
 
@@ -574,7 +683,7 @@ void IoChecker::CheckForProhibitedSpecifier(IoSpecKind specKind) const {
 void IoChecker::CheckForProhibitedSpecifier(
     IoSpecKind specKind1, IoSpecKind specKind2) const {
   if (specifierSet_.test(specKind1) && specifierSet_.test(specKind2)) {
-    context_.Say("if %s appears, %s must not appear"_err_en_US,
+    context_.Say("If %s appears, %s must not appear"_err_en_US,
         parser::ToUpperCaseLetters(common::EnumToString(specKind1)),
         parser::ToUpperCaseLetters(common::EnumToString(specKind2)));
   }
@@ -583,7 +692,7 @@ void IoChecker::CheckForProhibitedSpecifier(
 void IoChecker::CheckForProhibitedSpecifier(
     IoSpecKind specKind, bool condition, const std::string &s) const {
   if (specifierSet_.test(specKind) && condition) {
-    context_.Say("if %s appears, %s must not appear"_err_en_US,
+    context_.Say("If %s appears, %s must not appear"_err_en_US,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)), s);
   }
 }
@@ -591,7 +700,7 @@ void IoChecker::CheckForProhibitedSpecifier(
 void IoChecker::CheckForProhibitedSpecifier(
     bool condition, const std::string &s, IoSpecKind specKind) const {
   if (condition && specifierSet_.test(specKind)) {
-    context_.Say("if %s appears, %s must not appear"_err_en_US, s,
+    context_.Say("If %s appears, %s must not appear"_err_en_US, s,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
 }

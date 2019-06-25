@@ -76,35 +76,35 @@
   open(access='STREAM', 90) ! nonstandard
 
   !ERROR: OPEN statement must have a UNIT or NEWUNIT specifier
-  !ERROR: if ACCESS='DIRECT' appears, RECL must also appear
+  !ERROR: If ACCESS='DIRECT' appears, RECL must also appear
   open(access='direct')
 
-  !ERROR: if STATUS='STREAM' appears, RECL must not appear
+  !ERROR: If STATUS='STREAM' appears, RECL must not appear
   open(10, access='st'//'ream', recl=13)
 
-  !ERROR: duplicate NEWUNIT specifier
-  !ERROR: if NEWUNIT appears, FILE or STATUS must also appear
+  !ERROR: Duplicate NEWUNIT specifier
+  !ERROR: If NEWUNIT appears, FILE or STATUS must also appear
   open(newunit=n, newunit=nn, iostat=stat4)
 
-  !ERROR: duplicate UNIT specifier
+  !ERROR: Duplicate UNIT specifier
   open(unit=100, unit=100)
 
-  !ERROR: duplicate UNIT specifier
+  !ERROR: Duplicate UNIT specifier
   open(101, delim=delim_(1), unit=102)
 
-  !ERROR: duplicate UNIT specifier
+  !ERROR: Duplicate UNIT specifier
   open(unit=103, &
       unit=104, iostat=stat8)
 
-  !ERROR: duplicate UNIT specifier
-  !ERROR: if ACCESS='DIRECT' appears, RECL must also appear
+  !ERROR: Duplicate UNIT specifier
+  !ERROR: If ACCESS='DIRECT' appears, RECL must also appear
   open(access='dir'//'ect', 9, 9) ! nonstandard
 
-  !ERROR: duplicate ROUND specifier
+  !ERROR: Duplicate ROUND specifier
   open(105, round=round_(1), pad='no', round='nearest')
 
-  !ERROR: if NEWUNIT appears, UNIT must not appear
-  !ERROR: if NEWUNIT appears, FILE or STATUS must also appear
+  !ERROR: If NEWUNIT appears, UNIT must not appear
+  !ERROR: If NEWUNIT appears, FILE or STATUS must also appear
   open(106, newunit=n)
 
   !ERROR: RECL value (-30) must be positive
@@ -113,27 +113,27 @@
   !ERROR: RECL value (-36) must be positive
   open(108, recl=-  -  (-36)) ! nonstandard
 
-  !ERROR: invalid ACTION value 'reedwrite'
+  !ERROR: Invalid ACTION value 'reedwrite'
   open(109, access=Access, action='reedwrite', recl=77)
 
-  !ERROR: invalid ACTION value 'nonsense'
+  !ERROR: Invalid ACTION value 'nonsense'
   open(110, action=''//'non'//'sense', recl=77)
 
-  !ERROR: invalid STATUS value 'cold'
+  !ERROR: Invalid STATUS value 'cold'
   open(111, status='cold')
 
-  !ERROR: invalid STATUS value 'Keep'
+  !ERROR: Invalid STATUS value 'Keep'
   open(112, status='Keep')
 
-  !ERROR: if STATUS='NEW' appears, FILE must also appear
+  !ERROR: If STATUS='NEW' appears, FILE must also appear
   open(113, status='new')
 
-  !ERROR: if STATUS='REPLACE' appears, FILE must also appear
+  !ERROR: If STATUS='REPLACE' appears, FILE must also appear
   open(114, status='replace')
 
-  !ERROR: if STATUS='SCRATCH' appears, FILE must not appear
+  !ERROR: If STATUS='SCRATCH' appears, FILE must not appear
   open(115, file='abc', status='scratch')
 
-  !ERROR: if NEWUNIT appears, FILE or STATUS='SCRATCH' must also appear
+  !ERROR: If NEWUNIT appears, FILE or STATUS='SCRATCH' must also appear
   open(newunit=nn, status='old')
 end

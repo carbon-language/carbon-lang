@@ -6,7 +6,7 @@ tags
 TAGS
 *.o
 .nfs*
-*.swp
+*.sw?
 *~
 *#
 CMakeCache.txt

@@ -32,6 +32,10 @@ set(ERROR_TESTS
   io04.f90
   io05.f90
   io06.f90
+  io07.f90
+  io08.f90
+  io09.f90
+  io10.f90
   kinds02.f90
   resolve01.f90
   resolve02.f90

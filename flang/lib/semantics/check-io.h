@@ -40,6 +40,9 @@ public:
   void Enter(const parser::WaitStmt &) { Init(IoStmtKind::Wait); }
   void Enter(const parser::WriteStmt &) { Init(IoStmtKind::Write); }
 
+  void Enter(
+      const parser::Statement<common::Indirection<parser::FormatStmt>> &);
+
   void Enter(const parser::ConnectSpec &);
   void Enter(const parser::ConnectSpec::CharExpr &);
   void Enter(const parser::ConnectSpec::Newunit &);
@@ -84,7 +87,7 @@ private:
   ENUM_CLASS(Flag, IoControlList, InternalUnit, NumberUnit, StarUnit, CharFmt,
       LabelFmt, StarFmt, FmtOrNml, KnownAccess, AccessDirect, AccessStream,
       AdvanceYes, AsynchronousYes, KnownStatus, StatusNew, StatusReplace,
-      StatusScratch, DataList);
+      StatusScratch, DataList)
 
   template<typename R, typename T> std::optional<R> GetConstExpr(const T &x) {
     using DefaultCharConstantType =
