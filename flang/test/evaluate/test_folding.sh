@@ -35,7 +35,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-F18CC=${F18:-../../../tools/f18/f18}
+F18CC=${F18:-../../../tools/f18/bin/f18}
 CMD="$F18CC -fdebug-dump-symbols -fparse-only"
 
 if [[ $# < 1 ]]; then

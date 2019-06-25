@@ -20,7 +20,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-CMD="${F18:-../../../tools/f18/f18} -funparse-with-symbols"
+CMD="${F18:-../../../tools/f18/bin/f18} -funparse-with-symbols"
 
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"

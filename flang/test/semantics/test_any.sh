@@ -19,7 +19,7 @@
 # Change the compiler by setting the F18 environment variable.
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-F18=${F18:=../../tools/f18/f18}
+F18=${F18:=../../tools/f18/bin/f18}
 FileCheck=${FileCheck:=internal_check}
 
 function internal_check() {
