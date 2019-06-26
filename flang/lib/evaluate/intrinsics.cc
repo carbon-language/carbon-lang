@@ -1477,6 +1477,8 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   }
   parser::Messages *finalBuffer{context.messages().messages()};
   // Special case: NULL()
+  // All special cases handled here before the table probes below must
+  // also be caught as special names in IsIntrinsic().
   if (call.name == "null") {
     parser::Messages nullBuffer;
     parser::ContextualMessages nullErrors{

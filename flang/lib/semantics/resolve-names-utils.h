@@ -50,7 +50,7 @@ parser::MessageFixedText WithIsFatal(
 
 // Is this the name of a defined operator, e.g. ".foo."
 bool IsDefinedOperator(const SourceName &);
-bool IsInstrinsicOperator(const SemanticsContext &, const SourceName &);
+bool IsIntrinsicOperator(const SemanticsContext &, const SourceName &);
 bool IsLogicalConstant(const SemanticsContext &, const SourceName &);
 
 // Analyze a generic-spec and generate a symbol name and GenericKind for it.

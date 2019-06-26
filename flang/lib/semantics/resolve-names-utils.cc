@@ -55,7 +55,7 @@ bool IsDefinedOperator(const SourceName &name) {
   return begin != end && begin[0] == '.' && end[-1] == '.';
 }
 
-bool IsInstrinsicOperator(
+bool IsIntrinsicOperator(
     const SemanticsContext &context, const SourceName &name) {
   std::string str{name.ToString()};
   std::set<std::string> intrinsics{".and.", ".eq.", ".eqv.", ".ge.", ".gt.",

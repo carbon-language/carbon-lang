@@ -1695,7 +1695,12 @@ static bool NeedsType(const Symbol &symbol) {
 void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   if (NeedsType(symbol)) {
     if (isImplicitNoneType()) {
-      Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
+      if (symbol.has<ProcEntityDetails>() &&
+          context().intrinsics().IsIntrinsic(symbol.name().ToString())) {
+        // type will be determined in expression semantics
+      } else {
+        Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
+      }
     } else if (const auto *type{GetImplicitType(symbol)}) {
       symbol.SetType(*type);
     }
@@ -1859,7 +1864,7 @@ void ModuleVisitor::AddUse(const parser::Rename::Operators &ops) {
   const parser::DefinedOpName &use{std::get<1>(ops.t)};
   GenericSpecInfo localInfo{local};
   GenericSpecInfo useInfo{use};
-  if (IsInstrinsicOperator(context(), local.v.source)) {
+  if (IsIntrinsicOperator(context(), local.v.source)) {
     Say(local.v,
         "Intrinsic operator '%s' may not be used as a defined operator"_err_en_US);
   } else if (IsLogicalConstant(context(), local.v.source)) {
