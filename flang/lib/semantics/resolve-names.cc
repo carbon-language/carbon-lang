@@ -1039,7 +1039,7 @@ public:
   bool Pre(const parser::Submodule &) { DIE("unreachable"); }
   bool Pre(const parser::BlockData &) { DIE("unreachable"); }
 
-  bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
+  void NoteExecutablePartCall(Symbol::Flag, const parser::Call &);
 
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
@@ -1050,6 +1050,7 @@ private:
   void CheckImport(const SourceName &, const SourceName &);
   void HandleCall(Symbol::Flag, const parser::Call &);
   void HandleProcedureName(Symbol::Flag, const parser::Name &);
+  bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
   void ResolveExecutionParts(const ProgramTree &);
   void AddSubpNames(const ProgramTree &);
   bool BeginScope(const ProgramTree &);
@@ -1682,8 +1683,10 @@ static bool NeedsType(const Symbol &symbol) {
               [](const EntityDetails &) { return true; },
               [](const ObjectEntityDetails &) { return true; },
               [](const AssocEntityDetails &) { return true; },
-              [&](const ProcEntityDetails &) {
-                return symbol.test(Symbol::Flag::Function);
+              [&](const ProcEntityDetails &p) {
+                return symbol.test(Symbol::Flag::Function) &&
+                    p.interface().type() == nullptr &&
+                    p.interface().symbol() == nullptr;
               },
               [](const auto &) { return false; },
           },
@@ -3977,19 +3980,21 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
 }
 
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
-  for (const auto &name : x.v) {
-    auto *prev{FindSymbol(name)};
-    if (!prev) {
+  for (auto &name : x.v) {
+    if (auto *prev{FindSymbol(name)}) {
+      if (prev->owner() == currScope()) {
+        SayAlreadyDeclared(name, *prev);  // C1125 & C1126
+      } else if (!IsVariableName(*prev)) {
+        SayBadLocality(name, *prev);  // C1124
+      } else {
+        auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
+        symbol.set(Symbol::Flag::LocalityShared);
+        name.symbol = &symbol;  // override resolution to parent
+      }
+    } else {
       Say(name, "Variable '%s' not found"_err_en_US);
       context().SetError(
           MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
-    } else if (prev->owner() == currScope()) {
-        SayAlreadyDeclared(name, *prev);  // C1125 and C1126
-    } else if (!IsVariableName(*prev)) {
-        SayBadLocality(name, *prev);  // C1124
-    } else {
-      auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
-      symbol.set(Symbol::Flag::LocalityShared);
     }
   }
   return false;
@@ -4606,16 +4611,13 @@ void ResolveNamesVisitor::HandleProcedureName(
     if (!symbol->has<ProcEntityDetails>()) {
       ConvertToProcEntity(*symbol);
     }
-    if (const auto type{GetImplicitType(*symbol)}) {
-      symbol->get<ProcEntityDetails>().interface().set_type(*type);
-    }
     SetProcFlag(name, *symbol, flag);
   } else if (symbol->has<UnknownDetails>()) {
     CHECK(!"unexpected UnknownDetails");
   } else if (CheckUseError(name)) {
     // error was reported
   } else {
-    symbol = Resolve(name, &symbol->GetUltimate());
+    symbol = &Resolve(name, symbol)->GetUltimate();
     ConvertToProcEntity(*symbol);
     if (!SetProcFlag(name, *symbol, flag)) {
       return;  // reported error
@@ -4631,6 +4633,32 @@ void ResolveNamesVisitor::HandleProcedureName(
     } else {
       SayWithDecl(name, *symbol,
           "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
+    }
+  }
+}
+
+// Variant of HandleProcedureName() for use while skimming the executable
+// part of a subprogram to catch calls that might be part of the subprogram's
+// interface, and to mark as procedures any symbols that might otherwise be
+// miscategorized as objects.
+void ResolveNamesVisitor::NoteExecutablePartCall(
+    Symbol::Flag flag, const parser::Call &call) {
+  auto &designator{std::get<parser::ProcedureDesignator>(call.t)};
+  if (const auto *name{std::get_if<parser::Name>(&designator.u)}) {
+    if (Symbol * symbol{FindSymbol(*name)}) {
+      Symbol::Flag other{flag == Symbol::Flag::Subroutine
+              ? Symbol::Flag::Function
+              : Symbol::Flag::Subroutine};
+      if (!symbol->test(other)) {
+        ConvertToProcEntity(*symbol);
+        if (auto *details{symbol->detailsIf<ProcEntityDetails>()}) {
+          symbol->set(flag);
+          if (symbol->IsDummy()) {
+            symbol->attrs().set(Attr::EXTERNAL);
+          }
+          ApplyImplicitRules(*symbol);
+        }
+      }
     }
   }
 }
@@ -4869,8 +4897,8 @@ bool ResolveNamesVisitor::Pre(const parser::ProgramUnit &x) {
 // to be procedures, so that they don't get converted to objects by default.
 class ExecutionPartSkimmer {
 public:
-  ExecutionPartSkimmer(ResolveNamesVisitor &resolver, Scope &s)
-    : resolver_{resolver}, scope_{s} {}
+  explicit ExecutionPartSkimmer(ResolveNamesVisitor &resolver)
+    : resolver_{resolver} {}
 
   void Walk(const parser::ExecutionPart *exec) {
     if (exec != nullptr) {
@@ -4881,35 +4909,15 @@ public:
   template<typename A> bool Pre(const A &) { return true; }
   template<typename A> void Post(const A &) {}
   void Post(const parser::FunctionReference &fr) {
-    NoteCall(Symbol::Flag::Function, fr.v);
+    resolver_.NoteExecutablePartCall(Symbol::Flag::Function, fr.v);
   }
   void Post(const parser::CallStmt &cs) {
-    NoteCall(Symbol::Flag::Subroutine, cs.v);
+    resolver_.NoteExecutablePartCall(Symbol::Flag::Subroutine, cs.v);
   }
 
 private:
-  void NoteCall(Symbol::Flag, const parser::Call &);
-
   ResolveNamesVisitor &resolver_;
-  Scope &scope_;
 };
-
-void ExecutionPartSkimmer::NoteCall(
-    Symbol::Flag flag, const parser::Call &call) {
-  auto &designator{std::get<parser::ProcedureDesignator>(call.t)};
-  if (const auto *name{std::get_if<parser::Name>(&designator.u)}) {
-    if (Symbol * symbol{scope_.FindSymbol(name->source)}) {
-      if (auto *details{symbol->detailsIf<EntityDetails>()}) {
-        if (resolver_.SetProcFlag(*name, *symbol, flag)) {
-          symbol->set_details(ProcEntityDetails{std::move(*details)});
-          if (symbol->IsDummy()) {
-            symbol->attrs().set(Attr::EXTERNAL);
-          }
-        }
-      }
-    }
-  }
-}
 
 // Build the scope tree and resolve names in the specification parts of this
 // node and its children
@@ -4928,9 +4936,9 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
   for (auto &child : node.children()) {
     ResolveSpecificationParts(child);
   }
-  ExecutionPartSkimmer{*this, scope}.Walk(node.exec());
+  ExecutionPartSkimmer{*this}.Walk(node.exec());
   PopScope();
-  // Ensure every object and function entity has a type.
+  // Ensure that every object entity has a type.
   for (auto &pair : *node.scope()) {
     ApplyImplicitRules(*pair.second);
   }
