@@ -35,6 +35,7 @@ public:
   void Enter(const parser::FlushStmt &) { Init(IoStmtKind::Flush); }
   void Enter(const parser::InquireStmt &) { Init(IoStmtKind::Inquire); }
   void Enter(const parser::OpenStmt &) { Init(IoStmtKind::Open); }
+  void Enter(const parser::PrintStmt &) { Init(IoStmtKind::Print); }
   void Enter(const parser::ReadStmt &) { Init(IoStmtKind::Read); }
   void Enter(const parser::RewindStmt &) { Init(IoStmtKind::Rewind); }
   void Enter(const parser::WaitStmt &) { Init(IoStmtKind::Wait); }

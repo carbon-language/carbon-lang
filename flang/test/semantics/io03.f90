@@ -31,6 +31,7 @@
   open(10)
 
   read*
+  print*, 'Ok'
   read(*)
   read*, jj
   read(*, *) jj
