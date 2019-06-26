@@ -76,7 +76,7 @@ public:
   using resultType = A;
   constexpr PureParser(const PureParser &) = default;
   constexpr explicit PureParser(A &&x) : value_(std::move(x)) {}
-  std::optional<A> Parse(ParseState &) const { return value_; }
+  std::optional<A> Parse(ParseState &) const { return {value_}; }
 
 private:
   const A value_;
@@ -126,9 +126,8 @@ public:
     forked.set_deferMessages(true);
     if (parser_.Parse(forked)) {
       return std::nullopt;
-    } else {
-      return Success{};
     }
+    return {Success{}};
   }
 
 private:
@@ -150,7 +149,7 @@ public:
     ParseState forked{state};
     forked.set_deferMessages(true);
     if (parser_.Parse(forked)) {
-      return Success{};
+      return {Success{}};
     }
     return std::nullopt;
   }
@@ -415,7 +414,7 @@ public:
       }
       at = state.GetLocation();
     }
-    return result;
+    return {std::move(result)};
   }
 
 private:
@@ -445,7 +444,7 @@ public:
       if (state.GetLocation() > start) {
         result.splice(result.end(), many(parser_).Parse(state).value());
       }
-      return result;
+      return {std::move(result)};
     }
     return std::nullopt;
   }
@@ -469,7 +468,7 @@ public:
          parser_.Parse(state) && state.GetLocation() > at;
          at = state.GetLocation()) {
     }
-    return Success{};
+    return {Success{}};
   }
 
 private:
@@ -491,7 +490,7 @@ public:
   std::optional<Success> Parse(ParseState &state) const {
     while (parser_.Parse(state)) {
     }
-    return Success{};
+    return {Success{}};
   }
 
 private:
@@ -513,9 +512,9 @@ public:
   constexpr MaybeParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     if (resultType result{parser_.Parse(state)}) {
-      return result;
+      return {std::move(result)};
     }
-    return resultType{};
+    return {resultType{}};
   }
 
 private:
@@ -539,7 +538,7 @@ public:
     if (ax.value().has_value()) {  // maybe() always succeeds
       return std::move(*ax);
     }
-    return resultType{};
+    return {resultType{}};
   }
 
 private:
@@ -610,8 +609,8 @@ public:
     ApplyArgs<PARSER...> results;
     using Sequence = std::index_sequence_for<PARSER...>;
     if (ApplyHelperArgs(parsers_, results, state, Sequence{})) {
-      return ApplyHelperFunction<FUNCTION, RESULT, PARSER...>(
-          function_, std::move(results), Sequence{});
+      return {ApplyHelperFunction<FUNCTION, RESULT, PARSER...>(
+          function_, std::move(results), Sequence{})};
     } else {
       return std::nullopt;
     }
@@ -669,8 +668,8 @@ public:
     using Sequence1 = std::index_sequence_for<OBJPARSER, PARSER...>;
     using Sequence2 = std::index_sequence_for<PARSER...>;
     if (ApplyHelperArgs(parsers_, results, state, Sequence1{})) {
-      return ApplyHelperMember<OBJPARSER, PARSER...>(
-          function_, std::move(results), Sequence2{});
+      return {ApplyHelperMember<OBJPARSER, PARSER...>(
+          function_, std::move(results), Sequence2{})};
     } else {
       return std::nullopt;
     }
@@ -799,7 +798,7 @@ template<bool pass> struct FixedParser {
   constexpr FixedParser() {}
   static constexpr std::optional<Success> Parse(ParseState &) {
     if constexpr (pass) {
-      return Success{};
+      return {Success{}};
     } else {
       return std::nullopt;
     }
