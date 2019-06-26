@@ -615,9 +615,7 @@ void CGDebugInfo::CreateCompileUnit() {
       LangTag, CUFile, CGOpts.EmitVersionIdentMetadata ? Producer : "",
       LO.Optimize || CGOpts.PrepareForLTO || CGOpts.PrepareForThinLTO,
       CGOpts.DwarfDebugFlags, RuntimeVers,
-      (CGOpts.getSplitDwarfMode() != CodeGenOptions::NoFission)
-          ? ""
-          : CGOpts.SplitDwarfFile,
+      CGOpts.SplitDwarfFile,
       EmissionKind, DwoId, CGOpts.SplitDwarfInlining,
       CGOpts.DebugInfoForProfiling,
       CGM.getTarget().getTriple().isNVPTX()
