@@ -2860,63 +2860,15 @@ define <8 x i16> @PR39549(<16 x i8> %x) {
 }
 
 define <4 x i32> @PR41545(<4 x i32> %a0, <16 x i8> %a1) {
-; SSE2-LABEL: PR41545:
-; SSE2:       # %bb.0:
-; SSE2-NEXT:    paddd %xmm1, %xmm0
-; SSE2-NEXT:    retq
+; SSE-LABEL: PR41545:
+; SSE:       # %bb.0:
+; SSE-NEXT:    paddd %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
-; SSSE3-LABEL: PR41545:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    paddd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: PR41545:
-; SSE41:       # %bb.0:
-; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [0,0,255,0,0,0,255,0,0,0,255,0,0,0,255,0]
-; SSE41-NEXT:    pand %xmm1, %xmm2
-; SSE41-NEXT:    pxor %xmm3, %xmm3
-; SSE41-NEXT:    pblendw {{.*#+}} xmm3 = xmm1[0],xmm3[1],xmm1[2],xmm3[3],xmm1[4],xmm3[5],xmm1[6],xmm3[7]
-; SSE41-NEXT:    psrld $24, %xmm1
-; SSE41-NEXT:    pslld $24, %xmm1
-; SSE41-NEXT:    por %xmm1, %xmm3
-; SSE41-NEXT:    por %xmm2, %xmm3
-; SSE41-NEXT:    paddd %xmm3, %xmm0
-; SSE41-NEXT:    retq
-;
-; AVX1-LABEL: PR41545:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vpsrld $24, %xmm1, %xmm2
-; AVX1-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm3
-; AVX1-NEXT:    vpslld $24, %xmm2, %xmm2
-; AVX1-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0],xmm4[1],xmm1[2],xmm4[3],xmm1[4],xmm4[5],xmm1[6],xmm4[7]
-; AVX1-NEXT:    vpor %xmm2, %xmm1, %xmm1
-; AVX1-NEXT:    vpor %xmm1, %xmm3, %xmm1
-; AVX1-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX2-SLOW-LABEL: PR41545:
-; AVX2-SLOW:       # %bb.0:
-; AVX2-SLOW-NEXT:    vpsrld $24, %xmm1, %xmm2
-; AVX2-SLOW-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm3
-; AVX2-SLOW-NEXT:    vpslld $24, %xmm2, %xmm2
-; AVX2-SLOW-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; AVX2-SLOW-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0],xmm4[1],xmm1[2],xmm4[3],xmm1[4],xmm4[5],xmm1[6],xmm4[7]
-; AVX2-SLOW-NEXT:    vpor %xmm2, %xmm1, %xmm1
-; AVX2-SLOW-NEXT:    vpor %xmm1, %xmm3, %xmm1
-; AVX2-SLOW-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
-; AVX2-SLOW-NEXT:    retq
-;
-; AVX2-FAST-LABEL: PR41545:
-; AVX2-FAST:       # %bb.0:
-; AVX2-FAST-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm2
-; AVX2-FAST-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm3
-; AVX2-FAST-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; AVX2-FAST-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0],xmm4[1],xmm1[2],xmm4[3],xmm1[4],xmm4[5],xmm1[6],xmm4[7]
-; AVX2-FAST-NEXT:    vpor %xmm2, %xmm1, %xmm1
-; AVX2-FAST-NEXT:    vpor %xmm3, %xmm1, %xmm1
-; AVX2-FAST-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
-; AVX2-FAST-NEXT:    retq
+; AVX-LABEL: PR41545:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
   %1  = shufflevector <16 x i8> %a1, <16 x i8> undef, <4 x i32> <i32 0, i32 4, i32 8, i32 12>
   %2  = shufflevector <16 x i8> %a1, <16 x i8> undef, <4 x i32> <i32 1, i32 5, i32 9, i32 13>
   %3  = shufflevector <16 x i8> %a1, <16 x i8> undef, <4 x i32> <i32 2, i32 6, i32 10, i32 14>
