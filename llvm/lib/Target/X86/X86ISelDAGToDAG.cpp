@@ -3179,16 +3179,28 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     return true;
   };
 
+  auto isAllOnes = [this, peekThroughOneUseTruncation, NVT](SDValue V) {
+    V = peekThroughOneUseTruncation(V);
+    return CurDAG->MaskedValueIsAllOnes(
+        V, APInt::getLowBitsSet(V.getSimpleValueType().getSizeInBits(),
+                                NVT.getSizeInBits()));
+  };
+
   // b) x & ~(-1 << nbits)
-  auto matchPatternB = [&checkOneUse, &NBits](SDValue Mask) -> bool {
+  auto matchPatternB = [&checkOneUse, isAllOnes, &peekThroughOneUseTruncation,
+                        &NBits](SDValue Mask) -> bool {
     // Match `~()`. Must only have one use!
-    if (!isBitwiseNot(Mask) || !checkOneUse(Mask))
+    if (Mask.getOpcode() != ISD::XOR || !checkOneUse(Mask))
       return false;
-    // Match `-1 << nbits`. Must only have one use!
-    SDValue M0 = Mask->getOperand(0);
+    // The -1 only has to be all-ones for the final Node's NVT.
+    if (!isAllOnes(Mask->getOperand(1)))
+      return false;
+    // Match `-1 << nbits`. Might be truncated. Must only have one use!
+    SDValue M0 = peekThroughOneUseTruncation(Mask->getOperand(0));
     if (M0->getOpcode() != ISD::SHL || !checkOneUse(M0))
       return false;
-    if (!isAllOnesConstant(M0->getOperand(0)))
+    // The -1 only has to be all-ones for the final Node's NVT.
+    if (!isAllOnes(M0->getOperand(0)))
       return false;
     NBits = M0->getOperand(1);
     return true;
