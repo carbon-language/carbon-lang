@@ -94,6 +94,7 @@ uint32_t ObjFile::calcNewAddend(const WasmRelocation &Reloc) const {
   switch (Reloc.Type) {
   case R_WASM_MEMORY_ADDR_LEB:
   case R_WASM_MEMORY_ADDR_SLEB:
+  case R_WASM_MEMORY_ADDR_REL_SLEB:
   case R_WASM_MEMORY_ADDR_I32:
   case R_WASM_FUNCTION_OFFSET_I32:
     return Reloc.Addend;
