@@ -93,6 +93,7 @@ static_library("clangd") {
     "Logger.cpp",
     "Protocol.cpp",
     "Quality.cpp",
+    "QueryDriverDatabase.cpp",
     "RIFF.cpp",
     "Selection.cpp",
     "SourceCode.cpp",
