@@ -1486,6 +1486,11 @@ void RewriteInstance::discoverFileObjects() {
       BF->addAlternativeName(UniqueName);
     } else {
       auto Section = BC->getSectionForAddress(Address);
+
+      // Skip zero-size symbol in zero-size section
+      if (!Section && !SymbolSize)
+        continue;
+      
       assert(Section && "section for functions must be registered.");
       BF = BC->createBinaryFunction(UniqueName, *Section, Address,
                                     SymbolSize, IsSimple);
@@ -1868,6 +1873,12 @@ void RewriteInstance::readSpecialSections() {
 
   BC->HasRelocations = HasTextRelocations &&
                        (opts::RelocationMode != cl::BOU_FALSE);
+ 
+  // Force non-relocation mode for heatmap generation
+  if (opts::HeatmapMode) {
+    BC->HasRelocations = false;
+  }
+  
   if (BC->HasRelocations) {
     outs() << "BOLT-INFO: enabling relocation mode\n";
   }
