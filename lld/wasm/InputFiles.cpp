@@ -52,7 +52,8 @@ InputFile *lld::wasm::createObjectFile(MemoryBufferRef MB,
                                        StringRef ArchiveName) {
   file_magic Magic = identify_magic(MB.getBuffer());
   if (Magic == file_magic::wasm_object) {
-    std::unique_ptr<Binary> Bin = check(createBinary(MB));
+    std::unique_ptr<Binary> Bin =
+        CHECK(createBinary(MB), MB.getBufferIdentifier());
     auto *Obj = cast<WasmObjectFile>(Bin.get());
     if (Obj->isSharedObject())
       return make<SharedFile>(MB);
