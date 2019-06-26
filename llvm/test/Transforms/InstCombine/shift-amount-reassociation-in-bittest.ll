@@ -260,6 +260,38 @@ declare void @use32(i32)
 define i1 @t16_const_oneuse0(i32 %x, i32 %y) {
 ; CHECK-LABEL: @t16_const_oneuse0(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
+; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
+; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
+; CHECK-NEXT:    [[T3:%.*]] = icmp ne i32 [[T2]], 0
+; CHECK-NEXT:    ret i1 [[T3]]
+;
+  %t0 = lshr i32 %x, 1
+  call void @use32(i32 %t0)
+  %t1 = shl i32 %y, 1
+  %t2 = and i32 %t1, %t0
+  %t3 = icmp ne i32 %t2, 0
+  ret i1 %t3
+}
+define i1 @t17_const_oneuse1(i32 %x, i32 %y) {
+; CHECK-LABEL: @t17_const_oneuse1(
+; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
+; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
+; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
+; CHECK-NEXT:    [[T3:%.*]] = icmp ne i32 [[T2]], 0
+; CHECK-NEXT:    ret i1 [[T3]]
+;
+  %t0 = lshr i32 %x, 1
+  %t1 = shl i32 %y, 1
+  call void @use32(i32 %t1)
+  %t2 = and i32 %t1, %t0
+  %t3 = icmp ne i32 %t2, 0
+  ret i1 %t3
+}
+define i1 @t18_const_oneuse2(i32 %x, i32 %y) {
+; CHECK-LABEL: @t18_const_oneuse2(
+; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
 ; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
 ; CHECK-NEXT:    call void @use32(i32 [[T2]])
@@ -273,8 +305,26 @@ define i1 @t16_const_oneuse0(i32 %x, i32 %y) {
   %t3 = icmp ne i32 %t2, 0
   ret i1 %t3
 }
-define i1 @t17_const_oneuse1(i32 %x, i32 %y) {
-; CHECK-LABEL: @t17_const_oneuse1(
+define i1 @t19_const_oneuse3(i32 %x, i32 %y) {
+; CHECK-LABEL: @t19_const_oneuse3(
+; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
+; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
+; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
+; CHECK-NEXT:    [[T3:%.*]] = icmp ne i32 [[T2]], 0
+; CHECK-NEXT:    ret i1 [[T3]]
+;
+  %t0 = lshr i32 %x, 1
+  call void @use32(i32 %t0)
+  %t1 = shl i32 %y, 1
+  call void @use32(i32 %t1)
+  %t2 = and i32 %t1, %t0
+  %t3 = icmp ne i32 %t2, 0
+  ret i1 %t3
+}
+define i1 @t20_const_oneuse4(i32 %x, i32 %y) {
+; CHECK-LABEL: @t20_const_oneuse4(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
@@ -291,8 +341,8 @@ define i1 @t17_const_oneuse1(i32 %x, i32 %y) {
   %t3 = icmp ne i32 %t2, 0
   ret i1 %t3
 }
-define i1 @t18_const_oneuse2(i32 %x, i32 %y) {
-; CHECK-LABEL: @t18_const_oneuse2(
+define i1 @t21_const_oneuse5(i32 %x, i32 %y) {
+; CHECK-LABEL: @t21_const_oneuse5(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
 ; CHECK-NEXT:    call void @use32(i32 [[T1]])
@@ -309,8 +359,8 @@ define i1 @t18_const_oneuse2(i32 %x, i32 %y) {
   %t3 = icmp ne i32 %t2, 0
   ret i1 %t3
 }
-define i1 @t19_const_oneuse2(i32 %x, i32 %y) {
-; CHECK-LABEL: @t19_const_oneuse2(
+define i1 @t22_const_oneuse6(i32 %x, i32 %y) {
+; CHECK-LABEL: @t22_const_oneuse6(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], 1
@@ -330,8 +380,40 @@ define i1 @t19_const_oneuse2(i32 %x, i32 %y) {
   ret i1 %t3
 }
 
-define i1 @t17_variable_oneuse0(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
-; CHECK-LABEL: @t17_variable_oneuse0(
+define i1 @t23_var_oneuse0(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t23_var_oneuse0(
+; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
+; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
+; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
+; CHECK-NEXT:    [[T3:%.*]] = icmp ne i32 [[T2]], 0
+; CHECK-NEXT:    ret i1 [[T3]]
+;
+  %t0 = lshr i32 %x, %shamt0
+  call void @use32(i32 %t0)
+  %t1 = shl i32 %y, %shamt1
+  %t2 = and i32 %t1, %t0
+  %t3 = icmp ne i32 %t2, 0
+  ret i1 %t3
+}
+define i1 @t24_var_oneuse1(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t24_var_oneuse1(
+; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
+; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
+; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
+; CHECK-NEXT:    [[T3:%.*]] = icmp ne i32 [[T2]], 0
+; CHECK-NEXT:    ret i1 [[T3]]
+;
+  %t0 = lshr i32 %x, %shamt0
+  %t1 = shl i32 %y, %shamt1
+  call void @use32(i32 %t1)
+  %t2 = and i32 %t1, %t0
+  %t3 = icmp ne i32 %t2, 0
+  ret i1 %t3
+}
+define i1 @t25_var_oneuse2(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t25_var_oneuse2(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
 ; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
@@ -346,8 +428,26 @@ define i1 @t17_variable_oneuse0(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
   %t3 = icmp ne i32 %t2, 0
   ret i1 %t3
 }
-define i1 @t18_variable_oneuse1(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
-; CHECK-LABEL: @t18_variable_oneuse1(
+define i1 @t26_var_oneuse3(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t26_var_oneuse3(
+; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
+; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
+; CHECK-NEXT:    [[T2:%.*]] = and i32 [[T1]], [[T0]]
+; CHECK-NEXT:    [[T3:%.*]] = icmp ne i32 [[T2]], 0
+; CHECK-NEXT:    ret i1 [[T3]]
+;
+  %t0 = lshr i32 %x, %shamt0
+  call void @use32(i32 %t0)
+  %t1 = shl i32 %y, %shamt1
+  call void @use32(i32 %t1)
+  %t2 = and i32 %t1, %t0
+  %t3 = icmp ne i32 %t2, 0
+  ret i1 %t3
+}
+define i1 @t27_var_oneuse4(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t27_var_oneuse4(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
@@ -364,8 +464,8 @@ define i1 @t18_variable_oneuse1(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
   %t3 = icmp ne i32 %t2, 0
   ret i1 %t3
 }
-define i1 @t19_variable_oneuse2(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
-; CHECK-LABEL: @t19_variable_oneuse2(
+define i1 @t28_var_oneuse5(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t28_var_oneuse5(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
 ; CHECK-NEXT:    call void @use32(i32 [[T1]])
@@ -382,8 +482,8 @@ define i1 @t19_variable_oneuse2(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
   %t3 = icmp ne i32 %t2, 0
   ret i1 %t3
 }
-define i1 @t20_variable_oneuse2(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
-; CHECK-LABEL: @t20_variable_oneuse2(
+define i1 @t29_var_oneuse6(i32 %x, i32 %y, i32 %shamt0, i32 %shamt1) {
+; CHECK-LABEL: @t29_var_oneuse6(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], [[SHAMT0:%.*]]
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
 ; CHECK-NEXT:    [[T1:%.*]] = shl i32 [[Y:%.*]], [[SHAMT1:%.*]]
