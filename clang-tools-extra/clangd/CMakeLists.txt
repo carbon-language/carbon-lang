@@ -21,6 +21,7 @@ configure_file(
 
 set(LLVM_LINK_COMPONENTS
   Support
+  AllTargetsInfos
   )
 
 if(CLANG_BUILT_STANDALONE)

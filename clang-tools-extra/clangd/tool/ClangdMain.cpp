@@ -24,6 +24,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <iostream>
@@ -329,6 +330,7 @@ int main(int argc, char *argv[]) {
   using namespace clang;
   using namespace clang::clangd;
 
+  llvm::InitializeAllTargetInfos();
   llvm::sys::PrintStackTraceOnErrorSignal(argv[0]);
   llvm::cl::SetVersionPrinter([](llvm::raw_ostream &OS) {
     OS << clang::getClangToolFullVersion("clangd") << "\n";
