@@ -826,12 +826,12 @@ protected:
 
 TEST_F(TargetAndModeTest, TargetAndMode) {
   add("foo.cpp", "clang-cl", "");
-  add("bar.cpp", "x86_64-linux-clang", "");
+  add("bar.cpp", "clang++", "");
 
   EXPECT_EQ(getCommand("foo.cpp"),
             "clang-cl --driver-mode=cl foo.cpp -D foo.cpp");
   EXPECT_EQ(getCommand("bar.cpp"),
-            "x86_64-linux-clang -target x86_64-linux bar.cpp -D bar.cpp");
+            "clang++ --driver-mode=g++ bar.cpp -D bar.cpp");
 }
 
 } // end namespace tooling
