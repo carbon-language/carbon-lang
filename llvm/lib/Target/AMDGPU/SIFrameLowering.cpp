@@ -526,7 +526,6 @@ void SIFrameLowering::emitEntryFunctionScratchSetup(const GCNSubtarget &ST,
 static unsigned findScratchNonCalleeSaveRegister(MachineFunction &MF,
                                                  LivePhysRegs &LiveRegs,
                                                  const TargetRegisterClass &RC) {
-  const GCNSubtarget &Subtarget = MF.getSubtarget<GCNSubtarget>();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
   // Mark callee saved registers as used so we will not choose them.
