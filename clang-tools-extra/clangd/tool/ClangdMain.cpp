@@ -269,6 +269,15 @@ static llvm::cl::opt<bool> HiddenFeatures(
     llvm::cl::desc("Enable hidden features mostly useful to clangd developers"),
     llvm::cl::init(false), llvm::cl::Hidden);
 
+static llvm::cl::list<std::string> QueryDriverGlobs(
+    "query-driver",
+    llvm::cl::desc(
+        "Comma separated list of globs for white-listing gcc-compatible "
+        "drivers that are safe to execute. Drivers matching any of these globs "
+        "will be used to extract system includes. e.g. "
+        "/usr/bin/**/clang-*,/path/to/repo/**/g++-*"),
+    llvm::cl::CommaSeparated);
+
 namespace {
 
 /// \brief Supports a test URI scheme with relaxed constraints for lit tests.
@@ -523,6 +532,7 @@ int main(int argc, char *argv[]) {
     };
   }
   Opts.SuggestMissingIncludes = SuggestMissingIncludes;
+  Opts.QueryDriverGlobs = std::move(QueryDriverGlobs);
   llvm::Optional<OffsetEncoding> OffsetEncodingFromFlag;
   if (ForceOffsetEncoding != OffsetEncoding::UnsupportedEncoding)
     OffsetEncodingFromFlag = ForceOffsetEncoding;

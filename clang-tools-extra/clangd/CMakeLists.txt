@@ -64,6 +64,7 @@ add_clang_library(clangDaemon
   RIFF.cpp
   Selection.cpp
   SourceCode.cpp
+  QueryDriverDatabase.cpp
   Threading.cpp
   Trace.cpp
   TUScheduler.cpp
