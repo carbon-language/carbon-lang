@@ -150,8 +150,6 @@ static Error executeObjcopyOnRawBinary(const CopyConfig &Config,
   case FileFormat::Unspecified:
     return elf::executeObjcopyOnRawBinary(Config, In, Out);
   }
-
-  llvm_unreachable("unsupported output format");
 }
 
 /// The function executeObjcopyOnBinary does the dispatch based on the format
