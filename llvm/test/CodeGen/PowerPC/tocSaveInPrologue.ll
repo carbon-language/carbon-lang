@@ -26,7 +26,7 @@ define dso_local void @test(void (i32)* nocapture %fp, i32 signext %Arg, i32 sig
 ; CHECK-NEXT:    std r2, 24(r1)
 ; CHECK-NEXT:    .p2align 5
 ; CHECK-NEXT:  .LBB0_2: # %for.body.us
-; CHECK-NEXT:  
+; CHECK-NEXT:  # =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    mtctr r30
 ; CHECK-NEXT:    mr r3, r28
 ; CHECK-NEXT:    mr r12, r30
