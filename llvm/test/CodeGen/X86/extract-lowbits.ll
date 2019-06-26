@@ -791,22 +791,13 @@ define i32 @bzhi64_32_a0(i64 %val, i64 %numlowbits) nounwind {
 ;
 ; X64-BMI1NOTBM-LABEL: bzhi64_32_a0:
 ; X64-BMI1NOTBM:       # %bb.0:
-; X64-BMI1NOTBM-NEXT:    movq %rsi, %rcx
-; X64-BMI1NOTBM-NEXT:    movl $1, %eax
-; X64-BMI1NOTBM-NEXT:    # kill: def $cl killed $cl killed $rcx
-; X64-BMI1NOTBM-NEXT:    shlq %cl, %rax
-; X64-BMI1NOTBM-NEXT:    decl %eax
-; X64-BMI1NOTBM-NEXT:    andl %edi, %eax
-; X64-BMI1NOTBM-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1NOTBM-NEXT:    shll $8, %esi
+; X64-BMI1NOTBM-NEXT:    bextrl %esi, %edi, %eax
 ; X64-BMI1NOTBM-NEXT:    retq
 ;
 ; X64-BMI1BMI2-LABEL: bzhi64_32_a0:
 ; X64-BMI1BMI2:       # %bb.0:
-; X64-BMI1BMI2-NEXT:    movl $1, %eax
-; X64-BMI1BMI2-NEXT:    shlxq %rsi, %rax, %rax
-; X64-BMI1BMI2-NEXT:    decl %eax
-; X64-BMI1BMI2-NEXT:    andl %edi, %eax
-; X64-BMI1BMI2-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1BMI2-NEXT:    bzhil %esi, %edi, %eax
 ; X64-BMI1BMI2-NEXT:    retq
   %onebit = shl i64 1, %numlowbits
   %mask = add nsw i64 %onebit, -1
@@ -1086,22 +1077,13 @@ define i32 @bzhi64_32_a3(i64 %val, i64 %numlowbits) nounwind {
 ;
 ; X64-BMI1NOTBM-LABEL: bzhi64_32_a3:
 ; X64-BMI1NOTBM:       # %bb.0:
-; X64-BMI1NOTBM-NEXT:    movq %rsi, %rcx
-; X64-BMI1NOTBM-NEXT:    movl $1, %eax
-; X64-BMI1NOTBM-NEXT:    # kill: def $cl killed $cl killed $rcx
-; X64-BMI1NOTBM-NEXT:    shlq %cl, %rax
-; X64-BMI1NOTBM-NEXT:    decl %eax
-; X64-BMI1NOTBM-NEXT:    andl %edi, %eax
-; X64-BMI1NOTBM-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1NOTBM-NEXT:    shll $8, %esi
+; X64-BMI1NOTBM-NEXT:    bextrl %esi, %edi, %eax
 ; X64-BMI1NOTBM-NEXT:    retq
 ;
 ; X64-BMI1BMI2-LABEL: bzhi64_32_a3:
 ; X64-BMI1BMI2:       # %bb.0:
-; X64-BMI1BMI2-NEXT:    movl $1, %eax
-; X64-BMI1BMI2-NEXT:    shlxq %rsi, %rax, %rax
-; X64-BMI1BMI2-NEXT:    decl %eax
-; X64-BMI1BMI2-NEXT:    andl %edi, %eax
-; X64-BMI1BMI2-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1BMI2-NEXT:    bzhil %esi, %edi, %eax
 ; X64-BMI1BMI2-NEXT:    retq
   %onebit = shl i64 1, %numlowbits
   %mask = add nsw i64 %onebit, 4294967295
