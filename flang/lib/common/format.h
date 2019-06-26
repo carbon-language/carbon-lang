@@ -393,7 +393,7 @@ template<typename CHAR> void FormatValidator<CHAR>::check_r(bool allowed) {
     ReportError("'%s' edit descriptor repeat specifier must be positive",
         knrToken_);  // C1304
   }
-};
+}
 
 // Return the predicate "w value is present" to control further processing.
 template<typename CHAR> bool FormatValidator<CHAR>::check_w() {
@@ -411,7 +411,7 @@ template<typename CHAR> bool FormatValidator<CHAR>::check_w() {
     ReportWarning("Expected '%s' edit descriptor 'w' value");  // C1306
   }
   return false;
-};
+}
 
 template<typename CHAR> void FormatValidator<CHAR>::check_m() {
   if (token_.kind() != TokenKind::Point) {
@@ -427,7 +427,7 @@ template<typename CHAR> void FormatValidator<CHAR>::check_m() {
     ReportError("'%s' edit descriptor 'm' value is greater than 'w' value");
   }
   NextToken();
-};
+}
 
 // Return the predicate "d value is present" to control further processing.
 template<typename CHAR> bool FormatValidator<CHAR>::check_d() {
@@ -442,7 +442,7 @@ template<typename CHAR> bool FormatValidator<CHAR>::check_d() {
   }
   NextToken();
   return true;
-};
+}
 
 template<typename CHAR> void FormatValidator<CHAR>::check_e() {
   if (token_.kind() != TokenKind::E) {
@@ -454,7 +454,7 @@ template<typename CHAR> void FormatValidator<CHAR>::check_e() {
     return;
   }
   NextToken();
-};
+}
 
 template<typename CHAR> bool FormatValidator<CHAR>::Check() {
   if (!*format_) {
