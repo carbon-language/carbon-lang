@@ -3136,8 +3136,6 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
   if (NVT != MVT::i32 && NVT != MVT::i64)
     return false;
 
-  unsigned Size = NVT.getSizeInBits();
-
   SDValue NBits;
 
   // If we have BMI2's BZHI, we are ok with muti-use patterns.
@@ -3207,7 +3205,8 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
   };
 
   // Match potentially-truncated (bitwidth - y)
-  auto matchShiftAmt = [checkOneUse, Size, &NBits](SDValue ShiftAmt) {
+  auto matchShiftAmt = [checkOneUse, &NBits](SDValue ShiftAmt,
+                                             unsigned Bitwidth) {
     // Skip over a truncate of the shift amount.
     if (ShiftAmt.getOpcode() == ISD::TRUNCATE) {
       ShiftAmt = ShiftAmt.getOperand(0);
@@ -3219,25 +3218,29 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     if (ShiftAmt.getOpcode() != ISD::SUB)
       return false;
     auto V0 = dyn_cast<ConstantSDNode>(ShiftAmt.getOperand(0));
-    if (!V0 || V0->getZExtValue() != Size)
+    if (!V0 || V0->getZExtValue() != Bitwidth)
       return false;
     NBits = ShiftAmt.getOperand(1);
     return true;
   };
 
   // c) x &  (-1 >> (32 - y))
-  auto matchPatternC = [&checkOneUse, matchShiftAmt](SDValue Mask) -> bool {
+  auto matchPatternC = [&checkOneUse, &peekThroughOneUseTruncation,
+                        matchShiftAmt](SDValue Mask) -> bool {
+    // The mask itself may be truncated.
+    Mask = peekThroughOneUseTruncation(Mask);
+    unsigned Bitwidth = Mask.getSimpleValueType().getSizeInBits();
     // Match `l>>`. Must only have one use!
     if (Mask.getOpcode() != ISD::SRL || !checkOneUse(Mask))
       return false;
-    // We should be shifting all-ones constant.
+    // We should be shifting truly all-ones constant.
     if (!isAllOnesConstant(Mask.getOperand(0)))
       return false;
     SDValue M1 = Mask.getOperand(1);
     // The shift amount should not be used externally.
     if (!checkOneUse(M1))
       return false;
-    return matchShiftAmt(M1);
+    return matchShiftAmt(M1, Bitwidth);
   };
 
   SDValue X;
@@ -3250,13 +3253,14 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     SDValue N0 = Node->getOperand(0);
     if (N0->getOpcode() != ISD::SHL || !checkOneUse(N0))
       return false;
+    unsigned Bitwidth = N0.getSimpleValueType().getSizeInBits();
     SDValue N1 = Node->getOperand(1);
     SDValue N01 = N0->getOperand(1);
     // Both of the shifts must be by the exact same value.
     // There should not be any uses of the shift amount outside of the pattern.
     if (N1 != N01 || !checkTwoUse(N1))
       return false;
-    if (!matchShiftAmt(N1))
+    if (!matchShiftAmt(N1, Bitwidth))
       return false;
     X = N0->getOperand(0);
     return true;

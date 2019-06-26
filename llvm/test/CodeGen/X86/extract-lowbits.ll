@@ -3463,22 +3463,13 @@ define i32 @bzhi64_32_c0(i64 %val, i64 %numlowbits) nounwind {
 ;
 ; X64-BMI1NOTBM-LABEL: bzhi64_32_c0:
 ; X64-BMI1NOTBM:       # %bb.0:
-; X64-BMI1NOTBM-NEXT:    movq %rsi, %rcx
-; X64-BMI1NOTBM-NEXT:    negb %cl
-; X64-BMI1NOTBM-NEXT:    movq $-1, %rax
-; X64-BMI1NOTBM-NEXT:    # kill: def $cl killed $cl killed $rcx
-; X64-BMI1NOTBM-NEXT:    shrq %cl, %rax
-; X64-BMI1NOTBM-NEXT:    andl %edi, %eax
-; X64-BMI1NOTBM-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1NOTBM-NEXT:    shll $8, %esi
+; X64-BMI1NOTBM-NEXT:    bextrl %esi, %edi, %eax
 ; X64-BMI1NOTBM-NEXT:    retq
 ;
 ; X64-BMI1BMI2-LABEL: bzhi64_32_c0:
 ; X64-BMI1BMI2:       # %bb.0:
-; X64-BMI1BMI2-NEXT:    negb %sil
-; X64-BMI1BMI2-NEXT:    movq $-1, %rax
-; X64-BMI1BMI2-NEXT:    shrxq %rsi, %rax, %rax
-; X64-BMI1BMI2-NEXT:    andl %edi, %eax
-; X64-BMI1BMI2-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1BMI2-NEXT:    bzhil %esi, %edi, %eax
 ; X64-BMI1BMI2-NEXT:    retq
   %numhighbits = sub i64 64, %numlowbits
   %mask = lshr i64 -1, %numhighbits

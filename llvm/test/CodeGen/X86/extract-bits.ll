@@ -6258,25 +6258,17 @@ define i32 @bextr64_32_c0(i64 %val, i64 %numskipbits, i64 %numlowbits) nounwind 
 ;
 ; X64-BMI1NOTBM-LABEL: bextr64_32_c0:
 ; X64-BMI1NOTBM:       # %bb.0:
-; X64-BMI1NOTBM-NEXT:    movq %rsi, %rcx
-; X64-BMI1NOTBM-NEXT:    # kill: def $cl killed $cl killed $rcx
-; X64-BMI1NOTBM-NEXT:    shrq %cl, %rdi
-; X64-BMI1NOTBM-NEXT:    negb %dl
-; X64-BMI1NOTBM-NEXT:    movq $-1, %rax
-; X64-BMI1NOTBM-NEXT:    movl %edx, %ecx
-; X64-BMI1NOTBM-NEXT:    shrq %cl, %rax
-; X64-BMI1NOTBM-NEXT:    andl %edi, %eax
+; X64-BMI1NOTBM-NEXT:    shll $8, %edx
+; X64-BMI1NOTBM-NEXT:    movzbl %sil, %eax
+; X64-BMI1NOTBM-NEXT:    orl %edx, %eax
+; X64-BMI1NOTBM-NEXT:    bextrq %rax, %rdi, %rax
 ; X64-BMI1NOTBM-NEXT:    # kill: def $eax killed $eax killed $rax
 ; X64-BMI1NOTBM-NEXT:    retq
 ;
 ; X64-BMI1BMI2-LABEL: bextr64_32_c0:
 ; X64-BMI1BMI2:       # %bb.0:
-; X64-BMI1BMI2-NEXT:    shrxq %rsi, %rdi, %rcx
-; X64-BMI1BMI2-NEXT:    negb %dl
-; X64-BMI1BMI2-NEXT:    movq $-1, %rax
-; X64-BMI1BMI2-NEXT:    shrxq %rdx, %rax, %rax
-; X64-BMI1BMI2-NEXT:    andl %ecx, %eax
-; X64-BMI1BMI2-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-BMI1BMI2-NEXT:    shrxq %rsi, %rdi, %rax
+; X64-BMI1BMI2-NEXT:    bzhil %edx, %eax, %eax
 ; X64-BMI1BMI2-NEXT:    retq
   %shifted = lshr i64 %val, %numskipbits
   %numhighbits = sub i64 64, %numlowbits
