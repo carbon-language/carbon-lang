@@ -30,7 +30,6 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeEarlyIfConverterPass(Registry);
   initializeEarlyMachineLICMPass(Registry);
   initializeEarlyTailDuplicatePass(Registry);
-  initializeExpandMemCmpPassPass(Registry);
   initializeExpandPostRAPass(Registry);
   initializeFEntryInserterPass(Registry);
   initializeFinalizeISelPass(Registry);

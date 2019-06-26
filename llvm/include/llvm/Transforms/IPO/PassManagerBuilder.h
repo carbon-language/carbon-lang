@@ -195,6 +195,7 @@ private:
   void addPGOInstrPasses(legacy::PassManagerBase &MPM, bool IsCS);
   void addFunctionSimplificationPasses(legacy::PassManagerBase &MPM);
   void addInstructionCombiningPass(legacy::PassManagerBase &MPM) const;
+  void addMemcmpPasses(legacy::PassManagerBase &MPM) const;
 
 public:
   /// populateFunctionPassManager - This fills in the function pass manager,
