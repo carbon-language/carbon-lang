@@ -28586,6 +28586,7 @@ bool X86TargetLowering::isBinOp(unsigned Opcode) const {
 bool X86TargetLowering::isCommutativeBinOp(unsigned Opcode) const {
   switch (Opcode) {
   // TODO: Add more X86ISD opcodes once we have test coverage.
+  case X86ISD::PCMPEQ:
   case X86ISD::PMULUDQ:
   case X86ISD::FMAXC:
   case X86ISD::FMINC:
