@@ -335,7 +335,7 @@ static void PrintTagsAroundAddr(tag_t *tag_ptr) {
   tag_t *center_row_beg = reinterpret_cast<tag_t *>(
       RoundDownTo(reinterpret_cast<uptr>(tag_ptr), row_len));
   tag_t *beg_row = center_row_beg - row_len * (num_rows / 2);
-  tag_t *end_row = center_row_beg + row_len * (num_rows / 2);
+  tag_t *end_row = center_row_beg + row_len * ((num_rows + 1) / 2);
   InternalScopedString s(GetPageSizeCached() * 8);
   for (tag_t *row = beg_row; row < end_row; row += row_len) {
     s.append("%s", row == center_row_beg ? "=>" : "  ");
