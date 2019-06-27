@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -114,6 +115,47 @@ template void
 CallLowering::setArgFlags<CallInst>(CallLowering::ArgInfo &Arg, unsigned OpIdx,
                                     const DataLayout &DL,
                                     const CallInst &FuncInfo) const;
+
+Register CallLowering::packRegs(ArrayRef<Register> SrcRegs, Type *PackedTy,
+                                MachineIRBuilder &MIRBuilder) const {
+  assert(SrcRegs.size() > 1 && "Nothing to pack");
+
+  const DataLayout &DL = MIRBuilder.getMF().getDataLayout();
+  MachineRegisterInfo *MRI = MIRBuilder.getMRI();
+
+  LLT PackedLLT = getLLTForType(*PackedTy, DL);
+
+  SmallVector<LLT, 8> LLTs;
+  SmallVector<uint64_t, 8> Offsets;
+  computeValueLLTs(DL, *PackedTy, LLTs, &Offsets);
+  assert(LLTs.size() == SrcRegs.size() && "Regs / types mismatch");
+
+  Register Dst = MRI->createGenericVirtualRegister(PackedLLT);
+  MIRBuilder.buildUndef(Dst);
+  for (unsigned i = 0; i < SrcRegs.size(); ++i) {
+    Register NewDst = MRI->createGenericVirtualRegister(PackedLLT);
+    MIRBuilder.buildInsert(NewDst, Dst, SrcRegs[i], Offsets[i]);
+    Dst = NewDst;
+  }
+
+  return Dst;
+}
+
+void CallLowering::unpackRegs(ArrayRef<Register> DstRegs, Register SrcReg,
+                              Type *PackedTy,
+                              MachineIRBuilder &MIRBuilder) const {
+  assert(DstRegs.size() > 1 && "Nothing to unpack");
+
+  const DataLayout &DL = MIRBuilder.getMF().getDataLayout();
+
+  SmallVector<LLT, 8> LLTs;
+  SmallVector<uint64_t, 8> Offsets;
+  computeValueLLTs(DL, *PackedTy, LLTs, &Offsets);
+  assert(LLTs.size() == DstRegs.size() && "Regs / types mismatch");
+
+  for (unsigned i = 0; i < DstRegs.size(); ++i)
+    MIRBuilder.buildExtract(DstRegs[i], SrcReg, Offsets[i]);
+}
 
 bool CallLowering::handleAssignments(MachineIRBuilder &MIRBuilder,
                                      ArrayRef<ArgInfo> Args,

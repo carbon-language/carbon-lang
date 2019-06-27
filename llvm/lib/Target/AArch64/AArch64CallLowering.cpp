@@ -203,13 +203,30 @@ void AArch64CallLowering::splitToValueTypes(
   SmallVector<EVT, 4> SplitVTs;
   SmallVector<uint64_t, 4> Offsets;
   ComputeValueVTs(TLI, DL, OrigArg.Ty, SplitVTs, &Offsets, 0);
-  assert(OrigArg.Regs.size() == 1 && "Can't handle multple regs yet");
 
   if (SplitVTs.size() == 1) {
     // No splitting to do, but we want to replace the original type (e.g. [1 x
     // double] -> double).
     SplitArgs.emplace_back(OrigArg.Regs[0], SplitVTs[0].getTypeForEVT(Ctx),
                            OrigArg.Flags, OrigArg.IsFixed);
+    return;
+  }
+
+  if (OrigArg.Regs.size() > 1) {
+    // Create one ArgInfo for each virtual register in the original ArgInfo.
+    assert(OrigArg.Regs.size() == SplitVTs.size() && "Regs / types mismatch");
+
+    bool NeedsRegBlock = TLI.functionArgumentNeedsConsecutiveRegisters(
+        OrigArg.Ty, CallConv, false);
+    for (unsigned i = 0, e = SplitVTs.size(); i < e; ++i) {
+      Type *SplitTy = SplitVTs[i].getTypeForEVT(Ctx);
+      SplitArgs.emplace_back(OrigArg.Regs[i], SplitTy, OrigArg.Flags,
+                             OrigArg.IsFixed);
+      if (NeedsRegBlock)
+        SplitArgs.back().Flags.setInConsecutiveRegs();
+    }
+
+    SplitArgs.back().Flags.setInConsecutiveRegsLast();
     return;
   }
 
@@ -351,9 +368,9 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
   return Success;
 }
 
-bool AArch64CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
-                                               const Function &F,
-                                               ArrayRef<Register> VRegs) const {
+bool AArch64CallLowering::lowerFormalArguments(
+    MachineIRBuilder &MIRBuilder, const Function &F,
+    ArrayRef<ArrayRef<Register>> VRegs) const {
   MachineFunction &MF = MIRBuilder.getMF();
   MachineBasicBlock &MBB = MIRBuilder.getMBB();
   MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -364,26 +381,14 @@ bool AArch64CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   for (auto &Arg : F.args()) {
     if (DL.getTypeStoreSize(Arg.getType()) == 0)
       continue;
+
     ArgInfo OrigArg{VRegs[i], Arg.getType()};
     setArgFlags(OrigArg, i + AttributeList::FirstArgIndex, DL, F);
-    bool Split = false;
-    LLT Ty = MRI.getType(VRegs[i]);
-    Register Dst = VRegs[i];
 
     splitToValueTypes(OrigArg, SplitArgs, DL, MRI, F.getCallingConv(),
-                      [&](unsigned Reg, uint64_t Offset) {
-                        if (!Split) {
-                          Split = true;
-                          Dst = MRI.createGenericVirtualRegister(Ty);
-                          MIRBuilder.buildUndef(Dst);
-                        }
-                        unsigned Tmp = MRI.createGenericVirtualRegister(Ty);
-                        MIRBuilder.buildInsert(Tmp, Dst, Reg, Offset);
-                        Dst = Tmp;
+                      [&](Register Reg, uint64_t Offset) {
+                        llvm_unreachable("Args should already be split");
                       });
-
-    if (Dst != VRegs[i])
-      MIRBuilder.buildCopy(VRegs[i], Dst);
     ++i;
   }
 

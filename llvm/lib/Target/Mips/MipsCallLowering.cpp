@@ -445,9 +445,9 @@ bool MipsCallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
   return true;
 }
 
-bool MipsCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
-                                            const Function &F,
-                                            ArrayRef<Register> VRegs) const {
+bool MipsCallLowering::lowerFormalArguments(
+    MachineIRBuilder &MIRBuilder, const Function &F,
+    ArrayRef<ArrayRef<Register>> VRegs) const {
 
   // Quick exit if there aren't any args.
   if (F.arg_empty())

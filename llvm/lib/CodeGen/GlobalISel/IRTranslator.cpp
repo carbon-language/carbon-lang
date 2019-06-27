@@ -2274,16 +2274,17 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &CurMF) {
   EntryBB->addSuccessor(&getMBB(F.front()));
 
   // Lower the actual args into this basic block.
-  SmallVector<Register, 8> VRegArgs;
+  SmallVector<ArrayRef<Register>, 8> VRegArgs;
   for (const Argument &Arg: F.args()) {
     if (DL->getTypeStoreSize(Arg.getType()) == 0)
       continue; // Don't handle zero sized types.
-    VRegArgs.push_back(
-        MRI->createGenericVirtualRegister(getLLTForType(*Arg.getType(), *DL)));
+    ArrayRef<Register> VRegs = getOrCreateVRegs(Arg);
+    VRegArgs.push_back(VRegs);
 
-    if (Arg.hasSwiftErrorAttr())
-      SwiftError.setCurrentVReg(EntryBB, SwiftError.getFunctionArg(),
-                                VRegArgs.back());
+    if (Arg.hasSwiftErrorAttr()) {
+      assert(VRegs.size() == 1 && "Too many vregs for Swift error");
+      SwiftError.setCurrentVReg(EntryBB, SwiftError.getFunctionArg(), VRegs[0]);
+    }
   }
 
   // We don't currently support translating swifterror or swiftself functions.
@@ -2304,20 +2305,6 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &CurMF) {
     R << "unable to lower arguments: " << ore::NV("Prototype", F.getType());
     reportTranslationError(*MF, *TPC, *ORE, R);
     return false;
-  }
-
-  auto ArgIt = F.arg_begin();
-  for (auto &VArg : VRegArgs) {
-    // If the argument is an unsplit scalar then don't use unpackRegs to avoid
-    // creating redundant copies.
-    if (!valueIsSplit(*ArgIt, VMap.getOffsets(*ArgIt))) {
-      auto &VRegs = *VMap.getVRegs(cast<Value>(*ArgIt));
-      assert(VRegs.empty() && "VRegs already populated?");
-      VRegs.push_back(VArg);
-    } else {
-      unpackRegs(*ArgIt, VArg, *EntryBuilder.get());
-    }
-    ArgIt++;
   }
 
   // Need to visit defs before uses when translating instructions.

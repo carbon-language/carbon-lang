@@ -202,12 +202,9 @@ define arm_aapcscc [3 x i32] @test_tiny_int_arrays([2 x i32] %arr) {
 ; CHECK: liveins: $r0, $r1
 ; CHECK: [[R0:%[0-9]+]]:_(s32) = COPY $r0
 ; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $r1
-; CHECK: [[ARG_ARR:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32)
-; CHECK: [[EXT1:%[0-9]+]]:_(s32) = G_EXTRACT [[ARG_ARR]](s64), 0
-; CHECK: [[EXT2:%[0-9]+]]:_(s32) = G_EXTRACT [[ARG_ARR]](s64), 32
 ; CHECK: [[IMPDEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF]], [[EXT1]](s32), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s64) = G_INSERT [[INS1]], [[EXT2]](s32), 32
+; CHECK: [[INS1:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF]], [[R0]](s32), 0
+; CHECK: [[INS2:%[0-9]+]]:_(s64) = G_INSERT [[INS1]], [[R1]](s32), 32
 ; CHECK: ADJCALLSTACKDOWN 0, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[R0:%[0-9]+]]:_(s32), [[R1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS2]](s64)
 ; CHECK: $r0 = COPY [[R0]]
@@ -244,18 +241,12 @@ define arm_aapcscc void @test_multiple_int_arrays([2 x i32] %arr0, [2 x i32] %ar
 ; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $r1
 ; CHECK: [[R2:%[0-9]+]]:_(s32) = COPY $r2
 ; CHECK: [[R3:%[0-9]+]]:_(s32) = COPY $r3
-; CHECK: [[ARG_ARR0:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32)
-; CHECK: [[ARG_ARR1:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[R2]](s32), [[R3]](s32)
-; CHECK: [[EXT1:%[0-9]+]]:_(s32) = G_EXTRACT [[ARG_ARR0]](s64), 0
-; CHECK: [[EXT2:%[0-9]+]]:_(s32) = G_EXTRACT [[ARG_ARR0]](s64), 32
-; CHECK: [[EXT3:%[0-9]+]]:_(s32) = G_EXTRACT [[ARG_ARR1]](s64), 0
-; CHECK: [[EXT4:%[0-9]+]]:_(s32) = G_EXTRACT [[ARG_ARR1]](s64), 32
 ; CHECK: [[IMPDEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF]], [[EXT1]](s32), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s64) = G_INSERT [[INS1]], [[EXT2]](s32), 32
+; CHECK: [[INS1:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF]], [[R0]](s32), 0
+; CHECK: [[INS2:%[0-9]+]]:_(s64) = G_INSERT [[INS1]], [[R1]](s32), 32
 ; CHECK: [[IMPDEF2:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
-; CHECK: [[INS3:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF2]], [[EXT3]](s32), 0
-; CHECK: [[INS4:%[0-9]+]]:_(s64) = G_INSERT [[INS3]], [[EXT4]](s32), 32
+; CHECK: [[INS3:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF2]], [[R2]](s32), 0
+; CHECK: [[INS4:%[0-9]+]]:_(s64) = G_INSERT [[INS3]], [[R3]](s32), 32
 ; CHECK: ADJCALLSTACKDOWN 0, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[R0:%[0-9]+]]:_(s32), [[R1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS2]](s64)
 ; CHECK: [[R2:%[0-9]+]]:_(s32), [[R3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS4]](s64)
@@ -291,8 +282,9 @@ define arm_aapcscc void @test_large_int_arrays([20 x i32] %arr) {
 ; CHECK: [[FIRST_STACK_ELEMENT:%[0-9]+]]:_(s32) = G_LOAD [[FIRST_STACK_ELEMENT_FI]]{{.*}}load 4 from %fixed-stack.[[FIRST_STACK_ID]]
 ; CHECK: [[LAST_STACK_ELEMENT_FI:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.[[LAST_STACK_ID]]
 ; CHECK: [[LAST_STACK_ELEMENT:%[0-9]+]]:_(s32) = G_LOAD [[LAST_STACK_ELEMENT_FI]]{{.*}}load 4 from %fixed-stack.[[LAST_STACK_ID]]
-; CHECK: [[ARG_ARR:%[0-9]+]]:_(s640) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32), [[R2]](s32), [[R3]](s32), [[FIRST_STACK_ELEMENT]](s32), {{.*}}, [[LAST_STACK_ELEMENT]](s32)
-; CHECK: [[INS:%[0-9]+]]:_(s640) = G_INSERT {{.*}}, {{.*}}(s32), 608
+; CHECK: [[IMPDEF:%[0-9]+]]:_(s640) = G_IMPLICIT_DEF
+; CHECK: [[INS1:%[0-9]+]]:_(s640) = G_INSERT [[IMPDEF]], [[R0]](s32), 0
+; CHECK: [[INS:%[0-9]+]]:_(s640) = G_INSERT {{.*}}, [[LAST_STACK_ELEMENT]](s32), 608
 ; CHECK: ADJCALLSTACKDOWN 64, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[R0:%[0-9]+]]:_(s32), [[R1:%[0-9]+]]:_(s32), [[R2:%[0-9]+]]:_(s32), [[R3:%[0-9]+]]:_(s32), [[FIRST_STACK_ELEMENT:%[0-9]+]]:_(s32), {{.*}}, [[LAST_STACK_ELEMENT:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS]](s640)
 ; CHECK: $r0 = COPY [[R0]]
@@ -336,14 +328,10 @@ define arm_aapcscc [2 x float] @test_fp_arrays_aapcs([3 x double] %arr) {
 ; BIG: [[ARR1:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[ARR1_1]](s32), [[ARR1_0]](s32)
 ; CHECK: [[ARR2_FI:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.[[ARR2_ID]]
 ; CHECK: [[ARR2:%[0-9]+]]:_(s64) = G_LOAD [[ARR2_FI]]{{.*}}load 8 from %fixed-stack.[[ARR2_ID]]
-; CHECK: [[ARR_MERGED:%[0-9]+]]:_(s192) = G_MERGE_VALUES [[ARR0]](s64), [[ARR1]](s64), [[ARR2]](s64)
-; CHECK: [[EXT1:%[0-9]+]]:_(s64) = G_EXTRACT [[ARR_MERGED]](s192), 0
-; CHECK: [[EXT2:%[0-9]+]]:_(s64) = G_EXTRACT [[ARR_MERGED]](s192), 64
-; CHECK: [[EXT3:%[0-9]+]]:_(s64) = G_EXTRACT [[ARR_MERGED]](s192), 128
 ; CHECK: [[IMPDEF:%[0-9]+]]:_(s192) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s192) = G_INSERT [[IMPDEF]], [[EXT1]](s64), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s192) = G_INSERT [[INS1]], [[EXT2]](s64), 64
-; CHECK: [[INS3:%[0-9]+]]:_(s192) = G_INSERT [[INS2]], [[EXT3]](s64), 128
+; CHECK: [[INS1:%[0-9]+]]:_(s192) = G_INSERT [[IMPDEF]], [[ARR0]](s64), 0
+; CHECK: [[INS2:%[0-9]+]]:_(s192) = G_INSERT [[INS1]], [[ARR1]](s64), 64
+; CHECK: [[INS3:%[0-9]+]]:_(s192) = G_INSERT [[INS2]], [[ARR2]](s64), 128
 ; CHECK: ADJCALLSTACKDOWN 8, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[ARR0:%[0-9]+]]:_(s64), [[ARR1:%[0-9]+]]:_(s64), [[ARR2:%[0-9]+]]:_(s64) = G_UNMERGE_VALUES [[INS3]](s192)
 ; CHECK: [[ARR0_0:%[0-9]+]]:_(s32), [[ARR0_1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[ARR0]](s64)
@@ -401,32 +389,19 @@ define arm_aapcs_vfpcc [4 x float] @test_fp_arrays_aapcs_vfp([3 x double] %x, [3
 ; CHECK: [[Z2:%[0-9]+]]:_(s64) = G_LOAD [[Z2_FI]]{{.*}}load 8
 ; CHECK: [[Z3_FI:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.[[Z3_ID]]
 ; CHECK: [[Z3:%[0-9]+]]:_(s64) = G_LOAD [[Z3_FI]]{{.*}}load 8
-; CHECK: [[X_ARR:%[0-9]+]]:_(s192) = G_MERGE_VALUES [[X0]](s64), [[X1]](s64), [[X2]](s64)
-; CHECK: [[Y_ARR:%[0-9]+]]:_(s96) = G_MERGE_VALUES [[Y0]](s32), [[Y1]](s32), [[Y2]](s32)
-; CHECK: [[Z_ARR:%[0-9]+]]:_(s256) = G_MERGE_VALUES [[Z0]](s64), [[Z1]](s64), [[Z2]](s64), [[Z3]](s64)
-; CHECK: [[EXT1:%[0-9]+]]:_(s64) = G_EXTRACT [[X_ARR]](s192), 0
-; CHECK: [[EXT2:%[0-9]+]]:_(s64) = G_EXTRACT [[X_ARR]](s192), 64
-; CHECK: [[EXT3:%[0-9]+]]:_(s64) = G_EXTRACT [[X_ARR]](s192), 128
-; CHECK: [[EXT4:%[0-9]+]]:_(s32) = G_EXTRACT [[Y_ARR]](s96), 0
-; CHECK: [[EXT5:%[0-9]+]]:_(s32) = G_EXTRACT [[Y_ARR]](s96), 32
-; CHECK: [[EXT6:%[0-9]+]]:_(s32) = G_EXTRACT [[Y_ARR]](s96), 64
-; CHECK: [[EXT7:%[0-9]+]]:_(s64) = G_EXTRACT [[Z_ARR]](s256), 0
-; CHECK: [[EXT8:%[0-9]+]]:_(s64) = G_EXTRACT [[Z_ARR]](s256), 64
-; CHECK: [[EXT9:%[0-9]+]]:_(s64) = G_EXTRACT [[Z_ARR]](s256), 128
-; CHECK: [[EXT10:%[0-9]+]]:_(s64) = G_EXTRACT [[Z_ARR]](s256), 192
 ; CHECK: [[IMPDEF:%[0-9]+]]:_(s192) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s192) = G_INSERT [[IMPDEF]], [[EXT1]](s64), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s192) = G_INSERT [[INS1]], [[EXT2]](s64), 64
-; CHECK: [[INS3:%[0-9]+]]:_(s192) = G_INSERT [[INS2]], [[EXT3]](s64), 128
+; CHECK: [[INS1:%[0-9]+]]:_(s192) = G_INSERT [[IMPDEF]], [[X0]](s64), 0
+; CHECK: [[INS2:%[0-9]+]]:_(s192) = G_INSERT [[INS1]], [[X1]](s64), 64
+; CHECK: [[INS3:%[0-9]+]]:_(s192) = G_INSERT [[INS2]], [[X2]](s64), 128
 ; CHECK: [[IMPDEF2:%[0-9]+]]:_(s96) = G_IMPLICIT_DEF
-; CHECK: [[INS4:%[0-9]+]]:_(s96) = G_INSERT [[IMPDEF2]], [[EXT4]](s32), 0
-; CHECK: [[INS5:%[0-9]+]]:_(s96) = G_INSERT [[INS4]], [[EXT5]](s32), 32
-; CHECK: [[INS6:%[0-9]+]]:_(s96) = G_INSERT [[INS5]], [[EXT6]](s32), 64
+; CHECK: [[INS4:%[0-9]+]]:_(s96) = G_INSERT [[IMPDEF2]], [[Y0]](s32), 0
+; CHECK: [[INS5:%[0-9]+]]:_(s96) = G_INSERT [[INS4]], [[Y1]](s32), 32
+; CHECK: [[INS6:%[0-9]+]]:_(s96) = G_INSERT [[INS5]], [[Y2]](s32), 64
 ; CHECK: [[IMPDEF3:%[0-9]+]]:_(s256) = G_IMPLICIT_DEF
-; CHECK: [[INS7:%[0-9]+]]:_(s256) = G_INSERT [[IMPDEF3]], [[EXT7]](s64), 0
-; CHECK: [[INS8:%[0-9]+]]:_(s256) = G_INSERT [[INS7]], [[EXT8]](s64), 64
-; CHECK: [[INS9:%[0-9]+]]:_(s256) = G_INSERT [[INS8]], [[EXT9]](s64), 128
-; CHECK: [[INS10:%[0-9]+]]:_(s256) = G_INSERT [[INS9]], [[EXT10]](s64), 192
+; CHECK: [[INS7:%[0-9]+]]:_(s256) = G_INSERT [[IMPDEF3]], [[Z0]](s64), 0
+; CHECK: [[INS8:%[0-9]+]]:_(s256) = G_INSERT [[INS7]], [[Z1]](s64), 64
+; CHECK: [[INS9:%[0-9]+]]:_(s256) = G_INSERT [[INS8]], [[Z2]](s64), 128
+; CHECK: [[INS10:%[0-9]+]]:_(s256) = G_INSERT [[INS9]], [[Z3]](s64), 192
 ; CHECK: ADJCALLSTACKDOWN 32, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[X0:%[0-9]+]]:_(s64), [[X1:%[0-9]+]]:_(s64), [[X2:%[0-9]+]]:_(s64) = G_UNMERGE_VALUES [[INS3]](s192)
 ; CHECK: [[Y0:%[0-9]+]]:_(s32), [[Y1:%[0-9]+]]:_(s32), [[Y2:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS6]](s96)
@@ -494,8 +469,7 @@ define arm_aapcscc [2 x i32*] @test_tough_arrays([6 x [4 x i32]] %arr) {
 ; CHECK: [[FIRST_STACK_ELEMENT:%[0-9]+]]:_(s32) = G_LOAD [[FIRST_STACK_ELEMENT_FI]]{{.*}}load 4 from %fixed-stack.[[FIRST_STACK_ID]]
 ; CHECK: [[LAST_STACK_ELEMENT_FI:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.[[LAST_STACK_ID]]
 ; CHECK: [[LAST_STACK_ELEMENT:%[0-9]+]]:_(s32) = G_LOAD [[LAST_STACK_ELEMENT_FI]]{{.*}}load 4 from %fixed-stack.[[LAST_STACK_ID]]
-; CHECK: [[ARG_ARR:%[0-9]+]]:_(s768) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32), [[R2]](s32), [[R3]](s32), [[FIRST_STACK_ELEMENT]](s32), {{.*}}, [[LAST_STACK_ELEMENT]](s32)
-; CHECK: [[INS:%[0-9]+]]:_(s768) = G_INSERT {{.*}}, {{.*}}(s32), 736
+; CHECK: [[INS:%[0-9]+]]:_(s768) = G_INSERT {{.*}}, [[LAST_STACK_ELEMENT]](s32), 736
 ; CHECK: ADJCALLSTACKDOWN 80, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[R0:%[0-9]+]]:_(s32), [[R1:%[0-9]+]]:_(s32), [[R2:%[0-9]+]]:_(s32), [[R3:%[0-9]+]]:_(s32), [[FIRST_STACK_ELEMENT:%[0-9]+]]:_(s32), {{.*}}, [[LAST_STACK_ELEMENT:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS]](s768)
 ; CHECK: $r0 = COPY [[R0]]
@@ -536,12 +510,9 @@ define arm_aapcscc {i32, i32} @test_structs({i32, i32} %x) {
 ; CHECK: liveins: $r0, $r1
 ; CHECK-DAG: [[X0:%[0-9]+]]:_(s32) = COPY $r0
 ; CHECK-DAG: [[X1:%[0-9]+]]:_(s32) = COPY $r1
-; CHECK: [[X:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[X0]](s32), [[X1]](s32)
-; CHECK: [[EXT1:%[0-9]+]]:_(s32) = G_EXTRACT [[X]](s64), 0
-; CHECK: [[EXT2:%[0-9]+]]:_(s32) = G_EXTRACT [[X]](s64), 32
 ; CHECK: [[IMPDEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF]], [[EXT1]](s32), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s64) = G_INSERT [[INS1]], [[EXT2]](s32), 32
+; CHECK: [[INS1:%[0-9]+]]:_(s64) = G_INSERT [[IMPDEF]], [[X0]](s32), 0
+; CHECK: [[INS2:%[0-9]+]]:_(s64) = G_INSERT [[INS1]], [[X1]](s32), 32
 ; CHECK: ADJCALLSTACKDOWN 0, 0, 14, $noreg, implicit-def $sp, implicit $sp
 ; CHECK: [[X0:%[0-9]+]]:_(s32), [[X1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[INS2]](s64)
 ; CHECK-DAG: $r0 = COPY [[X0]](s32)

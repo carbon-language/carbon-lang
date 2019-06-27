@@ -52,8 +52,8 @@ public:
             ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy{}, bool IsFixed = true)
         : Regs(Regs.begin(), Regs.end()), Ty(Ty), Flags(Flags),
           IsFixed(IsFixed) {
-      assert(Regs.size() == 1 && "Can't handle multiple regs yet");
-      assert((Ty->isVoidTy() == (Regs[0] == 0)) &&
+      // FIXME: We should have just one way of saying "no register".
+      assert((Ty->isVoidTy() == (Regs.empty() || Regs[0] == 0)) &&
              "only void types should have no register");
     }
   };
@@ -139,6 +139,24 @@ protected:
   void setArgFlags(ArgInfo &Arg, unsigned OpIdx, const DataLayout &DL,
                    const FuncInfoTy &FuncInfo) const;
 
+  /// Generate instructions for packing \p SrcRegs into one big register
+  /// corresponding to the aggregate type \p PackedTy.
+  ///
+  /// \param SrcRegs should contain one virtual register for each base type in
+  ///                \p PackedTy, as returned by computeValueLLTs.
+  ///
+  /// \return The packed register.
+  Register packRegs(ArrayRef<Register> SrcRegs, Type *PackedTy,
+                    MachineIRBuilder &MIRBuilder) const;
+
+  /// Generate instructions for unpacking \p SrcReg into the \p DstRegs
+  /// corresponding to the aggregate type \p PackedTy.
+  ///
+  /// \param DstRegs should contain one virtual register for each base type in
+  ///        \p PackedTy, as returned by computeValueLLTs.
+  void unpackRegs(ArrayRef<Register> DstRegs, Register SrcReg, Type *PackedTy,
+                  MachineIRBuilder &MIRBuilder) const;
+
   /// Invoke Handler::assignArg on each of the given \p Args and then use
   /// \p Callback to move them to the assigned locations.
   ///
@@ -182,19 +200,19 @@ public:
     return false;
   }
 
-
   /// This hook must be implemented to lower the incoming (formal)
-  /// arguments, described by \p Args, for GlobalISel. Each argument
-  /// must end up in the related virtual register described by VRegs.
-  /// In other words, the first argument should end up in VRegs[0],
-  /// the second in VRegs[1], and so on.
+  /// arguments, described by \p VRegs, for GlobalISel. Each argument
+  /// must end up in the related virtual registers described by \p VRegs.
+  /// In other words, the first argument should end up in \c VRegs[0],
+  /// the second in \c VRegs[1], and so on. For each argument, there will be one
+  /// register for each non-aggregate type, as returned by \c computeValueLLTs.
   /// \p MIRBuilder is set to the proper insertion for the argument
   /// lowering.
   ///
   /// \return True if the lowering succeeded, false otherwise.
   virtual bool lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                     const Function &F,
-                                    ArrayRef<Register> VRegs) const {
+                                    ArrayRef<ArrayRef<Register>> VRegs) const {
     return false;
   }
 

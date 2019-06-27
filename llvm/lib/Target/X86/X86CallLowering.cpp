@@ -320,9 +320,9 @@ protected:
 
 } // end anonymous namespace
 
-bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
-                                           const Function &F,
-                                           ArrayRef<Register> VRegs) const {
+bool X86CallLowering::lowerFormalArguments(
+    MachineIRBuilder &MIRBuilder, const Function &F,
+    ArrayRef<ArrayRef<Register>> VRegs) const {
   if (F.arg_empty())
     return true;
 
@@ -344,14 +344,14 @@ bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
         Arg.hasAttribute(Attribute::StructRet) ||
         Arg.hasAttribute(Attribute::SwiftSelf) ||
         Arg.hasAttribute(Attribute::SwiftError) ||
-        Arg.hasAttribute(Attribute::Nest))
+        Arg.hasAttribute(Attribute::Nest) || VRegs[Idx].size() > 1)
       return false;
 
     ArgInfo OrigArg(VRegs[Idx], Arg.getType());
     setArgFlags(OrigArg, Idx + AttributeList::FirstArgIndex, DL, F);
     if (!splitToValueTypes(OrigArg, SplitArgs, DL, MRI,
                            [&](ArrayRef<Register> Regs) {
-                             MIRBuilder.buildMerge(VRegs[Idx], Regs);
+                             MIRBuilder.buildMerge(VRegs[Idx][0], Regs);
                            }))
       return false;
     Idx++;

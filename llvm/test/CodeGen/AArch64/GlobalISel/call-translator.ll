@@ -65,21 +65,13 @@ define void @test_multiple_args(i64 %in) {
 ; CHECK: [[I8:%[0-9]+]]:_(s8) = G_TRUNC [[I8_C]]
 ; CHECK: [[ADDR:%[0-9]+]]:_(p0) = COPY $x2
 
-; CHECK: [[UNDEF:%[0-9]+]]:_(s192) = G_IMPLICIT_DEF
-; CHECK: [[ARG0:%[0-9]+]]:_(s192) = G_INSERT [[UNDEF]], [[DBL]](s64), 0
-; CHECK: [[ARG1:%[0-9]+]]:_(s192) = G_INSERT [[ARG0]], [[I64]](s64), 64
-; CHECK: [[ARG2:%[0-9]+]]:_(s192) = G_INSERT [[ARG1]], [[I8]](s8), 128
-; CHECK: [[ARG:%[0-9]+]]:_(s192) = COPY [[ARG2]]
-; CHECK: [[EXTA0:%[0-9]+]]:_(s64) = G_EXTRACT [[ARG]](s192), 0
-; CHECK: [[EXTA1:%[0-9]+]]:_(s64) = G_EXTRACT [[ARG]](s192), 64
-; CHECK: [[EXTA2:%[0-9]+]]:_(s8) = G_EXTRACT [[ARG]](s192), 128
-; CHECK: G_STORE [[EXTA0]](s64), [[ADDR]](p0) :: (store 8 into %ir.addr)
+; CHECK: G_STORE [[DBL]](s64), [[ADDR]](p0) :: (store 8 into %ir.addr)
 ; CHECK: [[CST1:%[0-9]+]]:_(s64) = G_CONSTANT i64 8
 ; CHECK: [[GEP1:%[0-9]+]]:_(p0) = G_GEP [[ADDR]], [[CST1]](s64)
-; CHECK: G_STORE [[EXTA1]](s64), [[GEP1]](p0) :: (store 8 into %ir.addr + 8)
+; CHECK: G_STORE [[I64]](s64), [[GEP1]](p0) :: (store 8 into %ir.addr + 8)
 ; CHECK: [[CST2:%[0-9]+]]:_(s64) = G_CONSTANT i64 16
 ; CHECK: [[GEP2:%[0-9]+]]:_(p0) = G_GEP [[ADDR]], [[CST2]](s64)
-; CHECK: G_STORE [[EXTA2]](s8), [[GEP2]](p0) :: (store 1 into %ir.addr + 16, align 8)
+; CHECK: G_STORE [[I8]](s8), [[GEP2]](p0) :: (store 1 into %ir.addr + 16, align 8)
 ; CHECK: RET_ReallyLR
 define void @test_struct_formal({double, i64, i8} %in, {double, i64, i8}* %addr) {
   store {double, i64, i8} %in, {double, i64, i8}* %addr
