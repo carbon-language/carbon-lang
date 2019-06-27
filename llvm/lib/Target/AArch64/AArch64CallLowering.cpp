@@ -192,8 +192,7 @@ struct OutgoingArgHandler : public CallLowering::ValueHandler {
 
 void AArch64CallLowering::splitToValueTypes(
     const ArgInfo &OrigArg, SmallVectorImpl<ArgInfo> &SplitArgs,
-    const DataLayout &DL, MachineRegisterInfo &MRI, CallingConv::ID CallConv,
-    const SplitArgTy &PerformArgSplit) const {
+    const DataLayout &DL, MachineRegisterInfo &MRI, CallingConv::ID CallConv) const {
   const AArch64TargetLowering &TLI = *getTLI<AArch64TargetLowering>();
   LLVMContext &Ctx = OrigArg.Ty->getContext();
 
@@ -212,40 +211,20 @@ void AArch64CallLowering::splitToValueTypes(
     return;
   }
 
-  if (OrigArg.Regs.size() > 1) {
-    // Create one ArgInfo for each virtual register in the original ArgInfo.
-    assert(OrigArg.Regs.size() == SplitVTs.size() && "Regs / types mismatch");
+  // Create one ArgInfo for each virtual register in the original ArgInfo.
+  assert(OrigArg.Regs.size() == SplitVTs.size() && "Regs / types mismatch");
 
-    bool NeedsRegBlock = TLI.functionArgumentNeedsConsecutiveRegisters(
-        OrigArg.Ty, CallConv, false);
-    for (unsigned i = 0, e = SplitVTs.size(); i < e; ++i) {
-      Type *SplitTy = SplitVTs[i].getTypeForEVT(Ctx);
-      SplitArgs.emplace_back(OrigArg.Regs[i], SplitTy, OrigArg.Flags,
-                             OrigArg.IsFixed);
-      if (NeedsRegBlock)
-        SplitArgs.back().Flags.setInConsecutiveRegs();
-    }
-
-    SplitArgs.back().Flags.setInConsecutiveRegsLast();
-    return;
-  }
-
-  unsigned FirstRegIdx = SplitArgs.size();
   bool NeedsRegBlock = TLI.functionArgumentNeedsConsecutiveRegisters(
       OrigArg.Ty, CallConv, false);
-  for (auto SplitVT : SplitVTs) {
-    Type *SplitTy = SplitVT.getTypeForEVT(Ctx);
-    SplitArgs.push_back(
-        ArgInfo{MRI.createGenericVirtualRegister(getLLTForType(*SplitTy, DL)),
-                SplitTy, OrigArg.Flags, OrigArg.IsFixed});
+  for (unsigned i = 0, e = SplitVTs.size(); i < e; ++i) {
+    Type *SplitTy = SplitVTs[i].getTypeForEVT(Ctx);
+    SplitArgs.emplace_back(OrigArg.Regs[i], SplitTy, OrigArg.Flags,
+                           OrigArg.IsFixed);
     if (NeedsRegBlock)
       SplitArgs.back().Flags.setInConsecutiveRegs();
   }
 
   SplitArgs.back().Flags.setInConsecutiveRegsLast();
-
-  for (unsigned i = 0; i < Offsets.size(); ++i)
-    PerformArgSplit(SplitArgs[FirstRegIdx + i].Regs[0], Offsets[i] * 8);
 }
 
 bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
@@ -349,10 +328,7 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
         // Reset the arg flags after modifying CurVReg.
         setArgFlags(CurArgInfo, AttributeList::ReturnIndex, DL, F);
       }
-     splitToValueTypes(CurArgInfo, SplitArgs, DL, MRI, CC,
-                        [&](unsigned Reg, uint64_t Offset) {
-                          MIRBuilder.buildExtract(Reg, CurVReg, Offset);
-                        });
+     splitToValueTypes(CurArgInfo, SplitArgs, DL, MRI, CC);
     }
 
     OutgoingArgHandler Handler(MIRBuilder, MRI, MIB, AssignFn, AssignFn);
@@ -385,10 +361,7 @@ bool AArch64CallLowering::lowerFormalArguments(
     ArgInfo OrigArg{VRegs[i], Arg.getType()};
     setArgFlags(OrigArg, i + AttributeList::FirstArgIndex, DL, F);
 
-    splitToValueTypes(OrigArg, SplitArgs, DL, MRI, F.getCallingConv(),
-                      [&](Register Reg, uint64_t Offset) {
-                        llvm_unreachable("Args should already be split");
-                      });
+    splitToValueTypes(OrigArg, SplitArgs, DL, MRI, F.getCallingConv());
     ++i;
   }
 
@@ -441,10 +414,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   SmallVector<ArgInfo, 8> SplitArgs;
   for (auto &OrigArg : OrigArgs) {
-    splitToValueTypes(OrigArg, SplitArgs, DL, MRI, CallConv,
-                      [&](Register Reg, uint64_t Offset) {
-                        llvm_unreachable("Call params should already be split");
-                      });
+    splitToValueTypes(OrigArg, SplitArgs, DL, MRI, CallConv);
     // AAPCS requires that we zero-extend i1 to 8 bits by the caller.
     if (OrigArg.Ty->isIntegerTy(1))
       SplitArgs.back().Flags.setZExt();
@@ -500,11 +470,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   if (!OrigRet.Ty->isVoidTy()) {
     SplitArgs.clear();
 
-    splitToValueTypes(OrigRet, SplitArgs, DL, MRI, F.getCallingConv(),
-                      [&](unsigned Reg, uint64_t Offset) {
-                        llvm_unreachable(
-                            "Call results should already be split");
-                      });
+    splitToValueTypes(OrigRet, SplitArgs, DL, MRI, F.getCallingConv());
 
     CallReturnHandler Handler(MIRBuilder, MRI, MIB, RetAssignFn);
     if (!handleAssignments(MIRBuilder, SplitArgs, Handler))
