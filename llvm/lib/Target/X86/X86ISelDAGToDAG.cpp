@@ -2283,12 +2283,14 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root, SDNode *Parent,
   if (!hasSingleUsesFromRoot(Root, Parent))
     return false;
 
-  // We can allow a full vector load here since narrowing a load is ok.
+  // We can allow a full vector load here since narrowing a load is ok unless
+  // it's volatile.
   if (ISD::isNON_EXTLoad(N.getNode())) {
-    PatternNodeWithChain = N;
-    if (IsProfitableToFold(PatternNodeWithChain, N.getNode(), Root) &&
-        IsLegalToFold(PatternNodeWithChain, Parent, Root, OptLevel)) {
-      LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
+    LoadSDNode *LD = cast<LoadSDNode>(N);
+    if (!LD->isVolatile() &&
+        IsProfitableToFold(N, LD, Root) &&
+        IsLegalToFold(N, Parent, Root, OptLevel)) {
+      PatternNodeWithChain = N;
       return selectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp,
                         Segment);
     }
