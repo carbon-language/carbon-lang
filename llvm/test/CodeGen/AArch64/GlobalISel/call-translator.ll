@@ -112,20 +112,11 @@ define {double, i64, i32} @test_struct_return({double, i64, i32}* %addr) {
 ; CHECK: [[CST3:%[0-9]+]]:_(s64) = G_CONSTANT i64 24
 ; CHECK: [[GEP3:%[0-9]+]]:_(p0) = G_GEP %0, [[CST3]](s64)
 ; CHECK: [[LD4:%[0-9]+]]:_(s64) = G_LOAD [[GEP3]](p0) :: (load 8 from %ir.addr + 24)
-; CHECK: [[IMPDEF:%[0-9]+]]:_(s256) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s256) = G_INSERT [[IMPDEF]], [[LD1]](s64), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s256) = G_INSERT [[INS1]], [[LD2]](s64), 64
-; CHECK: [[INS3:%[0-9]+]]:_(s256) = G_INSERT [[INS2]], [[LD3]](s64), 128
-; CHECK: [[ARG:%[0-9]+]]:_(s256) = G_INSERT [[INS3]], [[LD4]](s64), 192
-; CHECK: [[E0:%[0-9]+]]:_(s64) = G_EXTRACT [[ARG]](s256), 0
-; CHECK: [[E1:%[0-9]+]]:_(s64) = G_EXTRACT [[ARG]](s256), 64
-; CHECK: [[E2:%[0-9]+]]:_(s64) = G_EXTRACT [[ARG]](s256), 128
-; CHECK: [[E3:%[0-9]+]]:_(s64) = G_EXTRACT [[ARG]](s256), 192
 
-; CHECK: $x0 = COPY [[E0]](s64)
-; CHECK: $x1 = COPY [[E1]](s64)
-; CHECK: $x2 = COPY [[E2]](s64)
-; CHECK: $x3 = COPY [[E3]](s64)
+; CHECK: $x0 = COPY [[LD1]](s64)
+; CHECK: $x1 = COPY [[LD2]](s64)
+; CHECK: $x2 = COPY [[LD3]](s64)
+; CHECK: $x3 = COPY [[LD4]](s64)
 ; CHECK: BL @arr_callee, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2, implicit $x3, implicit-def $x0, implicit-def $x1, implicit-def $x2, implicit-def $x3
 ; CHECK: [[E0:%[0-9]+]]:_(s64) = COPY $x0
 ; CHECK: [[E1:%[0-9]+]]:_(s64) = COPY $x1
@@ -262,20 +253,14 @@ define void @take_128bit_struct([2 x i64]* %ptr, [2 x i64] %in) {
 ; CHECK: [[GEP:%[0-9]+]]:_(p0) = G_GEP [[ADDR]], [[CST]](s64)
 ; CHECK: [[HI:%[0-9]+]]:_(s64) = G_LOAD [[GEP]](p0) :: (load 8 from %ir.ptr + 8)
 
-; CHECK: [[IMPDEF:%[0-9]+]]:_(s128) = G_IMPLICIT_DEF
-; CHECK: [[INS1:%[0-9]+]]:_(s128) = G_INSERT [[IMPDEF]], [[LO]](s64), 0
-; CHECK: [[INS2:%[0-9]+]]:_(s128) = G_INSERT [[INS1]], [[HI]](s64), 64
-; CHECK: [[EXTLO:%[0-9]+]]:_(s64) = G_EXTRACT [[INS2]](s128), 0
-; CHECK: [[EXTHI:%[0-9]+]]:_(s64) = G_EXTRACT [[INS2]](s128), 64
-
 ; CHECK: [[SP:%[0-9]+]]:_(p0) = COPY $sp
 ; CHECK: [[CST2:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
 ; CHECK: [[GEP2:%[0-9]+]]:_(p0) = G_GEP [[SP]], [[CST2]](s64)
-; CHECK: G_STORE [[EXTLO]](s64), [[GEP2]](p0) :: (store 8 into stack, align 1)
+; CHECK: G_STORE [[LO]](s64), [[GEP2]](p0) :: (store 8 into stack, align 1)
 ; CHECK: [[SP:%[0-9]+]]:_(p0) = COPY $sp
 ; CHECK: [[CST3:%[0-9]+]]:_(s64) = COPY [[CST]]
 ; CHECK: [[GEP3:%[0-9]+]]:_(p0) = G_GEP [[SP]], [[CST3]](s64)
-; CHECK: G_STORE [[EXTHI]](s64), [[GEP3]](p0) :: (store 8 into stack + 8, align 1)
+; CHECK: G_STORE [[HI]](s64), [[GEP3]](p0) :: (store 8 into stack + 8, align 1)
 define void @test_split_struct([2 x i64]* %ptr) {
   %struct = load [2 x i64], [2 x i64]* %ptr
   call void @take_split_struct([2 x i64]* null, i64 1, i64 2, i64 3,

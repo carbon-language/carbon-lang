@@ -1587,8 +1587,8 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
   if (!F || !F->isIntrinsic() || ID == Intrinsic::not_intrinsic) {
     ArrayRef<Register> Res = getOrCreateVRegs(CI);
 
-    SmallVector<Register, 8> Args;
-    Register SwiftErrorVReg;
+    SmallVector<ArrayRef<Register>, 8> Args;
+    Register SwiftErrorVReg = 0;
     for (auto &Arg: CI.arg_operands()) {
       if (CLI->supportSwiftError() && isSwiftError(Arg)) {
         LLT Ty = getLLTForType(*Arg->getType(), *DL);
@@ -1600,7 +1600,7 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
             SwiftError.getOrCreateVRegDefAt(&CI, &MIRBuilder.getMBB(), Arg);
         continue;
       }
-      Args.push_back(packRegs(*Arg, MIRBuilder));
+      Args.push_back(getOrCreateVRegs(*Arg));
     }
 
     MF->getFrameInfo().setHasCalls(true);
@@ -1684,7 +1684,7 @@ bool IRTranslator::translateInvoke(const User &U,
   ArrayRef<Register> Res;
   if (!I.getType()->isVoidTy())
     Res = getOrCreateVRegs(I);
-  SmallVector<Register, 8> Args;
+  SmallVector<ArrayRef<Register>, 8> Args;
   Register SwiftErrorVReg = 0;
   for (auto &Arg : I.arg_operands()) {
     if (CLI->supportSwiftError() && isSwiftError(Arg)) {
@@ -1698,7 +1698,7 @@ bool IRTranslator::translateInvoke(const User &U,
       continue;
     }
 
-    Args.push_back(packRegs(*Arg, MIRBuilder));
+    Args.push_back(getOrCreateVRegs(*Arg));
   }
 
   if (!CLI->lowerCall(MIRBuilder, &I, Res, Args, SwiftErrorVReg,

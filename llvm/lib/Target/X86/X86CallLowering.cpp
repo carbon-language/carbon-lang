@@ -409,7 +409,9 @@ bool X86CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     if (OrigArg.Flags.isByVal())
       return false;
 
-    assert(OrigArg.Regs.size() == 1 && "Can't handle multple regs yet");
+    if (OrigArg.Regs.size() > 1)
+      return false;
+
     if (!splitToValueTypes(OrigArg, SplitArgs, DL, MRI,
                            [&](ArrayRef<Register> Regs) {
                              MIRBuilder.buildUnmerge(Regs, OrigArg.Regs[0]);

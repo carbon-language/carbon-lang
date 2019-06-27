@@ -596,14 +596,9 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     if (Arg.Flags.isByVal())
       return false;
 
-    assert(Arg.Regs.size() == 1 && "Can't handle multple regs yet");
-
-    SmallVector<Register, 8> Regs;
-    splitToValueTypes(Arg, ArgInfos, MF,
-                      [&](unsigned Reg) { Regs.push_back(Reg); });
-
-    if (Regs.size() > 1)
-      MIRBuilder.buildUnmerge(Regs, Arg.Regs[0]);
+    splitToValueTypes(Arg, ArgInfos, MF, [&](Register Reg) {
+      llvm_unreachable("Function args should already be split");
+    });
   }
 
   auto ArgAssignFn = TLI.CCAssignFnForCall(CallConv, IsVarArg);

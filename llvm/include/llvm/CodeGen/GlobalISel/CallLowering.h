@@ -262,8 +262,10 @@ public:
   /// stored (or 0 if there is no return value). There will be one register for
   /// each non-aggregate type, as returned by \c computeValueLLTs.
   ///
-  /// \p ArgRegs is a list of virtual registers containing each argument that
-  /// needs to be passed.
+  /// \p ArgRegs is a list of lists of virtual registers containing each
+  /// argument that needs to be passed (argument \c i should be placed in \c
+  /// ArgRegs[i]). For each argument, there will be one register for each
+  /// non-aggregate type, as returned by \c computeValueLLTs.
   ///
   /// \p SwiftErrorVReg is non-zero if the call has a swifterror inout
   /// parameter, and contains the vreg that the swifterror should be copied into
@@ -276,8 +278,8 @@ public:
   ///
   /// \return true if the lowering succeeded, false otherwise.
   bool lowerCall(MachineIRBuilder &MIRBuilder, ImmutableCallSite CS,
-                 ArrayRef<Register> ResRegs, ArrayRef<Register> ArgRegs,
-                 Register SwiftErrorVReg,
+                 ArrayRef<Register> ResRegs,
+                 ArrayRef<ArrayRef<Register>> ArgRegs, Register SwiftErrorVReg,
                  std::function<unsigned()> GetCalleeReg) const;
 };
 

@@ -29,7 +29,7 @@ void CallLowering::anchor() {}
 
 bool CallLowering::lowerCall(MachineIRBuilder &MIRBuilder, ImmutableCallSite CS,
                              ArrayRef<Register> ResRegs,
-                             ArrayRef<Register> ArgRegs,
+                             ArrayRef<ArrayRef<Register>> ArgRegs,
                              Register SwiftErrorVReg,
                              std::function<unsigned()> GetCalleeReg) const {
   auto &DL = CS.getParent()->getParent()->getParent()->getDataLayout();

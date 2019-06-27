@@ -441,10 +441,9 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   SmallVector<ArgInfo, 8> SplitArgs;
   for (auto &OrigArg : OrigArgs) {
-    assert(OrigArg.Regs.size() == 1 && "Can't handle multple regs yet");
     splitToValueTypes(OrigArg, SplitArgs, DL, MRI, CallConv,
                       [&](Register Reg, uint64_t Offset) {
-                        MIRBuilder.buildExtract(Reg, OrigArg.Regs[0], Offset);
+                        llvm_unreachable("Call params should already be split");
                       });
     // AAPCS requires that we zero-extend i1 to 8 bits by the caller.
     if (OrigArg.Ty->isIntegerTy(1))
