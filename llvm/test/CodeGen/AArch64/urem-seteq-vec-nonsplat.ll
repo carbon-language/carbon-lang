@@ -123,7 +123,6 @@ define <4 x i32> @test_urem_one(<4 x i32> %X) nounwind readnone {
   ret <4 x i32> %ret
 }
 
-; Can't fold due to second line
 define <4 x i32> @test_urem_nomulinv(<4 x i32> %X) nounwind readnone {
 ; CHECK-LABEL: test_urem_nomulinv:
 ; CHECK:       // %bb.0:
