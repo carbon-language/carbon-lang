@@ -1145,6 +1145,10 @@ static void emitStoresForConstant(CodeGenModule &CGM, const VarDecl &D,
                                   CGBuilderTy &Builder,
                                   llvm::Constant *constant) {
   auto *Ty = constant->getType();
+  uint64_t ConstantSize = CGM.getDataLayout().getTypeAllocSize(Ty);
+  if (!ConstantSize)
+    return;
+
   bool canDoSingleStore = Ty->isIntOrIntVectorTy() ||
                           Ty->isPtrOrPtrVectorTy() || Ty->isFPOrFPVectorTy();
   if (canDoSingleStore) {
@@ -1152,9 +1156,6 @@ static void emitStoresForConstant(CodeGenModule &CGM, const VarDecl &D,
     return;
   }
 
-  uint64_t ConstantSize = CGM.getDataLayout().getTypeAllocSize(Ty);
-  if (!ConstantSize)
-    return;
   auto *SizeVal = llvm::ConstantInt::get(CGM.IntPtrTy, ConstantSize);
 
   // If the initializer is all or mostly the same, codegen with bzero / memset
