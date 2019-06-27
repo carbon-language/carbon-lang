@@ -488,7 +488,7 @@ static DecodeStatus DecoderForMRRC2AndMCRR2(MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeForVMRSandVMSR(MCInst &Inst, unsigned Val,
                                          uint64_t Address, const void *Decoder);
 
-template <bool isSigned, bool isNeg, int size>
+template <bool isSigned, bool isNeg, bool zeroPermitted, int size>
 static DecodeStatus DecodeBFLabelOperand(MCInst &Inst, unsigned val,
                                          uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeBFAfterTargetOperand(MCInst &Inst, unsigned val,
@@ -5908,13 +5908,13 @@ static DecodeStatus DecodeForVMRSandVMSR(MCInst &Inst, unsigned Val,
   return S;
 }
 
-template <bool isSigned, bool isNeg, int size>
+template <bool isSigned, bool isNeg, bool zeroPermitted, int size>
 static DecodeStatus DecodeBFLabelOperand(MCInst &Inst, unsigned Val,
                                          uint64_t Address,
                                          const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
-  if (Val == 0)
-    S = MCDisassembler::SoftFail;
+  if (Val == 0 && !zeroPermitted)
+    S = MCDisassembler::Fail;
 
   uint64_t DecVal;
   if (isSigned)
@@ -5965,8 +5965,8 @@ static DecodeStatus DecodeLOLoop(MCInst &Inst, unsigned Insn, uint64_t Address,
     Inst.addOperand(MCOperand::createReg(ARM::LR));
     LLVM_FALLTHROUGH;
   case ARM::t2LE:
-    if (!Check(S, DecodeBFLabelOperand<false, true, 11>(Inst, Imm, Address,
-                                                        Decoder)))
+    if (!Check(S, DecodeBFLabelOperand<false, true, true, 11>(
+                   Inst, Imm, Address, Decoder)))
       return MCDisassembler::Fail;
     break;
   case ARM::t2WLS:
@@ -5978,8 +5978,8 @@ static DecodeStatus DecodeLOLoop(MCInst &Inst, unsigned Insn, uint64_t Address,
     if (!Check(S,
                DecoderGPRRegisterClass(Inst, fieldFromInstruction(Insn, 16, 4),
                                        Address, Decoder)) ||
-        !Check(S, DecodeBFLabelOperand<false, false, 11>(Inst, Imm, Address,
-                                                         Decoder)))
+        !Check(S, DecodeBFLabelOperand<false, false, true, 11>(
+                   Inst, Imm, Address, Decoder)))
       return MCDisassembler::Fail;
     break;
   case ARM::t2DLS:

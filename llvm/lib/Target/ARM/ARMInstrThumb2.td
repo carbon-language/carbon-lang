@@ -360,18 +360,19 @@ def addrmode_tbh : MemOperand {
 // Define ARMv8.1-M specific addressing modes.
 
 // Label operands for BF/BFL/WLS/DLS/LE
-class BFLabelOp<string signed, string isNeg, string size, string fixup>
+class BFLabelOp<string signed, string isNeg, string zeroPermitted, string size,
+                string fixup>
   : Operand<OtherVT> {
   let EncoderMethod = !strconcat("getBFTargetOpValue<", isNeg, ", ",
                                  fixup, ">");
   let OperandType = "OPERAND_PCREL";
   let DecoderMethod = !strconcat("DecodeBFLabelOperand<", signed, ", ",
-                                 isNeg, ", ", size, ">");
+                                 isNeg, ", ", zeroPermitted, ", ", size, ">");
 }
-def bflabel_u4  : BFLabelOp<"false", "false", "4",  "ARM::fixup_bf_branch">;
-def bflabel_s12 : BFLabelOp<"true",  "false", "12", "ARM::fixup_bfc_target">;
-def bflabel_s16 : BFLabelOp<"true",  "false", "16", "ARM::fixup_bf_target">;
-def bflabel_s18 : BFLabelOp<"true",  "false", "18", "ARM::fixup_bfl_target">;
+def bflabel_u4  : BFLabelOp<"false", "false", "false", "4",  "ARM::fixup_bf_branch">;
+def bflabel_s12 : BFLabelOp<"true",  "false", "true",  "12", "ARM::fixup_bfc_target">;
+def bflabel_s16 : BFLabelOp<"true",  "false", "true",  "16", "ARM::fixup_bf_target">;
+def bflabel_s18 : BFLabelOp<"true",  "false", "true",  "18", "ARM::fixup_bfl_target">;
 
 def wlslabel_u11_asmoperand : AsmOperandClass {
   let Name = "WLSLabel";
@@ -380,7 +381,7 @@ def wlslabel_u11_asmoperand : AsmOperandClass {
   let DiagnosticString =
     "loop end is out of range or not a positive multiple of 2";
 }
-def wlslabel_u11 : BFLabelOp<"false", "false", "11", "ARM::fixup_wls"> {
+def wlslabel_u11 : BFLabelOp<"false", "false", "true",  "11", "ARM::fixup_wls"> {
   let ParserMatchClass = wlslabel_u11_asmoperand;
 }
 def lelabel_u11_asmoperand : AsmOperandClass {
@@ -390,7 +391,7 @@ def lelabel_u11_asmoperand : AsmOperandClass {
   let DiagnosticString =
     "loop start is out of range or not a negative multiple of 2";
 }
-def lelabel_u11 : BFLabelOp<"false", "true",  "11", "ARM::fixup_le"> {
+def lelabel_u11 : BFLabelOp<"false", "true",  "true",  "11", "ARM::fixup_le"> {
   let ParserMatchClass = lelabel_u11_asmoperand;
 }
 
