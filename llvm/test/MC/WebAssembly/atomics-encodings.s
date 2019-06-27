@@ -3,9 +3,8 @@
 main:
   .functype main () -> ()
 
-  # FIXME This doesn't work because of PR40728. Enable this once it's fixed.
-  # C HECK:  atomic.notify 0 # encoding: [0xfe,0x00,0x00,0x00]
-  # atomic.notify 0
+  # CHECK:  atomic.notify 0 # encoding: [0xfe,0x00,0x02,0x00]
+  atomic.notify 0
   # CHECK:  i32.atomic.wait 0 # encoding: [0xfe,0x01,0x02,0x00]
   i32.atomic.wait 0
   # CHECK:  i64.atomic.wait 0 # encoding: [0xfe,0x02,0x03,0x00]
