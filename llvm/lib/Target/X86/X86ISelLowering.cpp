@@ -7359,7 +7359,7 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
     SDValue SrcVector = Current->getOperand(0);
     if (!V1.getNode())
       V1 = SrcVector;
-    CanFold = (SrcVector == V1) && (Current.getConstantOperandVal(1) == i);
+    CanFold = (SrcVector == V1) && (Current.getConstantOperandAPInt(1) == i);
   }
 
   if (!CanFold)
@@ -38723,14 +38723,14 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
   SDValue ShMsk0;
   if (ShAmt0.getOpcode() == ISD::AND &&
       isa<ConstantSDNode>(ShAmt0.getOperand(1)) &&
-      ShAmt0.getConstantOperandVal(1) == (Bits - 1)) {
+      ShAmt0.getConstantOperandAPInt(1) == (Bits - 1)) {
     ShMsk0 = ShAmt0;
     ShAmt0 = ShAmt0.getOperand(0);
   }
   SDValue ShMsk1;
   if (ShAmt1.getOpcode() == ISD::AND &&
       isa<ConstantSDNode>(ShAmt1.getOperand(1)) &&
-      ShAmt1.getConstantOperandVal(1) == (Bits - 1)) {
+      ShAmt1.getConstantOperandAPInt(1) == (Bits - 1)) {
     ShMsk1 = ShAmt1;
     ShAmt1 = ShAmt1.getOperand(0);
   }
@@ -38771,7 +38771,7 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
       SDValue ShAmt1Op1 = ShAmt1.getOperand(1);
       if (ShAmt1Op1.getOpcode() == ISD::AND &&
           isa<ConstantSDNode>(ShAmt1Op1.getOperand(1)) &&
-          ShAmt1Op1.getConstantOperandVal(1) == (Bits - 1)) {
+          ShAmt1Op1.getConstantOperandAPInt(1) == (Bits - 1)) {
         ShMsk1 = ShAmt1Op1;
         ShAmt1Op1 = ShAmt1Op1.getOperand(0);
       }
@@ -38797,7 +38797,7 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
           (ShAmt1Op0 == ShAmt0 || ShAmt1Op0 == ShMsk0)) {
         if (Op1.getOpcode() == InnerShift &&
             isa<ConstantSDNode>(Op1.getOperand(1)) &&
-            Op1.getConstantOperandVal(1) == 1) {
+            Op1.getConstantOperandAPInt(1) == 1) {
           return GetFunnelShift(Op0, Op1.getOperand(0), ShAmt0);
         }
         // Test for ADD( Y, Y ) as an equivalent to SHL( Y, 1 ).
@@ -38845,7 +38845,7 @@ static SDValue foldXorTruncShiftIntoCmp(SDNode *N, SelectionDAG &DAG) {
 
   // Make sure the shift amount extracts the sign bit.
   if (!isa<ConstantSDNode>(Shift.getOperand(1)) ||
-      Shift.getConstantOperandVal(1) != ShiftTy.getSizeInBits() - 1)
+      Shift.getConstantOperandAPInt(1) != (ShiftTy.getSizeInBits() - 1))
     return SDValue();
 
   // Create a greater-than comparison against -1.
@@ -43454,10 +43454,10 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
     // least as large as the original insertion. Just insert the original
     // subvector into a zero vector.
     if (SubVec.getOpcode() == ISD::EXTRACT_SUBVECTOR && IdxVal == 0 &&
-        SubVec.getConstantOperandVal(1) == 0 &&
+        SubVec.getConstantOperandAPInt(1) == 0 &&
         SubVec.getOperand(0).getOpcode() == ISD::INSERT_SUBVECTOR) {
       SDValue Ins = SubVec.getOperand(0);
-      if (Ins.getConstantOperandVal(2) == 0 &&
+      if (Ins.getConstantOperandAPInt(2) == 0 &&
           ISD::isBuildVectorAllZeros(Ins.getOperand(0).getNode()) &&
           Ins.getOperand(1).getValueSizeInBits() <= SubVecVT.getSizeInBits())
         return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT,
