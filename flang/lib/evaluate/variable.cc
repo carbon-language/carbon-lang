@@ -322,7 +322,9 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
       common::visitors{
           [](const Symbol *s) { return SymbolLEN(*s); },
-          [](const common::CopyableIndirection<Component> &c) { return c.value().LEN(); },
+          [](const common::CopyableIndirection<Component> &c) {
+            return c.value().LEN();
+          },
           [](const auto &) {
             // TODO intrinsics?
             CRASH_NO_CASE;
@@ -350,8 +352,11 @@ int Component::Rank() const {
 }
 
 int NamedEntity::Rank() const {
-  return std::visit(common::visitors{[](const Symbol *s) { return s->Rank(); },
-                        [](const Component &c) { return c.Rank(); }},
+  return std::visit(
+      common::visitors{
+          [](const Symbol *s) { return s->Rank(); },
+          [](const Component &c) { return c.Rank(); },
+      },
       u_);
 }
 
