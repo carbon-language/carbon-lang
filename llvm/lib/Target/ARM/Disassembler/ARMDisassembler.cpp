@@ -194,6 +194,8 @@ static DecodeStatus DecodeGPRwithAPSRRegisterClass(MCInst &Inst,
 static DecodeStatus DecodeGPRwithZRRegisterClass(MCInst &Inst,
                                                unsigned RegNo, uint64_t Address,
                                                const void *Decoder);
+static DecodeStatus DecodeGPRwithZRnospRegisterClass(
+    MCInst &Inst, unsigned RegNo, uint64_t Address, const void *Decoder);
 static DecodeStatus DecodetGPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodetcGPRRegisterClass(MCInst &Inst, unsigned RegNo,
@@ -1184,9 +1186,19 @@ DecodeGPRwithZRRegisterClass(MCInst &Inst, unsigned RegNo,
   }
 
   if (RegNo == 13)
-    S = MCDisassembler::SoftFail;
+    Check(S, MCDisassembler::SoftFail);
 
   Check(S, DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder));
+  return S;
+}
+
+static DecodeStatus
+DecodeGPRwithZRnospRegisterClass(MCInst &Inst, unsigned RegNo,
+                                 uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+  if (RegNo == 13)
+    return MCDisassembler::Fail;
+  Check(S, DecodeGPRwithZRRegisterClass(Inst, RegNo, Address, Decoder));
   return S;
 }
 
