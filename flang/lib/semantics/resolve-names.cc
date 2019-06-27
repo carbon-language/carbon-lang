@@ -3982,17 +3982,13 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
       Say(name, "Variable '%s' not found"_err_en_US);
       context().SetError(
           MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
-    } else {
-      if (prev->owner() == currScope()) {
+    } else if (prev->owner() == currScope()) {
         SayAlreadyDeclared(name, *prev);  // C1125 and C1126
-      } else {
-        if (!IsVariableName(*prev)) {
-          SayBadLocality(name, *prev);  // C1124
-        } else {
-          auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
-          symbol.set(Symbol::Flag::LocalityShared);
-        }
-      }
+    } else if (!IsVariableName(*prev)) {
+        SayBadLocality(name, *prev);  // C1124
+    } else {
+      auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
+      symbol.set(Symbol::Flag::LocalityShared);
     }
   }
   return false;
