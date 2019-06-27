@@ -150,6 +150,12 @@ bool CallLowering::handleAssignments(MachineIRBuilder &MIRBuilder,
       continue;
     }
 
+    assert(Args[i].Regs.size() == 1 &&
+           "Can't handle multiple virtual regs yet");
+
+    // FIXME: Pack registers if we have more than one.
+    unsigned ArgReg = Args[i].Regs[0];
+
     if (VA.isRegLoc()) {
       MVT OrigVT = MVT::getVT(Args[i].Ty);
       MVT VAVT = VA.getValVT();
@@ -172,12 +178,12 @@ bool CallLowering::handleAssignments(MachineIRBuilder &MIRBuilder,
             return false;
           }
           auto Unmerge = MIRBuilder.buildUnmerge({OrigTy, OrigTy}, {NewReg});
-          MIRBuilder.buildCopy(Args[i].Reg, Unmerge.getReg(0));
+          MIRBuilder.buildCopy(ArgReg, Unmerge.getReg(0));
         } else {
-          MIRBuilder.buildTrunc(Args[i].Reg, {NewReg}).getReg(0);
+          MIRBuilder.buildTrunc(ArgReg, {NewReg}).getReg(0);
         }
       } else {
-        Handler.assignValueToReg(Args[i].Reg, VA.getLocReg(), VA);
+        Handler.assignValueToReg(ArgReg, VA.getLocReg(), VA);
       }
     } else if (VA.isMemLoc()) {
       MVT VT = MVT::getVT(Args[i].Ty);
@@ -186,7 +192,7 @@ bool CallLowering::handleAssignments(MachineIRBuilder &MIRBuilder,
       unsigned Offset = VA.getLocMemOffset();
       MachinePointerInfo MPO;
       unsigned StackAddr = Handler.getStackAddress(Size, Offset, MPO);
-      Handler.assignValueToAddress(Args[i].Reg, StackAddr, Size, MPO, VA);
+      Handler.assignValueToAddress(ArgReg, StackAddr, Size, MPO, VA);
     } else {
       // FIXME: Support byvals and other weirdness
       return false;

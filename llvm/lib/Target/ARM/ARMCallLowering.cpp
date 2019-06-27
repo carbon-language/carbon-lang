@@ -137,6 +137,8 @@ struct OutgoingValueHandler : public CallLowering::ValueHandler {
 
   unsigned assignCustomValue(const CallLowering::ArgInfo &Arg,
                              ArrayRef<CCValAssign> VAs) override {
+    assert(Arg.Regs.size() == 1 && "Can't handle multple regs yet");
+
     CCValAssign VA = VAs[0];
     assert(VA.needsCustom() && "Value doesn't need custom handling");
     assert(VA.getValVT() == MVT::f64 && "Unsupported type");
@@ -153,7 +155,7 @@ struct OutgoingValueHandler : public CallLowering::ValueHandler {
 
     Register NewRegs[] = {MRI.createGenericVirtualRegister(LLT::scalar(32)),
                           MRI.createGenericVirtualRegister(LLT::scalar(32))};
-    MIRBuilder.buildUnmerge(NewRegs, Arg.Reg);
+    MIRBuilder.buildUnmerge(NewRegs, Arg.Regs[0]);
 
     bool IsLittle = MIRBuilder.getMF().getSubtarget<ARMSubtarget>().isLittle();
     if (!IsLittle)
@@ -193,6 +195,7 @@ void ARMCallLowering::splitToValueTypes(
 
   SmallVector<EVT, 4> SplitVTs;
   ComputeValueVTs(TLI, DL, OrigArg.Ty, SplitVTs, nullptr, nullptr, 0);
+  assert(OrigArg.Regs.size() == 1 && "Can't handle multple regs yet");
 
   if (SplitVTs.size() == 1) {
     // Even if there is no splitting to do, we still want to replace the
@@ -200,8 +203,8 @@ void ARMCallLowering::splitToValueTypes(
     auto Flags = OrigArg.Flags;
     unsigned OriginalAlignment = DL.getABITypeAlignment(OrigArg.Ty);
     Flags.setOrigAlign(OriginalAlignment);
-    SplitArgs.emplace_back(OrigArg.Reg, SplitVTs[0].getTypeForEVT(Ctx), Flags,
-                           OrigArg.IsFixed);
+    SplitArgs.emplace_back(OrigArg.Regs[0], SplitVTs[0].getTypeForEVT(Ctx),
+                           Flags, OrigArg.IsFixed);
     return;
   }
 
@@ -222,7 +225,7 @@ void ARMCallLowering::splitToValueTypes(
         Flags.setInConsecutiveRegsLast();
     }
 
-    unsigned PartReg =
+    Register PartReg =
         MRI.createGenericVirtualRegister(getLLTForType(*SplitTy, DL));
     SplitArgs.push_back(ArgInfo{PartReg, SplitTy, Flags, OrigArg.IsFixed});
     PerformArgSplit(PartReg);
@@ -372,6 +375,8 @@ struct IncomingValueHandler : public CallLowering::ValueHandler {
 
   unsigned assignCustomValue(const ARMCallLowering::ArgInfo &Arg,
                              ArrayRef<CCValAssign> VAs) override {
+    assert(Arg.Regs.size() == 1 && "Can't handle multple regs yet");
+
     CCValAssign VA = VAs[0];
     assert(VA.needsCustom() && "Value doesn't need custom handling");
     assert(VA.getValVT() == MVT::f64 && "Unsupported type");
@@ -396,7 +401,7 @@ struct IncomingValueHandler : public CallLowering::ValueHandler {
     if (!IsLittle)
       std::swap(NewRegs[0], NewRegs[1]);
 
-    MIRBuilder.buildMerge(Arg.Reg, NewRegs);
+    MIRBuilder.buildMerge(Arg.Regs[0], NewRegs);
 
     return 1;
   }
@@ -568,12 +573,14 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     if (Arg.Flags.isByVal())
       return false;
 
+    assert(Arg.Regs.size() == 1 && "Can't handle multple regs yet");
+
     SmallVector<Register, 8> Regs;
     splitToValueTypes(Arg, ArgInfos, MF,
                       [&](unsigned Reg) { Regs.push_back(Reg); });
 
     if (Regs.size() > 1)
-      MIRBuilder.buildUnmerge(Regs, Arg.Reg);
+      MIRBuilder.buildUnmerge(Regs, Arg.Regs[0]);
   }
 
   auto ArgAssignFn = TLI.CCAssignFnForCall(CallConv, IsVarArg);
@@ -601,7 +608,8 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     if (!SplitRegs.empty()) {
       // We have split the value and allocated each individual piece, now build
       // it up again.
-      MIRBuilder.buildMerge(OrigRet.Reg, SplitRegs);
+      assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
+      MIRBuilder.buildMerge(OrigRet.Regs[0], SplitRegs);
     }
   }
 

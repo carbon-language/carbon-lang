@@ -66,6 +66,8 @@ bool MipsCallLowering::MipsHandler::handle(
     EVT VT = TLI.getValueType(DL, Args[ArgsIndex].Ty);
     SplitLength = TLI.getNumRegistersForCallingConv(F.getContext(),
                                                     F.getCallingConv(), VT);
+    assert(Args[ArgsIndex].Regs.size() == 1 && "Can't handle multple regs yet");
+
     if (SplitLength > 1) {
       VRegs.clear();
       MVT RegisterVT = TLI.getRegisterTypeForCallingConv(
@@ -73,10 +75,11 @@ bool MipsCallLowering::MipsHandler::handle(
       for (unsigned i = 0; i < SplitLength; ++i)
         VRegs.push_back(MRI.createGenericVirtualRegister(LLT{RegisterVT}));
 
-      if (!handleSplit(VRegs, ArgLocs, ArgLocsIndex, Args[ArgsIndex].Reg, VT))
+      if (!handleSplit(VRegs, ArgLocs, ArgLocsIndex, Args[ArgsIndex].Regs[0],
+                       VT))
         return false;
     } else {
-      if (!assign(Args[ArgsIndex].Reg, ArgLocs[ArgLocsIndex], VT))
+      if (!assign(Args[ArgsIndex].Regs[0], ArgLocs[ArgLocsIndex], VT))
         return false;
     }
   }
@@ -510,7 +513,9 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     if (Arg.Flags.isByVal() || Arg.Flags.isSRet())
       return false;
   }
-  if (OrigRet.Reg && !isSupportedType(OrigRet.Ty))
+
+  assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
+  if (OrigRet.Regs[0] && !isSupportedType(OrigRet.Ty))
     return false;
 
   MachineFunction &MF = MIRBuilder.getMF();
@@ -595,8 +600,7 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                          *STI.getRegBankInfo());
   }
 
-  if (OrigRet.Reg) {
-
+  if (OrigRet.Regs[0]) {
     ArgInfos.clear();
     SmallVector<unsigned, 8> OrigRetIndices;
 

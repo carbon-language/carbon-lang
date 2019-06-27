@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_GLOBALISEL_CALLLOWERING_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/TargetCallingConv.h"
 #include "llvm/IR/CallSite.h"
@@ -42,15 +43,17 @@ class CallLowering {
   virtual void anchor();
 public:
   struct ArgInfo {
-    Register Reg;
+    SmallVector<Register, 4> Regs;
     Type *Ty;
     ISD::ArgFlagsTy Flags;
     bool IsFixed;
 
-    ArgInfo(unsigned Reg, Type *Ty, ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy{},
-            bool IsFixed = true)
-      : Reg(Reg), Ty(Ty), Flags(Flags), IsFixed(IsFixed) {
-      assert((Ty->isVoidTy() == (Reg == 0)) &&
+    ArgInfo(ArrayRef<Register> Regs, Type *Ty,
+            ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy{}, bool IsFixed = true)
+        : Regs(Regs.begin(), Regs.end()), Ty(Ty), Flags(Flags),
+          IsFixed(IsFixed) {
+      assert(Regs.size() == 1 && "Can't handle multiple regs yet");
+      assert((Ty->isVoidTy() == (Regs[0] == 0)) &&
              "only void types should have no register");
     }
   };

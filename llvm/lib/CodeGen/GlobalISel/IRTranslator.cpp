@@ -1160,7 +1160,7 @@ bool IRTranslator::translateMemfunc(const CallInst &CI,
 
   return CLI->lowerCall(MIRBuilder, CI.getCallingConv(),
                         MachineOperand::CreateES(Callee),
-                        CallLowering::ArgInfo(0, CI.getType()), Args);
+                        CallLowering::ArgInfo({0}, CI.getType()), Args);
 }
 
 void IRTranslator::getStackGuard(Register DstReg,

@@ -203,11 +203,12 @@ void AArch64CallLowering::splitToValueTypes(
   SmallVector<EVT, 4> SplitVTs;
   SmallVector<uint64_t, 4> Offsets;
   ComputeValueVTs(TLI, DL, OrigArg.Ty, SplitVTs, &Offsets, 0);
+  assert(OrigArg.Regs.size() == 1 && "Can't handle multple regs yet");
 
   if (SplitVTs.size() == 1) {
     // No splitting to do, but we want to replace the original type (e.g. [1 x
     // double] -> double).
-    SplitArgs.emplace_back(OrigArg.Reg, SplitVTs[0].getTypeForEVT(Ctx),
+    SplitArgs.emplace_back(OrigArg.Regs[0], SplitVTs[0].getTypeForEVT(Ctx),
                            OrigArg.Flags, OrigArg.IsFixed);
     return;
   }
@@ -227,7 +228,7 @@ void AArch64CallLowering::splitToValueTypes(
   SplitArgs.back().Flags.setInConsecutiveRegsLast();
 
   for (unsigned i = 0; i < Offsets.size(); ++i)
-    PerformArgSplit(SplitArgs[FirstRegIdx + i].Reg, Offsets[i] * 8);
+    PerformArgSplit(SplitArgs[FirstRegIdx + i].Regs[0], Offsets[i] * 8);
 }
 
 bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
@@ -326,8 +327,8 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
           }
         }
       }
-      if (CurVReg != CurArgInfo.Reg) {
-        CurArgInfo.Reg = CurVReg;
+      if (CurVReg != CurArgInfo.Regs[0]) {
+        CurArgInfo.Regs[0] = CurVReg;
         // Reset the arg flags after modifying CurVReg.
         setArgFlags(CurArgInfo, AttributeList::ReturnIndex, DL, F);
       }
@@ -435,9 +436,10 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   SmallVector<ArgInfo, 8> SplitArgs;
   for (auto &OrigArg : OrigArgs) {
+    assert(OrigArg.Regs.size() == 1 && "Can't handle multple regs yet");
     splitToValueTypes(OrigArg, SplitArgs, DL, MRI, CallConv,
                       [&](Register Reg, uint64_t Offset) {
-                        MIRBuilder.buildExtract(Reg, OrigArg.Reg, Offset);
+                        MIRBuilder.buildExtract(Reg, OrigArg.Regs[0], Offset);
                       });
     // AAPCS requires that we zero-extend i1 to 8 bits by the caller.
     if (OrigArg.Ty->isIntegerTy(1))
@@ -491,7 +493,8 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // symmetry with the arugments, the physical register must be an
   // implicit-define of the call instruction.
   CCAssignFn *RetAssignFn = TLI.CCAssignFnForReturn(F.getCallingConv());
-  if (OrigRet.Reg) {
+  assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
+  if (OrigRet.Regs[0]) {
     SplitArgs.clear();
 
     SmallVector<uint64_t, 8> RegOffsets;
@@ -507,7 +510,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       return false;
 
     if (!RegOffsets.empty())
-      MIRBuilder.buildSequence(OrigRet.Reg, SplitRegs, RegOffsets);
+      MIRBuilder.buildSequence(OrigRet.Regs[0], SplitRegs, RegOffsets);
   }
 
   if (SwiftErrorVReg) {
