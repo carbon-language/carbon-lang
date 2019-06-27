@@ -1560,14 +1560,16 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
     ArrayRef<Register> Res = getOrCreateVRegs(CI);
 
     SmallVector<ArrayRef<Register>, 8> Args;
+    SmallVector<Register, 8> InVRegs;
     Register SwiftErrorVReg = 0;
     for (auto &Arg: CI.arg_operands()) {
       if (CLI->supportSwiftError() && isSwiftError(Arg)) {
         LLT Ty = getLLTForType(*Arg->getType(), *DL);
-        Register InVReg = MRI->createGenericVirtualRegister(Ty);
-        MIRBuilder.buildCopy(InVReg, SwiftError.getOrCreateVRegUseAt(
-                                         &CI, &MIRBuilder.getMBB(), Arg));
-        Args.push_back(InVReg);
+        InVRegs.push_back(MRI->createGenericVirtualRegister(Ty));
+        MIRBuilder.buildCopy(
+            InVRegs.back(),
+            SwiftError.getOrCreateVRegUseAt(&CI, &MIRBuilder.getMBB(), Arg));
+        Args.emplace_back(llvm::makeArrayRef(InVRegs.back()));
         SwiftErrorVReg =
             SwiftError.getOrCreateVRegDefAt(&CI, &MIRBuilder.getMBB(), Arg);
         continue;
