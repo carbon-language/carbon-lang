@@ -1475,6 +1475,13 @@ example:
     This function attribute indicates that the function does not call itself
     either directly or indirectly down any possible call path. This produces
     undefined behavior at runtime if the function ever does recurse.
+``willreturn``
+    This function attribute indicates that a call of this function will
+    either exhibit undefined behavior or comes back and continues execution
+    at a point in the existing call stack that includes the current invocation.
+    Annotated functions may still raise an exception, i.a., ``nounwind`` is not implied.
+    If an invocation of an annotated function does not return control back
+    to a point in the call stack, the behavior is undefined.
 ``nounwind``
     This function attribute indicates that the function never raises an
     exception. If the function does raise an exception, its runtime
