@@ -1537,34 +1537,6 @@ bool IRTranslator::translateInlineAsm(const CallInst &CI,
   return true;
 }
 
-Register IRTranslator::packRegs(const Value &V,
-                                  MachineIRBuilder &MIRBuilder) {
-  ArrayRef<Register> Regs = getOrCreateVRegs(V);
-  ArrayRef<uint64_t> Offsets = *VMap.getOffsets(V);
-  LLT BigTy = getLLTForType(*V.getType(), *DL);
-
-  if (Regs.size() == 1)
-    return Regs[0];
-
-  Register Dst = MRI->createGenericVirtualRegister(BigTy);
-  MIRBuilder.buildUndef(Dst);
-  for (unsigned i = 0; i < Regs.size(); ++i) {
-    Register NewDst = MRI->createGenericVirtualRegister(BigTy);
-    MIRBuilder.buildInsert(NewDst, Dst, Regs[i], Offsets[i]);
-    Dst = NewDst;
-  }
-  return Dst;
-}
-
-void IRTranslator::unpackRegs(const Value &V, Register Src,
-                                MachineIRBuilder &MIRBuilder) {
-  ArrayRef<Register> Regs = getOrCreateVRegs(V);
-  ArrayRef<uint64_t> Offsets = *VMap.getOffsets(V);
-
-  for (unsigned i = 0; i < Regs.size(); ++i)
-    MIRBuilder.buildExtract(Regs[i], Src, Offsets[i]);
-}
-
 bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
   const CallInst &CI = cast<CallInst>(U);
   auto TII = MF->getTarget().getIntrinsicInfo();
@@ -1631,7 +1603,10 @@ bool IRTranslator::translateCall(const User &U, MachineIRBuilder &MIRBuilder) {
     // Some intrinsics take metadata parameters. Reject them.
     if (isa<MetadataAsValue>(Arg))
       return false;
-    MIB.addUse(packRegs(*Arg, MIRBuilder));
+    ArrayRef<Register> VRegs = getOrCreateVRegs(*Arg);
+    if (VRegs.size() > 1)
+      return false;
+    MIB.addUse(VRegs[0]);
   }
 
   // Add a MachineMemOperand if it is a target mem intrinsic.
