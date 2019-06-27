@@ -22,4 +22,4 @@ if config.enable_per_target_runtime_dir:
 else:
   config.runtime_library_dir = "@LLVM_LIBRARY_DIR@"
 
-lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg")
+lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg.py")

@@ -2,7 +2,7 @@
 
 # Configuration file for 'lit' test runner.
 # This file contains common rules for various compiler-rt testsuites.
-# It is mostly copied from lit.cfg used by Clang.
+# It is mostly copied from lit.cfg.py used by Clang.
 import os
 import platform
 import re

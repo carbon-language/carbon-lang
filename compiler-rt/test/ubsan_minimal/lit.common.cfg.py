@@ -8,7 +8,7 @@ def get_required_attr(config, attr_name):
     lit_config.fatal(
       "No attribute %r in test configuration! You may need to run "
       "tests from your build directory or add this attribute "
-      "to lit.site.cfg " % attr_name)
+      "to lit.site.cfg.py " % attr_name)
   return attr_value
 
 # Setup source root.

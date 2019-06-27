@@ -10,4 +10,4 @@ config.use_thinlto = @CFI_TEST_USE_THINLTO@
 config.use_newpm = @CFI_TEST_USE_NEWPM@
 
 lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configured")
-lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg")
+lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg.py")

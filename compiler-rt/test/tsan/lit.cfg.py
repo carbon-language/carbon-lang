@@ -8,7 +8,7 @@ def get_required_attr(config, attr_name):
     lit_config.fatal(
       "No attribute %r in test configuration! You may need to run "
       "tests from your build directory or add this attribute "
-      "to lit.site.cfg " % attr_name)
+      "to lit.site.cfg.py " % attr_name)
   return attr_value
 
 # Setup config name.
@@ -26,7 +26,7 @@ if config.host_os == 'Darwin':
   default_tsan_opts += ':abort_on_error=0'
   # On Darwin, we default to ignore_noninstrumented_modules=1, which also
   # suppresses some races the tests are supposed to find. Let's run without this
-  # setting, but turn it back on for Darwin tests (see Darwin/lit.local.cfg).
+  # setting, but turn it back on for Darwin tests (see Darwin/lit.local.cfg.py).
   default_tsan_opts += ':ignore_noninstrumented_modules=0'
 
 # Platform-specific default TSAN_OPTIONS for lit tests.
