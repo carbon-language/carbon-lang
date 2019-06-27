@@ -349,21 +349,28 @@ public:
     parseSingleInteger(IsNegative, Operands);
     // FIXME: there is probably a cleaner way to do this.
     auto IsLoadStore = InstName.startswith("load") ||
-                       InstName.startswith("store") ||
-                       InstName.startswith("atomic");
-    if (IsLoadStore) {
-      // Parse load/store operands of the form: offset align
-      auto &Offset = Lexer.getTok();
-      if (Offset.is(AsmToken::Integer)) {
+                       InstName.startswith("store");
+    auto IsAtomic = InstName.startswith("atomic");
+    if (IsLoadStore || IsAtomic) {
+      // Parse load/store operands of the form: offset:p2align=align
+      if (IsLoadStore && isNext(AsmToken::Colon)) {
+        auto Id = expectIdent();
+        if (Id != "p2align")
+          return error("Expected p2align, instead got: " + Id);
+        if (expect(AsmToken::Equal, "="))
+          return true;
+        if (!Lexer.is(AsmToken::Integer))
+          return error("Expected integer constant");
         parseSingleInteger(false, Operands);
       } else {
-        // Alignment not specified.
-        // FIXME: correctly derive a default from the instruction.
+        // Alignment not specified (or atomics, must use default alignment).
         // We can't just call WebAssembly::GetDefaultP2Align since we don't have
-        // an opcode until after the assembly matcher.
+        // an opcode until after the assembly matcher, so set a default to fix
+        // up later.
+        auto Tok = Lexer.getTok();
         Operands.push_back(make_unique<WebAssemblyOperand>(
-            WebAssemblyOperand::Integer, Offset.getLoc(), Offset.getEndLoc(),
-            WebAssemblyOperand::IntOp{0}));
+            WebAssemblyOperand::Integer, Tok.getLoc(), Tok.getEndLoc(),
+            WebAssemblyOperand::IntOp{-1}));
       }
     }
     return false;
@@ -698,6 +705,13 @@ public:
         auto &TOut = reinterpret_cast<WebAssemblyTargetStreamer &>(
             *Out.getTargetStreamer());
         TOut.emitLocal(SmallVector<wasm::ValType, 0>());
+      }
+      // Fix unknown p2align operands.
+      auto Align = WebAssembly::GetDefaultP2AlignAny(Inst.getOpcode());
+      if (Align != -1U) {
+        auto &Op0 = Inst.getOperand(0);
+        if (Op0.getImm() == -1)
+          Op0.setImm(Align);
       }
       Out.EmitInstruction(Inst, getSTI());
       if (CurrentState == EndFunction) {

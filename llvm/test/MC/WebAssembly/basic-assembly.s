@@ -17,7 +17,8 @@ test0:
     v128.const  0, 1, 2, 3, 4, 5, 6, 7
     # Indirect addressing:
     local.get   0
-    f64.store   0
+    f64.store   1234:p2align=4
+    f64.store   1234     # Natural alignment (3)
     # Loops, conditionals, binary ops, calls etc:
     block       i32
     i32.const   1
@@ -104,7 +105,8 @@ test0:
 # CHECK-NEXT:      v128.const  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 # CHECK-NEXT:      v128.const  0, 1, 2, 3, 4, 5, 6, 7
 # CHECK-NEXT:      local.get   0
-# CHECK-NEXT:      f64.store   0:p2align=0
+# CHECK-NEXT:      f64.store   1234:p2align=4
+# CHECK-NEXT:      f64.store   1234
 # CHECK-NEXT:      block       i32
 # CHECK-NEXT:      i32.const   1
 # CHECK-NEXT:      local.get   0
