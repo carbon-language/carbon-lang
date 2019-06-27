@@ -330,4 +330,4 @@ To report bugs, please visit <http://llvm.org/bugs/>.
 SEE ALSO
 --------
 
-:manpage:`llvm-nm(1)`, :manpage:`llvm-readobj(1)`
+:manpage:`llvm-nm(1)`, :manpage:`llvm-readelf(1)`, :manpage:`llvm-readobj(1)`
