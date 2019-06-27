@@ -481,11 +481,6 @@ private:
     EnforceConcurrentLoopControl(concurrent);
   }
 
-  bool InnermostEnclosingScope(const semantics::Symbol &symbol) const {
-    // TODO - implement
-    return true;
-  }
-
   void CheckZeroOrOneDefaultNone(
       const std::list<parser::LocalitySpec> &localitySpecs) const {
     // C1127
@@ -498,18 +493,6 @@ private:
               "only one DEFAULT(NONE) may appear"_en_US);
           return;
         }
-      }
-    }
-  }
-
-  void CheckScopingConstraints(const CS &symbols) const {
-    // C1124
-    for (auto *symbol : symbols) {
-      if (!InnermostEnclosingScope(*symbol)) {
-        context_.Say(currentStatementSourcePosition_,
-            "variable in locality-spec must be in innermost"
-            " scoping unit"_err_en_US);
-        return;
       }
     }
   }
@@ -600,7 +583,6 @@ private:
     }
     auto variableNames{
         GatherVariables(localitySpecs, GatherWhichVariables::All)};
-    CheckScopingConstraints(variableNames);
     CheckZeroOrOneDefaultNone(localitySpecs);
     CheckLocalAndLocalInitAttributes(
         GatherVariables(localitySpecs, GatherWhichVariables::NotShared));

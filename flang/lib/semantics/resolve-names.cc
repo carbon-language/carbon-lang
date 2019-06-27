@@ -432,6 +432,7 @@ public:
   void SayAlreadyDeclared(const SourceName &, Symbol &);
   void SayAlreadyDeclared(const parser::Name &, Symbol &);
   void SayWithDecl(const parser::Name &, Symbol &, MessageFixedText &&);
+  void SayBadLocality(const parser::Name &, Symbol &);
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
   void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
       MessageFixedText &&);
@@ -1511,6 +1512,11 @@ void ScopeHandler::SayWithDecl(
                                           : "Declaration of '%s'"_en_US);
   context().SetError(symbol, msg.isFatal());
 }
+
+void ScopeHandler::SayBadLocality(const parser::Name &name, Symbol &symbol) {
+  SayWithDecl(name, symbol, "Locality attribute not allowed on '%s'"_err_en_US);
+}
+
 void ScopeHandler::SayDerivedType(
     const SourceName &name, MessageFixedText &&msg, const Scope &type) {
   const Symbol *typeSymbol{type.GetSymbol()};
@@ -3682,11 +3688,10 @@ Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
     implicit = true;
   }
   if (!ConvertToObjectEntity(*prev) || prev->attrs().test(Attr::PARAMETER)) {
-    SayWithDecl(
-        name, *prev, "Locality attribute not allowed on '%s'"_err_en_US);
+    SayBadLocality(name, *prev);  // C1124
     return nullptr;
   }
-  if (prev->owner() == currScope()) {
+  if (prev->owner() == currScope()) {  // C1125 and C1126
     SayAlreadyDeclared(name, *prev);
     return nullptr;
   }
@@ -3969,18 +3974,25 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
   }
   return false;
 }
+
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
-  for (auto &name : x.v) {
-    if (auto *prev{FindSymbol(name)}) {
-      if (prev->owner() == currScope()) {
-        SayAlreadyDeclared(name, *prev);
-      }
-      auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
-      symbol.set(Symbol::Flag::LocalityShared);
-    } else {
+  for (const auto &name : x.v) {
+    auto *prev{FindSymbol(name)};
+    if (!prev) {
       Say(name, "Variable '%s' not found"_err_en_US);
       context().SetError(
           MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
+    } else {
+      if (prev->owner() == currScope()) {
+        SayAlreadyDeclared(name, *prev);  // C1125 and C1126
+      } else {
+        if (!IsVariableName(*prev)) {
+          SayBadLocality(name, *prev);  // C1124
+        } else {
+          auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
+          symbol.set(Symbol::Flag::LocalityShared);
+        }
+      }
     }
   }
   return false;

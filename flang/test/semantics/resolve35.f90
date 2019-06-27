@@ -106,6 +106,16 @@ subroutine s8
 end
 
 subroutine s9
+  integer :: j
+  !ERROR: 'i' is already declared in this scoping unit
+  do concurrent(integer::i=1:5) shared(i) &
+      shared(j) &
+      !ERROR: 'j' is already declared in this scoping unit
+      shared(j)
+  end do
+end
+
+subroutine s10
   external bad1
   real, parameter :: bad2 = 1.0
   x = cos(0.)
@@ -118,6 +128,16 @@ subroutine s9
     local(bad3) &
     !ERROR: Locality attribute not allowed on 'cos'
     local(cos)
+  end do
+  do concurrent(i=1:2) &
+    !ERROR: Locality attribute not allowed on 'bad1'
+    shared(bad1) &
+    !ERROR: Locality attribute not allowed on 'bad2'
+    shared(bad2) &
+    !ERROR: Locality attribute not allowed on 'bad3'
+    shared(bad3) &
+    !ERROR: Locality attribute not allowed on 'cos'
+    shared(cos)
   end do
 contains
   subroutine bad3
