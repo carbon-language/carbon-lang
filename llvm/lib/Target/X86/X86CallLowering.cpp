@@ -453,7 +453,8 @@ bool X86CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // implicit-define of the call instruction.
 
   if (!OrigRet.Ty->isVoidTy()) {
-    assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
+    if (OrigRet.Regs.size() > 1)
+      return false;
 
     SplitArgs.clear();
     SmallVector<Register, 8> NewRegs;

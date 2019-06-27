@@ -214,17 +214,13 @@ define arm_aapcscc [3 x i32] @test_tiny_int_arrays([2 x i32] %arr) {
 ; CHECK: [[R0:%[0-9]+]]:_(s32) = COPY $r0
 ; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $r1
 ; CHECK: [[R2:%[0-9]+]]:_(s32) = COPY $r2
-; CHECK: [[RES_ARR:%[0-9]+]]:_(s96) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32), [[R2]](s32)
 ; CHECK: ADJCALLSTACKUP 0, 0, 14, $noreg, implicit-def $sp, implicit $sp
-; CHECK: [[EXT3:%[0-9]+]]:_(s32) = G_EXTRACT [[RES_ARR]](s96), 0
-; CHECK: [[EXT4:%[0-9]+]]:_(s32) = G_EXTRACT [[RES_ARR]](s96), 32
-; CHECK: [[EXT5:%[0-9]+]]:_(s32) = G_EXTRACT [[RES_ARR]](s96), 64
 ; FIXME: This doesn't seem correct with regard to the AAPCS docs (which say
 ; that composite types larger than 4 bytes should be passed through memory),
 ; but it's what DAGISel does. We should fix it in the common code for both.
-; CHECK: $r0 = COPY [[EXT3]]
-; CHECK: $r1 = COPY [[EXT4]]
-; CHECK: $r2 = COPY [[EXT5]]
+; CHECK: $r0 = COPY [[R0]]
+; CHECK: $r1 = COPY [[R1]]
+; CHECK: $r2 = COPY [[R2]]
 ; ARM: BX_RET 14, $noreg, implicit $r0, implicit $r1, implicit $r2
 ; THUMB: tBX_RET 14, $noreg, implicit $r0, implicit $r1, implicit $r2
 entry:
@@ -352,12 +348,9 @@ define arm_aapcscc [2 x float] @test_fp_arrays_aapcs([3 x double] %arr) {
 ; THUMB: tBL 14, $noreg, @fp_arrays_aapcs_target, csr_aapcs, implicit-def $lr, implicit $sp, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit-def $r0, implicit-def $r1
 ; CHECK: [[R0:%[0-9]+]]:_(s32) = COPY $r0
 ; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $r1
-; CHECK: [[R_MERGED:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32)
 ; CHECK: ADJCALLSTACKUP 8, 0, 14, $noreg, implicit-def $sp, implicit $sp
-; CHECK: [[EXT4:%[0-9]+]]:_(s32) = G_EXTRACT [[R_MERGED]](s64), 0
-; CHECK: [[EXT5:%[0-9]+]]:_(s32) = G_EXTRACT [[R_MERGED]](s64), 32
-; CHECK: $r0 = COPY [[EXT4]]
-; CHECK: $r1 = COPY [[EXT5]]
+; CHECK: $r0 = COPY [[R0]]
+; CHECK: $r1 = COPY [[R1]]
 ; ARM: BX_RET 14, $noreg, implicit $r0, implicit $r1
 ; THUMB: tBX_RET 14, $noreg, implicit $r0, implicit $r1
 entry:
@@ -434,16 +427,11 @@ define arm_aapcs_vfpcc [4 x float] @test_fp_arrays_aapcs_vfp([3 x double] %x, [3
 ; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $s1
 ; CHECK: [[R2:%[0-9]+]]:_(s32) = COPY $s2
 ; CHECK: [[R3:%[0-9]+]]:_(s32) = COPY $s3
-; CHECK: [[R_MERGED:%[0-9]+]]:_(s128) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32), [[R2]](s32), [[R3]](s32)
 ; CHECK: ADJCALLSTACKUP 32, 0, 14, $noreg, implicit-def $sp, implicit $sp
-; CHECK: [[EXT11:%[0-9]+]]:_(s32) = G_EXTRACT [[R_MERGED]](s128), 0
-; CHECK: [[EXT12:%[0-9]+]]:_(s32) = G_EXTRACT [[R_MERGED]](s128), 32
-; CHECK: [[EXT13:%[0-9]+]]:_(s32) = G_EXTRACT [[R_MERGED]](s128), 64
-; CHECK: [[EXT14:%[0-9]+]]:_(s32) = G_EXTRACT [[R_MERGED]](s128), 96
-; CHECK: $s0 = COPY [[EXT11]]
-; CHECK: $s1 = COPY [[EXT12]]
-; CHECK: $s2 = COPY [[EXT13]]
-; CHECK: $s3 = COPY [[EXT14]]
+; CHECK: $s0 = COPY [[R0]]
+; CHECK: $s1 = COPY [[R1]]
+; CHECK: $s2 = COPY [[R2]]
+; CHECK: $s3 = COPY [[R3]]
 ; ARM: BX_RET 14, $noreg, implicit $s0, implicit $s1, implicit $s2, implicit $s3
 ; THUMB: tBX_RET 14, $noreg, implicit $s0, implicit $s1, implicit $s2, implicit $s3
 entry:
@@ -488,14 +476,11 @@ define arm_aapcscc [2 x i32*] @test_tough_arrays([6 x [4 x i32]] %arr) {
 ; CHECK: G_STORE [[LAST_STACK_ELEMENT]](s32), [[LAST_STACK_ARG_ADDR]]{{.*}}store 4
 ; ARM: BL @tough_arrays_target, csr_aapcs, implicit-def $lr, implicit $sp, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit-def $r0, implicit-def $r1
 ; THUMB: tBL 14, $noreg, @tough_arrays_target, csr_aapcs, implicit-def $lr, implicit $sp, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit-def $r0, implicit-def $r1
-; CHECK: [[R0:%[0-9]+]]:_(s32) = COPY $r0
-; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $r1
-; CHECK: [[RES_ARR:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32)
+; CHECK: [[R0:%[0-9]+]]:_(p0) = COPY $r0
+; CHECK: [[R1:%[0-9]+]]:_(p0) = COPY $r1
 ; CHECK: ADJCALLSTACKUP 80, 0, 14, $noreg, implicit-def $sp, implicit $sp
-; CHECK: [[EXT1:%[0-9]+]]:_(p0) = G_EXTRACT [[RES_ARR]](s64), 0
-; CHECK: [[EXT2:%[0-9]+]]:_(p0) = G_EXTRACT [[RES_ARR]](s64), 32
-; CHECK: $r0 = COPY [[EXT1]]
-; CHECK: $r1 = COPY [[EXT2]]
+; CHECK: $r0 = COPY [[R0]]
+; CHECK: $r1 = COPY [[R1]]
 ; ARM: BX_RET 14, $noreg, implicit $r0, implicit $r1
 ; THUMB: tBX_RET 14, $noreg, implicit $r0, implicit $r1
 entry:
@@ -521,12 +506,9 @@ define arm_aapcscc {i32, i32} @test_structs({i32, i32} %x) {
 ; THUMB: tBL 14, $noreg, @structs_target, csr_aapcs, implicit-def $lr, implicit $sp, implicit $r0, implicit $r1, implicit-def $r0, implicit-def $r1
 ; CHECK: [[R0:%[0-9]+]]:_(s32) = COPY $r0
 ; CHECK: [[R1:%[0-9]+]]:_(s32) = COPY $r1
-; CHECK: [[R:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[R0]](s32), [[R1]](s32)
 ; CHECK: ADJCALLSTACKUP 0, 0, 14, $noreg, implicit-def $sp, implicit $sp
-; CHECK: [[EXT3:%[0-9]+]]:_(s32) = G_EXTRACT [[R]](s64), 0
-; CHECK: [[EXT4:%[0-9]+]]:_(s32) = G_EXTRACT [[R]](s64), 32
-; CHECK: $r0 = COPY [[EXT3]](s32)
-; CHECK: $r1 = COPY [[EXT4]](s32)
+; CHECK: $r0 = COPY [[R0]](s32)
+; CHECK: $r1 = COPY [[R1]](s32)
 ; ARM: BX_RET 14, $noreg, implicit $r0, implicit $r1
 ; THUMB: tBX_RET 14, $noreg, implicit $r0, implicit $r1
   %r = notail call arm_aapcscc {i32, i32} @structs_target({i32, i32} %x)

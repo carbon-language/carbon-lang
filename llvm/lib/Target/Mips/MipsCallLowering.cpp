@@ -514,7 +514,6 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       return false;
   }
 
-  assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
   if (OrigRet.Regs[0] && !isSupportedType(OrigRet.Ty))
     return false;
 

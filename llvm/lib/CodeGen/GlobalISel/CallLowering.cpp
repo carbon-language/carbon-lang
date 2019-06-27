@@ -28,7 +28,8 @@ using namespace llvm;
 void CallLowering::anchor() {}
 
 bool CallLowering::lowerCall(MachineIRBuilder &MIRBuilder, ImmutableCallSite CS,
-                             Register ResReg, ArrayRef<Register> ArgRegs,
+                             ArrayRef<Register> ResRegs,
+                             ArrayRef<Register> ArgRegs,
                              Register SwiftErrorVReg,
                              std::function<unsigned()> GetCalleeReg) const {
   auto &DL = CS.getParent()->getParent()->getParent()->getDataLayout();
@@ -56,7 +57,7 @@ bool CallLowering::lowerCall(MachineIRBuilder &MIRBuilder, ImmutableCallSite CS,
   else
     Callee = MachineOperand::CreateReg(GetCalleeReg(), false);
 
-  ArgInfo OrigRet{ResReg, CS.getType(), ISD::ArgFlagsTy{}};
+  ArgInfo OrigRet{ResRegs, CS.getType(), ISD::ArgFlagsTy{}};
   if (!OrigRet.Ty->isVoidTy())
     setArgFlags(OrigRet, AttributeList::ReturnIndex, DL, CS);
 

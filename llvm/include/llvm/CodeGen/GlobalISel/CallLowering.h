@@ -258,8 +258,9 @@ public:
   ///
   /// \p CI is the call/invoke instruction.
   ///
-  /// \p ResReg is a register where the call's return value should be stored (or
-  /// 0 if there is no return value).
+  /// \p ResRegs are the registers where the call's return value should be
+  /// stored (or 0 if there is no return value). There will be one register for
+  /// each non-aggregate type, as returned by \c computeValueLLTs.
   ///
   /// \p ArgRegs is a list of virtual registers containing each argument that
   /// needs to be passed.
@@ -275,10 +276,9 @@ public:
   ///
   /// \return true if the lowering succeeded, false otherwise.
   bool lowerCall(MachineIRBuilder &MIRBuilder, ImmutableCallSite CS,
-                 Register ResReg, ArrayRef<Register> ArgRegs,
+                 ArrayRef<Register> ResRegs, ArrayRef<Register> ArgRegs,
                  Register SwiftErrorVReg,
                  std::function<unsigned()> GetCalleeReg) const;
-
 };
 
 } // end namespace llvm

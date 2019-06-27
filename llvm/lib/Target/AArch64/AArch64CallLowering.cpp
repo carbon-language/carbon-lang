@@ -498,24 +498,18 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // symmetry with the arugments, the physical register must be an
   // implicit-define of the call instruction.
   CCAssignFn *RetAssignFn = TLI.CCAssignFnForReturn(F.getCallingConv());
-  assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
-  if (OrigRet.Regs[0]) {
+  if (!OrigRet.Ty->isVoidTy()) {
     SplitArgs.clear();
 
-    SmallVector<uint64_t, 8> RegOffsets;
-    SmallVector<Register, 8> SplitRegs;
     splitToValueTypes(OrigRet, SplitArgs, DL, MRI, F.getCallingConv(),
                       [&](unsigned Reg, uint64_t Offset) {
-                        RegOffsets.push_back(Offset);
-                        SplitRegs.push_back(Reg);
+                        llvm_unreachable(
+                            "Call results should already be split");
                       });
 
     CallReturnHandler Handler(MIRBuilder, MRI, MIB, RetAssignFn);
     if (!handleAssignments(MIRBuilder, SplitArgs, Handler))
       return false;
-
-    if (!RegOffsets.empty())
-      MIRBuilder.buildSequence(OrigRet.Regs[0], SplitRegs, RegOffsets);
   }
 
   if (SwiftErrorVReg) {

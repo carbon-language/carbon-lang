@@ -131,8 +131,7 @@ define {double, i64, i32} @test_struct_return({double, i64, i32}* %addr) {
 ; CHECK: [[E1:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK: [[E2:%[0-9]+]]:_(s64) = COPY $x2
 ; CHECK: [[E3:%[0-9]+]]:_(s64) = COPY $x3
-; CHECK: [[RES:%[0-9]+]]:_(s256) = G_MERGE_VALUES [[E0]](s64), [[E1]](s64), [[E2]](s64), [[E3]](s64)
-; CHECK: G_EXTRACT [[RES]](s256), 64
+; CHECK: $x0 = COPY [[E1]]
 declare [4 x i64] @arr_callee([4 x i64])
 define i64 @test_arr_call([4 x i64]* %addr) {
   %arg = load [4 x i64], [4 x i64]* %addr

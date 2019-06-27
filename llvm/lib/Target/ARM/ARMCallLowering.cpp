@@ -619,21 +619,14 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       return false;
 
     ArgInfos.clear();
-    SmallVector<Register, 8> SplitRegs;
-    splitToValueTypes(OrigRet, ArgInfos, MF,
-                      [&](Register Reg) { SplitRegs.push_back(Reg); });
+    splitToValueTypes(OrigRet, ArgInfos, MF, [&](Register Reg) {
+      llvm_unreachable("Call results should already be split");
+    });
 
     auto RetAssignFn = TLI.CCAssignFnForReturn(CallConv, IsVarArg);
     CallReturnHandler RetHandler(MIRBuilder, MRI, MIB, RetAssignFn);
     if (!handleAssignments(MIRBuilder, ArgInfos, RetHandler))
       return false;
-
-    if (!SplitRegs.empty()) {
-      // We have split the value and allocated each individual piece, now build
-      // it up again.
-      assert(OrigRet.Regs.size() == 1 && "Can't handle multple regs yet");
-      MIRBuilder.buildMerge(OrigRet.Regs[0], SplitRegs);
-    }
   }
 
   // We now know the size of the stack - update the ADJCALLSTACKDOWN
