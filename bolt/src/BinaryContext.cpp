@@ -1336,18 +1336,10 @@ ErrorOr<BinarySection&> BinaryContext::getSectionForAddress(uint64_t Address) {
   auto SI = AddressToSection.upper_bound(Address);
   if (SI != AddressToSection.begin()) {
     --SI;
-    if (SI->first + SI->second->getSize() > Address)
-      return *SI->second;
-  }
-  return std::make_error_code(std::errc::bad_address);
-}
-
-ErrorOr<const BinarySection &>
-BinaryContext::getSectionForAddress(uint64_t Address) const {
-  auto SI = AddressToSection.upper_bound(Address);
-  if (SI != AddressToSection.begin()) {
-    --SI;
-    if (SI->first + SI->second->getSize() > Address)
+    auto UpperBound = SI->first + SI->second->getSize();
+    if (!SI->second->getSize())
+      UpperBound += 1;
+    if (UpperBound > Address)
       return *SI->second;
   }
   return std::make_error_code(std::errc::bad_address);

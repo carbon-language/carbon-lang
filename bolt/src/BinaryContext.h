@@ -785,7 +785,9 @@ public:
   /// functions only work for allocatable sections, i.e. ones with non-zero
   /// addresses.
   ErrorOr<BinarySection &> getSectionForAddress(uint64_t Address);
-  ErrorOr<const BinarySection &> getSectionForAddress(uint64_t Address) const;
+  ErrorOr<const BinarySection &> getSectionForAddress(uint64_t Address) const {
+    return const_cast<BinaryContext *>(this)->getSectionForAddress(Address);
+  }
 
   /// Return section(s) associated with given \p Name.
   iterator_range<NameToSectionMapType::iterator>

@@ -284,7 +284,8 @@ public:
   /// Does this section contain the given \p Address?
   /// Note: this is in terms of the original mapped binary addresses.
   bool containsAddress(uint64_t Address) const {
-    return getAddress() <= Address && Address < getEndAddress();
+    return (getAddress() <= Address && Address < getEndAddress()) ||
+           (getSize() == 0 && getAddress() == Address);
   }
 
   /// Does this section contain the range [\p Address, \p Address + \p Size)?

@@ -587,12 +587,6 @@ bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
   return Itr != opts::ReorderData.end();
 }
 
-StringRef getSectionName(SectionRef Section) {
-  StringRef SectionName;
-  Section.getName(SectionName);
-  return SectionName;
-}
-
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
 std::unique_ptr<BinaryContext>
@@ -1486,12 +1480,12 @@ void RewriteInstance::discoverFileObjects() {
       BF->addAlternativeName(UniqueName);
     } else {
       auto Section = BC->getSectionForAddress(Address);
+      assert(Section && "section for functions must be registered");
 
-      // Skip zero-size symbol in zero-size section
-      if (!Section && !SymbolSize)
+      // Skip symbols from zero-sized sections.
+      if (!Section->getSize())
         continue;
       
-      assert(Section && "section for functions must be registered.");
       BF = BC->createBinaryFunction(UniqueName, *Section, Address,
                                     SymbolSize, IsSimple);
     }
@@ -2031,9 +2025,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   bool SkipVerification = false;
   auto SymbolIter = Rel.getSymbol();
   if (SymbolIter == InputFile->symbol_end()) {
-    SymbolAddress = ExtractedValue - Addend;
-    if (IsPCRelative)
-      SymbolAddress += PCRelOffset;
+    SymbolAddress = ExtractedValue - Addend + PCRelOffset;
     auto *RelSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress, "RELSYMat");
     SymbolName = RelSymbol->getName();
     IsSectionRelocation = false;
@@ -2044,23 +2036,19 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
     SkipVerification = (cantFail(Symbol.getType()) == SymbolRef::ST_Other);
     // Section symbols are marked as ST_Debug.
     IsSectionRelocation = (cantFail(Symbol.getType()) == SymbolRef::ST_Debug);
-    if (IsSectionRelocation) {
-      auto Section = Symbol.getSection();
-      if (Section && *Section != InputFile->section_end()) {
-        SymbolName = "section " + std::string(getSectionName(**Section));
-        if (!IsAArch64) {
-          assert(SymbolAddress == (*Section)->getAddress() &&
-                 "section symbol address must be the same as section address");
-          // Convert section symbol relocations to regular relocations inside
-          // non-section symbols.
-          if (IsPCRelative) {
-            Addend = ExtractedValue - (SymbolAddress - PCRelOffset);
-          } else {
-            SymbolAddress = ExtractedValue;
-            Addend = 0;
-          }
-        }
-      }
+  }
+
+  if (IsSectionRelocation && !IsAArch64) {
+    auto Section = BC->getSectionForAddress(SymbolAddress);
+    assert(Section && "section expected for section relocation");
+    SymbolName = "section " + std::string(Section->getName());
+    // Convert section symbol relocations to regular relocations inside
+    // non-section symbols.
+    if (Section->containsAddress(ExtractedValue) && !IsPCRelative) {
+      SymbolAddress = ExtractedValue;
+      Addend = 0;
+    } else {
+      Addend = ExtractedValue - (SymbolAddress - PCRelOffset);
     }
   }
 
@@ -2298,6 +2286,12 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           );
           ReferencedBF = BF;
         }
+      }
+    } else if (ReferencedBF) {
+      assert(RefSection && "section expected for section relocation");
+      if (ReferencedBF->getSection() != *RefSection) {
+        DEBUG(dbgs() << "BOLT-DEBUG: ignoring false function reference\n");
+        ReferencedBF = nullptr;
       }
     }
 
