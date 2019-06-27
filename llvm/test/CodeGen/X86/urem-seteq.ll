@@ -223,6 +223,38 @@ define i32 @test_urem_one(i32 %X) nounwind readnone {
   ret i32 %ret
 }
 
+; We should not proceed with this fold if we can not compute
+; multiplicative inverse
+define i32 @test_urem_100(i32 %X) nounwind readnone {
+; X86-LABEL: test_urem_100:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NEXT:    movl $1374389535, %edx # imm = 0x51EB851F
+; X86-NEXT:    movl %ecx, %eax
+; X86-NEXT:    mull %edx
+; X86-NEXT:    shrl $5, %edx
+; X86-NEXT:    imull $100, %edx, %edx
+; X86-NEXT:    xorl %eax, %eax
+; X86-NEXT:    cmpl %edx, %ecx
+; X86-NEXT:    sete %al
+; X86-NEXT:    retl
+;
+; X64-LABEL: test_urem_100:
+; X64:       # %bb.0:
+; X64-NEXT:    movl %edi, %eax
+; X64-NEXT:    imulq $1374389535, %rax, %rax # imm = 0x51EB851F
+; X64-NEXT:    shrq $37, %rax
+; X64-NEXT:    imull $100, %eax, %ecx
+; X64-NEXT:    xorl %eax, %eax
+; X64-NEXT:    cmpl %ecx, %edi
+; X64-NEXT:    sete %al
+; X64-NEXT:    retq
+  %urem = urem i32 %X, 100
+  %cmp = icmp eq i32 %urem, 0
+  %ret = zext i1 %cmp to i32
+  ret i32 %ret
+}
+
 ; We can lower remainder of division by powers of two much better elsewhere;
 ; also, BuildREMEqFold does not work when the only odd factor of the divisor is 1.
 ; This ensures we don't touch powers of two.

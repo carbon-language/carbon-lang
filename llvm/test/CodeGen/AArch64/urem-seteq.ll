@@ -137,6 +137,26 @@ define i32 @test_urem_one(i32 %X) nounwind readnone {
   ret i32 %ret
 }
 
+; We should not proceed with this fold if we can not compute
+; multiplicative inverse
+define i32 @test_urem_100(i32 %X) nounwind readnone {
+; CHECK-LABEL: test_urem_100:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    mov w8, #34079
+; CHECK-NEXT:    movk w8, #20971, lsl #16
+; CHECK-NEXT:    umull x8, w0, w8
+; CHECK-NEXT:    lsr x8, x8, #37
+; CHECK-NEXT:    mov w9, #100
+; CHECK-NEXT:    msub w8, w8, w9, w0
+; CHECK-NEXT:    cmp w8, #0 // =0
+; CHECK-NEXT:    cset w0, eq
+; CHECK-NEXT:    ret
+  %urem = urem i32 %X, 100
+  %cmp = icmp eq i32 %urem, 0
+  %ret = zext i1 %cmp to i32
+  ret i32 %ret
+}
+
 ; We can lower remainder of division by powers of two much better elsewhere;
 ; also, BuildREMEqFold does not work when the only odd factor of the divisor is 1.
 ; This ensures we don't touch powers of two.
