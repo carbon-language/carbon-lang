@@ -2321,23 +2321,6 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root, SDNode *Parent,
     }
   }
 
-  // Also handle the case where we explicitly require zeros in the top
-  // elements.  This is a vector shuffle from the zero vector.
-  if (N.getOpcode() == X86ISD::VZEXT_MOVL && N.getNode()->hasOneUse() &&
-      // Check to see if the top elements are all zeros (or bitcast of zeros).
-      N.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR &&
-      N.getOperand(0).getNode()->hasOneUse()) {
-    PatternNodeWithChain = N.getOperand(0).getOperand(0);
-    if (ISD::isNON_EXTLoad(PatternNodeWithChain.getNode()) &&
-        IsProfitableToFold(PatternNodeWithChain, N.getNode(), Root) &&
-        IsLegalToFold(PatternNodeWithChain, N.getNode(), Root, OptLevel)) {
-      // Okay, this is a zero extending load.  Fold it.
-      LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
-      return selectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp,
-                        Segment);
-    }
-  }
-
   return false;
 }
 
