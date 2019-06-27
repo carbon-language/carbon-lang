@@ -4486,14 +4486,7 @@ static DecodeStatus DecodeCoprocessor(MCInst &Inst, unsigned Val,
   const FeatureBitset &featureBits =
     ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
 
-  if (featureBits[ARM::HasV8Ops] && !(Val == 14 || Val == 15))
-    return MCDisassembler::Fail;
-
-  // For Armv8.1-M Mainline coprocessors matching 100x,101x or 111x should
-  // decode as VFP/MVE instructions.
-  if (featureBits[ARM::HasV8_1MMainlineOps] &&
-      ((Val & 0xE) == 0x8 || (Val & 0xE) == 0xA ||
-       (Val & 0xE) == 0xE))
+  if (!isValidCoprocessorNumber(Val, featureBits))
     return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::createImm(Val));
