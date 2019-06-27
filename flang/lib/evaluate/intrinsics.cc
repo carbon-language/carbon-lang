@@ -201,7 +201,7 @@ static constexpr IntrinsicDummyArgument SubscriptDefaultKIND{"kind",
     {IntType, KindCode::kindArg}, Rank::scalar,
     Optionality::defaultsToSubscriptKind};
 static constexpr IntrinsicDummyArgument RequiredDIM{
-    "dim", {IntType, KindCode::dimArg}, Rank::scalar};
+    "dim", {IntType, KindCode::dimArg}, Rank::scalar, Optionality::required};
 static constexpr IntrinsicDummyArgument OptionalDIM{
     "dim", {IntType, KindCode::dimArg}, Rank::scalar, Optionality::optional};
 static constexpr IntrinsicDummyArgument OptionalMASK{

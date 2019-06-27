@@ -4656,7 +4656,7 @@ void ResolveNamesVisitor::NoteExecutablePartCall(
               : Symbol::Flag::Subroutine};
       if (!symbol->test(other)) {
         ConvertToProcEntity(*symbol);
-        if (auto *details{symbol->detailsIf<ProcEntityDetails>()}) {
+        if (symbol->has<ProcEntityDetails>()) {
           symbol->set(flag);
           if (symbol->IsDummy()) {
             symbol->attrs().set(Attr::EXTERNAL);
