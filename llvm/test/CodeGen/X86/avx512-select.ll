@@ -537,7 +537,7 @@ define <64 x i8> @pr42355_v64i8(i1 %c, <64 x i8> %x, <64 x i8> %y) {
   ret <64 x i8> %a
 }
 
-; This would crash because AVX512 has legal vector select 
+; This would crash because AVX512 has legal vector select
 ; condition values that are not 256/512-bit vectors.
 
 define <16 x i64> @narrowExtractedVectorSelect_crash(<16 x i64> %arg, <16 x i16> %arg1) #0 {
@@ -595,4 +595,3 @@ define <16 x i64> @narrowExtractedVectorSelect_crash(<16 x i64> %arg, <16 x i16>
   %tmp3 = zext <16 x i16> %tmp2 to <16 x i64>
   ret <16 x i64> %tmp3
 }
-
