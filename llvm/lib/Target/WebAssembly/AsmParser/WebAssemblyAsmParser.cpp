@@ -348,9 +348,9 @@ public:
                                        StringRef InstName) {
     parseSingleInteger(IsNegative, Operands);
     // FIXME: there is probably a cleaner way to do this.
-    auto IsLoadStore = InstName.startswith("load") ||
-                       InstName.startswith("store");
-    auto IsAtomic = InstName.startswith("atomic");
+    auto IsLoadStore = InstName.find(".load") != StringRef::npos ||
+                       InstName.find(".store") != StringRef::npos;
+    auto IsAtomic = InstName.find("atomic.") != StringRef::npos;
     if (IsLoadStore || IsAtomic) {
       // Parse load/store operands of the form: offset:p2align=align
       if (IsLoadStore && isNext(AsmToken::Colon)) {
@@ -413,48 +413,45 @@ public:
     Operands.push_back(make_unique<WebAssemblyOperand>(
         WebAssemblyOperand::Token, NameLoc, SMLoc::getFromPointer(Name.end()),
         WebAssemblyOperand::TokOp{Name}));
-    auto NamePair = Name.split('.');
-    // If no '.', there is no type prefix.
-    auto BaseName = NamePair.second.empty() ? NamePair.first : NamePair.second;
 
     // If this instruction is part of a control flow structure, ensure
     // proper nesting.
     bool ExpectBlockType = false;
-    if (BaseName == "block") {
+    if (Name == "block") {
       push(Block);
       ExpectBlockType = true;
-    } else if (BaseName == "loop") {
+    } else if (Name == "loop") {
       push(Loop);
       ExpectBlockType = true;
-    } else if (BaseName == "try") {
+    } else if (Name == "try") {
       push(Try);
       ExpectBlockType = true;
-    } else if (BaseName == "if") {
+    } else if (Name == "if") {
       push(If);
       ExpectBlockType = true;
-    } else if (BaseName == "else") {
-      if (pop(BaseName, If))
+    } else if (Name == "else") {
+      if (pop(Name, If))
         return true;
       push(Else);
-    } else if (BaseName == "catch") {
-      if (pop(BaseName, Try))
+    } else if (Name == "catch") {
+      if (pop(Name, Try))
         return true;
       push(Try);
-    } else if (BaseName == "end_if") {
-      if (pop(BaseName, If, Else))
+    } else if (Name == "end_if") {
+      if (pop(Name, If, Else))
         return true;
-    } else if (BaseName == "end_try") {
-      if (pop(BaseName, Try))
+    } else if (Name == "end_try") {
+      if (pop(Name, Try))
         return true;
-    } else if (BaseName == "end_loop") {
-      if (pop(BaseName, Loop))
+    } else if (Name == "end_loop") {
+      if (pop(Name, Loop))
         return true;
-    } else if (BaseName == "end_block") {
-      if (pop(BaseName, Block))
+    } else if (Name == "end_block") {
+      if (pop(Name, Block))
         return true;
-    } else if (BaseName == "end_function") {
+    } else if (Name == "end_function") {
       CurrentState = EndFunction;
-      if (pop(BaseName, Function) || ensureEmptyNestingStack())
+      if (pop(Name, Function) || ensureEmptyNestingStack())
         return true;
     }
 
@@ -486,11 +483,11 @@ public:
         Parser.Lex();
         if (Lexer.isNot(AsmToken::Integer))
           return error("Expected integer instead got: ", Lexer.getTok());
-        if (parseOperandStartingWithInteger(true, Operands, BaseName))
+        if (parseOperandStartingWithInteger(true, Operands, Name))
           return true;
         break;
       case AsmToken::Integer:
-        if (parseOperandStartingWithInteger(false, Operands, BaseName))
+        if (parseOperandStartingWithInteger(false, Operands, Name))
           return true;
         break;
       case AsmToken::Real: {
