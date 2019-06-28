@@ -47,7 +47,7 @@ intrinsic operators and elemental functions.
 Fortran doesn't allow one to apply subscripts directly to an expression,
 but expressions have rank and shape, and one can view array expressions
 as functions over index tuples by applying those indices to the arrays
-in the expression.
+and subexpressions in the expression.
 
 Consider `B = A + 1.0` (assuming `REAL :: A(N,M), B(N,M)`).
 The right-hand side of that assignment could be evaluated into a
@@ -61,7 +61,7 @@ END DO
 DO CONCURRENT(J=1:N,K=1:M)
   B(J,K)=T(J,K)
 END DO
-DEALLOCATE(T(N,M))
+DEALLOCATE(T)
 ```
 But we can avoid the allocation, population, and deallocation of
 the temporary by treating the right-hand side expression as if it
@@ -83,7 +83,8 @@ Transformational intrinsic functions as function composition
 Many of the transformational intrinsic functions listed above
 can, when their array arguments are viewed as functions over their
 index tuples, be seen as compositions of those functions with
-functions of the "incoming" indices.
+functions of the "incoming" indices -- yielding a function for
+an entire right-hand side of an array assignment statement.
 
 For example, the application of `TRANSPOSE(A + 1.0)` to the index
 tuple `(J,K)` becomes `A(K,J) + 1.0`.
