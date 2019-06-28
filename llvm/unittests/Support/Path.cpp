@@ -1534,7 +1534,7 @@ TEST_F(FileSystemTest, getUmask) {
   unsigned CurrentMask = fs::getUmask();
   EXPECT_EQ(CurrentMask, 0022U)
       << "getUmask() didn't return previously set umask()";
-  EXPECT_EQ(::umask(OldMask), 0022) << "getUmask() may have changed umask()";
+  EXPECT_EQ(::umask(OldMask), 0022U) << "getUmask() may have changed umask()";
 #endif
 }
 
@@ -1556,7 +1556,7 @@ TEST_F(FileSystemTest, RespectUmask) {
 
   ASSERT_NO_ERROR(fs::setPermissions(TempPath, AllRWE, /*RespectUmask=*/false));
 
-  ErrorOr<fs::perms> Perms = fs::getPermissions(TempPath);
+  Perms = fs::getPermissions(TempPath);
   ASSERT_TRUE(!!Perms);
   EXPECT_EQ(Perms.get(), AllRWE) << "Should have ignored umask";
 
