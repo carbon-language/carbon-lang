@@ -520,9 +520,6 @@ int main(int argc, char *const argv[]) {
     driver.pgf90Args.push_back("-mp");
   }
   if (isPGF90) {
-    if (driver.encoding == Fortran::parser::Encoding::EUC_JP) {
-      driver.pgf90Args.push_back("-Mx,125,4");  // PGI "Kanji" mode
-    }
     if (!options.features.IsEnabled(
             Fortran::parser::LanguageFeature::BackslashEscapes)) {
       driver.pgf90Args.push_back(
