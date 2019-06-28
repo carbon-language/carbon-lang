@@ -9,6 +9,7 @@ static int sii;
 static int globalii;
 
 struct S {
+  // expected-note@+1 {{static data member is predetermined as shared}}
   static int ssi;
 };
 
@@ -19,6 +20,10 @@ int test_iteration_spaces() {
   float fii;
   double dii;
 #pragma omp simd linear(S::ssi)
+  for (S::ssi = 0; S::ssi < 10; ++S::ssi)
+    ;
+// expected-error@+1 {{shared variable cannot be private}}
+#pragma omp simd private(S::ssi)
   for (S::ssi = 0; S::ssi < 10; ++S::ssi)
     ;
 #pragma omp simd // no messages expected

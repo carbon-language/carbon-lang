@@ -1354,16 +1354,28 @@ const DSAStackTy::DSAVarData DSAStackTy::getTopDSA(ValueDecl *D,
   // in a Construct, C/C++, predetermined, p.7]
   //  Variables with static storage duration that are declared in a scope
   //  inside the construct are shared.
-  auto &&MatchesAlways = [](OpenMPDirectiveKind) { return true; };
   if (VD && VD->isStaticDataMember()) {
-    DSAVarData DVarTemp = hasDSA(D, isOpenMPPrivate, MatchesAlways, FromParent);
-    if (DVarTemp.CKind != OMPC_unknown && DVarTemp.RefExpr)
+    // Check for explicitly specified attributes.
+    const_iterator I = begin();
+    const_iterator EndI = end();
+    if (FromParent && I != EndI)
+      ++I;
+    auto It = I->SharingMap.find(D);
+    if (It != I->SharingMap.end()) {
+      const DSAInfo &Data = It->getSecond();
+      DVar.RefExpr = Data.RefExpr.getPointer();
+      DVar.PrivateCopy = Data.PrivateCopy;
+      DVar.CKind = Data.Attributes;
+      DVar.ImplicitDSALoc = I->DefaultAttrLoc;
+      DVar.DKind = I->Directive;
       return DVar;
+    }
 
     DVar.CKind = OMPC_shared;
     return DVar;
   }
 
+  auto &&MatchesAlways = [](OpenMPDirectiveKind) { return true; };
   // The predetermined shared attribute for const-qualified types having no
   // mutable members was removed after OpenMP 3.1.
   if (SemaRef.LangOpts.OpenMP <= 31) {
