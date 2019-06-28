@@ -13162,7 +13162,7 @@ bool ARMTargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
 }
 
 bool ARMTargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
-                                                       unsigned,
+                                                       unsigned Alignment,
                                                        MachineMemOperand::Flags,
                                                        bool *Fast) const {
   // Depends what it gets converted into if the type is weird.
@@ -13171,23 +13171,18 @@ bool ARMTargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
 
   // The AllowsUnaliged flag models the SCTLR.A setting in ARM cpus
   bool AllowsUnaligned = Subtarget->allowsUnalignedMem();
+  auto Ty = VT.getSimpleVT().SimpleTy;
 
-  switch (VT.getSimpleVT().SimpleTy) {
-  default:
-    return false;
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32: {
+  if (Ty == MVT::i8 || Ty == MVT::i16 || Ty == MVT::i32) {
     // Unaligned access can use (for example) LRDB, LRDH, LDR
     if (AllowsUnaligned) {
       if (Fast)
         *Fast = Subtarget->hasV7Ops();
       return true;
     }
-    return false;
   }
-  case MVT::f64:
-  case MVT::v2f64: {
+
+  if (Ty == MVT::f64 || Ty == MVT::v2f64) {
     // For any little-endian targets with neon, we can support unaligned ld/st
     // of D and Q (e.g. {D0,D1}) registers by using vld1.i8/vst1.i8.
     // A big-endian target may also explicitly support unaligned accesses
@@ -13196,9 +13191,52 @@ bool ARMTargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
         *Fast = true;
       return true;
     }
+  }
+
+  if (!Subtarget->hasMVEIntegerOps())
     return false;
+  if (Ty != MVT::v16i8 && Ty != MVT::v8i16 && Ty != MVT::v8f16 &&
+      Ty != MVT::v4i32 && Ty != MVT::v4f32 && Ty != MVT::v2i64 &&
+      Ty != MVT::v2f64)
+    return false;
+
+  if (Subtarget->isLittle()) {
+    // In little-endian MVE, the store instructions VSTRB.U8,
+    // VSTRH.U16 and VSTRW.U32 all store the vector register in
+    // exactly the same format, and differ only in the range of
+    // their immediate offset field and the required alignment.
+    //
+    // In particular, VSTRB.U8 can store a vector at byte alignment.
+    // So at this stage we can simply say that loads/stores of all
+    // 128-bit wide vector types are permitted at any alignment,
+    // because we know at least _one_ instruction can manage that.
+    //
+    // Later on we might find that some of those loads are better
+    // generated as VLDRW.U32 if alignment permits, to take
+    // advantage of the larger immediate range. But for the moment,
+    // all that matters is that if we don't lower the load then
+    // _some_ instruction can handle it.
+    if (Fast)
+      *Fast = true;
+    return true;
+  } else {
+    // In big-endian MVE, those instructions aren't so similar
+    // after all, because they reorder the bytes of the vector
+    // differently. So this time we can only store a particular
+    // kind of vector if its alignment is at least the element
+    // type. And we can't store vectors of i64 or f64 at all
+    // without having to do some postprocessing, because there's
+    // no VSTRD.U64.
+    if (Ty == MVT::v16i8 ||
+        ((Ty == MVT::v8i16 || Ty == MVT::v8f16) && Alignment >= 2) ||
+        ((Ty == MVT::v4i32 || Ty == MVT::v4f32) && Alignment >= 4)) {
+      if (Fast)
+        *Fast = true;
+      return true;
+    }
   }
-  }
+
+  return false;
 }
 
 static bool memOpAlign(unsigned DstAlign, unsigned SrcAlign,

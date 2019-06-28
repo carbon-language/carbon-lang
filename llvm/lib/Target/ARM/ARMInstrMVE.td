@@ -4151,12 +4151,14 @@ multiclass MVE_unpred_vector_store<Instruction RegImmInst, PatFrag StoreKind,
   def : MVE_unpred_vector_store_typed<v4i32, RegImmInst, StoreKind, shift>;
   def : MVE_unpred_vector_store_typed<v4f32, RegImmInst, StoreKind, shift>;
   def : MVE_unpred_vector_store_typed<v2i64, RegImmInst, StoreKind, shift>;
+  def : MVE_unpred_vector_store_typed<v2f64, RegImmInst, StoreKind, shift>;
 }
 
 class MVE_unpred_vector_load_typed<ValueType Ty, Instruction RegImmInst,
                                    PatFrag LoadKind, int shift>
       : Pat<(Ty (LoadKind t2addrmode_imm7<shift>:$addr)),
           (Ty (RegImmInst t2addrmode_imm7<shift>:$addr))>;
+
 multiclass MVE_unpred_vector_load<Instruction RegImmInst, PatFrag LoadKind,
                                   int shift> {
   def : MVE_unpred_vector_load_typed<v16i8, RegImmInst, LoadKind, shift>;
@@ -4165,6 +4167,7 @@ multiclass MVE_unpred_vector_load<Instruction RegImmInst, PatFrag LoadKind,
   def : MVE_unpred_vector_load_typed<v4i32, RegImmInst, LoadKind, shift>;
   def : MVE_unpred_vector_load_typed<v4f32, RegImmInst, LoadKind, shift>;
   def : MVE_unpred_vector_load_typed<v2i64, RegImmInst, LoadKind, shift>;
+  def : MVE_unpred_vector_load_typed<v2f64, RegImmInst, LoadKind, shift>;
 }
 
 let Predicates = [HasMVEInt, IsLE] in {
