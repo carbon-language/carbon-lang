@@ -33677,7 +33677,7 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
                                   LN->getPointerInfo(),
                                   LN->getAlignment(),
                                   MachineMemOperand::MOLoad);
-      DAG.ReplaceAllUsesOfValueWith(SDValue(LN, 0), VZLoad.getValue(1));
+      DAG.ReplaceAllUsesOfValueWith(SDValue(LN, 1), VZLoad.getValue(1));
       return VZLoad;
     }
   }
