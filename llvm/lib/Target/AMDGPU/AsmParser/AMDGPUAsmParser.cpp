@@ -1148,7 +1148,7 @@ private:
   };
 
   bool parseSendMsgBody(OperandInfoTy &Msg, OperandInfoTy &Op, OperandInfoTy &Stream);
-  void validateSendMsg(const OperandInfoTy &Msg,
+  bool validateSendMsg(const OperandInfoTy &Msg,
                        const OperandInfoTy &Op,
                        const OperandInfoTy &Stream,
                        const SMLoc Loc);
@@ -4743,7 +4743,7 @@ AMDGPUAsmParser::parseSendMsgBody(OperandInfoTy &Msg,
   return skipToken(AsmToken::RParen, "expected a closing parenthesis");
 }
 
-void
+bool
 AMDGPUAsmParser::validateSendMsg(const OperandInfoTy &Msg,
                                  const OperandInfoTy &Op,
                                  const OperandInfoTy &Stream,
@@ -4757,17 +4757,23 @@ AMDGPUAsmParser::validateSendMsg(const OperandInfoTy &Msg,
 
   if (!isValidMsgId(Msg.Id, getSTI(), Strict)) {
     Error(S, "invalid message id");
+    return false;
   } else if (Strict && (msgRequiresOp(Msg.Id) != Op.IsDefined)) {
     Error(S, Op.IsDefined ?
              "message does not support operations" :
              "missing message operation");
+    return false;
   } else if (!isValidMsgOp(Msg.Id, Op.Id, Strict)) {
     Error(S, "invalid operation id");
+    return false;
   } else if (Strict && !msgSupportsStream(Msg.Id, Op.Id) && Stream.IsDefined) {
     Error(S, "message operation does not support streams");
+    return false;
   } else if (!isValidMsgStream(Msg.Id, Op.Id, Stream.Id, Strict)) {
     Error(S, "invalid message stream id");
+    return false;
   }
+  return true;
 }
 
 OperandMatchResultTy
@@ -4783,8 +4789,8 @@ AMDGPUAsmParser::parseSendMsgOp(OperandVector &Operands) {
     OperandInfoTy Msg(ID_UNKNOWN_);
     OperandInfoTy Op(OP_NONE_);
     OperandInfoTy Stream(STREAM_ID_NONE_);
-    if (parseSendMsgBody(Msg, Op, Stream)) {
-      validateSendMsg(Msg, Op, Stream, Loc);
+    if (parseSendMsgBody(Msg, Op, Stream) &&
+        validateSendMsg(Msg, Op, Stream, Loc)) {
       ImmVal = encodeMsg(Msg.Id, Op.Id, Stream.Id);
     }
   } else if (parseExpr(ImmVal)) {
