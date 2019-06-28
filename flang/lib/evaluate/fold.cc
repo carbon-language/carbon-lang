@@ -2291,9 +2291,19 @@ template<typename A> bool IsInitialDataTarget(const A &) { return false; }
 template<typename... A> bool IsInitialDataTarget(const std::variant<A...> &);
 bool IsInitialDataTarget(const DataRef &);
 template<typename T> bool IsInitialDataTarget(const Expr<T> &);
-bool IsInitialDataTarget(const semantics::Symbol *s) { return true; }
+bool IsInitialDataTarget(const semantics::Symbol &s) { return true; }
+bool IsInitialDataTarget(const semantics::Symbol *s) {
+  return IsInitialDataTarget(*s);
+}
 bool IsInitialDataTarget(const Component &x) {
   return IsInitialDataTarget(x.base());
+}
+bool IsInitialDataTarget(const NamedEntity &x) {
+  if (const Component * c{x.UnwrapComponent()}) {
+    return IsInitialDataTarget(*c);
+  } else {
+    return IsInitialDataTarget(x.GetLastSymbol());
+  }
 }
 bool IsInitialDataTarget(const Triplet &x) {
   if (auto lower{x.lower()}) {
@@ -2326,9 +2336,7 @@ bool IsInitialDataTarget(const ArrayRef &x) {
   }
   return IsInitialDataTarget(x.base());
 }
-bool IsInitialDataTarget(const DataRef &x) {
-  return std::visit([](const auto &y) { return IsInitialDataTarget(y); }, x.u);
-}
+bool IsInitialDataTarget(const DataRef &x) { return IsInitialDataTarget(x.u); }
 bool IsInitialDataTarget(const Substring &x) {
   return IsConstantExpr(x.lower()) && IsConstantExpr(x.upper());
 }

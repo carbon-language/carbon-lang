@@ -826,7 +826,7 @@ private:
   void SetSaveAttr(Symbol &);
   bool HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
   const parser::Name *FindComponent(const parser::Name *, const parser::Name &);
-  void CheckInitialDataTarget(const Symbol &, const SomeExpr &);
+  void CheckInitialDataTarget(const Symbol &, const SomeExpr &, SourceName);
   void Initialization(const parser::Name &, const parser::Initialization &,
       bool inComponentDecl);
 
@@ -4497,26 +4497,51 @@ const parser::Name *DeclarationVisitor::FindComponent(
 
 // C764, C765
 void DeclarationVisitor::CheckInitialDataTarget(
-    const Symbol &pointer, const SomeExpr &expr) {
+    const Symbol &pointer, const SomeExpr &expr, SourceName source) {
+  if (!evaluate::IsInitialDataTarget(expr)) {
+    Say(source,
+        "Pointer '%s' cannot be initialized with a reference to a designator with non-constant subscripts"_err_en_US,
+        pointer.name());
+    return;
+  }
+  if (pointer.Rank() != expr.Rank()) {
+    Say(source,
+        "Pointer '%s' of rank %d cannot be initialized with a target of different rank (%d)"_err_en_US,
+        pointer.name(), pointer.Rank(), expr.Rank());
+    return;
+  }
   if (auto base{evaluate::GetBaseObject(expr)}) {
     if (const Symbol * baseSym{base->symbol()}) {
       const Symbol &ultimate{baseSym->GetUltimate()};
-      if (!IsAllocatable(ultimate) && ultimate.Corank() == 0 &&
-          ultimate.attrs().HasAll({Attr::TARGET, Attr::SAVE}) &&
-          evaluate::IsInitialDataTarget(expr)) {
-        // TODO: check type compatibility
-        // TODO: check non-deferred type parameter values
-        // TODO: check contiguity if pointer is CONTIGUOUS
-        if (pointer.Rank() != expr.Rank()) {
-          Say(pointer.name(),
-              "Pointer '%s' initialized with target of different rank"_err_en_US);
-        }
+      if (IsAllocatable(ultimate)) {
+        Say(source,
+            "Pointer '%s' cannot be initialized with a reference to an allocatable '%s'"_err_en_US,
+            pointer.name(), ultimate.name());
+        return;
+      }
+      if (ultimate.Corank() > 0) {
+        Say(source,
+            "Pointer '%s' cannot be initialized with a reference to a coarray '%s'"_err_en_US,
+            pointer.name(), ultimate.name());
+        return;
+      }
+      if (!ultimate.attrs().test(Attr::TARGET)) {
+        Say(source,
+            "Pointer '%s' cannot be initialized with a reference to an object '%s' that lacks the TARGET attribute"_err_en_US,
+            pointer.name(), ultimate.name());
+        return;
+      }
+      if (!ultimate.attrs().test(Attr::SAVE)) {
+        Say(source,
+            "Pointer '%s' cannot be initialized with a reference to an object '%s' that lacks the SAVE attribute"_err_en_US,
+            pointer.name(), ultimate.name());
         return;
       }
     }
   }
-  Say(pointer.name(),
-      "Pointer '%s' initialized with invalid data target designator"_err_en_US);
+  // TODO: check type compatibility
+  // TODO: check non-deferred type parameter values
+  // TODO: check contiguity if pointer is CONTIGUOUS
 }
 
 void DeclarationVisitor::Initialization(const parser::Name &name,
@@ -4552,7 +4577,8 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
             [&](const parser::InitialDataTarget &initExpr) {
               isPointer = true;
               if (MaybeExpr expr{EvaluateExpr(initExpr)}) {
-                CheckInitialDataTarget(ultimate, *expr);
+                CheckInitialDataTarget(
+                    ultimate, *expr, initExpr.value().source);
                 details->set_init(std::move(*expr));
               }
             },

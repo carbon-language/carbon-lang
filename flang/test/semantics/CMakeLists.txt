@@ -136,6 +136,7 @@ set(ERROR_TESTS
   omp-clause-validity01.f90
 #  omp-nested01.f90
   equivalence01.f90
+  init01.f90
 )
 
 # These test files have expected symbols in the source
