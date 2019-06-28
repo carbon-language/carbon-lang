@@ -1685,6 +1685,9 @@ void RewriteInstance::adjustFunctionBoundaries() {
             BFE = BC->getBinaryFunctions().end();
        BFI != BFE; ++BFI) {
     auto &Function = BFI->second;
+    const BinaryFunction *NextFunction{nullptr};
+    if (std::next(BFI) != BFE)
+      NextFunction = &std::next(BFI)->second;
 
     // Check if it's a fragment of a function.
     const auto *FragName = Function.hasNameRegex(".*\\.cold\\..*");
@@ -1710,7 +1713,11 @@ void RewriteInstance::adjustFunctionBoundaries() {
     auto NextSymRefI = FileSymRefs.upper_bound(Function.getAddress());
     while (NextSymRefI != FileSymRefs.end()) {
       auto &Symbol = NextSymRefI->second;
-      auto SymbolSize = ELFSymbolRef(Symbol).getSize();
+      const auto SymbolAddress = NextSymRefI->first;
+      const auto SymbolSize = ELFSymbolRef(Symbol).getSize();
+
+      if (NextFunction && SymbolAddress >= NextFunction->getAddress())
+        break;
 
       if (!Function.isSymbolValidInScope(Symbol, SymbolSize))
         break;
@@ -1736,9 +1743,8 @@ void RewriteInstance::adjustFunctionBoundaries() {
       NextObjectAddress = std::min(NextSymRefI->first, NextObjectAddress);
     }
     // Or till the next function not marked by a symbol.
-    if (std::next(BFI) != BFE) {
-      const auto &NextFunction = std::next(BFI)->second;
-      NextObjectAddress = std::min(NextFunction.getAddress(),
+    if (NextFunction) {
+      NextObjectAddress = std::min(NextFunction->getAddress(),
                                    NextObjectAddress);
     }
 
