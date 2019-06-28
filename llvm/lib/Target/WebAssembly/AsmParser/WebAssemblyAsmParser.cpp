@@ -665,13 +665,18 @@ public:
       return expect(AsmToken::EndOfStatement, "EOL");
     }
 
-    if (DirectiveID.getString() == ".int8") {
+    if (DirectiveID.getString() == ".int8" ||
+        DirectiveID.getString() == ".int16" ||
+        DirectiveID.getString() == ".int32" ||
+        DirectiveID.getString() == ".int64") {
       if (CheckDataSection()) return true;
-      int64_t V;
-      if (Parser.parseAbsoluteExpression(V))
-        return error("Cannot parse int8 constant: ", Lexer.getTok());
-      // TODO: error if value doesn't fit?
-      Out.EmitIntValue(static_cast<uint64_t>(V), 1);
+      const MCExpr *Val;
+      SMLoc End;
+      if (Parser.parseExpression(Val, End))
+        return error("Cannot parse .int expression: ", Lexer.getTok());
+      size_t NumBits = 0;
+      DirectiveID.getString().drop_front(4).getAsInteger(10, NumBits);
+      Out.EmitValue(Val, NumBits / 8, End);
       return expect(AsmToken::EndOfStatement, "EOL");
     }
 

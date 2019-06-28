@@ -95,7 +95,10 @@ test0:
 .L.str:
     .int8       'H'
     .asciz      "ello, World!"
-    .size       .L.str, 14
+    .int16      1234
+    .int64      5000000000
+    .int32      2000000000
+    .size       .L.str, 28
 
     .ident      "clang version 9.0.0 (trunk 364502) (llvm/trunk 364571)"
     .globaltype __stack_pointer, i32
@@ -185,5 +188,8 @@ test0:
 # CHECK-NEXT:  .L.str:
 # CHECK-NEXT:      .int8       72
 # CHECK-NEXT:      .asciz      "ello, World!"
+# CHECK-NEXT:      .int16       1234
+# CHECK-NEXT:      .int64       5000000000
+# CHECK-NEXT:      .int32       2000000000
 
 # CHECK:           .globaltype __stack_pointer, i32
