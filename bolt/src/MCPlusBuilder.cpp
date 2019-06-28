@@ -163,6 +163,10 @@ uint64_t MCPlusBuilder::getJumpTable(const MCInst &Inst) const {
   return *Value;
 }
 
+uint16_t MCPlusBuilder::getJumpTableIndexReg(const MCInst &Inst) const {
+  return getAnnotationAs<uint16_t>(Inst, "JTIndexReg");
+}
+
 bool MCPlusBuilder::setJumpTable(MCInst &Inst, uint64_t Value,
                                  uint16_t IndexReg) {
   if (!isIndirectBranch(Inst))
@@ -170,6 +174,14 @@ bool MCPlusBuilder::setJumpTable(MCInst &Inst, uint64_t Value,
   assert(getJumpTable(Inst) == 0 && "jump table already set");
   setAnnotationOpValue(Inst, MCAnnotation::kJumpTable, Value);
   addAnnotation<>(Inst, "JTIndexReg", IndexReg);
+  return true;
+}
+
+bool MCPlusBuilder::unsetJumpTable(MCInst &Inst) {
+  if (!getJumpTable(Inst))
+    return false;
+  removeAnnotation(Inst, MCAnnotation::kJumpTable);
+  removeAnnotation(Inst, "JTIndexReg");
   return true;
 }
 

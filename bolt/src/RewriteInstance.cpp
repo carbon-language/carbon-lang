@@ -356,6 +356,13 @@ SplitEH("split-eh",
   cl::cat(BoltOptCategory));
 
 cl::opt<bool>
+StrictMode("strict",
+  cl::desc("trust the input to be from a well-formed source"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
 TrapOldCode("trap-old-code",
   cl::desc("insert traps in old function bodies (relocation mode)"),
   cl::Hidden,
@@ -767,7 +774,8 @@ bool RewriteInstance::shouldDisassemble(BinaryFunction &BF) const {
     return false;
   }
 
-  if (opts::AggregateOnly && !BF.hasProfileAvailable())
+  // In strict mode we have to account for all functions.
+  if (!opts::StrictMode && opts::AggregateOnly && !BF.hasProfileAvailable())
     return false;
 
   return true;
@@ -1569,10 +1577,23 @@ void RewriteInstance::discoverFileObjects() {
     return;
 
   // Read all relocations now that we have binary functions mapped.
+  std::vector<SectionRef> RelocationSections;
   for (const auto &Section : InputFile->sections()) {
     if (Section.getRelocatedSection() != InputFile->section_end())
-      readRelocations(Section);
+      RelocationSections.push_back(Section);
   }
+
+  // Sort relocation sections so that we process text section relocations last.
+  std::stable_sort(RelocationSections.begin(), RelocationSections.end(),
+                   [](const SectionRef &A, const SectionRef &B) {
+                     if (!A.getRelocatedSection()->isText() &&
+                         B.getRelocatedSection()->isText())
+                       return true;
+                     return false;
+                   });
+
+  for (const auto &Section : RelocationSections)
+    readRelocations(Section);
 }
 
 void RewriteInstance::disassemblePLT() {
@@ -1874,7 +1895,8 @@ void RewriteInstance::readSpecialSections() {
   }
   
   if (BC->HasRelocations) {
-    outs() << "BOLT-INFO: enabling relocation mode\n";
+    outs() << "BOLT-INFO: enabling " << (opts::StrictMode ? "strict " : "")
+           << "relocation mode\n";
   }
 
   // Process debug sections.
@@ -1927,6 +1949,12 @@ void RewriteInstance::adjustCommandLineOptions() {
   if (opts::SplitEH && !BC->HasRelocations) {
     errs() << "BOLT-WARNING: disabling -split-eh in non-relocation mode\n";
     opts::SplitEH = false;
+  }
+
+  if (opts::StrictMode && !BC->HasRelocations) {
+    errs() << "BOLT-WARNING: disabling strict mode (-strict) in non-relocation "
+              "mode\n";
+    opts::StrictMode = false;
   }
 
   if (BC->isX86() && BC->HasRelocations &&
@@ -2104,7 +2132,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
 void RewriteInstance::readRelocations(const SectionRef &Section) {
   StringRef SectionName;
   Section.getName(SectionName);
-  DEBUG(dbgs() << "BOLT-DEBUG: relocations for section "
+  DEBUG(dbgs() << "BOLT-DEBUG: reading relocations for section "
                << SectionName << ":\n");
   if (BinarySection(*BC, Section).isAllocatable()) {
     DEBUG(dbgs() << "BOLT-DEBUG: ignoring runtime relocations\n");
@@ -2125,7 +2153,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     return;
   }
   const bool SkipRelocs = StringSwitch<bool>(RelocatedSectionName)
-    .Cases(".plt", ".rela.plt", ".got.plt", ".eh_frame", true)
+    .Cases(".plt", ".rela.plt", ".got.plt", ".eh_frame", ".gcc_except_table",
+           true)
     .Default(false);
   if (SkipRelocs) {
     DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocations against known section\n");
@@ -2176,6 +2205,10 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       RType &= ~ELF::R_X86_64_converted_reloc_bit;
     }
 
+    // No special handling required for TLS relocations.
+    if (Relocation::isTLS(RType))
+      continue;
+
     std::string SymbolName;
     uint64_t SymbolAddress;
     int64_t Addend;
@@ -2197,13 +2230,12 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 
     const auto Address = SymbolAddress + Addend;
 
-    DEBUG(
-       dbgs() << "BOLT-DEBUG: ";
-       printRelocationInfo(Rel,
-                           SymbolName,
-                           SymbolAddress,
-                           Addend,
-                           ExtractedValue));
+    DEBUG(dbgs() << "BOLT-DEBUG: ";
+          printRelocationInfo(Rel,
+                              SymbolName,
+                              SymbolAddress,
+                              Addend,
+                              ExtractedValue));
 
     BinaryFunction *ContainingBF = nullptr;
     if (IsFromCode) {
@@ -2227,6 +2259,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       // from linker data alone.
       if (IsFromCode) {
         ContainingBF->addPCRelativeRelocationAddress(Rel.getOffset());
+      } else {
+        BC->addPCRelativeDataRelocation(Rel.getOffset(), Rel.getType(),
+                                        ExtractedValue);
       }
       DEBUG(dbgs() << "BOLT-DEBUG: not creating PC-relative relocation at 0x"
                    << Twine::utohexstr(Rel.getOffset()) << " for " << SymbolName
@@ -2328,6 +2363,13 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           ReferencedSymbol =
             ReferencedBF->getOrCreateLocalLabel(Address,
                                                 /*CreatePastEnd =*/ true);
+          ReferencedBF->registerReferencedOffset(RefFunctionOffset);
+          if (opts::Verbosity > 1 && !RelocatedSection.isReadOnly()) {
+            dbgs() << "BOLT-WARNING: writable reference into the middle of "
+                   << "the function " << *ReferencedBF
+                   << " detected at address 0x"
+                   << Twine::utohexstr(Rel.getOffset()) << '\n';
+          }
         }
         SymbolAddress = Address;
         Addend = 0;
@@ -2339,7 +2381,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         dbgs() << '\n'
       );
     } else {
-      if (RefSection && RefSection->isText() && SymbolAddress) {
+      if (IsToCode && SymbolAddress) {
         // This can happen e.g. with PIC-style jump tables.
         DEBUG(dbgs() << "BOLT-DEBUG: no corresponding function for "
                         "relocation against code\n");
@@ -2509,26 +2551,19 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     if (IsFromCode && IsAArch64)
       ForceRelocation = true;
 
-    if (refersToReorderedSection(RefSection) ||
+    if ((RefSection && refersToReorderedSection(RefSection)) ||
         (opts::ForceToDataRelocations && checkMaxDataRelocations()))
       ForceRelocation = true;
 
     if (IsFromCode) {
-      if (ReferencedBF || ForceRelocation) {
-        ContainingBF->addRelocation(Rel.getOffset(),
-                                    ReferencedSymbol,
-                                    RType,
-                                    Addend,
-                                    ExtractedValue);
-      } else {
-        DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from code to data "
-                     << ReferencedSymbol->getName() << "\n");
-      }
+      ContainingBF->addRelocation(Rel.getOffset(),
+                                  ReferencedSymbol,
+                                  RType,
+                                  Addend,
+                                  ExtractedValue);
     } else if (IsToCode || ForceRelocation) {
-      BC->addRelocation(Rel.getOffset(),
-                        ReferencedSymbol,
-                        RType,
-                        Addend);
+      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, RType, Addend,
+                        ExtractedValue);
     } else {
       DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from data to data\n");
     }
@@ -2657,6 +2692,8 @@ void RewriteInstance::disassembleFunctions() {
     if (opts::PrintAll || opts::PrintDisasm)
       Function.print(outs(), "after disassembly", true);
 
+    // Post-process inter-procedural references ASAP as it may affect
+    // functions we are about to disassemble next.
     BC->processInterproceduralReferences();
   }
 

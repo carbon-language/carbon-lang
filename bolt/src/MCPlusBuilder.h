@@ -909,7 +909,7 @@ public:
   /// of the passed \p Symbol plus \p Addend. If the instruction does not have
   /// an immediate operand or has more than one - then return false. Otherwise
   /// return true.
-  virtual bool replaceImmWithSymbolRef(MCInst &Inst, MCSymbol *Symbol,
+  virtual bool replaceImmWithSymbolRef(MCInst &Inst, const MCSymbol *Symbol,
                                        int64_t Addend, MCContext *Ctx,
                                        int64_t &Value, uint64_t RelType) const {
     llvm_unreachable("not implemented");
@@ -981,9 +981,14 @@ public:
   /// Return jump table addressed by this instruction.
   uint64_t getJumpTable(const MCInst &Inst) const;
 
+  /// Return index register for instruction that uses a jump table.
+  uint16_t getJumpTableIndexReg(const MCInst &Inst) const;
+
   /// Set jump table addressed by this instruction.
-  bool setJumpTable(MCInst &Inst, uint64_t Value,
-                    uint16_t IndexReg);
+  bool setJumpTable(MCInst &Inst, uint64_t Value, uint16_t IndexReg);
+
+  /// Disassociate instruction with a jump table.
+  bool unsetJumpTable(MCInst &Inst);
 
   /// Return destination of conditional tail call instruction if \p Inst is one.
   Optional<uint64_t> getConditionalTailCall(const MCInst &Inst) const;
@@ -1145,7 +1150,7 @@ public:
   }
 
   /// Replace instruction opcode to be a tail call instead of jump.
-  virtual bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) {
+  virtual bool convertJmpToTailCall(MCInst &Inst) {
     llvm_unreachable("not implemented");
     return false;
   }

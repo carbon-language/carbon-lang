@@ -37,6 +37,8 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 
+extern cl::opt<bool> AggregateOnly;
+extern cl::opt<bool> StrictMode;
 extern cl::opt<unsigned> Verbosity;
 
 cl::opt<bool>
@@ -111,6 +113,9 @@ BinaryContext::~BinaryContext() {
   }
   for (auto *InjectedFunction : InjectedBinaryFunctions) {
     delete InjectedFunction;
+  }
+  for (auto JTI : JumpTables) {
+    delete JTI.second;
   }
   clearBinaryData();
 }
@@ -224,32 +229,32 @@ BinaryContext::getSubBinaryData(BinaryData *BD) {
   return make_range(Start, End);
 }
 
-std::pair<MCSymbol *, uint64_t>
-BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF) {
+std::pair<const MCSymbol *, uint64_t>
+BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
+                                bool IsPCRel) {
   uint64_t Addend{0};
 
   if (isAArch64()) {
     // Check if this is an access to a constant island and create bookkeeping
     // to keep track of it and emit it later as part of this function.
-    if (MCSymbol *IslandSym = BF.getOrCreateIslandAccess(Address)) {
+    if (MCSymbol *IslandSym = BF.getOrCreateIslandAccess(Address))
       return std::make_pair(IslandSym, Addend);
-    } else {
-      // Detect custom code written in assembly that refers to arbitrary
-      // constant islands from other functions. Write this reference so we
-      // can pull this constant island and emit it as part of this function
-      // too.
-      auto IslandIter = AddressToConstantIslandMap.lower_bound(Address);
-      if (IslandIter != AddressToConstantIslandMap.end()) {
-        if (auto *IslandSym =
-                IslandIter->second->getOrCreateProxyIslandAccess(Address, BF)) {
-          /// Make this function depend on IslandIter->second because we have
-          /// a reference to its constant island. When emitting this function,
-          /// we will also emit IslandIter->second's constants. This only
-          /// happens in custom AArch64 assembly code.
-          BF.IslandDependency.insert(IslandIter->second);
-          BF.ProxyIslandSymbols[IslandSym] = IslandIter->second;
-          return std::make_pair(IslandSym, Addend);
-        }
+
+    // Detect custom code written in assembly that refers to arbitrary
+    // constant islands from other functions. Write this reference so we
+    // can pull this constant island and emit it as part of this function
+    // too.
+    auto IslandIter = AddressToConstantIslandMap.lower_bound(Address);
+    if (IslandIter != AddressToConstantIslandMap.end()) {
+      if (auto *IslandSym =
+              IslandIter->second->getOrCreateProxyIslandAccess(Address, BF)) {
+        /// Make this function depend on IslandIter->second because we have
+        /// a reference to its constant island. When emitting this function,
+        /// we will also emit IslandIter->second's constants. This only
+        /// happens in custom AArch64 assembly code.
+        BF.IslandDependency.insert(IslandIter->second);
+        BF.ProxyIslandSymbols[IslandSym] = IslandIter->second;
+        return std::make_pair(IslandSym, Addend);
       }
     }
   }
@@ -267,6 +272,7 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF) {
                  << Twine::utohexstr(Address) << " in function "
                  << BF << '\n';
         }
+        BF.HasInternalLabelReference = true;
         return std::make_pair(
                   BF.addEntryPointAtOffset(Address - BF.getAddress()),
                   Addend);
@@ -274,6 +280,16 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF) {
     } else {
       InterproceduralReferences.insert(std::make_pair(&BF, Address));
     }
+  }
+
+  const auto MemType = analyzeMemoryAt(Address, BF);
+  if (MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
+    JumpTable *JT;
+    const MCSymbol *Symbol;
+    std::tie(JT, Symbol) =
+      getOrCreateJumpTable(BF, Address, JumpTable::JTT_PIC);
+
+    return std::make_pair(Symbol, Addend);
   }
 
   if (auto *BD = getBinaryDataContainingAddress(Address)) {
@@ -303,10 +319,15 @@ BinaryContext::analyzeMemoryAt(uint64_t Address, BinaryFunction &BF) {
     }
     return MemoryContentsType::UNKNOWN;
   }
+
   if (Section->isVirtual()) {
     // The contents are filled at runtime.
     return MemoryContentsType::UNKNOWN;
   }
+
+  // No support for jump tables in code yet.
+  if (Section->isText())
+    return MemoryContentsType::UNKNOWN;
 
   auto couldBeJumpTable = [&](const uint64_t JTAddress,
                               JumpTable::JumpTableType Type) {
@@ -413,12 +434,42 @@ void BinaryContext::populateJumpTables() {
       if (!BF.getInstructionAtOffset(Value - BF.getAddress()))
         break;
 
+      BF.registerReferencedOffset(Value - BF.getAddress());
       JT->OffsetEntries.emplace_back(Value - BF.getAddress());
     }
 
+    if (JT->OffsetEntries.size() <= 1) {
+      dbgs() << "JT with size " << JT->OffsetEntries.size() << " detected in "
+             << BF << '\n';
+      JT->print(dbgs());
+      if (NextJTI != JTE) {
+        dbgs() << "next jump table at 0x"
+               << Twine::utohexstr(NextJTI->second->getAddress())
+               << " belongs to function " << *NextJTI->second->Parent << '\n';
+        NextJTI->second->print(dbgs());
+      }
+    }
     assert(JT->OffsetEntries.size() > 1 &&
            "expected more than one jump table entry");
+
+    // Check there are relocations against JT entries.
+    if (opts::StrictMode) {
+      for (auto Address = JT->getAddress();
+           Address < JT->getAddress() + JT->getSize();
+           Address += JT->EntrySize) {
+        if (JT->Type == JumpTable::JTT_PIC) {
+          assert(PCRelocation.count(Address) && "no matching relocation");
+          PCRelocation.erase(PCRelocation.find(Address));
+        } else {
+          assert(getRelocationAt(Address) && "missing relocation");
+        }
+      }
+    }
   }
+
+  assert((!opts::StrictMode || !PCRelocation.size()) &&
+         "unclaimed PC-relative relocations left in data\n");
+  clearList(PCRelocation);
 }
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
@@ -454,49 +505,42 @@ std::pair<JumpTable *, const MCSymbol *>
 BinaryContext::getOrCreateJumpTable(BinaryFunction &Function,
                                    uint64_t Address,
                                    JumpTable::JumpTableType Type) {
-  const auto JumpTableName = generateJumpTableName(Function, Address);
   if (auto *JT = getJumpTableContainingAddress(Address)) {
     assert(JT->Type == Type && "jump table types have to match");
     assert(JT->Parent == &Function &&
            "cannot re-use jump table of a different function");
-    assert((Address == JT->getAddress() || Type != JumpTable::JTT_PIC) &&
-           "cannot re-use part of PIC jump table");
-    // Get or create a new label for the table.
-    const auto JTOffset = Address - JT->getAddress();
-    auto LI = JT->Labels.find(JTOffset);
-    if (LI == JT->Labels.end()) {
-      auto *JTStartLabel = registerNameAtAddress(JumpTableName,
-                                                 Address,
-                                                 0,
-                                                 JT->EntrySize);
-      auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
-      assert(Result.second && "error adding jump table label");
-      LI = Result.first;
-    }
+    assert(Address == JT->getAddress() && "unexpected non-empty jump table");
 
-    return std::make_pair(JT, LI->second);
+    return std::make_pair(JT, JT->getFirstLabel());
   }
 
-  auto *JTStartLabel = Ctx->getOrCreateSymbol(JumpTableName);
   const auto EntrySize =
     Type == JumpTable::JTT_PIC ? 4 : AsmInfo->getCodePointerSize();
 
+  // Re-use the existing symbol if possible.
+  MCSymbol *JTLabel{nullptr};
+  if (auto *Object = getBinaryDataAtAddress(Address)) {
+    if (!isInternalSymbolName(Object->getSymbol()->getName()))
+      JTLabel = Object->getSymbol();
+  }
+  if (!JTLabel) {
+    const auto JumpTableName = generateJumpTableName(Function, Address);
+    JTLabel = Ctx->getOrCreateSymbol(JumpTableName);
+    registerNameAtAddress(JTLabel->getName(), Address, 0, EntrySize);
+  }
+
   DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
-               << JTStartLabel->getName()
+               << JTLabel->getName()
                << " in function " << Function << 'n');
 
-  auto *JT = new JumpTable(JumpTableName,
+  auto *JT = new JumpTable(JTLabel->getName(),
                            Address,
                            EntrySize,
                            Type,
                            {},
-                           JumpTable::LabelMapType{{0, JTStartLabel}},
+                           JumpTable::LabelMapType{{0, JTLabel}},
                            Function,
                            *getSectionForAddress(Address));
-
-  const auto *JTLabel = registerNameAtAddress(JumpTableName, Address, JT);
-  assert(JTLabel == JTStartLabel);
-
   JumpTables.emplace(Address, JT);
 
   // Duplicate the entry for the parent function for easy access.
@@ -638,12 +682,6 @@ bool BinaryContext::setBinaryDataSize(uint64_t Address, uint64_t Size) {
 }
 
 void BinaryContext::generateSymbolHashes() {
-  auto isNonAnonymousName = [](StringRef Name) {
-    return !(Name.startswith("SYMBOLat") ||
-             Name.startswith("DATAat") ||
-             Name.startswith("HOLEat"));
-  };
-
   auto isPadding = [](const BinaryData &BD) {
     auto Contents = BD.getSection().getContents();
     auto SymData = Contents.substr(BD.getOffset(), BD.getSize());
@@ -656,14 +694,16 @@ void BinaryContext::generateSymbolHashes() {
     auto &BD = *Entry.second;
     auto Name = BD.getName();
 
-    if (isNonAnonymousName(Name))
+    if (!isInternalSymbolName(Name))
       continue;
 
     // First check if a non-anonymous alias exists and move it to the front.
     if (BD.getNames().size() > 1) {
       auto Itr = std::find_if(BD.Names.begin(),
                               BD.Names.end(),
-                              isNonAnonymousName);
+                              [&](const StringRef Name) {
+                                return !isInternalSymbolName(Name);
+                              });
       if (Itr != BD.Names.end()) {
         assert(BD.Names.size() == BD.Symbols.size() &&
                "there should be a 1:1 mapping between names and symbols");
@@ -1254,10 +1294,11 @@ void BinaryContext::printInstruction(raw_ostream &OS,
       if (GnuArgsSize >= 0)
         OS << "; GNU_args_size = " << GnuArgsSize;
     }
-  }
-  if (MIB->isIndirectBranch(Instruction)) {
+  } else if (MIB->isIndirectBranch(Instruction)) {
     if (auto JTAddress = MIB->getJumpTable(Instruction)) {
       OS << " # JUMPTABLE @0x" << Twine::utohexstr(JTAddress);
+    } else {
+      OS << " # UNKNOWN CONTROL FLOW";
     }
   }
 
@@ -1499,7 +1540,9 @@ bool BinaryContext::removeRelocationAt(uint64_t Address) {
 
 const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {
   auto Section = getSectionForAddress(Address);
-  assert(Section && "cannot find section for address");
+  if (!Section)
+    return nullptr;
+
   return Section->getRelocationAt(Address - Section->getAddress());
 }
 

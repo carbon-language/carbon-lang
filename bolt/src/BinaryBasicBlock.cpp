@@ -96,6 +96,10 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
       }
     }
   } else {
+    // Unknown control flow.
+    if (Inst && BC.MIB->isIndirectBranch(*Inst))
+      return true;
+
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;

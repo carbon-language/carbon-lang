@@ -1600,7 +1600,8 @@ public:
 
     case X86::AND64ri32:
     case X86::AND64ri8:
-      assert(Inst.getOperand(2).isImm());
+      if (!Inst.getOperand(2).isImm())
+        return false;
       if (auto InputVal = getOperandVal(Inst.getOperand(1).getReg())) {
         Output = *InputVal & Inst.getOperand(2).getImm();
       } else {
@@ -1609,7 +1610,8 @@ public:
       break;
     case X86::SUB64ri32:
     case X86::SUB64ri8:
-      assert(Inst.getOperand(2).isImm());
+      if (!Inst.getOperand(2).isImm())
+        return false;
       if (auto InputVal = getOperandVal(Inst.getOperand(1).getReg())) {
         Output = *InputVal - Inst.getOperand(2).getImm();
       } else {
@@ -1618,7 +1620,8 @@ public:
       break;
     case X86::ADD64ri32:
     case X86::ADD64ri8:
-      assert(Inst.getOperand(2).isImm());
+      if (!Inst.getOperand(2).isImm())
+        return false;
       if (auto InputVal = getOperandVal(Inst.getOperand(1).getReg())) {
         Output = *InputVal + Inst.getOperand(2).getImm();
       } else {
@@ -1626,7 +1629,8 @@ public:
       }
       break;
     case X86::ADD64i32:
-      assert(Inst.getOperand(0).isImm());
+      if (!Inst.getOperand(0).isImm())
+        return false;
       if (auto InputVal = getOperandVal(X86::RAX)) {
         Output = *InputVal + Inst.getOperand(0).getImm();
       } else {
@@ -2029,7 +2033,7 @@ public:
     return false;
   }
 
-  bool convertJmpToTailCall(MCInst &Inst, MCContext *) override {
+  bool convertJmpToTailCall(MCInst &Inst) override {
     int NewOpcode;
     switch (Inst.getOpcode()) {
     default:
@@ -2048,6 +2052,26 @@ public:
     case X86::JMP32r:
     case X86::JMP64r:
       NewOpcode = X86::TAILJMPr;
+      break;
+    }
+
+    Inst.setOpcode(NewOpcode);
+    return true;
+  }
+
+  bool convertTailCallToJmp(MCInst &Inst) override {
+    int NewOpcode;
+    switch (Inst.getOpcode()) {
+    default:
+      return false;
+    case X86::TAILJMPd:
+      NewOpcode = X86::JMP_1;
+      break;
+    case X86::TAILJMPm:
+      NewOpcode = X86::JMP64m;
+      break;
+    case X86::TAILJMPr:
+      NewOpcode = X86::JMP64r;
       break;
     }
 
@@ -2315,7 +2339,6 @@ public:
           break;
         MovInstr = &Instr;
       } else {
-        assert(MovInstr && "MOV instruction expected to be set");
         if (!InstrDesc.hasDefOfPhysReg(Instr, R1, *RegInfo))
           continue;
         if (!isLEA64r(Instr)) {
@@ -2375,15 +2398,15 @@ public:
     //   {%rip}/{%basereg} + Imm + IndexReg * Scale
     //
     // We are interested in the cases where Scale == sizeof(uintptr_t) and
-    // the contents of the memory are presumably a function array.
+    // the contents of the memory are presumably an array of pointers to code.
     //
     // Normal jump table:
     //
-    //    jmp *(JUMP_TABLE, %index, Scale)
+    //    jmp *(JUMP_TABLE, %index, Scale)        <- MemLocInstr
     //
     //    or
     //
-    //    mov (JUMP_TABLE, %index, Scale), %r1
+    //    mov (JUMP_TABLE, %index, Scale), %r1    <- MemLocInstr
     //    ...
     //    jmp %r1
     //
@@ -2823,8 +2846,8 @@ public:
     return Code;
   }
 
-  bool replaceImmWithSymbolRef(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
-                               MCContext *Ctx, int64_t &Value,
+  bool replaceImmWithSymbolRef(MCInst &Inst, const MCSymbol *Symbol,
+                               int64_t Addend, MCContext *Ctx, int64_t &Value,
                                uint64_t RelType) const override {
     unsigned ImmOpNo = -1U;
 

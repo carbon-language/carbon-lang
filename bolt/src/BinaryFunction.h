@@ -202,10 +202,26 @@ private:
 
   std::unique_ptr<BinaryLoopInfo> BLI;
 
+  /// All labels in the function that are referenced via relocations from
+  /// data objects. Typically these are jump table destinations and computed
+  /// goto labels.
+  std::set<uint64_t> ExternallyReferencedOffsets;
+
+  /// Offsets of indirect branches with unknown destinations.
+  std::set<uint64_t> UnknownIndirectBranchOffsets;
+
   /// False if the function is too complex to reconstruct its control
   /// flow graph.
   /// In relocation mode we still disassemble and re-assemble such functions.
   bool IsSimple{true};
+
+  /// True if the function has an indirect branch with unknown destination.
+  bool HasUnknownControlFlow{false};
+
+  /// The code from inside the function references one of the code locations
+  /// from the same function as a data, i.e. it's possible the label is used
+  /// inside an address calculation or could be referenced from outside.
+  bool HasInternalLabelReference{false};
 
   /// In AArch64, preserve nops to maintain code equal to input (assuming no
   /// optimizations are done).
@@ -571,6 +587,17 @@ private:
     EntryOffsets.emplace(Offset);
     IsMultiEntry = (Offset == 0 ? IsMultiEntry : true);
     return getOrCreateLocalLabel(getAddress() + Offset);
+  }
+
+  /// Register an internal offset in a function referenced from outside.
+  void registerReferencedOffset(uint64_t Offset) {
+    ExternallyReferencedOffsets.emplace(Offset);
+  }
+
+  /// True if there are references to internals of this function from data,
+  /// e.g. from jump tables.
+  bool hasInternalReference() const {
+    return !ExternallyReferencedOffsets.empty();
   }
 
   /// Update all \p From references in the code to refer to \p To. Used
@@ -1169,7 +1196,7 @@ public:
   /// address in a function. During disassembly we have to make sure we create
   /// relocation at that location.
   void addPCRelativeRelocationAddress(uint64_t Address) {
-    assert(Address >= getAddress() && Address < getAddress() + getSize() &&
+    assert(containsAddress(Address, /*UseMaxSize=*/ true) &&
            "address is outside of the function");
     PCRelativeRelocationOffsets.emplace(Address - getAddress());
   }
@@ -1224,6 +1251,11 @@ public:
   /// Return true if the function could be correctly processed.
   bool isSimple() const {
     return IsSimple;
+  }
+
+  /// Return true if the function has instruction(s) with unknown control flow.
+  bool hasUnknownControlFlow() const {
+    return HasUnknownControlFlow;
   }
 
   /// Return true if the function should be split for the output.

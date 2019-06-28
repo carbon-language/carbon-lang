@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "JumpTable.h"
+#include "BinaryFunction.h"
 #include "BinarySection.h"
 #include "Relocation.h"
 #include "llvm/MC/MCStreamer.h"
@@ -170,16 +171,20 @@ uint64_t JumpTable::emit(MCStreamer *Streamer,
 
 void JumpTable::print(raw_ostream &OS) const {
   uint64_t Offset = 0;
+  if (Type == JTT_PIC)
+    OS << "PIC ";
+  OS << "Jump table " << getName() << " for function " << *Parent << " at 0x"
+     << Twine::utohexstr(getAddress()) << " with a total count of " << Count
+     << ":\n";
+  for (const auto EntryOffset : OffsetEntries) {
+    OS << "  " << Twine::utohexstr(EntryOffset) << '\n';
+  }
   for (const auto *Entry : Entries) {
     auto LI = Labels.find(Offset);
-    if (LI != Labels.end()) {
-      OS << "Jump Table " << LI->second->getName() << " at @0x"
-         << Twine::utohexstr(getAddress()+Offset);
-      if (Offset) {
-        OS << " (possibly part of larger jump table):\n";
-      } else {
-        OS << " with total count of " << Count << ":\n";
-      }
+    if (Offset && LI != Labels.end()) {
+      OS << "Jump Table " << LI->second->getName() << " at 0x"
+         << Twine::utohexstr(getAddress() + Offset)
+        << " (possibly part of larger jump table):\n";
     }
     OS << format("  0x%04" PRIx64 " : ", Offset) << Entry->getName();
     if (!Counts.empty()) {

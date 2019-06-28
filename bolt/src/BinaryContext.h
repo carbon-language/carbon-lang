@@ -67,6 +67,12 @@ enum class MemoryContentsType : char {
   POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a PIC jump table.
 };
 
+/// Free memory allocated for \p List.
+template<typename T> void clearList(T& List) {
+  T TempList;
+  TempList.swap(List);
+}
+
 /// Helper function to truncate a \p Value to given size in \p Bytes.
 inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
@@ -302,7 +308,9 @@ public:
     return InjectedBinaryFunctions;
   }
 
-  /// Construct a jump table for \p Function at \p Address.
+  /// Construct a jump table for \p Function at \p Address or return an existing
+  /// one at that location.
+  ///
   /// May create an embedded jump table and return its label as the second
   /// element of the pair.
   std::pair<JumpTable *, const MCSymbol *>
@@ -502,9 +510,11 @@ public:
   }
 
   /// Process \p Address reference from code in function \BF.
+  /// \p IsPCRel indicates if the reference is PC-relative.
   /// Return <Symbol, Addend> pair corresponding to the \p Address.
-  std::pair<MCSymbol *, uint64_t> handleAddressRef(uint64_t Address,
-                                                   BinaryFunction &BF);
+  std::pair<const MCSymbol *, uint64_t> handleAddressRef(uint64_t Address,
+                                                         BinaryFunction &BF,
+                                                         bool IsPCRel);
 
   /// Analyze memory contents at the given \p Address and return the type of
   /// memory contents (such as a possible jump table).
@@ -581,6 +591,14 @@ public:
   BinaryData *getBinaryDataByName(StringRef Name) {
     auto Itr = GlobalSymbols.find(Name);
     return Itr != GlobalSymbols.end() ? Itr->second : nullptr;
+  }
+
+  /// Return true if \p SymbolName was generated internally and was not present
+  /// in the input binary.
+  bool isInternalSymbolName(const StringRef Name) {
+    return Name.startswith("SYMBOLat") ||
+           Name.startswith("DATAat") ||
+           Name.startswith("HOLEat");
   }
 
   MCSymbol *getHotTextStartSymbol() const {
@@ -833,6 +851,14 @@ public:
   /// Add a Section relocation at a given \p Address.
   void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
                      uint64_t Addend = 0, uint64_t Value = 0);
+
+  /// All PC-relative relocations in data objects.
+  std::map<uint64_t, std::pair<uint64_t, uint64_t>> PCRelocation;
+
+  void addPCRelativeDataRelocation(uint64_t Address, uint64_t Type,
+                                   uint64_t Value) {
+    PCRelocation[Address] = std::make_pair(Type, Value);
+  }
 
   /// Remove registered relocation at a given \p Address.
   bool removeRelocationAt(uint64_t Address);

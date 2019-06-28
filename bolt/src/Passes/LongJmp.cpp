@@ -84,7 +84,7 @@ LongJmpPass::createNewStub(BinaryBasicBlock &SourceBB, const MCSymbol *TgtSym,
   MCInst Inst;
   BC.MIB->createUncondBranch(Inst, TgtSym, BC.Ctx.get());
   if (TgtIsFunc)
-    BC.MIB->convertJmpToTailCall(Inst, BC.Ctx.get());
+    BC.MIB->convertJmpToTailCall(Inst);
   StubBB->addInstruction(Inst);
   StubBB->setExecutionCount(0);
 

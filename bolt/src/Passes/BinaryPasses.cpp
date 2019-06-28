@@ -137,6 +137,22 @@ PrintSortedBy("print-sorted-by",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+PrintUnknown("print-unknown",
+  cl::desc("print names of functions with unknown control flow"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory),
+  cl::Hidden);
+
+static cl::opt<bool>
+PrintUnknownCFG("print-unknown-cfg",
+  cl::desc("dump CFG of functions with unknown control flow"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory),
+  cl::ReallyHidden);
+
 static cl::opt<bolt::ReorderBasicBlocks::LayoutType>
 ReorderBlocks("reorder-blocks",
   cl::desc("change layout of basic blocks in a function"),
@@ -270,7 +286,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
         if (!BB->isValid()) {
           dbgs() << "BOLT-INFO: UCE found unreachable block " << BB->getName()
                  << " in function " << Function << "\n";
-          BB->dump();
+          Function.dump();
         }
       }
     });
@@ -1350,17 +1366,26 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   uint64_t NumSimpleFunctions{0};
   uint64_t NumStaleProfileFunctions{0};
   uint64_t NumNonSimpleProfiledFunctions{0};
+  uint64_t NumUnknownControlFlowFunctions{0};
   std::vector<BinaryFunction *> ProfiledFunctions;
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
     if (!Function.isSimple()) {
-      if (Function.hasProfile()) {
+      if (Function.hasProfile() && !Function.isPLTFunction()) {
         ++NumNonSimpleProfiledFunctions;
       }
       continue;
     }
     ++NumSimpleFunctions;
+    if (Function.hasUnknownControlFlow()) {
+      if (opts::PrintUnknownCFG) {
+        Function.dump();
+      } else if (opts::PrintUnknown) {
+        errs() << "function with unknown control flow: " << Function <<'\n';
+      }
+      ++NumUnknownControlFlowFunctions;
+    }
     if (!Function.hasProfile())
       continue;
     if (Function.hasValidProfile()) {
@@ -1590,6 +1615,15 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
         SuboptimalFuncs[I]->print(outs());
       }
     }
+  }
+
+  if (NumUnknownControlFlowFunctions) {
+    outs() << "BOLT-INFO: " << NumUnknownControlFlowFunctions
+           << " functions have instructions with unknown control flow";
+    if (!opts::PrintUnknown) {
+      outs() << ". Use -print-unknown to see the list.";
+    }
+    outs() << '\n';
   }
 }
 

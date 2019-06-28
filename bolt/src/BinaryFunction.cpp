@@ -54,10 +54,11 @@ extern cl::OptionCategory BoltRelocCategory;
 
 extern bool shouldProcess(const BinaryFunction &);
 
-extern cl::opt<bool> UpdateDebugSections;
-extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> EnableBAT;
 extern cl::opt<bool> Instrument;
+extern cl::opt<bool> StrictMode;
+extern cl::opt<bool> UpdateDebugSections;
+extern cl::opt<unsigned> Verbosity;
 
 cl::opt<bool>
 AlignBlocks("align-blocks",
@@ -412,6 +413,12 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  IsSplit     : "   << isSplit()
      << "\n  BB Count    : "   << size();
 
+  if (HasFixedIndirectBranch) {
+    OS << "\n  HasFixedIndirectBranch : true";
+  }
+  if (HasUnknownControlFlow) {
+    OS << "\n  Unknown CF  : true";
+  }
   if (IsFragment) {
     OS << "\n  IsFragment  : true";
   }
@@ -705,7 +712,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     return Type;
 
   if (MemLocInstr != &Instruction)
-    IndexRegNum = 0;
+    IndexRegNum = BC.MIB->getNoRegister();
 
   if (BC.isAArch64()) {
     const auto *Sym = BC.MIB->getTargetSymbol(*PCRelBaseInstr, 1);
@@ -749,7 +756,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     auto SymValueOrError = BC.getSymbolValue(*TargetSym);
     assert(SymValueOrError && "global symbol needs a value");
     ArrayStart = *SymValueOrError + TargetOffset;
-    BaseRegNum = 0;
+    BaseRegNum = BC.MIB->getNoRegister();
     if (BC.isAArch64()) {
       ArrayStart &= ~0xFFFULL;
       ArrayStart += DispValue & 0xFFFULL;
@@ -918,17 +925,15 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       errs() << '\n';
       return false;
     }
-    if (TargetAddress == 0) {
-      if (opts::Verbosity >= 1) {
-        outs() << "BOLT-INFO: PC-relative operand is zero in function "
-               << *this << ".\n";
-      }
+    if (TargetAddress == 0 && opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: PC-relative operand is zero in function " << *this
+             << '\n';
     }
 
-    MCSymbol *TargetSymbol;
+    const MCSymbol *TargetSymbol;
     uint64_t TargetOffset;
-    std::tie(TargetSymbol, TargetOffset) = BC.handleAddressRef(TargetAddress,
-                                                               *this);
+    std::tie(TargetSymbol, TargetOffset) =
+      BC.handleAddressRef(TargetAddress, *this, /*IsPCRel*/ true);
     const MCExpr *Expr = MCSymbolRefExpr::create(TargetSymbol,
                                                  MCSymbolRefExpr::VK_None,
                                                  *BC.Ctx);
@@ -948,9 +953,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // info
   auto fixStubTarget = [&](MCInst &LoadLowBits, MCInst &LoadHiBits,
                            uint64_t Target) {
-    MCSymbol *TargetSymbol;
+    const MCSymbol *TargetSymbol;
     uint64_t Addend{0};
-    std::tie(TargetSymbol, Addend) = BC.handleAddressRef(Target, *this);
+    std::tie(TargetSymbol, Addend) = BC.handleAddressRef(Target, *this, true);
 
     int64_t Val;
     MIB->replaceImmWithSymbolRef(LoadHiBits, TargetSymbol, Addend, Ctx.get(),
@@ -1001,8 +1006,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
                << *this << '\n';
         // Some AVX-512 instructions could not be disassembled at all.
-        if (BC.HasRelocations && opts::TrapOnAVX512 &&
-            BC.TheTriple->getArch() == llvm::Triple::x86_64) {
+        if (BC.HasRelocations && opts::TrapOnAVX512 && BC.isX86()) {
           setTrapOnEntry();
           BC.TrappedFunctions.push_back(this);
         } else {
@@ -1039,17 +1043,22 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       if (Relocation.Offset >= Offset + Size)
         continue;
 
-      DEBUG(dbgs() << "BOLT-DEBUG: replacing immediate with relocation"
-            " against " << Relocation.Symbol->getName()
-            << "+" << Relocation.Addend
-            << " in function " << *this
+      const MCSymbol *TargetSymbol = Relocation.Symbol;
+      auto Addend = Relocation.Addend;
+
+      DEBUG(dbgs() << "BOLT-DEBUG: replacing immediate 0x"
+            << Twine::utohexstr(Relocation.Value) << " with relocation"
+            " against " << TargetSymbol->getName()
+            << "+" << Addend << " in function " << *this
             << " for instruction at offset 0x"
             << Twine::utohexstr(Offset) << '\n');
       int64_t Value = Relocation.Value;
 
       // Process reference to the primary symbol.
       if (!Relocation.isPCRelative())
-        BC.handleAddressRef(Relocation.Value - Relocation.Addend, *this);
+        BC.handleAddressRef(Relocation.Value - Relocation.Addend,
+                            *this,
+                            /*IsPCRel*/ false);
 
       const auto Result = BC.MIB->replaceImmWithSymbolRef(Instruction,
                                                           Relocation.Symbol,
@@ -1147,7 +1156,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Assign proper opcode for tail calls, so that they could be
             // treated as calls.
             if (!IsCall) {
-              if (!MIB->convertJmpToTailCall(Instruction, BC.Ctx.get())) {
+              if (!MIB->convertJmpToTailCall(Instruction)) {
                 assert(IsCondBranch && "unknown tail call instruction");
                 if (opts::Verbosity >= 2) {
                   errs() << "BOLT-WARNING: conditional tail call detected in "
@@ -1222,7 +1231,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           default:
             llvm_unreachable("unexpected result");
           case IndirectBranchType::POSSIBLE_TAIL_CALL: {
-            auto Result = MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
+            auto Result = MIB->convertJmpToTailCall(Instruction);
             (void)Result;
             assert(Result);
             break;
@@ -1240,7 +1249,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               TakenBranches.emplace_back(Offset, IndirectTarget - getAddress());
               HasFixedIndirectBranch = true;
             } else {
-              MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
+              MIB->convertJmpToTailCall(Instruction);
               BC.InterproceduralReferences.insert(
                   std::make_pair(this, IndirectTarget));
             }
@@ -1249,6 +1258,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           case IndirectBranchType::UNKNOWN:
             // Keep processing. We'll do more checks and fixes in
             // postProcessIndirectBranches().
+            UnknownIndirectBranchOffsets.emplace(Offset);
             break;
           };
         }
@@ -1362,7 +1372,14 @@ void BinaryFunction::postProcessJumpTables() {
                                           /*CreatePastEnd*/ true);
       JT.Entries.push_back(Label);
     }
-    BC.setBinaryDataSize(JT.getAddress(), JT.getSize());
+
+    const auto BDSize = BC.getBinaryDataAtAddress(JT.getAddress())->getSize();
+    if (!BDSize) {
+      BC.setBinaryDataSize(JT.getAddress(), JT.getSize());
+    } else {
+      assert(BDSize >= JT.getSize() &&
+             "jump table cannot be larger than the containing object");
+    }
   }
 
   // Add TakenBranches from JumpTables.
@@ -1373,12 +1390,18 @@ void BinaryFunction::postProcessJumpTables() {
     const auto JTSiteOffset = JTSite.first;
     const auto JTAddress = JTSite.second;
     const auto *JT = getJumpTableContainingAddress(JTAddress);
+    if (!JT)
+      continue;
     assert(JT && "cannot find jump table for address");
     auto EntryOffset = JTAddress - JT->getAddress();
     while (EntryOffset < JT->getSize()) {
       auto TargetOffset = JT->OffsetEntries[EntryOffset / JT->EntrySize];
-      if (TargetOffset < getSize())
+      if (TargetOffset < getSize()) {
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
+
+        if (opts::StrictMode)
+          registerReferencedOffset(TargetOffset);
+      }
 
       // Take ownership of jump table relocations.
       if (BC.HasRelocations) {
@@ -1409,6 +1432,16 @@ void BinaryFunction::postProcessJumpTables() {
     clearList(JT.OffsetEntries);
   }
 
+  // Conservatively populate all possible destinations for unknown indirect
+  // branches.
+  if (opts::StrictMode && hasInternalReference()) {
+    for (auto Offset : UnknownIndirectBranchOffsets) {
+      for (auto PossibleDestination : ExternallyReferencedOffsets) {
+        TakenBranches.emplace_back(Offset, PossibleDestination);
+      }
+    }
+  }
+
   // Remove duplicates branches. We can get a bunch of them from jump tables.
   // Without doing jump table value profiling we don't have use for extra
   // (duplicate) branches.
@@ -1418,6 +1451,21 @@ void BinaryFunction::postProcessJumpTables() {
 }
 
 bool BinaryFunction::postProcessIndirectBranches() {
+
+  auto addUnknownControlFlow = [&](BinaryBasicBlock &BB) {
+    HasUnknownControlFlow = true;
+    BB.removeAllSuccessors();
+    for (auto PossibleDestination : ExternallyReferencedOffsets) {
+      if (auto *SuccBB = getBasicBlockAtOffset(PossibleDestination))
+        BB.addSuccessor(SuccBB);
+    }
+  };
+
+  uint64_t NumIndirectJumps{0};
+  MCInst *LastIndirectJump = nullptr;
+  BinaryBasicBlock *LastIndirectJumpBB{nullptr};
+  uint64_t LastJT{0};
+  uint16_t LastJTIndexReg = BC.MIB->getNoRegister();
   for (auto *BB : layout()) {
     for (auto &Instr : *BB) {
       if (!BC.MIB->isIndirectBranch(Instr))
@@ -1426,8 +1474,15 @@ bool BinaryFunction::postProcessIndirectBranches() {
       // If there's an indirect branch in a single-block function -
       // it must be a tail call.
       if (layout_size() == 1) {
-        BC.MIB->convertJmpToTailCall(Instr, BC.Ctx.get());
+        BC.MIB->convertJmpToTailCall(Instr);
         return true;
+      }
+
+      ++NumIndirectJumps;
+
+      if (opts::StrictMode && !hasInternalReference()) {
+        BC.MIB->convertJmpToTailCall(Instr);
+        break;
       }
 
       // Validate the tail call or jump table assumptions now that we know
@@ -1449,9 +1504,33 @@ bool BinaryFunction::postProcessIndirectBranches() {
                                                   DispValue,
                                                   DispExpr,
                                                   PCRelBaseInstr);
-        if (Type == IndirectBranchType::UNKNOWN && MemLocInstr == nullptr)
+        if (Type != IndirectBranchType::UNKNOWN || MemLocInstr != nullptr)
+          continue;
+
+        if (!opts::StrictMode)
           return false;
 
+        if (BC.MIB->isTailCall(Instr)) {
+          BC.MIB->convertTailCallToJmp(Instr);
+        } else {
+          LastIndirectJump = &Instr;
+          LastIndirectJumpBB = BB;
+          LastJT = BC.MIB->getJumpTable(Instr);
+          LastJTIndexReg = BC.MIB->getJumpTableIndexReg(Instr);
+          BC.MIB->unsetJumpTable(Instr);
+
+          auto *JT = BC.getJumpTableContainingAddress(LastJT);
+          if (JT->Type == JumpTable::JTT_NORMAL) {
+            // Invalidating the jump table may also invalidate other jump table
+            // boundaries. Until we have/need a support for this, mark the
+            // function as non-simple.
+            DEBUG(dbgs() << "BOLT-DEBUG: rejected jump table reference"
+                         << JT->getName() << " in " << *this << '\n');
+            return false;
+          }
+        }
+
+        addUnknownControlFlow(*BB);
         continue;
       }
 
@@ -1465,21 +1544,54 @@ bool BinaryFunction::postProcessIndirectBranches() {
           break;
         }
       }
-      if (!IsEpilogue) {
-        if (opts::Verbosity >= 2) {
-          outs() << "BOLT-INFO: rejected potential indirect tail call in "
-                 << "function " << *this << " in basic block "
-                 << BB->getName() << ".\n";
-          DEBUG(BC.printInstructions(dbgs(), BB->begin(), BB->end(),
-                                     BB->getOffset(), this, true));
-        }
-        return false;
+      if (IsEpilogue) {
+        BC.MIB->convertJmpToTailCall(Instr);
+        BB->removeAllSuccessors();
+        continue;
       }
-      BC.MIB->convertJmpToTailCall(Instr, BC.Ctx.get());
+
+      if (opts::Verbosity >= 2) {
+        outs() << "BOLT-INFO: rejected potential indirect tail call in "
+               << "function " << *this << " in basic block "
+               << BB->getName() << ".\n";
+        DEBUG(BC.printInstructions(dbgs(), BB->begin(), BB->end(),
+                                   BB->getOffset(), this, true));
+      }
+
+      if (!opts::StrictMode)
+        return false;
+
+      addUnknownControlFlow(*BB);
+    }
+  }
+
+  if (HasInternalLabelReference)
+    return false;
+
+  // If there's only one jump table, and one indirect jump, and no other
+  // references, then we should be able to derive the jump table even if we
+  // fail to match the pattern.
+  if (HasUnknownControlFlow && NumIndirectJumps == 1 &&
+      JumpTables.size() == 1 && LastIndirectJump) {
+    BC.MIB->setJumpTable(*LastIndirectJump, LastJT, LastJTIndexReg);
+    HasUnknownControlFlow = false;
+
+    // re-populate successors based on the jump table.
+    std::set<const MCSymbol *> JTLabels;
+    LastIndirectJumpBB->removeAllSuccessors();
+    const auto *JT = getJumpTableContainingAddress(LastJT);
+    for (const auto *Label : JT->Entries) {
+      JTLabels.emplace(Label);
+    }
+    for (const auto *Label : JTLabels) {
+      LastIndirectJumpBB->addSuccessor(getBasicBlockForLabel(Label));
     }
   }
 
   if (HasFixedIndirectBranch)
+    return false;
+
+  if (HasUnknownControlFlow && !BC.HasRelocations)
     return false;
 
   return true;
@@ -1769,6 +1881,9 @@ bool BinaryFunction::buildCFG() {
     // optimizing it.
     setSimple(false);
   }
+
+  clearList(ExternallyReferencedOffsets);
+  clearList(UnknownIndirectBranchOffsets);
 
   return true;
 }

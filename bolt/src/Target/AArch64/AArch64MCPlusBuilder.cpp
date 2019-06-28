@@ -211,6 +211,10 @@ public:
     return Inst.getOpcode() == AArch64::BLR;
   }
 
+  MCPhysReg getNoRegister() const override {
+    return AArch64::NoRegister;
+  }
+
   bool hasPCRelOperand(const MCInst &Inst) const override {
     // ADRP is blacklisted and is an exception. Even though it has a
     // PC-relative operand, this operand is not a complete symbol reference
@@ -743,7 +747,7 @@ public:
     return true;
   }
 
-  bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) override {
+  bool convertJmpToTailCall(MCInst &Inst) override {
     addAnnotation(Inst, "TC", true);
     return true;
   }
@@ -968,8 +972,8 @@ public:
     return true;
   }
 
-  bool replaceImmWithSymbolRef(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
-                               MCContext *Ctx, int64_t &Value,
+  bool replaceImmWithSymbolRef(MCInst &Inst, const MCSymbol *Symbol,
+                               int64_t Addend, MCContext *Ctx, int64_t &Value,
                                uint64_t RelType) const override {
     unsigned ImmOpNo = -1U;
     for (unsigned Index = 0; Index < MCPlus::getNumPrimeOperands(Inst);

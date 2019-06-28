@@ -198,6 +198,11 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
       continue;
     }
 
+    if (BC.MIB->isIndirectBranch(*LastInstr) && !BC.MIB->isCall(*LastInstr)) {
+      Stats[DynoStats::UNKNOWN_INDIRECT_BRANCHES] += BBExecutionCount;
+      continue;
+    }
+
     // Update stats for branches.
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;

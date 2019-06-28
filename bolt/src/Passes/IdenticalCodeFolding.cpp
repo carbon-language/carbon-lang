@@ -350,7 +350,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
 
         for (auto It = BlockBegin; It != BlockEnd; ++It) {
           auto &BF = It->second;
-          if (!shouldOptimize(BF) || BF.isFolded() || BF.hasSDTMarker())
+          if (!this->shouldOptimize(BF))
             continue;
           // Make sure indices are in-order.
           BF.updateLayoutIndices();
@@ -391,7 +391,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
                                            "ICF breakdown", opts::TimeICF);
     for (auto &BFI : BC.getBinaryFunctions()) {
       auto &BF = BFI.second;
-      if (!shouldOptimize(BF) || BF.isFolded() || BF.hasSDTMarker())
+      if (!this->shouldOptimize(BF))
         continue;
       CongruentBuckets[&BF].emplace(&BF);
     }

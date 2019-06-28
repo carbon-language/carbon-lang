@@ -31,6 +31,9 @@ static cl::opt<std::string> FrameOptFunctionNamesFile(
     cl::desc("file with list of functions to frame optimize"));
 
 bool shouldFrameOptimize(const llvm::bolt::BinaryFunction &Function) {
+  if (Function.hasUnknownControlFlow())
+    return false;
+
   if (!FrameOptFunctionNamesFile.empty()) {
     assert(!FrameOptFunctionNamesFile.empty() && "unexpected empty file name");
     std::ifstream FuncsFile(FrameOptFunctionNamesFile, std::ios::in);

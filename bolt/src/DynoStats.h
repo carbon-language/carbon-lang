@@ -38,6 +38,7 @@ class DynoStats {
   D(LOADS,                        "executed load instructions", Fn)\
   D(STORES,                       "executed store instructions", Fn)\
   D(JUMP_TABLE_BRANCHES,          "taken jump table branches", Fn)\
+  D(UNKNOWN_INDIRECT_BRANCHES,    "taken unknown indirect branches", Fn)\
   D(ALL_BRANCHES,                 "total branches",\
       Fadd(ALL_CONDITIONAL, UNCOND_BRANCHES))\
   D(ALL_TAKEN,                    "taken branches",\
