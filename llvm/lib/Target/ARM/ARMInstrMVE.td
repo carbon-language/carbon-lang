@@ -427,11 +427,21 @@ class MVE_ScalarShiftDRegReg<string iname, bit op5, bit op16,
   let DecoderMethod = "DecodeMVEOverlappingLongShift";
 }
 
-def MVE_ASRLr   : MVE_ScalarShiftDRegReg<"asrl",    0b1,  0b0>;
-def MVE_ASRLi   : MVE_ScalarShiftDRegImm<"asrl",    0b10, ?>;
-def MVE_LSLLr   : MVE_ScalarShiftDRegReg<"lsll",    0b0,  0b0>;
-def MVE_LSLLi   : MVE_ScalarShiftDRegImm<"lsll",    0b00, ?>;
-def MVE_LSRL    : MVE_ScalarShiftDRegImm<"lsrl",    0b01, ?>;
+def MVE_ASRLr   : MVE_ScalarShiftDRegReg<"asrl",    0b1,  0b0, [(set tGPREven:$RdaLo, tGPROdd:$RdaHi,
+                                        (ARMasrl tGPREven:$RdaLo_src,
+                                        tGPROdd:$RdaHi_src, rGPR:$Rm))]>;
+def MVE_ASRLi   : MVE_ScalarShiftDRegImm<"asrl",    0b10, ?, [(set tGPREven:$RdaLo, tGPROdd:$RdaHi,
+                                        (ARMasrl tGPREven:$RdaLo_src,
+                                        tGPROdd:$RdaHi_src, (i32 imm:$imm)))]>;
+def MVE_LSLLr   : MVE_ScalarShiftDRegReg<"lsll",    0b0,  0b0, [(set tGPREven:$RdaLo, tGPROdd:$RdaHi,
+                                        (ARMlsll tGPREven:$RdaLo_src,
+                                        tGPROdd:$RdaHi_src, rGPR:$Rm))]>;
+def MVE_LSLLi   : MVE_ScalarShiftDRegImm<"lsll",    0b00, ?, [(set tGPREven:$RdaLo, tGPROdd:$RdaHi,
+                                        (ARMlsll tGPREven:$RdaLo_src,
+                                        tGPROdd:$RdaHi_src, (i32 imm:$imm)))]>;
+def MVE_LSRL    : MVE_ScalarShiftDRegImm<"lsrl",    0b01, ?, [(set tGPREven:$RdaLo, tGPROdd:$RdaHi,
+                                        (ARMlsrl tGPREven:$RdaLo_src,
+                                        tGPROdd:$RdaHi_src, (i32 imm:$imm)))]>;
 
 def MVE_SQRSHRL : MVE_ScalarShiftDRegReg<"sqrshrl", 0b1,  0b1>;
 def MVE_SQSHLL  : MVE_ScalarShiftDRegImm<"sqshll",  0b11, 0b1>;
