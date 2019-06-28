@@ -5697,7 +5697,9 @@ static bool checkOpenMPIterationSpace(
             ? ((NestedLoopCount == 1) ? OMPC_linear : OMPC_lastprivate)
             : OMPC_private;
     if (((isOpenMPSimdDirective(DKind) && DVar.CKind != OMPC_unknown &&
-          DVar.CKind != PredeterminedCKind && DVar.RefExpr) ||
+          DVar.CKind != PredeterminedCKind && DVar.RefExpr &&
+          (SemaRef.getLangOpts().OpenMP <= 45 ||
+           (DVar.CKind != OMPC_lastprivate && DVar.CKind != OMPC_private))) ||
          ((isOpenMPWorksharingDirective(DKind) || DKind == OMPD_taskloop ||
            isOpenMPDistributeDirective(DKind)) &&
           !isOpenMPSimdDirective(DKind) && DVar.CKind != OMPC_unknown &&

@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -fopenmp -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
 // RUN: %clang_cc1 -fsyntax-only -fopenmp-simd -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fopenmp -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s -fopenmp-version=50 -DOMP50
+// RUN: %clang_cc1 -fsyntax-only -fopenmp-simd -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s -fopenmp-version=50 -DOMP50
 
 static int sii;
 // expected-note@+1 {{defined as threadprivate or thread local}}
@@ -239,9 +241,19 @@ int test_iteration_spaces() {
   for (ii = 0; (ii < 10); (ii-=0))
     c[ii] = a[ii];
 
-  // expected-note@+2  {{defined as private}}
-  // expected-error@+2 {{loop iteration variable in the associated loop of 'omp simd' directive may not be private, predetermined as linear}}
+#ifndef OMP50
+  // expected-note@+3  {{defined as private}}
+  // expected-error@+3 {{loop iteration variable in the associated loop of 'omp simd' directive may not be private, predetermined as linear}}
+#endif // OMP50
   #pragma omp simd private(ii)
+  for (ii = 0; ii < 10; ii++)
+    c[ii] = a[ii];
+
+#ifndef OMP50
+  // expected-note@+3  {{defined as lastprivate}}
+  // expected-error@+3 {{loop iteration variable in the associated loop of 'omp simd' directive may not be lastprivate, predetermined as linear}}
+#endif // OMP50
+  #pragma omp simd lastprivate(ii)
   for (ii = 0; ii < 10; ii++)
     c[ii] = a[ii];
 
