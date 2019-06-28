@@ -1839,9 +1839,27 @@ def MVE_VADDi8  : MVE_VADD<"i8",  0b00>;
 def MVE_VADDi16 : MVE_VADD<"i16", 0b01>;
 def MVE_VADDi32 : MVE_VADD<"i32", 0b10>;
 
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (add (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
+            (v16i8 (MVE_VADDi8 (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
+  def : Pat<(v8i16 (add (v8i16 MQPR:$val1), (v8i16 MQPR:$val2))),
+            (v8i16 (MVE_VADDi16 (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
+  def : Pat<(v4i32 (add (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
+            (v4i32 (MVE_VADDi32 (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+}
+
 def MVE_VSUBi8  : MVE_VSUB<"i8",  0b00>;
 def MVE_VSUBi16 : MVE_VSUB<"i16", 0b01>;
 def MVE_VSUBi32 : MVE_VSUB<"i32", 0b10>;
+
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (sub (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
+            (v16i8 (MVE_VSUBi8 (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
+  def : Pat<(v8i16 (sub (v8i16 MQPR:$val1), (v8i16 MQPR:$val2))),
+            (v8i16 (MVE_VSUBi16 (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
+  def : Pat<(v4i32 (sub (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
+            (v4i32 (MVE_VSUBi32 (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+}
 
 class MVE_VQADDSUB<string iname, string suffix, bit U, bit subtract,
                    bits<2> size, list<dag> pattern=[]>
