@@ -166,8 +166,7 @@ TokenSequence &TokenSequence::ToLowerCase() {
           *p = ToLowerCaseLetter(*p);
         }
       } else {
-        // Kanji NC'...' character literal or literal with kind-param prefix
-        // name (e.g., K_"ABC").
+        // Literal with kind-param prefix name (e.g., K_"ABC").
         for (; *p != limit[-1]; ++p) {
           *p = ToLowerCaseLetter(*p);
         }

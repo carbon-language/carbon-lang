@@ -530,7 +530,7 @@ TYPE_CONTEXT_PARSER("declaration type spec"_en_US,
 //        integer-type-spec | REAL [kind-selector] | DOUBLE PRECISION |
 //        COMPLEX [kind-selector] | CHARACTER [char-selector] |
 //        LOGICAL [kind-selector]
-// Extensions: DOUBLE COMPLEX, NCHARACTER, BYTE
+// Extensions: DOUBLE COMPLEX, BYTE
 TYPE_CONTEXT_PARSER("intrinsic type spec"_en_US,
     first(construct<IntrinsicTypeSpec>(integerTypeSpec),
         construct<IntrinsicTypeSpec>(
@@ -546,9 +546,6 @@ TYPE_CONTEXT_PARSER("intrinsic type spec"_en_US,
         construct<IntrinsicTypeSpec>("DOUBLE COMPLEX" >>
             extension<LanguageFeature::DoubleComplex>(
                 construct<IntrinsicTypeSpec::DoubleComplex>())),
-        construct<IntrinsicTypeSpec>(extension<LanguageFeature::Kanji>(
-            construct<IntrinsicTypeSpec::NCharacter>(
-                "NCHARACTER" >> maybe(Parser<LengthSelector>{})))),
         extension<LanguageFeature::Byte>(
             construct<IntrinsicTypeSpec>(construct<IntegerTypeSpec>(
                 "BYTE" >> construct<std::optional<KindSelector>>(pure(1)))))))
@@ -661,7 +658,6 @@ TYPE_PARSER(construct<CharLength>(parenthesized(typeParamValue)) ||
 //        [kind-param _] " [rep-char]... "
 // "rep-char" is any non-control character.  Doubled interior quotes are
 // combined.  Backslash escapes can be enabled.
-// PGI extension: nc'...' is Kanji.
 // N.B. charLiteralConstantWithoutKind does not skip preceding space.
 // N.B. the parsing of "name" takes care to not consume the '_'.
 constexpr auto charLiteralConstantWithoutKind{
@@ -671,11 +667,7 @@ TYPE_CONTEXT_PARSER("CHARACTER literal constant"_en_US,
     construct<CharLiteralConstant>(
         kindParam / underscore, charLiteralConstantWithoutKind) ||
         construct<CharLiteralConstant>(construct<std::optional<KindParam>>(),
-            space >> charLiteralConstantWithoutKind) ||
-        construct<CharLiteralConstant>(
-            construct<std::optional<KindParam>>(
-                construct<KindParam>(construct<KindParam::Kanji>("NC"_tok))),
-            charLiteralConstantWithoutKind))
+            space >> charLiteralConstantWithoutKind))
 
 // deprecated: Hollerith literals
 constexpr auto rawHollerithLiteral{

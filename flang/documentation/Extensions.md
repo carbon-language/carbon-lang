@@ -23,7 +23,6 @@ Extensions, deletions, and legacy features supported by default
 * Signed complex literal constants
 * DEC `STRUCTURE`, `RECORD`, `UNION`, and `MAP`
 * Structure field access with `.field`
-* `NCHARACTER` type and `NC` Kanji character literals
 * `BYTE` as synonym for `INTEGER(KIND=1)`
 * Quad precision REAL literals with `Q`
 * `X` prefix/suffix as synonym for `Z` on hexadecimal literals
@@ -111,3 +110,4 @@ Extensions and legacy features deliberately not supported
 * Comparsion of LOGICAL with ==/.EQ. rather than .EQV. (also .NEQV.) (PGI/Intel)
 * Procedure pointers in COMMON blocks (PGI/Intel)
 * Underindexing multi-dimensional arrays (e.g., A(1) rather than A(1,1)) (PGI only)
+* Legacy PGI `NCHARACTER` type and `NC` Kanji character literals

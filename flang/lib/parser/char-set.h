@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ struct SetOfChars {
     // character literals.  We repurpose '^' and '?' for newline and unknown
     // characters (resp.), leaving the others alone in case this code might
     // be useful in preprocssing.
-    // TODO: EBCDIC?
     if (c == '\n') {
       // map newline to '^'
       c = '^';

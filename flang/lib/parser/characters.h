@@ -18,7 +18,6 @@
 // Define some character classification predicates and
 // conversions here to avoid dependences upon <cctype> and
 // also to accomodate Fortran tokenization.
-// TODO: EBCDIC?
 
 #include <cstddef>
 #include <optional>
@@ -31,8 +30,7 @@ namespace Fortran::parser {
 // The specific encodings that we can handle include:
 //   LATIN_1: ISO 8859-1 Latin-1
 //   UTF_8: Multi-byte encoding of Unicode (ISO/IEC 10646)
-//   EUC_JP: 1-3 byte encoding of JIS X 0208 / 0212
-enum class Encoding { LATIN_1, UTF_8, EUC_JP };
+enum class Encoding { LATIN_1, UTF_8 };
 
 inline constexpr bool IsUpperCaseLetter(char ch) {
   return ch >= 'A' && ch <= 'Z';
@@ -147,7 +145,6 @@ struct EncodedCharacter {
 
 template<Encoding ENCODING> EncodedCharacter EncodeCharacter(char32_t ucs);
 template<> EncodedCharacter EncodeCharacter<Encoding::LATIN_1>(char32_t);
-template<> EncodedCharacter EncodeCharacter<Encoding::EUC_JP>(char32_t);
 template<> EncodedCharacter EncodeCharacter<Encoding::UTF_8>(char32_t);
 
 EncodedCharacter EncodeCharacter(Encoding, char32_t ucs);
@@ -156,8 +153,6 @@ template<Encoding ENCODING, typename STRING>
 std::string EncodeString(const STRING &);
 extern template std::string EncodeString<Encoding::LATIN_1, std::string>(
     const std::string &);
-extern template std::string EncodeString<Encoding::EUC_JP, std::u16string>(
-    const std::u16string &);
 extern template std::string EncodeString<Encoding::UTF_8, std::u32string>(
     const std::u32string &);
 
@@ -194,7 +189,7 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
 std::string QuoteCharacterLiteral(const std::string &,
     bool backslashEscapes = true, Encoding = Encoding::LATIN_1);
 std::string QuoteCharacterLiteral(const std::u16string &,
-    bool backslashEscapes = true, Encoding = Encoding::EUC_JP);
+    bool backslashEscapes = true, Encoding = Encoding::UTF_8);
 std::string QuoteCharacterLiteral(const std::u32string &,
     bool backslashEscapes = true, Encoding = Encoding::UTF_8);
 
@@ -210,9 +205,7 @@ DecodedCharacter DecodeRawCharacter(const char *, std::size_t);
 template<>
 DecodedCharacter DecodeRawCharacter<Encoding::LATIN_1>(
     const char *, std::size_t);
-template<>
-DecodedCharacter DecodeRawCharacter<Encoding::EUC_JP>(
-    const char *, std::size_t);
+
 template<>
 DecodedCharacter DecodeRawCharacter<Encoding::UTF_8>(const char *, std::size_t);
 
@@ -222,34 +215,19 @@ DecodedCharacter DecodeCharacter(
     const char *, std::size_t, bool backslashEscapes);
 extern template DecodedCharacter DecodeCharacter<Encoding::LATIN_1>(
     const char *, std::size_t, bool);
-extern template DecodedCharacter DecodeCharacter<Encoding::EUC_JP>(
-    const char *, std::size_t, bool);
 extern template DecodedCharacter DecodeCharacter<Encoding::UTF_8>(
     const char *, std::size_t, bool);
 
 DecodedCharacter DecodeCharacter(
     Encoding, const char *, std::size_t, bool backslashEscapes);
 
-template<Encoding ENCODING> struct StringForEncoding;
-template<> struct StringForEncoding<Encoding::LATIN_1> {
-  using type = std::string;
-};
-template<> struct StringForEncoding<Encoding::EUC_JP> {
-  using type = std::u16string;
-};
-template<> struct StringForEncoding<Encoding::UTF_8> {
-  using type = std::u32string;
-};
-template<Encoding ENCODING>
-using StringFor = typename StringForEncoding<ENCODING>::type;
-
-template<Encoding ENCODING>
-StringFor<ENCODING> DecodeString(const std::string &, bool backslashEscapes);
-extern template std::string DecodeString<Encoding::LATIN_1>(
+template<typename RESULT, Encoding ENCODING>
+RESULT DecodeString(const std::string &, bool backslashEscapes);
+extern template std::string DecodeString<std::string, Encoding::LATIN_1>(
     const std::string &, bool);
-extern template std::u16string DecodeString<Encoding::EUC_JP>(
+extern template std::u16string DecodeString<std::u16string, Encoding::UTF_8>(
     const std::string &, bool);
-extern template std::u32string DecodeString<Encoding::UTF_8>(
+extern template std::u32string DecodeString<std::u32string, Encoding::UTF_8>(
     const std::string &, bool);
 }
 #endif  // FORTRAN_PARSER_CHARACTERS_H_

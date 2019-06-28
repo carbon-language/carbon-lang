@@ -693,7 +693,6 @@ public:
   void Post(const parser::IntrinsicTypeSpec::Complex &);
   void Post(const parser::IntrinsicTypeSpec::Logical &);
   void Post(const parser::IntrinsicTypeSpec::Character &);
-  void Post(const parser::IntrinsicTypeSpec::NCharacter &);
   void Post(const parser::CharSelector::LengthAndKind &);
   void Post(const parser::CharLength &);
   void Post(const parser::LengthSelector &);
@@ -2764,15 +2763,6 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
       std::move(*charInfo_.length), std::move(*charInfo_.kind)));
   charInfo_ = {};
 }
-void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::NCharacter &x) {
-  if (!charInfo_.length) {
-    charInfo_.length = ParamValue{1};
-  }
-  CHECK(!charInfo_.kind.has_value());
-  SetDeclTypeSpec(currScope().MakeCharacterType(
-      std::move(*charInfo_.length), KindExpr{2 /* EUC_JP */}));
-  charInfo_ = {};
-}
 void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
   charInfo_.kind = EvaluateSubscriptIntExpr(x.kind);
   if (x.length) {
@@ -3149,9 +3139,6 @@ bool DeclarationVisitor::Pre(const parser::ProcInterface &x) {
       } else if (name->source == "doublecomplex") {
         proc.u = parser::IntrinsicTypeSpec{
             parser::IntrinsicTypeSpec::DoubleComplex{}};
-      } else if (name->source == "ncharacter") {
-        proc.u = parser::IntrinsicTypeSpec{
-            parser::IntrinsicTypeSpec::NCharacter{std::nullopt}};
       }
     }
   }

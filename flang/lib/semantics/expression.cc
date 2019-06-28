@@ -321,8 +321,7 @@ template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
 
 // Type kind parameter values for literal constants.
 int ExpressionAnalyzer::AnalyzeKindParam(
-    const std::optional<parser::KindParam> &kindParam, int defaultKind,
-    int kanjiKind /* = -1 */) {
+    const std::optional<parser::KindParam> &kindParam, int defaultKind) {
   if (!kindParam.has_value()) {
     return defaultKind;
   }
@@ -339,13 +338,6 @@ int ExpressionAnalyzer::AnalyzeKindParam(
                 }
               }
             }
-            return defaultKind;
-          },
-          [&](parser::KindParam::Kanji) {
-            if (kanjiKind >= 0) {
-              return kanjiKind;
-            }
-            Say("Kanji not allowed here"_err_en_US);
             return defaultKind;
           },
       },
@@ -522,13 +514,16 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
   switch (kind) {
   case 1:
     return AsGenericExpr(Constant<Type<TypeCategory::Character, 1>>{
-        parser::DecodeString<parser::Encoding::LATIN_1>(string, true)});
+        parser::DecodeString<std::string, parser::Encoding::LATIN_1>(
+            string, true)});
   case 2:
     return AsGenericExpr(Constant<Type<TypeCategory::Character, 2>>{
-        parser::DecodeString<parser::Encoding::EUC_JP>(string, true)});
+        parser::DecodeString<std::u16string, parser::Encoding::UTF_8>(
+            string, true)});
   case 4:
     return AsGenericExpr(Constant<Type<TypeCategory::Character, 4>>{
-        parser::DecodeString<parser::Encoding::UTF_8>(string, true)});
+        parser::DecodeString<std::u32string, parser::Encoding::UTF_8>(
+            string, true)});
   default: CRASH_NO_CASE;
   }
 }

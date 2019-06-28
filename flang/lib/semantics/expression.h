@@ -290,8 +290,8 @@ private:
   }
 
   // Analysis subroutines
-  int AnalyzeKindParam(const std::optional<parser::KindParam> &,
-      int defaultKind, int kanjiKind = -1);
+  int AnalyzeKindParam(
+      const std::optional<parser::KindParam> &, int defaultKind);
   template<typename PARSED> MaybeExpr ExprOrVariable(const PARSED &);
   template<typename PARSED> MaybeExpr IntLiteralConstant(const PARSED &);
   MaybeExpr AnalyzeString(std::string &&, int kind);

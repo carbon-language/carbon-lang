@@ -119,40 +119,9 @@ template<> EncodedCharacter EncodeCharacter<Encoding::UTF_8>(char32_t ucs) {
   return result;
 }
 
-// These are placeholders; the actual mapping is complicated.
-static char32_t JIS_0208ToUCS(char32_t jis) { return jis | 0x80000; }
-static char32_t JIS_0212ToUCS(char32_t jis) { return jis | 0x90000; }
-static bool IsUCSJIS_0212(char32_t ucs) { return (ucs & 0x90000) == 0x90000; }
-static char32_t UCSToJIS(char32_t ucs) { return ucs & 0xffff; }
-
-template<> EncodedCharacter EncodeCharacter<Encoding::EUC_JP>(char32_t ucs) {
-  EncodedCharacter result;
-  if (ucs <= 0x7f) {
-    result.buffer[0] = ucs;
-    result.bytes = 1;
-  } else if (ucs <= 0xff) {
-    result.buffer[0] = '\x8e';  // JIS X 0201
-    result.buffer[1] = ucs;
-    result.bytes = 2;
-  } else if (IsUCSJIS_0212(ucs)) {  // JIS X 0212
-    char32_t jis{UCSToJIS(ucs)};
-    result.buffer[0] = '\x8f';
-    result.buffer[1] = 0x80 ^ (jis >> 8);
-    result.buffer[2] = 0x80 ^ jis;
-    result.bytes = 3;
-  } else {  // JIS X 0208
-    char32_t jis{UCSToJIS(ucs)};
-    result.buffer[0] = 0x80 ^ (jis >> 8);
-    result.buffer[1] = 0x80 ^ jis;
-    result.bytes = 2;
-  }
-  return result;
-}
-
 EncodedCharacter EncodeCharacter(Encoding encoding, char32_t ucs) {
   switch (encoding) {
   case Encoding::LATIN_1: return EncodeCharacter<Encoding::LATIN_1>(ucs);
-  case Encoding::EUC_JP: return EncodeCharacter<Encoding::EUC_JP>(ucs);
   case Encoding::UTF_8: return EncodeCharacter<Encoding::UTF_8>(ucs);
   default: CRASH_NO_CASE;
   }
@@ -171,7 +140,7 @@ std::string EncodeString(const STRING &str) {
 
 template std::string EncodeString<Encoding::LATIN_1, std::string>(
     const std::string &);
-template std::string EncodeString<Encoding::EUC_JP, std::u16string>(
+template std::string EncodeString<Encoding::UTF_8, std::u16string>(
     const std::u16string &);
 template std::string EncodeString<Encoding::UTF_8, std::u32string>(
     const std::u32string &);
@@ -211,27 +180,6 @@ DecodedCharacter DecodeRawCharacter<Encoding::UTF_8>(
   } else {
     return {};  // not valid UTF-8
   }
-}
-
-template<>
-DecodedCharacter DecodeRawCharacter<Encoding::EUC_JP>(
-    const char *cp, std::size_t bytes) {
-  auto p{reinterpret_cast<const std::uint8_t *>(cp)};
-  char32_t ch{*p};
-  if (ch <= 0x7f) {
-    return {ch, 1};
-  } else if (ch == 0x8e) {
-    if (bytes >= 2) {
-      return {p[1], 2};  // JIS X 0201
-    }
-  } else if (ch == 0x8f) {  // JIS X 0212
-    if (bytes >= 3) {
-      return {JIS_0212ToUCS(((p[1] << 8) | p[2]) ^ 0x8080), 3};
-    }
-  } else if (bytes >= 2) {  // assume JIS X 0208
-    return {JIS_0208ToUCS(((ch << 8) | p[1]) ^ 0x8080), 2};
-  }
-  return {};
 }
 
 static DecodedCharacter DecodeEscapedCharacter(
@@ -297,8 +245,6 @@ DecodedCharacter DecodeCharacter(
 
 template DecodedCharacter DecodeCharacter<Encoding::LATIN_1>(
     const char *, std::size_t, bool);
-template DecodedCharacter DecodeCharacter<Encoding::EUC_JP>(
-    const char *, std::size_t, bool);
 template DecodedCharacter DecodeCharacter<Encoding::UTF_8>(
     const char *, std::size_t, bool);
 
@@ -307,17 +253,15 @@ DecodedCharacter DecodeCharacter(Encoding encoding, const char *cp,
   switch (encoding) {
   case Encoding::LATIN_1:
     return DecodeCharacter<Encoding::LATIN_1>(cp, bytes, backslashEscapes);
-  case Encoding::EUC_JP:
-    return DecodeCharacter<Encoding::EUC_JP>(cp, bytes, backslashEscapes);
   case Encoding::UTF_8:
     return DecodeCharacter<Encoding::UTF_8>(cp, bytes, backslashEscapes);
   default: CRASH_NO_CASE;
   }
 }
 
-template<Encoding ENCODING>
-StringFor<ENCODING> DecodeString(const std::string &s, bool backslashEscapes) {
-  StringFor<ENCODING> result;
+template<typename RESULT, Encoding ENCODING>
+RESULT DecodeString(const std::string &s, bool backslashEscapes) {
+  RESULT result;
   const char *p{s.c_str()};
   for (auto bytes{s.size()}; bytes != 0;) {
     DecodedCharacter decoded{
@@ -337,9 +281,10 @@ StringFor<ENCODING> DecodeString(const std::string &s, bool backslashEscapes) {
   return result;
 }
 
-template std::string DecodeString<Encoding::LATIN_1>(const std::string &, bool);
-template std::u16string DecodeString<Encoding::EUC_JP>(
+template std::string DecodeString<std::string, Encoding::LATIN_1>(
     const std::string &, bool);
-template std::u32string DecodeString<Encoding::UTF_8>(
+template std::u16string DecodeString<std::u16string, Encoding::UTF_8>(
+    const std::string &, bool);
+template std::u32string DecodeString<std::u32string, Encoding::UTF_8>(
     const std::string &, bool);
 }

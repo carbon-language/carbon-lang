@@ -465,8 +465,6 @@ int main(int argc, char *const argv[]) {
       driver.encoding = Fortran::parser::Encoding::UTF_8;
     } else if (arg == "-flatin") {
       driver.encoding = Fortran::parser::Encoding::LATIN_1;
-    } else if (arg == "-fkanji" || arg == "-Mx,125,4") {
-      driver.encoding = Fortran::parser::Encoding::EUC_JP;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -481,8 +479,6 @@ int main(int argc, char *const argv[]) {
           << "  -ed                  enable fixed form D lines\n"
           << "  -E                   prescan & preprocess only\n"
           << "  -module dir          module output directory (default .)\n"
-          << "  -fkanji              interpret source as EUC_JP rather than "
-             "UTF-8\n"
           << "  -flatin              interpret source as Latin-1 (ISO 8859-1) "
              "rather than UTF-8\n"
           << "  -fparse-only         parse only, no output except messages\n"
