@@ -59,7 +59,7 @@ struct FunctionInfo {
   uint64_t startAddress() const { return Range.Start; }
   uint64_t endAddress() const { return Range.End; }
   uint64_t size() const { return Range.size(); }
-  void setStartAddress(uint64_t Addr) { Range.End = Addr; }
+  void setStartAddress(uint64_t Addr) { Range.Start = Addr; }
   void setEndAddress(uint64_t Addr) { Range.End = Addr; }
   void setSize(uint64_t Size) { Range.End = Range.Start + Size; }
 
