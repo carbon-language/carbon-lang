@@ -748,6 +748,10 @@ public:
     auto SymName = Symbol->getName();
     if (SymName.startswith(".L"))
       return; // Local Symbol.
+    // Only create a new text section if we're already in one.
+    auto CWS = cast<MCSectionWasm>(getStreamer().getCurrentSection().first);
+    if (!CWS || !CWS->getKind().isText())
+      return;
     auto SecName = ".text." + SymName;
     auto WS = getContext().getWasmSection(SecName, SectionKind::getText());
     getStreamer().SwitchSection(WS);
