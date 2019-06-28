@@ -5,13 +5,15 @@ Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 This note attempts to describe the motivation for and design of an
 implementation of Fortran 90 (and later) array expression evaluation that
 minimizes the use of dynamically allocated temporary storage for
-the results of calls to transformational intrinsic functions.
+the results of calls to transformational intrinsic functions, and
+making them more amenable to acceleration.
 
 The transformational intrinsic functions of Fortran of interest to
 us here include:
 
-* Reductions to scalars (`SUM(X)`, also `ALL`, `ANY`, `COUNT`, `IALL`,
-  `IANY`, `IPARITY`, `MAXVAL`, `MINVAL`, `PARITY`, `PRODUCT`)
+* Reductions to scalars (`SUM(X)`, also `ALL`, `ANY`, `COUNT`,
+  `DOT_PRODUCT`,
+  `IALL`, `IANY`, `IPARITY`, `MAXVAL`, `MINVAL`, `PARITY`, `PRODUCT`)
 * Axial reductions (`SUM(X,DIM=)`, &c.)
 * Location reductions to indices (`MAXLOC`, `MINLOC`, `FINDLOC`)
 * Axial location reductions (`MAXLOC(DIM=`, &c.)
@@ -21,6 +23,7 @@ us here include:
 * `CSHIFT` and `EOSHIFT` with scalar `SHIFT=`
 * `CSHIFT` and `EOSHIFT` with array-valued `SHIFT=`
 * `PACK` and `UNPACK`
+* `MATMUL`
 
 Other Fortran intrinsic functions are technically transformational (e.g.,
 `COMMAND_ARGUMENT_COUNT`) but not of interest for this note.
@@ -48,19 +51,25 @@ in the expression.
 
 Consider `B = A + 1.0` (assuming `REAL :: A(N,M), B(N,M)`).
 The right-hand side of that assignment could be evaluated into a
-temporary array `T` and then subscripted as it is copied into `A`.
+temporary array `T` and then subscripted as it is copied into `B`.
 ```
 REAL, ALLOCATABLE :: T(:,:)
 ALLOCATE(T(N,M))
-FORALL(J=1:N,K=1:M) T(J,K)=A(J,K) + 1.0
-FORALL(J=1:N,K=1:M) B(J,K)=T(J,K)
+DO CONCURRENT(J=1:N,K=1:M)
+  T(J,K)=A(J,K) + 1.0
+END DO
+DO CONCURRENT(J=1:N,K=1:M)
+  B(J,K)=T(J,K)
+END DO
 DEALLOCATE(T(N,M))
 ```
 But we can avoid the allocation, population, and deallocation of
 the temporary by treating the right-hand side expression as if it
 were a statement function `F(J,K)=A(J,K)+1.0` and evaluating
 ```
-FORALL(J=1:N,K=1:M) A(J,K)=F(J,K)
+DO CONCURRENT(J=1:N,K=1:M)
+  A(J,K)=F(J,K)
+END DO
 ```
 
 In general, when a Fortran array assignment to a non-allocatable array
@@ -79,6 +88,10 @@ functions of the "incoming" indices.
 For example, the application of `TRANSPOSE(A + 1.0)` to the index
 tuple `(J,K)` becomes `A(K,J) + 1.0`.
 
+Partial (axial) reductions can be similarly composed.
+The application of `SUM(A,DIM=2)` to the index `J` is the
+complete reduction `SUM(A(J,:))`.
+
 Determination of rank and shape
 ===============================
 An important part of evaluating array expressions without the use of
@@ -88,16 +101,19 @@ or without, evaluating the elements of the result.
 The shapes of array objects, results of elemental intrinsic functions,
 and results of intrinsic operations are obvious.
 But it is possible to determine the shapes of the results of many
-transformantional intrinsic function calls as well.
+transformational intrinsic function calls as well.
 
-* `SHAPE(SUM(X,DIM=d))` is `SHAPE(X)` with one element removed.
-  The `DIM=` argument is commonly a compile-time constant.
+* `SHAPE(SUM(X,DIM=d))` is `SHAPE(X)` with one element removed:
+  `PACK(SHAPE(X),[(j,j=1,RANK(X))]/=d)` in general.
+  (The `DIM=` argument is commonly a compile-time constant.)
 * `SHAPE(MAXLOC(X))` is `[RANK(X)]`.
 * `SHAPE(MAXLOC(X,DIM=d))` is `SHAPE(X)` with one element removed.
 * `SHAPE(TRANSPOSE(M))` is a reversal of `SHAPE(M)`.
 * `SHAPE(RESHAPE(..., SHAPE=S))` is `S`.
 * `SHAPE(CSHIFT(X))` is `SHAPE(X)`; same with `EOSHIFT`.
-* `SHAPE(PACK(A,VECTOR=V))` is `SHAPE(V)`; `RANK(PACK(...))` is always 1.
+* `SHAPE(PACK(A,VECTOR=V))` is `SHAPE(V)`
+* `SHAPE(PACK(A,MASK=m))` with non-scalar `m` and without `VECTOR=` is `[COUNT(m)]`.
+* `RANK(PACK(...))` is always 1.
 * `SHAPE(UNPACK(MASK=M))` is `SHAPE(M)`.
 * `SHAPE(SHAPE(X))` is `[RANK(X)]`.
 
@@ -127,4 +143,3 @@ new shape.
 The implementation of this feature also becomes more straightforward if
 our implementation of array expressions has decoupled calculation of shapes
 from the evaluation of the elements of the result.
-
