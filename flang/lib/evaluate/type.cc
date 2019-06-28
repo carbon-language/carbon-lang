@@ -234,9 +234,9 @@ int SelectedCharKind(const std::string &s) {  // 16.9.168
   }
   if (lower == "ascii") {
     return 1;
-  } else if (lower == "jis") {
+  } else if (lower == "ucs-2") {
     return 2;
-  } else if (lower == "iso_10646") {
+  } else if (lower == "iso_10646" || lower == "ucs-4") {
     return 4;
   } else {
     return -1;
