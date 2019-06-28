@@ -21,6 +21,7 @@
 //===----------------------------------------------------------------------===//
 #include "Representation.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/Path.h"
 
 namespace clang {
 namespace doc {
@@ -192,6 +193,38 @@ void FunctionInfo::merge(FunctionInfo &&Other) {
   if (Params.empty())
     Params = std::move(Other.Params);
   SymbolInfo::merge(std::move(Other));
+}
+
+llvm::SmallString<16> Info::extractName() {
+  if (!Name.empty())
+    return Name;
+
+  switch (IT) {
+  case InfoType::IT_namespace:
+    // Cover the case where the project contains a base namespace called
+    // 'GlobalNamespace' (i.e. a namespace at the same level as the global
+    // namespace, which would conflict with the hard-coded global namespace name
+    // below.)
+    if (Name == "GlobalNamespace" && Namespace.empty())
+      return llvm::SmallString<16>("@GlobalNamespace");
+    // The case of anonymous namespaces is taken care of in serialization,
+    // so here we can safely assume an unnamed namespace is the global
+    // one.
+    return llvm::SmallString<16>("GlobalNamespace");
+  case InfoType::IT_record:
+    return llvm::SmallString<16>("@nonymous_record_" +
+                                 toHex(llvm::toStringRef(USR)));
+  case InfoType::IT_enum:
+    return llvm::SmallString<16>("@nonymous_enum_" +
+                                 toHex(llvm::toStringRef(USR)));
+  case InfoType::IT_function:
+    return llvm::SmallString<16>("@nonymous_function_" +
+                                 toHex(llvm::toStringRef(USR)));
+  case InfoType::IT_default:
+    return llvm::SmallString<16>("@nonymous_" + toHex(llvm::toStringRef(USR)));
+  }
+  llvm_unreachable("Invalid InfoType.");
+  return llvm::SmallString<16>("");
 }
 
 } // namespace doc

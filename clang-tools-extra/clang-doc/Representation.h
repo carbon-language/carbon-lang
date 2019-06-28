@@ -223,6 +223,8 @@ struct Info {
   void mergeBase(Info &&I);
   bool mergeable(const Info &Other);
 
+  llvm::SmallString<16> extractName();
+
   // Returns a reference to the parent scope (that is, the immediate parent
   // namespace or class in which this decl resides).
   llvm::Expected<Reference> getEnclosingScope();
