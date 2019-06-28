@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -fopenmp -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
-
 // RUN: %clang_cc1 -fsyntax-only -fopenmp-simd -x c++ -std=c++11 -fexceptions -fcxx-exceptions -verify %s
 
 static int sii;
@@ -7,12 +6,22 @@ static int sii;
 #pragma omp threadprivate(sii)
 static int globalii;
 
+struct S {
+  static int ssi;
+};
+
 int test_iteration_spaces() {
   const int N = 100;
   float a[N], b[N], c[N];
   int ii, jj, kk;
   float fii;
   double dii;
+#pragma omp simd linear(S::ssi)
+  for (S::ssi = 0; S::ssi < 10; ++S::ssi)
+    ;
+#pragma omp simd // no messages expected
+  for (S::ssi = 0; S::ssi < 10; ++S::ssi)
+    ;
   #pragma omp simd
   for (int i = 0; i < 10; i+=1) {
     c[i] = a[i] + b[i];
