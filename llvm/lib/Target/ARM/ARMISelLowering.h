@@ -813,7 +813,8 @@ class VectorType;
                                            MachineBasicBlock *MBB) const;
     MachineBasicBlock *EmitLowered__dbzchk(MachineInstr &MI,
                                            MachineBasicBlock *MBB) const;
-    void addMVEVectorTypes();
+    void addMVEVectorTypes(bool HasMVEFP);
+    void setAllExpand(MVT VT);
   };
 
   enum NEONModImmType {

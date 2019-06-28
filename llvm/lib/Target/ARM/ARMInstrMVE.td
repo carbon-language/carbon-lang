@@ -1486,6 +1486,30 @@ def MVE_VREV32_16 : MVE_VREV<"vrev32", "16", 0b01, 0b01>;
 
 def MVE_VREV16_8  : MVE_VREV<"vrev16", "8", 0b00, 0b10>;
 
+let Predicates = [HasMVEInt] in {
+def : Pat<(v4i32 (ARMvrev64 (v4i32 MQPR:$src))),
+          (v4i32 (MVE_VREV64_32 (v4i32 MQPR:$src)))>;
+def : Pat<(v8i16 (ARMvrev64 (v8i16 MQPR:$src))),
+          (v8i16 (MVE_VREV64_16 (v8i16 MQPR:$src)))>;
+def : Pat<(v16i8 (ARMvrev64 (v16i8 MQPR:$src))),
+          (v16i8 (MVE_VREV64_8  (v16i8 MQPR:$src)))>;
+
+def : Pat<(v8i16 (ARMvrev32 (v8i16 MQPR:$src))),
+          (v8i16 (MVE_VREV32_16 (v8i16 MQPR:$src)))>;
+def : Pat<(v16i8 (ARMvrev32 (v16i8 MQPR:$src))),
+          (v16i8 (MVE_VREV32_8  (v16i8 MQPR:$src)))>;
+
+def : Pat<(v16i8 (ARMvrev16 (v16i8 MQPR:$src))),
+          (v16i8 (MVE_VREV16_8  (v16i8 MQPR:$src)))>;
+
+def : Pat<(v4f32 (ARMvrev64 (v4f32 MQPR:$src))),
+          (v4f32 (MVE_VREV64_32 (v4f32 MQPR:$src)))>;
+def : Pat<(v8f16 (ARMvrev64 (v8f16 MQPR:$src))),
+          (v8f16 (MVE_VREV64_16 (v8f16 MQPR:$src)))>;
+def : Pat<(v8f16 (ARMvrev32 (v8f16 MQPR:$src))),
+          (v8f16 (MVE_VREV32_16 (v8f16 MQPR:$src)))>;
+}
+
 def MVE_VMVN : MVE_bit_arith<(outs MQPR:$Qd), (ins MQPR:$Qm),
                              "vmvn", "", "$Qd, $Qm", ""> {
   let Inst{28} = 0b1;
@@ -1683,6 +1707,55 @@ def MVE_VMOV_to_lane_16    : MVE_VMOV_lane_16< "16", 0b0, MVE_VMOV_to_lane>;
 def MVE_VMOV_from_lane_s8  : MVE_VMOV_lane_8 < "s8", 0b0, MVE_VMOV_from_lane>;
 def MVE_VMOV_from_lane_u8  : MVE_VMOV_lane_8 < "u8", 0b1, MVE_VMOV_from_lane>;
 def MVE_VMOV_to_lane_8     : MVE_VMOV_lane_8 <  "8", 0b0, MVE_VMOV_to_lane>;
+
+let Predicates = [HasMVEInt] in {
+  def : Pat<(extractelt (v4i32 MQPR:$src), imm:$lane),
+            (COPY_TO_REGCLASS
+              (i32 (EXTRACT_SUBREG MQPR:$src, (SSubReg_f32_reg imm:$lane))), rGPR)>;
+  def : Pat<(insertelt (v4i32 MQPR:$src1), rGPR:$src2, imm:$lane),
+            (MVE_VMOV_to_lane_32 MQPR:$src1, rGPR:$src2, imm:$lane)>;
+
+  def : Pat<(vector_insert (v16i8 MQPR:$src1), rGPR:$src2, imm:$lane),
+            (MVE_VMOV_to_lane_8  MQPR:$src1, rGPR:$src2, imm:$lane)>;
+  def : Pat<(vector_insert (v8i16 MQPR:$src1), rGPR:$src2, imm:$lane),
+            (MVE_VMOV_to_lane_16 MQPR:$src1, rGPR:$src2, imm:$lane)>;
+
+  def : Pat<(ARMvgetlanes (v16i8 MQPR:$src), imm:$lane),
+            (MVE_VMOV_from_lane_s8 MQPR:$src, imm:$lane)>;
+  def : Pat<(ARMvgetlanes (v8i16 MQPR:$src), imm:$lane),
+            (MVE_VMOV_from_lane_s16 MQPR:$src, imm:$lane)>;
+  def : Pat<(ARMvgetlaneu (v16i8 MQPR:$src), imm:$lane),
+            (MVE_VMOV_from_lane_u8 MQPR:$src, imm:$lane)>;
+  def : Pat<(ARMvgetlaneu (v8i16 MQPR:$src), imm:$lane),
+            (MVE_VMOV_from_lane_u16 MQPR:$src, imm:$lane)>;
+
+  def : Pat<(v16i8 (scalar_to_vector GPR:$src)),
+            (MVE_VMOV_to_lane_8  (v16i8 (IMPLICIT_DEF)), rGPR:$src, (i32 0))>;
+  def : Pat<(v8i16 (scalar_to_vector GPR:$src)),
+            (MVE_VMOV_to_lane_16 (v8i16 (IMPLICIT_DEF)), rGPR:$src, (i32 0))>;
+  def : Pat<(v4i32 (scalar_to_vector GPR:$src)),
+            (MVE_VMOV_to_lane_32 (v4i32 (IMPLICIT_DEF)), rGPR:$src, (i32 0))>;
+
+  // Floating point patterns, still enabled under HasMVEInt
+  def : Pat<(extractelt (v4f32 MQPR:$src), imm:$lane),
+            (COPY_TO_REGCLASS (f32 (EXTRACT_SUBREG MQPR:$src, (SSubReg_f32_reg imm:$lane))), SPR)>;
+  def : Pat<(insertelt (v4f32 MQPR:$src1), (f32 SPR:$src2), imm:$lane),
+            (INSERT_SUBREG (v4f32 (COPY_TO_REGCLASS MQPR:$src1, MQPR)), SPR:$src2, (SSubReg_f32_reg imm:$lane))>;
+
+  def : Pat<(insertelt (v8f16 MQPR:$src1), HPR:$src2, imm:$lane),
+            (MVE_VMOV_to_lane_16 MQPR:$src1, (COPY_TO_REGCLASS HPR:$src2, rGPR), imm:$lane)>;
+  def : Pat<(extractelt (v8f16 MQPR:$src), imm:$lane),
+            (COPY_TO_REGCLASS (MVE_VMOV_from_lane_u16 MQPR:$src, imm:$lane), HPR)>;
+
+  def : Pat<(v4f32 (scalar_to_vector SPR:$src)),
+            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), SPR:$src, ssub_0)>;
+  def : Pat<(v4f32 (scalar_to_vector GPR:$src)),
+            (MVE_VMOV_to_lane_32 (v4f32 (IMPLICIT_DEF)), rGPR:$src, (i32 0))>;
+  def : Pat<(v8f16 (scalar_to_vector HPR:$src)),
+            (INSERT_SUBREG (v8f16 (IMPLICIT_DEF)), HPR:$src, ssub_0)>;
+  def : Pat<(v8f16 (scalar_to_vector GPR:$src)),
+            (MVE_VMOV_to_lane_16 (v8f16 (IMPLICIT_DEF)), rGPR:$src, (i32 0))>;
+}
 
 // end of mve_bit instructions
 
@@ -1897,6 +1970,35 @@ class MVE_VDUP<string suffix, bit B, bit E, list<dag> pattern=[]>
 def MVE_VDUP32 : MVE_VDUP<"32", 0b0, 0b0>;
 def MVE_VDUP16 : MVE_VDUP<"16", 0b0, 0b1>;
 def MVE_VDUP8  : MVE_VDUP<"8",  0b1, 0b0>;
+
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (ARMvdup (i32 rGPR:$elem))),
+            (MVE_VDUP8  rGPR:$elem)>;
+  def : Pat<(v8i16 (ARMvdup (i32 rGPR:$elem))),
+            (MVE_VDUP16 rGPR:$elem)>;
+  def : Pat<(v4i32 (ARMvdup (i32 rGPR:$elem))),
+            (MVE_VDUP32 rGPR:$elem)>;
+
+  def : Pat<(v4i32 (ARMvduplane (v4i32 MQPR:$src), imm:$lane)),
+            (MVE_VDUP32 (MVE_VMOV_from_lane_32 MQPR:$src, imm:$lane))>;
+  // For the 16-bit and 8-bit vduplanes we don't care about the signedness
+  // of the lane move operation as we only want the lowest 8/16 bits anyway.
+  def : Pat<(v8i16 (ARMvduplane (v8i16 MQPR:$src), imm:$lane)),
+            (MVE_VDUP16 (MVE_VMOV_from_lane_u16 MQPR:$src, imm:$lane))>;
+  def : Pat<(v16i8 (ARMvduplane (v16i8 MQPR:$src), imm:$lane)),
+            (MVE_VDUP8  (MVE_VMOV_from_lane_u8 MQPR:$src, imm:$lane))>;
+
+  def : Pat<(v4f32 (ARMvdup (f32 SPR:$elem))),
+            (v4f32 (MVE_VDUP32 (i32 (COPY_TO_REGCLASS (f32 SPR:$elem), rGPR))))>;
+  def : Pat<(v8f16 (ARMvdup (f16 HPR:$elem))),
+            (v8f16 (MVE_VDUP16 (i32 (COPY_TO_REGCLASS (f16 HPR:$elem), rGPR))))>;
+
+  def : Pat<(v4f32 (ARMvduplane (v4f32 MQPR:$src), imm:$lane)),
+            (MVE_VDUP32 (MVE_VMOV_from_lane_32 MQPR:$src, imm:$lane))>;
+  def : Pat<(v8f16 (ARMvduplane (v8f16 MQPR:$src), imm:$lane)),
+            (MVE_VDUP16 (MVE_VMOV_from_lane_u16 MQPR:$src, imm:$lane))>;
+}
+
 
 class MVEIntSingleSrc<string iname, string suffix, bits<2> size,
                          list<dag> pattern=[]>
