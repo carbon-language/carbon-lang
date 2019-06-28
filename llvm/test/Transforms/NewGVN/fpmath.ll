@@ -43,9 +43,8 @@ define double @test4(double %x, double %y) {
 
 define double @test5(double %x) {
 ; CHECK: @test5(double %x)
-; CHECK: %neg1 = fneg double %x, !fpmath !0
-; CHECK: %neg2 = fneg double %x, !fpmath !1
-; CHECK: %foo = fadd double %neg1, %neg2
+; CHECK: %neg1 = fneg double %x, !fpmath !1
+; CHECK: %foo = fadd double %neg1, %neg1
   %neg1 = fneg double %x, !fpmath !0
   %neg2 = fneg double %x, !fpmath !1
   %foo = fadd double %neg1, %neg2
