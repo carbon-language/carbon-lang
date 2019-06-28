@@ -93,6 +93,33 @@ Partial (axial) reductions can be similarly composed.
 The application of `SUM(A,DIM=2)` to the index `J` is the
 complete reduction `SUM(A(J,:))`.
 
+More completely:
+* Reductions to scalars (`SUM(X)` without `DIM=`) become
+  runtime calls; the result needs no dynamic allocation,
+  being a scalar.
+* Axial reductions (`SUM(X,DIM=d)`) applied to indices `(J,K)`
+  become scalar values like `SUM(X(J,K,:))` if `d=3`.
+* Location reductions to indices (`MAXLOC(X)` without `DIM=`)
+  do not require dynamic allocation, since their results are
+  either scalar or small vectors of length `RANK(X)`.
+* Axial location reductions (`MAXLOC(X,DIM=)`, &c.)
+  are handled like other axial reductions like `SUM(DIM=)`.
+* `TRANSPOSE(M)` exchanges the two components of the index tuple.
+* `RESHAPE(A,SHAPE=s)` without `ORDER=` must precompute the shape
+  vector `S`, and then use it to linearize indices into offsets
+  in the storage order of `A` (whose shape must also be captured).
+  These conversions can involve division and/or modulus, which
+  can be optimized into a fixed-point multiplication using the
+  usual technique.
+* `RESHAPE` with `ORDER=` is similar, but must permute the
+  components of the index tuple; it generalizes `TRANSPOSE`.
+* `CSHIFT` applies addition and modulus.
+* `EOSHIFT` applies addition and a conditional move (`SELECT`).
+* `PACK` and `UNPACK` are likely to require a runtime call.
+* `MATMUL(A,B)` can become `DOT_PRODUCT(A(J,:),B(:,K))`, but
+  might benefit from calling a highly optimized runtime
+  routine.
+
 Determination of rank and shape
 ===============================
 An important part of evaluating array expressions without the use of
