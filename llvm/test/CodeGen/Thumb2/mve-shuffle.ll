@@ -494,15 +494,24 @@ define arm_aapcs_vfpcc i64 @scalar_to_vector_i32(<8 x i16> %v) {
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    .pad #8
 ; CHECK-NEXT:    sub sp, #8
-; CHECK-NEXT:    movs r0, #7
-; CHECK-NEXT:    movs r1, #1
-; CHECK-NEXT:    strh.w r0, [sp, #2]
+; CHECK-NEXT:    adr r1, .LCPI30_0
 ; CHECK-NEXT:    vmov.u16 r0, q0[0]
-; CHECK-NEXT:    strh.w r0, [sp]
-; CHECK-NEXT:    movt r1, #9
-; CHECK-NEXT:    ldr r0, [sp]
-; CHECK-NEXT:    add sp, #8
+; CHECK-NEXT:    vldrw.u32 q1, [r1]
+; CHECK-NEXT:    vmov.32 q0[0], r0
+; CHECK-NEXT:    mov r2, sp
+; CHECK-NEXT:    vmov.f32 s1, s5
+; CHECK-NEXT:    vmov.f32 s2, s6
+; CHECK-NEXT:    vmov.f32 s3, s7
+; CHECK-NEXT:    vstrh.32 q0, [r2]
+; CHECK-NEXT:    ldrd r0, r1, [sp], #8
 ; CHECK-NEXT:    bx lr
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  @ %bb.1:
+; CHECK-NEXT:  .LCPI30_0:
+; CHECK-NEXT:    .zero 4
+; CHECK-NEXT:    .long 7 @ 0x7
+; CHECK-NEXT:    .long 1 @ 0x1
+; CHECK-NEXT:    .long 9 @ 0x9
 entry:
   %f = shufflevector <8 x i16> %v, <8 x i16> <i16 undef, i16 7, i16 1, i16 9, i16 undef, i16 undef, i16 undef, i16 undef>, <4 x i32> <i32 0, i32 9, i32 10, i32 11>
   %0 = bitcast <4 x i16> %f to i64

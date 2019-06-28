@@ -117,16 +117,8 @@ entry:
 define i8* @post_ldrhu32_4(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhu32_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrh r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrh r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    mov r2, r0
-; CHECK-NEXT:    ldrh r3, [r2, #4]!
-; CHECK-NEXT:    ldrh r0, [r0, #6]
-; CHECK-NEXT:    vmov.32 q0[2], r3
-; CHECK-NEXT:    vmov.32 q0[3], r0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    vldrh.u32 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -142,15 +134,8 @@ entry:
 define i8* @post_ldrhu32_3(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhu32_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrh r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrh r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrh r2, [r0, #4]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrh r2, [r0, #6]
+; CHECK-NEXT:    vldrh.u32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #3
-; CHECK-NEXT:    vmov.32 q0[3], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -166,16 +151,8 @@ entry:
 define i8* @post_ldrhu32_2(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhu32_2:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrh r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    mov r2, r0
-; CHECK-NEXT:    ldrh r3, [r2, #2]!
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrh r3, [r0, #4]
-; CHECK-NEXT:    ldrh r0, [r0, #6]
-; CHECK-NEXT:    vmov.32 q0[2], r3
-; CHECK-NEXT:    vmov.32 q0[3], r0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    vldrh.u32 q0, [r0]
+; CHECK-NEXT:    adds r0, #2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -191,15 +168,8 @@ entry:
 define i8* @post_ldrhu32_254(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhu32_254:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrh r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrh r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrh r2, [r0, #4]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrh r2, [r0, #6]
+; CHECK-NEXT:    vldrh.u32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #254
-; CHECK-NEXT:    vmov.32 q0[3], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -215,15 +185,8 @@ entry:
 define i8* @post_ldrhu32_256(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhu32_256:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrh r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrh r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrh r2, [r0, #4]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrh r2, [r0, #6]
+; CHECK-NEXT:    vldrh.u32 q0, [r0]
 ; CHECK-NEXT:    add.w r0, r0, #256
-; CHECK-NEXT:    vmov.32 q0[3], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -240,14 +203,8 @@ entry:
 define i8* @post_ldrhs32_4(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhs32_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsh.w r2, [r0]
-; CHECK-NEXT:    ldrsh.w r3, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsh.w r12, [r0, #6]
-; CHECK-NEXT:    ldrsh r2, [r0, #4]!
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    vmov.32 q0[3], r12
+; CHECK-NEXT:    vldrh.s32 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -263,19 +220,10 @@ entry:
 define i8* @post_ldrhs32_3(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhs32_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrsh.w r2, [r0]
-; CHECK-NEXT:    ldrsh.w r3, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsh.w r12, [r0, #4]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrsh.w lr, [r0, #6]
-; CHECK-NEXT:    vmov.32 q0[2], r12
+; CHECK-NEXT:    vldrh.s32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #3
-; CHECK-NEXT:    vmov.32 q0[3], lr
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 3
   %0 = bitcast i8* %x to <4 x i16>*
@@ -289,14 +237,8 @@ entry:
 define i8* @post_ldrhs32_2(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhs32_2:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsh.w r2, [r0]
-; CHECK-NEXT:    ldrsh.w r3, [r0, #4]
-; CHECK-NEXT:    ldrsh.w r12, [r0, #6]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsh r2, [r0, #2]!
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    vmov.32 q0[2], r3
-; CHECK-NEXT:    vmov.32 q0[3], r12
+; CHECK-NEXT:    vldrh.s32 q0, [r0]
+; CHECK-NEXT:    adds r0, #2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -312,19 +254,10 @@ entry:
 define i8* @post_ldrhs32_254(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhs32_254:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrsh.w r2, [r0]
-; CHECK-NEXT:    ldrsh.w r3, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsh.w r12, [r0, #4]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrsh.w lr, [r0, #6]
-; CHECK-NEXT:    vmov.32 q0[2], r12
+; CHECK-NEXT:    vldrh.s32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #254
-; CHECK-NEXT:    vmov.32 q0[3], lr
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 254
   %0 = bitcast i8* %x to <4 x i16>*
@@ -338,19 +271,10 @@ entry:
 define i8* @post_ldrhs32_256(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrhs32_256:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrsh.w r2, [r0]
-; CHECK-NEXT:    ldrsh.w r3, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsh.w r12, [r0, #4]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrsh.w lr, [r0, #6]
-; CHECK-NEXT:    vmov.32 q0[2], r12
+; CHECK-NEXT:    vldrh.s32 q0, [r0]
 ; CHECK-NEXT:    add.w r0, r0, #256
-; CHECK-NEXT:    vmov.32 q0[3], lr
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 256
   %0 = bitcast i8* %x to <4 x i16>*
@@ -446,19 +370,10 @@ entry:
 define i8* @post_ldrbu32_4(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu32_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrb.w lr, [r0, #3]
-; CHECK-NEXT:    vmov.32 q0[2], r12
+; CHECK-NEXT:    vldrb.u32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #4
-; CHECK-NEXT:    vmov.32 q0[3], lr
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 4
   %0 = bitcast i8* %x to <4 x i8>*
@@ -472,14 +387,8 @@ entry:
 define i8* @post_ldrbu32_3(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu32_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrb r2, [r0, #3]!
-; CHECK-NEXT:    vmov.32 q0[2], r12
-; CHECK-NEXT:    vmov.32 q0[3], r2
+; CHECK-NEXT:    vldrb.u32 q0, [r0]
+; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -495,19 +404,10 @@ entry:
 define i8* @post_ldrbu32_127(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu32_127:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrb.w lr, [r0, #3]
-; CHECK-NEXT:    vmov.32 q0[2], r12
+; CHECK-NEXT:    vldrb.u32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #127
-; CHECK-NEXT:    vmov.32 q0[3], lr
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 127
   %0 = bitcast i8* %x to <4 x i8>*
@@ -521,19 +421,10 @@ entry:
 define i8* @post_ldrbu32_128(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu32_128:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[1], r3
-; CHECK-NEXT:    ldrb.w lr, [r0, #3]
-; CHECK-NEXT:    vmov.32 q0[2], r12
+; CHECK-NEXT:    vldrb.u32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #128
-; CHECK-NEXT:    vmov.32 q0[3], lr
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 128
   %0 = bitcast i8* %x to <4 x i8>*
@@ -548,15 +439,8 @@ entry:
 define i8* @post_ldrbs32_4(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs32_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #3]
+; CHECK-NEXT:    vldrb.s32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #4
-; CHECK-NEXT:    vmov.32 q0[3], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -572,14 +456,8 @@ entry:
 define i8* @post_ldrbs32_3(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs32_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrsb r2, [r0, #3]!
-; CHECK-NEXT:    vmov.32 q0[3], r2
+; CHECK-NEXT:    vldrb.s32 q0, [r0]
+; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -595,15 +473,8 @@ entry:
 define i8* @post_ldrbs32_127(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs32_127:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #3]
+; CHECK-NEXT:    vldrb.s32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #127
-; CHECK-NEXT:    vmov.32 q0[3], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -619,15 +490,8 @@ entry:
 define i8* @post_ldrbs32_128(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs32_128:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.32 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.32 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.32 q0[2], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #3]
+; CHECK-NEXT:    vldrb.s32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #128
-; CHECK-NEXT:    vmov.32 q0[3], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -644,28 +508,10 @@ entry:
 define i8* @post_ldrbu16_4(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu16_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[1], r3
-; CHECK-NEXT:    mov r2, r0
-; CHECK-NEXT:    ldrb.w lr, [r0, #3]
-; CHECK-NEXT:    vmov.16 q0[2], r12
-; CHECK-NEXT:    ldrb r3, [r2, #4]!
-; CHECK-NEXT:    vmov.16 q0[3], lr
-; CHECK-NEXT:    vmov.16 q0[4], r3
-; CHECK-NEXT:    ldrb r3, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r3
-; CHECK-NEXT:    ldrb r3, [r0, #6]
-; CHECK-NEXT:    ldrb r0, [r0, #7]
-; CHECK-NEXT:    vmov.16 q0[6], r3
-; CHECK-NEXT:    vmov.16 q0[7], r0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    vldrb.u16 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 4
   %0 = bitcast i8* %x to <8 x i8>*
@@ -679,28 +525,10 @@ entry:
 define i8* @post_ldrbu16_3(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu16_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    mov r2, r0
-; CHECK-NEXT:    vmov.16 q0[1], r3
-; CHECK-NEXT:    ldrb r3, [r2, #3]!
-; CHECK-NEXT:    vmov.16 q0[2], r12
-; CHECK-NEXT:    ldrb.w lr, [r0, #4]
-; CHECK-NEXT:    vmov.16 q0[3], r3
-; CHECK-NEXT:    ldrb r3, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[4], lr
-; CHECK-NEXT:    vmov.16 q0[5], r3
-; CHECK-NEXT:    ldrb r3, [r0, #6]
-; CHECK-NEXT:    ldrb r0, [r0, #7]
-; CHECK-NEXT:    vmov.16 q0[6], r3
-; CHECK-NEXT:    vmov.16 q0[7], r0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    vldrb.u16 q0, [r0]
+; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 3
   %0 = bitcast i8* %x to <8 x i8>*
@@ -714,27 +542,10 @@ entry:
 define i8* @post_ldrbu16_127(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu16_127:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[1], r3
-; CHECK-NEXT:    ldrb.w lr, [r0, #3]
-; CHECK-NEXT:    vmov.16 q0[2], r12
-; CHECK-NEXT:    ldrb r2, [r0, #4]
-; CHECK-NEXT:    vmov.16 q0[3], lr
-; CHECK-NEXT:    vmov.16 q0[4], r2
-; CHECK-NEXT:    ldrb r2, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r2
-; CHECK-NEXT:    ldrb r2, [r0, #6]
-; CHECK-NEXT:    vmov.16 q0[6], r2
-; CHECK-NEXT:    ldrb r2, [r0, #7]
+; CHECK-NEXT:    vldrb.u16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #127
-; CHECK-NEXT:    vmov.16 q0[7], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 127
   %0 = bitcast i8* %x to <8 x i8>*
@@ -748,27 +559,10 @@ entry:
 define i8* @post_ldrbu16_128(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbu16_128:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    .save {r7, lr}
-; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    ldrb r2, [r0]
-; CHECK-NEXT:    ldrb r3, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrb.w r12, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[1], r3
-; CHECK-NEXT:    ldrb.w lr, [r0, #3]
-; CHECK-NEXT:    vmov.16 q0[2], r12
-; CHECK-NEXT:    ldrb r2, [r0, #4]
-; CHECK-NEXT:    vmov.16 q0[3], lr
-; CHECK-NEXT:    vmov.16 q0[4], r2
-; CHECK-NEXT:    ldrb r2, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r2
-; CHECK-NEXT:    ldrb r2, [r0, #6]
-; CHECK-NEXT:    vmov.16 q0[6], r2
-; CHECK-NEXT:    ldrb r2, [r0, #7]
+; CHECK-NEXT:    vldrb.u16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #128
-; CHECK-NEXT:    vmov.16 q0[7], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
-; CHECK-NEXT:    pop {r7, pc}
+; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 128
   %0 = bitcast i8* %x to <8 x i8>*
@@ -783,24 +577,8 @@ entry:
 define i8* @post_ldrbs16_4(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs16_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[2], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #3]
-; CHECK-NEXT:    vmov.16 q0[3], r2
-; CHECK-NEXT:    mov r2, r0
-; CHECK-NEXT:    ldrsb r3, [r2, #4]!
-; CHECK-NEXT:    vmov.16 q0[4], r3
-; CHECK-NEXT:    ldrsb.w r3, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r3
-; CHECK-NEXT:    ldrsb.w r3, [r0, #6]
-; CHECK-NEXT:    ldrsb.w r0, [r0, #7]
-; CHECK-NEXT:    vmov.16 q0[6], r3
-; CHECK-NEXT:    vmov.16 q0[7], r0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    vldrb.s16 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -816,24 +594,8 @@ entry:
 define i8* @post_ldrbs16_3(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs16_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[2], r2
-; CHECK-NEXT:    mov r2, r0
-; CHECK-NEXT:    ldrsb r3, [r2, #3]!
-; CHECK-NEXT:    vmov.16 q0[3], r3
-; CHECK-NEXT:    ldrsb.w r3, [r0, #4]
-; CHECK-NEXT:    vmov.16 q0[4], r3
-; CHECK-NEXT:    ldrsb.w r3, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r3
-; CHECK-NEXT:    ldrsb.w r3, [r0, #6]
-; CHECK-NEXT:    ldrsb.w r0, [r0, #7]
-; CHECK-NEXT:    vmov.16 q0[6], r3
-; CHECK-NEXT:    vmov.16 q0[7], r0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    vldrb.s16 q0, [r0]
+; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -849,23 +611,8 @@ entry:
 define i8* @post_ldrbs16_127(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs16_127:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[2], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #3]
-; CHECK-NEXT:    vmov.16 q0[3], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #4]
-; CHECK-NEXT:    vmov.16 q0[4], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #6]
-; CHECK-NEXT:    vmov.16 q0[6], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #7]
+; CHECK-NEXT:    vldrb.s16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #127
-; CHECK-NEXT:    vmov.16 q0[7], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -881,23 +628,8 @@ entry:
 define i8* @post_ldrbs16_128(i8* %x, i8* %y) {
 ; CHECK-LABEL: post_ldrbs16_128:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrsb.w r2, [r0]
-; CHECK-NEXT:    vmov.16 q0[0], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #1]
-; CHECK-NEXT:    vmov.16 q0[1], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #2]
-; CHECK-NEXT:    vmov.16 q0[2], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #3]
-; CHECK-NEXT:    vmov.16 q0[3], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #4]
-; CHECK-NEXT:    vmov.16 q0[4], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #5]
-; CHECK-NEXT:    vmov.16 q0[5], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #6]
-; CHECK-NEXT:    vmov.16 q0[6], r2
-; CHECK-NEXT:    ldrsb.w r2, [r0, #7]
+; CHECK-NEXT:    vldrb.s16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #128
-; CHECK-NEXT:    vmov.16 q0[7], r2
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1127,9 +859,9 @@ entry:
 define i8* @post_strh32_4(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strh32_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    str r1, [r0]
-; CHECK-NEXT:    str r2, [r0, #4]!
+; CHECK-NEXT:    vldrh.u32 q0, [r1]
+; CHECK-NEXT:    vstrh.32 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 4
@@ -1143,8 +875,8 @@ entry:
 define i8* @post_strh32_3(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strh32_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrh.u32 q0, [r1]
+; CHECK-NEXT:    vstrh.32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1159,8 +891,8 @@ entry:
 define i8* @post_strh32_2(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strh32_2:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrh.u32 q0, [r1]
+; CHECK-NEXT:    vstrh.32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #2
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1175,8 +907,8 @@ entry:
 define i8* @post_strh32_254(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strh32_254:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrh.u32 q0, [r1]
+; CHECK-NEXT:    vstrh.32 q0, [r0]
 ; CHECK-NEXT:    adds r0, #254
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1191,8 +923,8 @@ entry:
 define i8* @post_strh32_256(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strh32_256:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrh.u32 q0, [r1]
+; CHECK-NEXT:    vstrh.32 q0, [r0]
 ; CHECK-NEXT:    add.w r0, r0, #256
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1289,8 +1021,9 @@ entry:
 define i8* @post_strb32_4(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb32_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldr r1, [r1]
-; CHECK-NEXT:    str r1, [r0], #4
+; CHECK-NEXT:    vldrb.u32 q0, [r1]
+; CHECK-NEXT:    vstrb.32 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 4
@@ -1304,8 +1037,9 @@ entry:
 define i8* @post_strb32_3(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb32_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldr r1, [r1]
-; CHECK-NEXT:    str r1, [r0], #3
+; CHECK-NEXT:    vldrb.u32 q0, [r1]
+; CHECK-NEXT:    vstrb.32 q0, [r0]
+; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 3
@@ -1319,8 +1053,9 @@ entry:
 define i8* @post_strb32_127(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb32_127:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldr r1, [r1]
-; CHECK-NEXT:    str r1, [r0], #127
+; CHECK-NEXT:    vldrb.u32 q0, [r1]
+; CHECK-NEXT:    vstrb.32 q0, [r0]
+; CHECK-NEXT:    adds r0, #127
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 127
@@ -1334,8 +1069,9 @@ entry:
 define i8* @post_strb32_128(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb32_128:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldr r1, [r1]
-; CHECK-NEXT:    str r1, [r0], #128
+; CHECK-NEXT:    vldrb.u32 q0, [r1]
+; CHECK-NEXT:    vstrb.32 q0, [r0]
+; CHECK-NEXT:    adds r0, #128
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 128
@@ -1350,9 +1086,9 @@ entry:
 define i8* @post_strb16_4(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb16_4:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    str r1, [r0]
-; CHECK-NEXT:    str r2, [r0, #4]!
+; CHECK-NEXT:    vldrb.u16 q0, [r1]
+; CHECK-NEXT:    vstrb.16 q0, [r0]
+; CHECK-NEXT:    adds r0, #4
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 4
@@ -1366,8 +1102,8 @@ entry:
 define i8* @post_strb16_3(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb16_3:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrb.u16 q0, [r1]
+; CHECK-NEXT:    vstrb.16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #3
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1382,8 +1118,8 @@ entry:
 define i8* @post_strb16_127(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb16_127:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrb.u16 q0, [r1]
+; CHECK-NEXT:    vstrb.16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #127
 ; CHECK-NEXT:    bx lr
 entry:
@@ -1398,8 +1134,8 @@ entry:
 define i8* @post_strb16_128(i8* %y, i8* %x) {
 ; CHECK-LABEL: post_strb16_128:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    ldrd r1, r2, [r1]
-; CHECK-NEXT:    strd r1, r2, [r0]
+; CHECK-NEXT:    vldrb.u16 q0, [r1]
+; CHECK-NEXT:    vstrb.16 q0, [r0]
 ; CHECK-NEXT:    adds r0, #128
 ; CHECK-NEXT:    bx lr
 entry:

@@ -4201,6 +4201,42 @@ let Predicates = [HasMVEInt, IsBE] in {
   def : MVE_unpred_vector_load_typed<v4f32, MVE_VLDRWU32, alignedload32, 2>;
 }
 
+
+// Widening/Narrowing Loads/Stores
+
+let Predicates = [HasMVEInt] in {
+  def : Pat<(truncstorevi8  (v8i16 MQPR:$val), t2addrmode_imm7<1>:$addr),
+             (MVE_VSTRB16 MQPR:$val, t2addrmode_imm7<1>:$addr)>;
+  def : Pat<(truncstorevi8  (v4i32 MQPR:$val), t2addrmode_imm7<1>:$addr),
+             (MVE_VSTRB32 MQPR:$val, t2addrmode_imm7<1>:$addr)>;
+  def : Pat<(truncstorevi16 (v4i32 MQPR:$val), t2addrmode_imm7<2>:$addr),
+             (MVE_VSTRH32 MQPR:$val, t2addrmode_imm7<2>:$addr)>;
+}
+
+multiclass MVEExtLoad<string DestLanes, string DestElemBits,
+                      string SrcElemBits, string SrcElemType,
+                      Operand am> {
+  def _Any : Pat<(!cast<ValueType>("v" # DestLanes # "i" # DestElemBits)
+                   (!cast<PatFrag>("extloadvi"  # SrcElemBits) am:$addr)),
+                 (!cast<Instruction>("MVE_VLDR" # SrcElemType # "U" # DestElemBits)
+                   am:$addr)>;
+  def _Z   : Pat<(!cast<ValueType>("v" # DestLanes # "i" # DestElemBits)
+                   (!cast<PatFrag>("zextloadvi"  # SrcElemBits) am:$addr)),
+                 (!cast<Instruction>("MVE_VLDR" # SrcElemType # "U" # DestElemBits)
+                   am:$addr)>;
+  def _S   : Pat<(!cast<ValueType>("v" # DestLanes # "i" # DestElemBits)
+                   (!cast<PatFrag>("sextloadvi"  # SrcElemBits) am:$addr)),
+                 (!cast<Instruction>("MVE_VLDR" # SrcElemType # "S" # DestElemBits)
+                   am:$addr)>;
+}
+
+let Predicates = [HasMVEInt] in {
+  defm : MVEExtLoad<"4", "32", "8",  "B", t2addrmode_imm7<1>>;
+  defm : MVEExtLoad<"8", "16", "8",  "B", t2addrmode_imm7<1>>;
+  defm : MVEExtLoad<"4", "32", "16", "H", t2addrmode_imm7<2>>;
+}
+
+
 // Bit convert patterns
 
 let Predicates = [HasMVEInt] in {
