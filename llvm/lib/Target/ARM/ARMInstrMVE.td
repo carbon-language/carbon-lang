@@ -2513,8 +2513,22 @@ class MVE_VABSNEG_fp<string iname, string suffix, bits<2> size, bit negate,
 def MVE_VABSf16 : MVE_VABSNEG_fp<"vabs", "f16", 0b01, 0b0>;
 def MVE_VABSf32 : MVE_VABSNEG_fp<"vabs", "f32", 0b10, 0b0>;
 
+let Predicates = [HasMVEFloat] in {
+  def : Pat<(v8f16 (fabs MQPR:$src)),
+            (MVE_VABSf16 MQPR:$src)>;
+  def : Pat<(v4f32 (fabs MQPR:$src)),
+            (MVE_VABSf32 MQPR:$src)>;
+}
+
 def MVE_VNEGf16 : MVE_VABSNEG_fp<"vneg", "f16", 0b01, 0b1>;
 def MVE_VNEGf32 : MVE_VABSNEG_fp<"vneg", "f32", 0b10, 0b1>;
+
+let Predicates = [HasMVEFloat] in {
+  def : Pat<(v8f16 (fneg MQPR:$src)),
+            (MVE_VNEGf16 MQPR:$src)>;
+  def : Pat<(v4f32 (fneg MQPR:$src)),
+            (MVE_VNEGf32 MQPR:$src)>;
+}
 
 class MVE_VMAXMINNMA<string iname, string suffix, bit size, bit bit_12,
                      list<dag> pattern=[]>
