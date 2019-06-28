@@ -81,6 +81,8 @@ test0:
     end_block
     end_try
     i32.const   .L.str
+    i32.load8_u .L.str+2
+    i32.load16_u .L.str:p2align=0
     throw 0
 .LBB0_5:
     #i32.trunc_sat_f32_s
@@ -170,6 +172,8 @@ test0:
 # CHECK-NEXT:      end_block
 # CHECK-NEXT:      end_try
 # CHECK-NEXT:      i32.const   .L.str
+# CHECK-NEXT:      i32.load8_u .L.str+2
+# CHECK-NEXT:      i32.load16_u .L.str:p2align=0
 # CHECK-NEXT:      throw       0
 # CHECK-NEXT:  .LBB0_5:
 # CHECK-NEXT:      global.get  __stack_pointer

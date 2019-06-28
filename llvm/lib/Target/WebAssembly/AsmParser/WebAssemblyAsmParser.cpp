@@ -344,9 +344,7 @@ public:
     Parser.Lex();
   }
 
-  bool parseOperandStartingWithInteger(bool IsNegative, OperandVector &Operands,
-                                       StringRef InstName) {
-    parseSingleInteger(IsNegative, Operands);
+  bool checkForP2AlignIfLoadStore(OperandVector &Operands, StringRef InstName) {
     // FIXME: there is probably a cleaner way to do this.
     auto IsLoadStore = InstName.find(".load") != StringRef::npos ||
                        InstName.find(".store") != StringRef::npos;
@@ -471,11 +469,13 @@ public:
           // Assume this identifier is a label.
           const MCExpr *Val;
           SMLoc End;
-          if (Parser.parsePrimaryExpr(Val, End))
+          if (Parser.parseExpression(Val, End))
             return error("Cannot parse symbol: ", Lexer.getTok());
           Operands.push_back(make_unique<WebAssemblyOperand>(
               WebAssemblyOperand::Symbol, Id.getLoc(), Id.getEndLoc(),
               WebAssemblyOperand::SymOp{Val}));
+          if (checkForP2AlignIfLoadStore(Operands, Name))
+            return true;
         }
         break;
       }
@@ -483,11 +483,13 @@ public:
         Parser.Lex();
         if (Lexer.isNot(AsmToken::Integer))
           return error("Expected integer instead got: ", Lexer.getTok());
-        if (parseOperandStartingWithInteger(true, Operands, Name))
+        parseSingleInteger(true, Operands);
+        if (checkForP2AlignIfLoadStore(Operands, Name))
           return true;
         break;
       case AsmToken::Integer:
-        if (parseOperandStartingWithInteger(false, Operands, Name))
+        parseSingleInteger(false, Operands);
+        if (checkForP2AlignIfLoadStore(Operands, Name))
           return true;
         break;
       case AsmToken::Real: {
