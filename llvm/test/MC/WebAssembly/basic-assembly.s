@@ -91,6 +91,7 @@ test0:
 
     .section    .rodata..L.str,"",@
     .hidden     .L.str
+    .type       .L.str,@object
 .L.str:
     .int8       'H'
     .asciz      "ello, World!"

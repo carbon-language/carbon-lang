@@ -187,6 +187,8 @@ public:
       WasmSym->setType(wasm::WASM_SYMBOL_TYPE_FUNCTION);
     else if (TypeName == "global")
       WasmSym->setType(wasm::WASM_SYMBOL_TYPE_GLOBAL);
+    else if (TypeName == "object")
+      WasmSym->setType(wasm::WASM_SYMBOL_TYPE_DATA);
     else
       return error("Unknown WASM symbol type: ", Lexer->getTok());
     Lex();
