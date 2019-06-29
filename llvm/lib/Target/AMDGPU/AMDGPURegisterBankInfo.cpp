@@ -1454,6 +1454,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     case Intrinsic::maxnum:
     case Intrinsic::minnum:
     case Intrinsic::amdgcn_cvt_pkrtz:
+    case Intrinsic::amdgcn_div_fmas:
       return getDefaultMappingVOP(MI);
     case Intrinsic::amdgcn_kernarg_segment_ptr:
     case Intrinsic::amdgcn_s_getpc:
