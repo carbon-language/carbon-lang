@@ -1604,6 +1604,8 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     case Intrinsic::amdgcn_ds_fadd:
     case Intrinsic::amdgcn_ds_fmin:
     case Intrinsic::amdgcn_ds_fmax:
+    case Intrinsic::amdgcn_atomic_inc:
+    case Intrinsic::amdgcn_atomic_dec:
       return getDefaultMappingAllVGPR(MI);
     case Intrinsic::amdgcn_ds_ordered_add:
     case Intrinsic::amdgcn_ds_ordered_swap:
