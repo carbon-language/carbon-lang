@@ -1455,7 +1455,9 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     case Intrinsic::minnum:
     case Intrinsic::amdgcn_cvt_pkrtz:
       return getDefaultMappingVOP(MI);
-    case Intrinsic::amdgcn_kernarg_segment_ptr: {
+    case Intrinsic::amdgcn_kernarg_segment_ptr:
+    case Intrinsic::amdgcn_s_getpc:
+    case Intrinsic::amdgcn_groupstaticsize: {
       unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
       OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
@@ -1522,6 +1524,14 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
     default:
       return getInvalidInstructionMapping();
+    case Intrinsic::amdgcn_s_getreg:
+    case Intrinsic::amdgcn_s_memtime:
+    case Intrinsic::amdgcn_s_memrealtime:
+    case Intrinsic::amdgcn_s_get_waveid_in_workgroup: {
+      unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+      OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
+      break;
+    }
     case Intrinsic::amdgcn_exp_compr:
       OpdsMapping[0] = nullptr; // IntrinsicID
       // FIXME: These are immediate values which can't be read from registers.
