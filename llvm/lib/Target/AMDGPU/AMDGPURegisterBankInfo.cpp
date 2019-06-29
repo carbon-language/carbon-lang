@@ -1042,7 +1042,11 @@ AMDGPURegisterBankInfo::getDefaultMappingAllVGPR(const MachineInstr &MI) const {
   SmallVector<const ValueMapping*, 8> OpdsMapping(MI.getNumOperands());
 
   for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
-    unsigned Size = getSizeInBits(MI.getOperand(I).getReg(), MRI, *TRI);
+    const MachineOperand &Op = MI.getOperand(I);
+    if (!Op.isReg())
+      continue;
+
+    unsigned Size = getSizeInBits(Op.getReg(), MRI, *TRI);
     OpdsMapping[I] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
   }
 
@@ -1503,6 +1507,9 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     case Intrinsic::amdgcn_udot8:
     case Intrinsic::amdgcn_fdiv_fast:
       return getDefaultMappingVOP(MI);
+    case Intrinsic::amdgcn_ds_permute:
+    case Intrinsic::amdgcn_ds_bpermute:
+      return getDefaultMappingAllVGPR(MI);
     case Intrinsic::amdgcn_kernarg_segment_ptr:
     case Intrinsic::amdgcn_s_getpc:
     case Intrinsic::amdgcn_groupstaticsize: {
@@ -1592,6 +1599,15 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
     }
+    case Intrinsic::amdgcn_ds_append:
+    case Intrinsic::amdgcn_ds_consume:
+    case Intrinsic::amdgcn_ds_fadd:
+    case Intrinsic::amdgcn_ds_fmin:
+    case Intrinsic::amdgcn_ds_fmax:
+      return getDefaultMappingAllVGPR(MI);
+    case Intrinsic::amdgcn_ds_ordered_add:
+    case Intrinsic::amdgcn_ds_ordered_swap:
+      return getInvalidInstructionMapping();
     case Intrinsic::amdgcn_exp_compr:
       OpdsMapping[0] = nullptr; // IntrinsicID
       // FIXME: These are immediate values which can't be read from registers.
