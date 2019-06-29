@@ -2027,16 +2027,9 @@ static PHINode *getLoopPhiForCounter(Value *IncV, Loop *L) {
   return nullptr;
 }
 
-/// Given a loop with one backedge and one exit, return the ICmpInst
-/// controlling the sole loop exit.  There is no guarantee that the exiting
-/// block is also the latch.
-static ICmpInst *getLoopTest(Loop *L, BasicBlock *ExitingBB) {
-
-  BasicBlock *LatchBlock = L->getLoopLatch();
-  // Don't bother with LFTR if the loop is not properly simplified.
-  if (!LatchBlock)
-    return nullptr;
-
+/// Return the ICmpInst controlling the given loop exit.  There is no guarantee
+/// that the exiting block is also the latch.
+static ICmpInst *getLoopTest(BasicBlock *ExitingBB) {
   BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
   return dyn_cast<ICmpInst>(BI->getCondition());
 }
@@ -2044,6 +2037,8 @@ static ICmpInst *getLoopTest(Loop *L, BasicBlock *ExitingBB) {
 /// linearFunctionTestReplace policy. Return true unless we can show that the
 /// current exit test is already sufficiently canonical.
 static bool needsLFTR(Loop *L, BasicBlock *ExitingBB) {
+  assert(L->getLoopLatch() && "Must be in simplified form");
+
   // Avoid converting a constant or loop invariant test back to a runtime
   // test.  This is critical for when SCEV's cached ExitCount is less precise
   // than the current IR (such as after we've proven a particular exit is
@@ -2053,7 +2048,7 @@ static bool needsLFTR(Loop *L, BasicBlock *ExitingBB) {
     return false;
   
   // Do LFTR to simplify the exit condition to an ICMP.
-  ICmpInst *Cond = getLoopTest(L, ExitingBB);
+  ICmpInst *Cond = getLoopTest(ExitingBB);
   if (!Cond)
     return true;
 
@@ -2228,7 +2223,7 @@ static PHINode *FindLoopCounter(Loop *L, BasicBlock *ExitingBB,
   PHINode *BestPhi = nullptr;
   const SCEV *BestInit = nullptr;
   BasicBlock *LatchBlock = L->getLoopLatch();
-  assert(LatchBlock && "needsLFTR should guarantee a loop latch");
+  assert(LatchBlock && "Must be in simplified form");
   const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
 
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
@@ -2255,7 +2250,7 @@ static PHINode *FindLoopCounter(Loop *L, BasicBlock *ExitingBB,
       // We explicitly allow unknown phis as long as they are already used by
       // the loop exit test.  This is legal since performing LFTR could not
       // increase the number of undef users. 
-      if (ICmpInst *Cond = getLoopTest(L, ExitingBB))
+      if (ICmpInst *Cond = getLoopTest(ExitingBB))
         if (Phi != getLoopPhiForCounter(Cond->getOperand(0), L) &&
             Phi != getLoopPhiForCounter(Cond->getOperand(1), L))
           continue;
@@ -2412,7 +2407,7 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
       // to add a potentially UB introducing use.  We need to either a) show
       // the loop test we're modifying is already in post-inc form, or b) show
       // that adding a use must not introduce UB.
-      if (ICmpInst *LoopTest = getLoopTest(L, ExitingBB))
+      if (ICmpInst *LoopTest = getLoopTest(ExitingBB))
         SafeToPostInc = LoopTest->getOperand(0) == IncVar ||
           LoopTest->getOperand(1) == IncVar;
       if (!SafeToPostInc)
