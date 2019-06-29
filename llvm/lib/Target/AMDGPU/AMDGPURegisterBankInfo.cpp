@@ -1518,6 +1518,18 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                                                Src1Size);
       break;
     }
+    case Intrinsic::amdgcn_icmp:
+    case Intrinsic::amdgcn_fcmp: {
+      unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+      // This is not VCCRegBank because this is not used in boolean contexts.
+      OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, DstSize);
+      unsigned OpSize = MRI.getType(MI.getOperand(2).getReg()).getSizeInBits();
+      unsigned Op1Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI);
+      unsigned Op2Bank = getRegBankID(MI.getOperand(3).getReg(), MRI, *TRI);
+      OpdsMapping[2] = AMDGPU::getValueMapping(Op1Bank, OpSize);
+      OpdsMapping[3] = AMDGPU::getValueMapping(Op2Bank, OpSize);
+      break;
+    }
     }
     break;
   }
