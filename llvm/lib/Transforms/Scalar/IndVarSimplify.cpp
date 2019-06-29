@@ -2027,11 +2027,17 @@ static PHINode *getLoopPhiForCounter(Value *IncV, Loop *L) {
   return nullptr;
 }
 
-/// Return the ICmpInst controlling the given loop exit.  There is no guarantee
-/// that the exiting block is also the latch.
-static ICmpInst *getLoopTest(BasicBlock *ExitingBB) {
+/// Whether the current loop exit test is based on this value.  Currently this
+/// is limited to a direct use in the loop condition.
+static bool isLoopExitTestBasedOn(Value *V, BasicBlock *ExitingBB) {
   BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
-  return dyn_cast<ICmpInst>(BI->getCondition());
+  ICmpInst *ICmp = dyn_cast<ICmpInst>(BI->getCondition());
+  // TODO: Allow non-icmp loop test.
+  if (!ICmp)
+    return false;
+
+  // TODO: Allow indirect use.
+  return ICmp->getOperand(0) == V || ICmp->getOperand(1) == V;
 }
 
 /// linearFunctionTestReplace policy. Return true unless we can show that the
@@ -2048,7 +2054,7 @@ static bool needsLFTR(Loop *L, BasicBlock *ExitingBB) {
     return false;
   
   // Do LFTR to simplify the exit condition to an ICMP.
-  ICmpInst *Cond = getLoopTest(ExitingBB);
+  ICmpInst *Cond = dyn_cast<ICmpInst>(BI->getCondition());
   if (!Cond)
     return true;
 
@@ -2250,10 +2256,10 @@ static PHINode *FindLoopCounter(Loop *L, BasicBlock *ExitingBB,
       // We explicitly allow unknown phis as long as they are already used by
       // the loop exit test.  This is legal since performing LFTR could not
       // increase the number of undef users. 
-      if (ICmpInst *Cond = getLoopTest(ExitingBB))
-        if (Phi != getLoopPhiForCounter(Cond->getOperand(0), L) &&
-            Phi != getLoopPhiForCounter(Cond->getOperand(1), L))
-          continue;
+      Value *IncPhi = Phi->getIncomingValueForBlock(LatchBlock);
+      if (!isLoopExitTestBasedOn(Phi, ExitingBB) &&
+          !isLoopExitTestBasedOn(IncPhi, ExitingBB))
+        continue;
     }
 
     // Avoid introducing undefined behavior due to poison which didn't exist in
@@ -2401,20 +2407,14 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
   // compare against the post-incremented value, otherwise we must compare
   // against the preincremented value.
   if (ExitingBB == L->getLoopLatch()) {
-    bool SafeToPostInc = IndVar->getType()->isIntegerTy();
-    if (!SafeToPostInc) {
-      // For pointer IVs, we chose to not strip inbounds which requires us not
-      // to add a potentially UB introducing use.  We need to either a) show
-      // the loop test we're modifying is already in post-inc form, or b) show
-      // that adding a use must not introduce UB.
-      if (ICmpInst *LoopTest = getLoopTest(ExitingBB))
-        SafeToPostInc = LoopTest->getOperand(0) == IncVar ||
-          LoopTest->getOperand(1) == IncVar;
-      if (!SafeToPostInc)
-        SafeToPostInc =
-          mustExecuteUBIfPoisonOnPathTo(IncVar, ExitingBB->getTerminator(), DT);
-    }
-
+    // For pointer IVs, we chose to not strip inbounds which requires us not
+    // to add a potentially UB introducing use.  We need to either a) show
+    // the loop test we're modifying is already in post-inc form, or b) show
+    // that adding a use must not introduce UB.
+    bool SafeToPostInc =
+        IndVar->getType()->isIntegerTy() ||
+        isLoopExitTestBasedOn(IncVar, ExitingBB) ||
+        mustExecuteUBIfPoisonOnPathTo(IncVar, ExitingBB->getTerminator(), DT);
     if (SafeToPostInc) {
       UsePostInc = true;
       CmpIndVar = IncVar;
