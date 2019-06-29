@@ -1453,8 +1453,55 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       return getInvalidInstructionMapping();
     case Intrinsic::maxnum:
     case Intrinsic::minnum:
-    case Intrinsic::amdgcn_cvt_pkrtz:
     case Intrinsic::amdgcn_div_fmas:
+    case Intrinsic::amdgcn_trig_preop:
+    case Intrinsic::amdgcn_sin:
+    case Intrinsic::amdgcn_cos:
+    case Intrinsic::amdgcn_log_clamp:
+    case Intrinsic::amdgcn_rcp:
+    case Intrinsic::amdgcn_rcp_legacy:
+    case Intrinsic::amdgcn_rsq:
+    case Intrinsic::amdgcn_rsq_legacy:
+    case Intrinsic::amdgcn_rsq_clamp:
+    case Intrinsic::amdgcn_ldexp:
+    case Intrinsic::amdgcn_frexp_mant:
+    case Intrinsic::amdgcn_frexp_exp:
+    case Intrinsic::amdgcn_fract:
+    case Intrinsic::amdgcn_cvt_pkrtz:
+    case Intrinsic::amdgcn_cvt_pknorm_i16:
+    case Intrinsic::amdgcn_cvt_pknorm_u16:
+    case Intrinsic::amdgcn_cvt_pk_i16:
+    case Intrinsic::amdgcn_cvt_pk_u16:
+    case Intrinsic::amdgcn_fmed3:
+    case Intrinsic::amdgcn_cubeid:
+    case Intrinsic::amdgcn_cubema:
+    case Intrinsic::amdgcn_cubesc:
+    case Intrinsic::amdgcn_cubetc:
+    case Intrinsic::amdgcn_sffbh:
+    case Intrinsic::amdgcn_fmad_ftz:
+    case Intrinsic::amdgcn_mbcnt_lo:
+    case Intrinsic::amdgcn_mbcnt_hi:
+    case Intrinsic::amdgcn_ubfe:
+    case Intrinsic::amdgcn_sbfe:
+    case Intrinsic::amdgcn_lerp:
+    case Intrinsic::amdgcn_sad_u8:
+    case Intrinsic::amdgcn_msad_u8:
+    case Intrinsic::amdgcn_sad_hi_u8:
+    case Intrinsic::amdgcn_sad_u16:
+    case Intrinsic::amdgcn_qsad_pk_u16_u8:
+    case Intrinsic::amdgcn_mqsad_pk_u16_u8:
+    case Intrinsic::amdgcn_mqsad_u32_u8:
+    case Intrinsic::amdgcn_cvt_pk_u8_f32:
+    case Intrinsic::amdgcn_alignbit:
+    case Intrinsic::amdgcn_alignbyte:
+    case Intrinsic::amdgcn_fdot2:
+    case Intrinsic::amdgcn_sdot2:
+    case Intrinsic::amdgcn_udot2:
+    case Intrinsic::amdgcn_sdot4:
+    case Intrinsic::amdgcn_udot4:
+    case Intrinsic::amdgcn_sdot8:
+    case Intrinsic::amdgcn_udot8:
+    case Intrinsic::amdgcn_fdiv_fast:
       return getDefaultMappingVOP(MI);
     case Intrinsic::amdgcn_kernarg_segment_ptr:
     case Intrinsic::amdgcn_s_getpc:
