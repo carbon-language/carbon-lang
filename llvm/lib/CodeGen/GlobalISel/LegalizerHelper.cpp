@@ -82,6 +82,10 @@ LegalizerHelper::LegalizeResult
 LegalizerHelper::legalizeInstrStep(MachineInstr &MI) {
   LLVM_DEBUG(dbgs() << "Legalizing: "; MI.print(dbgs()));
 
+  if (MI.getOpcode() == TargetOpcode::G_INTRINSIC ||
+      MI.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS)
+    return LI.legalizeIntrinsic(MI, MRI, MIRBuilder) ? Legalized
+                                                     : UnableToLegalize;
   auto Step = LI.getAction(MI, MRI);
   switch (Step.Action) {
   case Legal:
