@@ -981,6 +981,37 @@ bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I) const {
   return Ret;
 }
 
+bool AMDGPUInstructionSelector::selectG_BRCOND(MachineInstr &I) const {
+  MachineBasicBlock *BB = I.getParent();
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  MachineOperand &CondOp = I.getOperand(0);
+  Register CondReg = CondOp.getReg();
+  const DebugLoc &DL = I.getDebugLoc();
+
+  if (isSCC(CondReg, MRI)) {
+    // In SelectionDAG, we inspect the IR block for uniformity metadata to decide
+    // whether the branch is uniform when selecting the instruction. In
+    // GlobalISel, we should push that decision into RegBankSelect. Assume for now
+    // RegBankSelect knows what it's doing if the branch condition is scc, even
+    // though it currently does not.
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::COPY), AMDGPU::SCC)
+      .addReg(CondReg);
+    if (!MRI.getRegClassOrNull(CondReg)) {
+      const TargetRegisterClass *RC
+        = TRI.getConstrainedRegClassForOperand(CondOp, MRI);
+      MRI.setRegClass(CondReg, RC);
+    }
+
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_CBRANCH_SCC1))
+      .addMBB(I.getOperand(1).getMBB());
+    I.eraseFromParent();
+    return true;
+  }
+
+  return false;
+}
+
 bool AMDGPUInstructionSelector::select(MachineInstr &I,
                                        CodeGenCoverage &CoverageInfo) const {
 
@@ -1036,6 +1067,8 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
     }
 
     return false;
+  case TargetOpcode::G_BRCOND:
+    return selectG_BRCOND(I);
   }
   return false;
 }
