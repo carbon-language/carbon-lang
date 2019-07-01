@@ -1855,24 +1855,35 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   }
   case AMDGPU::G_SELECT: {
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
-    unsigned Op1Bank = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI,
+    unsigned Op2Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI,
                                     AMDGPU::SGPRRegBankID);
-    unsigned Op2Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI);
-    unsigned Op3Bank = getRegBankID(MI.getOperand(3).getReg(), MRI, *TRI);
-    bool SGPRSrcs = Op1Bank == AMDGPU::SCCRegBankID &&
-                    Op2Bank == AMDGPU::SGPRRegBankID &&
+    unsigned Op3Bank = getRegBankID(MI.getOperand(3).getReg(), MRI, *TRI,
+                                    AMDGPU::SGPRRegBankID);
+    bool SGPRSrcs = Op2Bank == AMDGPU::SGPRRegBankID &&
                     Op3Bank == AMDGPU::SGPRRegBankID;
-    unsigned Bank = SGPRSrcs ? AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
-    Op1Bank = SGPRSrcs ? AMDGPU::SCCRegBankID : AMDGPU::VCCRegBankID;
+
+    unsigned CondBankDefault = SGPRSrcs ?
+      AMDGPU::SCCRegBankID : AMDGPU::VCCRegBankID;
+    unsigned CondBank = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI,
+                                     CondBankDefault);
+    if (CondBank == AMDGPU::SGPRRegBankID)
+      CondBank = SGPRSrcs ? AMDGPU::SCCRegBankID : AMDGPU::VCCRegBankID;
+    else if (CondBank == AMDGPU::VGPRRegBankID)
+      CondBank = AMDGPU::VCCRegBankID;
+
+    unsigned Bank = SGPRSrcs && CondBank == AMDGPU::SCCRegBankID ?
+      AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+
+    assert(CondBank == AMDGPU::VCCRegBankID || CondBank == AMDGPU::SCCRegBankID);
 
     if (Size == 64) {
       OpdsMapping[0] = AMDGPU::getValueMappingSGPR64Only(Bank, Size);
-      OpdsMapping[1] = AMDGPU::getValueMapping(Op1Bank, 1);
+      OpdsMapping[1] = AMDGPU::getValueMapping(CondBank, 1);
       OpdsMapping[2] = AMDGPU::getValueMappingSGPR64Only(Bank, Size);
       OpdsMapping[3] = AMDGPU::getValueMappingSGPR64Only(Bank, Size);
     } else {
       OpdsMapping[0] = AMDGPU::getValueMapping(Bank, Size);
-      OpdsMapping[1] = AMDGPU::getValueMapping(Op1Bank, 1);
+      OpdsMapping[1] = AMDGPU::getValueMapping(CondBank, 1);
       OpdsMapping[2] = AMDGPU::getValueMapping(Bank, Size);
       OpdsMapping[3] = AMDGPU::getValueMapping(Bank, Size);
     }
