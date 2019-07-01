@@ -317,8 +317,9 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC(MachineInstr &I,
   return false;
 }
 
-static unsigned getV_CMPOpcode(CmpInst::Predicate P, unsigned Size) {
-  assert(Size == 32 || Size == 64);
+static int getV_CMPOpcode(CmpInst::Predicate P, unsigned Size) {
+  if (Size != 32 && Size != 64)
+    return -1;
   switch (P) {
   default:
     llvm_unreachable("Unknown condition code!");
@@ -345,12 +346,26 @@ static unsigned getV_CMPOpcode(CmpInst::Predicate P, unsigned Size) {
   }
 }
 
-static unsigned getS_CMPOpcode(CmpInst::Predicate P, unsigned Size) {
-  // FIXME: VI supports 64-bit comparse.
-  assert(Size == 32);
+int AMDGPUInstructionSelector::getS_CMPOpcode(CmpInst::Predicate P,
+                                              unsigned Size) const {
+  if (Size == 64) {
+    if (!STI.hasScalarCompareEq64())
+      return -1;
+
+    switch (P) {
+    case CmpInst::ICMP_NE:
+      return AMDGPU::S_CMP_LG_U64;
+    case CmpInst::ICMP_EQ:
+      return AMDGPU::S_CMP_EQ_U64;
+    default:
+      return -1;
+    }
+  }
+
+  if (Size != 32)
+    return -1;
+
   switch (P) {
-  default:
-    llvm_unreachable("Unknown condition code!");
   case CmpInst::ICMP_NE:
     return AMDGPU::S_CMP_LG_U32;
   case CmpInst::ICMP_EQ:
@@ -371,6 +386,8 @@ static unsigned getS_CMPOpcode(CmpInst::Predicate P, unsigned Size) {
     return AMDGPU::S_CMP_LT_U32;
   case CmpInst::ICMP_ULE:
     return AMDGPU::S_CMP_LE_U32;
+  default:
+    llvm_unreachable("Unknown condition code!");
   }
 }
 
@@ -382,12 +399,14 @@ bool AMDGPUInstructionSelector::selectG_ICMP(MachineInstr &I) const {
 
   unsigned SrcReg = I.getOperand(2).getReg();
   unsigned Size = RBI.getSizeInBits(SrcReg, MRI, TRI);
-  // FIXME: VI supports 64-bit compares.
-  assert(Size == 32);
+
+  auto Pred = (CmpInst::Predicate)I.getOperand(1).getPredicate();
 
   unsigned CCReg = I.getOperand(0).getReg();
   if (isSCC(CCReg, MRI)) {
-    unsigned Opcode = getS_CMPOpcode((CmpInst::Predicate)I.getOperand(1).getPredicate(), Size);
+    int Opcode = getS_CMPOpcode(Pred, Size);
+    if (Opcode == -1)
+      return false;
     MachineInstr *ICmp = BuildMI(*BB, &I, DL, TII.get(Opcode))
             .add(I.getOperand(2))
             .add(I.getOperand(3));
@@ -400,8 +419,10 @@ bool AMDGPUInstructionSelector::selectG_ICMP(MachineInstr &I) const {
     return Ret;
   }
 
-  assert(Size == 32 || Size == 64);
-  unsigned Opcode = getV_CMPOpcode((CmpInst::Predicate)I.getOperand(1).getPredicate(), Size);
+  int Opcode = getV_CMPOpcode(Pred, Size);
+  if (Opcode == -1)
+    return false;
+
   MachineInstr *ICmp = BuildMI(*BB, &I, DL, TII.get(Opcode),
             I.getOperand(0).getReg())
             .add(I.getOperand(2))
@@ -984,7 +1005,9 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS:
     return selectG_INTRINSIC_W_SIDE_EFFECTS(I, CoverageInfo);
   case TargetOpcode::G_ICMP:
-    return selectG_ICMP(I);
+    if (selectG_ICMP(I))
+      return true;
+    return selectImpl(I, CoverageInfo);
   case TargetOpcode::G_LOAD:
     if (selectImpl(I, CoverageInfo))
       return true;
