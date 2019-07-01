@@ -222,6 +222,20 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappingsIntrinsicWSideEffects(
     const std::array<unsigned, 2> RegSrcOpIdx = { { 2, 3 } };
     return addMappingFromTable<2>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
   }
+  case Intrinsic::amdgcn_ds_ordered_add:
+  case Intrinsic::amdgcn_ds_ordered_swap: {
+    // VGPR = M0, VGPR
+    static const OpRegBankEntry<3> Table[2] = {
+      // Perfectly legal.
+      { { AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::VGPRRegBankID  }, 1 },
+
+      // Need a readfirstlane for m0
+      { { AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID }, 2 }
+    };
+
+    const std::array<unsigned, 3> RegSrcOpIdx = { { 0, 2, 3 } };
+    return addMappingFromTable<3>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
+  }
   default:
     return RegisterBankInfo::getInstrAlternativeMappings(MI);
   }
@@ -1042,6 +1056,14 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       executeInWaterfallLoop(MI, MRI, { 2 });
       return;
     }
+    case Intrinsic::amdgcn_ds_ordered_add:
+    case Intrinsic::amdgcn_ds_ordered_swap: {
+      // This is only allowed to execute with 1 lane, so readfirstlane is safe.
+      assert(empty(OpdMapper.getVRegs(0)));
+      substituteSimpleCopyRegs(OpdMapper, 3);
+      constrainOpWithReadfirstlane(MI, MRI, 2); // M0
+      return;
+    }
     default:
       break;
     }
@@ -1741,8 +1763,15 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     case Intrinsic::amdgcn_atomic_dec:
       return getDefaultMappingAllVGPR(MI);
     case Intrinsic::amdgcn_ds_ordered_add:
-    case Intrinsic::amdgcn_ds_ordered_swap:
-      return getInvalidInstructionMapping();
+    case Intrinsic::amdgcn_ds_ordered_swap: {
+      unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+      OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, DstSize);
+      unsigned M0Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI,
+                                 AMDGPU::SGPRRegBankID);
+      OpdsMapping[2] = AMDGPU::getValueMapping(M0Bank, 32);
+      OpdsMapping[3] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, 32);
+      break;
+    }
     case Intrinsic::amdgcn_exp_compr:
       OpdsMapping[0] = nullptr; // IntrinsicID
       // FIXME: These are immediate values which can't be read from registers.
