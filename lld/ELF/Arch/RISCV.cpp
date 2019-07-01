@@ -36,6 +36,8 @@ public:
 
 } // end anonymous namespace
 
+const uint64_t DTPOffset = 0x800;
+
 enum Op {
   ADDI = 0x13,
   AUIPC = 0x17,
@@ -72,7 +74,17 @@ RISCV::RISCV() {
   NoneRel = R_RISCV_NONE;
   PltRel = R_RISCV_JUMP_SLOT;
   RelativeRel = R_RISCV_RELATIVE;
-  SymbolicRel = Config->Is64 ? R_RISCV_64 : R_RISCV_32;
+  if (Config->Is64) {
+    SymbolicRel = R_RISCV_64;
+    TlsModuleIndexRel = R_RISCV_TLS_DTPMOD64;
+    TlsOffsetRel = R_RISCV_TLS_DTPREL64;
+    TlsGotRel = R_RISCV_TLS_TPREL64;
+  } else {
+    SymbolicRel = R_RISCV_32;
+    TlsModuleIndexRel = R_RISCV_TLS_DTPMOD32;
+    TlsOffsetRel = R_RISCV_TLS_DTPREL32;
+    TlsGotRel = R_RISCV_TLS_TPREL32;
+  }
   GotRel = SymbolicRel;
 
   // .got[0] = _DYNAMIC
@@ -199,8 +211,18 @@ RelExpr RISCV::getRelExpr(const RelType Type, const Symbol &S,
   case R_RISCV_PCREL_LO12_I:
   case R_RISCV_PCREL_LO12_S:
     return R_RISCV_PC_INDIRECT;
+  case R_RISCV_TLS_GD_HI20:
+    return R_TLSGD_PC;
+  case R_RISCV_TLS_GOT_HI20:
+    Config->HasStaticTlsModel = true;
+    return R_GOT_PC;
+  case R_RISCV_TPREL_HI20:
+  case R_RISCV_TPREL_LO12_I:
+  case R_RISCV_TPREL_LO12_S:
+    return R_TLS;
   case R_RISCV_RELAX:
   case R_RISCV_ALIGN:
+  case R_RISCV_TPREL_ADD:
     return R_HINT;
   default:
     return R_ABS;
@@ -314,6 +336,9 @@ void RISCV::relocateOne(uint8_t *Loc, const RelType Type,
 
   case R_RISCV_GOT_HI20:
   case R_RISCV_PCREL_HI20:
+  case R_RISCV_TLS_GD_HI20:
+  case R_RISCV_TLS_GOT_HI20:
+  case R_RISCV_TPREL_HI20:
   case R_RISCV_HI20: {
     uint64_t Hi = Val + 0x800;
     checkInt(Loc, SignExtend64(Hi, Bits) >> 12, 20, Type);
@@ -322,6 +347,7 @@ void RISCV::relocateOne(uint8_t *Loc, const RelType Type,
   }
 
   case R_RISCV_PCREL_LO12_I:
+  case R_RISCV_TPREL_LO12_I:
   case R_RISCV_LO12_I: {
     uint64_t Hi = (Val + 0x800) >> 12;
     uint64_t Lo = Val - (Hi << 12);
@@ -330,6 +356,7 @@ void RISCV::relocateOne(uint8_t *Loc, const RelType Type,
   }
 
   case R_RISCV_PCREL_LO12_S:
+  case R_RISCV_TPREL_LO12_S:
   case R_RISCV_LO12_S: {
     uint64_t Hi = (Val + 0x800) >> 12;
     uint64_t Lo = Val - (Hi << 12);
@@ -379,6 +406,13 @@ void RISCV::relocateOne(uint8_t *Loc, const RelType Type,
   case R_RISCV_32_PCREL:
     write32le(Loc, Val);
     return;
+
+  case R_RISCV_TLS_DTPREL32:
+    write32le(Loc, Val - DTPOffset);
+    break;
+  case R_RISCV_TLS_DTPREL64:
+    write64le(Loc, Val - DTPOffset);
+    break;
 
   case R_RISCV_ALIGN:
   case R_RISCV_RELAX:
