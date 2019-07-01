@@ -626,6 +626,13 @@ bool AMDGPUInstructionSelector::selectG_TRUNC(MachineInstr &I) const {
   return true;
 }
 
+/// \returns true if a bitmask for \p Size bits will be an inline immediate.
+static bool shouldUseAndMask(unsigned Size, unsigned &Mask) {
+  Mask = maskTrailingOnes<unsigned>(Size);
+  int SignedMask = static_cast<int>(Mask);
+  return SignedMask >= -16 && SignedMask <= 64;
+}
+
 bool AMDGPUInstructionSelector::selectG_SZA_EXT(MachineInstr &I) const {
   bool Signed = I.getOpcode() == AMDGPU::G_SEXT;
   const DebugLoc &DL = I.getDebugLoc();
@@ -688,9 +695,17 @@ bool AMDGPUInstructionSelector::selectG_SZA_EXT(MachineInstr &I) const {
 
   if (SrcBank->getID() == AMDGPU::VGPRRegBankID && DstSize <= 32) {
     // 64-bit should have been split up in RegBankSelect
-    //
-    // TODO: USE V_AND_B32 when the constant mask is an inline immediate for
-    // unsigned for smaller code size.
+
+    // Try to use an and with a mask if it will save code size.
+    unsigned Mask;
+    if (!Signed && shouldUseAndMask(SrcSize, Mask)) {
+      MachineInstr *ExtI =
+      BuildMI(MBB, I, DL, TII.get(AMDGPU::V_AND_B32_e32), DstReg)
+        .addImm(Mask)
+        .addReg(SrcReg);
+      return constrainSelectedInstRegOperands(*ExtI, TII, TRI, RBI);
+    }
+
     const unsigned BFE = Signed ? AMDGPU::V_BFE_I32 : AMDGPU::V_BFE_U32;
     MachineInstr *ExtI =
       BuildMI(MBB, I, DL, TII.get(BFE), DstReg)
@@ -736,9 +751,17 @@ bool AMDGPUInstructionSelector::selectG_SZA_EXT(MachineInstr &I) const {
       return RBI.constrainGenericRegister(DstReg, AMDGPU::SReg_64RegClass, MRI);
     }
 
-    BuildMI(MBB, I, DL, TII.get(BFE32), DstReg)
-      .addReg(SrcReg)
-      .addImm(SrcSize << 16);
+    unsigned Mask;
+    if (!Signed && shouldUseAndMask(SrcSize, Mask)) {
+      BuildMI(MBB, I, DL, TII.get(AMDGPU::S_AND_B32), DstReg)
+        .addReg(SrcReg)
+        .addImm(Mask);
+    } else {
+      BuildMI(MBB, I, DL, TII.get(BFE32), DstReg)
+        .addReg(SrcReg)
+        .addImm(SrcSize << 16);
+    }
+
     return RBI.constrainGenericRegister(DstReg, AMDGPU::SReg_32RegClass, MRI);
   }
 
