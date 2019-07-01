@@ -133,6 +133,44 @@ bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
   return true;
 }
 
+bool AMDGPUInstructionSelector::selectPHI(MachineInstr &I) const {
+  MachineBasicBlock *BB = I.getParent();
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  const Register DefReg = I.getOperand(0).getReg();
+  const LLT DefTy = MRI.getType(DefReg);
+
+  // TODO: Verify this doesn't have insane operands (i.e. VGPR to SGPR copy)
+
+  const RegClassOrRegBank &RegClassOrBank =
+    MRI.getRegClassOrRegBank(DefReg);
+
+  const TargetRegisterClass *DefRC
+    = RegClassOrBank.dyn_cast<const TargetRegisterClass *>();
+  if (!DefRC) {
+    if (!DefTy.isValid()) {
+      LLVM_DEBUG(dbgs() << "PHI operand has no type, not a gvreg?\n");
+      return false;
+    }
+
+    const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
+    if (RB.getID() == AMDGPU::SCCRegBankID) {
+      LLVM_DEBUG(dbgs() << "illegal scc phi\n");
+      return false;
+    }
+
+    DefRC = TRI.getRegClassForTypeOnBank(DefTy, RB, MRI);
+    if (!DefRC) {
+      LLVM_DEBUG(dbgs() << "PHI operand has unexpected size/bank\n");
+      return false;
+    }
+  }
+
+  I.setDesc(TII.get(TargetOpcode::PHI));
+  return RBI.constrainGenericRegister(DefReg, *DefRC, MRI);
+}
+
 MachineOperand
 AMDGPUInstructionSelector::getSubOperand64(MachineOperand &MO,
                                            unsigned SubIdx) const {
@@ -1048,6 +1086,8 @@ bool AMDGPUInstructionSelector::selectG_FRAME_INDEX(MachineInstr &I) const {
 
 bool AMDGPUInstructionSelector::select(MachineInstr &I,
                                        CodeGenCoverage &CoverageInfo) const {
+  if (I.isPHI())
+    return selectPHI(I);
 
   if (!isPreISelGenericOpcode(I.getOpcode())) {
     if (I.isCopy())
