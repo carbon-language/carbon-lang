@@ -1851,7 +1851,9 @@ class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
 // Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
 class Atomic2Ops<PatFrag Op, RegisterClass DRC> :
   PseudoSE<(outs DRC:$dst), (ins PtrRC:$ptr, DRC:$incr),
-           [(set DRC:$dst, (Op iPTR:$ptr, DRC:$incr))]>;
+           [(set DRC:$dst, (Op iPTR:$ptr, DRC:$incr))]> {
+  let hasNoSchedulingInfo = 1;
+}
 
 class Atomic2OpsPostRA<RegisterClass RC> :
   PseudoSE<(outs RC:$dst), (ins PtrRC:$ptr, RC:$incr), []> {
@@ -1868,7 +1870,9 @@ class Atomic2OpsSubwordPostRA<RegisterClass RC> :
 // during ISelLowering, which produces the PostRA version of this instruction.
 class AtomicCmpSwap<PatFrag Op, RegisterClass DRC> :
   PseudoSE<(outs DRC:$dst), (ins PtrRC:$ptr, DRC:$cmp, DRC:$swap),
-           [(set DRC:$dst, (Op iPTR:$ptr, DRC:$cmp, DRC:$swap))]>;
+           [(set DRC:$dst, (Op iPTR:$ptr, DRC:$cmp, DRC:$swap))]> {
+  let hasNoSchedulingInfo = 1;
+}
 
 class AtomicCmpSwapPostRA<RegisterClass RC> :
   PseudoSE<(outs RC:$dst), (ins PtrRC:$ptr, RC:$cmp, RC:$swap), []> {
@@ -1882,7 +1886,6 @@ class AtomicCmpSwapSubwordPostRA<RegisterClass RC> :
   let mayLoad = 1;
   let mayStore = 1;
 }
-
 
 class LLBase<string opstr, RegisterOperand RO, DAGOperand MO = mem> :
   InstSE<(outs RO:$rt), (ins MO:$addr), !strconcat(opstr, "\t$rt, $addr"),
