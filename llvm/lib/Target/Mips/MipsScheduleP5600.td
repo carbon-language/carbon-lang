@@ -288,6 +288,8 @@ def : InstRW<[P5600WriteMSAShortInt], (instregex "^(BCLR|BCLRI)_[BHWD]$")>;
 def : InstRW<[P5600WriteMSAShortInt], (instregex "^(BNEG|BNEGI)_[BHWD]$")>;
 def : InstRW<[P5600WriteMSAShortInt], (instregex "^(BSEL_V|BSELI_B)$")>;
 def : InstRW<[P5600WriteMSAShortInt], (instregex "^BMN*Z.*$")>;
+def : InstRW<[P5600WriteMSAShortInt],
+             (instregex "^BSEL_(H|W|D|FW|FD)_PSEUDO$")>;
 
 // pcnt.[bhwd], sat_s.[bhwd], sat_u.bhwd]
 def : InstRW<[P5600WriteMSAOther3], (instregex "^PCNT_[BHWD]$")>;
@@ -335,6 +337,10 @@ def : InstRW<[P5600WriteMSAShortLogic], (instregex "^MOVE_V$")>;
 def : InstRW<[P5600WriteMSAShortLogic], (instregex "^LDI_[BHWD]$")>;
 def : InstRW<[P5600WriteMSAShortLogic], (instregex "^(AND|OR|[XN]OR)_V$")>;
 def : InstRW<[P5600WriteMSAShortLogic], (instregex "^(AND|OR|[XN]OR)I_B$")>;
+def : InstRW<[P5600WriteMSAShortLogic],
+             (instregex "^(AND|OR|[XN]OR)_V_[DHW]_PSEUDO$")>;
+def : InstRW<[P5600WriteMSAShortLogic], (instregex "^FILL_F(D|W)_PSEUDO$")>;
+def : InstRW<[P5600WriteMSAShortLogic], (instregex "^INSERT_F(D|W)_PSEUDO$")>;
 
 // fexp2_w, fexp2_d
 def : InstRW<[P5600WriteFPUS], (instregex "^FEXP2_(W|D)$")>;
