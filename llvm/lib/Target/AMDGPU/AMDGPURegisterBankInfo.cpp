@@ -1521,7 +1521,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     case Intrinsic::amdgcn_wqm_vote: {
       unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
       OpdsMapping[0] = OpdsMapping[2]
-        = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
+        = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, Size);
       break;
     }
     case Intrinsic::amdgcn_s_buffer_load: {
