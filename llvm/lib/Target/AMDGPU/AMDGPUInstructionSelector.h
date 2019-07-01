@@ -17,6 +17,7 @@
 #include "AMDGPUArgumentUsageInfo.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/IR/InstrTypes.h"
 
@@ -59,6 +60,8 @@ private:
   };
 
   bool isInstrUniform(const MachineInstr &MI) const;
+  bool isVCC(Register Reg, const MachineRegisterInfo &MRI) const;
+
   /// tblgen-erated 'select' implementation.
   bool selectImpl(MachineInstr &I, CodeGenCoverage &CoverageInfo) const;
 

@@ -59,8 +59,9 @@ AMDGPUInstructionSelector::AMDGPUInstructionSelector(
 
 const char *AMDGPUInstructionSelector::getName() { return DEBUG_TYPE; }
 
-static bool isSCC(unsigned Reg, const MachineRegisterInfo &MRI) {
-  assert(!TargetRegisterInfo::isPhysicalRegister(Reg));
+static bool isSCC(Register Reg, const MachineRegisterInfo &MRI) {
+  if (TargetRegisterInfo::isPhysicalRegister(Reg))
+    return Reg == AMDGPU::SCC;
 
   auto &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
   const TargetRegisterClass *RC =
@@ -76,15 +77,16 @@ static bool isSCC(unsigned Reg, const MachineRegisterInfo &MRI) {
   return RB->getID() == AMDGPU::SCCRegBankID;
 }
 
-static bool isVCC(unsigned Reg, const MachineRegisterInfo &MRI,
-                  const SIRegisterInfo &TRI) {
-  assert(!TargetRegisterInfo::isPhysicalRegister(Reg));
+bool AMDGPUInstructionSelector::isVCC(Register Reg,
+                                      const MachineRegisterInfo &MRI) const {
+  if (TargetRegisterInfo::isPhysicalRegister(Reg))
+    return Reg == TRI.getVCC();
 
   auto &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
   const TargetRegisterClass *RC =
       RegClassOrBank.dyn_cast<const TargetRegisterClass*>();
   if (RC) {
-    return RC == TRI.getWaveMaskRegClass() &&
+    return RC->hasSuperClassEq(TRI.getBoolRC()) &&
            MRI.getType(Reg).getSizeInBits() == 1;
   }
 
@@ -106,7 +108,7 @@ bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
     unsigned DstReg = I.getOperand(0).getReg();
 
     // Specially handle scc->vcc copies.
-    if (isVCC(DstReg, MRI, TRI)) {
+    if (isVCC(DstReg, MRI)) {
       const DebugLoc &DL = I.getDebugLoc();
       BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CMP_NE_U32_e64), DstReg)
         .addImm(0)
@@ -991,27 +993,41 @@ bool AMDGPUInstructionSelector::selectG_BRCOND(MachineInstr &I) const {
   Register CondReg = CondOp.getReg();
   const DebugLoc &DL = I.getDebugLoc();
 
+  unsigned BrOpcode;
+  Register CondPhysReg;
+  const TargetRegisterClass *ConstrainRC;
+
+  // In SelectionDAG, we inspect the IR block for uniformity metadata to decide
+  // whether the branch is uniform when selecting the instruction. In
+  // GlobalISel, we should push that decision into RegBankSelect. Assume for now
+  // RegBankSelect knows what it's doing if the branch condition is scc, even
+  // though it currently does not.
   if (isSCC(CondReg, MRI)) {
-    // In SelectionDAG, we inspect the IR block for uniformity metadata to decide
-    // whether the branch is uniform when selecting the instruction. In
-    // GlobalISel, we should push that decision into RegBankSelect. Assume for now
-    // RegBankSelect knows what it's doing if the branch condition is scc, even
-    // though it currently does not.
-    BuildMI(*BB, &I, DL, TII.get(AMDGPU::COPY), AMDGPU::SCC)
-      .addReg(CondReg);
-    if (!MRI.getRegClassOrNull(CondReg)) {
-      const TargetRegisterClass *RC
-        = TRI.getConstrainedRegClassForOperand(CondOp, MRI);
-      MRI.setRegClass(CondReg, RC);
-    }
+    CondPhysReg = AMDGPU::SCC;
+    BrOpcode = AMDGPU::S_CBRANCH_SCC1;
+    ConstrainRC = &AMDGPU::SReg_32_XM0RegClass;
+  } else if (isVCC(CondReg, MRI)) {
+    // FIXME: Do we have to insert an and with exec here, like in SelectionDAG?
+    // We sort of know that a VCC producer based on the register bank, that ands
+    // inactive lanes with 0. What if there was a logical operation with vcc
+    // producers in different blocks/with different exec masks?
+    // FIXME: Should scc->vcc copies and with exec?
+    CondPhysReg = TRI.getVCC();
+    BrOpcode = AMDGPU::S_CBRANCH_VCCNZ;
+    ConstrainRC = TRI.getBoolRC();
+  } else
+    return false;
 
-    BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_CBRANCH_SCC1))
-      .addMBB(I.getOperand(1).getMBB());
-    I.eraseFromParent();
-    return true;
-  }
+  if (!MRI.getRegClassOrNull(CondReg))
+    MRI.setRegClass(CondReg, ConstrainRC);
 
-  return false;
+  BuildMI(*BB, &I, DL, TII.get(AMDGPU::COPY), CondPhysReg)
+    .addReg(CondReg);
+  BuildMI(*BB, &I, DL, TII.get(BrOpcode))
+    .addMBB(I.getOperand(1).getMBB());
+
+  I.eraseFromParent();
+  return true;
 }
 
 bool AMDGPUInstructionSelector::selectG_FRAME_INDEX(MachineInstr &I) const {
