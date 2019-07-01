@@ -70,6 +70,17 @@ class GISelVop2Pat <
   (inst src0_vt:$src0, src1_vt:$src1)
 >;
 
+// FIXME: clamp operand should be OperandWithDefaultOps to 0, but it's badly broken.
+class GISelVop2ClampingPat <
+  SDPatternOperator node,
+  Instruction inst,
+  ValueType dst_vt,
+  ValueType src0_vt = dst_vt, ValueType src1_vt = src0_vt>   : GCNPat <
+
+  (dst_vt (node (src0_vt (sd_vsrc0 src0_vt:$src0)), (src1_vt VGPR_32:$src1))),
+  (inst src0_vt:$src0, src1_vt:$src1, 0)
+>;
+
 class GISelVop2CommutePat <
   SDPatternOperator node,
   Instruction inst,
@@ -129,7 +140,16 @@ def : GISelSop2Pat <or, S_OR_B32, i32>;
 def : GISelVop2Pat <or, V_OR_B32_e32, i32>;
 
 def : GISelSop2Pat <add, S_ADD_I32, i32>;
+
+let SubtargetPredicate = NotHasAddNoCarryInsts in {
+// FIXME: This should use the VOP3 form
+//def : GISelVop2ClampingPat <add, V_ADD_I32_e64, i32>;
 def : GISelVop2Pat <add, V_ADD_I32_e32, i32>;
+}
+
+let SubtargetPredicate = HasAddNoCarryInsts in {
+def : GISelVop2ClampingPat <add, V_ADD_U32_e64, i32>;
+}
 
 def : GISelSop2Pat <sra, S_ASHR_I32, i32>;
 let AddedComplexity = 100 in {
