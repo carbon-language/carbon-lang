@@ -158,7 +158,25 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappingsIntrinsic(
     const std::array<unsigned, 3> RegSrcOpIdx = { { 0, 2, 3 } };
     return addMappingFromTable<3>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
   }
+  case Intrinsic::amdgcn_writelane: {
+    static const OpRegBankEntry<4> Table[4] = {
+      // Perfectly legal.
+      { { AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::VGPRRegBankID }, 1 },
 
+      // Need readfirstlane of first op
+      { { AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::VGPRRegBankID }, 2 },
+
+      // Need readfirstlane of second op
+      { { AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID }, 2 },
+
+      // Need readfirstlane of both ops
+      { { AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID }, 3 }
+    };
+
+    // rsrc, voffset, offset
+    const std::array<unsigned, 4> RegSrcOpIdx = { { 0, 2, 3, 4 } };
+    return addMappingFromTable<4>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
+  }
   default:
     return RegisterBankInfo::getInstrAlternativeMappings(MI);
   }
@@ -764,6 +782,17 @@ void AMDGPURegisterBankInfo::constrainOpWithReadfirstlane(
   MI.getOperand(OpIdx).setReg(SGPR);
 }
 
+// For cases where only a single copy is inserted for matching register banks.
+// Replace the register in the instruction operand
+static void substituteSimpleCopyRegs(
+  const AMDGPURegisterBankInfo::OperandsMapper &OpdMapper, unsigned OpIdx) {
+  SmallVector<unsigned, 1> SrcReg(OpdMapper.getVRegs(OpIdx));
+  if (!SrcReg.empty()) {
+    assert(SrcReg.size() == 1);
+    OpdMapper.getMI().getOperand(OpIdx).setReg(SrcReg[0]);
+  }
+}
+
 void AMDGPURegisterBankInfo::applyMappingImpl(
     const OperandsMapper &OpdMapper) const {
   MachineInstr &MI = OpdMapper.getMI();
@@ -982,16 +1011,23 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       return;
     }
     case Intrinsic::amdgcn_readlane: {
-      SmallVector<unsigned, 1> SrcReg(OpdMapper.getVRegs(2));
-
-      if (!SrcReg.empty()) {
-        assert(SrcReg.size() == 1);
-        MI.getOperand(2).setReg(SrcReg[0]);
-      }
+      substituteSimpleCopyRegs(OpdMapper, 2);
 
       assert(empty(OpdMapper.getVRegs(0)));
       assert(empty(OpdMapper.getVRegs(3)));
 
+      // Make sure the index is an SGPR. It doesn't make sense to run this in a
+      // waterfall loop, so assume it's a uniform value.
+      constrainOpWithReadfirstlane(MI, MRI, 3); // Index
+      return;
+    }
+    case Intrinsic::amdgcn_writelane: {
+      assert(empty(OpdMapper.getVRegs(0)));
+      assert(empty(OpdMapper.getVRegs(2)));
+      assert(empty(OpdMapper.getVRegs(3)));
+
+      substituteSimpleCopyRegs(OpdMapper, 4); // VGPR input val
+      constrainOpWithReadfirstlane(MI, MRI, 2); // Source value
       constrainOpWithReadfirstlane(MI, MRI, 3); // Index
       return;
     }
@@ -1662,6 +1698,23 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       unsigned SrcSize = MRI.getType(MI.getOperand(2).getReg()).getSizeInBits();
       OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, DstSize);
       OpdsMapping[2] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, SrcSize);
+      break;
+    }
+    case Intrinsic::amdgcn_writelane: {
+      unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+      unsigned SrcReg = MI.getOperand(2).getReg();
+      unsigned SrcSize = MRI.getType(SrcReg).getSizeInBits();
+      unsigned SrcBank = getRegBankID(SrcReg, MRI, *TRI, AMDGPU::SGPRRegBankID);
+      unsigned IdxReg = MI.getOperand(3).getReg();
+      unsigned IdxSize = MRI.getType(IdxReg).getSizeInBits();
+      unsigned IdxBank = getRegBankID(IdxReg, MRI, *TRI, AMDGPU::SGPRRegBankID);
+      OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, DstSize);
+
+      // These 2 must be SGPRs, but accept VGPRs. Readfirstlane will be inserted
+      // to legalize.
+      OpdsMapping[2] = AMDGPU::getValueMapping(SrcBank, SrcSize);
+      OpdsMapping[3] = AMDGPU::getValueMapping(IdxBank, IdxSize);
+      OpdsMapping[4] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, SrcSize);
       break;
     }
     }
