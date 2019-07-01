@@ -1237,6 +1237,18 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
   case Intrinsic::amdgcn_workgroup_id_z:
     return legalizePreloadedArgIntrin(MI, MRI, B,
                                       AMDGPUFunctionArgInfo::WORKGROUP_ID_Z);
+  case Intrinsic::amdgcn_dispatch_ptr:
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::DISPATCH_PTR);
+  case Intrinsic::amdgcn_queue_ptr:
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::QUEUE_PTR);
+  case Intrinsic::amdgcn_implicit_buffer_ptr:
+    return legalizePreloadedArgIntrin(
+      MI, MRI, B, AMDGPUFunctionArgInfo::IMPLICIT_BUFFER_PTR);
+  case Intrinsic::amdgcn_dispatch_id:
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::DISPATCH_ID);
   default:
     return true;
   }
