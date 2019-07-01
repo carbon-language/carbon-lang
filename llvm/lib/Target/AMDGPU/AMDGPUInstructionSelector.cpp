@@ -1036,25 +1036,31 @@ bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I) const {
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  DebugLoc DL = I.getDebugLoc();
-  unsigned DstReg = I.getOperand(0).getReg();
-  unsigned PtrReg = I.getOperand(1).getReg();
+  const DebugLoc &DL = I.getDebugLoc();
+  Register DstReg = I.getOperand(0).getReg();
+  Register PtrReg = I.getOperand(1).getReg();
   unsigned LoadSize = RBI.getSizeInBits(DstReg, MRI, TRI);
   unsigned Opcode;
+
+  if (MRI.getType(I.getOperand(1).getReg()).getSizeInBits() == 32) {
+    LLVM_DEBUG(dbgs() << "Unhandled address space\n");
+    return false;
+  }
 
   SmallVector<GEPInfo, 4> AddrInfo;
 
   getAddrModeInfo(I, MRI, AddrInfo);
 
   switch (LoadSize) {
-  default:
-    llvm_unreachable("Load size not supported\n");
   case 32:
     Opcode = AMDGPU::FLAT_LOAD_DWORD;
     break;
   case 64:
     Opcode = AMDGPU::FLAT_LOAD_DWORDX2;
     break;
+  default:
+    LLVM_DEBUG(dbgs() << "Unhandled load size\n");
+    return false;
   }
 
   MachineInstr *Flat = BuildMI(*BB, &I, DL, TII.get(Opcode))
