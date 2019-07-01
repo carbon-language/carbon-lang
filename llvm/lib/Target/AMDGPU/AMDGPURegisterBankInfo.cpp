@@ -1293,7 +1293,8 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     OpdsMapping[2] = nullptr;
     break;
   }
-  case AMDGPU::G_MERGE_VALUES: {
+  case AMDGPU::G_MERGE_VALUES:
+  case AMDGPU::G_BUILD_VECTOR: {
     unsigned Bank = isSALUMapping(MI) ?
       AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
     unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
