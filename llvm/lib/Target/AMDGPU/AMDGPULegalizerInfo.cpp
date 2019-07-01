@@ -1046,3 +1046,67 @@ bool AMDGPULegalizerInfo::legalizeITOFP(
   MI.eraseFromParent();
   return true;
 }
+
+// Return the use branch instruction, otherwise null if the usage is invalid.
+static MachineInstr *verifyCFIntrinsic(MachineInstr &MI,
+                                       MachineRegisterInfo &MRI) {
+  Register CondDef = MI.getOperand(0).getReg();
+  if (!MRI.hasOneNonDBGUse(CondDef))
+    return nullptr;
+
+  MachineInstr &UseMI = *MRI.use_instr_nodbg_begin(CondDef);
+  return UseMI.getParent() == MI.getParent() &&
+    UseMI.getOpcode() == AMDGPU::G_BRCOND ? &UseMI : nullptr;
+}
+
+bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
+                                            MachineRegisterInfo &MRI,
+                                            MachineIRBuilder &B) const {
+  // Replace the use G_BRCOND with the exec manipulate and branch pseudos.
+  switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+  case Intrinsic::amdgcn_if: {
+    if (MachineInstr *BrCond = verifyCFIntrinsic(MI, MRI)) {
+      const SIRegisterInfo *TRI
+        = static_cast<const SIRegisterInfo *>(MRI.getTargetRegisterInfo());
+
+      B.setInstr(*BrCond);
+      Register Def = MI.getOperand(1).getReg();
+      Register Use = MI.getOperand(3).getReg();
+      B.buildInstr(AMDGPU::SI_IF)
+        .addDef(Def)
+        .addUse(Use)
+        .addMBB(BrCond->getOperand(1).getMBB());
+
+      MRI.setRegClass(Def, TRI->getWaveMaskRegClass());
+      MRI.setRegClass(Use, TRI->getWaveMaskRegClass());
+      MI.eraseFromParent();
+      BrCond->eraseFromParent();
+      return true;
+    }
+
+    return false;
+  }
+  case Intrinsic::amdgcn_loop: {
+    if (MachineInstr *BrCond = verifyCFIntrinsic(MI, MRI)) {
+      const SIRegisterInfo *TRI
+        = static_cast<const SIRegisterInfo *>(MRI.getTargetRegisterInfo());
+
+      B.setInstr(*BrCond);
+      Register Reg = MI.getOperand(2).getReg();
+      B.buildInstr(AMDGPU::SI_LOOP)
+        .addUse(Reg)
+        .addMBB(BrCond->getOperand(1).getMBB());
+      MI.eraseFromParent();
+      BrCond->eraseFromParent();
+      MRI.setRegClass(Reg, TRI->getWaveMaskRegClass());
+      return true;
+    }
+
+    return false;
+  }
+  default:
+    return true;
+  }
+
+  return true;
+}
