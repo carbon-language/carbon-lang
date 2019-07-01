@@ -587,7 +587,7 @@ static Relocation *getRISCVPCRelHi20(const Symbol *Sym, uint64_t Addend) {
                        });
 
   for (auto It = Range.first; It != Range.second; ++It)
-    if (It->Expr == R_PC)
+    if (It->Type == R_RISCV_PCREL_HI20 || It->Type == R_RISCV_GOT_HI20)
       return &*It;
 
   error("R_RISCV_PCREL_LO12 relocation points to " + IS->getObjMsg(D->Value) +
