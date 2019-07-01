@@ -1056,10 +1056,12 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   }
 
   switch (I.getOpcode()) {
+  case TargetOpcode::G_ADD:
+    if (selectG_ADD(I))
+      return true;
+    LLVM_FALLTHROUGH;
   default:
     return selectImpl(I, CoverageInfo);
-  case TargetOpcode::G_ADD:
-    return selectG_ADD(I);
   case TargetOpcode::G_INTTOPTR:
   case TargetOpcode::G_BITCAST:
     return selectCOPY(I);
