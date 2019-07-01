@@ -549,6 +549,12 @@ bool AMDGPUInstructionSelector::selectG_STORE(MachineInstr &I) const {
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   DebugLoc DL = I.getDebugLoc();
+  unsigned PtrSize = RBI.getSizeInBits(I.getOperand(1).getReg(), MRI, TRI);
+  if (PtrSize != 64) {
+    LLVM_DEBUG(dbgs() << "Unhandled address space\n");
+    return false;
+  }
+
   unsigned StoreSize = RBI.getSizeInBits(I.getOperand(0).getReg(), MRI, TRI);
   unsigned Opcode;
 
