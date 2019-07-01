@@ -1652,8 +1652,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::PercentLoc &x) {
   // Use the actual source for the name of the call for error reporting.
   if (MaybeExpr arg{Analyze(x.v.value())}) {
     parser::CharBlock at{GetContextualMessages().at()};
-    CHECK(at[0] == '%');
-    parser::CharBlock loc{at.begin() + 1, at.end()};
+    CHECK(at.size() >= 4);
+    parser::CharBlock loc{at.begin() + 1, 3};
+    CHECK(loc == "loc");
     return MakeFunctionRef(
         loc, ActualArguments{ActualArgument{std::move(*arg)}});
   }

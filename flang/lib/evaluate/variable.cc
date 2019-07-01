@@ -319,8 +319,8 @@ template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
 }
 
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
-  // TODO pmk: this needs more thought for assumed-length
-  // character functions, &c.
+  // TODO: this needs more thought for assumed-length
+  // character functions, intrinsics, &c.
   return std::visit(
       common::visitors{
           [](const Symbol *s) { return SymbolLEN(*s); },
