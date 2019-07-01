@@ -287,7 +287,8 @@ with the Global_Expr operation below.
 
 +    _Extract_Value_
 
-     This operation is similar to LLVM's GEP instruction. It allows the
+     This operation is similar to LLVM's `extractvalue` instruction.
+     It allows the
      extraction of a value from a composite structure, such as a
      standard tuple.
 
