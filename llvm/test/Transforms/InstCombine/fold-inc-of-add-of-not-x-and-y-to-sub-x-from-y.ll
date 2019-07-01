@@ -138,18 +138,58 @@ define i32 @t7(i32 %x, i32 %y) {
 
 declare i32 @gen32()
 
-define i32 @t8_commutative(i32 %x) {
-; CHECK-LABEL: @t8_commutative(
+define i32 @t8_commutative0(i32 %x) {
+; CHECK-LABEL: @t8_commutative0(
 ; CHECK-NEXT:    [[Y:%.*]] = call i32 @gen32()
 ; CHECK-NEXT:    [[T0:%.*]] = xor i32 [[X:%.*]], -1
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
 ; CHECK-NEXT:    [[T1:%.*]] = add i32 [[Y]], [[T0]]
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
 ; CHECK-NEXT:    [[T2:%.*]] = add i32 [[T1]], 1
 ; CHECK-NEXT:    ret i32 [[T2]]
 ;
   %y = call i32 @gen32()
   %t0 = xor i32 %x, -1
+  call void @use32(i32 %t0)
   %t1 = add i32 %y, %t0 ; swapped
+  call void @use32(i32 %t1)
   %t2 = add i32 %t1, 1
+  ret i32 %t2
+}
+
+define i32 @t9_commutative1(i32 %x, i32 %y) {
+; CHECK-LABEL: @t9_commutative1(
+; CHECK-NEXT:    [[T0:%.*]] = xor i32 [[X:%.*]], -1
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
+; CHECK-NEXT:    [[T1:%.*]] = sub i32 0, [[X]]
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
+; CHECK-NEXT:    [[T2:%.*]] = sub i32 [[Y:%.*]], [[X]]
+; CHECK-NEXT:    ret i32 [[T2]]
+;
+  %t0 = xor i32 %x, -1
+  call void @use32(i32 %t0)
+  %t1 = add i32 %t0, 1  ; +1 is not last
+  call void @use32(i32 %t1)
+  %t2 = add i32 %t1, %y ;
+  ret i32 %t2
+}
+
+define i32 @t10_commutative2(i32 %x) {
+; CHECK-LABEL: @t10_commutative2(
+; CHECK-NEXT:    [[Y:%.*]] = call i32 @gen32()
+; CHECK-NEXT:    [[T0:%.*]] = xor i32 [[X:%.*]], -1
+; CHECK-NEXT:    call void @use32(i32 [[T0]])
+; CHECK-NEXT:    [[T1:%.*]] = sub i32 0, [[X]]
+; CHECK-NEXT:    call void @use32(i32 [[T1]])
+; CHECK-NEXT:    [[T2:%.*]] = sub i32 [[Y]], [[X]]
+; CHECK-NEXT:    ret i32 [[T2]]
+;
+  %y = call i32 @gen32()
+  %t0 = xor i32 %x, -1
+  call void @use32(i32 %t0)
+  %t1 = add i32 %t0, 1  ; +1 is not last
+  call void @use32(i32 %t1)
+  %t2 = add i32 %y, %t1 ; swapped
   ret i32 %t2
 }
 
@@ -157,8 +197,8 @@ define i32 @t8_commutative(i32 %x) {
 ; Basic negative tests
 ;------------------------------------------------------------------------------;
 
-define i32 @n9(i32 %x, i32 %y) {
-; CHECK-LABEL: @n9(
+define i32 @n11(i32 %x, i32 %y) {
+; CHECK-LABEL: @n11(
 ; CHECK-NEXT:    [[T0:%.*]] = xor i32 [[X:%.*]], 2147483647
 ; CHECK-NEXT:    [[T1:%.*]] = add i32 [[T0]], [[Y:%.*]]
 ; CHECK-NEXT:    [[T2:%.*]] = add i32 [[T1]], 1
@@ -170,8 +210,8 @@ define i32 @n9(i32 %x, i32 %y) {
   ret i32 %t2
 }
 
-define i32 @n10(i32 %x, i32 %y) {
-; CHECK-LABEL: @n10(
+define i32 @n12(i32 %x, i32 %y) {
+; CHECK-LABEL: @n12(
 ; CHECK-NEXT:    [[T0:%.*]] = xor i32 [[X:%.*]], -1
 ; CHECK-NEXT:    [[T1:%.*]] = add i32 [[T0]], [[Y:%.*]]
 ; CHECK-NEXT:    [[T2:%.*]] = add i32 [[T1]], 2
