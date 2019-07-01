@@ -5891,11 +5891,28 @@ SDValue SITargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
     SDValue Chain = M->getOperand(0);
     SDValue M0 = M->getOperand(2);
     SDValue Value = M->getOperand(3);
-    unsigned OrderedCountIndex = M->getConstantOperandVal(7);
+    unsigned IndexOperand = M->getConstantOperandVal(7);
     unsigned WaveRelease = M->getConstantOperandVal(8);
     unsigned WaveDone = M->getConstantOperandVal(9);
     unsigned ShaderType;
     unsigned Instruction;
+
+    unsigned OrderedCountIndex = IndexOperand & 0x3f;
+    IndexOperand &= ~0x3f;
+    unsigned CountDw = 0;
+
+    if (Subtarget->getGeneration() >= AMDGPUSubtarget::GFX10) {
+      CountDw = (IndexOperand >> 24) & 0xf;
+      IndexOperand &= ~(0xf << 24);
+
+      if (CountDw < 1 || CountDw > 4) {
+        report_fatal_error(
+            "ds_ordered_count: dword count must be between 1 and 4");
+      }
+    }
+
+    if (IndexOperand)
+      report_fatal_error("ds_ordered_count: bad index operand");
 
     switch (IntrID) {
     case Intrinsic::amdgcn_ds_ordered_add:
@@ -5930,6 +5947,10 @@ SDValue SITargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
     unsigned Offset0 = OrderedCountIndex << 2;
     unsigned Offset1 = WaveRelease | (WaveDone << 1) | (ShaderType << 2) |
                        (Instruction << 4);
+
+    if (Subtarget->getGeneration() >= AMDGPUSubtarget::GFX10)
+      Offset1 |= (CountDw - 1) << 6;
+
     unsigned Offset = Offset0 | (Offset1 << 8);
 
     SDValue Ops[] = {
