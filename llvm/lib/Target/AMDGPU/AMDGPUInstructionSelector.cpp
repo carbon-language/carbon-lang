@@ -173,13 +173,14 @@ bool AMDGPUInstructionSelector::selectPHI(MachineInstr &I) const {
 
 MachineOperand
 AMDGPUInstructionSelector::getSubOperand64(MachineOperand &MO,
+                                           const TargetRegisterClass &SubRC,
                                            unsigned SubIdx) const {
 
   MachineInstr *MI = MO.getParent();
   MachineBasicBlock *BB = MO.getParent()->getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  unsigned DstReg = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+  Register DstReg = MRI.createVirtualRegister(&SubRC);
 
   if (MO.isReg()) {
     unsigned ComposedSubIdx = TRI.composeSubRegIndices(MO.getSubReg(), SubIdx);
@@ -215,40 +216,86 @@ bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  unsigned Size = RBI.getSizeInBits(I.getOperand(0).getReg(), MRI, TRI);
-  unsigned DstLo = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
-  unsigned DstHi = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+  Register DstReg = I.getOperand(0).getReg();
+  const DebugLoc &DL = I.getDebugLoc();
+  unsigned Size = RBI.getSizeInBits(DstReg, MRI, TRI);
+  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
+  const bool IsSALU = DstRB->getID() == AMDGPU::SGPRRegBankID;
 
-  if (Size != 64)
-    return false;
+  if (Size == 32) {
+    if (IsSALU) {
+      MachineInstr *Add =
+        BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_ADD_U32), DstReg)
+        .add(I.getOperand(1))
+        .add(I.getOperand(2));
+      I.eraseFromParent();
+      return constrainSelectedInstRegOperands(*Add, TII, TRI, RBI);
+    }
 
-  DebugLoc DL = I.getDebugLoc();
+    if (STI.hasAddNoCarry()) {
+      I.setDesc(TII.get(AMDGPU::V_ADD_U32_e64));
+      I.addOperand(*MF, MachineOperand::CreateImm(0));
+      I.addOperand(*MF, MachineOperand::CreateReg(AMDGPU::EXEC, false, true));
+      return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+    }
 
-  MachineOperand Lo1(getSubOperand64(I.getOperand(1), AMDGPU::sub0));
-  MachineOperand Lo2(getSubOperand64(I.getOperand(2), AMDGPU::sub0));
-
-  BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_ADD_U32), DstLo)
-          .add(Lo1)
-          .add(Lo2);
-
-  MachineOperand Hi1(getSubOperand64(I.getOperand(1), AMDGPU::sub1));
-  MachineOperand Hi2(getSubOperand64(I.getOperand(2), AMDGPU::sub1));
-
-  BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_ADDC_U32), DstHi)
-          .add(Hi1)
-          .add(Hi2);
-
-  BuildMI(*BB, &I, DL, TII.get(AMDGPU::REG_SEQUENCE), I.getOperand(0).getReg())
-          .addReg(DstLo)
-          .addImm(AMDGPU::sub0)
-          .addReg(DstHi)
-          .addImm(AMDGPU::sub1);
-
-  for (MachineOperand &MO : I.explicit_operands()) {
-    if (!MO.isReg() || TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-      continue;
-    RBI.constrainGenericRegister(MO.getReg(), AMDGPU::SReg_64RegClass, MRI);
+    Register UnusedCarry = MRI.createVirtualRegister(TRI.getWaveMaskRegClass());
+    MachineInstr *Add
+      = BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_ADD_I32_e64), DstReg)
+      .addDef(UnusedCarry, RegState::Dead)
+      .add(I.getOperand(1))
+      .add(I.getOperand(2))
+      .addImm(0);
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*Add, TII, TRI, RBI);
   }
+
+  const TargetRegisterClass &RC
+    = IsSALU ? AMDGPU::SReg_64_XEXECRegClass : AMDGPU::VReg_64RegClass;
+  const TargetRegisterClass &HalfRC
+    = IsSALU ? AMDGPU::SReg_32RegClass : AMDGPU::VGPR_32RegClass;
+
+  MachineOperand Lo1(getSubOperand64(I.getOperand(1), HalfRC, AMDGPU::sub0));
+  MachineOperand Lo2(getSubOperand64(I.getOperand(2), HalfRC, AMDGPU::sub0));
+  MachineOperand Hi1(getSubOperand64(I.getOperand(1), HalfRC, AMDGPU::sub1));
+  MachineOperand Hi2(getSubOperand64(I.getOperand(2), HalfRC, AMDGPU::sub1));
+
+  Register DstLo = MRI.createVirtualRegister(&HalfRC);
+  Register DstHi = MRI.createVirtualRegister(&HalfRC);
+
+  if (IsSALU) {
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_ADD_U32), DstLo)
+      .add(Lo1)
+      .add(Lo2);
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_ADDC_U32), DstHi)
+      .add(Hi1)
+      .add(Hi2);
+  } else {
+    const TargetRegisterClass *CarryRC = TRI.getWaveMaskRegClass();
+    Register CarryReg = MRI.createVirtualRegister(CarryRC);
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_ADD_I32_e64), DstLo)
+      .addDef(CarryReg)
+      .add(Lo1)
+      .add(Lo2)
+      .addImm(0);
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_ADDC_U32_e64), DstHi)
+      .addDef(MRI.createVirtualRegister(CarryRC), RegState::Dead)
+      .add(Hi1)
+      .add(Hi2)
+      .addReg(CarryReg, RegState::Kill)
+      .addImm(0);
+  }
+
+  BuildMI(*BB, &I, DL, TII.get(AMDGPU::REG_SEQUENCE), DstReg)
+    .addReg(DstLo)
+    .addImm(AMDGPU::sub0)
+    .addReg(DstHi)
+    .addImm(AMDGPU::sub1);
+
+  if (!RBI.constrainGenericRegister(DstReg, RC, MRI) ||
+      !RBI.constrainGenericRegister(I.getOperand(1).getReg(), RC, MRI) ||
+      !RBI.constrainGenericRegister(I.getOperand(2).getReg(), RC, MRI))
+    return false;
 
   I.eraseFromParent();
   return true;
