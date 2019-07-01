@@ -3122,14 +3122,12 @@ define <2 x double> @sitofp_volatile_load_4i32_to_2f64(<4 x i32> *%a) {
 define <2 x double> @sitofp_load_4i32_to_2f64_2(<4 x i32>* %x) {
 ; SSE-LABEL: sitofp_load_4i32_to_2f64_2:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movaps (%rdi), %xmm0
-; SSE-NEXT:    cvtdq2pd %xmm0, %xmm0
+; SSE-NEXT:    cvtdq2pd (%rdi), %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: sitofp_load_4i32_to_2f64_2:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps (%rdi), %xmm0
-; AVX-NEXT:    vcvtdq2pd %xmm0, %xmm0
+; AVX-NEXT:    vcvtdq2pd (%rdi), %xmm0
 ; AVX-NEXT:    retq
   %a = load <4 x i32>, <4 x i32>* %x
   %b = sitofp <4 x i32> %a to <4 x double>
@@ -3597,7 +3595,7 @@ define <2 x double> @uitofp_load_4i32_to_2f64_2(<4 x i32>* %x) {
 ;
 ; AVX512F-LABEL: uitofp_load_4i32_to_2f64_2:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vmovaps (%rdi), %xmm0
+; AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX512F-NEXT:    vcvtudq2pd %ymm0, %zmm0
 ; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
 ; AVX512F-NEXT:    vzeroupper
@@ -3605,13 +3603,12 @@ define <2 x double> @uitofp_load_4i32_to_2f64_2(<4 x i32>* %x) {
 ;
 ; AVX512VL-LABEL: uitofp_load_4i32_to_2f64_2:
 ; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vmovaps (%rdi), %xmm0
-; AVX512VL-NEXT:    vcvtudq2pd %xmm0, %xmm0
+; AVX512VL-NEXT:    vcvtudq2pd (%rdi), %xmm0
 ; AVX512VL-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: uitofp_load_4i32_to_2f64_2:
 ; AVX512DQ:       # %bb.0:
-; AVX512DQ-NEXT:    vmovaps (%rdi), %xmm0
+; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX512DQ-NEXT:    vcvtudq2pd %ymm0, %zmm0
 ; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
 ; AVX512DQ-NEXT:    vzeroupper
@@ -3619,8 +3616,7 @@ define <2 x double> @uitofp_load_4i32_to_2f64_2(<4 x i32>* %x) {
 ;
 ; AVX512VLDQ-LABEL: uitofp_load_4i32_to_2f64_2:
 ; AVX512VLDQ:       # %bb.0:
-; AVX512VLDQ-NEXT:    vmovaps (%rdi), %xmm0
-; AVX512VLDQ-NEXT:    vcvtudq2pd %xmm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvtudq2pd (%rdi), %xmm0
 ; AVX512VLDQ-NEXT:    retq
   %a = load <4 x i32>, <4 x i32>* %x
   %b = uitofp <4 x i32> %a to <4 x double>
