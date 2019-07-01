@@ -72,7 +72,7 @@ module iso_c_binding
     c_long_double_complex = c_long_double
 
   integer, parameter :: c_bool = 1 ! TODO: or default LOGICAL?
-  integer, parameter :: c_char = 1 ! TODO: Kanji mode
+  integer, parameter :: c_char = 1
 
  contains
 
@@ -96,9 +96,19 @@ module iso_c_binding
     ! TODO: Define, or write in C and change this to an interface
   end subroutine c_f_pointer
 
+  function c_loc(x)
+    type(c_ptr) :: c_loc
+    type(*), intent(in) :: x
+    c_loc = c_ptr(loc(x))
+  end function c_loc
+
+  function c_funloc(x)
+    type(c_funptr) :: c_funloc
+    external :: x
+    c_funloc = c_funptr(loc(x))
+  end function c_funloc
+
   ! TODO c_f_procpointer
-  ! TODO c_funcloc
-  ! TODO c_loc
   ! TODO c_sizeof
 
 end module iso_c_binding

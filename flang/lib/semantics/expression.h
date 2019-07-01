@@ -308,9 +308,10 @@ private:
   MaybeExpr TopLevelChecks(DataRef &&);
   std::optional<Expr<SubscriptInteger>> GetSubstringBound(
       const std::optional<parser::ScalarIntExpr> &);
-
   std::optional<ProcedureDesignator> AnalyzeProcedureComponentRef(
       const parser::ProcComponentRef &);
+  std::optional<ActualArgument> AnalyzeActualArgument(const parser::Expr &);
+  std::optional<ActualArgument> AnalyzeActualArgument(const parser::Variable &);
 
   struct CalleeAndArguments {
     ProcedureDesignator procedureDesignator;

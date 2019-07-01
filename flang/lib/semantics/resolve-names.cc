@@ -4272,10 +4272,16 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
   case common::TypeCategory::Logical:
     return context().MakeLogicalType(type.kind());
   case common::TypeCategory::Derived:
-    return currScope().MakeDerivedType(type.isPolymorphic()
-            ? DeclTypeSpec::ClassDerived
-            : DeclTypeSpec::TypeDerived,
-        DerivedTypeSpec{type.GetDerivedTypeSpec()});
+    if (type.IsAssumedType()) {
+      return currScope().MakeTypeStarType();
+    } else if (type.IsUnlimitedPolymorphic()) {
+      return currScope().MakeClassStarType();
+    } else {
+      return currScope().MakeDerivedType(type.IsPolymorphic()
+              ? DeclTypeSpec::ClassDerived
+              : DeclTypeSpec::TypeDerived,
+          DerivedTypeSpec{type.GetDerivedTypeSpec()});
+    }
   case common::TypeCategory::Character:
   default: CRASH_NO_CASE;
   }

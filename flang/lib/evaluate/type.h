@@ -96,7 +96,7 @@ public:
   }
   explicit constexpr DynamicType(
       const semantics::DerivedTypeSpec &dt, bool poly = false)
-    : category_{TypeCategory::Derived}, derived_{&dt}, isPolymorphic_{poly} {}
+    : category_{TypeCategory::Derived}, derived_{&dt} {}
 
   // A rare use case used for representing the characteristics of an
   // intrinsic function like REAL() that accepts a typeless BOZ literal
@@ -110,8 +110,14 @@ public:
 
   static constexpr DynamicType UnlimitedPolymorphic() {
     DynamicType result;
-    result.isPolymorphic_ = true;
+    result.kind_ = 1;
     return result;  // CLASS(*)
+  }
+
+  static constexpr DynamicType AssumedType() {
+    DynamicType result;
+    result.kind_ = 2;
+    return result;  // TYPE(*)
   }
 
   // Comparison is deep -- type parameters are compared independently.
@@ -123,15 +129,22 @@ public:
   constexpr const semantics::ParamValue *charLength() const {
     return charLength_;
   }
-  constexpr bool isPolymorphic() const { return isPolymorphic_; }
 
   std::string AsFortran() const;
   std::string AsFortran(std::string &&charLenExpr) const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   bool IsAssumedLengthCharacter() const;
+  constexpr bool IsPolymorphic() const {
+    return category_ == TypeCategory::Derived && kind_ > 0;
+  }
   constexpr bool IsUnlimitedPolymorphic() const {
-    return isPolymorphic_ && derived_ == nullptr;
+    return category_ == TypeCategory::Derived && derived_ == nullptr &&
+        kind_ == 1;
+  }
+  constexpr bool IsAssumedType() const {
+    return category_ == TypeCategory::Derived && derived_ == nullptr &&
+        kind_ == 2;
   }
   constexpr const semantics::DerivedTypeSpec &GetDerivedTypeSpec() const {
     CHECK(derived_ != nullptr);
@@ -172,10 +185,9 @@ private:
   constexpr DynamicType() {}
 
   TypeCategory category_{TypeCategory::Derived};  // overridable default
-  int kind_{0};  // set only for intrinsic types
+  int kind_{0};  // for Derived, encodes 1->CLASS(T or *), 2->TYPE(*)
   const semantics::ParamValue *charLength_{nullptr};
   const semantics::DerivedTypeSpec *derived_{nullptr};  // TYPE(T), CLASS(T)
-  bool isPolymorphic_{false};  // CLASS(T), CLASS(*)
 };
 
 std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &);

@@ -100,8 +100,7 @@ template<typename A> inline bool PointeeComparison(const A *x, const A *y) {
 bool DynamicType::operator==(const DynamicType &that) const {
   return category_ == that.category_ && kind_ == that.kind_ &&
       PointeeComparison(charLength_, that.charLength_) &&
-      PointeeComparison(derived_, that.derived_) &&
-      isPolymorphic_ == that.isPolymorphic_;
+      PointeeComparison(derived_, that.derived_);
 }
 
 bool DynamicType::IsAssumedLengthCharacter() const {
@@ -143,7 +142,8 @@ static const bool IsAncestorTypeOf(const semantics::DerivedTypeSpec *ancestor,
 
 bool DynamicType::IsTypeCompatibleWith(const DynamicType &that) const {
   return *this == that || IsUnlimitedPolymorphic() ||
-      (isPolymorphic_ && IsAncestorTypeOf(derived_, that.derived_));
+      (IsPolymorphic() && derived_ != nullptr &&
+          IsAncestorTypeOf(derived_, that.derived_));
 }
 
 std::optional<DynamicType> DynamicType::From(
@@ -165,8 +165,10 @@ std::optional<DynamicType> DynamicType::From(
         *derived, type.category() == semantics::DeclTypeSpec::ClassDerived};
   } else if (type.category() == semantics::DeclTypeSpec::ClassStar) {
     return DynamicType::UnlimitedPolymorphic();
+  } else if (type.category() == semantics::DeclTypeSpec::TypeStar) {
+    return DynamicType::AssumedType();
   } else {
-    // Assumed-type dummy arguments (TYPE(*)) do not have dynamic types.
+    common::die("DynamicType::From(DeclTypeSpec): failed");
   }
   return std::nullopt;
 }

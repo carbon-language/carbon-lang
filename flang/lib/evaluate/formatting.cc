@@ -397,7 +397,6 @@ std::string DynamicType::AsFortran() const {
   if (derived_ != nullptr) {
     CHECK(category_ == TypeCategory::Derived);
     return DerivedTypeSpecAsFortran(*derived_);
-    // TODO pmk: how to indicate polymorphism?  can't use TYPE() vs CLASS()
   } else if (charLength_ != nullptr) {
     std::string result{"CHARACTER(KIND="s + std::to_string(kind_) + ",LEN="};
     if (charLength_->isAssumed()) {
@@ -410,8 +409,10 @@ std::string DynamicType::AsFortran() const {
       result += ss.str();
     }
     return result + ')';
-  } else if (isPolymorphic_) {
-    return "CLASS(*)";  // not valid, just for debugging
+  } else if (IsUnlimitedPolymorphic()) {
+    return "CLASS(*)";
+  } else if (IsAssumedType()) {
+    return "TYPE(*)";
   } else if (kind_ == 0) {
     return "(typeless intrinsic function argument)";
   } else {

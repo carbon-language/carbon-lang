@@ -145,12 +145,6 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
     return TypedWrapper<Designator, DataRef>(*dyType, std::move(ref));
-  } else if (const auto *declTypeSpec{symbol.GetType()}) {
-    if (declTypeSpec->category() == semantics::DeclTypeSpec::TypeStar) {
-      Say("TYPE(*) assumed-type dummy argument '%s' may not be "
-          "used except as an actual argument"_err_en_US,
-          symbol.name());
-    }
   }
   return std::nullopt;
 }
@@ -1488,7 +1482,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
       pd.u);
 }
 
-static const Symbol *AssumedTypeDummy(const parser::Expr &x) {
+template<typename A> static const Symbol *AssumedTypeDummy(const A &x) {
   if (const auto *designator{
           std::get_if<common::Indirection<parser::Designator>>(&x.u)}) {
     if (const auto *dataRef{
@@ -1507,6 +1501,28 @@ static const Symbol *AssumedTypeDummy(const parser::Expr &x) {
   return nullptr;
 }
 
+std::optional<ActualArgument> ExpressionAnalyzer::AnalyzeActualArgument(
+    const parser::Expr &expr) {
+  if (const Symbol * assumedTypeDummy{AssumedTypeDummy(expr)}) {
+    return ActualArgument{ActualArgument::AssumedType{*assumedTypeDummy}};
+  } else if (MaybeExpr argExpr{Analyze(expr)}) {
+    return ActualArgument{Fold(GetFoldingContext(), std::move(*argExpr))};
+  } else {
+    return std::nullopt;
+  }
+}
+
+std::optional<ActualArgument> ExpressionAnalyzer::AnalyzeActualArgument(
+    const parser::Variable &var) {
+  if (const Symbol * assumedTypeDummy{AssumedTypeDummy(var)}) {
+    return ActualArgument{ActualArgument::AssumedType{*assumedTypeDummy}};
+  } else if (MaybeExpr argExpr{Analyze(var)}) {
+    return ActualArgument{std::move(*argExpr)};
+  } else {
+    return std::nullopt;
+  }
+}
+
 MaybeExpr ExpressionAnalyzer::Analyze(
     const parser::FunctionReference &funcRef) {
   // TODO: C1002: Allow a whole assumed-size array to appear if the dummy
@@ -1519,16 +1535,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   ActualArguments arguments;
   for (const auto &arg :
       std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {
-    MaybeExpr actualArgExpr;
-    const Symbol *assumedTypeDummy{nullptr};
+    std::optional<ActualArgument> actual;
     std::visit(
         common::visitors{
             [&](const common::Indirection<parser::Expr> &x) {
               // TODO: Distinguish & handle procedure name and
               // proc-component-ref
-              if (!(assumedTypeDummy = AssumedTypeDummy(x.value()))) {
-                actualArgExpr = Analyze(x.value());
-              }
+              actual = AnalyzeActualArgument(x.value());
             },
             [&](const parser::AltReturnSpec &) {
               Say("alternate return specification may not appear on function reference"_err_en_US);
@@ -1541,12 +1554,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(
             },
         },
         std::get<parser::ActualArg>(arg.t).u);
-    if (assumedTypeDummy != nullptr) {
-      arguments.emplace_back(
-          std::make_optional(ActualArgument::AssumedType{*assumedTypeDummy}));
-    } else if (actualArgExpr.has_value()) {
-      arguments.emplace_back(std::make_optional(
-          Fold(GetFoldingContext(), std::move(*actualArgExpr))));
+    if (actual.has_value()) {
+      arguments.emplace_back(std::move(actual));
       if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
         arguments.back()->keyword = argKW->v.source;
       }
@@ -1650,15 +1659,15 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::PercentLoc &x) {
   // Represent %LOC() exactly as if it had been a call to the LOC() extension
   // intrinsic function.
   // Use the actual source for the name of the call for error reporting.
-  if (MaybeExpr arg{Analyze(x.v.value())}) {
+  if (std::optional<ActualArgument> arg{AnalyzeActualArgument(x.v.value())}) {
     parser::CharBlock at{GetContextualMessages().at()};
     CHECK(at.size() >= 4);
     parser::CharBlock loc{at.begin() + 1, 3};
     CHECK(loc == "loc");
-    return MakeFunctionRef(
-        loc, ActualArguments{ActualArgument{std::move(*arg)}});
+    return MakeFunctionRef(loc, ActualArguments{std::move(*arg)});
+  } else {
+    return std::nullopt;
   }
-  return std::nullopt;
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedUnary &) {

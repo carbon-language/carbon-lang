@@ -957,8 +957,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         }
       } else {
         // NULL(), pointer to subroutine, &c.
-        messages.Say("Typeless item not allowed for '%s=' argument"_err_en_US,
-            d.keyword);
+        if ("loc"s != name) {
+          messages.Say("Typeless item not allowed for '%s=' argument"_err_en_US,
+              d.keyword);
+        }
       }
       return std::nullopt;
     } else if (!d.typePattern.categorySet.test(type->category())) {
@@ -1278,23 +1280,25 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (const auto &arg{rearranged[j]}) {
-      const Expr<SomeType> *expr{arg->UnwrapExpr()};
-      CHECK(expr != nullptr);
-      std::optional<characteristics::TypeAndShape> typeAndShape;
-      if (auto type{expr->GetType()}) {
-        if (auto shape{GetShape(context, *expr)}) {
-          typeAndShape.emplace(*type, std::move(*shape));
+      if (const Expr<SomeType> *expr{arg->UnwrapExpr()}) {
+        std::optional<characteristics::TypeAndShape> typeAndShape;
+        if (auto type{expr->GetType()}) {
+          if (auto shape{GetShape(context, *expr)}) {
+            typeAndShape.emplace(*type, std::move(*shape));
+          } else {
+            typeAndShape.emplace(*type);
+          }
         } else {
-          typeAndShape.emplace(*type);
+          typeAndShape.emplace(DynamicType::TypelessIntrinsicArgument());
+        }
+        dummyArgs.emplace_back(
+            characteristics::DummyDataObject{std::move(typeAndShape.value())});
+        if (d.typePattern.kindCode == KindCode::same &&
+            !sameDummyArg.has_value()) {
+          sameDummyArg = j;
         }
       } else {
-        typeAndShape.emplace(DynamicType::TypelessIntrinsicArgument());
-      }
-      dummyArgs.emplace_back(
-          characteristics::DummyDataObject{std::move(typeAndShape.value())});
-      if (d.typePattern.kindCode == KindCode::same &&
-          !sameDummyArg.has_value()) {
-        sameDummyArg = j;
+        CHECK(arg->GetAssumedTypeDummy() != nullptr);
       }
     } else {
       // optional argument is absent
@@ -1465,7 +1469,8 @@ static bool ApplySpecificChecks(
     }
   } else if (name == "loc") {
     if (const auto &arg{call.arguments[0]}) {
-      ok = GetLastSymbol(arg->UnwrapExpr()) != nullptr;
+      ok = arg->GetAssumedTypeDummy() != nullptr ||
+          GetLastSymbol(arg->UnwrapExpr()) != nullptr;
     }
     if (!ok) {
       messages.Say(
