@@ -1014,6 +1014,22 @@ bool AMDGPUInstructionSelector::selectG_BRCOND(MachineInstr &I) const {
   return false;
 }
 
+bool AMDGPUInstructionSelector::selectG_FRAME_INDEX(MachineInstr &I) const {
+  MachineBasicBlock *BB = I.getParent();
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  Register DstReg = I.getOperand(0).getReg();
+  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
+  const bool IsVGPR = DstRB->getID() == AMDGPU::VGPRRegBankID;
+  I.setDesc(TII.get(IsVGPR ? AMDGPU::V_MOV_B32_e32 : AMDGPU::S_MOV_B32));
+  if (IsVGPR)
+    I.addOperand(*MF, MachineOperand::CreateReg(AMDGPU::EXEC, false, true));
+
+  return RBI.constrainGenericRegister(
+    DstReg, IsVGPR ? AMDGPU::VGPR_32RegClass : AMDGPU::SReg_32RegClass, MRI);
+}
+
 bool AMDGPUInstructionSelector::select(MachineInstr &I,
                                        CodeGenCoverage &CoverageInfo) const {
 
@@ -1071,6 +1087,8 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
     return false;
   case TargetOpcode::G_BRCOND:
     return selectG_BRCOND(I);
+  case TargetOpcode::G_FRAME_INDEX:
+    return selectG_FRAME_INDEX(I);
   }
   return false;
 }

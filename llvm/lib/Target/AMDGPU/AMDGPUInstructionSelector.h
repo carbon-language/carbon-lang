@@ -85,6 +85,7 @@ private:
   bool selectG_SELECT(MachineInstr &I) const;
   bool selectG_STORE(MachineInstr &I) const;
   bool selectG_BRCOND(MachineInstr &I) const;
+  bool selectG_FRAME_INDEX(MachineInstr &I) const;
 
   std::pair<Register, unsigned>
   selectVOP3ModsImpl(Register Src, const MachineRegisterInfo &MRI) const;
