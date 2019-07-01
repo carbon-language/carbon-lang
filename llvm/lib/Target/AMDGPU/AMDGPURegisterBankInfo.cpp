@@ -1256,6 +1256,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_FPEXT:
   case AMDGPU::G_FEXP2:
   case AMDGPU::G_FLOG2:
+  case AMDGPU::G_FCANONICALIZE:
   case AMDGPU::G_INTRINSIC_TRUNC:
   case AMDGPU::G_INTRINSIC_ROUND:
     return getDefaultMappingVOP(MI);
