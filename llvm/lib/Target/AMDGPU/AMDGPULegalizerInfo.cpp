@@ -82,8 +82,9 @@ static LegalityPredicate numElementsNotEven(unsigned TypeIdx) {
   };
 }
 
-AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
-                                         const GCNTargetMachine &TM) {
+AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
+                                         const GCNTargetMachine &TM)
+  :  ST(ST_) {
   using namespace TargetOpcode;
 
   auto GetAddrSpacePtr = [&TM](unsigned AS) {
@@ -460,7 +461,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       [](const LegalityQuery &Query) {
         return std::make_pair(0, LLT::scalar(32));
       })
-    .fewerElementsIf([=, &ST](const LegalityQuery &Query) {
+    .fewerElementsIf([=](const LegalityQuery &Query) {
         unsigned MemSize = Query.MMODescrs[0].SizeInBits;
         return (MemSize == 96) &&
                Query.Types[0].isVector() &&
@@ -469,7 +470,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       [=](const LegalityQuery &Query) {
         return std::make_pair(0, V2S32);
       })
-    .legalIf([=, &ST](const LegalityQuery &Query) {
+    .legalIf([=](const LegalityQuery &Query) {
         const LLT &Ty0 = Query.Types[0];
 
         unsigned Size = Ty0.getSizeInBits();
@@ -1134,6 +1135,40 @@ bool AMDGPULegalizerInfo::legalizePreloadedArgIntrin(
   return false;
 }
 
+bool AMDGPULegalizerInfo::legalizeImplicitArgPtr(MachineInstr &MI,
+                                                 MachineRegisterInfo &MRI,
+                                                 MachineIRBuilder &B) const {
+  const SIMachineFunctionInfo *MFI = B.getMF().getInfo<SIMachineFunctionInfo>();
+  if (!MFI->isEntryFunction()) {
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::IMPLICIT_ARG_PTR);
+  }
+
+  B.setInstr(MI);
+
+  uint64_t Offset =
+    ST.getTargetLowering()->getImplicitParameterOffset(
+      B.getMF(), AMDGPUTargetLowering::FIRST_IMPLICIT);
+  Register DstReg = MI.getOperand(0).getReg();
+  LLT DstTy = MRI.getType(DstReg);
+  LLT IdxTy = LLT::scalar(DstTy.getSizeInBits());
+
+  const ArgDescriptor *Arg;
+  const TargetRegisterClass *RC;
+  std::tie(Arg, RC)
+    = MFI->getPreloadedValue(AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR);
+  if (!Arg)
+    return false;
+
+  Register KernargPtrReg = MRI.createGenericVirtualRegister(DstTy);
+  if (!loadInputValue(KernargPtrReg, B, Arg))
+    return false;
+
+  B.buildGEP(DstReg, KernargPtrReg, B.buildConstant(IdxTy, Offset).getReg(0));
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             MachineIRBuilder &B) const {
@@ -1179,6 +1214,11 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
 
     return false;
   }
+  case Intrinsic::amdgcn_kernarg_segment_ptr:
+    return legalizePreloadedArgIntrin(
+      MI, MRI, B, AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR);
+  case Intrinsic::amdgcn_implicitarg_ptr:
+    return legalizeImplicitArgPtr(MI, MRI, B);
   case Intrinsic::amdgcn_workitem_id_x:
     return legalizePreloadedArgIntrin(MI, MRI, B,
                                       AMDGPUFunctionArgInfo::WORKITEM_ID_X);

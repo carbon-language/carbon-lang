@@ -25,6 +25,8 @@ class GCNSubtarget;
 
 /// This class provides the information for the target register banks.
 class AMDGPULegalizerInfo : public LegalizerInfo {
+  const GCNSubtarget &ST;
+
 public:
   AMDGPULegalizerInfo(const GCNSubtarget &ST,
                       const GCNTargetMachine &TM);
@@ -57,6 +59,8 @@ public:
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
     AMDGPUFunctionArgInfo::PreloadedValue ArgType) const;
 
+  bool legalizeImplicitArgPtr(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              MachineIRBuilder &B) const;
   bool legalizeIntrinsic(MachineInstr &MI, MachineRegisterInfo &MRI,
                          MachineIRBuilder &MIRBuilder) const override;
 
