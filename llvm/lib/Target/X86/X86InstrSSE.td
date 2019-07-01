@@ -5031,14 +5031,12 @@ multiclass SS41I_pmovx_patterns<string OpcPrefix, string ExtTy,
   let Predicates = [HasAVX, NoVLX] in {
   def : Pat<(v4i32 (ExtOp (bc_v16i8 (v4i32 (scalar_to_vector (loadi32 addr:$src)))))),
             (!cast<I>(OpcPrefix#BDrm) addr:$src)>;
-  def : Pat<(v4i32 (ExtOp (v16i8 (vzload_v2i64 addr:$src)))),
+  def : Pat<(v4i32 (ExtOp (v16i8 (vzload_v4i32 addr:$src)))),
             (!cast<I>(OpcPrefix#BDrm) addr:$src)>;
   def : Pat<(v4i32 (ExtOp (loadv16i8 addr:$src))),
             (!cast<I>(OpcPrefix#BDrm) addr:$src)>;
 
   def : Pat<(v2i64 (ExtOp (bc_v16i8 (v4i32 (scalar_to_vector (extloadi32i16 addr:$src)))))),
-            (!cast<I>(OpcPrefix#BQrm) addr:$src)>;
-  def : Pat<(v2i64 (ExtOp (v16i8 (vzload_v2i64 addr:$src)))),
             (!cast<I>(OpcPrefix#BQrm) addr:$src)>;
   def : Pat<(v2i64 (ExtOp (loadv16i8 addr:$src))),
             (!cast<I>(OpcPrefix#BQrm) addr:$src)>;
@@ -5054,7 +5052,7 @@ multiclass SS41I_pmovx_patterns<string OpcPrefix, string ExtTy,
 
   def : Pat<(v2i64 (ExtOp (bc_v8i16 (v4i32 (scalar_to_vector (loadi32 addr:$src)))))),
             (!cast<I>(OpcPrefix#WQrm) addr:$src)>;
-  def : Pat<(v2i64 (ExtOp (v8i16 (vzload_v2i64 addr:$src)))),
+  def : Pat<(v2i64 (ExtOp (v8i16 (vzload_v4i32 addr:$src)))),
             (!cast<I>(OpcPrefix#WQrm) addr:$src)>;
   def : Pat<(v2i64 (ExtOp (loadv8i16 addr:$src))),
             (!cast<I>(OpcPrefix#WQrm) addr:$src)>;
