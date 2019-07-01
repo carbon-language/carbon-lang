@@ -85,6 +85,9 @@ private:
   bool selectG_SELECT(MachineInstr &I) const;
   bool selectG_STORE(MachineInstr &I) const;
 
+  std::pair<Register, unsigned>
+  selectVOP3ModsImpl(Register Src, const MachineRegisterInfo &MRI) const;
+
   InstructionSelector::ComplexRendererFns
   selectVCSRC(MachineOperand &Root) const;
 
