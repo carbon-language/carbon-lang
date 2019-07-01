@@ -439,6 +439,22 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
     return AltMappings;
   }
+  case TargetOpcode::G_SMIN:
+  case TargetOpcode::G_SMAX:
+  case TargetOpcode::G_UMIN:
+  case TargetOpcode::G_UMAX: {
+    static const OpRegBankEntry<3> Table[4] = {
+      { { AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID }, 1 },
+      { { AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::VGPRRegBankID }, 1 },
+      { { AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID }, 1 },
+
+      // Scalar requires cmp+select
+      { { AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID }, 2 }
+    };
+
+    const std::array<unsigned, 3> RegSrcOpIdx = { { 0, 1, 2 } };
+    return addMappingFromTable<3>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
+  }
   case TargetOpcode::G_UADDE:
   case TargetOpcode::G_USUBE:
   case TargetOpcode::G_SADDE:
@@ -1000,6 +1016,28 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       llvm_unreachable("widen scalar should have succeeded");
     return;
   }
+  case AMDGPU::G_SMIN:
+  case AMDGPU::G_SMAX:
+  case AMDGPU::G_UMIN:
+  case AMDGPU::G_UMAX: {
+    Register DstReg = MI.getOperand(0).getReg();
+    const RegisterBank *DstBank = getRegBank(DstReg, MRI, *TRI);
+    if (DstBank == &AMDGPU::VGPRRegBank)
+      break;
+
+    MachineFunction *MF = MI.getParent()->getParent();
+    MachineIRBuilder B(MI);
+    ApplySALUMapping ApplySALU(MRI);
+    GISelObserverWrapper Observer(&ApplySALU);
+    LegalizerHelper Helper(*MF, Observer, B);
+
+    // Turn scalar min/max into a compare and select.
+    LLT DstTy = MRI.getType(DstReg);
+    if (Helper.lower(MI, 0, DstTy) != LegalizerHelper::Legalized)
+      llvm_unreachable("lower should have succeeded");
+
+    return;
+  }
   case AMDGPU::G_SEXT:
   case AMDGPU::G_ZEXT: {
     Register SrcReg = MI.getOperand(1).getReg();
@@ -1441,16 +1479,13 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_SSUBE:
   case AMDGPU::G_UMULH:
   case AMDGPU::G_SMULH:
-    if (isSALUMapping(MI))
-      return getDefaultMappingSOP(MI);
-    LLVM_FALLTHROUGH;
-
   case AMDGPU::G_SMIN:
   case AMDGPU::G_SMAX:
   case AMDGPU::G_UMIN:
   case AMDGPU::G_UMAX:
-    // TODO: min/max can be scalar, but requires expanding as a compare and
-    // select.
+    if (isSALUMapping(MI))
+      return getDefaultMappingSOP(MI);
+    LLVM_FALLTHROUGH;
 
   case AMDGPU::G_FADD:
   case AMDGPU::G_FSUB:
