@@ -14,8 +14,7 @@
 define i1 @p0_scalar_urem_by_const(i32 %x, i32 %y) {
 ; CHECK-LABEL: @p0_scalar_urem_by_const(
 ; CHECK-NEXT:    [[T0:%.*]] = and i32 [[X:%.*]], 128
-; CHECK-NEXT:    [[T1:%.*]] = urem i32 [[T0]], 6
-; CHECK-NEXT:    [[T2:%.*]] = icmp eq i32 [[T1]], 0
+; CHECK-NEXT:    [[T2:%.*]] = icmp eq i32 [[T0]], 0
 ; CHECK-NEXT:    ret i1 [[T2]]
 ;
   %t0 = and i32 %x, 128 ; clearly a power-of-two or zero
@@ -27,9 +26,7 @@ define i1 @p0_scalar_urem_by_const(i32 %x, i32 %y) {
 define i1 @p1_scalar_urem_by_nonconst(i32 %x, i32 %y) {
 ; CHECK-LABEL: @p1_scalar_urem_by_nonconst(
 ; CHECK-NEXT:    [[T0:%.*]] = and i32 [[X:%.*]], 128
-; CHECK-NEXT:    [[T1:%.*]] = or i32 [[Y:%.*]], 6
-; CHECK-NEXT:    [[T2:%.*]] = urem i32 [[T0]], [[T1]]
-; CHECK-NEXT:    [[T3:%.*]] = icmp eq i32 [[T2]], 0
+; CHECK-NEXT:    [[T3:%.*]] = icmp eq i32 [[T0]], 0
 ; CHECK-NEXT:    ret i1 [[T3]]
 ;
   %t0 = and i32 %x, 128 ; clearly a power-of-two or zero
@@ -76,8 +73,7 @@ define i1 @p3_scalar_shifted2_urem_by_const(i32 %x, i32 %y) {
 define <4 x i1> @p4_vector_urem_by_const__splat(<4 x i32> %x, <4 x i32> %y) {
 ; CHECK-LABEL: @p4_vector_urem_by_const__splat(
 ; CHECK-NEXT:    [[T0:%.*]] = and <4 x i32> [[X:%.*]], <i32 128, i32 128, i32 128, i32 128>
-; CHECK-NEXT:    [[T1:%.*]] = urem <4 x i32> [[T0]], <i32 6, i32 6, i32 6, i32 6>
-; CHECK-NEXT:    [[T2:%.*]] = icmp eq <4 x i32> [[T1]], zeroinitializer
+; CHECK-NEXT:    [[T2:%.*]] = icmp eq <4 x i32> [[T0]], zeroinitializer
 ; CHECK-NEXT:    ret <4 x i1> [[T2]]
 ;
   %t0 = and <4 x i32> %x, <i32 128, i32 128, i32 128, i32 128> ; clearly a power-of-two or zero
@@ -115,8 +111,7 @@ define <4 x i1> @p6_vector_urem_by_const__nonsplat_undef0(<4 x i32> %x, <4 x i32
 define <4 x i1> @p7_vector_urem_by_const__nonsplat_undef2(<4 x i32> %x, <4 x i32> %y) {
 ; CHECK-LABEL: @p7_vector_urem_by_const__nonsplat_undef2(
 ; CHECK-NEXT:    [[T0:%.*]] = and <4 x i32> [[X:%.*]], <i32 128, i32 128, i32 128, i32 128>
-; CHECK-NEXT:    [[T1:%.*]] = urem <4 x i32> [[T0]], <i32 6, i32 6, i32 6, i32 6>
-; CHECK-NEXT:    [[T2:%.*]] = icmp eq <4 x i32> [[T1]], <i32 0, i32 0, i32 undef, i32 0>
+; CHECK-NEXT:    [[T2:%.*]] = icmp eq <4 x i32> [[T0]], <i32 0, i32 0, i32 undef, i32 0>
 ; CHECK-NEXT:    ret <4 x i1> [[T2]]
 ;
   %t0 = and <4 x i32> %x, <i32 128, i32 128, i32 128, i32 128> ; clearly a power-of-two or zero
