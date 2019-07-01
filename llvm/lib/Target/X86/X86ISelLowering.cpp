@@ -5453,6 +5453,20 @@ static SDValue widenSubVector(MVT VT, SDValue Vec, bool ZeroNewElements,
                      DAG.getIntPtrConstant(0, dl));
 }
 
+/// Widen a vector to a larger size with the same scalar type, with the new
+/// elements either zero or undef.
+static SDValue widenSubVector(SDValue Vec, bool ZeroNewElements,
+                              const X86Subtarget &Subtarget, SelectionDAG &DAG,
+                              const SDLoc &dl, unsigned WideSizeInBits) {
+  assert(Vec.getValueSizeInBits() < WideSizeInBits &&
+         (WideSizeInBits % Vec.getScalarValueSizeInBits()) == 0 &&
+         "Unsupported vector widening type");
+  unsigned WideNumElts = WideSizeInBits / Vec.getScalarValueSizeInBits();
+  MVT SVT = Vec.getSimpleValueType().getScalarType();
+  MVT VT = MVT::getVectorVT(SVT, WideNumElts);
+  return widenSubVector(VT, Vec, ZeroNewElements, Subtarget, DAG, dl);
+}
+
 // Helper function to collect subvector ops that are concated together,
 // either by ISD::CONCAT_VECTORS or a ISD::INSERT_SUBVECTOR series.
 // The subvectors in Ops are guaranteed to be the same type.
@@ -32093,12 +32107,10 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
            "Shuffle vector size mismatch");
     if (Src1SizeInBits != Src2SizeInBits) {
       if (Src1SizeInBits > Src2SizeInBits) {
-        Src2 = insertSubVector(DAG.getUNDEF(Src1.getValueType()), Src2, 0, DAG,
-                               DL, Src2SizeInBits);
+        Src2 = widenSubVector(Src2, false, Subtarget, DAG, DL, Src1SizeInBits);
         Src2SizeInBits = Src1SizeInBits;
       } else {
-        Src1 = insertSubVector(DAG.getUNDEF(Src2.getValueType()), Src1, 0, DAG,
-                               DL, Src1SizeInBits);
+        Src1 = widenSubVector(Src1, false, Subtarget, DAG, DL, Src2SizeInBits);
         Src1SizeInBits = Src2SizeInBits;
       }
     }
