@@ -63,6 +63,7 @@ public:
   void Leave(const parser::OpenMPBlockConstruct &);
   void Enter(const parser::OmpBlockDirective::Parallel &);
 
+  void Leave(const parser::OmpClauseList &);
   void Enter(const parser::OmpClause &);
   void Enter(const parser::OmpClause::Defaultmap &);
   void Enter(const parser::OmpClause::Inbranch &);
@@ -113,15 +114,18 @@ private:
     OmpDirective directive;
     OmpClauseSet allowedClauses;
     OmpClauseSet allowedOnceClauses;
-    OmpClauseSet seenClauses;
+
+    const parser::OmpClause *clause{nullptr};
+    std::multimap<OmpClause, const parser::OmpClause *> clauseInfo;
   };
   // back() is the top of the stack
   const OmpContext &GetContext() const { return ompContext_.back(); }
   void SetContextDirectiveSource(const parser::CharBlock &directive) {
     ompContext_.back().directiveSource = directive;
   }
-  void SetContextClauseSource(const parser::CharBlock &clause) {
-    ompContext_.back().clauseSource = clause;
+  void SetContextClause(const parser::OmpClause &clause) {
+    ompContext_.back().clauseSource = clause.source;
+    ompContext_.back().clause = &clause;
   }
   void SetContextDirectiveEnum(const OmpDirective &dir) {
     ompContext_.back().directive = dir;
@@ -132,14 +136,25 @@ private:
   void SetContextAllowedOnce(const OmpClauseSet &allowedOnce) {
     ompContext_.back().allowedOnceClauses = allowedOnce;
   }
-  void SetContextSeen(const OmpClause &seenType) {
-    ompContext_.back().seenClauses.set(seenType);
+  void SetContextClauseInfo(const OmpClause &type) {
+    ompContext_.back().clauseInfo.emplace(type, ompContext_.back().clause);
+  }
+  const parser::OmpClause *FindClause(const OmpClause &type) {
+    auto it{GetContext().clauseInfo.find(type)};
+    if (it != GetContext().clauseInfo.end()) {
+      return it->second;
+    }
+    return nullptr;
   }
 
   bool CurrentDirectiveIsNested() { return ompContext_.size() > 0; };
   bool HasInvalidWorksharingNesting(
       const parser::CharBlock &, const OmpDirectiveSet &);
   void CheckAllowed(const OmpClause &);
+
+  // specific clause related
+  bool ScheduleModifierHasType(const parser::OmpScheduleClause &,
+      const parser::OmpScheduleModifierType::ModType &);
 
   SemanticsContext &context_;
   std::vector<OmpContext> ompContext_;  // used as a stack

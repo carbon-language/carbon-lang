@@ -17,10 +17,13 @@
 ! Check OpenMP clause validity for the following directives:
 !
 !    2.5 PARALLEL construct
+!    2.7.1 Loop construct
 !    ...
 
-! 2.5 parallel -> PARALLEL [parallel-clause[ [,] parallel-clause]...]
-!     parallel-clause -> if-clause |
+  integer :: b = 128
+  N = 1024
+
+! 2.5 parallel-clause -> if-clause |
 !                        num-threads-clause |
 !                        default-clause |
 !                        private-clause |
@@ -30,7 +33,6 @@
 !                        reduction-clause |
 !                        proc-bind-clause
 
-  N = 1024
   !$omp parallel
   do i = 1, N
      a = 3.14
@@ -73,4 +75,50 @@
      a = 3.14
   enddo
   !$omp end parallel
+
+! 2.7.1  do-clause -> private-clause |
+!                     firstprivate-clause |
+!                     lastprivate-clause |
+!                     linear-clause |
+!                     reduction-clause |
+!                     schedule-clause |
+!                     collapse-clause |
+!                     ordered-clause
+
+! TODO: all the internal errors
+
+  !ERROR: When SCHEDULE clause has AUTO specified, it must not have chunk size specified
+  !ERROR: At most one SCHEDULE clause can appear on the DO directive
+  !ERROR: When SCHEDULE clause has RUNTIME specified, it must not have chunk size specified
+  !$omp do schedule(auto, 2) schedule(runtime, 2)
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: A modifier may not be specified in a LINEAR clause on the DO or SIMD directive
+  !ERROR: Internal: no symbol found for 'b'
+  !$omp do linear(ref(b))
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: The NONMONOTONIC modifier can only be specified with SCHEDULE(DYNAMIC) or SCHEDULE(GUIDED)
+  !ERROR: The NONMONOTONIC modifier cannot be specified if an ORDERED clause is specified
+  !$omp do schedule(NONMONOTONIC:static) ordered
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !$omp do schedule(simd, monotonic:dynamic)
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: A loop directive may not have both a LINEAR clause and an ORDERED clause with a parameter
+  !ERROR: Internal: no symbol found for 'b'
+  !ERROR: Internal: no symbol found for 'a'
+  !$omp do ordered(1) private(b) linear(b) linear(a)
+  do i = 1, N
+     a = 3.14
+  enddo
 end
