@@ -138,3 +138,59 @@ body: |
     %5:vgpr(s32) = G_SELECT %3, %1, %2
     G_STORE %5, %0 :: (store 4, addrspace 1)
 ...
+---
+
+name:            copy_sgpr_no_type
+legalized:       true
+regBankSelected: true
+
+
+body: |
+  bb.0:
+    liveins: $sgpr0
+    ; GCN-LABEL: name: copy_sgpr_no_type
+    ; GCN: [[COPY:%[0-9]+]]:sreg_32_xm0 = COPY $sgpr0
+    ; GCN: S_ENDPGM 0, implicit [[COPY]]
+    %0:sreg_32_xm0 = COPY $sgpr0
+    %1:sreg_32_xm0 = COPY %0
+    S_ENDPGM 0, implicit %1
+
+...
+
+---
+
+name:            copy_vgpr_no_type
+legalized:       true
+regBankSelected: true
+
+
+body: |
+  bb.0:
+    liveins: $vgpr0
+    ; GCN-LABEL: name: copy_vgpr_no_type
+    ; GCN: [[COPY:%[0-9]+]]:vgpr_32 = COPY $vgpr0
+    ; GCN: S_ENDPGM 0, implicit [[COPY]]
+    %0:vgpr_32 = COPY $vgpr0
+    %1:vgpr_32 = COPY %0
+    S_ENDPGM 0, implicit %1
+
+...
+
+---
+
+name:            copy_maybe_vcc
+legalized:       true
+regBankSelected: true
+
+
+body: |
+  bb.0:
+    liveins: $sgpr0_sgpr1
+    ; GCN-LABEL: name: copy_maybe_vcc
+    ; GCN: [[COPY:%[0-9]+]]:sreg_64_xexec = COPY $sgpr0_sgpr1
+    ; GCN: S_ENDPGM 0, implicit [[COPY]]
+    %0:sreg_64_xexec = COPY $sgpr0_sgpr1
+    %1:sreg_64_xexec  = COPY %0
+    S_ENDPGM 0, implicit %1
+
+...

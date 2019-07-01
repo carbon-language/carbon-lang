@@ -65,9 +65,12 @@ static bool isSCC(unsigned Reg, const MachineRegisterInfo &MRI) {
   auto &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
   const TargetRegisterClass *RC =
       RegClassOrBank.dyn_cast<const TargetRegisterClass*>();
-  if (RC)
-    return RC->getID() == AMDGPU::SReg_32_XM0RegClassID &&
-           MRI.getType(Reg).getSizeInBits() == 1;
+  if (RC) {
+    if (RC->getID() != AMDGPU::SReg_32_XM0RegClassID)
+      return false;
+    const LLT Ty = MRI.getType(Reg);
+    return Ty.isValid() && Ty.getSizeInBits() == 1;
+  }
 
   const RegisterBank *RB = RegClassOrBank.get<const RegisterBank *>();
   return RB->getID() == AMDGPU::SCCRegBankID;
