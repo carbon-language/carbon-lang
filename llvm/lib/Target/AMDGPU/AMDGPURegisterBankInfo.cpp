@@ -448,8 +448,9 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
       { { AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::VGPRRegBankID }, 1 },
       { { AMDGPU::VGPRRegBankID, AMDGPU::VGPRRegBankID, AMDGPU::SGPRRegBankID }, 1 },
 
-      // Scalar requires cmp+select
-      { { AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID }, 2 }
+      // Scalar requires cmp+select, and extends if 16-bit.
+      // FIXME: Should there be separate costs for 32 and 16-bit
+      { { AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID, AMDGPU::SGPRRegBankID }, 3 }
     };
 
     const std::array<unsigned, 3> RegSrcOpIdx = { { 0, 1, 2 } };
@@ -1032,9 +1033,22 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     LegalizerHelper Helper(*MF, Observer, B);
 
     // Turn scalar min/max into a compare and select.
-    LLT DstTy = MRI.getType(DstReg);
-    if (Helper.lower(MI, 0, DstTy) != LegalizerHelper::Legalized)
-      llvm_unreachable("lower should have succeeded");
+    LLT Ty = MRI.getType(DstReg);
+    LLT S32 = LLT::scalar(32);
+    LLT S16 = LLT::scalar(16);
+
+    if (Ty == S16) {
+      // Need to widen to s32, and expand as cmp + select.
+      if (Helper.widenScalar(MI, 0, S32) != LegalizerHelper::Legalized)
+        llvm_unreachable("widenScalar should have succeeded");
+
+      // FIXME: This is relying on widenScalar leaving MI in place.
+      if (Helper.lower(MI, 0, S32) != LegalizerHelper::Legalized)
+        llvm_unreachable("lower should have succeeded");
+    } else {
+      if (Helper.lower(MI, 0, Ty) != LegalizerHelper::Legalized)
+        llvm_unreachable("lower should have succeeded");
+    }
 
     return;
   }
