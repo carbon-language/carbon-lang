@@ -33,7 +33,8 @@ Extensions, deletions, and legacy features supported by default
 * Leading comma allowed before I/O item list
 * Empty parentheses allowed in `PROGRAM P()`
 * Missing parentheses allowed in `FUNCTION F`
-* Cray based `POINTER(p,x)`
+* Cray based `POINTER(p,x)` and `LOC()` intrinsic (with `%LOC()` as
+  an alias)
 * Arithmetic `IF`.  (Which branch should NaN take? Fall through?)
 * `ASSIGN` statement, assigned `GO TO`, and assigned format
 * `PAUSE` statement

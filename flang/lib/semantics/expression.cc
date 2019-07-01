@@ -1646,8 +1646,17 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::NOT &x) {
   return std::nullopt;
 }
 
-MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::PercentLoc &) {
-  Say("TODO: %LOC unimplemented"_err_en_US);
+MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::PercentLoc &x) {
+  // Represent %LOC() exactly as if it had been a call to the LOC() extension
+  // intrinsic function.
+  // Use the actual source for the name of the call for error reporting.
+  if (MaybeExpr arg{Analyze(x.v.value())}) {
+    parser::CharBlock at{GetContextualMessages().at()};
+    CHECK(at[0] == '%');
+    parser::CharBlock loc{at.begin() + 1, at.end()};
+    return MakeFunctionRef(
+        loc, ActualArguments{ActualArgument{std::move(*arg)}});
+  }
   return std::nullopt;
 }
 

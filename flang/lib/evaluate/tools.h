@@ -612,6 +612,9 @@ struct TypeKindVisitor {
 template<typename A> const semantics::Symbol *GetLastSymbol(const A &) {
   return nullptr;
 }
+template<typename... A> const semantics::Symbol *GetLastSymbol(const std::variant<A...> &);
+template<typename A> const semantics::Symbol *GetLastSymbol(const std::optional<A> &);
+template<typename A> const semantics::Symbol *GetLastSymbol(const A *);
 inline const semantics::Symbol *GetLastSymbol(const Symbol &x) { return &x; }
 inline const semantics::Symbol *GetLastSymbol(const Component &x) {
   return &x.GetLastSymbol();
@@ -639,12 +642,22 @@ inline const semantics::Symbol *GetLastSymbol(const ProcedureRef &x) {
   return GetLastSymbol(x.proc());
 }
 template<typename T> const semantics::Symbol *GetLastSymbol(const Expr<T> &x) {
-  return std::visit([](const auto &y) { return GetLastSymbol(y); }, x.u);
+  return GetLastSymbol(x.u);
+}
+template<typename... A> const semantics::Symbol *GetLastSymbol(const std::variant<A...> &u) {
+  return std::visit([](const auto &x) { return GetLastSymbol(x); }, u);
 }
 template<typename A>
 const semantics::Symbol *GetLastSymbol(const std::optional<A> &x) {
   if (x.has_value()) {
     return GetLastSymbol(*x);
+  } else {
+    return nullptr;
+  }
+}
+template<typename A> const semantics::Symbol *GetLastSymbol(const A *p) {
+  if (p != nullptr) {
+    return GetLastSymbol(*p);
   } else {
     return nullptr;
   }
