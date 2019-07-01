@@ -171,8 +171,19 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .moreElementsIf(isSmallOddVector(0), oneMoreElement(0))
     .legalIf(isPointer(0));
 
+  if (ST.has16BitInsts()) {
+    getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL})
+      .legalFor({S32, S16})
+      .clampScalar(0, S16, S32)
+      .scalarize(0);
+  } else {
+    getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL})
+      .legalFor({S32})
+      .clampScalar(0, S32, S32)
+      .scalarize(0);
+  }
 
-  getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL, G_UMULH, G_SMULH})
+  getActionDefinitionsBuilder({G_UMULH, G_SMULH})
     .legalFor({S32})
     .clampScalar(0, S32, S32)
     .scalarize(0);

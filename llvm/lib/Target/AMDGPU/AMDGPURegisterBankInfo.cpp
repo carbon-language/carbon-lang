@@ -14,10 +14,11 @@
 #include "AMDGPURegisterBankInfo.h"
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPUSubtarget.h"
+#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
-#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
@@ -32,6 +33,53 @@
 #include "AMDGPUGenRegisterBankInfo.def"
 
 using namespace llvm;
+
+namespace {
+
+// Observer to apply a register bank to new registers created by LegalizerHelper.
+class ApplySALUMapping final : public GISelChangeObserver {
+private:
+  MachineRegisterInfo &MRI;
+  SmallVector<MachineInstr *, 4> NewInsts;
+
+public:
+  ApplySALUMapping(MachineRegisterInfo &MRI_)
+    : MRI(MRI_) {}
+
+  ~ApplySALUMapping() {
+    for (MachineInstr *MI : NewInsts)
+      applySALUBank(*MI);
+  }
+
+  /// Set any registers that don't have a set register class or bank to SALU.
+  void applySALUBank(MachineInstr &MI) {
+    for (MachineOperand &Op : MI.operands()) {
+      if (!Op.isReg())
+        continue;
+
+      Register Reg = Op.getReg();
+      if (MRI.getRegClassOrRegBank(Reg))
+        continue;
+
+      // FIXME: This might not be enough to detect when SCC should be used.
+      const RegisterBank &RB = MRI.getType(Reg) == LLT::scalar(1) ?
+        AMDGPU::SCCRegBank : AMDGPU::SGPRRegBank;
+      MRI.setRegBank(Reg, RB);
+    }
+  }
+
+  void erasingInstr(MachineInstr &MI) override {}
+
+  void createdInstr(MachineInstr &MI) override {
+    // At this point, the instruction was just inserted and has no operands.
+    NewInsts.push_back(&MI);
+  }
+
+  void changingInstr(MachineInstr &MI) override {}
+  void changedInstr(MachineInstr &MI) override {}
+};
+
+}
 
 AMDGPURegisterBankInfo::AMDGPURegisterBankInfo(const TargetRegisterInfo &TRI)
     : AMDGPUGenRegisterBankInfo(),
@@ -926,6 +974,30 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
 
     MRI.setRegBank(DstReg, getRegBank(AMDGPU::VGPRRegBankID));
     MI.eraseFromParent();
+    return;
+  }
+  case AMDGPU::G_ADD:
+  case AMDGPU::G_SUB:
+  case AMDGPU::G_MUL: {
+    Register DstReg = MI.getOperand(0).getReg();
+    LLT DstTy = MRI.getType(DstReg);
+    if (DstTy != LLT::scalar(16))
+      break;
+
+    const RegisterBank *DstBank = getRegBank(DstReg, MRI, *TRI);
+    if (DstBank == &AMDGPU::VGPRRegBank)
+      break;
+
+    // 16-bit operations are VALU only, but can be promoted to 32-bit SALU.
+    MachineFunction *MF = MI.getParent()->getParent();
+    MachineIRBuilder B(MI);
+    ApplySALUMapping ApplySALU(MRI);
+    GISelObserverWrapper Observer(&ApplySALU);
+    LegalizerHelper Helper(*MF, Observer, B);
+
+    if (Helper.widenScalar(MI, 0, LLT::scalar(32)) !=
+        LegalizerHelper::Legalized)
+      llvm_unreachable("widen scalar should have succeeded");
     return;
   }
   case AMDGPU::G_SEXT:
