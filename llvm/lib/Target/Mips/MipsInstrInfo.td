@@ -2014,17 +2014,25 @@ let isPseudo = 1, isCodeGenOnly = 1, hasNoSchedulingInfo = 1 in {
 
 // Expands to: lui $dst, %highest/%higher/%hi/%lo($tgt - $baltgt)
 def LONG_BRANCH_LUi : PseudoSE<(outs GPR32Opnd:$dst),
-  (ins brtarget:$tgt, brtarget:$baltgt), []>;
+  (ins brtarget:$tgt, brtarget:$baltgt), []> {
+  bit hasNoSchedulingInfo = 1;
+}
 // Expands to: lui $dst, highest/%higher/%hi/%lo($tgt)
 def LONG_BRANCH_LUi2Op : PseudoSE<(outs GPR32Opnd:$dst),
-  (ins brtarget:$tgt), []>;
+  (ins brtarget:$tgt), []> {
+  bit hasNoSchedulingInfo = 1;
+}
 
 // Expands to: addiu $dst, $src, %highest/%higher/%hi/%lo($tgt - $baltgt)
 def LONG_BRANCH_ADDiu : PseudoSE<(outs GPR32Opnd:$dst),
-  (ins GPR32Opnd:$src, brtarget:$tgt, brtarget:$baltgt), []>;
+  (ins GPR32Opnd:$src, brtarget:$tgt, brtarget:$baltgt), []> {
+  bit hasNoSchedulingInfo = 1;
+}
 // Expands to: addiu $dst, $src, %highest/%higher/%hi/%lo($tgt)
 def LONG_BRANCH_ADDiu2Op : PseudoSE<(outs GPR32Opnd:$dst),
-  (ins GPR32Opnd:$src, brtarget:$tgt), []>;
+  (ins GPR32Opnd:$src, brtarget:$tgt), []> {
+  bit hasNoSchedulingInfo = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
