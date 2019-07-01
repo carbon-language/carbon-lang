@@ -203,6 +203,33 @@ static void allocateSystemSGPRs(CCState &CCInfo,
                                 SIMachineFunctionInfo &Info,
                                 CallingConv::ID CallConv,
                                 bool IsShader) {
+  const LLT S32 = LLT::scalar(32);
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  if (Info.hasWorkGroupIDX()) {
+    Register Reg = Info.addWorkGroupIDX();
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::SReg_32_XM0RegClass), S32);
+    CCInfo.AllocateReg(Reg);
+  }
+
+  if (Info.hasWorkGroupIDY()) {
+    Register Reg = Info.addWorkGroupIDY();
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::SReg_32_XM0RegClass), S32);
+    CCInfo.AllocateReg(Reg);
+  }
+
+  if (Info.hasWorkGroupIDZ()) {
+    unsigned Reg = Info.addWorkGroupIDZ();
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::SReg_32_XM0RegClass), S32);
+    CCInfo.AllocateReg(Reg);
+  }
+
+  if (Info.hasWorkGroupInfo()) {
+    unsigned Reg = Info.addWorkGroupInfo();
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::SReg_32_XM0RegClass), S32);
+    CCInfo.AllocateReg(Reg);
+  }
+
   if (Info.hasPrivateSegmentWaveByteOffset()) {
     // Scratch wave offset passed in system SGPR.
     unsigned PrivateSegmentWaveByteOffsetReg;
