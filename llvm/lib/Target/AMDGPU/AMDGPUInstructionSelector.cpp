@@ -508,12 +508,12 @@ bool AMDGPUInstructionSelector::selectG_SELECT(MachineInstr &I) const {
 
   unsigned DstReg = I.getOperand(0).getReg();
   unsigned Size = RBI.getSizeInBits(DstReg, MRI, TRI);
-  assert(Size == 32 || Size == 64);
+  assert(Size <= 32 || Size == 64);
   const MachineOperand &CCOp = I.getOperand(1);
   unsigned CCReg = CCOp.getReg();
   if (isSCC(CCReg, MRI)) {
-    unsigned SelectOpcode = Size == 32 ? AMDGPU::S_CSELECT_B32 :
-                                         AMDGPU::S_CSELECT_B64;
+    unsigned SelectOpcode = Size == 64 ? AMDGPU::S_CSELECT_B64 :
+                                         AMDGPU::S_CSELECT_B32;
     MachineInstr *CopySCC = BuildMI(*BB, &I, DL, TII.get(AMDGPU::COPY), AMDGPU::SCC)
             .addReg(CCReg);
 
@@ -532,8 +532,10 @@ bool AMDGPUInstructionSelector::selectG_SELECT(MachineInstr &I) const {
     return Ret;
   }
 
-  assert(Size == 32);
-  // FIXME: Support 64-bit select
+  // Wide VGPR select should have been split in RegBankSelect.
+  if (Size > 32)
+    return false;
+
   MachineInstr *Select =
       BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
               .addImm(0)
