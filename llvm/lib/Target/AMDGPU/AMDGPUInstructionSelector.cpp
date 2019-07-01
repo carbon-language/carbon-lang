@@ -60,11 +60,7 @@ AMDGPUInstructionSelector::AMDGPUInstructionSelector(
 const char *AMDGPUInstructionSelector::getName() { return DEBUG_TYPE; }
 
 static bool isSCC(unsigned Reg, const MachineRegisterInfo &MRI) {
-  if (Reg == AMDGPU::SCC)
-    return true;
-
-  if (TargetRegisterInfo::isPhysicalRegister(Reg))
-    return false;
+  assert(!TargetRegisterInfo::isPhysicalRegister(Reg));
 
   auto &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
   const TargetRegisterClass *RC =
@@ -75,6 +71,22 @@ static bool isSCC(unsigned Reg, const MachineRegisterInfo &MRI) {
 
   const RegisterBank *RB = RegClassOrBank.get<const RegisterBank *>();
   return RB->getID() == AMDGPU::SCCRegBankID;
+}
+
+static bool isVCC(unsigned Reg, const MachineRegisterInfo &MRI,
+                  const SIRegisterInfo &TRI) {
+  assert(!TargetRegisterInfo::isPhysicalRegister(Reg));
+
+  auto &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
+  const TargetRegisterClass *RC =
+      RegClassOrBank.dyn_cast<const TargetRegisterClass*>();
+  if (RC) {
+    return RC == TRI.getWaveMaskRegClass() &&
+           MRI.getType(Reg).getSizeInBits() == 1;
+  }
+
+  const RegisterBank *RB = RegClassOrBank.get<const RegisterBank *>();
+  return RB->getID() == AMDGPU::VCCRegBankID;
 }
 
 bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
@@ -88,14 +100,12 @@ bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
   const MachineOperand &Src = I.getOperand(1);
   unsigned SrcReg = Src.getReg();
   if (!TargetRegisterInfo::isPhysicalRegister(SrcReg) && isSCC(SrcReg, MRI)) {
-    unsigned DstReg = TRI.getRegSizeInBits(I.getOperand(0).getReg(), MRI);
-    unsigned DstSize = TRI.getRegSizeInBits(DstReg, MRI);
+    unsigned DstReg = I.getOperand(0).getReg();
 
-    // We have a copy from a 32-bit to 64-bit register.  This happens
-    // when we are selecting scc->vcc copies.
-    if (DstSize == 64) {
+    // Specially handle scc->vcc copies.
+    if (isVCC(DstReg, MRI, TRI)) {
       const DebugLoc &DL = I.getDebugLoc();
-      BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CMP_NE_U32_e64), I.getOperand(0).getReg())
+      BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CMP_NE_U32_e64), DstReg)
         .addImm(0)
         .addReg(SrcReg);
       if (!MRI.getRegClassOrNull(SrcReg))
