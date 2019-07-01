@@ -166,6 +166,38 @@ static Register findFirstFreeSGPR(CCState &CCInfo) {
   llvm_unreachable("Cannot allocate sgpr");
 }
 
+static void allocateSpecialEntryInputVGPRs(CCState &CCInfo,
+                                           MachineFunction &MF,
+                                           const SIRegisterInfo &TRI,
+                                           SIMachineFunctionInfo &Info) {
+  const LLT S32 = LLT::scalar(32);
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  if (Info.hasWorkItemIDX()) {
+    Register Reg = AMDGPU::VGPR0;
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass), S32);
+
+    CCInfo.AllocateReg(Reg);
+    Info.setWorkItemIDX(ArgDescriptor::createRegister(Reg));
+  }
+
+  if (Info.hasWorkItemIDY()) {
+    Register Reg = AMDGPU::VGPR1;
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass), S32);
+
+    CCInfo.AllocateReg(Reg);
+    Info.setWorkItemIDY(ArgDescriptor::createRegister(Reg));
+  }
+
+  if (Info.hasWorkItemIDZ()) {
+    Register Reg = AMDGPU::VGPR2;
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass), S32);
+
+    CCInfo.AllocateReg(Reg);
+    Info.setWorkItemIDZ(ArgDescriptor::createRegister(Reg));
+  }
+}
+
 static void allocateSystemSGPRs(CCState &CCInfo,
                                 MachineFunction &MF,
                                 SIMachineFunctionInfo &Info,
@@ -288,6 +320,7 @@ bool AMDGPUCallLowering::lowerFormalArguments(
       ++i;
     }
 
+    allocateSpecialEntryInputVGPRs(CCInfo, MF, *TRI, *Info);
     allocateSystemSGPRs(CCInfo, MF, *Info, F.getCallingConv(), IsShader);
     return true;
   }

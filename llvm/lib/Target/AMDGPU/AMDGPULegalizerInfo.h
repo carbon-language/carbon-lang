@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUMACHINELEGALIZER_H
 
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+#include "AMDGPUArgumentUsageInfo.h"
 
 namespace llvm {
 
@@ -46,6 +47,15 @@ public:
                               MachineIRBuilder &MIRBuilder) const;
   bool legalizeITOFP(MachineInstr &MI, MachineRegisterInfo &MRI,
                      MachineIRBuilder &MIRBuilder, bool Signed) const;
+
+  Register getLiveInRegister(MachineRegisterInfo &MRI,
+                             Register Reg, LLT Ty) const;
+
+  bool loadInputValue(Register DstReg, MachineIRBuilder &B,
+                      const ArgDescriptor *Arg) const;
+  bool legalizePreloadedArgIntrin(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    AMDGPUFunctionArgInfo::PreloadedValue ArgType) const;
 
   bool legalizeIntrinsic(MachineInstr &MI, MachineRegisterInfo &MRI,
                          MachineIRBuilder &MIRBuilder) const override;

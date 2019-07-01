@@ -3,7 +3,8 @@
 ; HSA-LABEL: name: default_kernel
 ; HSA: liveins:
 ; HSA-NEXT: - { reg: '$sgpr0_sgpr1_sgpr2_sgpr3', virtual-reg: '%0' }
-; HSA-NEXT: - { reg: '$sgpr4', virtual-reg: '%1' }
+; HSA-NEXT: - { reg: '$vgpr0', virtual-reg: '%1' }
+; HSA-NEXT: - { reg: '$sgpr4', virtual-reg: '%2' }
 ; HSA-NEXT: frameInfo:
 define amdgpu_kernel void @default_kernel() {
   ret void

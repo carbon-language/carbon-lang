@@ -23,6 +23,8 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Debug.h"
 
+#define DEBUG_TYPE "amdgpu-legalinfo"
+
 using namespace llvm;
 using namespace LegalizeActions;
 using namespace LegalizeMutations;
@@ -1059,6 +1061,79 @@ static MachineInstr *verifyCFIntrinsic(MachineInstr &MI,
     UseMI.getOpcode() == AMDGPU::G_BRCOND ? &UseMI : nullptr;
 }
 
+Register AMDGPULegalizerInfo::getLiveInRegister(MachineRegisterInfo &MRI,
+                                                Register Reg, LLT Ty) const {
+  Register LiveIn = MRI.getLiveInVirtReg(Reg);
+  if (LiveIn)
+    return LiveIn;
+
+  Register NewReg = MRI.createGenericVirtualRegister(Ty);
+  MRI.addLiveIn(Reg, NewReg);
+  return NewReg;
+}
+
+bool AMDGPULegalizerInfo::loadInputValue(Register DstReg, MachineIRBuilder &B,
+                                         const ArgDescriptor *Arg) const {
+  if (!Arg->isRegister())
+    return false; // TODO: Handle these
+
+  assert(Arg->getRegister() != 0);
+  assert(Arg->getRegister().isPhysical());
+
+  MachineRegisterInfo &MRI = *B.getMRI();
+
+  LLT Ty = MRI.getType(DstReg);
+  Register LiveIn = getLiveInRegister(MRI, Arg->getRegister(), Ty);
+
+  if (Arg->isMasked()) {
+    // TODO: Should we try to emit this once in the entry block?
+    const LLT S32 = LLT::scalar(32);
+    const unsigned Mask = Arg->getMask();
+    const unsigned Shift = countTrailingZeros<unsigned>(Mask);
+
+    auto ShiftAmt = B.buildConstant(S32, Shift);
+    auto LShr = B.buildLShr(S32, LiveIn, ShiftAmt);
+    B.buildAnd(DstReg, LShr, B.buildConstant(S32, Mask >> Shift));
+  } else
+    B.buildCopy(DstReg, LiveIn);
+
+  // Insert the argument copy if it doens't already exist.
+  // FIXME: It seems EmitLiveInCopies isn't called anywhere?
+  if (!MRI.getVRegDef(LiveIn)) {
+    MachineBasicBlock &EntryMBB = B.getMF().front();
+    EntryMBB.addLiveIn(Arg->getRegister());
+    B.setInsertPt(EntryMBB, EntryMBB.begin());
+    B.buildCopy(LiveIn, Arg->getRegister());
+  }
+
+  return true;
+}
+
+bool AMDGPULegalizerInfo::legalizePreloadedArgIntrin(
+  MachineInstr &MI,
+  MachineRegisterInfo &MRI,
+  MachineIRBuilder &B,
+  AMDGPUFunctionArgInfo::PreloadedValue ArgType) const {
+  B.setInstr(MI);
+
+  const SIMachineFunctionInfo *MFI = B.getMF().getInfo<SIMachineFunctionInfo>();
+
+  const ArgDescriptor *Arg;
+  const TargetRegisterClass *RC;
+  std::tie(Arg, RC) = MFI->getPreloadedValue(ArgType);
+  if (!Arg) {
+    LLVM_DEBUG(dbgs() << "Required arg register missing\n");
+    return false;
+  }
+
+  if (loadInputValue(MI.getOperand(0).getReg(), B, Arg)) {
+    MI.eraseFromParent();
+    return true;
+  }
+
+  return false;
+}
+
 bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             MachineIRBuilder &B) const {
@@ -1104,6 +1179,15 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
 
     return false;
   }
+  case Intrinsic::amdgcn_workitem_id_x:
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::WORKITEM_ID_X);
+  case Intrinsic::amdgcn_workitem_id_y:
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::WORKITEM_ID_Y);
+  case Intrinsic::amdgcn_workitem_id_z:
+    return legalizePreloadedArgIntrin(MI, MRI, B,
+                                      AMDGPUFunctionArgInfo::WORKITEM_ID_Z);
   default:
     return true;
   }
