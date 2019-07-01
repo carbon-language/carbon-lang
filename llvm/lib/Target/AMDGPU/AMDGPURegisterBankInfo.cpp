@@ -236,6 +236,19 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappingsIntrinsicWSideEffects(
     const std::array<unsigned, 3> RegSrcOpIdx = { { 0, 2, 3 } };
     return addMappingFromTable<3>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
   }
+  case Intrinsic::amdgcn_s_sendmsg:
+  case Intrinsic::amdgcn_s_sendmsghalt: {
+    static const OpRegBankEntry<1> Table[2] = {
+      // Perfectly legal.
+      { { AMDGPU::SGPRRegBankID }, 1 },
+
+      // Need readlane
+      { { AMDGPU::VGPRRegBankID }, 3 }
+    };
+
+    const std::array<unsigned, 1> RegSrcOpIdx = { { 2 } };
+    return addMappingFromTable<1>(MI, MRI, RegSrcOpIdx, makeArrayRef(Table));
+  }
   default:
     return RegisterBankInfo::getInstrAlternativeMappings(MI);
   }
@@ -777,13 +790,13 @@ void AMDGPURegisterBankInfo::executeInWaterfallLoop(
 // Legalize an operand that must be an SGPR by inserting a readfirstlane.
 void AMDGPURegisterBankInfo::constrainOpWithReadfirstlane(
     MachineInstr &MI, MachineRegisterInfo &MRI, unsigned OpIdx) const {
-  unsigned Reg = MI.getOperand(OpIdx).getReg();
+  Register Reg = MI.getOperand(OpIdx).getReg();
   const RegisterBank *Bank = getRegBank(Reg, MRI, *TRI);
   if (Bank != &AMDGPU::VGPRRegBank)
     return;
 
   MachineIRBuilder B(MI);
-  unsigned SGPR = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+  Register SGPR = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
   B.buildInstr(AMDGPU::V_READFIRSTLANE_B32)
     .addDef(SGPR)
     .addReg(Reg);
@@ -1061,6 +1074,12 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       // This is only allowed to execute with 1 lane, so readfirstlane is safe.
       assert(empty(OpdMapper.getVRegs(0)));
       substituteSimpleCopyRegs(OpdMapper, 3);
+      constrainOpWithReadfirstlane(MI, MRI, 2); // M0
+      return;
+    }
+    case Intrinsic::amdgcn_s_sendmsg:
+    case Intrinsic::amdgcn_s_sendmsghalt: {
+      // FIXME: Should this use a waterfall loop?
       constrainOpWithReadfirstlane(MI, MRI, 2); // M0
       return;
     }
@@ -1823,8 +1842,15 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[6] = nullptr;
       break;
     }
+    case Intrinsic::amdgcn_s_sendmsg:
+    case Intrinsic::amdgcn_s_sendmsghalt: {
+      // This must be an SGPR, but accept a VGPR.
+      unsigned Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI,
+                                   AMDGPU::SGPRRegBankID);
+      OpdsMapping[2] = AMDGPU::getValueMapping(Bank, 32);
+      break;
     }
-
+    }
     break;
   }
   case AMDGPU::G_SELECT: {
