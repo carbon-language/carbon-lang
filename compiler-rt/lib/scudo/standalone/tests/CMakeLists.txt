@@ -76,8 +76,6 @@ set(SCUDO_UNIT_TEST_SOURCES
   vector_test.cc
   scudo_unit_test_main.cc)
 
-set(EXCLUDE_FROM_ALL ON)
-
 add_scudo_unittest(ScudoUnitTest
   SOURCES ${SCUDO_UNIT_TEST_SOURCES})
 
