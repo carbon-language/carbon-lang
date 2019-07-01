@@ -32180,8 +32180,8 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
       return DAG.getBitcast(RootVT, Res);
     }
 
-    // If that failed and both inputs are extracted from the same source type
-    // then try to combine as an unary shuffle with the larger type.
+    // If that failed and either input is extracted then try to combine as a
+    // shuffle with the larger type.
     SDValue NewRoot;
     SmallVector<int, 64> NewMask;
     SmallVector<SDValue, 2> NewInputs;
@@ -32360,8 +32360,8 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     return DAG.getBitcast(RootVT, Res);
   }
 
-  // If that failed and both inputs are extracted from the same source type
-  // then try to combine as an unary shuffle with the larger type.
+  // If that failed and either input is extracted then try to combine as a
+  // shuffle with the larger type.
   SDValue NewRoot;
   SmallVector<int, 64> NewMask;
   SmallVector<SDValue, 2> NewInputs;
