@@ -171,9 +171,8 @@ bool MCPlusBuilder::setJumpTable(MCInst &Inst, uint64_t Value,
                                  uint16_t IndexReg) {
   if (!isIndirectBranch(Inst))
     return false;
-  assert(getJumpTable(Inst) == 0 && "jump table already set");
   setAnnotationOpValue(Inst, MCAnnotation::kJumpTable, Value);
-  addAnnotation<>(Inst, "JTIndexReg", IndexReg);
+  getOrCreateAnnotationAs<uint16_t>(Inst, "JTIndexReg") = IndexReg;
   return true;
 }
 

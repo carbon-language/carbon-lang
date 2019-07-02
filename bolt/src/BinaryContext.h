@@ -165,6 +165,11 @@ class BinaryContext {
   /// Jump tables for all functions mapped by address.
   std::map<uint64_t, JumpTable *> JumpTables;
 
+  /// Used in duplicateJumpTable() to uniquely identify a JT clone
+  /// Start our IDs with a high number so getJumpTableContainingAddress checks
+  /// with size won't overflow
+  uint32_t DuplicatedJumpTables{0x10000000};
+
 public:
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = std::map<std::string, BinaryData *>;
@@ -313,20 +318,26 @@ public:
   ///
   /// May create an embedded jump table and return its label as the second
   /// element of the pair.
-  std::pair<JumpTable *, const MCSymbol *>
-  getOrCreateJumpTable(BinaryFunction &Function,
-                       uint64_t Address,
-                       JumpTable::JumpTableType Type);
+  const MCSymbol *getOrCreateJumpTable(BinaryFunction &Function,
+                                       uint64_t Address,
+                                       JumpTable::JumpTableType Type);
 
   /// After jump table locations are established, this function will populate
   /// their OffsetEntries based on memory contents.
   void populateJumpTables();
 
+  /// Returns a jump table ID and label pointing to the duplicated jump table.
+  /// Ordinarily, jump tables are identified by their address in the input
+  /// binary. We return an ID with the high bit set to differentiate it from
+  /// regular addresses, avoiding conflicts with standard jump tables.
+  std::pair<uint64_t, const MCSymbol *>
+  duplicateJumpTable(BinaryFunction &Function, JumpTable *JT,
+                     const MCSymbol *OldLabel);
+
   /// Generate a unique name for jump table at a given \p Address belonging
   /// to function \p BF.
   std::string generateJumpTableName(const BinaryFunction &BF, uint64_t Address);
 
-public:
   /// Regular page size.
   static constexpr unsigned RegularPageSize = 0x1000;
 

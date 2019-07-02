@@ -28,6 +28,13 @@ cl::opt<std::string> InstrumentationFilename(
     cl::init("/tmp/prof.fdata"),
     cl::Optional,
     cl::cat(BoltCategory));
+
+cl::opt<bool> InstrumentHotOnly(
+    "instrument-hot-only",
+    cl::desc("only insert instrumentation on hot functions (need profile)"),
+    cl::init(false),
+    cl::Optional,
+    cl::cat(BoltCategory));
 }
 
 namespace llvm {
@@ -138,8 +145,10 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
   uint64_t InstrumentationSitesSavingFlags{0ULL};
   for (auto &BFI : BC.getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
-    if (!Function.isSimple() || !opts::shouldProcess(Function))
+    if (!Function.isSimple() || !opts::shouldProcess(Function)
+        || (opts::InstrumentHotOnly && !Function.getKnownExecutionCount()))
       continue;
+    Function.disambiguateJumpTables();
     SplitWorklist.clear();
     SplitInstrs.clear();
 
@@ -193,6 +202,7 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
       if (!HasUnconditionalBranch && !HasJumpTable && BB.succ_size() > 0 &&
           BB.size() > 0) {
         auto *FTBB = BB.getFallthrough();
+        assert(FTBB && "expected valid fall-through basic block");
         auto I = BB.begin();
         auto LastInstr = BB.end();
         --LastInstr;

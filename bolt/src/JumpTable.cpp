@@ -47,6 +47,10 @@ JumpTable::JumpTable(StringRef Name,
 
 std::pair<size_t, size_t>
 JumpTable::getEntriesForAddress(const uint64_t Addr) const {
+  // Check if this is not an address, but a cloned JT id
+  if ((int64_t)Addr < 0ll)
+    return std::make_pair(0, Entries.size());
+
   const uint64_t InstOffset = Addr - getAddress();
   size_t StartIndex = 0, EndIndex = 0;
   uint64_t Offset = 0;
@@ -73,13 +77,12 @@ JumpTable::getEntriesForAddress(const uint64_t Addr) const {
   return std::make_pair(StartIndex, EndIndex);
 }
 
-bool JumpTable::replaceDestination(uint64_t JTAddress,
-                                   const MCSymbol *OldDest,
+bool JumpTable::replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
                                    MCSymbol *NewDest) {
   bool Patched{false};
   const auto Range = getEntriesForAddress(JTAddress);
-  for (auto I = &Entries[Range.first], E = &Entries[Range.second];
-       I != E; ++I) {
+  for (auto I = &Entries[Range.first], E = &Entries[Range.second]; I != E;
+       ++I) {
     auto &Entry = *I;
     if (Entry == OldDest) {
       Patched = true;

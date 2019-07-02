@@ -2736,7 +2736,7 @@ public:
   bool createIncMemory(MCInst &Inst, const MCSymbol *Target,
                        MCContext *Ctx) const override {
 
-    Inst.setOpcode(X86::INC64m);
+    Inst.setOpcode(X86::LOCK_INC64m);
     Inst.clear();
     Inst.addOperand(MCOperand::createReg(X86::RIP));        // BaseReg
     Inst.addOperand(MCOperand::createImm(1));               // ScaleAmt

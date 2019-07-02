@@ -1441,13 +1441,15 @@ public:
     BinaryBasicBlock *Start,
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout = true,
-    const bool UpdateCFIState = true);
+    const bool UpdateCFIState = true,
+    const bool RecomputeLandingPads = true);
 
   iterator insertBasicBlocks(
     iterator StartBB,
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout = true,
-    const bool UpdateCFIState = true);
+    const bool UpdateCFIState = true,
+    const bool RecomputeLandingPads = true);
 
   /// Update the basic block layout for this function.  The BBs from
   /// [Start->Index, Start->Index + NumNewBlocks) are inserted into the
@@ -1465,6 +1467,20 @@ public:
   /// Recompute the CFI state for NumNewBlocks following Start after inserting
   /// new blocks into the CFG.  This must be called after updateLayout.
   void updateCFIState(BinaryBasicBlock *Start, const unsigned NumNewBlocks);
+
+  /// Return true if we detected ambiguous jump tables in this function, which
+  /// happen when one JT is used in more than one indirect jumps. This precludes
+  /// us from splitting edges for this JT unless we duplicate the JT (see
+  /// disambiguateJumpTables).
+  bool checkForAmbiguousJumpTables();
+
+  /// Detect when two distinct indirect jumps are using the same jump table and
+  /// duplicate it, allocating a separate JT for each indirect branch. This is
+  /// necessary for code transformations on the CFG that change an edge induced
+  /// by an indirect branch, e.g.: instrumentation or shrink wrapping. However,
+  /// this is only possible if we are not updating jump tables in place, but are
+  /// writing it to a new location (moving them).
+  void disambiguateJumpTables();
 
   /// Change \p OrigDest to \p NewDest in the jump table used at the end of
   /// \p BB. Returns false if \p OrigDest couldn't be find as a valid target

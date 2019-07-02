@@ -49,7 +49,6 @@ public:
     JTT_PIC,
   };
 
-public:
   /// Branch statistics for jump table entries.
   struct JumpInfo {
     uint64_t Mispreds{0};

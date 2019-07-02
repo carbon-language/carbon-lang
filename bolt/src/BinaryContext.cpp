@@ -289,9 +289,7 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
   // better heuristic.
   if (opts::StrictMode &&
       MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
-    JumpTable *JT;
-    const MCSymbol *Symbol;
-    std::tie(JT, Symbol) =
+    const MCSymbol *Symbol =
       getOrCreateJumpTable(BF, Address, JumpTable::JTT_PIC);
 
     return std::make_pair(Symbol, Addend);
@@ -506,17 +504,16 @@ BinaryFunction *BinaryContext::createBinaryFunction(
   return BF;
 }
 
-std::pair<JumpTable *, const MCSymbol *>
-BinaryContext::getOrCreateJumpTable(BinaryFunction &Function,
-                                   uint64_t Address,
-                                   JumpTable::JumpTableType Type) {
+const MCSymbol *
+BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
+                                    JumpTable::JumpTableType Type) {
   if (auto *JT = getJumpTableContainingAddress(Address)) {
     assert(JT->Type == Type && "jump table types have to match");
     assert(JT->Parent == &Function &&
            "cannot re-use jump table of a different function");
     assert(Address == JT->getAddress() && "unexpected non-empty jump table");
 
-    return std::make_pair(JT, JT->getFirstLabel());
+    return JT->getFirstLabel();
   }
 
   const auto EntrySize =
@@ -551,7 +548,40 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function,
   // Duplicate the entry for the parent function for easy access.
   Function.JumpTables.emplace(Address, JT);
 
-  return std::make_pair(JT, JTLabel);
+  return JTLabel;
+}
+
+std::pair<uint64_t, const MCSymbol *>
+BinaryContext::duplicateJumpTable(BinaryFunction &Function, JumpTable *JT,
+                                  const MCSymbol *OldLabel) {
+  unsigned Offset = 0;
+  bool Found = false;
+  for (auto Elmt : JT->Labels) {
+    if (Elmt.second != OldLabel)
+      continue;
+    Offset = Elmt.first;
+    Found = true;
+    break;
+  }
+  assert(Found && "Label not found");
+  auto *NewLabel = Ctx->createTempSymbol("duplicatedJT", true);
+  auto *NewJT = new JumpTable(NewLabel->getName(),
+                              JT->getAddress(),
+                              JT->EntrySize,
+                              JT->Type,
+                              {},
+                              JumpTable::LabelMapType{{Offset, NewLabel}},
+                              Function,
+                              *getSectionForAddress(JT->getAddress()));
+  NewJT->Entries = JT->Entries;
+  NewJT->Counts = JT->Counts;
+  uint64_t JumpTableID = ++DuplicatedJumpTables;
+  // Invert it to differentiate from regular jump tables whose IDs are their
+  // addresses in the input binary memory space
+  JumpTableID = ~JumpTableID;
+  JumpTables.emplace(JumpTableID, NewJT);
+  Function.JumpTables.emplace(JumpTableID, NewJT);
+  return std::make_pair(JumpTableID, NewLabel);
 }
 
 std::string BinaryContext::generateJumpTableName(const BinaryFunction &BF,

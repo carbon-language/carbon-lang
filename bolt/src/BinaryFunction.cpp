@@ -807,9 +807,8 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   }
 
   auto useJumpTableForInstruction = [&](JumpTable::JumpTableType JTType) {
-    JumpTable *JT;
-    const MCSymbol *JTLabel;
-    std::tie(JT, JTLabel) = BC.getOrCreateJumpTable(*this, ArrayStart, JTType);
+    const MCSymbol *JTLabel =
+        BC.getOrCreateJumpTable(*this, ArrayStart, JTType);
 
     BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
                                   JTLabel, BC.Ctx.get());
@@ -3503,7 +3502,8 @@ void BinaryFunction::insertBasicBlocks(
     BinaryBasicBlock *Start,
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout,
-    const bool UpdateCFIState) {
+    const bool UpdateCFIState,
+    const bool RecomputeLandingPads) {
   const auto StartIndex = Start ? getIndex(Start) : -1;
   const auto NumNewBlocks = NewBBs.size();
 
@@ -3517,7 +3517,11 @@ void BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  recomputeLandingPads();
+  if (RecomputeLandingPads) {
+    recomputeLandingPads();
+  } else {
+    updateBBIndices(0);
+  }
 
   if (UpdateLayout) {
     updateLayout(Start, NumNewBlocks);
@@ -3532,7 +3536,8 @@ BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
     BinaryFunction::iterator StartBB,
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout,
-    const bool UpdateCFIState) {
+    const bool UpdateCFIState,
+    const bool RecomputeLandingPads) {
   const auto StartIndex = getIndex(&*StartBB);
   const auto NumNewBlocks = NewBBs.size();
 
@@ -3547,7 +3552,11 @@ BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  recomputeLandingPads();
+  if (RecomputeLandingPads) {
+    recomputeLandingPads();
+  } else {
+    updateBBIndices(0);
+  }
 
   if (UpdateLayout) {
     updateLayout(*std::prev(RetIter), NumNewBlocks);
@@ -3592,6 +3601,106 @@ void BinaryFunction::updateLayout(BinaryBasicBlock *Start,
   auto End = &BasicBlocks[getIndex(Start) + NumNewBlocks + 1];
   BasicBlocksLayout.insert(Pos + 1, Begin, End);
   updateLayoutIndices();
+}
+
+bool BinaryFunction::checkForAmbiguousJumpTables() {
+  SmallPtrSet<uint64_t, 4> JumpTables;
+  for (auto &BB : BasicBlocks) {
+    for (auto &Inst : *BB) {
+      if (!BC.MIB->isIndirectBranch(Inst))
+        continue;
+      auto JTAddress = BC.MIB->getJumpTable(Inst);
+      if (!JTAddress)
+        continue;
+      // This address can be inside another jump table, but we only consider
+      // it ambiguous when the same start address is used, not the same JT
+      // object.
+      auto Iter = JumpTables.find(JTAddress);
+      if (Iter == JumpTables.end()) {
+        JumpTables.insert(JTAddress);
+        continue;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+void BinaryFunction::disambiguateJumpTables() {
+  assert((opts::JumpTables != JTS_BASIC && isSimple()) || BC.HasRelocations);
+  SmallPtrSet<JumpTable *, 4> JumpTables;
+  for (auto &BB : BasicBlocks) {
+    for (auto &Inst : *BB) {
+      if (!BC.MIB->isIndirectBranch(Inst))
+        continue;
+      auto *JT = getJumpTable(Inst);
+      if (!JT)
+        continue;
+      auto Iter = JumpTables.find(JT);
+      if (Iter == JumpTables.end()) {
+        JumpTables.insert(JT);
+        continue;
+      }
+      // This instruction is an indirect jump using a jump table, but it is
+      // using the same jump table of another jump. Try all our tricks to
+      // extract the jump table symbol and make it point to a new, duplicated JT
+      uint64_t Scale;
+      const MCSymbol *Target;
+      MCInst *JTLoadInst = &Inst;
+      // Try a standard indirect jump matcher, scale 8
+      auto IndJmpMatcher = BC.MIB->matchIndJmp(
+          BC.MIB->matchReg(), BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
+          /*Offset=*/BC.MIB->matchSymbol(Target));
+      if (!BC.MIB->hasPCRelOperand(Inst) ||
+          !IndJmpMatcher->match(
+              *BC.MRI, *BC.MIB,
+              MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1) ||
+          Scale != 8) {
+        // Standard JT matching failed. Trying now:
+        // PIC-style matcher, scale 4
+        //    addq    %rdx, %rsi
+        //    addq    %rdx, %rdi
+        //    leaq    DATAat0x402450(%rip), %r11
+        //    movslq  (%r11,%rdx,4), %rcx
+        //    addq    %r11, %rcx
+        //    jmpq    *%rcx # JUMPTABLE @0x402450
+        MCPhysReg BaseReg1;
+        MCPhysReg BaseReg2;
+        uint64_t Offset;
+        auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+            BC.MIB->matchReg(BaseReg1),
+            BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg2),
+                              BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
+                              BC.MIB->matchImm(Offset))));
+        auto LEAMatcherOwner =
+            BC.MIB->matchLoadAddr(BC.MIB->matchSymbol(Target));
+        auto LEAMatcher = LEAMatcherOwner.get();
+        auto PICBaseAddrMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+            std::move(LEAMatcherOwner), BC.MIB->matchAnyOperand()));
+        if (!PICIndJmpMatcher->match(
+                *BC.MRI, *BC.MIB,
+                MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1) ||
+            Scale != 4 || BaseReg1 != BaseReg2 || Offset != 0 ||
+            !PICBaseAddrMatcher->match(
+                *BC.MRI, *BC.MIB,
+                MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1)) {
+          llvm_unreachable("Failed to extract jump table base");
+          continue;
+        }
+        // Matched PIC
+        JTLoadInst = &*LEAMatcher->CurInst;
+      }
+
+      uint64_t NewJumpTableID{0};
+      const MCSymbol *NewJTLabel;
+      std::tie(NewJumpTableID, NewJTLabel) =
+          BC.duplicateJumpTable(*this, JT, Target);
+      BC.MIB->replaceMemOperandDisp(*JTLoadInst, NewJTLabel, BC.Ctx.get());
+      // We use a unique ID with the high bit set as address for this "injected"
+      // jump table (not originally in the input binary).
+      BC.MIB->setJumpTable(Inst, NewJumpTableID, 0);
+    }
+  }
 }
 
 bool BinaryFunction::replaceJumpTableEntryIn(BinaryBasicBlock *BB,
@@ -3641,7 +3750,8 @@ BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
   // Update CFI and BB layout with new intermediate BB
   std::vector<std::unique_ptr<BinaryBasicBlock>> NewBBs;
   NewBBs.emplace_back(std::move(NewBB));
-  insertBasicBlocks(From, std::move(NewBBs), true, true);
+  insertBasicBlocks(From, std::move(NewBBs), true, true,
+                    /*RecomputeLandingPads=*/false);
   return NewBBPtr;
 }
 

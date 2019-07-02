@@ -1910,6 +1910,15 @@ bool ShrinkWrapping::perform() {
   PopOffsetByReg = std::vector<int64_t>(BC.MRI->getNumRegs(), 0LL);
   DomOrder = std::vector<MCPhysReg>(BC.MRI->getNumRegs(), 0);
 
+  if (BF.checkForAmbiguousJumpTables()) {
+    DEBUG(dbgs() << "BOLT-DEBUG: ambiguous JTs in " << BF.getPrintName()
+                 << ".\n");
+    // We could call disambiguateJumpTables here, but it is probably not worth
+    // the cost (of duplicating potentially large jump tables that could regress
+    // dcache misses). Moreover, ambiguous JTs are rare and coming from code
+    // written in assembly language. Just bail.
+    return false;
+  }
   SLM.initialize();
   CSA.compute();
   classifyCSRUses();
