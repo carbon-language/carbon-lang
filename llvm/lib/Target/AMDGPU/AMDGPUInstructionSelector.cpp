@@ -375,18 +375,17 @@ bool AMDGPUInstructionSelector::selectG_INSERT(MachineInstr &I) const {
   return true;
 }
 
-bool AMDGPUInstructionSelector::selectG_INTRINSIC(MachineInstr &I,
-                                          CodeGenCoverage &CoverageInfo) const {
+bool AMDGPUInstructionSelector::selectG_INTRINSIC(
+  MachineInstr &I, CodeGenCoverage &CoverageInfo) const {
   unsigned IntrinsicID =  I.getOperand(I.getNumExplicitDefs()).getIntrinsicID();
   switch (IntrinsicID) {
-  default:
-    break;
   case Intrinsic::maxnum:
   case Intrinsic::minnum:
   case Intrinsic::amdgcn_cvt_pkrtz:
     return selectImpl(I, CoverageInfo);
+  default:
+    return selectImpl(I, CoverageInfo);
   }
-  return false;
 }
 
 static int getV_CMPOpcode(CmpInst::Predicate P, unsigned Size) {
@@ -525,8 +524,7 @@ buildEXP(const TargetInstrInfo &TII, MachineInstr *Insert, unsigned Tgt,
 }
 
 bool AMDGPUInstructionSelector::selectG_INTRINSIC_W_SIDE_EFFECTS(
-                                                 MachineInstr &I,
-						 CodeGenCoverage &CoverageInfo) const {
+  MachineInstr &I, CodeGenCoverage &CoverageInfo) const {
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
@@ -565,8 +563,9 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC_W_SIDE_EFFECTS(
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*Exp, TII, TRI, RBI);
   }
+  default:
+    return selectImpl(I, CoverageInfo);
   }
-  return false;
 }
 
 bool AMDGPUInstructionSelector::selectG_SELECT(MachineInstr &I) const {
