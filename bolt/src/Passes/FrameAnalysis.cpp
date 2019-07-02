@@ -497,14 +497,42 @@ bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
 void FrameAnalysis::cleanAnnotations() {
   NamedRegionTimer T("cleanannotations", "clean annotations", "FA",
                      "FA breakdown", opts::TimeFA);
-  for (auto &I : BC.getBinaryFunctions()) {
-    for (auto &BB : I.second) {
-      for (auto &Inst : BB) {
-        BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
-        BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
+  auto cleanBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
+                        std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
+    for (auto It = BlockBegin; It != BlockEnd; ++It) {
+      auto &BF = It->second;
+
+      for (auto &BB : BF) {
+        for (auto &Inst : BB) {
+          BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
+          BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
+        }
       }
     }
+  };
+
+  if (opts::NoThreads) {
+    cleanBlock(BC.getBinaryFunctions().begin(), BC.getBinaryFunctions().end());
+    return;
   }
+
+  ThreadPool ThPool(opts::ThreadCount);
+  const unsigned TasksCount = 20 * opts::ThreadCount;
+  const unsigned SingleTaskSize = BC.getBinaryFunctions().size() / TasksCount;
+
+  auto BlockBegin = BC.getBinaryFunctions().begin();
+  unsigned CurSize = 0;
+  for (auto It = BC.getBinaryFunctions().begin();
+       It != BC.getBinaryFunctions().end(); ++It) {
+    CurSize++;
+    if (CurSize >= SingleTaskSize) {
+      ThPool.async(cleanBlock, BlockBegin, std::next(It));
+      BlockBegin = std::next(It);
+      CurSize = 0;
+    }
+  }
+  ThPool.async(cleanBlock, BlockBegin, BC.getBinaryFunctions().end());
+  ThPool.wait();
 }
 
 FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
