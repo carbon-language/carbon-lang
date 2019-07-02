@@ -3688,20 +3688,19 @@ void ModuleBitcodeWriterBase::writeModuleLevelReferences(
   // been initialized from a DenseSet.
   llvm::sort(NameVals.begin() + SizeBeforeRefs, NameVals.end());
 
-  if (!VTableFuncs.empty()) {
+  if (VTableFuncs.empty())
+    Stream.EmitRecord(bitc::FS_PERMODULE_GLOBALVAR_INIT_REFS, NameVals,
+                      FSModRefsAbbrev);
+  else {
     // VTableFuncs pairs should already be sorted by offset.
     for (auto &P : VTableFuncs) {
       NameVals.push_back(VE.getValueID(P.FuncVI.getValue()));
       NameVals.push_back(P.VTableOffset);
     }
-  }
 
-  if (VTableFuncs.empty())
-    Stream.EmitRecord(bitc::FS_PERMODULE_GLOBALVAR_INIT_REFS, NameVals,
-                      FSModRefsAbbrev);
-  else
     Stream.EmitRecord(bitc::FS_PERMODULE_VTABLE_GLOBALVAR_INIT_REFS, NameVals,
                       FSModVTableRefsAbbrev);
+  }
   NameVals.clear();
 }
 
@@ -3854,14 +3853,12 @@ void ModuleBitcodeWriterBase::writePerModuleGlobalValueSummary() {
     NameVals.clear();
   }
 
-  if (!Index->typeIdCompatibleVtableMap().empty()) {
-    for (auto &S : Index->typeIdCompatibleVtableMap()) {
-      writeTypeIdCompatibleVtableSummaryRecord(NameVals, StrtabBuilder, S.first,
-                                               S.second, VE);
-      Stream.EmitRecord(bitc::FS_TYPE_ID_METADATA, NameVals,
-                        TypeIdCompatibleVtableAbbrev);
-      NameVals.clear();
-    }
+  for (auto &S : Index->typeIdCompatibleVtableMap()) {
+    writeTypeIdCompatibleVtableSummaryRecord(NameVals, StrtabBuilder, S.first,
+                                             S.second, VE);
+    Stream.EmitRecord(bitc::FS_TYPE_ID_METADATA, NameVals,
+                      TypeIdCompatibleVtableAbbrev);
+    NameVals.clear();
   }
 
   Stream.ExitBlock();
