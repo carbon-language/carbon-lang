@@ -136,6 +136,7 @@ def : GINodeEquiv<G_ATOMICRMW_MIN, atomic_load_min>;
 def : GINodeEquiv<G_ATOMICRMW_MAX, atomic_load_max>;
 def : GINodeEquiv<G_ATOMICRMW_UMIN, atomic_load_umin>;
 def : GINodeEquiv<G_ATOMICRMW_UMAX, atomic_load_umax>;
+def : GINodeEquiv<G_FENCE, atomic_fence>;
 
 // Specifies the GlobalISel equivalents for SelectionDAG's ComplexPattern.
 // Should be used on defs that subclass GIComplexOperandMatcher<>.
