@@ -1180,6 +1180,11 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
     return selectG_BRCOND(I);
   case TargetOpcode::G_FRAME_INDEX:
     return selectG_FRAME_INDEX(I);
+  case TargetOpcode::G_FENCE:
+    // FIXME: Tablegen importer doesn't handle the imm operands correctly, and
+    // is checking for G_CONSTANT
+    I.setDesc(TII.get(AMDGPU::ATOMIC_FENCE));
+    return true;
   }
   return false;
 }
