@@ -278,12 +278,15 @@ bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
       .add(Lo1)
       .add(Lo2)
       .addImm(0);
-    BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_ADDC_U32_e64), DstHi)
+    MachineInstr *Addc = BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_ADDC_U32_e64), DstHi)
       .addDef(MRI.createVirtualRegister(CarryRC), RegState::Dead)
       .add(Hi1)
       .add(Hi2)
       .addReg(CarryReg, RegState::Kill)
       .addImm(0);
+
+    if (!constrainSelectedInstRegOperands(*Addc, TII, TRI, RBI))
+      return false;
   }
 
   BuildMI(*BB, &I, DL, TII.get(AMDGPU::REG_SEQUENCE), DstReg)
@@ -292,9 +295,8 @@ bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
     .addReg(DstHi)
     .addImm(AMDGPU::sub1);
 
-  if (!RBI.constrainGenericRegister(DstReg, RC, MRI) ||
-      !RBI.constrainGenericRegister(I.getOperand(1).getReg(), RC, MRI) ||
-      !RBI.constrainGenericRegister(I.getOperand(2).getReg(), RC, MRI))
+
+  if (!RBI.constrainGenericRegister(DstReg, RC, MRI))
     return false;
 
   I.eraseFromParent();
