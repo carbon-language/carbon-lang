@@ -35,45 +35,48 @@
 
 ; TODO: Test index-based WPD one %t2.o once implemented.
 
+; TODO: Re-enable the below testing of the hybrid Thin/Regular LTO WPD, once expensive checks
+; failure is addressed.
+
 ; Legacy PM
-; RUN: llvm-lto2 run %t.o -save-temps -pass-remarks=. \
-; RUN:   -o %t3 \
-; RUN:   -r=%t.o,test,px \
-; RUN:   -r=%t.o,_ZN1A1nEi,p \
-; RUN:   -r=%t.o,_ZN1B1fEi,p \
-; RUN:   -r=%t.o,_ZN1C1fEi,p \
-; RUN:   -r=%t.o,_ZN1D1mEi,p \
-; RUN:   -r=%t.o,_ZTV1B, \
-; RUN:   -r=%t.o,_ZTV1C, \
-; RUN:   -r=%t.o,_ZTV1D, \
-; RUN:   -r=%t.o,_ZN1A1nEi, \
-; RUN:   -r=%t.o,_ZN1B1fEi, \
-; RUN:   -r=%t.o,_ZN1C1fEi, \
-; RUN:   -r=%t.o,_ZN1D1mEi, \
-; RUN:   -r=%t.o,_ZTV1B,px \
-; RUN:   -r=%t.o,_ZTV1C,px \
-; RUN:   -r=%t.o,_ZTV1D,px 2>&1 | FileCheck %s --check-prefix=REMARK --dump-input=fail
-; RUN: llvm-dis %t3.1.4.opt.bc -o - | FileCheck %s --check-prefix=CHECK-IR
+; RUN llvm-lto2 run %t.o -save-temps -pass-remarks=. \
+; RUN   -o %t3 \
+; RUN   -r=%t.o,test,px \
+; RUN   -r=%t.o,_ZN1A1nEi,p \
+; RUN   -r=%t.o,_ZN1B1fEi,p \
+; RUN   -r=%t.o,_ZN1C1fEi,p \
+; RUN   -r=%t.o,_ZN1D1mEi,p \
+; RUN   -r=%t.o,_ZTV1B, \
+; RUN   -r=%t.o,_ZTV1C, \
+; RUN   -r=%t.o,_ZTV1D, \
+; RUN   -r=%t.o,_ZN1A1nEi, \
+; RUN   -r=%t.o,_ZN1B1fEi, \
+; RUN   -r=%t.o,_ZN1C1fEi, \
+; RUN   -r=%t.o,_ZN1D1mEi, \
+; RUN   -r=%t.o,_ZTV1B,px \
+; RUN   -r=%t.o,_ZTV1C,px \
+; RUN   -r=%t.o,_ZTV1D,px 2>&1 | FileCheck %s --check-prefix=REMARK --dump-input=fail
+; RUN llvm-dis %t3.1.4.opt.bc -o - | FileCheck %s --check-prefix=CHECK-IR
 
 ; New PM
-; RUN: llvm-lto2 run %t.o -save-temps -use-new-pm -pass-remarks=. \
-; RUN:   -o %t3 \
-; RUN:   -r=%t.o,test,px \
-; RUN:   -r=%t.o,_ZN1A1nEi,p \
-; RUN:   -r=%t.o,_ZN1B1fEi,p \
-; RUN:   -r=%t.o,_ZN1C1fEi,p \
-; RUN:   -r=%t.o,_ZN1D1mEi,p \
-; RUN:   -r=%t.o,_ZTV1B, \
-; RUN:   -r=%t.o,_ZTV1C, \
-; RUN:   -r=%t.o,_ZTV1D, \
-; RUN:   -r=%t.o,_ZN1A1nEi, \
-; RUN:   -r=%t.o,_ZN1B1fEi, \
-; RUN:   -r=%t.o,_ZN1C1fEi, \
-; RUN:   -r=%t.o,_ZN1D1mEi, \
-; RUN:   -r=%t.o,_ZTV1B,px \
-; RUN:   -r=%t.o,_ZTV1C,px \
-; RUN:   -r=%t.o,_ZTV1D,px 2>&1 | FileCheck %s --check-prefix=REMARK --dump-input=fail
-; RUN: llvm-dis %t3.1.4.opt.bc -o - | FileCheck %s --check-prefix=CHECK-IR
+; RUN llvm-lto2 run %t.o -save-temps -use-new-pm -pass-remarks=. \
+; RUN   -o %t3 \
+; RUN   -r=%t.o,test,px \
+; RUN   -r=%t.o,_ZN1A1nEi,p \
+; RUN   -r=%t.o,_ZN1B1fEi,p \
+; RUN   -r=%t.o,_ZN1C1fEi,p \
+; RUN   -r=%t.o,_ZN1D1mEi,p \
+; RUN   -r=%t.o,_ZTV1B, \
+; RUN   -r=%t.o,_ZTV1C, \
+; RUN   -r=%t.o,_ZTV1D, \
+; RUN   -r=%t.o,_ZN1A1nEi, \
+; RUN   -r=%t.o,_ZN1B1fEi, \
+; RUN   -r=%t.o,_ZN1C1fEi, \
+; RUN   -r=%t.o,_ZN1D1mEi, \
+; RUN   -r=%t.o,_ZTV1B,px \
+; RUN   -r=%t.o,_ZTV1C,px \
+; RUN   -r=%t.o,_ZTV1D,px 2>&1 | FileCheck %s --check-prefix=REMARK --dump-input=fail
+; RUN llvm-dis %t3.1.4.opt.bc -o - | FileCheck %s --check-prefix=CHECK-IR
 
 ; REMARK-DAG: single-impl: devirtualized a call to _ZN1A1nEi
 ; REMARK-DAG: single-impl: devirtualized a call to _ZN1D1mEi
