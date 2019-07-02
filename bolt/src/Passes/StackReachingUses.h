@@ -32,8 +32,9 @@ class StackReachingUses
 
 public:
   StackReachingUses(const FrameAnalysis &FA, const BinaryContext &BC,
-                    BinaryFunction &BF)
-      : InstrsDataflowAnalysis(BC, BF), FA(FA) {}
+                    BinaryFunction &BF,
+                    MCPlusBuilder::AllocatorIdTy AllocId = 0)
+      : InstrsDataflowAnalysis(BC, BF, AllocId), FA(FA) {}
   virtual ~StackReachingUses() {}
 
   /// Return true if the stack position written by the store in \p StoreFIE was
@@ -51,8 +52,6 @@ public:
                    bool IncludeLocalAccesses = true) const;
 
   void run() {
-    NamedRegionTimer T1("SRU", "Stack Reaching Uses", "Dataflow", "Dataflow",
-                        opts::TimeOpts);
     InstrsDataflowAnalysis<StackReachingUses, true>::run();
   }
 

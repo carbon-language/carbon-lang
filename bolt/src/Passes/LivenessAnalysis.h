@@ -38,8 +38,8 @@ class LivenessAnalysis
 
 public:
   LivenessAnalysis(const RegAnalysis &RA, const BinaryContext &BC,
-                   BinaryFunction &BF)
-      : Parent(BC, BF), RA(RA), NumRegs(BC.MRI->getNumRegs()) {}
+                   BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId)
+      : Parent(BC, BF, AllocId), RA(RA), NumRegs(BC.MRI->getNumRegs()) {}
   virtual ~LivenessAnalysis();
 
   bool isAlive(ProgramPoint PP, MCPhysReg Reg) const {
@@ -50,8 +50,6 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("LA", "Liveness Analysis", "Dataflow", "Dataflow",
-                        opts::TimeOpts);
     Parent::run();
   }
 

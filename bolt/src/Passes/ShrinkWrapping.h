@@ -27,6 +27,8 @@ class CalleeSavedAnalysis {
   const BinaryContext &BC;
   BinaryFunction &BF;
   DataflowInfoManager &Info;
+  MCPlusBuilder::AllocatorIdTy AllocatorId;
+
   Optional<unsigned> SaveTagIndex;
   Optional<unsigned> RestoreTagIndex;
 
@@ -39,21 +41,11 @@ class CalleeSavedAnalysis {
   /// function.
   void analyzeRestores();
 
-  /// Returns the identifying string used to annotate instructions with metadata
-  /// for this analysis. These are deleted in the destructor.
-  static StringRef getSaveTagName() {
-    return StringRef("CSA-SavedReg");
-  }
-
   unsigned getSaveTag() {
     if (SaveTagIndex)
       return *SaveTagIndex;
     SaveTagIndex = BC.MIB->getOrCreateAnnotationIndex(getSaveTagName());
     return *SaveTagIndex;
-  }
-
-  static StringRef getRestoreTagName() {
-    return StringRef("CSA-RestoredReg");
   }
 
   unsigned getRestoreTag() {
@@ -72,8 +64,9 @@ public:
   std::vector<const FrameIndexEntry*> LoadFIEByReg;
 
   CalleeSavedAnalysis(const FrameAnalysis &FA, const BinaryContext &BC,
-                      BinaryFunction &BF, DataflowInfoManager &Info)
-      : FA(FA), BC(BC), BF(BF), Info(Info),
+                      BinaryFunction &BF, DataflowInfoManager &Info,
+                      MCPlusBuilder::AllocatorIdTy AllocId)
+      : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId),
         CalleeSaved(BC.MRI->getNumRegs(), false),
         OffsetsByReg(BC.MRI->getNumRegs(), 0LL),
         HasRestores(BC.MRI->getNumRegs(), false),
@@ -112,6 +105,17 @@ public:
   /// instructions).
   std::vector<MCInst *> getSavesByReg(uint16_t Reg);
   std::vector<MCInst *> getRestoresByReg(uint16_t Reg);
+
+  /// Returns the identifying string used to annotate instructions with metadata
+  /// for this analysis. These are deleted in the destructor.
+  static StringRef getSaveTagName() {
+    return StringRef("CSA-SavedReg");
+  }
+  
+  static StringRef getRestoreTagName() {
+    return StringRef("CSA-RestoredReg");
+  }
+
 };
 
 /// Identifies in a given binary function all stack regions being used and allow
@@ -122,6 +126,7 @@ class StackLayoutModifier {
   const BinaryContext &BC;
   BinaryFunction &BF;
   DataflowInfoManager &Info;
+  MCPlusBuilder::AllocatorIdTy AllocatorId;
 
   // Keep track of stack slots we know how to safely move
   std::map<int64_t, int64_t> AvailableRegions;
@@ -217,20 +222,11 @@ private:
     return *OffsetCFIRegTagIndex;
   }
 
-  static StringRef getTodoTagName() {
-    return StringRef("SLM-TodoTag");
-  }
-  static StringRef getSlotTagName() {
-    return StringRef("SLM-SlotTag");
-  }
-  static StringRef getOffsetCFIRegTagName() {
-    return StringRef("SLM-OffsetCFIReg");
-  }
-
 public:
   StackLayoutModifier(const FrameAnalysis &FA, const BinaryContext &BC,
-                      BinaryFunction &BF, DataflowInfoManager &Info)
-      : FA(FA), BC(BC), BF(BF), Info(Info) {}
+                      BinaryFunction &BF, DataflowInfoManager &Info,
+                      MCPlusBuilder::AllocatorIdTy AllocId)
+      : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId) {}
 
   ~StackLayoutModifier() {
     for (auto &BB : BF) {
@@ -283,6 +279,19 @@ public:
   /// Perform initial assessment of the function trying to understand its stack
   /// accesses.
   void initialize();
+
+  static StringRef getTodoTagName() {
+    return StringRef("SLM-TodoTag");
+  }
+
+  static StringRef getSlotTagName() {
+    return StringRef("SLM-SlotTag");
+  }
+
+  static StringRef getOffsetCFIRegTagName() {
+    return StringRef("SLM-OffsetCFIReg");
+  }
+
 };
 
 /// Implements a pass to optimize callee-saved register spills. These spills
@@ -294,6 +303,7 @@ class ShrinkWrapping {
   const BinaryContext &BC;
   BinaryFunction &BF;
   DataflowInfoManager &Info;
+  MCPlusBuilder::AllocatorIdTy AllocatorId;
   StackLayoutModifier SLM;
   /// For each CSR, store a vector of all CFI indexes deleted as a consequence
   /// of moving this Callee-Saved Reg
@@ -381,7 +391,7 @@ private:
   void scheduleChange(ProgramPoint PP, T&& ...Item) {
     if (PP.isInst()) {
       auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-          *PP.getInst(), getAnnotationIndex());
+          *PP.getInst(), getAnnotationIndex(), AllocatorId);
       WList.emplace_back(std::forward<T>(Item)...);
       return;
     }
@@ -398,7 +408,7 @@ private:
       BB = *BB->succ_begin();
     }
     auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-      *BB->begin(), getAnnotationIndex());
+        *BB->begin(), getAnnotationIndex(), AllocatorId);
     WList.emplace_back(std::forward<T>(Item)...);
   }
 
@@ -517,9 +527,10 @@ private:
 
 public:
   ShrinkWrapping(const FrameAnalysis &FA, const BinaryContext &BC,
-                  BinaryFunction &BF, DataflowInfoManager &Info)
-      : FA(FA), BC(BC), BF(BF), Info(Info), SLM(FA, BC, BF, Info),
-        CSA(FA, BC, BF, Info) {}
+                 BinaryFunction &BF, DataflowInfoManager &Info,
+                 MCPlusBuilder::AllocatorIdTy AllocId)
+      : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId),
+        SLM(FA, BC, BF, Info, AllocId), CSA(FA, BC, BF, Info, AllocId) {}
 
   ~ShrinkWrapping() {
     for (auto &BB : BF) {

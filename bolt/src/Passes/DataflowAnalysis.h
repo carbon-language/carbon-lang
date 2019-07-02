@@ -555,8 +555,10 @@ public:
     return count(*Expressions[PointIdx], Expr);
   }
 
-  InstrsDataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF)
-    : DataflowAnalysis<Derived, BitVector, Backward, StatePrinterTy>(BC, BF) {}
+  InstrsDataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF,
+                         MCPlusBuilder::AllocatorIdTy AllocId = 0)
+      : DataflowAnalysis<Derived, BitVector, Backward, StatePrinterTy>(
+            BC, BF, AllocId) {}
   virtual ~InstrsDataflowAnalysis() {}
 };
 

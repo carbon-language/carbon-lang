@@ -29,8 +29,9 @@ class ReachingInsns
   friend class DataflowAnalysis<ReachingInsns<Backward>, BitVector, Backward>;
 
 public:
-  ReachingInsns(const BinaryContext &BC, BinaryFunction &BF)
-      : InstrsDataflowAnalysis<ReachingInsns, Backward>(BC, BF) {}
+  ReachingInsns(const BinaryContext &BC, BinaryFunction &BF,
+                MCPlusBuilder::AllocatorIdTy AllocId = 0)
+      : InstrsDataflowAnalysis<ReachingInsns, Backward>(BC, BF, AllocId) {}
   virtual ~ReachingInsns() {}
 
   bool isInLoop(const BinaryBasicBlock &BB) {
@@ -46,8 +47,6 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("RI", "Reaching Insns", "Dataflow", "Dataflow",
-                        opts::TimeOpts);
     InstrsDataflowAnalysis<ReachingInsns<Backward>, Backward>::run();
   }
 

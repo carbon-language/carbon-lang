@@ -47,10 +47,15 @@ class DataflowInfoManager {
   std::unique_ptr<std::unordered_map<const MCInst *, BinaryBasicBlock *>>
       InsnToBB;
 
+  // Id of the allocator to be used for annotations added by any of the managed
+  // analysis
+  MCPlusBuilder::AllocatorIdTy AllocatorId;
+
 public:
   DataflowInfoManager(const BinaryContext &BC, BinaryFunction &BF,
-                      const RegAnalysis *RA, const FrameAnalysis *FA)
-      : RA(RA), FA(FA), BC(BC), BF(BF){};
+                      const RegAnalysis *RA, const FrameAnalysis *FA,
+                      MCPlusBuilder::AllocatorIdTy AllocId = 0)
+      : RA(RA), FA(FA), BC(BC), BF(BF), AllocatorId(AllocId){};
 
   /// Helper function to fetch the parent BB associated with a program point
   /// If PP is a BB itself, then return itself (cast to a BinaryBasicBlock)

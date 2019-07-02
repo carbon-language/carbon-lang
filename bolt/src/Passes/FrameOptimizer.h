@@ -86,6 +86,8 @@ class FrameOptimizerPass : public BinaryFunctionPass {
 
   DenseSet<const BinaryFunction *> FuncsChanged;
 
+  std::mutex FuncsChangedMutex;
+
   /// Perform a dataflow analysis in \p BF to reveal unnecessary reloads from
   /// the frame. Use the analysis to convert memory loads to register moves or
   /// immediate loads. Delete redundant register moves.
@@ -98,6 +100,10 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   void removeUnusedStores(const FrameAnalysis &FA,
                           const BinaryContext &BC,
                           BinaryFunction &BF);
+
+  /// Perform shrinkwrapping step
+  void performShrinkWrapping(const RegAnalysis &RA, const FrameAnalysis &FA,
+                             BinaryContext &BC);
 
 public:
   explicit FrameOptimizerPass(const cl::opt<bool> &PrintPass)

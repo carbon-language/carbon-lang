@@ -102,7 +102,7 @@ void CalleeSavedAnalysis::analyzeSaves() {
         CalleeSaved.set(FIE->RegOrImm);
         SaveFIEByReg[FIE->RegOrImm] = &*FIE;
         SavingCost[FIE->RegOrImm] += InsnToBB[&Inst]->getKnownExecutionCount();
-        BC.MIB->addAnnotation(Inst, getSaveTag(), FIE->RegOrImm);
+        BC.MIB->addAnnotation(Inst, getSaveTag(), FIE->RegOrImm, AllocatorId);
         OffsetsByReg[FIE->RegOrImm] = FIE->StackOffset;
         DEBUG(dbgs() << "Logging new candidate for Callee-Saved Reg: "
                      << FIE->RegOrImm << "\n");
@@ -153,7 +153,8 @@ void CalleeSavedAnalysis::analyzeRestores() {
                      << "\n");
         if (LoadFIEByReg[FIE->RegOrImm] == nullptr)
           LoadFIEByReg[FIE->RegOrImm] = &*FIE;
-        BC.MIB->addAnnotation(Inst, getRestoreTag(), FIE->RegOrImm);
+        BC.MIB->addAnnotation(Inst, getRestoreTag(), FIE->RegOrImm,
+                              AllocatorId);
         HasRestores.set(FIE->RegOrImm);
       }
       Prev = &Inst;
@@ -311,7 +312,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
 
   // We are restoring SP to an old value based on FP. Mark it as a stack
   // access to be fixed later.
-  BC.MIB->addAnnotation(Point, getSlotTag(), Output);
+  BC.MIB->addAnnotation(Point, getSlotTag(), Output, AllocatorId);
 }
 
 void StackLayoutModifier::classifyStackAccesses() {
@@ -354,7 +355,7 @@ void StackLayoutModifier::classifyStackAccesses() {
       // We are free to go. Add it as available stack slot which we know how
       // to move it.
       AvailableRegions[FIEX->StackOffset] = FIEX->Size;
-      BC.MIB->addAnnotation(Inst, getSlotTag(), FIEX->StackOffset);
+      BC.MIB->addAnnotation(Inst, getSlotTag(), FIEX->StackOffset, AllocatorId);
       RegionToRegMap[FIEX->StackOffset].insert(FIEX->RegOrImm);
       RegToRegionMap[FIEX->RegOrImm].insert(FIEX->StackOffset);
       DEBUG(dbgs() << "Adding region " << FIEX->StackOffset << " size "
@@ -371,7 +372,7 @@ void StackLayoutModifier::classifyCFIs() {
   auto recordAccess = [&](MCInst *Inst, int64_t Offset) {
     const uint16_t Reg = BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
     if (Reg == BC.MIB->getStackPointer() || Reg == BC.MIB->getFramePointer()) {
-      BC.MIB->addAnnotation(*Inst, getSlotTag(), Offset);
+      BC.MIB->addAnnotation(*Inst, getSlotTag(), Offset, AllocatorId);
       DEBUG(dbgs() << "Recording CFI " << Offset << "\n");
     } else {
       IsSimple = false;
@@ -400,12 +401,14 @@ void StackLayoutModifier::classifyCFIs() {
         recordAccess(&Inst, CFI->getOffset());
         BC.MIB->addAnnotation(Inst, getOffsetCFIRegTag(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
-                                                    /*isEH=*/false));
+                                                    /*isEH=*/false),
+                              AllocatorId);
         break;
       case MCCFIInstruction::OpSameValue:
         BC.MIB->addAnnotation(Inst, getOffsetCFIRegTag(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
-                                                    /*isEH=*/false));
+                                                    /*isEH=*/false),
+                              AllocatorId);
         break;
       case MCCFIInstruction::OpRememberState:
         CFIStack.push(std::make_pair(CfaOffset, CfaReg));
@@ -432,7 +435,7 @@ void StackLayoutModifier::classifyCFIs() {
 void StackLayoutModifier::scheduleChange(
     MCInst &Inst, StackLayoutModifier::WorklistItem Item) {
   auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-      Inst, getTodoTag());
+      Inst, getTodoTag(), AllocatorId);
   WList.push_back(Item);
 }
 
@@ -510,7 +513,7 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
       }
 
       if (Slot == RegionAddr) {
-        BC.MIB->addAnnotation(Inst, "AccessesDeletedPos", 0U);
+        BC.MIB->addAnnotation(Inst, "AccessesDeletedPos", 0U, AllocatorId);
         continue;
       }
       if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst)) {
@@ -1454,13 +1457,13 @@ protected:
 public:
   PredictiveStackPointerTracking(const BinaryContext &BC, BinaryFunction &BF,
                                  decltype(ShrinkWrapping::Todo) &TodoMap,
-                                 DataflowInfoManager &Info)
-      : StackPointerTrackingBase<PredictiveStackPointerTracking>(BC, BF),
+                                 DataflowInfoManager &Info,
+                                 MCPlusBuilder::AllocatorIdTy AllocatorId = 0)
+      : StackPointerTrackingBase<PredictiveStackPointerTracking>(BC, BF,
+                                                                 AllocatorId),
         TodoMap(TodoMap), Info(Info) {}
 
   void run() {
-    NamedRegionTimer T1("PSPT", "Predictive Stack Pointer Tracking", "Dataflow",
-                        "Dataflow", opts::TimeOpts);
     StackPointerTrackingBase<PredictiveStackPointerTracking>::run();
   }
 };
@@ -1553,7 +1556,7 @@ void ShrinkWrapping::rebuildCFIForSP() {
         continue;
       auto *CFI = BF.getCFIFor(Inst);
       if (CFI->getOperation() == MCCFIInstruction::OpDefCfaOffset)
-        BC.MIB->addAnnotation(Inst, "DeleteMe", 0U);
+        BC.MIB->addAnnotation(Inst, "DeleteMe", 0U, AllocatorId);
     }
   }
 
@@ -1812,7 +1815,7 @@ BBIterTy ShrinkWrapping::processInsertionsList(
 }
 
 bool ShrinkWrapping::processInsertions() {
-  PredictiveStackPointerTracking PSPT(BC, BF, Todo, Info);
+  PredictiveStackPointerTracking PSPT(BC, BF, Todo, Info, AllocatorId);
   PSPT.run();
 
   bool Changes{false};

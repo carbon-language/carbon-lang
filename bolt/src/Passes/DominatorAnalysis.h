@@ -35,8 +35,11 @@ class DominatorAnalysis
                                 Backward>;
 
 public:
-  DominatorAnalysis(const BinaryContext &BC, BinaryFunction &BF)
-      : InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>(BC, BF) {}
+  DominatorAnalysis(const BinaryContext &BC, BinaryFunction &BF,
+                    MCPlusBuilder::AllocatorIdTy AllocId)
+      : InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>(BC, BF,
+                                                                      AllocId) {
+  }
   virtual ~DominatorAnalysis() {}
 
   SmallSetVector<ProgramPoint, 4> getDominanceFrontierFor(const MCInst &Dom) {
@@ -102,8 +105,6 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("DA", "Dominator Analysis", "Dataflow", "Dataflow",
-                        opts::TimeOpts);
     InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>::run();
   }
 

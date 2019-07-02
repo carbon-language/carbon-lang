@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FrameOptimizer.h"
+#include "ParallelUtilities.h"
 #include "ShrinkWrapping.h"
 #include "StackAvailableExpressions.h"
 #include "StackReachingUses.h"
@@ -46,7 +47,7 @@ RemoveStores("frame-opt-rm-stores",
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
-  
+
 } // namespace opts
 
 namespace llvm {
@@ -246,8 +247,8 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     RA = std::make_unique<RegAnalysis>(BC, &BC.getBinaryFunctions(), CG.get());
   }
 
-  // Our main loop: perform caller-saved register optimizations, then
-  // callee-saved register optimizations (shrink wrapping).
+  // Perform caller-saved register optimizations, then callee-saved register
+  // optimizations (shrink wrapping)
   for (auto &I : BC.getBinaryFunctions()) {
     if (!FA->hasFrameInfo(I.second))
       continue;
@@ -261,11 +262,13 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
                    << " ) exceeds our hotness threshold ( "
                    << BC.getHotThreshold() << " )\n");
     }
+
     {
       NamedRegionTimer T1("removeloads", "remove loads", "FOP", "FOP breakdown",
                           opts::TimeOpts);
       removeUnnecessaryLoads(*RA, *FA, BC, I.second);
     }
+
     if (opts::RemoveStores) {
       NamedRegionTimer T1("removestores", "remove stores", "FOP",
                           "FOP breakdown", opts::TimeOpts);
@@ -274,14 +277,13 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     // Don't even start shrink wrapping if no profiling info is available
     if (I.second.getKnownExecutionCount() == 0)
       continue;
-    {
-      NamedRegionTimer T1("movespills", "move spills", "FOP", "FOP breakdown",
-                          opts::TimeOpts);
-      DataflowInfoManager Info(BC, I.second, RA.get(), FA.get());
-      ShrinkWrapping SW(*FA, BC, I.second, Info);
-      if (SW.perform())
-        FuncsChanged.insert(&I.second);
-    }
+
+  }
+
+  {
+    NamedRegionTimer T1("shrinkwrapping", "shrink wrapping", "FOP",
+                        "FOP breakdown", opts::TimeOpts);
+    performShrinkWrapping(*RA, *FA, BC);
   }
 
   outs() << "BOLT-INFO: FOP optimized " << NumRedundantLoads
@@ -294,6 +296,64 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
          << NumRedundantStores << " store(s).\n";
   FA->printStats();
   ShrinkWrapping::printStats();
+}
+
+void FrameOptimizerPass::performShrinkWrapping(const RegAnalysis &RA,
+                                               const FrameAnalysis &FA,
+                                               BinaryContext &BC) {
+  // Initialize necessary annotations to allow safe parallel accesses to
+  // annotation index in MIB
+  BC.MIB->getOrCreateAnnotationIndex(CalleeSavedAnalysis::getSaveTagName());
+  BC.MIB->getOrCreateAnnotationIndex(CalleeSavedAnalysis::getRestoreTagName());
+  BC.MIB->getOrCreateAnnotationIndex(StackLayoutModifier::getTodoTagName());
+  BC.MIB->getOrCreateAnnotationIndex(StackLayoutModifier::getSlotTagName());
+  BC.MIB->getOrCreateAnnotationIndex(
+      StackLayoutModifier::getOffsetCFIRegTagName());
+  BC.MIB->getOrCreateAnnotationIndex("ReachingDefs");
+  BC.MIB->getOrCreateAnnotationIndex("ReachingUses");
+  BC.MIB->getOrCreateAnnotationIndex("LivenessAnalysis");
+  BC.MIB->getOrCreateAnnotationIndex("StackReachingUses");
+  BC.MIB->getOrCreateAnnotationIndex("PostDominatorAnalysis");
+  BC.MIB->getOrCreateAnnotationIndex("DominatorAnalysis");
+  BC.MIB->getOrCreateAnnotationIndex("StackPointerTracking");
+  BC.MIB->getOrCreateAnnotationIndex("StackPointerTrackingForInternalCalls");
+  BC.MIB->getOrCreateAnnotationIndex("StackAvailableExpressions");
+  BC.MIB->getOrCreateAnnotationIndex("StackAllocationAnalysis");
+  BC.MIB->getOrCreateAnnotationIndex("ShrinkWrap-Todo");
+  BC.MIB->getOrCreateAnnotationIndex("PredictiveStackPointerTracking");
+  BC.MIB->getOrCreateAnnotationIndex("ReachingInsnsBackward");
+  BC.MIB->getOrCreateAnnotationIndex("ReachingInsns");
+  BC.MIB->getOrCreateAnnotationIndex("AccessesDeletedPos");
+  BC.MIB->getOrCreateAnnotationIndex("DeleteMe");
+
+  ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
+    if (!FA.hasFrameInfo(BF))
+      return true;
+
+    if (opts::FrameOptimization == FOP_HOT &&
+        (BF.getKnownExecutionCount() < BC.getHotThreshold()))
+      return true;
+
+    if (BF.getKnownExecutionCount() == 0)
+      return true;
+
+    return false;
+  };
+
+  ParallelUtilities::WorkFuncWithAllocTy WorkFunction =
+      [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocatorId) {
+        DataflowInfoManager Info(BC, BF, &RA, &FA, AllocatorId);
+        ShrinkWrapping SW(FA, BC, BF, Info, AllocatorId);
+
+        if (SW.perform()) {
+          std::lock_guard<std::mutex> Lock(FuncsChangedMutex);
+          FuncsChanged.insert(&BF);
+        }
+      };
+
+  ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
+      BC, ParallelUtilities::SchedulingPolicy::SP_INST_QUADRATIC, WorkFunction,
+      SkipPredicate, "shrink-wrapping");
 }
 
 } // namespace bolt

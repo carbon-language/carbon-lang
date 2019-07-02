@@ -84,8 +84,6 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("SPTIC", "Stack Pointer Tracking for Internal Calls",
-                        "Dataflow", "Dataflow", opts::TimeOpts);
     StackPointerTrackingBase<StackPointerTrackingForInternalCalls>::run();
   }
 };

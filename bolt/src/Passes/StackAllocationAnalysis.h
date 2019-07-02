@@ -35,14 +35,13 @@ class StackAllocationAnalysis
 
 public:
   StackAllocationAnalysis(const BinaryContext &BC, BinaryFunction &BF,
-                          StackPointerTracking &SPT)
-      : InstrsDataflowAnalysis<StackAllocationAnalysis, false>(BC, BF),
+                          StackPointerTracking &SPT,
+                          MCPlusBuilder::AllocatorIdTy AllocId)
+      : InstrsDataflowAnalysis<StackAllocationAnalysis, false>(BC, BF, AllocId),
         SPT(SPT) {}
   virtual ~StackAllocationAnalysis() {}
 
   void run() {
-    NamedRegionTimer T1("SAA", "Stack Allocation Analysis", "Dataflow",
-                        "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<StackAllocationAnalysis, false>::run();
   }
 

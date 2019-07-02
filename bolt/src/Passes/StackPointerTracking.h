@@ -18,7 +18,6 @@
 
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;
-extern llvm::cl::opt<bool> NoThreads;
 } // namespace opts
 
 namespace llvm {
@@ -206,8 +205,6 @@ public:
   virtual ~StackPointerTracking() {}
 
   void run() {
-    NamedRegionTimer T1("SPT", "Stack Pointer Tracking", "Dataflow", "Dataflow",
-                        opts::TimeOpts && opts::NoThreads);
     StackPointerTrackingBase<StackPointerTracking>::run();
   }
 };

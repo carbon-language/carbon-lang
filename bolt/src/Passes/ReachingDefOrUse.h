@@ -36,9 +36,10 @@ class ReachingDefOrUse
 
 public:
   ReachingDefOrUse(const RegAnalysis &RA, const BinaryContext &BC,
-                   BinaryFunction &BF, Optional<MCPhysReg> TrackingReg = None)
-      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF), RA(RA),
-        TrackingReg(TrackingReg) {}
+                   BinaryFunction &BF, Optional<MCPhysReg> TrackingReg = None,
+                   MCPlusBuilder::AllocatorIdTy AllocId = 0)
+      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF, AllocId),
+        RA(RA), TrackingReg(TrackingReg) {}
   virtual ~ReachingDefOrUse() {}
 
   bool isReachedBy(MCPhysReg Reg, ExprIterator Candidates) {
@@ -60,8 +61,6 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("RD", "Reaching Defs", "Dataflow", "Dataflow",
-                        opts::TimeOpts);
     InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>::run();
   }
 

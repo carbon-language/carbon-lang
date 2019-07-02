@@ -1846,7 +1846,7 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     DEBUG(dbgs() << "last block was marked as a fall-through in " << *this
                  << '\n');
   }
-  
+
   // Assign landing pads and throwers info.
   recomputeLandingPads();
 
@@ -2571,7 +2571,7 @@ bool BinaryFunction::finalizeCFIState() {
   DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
   DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
                << ": ");
-               
+
   int32_t State = 0;
   bool SeenCold = false;
   auto Sep = "";
@@ -2645,7 +2645,7 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
                               bool EmitCodeOnly, bool LabelsForOffsets) {
   if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
-  
+
   // Track first emitted instruction with debug info.
   bool FirstInstr = true;
   for (auto BB : layout()) {
@@ -2725,7 +2725,7 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
         auto OriginalAddress =
             BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "SDTMarker").get();
         auto *SDTLabel = BC.SDTMarkers[OriginalAddress].Label;
-        
+
         //  A given symbol should only be emitted as a label once
         if (SDTLabel->isUndefined())
           Streamer.EmitLabel(SDTLabel);
@@ -3744,7 +3744,11 @@ bool BinaryFunction::replaceJumpTableEntryIn(BinaryBasicBlock *BB,
 BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
                                             BinaryBasicBlock *To) {
   // Create intermediate BB
-  MCSymbol *Tmp = BC.Ctx->createTempSymbol("SplitEdge", true);
+  MCSymbol *Tmp;
+  {
+    std::unique_lock<std::shared_timed_mutex> WrLock(BC.CtxMutex);
+    Tmp = BC.Ctx->createTempSymbol("SplitEdge", true);
+  }
   // Link new BBs to the original input offset of the From BB, so we can map
   // samples recorded in new BBs back to the original BB seem in the input
   // binary (if using BAT)
@@ -3871,13 +3875,13 @@ SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc,
   // Always emit is_stmt at the beginning of function fragment.
   if (FirstInstr)
     Flags |= DWARF2_FLAG_IS_STMT;
-    
+
   BC.Ctx->setCurrentDwarfLoc(
     CurrentFilenum,
-    CurrentRow.Line, 
+    CurrentRow.Line,
     CurrentRow.Column,
-    Flags, 
-    CurrentRow.Isa, 
+    Flags,
+    CurrentRow.Isa,
     CurrentRow.Discriminator);
   BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
 
