@@ -49,6 +49,8 @@ def : GINodeEquiv<G_FCONSTANT, fpimm>;
 def : GINodeEquiv<G_ADD, add>;
 def : GINodeEquiv<G_SUB, sub>;
 def : GINodeEquiv<G_MUL, mul>;
+def : GINodeEquiv<G_UMULH, mulhu>;
+def : GINodeEquiv<G_SMULH, mulhs>;
 def : GINodeEquiv<G_SDIV, sdiv>;
 def : GINodeEquiv<G_UDIV, udiv>;
 def : GINodeEquiv<G_SREM, srem>;
