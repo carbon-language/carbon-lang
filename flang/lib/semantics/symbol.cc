@@ -39,7 +39,7 @@ static void DumpBool(std::ostream &os, const char *label, bool x) {
   }
 }
 
-static void DumpSymbolList(std::ostream &os, const SymbolList &list) {
+static void DumpSymbolVector(std::ostream &os, const SymbolVector &list) {
   char sep{' '};
   for (const auto *elem : list) {
     os << sep << elem->name();
@@ -154,11 +154,8 @@ UseErrorDetails &UseErrorDetails::add_occurrence(
   return *this;
 }
 
-GenericDetails::GenericDetails(const SymbolList &specificProcs) {
-  for (const auto *proc : specificProcs) {
-    add_specificProc(*proc);
-  }
-}
+GenericDetails::GenericDetails(const SymbolVector &specificProcs)
+  : specificProcs_{specificProcs} {}
 
 void GenericDetails::set_specific(Symbol &specific) {
   CHECK(!specific_);
@@ -314,6 +311,12 @@ bool Symbol::IsSeparateModuleProc() const {
   return false;
 }
 
+bool Symbol::IsFromModFile() const {
+  return test(Flag::ModFile) ||
+      (owner_->kind() != Scope::Kind::Global &&
+          owner_->symbol()->IsFromModFile());
+}
+
 ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
   : EntityDetails(d) {}
 
@@ -412,7 +415,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [](const HostAssocDetails &) {},
           [&](const GenericDetails &x) {
             os << ' ' << EnumToString(x.kind());
-            DumpSymbolList(os, x.specificProcs());
+            DumpSymbolVector(os, x.specificProcs());
           },
           [&](const ProcBindingDetails &x) {
             os << " => " << x.symbol().name();
@@ -420,11 +423,11 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [&](const GenericBindingDetails &x) {
             os << " =>";
-            DumpSymbolList(os, x.specificProcs());
+            DumpSymbolVector(os, x.specificProcs());
           },
           [&](const NamelistDetails &x) {
             os << ':';
-            DumpSymbolList(os, x.objects());
+            DumpSymbolVector(os, x.objects());
           },
           [&](const CommonBlockDetails &x) {
             os << ':';
@@ -652,22 +655,20 @@ std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
   return result;
 }
 
-SymbolList DerivedTypeDetails::OrderParameterDeclarations(
+SymbolVector DerivedTypeDetails::OrderParameterDeclarations(
     const Symbol &type) const {
-  SymbolList result;
+  SymbolVector result;
   if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
     const DerivedTypeDetails &details{
         spec->typeSymbol().get<DerivedTypeDetails>()};
     result = details.OrderParameterDeclarations(spec->typeSymbol());
   }
-  for (const Symbol *symbol : paramDecls_) {
-    result.push_back(symbol);
-  }
+  result.insert(result.end(), paramDecls_.begin(), paramDecls_.end());
   return result;
 }
 
-SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
-  SymbolList result;
+SymbolVector DerivedTypeDetails::OrderComponents(const Scope &scope) const {
+  SymbolVector result;
   for (SourceName name : componentNames_) {
     auto iter{scope.find(name)};
     if (iter != scope.cend()) {

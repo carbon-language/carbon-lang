@@ -85,7 +85,7 @@ sed -e '/\.true\._.$/d' $src3 > $src4
 
 
 #Check warnings
-sed -n 's=^[^:]*:\([^:]*\):[^:]*: =\1: =p' $messages > $actual_warnings
+sed -n 's=^[^:]*:\([0-9]*\):[0-9]*: =\1: =p' $messages > $actual_warnings
 
 awk '
   BEGIN { FS = "!WARN: "; }

@@ -33,7 +33,7 @@ class Scope;
 class SemanticsContext;
 class Symbol;
 
-using SymbolList = std::list<const Symbol *>;
+using SymbolVector = std::vector<const Symbol *>;
 
 // A module or submodule.
 class ModuleDetails {
@@ -227,7 +227,7 @@ private:
 class DerivedTypeDetails {
 public:
   const std::list<SourceName> &paramNames() const { return paramNames_; }
-  const SymbolList &paramDecls() const { return paramDecls_; }
+  const SymbolVector &paramDecls() const { return paramDecls_; }
   bool sequence() const { return sequence_; }
   void add_paramName(const SourceName &name) { paramNames_.push_back(name); }
   void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(&symbol); }
@@ -241,13 +241,13 @@ public:
   // Returns the complete list of derived type parameter symbols in
   // the order in which their declarations appear in the derived type
   // definitions (parents first).
-  SymbolList OrderParameterDeclarations(const Symbol &) const;
+  SymbolVector OrderParameterDeclarations(const Symbol &) const;
 
   // Returns the complete list of derived type components in the order
   // in which their declarations appear in the derived type definitions
   // (parents first).  Parent components appear in the list immediately
   // after the components that belong to them.
-  SymbolList OrderComponents(const Scope &) const;
+  SymbolVector OrderComponents(const Scope &) const;
 
   // If this derived type extends another, locate the parent component's symbol.
   const Symbol *GetParentComponent(const Scope &) const;
@@ -266,7 +266,7 @@ private:
   // symbols that correspond to those names in the order in which their
   // declarations appear in the derived type definition(s).
   std::list<SourceName> paramNames_;
-  SymbolList paramDecls_;
+  SymbolVector paramDecls_;
   // These are the names of the derived type's components in component
   // order.  A parent component, if any, appears first in this list.
   std::list<SourceName> componentNames_;
@@ -295,27 +295,27 @@ public:
   GenericBindingDetails() {}
   GenericKind kind() const { return kind_; }
   void set_kind(GenericKind kind) { kind_ = kind; }
-  const SymbolList &specificProcs() const { return specificProcs_; }
+  const SymbolVector &specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
-  void add_specificProcs(const SymbolList &procs) {
+  void add_specificProcs(const SymbolVector &procs) {
     specificProcs_.insert(specificProcs_.end(), procs.begin(), procs.end());
   }
 
 private:
   GenericKind kind_{GenericKind::Name};
-  SymbolList specificProcs_;
+  SymbolVector specificProcs_;
 };
 
 class NamelistDetails {
 public:
-  const SymbolList &objects() const { return objects_; }
+  const SymbolVector &objects() const { return objects_; }
   void add_object(const Symbol &object) { objects_.push_back(&object); }
-  void add_objects(const SymbolList &objects) {
+  void add_objects(const SymbolVector &objects) {
     objects_.insert(objects_.end(), objects.begin(), objects.end());
   }
 
 private:
-  SymbolList objects_;
+  SymbolVector objects_;
 };
 
 class CommonBlockDetails {
@@ -404,13 +404,13 @@ private:
 class GenericDetails {
 public:
   GenericDetails() {}
-  GenericDetails(const SymbolList &specificProcs);
+  GenericDetails(const SymbolVector &specificProcs);
   GenericDetails(Symbol *specific) : specific_{specific} {}
 
   GenericKind kind() const { return kind_; }
   void set_kind(GenericKind kind) { kind_ = kind; }
 
-  const SymbolList specificProcs() const { return specificProcs_; }
+  const SymbolVector &specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
 
   Symbol *specific() { return specific_; }
@@ -430,7 +430,7 @@ public:
 private:
   GenericKind kind_{GenericKind::Name};
   // all of the specific procedures for this generic
-  SymbolList specificProcs_;
+  SymbolVector specificProcs_;
   // a specific procedure with the same name as this generic, if any
   Symbol *specific_{nullptr};
   // a derived type with the same name as this generic, if any
@@ -544,6 +544,7 @@ public:
   bool IsObjectArray() const;
   bool IsSubprogram() const;
   bool IsSeparateModuleProc() const;
+  bool IsFromModFile() const;
   bool HasExplicitInterface() const {
     return std::visit(
         common::visitors{

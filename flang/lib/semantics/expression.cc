@@ -1213,7 +1213,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   // The order is important below because a structure constructor can
   // initialize X or A by name, but not both.
   const auto &details{typeSymbol.get<semantics::DerivedTypeDetails>()};
-  std::list<const Symbol *> components{details.OrderComponents(*spec.scope())};
+  semantics::SymbolVector components{details.OrderComponents(*spec.scope())};
   auto nextAnonymous{components.begin()};
 
   std::set<parser::CharBlock> unavailable;

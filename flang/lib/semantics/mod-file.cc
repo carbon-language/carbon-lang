@@ -69,7 +69,7 @@ public:
 
   SubprogramSymbolCollector(const Symbol &symbol)
     : symbol_{symbol}, scope_{*symbol.scope()} {}
-  SymbolList symbols() const { return need_; }
+  SymbolVector symbols() const { return need_; }
   SymbolSet imports() const { return imports_; }
   void Collect();
 
@@ -77,7 +77,7 @@ private:
   const Symbol &symbol_;
   const Scope &scope_;
   bool isInterface_{false};
-  SymbolList need_;  // symbols that are needed
+  SymbolVector need_;  // symbols that are needed
   SymbolSet needSet_;  // symbols already in need_
   SymbolSet useSet_;  // use-associations that might be needed
   SymbolSet imports_;  // imports from host that are needed
@@ -87,7 +87,6 @@ private:
   void DoBound(const Bound &);
   void DoParamValue(const ParamValue &);
 
-  using SymbolVector = std::vector<const Symbol *>;
   struct SymbolVisitor : public virtual evaluate::VisitorBase<SymbolVector> {
     using Result = SymbolVector;
     explicit SymbolVisitor(int) {}

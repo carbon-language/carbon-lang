@@ -96,7 +96,11 @@ public:
   }
   explicit constexpr DynamicType(
       const semantics::DerivedTypeSpec &dt, bool poly = false)
-    : category_{TypeCategory::Derived}, derived_{&dt} {}
+    : category_{TypeCategory::Derived}, derived_{&dt} {
+    if (poly) {
+      kind_ = ClassKind;
+    }
+  }
 
   // A rare use case used for representing the characteristics of an
   // intrinsic function like REAL() that accepts a typeless BOZ literal
@@ -161,6 +165,8 @@ public:
   // dummy argument x would be valid.  Be advised, this is not a reflexive
   // relation.
   bool IsTypeCompatibleWith(const DynamicType &) const;
+  // Type compatible and kind type parameters match
+  bool IsTkCompatibleWith(const DynamicType &) const;
 
   // Result will be missing when a symbol is absent or
   // has an erroneous type, e.g., REAL(KIND=666).

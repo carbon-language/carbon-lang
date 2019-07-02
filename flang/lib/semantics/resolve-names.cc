@@ -29,6 +29,7 @@
 #include "../common/default-kinds.h"
 #include "../common/indirection.h"
 #include "../common/restorer.h"
+#include "../evaluate/characteristics.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/intrinsics.h"
@@ -454,9 +455,8 @@ public:
   Symbol *FindInTypeOrParents(const parser::Name &);
   void EraseSymbol(const parser::Name &);
   void EraseSymbol(const Symbol &symbol) { currScope().erase(symbol.name()); }
-  // Record that name resolved to symbol
   // Make a new symbol with the name and attrs of an existing one
-  Symbol &CopySymbol(const Symbol &);
+  Symbol &CopySymbol(const SourceName &, const Symbol &);
 
   // Make symbols in the current or named scope
   Symbol &MakeSymbol(Scope &, const SourceName &, Attrs);
@@ -587,6 +587,7 @@ protected:
   GenericDetails &GetGenericDetails();
   // Add to generic the symbol for the subprogram with the same name
   void CheckGenericProcedures(Symbol &);
+  void CheckSpecificsAreDistinguishable(const Symbol &, const SymbolVector &);
 
 private:
   // A new GenericInfo is pushed for each interface block and generic stmt
@@ -608,6 +609,7 @@ private:
 
   void AddSpecificProcs(const std::list<parser::Name> &, ProcedureKind);
   void ResolveSpecificsInGeneric(Symbol &generic);
+  void SayNotDistinguishable(const Symbol &, const Symbol &, const Symbol &);
 };
 
 class SubprogramVisitor : public virtual ScopeHandler, public InterfaceVisitor {
@@ -1050,14 +1052,14 @@ private:
   void HandleCall(Symbol::Flag, const parser::Call &);
   void HandleProcedureName(Symbol::Flag, const parser::Name &);
   bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
-  void ResolveExecutionParts(const ProgramTree &);
+  void ResolveSpecificationParts(ProgramTree &);
   void AddSubpNames(const ProgramTree &);
   bool BeginScope(const ProgramTree &);
-  void ResolveSpecificationParts(ProgramTree &);
   void FinishSpecificationParts(const ProgramTree &);
   void FinishDerivedType(Scope &);
   const Symbol *CheckPassArg(
       const Symbol &, const Symbol *, const SourceName *);
+  void ResolveExecutionParts(const ProgramTree &);
 };
 
 // ImplicitRules implementation
@@ -1576,7 +1578,7 @@ void ScopeHandler::PushScope(Scope &scope) {
       // Create a dummy symbol so we can't create another one with the same
       // name. It might already be there if we previously pushed the scope.
       if (!FindInScope(scope, symbol->name())) {
-        auto &newSymbol{CopySymbol(*symbol)};
+        auto &newSymbol{CopySymbol(symbol->name(), *symbol)};
         if (kind == Scope::Kind::Subprogram) {
           newSymbol.set_details(symbol->get<SubprogramDetails>());
         } else {
@@ -1632,9 +1634,9 @@ Symbol &ScopeHandler::MakeSymbol(const SourceName &name, Attrs attrs) {
 Symbol &ScopeHandler::MakeSymbol(const parser::Name &name, Attrs attrs) {
   return Resolve(name, MakeSymbol(name.source, attrs));
 }
-Symbol &ScopeHandler::CopySymbol(const Symbol &symbol) {
-  CHECK(!FindInScope(currScope(), symbol.name()));
-  return MakeSymbol(currScope(), symbol.name(), symbol.attrs());
+Symbol &ScopeHandler::CopySymbol(const SourceName &name, const Symbol &symbol) {
+  CHECK(!FindInScope(currScope(), name));
+  return MakeSymbol(currScope(), name, symbol.attrs());
 }
 
 // Look for name only in scope, not in enclosing scopes.
@@ -1840,7 +1842,7 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
         if (useNames.count(name) == 0) {
           auto *localSymbol{FindInScope(currScope(), name)};
           if (!localSymbol) {
-            localSymbol = &CopySymbol(*symbol);
+            localSymbol = &CopySymbol(name, *symbol);
           }
           AddUse(x.moduleName.source, *localSymbol, *symbol);
         }
@@ -2032,13 +2034,13 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       // copy the USEd symbol into this scope so we can modify it
       const Symbol &ultimate{symbol->GetUltimate()};
       EraseSymbol(*symbol);
-      symbol = &CopySymbol(ultimate);
+      symbol = &CopySymbol(symbolName, ultimate);
       if (const auto *details{ultimate.detailsIf<GenericDetails>()}) {
         symbol->set_details(GenericDetails{details->specificProcs()});
       } else if (const auto *details{ultimate.detailsIf<SubprogramDetails>()}) {
         symbol->set_details(SubprogramDetails{*details});
       } else {
-        common::die("unexpected kind of symbol");
+        DIE("unexpected kind of symbol");
       }
     }
   }
@@ -2182,8 +2184,8 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
   }
   auto &firstSpecific{*specifics.front()};
   bool isFunction{firstSpecific.test(Symbol::Flag::Function)};
-  for (auto *specific : specifics) {
-    if (isFunction != specific->test(Symbol::Flag::Function)) {
+  for (const auto *specific : specifics) {
+    if (isFunction != specific->test(Symbol::Flag::Function)) {  // C1514
       auto &msg{Say(generic.name(),
           "Generic interface '%s' has both a function and a subroutine"_err_en_US)};
       if (isFunction) {
@@ -2202,6 +2204,50 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
         *details.derivedType()->scope());
   }
   generic.set(isFunction ? Symbol::Flag::Function : Symbol::Flag::Subroutine);
+}
+
+void InterfaceVisitor::SayNotDistinguishable(
+    const Symbol &generic, const Symbol &proc1, const Symbol &proc2) {
+  auto &&text{IsDefinedOperator(generic.name())
+          ? "Generic operator '%s' may not have specific procedures '%s'"
+            " and '%s' as their interfaces are not distinguishable"_err_en_US
+          : "Generic '%s' may not have specific procedures '%s'"
+            " and '%s' as their interfaces are not distinguishable"_err_en_US};
+  auto &msg{context().Say(generic.name(), std::move(text), generic.name(),
+      proc1.name(), proc2.name())};
+  if (!proc1.IsFromModFile()) {
+    msg.Attach(proc1.name(), "Declaration of '%s'"_en_US, proc1.name());
+  }
+  if (!proc2.IsFromModFile()) {
+    msg.Attach(proc2.name(), "Declaration of '%s'"_en_US, proc2.name());
+  }
+}
+
+// Check that the specifics of this generic are distinguishable from each other
+void InterfaceVisitor::CheckSpecificsAreDistinguishable(
+    const Symbol &generic, const SymbolVector &specifics) {
+  auto count{specifics.size()};
+  if (specifics.size() < 2) {
+    return;
+  }
+  using evaluate::characteristics::Procedure;
+  std::vector<Procedure> procs;
+  for (const Symbol *symbol : specifics) {
+    auto proc{Procedure::Characterize(*symbol, context().intrinsics())};
+    if (!proc) {
+      return;
+    }
+    procs.emplace_back(*proc);
+  }
+  for (std::size_t i1{0}; i1 < count - 1; ++i1) {
+    auto &proc1{procs[i1]};
+    for (std::size_t i2{i1 + 1}; i2 < count; ++i2) {
+      auto &proc2{procs[i2]};
+      if (!evaluate::characteristics::Distinguishable(proc1, proc2)) {
+        SayNotDistinguishable(generic, *specifics[i1], *specifics[i2]);
+      }
+    }
+  }
 }
 
 // SubprogramVisitor implementation
@@ -3241,7 +3287,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
   const auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)};
   const auto &genericSpec{std::get<Indirection<parser::GenericSpec>>(x.t)};
   const auto &bindingNames{std::get<std::list<parser::Name>>(x.t)};
-  SymbolList specificProcs;
+  SymbolVector specificProcs;
   for (const auto &bindingName : bindingNames) {
     auto *symbol{FindInTypeOrParents(bindingName)};
     if (!symbol) {
@@ -4912,7 +4958,6 @@ bool ResolveNamesVisitor::Pre(const parser::ProgramUnit &x) {
   SetScope(context().globalScope());
   ResolveSpecificationParts(root);
   FinishSpecificationParts(root);
-  SetScope(context().globalScope());
   ResolveExecutionParts(root);
   return false;
 }
@@ -5006,6 +5051,12 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
     return;  // error occurred creating scope
   }
   SetScope(*node.scope());
+  for (const auto &pair : currScope()) {
+    const Symbol &symbol{*pair.second};
+    if (const auto *details{symbol.detailsIf<GenericDetails>()}) {
+      CheckSpecificsAreDistinguishable(symbol, details->specificProcs());
+    }
+  }
   for (Scope &childScope : currScope().children()) {
     if (childScope.kind() == Scope::Kind::DerivedType && childScope.symbol()) {
       FinishDerivedType(childScope);
@@ -5039,6 +5090,9 @@ void ResolveNamesVisitor::FinishDerivedType(Scope &scope) {
             },
             [&](ProcBindingDetails &x) {
               x.set_passArg(CheckPassArg(comp, &x.symbol(), x.passName()));
+            },
+            [&](GenericBindingDetails &x) {
+              CheckSpecificsAreDistinguishable(comp, x.specificProcs());
             },
             [](auto &x) {},
         },
