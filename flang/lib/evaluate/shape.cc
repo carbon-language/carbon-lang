@@ -16,6 +16,7 @@
 #include "fold.h"
 #include "tools.h"
 #include "traversal.h"
+#include "type.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
 #include "../parser/message.h"
@@ -194,7 +195,7 @@ MaybeExtentExpr GetLowerBound(
       if (j++ == dimension) {
         if (const auto &bound{shapeSpec.lbound().GetExplicit()}) {
           return Fold(context, common::Clone(*bound));
-        } else {
+        } else if (semantics::IsDescriptor(symbol)) {
           return ExtentExpr{DescriptorInquiry{
               base, DescriptorInquiry::Field::LowerBound, dimension}};
         }
@@ -212,7 +213,7 @@ Shape GetLowerBounds(FoldingContext &context, const NamedEntity &base) {
     for (const auto &shapeSpec : details->shape()) {
       if (const auto &bound{shapeSpec.lbound().GetExplicit()}) {
         result.emplace_back(Fold(context, common::Clone(*bound)));
-      } else {
+      } else if (semantics::IsDescriptor(symbol)) {
         result.emplace_back(ExtentExpr{DescriptorInquiry{
             base, DescriptorInquiry::Field::LowerBound, dim}});
       }
@@ -246,7 +247,7 @@ MaybeExtentExpr GetExtent(
           }
         } else if (details->IsAssumedSize() && j == symbol.Rank()) {
           return std::nullopt;
-        } else {
+        } else if (semantics::IsDescriptor(symbol)) {
           return ExtentExpr{DescriptorInquiry{
               NamedEntity{base}, DescriptorInquiry::Field::Extent, dimension}};
         }
