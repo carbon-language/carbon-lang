@@ -434,7 +434,7 @@ public:
   void SayAlreadyDeclared(const SourceName &, Symbol &);
   void SayAlreadyDeclared(const parser::Name &, Symbol &);
   void SayWithDecl(const parser::Name &, Symbol &, MessageFixedText &&);
-  void SayBadLocality(const parser::Name &, Symbol &);
+  void SayLocalMustBeVariable(const parser::Name &, Symbol &);
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
   void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
       MessageFixedText &&);
@@ -830,6 +830,7 @@ private:
   void CheckInitialDataTarget(const Symbol &, const SomeExpr &, SourceName);
   void Initialization(const parser::Name &, const parser::Initialization &,
       bool inComponentDecl);
+  bool PassesLocalityChecks(const parser::Name &name, Symbol &symbol);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -1520,8 +1521,11 @@ void ScopeHandler::SayWithDecl(
   context().SetError(symbol, msg.isFatal());
 }
 
-void ScopeHandler::SayBadLocality(const parser::Name &name, Symbol &symbol) {
-  SayWithDecl(name, symbol, "Locality attribute not allowed on '%s'"_err_en_US);
+void ScopeHandler::SayLocalMustBeVariable(
+    const parser::Name &name, Symbol &symbol) {
+  SayWithDecl(name, symbol,
+      "The name '%s' must be a variable to appear"
+      " in a locality-spec"_err_en_US);
 }
 
 void ScopeHandler::SayDerivedType(
@@ -3718,8 +3722,62 @@ bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
   }
 }
 
+bool DeclarationVisitor::PassesLocalityChecks(
+    const parser::Name &name, Symbol &symbol) {
+  if (!IsVariableName(symbol)) {
+    SayLocalMustBeVariable(name, symbol);  // C1124
+    return false;
+  }
+  if (IsAllocatable(symbol)) {  // C1128
+    SayWithDecl(name, symbol,
+        "ALLOCATABLE variable '%s' not allowed in a locality-spec"_err_en_US);
+    return false;
+  }
+  if (IsOptional(symbol)) {  // C1128
+    SayWithDecl(name, symbol,
+        "OPTIONAL argument '%s' not allowed in a locality-spec"_err_en_US);
+    return false;
+  }
+  if (IsIntentIn(symbol)) {  // C1128
+    SayWithDecl(name, symbol,
+        "INTENT IN argument '%s' not allowed in a locality-spec"_err_en_US);
+    return false;
+  }
+  if (IsFinalizable(symbol)) {  // C1128
+    SayWithDecl(name, symbol,
+        "Finalizable variable '%s' not allowed in a locality-spec"_err_en_US);
+    return false;
+  }
+  if (IsCoarray(symbol)) {  // C1128
+    SayWithDecl(
+        name, symbol, "Coarray '%s' not allowed in a locality-spec"_err_en_US);
+    return false;
+  }
+  const DeclTypeSpec *type{symbol.GetType()};
+  if (type) {
+    if (type->IsPolymorphic() && symbol.IsDummy() &&
+        (!IsPointer(symbol))) {  // C1128
+      SayWithDecl(name, symbol,
+          "Nonpointer polymorphic argument '%s' not allowed in a "
+          "locality-spec"_err_en_US);
+      return false;
+    }
+  }
+  if (IsAssumedSizeArray(symbol)) {  // C1128
+    SayWithDecl(name, symbol,
+        "Assumed size array '%s' not allowed in a locality-spec"_err_en_US);
+    return false;
+  }
+  if (symbol.owner() == currScope()) {  // C1125 and C1126
+    SayAlreadyDeclared(name, symbol);
+    return false;
+  }
+  // TODO: Check to see if the name can appear in a variable definition context
+  return true;
+}
+
 Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
-  auto *prev{FindSymbol(name)};
+  Symbol *prev{FindSymbol(name)};
   bool implicit{false};
   if (prev == nullptr) {
     // Declare the name as an object in the enclosing scope so that
@@ -3729,12 +3787,7 @@ Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
     ApplyImplicitRules(*prev);
     implicit = true;
   }
-  if (!ConvertToObjectEntity(*prev) || prev->attrs().test(Attr::PARAMETER)) {
-    SayBadLocality(name, *prev);  // C1124
-    return nullptr;
-  }
-  if (prev->owner() == currScope()) {  // C1125 and C1126
-    SayAlreadyDeclared(name, *prev);
+  if (!PassesLocalityChecks(name, *prev)) {
     return nullptr;
   }
   name.symbol = nullptr;
@@ -4018,21 +4071,20 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
 }
 
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
-  for (auto &name : x.v) {
-    if (auto *prev{FindSymbol(name)}) {
-      if (prev->owner() == currScope()) {
-        SayAlreadyDeclared(name, *prev);  // C1125 & C1126
-      } else if (!IsVariableName(*prev)) {
-        SayBadLocality(name, *prev);  // C1124
-      } else {
-        auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
-        symbol.set(Symbol::Flag::LocalityShared);
-        name.symbol = &symbol;  // override resolution to parent
-      }
-    } else {
+  for (const auto &name : x.v) {
+    Symbol *prev{FindSymbol(name)};
+    if (!prev) {
       Say(name, "Variable '%s' not found"_err_en_US);
       context().SetError(
           MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
+    } else if (prev->owner() == currScope()) {
+      SayAlreadyDeclared(name, *prev);  // C1125 and C1126
+    } else if (!IsVariableName(*prev)) {
+      SayLocalMustBeVariable(name, *prev);  // C1124
+    } else {
+      auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
+      symbol.set(Symbol::Flag::LocalityShared);
+      name.symbol = &symbol;  // override resolution to parent
     }
   }
   return false;

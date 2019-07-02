@@ -91,6 +91,7 @@ set(ERROR_TESTS
   resolve52.f90
   resolve53.f90
   resolve54.f90
+  resolve55.f90
   stop01.f90
   structconst01.f90
   structconst02.f90

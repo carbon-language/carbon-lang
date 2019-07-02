@@ -93,6 +93,15 @@ inline bool IsAllocatableOrPointer(const Symbol &symbol) {
 inline bool IsParameter(const Symbol &symbol) {
   return symbol.attrs().test(Attr::PARAMETER);
 }
+inline bool IsOptional(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::OPTIONAL);
+}
+inline bool IsIntentIn(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::INTENT_IN);
+}
+bool IsFinalizable(const Symbol &symbol);
+bool IsCoarray(const Symbol &symbol);
+bool IsAssumedSizeArray(const Symbol &symbol);
 
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for

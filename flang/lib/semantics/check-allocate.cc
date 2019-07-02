@@ -532,13 +532,6 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
   return RunCoarrayRelatedChecks(context);
 }
 
-static bool IsCoarray(const Symbol &symbol) {
-  if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
-    return objectDetails->IsCoarray();
-  }
-  return false;
-}
-
 bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
     SemanticsContext &context) const {
   if (symbol_ == nullptr) {

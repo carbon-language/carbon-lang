@@ -319,8 +319,6 @@ bool IsTeamType(const DerivedTypeSpec *derived) {
   return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
 }
 
-bool IsCoarray(const Symbol &symbol) { return symbol.Corank() > 0; }
-
 const Symbol *HasCoarrayUltimateComponent(
     const DerivedTypeSpec &derivedTypeSpec) {
   return FindUltimateComponent(derivedTypeSpec, IsCoarray);
@@ -385,6 +383,35 @@ const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
     }
   }
   return nullptr;
+}
+
+bool IsFinalizable(const Symbol &symbol) {
+  const DeclTypeSpec *type{symbol.GetType()};
+  if (type) {
+    const DerivedTypeSpec *derived{type->AsDerived()};
+    if (derived) {
+      const Scope *scope{derived->scope()};
+      if (scope) {
+        for (auto &pair : *scope) {
+          Symbol &symbol{*pair.second};
+          if (symbol.has<FinalProcDetails>()) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool IsCoarray(const Symbol &symbol) {
+  const auto *details{symbol.detailsIf<ObjectEntityDetails>()};
+  return details && details->IsCoarray();
+}
+
+bool IsAssumedSizeArray(const Symbol &symbol) {
+  const auto *details{symbol.detailsIf<ObjectEntityDetails>()};
+  return details && details->IsAssumedSize();
 }
 
 }
