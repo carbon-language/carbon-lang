@@ -231,6 +231,7 @@ void ARMTargetLowering::setAllExpand(MVT VT) {
   setOperationAction(ISD::BITCAST, VT, Legal);
   setOperationAction(ISD::LOAD, VT, Legal);
   setOperationAction(ISD::STORE, VT, Legal);
+  setOperationAction(ISD::UNDEF, VT, Legal);
 }
 
 void ARMTargetLowering::addAllExtLoads(const MVT From, const MVT To,
@@ -266,8 +267,10 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     // These are legal or custom whether we have MVE.fp or not
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT, VT.getVectorElementType(), Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
     setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, VT.getVectorElementType(), Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Legal);
 
     if (HasMVEFP) {
@@ -293,6 +296,9 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
   for (auto VT : LongTypes) {
     addRegisterClass(VT, &ARM::QPRRegClass);
     setAllExpand(VT);
+    setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
   }
 
   // It is legal to extload from v4i8 to v4i16 or v4i32.
@@ -6747,7 +6753,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   // Vectors with 32- or 64-bit elements can be built by directly assigning
   // the subregisters.  Lower it to an ARMISD::BUILD_VECTOR so the operands
   // will be legalized.
-  if (ST->hasNEON() && EltSize >= 32) {
+  if (EltSize >= 32) {
     // Do the expansion with floating-point types, since that is what the VFP
     // registers are defined to use, and since i64 is not legal.
     EVT EltVT = EVT::getFloatingPointVT(EltSize);
@@ -7344,11 +7350,39 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
+SDValue ARMTargetLowering::
+LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
   // INSERT_VECTOR_ELT is legal only for immediate indexes.
   SDValue Lane = Op.getOperand(2);
   if (!isa<ConstantSDNode>(Lane))
     return SDValue();
+
+  SDValue Elt = Op.getOperand(1);
+  EVT EltVT = Elt.getValueType();
+  if (getTypeAction(*DAG.getContext(), EltVT) ==
+      TargetLowering::TypePromoteFloat) {
+    // INSERT_VECTOR_ELT doesn't want f16 operands promoting to f32,
+    // but the type system will try to do that if we don't intervene.
+    // Reinterpret any such vector-element insertion as one with the
+    // corresponding integer types.
+
+    SDLoc dl(Op);
+
+    EVT IEltVT = MVT::getIntegerVT(EltVT.getScalarSizeInBits());
+    assert(getTypeAction(*DAG.getContext(), IEltVT) !=
+           TargetLowering::TypePromoteFloat);
+
+    SDValue VecIn = Op.getOperand(0);
+    EVT VecVT = VecIn.getValueType();
+    EVT IVecVT = EVT::getVectorVT(*DAG.getContext(), IEltVT,
+                                  VecVT.getVectorNumElements());
+
+    SDValue IElt = DAG.getNode(ISD::BITCAST, dl, IEltVT, Elt);
+    SDValue IVecIn = DAG.getNode(ISD::BITCAST, dl, IVecVT, VecIn);
+    SDValue IVecOut = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, IVecVT,
+                                  IVecIn, IElt, Lane);
+    return DAG.getNode(ISD::BITCAST, dl, VecVT, IVecOut);
+  }
 
   return Op;
 }
