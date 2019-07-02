@@ -4312,6 +4312,10 @@ let Predicates = [HasAVX512, OptForSpeed] in {
 }
 
 let Predicates = [HasAVX512] in {
+  def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
+            (VMOVSSZrm addr:$src)>;
+  def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
+            (VMOVSDZrm addr:$src)>;
 
   // Represent the same patterns above but in the form they appear for
   // 256-bit types
