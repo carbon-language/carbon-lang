@@ -141,7 +141,7 @@ public:
     AU.addRequired<AMDGPUArgumentUsageInfo>();
     AU.addRequired<AMDGPUPerfHintAnalysis>();
     AU.addRequired<LegacyDivergenceAnalysis>();
-#ifndef EXPENSIVE_CHECKS
+#ifdef EXPENSIVE_CHECKS
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
 #endif
