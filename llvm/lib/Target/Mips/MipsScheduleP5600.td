@@ -59,15 +59,21 @@ def P5600WriteJumpAndLink : SchedWriteRes<[P5600IssueCTISTD, P5600CTISTD]> {
   let Latency = 2;
 }
 
+def P5600Nop : SchedWriteRes<[P5600IssueCTISTD]> {
+  let Latency = 0;
+}
+
+def : InstRW<[P5600Nop], (instrs SSNOP, NOP)>;
+
 // b, beq, beql, bg[et]z, bl[et]z, bne, bnel, j, syscall, jal, bltzal,
 // jalr, jr.hb, jr
 def : InstRW<[P5600WriteJump], (instrs B, BAL, BAL_BR, BEQ, BEQL, BGEZ, BGEZAL,
                                 BGEZALL, BGEZL, BGTZ, BGTZL, BLEZ, BLEZL, BLTZ,
                                 BLTZAL, BLTZALL, BLTZL, BNE, BNEL, BREAK,
-                                DERET, ERET, ERETNC, J, JR, JR_HB,
+                                DERET, ERET, ERet, ERETNC, J, JR, JR_HB,
                                 PseudoIndirectBranch,
                                 PseudoIndirectHazardBranch, PseudoReturn,
-                                SDBBP, SSNOP, SYSCALL, TAILCALL, TAILCALLREG,
+                                SDBBP, SYSCALL, RetRA, TAILCALL, TAILCALLREG,
                                 TAILCALLREGHB, TEQ, TEQI, TGE, TGEI, TGEIU,
                                 TGEU, TLT, TLTI, TLTU, TNE, TNEI, TRAP,
                                 TTLTIU, WAIT, PAUSE)>;
