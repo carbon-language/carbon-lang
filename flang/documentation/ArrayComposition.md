@@ -24,6 +24,7 @@ us here include:
 * `CSHIFT` and `EOSHIFT` with array-valued `SHIFT=`
 * `PACK` and `UNPACK`
 * `MATMUL`
+* `SPREAD`
 
 Other Fortran intrinsic functions are technically transformational (e.g.,
 `COMMAND_ARGUMENT_COUNT`) but not of interest for this note.
@@ -114,11 +115,13 @@ More completely:
 * `RESHAPE` with `ORDER=` is similar, but must permute the
   components of the index tuple; it generalizes `TRANSPOSE`.
 * `CSHIFT` applies addition and modulus.
-* `EOSHIFT` applies addition and a conditional move (`SELECT`).
+* `EOSHIFT` applies addition and a conditional move (`MERGE`).
 * `PACK` and `UNPACK` are likely to require a runtime call.
 * `MATMUL(A,B)` can become `DOT_PRODUCT(A(J,:),B(:,K))`, but
   might benefit from calling a highly optimized runtime
   routine.
+* `SPREAD(A,DIM=d,NCOPIES=n)` for compile-time `d` simply
+  applies `A` to a reduced index tuple.
 
 Determination of rank and shape
 ===============================
@@ -143,7 +146,10 @@ transformational intrinsic function calls as well.
 * `SHAPE(PACK(A,MASK=m))` with non-scalar `m` and without `VECTOR=` is `[COUNT(m)]`.
 * `RANK(PACK(...))` is always 1.
 * `SHAPE(UNPACK(MASK=M))` is `SHAPE(M)`.
+* `SHAPE(MATMUL(A,B))` drops one value from `SHAPE(A)` and another from `SHAPE(B)`.
 * `SHAPE(SHAPE(X))` is `[RANK(X)]`.
+* `SHAPE(SPREAD(A,DIM=d,NCOPIES=n))` is `SHAPE(A)` with `n` inserted at
+  dimension `d`.
 
 This is useful because expression evaluations that *do* require temporaries
 to hold their results (due to the context in which the evaluation occurs)
