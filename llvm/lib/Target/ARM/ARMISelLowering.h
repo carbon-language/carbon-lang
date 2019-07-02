@@ -794,6 +794,8 @@ class VectorType;
 
     bool shouldConsiderGEPOffsetSplit() const override { return true; }
 
+    bool isUnsupportedFloatingType(EVT VT) const;
+
     SDValue getCMOV(const SDLoc &dl, EVT VT, SDValue FalseVal, SDValue TrueVal,
                     SDValue ARMcc, SDValue CCR, SDValue Cmp,
                     SelectionDAG &DAG) const;
