@@ -14,7 +14,7 @@ append_list_if(COMPILER_RT_HAS_LIBPTHREAD pthread SCUDO_MINIMAL_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBLOG log SCUDO_MINIMAL_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG -fno-omit-frame-pointer
                SCUDO_CFLAGS)
-if (COMPILER_RT_TEST_COMPILER_ID STREQUAL "Clang")
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG
                  -mno-omit-leaf-frame-pointer SCUDO_CFLAGS)
 endif()
