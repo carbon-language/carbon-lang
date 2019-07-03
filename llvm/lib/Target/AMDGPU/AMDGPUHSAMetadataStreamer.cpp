@@ -104,11 +104,6 @@ ValueKind MetadataStreamerV2::getValueKind(Type *Ty, StringRef TypeQual,
   if (TypeQual.find("pipe") != StringRef::npos)
     return ValueKind::Pipe;
 
-  if (isa<PointerType>(Ty) && Ty->getPointerElementType()->isStructTy() &&
-      Ty->getPointerElementType()->getStructName() == "struct.__hip_texture") {
-    return ValueKind::Image;
-  }
-
   return StringSwitch<ValueKind>(BaseTypeName)
              .Case("image1d_t", ValueKind::Image)
              .Case("image1d_array_t", ValueKind::Image)
@@ -545,11 +540,6 @@ StringRef MetadataStreamerV3::getValueKind(Type *Ty, StringRef TypeQual,
                                            StringRef BaseTypeName) const {
   if (TypeQual.find("pipe") != StringRef::npos)
     return "pipe";
-
-  if (isa<PointerType>(Ty) && Ty->getPointerElementType()->isStructTy() &&
-      Ty->getPointerElementType()->getStructName() == "struct.__hip_texture") {
-    return "image";
-  }
 
   return StringSwitch<StringRef>(BaseTypeName)
       .Case("image1d_t", "image")

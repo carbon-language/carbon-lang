@@ -13,7 +13,6 @@
 %opencl.pipe_t = type opaque
 %struct.B = type { i32 addrspace(1)*}
 %opencl.clk_event_t = type opaque
-%struct.__hip_texture = type opaque
 
 @__test_block_invoke_kernel_runtime_handle = external addrspace(1) externally_initialized constant i8 addrspace(1)*
 
@@ -1494,18 +1493,6 @@ define amdgpu_kernel void @test_enqueue_kernel_caller(i8 %a) #2
 ; CHECK:          .name:           unknown_addrspace_kernarg
 ; CHECK:          .symbol:         unknown_addrspace_kernarg.kd
 define amdgpu_kernel void @unknown_addrspace_kernarg(i32 addrspace(12345)* %ptr) #0 {
-  ret void
-}
-
-; CHECK:  - .args:           
-; CHECK-NEXT:      - .address_space:  generic
-; CHECK-NEXT:        .offset:         0
-; CHECK-NEXT:        .size:           8
-; CHECK-NEXT:        .value_kind:     image
-; CHECK-NEXT:        .value_type:     struct
-; CHECK:    .name:           _Z5EmptyP13__hip_texture
-; CHECK:    .symbol:         _Z5EmptyP13__hip_texture.kd
-define protected amdgpu_kernel void @_Z5EmptyP13__hip_texture(%struct.__hip_texture* nocapture) local_unnamed_addr #1 {
   ret void
 }
 
