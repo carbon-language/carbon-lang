@@ -6746,7 +6746,6 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
 
   case Intrinsic::icall_branch_funnel: {
     SmallVector<SDValue, 16> Ops;
-    Ops.push_back(DAG.getRoot());
     Ops.push_back(getValue(I.getArgOperand(0)));
 
     int64_t Offset;
@@ -6789,6 +6788,7 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
       Ops.push_back(T.Target);
     }
 
+    Ops.push_back(DAG.getRoot()); // Chain
     SDValue N(DAG.getMachineNode(TargetOpcode::ICALL_BRANCH_FUNNEL,
                                  getCurSDLoc(), MVT::Other, Ops),
               0);
