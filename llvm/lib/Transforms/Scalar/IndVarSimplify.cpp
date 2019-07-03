@@ -2511,7 +2511,10 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
         }
       }
 
-      if (!Extended)
+      if (Extended) {
+        bool Discard;
+        L->makeLoopInvariant(ExitCnt, Discard);
+      } else 
         CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
                                         "lftr.wideiv");
     }

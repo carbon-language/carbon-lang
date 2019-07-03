@@ -135,6 +135,7 @@ define void @guardedloop([0 x double]* %matrix, [0 x double]* %vector,
 ; CHECK-NEXT:    br i1 [[CMP]], label [[LOOP_PREHEADER:%.*]], label [[RETURN:%.*]]
 ; CHECK:       loop.preheader:
 ; CHECK-NEXT:    [[TMP0:%.*]] = sext i32 [[ILEAD:%.*]] to i64
+; CHECK-NEXT:    [[WIDE_TRIP_COUNT:%.*]] = zext i32 [[IROW]] to i64
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[INDVARS_IV2:%.*]] = phi i64 [ 0, [[LOOP_PREHEADER]] ], [ [[INDVARS_IV_NEXT3:%.*]], [[LOOP]] ]
@@ -148,7 +149,6 @@ define void @guardedloop([0 x double]* %matrix, [0 x double]* %vector,
 ; CHECK-NEXT:    call void @use(double [[V2]])
 ; CHECK-NEXT:    [[INDVARS_IV_NEXT]] = add nsw i64 [[INDVARS_IV]], [[TMP0]]
 ; CHECK-NEXT:    [[INDVARS_IV_NEXT3]] = add nuw nsw i64 [[INDVARS_IV2]], 1
-; CHECK-NEXT:    [[WIDE_TRIP_COUNT:%.*]] = zext i32 [[IROW]] to i64
 ; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i64 [[INDVARS_IV_NEXT3]], [[WIDE_TRIP_COUNT]]
 ; CHECK-NEXT:    br i1 [[EXITCOND]], label [[LOOP]], label [[RETURN_LOOPEXIT:%.*]]
 ; CHECK:       return.loopexit:
