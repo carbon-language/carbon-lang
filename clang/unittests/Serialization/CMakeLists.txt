@@ -8,7 +8,7 @@ add_clang_unittest(SerializationTests
   InMemoryModuleCacheTest.cpp
   )
 
-target_link_libraries(SerializationTests
+clang_target_link_libraries(SerializationTests
   PRIVATE
   clangAST
   clangBasic
