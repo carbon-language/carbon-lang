@@ -32738,29 +32738,34 @@ static SDValue combineX86ShufflesRecursively(
     return Cst;
 
   // We can only combine unary and binary shuffle mask cases.
-  if (Ops.size() > 2)
-    return SDValue();
+  if (Ops.size() <= 2) {
+    // Minor canonicalization of the accumulated shuffle mask to make it easier
+    // to match below. All this does is detect masks with sequential pairs of
+    // elements, and shrink them to the half-width mask. It does this in a loop
+    // so it will reduce the size of the mask to the minimal width mask which
+    // performs an equivalent shuffle.
+    SmallVector<int, 64> WidenedMask;
+    while (Mask.size() > 1 && canWidenShuffleElements(Mask, WidenedMask)) {
+      Mask = std::move(WidenedMask);
+    }
 
-  // Minor canonicalization of the accumulated shuffle mask to make it easier
-  // to match below. All this does is detect masks with sequential pairs of
-  // elements, and shrink them to the half-width mask. It does this in a loop
-  // so it will reduce the size of the mask to the minimal width mask which
-  // performs an equivalent shuffle.
-  SmallVector<int, 64> WidenedMask;
-  while (Mask.size() > 1 && canWidenShuffleElements(Mask, WidenedMask)) {
-    Mask = std::move(WidenedMask);
+    // Canonicalization of binary shuffle masks to improve pattern matching by
+    // commuting the inputs.
+    if (Ops.size() == 2 && canonicalizeShuffleMaskWithCommute(Mask)) {
+      ShuffleVectorSDNode::commuteMask(Mask);
+      std::swap(Ops[0], Ops[1]);
+    }
+
+    // Finally, try to combine into a single shuffle instruction.
+    return combineX86ShuffleChain(Ops, Root, Mask, Depth, HasVariableMask,
+                                  AllowVariableMask, DAG, Subtarget);
   }
 
-  // Canonicalization of binary shuffle masks to improve pattern matching by
-  // commuting the inputs.
-  if (Ops.size() == 2 && canonicalizeShuffleMaskWithCommute(Mask)) {
-    ShuffleVectorSDNode::commuteMask(Mask);
-    std::swap(Ops[0], Ops[1]);
-  }
-
-  // Finally, try to combine into a single shuffle instruction.
-  return combineX86ShuffleChain(Ops, Root, Mask, Depth, HasVariableMask,
-                                AllowVariableMask, DAG, Subtarget);
+  // If that failed and any input is extracted then try to combine as a
+  // shuffle with the larger type.
+  return combineX86ShuffleChainWithExtract(Ops, Root, Mask, Depth,
+                                           HasVariableMask, AllowVariableMask,
+                                           DAG, Subtarget);
 }
 
 /// Helper entry wrapper to combineX86ShufflesRecursively.
