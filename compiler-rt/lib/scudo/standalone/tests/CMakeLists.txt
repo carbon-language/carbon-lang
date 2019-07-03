@@ -23,6 +23,8 @@ foreach(lib ${SANITIZER_TEST_CXX_LIBRARIES})
   list(APPEND LINK_FLAGS -l${lib})
 endforeach()
 list(APPEND LINK_FLAGS -pthread)
+# Linking against libatomic is required with some compilers
+list(APPEND LINK_FLAGS -latomic)
 
 set(SCUDO_TEST_HEADERS)
 foreach (header ${SCUDO_HEADERS})
