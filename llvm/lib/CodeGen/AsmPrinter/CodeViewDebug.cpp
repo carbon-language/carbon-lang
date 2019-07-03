@@ -51,6 +51,7 @@
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeTableCollection.h"
+#include "llvm/DebugInfo/CodeView/TypeVisitorCallbackPipeline.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfoMetadata.h"
@@ -93,6 +94,24 @@
 
 using namespace llvm;
 using namespace llvm::codeview;
+
+namespace {
+class CVMCAdapter : public CodeViewRecordStreamer {
+public:
+  CVMCAdapter(MCStreamer &OS) : OS(&OS) {}
+
+  void EmitBytes(StringRef Data) { OS->EmitBytes(Data); }
+
+  void EmitIntValue(uint64_t Value, unsigned Size) {
+    OS->EmitIntValue(Value, Size);
+  }
+
+  void EmitBinaryData(StringRef Data) { OS->EmitBinaryData(Data); }
+
+private:
+  MCStreamer *OS = nullptr;
+};
+} // namespace
 
 static CPUType mapArchToCVCPUType(Triple::ArchType Type) {
   switch (Type) {
@@ -617,26 +636,40 @@ void CodeViewDebug::emitTypeInformation() {
     // This will fail if the record data is invalid.
     CVType Record = Table.getType(*B);
 
+    TypeVisitorCallbackPipeline Pipeline;
+    CVMCAdapter CVMCOS(OS);
+    TypeRecordMapping typeMapping(CVMCOS);
+    SmallString<512> CommentBlock;
+    raw_svector_ostream CommentOS(CommentBlock);
+
     if (OS.isVerboseAsm()) {
       // Emit a block comment describing the type record for readability.
-      SmallString<512> CommentBlock;
-      raw_svector_ostream CommentOS(CommentBlock);
       ScopedPrinter SP(CommentOS);
       SP.setPrefix(CommentPrefix);
       TypeDumpVisitor TDV(Table, &SP, false);
+      Pipeline.addCallbackToPipeline(TDV);
+    }
+    Pipeline.addCallbackToPipeline(typeMapping);
 
-      Error E = codeview::visitTypeRecord(Record, *B, TDV);
-      if (E) {
-        logAllUnhandledErrors(std::move(E), errs(), "error: ");
-        llvm_unreachable("produced malformed type record");
-      }
+    auto RecordLen = Record.length();
+    auto RecordKind = Record.kind();
+    OS.EmitIntValue(RecordLen - 2, 2);
+    OS.EmitIntValue(RecordKind, sizeof(RecordKind));
+
+    Error E = codeview::visitTypeRecord(Record, *B, Pipeline);
+
+    if (E) {
+      logAllUnhandledErrors(std::move(E), errs(), "error: ");
+      llvm_unreachable("produced malformed type record");
+    }
+
+    if (OS.isVerboseAsm()) {
       // emitRawComment will insert its own tab and comment string before
       // the first line, so strip off our first one. It also prints its own
       // newline.
       OS.emitRawComment(
           CommentOS.str().drop_front(CommentPrefix.size() - 1).rtrim());
     }
-    OS.EmitBinaryData(Record.str_data());
     B = Table.getNext(*B);
   }
 }
