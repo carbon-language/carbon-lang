@@ -270,6 +270,11 @@ bool Message::AtSameLocation(const Message &that) const {
       location_, that.location_);
 }
 
+void Messages::clear() {
+  messages_.clear();
+  ResetLastPointer();
+}
+
 bool Messages::Merge(const Message &msg) {
   if (msg.IsMergeable()) {
     for (auto &m : messages_) {

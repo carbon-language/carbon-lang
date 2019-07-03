@@ -1006,7 +1006,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       if (sameArg == nullptr) {
         sameArg = arg;
       }
-      argOk = type.value() == sameArg->GetType();
+      argOk = type->IsTkCompatibleWith(sameArg->GetType().value());
       break;
     case KindCode::effectiveKind:
       common::die("INTERNAL: KindCode::effectiveKind appears on argument '%s' "
@@ -1523,7 +1523,6 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   parser::Messages genericBuffer;
   auto genericRange{genericFuncs_.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
-    CHECK(localBuffer.empty());
     if (auto specificCall{
             iter->second->Match(call, defaults_, arguments, localContext)}) {
       ApplySpecificChecks(*specificCall, localMessages);
@@ -1531,8 +1530,10 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
         finalBuffer->Annex(std::move(localBuffer));
       }
       return specificCall;
-    } else {
+    } else if (genericBuffer.empty()) {
       genericBuffer.Annex(std::move(localBuffer));
+    } else {
+      localBuffer.clear();
     }
   }
   // Probe the specific intrinsic function table next.
@@ -1546,7 +1547,6 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       auto genericRange{genericFuncs_.equal_range(genericName)};
       for (auto genIter{genericRange.first}; genIter != genericRange.second;
            ++genIter) {
-        CHECK(localBuffer.empty());
         if (auto specificCall{genIter->second->Match(
                 call, defaults_, arguments, localContext)}) {
           specificCall->specificIntrinsic.name = genericName;
@@ -1573,8 +1573,10 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
           // TODO test feature AdditionalIntrinsics, warn on nonstandard
           // specifics with DoublePrecisionComplex arguments.
           return specificCall;
-        } else {
+        } else if (specificBuffer.empty()) {
           specificBuffer.Annex(std::move(localBuffer));
+        } else {
+          specificBuffer.clear();
         }
       }
     }

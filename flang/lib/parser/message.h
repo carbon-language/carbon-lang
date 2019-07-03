@@ -237,6 +237,7 @@ public:
   }
 
   bool empty() const { return messages_.empty(); }
+  void clear();
 
   template<typename... A> Message &Say(A &&... args) {
     last_ = messages_.emplace_after(last_, std::forward<A>(args)...);
