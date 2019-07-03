@@ -215,6 +215,10 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
     source.ExtendToCover(arg.source);
   }
   // extend source to include closing paren
+  if (funcArgs.empty()) {
+    CHECK(*source.end() == '(');
+    source = CharBlock{source.begin(), source.end() + 1};
+  }
   CHECK(*source.end() == ')');
   source = CharBlock{source.begin(), source.end() + 1};
   auto variable{Variable{common::Indirection{WithSource(
