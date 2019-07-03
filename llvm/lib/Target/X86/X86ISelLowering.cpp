@@ -31946,6 +31946,7 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
 
   // Which shuffle domains are permitted?
   // Permit domain crossing at higher combine depths.
+  // TODO: Should we indicate which domain is preferred if both are allowed?
   bool AllowFloatDomain = FloatDomain || (Depth > 3);
   bool AllowIntDomain = (!FloatDomain || (Depth > 3)) && Subtarget.hasSSE2() &&
                         (!MaskVT.is256BitVector() || Subtarget.hasAVX2());
@@ -33054,6 +33055,21 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
                             N1.getOperand(0),
                             DAG.getConstant(ScaleMask, DL, MVT::i8)));
       }
+    }
+    return SDValue();
+  }
+  case X86ISD::VPERMI: {
+    // vpermi(bitcast(x)) -> bitcast(vpermi(x)) for same number of elements.
+    // TODO: Remove when we have preferred domains in combineX86ShuffleChain.
+    SDValue N0 = N.getOperand(0);
+    SDValue N1 = N.getOperand(1);
+    unsigned EltSizeInBits = VT.getScalarSizeInBits();
+    if (N0.getOpcode() == ISD::BITCAST &&
+        N0.getOperand(0).getScalarValueSizeInBits() == EltSizeInBits) {
+      SDValue Src = N0.getOperand(0);
+      EVT SrcVT = Src.getValueType();
+      SDValue Res = DAG.getNode(X86ISD::VPERMI, DL, SrcVT, Src, N1);
+      return DAG.getBitcast(VT, Res);
     }
     return SDValue();
   }
