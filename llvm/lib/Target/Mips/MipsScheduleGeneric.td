@@ -311,7 +311,7 @@ def : InstRW<[GenericWriteJumpAndLink], (instrs BALC, BEQZALC, BGEZALC,
 def : InstRW<[GenericWriteJump], (instrs BC, BC2EQZ, BC2NEZ, BEQC, BEQZC, BGEC,
                                   BGEUC, BGEZC, BGTZC, BLEZC, BLTC, BLTUC,
                                   BLTZC, BNEC, BNEZC, BNVC, BOVC, JIC, JR_HB_R6,
-                                  PseudoIndirectBranchR6,
+                                  SIGRIE, PseudoIndirectBranchR6,
                                   PseudoIndrectHazardBranchR6)>;
 
 def : InstRW<[GenericWriteJump], (instrs TAILCALLR6REG, TAILCALLHBR6REG)>;
@@ -377,7 +377,7 @@ def : InstRW<[GenericWriteJump], (instrs BC16_MMR6, BC1EQZC_MMR6, BC1NEZC_MMR6,
                                   BNEZC16_MMR6, BNEZC_MMR6, BNVC_MMR6,
                                   BOVC_MMR6, DERET_MMR6, ERETNC_MMR6,
                                   ERET_MMR6, JIC_MMR6, JRADDIUSP, JRC16_MM,
-                                  JRC16_MMR6, JRCADDIUSP_MMR6,
+                                  JRC16_MMR6, JRCADDIUSP_MMR6, SIGRIE_MMR6,
                                   PseudoIndirectBranch_MMR6)>;
 
 def : InstRW<[GenericWriteJumpAndLink], (instrs BALC_MMR6, BEQZALC_MMR6,
@@ -589,6 +589,8 @@ def : InstRW<[GenericWritePref], (instrs PREF_R6)>;
 
 def : InstRW<[GenericWriteCache], (instrs CACHE_R6)>;
 
+def : InstRW<[GenericWriteSync], (instrs GINVI, GINVT)>;
+
 // MIPS32 EVA
 // ==========
 
@@ -649,6 +651,7 @@ def : InstRW<[GenericWritePref], (instrs PREF_MM, PREFX_MM)>;
 def : InstRW<[GenericWriteCache], (instrs CACHE_MM)>;
 
 def : InstRW<[GenericWriteSync], (instrs SYNC_MM, SYNCI_MM)>;
+def : InstRW<[GenericWriteSync], (instrs GINVI_MMR6, GINVT_MMR6)>;
 
 // microMIPS32r6
 // =============
