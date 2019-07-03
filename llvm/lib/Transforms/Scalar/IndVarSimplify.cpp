@@ -2359,7 +2359,6 @@ static Value *genLoopLimit(PHINode *IndVar, BasicBlock *ExitingBB,
     assert(AR->getStepRecurrence(*SE)->isOne() && "only handles unit stride");
     // For unit stride, IVCount = Start + ExitCount with 2's complement
     // overflow.
-    const SCEV *IVInit = AR->getStart();
 
     // For integer IVs, truncate the IV before computing IVInit + BECount,
     // unless we know apriori that the limit must be a constant when evaluated
