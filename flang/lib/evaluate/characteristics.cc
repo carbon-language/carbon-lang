@@ -412,6 +412,12 @@ std::optional<Procedure> Procedure::Characterize(
               return std::nullopt;
             }
           },
+          [](const semantics::GenericDetails &) -> std::optional<Procedure> {
+            return std::nullopt;
+          },
+          [](const semantics::GenericBindingDetails &) -> std::optional<Procedure> {
+            return std::nullopt;
+          },
           [](const auto &) -> std::optional<Procedure> { CRASH_NO_CASE; },
       },
       symbol.details());
