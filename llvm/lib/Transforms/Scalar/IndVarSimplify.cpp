@@ -2361,10 +2361,18 @@ static Value *genLoopLimit(PHINode *IndVar, BasicBlock *ExitingBB,
     // overflow.
     const SCEV *IVInit = AR->getStart();
 
-    // For integer IVs, truncate the IV before computing IVInit + BECount.
+    // For integer IVs, truncate the IV before computing IVInit + BECount,
+    // unless we know apriori that the limit must be a constant when evaluated
+    // in the bitwidth of the IV.  We prefer (potentially) keeping a truncate
+    // of the IV in the loop over a (potentially) expensive expansion of the
+    // widened exit count computation.  
     if (SE->getTypeSizeInBits(IVInit->getType())
-        > SE->getTypeSizeInBits(ExitCount->getType()))
-      IVInit = SE->getTruncateExpr(IVInit, ExitCount->getType());
+        > SE->getTypeSizeInBits(ExitCount->getType())) {
+      if (isa<SCEVConstant>(IVInit) && isa<SCEVConstant>(ExitCount))
+        ExitCount = SE->getZeroExtendExpr(ExitCount, IVInit->getType());
+      else
+        IVInit = SE->getTruncateExpr(IVInit, ExitCount->getType());
+    }
 
     const SCEV *IVLimit = SE->getAddExpr(IVInit, ExitCount);
 
@@ -2467,54 +2475,43 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
   unsigned CmpIndVarSize = SE->getTypeSizeInBits(CmpIndVar->getType());
   unsigned ExitCntSize = SE->getTypeSizeInBits(ExitCnt->getType());
   if (CmpIndVarSize > ExitCntSize) {
-    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
-    const SCEV *ARStart = AR->getStart();
-    const SCEV *ARStep = AR->getStepRecurrence(*SE);
-    // For constant ExitCount, avoid truncation.
-    if (isa<SCEVConstant>(ARStart) && isa<SCEVConstant>(ExitCount)) {
-      const APInt &Start = cast<SCEVConstant>(ARStart)->getAPInt();
-      APInt Count = cast<SCEVConstant>(ExitCount)->getAPInt();
-      Count = Count.zext(CmpIndVarSize);
-      if (UsePostInc)
-        ++Count;
-      assert(cast<SCEVConstant>(ARStep)->getValue()->isOne());
-      APInt NewLimit = Start + Count;
-      ExitCnt = ConstantInt::get(CmpIndVar->getType(), NewLimit);
+    // The constant case was handled in the IV width to start with!
+    assert(!isa<SCEVConstant>(cast<SCEVAddRecExpr>(SE->getSCEV(IndVar))->getStart()) ||
+           !isa<SCEVConstant>(ExitCount));
+    
+    // We try to extend trip count first. If that doesn't work we truncate IV.
+    // Zext(trunc(IV)) == IV implies equivalence of the following two:
+    // Trunc(IV) == ExitCnt and IV == zext(ExitCnt). Similarly for sext. If
+    // one of the two holds, extend the trip count, otherwise we truncate IV.
+    bool Extended = false;
+    const SCEV *IV = SE->getSCEV(CmpIndVar);
+    const SCEV *ZExtTrunc =
+      SE->getZeroExtendExpr(SE->getTruncateExpr(SE->getSCEV(CmpIndVar),
+                                                ExitCnt->getType()),
+                            CmpIndVar->getType());
+    
+    if (ZExtTrunc == IV) {
+      Extended = true;
+      ExitCnt = Builder.CreateZExt(ExitCnt, IndVar->getType(),
+                                   "wide.trip.count");
     } else {
-      // We try to extend trip count first. If that doesn't work we truncate IV.
-      // Zext(trunc(IV)) == IV implies equivalence of the following two:
-      // Trunc(IV) == ExitCnt and IV == zext(ExitCnt). Similarly for sext. If
-      // one of the two holds, extend the trip count, otherwise we truncate IV.
-      bool Extended = false;
-      const SCEV *IV = SE->getSCEV(CmpIndVar);
-      const SCEV *ZExtTrunc =
-           SE->getZeroExtendExpr(SE->getTruncateExpr(SE->getSCEV(CmpIndVar),
-                                                     ExitCnt->getType()),
-                                 CmpIndVar->getType());
-
-      if (ZExtTrunc == IV) {
+      const SCEV *SExtTrunc =
+        SE->getSignExtendExpr(SE->getTruncateExpr(SE->getSCEV(CmpIndVar),
+                                                  ExitCnt->getType()),
+                              CmpIndVar->getType());
+      if (SExtTrunc == IV) {
         Extended = true;
-        ExitCnt = Builder.CreateZExt(ExitCnt, IndVar->getType(),
+        ExitCnt = Builder.CreateSExt(ExitCnt, IndVar->getType(),
                                      "wide.trip.count");
-      } else {
-        const SCEV *SExtTrunc =
-          SE->getSignExtendExpr(SE->getTruncateExpr(SE->getSCEV(CmpIndVar),
-                                                    ExitCnt->getType()),
-                                CmpIndVar->getType());
-        if (SExtTrunc == IV) {
-          Extended = true;
-          ExitCnt = Builder.CreateSExt(ExitCnt, IndVar->getType(),
-                                       "wide.trip.count");
-        }
       }
-
-      if (Extended) {
-        bool Discard;
-        L->makeLoopInvariant(ExitCnt, Discard);
-      } else 
-        CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
-                                        "lftr.wideiv");
     }
+
+    if (Extended) {
+      bool Discard;
+      L->makeLoopInvariant(ExitCnt, Discard);
+    } else 
+      CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
+                                      "lftr.wideiv");
   }
   LLVM_DEBUG(dbgs() << "INDVARS: Rewriting loop exit condition to:\n"
                     << "      LHS:" << *CmpIndVar << '\n'
