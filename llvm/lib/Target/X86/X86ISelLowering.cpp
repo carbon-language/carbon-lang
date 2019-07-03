@@ -13235,7 +13235,7 @@ static SDValue lowerV8I16GeneralSingleInputShuffle(
     // a half by taking the sum of the half with three inputs and subtracting
     // the sum of the actual three inputs. The difference is the remaining
     // slot.
-    int ADWord, BDWord;
+    int ADWord = 0, BDWord = 0;
     int &TripleDWord = ThreeAInputs ? ADWord : BDWord;
     int &OneInputDWord = ThreeAInputs ? BDWord : ADWord;
     int TripleInputOffset = ThreeAInputs ? AOffset : BOffset;
