@@ -79,6 +79,9 @@ def : InstRW<[GenericWriteALU], (instrs AddiuRxImmX16, AddiuRxRxImm16,
                                  SraX16, SrlvRxRy16, SrlX16, SubuRxRyRz16,
                                  XorRxRxRy16)>;
 
+def : InstRW<[GenericWriteALU], (instrs Constant32, LwConstant32,
+                                 GotPrologue16, CONSTPOOL_ENTRY)>;
+
 // microMIPS
 // =========
 
