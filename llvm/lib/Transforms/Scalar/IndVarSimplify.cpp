@@ -2477,11 +2477,8 @@ linearFunctionTestReplace(Loop *L, BasicBlock *ExitingBB,
       Count = Count.zext(CmpIndVarSize);
       if (UsePostInc)
         ++Count;
-      APInt NewLimit;
-      if (cast<SCEVConstant>(ARStep)->getValue()->isNegative())
-        NewLimit = Start - Count;
-      else
-        NewLimit = Start + Count;
+      assert(cast<SCEVConstant>(ARStep)->getValue()->isOne());
+      APInt NewLimit = Start + Count;
       ExitCnt = ConstantInt::get(CmpIndVar->getType(), NewLimit);
     } else {
       // We try to extend trip count first. If that doesn't work we truncate IV.
