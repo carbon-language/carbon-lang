@@ -146,6 +146,10 @@ def GenericWriteMul : SchedWriteRes<[GenericIssueMDU]> { let Latency = 4; }
 
 def : InstRW<[GenericWriteHILO], (instrs MADD, MADDU, MSUB, MSUBU)>;
 
+def : InstRW<[GenericWriteHILO], (instrs PseudoMADD_MM, PseudoMADDU_MM,
+                                  PseudoMSUB_MM, PseudoMSUBU_MM,
+                                  PseudoMULT_MM, PseudoMULTu_MM)>;
+
 def : InstRW<[GenericWriteHILO], (instrs PseudoMADD, PseudoMADDU, PseudoMSUB,
                                   PseudoMSUBU, PseudoMULT, PseudoMULTu)>;
 
@@ -179,7 +183,10 @@ def : InstRW<[GenericWriteDIVU], (instrs PseudoUDIV, UDIV)>;
 def : InstRW<[GenericWriteALULong], (instrs MFHI, MFLO, PseudoMFHI,
                                      PseudoMFLO)>;
 
+def : InstRW<[GenericWriteALULong], (instrs PseudoMFHI_MM, PseudoMFLO_MM)>;
+
 def : InstRW<[GenericWriteMove], (instrs MTHI, MTLO, RDHWR, PseudoMTLOHI)>;
+def : InstRW<[GenericWriteMove], (instrs PseudoMTLOHI_MM)>;
 
 def : InstRW<[GenericWriteALU], (instrs MOVN_I_I, MOVZ_I_I)>;
 
@@ -347,10 +354,11 @@ def : InstRW<[GenericWriteALULong], (instrs SelBeqZ, SelTBteqZCmp,
 // microMIPS
 // =========
 
-def : InstRW<[GenericWriteJump], (instrs B16_MM, BC1F_MM, BC1T_MM, BEQZ16_MM,
-                                  BEQZC_MM, BEQ_MM, BGEZ_MM, BGTZ_MM, BLEZ_MM,
-                                  BLTZ_MM, BNEZ16_MM, BNEZC_MM, BNE_MM, B_MM,
-                                  DERET_MM, ERET_MM, JR16_MM, JR_MM, J_MM)>;
+def : InstRW<[GenericWriteJump], (instrs B16_MM, BAL_BR_MM, BC1F_MM, BC1T_MM,
+                                  BEQZ16_MM, BEQZC_MM, BEQ_MM, BGEZ_MM,
+                                  BGTZ_MM, BLEZ_MM, BLTZ_MM, BNEZ16_MM,
+                                  BNEZC_MM, BNE_MM, B_MM, DERET_MM, ERET_MM,
+                                  JR16_MM, JR_MM, J_MM, B_MM_Pseudo)>;
 
 def : InstRW<[GenericWriteJumpAndLink], (instrs BGEZALS_MM, BGEZAL_MM,
                                          BLTZALS_MM, BLTZAL_MM, JALR16_MM,
@@ -363,7 +371,8 @@ def : InstRW<[GenericWriteJump], (instrs TAILCALLREG_MM, TAILCALL_MM,
 def : InstRW<[GenericWriteTrap], (instrs BREAK16_MM, BREAK_MM, SDBBP16_MM,
                                   SDBBP_MM, SYSCALL_MM, TEQI_MM, TEQ_MM,
                                   TGEIU_MM, TGEI_MM, TGEU_MM, TGE_MM, TLTIU_MM,
-                                  TLTI_MM, TLTU_MM, TLT_MM, TNEI_MM, TNE_MM)>;
+                                  TLTI_MM, TLTU_MM, TLT_MM, TNEI_MM, TNE_MM,
+                                  TRAP_MM)>;
 
 // microMIPS32r6
 // =============
@@ -378,7 +387,7 @@ def : InstRW<[GenericWriteJump], (instrs BC16_MMR6, BC1EQZC_MMR6, BC1NEZC_MMR6,
                                   BOVC_MMR6, DERET_MMR6, ERETNC_MMR6,
                                   ERET_MMR6, JIC_MMR6, JRADDIUSP, JRC16_MM,
                                   JRC16_MMR6, JRCADDIUSP_MMR6, SIGRIE_MMR6,
-                                  PseudoIndirectBranch_MMR6)>;
+                                  B_MMR6_Pseudo, PseudoIndirectBranch_MMR6)>;
 
 def : InstRW<[GenericWriteJumpAndLink], (instrs BALC_MMR6, BEQZALC_MMR6,
                                          BGEZALC_MMR6, BGTZALC_MMR6,
@@ -566,7 +575,7 @@ def : InstRW<[GenericWriteStore], (instrs SB, SH, SW, SWC2, SWC3,
 // PreMIPSR6 sw[lr]
 def : InstRW<[GenericWriteStore], (instrs SWL, SWR)>;
 
-def : InstRW<[GenericWriteStoreSC], (instrs SC)>;
+def : InstRW<[GenericWriteStoreSC], (instrs SC, SC_MMR6)>;
 
 // pref
 def : InstRW<[GenericWritePref], (instrs PREF)>;
@@ -642,7 +651,7 @@ def : InstRW<[GenericWriteLoad], (instrs LBU16_MM, LB_MM, LBu_MM, LHU16_MM,
                                   LWSP_MM, LWU_MM, LWXS_MM, LW_MM)>;
 
 def : InstRW<[GenericWriteStore], (instrs SB16_MM, SC_MM, SH16_MM, SH_MM,
-                                   SW16_MM, SWL_MM, SWM16_MM, SWM32_MM,
+                                   SW16_MM, SWL_MM, SWM16_MM, SWM32_MM, SWM_MM,
                                    SWP_MM, SWR_MM, SWSP_MM, SW_MM)>;
 
 
@@ -656,7 +665,7 @@ def : InstRW<[GenericWriteSync], (instrs GINVI_MMR6, GINVT_MMR6)>;
 // microMIPS32r6
 // =============
 
-def : InstRW<[GenericWriteLoad], (instrs LBU_MMR6, LB_MMR6, LDC2_MMR6,
+def : InstRW<[GenericWriteLoad], (instrs LBU_MMR6, LB_MMR6, LDC2_MMR6, LL_MMR6,
                                   LWM16_MMR6, LWC2_MMR6, LWPC_MMR6, LW_MMR6)>;
 
 def : InstRW<[GenericWriteStore], (instrs SB16_MMR6, SB_MMR6, SDC2_MMR6,
@@ -813,14 +822,17 @@ def : InstRW<[GenericWriteFPUL], (instrs CEIL_L_D64, CEIL_L_S, CEIL_W_D32,
                                   CVT_D64_L, CVT_D64_S, CVT_D64_W, CVT_L_D64,
                                   CVT_L_S, CVT_S_D32, CVT_S_D64, CVT_S_L,
                                   CVT_S_W, CVT_W_D32, CVT_W_D64, CVT_W_S,
+                                  CVT_PS_S64, CVT_S_PL64, CVT_S_PU64,
                                   FLOOR_L_D64, FLOOR_L_S, FLOOR_W_D32,
                                   FLOOR_W_D64, FLOOR_W_S, FMUL_D32, FMUL_D64,
                                   MADD_D32, MADD_D64, MSUB_D32, MSUB_D64,
                                   NMADD_D32, NMADD_D64, NMSUB_D32, NMSUB_D64,
+                                  PLL_PS64, PLU_PS64,
                                   ROUND_L_D64, ROUND_L_S, ROUND_W_D32,
                                   ROUND_W_D64, ROUND_W_S, TRUNC_L_D64,
                                   TRUNC_L_S, TRUNC_W_D32, TRUNC_W_D64,
-                                  TRUNC_W_S)>;
+                                  TRUNC_W_S, PseudoTRUNC_W_D,
+                                  PseudoTRUNC_W_D32, PseudoTRUNC_W_S)>;
 
 // Pseudo convert instruction
 def : InstRW<[GenericWriteFPUL], (instrs PseudoCVT_D32_W, PseudoCVT_D64_L,
@@ -916,7 +928,8 @@ def : InstRW<[GenericWriteFPUCmp], (instregex "^C_NGLE_(S|D32|D64)_MM$")>;
 def : InstRW<[GenericWriteFPUCmp], (instrs FCMP_S32_MM, FCMP_D32_MM)>;
 
 def : InstRW<[GenericWriteFPUS], (instrs MFC1_MM, MFHC1_D32_MM, MFHC1_D64_MM,
-                                  MTC1_MM, MTHC1_D32_MM, MTHC1_D64_MM)>;
+                                  MTC1_MM, MTC1_D64_MM,
+                                  MTHC1_D32_MM, MTHC1_D64_MM)>;
 
 def : InstRW<[GenericWriteFPUS], (instrs FABS_D32_MM, FABS_D64_MM, FABS_S_MM,
                                   FNEG_D32_MM, FNEG_D64_MM, FNEG_S_MM,
@@ -987,7 +1000,7 @@ def : InstRW<[GenericWriteFPUL], (instrs RINT_S_MMR6, RINT_D_MMR6)>;
 def : InstRW<[GenericWriteFPUS], (instregex "M(ADD|SUB)F_(S|D)_MMR6")>;
 
 def : InstRW<[GenericWriteFPUS], (instrs FMOV_S_MMR6, FMUL_S_MMR6,
-                                  FSUB_S_MMR6)>;
+                                  FSUB_S_MMR6, FMOV_D_MMR6)>;
 
 def : InstRW<[GenericWriteFPUL], (instrs FDIV_S_MMR6)>;
 
