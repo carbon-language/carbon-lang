@@ -1,5 +1,4 @@
 ; RUN: llc < %s -filetype=obj -o - | llvm-readobj - --codeview | FileCheck %s
-; RUN: llc < %s -o - | llvm-mc -filetype=obj --triple=x86_64-windows | llvm-readobj - --codeview | FileCheck %s
 
 ; C++ source to regenerate:
 ; $ cat t.cpp

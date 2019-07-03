@@ -1,5 +1,4 @@
 ; RUN: llc < %s -filetype=obj | llvm-readobj - --codeview | FileCheck %s
-; RUN: llc < %s | llvm-mc -filetype=obj --triple=i686-windows | llvm-readobj - --codeview | FileCheck %s
 
 ; Generated from the following C++ source:
 ; enum E : int { BLAH };
