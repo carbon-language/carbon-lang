@@ -32429,6 +32429,9 @@ static SDValue combineX86ShuffleChainWithExtract(
   if (WideInputs.size() > 2)
     return SDValue();
 
+  // Increase depth for every upper subvector we've peeked through.
+  Depth += count_if(Offsets, [](unsigned Offset) { return Offset > 0; });
+
   // Attempt to combine wider chain.
   // TODO: Can we use a better Root?
   SDValue WideRoot = WideInputs[0];
