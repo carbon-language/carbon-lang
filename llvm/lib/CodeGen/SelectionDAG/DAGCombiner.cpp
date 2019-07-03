@@ -2699,7 +2699,7 @@ static SDValue flipBoolean(SDValue V, const SDLoc &DL,
     Cst = DAG.getConstant(1, DL, VT);
     break;
   case TargetLowering::ZeroOrNegativeOneBooleanContent:
-    Cst = DAG.getConstant(-1, DL, VT);
+    Cst = DAG.getAllOnesConstant(DL, VT);
     break;
   }
 
