@@ -2935,7 +2935,8 @@ MachineInstr *AArch64InstructionSelector::emitIntegerCompare(
   Register ZReg;
 
   LLT CmpTy = MRI.getType(LHS.getReg());
-  assert(CmpTy.isScalar() || CmpTy.isPointer() && "Expected scalar or pointer");
+  assert((CmpTy.isScalar() || CmpTy.isPointer()) &&
+         "Expected scalar or pointer");
   if (CmpTy == LLT::scalar(32)) {
     CmpOpc = AArch64::SUBSWrr;
     ZReg = AArch64::WZR;
