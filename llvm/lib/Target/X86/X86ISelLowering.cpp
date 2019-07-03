@@ -18188,7 +18188,7 @@ static SDValue lowerUINT_TO_FP_v2i32(SDValue Op, SelectionDAG &DAG,
   SDValue HalfWordMask = DAG.getConstant(0x0000FFFF, DL, MVT::v4i32);
 
   // Two to the power of half-word-size.
-  SDValue TWOHW = DAG.getConstantFP(1 << 16, DL, MVT::v2f64);
+  SDValue TWOHW = DAG.getConstantFP((double)(1 << 16), DL, MVT::v2f64);
 
   // Clear upper part of LO, lower HI.
   SDValue HI = DAG.getNode(ISD::SRL, DL, MVT::v4i32, N0, HalfWord);
