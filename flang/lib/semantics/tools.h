@@ -160,5 +160,13 @@ template<typename T> const SomeExpr *GetExpr(const T &x) {
   return GetExprHelper{}.Get(x);
 }
 
+template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
+  if (const auto *expr{GetExpr(x)}) {
+    return evaluate::ToInt64(*expr);
+  } else {
+    return std::nullopt;
+  }
+}
+
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

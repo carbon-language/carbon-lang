@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "check-omp-structure.h"
+#include "tools.h"
 #include "../parser/parse-tree.h"
 
 namespace Fortran::semantics {
@@ -146,14 +147,31 @@ void OmpStructureChecker::Leave(const parser::OmpClauseList &) {
     }
 
     if (auto *clause{FindClause(OmpClause::ORDERED)}) {
-      if (FindClause(OmpClause::LINEAR)) {
-        // only one ordered clause is allowed
-        const auto &orderedClause{
-            std::get<parser::OmpClause::Ordered>(clause->u)};
-        if (orderedClause.v.has_value()) {
+      // only one ordered clause is allowed
+      const auto &orderedClause{
+          std::get<parser::OmpClause::Ordered>(clause->u)};
+
+      if (orderedClause.v.has_value()) {
+        if (FindClause(OmpClause::LINEAR)) {
           context_.Say(clause->source,
               "A loop directive may not have both a LINEAR clause and "
               "an ORDERED clause with a parameter"_err_en_US);
+        }
+
+        if (auto *clause2{FindClause(OmpClause::COLLAPSE)}) {
+          const auto &collapseClause{
+              std::get<parser::OmpClause::Collapse>(clause2->u)};
+          // ordered and collapse both have parameters
+          if (const auto orderedValue{GetIntValue(orderedClause.v)}) {
+            if (const auto collapseValue{GetIntValue(collapseClause.v)}) {
+              if (*orderedValue > 0 && *orderedValue < *collapseValue) {
+                context_.Say(clause->source,
+                    "The parameter of the ORDERED clause must be "
+                    "greater than or equal to "
+                    "the parameter of the COLLAPSE clause"_err_en_US);
+              }
+            }
+          }
         }
       }
 
@@ -184,9 +202,19 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Notinbranch &) {
 void OmpStructureChecker::Enter(const parser::OmpClause::Untied &) {
   CheckAllowed(OmpClause::UNTIED);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Collapse &) {
+
+void OmpStructureChecker::Enter(const parser::OmpClause::Collapse &x) {
   CheckAllowed(OmpClause::COLLAPSE);
+  // collapse clause must have a parameter
+  if (const auto v{GetIntValue(x.v)}) {
+    if (*v <= 0) {
+      context_.Say(GetContext().clauseSource,
+          "The parameter of the COLLAPSE clause must be "
+          "a constant positive integer expression"_err_en_US);
+    }
+  }
 }
+
 void OmpStructureChecker::Enter(const parser::OmpClause::Copyin &) {
   CheckAllowed(OmpClause::COPYIN);
 }
@@ -220,11 +248,30 @@ void OmpStructureChecker::Enter(const parser::OmpClause::NumTasks &) {
 void OmpStructureChecker::Enter(const parser::OmpClause::NumTeams &) {
   CheckAllowed(OmpClause::NUM_TEAMS);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::NumThreads &) {
+void OmpStructureChecker::Enter(const parser::OmpClause::NumThreads &x) {
   CheckAllowed(OmpClause::NUM_THREADS);
+  if (const auto v{GetIntValue(x.v)}) {
+    if (*v <= 0) {
+      context_.Say(GetContext().clauseSource,
+          "The parameter of the NUM_THREADS clause must be "
+          "a positive integer expression"_err_en_US);
+    }
+  }
+  // if parameter is variable, defer to Expression Analysis
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Ordered &) {
+
+void OmpStructureChecker::Enter(const parser::OmpClause::Ordered &x) {
   CheckAllowed(OmpClause::ORDERED);
+  // the parameter of ordered clause is optional
+  if (const auto &expr{x.v}) {
+    if (const auto v{GetIntValue(expr)}) {
+      if (*v <= 0) {
+        context_.Say(GetContext().clauseSource,
+            "The parameter of the ORDERED clause must be "
+            "a constant positive integer expression"_err_en_US);
+      }
+    }
+  }
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Priority &) {
   CheckAllowed(OmpClause::PRIORITY);
