@@ -497,6 +497,10 @@ void IoChecker::Leave(const parser::OpenStmt &stmt) {
   stmt_ = IoStmtKind::None;
 }
 
+void IoChecker::Leave(const parser::PrintStmt &stmt) {
+  stmt_ = IoStmtKind::None;
+}
+
 void IoChecker::Leave(const parser::ReadStmt &stmt) {
   if (!flags_.test(Flag::IoControlList)) {
     return;

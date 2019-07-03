@@ -21,6 +21,7 @@
   integer*8 stat8
   integer :: iunit = 10
   integer, parameter :: junit = 11
+  integer, pointer :: a(:)
 
   namelist /nnn/ nn1, nn2
 
@@ -57,6 +58,9 @@
 
   print*
   print*, 'Ok'
+
+  allocate(a(2), stat=stat2)
+  allocate(a(8), stat=stat8)
 
   !ERROR: Duplicate UNIT specifier
   write(internal_file, unit=*)

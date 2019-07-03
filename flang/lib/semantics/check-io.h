@@ -78,6 +78,7 @@ public:
   void Leave(const parser::FlushStmt &);
   void Leave(const parser::InquireStmt &);
   void Leave(const parser::OpenStmt &);
+  void Leave(const parser::PrintStmt &);
   void Leave(const parser::ReadStmt &);
   void Leave(const parser::RewindStmt &);
   void Leave(const parser::WaitStmt &);
