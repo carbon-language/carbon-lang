@@ -506,6 +506,26 @@ def : InstRW<[GenericReadWriteCOP0Long], (instrs YIELD)>;
 
 def : InstRW<[GenericWriteCOP0Short], (instrs FORK)>;
 
+// MIPS Virtualization ASE
+// =======================
+
+def : InstRW<[GenericWriteCOP0Short], (instrs HYPCALL, TLBGINV, TLBGINVF, TLBGP,
+                                       TLBGR, TLBGWI, TLBGWR, MFGC0, MFHGC0,
+                                       MTGC0, MTHGC0)>;
+
+// MIPS64 Virtualization ASE
+// =========================
+
+def : InstRW<[GenericWriteCOP0Short], (instrs DMFGC0, DMTGC0)>;
+
+// microMIPS virtualization ASE
+// ============================
+
+def : InstRW<[GenericWriteCOP0Short], (instrs HYPCALL_MM, TLBGINVF_MM,
+                                       TLBGINV_MM, TLBGP_MM, TLBGR_MM,
+                                       TLBGWI_MM, TLBGWR_MM, MFGC0_MM,
+                                       MFHGC0_MM, MTGC0_MM, MTHGC0_MM)>;
+
 // LDST Pipeline
 // -------------
 
@@ -1107,6 +1127,11 @@ def : InstRW<[GenericDSPShort], (instregex "^SUBU_QB$")>;
 def : InstRW<[GenericDSPShort], (instregex "^SUBU_S_QB$")>;
 def : InstRW<[GenericDSPShort], (instregex "^WRDSP$")>;
 
+def : InstRW<[GenericDSPShort],
+             (instregex "^Pseudo(CMP|CMPU)_(EQ|LE|LT)_(PH|QB)$")>;
+def : InstRW<[GenericDSPShort],
+						 (instregex "^PseudoPICK_(PH|QB)$")>;
+
 // MIPS DSP R2 - hasDSP, HasDSPR2, InMicroMips
 // ===========================================
 
@@ -1384,6 +1409,8 @@ def : InstRW<[GenericWriteMSAShortLogic], (instregex "^LDI_[BHWD]$")>;
 def : InstRW<[GenericWriteMSAShortLogic], (instrs LSA)>;
 def : InstRW<[GenericWriteMSAShortLogic], (instregex "^(AND|OR|[XN]OR)_V$")>;
 def : InstRW<[GenericWriteMSAShortLogic], (instregex "^(AND|OR|[XN]OR)I_B$")>;
+def : InstRW<[GenericWriteMSAShortLogic],
+             (instregex "^(AND|OR|[XN]OR)_V_[DHW]_PSEUDO$")>;
 
 // vshf.[bhwd], binsl.[bhwd], binsr.[bhwd], insert.[bhwd], sld?.[bhwd],
 // bset.[bhwd], bclr.[bhwd], bneg.[bhwd], bsel_v, bseli_b
@@ -1397,6 +1424,8 @@ def : InstRW<[GenericWriteMSAShortInt], (instregex "^(BCLR|BCLRI)_[BHWD]$")>;
 def : InstRW<[GenericWriteMSAShortInt], (instregex "^(BNEG|BNEGI)_[BHWD]$")>;
 def : InstRW<[GenericWriteMSAShortInt], (instregex "^(BSEL_V|BSELI_B)$")>;
 def : InstRW<[GenericWriteMSAShortInt], (instregex "^BMN*Z.*$")>;
+def : InstRW<[GenericWriteMSAShortInt],
+             (instregex "^BSEL_(H|W|D|FW|FD)_PSEUDO$")>;
 
 // pcnt.[bhwd], sat_s.[bhwd], sat_u.[bhwd]
 def : InstRW<[GenericWriteMSAOther3], (instregex "^PCNT_[BHWD]$")>;
@@ -1507,6 +1536,8 @@ def : InstRW<[GenericWriteMSAShortLogic], (instregex "^(SLL|SLLI)_[BHWD]$")>;
 def : InstRW<[GenericWriteMSAShortLogic], (instregex "^(PCKEV|PCKOD)_[BHWD]$")>;
 def : InstRW<[GenericWriteMSAShortLogic], (instregex "^(NLOC|NLZC)_[BHWD]$")>;
 def : InstRW<[GenericWriteMSAShortLogic], (instregex "^INSVE_[BHWD]$")>;
+def : InstRW<[GenericWriteMSAShortLogic], (instregex "^INSERT_F(D|W)_PSEUDO$")>;
+def : InstRW<[GenericWriteMSAShortLogic], (instregex "^FILL_F(D|W)_PSEUDO$")>;
 
 // dpadd_?.[bhwd], dpsub_?.[bhwd], dotp_?.[bhwd], msubv.[bhwd], maddv.[bhwd]
 // mulv.[bhwd].
@@ -1542,5 +1573,7 @@ def : InstRW<[GenericWriteFPUMoveGPRFPU], (instregex "^COPY_U_[BHW]$")>;
 def : InstRW<[GenericWriteFPUMoveGPRFPU], (instregex "^COPY_S_[BHWD]$")>;
 
 def : InstRW<[GenericWriteFPUStore], (instregex "^ST_[BHWD]$")>;
+def : InstRW<[GenericWriteFPUStore], (instrs ST_F16)>;
 def : InstRW<[GenericWriteFPULoad], (instregex "^LD_[BHWD]$")>;
+def : InstRW<[GenericWriteFPULoad], (instrs LD_F16)>;
 }
