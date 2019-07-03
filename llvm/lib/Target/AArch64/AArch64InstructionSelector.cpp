@@ -3777,13 +3777,11 @@ static Optional<uint64_t> getImmedFromMO(const MachineOperand &Root) {
   else if (Root.isCImm())
     Immed = Root.getCImm()->getZExtValue();
   else if (Root.isReg()) {
-    MachineInstr *Def = MRI.getVRegDef(Root.getReg());
-    if (Def->getOpcode() != TargetOpcode::G_CONSTANT)
+    auto ValAndVReg =
+        getConstantVRegValWithLookThrough(Root.getReg(), MRI, true);
+    if (!ValAndVReg)
       return None;
-    MachineOperand &Op1 = Def->getOperand(1);
-    if (!Op1.isCImm() || Op1.getCImm()->getBitWidth() > 64)
-      return None;
-    Immed = Op1.getCImm()->getZExtValue();
+    Immed = ValAndVReg->Value;
   } else
     return None;
   return Immed;
