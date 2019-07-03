@@ -171,7 +171,8 @@ bool DynamicType::IsTkCompatibleWith(const DynamicType &that) const {
     return true;
   } else if (that.IsUnlimitedPolymorphic()) {
     return false;
-  } else if (!IsKindCompatible(*derived_, *that.derived_)) {
+  } else if (!derived_ || !that.derived_ ||
+      !IsKindCompatible(*derived_, *that.derived_)) {
     return false;  // kind params don't match
   } else if (!IsPolymorphic()) {
     return derived_->typeSymbol() == that.derived_->typeSymbol();
