@@ -2329,21 +2329,17 @@ static Value *genLoopLimit(PHINode *IndVar, BasicBlock *ExitingBB,
     // Expand the code for the iteration count.
     assert(SE->isLoopInvariant(IVOffset, L) &&
            "Computed iteration count is not loop invariant!");
-    BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
-    Value *GEPOffset = Rewriter.expandCodeFor(IVOffset, OfsTy, BI);
 
-    Value *GEPBase = IndVar->getIncomingValueForBlock(L->getLoopPreheader());
-    assert(AR->getStart() == SE->getSCEV(GEPBase) && "bad loop counter");
     // We could handle pointer IVs other than i8*, but we need to compensate for
     // gep index scaling.
     assert(SE->getSizeOfExpr(IntegerType::getInt64Ty(IndVar->getContext()),
-                             cast<PointerType>(GEPBase->getType())
+                             cast<PointerType>(IndVar->getType())
                                  ->getElementType())->isOne() &&
            "unit stride pointer IV must be i8*");
 
-    IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
-    return Builder.CreateGEP(GEPBase->getType()->getPointerElementType(),
-                             GEPBase, GEPOffset, "lftr.limit");
+    const SCEV *IVLimit = SE->getAddExpr(IVInit, IVOffset);
+    BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
+    return Rewriter.expandCodeFor(IVLimit, IndVar->getType(), BI);
   } else {
     // In any other case, convert both IVInit and ExitCount to integers before
     // comparing. This may result in SCEV expansion of pointers, but in practice
@@ -2379,8 +2375,6 @@ static Value *genLoopLimit(PHINode *IndVar, BasicBlock *ExitingBB,
       IVLimit = SE->getAddExpr(IVLimit, SE->getOne(IVLimit->getType()));
 
     // Expand the code for the iteration count.
-    BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
-    IRBuilder<> Builder(BI);
     assert(SE->isLoopInvariant(IVLimit, L) &&
            "Computed iteration count is not loop invariant!");
     // Ensure that we generate the same type as IndVar, or a smaller integer
@@ -2388,6 +2382,7 @@ static Value *genLoopLimit(PHINode *IndVar, BasicBlock *ExitingBB,
     // SCEV expression (IVInit) for a pointer type IV value (IndVar).
     Type *LimitTy = ExitCount->getType()->isPointerTy() ?
       IndVar->getType() : ExitCount->getType();
+    BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
     return Rewriter.expandCodeFor(IVLimit, LimitTy, BI);
   }
 }

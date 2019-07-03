@@ -20,7 +20,6 @@ define void @ptriv(i8* %base, i32 %n) nounwind {
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp ult i8* [[BASE]], [[ADD_PTR]]
 ; CHECK-NEXT:    br i1 [[CMP1]], label [[FOR_BODY_PREHEADER:%.*]], label [[FOR_END:%.*]]
 ; CHECK:       for.body.preheader:
-; CHECK-NEXT:    [[LFTR_LIMIT:%.*]] = getelementptr i8, i8* [[BASE]], i64 [[IDX_EXT]]
 ; CHECK-NEXT:    br label [[FOR_BODY:%.*]]
 ; CHECK:       for.body:
 ; CHECK-NEXT:    [[P_02:%.*]] = phi i8* [ [[INCDEC_PTR:%.*]], [[FOR_BODY]] ], [ [[BASE]], [[FOR_BODY_PREHEADER]] ]
@@ -30,7 +29,7 @@ define void @ptriv(i8* %base, i32 %n) nounwind {
 ; CHECK-NEXT:    [[CONV:%.*]] = trunc i64 [[SUB_PTR_SUB]] to i8
 ; CHECK-NEXT:    store i8 [[CONV]], i8* [[P_02]]
 ; CHECK-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds i8, i8* [[P_02]], i32 1
-; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8* [[INCDEC_PTR]], [[LFTR_LIMIT]]
+; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8* [[INCDEC_PTR]], [[ADD_PTR]]
 ; CHECK-NEXT:    br i1 [[EXITCOND]], label [[FOR_BODY]], label [[FOR_END_LOOPEXIT:%.*]]
 ; CHECK:       for.end.loopexit:
 ; CHECK-NEXT:    br label [[FOR_END]]
@@ -303,13 +302,13 @@ define void @aryptriv([256 x i8]* %base, i32 %n) nounwind {
 ; CHECK-NEXT:    br i1 [[CMP_PH]], label [[LOOP_PREHEADER:%.*]], label [[EXIT:%.*]]
 ; CHECK:       loop.preheader:
 ; CHECK-NEXT:    [[TMP0:%.*]] = sext i32 [[N]] to i64
-; CHECK-NEXT:    [[LFTR_LIMIT:%.*]] = getelementptr i8, i8* [[IVSTART]], i64 [[TMP0]]
+; CHECK-NEXT:    [[SCEVGEP:%.*]] = getelementptr [256 x i8], [256 x i8]* [[BASE]], i64 0, i64 [[TMP0]]
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[APTR:%.*]] = phi i8* [ [[INCDEC_PTR:%.*]], [[LOOP]] ], [ [[IVSTART]], [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds i8, i8* [[APTR]], i32 1
 ; CHECK-NEXT:    store i8 3, i8* [[APTR]]
-; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8* [[INCDEC_PTR]], [[LFTR_LIMIT]]
+; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8* [[INCDEC_PTR]], [[SCEVGEP]]
 ; CHECK-NEXT:    br i1 [[EXITCOND]], label [[LOOP]], label [[EXIT_LOOPEXIT:%.*]]
 ; CHECK:       exit.loopexit:
 ; CHECK-NEXT:    br label [[EXIT]]
