@@ -970,7 +970,7 @@ private:
   void CheckRef(const std::optional<parser::Name> &);
   const DeclTypeSpec &ToDeclTypeSpec(evaluate::DynamicType &&);
   const DeclTypeSpec &ToDeclTypeSpec(
-      evaluate::DynamicType &&, SubscriptIntExpr &&length);
+      evaluate::DynamicType &&, MaybeSubscriptIntExpr &&length);
   Symbol *MakeAssocEntity();
   void SetTypeFromAssociation(Symbol &);
   void SetAttrsFromAssociation(Symbol &);
@@ -4334,10 +4334,15 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 }
 
 const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
-    evaluate::DynamicType &&type, SubscriptIntExpr &&length) {
+    evaluate::DynamicType &&type, MaybeSubscriptIntExpr &&length) {
   CHECK(type.category() == common::TypeCategory::Character);
-  return currScope().MakeCharacterType(
-      ParamValue{SomeIntExpr{std::move(length)}}, KindExpr{type.kind()});
+  if (length.has_value()) {
+    return currScope().MakeCharacterType(
+        ParamValue{SomeIntExpr{*std::move(length)}}, KindExpr{type.kind()});
+  } else {
+    return currScope().MakeCharacterType(
+        ParamValue::Deferred(), KindExpr{type.kind()});
+  }
 }
 
 // ResolveNamesVisitor implementation

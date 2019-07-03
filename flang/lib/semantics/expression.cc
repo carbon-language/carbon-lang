@@ -699,8 +699,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       GetSubstringBound(std::get<1>(range.t))};
   if (MaybeExpr string{Analyze(std::get<parser::CharLiteralConstant>(x.t))}) {
     if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&string->u)}) {
-      Expr<SubscriptInteger> length{std::visit(
-          [](const auto &ckExpr) { return ckExpr.LEN(); }, charExpr->u)};
+      Expr<SubscriptInteger> length{
+          std::visit([](const auto &ckExpr) { return ckExpr.LEN().value(); },
+              charExpr->u)};
       if (!lower.has_value()) {
         lower = Expr<SubscriptInteger>{1};
       }
@@ -1149,8 +1150,10 @@ struct ArrayConstructorTypeVisitor {
             type.GetDerivedTypeSpec(), MakeSpecific<T>(std::move(values))});
       } else if (type.kind() == T::kind) {
         if constexpr (T::category == TypeCategory::Character) {
-          return AsMaybeExpr(ArrayConstructor<T>{
-              type.LEN().value(), MakeSpecific<T>(std::move(values))});
+          if (auto len{type.LEN()}) {
+            return AsMaybeExpr(ArrayConstructor<T>{
+                *std::move(len), MakeSpecific<T>(std::move(values))});
+          }
         } else {
           return AsMaybeExpr(
               ArrayConstructor<T>{MakeSpecific<T>(std::move(values))});

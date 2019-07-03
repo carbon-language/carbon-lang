@@ -152,7 +152,7 @@ struct ProcedureDesignator {
   std::optional<DynamicType> GetType() const;
   int Rank() const;
   bool IsElemental() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   std::ostream &AsFortran(std::ostream &) const;
 
   // TODO: When calling X%F, pass X as PASS argument unless NOPASS
@@ -172,7 +172,7 @@ public:
   ActualArguments &arguments() { return arguments_; }
   const ActualArguments &arguments() const { return arguments_; }
 
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   int Rank() const { return proc_.Rank(); }
   bool IsElemental() const { return proc_.IsElemental(); }
   bool operator==(const ProcedureRef &) const;

@@ -49,7 +49,7 @@ subroutine s2
   print *, "z:", z
  end associate
  !TODO: need correct length for z
- !DEF: /s2/Block2/z AssocEntity CHARACTER(0_8,1)
+ !DEF: /s2/Block2/z AssocEntity CHARACTER(8_8,1)
  !REF: /s2/x
  !REF: /s2/y
  associate (z => x//y)

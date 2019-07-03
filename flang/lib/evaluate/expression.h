@@ -502,7 +502,8 @@ public:
   ArrayConstructor(Expr<SubscriptInteger> &&len, Base &&v)
     : Base{std::move(v)}, length_{std::move(len)} {}
   template<typename A>
-  explicit ArrayConstructor(const A &prototype) : length_{prototype.LEN()} {}
+  explicit ArrayConstructor(const A &prototype)
+    : length_{prototype.LEN().value()} {}
   bool operator==(const ArrayConstructor &) const;
   static constexpr Result result() { return Result{}; }
   static constexpr DynamicType GetType() { return Result::GetType(); }
@@ -624,7 +625,7 @@ public:
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
   explicit Expr(Scalar<Result> &&x) : u{Constant<Result>{std::move(x)}} {}
 
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
 
   std::variant<Constant<Result>, ArrayConstructor<Result>, Designator<Result>,
       FunctionRef<Result>, Parentheses<Result>, Convert<Result>, Concat<KIND>,
@@ -794,7 +795,7 @@ public:
   using Result = SomeCharacter;
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   int GetKind() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   common::MapTemplate<Expr, CategoryTypes<TypeCategory::Character>> u;
 };
 

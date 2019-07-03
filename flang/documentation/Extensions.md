@@ -103,8 +103,6 @@ Extensions and legacy features deliberately not supported
 * ALLOCATE(TYPE(derived)::...) as variant of correct ALLOCATE(derived::...) (PGI only)
 * Defining an explicit interface for a subprogram within itself (PGI only)
 * USE association of a procedure interface within that same procedure's definition
-* After "TYPE,EXTENDS(T1)::T2;...", the nonstandard structure constructor
-  T2(T1(x)) is accepted by PGI/GNU/Intel.  Use T2(T1=T1(x)) or T2(x) instead.
 * NULL() as a structure constructor expression for an ALLOCATABLE component (PGI).
 * Conversion of LOGICAL to INTEGER.
 * IF (integer expression) THEN ... END IF  (PGI/Intel)
@@ -112,3 +110,4 @@ Extensions and legacy features deliberately not supported
 * Procedure pointers in COMMON blocks (PGI/Intel)
 * Underindexing multi-dimensional arrays (e.g., A(1) rather than A(1,1)) (PGI only)
 * Legacy PGI `NCHARACTER` type and `NC` Kanji character literals
+* Using non-integer expressions for array bounds (e.g., A(3.14159)) (PGI/Intel)

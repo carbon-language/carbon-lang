@@ -149,14 +149,15 @@ Substring &Substring::set_lower(Expr<SubscriptInteger> &&expr) {
   return *this;
 }
 
-Expr<SubscriptInteger> Substring::upper() const {
+std::optional<Expr<SubscriptInteger>> Substring::upper() const {
   if (upper_.has_value()) {
     return upper_.value().value();
   } else {
     return std::visit(
         common::visitors{
             [](const DataRef &dataRef) { return dataRef.LEN(); },
-            [](const StaticDataObject::Pointer &object) {
+            [](const StaticDataObject::Pointer &object)
+                -> std::optional<Expr<SubscriptInteger>> {
               return AsExpr(Constant<SubscriptInteger>{object->data().size()});
             },
         },
@@ -259,36 +260,46 @@ DescriptorInquiry::DescriptorInquiry(NamedEntity &&base, Field field, int dim)
 }
 
 // LEN()
-static Expr<SubscriptInteger> SymbolLEN(const Symbol &sym) {
-  return AsExpr(Constant<SubscriptInteger>{0});  // TODO
+static std::optional<Expr<SubscriptInteger>> SymbolLEN(const Symbol &sym) {
+  if (auto dyType{DynamicType::From(sym)}) {
+    if (const semantics::ParamValue * len{dyType->charLength()}) {
+      if (auto intExpr{len->GetExplicit()}) {
+        return ConvertToType<SubscriptInteger>(*std::move(intExpr));
+      }
+    }
+  }
+  return std::nullopt;
 }
 
-Expr<SubscriptInteger> BaseObject::LEN() const {
+std::optional<Expr<SubscriptInteger>> BaseObject::LEN() const {
   return std::visit(
       common::visitors{
           [](const Symbol *symbol) { return SymbolLEN(*symbol); },
-          [](const StaticDataObject::Pointer &object) {
+          [](const StaticDataObject::Pointer &object)
+              -> std::optional<Expr<SubscriptInteger>> {
             return AsExpr(Constant<SubscriptInteger>{object->data().size()});
           },
       },
       u);
 }
 
-Expr<SubscriptInteger> Component::LEN() const {
+std::optional<Expr<SubscriptInteger>> Component::LEN() const {
   return SymbolLEN(GetLastSymbol());
 }
 
-Expr<SubscriptInteger> NamedEntity::LEN() const {
+std::optional<Expr<SubscriptInteger>> NamedEntity::LEN() const {
   return SymbolLEN(GetLastSymbol());
 }
 
-Expr<SubscriptInteger> ArrayRef::LEN() const { return base_.LEN(); }
+std::optional<Expr<SubscriptInteger>> ArrayRef::LEN() const {
+  return base_.LEN();
+}
 
-Expr<SubscriptInteger> CoarrayRef::LEN() const {
+std::optional<Expr<SubscriptInteger>> CoarrayRef::LEN() const {
   return SymbolLEN(GetLastSymbol());
 }
 
-Expr<SubscriptInteger> DataRef::LEN() const {
+std::optional<Expr<SubscriptInteger>> DataRef::LEN() const {
   return std::visit(
       common::visitors{
           [](const Symbol *s) { return SymbolLEN(*s); },
@@ -297,40 +308,47 @@ Expr<SubscriptInteger> DataRef::LEN() const {
       u);
 }
 
-Expr<SubscriptInteger> Substring::LEN() const {
-  return AsExpr(
-      Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
-          upper() - lower() + AsExpr(Constant<SubscriptInteger>{1})});
+std::optional<Expr<SubscriptInteger>> Substring::LEN() const {
+  if (auto top{upper()}) {
+    return AsExpr(
+        Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
+            *std::move(top) - lower() + AsExpr(Constant<SubscriptInteger>{1})});
+  } else {
+    return std::nullopt;
+  }
 }
 
-template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
-  if constexpr (Result::category == TypeCategory::Character) {
+template<typename T>
+std::optional<Expr<SubscriptInteger>> Designator<T>::LEN() const {
+  if constexpr (T::category == TypeCategory::Character) {
     return std::visit(
         common::visitors{
             [](const Symbol *s) { return SymbolLEN(*s); },
-            [](const Component &c) { return c.LEN(); },
             [](const auto &x) { return x.LEN(); },
         },
         u);
   } else {
-    CHECK(!"LEN() on non-character Designator");
-    return AsExpr(Constant<SubscriptInteger>{0});
+    common::die("Designator<non-char>::LEN() called");
+    return std::nullopt;
   }
 }
 
-Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
-  // TODO: this needs more thought for assumed-length
-  // character functions, intrinsics, &c.
+std::optional<Expr<SubscriptInteger>> ProcedureDesignator::LEN() const {
+  using T = std::optional<Expr<SubscriptInteger>>;
   return std::visit(
       common::visitors{
-          [](const Symbol *s) { return SymbolLEN(*s); },
-          [](const common::CopyableIndirection<Component> &c) {
+          [](const Symbol *s) -> T { return SymbolLEN(*s); },
+          [](const common::CopyableIndirection<Component> &c) -> T {
             return c.value().LEN();
           },
-          [](const auto &) {
-            // TODO: intrinsics
-            CRASH_NO_CASE;
-            return AsExpr(Constant<SubscriptInteger>{0});
+          [](const SpecificIntrinsic &i) -> T {
+            if (i.name == "char") {
+              return Expr<SubscriptInteger>{1};
+            }
+            // Some other cases whose results' lengths can be determined
+            // from the lengths of their arguments are handled in
+            // ProcedureRef::LEN().
+            return std::nullopt;
           },
       },
       u);

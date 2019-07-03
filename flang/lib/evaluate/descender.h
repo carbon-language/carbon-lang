@@ -308,9 +308,10 @@ public:
     auto lx{ss.lower()};
     Visit(lx);
     ss.set_lower(std::move(lx));
-    auto ux{ss.upper()};
-    Visit(ux);
-    ss.set_lower(std::move(ux));
+    if (auto ux{ss.upper()}) {
+      Visit(ux);
+      ss.set_upper(std::move(*ux));
+    }
   }
 
   template<typename T> void Descend(const Designator<T> &designator) {

@@ -27,28 +27,40 @@ using namespace Fortran::parser::literals;
 namespace Fortran::evaluate {
 
 template<int KIND>
-Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
+std::optional<Expr<SubscriptInteger>>
+Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
+  using T = std::optional<Expr<SubscriptInteger>>;
   return std::visit(
       common::visitors{
-          [](const Constant<Result> &c) {
+          [](const Constant<Result> &c) -> T {
             return AsExpr(Constant<SubscriptInteger>{c.LEN()});
           },
-          [](const ArrayConstructor<Result> &a) { return a.LEN(); },
+          [](const ArrayConstructor<Result> &a) -> T { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Convert<Result> &x) {
             return std::visit(
                 [&](const auto &kx) { return kx.LEN(); }, x.left().u);
           },
-          [](const Concat<KIND> &c) {
-            return c.left().LEN() + c.right().LEN();
+          [](const Concat<KIND> &c) -> T {
+            if (auto llen{c.left().LEN()}) {
+              if (auto rlen{c.right().LEN()}) {
+                return *std::move(llen) + *std::move(rlen);
+              }
+            }
+            return std::nullopt;
           },
-          [](const Extremum<Result> &c) {
-            return Expr<SubscriptInteger>{
-                Extremum<SubscriptInteger>{c.left().LEN(), c.right().LEN()}};
+          [](const Extremum<Result> &c) -> T {
+            if (auto llen{c.left().LEN()}) {
+              if (auto rlen{c.right().LEN()}) {
+                return Expr<SubscriptInteger>{Extremum<SubscriptInteger>{
+                    *std::move(llen), *std::move(rlen)}};
+              }
+            }
+            return std::nullopt;
           },
           [](const Designator<Result> &dr) { return dr.LEN(); },
           [](const FunctionRef<Result> &fr) { return fr.LEN(); },
-          [](const SetLength<KIND> &x) { return x.right(); },
+          [](const SetLength<KIND> &x) -> T { return x.right(); },
       },
       u);
 }
@@ -175,7 +187,7 @@ int Expr<SomeCharacter>::GetKind() const {
       u);
 }
 
-Expr<SubscriptInteger> Expr<SomeCharacter>::LEN() const {
+std::optional<Expr<SubscriptInteger>> Expr<SomeCharacter>::LEN() const {
   return std::visit([](const auto &kx) { return kx.LEN(); }, u);
 }
 

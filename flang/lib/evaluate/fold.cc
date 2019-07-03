@@ -487,7 +487,13 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     } else if (name == "len") {
       if (auto *charExpr{UnwrapExpr<Expr<SomeCharacter>>(args[0])}) {
         return std::visit(
-            [&](auto &kx) { return Fold(context, ConvertToType<T>(kx.LEN())); },
+            [&](auto &kx) {
+              if (auto len{kx.LEN()}) {
+                return Fold(context, ConvertToType<T>(*std::move(len)));
+              } else {
+                return Expr<T>{std::move(funcRef)};
+              }
+            },
             charExpr->u);
       } else {
         common::die("len() argument must be of character type");

@@ -53,7 +53,7 @@ struct BaseObject {
   explicit BaseObject(const Symbol &symbol) : u{&symbol} {}
   explicit BaseObject(StaticDataObject::Pointer &&p) : u{std::move(p)} {}
   int Rank() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const BaseObject &) const;
   std::ostream &AsFortran(std::ostream &) const;
   const Symbol *symbol() const {
@@ -86,7 +86,7 @@ public:
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const { return *symbol_; }
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const Component &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
@@ -114,7 +114,7 @@ public:
   Component *UnwrapComponent();
 
   int Rank() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const NamedEntity &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
@@ -219,7 +219,7 @@ public:
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const ArrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
@@ -267,7 +267,7 @@ public:
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
   NamedEntity GetBase() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const CoarrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
@@ -291,7 +291,7 @@ struct DataRef {
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   std::ostream &AsFortran(std::ostream &) const;
 
   std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u;
@@ -320,7 +320,7 @@ public:
 
   Expr<SubscriptInteger> lower() const;
   Substring &set_lower(Expr<SubscriptInteger> &&);
-  Expr<SubscriptInteger> upper() const;
+  std::optional<Expr<SubscriptInteger>> upper() const;
   Substring &set_upper(Expr<SubscriptInteger> &&);
   const Parent &parent() const { return parent_; }
   Parent &parent() { return parent_; }
@@ -331,7 +331,7 @@ public:
   }
   BaseObject GetBaseObject() const;
   const Symbol *GetLastSymbol() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const Substring &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
@@ -393,7 +393,7 @@ public:
   int Rank() const;
   BaseObject GetBaseObject() const;
   const Symbol *GetLastSymbol() const;
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<Expr<SubscriptInteger>> LEN() const;
   std::ostream &AsFortran(std::ostream &o) const;
 
   Variant u;

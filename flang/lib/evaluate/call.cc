@@ -155,7 +155,7 @@ std::string ProcedureDesignator::GetName() const {
       u);
 }
 
-Expr<SubscriptInteger> ProcedureRef::LEN() const {
+std::optional<Expr<SubscriptInteger>> ProcedureRef::LEN() const {
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&proc_.u)}) {
     if (intrinsic->name == "repeat") {
       // LEN(REPEAT(ch,n)) == LEN(ch) * n
@@ -165,18 +165,14 @@ Expr<SubscriptInteger> ProcedureRef::LEN() const {
       const auto *nCopiesArg{
           UnwrapExpr<Expr<SomeInteger>>(arguments_[1].value())};
       CHECK(stringArg != nullptr && nCopiesArg != nullptr);
-      auto stringLen{stringArg->LEN()};
-      return std::move(stringLen) *
-          ConvertTo(stringLen, common::Clone(*nCopiesArg));
+      if (auto stringLen{stringArg->LEN()}) {
+        auto converted{ConvertTo(*stringLen, common::Clone(*nCopiesArg))};
+        return *std::move(stringLen) * std::move(converted);
+      }
     }
-    if (intrinsic->name == "trim") {
-      // LEN(TRIM(ch)) is unknown without execution.
-      CHECK(arguments_.size() == 1);
-      const auto *stringArg{
-          UnwrapExpr<Expr<SomeCharacter>>(arguments_[0].value())};
-      CHECK(stringArg != nullptr);
-      return stringArg->LEN();
-    }
+    // Some other cases (e.g., LEN(CHAR(...))) are handled in
+    // ProcedureDesignator::LEN() because they're independent of the
+    // lengths of the actual arguments.
   }
   return proc_.LEN();
 }
