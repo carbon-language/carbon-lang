@@ -24,11 +24,11 @@ def MipsGenericModel : SchedMachineModel {
   int HighLatency = 37;
   list<Predicate> UnsupportedFeatures = [];
 
-  let CompleteModel = 0;
+  let CompleteModel = 1;
   let PostRAScheduler = 1;
 
   // FIXME: Remove when all errors have been fixed.
-  let FullInstRWOverlapCheck = 0;
+  let FullInstRWOverlapCheck = 1;
 }
 
 let SchedModel = MipsGenericModel in {
