@@ -386,12 +386,9 @@ const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
 }
 
 bool IsFinalizable(const Symbol &symbol) {
-  const DeclTypeSpec *type{symbol.GetType()};
-  if (type) {
-    const DerivedTypeSpec *derived{type->AsDerived()};
-    if (derived) {
-      const Scope *scope{derived->scope()};
-      if (scope) {
+  if (const DeclTypeSpec * type{symbol.GetType()}) {
+    if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+      if (const Scope * scope{derived->scope()}) {
         for (auto &pair : *scope) {
           Symbol &symbol{*pair.second};
           if (symbol.has<FinalProcDetails>()) {

@@ -3753,10 +3753,9 @@ bool DeclarationVisitor::PassesLocalityChecks(
         name, symbol, "Coarray '%s' not allowed in a locality-spec"_err_en_US);
     return false;
   }
-  const DeclTypeSpec *type{symbol.GetType()};
-  if (type) {
+  if (const DeclTypeSpec * type{symbol.GetType()}) {
     if (type->IsPolymorphic() && symbol.IsDummy() &&
-        (!IsPointer(symbol))) {  // C1128
+        !IsPointer(symbol)) {  // C1128
       SayWithDecl(name, symbol,
           "Nonpointer polymorphic argument '%s' not allowed in a "
           "locality-spec"_err_en_US);
