@@ -524,18 +524,41 @@ TEST_F(BackgroundIndexTest, UncompilableFiles) {
   CDB.setCompileCommand(testPath("build/../A.cc"), Cmd);
   ASSERT_TRUE(Idx.blockUntilIdleForTest());
 
-  // Make sure we only store the shard for main file.
-  EXPECT_THAT(Storage.keys(), ElementsAre(testPath("A.cc")));
-  auto Shard = MSS.loadShard(testPath("A.cc"));
-  EXPECT_THAT(*Shard->Symbols, UnorderedElementsAre(Named("foo")));
-  EXPECT_THAT(Shard->Sources->keys(),
-              UnorderedElementsAre("unittest:///A.cc", "unittest:///A.h",
-                                   "unittest:///B.h"));
+  EXPECT_THAT(Storage.keys(), ElementsAre(testPath("A.cc"), testPath("A.h"),
+                                          testPath("B.h"), testPath("C.h")));
 
-  EXPECT_THAT(Shard->Sources->lookup("unittest:///A.cc"), HadErrors());
-  // FIXME: We should also persist headers while marking them with errors.
-  EXPECT_THAT(Shard->Sources->lookup("unittest:///A.h"), Not(HadErrors()));
-  EXPECT_THAT(Shard->Sources->lookup("unittest:///B.h"), Not(HadErrors()));
+  {
+    auto Shard = MSS.loadShard(testPath("A.cc"));
+    EXPECT_THAT(*Shard->Symbols, UnorderedElementsAre(Named("foo")));
+    EXPECT_THAT(Shard->Sources->keys(),
+                UnorderedElementsAre("unittest:///A.cc", "unittest:///A.h",
+                                     "unittest:///B.h"));
+    EXPECT_THAT(Shard->Sources->lookup("unittest:///A.cc"), HadErrors());
+  }
+
+  {
+    auto Shard = MSS.loadShard(testPath("A.h"));
+    EXPECT_THAT(*Shard->Symbols, UnorderedElementsAre(Named("foo")));
+    EXPECT_THAT(Shard->Sources->keys(),
+                UnorderedElementsAre("unittest:///A.h"));
+    EXPECT_THAT(Shard->Sources->lookup("unittest:///A.h"), HadErrors());
+  }
+
+  {
+    auto Shard = MSS.loadShard(testPath("B.h"));
+    EXPECT_THAT(*Shard->Symbols, UnorderedElementsAre(Named("asdf")));
+    EXPECT_THAT(Shard->Sources->keys(),
+                UnorderedElementsAre("unittest:///B.h", "unittest:///C.h"));
+    EXPECT_THAT(Shard->Sources->lookup("unittest:///B.h"), HadErrors());
+  }
+
+  {
+    auto Shard = MSS.loadShard(testPath("C.h"));
+    EXPECT_THAT(*Shard->Symbols, UnorderedElementsAre());
+    EXPECT_THAT(Shard->Sources->keys(),
+                UnorderedElementsAre("unittest:///C.h"));
+    EXPECT_THAT(Shard->Sources->lookup("unittest:///C.h"), HadErrors());
+  }
 }
 
 TEST_F(BackgroundIndexTest, CmdLineHash) {
