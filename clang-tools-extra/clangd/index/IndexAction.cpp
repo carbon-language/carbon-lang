@@ -7,10 +7,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexAction.h"
+#include "Logger.h"
+#include "index/Relation.h"
 #include "index/SymbolOrigin.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Index/IndexingAction.h"
 #include "clang/Tooling/Tooling.h"
+#include <utility>
 
 namespace clang {
 namespace clangd {
@@ -149,12 +152,6 @@ public:
   void EndSourceFileAction() override {
     WrapperFrontendAction::EndSourceFileAction();
 
-    const auto &CI = getCompilerInstance();
-    if (CI.hasDiagnostics() &&
-        CI.getDiagnostics().hasUncompilableErrorOccurred()) {
-      llvm::errs() << "Skipping TU due to uncompilable errors\n";
-      return;
-    }
     SymbolsCallback(Collector->takeSymbols());
     if (RefsCallback != nullptr)
       RefsCallback(Collector->takeRefs());

@@ -491,5 +491,40 @@ TEST_F(BackgroundIndexTest, NoDotsInAbsPath) {
   }
 }
 
+TEST_F(BackgroundIndexTest, UncompilableFiles) {
+  MockFSProvider FS;
+  llvm::StringMap<std::string> Storage;
+  size_t CacheHits = 0;
+  MemoryShardStorage MSS(Storage, CacheHits);
+  OverlayCDB CDB(/*Base=*/nullptr);
+  BackgroundIndex Idx(Context::empty(), FS, CDB,
+                      [&](llvm::StringRef) { return &MSS; });
+
+  tooling::CompileCommand Cmd;
+  FS.Files[testPath("A.h")] = "void foo();";
+  FS.Files[testPath("B.h")] = "#include \"C.h\"\nasdf;";
+  FS.Files[testPath("C.h")] = "";
+  FS.Files[testPath("A.cc")] = R"cpp(
+  #include "A.h"
+  #include "B.h"
+  #include "not_found_header.h"
+
+  void foo() {}
+  )cpp";
+  Cmd.Filename = "../A.cc";
+  Cmd.Directory = testPath("build");
+  Cmd.CommandLine = {"clang++", "../A.cc"};
+  CDB.setCompileCommand(testPath("build/../A.cc"), Cmd);
+  ASSERT_TRUE(Idx.blockUntilIdleForTest());
+
+  // Make sure we only store the shard for main file.
+  EXPECT_THAT(Storage.keys(), ElementsAre(testPath("A.cc")));
+  auto Shard = MSS.loadShard(testPath("A.cc"));
+  EXPECT_THAT(*Shard->Symbols, UnorderedElementsAre(Named("foo")));
+  EXPECT_THAT(Shard->Sources->keys(),
+              UnorderedElementsAre("unittest:///A.cc", "unittest:///A.h",
+                                   "unittest:///B.h"));
+}
+
 } // namespace clangd
 } // namespace clang

@@ -98,7 +98,7 @@ private:
   /// information on IndexStorage.
   void update(llvm::StringRef MainFile, IndexFileIn Index,
               const llvm::StringMap<FileDigest> &DigestsSnapshot,
-              BackgroundIndexStorage *IndexStorage);
+              BackgroundIndexStorage *IndexStorage, bool HadErrors);
 
   // configuration
   const FileSystemProvider &FSProvider;

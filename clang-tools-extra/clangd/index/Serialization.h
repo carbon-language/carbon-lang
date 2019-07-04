@@ -62,7 +62,8 @@ struct IndexFileOut {
   IndexFileOut(const IndexFileIn &I)
       : Symbols(I.Symbols ? I.Symbols.getPointer() : nullptr),
         Refs(I.Refs ? I.Refs.getPointer() : nullptr),
-        Relations(I.Relations ? I.Relations.getPointer() : nullptr) {}
+        Relations(I.Relations ? I.Relations.getPointer() : nullptr),
+        Sources(I.Sources ? I.Sources.getPointer() : nullptr) {}
 };
 // Serializes an index file.
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const IndexFileOut &O);

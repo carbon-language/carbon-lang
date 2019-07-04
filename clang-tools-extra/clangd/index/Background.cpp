@@ -9,7 +9,9 @@
 #include "index/Background.h"
 #include "ClangdUnit.h"
 #include "Compiler.h"
+#include "Headers.h"
 #include "Logger.h"
+#include "Path.h"
 #include "SourceCode.h"
 #include "Symbol.h"
 #include "Threading.h"
@@ -17,6 +19,8 @@
 #include "URI.h"
 #include "index/IndexAction.h"
 #include "index/MemIndex.h"
+#include "index/Ref.h"
+#include "index/Relation.h"
 #include "index/Serialization.h"
 #include "index/SymbolCollector.h"
 #include "clang/Basic/SourceLocation.h"
@@ -25,6 +29,8 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/SHA1.h"
 #include "llvm/Support/Threading.h"
 
@@ -271,7 +277,8 @@ void BackgroundIndex::enqueueTask(Task T, llvm::ThreadPriority Priority) {
 /// information on IndexStorage.
 void BackgroundIndex::update(llvm::StringRef MainFile, IndexFileIn Index,
                              const llvm::StringMap<FileDigest> &DigestsSnapshot,
-                             BackgroundIndexStorage *IndexStorage) {
+                             BackgroundIndexStorage *IndexStorage,
+                             bool HadErrors) {
   // Partition symbols/references into files.
   struct File {
     llvm::DenseSet<const Symbol *> Symbols;
@@ -283,6 +290,14 @@ void BackgroundIndex::update(llvm::StringRef MainFile, IndexFileIn Index,
   URIToFileCache URICache(MainFile);
   for (const auto &IndexIt : *Index.Sources) {
     const auto &IGN = IndexIt.getValue();
+    // In case of failures, we only store main file of TU. That way we can still
+    // get symbols from headers if some other TU can compile them. Note that
+    // sources do not contain any information regarding missing headers, since
+    // we don't even know what absolute path they should fall in.
+    // FIXME: Also store contents from other files whenever the current contents
+    // for those files are missing or if they had errors before.
+    if (HadErrors && !IGN.IsTU)
+      continue;
     const auto AbsPath = URICache.resolve(IGN.URI);
     const auto DigestIt = DigestsSnapshot.find(AbsPath);
     // File has different contents.
@@ -347,8 +362,10 @@ void BackgroundIndex::update(llvm::StringRef MainFile, IndexFileIn Index,
     auto RelS = llvm::make_unique<RelationSlab>(std::move(Relations).build());
     auto IG = llvm::make_unique<IncludeGraph>(
         getSubGraph(URI::create(Path), Index.Sources.getValue()));
+
     // We need to store shards before updating the index, since the latter
     // consumes slabs.
+    // FIXME: Also skip serializing the shard if it is already up-to-date.
     if (IndexStorage) {
       IndexFileOut Shard;
       Shard.Symbols = SS.get();
@@ -360,6 +377,7 @@ void BackgroundIndex::update(llvm::StringRef MainFile, IndexFileIn Index,
         elog("Failed to write background-index shard for file {0}: {1}", Path,
              std::move(Error));
     }
+
     {
       std::lock_guard<std::mutex> Lock(DigestsMu);
       auto Hash = FileIt.second.Digest;
@@ -460,12 +478,6 @@ llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
     return Err;
 
   Action->EndSourceFile();
-  if (Clang->hasDiagnostics() &&
-      Clang->getDiagnostics().hasUncompilableErrorOccurred()) {
-    return llvm::createStringError(
-        llvm::inconvertibleErrorCode(),
-        "IndexingAction failed: has uncompilable errors");
-  }
 
   assert(Index.Symbols && Index.Refs && Index.Sources &&
          "Symbols, Refs and Sources must be set.");
@@ -477,7 +489,12 @@ llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
   SPAN_ATTACH(Tracer, "refs", int(Index.Refs->numRefs()));
   SPAN_ATTACH(Tracer, "sources", int(Index.Sources->size()));
 
-  update(AbsolutePath, std::move(Index), DigestsSnapshot, IndexStorage);
+  bool HadErrors = Clang->hasDiagnostics() &&
+                   Clang->getDiagnostics().hasUncompilableErrorOccurred();
+  update(AbsolutePath, std::move(Index), DigestsSnapshot, IndexStorage,
+         HadErrors);
+  if (HadErrors)
+    log("Failed to compile {0}, index may be incomplete", AbsolutePath);
 
   if (BuildIndexPeriodMs > 0)
     SymbolsUpdatedSinceLastIndex = true;
@@ -568,6 +585,8 @@ BackgroundIndex::loadShard(const tooling::CompileCommand &Cmd,
         continue;
       }
       // If digests match then dependency doesn't need re-indexing.
+      // FIXME: Also check for dependencies(sources) of this shard and compile
+      // commands for cache invalidation.
       CurDependency.NeedsReIndexing =
           digest(Buf->get()->getBuffer()) != I.getValue().Digest;
     }
