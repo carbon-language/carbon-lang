@@ -8,11 +8,10 @@ define i64 @test_shl(i64 %val, i64 %amt) {
 ; CHECK-NEXT:    rsb r3, r2, #32
 ; CHECK-NEXT:    lsr r3, r0, r3
 ; CHECK-NEXT:    orr r1, r3, r1, lsl r2
-; CHECK-NEXT:    sub r3, r2, #32
-; CHECK-NEXT:    cmp r3, #0
-; CHECK-NEXT:    lslge r1, r0, r3
+; CHECK-NEXT:    subs r3, r2, #32
+; CHECK-NEXT:    lslpl r1, r0, r3
 ; CHECK-NEXT:    lsl r0, r0, r2
-; CHECK-NEXT:    movge r0, #0
+; CHECK-NEXT:    movpl r0, #0
 ; CHECK-NEXT:    mov pc, lr
 ;
 ; EXPAND-LABEL: test_shl:
@@ -32,11 +31,10 @@ define i64 @test_lshr(i64 %val, i64 %amt) {
 ; CHECK-NEXT:    rsb r3, r2, #32
 ; CHECK-NEXT:    lsr r0, r0, r2
 ; CHECK-NEXT:    orr r0, r0, r1, lsl r3
-; CHECK-NEXT:    sub r3, r2, #32
-; CHECK-NEXT:    cmp r3, #0
-; CHECK-NEXT:    lsrge r0, r1, r3
+; CHECK-NEXT:    subs r3, r2, #32
+; CHECK-NEXT:    lsrpl r0, r1, r3
 ; CHECK-NEXT:    lsr r1, r1, r2
-; CHECK-NEXT:    movge r1, #0
+; CHECK-NEXT:    movpl r1, #0
 ; CHECK-NEXT:    mov pc, lr
 ;
 ; EXPAND-LABEL: test_lshr:
@@ -54,14 +52,13 @@ define i64 @test_lshr(i64 %val, i64 %amt) {
 define i64 @test_ashr(i64 %val, i64 %amt) {
 ; CHECK-LABEL: test_ashr:
 ; CHECK:       @ %bb.0:
-; CHECK-NEXT:    sub r12, r2, #32
 ; CHECK-NEXT:    asr r3, r1, r2
+; CHECK-NEXT:    subs r12, r2, #32
 ; CHECK-NEXT:    lsr r0, r0, r2
 ; CHECK-NEXT:    rsb r2, r2, #32
-; CHECK-NEXT:    cmp r12, #0
+; CHECK-NEXT:    asrpl r3, r1, #31
 ; CHECK-NEXT:    orr r0, r0, r1, lsl r2
-; CHECK-NEXT:    asrge r3, r1, #31
-; CHECK-NEXT:    asrge r0, r1, r12
+; CHECK-NEXT:    asrpl r0, r1, r12
 ; CHECK-NEXT:    mov r1, r3
 ; CHECK-NEXT:    mov pc, lr
 ;

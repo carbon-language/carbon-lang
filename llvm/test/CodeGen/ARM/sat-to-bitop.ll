@@ -39,15 +39,14 @@ define i16 @sat0_base_16bit(i16 %x) #0 {
 ; CHECK-ARM-NEXT:    lsl r1, r0, #16
 ; CHECK-ARM-NEXT:    asr r1, r1, #16
 ; CHECK-ARM-NEXT:    cmp r1, #0
-; CHECK-ARM-NEXT:    movlt r0, #0
+; CHECK-ARM-NEXT:    movmi r0, #0
 ; CHECK-ARM-NEXT:    mov pc, lr
 ;
 ; CHECK-T-LABEL: sat0_base_16bit:
 ; CHECK-T:       @ %bb.0: @ %entry
 ; CHECK-T-NEXT:    lsls r1, r0, #16
 ; CHECK-T-NEXT:    asrs r1, r1, #16
-; CHECK-T-NEXT:    cmp r1, #0
-; CHECK-T-NEXT:    bge .LBB1_2
+; CHECK-T-NEXT:    bpl .LBB1_2
 ; CHECK-T-NEXT:  @ %bb.1:
 ; CHECK-T-NEXT:    movs r0, #0
 ; CHECK-T-NEXT:  .LBB1_2: @ %entry
@@ -57,8 +56,8 @@ define i16 @sat0_base_16bit(i16 %x) #0 {
 ; CHECK-T2:       @ %bb.0: @ %entry
 ; CHECK-T2-NEXT:    sxth r1, r0
 ; CHECK-T2-NEXT:    cmp r1, #0
-; CHECK-T2-NEXT:    it lt
-; CHECK-T2-NEXT:    movlt r0, #0
+; CHECK-T2-NEXT:    it mi
+; CHECK-T2-NEXT:    movmi r0, #0
 ; CHECK-T2-NEXT:    bx lr
 entry:
   %cmpLow = icmp slt i16 %x, 0
@@ -74,15 +73,14 @@ define i8 @sat0_base_8bit(i8 %x) #0 {
 ; CHECK-ARM-NEXT:    lsl r1, r0, #24
 ; CHECK-ARM-NEXT:    asr r1, r1, #24
 ; CHECK-ARM-NEXT:    cmp r1, #0
-; CHECK-ARM-NEXT:    movlt r0, #0
+; CHECK-ARM-NEXT:    movmi r0, #0
 ; CHECK-ARM-NEXT:    mov pc, lr
 ;
 ; CHECK-T-LABEL: sat0_base_8bit:
 ; CHECK-T:       @ %bb.0: @ %entry
 ; CHECK-T-NEXT:    lsls r1, r0, #24
 ; CHECK-T-NEXT:    asrs r1, r1, #24
-; CHECK-T-NEXT:    cmp r1, #0
-; CHECK-T-NEXT:    bge .LBB2_2
+; CHECK-T-NEXT:    bpl .LBB2_2
 ; CHECK-T-NEXT:  @ %bb.1:
 ; CHECK-T-NEXT:    movs r0, #0
 ; CHECK-T-NEXT:  .LBB2_2: @ %entry
@@ -92,8 +90,8 @@ define i8 @sat0_base_8bit(i8 %x) #0 {
 ; CHECK-T2:       @ %bb.0: @ %entry
 ; CHECK-T2-NEXT:    sxtb r1, r0
 ; CHECK-T2-NEXT:    cmp r1, #0
-; CHECK-T2-NEXT:    it lt
-; CHECK-T2-NEXT:    movlt r0, #0
+; CHECK-T2-NEXT:    it mi
+; CHECK-T2-NEXT:    movmi r0, #0
 ; CHECK-T2-NEXT:    bx lr
 entry:
   %cmpLow = icmp slt i8 %x, 0
@@ -265,14 +263,14 @@ define i32 @no_sat0_incorrect_variable(i32 %x, i32 %y) #0 {
 ; CHECK-ARM-LABEL: no_sat0_incorrect_variable:
 ; CHECK-ARM:       @ %bb.0: @ %entry
 ; CHECK-ARM-NEXT:    cmp r0, #0
-; CHECK-ARM-NEXT:    movlt r1, #0
+; CHECK-ARM-NEXT:    movmi r1, #0
 ; CHECK-ARM-NEXT:    mov r0, r1
 ; CHECK-ARM-NEXT:    mov pc, lr
 ;
 ; CHECK-T-LABEL: no_sat0_incorrect_variable:
 ; CHECK-T:       @ %bb.0: @ %entry
 ; CHECK-T-NEXT:    cmp r0, #0
-; CHECK-T-NEXT:    bge .LBB8_2
+; CHECK-T-NEXT:    bpl .LBB8_2
 ; CHECK-T-NEXT:  @ %bb.1:
 ; CHECK-T-NEXT:    movs r1, #0
 ; CHECK-T-NEXT:  .LBB8_2: @ %entry
@@ -282,8 +280,8 @@ define i32 @no_sat0_incorrect_variable(i32 %x, i32 %y) #0 {
 ; CHECK-T2-LABEL: no_sat0_incorrect_variable:
 ; CHECK-T2:       @ %bb.0: @ %entry
 ; CHECK-T2-NEXT:    cmp r0, #0
-; CHECK-T2-NEXT:    it lt
-; CHECK-T2-NEXT:    movlt r1, #0
+; CHECK-T2-NEXT:    it mi
+; CHECK-T2-NEXT:    movmi r1, #0
 ; CHECK-T2-NEXT:    mov r0, r1
 ; CHECK-T2-NEXT:    bx lr
 entry:
@@ -297,13 +295,13 @@ define i32 @no_sat0_incorrect_constant(i32 %x) {
 ; CHECK-ARM-LABEL: no_sat0_incorrect_constant:
 ; CHECK-ARM:       @ %bb.0: @ %entry
 ; CHECK-ARM-NEXT:    cmp r0, #0
-; CHECK-ARM-NEXT:    mvnlt r0, #0
+; CHECK-ARM-NEXT:    mvnmi r0, #0
 ; CHECK-ARM-NEXT:    mov pc, lr
 ;
 ; CHECK-T-LABEL: no_sat0_incorrect_constant:
 ; CHECK-T:       @ %bb.0: @ %entry
 ; CHECK-T-NEXT:    cmp r0, #0
-; CHECK-T-NEXT:    bge .LBB9_2
+; CHECK-T-NEXT:    bpl .LBB9_2
 ; CHECK-T-NEXT:  @ %bb.1:
 ; CHECK-T-NEXT:    movs r0, #0
 ; CHECK-T-NEXT:    mvns r0, r0
@@ -313,8 +311,8 @@ define i32 @no_sat0_incorrect_constant(i32 %x) {
 ; CHECK-T2-LABEL: no_sat0_incorrect_constant:
 ; CHECK-T2:       @ %bb.0: @ %entry
 ; CHECK-T2-NEXT:    cmp r0, #0
-; CHECK-T2-NEXT:    it lt
-; CHECK-T2-NEXT:    movlt.w r0, #-1
+; CHECK-T2-NEXT:    it mi
+; CHECK-T2-NEXT:    movmi.w r0, #-1
 ; CHECK-T2-NEXT:    bx lr
 entry:
   %cmpLow = icmp slt i32 %x, 0

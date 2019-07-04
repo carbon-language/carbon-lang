@@ -28,18 +28,16 @@ define i64 @f0(i64 %A, i64 %B) {
 define i32 @f1(i64 %x, i64 %y) {
 ; CHECK-LE-LABEL: f1:
 ; CHECK-LE:       @ %bb.0:
-; CHECK-LE-NEXT:    sub r1, r2, #32
 ; CHECK-LE-NEXT:    lsl r0, r0, r2
-; CHECK-LE-NEXT:    cmp r1, #0
-; CHECK-LE-NEXT:    movge r0, #0
+; CHECK-LE-NEXT:    subs r1, r2, #32
+; CHECK-LE-NEXT:    movpl r0, #0
 ; CHECK-LE-NEXT:    mov pc, lr
 ;
 ; CHECK-BE-LABEL: f1:
 ; CHECK-BE:       @ %bb.0:
 ; CHECK-BE-NEXT:    lsl r0, r1, r3
-; CHECK-BE-NEXT:    sub r1, r3, #32
-; CHECK-BE-NEXT:    cmp r1, #0
-; CHECK-BE-NEXT:    movge r0, #0
+; CHECK-BE-NEXT:    subs r1, r3, #32
+; CHECK-BE-NEXT:    movpl r0, #0
 ; CHECK-BE-NEXT:    mov pc, lr
 
   %a = shl i64 %x, %y
@@ -52,10 +50,9 @@ define i32 @f2(i64 %x, i64 %y) {
 ; CHECK-LE:       @ %bb.0:
 ; CHECK-LE-NEXT:    rsb r3, r2, #32
 ; CHECK-LE-NEXT:    lsr r0, r0, r2
-; CHECK-LE-NEXT:    sub r2, r2, #32
+; CHECK-LE-NEXT:    subs r2, r2, #32
 ; CHECK-LE-NEXT:    orr r0, r0, r1, lsl r3
-; CHECK-LE-NEXT:    cmp r2, #0
-; CHECK-LE-NEXT:    asrge r0, r1, r2
+; CHECK-LE-NEXT:    asrpl r0, r1, r2
 ; CHECK-LE-NEXT:    mov pc, lr
 ;
 ; CHECK-BE-LABEL: f2:
@@ -63,9 +60,8 @@ define i32 @f2(i64 %x, i64 %y) {
 ; CHECK-BE-NEXT:    rsb r2, r3, #32
 ; CHECK-BE-NEXT:    lsr r1, r1, r3
 ; CHECK-BE-NEXT:    orr r1, r1, r0, lsl r2
-; CHECK-BE-NEXT:    sub r2, r3, #32
-; CHECK-BE-NEXT:    cmp r2, #0
-; CHECK-BE-NEXT:    asrge r1, r0, r2
+; CHECK-BE-NEXT:    subs r2, r3, #32
+; CHECK-BE-NEXT:    asrpl r1, r0, r2
 ; CHECK-BE-NEXT:    mov r0, r1
 ; CHECK-BE-NEXT:    mov pc, lr
 
@@ -79,10 +75,9 @@ define i32 @f3(i64 %x, i64 %y) {
 ; CHECK-LE:       @ %bb.0:
 ; CHECK-LE-NEXT:    rsb r3, r2, #32
 ; CHECK-LE-NEXT:    lsr r0, r0, r2
-; CHECK-LE-NEXT:    sub r2, r2, #32
+; CHECK-LE-NEXT:    subs r2, r2, #32
 ; CHECK-LE-NEXT:    orr r0, r0, r1, lsl r3
-; CHECK-LE-NEXT:    cmp r2, #0
-; CHECK-LE-NEXT:    lsrge r0, r1, r2
+; CHECK-LE-NEXT:    lsrpl r0, r1, r2
 ; CHECK-LE-NEXT:    mov pc, lr
 ;
 ; CHECK-BE-LABEL: f3:
@@ -90,9 +85,8 @@ define i32 @f3(i64 %x, i64 %y) {
 ; CHECK-BE-NEXT:    rsb r2, r3, #32
 ; CHECK-BE-NEXT:    lsr r1, r1, r3
 ; CHECK-BE-NEXT:    orr r1, r1, r0, lsl r2
-; CHECK-BE-NEXT:    sub r2, r3, #32
-; CHECK-BE-NEXT:    cmp r2, #0
-; CHECK-BE-NEXT:    lsrge r1, r0, r2
+; CHECK-BE-NEXT:    subs r2, r3, #32
+; CHECK-BE-NEXT:    lsrpl r1, r0, r2
 ; CHECK-BE-NEXT:    mov r0, r1
 ; CHECK-BE-NEXT:    mov pc, lr
 
