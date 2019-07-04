@@ -19,7 +19,7 @@
 #include "DynoStats.h"
 #include "HFSort.h"
 #include "llvm/Support/CommandLine.h"
-
+#include <atomic>
 #include <map>
 #include <set>
 #include <string>
@@ -95,9 +95,10 @@ public:
 /// Detect and eliminate unreachable basic blocks. We could have those
 /// filled with nops and they are used for alignment.
 class EliminateUnreachableBlocks : public BinaryFunctionPass {
+  std::shared_timed_mutex ModifiedMtx;
   std::unordered_set<const BinaryFunction *> Modified;
-  unsigned DeletedBlocks{0};
-  uint64_t DeletedBytes{0};
+  std::atomic<unsigned> DeletedBlocks{0};
+  std::atomic<uint64_t> DeletedBytes{0};
   void runOnFunction(BinaryFunction& Function);
  public:
   EliminateUnreachableBlocks(const cl::opt<bool> &PrintPass)

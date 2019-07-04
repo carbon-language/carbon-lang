@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPasses.h"
+#include "ParallelUtilities.h"
 #include "Passes/ReorderAlgorithm.h"
 #include "llvm/Support/Options.h"
 #include <numeric>
@@ -294,7 +295,10 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     DeletedBlocks += Count;
     DeletedBytes += Bytes;
     if (Count) {
-      Modified.insert(&Function);
+      {
+        std::unique_lock<std::shared_timed_mutex> Lock(ModifiedMtx);
+        Modified.insert(&Function);
+      }
       if (opts::Verbosity > 0) {
         outs() << "BOLT-INFO: Removed " << Count
                << " dead basic block(s) accounting for " << Bytes
@@ -305,12 +309,18 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
 }
 
 void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
-  for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
-    if (shouldOptimize(Function)) {
-      runOnFunction(Function);
-    }
-  }
+  ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
+    runOnFunction(BF);
+  };
+  
+  ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
+    return !shouldOptimize(BF);
+  };
+
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_TRIVIAL, WorkFun, SkipFunc,
+      "EliminateUnreachableBlocks");
+
   outs() << "BOLT-INFO: UCE removed " << DeletedBlocks << " blocks and "
          << DeletedBytes << " bytes of code.\n";
 }

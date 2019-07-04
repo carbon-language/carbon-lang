@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Passes/IdenticalCodeFolding.h"
+#include "ParallelUtilities.h"
 #include "llvm/Support/Options.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/Timer.h"
@@ -26,8 +27,6 @@ using namespace bolt;
 namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
-extern cl::opt<int> ThreadCount;
-extern cl::opt<int> NoThreads;
 
 static cl::opt<bool>
 UseDFS("icf-dfs",

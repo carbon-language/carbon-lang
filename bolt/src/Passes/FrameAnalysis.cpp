@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 #include "FrameAnalysis.h"
 #include "CallGraphWalker.h"
+#include "ParallelUtilities.h"
 #include "llvm/Support/ThreadPool.h"
 #include <fstream>
 
@@ -20,8 +21,6 @@ using namespace llvm;
 namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> NoThreads;
-extern cl::opt<int> ThreadCount;
 
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 

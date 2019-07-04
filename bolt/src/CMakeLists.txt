@@ -83,6 +83,7 @@ add_llvm_tool(llvm-bolt
   Heatmap.cpp
   JumpTable.cpp
   MCPlusBuilder.cpp
+  ParallelUtilities.cpp
   ProfileReader.cpp
   ProfileWriter.cpp
   Relocation.cpp

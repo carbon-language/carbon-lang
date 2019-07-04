@@ -104,18 +104,6 @@ PerfDataA("p",
   cl::desc("Alias for -perfdata"),
   cl::aliasopt(PerfData),
   cl::cat(AggregatorCategory));
-
-cl::opt<int> 
-ThreadCount("thread-count",
-  cl::desc("number of threads"),
-  cl::init(hardware_concurrency()),
-  cl::cat(BoltCategory));
-
-cl::opt<bool> 
-NoThreads("no-threads",
-  cl::desc("disbale multithreading"),
-  cl::init(false),
-  cl::cat(BoltCategory));
   
 } // namespace opts
 static StringRef ToolName;
