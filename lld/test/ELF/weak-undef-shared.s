@@ -4,6 +4,7 @@
 
 # RUN: echo '.data; .weak foo; .quad foo' | llvm-mc -filetype=obj -triple=x86_64 - -o %t1.o
 # RUN: echo '.data; .quad foo' | llvm-mc -filetype=obj -triple=x86_64 - -o %t2.o
+# RUN: ld.lld -shared %t2.o -o %t2.so
 
 ## If the first undefined reference is weak, the binding changes to
 ## STB_WEAK.
