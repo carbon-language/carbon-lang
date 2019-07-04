@@ -25,6 +25,7 @@
 #include "index/SymbolCollector.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringMap.h"
@@ -373,6 +374,11 @@ void BackgroundIndex::update(llvm::StringRef MainFile, IndexFileIn Index,
       Shard.Relations = RelS.get();
       Shard.Sources = IG.get();
 
+      // Only store command line hash for main files of the TU, since our
+      // current model keeps only one version of a header file.
+      if (Path == MainFile)
+        Shard.Cmd = Index.Cmd.getPointer();
+
       if (auto Error = IndexStorage->storeShard(Path, Shard))
         elog("Failed to write background-index shard for file {0}: {1}", Path,
              std::move(Error));
@@ -479,6 +485,7 @@ llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
 
   Action->EndSourceFile();
 
+  Index.Cmd = Inputs.CompileCommand;
   assert(Index.Symbols && Index.Refs && Index.Sources &&
          "Symbols, Refs and Sources must be set.");
 

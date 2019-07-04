@@ -2,6 +2,7 @@
 #include "TestFS.h"
 #include "TestTU.h"
 #include "index/Background.h"
+#include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/Threading.h"
 #include "gmock/gmock.h"
@@ -524,6 +525,50 @@ TEST_F(BackgroundIndexTest, UncompilableFiles) {
   EXPECT_THAT(Shard->Sources->keys(),
               UnorderedElementsAre("unittest:///A.cc", "unittest:///A.h",
                                    "unittest:///B.h"));
+}
+
+TEST_F(BackgroundIndexTest, CmdLineHash) {
+  MockFSProvider FS;
+  llvm::StringMap<std::string> Storage;
+  size_t CacheHits = 0;
+  MemoryShardStorage MSS(Storage, CacheHits);
+  OverlayCDB CDB(/*Base=*/nullptr, /*FallbackFlags=*/{},
+                 /*ResourceDir=*/std::string(""));
+  BackgroundIndex Idx(Context::empty(), FS, CDB,
+                      [&](llvm::StringRef) { return &MSS; });
+
+  tooling::CompileCommand Cmd;
+  FS.Files[testPath("A.cc")] = "#include \"A.h\"";
+  FS.Files[testPath("A.h")] = "";
+  Cmd.Filename = "../A.cc";
+  Cmd.Directory = testPath("build");
+  Cmd.CommandLine = {"clang++", "../A.cc", "-fsyntax-only"};
+  CDB.setCompileCommand(testPath("build/../A.cc"), Cmd);
+  ASSERT_TRUE(Idx.blockUntilIdleForTest());
+
+  EXPECT_THAT(Storage.keys(), ElementsAre(testPath("A.cc"), testPath("A.h")));
+  // Make sure we only store the Cmd for main file.
+  EXPECT_FALSE(MSS.loadShard(testPath("A.h"))->Cmd);
+
+  {
+    tooling::CompileCommand CmdStored = *MSS.loadShard(testPath("A.cc"))->Cmd;
+    EXPECT_EQ(CmdStored.CommandLine, Cmd.CommandLine);
+    EXPECT_EQ(CmdStored.Directory, Cmd.Directory);
+  }
+
+  // FIXME: Changing compile commands should be enough to invalidate the cache.
+  FS.Files[testPath("A.cc")] = " ";
+  Cmd.CommandLine = {"clang++", "../A.cc", "-Dfoo", "-fsyntax-only"};
+  CDB.setCompileCommand(testPath("build/../A.cc"), Cmd);
+  ASSERT_TRUE(Idx.blockUntilIdleForTest());
+
+  EXPECT_FALSE(MSS.loadShard(testPath("A.h"))->Cmd);
+
+  {
+    tooling::CompileCommand CmdStored = *MSS.loadShard(testPath("A.cc"))->Cmd;
+    EXPECT_EQ(CmdStored.CommandLine, Cmd.CommandLine);
+    EXPECT_EQ(CmdStored.Directory, Cmd.Directory);
+  }
 }
 
 } // namespace clangd

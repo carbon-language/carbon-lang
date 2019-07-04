@@ -8,6 +8,7 @@
 
 #include "index/Index.h"
 #include "index/Serialization.h"
+#include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/Support/SHA1.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "gmock/gmock.h"
@@ -240,6 +241,36 @@ TEST(SerializationTest, SrcsTest) {
   }
 }
 
+TEST(SerializationTest, CmdlTest) {
+  auto In = readIndexFile(YAML);
+  EXPECT_TRUE(bool(In)) << In.takeError();
+
+  tooling::CompileCommand Cmd;
+  Cmd.Directory = "testdir";
+  Cmd.CommandLine.push_back("cmd1");
+  Cmd.CommandLine.push_back("cmd2");
+  Cmd.Filename = "ignored";
+  Cmd.Heuristic = "ignored";
+  Cmd.Output = "ignored";
+
+  IndexFileOut Out(*In);
+  Out.Format = IndexFileFormat::RIFF;
+  Out.Cmd = &Cmd;
+  {
+    std::string Serialized = llvm::to_string(Out);
+
+    auto In = readIndexFile(Serialized);
+    ASSERT_TRUE(bool(In)) << In.takeError();
+    ASSERT_TRUE(In->Cmd);
+
+    const tooling::CompileCommand &SerializedCmd = In->Cmd.getValue();
+    EXPECT_EQ(SerializedCmd.CommandLine, Cmd.CommandLine);
+    EXPECT_EQ(SerializedCmd.Directory, Cmd.Directory);
+    EXPECT_NE(SerializedCmd.Filename, Cmd.Filename);
+    EXPECT_NE(SerializedCmd.Heuristic, Cmd.Heuristic);
+    EXPECT_NE(SerializedCmd.Output, Cmd.Output);
+  }
+}
 } // namespace
 } // namespace clangd
 } // namespace clang
