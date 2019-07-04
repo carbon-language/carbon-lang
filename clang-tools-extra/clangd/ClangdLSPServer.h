@@ -55,8 +55,9 @@ private:
   // Implement DiagnosticsConsumer.
   void onDiagnosticsReady(PathRef File, std::vector<Diag> Diagnostics) override;
   void onFileUpdated(PathRef File, const TUStatus &Status) override;
-  void onHighlightingsReady(PathRef File,
-                         std::vector<HighlightingToken> Highlightings) override;
+  void
+  onHighlightingsReady(PathRef File,
+                       std::vector<HighlightingToken> Highlightings) override;
 
   // LSP methods. Notifications have signature void(const Params&).
   // Calls have signature void(const Params&, Callback<Response>).
