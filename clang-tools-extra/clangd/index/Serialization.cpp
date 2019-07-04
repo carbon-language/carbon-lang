@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Serialization.h"
+#include "Headers.h"
 #include "Logger.h"
 #include "RIFF.h"
 #include "SymbolLocation.h"
@@ -278,7 +279,7 @@ SymbolLocation readLocation(Reader &Data,
 IncludeGraphNode readIncludeGraphNode(Reader &Data,
                                       llvm::ArrayRef<llvm::StringRef> Strings) {
   IncludeGraphNode IGN;
-  IGN.IsTU = Data.consume8();
+  IGN.Flags = static_cast<IncludeGraphNode::SourceFlag>(Data.consume8());
   IGN.URI = Data.consumeString(Strings);
   llvm::StringRef Digest = Data.consume(IGN.Digest.size());
   std::copy(Digest.bytes_begin(), Digest.bytes_end(), IGN.Digest.begin());
@@ -291,7 +292,7 @@ IncludeGraphNode readIncludeGraphNode(Reader &Data,
 void writeIncludeGraphNode(const IncludeGraphNode &IGN,
                            const StringTableOut &Strings,
                            llvm::raw_ostream &OS) {
-  OS.write(IGN.IsTU);
+  OS.write(static_cast<uint8_t>(IGN.Flags));
   writeVar(Strings.index(IGN.URI), OS);
   llvm::StringRef Hash(reinterpret_cast<const char *>(IGN.Digest.data()),
                        IGN.Digest.size());
@@ -443,7 +444,7 @@ readCompileCommand(Reader CmdReader, llvm::ArrayRef<llvm::StringRef> Strings) {
 // The current versioning scheme is simple - non-current versions are rejected.
 // If you make a breaking change, bump this version number to invalidate stored
 // data. Later we may want to support some backward compatibility.
-constexpr static uint32_t Version = 10;
+constexpr static uint32_t Version = 11;
 
 llvm::Expected<IndexFileIn> readRIFF(llvm::StringRef Data) {
   auto RIFF = riff::readFile(Data);

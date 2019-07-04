@@ -297,7 +297,7 @@ void BackgroundIndex::update(llvm::StringRef MainFile, IndexFileIn Index,
     // we don't even know what absolute path they should fall in.
     // FIXME: Also store contents from other files whenever the current contents
     // for those files are missing or if they had errors before.
-    if (HadErrors && !IGN.IsTU)
+    if (HadErrors && !(IGN.Flags & IncludeGraphNode::SourceFlag::IsTU))
       continue;
     const auto AbsPath = URICache.resolve(IGN.URI);
     const auto DigestIt = DigestsSnapshot.find(AbsPath);
@@ -498,10 +498,13 @@ llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
 
   bool HadErrors = Clang->hasDiagnostics() &&
                    Clang->getDiagnostics().hasUncompilableErrorOccurred();
+  if (HadErrors) {
+    log("Failed to compile {0}, index may be incomplete", AbsolutePath);
+    for (auto &It : *Index.Sources)
+      It.second.Flags |= IncludeGraphNode::SourceFlag::HadErrors;
+  }
   update(AbsolutePath, std::move(Index), DigestsSnapshot, IndexStorage,
          HadErrors);
-  if (HadErrors)
-    log("Failed to compile {0}, index may be incomplete", AbsolutePath);
 
   if (BuildIndexPeriodMs > 0)
     SymbolsUpdatedSinceLastIndex = true;
@@ -581,7 +584,8 @@ BackgroundIndex::loadShard(const tooling::CompileCommand &Cmd,
       SI.AbsolutePath = CurDependency.Path;
       SI.Shard = std::move(Shard);
       SI.Digest = I.getValue().Digest;
-      SI.CountReferences = I.getValue().IsTU;
+      SI.CountReferences =
+          I.getValue().Flags & IncludeGraphNode::SourceFlag::IsTU;
       IntermediateSymbols.push_back(std::move(SI));
       // Check if the source needs re-indexing.
       // Get the digest, skip it if file doesn't exist.

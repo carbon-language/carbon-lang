@@ -1,3 +1,4 @@
+#include "Headers.h"
 #include "SyncAPI.h"
 #include "TestFS.h"
 #include "TestTU.h"
@@ -31,9 +32,14 @@ RefsAre(std::vector<::testing::Matcher<Ref>> Matchers) {
 }
 // URI cannot be empty since it references keys in the IncludeGraph.
 MATCHER(EmptyIncludeNode, "") {
-  return !arg.IsTU && !arg.URI.empty() && arg.Digest == FileDigest{{0}} &&
-         arg.DirectIncludes.empty();
+  return arg.Flags == IncludeGraphNode::SourceFlag::None && !arg.URI.empty() &&
+         arg.Digest == FileDigest{{0}} && arg.DirectIncludes.empty();
 }
+
+MATCHER(HadErrors, "") {
+  return arg.Flags & IncludeGraphNode::SourceFlag::HadErrors;
+}
+
 MATCHER_P(NumReferences, N, "") { return arg.References == N; }
 
 class MemoryShardStorage : public BackgroundIndexStorage {
@@ -525,6 +531,11 @@ TEST_F(BackgroundIndexTest, UncompilableFiles) {
   EXPECT_THAT(Shard->Sources->keys(),
               UnorderedElementsAre("unittest:///A.cc", "unittest:///A.h",
                                    "unittest:///B.h"));
+
+  EXPECT_THAT(Shard->Sources->lookup("unittest:///A.cc"), HadErrors());
+  // FIXME: We should also persist headers while marking them with errors.
+  EXPECT_THAT(Shard->Sources->lookup("unittest:///A.h"), Not(HadErrors()));
+  EXPECT_THAT(Shard->Sources->lookup("unittest:///B.h"), Not(HadErrors()));
 }
 
 TEST_F(BackgroundIndexTest, CmdLineHash) {

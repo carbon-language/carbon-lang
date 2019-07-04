@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexAction.h"
+#include "Headers.h"
 #include "Logger.h"
 #include "index/Relation.h"
 #include "index/SymbolOrigin.h"
@@ -67,7 +68,8 @@ public:
     }
     if (auto Digest = digestFile(SM, FileID))
       Node.Digest = std::move(*Digest);
-    Node.IsTU = FileID == SM.getMainFileID();
+    if (FileID == SM.getMainFileID())
+      Node.Flags |= IncludeGraphNode::SourceFlag::IsTU;
     Node.URI = I->getKey();
   }
 

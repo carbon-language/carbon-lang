@@ -6,6 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Headers.h"
 #include "index/Index.h"
 #include "index/Serialization.h"
 #include "clang/Tooling/CompilationDatabase.h"
@@ -212,7 +213,8 @@ TEST(SerializationTest, SrcsTest) {
                         TestContent.size()});
   IGN.DirectIncludes = {"inc1", "inc2"};
   IGN.URI = "URI";
-  IGN.IsTU = true;
+  IGN.Flags |= IncludeGraphNode::SourceFlag::IsTU;
+  IGN.Flags |= IncludeGraphNode::SourceFlag::HadErrors;
   IncludeGraph Sources;
   Sources[IGN.URI] = IGN;
   // Write to binary format, and parse again.
@@ -237,7 +239,7 @@ TEST(SerializationTest, SrcsTest) {
     EXPECT_EQ(IGNDeserialized.Digest, IGN.Digest);
     EXPECT_EQ(IGNDeserialized.DirectIncludes, IGN.DirectIncludes);
     EXPECT_EQ(IGNDeserialized.URI, IGN.URI);
-    EXPECT_EQ(IGNDeserialized.IsTU, IGN.IsTU);
+    EXPECT_EQ(IGNDeserialized.Flags, IGN.Flags);
   }
 }
 
