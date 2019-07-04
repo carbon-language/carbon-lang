@@ -746,6 +746,8 @@ protected:
   bool BeginDecl();
   void EndDecl();
   Symbol &DeclareObjectEntity(const parser::Name &, Attrs);
+  // Make sure that there's an entity in an enclosing scope called Name
+  Symbol *EnsureEnclosingEntity(const parser::Name &);
   // Declare a LOCAL/LOCAL_INIT entity. If there isn't a type specified
   // it comes from the entity in the containing scope, or implicit rules.
   // Return pointer to the new symbol, or nullptr on error.
@@ -772,6 +774,7 @@ protected:
   const parser::Name *ResolveDataRef(const parser::DataRef &);
   const parser::Name *ResolveVariable(const parser::Variable &);
   const parser::Name *ResolveName(const parser::Name &);
+  bool PassesSharedLocalityChecks(const parser::Name &name, Symbol &symbol);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -3725,10 +3728,24 @@ bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
   }
 }
 
-bool DeclarationVisitor::PassesLocalityChecks(
+// Checks for all locality-specs: LOCAL, LOCAL_INIT, and SHARED
+bool DeclarationVisitor::PassesSharedLocalityChecks(
     const parser::Name &name, Symbol &symbol) {
   if (!IsVariableName(symbol)) {
     SayLocalMustBeVariable(name, symbol);  // C1124
+    return false;
+  }
+  if (symbol.owner() == currScope()) {  // C1125 and C1126
+    SayAlreadyDeclared(name, symbol);
+    return false;
+  }
+  return true;
+}
+
+// Checks for locality-specs LOCAL and LOCAL_INIT
+bool DeclarationVisitor::PassesLocalityChecks(
+    const parser::Name &name, Symbol &symbol) {
+  if (!PassesSharedLocalityChecks(name, symbol)) {
     return false;
   }
   if (IsAllocatable(symbol)) {  // C1128
@@ -3770,35 +3787,33 @@ bool DeclarationVisitor::PassesLocalityChecks(
         "Assumed size array '%s' not allowed in a locality-spec"_err_en_US);
     return false;
   }
-  if (symbol.owner() == currScope()) {  // C1125 and C1126
-    SayAlreadyDeclared(name, symbol);
-    return false;
-  }
   // TODO: Check to see if the name can appear in a variable definition context
   return true;
 }
 
-Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
+Symbol *DeclarationVisitor::EnsureEnclosingEntity(const parser::Name &name) {
   Symbol *prev{FindSymbol(name)};
-  bool implicit{false};
   if (prev == nullptr) {
     // Declare the name as an object in the enclosing scope so that
     // the name can't be repurposed there later as something else.
     prev = &MakeSymbol(InclusiveScope(), name.source, Attrs{});
     ConvertToObjectEntity(*prev);
     ApplyImplicitRules(*prev);
-    implicit = true;
   }
+  return prev;
+}
+
+Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
+  Symbol *prev{EnsureEnclosingEntity(name)};
   if (!PassesLocalityChecks(name, *prev)) {
     return nullptr;
   }
   name.symbol = nullptr;
   Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
   if (auto *type{prev->GetType()}) {
-    if (implicit) {
-      ApplyImplicitRules(symbol);
-    } else {
-      symbol.SetType(*type);
+    symbol.SetType(*type);
+    if (prev->test(Symbol::Flag::Implicit)) {
+      symbol.set(Symbol::Flag::Implicit);
     }
   }
   return &symbol;
@@ -4091,16 +4106,8 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
 
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
   for (const auto &name : x.v) {
-    Symbol *prev{FindSymbol(name)};
-    if (!prev) {
-      Say(name, "Variable '%s' not found"_err_en_US);
-      context().SetError(
-          MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
-    } else if (prev->owner() == currScope()) {
-      SayAlreadyDeclared(name, *prev);  // C1125 and C1126
-    } else if (!IsVariableName(*prev)) {
-      SayLocalMustBeVariable(name, *prev);  // C1124
-    } else {
+    Symbol *prev{EnsureEnclosingEntity(name)};
+    if (PassesSharedLocalityChecks(name, *prev)) {
       auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
       symbol.set(Symbol::Flag::LocalityShared);
       name.symbol = &symbol;  // override resolution to parent
