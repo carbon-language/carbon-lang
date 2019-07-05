@@ -217,7 +217,6 @@ void PPCMIPeephole::UpdateTOCSaves(
   assert(MF->getSubtarget<PPCSubtarget>().isELFv2ABI() &&
          "TOC-save removal only supported on ELFv2");
   PPCFunctionInfo *FI = MF->getInfo<PPCFunctionInfo>();
-  MachineFrameInfo &MFI = MF->getFrameInfo();
 
   MachineBasicBlock *Entry = &MF->front();
   uint64_t CurrBlockFreq = MBFI->getBlockFreq(MI->getParent()).getFrequency();
