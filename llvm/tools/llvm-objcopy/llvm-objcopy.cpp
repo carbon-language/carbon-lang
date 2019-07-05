@@ -215,7 +215,8 @@ static Error restoreStatOnFile(StringRef Filename,
             FD, Stat.getLastAccessedTime(), Stat.getLastModificationTime()))
       return createFileError(Filename, EC);
 
-  if (auto EC = sys::fs::setPermissions(Filename, Stat.permissions()))
+  if (auto EC = sys::fs::setPermissions(Filename, Stat.permissions(),
+                                        /*respectUmask=*/true))
     return createFileError(Filename, EC);
 
   if (auto EC = sys::Process::SafelyCloseFileDescriptor(FD))
