@@ -332,7 +332,7 @@ void LinkerDriver::parseDirectives(InputFile *File) {
   }
 
   for (auto *Arg : Args) {
-    switch (Arg->getOption().getUnaliasedOption().getID()) {
+    switch (Arg->getOption().getID()) {
     case OPT_aligncomm:
       parseAligncomm(Arg->getValue());
       break;

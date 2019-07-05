@@ -172,7 +172,7 @@ std::string elf::createResponseFile(const opt::InputArgList &Args) {
 
   // Copy the command line to the output while rewriting paths.
   for (auto *Arg : Args) {
-    switch (Arg->getOption().getUnaliasedOption().getID()) {
+    switch (Arg->getOption().getID()) {
     case OPT_reproduce:
       break;
     case OPT_INPUT:
