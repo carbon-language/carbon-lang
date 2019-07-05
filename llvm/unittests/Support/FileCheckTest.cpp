@@ -178,6 +178,7 @@ public:
     GlobalDefines.emplace_back(std::string("BAR=BAZ"));
     EXPECT_FALSE(
         errorToBool(Context.defineCmdlineVariables(GlobalDefines, SM)));
+    Context.createLineVariable();
     // Call parsePattern to have @LINE defined.
     P.parsePattern("N/A", "CHECK", SM, Req);
     // parsePattern does not expect to be called twice for the same line and
@@ -192,9 +193,9 @@ public:
 
   bool parseNumVarDefExpect(StringRef Expr) {
     StringRef ExprBufferRef = bufferize(SM, Expr);
-    StringRef Name;
     return errorToBool(FileCheckPattern::parseNumericVariableDefinition(
-        ExprBufferRef, Name, &Context, SM));
+                           ExprBufferRef, &Context, LineNumber, SM)
+                           .takeError());
   }
 
   bool parseSubstExpect(StringRef Expr) {
