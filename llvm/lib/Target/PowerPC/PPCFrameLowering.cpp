@@ -1862,7 +1862,6 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
   bool HasFPSaveArea = false;
   bool HasVRSAVESaveArea = false;
   bool HasVRSaveArea = false;
-  bool MustSaveTOC = FI->mustSaveTOC();
 
   SmallVector<CalleeSavedInfo, 18> GPRegs;
   SmallVector<CalleeSavedInfo, 18> G8Regs;
@@ -1871,7 +1870,7 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
 
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    assert((!MustSaveTOC || (Reg != PPC::X2 && Reg != PPC::R2)) &&
+    assert((!FI->mustSaveTOC() || (Reg != PPC::X2 && Reg != PPC::R2)) &&
            "Not expecting to try to spill R2 in a function that must save TOC");
     if (PPC::GPRCRegClass.contains(Reg) ||
         PPC::SPE4RCRegClass.contains(Reg)) {
