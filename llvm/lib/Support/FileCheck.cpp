@@ -151,12 +151,12 @@ FileCheckPattern::parseNumericVariableUse(StringRef &Expr,
     return FileCheckErrorDiagnostic::get(
         SM, Name, "invalid pseudo numeric variable '" + Name + "'");
 
-  // This method is indirectly called from parsePattern for all numeric
-  // variable definitions and uses in the order in which they appear in the
-  // CHECK pattern. For each definition, the pointer to the class instance of
-  // the corresponding numeric variable definition is stored in
-  // GlobalNumericVariableTable. Therefore, the pointer we get below is for the
-  // class instance corresponding to the last definition of this variable use.
+  // Numeric variable definitions and uses are parsed in the order in which
+  // they appear in the CHECK patterns. For each definition, the pointer to the
+  // class instance of the corresponding numeric variable definition is stored
+  // in GlobalNumericVariableTable in parsePattern. Therefore, the pointer we
+  // get below is for the class instance corresponding to the last definition
+  // of this variable use.
   auto VarTableIter = Context->GlobalNumericVariableTable.find(Name);
   if (VarTableIter == Context->GlobalNumericVariableTable.end())
     return FileCheckErrorDiagnostic::get(
