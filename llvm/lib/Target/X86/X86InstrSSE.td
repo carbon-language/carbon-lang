@@ -657,11 +657,6 @@ def MOVLPDmr : PDI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 } // SchedRW
 
 let Predicates = [UseSSE1] in {
-  // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
-  def : Pat<(store (i64 (extractelt (bc_v2i64 (v4f32 VR128:$src2)),
-                                 (iPTR 0))), addr:$src1),
-            (MOVLPSmr addr:$src1, VR128:$src2)>;
-
   // This pattern helps select MOVLPS on SSE1 only targets. With SSE2 we'll
   // end up with a movsd or blend instead of shufp.
   // No need for aligned load, we're only loading 64-bits.
