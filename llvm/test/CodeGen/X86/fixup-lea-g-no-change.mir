@@ -1,0 +1,996 @@
+# RUN: llc %s -run-pass x86-fixup-LEAs -mtriple=x86_64-unknown-linux-gnu -o - | FileCheck %s -check-prefixes DEBUG-LABEL,CHECK
+# RUN: llc %s -run-pass x86-fixup-LEAs -mtriple=x86_64-unknown-linux-gnu -o - | FileCheck %s -check-prefixes NODEBUG-LABEL,CHECK
+#
+# This was generated from:
+#
+# a;
+# short *b, *d, *e;
+# *c;
+# f() {
+#   int g, h, i, j;
+#   g = 1 > a ? 0 : a;
+#   j = 1;
+#   for (; j <= g; j++) {
+#     i = -j + 1;
+#     for (; i < j; i++) {
+#       c = -j;
+#       e[h++] = -j << 1;
+#       b[h] = i;
+#       c[h] = d[h] = i << 1;
+#       e[h++] = j << 1;
+#     }
+#     i = -j;
+#     for (; i <= j; i++) {
+#       b[h] = -j;
+#       c[h] = i;
+#       d[h] = -j << 1;
+#       e[h++] = i << 1;
+#       b[h] = j;
+#       d[h] = j << 1;
+#       e[h++] = 1;
+#     }
+#   }
+#   for (;;)
+#     ;
+# }
+#
+# Using the command line:
+# clang -g -c mv-search.c -O2 -S -emit-llvm --target=x86_64-unknown-unknown -o leatestg.ll
+# llc -stop-before=x86-fixup-LEAs leatest.ll -o fixup-lea-g-no-change.mir
+#
+# The debug and nodebug versions have been manually adjusted to change the
+# function names accordingly and combined with llvm-link.
+--- |
+  ; ModuleID = 'leatest.ll'
+  source_filename = "llvm-link"
+  target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+  target triple = "x86_64-unknown-linux-gnu"
+  
+  @a = common dso_local local_unnamed_addr global i32 0, align 4
+  @c = common dso_local local_unnamed_addr global i32* null, align 8
+  @e = common dso_local local_unnamed_addr global i16* null, align 8
+  @b = common dso_local local_unnamed_addr global i16* null, align 8
+  @d = common dso_local local_unnamed_addr global i16* null, align 8
+  
+  ; Function Attrs: norecurse noreturn nounwind uwtable
+  define dso_local i32 @nodebug() local_unnamed_addr {
+  entry:
+    %0 = load i32, i32* @a, align 4, !tbaa !22
+    %cmp = icmp sgt i32 %0, 0
+    %cond = select i1 %cmp, i32 %0, i32 0
+    %cmp199 = icmp slt i32 %cond, 1
+    br i1 %cmp199, label %for.cond61.preheader, label %for.body.lr.ph
+  
+  for.cond61.preheader:                             ; preds = %for.cond61.preheader.loopexit, %entry
+    br label %for.cond61
+  
+  for.body.lr.ph:                                   ; preds = %entry
+    %1 = load i16*, i16** @e, align 8
+    %2 = load i16*, i16** @b, align 8
+    %3 = load i16*, i16** @d, align 8
+    %4 = zext i32 %cond to i64
+    %scevgep = getelementptr i16, i16* %1, i64 1
+    %scevgep10 = getelementptr i16, i16* %3, i64 1
+    %scevgep13 = getelementptr i16, i16* %2, i64 1
+    %scevgep27 = getelementptr i16, i16* %1, i64 1
+    %scevgep32 = getelementptr i16, i16* %3, i64 1
+    %scevgep37 = getelementptr i16, i16* %2, i64 1
+    br label %for.body4.lr.ph
+  
+  for.cond61.preheader.loopexit:                    ; preds = %for.inc58
+    %5 = inttoptr i64 %6 to i32*
+    store i32* %5, i32** @c, align 8, !tbaa !26
+    br label %for.cond61.preheader
+  
+  for.body4.lr.ph:                                  ; preds = %for.inc58, %for.body.lr.ph
+    %lsr.iv50 = phi i64 [ %lsr.iv.next51, %for.inc58 ], [ 4294967295, %for.body.lr.ph ]
+    %lsr.iv44 = phi i64 [ %lsr.iv.next45, %for.inc58 ], [ 0, %for.body.lr.ph ]
+    %lsr.iv16 = phi i64 [ %lsr.iv.next17, %for.inc58 ], [ 0, %for.body.lr.ph ]
+    %indvars.iv109 = phi i64 [ %indvars.iv.next110, %for.inc58 ], [ 1, %for.body.lr.ph ]
+    %h.0100 = phi i64 [ %27, %for.inc58 ], [ 0, %for.body.lr.ph ]
+    %lsr53 = trunc i64 %lsr.iv44 to i16
+    %6 = sub nsw i64 0, %indvars.iv109
+    %7 = inttoptr i64 %6 to i32*
+    %sub.tr90 = trunc i64 %6 to i16
+    %conv7 = shl i16 %sub.tr90, 1
+    %j.0.tr91 = trunc i64 %indvars.iv109 to i16
+    %conv19 = shl i16 %j.0.tr91, 1
+    %8 = trunc i64 %h.0100 to i32
+    %9 = sext i32 %8 to i64
+    %10 = shl i64 %9, 32
+    %scevgep1 = getelementptr i16, i16* %scevgep, i64 %9
+    %scevgep7 = getelementptr i32, i32* %7, i64 1
+    %scevgep8 = getelementptr i32, i32* %scevgep7, i64 %9
+    %scevgep11 = getelementptr i16, i16* %scevgep10, i64 %9
+    %scevgep14 = getelementptr i16, i16* %scevgep13, i64 %9
+    br label %for.body4
+  
+  for.body28.lr.ph:                                 ; preds = %for.body4
+    %11 = inttoptr i64 %6 to i32*
+    %conv30 = trunc i64 %6 to i16
+    %conv37 = shl i16 %conv30, 1
+    %conv45 = trunc i64 %indvars.iv109 to i16
+    %conv49 = shl i16 %conv45, 1
+    %12 = sext i32 %lsr.iv.next24 to i64
+    %scevgep28 = getelementptr i16, i16* %scevgep27, i64 %12
+    %scevgep33 = getelementptr i16, i16* %scevgep32, i64 %12
+    %scevgep38 = getelementptr i16, i16* %scevgep37, i64 %12
+    %scevgep42 = getelementptr i32, i32* %11, i64 %12
+    br label %for.body28
+  
+  for.body4:                                        ; preds = %for.body4, %for.body4.lr.ph
+    %lsr.iv23 = phi i32 [ %lsr.iv.next24, %for.body4 ], [ %8, %for.body4.lr.ph ]
+    %lsr.iv20 = phi i16 [ %lsr.iv.next21, %for.body4 ], [ %lsr53, %for.body4.lr.ph ]
+    %lsr.iv2 = phi i64 [ %lsr.iv.next3, %for.body4 ], [ 0, %for.body4.lr.ph ]
+    %lsr.iv = phi i64 [ %lsr.iv.next, %for.body4 ], [ %10, %for.body4.lr.ph ]
+    %13 = shl i64 %lsr.iv2, 1
+    %scevgep4 = getelementptr i16, i16* %scevgep1, i64 %13
+    %scevgep5 = getelementptr i16, i16* %scevgep4, i64 -1
+    store i16 %conv7, i16* %scevgep5, align 2, !tbaa !28
+    %14 = add i64 %lsr.iv16, %lsr.iv2
+    %scevgep15 = getelementptr i16, i16* %scevgep14, i64 %13
+    %tmp22 = trunc i64 %14 to i16
+    store i16 %tmp22, i16* %scevgep15, align 2, !tbaa !28
+    %15 = shl i64 %lsr.iv2, 1
+    %scevgep12 = getelementptr i16, i16* %scevgep11, i64 %15
+    store i16 %lsr.iv20, i16* %scevgep12, align 2, !tbaa !28
+    %conv15 = sext i16 %lsr.iv20 to i32
+    %16 = shl i64 %lsr.iv2, 1
+    %scevgep9 = getelementptr i32, i32* %scevgep8, i64 %16
+    store i32 %conv15, i32* %scevgep9, align 4, !tbaa !22
+    %17 = shl i64 %lsr.iv2, 1
+    %scevgep6 = getelementptr i16, i16* %scevgep1, i64 %17
+    store i16 %conv19, i16* %scevgep6, align 2, !tbaa !28
+    %18 = add i64 %lsr.iv16, %lsr.iv2
+    %19 = add i64 %18, 1
+    %tmp = trunc i64 %19 to i32
+    %20 = zext i32 %tmp to i64
+    %exitcond = icmp eq i64 %indvars.iv109, %20
+    %lsr.iv.next = add i64 %lsr.iv, 8589934592
+    %lsr.iv.next3 = add i64 %lsr.iv2, 1
+    %lsr.iv.next21 = add i16 %lsr.iv20, 2
+    %lsr.iv.next24 = add i32 %lsr.iv23, 2
+    br i1 %exitcond, label %for.body28.lr.ph, label %for.body4
+  
+  for.body28:                                       ; preds = %for.body28, %for.body28.lr.ph
+    %lsr.iv46 = phi i64 [ %lsr.iv.next47, %for.body28 ], [ 0, %for.body28.lr.ph ]
+    %lsr.iv25 = phi i64 [ %lsr.iv.next26, %for.body28 ], [ 0, %for.body28.lr.ph ]
+    %21 = add i64 %lsr.iv50, %lsr.iv46
+    %scevgep40 = getelementptr i16, i16* %scevgep38, i64 %lsr.iv25
+    %scevgep41 = getelementptr i16, i16* %scevgep40, i64 -1
+    store i16 %conv30, i16* %scevgep41, align 2, !tbaa !28
+    %scevgep43 = getelementptr i32, i32* %scevgep42, i64 %lsr.iv25
+    %tmp52 = trunc i64 %21 to i32
+    store i32 %tmp52, i32* %scevgep43, align 4, !tbaa !22
+    %scevgep35 = getelementptr i16, i16* %scevgep33, i64 %lsr.iv25
+    %scevgep36 = getelementptr i16, i16* %scevgep35, i64 -1
+    store i16 %conv37, i16* %scevgep36, align 2, !tbaa !28
+    %22 = add i64 %lsr.iv44, %lsr.iv25
+    %23 = add i64 %22, 65534
+    %scevgep29 = getelementptr i16, i16* %scevgep28, i64 %lsr.iv25
+    %scevgep30 = getelementptr i16, i16* %scevgep29, i64 -1
+    %tmp49 = trunc i64 %23 to i16
+    store i16 %tmp49, i16* %scevgep30, align 2, !tbaa !28
+    %scevgep39 = getelementptr i16, i16* %scevgep38, i64 %lsr.iv25
+    store i16 %conv45, i16* %scevgep39, align 2, !tbaa !28
+    %scevgep34 = getelementptr i16, i16* %scevgep33, i64 %lsr.iv25
+    store i16 %conv49, i16* %scevgep34, align 2, !tbaa !28
+    %scevgep31 = getelementptr i16, i16* %scevgep28, i64 %lsr.iv25
+    store i16 1, i16* %scevgep31, align 2, !tbaa !28
+    %lsr.iv.next26 = add nuw nsw i64 %lsr.iv25, 2
+    %lsr.iv.next47 = add nuw nsw i64 %lsr.iv46, 1
+    %24 = add i64 %lsr.iv44, %lsr.iv.next47
+    %25 = add i64 %24, -3
+    %tmp48 = trunc i64 %25 to i32
+    %exitcond108 = icmp eq i32 %tmp48, 0
+    br i1 %exitcond108, label %for.inc58, label %for.body28
+  
+  for.inc58:                                        ; preds = %for.body28
+    %indvars.iv.next110 = add nuw nsw i64 %indvars.iv109, 1
+    %lsr.iv.next17 = add nsw i64 %lsr.iv16, -1
+    %lsr.iv.next45 = add nsw i64 %lsr.iv44, -2
+    %26 = sext i32 %lsr.iv.next24 to i64
+    %27 = add i64 %26, %lsr.iv.next26
+    %lsr.iv.next51 = add nsw i64 %lsr.iv50, -1
+    %cmp1 = icmp ult i64 %indvars.iv109, %4
+    br i1 %cmp1, label %for.body4.lr.ph, label %for.cond61.preheader.loopexit
+  
+  for.cond61:                                       ; preds = %for.cond61, %for.cond61.preheader
+    br label %for.cond61
+  }
+  
+  ; Function Attrs: norecurse noreturn nounwind uwtable
+  define dso_local i32 @debug() local_unnamed_addr !dbg !30 {
+  entry:
+    %0 = load i32, i32* @a, align 4, !dbg !38, !tbaa !22
+    %cmp = icmp sgt i32 %0, 0, !dbg !39
+    %cond = select i1 %cmp, i32 %0, i32 0, !dbg !40
+    call void @llvm.dbg.value(metadata i32 %cond, metadata !34, metadata !DIExpression()), !dbg !41
+    call void @llvm.dbg.value(metadata i32 1, metadata !37, metadata !DIExpression()), !dbg !41
+    call void @llvm.dbg.value(metadata i32 undef, metadata !35, metadata !DIExpression()), !dbg !41
+    %cmp199 = icmp slt i32 %cond, 1, !dbg !42
+    br i1 %cmp199, label %for.cond61.preheader, label %for.body.lr.ph, !dbg !45
+  
+  for.cond61.preheader:                             ; preds = %for.cond61.preheader.loopexit, %entry
+    br label %for.cond61, !dbg !46
+  
+  for.body.lr.ph:                                   ; preds = %entry
+    %1 = load i16*, i16** @e, align 8, !dbg !49
+    %2 = load i16*, i16** @b, align 8, !dbg !49
+    %3 = load i16*, i16** @d, align 8, !dbg !49
+    %4 = zext i32 %cond to i64, !dbg !45
+    %scevgep = getelementptr i16, i16* %1, i64 1, !dbg !45
+    %scevgep10 = getelementptr i16, i16* %3, i64 1, !dbg !45
+    %scevgep13 = getelementptr i16, i16* %2, i64 1, !dbg !45
+    %scevgep27 = getelementptr i16, i16* %1, i64 1, !dbg !45
+    %scevgep32 = getelementptr i16, i16* %3, i64 1, !dbg !45
+    %scevgep37 = getelementptr i16, i16* %2, i64 1, !dbg !45
+    br label %for.body4.lr.ph, !dbg !45
+  
+  for.cond61.preheader.loopexit:                    ; preds = %for.inc58
+    %5 = inttoptr i64 %6 to i32*, !dbg !49
+    store i32* %5, i32** @c, align 8, !dbg !54, !tbaa !26
+    br label %for.cond61.preheader, !dbg !46
+  
+  for.body4.lr.ph:                                  ; preds = %for.inc58, %for.body.lr.ph
+    %lsr.iv50 = phi i64 [ %lsr.iv.next51, %for.inc58 ], [ 4294967295, %for.body.lr.ph ]
+    %lsr.iv44 = phi i64 [ %lsr.iv.next45, %for.inc58 ], [ 0, %for.body.lr.ph ]
+    %lsr.iv16 = phi i64 [ %lsr.iv.next17, %for.inc58 ], [ 0, %for.body.lr.ph ]
+    %indvars.iv109 = phi i64 [ %indvars.iv.next110, %for.inc58 ], [ 1, %for.body.lr.ph ]
+    %h.0100 = phi i64 [ %27, %for.inc58 ], [ 0, %for.body.lr.ph ]
+    call void @llvm.dbg.value(metadata i64 %indvars.iv109, metadata !37, metadata !DIExpression()), !dbg !41
+    %lsr53 = trunc i64 %lsr.iv44 to i16
+    %6 = sub nsw i64 0, %indvars.iv109, !dbg !55
+    %7 = inttoptr i64 %6 to i32*, !dbg !49
+    %sub.tr90 = trunc i64 %6 to i16, !dbg !49
+    %conv7 = shl i16 %sub.tr90, 1, !dbg !49
+    %j.0.tr91 = trunc i64 %indvars.iv109 to i16, !dbg !49
+    %conv19 = shl i16 %j.0.tr91, 1, !dbg !49
+    %8 = trunc i64 %h.0100 to i32, !dbg !56
+    %9 = sext i32 %8 to i64, !dbg !56
+    %10 = shl i64 %9, 32, !dbg !56
+    %scevgep1 = getelementptr i16, i16* %scevgep, i64 %9, !dbg !56
+    %scevgep7 = getelementptr i32, i32* %7, i64 1, !dbg !56
+    %scevgep8 = getelementptr i32, i32* %scevgep7, i64 %9, !dbg !56
+    %scevgep11 = getelementptr i16, i16* %scevgep10, i64 %9, !dbg !56
+    %scevgep14 = getelementptr i16, i16* %scevgep13, i64 %9, !dbg !56
+    br label %for.body4, !dbg !56
+  
+  for.body28.lr.ph:                                 ; preds = %for.body4
+    %11 = inttoptr i64 %6 to i32*, !dbg !49
+    %conv30 = trunc i64 %6 to i16, !dbg !57
+    %conv37 = shl i16 %conv30, 1, !dbg !57
+    %conv45 = trunc i64 %indvars.iv109 to i16, !dbg !57
+    %conv49 = shl i16 %conv45, 1, !dbg !57
+    %12 = sext i32 %lsr.iv.next24 to i64, !dbg !61
+    %scevgep28 = getelementptr i16, i16* %scevgep27, i64 %12, !dbg !61
+    %scevgep33 = getelementptr i16, i16* %scevgep32, i64 %12, !dbg !61
+    %scevgep38 = getelementptr i16, i16* %scevgep37, i64 %12, !dbg !61
+    %scevgep42 = getelementptr i32, i32* %11, i64 %12, !dbg !61
+    br label %for.body28, !dbg !61
+  
+  for.body4:                                        ; preds = %for.body4, %for.body4.lr.ph
+    %lsr.iv23 = phi i32 [ %lsr.iv.next24, %for.body4 ], [ %8, %for.body4.lr.ph ]
+    %lsr.iv20 = phi i16 [ %lsr.iv.next21, %for.body4 ], [ %lsr53, %for.body4.lr.ph ]
+    %lsr.iv2 = phi i64 [ %lsr.iv.next3, %for.body4 ], [ 0, %for.body4.lr.ph ]
+    %lsr.iv = phi i64 [ %lsr.iv.next, %for.body4 ], [ %10, %for.body4.lr.ph ]
+    call void @llvm.dbg.value(metadata i32 undef, metadata !36, metadata !DIExpression()), !dbg !41
+    call void @llvm.dbg.value(metadata i64 undef, metadata !35, metadata !DIExpression()), !dbg !41
+    call void @llvm.dbg.value(metadata i32 undef, metadata !35, metadata !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value)), !dbg !41
+    %13 = shl i64 %lsr.iv2, 1, !dbg !62
+    %scevgep4 = getelementptr i16, i16* %scevgep1, i64 %13, !dbg !62
+    %scevgep5 = getelementptr i16, i16* %scevgep4, i64 -1, !dbg !62
+    store i16 %conv7, i16* %scevgep5, align 2, !dbg !62, !tbaa !28
+    %14 = add i64 %lsr.iv16, %lsr.iv2, !dbg !63
+    %scevgep15 = getelementptr i16, i16* %scevgep14, i64 %13, !dbg !64
+    %tmp22 = trunc i64 %14 to i16
+    store i16 %tmp22, i16* %scevgep15, align 2, !dbg !64, !tbaa !28
+    %15 = shl i64 %lsr.iv2, 1, !dbg !65
+    %scevgep12 = getelementptr i16, i16* %scevgep11, i64 %15, !dbg !65
+    store i16 %lsr.iv20, i16* %scevgep12, align 2, !dbg !65, !tbaa !28
+    %conv15 = sext i16 %lsr.iv20 to i32, !dbg !66
+    %16 = shl i64 %lsr.iv2, 1, !dbg !67
+    %scevgep9 = getelementptr i32, i32* %scevgep8, i64 %16, !dbg !67
+    store i32 %conv15, i32* %scevgep9, align 4, !dbg !67, !tbaa !22
+    %17 = shl i64 %lsr.iv2, 1, !dbg !68
+    %scevgep6 = getelementptr i16, i16* %scevgep1, i64 %17, !dbg !68
+    store i16 %conv19, i16* %scevgep6, align 2, !dbg !68, !tbaa !28
+    call void @llvm.dbg.value(metadata i32 undef, metadata !36, metadata !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value)), !dbg !41
+    call void @llvm.dbg.value(metadata i32 undef, metadata !35, metadata !DIExpression(DW_OP_plus_uconst, 2, DW_OP_stack_value)), !dbg !41
+    %18 = add i64 %lsr.iv16, %lsr.iv2, !dbg !69
+    %19 = add i64 %18, 1, !dbg !69
+    %tmp = trunc i64 %19 to i32
+    %20 = zext i32 %tmp to i64, !dbg !69
+    %exitcond = icmp eq i64 %indvars.iv109, %20, !dbg !69
+    %lsr.iv.next = add i64 %lsr.iv, 8589934592, !dbg !56
+    %lsr.iv.next3 = add i64 %lsr.iv2, 1, !dbg !56
+    %lsr.iv.next21 = add i16 %lsr.iv20, 2, !dbg !56
+    %lsr.iv.next24 = add i32 %lsr.iv23, 2, !dbg !56
+    br i1 %exitcond, label %for.body28.lr.ph, label %for.body4, !dbg !56, !llvm.loop !70
+  
+  for.body28:                                       ; preds = %for.body28, %for.body28.lr.ph
+    %lsr.iv46 = phi i64 [ %lsr.iv.next47, %for.body28 ], [ 0, %for.body28.lr.ph ]
+    %lsr.iv25 = phi i64 [ %lsr.iv.next26, %for.body28 ], [ 0, %for.body28.lr.ph ]
+    call void @llvm.dbg.value(metadata i32 undef, metadata !36, metadata !DIExpression()), !dbg !41
+    call void @llvm.dbg.value(metadata i64 undef, metadata !35, metadata !DIExpression()), !dbg !41
+    %21 = add i64 %lsr.iv50, %lsr.iv46, !dbg !72
+    %scevgep40 = getelementptr i16, i16* %scevgep38, i64 %lsr.iv25, !dbg !73
+    %scevgep41 = getelementptr i16, i16* %scevgep40, i64 -1, !dbg !73
+    store i16 %conv30, i16* %scevgep41, align 2, !dbg !73, !tbaa !28
+    %scevgep43 = getelementptr i32, i32* %scevgep42, i64 %lsr.iv25, !dbg !74
+    %tmp52 = trunc i64 %21 to i32
+    store i32 %tmp52, i32* %scevgep43, align 4, !dbg !74, !tbaa !22
+    %scevgep35 = getelementptr i16, i16* %scevgep33, i64 %lsr.iv25, !dbg !75
+    %scevgep36 = getelementptr i16, i16* %scevgep35, i64 -1, !dbg !75
+    store i16 %conv37, i16* %scevgep36, align 2, !dbg !75, !tbaa !28
+    %22 = add i64 %lsr.iv44, %lsr.iv25, !dbg !76
+    %23 = add i64 %22, 65534, !dbg !76
+    call void @llvm.dbg.value(metadata i32 undef, metadata !35, metadata !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value)), !dbg !41
+    %scevgep29 = getelementptr i16, i16* %scevgep28, i64 %lsr.iv25, !dbg !77
+    %scevgep30 = getelementptr i16, i16* %scevgep29, i64 -1, !dbg !77
+    %tmp49 = trunc i64 %23 to i16
+    store i16 %tmp49, i16* %scevgep30, align 2, !dbg !77, !tbaa !28
+    %scevgep39 = getelementptr i16, i16* %scevgep38, i64 %lsr.iv25, !dbg !78
+    store i16 %conv45, i16* %scevgep39, align 2, !dbg !78, !tbaa !28
+    %scevgep34 = getelementptr i16, i16* %scevgep33, i64 %lsr.iv25, !dbg !79
+    store i16 %conv49, i16* %scevgep34, align 2, !dbg !79, !tbaa !28
+    %scevgep31 = getelementptr i16, i16* %scevgep28, i64 %lsr.iv25, !dbg !80
+    store i16 1, i16* %scevgep31, align 2, !dbg !80, !tbaa !28
+    call void @llvm.dbg.value(metadata i32 undef, metadata !36, metadata !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value)), !dbg !41
+    call void @llvm.dbg.value(metadata i32 undef, metadata !35, metadata !DIExpression(DW_OP_plus_uconst, 2, DW_OP_stack_value)), !dbg !41
+    %lsr.iv.next26 = add nuw nsw i64 %lsr.iv25, 2, !dbg !81
+    %lsr.iv.next47 = add nuw nsw i64 %lsr.iv46, 1, !dbg !81
+    %24 = add i64 %lsr.iv44, %lsr.iv.next47, !dbg !81
+    %25 = add i64 %24, -3, !dbg !81
+    %tmp48 = trunc i64 %25 to i32
+    %exitcond108 = icmp eq i32 %tmp48, 0, !dbg !81
+    br i1 %exitcond108, label %for.inc58, label %for.body28, !dbg !61, !llvm.loop !82
+  
+  for.inc58:                                        ; preds = %for.body28
+    %indvars.iv.next110 = add nuw nsw i64 %indvars.iv109, 1, !dbg !84
+    call void @llvm.dbg.value(metadata i32 undef, metadata !37, metadata !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value)), !dbg !41
+    %lsr.iv.next17 = add nsw i64 %lsr.iv16, -1, !dbg !45
+    %lsr.iv.next45 = add nsw i64 %lsr.iv44, -2, !dbg !45
+    %26 = sext i32 %lsr.iv.next24 to i64, !dbg !45
+    %27 = add i64 %26, %lsr.iv.next26, !dbg !45
+    %lsr.iv.next51 = add nsw i64 %lsr.iv50, -1, !dbg !45
+    %cmp1 = icmp ult i64 %indvars.iv109, %4, !dbg !42
+    br i1 %cmp1, label %for.body4.lr.ph, label %for.cond61.preheader.loopexit, !dbg !45, !llvm.loop !85
+  
+  for.cond61:                                       ; preds = %for.cond61, %for.cond61.preheader
+    br label %for.cond61, !dbg !46, !llvm.loop !87
+  }
+  
+  ; Function Attrs: nounwind readnone speculatable
+  declare void @llvm.dbg.value(metadata, metadata, metadata)
+  
+  ; Function Attrs: nounwind
+  declare void @llvm.stackprotector(i8*, i8**)
+  
+  !llvm.ident = !{!0, !0}
+  !llvm.module.flags = !{!1, !2, !3}
+  !llvm.dbg.cu = !{!4}
+  
+  !0 = !{!"clang version 9.0.0 (https://github.com/llvm/llvm-project.git 64b8e79e41221f8d6118f11f81549db9e768eed8)"}
+  !1 = !{i32 1, !"wchar_size", i32 4}
+  !2 = !{i32 2, !"Dwarf Version", i32 4}
+  !3 = !{i32 2, !"Debug Info Version", i32 3}
+  !4 = distinct !DICompileUnit(language: DW_LANG_C99, file: !5, producer: "clang version 9.0.0 (https://github.com/llvm/llvm-project.git 64b8e79e41221f8d6118f11f81549db9e768eed8)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !6, globals: !7, nameTableKind: None)
+  !5 = !DIFile(filename: "mv-search.ii.c", directory: "/mnt/c/Users/gbdawsoc/Documents/llvm/gnochange")
+  !6 = !{}
+  !7 = !{!8, !11, !15, !17, !19}
+  !8 = !DIGlobalVariableExpression(var: !9, expr: !DIExpression())
+  !9 = distinct !DIGlobalVariable(name: "a", scope: !4, file: !5, line: 1, type: !10, isLocal: false, isDefinition: true)
+  !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+  !11 = !DIGlobalVariableExpression(var: !12, expr: !DIExpression())
+  !12 = distinct !DIGlobalVariable(name: "b", scope: !4, file: !5, line: 2, type: !13, isLocal: false, isDefinition: true)
+  !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !14, size: 64)
+  !14 = !DIBasicType(name: "short", size: 16, encoding: DW_ATE_signed)
+  !15 = !DIGlobalVariableExpression(var: !16, expr: !DIExpression())
+  !16 = distinct !DIGlobalVariable(name: "d", scope: !4, file: !5, line: 2, type: !13, isLocal: false, isDefinition: true)
+  !17 = !DIGlobalVariableExpression(var: !18, expr: !DIExpression())
+  !18 = distinct !DIGlobalVariable(name: "e", scope: !4, file: !5, line: 2, type: !13, isLocal: false, isDefinition: true)
+  !19 = !DIGlobalVariableExpression(var: !20, expr: !DIExpression())
+  !20 = distinct !DIGlobalVariable(name: "c", scope: !4, file: !5, line: 3, type: !21, isLocal: false, isDefinition: true)
+  !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !10, size: 64)
+  !22 = !{!23, !23, i64 0}
+  !23 = !{!"int", !24, i64 0}
+  !24 = !{!"omnipotent char", !25, i64 0}
+  !25 = !{!"Simple C/C++ TBAA"}
+  !26 = !{!27, !27, i64 0}
+  !27 = !{!"any pointer", !24, i64 0}
+  !28 = !{!29, !29, i64 0}
+  !29 = !{!"short", !24, i64 0}
+  !30 = distinct !DISubprogram(name: "debug", scope: !5, file: !5, line: 4, type: !31, scopeLine: 4, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !4, retainedNodes: !33)
+  !31 = !DISubroutineType(types: !32)
+  !32 = !{!10}
+  !33 = !{!34, !35, !36, !37}
+  !34 = !DILocalVariable(name: "g", scope: !30, file: !5, line: 5, type: !10)
+  !35 = !DILocalVariable(name: "h", scope: !30, file: !5, line: 5, type: !10)
+  !36 = !DILocalVariable(name: "i", scope: !30, file: !5, line: 5, type: !10)
+  !37 = !DILocalVariable(name: "j", scope: !30, file: !5, line: 5, type: !10)
+  !38 = !DILocation(line: 6, column: 11, scope: !30)
+  !39 = !DILocation(line: 6, column: 9, scope: !30)
+  !40 = !DILocation(line: 6, column: 7, scope: !30)
+  !41 = !DILocation(line: 0, scope: !30)
+  !42 = !DILocation(line: 8, column: 12, scope: !43)
+  !43 = distinct !DILexicalBlock(scope: !44, file: !5, line: 8, column: 3)
+  !44 = distinct !DILexicalBlock(scope: !30, file: !5, line: 8, column: 3)
+  !45 = !DILocation(line: 8, column: 3, scope: !44)
+  !46 = !DILocation(line: 28, column: 3, scope: !47)
+  !47 = distinct !DILexicalBlock(scope: !48, file: !5, line: 28, column: 3)
+  !48 = distinct !DILexicalBlock(scope: !30, file: !5, line: 28, column: 3)
+  !49 = !DILocation(line: 0, scope: !50)
+  !50 = distinct !DILexicalBlock(scope: !51, file: !5, line: 10, column: 24)
+  !51 = distinct !DILexicalBlock(scope: !52, file: !5, line: 10, column: 5)
+  !52 = distinct !DILexicalBlock(scope: !53, file: !5, line: 10, column: 5)
+  !53 = distinct !DILexicalBlock(scope: !43, file: !5, line: 8, column: 23)
+  !54 = !DILocation(line: 11, column: 9, scope: !50)
+  !55 = !DILocation(line: 9, column: 9, scope: !53)
+  !56 = !DILocation(line: 10, column: 5, scope: !52)
+  !57 = !DILocation(line: 0, scope: !58)
+  !58 = distinct !DILexicalBlock(scope: !59, file: !5, line: 18, column: 25)
+  !59 = distinct !DILexicalBlock(scope: !60, file: !5, line: 18, column: 5)
+  !60 = distinct !DILexicalBlock(scope: !53, file: !5, line: 18, column: 5)
+  !61 = !DILocation(line: 18, column: 5, scope: !60)
+  !62 = !DILocation(line: 12, column: 14, scope: !50)
+  !63 = !DILocation(line: 13, column: 7, scope: !50)
+  !64 = !DILocation(line: 13, column: 12, scope: !50)
+  !65 = !DILocation(line: 14, column: 19, scope: !50)
+  !66 = !DILocation(line: 14, column: 14, scope: !50)
+  !67 = !DILocation(line: 14, column: 12, scope: !50)
+  !68 = !DILocation(line: 15, column: 14, scope: !50)
+  !69 = !DILocation(line: 10, column: 14, scope: !51)
+  !70 = distinct !{!70, !56, !71}
+  !71 = !DILocation(line: 16, column: 5, scope: !52)
+  !72 = !DILocation(line: 19, column: 7, scope: !58)
+  !73 = !DILocation(line: 19, column: 12, scope: !58)
+  !74 = !DILocation(line: 20, column: 12, scope: !58)
+  !75 = !DILocation(line: 21, column: 12, scope: !58)
+  !76 = !DILocation(line: 22, column: 10, scope: !58)
+  !77 = !DILocation(line: 22, column: 14, scope: !58)
+  !78 = !DILocation(line: 23, column: 12, scope: !58)
+  !79 = !DILocation(line: 24, column: 12, scope: !58)
+  !80 = !DILocation(line: 25, column: 14, scope: !58)
+  !81 = !DILocation(line: 18, column: 14, scope: !59)
+  !82 = distinct !{!82, !61, !83}
+  !83 = !DILocation(line: 26, column: 5, scope: !60)
+  !84 = !DILocation(line: 8, column: 19, scope: !43)
+  !85 = distinct !{!85, !45, !86}
+  !86 = !DILocation(line: 27, column: 3, scope: !44)
+  !87 = distinct !{!87, !88, !89}
+  !88 = !DILocation(line: 28, column: 3, scope: !48)
+  !89 = !DILocation(line: 29, column: 5, scope: !48)
+
+...
+---
+name:            nodebug
+alignment:       4
+exposesReturnsTwice: false
+legalized:       false
+regBankSelected: false
+selected:        false
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+registers:       []
+liveins:         []
+frameInfo:       
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       48
+  offsetAdjustment: -48
+  maxAlignment:    8
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 48
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  localFrameSize:  0
+  savePoint:       ''
+  restorePoint:    ''
+fixedStack:      
+  - { id: 0, type: spill-slot, offset: -56, size: 8, alignment: 8, stack-id: default, 
+      callee-saved-register: '$rbx', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, type: spill-slot, offset: -48, size: 8, alignment: 16, stack-id: default, 
+      callee-saved-register: '$r12', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, type: spill-slot, offset: -40, size: 8, alignment: 8, stack-id: default, 
+      callee-saved-register: '$r13', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, type: spill-slot, offset: -32, size: 8, alignment: 16, stack-id: default, 
+      callee-saved-register: '$r14', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, type: spill-slot, offset: -24, size: 8, alignment: 8, stack-id: default, 
+      callee-saved-register: '$r15', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, type: spill-slot, offset: -16, size: 8, alignment: 16, stack-id: default, 
+      callee-saved-register: '$rbp', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+stack:           
+  - { id: 0, name: '', type: spill-slot, offset: -116, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, name: '', type: spill-slot, offset: -88, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, name: '', type: spill-slot, offset: -96, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, name: '', type: spill-slot, offset: -104, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, name: '', type: spill-slot, offset: -112, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, name: '', type: spill-slot, offset: -64, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 6, name: '', type: spill-slot, offset: -72, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 7, name: '', type: spill-slot, offset: -80, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+constants:       []
+machineFunctionInfo: {}
+body:             |
+  bb.0.entry:
+    successors: %bb.8(0x30000000), %bb.1(0x50000000)
+    liveins: $rbx, $r12, $r13, $r14, $r15, $rbp
+  
+    renamable $ecx = MOV32rm $rip, 1, $noreg, @a, $noreg :: (dereferenceable load 4 from @a, !tbaa !22)
+    renamable $eax = XOR32rr undef $eax, undef $eax, implicit-def dead $eflags
+    TEST32rr renamable $ecx, renamable $ecx, implicit-def $eflags
+    renamable $eax = CMOV32rr killed renamable $eax, killed renamable $ecx, 9, implicit $eflags
+    TEST32rr renamable $eax, renamable $eax, implicit-def $eflags
+    JCC_1 %bb.8, 14, implicit $eflags
+  
+  bb.1.for.body.lr.ph:
+    successors: %bb.2(0x80000000)
+    liveins: $eax, $rbp, $r15, $r14, $r13, $r12, $rbx
+  
+    frame-setup PUSH64r killed $rbp, implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 16
+    frame-setup PUSH64r killed $r15, implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 24
+    frame-setup PUSH64r killed $r14, implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 32
+    frame-setup PUSH64r killed $r13, implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 40
+    frame-setup PUSH64r killed $r12, implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 48
+    frame-setup PUSH64r killed $rbx, implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 56
+    CFI_INSTRUCTION offset $rbx, -56
+    CFI_INSTRUCTION offset $r12, -48
+    CFI_INSTRUCTION offset $r13, -40
+    CFI_INSTRUCTION offset $r14, -32
+    CFI_INSTRUCTION offset $r15, -24
+    CFI_INSTRUCTION offset $rbp, -16
+    renamable $rdx = MOV64rm $rip, 1, $noreg, @e, $noreg :: (dereferenceable load 8 from @e)
+    renamable $r9 = MOV64rm $rip, 1, $noreg, @b, $noreg :: (dereferenceable load 8 from @b)
+    renamable $rcx = MOV64rm $rip, 1, $noreg, @d, $noreg :: (dereferenceable load 8 from @d)
+    renamable $eax = MOV32rr killed renamable $eax, implicit-def $rax
+    MOV64mr $rsp, 1, $noreg, -24, $noreg, killed renamable $rax :: (store 8 into %stack.7)
+    renamable $rdx = ADD64ri8 killed renamable $rdx, 2, implicit-def dead $eflags
+    renamable $rcx = ADD64ri8 killed renamable $rcx, 2, implicit-def dead $eflags
+    MOV64mr $rsp, 1, $noreg, -48, $noreg, killed renamable $rcx :: (store 8 into %stack.3)
+    renamable $r9 = ADD64ri8 killed renamable $r9, 2, implicit-def dead $eflags
+    $r13d = MOV32ri 1, implicit-def $r13
+    $r12d = MOV32ri 4294967295, implicit-def $r12
+    renamable $r10d = XOR32rr undef $r10d, undef $r10d, implicit-def dead $eflags, implicit-def $r10
+    renamable $ebp = XOR32rr undef $ebp, undef $ebp, implicit-def dead $eflags, implicit-def $rbp
+    renamable $ebx = XOR32rr undef $ebx, undef $ebx, implicit-def dead $eflags, implicit-def $rbx
+    MOV64mr $rsp, 1, $noreg, -32, $noreg, renamable $rdx :: (store 8 into %stack.1)
+    MOV64mr $rsp, 1, $noreg, -40, $noreg, renamable $r9 :: (store 8 into %stack.2)
+  
+  bb.2.for.body4.lr.ph (align 4):
+    successors: %bb.3(0x80000000)
+    liveins: $rbp, $rbx, $rdx, $r9, $r10, $r12, $r13
+  
+    MOV64mr $rsp, 1, $noreg, -8, $noreg, killed renamable $r12 :: (store 8 into %stack.5)
+    $rax = MOV64rr $r13
+    renamable $rax = nsw NEG64r killed renamable $rax, implicit-def dead $eflags
+    MOV64mr $rsp, 1, $noreg, -56, $noreg, renamable $rax :: (store 8 into %stack.4)
+    renamable $eax = LEA64_32r killed renamable $rax, 1, renamable $rax, 0, $noreg
+    MOV32mr $rsp, 1, $noreg, -60, $noreg, killed renamable $eax :: (store 4 into %stack.0)
+    $rsi = MOV64rr killed $r10
+    renamable $r10d = LEA64_32r renamable $r13, 1, renamable $r13, 0, $noreg
+    renamable $rax = MOVSX64rr32 renamable $ebx
+    renamable $rdx = LEA64r killed renamable $rdx, 2, renamable $rax, 0, $noreg
+    renamable $rcx = LEA64r $noreg, 4, renamable $rax, 0, $noreg
+    renamable $rdi = MOV64rm $rsp, 1, $noreg, -48, $noreg :: (load 8 from %stack.3)
+    renamable $r8 = LEA64r killed renamable $rdi, 2, renamable $rax, 0, $noreg
+    renamable $r9 = LEA64r killed renamable $r9, 2, renamable $rax, 0, $noreg
+    renamable $rax = SHL64ri killed renamable $rax, 32, implicit-def dead $eflags
+    renamable $rcx = SUB64rr killed renamable $rcx, renamable $r13, implicit-def dead $eflags
+    renamable $rcx = ADD64ri8 killed renamable $rcx, 4, implicit-def dead $eflags
+    MOV64mr $rsp, 1, $noreg, -16, $noreg, renamable $rsi :: (store 8 into %stack.6)
+    $edi = MOV32rr undef $esi, implicit $si, implicit killed $rsi, implicit-def $rdi
+    renamable $r14d = XOR32rr undef $r14d, undef $r14d, implicit-def dead $eflags, implicit-def $r14
+    renamable $r11 = MOV64ri 8589934592
+  
+  bb.3.for.body4 (align 4):
+    successors: %bb.4(0x04000000), %bb.3(0x7c000000)
+    liveins: $rax, $rbp, $rbx, $rcx, $rdi, $rdx, $r8, $r9, $r11, $r13, $r14, $r10d
+  
+    renamable $rax = ADD64rr killed renamable $rax, renamable $r11, implicit-def dead $eflags
+    renamable $esi = MOV32rm $rsp, 1, $noreg, -60, $noreg :: (load 4 from %stack.0)
+    MOV16mr renamable $rdx, 4, renamable $r14, -2, $noreg, renamable $si, implicit killed $esi :: (store 2 into %ir.scevgep5, !tbaa !28)
+    renamable $r15 = LEA64r renamable $rbp, 1, renamable $r14, 0, $noreg
+    MOV16mr renamable $r9, 4, renamable $r14, 0, $noreg, renamable $r15w :: (store 2 into %ir.scevgep15, !tbaa !28)
+    MOV16mr renamable $r8, 4, renamable $r14, 0, $noreg, renamable $di :: (store 2 into %ir.scevgep12, !tbaa !28)
+    renamable $r12d = MOVSX32rr16 renamable $di
+    MOV32mr renamable $rcx, 8, renamable $r14, 0, $noreg, killed renamable $r12d :: (store 4 into %ir.scevgep9, !tbaa !22)
+    MOV16mr renamable $rdx, 4, renamable $r14, 0, $noreg, renamable $r10w :: (store 2 into %ir.scevgep6, !tbaa !28)
+    renamable $r15d = ADD32ri8 renamable $r15d, 1, implicit-def dead $eflags, implicit killed $r15, implicit-def $r15
+    renamable $r14 = ADD64ri8 killed renamable $r14, 1, implicit-def dead $eflags
+    renamable $edi = LEA64_32r killed renamable $rdi, 1, $noreg, 2, $noreg, implicit-def $rdi
+    renamable $ebx = ADD32ri8 renamable $ebx, 2, implicit-def dead $eflags, implicit killed $rbx, implicit-def $rbx
+    CMP64rr renamable $r13, killed renamable $r15, implicit-def $eflags
+    JCC_1 %bb.3, 5, implicit $eflags
+  
+  bb.4.for.body28.lr.ph:
+    successors: %bb.5(0x80000000)
+    liveins: $rbp, $rbx, $r13
+  
+    $r11 = MOV64rr killed $rbp
+    renamable $r15 = MOV64rm $rsp, 1, $noreg, -56, $noreg :: (load 8 from %stack.4)
+    renamable $r8d = LEA64_32r renamable $r15, 1, renamable $r15, 0, $noreg
+    renamable $r9d = LEA64_32r renamable $r13, 1, renamable $r13, 0, $noreg
+    renamable $rbx = MOVSX64rr32 renamable $ebx, implicit killed $rbx
+    renamable $rax = MOV64rm $rsp, 1, $noreg, -32, $noreg :: (load 8 from %stack.1)
+    renamable $rbp = LEA64r killed renamable $rax, 2, renamable $rbx, 0, $noreg
+    renamable $rax = MOV64rm $rsp, 1, $noreg, -48, $noreg :: (load 8 from %stack.3)
+    renamable $rax = LEA64r killed renamable $rax, 2, renamable $rbx, 0, $noreg
+    renamable $rcx = MOV64rm $rsp, 1, $noreg, -40, $noreg :: (load 8 from %stack.2)
+    renamable $rdi = LEA64r killed renamable $rcx, 2, renamable $rbx, 0, $noreg
+    renamable $r14 = LEA64r renamable $r15, 4, renamable $rbx, 0, $noreg
+    renamable $ecx = XOR32rr undef $ecx, undef $ecx, implicit-def dead $eflags, implicit-def $rcx
+    renamable $edx = XOR32rr undef $edx, undef $edx, implicit-def dead $eflags, implicit-def $rdx
+    renamable $r12 = MOV64rm $rsp, 1, $noreg, -8, $noreg :: (load 8 from %stack.5)
+    renamable $r10 = MOV64rm $rsp, 1, $noreg, -16, $noreg :: (load 8 from %stack.6)
+  
+  bb.5.for.body28 (align 4):
+    successors: %bb.6(0x04000000), %bb.5(0x7c000000)
+    liveins: $rax, $rbp, $rbx, $rcx, $rdi, $rdx, $r10, $r11, $r12, $r13, $r14, $r15, $r8d, $r9d
+  
+    renamable $esi = LEA64_32r renamable $r12, 1, renamable $rcx, 0, $noreg
+    MOV16mr renamable $rdi, 2, renamable $rdx, -2, $noreg, renamable $r15w :: (store 2 into %ir.scevgep41, !tbaa !28)
+    MOV32mr renamable $r14, 4, renamable $rdx, 0, $noreg, killed renamable $esi :: (store 4 into %ir.scevgep43, !tbaa !22)
+    MOV16mr renamable $rax, 2, renamable $rdx, -2, $noreg, renamable $r8w :: (store 2 into %ir.scevgep36, !tbaa !28)
+    renamable $esi = LEA64_32r renamable $r10, 1, renamable $rdx, -2, $noreg
+    MOV16mr renamable $rbp, 2, renamable $rdx, -2, $noreg, renamable $si, implicit killed $esi :: (store 2 into %ir.scevgep30, !tbaa !28)
+    MOV16mr renamable $rdi, 2, renamable $rdx, 0, $noreg, renamable $r13w :: (store 2 into %ir.scevgep39, !tbaa !28)
+    MOV16mr renamable $rax, 2, renamable $rdx, 0, $noreg, renamable $r9w :: (store 2 into %ir.scevgep34, !tbaa !28)
+    MOV16mi renamable $rbp, 2, renamable $rdx, 0, $noreg, 1 :: (store 2 into %ir.scevgep31, !tbaa !28)
+    renamable $rdx = nuw nsw ADD64ri8 killed renamable $rdx, 2, implicit-def dead $eflags
+    renamable $rcx = nuw nsw ADD64ri8 killed renamable $rcx, 1, implicit-def dead $eflags
+    renamable $esi = LEA64_32r renamable $rcx, 1, renamable $r10, 0, $noreg
+    CMP32ri8 killed renamable $esi, 3, implicit-def $eflags
+    JCC_1 %bb.5, 5, implicit $eflags
+  
+  bb.6.for.inc58:
+    successors: %bb.2(0x7c000000), %bb.7(0x04000000)
+    liveins: $rbx, $rdx, $r10, $r11, $r12, $r13
+  
+    $rbp = MOV64rr killed $r11
+    renamable $rbp = nsw ADD64ri8 killed renamable $rbp, -1, implicit-def dead $eflags
+    renamable $r10 = nsw ADD64ri8 killed renamable $r10, -2, implicit-def dead $eflags
+    renamable $rbx = ADD64rr killed renamable $rbx, killed renamable $rdx, implicit-def dead $eflags
+    renamable $r12 = nsw ADD64ri8 killed renamable $r12, -1, implicit-def dead $eflags
+    CMP64rm renamable $r13, $rsp, 1, $noreg, -24, $noreg, implicit-def $eflags :: (load 8 from %stack.7)
+    renamable $r13 = LEA64r killed renamable $r13, 1, $noreg, 1, $noreg
+    renamable $r9 = MOV64rm $rsp, 1, $noreg, -40, $noreg :: (load 8 from %stack.2)
+    renamable $rdx = MOV64rm $rsp, 1, $noreg, -32, $noreg :: (load 8 from %stack.1)
+    JCC_1 %bb.2, 2, implicit $eflags
+  
+  bb.7.for.cond61.preheader.loopexit:
+    successors: %bb.8(0x80000000)
+  
+    renamable $rax = MOV64rm $rsp, 1, $noreg, -56, $noreg :: (load 8 from %stack.4)
+    MOV64mr $rip, 1, $noreg, @c, $noreg, killed renamable $rax :: (store 8 into @c, !tbaa !26)
+    $rbx = frame-destroy POP64r implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 48
+    $r12 = frame-destroy POP64r implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 40
+    $r13 = frame-destroy POP64r implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 32
+    $r14 = frame-destroy POP64r implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 24
+    $r15 = frame-destroy POP64r implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 16
+    $rbp = frame-destroy POP64r implicit-def $rsp, implicit $rsp
+    CFI_INSTRUCTION def_cfa_offset 8
+  
+  bb.8.for.cond61 (align 4):
+    successors: %bb.8(0x80000000)
+    liveins: $rbx, $r12, $r13, $r14, $r15, $rbp
+  
+    JMP_1 %bb.8
+
+...
+---
+name:            debug
+alignment:       4
+exposesReturnsTwice: false
+legalized:       false
+regBankSelected: false
+selected:        false
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+registers:       []
+liveins:         []
+frameInfo:       
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       48
+  offsetAdjustment: -48
+  maxAlignment:    8
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 48
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  localFrameSize:  0
+  savePoint:       ''
+  restorePoint:    ''
+fixedStack:      
+  - { id: 0, type: spill-slot, offset: -56, size: 8, alignment: 8, stack-id: default, 
+      callee-saved-register: '$rbx', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, type: spill-slot, offset: -48, size: 8, alignment: 16, stack-id: default, 
+      callee-saved-register: '$r12', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, type: spill-slot, offset: -40, size: 8, alignment: 8, stack-id: default, 
+      callee-saved-register: '$r13', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, type: spill-slot, offset: -32, size: 8, alignment: 16, stack-id: default, 
+      callee-saved-register: '$r14', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, type: spill-slot, offset: -24, size: 8, alignment: 8, stack-id: default, 
+      callee-saved-register: '$r15', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, type: spill-slot, offset: -16, size: 8, alignment: 16, stack-id: default, 
+      callee-saved-register: '$rbp', callee-saved-restored: true, debug-info-variable: '', 
+      debug-info-expression: '', debug-info-location: '' }
+stack:           
+  - { id: 0, name: '', type: spill-slot, offset: -116, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, name: '', type: spill-slot, offset: -88, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, name: '', type: spill-slot, offset: -96, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, name: '', type: spill-slot, offset: -104, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, name: '', type: spill-slot, offset: -112, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, name: '', type: spill-slot, offset: -64, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 6, name: '', type: spill-slot, offset: -72, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 7, name: '', type: spill-slot, offset: -80, size: 8, alignment: 8, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+constants:       []
+machineFunctionInfo: {}
+body:             |
+  bb.0.entry:
+    successors: %bb.8(0x30000000), %bb.1(0x50000000)
+    liveins: $rbx, $r12, $r13, $r14, $r15, $rbp
+  
+    renamable $ecx = MOV32rm $rip, 1, $noreg, @a, $noreg, debug-location !38 :: (dereferenceable load 4 from @a, !tbaa !22)
+    renamable $eax = XOR32rr undef $eax, undef $eax, implicit-def dead $eflags
+    TEST32rr renamable $ecx, renamable $ecx, implicit-def $eflags, debug-location !39
+    renamable $eax = CMOV32rr killed renamable $eax, killed renamable $ecx, 9, implicit $eflags, debug-location !40
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(), debug-location !41
+    DBG_VALUE 1, $noreg, !37, !DIExpression(), debug-location !41
+    DBG_VALUE $eax, $noreg, !34, !DIExpression(), debug-location !41
+    TEST32rr renamable $eax, renamable $eax, implicit-def $eflags, debug-location !42
+    JCC_1 %bb.8, 14, implicit $eflags, debug-location !45
+  
+  bb.1.for.body.lr.ph:
+    successors: %bb.2(0x80000000)
+    liveins: $eax, $rbp, $r15, $r14, $r13, $r12, $rbx
+  
+    frame-setup PUSH64r killed $rbp, implicit-def $rsp, implicit $rsp, debug-location !49
+    CFI_INSTRUCTION def_cfa_offset 16
+    frame-setup PUSH64r killed $r15, implicit-def $rsp, implicit $rsp, debug-location !49
+    CFI_INSTRUCTION def_cfa_offset 24
+    frame-setup PUSH64r killed $r14, implicit-def $rsp, implicit $rsp, debug-location !49
+    CFI_INSTRUCTION def_cfa_offset 32
+    frame-setup PUSH64r killed $r13, implicit-def $rsp, implicit $rsp, debug-location !49
+    CFI_INSTRUCTION def_cfa_offset 40
+    frame-setup PUSH64r killed $r12, implicit-def $rsp, implicit $rsp, debug-location !49
+    CFI_INSTRUCTION def_cfa_offset 48
+    frame-setup PUSH64r killed $rbx, implicit-def $rsp, implicit $rsp, debug-location !49
+    CFI_INSTRUCTION def_cfa_offset 56
+    CFI_INSTRUCTION offset $rbx, -56
+    CFI_INSTRUCTION offset $r12, -48
+    CFI_INSTRUCTION offset $r13, -40
+    CFI_INSTRUCTION offset $r14, -32
+    CFI_INSTRUCTION offset $r15, -24
+    CFI_INSTRUCTION offset $rbp, -16
+    renamable $rdx = MOV64rm $rip, 1, $noreg, @e, $noreg, debug-location !49 :: (dereferenceable load 8 from @e)
+    renamable $r9 = MOV64rm $rip, 1, $noreg, @b, $noreg, debug-location !49 :: (dereferenceable load 8 from @b)
+    renamable $rcx = MOV64rm $rip, 1, $noreg, @d, $noreg, debug-location !49 :: (dereferenceable load 8 from @d)
+    renamable $eax = MOV32rr killed renamable $eax, implicit-def $rax, debug-location !45
+    MOV64mr $rsp, 1, $noreg, -24, $noreg, killed renamable $rax :: (store 8 into %stack.7)
+    renamable $rdx = ADD64ri8 killed renamable $rdx, 2, implicit-def dead $eflags, debug-location !45
+    renamable $rcx = ADD64ri8 killed renamable $rcx, 2, implicit-def dead $eflags, debug-location !45
+    MOV64mr $rsp, 1, $noreg, -48, $noreg, killed renamable $rcx :: (store 8 into %stack.3)
+    renamable $r9 = ADD64ri8 killed renamable $r9, 2, implicit-def dead $eflags, debug-location !45
+    $r13d = MOV32ri 1, implicit-def $r13
+    $r12d = MOV32ri 4294967295, implicit-def $r12
+    renamable $r10d = XOR32rr undef $r10d, undef $r10d, implicit-def dead $eflags, implicit-def $r10
+    renamable $ebp = XOR32rr undef $ebp, undef $ebp, implicit-def dead $eflags, implicit-def $rbp
+    renamable $ebx = XOR32rr undef $ebx, undef $ebx, implicit-def dead $eflags, implicit-def $rbx
+    MOV64mr $rsp, 1, $noreg, -32, $noreg, renamable $rdx :: (store 8 into %stack.1)
+    MOV64mr $rsp, 1, $noreg, -40, $noreg, renamable $r9 :: (store 8 into %stack.2)
+  
+  bb.2.for.body4.lr.ph (align 4):
+    successors: %bb.3(0x80000000)
+    liveins: $rbp, $rbx, $rdx, $r9, $r10, $r12, $r13
+  
+    DBG_VALUE $r13, $noreg, !37, !DIExpression(), debug-location !41
+    MOV64mr $rsp, 1, $noreg, -8, $noreg, killed renamable $r12 :: (store 8 into %stack.5)
+    $rax = MOV64rr $r13, debug-location !55
+    renamable $rax = nsw NEG64r killed renamable $rax, implicit-def dead $eflags, debug-location !55
+    MOV64mr $rsp, 1, $noreg, -56, $noreg, renamable $rax :: (store 8 into %stack.4)
+    renamable $eax = LEA64_32r killed renamable $rax, 1, renamable $rax, 0, $noreg, debug-location !49
+    MOV32mr $rsp, 1, $noreg, -60, $noreg, killed renamable $eax :: (store 4 into %stack.0)
+    $rsi = MOV64rr killed $r10
+    renamable $r10d = LEA64_32r renamable $r13, 1, renamable $r13, 0, $noreg, debug-location !49
+    renamable $rax = MOVSX64rr32 renamable $ebx, debug-location !56
+    renamable $rdx = LEA64r killed renamable $rdx, 2, renamable $rax, 0, $noreg, debug-location !56
+    renamable $rcx = LEA64r $noreg, 4, renamable $rax, 0, $noreg, debug-location !56
+    renamable $rdi = MOV64rm $rsp, 1, $noreg, -48, $noreg :: (load 8 from %stack.3)
+    renamable $r8 = LEA64r killed renamable $rdi, 2, renamable $rax, 0, $noreg, debug-location !56
+    renamable $r9 = LEA64r killed renamable $r9, 2, renamable $rax, 0, $noreg, debug-location !56
+    renamable $rax = SHL64ri killed renamable $rax, 32, implicit-def dead $eflags, debug-location !56
+    renamable $rcx = SUB64rr killed renamable $rcx, renamable $r13, implicit-def dead $eflags, debug-location !56
+    renamable $rcx = ADD64ri8 killed renamable $rcx, 4, implicit-def dead $eflags, debug-location !56
+    MOV64mr $rsp, 1, $noreg, -16, $noreg, renamable $rsi :: (store 8 into %stack.6)
+    $edi = MOV32rr undef $esi, implicit $si, implicit killed $rsi, implicit-def $rdi
+    renamable $r14d = XOR32rr undef $r14d, undef $r14d, implicit-def dead $eflags, implicit-def $r14
+    renamable $r11 = MOV64ri 8589934592
+  
+  bb.3.for.body4 (align 4):
+    successors: %bb.4(0x04000000), %bb.3(0x7c000000)
+    liveins: $rax, $rbp, $rbx, $rcx, $rdi, $rdx, $r8, $r9, $r11, $r13, $r14, $r10d
+  
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(), debug-location !41
+    DBG_VALUE $noreg, $noreg, !36, !DIExpression(), debug-location !41
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value), debug-location !41
+    renamable $rax = ADD64rr killed renamable $rax, renamable $r11, implicit-def dead $eflags, debug-location !56
+    renamable $esi = MOV32rm $rsp, 1, $noreg, -60, $noreg :: (load 4 from %stack.0)
+    MOV16mr renamable $rdx, 4, renamable $r14, -2, $noreg, renamable $si, implicit killed $esi, debug-location !62 :: (store 2 into %ir.scevgep5, !tbaa !28)
+    renamable $r15 = LEA64r renamable $rbp, 1, renamable $r14, 0, $noreg, debug-location !63
+    MOV16mr renamable $r9, 4, renamable $r14, 0, $noreg, renamable $r15w, debug-location !64 :: (store 2 into %ir.scevgep15, !tbaa !28)
+    MOV16mr renamable $r8, 4, renamable $r14, 0, $noreg, renamable $di, debug-location !65 :: (store 2 into %ir.scevgep12, !tbaa !28)
+    renamable $r12d = MOVSX32rr16 renamable $di, debug-location !66
+    MOV32mr renamable $rcx, 8, renamable $r14, 0, $noreg, killed renamable $r12d, debug-location !67 :: (store 4 into %ir.scevgep9, !tbaa !22)
+    MOV16mr renamable $rdx, 4, renamable $r14, 0, $noreg, renamable $r10w, debug-location !68 :: (store 2 into %ir.scevgep6, !tbaa !28)
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(DW_OP_plus_uconst, 2, DW_OP_stack_value), debug-location !41
+    DBG_VALUE $noreg, $noreg, !36, !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value), debug-location !41
+    renamable $r15d = ADD32ri8 renamable $r15d, 1, implicit-def dead $eflags, implicit killed $r15, implicit-def $r15, debug-location !69
+    renamable $r14 = ADD64ri8 killed renamable $r14, 1, implicit-def dead $eflags, debug-location !56
+    renamable $edi = LEA64_32r killed renamable $rdi, 1, $noreg, 2, $noreg, implicit-def $rdi, debug-location !56
+    renamable $ebx = ADD32ri8 renamable $ebx, 2, implicit-def dead $eflags, implicit killed $rbx, implicit-def $rbx, debug-location !56
+    CMP64rr renamable $r13, killed renamable $r15, implicit-def $eflags, debug-location !69
+    JCC_1 %bb.3, 5, implicit $eflags, debug-location !56
+  
+  bb.4.for.body28.lr.ph:
+    successors: %bb.5(0x80000000)
+    liveins: $rbp, $rbx, $r13
+  
+    $r11 = MOV64rr killed $rbp
+    renamable $r15 = MOV64rm $rsp, 1, $noreg, -56, $noreg :: (load 8 from %stack.4)
+    renamable $r8d = LEA64_32r renamable $r15, 1, renamable $r15, 0, $noreg, debug-location !57
+    renamable $r9d = LEA64_32r renamable $r13, 1, renamable $r13, 0, $noreg, debug-location !57
+    renamable $rbx = MOVSX64rr32 renamable $ebx, implicit killed $rbx, debug-location !61
+    renamable $rax = MOV64rm $rsp, 1, $noreg, -32, $noreg :: (load 8 from %stack.1)
+    renamable $rbp = LEA64r killed renamable $rax, 2, renamable $rbx, 0, $noreg, debug-location !61
+    renamable $rax = MOV64rm $rsp, 1, $noreg, -48, $noreg :: (load 8 from %stack.3)
+    renamable $rax = LEA64r killed renamable $rax, 2, renamable $rbx, 0, $noreg, debug-location !61
+    renamable $rcx = MOV64rm $rsp, 1, $noreg, -40, $noreg :: (load 8 from %stack.2)
+    renamable $rdi = LEA64r killed renamable $rcx, 2, renamable $rbx, 0, $noreg, debug-location !61
+    renamable $r14 = LEA64r renamable $r15, 4, renamable $rbx, 0, $noreg, debug-location !61
+    renamable $ecx = XOR32rr undef $ecx, undef $ecx, implicit-def dead $eflags, implicit-def $rcx
+    renamable $edx = XOR32rr undef $edx, undef $edx, implicit-def dead $eflags, implicit-def $rdx
+    renamable $r12 = MOV64rm $rsp, 1, $noreg, -8, $noreg :: (load 8 from %stack.5)
+    renamable $r10 = MOV64rm $rsp, 1, $noreg, -16, $noreg :: (load 8 from %stack.6)
+  
+  bb.5.for.body28 (align 4):
+    successors: %bb.6(0x04000000), %bb.5(0x7c000000)
+    liveins: $rax, $rbp, $rbx, $rcx, $rdi, $rdx, $r10, $r11, $r12, $r13, $r14, $r15, $r8d, $r9d
+  
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(), debug-location !41
+    DBG_VALUE $noreg, $noreg, !36, !DIExpression(), debug-location !41
+    renamable $esi = LEA64_32r renamable $r12, 1, renamable $rcx, 0, $noreg, debug-location !72
+    MOV16mr renamable $rdi, 2, renamable $rdx, -2, $noreg, renamable $r15w, debug-location !73 :: (store 2 into %ir.scevgep41, !tbaa !28)
+    MOV32mr renamable $r14, 4, renamable $rdx, 0, $noreg, killed renamable $esi, debug-location !74 :: (store 4 into %ir.scevgep43, !tbaa !22)
+    MOV16mr renamable $rax, 2, renamable $rdx, -2, $noreg, renamable $r8w, debug-location !75 :: (store 2 into %ir.scevgep36, !tbaa !28)
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value), debug-location !41
+    renamable $esi = LEA64_32r renamable $r10, 1, renamable $rdx, -2, $noreg
+    MOV16mr renamable $rbp, 2, renamable $rdx, -2, $noreg, renamable $si, implicit killed $esi, debug-location !77 :: (store 2 into %ir.scevgep30, !tbaa !28)
+    MOV16mr renamable $rdi, 2, renamable $rdx, 0, $noreg, renamable $r13w, debug-location !78 :: (store 2 into %ir.scevgep39, !tbaa !28)
+    MOV16mr renamable $rax, 2, renamable $rdx, 0, $noreg, renamable $r9w, debug-location !79 :: (store 2 into %ir.scevgep34, !tbaa !28)
+    MOV16mi renamable $rbp, 2, renamable $rdx, 0, $noreg, 1, debug-location !80 :: (store 2 into %ir.scevgep31, !tbaa !28)
+    DBG_VALUE $noreg, $noreg, !35, !DIExpression(DW_OP_plus_uconst, 2, DW_OP_stack_value), debug-location !41
+    DBG_VALUE $noreg, $noreg, !36, !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value), debug-location !41
+    renamable $rdx = nuw nsw ADD64ri8 killed renamable $rdx, 2, implicit-def dead $eflags, debug-location !81
+    renamable $rcx = nuw nsw ADD64ri8 killed renamable $rcx, 1, implicit-def dead $eflags, debug-location !81
+    renamable $esi = LEA64_32r renamable $rcx, 1, renamable $r10, 0, $noreg, debug-location !81
+    CMP32ri8 killed renamable $esi, 3, implicit-def $eflags, debug-location !81
+    JCC_1 %bb.5, 5, implicit $eflags, debug-location !61
+  
+  bb.6.for.inc58:
+    successors: %bb.2(0x7c000000), %bb.7(0x04000000)
+    liveins: $rbx, $rdx, $r10, $r11, $r12, $r13
+  
+    DBG_VALUE $noreg, $noreg, !37, !DIExpression(DW_OP_plus_uconst, 1, DW_OP_stack_value), debug-location !41
+    $rbp = MOV64rr killed $r11
+    renamable $rbp = nsw ADD64ri8 killed renamable $rbp, -1, implicit-def dead $eflags, debug-location !45
+    renamable $r10 = nsw ADD64ri8 killed renamable $r10, -2, implicit-def dead $eflags, debug-location !45
+    renamable $rbx = ADD64rr killed renamable $rbx, killed renamable $rdx, implicit-def dead $eflags, debug-location !45
+    renamable $r12 = nsw ADD64ri8 killed renamable $r12, -1, implicit-def dead $eflags, debug-location !45
+    CMP64rm renamable $r13, $rsp, 1, $noreg, -24, $noreg, implicit-def $eflags, debug-location !42 :: (load 8 from %stack.7)
+    renamable $r13 = LEA64r killed renamable $r13, 1, $noreg, 1, $noreg, debug-location !84
+    renamable $r9 = MOV64rm $rsp, 1, $noreg, -40, $noreg :: (load 8 from %stack.2)
+    renamable $rdx = MOV64rm $rsp, 1, $noreg, -32, $noreg :: (load 8 from %stack.1)
+    JCC_1 %bb.2, 2, implicit $eflags, debug-location !45
+  
+  bb.7.for.cond61.preheader.loopexit:
+    successors: %bb.8(0x80000000)
+  
+    renamable $rax = MOV64rm $rsp, 1, $noreg, -56, $noreg :: (load 8 from %stack.4)
+    MOV64mr $rip, 1, $noreg, @c, $noreg, killed renamable $rax, debug-location !54 :: (store 8 into @c, !tbaa !26)
+    $rbx = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !46
+    CFI_INSTRUCTION def_cfa_offset 48, debug-location !46
+    $r12 = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !46
+    CFI_INSTRUCTION def_cfa_offset 40, debug-location !46
+    $r13 = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !46
+    CFI_INSTRUCTION def_cfa_offset 32, debug-location !46
+    $r14 = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !46
+    CFI_INSTRUCTION def_cfa_offset 24, debug-location !46
+    $r15 = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !46
+    CFI_INSTRUCTION def_cfa_offset 16, debug-location !46
+    $rbp = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !46
+    CFI_INSTRUCTION def_cfa_offset 8, debug-location !46
+  
+  bb.8.for.cond61 (align 4):
+    successors: %bb.8(0x80000000)
+    liveins: $rbx, $r12, $r13, $r14, $r15, $rbp
+  
+    JMP_1 %bb.8, debug-location !46
+    
+    ; DEBUG-LABEL: name: debug
+    ; NODEBUG_LABEL: name: nodebug 
+    ; CHECK: renamable $esi = LEA64_32r renamable $r10, 1, renamable $rdx, 0, $noreg
+    ; CHECK-NEXT: $esi = ADD32ri8
+    ; CHECK-NEXT: MOV16mr renamable $rbp
+    ; CHECK-NEXT: MOV16mr renamable $rdi
+    ; NODEBUG-LABEL: name: debug
+
+...
