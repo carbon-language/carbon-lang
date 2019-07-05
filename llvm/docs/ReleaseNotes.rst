@@ -126,6 +126,11 @@ Changes to the C API
 Changes to the DAG infrastructure
 ---------------------------------
 
+Changes to LLDB
+===============
+
+* Backtraces are now color highlighting in the terminal.
+
 External Open Source Projects Using LLVM 9
 ==========================================
 
