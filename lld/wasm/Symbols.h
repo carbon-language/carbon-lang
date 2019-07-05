@@ -475,11 +475,6 @@ union SymbolUnion {
   alignas(SectionSymbol) char I[sizeof(SectionSymbol)];
 };
 
-// It is important to keep the size of SymbolUnion small for performance and
-// memory usage reasons. 96 bytes is a soft limit based on the size of
-// UndefinedFunction on a 64-bit system.
-static_assert(sizeof(SymbolUnion) <= 96, "SymbolUnion too large");
-
 void printTraceSymbol(Symbol *Sym);
 void printTraceSymbolUndefined(StringRef Name, const InputFile* File);
 
