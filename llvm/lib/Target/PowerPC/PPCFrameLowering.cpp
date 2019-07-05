@@ -1856,7 +1856,6 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
   unsigned MinFPR = PPC::F31;
   unsigned MinVR = Subtarget.hasSPE() ? PPC::S31 : PPC::V31;
 
-  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool HasGPSaveArea = false;
   bool HasG8SaveArea = false;
   bool HasFPSaveArea = false;
@@ -1870,7 +1869,8 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
 
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    assert((!FI->mustSaveTOC() || (Reg != PPC::X2 && Reg != PPC::R2)) &&
+    assert((!MF.getInfo<PPCFunctionInfo>()->mustSaveTOC() ||
+            (Reg != PPC::X2 && Reg != PPC::R2)) &&
            "Not expecting to try to spill R2 in a function that must save TOC");
     if (PPC::GPRCRegClass.contains(Reg) ||
         PPC::SPE4RCRegClass.contains(Reg)) {
