@@ -660,7 +660,7 @@ void FileCheckPattern::printSubstitutions(const SourceMgr &SM, StringRef Buffer,
         bool UndefSeen = false;
         handleAllErrors(MatchedValue.takeError(),
                         [](const FileCheckNotFoundError &E) {},
-                        // Handled in PrintNoMatch()
+                        // Handled in PrintNoMatch().
                         [](const FileCheckErrorDiagnostic &E) {},
                         [&](const FileCheckUndefVarError &E) {
                           if (!UndefSeen) {
