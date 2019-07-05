@@ -231,8 +231,9 @@ AMDGPUPerfHintAnalysis::FuncInfo *AMDGPUPerfHint::visit(const Function &F) {
           continue;
 
         auto Loc = FIM.find(Callee);
+        if (Loc == FIM.end())
+          continue;
 
-        assert(Loc != FIM.end() && "No func info");
         FI.MemInstCount += Loc->second.MemInstCount;
         FI.InstCount += Loc->second.InstCount;
         FI.IAMInstCount += Loc->second.IAMInstCount;
