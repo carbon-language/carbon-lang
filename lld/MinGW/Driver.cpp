@@ -105,7 +105,7 @@ opt::InputArgList MinGWOptTable::parse(ArrayRef<const char *> Argv) {
   if (MissingCount)
     fatal(StringRef(Args.getArgString(MissingIndex)) + ": missing argument");
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
-    fatal("unknown argument: " + Arg->getSpelling());
+    fatal("unknown argument: " + Arg->getAsString(Args));
   return Args;
 }
 

@@ -170,7 +170,7 @@ opt::InputArgList WasmOptTable::parse(ArrayRef<const char *> Argv) {
 
   handleColorDiagnostics(Args);
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
-    error("unknown argument: " + Arg->getSpelling());
+    error("unknown argument: " + Arg->getAsString(Args));
   return Args;
 }
 

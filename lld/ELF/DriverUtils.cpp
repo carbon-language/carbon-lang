@@ -135,10 +135,10 @@ opt::InputArgList ELFOptTable::parse(ArrayRef<const char *> Argv) {
   for (auto *Arg : Args.filtered(OPT_UNKNOWN)) {
     std::string Nearest;
     if (findNearest(Arg->getAsString(Args), Nearest) > 1)
-      error("unknown argument '" + Arg->getSpelling() + "'");
+      error("unknown argument '" + Arg->getAsString(Args) + "'");
     else
-      error("unknown argument '" + Arg->getSpelling() + "', did you mean '" +
-            Nearest + "'");
+      error("unknown argument '" + Arg->getAsString(Args) +
+            "', did you mean '" + Nearest + "'");
   }
   return Args;
 }
