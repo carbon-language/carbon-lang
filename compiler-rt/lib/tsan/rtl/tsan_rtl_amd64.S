@@ -271,30 +271,16 @@ ASM_SYMBOL_INTERCEPTOR(sigsetjmp):
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%rdi, 0)
-  // save savesigs parameter
-  push %rsi
-  CFI_ADJUST_CFA_OFFSET(8)
-  CFI_REL_OFFSET(%rsi, 0)
-  // align stack frame
-  sub $8, %rsp
-  CFI_ADJUST_CFA_OFFSET(8)
   // obtain SP, store in %rdi, first argument to `void __tsan_setjmp(uptr sp)`
 #if defined(__FreeBSD__) || defined(__NetBSD__)
-  lea 24(%rsp), %rdi
+  lea 8(%rsp), %rdi
 #elif defined(__linux__) || defined(__APPLE__)
-  lea 32(%rsp), %rdi
+  lea 16(%rsp), %rdi
 #else
 # error "Unknown platform"
 #endif
   // call tsan interceptor
   call ASM_SYMBOL(__tsan_setjmp)
-  // unalign stack frame
-  add $8, %rsp
-  CFI_ADJUST_CFA_OFFSET(-8)
-  // restore savesigs parameter
-  pop %rsi
-  CFI_ADJUST_CFA_OFFSET(-8)
-  CFI_RESTORE(%rsi)
   // restore env parameter
   pop %rdi
   CFI_ADJUST_CFA_OFFSET(-8)
@@ -327,28 +313,14 @@ ASM_SYMBOL_INTERCEPTOR(__sigsetjmp):
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%rdi, 0)
-  // save savesigs parameter
-  push %rsi
-  CFI_ADJUST_CFA_OFFSET(8)
-  CFI_REL_OFFSET(%rsi, 0)
-  // align stack frame
-  sub $8, %rsp
-  CFI_ADJUST_CFA_OFFSET(8)
   // obtain SP, store in %rdi, first argument to `void __tsan_setjmp(uptr sp)`
 #if defined(__FreeBSD__)
-  lea 24(%rsp), %rdi
+  lea 8(%rsp), %rdi
 #else
-  lea 32(%rsp), %rdi
+  lea 16(%rsp), %rdi
 #endif
   // call tsan interceptor
   call ASM_SYMBOL(__tsan_setjmp)
-  // unalign stack frame
-  add $8, %rsp
-  CFI_ADJUST_CFA_OFFSET(-8)
-  // restore savesigs parameter
-  pop %rsi
-  CFI_ADJUST_CFA_OFFSET(-8)
-  CFI_RESTORE(%rsi)
   // restore env parameter
   pop %rdi
   CFI_ADJUST_CFA_OFFSET(-8)
