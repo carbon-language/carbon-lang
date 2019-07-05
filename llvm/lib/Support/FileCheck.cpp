@@ -24,15 +24,18 @@
 
 using namespace llvm;
 
-void FileCheckNumericVariable::setValue(uint64_t NewValue) {
-  assert(!Value && "Overwriting numeric variable's value is not allowed");
+bool FileCheckNumericVariable::setValue(uint64_t NewValue) {
+  if (Value)
+    return true;
   Value = NewValue;
+  return false;
 }
 
-void FileCheckNumericVariable::clearValue() {
+bool FileCheckNumericVariable::clearValue() {
   if (!Value)
-    return;
+    return true;
   Value = None;
+  return false;
 }
 
 Expected<uint64_t> FileCheckExpression::eval() const {
@@ -620,7 +623,8 @@ Expected<size_t> FileCheckPattern::match(StringRef Buffer, size_t &MatchLen,
     if (MatchedValue.getAsInteger(10, Val))
       return FileCheckErrorDiagnostic::get(SM, MatchedValue,
                                            "Unable to represent numeric value");
-    DefinedNumericVariable->setValue(Val);
+    if (DefinedNumericVariable->setValue(Val))
+      llvm_unreachable("Numeric variable redefined");
   }
 
   // Like CHECK-NEXT, CHECK-EMPTY's match range is considered to start after

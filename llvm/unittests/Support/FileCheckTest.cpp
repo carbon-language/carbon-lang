@@ -15,23 +15,28 @@ namespace {
 class FileCheckTest : public ::testing::Test {};
 
 TEST_F(FileCheckTest, NumericVariable) {
-  // Undefined variable: getValue fails, setValue does not trigger assert.
+  // Undefined variable: getValue and clearValue fails, setValue works.
   FileCheckNumericVariable FooVar = FileCheckNumericVariable(1, "FOO");
   EXPECT_EQ("FOO", FooVar.getName());
   llvm::Optional<uint64_t> Value = FooVar.getValue();
   EXPECT_FALSE(Value);
-  FooVar.clearValue();
-  FooVar.setValue(42);
+  EXPECT_TRUE(FooVar.clearValue());
+  EXPECT_FALSE(FooVar.setValue(42));
 
-  // Defined variable: getValue returns value set.
+  // Defined variable: getValue returns value set, setValue fails.
+  Value = FooVar.getValue();
+  EXPECT_TRUE(Value);
+  EXPECT_EQ(42U, *Value);
+  EXPECT_TRUE(FooVar.setValue(43));
   Value = FooVar.getValue();
   EXPECT_TRUE(Value);
   EXPECT_EQ(42U, *Value);
 
-  // Clearing variable: getValue fails.
-  FooVar.clearValue();
+  // Clearing variable: getValue fails, clearValue again fails.
+  EXPECT_FALSE(FooVar.clearValue());
   Value = FooVar.getValue();
   EXPECT_FALSE(Value);
+  EXPECT_TRUE(FooVar.clearValue());
 }
 
 uint64_t doAdd(uint64_t OpL, uint64_t OpR) { return OpL + OpR; }
