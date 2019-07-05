@@ -1384,7 +1384,7 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
   // Try searching forwards from Before, looking for reads or defs.
   const_iterator I(Before);
   for (; I != end() && N > 0; ++I) {
-    if (I->isMetaInstruction())
+    if (I->isDebugInstr())
       continue;
 
     --N;
@@ -1423,7 +1423,7 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
     do {
       --I;
 
-      if (I->isMetaInstruction())
+      if (I->isDebugInstr())
         continue;
 
       --N;
@@ -1455,11 +1455,6 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
 
     } while (I != begin() && N > 0);
   }
-
-  // Check for the edge condition where the only instructions between I and
-  // begin() are meta instructions.
-  if (I != begin() && std::prev(I)->isMetaInstruction()) 
-    I = skipMetaInstructionsBackward(std::prev(I), begin());
 
   // Did we get to the start of the block?
   if (I == begin()) {
