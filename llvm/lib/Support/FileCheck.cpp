@@ -156,13 +156,19 @@ FileCheckPattern::parseNumericVariableUse(StringRef &Expr,
   // class instance of the corresponding numeric variable definition is stored
   // in GlobalNumericVariableTable in parsePattern. Therefore, the pointer we
   // get below is for the class instance corresponding to the last definition
-  // of this variable use.
+  // of this variable use. If we don't find a variable definition we create a
+  // dummy one so that parsing can continue. All uses of undefined variables,
+  // whether string or numeric, are then diagnosed in printSubstitutions()
+  // after failing to match.
   auto VarTableIter = Context->GlobalNumericVariableTable.find(Name);
-  if (VarTableIter == Context->GlobalNumericVariableTable.end())
-    return FileCheckErrorDiagnostic::get(
-        SM, Name, "using undefined numeric variable '" + Name + "'");
+  FileCheckNumericVariable *NumericVariable;
+  if (VarTableIter != Context->GlobalNumericVariableTable.end())
+    NumericVariable = VarTableIter->second;
+  else {
+    NumericVariable = Context->makeNumericVariable(0, Name);
+    Context->GlobalNumericVariableTable[Name] = NumericVariable;
+  }
 
-  FileCheckNumericVariable *NumericVariable = VarTableIter->second;
   if (!IsPseudo && NumericVariable->getDefLineNumber() == LineNumber)
     return FileCheckErrorDiagnostic::get(
         SM, Name,
