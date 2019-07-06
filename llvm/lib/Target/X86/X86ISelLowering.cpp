@@ -7237,11 +7237,11 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
     }
 
     if (NextIsNonZero) {
-      SDValue NextElt;
+      SDValue NextElt = Op.getOperand(i + 1);
       if (i == 0 && NumZero)
-        NextElt = DAG.getZExtOrTrunc(Op.getOperand(i+1), dl, MVT::i32);
+        NextElt = DAG.getZExtOrTrunc(NextElt, dl, MVT::i32);
       else
-        NextElt = DAG.getAnyExtOrTrunc(Op.getOperand(i+1), dl, MVT::i32);
+        NextElt = DAG.getAnyExtOrTrunc(NextElt, dl, MVT::i32);
       NextElt = DAG.getNode(ISD::SHL, dl, MVT::i32, NextElt,
                             DAG.getConstant(8, dl, MVT::i8));
       if (ThisIsNonZero)
