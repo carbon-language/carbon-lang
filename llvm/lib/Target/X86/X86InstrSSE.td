@@ -748,6 +748,13 @@ let Predicates = [UseSSE2] in {
             (MOVLPDrm VR128:$src1, addr:$src2)>;
 }
 
+let Predicates = [UseSSE2, NoSSE41_Or_OptForSize] in {
+  // Use MOVLPD to load into the low bits from a full vector unless we can use
+  // BLENDPD.
+  def : Pat<(X86Movsd VR128:$src1, (v2f64 (nonvolatile_load addr:$src2))),
+            (MOVLPDrm VR128:$src1, addr:$src2)>;
+}
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Move Low to High and High to Low packed FP Instructions
 //===----------------------------------------------------------------------===//
@@ -2073,6 +2080,13 @@ let Predicates = [HasAVX1Only] in {
             (VUNPCKHPDYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v4i64 (X86Unpckh VR256:$src1, VR256:$src2)),
             (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
+}
+
+let Predicates = [UseSSE2] in {
+  // Use MOVHPD if the load isn't aligned enough for UNPCKLPD.
+  def : Pat<(v2f64 (X86Unpckl VR128:$src1,
+                              (v2f64 (nonvolatile_load addr:$src2)))),
+            (MOVHPDrm VR128:$src1, addr:$src2)>;
 }
 
 //===----------------------------------------------------------------------===//

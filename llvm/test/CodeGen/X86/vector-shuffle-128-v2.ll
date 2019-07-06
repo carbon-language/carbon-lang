@@ -1309,8 +1309,7 @@ define <2 x double> @shuffle_mem_v2f64_31(<2 x double> %a, <2 x double>* %b) {
 define <2 x double> @shuffle_mem_v2f64_02(<2 x double> %a, <2 x double>* %pb) {
 ; SSE-LABEL: shuffle_mem_v2f64_02:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movups (%rdi), %xmm1
-; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_mem_v2f64_02:
@@ -1325,20 +1324,17 @@ define <2 x double> @shuffle_mem_v2f64_02(<2 x double> %a, <2 x double>* %pb) {
 define <2 x double> @shuffle_mem_v2f64_21(<2 x double> %a, <2 x double>* %pb) {
 ; SSE2-LABEL: shuffle_mem_v2f64_21:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    movupd (%rdi), %xmm1
-; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; SSE2-NEXT:    movlpd {{.*#+}} xmm0 = mem[0],xmm0[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_mem_v2f64_21:
 ; SSE3:       # %bb.0:
-; SSE3-NEXT:    movupd (%rdi), %xmm1
-; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; SSE3-NEXT:    movlpd {{.*#+}} xmm0 = mem[0],xmm0[1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_mem_v2f64_21:
 ; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movupd (%rdi), %xmm1
-; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; SSSE3-NEXT:    movlpd {{.*#+}} xmm0 = mem[0],xmm0[1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_mem_v2f64_21:
