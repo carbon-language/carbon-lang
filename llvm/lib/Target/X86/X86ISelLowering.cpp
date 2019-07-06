@@ -33908,9 +33908,9 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
     // If we reuse the shift amount just for sse shift amounts then we know that
     // only the bottom 64-bits are only ever used.
     bool AssumeSingleUse = llvm::all_of(Amt->uses(), [&Amt](SDNode *Use) {
-      unsigned Opc = Use->getOpcode();
-      return (Opc == X86ISD::VSHL || Opc == X86ISD::VSRL ||
-              Opc == X86ISD::VSRA) &&
+      unsigned UseOpc = Use->getOpcode();
+      return (UseOpc == X86ISD::VSHL || UseOpc == X86ISD::VSRL ||
+              UseOpc == X86ISD::VSRA) &&
              Use->getOperand(0) != Amt;
     });
 
