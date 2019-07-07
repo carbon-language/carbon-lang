@@ -15237,6 +15237,36 @@ bool ARMTargetLowering::useLoadStackGuardNode() const {
   return Subtarget->isTargetMachO();
 }
 
+void ARMTargetLowering::insertSSPDeclarations(Module &M) const {
+  if (!Subtarget->getTargetTriple().isWindowsMSVCEnvironment())
+    return TargetLowering::insertSSPDeclarations(M);
+
+  // MSVC CRT has a global variable holding security cookie.
+  M.getOrInsertGlobal("__security_cookie",
+                      Type::getInt8PtrTy(M.getContext()));
+
+  // MSVC CRT has a function to validate security cookie.
+  FunctionCallee SecurityCheckCookie = M.getOrInsertFunction(
+      "__security_check_cookie", Type::getVoidTy(M.getContext()),
+      Type::getInt8PtrTy(M.getContext()));
+  if (Function *F = dyn_cast<Function>(SecurityCheckCookie.getCallee()))
+    F->addAttribute(1, Attribute::AttrKind::InReg);
+}
+
+Value *ARMTargetLowering::getSDagStackGuard(const Module &M) const {
+  // MSVC CRT has a global variable holding security cookie.
+  if (Subtarget->getTargetTriple().isWindowsMSVCEnvironment())
+    return M.getGlobalVariable("__security_cookie");
+  return TargetLowering::getSDagStackGuard(M);
+}
+
+Function *ARMTargetLowering::getSSPStackGuardCheck(const Module &M) const {
+  // MSVC CRT has a function to validate security cookie.
+  if (Subtarget->getTargetTriple().isWindowsMSVCEnvironment())
+    return M.getFunction("__security_check_cookie");
+  return TargetLowering::getSSPStackGuardCheck(M);
+}
+
 bool ARMTargetLowering::canCombineStoreAndExtract(Type *VectorTy, Value *Idx,
                                                   unsigned &Cost) const {
   // If we do not have NEON, vector types are not natively supported.
