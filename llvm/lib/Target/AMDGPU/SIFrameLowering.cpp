@@ -848,10 +848,10 @@ void SIFrameLowering::emitEpilogue(MachineFunction &MF,
 
   if (FuncInfo->FramePointerSaveIndex) {
     const int FI = FuncInfo->FramePointerSaveIndex.getValue();
-    const MachineFrameInfo &MFI = MF.getFrameInfo();
 
-    assert(!MFI.isDeadObjectIndex(FI));
-    assert(MFI.getStackID(FI) == TargetStackID::SGPRSpill);
+    assert(!MF.getFrameInfo().isDeadObjectIndex(FI) &&
+           MF.getFrameInfo().getStackID(FI) == TargetStackID::SGPRSpill);
+
     ArrayRef<SIMachineFunctionInfo::SpilledReg> Spill
       = FuncInfo->getSGPRToVGPRSpills(FI);
     assert(Spill.size() == 1);
