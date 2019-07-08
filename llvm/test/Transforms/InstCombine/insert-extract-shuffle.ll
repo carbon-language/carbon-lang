@@ -425,3 +425,46 @@ define <5 x float> @insert_not_undef_shuffle_translate_commute_lengthen(float %x
   ret <5 x float> %r
 }
 
+define <4 x float> @insert_nonzero_index_splat(float %x) {
+; CHECK-LABEL: @insert_nonzero_index_splat(
+; CHECK-NEXT:    [[XV:%.*]] = insertelement <4 x float> undef, float [[X:%.*]], i32 2
+; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <4 x float> [[XV]], <4 x float> undef, <4 x i32> <i32 undef, i32 2, i32 2, i32 undef>
+; CHECK-NEXT:    ret <4 x float> [[SPLAT]]
+;
+  %xv = insertelement <4 x float> undef, float %x, i32 2
+  %splat = shufflevector <4 x float> %xv, <4 x float> undef, <4 x i32> <i32 undef, i32 2, i32 2, i32 undef>
+  ret <4 x float> %splat
+}
+
+define <3 x double> @insert_nonzero_index_splat_narrow(double %x) {
+; CHECK-LABEL: @insert_nonzero_index_splat_narrow(
+; CHECK-NEXT:    ret <3 x double> undef
+;
+  %xv = insertelement <4 x double> undef, double %x, i32 4
+  %splat = shufflevector <4 x double> %xv, <4 x double> undef, <3 x i32> <i32 4, i32 undef, i32 4>
+  ret <3 x double> %splat
+}
+
+define <5 x i7> @insert_nonzero_index_splat_widen(i7 %x) {
+; CHECK-LABEL: @insert_nonzero_index_splat_widen(
+; CHECK-NEXT:    [[XV:%.*]] = insertelement <4 x i7> undef, i7 [[X:%.*]], i32 1
+; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <4 x i7> [[XV]], <4 x i7> undef, <5 x i32> <i32 undef, i32 1, i32 1, i32 undef, i32 1>
+; CHECK-NEXT:    ret <5 x i7> [[SPLAT]]
+;
+  %xv = insertelement <4 x i7> undef, i7 %x, i32 1
+  %splat = shufflevector <4 x i7> %xv, <4 x i7> undef, <5 x i32> <i32 undef, i32 1, i32 1, i32 undef, i32 1>
+  ret <5 x i7> %splat
+}
+
+define <4 x float> @insert_nonzero_index_splat_extra_use(float %x) {
+; CHECK-LABEL: @insert_nonzero_index_splat_extra_use(
+; CHECK-NEXT:    [[XV:%.*]] = insertelement <4 x float> undef, float [[X:%.*]], i32 2
+; CHECK-NEXT:    call void @use(<4 x float> [[XV]])
+; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <4 x float> [[XV]], <4 x float> undef, <4 x i32> <i32 undef, i32 2, i32 2, i32 undef>
+; CHECK-NEXT:    ret <4 x float> [[SPLAT]]
+;
+  %xv = insertelement <4 x float> undef, float %x, i32 2
+  call void @use(<4 x float> %xv)
+  %splat = shufflevector <4 x float> %xv, <4 x float> undef, <4 x i32> <i32 undef, i32 2, i32 2, i32 undef>
+  ret <4 x float> %splat
+}
