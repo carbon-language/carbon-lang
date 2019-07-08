@@ -63,7 +63,6 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
     {MD_irr_loop, "irr_loop"},
     {MD_access_group, "llvm.access.group"},
     {MD_callback, "callback"},
-    {MD_preserve_access_index, "llvm.preserve.access.index"},
   };
 
   for (auto &MDKind : MDKinds) {
