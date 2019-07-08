@@ -164,7 +164,16 @@ int exitStatus{EXIT_SUCCESS};
 
 std::string CompileFortran(std::string path, Fortran::parser::Options options,
     DriverOptions &driver,
-    Fortran::semantics::SemanticsContext &semanticsContext) {
+    const Fortran::common::IntrinsicTypeDefaultKinds &defaultKinds) {
+  Fortran::parser::AllSources allSources;
+  allSources.set_encoding(driver.encoding);
+  Fortran::semantics::SemanticsContext semanticsContext{
+      defaultKinds, options.features, allSources};
+  semanticsContext.set_moduleDirectory(driver.moduleDirectory)
+      .set_moduleFileSuffix(driver.moduleFileSuffix)
+      .set_searchDirectories(driver.searchDirectories)
+      .set_warnOnNonstandardUsage(driver.warnOnNonstandardUsage)
+      .set_warningsAreErrors(driver.warningsAreErrors);
   if (!driver.forcedForm) {
     auto dot{path.rfind(".")};
     if (dot != std::string::npos) {
@@ -529,24 +538,14 @@ int main(int argc, char *const argv[]) {
     // TODO: equivalents for other Fortran compilers
   }
 
-  Fortran::parser::AllSources allSources;
-  allSources.set_encoding(driver.encoding);
-  Fortran::semantics::SemanticsContext semanticsContext{
-      defaultKinds, options.features, allSources};
-  semanticsContext.set_moduleDirectory(driver.moduleDirectory)
-      .set_moduleFileSuffix(driver.moduleFileSuffix)
-      .set_searchDirectories(driver.searchDirectories)
-      .set_warnOnNonstandardUsage(driver.warnOnNonstandardUsage)
-      .set_warningsAreErrors(driver.warningsAreErrors);
-
   if (!anyFiles) {
     driver.measureTree = true;
     driver.dumpUnparse = true;
-    CompileFortran("-", options, driver, semanticsContext);
+    CompileFortran("-", options, driver, defaultKinds);
     return exitStatus;
   }
   for (const auto &path : fortranSources) {
-    std::string relo{CompileFortran(path, options, driver, semanticsContext)};
+    std::string relo{CompileFortran(path, options, driver, defaultKinds)};
     if (!driver.compileOnly && !relo.empty()) {
       relocatables.push_back(relo);
     }
