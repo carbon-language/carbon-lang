@@ -27,6 +27,7 @@ using namespace bolt;
 namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
+extern cl::opt<bool> NoThreads;
 
 static cl::opt<bool>
 PrintClusters("print-clusters",
@@ -65,7 +66,13 @@ struct HashPair {
 
 }
 
-void ClusterAlgorithm::computeClusterAverageFrequency() {
+void ClusterAlgorithm::computeClusterAverageFrequency(const BinaryContext &BC) {
+  // Create a separate MCCodeEmitter to allow lock-free execution
+  BinaryContext::IndependentCodeEmitter Emitter;
+  if (!opts::NoThreads) {
+    Emitter = BC.createIndependentMCCodeEmitter();
+  }
+
   AvgFreq.resize(Clusters.size(), 0.0);
   for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
     double Freq = 0.0;
@@ -75,7 +82,7 @@ void ClusterAlgorithm::computeClusterAverageFrequency() {
         Freq += BB->getExecutionCount();
         // Estimate the size of a block in bytes at run time
         // NOTE: This might be inaccurate
-        ClusterSize += BB->estimateSize();
+        ClusterSize += BB->estimateSize(Emitter.MCE.get());
       }
     }
     AvgFreq[I] = ClusterSize == 0 ? 0 : Freq / ClusterSize;
@@ -525,7 +532,7 @@ void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
   auto &ClusterEdges = CAlgo->ClusterEdges;
 
   // Compute clusters' average frequencies.
-  CAlgo->computeClusterAverageFrequency();
+  CAlgo->computeClusterAverageFrequency(BF.getBinaryContext());
   std::vector<double> &AvgFreq = CAlgo->AvgFreq;
 
   if (opts::PrintClusters)
@@ -621,13 +628,13 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
-
+    
   // Cluster basic blocks.
   CAlgo->clusterBasicBlocks(BF);
   std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;
 
   // Compute clusters' average frequencies.
-  CAlgo->computeClusterAverageFrequency();
+  CAlgo->computeClusterAverageFrequency(BF.getBinaryContext());
   std::vector<double> &AvgFreq = CAlgo->AvgFreq;
 
   if (opts::PrintClusters)

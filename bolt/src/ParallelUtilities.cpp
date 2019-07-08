@@ -20,13 +20,13 @@
 namespace opts {
 extern cl::OptionCategory BoltCategory;
 
-cl::opt<unsigned> 
+cl::opt<unsigned>
 ThreadCount("thread-count",
   cl::desc("number of threads"),
   cl::init(hardware_concurrency()),
   cl::cat(BoltCategory));
 
-cl::opt<bool> 
+cl::opt<bool>
 NoThreads("no-threads",
   cl::desc("disable multithreading"),
   cl::init(false),

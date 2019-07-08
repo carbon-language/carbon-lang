@@ -12,6 +12,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "ParallelUtilities.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -455,6 +456,7 @@ void BinaryBasicBlock::addBranchInstruction(const BinaryBasicBlock *Successor) {
   assert(isSuccessor(Successor));
   auto &BC = Function->getBinaryContext();
   MCInst NewInst;
+  std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
   BC.MIB->createUncondBranch(NewInst, Successor->getLabel(), BC.Ctx.get());
   Instructions.emplace_back(std::move(NewInst));
 }
@@ -537,8 +539,8 @@ void BinaryBasicBlock::dump() const {
   outs() << "\n";
 }
 
-uint64_t BinaryBasicBlock::estimateSize() const {
-  return Function->getBinaryContext().computeCodeSize(begin(), end());
+uint64_t BinaryBasicBlock::estimateSize(const MCCodeEmitter *Emitter) const {
+  return Function->getBinaryContext().computeCodeSize(begin(), end(), Emitter);
 }
 
 BinaryBasicBlock::BinaryBranchInfo &

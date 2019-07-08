@@ -13,6 +13,7 @@
 #include "ParallelUtilities.h"
 #include "Passes/ReorderAlgorithm.h"
 #include "llvm/Support/Options.h"
+
 #include <numeric>
 #include <vector>
 
@@ -335,31 +336,32 @@ void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
     return;
 
   IsAArch64 = BC.isAArch64();
+  std::atomic<uint64_t> ModifiedFuncCount{0};
 
-  uint64_t ModifiedFuncCount = 0;
-  for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
-
-    if (!shouldOptimize(Function))
-      continue;
-
+  ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
     const bool ShouldSplit =
-            (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
-            (opts::SplitFunctions == BinaryFunction::ST_EH &&
-             Function.hasEHRanges()) ||
-             Function.shouldSplit();
-    modifyFunctionLayout(Function, opts::ReorderBlocks, opts::MinBranchClusters,
+        (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
+        (opts::SplitFunctions == BinaryFunction::ST_EH && BF.hasEHRanges()) ||
+        BF.shouldSplit();
+    modifyFunctionLayout(BF, opts::ReorderBlocks, opts::MinBranchClusters,
                          ShouldSplit);
-
-    if (Function.hasLayoutChanged()) {
+    if (BF.hasLayoutChanged()) {
       ++ModifiedFuncCount;
     }
-  }
+  };
+
+  ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
+    return !shouldOptimize(BF);
+  };
+
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_LINEAR, WorkFun, SkipFunc,
+      "ReorderBasicBlocks");
 
   outs() << "BOLT-INFO: basic block reordering modified layout of "
-         << format("%zu (%.2lf%%) functions\n",
-                   ModifiedFuncCount,
-                   100.0 * ModifiedFuncCount / BC.getBinaryFunctions().size());
+         << format("%zu (%.2lf%%) functions\n", ModifiedFuncCount.load(),
+                   100.0 * ModifiedFuncCount.load() /
+                       BC.getBinaryFunctions().size());
 
   if (opts::PrintFuncStat > 0) {
     raw_ostream &OS = outs();
@@ -373,8 +375,8 @@ void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
 
     OS << "\nBOLT-INFO: Printing Function Statistics:\n\n";
     OS << "           There are " << BFs.size() << " functions in total. \n";
-    OS << "           Number of functions being modified: " << ModifiedFuncCount
-       << "\n";
+    OS << "           Number of functions being modified: "
+       << ModifiedFuncCount.load() << "\n";
     OS << "           User asks for detailed information on top "
        << opts::PrintFuncStat << " functions. (Ranked by function score)"
        << "\n\n";

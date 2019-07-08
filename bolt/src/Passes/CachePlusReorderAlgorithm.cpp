@@ -23,6 +23,7 @@ using EdgeList = std::vector<std::pair<BinaryBasicBlock *, uint64_t>>;
 namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
+extern cl::opt<bool> NoThreads;
 
 cl::opt<unsigned>
 ClusterSplitThreshold("cluster-split-threshold",
@@ -288,6 +289,12 @@ private:
       ExecutionCounts[BB->getLayoutIndex()] = EC;
     }
 
+    // Create a separate MCCodeEmitter to allow lock-free execution
+    BinaryContext::IndependentCodeEmitter Emitter;
+    if (!opts::NoThreads) {
+      Emitter = BF.getBinaryContext().createIndependentMCCodeEmitter();
+    }
+
     // Initialize clusters
     Clusters.reserve(BF.layout_size());
     AllClusters.reserve(BF.layout_size());
@@ -295,7 +302,8 @@ private:
     Size.reserve(BF.layout_size());
     for (auto BB : BF.layout()) {
       size_t Index = BB->getLayoutIndex();
-      Size.push_back(std::max<uint64_t>(BB->estimateSize(), 1));
+      Size.push_back(
+          std::max<uint64_t>(BB->estimateSize(Emitter.MCE.get()), 1));
       AllClusters.emplace_back(BB, ExecutionCounts[Index], Size[Index]);
       Clusters.push_back(&AllClusters[Index]);
       CurCluster.push_back(&AllClusters[Index]);

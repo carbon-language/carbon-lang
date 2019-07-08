@@ -1615,26 +1615,23 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF) {
   BF.fixBranches();
 
   // Create local MC context to isolate the effect of ephemeral code emission.
-  std::unique_ptr<MCObjectFileInfo> LocalMOFI =
-    llvm::make_unique<MCObjectFileInfo>();
-  std::unique_ptr<MCContext> LocalCtx =
-    llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), LocalMOFI.get());
-  LocalMOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false, *LocalCtx);
+  auto MCEInstance = createIndependentMCCodeEmitter();
+  auto *LocalCtx = MCEInstance.LocalCtx.get();
   auto *MAB = TheTarget->createMCAsmBackend(*STI, *MRI, MCTargetOptions());
-  auto *MCE = TheTarget->createMCCodeEmitter(*MII, *MRI, *LocalCtx);
+
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
 
   std::unique_ptr<MCStreamer> Streamer(TheTarget->createMCObjectStreamer(
       *TheTriple, *LocalCtx, std::unique_ptr<MCAsmBackend>(MAB), VecOS,
-      std::unique_ptr<MCCodeEmitter>(MCE), *STI,
+      std::unique_ptr<MCCodeEmitter>(MCEInstance.MCE.release()), *STI,
       /* RelaxAll */ false,
       /* IncrementalLinkerCompatible */ false,
       /* DWARFMustBeAtTheEnd */ false));
 
   Streamer->InitSections(false);
 
-  auto *Section = LocalMOFI->getTextSection();
+  auto *Section = MCEInstance.LocalMOFI->getTextSection();
   Section->setHasInstructions(true);
 
   auto *StartLabel = LocalCtx->getOrCreateSymbol("__hstart");

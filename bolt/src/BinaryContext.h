@@ -915,26 +915,33 @@ public:
   /// size is for the cold one.
   std::pair<size_t, size_t> calculateEmittedSize(BinaryFunction &BF);
 
-  /// Calculate the size of the instruction \p Inst.
-  uint64_t computeInstructionSize(const MCInst &Inst) const {
+  /// Calculate the size of the instruction \p Inst optionally using a
+  /// user-supplied emitter for lock-free multi-thread work. MCCodeEmitter is
+  /// not thread safe and each thread should operate with its own copy of it.
+  uint64_t
+  computeInstructionSize(const MCInst &Inst,
+                         const MCCodeEmitter *Emitter = nullptr) const {
+    if (!Emitter)
+      Emitter = this->MCE.get();
     SmallString<256> Code;
     SmallVector<MCFixup, 4> Fixups;
     raw_svector_ostream VecOS(Code);
-    MCE->encodeInstruction(Inst, VecOS, Fixups, *STI);
-
+    Emitter->encodeInstruction(Inst, VecOS, Fixups, *STI);
     return Code.size();
   }
 
   /// Compute the native code size for a range of instructions.
   /// Note: this can be imprecise wrt the final binary since happening prior to
   /// relaxation, as well as wrt the original binary because of opcode
-  /// shortening.
+  /// shortening.MCCodeEmitter is not thread safe and each thread should operate
+  /// with its own copy of it.
   template <typename Itr>
-  uint64_t computeCodeSize(Itr Beg, Itr End) const {
+  uint64_t computeCodeSize(Itr Beg, Itr End,
+                           const MCCodeEmitter *Emitter = nullptr) const {
     uint64_t Size = 0;
     while (Beg != End) {
       if (!MII->get(Beg->getOpcode()).isPseudo())
-        Size += computeInstructionSize(*Beg);
+        Size += computeInstructionSize(*Beg, Emitter);
       ++Beg;
     }
     return Size;
@@ -999,6 +1006,30 @@ public:
 
   void exitWithBugReport(StringRef Message,
                          const BinaryFunction &Function) const;
+
+  struct IndependentCodeEmitter {
+    std::unique_ptr<MCObjectFileInfo> LocalMOFI;
+    std::unique_ptr<MCContext> LocalCtx;
+    std::unique_ptr<MCCodeEmitter> MCE;
+  };
+
+  /// Encapsulates an independent MCCodeEmitter that doesn't share resources
+  /// with the main one available through BinaryContext::MCE, managed by
+  /// BinaryContext.
+  /// This is intended to create a lock-free environment for an auxiliary thread
+  /// that needs to perform work with an MCCodeEmitter that can be transient or
+  /// won't be used in the main code emitter.
+  IndependentCodeEmitter createIndependentMCCodeEmitter() const {
+    IndependentCodeEmitter MCEInstance;
+    MCEInstance.LocalMOFI = llvm::make_unique<MCObjectFileInfo>();
+    MCEInstance.LocalCtx = llvm::make_unique<MCContext>(
+        AsmInfo.get(), MRI.get(), MCEInstance.LocalMOFI.get());
+    MCEInstance.LocalMOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false,
+                                                *MCEInstance.LocalCtx);
+    MCEInstance.MCE.reset(
+        TheTarget->createMCCodeEmitter(*MII, *MRI, *MCEInstance.LocalCtx));
+    return MCEInstance;
+  }
 };
 
 } // namespace bolt

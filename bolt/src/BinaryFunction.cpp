@@ -2634,7 +2634,7 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
                               bool EmitCodeOnly, bool LabelsForOffsets) {
   if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
-
+  
   // Track first emitted instruction with debug info.
   bool FirstInstr = true;
   for (auto BB : layout()) {
@@ -2699,7 +2699,9 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
 
       // Prepare to tag this location with a label if we need to keep track of
       // the location of calls/returns for BOLT address translation maps
-      if (LabelsForOffsets && BC.MIB->hasAnnotation(Instr, "Offset")) {
+      if (!EmitCodeOnly && LabelsForOffsets &&
+          BC.MIB->hasAnnotation(Instr, "Offset")) {
+
         MCSymbol *LocSym = BC.Ctx->createTempSymbol(/*CanBeUnnamed=*/true);
         Streamer.EmitLabel(LocSym);
         BC.MIB->addAnnotation(Instr, "LocSym",
@@ -2708,11 +2710,11 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
       }
 
       // Emit SDT labels
-      if (BC.MIB->hasAnnotation(Instr, "SDTMarker")) {
+      if (!EmitCodeOnly && BC.MIB->hasAnnotation(Instr, "SDTMarker")) {
         auto OriginalAddress =
             BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "SDTMarker").get();
         auto *SDTLabel = BC.SDTMarkers[OriginalAddress].Label;
-
+        
         //  A given symbol should only be emitted as a label once
         if (SDTLabel->isUndefined())
           Streamer.EmitLabel(SDTLabel);
@@ -3263,9 +3265,13 @@ void BinaryFunction::fixBranches() {
       const auto *FSuccessor = BB->getConditionalSuccessor(false);
       if (NextBB && NextBB == TSuccessor) {
         std::swap(TSuccessor, FSuccessor);
-        MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
+        {
+          std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+          MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
+        }
         BB->swapConditionalSuccessors();
       } else {
+        std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
         MIB->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
       }
       if (TSuccessor == FSuccessor) {
@@ -3279,7 +3285,11 @@ void BinaryFunction::fixBranches() {
             TSuccessor->isCold() != FSuccessor->isCold() &&
             BB->isCold() != TSuccessor->isCold()) {
           std::swap(TSuccessor, FSuccessor);
-          MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
+          {
+            std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+            MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(),
+                                        Ctx);
+          }
           BB->swapConditionalSuccessors();
         }
         BB->addBranchInstruction(FSuccessor);
@@ -3849,13 +3859,13 @@ SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc,
   // Always emit is_stmt at the beginning of function fragment.
   if (FirstInstr)
     Flags |= DWARF2_FLAG_IS_STMT;
-
+    
   BC.Ctx->setCurrentDwarfLoc(
     CurrentFilenum,
-    CurrentRow.Line,
+    CurrentRow.Line, 
     CurrentRow.Column,
-    Flags,
-    CurrentRow.Isa,
+    Flags, 
+    CurrentRow.Isa, 
     CurrentRow.Discriminator);
   BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
 

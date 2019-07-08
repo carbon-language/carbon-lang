@@ -16,14 +16,15 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
-#include <utility>
 #include <set>
+#include <utility>
 
 namespace llvm {
 
@@ -870,8 +871,11 @@ public:
     return InputRange.second - InputRange.first;
   }
 
-  /// Returns an estimate of size of basic block during run time.
-  uint64_t estimateSize() const;
+  /// Returns an estimate of size of basic block during run time optionally
+  /// using a user-supplied emitter for lock-free multi-thread work.
+  /// MCCodeEmitter is not thread safe and each thread should operate with its
+  /// own copy of it.
+  uint64_t estimateSize(const MCCodeEmitter *Emitter = nullptr) const;
 
   /// Return index in the current layout. The user is responsible for
   /// making sure the indices are up to date,

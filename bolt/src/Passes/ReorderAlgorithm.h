@@ -53,7 +53,7 @@ public:
   /// the sum of average frequencies of its blocks (execution count / # instrs).
   /// The average frequencies are stored in the AvgFreq vector, index by the
   /// cluster indices in the Clusters vector.
-  void computeClusterAverageFrequency();
+  void computeClusterAverageFrequency(const BinaryContext &BC);
 
   /// Clear clusters and related info.
   virtual void reset();
