@@ -12,6 +12,17 @@ Other non-standard features, which do conflict with the current
 standard specification of the Fortran programming language, are
 accepted if enabled by command-line options.
 
+Intentional violations of the standard
+======================================
+* The default `INTEGER` type is required by the standard to occupy
+  the same amount of storage as the default `REAL` type.  Default
+  `REAL` is of course 32-bit IEEE-754 floating-point today.  This legacy
+  rule imposes an artificially small constraint in some cases
+  where Fortran mandates that something have the default `INTEGER`
+  type: array bounds, `CHARACTER` length, subscripts, and the results
+  of intrinsic function references that return such things.  We
+  use `INTEGER(KIND=8)` for such things.
+
 Extensions, deletions, and legacy features supported by default
 ===============================================================
 * Tabs in source
