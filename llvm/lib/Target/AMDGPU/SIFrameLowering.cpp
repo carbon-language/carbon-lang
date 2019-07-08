@@ -805,13 +805,13 @@ void SIFrameLowering::emitPrologue(MachineFunction &MF,
       .setMIFlag(MachineInstr::FrameSetup);
   }
 
-  assert(!HasFP || (FuncInfo->SGPRForFPSaveRestoreCopy != AMDGPU::NoRegister ||
-                    FuncInfo->FramePointerSaveIndex) &&
-                       "Needed to save FP but didn't save it anywhere");
+  assert((!HasFP || (FuncInfo->SGPRForFPSaveRestoreCopy != AMDGPU::NoRegister ||
+                     FuncInfo->FramePointerSaveIndex)) &&
+         "Needed to save FP but didn't save it anywhere");
 
-  assert(HasFP || (FuncInfo->SGPRForFPSaveRestoreCopy == AMDGPU::NoRegister &&
-                   !FuncInfo->FramePointerSaveIndex) &&
-                      "Saved FP but didn't need it");
+  assert((HasFP || (FuncInfo->SGPRForFPSaveRestoreCopy == AMDGPU::NoRegister &&
+                    !FuncInfo->FramePointerSaveIndex)) &&
+         "Saved FP but didn't need it");
 }
 
 void SIFrameLowering::emitEpilogue(MachineFunction &MF,
