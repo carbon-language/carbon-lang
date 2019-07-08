@@ -38,6 +38,7 @@ struct LabeledStatementInfoTuplePOD {
   ProxyForScope proxyForScope;
   parser::CharBlock parserCharBlock;
   LabeledStmtClassificationSet labeledStmtClassificationSet;
+  bool legacyAcceptedInDirectSubscope;
 };
 using TargetStmtMap = std::map<parser::Label, LabeledStatementInfoTuplePOD>;
 struct SourceStatementInfoTuplePOD {
@@ -209,6 +210,14 @@ const parser::CharBlock *GetStmtName(const parser::Statement<A> &stmt) {
   return nullptr;
 }
 
+template<typename A>
+static constexpr bool LabelDoTargetAcceptedInDirectSubscopeOn(
+    const parser::Statement<A> &statement) {
+  return (std::is_same_v<A, parser::EndIfStmt> ||
+      std::is_same_v<A, parser::EndDoStmt> ||
+      std::is_same_v<A, parser::EndSelectStmt>);
+}
+
 class ParseTreeAnalyzer {
 public:
   ParseTreeAnalyzer(ParseTreeAnalyzer &&that) = default;
@@ -223,6 +232,7 @@ public:
     if (statement.label.has_value()) {
       auto label{statement.label.value()};
       auto targetFlags{ConstructBranchTargetFlags(statement)};
+      bool canBeParentLabel{LabelDoTargetAcceptedInDirectSubscopeOn(statement)};
       if constexpr (std::is_same_v<A, parser::AssociateStmt> ||
           std::is_same_v<A, parser::BlockStmt> ||
           std::is_same_v<A, parser::ChangeTeamStmt> ||
@@ -233,10 +243,12 @@ public:
           std::is_same_v<A, parser::SelectRankStmt> ||
           std::is_same_v<A, parser::SelectTypeStmt>) {
         constexpr bool useParent{true};
-        AddTargetLabelDefinition(useParent, label, targetFlags);
+        AddTargetLabelDefinition(
+            useParent, label, targetFlags, canBeParentLabel);
       } else {
         constexpr bool useParent{false};
-        AddTargetLabelDefinition(useParent, label, targetFlags);
+        AddTargetLabelDefinition(
+            useParent, label, targetFlags, canBeParentLabel);
       }
     }
     return true;
@@ -737,12 +749,13 @@ private:
 
   // 6.2.5., paragraph 2
   void AddTargetLabelDefinition(bool useParent, parser::Label label,
-      LabeledStmtClassificationSet labeledStmtClassificationSet) {
+      LabeledStmtClassificationSet labeledStmtClassificationSet,
+      bool legacyAcceptedInDirectSubscope) {
     CheckLabelInRange(label);
     const auto pair{programUnits_.back().targetStmts.emplace(label,
         LabeledStatementInfoTuplePOD{
             (useParent ? ParentScope() : currentScope_), currentPosition_,
-            labeledStmtClassificationSet})};
+            labeledStmtClassificationSet, legacyAcceptedInDirectSubscope})};
     if (!pair.second) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
@@ -812,7 +825,7 @@ LabeledStatementInfoTuplePOD GetLabel(
     const TargetStmtMap &labels, const parser::Label &label) {
   const auto iter{labels.find(label)};
   if (iter == labels.cend()) {
-    return {0u, nullptr, LabeledStmtClassificationSet{}};
+    return {0u, nullptr, LabeledStmtClassificationSet{}, false};
   } else {
     return iter->second;
   }
@@ -867,6 +880,11 @@ parser::CharBlock SkipLabel(const parser::CharBlock &position) {
   return position;
 }
 
+ProxyForScope ParentScope(
+    const std::vector<ProxyForScope> &scopes, ProxyForScope scope) {
+  return scopes[scope];
+}
+
 void CheckLabelDoConstraints(const SourceStmtList &dos,
     const SourceStmtList &branches, const TargetStmtMap &labels,
     const std::vector<ProxyForScope> &scopes, parser::Messages &errorHandler) {
@@ -889,9 +907,16 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               SayLabel(label)});
     } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
       // C1133
-      errorHandler.Say(position,
-          parser::MessageFormattedText{
-              "label '%u' is not in scope"_en_US, SayLabel(label)});
+      if (doTarget.legacyAcceptedInDirectSubscope &&
+          ParentScope(scopes, doTarget.proxyForScope) == scope) {
+        errorHandler.Say(doTarget.parserCharBlock,
+            parser::MessageFormattedText{
+                "A DO loop should terminate with an END DO or CONTINUE inside its scope"_en_US});
+      } else {
+        errorHandler.Say(position,
+            parser::MessageFormattedText{
+                "label '%u' is not in scope"_err_en_US, SayLabel(label)});
+      }
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do)) {
       if (!doTarget.labeledStmtClassificationSet.test(

@@ -33,6 +33,30 @@ public:
         std::visit(
             common::visitors{
                 [](auto &) {},
+                // Labels on end-stmt of constructs are accepted by f18 for
+                // compatibility purposes, even-though they are technically
+                // not in the same scope as the label-do-stmt.
+                [&](common::Indirection<IfConstruct> &ifConstruct) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndIfStmt>>(ifConstruct.value().t));
+                },
+                [&](common::Indirection<DoConstruct> &doConstruct) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndDoStmt>>(doConstruct.value().t));
+                },
+                [&](common::Indirection<CaseConstruct> &caseConstruct) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndSelectStmt>>(
+                          caseConstruct.value().t));
+                },
+                [&](common::Indirection<SelectRankConstruct> &selectRank) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndSelectStmt>>(selectRank.value().t));
+                },
+                [&](common::Indirection<SelectTypeConstruct> &selectType) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndSelectStmt>>(selectType.value().t));
+                },
                 [&](Statement<common::Indirection<LabelDoStmt>> &labelDoStmt) {
                   auto &label{std::get<Label>(labelDoStmt.statement.value().t)};
                   stack.push_back(LabelInfo{i, label});
