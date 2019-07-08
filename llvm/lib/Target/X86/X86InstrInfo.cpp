@@ -4603,7 +4603,22 @@ MachineInstr *X86InstrInfo::foldMemoryOperandCustom(
       }
     }
     break;
-  };
+  case X86::UNPCKLPDrr:
+    // If we won't be able to fold this to the memory form of UNPCKL, use
+    // MOVHPD instead. Done as custom because we can't have this in the load
+    // table twice.
+    if (OpNum == 2) {
+      const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+      const TargetRegisterClass *RC = getRegClass(MI.getDesc(), OpNum, &RI, MF);
+      unsigned RCSize = TRI.getRegSizeInBits(*RC) / 8;
+      if ((Size == 0 || Size >= 16) && RCSize >= 16 && Align < 16) {
+        MachineInstr *NewMI =
+            FuseInst(MF, X86::MOVHPDrm, OpNum, MOs, InsertPt, MI, *this, 8);
+        return NewMI;
+      }
+    }
+    break;
+  }
 
   return nullptr;
 }

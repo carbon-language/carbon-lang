@@ -2441,8 +2441,7 @@ define <4 x i32> @shuffle_v4i32_1z3z(<4 x i32> %a) {
 define <4 x float> @shuffle_mem_v4f32_0145(<4 x float> %a, <4 x float>* %pb) {
 ; SSE-LABEL: shuffle_mem_v4f32_0145:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movups (%rdi), %xmm1
-; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movhps {{.*#+}} xmm0 = xmm0[0,1],mem[0,1]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_mem_v4f32_0145:
@@ -2457,20 +2456,17 @@ define <4 x float> @shuffle_mem_v4f32_0145(<4 x float> %a, <4 x float>* %pb) {
 define <4 x float> @shuffle_mem_v4f32_4523(<4 x float> %a, <4 x float>* %pb) {
 ; SSE2-LABEL: shuffle_mem_v4f32_4523:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    movupd (%rdi), %xmm1
-; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; SSE2-NEXT:    movlps {{.*#+}} xmm0 = mem[0,1],xmm0[2,3]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_mem_v4f32_4523:
 ; SSE3:       # %bb.0:
-; SSE3-NEXT:    movupd (%rdi), %xmm1
-; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; SSE3-NEXT:    movlps {{.*#+}} xmm0 = mem[0,1],xmm0[2,3]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_mem_v4f32_4523:
 ; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movupd (%rdi), %xmm1
-; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; SSSE3-NEXT:    movlps {{.*#+}} xmm0 = mem[0,1],xmm0[2,3]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_mem_v4f32_4523:
