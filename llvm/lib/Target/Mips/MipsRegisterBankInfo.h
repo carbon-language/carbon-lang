@@ -57,15 +57,19 @@ private:
   /// Some generic instructions have operands that can be mapped to either fprb
   /// or gprb e.g. for G_LOAD we consider only operand 0 as ambiguous, operand 1
   /// is always gprb since it is a pointer.
-  /// This class provides container for MI's ambiguous:
+  /// This class provides containers for MI's ambiguous:
+  /// DefUses : MachineInstrs that use one of MI's ambiguous def operands.
   /// UseDefs : MachineInstrs that define MI's ambiguous use operands.
   class AmbiguousRegDefUseContainer {
+    SmallVector<MachineInstr *, 2> DefUses;
     SmallVector<MachineInstr *, 2> UseDefs;
 
+    void addDefUses(Register Reg, const MachineRegisterInfo &MRI);
     void addUseDef(Register Reg, const MachineRegisterInfo &MRI);
 
   public:
     AmbiguousRegDefUseContainer(const MachineInstr *MI);
+    SmallVectorImpl<MachineInstr *> &getDefUses() { return DefUses; }
     SmallVectorImpl<MachineInstr *> &getUseDefs() { return UseDefs; }
   };
 
@@ -77,9 +81,10 @@ private:
 
     bool visit(const MachineInstr *MI);
 
-    /// Visit MI's adjacent UseDefs.
+    /// Visit MI's adjacent UseDefs or DefUses.
     bool visitAdjacentInstrs(const MachineInstr *MI,
-                             SmallVectorImpl<MachineInstr *> &AdjacentInstrs);
+                             SmallVectorImpl<MachineInstr *> &AdjacentInstrs,
+                             bool isDefUse);
 
     void setTypes(const MachineInstr *MI, InstType ITy);
 

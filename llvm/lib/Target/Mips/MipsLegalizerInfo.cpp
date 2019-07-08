@@ -43,6 +43,9 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
                                  {p0, p0, 32, 8}})
       .minScalar(0, s32);
 
+  getActionDefinitionsBuilder(G_UNMERGE_VALUES)
+     .legalFor({{s32, s64}});
+
   getActionDefinitionsBuilder(G_MERGE_VALUES)
      .legalFor({{s64, s32}});
 
