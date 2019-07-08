@@ -776,7 +776,8 @@ protected:
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
-  // Info about current character type while walking DeclTypeSpec
+  // Info about current character type while walking DeclTypeSpec.
+  // Also captures any "*length" specifier on an individual declaration.
   struct {
     std::optional<ParamValue> length;
     std::optional<KindExpr> kind;
@@ -2731,6 +2732,7 @@ Symbol &DeclarationVisitor::DeclareUnknownEntity(
     if (auto *type{GetDeclTypeSpec()}) {
       SetType(name, *type);
     }
+    charInfo_.length.reset();
     SetBindNameOn(symbol);
     if (symbol.attrs().test(Attr::EXTERNAL)) {
       ConvertToProcEntity(symbol);
@@ -2786,6 +2788,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
     }
     SetBindNameOn(symbol);
   }
+  charInfo_.length.reset();
   return symbol;
 }
 
@@ -3820,6 +3823,9 @@ Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name,
     declTypeSpec = ProcessTypeSpec(*type);
   }
   if (declTypeSpec != nullptr) {
+    // Subtlety: Don't let a "*length" specifier (if any is pending) affect the
+    // declaration of this implied DO loop control variable.
+    auto save{common::ScopedSet(charInfo_.length, std::optional<ParamValue>{})};
     SetType(name, *declTypeSpec);
   } else {
     ApplyImplicitRules(symbol);

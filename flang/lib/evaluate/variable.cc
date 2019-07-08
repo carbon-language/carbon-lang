@@ -185,6 +185,9 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   }
   if (!upper_.has_value()) {
     upper_ = upper();
+    if (!upper_.has_value()) {
+      return std::nullopt;
+    }
   }
   upper_.value() = evaluate::Fold(context, std::move(upper_.value().value()));
   if (std::optional<ConstantSubscript> ubi{ToInt64(upper_.value().value())}) {
