@@ -697,7 +697,7 @@ define <16 x i8> @test14(<16 x i8> %x, <16 x i32> %y) nounwind {
 ; SSSE3-NEXT:    pcmpgtd %xmm6, %xmm7
 ; SSSE3-NEXT:    pshufb %xmm5, %xmm7
 ; SSSE3-NEXT:    punpckldq {{.*#+}} xmm7 = xmm7[0],xmm11[0],xmm7[1],xmm11[1]
-; SSSE3-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[0],xmm7[1]
+; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm7[2,3]
 ; SSSE3-NEXT:    psubd %xmm8, %xmm3
 ; SSSE3-NEXT:    movdqa {{.*#+}} xmm5 = [255,0,0,0,255,0,0,0,255,0,0,0,255,0,0,0]
 ; SSSE3-NEXT:    pand %xmm5, %xmm4
@@ -707,7 +707,7 @@ define <16 x i8> @test14(<16 x i8> %x, <16 x i32> %y) nounwind {
 ; SSSE3-NEXT:    pand %xmm5, %xmm1
 ; SSSE3-NEXT:    packuswb %xmm2, %xmm1
 ; SSSE3-NEXT:    packuswb %xmm3, %xmm1
-; SSSE3-NEXT:    andnpd %xmm1, %xmm0
+; SSSE3-NEXT:    pandn %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: test14:

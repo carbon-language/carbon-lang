@@ -7,7 +7,7 @@
 define <4 x i32> @test1(<4 x i32> %A, <4 x i32> %B) {
 ; SSE2-LABEL: test1:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3]
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: test1:
@@ -45,7 +45,7 @@ define <4 x i32> @test2(<4 x i32> %A, <4 x i32> %B) {
 define <4 x float> @test3(<4 x float> %A, <4 x float> %B) {
 ; SSE2-LABEL: test3:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3]
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: test3:

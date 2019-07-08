@@ -6438,6 +6438,8 @@ uint16_t X86InstrInfo::getExecutionDomainCustom(const MachineInstr &MI) const {
         MI.getOperand(2).getSubReg() == 0)
       return 0x6;
     return 0;
+  case X86::SHUFPDrri:
+    return 0x6;
   }
   return 0;
 }
@@ -6558,6 +6560,18 @@ bool X86InstrInfo::setExecutionDomainCustom(MachineInstr &MI,
     // We must always return true for MOVHLPSrr.
     if (Opcode == X86::MOVHLPSrr)
       return true;
+    break;
+  case X86::SHUFPDrri: {
+    if (Domain == 1) {
+      unsigned Imm = MI.getOperand(3).getImm();
+      unsigned NewImm = 0x44;
+      if (Imm & 1) NewImm |= 0x0a;
+      if (Imm & 2) NewImm |= 0xa0;
+      MI.getOperand(3).setImm(NewImm);
+      MI.setDesc(get(X86::SHUFPSrri));
+    }
+    return true;
+  }
   }
   return false;
 }
