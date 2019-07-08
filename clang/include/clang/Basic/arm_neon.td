@@ -1333,7 +1333,7 @@ def SCALAR_SQNEG : SInst<"vqneg", "ss", "ScSsSiSl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed Saturating Accumulated of Unsigned Value
-def SCALAR_SUQADD : SInst<"vuqadd", "sss", "ScSsSiSl">;
+def SCALAR_SUQADD : SInst<"vuqadd", "ssb", "ScSsSiSl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Unsigned Saturating Accumulated of Signed Value
