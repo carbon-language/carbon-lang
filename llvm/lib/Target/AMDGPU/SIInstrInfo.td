@@ -745,6 +745,7 @@ def VReg32OrOffClass : AsmOperandClass {
 def WAIT_FLAG : Operand <i32> {
   let ParserMatchClass = SWaitMatchClass;
   let PrintMethod = "printWaitFlag";
+  let OperandType = "OPERAND_IMMEDIATE";
 }
 
 include "SIInstrFormats.td"
