@@ -13,7 +13,7 @@ RUN: diff %t_show_2 %t_show_1
 
 We report error for the show command.
 RUN: not llvm-profdata show -o %t.1.profdata %t.1.profdata 2>&1 | FileCheck %s
-CHECK: llvm-profdata show: Input file name cannot be the same as the output file name!
+CHECK: llvm-profdata{{.*}} show: Input file name cannot be the same as the output file name!
 
 This is OK for merging sample fdo profiles.
 RUN: cp %S/Inputs/same-name-3.proftext %t.3.proftext
