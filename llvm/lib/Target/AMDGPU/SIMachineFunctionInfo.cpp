@@ -72,7 +72,7 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     ScratchRSrcReg = AMDGPU::SGPR0_SGPR1_SGPR2_SGPR3;
     ScratchWaveOffsetReg = AMDGPU::SGPR33;
 
-    // TODO: Pick a high register, and shift down, similar to a kernel.wwwwwwwwwwww
+    // TODO: Pick a high register, and shift down, similar to a kernel.
     FrameOffsetReg = AMDGPU::SGPR34;
     StackPtrOffsetReg = AMDGPU::SGPR32;
 
