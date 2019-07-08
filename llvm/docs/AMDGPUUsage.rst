@@ -5756,7 +5756,7 @@ Most *modifiers* are optional and may be omitted.
 
 See detailed instruction syntax description for :doc:`GFX7<AMDGPU/AMDGPUAsmGFX7>`,
 :doc:`GFX8<AMDGPU/AMDGPUAsmGFX8>`, :doc:`GFX9<AMDGPU/AMDGPUAsmGFX9>`
-and :doc:`GFX9<AMDGPU/AMDGPUAsmGFX10>`.
+and :doc:`GFX10<AMDGPU/AMDGPUAsmGFX10>`.
 
 Note that features under development are not included in this description.
 
