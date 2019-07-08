@@ -156,6 +156,7 @@ set(SYMBOL_TESTS
   symbol10.f90
   symbol11.f90
   symbol12.f90
+  symbol13.f90
   kinds01.f90
   kinds03.f90
   procinterface01.f90

@@ -3832,6 +3832,20 @@ void DeclarationVisitor::SetType(
     const parser::Name &name, const DeclTypeSpec &type) {
   CHECK(name.symbol);
   auto &symbol{*name.symbol};
+  if (charInfo_.length.has_value()) {  // Declaration has "*length" (R723)
+    auto length{std::move(*charInfo_.length)};
+    charInfo_.length.reset();
+    if (type.category() == DeclTypeSpec::Character) {
+      auto kind{type.characterTypeSpec().kind()};
+      // Recurse with correct type.
+      SetType(name,
+          currScope().MakeCharacterType(std::move(length), std::move(kind)));
+      return;
+    } else {
+      Say(name,
+          "A length specifier cannot be used to declare the non-character entity '%s'"_err_en_US);
+    }
+  }
   auto *prevType{symbol.GetType()};
   if (!prevType) {
     symbol.SetType(type);
