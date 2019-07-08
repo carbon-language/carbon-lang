@@ -89,7 +89,7 @@ subroutine s7
       !ERROR: 'j' is already declared in this scoping unit
       local_init(k, j) &
       shared(a)
-    a(i) = j + 1
+    a = j + 1
   end do
 end
 

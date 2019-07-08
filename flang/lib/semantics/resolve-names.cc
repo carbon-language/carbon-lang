@@ -747,7 +747,7 @@ protected:
   void EndDecl();
   Symbol &DeclareObjectEntity(const parser::Name &, Attrs);
   // Make sure that there's an entity in an enclosing scope called Name
-  Symbol *EnsureEnclosingEntity(const parser::Name &);
+  Symbol &FindOrDeclareEnclosingEntity(const parser::Name &);
   // Declare a LOCAL/LOCAL_INIT entity. If there isn't a type specified
   // it comes from the entity in the containing scope, or implicit rules.
   // Return pointer to the new symbol, or nullptr on error.
@@ -3791,7 +3791,8 @@ bool DeclarationVisitor::PassesLocalityChecks(
   return true;
 }
 
-Symbol *DeclarationVisitor::EnsureEnclosingEntity(const parser::Name &name) {
+Symbol &DeclarationVisitor::FindOrDeclareEnclosingEntity(
+    const parser::Name &name) {
   Symbol *prev{FindSymbol(name)};
   if (prev == nullptr) {
     // Declare the name as an object in the enclosing scope so that
@@ -3800,21 +3801,19 @@ Symbol *DeclarationVisitor::EnsureEnclosingEntity(const parser::Name &name) {
     ConvertToObjectEntity(*prev);
     ApplyImplicitRules(*prev);
   }
-  return prev;
+  return *prev;
 }
 
 Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
-  Symbol *prev{EnsureEnclosingEntity(name)};
-  if (!PassesLocalityChecks(name, *prev)) {
+  Symbol &prev{FindOrDeclareEnclosingEntity(name)};
+  if (!PassesLocalityChecks(name, prev)) {
     return nullptr;
   }
   name.symbol = nullptr;
   Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
-  if (auto *type{prev->GetType()}) {
+  if (auto *type{prev.GetType()}) {
     symbol.SetType(*type);
-    if (prev->test(Symbol::Flag::Implicit)) {
-      symbol.set(Symbol::Flag::Implicit);
-    }
+    symbol.set(Symbol::Flag::Implicit, prev.test(Symbol::Flag::Implicit));
   }
   return &symbol;
 }
@@ -4106,9 +4105,14 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
 
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
   for (const auto &name : x.v) {
-    Symbol *prev{EnsureEnclosingEntity(name)};
-    if (PassesSharedLocalityChecks(name, *prev)) {
-      auto &symbol{MakeSymbol(name, HostAssocDetails{*prev})};
+    if (!FindSymbol(name)) {
+      Say(name,
+          "Warning, variable '%s' with SHARED locality allocated"
+          " automatically and may be uninitialized"_en_US);
+    }
+    Symbol &prev{FindOrDeclareEnclosingEntity(name)};
+    if (PassesSharedLocalityChecks(name, prev)) {
+      auto &symbol{MakeSymbol(name, HostAssocDetails{prev})};
       symbol.set(Symbol::Flag::LocalityShared);
       name.symbol = &symbol;  // override resolution to parent
     }
