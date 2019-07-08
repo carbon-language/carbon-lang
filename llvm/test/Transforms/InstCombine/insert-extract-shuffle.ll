@@ -438,10 +438,12 @@ define <4 x float> @insert_nonzero_index_splat(float %x) {
 
 define <3 x double> @insert_nonzero_index_splat_narrow(double %x) {
 ; CHECK-LABEL: @insert_nonzero_index_splat_narrow(
-; CHECK-NEXT:    ret <3 x double> undef
+; CHECK-NEXT:    [[XV:%.*]] = insertelement <4 x double> undef, double [[X:%.*]], i32 3
+; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <4 x double> [[XV]], <4 x double> undef, <3 x i32> <i32 3, i32 undef, i32 3>
+; CHECK-NEXT:    ret <3 x double> [[SPLAT]]
 ;
-  %xv = insertelement <4 x double> undef, double %x, i32 4
-  %splat = shufflevector <4 x double> %xv, <4 x double> undef, <3 x i32> <i32 4, i32 undef, i32 4>
+  %xv = insertelement <4 x double> undef, double %x, i32 3
+  %splat = shufflevector <4 x double> %xv, <4 x double> undef, <3 x i32> <i32 3, i32 undef, i32 3>
   ret <3 x double> %splat
 }
 
