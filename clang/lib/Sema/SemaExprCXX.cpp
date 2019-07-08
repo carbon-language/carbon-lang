@@ -1793,6 +1793,14 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     NumInits = List->getNumExprs();
   }
 
+  for (unsigned I = 0, E = NumInits; I != E; ++I)
+    if (Inits[I]->hasNonOverloadPlaceholderType()) {
+      ExprResult Result = CheckPlaceholderExpr(Inits[I]);
+      if (!Result.isUsable())
+        return ExprError();
+      Inits[I] = Result.get();
+    }
+
   // C++11 [expr.new]p15:
   //   A new-expression that creates an object of type T initializes that
   //   object as follows:

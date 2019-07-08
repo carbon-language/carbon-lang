@@ -6678,6 +6678,14 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *OrigExpr) {
 ExprResult Sema::ActOnParenListExpr(SourceLocation L,
                                     SourceLocation R,
                                     MultiExprArg Val) {
+  for (size_t I = 0, E = Val.size(); I != E; ++I)
+    if (Val[I]->hasNonOverloadPlaceholderType()) {
+      ExprResult Result = CheckPlaceholderExpr(Val[I]);
+      if (!Result.isUsable())
+        return ExprError();
+      Val[I] = Result.get();
+    }
+
   return ParenListExpr::Create(Context, L, Val, R);
 }
 

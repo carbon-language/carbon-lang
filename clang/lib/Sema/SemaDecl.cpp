@@ -10985,18 +10985,6 @@ QualType Sema::deduceVarTypeFromInitializer(VarDecl *VDecl,
     return QualType();
   }
 
-  // Expressions default to 'id' when we're in a debugger.
-  bool DefaultedAnyToId = false;
-  if (getLangOpts().DebuggerCastResultToId &&
-      Init->getType() == Context.UnknownAnyTy && !IsInitCapture) {
-    ExprResult Result = forceUnknownAnyToType(Init, Context.getObjCIdType());
-    if (Result.isInvalid()) {
-      return QualType();
-    }
-    Init = Result.get();
-    DefaultedAnyToId = true;
-  }
-
   // C++ [dcl.decomp]p1:
   //   If the assignment-expression [...] has array type A and no ref-qualifier
   //   is present, e has type cv A
@@ -11030,6 +11018,7 @@ QualType Sema::deduceVarTypeFromInitializer(VarDecl *VDecl,
   // checks.
   // We only want to warn outside of template instantiations, though:
   // inside a template, the 'id' could have come from a parameter.
+  bool DefaultedAnyToId = VDecl && VDecl->hasAttr<ObjCDefaultedAnyToIdAttr>();
   if (!inTemplateInstantiation() && !DefaultedAnyToId && !IsInitCapture &&
       !DeducedType.isNull() && DeducedType->isObjCIdType()) {
     SourceLocation Loc = TSI->getTypeLoc().getBeginLoc();
@@ -11107,6 +11096,27 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
       return;
     }
     Init = Res.get();
+
+    // Expressions default to 'id' when we're in a debugger
+    // and we are assigning it to a variable of Objective-C pointer type.
+    if (getLangOpts().DebuggerCastResultToId &&
+        Init->getType() == Context.UnknownAnyTy) {
+      ExprResult Result = forceUnknownAnyToType(Init, Context.getObjCIdType());
+      if (Result.isInvalid()) {
+        VDecl->setInvalidDecl();
+        return;
+      }
+      Init = Result.get();
+      VDecl->addAttr(ObjCDefaultedAnyToIdAttr::CreateImplicit(Context));
+    } else if (!Init->getType().isNull() &&
+               Init->hasNonOverloadPlaceholderType()) {
+      Res = CheckPlaceholderExpr(Init).get();
+      if (!Res.isUsable()) {
+        VDecl->setInvalidDecl();
+        return;
+      }
+      Init = Res.get();
+    }
 
     if (DeduceVariableDeclarationType(VDecl, DirectInit, Init))
       return;

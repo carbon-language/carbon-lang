@@ -490,6 +490,15 @@ public:
     return false;
   }
 
+  /// Returns whether this expression has a placeholder type that isn't
+  /// Overload.
+  bool hasNonOverloadPlaceholderType() const {
+    if (auto *PlaceholderType = getType()->getAsPlaceholderType())
+      if (PlaceholderType->isNonOverloadPlaceholderType())
+        return true;
+    return false;
+  }
+
   /// isKnownToHaveBooleanValue - Return true if this is an integer expression
   /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
   /// but also int expressions which are produced by things like comparisons in

@@ -1844,6 +1844,16 @@ def ObjCBoxable : Attr {
   let Documentation = [ObjCBoxableDocs];
 }
 
+
+// This is used to indicate that the type of the annotated variable's
+// initializer was changed from UnknownAny to 'id'.
+def ObjCDefaultedAnyToId : Attr {
+  // This attribute has no spellings as it is only ever created implicitly.
+  let Spellings = [];
+  let Subjects = SubjectList<[Var]>;
+  let Documentation = [Undocumented];
+}
+
 def OptimizeNone : InheritableAttr {
   let Spellings = [Clang<"optnone">];
   let Subjects = SubjectList<[Function, ObjCMethod]>;
