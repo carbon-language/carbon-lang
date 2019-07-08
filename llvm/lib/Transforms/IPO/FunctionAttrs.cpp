@@ -1402,11 +1402,6 @@ PreservedAnalyses PostOrderFunctionAttrsPass::run(LazyCallGraph::SCC &C,
   FunctionAnalysisManager &FAM =
       AM.getResult<FunctionAnalysisManagerCGSCCProxy>(C, CG).getManager();
 
-  const ModuleAnalysisManager &MAM =
-      AM.getResult<ModuleAnalysisManagerCGSCCProxy>(C, CG).getManager();
-  assert(C.size() > 0 && "Cannot handle an empty SCC!");
-  Module &M = *C.begin()->getFunction().getParent();
-
   // We pass a lambda into functions to wire them up to the analysis manager
   // for getting function analyses.
   auto AARGetter = [&](Function &F) -> AAResults & {
