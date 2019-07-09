@@ -7,9 +7,7 @@
 ; We don't test MIPS32r1 since support for 64-bit coprocessors (such as a 64-bit
 ; FPU) on a 32-bit architecture was added in MIPS32r2.
 ; FIXME: We currently don't test that attempting to use FP64 on MIPS32r1 is an
-;        error either. This is because a large number of CodeGen tests are
-;        incorrectly using this case. We should fix those test cases then add
-;        this check here.
+;        error either.
 
 ; RUN: llc -march=mips -mcpu=mips32r2 -mattr=fp64 < %s | FileCheck %s -check-prefixes=ALL,32R2-NO-FP64A-BE
 ; RUN: llc -march=mips -mcpu=mips32r2 -mattr=fp64,nooddspreg < %s | FileCheck %s -check-prefixes=ALL,32R2-FP64A
