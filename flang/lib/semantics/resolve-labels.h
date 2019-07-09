@@ -16,16 +16,16 @@
 #define FORTRAN_SEMANTICS_RESOLVE_LABELS_H_
 
 namespace Fortran::parser {
-class Messages;
 struct Program;
 }
 
 namespace Fortran::semantics {
+class SemanticsContext;
 
 /// \brief Validate the labels in the program
-/// \param messages   where to emit messages
+/// \param context   semantic context for errors
 /// \param program    the parse tree of the program
 /// \return true, iff the program's labels pass semantics checks
-bool ValidateLabels(parser::Messages &messages, const parser::Program &program);
+bool ValidateLabels(SemanticsContext &context, const parser::Program &program);
 }
 #endif  // FORTRAN_SEMANTICS_RESOLVE_LABELS_H_

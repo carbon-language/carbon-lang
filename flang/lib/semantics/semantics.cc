@@ -169,7 +169,7 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
 }
 
 bool Semantics::Perform() {
-  return ValidateLabels(context_.messages(), program_) &&
+  return ValidateLabels(context_, program_) &&
       parser::CanonicalizeDo(program_) &&  // force line break
       PerformStatementSemantics(context_, program_) &&
       ModFileWriter{context_}.WriteAll();
