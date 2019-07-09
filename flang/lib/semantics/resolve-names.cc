@@ -4107,8 +4107,8 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
   for (const auto &name : x.v) {
     if (!FindSymbol(name)) {
       Say(name,
-          "Warning, variable '%s' with SHARED locality allocated"
-          " automatically and may be uninitialized"_en_US);
+          "Variable '%s' with SHARED locality implicitly"
+          " declared and may be uninitialized"_en_US);
     }
     Symbol &prev{FindOrDeclareEnclosingEntity(name)};
     if (PassesSharedLocalityChecks(name, prev)) {
