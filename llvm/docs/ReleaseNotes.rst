@@ -76,6 +76,12 @@ Changes to the LLVM IR
   pointee type. In the next release we intend to make this parameter
   mandatory in preparation for opaque pointer types.
 
+Changes to building LLVM
+------------------------
+
+* Building LLVM with Visual Studio now requires version 2017 or later.
+
+
 Changes to the ARM Backend
 --------------------------
 
