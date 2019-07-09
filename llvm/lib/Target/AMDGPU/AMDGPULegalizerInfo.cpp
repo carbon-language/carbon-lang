@@ -82,6 +82,21 @@ static LegalityPredicate numElementsNotEven(unsigned TypeIdx) {
   };
 }
 
+// Any combination of 32 or 64-bit elements up to 512 bits, and multiples of
+// v2s16.
+static LegalityPredicate isRegisterType(unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Ty = Query.Types[TypeIdx];
+    if (Ty.isVector()) {
+      const int EltSize = Ty.getElementType().getSizeInBits();
+      return EltSize == 32 || EltSize == 64 ||
+            (EltSize == 16 && Ty.getNumElements() % 2 == 0);
+    }
+
+    return Ty.getSizeInBits() % 32 == 0 && Ty.getSizeInBits() <= 512;
+  };
+}
+
 AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                                          const GCNTargetMachine &TM)
   :  ST(ST_) {
@@ -102,7 +117,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
 
   const LLT V2S16 = LLT::vector(2, 16);
   const LLT V4S16 = LLT::vector(4, 16);
-  const LLT V8S16 = LLT::vector(8, 16);
 
   const LLT V2S32 = LLT::vector(2, 32);
   const LLT V3S32 = LLT::vector(3, 32);
@@ -647,19 +661,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                Query.Types[0].getScalarSizeInBits() == 64;
       });
 
-  // TODO: Support any combination of s16, s32, s64, pointer vectors.
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
-    .legalFor({{V4S32, V2S32},
-               {V8S32, V2S32},
-               {V8S32, V4S32},
-               {V4S64, V2S64},
-               {V4S16, V2S16},
-               {V8S16, V2S16},
-               {V8S16, V4S16},
-               {LLT::vector(4, LocalPtr), LLT::vector(2, LocalPtr)},
-               {LLT::vector(4, PrivatePtr), LLT::vector(2, PrivatePtr)}})
-    // FIXME: Should restrict maximum size, but there seems to be a missing predicate.
-    .legalIf(typeInSet(1, {V2S32, V4S32, V8S32,V2S16, V4S16, V8S16, LLT::vector(16, 16), V2S64}));
+    .legalIf(isRegisterType(0));
 
   // Merge/Unmerge
   for (unsigned Op : {G_MERGE_VALUES, G_UNMERGE_VALUES}) {
