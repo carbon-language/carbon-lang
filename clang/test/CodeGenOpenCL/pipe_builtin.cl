@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -cl-ext=+cl_khr_subgroups -O0 -cl-std=CL2.0 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -cl-ext=+cl_khr_subgroups -O0 -cl-std=c++ -o - %s | FileCheck %s
 
 // CHECK-DAG: %opencl.pipe_ro_t = type opaque
 // CHECK-DAG: %opencl.pipe_wo_t = type opaque
