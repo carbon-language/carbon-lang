@@ -275,6 +275,9 @@ static bool rewrite(Function &F) {
       if (isa<PHINode>(I)) continue;
 
       IRBuilder<> B(cast<Instruction>(&I));
+      
+      // Note: There are many more sources of documented UB, but this pass only
+      // attempts to find UB triggered by propagation of poison.
       if (Value *Op = const_cast<Value*>(getGuaranteedNonFullPoisonOp(&I)))
         CreateAssertNot(B, getPoisonFor(ValToPoison, Op));
 
@@ -330,12 +333,25 @@ PreservedAnalyses PoisonCheckingPass::run(Function &F,
    - Strict mode - (i.e. must analyze every operand)
      - Poison through memory
      - Function ABIs
-   
-   Minor TODO items:
-   - Add propagation rules for and/or instructions
-   - Add hasPoisonFlags predicate to ValueTracking
-   - Add poison check rules for:
-     - exact flags, out of bounds operands
-     - inbounds (can't be strict due to unknown allocation sizes)
-     - fmf and fp casts
+     - Full coverage of intrinsics, etc.. (ouch)
+
+   Instructions w/Unclear Semantics:
+   - shufflevector - It would seem reasonable for an out of bounds mask element
+     to produce poison, but the LangRef does not state.  
+   - and/or - It would seem reasonable for poison to propagate from both
+     arguments, but LangRef doesn't state and propagatesFullPoison doesn't
+     include these two.
+   - all binary ops w/vector operands - The likely interpretation would be that
+     any element overflowing should produce poison for the entire result, but
+     the LangRef does not state.
+   - Floating point binary ops w/fmf flags other than (nnan, noinfs).  It seems
+     strange that only certian flags should be documented as producing poison.
+
+   Cases of clear poison semantics not yet implemented:
+   - Exact flags on ashr/lshr produce poison
+   - NSW/NUW flags on shl produce poison
+   - Inbounds flag on getelementptr produce poison
+   - fptosi/fptoui (out of bounds input) produce poison
+   - Scalable vector types for insertelement/extractelement
+   - Floating point binary ops w/fmf nnan/noinfs flags produce poison
  */
