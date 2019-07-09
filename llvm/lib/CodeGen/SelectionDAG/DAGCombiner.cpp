@@ -14364,7 +14364,7 @@ struct LoadedSlice {
   /// Get the alignment of the load used for this slice.
   unsigned getAlignment() const {
     unsigned Alignment = Origin->getAlignment();
-    unsigned Offset = getOffsetFromBase();
+    uint64_t Offset = getOffsetFromBase();
     if (Offset != 0)
       Alignment = MinAlign(Alignment, Alignment + Offset);
     return Alignment;
