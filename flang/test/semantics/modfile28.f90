@@ -14,7 +14,6 @@
 ! limitations under the License.
 
 ! Test UTF-8 support in character literals
-! TODO: test EUC-JP
 ! Note: Module files are encoded in UTF-8.
 
 module m
