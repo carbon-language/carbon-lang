@@ -20,9 +20,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/LoopIterator.h"
-#include "llvm/Transforms/Utils.h"
-#include "llvm/Transforms/Utils/LoopUtils.h" 
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include <utility>
 
 using namespace llvm;
@@ -58,8 +55,7 @@ bool HardwareLoopInfo::canAnalyze(LoopInfo &LI) {
 bool HardwareLoopInfo::isHardwareLoopCandidate(ScalarEvolution &SE,
                                                LoopInfo &LI, DominatorTree &DT,
                                                bool ForceNestedLoop,
-                                               bool ForceHardwareLoopPHI,
-                                               bool ForceGuardLoopEntry) {
+                                               bool ForceHardwareLoopPHI) {
   SmallVector<BasicBlock *, 4> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
@@ -138,33 +134,6 @@ bool HardwareLoopInfo::isHardwareLoopCandidate(ScalarEvolution &SE,
 
   if (!ExitBlock)
     return false;
-
-  BasicBlock *Preheader = L->getLoopPreheader();
-
-  // If we don't have a preheader, then insert one.
-  if (!Preheader)
-    Preheader = InsertPreheaderForLoop(L, &DT, &LI, nullptr, true);
-  if (!Preheader)
-    return false;
-
-  // Make sure we have a valid Loop Count
-  if (!ExitCount->getType()->isPointerTy() && ExitCount->getType() != CountType)
-    ExitCount = SE.getZeroExtendExpr(ExitCount, CountType);
-
-  ExitCount = SE.getAddExpr(ExitCount, SE.getOne(CountType));
-
-  BasicBlock *BB = L->getLoopPreheader();
-
-  if (ForceGuardLoopEntry && BB->getSinglePredecessor() &&
-      cast<BranchInst>(BB->getTerminator())->isUnconditional())
-    BB = BB->getSinglePredecessor();
-
-  if (!isSafeToExpandAt(ExitCount, BB->getTerminator(), SE)) {
-    LLVM_DEBUG(dbgs() << "Not a Hardware Loop: unsafe to expand ExitCount "
-                      << *ExitCount << "\n");
-    return false;
-  }
-
   return true;
 }
 
