@@ -181,7 +181,7 @@ tooling::Replacement
 ExtractionContext::insertDeclaration(llvm::StringRef VarName) const {
   const llvm::Optional<SourceRange> ExtractionRng =
       toHalfOpenFileRange(SM, Ctx.getLangOpts(), getExpr()->getSourceRange());
-  assert(ExractionRng && "ExtractionRng should not be null");
+  assert(ExtractionRng && "ExtractionRng should not be null");
   llvm::StringRef ExtractionCode = toSourceCode(SM, *ExtractionRng);
   const SourceLocation InsertionLoc =
       toHalfOpenFileRange(SM, Ctx.getLangOpts(),
