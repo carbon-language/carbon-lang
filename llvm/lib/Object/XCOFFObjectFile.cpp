@@ -189,8 +189,12 @@ Expected<StringRef> XCOFFObjectFile::getSectionName(DataRefImpl Sec) const {
 }
 
 uint64_t XCOFFObjectFile::getSectionAddress(DataRefImpl Sec) const {
-  return is64Bit() ? toSection64(Sec)->VirtualAddress
-                   : toSection32(Sec)->VirtualAddress;
+  // Avoid ternary due to failure to convert the ubig32_t value to a unit64_t
+  // with MSVC.
+  if (is64Bit())
+    return toSection64(Sec)->VirtualAddress;
+
+  return toSection32(Sec)->VirtualAddress;
 }
 
 uint64_t XCOFFObjectFile::getSectionIndex(DataRefImpl Sec) const {
@@ -203,8 +207,12 @@ uint64_t XCOFFObjectFile::getSectionIndex(DataRefImpl Sec) const {
 }
 
 uint64_t XCOFFObjectFile::getSectionSize(DataRefImpl Sec) const {
-  return is64Bit() ? toSection64(Sec)->SectionSize
-                   : toSection32(Sec)->SectionSize;
+  // Avoid ternary due to failure to convert the ubig32_t value to a unit64_t
+  // with MSVC.
+  if (is64Bit())
+    return toSection64(Sec)->SectionSize;
+
+  return toSection32(Sec)->SectionSize;
 }
 
 Expected<ArrayRef<uint8_t>>
