@@ -653,6 +653,11 @@ static void normalizePredicate(ScalarEvolution *SE, Loop *L,
       RC.IV->getStepRecurrence(*SE)->isOne() &&
       SE->isKnownPredicate(ICmpInst::ICMP_ULE, RC.IV->getStart(), RC.Limit))
     RC.Pred = ICmpInst::ICMP_ULT;
+  if (RC.Pred == ICmpInst::ICMP_EQ &&
+      RC.IV->getStepRecurrence(*SE)->isOne() &&
+      SE->isKnownPredicate(ICmpInst::ICMP_ULE, RC.IV->getStart(), RC.Limit))
+    RC.Pred = ICmpInst::ICMP_UGE;
+
 }
 
 
