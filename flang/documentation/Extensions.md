@@ -78,8 +78,9 @@ Extensions, deletions, and legacy features supported by default
   for the default kind of INTEGER are assumed to have the least larger kind
   that can hold them, if one exists.
 * BOZ literals can be used as INTEGER values in contexts where the type is
-  unambiguous (including the right hand sides of assigments and initializations
-  of INTEGER entities).
+  unambiguous: the right hand sides of assigments and initializations
+  of INTEGER entities, and as actual arguments to a few intrinsic functions
+  (ACHAR, BTEST, CHAR).
 * EQUIVALENCE of numeric and character sequences (a ubiquitous extension)
 * Values for whole anonymous parent components in structure constructors
   (e.g., `EXTENDEDTYPE(PARENTTYPE(1,2,3))` rather than `EXTENDEDTYPE(1,2,3)`
@@ -121,4 +122,6 @@ Extensions and legacy features deliberately not supported
 * Procedure pointers in COMMON blocks (PGI/Intel)
 * Underindexing multi-dimensional arrays (e.g., A(1) rather than A(1,1)) (PGI only)
 * Legacy PGI `NCHARACTER` type and `NC` Kanji character literals
-* Using non-integer expressions for array bounds (e.g., A(3.14159)) (PGI/Intel)
+* Using non-integer expressions for array bounds (e.g., REAL A(3.14159)) (PGI/Intel)
+* Mixing INTEGER types as operands to bit intrinsics (e.g., IAND); only two
+  compilers support it, and they disagree on sign extension.
