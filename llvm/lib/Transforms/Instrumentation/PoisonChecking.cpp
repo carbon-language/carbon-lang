@@ -169,14 +169,54 @@ static void generatePoisonChecksForBinOp(Instruction &I,
     }
     break;
   }
+  case Instruction::AShr:
+  case Instruction::LShr:
+  case Instruction::Shl: {
+    Value *ShiftCheck =
+      B.CreateICmp(ICmpInst::ICMP_UGE, RHS,
+                   ConstantInt::get(RHS->getType(),
+                                    LHS->getType()->getScalarSizeInBits()));
+    Checks.push_back(ShiftCheck);
+    break;
+  }
   };
 }
 
 static Value* generatePoisonChecks(Instruction &I) {
   IRBuilder<> B(&I);
   SmallVector<Value*, 2> Checks;
-  if (isa<BinaryOperator>(I))
+  if (isa<BinaryOperator>(I) && !I.getType()->isVectorTy())
     generatePoisonChecksForBinOp(I, Checks);
+
+  // Handle non-binops seperately
+  switch (I.getOpcode()) {
+  default:
+    break;
+  case Instruction::ExtractElement: {
+    Value *Vec = I.getOperand(0);
+    if (Vec->getType()->getVectorIsScalable())
+      break;
+    Value *Idx = I.getOperand(1);
+    unsigned NumElts = Vec->getType()->getVectorNumElements();
+    Value *Check =
+      B.CreateICmp(ICmpInst::ICMP_UGE, Idx,
+                   ConstantInt::get(Idx->getType(), NumElts));
+    Checks.push_back(Check);
+    break;
+  }
+  case Instruction::InsertElement: {
+    Value *Vec = I.getOperand(0);
+    if (Vec->getType()->getVectorIsScalable())
+      break;
+    Value *Idx = I.getOperand(2);
+    unsigned NumElts = Vec->getType()->getVectorNumElements();
+    Value *Check =
+      B.CreateICmp(ICmpInst::ICMP_UGE, Idx,
+                   ConstantInt::get(Idx->getType(), NumElts));
+    Checks.push_back(Check);
+    break;
+  }
+  };
   return buildOrChain(B, Checks);
 }
 

@@ -199,3 +199,124 @@ define i32 @udiv_exact(i32 %a, i32 %b) {
   %res = udiv exact i32 %a, %b
   ret i32 %res
 }
+
+define i32 @ashr_noflags(i32 %a, i32 %b) {
+; CHECK-LABEL: @ashr_noflags(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = ashr i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = ashr i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @ashr_exact(i32 %a, i32 %b) {
+; CHECK-LABEL: @ashr_exact(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = ashr exact i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = ashr exact i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @lshr_noflags(i32 %a, i32 %b) {
+; CHECK-LABEL: @lshr_noflags(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = lshr i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = lshr i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @lshr_exact(i32 %a, i32 %b) {
+; CHECK-LABEL: @lshr_exact(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = lshr exact i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = lshr exact i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @shl_noflags(i32 %a, i32 %b) {
+; CHECK-LABEL: @shl_noflags(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = shl i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = shl i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @shl_nsw(i32 %a, i32 %b) {
+; CHECK-LABEL: @shl_nsw(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = shl nsw i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = shl nsw i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @shl_nuw(i32 %a, i32 %b) {
+; CHECK-LABEL: @shl_nuw(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = shl nuw i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = shl nuw i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @shl_nsw_nuw(i32 %a, i32 %b) {
+; CHECK-LABEL: @shl_nsw_nuw(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[B:%.*]], 32
+; CHECK-NEXT:    [[RES:%.*]] = shl nuw nsw i32 [[A:%.*]], [[B]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = shl nsw nuw i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @extractelement(<4 x i32> %v, i32 %idx) {
+; CHECK-LABEL: @extractelement(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[IDX:%.*]], 4
+; CHECK-NEXT:    [[RES:%.*]] = extractelement <4 x i32> [[V:%.*]], i32 [[IDX]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = extractelement <4 x i32> %v, i32 %idx
+  ret i32 %res
+}
+
+define <4 x i32> @insertelement(<4 x i32> %v, i32 %idx, i32 %val) {
+; CHECK-LABEL: @insertelement(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i32 [[IDX:%.*]], 4
+; CHECK-NEXT:    [[RES:%.*]] = insertelement <4 x i32> [[V:%.*]], i32 [[VAL:%.*]], i32 [[IDX]]
+; CHECK-NEXT:    [[TMP2:%.*]] = xor i1 [[TMP1]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP2]])
+; CHECK-NEXT:    ret <4 x i32> [[RES]]
+;
+  %res = insertelement <4 x i32> %v, i32 %val, i32 %idx
+  ret <4 x i32> %res
+}
+
