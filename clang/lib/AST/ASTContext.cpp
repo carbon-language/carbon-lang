@@ -1525,13 +1525,11 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
   case BuiltinType::Float:      return Target->getFloatFormat();
   case BuiltinType::Double:     return Target->getDoubleFormat();
   case BuiltinType::LongDouble:
-    if (getLangOpts().OpenMP && getLangOpts().OpenMPIsDevice &&
-        &Target->getLongDoubleFormat() != &AuxTarget->getLongDoubleFormat())
+    if (getLangOpts().OpenMP && getLangOpts().OpenMPIsDevice)
       return AuxTarget->getLongDoubleFormat();
     return Target->getLongDoubleFormat();
   case BuiltinType::Float128:
-    if (getLangOpts().OpenMP && getLangOpts().OpenMPIsDevice &&
-        &Target->getFloat128Format() != &AuxTarget->getFloat128Format())
+    if (getLangOpts().OpenMP && getLangOpts().OpenMPIsDevice)
       return AuxTarget->getFloat128Format();
     return Target->getFloat128Format();
   }
