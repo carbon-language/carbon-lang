@@ -15,7 +15,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/PassSupport.h"
 #include "llvm/ADT/Statistic.h"
@@ -36,10 +35,8 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/LoopUtils.h"
 
 #define DEBUG_TYPE "hardware-loops"
 
@@ -112,7 +109,6 @@ namespace {
     const DataLayout *DL = nullptr;
     const TargetTransformInfo *TTI = nullptr;
     DominatorTree *DT = nullptr;
-    bool PreserveLCSSA = false;
     AssumptionCache *AC = nullptr;
     TargetLibraryInfo *LibInfo = nullptr;
     Module *M = nullptr;
@@ -184,7 +180,6 @@ bool HardwareLoops::runOnFunction(Function &F) {
   DL = &F.getParent()->getDataLayout();
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
   LibInfo = TLIP ? &TLIP->getTLI() : nullptr;
-  PreserveLCSSA = mustPreserveAnalysisID(LCSSAID);
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   M = F.getParent();
 
@@ -230,25 +225,19 @@ bool HardwareLoops::TryConvertLoop(Loop *L) {
 
 bool HardwareLoops::TryConvertLoop(HardwareLoopInfo &HWLoopInfo) {
 
-  Loop *L = HWLoopInfo.L;
-  LLVM_DEBUG(dbgs() << "HWLoops: Try to convert profitable loop: " << *L);
+  LLVM_DEBUG(dbgs() << "HWLoops: Try to convert profitable loop: "
+                    << *HWLoopInfo.L);
 
   if (!HWLoopInfo.isHardwareLoopCandidate(*SE, *LI, *DT, ForceNestedLoop,
-                                          ForceHardwareLoopPHI))
+                                          ForceHardwareLoopPHI,
+                                          ForceGuardLoopEntry))
     return false;
 
   assert(
       (HWLoopInfo.ExitBlock && HWLoopInfo.ExitBranch && HWLoopInfo.ExitCount) &&
       "Hardware Loop must have set exit info.");
 
-  BasicBlock *Preheader = L->getLoopPreheader();
-
-  // If we don't have a preheader, then insert one.
-  if (!Preheader)
-    Preheader = InsertPreheaderForLoop(L, DT, LI, nullptr, PreserveLCSSA);
-  if (!Preheader)
-    return false;
-
+  // Now start to converting...
   HardwareLoop HWLoop(HWLoopInfo, *SE, *DL);
   HWLoop.Create();
   ++NumHWLoops;
@@ -257,10 +246,10 @@ bool HardwareLoops::TryConvertLoop(HardwareLoopInfo &HWLoopInfo) {
 
 void HardwareLoop::Create() {
   LLVM_DEBUG(dbgs() << "HWLoops: Converting loop..\n");
- 
+
   Value *LoopCountInit = InitLoopCount();
-  if (!LoopCountInit)
-    return;
+
+  assert(LoopCountInit && "Hardware Loop must have a loop count");
 
   InsertIterationSetup(LoopCountInit);
 
@@ -320,32 +309,22 @@ Value *HardwareLoop::InitLoopCount() {
   // loop counter and tests that is not zero?
 
   SCEVExpander SCEVE(SE, DL, "loopcnt");
-  if (!ExitCount->getType()->isPointerTy() &&
-      ExitCount->getType() != CountType)
-    ExitCount = SE.getZeroExtendExpr(ExitCount, CountType);
-
-  ExitCount = SE.getAddExpr(ExitCount, SE.getOne(CountType));
 
   // If we're trying to use the 'test and set' form of the intrinsic, we need
   // to replace a conditional branch that is controlling entry to the loop. It
   // is likely (guaranteed?) that the preheader has an unconditional branch to
   // the loop header, so also check if it has a single predecessor.
   if (SE.isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, ExitCount,
-                                  SE.getZero(ExitCount->getType()))) {
-    LLVM_DEBUG(dbgs() << " - Attempting to use test.set counter.\n");
+                                  SE.getZero(ExitCount->getType())))
     UseLoopGuard |= ForceGuardLoopEntry;
-  } else
+  else
     UseLoopGuard = false;
 
   BasicBlock *BB = L->getLoopPreheader();
   if (UseLoopGuard && BB->getSinglePredecessor() &&
-      cast<BranchInst>(BB->getTerminator())->isUnconditional())
+      cast<BranchInst>(BB->getTerminator())->isUnconditional()) {
+    LLVM_DEBUG(dbgs() << " - Attempting to use test.set counter.\n");
     BB = BB->getSinglePredecessor();
-
-  if (!isSafeToExpandAt(ExitCount, BB->getTerminator(), SE)) {
-    LLVM_DEBUG(dbgs() << "- Bailing, unsafe to expand ExitCount "
-               << *ExitCount << "\n");
-    return nullptr;
   }
 
   Value *Count = SCEVE.expandCodeFor(ExitCount, CountType,

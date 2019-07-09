@@ -99,7 +99,8 @@ struct HardwareLoopInfo {
                                   // produces an i1 to guard the loop entry.
   bool isHardwareLoopCandidate(ScalarEvolution &SE, LoopInfo &LI,
                                DominatorTree &DT, bool ForceNestedLoop = false,
-                               bool ForceHardwareLoopPHI = false);
+                               bool ForceHardwareLoopPHI = false,
+                               bool ForceGuardLoopEntry = false);
   bool canAnalyze(LoopInfo &LI);
 };
 
