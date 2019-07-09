@@ -1439,6 +1439,7 @@ bool PPCMIPeephole::combineSEXTAndSHL(MachineInstr &MI,
               MI.getOperand(0).getReg())
           .add(SrcMI->getOperand(1))
           .add(MOpSHMI);
+  (void)NewInstr;
 
   LLVM_DEBUG(dbgs() << "TO: ");
   LLVM_DEBUG(NewInstr->dump());
