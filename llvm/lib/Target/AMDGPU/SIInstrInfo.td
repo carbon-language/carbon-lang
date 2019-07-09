@@ -1159,6 +1159,31 @@ def TRAPID{
   int LLVM_DEBUG_TRAP = 3;
 }
 
+def HWREG {
+  int MODE = 1;
+  int STATUS = 2;
+  int TRAPSTS = 3;
+  int HW_ID = 4;
+  int GPR_ALLOC = 5;
+  int LDS_ALLOC = 6;
+  int IB_STS = 7;
+  int MEM_BASES = 15;
+  int TBA_LO = 16;
+  int TBA_HI = 17;
+  int TMA_LO = 18;
+  int TMA_HI = 19;
+  int FLAT_SCR_LO = 20;
+  int FLAT_SCR_HI = 21;
+  int XNACK_MASK = 22;
+  int POPS_PACKER = 25;
+}
+
+class getHwRegImm<int Reg, int Offset = 0, int Size = 32> {
+  int ret = !or(Reg,
+                !or(!shl(Offset, 6),
+                    !shl(!add(Size, -1), 11)));
+}
+
 //===----------------------------------------------------------------------===//
 //
 // SI Instruction multiclass helpers.
