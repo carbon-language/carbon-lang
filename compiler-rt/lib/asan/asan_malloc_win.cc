@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_allocator_interface.h"
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_WINDOWS
 // Need to include defintions for windows heap api functions,
 // these assume windows.h will also be included. This definition
 // fixes an error that's thrown if you only include heapapi.h
@@ -24,8 +26,6 @@
 #endif
 #include <heapapi.h>
 
-#include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_WINDOWS
 // Intentionally not including windows.h here, to avoid the risk of
 // pulling in conflicting declarations of these functions. (With mingw-w64,
 // there's a risk of windows.h pulling in stdint.h.)

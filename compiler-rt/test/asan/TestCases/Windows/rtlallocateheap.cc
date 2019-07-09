@@ -1,6 +1,6 @@
 // RUN: %clang_cl_asan -O0 %s -Fe%t /MD
 // RUN: %env_asan_opts=windows_hook_rtl_allocators=true not %run %t 2>&1 | FileCheck %s
-// XFAIL: asan-64-bits
+// UNSUPPORTED: asan-64-bits
 // REQUIRES: asan-rtl-heap-interception
 
 #include <stdio.h>

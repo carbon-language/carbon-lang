@@ -3,7 +3,7 @@
 // RUN: %env_asan_opts=windows_hook_rtl_allocators=false %run %t 2>&1 | FileCheck %s
 // RUN: %clang_cl /Od -o %t %s
 // RUN: %run %t 2>&1 | FileCheck %s
-// XFAIL: asan-64-bits
+// UNSUPPORTED: asan-64-bits
 #include <cassert>
 #include <stdio.h>
 #include <windows.h>

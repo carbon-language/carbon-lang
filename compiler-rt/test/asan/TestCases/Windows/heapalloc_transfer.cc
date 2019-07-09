@@ -4,7 +4,7 @@
 #include <windows.h>
 // RUN: %clang_cl_asan %s -o%t
 // RUN: %env_asan_opts=windows_hook_rtl_allocators=true %run %t 2>&1 | FileCheck %s
-// XFAIL: asan-64-bits
+// UNSUPPORTED: asan-64-bits
 
 int main() {
   //owned by rtl
