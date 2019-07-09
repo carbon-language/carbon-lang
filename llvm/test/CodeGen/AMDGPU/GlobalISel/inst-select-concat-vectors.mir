@@ -5,10 +5,7 @@
 # ERR-NOT: remark:
 # ERR: remark: <unknown>:0:0: cannot select: %3:sgpr(<12 x s16>) = G_CONCAT_VECTORS %0:sgpr(<4 x s16>), %1:sgpr(<4 x s16>), %2:sgpr(<4 x s16>) (in function: test_concat_vectors_s_v12s16_s_v4s16_s_v4s16_s_v4s16)
 # ERR-NEXT: remark: <unknown>:0:0: cannot select: %3:vgpr(<12 x s16>) = G_CONCAT_VECTORS %0:vgpr(<4 x s16>), %1:vgpr(<4 x s16>), %2:vgpr(<4 x s16>) (in function: test_concat_vectors_v_v12s16_v_v4s16_v_v4s16_v_v4s16)
-# ERR-NEXT: remark: <unknown>:0:0: instruction is not legal: %2:sgpr(<6 x s64>) = G_CONCAT_VECTORS %0:sgpr(<3 x s64>), %1:sgpr(<3 x s64>) (in function: test_concat_vectors_s_v6s64_s_v3s64_s_v3s64)
-# ERR-NEXT: remark: <unknown>:0:0: instruction is not legal: %2:sgpr(<8 x s64>) = G_CONCAT_VECTORS %0:sgpr(<4 x s64>), %1:sgpr(<4 x s64>) (in function: test_concat_vectors_s_v8s64_s_v4s64_s_v4s64)
-# ERR-NEXT: remark: <unknown>:0:0: instruction is not legal: %2:sgpr(<4 x p1>) = G_CONCAT_VECTORS %0:sgpr(<2 x p1>), %1:sgpr(<2 x p1>) (in function: test_concat_vectors_s_v4p1_s_v2p1_s_v2p1)
-# ERR-NEXT: remark: <unknown>:0:0: instruction is not legal: %4:sgpr(<8 x p3>) = G_CONCAT_VECTORS %0:sgpr(<2 x p3>), %1:sgpr(<2 x p3>), %2:sgpr(<2 x p3>), %3:sgpr(<2 x p3>) (in function: test_concat_vectors_s_v8p3_s_v2p3_s_v2p3_v2p3_s_v2p3)
+# ERR-NEXT: remark: <unknown>:0:0: cannot select: %2:sgpr(<6 x s64>) = G_CONCAT_VECTORS %0:sgpr(<3 x s64>), %1:sgpr(<3 x s64>) (in function: test_concat_vectors_s_v6s64_s_v3s64_s_v3s64)
 # ERR-NOT: remark:
 
 ---
