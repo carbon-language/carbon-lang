@@ -8,7 +8,7 @@ define dso_local void @sha512() #0 {
 ;CHECK: epilog:
 ;CHECK:        %23:g8rc_and_g8rc_nox0 = PHI %5:g8rc_and_g8rc_nox0, %bb.3, %18:g8rc_and_g8rc_nox0, %bb.4
 ;CHECK-NEXT:   %24:g8rc = PHI %6:g8rc, %bb.3, %16:g8rc, %bb.4
-;CHECK-NEXT:   %25:g8rc = PHI %6:g8rc, %bb.3, %16:g8rc, %bb.4
+;CHECK-NEXT:   %25:g8rc = PHI %6:g8rc, %bb.3, %19:g8rc, %bb.4
   br label %1
 
 1:                                                ; preds = %1, %0
