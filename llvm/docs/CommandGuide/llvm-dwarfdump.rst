@@ -77,7 +77,7 @@ OPTIONS
 
 .. option:: --lookup=<address>
 
-            Lookup <address> in the debug information and print out the file,
+            Look up <address> in the debug information and print out the file,
             function, block, and line table details.
 
 .. option:: -o <path>
