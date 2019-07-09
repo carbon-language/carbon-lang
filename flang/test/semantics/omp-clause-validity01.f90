@@ -20,7 +20,10 @@
 !    2.7.1 Loop construct
 !    ...
 
+! TODO: all the internal errors
+
   integer :: b = 128
+  integer :: c = 32
   integer, parameter :: num = 16
   N = 1024
 
@@ -105,8 +108,6 @@
 !                     collapse-clause |
 !                     ordered-clause
 
-! TODO: all the internal errors
-
   !ERROR: When SCHEDULE clause has AUTO specified, it must not have chunk size specified
   !ERROR: At most one SCHEDULE clause can appear on the DO directive
   !ERROR: When SCHEDULE clause has RUNTIME specified, it must not have chunk size specified
@@ -151,5 +152,45 @@
            a = 3.14
         enddo
      enddo
+  enddo
+
+! 2.8.1 simd-clause -> safelen-clause |
+!                      simdlen-clause |
+!                      linear-clause |
+!                      aligned-clause |
+!                      private-clause |
+!                      lastprivate-clause |
+!                      reduction-clause |
+!                      collapse-clause
+
+  a = 0.0
+  !$omp simd private(b) reduction(+:a)
+  do i = 1, N
+     a = a + b + 3.14
+  enddo
+
+  !ERROR: At most one SAFELEN clause can appear on the SIMD directive
+  !$omp simd safelen(1) safelen(2)
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: The parameter of the SIMDLEN clause must be a constant positive integer expression
+  !$omp simd simdlen(-1)
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: The ALIGNMENT parameter of the ALIGNED clause must be a constant positive integer expression
+  !ERROR: Internal: no symbol found for 'b'
+  !$omp simd aligned(b:-2)
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: The parameter of the SIMDLEN clause must be less than or equal to the parameter of the SAFELEN clause
+  !$omp simd safelen(1+1) simdlen(1+2)
+  do i = 1, N
+     a = 3.14
   enddo
 end

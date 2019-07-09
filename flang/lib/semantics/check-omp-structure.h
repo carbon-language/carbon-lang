@@ -43,11 +43,11 @@ ENUM_CLASS(OmpDirective, PARALLEL, DO, SECTIONS, SECTION, SINGLE, WORKSHARE,
 using OmpDirectiveSet = common::EnumSet<OmpDirective, OmpDirective_enumSize>;
 
 ENUM_CLASS(OmpClause, DEFAULTMAP, INBRANCH, MERGEABLE, NOGROUP, NOTINBRANCH,
-    NOWAIT, UNTIED, COLLAPSE, COPYIN, COPYPRIVATE, DEVICE, DIST_SCHEDULE, FINAL,
-    FIRSTPRIVATE, FROM, GRAINSIZE, LASTPRIVATE, NUM_TASKS, NUM_TEAMS,
-    NUM_THREADS, ORDERED, PRIORITY, PRIVATE, SAFELEN, SHARED, SIMDLEN,
-    THREAD_LIMIT, TO, LINK, UNIFORM, USE_DEVICE_PTR, IS_DEVICE_PTR, ALIGNED,
-    DEFAULT, DEPEND, IF, LINEAR, MAP, PROC_BIND, REDUCTION, SCHEDULE)
+    NOWAIT, UNTIED, THREADS, SIMD, COLLAPSE, COPYIN, COPYPRIVATE, DEVICE,
+    DIST_SCHEDULE, FINAL, FIRSTPRIVATE, FROM, GRAINSIZE, LASTPRIVATE, NUM_TASKS,
+    NUM_TEAMS, NUM_THREADS, ORDERED, PRIORITY, PRIVATE, SAFELEN, SHARED,
+    SIMDLEN, THREAD_LIMIT, TO, LINK, UNIFORM, USE_DEVICE_PTR, IS_DEVICE_PTR,
+    ALIGNED, DEFAULT, DEPEND, IF, LINEAR, MAP, PROC_BIND, REDUCTION, SCHEDULE)
 
 using OmpClauseSet = common::EnumSet<OmpClause, OmpClause_enumSize>;
 
@@ -55,9 +55,11 @@ class OmpStructureChecker : public virtual BaseChecker {
 public:
   OmpStructureChecker(SemanticsContext &context) : context_{context} {}
 
+  void Enter(const parser::OpenMPConstruct &);
   void Enter(const parser::OpenMPLoopConstruct &);
   void Leave(const parser::OpenMPLoopConstruct &);
   void Enter(const parser::OmpLoopDirective::Do &);
+  void Enter(const parser::OmpLoopDirective::Simd &);
 
   void Enter(const parser::OpenMPBlockConstruct &);
   void Leave(const parser::OpenMPBlockConstruct &);

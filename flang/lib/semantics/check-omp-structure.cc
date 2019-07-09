@@ -51,6 +51,10 @@ void OmpStructureChecker::CheckAllowed(const OmpClause &type) {
   SetContextClauseInfo(type);
 }
 
+void OmpStructureChecker::Enter(const parser::OpenMPConstruct &x) {
+  // 2.8.1 TODO: Simd Construct with Ordered Construct Nesting check
+}
+
 void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   const auto &dir{std::get<parser::OmpLoopDirective>(x.t)};
   if (std::holds_alternative<parser::OmpLoopDirective::Do>(dir.u)) {
@@ -124,6 +128,26 @@ void OmpStructureChecker::Enter(const parser::OmpLoopDirective::Do &) {
   SetContextAllowedOnce(allowedOnce);
 }
 
+// 2.8.1 simd-clause -> safelen-clause |
+//                      simdlen-clause |
+//                      linear-clause |
+//                      aligned-clause |
+//                      private-clause |
+//                      lastprivate-clause |
+//                      reduction-clause |
+//                      collapse-clause
+void OmpStructureChecker::Enter(const parser::OmpLoopDirective::Simd &) {
+  SetContextDirectiveEnum(OmpDirective::SIMD);
+
+  OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
+      OmpClause::PRIVATE, OmpClause::LASTPRIVATE, OmpClause::REDUCTION};
+  SetContextAllowed(allowed);
+
+  OmpClauseSet allowedOnce{
+      OmpClause::COLLAPSE, OmpClause::SAFELEN, OmpClause::SIMDLEN};
+  SetContextAllowedOnce(allowedOnce);
+}
+
 void OmpStructureChecker::Leave(const parser::OmpClauseList &) {
   // 2.7 Loop Construct Restriction
   if (GetContext().directive == OmpDirective::DO) {
@@ -177,7 +201,31 @@ void OmpStructureChecker::Leave(const parser::OmpClauseList &) {
 
       // TODO: ordered region binding check (requires nesting implementation)
     }
-  }
+  }  // DO
+
+  // 2.8.1 Simd Construct Restriction
+  if (GetContext().directive == OmpDirective::SIMD) {
+    if (auto *clause{FindClause(OmpClause::SIMDLEN)}) {
+      if (auto *clause2{FindClause(OmpClause::SAFELEN)}) {
+        const auto &simdlenClause{
+            std::get<parser::OmpClause::Simdlen>(clause->u)};
+        const auto &safelenClause{
+            std::get<parser::OmpClause::Safelen>(clause2->u)};
+        // simdlen and safelen both have parameters
+        if (const auto simdlenValue{GetIntValue(simdlenClause.v)}) {
+          if (const auto safelenValue{GetIntValue(safelenClause.v)}) {
+            if (*safelenValue > 0 && *simdlenValue > *safelenValue) {
+              context_.Say(clause->source,
+                  "The parameter of the SIMDLEN clause must be less than or "
+                  "equal to the parameter of the SAFELEN clause"_err_en_US);
+            }
+          }
+        }
+      }
+    }
+
+    // TODO: A list-item cannot appear in more than one aligned clause
+  }  // SIMD
 }
 
 void OmpStructureChecker::Enter(const parser::OmpClause &x) {
@@ -279,14 +327,30 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Priority &) {
 void OmpStructureChecker::Enter(const parser::OmpClause::Private &) {
   CheckAllowed(OmpClause::PRIVATE);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Safelen &) {
+void OmpStructureChecker::Enter(const parser::OmpClause::Safelen &x) {
   CheckAllowed(OmpClause::SAFELEN);
+
+  if (const auto v{GetIntValue(x.v)}) {
+    if (*v <= 0) {
+      context_.Say(GetContext().clauseSource,
+          "The parameter of the SAFELEN clause must be "
+          "a constant positive integer expression"_err_en_US);
+    }
+  }
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Shared &) {
   CheckAllowed(OmpClause::SHARED);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Simdlen &) {
+void OmpStructureChecker::Enter(const parser::OmpClause::Simdlen &x) {
   CheckAllowed(OmpClause::SIMDLEN);
+
+  if (const auto v{GetIntValue(x.v)}) {
+    if (*v <= 0) {
+      context_.Say(GetContext().clauseSource,
+          "The parameter of the SIMDLEN clause must be "
+          "a constant positive integer expression"_err_en_US);
+    }
+  }
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::ThreadLimit &) {
   CheckAllowed(OmpClause::THREAD_LIMIT);
@@ -307,8 +371,20 @@ void OmpStructureChecker::Enter(const parser::OmpClause::IsDevicePtr &) {
   CheckAllowed(OmpClause::IS_DEVICE_PTR);
 }
 
-void OmpStructureChecker::Enter(const parser::OmpAlignedClause &) {
+void OmpStructureChecker::Enter(const parser::OmpAlignedClause &x) {
   CheckAllowed(OmpClause::ALIGNED);
+
+  if (const auto &expr{
+          std::get<std::optional<parser::ScalarIntConstantExpr>>(x.t)}) {
+    if (const auto v{GetIntValue(*expr)}) {
+      if (*v <= 0) {
+        context_.Say(GetContext().clauseSource,
+            "The ALIGNMENT parameter of the ALIGNED clause must be "
+            "a constant positive integer expression"_err_en_US);
+      }
+    }
+  }
+  // 2.8.1 TODO: list-item attribute check
 }
 void OmpStructureChecker::Enter(const parser::OmpDefaultClause &) {
   CheckAllowed(OmpClause::DEFAULT);
