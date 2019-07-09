@@ -325,6 +325,44 @@ bool AMDGPUInstructionSelector::selectG_EXTRACT(MachineInstr &I) const {
   return true;
 }
 
+bool AMDGPUInstructionSelector::selectG_MERGE_VALUES(MachineInstr &MI) const {
+  MachineBasicBlock *BB = MI.getParent();
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  Register DstReg = MI.getOperand(0).getReg();
+  LLT DstTy = MRI.getType(DstReg);
+  LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+
+  const unsigned SrcSize = SrcTy.getSizeInBits();
+  const DebugLoc &DL = MI.getDebugLoc();
+  const RegisterBank *DstBank = RBI.getRegBank(DstReg, MRI, TRI);
+  const unsigned DstSize = DstTy.getSizeInBits();
+  const TargetRegisterClass *DstRC =
+    TRI.getRegClassForSizeOnBank(DstSize, *DstBank, MRI);
+  if (!DstRC)
+    return false;
+
+  ArrayRef<int16_t> SubRegs = TRI.getRegSplitParts(DstRC, SrcSize / 8);
+  MachineInstrBuilder MIB =
+    BuildMI(*BB, &MI, DL, TII.get(TargetOpcode::REG_SEQUENCE), DstReg);
+  for (int I = 0, E = MI.getNumOperands() - 1; I != E; ++I) {
+    MachineOperand &Src = MI.getOperand(I + 1);
+    MIB.addReg(Src.getReg(), getUndefRegState(Src.isUndef()));
+    MIB.addImm(SubRegs[I]);
+
+    const TargetRegisterClass *SrcRC
+      = TRI.getConstrainedRegClassForOperand(Src, MRI);
+    if (SrcRC && !RBI.constrainGenericRegister(Src.getReg(), *SrcRC, MRI))
+      return false;
+  }
+
+  if (!RBI.constrainGenericRegister(DstReg, *DstRC, MRI))
+    return false;
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AMDGPUInstructionSelector::selectG_GEP(MachineInstr &I) const {
   return selectG_ADD(I);
 }
@@ -1144,6 +1182,9 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
     return selectG_CONSTANT(I);
   case TargetOpcode::G_EXTRACT:
     return selectG_EXTRACT(I);
+  case TargetOpcode::G_MERGE_VALUES:
+  case TargetOpcode::G_CONCAT_VECTORS:
+    return selectG_MERGE_VALUES(I);
   case TargetOpcode::G_GEP:
     return selectG_GEP(I);
   case TargetOpcode::G_IMPLICIT_DEF:

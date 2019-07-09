@@ -641,7 +641,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                Query.Types[0].getScalarSizeInBits() == 64;
       });
 
-  // TODO: Support any combination of v2s32
+  // TODO: Support any combination of s16, s32, s64, pointer vectors.
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
     .legalFor({{V4S32, V2S32},
                {V8S32, V2S32},
@@ -651,7 +651,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                {V8S16, V2S16},
                {V8S16, V4S16},
                {LLT::vector(4, LocalPtr), LLT::vector(2, LocalPtr)},
-               {LLT::vector(4, PrivatePtr), LLT::vector(2, PrivatePtr)}});
+               {LLT::vector(4, PrivatePtr), LLT::vector(2, PrivatePtr)}})
+    // FIXME: Should restrict maximum size, but there seems to be a missing predicate.
+    .legalIf(typeInSet(1, {V2S32, V4S32, V8S32,V2S16, V4S16, V8S16, LLT::vector(16, 16), V2S64}));
 
   // Merge/Unmerge
   for (unsigned Op : {G_MERGE_VALUES, G_UNMERGE_VALUES}) {
