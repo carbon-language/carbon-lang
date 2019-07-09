@@ -337,10 +337,16 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
 
   setAction({G_BLOCK_ADDR, CodePtr}, Legal);
 
-  getActionDefinitionsBuilder(G_ICMP)
+  auto &CmpBuilder =
+    getActionDefinitionsBuilder(G_ICMP)
     .legalForCartesianProduct(
       {S1}, {S32, S64, GlobalPtr, LocalPtr, ConstantPtr, PrivatePtr, FlatPtr})
-    .legalFor({{S1, S32}, {S1, S64}})
+    .legalFor({{S1, S32}, {S1, S64}});
+  if (ST.has16BitInsts()) {
+    CmpBuilder.legalFor({{S1, S16}});
+  }
+
+  CmpBuilder
     .widenScalarToNextPow2(1)
     .clampScalar(1, S32, S64)
     .scalarize(0)
