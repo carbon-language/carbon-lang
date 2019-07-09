@@ -156,3 +156,46 @@ define i32 @mul_nsw_nuw(i32 %a, i32 %b) {
   ret i32 %res
 }
 
+define i32 @sdiv_noflags(i32 %a, i32 %b) {
+; CHECK-LABEL: @sdiv_noflags(
+; CHECK-NEXT:    [[RES:%.*]] = sdiv i32 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = sdiv i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @sdiv_exact(i32 %a, i32 %b) {
+; CHECK-LABEL: @sdiv_exact(
+; CHECK-NEXT:    [[TMP1:%.*]] = srem i32 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ne i32 [[TMP1]], 0
+; CHECK-NEXT:    [[RES:%.*]] = sdiv exact i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP3:%.*]] = xor i1 [[TMP2]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP3]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = sdiv exact i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @udiv_noflags(i32 %a, i32 %b) {
+; CHECK-LABEL: @udiv_noflags(
+; CHECK-NEXT:    [[RES:%.*]] = udiv i32 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = udiv i32 %a, %b
+  ret i32 %res
+}
+
+define i32 @udiv_exact(i32 %a, i32 %b) {
+; CHECK-LABEL: @udiv_exact(
+; CHECK-NEXT:    [[TMP1:%.*]] = urem i32 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ne i32 [[TMP1]], 0
+; CHECK-NEXT:    [[RES:%.*]] = udiv exact i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP3:%.*]] = xor i1 [[TMP2]], true
+; CHECK-NEXT:    call void @__poison_checker_assert(i1 [[TMP3]])
+; CHECK-NEXT:    ret i32 [[RES]]
+;
+  %res = udiv exact i32 %a, %b
+  ret i32 %res
+}

@@ -151,6 +151,24 @@ static void generatePoisonChecksForBinOp(Instruction &I,
     }
     break;
   }
+  case Instruction::UDiv: {
+    if (I.isExact()) {
+      auto *Check =
+        B.CreateICmp(ICmpInst::ICMP_NE, B.CreateURem(LHS, RHS),
+                     ConstantInt::get(LHS->getType(), 0));
+      Checks.push_back(Check);
+    }
+    break;
+  }
+  case Instruction::SDiv: {
+    if (I.isExact()) {
+      auto *Check =
+        B.CreateICmp(ICmpInst::ICMP_NE, B.CreateSRem(LHS, RHS),
+                     ConstantInt::get(LHS->getType(), 0));
+      Checks.push_back(Check);
+    }
+    break;
+  }
   };
 }
 
