@@ -96,7 +96,10 @@ enum : uint64_t {
   FPDPRounding = UINT64_C(1) << 52,
 
   // Instruction is FP atomic.
-  FPAtomic = UINT64_C(1) << 53
+  FPAtomic = UINT64_C(1) << 53,
+
+  // Is a MFMA instruction.
+  IsMAI = UINT64_C(1) << 54
 };
 
 // v_cmp_class_* etc. use a 10-bit mask for what operation is checked.

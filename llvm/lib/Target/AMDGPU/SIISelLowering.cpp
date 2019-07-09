@@ -10304,6 +10304,29 @@ SITargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         break;
       }
       break;
+    case 'a':
+      switch (VT.getSizeInBits()) {
+      default:
+        return std::make_pair(0U, nullptr);
+      case 32:
+      case 16:
+        RC = &AMDGPU::AGPR_32RegClass;
+        break;
+      case 64:
+        RC = &AMDGPU::AReg_64RegClass;
+        break;
+      case 128:
+        RC = &AMDGPU::AReg_128RegClass;
+        break;
+      case 512:
+        RC = &AMDGPU::AReg_512RegClass;
+        break;
+      case 1024:
+        RC = &AMDGPU::AReg_1024RegClass;
+        // v32 types are not legal but we support them here.
+        return std::make_pair(0U, RC);
+      }
+      break;
     }
     // We actually support i128, i16 and f16 as inline parameters
     // even if they are not reported as legal
@@ -10317,6 +10340,8 @@ SITargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       RC = &AMDGPU::VGPR_32RegClass;
     } else if (Constraint[1] == 's') {
       RC = &AMDGPU::SGPR_32RegClass;
+    } else if (Constraint[1] == 'a') {
+      RC = &AMDGPU::AGPR_32RegClass;
     }
 
     if (RC) {
@@ -10336,6 +10361,7 @@ SITargetLowering::getConstraintType(StringRef Constraint) const {
     default: break;
     case 's':
     case 'v':
+    case 'a':
       return C_RegisterClass;
     }
   }

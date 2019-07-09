@@ -139,6 +139,13 @@ DECODE_OPERAND_REG(SReg_128)
 DECODE_OPERAND_REG(SReg_256)
 DECODE_OPERAND_REG(SReg_512)
 
+DECODE_OPERAND_REG(AGPR_32)
+DECODE_OPERAND_REG(AReg_128)
+DECODE_OPERAND_REG(AReg_512)
+DECODE_OPERAND_REG(AReg_1024)
+DECODE_OPERAND_REG(AV_32)
+DECODE_OPERAND_REG(AV_64)
+
 static DecodeStatus decodeOperand_VSrc16(MCInst &Inst,
                                          unsigned Imm,
                                          uint64_t Addr,
@@ -171,12 +178,44 @@ static DecodeStatus decodeOperand_VS_32(MCInst &Inst,
   return addOperand(Inst, DAsm->decodeOperand_VS_32(Imm));
 }
 
+static DecodeStatus decodeOperand_AReg_128(MCInst &Inst,
+                                           unsigned Imm,
+                                           uint64_t Addr,
+                                           const void *Decoder) {
+  auto DAsm = static_cast<const AMDGPUDisassembler*>(Decoder);
+  return addOperand(Inst, DAsm->decodeSrcOp(AMDGPUDisassembler::OPW128, Imm | 512));
+}
+
+static DecodeStatus decodeOperand_AReg_512(MCInst &Inst,
+                                           unsigned Imm,
+                                           uint64_t Addr,
+                                           const void *Decoder) {
+  auto DAsm = static_cast<const AMDGPUDisassembler*>(Decoder);
+  return addOperand(Inst, DAsm->decodeSrcOp(AMDGPUDisassembler::OPW512, Imm | 512));
+}
+
+static DecodeStatus decodeOperand_AReg_1024(MCInst &Inst,
+                                            unsigned Imm,
+                                            uint64_t Addr,
+                                            const void *Decoder) {
+  auto DAsm = static_cast<const AMDGPUDisassembler*>(Decoder);
+  return addOperand(Inst, DAsm->decodeSrcOp(AMDGPUDisassembler::OPW1024, Imm | 512));
+}
+
 static DecodeStatus decodeOperand_SReg_32(MCInst &Inst,
                                           unsigned Imm,
                                           uint64_t Addr,
                                           const void *Decoder) {
   auto DAsm = static_cast<const AMDGPUDisassembler*>(Decoder);
   return addOperand(Inst, DAsm->decodeOperand_SReg_32(Imm));
+}
+
+static DecodeStatus decodeOperand_VGPR_32(MCInst &Inst,
+                                         unsigned Imm,
+                                         uint64_t Addr,
+                                         const void *Decoder) {
+  auto DAsm = static_cast<const AMDGPUDisassembler*>(Decoder);
+  return addOperand(Inst, DAsm->decodeSrcOp(AMDGPUDisassembler::OPW32, Imm));
 }
 
 #define DECODE_SDWA(DecName) \
