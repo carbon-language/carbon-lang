@@ -38,7 +38,7 @@ struct LabeledStatementInfoTuplePOD {
   ProxyForScope proxyForScope;
   parser::CharBlock parserCharBlock;
   LabeledStmtClassificationSet labeledStmtClassificationSet;
-  bool legacyAcceptedInDirectSubscope;
+  bool isExecutableConstructEndStmt;
 };
 using TargetStmtMap = std::map<parser::Label, LabeledStatementInfoTuplePOD>;
 struct SourceStatementInfoTuplePOD {
@@ -62,6 +62,12 @@ constexpr Legality IsLegalDoTerm(const parser::Statement<A> &) {
   if (std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
       std::is_same_v<A, parser::EndDoStmt>) {
     return Legality::always;
+  } else if (std::is_same_v<A, parser::EndForallStmt> ||
+      std::is_same_v<A, parser::EndWhereStmt>) {
+    // Executable construct end statements are also supported as
+    // an extension but they need special care because the associated
+    // construct create there own scope.
+    return Legality::formerly;
   } else {
     return Legality::never;
   }
@@ -210,13 +216,13 @@ const parser::CharBlock *GetStmtName(const parser::Statement<A> &stmt) {
   return nullptr;
 }
 
+using ExecutableConstructEndStmts = std::tuple<parser::EndIfStmt,
+    parser::EndDoStmt, parser::EndSelectStmt, parser::EndChangeTeamStmt,
+    parser::EndBlockStmt, parser::EndCriticalStmt, parser::EndAssociateStmt>;
+
 template<typename A>
-static constexpr bool LabelDoTargetAcceptedInDirectSubscopeOn(
-    const parser::Statement<A> &statement) {
-  return (std::is_same_v<A, parser::EndIfStmt> ||
-      std::is_same_v<A, parser::EndDoStmt> ||
-      std::is_same_v<A, parser::EndSelectStmt>);
-}
+static constexpr bool IsExecutableConstructEndStmt{
+    common::HasMember<A, ExecutableConstructEndStmts>};
 
 class ParseTreeAnalyzer {
 public:
@@ -232,7 +238,6 @@ public:
     if (statement.label.has_value()) {
       auto label{statement.label.value()};
       auto targetFlags{ConstructBranchTargetFlags(statement)};
-      bool canBeParentLabel{LabelDoTargetAcceptedInDirectSubscopeOn(statement)};
       if constexpr (std::is_same_v<A, parser::AssociateStmt> ||
           std::is_same_v<A, parser::BlockStmt> ||
           std::is_same_v<A, parser::ChangeTeamStmt> ||
@@ -244,11 +249,11 @@ public:
           std::is_same_v<A, parser::SelectTypeStmt>) {
         constexpr bool useParent{true};
         AddTargetLabelDefinition(
-            useParent, label, targetFlags, canBeParentLabel);
+            useParent, label, targetFlags, IsExecutableConstructEndStmt<A>);
       } else {
         constexpr bool useParent{false};
         AddTargetLabelDefinition(
-            useParent, label, targetFlags, canBeParentLabel);
+            useParent, label, targetFlags, IsExecutableConstructEndStmt<A>);
       }
     }
     return true;
@@ -750,12 +755,12 @@ private:
   // 6.2.5., paragraph 2
   void AddTargetLabelDefinition(bool useParent, parser::Label label,
       LabeledStmtClassificationSet labeledStmtClassificationSet,
-      bool legacyAcceptedInDirectSubscope) {
+      bool isExecutableConstructEndStmt) {
     CheckLabelInRange(label);
     const auto pair{programUnits_.back().targetStmts.emplace(label,
         LabeledStatementInfoTuplePOD{
             (useParent ? ParentScope() : currentScope_), currentPosition_,
-            labeledStmtClassificationSet, legacyAcceptedInDirectSubscope})};
+            labeledStmtClassificationSet, isExecutableConstructEndStmt})};
     if (!pair.second) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
@@ -905,30 +910,25 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
           parser::MessageFormattedText{
               "label '%u' doesn't lexically follow DO stmt"_err_en_US,
               SayLabel(label)});
+
+    } else if ((InInclusiveScope(scopes, scope, doTarget.proxyForScope) &&
+                   doTarget.labeledStmtClassificationSet.test(
+                       TargetStatementEnum::CompatibleDo)) ||
+        (doTarget.isExecutableConstructEndStmt &&
+            ParentScope(scopes, doTarget.proxyForScope) == scope)) {
+      // Accepted for legacy support
+      errorHandler.Say(doTarget.parserCharBlock,
+          parser::MessageFormattedText{
+              "A DO loop should terminate with an END DO or CONTINUE"_en_US});
     } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
-      // C1133
-      if (doTarget.legacyAcceptedInDirectSubscope &&
-          ParentScope(scopes, doTarget.proxyForScope) == scope) {
-        errorHandler.Say(doTarget.parserCharBlock,
-            parser::MessageFormattedText{
-                "A DO loop should terminate with an END DO or CONTINUE inside its scope"_en_US});
-      } else {
-        errorHandler.Say(position,
-            parser::MessageFormattedText{
-                "label '%u' is not in scope"_err_en_US, SayLabel(label)});
-      }
+      errorHandler.Say(position,
+          parser::MessageFormattedText{
+              "label '%u' is not in DO loop scope"_err_en_US, SayLabel(label)});
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do)) {
-      if (!doTarget.labeledStmtClassificationSet.test(
-              TargetStatementEnum::CompatibleDo)) {
-        errorHandler.Say(doTarget.parserCharBlock,
-            parser::MessageFormattedText{
-                "A DO loop should terminate with an END DO or CONTINUE"_err_en_US});
-      } else {
-        errorHandler.Say(doTarget.parserCharBlock,
-            parser::MessageFormattedText{
-                "A DO loop should terminate with an END DO or CONTINUE"_en_US});
-      }
+      errorHandler.Say(doTarget.parserCharBlock,
+          parser::MessageFormattedText{
+              "A DO loop should terminate with an END DO or CONTINUE"_err_en_US});
     } else {
       loopBodies.emplace_back(SkipLabel(position), doTarget.parserCharBlock);
     }

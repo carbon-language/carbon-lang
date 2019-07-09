@@ -34,15 +34,33 @@ public:
             common::visitors{
                 [](auto &) {},
                 // Labels on end-stmt of constructs are accepted by f18 for
-                // compatibility purposes, even-though they are technically
-                // not in the same scope as the label-do-stmt.
-                [&](common::Indirection<IfConstruct> &ifConstruct) {
+                // as an extension.
+                [&](common::Indirection<AssociateConstruct> &associate) {
                   CanonicalizeIfMatch(block, stack, i,
-                      std::get<Statement<EndIfStmt>>(ifConstruct.value().t));
+                      std::get<Statement<EndAssociateStmt>>(
+                          associate.value().t));
+                },
+                [&](common::Indirection<BlockConstruct> &blockConstruct) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndBlockStmt>>(
+                          blockConstruct.value().t));
+                },
+                [&](common::Indirection<ChangeTeamConstruct> &changeTeam) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndChangeTeamStmt>>(
+                          changeTeam.value().t));
+                },
+                [&](common::Indirection<CriticalConstruct> &critical) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndCriticalStmt>>(critical.value().t));
                 },
                 [&](common::Indirection<DoConstruct> &doConstruct) {
                   CanonicalizeIfMatch(block, stack, i,
                       std::get<Statement<EndDoStmt>>(doConstruct.value().t));
+                },
+                [&](common::Indirection<IfConstruct> &ifConstruct) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndIfStmt>>(ifConstruct.value().t));
                 },
                 [&](common::Indirection<CaseConstruct> &caseConstruct) {
                   CanonicalizeIfMatch(block, stack, i,
@@ -56,6 +74,14 @@ public:
                 [&](common::Indirection<SelectTypeConstruct> &selectType) {
                   CanonicalizeIfMatch(block, stack, i,
                       std::get<Statement<EndSelectStmt>>(selectType.value().t));
+                },
+                [&](common::Indirection<ForallConstruct> &forall) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndForallStmt>>(forall.value().t));
+                },
+                [&](common::Indirection<WhereConstruct> &where) {
+                  CanonicalizeIfMatch(block, stack, i,
+                      std::get<Statement<EndWhereStmt>>(where.value().t));
                 },
                 [&](Statement<common::Indirection<LabelDoStmt>> &labelDoStmt) {
                   auto &label{std::get<Label>(labelDoStmt.statement.value().t)};
