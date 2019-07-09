@@ -2902,8 +2902,8 @@ void DAGTypeLegalizer::ExpandIntRes_MULFIX(SDNode *N, SDValue &Lo,
     Lo = ResultLH;
     Hi = ResultHL;
 
-    // We overflow max if HH > 0 or HH == 0 && HL sign is negative.
-    // We overflow min if HH < -1 or HH == -1 && HL sign is 0.
+    // We overflow max if HH > 0 or HH == 0 && HL sign bit is 1.
+    // We overflow min if HH < -1 or HH == -1 && HL sign bit is 0.
     if (Saturating) {
       SDValue HHPos = DAG.getSetCC(dl, BoolNVT, ResultHH, NVTZero, ISD::SETGT);
       SDValue HHZero = DAG.getSetCC(dl, BoolNVT, ResultHH, NVTZero, ISD::SETEQ);
@@ -2913,7 +2913,7 @@ void DAGTypeLegalizer::ExpandIntRes_MULFIX(SDNode *N, SDValue &Lo,
 
       SDValue HHNeg = DAG.getSetCC(dl, BoolNVT, ResultHH, NVTNeg1, ISD::SETLT);
       SDValue HHNeg1 = DAG.getSetCC(dl, BoolNVT, ResultHH, NVTNeg1, ISD::SETEQ);
-      SDValue HLPos = DAG.getSetCC(dl, BoolNVT, ResultHL, NVTZero, ISD::SETGT);
+      SDValue HLPos = DAG.getSetCC(dl, BoolNVT, ResultHL, NVTZero, ISD::SETGE);
       SatMin = DAG.getNode(ISD::OR, dl, BoolNVT, HHNeg,
                            DAG.getNode(ISD::AND, dl, BoolNVT, HHNeg1, HLPos));
     }
