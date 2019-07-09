@@ -76,6 +76,7 @@ private:
   bool selectG_ADD(MachineInstr &I) const;
   bool selectG_EXTRACT(MachineInstr &I) const;
   bool selectG_MERGE_VALUES(MachineInstr &I) const;
+  bool selectG_UNMERGE_VALUES(MachineInstr &I) const;
   bool selectG_GEP(MachineInstr &I) const;
   bool selectG_IMPLICIT_DEF(MachineInstr &I) const;
   bool selectG_INSERT(MachineInstr &I) const;

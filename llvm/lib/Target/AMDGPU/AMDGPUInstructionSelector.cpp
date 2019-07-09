@@ -363,6 +363,50 @@ bool AMDGPUInstructionSelector::selectG_MERGE_VALUES(MachineInstr &MI) const {
   return true;
 }
 
+bool AMDGPUInstructionSelector::selectG_UNMERGE_VALUES(MachineInstr &MI) const {
+  MachineBasicBlock *BB = MI.getParent();
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  const int NumDst = MI.getNumOperands() - 1;
+
+  MachineOperand &Src = MI.getOperand(NumDst);
+
+  Register SrcReg = Src.getReg();
+  Register DstReg0 = MI.getOperand(0).getReg();
+  LLT DstTy = MRI.getType(DstReg0);
+  LLT SrcTy = MRI.getType(SrcReg);
+
+  const unsigned DstSize = DstTy.getSizeInBits();
+  const unsigned SrcSize = SrcTy.getSizeInBits();
+  const DebugLoc &DL = MI.getDebugLoc();
+  const RegisterBank *SrcBank = RBI.getRegBank(SrcReg, MRI, TRI);
+
+  const TargetRegisterClass *SrcRC =
+    TRI.getRegClassForSizeOnBank(SrcSize, *SrcBank, MRI);
+  if (!SrcRC || !RBI.constrainGenericRegister(SrcReg, *SrcRC, MRI))
+    return false;
+
+  const unsigned SrcFlags = getUndefRegState(Src.isUndef());
+
+  // Note we could have mixed SGPR and VGPR destination banks for an SGPR
+  // source, and this relies on the fact that the same subregister indices are
+  // used for both.
+  ArrayRef<int16_t> SubRegs = TRI.getRegSplitParts(SrcRC, DstSize / 8);
+  for (int I = 0, E = NumDst; I != E; ++I) {
+    MachineOperand &Dst = MI.getOperand(I);
+    BuildMI(*BB, &MI, DL, TII.get(TargetOpcode::COPY), Dst.getReg())
+      .addReg(SrcReg, SrcFlags, SubRegs[I]);
+
+    const TargetRegisterClass *DstRC =
+      TRI.getConstrainedRegClassForOperand(Dst, MRI);
+    if (DstRC && !RBI.constrainGenericRegister(Dst.getReg(), *DstRC, MRI))
+      return false;
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AMDGPUInstructionSelector::selectG_GEP(MachineInstr &I) const {
   return selectG_ADD(I);
 }
@@ -1185,6 +1229,8 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   case TargetOpcode::G_MERGE_VALUES:
   case TargetOpcode::G_CONCAT_VECTORS:
     return selectG_MERGE_VALUES(I);
+  case TargetOpcode::G_UNMERGE_VALUES:
+    return selectG_UNMERGE_VALUES(I);
   case TargetOpcode::G_GEP:
     return selectG_GEP(I);
   case TargetOpcode::G_IMPLICIT_DEF:
