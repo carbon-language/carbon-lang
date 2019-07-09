@@ -136,16 +136,16 @@ void foo() {}
 | |-(
 | |-)
 | `-CompoundStatement
-|   |-1: {
-|   `-2: }
+|   |-2: {
+|   `-3: }
 |-TopLevelDeclaration
 | |-void
 | |-foo
 | |-(
 | |-)
 | `-CompoundStatement
-|   |-1: {
-|   `-2: }
+|   |-2: {
+|   `-3: }
 `-<eof>
 )txt"},
   };
