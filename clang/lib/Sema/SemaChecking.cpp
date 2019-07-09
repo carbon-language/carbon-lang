@@ -191,6 +191,16 @@ static bool SemaBuiltinAddressof(Sema &S, CallExpr *TheCall) {
   return false;
 }
 
+/// Check the number of arguments, and set the result type to
+/// the argument type.
+static bool SemaBuiltinPreserveAI(Sema &S, CallExpr *TheCall) {
+  if (checkArgCount(S, TheCall, 1))
+    return true;
+
+  TheCall->setType(TheCall->getArg(0)->getType());
+  return false;
+}
+
 static bool SemaBuiltinOverflow(Sema &S, CallExpr *TheCall) {
   if (checkArgCount(S, TheCall, 3))
     return true;
@@ -1409,6 +1419,10 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     TheCall->setType(Context.IntTy);
     break;
   }
+  case Builtin::BI__builtin_preserve_access_index:
+    if (SemaBuiltinPreserveAI(*this, TheCall))
+      return ExprError();
+    break;
   case Builtin::BI__builtin_call_with_static_chain:
     if (SemaBuiltinCallWithStaticChain(*this, TheCall))
       return ExprError();
