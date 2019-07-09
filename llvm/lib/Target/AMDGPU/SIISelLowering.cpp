@@ -2234,16 +2234,13 @@ SITargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     SDValue ReturnAddrReg = CreateLiveInRegister(
       DAG, &AMDGPU::SReg_64RegClass, TRI->getReturnAddressReg(MF), MVT::i64);
 
-    // FIXME: Should be able to use a vreg here, but need a way to prevent it
-    // from being allcoated to a CSR.
-
-    SDValue PhysReturnAddrReg = DAG.getRegister(TRI->getReturnAddressReg(MF),
-                                                MVT::i64);
-
-    Chain = DAG.getCopyToReg(Chain, DL, PhysReturnAddrReg, ReturnAddrReg, Flag);
+    SDValue ReturnAddrVirtualReg = DAG.getRegister(
+        MF.getRegInfo().createVirtualRegister(&AMDGPU::CCR_SGPR_64RegClass),
+        MVT::i64);
+    Chain =
+        DAG.getCopyToReg(Chain, DL, ReturnAddrVirtualReg, ReturnAddrReg, Flag);
     Flag = Chain.getValue(1);
-
-    RetOps.push_back(PhysReturnAddrReg);
+    RetOps.push_back(ReturnAddrVirtualReg);
   }
 
   // Copy the result values into the output registers.
