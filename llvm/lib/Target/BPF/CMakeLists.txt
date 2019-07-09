@@ -13,7 +13,7 @@ tablegen(LLVM BPFGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(BPFCommonTableGen)
 
 add_llvm_target(BPFCodeGen
-  BPFAbstrctMemberAccess.cpp
+  BPFAbstractMemberAccess.cpp
   BPFAsmPrinter.cpp
   BPFFrameLowering.cpp
   BPFInstrInfo.cpp
