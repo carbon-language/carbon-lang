@@ -604,8 +604,7 @@ static void collectCallSiteParameters(const MachineInstr *CallMI,
     return 0;
   };
 
-  auto finishCallSiteParam = [&](DbgValueLoc &DbgLocVal,
-                                 unsigned &Reg) {
+  auto finishCallSiteParam = [&](DbgValueLoc &DbgLocVal, unsigned &Reg) {
     unsigned FwdReg = Reg;
     if (ShouldTryEmitEntryVals && RegsForEntryValues.count(Reg))
       FwdReg = RegsForEntryValues[Reg];
@@ -642,8 +641,7 @@ static void collectCallSiteParameters(const MachineInstr *CallMI,
           unsigned FP = TRI->getFrameRegister(*MF);
           bool IsSPorFP = (RegLoc == SP) || (RegLoc == FP);
           if (TRI->isCallerPreservedPhysReg(RegLoc, *MF) || IsSPorFP) {
-            DbgValueLoc DbgLocVal(
-                Expr, MachineLocation(RegLoc, IsSPorFP));
+            DbgValueLoc DbgLocVal(Expr, MachineLocation(RegLoc, IsSPorFP));
             finishCallSiteParam(DbgLocVal, Reg);
           } else if (ShouldTryEmitEntryVals) {
             ArgsRegsForProcess.insert(RegLoc);
@@ -689,7 +687,6 @@ void DwarfDebug::constructCallSiteEntryDIEs(const DISubprogram &SP,
 
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   assert(TII && "TargetInstrInfo not found: cannot label tail calls");
-  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   bool ApplyGNUExtensions = getDwarfVersion() == 4 && tuneForGDB();
 
   // Emit call site entries for each call or tail call in the function.
@@ -748,9 +745,10 @@ void DwarfDebug::constructCallSiteEntryDIEs(const DISubprogram &SP,
 
       LLVM_DEBUG(dbgs() << "CallSiteEntry: " << MF.getName() << " -> "
                         << (CalleeDecl ? CalleeDecl->getName()
-                                       : StringRef(TRI->getName(CallReg)))
-                        << (IsTail ? " [IsTail]" : "")
-                        << "\n");
+                                       : StringRef(MF.getSubtarget()
+                                                       .getRegisterInfo()
+                                                       ->getName(CallReg)))
+                        << (IsTail ? " [IsTail]" : "") << "\n");
 
       DIE &CallSiteDIE =
             CU.constructCallSiteEntryDIE(ScopeDIE, CalleeSP, IsTail, PCAddr,

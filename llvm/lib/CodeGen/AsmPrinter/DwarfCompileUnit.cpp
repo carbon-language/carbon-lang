@@ -894,7 +894,7 @@ dwarf::Tag DwarfCompileUnit::getDwarf5OrGNUCallSiteTag(dwarf::Tag Tag) {
   bool ApplyGNUExtensions = DD->getDwarfVersion() == 4 && DD->tuneForGDB();
   if (!ApplyGNUExtensions)
     return Tag;
-  switch(Tag) {
+  switch (Tag) {
   case dwarf::DW_TAG_call_site:
     return dwarf::DW_TAG_GNU_call_site;
   case dwarf::DW_TAG_call_site_parameter:
@@ -904,11 +904,12 @@ dwarf::Tag DwarfCompileUnit::getDwarf5OrGNUCallSiteTag(dwarf::Tag Tag) {
   }
 }
 
-dwarf::Attribute DwarfCompileUnit::getDwarf5OrGNUCallSiteAttr(dwarf::Attribute Attr) {
+dwarf::Attribute
+DwarfCompileUnit::getDwarf5OrGNUCallSiteAttr(dwarf::Attribute Attr) {
   bool ApplyGNUExtensions = DD->getDwarfVersion() == 4 && DD->tuneForGDB();
   if (!ApplyGNUExtensions)
     return Attr;
-  switch(Attr) {
+  switch (Attr) {
   case dwarf::DW_AT_call_all_calls:
     return dwarf::DW_AT_GNU_all_call_sites;
   case dwarf::DW_AT_call_target:
@@ -926,31 +927,30 @@ dwarf::Attribute DwarfCompileUnit::getDwarf5OrGNUCallSiteAttr(dwarf::Attribute A
   }
 }
 
-DIE &DwarfCompileUnit::constructCallSiteEntryDIE(DIE &ScopeDIE,
-                                                 const DISubprogram *CalleeSP,
-                                                 bool IsTail,
-                                                 const MCSymbol *PCAddr,
-                                                 const MCExpr *PCOffset,
-                                                 unsigned CallReg) {
+DIE &DwarfCompileUnit::constructCallSiteEntryDIE(
+    DIE &ScopeDIE, const DISubprogram *CalleeSP, bool IsTail,
+    const MCSymbol *PCAddr, const MCExpr *PCOffset, unsigned CallReg) {
   // Insert a call site entry DIE within ScopeDIE.
-  DIE &CallSiteDIE =
-      createAndAddDIE(getDwarf5OrGNUCallSiteTag(dwarf::DW_TAG_call_site),
-                      ScopeDIE, nullptr);
+  DIE &CallSiteDIE = createAndAddDIE(
+      getDwarf5OrGNUCallSiteTag(dwarf::DW_TAG_call_site), ScopeDIE, nullptr);
 
   if (CallReg) {
     // Indirect call.
-    addAddress(CallSiteDIE, getDwarf5OrGNUCallSiteAttr(dwarf::DW_AT_call_target),
+    addAddress(CallSiteDIE,
+               getDwarf5OrGNUCallSiteAttr(dwarf::DW_AT_call_target),
                MachineLocation(CallReg));
   } else {
     DIE *CalleeDIE = getOrCreateSubprogramDIE(CalleeSP);
     assert(CalleeDIE && "Could not create DIE for call site entry origin");
-    addDIEEntry(CallSiteDIE, getDwarf5OrGNUCallSiteAttr(dwarf::DW_AT_call_origin),
+    addDIEEntry(CallSiteDIE,
+                getDwarf5OrGNUCallSiteAttr(dwarf::DW_AT_call_origin),
                 *CalleeDIE);
   }
 
   if (IsTail)
     // Attach DW_AT_call_tail_call to tail calls for standards compliance.
-    addFlag(CallSiteDIE, getDwarf5OrGNUCallSiteAttr(dwarf::DW_AT_call_tail_call));
+    addFlag(CallSiteDIE,
+            getDwarf5OrGNUCallSiteAttr(dwarf::DW_AT_call_tail_call));
 
   // Attach the return PC to allow the debugger to disambiguate call paths
   // from one function to another.
