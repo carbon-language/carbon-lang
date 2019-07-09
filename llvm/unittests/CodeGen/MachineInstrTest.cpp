@@ -50,7 +50,10 @@ class BogusRegisterInfo : public TargetRegisterInfo {
 public:
   BogusRegisterInfo()
       : TargetRegisterInfo(nullptr, BogusRegisterClasses, BogusRegisterClasses,
-                           nullptr, nullptr, LaneBitmask(~0u), nullptr) {}
+                           nullptr, nullptr, LaneBitmask(~0u), nullptr) {
+    InitMCRegisterInfo(nullptr, 0, 0, 0, nullptr, 0, nullptr, 0, nullptr,
+                       nullptr, nullptr, nullptr, nullptr, 0, nullptr, nullptr);
+  }
 
   const MCPhysReg *
   getCalleeSavedRegs(const MachineFunction *MF) const override {
