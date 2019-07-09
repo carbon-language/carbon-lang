@@ -2750,6 +2750,9 @@ def err_only_annotate_after_access_spec : Error<
 
 def err_attribute_section_invalid_for_target : Error<
   "argument to %select{'code_seg'|'section'}1 attribute is not valid for this target: %0">;
+def warn_attribute_section_drectve : Warning<
+  "#pragma %0(\".drectve\") has undefined behavior, "
+  "use #pragma comment(linker, ...) instead">, InGroup<MicrosoftDrectveSection>;
 def warn_mismatched_section : Warning<
   "%select{codeseg|section}0 does not match previous declaration">, InGroup<Section>;
 def warn_attribute_section_on_redeclaration : Warning<
