@@ -212,7 +212,7 @@ static int64_t getConstant(const MachineInstr *MI) {
   return MI->getOperand(1).getCImm()->getSExtValue();
 }
 
-bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
+bool AMDGPUInstructionSelector::selectG_ADD_SUB(MachineInstr &I) const {
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
@@ -221,11 +221,13 @@ bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
   unsigned Size = RBI.getSizeInBits(DstReg, MRI, TRI);
   const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
   const bool IsSALU = DstRB->getID() == AMDGPU::SGPRRegBankID;
+  const bool Sub = I.getOpcode() == TargetOpcode::G_SUB;
 
   if (Size == 32) {
     if (IsSALU) {
+      const unsigned Opc = Sub ? AMDGPU::S_SUB_U32 : AMDGPU::S_ADD_U32;
       MachineInstr *Add =
-        BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_ADD_U32), DstReg)
+        BuildMI(*BB, &I, DL, TII.get(Opc), DstReg)
         .add(I.getOperand(1))
         .add(I.getOperand(2));
       I.eraseFromParent();
@@ -233,15 +235,18 @@ bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
     }
 
     if (STI.hasAddNoCarry()) {
-      I.setDesc(TII.get(AMDGPU::V_ADD_U32_e64));
+      const unsigned Opc = Sub ? AMDGPU::V_SUB_U32_e64 : AMDGPU::V_ADD_U32_e64;
+      I.setDesc(TII.get(Opc));
       I.addOperand(*MF, MachineOperand::CreateImm(0));
       I.addOperand(*MF, MachineOperand::CreateReg(AMDGPU::EXEC, false, true));
       return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
     }
 
+    const unsigned Opc = Sub ? AMDGPU::V_SUB_I32_e64 : AMDGPU::V_ADD_I32_e64;
+
     Register UnusedCarry = MRI.createVirtualRegister(TRI.getWaveMaskRegClass());
     MachineInstr *Add
-      = BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_ADD_I32_e64), DstReg)
+      = BuildMI(*BB, &I, DL, TII.get(Opc), DstReg)
       .addDef(UnusedCarry, RegState::Dead)
       .add(I.getOperand(1))
       .add(I.getOperand(2))
@@ -249,6 +254,8 @@ bool AMDGPUInstructionSelector::selectG_ADD(MachineInstr &I) const {
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*Add, TII, TRI, RBI);
   }
+
+  assert(!Sub && "illegal sub should not reach here");
 
   const TargetRegisterClass &RC
     = IsSALU ? AMDGPU::SReg_64_XEXECRegClass : AMDGPU::VReg_64RegClass;
@@ -408,7 +415,7 @@ bool AMDGPUInstructionSelector::selectG_UNMERGE_VALUES(MachineInstr &MI) const {
 }
 
 bool AMDGPUInstructionSelector::selectG_GEP(MachineInstr &I) const {
-  return selectG_ADD(I);
+  return selectG_ADD_SUB(I);
 }
 
 bool AMDGPUInstructionSelector::selectG_IMPLICIT_DEF(MachineInstr &I) const {
@@ -1213,7 +1220,8 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
 
   switch (I.getOpcode()) {
   case TargetOpcode::G_ADD:
-    if (selectG_ADD(I))
+  case TargetOpcode::G_SUB:
+    if (selectG_ADD_SUB(I))
       return true;
     LLVM_FALLTHROUGH;
   default:

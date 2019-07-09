@@ -73,7 +73,7 @@ private:
   bool selectG_TRUNC(MachineInstr &I) const;
   bool selectG_SZA_EXT(MachineInstr &I) const;
   bool selectG_CONSTANT(MachineInstr &I) const;
-  bool selectG_ADD(MachineInstr &I) const;
+  bool selectG_ADD_SUB(MachineInstr &I) const;
   bool selectG_EXTRACT(MachineInstr &I) const;
   bool selectG_MERGE_VALUES(MachineInstr &I) const;
   bool selectG_UNMERGE_VALUES(MachineInstr &I) const;
