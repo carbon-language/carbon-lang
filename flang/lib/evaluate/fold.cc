@@ -194,6 +194,24 @@ template<typename TR, typename... TArgs>
 using ScalarFuncWithContext =
     std::function<Scalar<TR>(FoldingContext &, const Scalar<TArgs> &...)>;
 
+// Apply type conversion and re-folding if necessary.
+// This is where BOZ arguments are converted.
+template<typename T>
+static inline Constant<T> *FoldConvertedArg(
+    FoldingContext &context, std::optional<ActualArgument> &arg) {
+  if (arg.has_value()) {
+    if (auto *expr{arg->UnwrapExpr()}) {
+      if (UnwrapExpr<Expr<T>>(*expr) == nullptr) {
+        if (auto converted{ConvertToType(T::GetType(), std::move(*expr))}) {
+          *expr = Fold(context, std::move(*converted));
+        }
+      }
+      return UnwrapConstantValue<T>(*expr);
+    }
+  }
+  return nullptr;
+}
+
 template<template<typename, typename...> typename WrapperType, typename TR,
     typename... TA, std::size_t... I>
 static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
@@ -203,7 +221,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
       (... && IsSpecificIntrinsicType<TA>));  // TODO derived types for MERGE?
   static_assert(sizeof...(TA) > 0);
   std::tuple<const Constant<TA> *...> args{
-      UnwrapConstantValue<TA>(funcRef.arguments()[I])...};
+      FoldConvertedArg<TA>(context, funcRef.arguments()[I])...};
   if ((... && (std::get<I>(args) != nullptr))) {
     // Compute the shape of the result based on shapes of arguments
     ConstantSubscripts shape;
@@ -328,22 +346,11 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       return FoldElementalIntrinsic<T, T, T>(
           context, std::move(funcRef), &Scalar<T>::DIM);
     } else if (name == "dshiftl" || name == "dshiftr") {
-      // convert boz
-      for (int i{0}; i <= 1; ++i) {
-        if (auto *x{UnwrapExpr<BOZLiteralConstant>(args[i])}) {
-          *args[i] =
-              AsGenericExpr(Fold(context, ConvertToType<T>(std::move(*x))));
-        }
-      }
-      // Third argument can be of any kind. However, it must be smaller or equal
-      // than BIT_SIZE. It can be converted to Int4 to simplify.
       using Int4 = Type<TypeCategory::Integer, 4>;
-      if (auto *n{UnwrapExpr<Expr<SomeInteger>>(args[2])}) {
-        *args[2] =
-            AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-      }
       const auto fptr{
           name == "dshiftl" ? &Scalar<T>::DSHIFTL : &Scalar<T>::DSHIFTR};
+      // Third argument can be of any kind. However, it must be smaller or equal
+      // than BIT_SIZE. It can be converted to Int4 to simplify.
       return FoldElementalIntrinsic<T, T, T, Int4>(context, std::move(funcRef),
           ScalarFunc<T, T, T, Int4>(
               [&fptr](const Scalar<T> &i, const Scalar<T> &j,
@@ -386,13 +393,6 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
         }
       }
     } else if (name == "iand" || name == "ior" || name == "ieor") {
-      // convert boz
-      for (int i{0}; i <= 1; ++i) {
-        if (auto *x{UnwrapExpr<BOZLiteralConstant>(args[i])}) {
-          *args[i] =
-              AsGenericExpr(Fold(context, ConvertToType<T>(std::move(*x))));
-        }
-      }
       auto fptr{&Scalar<T>::IAND};
       if (name == "iand") {  // done in fptr declaration
       } else if (name == "ior") {
@@ -409,10 +409,6 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       // Second argument can be of any kind. However, it must be smaller or
       // equal than BIT_SIZE. It can be converted to Int4 to simplify.
       using Int4 = Type<TypeCategory::Integer, 4>;
-      if (auto *n{UnwrapExpr<Expr<SomeInteger>>(args[1])}) {
-        *args[1] =
-            AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-      }
       auto fptr{&Scalar<T>::IBCLR};
       if (name == "ibclr") {  // done in fprt definition
       } else if (name == "ibset") {
@@ -502,23 +498,12 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       // Argument can be of any kind but value has to be smaller than bit_size.
       // It can be safely converted to Int4 to simplify.
       using Int4 = Type<TypeCategory::Integer, 4>;
-      if (auto *n{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
-        *args[0] =
-            AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-      }
       const auto fptr{name == "maskl" ? &Scalar<T>::MASKL : &Scalar<T>::MASKR};
       return FoldElementalIntrinsic<T, Int4>(context, std::move(funcRef),
           ScalarFunc<T, Int4>([&fptr](const Scalar<Int4> &places) -> Scalar<T> {
             return fptr(static_cast<int>(places.ToInt64()));
           }));
     } else if (name == "merge_bits") {
-      // convert boz
-      for (int i{0}; i <= 2; ++i) {
-        if (auto *x{UnwrapExpr<BOZLiteralConstant>(args[i])}) {
-          *args[i] =
-              AsGenericExpr(Fold(context, ConvertToType<T>(std::move(*x))));
-        }
-      }
       return FoldElementalIntrinsic<T, T, T, T>(
           context, std::move(funcRef), &Scalar<T>::MERGE_BITS);
     } else if (name == "precision") {
@@ -695,10 +680,6 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
       if (args.size() == 2) {  // elemental
         // runtime functions use int arg
         using Int4 = Type<TypeCategory::Integer, 4>;
-        if (auto *n{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
-          *args[0] =
-              AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-        }
         if (auto callable{
                 context.hostIntrinsicsLibrary()
                     .GetHostProcedureWrapper<Scalar, T, Int4, T>(name)}) {
@@ -732,11 +713,6 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
       return FoldElementalIntrinsic<T, ComplexT>(
           context, std::move(funcRef), &Scalar<ComplexT>::AIMAG);
     } else if (name == "aint") {
-      // Convert argument to the requested kind before calling aint
-      if (auto *x{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
-        *args[0] =
-            AsGenericExpr(Fold(context, ConvertToType<T>(std::move(*x))));
-      }
       return FoldElementalIntrinsic<T, T>(context, std::move(funcRef),
           ScalarFunc<T, T>([&name, &context](const Scalar<T> &x) -> Scalar<T> {
             ValueWithRealFlags<Scalar<T>> y{x.AINT()};
@@ -897,21 +873,15 @@ template<int KIND>
 Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Character, KIND>> &&funcRef) {
   using T = Type<TypeCategory::Character, KIND>;
-  ActualArguments &args{FoldArguments(context, funcRef)};
+  FoldArguments(context, funcRef);
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
     if (name == "achar" || name == "char") {
-      auto *sn{UnwrapExpr<Expr<SomeInteger>>(args[0])};
-      CHECK(sn != nullptr);
-      return std::visit(
-          [&funcRef, &context](const auto &n) -> Expr<T> {
-            using IntT = typename std::decay_t<decltype(n)>::Result;
-            return FoldElementalIntrinsic<T, IntT>(context, std::move(funcRef),
-                ScalarFunc<T, IntT>([](const Scalar<IntT> &i) {
-                  return CharacterUtils<KIND>::CHAR(i.ToUInt64());
-                }));
-          },
-          sn->u);
+      using IntT = SubscriptInteger;
+      return FoldElementalIntrinsic<T, IntT>(context, std::move(funcRef),
+          ScalarFunc<T, IntT>([](const Scalar<IntT> &i) {
+            return CharacterUtils<KIND>::CHAR(i.ToUInt64());
+          }));
     } else if (name == "adjustl") {
       return FoldElementalIntrinsic<T, T>(
           context, std::move(funcRef), CharacterUtils<KIND>::ADJUSTL);
