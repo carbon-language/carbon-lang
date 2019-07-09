@@ -2699,12 +2699,29 @@ let AdditionalPredicates = [NotInMicroMips] in {
   def : MipsInstAlias<
           "sgt $rs, $rt",
           (SLT GPR32Opnd:$rs, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>, ISA_MIPS1;
+
+  def SGTImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                 (ins GPR32Opnd:$rs, simm32:$imm),
+                                 "sgt\t$rd, $rs, $imm">, GPR_32;
+  def : MipsInstAlias<"sgt $rs, $imm", (SGTImm GPR32Opnd:$rs,
+                                               GPR32Opnd:$rs,
+                                               simm32:$imm), 0>,
+        GPR_32;
   def : MipsInstAlias<
           "sgtu $rd, $rs, $rt",
           (SLTu GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>, ISA_MIPS1;
   def : MipsInstAlias<
           "sgtu $$rs, $rt",
           (SLTu GPR32Opnd:$rs, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>, ISA_MIPS1;
+
+  def SGTUImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                  (ins GPR32Opnd:$rs, uimm32_coerced:$imm),
+                                  "sgtu\t$rd, $rs, $imm">, GPR_32;
+  def : MipsInstAlias<"sgtu $rs, $imm", (SGTUImm GPR32Opnd:$rs,
+                                                 GPR32Opnd:$rs,
+                                                 uimm32_coerced:$imm), 0>,
+        GPR_32;
+
   def : MipsInstAlias<
           "not $rt, $rs",
           (NOR GPR32Opnd:$rt, GPR32Opnd:$rs, ZERO), 0>, ISA_MIPS1;
