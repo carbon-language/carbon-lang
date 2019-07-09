@@ -827,13 +827,6 @@ void Writer::run() {
     if (Config->Pic)
       createApplyRelocationsFunction();
     createCallCtorsFunction();
-
-    // Make sure we have resolved all symbols.
-    if (!Config->AllowUndefined)
-      Symtab->reportRemainingUndefines();
-
-    if (errorCount())
-      return;
   }
 
   log("-- calculateTypes");
