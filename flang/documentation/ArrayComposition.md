@@ -177,3 +177,29 @@ new shape.
 The implementation of this feature also becomes more straightforward if
 our implementation of array expressions has decoupled calculation of shapes
 from the evaluation of the elements of the result.
+
+Rewriting rules
+===============
+Let `{...}` denote an ordered tuple of 1-based indices, e.g. `{j,k}`, into
+the result of an array expression or subexpression.
+
+* Array constructors always yield vectors; higher-rank arrays that appear as
+  constituents are flattened; so `[X] => RESHAPE(X,SHAPE=[SIZE(X)})`.
+* Array constructors with multiple constituents are concatenations of
+  their constituents; so `[X,Y]{j} => MERGE(Y{j-SIZE(X)},X{j},J>SIZE(X))`.
+* Array constructors with implied DO loops are difficult when nested
+  triangularly.
+* Whole array references can have lower bounds other than 1, so
+  `A => A(LBOUND(A,1):UBOUND(A,1),...)`.
+* Array sections simply apply indices: `A(i:...:n){j} => A(i1+n*(j-1))`.
+* Vector-valued subscripts apply indices to the subscript: `A(N(:)){j} => A(N(:){j})`.
+* Scalar operands ignore indices: `X{j,k} => X`.
+  Further, they are evaluated at most once.
+* Elemental operators and functions apply indices to their arguments:
+  `(A(:,:) + B(:,:)){j,k}` => A(:,:){j,k} + B(:,:){j,k}`.
+* `TRANSPOSE(X){j,k} => X{k,j}`.
+* `SPREAD(X,DIM=2,...){j,k} => X{j}`; i.e., the contents are replicated.
+  If X is sufficiently expensive to compute elementally, it might be evaluated
+  into a temporary.
+
+(more...)
