@@ -153,6 +153,14 @@ public:
   shouldConsiderAddressTypePromotion(const Instruction &I,
                                      bool &AllowPromotionWithoutCommonHeader);
 
+  unsigned getCacheLineSize();
+
+  unsigned getPrefetchDistance();
+
+  unsigned getMinPrefetchStride();
+
+  unsigned getMaxPrefetchIterationsAhead();
+
   bool shouldExpandReduction(const IntrinsicInst *II) const {
     return false;
   }

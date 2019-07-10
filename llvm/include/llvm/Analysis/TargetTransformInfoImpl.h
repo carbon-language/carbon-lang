@@ -363,9 +363,9 @@ public:
     return false;
   }
 
-  unsigned getCacheLineSize() const { return 0; }
+  unsigned getCacheLineSize() { return 0; }
 
-  llvm::Optional<unsigned> getCacheSize(TargetTransformInfo::CacheLevel Level) const {
+  llvm::Optional<unsigned> getCacheSize(TargetTransformInfo::CacheLevel Level) {
     switch (Level) {
     case TargetTransformInfo::CacheLevel::L1D:
       LLVM_FALLTHROUGH;
@@ -377,7 +377,7 @@ public:
   }
 
   llvm::Optional<unsigned> getCacheAssociativity(
-    TargetTransformInfo::CacheLevel Level) const {
+    TargetTransformInfo::CacheLevel Level) {
     switch (Level) {
     case TargetTransformInfo::CacheLevel::L1D:
       LLVM_FALLTHROUGH;
@@ -388,11 +388,11 @@ public:
     llvm_unreachable("Unknown TargetTransformInfo::CacheLevel");
   }
 
-  unsigned getPrefetchDistance() const { return 0; }
+  unsigned getPrefetchDistance() { return 0; }
 
-  unsigned getMinPrefetchStride() const { return 1; }
+  unsigned getMinPrefetchStride() { return 1; }
 
-  unsigned getMaxPrefetchIterationsAhead() const { return UINT_MAX; }
+  unsigned getMaxPrefetchIterationsAhead() { return UINT_MAX; }
 
   unsigned getMaxInterleaveFactor(unsigned VF) { return 1; }
 
