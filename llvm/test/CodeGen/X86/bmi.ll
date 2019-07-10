@@ -1154,10 +1154,7 @@ define i32 @blsi32_branch(i32 %x) {
 ; X86-NEXT:    pushl %esi
 ; X86-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NEXT:    .cfi_offset %esi, -8
-; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    movl %eax, %esi
-; X86-NEXT:    negl %esi
-; X86-NEXT:    andl %eax, %esi
+; X86-NEXT:    blsil {{[0-9]+}}(%esp), %esi
 ; X86-NEXT:    jne .LBB48_2
 ; X86-NEXT:  # %bb.1:
 ; X86-NEXT:    calll bar
@@ -1172,9 +1169,7 @@ define i32 @blsi32_branch(i32 %x) {
 ; X64-NEXT:    pushq %rbx
 ; X64-NEXT:    .cfi_def_cfa_offset 16
 ; X64-NEXT:    .cfi_offset %rbx, -16
-; X64-NEXT:    movl %edi, %ebx
-; X64-NEXT:    negl %ebx
-; X64-NEXT:    andl %edi, %ebx
+; X64-NEXT:    blsil %edi, %ebx
 ; X64-NEXT:    jne .LBB48_2
 ; X64-NEXT:  # %bb.1:
 ; X64-NEXT:    callq bar
@@ -1229,9 +1224,7 @@ define i64 @blsi64_branch(i64 %x) {
 ; X64-NEXT:    pushq %rbx
 ; X64-NEXT:    .cfi_def_cfa_offset 16
 ; X64-NEXT:    .cfi_offset %rbx, -16
-; X64-NEXT:    movq %rdi, %rbx
-; X64-NEXT:    negq %rbx
-; X64-NEXT:    andq %rdi, %rbx
+; X64-NEXT:    blsiq %rdi, %rbx
 ; X64-NEXT:    jne .LBB49_2
 ; X64-NEXT:  # %bb.1:
 ; X64-NEXT:    callq bar
