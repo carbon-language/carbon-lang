@@ -1188,12 +1188,11 @@ bool AttrsVisitor::SetPassNameOn(Symbol &symbol) {
   if (!passName_) {
     return false;
   }
-  std::visit(
-      common::visitors{
-          [&](ProcEntityDetails &x) { x.set_passName(*passName_); },
-          [&](ProcBindingDetails &x) { x.set_passName(*passName_); },
-          [](auto &) { common::die("unexpected pass name"); },
-      },
+  std::visit(common::visitors{
+                 [&](ProcEntityDetails &x) { x.set_passName(*passName_); },
+                 [&](ProcBindingDetails &x) { x.set_passName(*passName_); },
+                 [](auto &) { common::die("unexpected pass name"); },
+             },
       symbol.details());
   return true;
 }
@@ -1345,20 +1344,19 @@ void ImplicitRulesVisitor::Post(const parser::ParameterStmt &x) {
 }
 
 bool ImplicitRulesVisitor::Pre(const parser::ImplicitStmt &x) {
-  bool res = std::visit(
-      common::visitors{
-          [&](const std::list<ImplicitNoneNameSpec> &x) {
-            return HandleImplicitNone(x);
-          },
-          [&](const std::list<parser::ImplicitSpec> &x) {
-            if (prevImplicitNoneType_) {
-              Say("IMPLICIT statement after IMPLICIT NONE or "
-                  "IMPLICIT NONE(TYPE) statement"_err_en_US);
-              return false;
-            }
-            return true;
-          },
-      },
+  bool res = std::visit(common::visitors{
+                            [&](const std::list<ImplicitNoneNameSpec> &x) {
+                              return HandleImplicitNone(x);
+                            },
+                            [&](const std::list<parser::ImplicitSpec> &x) {
+                              if (prevImplicitNoneType_) {
+                                Say("IMPLICIT statement after IMPLICIT NONE or "
+                                    "IMPLICIT NONE(TYPE) statement"_err_en_US);
+                                return false;
+                              }
+                              return true;
+                            },
+                        },
       x.u);
   prevImplicit_ = currStmtSource();
   return res;
@@ -1687,18 +1685,17 @@ void ScopeHandler::EraseSymbol(const parser::Name &name) {
 
 static bool NeedsType(const Symbol &symbol) {
   return symbol.GetType() == nullptr &&
-      std::visit(
-          common::visitors{
-              [](const EntityDetails &) { return true; },
-              [](const ObjectEntityDetails &) { return true; },
-              [](const AssocEntityDetails &) { return true; },
-              [&](const ProcEntityDetails &p) {
-                return symbol.test(Symbol::Flag::Function) &&
-                    p.interface().type() == nullptr &&
-                    p.interface().symbol() == nullptr;
-              },
-              [](const auto &) { return false; },
-          },
+      std::visit(common::visitors{
+                     [](const EntityDetails &) { return true; },
+                     [](const ObjectEntityDetails &) { return true; },
+                     [](const AssocEntityDetails &) { return true; },
+                     [&](const ProcEntityDetails &p) {
+                       return symbol.test(Symbol::Flag::Function) &&
+                           p.interface().type() == nullptr &&
+                           p.interface().symbol() == nullptr;
+                     },
+                     [](const auto &) { return false; },
+                 },
           symbol.details());
 }
 void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
@@ -1833,15 +1830,14 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
     // then add a use for each public name that was not renamed.
     std::set<SourceName> useNames;
     for (const auto &rename : *list) {
-      std::visit(
-          common::visitors{
-              [&](const parser::Rename::Names &names) {
-                useNames.insert(std::get<1>(names.t).source);
-              },
-              [&](const parser::Rename::Operators &ops) {
-                useNames.insert(std::get<1>(ops.t).v.source);
-              },
-          },
+      std::visit(common::visitors{
+                     [&](const parser::Rename::Names &names) {
+                       useNames.insert(std::get<1>(names.t).source);
+                     },
+                     [&](const parser::Rename::Operators &ops) {
+                       useNames.insert(std::get<1>(ops.t).v.source);
+                     },
+                 },
           rename.u);
     }
     for (const auto &[name, symbol] : *useModuleScope_) {
@@ -4106,9 +4102,7 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
   for (const auto &name : x.v) {
     if (!FindSymbol(name)) {
-      Say(name,
-          "Variable '%s' with SHARED locality implicitly"
-          " declared and may be uninitialized"_en_US);
+      Say(name, "Variable '%s' with SHARED locality implicitly declared"_en_US);
     }
     Symbol &prev{FindOrDeclareEnclosingEntity(name)};
     if (PassesSharedLocalityChecks(name, prev)) {
@@ -4150,17 +4144,16 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
 }
 
 bool ConstructVisitor::Pre(const parser::DataStmtObject &x) {
-  std::visit(
-      common::visitors{
-          [&](const common::Indirection<parser::Variable> &y) {
-            Walk(y.value());
-          },
-          [&](const parser::DataImpliedDo &y) {
-            PushScope(Scope::Kind::ImpliedDos, nullptr);
-            Walk(y);
-            PopScope();
-          },
-      },
+  std::visit(common::visitors{
+                 [&](const common::Indirection<parser::Variable> &y) {
+                   Walk(y.value());
+                 },
+                 [&](const parser::DataImpliedDo &y) {
+                   PushScope(Scope::Kind::ImpliedDos, nullptr);
+                   Walk(y);
+                   PopScope();
+                 },
+             },
       x.u);
   return false;
 }
@@ -4378,15 +4371,14 @@ void ConstructVisitor::SetAttrsFromAssociation(Symbol &symbol) {
 
 ConstructVisitor::Selector ConstructVisitor::ResolveSelector(
     const parser::Selector &x) {
-  return std::visit(
-      common::visitors{
-          [&](const parser::Expr &expr) {
-            return Selector{expr.source, EvaluateExpr(expr)};
-          },
-          [&](const parser::Variable &var) {
-            return Selector{var.GetSource(), EvaluateExpr(var)};
-          },
-      },
+  return std::visit(common::visitors{
+                        [&](const parser::Expr &expr) {
+                          return Selector{expr.source, EvaluateExpr(expr)};
+                        },
+                        [&](const parser::Variable &var) {
+                          return Selector{var.GetSource(), EvaluateExpr(var)};
+                        },
+                    },
       x.u);
 }
 
@@ -4516,13 +4508,12 @@ const parser::Name *DeclarationVisitor::ResolveVariable(
           [&](const common::Indirection<parser::FunctionReference> &y) {
             const auto &proc{
                 std::get<parser::ProcedureDesignator>(y.value().v.t)};
-            return std::visit(
-                common::visitors{
-                    [&](const parser::Name &z) { return &z; },
-                    [&](const parser::ProcComponentRef &z) {
-                      return ResolveStructureComponent(z.v.thing);
-                    },
-                },
+            return std::visit(common::visitors{
+                                  [&](const parser::Name &z) { return &z; },
+                                  [&](const parser::ProcComponentRef &z) {
+                                    return ResolveStructureComponent(z.v.thing);
+                                  },
+                              },
                 proc.u);
           },
       },
@@ -4862,16 +4853,15 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
     defaultAccess_ = accessAttr;
   } else {
     for (const auto &accessId : accessIds) {
-      std::visit(
-          common::visitors{
-              [=](const parser::Name &y) {
-                Resolve(y, SetAccess(y.source, accessAttr));
-              },
-              [=](const Indirection<parser::GenericSpec> &y) {
-                auto info{GenericSpecInfo{y.value()}};
-                info.Resolve(&SetAccess(info.symbolName(), accessAttr));
-              },
-          },
+      std::visit(common::visitors{
+                     [=](const parser::Name &y) {
+                       Resolve(y, SetAccess(y.source, accessAttr));
+                     },
+                     [=](const Indirection<parser::GenericSpec> &y) {
+                       auto info{GenericSpecInfo{y.value()}};
+                       info.Resolve(&SetAccess(info.symbolName(), accessAttr));
+                     },
+                 },
           accessId.u);
     }
   }
@@ -4970,23 +4960,21 @@ bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
 }
 
 void ResolveNamesVisitor::Post(const parser::PointerObject &x) {
-  std::visit(
-      common::visitors{
-          [&](const parser::Name &x) { ResolveName(x); },
-          [&](const parser::StructureComponent &x) {
-            ResolveStructureComponent(x);
-          },
-      },
+  std::visit(common::visitors{
+                 [&](const parser::Name &x) { ResolveName(x); },
+                 [&](const parser::StructureComponent &x) {
+                   ResolveStructureComponent(x);
+                 },
+             },
       x.u);
 }
 void ResolveNamesVisitor::Post(const parser::AllocateObject &x) {
-  std::visit(
-      common::visitors{
-          [&](const parser::Name &x) { ResolveName(x); },
-          [&](const parser::StructureComponent &x) {
-            ResolveStructureComponent(x);
-          },
-      },
+  std::visit(common::visitors{
+                 [&](const parser::Name &x) { ResolveName(x); },
+                 [&](const parser::StructureComponent &x) {
+                   ResolveStructureComponent(x);
+                 },
+             },
       x.u);
 }
 
