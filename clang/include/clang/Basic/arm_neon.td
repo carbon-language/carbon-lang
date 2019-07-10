@@ -703,7 +703,7 @@ def QNEG   : SInst<"vqneg", "dd", "lQl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signed Saturating Accumulated of Unsigned Value
-def SUQADD : SInst<"vuqadd", "ddd", "csilQcQsQiQl">;
+def SUQADD : SInst<"vuqadd", "ddu", "csilQcQsQiQl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Unsigned Saturating Accumulated of Signed Value
