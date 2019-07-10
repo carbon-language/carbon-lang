@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 Fortran Preprocessing
@@ -72,6 +72,8 @@ Judgement calls, where precedents are unclear:
 * `#define c 1` does not allow a `c` in column 1 to be used as a label
   in fixed form, rather than as a comment line indicator.
 * IBM claims to be ISO C compliant and therefore recognizes trigraph sequences.
+* Fortran comments in macro actual arguments should be respected, on
+  the principle that a macro call should work like a function reference.
 
 Behavior that few compilers properly support (or none), but should:
 -------------------------------------------------------------------

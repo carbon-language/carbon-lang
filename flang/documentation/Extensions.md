@@ -125,3 +125,10 @@ Extensions and legacy features deliberately not supported
 * Using non-integer expressions for array bounds (e.g., REAL A(3.14159)) (PGI/Intel)
 * Mixing INTEGER types as operands to bit intrinsics (e.g., IAND); only two
   compilers support it, and they disagree on sign extension.
+
+Preprocessing behavior
+======================
+* The preprocessor is always run, whatever the filename extension may be.
+* We respect Fortran comments in macro actual arguments (like GNU, Intel, NAG;
+  unlike PGI and XLF) on the principle that macro calls should be treated
+  like function references.  Fortran's line continuation methods also work.
