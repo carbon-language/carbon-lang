@@ -415,12 +415,13 @@ int main(int argc, char *const argv[]) {
       options.features.Enable(Fortran::parser::LanguageFeature::OldDebugLines);
     } else if (arg == "-E") {
       driver.dumpCookedChars = true;
-    } else if (arg == "-fbackslash") {
+    } else if (arg == "-fbackslash" || arg == "-fno-backslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes, true);
-    } else if (arg == "-fno-backslash") {
-      options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes, false);
+          Fortran::parser::LanguageFeature::BackslashEscapes,
+          arg == "-fbackslash");
+    } else if (arg == "-fxor-operator" || arg == "-fno-xor-operator") {
+      options.features.Enable(Fortran::parser::LanguageFeature::XOROperator,
+          arg == "-fxor-operator");
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
