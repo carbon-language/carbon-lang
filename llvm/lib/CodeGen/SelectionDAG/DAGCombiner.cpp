@@ -18002,7 +18002,7 @@ static SDValue narrowInsertExtractVectorBinOp(SDNode *Extract,
   SDValue Index = Extract->getOperand(1);
   EVT VT = Extract->getValueType(0);
 
-  auto GetSubVector = [VT, Index](SDValue V) {
+  auto GetSubVector = [VT, Index](SDValue V) -> SDValue {
     if (V.getOpcode() != ISD::INSERT_SUBVECTOR ||
         V.getOperand(1).getValueType() != VT || V.getOperand(2) != Index)
       return SDValue();
