@@ -48,7 +48,7 @@ TEST_F(FileCheckTest, Expression) {
 
   // Defined variable: eval returns right value.
   Expected<uint64_t> Value = Expression.eval();
-  EXPECT_TRUE(static_cast<bool>(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ(60U, *Value);
 
   // Undefined variable: eval fails, undefined variable returned. We call
@@ -87,7 +87,7 @@ TEST_F(FileCheckTest, ParseVar) {
   bool IsPseudo = true;
   Expected<StringRef> ParsedName =
       FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(*ParsedName, OrigVarName);
   EXPECT_TRUE(VarName.empty());
   EXPECT_FALSE(IsPseudo);
@@ -95,7 +95,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = OrigVarName = bufferize(SM, "$GoodGlobalVar");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(*ParsedName, OrigVarName);
   EXPECT_TRUE(VarName.empty());
   EXPECT_FALSE(IsPseudo);
@@ -103,7 +103,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = OrigVarName = bufferize(SM, "@GoodPseudoVar");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(*ParsedName, OrigVarName);
   EXPECT_TRUE(VarName.empty());
   EXPECT_TRUE(IsPseudo);
@@ -119,7 +119,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = OrigVarName = bufferize(SM, "B@dVar");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(VarName, OrigVarName.substr(1));
   EXPECT_EQ(*ParsedName, "B");
   EXPECT_FALSE(IsPseudo);
@@ -127,7 +127,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = OrigVarName = bufferize(SM, "B$dVar");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(VarName, OrigVarName.substr(1));
   EXPECT_EQ(*ParsedName, "B");
   EXPECT_FALSE(IsPseudo);
@@ -135,7 +135,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = bufferize(SM, "BadVar+");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(VarName, "+");
   EXPECT_EQ(*ParsedName, "BadVar");
   EXPECT_FALSE(IsPseudo);
@@ -143,7 +143,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = bufferize(SM, "BadVar-");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(VarName, "-");
   EXPECT_EQ(*ParsedName, "BadVar");
   EXPECT_FALSE(IsPseudo);
@@ -151,7 +151,7 @@ TEST_F(FileCheckTest, ParseVar) {
   VarName = bufferize(SM, "BadVar:");
   IsPseudo = true;
   ParsedName = FileCheckPattern::parseVariable(VarName, IsPseudo, SM);
-  EXPECT_TRUE(static_cast<bool>(ParsedName));
+  EXPECT_TRUE(bool(ParsedName));
   EXPECT_EQ(VarName, ":");
   EXPECT_EQ(*ParsedName, "BadVar");
   EXPECT_FALSE(IsPseudo);
@@ -358,7 +358,7 @@ TEST_F(FileCheckTest, Substitution) {
   FileCheckStringSubstitution StringSubstitution =
       FileCheckStringSubstitution(&Context, "VAR404", 42);
   Expected<std::string> SubstValue = StringSubstitution.getResult();
-  EXPECT_FALSE(static_cast<bool>(SubstValue));
+  EXPECT_FALSE(bool(SubstValue));
   expectUndefError("VAR404", SubstValue.takeError());
 
   // Substitutions of defined pseudo and non-pseudo numeric variables return
@@ -372,27 +372,27 @@ TEST_F(FileCheckTest, Substitution) {
   FileCheckNumericSubstitution SubstitutionN =
       FileCheckNumericSubstitution(&Context, "N", &NExpression, 30);
   Expected<std::string> Value = SubstitutionLine.getResult();
-  EXPECT_TRUE(static_cast<bool>(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ("42", *Value);
   Value = SubstitutionN.getResult();
-  EXPECT_TRUE(static_cast<bool>(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ("13", *Value);
 
   // Substitution of an undefined numeric variable fails.
   LineVar.clearValue();
   SubstValue = SubstitutionLine.getResult().takeError();
-  EXPECT_FALSE(static_cast<bool>(SubstValue));
+  EXPECT_FALSE(bool(SubstValue));
   expectUndefError("@LINE", SubstValue.takeError());
   NVar.clearValue();
   SubstValue = SubstitutionN.getResult().takeError();
-  EXPECT_FALSE(static_cast<bool>(SubstValue));
+  EXPECT_FALSE(bool(SubstValue));
   expectUndefError("N", SubstValue.takeError());
 
   // Substitution of a defined string variable returns the right value.
   FileCheckPattern P = FileCheckPattern(Check::CheckPlain, &Context, 1);
   StringSubstitution = FileCheckStringSubstitution(&Context, "FOO", 42);
   Value = StringSubstitution.getResult();
-  EXPECT_TRUE(static_cast<bool>(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ("BAR", *Value);
 }
 
@@ -460,13 +460,13 @@ TEST_F(FileCheckTest, FileCheckContext) {
       LocalNumVarRef, DefinedNumericVariable, SM);
   Expected<StringRef> EmptyVar = Cxt.getPatternVarValue(EmptyVarStr);
   Expected<StringRef> UnknownVar = Cxt.getPatternVarValue(UnknownVarStr);
-  EXPECT_TRUE(static_cast<bool>(LocalVar));
+  EXPECT_TRUE(bool(LocalVar));
   EXPECT_EQ(*LocalVar, "FOO");
-  EXPECT_TRUE(static_cast<bool>(Expression));
+  EXPECT_TRUE(bool(Expression));
   Expected<uint64_t> ExpressionVal = (*Expression)->eval();
-  EXPECT_TRUE(static_cast<bool>(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 18U);
-  EXPECT_TRUE(static_cast<bool>(EmptyVar));
+  EXPECT_TRUE(bool(EmptyVar));
   EXPECT_EQ(*EmptyVar, "");
   EXPECT_TRUE(errorToBool(UnknownVar.takeError()));
 
@@ -498,14 +498,14 @@ TEST_F(FileCheckTest, FileCheckContext) {
   StringRef GlobalVarStr = "$GlobalVar";
   StringRef GlobalNumVarRef = bufferize(SM, "$GlobalNumVar");
   Expected<StringRef> GlobalVar = Cxt.getPatternVarValue(GlobalVarStr);
-  EXPECT_TRUE(static_cast<bool>(GlobalVar));
+  EXPECT_TRUE(bool(GlobalVar));
   EXPECT_EQ(*GlobalVar, "BAR");
   P = FileCheckPattern(Check::CheckPlain, &Cxt, 3);
   Expression = P.parseNumericSubstitutionBlock(GlobalNumVarRef,
                                                DefinedNumericVariable, SM);
-  EXPECT_TRUE(static_cast<bool>(Expression));
+  EXPECT_TRUE(bool(Expression));
   ExpressionVal = (*Expression)->eval();
-  EXPECT_TRUE(static_cast<bool>(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 36U);
 
   // Clear local variables and check global variables remain defined.
@@ -514,9 +514,9 @@ TEST_F(FileCheckTest, FileCheckContext) {
   P = FileCheckPattern(Check::CheckPlain, &Cxt, 4);
   Expression = P.parseNumericSubstitutionBlock(GlobalNumVarRef,
                                                DefinedNumericVariable, SM);
-  EXPECT_TRUE(static_cast<bool>(Expression));
+  EXPECT_TRUE(bool(Expression));
   ExpressionVal = (*Expression)->eval();
-  EXPECT_TRUE(static_cast<bool>(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 36U);
 }
 } // namespace
