@@ -1663,6 +1663,87 @@ bool CodeGenFunction::isTrivialInitializer(const Expr *Init) {
   return false;
 }
 
+void CodeGenFunction::emitZeroOrPatternForAutoVarInit(QualType type,
+                                                      const VarDecl &D,
+                                                      Address Loc) {
+  auto trivialAutoVarInit = getContext().getLangOpts().getTrivialAutoVarInit();
+  CharUnits Size = getContext().getTypeSizeInChars(type);
+  bool isVolatile = type.isVolatileQualified();
+  if (!Size.isZero()) {
+    switch (trivialAutoVarInit) {
+    case LangOptions::TrivialAutoVarInitKind::Uninitialized:
+      llvm_unreachable("Uninitialized handled by caller");
+    case LangOptions::TrivialAutoVarInitKind::Zero:
+      emitStoresForZeroInit(CGM, D, Loc, isVolatile, Builder);
+      break;
+    case LangOptions::TrivialAutoVarInitKind::Pattern:
+      emitStoresForPatternInit(CGM, D, Loc, isVolatile, Builder);
+      break;
+    }
+    return;
+  }
+
+  // VLAs look zero-sized to getTypeInfo. We can't emit constant stores to
+  // them, so emit a memcpy with the VLA size to initialize each element.
+  // Technically zero-sized or negative-sized VLAs are undefined, and UBSan
+  // will catch that code, but there exists code which generates zero-sized
+  // VLAs. Be nice and initialize whatever they requested.
+  const auto *VlaType = getContext().getAsVariableArrayType(type);
+  if (!VlaType)
+    return;
+  auto VlaSize = getVLASize(VlaType);
+  auto SizeVal = VlaSize.NumElts;
+  CharUnits EltSize = getContext().getTypeSizeInChars(VlaSize.Type);
+  switch (trivialAutoVarInit) {
+  case LangOptions::TrivialAutoVarInitKind::Uninitialized:
+    llvm_unreachable("Uninitialized handled by caller");
+
+  case LangOptions::TrivialAutoVarInitKind::Zero:
+    if (!EltSize.isOne())
+      SizeVal = Builder.CreateNUWMul(SizeVal, CGM.getSize(EltSize));
+    Builder.CreateMemSet(Loc, llvm::ConstantInt::get(Int8Ty, 0), SizeVal,
+                         isVolatile);
+    break;
+
+  case LangOptions::TrivialAutoVarInitKind::Pattern: {
+    llvm::Type *ElTy = Loc.getElementType();
+    llvm::Constant *Constant = constWithPadding(
+        CGM, IsPattern::Yes, initializationPatternFor(CGM, ElTy));
+    CharUnits ConstantAlign = getContext().getTypeAlignInChars(VlaSize.Type);
+    llvm::BasicBlock *SetupBB = createBasicBlock("vla-setup.loop");
+    llvm::BasicBlock *LoopBB = createBasicBlock("vla-init.loop");
+    llvm::BasicBlock *ContBB = createBasicBlock("vla-init.cont");
+    llvm::Value *IsZeroSizedVLA = Builder.CreateICmpEQ(
+        SizeVal, llvm::ConstantInt::get(SizeVal->getType(), 0),
+        "vla.iszerosized");
+    Builder.CreateCondBr(IsZeroSizedVLA, ContBB, SetupBB);
+    EmitBlock(SetupBB);
+    if (!EltSize.isOne())
+      SizeVal = Builder.CreateNUWMul(SizeVal, CGM.getSize(EltSize));
+    llvm::Value *BaseSizeInChars =
+        llvm::ConstantInt::get(IntPtrTy, EltSize.getQuantity());
+    Address Begin = Builder.CreateElementBitCast(Loc, Int8Ty, "vla.begin");
+    llvm::Value *End =
+        Builder.CreateInBoundsGEP(Begin.getPointer(), SizeVal, "vla.end");
+    llvm::BasicBlock *OriginBB = Builder.GetInsertBlock();
+    EmitBlock(LoopBB);
+    llvm::PHINode *Cur = Builder.CreatePHI(Begin.getType(), 2, "vla.cur");
+    Cur->addIncoming(Begin.getPointer(), OriginBB);
+    CharUnits CurAlign = Loc.getAlignment().alignmentOfArrayElement(EltSize);
+    Builder.CreateMemCpy(Address(Cur, CurAlign),
+                         createUnnamedGlobalForMemcpyFrom(
+                             CGM, D, Builder, Constant, ConstantAlign),
+                         BaseSizeInChars, isVolatile);
+    llvm::Value *Next =
+        Builder.CreateInBoundsGEP(Int8Ty, Cur, BaseSizeInChars, "vla.next");
+    llvm::Value *Done = Builder.CreateICmpEQ(Next, End, "vla-init.isdone");
+    Builder.CreateCondBr(Done, ContBB, LoopBB);
+    Cur->addIncoming(Next, LoopBB);
+    EmitBlock(ContBB);
+  } break;
+  }
+}
+
 void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   assert(emission.Variable && "emission was not valid!");
 
@@ -1727,87 +1808,11 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
     if (emission.IsEscapingByRef && !locIsByrefHeader)
       Loc = emitBlockByrefAddress(Loc, &D, /*follow=*/false);
 
-    bool isVolatile = type.isVolatileQualified();
-    CharUnits Size = getContext().getTypeSizeInChars(type);
-    if (!Size.isZero()) {
-      switch (trivialAutoVarInit) {
-      case LangOptions::TrivialAutoVarInitKind::Uninitialized:
-        llvm_unreachable("Uninitialized handled above");
-      case LangOptions::TrivialAutoVarInitKind::Zero:
-        emitStoresForZeroInit(CGM, D, Loc, isVolatile, Builder);
-        break;
-      case LangOptions::TrivialAutoVarInitKind::Pattern:
-        emitStoresForPatternInit(CGM, D, Loc, isVolatile, Builder);
-        break;
-      }
-      return;
-    }
-
-    // VLAs look zero-sized to getTypeInfo. We can't emit constant stores to
-    // them, so emit a memcpy with the VLA size to initialize each element.
-    // Technically zero-sized or negative-sized VLAs are undefined, and UBSan
-    // will catch that code, but there exists code which generates zero-sized
-    // VLAs. Be nice and initialize whatever they requested.
-    const auto *VlaType = getContext().getAsVariableArrayType(type);
-    if (!VlaType)
-      return;
-    auto VlaSize = getVLASize(VlaType);
-    auto SizeVal = VlaSize.NumElts;
-    CharUnits EltSize = getContext().getTypeSizeInChars(VlaSize.Type);
-    switch (trivialAutoVarInit) {
-    case LangOptions::TrivialAutoVarInitKind::Uninitialized:
-      llvm_unreachable("Uninitialized handled above");
-
-    case LangOptions::TrivialAutoVarInitKind::Zero:
-      if (!EltSize.isOne())
-        SizeVal = Builder.CreateNUWMul(SizeVal, CGM.getSize(EltSize));
-      Builder.CreateMemSet(Loc, llvm::ConstantInt::get(Int8Ty, 0), SizeVal,
-                           isVolatile);
-      break;
-
-    case LangOptions::TrivialAutoVarInitKind::Pattern: {
-      llvm::Type *ElTy = Loc.getElementType();
-      llvm::Constant *Constant = constWithPadding(
-          CGM, IsPattern::Yes, initializationPatternFor(CGM, ElTy));
-      CharUnits ConstantAlign = getContext().getTypeAlignInChars(VlaSize.Type);
-      llvm::BasicBlock *SetupBB = createBasicBlock("vla-setup.loop");
-      llvm::BasicBlock *LoopBB = createBasicBlock("vla-init.loop");
-      llvm::BasicBlock *ContBB = createBasicBlock("vla-init.cont");
-      llvm::Value *IsZeroSizedVLA = Builder.CreateICmpEQ(
-          SizeVal, llvm::ConstantInt::get(SizeVal->getType(), 0),
-          "vla.iszerosized");
-      Builder.CreateCondBr(IsZeroSizedVLA, ContBB, SetupBB);
-      EmitBlock(SetupBB);
-      if (!EltSize.isOne())
-        SizeVal = Builder.CreateNUWMul(SizeVal, CGM.getSize(EltSize));
-      llvm::Value *BaseSizeInChars =
-          llvm::ConstantInt::get(IntPtrTy, EltSize.getQuantity());
-      Address Begin = Builder.CreateElementBitCast(Loc, Int8Ty, "vla.begin");
-      llvm::Value *End =
-          Builder.CreateInBoundsGEP(Begin.getPointer(), SizeVal, "vla.end");
-      llvm::BasicBlock *OriginBB = Builder.GetInsertBlock();
-      EmitBlock(LoopBB);
-      llvm::PHINode *Cur = Builder.CreatePHI(Begin.getType(), 2, "vla.cur");
-      Cur->addIncoming(Begin.getPointer(), OriginBB);
-      CharUnits CurAlign = Loc.getAlignment().alignmentOfArrayElement(EltSize);
-      Builder.CreateMemCpy(Address(Cur, CurAlign),
-                           createUnnamedGlobalForMemcpyFrom(
-                               CGM, D, Builder, Constant, ConstantAlign),
-                           BaseSizeInChars, isVolatile);
-      llvm::Value *Next =
-          Builder.CreateInBoundsGEP(Int8Ty, Cur, BaseSizeInChars, "vla.next");
-      llvm::Value *Done = Builder.CreateICmpEQ(Next, End, "vla-init.isdone");
-      Builder.CreateCondBr(Done, ContBB, LoopBB);
-      Cur->addIncoming(Next, LoopBB);
-      EmitBlock(ContBB);
-    } break;
-    }
+    return emitZeroOrPatternForAutoVarInit(type, D, Loc);
   };
 
-  if (isTrivialInitializer(Init)) {
-    initializeWhatIsTechnicallyUninitialized(Loc);
-    return;
-  }
+  if (isTrivialInitializer(Init))
+    return initializeWhatIsTechnicallyUninitialized(Loc);
 
   llvm::Constant *constant = nullptr;
   if (emission.IsConstantAggregate ||
