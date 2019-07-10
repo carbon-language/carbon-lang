@@ -1631,25 +1631,6 @@ public:
     Put(')'), Walk(", ", std::get<std::list<ProcAttrSpec>>(x.t), ", ");
     Put(" :: "), Walk(std::get<std::list<ProcDecl>>(x.t), ", ");
   }
-  void Unparse(const ProcInterface &x) {  // R1513
-    std::visit(
-        common::visitors{
-            [&](const DeclarationTypeSpec &d) {
-              std::visit(
-                  common::visitors{
-                      [&](const IntrinsicTypeSpec &t) {
-                        // Emit TYPE(REAL) to ensure no conflict with a symbol
-                        // REAL
-                        Word("TYPE("), Walk(t), Word(")");
-                      },
-                      [&](const auto &t) { Walk(t); },
-                  },
-                  d.u);
-            },
-            [&](const Name &n) { Walk(n); },
-        },
-        x.u);
-  }
   void Unparse(const ProcDecl &x) {  // R1515
     Walk(std::get<Name>(x.t));
     Walk(" => ", std::get<std::optional<ProcPointerInit>>(x.t));
