@@ -7562,8 +7562,10 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   int FirstLoadedElt = LoadMask.countTrailingZeros();
   SDValue EltBase = peekThroughBitcasts(Elts[FirstLoadedElt]);
+  EVT EltBaseVT = EltBase.getValueType();
+  assert(EltBaseVT.getSizeInBits() == EltBaseVT.getStoreSizeInBits() &&
+         "Register/Memory size mismatch");
   LoadSDNode *LDBase = Loads[FirstLoadedElt];
-  EVT LDBaseVT = EltBase.getValueType();
   assert(LDBase && "Did not find base load for merging consecutive loads");
 
   // Consecutive loads can contain UNDEFS but not ZERO elements.
@@ -7650,7 +7652,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     }
   }
 
-  unsigned BaseSize = LDBaseVT.getStoreSizeInBits();
+  unsigned BaseSize = EltBaseVT.getStoreSizeInBits();
   int LoadSize = (1 + LastLoadedElt - FirstLoadedElt) * BaseSize;
 
   // If the upper half of a ymm/zmm load is undef then just load the lower half.
@@ -7702,7 +7704,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
         continue;
 
       bool Match = true;
-      SmallVector<SDValue, 8> RepeatedLoads(SubElems, DAG.getUNDEF(LDBaseVT));
+      SmallVector<SDValue, 8> RepeatedLoads(SubElems, DAG.getUNDEF(EltBaseVT));
       for (unsigned i = 0; i != NumElems && Match; ++i) {
         if (!LoadMask[i])
           continue;
