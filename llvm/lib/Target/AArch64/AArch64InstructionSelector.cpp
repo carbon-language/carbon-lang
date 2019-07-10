@@ -2811,13 +2811,10 @@ void AArch64InstructionSelector::collectShuffleMaskIndices(
       "G_SHUFFLE_VECTOR should have a constant mask operand as G_BUILD_VECTOR");
   // Find the constant indices.
   for (unsigned i = 1, e = MaskDef->getNumOperands(); i < e; ++i) {
-    MachineInstr *ScalarDef = MRI.getVRegDef(MaskDef->getOperand(i).getReg());
-    assert(ScalarDef && "Could not find vreg def of shufflevec index op");
     // Look through copies.
-    while (ScalarDef->getOpcode() == TargetOpcode::COPY) {
-      ScalarDef = MRI.getVRegDef(ScalarDef->getOperand(1).getReg());
-      assert(ScalarDef && "Could not find def of copy operand");
-    }
+    MachineInstr *ScalarDef =
+        getDefIgnoringCopies(MaskDef->getOperand(i).getReg(), MRI);
+    assert(ScalarDef && "Could not find vreg def of shufflevec index op");
     if (ScalarDef->getOpcode() != TargetOpcode::G_CONSTANT) {
       // This be an undef if not a constant.
       assert(ScalarDef->getOpcode() == TargetOpcode::G_IMPLICIT_DEF);
@@ -3229,20 +3226,6 @@ MachineInstr *AArch64InstructionSelector::tryFoldIntegerCompare(
   //
   // cmn z, y
 
-  // Helper lambda to find the def.
-  auto FindDef = [&](Register VReg) {
-    MachineInstr *Def = MRI.getVRegDef(VReg);
-    while (Def) {
-      if (Def->getOpcode() != TargetOpcode::COPY)
-        break;
-      // Copies can be from physical registers. If we hit this, we're done.
-      if (TargetRegisterInfo::isPhysicalRegister(Def->getOperand(1).getReg()))
-        break;
-      Def = MRI.getVRegDef(Def->getOperand(1).getReg());
-    }
-    return Def;
-  };
-
   // Helper lambda to detect the subtract followed by the compare.
   // Takes in the def of the LHS or RHS, and checks if it's a subtract from 0.
   auto IsCMN = [&](MachineInstr *DefMI, const AArch64CC::CondCode &CC) {
@@ -3269,8 +3252,8 @@ MachineInstr *AArch64InstructionSelector::tryFoldIntegerCompare(
   };
 
   // Check if the RHS or LHS of the G_ICMP is defined by a SUB
-  MachineInstr *LHSDef = FindDef(LHS.getReg());
-  MachineInstr *RHSDef = FindDef(RHS.getReg());
+  MachineInstr *LHSDef = getDefIgnoringCopies(LHS.getReg(), MRI);
+  MachineInstr *RHSDef = getDefIgnoringCopies(RHS.getReg(), MRI);
   CmpInst::Predicate P = (CmpInst::Predicate)Predicate.getPredicate();
   const AArch64CC::CondCode CC = changeICMPPredToAArch64CC(P);
 
