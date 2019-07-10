@@ -688,17 +688,15 @@ void test_mm_store1_ps(float* x, __m128 y) {
 
 void test_mm_storeh_pi(__m64* x,  __m128 y) {
   // CHECK-LABEL: test_mm_storeh_pi
-  // CHECK: bitcast <4 x float> %{{.*}} to <2 x i64>
-  // CHECK: extractelement <2 x i64> %{{.*}}, i64 1
-  // CHECK: store i64 %{{.*}}, i64* {{.*}}
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <2 x i32> <i32 2, i32 3>
+  // CHECK: store <2 x float> %{{.*}}, <2 x float>* %{{.*}}, align 1{{$}}
   _mm_storeh_pi(x, y);
 }
 
 void test_mm_storel_pi(__m64* x,  __m128 y) {
   // CHECK-LABEL: test_mm_storel_pi
-  // CHECK: bitcast <4 x float> %{{.*}} to <2 x i64>
-  // CHECK: extractelement <2 x i64> %{{.*}}, i64 0
-  // CHECK: store i64 %{{.*}}, i64* {{.*}}
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <2 x i32> <i32 0, i32 1>
+  // CHECK: store <2 x float> %{{.*}}, <2 x float>* %{{.*}}, align 1{{$}}
   _mm_storel_pi(x, y);
 }
 
