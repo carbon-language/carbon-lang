@@ -3247,9 +3247,12 @@ TYPE_PARSER("PROCEDURE" >>
 
 // R1513 proc-interface -> interface-name | declaration-type-spec
 // R1516 interface-name -> name
-// N.B. Simple names of intrinsic types (e.g., "REAL") are ambiguous here.
-TYPE_PARSER(construct<ProcInterface>(name / lookAhead(")"_tok)) ||
-    construct<ProcInterface>(declarationTypeSpec))
+// N.B. Simple names of intrinsic types (e.g., "REAL") are not
+// ambiguous here - they take precedence over derived type names
+// thanks to C1516.
+TYPE_PARSER(
+    construct<ProcInterface>(declarationTypeSpec / lookAhead(")"_tok)) ||
+    construct<ProcInterface>(name))
 
 // R1514 proc-attr-spec ->
 //         access-spec | proc-language-binding-spec | INTENT ( intent-spec ) |

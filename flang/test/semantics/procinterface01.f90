@@ -57,9 +57,8 @@ module module1
   !DEF: /module1/derived1/p2 NOPASS, POINTER ProcEntity REAL(4)
   !REF: /module1/nested1
   procedure(explicit1), pointer, nopass :: p2 => nested1
-  !REF: /module1/logical
-  !DEF: /module1/derived1/p3 NOPASS, POINTER ProcEntity INTEGER(4)
-  !DEF: /module1/nested2 PUBLIC Subprogram INTEGER(4)
+  !DEF: /module1/derived1/p3 NOPASS, POINTER ProcEntity LOGICAL(4)
+  !DEF: /module1/nested2 PUBLIC Subprogram LOGICAL(4)
   procedure(logical), pointer, nopass :: p3 => nested2
   !DEF: /module1/derived1/p4 NOPASS, POINTER ProcEntity LOGICAL(4)
   !DEF: /module1/nested3 PUBLIC Subprogram LOGICAL(4)
@@ -95,12 +94,12 @@ contains
 
  !REF: /module1/nested2
  !DEF: /module1/nested2/x INTENT(IN) ObjectEntity REAL(4)
- integer function nested2(x)
+ logical function nested2(x)
   !REF: /module1/nested2/x
   real, intent(in) :: x
-  !DEF: /module1/nested2/nested2 ObjectEntity INTEGER(4)
+  !DEF: /module1/nested2/nested2 ObjectEntity LOGICAL(4)
   !REF: /module1/nested2/x
-  nested2 = x+2.
+  nested2 = x/=0
  end function nested2
 
  !REF: /module1/nested3
@@ -179,7 +178,7 @@ program main
  if (instance%p2(1.)/=2.) print *, "p2 failed"
  !REF: /main/instance
  !REF: /module1/derived1/p3
- if (instance%p3(1.)/=3) print *, "p3 failed"
+ if (.not.instance%p3(1.)) print *, "p3 failed"
  !REF: /main/instance
  !REF: /module1/derived1/p4
  if (.not.instance%p4(1.)) print *, "p4 failed"
