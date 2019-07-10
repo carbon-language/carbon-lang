@@ -417,7 +417,7 @@ uptr ExtractLongJmpSp(uptr *env) {
 
 #if SANITIZER_LINUX && defined(__aarch64__)
 #include "interception/interception.h"
-DECLARE_REAL(int, setjmp, void* env);
+DECLARE_REAL(int, _setjmp, void* env)
 // GLIBC mangles the function pointers in jmp_buf (used in {set,long}*jmp
 // functions) by XORing them with a random key.  For AArch64 it is a global
 // variable rather than a TCB one (as for x86_64/powerpc).  We obtain the key by
