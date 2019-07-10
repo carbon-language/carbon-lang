@@ -33,8 +33,8 @@ public:
         std::visit(
             common::visitors{
                 [](auto &) {},
-                // Labels on end-stmt of constructs are accepted by f18 for
-                // as an extension.
+                // Labels on end-stmt of constructs are accepted by f18 as an
+                // extension.
                 [&](common::Indirection<AssociateConstruct> &associate) {
                   CanonicalizeIfMatch(block, stack, i,
                       std::get<Statement<EndAssociateStmt>>(
