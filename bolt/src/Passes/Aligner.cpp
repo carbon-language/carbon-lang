@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Aligner.h"
+#include "ParallelUtilities.h"
 
 #define DEBUG_TYPE "bolt-aligner"
 
@@ -88,16 +89,16 @@ void alignMaxBytes(BinaryFunction &Function) {
 // the fuction by not more than the minimum over
 // -- the size of the function
 // -- the specified number of bytes
-void alignCompact(BinaryFunction &Function) {
+void alignCompact(BinaryFunction &Function, const MCCodeEmitter *Emitter) {
   const auto &BC = Function.getBinaryContext();
   size_t HotSize = 0;
   size_t ColdSize = 0;
 
   for (const auto *BB : Function.layout()) {
     if (BB->isCold())
-      ColdSize += BC.computeCodeSize(BB->begin(), BB->end());
+      ColdSize += BC.computeCodeSize(BB->begin(), BB->end(), Emitter);
     else
-      HotSize += BC.computeCodeSize(BB->begin(), BB->end());
+      HotSize += BC.computeCodeSize(BB->begin(), BB->end(), Emitter);
   }
 
   Function.setAlignment(opts::AlignFunctions);
@@ -114,7 +115,8 @@ void alignCompact(BinaryFunction &Function) {
 
 } // end anonymous namespace
 
-void AlignerPass::alignBlocks(BinaryFunction &Function) {
+void AlignerPass::alignBlocks(BinaryFunction &Function,
+                              const MCCodeEmitter *Emitter) {
   if (!Function.hasValidProfile() || !Function.isSimple())
     return;
 
@@ -140,7 +142,7 @@ void AlignerPass::alignBlocks(BinaryFunction &Function) {
     if (Count < FTCount * 2)
       continue;
 
-    const auto BlockSize = BC.computeCodeSize(BB->begin(), BB->end());
+    const auto BlockSize = BC.computeCodeSize(BB->begin(), BB->end(), Emitter);
     const auto BytesToUse =
         std::min<uint64_t>(opts::BlockAlignment - 1, BlockSize);
 
@@ -151,8 +153,11 @@ void AlignerPass::alignBlocks(BinaryFunction &Function) {
     BB->setAlignmentMaxBytes(BytesToUse);
 
     // Update stats.
-    AlignHistogram[BytesToUse]++;
-    AlignedBlocksCount += BB->getKnownExecutionCount();
+    DEBUG(
+      std::unique_lock<std::shared_timed_mutex> Lock(AlignHistogramMtx);
+      AlignHistogram[BytesToUse]++;
+      AlignedBlocksCount += BB->getKnownExecutionCount();
+    );
   }
 }
 
@@ -162,17 +167,22 @@ void AlignerPass::runOnFunctions(BinaryContext &BC) {
 
   AlignHistogram.resize(opts::BlockAlignment);
 
-  for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+  ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
+    // Create a separate MCCodeEmitter to allow lock free execution
+    auto Emitter = BC.createIndependentMCCodeEmitter();
 
     if (opts::UseCompactAligner)
-      alignCompact(Function);
+      alignCompact(BF, Emitter.MCE.get());
     else
-      alignMaxBytes(Function);
+      alignMaxBytes(BF);
 
     if (opts::AlignBlocks && !opts::PreserveBlocksAlignment)
-      alignBlocks(Function);
-  }
+      alignBlocks(BF, Emitter.MCE.get());
+  };
+
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_TRIVIAL, WorkFun,
+      ParallelUtilities::PredicateTy(nullptr), "AlignerPass");
 
   DEBUG(
     dbgs() << "BOLT-DEBUG: max bytes per basic block alignment distribution:\n";

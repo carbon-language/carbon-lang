@@ -19,15 +19,15 @@ namespace bolt {
 
 class AlignerPass : public BinaryFunctionPass {
 private:
-
   /// Stats for usage of max bytes for basic block alignment.
   std::vector<uint32_t> AlignHistogram;
+  std::shared_timed_mutex AlignHistogramMtx;
 
   /// Stats: execution count of blocks that were aligned.
-  uint64_t AlignedBlocksCount{0};
+  std::atomic<uint64_t> AlignedBlocksCount{0};
 
   /// Assign alignment to basic blocks based on profile.
-  void alignBlocks(BinaryFunction &Function);
+  void alignBlocks(BinaryFunction &Function, const MCCodeEmitter *Emitter);
 
 public:
   explicit AlignerPass() : BinaryFunctionPass(false) {}
