@@ -190,17 +190,6 @@ private:
                              unsigned char OpFlags) const;
 
   // Optimization methods.
-
-  // Helper function to check if a reg def is an MI with a given opcode and
-  // returns it if so.
-  MachineInstr *findMIFromReg(unsigned Reg, unsigned Opc,
-                              MachineIRBuilder &MIB) const {
-    auto *Def = MIB.getMRI()->getVRegDef(Reg);
-    if (!Def || Def->getOpcode() != Opc)
-      return nullptr;
-    return Def;
-  }
-
   bool tryOptVectorShuffle(MachineInstr &I) const;
   bool tryOptVectorDup(MachineInstr &MI) const;
   bool tryOptSelect(MachineInstr &MI) const;
@@ -3325,12 +3314,12 @@ bool AArch64InstructionSelector::tryOptVectorDup(MachineInstr &I) const {
 
   // Begin matching the insert.
   auto *InsMI =
-      findMIFromReg(I.getOperand(1).getReg(), G_INSERT_VECTOR_ELT, MIB);
+      getOpcodeDef(G_INSERT_VECTOR_ELT, I.getOperand(1).getReg(), MRI);
   if (!InsMI)
     return false;
   // Match the undef vector operand.
   auto *UndefMI =
-      findMIFromReg(InsMI->getOperand(1).getReg(), G_IMPLICIT_DEF, MIB);
+      getOpcodeDef(G_IMPLICIT_DEF, InsMI->getOperand(1).getReg(), MRI);
   if (!UndefMI)
     return false;
   // Match the scalar being splatted.
@@ -3342,7 +3331,7 @@ bool AArch64InstructionSelector::tryOptVectorDup(MachineInstr &I) const {
     return false;
 
   // The shuffle's second operand doesn't matter if the mask is all zero.
-  auto *ZeroVec = findMIFromReg(I.getOperand(3).getReg(), G_BUILD_VECTOR, MIB);
+  auto *ZeroVec = getOpcodeDef(G_BUILD_VECTOR, I.getOperand(3).getReg(), MRI);
   if (!ZeroVec)
     return false;
   int64_t Zero = 0;
