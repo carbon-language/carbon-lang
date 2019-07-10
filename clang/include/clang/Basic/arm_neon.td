@@ -707,7 +707,7 @@ def SUQADD : SInst<"vuqadd", "ddd", "csilQcQsQiQl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Unsigned Saturating Accumulated of Signed Value
-def USQADD : SInst<"vsqadd", "ddd", "UcUsUiUlQUcQUsQUiQUl">;
+def USQADD : SInst<"vsqadd", "ddx", "UcUsUiUlQUcQUsQUiQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Reciprocal/Sqrt
