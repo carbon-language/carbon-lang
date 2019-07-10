@@ -21,7 +21,7 @@ program main
  !DEF: /main/y EXTERNAL, POINTER ProcEntity REAL(4)
  pointer :: y
  !REF: /main/y
- procedure (type(real)) :: y
+ procedure (real) :: y
  !DEF: /main/z (implicit) ObjectEntity REAL(4)
  !REF: /main/y
  z = y()

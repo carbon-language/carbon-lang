@@ -40,7 +40,7 @@ contains
   !REF: /m/s/y
   !REF: /m/x
   y = x
-  !DEF: /m/s/s PUBLIC Subprogram
+  !DEF: /m/s/s HostAssoc
   call s
  contains
   !DEF: /m/s/s2 Subprogram

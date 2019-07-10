@@ -63,10 +63,10 @@ module module1
   procedure(logical), pointer, nopass :: p3 => nested2
   !DEF: /module1/derived1/p4 NOPASS, POINTER ProcEntity LOGICAL(4)
   !DEF: /module1/nested3 PUBLIC Subprogram LOGICAL(4)
-  procedure(type(logical(kind=4))), pointer, nopass :: p4 => nested3
+  procedure(logical(kind=4)), pointer, nopass :: p4 => nested3
   !DEF: /module1/derived1/p5 NOPASS, POINTER ProcEntity COMPLEX(4)
   !DEF: /module1/nested4 PUBLIC Subprogram COMPLEX(4)
-  procedure(type(complex)), pointer, nopass :: p5 => nested4
+  procedure(complex), pointer, nopass :: p5 => nested4
   !DEF: /module1/derived1/p6 NOPASS, POINTER ProcEntity
   !REF: /module1/nested1
   ! NOTE: sin is not dumped as a DEF here because specific
