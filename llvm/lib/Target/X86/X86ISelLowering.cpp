@@ -7595,11 +7595,19 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     return NewLd;
   };
 
-  // LOAD - all consecutive load/undefs (must start/end with a load).
-  // If we have found an entire vector of loads and undefs, then return a large
-  // load of the entire vector width starting at the base pointer.
-  // If the vector contains zeros, then attempt to shuffle those elements.
-  if (FirstLoadedElt == 0 && LastLoadedElt == (int)(NumElems - 1) &&
+  // Check if the base load is entirely dereferenceable.
+  bool IsDereferenceable =
+      LDBase &&
+      LDBase->getPointerInfo().isDereferenceable(
+          VT.getSizeInBits() / 8, *DAG.getContext(), DAG.getDataLayout());
+
+  // LOAD - all consecutive load/undefs (must start/end with a load or be
+  // entirely dereferenceable). If we have found an entire vector of loads and
+  // undefs, then return a large load of the entire vector width starting at the
+  // base pointer. If the vector contains zeros, then attempt to shuffle those
+  // elements.
+  if (FirstLoadedElt == 0 &&
+      (LastLoadedElt == (int)(NumElems - 1) || IsDereferenceable) &&
       (IsConsecutiveLoad || IsConsecutiveLoadWithZeros)) {
     assert(LDBase && "Did not find base load for merging consecutive loads");
     EVT EltVT = LDBase->getValueType(0);
@@ -7620,12 +7628,12 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
     if (NumElems == 1)
       return DAG.getBitcast(VT, Elts[FirstLoadedElt]);
 
-    if (IsConsecutiveLoad)
+    if (!ZeroMask)
       return CreateLoad(VT, LDBase);
 
     // IsConsecutiveLoadWithZeros - we need to create a shuffle of the loaded
     // vector and a zero vector to clear out the zero elements.
-    if (!isAfterLegalize && VT.isVector() && NumElems == VT.getVectorNumElements()) {
+    if (!isAfterLegalize && VT.isVector()) {
       SmallVector<int, 4> ClearMask(NumElems, -1);
       for (unsigned i = 0; i < NumElems; ++i) {
         if (ZeroMask[i])
