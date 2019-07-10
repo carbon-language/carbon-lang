@@ -588,30 +588,30 @@ void FixupBranches::runOnFunctions(BinaryContext &BC) {
 }
 
 void FinalizeFunctions::runOnFunctions(BinaryContext &BC) {
-  for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
-    const auto ShouldOptimize = shouldOptimize(Function);
-
-    // Always fix functions in relocation mode.
-    if (!BC.HasRelocations && !ShouldOptimize)
-      continue;
-
-    // Fix the CFI state.
-    if (ShouldOptimize && !Function.finalizeCFIState()) {
+  ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
+    if (shouldOptimize(BF) && !BF.finalizeCFIState()) {
       if (BC.HasRelocations) {
-        errs() << "BOLT-ERROR: unable to fix CFI state for function "
-               << Function << ". Exiting.\n";
+        errs() << "BOLT-ERROR: unable to fix CFI state for function " << BF
+               << ". Exiting.\n";
         exit(1);
       }
-      Function.setSimple(false);
-      continue;
+      BF.setSimple(false);
+      return;
     }
 
-    Function.setFinalized();
+    BF.setFinalized();
 
     // Update exception handling information.
-    Function.updateEHRanges();
-  }
+    BF.updateEHRanges();
+  };
+
+  ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
+    return !BC.HasRelocations && !shouldOptimize(BF);
+  };
+
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_CONSTANT, WorkFun,
+      SkipPredicate, "FinalizeFunctions");
 }
 
 void LowerAnnotations::runOnFunctions(BinaryContext &BC) {

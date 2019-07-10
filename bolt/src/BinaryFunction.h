@@ -1088,6 +1088,7 @@ public:
   MCSymbol *getFunctionEndLabel() const {
     assert(BC.Ctx && "cannot be called with empty context");
     if (!FunctionEndLabel) {
+      std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
       FunctionEndLabel = BC.Ctx->createTempSymbol("func_end", true);
     }
     return FunctionEndLabel;
@@ -1096,6 +1097,7 @@ public:
   /// Return MC symbol associated with the end of the cold part of the function.
   MCSymbol *getFunctionColdEndLabel() const {
     if (!FunctionColdEndLabel) {
+      std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
       FunctionColdEndLabel = BC.Ctx->createTempSymbol("func_cold_end", true);
     }
     return FunctionColdEndLabel;

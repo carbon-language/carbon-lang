@@ -364,7 +364,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
 void BinaryFunction::updateEHRanges() {
   if (getSize() == 0)
     return;
-
+    
   assert(CurrentState == State::CFG_Finalized && "unexpected state");
 
   // Build call sites table.
@@ -430,9 +430,14 @@ void BinaryFunction::updateEHRanges() {
         continue;
 
       // Same symbol is used for the beginning and the end of the range.
-      const MCSymbol *EHSymbol = BC.Ctx->createTempSymbol("EH", true);
+      const MCSymbol *EHSymbol;
       MCInst EHLabel;
-      BC.MIB->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
+      {
+        std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+        EHSymbol = BC.Ctx->createTempSymbol("EH", true);
+        BC.MIB->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
+      }
+
       II = std::next(BB->insertPseudoInstr(II, EHLabel));
 
       // At this point we could be in one of the following states:

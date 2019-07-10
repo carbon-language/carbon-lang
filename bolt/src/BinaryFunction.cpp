@@ -2560,7 +2560,7 @@ bool BinaryFunction::finalizeCFIState() {
   DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
   DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
                << ": ");
-
+               
   int32_t State = 0;
   bool SeenCold = false;
   auto Sep = "";
