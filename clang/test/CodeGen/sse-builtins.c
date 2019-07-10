@@ -267,12 +267,14 @@ __m128 test_mm_cvtsi32_ss(__m128 A, int B) {
   return _mm_cvtsi32_ss(A, B);
 }
 
+#ifdef __x86_64__
 __m128 test_mm_cvtsi64_ss(__m128 A, long long B) {
   // CHECK-LABEL: test_mm_cvtsi64_ss
   // CHECK: sitofp i64 %{{.*}} to float
   // CHECK: insertelement <4 x float> %{{.*}}, float %{{.*}}, i32 0
   return _mm_cvtsi64_ss(A, B);
 }
+#endif
 
 float test_mm_cvtss_f32(__m128 A) {
   // CHECK-LABEL: test_mm_cvtss_f32
@@ -286,11 +288,13 @@ int test_mm_cvtss_si32(__m128 A) {
   return _mm_cvtss_si32(A);
 }
 
+#ifdef __x86_64__
 long long test_mm_cvtss_si64(__m128 A) {
   // CHECK-LABEL: test_mm_cvtss_si64
   // CHECK: call i64 @llvm.x86.sse.cvtss2si64(<4 x float> %{{.*}})
   return _mm_cvtss_si64(A);
 }
+#endif
 
 int test_mm_cvtt_ss2si(__m128 A) {
   // CHECK-LABEL: test_mm_cvtt_ss2si
@@ -304,11 +308,13 @@ int test_mm_cvttss_si32(__m128 A) {
   return _mm_cvttss_si32(A);
 }
 
+#ifdef __x86_64__
 long long test_mm_cvttss_si64(__m128 A) {
   // CHECK-LABEL: test_mm_cvttss_si64
   // CHECK: call i64 @llvm.x86.sse.cvttss2si64(<4 x float> %{{.*}})
   return _mm_cvttss_si64(A);
 }
+#endif
 
 __m128 test_mm_div_ps(__m128 A, __m128 B) {
   // CHECK-LABEL: test_mm_div_ps
