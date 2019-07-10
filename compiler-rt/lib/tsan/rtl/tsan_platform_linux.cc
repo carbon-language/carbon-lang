@@ -425,7 +425,7 @@ DECLARE_REAL(int, _setjmp, void* env)
 static void InitializeLongjmpXorKey() {
   // 1. Call REAL(setjmp), which stores the mangled SP in env.
   jmp_buf env;
-  REAL(setjmp)(env);
+  REAL(_setjmp)(env);
 
   // 2. Retrieve mangled/vanilla SP.
   uptr mangled_sp = ((uptr *)&env)[LONG_JMP_SP_ENV_SLOT];
