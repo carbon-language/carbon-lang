@@ -283,7 +283,12 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
   }
 
   const auto MemType = analyzeMemoryAt(Address, BF);
-  if (MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
+  // FIXME: this is too permissive in creating jump tables. This is a random
+  // memory access we did not necessarily match against an indirect jump. Only
+  // do this for strict mode, for now. We should revisit this and come up with a
+  // better heuristic.
+  if (opts::StrictMode &&
+      MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
     JumpTable *JT;
     const MCSymbol *Symbol;
     std::tie(JT, Symbol) =
