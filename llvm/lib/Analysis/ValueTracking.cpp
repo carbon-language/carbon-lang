@@ -3166,7 +3166,7 @@ bool llvm::isKnownNeverNaN(const Value *V, const TargetLibraryInfo *TLI,
   return true;
 }
 
-Value *llvm::isBytewiseValue(Value *V) {
+Value *llvm::isBytewiseValue(Value *V, const DataLayout &DL) {
 
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType()->isIntegerTy(8))
@@ -3205,7 +3205,8 @@ Value *llvm::isBytewiseValue(Value *V) {
     else if (CFP->getType()->isDoubleTy())
       Ty = Type::getInt64Ty(Ctx);
     // Don't handle long double formats, which have strange constraints.
-    return Ty ? isBytewiseValue(ConstantExpr::getBitCast(CFP, Ty)) : nullptr;
+    return Ty ? isBytewiseValue(ConstantExpr::getBitCast(CFP, Ty), DL)
+              : nullptr;
   }
 
   // We can handle constant integers that are multiple of 8 bits.
@@ -3233,20 +3234,20 @@ Value *llvm::isBytewiseValue(Value *V) {
   if (ConstantDataSequential *CA = dyn_cast<ConstantDataSequential>(C)) {
     Value *Val = UndefInt8;
     for (unsigned I = 0, E = CA->getNumElements(); I != E; ++I)
-      if (!(Val = Merge(Val, isBytewiseValue(CA->getElementAsConstant(I)))))
+      if (!(Val = Merge(Val, isBytewiseValue(CA->getElementAsConstant(I), DL))))
         return nullptr;
     return Val;
   }
 
   if (isa<ConstantVector>(C)) {
     Constant *Splat = cast<ConstantVector>(C)->getSplatValue();
-    return Splat ? isBytewiseValue(Splat) : nullptr;
+    return Splat ? isBytewiseValue(Splat, DL) : nullptr;
   }
 
   if (isa<ConstantArray>(C) || isa<ConstantStruct>(C)) {
     Value *Val = UndefInt8;
     for (unsigned I = 0, E = C->getNumOperands(); I != E; ++I)
-      if (!(Val = Merge(Val, isBytewiseValue(C->getOperand(I)))))
+      if (!(Val = Merge(Val, isBytewiseValue(C->getOperand(I), DL))))
         return nullptr;
     return Val;
   }

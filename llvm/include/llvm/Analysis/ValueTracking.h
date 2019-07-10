@@ -224,7 +224,7 @@ class Value;
   /// 0.0 etc. If the value can't be handled with a repeated byte store (e.g.
   /// i16 0x1234), return null. If the value is entirely undef and padding,
   /// return undef.
-  Value *isBytewiseValue(Value *V);
+  Value *isBytewiseValue(Value *V, const DataLayout &DL);
 
   /// Given an aggregrate and an sequence of indices, see if the scalar value
   /// indexed is already around as a register, for example if it were inserted
