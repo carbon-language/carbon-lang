@@ -228,7 +228,8 @@ define i32 @t6_commutativity1(i32 %nbits0, i32 %nbits1) {
 ; CHECK-NEXT:    call void @use32(i32 [[T3]])
 ; CHECK-NEXT:    call void @use32(i32 [[T4]])
 ; CHECK-NEXT:    call void @use32(i32 [[T5]])
-; CHECK-NEXT:    ret i32 [[T4]]
+; CHECK-NEXT:    [[T6:%.*]] = shl i32 [[T4]], [[T5]]
+; CHECK-NEXT:    ret i32 [[T6]]
 ;
   %t0 = shl i32 -1, %nbits0
   %t1 = xor i32 %t0, -1
@@ -243,7 +244,7 @@ define i32 @t6_commutativity1(i32 %nbits0, i32 %nbits1) {
   call void @use32(i32 %t4)
   call void @use32(i32 %t5)
   %t6 = shl i32 %t4, %t5
-  ret i32 %t4
+  ret i32 %t6
 }
 define i32 @t6_commutativity2(i32 %nbits0, i32 %nbits1) {
 ; CHECK-LABEL: @t6_commutativity2(
@@ -259,7 +260,8 @@ define i32 @t6_commutativity2(i32 %nbits0, i32 %nbits1) {
 ; CHECK-NEXT:    call void @use32(i32 [[T3]])
 ; CHECK-NEXT:    call void @use32(i32 [[T4]])
 ; CHECK-NEXT:    call void @use32(i32 [[T5]])
-; CHECK-NEXT:    ret i32 [[T4]]
+; CHECK-NEXT:    [[T6:%.*]] = shl i32 [[T4]], [[T5]]
+; CHECK-NEXT:    ret i32 [[T6]]
 ;
   %t0 = shl i32 -1, %nbits0
   %t1 = xor i32 %t0, -1
@@ -274,7 +276,7 @@ define i32 @t6_commutativity2(i32 %nbits0, i32 %nbits1) {
   call void @use32(i32 %t4)
   call void @use32(i32 %t5)
   %t6 = shl i32 %t4, %t5
-  ret i32 %t4
+  ret i32 %t6
 }
 
 ; Fast-math flags. We must not preserve them!
