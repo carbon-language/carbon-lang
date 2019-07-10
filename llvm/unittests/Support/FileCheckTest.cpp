@@ -334,6 +334,21 @@ TEST_F(FileCheckTest, Match) {
   EXPECT_TRUE(Tester.matchExpect("19 21"));
   EXPECT_TRUE(Tester.matchExpect("18 21"));
   EXPECT_FALSE(Tester.matchExpect("18 20"));
+
+  // Check matching a numeric expression using @LINE after match failure uses
+  // the correct value for @LINE.
+  Tester.initNextPattern();
+  EXPECT_FALSE(Tester.parsePatternExpect("[[#@LINE]]"));
+  // Ok, @LINE is 4 now.
+  EXPECT_FALSE(Tester.matchExpect("4"));
+  Tester.initNextPattern();
+  // @LINE is now 5, match with substitution failure.
+  EXPECT_FALSE(Tester.parsePatternExpect("[[#UNKNOWN]]"));
+  EXPECT_TRUE(Tester.matchExpect("FOO"));
+  Tester.initNextPattern();
+  // Check that @LINE is 6 as expected.
+  EXPECT_FALSE(Tester.parsePatternExpect("[[#@LINE]]"));
+  EXPECT_FALSE(Tester.matchExpect("6"));
 }
 
 TEST_F(FileCheckTest, Substitution) {

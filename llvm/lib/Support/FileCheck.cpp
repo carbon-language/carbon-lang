@@ -580,8 +580,10 @@ Expected<size_t> FileCheckPattern::match(StringRef Buffer, size_t &MatchLen,
     for (const auto &Substitution : Substitutions) {
       // Substitute and check for failure (e.g. use of undefined variable).
       Expected<std::string> Value = Substitution->getResult();
-      if (!Value)
+      if (!Value) {
+        Context->LineVariable->clearValue();
         return Value.takeError();
+      }
 
       // Plop it into the regex at the adjusted offset.
       TmpStr.insert(TmpStr.begin() + Substitution->getIndex() + InsertOffset,
