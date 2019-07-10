@@ -221,3 +221,89 @@ cond.end:
   %cond = phi i64 [ %a, %cond.true ], [ %b, %cond.false ]
   ret i64 %cond
 }
+
+define float @phi_float(i1 %cnd, float %a, float %b) {
+; MIPS32-LABEL: phi_float:
+; MIPS32:       # %bb.0: # %entry
+; MIPS32-NEXT:    addiu $sp, $sp, -16
+; MIPS32-NEXT:    .cfi_def_cfa_offset 16
+; MIPS32-NEXT:    mtc1 $5, $f0
+; MIPS32-NEXT:    mtc1 $6, $f1
+; MIPS32-NEXT:    ori $1, $zero, 1
+; MIPS32-NEXT:    and $1, $4, $1
+; MIPS32-NEXT:    swc1 $f0, 12($sp) # 4-byte Folded Spill
+; MIPS32-NEXT:    swc1 $f1, 8($sp) # 4-byte Folded Spill
+; MIPS32-NEXT:    bnez $1, $BB5_2
+; MIPS32-NEXT:    nop
+; MIPS32-NEXT:  # %bb.1: # %entry
+; MIPS32-NEXT:    j $BB5_3
+; MIPS32-NEXT:    nop
+; MIPS32-NEXT:  $BB5_2: # %cond.true
+; MIPS32-NEXT:    lwc1 $f0, 12($sp) # 4-byte Folded Reload
+; MIPS32-NEXT:    swc1 $f0, 4($sp) # 4-byte Folded Spill
+; MIPS32-NEXT:    j $BB5_4
+; MIPS32-NEXT:    nop
+; MIPS32-NEXT:  $BB5_3: # %cond.false
+; MIPS32-NEXT:    lwc1 $f0, 8($sp) # 4-byte Folded Reload
+; MIPS32-NEXT:    swc1 $f0, 4($sp) # 4-byte Folded Spill
+; MIPS32-NEXT:  $BB5_4: # %cond.end
+; MIPS32-NEXT:    lwc1 $f0, 4($sp) # 4-byte Folded Reload
+; MIPS32-NEXT:    addiu $sp, $sp, 16
+; MIPS32-NEXT:    jr $ra
+; MIPS32-NEXT:    nop
+entry:
+  br i1 %cnd, label %cond.true, label %cond.false
+
+cond.true:
+  br label %cond.end
+
+cond.false:
+  br label %cond.end
+
+cond.end:
+  %cond = phi float [ %a, %cond.true ], [ %b, %cond.false ]
+  ret float %cond
+}
+
+define double @phi_double(double %a, double %b, i1 %cnd) {
+; MIPS32-LABEL: phi_double:
+; MIPS32:       # %bb.0: # %entry
+; MIPS32-NEXT:    addiu $sp, $sp, -24
+; MIPS32-NEXT:    .cfi_def_cfa_offset 24
+; MIPS32-NEXT:    addiu $1, $sp, 40
+; MIPS32-NEXT:    lw $1, 0($1)
+; MIPS32-NEXT:    ori $2, $zero, 1
+; MIPS32-NEXT:    and $1, $1, $2
+; MIPS32-NEXT:    sdc1 $f12, 16($sp) # 8-byte Folded Spill
+; MIPS32-NEXT:    sdc1 $f14, 8($sp) # 8-byte Folded Spill
+; MIPS32-NEXT:    bnez $1, $BB6_2
+; MIPS32-NEXT:    nop
+; MIPS32-NEXT:  # %bb.1: # %entry
+; MIPS32-NEXT:    j $BB6_3
+; MIPS32-NEXT:    nop
+; MIPS32-NEXT:  $BB6_2: # %cond.true
+; MIPS32-NEXT:    ldc1 $f0, 16($sp) # 8-byte Folded Reload
+; MIPS32-NEXT:    sdc1 $f0, 0($sp) # 8-byte Folded Spill
+; MIPS32-NEXT:    j $BB6_4
+; MIPS32-NEXT:    nop
+; MIPS32-NEXT:  $BB6_3: # %cond.false
+; MIPS32-NEXT:    ldc1 $f0, 8($sp) # 8-byte Folded Reload
+; MIPS32-NEXT:    sdc1 $f0, 0($sp) # 8-byte Folded Spill
+; MIPS32-NEXT:  $BB6_4: # %cond.end
+; MIPS32-NEXT:    ldc1 $f0, 0($sp) # 8-byte Folded Reload
+; MIPS32-NEXT:    addiu $sp, $sp, 24
+; MIPS32-NEXT:    jr $ra
+; MIPS32-NEXT:    nop
+entry:
+  br i1 %cnd, label %cond.true, label %cond.false
+
+cond.true:
+  br label %cond.end
+
+cond.false:
+  br label %cond.end
+
+cond.end:
+  %cond = phi double [ %a, %cond.true ], [ %b, %cond.false ]
+  ret double %cond
+}

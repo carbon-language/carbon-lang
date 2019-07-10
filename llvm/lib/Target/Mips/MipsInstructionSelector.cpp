@@ -41,6 +41,9 @@ private:
   bool materialize32BitImm(Register DestReg, APInt Imm,
                            MachineIRBuilder &B) const;
   bool selectCopy(MachineInstr &I, MachineRegisterInfo &MRI) const;
+  const TargetRegisterClass *
+  getRegClassForTypeOnBank(unsigned OpSize, const RegisterBank &RB,
+                           const RegisterBankInfo &RBI) const;
 
   const MipsTargetMachine &TM;
   const MipsSubtarget &STI;
@@ -102,6 +105,22 @@ bool MipsInstructionSelector::selectCopy(MachineInstr &I,
     return false;
   }
   return true;
+}
+
+const TargetRegisterClass *MipsInstructionSelector::getRegClassForTypeOnBank(
+    unsigned OpSize, const RegisterBank &RB,
+    const RegisterBankInfo &RBI) const {
+  if (RB.getID() == Mips::GPRBRegBankID)
+    return &Mips::GPR32RegClass;
+
+  if (RB.getID() == Mips::FPRBRegBankID)
+    return OpSize == 32
+               ? &Mips::FGR32RegClass
+               : STI.hasMips32r6() || STI.isFP64bit() ? &Mips::FGR64RegClass
+                                                      : &Mips::AFGR64RegClass;
+
+  llvm_unreachable("getRegClassForTypeOnBank can't find register class.");
+  return nullptr;
 }
 
 bool MipsInstructionSelector::materialize32BitImm(Register DestReg, APInt Imm,
@@ -262,13 +281,15 @@ bool MipsInstructionSelector::select(MachineInstr &I,
   }
   case G_PHI: {
     const Register DestReg = I.getOperand(0).getReg();
-    const unsigned DestRegBank = RBI.getRegBank(DestReg, MRI, TRI)->getID();
     const unsigned OpSize = MRI.getType(DestReg).getSizeInBits();
 
-    if (DestRegBank != Mips::GPRBRegBankID || OpSize != 32)
-      return false;
+    const TargetRegisterClass *DefRC = nullptr;
+    if (TargetRegisterInfo::isPhysicalRegister(DestReg))
+      DefRC = TRI.getRegClass(DestReg);
+    else
+      DefRC = getRegClassForTypeOnBank(OpSize,
+                                       *RBI.getRegBank(DestReg, MRI, TRI), RBI);
 
-    const TargetRegisterClass *DefRC = &Mips::GPR32RegClass;
     I.setDesc(TII.get(TargetOpcode::PHI));
     return RBI.constrainGenericRegister(DestReg, *DefRC, MRI);
   }
