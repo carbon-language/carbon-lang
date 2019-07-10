@@ -7614,12 +7614,6 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   if (FirstLoadedElt == 0 &&
       (LastLoadedElt == (int)(NumElems - 1) || IsDereferenceable) &&
       (IsConsecutiveLoad || IsConsecutiveLoadWithZeros)) {
-    EVT EltVT = LDBase->getValueType(0);
-    // Ensure that the input vector size for the merged loads matches the
-    // cumulative size of the input elements.
-    if (VT.getSizeInBits() != EltVT.getSizeInBits() * NumElems)
-      return SDValue();
-
     if (isAfterLegalize && !TLI.isOperationLegal(ISD::LOAD, VT))
       return SDValue();
 
