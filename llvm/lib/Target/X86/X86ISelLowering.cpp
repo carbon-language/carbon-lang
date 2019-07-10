@@ -7559,6 +7559,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   SDValue EltBase = peekThroughBitcasts(Elts[FirstLoadedElt]);
   LoadSDNode *LDBase = Loads[FirstLoadedElt];
   EVT LDBaseVT = EltBase.getValueType();
+  assert(LDBase && "Did not find base load for merging consecutive loads");
 
   // Consecutive loads can contain UNDEFS but not ZERO elements.
   // Consecutive loads with UNDEFs and ZEROs elements require a
@@ -7568,7 +7569,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   for (int i = FirstLoadedElt + 1; i <= LastLoadedElt; ++i) {
     if (LoadMask[i]) {
       SDValue Elt = peekThroughBitcasts(Elts[i]);
-      LoadSDNode* LD = Loads[i];
+      LoadSDNode *LD = Loads[i];
       if (!DAG.areNonVolatileConsecutiveLoads(
               LD, LDBase, Elt.getValueType().getStoreSizeInBits() / 8,
               i - FirstLoadedElt)) {
@@ -7595,10 +7596,8 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   };
 
   // Check if the base load is entirely dereferenceable.
-  bool IsDereferenceable =
-      LDBase &&
-      LDBase->getPointerInfo().isDereferenceable(
-          VT.getSizeInBits() / 8, *DAG.getContext(), DAG.getDataLayout());
+  bool IsDereferenceable = LDBase->getPointerInfo().isDereferenceable(
+      VT.getSizeInBits() / 8, *DAG.getContext(), DAG.getDataLayout());
 
   // LOAD - all consecutive load/undefs (must start/end with a load or be
   // entirely dereferenceable). If we have found an entire vector of loads and
@@ -7608,7 +7607,6 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   if (FirstLoadedElt == 0 &&
       (LastLoadedElt == (int)(NumElems - 1) || IsDereferenceable) &&
       (IsConsecutiveLoad || IsConsecutiveLoadWithZeros)) {
-    assert(LDBase && "Did not find base load for merging consecutive loads");
     EVT EltVT = LDBase->getValueType(0);
     // Ensure that the input vector size for the merged loads matches the
     // cumulative size of the input elements.
