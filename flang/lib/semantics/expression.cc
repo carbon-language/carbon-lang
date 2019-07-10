@@ -1573,7 +1573,6 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     if (MaybeExpr funcRef{MakeFunctionRef(std::move(*callee))}) {
       return funcRef;
     }
-    Say("Subroutine called as if it were a function"_err_en_US);
   }
   return std::nullopt;
 }

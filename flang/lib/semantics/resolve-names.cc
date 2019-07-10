@@ -1584,9 +1584,12 @@ void ScopeHandler::PushScope(Scope &scope) {
       // Create a dummy symbol so we can't create another one with the same
       // name. It might already be there if we previously pushed the scope.
       if (!FindInScope(scope, symbol->name())) {
-        auto &newSymbol{CopySymbol(symbol->name(), *symbol)};
+        auto &newSymbol{MakeSymbol(symbol->name())};
         if (kind == Scope::Kind::Subprogram) {
-          newSymbol.set_details(symbol->get<SubprogramDetails>());
+          // Allow for recursive references.  If this symbol is a function
+          // without an explicit RESULT(), this new symbol will be discarded
+          // and replaced with an object of the same name.
+          newSymbol.set_details(HostAssocDetails{*symbol});
         } else {
           newSymbol.set_details(MiscDetails{MiscDetails::Kind::ScopeName});
         }
