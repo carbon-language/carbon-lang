@@ -1441,6 +1441,11 @@ void LinkerDriver::link(ArrayRef<const char *> argsArr) {
     fatal("/manifestinput: requires /manifest:embed");
   }
 
+  config->thinLTOEmitImportsFiles = args.hasArg(OPT_thinlto_emit_imports_files);
+  config->thinLTOIndexOnly = args.hasArg(OPT_thinlto_index_only) ||
+                             args.hasArg(OPT_thinlto_index_only_arg);
+  config->thinLTOIndexOnlyArg =
+      args.getLastArgValue(OPT_thinlto_index_only_arg);
   // Handle miscellaneous boolean flags.
   config->allowBind = args.hasFlag(OPT_allowbind, OPT_allowbind_no, true);
   config->allowIsolation =
@@ -1727,8 +1732,18 @@ void LinkerDriver::link(ArrayRef<const char *> argsArr) {
     return;
 
   // Do LTO by compiling bitcode input files to a set of native COFF files then
-  // link those files.
+  // link those files (unless -thinlto-index-only was given, in which case we
+  // resolve symbols and write indices, but don't generate native code or link).
   symtab->addCombinedLTOObjects();
+
+  // If -thinlto-index-only is given, we should create only "index
+  // files" and not object files. Index file creation is already done
+  // in addCombinedLTOObject, so we are done if that's the case.
+  if (config->thinLTOIndexOnly)
+    return;
+
+  // If we generated native object files from bitcode files, this resolves
+  // references to the symbols we use from them.
   run();
 
   if (args.hasArg(OPT_include_optional)) {
