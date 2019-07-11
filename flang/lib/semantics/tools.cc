@@ -459,6 +459,26 @@ static const DeclTypeSpec *FindInstantiatedDerivedType(const Scope &scope,
 
 static Symbol &InstantiateSymbol(const Symbol &, Scope &, SemanticsContext &);
 
+std::list<SourceName> OrderParameterNames(const Symbol &typeSymbol) {
+  std::list<SourceName> result;
+  if (const DerivedTypeSpec * spec{typeSymbol.GetParentTypeSpec()}) {
+    result = OrderParameterNames(spec->typeSymbol());
+  }
+  const auto &paramNames{typeSymbol.get<DerivedTypeDetails>().paramNames()};
+  result.insert(result.end(), paramNames.begin(), paramNames.end());
+  return result;
+}
+
+SymbolVector OrderParameterDeclarations(const Symbol &typeSymbol) {
+  SymbolVector result;
+  if (const DerivedTypeSpec * spec{typeSymbol.GetParentTypeSpec()}) {
+    result = OrderParameterDeclarations(spec->typeSymbol());
+  }
+  const auto &paramDecls{typeSymbol.get<DerivedTypeDetails>().paramDecls()};
+  result.insert(result.end(), paramDecls.begin(), paramDecls.end());
+  return result;
+}
+
 void InstantiateDerivedType(DerivedTypeSpec &spec, Scope &containingScope,
     SemanticsContext &semanticsContext) {
   Scope &newScope{containingScope.MakeScope(Scope::Kind::DerivedType)};
@@ -467,9 +487,7 @@ void InstantiateDerivedType(DerivedTypeSpec &spec, Scope &containingScope,
   const Symbol &typeSymbol{spec.typeSymbol()};
   const Scope *typeScope{typeSymbol.scope()};
   CHECK(typeScope != nullptr);
-  const auto &typeDetails{typeSymbol.get<DerivedTypeDetails>()};
-  for (const Symbol *symbol :
-      typeDetails.OrderParameterDeclarations(typeSymbol)) {
+  for (const Symbol *symbol : OrderParameterDeclarations(typeSymbol)) {
     const SourceName &name{symbol->name()};
     if (typeScope->find(symbol->name()) != typeScope->end()) {
       // This type parameter belongs to the derived type itself, not to
@@ -526,9 +544,7 @@ void InstantiateDerivedType(DerivedTypeSpec &spec, Scope &containingScope,
 
 void ProcessParameterExpressions(
     DerivedTypeSpec &spec, evaluate::FoldingContext &foldingContext) {
-  const Symbol &typeSymbol{spec.typeSymbol()};
-  const DerivedTypeDetails &typeDetails{typeSymbol.get<DerivedTypeDetails>()};
-  auto paramDecls{typeDetails.OrderParameterDeclarations(typeSymbol)};
+  auto paramDecls{OrderParameterDeclarations(spec.typeSymbol())};
   // Fold the explicit type parameter value expressions first.  Do not
   // fold them within the scope of the derived type being instantiated;
   // these expressions cannot use its type parameters.  Convert the values

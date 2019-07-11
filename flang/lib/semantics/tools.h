@@ -103,6 +103,14 @@ bool IsFinalizable(const Symbol &symbol);
 bool IsCoarray(const Symbol &symbol);
 bool IsAssumedSizeArray(const Symbol &symbol);
 
+// Returns the complete list of derived type parameter symbols in
+// the order in which their declarations appear in the derived type
+// definitions (parents first).
+SymbolVector OrderParameterDeclarations(const Symbol &);
+// Returns the complete list of derived type parameter names in the
+// order defined by 7.5.3.2.
+std::list<SourceName> OrderParameterNames(const Symbol &);
+
 // Create a new instantiation of this parameterized derived type
 // for this particular distinct set of actual parameter values.
 void InstantiateDerivedType(DerivedTypeSpec &, Scope &, SemanticsContext &);

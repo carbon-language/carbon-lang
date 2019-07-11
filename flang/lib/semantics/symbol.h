@@ -233,15 +233,6 @@ public:
   void add_component(const Symbol &);
   void set_sequence(bool x = true) { sequence_ = x; }
 
-  // Returns the complete list of derived type parameter names in the
-  // order defined by 7.5.3.2.
-  std::list<SourceName> OrderParameterNames(const Symbol &) const;
-
-  // Returns the complete list of derived type parameter symbols in
-  // the order in which their declarations appear in the derived type
-  // definitions (parents first).
-  SymbolVector OrderParameterDeclarations(const Symbol &) const;
-
   // Returns the complete list of derived type components in the order
   // in which their declarations appear in the derived type definitions
   // (parents first).  Parent components appear in the list immediately

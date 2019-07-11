@@ -353,10 +353,8 @@ static std::optional<std::int64_t> GetTypeParameterInt64Value(
 // type2 (except for kind type parameters)
 static bool HaveCompatibleKindParameters(
     const DerivedTypeSpec &derivedType1, const DerivedTypeSpec &derivedType2) {
-  const DerivedTypeDetails &typeDetails{
-      derivedType1.typeSymbol().get<DerivedTypeDetails>()};
   for (const Symbol *symbol :
-      typeDetails.OrderParameterDeclarations(derivedType1.typeSymbol())) {
+      OrderParameterDeclarations(derivedType1.typeSymbol())) {
     if (symbol->get<TypeParamDetails>().attr() == common::TypeParamAttr::Kind) {
       // At this point, it should have been ensured that these contain integer
       // constants, so die if this is not the case.

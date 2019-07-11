@@ -552,32 +552,6 @@ void DerivedTypeDetails::add_component(const Symbol &symbol) {
   componentNames_.push_back(symbol.name());
 }
 
-std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
-    const Symbol &type) const {
-  std::list<SourceName> result;
-  if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
-    const DerivedTypeDetails &details{
-        spec->typeSymbol().get<DerivedTypeDetails>()};
-    result = details.OrderParameterNames(spec->typeSymbol());
-  }
-  for (const auto &name : paramNames_) {
-    result.push_back(name);
-  }
-  return result;
-}
-
-SymbolVector DerivedTypeDetails::OrderParameterDeclarations(
-    const Symbol &type) const {
-  SymbolVector result;
-  if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
-    const DerivedTypeDetails &details{
-        spec->typeSymbol().get<DerivedTypeDetails>()};
-    result = details.OrderParameterDeclarations(spec->typeSymbol());
-  }
-  result.insert(result.end(), paramDecls_.begin(), paramDecls_.end());
-  return result;
-}
-
 SymbolVector DerivedTypeDetails::OrderComponents(const Scope &scope) const {
   SymbolVector result;
   for (SourceName name : componentNames_) {

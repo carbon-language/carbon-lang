@@ -2891,9 +2891,8 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   // order as "type parameter order" (7.5.3.2).
   // Parameters of the most deeply nested "base class" come first when the
   // derived type is an extension.
-  const DerivedTypeDetails &typeDetails{typeSymbol->get<DerivedTypeDetails>()};
-  auto parameterNames{typeDetails.OrderParameterNames(*typeSymbol)};
-  auto parameterDecls{typeDetails.OrderParameterDeclarations(*typeSymbol)};
+  auto parameterNames{OrderParameterNames(*typeSymbol)};
+  auto parameterDecls{OrderParameterDeclarations(*typeSymbol)};
   auto nextNameIter{parameterNames.begin()};
   bool seenAnyName{false};
   for (const auto &typeParamSpec :
