@@ -73,6 +73,20 @@ private:
     void addDefUses(Register Reg, const MachineRegisterInfo &MRI);
     void addUseDef(Register Reg, const MachineRegisterInfo &MRI);
 
+    /// Skip copy instructions until we get to a non-copy instruction or to a
+    /// copy with phys register as def. Used during search for DefUses.
+    /// MI :  %5 = COPY %4
+    ///       %6 = COPY %5
+    ///       $v0 = COPY %6 <- we want this one.
+    MachineInstr *skipCopiesOutgoing(MachineInstr *MI) const;
+
+    /// Skip copy instructions until we get to a non-copy instruction or to a
+    /// copy with phys register as use. Used during search for UseDefs.
+    ///       %1 = COPY $a1 <- we want this one.
+    ///       %2 = COPY %1
+    /// MI =  %3 = COPY %2
+    MachineInstr *skipCopiesIncoming(MachineInstr *MI) const;
+
   public:
     AmbiguousRegDefUseContainer(const MachineInstr *MI);
     SmallVectorImpl<MachineInstr *> &getDefUses() { return DefUses; }

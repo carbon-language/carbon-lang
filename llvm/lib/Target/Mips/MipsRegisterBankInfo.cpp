@@ -160,12 +160,14 @@ void MipsRegisterBankInfo::AmbiguousRegDefUseContainer::addDefUses(
   assert(!MRI.getType(Reg).isPointer() &&
          "Pointers are gprb, they should not be considered as ambiguous.\n");
   for (MachineInstr &UseMI : MRI.use_instructions(Reg)) {
-    if (UseMI.getOpcode() == TargetOpcode::COPY &&
-        !TargetRegisterInfo::isPhysicalRegister(UseMI.getOperand(0).getReg()))
-      // Copies of non-physical registers are not supported
-      return;
-
-    DefUses.push_back(&UseMI);
+    MachineInstr *NonCopyInstr = skipCopiesOutgoing(&UseMI);
+    // Copy with many uses.
+    if (NonCopyInstr->getOpcode() == TargetOpcode::COPY &&
+        !TargetRegisterInfo::isPhysicalRegister(
+            NonCopyInstr->getOperand(0).getReg()))
+      addDefUses(NonCopyInstr->getOperand(0).getReg(), MRI);
+    else
+      DefUses.push_back(skipCopiesOutgoing(&UseMI));
   }
 }
 
@@ -174,12 +176,33 @@ void MipsRegisterBankInfo::AmbiguousRegDefUseContainer::addUseDef(
   assert(!MRI.getType(Reg).isPointer() &&
          "Pointers are gprb, they should not be considered as ambiguous.\n");
   MachineInstr *DefMI = MRI.getVRegDef(Reg);
-  if (DefMI->getOpcode() == TargetOpcode::COPY &&
-      !TargetRegisterInfo::isPhysicalRegister(DefMI->getOperand(1).getReg()))
-    // Copies from non-physical registers are not supported.
-    return;
+  UseDefs.push_back(skipCopiesIncoming(DefMI));
+}
 
-  UseDefs.push_back(DefMI);
+MachineInstr *
+MipsRegisterBankInfo::AmbiguousRegDefUseContainer::skipCopiesOutgoing(
+    MachineInstr *MI) const {
+  const MachineFunction &MF = *MI->getParent()->getParent();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  MachineInstr *Ret = MI;
+  while (Ret->getOpcode() == TargetOpcode::COPY &&
+         !TargetRegisterInfo::isPhysicalRegister(Ret->getOperand(0).getReg()) &&
+         MRI.hasOneUse(Ret->getOperand(0).getReg())) {
+    Ret = &(*MRI.use_instr_begin(Ret->getOperand(0).getReg()));
+  }
+  return Ret;
+}
+
+MachineInstr *
+MipsRegisterBankInfo::AmbiguousRegDefUseContainer::skipCopiesIncoming(
+    MachineInstr *MI) const {
+  const MachineFunction &MF = *MI->getParent()->getParent();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  MachineInstr *Ret = MI;
+  while (Ret->getOpcode() == TargetOpcode::COPY &&
+         !TargetRegisterInfo::isPhysicalRegister(Ret->getOperand(1).getReg()))
+    Ret = MRI.getVRegDef(Ret->getOperand(1).getReg());
+  return Ret;
 }
 
 MipsRegisterBankInfo::AmbiguousRegDefUseContainer::AmbiguousRegDefUseContainer(
