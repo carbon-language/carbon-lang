@@ -408,11 +408,10 @@ public:
   /// End an inlined function scope.
   void EmitInlineFunctionEnd(CGBuilderTy &Builder);
 
-  /// Emit debug info for a function declaration. Set \p IsDeclForCallSite if
-  /// a call site entry must reference the declaration.
-  llvm::DISubprogram *EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc,
-                                       QualType FnType,
-                                       bool IsDeclForCallSite = false);
+  /// Emit debug info for a function declaration.
+  /// \p Fn is set only when a declaration for a debug call site gets created.
+  void EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc,
+                        QualType FnType, llvm::Function *Fn = nullptr);
 
   /// Emit debug info for an extern function being called.
   /// This is needed for call site debug info.

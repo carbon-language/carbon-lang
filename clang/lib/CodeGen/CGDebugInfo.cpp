@@ -3621,19 +3621,18 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
     RegionMap[D].reset(SP);
 }
 
-llvm::DISubprogram *CGDebugInfo::EmitFunctionDecl(GlobalDecl GD,
-                                                  SourceLocation Loc,
-                                                  QualType FnType,
-                                                  bool IsDeclForCallSite) {
+void CGDebugInfo::EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc,
+                                   QualType FnType, llvm::Function *Fn) {
   StringRef Name;
   StringRef LinkageName;
 
   const Decl *D = GD.getDecl();
   if (!D)
-    return nullptr;
+    return;
 
   llvm::DINode::DIFlags Flags = llvm::DINode::FlagZero;
   llvm::DIFile *Unit = getOrCreateFile(Loc);
+  bool IsDeclForCallSite = Fn ? true : false;
   llvm::DIScope *FDContext =
       IsDeclForCallSite ? Unit : getDeclContextDescriptor(D);
   llvm::DINodeArray TParamsArray;
@@ -3666,8 +3665,11 @@ llvm::DISubprogram *CGDebugInfo::EmitFunctionDecl(GlobalDecl GD,
       FDContext, Name, LinkageName, Unit, LineNo,
       getOrCreateFunctionType(D, FnType, Unit), ScopeLine, Flags, SPFlags,
       TParamsArray.get(), getFunctionDeclaration(D));
+
+  if (IsDeclForCallSite)
+    Fn->setSubprogram(SP);
+
   DBuilder.retainType(SP);
-  return SP;
 }
 
 void CGDebugInfo::EmitFuncDeclForCallSite(llvm::CallBase *CallOrInvoke,
@@ -3689,13 +3691,8 @@ void CGDebugInfo::EmitFuncDeclForCallSite(llvm::CallBase *CallOrInvoke,
   if (Func->getSubprogram())
     return;
 
-  if (!CalleeDecl->isStatic() && !CalleeDecl->isInlined()) {
-    llvm::DISubprogram *SP =
-        EmitFunctionDecl(CalleeDecl, CalleeDecl->getLocation(), CalleeType,
-                         /*IsDeclForCallSite=*/true);
-    assert(SP && "Could not find decl for callee?");
-    Func->setSubprogram(SP);
-  }
+  if (!CalleeDecl->isStatic() && !CalleeDecl->isInlined())
+    EmitFunctionDecl(CalleeDecl, CalleeDecl->getLocation(), CalleeType, Func);
 }
 
 void CGDebugInfo::EmitInlineFunctionStart(CGBuilderTy &Builder, GlobalDecl GD) {
