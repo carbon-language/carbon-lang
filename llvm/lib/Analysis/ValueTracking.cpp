@@ -38,7 +38,6 @@
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Dominators.h"
@@ -3423,57 +3422,6 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
   return nullptr;
 }
 
-/// Analyze the specified pointer to see if it can be expressed as a base
-/// pointer plus a constant offset. Return the base and offset to the caller.
-Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
-                                              const DataLayout &DL) {
-  unsigned BitWidth = DL.getIndexTypeSizeInBits(Ptr->getType());
-  APInt ByteOffset(BitWidth, 0);
-
-  // We walk up the defs but use a visited set to handle unreachable code. In
-  // that case, we stop after accumulating the cycle once (not that it
-  // matters).
-  SmallPtrSet<Value *, 16> Visited;
-  while (Visited.insert(Ptr).second) {
-    if (Ptr->getType()->isVectorTy())
-      break;
-
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
-      // If one of the values we have visited is an addrspacecast, then
-      // the pointer type of this GEP may be different from the type
-      // of the Ptr parameter which was passed to this function.  This
-      // means when we construct GEPOffset, we need to use the size
-      // of GEP's pointer type rather than the size of the original
-      // pointer type.
-      APInt GEPOffset(DL.getIndexTypeSizeInBits(Ptr->getType()), 0);
-      if (!GEP->accumulateConstantOffset(DL, GEPOffset))
-        break;
-
-      APInt OrigByteOffset(ByteOffset);
-      ByteOffset += GEPOffset.sextOrTrunc(ByteOffset.getBitWidth());
-      if (ByteOffset.getMinSignedBits() > 64) {
-        // Stop traversal if the pointer offset wouldn't fit into int64_t
-        // (this should be removed if Offset is updated to an APInt)
-        ByteOffset = OrigByteOffset;
-        break;
-      }
-
-      Ptr = GEP->getPointerOperand();
-    } else if (Operator::getOpcode(Ptr) == Instruction::BitCast ||
-               Operator::getOpcode(Ptr) == Instruction::AddrSpaceCast) {
-      Ptr = cast<Operator>(Ptr)->getOperand(0);
-    } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(Ptr)) {
-      if (GA->isInterposable())
-        break;
-      Ptr = GA->getAliasee();
-    } else {
-      break;
-    }
-  }
-  Offset = ByteOffset.getSExtValue();
-  return Ptr;
-}
-
 bool llvm::isGEPBasedOnPointerToString(const GEPOperator *GEP,
                                        unsigned CharSize) {
   // Make sure the GEP has exactly three arguments.
@@ -4401,7 +4349,7 @@ const Value *llvm::getGuaranteedNonFullPoisonOp(const Instruction *I) {
       // Note: It's really tempting to think that a conditional branch or
       // switch should be listed here, but that's incorrect.  It's not
       // branching off of poison which is UB, it is executing a side effecting
-      // instruction which follows the branch.  
+      // instruction which follows the branch.
       return nullptr;
   }
 }
