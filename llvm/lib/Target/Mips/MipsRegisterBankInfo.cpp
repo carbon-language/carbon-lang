@@ -210,8 +210,11 @@ MipsRegisterBankInfo::AmbiguousRegDefUseContainer::AmbiguousRegDefUseContainer(
   }
 }
 
-bool MipsRegisterBankInfo::TypeInfoForMF::visit(const MachineInstr *MI) {
+bool MipsRegisterBankInfo::TypeInfoForMF::visit(
+    const MachineInstr *MI, const MachineInstr *WaitingForTypeOfMI) {
   assert(isAmbiguous(MI->getOpcode()) && "Visiting non-Ambiguous opcode.\n");
+  if (wasVisited(MI))
+    return true; // InstType has already been determined for MI.
 
   startVisit(MI);
   AmbiguousRegDefUseContainer DefUseContainer(MI);
@@ -224,6 +227,21 @@ bool MipsRegisterBankInfo::TypeInfoForMF::visit(const MachineInstr *MI) {
   if (visitAdjacentInstrs(MI, DefUseContainer.getUseDefs(), false))
     return true;
 
+  // All MI's adjacent instructions, are ambiguous.
+  if (!WaitingForTypeOfMI) {
+    // This is chain of ambiguous instructions.
+    setTypes(MI, InstType::Ambiguous);
+    return true;
+  }
+  // Excluding WaitingForTypeOfMI, MI is either connected to chains of ambiguous
+  // instructions or has no other adjacent instructions. Anyway InstType could
+  // not be determined. There could be unexplored path from some of
+  // WaitingForTypeOfMI's adjacent instructions to an instruction with only one
+  // mapping available.
+  // We are done with this branch, add MI to WaitingForTypeOfMI's WaitingQueue,
+  // this way when WaitingForTypeOfMI figures out its InstType same InstType
+  // will be assigned to all instructions in this branch.
+  addToWaitingQueue(WaitingForTypeOfMI, MI);
   return false;
 }
 
@@ -246,15 +264,23 @@ bool MipsRegisterBankInfo::TypeInfoForMF::visitAdjacentInstrs(
       return true;
     }
 
-    if (isAmbiguous(AdjMI->getOpcode())) {
-      // Chains of ambiguous instructions are not supported.
-      return false;
-    }
-
     // Defaults to integer instruction. Includes G_MERGE_VALUES and
     // G_UNMERGE_VALUES.
-    setTypes(MI, InstType::Integer);
-    return true;
+    if (!isAmbiguous(AdjMI->getOpcode())) {
+      setTypes(MI, InstType::Integer);
+      return true;
+    }
+
+    // When AdjMI was visited first, MI has to continue to explore remaining
+    // adjacent instructions and determine InstType without visiting AdjMI.
+    if (!wasVisited(AdjMI) ||
+        getRecordedTypeForInstr(AdjMI) != InstType::NotDetermined) {
+      if (visit(AdjMI, MI)) {
+        // InstType is successfully determined and is same as for AdjMI.
+        setTypes(MI, getRecordedTypeForInstr(AdjMI));
+        return true;
+      }
+    }
   }
   return false;
 }
@@ -262,6 +288,9 @@ bool MipsRegisterBankInfo::TypeInfoForMF::visitAdjacentInstrs(
 void MipsRegisterBankInfo::TypeInfoForMF::setTypes(const MachineInstr *MI,
                                                    InstType InstTy) {
   changeRecordedTypeForInstr(MI, InstTy);
+  for (const MachineInstr *WaitingInstr : getWaitingQueueFor(MI)) {
+    setTypes(WaitingInstr, InstTy);
+  }
 }
 
 void MipsRegisterBankInfo::TypeInfoForMF::setTypesAccordingToPhysicalRegister(
@@ -288,7 +317,7 @@ void MipsRegisterBankInfo::TypeInfoForMF::setTypesAccordingToPhysicalRegister(
 
 MipsRegisterBankInfo::InstType
 MipsRegisterBankInfo::TypeInfoForMF::determineInstType(const MachineInstr *MI) {
-  visit(MI);
+  visit(MI, nullptr);
   return getRecordedTypeForInstr(MI);
 }
 
@@ -296,6 +325,7 @@ void MipsRegisterBankInfo::TypeInfoForMF::cleanupIfNewFunction(
     llvm::StringRef FunctionName) {
   if (MFName != FunctionName) {
     MFName = FunctionName;
+    WaitingQueues.clear();
     Types.clear();
   }
 }
@@ -354,7 +384,8 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       InstTy = TI.determineInstType(&MI);
     }
 
-    if (InstTy == InstType::FloatingPoint) { // fprb
+    if (InstTy == InstType::FloatingPoint ||
+        (Size == 64 && InstTy == InstType::Ambiguous)) { // fprb
       OperandsMapping =
           getOperandsMapping({Size == 32 ? &Mips::ValueMappings[Mips::SPRIdx]
                                          : &Mips::ValueMappings[Mips::DPRIdx],
@@ -378,7 +409,8 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       InstTy = TI.determineInstType(&MI);
     }
 
-    if (InstTy == InstType::FloatingPoint) { // fprb
+    if (InstTy == InstType::FloatingPoint ||
+        (Size == 64 && InstTy == InstType::Ambiguous)) { // fprb
       OperandsMapping =
           getOperandsMapping({Size == 32 ? &Mips::ValueMappings[Mips::SPRIdx]
                                          : &Mips::ValueMappings[Mips::DPRIdx],
@@ -421,7 +453,8 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       InstTy = TI.determineInstType(&MI);
     }
 
-    if (InstTy == InstType::FloatingPoint) { // fprb
+    if (InstTy == InstType::FloatingPoint ||
+        (Size == 64 && InstTy == InstType::Ambiguous)) { // fprb
       const RegisterBankInfo::ValueMapping *Bank =
           Size == 32 ? &Mips::ValueMappings[Mips::SPRIdx]
                      : &Mips::ValueMappings[Mips::DPRIdx];
