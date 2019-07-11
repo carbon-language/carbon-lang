@@ -41,7 +41,7 @@ using namespace lld;
 void lld::unlinkAsync(StringRef path) {
 // Removing a file is async on windows.
 #if defined(_WIN32)
-  sys::fs::remove(Path);
+  sys::fs::remove(path);
 #else
   if (!threadsEnabled || !sys::fs::exists(path) ||
       !sys::fs::is_regular_file(path))
