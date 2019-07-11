@@ -117,7 +117,7 @@ static std::future<MBErrPair> createFutureForFile(std::string path) {
 #if _WIN32
   // On Windows, file I/O is relatively slow so it is best to do this
   // asynchronously.
-  auto Strategy = std::launch::async;
+  auto strategy = std::launch::async;
 #else
   auto strategy = std::launch::deferred;
 #endif
