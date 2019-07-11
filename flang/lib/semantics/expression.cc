@@ -448,14 +448,16 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   auto &defaults{context_.defaultKinds()};
   int defaultKind{defaults.GetDefaultKind(TypeCategory::Real)};
   const char *end{x.real.source.end()};
+  char expoLetter{' '};
   std::optional<int> letterKind;
   for (const char *p{x.real.source.begin()}; p < end; ++p) {
     if (parser::IsLetter(*p)) {
-      switch (*p) {
+      expoLetter = *p;
+      switch (expoLetter) {
       case 'e': letterKind = defaults.GetDefaultKind(TypeCategory::Real); break;
       case 'd': letterKind = defaults.doublePrecisionKind(); break;
       case 'q': letterKind = defaults.quadPrecisionKind(); break;
-      default: Say("Unknown exponent letter '%c'"_err_en_US, *p);
+      default: Say("Unknown exponent letter '%c'"_err_en_US, expoLetter);
       }
       break;
     }
@@ -464,9 +466,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
     defaultKind = *letterKind;
   }
   auto kind{AnalyzeKindParam(x.kind, defaultKind)};
-  if (letterKind.has_value() && kind != *letterKind) {
+  if (letterKind.has_value() && kind != *letterKind && expoLetter != 'e') {
     Say("Explicit kind parameter on real constant disagrees with "
-        "exponent letter"_en_US);
+        "exponent letter '%c'"_en_US,
+        expoLetter);
   }
   auto result{common::SearchTypes(
       RealTypeVisitor{kind, x.real.source, GetFoldingContext()})};
