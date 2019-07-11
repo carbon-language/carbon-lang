@@ -311,8 +311,7 @@ bool Symbol::IsSeparateModuleProc() const {
 
 bool Symbol::IsFromModFile() const {
   return test(Flag::ModFile) ||
-      (owner_->kind() != Scope::Kind::Global &&
-          owner_->symbol()->IsFromModFile());
+      (!owner_->IsGlobal() && owner_->symbol()->IsFromModFile());
 }
 
 ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
@@ -483,7 +482,7 @@ std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
 // parent scopes. For scopes without corresponding symbols, use the kind
 // with an index (e.g. Block1, Block2, etc.).
 static void DumpUniqueName(std::ostream &os, const Scope &scope) {
-  if (scope.kind() != Scope::Kind::Global) {
+  if (!scope.IsGlobal()) {
     DumpUniqueName(os, scope.parent());
     os << '/';
     if (auto *scopeSymbol{scope.symbol()};

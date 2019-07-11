@@ -79,7 +79,9 @@ public:
     return parent_;
   }
   Kind kind() const { return kind_; }
+  bool IsGlobal() const { return kind_ == Kind::Global; }
   bool IsModule() const;  // only module, not submodule
+  bool IsDerivedType() const { return kind_ == Kind::DerivedType; }
   bool IsParameterizedDerivedType() const;
   Symbol *symbol() { return symbol_; }
   const Symbol *symbol() const { return symbol_; }

@@ -510,7 +510,7 @@ bool EquivalenceSets::CheckObject(const parser::Name &name) {
   currObject_.symbol = name.symbol;
   parser::MessageFixedText msg{"", 0};
   const Symbol &symbol{*name.symbol};
-  if (symbol.owner().kind() == Scope::Kind::DerivedType) {  // C8107
+  if (symbol.owner().IsDerivedType()) {  // C8107
     msg = "Derived type component '%s'"
           " is not allowed in an equivalence set"_err_en_US;
   } else if (symbol.IsDummy()) {  // C8106

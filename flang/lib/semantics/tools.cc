@@ -39,8 +39,8 @@ static const Symbol *FindCommonBlockInScope(
 }
 
 const Symbol *FindCommonBlockContaining(const Symbol &object) {
-  for (const Scope *scope{&object.owner()};
-       scope->kind() != Scope::Kind::Global; scope = &scope->parent()) {
+  for (const Scope *scope{&object.owner()}; !scope->IsGlobal();
+       scope = &scope->parent()) {
     if (const Symbol * block{FindCommonBlockInScope(*scope, object)}) {
       return block;
     }
@@ -96,7 +96,7 @@ bool DoesScopeContain(
     const Scope *maybeAncestor, const Scope &maybeDescendent) {
   if (maybeAncestor != nullptr) {
     const Scope *scope{&maybeDescendent};
-    while (scope->kind() != Scope::Kind::Global) {
+    while (!scope->IsGlobal()) {
       scope = &scope->parent();
       if (scope == maybeAncestor) {
         return true;
@@ -188,7 +188,7 @@ bool IsProcedurePointer(const Symbol &symbol) {
 
 static const Symbol *FindPointerComponent(
     const Scope &scope, std::set<const Scope *> &visited) {
-  if (scope.kind() != Scope::Kind::DerivedType) {
+  if (!scope.IsDerivedType()) {
     return nullptr;
   }
   if (!visited.insert(&scope).second) {
@@ -450,7 +450,7 @@ static const DeclTypeSpec *FindInstantiatedDerivedType(const Scope &scope,
   DeclTypeSpec type{category, spec};
   if (const auto *found{scope.FindType(type)}) {
     return found;
-  } else if (scope.kind() == Scope::Kind::Global) {
+  } else if (scope.IsGlobal()) {
     return nullptr;
   } else {
     return FindInstantiatedDerivedType(scope.parent(), spec, category);

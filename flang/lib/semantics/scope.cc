@@ -75,7 +75,7 @@ Scope::size_type Scope::erase(const SourceName &name) {
   }
 }
 Symbol *Scope::FindSymbol(const SourceName &name) const {
-  if (kind() == Kind::DerivedType) {
+  if (IsDerivedType()) {
     return parent_.FindSymbol(name);
   }
   auto it{find(name)};
@@ -173,7 +173,7 @@ DeclTypeSpec &Scope::MakeDerivedType(
 
 void Scope::set_chars(parser::CookedSource &cooked) {
   CHECK(kind_ == Kind::Module);
-  CHECK(parent_.kind_ == Kind::Global || parent_.IsModuleFile());
+  CHECK(parent_.IsGlobal() || parent_.IsModuleFile());
   CHECK(symbol_ != nullptr);
   CHECK(symbol_->test(Symbol::Flag::ModFile));
   // TODO: Preserve the CookedSource rather than acquiring its string.
@@ -220,7 +220,7 @@ void Scope::add_importName(const SourceName &name) {
 
 // true if name can be imported or host-associated from parent scope.
 bool Scope::CanImport(const SourceName &name) const {
-  if (kind_ == Kind::Global) {
+  if (IsGlobal()) {
     return false;
   }
   switch (GetImportKind()) {
@@ -238,7 +238,7 @@ const Scope *Scope::FindScope(parser::CharBlock source) const {
 
 Scope *Scope::FindScope(parser::CharBlock source) {
   bool isContained{sourceRange_.Contains(source)};
-  if (!isContained && kind_ != Kind::Global && !IsModuleFile()) {
+  if (!isContained && !IsGlobal() && !IsModuleFile()) {
     return nullptr;
   }
   for (auto &child : children_) {
@@ -281,7 +281,7 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
 }
 
 bool Scope::IsParameterizedDerivedType() const {
-  if (kind_ != Kind::DerivedType) {
+  if (!IsDerivedType()) {
     return false;
   }
   if (const Scope * parent{GetDerivedTypeParent()}) {
@@ -302,7 +302,7 @@ const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
   DeclTypeSpec type{category, spec};
   if (const auto *result{FindType(type)}) {
     return result;
-  } else if (kind() == Kind::Global) {
+  } else if (IsGlobal()) {
     return nullptr;
   } else {
     return parent().FindInstantiatedDerivedType(spec, category);

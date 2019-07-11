@@ -36,7 +36,7 @@ void DerivedTypeSpec::set_scope(const Scope &scope) {
   ReplaceScope(scope);
 }
 void DerivedTypeSpec::ReplaceScope(const Scope &scope) {
-  CHECK(scope.kind() == Scope::Kind::DerivedType);
+  CHECK(scope.IsDerivedType());
   scope_ = &scope;
 }
 

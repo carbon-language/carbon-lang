@@ -174,7 +174,7 @@ void ModFileWriter::PutSymbols(const Scope &scope) {
     PutSymbol(typeBindings, symbol);
   }
   if (auto str{typeBindings.str()}; !str.empty()) {
-    CHECK(scope.kind() == Scope::Kind::DerivedType);
+    CHECK(scope.IsDerivedType());
     decls_ << "contains\n" << str;
   }
 }
@@ -806,7 +806,7 @@ void SubprogramSymbolCollector::Collect() {
 // Do symbols this one depends on; then add to need_
 void SubprogramSymbolCollector::DoSymbol(const Symbol &symbol) {
   const auto &scope{symbol.owner()};
-  if (scope != scope_ && scope.kind() != Scope::Kind::DerivedType) {
+  if (scope != scope_ && !scope.IsDerivedType()) {
     if (scope != scope_.parent()) {
       useSet_.insert(&symbol);
     } else if (isInterface_) {
@@ -843,7 +843,7 @@ void SubprogramSymbolCollector::DoSymbol(const Symbol &symbol) {
   if (!symbol.has<UseDetails>()) {
     DoType(symbol.GetType());
   }
-  if (scope.kind() != Scope::Kind::DerivedType) {
+  if (!scope.IsDerivedType()) {
     need_.push_back(&symbol);
   }
 }

@@ -22,7 +22,7 @@ namespace Fortran::semantics {
 
 const Scope *FindContainingSubprogram(const Scope &start) {
   const Scope *scope{&start};
-  while (scope->kind() != Scope::Kind::Global) {
+  while (!scope->IsGlobal()) {
     switch (scope->kind()) {
     case Scope::Kind::MainProgram:
     case Scope::Kind::Subprogram: return scope;
