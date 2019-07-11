@@ -143,6 +143,8 @@ is built.  All of the following parsers consume characters acquired from
   the combinator `/`.
 * `"..."_sptok` is a string match in which the spaces are required in
    free form source.
+* `"..."_id` is a string match for a complete identifier (not a prefix of
+   a longer identifier or keyword).
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
 * `nonEmptyList(p)` matches a comma-separated list of one or more

@@ -119,21 +119,21 @@ constexpr struct SpaceCheck {
 // like "BIND ( C )"_tok and "SYNC ALL"_sptok.  The _tok suffix is implied
 // when a string literal appears before the sequencing operator >> or
 // after the sequencing operator /.
+template<bool MandatoryFreeFormSpace = false, bool MustBeComplete = false>
 class TokenStringMatch {
 public:
   using resultType = Success;
   constexpr TokenStringMatch(const TokenStringMatch &) = default;
-  constexpr TokenStringMatch(const char *str, std::size_t n, bool mandatory)
-    : str_{str}, bytes_{n}, mandatoryFreeFormSpace_{mandatory} {}
-  constexpr TokenStringMatch(const char *str, bool mandatory)
-    : str_{str}, mandatoryFreeFormSpace_{mandatory} {}
+  constexpr TokenStringMatch(const char *str, std::size_t n)
+    : str_{str}, bytes_{n} {}
+  explicit constexpr TokenStringMatch(const char *str) : str_{str} {}
   std::optional<Success> Parse(ParseState &state) const {
     space.Parse(state);
     const char *start{state.GetLocation()};
     const char *p{str_};
     std::optional<const char *> at;  // initially empty
     for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
-      const auto spaceSkipping{*p == ' '};
+      bool spaceSkipping{*p == ' '};
       if (spaceSkipping) {
         if (j + 1 == bytes_ || p[1] == ' ' || p[1] == '\0') {
           continue;  // redundant; ignore
@@ -151,7 +151,7 @@ public:
           if (!at.has_value()) {
             return std::nullopt;
           }
-        } else if (mandatoryFreeFormSpace_) {
+        } else if constexpr (MandatoryFreeFormSpace) {
           MissingSpace(state);
         }
         // 'at' remains full for next iteration
@@ -160,6 +160,14 @@ public:
       } else {
         state.Say(start, MessageExpectedText{str_, bytes_});
         return std::nullopt;
+      }
+    }
+    if constexpr (MustBeComplete) {
+      if (auto after{state.PeekAtNextChar()}) {
+        if (IsLegalInIdentifier(**after)) {
+          state.Say(start, MessageExpectedText{str_, bytes_});
+          return std::nullopt;
+        }
       }
     }
     state.set_anyTokenMatched();
@@ -173,29 +181,32 @@ public:
 private:
   const char *const str_;
   const std::size_t bytes_{std::string::npos};
-  const bool mandatoryFreeFormSpace_;
 };
 
-constexpr TokenStringMatch operator""_tok(const char str[], std::size_t n) {
-  return TokenStringMatch{str, n, false};
+constexpr TokenStringMatch<> operator""_tok(const char str[], std::size_t n) {
+  return {str, n};
 }
 
-constexpr TokenStringMatch operator""_sptok(const char str[], std::size_t n) {
-  return TokenStringMatch{str, n, true};
+constexpr TokenStringMatch<true> operator""_sptok(const char str[], std::size_t n) {
+  return {str, n};
+}
+
+constexpr TokenStringMatch<false, true> operator""_id(const char str[], std::size_t n) {
+  return {str, n};
 }
 
 template<class PA>
 inline constexpr std::enable_if_t<std::is_class_v<PA>,
-    SequenceParser<TokenStringMatch, PA>>
+    SequenceParser<TokenStringMatch<>, PA>>
 operator>>(const char *str, const PA &p) {
-  return SequenceParser<TokenStringMatch, PA>{TokenStringMatch{str, false}, p};
+  return SequenceParser<TokenStringMatch<>, PA>{TokenStringMatch<>{str}, p};
 }
 
 template<class PA>
 inline constexpr std::enable_if_t<std::is_class_v<PA>,
-    FollowParser<PA, TokenStringMatch>>
+    FollowParser<PA, TokenStringMatch<>>>
 operator/(const PA &p, const char *str) {
-  return FollowParser<PA, TokenStringMatch>{p, TokenStringMatch{str, false}};
+  return FollowParser<PA, TokenStringMatch<>>{p, TokenStringMatch<>{str}};
 }
 
 template<class PA> inline constexpr auto parenthesized(const PA &p) {

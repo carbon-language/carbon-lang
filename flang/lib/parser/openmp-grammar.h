@@ -44,28 +44,28 @@ constexpr auto endOmpLine = space >> endOfLine;
 // OpenMP Clauses
 // DEFAULT (PRIVATE | FIRSTPRIVATE | SHARED | NONE )
 TYPE_PARSER(construct<OmpDefaultClause>(
-    "PRIVATE" >> pure(OmpDefaultClause::Type::Private) ||
-    "FIRSTPRIVATE" >> pure(OmpDefaultClause::Type::Firstprivate) ||
-    "SHARED" >> pure(OmpDefaultClause::Type::Shared) ||
-    "NONE" >> pure(OmpDefaultClause::Type::None)))
+    "PRIVATE"_id >> pure(OmpDefaultClause::Type::Private) ||
+    "FIRSTPRIVATE"_id >> pure(OmpDefaultClause::Type::Firstprivate) ||
+    "SHARED"_id >> pure(OmpDefaultClause::Type::Shared) ||
+    "NONE"_id >> pure(OmpDefaultClause::Type::None)))
 
 // PROC_BIND(CLOSE | MASTER | SPREAD)
 TYPE_PARSER(construct<OmpProcBindClause>(
-    "CLOSE" >> pure(OmpProcBindClause::Type::Close) ||
-    "MASTER" >> pure(OmpProcBindClause::Type::Master) ||
-    "SPREAD" >> pure(OmpProcBindClause::Type::Spread)))
+    "CLOSE"_id >> pure(OmpProcBindClause::Type::Close) ||
+    "MASTER"_id >> pure(OmpProcBindClause::Type::Master) ||
+    "SPREAD"_id >> pure(OmpProcBindClause::Type::Spread)))
 
 // MAP ([ [map-type-modifier[,]] map-type : ] list)
 // map-type-modifier -> ALWAYS
 // map-type -> TO | FROM | TOFROM | ALLOC | RELEASE | DELETE
 TYPE_PARSER(construct<OmpMapType>(
-    maybe("ALWAYS" >> construct<OmpMapType::Always>() / maybe(","_tok)),
-    "TO" >> pure(OmpMapType::Type::To) / ":"_tok ||
-        "FROM" >> pure(OmpMapType::Type::From) / ":"_tok ||
-        "TOFROM" >> pure(OmpMapType::Type::Tofrom) / ":"_tok ||
-        "ALLOC" >> pure(OmpMapType::Type::Alloc) / ":"_tok ||
-        "RELEASE" >> pure(OmpMapType::Type::Release) / ":"_tok ||
-        "DELETE" >> pure(OmpMapType::Type::Delete) / ":"_tok))
+    maybe("ALWAYS"_id >> construct<OmpMapType::Always>() / maybe(","_tok)),
+    "TO"_id >> pure(OmpMapType::Type::To) / ":"_tok ||
+        "FROM"_id >> pure(OmpMapType::Type::From) / ":"_tok ||
+        "TOFROM"_id >> pure(OmpMapType::Type::Tofrom) / ":"_tok ||
+        "ALLOC"_id >> pure(OmpMapType::Type::Alloc) / ":"_tok ||
+        "RELEASE"_id >> pure(OmpMapType::Type::Release) / ":"_tok ||
+        "DELETE"_id >> pure(OmpMapType::Type::Delete) / ":"_tok))
 
 TYPE_PARSER(construct<OmpMapClause>(
     maybe(Parser<OmpMapType>{}), Parser<OmpObjectList>{}))
@@ -75,36 +75,36 @@ TYPE_PARSER(construct<OmpMapClause>(
 // kind -> STATIC | DYNAMIC | GUIDED | AUTO | RUNTIME
 // chunk_size -> ScalarIntExpr
 TYPE_PARSER(construct<OmpScheduleModifierType>(
-    "MONOTONIC" >> pure(OmpScheduleModifierType::ModType::Monotonic) ||
-    "NONMONOTONIC" >> pure(OmpScheduleModifierType::ModType::Nonmonotonic) ||
-    "SIMD" >> pure(OmpScheduleModifierType::ModType::Simd)))
+    "MONOTONIC"_id >> pure(OmpScheduleModifierType::ModType::Monotonic) ||
+    "NONMONOTONIC"_id >> pure(OmpScheduleModifierType::ModType::Nonmonotonic) ||
+    "SIMD"_id >> pure(OmpScheduleModifierType::ModType::Simd)))
 
 TYPE_PARSER(construct<OmpScheduleModifier>(Parser<OmpScheduleModifierType>{},
     maybe(","_tok >> Parser<OmpScheduleModifierType>{}) / ":"_tok))
 
 TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
-    "STATIC" >> pure(OmpScheduleClause::ScheduleType::Static) ||
-        "DYNAMIC" >> pure(OmpScheduleClause::ScheduleType::Dynamic) ||
-        "GUIDED" >> pure(OmpScheduleClause::ScheduleType::Guided) ||
-        "AUTO" >> pure(OmpScheduleClause::ScheduleType::Auto) ||
-        "RUNTIME" >> pure(OmpScheduleClause::ScheduleType::Runtime),
+    "STATIC"_id >> pure(OmpScheduleClause::ScheduleType::Static) ||
+        "DYNAMIC"_id >> pure(OmpScheduleClause::ScheduleType::Dynamic) ||
+        "GUIDED"_id >> pure(OmpScheduleClause::ScheduleType::Guided) ||
+        "AUTO"_id >> pure(OmpScheduleClause::ScheduleType::Auto) ||
+        "RUNTIME"_id >> pure(OmpScheduleClause::ScheduleType::Runtime),
     maybe(","_tok >> scalarIntExpr)))
 
 // IF(directive-name-modifier: scalar-logical-expr)
 TYPE_PARSER(construct<OmpIfClause>(
     maybe(
-        ("PARALLEL" >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
-            "TARGET ENTER DATA" >>
+        ("PARALLEL"_id >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
+            "TARGET ENTER DATA"_id >>
                 pure(OmpIfClause::DirectiveNameModifier::TargetEnterData) ||
-            "TARGET EXIT DATA" >>
+            "TARGET EXIT DATA"_id >>
                 pure(OmpIfClause::DirectiveNameModifier::TargetExitData) ||
-            "TARGET DATA" >>
+            "TARGET DATA"_id >>
                 pure(OmpIfClause::DirectiveNameModifier::TargetData) ||
-            "TARGET UPDATE" >>
+            "TARGET UPDATE"_id >>
                 pure(OmpIfClause::DirectiveNameModifier::TargetUpdate) ||
-            "TARGET" >> pure(OmpIfClause::DirectiveNameModifier::Target) ||
-            "TASKLOOP" >> pure(OmpIfClause::DirectiveNameModifier::Taskloop) ||
-            "TASK" >> pure(OmpIfClause::DirectiveNameModifier::Task)) /
+            "TARGET"_id >> pure(OmpIfClause::DirectiveNameModifier::Target) ||
+            "TASKLOOP"_id >> pure(OmpIfClause::DirectiveNameModifier::Taskloop) ||
+            "TASK"_id >> pure(OmpIfClause::DirectiveNameModifier::Task)) /
         ":"_tok),
     scalarLogicalExpr))
 
@@ -123,23 +123,23 @@ TYPE_PARSER(
     construct<OmpDependSinkVec>(name, maybe(Parser<OmpDependSinkVecLength>{})))
 
 TYPE_PARSER(construct<OmpDependenceType>(
-    "INOUT" >> pure(OmpDependenceType::Type::Inout) ||
-    "IN" >> pure(OmpDependenceType::Type::In) ||
-    "OUT" >> pure(OmpDependenceType::Type::Out)))
+    "INOUT"_id >> pure(OmpDependenceType::Type::Inout) ||
+    "IN"_id >> pure(OmpDependenceType::Type::In) ||
+    "OUT"_id >> pure(OmpDependenceType::Type::Out)))
 
 TYPE_CONTEXT_PARSER("Omp Depend clause"_en_US,
     construct<OmpDependClause>(construct<OmpDependClause::Sink>(
-        "SINK"_tok >> ":"_tok >> nonemptyList(Parser<OmpDependSinkVec>{}))) ||
+        "SINK"_id_tok >> ":"_tok >> nonemptyList(Parser<OmpDependSinkVec>{}))) ||
         construct<OmpDependClause>(
-            construct<OmpDependClause::Source>("SOURCE"_tok)) ||
+            construct<OmpDependClause::Source>("SOURCE"_id)) ||
         construct<OmpDependClause>(construct<OmpDependClause::InOut>(
             Parser<OmpDependenceType>{}, ":"_tok >> nonemptyList(designator))))
 
 // linear-modifier
 TYPE_PARSER(
-    construct<OmpLinearModifier>("REF" >> pure(OmpLinearModifier::Type::Ref) ||
-        "VAL" >> pure(OmpLinearModifier::Type::Val) ||
-        "UVAL" >> pure(OmpLinearModifier::Type::Uval)))
+    construct<OmpLinearModifier>("REF"_id >> pure(OmpLinearModifier::Type::Ref) ||
+        "VAL"_id >> pure(OmpLinearModifier::Type::Val) ||
+        "UVAL"_id >> pure(OmpLinearModifier::Type::Uval)))
 
 // LINEAR(list: linear-step)
 TYPE_CONTEXT_PARSER("Omp LINEAR clause"_en_US,
