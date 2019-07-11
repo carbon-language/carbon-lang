@@ -94,7 +94,7 @@ static bool isPETarget(std::vector<const char *> &v) {
 static Flavor parseProgname(StringRef progname) {
 #if __APPLE__
   // Use Darwin driver for "ld" on Darwin.
-  if (Progname == "ld")
+  if (progname == "ld")
     return Darwin;
 #endif
 
