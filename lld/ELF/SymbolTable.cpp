@@ -201,6 +201,14 @@ void SymbolTable::assignExactVersion(SymbolVersion ver, uint16_t versionId,
     return;
   }
 
+  auto getName = [](uint16_t ver) -> std::string {
+    if (ver == VER_NDX_LOCAL)
+      return "VER_NDX_LOCAL";
+    if (ver == VER_NDX_GLOBAL)
+      return "VER_NDX_GLOBAL";
+    return ("version '" + config->versionDefinitions[ver - 2].name + "'").str();
+  };
+
   // Assign the version.
   for (Symbol *sym : syms) {
     // Skip symbols containing version info because symbol versions
@@ -209,10 +217,13 @@ void SymbolTable::assignExactVersion(SymbolVersion ver, uint16_t versionId,
     if (sym->getName().contains('@'))
       continue;
 
-    if (sym->versionId != config->defaultSymbolVersion &&
-        sym->versionId != versionId)
-      error("duplicate symbol '" + ver.name + "' in version script");
-    sym->versionId = versionId;
+    if (sym->versionId == config->defaultSymbolVersion)
+      sym->versionId = versionId;
+    if (sym->versionId == versionId)
+      continue;
+
+    warn("attempt to reassign symbol '" + ver.name + "' of " +
+         getName(sym->versionId) + " to " + getName(versionId));
   }
 }
 
