@@ -1449,17 +1449,15 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
               return std::nullopt;
             }
             const Symbol &symbol{n.symbol->GetUltimate()};
-            if (!symbol.HasExplicitInterface() ||
-                (symbol.has<semantics::MiscDetails>() &&
-                    symbol.get<semantics::MiscDetails>().kind() ==
-                        semantics::MiscDetails::Kind::SpecificIntrinsic)) {
-              // Might be an intrinsic.
+            if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
               if (std::optional<SpecificCall> specificCall{
                       context_.intrinsics().Probe(CallCharacteristics{n.source},
                           arguments, GetFoldingContext())}) {
                 return CalleeAndArguments{ProcedureDesignator{std::move(
                                               specificCall->specificIntrinsic)},
                     std::move(specificCall->arguments)};
+              } else {
+                return std::nullopt;
               }
             }
             if (symbol.HasExplicitInterface()) {

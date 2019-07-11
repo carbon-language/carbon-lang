@@ -371,6 +371,10 @@ std::optional<Procedure> Procedure::Characterize(
           },
           [&](const semantics::ProcEntityDetails &proc)
               -> std::optional<Procedure> {
+            if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
+              return intrinsics.IsUnrestrictedSpecificIntrinsicFunction(
+                  symbol.name().ToString());
+            }
             const semantics::ProcInterface &interface{proc.interface()};
             if (const semantics::Symbol * interfaceSymbol{interface.symbol()}) {
               auto characterized{Characterize(*interfaceSymbol, intrinsics)};
@@ -403,21 +407,11 @@ std::optional<Procedure> Procedure::Characterize(
           [&](const semantics::ProcBindingDetails &binding) {
             return Characterize(binding.symbol(), intrinsics);
           },
-          [&](const semantics::MiscDetails &misc) -> std::optional<Procedure> {
-            if (misc.kind() ==
-                semantics::MiscDetails::Kind::SpecificIntrinsic) {
-              return intrinsics.IsUnrestrictedSpecificIntrinsicFunction(
-                  symbol.name().ToString());
-            } else {
-              return std::nullopt;
-            }
-          },
           [](const semantics::GenericDetails &) -> std::optional<Procedure> {
             return std::nullopt;
           },
-          [](const semantics::GenericBindingDetails &) -> std::optional<Procedure> {
-            return std::nullopt;
-          },
+          [](const semantics::GenericBindingDetails &)
+              -> std::optional<Procedure> { return std::nullopt; },
           [](const auto &) -> std::optional<Procedure> { CRASH_NO_CASE; },
       },
       symbol.details());

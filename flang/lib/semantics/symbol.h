@@ -326,8 +326,8 @@ class FinalProcDetails {};
 class MiscDetails {
 public:
   ENUM_CLASS(Kind, None, ConstructName, ScopeName, PassName, ComplexPartRe,
-      ComplexPartIm, KindParamInquiry, LenParamInquiry, SelectTypeAssociateName,
-      SpecificIntrinsic);
+      ComplexPartIm, KindParamInquiry, LenParamInquiry,
+      SelectTypeAssociateName);
   MiscDetails(Kind kind) : kind_{kind} {}
   Kind kind() const { return kind_; }
 
@@ -540,12 +540,11 @@ public:
         common::visitors{
             [](const SubprogramDetails &) { return true; },
             [](const SubprogramNameDetails &) { return true; },
-            [](const ProcEntityDetails &x) { return x.HasExplicitInterface(); },
+            [&](const ProcEntityDetails &x) {
+              return attrs_.test(Attr::INTRINSIC) || x.HasExplicitInterface();
+            },
             [](const UseDetails &x) {
               return x.symbol().HasExplicitInterface();
-            },
-            [](const MiscDetails &x) {
-              return x.kind() == MiscDetails::Kind::SpecificIntrinsic;
             },
             [](const auto &) { return false; },
         },

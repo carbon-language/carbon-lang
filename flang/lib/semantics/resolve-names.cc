@@ -1697,6 +1697,7 @@ static bool NeedsType(const Symbol &symbol) {
               [](const AssocEntityDetails &) { return true; },
               [&](const ProcEntityDetails &p) {
                 return symbol.test(Symbol::Flag::Function) &&
+                    !symbol.attrs().test(Attr::INTRINSIC) &&
                     p.interface().type() == nullptr &&
                     p.interface().symbol() == nullptr;
               },
@@ -1708,8 +1709,10 @@ void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   if (NeedsType(symbol)) {
     if (isImplicitNoneType()) {
       if (symbol.has<ProcEntityDetails>() &&
+          !symbol.attrs().test(Attr::EXTERNAL) &&
           context().intrinsics().IsIntrinsic(symbol.name().ToString())) {
         // type will be determined in expression semantics
+        symbol.attrs().set(Attr::INTRINSIC);
       } else {
         Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
       }
@@ -3716,13 +3719,9 @@ bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
           .has_value()) {
     // Unrestricted specific intrinsic function names (e.g., "cos")
     // are acceptable as procedure interfaces.
-    Scope *scope{&currScope()};
-    while (scope->kind() == Scope::Kind::DerivedType) {
-      scope = &scope->parent();
-    }
-    Symbol &symbol{MakeSymbol(*scope, name.source, Attrs{Attr::INTRINSIC})};
-    symbol.set_details(MiscDetails{MiscDetails::Kind::SpecificIntrinsic});
-    CHECK(symbol.HasExplicitInterface());
+    Symbol &symbol{
+        MakeSymbol(InclusiveScope(), name.source, Attrs{Attr::INTRINSIC})};
+    symbol.set_details(ProcEntityDetails{});
     Resolve(name, symbol);
     return true;
   } else {
@@ -4751,20 +4750,26 @@ void ResolveNamesVisitor::HandleProcedureName(
   CHECK(flag == Symbol::Flag::Function || flag == Symbol::Flag::Subroutine);
   auto *symbol{FindSymbol(name)};
   if (symbol == nullptr) {
-    symbol = &MakeSymbol(context().globalScope(), name.source, Attrs{});
+    Attrs attrs;
+    if (context().intrinsics().IsIntrinsic(name.source.ToString())) {
+      attrs.set(Attr::INTRINSIC);
+    }
+    symbol = &MakeSymbol(context().globalScope(), name.source, attrs);
     Resolve(name, *symbol);
     if (symbol->has<ModuleDetails>()) {
       SayWithDecl(name, *symbol,
           "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
       return;
     }
-    if (isImplicitNoneExternal() && !symbol->attrs().test(Attr::EXTERNAL)) {
-      Say(name,
-          "'%s' is an external procedure without the EXTERNAL"
-          " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
-      return;
+    if (!symbol->attrs().test(Attr::INTRINSIC)) {
+      if (isImplicitNoneExternal() && !symbol->attrs().test(Attr::EXTERNAL)) {
+        Say(name,
+            "'%s' is an external procedure without the EXTERNAL"
+            " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
+        return;
+      }
+      MakeExternal(*symbol);
     }
-    MakeExternal(*symbol);
     if (!symbol->has<ProcEntityDetails>()) {
       ConvertToProcEntity(*symbol);
     }
@@ -4779,9 +4784,7 @@ void ResolveNamesVisitor::HandleProcedureName(
     if (!SetProcFlag(name, *symbol, flag)) {
       return;  // reported error
     }
-    if (symbol->has<SubprogramNameDetails>() || symbol->has<GenericDetails>() ||
-        symbol->has<DerivedTypeDetails>() || symbol->has<SubprogramDetails>() ||
-        symbol->has<ProcEntityDetails>() ||
+    if (IsProcedure(*symbol) || symbol->has<DerivedTypeDetails>() ||
         symbol->has<ObjectEntityDetails>()) {
       // these are all valid as procedure-designators
     } else if (symbol->test(Symbol::Flag::Implicit)) {

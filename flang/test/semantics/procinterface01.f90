@@ -66,13 +66,13 @@ module module1
   !DEF: /module1/derived1/p5 NOPASS, POINTER ProcEntity COMPLEX(4)
   !DEF: /module1/nested4 PUBLIC Subprogram COMPLEX(4)
   procedure(complex), pointer, nopass :: p5 => nested4
+  !DEF: /module1/sin INTRINSIC, PUBLIC ProcEntity
   !DEF: /module1/derived1/p6 NOPASS, POINTER ProcEntity
   !REF: /module1/nested1
-  ! NOTE: sin is not dumped as a DEF here because specific
-  ! intrinsic functions are represented with MiscDetails
-  ! and those are omitted from dumping.
   procedure(sin), pointer, nopass :: p6 => nested1
+  !REF: /module1/sin
   !DEF: /module1/derived1/p7 NOPASS, POINTER ProcEntity
+  !DEF: /module1/cos INTRINSIC, PUBLIC ProcEntity
   procedure(sin), pointer, nopass :: p7 => cos
   !REF: /module1/tan
   !DEF: /module1/derived1/p8 NOPASS, POINTER ProcEntity CHARACTER(1_4,1)
@@ -118,7 +118,7 @@ contains
   !REF: /module1/nested4/x
   real, intent(in) :: x
   !DEF: /module1/nested4/nested4 ObjectEntity COMPLEX(4)
-  !DEF: /cmplx EXTERNAL (implicit) ProcEntity REAL(4)
+  !DEF: /cmplx INTRINSIC ProcEntity
   !REF: /module1/nested4/x
   nested4 = cmplx(x+4., 6.)
  end function nested4
