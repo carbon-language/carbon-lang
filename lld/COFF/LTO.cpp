@@ -54,6 +54,12 @@ static std::unique_ptr<raw_fd_ostream> openFile(StringRef file) {
   return ret;
 }
 
+static std::string getThinLTOOutputFile(StringRef path) {
+  return lto::getThinLTOOutputFile(path,
+                                   config->thinLTOPrefixReplace.first,
+                                   config->thinLTOPrefixReplace.second);
+}
+
 static lto::Config createConfig() {
   lto::Config c;
   c.Options = initTargetOptionsFromCodeGenFlags();
@@ -93,7 +99,8 @@ BitcodeCompiler::BitcodeCompiler() {
   if (config->thinLTOIndexOnly) {
     auto OnIndexWrite = [&](StringRef S) { thinIndices.erase(S); };
     backend = lto::createWriteIndexesThinBackend(
-        "", "", config->thinLTOEmitImportsFiles, indexFile.get(), OnIndexWrite);
+        config->thinLTOPrefixReplace.first, config->thinLTOPrefixReplace.second,
+        config->thinLTOEmitImportsFiles, indexFile.get(), OnIndexWrite);
   } else if (config->thinLTOJobs != 0) {
     backend = lto::createInProcessThinBackend(config->thinLTOJobs);
   }
@@ -159,11 +166,11 @@ std::vector<StringRef> BitcodeCompiler::compile() {
       cache));
 
   // Emit empty index files for non-indexed files
-  for (StringRef S : thinIndices) {
-    std::string Path(S);
-    openFile(Path + ".thinlto.bc");
+  for (StringRef s : thinIndices) {
+    std::string path = getThinLTOOutputFile(s);
+    openFile(path + ".thinlto.bc");
     if (config->thinLTOEmitImportsFiles)
-      openFile(Path + ".imports");
+      openFile(path + ".imports");
   }
 
   // ThinLTO with index only option is required to generate only the index

@@ -86,6 +86,20 @@ bool link(ArrayRef<const char *> args, bool canExitEarly, raw_ostream &diag) {
   return !errorCount();
 }
 
+// Parse options of the form "old;new".
+static std::pair<StringRef, StringRef> getOldNewOptions(opt::InputArgList &args,
+                                                        unsigned id) {
+  auto *arg = args.getLastArg(id);
+  if (!arg)
+    return {"", ""};
+
+  StringRef s = arg->getValue();
+  std::pair<StringRef, StringRef> ret = s.split(';');
+  if (ret.second.empty())
+    error(arg->getSpelling() + " expects 'old;new' format, but got " + s);
+  return ret;
+}
+
 // Drop directory components and replace extension with ".exe" or ".dll".
 static std::string getOutputPath(StringRef path) {
   auto p = path.find_last_of("\\/");
@@ -1446,6 +1460,10 @@ void LinkerDriver::link(ArrayRef<const char *> argsArr) {
                              args.hasArg(OPT_thinlto_index_only_arg);
   config->thinLTOIndexOnlyArg =
       args.getLastArgValue(OPT_thinlto_index_only_arg);
+  config->thinLTOPrefixReplace =
+      getOldNewOptions(args, OPT_thinlto_prefix_replace);
+  config->thinLTOObjectSuffixReplace =
+      getOldNewOptions(args, OPT_thinlto_object_suffix_replace);
   // Handle miscellaneous boolean flags.
   config->allowBind = args.hasFlag(OPT_allowbind, OPT_allowbind_no, true);
   config->allowIsolation =
