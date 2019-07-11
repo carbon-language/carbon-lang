@@ -891,6 +891,16 @@ def : Pat <
   (v2f16 (EXTRACT_SUBREG v4f16:$vec, sub1))
 >;
 
+foreach Index = 0-31 in {
+  def Extract_Element_v32i32_#Index : Extract_Element <
+    i32, v32i32, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+
+  def Insert_Element_v32i32_#Index : Insert_Element <
+    i32, v32i32, Index, !cast<SubRegIndex>(sub#Index)
+  >;
+}
+
 // FIXME: Why do only some of these type combinations for SReg and
 // VReg?
 // 16-bit bitcast
