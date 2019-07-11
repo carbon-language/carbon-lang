@@ -5,6 +5,7 @@
 // RUN: %clang_cc1 -std=c++14 -triple x86_64-unknown-unknown -fblocks -ftrivial-auto-var-init=zero %s -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-O0,ZERO,ZERO-O0
 // RUN: %clang_cc1 -std=c++14 -triple x86_64-unknown-unknown -fblocks -ftrivial-auto-var-init=zero %s -O1 -fno-experimental-new-pass-manager -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-O1,ZERO,ZERO-O1,ZERO-O1-LEGACY
 // RUN: %clang_cc1 -std=c++14 -triple x86_64-unknown-unknown -fblocks -ftrivial-auto-var-init=zero %s -O1 -fexperimental-new-pass-manager -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-O1,ZERO,ZERO-O1,ZERO-O1-NEWPM
+// RUN: %clang_cc1 -std=c++14 -triple i386-unknown-unknown -fblocks -ftrivial-auto-var-init=pattern %s -emit-llvm -o - | FileCheck %s -check-prefixes=PATTERN-I386
 
 template<typename T> void used(T &) noexcept;
 
@@ -64,6 +65,9 @@ struct smallpartinit { char c = 42, d; };
 // PATTERN-O1-NOT: @__const.test_nullinit_uninit.uninit
 // PATTERN-O1-NOT: @__const.test_nullinit_braces.braces
 // PATTERN-O1-NOT: @__const.test_nullinit_custom.custom
+// PATTERN-I386: @__const.test_nullinit_uninit.uninit = private unnamed_addr constant %struct.nullinit { i8* inttoptr (i32 170 to i8*) }, align 4
+// PATTERN-I386: @__const.test_nullinit_braces.braces = private unnamed_addr constant %struct.nullinit { i8* inttoptr (i32 170 to i8*) }, align 4
+// PATTERN-I386: @__const.test_nullinit_custom.custom = private unnamed_addr constant %struct.nullinit { i8* inttoptr (i32 170 to i8*) }, align 4
 struct nullinit { char* null = nullptr; };
 // PATTERN-O0: @__const.test_padded_uninit.uninit = private unnamed_addr constant { i8, [3 x i8], i32 } { i8 -86, [3 x i8] c"\AA\AA\AA", i32 -1431655766 }, align 4
 // PATTERN-O0: @__const.test_padded_custom.custom = private unnamed_addr constant { i8, [3 x i8], i32 } { i8 42, [3 x i8] zeroinitializer, i32 13371337 }, align 4
@@ -139,6 +143,7 @@ struct arraytail { int i; int arr[]; };
 // PATTERN-O1-NOT: @__const.test_tailpad4_uninit.uninit
 // PATTERN: @__const.test_tailpad4_custom.custom = private unnamed_addr constant [4 x { i16, i8, [1 x i8] }] [{ i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }, { i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }, { i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }, { i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }], align 16
 // ZERO: @__const.test_tailpad4_custom.custom = private unnamed_addr constant [4 x { i16, i8, [1 x i8] }] [{ i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }, { i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }, { i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }, { i16, i8, [1 x i8] } { i16 257, i8 1, [1 x i8] zeroinitializer }], align 16
+// PATTERN-I386: @__const.test_intptr4_custom.custom = private unnamed_addr constant [4 x i32*] [i32* inttoptr (i32 572662306 to i32*), i32* inttoptr (i32 572662306 to i32*), i32* inttoptr (i32 572662306 to i32*), i32* inttoptr (i32 572662306 to i32*)], align 4
 struct tailpad { short s; char c; };
 // PATTERN-O0: @__const.test_atomicnotlockfree_uninit.uninit = private unnamed_addr constant %struct.notlockfree { [4 x i64] [i64 -6148914691236517206, i64 -6148914691236517206, i64 -6148914691236517206, i64 -6148914691236517206] }, align 8
 // PATTERN-O1-NOT: @__const.test_atomicnotlockfree_uninit.uninit
@@ -176,16 +181,19 @@ struct semivolatileinit { int i = 0x11111111; volatile int vi = 0x11111111; };
 // PATTERN-O1-NOT: @__const.test_base_uninit.uninit
 // PATTERN-O0: @__const.test_base_braces.braces = private unnamed_addr constant %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) }, align 8
 // PATTERN-O1-NOT: @__const.test_base_braces.braces
+// PATTERN-I386: @__const.test_base_uninit.uninit = private unnamed_addr constant %struct.base { i32 (...)** inttoptr (i32 170 to i32 (...)**) }, align 4
 struct base { virtual ~base(); };
 // PATTERN-O0: @__const.test_derived_uninit.uninit = private unnamed_addr constant %struct.derived { %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) } }, align 8
 // PATTERN-O1-NOT: @__const.test_derived_uninit.uninit
 // PATTERN-O0: @__const.test_derived_braces.braces = private unnamed_addr constant %struct.derived { %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) } }, align 8
 // PATTERN-O1-NOT: @__const.test_derived_braces.braces
+// PATTERN-I386: @__const.test_derived_uninit.uninit = private unnamed_addr constant %struct.derived { %struct.base { i32 (...)** inttoptr (i32 170 to i32 (...)**) } }, align 4
 struct derived : public base {};
 // PATTERN-O0: @__const.test_virtualderived_uninit.uninit = private unnamed_addr constant %struct.virtualderived { %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) }, %struct.derived { %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) } } }, align 8
 // PATTERN-O1-NOT: @__const.test_virtualderived_uninit.uninit
 // PATTERN-O0: @__const.test_virtualderived_braces.braces = private unnamed_addr constant %struct.virtualderived { %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) }, %struct.derived { %struct.base { i32 (...)** inttoptr (i64 -6148914691236517206 to i32 (...)**) } } }, align 8
 // PATTERN-O1-NOT: @__const.test_virtualderived_braces.braces
+// PATTERN-I386: @__const.test_virtualderived_uninit.uninit = private unnamed_addr constant %struct.virtualderived { %struct.base { i32 (...)** inttoptr (i32 170 to i32 (...)**) }, %struct.derived { %struct.base { i32 (...)** inttoptr (i32 170 to i32 (...)**) } } }, align 4
 struct virtualderived : public virtual base, public virtual derived {};
 // PATTERN-O0: @__const.test_matching_uninit.uninit = private unnamed_addr constant %union.matching { i32 -1431655766 }, align 4
 // PATTERN-O1-NOT: @__const.test_matching_uninit.uninit
@@ -407,6 +415,7 @@ TEST_BRACES(ulonglong, unsigned long long);
 // CHECK-NEXT:  store i64 0, i64* %braces, align [[ALIGN]]
 // CHECK-NEXT:  call void @{{.*}}used{{.*}}%braces)
 
+#ifdef __SIZEOF_INT128__
 TEST_UNINIT(int128, __int128);
 // CHECK-LABEL: @test_int128_uninit()
 // CHECK:       %uninit = alloca i128, align
@@ -436,6 +445,7 @@ TEST_BRACES(uint128, unsigned __int128);
 // CHECK:       %braces = alloca i128, align [[ALIGN:[0-9]*]]
 // CHECK-NEXT:  store i128 0, i128* %braces, align [[ALIGN]]
 // CHECK-NEXT:  call void @{{.*}}used{{.*}}%braces)
+#endif
 
 
 TEST_UNINIT(fp16, __fp16);
@@ -507,6 +517,8 @@ TEST_UNINIT(intptr, int*);
 // PATTERN: store i32* inttoptr (i64 -6148914691236517206 to i32*), i32** %uninit, align
 // ZERO-LABEL: @test_intptr_uninit()
 // ZERO: store i32* null, i32** %uninit, align
+// PATTERN-I386-LABEL: @test_intptr_uninit()
+// PATTERN-I386: store i32* inttoptr (i32 170 to i32*), i32** %uninit, align 4
 
 TEST_BRACES(intptr, int*);
 // CHECK-LABEL: @test_intptr_braces()
@@ -522,6 +534,8 @@ TEST_UNINIT(intptrptr, int**);
 // PATTERN: store i32** inttoptr (i64 -6148914691236517206 to i32**), i32*** %uninit, align
 // ZERO-LABEL: @test_intptrptr_uninit()
 // ZERO: store i32** null, i32*** %uninit, align
+// PATTERN-I386-LABEL: @test_intptrptr_uninit()
+// PATTERN-I386: store i32** inttoptr (i32 170 to i32**), i32*** %uninit, align 4
 
 TEST_BRACES(intptrptr, int**);
 // CHECK-LABEL: @test_intptrptr_braces()
@@ -537,6 +551,8 @@ TEST_UNINIT(function, void(*)());
 // PATTERN: store void ()* inttoptr (i64 -6148914691236517206 to void ()*), void ()** %uninit, align
 // ZERO-LABEL: @test_function_uninit()
 // ZERO: store void ()* null, void ()** %uninit, align
+// PATTERN-I386-LABEL: @test_function_uninit()
+// PATTERN-I386: store void ()* inttoptr (i32 170 to void ()*), void ()** %uninit, align 4
 
 TEST_BRACES(function, void(*)());
 // CHECK-LABEL: @test_function_braces()
