@@ -364,6 +364,7 @@ const Node *SelectionTree::commonAncestor() const {
     // The tree only contains ancestors of the interesting nodes.
     assert(!Ancestor->Children.empty() && "bad node in selection tree");
   }
+  return nullptr;
 }
 
 } // namespace clangd
