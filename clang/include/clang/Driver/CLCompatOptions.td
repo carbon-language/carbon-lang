@@ -120,8 +120,6 @@ def _SLASH_J : CLFlag<"J">, HelpText<"Make char type unsigned">,
 def _SLASH_O : CLJoined<"O">,
   HelpText<"Set multiple /O flags at once; e.g. '/O2y-' for '/O2 /Oy-'">,
   MetaVarName<"<flags>">;
-// FIXME: Not sure why we have -O0 here; MSVC doesn't support that.
-def : CLFlag<"O0">, Alias<O0>, HelpText<"Disable optimization">;
 def : CLFlag<"O1">, Alias<_SLASH_O>, AliasArgs<["1"]>,
   HelpText<"Optimize for size  (like /Og     /Os /Oy /Ob2 /GF /Gy)">;
 def : CLFlag<"O2">, Alias<_SLASH_O>, AliasArgs<["2"]>,
