@@ -256,6 +256,13 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     reserveRegisterTuples(Reserved, Reg);
   }
 
+  // FIXME: Stop using reserved registers for this.
+  for (MCPhysReg Reg : MFI->getAGPRSpillVGPRs())
+    reserveRegisterTuples(Reserved, Reg);
+
+  for (MCPhysReg Reg : MFI->getVGPRSpillAGPRs())
+    reserveRegisterTuples(Reserved, Reg);
+
   return Reserved;
 }
 
@@ -448,10 +455,19 @@ const TargetRegisterClass *SIRegisterInfo::getPointerRegClass(
 static unsigned getNumSubRegsForSpillOp(unsigned Op) {
 
   switch (Op) {
+  case AMDGPU::SI_SPILL_S1024_SAVE:
+  case AMDGPU::SI_SPILL_S1024_RESTORE:
+  case AMDGPU::SI_SPILL_V1024_SAVE:
+  case AMDGPU::SI_SPILL_V1024_RESTORE:
+  case AMDGPU::SI_SPILL_A1024_SAVE:
+  case AMDGPU::SI_SPILL_A1024_RESTORE:
+    return 32;
   case AMDGPU::SI_SPILL_S512_SAVE:
   case AMDGPU::SI_SPILL_S512_RESTORE:
   case AMDGPU::SI_SPILL_V512_SAVE:
   case AMDGPU::SI_SPILL_V512_RESTORE:
+  case AMDGPU::SI_SPILL_A512_SAVE:
+  case AMDGPU::SI_SPILL_A512_RESTORE:
     return 16;
   case AMDGPU::SI_SPILL_S256_SAVE:
   case AMDGPU::SI_SPILL_S256_RESTORE:
@@ -467,6 +483,8 @@ static unsigned getNumSubRegsForSpillOp(unsigned Op) {
   case AMDGPU::SI_SPILL_S128_RESTORE:
   case AMDGPU::SI_SPILL_V128_SAVE:
   case AMDGPU::SI_SPILL_V128_RESTORE:
+  case AMDGPU::SI_SPILL_A128_SAVE:
+  case AMDGPU::SI_SPILL_A128_RESTORE:
     return 4;
   case AMDGPU::SI_SPILL_S96_SAVE:
   case AMDGPU::SI_SPILL_S96_RESTORE:
@@ -477,11 +495,15 @@ static unsigned getNumSubRegsForSpillOp(unsigned Op) {
   case AMDGPU::SI_SPILL_S64_RESTORE:
   case AMDGPU::SI_SPILL_V64_SAVE:
   case AMDGPU::SI_SPILL_V64_RESTORE:
+  case AMDGPU::SI_SPILL_A64_SAVE:
+  case AMDGPU::SI_SPILL_A64_RESTORE:
     return 2;
   case AMDGPU::SI_SPILL_S32_SAVE:
   case AMDGPU::SI_SPILL_S32_RESTORE:
   case AMDGPU::SI_SPILL_V32_SAVE:
   case AMDGPU::SI_SPILL_V32_RESTORE:
+  case AMDGPU::SI_SPILL_A32_SAVE:
+  case AMDGPU::SI_SPILL_A32_RESTORE:
     return 1;
   default: llvm_unreachable("Invalid spill opcode");
   }
@@ -541,6 +563,35 @@ static int getOffsetMUBUFLoad(unsigned Opc) {
   }
 }
 
+static MachineInstrBuilder spillVGPRtoAGPR(MachineBasicBlock::iterator MI,
+                                           int Index,
+                                           unsigned Lane,
+                                           unsigned ValueReg,
+                                           bool IsKill) {
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineFunction *MF = MI->getParent()->getParent();
+  SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
+  const GCNSubtarget &ST =  MF->getSubtarget<GCNSubtarget>();
+  const SIInstrInfo *TII = ST.getInstrInfo();
+
+  MCPhysReg Reg = MFI->getVGPRToAGPRSpill(Index, Lane);
+
+  if (Reg == AMDGPU::NoRegister)
+    return MachineInstrBuilder();
+
+  bool IsStore = MI->mayStore();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  auto *TRI = static_cast<const SIRegisterInfo*>(MRI.getTargetRegisterInfo());
+
+  unsigned Dst = IsStore ? Reg : ValueReg;
+  unsigned Src = IsStore ? ValueReg : Reg;
+  unsigned Opc = (IsStore ^ TRI->isVGPR(MRI, Reg)) ? AMDGPU::V_ACCVGPR_WRITE_B32
+                                                   : AMDGPU::V_ACCVGPR_READ_B32;
+
+  return BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(Opc), Dst)
+           .addReg(Src, getKillRegState(IsKill));
+}
+
 // This differs from buildSpillLoadStore by only scavenging a VGPR. It does not
 // need to handle the case where an SGPR may need to be spilled while spilling.
 static bool buildMUBUFOffsetLoadStore(const SIInstrInfo *TII,
@@ -559,6 +610,9 @@ static bool buildMUBUFOffsetLoadStore(const SIInstrInfo *TII,
     return false;
 
   const MachineOperand *Reg = TII->getNamedOperand(*MI, AMDGPU::OpName::vdata);
+  if (spillVGPRtoAGPR(MI, Index, 0, Reg->getReg(), false).getInstr())
+    return true;
+
   MachineInstrBuilder NewMI =
       BuildMI(*MBB, MI, DL, TII->get(LoadStoreOp))
           .add(*Reg)
@@ -611,6 +665,10 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
   unsigned Align = MFI.getObjectAlignment(Index);
   const MachinePointerInfo &BasePtrInfo = MMO->getPointerInfo();
 
+  Register TmpReg =
+    hasAGPRs(RC) ? TII->getNamedOperand(*MI, AMDGPU::OpName::tmp)->getReg()
+                 : Register();
+
   assert((Offset % EltSize) == 0 && "unexpected VGPR spill offset");
 
   if (!isUInt<12>(Offset + Size - EltSize)) {
@@ -659,21 +717,38 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
       SrcDstRegState |= getKillRegState(IsKill);
     }
 
-    MachinePointerInfo PInfo = BasePtrInfo.getWithOffset(EltSize * i);
-    MachineMemOperand *NewMMO
-      = MF->getMachineMemOperand(PInfo, MMO->getFlags(),
-                                 EltSize, MinAlign(Align, EltSize * i));
+    auto MIB = spillVGPRtoAGPR(MI, Index, i, SubReg, IsKill);
 
-    auto MIB = BuildMI(*MBB, MI, DL, Desc)
-      .addReg(SubReg, getDefRegState(!IsStore) | getKillRegState(IsKill))
-      .addReg(ScratchRsrcReg)
-      .addReg(SOffset, SOffsetRegState)
-      .addImm(Offset)
-      .addImm(0) // glc
-      .addImm(0) // slc
-      .addImm(0) // tfe
-      .addImm(0) // dlc
-      .addMemOperand(NewMMO);
+    if (!MIB.getInstr()) {
+      unsigned FinalReg = SubReg;
+      if (TmpReg != AMDGPU::NoRegister) {
+        if (IsStore)
+          BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_ACCVGPR_READ_B32), TmpReg)
+            .addReg(SubReg, getKillRegState(IsKill));
+        SubReg = TmpReg;
+      }
+
+      MachinePointerInfo PInfo = BasePtrInfo.getWithOffset(EltSize * i);
+      MachineMemOperand *NewMMO
+        = MF->getMachineMemOperand(PInfo, MMO->getFlags(),
+                                   EltSize, MinAlign(Align, EltSize * i));
+
+      MIB = BuildMI(*MBB, MI, DL, Desc)
+        .addReg(SubReg, getDefRegState(!IsStore) | getKillRegState(IsKill))
+        .addReg(ScratchRsrcReg)
+        .addReg(SOffset, SOffsetRegState)
+        .addImm(Offset)
+        .addImm(0) // glc
+        .addImm(0) // slc
+        .addImm(0) // tfe
+        .addImm(0) // dlc
+        .addMemOperand(NewMMO);
+
+      if (!IsStore && TmpReg != AMDGPU::NoRegister)
+        MIB = BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_ACCVGPR_WRITE_B32),
+                      FinalReg)
+          .addReg(TmpReg, RegState::Kill);
+    }
 
     if (NumSubRegs > 1)
       MIB.addReg(ValueReg, RegState::Implicit | SrcDstRegState);
@@ -1038,6 +1113,7 @@ bool SIRegisterInfo::eliminateSGPRToVGPRSpillFrameIndex(
   int FI,
   RegScavenger *RS) const {
   switch (MI->getOpcode()) {
+  case AMDGPU::SI_SPILL_S1024_SAVE:
   case AMDGPU::SI_SPILL_S512_SAVE:
   case AMDGPU::SI_SPILL_S256_SAVE:
   case AMDGPU::SI_SPILL_S160_SAVE:
@@ -1046,6 +1122,7 @@ bool SIRegisterInfo::eliminateSGPRToVGPRSpillFrameIndex(
   case AMDGPU::SI_SPILL_S64_SAVE:
   case AMDGPU::SI_SPILL_S32_SAVE:
     return spillSGPR(MI, FI, RS, true);
+  case AMDGPU::SI_SPILL_S1024_RESTORE:
   case AMDGPU::SI_SPILL_S512_RESTORE:
   case AMDGPU::SI_SPILL_S256_RESTORE:
   case AMDGPU::SI_SPILL_S160_RESTORE:
@@ -1080,6 +1157,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   switch (MI->getOpcode()) {
     // SGPR register spill
+    case AMDGPU::SI_SPILL_S1024_SAVE:
     case AMDGPU::SI_SPILL_S512_SAVE:
     case AMDGPU::SI_SPILL_S256_SAVE:
     case AMDGPU::SI_SPILL_S160_SAVE:
@@ -1092,6 +1170,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     }
 
     // SGPR register restore
+    case AMDGPU::SI_SPILL_S1024_RESTORE:
     case AMDGPU::SI_SPILL_S512_RESTORE:
     case AMDGPU::SI_SPILL_S256_RESTORE:
     case AMDGPU::SI_SPILL_S160_RESTORE:
@@ -1104,13 +1183,19 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     }
 
     // VGPR register spill
+    case AMDGPU::SI_SPILL_V1024_SAVE:
     case AMDGPU::SI_SPILL_V512_SAVE:
     case AMDGPU::SI_SPILL_V256_SAVE:
     case AMDGPU::SI_SPILL_V160_SAVE:
     case AMDGPU::SI_SPILL_V128_SAVE:
     case AMDGPU::SI_SPILL_V96_SAVE:
     case AMDGPU::SI_SPILL_V64_SAVE:
-    case AMDGPU::SI_SPILL_V32_SAVE: {
+    case AMDGPU::SI_SPILL_V32_SAVE:
+    case AMDGPU::SI_SPILL_A1024_SAVE:
+    case AMDGPU::SI_SPILL_A512_SAVE:
+    case AMDGPU::SI_SPILL_A128_SAVE:
+    case AMDGPU::SI_SPILL_A64_SAVE:
+    case AMDGPU::SI_SPILL_A32_SAVE: {
       const MachineOperand *VData = TII->getNamedOperand(*MI,
                                                          AMDGPU::OpName::vdata);
       assert(TII->getNamedOperand(*MI, AMDGPU::OpName::soffset)->getReg() ==
@@ -1134,7 +1219,13 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     case AMDGPU::SI_SPILL_V128_RESTORE:
     case AMDGPU::SI_SPILL_V160_RESTORE:
     case AMDGPU::SI_SPILL_V256_RESTORE:
-    case AMDGPU::SI_SPILL_V512_RESTORE: {
+    case AMDGPU::SI_SPILL_V512_RESTORE:
+    case AMDGPU::SI_SPILL_V1024_RESTORE:
+    case AMDGPU::SI_SPILL_A32_RESTORE:
+    case AMDGPU::SI_SPILL_A64_RESTORE:
+    case AMDGPU::SI_SPILL_A128_RESTORE:
+    case AMDGPU::SI_SPILL_A512_RESTORE:
+    case AMDGPU::SI_SPILL_A1024_RESTORE: {
       const MachineOperand *VData = TII->getNamedOperand(*MI,
                                                          AMDGPU::OpName::vdata);
       assert(TII->getNamedOperand(*MI, AMDGPU::OpName::soffset)->getReg() ==

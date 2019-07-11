@@ -976,6 +976,8 @@ static unsigned getSGPRSpillSaveOpcode(unsigned Size) {
     return AMDGPU::SI_SPILL_S256_SAVE;
   case 64:
     return AMDGPU::SI_SPILL_S512_SAVE;
+  case 128:
+    return AMDGPU::SI_SPILL_S1024_SAVE;
   default:
     llvm_unreachable("unknown register size");
   }
@@ -997,6 +999,25 @@ static unsigned getVGPRSpillSaveOpcode(unsigned Size) {
     return AMDGPU::SI_SPILL_V256_SAVE;
   case 64:
     return AMDGPU::SI_SPILL_V512_SAVE;
+  case 128:
+    return AMDGPU::SI_SPILL_V1024_SAVE;
+  default:
+    llvm_unreachable("unknown register size");
+  }
+}
+
+static unsigned getAGPRSpillSaveOpcode(unsigned Size) {
+  switch (Size) {
+  case 4:
+    return AMDGPU::SI_SPILL_A32_SAVE;
+  case 8:
+    return AMDGPU::SI_SPILL_A64_SAVE;
+  case 16:
+    return AMDGPU::SI_SPILL_A128_SAVE;
+  case 64:
+    return AMDGPU::SI_SPILL_A512_SAVE;
+  case 128:
+    return AMDGPU::SI_SPILL_A1024_SAVE;
   default:
     llvm_unreachable("unknown register size");
   }
@@ -1055,17 +1076,22 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     return;
   }
 
-  assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
-
-  unsigned Opcode = getVGPRSpillSaveOpcode(SpillSize);
+  unsigned Opcode = RI.hasAGPRs(RC) ? getAGPRSpillSaveOpcode(SpillSize)
+                                    : getVGPRSpillSaveOpcode(SpillSize);
   MFI->setHasSpilledVGPRs();
-  BuildMI(MBB, MI, DL, get(Opcode))
-    .addReg(SrcReg, getKillRegState(isKill)) // data
-    .addFrameIndex(FrameIndex)               // addr
-    .addReg(MFI->getScratchRSrcReg())        // scratch_rsrc
-    .addReg(MFI->getStackPtrOffsetReg())     // scratch_offset
-    .addImm(0)                               // offset
-    .addMemOperand(MMO);
+
+  auto MIB = BuildMI(MBB, MI, DL, get(Opcode));
+  if (RI.hasAGPRs(RC)) {
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+    unsigned Tmp = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
+    MIB.addReg(Tmp, RegState::Define);
+  }
+  MIB.addReg(SrcReg, getKillRegState(isKill)) // data
+     .addFrameIndex(FrameIndex)               // addr
+     .addReg(MFI->getScratchRSrcReg())        // scratch_rsrc
+     .addReg(MFI->getStackPtrOffsetReg())     // scratch_offset
+     .addImm(0)                               // offset
+     .addMemOperand(MMO);
 }
 
 static unsigned getSGPRSpillRestoreOpcode(unsigned Size) {
@@ -1084,6 +1110,8 @@ static unsigned getSGPRSpillRestoreOpcode(unsigned Size) {
     return AMDGPU::SI_SPILL_S256_RESTORE;
   case 64:
     return AMDGPU::SI_SPILL_S512_RESTORE;
+  case 128:
+    return AMDGPU::SI_SPILL_S1024_RESTORE;
   default:
     llvm_unreachable("unknown register size");
   }
@@ -1105,6 +1133,25 @@ static unsigned getVGPRSpillRestoreOpcode(unsigned Size) {
     return AMDGPU::SI_SPILL_V256_RESTORE;
   case 64:
     return AMDGPU::SI_SPILL_V512_RESTORE;
+  case 128:
+    return AMDGPU::SI_SPILL_V1024_RESTORE;
+  default:
+    llvm_unreachable("unknown register size");
+  }
+}
+
+static unsigned getAGPRSpillRestoreOpcode(unsigned Size) {
+  switch (Size) {
+  case 4:
+    return AMDGPU::SI_SPILL_A32_RESTORE;
+  case 8:
+    return AMDGPU::SI_SPILL_A64_RESTORE;
+  case 16:
+    return AMDGPU::SI_SPILL_A128_RESTORE;
+  case 64:
+    return AMDGPU::SI_SPILL_A512_RESTORE;
+  case 128:
+    return AMDGPU::SI_SPILL_A1024_RESTORE;
   default:
     llvm_unreachable("unknown register size");
   }
@@ -1156,15 +1203,19 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     return;
   }
 
-  assert(RI.hasVGPRs(RC) && "Only VGPR spilling expected");
-
-  unsigned Opcode = getVGPRSpillRestoreOpcode(SpillSize);
-  BuildMI(MBB, MI, DL, get(Opcode), DestReg)
-    .addFrameIndex(FrameIndex)           // vaddr
-    .addReg(MFI->getScratchRSrcReg())    // scratch_rsrc
-    .addReg(MFI->getStackPtrOffsetReg()) // scratch_offset
-    .addImm(0)                           // offset
-    .addMemOperand(MMO);
+  unsigned Opcode = RI.hasAGPRs(RC) ? getAGPRSpillRestoreOpcode(SpillSize)
+                                    : getVGPRSpillRestoreOpcode(SpillSize);
+  auto MIB = BuildMI(MBB, MI, DL, get(Opcode), DestReg);
+  if (RI.hasAGPRs(RC)) {
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+    unsigned Tmp = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
+    MIB.addReg(Tmp, RegState::Define);
+  }
+  MIB.addFrameIndex(FrameIndex)        // vaddr
+     .addReg(MFI->getScratchRSrcReg()) // scratch_rsrc
+     .addReg(MFI->getStackPtrOffsetReg()) // scratch_offset
+     .addImm(0)                           // offset
+     .addMemOperand(MMO);
 }
 
 /// \param @Offset Offset in bytes of the FrameIndex being spilled

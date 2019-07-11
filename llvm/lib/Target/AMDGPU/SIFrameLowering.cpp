@@ -913,7 +913,6 @@ static bool allStackObjectsAreDead(const MachineFrameInfo &MFI) {
   return true;
 }
 
-
 #ifndef NDEBUG
 static bool allSGPRSpillsAreDead(const MachineFrameInfo &MFI,
                                  Optional<int> FramePointerSaveIndex) {
@@ -947,6 +946,7 @@ void SIFrameLowering::processFunctionBeforeFrameFinalized(
   const SIRegisterInfo *TRI = ST.getRegisterInfo();
   SIMachineFunctionInfo *FuncInfo = MF.getInfo<SIMachineFunctionInfo>();
 
+  FuncInfo->removeDeadFrameIndices(MFI);
   assert(allSGPRSpillsAreDead(MFI, None) &&
          "SGPR spill should have been removed in SILowerSGPRSpills");
 
