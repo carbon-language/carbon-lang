@@ -42,7 +42,7 @@ namespace {
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
-  Writer() : buffer(errorHandler().OutputBuffer) {}
+  Writer() : buffer(errorHandler().outputBuffer) {}
   using Elf_Shdr = typename ELFT::Shdr;
   using Elf_Ehdr = typename ELFT::Ehdr;
   using Elf_Phdr = typename ELFT::Phdr;
@@ -103,8 +103,8 @@ StringRef elf::getOutputSectionName(const InputSectionBase *s) {
     if (InputSectionBase *rel = isec->getRelocatedSection()) {
       OutputSection *out = rel->getOutputSection();
       if (s->type == SHT_RELA)
-        return Saver.save(".rela" + out->name);
-      return Saver.save(".rel" + out->name);
+        return saver.save(".rela" + out->name);
+      return saver.save(".rel" + out->name);
     }
   }
 
@@ -2006,8 +2006,8 @@ void Writer<ELFT>::addStartStopSymbols(OutputSection *sec) {
   StringRef s = sec->name;
   if (!isValidCIdentifier(s))
     return;
-  addOptionalRegular(Saver.save("__start_" + s), sec, 0, STV_PROTECTED);
-  addOptionalRegular(Saver.save("__stop_" + s), sec, -1, STV_PROTECTED);
+  addOptionalRegular(saver.save("__start_" + s), sec, 0, STV_PROTECTED);
+  addOptionalRegular(saver.save("__stop_" + s), sec, -1, STV_PROTECTED);
 }
 
 static bool needsPtLoad(OutputSection *sec) {
