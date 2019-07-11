@@ -7,6 +7,8 @@
 // RUN: %clang_cc1 -std=c++14 -triple x86_64-unknown-unknown -fblocks -ftrivial-auto-var-init=zero %s -O1 -fexperimental-new-pass-manager -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-O1,ZERO,ZERO-O1,ZERO-O1-NEWPM
 // RUN: %clang_cc1 -std=c++14 -triple i386-unknown-unknown -fblocks -ftrivial-auto-var-init=pattern %s -emit-llvm -o - | FileCheck %s -check-prefixes=PATTERN-I386
 
+#pragma clang diagnostic ignored "-Winaccessible-base"
+
 template<typename T> void used(T &) noexcept;
 
 #define TEST_UNINIT(NAME, TYPE)                 \
