@@ -2150,11 +2150,13 @@ TEST(GetDeducedType, KwAutoExpansion) {
   for (Test T : Tests) {
     Annotations File(T.AnnotatedCode);
     auto AST = TestTU::withCode(File.code()).build();
-    ASSERT_TRUE(AST.getDiagnostics().empty()) << AST.getDiagnostics().begin()->Message;
+    ASSERT_TRUE(AST.getDiagnostics().empty())
+        << AST.getDiagnostics().begin()->Message;
     SourceManagerForFile SM("foo.cpp", File.code());
 
     for (Position Pos : File.points()) {
       auto Location = sourceLocationInMainFile(SM.get(), Pos);
+      ASSERT_TRUE(!!Location) << llvm::toString(Location.takeError());
       auto DeducedType = getDeducedType(AST, *Location);
       EXPECT_EQ(DeducedType->getAsString(), T.DeducedType);
     }
