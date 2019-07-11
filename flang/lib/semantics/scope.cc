@@ -13,13 +13,12 @@
 // limitations under the License.
 
 #include "scope.h"
-#include "semantics.h"
 #include "symbol.h"
 #include "type.h"
-#include "../evaluate/fold.h"
 #include "../parser/characters.h"
 #include <algorithm>
 #include <memory>
+#include <sstream>
 
 namespace Fortran::semantics {
 
@@ -123,6 +122,11 @@ bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
   return submodules_.emplace(name, &submodule).second;
 }
 
+const DeclTypeSpec *Scope::FindType(const DeclTypeSpec &type) const {
+  auto it{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
+  return it != declTypeSpecs_.end() ? &*it : nullptr;
+}
+
 const DeclTypeSpec &Scope::MakeNumericType(
     TypeCategory category, KindExpr &&kind) {
   return MakeLengthlessType(NumericTypeSpec{category, std::move(kind)});
@@ -139,12 +143,8 @@ const DeclTypeSpec &Scope::MakeClassStarType() {
 // Types that can't have length parameters can be reused without having to
 // compare length expressions. They are stored in the global scope.
 const DeclTypeSpec &Scope::MakeLengthlessType(DeclTypeSpec &&type) {
-  auto it{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
-  if (it != declTypeSpecs_.end()) {
-    return *it;
-  } else {
-    return declTypeSpecs_.emplace_back(std::move(type));
-  }
+  const auto *found{FindType(type)};
+  return found ? *found : declTypeSpecs_.emplace_back(std::move(type));
 }
 
 const DeclTypeSpec &Scope::MakeCharacterType(
@@ -300,75 +300,12 @@ bool Scope::IsParameterizedDerivedType() const {
 const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
     const DerivedTypeSpec &spec, DeclTypeSpec::Category category) const {
   DeclTypeSpec type{category, spec};
-  auto typeIter{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
-  if (typeIter != declTypeSpecs_.end()) {
-    return &*typeIter;
-  }
-  if (&parent_ == this) {
+  if (const auto *result{FindType(type)}) {
+    return result;
+  } else if (kind() == Kind::Global) {
     return nullptr;
-  }
-  return parent_.FindInstantiatedDerivedType(spec, category);
-}
-
-const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
-    SemanticsContext &semanticsContext, DeclTypeSpec::Category category) {
-  spec.ProcessParameterExpressions(semanticsContext.foldingContext());
-  if (const DeclTypeSpec * type{FindInstantiatedDerivedType(spec, category)}) {
-    return *type;
-  }
-  // Create a new instantiation of this parameterized derived type
-  // for this particular distinct set of actual parameter values.
-  DeclTypeSpec &type{MakeDerivedType(std::move(spec), category)};
-  type.derivedTypeSpec().Instantiate(*this, semanticsContext);
-  return type;
-}
-
-Scope &Scope::InstantiateDerivedType(
-    const Scope &from, SemanticsContext &semanticsContext) {
-  CHECK(from.kind_ == Kind::DerivedType);
-  sourceRange_ = from.sourceRange_;
-  chars_ = from.chars_;
-  for (const auto &pair : from.symbols_) {
-    pair.second->Instantiate(*this, semanticsContext);
-  }
-  return *this;
-}
-
-const DeclTypeSpec &Scope::InstantiateIntrinsicType(
-    const DeclTypeSpec &spec, SemanticsContext &semanticsContext) {
-  const IntrinsicTypeSpec *intrinsic{spec.AsIntrinsic()};
-  CHECK(intrinsic != nullptr);
-  if (evaluate::ToInt64(intrinsic->kind()).has_value()) {
-    return spec;  // KIND is already a known constant
-  }
-  // The expression was not originally constant, but now it must be so
-  // in the context of a parameterized derived type instantiation.
-  KindExpr copy{intrinsic->kind()};
-  evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
-  copy = evaluate::Fold(foldingContext, std::move(copy));
-  int kind{semanticsContext.GetDefaultKind(intrinsic->category())};
-  if (auto value{evaluate::ToInt64(copy)}) {
-    if (evaluate::IsValidKindOfIntrinsicType(intrinsic->category(), *value)) {
-      kind = *value;
-    } else {
-      foldingContext.messages().Say(
-          "KIND parameter value (%jd) of intrinsic type %s "
-          "did not resolve to a supported value"_err_en_US,
-          static_cast<std::intmax_t>(*value),
-          parser::ToUpperCaseLetters(
-              common::EnumToString(intrinsic->category())));
-    }
-  }
-  switch (spec.category()) {
-  case DeclTypeSpec::Numeric:
-    return declTypeSpecs_.emplace_back(
-        NumericTypeSpec{intrinsic->category(), KindExpr{kind}});
-  case DeclTypeSpec::Logical:
-    return declTypeSpecs_.emplace_back(LogicalTypeSpec{KindExpr{kind}});
-  case DeclTypeSpec::Character:
-    return declTypeSpecs_.emplace_back(CharacterTypeSpec{
-        ParamValue{spec.characterTypeSpec().length()}, KindExpr{kind}});
-  default: CRASH_NO_CASE;
+  } else {
+    return parent().FindInstantiatedDerivedType(spec, category);
   }
 }
 

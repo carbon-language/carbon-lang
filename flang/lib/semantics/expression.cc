@@ -1892,8 +1892,8 @@ static void FixMisparsedFunctionReference(
             CHECK(derivedType->has<semantics::DerivedTypeDetails>());
             auto &scope{context.FindScope(name->source)};
             const semantics::DeclTypeSpec &type{
-                scope.FindOrInstantiateDerivedType(
-                    semantics::DerivedTypeSpec{*derivedType}, context)};
+                semantics::FindOrInstantiateDerivedType(
+                    scope, semantics::DerivedTypeSpec{*derivedType}, context)};
             u = funcRef.ConvertToStructureConstructor(type.derivedTypeSpec());
           } else {
             common::die(

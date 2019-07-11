@@ -2954,7 +2954,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   }
 
   auto category{GetDeclTypeSpecCategory()};
-  spec.ProcessParameterExpressions(context().foldingContext());
+  ProcessParameterExpressions(spec, context().foldingContext());
   if (const DeclTypeSpec *
       extant{currScope().FindInstantiatedDerivedType(spec, category)}) {
     // This derived type and parameter expressions (if any) are already present
@@ -2973,7 +2973,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       // clone its contents, specialize them with the actual type parameter
       // values, and check constraints.
       auto save{GetFoldingContext().messages().SetLocation(*currStmtSource())};
-      type.derivedTypeSpec().Instantiate(currScope(), context());
+      InstantiateDerivedType(type.derivedTypeSpec(), currScope(), context());
     }
     SetDeclTypeSpec(type);
   }

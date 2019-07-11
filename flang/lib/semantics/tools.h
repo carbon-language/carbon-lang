@@ -103,6 +103,14 @@ bool IsFinalizable(const Symbol &symbol);
 bool IsCoarray(const Symbol &symbol);
 bool IsAssumedSizeArray(const Symbol &symbol);
 
+// Create a new instantiation of this parameterized derived type
+// for this particular distinct set of actual parameter values.
+void InstantiateDerivedType(DerivedTypeSpec &, Scope &, SemanticsContext &);
+// Return an existing or new derived type instance
+const DeclTypeSpec &FindOrInstantiateDerivedType(Scope &, DerivedTypeSpec &&,
+    SemanticsContext &, DeclTypeSpec::Category = DeclTypeSpec::TypeDerived);
+void ProcessParameterExpressions(DerivedTypeSpec &, evaluate::FoldingContext &);
+
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for
 // diagnostic purposes if so.

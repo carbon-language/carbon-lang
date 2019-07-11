@@ -30,7 +30,6 @@ namespace Fortran::semantics {
 /// *Details classes.
 
 class Scope;
-class SemanticsContext;
 class Symbol;
 
 using SymbolVector = std::vector<const Symbol *>;
@@ -609,9 +608,6 @@ public:
         },
         details_);
   }
-
-  // Clones the Symbol in the context of a parameterized derived type instance
-  Symbol &Instantiate(Scope &, SemanticsContext &) const;
 
   // If there is a parent component, return a pointer to its derived type spec.
   // The Scope * argument defaults to this->scope_ but should be overridden

@@ -14,9 +14,7 @@
 
 #include "symbol.h"
 #include "scope.h"
-#include "semantics.h"
 #include "../common/idioms.h"
-#include "../evaluate/fold.h"
 #include <ostream>
 #include <string>
 
@@ -524,93 +522,6 @@ std::ostream &DumpForUnparse(
     DumpType(os, symbol.GetType());
   }
   return os;
-}
-
-Symbol &Symbol::Instantiate(
-    Scope &scope, SemanticsContext &semanticsContext) const {
-  evaluate::FoldingContext foldingContext{semanticsContext.foldingContext()};
-  CHECK(foldingContext.pdtInstance() != nullptr);
-  const DerivedTypeSpec &instanceSpec{*foldingContext.pdtInstance()};
-  auto pair{scope.try_emplace(name_, attrs_)};
-  Symbol &symbol{*pair.first->second};
-  if (!pair.second) {
-    // Symbol was already present in the scope, which can only happen
-    // in the case of type parameters.
-    CHECK(has<TypeParamDetails>());
-    return symbol;
-  }
-  symbol.attrs_ = attrs_;
-  symbol.flags_ = flags_;
-  std::visit(
-      common::visitors{
-          [&](const ObjectEntityDetails &that) {
-            symbol.details_ = that;
-            ObjectEntityDetails &details{symbol.get<ObjectEntityDetails>()};
-            if (DeclTypeSpec * origType{symbol.GetType()}) {
-              if (const DerivedTypeSpec * derived{origType->AsDerived()}) {
-                DerivedTypeSpec newSpec{*derived};
-                if (test(Flag::ParentComp)) {
-                  // Forward any explicit type parameter values from the
-                  // derived type spec under instantiation to its parent
-                  // component derived type spec that define type parameters
-                  // of the parent component.
-                  for (const auto &pair : instanceSpec.parameters()) {
-                    if (scope.find(pair.first) == scope.end()) {
-                      newSpec.AddParamValue(
-                          pair.first, ParamValue{pair.second});
-                    }
-                  }
-                }
-                details.ReplaceType(
-                    scope.FindOrInstantiateDerivedType(std::move(newSpec),
-                        semanticsContext, origType->category()));
-              } else if (origType->AsIntrinsic() != nullptr) {
-                const DeclTypeSpec &newType{scope.InstantiateIntrinsicType(
-                    *origType, semanticsContext)};
-                details.ReplaceType(newType);
-              } else if (origType->category() != DeclTypeSpec::ClassStar) {
-                common::die("instantiated component has type that is "
-                            "neither intrinsic, derived, nor CLASS(*)");
-              }
-            }
-            details.set_init(
-                evaluate::Fold(foldingContext, std::move(details.init())));
-            for (ShapeSpec &dim : details.shape()) {
-              if (dim.lbound().isExplicit()) {
-                dim.lbound().SetExplicit(Fold(
-                    foldingContext, std::move(dim.lbound().GetExplicit())));
-              }
-              if (dim.ubound().isExplicit()) {
-                dim.ubound().SetExplicit(Fold(
-                    foldingContext, std::move(dim.ubound().GetExplicit())));
-              }
-            }
-            for (ShapeSpec &dim : details.coshape()) {
-              if (dim.lbound().isExplicit()) {
-                dim.lbound().SetExplicit(Fold(
-                    foldingContext, std::move(dim.lbound().GetExplicit())));
-              }
-              if (dim.ubound().isExplicit()) {
-                dim.ubound().SetExplicit(Fold(
-                    foldingContext, std::move(dim.ubound().GetExplicit())));
-              }
-            }
-          },
-          [&](const ProcBindingDetails &that) { symbol.details_ = that; },
-          [&](const GenericBindingDetails &that) { symbol.details_ = that; },
-          [&](const ProcEntityDetails &that) { symbol.details_ = that; },
-          [&](const FinalProcDetails &that) { symbol.details_ = that; },
-          [&](const TypeParamDetails &that) {
-            // LEN type parameter, or error recovery on a KIND type parameter
-            // with no corresponding actual argument or default
-            symbol.details_ = that;
-          },
-          [&](const auto &that) {
-            common::die("unexpected details in Symbol::Instantiate");
-          },
-      },
-      details_);
-  return symbol;
 }
 
 const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {

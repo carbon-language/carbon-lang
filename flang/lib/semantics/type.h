@@ -33,15 +33,10 @@ namespace Fortran::parser {
 struct Expr;
 }
 
-namespace Fortran::evaluate {
-class FoldingContext;
-}
-
 namespace Fortran::semantics {
 
 class Scope;
 class Symbol;
-class SemanticsContext;
 class ExprResolver;
 
 /// A SourceName is a name in the cooked character stream,
@@ -231,6 +226,7 @@ public:
   const Symbol &typeSymbol() const { return typeSymbol_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
+  void ReplaceScope(const Scope &);
   const std::map<SourceName, ParamValue> &parameters() const {
     return parameters_;
   }
@@ -246,8 +242,6 @@ public:
       return nullptr;
     }
   }
-  void ProcessParameterExpressions(evaluate::FoldingContext &);
-  Scope &Instantiate(Scope &, SemanticsContext &);
   bool operator==(const DerivedTypeSpec &that) const {
     return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
   }

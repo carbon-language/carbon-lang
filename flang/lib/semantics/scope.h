@@ -23,12 +23,12 @@
 #include "../parser/provenance.h"
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 
 namespace Fortran::semantics {
 
-class SemanticsContext;
 using namespace parser::literals;
 
 using common::ConstantSubscript;
@@ -162,6 +162,7 @@ public:
   Scope *FindSubmodule(const SourceName &) const;
   bool AddSubmodule(const SourceName &, Scope &);
 
+  const DeclTypeSpec *FindType(const DeclTypeSpec &) const;
   const DeclTypeSpec &MakeNumericType(TypeCategory, KindExpr &&kind);
   const DeclTypeSpec &MakeLogicalType(KindExpr &&kind);
   const DeclTypeSpec &MakeCharacterType(
@@ -202,17 +203,6 @@ public:
   // Attempts to find a match for a derived type instance
   const DeclTypeSpec *FindInstantiatedDerivedType(const DerivedTypeSpec &,
       DeclTypeSpec::Category = DeclTypeSpec::TypeDerived) const;
-
-  // Returns a matching derived type instance if one exists, otherwise
-  // creates one
-  const DeclTypeSpec &FindOrInstantiateDerivedType(DerivedTypeSpec &&,
-      SemanticsContext &, DeclTypeSpec::Category = DeclTypeSpec::TypeDerived);
-
-  // Clones a DerivedType scope for a new instance from the type definition.
-  Scope &InstantiateDerivedType(const Scope &, SemanticsContext &);
-
-  const DeclTypeSpec &InstantiateIntrinsicType(
-      const DeclTypeSpec &, SemanticsContext &);
 
   bool IsModuleFile() const {
     return kind_ == Kind::Module && symbol_ != nullptr &&
