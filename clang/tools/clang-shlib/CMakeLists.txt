@@ -1,4 +1,4 @@
-# Building libclang_shared.so fails if LLVM_ENABLE_PIC=Off
+# Building libclang-cpp.so fails if LLVM_ENABLE_PIC=Off
 if (NOT LLVM_ENABLE_PIC)
   return()
 endif()
@@ -38,7 +38,7 @@ foreach (lib ${clang_libs})
   list(APPEND _DEPS ${lib})
 endforeach ()
 
-add_clang_library(clang_shared
+add_clang_library(clang-cpp
                   SHARED
                   clang-shlib.cpp
                   ${_OBJECTS}
