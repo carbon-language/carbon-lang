@@ -166,6 +166,8 @@ TYPE_PARSER("DEFAULTMAP" >>
     "NOGROUP" >> construct<OmpClause>(construct<OmpClause::Nogroup>()) ||
     "NOTINBRANCH" >>
         construct<OmpClause>(construct<OmpClause::Notinbranch>()) ||
+    "THREADS" >> construct<OmpClause>(construct<OmpClause::Threads>()) ||
+    "SIMD" >> construct<OmpClause>(construct<OmpClause::Simd>()) ||
     "NOWAIT" >> construct<OmpClause>(construct<OmpNowait>()) ||
     "UNTIED" >> construct<OmpClause>(construct<OmpClause::Untied>()) ||
     "COLLAPSE" >> construct<OmpClause>(construct<OmpClause::Collapse>(

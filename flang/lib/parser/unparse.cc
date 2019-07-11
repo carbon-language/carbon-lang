@@ -1861,6 +1861,8 @@ public:
   void Before(const OmpClause::Nogroup &x) { Word("NOGROUP"); }
   void Before(const OmpClause::Notinbranch &x) { Word("NOTINBRANCH"); }
   void Before(const OmpClause::Untied &x) { Word("UNTIED"); }
+  void Before(const OmpClause::Threads &x) { Word("THREADS"); }
+  void Before(const OmpClause::Simd &x) { Word("SIMD"); }
   void Unparse(const OmpNowait &) { Word("NOWAIT"); }
   void Unparse(const OmpClause::Collapse &x) {
     Word("COLLAPSE(");

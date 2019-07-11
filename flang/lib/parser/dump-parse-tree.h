@@ -460,6 +460,8 @@ public:
   NODE(parser::OmpClause, Mergeable)
   NODE(parser::OmpClause, Nogroup)
   NODE(parser::OmpClause, Notinbranch)
+  NODE(parser::OmpClause, Threads)
+  NODE(parser::OmpClause, Simd)
   NODE(parser::OmpClause, NumTasks)
   NODE(parser::OmpClause, NumTeams)
   NODE(parser::OmpClause, NumThreads)

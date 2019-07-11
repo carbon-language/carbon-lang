@@ -3418,6 +3418,8 @@ struct OmpClause {
   EMPTY_CLASS(Nogroup);
   EMPTY_CLASS(Notinbranch);
   EMPTY_CLASS(Untied);
+  EMPTY_CLASS(Threads);
+  EMPTY_CLASS(Simd);
   WRAPPER_CLASS(Collapse, ScalarIntConstantExpr);
   WRAPPER_CLASS(Copyin, OmpObjectList);
   WRAPPER_CLASS(Copyprivate, OmpObjectList);
@@ -3445,10 +3447,10 @@ struct OmpClause {
   WRAPPER_CLASS(IsDevicePtr, std::list<Name>);
   CharBlock source;
   std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, OmpNowait,
-      Untied, Collapse, Copyin, Copyprivate, Device, DistSchedule, Final,
-      Firstprivate, From, Grainsize, Lastprivate, NumTasks, NumTeams,
-      NumThreads, Ordered, Priority, Private, Safelen, Shared, Simdlen,
-      ThreadLimit, To, Link, Uniform, UseDevicePtr, IsDevicePtr,
+      Untied, Threads, Simd, Collapse, Copyin, Copyprivate, Device,
+      DistSchedule, Final, Firstprivate, From, Grainsize, Lastprivate, NumTasks,
+      NumTeams, NumThreads, Ordered, Priority, Private, Safelen, Shared,
+      Simdlen, ThreadLimit, To, Link, Uniform, UseDevicePtr, IsDevicePtr,
       OmpAlignedClause, OmpDefaultClause, OmpDependClause, OmpIfClause,
       OmpLinearClause, OmpMapClause, OmpProcBindClause, OmpReductionClause,
       OmpScheduleClause>
