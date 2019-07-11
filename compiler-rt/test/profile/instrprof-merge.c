@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "profile_test.h"
 
 int __llvm_profile_runtime = 0;
 uint64_t __llvm_profile_get_size_for_buffer(void);
@@ -41,7 +42,7 @@ int main(int argc, const char *argv[]) {
     return 1;
 
   const uint64_t MaxSize = 10000;
-  static char Buffer[MaxSize];
+  static ALIGNED(sizeof(uint64_t)) char Buffer[MaxSize];
 
   uint64_t Size = __llvm_profile_get_size_for_buffer();
   if (Size > MaxSize)
