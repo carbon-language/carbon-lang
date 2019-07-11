@@ -158,24 +158,21 @@ TYPE_PARSER(construct<OmpObject>(pure(OmpObject::Kind::Object), designator) ||
     construct<OmpObject>(
         "/" >> pure(OmpObject::Kind::Common), designator / "/"))
 
-TYPE_PARSER("DEFAULTMAP" >>
-        construct<OmpClause>(construct<OmpClause::Defaultmap>(
-            parenthesized("TOFROM"_tok >> ":"_tok >> "SCALAR"_tok))) ||
-    "INBRANCH" >> construct<OmpClause>(construct<OmpClause::Inbranch>()) ||
-    "MERGEABLE" >> construct<OmpClause>(construct<OmpClause::Mergeable>()) ||
-    "NOGROUP" >> construct<OmpClause>(construct<OmpClause::Nogroup>()) ||
-    "NOTINBRANCH" >>
-        construct<OmpClause>(construct<OmpClause::Notinbranch>()) ||
-    "THREADS" >> construct<OmpClause>(construct<OmpClause::Threads>()) ||
-    "SIMD" >> construct<OmpClause>(construct<OmpClause::Simd>()) ||
-    "NOWAIT" >> construct<OmpClause>(construct<OmpNowait>()) ||
-    "UNTIED" >> construct<OmpClause>(construct<OmpClause::Untied>()) ||
+TYPE_PARSER("ALIGNED" >>
+        construct<OmpClause>(parenthesized(Parser<OmpAlignedClause>{})) ||
     "COLLAPSE" >> construct<OmpClause>(construct<OmpClause::Collapse>(
                       parenthesized(scalarIntConstantExpr))) ||
     "COPYIN" >> construct<OmpClause>(construct<OmpClause::Copyin>(
                     parenthesized(Parser<OmpObjectList>{}))) ||
     "COPYPRIVATE" >> construct<OmpClause>(construct<OmpClause::Copyprivate>(
                          (parenthesized(Parser<OmpObjectList>{})))) ||
+    "DEFAULTMAP" >>
+        construct<OmpClause>(construct<OmpClause::Defaultmap>(
+            parenthesized("TOFROM"_tok >> ":"_tok >> "SCALAR"_tok))) ||
+    "DEFAULT" >>
+        construct<OmpClause>(parenthesized(Parser<OmpDefaultClause>{})) ||
+    "DEPEND" >>
+        construct<OmpClause>(parenthesized(Parser<OmpDependClause>{})) ||
     "DEVICE" >> construct<OmpClause>(construct<OmpClause::Device>(
                     parenthesized(scalarIntExpr))) ||
     "DIST_SCHEDULE" >>
@@ -189,8 +186,22 @@ TYPE_PARSER("DEFAULTMAP" >>
                   parenthesized(nonemptyList(designator)))) ||
     "GRAINSIZE" >> construct<OmpClause>(construct<OmpClause::Grainsize>(
                        parenthesized(scalarIntExpr))) ||
+    "IF" >> construct<OmpClause>(parenthesized(Parser<OmpIfClause>{})) ||
+    "INBRANCH" >> construct<OmpClause>(construct<OmpClause::Inbranch>()) ||
+    "IS_DEVICE_PTR" >> construct<OmpClause>(construct<OmpClause::IsDevicePtr>(
+                           parenthesized(nonemptyList(name)))) ||
     "LASTPRIVATE" >> construct<OmpClause>(construct<OmpClause::Lastprivate>(
                          parenthesized(Parser<OmpObjectList>{}))) ||
+    "LINEAR" >>
+        construct<OmpClause>(parenthesized(Parser<OmpLinearClause>{})) ||
+    "LINK" >> construct<OmpClause>(construct<OmpClause::Link>(
+                  parenthesized(nonemptyList(designator)))) ||
+    "MAP" >> construct<OmpClause>(parenthesized(Parser<OmpMapClause>{})) ||
+    "MERGEABLE" >> construct<OmpClause>(construct<OmpClause::Mergeable>()) ||
+    "NOGROUP" >> construct<OmpClause>(construct<OmpClause::Nogroup>()) ||
+    "NOTINBRANCH" >>
+        construct<OmpClause>(construct<OmpClause::Notinbranch>()) ||
+    "NOWAIT" >> construct<OmpClause>(construct<OmpNowait>()) ||
     "NUM_TASKS" >> construct<OmpClause>(construct<OmpClause::NumTasks>(
                        parenthesized(scalarIntExpr))) ||
     "NUM_TEAMS" >> construct<OmpClause>(construct<OmpClause::NumTeams>(
@@ -203,40 +214,29 @@ TYPE_PARSER("DEFAULTMAP" >>
                       parenthesized(scalarIntExpr))) ||
     "PRIVATE" >> construct<OmpClause>(construct<OmpClause::Private>(
                      parenthesized(Parser<OmpObjectList>{}))) ||
-    "SAFELEN" >> construct<OmpClause>(construct<OmpClause::Safelen>(
-                     parenthesized(scalarIntConstantExpr))) ||
-    "SHARED" >> construct<OmpClause>(construct<OmpClause::Shared>(
-                    parenthesized(Parser<OmpObjectList>{}))) ||
-    "SIMDLEN" >> construct<OmpClause>(construct<OmpClause::Simdlen>(
-                     parenthesized(scalarIntConstantExpr))) ||
-    "THREAD_LIMIT" >> construct<OmpClause>(construct<OmpClause::ThreadLimit>(
-                          parenthesized(scalarIntExpr))) ||
-    "TO" >> construct<OmpClause>(construct<OmpClause::To>(
-                parenthesized(nonemptyList(designator)))) ||
-    "LINK" >> construct<OmpClause>(construct<OmpClause::Link>(
-                  parenthesized(nonemptyList(designator)))) ||
-    "UNIFORM" >> construct<OmpClause>(construct<OmpClause::Uniform>(
-                     parenthesized(nonemptyList(name)))) ||
-    "USE_DEVICE_PTR" >> construct<OmpClause>(construct<OmpClause::UseDevicePtr>(
-                            parenthesized(nonemptyList(name)))) ||
-    "IS_DEVICE_PTR" >> construct<OmpClause>(construct<OmpClause::IsDevicePtr>(
-                           parenthesized(nonemptyList(name)))) ||
-    "ALIGNED" >>
-        construct<OmpClause>(parenthesized(Parser<OmpAlignedClause>{})) ||
-    "DEFAULT" >>
-        construct<OmpClause>(parenthesized(Parser<OmpDefaultClause>{})) ||
-    "DEPEND" >>
-        construct<OmpClause>(parenthesized(Parser<OmpDependClause>{})) ||
-    "IF" >> construct<OmpClause>(parenthesized(Parser<OmpIfClause>{})) ||
-    "LINEAR" >>
-        construct<OmpClause>(parenthesized(Parser<OmpLinearClause>{})) ||
-    "MAP" >> construct<OmpClause>(parenthesized(Parser<OmpMapClause>{})) ||
     "PROC_BIND" >>
         construct<OmpClause>(parenthesized(Parser<OmpProcBindClause>{})) ||
     "REDUCTION" >>
         construct<OmpClause>(parenthesized(Parser<OmpReductionClause>{})) ||
+    "SAFELEN" >> construct<OmpClause>(construct<OmpClause::Safelen>(
+                     parenthesized(scalarIntConstantExpr))) ||
     "SCHEDULE" >>
-        construct<OmpClause>(parenthesized(Parser<OmpScheduleClause>{})))
+        construct<OmpClause>(parenthesized(Parser<OmpScheduleClause>{})) ||
+    "SHARED" >> construct<OmpClause>(construct<OmpClause::Shared>(
+                    parenthesized(Parser<OmpObjectList>{}))) ||
+    "SIMDLEN" >> construct<OmpClause>(construct<OmpClause::Simdlen>(
+                     parenthesized(scalarIntConstantExpr))) ||
+    "SIMD" >> construct<OmpClause>(construct<OmpClause::Simd>()) ||
+    "THREADS" >> construct<OmpClause>(construct<OmpClause::Threads>()) ||
+    "THREAD_LIMIT" >> construct<OmpClause>(construct<OmpClause::ThreadLimit>(
+                          parenthesized(scalarIntExpr))) ||
+    "TO" >> construct<OmpClause>(construct<OmpClause::To>(
+                parenthesized(nonemptyList(designator)))) ||
+    "USE_DEVICE_PTR" >> construct<OmpClause>(construct<OmpClause::UseDevicePtr>(
+                            parenthesized(nonemptyList(name)))) ||
+    "UNIFORM" >> construct<OmpClause>(construct<OmpClause::Uniform>(
+                     parenthesized(nonemptyList(name)))) ||
+    "UNTIED" >> construct<OmpClause>(construct<OmpClause::Untied>()))
 
 // [Clause, [Clause], ...]
 TYPE_PARSER(construct<OmpClauseList>(
