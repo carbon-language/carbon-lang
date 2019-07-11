@@ -4767,11 +4767,12 @@ void ResolveNamesVisitor::HandleProcedureName(
   CHECK(flag == Symbol::Flag::Function || flag == Symbol::Flag::Subroutine);
   auto *symbol{FindSymbol(name)};
   if (symbol == nullptr) {
-    Attrs attrs;
     if (context().intrinsics().IsIntrinsic(name.source.ToString())) {
-      attrs.set(Attr::INTRINSIC);
+      symbol =
+          &MakeSymbol(InclusiveScope(), name.source, Attrs{Attr::INTRINSIC});
+    } else {
+      symbol = &MakeSymbol(context().globalScope(), name.source, Attrs{});
     }
-    symbol = &MakeSymbol(context().globalScope(), name.source, attrs);
     Resolve(name, *symbol);
     if (symbol->has<ModuleDetails>()) {
       SayWithDecl(name, *symbol,

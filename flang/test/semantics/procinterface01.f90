@@ -118,7 +118,7 @@ contains
   !REF: /module1/nested4/x
   real, intent(in) :: x
   !DEF: /module1/nested4/nested4 ObjectEntity COMPLEX(4)
-  !DEF: /cmplx INTRINSIC ProcEntity
+  !DEF: /module1/nested4/cmplx INTRINSIC ProcEntity
   !REF: /module1/nested4/x
   nested4 = cmplx(x+4., 6.)
  end function nested4

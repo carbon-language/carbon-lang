@@ -427,7 +427,6 @@ void PutEntity(std::ostream &os, const Symbol &symbol) {
           },
       },
       symbol.details());
-  os << '\n';
 }
 
 void PutShapeSpec(std::ostream &os, const ShapeSpec &x) {
@@ -470,9 +469,13 @@ void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
   PutShape(os, details.shape(), '(', ')');
   PutShape(os, details.coshape(), '[', ']');
   PutInit(os, details.init());
+  os << '\n';
 }
 
 void PutProcEntity(std::ostream &os, const Symbol &symbol) {
+  if (symbol.attrs().test(Attr::INTRINSIC)) {
+    return;
+  }
   const auto &details{symbol.get<ProcEntityDetails>()};
   const ProcInterface &interface{details.interface()};
   PutEntity(os, symbol, [&]() {
@@ -485,6 +488,7 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
     os << ')';
     PutPassName(os, details.passName());
   });
+  os << '\n';
 }
 
 void PutPassName(std::ostream &os, const SourceName *passName) {
@@ -502,6 +506,7 @@ void PutTypeParam(std::ostream &os, const Symbol &symbol) {
     PutLower(os << ',', common::EnumToString(details.attr()));
   });
   PutInit(os, details.init());
+  os << '\n';
 }
 
 void PutInit(std::ostream &os, const MaybeExpr &init) {

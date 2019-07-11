@@ -23,11 +23,11 @@ character*1 function f1(x1, x2)
  !REF: /f1/n
  !REF: /f1/x1
  !REF: /f1/x2
- !DEF: /len INTRINSIC ProcEntity
+ !DEF: /f1/len INTRINSIC ProcEntity
  character*(n), intent(in) :: x1, x2*(len(x1)+1)
  !DEF: /f1/t DerivedType
  type :: t
-  !REF: /len
+  !REF: /f1/len
   !REF: /f1/x2
   !DEF: /f1/t/c1 ObjectEntity CHARACTER(4_8,1)
   !DEF: /f1/t/c2 ObjectEntity CHARACTER(6_8,1)
