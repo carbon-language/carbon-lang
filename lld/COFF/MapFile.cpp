@@ -106,7 +106,7 @@ void coff::writeMapFile(ArrayRef<OutputSection *> outputSections) {
 
   // Print out file contents.
   for (OutputSection *sec : outputSections) {
-    writeHeader(os, sec->getRVA(), sec->getVirtualSize(), /*Align=*/pageSize);
+    writeHeader(os, sec->getRVA(), sec->getVirtualSize(), /*align=*/pageSize);
     os << sec->name << '\n';
 
     for (Chunk *c : sec->chunks) {
