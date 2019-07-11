@@ -66,7 +66,7 @@ public:
   /// A work item on the thread pool's queue.
   struct Task {
     template <typename Func>
-    explicit Task(Func &&F) : Run(std::forward<Func>(F)){};
+    explicit Task(Func &&F) : Run(std::forward<Func>(F)){}
 
     std::function<void()> Run;
     llvm::ThreadPriority ThreadPri = llvm::ThreadPriority::Background;
