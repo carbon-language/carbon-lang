@@ -3178,6 +3178,10 @@ Value *llvm::isBytewiseValue(Value *V, const DataLayout &DL) {
   if (isa<UndefValue>(V))
     return UndefInt8;
 
+  const uint64_t Size = DL.getTypeStoreSize(V->getType());
+  if (!Size)
+    return UndefInt8;
+
   Constant *C = dyn_cast<Constant>(V);
   if (!C) {
     // Conceptually, we could handle things like:
