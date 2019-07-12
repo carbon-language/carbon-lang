@@ -3448,19 +3448,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const llvm::Triple *AuxTriple = IsCuda ? TC.getAuxTriple() : nullptr;
-  bool IsWindowsGNU = RawTriple.isWindowsGNUEnvironment();
-  bool IsWindowsCygnus = RawTriple.isWindowsCygwinEnvironment();
   bool IsWindowsMSVC = RawTriple.isWindowsMSVCEnvironment();
   bool IsIAMCU = RawTriple.isOSIAMCU();
 
   // Adjust IsWindowsXYZ for CUDA/HIP compilations.  Even when compiling in
   // device mode (i.e., getToolchain().getTriple() is NVPTX/AMDGCN, not
   // Windows), we need to pass Windows-specific flags to cc1.
-  if (IsCuda || IsHIP) {
+  if (IsCuda || IsHIP)
     IsWindowsMSVC |= AuxTriple && AuxTriple->isWindowsMSVCEnvironment();
-    IsWindowsGNU |= AuxTriple && AuxTriple->isWindowsGNUEnvironment();
-    IsWindowsCygnus |= AuxTriple && AuxTriple->isWindowsCygwinEnvironment();
-  }
 
   // C++ is not supported for IAMCU.
   if (IsIAMCU && types::isCXX(Input.getType()))
