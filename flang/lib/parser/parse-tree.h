@@ -261,7 +261,6 @@ struct AssignedGotoStmt;
 struct PauseStmt;
 struct OpenMPConstruct;
 struct OpenMPDeclarativeConstruct;
-struct OmpBlockDirective;
 struct OpenMPEndLoopDirective;
 
 // Cooked character stream locations
@@ -3457,15 +3456,9 @@ struct OmpClause {
       u;
 };
 
-WRAPPER_CLASS(OmpClauseList, std::list<OmpClause>);
-
-// Common representation for directives that begin multi-line constructs
-struct OpenMPConstructDirective {
-  BOILERPLATE(OpenMPConstructDirective);
-  explicit OpenMPConstructDirective(OmpClauseList &&list)
-    : clauses{std::move(list)} {}
+struct OmpClauseList {
+  WRAPPER_CLASS_BOILERPLATE(OmpClauseList, std::list<OmpClause>);
   CharBlock source;
-  OmpClauseList clauses;
 };
 
 // SECTIONS, PARALLEL SECTIONS
@@ -3475,12 +3468,12 @@ EMPTY_CLASS(OmpSection);
 
 struct OpenMPSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
-  std::tuple<OpenMPConstructDirective, Block, OmpEndSections> t;
+  std::tuple<OmpClauseList, Block, OmpEndSections> t;
 };
 
 struct OpenMPParallelSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPParallelSectionsConstruct);
-  std::tuple<OpenMPConstructDirective, Block, OmpEndParallelSections> t;
+  std::tuple<OmpClauseList, Block, OmpEndParallelSections> t;
 };
 
 // WORKSHARE
@@ -3494,10 +3487,10 @@ struct OpenMPWorkshareConstruct {
 WRAPPER_CLASS(OmpEndSingle, OmpClauseList);
 struct OpenMPSingleConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSingleConstruct);
-  std::tuple<OpenMPConstructDirective, Block, OmpEndSingle> t;
+  std::tuple<OmpClauseList, Block, OmpEndSingle> t;
 };
 
-// OpenMP directive beginning a block
+// OpenMP directive beginning or ending a block
 struct OmpBlockDirective {
   ENUM_CLASS(Directive, Master, Ordered, Parallel, ParallelWorkshare, Target,
       TargetData, TargetParallel, TargetTeams, Task, Taskgroup, Teams);
@@ -3664,16 +3657,25 @@ struct OpenMPCancelConstruct {
 // FLUSH
 WRAPPER_CLASS(OpenMPFlushConstruct, std::optional<OmpObjectList>);
 
-// Standalone constructs
+// These simple constructs do not have clauses.
+struct OpenMPSimpleConstruct {
+  ENUM_CLASS(Directive, Barrier, Taskwait, Taskyield)
+  WRAPPER_CLASS_BOILERPLATE(OpenMPSimpleConstruct, Directive);
+  CharBlock source;
+};
+
+// Standalone constructs; these can have clauses.
 struct OmpStandaloneDirective {
   ENUM_CLASS(Directive, TargetEnterData, TargetExitData, TargetUpdate)
   WRAPPER_CLASS_BOILERPLATE(OmpStandaloneDirective, Directive);
   CharBlock source;
 };
 
-EMPTY_CLASS(OpenMPTaskyieldConstruct);
-EMPTY_CLASS(OpenMPTaskwaitConstruct);
-EMPTY_CLASS(OpenMPBarrierConstruct);
+struct OpenMPStandaloneConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPStandaloneConstruct);
+  std::tuple<OmpStandaloneDirective, OmpClauseList> t;
+};
+
 WRAPPER_CLASS(OmpEndBlockDirective, OmpBlockDirective);
 
 // DO / DO SIMD
@@ -3694,17 +3696,12 @@ struct OpenMPLoopConstruct {
   std::tuple<OmpLoopDirective, OmpClauseList> t;
 };
 
-struct OpenMPStandaloneConstruct {
-  TUPLE_CLASS_BOILERPLATE(OpenMPStandaloneConstruct);
-  std::tuple<OmpStandaloneDirective, OmpClauseList> t;
-};
-
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
-  std::variant<OpenMPStandaloneConstruct, OpenMPBarrierConstruct,
-      OpenMPTaskwaitConstruct, OpenMPTaskyieldConstruct, OpenMPSingleConstruct,
-      OpenMPSectionsConstruct, OpenMPParallelSectionsConstruct,
-      OpenMPWorkshareConstruct, OpenMPLoopConstruct, OpenMPBlockConstruct,
+  std::variant<OpenMPStandaloneConstruct, OpenMPSimpleConstruct,
+      OpenMPSingleConstruct, OpenMPSectionsConstruct,
+      OpenMPParallelSectionsConstruct, OpenMPWorkshareConstruct,
+      OpenMPLoopConstruct, OpenMPBlockConstruct,
       OpenMPCancellationPointConstruct, OpenMPCancelConstruct,
       OpenMPFlushConstruct, OpenMPAtomicConstruct, OpenMPCriticalConstruct,
       OmpSection>

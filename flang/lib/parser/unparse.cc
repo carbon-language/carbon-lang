@@ -2247,17 +2247,10 @@ public:
     Walk(x.v);
     EndOpenMP();
   }
-  bool Pre(const OpenMPBarrierConstruct &x) {
-    BeginOpenMP();
-    Word("!$OMP BARRIER");
-    Put("\n");
-    EndOpenMP();
-    return false;
-  }
   void Unparse(const OpenMPSingleConstruct &x) {
     BeginOpenMP();
     Word("!$OMP SINGLE");
-    Walk(std::get<OpenMPConstructDirective>(x.t));
+    Walk(std::get<OmpClauseList>(x.t));
     EndOpenMP();
     Put("\n");
     Walk(std::get<Block>(x.t), "");
@@ -2273,11 +2266,10 @@ public:
     Put("\n");
     EndOpenMP();
   }
-  void Unparse(const OpenMPConstructDirective &x) { Walk(x.clauses); }
   void Unparse(const OpenMPSectionsConstruct &x) {
     BeginOpenMP();
     Word("!$OMP SECTIONS");
-    Walk(std::get<OpenMPConstructDirective>(x.t));
+    Walk(std::get<OmpClauseList>(x.t));
     Put("\n");
     EndOpenMP();
     Walk(std::get<Block>(x.t), "");
@@ -2289,7 +2281,7 @@ public:
   void Unparse(const OpenMPParallelSectionsConstruct &x) {
     BeginOpenMP();
     Word("!$OMP PARALLEL SECTIONS");
-    Walk(std::get<OpenMPConstructDirective>(x.t));
+    Walk(std::get<OmpClauseList>(x.t));
     Put("\n");
     EndOpenMP();
     Walk(std::get<Block>(x.t), "");
@@ -2309,20 +2301,6 @@ public:
     Walk(std::get<std::optional<OmpNowait>>(x.t));
     Put("\n");
     EndOpenMP();
-  }
-  bool Pre(const OpenMPTaskyieldConstruct &x) {
-    BeginOpenMP();
-    Word("!$OMP TASKYIELD");
-    Put("\n");
-    EndOpenMP();
-    return false;
-  }
-  bool Pre(const OpenMPTaskwaitConstruct &x) {
-    BeginOpenMP();
-    Word("!$OMP TASKWAIT");
-    Put("\n");
-    EndOpenMP();
-    return false;
   }
   void Unparse(const OpenMPCancellationPointConstruct &x) {
     BeginOpenMP();
@@ -2360,6 +2338,17 @@ public:
     EndOpenMP();
   }
   void Unparse(const OmpClauseList &x) { Walk(" ", x.v, " "); }
+  void Unparse(const OpenMPSimpleConstruct &x) {
+    BeginOpenMP();
+    Word("!$OMP ");
+    switch (x.v) {
+    case OpenMPSimpleConstruct::Directive::Barrier: Word("BARRIER"); break;
+    case OpenMPSimpleConstruct::Directive::Taskwait: Word("TASKWAIT"); break;
+    case OpenMPSimpleConstruct::Directive::Taskyield: Word("TASKYIELD"); break;
+    }
+    Put("\n");
+    EndOpenMP();
+  }
   void Unparse(const OpenMPStandaloneConstruct &x) {
     BeginOpenMP();
     Word("!$OMP ");
