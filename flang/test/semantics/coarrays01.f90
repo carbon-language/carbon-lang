@@ -14,12 +14,6 @@
 
 ! Test selector and team-value in CHANGE TEAM statement
 
-! Temporary, until we have real iso_fortran_env
-module iso_fortran_env
-  type :: team_type
-  end type
-end
-
 ! OK
 subroutine s1
   use iso_fortran_env, only: team_type

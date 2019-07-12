@@ -16,22 +16,10 @@
 # Compile a source file and check errors against those listed in the file.
 # Change the compiler by setting the F18 environment variable.
 
-PATH=/usr/bin:/bin
+F18_OPTIONS="-fdebug-resolve-names -fparse-only"
 srcdir=$(dirname $0)
-CMD="${F18:-../../../tools/f18/bin/f18} -fdebug-resolve-names -fparse-only"
-
-if [[ $# != 1 ]]; then
-  echo "Usage: $0 <fortran-source>"
-  exit 1
-fi
-case $1 in
-(/*) src=$1 ;;
-(*) src=$srcdir/$1 ;;
-esac
-[[ ! -f $src ]] && echo "File not found: $src" && exit 1
-
-temp=`mktemp -d ./tmp.XXXXXX`
-[[ $KEEP ]] || trap "rm -rf $temp" EXIT
+source $srcdir/common.sh
+[[ ! -f $src ]] && die "File not found: $src"
 
 log=$temp/log
 actual=$temp/actual
@@ -43,7 +31,8 @@ options=$temp/options
 sed -n 's/^ *! *OPTIONS: *//p' $src > $options
 cat $options
 
-cmd="$CMD `cat $options` $src"
+include=$(dirname $(dirname $F18))/include
+cmd="$F18 $F18_OPTIONS -I$include `cat $options` $src"
 ( cd $temp; $cmd ) > $log 2>&1
 if [[ $? -ge 128 ]]; then
   cat $log
@@ -66,6 +55,5 @@ else
   < $diffs \
     sed -n -e 's/^-\([0-9]\)/actual at \1/p' -e 's/^+\([0-9]\)/expect at \1/p' \
     | sort -n -k 2
-  echo FAIL
-  exit 1
+  die FAIL
 fi

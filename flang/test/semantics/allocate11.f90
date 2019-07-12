@@ -90,20 +90,6 @@ subroutine C937(var)
   allocate(C:: var)
 end subroutine
 
-module iso_fortran_env
-  type :: team_type
-  end type
-end module
-
-module iso_c_binding
-  type :: c_ptr
-    integer(kind=8) ptr
-  end type
-  type :: c_funptr
-    integer(kind=8) ptr
-  end type
-end module
-
 !TODO: type extending team_type !? subcomponents !?
 
 subroutine C938_C947(var2, ptr, ptr2, fptr, my_team, srca)

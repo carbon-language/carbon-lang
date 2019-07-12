@@ -14,11 +14,6 @@
 
 ! Test coarray association in CHANGE TEAM statement
 
-module iso_fortran_env
-  type :: team_type
-  end type
-end
-
 subroutine s1
   use iso_fortran_env
   type(team_type) :: t

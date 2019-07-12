@@ -140,6 +140,9 @@ set(ERROR_TESTS
 #  omp-nested01.f90
   equivalence01.f90
   init01.f90
+  if_arith01.f90
+  if_construct01.f90
+  if_stmt01.f90
 )
 
 # These test files have expected symbols in the source
@@ -211,40 +214,24 @@ set(FORALL_TESTS
   forall*.[Ff]90
 )
 
-set(IF_TESTS
-  if_arith01.f90
-  if_construct01.f90
-  if_stmt01.f90
-)
+set(F18 $<TARGET_FILE:f18>)
 
 foreach(test ${ERROR_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test})
+  add_test(NAME ${test}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test} ${F18})
 endforeach()
 
 foreach(test ${SYMBOL_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_symbols.sh ${test})
+  add_test(NAME ${test}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_symbols.sh ${test} ${F18})
 endforeach()
 
 foreach(test ${MODFILE_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_modfile.sh ${test})
+  add_test(NAME ${test}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_modfile.sh ${test} ${F18})
 endforeach()
 
-foreach(test ${LABEL_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
-endforeach()
-
-foreach(test ${CANONDO_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
-endforeach()
-
-foreach(test ${DOCONCURRENT_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
-endforeach()
-
-foreach(test ${FORALL_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
-endforeach()
-
-foreach(test ${IF_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
+foreach(test ${LABEL_TESTS} ${CANONDO_TESTS} ${DOCONCURRENT_TESTS} ${FORALL_TESTS})
+  add_test(NAME ${test}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test} ${F18})
 endforeach()

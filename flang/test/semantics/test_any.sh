@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 # we get the right symbols in the output, i.e. the output should be
 # the same as the input, except for the copyright comment.
 # Change the compiler by setting the F18 environment variable.
-PATH=/usr/bin:/bin
+
 srcdir=$(dirname $0)
-F18=${F18:=../../tools/f18/bin/f18}
+source $srcdir/common.sh
+
 FileCheck=${FileCheck:=internal_check}
 
 function internal_check() {
@@ -50,11 +51,9 @@ function internal_check() {
 
 gr=0
 for input in ${srcdir}/$*; do
-  lr=true
   CMD=$(cat ${input} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
   CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
-  $(eval $CMD) || lr=false
-  if $lr; then
+  if $(eval $CMD); then
     echo "PASS  ${input}"
   else
     echo "FAIL  ${input}"

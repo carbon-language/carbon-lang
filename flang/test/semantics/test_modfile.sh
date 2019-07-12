@@ -16,19 +16,10 @@
 # Compile a source file and compare generated .mod files against expected.
 
 set -e
-PATH=/usr/bin:/bin
+F18_OPTIONS="-fdebug-resolve-names -fparse-only"
 srcdir=$(dirname $0)
-CMD="${F18:-../../../tools/f18/bin/f18} -fdebug-resolve-names -fparse-only"
-if [[ $# != 1 ]]; then
-  echo "Usage: $0 <fortran-source>"
-  exit 1
-fi
-src=$srcdir/$1
+source $srcdir/common.sh
 
-temp=temp-$1
-rm -rf $temp
-mkdir $temp
-[[ $KEEP ]] || trap "rm -rf $temp" EXIT
 actual=$temp/actual.mod
 expect=$temp/expect.mod
 actual_files=$temp/actual_files
@@ -43,7 +34,7 @@ for src in "$@"; do
   (
     cd $temp
     ls -1 *.mod > prev_files
-    $CMD $src
+    $F18 $F18_OPTIONS $src
     ls -1 *.mod | comm -13 prev_files -
   ) > $actual_files
   expected_files=$(sed -n 's/^!Expect: \(.*\)/\1/p' $src | sort)

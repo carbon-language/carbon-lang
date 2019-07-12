@@ -14,13 +14,6 @@
 
 ! Check for semantic errors in ALLOCATE statements
 
-module iso_fortran_env
-  type event_type
-  end type
-  type lock_type
-  end type
-end module
-
 module not_iso_fortran_env
   type event_type
   end type

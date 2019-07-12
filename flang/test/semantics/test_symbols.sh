@@ -18,21 +18,10 @@
 # the same as the input, except for the copyright comment.
 # Change the compiler by setting the F18 environment variable.
 
-PATH=/usr/bin:/bin
+F18_OPTIONS="-funparse-with-symbols"
 srcdir=$(dirname $0)
-CMD="${F18:-../../../tools/f18/bin/f18} -funparse-with-symbols"
-
-if [[ $# != 1 ]]; then
-  echo "Usage: $0 <fortran-source>"
-  exit 1
-fi
-src=$srcdir/$1
+source $srcdir/common.sh
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
-
-temp=temp-$1
-rm -rf $temp
-mkdir $temp
-[[ $KEEP ]] || trap "rm -rf $temp" EXIT
 
 src1=$temp/1.f90
 src2=$temp/2.f90
@@ -44,7 +33,8 @@ sed -e 's/!\([DR]EF:\)/KEEP \1/' \
   -e 's/!.*//' -e 's/ *$//' -e '/^$/d' -e 's/KEEP \([DR]EF:\)/!\1/' \
   $src > $src1
 egrep -v '^ *!' $src1 > $src2  # strip out meaningful comments
-( cd $temp; $CMD $(basename $src2) ) > $src3  # compile, inserting comments for symbols
+# compile, inserting comments for symbols:
+( cd $temp; $F18 $F18_OPTIONS $(basename $src2) ) > $src3
 
 if diff -w -U999999 $src1 $src3 > $diffs; then
   echo PASS
