@@ -5071,8 +5071,7 @@ void SIInstrInfo::lowerScalarXnor(SetVectorType &Worklist,
                       RI.isSGPRClass(MRI.getRegClass(Src0.getReg()));
     bool Src1IsSGPR = Src1.isReg() &&
                       RI.isSGPRClass(MRI.getRegClass(Src1.getReg()));
-    MachineInstr *Not = nullptr;
-    MachineInstr *Xor = nullptr;
+    MachineInstr *Xor;
     unsigned Temp = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
     unsigned NewDest = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
 
@@ -5080,14 +5079,12 @@ void SIInstrInfo::lowerScalarXnor(SetVectorType &Worklist,
     // The next iteration over the work list will lower these to the vector
     // unit as necessary.
     if (Src0IsSGPR) {
-      Not = BuildMI(MBB, MII, DL, get(AMDGPU::S_NOT_B32), Temp)
-        .add(Src0);
+      BuildMI(MBB, MII, DL, get(AMDGPU::S_NOT_B32), Temp).add(Src0);
       Xor = BuildMI(MBB, MII, DL, get(AMDGPU::S_XOR_B32), NewDest)
       .addReg(Temp)
       .add(Src1);
     } else if (Src1IsSGPR) {
-      Not = BuildMI(MBB, MII, DL, get(AMDGPU::S_NOT_B32), Temp)
-        .add(Src1);
+      BuildMI(MBB, MII, DL, get(AMDGPU::S_NOT_B32), Temp).add(Src1);
       Xor = BuildMI(MBB, MII, DL, get(AMDGPU::S_XOR_B32), NewDest)
       .add(Src0)
       .addReg(Temp);
@@ -5095,8 +5092,8 @@ void SIInstrInfo::lowerScalarXnor(SetVectorType &Worklist,
       Xor = BuildMI(MBB, MII, DL, get(AMDGPU::S_XOR_B32), Temp)
         .add(Src0)
         .add(Src1);
-      Not = BuildMI(MBB, MII, DL, get(AMDGPU::S_NOT_B32), NewDest)
-        .addReg(Temp);
+      MachineInstr *Not =
+          BuildMI(MBB, MII, DL, get(AMDGPU::S_NOT_B32), NewDest).addReg(Temp);
       Worklist.insert(Not);
     }
 
