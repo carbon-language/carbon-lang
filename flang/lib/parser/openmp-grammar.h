@@ -61,12 +61,13 @@ TYPE_PARSER(construct<OmpProcBindClause>(
 // map-type -> TO | FROM | TOFROM | ALLOC | RELEASE | DELETE
 TYPE_PARSER(construct<OmpMapType>(
     maybe("ALWAYS" >> construct<OmpMapType::Always>() / maybe(","_tok)),
-    "TO"_id >> pure(OmpMapType::Type::To) / ":"_tok ||
-        "FROM" >> pure(OmpMapType::Type::From) / ":"_tok ||
-        "TOFROM" >> pure(OmpMapType::Type::Tofrom) / ":"_tok ||
-        "ALLOC" >> pure(OmpMapType::Type::Alloc) / ":"_tok ||
-        "RELEASE" >> pure(OmpMapType::Type::Release) / ":"_tok ||
-        "DELETE" >> pure(OmpMapType::Type::Delete) / ":"_tok))
+    ("TO"_id >> pure(OmpMapType::Type::To) ||
+        "FROM" >> pure(OmpMapType::Type::From) ||
+        "TOFROM" >> pure(OmpMapType::Type::Tofrom) ||
+        "ALLOC" >> pure(OmpMapType::Type::Alloc) ||
+        "RELEASE" >> pure(OmpMapType::Type::Release) ||
+        "DELETE" >> pure(OmpMapType::Type::Delete)) /
+        ":"))
 
 TYPE_PARSER(construct<OmpMapClause>(
     maybe(Parser<OmpMapType>{}), Parser<OmpObjectList>{}))
@@ -514,10 +515,15 @@ TYPE_PARSER(startOmpLine >> "END SECTIONS"_tok >>
     construct<OmpEndSections>(
         maybe("NOWAIT" >> construct<OmpNowait>()) / endOmpLine))
 
+template<typename A> constexpr decltype(auto) OmpConstructDirective(A keyword) {
+  return sourced(construct<OpenMPConstructDirective>(
+             keyword >> Parser<OmpClauseList>{})) /
+      endOmpLine;
+}
+
 // OMP SECTIONS
-TYPE_PARSER("SECTIONS" >>
-    construct<OpenMPSectionsConstruct>(
-        Parser<OmpClauseList>{} / endOmpLine, block, Parser<OmpEndSections>{}))
+TYPE_PARSER(construct<OpenMPSectionsConstruct>(
+    OmpConstructDirective("SECTIONS"_tok), block, Parser<OmpEndSections>{}))
 
 // OMP END PARALLEL SECTIONS [NOWAIT]
 TYPE_PARSER(startOmpLine >> "END PARALLEL SECTIONS"_tok >>

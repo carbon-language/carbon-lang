@@ -3459,6 +3459,15 @@ struct OmpClause {
 
 WRAPPER_CLASS(OmpClauseList, std::list<OmpClause>);
 
+// Common representation for construct-starting directives
+struct OpenMPConstructDirective {
+  BOILERPLATE(OpenMPConstructDirective);
+  explicit OpenMPConstructDirective(OmpClauseList &&list)
+    : clauses{std::move(list)} {}
+  CharBlock source;
+  OmpClauseList clauses;
+};
+
 // SECTIONS, PARALLEL SECTIONS
 WRAPPER_CLASS(OmpEndSections, std::optional<OmpNowait>);
 WRAPPER_CLASS(OmpEndParallelSections, std::optional<OmpNowait>);
@@ -3466,7 +3475,7 @@ EMPTY_CLASS(OmpSection);
 
 struct OpenMPSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
-  std::tuple<OmpClauseList, Block, OmpEndSections> t;
+  std::tuple<OpenMPConstructDirective, Block, OmpEndSections> t;
 };
 
 struct OpenMPParallelSectionsConstruct {

@@ -784,6 +784,18 @@ template<typename M> void Walk(CompilerDirective &x, M &mutator) {
     mutator.Post(x);
   }
 }
+template<typename V> void Walk(const OpenMPConstructDirective &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.clauses, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(OpenMPConstructDirective &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.clauses, mutator);
+    mutator.Post(x);
+  }
+}
 template<typename V>
 void Walk(const OmpLinearClause::WithModifier &x, V &visitor) {
   if (visitor.Pre(x)) {

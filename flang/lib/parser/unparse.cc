@@ -2276,10 +2276,11 @@ public:
     Put("\n");
     EndOpenMP();
   }
+  void Unparse(const OpenMPConstructDirective &x) { Walk(x.clauses); }
   void Unparse(const OpenMPSectionsConstruct &x) {
     BeginOpenMP();
     Word("!$OMP SECTIONS");
-    Walk(std::get<OmpClauseList>(x.t));
+    Walk(std::get<OpenMPConstructDirective>(x.t));
     Put("\n");
     EndOpenMP();
     Walk(std::get<Block>(x.t), "");

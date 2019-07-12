@@ -118,7 +118,8 @@ constexpr struct SpaceCheck {
 // Token strings appear in the grammar as C++ user-defined literals
 // like "BIND ( C )"_tok and "SYNC ALL"_sptok.  The _tok suffix is implied
 // when a string literal appears before the sequencing operator >> or
-// after the sequencing operator /.
+// after the sequencing operator /.  The literal "..."_id parses a
+// token that cannot be a prefix of a longer identifier.
 template<bool MandatoryFreeFormSpace = false, bool MustBeComplete = false>
 class TokenStringMatch {
 public:
@@ -187,11 +188,13 @@ constexpr TokenStringMatch<> operator""_tok(const char str[], std::size_t n) {
   return {str, n};
 }
 
-constexpr TokenStringMatch<true> operator""_sptok(const char str[], std::size_t n) {
+constexpr TokenStringMatch<true> operator""_sptok(
+    const char str[], std::size_t n) {
   return {str, n};
 }
 
-constexpr TokenStringMatch<false, true> operator""_id(const char str[], std::size_t n) {
+constexpr TokenStringMatch<false, true> operator""_id(
+    const char str[], std::size_t n) {
   return {str, n};
 }
 
