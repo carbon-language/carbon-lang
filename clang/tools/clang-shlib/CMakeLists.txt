@@ -38,8 +38,13 @@ foreach (lib ${clang_libs})
   list(APPEND _DEPS ${lib})
 endforeach ()
 
+if (CLANG_LINK_CLANG_DYLIB)
+  set(INSTALL_WITH_TOOLCHAIN INSTALL_WITH_TOOLCHAIN)
+endif()
+
 add_clang_library(clang-cpp
                   SHARED
+                  ${INSTALL_WITH_TOOLCHAIN}
                   clang-shlib.cpp
                   ${_OBJECTS}
                   LINK_LIBS
