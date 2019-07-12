@@ -151,7 +151,10 @@ void ClangdServer::addDocument(PathRef File, llvm::StringRef Contents,
   Inputs.Contents = Contents;
   Inputs.Opts = std::move(Opts);
   Inputs.Index = Index;
-  WorkScheduler.update(File, Inputs, WantDiags);
+  bool NewFile = WorkScheduler.update(File, Inputs, WantDiags);
+  // If we loaded Foo.h, we want to make sure Foo.cpp is indexed.
+  if (NewFile && BackgroundIdx)
+    BackgroundIdx->boostRelated(File);
 }
 
 void ClangdServer::removeDocument(PathRef File) { WorkScheduler.remove(File); }
