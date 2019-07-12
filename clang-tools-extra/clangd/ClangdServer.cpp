@@ -101,7 +101,7 @@ ClangdServer::ClangdServer(const GlobalCompilationDatabase &CDB,
                      : nullptr),
       GetClangTidyOptions(Opts.GetClangTidyOptions),
       SuggestMissingIncludes(Opts.SuggestMissingIncludes),
-      EnableHiddenFeatures(Opts.HiddenFeatures), TweakFilter(Opts.TweakFilter),
+      TweakFilter(Opts.TweakFilter),
       WorkspaceRoot(Opts.WorkspaceRoot),
       // Pass a callback into `WorkScheduler` to extract symbols from a newly
       // parsed file and rebuild the file index synchronously each time an AST
@@ -333,11 +333,9 @@ void ClangdServer::enumerateTweaks(PathRef File, Range Sel,
     if (!Selection)
       return CB(Selection.takeError());
     std::vector<TweakRef> Res;
-    for (auto &T : prepareTweaks(*Selection)) {
-      if (!TweakFilter(T->id()) || (T->hidden() && !EnableHiddenFeatures))
-        continue;
+    for (auto &T : prepareTweaks(*Selection, TweakFilter))
       Res.push_back({T->id(), T->title(), T->intent()});
-    }
+
     CB(std::move(Res));
   };
 

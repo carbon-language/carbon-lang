@@ -126,10 +126,6 @@ public:
 
     bool SuggestMissingIncludes = false;
 
-    /// Enable hidden features mostly useful to clangd developers.
-    /// e.g. tweaks to dump the AST.
-    bool HiddenFeatures = false;
-
     /// Clangd will execute compiler drivers matching one of these globs to
     /// fetch system include path.
     std::vector<std::string> QueryDriverGlobs;
@@ -137,9 +133,10 @@ public:
     /// Enable semantic highlighting features.
     bool SemanticHighlighting = false;
 
-    /// Returns true if the StringRef is a tweak that should be enabled
-    std::function<bool(llvm::StringRef)> TweakFilter =
-        [](llvm::StringRef TweakToSearch) { return true; };
+    /// Returns true if the tweak should be enabled.
+    std::function<bool(const Tweak &)> TweakFilter = [](const Tweak &T) {
+      return !T.hidden(); // only enable non-hidden tweaks.
+    };
   };
   // Sensible default options for use in tests.
   // Features like indexing must be enabled if desired.
@@ -322,7 +319,7 @@ private:
   bool SuggestMissingIncludes = false;
   bool EnableHiddenFeatures = false;
 
-  std::function<bool(llvm::StringRef)> TweakFilter;
+  std::function<bool(const Tweak &)> TweakFilter;
 
   // GUARDED_BY(CachedCompletionFuzzyFindRequestMutex)
   llvm::StringMap<llvm::Optional<FuzzyFindRequest>>
