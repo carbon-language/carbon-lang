@@ -3218,6 +3218,17 @@ Value *llvm::isBytewiseValue(Value *V, const DataLayout &DL) {
     }
   }
 
+  if (auto *CE = dyn_cast<ConstantExpr>(C)) {
+    if (CE->getOpcode() == Instruction::IntToPtr) {
+      auto PS = DL.getPointerSizeInBits(
+          cast<PointerType>(CE->getType())->getAddressSpace());
+      return isBytewiseValue(
+          ConstantExpr::getIntegerCast(CE->getOperand(0),
+                                       Type::getIntNTy(Ctx, PS), false),
+          DL);
+    }
+  }
+
   auto Merge = [&](Value *LHS, Value *RHS) -> Value * {
     if (LHS == RHS)
       return LHS;

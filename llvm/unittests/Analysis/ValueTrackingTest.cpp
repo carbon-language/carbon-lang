@@ -794,11 +794,11 @@ const std::pair<const char *, const char *> IsBytewiseValueTests[] = {
         "i16* inttoptr (i64 0 to i16*)",
     },
     {
-        "",
+        "i8 -1",
         "i16* inttoptr (i64 -1 to i16*)",
     },
     {
-        "",
+        "i8 -86",
         "i16* inttoptr (i64 -6148914691236517206 to i16*)",
     },
     {
@@ -806,7 +806,7 @@ const std::pair<const char *, const char *> IsBytewiseValueTests[] = {
         "i16* inttoptr (i48 -1 to i16*)",
     },
     {
-        "",
+        "i8 -1",
         "i16* inttoptr (i96 -1 to i16*)",
     },
     {

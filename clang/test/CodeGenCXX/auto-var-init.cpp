@@ -1042,14 +1042,8 @@ TEST_UNINIT(intptr4, int*[4]);
 // CHECK:            %uninit = alloca [4 x i32*], align
 // CHECK-NEXT:       call void @{{.*}}used{{.*}}%uninit)
 // PATTERN-O1-LABEL: @test_intptr4_uninit()
-// PATTERN-O1:       %1 = getelementptr inbounds [4 x i32*], [4 x i32*]* %uninit, i64 0, i64 0
-// PATTERN-O1-NEXT:  store i32* inttoptr (i64 -6148914691236517206 to i32*), i32** %1, align 16
-// PATTERN-O1-NEXT:  %2 = getelementptr inbounds [4 x i32*], [4 x i32*]* %uninit, i64 0, i64 1
-// PATTERN-O1-NEXT:  store i32* inttoptr (i64 -6148914691236517206 to i32*), i32** %2, align 8
-// PATTERN-O1-NEXT:  %3 = getelementptr inbounds [4 x i32*], [4 x i32*]* %uninit, i64 0, i64 2
-// PATTERN-O1-NEXT:  store i32* inttoptr (i64 -6148914691236517206 to i32*), i32** %3, align 16
-// PATTERN-O1-NEXT:  %4 = getelementptr inbounds [4 x i32*], [4 x i32*]* %uninit, i64 0, i64 3
-// PATTERN-O1-NEXT:  store i32* inttoptr (i64 -6148914691236517206 to i32*), i32** %4, align 8
+// PATTERN-O1:       %1 = bitcast [4 x i32*]* %uninit to i8*
+// PATTERN-O1-NEXT:  call void @llvm.memset.p0i8.i64(i8* nonnull align 16 %1, i8 -86, i64 32, i1 false)
 // ZERO-LABEL:       @test_intptr4_uninit()
 // ZERO:             call void @llvm.memset{{.*}}, i8 0,
 
