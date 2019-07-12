@@ -359,22 +359,22 @@ struct AANoUnwindFunction : AANoUnwind, BooleanState {
   /// }
 
   /// See AbstractAttribute::getManifestPosition().
-  virtual ManifestPosition getManifestPosition() const override {
+  ManifestPosition getManifestPosition() const override {
     return MP_FUNCTION;
   }
 
-  virtual const std::string getAsStr() const override {
+  const std::string getAsStr() const override {
     return getAssumed() ? "nounwind" : "may-unwind";
   }
 
   /// See AbstractAttribute::updateImpl(...).
-  virtual ChangeStatus updateImpl(Attributor &A) override;
+  ChangeStatus updateImpl(Attributor &A) override;
 
   /// See AANoUnwind::isAssumedNoUnwind().
-  virtual bool isAssumedNoUnwind() const override { return getAssumed(); }
+  bool isAssumedNoUnwind() const override { return getAssumed(); }
 
   /// See AANoUnwind::isKnownNoUnwind().
-  virtual bool isKnownNoUnwind() const override { return getKnown(); }
+  bool isKnownNoUnwind() const override { return getKnown(); }
 };
 
 ChangeStatus AANoUnwindFunction::updateImpl(Attributor &A) {
@@ -491,21 +491,21 @@ public:
   }
 
   /// See AbstractAttribute::manifest(...).
-  virtual ChangeStatus manifest(Attributor &A) override;
+  ChangeStatus manifest(Attributor &A) override;
 
   /// See AbstractAttribute::getState(...).
-  virtual AbstractState &getState() override { return *this; }
+  AbstractState &getState() override { return *this; }
 
   /// See AbstractAttribute::getState(...).
-  virtual const AbstractState &getState() const override { return *this; }
+  const AbstractState &getState() const override { return *this; }
 
   /// See AbstractAttribute::getManifestPosition().
-  virtual ManifestPosition getManifestPosition() const override {
+  ManifestPosition getManifestPosition() const override {
     return MP_ARGUMENT;
   }
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
-  virtual ChangeStatus updateImpl(Attributor &A) override;
+  ChangeStatus updateImpl(Attributor &A) override;
 
   /// Return the number of potential return values, -1 if unknown.
   size_t getNumReturnValues() const {
@@ -518,11 +518,11 @@ public:
   Optional<Value *> getAssumedUniqueReturnValue() const;
 
   /// See AbstractState::checkForallReturnedValues(...).
-  virtual bool
+  bool
   checkForallReturnedValues(std::function<bool(Value &)> &Pred) const override;
 
   /// Pretty print the attribute similar to the IR representation.
-  virtual const std::string getAsStr() const override;
+  const std::string getAsStr() const override;
 
   /// See AbstractState::isAtFixpoint().
   bool isAtFixpoint() const override { return IsFixed; }
