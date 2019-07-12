@@ -675,6 +675,7 @@ public:
   NODE(parser, Value)
   NODE(parser, ValueStmt)
   NODE(parser, Variable)
+  NODE(parser, Verbatim)
   NODE(parser, Volatile)
   NODE(parser, VolatileStmt)
   NODE(parser, WaitSpec)

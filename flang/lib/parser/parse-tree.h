@@ -88,14 +88,17 @@ struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
 
 // Empty classes are often used below as alternatives in std::variant<>
 // discriminated unions.
+#define EMPTY_CLASS_BOILERPLATE(classname) \
+  classname() {} \
+  classname(const classname &) {} \
+  classname(classname &&) {} \
+  classname &operator=(const classname &) { return *this; }; \
+  classname &operator=(classname &&) { return *this; }; \
+  using EmptyTrait = std::true_type
+
 #define EMPTY_CLASS(classname) \
   struct classname { \
-    classname() {} \
-    classname(const classname &) {} \
-    classname(classname &&) {} \
-    classname &operator=(const classname &) { return *this; }; \
-    classname &operator=(classname &&) { return *this; }; \
-    using EmptyTrait = std::true_type; \
+    EMPTY_CLASS_BOILERPLATE(classname); \
   }
 
 // Many classes below simply wrap a std::variant<> discriminated union,
@@ -265,6 +268,12 @@ struct OpenMPEndLoopDirective;
 
 // Cooked character stream locations
 using Location = const char *;
+
+// A parse tree node with provenance only
+struct Verbatim {
+  EMPTY_CLASS_BOILERPLATE(Verbatim);
+  CharBlock source;
+};
 
 // Implicit definitions of the Standard
 
@@ -3464,7 +3473,7 @@ struct OmpClauseList {
 // SECTIONS, PARALLEL SECTIONS
 WRAPPER_CLASS(OmpEndSections, std::optional<OmpNowait>);
 WRAPPER_CLASS(OmpEndParallelSections, std::optional<OmpNowait>);
-EMPTY_CLASS(OmpSection);
+WRAPPER_CLASS(OmpSection, Verbatim);
 
 struct OpenMPSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
@@ -3477,10 +3486,9 @@ struct OpenMPParallelSectionsConstruct {
 };
 
 // WORKSHARE
-EMPTY_CLASS(OmpEndWorkshare);
 struct OpenMPWorkshareConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPWorkshareConstruct);
-  std::tuple<Block, std::optional<OmpNowait>> t;
+  std::tuple<Verbatim, Block, std::optional<OmpNowait>> t;
 };
 
 // SINGLE
@@ -3642,6 +3650,7 @@ struct OmpLoopDirective {
 struct OmpCancelType {
   ENUM_CLASS(Type, Parallel, Sections, Do, Taskgroup)
   WRAPPER_CLASS_BOILERPLATE(OmpCancelType, Type);
+  CharBlock source;
 };
 
 // CANCELLATION POINT
@@ -3655,7 +3664,10 @@ struct OpenMPCancelConstruct {
 };
 
 // FLUSH
-WRAPPER_CLASS(OpenMPFlushConstruct, std::optional<OmpObjectList>);
+struct OpenMPFlushConstruct {
+  WRAPPER_CLASS_BOILERPLATE(OpenMPFlushConstruct, std::optional<OmpObjectList>);
+  CharBlock source;
+};
 
 // These simple constructs do not have clauses.
 struct OpenMPSimpleConstruct {

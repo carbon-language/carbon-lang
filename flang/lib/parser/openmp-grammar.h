@@ -46,6 +46,10 @@ template<typename A> constexpr decltype(auto) OmpConstructDirective(A keyword) {
   return sourced(keyword >> Parser<OmpClauseList>{}) / endOmpLine;
 }
 
+template<typename A> constexpr decltype(auto) verbatim(A x) {
+  return sourced(construct<Verbatim>(x));
+}
+
 // OpenMP Clauses
 // DEFAULT (PRIVATE | FIRSTPRIVATE | SHARED | NONE )
 TYPE_PARSER(construct<OmpDefaultClause>(
@@ -290,26 +294,24 @@ TYPE_PARSER(sourced(construct<OmpLoopDirective>(first(
         pure(OmpLoopDirective::Directive::TeamsDistributeSimd),
     "TEAMS DISTRIBUTE" >> pure(OmpLoopDirective::Directive::TeamsDistribute)))))
 
+TYPE_PARSER(sourced(construct<OmpCancelType>(
+    first("PARALLEL" >> pure(OmpCancelType::Type::Parallel),
+        "SECTIONS" >> pure(OmpCancelType::Type::Sections),
+        "DO" >> pure(OmpCancelType::Type::Do),
+        "TASKGROUP" >> pure(OmpCancelType::Type::Taskgroup)))))
+
 // Cancellation Point construct
-TYPE_PARSER("CANCELLATION POINT" >>
-    construct<OpenMPCancellationPointConstruct>(
-        "PARALLEL" >> pure(OmpCancelType::Type::Parallel) ||
-        "SECTIONS" >> pure(OmpCancelType::Type::Sections) ||
-        "DO" >> pure(OmpCancelType::Type::Do) ||
-        "TASKGROUP" >> pure(OmpCancelType::Type::Taskgroup)))
+TYPE_PARSER(construct<OpenMPCancellationPointConstruct>(
+    sourced("CANCELLATION POINT" >> Parser<OmpCancelType>{})))
 
 // Cancel construct
-TYPE_PARSER(
-    "CANCEL" >> construct<OpenMPCancelConstruct>(
-                    ("PARALLEL" >> pure(OmpCancelType::Type::Parallel) ||
-                        "SECTIONS" >> pure(OmpCancelType::Type::Sections) ||
-                        "DO" >> pure(OmpCancelType::Type::Do) ||
-                        "TASKGROUP" >> pure(OmpCancelType::Type::Taskgroup)),
-                    maybe("IF" >> parenthesized(scalarLogicalExpr))))
+TYPE_PARSER(construct<OpenMPCancelConstruct>(
+    sourced("CANCEL" >> Parser<OmpCancelType>{}),
+    maybe("IF" >> parenthesized(scalarLogicalExpr))))
 
 // Flush construct
-TYPE_PARSER("FLUSH" >> construct<OpenMPFlushConstruct>(
-                           maybe(parenthesized(Parser<OmpObjectList>{}))))
+TYPE_PARSER(sourced(construct<OpenMPFlushConstruct>(
+    "FLUSH" >> maybe(parenthesized(Parser<OmpObjectList>{})))))
 
 // Standalone directives
 TYPE_PARSER(sourced(construct<OmpStandaloneDirective>(first(
@@ -472,13 +474,11 @@ TYPE_PARSER("SINGLE" >>
     construct<OpenMPSingleConstruct>(
         OmpConstructDirective("SINGLE"_tok), block, Parser<OmpEndSingle>{}))
 
-TYPE_PARSER(startOmpLine >> "END"_tok >>
-    construct<OmpEndWorkshare>("WORKSHARE"_tok) / endOmpLine)
-
 // OMP WORKSHARE
-TYPE_PARSER("WORKSHARE" >>
-    construct<OpenMPWorkshareConstruct>(endOmpLine >> block,
-        Parser<OmpEndWorkshare>{} >> maybe(construct<OmpNowait>("NOWAIT"_tok))))
+TYPE_PARSER(construct<OpenMPWorkshareConstruct>(
+    verbatim("WORKSHARE"_tok) / endOmpLine, block,
+    startOmpLine >> "END WORKSHARE"_tok >>
+        maybe(construct<OmpNowait>("NOWAIT"_tok) / endOmpLine)))
 
 // OMP END DO SIMD [NOWAIT]
 TYPE_PARSER(construct<OmpEndDoSimd>(maybe(construct<OmpNowait>("NOWAIT"_tok))))
@@ -505,6 +505,8 @@ TYPE_PARSER(construct<OpenMPParallelSectionsConstruct>(
     OmpConstructDirective("PARALLEL SECTIONS"_tok), block,
     Parser<OmpEndParallelSections>{}))
 
+TYPE_PARSER(construct<OmpSection>(verbatim("SECTION"_tok) / endOmpLine))
+
 TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
     startOmpLine >>
         first(construct<OpenMPConstruct>(Parser<OpenMPStandaloneConstruct>{}),
@@ -522,8 +524,7 @@ TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
             construct<OpenMPConstruct>(
                 Parser<OpenMPCancellationPointConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPFlushConstruct>{}),
-            "SECTION" >> endOmpLine >>
-                construct<OpenMPConstruct>(construct<OmpSection>())))
+            construct<OpenMPConstruct>(Parser<OmpSection>{})))
 
 // END OMP Block directives
 TYPE_PARSER(startOmpLine >> "END"_tok >>
