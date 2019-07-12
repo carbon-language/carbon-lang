@@ -1062,8 +1062,7 @@ private:
   bool BeginScope(const ProgramTree &);
   void FinishSpecificationParts(const ProgramTree &);
   void FinishDerivedType(Scope &);
-  const Symbol *CheckPassArg(
-      const Symbol &, const Symbol *, const SourceName *);
+  void SetPassArg(const Symbol &, const Symbol *, WithPassArg &);
   void ResolveExecutionParts(const ProgramTree &);
 };
 
@@ -5174,12 +5173,17 @@ void ResolveNamesVisitor::FinishDerivedType(Scope &scope) {
     std::visit(
         common::visitors{
             [&](ProcEntityDetails &x) {
-              x.set_passArg(
-                  CheckPassArg(comp, x.interface().symbol(), x.passName()));
+              SetPassArg(comp, x.interface().symbol(), x);
             },
-            [&](ProcBindingDetails &x) {
-              x.set_passArg(CheckPassArg(comp, &x.symbol(), x.passName()));
-            },
+            [&](ProcBindingDetails &x) { SetPassArg(comp, &x.symbol(), x); },
+            [](auto &x) {},
+        },
+        comp.details());
+  }
+  for (auto &pair : scope) {
+    Symbol &comp{*pair.second};
+    std::visit(
+        common::visitors{
             [&](GenericBindingDetails &x) {
               CheckSpecificsAreDistinguishable(comp, x.specificProcs());
             },
@@ -5190,19 +5194,20 @@ void ResolveNamesVisitor::FinishDerivedType(Scope &scope) {
 }
 
 // Check C760, constraints on the passed-object dummy argument
-// If they all pass, return the Symbol for that argument.
-const Symbol *ResolveNamesVisitor::CheckPassArg(
-    const Symbol &proc, const Symbol *interface, const SourceName *passName) {
+// If they all pass, set the passIndex in details.
+void ResolveNamesVisitor::SetPassArg(
+    const Symbol &proc, const Symbol *interface, WithPassArg &details) {
   if (proc.attrs().test(Attr::NOPASS)) {
-    return nullptr;
+    return;
   }
   const auto &name{proc.name()};
   if (!interface) {
     Say(name,
         "Procedure component '%s' must have NOPASS attribute or explicit interface"_err_en_US,
         name);
-    return nullptr;
+    return;
   }
+  const SourceName *passName{details.passName()};
   const auto &dummyArgs{interface->get<SubprogramDetails>().dummyArgs()};
   if (!passName && dummyArgs.empty()) {
     Say(name,
@@ -5212,7 +5217,7 @@ const Symbol *ResolveNamesVisitor::CheckPassArg(
             : "Procedure binding '%s' with no dummy arguments"
               " must have NOPASS attribute"_err_en_US,
         name);
-    return nullptr;
+    return;
   }
   int passArgIndex{0};
   if (!passName) {
@@ -5223,7 +5228,7 @@ const Symbol *ResolveNamesVisitor::CheckPassArg(
       Say(*passName,
           "'%s' is not a dummy argument of procedure interface '%s'"_err_en_US,
           *passName, interface->name());
-      return nullptr;
+      return;
     }
   }
   const Symbol &passArg{*dummyArgs[passArgIndex]};
@@ -5246,11 +5251,11 @@ const Symbol *ResolveNamesVisitor::CheckPassArg(
   }
   if (msg) {
     Say(name, std::move(*msg), *passName, name);
-    return nullptr;
+    return;
   }
   const DeclTypeSpec *type{passArg.GetType()};
   if (!type) {
-    return nullptr;  // an error already occurred
+    return;  // an error already occurred
   }
   const Symbol &typeSymbol{*proc.owner().GetSymbol()};
   const DerivedTypeSpec *derived{type->AsDerived()};
@@ -5259,7 +5264,7 @@ const Symbol *ResolveNamesVisitor::CheckPassArg(
         "Passed-object dummy argument '%s' of procedure '%s'"
         " must be of type '%s' but is '%s'"_err_en_US,
         *passName, name, typeSymbol.name(), type->AsFortran());
-    return nullptr;
+    return;
   }
   if (IsExtensibleType(derived) != type->IsPolymorphic()) {
     Say(name,
@@ -5269,7 +5274,7 @@ const Symbol *ResolveNamesVisitor::CheckPassArg(
             : "Passed-object dummy argument '%s' of procedure '%s'"
               " must polymorphic because '%s' is extensible"_err_en_US,
         *passName, name, typeSymbol.name());
-    return nullptr;
+    return;
   }
   for (const auto &[paramName, paramValue] : derived->parameters()) {
     if (paramValue.isLen() && !paramValue.isAssumed()) {
@@ -5279,7 +5284,7 @@ const Symbol *ResolveNamesVisitor::CheckPassArg(
           *passName, name, paramName);
     }
   }
-  return &passArg;
+  details.set_passIndex(passArgIndex);
 }
 
 // Resolve names in the execution part of this node and its children

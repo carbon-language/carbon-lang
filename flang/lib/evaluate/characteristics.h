@@ -145,9 +145,10 @@ struct DummyArgument {
   bool IsOptional() const;
   void SetOptional(bool = true);
   std::ostream &Dump(std::ostream &) const;
-  // name is not a characteristic and so does not participate in operator==
-  // but it is needed to determine if procedures are distinguishable
+  // name and pass are not a characteristics and so does not participate in
+  // operator== but are needed to determine if procedures are distinguishable
   std::string name;
+  bool pass{false};  // is this the PASS argument of its procedure
   std::variant<DummyDataObject, DummyProcedure, AlternateReturn> u;
 };
 

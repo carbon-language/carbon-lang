@@ -357,3 +357,23 @@ contains
     type(*) :: x
   end
 end
+
+! Test C1514 rule 3 -- distinguishable passed-object dummy arguments
+module m18
+  type :: t(k)
+    integer, kind :: k
+  contains
+    procedure, pass(x) :: p1 => s
+    procedure, pass    :: p2 => s
+    procedure          :: p3 => s
+    procedure, pass(y) :: p4 => s
+    generic :: g1 => p1, p4
+    generic :: g2 => p2, p4
+    generic :: g3 => p3, p4
+  end type
+contains
+  subroutine s(x, y)
+    class(t(1)) :: x
+    class(t(2)) :: y
+  end
+end

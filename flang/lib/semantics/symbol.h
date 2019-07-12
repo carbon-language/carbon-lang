@@ -190,16 +190,17 @@ private:
 };
 
 // Mixin for details with passed-object dummy argument.
+// passIndex is set based on passName or the PASS attr.
 class WithPassArg {
 public:
   const SourceName *passName() const { return passName_; }
   void set_passName(const SourceName &passName) { passName_ = &passName; }
-  const Symbol *passArg() const { return passArg_; }
-  void set_passArg(const Symbol *passArg) { passArg_ = passArg; }
+  std::optional<int> passIndex() const { return passIndex_; }
+  void set_passIndex(int index) { passIndex_ = index; }
 
 private:
   const SourceName *passName_{nullptr};
-  const Symbol *passArg_{nullptr};
+  std::optional<int> passIndex_;
 };
 
 // A procedure pointer, dummy procedure, or external procedure
