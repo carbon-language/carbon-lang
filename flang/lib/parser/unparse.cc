@@ -2047,19 +2047,17 @@ public:
   }
   void Unparse(const OmpObjectList &x) { Walk(x.v, ","); }
   void Unparse(const OmpStandaloneDirective &x) {
-    std::visit(
-        common::visitors{
-            [&](const OmpStandaloneDirective::TargetEnterData &) {
-              Word("TARGET ENTER DATA ");
-            },
-            [&](const OmpStandaloneDirective::TargetExitData &) {
-              Word("TARGET EXIT DATA ");
-            },
-            [&](const OmpStandaloneDirective::TargetUpdate &) {
-              Word("TARGET UPDATE ");
-            },
-        },
-        x.u);
+    switch (x.v) {
+    case OmpStandaloneDirective::Directive::TargetEnterData:
+      Word("TARGET ENTER DATA ");
+      break;
+    case OmpStandaloneDirective::Directive::TargetExitData:
+      Word("TARGET EXIT DATA ");
+      break;
+    case OmpStandaloneDirective::Directive::TargetUpdate:
+      Word("TARGET UPDATE ");
+      break;
+    }
   }
   void Unparse(const OmpBlockDirective &x) {
     std::visit(

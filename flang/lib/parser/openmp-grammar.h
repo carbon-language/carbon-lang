@@ -250,50 +250,47 @@ TYPE_PARSER(construct<OmpClauseList>(
 TYPE_PARSER(construct<OmpObjectList>(nonemptyList(Parser<OmpObject>{})))
 
 // Omp directives enclosing do loop
-TYPE_PARSER(first(
-    construct<OmpLoopDirective>("DISTRIBUTE PARALLEL DO SIMD" >>
-        pure(OmpLoopDirective::Directive::DistributeParallelDoSimd)),
-    construct<OmpLoopDirective>("DISTRIBUTE PARALLEL DO" >>
-        pure(OmpLoopDirective::Directive::DistributeParallelDo)),
-    construct<OmpLoopDirective>(
-        "DISTRIBUTE SIMD" >> pure(OmpLoopDirective::Directive::DistributeSimd)),
-    construct<OmpLoopDirective>(
-        "DISTRIBUTE" >> pure(OmpLoopDirective::Directive::Distribute)),
-    construct<OmpLoopDirective>(
-        "DO SIMD" >> pure(OmpLoopDirective::Directive::DoSimd)),
-    construct<OmpLoopDirective>("DO" >> pure(OmpLoopDirective::Directive::Do)),
-    construct<OmpLoopDirective>("PARALLEL DO SIMD" >>
-        pure(OmpLoopDirective::Directive::ParallelDoSimd)),
-    construct<OmpLoopDirective>(
-        "PARALLEL DO" >> pure(OmpLoopDirective::Directive::ParallelDo)),
-    construct<OmpLoopDirective>(
-        "SIMD" >> pure(OmpLoopDirective::Directive::Simd)),
-    construct<OmpLoopDirective>("TARGET PARALLEL DO SIMD" >>
-        pure(OmpLoopDirective::Directive::TargetParallelDoSimd)),
-    construct<OmpLoopDirective>("TARGET PARALLEL DO" >>
-        pure(OmpLoopDirective::Directive::TargetParallelDo)),
-    construct<OmpLoopDirective>(
-        "TARGET SIMD" >> pure(OmpLoopDirective::Directive::TargetSimd)),
-    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
-        pure(OmpLoopDirective::Directive::TargetTeamsDistributeParallelDoSimd)),
-    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE PARALLEL DO" >>
-        pure(OmpLoopDirective::Directive::TargetTeamsDistributeParallelDo)),
-    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE SIMD" >>
-        pure(OmpLoopDirective::Directive::TargetTeamsDistributeSimd)),
-    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE" >>
-        pure(OmpLoopDirective::Directive::TargetTeamsDistribute)),
-    construct<OmpLoopDirective>(
-        "TASKLOOP SIMD" >> pure(OmpLoopDirective::Directive::TaskloopSimd)),
-    construct<OmpLoopDirective>(
-        "TASKLOOP" >> pure(OmpLoopDirective::Directive::Taskloop)),
-    construct<OmpLoopDirective>("TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
-        pure(OmpLoopDirective::Directive::TeamsDistributeParallelDoSimd)),
-    construct<OmpLoopDirective>("TEAMS DISTRIBUTE PARALLEL DO" >>
-        pure(OmpLoopDirective::Directive::TeamsDistributeParallelDo)),
-    construct<OmpLoopDirective>("TEAMS DISTRIBUTE SIMD" >>
-        pure(OmpLoopDirective::Directive::TeamsDistributeSimd)),
-    construct<OmpLoopDirective>("TEAMS DISTRIBUTE" >>
-        pure(OmpLoopDirective::Directive::TeamsDistribute))))
+TYPE_PARSER(sourced(construct<OmpLoopDirective>(first(
+    "DISTRIBUTE PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::DistributeParallelDoSimd),
+    "DISTRIBUTE PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::DistributeParallelDo),
+
+    "DISTRIBUTE SIMD" >> pure(OmpLoopDirective::Directive::DistributeSimd),
+
+    "DISTRIBUTE" >> pure(OmpLoopDirective::Directive::Distribute),
+
+    "DO SIMD" >> pure(OmpLoopDirective::Directive::DoSimd),
+    "DO" >> pure(OmpLoopDirective::Directive::Do),
+    "PARALLEL DO SIMD" >> pure(OmpLoopDirective::Directive::ParallelDoSimd),
+
+    "PARALLEL DO" >> pure(OmpLoopDirective::Directive::ParallelDo),
+
+    "SIMD" >> pure(OmpLoopDirective::Directive::Simd),
+    "TARGET PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::TargetParallelDoSimd),
+    "TARGET PARALLEL DO" >> pure(OmpLoopDirective::Directive::TargetParallelDo),
+
+    "TARGET SIMD" >> pure(OmpLoopDirective::Directive::TargetSimd),
+    "TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistributeParallelDoSimd),
+    "TARGET TEAMS DISTRIBUTE PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistributeParallelDo),
+    "TARGET TEAMS DISTRIBUTE SIMD" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistributeSimd),
+    "TARGET TEAMS DISTRIBUTE" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistribute),
+
+    "TASKLOOP SIMD" >> pure(OmpLoopDirective::Directive::TaskloopSimd),
+
+    "TASKLOOP" >> pure(OmpLoopDirective::Directive::Taskloop),
+    "TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::TeamsDistributeParallelDoSimd),
+    "TEAMS DISTRIBUTE PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::TeamsDistributeParallelDo),
+    "TEAMS DISTRIBUTE SIMD" >>
+        pure(OmpLoopDirective::Directive::TeamsDistributeSimd),
+    "TEAMS DISTRIBUTE" >> pure(OmpLoopDirective::Directive::TeamsDistribute)))))
 
 // Cancellation Point construct
 TYPE_PARSER("CANCELLATION POINT" >>
@@ -317,14 +314,12 @@ TYPE_PARSER("FLUSH" >> construct<OpenMPFlushConstruct>(
                            maybe(parenthesized(Parser<OmpObjectList>{}))))
 
 // Standalone directives
-TYPE_PARSER("TARGET ENTER DATA" >>
-        construct<OmpStandaloneDirective>(
-            construct<OmpStandaloneDirective::TargetEnterData>()) ||
+TYPE_PARSER(sourced(construct<OmpStandaloneDirective>(first(
+    "TARGET ENTER DATA" >>
+        pure(OmpStandaloneDirective::Directive::TargetEnterData),
     "TARGET EXIT DATA" >>
-        construct<OmpStandaloneDirective>(
-            construct<OmpStandaloneDirective::TargetExitData>()) ||
-    "TARGET UPDATE" >> construct<OmpStandaloneDirective>(
-                           construct<OmpStandaloneDirective::TargetUpdate>()))
+        pure(OmpStandaloneDirective::Directive::TargetExitData),
+    "TARGET UPDATE" >> pure(OmpStandaloneDirective::Directive::TargetUpdate)))))
 
 // Directives enclosing structured-block
 TYPE_PARSER("MASTER" >>
@@ -558,6 +553,6 @@ TYPE_PARSER(startOmpLine >> "END"_tok >>
             endOmpLine))
 
 TYPE_PARSER(construct<OpenMPLoopConstruct>(
-    sourced(Parser<OmpLoopDirective>{}), Parser<OmpClauseList>{} / endOmpLine))
+    Parser<OmpLoopDirective>{}, Parser<OmpClauseList>{} / endOmpLine))
 }
 #endif  // FORTRAN_PARSER_OPENMP_GRAMMAR_H_

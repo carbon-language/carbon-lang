@@ -3678,11 +3678,9 @@ WRAPPER_CLASS(OpenMPFlushConstruct, std::optional<OmpObjectList>);
 
 // Standalone constructs
 struct OmpStandaloneDirective {
-  UNION_CLASS_BOILERPLATE(OmpStandaloneDirective);
-  EMPTY_CLASS(TargetEnterData);
-  EMPTY_CLASS(TargetExitData);
-  EMPTY_CLASS(TargetUpdate);
-  std::variant<TargetEnterData, TargetExitData, TargetUpdate> u;
+  ENUM_CLASS(Directive, TargetEnterData, TargetExitData, TargetUpdate)
+  WRAPPER_CLASS_BOILERPLATE(OmpStandaloneDirective, Directive);
+  CharBlock source;
 };
 
 EMPTY_CLASS(OpenMPTaskyieldConstruct);
