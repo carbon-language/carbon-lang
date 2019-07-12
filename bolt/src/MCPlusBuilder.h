@@ -73,13 +73,6 @@ private:
   /// A variable that is used to generate unique ids for annotation allocators
   AllocatorIdTy MaxAllocatorId = 0;
 
-  /// Return the annotation allocator of a given id
-  AnnotationAllocator &getAnnotationAllocator(AllocatorIdTy AllocatorId) {
-    assert(AnnotationAllocators.count(AllocatorId) &&
-           "allocator not initialized");
-    return AnnotationAllocators.find(AllocatorId)->second;
-  }
-
   /// We encode Index and Value into a 64-bit immediate operand value.
   static int64_t encodeAnnotationImm(unsigned Index, int64_t Value) {
     assert(Index < 256 && "annotation index max value exceeded");
@@ -296,18 +289,30 @@ public:
   MCPlusBuilder(const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
                 const MCRegisterInfo *RegInfo)
       : Analysis(Analysis), Info(Info), RegInfo(RegInfo) {
-    // Initialize the default annotation allocator with id 0.
+    // Initialize the default annotation allocator with id 0
     AnnotationAllocators.emplace(0, AnnotationAllocator());
     MaxAllocatorId++;
   }
 
-  /// Initialize a new annotation allocator and return its id.
+  /// Initialize a new annotation allocator and return its id
   AllocatorIdTy initializeNewAnnotationAllocator() {
     AnnotationAllocators.emplace(MaxAllocatorId, AnnotationAllocator());
     return MaxAllocatorId++;
   }
 
-  /// Free the values allocator within the annotation allocator.
+  /// Return the annotation allocator of a given id
+  AnnotationAllocator &getAnnotationAllocator(AllocatorIdTy AllocatorId) {
+    assert(AnnotationAllocators.count(AllocatorId) &&
+           "allocator not initialized");
+    return AnnotationAllocators.find(AllocatorId)->second;
+  }
+
+  // Check if an annotation allocator with the given id exists
+  bool checkAllocatorExists(AllocatorIdTy AllocatorId) {
+    return AnnotationAllocators.count(AllocatorId);
+  }
+
+  /// Free the values allocator within the annotation allocator
   void freeValuesAllocator(AllocatorIdTy AllocatorId) {
     auto &Allocator = getAnnotationAllocator(AllocatorId);
     for (auto *Annotation : Allocator.AnnotationPool)
@@ -321,7 +326,7 @@ public:
     freeAnnotations();
   }
 
-  /// Free all memory allocated for annotations.
+  /// Free all memory allocated for annotations
   void freeAnnotations() {
     for (auto &Element : AnnotationAllocators) {
       auto &Allocator = Element.second;
@@ -1016,7 +1021,8 @@ public:
   int64_t getGnuArgsSize(const MCInst &Inst) const;
 
   /// Add the value of GNU_args_size to Inst if it already has EH info.
-  void addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize);
+  void addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize,
+                      AllocatorIdTy AllocId = 0);
 
   /// Return jump table addressed by this instruction.
   uint64_t getJumpTable(const MCInst &Inst) const;
@@ -1025,7 +1031,8 @@ public:
   uint16_t getJumpTableIndexReg(const MCInst &Inst) const;
 
   /// Set jump table addressed by this instruction.
-  bool setJumpTable(MCInst &Inst, uint64_t Value, uint16_t IndexReg);
+  bool setJumpTable(MCInst &Inst, uint64_t Value, uint16_t IndexReg,
+                    AllocatorIdTy AllocId = 0);
 
   /// Disassociate instruction with a jump table.
   bool unsetJumpTable(MCInst &Inst);

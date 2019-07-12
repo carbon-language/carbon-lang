@@ -141,7 +141,7 @@ PrintOnly("print-only",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 TimeBuild("time-build",
   cl::desc("print time spent constructing binary functions"),
   cl::ZeroOrMore,
@@ -176,8 +176,6 @@ namespace llvm {
 namespace bolt {
 
 constexpr unsigned BinaryFunction::MinAlign;
-const char BinaryFunction::TimerGroupName[] = "buildfuncs";
-const char BinaryFunction::TimerGroupDesc[] = "Build Binary Functions";
 
 namespace {
 
@@ -887,15 +885,18 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address)) {
     return IslandSym;
   }
-
-  MCSymbol *Result = BC.Ctx->createTempSymbol();
+  MCSymbol *Result;
+  {
+    std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+    Result = BC.Ctx->createTempSymbol();
+  }
   Labels[Offset] = Result;
   return Result;
 }
 
 void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
-  NamedRegionTimer T("disassemble", "Disassemble function", TimerGroupName,
-                     TimerGroupDesc, opts::TimeBuild);
+  NamedRegionTimer T("disassemble", "Disassemble function", "buildfuncs",
+                     "Build Binary Functions", opts::TimeBuild);
 
   assert(FunctionData.size() == getSize() &&
          "function size does not match raw data size");
@@ -1449,8 +1450,8 @@ void BinaryFunction::postProcessJumpTables() {
   TakenBranches.erase(NewEnd, TakenBranches.end());
 }
 
-bool BinaryFunction::postProcessIndirectBranches() {
-
+bool BinaryFunction::postProcessIndirectBranches(
+    MCPlusBuilder::AllocatorIdTy AllocId) {
   auto addUnknownControlFlow = [&](BinaryBasicBlock &BB) {
     HasUnknownControlFlow = true;
     BB.removeAllSuccessors();
@@ -1572,7 +1573,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
   // fail to match the pattern.
   if (HasUnknownControlFlow && NumIndirectJumps == 1 &&
       JumpTables.size() == 1 && LastIndirectJump) {
-    BC.MIB->setJumpTable(*LastIndirectJump, LastJT, LastJTIndexReg);
+    BC.MIB->setJumpTable(*LastIndirectJump, LastJT, LastJTIndexReg, AllocId);
     HasUnknownControlFlow = false;
 
     // re-populate successors based on the jump table.
@@ -1624,9 +1625,7 @@ void BinaryFunction::recomputeLandingPads() {
   }
 }
 
-bool BinaryFunction::buildCFG() {
-  NamedRegionTimer T("buildcfg", "Build CFG", TimerGroupName, TimerGroupDesc,
-                     opts::TimeBuild);
+bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
   auto &MIB = BC.MIB;
 
   if (!isSimple()) {
@@ -1677,7 +1676,8 @@ bool BinaryFunction::buildCFG() {
     assert(PrevBB && PrevBB != InsertBB && "invalid previous block");
     auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
     if (PrevInstr && !MIB->hasAnnotation(*PrevInstr, "Offset"))
-      MIB->addAnnotation(*PrevInstr, "Offset", static_cast<uint32_t>(Offset));
+      MIB->addAnnotation(*PrevInstr, "Offset", static_cast<uint32_t>(Offset),
+                         AllocatorId);
   };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
@@ -1705,9 +1705,17 @@ bool BinaryFunction::buildCFG() {
       DEBUG(dbgs() << "SDTMarker detected in the input at : "
                    << utohexstr(InstrInputAddr) << "\n");
 
-      MIB->addAnnotation<uint64_t>(Instr, "SDTMarker", InstrInputAddr);
-      BC.SDTMarkers[InstrInputAddr].Label =
-          getOrCreateLocalLabel(InstrInputAddr);
+      MIB->addAnnotation<uint64_t>(Instr, "SDTMarker", InstrInputAddr,
+                                   AllocatorId);
+
+      // This mutex is used to lock concurrent writes to GlobalSymbols and
+      // BinaryDataMap that happens in registerNameAtAddress
+      {
+        static std::shared_timed_mutex GlobalSymbolCreationMtx;
+        std::unique_lock<std::shared_timed_mutex> Lock(GlobalSymbolCreationMtx);
+        BC.SDTMarkers[InstrInputAddr].Label =
+            getOrCreateLocalLabel(InstrInputAddr);
+      }
     }
 
     // Ignore nops except SDT markers. We use nops to derive alignment of the
@@ -1730,10 +1738,13 @@ bool BinaryFunction::buildCFG() {
         // Temporarily restore inserter basic block.
         InsertBB = PrevBB;
       } else {
-        InsertBB = addBasicBlock(Offset,
-                                 BC.Ctx->createTempSymbol("FT", true),
-                                 opts::PreserveBlocksAlignment &&
-                                   IsLastInstrNop);
+        MCSymbol *Label;
+        {
+          std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+          Label = BC.Ctx->createTempSymbol("FT", true);
+        }
+        InsertBB = addBasicBlock(
+            Offset, Label, opts::PreserveBlocksAlignment && IsLastInstrNop);
         updateOffset(LastInstrOffset);
       }
     }
@@ -1835,7 +1846,7 @@ bool BinaryFunction::buildCFG() {
     DEBUG(dbgs() << "last block was marked as a fall-through in " << *this
                  << '\n');
   }
-
+  
   // Assign landing pads and throwers info.
   recomputeLandingPads();
 
@@ -1843,7 +1854,7 @@ bool BinaryFunction::buildCFG() {
   annotateCFIState();
 
   // Annotate invoke instructions with GNU_args_size data.
-  propagateGnuArgsSizeInfo();
+  propagateGnuArgsSizeInfo(AllocatorId);
 
   // Set the basic block layout to the original order and set end offsets.
   PrevBB = nullptr;
@@ -1871,7 +1882,7 @@ bool BinaryFunction::buildCFG() {
   CurrentState = State::CFG;
 
   // Make any necessary adjustments for indirect branches.
-  if (!postProcessIndirectBranches()) {
+  if (!postProcessIndirectBranches(AllocatorId)) {
     if (opts::Verbosity) {
       errs() << "BOLT-WARNING: failed to post-process indirect branches for "
              << *this << '\n';
@@ -3303,7 +3314,8 @@ void BinaryFunction::fixBranches() {
          && "Invalid CFG detected after fixing branches");
 }
 
-void BinaryFunction::propagateGnuArgsSizeInfo() {
+void BinaryFunction::propagateGnuArgsSizeInfo(
+    MCPlusBuilder::AllocatorIdTy AllocId) {
   assert(CurrentState == State::Disassembled && "unexpected function state");
 
   if (!hasEHRanges() || !usesGnuArgsSize())
@@ -3329,7 +3341,7 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
         }
       } else if (BC.MIB->isInvoke(Instr)) {
         // Add the value of GNU_args_size as an extra operand to invokes.
-        BC.MIB->addGnuArgsSize(Instr, CurrentGnuArgsSize);
+        BC.MIB->addGnuArgsSize(Instr, CurrentGnuArgsSize, AllocId);
       }
       ++II;
     }

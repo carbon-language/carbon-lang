@@ -367,7 +367,7 @@ private:
 
   /// Associate DW_CFA_GNU_args_size info with invoke instructions
   /// (call instructions with non-empty landing pad).
-  void propagateGnuArgsSizeInfo();
+  void propagateGnuArgsSizeInfo(MCPlusBuilder::AllocatorIdTy AllocId);
 
   /// Synchronize branch instructions with CFG.
   void postProcessBranches();
@@ -790,7 +790,6 @@ public:
     assert(Idx < LocSyms.size() && "Invalid index");
     return LocSyms[Idx];
   }
-
 
   /// Update layout of basic blocks used for output.
   void updateBasicBlockLayout(BasicBlockOrderType &NewLayout) {
@@ -1358,6 +1357,7 @@ public:
                    bool DeriveAlignment = false) {
     assert(BC.Ctx && "cannot be called with empty context");
     if (!Label) {
+      std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
       Label = BC.Ctx->createTempSymbol("BB", true);
     }
     auto BB = std::unique_ptr<BinaryBasicBlock>(
@@ -1384,9 +1384,10 @@ public:
     assert((CurrentState == State::CFG || !getBasicBlockAtOffset(Offset)) &&
            "basic block already exists in pre-CFG state");
 
-    if (!Label)
+    if (!Label) {
+      std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
       Label = BC.Ctx->createTempSymbol("BB", true);
-
+    }
     auto BBPtr = createBasicBlock(Offset, Label, DeriveAlignment);
     BasicBlocks.emplace_back(BBPtr.release());
 
@@ -1837,6 +1838,7 @@ public:
 
     // Register our island at global namespace
     Symbol = BC.getOrCreateGlobalSymbol(Address, "ISLANDat");
+    
     // Internal bookkeeping
     const auto Offset = Address - getAddress();
     assert((!IslandOffsets.count(Offset) || IslandOffsets[Offset] == Symbol) &&
@@ -1963,7 +1965,7 @@ public:
   ///
   /// Returns true on success and update the current function state to
   /// State::CFG. Returns false if CFG cannot be built.
-  bool buildCFG();
+  bool buildCFG(MCPlusBuilder::AllocatorIdTy);
 
   /// Read any kind of profile information available for the function.
   void readProfile();
@@ -1984,7 +1986,7 @@ public:
   ///
   /// Return true upon successful processing, or false if the control flow
   /// cannot be statically evaluated for any given indirect branch.
-  bool postProcessIndirectBranches();
+  bool postProcessIndirectBranches(MCPlusBuilder::AllocatorIdTy AllocId);
 
   /// In functions with multiple entry points, the profile collection records
   /// data for other entry points in a different function entry. This function

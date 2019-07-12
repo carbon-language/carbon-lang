@@ -355,7 +355,7 @@ void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
   };
 
   ParallelUtilities::runOnEachFunction(
-      BC, ParallelUtilities::SchedulingPolicy::SP_LINEAR, WorkFun, SkipFunc,
+      BC, ParallelUtilities::SchedulingPolicy::SP_BB_LINEAR, WorkFun, SkipFunc,
       "ReorderBasicBlocks");
 
   outs() << "BOLT-INFO: basic block reordering modified layout of "

@@ -9,7 +9,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "RewriteInstance.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
@@ -23,6 +22,7 @@
 #include "Exceptions.h"
 #include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
+#include "ParallelUtilities.h"
 #include "Passes/ReorderFunctions.h"
 #include "ProfileReader.h"
 #include "ProfileWriter.h"
@@ -36,8 +36,8 @@
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCDwarf.h"
@@ -60,8 +60,8 @@
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
@@ -92,6 +92,7 @@ extern cl::opt<MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::list<std::string> ReorderData;
 extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
+extern cl::opt<bool> TimeBuild;
 
 cl::opt<bool>
 Instrument("instrument-experimental",
@@ -431,6 +432,12 @@ TimeRewrite("time-rewrite",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+SequentialDisassembly("sequential-disassembly",
+  cl::desc("performs disassembly sequentially"),
+  cl::init(false),
+  cl::cat(BoltOptCategory));
+
 bool isHotTextMover(const BinaryFunction &Function) {
   for (auto &SectionName : opts::HotTextMoveSections) {
     if (Function.getOriginSectionName() == SectionName)
@@ -766,7 +773,7 @@ void RewriteInstance::reset() {
   }
 }
 
-bool RewriteInstance::shouldDisassemble(BinaryFunction &BF) const {
+bool RewriteInstance::shouldDisassemble(const BinaryFunction &BF) const {
   // If we have to relocate the code we have to disassemble all functions.
   if (!BF.getBinaryContext().HasRelocations && !opts::shouldProcess(BF)) {
     DEBUG(dbgs() << "BOLT: skipping processing function " << BF
@@ -1493,7 +1500,7 @@ void RewriteInstance::discoverFileObjects() {
       // Skip symbols from zero-sized sections.
       if (!Section->getSize())
         continue;
-      
+
       BF = BC->createBinaryFunction(UniqueName, *Section, Address,
                                     SymbolSize, IsSimple);
     }
@@ -1894,12 +1901,12 @@ void RewriteInstance::readSpecialSections() {
 
   BC->HasRelocations = HasTextRelocations &&
                        (opts::RelocationMode != cl::BOU_FALSE);
- 
+
   // Force non-relocation mode for heatmap generation
   if (opts::HeatmapMode) {
     BC->HasRelocations = false;
   }
-  
+
   if (BC->HasRelocations) {
     outs() << "BOLT-INFO: enabling " << (opts::StrictMode ? "strict " : "")
            << "relocation mode\n";
@@ -2744,13 +2751,40 @@ void RewriteInstance::disassembleFunctions() {
     if (Function.getLSDAAddress() != 0)
       Function.parseLSDA(getLSDAData(), getLSDAAddress());
 
-    if (!Function.buildCFG())
-      continue;
-
-    if (opts::PrintAll)
-      Function.print(outs(), "while building cfg", true);
-
   } // Iterate over all functions
+
+  // Run buildCFG in parallel for all functions
+  {
+    NamedRegionTimer T("buildCFG", "buildCFG", "buildfuncs",
+                       "Build Binary Functions", opts::TimeBuild);
+
+    // Create annotation indices to allow lock-free execution
+    BC->MIB->getOrCreateAnnotationIndex("Offset");
+    BC->MIB->getOrCreateAnnotationIndex("JTIndexReg");
+    BC->MIB->getOrCreateAnnotationIndex("SDTMarker");
+
+    ParallelUtilities::WorkFuncWithAllocTy WorkFun =
+        [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
+          if (!BF.buildCFG(AllocId))
+            return;
+
+          if (opts::PrintAll) {
+            static std::mutex CriticalSectionMutex;
+            std::lock_guard<std::mutex> Lock(CriticalSectionMutex);
+            BF.print(outs(), "while building cfg", true);
+          }
+        };
+
+    ParallelUtilities::PredicateTy SkipPredicate =
+        [&](const BinaryFunction &BF) {
+          return !shouldDisassemble(BF) || !BF.isSimple();
+        };
+
+    ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
+        *BC, ParallelUtilities::SchedulingPolicy::SP_INST_LINEAR, WorkFun,
+        SkipPredicate, "disassembleFunctions-buildCFG",
+        /*ForceSequential*/ opts::SequentialDisassembly);
+  }
 
   BC->postProcessSymbolTable();
 }

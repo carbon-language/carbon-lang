@@ -34,7 +34,7 @@ UseDFS("icf-dfs",
   cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
-  
+
 static cl::opt<bool>
 TimeICF("time-icf",
   cl::desc("time icf steps"),
@@ -354,7 +354,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
           // Make sure indices are in-order.
           BF.updateLayoutIndices();
 
-          // Pre-compute hash before pushing into hashtable. 
+          // Pre-compute hash before pushing into hashtable.
           BF.hash(/*Recompute=*/true, opts::UseDFS);
         }
         DEBUG(T.stopTimer());
@@ -462,7 +462,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
       auto &Candidates = Entry.second;
       if (Candidates.size() < 2)
         continue;
-      
+
       if (opts::NoThreads)
         performFoldingForItem(Candidates);
       else

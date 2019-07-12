@@ -148,12 +148,13 @@ int64_t MCPlusBuilder::getGnuArgsSize(const MCInst &Inst) const {
   return *Value;
 }
 
-void MCPlusBuilder::addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize) {
+void MCPlusBuilder::addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize,
+                                   AllocatorIdTy AllocId) {
   assert(GnuArgsSize >= 0 && "cannot set GNU_args_size to negative value");
   assert(getGnuArgsSize(Inst) == -1LL && "GNU_args_size already set");
   assert(isInvoke(Inst) && "GNU_args_size can only be set for invoke");
 
-  setAnnotationOpValue(Inst, MCAnnotation::kGnuArgsSize, GnuArgsSize);
+  setAnnotationOpValue(Inst, MCAnnotation::kGnuArgsSize, GnuArgsSize, AllocId);
 }
 
 uint64_t MCPlusBuilder::getJumpTable(const MCInst &Inst) const {
@@ -168,11 +169,11 @@ uint16_t MCPlusBuilder::getJumpTableIndexReg(const MCInst &Inst) const {
 }
 
 bool MCPlusBuilder::setJumpTable(MCInst &Inst, uint64_t Value,
-                                 uint16_t IndexReg) {
+                                 uint16_t IndexReg, AllocatorIdTy AllocId) {
   if (!isIndirectBranch(Inst))
     return false;
-  setAnnotationOpValue(Inst, MCAnnotation::kJumpTable, Value);
-  getOrCreateAnnotationAs<uint16_t>(Inst, "JTIndexReg") = IndexReg;
+  setAnnotationOpValue(Inst, MCAnnotation::kJumpTable, Value, AllocId);
+  addAnnotation<>(Inst, "JTIndexReg", IndexReg, AllocId);
   return true;
 }
 
@@ -249,10 +250,10 @@ MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
     const auto Imm = AnnotationInst->getOperand(I).getImm();
     const auto Index = extractAnnotationIndex(Imm);
     const auto Value = extractAnnotationValue(Imm);
-    const auto *Annotation = 
+    const auto *Annotation =
             reinterpret_cast<const MCAnnotation *>(Value);
     if (Index >= MCAnnotation::kGeneric) {
-      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric] 
+      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric]
          << ": ";
       Annotation->print(OS);
     }
@@ -427,7 +428,7 @@ bool MCPlusBuilder::evaluateBranch(const MCInst &Inst, uint64_t Addr,
       return AliasMap[Reg];
     return AliasMap[SuperReg[Reg]];
   }
- 
+
  uint8_t
  MCPlusBuilder::getRegSize(MCPhysReg Reg) const {
     // SizeMap caches a mapping of registers to their sizes
