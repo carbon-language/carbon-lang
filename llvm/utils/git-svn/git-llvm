@@ -48,7 +48,7 @@ except ImportError:
     from pipes import quote
 
 # It's *almost* a straightforward mapping from the monorepo to svn...
-GIT_TO_SVN_DIR = {
+LLVM_MONOREPO_SVN_MAPPING = {
     d: (d + '/trunk')
     for d in [
         'clang-tools-extra',
@@ -70,8 +70,11 @@ GIT_TO_SVN_DIR = {
         'pstl',
     ]
 }
-GIT_TO_SVN_DIR.update({'clang': 'cfe/trunk'})
-GIT_TO_SVN_DIR.update({'': 'monorepo-root/trunk'})
+LLVM_MONOREPO_SVN_MAPPING.update({'clang': 'cfe/trunk'})
+LLVM_MONOREPO_SVN_MAPPING.update({'': 'monorepo-root/trunk'})
+
+SPLIT_REPO_NAMES = {'llvm-' + d : d + '/trunk'
+                    for d in ['www', 'zorg', 'test-suite', 'lnt']}
 
 VERBOSE = False
 QUIET = False
@@ -274,13 +277,13 @@ def fix_eol_style_native(rev, svn_sr_path, files):
         # just the diff, and not a mass line ending change.
         shell(['dos2unix'] + crlf_files, ignore_errors=True, cwd=svn_sr_path)
 
-def split_subrepo(f):
+def split_subrepo(f, git_to_svn_mapping):
     # Given a path, splits it into (subproject, rest-of-path). If the path is
     # not in a subproject, returns ('', full-path).
 
     subproject, remainder = split_first_path_component(f)
 
-    if subproject in GIT_TO_SVN_DIR:
+    if subproject in git_to_svn_mapping:
         return subproject, remainder
     else:
         return '', f
@@ -293,7 +296,7 @@ def get_all_parent_dirs(name):
         head, tail = os.path.split(head)
     return parts
 
-def svn_push_one_rev(svn_repo, rev, dry_run):
+def svn_push_one_rev(svn_repo, rev, git_to_svn_mapping, dry_run):
     files = git('diff-tree', '--no-commit-id', '--name-only', '-r',
                 rev).split('\n')
     if not files:
@@ -302,7 +305,7 @@ def svn_push_one_rev(svn_repo, rev, dry_run):
     # Split files by subrepo
     subrepo_files = collections.defaultdict(list)
     for f in files:
-        subrepo, remainder = split_subrepo(f)
+        subrepo, remainder = split_subrepo(f, git_to_svn_mapping)
         subrepo_files[subrepo].append(remainder)
 
     status = svn(svn_repo, 'status', '--no-ignore')
@@ -312,7 +315,7 @@ def svn_push_one_rev(svn_repo, rev, dry_run):
 
     svn_dirs_to_update = set()
     for sr, files in iteritems(subrepo_files):
-        svn_sr_path = GIT_TO_SVN_DIR[sr]
+        svn_sr_path = git_to_svn_mapping[sr]
         for f in files:
             svn_dirs_to_update.add(
                 os.path.dirname(os.path.join(svn_sr_path, f)))
@@ -333,7 +336,7 @@ def svn_push_one_rev(svn_repo, rev, dry_run):
     svn(svn_repo, 'update', '--depth=files', *sorted_dirs_to_update)
 
     for sr, files in iteritems(subrepo_files):
-        svn_sr_path = os.path.join(svn_repo, GIT_TO_SVN_DIR[sr])
+        svn_sr_path = os.path.join(svn_repo, git_to_svn_mapping[sr])
         if os.name == 'nt':
             fix_eol_style_native(rev, svn_sr_path, files)
         # We use text=False (and pass '--binary') so that we can get an exact
@@ -390,6 +393,17 @@ def cmd_push(args):
     # Push from the root of the git repo
     os.chdir(git_root)
 
+    # Get the remote URL, and check if it's one of the standalone repos.
+    git_remote_url = git('remote', 'get-url', 'origin')
+    git_remote_url = git_remote_url.rstrip('.git').rstrip('/')
+    git_remote_repo_name = git_remote_url.rsplit('/', 1)[-1]
+    split_repo_path = SPLIT_REPO_NAMES.get(git_remote_repo_name)
+    if split_repo_path:
+      git_to_svn_mapping = {'': split_repo_path}
+    else:
+      # Default to the monorepo mapping
+      git_to_svn_mapping = LLVM_MONOREPO_SVN_MAPPING
+
     # We need a staging area for SVN, let's hide it in the .git directory.
     dot_git_dir = git('rev-parse', '--git-common-dir')
     # Not all versions of git support --git-common-dir and just print the
@@ -403,13 +417,15 @@ def cmd_push(args):
     rev_range = args.rev_range
     dry_run = args.dry_run
     revs = get_revs_to_push(rev_range)
-    log('Pushing %d commit%s:\n%s' %
-        (len(revs), 's' if len(revs) != 1
-         else '', '\n'.join('  ' + git('show', '--oneline', '--quiet', c)
-                            for c in revs)))
+    log('Pushing %d %s commit%s:\n%s' %
+        (len(revs),
+         'split-repo (%s)' % split_repo_path if split_repo_path else 'monorepo',
+         's' if len(revs) != 1 else '',
+         '\n'.join('  ' + git('show', '--oneline', '--quiet', c)
+                   for c in revs)))
     for r in revs:
         clean_svn(svn_root)
-        svn_push_one_rev(svn_root, r, dry_run)
+        svn_push_one_rev(svn_root, r, git_to_svn_mapping, dry_run)
 
 
 def lookup_llvm_svn_id(git_commit_hash):
