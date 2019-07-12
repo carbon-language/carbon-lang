@@ -55,7 +55,10 @@ struct SemaphorePipe {
   };
 
   void signal() {
-    ssize_t Result = llvm::sys::RetryAfterSignal(-1, write, FDWrite, "A", 1);
+#ifndef NDEBUG
+    ssize_t Result =
+#endif
+    llvm::sys::RetryAfterSignal(-1, write, FDWrite, "A", 1);
     assert(Result != -1);
   }
   ~SemaphorePipe() {
