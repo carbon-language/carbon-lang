@@ -138,7 +138,8 @@ public:
     bool SemanticHighlighting = false;
 
     /// Returns true if the StringRef is a tweak that should be enabled
-    std::function<bool(llvm::StringRef)> TweakFilter = [](llvm::StringRef TweakToSearch) {return true;};
+    std::function<bool(llvm::StringRef)> TweakFilter =
+        [](llvm::StringRef TweakToSearch) { return true; };
   };
   // Sensible default options for use in tests.
   // Features like indexing must be enabled if desired.
@@ -211,6 +212,11 @@ public:
   void typeHierarchy(PathRef File, Position Pos, int Resolve,
                      TypeHierarchyDirection Direction,
                      Callback<llvm::Optional<TypeHierarchyItem>> CB);
+
+  /// Resolve type hierarchy item in the given direction.
+  void resolveTypeHierarchy(TypeHierarchyItem Item, int Resolve,
+                            TypeHierarchyDirection Direction,
+                            Callback<llvm::Optional<TypeHierarchyItem>> CB);
 
   /// Retrieve the top symbols from the workspace matching a query.
   void workspaceSymbols(StringRef Query, int Limit,
@@ -315,7 +321,7 @@ private:
   // can be caused by missing includes (e.g. member access in incomplete type).
   bool SuggestMissingIncludes = false;
   bool EnableHiddenFeatures = false;
-   
+
   std::function<bool(llvm::StringRef)> TweakFilter;
 
   // GUARDED_BY(CachedCompletionFuzzyFindRequestMutex)
