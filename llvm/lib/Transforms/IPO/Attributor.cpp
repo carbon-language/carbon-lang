@@ -742,22 +742,22 @@ struct AANoSyncFunction : AANoSync, BooleanState {
   /// }
 
   /// See AbstractAttribute::getManifestPosition().
-  virtual ManifestPosition getManifestPosition() const override {
+  ManifestPosition getManifestPosition() const override {
     return MP_FUNCTION;
   }
 
-  virtual const std::string getAsStr() const override {
+  const std::string getAsStr() const override {
     return getAssumed() ? "nosync" : "may-sync";
   }
 
   /// See AbstractAttribute::updateImpl(...).
-  virtual ChangeStatus updateImpl(Attributor &A) override;
+  ChangeStatus updateImpl(Attributor &A) override;
 
   /// See AANoSync::isAssumedNoSync()
-  virtual bool isAssumedNoSync() const override { return getAssumed(); }
+  bool isAssumedNoSync() const override { return getAssumed(); }
 
   /// See AANoSync::isKnownNoSync()
-  virtual bool isKnownNoSync() const override { return getKnown(); }
+  bool isKnownNoSync() const override { return getKnown(); }
 
   /// Helper function used to determine whether an instruction is non-relaxed
   /// atomic. In other words, if an atomic instruction does not have unordered
