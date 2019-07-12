@@ -220,8 +220,8 @@ void DirectoryWatcherLinux::InotifyPollingLoop() {
 
     // Multiple epoll_events can be received for a single file descriptor per
     // epoll_wait call.
-    for (const auto &EpollEvent : EpollEventBuffer) {
-      if (EpollEvent.data.fd == InotifyPollingStopSignal.FDRead) {
+    for (int i = 0; i < EpollWaitResult; ++i) {
+      if (EpollEventBuffer[i].data.fd == InotifyPollingStopSignal.FDRead) {
         StopWork();
         return;
       }
