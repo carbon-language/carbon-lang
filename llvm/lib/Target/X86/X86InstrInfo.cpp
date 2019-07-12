@@ -3374,6 +3374,11 @@ inline static bool isDefConvertible(const MachineInstr &MI, bool &NoSignFlag) {
 static X86::CondCode isUseDefConvertible(const MachineInstr &MI) {
   switch (MI.getOpcode()) {
   default: return X86::COND_INVALID;
+  case X86::NEG8r:
+  case X86::NEG16r:
+  case X86::NEG32r:
+  case X86::NEG64r:
+    return X86::COND_AE;
   case X86::LZCNT16rr:
   case X86::LZCNT32rr:
   case X86::LZCNT64rr:
