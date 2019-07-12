@@ -98,27 +98,32 @@ void OmpStructureChecker::Leave(const parser::OpenMPBlockConstruct &) {
   ompContext_.pop_back();
 }
 
-// 2.5 parallel-clause -> if-clause |
-//                        num-threads-clause |
-//                        default-clause |
-//                        private-clause |
-//                        firstprivate-clause |
-//                        shared-clause |
-//                        copyin-clause |
-//                        reduction-clause |
-//                        proc-bind-clause
-void OmpStructureChecker::Enter(const parser::OmpBlockDirective::Parallel &) {
-  // reserve for nesting check
-  SetContextDirectiveEnum(OmpDirective::PARALLEL);
-
-  OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
-      OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
-      OmpClause::REDUCTION};
-  SetContextAllowed(allowed);
-
-  OmpClauseSet allowedOnce{
-      OmpClause::IF, OmpClause::NUM_THREADS, OmpClause::PROC_BIND};
-  SetContextAllowedOnce(allowedOnce);
+void OmpStructureChecker::Enter(const parser::OmpBlockDirective &x) {
+  switch (x.v) {
+  // 2.5 parallel-clause -> if-clause |
+  //                        num-threads-clause |
+  //                        default-clause |
+  //                        private-clause |
+  //                        firstprivate-clause |
+  //                        shared-clause |
+  //                        copyin-clause |
+  //                        reduction-clause |
+  //                        proc-bind-clause
+  case parser::OmpBlockDirective::Directive::Parallel: {
+    // reserve for nesting check
+    SetContextDirectiveEnum(OmpDirective::PARALLEL);
+    OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
+        OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
+        OmpClause::REDUCTION};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{
+        OmpClause::IF, OmpClause::NUM_THREADS, OmpClause::PROC_BIND};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
+  default:
+    // TODO others
+    break;
+  }
 }
 
 void OmpStructureChecker::Enter(const parser::OmpLoopDirective &x) {

@@ -2060,29 +2060,25 @@ public:
     }
   }
   void Unparse(const OmpBlockDirective &x) {
-    std::visit(
-        common::visitors{
-            [&](const OmpBlockDirective::Master &y) { Word("MASTER"); },
-            [&](const OmpBlockDirective::Ordered &) { Word("ORDERED "); },
-            [&](const OmpBlockDirective::ParallelWorkshare &) {
-              Word("PARALLEL WORKSHARE ");
-            },
-            [&](const OmpBlockDirective::Parallel &) { Word("PARALLEL "); },
-            [&](const OmpBlockDirective::TargetData &) {
-              Word("TARGET DATA ");
-            },
-            [&](const OmpBlockDirective::TargetParallel &) {
-              Word("TARGET PARALLEL ");
-            },
-            [&](const OmpBlockDirective::TargetTeams &) {
-              Word("TARGET TEAMS ");
-            },
-            [&](const OmpBlockDirective::Target &) { Word("TARGET "); },
-            [&](const OmpBlockDirective::Taskgroup &) { Word("TASKGROUP "); },
-            [&](const OmpBlockDirective::Task &) { Word("TASK "); },
-            [&](const OmpBlockDirective::Teams &) { Word("TEAMS "); },
-        },
-        x.u);
+    switch (x.v) {
+    case OmpBlockDirective::Directive::Master: Word("MASTER"); break;
+    case OmpBlockDirective::Directive::Ordered: Word("ORDERED "); break;
+    case OmpBlockDirective::Directive::ParallelWorkshare:
+      Word("PARALLEL WORKSHARE ");
+      break;
+    case OmpBlockDirective::Directive::Parallel: Word("PARALLEL "); break;
+    case OmpBlockDirective::Directive::TargetData: Word("TARGET DATA "); break;
+    case OmpBlockDirective::Directive::TargetParallel:
+      Word("TARGET PARALLEL ");
+      break;
+    case OmpBlockDirective::Directive::TargetTeams:
+      Word("TARGET TEAMS ");
+      break;
+    case OmpBlockDirective::Directive::Target: Word("TARGET "); break;
+    case OmpBlockDirective::Directive::Taskgroup: Word("TASKGROUP "); break;
+    case OmpBlockDirective::Directive::Task: Word("TASK "); break;
+    case OmpBlockDirective::Directive::Teams: Word("TEAMS "); break;
+    }
   }
   void Unparse(const OmpAtomic &x) {
     BeginOpenMP();

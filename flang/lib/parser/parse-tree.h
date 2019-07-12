@@ -3499,22 +3499,10 @@ struct OpenMPSingleConstruct {
 
 // OpenMP directive beginning a block
 struct OmpBlockDirective {
-  UNION_CLASS_BOILERPLATE(OmpBlockDirective);
-  EMPTY_CLASS(Master);
-  EMPTY_CLASS(Ordered);
-  EMPTY_CLASS(Parallel);
-  EMPTY_CLASS(ParallelWorkshare);
-  EMPTY_CLASS(TargetData);
-  EMPTY_CLASS(TargetParallel);
-  EMPTY_CLASS(TargetTeams);
-  EMPTY_CLASS(Target);
-  EMPTY_CLASS(Taskgroup);
-  EMPTY_CLASS(Task);
-  EMPTY_CLASS(Teams);
+  ENUM_CLASS(Directive, Master, Ordered, Parallel, ParallelWorkshare, Target,
+      TargetData, TargetParallel, TargetTeams, Task, Taskgroup, Teams);
+  WRAPPER_CLASS_BOILERPLATE(OmpBlockDirective, Directive);
   CharBlock source;
-  std::variant<Master, Ordered, ParallelWorkshare, Parallel, TargetData,
-      TargetParallel, TargetTeams, Target, Taskgroup, Task, Teams>
-      u;
 };
 
 struct OmpDeclareTargetMapType {

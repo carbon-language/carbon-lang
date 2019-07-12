@@ -62,7 +62,7 @@ public:
 
   void Enter(const parser::OpenMPBlockConstruct &);
   void Leave(const parser::OpenMPBlockConstruct &);
-  void Enter(const parser::OmpBlockDirective::Parallel &);
+  void Enter(const parser::OmpBlockDirective &);
 
   void Leave(const parser::OmpClauseList &);
   void Enter(const parser::OmpClause &);

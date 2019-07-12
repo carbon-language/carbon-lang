@@ -322,29 +322,19 @@ TYPE_PARSER(sourced(construct<OmpStandaloneDirective>(first(
     "TARGET UPDATE" >> pure(OmpStandaloneDirective::Directive::TargetUpdate)))))
 
 // Directives enclosing structured-block
-TYPE_PARSER("MASTER" >>
-        construct<OmpBlockDirective>(construct<OmpBlockDirective::Master>()) ||
-    "ORDERED" >>
-        construct<OmpBlockDirective>(construct<OmpBlockDirective::Ordered>()) ||
-    "PARALLEL WORKSHARE" >>
-        construct<OmpBlockDirective>(
-            construct<OmpBlockDirective::ParallelWorkshare>()) ||
-    "PARALLEL" >> construct<OmpBlockDirective>(
-                      construct<OmpBlockDirective::Parallel>()) ||
-    "TARGET DATA" >> construct<OmpBlockDirective>(
-                         construct<OmpBlockDirective::TargetData>()) ||
-    "TARGET PARALLEL" >> construct<OmpBlockDirective>(
-                             construct<OmpBlockDirective::TargetParallel>()) ||
-    "TARGET TEAMS" >> construct<OmpBlockDirective>(
-                          construct<OmpBlockDirective::TargetTeams>()) ||
-    "TARGET" >>
-        construct<OmpBlockDirective>(construct<OmpBlockDirective::Target>()) ||
-    "TASK"_id >>
-        construct<OmpBlockDirective>(construct<OmpBlockDirective::Task>()) ||
-    "TASKGROUP" >> construct<OmpBlockDirective>(
-                       construct<OmpBlockDirective::Taskgroup>()) ||
-    "TEAMS" >>
-        construct<OmpBlockDirective>(construct<OmpBlockDirective::Teams>()))
+TYPE_PARSER(sourced(construct<OmpBlockDirective>(
+    first("MASTER" >> pure(OmpBlockDirective::Directive::Master),
+        "ORDERED" >> pure(OmpBlockDirective::Directive::Ordered),
+        "PARALLEL WORKSHARE" >>
+            pure(OmpBlockDirective::Directive::ParallelWorkshare),
+        "PARALLEL" >> pure(OmpBlockDirective::Directive::Parallel),
+        "TARGET DATA" >> pure(OmpBlockDirective::Directive::TargetData),
+        "TARGET PARALLEL" >> pure(OmpBlockDirective::Directive::TargetParallel),
+        "TARGET TEAMS" >> pure(OmpBlockDirective::Directive::TargetTeams),
+        "TARGET" >> pure(OmpBlockDirective::Directive::Target),
+        "TASK"_id >> pure(OmpBlockDirective::Directive::Task),
+        "TASKGROUP" >> pure(OmpBlockDirective::Directive::Taskgroup),
+        "TEAMS" >> pure(OmpBlockDirective::Directive::Teams)))))
 
 TYPE_PARSER(construct<OmpReductionInitializerClause>(
     "INITIALIZER" >> parenthesized("OMP_PRIV =" >> expr)))
