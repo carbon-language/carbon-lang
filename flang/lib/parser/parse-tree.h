@@ -3494,7 +3494,7 @@ struct OpenMPWorkshareConstruct {
 WRAPPER_CLASS(OmpEndSingle, OmpClauseList);
 struct OpenMPSingleConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSingleConstruct);
-  std::tuple<OmpClauseList, Block, OmpEndSingle> t;
+  std::tuple<OpenMPConstructDirective, Block, OmpEndSingle> t;
 };
 
 // OpenMP directive beginning a block
@@ -3557,12 +3557,14 @@ struct OpenMPDeclareReductionConstruct {
 
 struct OpenMPDeclareSimdConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPDeclareSimdConstruct);
+  CharBlock source;
   std::tuple<std::optional<Name>, OmpClauseList> t;
 };
 
 struct OpenMPDeclarativeConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPDeclarativeConstruct);
   WRAPPER_CLASS(Threadprivate, OmpObjectList);
+  CharBlock source;
   std::variant<OpenMPDeclareReductionConstruct, OpenMPDeclareSimdConstruct,
       OpenMPDeclareTargetConstruct, Threadprivate>
       u;
@@ -3570,10 +3572,15 @@ struct OpenMPDeclarativeConstruct {
 
 // CRITICAL [Name] <block> END CRITICAL [Name]
 WRAPPER_CLASS(OmpEndCritical, std::optional<Name>);
+struct OpenMPCriticalConstructDirective {
+  TUPLE_CLASS_BOILERPLATE(OpenMPCriticalConstructDirective);
+  WRAPPER_CLASS(Hint, ConstantExpr);
+  CharBlock source;
+  std::tuple<std::optional<Name>, std::optional<Hint>> t;
+};
 struct OpenMPCriticalConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPCriticalConstruct);
-  WRAPPER_CLASS(Hint, ConstantExpr);
-  std::tuple<std::optional<Name>, std::optional<Hint>, Block, OmpEndCritical> t;
+  std::tuple<OpenMPCriticalConstructDirective, Block, OmpEndCritical> t;
 };
 
 // END ATOMIC
@@ -3639,28 +3646,28 @@ struct OpenMPAtomicConstruct {
 
 struct OmpLoopDirective {
   UNION_CLASS_BOILERPLATE(OmpLoopDirective);
+  EMPTY_CLASS(Distribute);
   EMPTY_CLASS(DistributeParallelDoSimd);
   EMPTY_CLASS(DistributeParallelDo);
   EMPTY_CLASS(DistributeSimd);
-  EMPTY_CLASS(Distribute);
-  EMPTY_CLASS(ParallelDoSimd);
   EMPTY_CLASS(ParallelDo);
+  EMPTY_CLASS(ParallelDoSimd);
   EMPTY_CLASS(Do);
   EMPTY_CLASS(DoSimd);
   EMPTY_CLASS(Simd);
-  EMPTY_CLASS(TargetParallelDoSimd);
   EMPTY_CLASS(TargetParallelDo);
-  EMPTY_CLASS(TargetTeamsDistributeParallelDoSimd);
-  EMPTY_CLASS(TargetTeamsDistributeParallelDo);
-  EMPTY_CLASS(TargetTeamsDistributeSimd);
+  EMPTY_CLASS(TargetParallelDoSimd);
   EMPTY_CLASS(TargetTeamsDistribute);
+  EMPTY_CLASS(TargetTeamsDistributeParallelDo);
+  EMPTY_CLASS(TargetTeamsDistributeParallelDoSimd);
+  EMPTY_CLASS(TargetTeamsDistributeSimd);
   EMPTY_CLASS(TargetSimd);
-  EMPTY_CLASS(TaskloopSimd);
   EMPTY_CLASS(Taskloop);
+  EMPTY_CLASS(TaskloopSimd);
+  EMPTY_CLASS(TeamsDistribute);
   EMPTY_CLASS(TeamsDistributeParallelDoSimd);
   EMPTY_CLASS(TeamsDistributeParallelDo);
   EMPTY_CLASS(TeamsDistributeSimd);
-  EMPTY_CLASS(TeamsDistribute);
   CharBlock source;
   std::variant<DistributeParallelDoSimd, DistributeParallelDo, DistributeSimd,
       Distribute, ParallelDoSimd, ParallelDo, Do, DoSimd, Simd,

@@ -42,6 +42,12 @@ namespace Fortran::parser {
 constexpr auto startOmpLine = skipStuffBeforeStatement >> "!$OMP "_sptok;
 constexpr auto endOmpLine = space >> endOfLine;
 
+template<typename A> constexpr decltype(auto) OmpConstructDirective(A keyword) {
+  return sourced(construct<OpenMPConstructDirective>(
+             keyword >> Parser<OmpClauseList>{})) /
+      endOmpLine;
+}
+
 // OpenMP Clauses
 // DEFAULT (PRIVATE | FIRSTPRIVATE | SHARED | NONE )
 TYPE_PARSER(construct<OmpDefaultClause>(
@@ -436,39 +442,40 @@ TYPE_PARSER("ATOMIC" >>
 
 // OMP CRITICAL
 TYPE_PARSER(startOmpLine >> "END CRITICAL"_tok >>
-    construct<OmpEndCritical>(maybe(parenthesized(name))))
+    construct<OmpEndCritical>(maybe(parenthesized(name))) / endOmpLine)
 
 TYPE_PARSER(
-    "CRITICAL" >> construct<OpenMPCriticalConstruct>(maybe(parenthesized(name)),
-                      maybe("HINT" >> construct<OpenMPCriticalConstruct::Hint>(
-                                          parenthesized(constantExpr))) /
-                          endOmpLine,
-                      block, Parser<OmpEndCritical>{} / endOmpLine))
+    sourced(construct<OpenMPCriticalConstructDirective>(
+        "CRITICAL" >> maybe(parenthesized(name)),
+        maybe("HINT" >> construct<OpenMPCriticalConstructDirective::Hint>(
+                            parenthesized(constantExpr))))) /
+    endOmpLine)
+TYPE_PARSER(construct<OpenMPCriticalConstruct>(
+    Parser<OpenMPCriticalConstructDirective>{}, block,
+    Parser<OmpEndCritical>{}))
 
 // Declare Simd construct
-TYPE_PARSER(construct<OpenMPDeclareSimdConstruct>(
-    maybe(parenthesized(name)), Parser<OmpClauseList>{}))
+TYPE_PARSER(sourced(construct<OpenMPDeclareSimdConstruct>(
+    maybe(parenthesized(name)), Parser<OmpClauseList>{})))
 
 // Declarative construct & Threadprivate directive
 TYPE_PARSER(startOmpLine >>
-    ("DECLARE REDUCTION" >>
+    sourced("DECLARE REDUCTION" >>
             construct<OpenMPDeclarativeConstruct>(
                 construct<OpenMPDeclarativeConstruct>(
-                    Parser<OpenMPDeclareReductionConstruct>{})) /
-                endOmpLine ||
+                    Parser<OpenMPDeclareReductionConstruct>{})) ||
         "DECLARE SIMD" >> construct<OpenMPDeclarativeConstruct>(
-                              Parser<OpenMPDeclareSimdConstruct>{}) /
-                endOmpLine ||
+                              Parser<OpenMPDeclareSimdConstruct>{}) ||
         "DECLARE TARGET" >> construct<OpenMPDeclarativeConstruct>(
                                 construct<OpenMPDeclarativeConstruct>(
-                                    Parser<OpenMPDeclareTargetConstruct>{})) /
-                endOmpLine ||
+                                    Parser<OpenMPDeclareTargetConstruct>{})) ||
         "THREADPRIVATE" >>
             construct<OpenMPDeclarativeConstruct>(
                 construct<OpenMPDeclarativeConstruct::Threadprivate>(
-                    parenthesized(Parser<OmpObjectList>{})) /
-                endOmpLine)))
+                    parenthesized(Parser<OmpObjectList>{}))) /
+                endOmpLine))
 
+// TODO pmk
 // Block Construct
 TYPE_PARSER(construct<OpenMPBlockConstruct>(
     sourced(Parser<OmpBlockDirective>{}), Parser<OmpClauseList>{} / endOmpLine,
@@ -488,20 +495,19 @@ TYPE_PARSER("TASKYIELD" >> construct<OpenMPTaskyieldConstruct>() / endOmpLine)
 
 // OMP SINGLE
 TYPE_PARSER(startOmpLine >> "END"_tok >>
-    construct<OmpEndSingle>("SINGLE" >> Parser<OmpClauseList>{}))
+    construct<OmpEndSingle>("SINGLE" >> Parser<OmpClauseList>{}) / endOmpLine)
 
 TYPE_PARSER("SINGLE" >>
-    construct<OpenMPSingleConstruct>(Parser<OmpClauseList>{} / endOmpLine,
-        block, Parser<OmpEndSingle>{} / endOmpLine))
+    construct<OpenMPSingleConstruct>(
+        OmpConstructDirective("SINGLE"_tok), block, Parser<OmpEndSingle>{}))
 
-TYPE_PARSER(
-    startOmpLine >> "END"_tok >> construct<OmpEndWorkshare>("WORKSHARE"_tok))
+TYPE_PARSER(startOmpLine >> "END"_tok >>
+    construct<OmpEndWorkshare>("WORKSHARE"_tok) / endOmpLine)
 
 // OMP WORKSHARE
 TYPE_PARSER("WORKSHARE" >>
     construct<OpenMPWorkshareConstruct>(endOmpLine >> block,
-        Parser<OmpEndWorkshare>{} >>
-            maybe(construct<OmpNowait>("NOWAIT"_tok)) / endOmpLine))
+        Parser<OmpEndWorkshare>{} >> maybe(construct<OmpNowait>("NOWAIT"_tok))))
 
 // OMP END DO SIMD [NOWAIT]
 TYPE_PARSER(construct<OmpEndDoSimd>(maybe(construct<OmpNowait>("NOWAIT"_tok))))
@@ -513,12 +519,6 @@ TYPE_PARSER(construct<OmpEndDo>(maybe(construct<OmpNowait>("NOWAIT"_tok))))
 TYPE_PARSER(startOmpLine >> "END SECTIONS"_tok >>
     construct<OmpEndSections>(
         maybe("NOWAIT" >> construct<OmpNowait>()) / endOmpLine))
-
-template<typename A> constexpr decltype(auto) OmpConstructDirective(A keyword) {
-  return sourced(construct<OpenMPConstructDirective>(
-             keyword >> Parser<OmpClauseList>{})) /
-      endOmpLine;
-}
 
 // OMP SECTIONS
 TYPE_PARSER(construct<OpenMPSectionsConstruct>(

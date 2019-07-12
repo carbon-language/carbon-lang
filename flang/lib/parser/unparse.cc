@@ -2156,14 +2156,18 @@ public:
     Walk(" (", x.v, ")");
     EndOpenMP();
   }
-  void Unparse(const OpenMPCriticalConstruct &x) {
+  void Unparse(const OpenMPCriticalConstructDirective &x) {
     BeginOpenMP();
     Word("!$OMP CRITICAL");
     Walk(" (", std::get<std::optional<Name>>(x.t), ")");
-    Walk(" HINT(", std::get<std::optional<OpenMPCriticalConstruct::Hint>>(x.t),
+    Walk(" HINT(",
+        std::get<std::optional<OpenMPCriticalConstructDirective::Hint>>(x.t),
         ")");
     Put("\n");
     EndOpenMP();
+  }
+  void Unparse(const OpenMPCriticalConstruct &x) {
+    Walk(std::get<OpenMPCriticalConstructDirective>(x.t));
     Walk(std::get<Block>(x.t), "");
     BeginOpenMP();
     Word("!$OMP END CRITICAL");
@@ -2260,7 +2264,7 @@ public:
   void Unparse(const OpenMPSingleConstruct &x) {
     BeginOpenMP();
     Word("!$OMP SINGLE");
-    Walk(std::get<OmpClauseList>(x.t));
+    Walk(std::get<OpenMPConstructDirective>(x.t));
     EndOpenMP();
     Put("\n");
     Walk(std::get<Block>(x.t), "");
