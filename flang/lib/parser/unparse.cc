@@ -1809,7 +1809,7 @@ public:
     Put(")");
   }
   void Unparse(const OmpDependSinkVecLength &x) {
-    Walk(std::get<common::Indirection<DefinedOperator>>(x.t));
+    Walk(std::get<DefinedOperator>(x.t));
     Walk(std::get<ScalarIntConstantExpr>(x.t));
   }
   void Unparse(const OmpDependSinkVec &x) {
@@ -2292,7 +2292,7 @@ public:
   void Unparse(const OpenMPParallelSectionsConstruct &x) {
     BeginOpenMP();
     Word("!$OMP PARALLEL SECTIONS");
-    Walk(std::get<OmpClauseList>(x.t));
+    Walk(std::get<OpenMPConstructDirective>(x.t));
     Put("\n");
     EndOpenMP();
     Walk(std::get<Block>(x.t), "");

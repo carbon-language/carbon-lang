@@ -3368,7 +3368,7 @@ struct OmpLinearClause {
 // min, max, iand, ior, ieor
 struct OmpReductionOperator {
   UNION_CLASS_BOILERPLATE(OmpReductionOperator);
-  std::variant<common::Indirection<DefinedOperator>, ProcedureDesignator> u;
+  std::variant<DefinedOperator, ProcedureDesignator> u;
 };
 
 // REDUCTION(reduction-identifier: list)
@@ -3380,7 +3380,7 @@ struct OmpReductionClause {
 //  depend-vec-length -> +/- non-negative-constant
 struct OmpDependSinkVecLength {
   TUPLE_CLASS_BOILERPLATE(OmpDependSinkVecLength);
-  std::tuple<common::Indirection<DefinedOperator>, ScalarIntConstantExpr> t;
+  std::tuple<DefinedOperator, ScalarIntConstantExpr> t;
 };
 
 //  depend-vec -> iterator_variable [+/- depend-vec-length]
@@ -3459,7 +3459,7 @@ struct OmpClause {
 
 WRAPPER_CLASS(OmpClauseList, std::list<OmpClause>);
 
-// Common representation for construct-starting directives
+// Common representation for directives that begin multi-line constructs
 struct OpenMPConstructDirective {
   BOILERPLATE(OpenMPConstructDirective);
   explicit OpenMPConstructDirective(OmpClauseList &&list)
@@ -3480,7 +3480,7 @@ struct OpenMPSectionsConstruct {
 
 struct OpenMPParallelSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPParallelSectionsConstruct);
-  std::tuple<OmpClauseList, Block, OmpEndParallelSections> t;
+  std::tuple<OpenMPConstructDirective, Block, OmpEndParallelSections> t;
 };
 
 // WORKSHARE
@@ -3497,13 +3497,13 @@ struct OpenMPSingleConstruct {
   std::tuple<OmpClauseList, Block, OmpEndSingle> t;
 };
 
-// OpenMP directive enclosing block
+// OpenMP directive beginning a block
 struct OmpBlockDirective {
   UNION_CLASS_BOILERPLATE(OmpBlockDirective);
   EMPTY_CLASS(Master);
   EMPTY_CLASS(Ordered);
-  EMPTY_CLASS(ParallelWorkshare);
   EMPTY_CLASS(Parallel);
+  EMPTY_CLASS(ParallelWorkshare);
   EMPTY_CLASS(TargetData);
   EMPTY_CLASS(TargetParallel);
   EMPTY_CLASS(TargetTeams);
@@ -3546,7 +3546,7 @@ struct OmpReductionCombiner {
   std::variant<AssignmentStmt, FunctionCombiner> u;
 };
 
-WRAPPER_CLASS(OmpReductionInitializerClause, common::Indirection<Expr>);
+WRAPPER_CLASS(OmpReductionInitializerClause, Expr);
 
 struct OpenMPDeclareReductionConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPDeclareReductionConstruct);
@@ -3703,16 +3703,14 @@ struct OmpStandaloneDirective {
 EMPTY_CLASS(OpenMPTaskyieldConstruct);
 EMPTY_CLASS(OpenMPTaskwaitConstruct);
 EMPTY_CLASS(OpenMPBarrierConstruct);
-WRAPPER_CLASS(OmpEndBlockDirective, common::Indirection<OmpBlockDirective>);
+WRAPPER_CLASS(OmpEndBlockDirective, OmpBlockDirective);
 
 // DO / DO SIMD
 WRAPPER_CLASS(OmpEndDoSimd, std::optional<OmpNowait>);
 WRAPPER_CLASS(OmpEndDo, std::optional<OmpNowait>);
 struct OpenMPEndLoopDirective {
   UNION_CLASS_BOILERPLATE(OpenMPEndLoopDirective);
-  std::variant<common::Indirection<OmpEndDoSimd>, common::Indirection<OmpEndDo>,
-      common::Indirection<OmpLoopDirective>>
-      u;
+  std::variant<OmpEndDoSimd, OmpEndDo, OmpLoopDirective> u;
 };
 
 struct OpenMPBlockConstruct {
@@ -3732,21 +3730,13 @@ struct OpenMPStandaloneConstruct {
 
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
-  std::variant<common::Indirection<OpenMPStandaloneConstruct>,
-      common::Indirection<OpenMPBarrierConstruct>,
-      common::Indirection<OpenMPTaskwaitConstruct>,
-      common::Indirection<OpenMPTaskyieldConstruct>,
-      common::Indirection<OpenMPSingleConstruct>,
-      common::Indirection<OpenMPSectionsConstruct>,
-      common::Indirection<OpenMPParallelSectionsConstruct>,
-      common::Indirection<OpenMPWorkshareConstruct>,
-      common::Indirection<OpenMPLoopConstruct>,
-      common::Indirection<OpenMPBlockConstruct>,
-      common::Indirection<OpenMPCancellationPointConstruct>,
-      common::Indirection<OpenMPCancelConstruct>,
-      common::Indirection<OpenMPFlushConstruct>,
-      common::Indirection<OpenMPAtomicConstruct>,
-      common::Indirection<OpenMPCriticalConstruct>, OmpSection>
+  std::variant<OpenMPStandaloneConstruct, OpenMPBarrierConstruct,
+      OpenMPTaskwaitConstruct, OpenMPTaskyieldConstruct, OpenMPSingleConstruct,
+      OpenMPSectionsConstruct, OpenMPParallelSectionsConstruct,
+      OpenMPWorkshareConstruct, OpenMPLoopConstruct, OpenMPBlockConstruct,
+      OpenMPCancellationPointConstruct, OpenMPCancelConstruct,
+      OpenMPFlushConstruct, OpenMPAtomicConstruct, OpenMPCriticalConstruct,
+      OmpSection>
       u;
 };
 }
