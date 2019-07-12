@@ -1989,62 +1989,61 @@ public:
     Put(")");
   }
   void Unparse(const OmpLoopDirective &x) {
-    std::visit(
-        common::visitors{
-            [&](const OmpLoopDirective::DistributeParallelDoSimd &) {
-              Word("DISTRIBUTE PARALLEL DO SIMD ");
-            },
-            [&](const OmpLoopDirective::DistributeParallelDo &) {
-              Word("DISTRIBUTE PARALLEL DO ");
-            },
-            [&](const OmpLoopDirective::DistributeSimd &) {
-              Word("DISTRIBUTE SIMD ");
-            },
-            [&](const OmpLoopDirective::Distribute &) { Word("DISTRIBUTE "); },
-            [&](const OmpLoopDirective::ParallelDoSimd &) {
-              Word("PARALLEL DO SIMD ");
-            },
-            [&](const OmpLoopDirective::ParallelDo &) { Word("PARALLEL DO "); },
-            [&](const OmpLoopDirective::Do &) { Word("DO "); },
-            [&](const OmpLoopDirective::DoSimd &) { Word("Do SIMD "); },
-            [&](const OmpLoopDirective::Simd &) { Word("SIMD "); },
-            [&](const OmpLoopDirective::TargetParallelDoSimd &) {
-              Word("TARGET PARALLEL DO SIMD ");
-            },
-            [&](const OmpLoopDirective::TargetParallelDo &) {
-              Word("TARGET PARALLEL DO ");
-            },
-            [&](const OmpLoopDirective::TargetTeamsDistributeParallelDoSimd &) {
-              Word("TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD ");
-            },
-            [&](const OmpLoopDirective::TargetTeamsDistributeParallelDo &) {
-              Word("TARGET TEAMS DISTRIBUTE PARALLEL DO ");
-            },
-            [&](const OmpLoopDirective::TargetTeamsDistributeSimd &) {
-              Word("TARGET TEAMS DISTRIBUTE SIMD ");
-            },
-            [&](const OmpLoopDirective::TargetTeamsDistribute &) {
-              Word("TARGET TEAMS DISTRIBUTE ");
-            },
-            [&](const OmpLoopDirective::TargetSimd &) { Word("TARGET SIMD "); },
-            [&](const OmpLoopDirective::TaskloopSimd &) {
-              Word("TASKLOOP SIMD ");
-            },
-            [&](const OmpLoopDirective::Taskloop &) { Word("TASKLOOP "); },
-            [&](const OmpLoopDirective::TeamsDistributeParallelDoSimd &) {
-              Word("TEAMS DISTRIBUTE PARALLEL DO SIMD ");
-            },
-            [&](const OmpLoopDirective::TeamsDistributeParallelDo &) {
-              Word("TEAMS DISTRIBUTE PARALLEL DO ");
-            },
-            [&](const OmpLoopDirective::TeamsDistributeSimd &) {
-              Word("TEAMS DISTRIBUTE SIMD ");
-            },
-            [&](const OmpLoopDirective::TeamsDistribute &) {
-              Word("TEAMS DISTRIBUTE ");
-            },
-        },
-        x.u);
+    switch (x.v) {
+    case OmpLoopDirective::Directive::Distribute: Word("DISTRIBUTE "); break;
+    case OmpLoopDirective::Directive::DistributeParallelDo:
+      Word("DISTRIBUTE PARALLEL DO ");
+      break;
+    case OmpLoopDirective::Directive::DistributeParallelDoSimd:
+      Word("DISTRIBUTE PARALLEL DO SIMD ");
+      break;
+    case OmpLoopDirective::Directive::DistributeSimd:
+      Word("DISTRIBUTE SIMD ");
+      break;
+    case OmpLoopDirective::Directive::Do: Word("DO "); break;
+    case OmpLoopDirective::Directive::DoSimd: Word("Do SIMD "); break;
+    case OmpLoopDirective::Directive::ParallelDo: Word("PARALLEL DO "); break;
+    case OmpLoopDirective::Directive::ParallelDoSimd:
+      Word("PARALLEL DO SIMD ");
+      break;
+    case OmpLoopDirective::Directive::Simd: Word("SIMD "); break;
+    case OmpLoopDirective::Directive::TargetParallelDo:
+      Word("TARGET PARALLEL DO ");
+      break;
+    case OmpLoopDirective::Directive::TargetParallelDoSimd:
+      Word("TARGET PARALLEL DO SIMD ");
+      break;
+    case OmpLoopDirective::Directive::TargetTeamsDistribute:
+      Word("TARGET TEAMS DISTRIBUTE ");
+      break;
+    case OmpLoopDirective::Directive::TargetTeamsDistributeParallelDo:
+      Word("TARGET TEAMS DISTRIBUTE PARALLEL DO ");
+      break;
+    case OmpLoopDirective::Directive::TargetTeamsDistributeParallelDoSimd:
+      Word("TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD ");
+      break;
+    case OmpLoopDirective::Directive::TargetTeamsDistributeSimd:
+      Word("TARGET TEAMS DISTRIBUTE SIMD ");
+      break;
+    case OmpLoopDirective::Directive::TargetSimd: Word("TARGET SIMD "); break;
+    case OmpLoopDirective::Directive::Taskloop: Word("TASKLOOP "); break;
+    case OmpLoopDirective::Directive::TaskloopSimd:
+      Word("TASKLOOP SIMD ");
+      break;
+    case OmpLoopDirective::Directive::TeamsDistribute:
+      Word("TEAMS DISTRIBUTE ");
+      break;
+    case OmpLoopDirective::Directive::TeamsDistributeParallelDo:
+      Word("TEAMS DISTRIBUTE PARALLEL DO ");
+      break;
+    case OmpLoopDirective::Directive::TeamsDistributeParallelDoSimd:
+      Word("TEAMS DISTRIBUTE PARALLEL DO SIMD ");
+      break;
+    case OmpLoopDirective::Directive::TeamsDistributeSimd:
+      Word("TEAMS DISTRIBUTE SIMD ");
+      break;
+    default: CRASH_NO_CASE;
+    }
   }
   void Unparse(const OmpObjectList &x) { Walk(x.v, ","); }
   void Unparse(const OmpStandaloneDirective &x) {

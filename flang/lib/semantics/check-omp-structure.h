@@ -58,11 +58,7 @@ public:
   void Enter(const parser::OpenMPConstruct &);
   void Enter(const parser::OpenMPLoopConstruct &);
   void Leave(const parser::OpenMPLoopConstruct &);
-  void Enter(const parser::OmpLoopDirective::Do &);
-  void Enter(const parser::OmpLoopDirective::ParallelDo &);
-  void Enter(const parser::OmpLoopDirective::Simd &);
-  void Enter(const parser::OmpLoopDirective::DoSimd &);
-  void Enter(const parser::OmpLoopDirective::ParallelDoSimd &);
+  void Enter(const parser::OmpLoopDirective &);
 
   void Enter(const parser::OpenMPBlockConstruct &);
   void Leave(const parser::OpenMPBlockConstruct &);

@@ -250,60 +250,50 @@ TYPE_PARSER(construct<OmpClauseList>(
 TYPE_PARSER(construct<OmpObjectList>(nonemptyList(Parser<OmpObject>{})))
 
 // Omp directives enclosing do loop
-TYPE_PARSER("DISTRIBUTE PARALLEL DO SIMD" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::DistributeParallelDoSimd>()) ||
-    "DISTRIBUTE PARALLEL DO" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::DistributeParallelDo>()) ||
-    "DISTRIBUTE SIMD" >> construct<OmpLoopDirective>(
-                             construct<OmpLoopDirective::DistributeSimd>()) ||
-    "DISTRIBUTE" >> construct<OmpLoopDirective>(
-                        construct<OmpLoopDirective::Distribute>()) ||
-    "DO SIMD" >>
-        construct<OmpLoopDirective>(construct<OmpLoopDirective::DoSimd>()) ||
-    "DO" >> construct<OmpLoopDirective>(construct<OmpLoopDirective::Do>()) ||
-    "PARALLEL DO SIMD" >> construct<OmpLoopDirective>(
-                              construct<OmpLoopDirective::ParallelDoSimd>()) ||
-    "PARALLEL DO" >> construct<OmpLoopDirective>(
-                         construct<OmpLoopDirective::ParallelDo>()) ||
-    "SIMD" >>
-        construct<OmpLoopDirective>(construct<OmpLoopDirective::Simd>()) ||
-    "TARGET PARALLEL DO SIMD" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TargetParallelDoSimd>()) ||
-    "TARGET PARALLEL DO" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TargetParallelDo>()) ||
-    "TARGET SIMD" >> construct<OmpLoopDirective>(
-                         construct<OmpLoopDirective::TargetSimd>()) ||
-    "TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
-        construct<OmpLoopDirective>(construct<
-            OmpLoopDirective::TargetTeamsDistributeParallelDoSimd>()) ||
-    "TARGET TEAMS DISTRIBUTE PARALLEL DO" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TargetTeamsDistributeParallelDo>()) ||
-    "TARGET TEAMS DISTRIBUTE SIMD" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TargetTeamsDistributeSimd>()) ||
-    "TARGET TEAMS DISTRIBUTE" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TargetTeamsDistribute>()) ||
-    "TASKLOOP SIMD" >> construct<OmpLoopDirective>(
-                           construct<OmpLoopDirective::TaskloopSimd>()) ||
-    "TASKLOOP" >>
-        construct<OmpLoopDirective>(construct<OmpLoopDirective::Taskloop>()) ||
-    "TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TeamsDistributeParallelDoSimd>()) ||
-    "TEAMS DISTRIBUTE PARALLEL DO" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TeamsDistributeParallelDo>()) ||
-    "TEAMS DISTRIBUTE SIMD" >>
-        construct<OmpLoopDirective>(
-            construct<OmpLoopDirective::TeamsDistributeSimd>()) ||
-    "TEAMS DISTRIBUTE" >> construct<OmpLoopDirective>(
-                              construct<OmpLoopDirective::TeamsDistribute>()))
+TYPE_PARSER(first(
+    construct<OmpLoopDirective>("DISTRIBUTE PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::DistributeParallelDoSimd)),
+    construct<OmpLoopDirective>("DISTRIBUTE PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::DistributeParallelDo)),
+    construct<OmpLoopDirective>(
+        "DISTRIBUTE SIMD" >> pure(OmpLoopDirective::Directive::DistributeSimd)),
+    construct<OmpLoopDirective>(
+        "DISTRIBUTE" >> pure(OmpLoopDirective::Directive::Distribute)),
+    construct<OmpLoopDirective>(
+        "DO SIMD" >> pure(OmpLoopDirective::Directive::DoSimd)),
+    construct<OmpLoopDirective>("DO" >> pure(OmpLoopDirective::Directive::Do)),
+    construct<OmpLoopDirective>("PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::ParallelDoSimd)),
+    construct<OmpLoopDirective>(
+        "PARALLEL DO" >> pure(OmpLoopDirective::Directive::ParallelDo)),
+    construct<OmpLoopDirective>(
+        "SIMD" >> pure(OmpLoopDirective::Directive::Simd)),
+    construct<OmpLoopDirective>("TARGET PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::TargetParallelDoSimd)),
+    construct<OmpLoopDirective>("TARGET PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::TargetParallelDo)),
+    construct<OmpLoopDirective>(
+        "TARGET SIMD" >> pure(OmpLoopDirective::Directive::TargetSimd)),
+    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistributeParallelDoSimd)),
+    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistributeParallelDo)),
+    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE SIMD" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistributeSimd)),
+    construct<OmpLoopDirective>("TARGET TEAMS DISTRIBUTE" >>
+        pure(OmpLoopDirective::Directive::TargetTeamsDistribute)),
+    construct<OmpLoopDirective>(
+        "TASKLOOP SIMD" >> pure(OmpLoopDirective::Directive::TaskloopSimd)),
+    construct<OmpLoopDirective>(
+        "TASKLOOP" >> pure(OmpLoopDirective::Directive::Taskloop)),
+    construct<OmpLoopDirective>("TEAMS DISTRIBUTE PARALLEL DO SIMD" >>
+        pure(OmpLoopDirective::Directive::TeamsDistributeParallelDoSimd)),
+    construct<OmpLoopDirective>("TEAMS DISTRIBUTE PARALLEL DO" >>
+        pure(OmpLoopDirective::Directive::TeamsDistributeParallelDo)),
+    construct<OmpLoopDirective>("TEAMS DISTRIBUTE SIMD" >>
+        pure(OmpLoopDirective::Directive::TeamsDistributeSimd)),
+    construct<OmpLoopDirective>("TEAMS DISTRIBUTE" >>
+        pure(OmpLoopDirective::Directive::TeamsDistribute))))
 
 // Cancellation Point construct
 TYPE_PARSER("CANCELLATION POINT" >>

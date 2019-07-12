@@ -3645,38 +3645,16 @@ struct OpenMPAtomicConstruct {
 };
 
 struct OmpLoopDirective {
-  UNION_CLASS_BOILERPLATE(OmpLoopDirective);
-  EMPTY_CLASS(Distribute);
-  EMPTY_CLASS(DistributeParallelDoSimd);
-  EMPTY_CLASS(DistributeParallelDo);
-  EMPTY_CLASS(DistributeSimd);
-  EMPTY_CLASS(ParallelDo);
-  EMPTY_CLASS(ParallelDoSimd);
-  EMPTY_CLASS(Do);
-  EMPTY_CLASS(DoSimd);
-  EMPTY_CLASS(Simd);
-  EMPTY_CLASS(TargetParallelDo);
-  EMPTY_CLASS(TargetParallelDoSimd);
-  EMPTY_CLASS(TargetTeamsDistribute);
-  EMPTY_CLASS(TargetTeamsDistributeParallelDo);
-  EMPTY_CLASS(TargetTeamsDistributeParallelDoSimd);
-  EMPTY_CLASS(TargetTeamsDistributeSimd);
-  EMPTY_CLASS(TargetSimd);
-  EMPTY_CLASS(Taskloop);
-  EMPTY_CLASS(TaskloopSimd);
-  EMPTY_CLASS(TeamsDistribute);
-  EMPTY_CLASS(TeamsDistributeParallelDoSimd);
-  EMPTY_CLASS(TeamsDistributeParallelDo);
-  EMPTY_CLASS(TeamsDistributeSimd);
+  ENUM_CLASS(Directive, Distribute, DistributeParallelDo,
+      DistributeParallelDoSimd, DistributeSimd, ParallelDo, ParallelDoSimd, Do,
+      DoSimd, Simd, TargetParallelDo, TargetParallelDoSimd,
+      TargetTeamsDistribute, TargetTeamsDistributeParallelDo,
+      TargetTeamsDistributeParallelDoSimd, TargetTeamsDistributeSimd,
+      TargetSimd, Taskloop, TaskloopSimd, TeamsDistribute,
+      TeamsDistributeParallelDo, TeamsDistributeParallelDoSimd,
+      TeamsDistributeSimd)
+  WRAPPER_CLASS_BOILERPLATE(OmpLoopDirective, Directive);
   CharBlock source;
-  std::variant<DistributeParallelDoSimd, DistributeParallelDo, DistributeSimd,
-      Distribute, ParallelDoSimd, ParallelDo, Do, DoSimd, Simd,
-      TargetParallelDoSimd, TargetParallelDo,
-      TargetTeamsDistributeParallelDoSimd, TargetTeamsDistributeParallelDo,
-      TargetTeamsDistributeSimd, TargetTeamsDistribute, TargetSimd,
-      TaskloopSimd, Taskloop, TeamsDistributeParallelDoSimd,
-      TeamsDistributeParallelDo, TeamsDistributeSimd, TeamsDistribute>
-      u;
 };
 
 // Cancel/Cancellation type

@@ -71,7 +71,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPConstruct &x) {
 
 void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   const auto &dir{std::get<parser::OmpLoopDirective>(x.t)};
-  if (std::holds_alternative<parser::OmpLoopDirective::Do>(dir.u)) {
+  if (dir.v == parser::OmpLoopDirective::Directive::Do) {
     HasInvalidWorksharingNesting(dir.source,
         {OmpDirective::DO, OmpDirective::SECTIONS, OmpDirective::SINGLE,
             OmpDirective::WORKSHARE, OmpDirective::TASK, OmpDirective::TASKLOOP,
@@ -121,94 +121,91 @@ void OmpStructureChecker::Enter(const parser::OmpBlockDirective::Parallel &) {
   SetContextAllowedOnce(allowedOnce);
 }
 
-// 2.7.1 do-clause -> private-clause |
-//                    firstprivate-clause |
-//                    lastprivate-clause |
-//                    linear-clause |
-//                    reduction-clause |
-//                    schedule-clause |
-//                    collapse-clause |
-//                    ordered-clause
-void OmpStructureChecker::Enter(const parser::OmpLoopDirective::Do &) {
-  // reserve for nesting check
-  SetContextDirectiveEnum(OmpDirective::DO);
+void OmpStructureChecker::Enter(const parser::OmpLoopDirective &x) {
+  switch (x.v) {
+  // 2.7.1 do-clause -> private-clause |
+  //                    firstprivate-clause |
+  //                    lastprivate-clause |
+  //                    linear-clause |
+  //                    reduction-clause |
+  //                    schedule-clause |
+  //                    collapse-clause |
+  //                    ordered-clause
+  case parser::OmpLoopDirective::Directive::Do: {
+    // reserve for nesting check
+    SetContextDirectiveEnum(OmpDirective::DO);
+    OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
+        OmpClause::LASTPRIVATE, OmpClause::LINEAR, OmpClause::REDUCTION};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{
+        OmpClause::SCHEDULE, OmpClause::COLLAPSE, OmpClause::ORDERED};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
 
-  OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
-      OmpClause::LASTPRIVATE, OmpClause::LINEAR, OmpClause::REDUCTION};
-  SetContextAllowed(allowed);
+  // 2.11.1 parallel-do-clause -> parallel-clause |
+  //                              do-clause
+  case parser::OmpLoopDirective::Directive::ParallelDo: {
+    SetContextDirectiveEnum(OmpDirective::PARALLEL_DO);
+    OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
+        OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
+        OmpClause::REDUCTION, OmpClause::LASTPRIVATE, OmpClause::LINEAR};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::IF, OmpClause::NUM_THREADS,
+        OmpClause::PROC_BIND, OmpClause::SCHEDULE, OmpClause::COLLAPSE,
+        OmpClause::ORDERED};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
 
-  OmpClauseSet allowedOnce{
-      OmpClause::SCHEDULE, OmpClause::COLLAPSE, OmpClause::ORDERED};
-  SetContextAllowedOnce(allowedOnce);
-}
+  // 2.8.1 simd-clause -> safelen-clause |
+  //                      simdlen-clause |
+  //                      linear-clause |
+  //                      aligned-clause |
+  //                      private-clause |
+  //                      lastprivate-clause |
+  //                      reduction-clause |
+  //                      collapse-clause
+  case parser::OmpLoopDirective::Directive::Simd: {
+    SetContextDirectiveEnum(OmpDirective::SIMD);
+    OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
+        OmpClause::PRIVATE, OmpClause::LASTPRIVATE, OmpClause::REDUCTION};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{
+        OmpClause::COLLAPSE, OmpClause::SAFELEN, OmpClause::SIMDLEN};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
 
-// 2.11.1 parallel-do-clause -> parallel-clause |
-//                              do-clause
-void OmpStructureChecker::Enter(const parser::OmpLoopDirective::ParallelDo &) {
-  SetContextDirectiveEnum(OmpDirective::PARALLEL_DO);
+  // 2.8.3 do-simd-clause -> do-clause |
+  //                         simd-clause
+  case parser::OmpLoopDirective::Directive::DoSimd: {
+    SetContextDirectiveEnum(OmpDirective::DO_SIMD);
+    OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
+        OmpClause::LASTPRIVATE, OmpClause::LINEAR, OmpClause::REDUCTION,
+        OmpClause::ALIGNED};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::SCHEDULE, OmpClause::COLLAPSE,
+        OmpClause::ORDERED, OmpClause::SAFELEN, OmpClause::SIMDLEN};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
 
-  OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
-      OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
-      OmpClause::REDUCTION, OmpClause::LASTPRIVATE, OmpClause::LINEAR};
-  SetContextAllowed(allowed);
+  // 2.11.4 parallel-do-simd-clause -> parallel-clause |
+  //                                   do-simd-clause
+  case parser::OmpLoopDirective::Directive::ParallelDoSimd: {
+    SetContextDirectiveEnum(OmpDirective::PARALLEL_DO_SIMD);
+    OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
+        OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
+        OmpClause::REDUCTION, OmpClause::LASTPRIVATE, OmpClause::LINEAR,
+        OmpClause::ALIGNED};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::IF, OmpClause::NUM_THREADS,
+        OmpClause::PROC_BIND, OmpClause::SCHEDULE, OmpClause::COLLAPSE,
+        OmpClause::ORDERED, OmpClause::SAFELEN, OmpClause::SIMDLEN};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
 
-  OmpClauseSet allowedOnce{OmpClause::IF, OmpClause::NUM_THREADS,
-      OmpClause::PROC_BIND, OmpClause::SCHEDULE, OmpClause::COLLAPSE,
-      OmpClause::ORDERED};
-  SetContextAllowedOnce(allowedOnce);
-}
-
-// 2.8.1 simd-clause -> safelen-clause |
-//                      simdlen-clause |
-//                      linear-clause |
-//                      aligned-clause |
-//                      private-clause |
-//                      lastprivate-clause |
-//                      reduction-clause |
-//                      collapse-clause
-void OmpStructureChecker::Enter(const parser::OmpLoopDirective::Simd &) {
-  SetContextDirectiveEnum(OmpDirective::SIMD);
-
-  OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
-      OmpClause::PRIVATE, OmpClause::LASTPRIVATE, OmpClause::REDUCTION};
-  SetContextAllowed(allowed);
-
-  OmpClauseSet allowedOnce{
-      OmpClause::COLLAPSE, OmpClause::SAFELEN, OmpClause::SIMDLEN};
-  SetContextAllowedOnce(allowedOnce);
-}
-
-// 2.8.3 do-simd-clause -> do-clause |
-//                         simd-clause
-void OmpStructureChecker::Enter(const parser::OmpLoopDirective::DoSimd &) {
-  SetContextDirectiveEnum(OmpDirective::DO_SIMD);
-
-  OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
-      OmpClause::LASTPRIVATE, OmpClause::LINEAR, OmpClause::REDUCTION,
-      OmpClause::ALIGNED};
-  SetContextAllowed(allowed);
-
-  OmpClauseSet allowedOnce{OmpClause::SCHEDULE, OmpClause::COLLAPSE,
-      OmpClause::ORDERED, OmpClause::SAFELEN, OmpClause::SIMDLEN};
-  SetContextAllowedOnce(allowedOnce);
-}
-
-// 2.11.4 parallel-do-simd-clause -> parallel-clause |
-//                                   do-simd-clause
-void OmpStructureChecker::Enter(
-    const parser::OmpLoopDirective::ParallelDoSimd &) {
-  SetContextDirectiveEnum(OmpDirective::PARALLEL_DO_SIMD);
-
-  OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
-      OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
-      OmpClause::REDUCTION, OmpClause::LASTPRIVATE, OmpClause::LINEAR,
-      OmpClause::ALIGNED};
-  SetContextAllowed(allowed);
-
-  OmpClauseSet allowedOnce{OmpClause::IF, OmpClause::NUM_THREADS,
-      OmpClause::PROC_BIND, OmpClause::SCHEDULE, OmpClause::COLLAPSE,
-      OmpClause::ORDERED, OmpClause::SAFELEN, OmpClause::SIMDLEN};
-  SetContextAllowedOnce(allowedOnce);
+  default:
+    // TODO others
+    break;
+  }
 }
 
 void OmpStructureChecker::Leave(const parser::OmpClauseList &) {
