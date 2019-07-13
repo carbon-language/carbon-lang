@@ -2325,6 +2325,29 @@ multiclass MVE_VRINT_ops<string suffix, bits<2> size, list<dag> pattern=[]> {
 defm MVE_VRINTf16 : MVE_VRINT_ops<"f16", 0b01>;
 defm MVE_VRINTf32 : MVE_VRINT_ops<"f32", 0b10>;
 
+let Predicates = [HasMVEFloat] in {
+  def : Pat<(v4f32 (frint (v4f32 MQPR:$val1))),
+            (v4f32 (MVE_VRINTf32X (v4f32 MQPR:$val1)))>;
+  def : Pat<(v8f16 (frint (v8f16 MQPR:$val1))),
+            (v8f16 (MVE_VRINTf16X (v8f16 MQPR:$val1)))>;
+  def : Pat<(v4f32 (fround (v4f32 MQPR:$val1))),
+            (v4f32 (MVE_VRINTf32A (v4f32 MQPR:$val1)))>;
+  def : Pat<(v8f16 (fround (v8f16 MQPR:$val1))),
+            (v8f16 (MVE_VRINTf16A (v8f16 MQPR:$val1)))>;
+  def : Pat<(v4f32 (ftrunc (v4f32 MQPR:$val1))),
+            (v4f32 (MVE_VRINTf32Z (v4f32 MQPR:$val1)))>;
+  def : Pat<(v8f16 (ftrunc (v8f16 MQPR:$val1))),
+            (v8f16 (MVE_VRINTf16Z (v8f16 MQPR:$val1)))>;
+  def : Pat<(v4f32 (ffloor (v4f32 MQPR:$val1))),
+            (v4f32 (MVE_VRINTf32M (v4f32 MQPR:$val1)))>;
+  def : Pat<(v8f16 (ffloor (v8f16 MQPR:$val1))),
+            (v8f16 (MVE_VRINTf16M (v8f16 MQPR:$val1)))>;
+  def : Pat<(v4f32 (fceil (v4f32 MQPR:$val1))),
+            (v4f32 (MVE_VRINTf32P (v4f32 MQPR:$val1)))>;
+  def : Pat<(v8f16 (fceil (v8f16 MQPR:$val1))),
+            (v8f16 (MVE_VRINTf16P (v8f16 MQPR:$val1)))>;
+}
+
 class MVEFloatArithNeon<string iname, string suffix, bit size,
                            dag oops, dag iops, string ops,
                            vpred_ops vpred, string cstr, list<dag> pattern=[]>
