@@ -2202,6 +2202,15 @@ def MVE_VNEGs8  : MVE_VABSNEG_int<"vneg", "s8",  0b00, 0b1>;
 def MVE_VNEGs16 : MVE_VABSNEG_int<"vneg", "s16", 0b01, 0b1>;
 def MVE_VNEGs32 : MVE_VABSNEG_int<"vneg", "s32", 0b10, 0b1>;
 
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (vnegq (v16i8 MQPR:$v))),
+            (v16i8 (MVE_VNEGs8 $v))>;
+  def : Pat<(v8i16 (vnegq (v8i16 MQPR:$v))),
+            (v8i16 (MVE_VNEGs16 $v))>;
+  def : Pat<(v4i32 (vnegq (v4i32 MQPR:$v))),
+            (v4i32 (MVE_VNEGs32 $v))>;
+}
+
 class MVE_VQABSNEG<string iname, string suffix, bits<2> size,
                    bit negate, list<dag> pattern=[]>
   : MVEIntSingleSrc<iname, suffix, size, pattern> {
