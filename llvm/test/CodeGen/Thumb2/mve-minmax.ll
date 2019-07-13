@@ -2,6 +2,140 @@
 ; RUN: llc -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=+mve,+fullfp16 -verify-machineinstrs %s -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-MVE
 ; RUN: llc -mtriple=thumbv8.1m.main-arm-none-eabi -mattr=+mve.fp -verify-machineinstrs %s -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-MVEFP
 
+define arm_aapcs_vfpcc <16 x i8> @smin_v16i8(<16 x i8> %s1, <16 x i8> %s2) {
+; CHECK-LABEL: smin_v16i8:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmin.s8 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp slt <16 x i8> %s1, %s2
+  %1 = select <16 x i1> %0, <16 x i8> %s1, <16 x i8> %s2
+  ret <16 x i8> %1
+}
+
+define arm_aapcs_vfpcc <8 x i16> @smin_v8i16(<8 x i16> %s1, <8 x i16> %s2) {
+; CHECK-LABEL: smin_v8i16:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmin.s16 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp slt <8 x i16> %s1, %s2
+  %1 = select <8 x i1> %0, <8 x i16> %s1, <8 x i16> %s2
+  ret <8 x i16> %1
+}
+
+define arm_aapcs_vfpcc <4 x i32> @smin_v4i32(<4 x i32> %s1, <4 x i32> %s2) {
+; CHECK-LABEL: smin_v4i32:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmin.s32 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp slt <4 x i32> %s1, %s2
+  %1 = select <4 x i1> %0, <4 x i32> %s1, <4 x i32> %s2
+  ret <4 x i32> %1
+}
+
+define arm_aapcs_vfpcc <16 x i8> @umin_v16i8(<16 x i8> %s1, <16 x i8> %s2) {
+; CHECK-LABEL: umin_v16i8:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmin.u8 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp ult <16 x i8> %s1, %s2
+  %1 = select <16 x i1> %0, <16 x i8> %s1, <16 x i8> %s2
+  ret <16 x i8> %1
+}
+
+define arm_aapcs_vfpcc <8 x i16> @umin_v8i16(<8 x i16> %s1, <8 x i16> %s2) {
+; CHECK-LABEL: umin_v8i16:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmin.u16 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp ult <8 x i16> %s1, %s2
+  %1 = select <8 x i1> %0, <8 x i16> %s1, <8 x i16> %s2
+  ret <8 x i16> %1
+}
+
+define arm_aapcs_vfpcc <4 x i32> @umin_v4i32(<4 x i32> %s1, <4 x i32> %s2) {
+; CHECK-LABEL: umin_v4i32:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmin.u32 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp ult <4 x i32> %s1, %s2
+  %1 = select <4 x i1> %0, <4 x i32> %s1, <4 x i32> %s2
+  ret <4 x i32> %1
+}
+
+
+define arm_aapcs_vfpcc <16 x i8> @smax_v16i8(<16 x i8> %s1, <16 x i8> %s2) {
+; CHECK-LABEL: smax_v16i8:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmax.s8 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp sgt <16 x i8> %s1, %s2
+  %1 = select <16 x i1> %0, <16 x i8> %s1, <16 x i8> %s2
+  ret <16 x i8> %1
+}
+
+define arm_aapcs_vfpcc <8 x i16> @smax_v8i16(<8 x i16> %s1, <8 x i16> %s2) {
+; CHECK-LABEL: smax_v8i16:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmax.s16 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp sgt <8 x i16> %s1, %s2
+  %1 = select <8 x i1> %0, <8 x i16> %s1, <8 x i16> %s2
+  ret <8 x i16> %1
+}
+
+define arm_aapcs_vfpcc <4 x i32> @smax_v4i32(<4 x i32> %s1, <4 x i32> %s2) {
+; CHECK-LABEL: smax_v4i32:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmax.s32 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp sgt <4 x i32> %s1, %s2
+  %1 = select <4 x i1> %0, <4 x i32> %s1, <4 x i32> %s2
+  ret <4 x i32> %1
+}
+
+define arm_aapcs_vfpcc <16 x i8> @umax_v16i8(<16 x i8> %s1, <16 x i8> %s2) {
+; CHECK-LABEL: umax_v16i8:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmax.u8 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp ugt <16 x i8> %s1, %s2
+  %1 = select <16 x i1> %0, <16 x i8> %s1, <16 x i8> %s2
+  ret <16 x i8> %1
+}
+
+define arm_aapcs_vfpcc <8 x i16> @umax_v8i16(<8 x i16> %s1, <8 x i16> %s2) {
+; CHECK-LABEL: umax_v8i16:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmax.u16 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp ugt <8 x i16> %s1, %s2
+  %1 = select <8 x i1> %0, <8 x i16> %s1, <8 x i16> %s2
+  ret <8 x i16> %1
+}
+
+define arm_aapcs_vfpcc <4 x i32> @umax_v4i32(<4 x i32> %s1, <4 x i32> %s2) {
+; CHECK-LABEL: umax_v4i32:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vmax.u32 q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = icmp ugt <4 x i32> %s1, %s2
+  %1 = select <4 x i1> %0, <4 x i32> %s1, <4 x i32> %s2
+  ret <4 x i32> %1
+}
+
+
 define arm_aapcs_vfpcc <4 x float> @maxnm_float32_t(<4 x float> %src1, <4 x float> %src2) {
 ; CHECK-MVE-LABEL: maxnm_float32_t:
 ; CHECK-MVE:       @ %bb.0: @ %entry

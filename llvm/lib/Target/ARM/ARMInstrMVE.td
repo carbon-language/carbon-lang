@@ -907,6 +907,36 @@ multiclass MVE_VMINMAX_all_sizes<string iname, bit bit_4> {
 defm MVE_VMAX : MVE_VMINMAX_all_sizes<"vmax", 0b0>;
 defm MVE_VMIN : MVE_VMINMAX_all_sizes<"vmin", 0b1>;
 
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (smin (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
+            (v16i8 (MVE_VMINs8 (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
+  def : Pat<(v8i16 (smin (v8i16 MQPR:$val1), (v8i16 MQPR:$val2))),
+            (v8i16 (MVE_VMINs16 (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
+  def : Pat<(v4i32 (smin (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
+            (v4i32 (MVE_VMINs32 (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+
+  def : Pat<(v16i8 (smax (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
+            (v16i8 (MVE_VMAXs8 (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
+  def : Pat<(v8i16 (smax (v8i16 MQPR:$val1), (v8i16 MQPR:$val2))),
+            (v8i16 (MVE_VMAXs16 (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
+  def : Pat<(v4i32 (smax (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
+            (v4i32 (MVE_VMAXs32 (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+
+  def : Pat<(v16i8 (umin (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
+            (v16i8 (MVE_VMINu8 (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
+  def : Pat<(v8i16 (umin (v8i16 MQPR:$val1), (v8i16 MQPR:$val2))),
+            (v8i16 (MVE_VMINu16 (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
+  def : Pat<(v4i32 (umin (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
+            (v4i32 (MVE_VMINu32 (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+
+  def : Pat<(v16i8 (umax (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
+            (v16i8 (MVE_VMAXu8 (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
+  def : Pat<(v8i16 (umax (v8i16 MQPR:$val1), (v8i16 MQPR:$val2))),
+            (v8i16 (MVE_VMAXu16 (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
+  def : Pat<(v4i32 (umax (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
+            (v4i32 (MVE_VMAXu32 (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+}
+
 // end of mve_comp instructions
 
 // start of mve_imm_shift instructions
