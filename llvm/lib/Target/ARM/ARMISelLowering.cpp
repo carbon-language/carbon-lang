@@ -281,6 +281,9 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Legal);
 
     if (HasMVEFP) {
+      setOperationAction(ISD::FMINNUM, VT, Legal);
+      setOperationAction(ISD::FMAXNUM, VT, Legal);
+
       // No native support for these.
       setOperationAction(ISD::FDIV, VT, Expand);
       setOperationAction(ISD::FREM, VT, Expand);
@@ -1254,10 +1257,12 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FRINT, MVT::f32, Legal);
     setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
-    setOperationAction(ISD::FMINNUM, MVT::v2f32, Legal);
-    setOperationAction(ISD::FMAXNUM, MVT::v2f32, Legal);
-    setOperationAction(ISD::FMINNUM, MVT::v4f32, Legal);
-    setOperationAction(ISD::FMAXNUM, MVT::v4f32, Legal);
+    if (Subtarget->hasNEON()) {
+      setOperationAction(ISD::FMINNUM, MVT::v2f32, Legal);
+      setOperationAction(ISD::FMAXNUM, MVT::v2f32, Legal);
+      setOperationAction(ISD::FMINNUM, MVT::v4f32, Legal);
+      setOperationAction(ISD::FMAXNUM, MVT::v4f32, Legal);
+    }
 
     if (Subtarget->hasFP64()) {
       setOperationAction(ISD::FFLOOR, MVT::f64, Legal);

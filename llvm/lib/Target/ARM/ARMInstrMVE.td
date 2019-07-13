@@ -863,8 +863,23 @@ class MVE_VMINMAXNM<string iname, string suffix, bit sz, bit bit_21,
 def MVE_VMAXNMf32 : MVE_VMINMAXNM<"vmaxnm", "f32", 0b0, 0b0>;
 def MVE_VMAXNMf16 : MVE_VMINMAXNM<"vmaxnm", "f16", 0b1, 0b0>;
 
+let Predicates = [HasMVEFloat] in {
+  def : Pat<(v4f32 (fmaxnum (v4f32 MQPR:$val1), (v4f32 MQPR:$val2))),
+            (v4f32 (MVE_VMAXNMf32 (v4f32 MQPR:$val1), (v4f32 MQPR:$val2)))>;
+  def : Pat<(v8f16 (fmaxnum (v8f16 MQPR:$val1), (v8f16 MQPR:$val2))),
+            (v8f16 (MVE_VMAXNMf16 (v8f16 MQPR:$val1), (v8f16 MQPR:$val2)))>;
+}
+
 def MVE_VMINNMf32 : MVE_VMINMAXNM<"vminnm", "f32", 0b0, 0b1>;
 def MVE_VMINNMf16 : MVE_VMINMAXNM<"vminnm", "f16", 0b1, 0b1>;
+
+let Predicates = [HasMVEFloat] in {
+  def : Pat<(v4f32 (fminnum (v4f32 MQPR:$val1), (v4f32 MQPR:$val2))),
+            (v4f32 (MVE_VMINNMf32 (v4f32 MQPR:$val1), (v4f32 MQPR:$val2)))>;
+  def : Pat<(v8f16 (fminnum (v8f16 MQPR:$val1), (v8f16 MQPR:$val2))),
+            (v8f16 (MVE_VMINNMf16 (v8f16 MQPR:$val1), (v8f16 MQPR:$val2)))>;
+}
+
 
 class MVE_VMINMAX<string iname, string suffix, bit U, bits<2> size,
               bit bit_4, list<dag> pattern=[]>
