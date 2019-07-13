@@ -179,9 +179,12 @@ struct Attributor {
     assert(AAType::ID != Attribute::None &&
            "Cannot lookup generic abstract attributes!");
 
-    // Determine the argument number automatically for llvm::Arguments.
+    // Determine the argument number automatically for llvm::Arguments if none
+    // is set. Do not override a given one as it could be a use of the argument
+    // in a call site.
     if (auto *Arg = dyn_cast<Argument>(&V))
-      ArgNo = Arg->getArgNo();
+      if (ArgNo == -1)
+        ArgNo = Arg->getArgNo();
 
     // If a function was given together with an argument number, perform the
     // lookup for the actual argument instead. Don't do it for variadic
