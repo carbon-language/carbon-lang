@@ -655,7 +655,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
 
     // Try to find a assumed unique return value for the called function.
     auto *RetCSAA = A.getAAFor<AAReturnedValuesImpl>(*this, *RV);
-    if (!RetCSAA || !RetCSAA->isValidState()) {
+    if (!RetCSAA) {
       HasOverdefinedReturnedCalls = true;
       LLVM_DEBUG(dbgs() << "[AAReturnedValues] Returned call site (" << *RV
                         << ") with " << (RetCSAA ? "invalid" : "no")
@@ -965,8 +965,7 @@ ChangeStatus AANoFreeFunction::updateImpl(Attributor &A) {
       auto ICS = ImmutableCallSite(I);
       auto *NoFreeAA = A.getAAFor<AANoFreeFunction>(*this, *I);
 
-      if ((!NoFreeAA || !NoFreeAA->isValidState() ||
-           !NoFreeAA->isAssumedNoFree()) &&
+      if ((!NoFreeAA || !NoFreeAA->isAssumedNoFree()) &&
           !ICS.hasFnAttr(Attribute::NoFree)) {
         indicatePessimisticFixpoint();
         return ChangeStatus::CHANGED;

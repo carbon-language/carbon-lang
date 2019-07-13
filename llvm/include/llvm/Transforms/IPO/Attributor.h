@@ -199,8 +199,12 @@ struct Attributor {
     const auto &KindToAbstractAttributeMap = AAMap.lookup({&V, ArgNo});
     if (AAType *AA = static_cast<AAType *>(
             KindToAbstractAttributeMap.lookup(AAType::ID))) {
-      QueryMap[AA].insert(&QueryingAA);
-      return AA;
+      // Do not return an attribute with an invalid state. This minimizes checks
+      // at the calls sites and allows the fallback below to kick in.
+      if (AA->getState().isValidState()) {
+        QueryMap[AA].insert(&QueryingAA);
+        return AA;
+      }
     }
 
     // If no abstract attribute was found and we look for a call site argument,
