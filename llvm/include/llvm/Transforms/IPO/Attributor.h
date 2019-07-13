@@ -693,9 +693,7 @@ struct AANoSync : public AbstractAttribute {
       : AbstractAttribute(V, InfoCache) {}
 
   /// See AbstractAttribute::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override {
-    return ID;
-  }
+  Attribute::AttrKind getAttrKind() const override { return ID; }
 
   static constexpr Attribute::AttrKind ID =
       Attribute::AttrKind(Attribute::NoSync);
