@@ -91,5 +91,5 @@ llvm::Error llvm::object::isNotObjectErrorInvalidFileType(llvm::Error Err) {
             return Error(std::move(M));
           }))
     return Err2;
-  return Err;
+  return Error::success();
 }
