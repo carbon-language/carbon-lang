@@ -490,16 +490,30 @@ static unsigned findDoublePrecisionFPU(unsigned InputFPUKind) {
   return ARM::FK_INVALID;
 }
 
+static unsigned getAEKID(StringRef ArchExtName) {
+  for (const auto AE : ARM::ARCHExtNames)
+    if (AE.getName() == ArchExtName)
+      return AE.ID;
+  return ARM::AEK_INVALID;
+}
+
 bool ARM::appendArchExtFeatures(
   StringRef CPU, ARM::ArchKind AK, StringRef ArchExt,
   std::vector<StringRef> &Features) {
-  StringRef StandardFeature = getArchExtFeature(ArchExt);
-  if (!StandardFeature.empty()) {
-    Features.push_back(StandardFeature);
-    return true;
-  }
 
+  size_t StartingNumFeatures = Features.size();
   const bool Negated = stripNegationPrefix(ArchExt);
+  unsigned ID = getAEKID(ArchExt);
+
+  if (ID == AEK_INVALID)
+    return false;
+
+  for (const auto AE : ARCHExtNames) {
+    if (Negated && (AE.ID & ID) == ID && AE.NegFeature)
+      Features.push_back(AE.NegFeature);
+    else if (AE.ID == ID && AE.Feature)
+      Features.push_back(AE.Feature);
+  }
 
   if (CPU == "")
     CPU = "generic";
@@ -519,7 +533,7 @@ bool ARM::appendArchExtFeatures(
     }
     return ARM::getFPUFeatures(FPUKind, Features);
   }
-  return false;
+  return StartingNumFeatures != Features.size();
 }
 
 StringRef ARM::getHWDivName(unsigned HWDivKind) {
