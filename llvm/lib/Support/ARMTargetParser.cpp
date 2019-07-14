@@ -409,30 +409,12 @@ bool ARM::getExtensionFeatures(unsigned Extensions,
   if (Extensions == AEK_INVALID)
     return false;
 
-  if (Extensions & AEK_CRC)
-    Features.push_back("+crc");
-  else
-    Features.push_back("-crc");
-
-  if (Extensions & AEK_DSP)
-    Features.push_back("+dsp");
-  else
-    Features.push_back("-dsp");
-
-  if (Extensions & AEK_FP16FML)
-    Features.push_back("+fp16fml");
-  else
-    Features.push_back("-fp16fml");
-
-  if (Extensions & AEK_RAS)
-    Features.push_back("+ras");
-  else
-    Features.push_back("-ras");
-
-  if (Extensions & AEK_DOTPROD)
-    Features.push_back("+dotprod");
-  else
-    Features.push_back("-dotprod");
+  for (const auto AE : ARCHExtNames) {
+    if ((Extensions & AE.ID) == AE.ID && AE.Feature)
+      Features.push_back(AE.Feature);
+    else if (AE.NegFeature)
+      Features.push_back(AE.NegFeature);
+  }
 
   return getHWDivFeatures(Extensions, Features);
 }
