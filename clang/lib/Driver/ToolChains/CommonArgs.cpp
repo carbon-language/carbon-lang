@@ -1194,17 +1194,11 @@ static void AddUnwindLibrary(const ToolChain &TC, const Driver &D,
 
 static void AddLibgcc(const ToolChain &TC, const Driver &D,
                       ArgStringList &CmdArgs, const ArgList &Args) {
-  bool isAndroid = TC.getTriple().isAndroid();
-
   LibGccType LGT = getLibGccType(D, Args);
-  bool LibGccFirst = (D.CCCIsCC() && LGT == LibGccType::UnspecifiedLibGcc) ||
-                     LGT == LibGccType::StaticLibGcc;
-  if (LibGccFirst)
+  if (LGT != LibGccType::SharedLibGcc)
     CmdArgs.push_back("-lgcc");
-
   AddUnwindLibrary(TC, D, CmdArgs, Args);
-
-  if (!LibGccFirst)
+  if (LGT == LibGccType::SharedLibGcc)
     CmdArgs.push_back("-lgcc");
 
   // According to Android ABI, we have to link with libdl if we are
@@ -1212,7 +1206,7 @@ static void AddLibgcc(const ToolChain &TC, const Driver &D,
   //
   // NOTE: This fixes a link error on Android MIPS as well.  The non-static
   // libgcc for MIPS relies on _Unwind_Find_FDE and dl_iterate_phdr from libdl.
-  if (isAndroid && getLibGccType(D, Args) != LibGccType::StaticLibGcc)
+  if (TC.getTriple().isAndroid() && LGT != LibGccType::StaticLibGcc)
     CmdArgs.push_back("-ldl");
 }
 
