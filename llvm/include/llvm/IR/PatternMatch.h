@@ -30,7 +30,6 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstrTypes.h"
@@ -1811,57 +1810,6 @@ template <typename Opnd_t> struct Signum_match {
 ///      x <  0  -> -1
 template <typename Val_t> inline Signum_match<Val_t> m_Signum(const Val_t &V) {
   return Signum_match<Val_t>(V);
-}
-
-/// \brief LibFunc matchers.
-struct LibFunc_match {
-  LibFunc F;
-  TargetLibraryInfo TLI;
-  
-  LibFunc_match(LibFunc Func, TargetLibraryInfo TargetLI)
-  : F(Func), TLI(TargetLI) {}
-  
-  template <typename OpTy> bool match(OpTy *V) {
-    LibFunc LF;
-    if (const auto *CI = dyn_cast<CallInst>(V))
-      if (!CI->isNoBuiltin() && CI->getCalledFunction() &&
-          TLI.getLibFunc(*CI->getCalledFunction(), LF) &&
-          LF == F && TLI.has(LF))
-        return true;
-    return false;
-  }
-};
-
-/// LibFunc matches are combinations of Name matchers, and argument
-/// matchers.
-template <typename T0 = void, typename T1 = void, typename T2 = void>
-struct m_LibFunc_Ty;
-template <typename T0> struct m_LibFunc_Ty<T0> {
-  using Ty = match_combine_and<LibFunc_match, Argument_match<T0>>;
-};
-template <typename T0, typename T1> struct m_LibFunc_Ty<T0, T1> {
-  using Ty =
-  match_combine_and<typename m_LibFunc_Ty<T0>::Ty,
-  Argument_match<T1>>;
-};
-
-/// \brief Match LibFunc calls like this:
-/// m_LibFunc<LibFunc_tan>(m_Value(X))
-template <LibFunc F>
-inline LibFunc_match m_LibFunc(TargetLibraryInfo TLI) {
-  return LibFunc_match(F, TLI);
-}
-
-template <LibFunc F, typename T0>
-inline typename m_LibFunc_Ty<T0>::Ty
-m_LibFunc(const TargetLibraryInfo TLI, const T0 &Op0) {
-  return m_CombineAnd(m_LibFunc<F>(TLI), m_Argument<0>(Op0));
-}
-
-template <LibFunc F, typename T0, typename T1>
-inline typename m_LibFunc_Ty<T0, T1>::Ty
-m_LibFunc(const TargetLibraryInfo TLI, const T0 &Op0, const T1 &Op1) {
-  return m_CombineAnd(m_LibFunc<F>(TLI, Op0), m_Argument<1>(Op1));
 }
 
 } // end namespace PatternMatch

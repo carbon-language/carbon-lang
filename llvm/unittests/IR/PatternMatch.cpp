@@ -35,15 +35,13 @@ struct PatternMatchTest : ::testing::Test {
   Function *F;
   BasicBlock *BB;
   IRBuilder<NoFolder> IRB;
-  TargetLibraryInfoImpl TLII;
-  TargetLibraryInfo TLI;
 
   PatternMatchTest()
       : M(new Module("PatternMatchTestModule", Ctx)),
         F(Function::Create(
             FunctionType::get(Type::getVoidTy(Ctx), /* IsVarArg */ false),
             Function::ExternalLinkage, "f", M.get())),
-        BB(BasicBlock::Create(Ctx, "entry", F)), IRB(BB), TLI(TLII) {}
+        BB(BasicBlock::Create(Ctx, "entry", F)), IRB(BB) {}
 };
 
 TEST_F(PatternMatchTest, OneUse) {
@@ -1008,40 +1006,6 @@ TEST_F(PatternMatchTest, FloatingPointFNeg) {
 
   // Test FAdd(-0.0, 1.0)
   EXPECT_FALSE(match(V3, m_FNeg(m_Value(Match))));
-}
-
-TEST_F(PatternMatchTest, LibFunc) {
-  Type *FltTy = IRB.getFloatTy();
-  Value *One = ConstantFP::get(FltTy, 1.0);
-  Value *Two = ConstantFP::get(FltTy, 2.0);
-  Value *MatchOne, *MatchTwo;
-
-  StringRef TanName = TLI.getName(LibFunc_tan);
-  FunctionCallee TanCallee = M->getOrInsertFunction(TanName, FltTy, FltTy);
-  CallInst *Tan = IRB.CreateCall(TanCallee, One, TanName);
-
-  StringRef PowName = TLI.getName(LibFunc_pow);
-  FunctionCallee PowCallee = M->getOrInsertFunction(PowName, FltTy, FltTy, FltTy);
-  CallInst *Pow = IRB.CreateCall(PowCallee, {One, Two}, PowName);
-
-  EXPECT_TRUE(match(Tan, m_LibFunc<LibFunc_tan>(TLI)));
-  EXPECT_FALSE(match(Tan, m_LibFunc<LibFunc_pow>(TLI)));
-  EXPECT_FALSE(match(Pow, m_LibFunc<LibFunc_tan>(TLI)));
-
-  EXPECT_TRUE(match(Tan, m_LibFunc<LibFunc_tan>(TLI, m_Value(MatchOne))));
-  EXPECT_EQ(One, MatchOne);
-  EXPECT_FALSE(match(Tan, m_LibFunc<LibFunc_sin>(TLI, m_Value())));
-
-  EXPECT_TRUE(match(Pow, m_LibFunc<LibFunc_pow>(TLI, m_Value(MatchOne),
-                                                m_Value(MatchTwo))));
-  EXPECT_EQ(One, MatchOne);
-  EXPECT_EQ(Two, MatchTwo);
-  EXPECT_FALSE(match(Pow, m_LibFunc<LibFunc_fminf>(TLI, m_Value(), m_Value())));
-  
-  TLII.disableAllFunctions();
-  EXPECT_FALSE(match(Tan, m_LibFunc<LibFunc_tan>(TLI)));
-  EXPECT_FALSE(match(Tan, m_LibFunc<LibFunc_tan>(TLI, m_Value())));
-  EXPECT_FALSE(match(Pow, m_LibFunc<LibFunc_pow>(TLI, m_Value(), m_Value())));
 }
 
 template <typename T> struct MutableConstTest : PatternMatchTest { };
