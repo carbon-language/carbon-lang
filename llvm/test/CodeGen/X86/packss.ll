@@ -266,7 +266,7 @@ define <8 x i16> @trunc_ashr_v4i64_demandedelts(<4 x i64> %a0) {
 }
 
 define <16 x i8> @packsswb_icmp_128_zero(<8 x i16> %a0) {
-; SSE-LABEL: packsswb_128_zero:
+; SSE-LABEL: packsswb_icmp_128_zero:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    pxor %xmm1, %xmm1
 ; SSE-NEXT:    pcmpeqw %xmm0, %xmm1
@@ -274,7 +274,7 @@ define <16 x i8> @packsswb_icmp_128_zero(<8 x i16> %a0) {
 ; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm1[0],zero
 ; SSE-NEXT:    ret{{[l|q]}}
 ;
-; AVX-LABEL: packsswb_128_zero:
+; AVX-LABEL: packsswb_icmp_128_zero:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; AVX-NEXT:    vpcmpeqw %xmm1, %xmm0, %xmm0
@@ -287,7 +287,7 @@ define <16 x i8> @packsswb_icmp_128_zero(<8 x i16> %a0) {
 }
 
 define <32 x i8> @packsswb_icmp_zero_256(<16 x i16> %a0) {
-; SSE-LABEL: packsswb_zero_256:
+; SSE-LABEL: packsswb_icmp_zero_256:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    pxor %xmm2, %xmm2
 ; SSE-NEXT:    pcmpeqw %xmm2, %xmm1
@@ -298,7 +298,7 @@ define <32 x i8> @packsswb_icmp_zero_256(<16 x i16> %a0) {
 ; SSE-NEXT:    movaps %xmm2, %xmm1
 ; SSE-NEXT:    ret{{[l|q]}}
 ;
-; AVX1-LABEL: packsswb_zero_256:
+; AVX1-LABEL: packsswb_icmp_zero_256:
 ; AVX1:       # %bb.0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
 ; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
@@ -311,7 +311,7 @@ define <32 x i8> @packsswb_icmp_zero_256(<16 x i16> %a0) {
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3],ymm1[4,5],ymm0[6,7]
 ; AVX1-NEXT:    ret{{[l|q]}}
 ;
-; AVX2-LABEL: packsswb_zero_256:
+; AVX2-LABEL: packsswb_icmp_zero_256:
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; AVX2-NEXT:    vpcmpeqw %ymm1, %ymm0, %ymm0
