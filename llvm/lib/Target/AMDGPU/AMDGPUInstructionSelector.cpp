@@ -655,6 +655,20 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC_W_SIDE_EFFECTS(
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*Exp, TII, TRI, RBI);
   }
+  case Intrinsic::amdgcn_end_cf: {
+    // FIXME: Manually selecting to avoid dealiing with the SReg_1 trick
+    // SelectionDAG uses for wave32 vs wave64.
+    BuildMI(*BB, &I, I.getDebugLoc(),
+            TII.get(AMDGPU::SI_END_CF))
+      .add(I.getOperand(1));
+
+    Register Reg = I.getOperand(1).getReg();
+    I.eraseFromParent();
+
+    if (!MRI.getRegClassOrNull(Reg))
+      MRI.setRegClass(Reg, TRI.getWaveMaskRegClass());
+    return true;
+  }
   default:
     return selectImpl(I, CoverageInfo);
   }
