@@ -37,7 +37,8 @@ void checkHighlightings(llvm::StringRef Code) {
       {HighlightingKind::Function, "Function"},
       {HighlightingKind::Class, "Class"},
       {HighlightingKind::Enum, "Enum"},
-      {HighlightingKind::Namespace, "Namespace"}};
+      {HighlightingKind::Namespace, "Namespace"},
+      {HighlightingKind::EnumConstant, "EnumConstant"}};
   std::vector<HighlightingToken> ExpectedTokens;
   for (const auto &KindString : KindToString) {
     std::vector<HighlightingToken> Toks = makeHighlightingTokens(
@@ -103,12 +104,19 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
       }
     )cpp",
     R"cpp(
-      enum class $Enum[[E]] {};
-      enum $Enum[[EE]] {};
+      enum class $Enum[[E]] {
+        $EnumConstant[[A]],
+        $EnumConstant[[B]],
+      };
+      enum $Enum[[EE]] {
+        $EnumConstant[[Hi]],
+      };
       struct $Class[[A]] {
         $Enum[[E]] EEE;
         $Enum[[EE]] EEEE;
       };
+      int $Variable[[I]] = $EnumConstant[[Hi]];
+      $Enum[[E]] $Variable[[L]] = $Enum[[E]]::$EnumConstant[[B]];
     )cpp",
     R"cpp(
       namespace $Namespace[[abc]] {
@@ -118,7 +126,7 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
           namespace $Namespace[[cde]] {
             struct $Class[[A]] {
               enum class $Enum[[B]] {
-                Hi,
+                $EnumConstant[[Hi]],
               };
             };
           }
@@ -129,7 +137,7 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
             $Namespace[[abc]]::$Namespace[[bcd]]::$Namespace[[cde]];
       $Namespace[[abc]]::$Namespace[[bcd]]::$Class[[A]] $Variable[[AA]];
       $Namespace[[vwz]]::$Class[[A]]::$Enum[[B]] $Variable[[AAA]] =
-            $Namespace[[vwz]]::$Class[[A]]::$Enum[[B]]::Hi;
+            $Namespace[[vwz]]::$Class[[A]]::$Enum[[B]]::$EnumConstant[[Hi]];
       ::$Namespace[[vwz]]::$Class[[A]] $Variable[[B]];
       ::$Namespace[[abc]]::$Namespace[[bcd]]::$Class[[A]] $Variable[[BB]];
     )cpp"};

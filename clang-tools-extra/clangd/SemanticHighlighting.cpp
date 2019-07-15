@@ -119,6 +119,10 @@ private:
       addToken(Loc, HighlightingKind::Enum);
       return;
     }
+    if (isa<EnumConstantDecl>(D)) {
+      addToken(Loc, HighlightingKind::EnumConstant);
+      return;
+    }
     if (isa<VarDecl>(D)) {
       addToken(Loc, HighlightingKind::Variable);
       return;
@@ -249,6 +253,8 @@ llvm::StringRef toTextMateScope(HighlightingKind Kind) {
     return "entity.name.type.class.cpp";
   case HighlightingKind::Enum:
     return "entity.name.type.enum.cpp";
+  case HighlightingKind::EnumConstant:
+    return "variable.other.enummember.cpp";
   case HighlightingKind::Namespace:
     return "entity.name.namespace.cpp";
   case HighlightingKind::NumKinds:
