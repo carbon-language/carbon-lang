@@ -341,6 +341,9 @@ bool AMDGPUInstructionSelector::selectG_MERGE_VALUES(MachineInstr &MI) const {
   LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
 
   const unsigned SrcSize = SrcTy.getSizeInBits();
+  if (SrcSize < 32)
+    return false;
+
   const DebugLoc &DL = MI.getDebugLoc();
   const RegisterBank *DstBank = RBI.getRegBank(DstReg, MRI, TRI);
   const unsigned DstSize = DstTy.getSizeInBits();
@@ -1235,6 +1238,7 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   case TargetOpcode::G_EXTRACT:
     return selectG_EXTRACT(I);
   case TargetOpcode::G_MERGE_VALUES:
+  case TargetOpcode::G_BUILD_VECTOR:
   case TargetOpcode::G_CONCAT_VECTORS:
     return selectG_MERGE_VALUES(I);
   case TargetOpcode::G_UNMERGE_VALUES:
