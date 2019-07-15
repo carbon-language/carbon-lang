@@ -116,6 +116,10 @@ bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
       return RBI.constrainGenericRegister(DstReg, *RC, MRI);
     }
 
+    // TODO: Should probably leave the copy and let copyPhysReg expand it.
+    if (!RBI.constrainGenericRegister(DstReg, *TRI.getBoolRC(), MRI))
+      return false;
+
     BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CMP_NE_U32_e64), DstReg)
       .addImm(0)
       .addReg(SrcReg);
