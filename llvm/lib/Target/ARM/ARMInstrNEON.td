@@ -493,26 +493,14 @@ def NEONvcltz     : SDNode<"ARMISD::VCLTZ", SDTARMVCMPZ>;
 def NEONvcgtu     : SDNode<"ARMISD::VCGTU", SDTARMVCMP>;
 def NEONvtst      : SDNode<"ARMISD::VTST", SDTARMVCMP>;
 
-// Vector Shifts
-def SDTARMVSH : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
-                                     SDTCisSameAs<0, 2>,]>;
-
-def NEONvshls        : SDNode<"ARMISD::VSHLs", SDTARMVSH>;
-def NEONvshlu        : SDNode<"ARMISD::VSHLu", SDTARMVSH>;
-
 // Types for vector shift by immediates.  The "SHX" version is for long and
 // narrow operations where the source and destination vectors have different
 // types.  The "SHINS" version is for shift and insert operations.
-def SDTARMVSHIMM     : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
-                                            SDTCisVT<2, i32>]>;
 def SDTARMVSHXIMM    : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisInt<1>,
                                             SDTCisVT<2, i32>]>;
 def SDTARMVSHINSIMM  : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
                                             SDTCisSameAs<0, 2>, SDTCisVT<3, i32>]>;
 
-def NEONvshlImm      : SDNode<"ARMISD::VSHLIMM", SDTARMVSHIMM>;
-def NEONvshrsImm     : SDNode<"ARMISD::VSHRsIMM", SDTARMVSHIMM>;
-def NEONvshruImm     : SDNode<"ARMISD::VSHRuIMM", SDTARMVSHIMM>;
 def NEONvshrnImm     : SDNode<"ARMISD::VSHRNIMM", SDTARMVSHXIMM>;
 
 def NEONvrshrsImm    : SDNode<"ARMISD::VRSHRsIMM", SDTARMVSHIMM>;
@@ -4269,11 +4257,11 @@ defm VRADDHN  : N3VNInt_HSD<1,1,0b0100,0, "vraddhn", "i",
                             int_arm_neon_vraddhn, 1>;
 
 let Predicates = [HasNEON] in {
-def : Pat<(v8i8  (trunc (NEONvshruImm (add (v8i16 QPR:$Vn), QPR:$Vm), 8))),
+def : Pat<(v8i8  (trunc (ARMvshruImm (add (v8i16 QPR:$Vn), QPR:$Vm), 8))),
           (VADDHNv8i8 QPR:$Vn, QPR:$Vm)>;
-def : Pat<(v4i16 (trunc (NEONvshruImm (add (v4i32 QPR:$Vn), QPR:$Vm), 16))),
+def : Pat<(v4i16 (trunc (ARMvshruImm (add (v4i32 QPR:$Vn), QPR:$Vm), 16))),
           (VADDHNv4i16 QPR:$Vn, QPR:$Vm)>;
-def : Pat<(v2i32 (trunc (NEONvshruImm (add (v2i64 QPR:$Vn), QPR:$Vm), 32))),
+def : Pat<(v2i32 (trunc (ARMvshruImm (add (v2i64 QPR:$Vn), QPR:$Vm), 32))),
           (VADDHNv2i32 QPR:$Vn, QPR:$Vm)>;
 }
 
@@ -5027,11 +5015,11 @@ defm VRSUBHN  : N3VNInt_HSD<1,1,0b0110,0, "vrsubhn", "i",
                             int_arm_neon_vrsubhn, 0>;
 
 let Predicates = [HasNEON] in {
-def : Pat<(v8i8  (trunc (NEONvshruImm (sub (v8i16 QPR:$Vn), QPR:$Vm), 8))),
+def : Pat<(v8i8  (trunc (ARMvshruImm (sub (v8i16 QPR:$Vn), QPR:$Vm), 8))),
           (VSUBHNv8i8 QPR:$Vn, QPR:$Vm)>;
-def : Pat<(v4i16 (trunc (NEONvshruImm (sub (v4i32 QPR:$Vn), QPR:$Vm), 16))),
+def : Pat<(v4i16 (trunc (ARMvshruImm (sub (v4i32 QPR:$Vn), QPR:$Vm), 16))),
           (VSUBHNv4i16 QPR:$Vn, QPR:$Vm)>;
-def : Pat<(v2i32 (trunc (NEONvshruImm (sub (v2i64 QPR:$Vn), QPR:$Vm), 32))),
+def : Pat<(v2i32 (trunc (ARMvshruImm (sub (v2i64 QPR:$Vn), QPR:$Vm), 32))),
           (VSUBHNv2i32 QPR:$Vn, QPR:$Vm)>;
 }
 
@@ -5522,7 +5510,7 @@ def : Pat<(v4i32 (abs (sub (zext (v4i16 DPR:$opA)), (zext (v4i16 DPR:$opB))))),
 
 def abd_shr :
     PatFrag<(ops node:$in1, node:$in2, node:$shift),
-            (NEONvshrsImm (sub (zext node:$in1),
+            (ARMvshrsImm (sub (zext node:$in1),
                             (zext node:$in2)), (i32 $shift))>;
 
 let Predicates = [HasNEON] in {
@@ -5790,56 +5778,56 @@ defm VSHLu    : N3VInt_QHSDSh<1, 0, 0b0100, 0, N3RegVShFrm,
                             "vshl", "u", int_arm_neon_vshiftu>;
 
 let Predicates = [HasNEON] in {
-def : Pat<(v8i8 (NEONvshls (v8i8 DPR:$Dn), (v8i8 DPR:$Dm))),
+def : Pat<(v8i8 (ARMvshls (v8i8 DPR:$Dn), (v8i8 DPR:$Dm))),
           (VSHLsv8i8 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v4i16 (NEONvshls (v4i16 DPR:$Dn), (v4i16 DPR:$Dm))),
+def : Pat<(v4i16 (ARMvshls (v4i16 DPR:$Dn), (v4i16 DPR:$Dm))),
           (VSHLsv4i16 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v2i32 (NEONvshls (v2i32 DPR:$Dn), (v2i32 DPR:$Dm))),
+def : Pat<(v2i32 (ARMvshls (v2i32 DPR:$Dn), (v2i32 DPR:$Dm))),
           (VSHLsv2i32 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v1i64 (NEONvshls (v1i64 DPR:$Dn), (v1i64 DPR:$Dm))),
+def : Pat<(v1i64 (ARMvshls (v1i64 DPR:$Dn), (v1i64 DPR:$Dm))),
           (VSHLsv1i64 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v16i8 (NEONvshls (v16i8 QPR:$Dn), (v16i8 QPR:$Dm))),
+def : Pat<(v16i8 (ARMvshls (v16i8 QPR:$Dn), (v16i8 QPR:$Dm))),
           (VSHLsv16i8 QPR:$Dn, QPR:$Dm)>;
-def : Pat<(v8i16 (NEONvshls (v8i16 QPR:$Dn), (v8i16 QPR:$Dm))),
+def : Pat<(v8i16 (ARMvshls (v8i16 QPR:$Dn), (v8i16 QPR:$Dm))),
           (VSHLsv8i16 QPR:$Dn, QPR:$Dm)>;
-def : Pat<(v4i32 (NEONvshls (v4i32 QPR:$Dn), (v4i32 QPR:$Dm))),
+def : Pat<(v4i32 (ARMvshls (v4i32 QPR:$Dn), (v4i32 QPR:$Dm))),
           (VSHLsv4i32 QPR:$Dn, QPR:$Dm)>;
-def : Pat<(v2i64 (NEONvshls (v2i64 QPR:$Dn), (v2i64 QPR:$Dm))),
+def : Pat<(v2i64 (ARMvshls (v2i64 QPR:$Dn), (v2i64 QPR:$Dm))),
           (VSHLsv2i64 QPR:$Dn, QPR:$Dm)>;
 
-def : Pat<(v8i8 (NEONvshlu (v8i8 DPR:$Dn), (v8i8 DPR:$Dm))),
+def : Pat<(v8i8 (ARMvshlu (v8i8 DPR:$Dn), (v8i8 DPR:$Dm))),
           (VSHLuv8i8 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v4i16 (NEONvshlu (v4i16 DPR:$Dn), (v4i16 DPR:$Dm))),
+def : Pat<(v4i16 (ARMvshlu (v4i16 DPR:$Dn), (v4i16 DPR:$Dm))),
           (VSHLuv4i16 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v2i32 (NEONvshlu (v2i32 DPR:$Dn), (v2i32 DPR:$Dm))),
+def : Pat<(v2i32 (ARMvshlu (v2i32 DPR:$Dn), (v2i32 DPR:$Dm))),
           (VSHLuv2i32 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v1i64 (NEONvshlu (v1i64 DPR:$Dn), (v1i64 DPR:$Dm))),
+def : Pat<(v1i64 (ARMvshlu (v1i64 DPR:$Dn), (v1i64 DPR:$Dm))),
           (VSHLuv1i64 DPR:$Dn, DPR:$Dm)>;
-def : Pat<(v16i8 (NEONvshlu (v16i8 QPR:$Dn), (v16i8 QPR:$Dm))),
+def : Pat<(v16i8 (ARMvshlu (v16i8 QPR:$Dn), (v16i8 QPR:$Dm))),
           (VSHLuv16i8 QPR:$Dn, QPR:$Dm)>;
-def : Pat<(v8i16 (NEONvshlu (v8i16 QPR:$Dn), (v8i16 QPR:$Dm))),
+def : Pat<(v8i16 (ARMvshlu (v8i16 QPR:$Dn), (v8i16 QPR:$Dm))),
           (VSHLuv8i16 QPR:$Dn, QPR:$Dm)>;
-def : Pat<(v4i32 (NEONvshlu (v4i32 QPR:$Dn), (v4i32 QPR:$Dm))),
+def : Pat<(v4i32 (ARMvshlu (v4i32 QPR:$Dn), (v4i32 QPR:$Dm))),
           (VSHLuv4i32 QPR:$Dn, QPR:$Dm)>;
-def : Pat<(v2i64 (NEONvshlu (v2i64 QPR:$Dn), (v2i64 QPR:$Dm))),
+def : Pat<(v2i64 (ARMvshlu (v2i64 QPR:$Dn), (v2i64 QPR:$Dm))),
           (VSHLuv2i64 QPR:$Dn, QPR:$Dm)>;
 
 }
 
 //   VSHL     : Vector Shift Left (Immediate)
-defm VSHLi    : N2VShL_QHSD<0, 1, 0b0101, 1, IIC_VSHLiD, "vshl", "i", NEONvshlImm>;
+defm VSHLi    : N2VShL_QHSD<0, 1, 0b0101, 1, IIC_VSHLiD, "vshl", "i", ARMvshlImm>;
 
 //   VSHR     : Vector Shift Right (Immediate)
 defm VSHRs    : N2VShR_QHSD<0, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "s", "VSHRs",
-                            NEONvshrsImm>;
+                            ARMvshrsImm>;
 defm VSHRu    : N2VShR_QHSD<1, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "u", "VSHRu",
-                            NEONvshruImm>;
+                            ARMvshruImm>;
 
 //   VSHLL    : Vector Shift Left Long
 defm VSHLLs   : N2VLSh_QHS<0, 1, 0b1010, 0, 0, 1, "vshll", "s",
-  PatFrag<(ops node:$LHS, node:$RHS), (NEONvshlImm (sext node:$LHS), node:$RHS)>>;
+  PatFrag<(ops node:$LHS, node:$RHS), (ARMvshlImm (sext node:$LHS), node:$RHS)>>;
 defm VSHLLu   : N2VLSh_QHS<1, 1, 0b1010, 0, 0, 1, "vshll", "u",
-  PatFrag<(ops node:$LHS, node:$RHS), (NEONvshlImm (zext node:$LHS), node:$RHS)>>;
+  PatFrag<(ops node:$LHS, node:$RHS), (ARMvshlImm (zext node:$LHS), node:$RHS)>>;
 
 //   VSHLL    : Vector Shift Left Long (with maximum shift count)
 class N2VLShMax<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
@@ -5858,37 +5846,37 @@ def  VSHLLi32 : N2VLShMax<1, 1, 0b111010, 0b0011, 0, 0, 0, "vshll", "i32",
                           v2i64, v2i32, imm32>;
 
 let Predicates = [HasNEON] in {
-def : Pat<(v8i16 (NEONvshlImm (zext (v8i8 DPR:$Rn)), (i32 8))),
+def : Pat<(v8i16 (ARMvshlImm (zext (v8i8 DPR:$Rn)), (i32 8))),
           (VSHLLi8 DPR:$Rn, 8)>;
-def : Pat<(v4i32 (NEONvshlImm (zext (v4i16 DPR:$Rn)), (i32 16))),
+def : Pat<(v4i32 (ARMvshlImm (zext (v4i16 DPR:$Rn)), (i32 16))),
           (VSHLLi16 DPR:$Rn, 16)>;
-def : Pat<(v2i64 (NEONvshlImm (zext (v2i32 DPR:$Rn)), (i32 32))),
+def : Pat<(v2i64 (ARMvshlImm (zext (v2i32 DPR:$Rn)), (i32 32))),
           (VSHLLi32 DPR:$Rn, 32)>;
-def : Pat<(v8i16 (NEONvshlImm (sext (v8i8 DPR:$Rn)), (i32 8))),
+def : Pat<(v8i16 (ARMvshlImm (sext (v8i8 DPR:$Rn)), (i32 8))),
           (VSHLLi8 DPR:$Rn, 8)>;
-def : Pat<(v4i32 (NEONvshlImm (sext (v4i16 DPR:$Rn)), (i32 16))),
+def : Pat<(v4i32 (ARMvshlImm (sext (v4i16 DPR:$Rn)), (i32 16))),
           (VSHLLi16 DPR:$Rn, 16)>;
-def : Pat<(v2i64 (NEONvshlImm (sext (v2i32 DPR:$Rn)), (i32 32))),
+def : Pat<(v2i64 (ARMvshlImm (sext (v2i32 DPR:$Rn)), (i32 32))),
           (VSHLLi32 DPR:$Rn, 32)>;
-def : Pat<(v8i16 (NEONvshlImm (anyext (v8i8 DPR:$Rn)), (i32 8))),
+def : Pat<(v8i16 (ARMvshlImm (anyext (v8i8 DPR:$Rn)), (i32 8))),
           (VSHLLi8 DPR:$Rn, 8)>;
-def : Pat<(v4i32 (NEONvshlImm (anyext (v4i16 DPR:$Rn)), (i32 16))),
+def : Pat<(v4i32 (ARMvshlImm (anyext (v4i16 DPR:$Rn)), (i32 16))),
           (VSHLLi16 DPR:$Rn, 16)>;
-def : Pat<(v2i64 (NEONvshlImm (anyext (v2i32 DPR:$Rn)), (i32 32))),
+def : Pat<(v2i64 (ARMvshlImm (anyext (v2i32 DPR:$Rn)), (i32 32))),
           (VSHLLi32 DPR:$Rn, 32)>;
 }
 
 //   VSHRN    : Vector Shift Right and Narrow
 defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",
                            PatFrag<(ops node:$Rn, node:$amt),
-                                   (trunc (NEONvshrsImm node:$Rn, node:$amt))>>;
+                                   (trunc (ARMvshrsImm node:$Rn, node:$amt))>>;
 
 let Predicates = [HasNEON] in {
-def : Pat<(v8i8 (trunc (NEONvshruImm (v8i16 QPR:$Vn), shr_imm8:$amt))),
+def : Pat<(v8i8 (trunc (ARMvshruImm (v8i16 QPR:$Vn), shr_imm8:$amt))),
           (VSHRNv8i8 QPR:$Vn, shr_imm8:$amt)>;
-def : Pat<(v4i16 (trunc (NEONvshruImm (v4i32 QPR:$Vn), shr_imm16:$amt))),
+def : Pat<(v4i16 (trunc (ARMvshruImm (v4i32 QPR:$Vn), shr_imm16:$amt))),
           (VSHRNv4i16 QPR:$Vn, shr_imm16:$amt)>;
-def : Pat<(v2i32 (trunc (NEONvshruImm (v2i64 QPR:$Vn), shr_imm32:$amt))),
+def : Pat<(v2i32 (trunc (ARMvshruImm (v2i64 QPR:$Vn), shr_imm32:$amt))),
           (VSHRNv2i32 QPR:$Vn, shr_imm32:$amt)>;
 }
 
@@ -5952,8 +5940,8 @@ defm VQRSHRUN : N2VNSh_HSD<1, 1, 0b1000, 0, 1, 1, IIC_VSHLi4D, "vqrshrun", "s",
                            NEONvqrshrnsuImm>;
 
 //   VSRA     : Vector Shift Right and Accumulate
-defm VSRAs    : N2VShAdd_QHSD<0, 1, 0b0001, 1, "vsra", "s", NEONvshrsImm>;
-defm VSRAu    : N2VShAdd_QHSD<1, 1, 0b0001, 1, "vsra", "u", NEONvshruImm>;
+defm VSRAs    : N2VShAdd_QHSD<0, 1, 0b0001, 1, "vsra", "s", ARMvshrsImm>;
+defm VSRAu    : N2VShAdd_QHSD<1, 1, 0b0001, 1, "vsra", "u", ARMvshruImm>;
 //   VRSRA    : Vector Rounding Shift Right and Accumulate
 defm VRSRAs   : N2VShAdd_QHSD<0, 1, 0b0011, 1, "vrsra", "s", NEONvrshrsImm>;
 defm VRSRAu   : N2VShAdd_QHSD<1, 1, 0b0011, 1, "vrsra", "u", NEONvrshruImm>;
