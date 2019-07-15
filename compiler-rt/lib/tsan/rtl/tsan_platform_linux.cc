@@ -421,7 +421,7 @@ static void InitializeLongjmpXorKey() {
 
   // 2. Retrieve vanilla/mangled SP.
   uptr sp;
-  asm("mov  %0, %%sp" : "=r" (sp));
+  asm("mov  %0, %sp" : "=r" (sp));
   uptr mangled_sp = ((uptr *)&env)[LONG_JMP_SP_ENV_SLOT];
 
   // 3. xor SPs to obtain key.
