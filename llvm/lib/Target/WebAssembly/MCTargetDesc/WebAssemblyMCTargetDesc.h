@@ -385,6 +385,8 @@ inline bool isArgument(unsigned Opc) {
   case WebAssembly::ARGUMENT_v4f32_S:
   case WebAssembly::ARGUMENT_v2f64:
   case WebAssembly::ARGUMENT_v2f64_S:
+  case WebAssembly::ARGUMENT_exnref:
+  case WebAssembly::ARGUMENT_exnref_S:
     return true;
   default:
     return false;
@@ -423,6 +425,8 @@ inline bool isTee(unsigned Opc) {
   case WebAssembly::TEE_F64_S:
   case WebAssembly::TEE_V128:
   case WebAssembly::TEE_V128_S:
+  case WebAssembly::TEE_EXNREF:
+  case WebAssembly::TEE_EXNREF_S:
     return true;
   default:
     return false;
