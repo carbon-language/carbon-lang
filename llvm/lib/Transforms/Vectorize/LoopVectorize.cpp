@@ -3149,11 +3149,8 @@ unsigned LoopVectorizationCostModel::getVectorIntrinsicCost(CallInst *CI,
   if (auto *FPMO = dyn_cast<FPMathOperator>(CI))
     FMF = FPMO->getFastMathFlags();
 
-  // Skip operands that do not require extraction/scalarization and do not incur
-  // any overhead.
-  return TTI.getIntrinsicInstrCost(
-      ID, CI->getType(), filterExtractingOperands(CI->arg_operands(), VF), FMF,
-      VF);
+  SmallVector<Value *, 4> Operands(CI->arg_operands());
+  return TTI.getIntrinsicInstrCost(ID, CI->getType(), Operands, FMF, VF);
 }
 
 static Type *smallestIntegerVectorType(Type *T1, Type *T2) {
