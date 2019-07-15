@@ -237,4 +237,14 @@ define i32 addrspace(3)* @gep2(i32 addrspace(3)* %p) {
   ret i32 addrspace(3)* %q
 }
 
+; CHECK: define internal nonnull i32* @f2()
+define internal i32* @f2() {
+  ret i32* inttoptr (i64 4 to i32*)
+}
+
+define  i32* @f1() {
+ %c = call i32* @f2()
+  ret i32* %c
+}
+
 attributes #0 = { "null-pointer-is-valid"="true" }
