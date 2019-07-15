@@ -2235,6 +2235,22 @@ void InterfaceVisitor::SayNotDistinguishable(
   }
 }
 
+static GenericKind GetGenericKind(const Symbol &generic) {
+  return std::visit(
+      common::visitors{
+          [&](const GenericDetails &x) { return x.kind(); },
+          [&](const GenericBindingDetails &x) { return x.kind(); },
+          [](auto &) -> GenericKind { DIE("not a generic"); },
+      },
+      generic.details());
+}
+
+static bool IsOperatorOrAssignment(const Symbol &generic) {
+  auto kind{GetGenericKind(generic)};
+  return kind == GenericKind::DefinedOp || kind == GenericKind::Assignment ||
+      (kind >= GenericKind::OpPower && kind <= GenericKind::OpNEQV);
+}
+
 // Check that the specifics of this generic are distinguishable from each other
 void InterfaceVisitor::CheckSpecificsAreDistinguishable(
     const Symbol &generic, const SymbolVector &specifics) {
@@ -2242,6 +2258,9 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
   if (specifics.size() < 2) {
     return;
   }
+  auto distinguishable{IsOperatorOrAssignment(generic)
+          ? evaluate::characteristics::DistinguishableOpOrAssign
+          : evaluate::characteristics::Distinguishable};
   using evaluate::characteristics::Procedure;
   std::vector<Procedure> procs;
   for (const Symbol *symbol : specifics) {
@@ -2255,7 +2274,7 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
     auto &proc1{procs[i1]};
     for (std::size_t i2{i1 + 1}; i2 < count; ++i2) {
       auto &proc2{procs[i2]};
-      if (!evaluate::characteristics::Distinguishable(proc1, proc2)) {
+      if (!distinguishable(proc1, proc2)) {
         SayNotDistinguishable(generic, *specifics[i1], *specifics[i2]);
       }
     }

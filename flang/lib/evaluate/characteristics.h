@@ -47,8 +47,10 @@ namespace Fortran::evaluate::characteristics {
 
 using common::CopyableIndirection;
 
-// Can these two procedures be distinguished based on C1514.
+// Are these procedures distinguishable for a generic name?
 bool Distinguishable(const Procedure &, const Procedure &);
+// Are these procedures distinguishable for a generic operator or assignment?
+bool DistinguishableOpOrAssign(const Procedure &, const Procedure &);
 
 class TypeAndShape {
 public:
@@ -145,7 +147,7 @@ struct DummyArgument {
   bool IsOptional() const;
   void SetOptional(bool = true);
   std::ostream &Dump(std::ostream &) const;
-  // name and pass are not a characteristics and so does not participate in
+  // name and pass are not characteristics and so does not participate in
   // operator== but are needed to determine if procedures are distinguishable
   std::string name;
   bool pass{false};  // is this the PASS argument of its procedure

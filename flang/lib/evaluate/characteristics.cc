@@ -448,8 +448,10 @@ std::ostream &Procedure::Dump(std::ostream &o) const {
 // Utility class to determine if Procedures, etc. are distinguishable
 class DistinguishUtils {
 public:
-  // Is x distinguishable from y
+  // Are these procedures distinguishable for a generic name?
   static bool Distinguishable(const Procedure &, const Procedure &);
+  // Are these procedures distinguishable for a generic operator or assignment?
+  static bool DistinguishableOpOrAssign(const Procedure &, const Procedure &);
 
 private:
   struct CountDummyProcedures {
@@ -486,6 +488,22 @@ private:
       const DummyArguments &, int);
   static const DummyArgument *GetPassArg(const Procedure &);
 };
+
+// Simpler distinguishability rules for operators and assignment
+bool DistinguishUtils::DistinguishableOpOrAssign(
+    const Procedure &proc1, const Procedure &proc2) {
+  auto &args1{proc1.dummyArguments};
+  auto &args2{proc2.dummyArguments};
+  if (args1.size() != args2.size()) {
+    return true;  // C1511: distinguishable based on number of arguments
+  }
+  for (std::size_t i{0}; i < args1.size(); ++i) {
+    if (Distinguishable(args1[i], args2[i])) {
+      return true;  // C1511, C1512: distinguishable based on this arg
+    }
+  }
+  return false;
+}
 
 bool DistinguishUtils::Distinguishable(
     const Procedure &proc1, const Procedure &proc2) {
@@ -720,6 +738,10 @@ const DummyArgument *DistinguishUtils::GetPassArg(const Procedure &proc) {
 
 bool Distinguishable(const Procedure &x, const Procedure &y) {
   return DistinguishUtils::Distinguishable(x, y);
+}
+
+bool DistinguishableOpOrAssign(const Procedure &x, const Procedure &y) {
+  return DistinguishUtils::DistinguishableOpOrAssign(x, y);
 }
 
 DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(DummyArgument)
