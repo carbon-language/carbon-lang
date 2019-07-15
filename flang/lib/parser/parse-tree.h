@@ -88,17 +88,14 @@ struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
 
 // Empty classes are often used below as alternatives in std::variant<>
 // discriminated unions.
-#define EMPTY_CLASS_BOILERPLATE(classname) \
-  classname() {} \
-  classname(const classname &) {} \
-  classname(classname &&) {} \
-  classname &operator=(const classname &) { return *this; }; \
-  classname &operator=(classname &&) { return *this; }; \
-  using EmptyTrait = std::true_type
-
 #define EMPTY_CLASS(classname) \
   struct classname { \
-    EMPTY_CLASS_BOILERPLATE(classname); \
+    classname() {} \
+    classname(const classname &) {} \
+    classname(classname &&) {} \
+    classname &operator=(const classname &) { return *this; }; \
+    classname &operator=(classname &&) { return *this; }; \
+    using EmptyTrait = std::true_type; \
   }
 
 // Many classes below simply wrap a std::variant<> discriminated union,
@@ -271,7 +268,8 @@ using Location = const char *;
 
 // A parse tree node with provenance only
 struct Verbatim {
-  EMPTY_CLASS_BOILERPLATE(Verbatim);
+  BOILERPLATE(Verbatim);
+  using EmptyTrait = std::true_type;
   CharBlock source;
 };
 
