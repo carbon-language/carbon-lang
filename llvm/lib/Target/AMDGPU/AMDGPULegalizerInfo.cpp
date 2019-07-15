@@ -793,7 +793,7 @@ bool AMDGPULegalizerInfo::legalizeCustom(MachineInstr &MI,
   case TargetOpcode::G_EXTRACT_VECTOR_ELT:
     return legalizeExtractVectorElt(MI, MRI, MIRBuilder);
   case TargetOpcode::G_INSERT_VECTOR_ELT:
-    return true; // TODO
+    return legalizeInsertVectorElt(MI, MRI, MIRBuilder);
   default:
     return false;
   }
@@ -1147,6 +1147,36 @@ bool AMDGPULegalizerInfo::legalizeExtractVectorElt(
 
   if (IdxVal.getValue() < VecTy.getNumElements())
     B.buildExtract(Dst, Vec, IdxVal.getValue() * EltTy.getSizeInBits());
+  else
+    B.buildUndef(Dst);
+
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AMDGPULegalizerInfo::legalizeInsertVectorElt(
+  MachineInstr &MI, MachineRegisterInfo &MRI,
+  MachineIRBuilder &B) const {
+  // TODO: Should move some of this into LegalizerHelper.
+
+  // TODO: Promote dynamic indexing of s16 to s32
+  // TODO: Dynamic s64 indexing is only legal for SGPR.
+  Optional<int64_t> IdxVal = getConstantVRegVal(MI.getOperand(3).getReg(), MRI);
+  if (!IdxVal) // Dynamic case will be selected to register indexing.
+    return true;
+
+  Register Dst = MI.getOperand(0).getReg();
+  Register Vec = MI.getOperand(1).getReg();
+  Register Ins = MI.getOperand(2).getReg();
+
+  LLT VecTy = MRI.getType(Vec);
+  LLT EltTy = VecTy.getElementType();
+  assert(EltTy == MRI.getType(Ins));
+
+  B.setInstr(MI);
+
+  if (IdxVal.getValue() < VecTy.getNumElements())
+    B.buildInsert(Dst, Vec, Ins, IdxVal.getValue() * EltTy.getSizeInBits());
   else
     B.buildUndef(Dst);
 

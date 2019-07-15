@@ -53,6 +53,8 @@ public:
                             MachineIRBuilder &MIRBuilder) const;
   bool legalizeExtractVectorElt(MachineInstr &MI, MachineRegisterInfo &MRI,
                                 MachineIRBuilder &MIRBuilder) const;
+  bool legalizeInsertVectorElt(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               MachineIRBuilder &MIRBuilder) const;
 
   Register getLiveInRegister(MachineRegisterInfo &MRI,
                              Register Reg, LLT Ty) const;
