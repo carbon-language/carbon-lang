@@ -583,6 +583,18 @@ bool llvm::peelLoop(Loop *L, unsigned PeelCount, LoopInfo *LI,
   SmallVector<std::pair<BasicBlock *, BasicBlock *>, 4> ExitEdges;
   L->getExitEdges(ExitEdges);
 
+  DenseMap<BasicBlock *, BasicBlock *> ExitIDom;
+  if (DT) {
+    assert(L->hasDedicatedExits() && "No dedicated exits?");
+    for (auto Edge : ExitEdges) {
+      if (ExitIDom.count(Edge.second))
+        continue;
+      BasicBlock *BB = DT->getNode(Edge.second)->getIDom()->getBlock();
+      assert(L->contains(BB) && "IDom is not in a loop");
+      ExitIDom[Edge.second] = BB;
+    }
+  }
+
   Function *F = Header->getParent();
 
   // Set up all the necessary basic blocks. It is convenient to split the
@@ -675,9 +687,9 @@ bool llvm::peelLoop(Loop *L, unsigned PeelCount, LoopInfo *LI,
       // latter is the first cloned loop body, as original PreHeader dominates
       // the original loop body.
       if (Iter == 0)
-        for (auto Edge : ExitEdges)
-          DT->changeImmediateDominator(Edge.second,
-                                       cast<BasicBlock>(LVMap[Edge.first]));
+        for (auto Exit : ExitIDom)
+          DT->changeImmediateDominator(Exit.first,
+                                       cast<BasicBlock>(LVMap[Exit.second]));
 #ifdef EXPENSIVE_CHECKS
       assert(DT->verify(DominatorTree::VerificationLevel::Fast));
 #endif
@@ -718,6 +730,9 @@ bool llvm::peelLoop(Loop *L, unsigned PeelCount, LoopInfo *LI,
 
   // We modified the loop, update SE.
   SE->forgetTopmostLoop(L);
+
+  // Finally DomtTree must be correct.
+  assert(DT->verify(DominatorTree::VerificationLevel::Fast));
 
   // FIXME: Incrementally update loop-simplify
   simplifyLoop(L, DT, LI, SE, AC, nullptr, PreserveLCSSA);
