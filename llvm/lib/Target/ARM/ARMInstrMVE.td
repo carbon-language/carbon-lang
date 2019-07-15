@@ -1035,6 +1035,8 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VMVN (v8i16 MQPR:$val1)))>;
   def : Pat<(v4i32 (vnotq  (v4i32 MQPR:$val1))),
             (v4i32 (MVE_VMVN (v4i32 MQPR:$val1)))>;
+  def : Pat<(v2i64 (vnotq  (v2i64 MQPR:$val1))),
+            (v2i64 (MVE_VMVN (v2i64 MQPR:$val1)))>;
 }
 
 class MVE_bit_ops<string iname, bits<2> bit_21_20, bit bit_28>
@@ -1081,6 +1083,8 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VAND (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
   def : Pat<(v4i32 (and (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
             (v4i32 (MVE_VAND (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+  def : Pat<(v2i64 (and (v2i64 MQPR:$val1), (v2i64 MQPR:$val2))),
+            (v2i64 (MVE_VAND (v2i64 MQPR:$val1), (v2i64 MQPR:$val2)))>;
 
   def : Pat<(v16i8 (or (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
             (v16i8 (MVE_VORR (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
@@ -1088,6 +1092,8 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VORR (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
   def : Pat<(v4i32 (or (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
             (v4i32 (MVE_VORR (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+  def : Pat<(v2i64 (or (v2i64 MQPR:$val1), (v2i64 MQPR:$val2))),
+            (v2i64 (MVE_VORR (v2i64 MQPR:$val1), (v2i64 MQPR:$val2)))>;
 
   def : Pat<(v16i8 (xor (v16i8 MQPR:$val1), (v16i8 MQPR:$val2))),
             (v16i8 (MVE_VEOR (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
@@ -1095,6 +1101,8 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VEOR (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
   def : Pat<(v4i32 (xor (v4i32 MQPR:$val1), (v4i32 MQPR:$val2))),
             (v4i32 (MVE_VEOR (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+  def : Pat<(v2i64 (xor (v2i64 MQPR:$val1), (v2i64 MQPR:$val2))),
+            (v2i64 (MVE_VEOR (v2i64 MQPR:$val1), (v2i64 MQPR:$val2)))>;
 
   def : Pat<(v16i8 (and (v16i8 MQPR:$val1), (vnotq MQPR:$val2))),
             (v16i8 (MVE_VBIC (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
@@ -1102,13 +1110,17 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VBIC (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
   def : Pat<(v4i32 (and (v4i32 MQPR:$val1), (vnotq MQPR:$val2))),
             (v4i32 (MVE_VBIC (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+  def : Pat<(v2i64 (and (v2i64 MQPR:$val1), (vnotq MQPR:$val2))),
+            (v2i64 (MVE_VBIC (v2i64 MQPR:$val1), (v2i64 MQPR:$val2)))>;
 
-  def : Pat<(v16i8 (or (v16i8 MQPR:$val1), (vnotq (v16i8 MQPR:$val2)))),
+  def : Pat<(v16i8 (or (v16i8 MQPR:$val1), (vnotq MQPR:$val2))),
             (v16i8 (MVE_VORN (v16i8 MQPR:$val1), (v16i8 MQPR:$val2)))>;
   def : Pat<(v8i16 (or (v8i16 MQPR:$val1), (vnotq MQPR:$val2))),
             (v8i16 (MVE_VORN (v8i16 MQPR:$val1), (v8i16 MQPR:$val2)))>;
   def : Pat<(v4i32 (or (v4i32 MQPR:$val1), (vnotq MQPR:$val2))),
             (v4i32 (MVE_VORN (v4i32 MQPR:$val1), (v4i32 MQPR:$val2)))>;
+  def : Pat<(v2i64 (or (v2i64 MQPR:$val1), (vnotq MQPR:$val2))),
+            (v2i64 (MVE_VORN (v2i64 MQPR:$val1), (v2i64 MQPR:$val2)))>;
 }
 
 class MVE_bit_cmode<string iname, string suffix, bits<4> cmode, dag inOps>

@@ -320,6 +320,10 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
     setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
   }
+  // We can do bitwise operations on v2i64 vectors
+  setOperationAction(ISD::AND, MVT::v2i64, Legal);
+  setOperationAction(ISD::OR, MVT::v2i64, Legal);
+  setOperationAction(ISD::XOR, MVT::v2i64, Legal);
 
   // It is legal to extload from v4i8 to v4i16 or v4i32.
   addAllExtLoads(MVT::v8i16, MVT::v8i8, Legal);
@@ -12854,6 +12858,8 @@ static SDValue PerformShiftCombine(SDNode *N,
   // Nothing to be done for scalar shifts.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!VT.isVector() || !TLI.isTypeLegal(VT))
+    return SDValue();
+  if (ST->hasMVEIntegerOps() && VT == MVT::v2i64)
     return SDValue();
 
   int64_t Cnt;
