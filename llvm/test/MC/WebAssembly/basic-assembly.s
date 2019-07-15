@@ -101,6 +101,10 @@ test0:
     .int32      2000000000
     .size       .L.str, 28
 
+    .section    .init_array.42,"",@
+    .p2align    2
+    .int32      test0
+
     .ident      "clang version 9.0.0 (trunk 364502) (llvm/trunk 364571)"
     .globaltype __stack_pointer, i32
 
@@ -190,8 +194,13 @@ test0:
 # CHECK-NEXT:  .L.str:
 # CHECK-NEXT:      .int8       72
 # CHECK-NEXT:      .asciz      "ello, World!"
-# CHECK-NEXT:      .int16       1234
-# CHECK-NEXT:      .int64       5000000000
-# CHECK-NEXT:      .int32       2000000000
+# CHECK-NEXT:      .int16      1234
+# CHECK-NEXT:      .int64      5000000000
+# CHECK-NEXT:      .int32      2000000000
+# CHECK-NEXT:      .size       .L.str, 28
+
+# CHECK:           .section    .init_array.42,"",@
+# CHECK-NEXT:      .p2align    2
+# CHECK-NEXT:      .int32      test0
 
 # CHECK:           .globaltype __stack_pointer, i32
