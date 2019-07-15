@@ -363,6 +363,28 @@ public:
     return false;
   }
 
+  bool parseSpecialFloatMaybe(bool IsNegative, OperandVector &Operands) {
+    if (Lexer.isNot(AsmToken::Identifier))
+      return true;
+    auto &Flt = Lexer.getTok();
+    auto S = Flt.getString();
+    double Val;
+    if (S.compare_lower("infinity") == 0) {
+      Val = std::numeric_limits<double>::infinity();
+    } else if (S.compare_lower("nan") == 0) {
+      Val = std::numeric_limits<double>::quiet_NaN();
+    } else {
+      return true;
+    }
+    if (IsNegative)
+      Val = -Val;
+    Operands.push_back(make_unique<WebAssemblyOperand>(
+        WebAssemblyOperand::Float, Flt.getLoc(), Flt.getEndLoc(),
+        WebAssemblyOperand::FltOp{Val}));
+    Parser.Lex();
+    return false;
+  }
+
   bool checkForP2AlignIfLoadStore(OperandVector &Operands, StringRef InstName) {
     // FIXME: there is probably a cleaner way to do this.
     auto IsLoadStore = InstName.find(".load") != StringRef::npos ||
@@ -476,6 +498,8 @@ public:
       auto &Tok = Lexer.getTok();
       switch (Tok.getKind()) {
       case AsmToken::Identifier: {
+        if (!parseSpecialFloatMaybe(false, Operands))
+          break;
         auto &Id = Lexer.getTok();
         if (ExpectBlockType) {
           // Assume this identifier is a block_type.
@@ -507,6 +531,7 @@ public:
         } else if(Lexer.is(AsmToken::Real)) {
           if (parseSingleFloat(true, Operands))
             return true;
+        } else if (!parseSpecialFloatMaybe(true, Operands)) {
         } else {
           return error("Expected numeric constant instead got: ",
                        Lexer.getTok());

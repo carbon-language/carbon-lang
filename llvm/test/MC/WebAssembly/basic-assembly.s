@@ -14,6 +14,8 @@ test0:
     i32.const   -1
     f64.const   0x1.999999999999ap1
     f32.const   -1.0
+    f32.const   -infinity
+    f32.const   nan
     v128.const  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
     v128.const  0, 1, 2, 3, 4, 5, 6, 7
     # Indirect addressing:
@@ -118,6 +120,8 @@ test0:
 # CHECK-NEXT:      i32.const   -1
 # CHECK-NEXT:      f64.const   0x1.999999999999ap1
 # CHECK-NEXT:      f32.const   -0x1p0
+# CHECK-NEXT:      f32.const   -infinity
+# CHECK-NEXT:      f32.const   nan
 # CHECK-NEXT:      v128.const  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 # CHECK-NEXT:      v128.const  0, 1, 2, 3, 4, 5, 6, 7
 # CHECK-NEXT:      local.get   0
