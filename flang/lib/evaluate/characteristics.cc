@@ -57,6 +57,12 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
               return Characterize(*interface.symbol());
             }
           },
+          [&](const semantics::UseDetails &use) {
+            return Characterize(use.symbol());
+          },
+          [&](const semantics::HostAssocDetails &assoc) {
+            return Characterize(assoc.symbol());
+          },
           [](const auto &) -> std::optional<TypeAndShape> {
             return std::nullopt;
           },
@@ -420,12 +426,13 @@ std::optional<Procedure> Procedure::Characterize(
             }
             return result;
           },
-          [](const semantics::GenericDetails &) -> std::optional<Procedure> {
-            return std::nullopt;
+          [&](const semantics::UseDetails &use) {
+            return Characterize(use.symbol(), intrinsics);
           },
-          [](const semantics::GenericBindingDetails &)
-              -> std::optional<Procedure> { return std::nullopt; },
-          [](const auto &) -> std::optional<Procedure> { CRASH_NO_CASE; },
+          [&](const semantics::HostAssocDetails &assoc) {
+            return Characterize(assoc.symbol(), intrinsics);
+          },
+          [](const auto &) -> std::optional<Procedure> { return std::nullopt; },
       },
       symbol.details());
 }
