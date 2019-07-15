@@ -475,6 +475,31 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC(
   case Intrinsic::minnum:
   case Intrinsic::amdgcn_cvt_pkrtz:
     return selectImpl(I, CoverageInfo);
+  case Intrinsic::amdgcn_if_break: {
+    MachineBasicBlock *BB = I.getParent();
+    MachineFunction *MF = BB->getParent();
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+
+    // FIXME: Manually selecting to avoid dealiing with the SReg_1 trick
+    // SelectionDAG uses for wave32 vs wave64.
+    BuildMI(*BB, &I, I.getDebugLoc(), TII.get(AMDGPU::SI_IF_BREAK))
+      .add(I.getOperand(0))
+      .add(I.getOperand(2))
+      .add(I.getOperand(3));
+
+    Register DstReg = I.getOperand(0).getReg();
+    Register Src0Reg = I.getOperand(2).getReg();
+    Register Src1Reg = I.getOperand(3).getReg();
+
+    I.eraseFromParent();
+
+    for (Register Reg : { DstReg, Src0Reg, Src1Reg }) {
+      if (!MRI.getRegClassOrNull(Reg))
+        MRI.setRegClass(Reg, TRI.getWaveMaskRegClass());
+    }
+
+    return true;
+  }
   default:
     return selectImpl(I, CoverageInfo);
   }
