@@ -3475,12 +3475,12 @@ WRAPPER_CLASS(OmpSection, Verbatim);
 
 struct OpenMPSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
-  std::tuple<OmpClauseList, Block, OmpEndSections> t;
+  std::tuple<Verbatim, OmpClauseList, Block, OmpEndSections> t;
 };
 
 struct OpenMPParallelSectionsConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPParallelSectionsConstruct);
-  std::tuple<OmpClauseList, Block, OmpEndParallelSections> t;
+  std::tuple<Verbatim, OmpClauseList, Block, OmpEndParallelSections> t;
 };
 
 // WORKSHARE
@@ -3493,7 +3493,7 @@ struct OpenMPWorkshareConstruct {
 WRAPPER_CLASS(OmpEndSingle, OmpClauseList);
 struct OpenMPSingleConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPSingleConstruct);
-  std::tuple<OmpClauseList, Block, OmpEndSingle> t;
+  std::tuple<Verbatim, OmpClauseList, Block, OmpEndSingle> t;
 };
 
 // OpenMP directive beginning or ending a block

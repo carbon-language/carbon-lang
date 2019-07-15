@@ -42,10 +42,6 @@ namespace Fortran::parser {
 constexpr auto startOmpLine = skipStuffBeforeStatement >> "!$OMP "_sptok;
 constexpr auto endOmpLine = space >> endOfLine;
 
-template<typename A> constexpr decltype(auto) OmpConstructDirective(A keyword) {
-  return sourced(keyword >> Parser<OmpClauseList>{}) / endOmpLine;
-}
-
 template<typename A> constexpr decltype(auto) verbatim(A x) {
   return sourced(construct<Verbatim>(x));
 }
@@ -470,8 +466,8 @@ TYPE_PARSER(construct<OpenMPStandaloneConstruct>(
 TYPE_PARSER(startOmpLine >> "END"_tok >>
     construct<OmpEndSingle>("SINGLE" >> Parser<OmpClauseList>{}) / endOmpLine)
 
-TYPE_PARSER(construct<OpenMPSingleConstruct>(
-    OmpConstructDirective("SINGLE"_tok), block, Parser<OmpEndSingle>{}))
+TYPE_PARSER(construct<OpenMPSingleConstruct>(verbatim("SINGLE"_tok),
+    Parser<OmpClauseList>{} / endOmpLine, block, Parser<OmpEndSingle>{}))
 
 // OMP WORKSHARE
 TYPE_PARSER(construct<OpenMPWorkshareConstruct>(
@@ -491,8 +487,8 @@ TYPE_PARSER(startOmpLine >> "END SECTIONS"_tok >>
         maybe("NOWAIT" >> construct<OmpNowait>()) / endOmpLine))
 
 // OMP SECTIONS
-TYPE_PARSER(construct<OpenMPSectionsConstruct>(
-    OmpConstructDirective("SECTIONS"_tok), block, Parser<OmpEndSections>{}))
+TYPE_PARSER(construct<OpenMPSectionsConstruct>(verbatim("SECTIONS"_tok),
+    Parser<OmpClauseList>{} / endOmpLine, block, Parser<OmpEndSections>{}))
 
 // OMP END PARALLEL SECTIONS [NOWAIT]
 TYPE_PARSER(startOmpLine >> "END PARALLEL SECTIONS"_tok >>
@@ -501,8 +497,8 @@ TYPE_PARSER(startOmpLine >> "END PARALLEL SECTIONS"_tok >>
 
 // OMP PARALLEL SECTIONS
 TYPE_PARSER(construct<OpenMPParallelSectionsConstruct>(
-    OmpConstructDirective("PARALLEL SECTIONS"_tok), block,
-    Parser<OmpEndParallelSections>{}))
+    verbatim("PARALLEL SECTIONS"_tok), Parser<OmpClauseList>{} / endOmpLine,
+    block, Parser<OmpEndParallelSections>{}))
 
 TYPE_PARSER(construct<OmpSection>(verbatim("SECTION"_tok) / endOmpLine))
 
