@@ -470,6 +470,24 @@ class MUBUF_Load_Pseudo <string opName,
   let dwords = getMUBUFDwords<vdataClass>.ret;
 }
 
+class MUBUF_Offset_Load_Pat <Instruction inst, ValueType load_vt = i32, SDPatternOperator ld = null_frag> : Pat <
+  (load_vt (ld (MUBUFOffset v4i32:$srsrc, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe, i1:$dlc))),
+  (load_vt (inst v4i32:$srsrc, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe, i1:$dlc))
+>;
+
+class MUBUF_Addr64_Load_Pat <Instruction inst,
+                            ValueType load_vt = i32,
+                            SDPatternOperator ld = null_frag> : Pat <
+  (load_vt (ld (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe, i1:$dlc))),
+  (load_vt (inst i64:$vaddr, v4i32:$srsrc, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe, i1:$dlc))
+>;
+
+multiclass MUBUF_Pseudo_Load_Pats<string BaseInst, ValueType load_vt = i32, SDPatternOperator ld = null_frag> {
+  def : MUBUF_Offset_Load_Pat<!cast<Instruction>(BaseInst#"_OFFSET"), load_vt, ld>;
+  def : MUBUF_Addr64_Load_Pat<!cast<Instruction>(BaseInst#"_ADDR64"), load_vt, ld>;
+}
+
+
 // FIXME: tfe can't be an operand because it requires a separate
 // opcode because it needs an N+1 register class dest register.
 multiclass MUBUF_Pseudo_Loads<string opName, RegisterClass vdataClass,
@@ -478,20 +496,10 @@ multiclass MUBUF_Pseudo_Loads<string opName, RegisterClass vdataClass,
                               bit TiedDest = 0,
                               bit isLds = 0> {
 
-  def _OFFSET : MUBUF_Load_Pseudo <opName, BUFAddrKind.Offset, vdataClass,
-    TiedDest, isLds,
-    !if(isLds,
-        [],
-        [(set load_vt:$vdata,
-         (ld (MUBUFOffset v4i32:$srsrc, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe, i1:$dlc)))])>,
+  def _OFFSET : MUBUF_Load_Pseudo <opName, BUFAddrKind.Offset, vdataClass, TiedDest, isLds>,
     MUBUFAddr64Table<0, NAME # !if(isLds, "_LDS", "")>;
 
-  def _ADDR64 : MUBUF_Load_Pseudo <opName, BUFAddrKind.Addr64, vdataClass,
-    TiedDest, isLds,
-    !if(isLds,
-        [],
-        [(set load_vt:$vdata,
-         (ld (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe, i1:$dlc)))])>,
+  def _ADDR64 : MUBUF_Load_Pseudo <opName, BUFAddrKind.Addr64, vdataClass, TiedDest, isLds>,
     MUBUFAddr64Table<1, NAME # !if(isLds, "_LDS", "")>;
 
   def _OFFEN  : MUBUF_Load_Pseudo <opName, BUFAddrKind.OffEn, vdataClass, TiedDest, isLds>;
@@ -819,29 +827,38 @@ let SubtargetPredicate = HasPackedD16VMem, D16Buf = 1 in {
 } // End HasPackedD16VMem.
 
 defm BUFFER_LOAD_UBYTE : MUBUF_Pseudo_Loads_Lds <
-  "buffer_load_ubyte", VGPR_32, i32, az_extloadi8_global
+  "buffer_load_ubyte", VGPR_32, i32
 >;
 defm BUFFER_LOAD_SBYTE : MUBUF_Pseudo_Loads_Lds <
-  "buffer_load_sbyte", VGPR_32, i32, sextloadi8_global
+  "buffer_load_sbyte", VGPR_32, i32
 >;
 defm BUFFER_LOAD_USHORT : MUBUF_Pseudo_Loads_Lds <
-  "buffer_load_ushort", VGPR_32, i32, az_extloadi16_global
+  "buffer_load_ushort", VGPR_32, i32
 >;
 defm BUFFER_LOAD_SSHORT : MUBUF_Pseudo_Loads_Lds <
-  "buffer_load_sshort", VGPR_32, i32, sextloadi16_global
+  "buffer_load_sshort", VGPR_32, i32
 >;
 defm BUFFER_LOAD_DWORD : MUBUF_Pseudo_Loads_Lds <
-  "buffer_load_dword", VGPR_32, i32, load_global
+  "buffer_load_dword", VGPR_32, i32
 >;
 defm BUFFER_LOAD_DWORDX2 : MUBUF_Pseudo_Loads <
-  "buffer_load_dwordx2", VReg_64, v2i32, load_global
+  "buffer_load_dwordx2", VReg_64, v2i32
 >;
 defm BUFFER_LOAD_DWORDX3 : MUBUF_Pseudo_Loads <
-  "buffer_load_dwordx3", VReg_96, v3i32, load_global
+  "buffer_load_dwordx3", VReg_96, v3i32
 >;
 defm BUFFER_LOAD_DWORDX4 : MUBUF_Pseudo_Loads <
-  "buffer_load_dwordx4", VReg_128, v4i32, load_global
+  "buffer_load_dwordx4", VReg_128, v4i32
 >;
+
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_UBYTE", i32, az_extloadi8_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_SBYTE", i32, sextloadi8_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_USHORT", i32, az_extloadi16_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_SSHORT", i32, sextloadi16_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_DWORD", i32, load_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_DWORDX2", v2i32, load_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_DWORDX3", v3i32, load_global>;
+defm : MUBUF_Pseudo_Load_Pats<"BUFFER_LOAD_DWORDX4", v4i32, load_global>;
 
 // This is not described in AMD documentation,
 // but 'lds' versions of these opcodes are available
