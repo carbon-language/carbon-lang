@@ -70,7 +70,7 @@ test0:
     # TODO: enable once instruction has been added.
     #i32x4.trunc_sat_f32x4_s
     i32.trunc_f32_s
-    try         except_ref
+    try         exnref
     i32.atomic.load 0
     atomic.notify 0
 .LBB0_3:
@@ -172,7 +172,7 @@ test0:
 # CHECK-NEXT:      end_if
 # CHECK-NEXT:      f32x4.add
 # CHECK-NEXT:      i32.trunc_f32_s
-# CHECK-NEXT:      try         except_ref
+# CHECK-NEXT:      try         exnref
 # CHECK-NEXT:      i32.atomic.load 0
 # CHECK-NEXT:      atomic.notify 0
 # CHECK-NEXT:  .LBB0_3:

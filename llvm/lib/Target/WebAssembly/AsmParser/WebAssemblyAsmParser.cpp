@@ -308,8 +308,8 @@ public:
         Type == "i32x4" || Type == "i64x2" || Type == "f32x4" ||
         Type == "f64x2")
       return wasm::ValType::V128;
-    if (Type == "except_ref")
-      return wasm::ValType::EXCEPT_REF;
+    if (Type == "exnref")
+      return wasm::ValType::EXNREF;
     return Optional<wasm::ValType>();
   }
 
@@ -320,7 +320,7 @@ public:
         .Case("f32", WebAssembly::ExprType::F32)
         .Case("f64", WebAssembly::ExprType::F64)
         .Case("v128", WebAssembly::ExprType::V128)
-        .Case("except_ref", WebAssembly::ExprType::ExceptRef)
+        .Case("exnref", WebAssembly::ExprType::Exnref)
         .Case("void", WebAssembly::ExprType::Void)
         .Default(WebAssembly::ExprType::Invalid);
   }

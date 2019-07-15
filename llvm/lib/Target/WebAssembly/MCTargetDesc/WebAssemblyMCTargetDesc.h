@@ -130,7 +130,7 @@ enum class ExprType : unsigned {
   F32 = 0x7D,
   F64 = 0x7C,
   V128 = 0x7B,
-  ExceptRef = 0x68,
+  Exnref = 0x68,
   Invalid = 0x00
 };
 
@@ -403,8 +403,8 @@ inline bool isCopy(unsigned Opc) {
   case WebAssembly::COPY_F64_S:
   case WebAssembly::COPY_V128:
   case WebAssembly::COPY_V128_S:
-  case WebAssembly::COPY_EXCEPT_REF:
-  case WebAssembly::COPY_EXCEPT_REF_S:
+  case WebAssembly::COPY_EXNREF:
+  case WebAssembly::COPY_EXNREF_S:
     return true;
   default:
     return false;
@@ -453,8 +453,8 @@ inline bool isCallDirect(unsigned Opc) {
   case WebAssembly::CALL_v4f32_S:
   case WebAssembly::CALL_v2f64:
   case WebAssembly::CALL_v2f64_S:
-  case WebAssembly::CALL_ExceptRef:
-  case WebAssembly::CALL_ExceptRef_S:
+  case WebAssembly::CALL_exnref:
+  case WebAssembly::CALL_exnref_S:
   case WebAssembly::RET_CALL:
   case WebAssembly::RET_CALL_S:
     return true;
@@ -487,8 +487,8 @@ inline bool isCallIndirect(unsigned Opc) {
   case WebAssembly::CALL_INDIRECT_v4f32_S:
   case WebAssembly::CALL_INDIRECT_v2f64:
   case WebAssembly::CALL_INDIRECT_v2f64_S:
-  case WebAssembly::CALL_INDIRECT_ExceptRef:
-  case WebAssembly::CALL_INDIRECT_ExceptRef_S:
+  case WebAssembly::CALL_INDIRECT_exnref:
+  case WebAssembly::CALL_INDIRECT_exnref_S:
   case WebAssembly::RET_CALL_INDIRECT:
   case WebAssembly::RET_CALL_INDIRECT_S:
     return true;
@@ -530,8 +530,8 @@ inline unsigned getCalleeOpNo(unsigned Opc) {
   case WebAssembly::CALL_v4f32_S:
   case WebAssembly::CALL_v2f64:
   case WebAssembly::CALL_v2f64_S:
-  case WebAssembly::CALL_ExceptRef:
-  case WebAssembly::CALL_ExceptRef_S:
+  case WebAssembly::CALL_exnref:
+  case WebAssembly::CALL_exnref_S:
   case WebAssembly::CALL_INDIRECT_i32:
   case WebAssembly::CALL_INDIRECT_i32_S:
   case WebAssembly::CALL_INDIRECT_i64:
@@ -552,8 +552,8 @@ inline unsigned getCalleeOpNo(unsigned Opc) {
   case WebAssembly::CALL_INDIRECT_v4f32_S:
   case WebAssembly::CALL_INDIRECT_v2f64:
   case WebAssembly::CALL_INDIRECT_v2f64_S:
-  case WebAssembly::CALL_INDIRECT_ExceptRef:
-  case WebAssembly::CALL_INDIRECT_ExceptRef_S:
+  case WebAssembly::CALL_INDIRECT_exnref:
+  case WebAssembly::CALL_INDIRECT_exnref_S:
     return 1;
   default:
     llvm_unreachable("Not a call instruction");
