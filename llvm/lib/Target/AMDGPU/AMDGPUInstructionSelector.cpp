@@ -86,8 +86,9 @@ bool AMDGPUInstructionSelector::isVCC(Register Reg,
   const TargetRegisterClass *RC =
       RegClassOrBank.dyn_cast<const TargetRegisterClass*>();
   if (RC) {
+    const LLT Ty = MRI.getType(Reg);
     return RC->hasSuperClassEq(TRI.getBoolRC()) &&
-           MRI.getType(Reg).getSizeInBits() == 1;
+           Ty.isValid() && Ty.getSizeInBits() == 1;
   }
 
   const RegisterBank *RB = RegClassOrBank.get<const RegisterBank *>();
@@ -95,29 +96,34 @@ bool AMDGPUInstructionSelector::isVCC(Register Reg,
 }
 
 bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
+  const DebugLoc &DL = I.getDebugLoc();
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   I.setDesc(TII.get(TargetOpcode::COPY));
 
-  // Special case for COPY from the scc register bank.  The scc register bank
-  // is modeled using 32-bit sgprs.
   const MachineOperand &Src = I.getOperand(1);
-  unsigned SrcReg = Src.getReg();
-  if (!TargetRegisterInfo::isPhysicalRegister(SrcReg) && isSCC(SrcReg, MRI)) {
-    unsigned DstReg = I.getOperand(0).getReg();
+  MachineOperand &Dst = I.getOperand(0);
+  Register DstReg = Dst.getReg();
+  Register SrcReg = Src.getReg();
 
-    // Specially handle scc->vcc copies.
-    if (isVCC(DstReg, MRI)) {
-      const DebugLoc &DL = I.getDebugLoc();
-      BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CMP_NE_U32_e64), DstReg)
-        .addImm(0)
-        .addReg(SrcReg);
-      if (!MRI.getRegClassOrNull(SrcReg))
-        MRI.setRegClass(SrcReg, TRI.getConstrainedRegClassForOperand(Src, MRI));
-      I.eraseFromParent();
-      return true;
+  if (isVCC(DstReg, MRI)) {
+    if (SrcReg == AMDGPU::SCC) {
+      const TargetRegisterClass *RC
+        = TRI.getConstrainedRegClassForOperand(Dst, MRI);
+      if (!RC)
+        return true;
+      return RBI.constrainGenericRegister(DstReg, *RC, MRI);
     }
+
+    BuildMI(*BB, &I, DL, TII.get(AMDGPU::V_CMP_NE_U32_e64), DstReg)
+      .addImm(0)
+      .addReg(SrcReg);
+
+    if (!MRI.getRegClassOrNull(SrcReg))
+      MRI.setRegClass(SrcReg, TRI.getConstrainedRegClassForOperand(Src, MRI));
+    I.eraseFromParent();
+    return true;
   }
 
   for (const MachineOperand &MO : I.operands()) {
