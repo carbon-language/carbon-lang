@@ -130,6 +130,26 @@ bool AMDGPUInstructionSelector::selectCOPY(MachineInstr &I) const {
       I.eraseFromParent();
       return true;
     }
+
+    const TargetRegisterClass *RC =
+      TRI.getConstrainedRegClassForOperand(Dst, MRI);
+    if (RC && !RBI.constrainGenericRegister(DstReg, *RC, MRI))
+      return false;
+
+    // Don't constrain the source register to a class so the def instruction
+    // handles it (unless it's undef).
+    //
+    // FIXME: This is a hack. When selecting the def, we neeed to know
+    // specifically know that the result is VCCRegBank, and not just an SGPR
+    // with size 1. An SReg_32 with size 1 is ambiguous with wave32.
+    if (Src.isUndef()) {
+      const TargetRegisterClass *SrcRC =
+        TRI.getConstrainedRegClassForOperand(Src, MRI);
+      if (SrcRC && !RBI.constrainGenericRegister(SrcReg, *SrcRC, MRI))
+        return false;
+    }
+
+    return true;
   }
 
   for (const MachineOperand &MO : I.operands()) {
