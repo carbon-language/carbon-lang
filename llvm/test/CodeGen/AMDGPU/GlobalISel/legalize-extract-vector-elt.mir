@@ -646,3 +646,22 @@ body: |
     %2:_(s128) = G_EXTRACT_VECTOR_ELT %0, %1
     $vgpr0_vgpr1_vgpr2_vgpr3 = COPY %2
 ...
+
+---
+name: extract_vector_elt_v2i32_varidx_i64
+
+body: |
+  bb.0:
+    liveins: $vgpr0_vgpr1, $vgpr2_vgpr3
+
+    ; CHECK-LABEL: name: extract_vector_elt_v2i32_varidx_i64
+    ; CHECK: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $vgpr0_vgpr1
+    ; CHECK: [[COPY1:%[0-9]+]]:_(s64) = COPY $vgpr2_vgpr3
+    ; CHECK: [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[COPY1]](s64)
+    ; CHECK: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY]](<2 x s32>), [[TRUNC]](s32)
+    ; CHECK: $vgpr0 = COPY [[EVEC]](s32)
+    %0:_(<2 x s32>) = COPY $vgpr0_vgpr1
+    %1:_(s64) = COPY $vgpr2_vgpr3
+    %2:_(s32) = G_EXTRACT_VECTOR_ELT %0, %1
+    $vgpr0 = COPY %2
+...
