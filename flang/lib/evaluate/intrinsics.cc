@@ -647,7 +647,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE,
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
-//   ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS,
+//   EXTENDS_TYPE_OF, IS_CONTIGUOUS,
 //   SAME_TYPE, STORAGE_SIZE
 // TODO: Type inquiry intrinsic functions - these return constants
 //  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
@@ -1077,9 +1077,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         }
         break;
       case Rank::known:
-        CHECK(knownArg == nullptr);
-        knownArg = arg;
-        argOk = true;
+        if (knownArg == nullptr) {
+          knownArg = arg;
+        }
+        argOk = rank == knownArg->Rank();
         break;
       case Rank::anyOrAssumedRank: argOk = true; break;
       case Rank::conformable:
