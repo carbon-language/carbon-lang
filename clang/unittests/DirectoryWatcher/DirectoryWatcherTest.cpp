@@ -264,7 +264,14 @@ TEST(DirectoryWatcherTest, InitialScanSync) {
       {{EventKind::Modified, "a"},
        {EventKind::Modified, "b"},
        {EventKind::Modified, "c"}},
-      {}};
+      {},
+      // We have to ignore these as it's a race between the test process
+      // which is scanning the directory and kernel which is sending
+      // notification.
+      {{EventKind::Modified, "a"},
+       {EventKind::Modified, "b"},
+       {EventKind::Modified, "c"}}
+      };
 
   auto DW = DirectoryWatcher::create(
       fixture.TestWatchedDir,
@@ -288,7 +295,14 @@ TEST(DirectoryWatcherTest, InitialScanAsync) {
       {{EventKind::Modified, "a"},
        {EventKind::Modified, "b"},
        {EventKind::Modified, "c"}},
-      {}};
+      {},
+      // We have to ignore these as it's a race between the test process
+      // which is scanning the directory and kernel which is sending
+      // notification.
+      {{EventKind::Modified, "a"},
+       {EventKind::Modified, "b"},
+       {EventKind::Modified, "c"}}
+       };
 
   auto DW = DirectoryWatcher::create(
       fixture.TestWatchedDir,
@@ -332,6 +346,7 @@ TEST(DirectoryWatcherTest, ModifyFile) {
 
   VerifyingConsumer TestConsumer{
       {{EventKind::Modified, "a"}},
+      {{EventKind::Modified, "a"}},
       {{EventKind::Modified, "a"}}};
 
   auto DW = DirectoryWatcher::create(
@@ -361,7 +376,8 @@ TEST(DirectoryWatcherTest, DeleteFile) {
 
   VerifyingConsumer TestConsumer{
       {{EventKind::Modified, "a"}},
-      {{EventKind::Removed, "a"}}};
+      {{EventKind::Removed, "a"}},
+      {{EventKind::Modified, "a"}}};
 
   auto DW = DirectoryWatcher::create(
       fixture.TestWatchedDir,
@@ -412,46 +428,6 @@ TEST(DirectoryWatcherTest, InvalidatedWatcher) {
         },
         /*waitForInitialSync=*/true);
   } // DW is destructed here.
-
-  checkEventualResultWithTimeout(TestConsumer);
-}
-
-TEST(DirectoryWatcherTest, ChangeMetadata) {
-  DirectoryWatcherTestFixture fixture;
-  fixture.addFile("a");
-
-  VerifyingConsumer TestConsumer{
-      {{DirectoryWatcher::Event::EventKind::Modified, "a"}},
-      // We don't expect any notification for file having access file changed.
-      {},
-      // Given the timing we are ok with receiving the duplicate event.
-      {{DirectoryWatcher::Event::EventKind::Modified, "a"}}};
-
-  auto DW = DirectoryWatcher::create(
-      fixture.TestWatchedDir,
-      [&TestConsumer](llvm::ArrayRef<DirectoryWatcher::Event> Events,
-                      bool IsInitial) {
-        TestConsumer.consume(Events, IsInitial);
-      },
-      /*waitForInitialSync=*/true);
-
-  { // Change access and modification time of file a.
-    Expected<file_t> HopefullyTheFD = llvm::sys::fs::openNativeFileForWrite(
-        fixture.getPathInWatched("a"), CD_OpenExisting, OF_None);
-    if (!HopefullyTheFD) {
-      llvm::outs() << HopefullyTheFD.takeError();
-    }
-
-    const int FD = HopefullyTheFD.get();
-    const TimePoint<> NewTimePt =
-        std::chrono::system_clock::now() - std::chrono::minutes(1);
-#ifndef NDEBUG
-    std::error_code setTimeRes =
-#endif
-        llvm::sys::fs::setLastAccessAndModificationTime(FD, NewTimePt,
-                                                        NewTimePt);
-    assert(!setTimeRes);
-  }
 
   checkEventualResultWithTimeout(TestConsumer);
 }
