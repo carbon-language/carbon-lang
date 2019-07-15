@@ -61,6 +61,10 @@ static cl::opt<unsigned> UnrollForcePeelCount(
     "unroll-force-peel-count", cl::init(0), cl::Hidden,
     cl::desc("Force a peel count regardless of profiling information."));
 
+static cl::opt<bool> UnrollPeelMultiDeoptExit(
+    "unroll-peel-multi-deopt-exit", cl::init(false), cl::Hidden,
+    cl::desc("Allow peeling of loops with multiple deopt exits."));
+
 // Designates that a Phi is estimated to become invariant after an "infinite"
 // number of loop iterations (i.e. only may become an invariant if the loop is
 // fully unrolled).
@@ -72,6 +76,22 @@ bool llvm::canPeel(Loop *L) {
   // Make sure the loop is in simplified form
   if (!L->isLoopSimplifyForm())
     return false;
+
+  if (UnrollPeelMultiDeoptExit) {
+    SmallVector<BasicBlock *, 4> Exits;
+    L->getUniqueNonLatchExitBlocks(Exits);
+
+    if (!Exits.empty()) {
+      // Latch's terminator is a conditional branch, Latch is exiting and
+      // all non Latch exits ends up with deoptimize.
+      const BasicBlock *Latch = L->getLoopLatch();
+      const BranchInst *T = dyn_cast<BranchInst>(Latch->getTerminator());
+      return T && T->isConditional() && L->isLoopExiting(Latch) &&
+             all_of(Exits, [](const BasicBlock *BB) {
+               return BB->getTerminatingDeoptimizeCall();
+             });
+    }
+  }
 
   // Only peel loops that contain a single exit
   if (!L->getExitingBlock() || !L->getUniqueExitBlock())
