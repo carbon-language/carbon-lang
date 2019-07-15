@@ -342,7 +342,8 @@ void *SharedReAlloc(ReAllocFunction reallocFunc, SizeFunction heapSizeFunc,
       size_t old_usable_size = 0;
       if (replacement_alloc) {
         old_usable_size = asan_malloc_usable_size(lpMem, pc, bp);
-        REAL(memcpy)(replacement_alloc, lpMem, Min<size_t>(dwBytes, old_usable_size));
+        REAL(memcpy)(replacement_alloc, lpMem,
+                     Min<size_t>(dwBytes, old_usable_size));
         asan_free(lpMem, &stack, FROM_MALLOC);
       }
       return replacement_alloc;
