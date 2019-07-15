@@ -4,7 +4,7 @@
 
 # RUN: chmod -x %t-universal.o
 # RUN: llvm-lipo %t-universal.o -thin i386 -output %t32.o
-# RUN: ! test -x %t32.o
+# RUN: test ! -x %t32.o
 
 # RUN: chmod +x %t-universal.o
 # RUN: llvm-lipo %t-universal.o -thin i386 -output %t32-ex.o
