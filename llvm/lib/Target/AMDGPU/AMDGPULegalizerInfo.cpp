@@ -633,7 +633,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     unsigned IdxTypeIdx = 2;
 
     getActionDefinitionsBuilder(Op)
-      .legalIf([=](const LegalityQuery &Query) {
+      .customIf([=](const LegalityQuery &Query) {
           const LLT EltTy = Query.Types[EltTypeIdx];
           const LLT VecTy = Query.Types[VecTypeIdx];
           const LLT IdxTy = Query.Types[IdxTypeIdx];
@@ -790,6 +790,10 @@ bool AMDGPULegalizerInfo::legalizeCustom(MachineInstr &MI,
   case TargetOpcode::G_FMINNUM_IEEE:
   case TargetOpcode::G_FMAXNUM_IEEE:
     return legalizeMinNumMaxNum(MI, MRI, MIRBuilder);
+  case TargetOpcode::G_EXTRACT_VECTOR_ELT:
+    return legalizeExtractVectorElt(MI, MRI, MIRBuilder);
+  case TargetOpcode::G_INSERT_VECTOR_ELT:
+    return true; // TODO
   default:
     return false;
   }
@@ -1119,6 +1123,35 @@ bool AMDGPULegalizerInfo::legalizeMinNumMaxNum(
   LegalizerHelper Helper(MF, DummyObserver, HelperBuilder);
   HelperBuilder.setMBB(*MI.getParent());
   return Helper.lowerFMinNumMaxNum(MI) == LegalizerHelper::Legalized;
+}
+
+bool AMDGPULegalizerInfo::legalizeExtractVectorElt(
+  MachineInstr &MI, MachineRegisterInfo &MRI,
+  MachineIRBuilder &B) const {
+  // TODO: Should move some of this into LegalizerHelper.
+
+  // TODO: Promote dynamic indexing of s16 to s32
+  // TODO: Dynamic s64 indexing is only legal for SGPR.
+  Optional<int64_t> IdxVal = getConstantVRegVal(MI.getOperand(2).getReg(), MRI);
+  if (!IdxVal) // Dynamic case will be selected to register indexing.
+    return true;
+
+  Register Dst = MI.getOperand(0).getReg();
+  Register Vec = MI.getOperand(1).getReg();
+
+  LLT VecTy = MRI.getType(Vec);
+  LLT EltTy = VecTy.getElementType();
+  assert(EltTy == MRI.getType(Dst));
+
+  B.setInstr(MI);
+
+  if (IdxVal.getValue() < VecTy.getNumElements())
+    B.buildExtract(Dst, Vec, IdxVal.getValue() * EltTy.getSizeInBits());
+  else
+    B.buildUndef(Dst);
+
+  MI.eraseFromParent();
+  return true;
 }
 
 // Return the use branch instruction, otherwise null if the usage is invalid.
