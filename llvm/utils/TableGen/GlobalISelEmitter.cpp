@@ -314,7 +314,7 @@ static Error isTrivialOperatorNode(const TreePatternNode *N) {
         Predicate.isSignExtLoad() || Predicate.isZeroExtLoad())
       continue;
 
-    if (Predicate.isNonTruncStore())
+    if (Predicate.isNonTruncStore() || Predicate.isTruncStore())
       continue;
 
     if (Predicate.isLoad() && Predicate.getMemoryVT())
@@ -3298,6 +3298,13 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
     if (Predicate.isLoad() && Predicate.isAnyExtLoad()) {
       InsnMatcher.addPredicate<MemoryVsLLTSizePredicateMatcher>(
           0, MemoryVsLLTSizePredicateMatcher::LessThan, 0);
+      continue;
+    }
+
+    if (Predicate.isStore() && Predicate.isTruncStore()) {
+      // FIXME: If MemoryVT is set, we end up with 2 checks for the MMO size.
+      InsnMatcher.addPredicate<MemoryVsLLTSizePredicateMatcher>(
+        0, MemoryVsLLTSizePredicateMatcher::LessThan, 0);
       continue;
     }
 
