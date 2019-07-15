@@ -634,11 +634,14 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
 
     getActionDefinitionsBuilder(Op)
       .legalIf([=](const LegalityQuery &Query) {
-          const LLT &VecTy = Query.Types[VecTypeIdx];
-          const LLT &IdxTy = Query.Types[IdxTypeIdx];
-          return VecTy.getSizeInBits() % 32 == 0 &&
-            VecTy.getSizeInBits() <= 512 &&
-            IdxTy.getSizeInBits() == 32;
+          const LLT EltTy = Query.Types[EltTypeIdx];
+          const LLT VecTy = Query.Types[VecTypeIdx];
+          const LLT IdxTy = Query.Types[IdxTypeIdx];
+          return (EltTy.getSizeInBits() == 16 ||
+                  EltTy.getSizeInBits() % 32 == 0) &&
+                 VecTy.getSizeInBits() % 32 == 0 &&
+                 VecTy.getSizeInBits() <= 512 &&
+                 IdxTy.getSizeInBits() == 32;
         })
       .clampScalar(EltTypeIdx, S32, S64)
       .clampScalar(VecTypeIdx, S32, S64)
