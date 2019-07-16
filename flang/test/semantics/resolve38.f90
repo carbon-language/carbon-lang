@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
+! C772
 module m1
   type t1
   contains
@@ -43,6 +44,7 @@ contains
   end
 end
 
+! C771
 module m3
   use m2
   type, extends(t3) :: t4
@@ -72,5 +74,46 @@ contains
   end
   subroutine s5(z)
     complex :: z
+  end
+end
+
+! Test forward reference in type-bound generic to binding is allowed
+module m4
+  type :: t1
+  contains
+    generic :: g => s1
+    generic :: g => s2
+    procedure, nopass :: s1
+    procedure, nopass :: s2
+  end type
+  type :: t2
+  contains
+    generic :: g => p1
+    generic :: g => p2
+    procedure, nopass :: p1 => s1
+    procedure, nopass :: p2 => s2
+  end type
+contains
+  subroutine s1()
+  end
+  subroutine s2(x)
+  end
+end
+
+! C773 - duplicate binding names
+module m5
+  type :: t1
+  contains
+    generic :: g => s1
+    generic :: g => s2
+    procedure, nopass :: s1
+    procedure, nopass :: s2
+    !ERROR: Binding name 's1' was already specified for generic 'g'
+    generic :: g => s1
+  end type
+contains
+  subroutine s1()
+  end
+  subroutine s2(x)
   end
 end

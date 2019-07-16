@@ -288,9 +288,6 @@ public:
   void set_kind(GenericKind kind) { kind_ = kind; }
   const SymbolVector &specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
-  void add_specificProcs(const SymbolVector &procs) {
-    specificProcs_.insert(specificProcs_.end(), procs.begin(), procs.end());
-  }
 
 private:
   GenericKind kind_{GenericKind::Name};

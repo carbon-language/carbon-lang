@@ -40,7 +40,6 @@
 #include "../parser/tools.h"
 #include <list>
 #include <map>
-#include <memory>
 #include <ostream>
 #include <set>
 #include <stack>
@@ -722,6 +721,7 @@ public:
   void Post(const parser::ProcInterface &);
   void Post(const parser::ProcDecl &);
   bool Pre(const parser::TypeBoundProcedurePart &);
+  void Post(const parser::TypeBoundProcedurePart &);
   void Post(const parser::ContainsStmt &);
   bool Pre(const parser::TypeBoundProcBinding &) { return BeginAttrs(); }
   void Post(const parser::TypeBoundProcBinding &) { EndAttrs(); }
@@ -810,6 +810,8 @@ private:
   // In a ProcedureDeclarationStmt or ProcComponentDefStmt, this is
   // the interface name, if any.
   const parser::Name *interfaceName_{nullptr};
+  // Map type-bound generic to binding names of its specific bindings
+  std::multimap<Symbol *, const parser::Name *> genericBindings_;
 
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   Symbol &HandleAttributeStmt(Attr, const parser::Name &);
@@ -3096,6 +3098,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   }
   EndAttrs();
 }
+
 void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
   auto *type{GetDeclTypeSpec()};
   auto attr{std::get<common::TypeParamAttr>(x.t)};
@@ -3228,6 +3231,39 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {
   return true;
 }
 
+// Resolve binding names from type-bound generics, saved in genericBindings_.
+void DeclarationVisitor::Post(const parser::TypeBoundProcedurePart &) {
+  // track specifics seen for the current generic to detect duplicates:
+  const Symbol *currGeneric{nullptr};
+  std::set<SourceName> specifics;
+  for (const auto [generic, bindingName] : genericBindings_) {
+    if (generic != currGeneric) {
+      currGeneric = generic;
+      specifics.clear();
+    }
+    auto [it, inserted]{specifics.insert(bindingName->source)};
+    if (!inserted) {
+      Say(*bindingName,  // C773
+          "Binding name '%s' was already specified for generic '%s'"_err_en_US,
+          bindingName->source, generic->name())
+          .Attach(*it, "Previous specification of '%s'"_en_US, *it);
+      continue;
+    }
+    auto *symbol{FindInTypeOrParents(*bindingName)};
+    if (!symbol) {
+      Say(*bindingName,  // C772
+          "Binding name '%s' not found in this derived type"_err_en_US);
+    } else if (!symbol->has<ProcBindingDetails>()) {
+      SayWithDecl(*bindingName, *symbol,  // C772
+          "'%s' is not the name of a specific binding of this type"_err_en_US);
+    } else {
+      auto &details{generic->get<GenericBindingDetails>()};
+      details.add_specificProc(*symbol);
+    }
+  }
+  genericBindings_.clear();
+}
+
 void DeclarationVisitor::Post(const parser::ContainsStmt &) {
   if (derivedTypeInfo_.sequence) {
     Say("A sequence type may not have a CONTAINS statement"_err_en_US);  // C740
@@ -3287,19 +3323,6 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
   const auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)};
   const auto &genericSpec{std::get<Indirection<parser::GenericSpec>>(x.t)};
   const auto &bindingNames{std::get<std::list<parser::Name>>(x.t)};
-  SymbolVector specificProcs;
-  for (const auto &bindingName : bindingNames) {
-    auto *symbol{FindInTypeOrParents(bindingName)};
-    if (!symbol) {
-      Say(bindingName,
-          "Binding name '%s' not found in this derived type"_err_en_US);
-    } else if (!symbol->has<ProcBindingDetails>()) {
-      SayWithDecl(bindingName, *symbol,
-          "'%s' is not the name of a specific binding of this type"_err_en_US);
-    } else {
-      specificProcs.push_back(symbol);
-    }
-  }
   auto info{GenericSpecInfo{genericSpec.value()}};
   const SourceName &symbolName{info.symbolName()};
   bool isPrivate{accessSpec ? accessSpec->v == parser::AccessSpec::Kind::Private
@@ -3313,11 +3336,11 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
                  FindInTypeOrParents(currScope(), symbolName)}) {
     // look in parent types:
     if (inheritedSymbol->has<GenericBindingDetails>()) {
-      CheckAccessibility(symbolName, isPrivate, *inheritedSymbol);
+      CheckAccessibility(symbolName, isPrivate, *inheritedSymbol);  // C771
     }
   }
   if (genericSymbol) {
-    CheckAccessibility(symbolName, isPrivate, *genericSymbol);
+    CheckAccessibility(symbolName, isPrivate, *genericSymbol);  // C771
   } else {
     genericSymbol = MakeTypeSymbol(symbolName, GenericBindingDetails{});
     if (!genericSymbol) {
@@ -3327,8 +3350,9 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
       genericSymbol->attrs().set(Attr::PRIVATE);
     }
   }
-  auto &details{genericSymbol->get<GenericBindingDetails>()};
-  details.add_specificProcs(specificProcs);
+  for (const parser::Name &bindingName : bindingNames) {
+    genericBindings_.emplace(genericSymbol, &bindingName);
+  }
   info.Resolve(genericSymbol);
   return false;
 }
@@ -5185,20 +5209,15 @@ void ResolveNamesVisitor::FinishDerivedType(Scope &scope) {
               SetPassArg(comp, x.interface().symbol(), x);
             },
             [&](ProcBindingDetails &x) { SetPassArg(comp, &x.symbol(), x); },
-            [](auto &x) {},
+            [](auto &) {},
         },
         comp.details());
   }
   for (auto &pair : scope) {
     Symbol &comp{*pair.second};
-    std::visit(
-        common::visitors{
-            [&](GenericBindingDetails &x) {
-              CheckSpecificsAreDistinguishable(comp, x.specificProcs());
-            },
-            [](auto &x) {},
-        },
-        comp.details());
+    if (const auto *details{comp.detailsIf<GenericBindingDetails>()}) {
+      CheckSpecificsAreDistinguishable(comp, details->specificProcs());
+    }
   }
 }
 
