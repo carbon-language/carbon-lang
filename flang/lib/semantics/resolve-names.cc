@@ -3712,7 +3712,7 @@ bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
         MakeSymbol(InclusiveScope(), name.source, Attrs{Attr::INTRINSIC})};
     symbol.set_details(ProcEntityDetails{});
     Resolve(name, symbol);
-    true;
+    return true;
   } else {
     return false;
   }
