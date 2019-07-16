@@ -41,6 +41,8 @@ const Symbol *FindPointerComponent(const Scope &);
 const Symbol *FindPointerComponent(const DerivedTypeSpec &);
 const Symbol *FindPointerComponent(const DeclTypeSpec &);
 const Symbol *FindPointerComponent(const Symbol &);
+const Symbol *FindInterface(const Symbol &);
+const Symbol *FindSubprogram(const Symbol &);
 const Symbol *FindFunctionResult(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);

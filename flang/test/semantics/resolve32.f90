@@ -57,7 +57,7 @@ module m
     procedure(foo), nopass, deferred :: f
     !ERROR: DEFERRED is required when an interface-name is provided
     procedure(foo), nopass :: g
-    !ERROR: 'bar' is not an abstract interface or a procedure with an explicit interface
+    !ERROR: The interface of 'h' (bar) is not an abstract interface or a procedure with an explicit interface
     procedure(bar), nopass, deferred :: h
   end type
   type t2

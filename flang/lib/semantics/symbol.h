@@ -541,7 +541,13 @@ public:
             [&](const ProcEntityDetails &x) {
               return attrs_.test(Attr::INTRINSIC) || x.HasExplicitInterface();
             },
+            [](const ProcBindingDetails &x) {
+              return x.symbol().HasExplicitInterface();
+            },
             [](const UseDetails &x) {
+              return x.symbol().HasExplicitInterface();
+            },
+            [](const HostAssocDetails &x) {
               return x.symbol().HasExplicitInterface();
             },
             [](const auto &) { return false; },

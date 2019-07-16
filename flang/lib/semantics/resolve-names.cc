@@ -774,6 +774,7 @@ protected:
   const parser::Name *ResolveVariable(const parser::Variable &);
   const parser::Name *ResolveName(const parser::Name &);
   bool PassesSharedLocalityChecks(const parser::Name &name, Symbol &symbol);
+  Symbol *NoteInterfaceName(const parser::Name &);
   void CheckExplicitInterface(Symbol &);
 
 private:
@@ -820,7 +821,6 @@ private:
   void SetType(const parser::Name &, const DeclTypeSpec &);
   const Symbol *ResolveDerivedType(const parser::Name &);
   bool CanBeTypeBoundProc(const Symbol &);
-  Symbol *FindExplicitInterface(const parser::Name &);
   Symbol *MakeTypeSymbol(const SourceName &, Details &&);
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
@@ -3195,12 +3195,7 @@ bool DeclarationVisitor::Pre(const parser::ProcPointerInit &x) {
 void DeclarationVisitor::Post(const parser::ProcInterface &x) {
   if (auto *name{std::get_if<parser::Name>(&x.u)}) {
     interfaceName_ = name;
-    // The symbol is checked later to ensure that it defines
-    // an explicit interface.
-    if (!NameIsKnownOrIntrinsic(*name)) {
-      // Forward reference
-      Resolve(*name, MakeSymbol(InclusiveScope(), name->source, Attrs{}));
-    }
+    NoteInterfaceName(*name);
   }
 }
 
@@ -3302,13 +3297,12 @@ void DeclarationVisitor::Post(
   if (!GetAttrs().test(Attr::DEFERRED)) {  // C783
     Say("DEFERRED is required when an interface-name is provided"_err_en_US);
   }
-  Symbol *interface{FindExplicitInterface(x.interfaceName)};
-  if (!interface) {
-    return;
-  }
-  for (auto &bindingName : x.bindingNames) {
-    if (auto *s{MakeTypeSymbol(bindingName, ProcBindingDetails{*interface})}) {
-      SetPassNameOn(*s);
+  if (Symbol * interface{NoteInterfaceName(x.interfaceName)}) {
+    for (auto &bindingName : x.bindingNames) {
+      if (auto *s{
+              MakeTypeSymbol(bindingName, ProcBindingDetails{*interface})}) {
+        SetPassNameOn(*s);
+      }
     }
   }
 }
@@ -3931,32 +3925,27 @@ bool DeclarationVisitor::CanBeTypeBoundProc(const Symbol &symbol) {
   }
 }
 
-void DeclarationVisitor::CheckExplicitInterface(Symbol &symbol) {
-  if (const auto *details{symbol.detailsIf<ProcEntityDetails>()}) {
-    if (const Symbol * interface{details->interface().symbol()}) {
-      if (!interface->HasExplicitInterface() && !context().HasError(symbol)) {
-        if (!context().HasError(*interface)) {
-          Say(symbol.name(),
-              "The interface of '%s' is not an abstract interface or a "
-              "procedure with an explicit interface"_err_en_US);
-        }
-        context().SetError(symbol);
-      }
-    }
+Symbol *DeclarationVisitor::NoteInterfaceName(const parser::Name &name) {
+  // The symbol is checked later by CheckExplicitInterface() to ensure
+  // that it defines an explicit interface.  The name can be a forward
+  // reference.
+  if (!NameIsKnownOrIntrinsic(name)) {
+    Resolve(name, MakeSymbol(InclusiveScope(), name.source, Attrs{}));
   }
+  return name.symbol;
 }
 
-Symbol *DeclarationVisitor::FindExplicitInterface(const parser::Name &name) {
-  auto *symbol{FindSymbol(name)};
-  if (!symbol) {
-    Say(name, "Explicit interface '%s' not found"_err_en_US);
-  } else if (!symbol->HasExplicitInterface()) {
-    SayWithDecl(name, *symbol,
-        "'%s' is not an abstract interface or a procedure with an"
-        " explicit interface"_err_en_US);
-    symbol = nullptr;
+void DeclarationVisitor::CheckExplicitInterface(Symbol &symbol) {
+  if (const Symbol * interface{FindInterface(symbol)}) {
+    const Symbol *subp{FindSubprogram(*interface)};
+    if (subp == nullptr || !subp->HasExplicitInterface()) {
+      Say(symbol.name(),
+          "The interface of '%s' (%s) is not an abstract interface or a "
+          "procedure with an explicit interface"_err_en_US,
+          symbol.name(), interface->name());
+      context().SetError(symbol);
+    }
   }
-  return symbol;
 }
 
 // Create a symbol for a type parameter, component, or procedure binding in
@@ -5207,8 +5196,12 @@ void ResolveNamesVisitor::FinishDerivedType(Scope &scope) {
         common::visitors{
             [&](ProcEntityDetails &x) {
               SetPassArg(comp, x.interface().symbol(), x);
+              CheckExplicitInterface(comp);
             },
-            [&](ProcBindingDetails &x) { SetPassArg(comp, &x.symbol(), x); },
+            [&](ProcBindingDetails &x) {
+              SetPassArg(comp, &x.symbol(), x);
+              CheckExplicitInterface(comp);
+            },
             [](auto &) {},
         },
         comp.details());
