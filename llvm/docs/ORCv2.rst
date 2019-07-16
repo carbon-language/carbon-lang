@@ -452,6 +452,7 @@ ThreadSafeContexts can be explicitly constructed from a
 std::unique_ptr<LLVMContext>:
 
   .. code-block:: c++
+
     ThreadSafeContext TSCtx(llvm::make_unique<LLVMContext>());
 
 ThreadSafeModules can be constructed from a pair of a std::unique_ptr<Module>
