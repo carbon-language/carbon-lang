@@ -1973,6 +1973,7 @@ void ModuleVisitor::BeginModule(const parser::Name &name, bool isSubmodule) {
   auto &details{symbol.get<ModuleDetails>()};
   PushScope(Scope::Kind::Module, &symbol);
   details.set_scope(&currScope());
+  defaultAccess_ = Attr::PUBLIC;
   prevAccessStmt_ = nullptr;
 }
 
