@@ -1249,15 +1249,12 @@ def int_amdgcn_ds_swizzle :
   Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
             [IntrNoMem, IntrConvergent, ImmArg<1>]>;
 
-def int_amdgcn_ubfe :
-  GCCBuiltin<"__builtin_amdgcn_ubfe">,
-  Intrinsic<[llvm_anyint_ty],
+def int_amdgcn_ubfe : Intrinsic<[llvm_anyint_ty],
     [LLVMMatchType<0>, llvm_i32_ty, llvm_i32_ty],
     [IntrNoMem, IntrSpeculatable]
 >;
 
-def int_amdgcn_sbfe : GCCBuiltin<"__builtin_amdgcn_sbfe">,
-  Intrinsic<[llvm_anyint_ty],
+def int_amdgcn_sbfe : Intrinsic<[llvm_anyint_ty],
     [LLVMMatchType<0>, llvm_i32_ty, llvm_i32_ty],
     [IntrNoMem, IntrSpeculatable]
 >;
