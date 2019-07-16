@@ -35,6 +35,6 @@ def InstB : Instruction {
 }
 
 // CHECK: #ifdef GET_INSTRINFO_OPERAND_TYPE
-// CHECK: { OpTypes::OpA, OpTypes::OpB, OpTypes::i32imm, }
-// CHECK-NEXT: { OpTypes::i32imm, -1, }
+// CHECK:        OpTypes::OpA, OpTypes::OpB, OpTypes::i32imm,
+// CHECK-NEXT:   OpTypes::i32imm, -1,
 // CHECK: #endif //GET_INSTRINFO_OPERAND_TYPE

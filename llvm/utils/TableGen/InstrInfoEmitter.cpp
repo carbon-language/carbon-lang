@@ -213,7 +213,7 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
 }
 
 /// Initialize data structures for generating operand name mappings.
-/// 
+///
 /// \param Operands [out] A map used to generate the OpName enum with operand
 ///        names as its keys and operand enum values as its values.
 /// \param OperandMap [out] A map for representing the operand name mappings for
@@ -360,41 +360,54 @@ void InstrInfoEmitter::emitOperandTypeMappings(
   OS << "LLVM_READONLY\n";
   OS << "int getOperandType(uint16_t Opcode, uint16_t OpIdx) {\n";
   if (!NumberedInstructions.empty()) {
-    OS << "  static const std::initializer_list<int> OpcodeOperandTypes[] = "
-          "{\n";
+    std::vector<int> OperandOffsets;
+    std::vector<Record *> OperandRecords;
+    int CurrentOffset = 0;
     for (const CodeGenInstruction *Inst : NumberedInstructions) {
-      OS << "    { ";
+      OperandOffsets.push_back(CurrentOffset);
       for (const auto &Op : Inst->Operands) {
-        // Handle aggregate operands and normal operands the same way by
-        // expanding either case into a list of operands for this op.
-        std::vector<CGIOperandList::OperandInfo> OperandList;
-
         const DagInit *MIOI = Op.MIOperandInfo;
         if (!MIOI || MIOI->getNumArgs() == 0) {
           // Single, anonymous, operand.
-          OperandList.push_back(Op);
+          OperandRecords.push_back(Op.Rec);
+          ++CurrentOffset;
         } else {
-          for (unsigned j = 0, e = Op.MINumOperands; j != e; ++j) {
-            OperandList.push_back(Op);
-
-            auto *OpR = cast<DefInit>(MIOI->getArg(j))->getDef();
-            OperandList.back().Rec = OpR;
+          for (Init *Arg : make_range(MIOI->arg_begin(), MIOI->arg_end())) {
+            OperandRecords.push_back(cast<DefInit>(Arg)->getDef());
+            ++CurrentOffset;
           }
         }
-
-        for (unsigned j = 0, e = OperandList.size(); j != e; ++j) {
-          Record *OpR = OperandList[j].Rec;
-          if (OpR->isSubClassOf("Operand") && !OpR->isAnonymous())
-            OS << "OpTypes::" << OpR->getName();
-          else
-            OS << -1;
-          OS << ", ";
-        }
       }
-      OS << "},\n";
     }
+
+    // Emit the table of offsets for the opcode lookup.
+    OS << "  const int Offsets[] = {\n";
+    for (int I = 0, E = OperandOffsets.size(); I != E; ++I)
+      OS << "    " << OperandOffsets[I] << ",\n";
     OS << "  };\n";
-    OS << "  return OpcodeOperandTypes[Opcode].begin()[OpIdx];\n";
+
+    // Add an entry for the end so that we don't need to special case it below.
+    OperandOffsets.push_back(OperandRecords.size());
+    // Emit the actual operand types in a flat table.
+    OS << "  const int OpcodeOperandTypes[] = {\n    ";
+    for (int I = 0, E = OperandRecords.size(), CurOffset = 1; I != E; ++I) {
+      // We print each Opcode's operands in its own row.
+      if (I == OperandOffsets[CurOffset]) {
+        OS << "\n    ";
+        // If there are empty rows, mark them with an empty comment.
+        while (OperandOffsets[++CurOffset] == I)
+          OS << "/**/\n    ";
+      }
+      Record *OpR = OperandRecords[I];
+      if (OpR->isSubClassOf("Operand") && !OpR->isAnonymous())
+        OS << "OpTypes::" << OpR->getName();
+      else
+        OS << -1;
+      OS << ", ";
+    }
+    OS << "\n  };\n";
+
+    OS << "  return OpcodeOperandTypes[Offsets[Opcode] + OpIdx];\n";
   } else {
     OS << "  llvm_unreachable(\"No instructions defined\");\n";
   }
