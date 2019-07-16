@@ -22,20 +22,20 @@ module m
   procedure(integer) :: b
   procedure(foo) :: c
   procedure(bar) :: d
-  !ERROR: The interface of 'e' (missing) is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'e' ('missing') is not an abstract interface or a procedure with an explicit interface
   procedure(missing) :: e
-  !ERROR: The interface of 'f' (b) is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'f' ('b') is not an abstract interface or a procedure with an explicit interface
   procedure(b) :: f
   procedure(c) :: g
   external :: h
-  !ERROR: The interface of 'i' (h) is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'i' ('h') is not an abstract interface or a procedure with an explicit interface
   procedure(h) :: i
   procedure(forward) :: j
-  !ERROR: The interface of 'k1' (bad1) is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'k1' ('bad1') is not an abstract interface or a procedure with an explicit interface
   procedure(bad1) :: k1
-  !ERROR: The interface of 'k2' (bad2) is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'k2' ('bad2') is not an abstract interface or a procedure with an explicit interface
   procedure(bad2) :: k2
-  !ERROR: The interface of 'k3' (bad3) is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'k3' ('bad3') is not an abstract interface or a procedure with an explicit interface
   procedure(bad3) :: k3
 
   abstract interface

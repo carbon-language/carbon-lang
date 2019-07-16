@@ -3941,7 +3941,7 @@ void DeclarationVisitor::CheckExplicitInterface(Symbol &symbol) {
     const Symbol *subp{FindSubprogram(*interface)};
     if (subp == nullptr || !subp->HasExplicitInterface()) {
       Say(symbol.name(),
-          "The interface of '%s' (%s) is not an abstract interface or a "
+          "The interface of '%s' ('%s') is not an abstract interface or a "
           "procedure with an explicit interface"_err_en_US,
           symbol.name(), interface->name());
       context().SetError(symbol);
