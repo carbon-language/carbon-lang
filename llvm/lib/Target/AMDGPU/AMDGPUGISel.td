@@ -57,6 +57,13 @@ def gi_flat_offset_signed :
     GIComplexOperandMatcher<s64, "selectFlatOffsetSigned">,
     GIComplexPatternEquiv<FLATOffsetSigned>;
 
+def gi_mubuf_scratch_offset :
+    GIComplexOperandMatcher<s32, "selectMUBUFScratchOffset">,
+    GIComplexPatternEquiv<MUBUFScratchOffset>;
+def gi_mubuf_scratch_offen :
+    GIComplexOperandMatcher<s32, "selectMUBUFScratchOffen">,
+    GIComplexPatternEquiv<MUBUFScratchOffen>;
+
 
 class GISelSop2Pat <
   SDPatternOperator node,

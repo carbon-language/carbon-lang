@@ -17,10 +17,11 @@
 #include "AMDGPURegisterInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "AMDGPUTargetMachine.h"
-#include "SIMachineFunctionInfo.h"
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
+#include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelectorImpl.h"
+#include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -34,6 +35,7 @@
 #define DEBUG_TYPE "amdgpu-isel"
 
 using namespace llvm;
+using namespace MIPatternMatch;
 
 #define GET_GLOBALISEL_IMPL
 #define AMDGPUSubtarget GCNSubtarget
@@ -1593,4 +1595,136 @@ AMDGPUInstructionSelector::selectFlatOffset(MachineOperand &Root) const {
 InstructionSelector::ComplexRendererFns
 AMDGPUInstructionSelector::selectFlatOffsetSigned(MachineOperand &Root) const {
   return selectFlatOffsetImpl<true>(Root);
+}
+
+// FIXME: Implement
+static bool signBitIsZero(const MachineOperand &Op,
+                          const MachineRegisterInfo &MRI) {
+  return false;
+}
+
+static bool isStackPtrRelative(const MachinePointerInfo &PtrInfo) {
+  auto PSV = PtrInfo.V.dyn_cast<const PseudoSourceValue *>();
+  return PSV && PSV->isStack();
+}
+
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectMUBUFScratchOffen(MachineOperand &Root) const {
+  MachineInstr *MI = Root.getParent();
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineFunction *MF = MBB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  const SIMachineFunctionInfo *Info = MF->getInfo<SIMachineFunctionInfo>();
+
+  int64_t Offset = 0;
+  if (mi_match(Root.getReg(), MRI, m_ICst(Offset))) {
+    Register HighBits = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
+
+    // TODO: Should this be inside the render function? The iterator seems to
+    // move.
+    BuildMI(*MBB, MI, MI->getDebugLoc(), TII.get(AMDGPU::V_MOV_B32_e32),
+            HighBits)
+      .addImm(Offset & ~4095);
+
+    return {{[=](MachineInstrBuilder &MIB) { // rsrc
+               MIB.addReg(Info->getScratchRSrcReg());
+             },
+             [=](MachineInstrBuilder &MIB) { // vaddr
+               MIB.addReg(HighBits);
+             },
+             [=](MachineInstrBuilder &MIB) { // soffset
+               const MachineMemOperand *MMO = *MI->memoperands_begin();
+               const MachinePointerInfo &PtrInfo = MMO->getPointerInfo();
+
+               Register SOffsetReg = isStackPtrRelative(PtrInfo)
+                                         ? Info->getStackPtrOffsetReg()
+                                         : Info->getScratchWaveOffsetReg();
+               MIB.addReg(SOffsetReg);
+             },
+             [=](MachineInstrBuilder &MIB) { // offset
+               MIB.addImm(Offset & 4095);
+             }}};
+  }
+
+  assert(Offset == 0);
+
+  // Try to fold a frame index directly into the MUBUF vaddr field, and any
+  // offsets.
+  Optional<int> FI;
+  Register VAddr = Root.getReg();
+  if (const MachineInstr *RootDef = MRI.getVRegDef(Root.getReg())) {
+    if (isBaseWithConstantOffset(Root, MRI)) {
+      const MachineOperand &LHS = RootDef->getOperand(1);
+      const MachineOperand &RHS = RootDef->getOperand(2);
+      const MachineInstr *LHSDef = MRI.getVRegDef(LHS.getReg());
+      const MachineInstr *RHSDef = MRI.getVRegDef(RHS.getReg());
+      if (LHSDef && RHSDef) {
+        int64_t PossibleOffset =
+            RHSDef->getOperand(1).getCImm()->getSExtValue();
+        if (SIInstrInfo::isLegalMUBUFImmOffset(PossibleOffset) &&
+            (!STI.privateMemoryResourceIsRangeChecked() ||
+             signBitIsZero(LHS, MRI))) {
+          if (LHSDef->getOpcode() == AMDGPU::G_FRAME_INDEX)
+            FI = LHSDef->getOperand(1).getIndex();
+          else
+            VAddr = LHS.getReg();
+          Offset = PossibleOffset;
+        }
+      }
+    } else if (RootDef->getOpcode() == AMDGPU::G_FRAME_INDEX) {
+      FI = RootDef->getOperand(1).getIndex();
+    }
+  }
+
+  // If we don't know this private access is a local stack object, it needs to
+  // be relative to the entry point's scratch wave offset register.
+  // TODO: Should split large offsets that don't fit like above.
+  // TODO: Don't use scratch wave offset just because the offset didn't fit.
+  Register SOffset = FI.hasValue() ? Info->getStackPtrOffsetReg()
+                                   : Info->getScratchWaveOffsetReg();
+
+  return {{[=](MachineInstrBuilder &MIB) { // rsrc
+             MIB.addReg(Info->getScratchRSrcReg());
+           },
+           [=](MachineInstrBuilder &MIB) { // vaddr
+             if (FI.hasValue())
+               MIB.addFrameIndex(FI.getValue());
+             else
+               MIB.addReg(VAddr);
+           },
+           [=](MachineInstrBuilder &MIB) { // soffset
+             MIB.addReg(SOffset);
+           },
+           [=](MachineInstrBuilder &MIB) { // offset
+             MIB.addImm(Offset);
+           }}};
+}
+
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectMUBUFScratchOffset(
+    MachineOperand &Root) const {
+  MachineInstr *MI = Root.getParent();
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+
+  int64_t Offset = 0;
+  if (!mi_match(Root.getReg(), MRI, m_ICst(Offset)) ||
+      !SIInstrInfo::isLegalMUBUFImmOffset(Offset))
+    return {};
+
+  const MachineFunction *MF = MBB->getParent();
+  const SIMachineFunctionInfo *Info = MF->getInfo<SIMachineFunctionInfo>();
+  const MachineMemOperand *MMO = *MI->memoperands_begin();
+  const MachinePointerInfo &PtrInfo = MMO->getPointerInfo();
+
+  Register SOffsetReg = isStackPtrRelative(PtrInfo)
+                            ? Info->getStackPtrOffsetReg()
+                            : Info->getScratchWaveOffsetReg();
+  return {{
+      [=](MachineInstrBuilder &MIB) {
+        MIB.addReg(Info->getScratchRSrcReg());
+      },                                                         // rsrc
+      [=](MachineInstrBuilder &MIB) { MIB.addReg(SOffsetReg); }, // soffset
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(Offset); }      // offset
+  }};
 }

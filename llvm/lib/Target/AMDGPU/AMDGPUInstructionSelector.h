@@ -128,6 +128,11 @@ private:
   InstructionSelector::ComplexRendererFns
   selectFlatOffsetSigned(MachineOperand &Root) const;
 
+  InstructionSelector::ComplexRendererFns
+  selectMUBUFScratchOffen(MachineOperand &Root) const;
+  InstructionSelector::ComplexRendererFns
+  selectMUBUFScratchOffset(MachineOperand &Root) const;
+
   const SIInstrInfo &TII;
   const SIRegisterInfo &TRI;
   const AMDGPURegisterBankInfo &RBI;
