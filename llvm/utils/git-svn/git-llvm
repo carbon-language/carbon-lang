@@ -372,7 +372,7 @@ def svn_push_one_rev(svn_repo, rev, git_to_svn_mapping, dry_run):
     # Now we're ready to commit.
     commit_msg = git('show', '--pretty=%B', '--quiet', rev)
     if not dry_run:
-        commit_args = ['commit', '-m', commit_msg]
+        commit_args = ['commit', '-m', commit_msg, '--username', 'ktkachov']
         if '--force-interactive' in svn(svn_repo, 'commit', '--help'):
             commit_args.append('--force-interactive')
         log(svn(svn_repo, *commit_args))
