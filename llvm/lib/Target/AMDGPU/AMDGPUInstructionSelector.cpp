@@ -856,7 +856,7 @@ bool AMDGPUInstructionSelector::selectG_STORE(MachineInstr &I) const {
   unsigned StoreSize = RBI.getSizeInBits(I.getOperand(0).getReg(), MRI, TRI);
   unsigned Opcode;
 
-  // FIXME: Select store instruction based on address space
+  // FIXME: Remove this when integers > s32 naturally selected.
   switch (StoreSize) {
   default:
     return false;
@@ -1363,6 +1363,8 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   case TargetOpcode::G_SELECT:
     return selectG_SELECT(I);
   case TargetOpcode::G_STORE:
+    if (selectImpl(I, CoverageInfo))
+      return true;
     return selectG_STORE(I);
   case TargetOpcode::G_TRUNC:
     return selectG_TRUNC(I);
@@ -1545,7 +1547,7 @@ AMDGPUInstructionSelector::selectSmrdSgpr(MachineOperand &Root) const {
   }};
 }
 
-  template <bool Signed>
+template <bool Signed>
 InstructionSelector::ComplexRendererFns
 AMDGPUInstructionSelector::selectFlatOffsetImpl(MachineOperand &Root) const {
   MachineInstr *MI = Root.getParent();
