@@ -22,14 +22,31 @@ module m
   procedure(integer) :: b
   procedure(foo) :: c
   procedure(bar) :: d
-  !ERROR: Explicit interface 'missing' not found
+  !ERROR: The interface of 'e' is not an abstract interface or a procedure with an explicit interface
   procedure(missing) :: e
-  !ERROR: 'b' is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'f' is not an abstract interface or a procedure with an explicit interface
   procedure(b) :: f
   procedure(c) :: g
   external :: h
-  !ERROR: 'h' is not an abstract interface or a procedure with an explicit interface
+  !ERROR: The interface of 'i' is not an abstract interface or a procedure with an explicit interface
   procedure(h) :: i
+  procedure(forward) :: j
+  !ERROR: The interface of 'k1' is not an abstract interface or a procedure with an explicit interface
+  procedure(bad1) :: k1
+  !ERROR: The interface of 'k2' is not an abstract interface or a procedure with an explicit interface
+  procedure(bad2) :: k2
+  !ERROR: The interface of 'k3' is not an abstract interface or a procedure with an explicit interface
+  procedure(bad3) :: k3
+
+  abstract interface
+    subroutine forward
+    end subroutine
+  end interface
+
+  real :: bad1(1)
+  real :: bad2
+  type :: bad3
+  end type
 
   external :: a, b, c, d
   !ERROR: EXTERNAL attribute not allowed on 'm'
