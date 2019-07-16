@@ -8169,7 +8169,7 @@
 // SPARC:#define __UINT_LEAST8_MAX__ 255
 // SPARC:#define __UINT_LEAST8_TYPE__ unsigned char
 // SPARC:#define __USER_LABEL_PREFIX__
-// SPARC:#define __VERSION__ "Clang{{.*}}
+// SPARC:#define __VERSION__ "{{.*}}Clang{{.*}}
 // SPARC:#define __WCHAR_MAX__ 2147483647
 // SPARC:#define __WCHAR_TYPE__ int
 // SPARC:#define __WCHAR_WIDTH__ 32
