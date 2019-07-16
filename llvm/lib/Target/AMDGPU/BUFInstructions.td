@@ -1568,17 +1568,18 @@ defm : MUBUFStore_Pattern <BUFFER_STORE_SHORT_OFFSET, i16, store_global>;
 
 multiclass MUBUFScratchStorePat <MUBUF_Pseudo InstrOffen,
                                  MUBUF_Pseudo InstrOffset,
-                                 ValueType vt, PatFrag st> {
+                                 ValueType vt, PatFrag st,
+                                 RegisterClass rc = VGPR_32> {
   def : GCNPat <
     (st vt:$value, (MUBUFScratchOffen v4i32:$srsrc, i32:$vaddr,
                                       i32:$soffset, u16imm:$offset)),
-    (InstrOffen $value, $vaddr, $srsrc, $soffset, $offset, 0, 0, 0, 0)
+    (InstrOffen rc:$value, $vaddr, $srsrc, $soffset, $offset, 0, 0, 0, 0)
   >;
 
   def : GCNPat <
     (st vt:$value, (MUBUFScratchOffset v4i32:$srsrc, i32:$soffset,
                                        u16imm:$offset)),
-    (InstrOffset $value, $srsrc, $soffset, $offset, 0, 0, 0, 0)
+    (InstrOffset rc:$value, $srsrc, $soffset, $offset, 0, 0, 0, 0)
   >;
 }
 
@@ -1587,9 +1588,9 @@ defm : MUBUFScratchStorePat <BUFFER_STORE_SHORT_OFFEN, BUFFER_STORE_SHORT_OFFSET
 defm : MUBUFScratchStorePat <BUFFER_STORE_BYTE_OFFEN, BUFFER_STORE_BYTE_OFFSET, i16, truncstorei8_private>;
 defm : MUBUFScratchStorePat <BUFFER_STORE_SHORT_OFFEN, BUFFER_STORE_SHORT_OFFSET, i16, store_private>;
 defm : MUBUFScratchStorePat <BUFFER_STORE_DWORD_OFFEN, BUFFER_STORE_DWORD_OFFSET, i32, store_private>;
-defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX2_OFFEN, BUFFER_STORE_DWORDX2_OFFSET, v2i32, store_private>;
-defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX3_OFFEN, BUFFER_STORE_DWORDX3_OFFSET, v3i32, store_private>;
-defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX4_OFFEN, BUFFER_STORE_DWORDX4_OFFSET, v4i32, store_private>;
+defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX2_OFFEN, BUFFER_STORE_DWORDX2_OFFSET, v2i32, store_private, VReg_64>;
+defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX3_OFFEN, BUFFER_STORE_DWORDX3_OFFSET, v3i32, store_private, VReg_96>;
+defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX4_OFFEN, BUFFER_STORE_DWORDX4_OFFSET, v4i32, store_private, VReg_128>;
 
 
 let OtherPredicates = [D16PreservesUnusedBits] in {
