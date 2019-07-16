@@ -2303,11 +2303,11 @@ bool InitListExpr::isTransparent() const {
 bool InitListExpr::isIdiomaticZeroInitializer(const LangOptions &LangOpts) const {
   assert(isSyntacticForm() && "only test syntactic form as zero initializer");
 
-  if (LangOpts.CPlusPlus || getNumInits() != 1) {
+  if (LangOpts.CPlusPlus || getNumInits() != 1 || !getInit(0)) {
     return false;
   }
 
-  const IntegerLiteral *Lit = dyn_cast<IntegerLiteral>(getInit(0));
+  const IntegerLiteral *Lit = dyn_cast<IntegerLiteral>(getInit(0)->IgnoreImplicit());
   return Lit && Lit->getValue() == 0;
 }
 
