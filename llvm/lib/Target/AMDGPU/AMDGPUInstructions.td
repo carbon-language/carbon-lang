@@ -467,25 +467,48 @@ def atomic_load_64_#as : PatFrag<(ops node:$ptr), (atomic_load_64 node:$ptr)> {
   let MemoryVT = i64;
 }
 
+def store_#as : PatFrag<(ops node:$val, node:$ptr),
+                    (unindexedstore node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let IsTruncStore = 0;
+}
+
+// truncstore fragments.
+def truncstore_#as : PatFrag<(ops node:$val, node:$ptr),
+                             (unindexedstore node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let IsTruncStore = 1;
+}
+
+// TODO: We don't really need the truncstore here. We can use
+// unindexedstore with MemoryVT directly, which will save an
+// unnecessary check that the memory size is less than the value type
+// in the generated matcher table.
+def truncstorei8_#as : PatFrag<(ops node:$val, node:$ptr),
+                               (truncstore node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let MemoryVT = i8;
+}
+
+def truncstorei16_#as : PatFrag<(ops node:$val, node:$ptr),
+                                (truncstore node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let MemoryVT = i16;
+}
+
+defm atomic_store_#as : binary_atomic_op<atomic_store>;
+
 } // End let AddressSpaces = ...
 } // End foreach AddrSpace
 
-def store_private : PrivateStore <store>;
-def truncstorei8_private : PrivateStore<truncstorei8>;
-def truncstorei16_private : PrivateStore <truncstorei16>;
+
 def store_hi16_private : StoreHi16 <truncstorei16>, PrivateAddress;
 def truncstorei8_hi16_private : StoreHi16<truncstorei8>, PrivateAddress;
 
-def store_global : GlobalStore <store>;
-def truncstorei8_global : GlobalStore <truncstorei8>;
-def truncstorei16_global : GlobalStore <truncstorei16>;
 def store_atomic_global : GlobalStore<atomic_store>;
 def truncstorei8_hi16_global : StoreHi16 <truncstorei8>, GlobalAddress;
 def truncstorei16_hi16_global : StoreHi16 <truncstorei16>, GlobalAddress;
 
-def store_local : LocalStore <store>;
-def truncstorei8_local : LocalStore <truncstorei8>;
-def truncstorei16_local : LocalStore <truncstorei16>;
 def store_local_hi16 : StoreHi16 <truncstorei16>, LocalAddress;
 def truncstorei8_local_hi16 : StoreHi16<truncstorei8>, LocalAddress;
 def atomic_store_local : LocalStore <atomic_store>;
@@ -506,9 +529,6 @@ def store_align16_local : Aligned16Bytes <
   (ops node:$val, node:$ptr), (store_local node:$val, node:$ptr)
 >;
 
-def store_flat         : FlatStore <store>;
-def truncstorei8_flat  : FlatStore <truncstorei8>;
-def truncstorei16_flat : FlatStore <truncstorei16>;
 def atomic_store_flat  : FlatStore <atomic_store>;
 def truncstorei8_hi16_flat  : StoreHi16<truncstorei8>, FlatStoreAddress;
 def truncstorei16_hi16_flat : StoreHi16<truncstorei16>, FlatStoreAddress;

@@ -792,8 +792,8 @@ def : FlatStorePat <FLAT_STORE_DWORDX2, store_flat, v2i32>;
 def : FlatStorePat <FLAT_STORE_DWORDX3, store_flat, v3i32>;
 def : FlatStorePat <FLAT_STORE_DWORDX4, store_flat, v4i32>;
 
-def : FlatStoreAtomicPat <FLAT_STORE_DWORD, atomic_store_flat, i32>;
-def : FlatStoreAtomicPat <FLAT_STORE_DWORDX2, atomic_store_flat, i64>;
+def : FlatStoreAtomicPat <FLAT_STORE_DWORD, atomic_store_flat_32, i32>;
+def : FlatStoreAtomicPat <FLAT_STORE_DWORDX2, atomic_store_flat_64, i64>;
 
 def : FlatAtomicPat <FLAT_ATOMIC_ADD_RTN, atomic_add_global, i32>;
 def : FlatAtomicPat <FLAT_ATOMIC_SUB_RTN, atomic_sub_global, i32>;
