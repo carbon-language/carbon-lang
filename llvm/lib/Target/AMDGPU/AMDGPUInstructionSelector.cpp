@@ -1239,47 +1239,9 @@ bool AMDGPUInstructionSelector::hasVgprParts(ArrayRef<GEPInfo> AddrInfo) const {
 }
 
 bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I) const {
-  MachineBasicBlock *BB = I.getParent();
-  MachineFunction *MF = BB->getParent();
-  MachineRegisterInfo &MRI = MF->getRegInfo();
-  const DebugLoc &DL = I.getDebugLoc();
-  Register DstReg = I.getOperand(0).getReg();
-  Register PtrReg = I.getOperand(1).getReg();
-  unsigned LoadSize = RBI.getSizeInBits(DstReg, MRI, TRI);
-  unsigned Opcode;
-
-  if (MRI.getType(I.getOperand(1).getReg()).getSizeInBits() == 32) {
-    LLVM_DEBUG(dbgs() << "Unhandled address space\n");
-    return false;
-  }
-
-  SmallVector<GEPInfo, 4> AddrInfo;
-
-  getAddrModeInfo(I, MRI, AddrInfo);
-
-  switch (LoadSize) {
-  case 32:
-    Opcode = AMDGPU::FLAT_LOAD_DWORD;
-    break;
-  case 64:
-    Opcode = AMDGPU::FLAT_LOAD_DWORDX2;
-    break;
-  default:
-    LLVM_DEBUG(dbgs() << "Unhandled load size\n");
-    return false;
-  }
-
-  MachineInstr *Flat = BuildMI(*BB, &I, DL, TII.get(Opcode))
-                               .add(I.getOperand(0))
-                               .addReg(PtrReg)
-                               .addImm(0)  // offset
-                               .addImm(0)  // glc
-                               .addImm(0)  // slc
-                               .addImm(0); // dlc
-
-  bool Ret = constrainSelectedInstRegOperands(*Flat, TII, TRI, RBI);
-  I.eraseFromParent();
-  return Ret;
+  // TODO: Can/should we insert m0 initialization here for DS instructions and
+  // call the normal selector?
+  return false;
 }
 
 bool AMDGPUInstructionSelector::selectG_BRCOND(MachineInstr &I) const {
@@ -1397,9 +1359,7 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
       return true;
     return selectImpl(I, CoverageInfo);
   case TargetOpcode::G_LOAD:
-    if (selectImpl(I, CoverageInfo))
-      return true;
-    return selectG_LOAD(I);
+    return selectImpl(I, CoverageInfo);
   case TargetOpcode::G_SELECT:
     return selectG_SELECT(I);
   case TargetOpcode::G_STORE:
@@ -1583,4 +1543,52 @@ AMDGPUInstructionSelector::selectSmrdSgpr(MachineOperand &Root) const {
     [=](MachineInstrBuilder &MIB) { MIB.addReg(PtrReg); },
     [=](MachineInstrBuilder &MIB) { MIB.addReg(OffsetReg); }
   }};
+}
+
+  template <bool Signed>
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectFlatOffsetImpl(MachineOperand &Root) const {
+  MachineInstr *MI = Root.getParent();
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+
+  InstructionSelector::ComplexRendererFns Default = {{
+      [=](MachineInstrBuilder &MIB) { MIB.addReg(Root.getReg()); },
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(0); },  // offset
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }  // slc
+    }};
+
+  if (!STI.hasFlatInstOffsets())
+    return Default;
+
+  const MachineInstr *OpDef = MRI.getVRegDef(Root.getReg());
+  if (!OpDef || OpDef->getOpcode() != AMDGPU::G_GEP)
+    return Default;
+
+  Optional<int64_t> Offset =
+    getConstantVRegVal(OpDef->getOperand(2).getReg(), MRI);
+  if (!Offset.hasValue())
+    return Default;
+
+  unsigned AddrSpace = (*MI->memoperands_begin())->getAddrSpace();
+  if (!TII.isLegalFLATOffset(Offset.getValue(), AddrSpace, Signed))
+    return Default;
+
+  Register BasePtr = OpDef->getOperand(1).getReg();
+
+  return {{
+      [=](MachineInstrBuilder &MIB) { MIB.addReg(BasePtr); },
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(Offset.getValue()); },
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }  // slc
+    }};
+}
+
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectFlatOffset(MachineOperand &Root) const {
+  return selectFlatOffsetImpl<false>(Root);
+}
+
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectFlatOffsetSigned(MachineOperand &Root) const {
+  return selectFlatOffsetImpl<true>(Root);
 }

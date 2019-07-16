@@ -50,6 +50,14 @@ def gi_smrd_sgpr :
     GIComplexOperandMatcher<s64, "selectSmrdSgpr">,
     GIComplexPatternEquiv<SMRDSgpr>;
 
+def gi_flat_offset :
+    GIComplexOperandMatcher<s64, "selectFlatOffset">,
+    GIComplexPatternEquiv<FLATOffset>;
+def gi_flat_offset_signed :
+    GIComplexOperandMatcher<s64, "selectFlatOffsetSigned">,
+    GIComplexPatternEquiv<FLATOffsetSigned>;
+
+
 class GISelSop2Pat <
   SDPatternOperator node,
   Instruction inst,
