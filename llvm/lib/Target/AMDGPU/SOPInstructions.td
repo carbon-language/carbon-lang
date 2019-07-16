@@ -511,10 +511,10 @@ let AddedComplexity = 1 in {
 let Defs = [SCC] in {
 // TODO: b64 versions require VOP3 change since v_lshlrev_b64 is VOP3
 def S_LSHL_B32 : SOP2_32 <"s_lshl_b32",
-  [(set i32:$sdst, (UniformBinFrag<shl> i32:$src0, i32:$src1))]
+  [(set SReg_32:$sdst, (shl (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_LSHL_B64 : SOP2_64_32 <"s_lshl_b64",
-  [(set i64:$sdst, (UniformBinFrag<shl> i64:$src0, i32:$src1))]
+  [(set SReg_64:$sdst, (shl (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_LSHR_B32 : SOP2_32 <"s_lshr_b32",
   [(set i32:$sdst, (UniformBinFrag<srl> i32:$src0, i32:$src1))]
