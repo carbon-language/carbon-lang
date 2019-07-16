@@ -9041,7 +9041,7 @@
 // X86_64-CLOUDABI:#define __UINT_LEAST8_MAX__ 255
 // X86_64-CLOUDABI:#define __UINT_LEAST8_TYPE__ unsigned char
 // X86_64-CLOUDABI:#define __USER_LABEL_PREFIX__
-// X86_64-CLOUDABI:#define __VERSION__ "Clang{{.*}}
+// X86_64-CLOUDABI:#define __VERSION__ "{{.*}}Clang{{.*}}
 // X86_64-CLOUDABI:#define __WCHAR_MAX__ 2147483647
 // X86_64-CLOUDABI:#define __WCHAR_TYPE__ int
 // X86_64-CLOUDABI:#define __WCHAR_WIDTH__ 32
