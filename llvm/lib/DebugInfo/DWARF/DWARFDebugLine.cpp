@@ -758,7 +758,7 @@ Error DWARFDebugLine::LineTable::parse(
           State.Row.Address.Address += PCOffset;
           if (OS)
             *OS
-                << format(" (0x%16.16" PRIx64 ")", PCOffset);
+                << format(" (0x%4.4" PRIx16 ")", PCOffset);
         }
         break;
 
