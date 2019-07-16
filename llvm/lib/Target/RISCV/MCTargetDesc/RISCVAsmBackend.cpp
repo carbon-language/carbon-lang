@@ -313,8 +313,12 @@ bool RISCVAsmBackend::shouldInsertExtraNopBytesForCodeAlign(
   bool HasStdExtC = STI.getFeatureBits()[RISCV::FeatureStdExtC];
   unsigned MinNopLen = HasStdExtC ? 2 : 4;
 
-  Size = AF.getAlignment() - MinNopLen;
-  return true;
+  if (AF.getAlignment() <= MinNopLen) {
+    return false;
+  } else {
+    Size = AF.getAlignment() - MinNopLen;
+    return true;
+  }
 }
 
 // We need to insert R_RISCV_ALIGN relocation type to indicate the
