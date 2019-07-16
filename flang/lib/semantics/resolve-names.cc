@@ -763,7 +763,7 @@ protected:
   void CheckSaveStmts();
   void CheckEquivalenceSets();
   bool CheckNotInBlock(const char *);
-  Symbol *NameIsKnownOrIntrinsic(const parser::Name &);
+  bool NameIsKnownOrIntrinsic(const parser::Name &);
 
   // Each of these returns a pointer to a resolved Name (i.e. with symbol)
   // or nullptr in case of error.
@@ -829,7 +829,7 @@ private:
   Attrs HandleSaveName(const SourceName &, Attrs);
   void AddSaveName(std::set<SourceName> &, const SourceName &);
   void SetSaveAttr(Symbol &);
-  Symbol *HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
+  bool HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
   const parser::Name *FindComponent(const parser::Name *, const parser::Name &);
   void CheckInitialDataTarget(const Symbol &, const SomeExpr &, SourceName);
   void Initialization(const parser::Name &, const parser::Initialization &,
@@ -3660,9 +3660,10 @@ Symbol &DeclarationVisitor::MakeCommonBlockSymbol(const parser::Name &name) {
   return Resolve(name, currScope().MakeCommonBlock(name.source));
 }
 
-Symbol *DeclarationVisitor::NameIsKnownOrIntrinsic(const parser::Name &name) {
+bool DeclarationVisitor::NameIsKnownOrIntrinsic(const parser::Name &name) {
   if (Symbol * symbol{FindSymbol(name)}) {
-    return &Resolve(name, *symbol);
+    Resolve(name, *symbol);
+    return true;
   } else {
     return HandleUnrestrictedSpecificIntrinsicFunction(name);
   }
@@ -3699,7 +3700,7 @@ void DeclarationVisitor::CheckCommonBlockDerivedType(
   }
 }
 
-Symbol *DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
+bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
     const parser::Name &name) {
   if (context()
           .intrinsics()
@@ -3711,9 +3712,9 @@ Symbol *DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
         MakeSymbol(InclusiveScope(), name.source, Attrs{Attr::INTRINSIC})};
     symbol.set_details(ProcEntityDetails{});
     Resolve(name, symbol);
-    return &symbol;
+    true;
   } else {
-    return nullptr;
+    return false;
   }
 }
 
