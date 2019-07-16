@@ -329,11 +329,10 @@ bool RISCVAsmBackend::shouldInsertFixupForCodeAlign(MCAssembler &Asm,
   if (!STI.getFeatureBits()[RISCV::FeatureRelax])
     return false;
 
-  // Calculate total Nops we need to insert.
+  // Calculate total Nops we need to insert. If there are none to insert
+  // then simply return.
   unsigned Count;
-  shouldInsertExtraNopBytesForCodeAlign(AF, Count);
-  // No Nop need to insert, simply return.
-  if (Count == 0)
+  if (!shouldInsertExtraNopBytesForCodeAlign(AF, Count) || (Count == 0))
     return false;
 
   MCContext &Ctx = Asm.getContext();
