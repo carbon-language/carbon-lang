@@ -523,10 +523,10 @@ def S_LSHR_B64 : SOP2_64_32 <"s_lshr_b64",
   [(set SReg_64:$sdst, (srl (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_ASHR_I32 : SOP2_32 <"s_ashr_i32",
-  [(set i32:$sdst, (UniformBinFrag<sra> i32:$src0, i32:$src1))]
+  [(set SReg_32:$sdst, (sra (i32 SSrc_b32:$src0), (i32 SSrc_b32:$src1)))]
 >;
 def S_ASHR_I64 : SOP2_64_32 <"s_ashr_i64",
-  [(set i64:$sdst, (UniformBinFrag<sra> i64:$src0, i32:$src1))]
+  [(set SReg_64:$sdst, (sra (i64 SSrc_b64:$src0), (i32 SSrc_b32:$src1)))]
 >;
 } // End Defs = [SCC]
 
