@@ -2201,7 +2201,7 @@ APValue SourceLocExpr::EvaluateInContext(const ASTContext &Ctx,
   case SourceLocExpr::Line:
   case SourceLocExpr::Column: {
     llvm::APSInt IntVal(Ctx.getIntWidth(Ctx.UnsignedIntTy),
-                        /*IsUnsigned=*/true);
+                        /*isUnsigned=*/true);
     IntVal = getIdentKind() == SourceLocExpr::Line ? PLoc.getLine()
                                                    : PLoc.getColumn();
     return APValue(IntVal);
