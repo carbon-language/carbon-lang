@@ -345,9 +345,6 @@ def FeatureRandGen : SubtargetFeature<"rand", "HasRandGen",
 def FeatureMTE : SubtargetFeature<"mte", "HasMTE",
     "true", "Enable Memory Tagging Extension" >;
 
-def FeatureTME : SubtargetFeature<"tme", "HasTME",
-    "true", "Enable Transactional Memory Extension" >;
-
 //===----------------------------------------------------------------------===//
 // Architectures.
 //
