@@ -296,10 +296,10 @@ public:
       if (that.IsNegative()) {
         result.value = result.value.IOR(MASKL(bits - FROM::bits));
       }
+      result.overflow = false;
     } else if constexpr (bits < FROM::bits) {
       auto back{FROM::template ConvertSigned(result.value)};
-      result.overflow |=
-          back.overflow || back.value.CompareUnsigned(that) != Ordering::Equal;
+      result.overflow = back.value.CompareUnsigned(that) != Ordering::Equal;
     }
     return result;
   }
