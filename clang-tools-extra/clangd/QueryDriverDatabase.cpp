@@ -63,7 +63,9 @@ std::vector<std::string> parseDriverOutput(llvm::StringRef Output) {
   llvm::SmallVector<llvm::StringRef, 8> Lines;
   Output.split(Lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
-  auto StartIt = std::find(Lines.begin(), Lines.end(), SIS);
+  auto StartIt =
+      std::find_if(Lines.begin(), Lines.end(),
+                   [](llvm::StringRef Line) { return Line.trim() == SIS; });
   if (StartIt == Lines.end()) {
     elog("System include extraction: start marker not found: {0}", Output);
     return {};
