@@ -51,8 +51,8 @@ try.cont:
 ; CHECK-NEXT: .byte	255 # @LPStart Encoding = omit
 ; TTypeEncoding = DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4
 ; CHECK-NEXT: .byte 155 # @TType Encoding = indirect pcrel sdata4
-; TODO: call site encoding should be DW_EH_PE_udata4
 ; CHECK: .Lttbaseref0:
+; CallSiteEncoding = dwarf::DW_EH_PE_udata4
 ; CHECK-NEXT: .byte	3                       # Call site Encoding = udata4
 ; CHECK-NEXT: .uleb128 .Lcst_end0-.Lcst_begin0
 ; CHECK-NEXT: cst_begin0:
