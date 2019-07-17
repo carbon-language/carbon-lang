@@ -535,3 +535,64 @@ body: |
     %8:_(s96) = G_MERGE_VALUES %0, %1, %2, %3, %4, %5
     $vgpr0_vgpr1_vgpr2 = COPY %8
 ...
+
+---
+name: test_merge_s56_s8_s8_s8_s8_s8_s8_s8
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_merge_s56_s8_s8_s8_s8_s8_s8_s8
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; CHECK: [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[C7]](s32)
+    ; CHECK: [[TRUNC1:%[0-9]+]]:_(s16) = G_TRUNC [[C]](s32)
+    ; CHECK: [[AND:%[0-9]+]]:_(s16) = G_AND [[TRUNC1]], [[TRUNC]]
+    ; CHECK: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY [[C8]](s32)
+    ; CHECK: [[AND1:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C9]]
+    ; CHECK: [[C10:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY [[C1]](s32)
+    ; CHECK: [[AND2:%[0-9]+]]:_(s32) = G_AND [[COPY1]], [[C10]]
+    ; CHECK: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[AND2]], [[AND1]](s32)
+    ; CHECK: [[TRUNC2:%[0-9]+]]:_(s16) = G_TRUNC [[SHL]](s32)
+    ; CHECK: [[OR:%[0-9]+]]:_(s16) = G_OR [[AND]], [[TRUNC2]]
+    ; CHECK: [[TRUNC3:%[0-9]+]]:_(s16) = G_TRUNC [[C2]](s32)
+    ; CHECK: [[AND3:%[0-9]+]]:_(s16) = G_AND [[TRUNC3]], [[TRUNC]]
+    ; CHECK: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK: [[COPY2:%[0-9]+]]:_(s32) = COPY [[C11]](s32)
+    ; CHECK: [[AND4:%[0-9]+]]:_(s32) = G_AND [[COPY2]], [[C9]]
+    ; CHECK: [[COPY3:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK: [[AND5:%[0-9]+]]:_(s32) = G_AND [[COPY3]], [[C10]]
+    ; CHECK: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[AND5]], [[AND4]](s32)
+    ; CHECK: [[TRUNC4:%[0-9]+]]:_(s16) = G_TRUNC [[SHL1]](s32)
+    ; CHECK: [[OR1:%[0-9]+]]:_(s16) = G_OR [[AND3]], [[TRUNC4]]
+    ; CHECK: [[TRUNC5:%[0-9]+]]:_(s16) = G_TRUNC [[C4]](s32)
+    ; CHECK: [[AND6:%[0-9]+]]:_(s16) = G_AND [[TRUNC5]], [[TRUNC]]
+    ; CHECK: [[C12:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK: [[COPY4:%[0-9]+]]:_(s32) = COPY [[C12]](s32)
+    ; CHECK: [[AND7:%[0-9]+]]:_(s32) = G_AND [[COPY4]], [[C9]]
+    ; CHECK: [[COPY5:%[0-9]+]]:_(s32) = COPY [[C5]](s32)
+    ; CHECK: [[AND8:%[0-9]+]]:_(s32) = G_AND [[COPY5]], [[C10]]
+    ; CHECK: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[AND8]], [[AND7]](s32)
+    ; CHECK: [[TRUNC6:%[0-9]+]]:_(s16) = G_TRUNC [[SHL2]](s32)
+    ; CHECK: [[OR2:%[0-9]+]]:_(s16) = G_OR [[AND6]], [[TRUNC6]]
+    ; CHECK: [[TRUNC7:%[0-9]+]]:_(s16) = G_TRUNC [[C6]](s32)
+    ; CHECK: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[OR]](s16), [[OR1]](s16), [[OR2]](s16), [[TRUNC7]](s16)
+    ; CHECK: [[TRUNC8:%[0-9]+]]:_(s56) = G_TRUNC [[MV]](s64)
+    ; CHECK: S_NOP 0, implicit [[TRUNC8]](s56)
+    %0:_(s8) = G_CONSTANT i8 0
+    %1:_(s8) = G_CONSTANT i8 1
+    %2:_(s8) = G_CONSTANT i8 2
+    %3:_(s8) = G_CONSTANT i8 3
+    %4:_(s8) = G_CONSTANT i8 4
+    %5:_(s8) = G_CONSTANT i8 5
+    %6:_(s8) = G_CONSTANT i8 6
+    %7:_(s56) = G_MERGE_VALUES %0, %1, %2, %3, %4, %5, %6
+    S_NOP 0, implicit %7
+...

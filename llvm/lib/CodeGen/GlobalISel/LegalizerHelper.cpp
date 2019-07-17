@@ -875,10 +875,14 @@ LegalizerHelper::widenScalarMergeValues(MachineInstr &MI, unsigned TypeIdx,
 
   // Try to turn this into a merge of merges if we can use the requested type as
   // the source.
-
-  // TODO: Pad with undef if DstTy > WideTy
-  if (NumMerge > 1 && WideTy.getSizeInBits() % SrcTy.getSizeInBits() == 0) {
+  if (NumMerge > 1) {
     int PartsPerMerge = WideTy.getSizeInBits() / SrcTy.getSizeInBits();
+    if (WideTy.getSizeInBits() % SrcTy.getSizeInBits() != 0)
+      return UnableToLegalize;
+
+    int RemainderBits = DstTy.getSizeInBits() % WideTy.getSizeInBits();
+    int RemainderParts = RemainderBits / SrcTy.getSizeInBits();
+
     SmallVector<Register, 4> Parts;
     SmallVector<Register, 4> SubMerges;
 
@@ -891,7 +895,22 @@ LegalizerHelper::widenScalarMergeValues(MachineInstr &MI, unsigned TypeIdx,
       Parts.clear();
     }
 
-    MIRBuilder.buildMerge(DstReg, SubMerges);
+    if (RemainderParts == 0) {
+      MIRBuilder.buildMerge(DstReg, SubMerges);
+      MI.eraseFromParent();
+      return Legalized;
+    }
+
+    assert(RemainderParts == 1);
+
+    auto AnyExt = MIRBuilder.buildAnyExt(
+      WideTy, MI.getOperand(MI.getNumOperands() - 1).getReg());
+    SubMerges.push_back(AnyExt.getReg(0));
+
+    LLT WiderDstTy = LLT::scalar(SubMerges.size() * WideTy.getSizeInBits());
+    auto Merge = MIRBuilder.buildMerge(WiderDstTy, SubMerges);
+    MIRBuilder.buildTrunc(DstReg, Merge);
+
     MI.eraseFromParent();
     return Legalized;
   }

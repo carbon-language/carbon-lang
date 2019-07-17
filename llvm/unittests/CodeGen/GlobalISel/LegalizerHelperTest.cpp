@@ -9,6 +9,10 @@
 
 #include "GISelMITest.h"
 
+using namespace LegalizeActions;
+using namespace LegalizeMutations;
+using namespace LegalityPredicates;
+
 namespace {
 
 class DummyGISelObserver : public GISelChangeObserver {
@@ -900,4 +904,34 @@ TEST_F(GISelMITest, WidenScalarBuildVector) {
   EXPECT_TRUE(CheckMachineFunction(*MF, CheckStr)) << *MF;
 }
 
+TEST_F(GISelMITest, LowerMergeValues) {
+  if (!TM)
+    return;
+
+  const LLT S24 = LLT::scalar(24);
+  const LLT S9 = LLT::scalar(9);
+  const LLT S3 = LLT::scalar(3);
+
+  DefineLegalizerInfo(A, {
+    getActionDefinitionsBuilder(G_UNMERGE_VALUES)
+      .widenScalarIf(typeIs(1, LLT::scalar(3)), changeTo(1, LLT::scalar(9)));
+  });
+
+  AInfo Info(MF->getSubtarget());
+  DummyGISelObserver Observer;
+  LegalizerHelper Helper(*MF, Info, Observer, B);
+  B.setInsertPt(*EntryMBB, EntryMBB->end());
+
+  // 24 = 3 3 3   3 3 3   3 3
+  //     => 9
+  //
+  // This can do 2 merges for the first parts, but has 2 leftover operands.
+  SmallVector<Register, 7> MergeOps;
+  for (int I = 0; I != 8; ++I)
+    MergeOps.push_back(B.buildConstant(S3, I).getReg(0));
+
+  auto Merge = B.buildMerge(S24, MergeOps);
+  EXPECT_EQ(LegalizerHelper::LegalizeResult::UnableToLegalize,
+            Helper.lower(*Merge, 1, S9));
+}
 } // namespace
