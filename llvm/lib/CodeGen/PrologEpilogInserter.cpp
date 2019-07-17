@@ -927,18 +927,18 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
   // Make sure that the stack protector comes before the local variables on the
   // stack.
   SmallSet<int, 16> ProtectedObjs;
-  if (MFI.getStackProtectorIndex() >= 0) {
+  if (MFI.hasStackProtectorIndex()) {
+    int StackProtectorFI = MFI.getStackProtectorIndex();
     StackObjSet LargeArrayObjs;
     StackObjSet SmallArrayObjs;
     StackObjSet AddrOfObjs;
 
-    AdjustStackOffset(MFI, MFI.getStackProtectorIndex(), StackGrowsDown,
-                      Offset, MaxAlign, Skew);
+    AdjustStackOffset(MFI, StackProtectorFI, StackGrowsDown, Offset, MaxAlign,
+                      Skew);
 
     // Assign large stack objects first.
     for (unsigned i = 0, e = MFI.getObjectIndexEnd(); i != e; ++i) {
-      if (MFI.isObjectPreAllocated(i) &&
-          MFI.getUseLocalStackAllocationBlock())
+      if (MFI.isObjectPreAllocated(i) && MFI.getUseLocalStackAllocationBlock())
         continue;
       if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
         continue;
@@ -946,8 +946,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
         continue;
       if (MFI.isDeadObjectIndex(i))
         continue;
-      if (MFI.getStackProtectorIndex() == (int)i ||
-          EHRegNodeFrameIndex == (int)i)
+      if (StackProtectorFI == (int)i || EHRegNodeFrameIndex == (int)i)
         continue;
       if (MFI.getStackID(i) !=
           TargetStackID::Default) // Only allocate objects on the default stack.
@@ -990,8 +989,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
       continue;
     if (MFI.isDeadObjectIndex(i))
       continue;
-    if (MFI.getStackProtectorIndex() == (int)i ||
-        EHRegNodeFrameIndex == (int)i)
+    if (MFI.getStackProtectorIndex() == (int)i || EHRegNodeFrameIndex == (int)i)
       continue;
     if (ProtectedObjs.count(i))
       continue;
