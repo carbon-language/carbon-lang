@@ -62,6 +62,7 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   type(WithParam(4, :)), allocatable :: param_ta_4_deferred
   class(WithParam(4, :)), pointer :: param_ca_4_deferred
   class(WithParam), allocatable :: param_defaulted
+  integer, allocatable :: integer_default(:)
 
   type(WithParamExtent2(k1=4, l1=:, k2=5, l2=:, l3=8 )), pointer :: extended2
 
@@ -87,6 +88,8 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   allocate(param_defaulted, source=WithParam(k1=1)(x=5))
   allocate(param_defaulted, mold=src_c_1_2_5_6_5_8)
   allocate(whatever, source=src_c_1_2_5_6_5_8)
+
+  allocate(integer_default, source=[(i,i=0,9)])
 
 
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
@@ -133,4 +136,6 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   allocate(param_defaulted, mold=WithParam(k1=2)(x=5))
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_defaulted, source=src_c_5_2_5_6_5_8)
+  !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
+  allocate(integer_default, source=[(i, integer(8)::i=0,9)])
 end subroutine

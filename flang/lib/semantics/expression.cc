@@ -1084,10 +1084,10 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
                 std::get<parser::AcImpliedDoControl::Bounds>(control.t)};
             Analyze(bounds.name);
             parser::CharBlock name{bounds.name.thing.thing.source};
+            const Symbol *symbol{bounds.name.thing.thing.symbol};
             int kind{IntType::kind};
-            if (auto &its{std::get<std::optional<parser::IntegerTypeSpec>>(
-                    control.t)}) {
-              kind = IntegerTypeSpecKind(*its);
+            if (const auto dynamicType{DynamicType::From(symbol)}) {
+              kind = dynamicType->kind();
             }
             bool inserted{AddAcImpliedDo(name, kind)};
             if (!inserted) {
