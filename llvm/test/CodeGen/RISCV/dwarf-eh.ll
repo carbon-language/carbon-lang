@@ -1,19 +1,19 @@
 ; RUN: llc -march=riscv32 --code-model=small  < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,SMALL %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv32 --code-model=medium < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,MED   %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv32 --code-model=small  -relocation-model=pic < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv32 --code-model=medium -relocation-model=pic < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv64 --code-model=small  < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,SMALL %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv64 --code-model=medium < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,MED   %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv64 --code-model=small  -relocation-model=pic < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN:     | FileCheck %s
 ; RUN: llc -march=riscv64 --code-model=medium -relocation-model=pic < %s \
-; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN:     | FileCheck %s
 
 declare void @throw_exception()
 
@@ -25,11 +25,10 @@ declare void @__cxa_end_catch()
 
 ; CHECK-LABEL: test1:
 ; CHECK: .cfi_startproc
-; TODO: Personality encoding should be DW_EH_PE_indirect | DW_EH_PE_pcrel |
-; DW_EH_PE_sdata4
-; CHECK-NEXT:	.cfi_personality 0, __gxx_personality_v0
-; TODO: LSDA encoding should be DW_EH_PE_pcrel | DW_EH_PE_sdata4
-; CHECK-NEXT:	.cfi_lsda 0, .Lexception0
+; PersonalityEncoding = DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4
+; CHECK-NEXT:	.cfi_personality 155, DW.ref.__gxx_personality_v0
+; LSDAEncoding = DW_EH_PE_pcrel | DW_EH_PE_sdata4
+; CHECK-NEXT:	.cfi_lsda 27, .Lexception0
 
 define void @test1() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
@@ -50,9 +49,8 @@ try.cont:
 ; CHECK-LABEL: GCC_except_table0:
 ; CHECK-NEXT: .Lexception0:
 ; CHECK-NEXT: .byte	255 # @LPStart Encoding = omit
-; TODO: TTypeEncoding encoding should be DW_EH_PE_indirect | DW_EH_PE_pcrel |
-; DW_EH_PE_sdata4
-; CHECK-NEXT: .byte 0 # @TType Encoding = absptr
+; TTypeEncoding = DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4
+; CHECK-NEXT: .byte 155 # @TType Encoding = indirect pcrel sdata4
 ; TODO: call site encoding should be DW_EH_PE_udata4
 ; CHECK: .Lttbaseref0:
 ; CHECK-NEXT: .byte	1                       # Call site Encoding = uleb128
