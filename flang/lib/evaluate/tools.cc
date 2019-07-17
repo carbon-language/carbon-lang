@@ -535,6 +535,10 @@ std::optional<Expr<SomeType>> ConvertToType(
     }
     return ConvertToNumeric<TypeCategory::Integer>(type.kind(), std::move(x));
   case TypeCategory::Real:
+    if (auto *boz{std::get_if<BOZLiteralConstant>(&x.u)}) {
+      return Expr<SomeType>{
+          ConvertToKind<TypeCategory::Real>(type.kind(), std::move(*boz))};
+    }
     return ConvertToNumeric<TypeCategory::Real>(type.kind(), std::move(x));
   case TypeCategory::Complex:
     return ConvertToNumeric<TypeCategory::Complex>(type.kind(), std::move(x));
