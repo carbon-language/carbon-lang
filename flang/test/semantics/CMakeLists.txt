@@ -148,6 +148,9 @@ set(ERROR_TESTS
   if_arith01.f90
   if_construct01.f90
   if_stmt01.f90
+  blockconstruct01.f90
+  blockconstruct02.f90
+  blockconstruct03.f90
 )
 
 # These test files have expected symbols in the source
