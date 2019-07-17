@@ -316,8 +316,8 @@ bool AArch64StackTagging::runOnFunction(Function &Fn) {
       untagAlloca(AI, Info.LifetimeEnd[0], Size);
     } else {
       uint64_t Size = Info.AI->getAllocationSizeInBits(*DL).getValue() / 8;
-      tagAlloca(AI, TagPCall->getNextNode(),
-                IRB.CreatePointerCast(TagPCall, IRB.getInt8PtrTy()), Size);
+      Value *Ptr = IRB.CreatePointerCast(TagPCall, IRB.getInt8PtrTy());
+      tagAlloca(AI, &*IRB.GetInsertPoint(), Ptr, Size);
       for (auto &RI : RetVec) {
         untagAlloca(AI, RI, Size);
       }
