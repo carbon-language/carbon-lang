@@ -103,7 +103,7 @@ public:
   void EmitBytes(StringRef Data) { OS->EmitBytes(Data); }
 
   void EmitIntValue(uint64_t Value, unsigned Size) {
-    OS->EmitIntValue(Value, Size);
+    OS->EmitIntValueInHex(Value, Size);
   }
 
   void EmitBinaryData(StringRef Data) { OS->EmitBinaryData(Data); }

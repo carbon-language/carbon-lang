@@ -306,7 +306,7 @@ Error TypeRecordMapping::visitKnownRecord(CVType &CVR, VFTableRecord &Record) {
     for (auto Name : Record.MethodNames)
       NamesLen += Name.size() + 1;
   }
-  error(IO.mapInteger(NamesLen, ""));
+  error(IO.mapInteger(NamesLen));
   error(IO.mapVectorTail(
       Record.MethodNames,
       [](CodeViewRecordIO &IO, StringRef &S) {
