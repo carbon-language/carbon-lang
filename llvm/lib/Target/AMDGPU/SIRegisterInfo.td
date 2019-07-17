@@ -171,7 +171,7 @@ foreach Index = 0-15 in {
 multiclass FLAT_SCR_LOHI_m <string n, bits<16> ci_e, bits<16> vi_e> {
   def _ci : SIReg<n, ci_e>;
   def _vi : SIReg<n, vi_e>;
-  def "" : SIReg<"", 0>;
+  def "" : SIReg<n, 0>;
 }
 
 class FlatReg <Register lo, Register hi, bits<16> encoding> :
