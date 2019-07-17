@@ -1,0 +1,68 @@
+; RUN: llc -march=riscv32 --code-model=small  < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,SMALL %s
+; RUN: llc -march=riscv32 --code-model=medium < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,MED   %s
+; RUN: llc -march=riscv32 --code-model=small  -relocation-model=pic < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN: llc -march=riscv32 --code-model=medium -relocation-model=pic < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN: llc -march=riscv64 --code-model=small  < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,SMALL %s
+; RUN: llc -march=riscv64 --code-model=medium < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,MED   %s
+; RUN: llc -march=riscv64 --code-model=small  -relocation-model=pic < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+; RUN: llc -march=riscv64 --code-model=medium -relocation-model=pic < %s \
+; RUN:     | FileCheck --check-prefixes=CHECK,PIC %s
+
+declare void @throw_exception()
+
+declare i32 @__gxx_personality_v0(...)
+
+declare i8* @__cxa_begin_catch(i8*)
+
+declare void @__cxa_end_catch()
+
+; CHECK-LABEL: test1:
+; CHECK: .cfi_startproc
+; TODO: Personality encoding should be DW_EH_PE_indirect | DW_EH_PE_pcrel |
+; DW_EH_PE_sdata4
+; CHECK-NEXT:	.cfi_personality 0, __gxx_personality_v0
+; TODO: LSDA encoding should be DW_EH_PE_pcrel | DW_EH_PE_sdata4
+; CHECK-NEXT:	.cfi_lsda 0, .Lexception0
+
+define void @test1() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+  invoke void @throw_exception() to label %try.cont unwind label %lpad
+
+lpad:
+  %0 = landingpad { i8*, i32 }
+          catch i8* null
+  %1 = extractvalue { i8*, i32 } %0, 0
+  %2 = tail call i8* @__cxa_begin_catch(i8* %1)
+  tail call void @__cxa_end_catch()
+  br label %try.cont
+
+try.cont:
+  ret void
+}
+
+; CHECK-LABEL: GCC_except_table0:
+; CHECK-NEXT: .Lexception0:
+; CHECK-NEXT: .byte	255 # @LPStart Encoding = omit
+; TODO: TTypeEncoding encoding should be DW_EH_PE_indirect | DW_EH_PE_pcrel |
+; DW_EH_PE_sdata4
+; CHECK-NEXT: .byte 0 # @TType Encoding = absptr
+; TODO: call site encoding should be DW_EH_PE_udata4
+; CHECK: .Lttbaseref0:
+; CHECK-NEXT: .byte	1                       # Call site Encoding = uleb128
+; CHECK-NEXT: .uleb128 .Lcst_end0-.Lcst_begin0
+; CHECK-NEXT: cst_begin0:
+; CHECK-NEXT: .uleb128 .Ltmp0-.Lfunc_begin0   # >> Call Site 1 <<
+; CHECK-NEXT: .uleb128 .Ltmp1-.Ltmp0          #   Call between .Ltmp0 and .Ltmp1
+; CHECK-NEXT: .uleb128 .Ltmp2-.Lfunc_begin0   #     jumps to .Ltmp2
+; CHECK-NEXT: .byte	1                       #   On action: 1
+; CHECK-NEXT: .uleb128 .Ltmp1-.Lfunc_begin0   # >> Call Site 2 <<
+; CHECK-NEXT: .uleb128 .Lfunc_end0-.Ltmp1     #   Call between .Ltmp1 and .Lfunc_end0
+; CHECK-NEXT: .byte	0                       #     has no landing pad
+; CHECK-NEXT: .byte	0                       #   On action: cleanup
