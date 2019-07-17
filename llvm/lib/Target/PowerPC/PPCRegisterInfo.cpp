@@ -938,6 +938,9 @@ static unsigned offsetMinAlignForOpcode(unsigned OpC) {
   case PPC::STXSD:
   case PPC::STXSSP:
     return 4;
+  case PPC::EVLDD:
+  case PPC::EVSTDD:
+    return 8;
   case PPC::LXV:
   case PPC::STXV:
     return 16;
@@ -1060,7 +1063,10 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // happen in invalid code.
   assert(OpC != PPC::DBG_VALUE &&
          "This should be handled in a target-independent way");
-  if (!noImmForm && ((isInt<16>(Offset) &&
+  bool OffsetFitsMnemonic = (OpC == PPC::EVSTDD || OpC == PPC::EVLDD) ?
+                            isUInt<8>(Offset) :
+                            isInt<16>(Offset);
+  if (!noImmForm && ((OffsetFitsMnemonic &&
                       ((Offset % offsetMinAlign(MI)) == 0)) ||
                      OpC == TargetOpcode::STACKMAP ||
                      OpC == TargetOpcode::PATCHPOINT)) {
