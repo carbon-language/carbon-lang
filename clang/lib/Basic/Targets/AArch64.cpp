@@ -219,6 +219,9 @@ void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasMTE)
     Builder.defineMacro("__ARM_FEATURE_MEMORY_TAGGING", "1");
 
+  if (HasTME)
+    Builder.defineMacro("__ARM_FEATURE_TME", "1");
+
   if ((FPU & NeonMode) && HasFP16FML)
     Builder.defineMacro("__ARM_FEATURE_FP16FML", "1");
 
@@ -270,6 +273,7 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   HasDotProd = false;
   HasFP16FML = false;
   HasMTE = false;
+  HasTME = false;
   ArchKind = llvm::AArch64::ArchKind::ARMV8A;
 
   for (const auto &Feature : Features) {
@@ -301,6 +305,8 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasFP16FML = true;
     if (Feature == "+mte")
       HasMTE = true;
+    if (Feature == "+tme")
+      HasTME = true;
   }
 
   setDataLayout();
