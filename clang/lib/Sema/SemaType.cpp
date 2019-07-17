@@ -7038,7 +7038,7 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state, ParsedAttr &attr,
       // stdcall and fastcall are ignored with a warning for GCC and MS
       // compatibility.
       if (CC == CC_X86StdCall || CC == CC_X86FastCall)
-        return S.Diag(attr.getLoc(), diag::warn_cconv_ignored)
+        return S.Diag(attr.getLoc(), diag::warn_cconv_unsupported)
                << FunctionType::getNameForCallConv(CC)
                << (int)Sema::CallingConventionIgnoredReason::VariadicFunction;
 
@@ -7103,7 +7103,7 @@ void Sema::adjustMemberFunctionCC(QualType &T, bool IsStatic, bool IsCtorOrDtor,
     // Issue a warning on ignored calling convention -- except of __stdcall.
     // Again, this is what MS compiler does.
     if (CurCC != CC_X86StdCall)
-      Diag(Loc, diag::warn_cconv_ignored)
+      Diag(Loc, diag::warn_cconv_unsupported)
           << FunctionType::getNameForCallConv(CurCC)
           << (int)Sema::CallingConventionIgnoredReason::ConstructorDestructor;
   // Default adjustment.

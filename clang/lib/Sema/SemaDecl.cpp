@@ -3165,7 +3165,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD,
       // Calling Conventions on a Builtin aren't really useful and setting a
       // default calling convention and cdecl'ing some builtin redeclarations is
       // common, so warn and ignore the calling convention on the redeclaration.
-      Diag(New->getLocation(), diag::warn_cconv_ignored)
+      Diag(New->getLocation(), diag::warn_cconv_unsupported)
           << FunctionType::getNameForCallConv(NewTypeInfo.getCC())
           << (int)CallingConventionIgnoredReason::BuiltinFunction;
       NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
