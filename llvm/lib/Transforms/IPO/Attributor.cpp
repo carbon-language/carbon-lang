@@ -1332,7 +1332,6 @@ bool Attributor::checkForAllCallSites(Function &F,
   for (const Use &U : F.uses()) {
 
     CallSite CS(U.getUser());
-    dbgs() << *CS.getInstruction() << "\n";
     if (!CS || !CS.isCallee(&U) || !CS.getCaller()->hasExactDefinition()) {
       if (!RequireAllCallSites)
         continue;
