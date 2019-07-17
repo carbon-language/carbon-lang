@@ -178,6 +178,69 @@ class ScopBuilder {
   /// @param Stmt       The parent statement of the instruction
   void buildAccessSingleDim(MemAccInst Inst, ScopStmt *Stmt);
 
+  /// Finalize all access relations.
+  ///
+  /// When building up access relations, temporary access relations that
+  /// correctly represent each individual access are constructed. However, these
+  /// access relations can be inconsistent or non-optimal when looking at the
+  /// set of accesses as a whole. This function finalizes the memory accesses
+  /// and constructs a globally consistent state.
+  void finalizeAccesses();
+
+  /// Update access dimensionalities.
+  ///
+  /// When detecting memory accesses different accesses to the same array may
+  /// have built with different dimensionality, as outer zero-values dimensions
+  /// may not have been recognized as separate dimensions. This function goes
+  /// again over all memory accesses and updates their dimensionality to match
+  /// the dimensionality of the underlying ScopArrayInfo object.
+  void updateAccessDimensionality();
+
+  /// Fold size constants to the right.
+  ///
+  /// In case all memory accesses in a given dimension are multiplied with a
+  /// common constant, we can remove this constant from the individual access
+  /// functions and move it to the size of the memory access. We do this as this
+  /// increases the size of the innermost dimension, consequently widens the
+  /// valid range the array subscript in this dimension can evaluate to, and
+  /// as a result increases the likelihood that our delinearization is
+  /// correct.
+  ///
+  /// Example:
+  ///
+  ///    A[][n]
+  ///    S[i,j] -> A[2i][2j+1]
+  ///    S[i,j] -> A[2i][2j]
+  ///
+  ///    =>
+  ///
+  ///    A[][2n]
+  ///    S[i,j] -> A[i][2j+1]
+  ///    S[i,j] -> A[i][2j]
+  ///
+  /// Constants in outer dimensions can arise when the elements of a parametric
+  /// multi-dimensional array are not elementary data types, but e.g.,
+  /// structures.
+  void foldSizeConstantsToRight();
+
+  /// Fold memory accesses to handle parametric offset.
+  ///
+  /// As a post-processing step, we 'fold' memory accesses to parametric
+  /// offsets in the access functions. @see MemoryAccess::foldAccess for
+  /// details.
+  void foldAccessRelations();
+
+  /// Assume that all memory accesses are within bounds.
+  ///
+  /// After we have built a model of all memory accesses, we need to assume
+  /// that the model we built matches reality -- aka. all modeled memory
+  /// accesses always remain within bounds. We do this as last step, after
+  /// all memory accesses have been modeled and canonicalized.
+  void assumeNoOutOfBounds();
+
+  /// Mark arrays that have memory accesses with FortranArrayDescriptor.
+  void markFortranArrays();
+
   /// Build the alias checks for this SCoP.
   bool buildAliasChecks();
 

@@ -1154,6 +1154,195 @@ void ScopBuilder::addArrayAccess(ScopStmt *Stmt, MemAccInst MemAccInst,
     MemAccess->setFortranArrayDescriptor(FAD);
 }
 
+/// Check if @p Expr is divisible by @p Size.
+static bool isDivisible(const SCEV *Expr, unsigned Size, ScalarEvolution &SE) {
+  assert(Size != 0);
+  if (Size == 1)
+    return true;
+
+  // Only one factor needs to be divisible.
+  if (auto *MulExpr = dyn_cast<SCEVMulExpr>(Expr)) {
+    for (auto *FactorExpr : MulExpr->operands())
+      if (isDivisible(FactorExpr, Size, SE))
+        return true;
+    return false;
+  }
+
+  // For other n-ary expressions (Add, AddRec, Max,...) all operands need
+  // to be divisible.
+  if (auto *NAryExpr = dyn_cast<SCEVNAryExpr>(Expr)) {
+    for (auto *OpExpr : NAryExpr->operands())
+      if (!isDivisible(OpExpr, Size, SE))
+        return false;
+    return true;
+  }
+
+  auto *SizeSCEV = SE.getConstant(Expr->getType(), Size);
+  auto *UDivSCEV = SE.getUDivExpr(Expr, SizeSCEV);
+  auto *MulSCEV = SE.getMulExpr(UDivSCEV, SizeSCEV);
+  return MulSCEV == Expr;
+}
+
+void ScopBuilder::foldSizeConstantsToRight() {
+  isl::union_set Accessed = scop->getAccesses().range();
+
+  for (auto Array : scop->arrays()) {
+    if (Array->getNumberOfDimensions() <= 1)
+      continue;
+
+    isl::space Space = Array->getSpace();
+    Space = Space.align_params(Accessed.get_space());
+
+    if (!Accessed.contains(Space))
+      continue;
+
+    isl::set Elements = Accessed.extract_set(Space);
+    isl::map Transform = isl::map::universe(Array->getSpace().map_from_set());
+
+    std::vector<int> Int;
+    int Dims = Elements.dim(isl::dim::set);
+    for (int i = 0; i < Dims; i++) {
+      isl::set DimOnly = isl::set(Elements).project_out(isl::dim::set, 0, i);
+      DimOnly = DimOnly.project_out(isl::dim::set, 1, Dims - i - 1);
+      DimOnly = DimOnly.lower_bound_si(isl::dim::set, 0, 0);
+
+      isl::basic_set DimHull = DimOnly.affine_hull();
+
+      if (i == Dims - 1) {
+        Int.push_back(1);
+        Transform = Transform.equate(isl::dim::in, i, isl::dim::out, i);
+        continue;
+      }
+
+      if (DimHull.dim(isl::dim::div) == 1) {
+        isl::aff Diff = DimHull.get_div(0);
+        isl::val Val = Diff.get_denominator_val();
+
+        int ValInt = 1;
+        if (Val.is_int()) {
+          auto ValAPInt = APIntFromVal(Val);
+          if (ValAPInt.isSignedIntN(32))
+            ValInt = ValAPInt.getSExtValue();
+        } else {
+        }
+
+        Int.push_back(ValInt);
+        isl::constraint C = isl::constraint::alloc_equality(
+            isl::local_space(Transform.get_space()));
+        C = C.set_coefficient_si(isl::dim::out, i, ValInt);
+        C = C.set_coefficient_si(isl::dim::in, i, -1);
+        Transform = Transform.add_constraint(C);
+        continue;
+      }
+
+      isl::basic_set ZeroSet = isl::basic_set(DimHull);
+      ZeroSet = ZeroSet.fix_si(isl::dim::set, 0, 0);
+
+      int ValInt = 1;
+      if (ZeroSet.is_equal(DimHull)) {
+        ValInt = 0;
+      }
+
+      Int.push_back(ValInt);
+      Transform = Transform.equate(isl::dim::in, i, isl::dim::out, i);
+    }
+
+    isl::set MappedElements = isl::map(Transform).domain();
+    if (!Elements.is_subset(MappedElements))
+      continue;
+
+    bool CanFold = true;
+    if (Int[0] <= 1)
+      CanFold = false;
+
+    unsigned NumDims = Array->getNumberOfDimensions();
+    for (unsigned i = 1; i < NumDims - 1; i++)
+      if (Int[0] != Int[i] && Int[i])
+        CanFold = false;
+
+    if (!CanFold)
+      continue;
+
+    for (auto &Access : scop->access_functions())
+      if (Access->getScopArrayInfo() == Array)
+        Access->setAccessRelation(
+            Access->getAccessRelation().apply_range(Transform));
+
+    std::vector<const SCEV *> Sizes;
+    for (unsigned i = 0; i < NumDims; i++) {
+      auto Size = Array->getDimensionSize(i);
+
+      if (i == NumDims - 1)
+        Size = SE.getMulExpr(Size, SE.getConstant(Size->getType(), Int[0]));
+      Sizes.push_back(Size);
+    }
+
+    Array->updateSizes(Sizes, false /* CheckConsistency */);
+  }
+}
+
+void ScopBuilder::markFortranArrays() {
+  for (ScopStmt &Stmt : *scop) {
+    for (MemoryAccess *MemAcc : Stmt) {
+      Value *FAD = MemAcc->getFortranArrayDescriptor();
+      if (!FAD)
+        continue;
+
+      // TODO: const_cast-ing to edit
+      ScopArrayInfo *SAI =
+          const_cast<ScopArrayInfo *>(MemAcc->getLatestScopArrayInfo());
+      assert(SAI && "memory access into a Fortran array does not "
+                    "have an associated ScopArrayInfo");
+      SAI->applyAndSetFAD(FAD);
+    }
+  }
+}
+
+void ScopBuilder::finalizeAccesses() {
+  updateAccessDimensionality();
+  foldSizeConstantsToRight();
+  foldAccessRelations();
+  assumeNoOutOfBounds();
+  markFortranArrays();
+}
+
+void ScopBuilder::updateAccessDimensionality() {
+  // Check all array accesses for each base pointer and find a (virtual) element
+  // size for the base pointer that divides all access functions.
+  for (ScopStmt &Stmt : *scop)
+    for (MemoryAccess *Access : Stmt) {
+      if (!Access->isArrayKind())
+        continue;
+      ScopArrayInfo *Array =
+          const_cast<ScopArrayInfo *>(Access->getScopArrayInfo());
+
+      if (Array->getNumberOfDimensions() != 1)
+        continue;
+      unsigned DivisibleSize = Array->getElemSizeInBytes();
+      const SCEV *Subscript = Access->getSubscript(0);
+      while (!isDivisible(Subscript, DivisibleSize, SE))
+        DivisibleSize /= 2;
+      auto *Ty = IntegerType::get(SE.getContext(), DivisibleSize * 8);
+      Array->updateElementType(Ty);
+    }
+
+  for (auto &Stmt : *scop)
+    for (auto &Access : Stmt)
+      Access->updateDimensionality();
+}
+
+void ScopBuilder::foldAccessRelations() {
+  for (auto &Stmt : *scop)
+    for (auto &Access : Stmt)
+      Access->foldAccessRelation();
+}
+
+void ScopBuilder::assumeNoOutOfBounds() {
+  for (auto &Stmt : *scop)
+    for (auto &Access : Stmt)
+      Access->assumeNoOutOfBound();
+}
+
 void ScopBuilder::ensureValueWrite(Instruction *Inst) {
   // Find the statement that defines the value of Inst. That statement has to
   // write the value to make it available to those statements that read it.
@@ -2367,7 +2556,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC) {
 
   scop->buildSchedule(LI);
 
-  scop->finalizeAccesses();
+  finalizeAccesses();
 
   scop->realignParams();
   addUserContext();
