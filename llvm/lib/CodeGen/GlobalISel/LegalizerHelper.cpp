@@ -747,6 +747,42 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     Observer.changedInstr(MI);
     return Legalized;
   }
+  case TargetOpcode::G_ICMP: {
+    uint64_t SrcSize = MRI.getType(MI.getOperand(2).getReg()).getSizeInBits();
+    if (NarrowSize * 2 != SrcSize)
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    Register LHSL = MRI.createGenericVirtualRegister(NarrowTy);
+    Register LHSH = MRI.createGenericVirtualRegister(NarrowTy);
+    MIRBuilder.buildUnmerge({LHSL, LHSH}, MI.getOperand(2).getReg());
+
+    Register RHSL = MRI.createGenericVirtualRegister(NarrowTy);
+    Register RHSH = MRI.createGenericVirtualRegister(NarrowTy);
+    MIRBuilder.buildUnmerge({RHSL, RHSH}, MI.getOperand(3).getReg());
+
+    CmpInst::Predicate Pred =
+        static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate());
+
+    if (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::ICMP_NE) {
+      MachineInstrBuilder XorL = MIRBuilder.buildXor(NarrowTy, LHSL, RHSL);
+      MachineInstrBuilder XorH = MIRBuilder.buildXor(NarrowTy, LHSH, RHSH);
+      MachineInstrBuilder Or = MIRBuilder.buildOr(NarrowTy, XorL, XorH);
+      MachineInstrBuilder Zero = MIRBuilder.buildConstant(NarrowTy, 0);
+      MIRBuilder.buildICmp(Pred, MI.getOperand(0).getReg(), Or, Zero);
+    } else {
+      const LLT s1 = LLT::scalar(1);
+      MachineInstrBuilder CmpH = MIRBuilder.buildICmp(Pred, s1, LHSH, RHSH);
+      MachineInstrBuilder CmpHEQ =
+          MIRBuilder.buildICmp(CmpInst::Predicate::ICMP_EQ, s1, LHSH, RHSH);
+      MachineInstrBuilder CmpLU = MIRBuilder.buildICmp(
+          ICmpInst::getUnsignedPredicate(Pred), s1, LHSL, RHSL);
+      MIRBuilder.buildSelect(MI.getOperand(0).getReg(), CmpHEQ, CmpLU, CmpH);
+    }
+    Observer.changedInstr(MI);
+    MI.eraseFromParent();
+    return Legalized;
+  }
   }
 }
 
