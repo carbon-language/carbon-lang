@@ -549,7 +549,12 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       if (const auto *chCon{
               UnwrapExpr<Constant<TypeOf<std::string>>>(args[0])}) {
         if (std::optional<std::string> value{chCon->GetScalarValue()}) {
-          return Expr<T>{SelectedCharKind(*value)};
+          if (*value == "default") {
+            return Expr<T>{
+                context.defaults().GetDefaultKind(TypeCategory::Character)};
+          } else {
+            return Expr<T>{SelectedCharKind(*value)};
+          }
         }
       }
     } else if (name == "selected_int_kind") {

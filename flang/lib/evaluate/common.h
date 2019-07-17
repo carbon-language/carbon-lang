@@ -207,21 +207,26 @@ template<typename A> class Expr;
 
 class FoldingContext {
 public:
-  FoldingContext() = default;
-  explicit FoldingContext(const parser::ContextualMessages &m,
+  explicit FoldingContext(const common::IntrinsicTypeDefaultKinds &d)
+    : defaults_{d} {}
+  FoldingContext(const parser::ContextualMessages &m,
+      const common::IntrinsicTypeDefaultKinds &d,
       Rounding round = defaultRounding, bool flush = false)
-    : messages_{m}, rounding_{round}, flushSubnormalsToZero_{flush} {}
+    : messages_{m}, defaults_{d}, rounding_{round}, flushSubnormalsToZero_{
+                                                        flush} {}
   FoldingContext(const FoldingContext &that)
-    : messages_{that.messages_}, rounding_{that.rounding_},
+    : messages_{that.messages_}, defaults_{that.defaults_},
+      rounding_{that.rounding_},
       flushSubnormalsToZero_{that.flushSubnormalsToZero_},
       pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
   FoldingContext(
       const FoldingContext &that, const parser::ContextualMessages &m)
-    : messages_{m}, rounding_{that.rounding_},
+    : messages_{m}, defaults_{that.defaults_}, rounding_{that.rounding_},
       flushSubnormalsToZero_{that.flushSubnormalsToZero_},
       pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
 
   parser::ContextualMessages &messages() { return messages_; }
+  const common::IntrinsicTypeDefaultKinds &defaults() { return defaults_; }
   Rounding rounding() const { return rounding_; }
   bool flushSubnormalsToZero() const { return flushSubnormalsToZero_; }
   bool bigEndian() const { return bigEndian_; }
@@ -245,6 +250,7 @@ public:
 
 private:
   parser::ContextualMessages messages_;
+  const common::IntrinsicTypeDefaultKinds &defaults_;
   Rounding rounding_{defaultRounding};
   bool flushSubnormalsToZero_{false};
   bool bigEndian_{false};
