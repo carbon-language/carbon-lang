@@ -24,6 +24,7 @@
 #include "polly/Support/VirtualInstruction.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Loads.h"
@@ -220,6 +221,179 @@ void ScopBuilder::buildScalarDependences(ScopStmt *UserStmt,
   // Pull-in required operands.
   for (Use &Op : Inst->operands())
     ensureValueRead(Op.get(), UserStmt);
+}
+
+// Create a sequence of two schedules. Either argument may be null and is
+// interpreted as the empty schedule. Can also return null if both schedules are
+// empty.
+static isl::schedule combineInSequence(isl::schedule Prev, isl::schedule Succ) {
+  if (!Prev)
+    return Succ;
+  if (!Succ)
+    return Prev;
+
+  return Prev.sequence(Succ);
+}
+
+// Create an isl_multi_union_aff that defines an identity mapping from the
+// elements of USet to their N-th dimension.
+//
+// # Example:
+//
+//            Domain: { A[i,j]; B[i,j,k] }
+//                 N: 1
+//
+// Resulting Mapping: { {A[i,j] -> [(j)]; B[i,j,k] -> [(j)] }
+//
+// @param USet   A union set describing the elements for which to generate a
+//               mapping.
+// @param N      The dimension to map to.
+// @returns      A mapping from USet to its N-th dimension.
+static isl::multi_union_pw_aff mapToDimension(isl::union_set USet, int N) {
+  assert(N >= 0);
+  assert(USet);
+  assert(!USet.is_empty());
+
+  auto Result = isl::union_pw_multi_aff::empty(USet.get_space());
+
+  for (isl::set S : USet.get_set_list()) {
+    int Dim = S.dim(isl::dim::set);
+    auto PMA = isl::pw_multi_aff::project_out_map(S.get_space(), isl::dim::set,
+                                                  N, Dim - N);
+    if (N > 1)
+      PMA = PMA.drop_dims(isl::dim::out, 0, N - 1);
+
+    Result = Result.add_pw_multi_aff(PMA);
+  }
+
+  return isl::multi_union_pw_aff(isl::union_pw_multi_aff(Result));
+}
+
+void ScopBuilder::buildSchedule() {
+  Loop *L = getLoopSurroundingScop(*scop, LI);
+  LoopStackTy LoopStack({LoopStackElementTy(L, nullptr, 0)});
+  buildSchedule(scop->getRegion().getNode(), LoopStack);
+  assert(LoopStack.size() == 1 && LoopStack.back().L == L);
+  scop->setScheduleTree(LoopStack[0].Schedule);
+}
+
+/// To generate a schedule for the elements in a Region we traverse the Region
+/// in reverse-post-order and add the contained RegionNodes in traversal order
+/// to the schedule of the loop that is currently at the top of the LoopStack.
+/// For loop-free codes, this results in a correct sequential ordering.
+///
+/// Example:
+///           bb1(0)
+///         /     \.
+///      bb2(1)   bb3(2)
+///         \    /  \.
+///          bb4(3)  bb5(4)
+///             \   /
+///              bb6(5)
+///
+/// Including loops requires additional processing. Whenever a loop header is
+/// encountered, the corresponding loop is added to the @p LoopStack. Starting
+/// from an empty schedule, we first process all RegionNodes that are within
+/// this loop and complete the sequential schedule at this loop-level before
+/// processing about any other nodes. To implement this
+/// loop-nodes-first-processing, the reverse post-order traversal is
+/// insufficient. Hence, we additionally check if the traversal yields
+/// sub-regions or blocks that are outside the last loop on the @p LoopStack.
+/// These region-nodes are then queue and only traverse after the all nodes
+/// within the current loop have been processed.
+void ScopBuilder::buildSchedule(Region *R, LoopStackTy &LoopStack) {
+  Loop *OuterScopLoop = getLoopSurroundingScop(*scop, LI);
+
+  ReversePostOrderTraversal<Region *> RTraversal(R);
+  std::deque<RegionNode *> WorkList(RTraversal.begin(), RTraversal.end());
+  std::deque<RegionNode *> DelayList;
+  bool LastRNWaiting = false;
+
+  // Iterate over the region @p R in reverse post-order but queue
+  // sub-regions/blocks iff they are not part of the last encountered but not
+  // completely traversed loop. The variable LastRNWaiting is a flag to indicate
+  // that we queued the last sub-region/block from the reverse post-order
+  // iterator. If it is set we have to explore the next sub-region/block from
+  // the iterator (if any) to guarantee progress. If it is not set we first try
+  // the next queued sub-region/blocks.
+  while (!WorkList.empty() || !DelayList.empty()) {
+    RegionNode *RN;
+
+    if ((LastRNWaiting && !WorkList.empty()) || DelayList.empty()) {
+      RN = WorkList.front();
+      WorkList.pop_front();
+      LastRNWaiting = false;
+    } else {
+      RN = DelayList.front();
+      DelayList.pop_front();
+    }
+
+    Loop *L = getRegionNodeLoop(RN, LI);
+    if (!scop->contains(L))
+      L = OuterScopLoop;
+
+    Loop *LastLoop = LoopStack.back().L;
+    if (LastLoop != L) {
+      if (LastLoop && !LastLoop->contains(L)) {
+        LastRNWaiting = true;
+        DelayList.push_back(RN);
+        continue;
+      }
+      LoopStack.push_back({L, nullptr, 0});
+    }
+    buildSchedule(RN, LoopStack);
+  }
+}
+
+void ScopBuilder::buildSchedule(RegionNode *RN, LoopStackTy &LoopStack) {
+  if (RN->isSubRegion()) {
+    auto *LocalRegion = RN->getNodeAs<Region>();
+    if (!scop->isNonAffineSubRegion(LocalRegion)) {
+      buildSchedule(LocalRegion, LoopStack);
+      return;
+    }
+  }
+
+  assert(LoopStack.rbegin() != LoopStack.rend());
+  auto LoopData = LoopStack.rbegin();
+  LoopData->NumBlocksProcessed += getNumBlocksInRegionNode(RN);
+
+  for (auto *Stmt : scop->getStmtListFor(RN)) {
+    isl::union_set UDomain{Stmt->getDomain()};
+    auto StmtSchedule = isl::schedule::from_domain(UDomain);
+    LoopData->Schedule = combineInSequence(LoopData->Schedule, StmtSchedule);
+  }
+
+  // Check if we just processed the last node in this loop. If we did, finalize
+  // the loop by:
+  //
+  //   - adding new schedule dimensions
+  //   - folding the resulting schedule into the parent loop schedule
+  //   - dropping the loop schedule from the LoopStack.
+  //
+  // Then continue to check surrounding loops, which might also have been
+  // completed by this node.
+  size_t Dimension = LoopStack.size();
+  while (LoopData->L &&
+         LoopData->NumBlocksProcessed == getNumBlocksInLoop(LoopData->L)) {
+    isl::schedule Schedule = LoopData->Schedule;
+    auto NumBlocksProcessed = LoopData->NumBlocksProcessed;
+
+    assert(std::next(LoopData) != LoopStack.rend());
+    ++LoopData;
+    --Dimension;
+
+    if (Schedule) {
+      isl::union_set Domain = Schedule.get_domain();
+      isl::multi_union_pw_aff MUPA = mapToDimension(Domain, Dimension);
+      Schedule = Schedule.insert_partial_schedule(MUPA);
+      LoopData->Schedule = combineInSequence(LoopData->Schedule, Schedule);
+    }
+
+    LoopData->NumBlocksProcessed += NumBlocksProcessed;
+  }
+  // Now pop all loops processed up there from the LoopStack
+  LoopStack.erase(LoopStack.begin() + Dimension, LoopStack.end());
 }
 
 void ScopBuilder::buildEscapingDependences(Instruction *Inst) {
@@ -2554,7 +2728,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC) {
     return;
   }
 
-  scop->buildSchedule(LI);
+  buildSchedule();
 
   finalizeAccesses();
 

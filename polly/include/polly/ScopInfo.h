@@ -2109,66 +2109,6 @@ private:
   /// have a corresponding domain in the domain map (or it is empty).
   void removeStmtNotInDomainMap();
 
-  /// Construct the schedule of this SCoP.
-  ///
-  /// @param LI The LoopInfo for the current function.
-  void buildSchedule(LoopInfo &LI);
-
-  /// A loop stack element to keep track of per-loop information during
-  ///        schedule construction.
-  using LoopStackElementTy = struct LoopStackElement {
-    // The loop for which we keep information.
-    Loop *L;
-
-    // The (possibly incomplete) schedule for this loop.
-    isl::schedule Schedule;
-
-    // The number of basic blocks in the current loop, for which a schedule has
-    // already been constructed.
-    unsigned NumBlocksProcessed;
-
-    LoopStackElement(Loop *L, isl::schedule S, unsigned NumBlocksProcessed)
-        : L(L), Schedule(S), NumBlocksProcessed(NumBlocksProcessed) {}
-  };
-
-  /// The loop stack used for schedule construction.
-  ///
-  /// The loop stack keeps track of schedule information for a set of nested
-  /// loops as well as an (optional) 'nullptr' loop that models the outermost
-  /// schedule dimension. The loops in a loop stack always have a parent-child
-  /// relation where the loop at position n is the parent of the loop at
-  /// position n + 1.
-  using LoopStackTy = SmallVector<LoopStackElementTy, 4>;
-
-  /// Construct schedule information for a given Region and add the
-  ///        derived information to @p LoopStack.
-  ///
-  /// Given a Region we derive schedule information for all RegionNodes
-  /// contained in this region ensuring that the assigned execution times
-  /// correctly model the existing control flow relations.
-  ///
-  /// @param R              The region which to process.
-  /// @param LoopStack      A stack of loops that are currently under
-  ///                       construction.
-  /// @param LI The LoopInfo for the current function.
-  void buildSchedule(Region *R, LoopStackTy &LoopStack, LoopInfo &LI);
-
-  /// Build Schedule for the region node @p RN and add the derived
-  ///        information to @p LoopStack.
-  ///
-  /// In case @p RN is a BasicBlock or a non-affine Region, we construct the
-  /// schedule for this @p RN and also finalize loop schedules in case the
-  /// current @p RN completes the loop.
-  ///
-  /// In case @p RN is a not-non-affine Region, we delegate the construction to
-  /// buildSchedule(Region *R, ...).
-  ///
-  /// @param RN             The RegionNode region traversed.
-  /// @param LoopStack      A stack of loops that are currently under
-  ///                       construction.
-  /// @param LI The LoopInfo for the current function.
-  void buildSchedule(RegionNode *RN, LoopStackTy &LoopStack, LoopInfo &LI);
-
   /// Collect all memory access relations of a given type.
   ///
   /// @param Predicate A predicate function that returns true if an access is
