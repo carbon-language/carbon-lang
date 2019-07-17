@@ -12,6 +12,7 @@
 #include "DWARFRewriter.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "ParallelUtilities.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -55,11 +56,18 @@ KeepARanges("keep-aranges",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+DeterministicDebugInfo("deterministic-debuginfo",
+  cl::desc("disables parallel execution of tasks that may produce"
+           "nondeterministic debug info"),
+  cl::init(true),
+  cl::cat(BoltCategory));
+
 } // namespace opts
 
 void DWARFRewriter::updateDebugInfo() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
-  SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
+  SectionPatchers[".debug_info"] = llvm::make_unique<SimpleBinaryPatcher>();
 
   DebugInfoPatcher =
       static_cast<SimpleBinaryPatcher *>(SectionPatchers[".debug_info"].get());
@@ -70,9 +78,23 @@ void DWARFRewriter::updateDebugInfo() {
   RangesSectionsWriter = llvm::make_unique<DebugRangesSectionsWriter>(&BC);
   LocationListWriter = llvm::make_unique<DebugLocWriter>(&BC);
 
-  for (auto &CU : BC.DwCtx->compile_units()) {
-    updateUnitDebugInfo(CU->getUnitDIE(false),
-                        std::vector<const BinaryFunction *>{});
+  auto processUnitDIE = [&](const DWARFDie DIE) {
+    const BinaryFunction *CachedFunction = nullptr;
+    std::map<DebugAddressRangesVector, uint64_t> CachedRanges{};
+    updateUnitDebugInfo(DIE, std::vector<const BinaryFunction *>{},
+                        CachedFunction, CachedRanges);
+  };
+
+  if (opts::NoThreads || opts::DeterministicDebugInfo) {
+    for (auto &CU : BC.DwCtx->compile_units())
+      processUnitDIE(CU->getUnitDIE(false));
+  } else {
+    // Update unit debug info in parallel
+    auto &ThreadPool = ParallelUtilities::getThreadPool();
+    for (auto &CU : BC.DwCtx->compile_units())
+      ThreadPool.async(processUnitDIE, CU->getUnitDIE(false));
+
+    ThreadPool.wait();
   }
 
   flushPendingRanges();
@@ -83,9 +105,9 @@ void DWARFRewriter::updateDebugInfo() {
 }
 
 void DWARFRewriter::updateUnitDebugInfo(
-    const DWARFDie DIE,
-    std::vector<const BinaryFunction *> FunctionStack) {
-
+    const DWARFDie DIE, std::vector<const BinaryFunction *> FunctionStack,
+    const BinaryFunction *&CachedFunction,
+    std::map<DebugAddressRangesVector, uint64_t> &CachedRanges) {
   bool IsFunctionDef = false;
   switch (DIE.getTag()) {
   case dwarf::DW_TAG_compile_unit:
@@ -93,8 +115,8 @@ void DWARFRewriter::updateUnitDebugInfo(
       const auto ModuleRanges = DIE.getAddressRanges();
       auto OutputRanges = BC.translateModuleAddressRanges(ModuleRanges);
       const auto RangesSectionOffset =
-        RangesSectionsWriter->addCURanges(DIE.getDwarfUnit()->getOffset(),
-                                          std::move(OutputRanges));
+      RangesSectionsWriter->addCURanges(DIE.getDwarfUnit()->getOffset(),
+                                        std::move(OutputRanges));
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
     }
     break;
@@ -134,11 +156,19 @@ void DWARFRewriter::updateUnitDebugInfo(
         const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
         assert(Abbrev && "abbrev expected");
 
+        // Create a critical section.
+        static std::shared_timed_mutex CriticalSectionMutex;
+        std::unique_lock<std::shared_timed_mutex> Lock(CriticalSectionMutex);
+
         if (FunctionRanges.size() > 1) {
           convertPending(Abbrev);
+          // Exit critical section early.
+          Lock.unlock();
           convertToRanges(DIE, FunctionRanges);
         } else if (ConvertedRangesAbbrevs.find(Abbrev) !=
                    ConvertedRangesAbbrevs.end()) {
+          // Exit critical section early.
+          Lock.unlock();
           convertToRanges(DIE, FunctionRanges);
         } else {
           if (FunctionRanges.empty())
@@ -169,8 +199,8 @@ void DWARFRewriter::updateUnitDebugInfo(
                    << Twine::utohexstr(DIE.getDwarfUnit()->getOffset()) << '\n';
           }
         );
-        RangesSectionOffset =
-          RangesSectionsWriter->addRanges(Function, std::move(OutputRanges));
+        RangesSectionOffset = RangesSectionsWriter->addRanges(
+            Function, std::move(OutputRanges), CachedFunction, CachedRanges);
       }
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
     }
@@ -219,6 +249,7 @@ void DWARFRewriter::updateUnitDebugInfo(
             }
           }
 
+          std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
           DebugInfoPatcher->addLE32Patch(AttrOffset, LocListSectionOffset);
         } else {
           assert((Value.isFormClass(DWARFFormValue::FC_Exprloc) ||
@@ -238,6 +269,8 @@ void DWARFRewriter::updateUnitDebugInfo(
                          << " for DIE with tag " << DIE.getTag()
                          << " to 0x" << Twine::utohexstr(NewAddress) << '\n');
           }
+
+          std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
           DebugInfoPatcher->addLE64Patch(AttrOffset, NewAddress);
         } else if (opts::Verbosity >= 1) {
           errs() << "BOLT-WARNING: unexpected form value for attribute at 0x"
@@ -249,7 +282,7 @@ void DWARFRewriter::updateUnitDebugInfo(
 
   // Recursively update each child.
   for (auto Child = DIE.getFirstChild(); Child; Child = Child.getSibling()) {
-    updateUnitDebugInfo(Child, FunctionStack);
+    updateUnitDebugInfo(Child, FunctionStack, CachedFunction, CachedRanges);
   }
 
   if (IsFunctionDef)
@@ -286,6 +319,8 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
     uint32_t AttrOffset = -1U;
     DIE.find(dwarf::DW_AT_ranges, &AttrOffset);
     assert(AttrOffset != -1U &&  "failed to locate DWARF attribute");
+
+    std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
     DebugInfoPatcher->addLE32Patch(AttrOffset, DebugRangesOffset);
   } else {
     // Case 2: The object has both DW_AT_low_pc and DW_AT_high_pc emitted back
@@ -578,6 +613,7 @@ void DWARFRewriter::updateGdbIndexSection() {
 
 void
 DWARFRewriter::convertToRanges(const DWARFAbbreviationDeclaration *Abbrev) {
+  std::lock_guard<std::mutex> Lock(AbbrevPatcherMutex);
   AbbrevPatcher->addAttributePatch(Abbrev,
                                    dwarf::DW_AT_low_pc,
                                    dwarf::DW_AT_ranges,
@@ -684,6 +720,8 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
   } else {
     llvm_unreachable("unexpected form");
   }
+
+  std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
   DebugInfoPatcher->addLE32Patch(LowPCOffset, RangesSectionOffset);
   DebugInfoPatcher->addUDataPatch(LowPCOffset + 4, 0, LowPCSize);
 }

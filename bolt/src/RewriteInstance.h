@@ -295,8 +295,8 @@ public:
   static bool isDebugSection(StringRef SectionName);
 
   using SectionPatchersType =
-    std::map<std::string, std::unique_ptr<BinaryPatcher>>;
-
+      std::map<std::string, std::unique_ptr<BinaryPatcher>>;
+      
 private:
   /// Get the contents of the LSDA section for this binary.
   ArrayRef<uint8_t> getLSDAData();

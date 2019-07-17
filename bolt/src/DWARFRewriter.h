@@ -15,6 +15,7 @@
 #include "DebugData.h"
 #include "RewriteInstance.h"
 #include <map>
+#include <mutex>
 
 namespace llvm {
 
@@ -32,7 +33,12 @@ class DWARFRewriter {
   SectionPatchersType &SectionPatchers;
 
   SimpleBinaryPatcher *DebugInfoPatcher{nullptr};
+  
+  std::mutex DebugInfoPatcherMutex;
+
   DebugAbbrevPatcher *AbbrevPatcher{nullptr};
+  
+  std::mutex AbbrevPatcherMutex;
 
   /// Stores and serializes information that will be put into the .debug_ranges
   /// and .debug_aranges DWARF sections.
@@ -43,8 +49,10 @@ class DWARFRewriter {
   /// Recursively update debug info for all DIEs in \p Unit.
   /// If \p Function is not empty, it points to a function corresponding
   /// to a parent DW_TAG_subprogram node of the current \p DIE.
-  void updateUnitDebugInfo(const DWARFDie DIE,
-                           std::vector<const BinaryFunction *> FunctionStack);
+  void updateUnitDebugInfo(
+      const DWARFDie DIE, std::vector<const BinaryFunction *> FunctionStack,
+      const BinaryFunction *&CachedFunction,
+      std::map<DebugAddressRangesVector, uint64_t> &CachedRanges);
 
   /// Patches the binary for an object's address ranges to be updated.
   /// The object can be a anything that has associated address ranges via either
@@ -68,7 +76,7 @@ class DWARFRewriter {
 
   /// Abbreviations that were converted to use DW_AT_ranges.
   std::set<const DWARFAbbreviationDeclaration *> ConvertedRangesAbbrevs;
-
+  
   /// DIEs with abbrevs that were not converted to DW_AT_ranges.
   /// We only update those when all DIEs have been processed to guarantee that
   /// the abbrev (which is shared) is intact.

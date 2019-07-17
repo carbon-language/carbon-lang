@@ -65,22 +65,22 @@ DebugRangesSectionsWriter::DebugRangesSectionsWriter(BinaryContext *BC) {
   SectionOffset += writeAddressRanges(Writer.get(), DebugAddressRangesVector{});
 }
 
-uint64_t DebugRangesSectionsWriter::addCURanges(
-    uint64_t CUOffset,
-    DebugAddressRangesVector &&Ranges) {
+uint64_t
+DebugRangesSectionsWriter::addCURanges(uint64_t CUOffset,
+                                       DebugAddressRangesVector &&Ranges) {
   const auto RangesOffset = addRanges(Ranges);
-  CUAddressRanges.emplace(CUOffset, std::move(Ranges));
 
+  std::lock_guard<std::mutex> Lock(CUAddressRangesMutex);
+  CUAddressRanges.emplace(CUOffset, std::move(Ranges));
   return RangesOffset;
 }
 
-uint64_t
-DebugRangesSectionsWriter::addRanges(const BinaryFunction *Function,
-                                     DebugAddressRangesVector &&Ranges) {
+uint64_t DebugRangesSectionsWriter::addRanges(
+    const BinaryFunction *Function, DebugAddressRangesVector &&Ranges,
+    const BinaryFunction *&CachedFunction,
+    std::map<DebugAddressRangesVector, uint64_t> &CachedRanges) {
   if (Ranges.empty())
     return getEmptyRangesOffset();
-
-  static const BinaryFunction *CachedFunction;
 
   if (Function == CachedFunction) {
     const auto RI = CachedRanges.find(Ranges);
@@ -102,6 +102,9 @@ DebugRangesSectionsWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   if (Ranges.empty())
     return getEmptyRangesOffset();
 
+  // Reading the SectionOffset and updating it should be atomic to guarantee
+  // unique and correct offsets in patches.
+  std::lock_guard<std::mutex> Lock(WriterMutex);
   const auto EntryOffset = SectionOffset;
   SectionOffset += writeAddressRanges(Writer.get(), Ranges);
 
@@ -165,14 +168,17 @@ uint64_t DebugLocWriter::addList(const DWARFDebugLoc::LocationList &LocList) {
   if (LocList.Entries.empty())
     return getEmptyListOffset();
 
+  // Reading the SectionOffset and updating it should be atomic to guarantee
+  // unique and correct offsets in patches.
+  std::lock_guard<std::mutex> Lock(WriterMutex);
   const auto EntryOffset = SectionOffset;
+  
   for (const auto &Entry : LocList.Entries) {
     Writer->writeLE64(Entry.Begin);
     Writer->writeLE64(Entry.End);
     Writer->writeLE16(Entry.Loc.size());
-    Writer->writeBytes(
-        StringRef(reinterpret_cast<const char *>(Entry.Loc.data()),
-                  Entry.Loc.size()));
+    Writer->writeBytes(StringRef(
+        reinterpret_cast<const char *>(Entry.Loc.data()), Entry.Loc.size()));
     SectionOffset += 2 * 8 + 2 + Entry.Loc.size();
   }
   Writer->writeLE64(0);

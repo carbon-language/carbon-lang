@@ -20,6 +20,7 @@
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#include <mutex>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -102,8 +103,10 @@ public:
   uint64_t addCURanges(uint64_t CUOffset, DebugAddressRangesVector &&Ranges);
 
   /// Add ranges with caching for \p Function.
-  uint64_t addRanges(const BinaryFunction *Function,
-                     DebugAddressRangesVector &&Ranges);
+  uint64_t
+  addRanges(const BinaryFunction *Function, DebugAddressRangesVector &&Ranges,
+            const BinaryFunction *&CachedFunction,
+            std::map<DebugAddressRangesVector, uint64_t> &CachedRanges);
 
   /// Add ranges and return offset into section.
   uint64_t addRanges(const DebugAddressRangesVector &Ranges);
@@ -139,6 +142,8 @@ private:
 
   std::unique_ptr<MCObjectWriter> Writer;
 
+  std::mutex WriterMutex;
+
   /// Current offset in the section (updated as new entries are written).
   /// Starts with 16 since the first 16 bytes are reserved for an empty range.
   uint32_t SectionOffset{0};
@@ -148,11 +153,10 @@ private:
   /// (first address, interval size).
   CUAddressRangesType CUAddressRanges;
 
+  std::mutex CUAddressRangesMutex;
+
   /// Offset of an empty address ranges list.
   static constexpr uint64_t EmptyRangesOffset{0};
-
-  /// Cached used for de-duplicating entries for the same function.
-  std::map<DebugAddressRangesVector, uint64_t> CachedRanges;
 };
 
 /// Serializes the .debug_loc DWARF section with LocationLists.
@@ -174,6 +178,8 @@ private:
   std::unique_ptr<raw_svector_ostream> LocStream;
 
   std::unique_ptr<MCObjectWriter> Writer;
+
+  std::mutex WriterMutex;
 
   /// Offset of an empty location list.
   static uint64_t const EmptyListOffset = 0;

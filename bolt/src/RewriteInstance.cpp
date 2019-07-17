@@ -1112,8 +1112,12 @@ void RewriteInstance::run() {
     executeRewritePass(LargeFunctions, false);
   }
 
-  if (opts::UpdateDebugSections)
-    DebugInfoRewriter->updateDebugInfo();
+  {
+    NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
+                       TimerGroupDesc, opts::TimeRewrite);
+    if (opts::UpdateDebugSections)
+      DebugInfoRewriter->updateDebugInfo();
+  }
 
   addBoltInfoSection();
 
