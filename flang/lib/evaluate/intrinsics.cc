@@ -76,10 +76,11 @@ ENUM_CLASS(KindCode, none, defaultIntegerKind,
     doublePrecision, defaultCharKind, defaultLogicalKind,
     any,  // matches any kind value; each instance is independent
     same,  // match any kind, but all "same" kinds must be equal
+    operand,  // match any kind, with promotion (non-standard)
     typeless,  // BOZ literals are INTEGER with this kind
     teamType,  // TEAM_TYPE from module ISO_FORTRAN_ENV (for coarrays)
     kindArg,  // this argument is KIND=
-    effectiveKind,  // for function results: same "kindArg", possibly defaulted
+    effectiveKind,  // for function results: "kindArg" value, possibly defaulted
     dimArg,  // this argument is DIM=
     likeMultiply,  // for DOT_PRODUCT and MATMUL
     subscript,  // address-sized integer
@@ -139,6 +140,13 @@ static constexpr TypePattern SameIntrinsic{IntrinsicType, KindCode::same};
 static constexpr TypePattern SameDerivedType{
     CategorySet{TypeCategory::Derived}, KindCode::same};
 static constexpr TypePattern SameType{AnyType, KindCode::same};
+
+// Match some kind of some INTEGER or REAL type(s); when argument types
+// &/or kinds differ, their values are converted as if they were operands to
+// an intrinsic operation like addition.  This is a nonstandard but nearly
+// universal extension feature.
+static constexpr TypePattern OperandReal{RealType, KindCode::operand};
+static constexpr TypePattern OperandIntOrReal{IntOrRealType, KindCode::operand};
 
 // For DOT_PRODUCT and MATMUL, the result type depends on the arguments
 static constexpr TypePattern ResultLogical{LogicalType, KindCode::likeMultiply};
@@ -263,8 +271,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"target", Anything, Rank::known, Optionality::optional}},
         DefaultLogical},
     {"atan", {{"x", SameFloating}}, SameFloating},
-    {"atan", {{"y", SameReal}, {"x", SameReal}}, SameReal},
-    {"atan2", {{"y", SameReal}, {"x", SameReal}}, SameReal},
+    {"atan", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
+    {"atan2", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
     {"atanh", {{"x", SameFloating}}, SameFloating},
     {"bessel_j0", {{"x", SameReal}}, SameReal},
     {"bessel_j1", {{"x", SameReal}}, SameReal},
@@ -317,7 +325,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             OptionalDIM},
         SameType, Rank::conformable},
     {"dble", {{"a", AnyNumeric, Rank::elementalOrBOZ}}, DoublePrecision},
-    {"dim", {{"x", SameIntOrReal}, {"y", SameIntOrReal}}, SameIntOrReal},
+    {"dim", {{"x", OperandIntOrReal}, {"y", OperandIntOrReal}},
+        OperandIntOrReal},
     {"dot_product",
         {{"vector_a", AnyLogical, Rank::vector},
             {"vector_b", AnyLogical, Rank::vector}},
@@ -395,7 +404,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"floor", {{"a", AnyReal}, DefaultingKIND}, KINDInt},
     {"fraction", {{"x", SameReal}}, SameReal},
     {"gamma", {{"x", SameReal}}, SameReal},
-    {"hypot", {{"x", SameReal}, {"y", SameReal}}, SameReal},
+    {"hypot", {{"x", OperandReal}, {"y", OperandReal}}, OperandReal},
     {"iachar", {{"c", AnyChar}, DefaultingKIND}, KINDInt},
     {"iall", {{"array", SameInt, Rank::array}, OptionalDIM, OptionalMASK},
         SameInt, Rank::dimReduced},
@@ -479,9 +488,13 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"maskl", {{"i", AnyInt}, DefaultingKIND}, KINDInt},
     {"maskr", {{"i", AnyInt}, DefaultingKIND}, KINDInt},
     {"max",
-        {{"a1", SameRelatable}, {"a2", SameRelatable},
-            {"a3", SameRelatable, Rank::elemental, Optionality::repeats}},
-        SameRelatable},
+        {{"a1", OperandIntOrReal}, {"a2", OperandIntOrReal},
+            {"a3", OperandIntOrReal, Rank::elemental, Optionality::repeats}},
+        OperandIntOrReal},
+    {"max",
+        {{"a1", SameChar}, {"a2", SameChar},
+            {"a3", SameChar, Rank::elemental, Optionality::repeats}},
+        SameChar},
     {"maxloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
             SubscriptDefaultKIND,
@@ -501,9 +514,13 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"i", BOZ}, {"j", SameInt}, {"mask", SameInt, Rank::elementalOrBOZ}},
         SameInt},
     {"min",
-        {{"a1", SameRelatable}, {"a2", SameRelatable},
-            {"a3", SameRelatable, Rank::elemental, Optionality::repeats}},
-        SameRelatable},
+        {{"a1", OperandIntOrReal}, {"a2", OperandIntOrReal},
+            {"a3", OperandIntOrReal, Rank::elemental, Optionality::repeats}},
+        OperandIntOrReal},
+    {"min",
+        {{"a1", SameChar}, {"a2", SameChar},
+            {"a3", SameChar, Rank::elemental, Optionality::repeats}},
+        SameChar},
     {"minloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
             SubscriptDefaultKIND,
@@ -512,8 +529,10 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"minval",
         {{"array", SameRelatable, Rank::array}, OptionalDIM, OptionalMASK},
         SameRelatable, Rank::dimReduced},
-    {"mod", {{"a", SameIntOrReal}, {"p", SameIntOrReal}}, SameIntOrReal},
-    {"modulo", {{"a", SameIntOrReal}, {"p", SameIntOrReal}}, SameIntOrReal},
+    {"mod", {{"a", OperandIntOrReal}, {"p", OperandIntOrReal}},
+        OperandIntOrReal},
+    {"modulo", {{"a", OperandIntOrReal}, {"p", OperandIntOrReal}},
+        OperandIntOrReal},
     {"nearest", {{"x", SameReal}, {"s", AnyReal}}, SameReal},
     {"nint", {{"a", AnyReal}, DefaultingKIND}, KINDInt},
     {"norm2", {{"x", SameReal, Rank::array}, OptionalDIM}, SameReal,
@@ -664,6 +683,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //  probably more (these are PGI + Intel, possibly incomplete)
 // TODO: Optionally warn on use of non-standard intrinsics:
 //  LOC, probably others
+// TODO: Optionally warn on operand promotion extension
 
 // The following table contains the intrinsic functions listed in
 // Tables 16.2 and 16.3 in Fortran 2018.  The "unrestricted" functions
@@ -909,8 +929,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
 
   // Check types and kinds of the actual arguments against the intrinsic's
   // interface.  Ensure that two or more arguments that have to have the same
-  // type and kind do so.  Check for missing non-optional arguments now, too.
+  // (or compatible) type and kind do so.  Check for missing non-optional
+  // arguments now, too.
   const ActualArgument *sameArg{nullptr};
+  const ActualArgument *operandArg{nullptr};
   const IntrinsicDummyArgument *kindDummyArg{nullptr};
   const ActualArgument *kindArg{nullptr};
   bool hasDimArg{false};
@@ -1008,6 +1030,20 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         sameArg = arg;
       }
       argOk = type->IsTkCompatibleWith(sameArg->GetType().value());
+      break;
+    case KindCode::operand:
+      if (operandArg == nullptr) {
+        operandArg = arg;
+      } else if (auto prev{operandArg->GetType()}) {
+        if (type->category() == prev->category()) {
+          if (type->kind() > prev->kind()) {
+            operandArg = arg;
+          }
+        } else if (prev->category() == TypeCategory::Integer) {
+          operandArg = arg;
+        }
+      }
+      argOk = true;
       break;
     case KindCode::effectiveKind:
       common::die("INTERNAL: KindCode::effectiveKind appears on argument '%s' "
@@ -1158,6 +1194,16 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     case KindCode::same:
       CHECK(sameArg != nullptr);
       if (std::optional<DynamicType> aType{sameArg->GetType()}) {
+        if (result.categorySet.test(aType->category())) {
+          resultType = *aType;
+        } else {
+          resultType = DynamicType{*category, aType->kind()};
+        }
+      }
+      break;
+    case KindCode::operand:
+      CHECK(operandArg != nullptr);
+      if (std::optional<DynamicType> aType{operandArg->GetType()}) {
         if (result.categorySet.test(aType->category())) {
           resultType = *aType;
         } else {
