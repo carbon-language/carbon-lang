@@ -68,7 +68,7 @@ is_equal(const T& x, const T& y)
 
 struct test_one_policy
 {
-#if _PSTL_ICC_17_VC141_TEST_SIMD_LAMBDA_DEBUG_32_BROKEN ||                                                            \
+#if _PSTL_ICC_17_VC141_TEST_SIMD_LAMBDA_DEBUG_32_BROKEN ||                                                             \
     _PSTL_ICC_16_VC14_TEST_SIMD_LAMBDA_DEBUG_32_BROKEN // dummy specialization by policy type, in case of broken configuration
     template <typename Iterator1, typename Size, typename Generator1, typename Generator2, typename Compare>
     typename std::enable_if<is_same_iterator_category<Iterator1, std::random_access_iterator_tag>::value, void>::type
@@ -113,8 +113,7 @@ struct test_one_policy
     template <typename Policy, typename Iterator1, typename Size, typename Generator1, typename Generator2,
               typename Compare>
     typename std::enable_if<!is_same_iterator_category<Iterator1, std::random_access_iterator_tag>::value, void>::type
-    operator()(Policy&&, Iterator1, Iterator1, Iterator1, Iterator1, Size, Size,
-               Generator1, Generator2, Compare)
+    operator()(Policy&&, Iterator1, Iterator1, Iterator1, Iterator1, Size, Size, Generator1, Generator2, Compare)
     {
     }
 };

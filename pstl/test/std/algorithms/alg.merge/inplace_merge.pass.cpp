@@ -20,7 +20,7 @@ using namespace TestUtils;
 
 struct test_one_policy
 {
-#if _PSTL_ICC_17_VC141_TEST_SIMD_LAMBDA_DEBUG_32_BROKEN ||                                                            \
+#if _PSTL_ICC_17_VC141_TEST_SIMD_LAMBDA_DEBUG_32_BROKEN ||                                                             \
     _PSTL_ICC_16_VC14_TEST_SIMD_LAMBDA_DEBUG_32_BROKEN // dummy specialization by policy type, in case of broken configuration
     template <typename BiDirIt1, typename Size, typename Generator1, typename Generator2, typename Compare>
     void
@@ -60,8 +60,7 @@ struct test_one_policy
     template <typename Policy, typename BiDirIt1, typename Size, typename Generator1, typename Generator2,
               typename Compare>
     typename std::enable_if<is_same_iterator_category<BiDirIt1, std::forward_iterator_tag>::value, void>::type
-    operator()(Policy&&, BiDirIt1, BiDirIt1, BiDirIt1, BiDirIt1, Size, Size,
-               Generator1, Generator2, Compare)
+    operator()(Policy&&, BiDirIt1, BiDirIt1, BiDirIt1, BiDirIt1, Size, Size, Generator1, Generator2, Compare)
     {
     }
 };

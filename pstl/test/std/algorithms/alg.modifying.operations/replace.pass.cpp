@@ -23,7 +23,7 @@ struct copy_int
 {
     int32_t value;
     int32_t copied_times = 0;
-    constexpr explicit copy_int(int32_t val = 0) : value(val) { }
+    constexpr explicit copy_int(int32_t val = 0) : value(val) {}
 
     constexpr copy_int&
     operator=(const copy_int& other)
@@ -82,8 +82,7 @@ struct test_one_policy
     }
 
     template <typename T, typename Iterator1>
-    bool
-    check(Iterator1, Iterator1)
+    bool check(Iterator1, Iterator1)
     {
         return true;
     }
