@@ -1,6 +1,6 @@
 # REQUIRES: aarch64
 # RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-freebsd %s -o %t
-# RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-freebsd %p/Inputs/uabs_label.s -o %t2.o
+# RUN: echo '.globl zero; zero = 0' | llvm-mc -filetype=obj -triple=aarch64-unknown-freebsd -o %t2.o
 # RUN: ld.lld %t %t2.o -o %t2
 # RUN: llvm-objdump -d %t2 | FileCheck %s
 
@@ -169,11 +169,11 @@ foo16:
 
 .section .R_AARCH64_MOVW_UABS,"ax",@progbits
 movz1:
-   movk x12, #:abs_g0_nc:uabs_label
-   movk x13, #:abs_g1_nc:uabs_label
-   movk x14, #:abs_g2_nc:uabs_label
-   movz x15, #:abs_g3:uabs_label
-   movk x16, #:abs_g3:uabs_label
+   movk x12, #:abs_g0_nc:zero+0xF000E000D000C
+   movk x13, #:abs_g1_nc:zero+0xF000E000D000C
+   movk x14, #:abs_g2_nc:zero+0xF000E000D000C
+   movz x15, #:abs_g3:zero+0xF000E000D000C
+   movk x16, #:abs_g3:zero+0xF000E000D000C
 
 ## 4222124650659840 == (0xF << 48)
 # CHECK: Disassembly of section .R_AARCH64_MOVW_UABS:
