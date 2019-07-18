@@ -134,6 +134,7 @@ Extensions and legacy features deliberately not supported
 * Using non-integer expressions for array bounds (e.g., REAL A(3.14159)) (PGI/Intel)
 * Mixing INTEGER types as operands to bit intrinsics (e.g., IAND); only two
   compilers support it, and they disagree on sign extension.
+* Module & program names that conflict with an object inside the unit (PGI only).
 
 Preprocessing behavior
 ======================
