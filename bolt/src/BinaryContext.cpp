@@ -12,11 +12,12 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "ParallelUtilities.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
-#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCObjectStreamer.h"
@@ -1101,7 +1102,7 @@ void findSubprograms(const DWARFDie DIE,
     if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
       auto It = BinaryFunctions.find(LowPC);
       if (It != BinaryFunctions.end()) {
-        It->second.addSubprogramDIE(DIE);
+          It->second.addSubprogramDIE(DIE);
       } else {
         // The function must have been optimized away by GC.
       }
@@ -1110,7 +1111,7 @@ void findSubprograms(const DWARFDie DIE,
       for (const auto Range : DIE.getAddressRanges()) {
         auto It = BinaryFunctions.find(Range.LowPC);
         if (It != BinaryFunctions.end()) {
-          It->second.addSubprogramDIE(DIE);
+            It->second.addSubprogramDIE(DIE);
         }
       }
     }
@@ -1198,8 +1199,39 @@ void BinaryContext::preprocessDebugInfo() {
 
   // For each CU, iterate over its children DIEs and match subprogram DIEs to
   // BinaryFunctions.
-  for (auto &CU : DwCtx->compile_units()) {
-    findSubprograms(CU->getUnitDIE(false), BinaryFunctions);
+
+  // Run findSubprograms on a range of compilation units
+  auto processBlock = [&](auto BlockBegin, auto BlockEnd) {
+    for (auto It = BlockBegin; It != BlockEnd; ++It) {
+      findSubprograms((*It)->getUnitDIE(false), BinaryFunctions);
+    }
+  };
+
+  if (opts::NoThreads) {
+    processBlock(DwCtx->compile_units().begin(), DwCtx->compile_units().end());
+  } else {
+    auto &ThreadPool = ParallelUtilities::getThreadPool();
+
+    // Divide compilation units uniformally into tasks.
+    unsigned BlockCost =
+        DwCtx->getNumCompileUnits() / (opts::TaskCount * opts::ThreadCount);
+    if (BlockCost == 0)
+      BlockCost = 1;
+
+    auto BlockBegin = DwCtx->compile_units().begin();
+    unsigned CurrentCost = 0;
+    for (auto It = DwCtx->compile_units().begin();
+         It != DwCtx->compile_units().end(); It++) {
+      CurrentCost++;
+      if (CurrentCost >= BlockCost) {
+        ThreadPool.async(processBlock, BlockBegin, std::next(It));
+        BlockBegin = std::next(It);
+        CurrentCost = 0;
+      }
+    }
+
+    ThreadPool.async(processBlock, BlockBegin, DwCtx->compile_units().end());
+    ThreadPool.wait();
   }
 
   // Some functions may not have a corresponding subprogram DIE
@@ -1236,7 +1268,7 @@ void BinaryContext::preprocessDebugInfo() {
     }
 #endif
   }
-}
+ }
 
 void BinaryContext::printCFI(raw_ostream &OS, const MCCFIInstruction &Inst) {
   uint32_t Operation = Inst.getOperation();

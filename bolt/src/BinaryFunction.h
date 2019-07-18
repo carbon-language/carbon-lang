@@ -2186,6 +2186,8 @@ public:
 
   /// Sets the associated .debug_info entry.
   void addSubprogramDIE(const DWARFDie DIE) {
+    static std::mutex CriticalSectionMutex;
+    std::lock_guard<std::mutex> Lock(CriticalSectionMutex);
     SubprogramDIEs.emplace_back(DIE);
     if (!UnitLineTable.first) {
       if (const auto *LineTable =
