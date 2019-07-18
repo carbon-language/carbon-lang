@@ -509,9 +509,6 @@ BackgroundIndex::loadProject(std::vector<std::string> MainFiles) {
     auto Cmd = CDB.getCompileCommand(TU);
     if (!Cmd)
       continue;
-    std::string ProjectRoot;
-    if (auto PI = CDB.getProjectInfo(TU))
-      ProjectRoot = std::move(PI->SourceRoot);
     NeedsReIndexing.emplace_back(std::move(*Cmd));
   }
 
