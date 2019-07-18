@@ -663,6 +663,20 @@ TEST(TweakTest, ExpandAutoType) {
     const char * x = "test";
   )cpp";
   checkTransform(ID, Input, Output);
+
+  Input = R"cpp(
+  namespace {
+  class Foo {};
+  }
+  au^to f = Foo();
+  )cpp";
+  Output = R"cpp(
+  namespace {
+  class Foo {};
+  }
+  Foo f = Foo();
+  )cpp";
+  checkTransform(ID, Input, Output);
 }
 
 } // namespace
