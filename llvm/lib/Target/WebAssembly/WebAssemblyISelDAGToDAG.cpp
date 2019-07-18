@@ -235,7 +235,7 @@ void WebAssemblyDAGToDAGISel::Select(SDNode *Node) {
       assert(PtrVT == MVT::i32 && "only wasm32 is supported for now");
 
       MachineSDNode *TLSBase = CurDAG->getMachineNode(
-          WebAssembly::GLOBAL_GET_I32, DL, MVT::i32,
+          WebAssembly::GLOBAL_GET_I32, DL, MVT::i32, MVT::Other,
           CurDAG->getTargetExternalSymbol("__tls_base", PtrVT),
           Node->getOperand(0));
       ReplaceNode(Node, TLSBase);
