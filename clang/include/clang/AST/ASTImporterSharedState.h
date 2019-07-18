@@ -17,18 +17,24 @@
 
 #include "clang/AST/ASTImporterLookupTable.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 // FIXME We need this because of ImportError.
 #include "clang/AST/ASTImporter.h"
 
 namespace clang {
 
+class ASTUnit;
 class TranslationUnitDecl;
 
 /// Importer specific state, which may be shared amongst several ASTImporter
 /// objects.
 class ASTImporterSharedState {
+public:
+  using ImportedFileIDMap =
+      llvm::DenseMap<FileID, std::pair<FileID, ASTUnit *>>;
 
+private:
   /// Pointer to the import specific lookup table.
   std::unique_ptr<ASTImporterLookupTable> LookupTable;
 
@@ -42,6 +48,16 @@ class ASTImporterSharedState {
 
   // FIXME put ImportedFromDecls here!
   // And from that point we can better encapsulate the lookup table.
+
+  /// Map of imported FileID's (in "To" context) to FileID in "From" context
+  /// and the ASTUnit that contains the preprocessor and source manager for the
+  /// "From" FileID. This map is used to lookup a FileID and its SourceManager
+  /// when knowing only the FileID in the 'To' context. The FileID could be
+  /// imported by any of multiple ASTImporter objects. The map is used because
+  /// we do not want to loop over all ASTImporter's to find the one that
+  /// imported the FileID. (The ASTUnit is usable to get the SourceManager and
+  /// additional data.)
+  ImportedFileIDMap ImportedFileIDs;
 
 public:
   ASTImporterSharedState() = default;
@@ -74,6 +90,12 @@ public:
 
   void setImportDeclError(Decl *To, ImportError Error) {
     ImportErrors[To] = Error;
+  }
+
+  ImportedFileIDMap &getImportedFileIDs() { return ImportedFileIDs; }
+
+  const ImportedFileIDMap &getImportedFileIDs() const {
+    return ImportedFileIDs;
   }
 };
 

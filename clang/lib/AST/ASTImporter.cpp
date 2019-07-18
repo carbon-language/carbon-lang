@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTImporter.h"
-#include "clang/AST/ASTImporterSharedState.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
+#include "clang/AST/ASTImporterSharedState.h"
 #include "clang/AST/ASTStructuralEquivalence.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
@@ -52,13 +52,14 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -7716,9 +7717,22 @@ ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
                          ASTContext &FromContext, FileManager &FromFileManager,
                          bool MinimalImport,
                          std::shared_ptr<ASTImporterSharedState> SharedState)
+    : ASTImporter(ToContext, ToFileManager, FromContext, FromFileManager,
+                  nullptr, MinimalImport, SharedState){}
+ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
+                         ASTUnit &FromUnit, bool MinimalImport,
+                         std::shared_ptr<ASTImporterSharedState> SharedState)
+    : ASTImporter(ToContext, ToFileManager, FromUnit.getASTContext(),
+                  FromUnit.getFileManager(), &FromUnit, MinimalImport,
+                  SharedState){}
+
+ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
+                         ASTContext &FromContext, FileManager &FromFileManager,
+                         ASTUnit *FromUnit, bool MinimalImport,
+                         std::shared_ptr<ASTImporterSharedState> SharedState)
     : SharedState(SharedState), ToContext(ToContext), FromContext(FromContext),
       ToFileManager(ToFileManager), FromFileManager(FromFileManager),
-      Minimal(MinimalImport) {
+      FromUnit(FromUnit), Minimal(MinimalImport) {
 
   // Create a default state without the lookup table: LLDB case.
   if (!SharedState) {
@@ -8421,6 +8435,13 @@ Expected<FileID> ASTImporter::Import(FileID FromID, bool IsBuiltin) {
   assert(ToID.isValid() && "Unexpected invalid fileID was created.");
 
   ImportedFileIDs[FromID] = ToID;
+  if (FromUnit) {
+    assert(SharedState->getImportedFileIDs().find(ToID) ==
+               SharedState->getImportedFileIDs().end() &&
+           "FileID already imported!");
+    SharedState->getImportedFileIDs()[ToID] = std::make_pair(FromID, FromUnit);
+  }
+
   return ToID;
 }
 
