@@ -26,7 +26,7 @@
 ; DWARF-DUMP: DW_AT_name        ("dwarf-riscv-relocs.c")
 ; DWARF-DUMP: DW_AT_comp_dir    (".")
 ; DWARF-DUMP: DW_AT_name      ("main")
-; DWARF-DUMP: DW_AT_decl_file ("./dwarf-riscv-relocs.c")
+; DWARF-DUMP: DW_AT_decl_file ("{{.*}}dwarf-riscv-relocs.c")
 ; DWARF-DUMP: DW_AT_decl_line (1)
 ; DWARF-DUMP: DW_AT_type      (0x00000032 "int")
 ; DWARF-DUMP: DW_AT_name      ("int")
