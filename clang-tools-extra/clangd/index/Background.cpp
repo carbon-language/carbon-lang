@@ -181,8 +181,8 @@ BackgroundQueue::Task BackgroundIndex::changedFilesTask(
                  std::mt19937(std::random_device{}()));
     std::vector<BackgroundQueue::Task> Tasks;
     Tasks.reserve(NeedsReIndexing.size());
-    for (auto &Elem : NeedsReIndexing)
-      Tasks.push_back(indexFileTask(std::move(Elem.first), Elem.second));
+    for (auto &Cmd : NeedsReIndexing)
+      Tasks.push_back(indexFileTask(std::move(Cmd)));
     Queue.append(std::move(Tasks));
   });
 
@@ -197,13 +197,12 @@ static llvm::StringRef filenameWithoutExtension(llvm::StringRef Path) {
 }
 
 BackgroundQueue::Task
-BackgroundIndex::indexFileTask(tooling::CompileCommand Cmd,
-                               BackgroundIndexStorage *Storage) {
-  BackgroundQueue::Task T([this, Storage, Cmd] {
+BackgroundIndex::indexFileTask(tooling::CompileCommand Cmd) {
+  BackgroundQueue::Task T([this, Cmd] {
     // We can't use llvm::StringRef here since we are going to
     // move from Cmd during the call below.
     const std::string FileName = Cmd.Filename;
-    if (auto Error = index(std::move(Cmd), Storage))
+    if (auto Error = index(std::move(Cmd)))
       elog("Indexing {0} failed: {1}", FileName, std::move(Error));
   });
   T.QueuePri = IndexFile;
@@ -226,7 +225,7 @@ void BackgroundIndex::boostRelated(llvm::StringRef Path) {
 void BackgroundIndex::update(
     llvm::StringRef MainFile, IndexFileIn Index,
     const llvm::StringMap<ShardVersion> &ShardVersionsSnapshot,
-    BackgroundIndexStorage *IndexStorage, bool HadErrors) {
+    bool HadErrors) {
   // Partition symbols/references into files.
   struct File {
     llvm::DenseSet<const Symbol *> Symbols;
@@ -310,22 +309,21 @@ void BackgroundIndex::update(
     // We need to store shards before updating the index, since the latter
     // consumes slabs.
     // FIXME: Also skip serializing the shard if it is already up-to-date.
-    if (IndexStorage) {
-      IndexFileOut Shard;
-      Shard.Symbols = SS.get();
-      Shard.Refs = RS.get();
-      Shard.Relations = RelS.get();
-      Shard.Sources = IG.get();
+    BackgroundIndexStorage *IndexStorage = IndexStorageFactory(Path);
+    IndexFileOut Shard;
+    Shard.Symbols = SS.get();
+    Shard.Refs = RS.get();
+    Shard.Relations = RelS.get();
+    Shard.Sources = IG.get();
 
-      // Only store command line hash for main files of the TU, since our
-      // current model keeps only one version of a header file.
-      if (Path == MainFile)
-        Shard.Cmd = Index.Cmd.getPointer();
+    // Only store command line hash for main files of the TU, since our
+    // current model keeps only one version of a header file.
+    if (Path == MainFile)
+      Shard.Cmd = Index.Cmd.getPointer();
 
-      if (auto Error = IndexStorage->storeShard(Path, Shard))
-        elog("Failed to write background-index shard for file {0}: {1}", Path,
-             std::move(Error));
-    }
+    if (auto Error = IndexStorage->storeShard(Path, Shard))
+      elog("Failed to write background-index shard for file {0}: {1}", Path,
+           std::move(Error));
 
     {
       std::lock_guard<std::mutex> Lock(ShardVersionsMu);
@@ -348,8 +346,7 @@ void BackgroundIndex::update(
   }
 }
 
-llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
-                                   BackgroundIndexStorage *IndexStorage) {
+llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd) {
   trace::Span Tracer("BackgroundIndex");
   SPAN_ATTACH(Tracer, "file", Cmd.Filename);
   auto AbsolutePath = getAbsolutePath(Cmd);
@@ -443,8 +440,7 @@ llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
     for (auto &It : *Index.Sources)
       It.second.Flags |= IncludeGraphNode::SourceFlag::HadErrors;
   }
-  update(AbsolutePath, std::move(Index), ShardVersionsSnapshot, IndexStorage,
-         HadErrors);
+  update(AbsolutePath, std::move(Index), ShardVersionsSnapshot, HadErrors);
 
   Rebuilder.indexedTU();
   return llvm::Error::success();
@@ -453,10 +449,9 @@ llvm::Error BackgroundIndex::index(tooling::CompileCommand Cmd,
 // Restores shards for \p MainFiles from index storage. Then checks staleness of
 // those shards and returns a list of TUs that needs to be indexed to update
 // staleness.
-std::vector<std::pair<tooling::CompileCommand, BackgroundIndexStorage *>>
+std::vector<tooling::CompileCommand>
 BackgroundIndex::loadProject(std::vector<std::string> MainFiles) {
-  std::vector<std::pair<tooling::CompileCommand, BackgroundIndexStorage *>>
-      NeedsReIndexing;
+  std::vector<tooling::CompileCommand> NeedsReIndexing;
 
   Rebuilder.startLoading();
   // Load shards for all of the mainfiles.
@@ -517,8 +512,7 @@ BackgroundIndex::loadProject(std::vector<std::string> MainFiles) {
     std::string ProjectRoot;
     if (auto PI = CDB.getProjectInfo(TU))
       ProjectRoot = std::move(PI->SourceRoot);
-    BackgroundIndexStorage *Storage = IndexStorageFactory(ProjectRoot);
-    NeedsReIndexing.emplace_back(std::move(*Cmd), Storage);
+    NeedsReIndexing.emplace_back(std::move(*Cmd));
   }
 
   return NeedsReIndexing;
