@@ -515,7 +515,7 @@ bool Constant::needsRelocation() const {
         // between two of them don't when they are for labels in the same
         // function.  This is a common idiom when creating a table for the
         // indirect goto extension, so we handle it efficiently here.
-        if (isa<BlockAddress>(LHSOp0) && isa<BlockAddress>(LHSOp0) &&
+        if (isa<BlockAddress>(LHSOp0) && isa<BlockAddress>(RHSOp0) &&
             cast<BlockAddress>(LHSOp0)->getFunction() ==
                 cast<BlockAddress>(RHSOp0)->getFunction())
           return false;
