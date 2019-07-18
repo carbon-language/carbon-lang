@@ -7419,7 +7419,9 @@ static void deduceOpenCLImplicitAddrSpace(TypeProcessingState &State,
       (T->isVoidType() && !IsPointee) ||
       // Do not deduce addr spaces for dependent types because they might end
       // up instantiating to a type with an explicit address space qualifier.
-      T->isDependentType() ||
+      // Except for pointer or reference types because the addr space in
+      // template argument can only belong to a pointee.
+      (T->isDependentType() && !T->isPointerType() && !T->isReferenceType()) ||
       // Do not deduce addr space of decltype because it will be taken from
       // its argument.
       T->isDecltypeType() ||
