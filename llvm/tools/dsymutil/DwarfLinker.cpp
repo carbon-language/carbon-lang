@@ -2003,7 +2003,7 @@ void DwarfLinker::patchFrameInfoForObject(const DebugMapObject &DMO,
                                           RangesTy &Ranges,
                                           DWARFContext &OrigDwarf,
                                           unsigned AddrSize) {
-  StringRef FrameData = OrigDwarf.getDWARFObj().getDebugFrameSection().Data;
+  StringRef FrameData = OrigDwarf.getDWARFObj().getDebugFrameSection();
   if (FrameData.empty())
     return;
 

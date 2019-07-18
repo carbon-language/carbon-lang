@@ -840,10 +840,6 @@ void MCAssembler::layout(MCAsmLayout &Layout) {
           getBackend().shouldInsertFixupForCodeAlign(*this, Layout, *AF);
         }
         continue;
-      } else if (auto *FragWithFixups =
-                     dyn_cast<MCDwarfCallFrameFragment>(&Frag)) {
-        Fixups = FragWithFixups->getFixups();
-        Contents = FragWithFixups->getContents();
       } else
         llvm_unreachable("Unknown fragment with fixups!");
       for (const MCFixup &Fixup : Fixups) {
@@ -973,9 +969,13 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
   MCContext &Context = Layout.getAssembler().getContext();
   uint64_t OldSize = DF.getContents().size();
   int64_t AddrDelta;
-  bool Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, Layout);
-  assert(Abs && "We created a line delta with an invalid expression");
-  (void)Abs;
+  bool Abs;
+  if (getBackend().requiresDiffExpressionRelocations())
+    Abs = DF.getAddrDelta().evaluateAsAbsolute(AddrDelta, Layout);
+  else {
+    Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, Layout);
+    assert(Abs && "We created a line delta with an invalid expression");
+  }
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
   SmallVectorImpl<char> &Data = DF.getContents();
@@ -983,7 +983,7 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
   raw_svector_ostream OSE(Data);
   DF.getFixups().clear();
 
-  if (!getBackend().requiresDiffExpressionRelocations()) {
+  if (Abs) {
     MCDwarfLineAddr::Encode(Context, getDWARFLinetableParams(), LineDelta,
                             AddrDelta, OSE);
   } else {
@@ -1017,25 +1017,10 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
   bool Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, Layout);
   assert(Abs && "We created call frame with an invalid expression");
   (void) Abs;
-  SmallVectorImpl<char> &Data = DF.getContents();
+  SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
-  DF.getFixups().clear();
-
-  if (getBackend().requiresDiffExpressionRelocations()) {
-    uint32_t Offset;
-    uint32_t Size;
-    MCDwarfFrameEmitter::EncodeAdvanceLoc(Context, AddrDelta, OSE, &Offset,
-                                          &Size);
-    if (Size) {
-      DF.getFixups().push_back(MCFixup::create(
-          Offset, &DF.getAddrDelta(),
-          MCFixup::getKindForSizeInBits(Size /*In bits.*/, false /*isPCRel*/)));
-    }
-  } else {
-    MCDwarfFrameEmitter::EncodeAdvanceLoc(Context, AddrDelta, OSE);
-  }
-
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(Context, AddrDelta, OSE);
   return OldSize != Data.size();
 }
 
