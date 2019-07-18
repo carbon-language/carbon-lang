@@ -135,6 +135,10 @@ Extensions and legacy features deliberately not supported
 * Mixing INTEGER types as operands to bit intrinsics (e.g., IAND); only two
   compilers support it, and they disagree on sign extension.
 * Module & program names that conflict with an object inside the unit (PGI only).
+* When the same name is brought into scope via USE association from
+  multiple modules, the name must refer to a generic interface; PGI
+  allows a name to be a procedure from one module and a generic interface
+  from another.
 
 Preprocessing behavior
 ======================
