@@ -2,7 +2,7 @@
 // RUN: %clang_asan %s -o %t.out -ldl
 // RUN: ASAN_OPTIONS=verbosity=1 not %t.out %t.so 2>&1 | FileCheck %s
 //
-// CHECK: AddressSanitizer: failed to intercept '__cxa_throw'
+// CHECK: {{.*}}AddressSanitizer: failed to intercept '__cxa_{{.*}}throw{{.*}}'
 //
 // dlopen() can not be intercepted on Android
 // UNSUPPORTED: android
