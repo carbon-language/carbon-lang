@@ -115,7 +115,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test<Number>(Number(42, OddTag()), std::equal_to<Number>(),

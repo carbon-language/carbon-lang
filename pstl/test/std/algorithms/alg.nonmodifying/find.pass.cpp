@@ -80,7 +80,7 @@ class Weird
     Weird(int32_t val, OddTag) : value(val, OddTag()) {}
 };
 
-int32_t
+int
 main()
 {
     // Note that the "hit" and "miss" functions here avoid overflow issues.

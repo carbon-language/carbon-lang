@@ -136,7 +136,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
 #if !_PSTL_ICC_16_17_18_TEST_UNIQUE_MASK_RELEASE_BROKEN

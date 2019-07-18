@@ -76,7 +76,7 @@ test(T trash, const T& value, Convert convert, bool check_weakness = true)
     }
 }
 
-int32_t
+int
 main()
 {
 

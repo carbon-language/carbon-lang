@@ -156,7 +156,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test_by_type<int32_t>([](int32_t i) { return 10 * i; }, [](int32_t i) { return i + 1; }, std::less<int32_t>());

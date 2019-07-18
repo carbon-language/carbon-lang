@@ -123,7 +123,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test<float64_t>(-666.0, [](const float64_t& x) { return x * x <= 1024; },

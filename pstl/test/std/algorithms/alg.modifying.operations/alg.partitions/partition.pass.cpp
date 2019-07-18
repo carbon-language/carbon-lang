@@ -161,7 +161,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
 #if !_PSTL_ICC_16_17_TEST_REDUCTION_RELEASE_BROKEN

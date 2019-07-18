@@ -131,7 +131,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     count_val = 0;

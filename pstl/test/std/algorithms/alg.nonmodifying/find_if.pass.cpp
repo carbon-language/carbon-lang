@@ -89,7 +89,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
 #if !_PSTL_ICC_17_TEST_MAC_RELEASE_32_BROKEN

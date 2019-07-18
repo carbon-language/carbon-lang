@@ -145,7 +145,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test<int32_t, float32_t>(__pstl::__internal::__equal_value<int32_t>(666));

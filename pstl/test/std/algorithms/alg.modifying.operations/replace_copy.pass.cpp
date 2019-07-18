@@ -83,7 +83,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
 

@@ -116,7 +116,7 @@ test_by_type(T init, BinaryOperation1 opB1, BinaryOperation2 opB2, UnaryOp opU, 
     }
 }
 
-int32_t
+int
 main()
 {
     test_by_type<int32_t>(42, std::plus<int32_t>(), std::multiplies<int32_t>(), std::negate<int32_t>(),

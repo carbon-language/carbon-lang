@@ -117,7 +117,7 @@ test()
     }
 }
 
-int32_t
+int
 main()
 {
     // clang-3.8 fails to correctly auto vectorize the loop in some cases of different types of container's elements,

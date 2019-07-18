@@ -185,7 +185,7 @@ test(T trash, Convert convert)
     }
 }
 
-int32_t
+int
 main()
 {
     test<int32_t>(-666, [](size_t j) { return int32_t(j); });

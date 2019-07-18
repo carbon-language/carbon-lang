@@ -180,7 +180,7 @@ test_matrix(Out init, BinaryOp binary_op, Out trash)
     }
 }
 
-int32_t
+int
 main()
 {
     for (int32_t mode = 0; mode < 2; ++mode)

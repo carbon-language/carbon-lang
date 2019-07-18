@@ -156,7 +156,7 @@ test(Pred pred)
     }
 }
 
-int32_t
+int
 main()
 {
     test<uint8_t, uint32_t>([](uint32_t a, uint32_t b) { return a - b; });

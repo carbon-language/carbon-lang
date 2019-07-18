@@ -134,7 +134,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test_by_type<float64_t>([](int32_t i) { return -2 * i; }, [](int32_t i) { return -(2 * i + 1); },

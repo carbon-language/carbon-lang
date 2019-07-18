@@ -178,7 +178,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test_partial_sort_copy<Num<float32_t>>([](Num<float32_t> x, Num<float32_t> y) { return x < y; });

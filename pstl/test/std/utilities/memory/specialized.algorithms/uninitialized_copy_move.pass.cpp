@@ -124,7 +124,7 @@ test_uninitialized_copy_move_by_type()
     }
 }
 
-int32_t
+int
 main()
 {
 

@@ -130,7 +130,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
 #if !_PSTL_ICC_18_TEST_EARLY_EXIT_MONOTONIC_RELEASE_BROKEN

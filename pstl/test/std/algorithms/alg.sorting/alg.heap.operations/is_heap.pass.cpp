@@ -132,7 +132,7 @@ struct test_non_const
     }
 };
 
-int32_t
+int
 main()
 {
     test_is_heap_by_type<float32_t>(std::greater<float32_t>());
