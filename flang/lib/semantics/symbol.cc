@@ -180,6 +180,11 @@ Symbol *GenericDetails::CheckSpecific() {
   }
 }
 
+void GenericDetails::AddSpecificProcsFrom(const Symbol &generic) {
+  const auto &procs{generic.get<GenericDetails>().specificProcs()};
+  specificProcs_.insert(specificProcs_.end(), procs.begin(), procs.end());
+}
+
 // The name of the kind of details for this symbol.
 // This is primarily for debugging.
 std::string DetailsToString(const Details &details) {

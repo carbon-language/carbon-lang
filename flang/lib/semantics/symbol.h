@@ -400,6 +400,7 @@ public:
 
   const SymbolVector &specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
+  void AddSpecificProcsFrom(const Symbol &generic);
 
   Symbol *specific() { return specific_; }
   const Symbol *specific() const { return specific_; }
@@ -415,6 +416,9 @@ public:
   const Symbol *CheckSpecific() const;
   Symbol *CheckSpecific();
 
+  const std::optional<UseDetails> &useDetails() const { return useDetails_; }
+  void set_useDetails(const UseDetails &details) { useDetails_ = details; }
+
 private:
   GenericKind kind_{GenericKind::Name};
   // all of the specific procedures for this generic
@@ -423,6 +427,9 @@ private:
   Symbol *specific_{nullptr};
   // a derived type with the same name as this generic, if any
   Symbol *derivedType_{nullptr};
+  // If two USEs of generics were merged to form this one, this is the
+  // UseDetails for one of them. Used for reporting USE errors.
+  std::optional<UseDetails> useDetails_;
 };
 
 class UnknownDetails {};

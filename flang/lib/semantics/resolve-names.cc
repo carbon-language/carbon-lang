@@ -1931,27 +1931,61 @@ ModuleVisitor::SymbolRename ModuleVisitor::AddUse(
   return {&localSymbol, useSymbol};
 }
 
+// symbol must be either a Use or a Generic formed by merging two uses.
+// Convert it to a UseError with this additional location.
+static void ConvertToUseError(
+    Symbol &symbol, const SourceName &location, const Scope &module) {
+  const auto *useDetails{symbol.detailsIf<UseDetails>()};
+  if (!useDetails) {
+    auto &genericDetails{symbol.get<GenericDetails>()};
+    useDetails = &genericDetails.useDetails().value();
+  }
+  symbol.set_details(
+      UseErrorDetails{*useDetails}.add_occurrence(location, module));
+}
+
 void ModuleVisitor::AddUse(
     const SourceName &location, Symbol &localSymbol, const Symbol &useSymbol) {
   localSymbol.attrs() = useSymbol.attrs();
   localSymbol.attrs() &= ~Attrs{Attr::PUBLIC, Attr::PRIVATE};
   localSymbol.flags() = useSymbol.flags();
-  if (auto *details{localSymbol.detailsIf<UseDetails>()}) {
-    // check for use-associating the same symbol again:
-    if (localSymbol.GetUltimate() != useSymbol.GetUltimate()) {
-      localSymbol.set_details(
-          UseErrorDetails{*details}.add_occurrence(location, *useModuleScope_));
+  if (auto *useDetails{localSymbol.detailsIf<UseDetails>()}) {
+    const Symbol &ultimate{localSymbol.GetUltimate()};
+    if (ultimate == useSymbol.GetUltimate()) {
+      // use-associating the same symbol again -- ok
+    } else if (ultimate.has<GenericDetails>() &&
+        useSymbol.has<GenericDetails>()) {
+      // use-associating generics with the same names: merge them into a
+      // new generic in this scope
+      auto genericDetails{ultimate.get<GenericDetails>()};
+      genericDetails.set_useDetails(*useDetails);
+      genericDetails.AddSpecificProcsFrom(useSymbol);
+      EraseSymbol(localSymbol);
+      MakeSymbol(
+          localSymbol.name(), ultimate.attrs(), std::move(genericDetails));
+    } else {
+      ConvertToUseError(localSymbol, location, *useModuleScope_);
     }
-  } else if (auto *details{localSymbol.detailsIf<UseErrorDetails>()}) {
-    details->add_occurrence(location, *useModuleScope_);
-  } else if (!localSymbol.has<UnknownDetails>()) {
-    Say(location,
-        "Cannot use-associate '%s'; it is already declared in this scope"_err_en_US,
-        localSymbol.name())
-        .Attach(localSymbol.name(), "Previous declaration of '%s'"_en_US,
-            localSymbol.name());
   } else {
-    localSymbol.set_details(UseDetails{location, useSymbol});
+    auto *genericDetails{localSymbol.detailsIf<GenericDetails>()};
+    if (genericDetails && genericDetails->useDetails().has_value()) {
+      // localSymbol came from merging two use-associated generics
+      if (useSymbol.has<GenericDetails>()) {
+        genericDetails->AddSpecificProcsFrom(useSymbol);
+      } else {
+        ConvertToUseError(localSymbol, location, *useModuleScope_);
+      }
+    } else if (auto *details{localSymbol.detailsIf<UseErrorDetails>()}) {
+      details->add_occurrence(location, *useModuleScope_);
+    } else if (!localSymbol.has<UnknownDetails>()) {
+      Say(location,
+          "Cannot use-associate '%s'; it is already declared in this scope"_err_en_US,
+          localSymbol.name())
+          .Attach(localSymbol.name(), "Previous declaration of '%s'"_en_US,
+              localSymbol.name());
+    } else {
+      localSymbol.set_details(UseDetails{location, useSymbol});
+    }
   }
 }
 
