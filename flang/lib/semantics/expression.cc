@@ -1357,6 +1357,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         } else if (MaybeExpr converted{
                        ConvertToType(*symbol, std::move(*value))}) {
           result.Add(*symbol, std::move(*converted));
+        } else if (IsAllocatable(*symbol) &&
+            std::holds_alternative<NullPointer>(value->u)) {
+          // NULL() with no arguments allowed by 7.5.10 para 6 for ALLOCATABLE
         } else if (auto symType{DynamicType::From(symbol)}) {
           if (valueType.has_value()) {
             if (auto *msg{Say(expr.source,
