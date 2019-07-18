@@ -12,6 +12,7 @@
 #include "Context.h"
 #include "FSProvider.h"
 #include "GlobalCompilationDatabase.h"
+#include "Path.h"
 #include "SourceCode.h"
 #include "Threading.h"
 #include "index/BackgroundRebuild.h"
@@ -173,20 +174,9 @@ private:
   std::mutex ShardVersionsMu;
 
   BackgroundIndexStorage::Factory IndexStorageFactory;
-  struct Source {
-    std::string Path;
-    bool NeedsReIndexing;
-    Source(llvm::StringRef Path, bool NeedsReIndexing)
-        : Path(Path), NeedsReIndexing(NeedsReIndexing) {}
-  };
-  // Loads the shards for a single TU and all of its dependencies. Returns the
-  // list of sources and whether they need to be re-indexed.
-  std::vector<Source> loadShard(const tooling::CompileCommand &Cmd,
-                                BackgroundIndexStorage *IndexStorage,
-                                llvm::StringSet<> &LoadedShards);
-  // Tries to load shards for the ChangedFiles.
+  // Tries to load shards for the MainFiles and their dependencies.
   std::vector<std::pair<tooling::CompileCommand, BackgroundIndexStorage *>>
-  loadShards(std::vector<std::string> ChangedFiles);
+  loadProject(std::vector<std::string> MainFiles);
 
   BackgroundQueue::Task
   changedFilesTask(const std::vector<std::string> &ChangedFiles);
