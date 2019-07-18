@@ -34,7 +34,6 @@ namespace clang {
 
 class ASTContext;
 class ASTImporterSharedState;
-class ASTUnit;
 class Attr;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
@@ -230,11 +229,6 @@ class TypeSourceInfo;
     /// The file managers we're importing to and from.
     FileManager &ToFileManager, &FromFileManager;
 
-    /// The ASTUnit for the From context, if any.
-    /// This is used to create a mapping of imported ('To') FileID's to the
-    /// original ('From') FileID and ASTUnit.
-    ASTUnit *FromUnit;
-
     /// Whether to perform a minimal import.
     bool Minimal;
 
@@ -283,11 +277,6 @@ class TypeSourceInfo;
 
     void AddToLookupTable(Decl *ToD);
 
-    ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                ASTContext &FromContext, FileManager &FromFileManager,
-                ASTUnit *FromUnit, bool MinimalImport,
-                std::shared_ptr<ASTImporterSharedState> SharedState);
-
   protected:
     /// Can be overwritten by subclasses to implement their own import logic.
     /// The overwritten method should call this method if it didn't import the
@@ -298,6 +287,7 @@ class TypeSourceInfo;
     virtual bool returnWithErrorInTest() { return false; };
 
   public:
+
     /// \param ToContext The context we'll be importing into.
     ///
     /// \param ToFileManager The file manager we'll be importing into.
@@ -316,23 +306,6 @@ class TypeSourceInfo;
     ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
                 ASTContext &FromContext, FileManager &FromFileManager,
                 bool MinimalImport,
-                std::shared_ptr<ASTImporterSharedState> SharedState = nullptr);
-    /// \param ToContext The context we'll be importing into.
-    ///
-    /// \param ToFileManager The file manager we'll be importing into.
-    ///
-    /// \param FromUnit Pointer to an ASTUnit that contains the context and
-    /// file manager to import from.
-    ///
-    /// \param MinimalImport If true, the importer will attempt to import
-    /// as little as it can, e.g., by importing declarations as forward
-    /// declarations that can be completed at a later point.
-    ///
-    /// \param SharedState The importer specific lookup table which may be
-    /// shared amongst several ASTImporter objects.
-    /// If not set then the original C/C++ lookup is used.
-    ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                ASTUnit &FromUnit, bool MinimalImport,
                 std::shared_ptr<ASTImporterSharedState> SharedState = nullptr);
 
     virtual ~ASTImporter();

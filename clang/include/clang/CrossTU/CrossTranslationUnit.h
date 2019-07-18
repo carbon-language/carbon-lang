@@ -153,10 +153,8 @@ public:
   ///        was passed to the constructor.
   ///
   /// \return Returns the resulting definition or an error.
-  llvm::Expected<const FunctionDecl *> importDefinition(const FunctionDecl *FD,
-                                                        ASTUnit *Unit);
-  llvm::Expected<const VarDecl *> importDefinition(const VarDecl *VD,
-                                                   ASTUnit *Unit);
+  llvm::Expected<const FunctionDecl *> importDefinition(const FunctionDecl *FD);
+  llvm::Expected<const VarDecl *> importDefinition(const VarDecl *VD);
 
   /// Get a name to identify a named decl.
   static std::string getLookupName(const NamedDecl *ND);
@@ -164,19 +162,9 @@ public:
   /// Emit diagnostics for the user for potential configuration errors.
   void emitCrossTUDiagnostics(const IndexError &IE);
 
-  /// Determine the original source location in the original TU for an
-  /// imported source location.
-  /// \p ToLoc Source location in the imported-to AST.
-  /// \return Source location in the imported-from AST and the corresponding
-  /// ASTUnit.
-  /// If any error happens (ToLoc is a non-imported source location) empty is
-  /// returned.
-  llvm::Optional<std::pair<SourceLocation /*FromLoc*/, ASTUnit *>>
-  getImportedFromSourceLocation(const clang::SourceLocation &ToLoc) const;
-
 private:
   void lazyInitImporterSharedSt(TranslationUnitDecl *ToTU);
-  ASTImporter &getOrCreateASTImporter(ASTUnit *Unit);
+  ASTImporter &getOrCreateASTImporter(ASTContext &From);
   template <typename T>
   llvm::Expected<const T *> getCrossTUDefinitionImpl(const T *D,
                                                      StringRef CrossTUDir,
@@ -186,7 +174,7 @@ private:
   const T *findDefInDeclContext(const DeclContext *DC,
                                 StringRef LookupName);
   template <typename T>
-  llvm::Expected<const T *> importDefinitionImpl(const T *D, ASTUnit *Unit);
+  llvm::Expected<const T *> importDefinitionImpl(const T *D);
 
   llvm::StringMap<std::unique_ptr<clang::ASTUnit>> FileASTUnitMap;
   llvm::StringMap<clang::ASTUnit *> NameASTUnitMap;
