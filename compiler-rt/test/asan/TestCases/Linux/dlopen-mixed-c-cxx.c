@@ -4,8 +4,8 @@
 //
 // CHECK: {{.*}}AddressSanitizer: failed to intercept '__cxa_{{.*}}throw{{.*}}'
 //
-// dlopen() can not be intercepted on Android
-// UNSUPPORTED: android
+// REQUIRES: x86-target-arch && !android
+
 #ifdef __cplusplus
 
 static void foo(void) {
