@@ -73,7 +73,7 @@ std::ostream &ConstantBase<RESULT, VALUE>::AsFortran(std::ostream &o) const {
   if (Rank() > 0) {
     o << ']';
   }
-  ShapeAsFortran(o, shape_);
+  ShapeAsFortran(o, shape());
   return o;
 }
 
@@ -99,7 +99,7 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
   if (Rank() > 0) {
     o << ']';
   }
-  ShapeAsFortran(o, shape_);
+  ShapeAsFortran(o, shape());
   return o;
 }
 

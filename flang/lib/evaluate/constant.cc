@@ -29,17 +29,48 @@ std::size_t TotalElementCount(const ConstantSubscripts &shape) {
   return size;
 }
 
-bool IncrementSubscripts(ConstantSubscripts &indices,
-    const ConstantSubscripts &shape, const ConstantSubscripts &lbound) {
-  int rank{GetRank(shape)};
+ConstantBounds::ConstantBounds(const ConstantSubscripts &shape)
+  : shape_(shape), lbounds_(shape_.size(), 1) {}
+
+ConstantBounds::ConstantBounds(ConstantSubscripts &&shape)
+  : shape_(std::move(shape)), lbounds_(shape_.size(), 1) {}
+
+ConstantBounds::~ConstantBounds() = default;
+
+void ConstantBounds::set_lbounds(ConstantSubscripts &&lb) {
+  CHECK(lb.size() == shape_.size());
+  lbounds_ = std::move(lb);
+}
+
+Constant<SubscriptInteger> ConstantBounds::SHAPE() const {
+  return AsConstantShape(shape_);
+}
+
+ConstantSubscript ConstantBounds::SubscriptsToOffset(
+    const ConstantSubscripts &index) const {
+  CHECK(GetRank(index) == GetRank(shape_));
+  ConstantSubscript stride{1}, offset{0};
+  int dim{0};
+  for (auto j : index) {
+    auto lb{lbounds_[dim]};
+    auto extent{shape_[dim++]};
+    CHECK(j >= lb && j < lb + extent);
+    offset += stride * (j - lb);
+    stride *= extent;
+  }
+  return offset;
+}
+
+bool ConstantBounds::IncrementSubscripts(ConstantSubscripts &indices) const {
+  int rank{GetRank(shape_)};
   CHECK(GetRank(indices) == rank);
   for (int j{0}; j < rank; ++j) {
-    auto lb{lbound[j]};
+    auto lb{lbounds_[j]};
     CHECK(indices[j] >= lb);
-    if (++indices[j] < lb + shape[j]) {
+    if (++indices[j] < lb + shape_[j]) {
       return true;
     } else {
-      CHECK(indices[j] == lb + shape[j]);
+      CHECK(indices[j] == lb + shape_[j]);
       indices[j] = lb;
     }
   }
@@ -48,10 +79,9 @@ bool IncrementSubscripts(ConstantSubscripts &indices,
 
 template<typename RESULT, typename ELEMENT>
 ConstantBase<RESULT, ELEMENT>::ConstantBase(
-    std::vector<Element> &&x, ConstantSubscripts &&dims, Result res)
-  : result_{res}, values_(std::move(x)), shape_(std::move(dims)),
-    lbounds_(shape_.size(), 1) {
-  CHECK(size() == TotalElementCount(shape_));
+    std::vector<Element> &&x, ConstantSubscripts &&sh, Result res)
+  : ConstantBounds(std::move(sh)), result_{res}, values_(std::move(x)) {
+  CHECK(size() == TotalElementCount(shape()));
 }
 
 template<typename RESULT, typename ELEMENT>
@@ -59,33 +89,7 @@ ConstantBase<RESULT, ELEMENT>::~ConstantBase() {}
 
 template<typename RESULT, typename ELEMENT>
 bool ConstantBase<RESULT, ELEMENT>::operator==(const ConstantBase &that) const {
-  return shape_ == that.shape_ && values_ == that.values_;
-}
-
-template<typename RESULT, typename ELEMENT>
-void ConstantBase<RESULT, ELEMENT>::set_lbounds(ConstantSubscripts &&lb) {
-  CHECK(lb.size() == shape_.size());
-  lbounds_ = std::move(lb);
-}
-
-static ConstantSubscript SubscriptsToOffset(const ConstantSubscripts &index,
-    const ConstantSubscripts &shape, const ConstantSubscripts &lbound) {
-  CHECK(GetRank(index) == GetRank(shape));
-  ConstantSubscript stride{1}, offset{0};
-  int dim{0};
-  for (auto j : index) {
-    auto lb{lbound[dim]};
-    auto extent{shape[dim++]};
-    CHECK(j >= lb && j < lb + extent);
-    offset += stride * (j - lb);
-    stride *= extent;
-  }
-  return offset;
-}
-
-template<typename RESULT, typename ELEMENT>
-Constant<SubscriptInteger> ConstantBase<RESULT, ELEMENT>::SHAPE() const {
-  return AsConstantShape(shape_);
+  return shape() == that.shape() && values_ == that.values_;
 }
 
 template<typename RESULT, typename ELEMENT>
@@ -106,8 +110,7 @@ auto ConstantBase<RESULT, ELEMENT>::Reshape(
 
 template<typename T>
 auto Constant<T>::At(const ConstantSubscripts &index) const -> Element {
-  return Base::values_.at(
-      SubscriptsToOffset(index, Base::shape_, Base::lbounds_));
+  return Base::values_.at(Base::SubscriptsToOffset(index));
 }
 
 template<typename T>
@@ -128,9 +131,9 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(Scalar<Result> &&str)
 
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(ConstantSubscript len,
-    std::vector<Scalar<Result>> &&strings, ConstantSubscripts &&dims)
-  : length_{len}, shape_{std::move(dims)}, lbounds_(shape_.size(), 1) {
-  CHECK(strings.size() == TotalElementCount(shape_));
+    std::vector<Scalar<Result>> &&strings, ConstantSubscripts &&sh)
+  : ConstantBounds(std::move(sh)), length_{len} {
+  CHECK(strings.size() == TotalElementCount(shape()));
   values_.assign(strings.size() * length_,
       static_cast<typename Scalar<Result>::value_type>(' '));
   ConstantSubscript at{0};
@@ -156,23 +159,16 @@ bool Constant<Type<TypeCategory::Character, KIND>>::empty() const {
 template<int KIND>
 std::size_t Constant<Type<TypeCategory::Character, KIND>>::size() const {
   if (length_ == 0) {
-    return TotalElementCount(shape_);
+    return TotalElementCount(shape());
   } else {
     return static_cast<ConstantSubscript>(values_.size()) / length_;
   }
 }
 
 template<int KIND>
-void Constant<Type<TypeCategory::Character, KIND>>::set_lbounds(
-    ConstantSubscripts &&lb) {
-  CHECK(lb.size() == shape_.size());
-  lbounds_ = std::move(lb);
-}
-
-template<int KIND>
 auto Constant<Type<TypeCategory::Character, KIND>>::At(
     const ConstantSubscripts &index) const -> Scalar<Result> {
-  auto offset{SubscriptsToOffset(index, shape_, lbounds_)};
+  auto offset{SubscriptsToOffset(index)};
   return values_.substr(offset * length_, length_);
 }
 
@@ -192,12 +188,6 @@ auto Constant<Type<TypeCategory::Character, KIND>>::Reshape(
     }
   }
   return {length_, std::move(elements), std::move(dims)};
-}
-
-template<int KIND>
-Constant<SubscriptInteger>
-Constant<Type<TypeCategory::Character, KIND>>::SHAPE() const {
-  return AsConstantShape(shape_);
 }
 
 // Constant<SomeDerived> specialization
@@ -221,12 +211,12 @@ static std::vector<StructureConstructorValues> AcquireValues(
 }
 
 Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
-    std::vector<StructureConstructor> &&x, ConstantSubscripts &&s)
-  : Base{AcquireValues(std::move(x)), std::move(s), Result{spec}} {}
+    std::vector<StructureConstructor> &&x, ConstantSubscripts &&shape)
+  : Base{AcquireValues(std::move(x)), std::move(shape), Result{spec}} {}
 
 std::optional<StructureConstructor>
 Constant<SomeDerived>::GetScalarValue() const {
-  if (shape_.empty()) {
+  if (Rank() == 0) {
     return StructureConstructor{result().derivedTypeSpec(), values_.at(0)};
   } else {
     return std::nullopt;
@@ -235,8 +225,7 @@ Constant<SomeDerived>::GetScalarValue() const {
 
 StructureConstructor Constant<SomeDerived>::At(
     const ConstantSubscripts &index) const {
-  return {result().derivedTypeSpec(),
-      values_.at(SubscriptsToOffset(index, shape_, lbounds_))};
+  return {result().derivedTypeSpec(), values_.at(SubscriptsToOffset(index))};
 }
 
 auto Constant<SomeDerived>::Reshape(ConstantSubscripts &&dims) const
