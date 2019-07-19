@@ -30,7 +30,7 @@ class AMDGPUCallLowering: public CallLowering {
                       Register DstReg) const;
 
   /// A function of this type is used to perform value split action.
-  using SplitArgTy = std::function<void(ArrayRef<Register>, LLT, LLT)>;
+  using SplitArgTy = std::function<void(ArrayRef<Register>, LLT, LLT, int)>;
 
   void splitToValueTypes(const ArgInfo &OrigArgInfo,
                          SmallVectorImpl<ArgInfo> &SplitArgs,

@@ -152,33 +152,45 @@ void AMDGPUCallLowering::splitToValueTypes(
   SmallVector<EVT, 4> SplitVTs;
   ComputeValueVTs(TLI, DL, OrigArg.Ty, SplitVTs);
 
-  EVT VT = SplitVTs[0];
-  unsigned NumParts = TLI.getNumRegistersForCallingConv(Ctx, CallConv, VT);
+  assert(OrigArg.Regs.size() == SplitVTs.size());
 
-  if (NumParts == 1) {
-    // No splitting to do, but we want to replace the original type (e.g. [1 x
-    // double] -> double).
-    SplitArgs.emplace_back(OrigArg.Regs[0], VT.getTypeForEVT(Ctx),
-                           OrigArg.Flags, OrigArg.IsFixed);
-    return;
+  int SplitIdx = 0;
+  for (EVT VT : SplitVTs) {
+    unsigned NumParts = TLI.getNumRegistersForCallingConv(Ctx, CallConv, VT);
+    Type *Ty = VT.getTypeForEVT(Ctx);
+
+
+
+    if (NumParts == 1) {
+      // No splitting to do, but we want to replace the original type (e.g. [1 x
+      // double] -> double).
+      SplitArgs.emplace_back(OrigArg.Regs[SplitIdx], Ty,
+                             OrigArg.Flags, OrigArg.IsFixed);
+
+      ++SplitIdx;
+      continue;
+    }
+
+    LLT LLTy = getLLTForType(*Ty, DL);
+
+    SmallVector<Register, 8> SplitRegs;
+
+    EVT PartVT = TLI.getRegisterTypeForCallingConv(Ctx, CallConv, VT);
+    Type *PartTy = PartVT.getTypeForEVT(Ctx);
+    LLT PartLLT = getLLTForType(*PartTy, DL);
+
+    // FIXME: Should we be reporting all of the part registers for a single
+    // argument, and let handleAssignments take care of the repacking?
+    for (unsigned i = 0; i < NumParts; ++i) {
+      Register PartReg = MRI.createGenericVirtualRegister(PartLLT);
+      SplitRegs.push_back(PartReg);
+      SplitArgs.emplace_back(ArrayRef<Register>(PartReg), PartTy, OrigArg.Flags);
+    }
+
+    PerformArgSplit(SplitRegs, LLTy, PartLLT, SplitIdx);
+
+    ++SplitIdx;
   }
-
-  LLT LLTy = getLLTForType(*OrigArg.Ty, DL);
-  SmallVector<Register, 8> SplitRegs;
-
-  EVT PartVT = TLI.getRegisterTypeForCallingConv(Ctx, CallConv, VT);
-  Type *PartTy = PartVT.getTypeForEVT(Ctx);
-  LLT PartLLT = getLLTForType(*PartTy, DL);
-
-  // FIXME: Should we be reporting all of the part registers for a single
-  // argument, and let handleAssignments take care of the repacking?
-  for (unsigned i = 0; i < NumParts; ++i) {
-    Register PartReg = MRI.createGenericVirtualRegister(PartLLT);
-    SplitRegs.push_back(PartReg);
-    SplitArgs.emplace_back(ArrayRef<Register>(PartReg), PartTy, OrigArg.Flags);
-  }
-
-  PerformArgSplit(SplitRegs, LLTy, PartLLT);
 }
 
 bool AMDGPUCallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
@@ -485,11 +497,11 @@ bool AMDGPUCallLowering::lowerFormalArguments(
     if (!IsShader && InReg)
       return false;
 
-    // TODO: Handle multiple registers and sret.
+    // TODO: Handle sret.
     if (Arg.hasAttribute(Attribute::StructRet) ||
         Arg.hasAttribute(Attribute::SwiftSelf) ||
         Arg.hasAttribute(Attribute::SwiftError) ||
-        Arg.hasAttribute(Attribute::Nest) || VRegs[Idx].size() > 1)
+        Arg.hasAttribute(Attribute::Nest))
       return false;
 
     if (CC == CallingConv::AMDGPU_PS && !InReg && PSInputNum <= 15) {
@@ -505,7 +517,9 @@ bool AMDGPUCallLowering::lowerFormalArguments(
       ++PSInputNum;
 
       if (SkipArg) {
-        MIRBuilder.buildUndef(VRegs[Idx][0]);
+        for (int I = 0, E = VRegs[Idx].size(); I != E; ++I)
+          MIRBuilder.buildUndef(VRegs[Idx][I]);
+
         ++Idx;
         continue;
       }
@@ -513,11 +527,14 @@ bool AMDGPUCallLowering::lowerFormalArguments(
 
     ArgInfo OrigArg(VRegs[Idx], Arg.getType());
     setArgFlags(OrigArg, Idx + AttributeList::FirstArgIndex, DL, F);
-    splitToValueTypes(OrigArg, SplitArgs, DL, MRI, CC,
+
+    splitToValueTypes(
+      OrigArg, SplitArgs, DL, MRI, CC,
       // FIXME: We should probably be passing multiple registers to
       // handleAssignments to do this
-      [&](ArrayRef<Register> Regs, LLT LLTy, LLT PartLLT) {
-        packSplitRegsToOrigType(MIRBuilder, VRegs[Idx], Regs, LLTy, PartLLT);
+      [&](ArrayRef<Register> Regs, LLT LLTy, LLT PartLLT, int VTSplitIdx) {
+        packSplitRegsToOrigType(MIRBuilder, VRegs[Idx][VTSplitIdx], Regs,
+                                LLTy, PartLLT);
       });
 
     ++Idx;
