@@ -18,6 +18,7 @@
 // Simple predicates and look-up functions that are best defined
 // canonically for use in semantic checking.
 
+#include "attr.h"
 #include "expression.h"
 #include "semantics.h"
 #include "../common/Fortran.h"
@@ -36,7 +37,7 @@ class Symbol;
 const Symbol *FindCommonBlockContaining(const Symbol &object);
 const Scope *FindProgramUnitContaining(const Scope &);
 const Scope *FindProgramUnitContaining(const Symbol &);
-const Scope *FindPureFunctionContaining(const Scope *);
+const Scope *FindPureProcedureContaining(const Scope *);
 const Symbol *FindPointerComponent(const Scope &);
 const Symbol *FindPointerComponent(const DerivedTypeSpec &);
 const Symbol *FindPointerComponent(const DeclTypeSpec &);
@@ -44,6 +45,7 @@ const Symbol *FindPointerComponent(const Symbol &);
 const Symbol *FindInterface(const Symbol &);
 const Symbol *FindSubprogram(const Symbol &);
 const Symbol *FindFunctionResult(const Symbol &);
+const Symbol *GetAssociationRoot(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);
@@ -52,9 +54,10 @@ bool IsUseAssociated(const Symbol *, const Scope &);
 bool IsHostAssociated(const Symbol &, const Scope &);
 bool IsDummy(const Symbol &);
 bool IsPointerDummy(const Symbol &);
+bool IsValueDummy(const Symbol &);
 bool IsFunction(const Symbol &);
-bool IsPureFunction(const Symbol &);
-bool IsPureFunction(const Scope &);
+bool IsPureProcedure(const Symbol &);
+bool IsPureProcedure(const Scope &);
 bool IsProcedure(const Symbol &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
@@ -78,6 +81,7 @@ const Symbol *HasCoarrayUltimateComponent(const DerivedTypeSpec &);
 // potential component of EVENT_TYPE or LOCK_TYPE from
 // ISO_FORTRAN_ENV module.
 const Symbol *HasEventOrLockPotentialComponent(const DerivedTypeSpec &);
+bool IsOrContainsEventOrLockComponent(const Symbol &);
 
 // Return an ultimate component of type that matches predicate, or nullptr.
 const Symbol *FindUltimateComponent(
@@ -101,9 +105,15 @@ inline bool IsOptional(const Symbol &symbol) {
 inline bool IsIntentIn(const Symbol &symbol) {
   return symbol.attrs().test(Attr::INTENT_IN);
 }
+inline bool IsProtected(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::PROTECTED);
+}
 bool IsFinalizable(const Symbol &symbol);
 bool IsCoarray(const Symbol &symbol);
 bool IsAssumedSizeArray(const Symbol &symbol);
+// Is the symbol modifiable in this scope
+bool IsModifiable(const Symbol &symbol, const Scope &scope);
+bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope);
 
 // Returns the complete list of derived type parameter symbols in
 // the order in which their declarations appear in the derived type

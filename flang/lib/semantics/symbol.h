@@ -501,7 +501,7 @@ public:
   // Can the details of this symbol be replaced with the given details?
   bool CanReplaceDetails(const Details &details) const;
 
-  // Follow use-associations to get the ultimate entity.
+  // Follow use-associations and host-associations to get the ultimate entity.
   Symbol &GetUltimate();
   const Symbol &GetUltimate() const;
 

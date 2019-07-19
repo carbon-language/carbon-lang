@@ -69,10 +69,10 @@ const Scope *FindProgramUnitContaining(const Symbol &symbol) {
   return FindProgramUnitContaining(symbol.owner());
 }
 
-const Scope *FindPureFunctionContaining(const Scope *scope) {
+const Scope *FindPureProcedureContaining(const Scope *scope) {
   scope = FindProgramUnitContaining(*scope);
   while (scope != nullptr) {
-    if (IsPureFunction(*scope)) {
+    if (IsPureProcedure(*scope)) {
       return scope;
     }
     scope = FindProgramUnitContaining(scope->parent());
@@ -124,14 +124,22 @@ bool IsDummy(const Symbol &symbol) {
   }
 }
 
+bool IsValueDummy(const Symbol &symbol) {
+  return IsDummy(symbol) && symbol.attrs().test(Attr::VALUE);
+}
+
 bool IsPointerDummy(const Symbol &symbol) {
   return IsPointer(symbol) && IsDummy(symbol);
 }
 
 // variable-name
 bool IsVariableName(const Symbol &symbol) {
-  const Symbol &ultimate{symbol.GetUltimate()};
-  return ultimate.has<ObjectEntityDetails>() && !IsParameter(ultimate);
+  if (const Symbol * root{GetAssociationRoot(symbol)}) {
+    return IsValueDummy(symbol) ||
+        (root->has<ObjectEntityDetails>() && !IsParameter(*root));
+  } else {
+    return false;
+  }
 }
 
 // proc-name
@@ -157,13 +165,13 @@ bool IsFunction(const Symbol &symbol) {
       symbol.details());
 }
 
-bool IsPureFunction(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::PURE) && IsFunction(symbol);
+bool IsPureProcedure(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::PURE) && IsProcedure(symbol);
 }
 
-bool IsPureFunction(const Scope &scope) {
+bool IsPureProcedure(const Scope &scope) {
   if (const Symbol * symbol{scope.GetSymbol()}) {
-    return IsPureFunction(*symbol);
+    return IsPureProcedure(*symbol);
   } else {
     return false;
   }
@@ -256,7 +264,7 @@ const Symbol *FindExternallyVisibleObject(
   // TODO: Storage association with any object for which this predicate holds,
   // once EQUIVALENCE is supported.
   if (IsUseAssociated(object, scope) || IsHostAssociated(object, scope) ||
-      (IsPureFunction(scope) && IsPointerDummy(object)) ||
+      (IsPureProcedure(scope) && IsPointerDummy(object)) ||
       (object.attrs().test(Attr::INTENT_IN) && IsDummy(object))) {
     return &object;
   } else if (const Symbol * block{FindCommonBlockContaining(object)}) {
@@ -326,6 +334,28 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
     }
   }
   return nullptr;
+}
+
+// Return the variable of a construct association, if associated
+// Return nullptr if the name is associated with an expression
+const Symbol *GetAssociationRoot(const Symbol &symbol) {
+  const Symbol &ultimate{symbol.GetUltimate()};
+  if (ultimate.has<AssocEntityDetails>()) {  // construct association
+    auto &details{ultimate.get<AssocEntityDetails>()};
+    if (const MaybeExpr * pexpr{&details.expr()}) {
+      if (pexpr->has_value()) {
+        const SomeExpr &expr{**pexpr};
+        if (evaluate::IsVariable(expr)) {
+          if (const Symbol * varSymbol{evaluate::GetLastSymbol(expr)}) {
+            return GetAssociationRoot(*varSymbol);
+          }
+        } else {
+          return nullptr;
+        }
+      }
+    }
+  }
+  return &ultimate;
 }
 
 bool IsExtensibleType(const DerivedTypeSpec *derived) {
@@ -399,6 +429,22 @@ const Symbol *HasEventOrLockPotentialComponent(
   return nullptr;
 }
 
+bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
+  if (const Symbol * root{GetAssociationRoot(symbol)}) {
+    if (const auto *details{root->detailsIf<ObjectEntityDetails>()}) {
+      if (const DeclTypeSpec * type{details->type()}) {
+        if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+          if (IsEventTypeOrLockType(derived) ||
+              HasEventOrLockPotentialComponent(*derived)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
     std::function<bool(const Symbol &)> predicate) {
   const auto *scope{derivedTypeSpec.typeSymbol().scope()};
@@ -441,6 +487,31 @@ bool IsCoarray(const Symbol &symbol) { return symbol.Corank() > 0; }
 bool IsAssumedSizeArray(const Symbol &symbol) {
   const auto *details{symbol.detailsIf<ObjectEntityDetails>()};
   return details && details->IsAssumedSize();
+}
+
+bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope) {
+  if (const auto *pureProc{semantics::FindPureProcedureContaining(&scope)}) {
+    if (const Symbol * root{GetAssociationRoot(symbol)}) {
+      if (semantics::FindExternallyVisibleObject(*root, *pureProc)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool InProtectedContext(const Symbol &symbol, const Scope &currentScope) {
+  return IsProtected(symbol) && !IsHostAssociated(symbol, currentScope);
+}
+
+bool IsModifiable(const Symbol &symbol, const Scope &scope) {
+  if (const Symbol * root{GetAssociationRoot(symbol)}) {
+    return IsVariableName(*root) && !InProtectedContext(*root, scope) &&
+        !IsExternalInPureContext(*root, scope) &&
+        !IsOrContainsEventOrLockComponent(*root);
+  } else {
+    return false;
+  }
 }
 
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,

@@ -119,13 +119,13 @@ subroutine s10
   real, parameter :: bad2 = 1.0
   x = cos(0.)
   do concurrent(i=1:2) &
-    !ERROR: The name 'bad1' must be a variable to appear in a locality-spec
+    !ERROR: 'bad1' must be able to appear in a variable definition context to appear in a locality-spec
     local(bad1) &
-    !ERROR: The name 'bad2' must be a variable to appear in a locality-spec
+    !ERROR: 'bad2' must be able to appear in a variable definition context to appear in a locality-spec
     local(bad2) &
-    !ERROR: The name 'bad3' must be a variable to appear in a locality-spec
+    !ERROR: 'bad3' must be able to appear in a variable definition context to appear in a locality-spec
     local(bad3) &
-    !ERROR: The name 'cos' must be a variable to appear in a locality-spec
+    !ERROR: 'cos' must be able to appear in a variable definition context to appear in a locality-spec
     local(cos)
   end do
   do concurrent(i=1:2) &

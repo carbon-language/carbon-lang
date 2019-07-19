@@ -3804,9 +3804,6 @@ bool DeclarationVisitor::PassesSharedLocalityChecks(
 // Checks for locality-specs LOCAL and LOCAL_INIT
 bool DeclarationVisitor::PassesLocalityChecks(
     const parser::Name &name, Symbol &symbol) {
-  if (!PassesSharedLocalityChecks(name, symbol)) {
-    return false;
-  }
   if (IsAllocatable(symbol)) {  // C1128
     SayWithDecl(name, symbol,
         "ALLOCATABLE variable '%s' not allowed in a locality-spec"_err_en_US);
@@ -3846,7 +3843,15 @@ bool DeclarationVisitor::PassesLocalityChecks(
         "Assumed size array '%s' not allowed in a locality-spec"_err_en_US);
     return false;
   }
-  // TODO: Check to see if the name can appear in a variable definition context
+  if (!IsModifiable(symbol, currScope())) {  // C1128
+    SayWithDecl(name, symbol,
+        "'%s' must be able to appear in a variable definition context to "
+        "appear in a locality-spec"_err_en_US);
+    return false;
+  }
+  if (!PassesSharedLocalityChecks(name, symbol)) {
+    return false;
+  }
   return true;
 }
 

@@ -1325,13 +1325,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         } else if (symbol->has<semantics::ObjectEntityDetails>()) {
           // C1594(4)
           const auto &innermost{context_.FindScope(expr.source)};
-          if (const auto *pureFunc{
-                  semantics::FindPureFunctionContaining(&innermost)}) {
+          if (const auto *pureProc{
+                  semantics::FindPureProcedureContaining(&innermost)}) {
             if (const Symbol *
                 pointer{semantics::FindPointerComponent(*symbol)}) {
               if (const Symbol *
                   object{semantics::FindExternallyVisibleObject(
-                      *value, *pureFunc)}) {
+                      *value, *pureProc)}) {
                 if (auto *msg{Say(expr.source,
                         "Externally visible object '%s' must not be "
                         "associated with pointer component '%s' in a "
