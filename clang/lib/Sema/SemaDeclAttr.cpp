@@ -4668,6 +4668,11 @@ bool Sema::CheckCallingConvAttr(const ParsedAttr &Attrs, CallingConv &CC,
     CC = CC_C;
     break;
 
+  case TargetInfo::CCCR_Error:
+    Diag(Attrs.getLoc(), diag::error_cconv_unsupported)
+        << Attrs << (int)CallingConventionIgnoredReason::ForThisTarget;
+    break;
+
   case TargetInfo::CCCR_Warning: {
     Diag(Attrs.getLoc(), diag::warn_cconv_unsupported)
         << Attrs << (int)CallingConventionIgnoredReason::ForThisTarget;
