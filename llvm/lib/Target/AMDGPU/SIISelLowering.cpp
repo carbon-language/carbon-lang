@@ -768,19 +768,22 @@ bool SITargetLowering::isShuffleMaskLegal(ArrayRef<int>, EVT) const {
 MVT SITargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
                                                     CallingConv::ID CC,
                                                     EVT VT) const {
-  // TODO: Consider splitting all arguments into 32-bit pieces.
-  if (CC != CallingConv::AMDGPU_KERNEL && VT.isVector()) {
+  if (CC == CallingConv::AMDGPU_KERNEL)
+    return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+
+  if (VT.isVector()) {
     EVT ScalarVT = VT.getScalarType();
     unsigned Size = ScalarVT.getSizeInBits();
     if (Size == 32)
       return ScalarVT.getSimpleVT();
 
-    if (Size == 64)
+    if (Size > 32)
       return MVT::i32;
 
     if (Size == 16 && Subtarget->has16BitInsts())
       return VT.isInteger() ? MVT::v2i16 : MVT::v2f16;
-  }
+  } else if (VT.getSizeInBits() > 32)
+    return MVT::i32;
 
   return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
 }
@@ -788,7 +791,10 @@ MVT SITargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
 unsigned SITargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
                                                          CallingConv::ID CC,
                                                          EVT VT) const {
-  if (CC != CallingConv::AMDGPU_KERNEL && VT.isVector()) {
+  if (CC == CallingConv::AMDGPU_KERNEL)
+    return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
+
+  if (VT.isVector()) {
     unsigned NumElts = VT.getVectorNumElements();
     EVT ScalarVT = VT.getScalarType();
     unsigned Size = ScalarVT.getSizeInBits();
@@ -796,12 +802,13 @@ unsigned SITargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
     if (Size == 32)
       return NumElts;
 
-    if (Size == 64)
-      return 2 * NumElts;
+    if (Size > 32)
+      return NumElts * ((Size + 31) / 32);
 
     if (Size == 16 && Subtarget->has16BitInsts())
-      return (VT.getVectorNumElements() + 1) / 2;
-  }
+      return (NumElts + 1) / 2;
+  } else if (VT.getSizeInBits() > 32)
+    return (VT.getSizeInBits() + 31) / 32;
 
   return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
 }
@@ -821,10 +828,10 @@ unsigned SITargetLowering::getVectorTypeBreakdownForCallingConv(
       return NumIntermediates;
     }
 
-    if (Size == 64) {
+    if (Size > 32) {
       RegisterVT = MVT::i32;
       IntermediateVT = RegisterVT;
-      NumIntermediates = 2 * NumElts;
+      NumIntermediates = NumElts * ((Size + 31) / 32);
       return NumIntermediates;
     }
 

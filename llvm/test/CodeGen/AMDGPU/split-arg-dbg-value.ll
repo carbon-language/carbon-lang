@@ -76,9 +76,8 @@ define hidden double @split_f64_arg(double returned %arg) local_unnamed_addr #0 
 ; GCN-NEXT:  ; %bb.0:
 ; GCN-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; GCN-NEXT:  .Ltmp10:
-; GCN-NEXT:    ;DEBUG_VALUE: split_f64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
-; GCN-NEXT:    ;DEBUG_VALUE: split_f64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
-; GCN-NEXT:    ;DEBUG_VALUE: split_f64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
+; GCN-NEXT:    ;DEBUG_VALUE: split_f64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef, DW_OP_LLVM_fragment 32 32] $vgpr1
+; GCN-NEXT:    ;DEBUG_VALUE: split_f64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef, DW_OP_LLVM_fragment 0 32] $vgpr0
 ; GCN-NEXT:    .loc 0 16 5 prologue_end ; /tmp/dbg.cl:16:5
 ; GCN-NEXT:    s_setpc_b64 s[30:31]
 ; GCN-NEXT:  .Ltmp11:
@@ -111,9 +110,8 @@ define hidden i64 @split_i64_arg(i64 returned %arg) local_unnamed_addr #0 !dbg !
 ; GCN-NEXT:  ; %bb.0:
 ; GCN-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; GCN-NEXT:  .Ltmp14:
-; GCN-NEXT:    ;DEBUG_VALUE: split_i64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
-; GCN-NEXT:    ;DEBUG_VALUE: split_i64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
-; GCN-NEXT:    ;DEBUG_VALUE: split_i64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
+; GCN-NEXT:    ;DEBUG_VALUE: split_i64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef, DW_OP_LLVM_fragment 32 32] $vgpr1
+; GCN-NEXT:    ;DEBUG_VALUE: split_i64_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef, DW_OP_LLVM_fragment 0 32] $vgpr0
 ; GCN-NEXT:    .loc 0 24 5 prologue_end ; /tmp/dbg.cl:24:5
 ; GCN-NEXT:    s_setpc_b64 s[30:31]
 ; GCN-NEXT:  .Ltmp15:
@@ -128,9 +126,8 @@ define hidden i8 addrspace(1)* @split_ptr_arg(i8 addrspace(1)* readnone returned
 ; GCN-NEXT:  ; %bb.0:
 ; GCN-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; GCN-NEXT:  .Ltmp16:
-; GCN-NEXT:    ;DEBUG_VALUE: split_ptr_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
-; GCN-NEXT:    ;DEBUG_VALUE: split_ptr_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
-; GCN-NEXT:    ;DEBUG_VALUE: split_ptr_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef] $vgpr0_vgpr1
+; GCN-NEXT:    ;DEBUG_VALUE: split_ptr_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef, DW_OP_LLVM_fragment 32 32] $vgpr1
+; GCN-NEXT:    ;DEBUG_VALUE: split_ptr_arg:arg <- [DW_OP_constu 1, DW_OP_swap, DW_OP_xderef, DW_OP_LLVM_fragment 0 32] $vgpr0
 ; GCN-NEXT:    .loc 0 28 5 prologue_end ; /tmp/dbg.cl:28:5
 ; GCN-NEXT:    s_setpc_b64 s[30:31]
 ; GCN-NEXT:  .Ltmp17:

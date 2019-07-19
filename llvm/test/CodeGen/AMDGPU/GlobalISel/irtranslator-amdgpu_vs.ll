@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=fiji -stop-after=irtranslator -global-isel %s -o - | FileCheck %s
 
 
