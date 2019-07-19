@@ -71,10 +71,11 @@ reassociateShiftAmtsOfTwoSameDirectionShifts(BinaryOperator *Sh0,
 //
 // There are many variants to this pattern:
 //   a)  (x & ((1 << MaskShAmt) - 1)) << ShiftShAmt
+//   b)  (x & (~(-1 << MaskShAmt))) << ShiftShAmt
 // All these patterns can be simplified to just:
 //   x << ShiftShAmt
 // iff:
-//   a) (MaskShAmt+ShiftShAmt) u>= bitwidth(x)
+//   a,b) (MaskShAmt+ShiftShAmt) u>= bitwidth(x)
 static Instruction *
 dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
                                      const SimplifyQuery &SQ) {
@@ -88,9 +89,11 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
 
   // ((1 << MaskShAmt) - 1)
   auto MaskA = m_Add(m_Shl(m_One(), m_Value(MaskShAmt)), m_AllOnes());
+  // (~(-1 << maskNbits))
+  auto MaskB = m_Xor(m_Shl(m_AllOnes(), m_Value(MaskShAmt)), m_AllOnes());
 
   Value *X;
-  if (!match(Masked, m_c_And(MaskA, m_Value(X))))
+  if (!match(Masked, m_c_And(m_CombineOr(MaskA, MaskB), m_Value(X))))
     return nullptr;
 
   // Can we simplify (MaskShAmt+ShiftShAmt) ?
