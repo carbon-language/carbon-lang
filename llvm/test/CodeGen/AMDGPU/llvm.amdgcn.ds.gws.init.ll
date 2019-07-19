@@ -111,7 +111,7 @@ define amdgpu_kernel void @gws_init_save_m0_init_constant_offset(i32 %val) #0 {
 
 ; GCN-LABEL: {{^}}gws_init_lgkmcnt:
 ; NOLOOP: ds_gws_init v0 offset:1 gds{{$}}
-; NOLOOP-NEXT: s_waitcnt expcnt(0) lgkmcnt(0)
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; NOLOOP-NEXT: s_setpc_b64
 define void @gws_init_lgkmcnt(i32 %val) {
   call void @llvm.amdgcn.ds.gws.init(i32 %val, i32 0)
@@ -120,8 +120,10 @@ define void @gws_init_lgkmcnt(i32 %val) {
 
 ; Does not imply memory fence on its own
 ; GCN-LABEL: {{^}}gws_init_wait_before:
-; NOLOOP: s_waitcnt
+; NOLOOP: s_waitcnt lgkmcnt(0)
 ; NOLOOP-NOT: s_waitcnt
+; NOLOOP: ds_gws_init
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 define amdgpu_kernel void @gws_init_wait_before(i32 %val, i32 addrspace(1)* %ptr) #0 {
   store i32 0, i32 addrspace(1)* %ptr
   call void @llvm.amdgcn.ds.gws.init(i32 %val, i32 7)

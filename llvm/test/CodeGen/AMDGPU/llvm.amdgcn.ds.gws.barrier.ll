@@ -4,6 +4,11 @@
 ; RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=gfx900 -o - -verify-machineinstrs < %s | FileCheck -enable-var-scope -check-prefixes=GCN,NOLOOP %s
 ; RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=gfx1010 -o - -verify-machineinstrs < %s | FileCheck -enable-var-scope -check-prefixes=GCN,NOLOOP,GFX10 %s
 
+; Make sure the op is emitted bundled with a waitcnt with and without the retry loop, and the bundle is not removed by ExpandPostRAPseudos.
+; RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=tahiti -stop-after=postrapseudos -o - -verify-machineinstrs < %s | FileCheck -enable-var-scope -check-prefix=MIR %s
+; RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=gfx900 -stop-after=postrapseudos -o - -verify-machineinstrs < %s | FileCheck -enable-var-scope -check-prefix=MIR %s
+
+
 ; Minimum offset
 ; GCN-LABEL: {{^}}gws_barrier_offset0:
 ; NOLOOP-DAG: s_load_dword [[BAR_NUM:s[0-9]+]]
@@ -18,10 +23,18 @@
 ; LOOP-NEXT: s_getreg_b32 [[GETREG:s[0-9]+]], hwreg(HW_REG_TRAPSTS, 8, 1)
 ; LOOP-NEXT: s_cmp_lg_u32 [[GETREG]], 0
 ; LOOP-NEXT: s_cbranch_scc1 [[LOOP]]
+
+; MIR-LABEL: name: gws_barrier_offset0{{$}}
+; MIR: BUNDLE implicit{{( killed)?}} $vgpr0, implicit $m0, implicit $exec {
+; MIR-NEXT: DS_GWS_BARRIER $vgpr0, 1, -1, implicit $m0, implicit $exec :: (load 4 from custom GWSResource)
+; MIR-NEXT: S_WAITCNT 0
+; MIR-NEXT: }
 define amdgpu_kernel void @gws_barrier_offset0(i32 %val) #0 {
   call void @llvm.amdgcn.ds.gws.barrier(i32 %val, i32 0)
   ret void
 }
+
+; MIR-LABEL: name: gws_barrier_offset63{{$}}
 
 ; Maximum offset
 ; GCN-LABEL: {{^}}gws_barrier_offset63:
@@ -103,7 +116,7 @@ define amdgpu_kernel void @gws_barrier_save_m0_barrier_constant_offset(i32 %val)
 ; Make sure this increments lgkmcnt
 ; GCN-LABEL: {{^}}gws_barrier_lgkmcnt:
 ; NOLOOP: ds_gws_barrier v0 offset:1 gds{{$}}
-; NOLOOP-NEXT: s_waitcnt expcnt(0) lgkmcnt(0)
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; NOLOOP-NEXT: s_setpc_b64
 define void @gws_barrier_lgkmcnt(i32 %val) {
   call void @llvm.amdgcn.ds.gws.barrier(i32 %val, i32 0)
@@ -122,7 +135,7 @@ define amdgpu_kernel void @gws_barrier_wait_before(i32 %val, i32 addrspace(1)* %
 
 ; GCN-LABEL: {{^}}gws_barrier_wait_after:
 ; NOLOOP: ds_gws_barrier v0 offset:8 gds
-; NOLOOP-NEXT: s_waitcnt expcnt(0){{$}}
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; NOLOOP-NEXT: load_dword
 define amdgpu_kernel void @gws_barrier_wait_after(i32 %val, i32 addrspace(1)* %ptr) #0 {
   call void @llvm.amdgcn.ds.gws.barrier(i32 %val, i32 7)
@@ -135,6 +148,7 @@ define amdgpu_kernel void @gws_barrier_wait_after(i32 %val, i32 addrspace(1)* %p
 ; NOLOOP: store_dword
 ; NOLOOP: s_waitcnt vmcnt(0) lgkmcnt(0)
 ; NOLOOP: ds_gws_barrier v0 offset:8 gds
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 define amdgpu_kernel void @gws_barrier_fence_before(i32 %val, i32 addrspace(1)* %ptr) #0 {
   store i32 0, i32 addrspace(1)* %ptr
   fence release
@@ -142,9 +156,11 @@ define amdgpu_kernel void @gws_barrier_fence_before(i32 %val, i32 addrspace(1)* 
   ret void
 }
 
+; FIXME: Extra waitcnt
 ; GCN-LABEL: {{^}}gws_barrier_fence_after:
 ; NOLOOP: ds_gws_barrier v0 offset:8 gds
 ; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) lgkmcnt(0)
 ; GFX10-NEXT: s_waitcnt_vscnt null, 0x0
 ; NOLOOP-NEXT: load_dword
 define amdgpu_kernel void @gws_barrier_fence_after(i32 %val, i32 addrspace(1)* %ptr) #0 {
@@ -158,7 +174,9 @@ define amdgpu_kernel void @gws_barrier_fence_after(i32 %val, i32 addrspace(1)* %
 ; GCN-LABEL: {{^}}gws_init_barrier:
 ; NOLOOP: s_mov_b32 m0, -1
 ; NOLOOP: ds_gws_init v0 offset:8 gds
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; NOLOOP-NEXT: ds_gws_barrier v0 offset:8 gds
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 define amdgpu_kernel void @gws_init_barrier(i32 %val) #0 {
   call void @llvm.amdgcn.ds.gws.init(i32 %val, i32 7)
   call void @llvm.amdgcn.ds.gws.barrier(i32 %val, i32 7)
@@ -169,9 +187,11 @@ define amdgpu_kernel void @gws_init_barrier(i32 %val) #0 {
 ; GCN-LABEL: {{^}}gws_init_fence_barrier:
 ; NOLOOP: s_mov_b32 m0, -1
 ; NOLOOP: ds_gws_init v0 offset:8 gds
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; NOLOOP-NEXT: s_waitcnt vmcnt(0) lgkmcnt(0)
 ; GFX10-NEXT: s_waitcnt_vscnt null, 0x0
 ; NOLOOP-NEXT: ds_gws_barrier v0 offset:8 gds
+; NOLOOP-NEXT: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 define amdgpu_kernel void @gws_init_fence_barrier(i32 %val) #0 {
   call void @llvm.amdgcn.ds.gws.init(i32 %val, i32 7)
   fence release

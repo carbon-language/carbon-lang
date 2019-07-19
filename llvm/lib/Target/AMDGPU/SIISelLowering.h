@@ -315,6 +315,7 @@ public:
   MachineBasicBlock *splitKillBlock(MachineInstr &MI,
                                     MachineBasicBlock *BB) const;
 
+  void bundleInstWithWaitcnt(MachineInstr &MI) const;
   MachineBasicBlock *emitGWSMemViolTestLoop(MachineInstr &MI,
                                             MachineBasicBlock *BB) const;
 

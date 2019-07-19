@@ -3069,6 +3069,20 @@ splitBlockForLoop(MachineInstr &MI, MachineBasicBlock &MBB, bool InstInLoop) {
   return std::make_pair(LoopBB, RemainderBB);
 }
 
+/// Insert \p MI into a BUNDLE with an S_WAITCNT 0 immediately following it.
+void SITargetLowering::bundleInstWithWaitcnt(MachineInstr &MI) const {
+  MachineBasicBlock *MBB = MI.getParent();
+  const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
+  auto I = MI.getIterator();
+  auto E = std::next(I);
+
+  BuildMI(*MBB, E, MI.getDebugLoc(), TII->get(AMDGPU::S_WAITCNT))
+    .addImm(0);
+
+  MIBundleBuilder Bundler(*MBB, I, E);
+  finalizeBundle(*MBB, Bundler.begin());
+}
+
 MachineBasicBlock *
 SITargetLowering::emitGWSMemViolTestLoop(MachineInstr &MI,
                                          MachineBasicBlock *BB) const {
@@ -3108,8 +3122,7 @@ SITargetLowering::emitGWSMemViolTestLoop(MachineInstr &MI,
     MRI.setSimpleHint(Data0, Src->getReg());
   }
 
-  BuildMI(*LoopBB, I, DL, TII->get(AMDGPU::S_WAITCNT))
-    .addImm(0);
+  bundleInstWithWaitcnt(MI);
 
   unsigned Reg = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
 
@@ -3828,8 +3841,12 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::DS_GWS_SEMA_P:
   case AMDGPU::DS_GWS_SEMA_RELEASE_ALL:
   case AMDGPU::DS_GWS_BARRIER:
-    if (getSubtarget()->hasGWSAutoReplay())
+    // A s_waitcnt 0 is required to be the instruction immediately following.
+    if (getSubtarget()->hasGWSAutoReplay()) {
+      bundleInstWithWaitcnt(MI);
       return BB;
+    }
+
     return emitGWSMemViolTestLoop(MI, BB);
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
