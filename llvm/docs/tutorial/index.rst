@@ -10,7 +10,7 @@ Kaleidoscope: Implementing a Language with LLVM
    :glob:
    :numbered:
 
-#. `My First Language Frontend with LLVM Tutorial <https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/>`_
+#. `My First Language Frontend with LLVM Tutorial <MyFirstLanguageFrontend/index>`_
    This is the "Kaleidoscope" Language tutorial, showing how to implement 
    a simple language using LLVM components in C++.
 
