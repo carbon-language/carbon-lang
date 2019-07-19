@@ -1,2 +1,2 @@
-#include "sub_dir/foo.h"
+#include "foo.h"
 int foo() { return 42; }

@@ -12,7 +12,6 @@
 #include "Context.h"
 #include "FSProvider.h"
 #include "GlobalCompilationDatabase.h"
-#include "Path.h"
 #include "SourceCode.h"
 #include "Threading.h"
 #include "index/BackgroundRebuild.h"
@@ -50,17 +49,15 @@ public:
   virtual std::unique_ptr<IndexFileIn>
   loadShard(llvm::StringRef ShardIdentifier) const = 0;
 
-  // The factory provides storage for each File.
+  // The factory provides storage for each CDB.
   // It keeps ownership of the storage instances, and should manage caching
   // itself. Factory must be threadsafe and never returns nullptr.
-  using Factory = llvm::unique_function<BackgroundIndexStorage *(PathRef)>;
+  using Factory =
+      llvm::unique_function<BackgroundIndexStorage *(llvm::StringRef)>;
 
   // Creates an Index Storage that saves shards into disk. Index storage uses
-  // CDBDirectory + ".clangd/index/" as the folder to save shards. CDBDirectory
-  // is the first directory containing a CDB in parent directories of a file, or
-  // user's home directory if none was found, e.g. standard library headers.
-  static Factory createDiskBackedStorageFactory(
-      std::function<llvm::Optional<ProjectInfo>(PathRef)> GetProjectInfo);
+  // CDBDirectory + ".clangd/index/" as the folder to save shards.
+  static Factory createDiskBackedStorageFactory();
 };
 
 // A priority queue of tasks which can be run on (external) worker threads.
@@ -160,14 +157,15 @@ private:
   /// information on IndexStorage.
   void update(llvm::StringRef MainFile, IndexFileIn Index,
               const llvm::StringMap<ShardVersion> &ShardVersionsSnapshot,
-              bool HadErrors);
+              BackgroundIndexStorage *IndexStorage, bool HadErrors);
 
   // configuration
   const FileSystemProvider &FSProvider;
   const GlobalCompilationDatabase &CDB;
   Context BackgroundContext;
 
-  llvm::Error index(tooling::CompileCommand);
+  llvm::Error index(tooling::CompileCommand,
+                    BackgroundIndexStorage *IndexStorage);
 
   FileSymbols IndexedSymbols;
   BackgroundIndexRebuilder Rebuilder;
@@ -175,13 +173,25 @@ private:
   std::mutex ShardVersionsMu;
 
   BackgroundIndexStorage::Factory IndexStorageFactory;
-  // Tries to load shards for the MainFiles and their dependencies.
-  std::vector<tooling::CompileCommand>
-  loadProject(std::vector<std::string> MainFiles);
+  struct Source {
+    std::string Path;
+    bool NeedsReIndexing;
+    Source(llvm::StringRef Path, bool NeedsReIndexing)
+        : Path(Path), NeedsReIndexing(NeedsReIndexing) {}
+  };
+  // Loads the shards for a single TU and all of its dependencies. Returns the
+  // list of sources and whether they need to be re-indexed.
+  std::vector<Source> loadShard(const tooling::CompileCommand &Cmd,
+                                BackgroundIndexStorage *IndexStorage,
+                                llvm::StringSet<> &LoadedShards);
+  // Tries to load shards for the ChangedFiles.
+  std::vector<std::pair<tooling::CompileCommand, BackgroundIndexStorage *>>
+  loadShards(std::vector<std::string> ChangedFiles);
 
   BackgroundQueue::Task
   changedFilesTask(const std::vector<std::string> &ChangedFiles);
-  BackgroundQueue::Task indexFileTask(tooling::CompileCommand Cmd);
+  BackgroundQueue::Task indexFileTask(tooling::CompileCommand Cmd,
+                                      BackgroundIndexStorage *Storage);
 
   // from lowest to highest priority
   enum QueuePriority {

@@ -78,13 +78,13 @@ void BackgroundIndexRebuilder::idle() {
 void BackgroundIndexRebuilder::startLoading() {
   std::lock_guard<std::mutex> Lock(Mu);
   if (!Loading)
-    LoadedShards = 0;
+    LoadedTUs = 0;
   ++Loading;
 }
-void BackgroundIndexRebuilder::loadedShard(size_t ShardCount) {
+void BackgroundIndexRebuilder::loadedTU() {
   std::lock_guard<std::mutex> Lock(Mu);
   assert(Loading);
-  LoadedShards += ShardCount;
+  ++LoadedTUs;
 }
 void BackgroundIndexRebuilder::doneLoading() {
   maybeRebuild("after loading index from disk", [this] {
@@ -93,7 +93,7 @@ void BackgroundIndexRebuilder::doneLoading() {
     if (Loading)    // was loading multiple batches concurrently
       return false; // rebuild once the last batch is done.
     // Rebuild if we loaded any shards, or if we stopped an indexedTU rebuild.
-    return LoadedShards > 0 || enoughTUsToRebuild();
+    return LoadedTUs > 0 || enoughTUsToRebuild();
   });
 }
 
