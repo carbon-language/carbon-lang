@@ -1203,13 +1203,8 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       break;
     case KindCode::operand:
       CHECK(operandArg != nullptr);
-      if (std::optional<DynamicType> aType{operandArg->GetType()}) {
-        if (result.categorySet.test(aType->category())) {
-          resultType = *aType;
-        } else {
-          resultType = DynamicType{*category, aType->kind()};
-        }
-      }
+      resultType = operandArg->GetType();
+      CHECK(!resultType || result.categorySet.test(resultType->category()));
       break;
     case KindCode::effectiveKind:
       CHECK(kindDummyArg != nullptr);
