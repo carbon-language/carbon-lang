@@ -6,6 +6,9 @@
 ;
 ; RELAX: Section{{.*}}.rela.{{eh|debug}}_frame {
 ; RELAX-NOT: {{[}]}}
+; RELAX-NOT: 0x0 R_RISCV_ADD32
+; RELAX-NOT: 0x0 R_RISCV_SUB32
+; RELAX-NOT: {{[}]}}
 ; RELAX: 0x20 R_RISCV_ADD32
 ; RELAX: 0x20 R_RISCV_SUB32
 ; RELAX-NOT: {{[}]}}
