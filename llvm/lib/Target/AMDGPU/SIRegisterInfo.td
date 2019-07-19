@@ -37,46 +37,29 @@ class getSubRegs<int size> {
                                               !if(!eq(size, 16), ret16, ret32))))));
 }
 
-let Namespace = "AMDGPU" in {
-defset list<RegAltNameIndex> AllRegAltNameIndices = {
-  def Reg64   : RegAltNameIndex;
-  def Reg96   : RegAltNameIndex;
-  def Reg128  : RegAltNameIndex;
-  def Reg160  : RegAltNameIndex;
-  def Reg256  : RegAltNameIndex;
-  def Reg512  : RegAltNameIndex;
-  def Reg1024 : RegAltNameIndex;
-}
+// Generates list of sequential register tuple names.
+// E.g. RegSeq<3,2,2,"s">.ret -> [ "s[0:1]", "s[2:3]" ]
+class RegSeq<int last_reg, int stride, int size, string prefix, int start = 0> {
+  int next = !add(start, stride);
+  int end_reg = !add(!add(start, size), -1);
+  list<string> ret =
+    !if(!le(end_reg, last_reg),
+        !listconcat([prefix # "[" # start # ":" # end_reg # "]"],
+                    RegSeq<last_reg, stride, size, prefix, next>.ret),
+                    []);
 }
 
 //===----------------------------------------------------------------------===//
 //  Declarations that describe the SI registers
 //===----------------------------------------------------------------------===//
-class SIReg <string n, bits<16> regIdx = 0, string prefix = "",
-             int regNo = !cast<int>(regIdx)> :
-  Register<n, !if(!eq(prefix, ""),
-                [ n, n, n, n, n, n, n ],
-                [ prefix # "[" # regNo # ":" # !and(!add(regNo, 1), 255) # "]",
-                  prefix # "[" # regNo # ":" # !and(!add(regNo, 2), 255) # "]",
-                  prefix # "[" # regNo # ":" # !and(!add(regNo, 3), 255) # "]",
-                  prefix # "[" # regNo # ":" # !and(!add(regNo, 4), 255) # "]",
-                  prefix # "[" # regNo # ":" # !and(!add(regNo, 7), 255) # "]",
-                  prefix # "[" # regNo # ":" # !and(!add(regNo, 15), 255) # "]",
-                  prefix # "[" # regNo # ":" # !and(!add(regNo, 31), 255) # "]",
-                ])>,
+class SIReg <string n, bits<16> regIdx = 0> :
+  Register<n>,
   DwarfRegNum<[!cast<int>(HWEncoding)]> {
   let Namespace = "AMDGPU";
-  let RegAltNameIndices = AllRegAltNameIndices;
 
   // This is the not yet the complete register encoding. An additional
   // bit is set for VGPRs.
   let HWEncoding = regIdx;
-}
-
-class SIRegisterWithSubRegs<string n, list<Register> subregs> :
-  RegisterWithSubRegs<n, subregs> {
-  let RegAltNameIndices = AllRegAltNameIndices;
-  let AltNames = [ n, n, n, n, n, n, n ];
 }
 
 // Special Registers
@@ -91,7 +74,7 @@ def SP_REG : SIReg<"sp", 0>;
 def SCRATCH_WAVE_OFFSET_REG : SIReg<"scratch_wave_offset", 0>;
 
 // VCC for 64-bit instructions
-def VCC : SIRegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]>,
+def VCC : RegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]>,
           DwarfRegAlias<VCC_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
@@ -101,7 +84,7 @@ def VCC : SIRegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]>,
 def EXEC_LO : SIReg<"exec_lo", 126>;
 def EXEC_HI : SIReg<"exec_hi", 127>;
 
-def EXEC : SIRegisterWithSubRegs<"exec", [EXEC_LO, EXEC_HI]>,
+def EXEC : RegisterWithSubRegs<"exec", [EXEC_LO, EXEC_HI]>,
            DwarfRegAlias<EXEC_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
@@ -132,7 +115,7 @@ def LDS_DIRECT : SIReg <"src_lds_direct", 254>;
 def XNACK_MASK_LO : SIReg<"xnack_mask_lo", 104>;
 def XNACK_MASK_HI : SIReg<"xnack_mask_hi", 105>;
 
-def XNACK_MASK : SIRegisterWithSubRegs<"xnack_mask", [XNACK_MASK_LO, XNACK_MASK_HI]>,
+def XNACK_MASK : RegisterWithSubRegs<"xnack_mask", [XNACK_MASK_LO, XNACK_MASK_HI]>,
                  DwarfRegAlias<XNACK_MASK_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
@@ -143,7 +126,7 @@ def XNACK_MASK : SIRegisterWithSubRegs<"xnack_mask", [XNACK_MASK_LO, XNACK_MASK_
 def TBA_LO : SIReg<"tba_lo", 108>;
 def TBA_HI : SIReg<"tba_hi", 109>;
 
-def TBA : SIRegisterWithSubRegs<"tba", [TBA_LO, TBA_HI]>,
+def TBA : RegisterWithSubRegs<"tba", [TBA_LO, TBA_HI]>,
           DwarfRegAlias<TBA_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
@@ -153,7 +136,7 @@ def TBA : SIRegisterWithSubRegs<"tba", [TBA_LO, TBA_HI]>,
 def TMA_LO : SIReg<"tma_lo", 110>;
 def TMA_HI : SIReg<"tma_hi", 111>;
 
-def TMA : SIRegisterWithSubRegs<"tma", [TMA_LO, TMA_HI]>,
+def TMA : RegisterWithSubRegs<"tma", [TMA_LO, TMA_HI]>,
           DwarfRegAlias<TMA_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
@@ -173,7 +156,7 @@ multiclass FLAT_SCR_LOHI_m <string n, bits<16> ci_e, bits<16> vi_e> {
 }
 
 class FlatReg <Register lo, Register hi, bits<16> encoding> :
-    SIRegisterWithSubRegs<"flat_scratch", [lo, hi]>,
+    RegisterWithSubRegs<"flat_scratch", [lo, hi]>,
     DwarfRegAlias<lo> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
@@ -189,19 +172,19 @@ def FLAT_SCR : FlatReg<FLAT_SCR_LO, FLAT_SCR_HI, 0>;
 
 // SGPR registers
 foreach Index = 0-105 in {
-  def SGPR#Index : SIReg <"s"#Index, Index, "s">;
+  def SGPR#Index : SIReg <"s"#Index, Index>;
 }
 
 // VGPR registers
 foreach Index = 0-255 in {
-  def VGPR#Index : SIReg <"v"#Index, Index, "v"> {
+  def VGPR#Index : SIReg <"v"#Index, Index> {
     let HWEncoding{8} = 1;
   }
 }
 
 // AccVGPR registers
 foreach Index = 0-255 in {
-  def AGPR#Index : SIReg <"a"#Index, Index, "a"> {
+  def AGPR#Index : SIReg <"a"#Index, Index> {
     let HWEncoding{8} = 1;
   }
 }
@@ -233,20 +216,23 @@ def SGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 // SGPR 64-bit registers
 def SGPR_64Regs : RegisterTuples<getSubRegs<2>.ret,
                              [(add (decimate SGPR_32, 2)),
-                              (add (decimate (shl SGPR_32, 1), 2))]>;
+                              (add (decimate (shl SGPR_32, 1), 2))],
+                             RegSeq<105, 2, 2, "s">.ret>;
 
 // SGPR 96-bit registers. No operations use these, but for symmetry with 96-bit VGPRs.
 def SGPR_96Regs : RegisterTuples<getSubRegs<3>.ret,
                             [(add (decimate SGPR_32, 3)),
                              (add (decimate (shl SGPR_32, 1), 3)),
-                             (add (decimate (shl SGPR_32, 2), 3))]>;
+                             (add (decimate (shl SGPR_32, 2), 3))],
+                            RegSeq<105, 3, 3, "s">.ret>;
 
 // SGPR 128-bit registers
 def SGPR_128Regs : RegisterTuples<getSubRegs<4>.ret,
                               [(add (decimate SGPR_32, 4)),
                                (add (decimate (shl SGPR_32, 1), 4)),
                                (add (decimate (shl SGPR_32, 2), 4)),
-                               (add (decimate (shl SGPR_32, 3), 4))]>;
+                               (add (decimate (shl SGPR_32, 3), 4))],
+                              RegSeq<105, 4, 4, "s">.ret>;
 
 // SGPR 160-bit registers. No operations use these, but for symmetry with 160-bit VGPRs.
 def SGPR_160Regs : RegisterTuples<getSubRegs<5>.ret,
@@ -254,7 +240,8 @@ def SGPR_160Regs : RegisterTuples<getSubRegs<5>.ret,
                              (add (decimate (shl SGPR_32, 1), 4)),
                              (add (decimate (shl SGPR_32, 2), 4)),
                              (add (decimate (shl SGPR_32, 3), 4)),
-                             (add (decimate (shl SGPR_32, 4), 4))]>;
+                             (add (decimate (shl SGPR_32, 4), 4))],
+                            RegSeq<105, 4, 5, "s">.ret>;
 
 // SGPR 256-bit registers
 def SGPR_256Regs : RegisterTuples<getSubRegs<8>.ret,
@@ -265,7 +252,8 @@ def SGPR_256Regs : RegisterTuples<getSubRegs<8>.ret,
                                (add (decimate (shl SGPR_32, 4), 4)),
                                (add (decimate (shl SGPR_32, 5), 4)),
                                (add (decimate (shl SGPR_32, 6), 4)),
-                               (add (decimate (shl SGPR_32, 7), 4))]>;
+                               (add (decimate (shl SGPR_32, 7), 4))],
+                              RegSeq<105, 4, 8, "s">.ret>;
 
 // SGPR 512-bit registers
 def SGPR_512Regs : RegisterTuples<getSubRegs<16>.ret,
@@ -284,7 +272,8 @@ def SGPR_512Regs : RegisterTuples<getSubRegs<16>.ret,
                                (add (decimate (shl SGPR_32, 12), 4)),
                                (add (decimate (shl SGPR_32, 13), 4)),
                                (add (decimate (shl SGPR_32, 14), 4)),
-                               (add (decimate (shl SGPR_32, 15), 4))]>;
+                               (add (decimate (shl SGPR_32, 15), 4))],
+                              RegSeq<105, 4, 16, "s">.ret>;
 
 // SGPR 1024-bit registers
 def SGPR_1024Regs : RegisterTuples<getSubRegs<32>.ret,
@@ -319,7 +308,8 @@ def SGPR_1024Regs : RegisterTuples<getSubRegs<32>.ret,
                                (add (decimate (shl SGPR_32, 28), 4)),
                                (add (decimate (shl SGPR_32, 29), 4)),
                                (add (decimate (shl SGPR_32, 30), 4)),
-                               (add (decimate (shl SGPR_32, 31), 4))]>;
+                               (add (decimate (shl SGPR_32, 31), 4))],
+                              RegSeq<105, 4, 32, "s">.ret>;
 
 // Trap handler TMP 32-bit registers
 def TTMP_32 : RegisterClass<"AMDGPU", [i32, f32, v2i16, v2f16], 32,
@@ -330,14 +320,16 @@ def TTMP_32 : RegisterClass<"AMDGPU", [i32, f32, v2i16, v2f16], 32,
 // Trap handler TMP 64-bit registers
 def TTMP_64Regs : RegisterTuples<getSubRegs<2>.ret,
                              [(add (decimate TTMP_32, 2)),
-                              (add (decimate (shl TTMP_32, 1), 2))]>;
+                              (add (decimate (shl TTMP_32, 1), 2))],
+                             RegSeq<15, 2, 2, "ttmp">.ret>;
 
 // Trap handler TMP 128-bit registers
 def TTMP_128Regs : RegisterTuples<getSubRegs<4>.ret,
                               [(add (decimate TTMP_32, 4)),
                                (add (decimate (shl TTMP_32, 1), 4)),
                                (add (decimate (shl TTMP_32, 2), 4)),
-                               (add (decimate (shl TTMP_32, 3), 4))]>;
+                               (add (decimate (shl TTMP_32, 3), 4))],
+                              RegSeq<15, 4, 4, "ttmp">.ret>;
 
 def TTMP_256Regs : RegisterTuples<getSubRegs<8>.ret,
                               [(add (decimate TTMP_32, 4)),
@@ -347,7 +339,8 @@ def TTMP_256Regs : RegisterTuples<getSubRegs<8>.ret,
                                (add (decimate (shl TTMP_32, 4), 4)),
                                (add (decimate (shl TTMP_32, 5), 4)),
                                (add (decimate (shl TTMP_32, 6), 4)),
-                               (add (decimate (shl TTMP_32, 7), 4))]>;
+                               (add (decimate (shl TTMP_32, 7), 4))],
+                              RegSeq<15, 4, 8, "ttmp">.ret>;
 
 def TTMP_512Regs : RegisterTuples<getSubRegs<16>.ret,
                               [(add (decimate TTMP_32, 4)),
@@ -365,14 +358,15 @@ def TTMP_512Regs : RegisterTuples<getSubRegs<16>.ret,
                                (add (decimate (shl TTMP_32, 12), 4)),
                                (add (decimate (shl TTMP_32, 13), 4)),
                                (add (decimate (shl TTMP_32, 14), 4)),
-                               (add (decimate (shl TTMP_32, 15), 4))]>;
+                               (add (decimate (shl TTMP_32, 15), 4))],
+                              RegSeq<15, 4, 16, "ttmp">.ret>;
 
 class TmpRegTuplesBase<int index, int size,
                        list<Register> subRegs,
                        list<SubRegIndex> indices = getSubRegs<size>.ret,
                        int index1 = !add(index, !add(size, -1)),
                        string name = "ttmp["#index#":"#index1#"]"> :
-  SIRegisterWithSubRegs<name, subRegs> {
+  RegisterWithSubRegs<name, subRegs> {
   let HWEncoding = subRegs[0].HWEncoding;
   let SubRegIndices = indices;
 }
@@ -457,20 +451,23 @@ def VGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 // VGPR 64-bit registers
 def VGPR_64 : RegisterTuples<getSubRegs<2>.ret,
                              [(add (trunc VGPR_32, 255)),
-                              (add (shl VGPR_32, 1))]>;
+                              (add (shl VGPR_32, 1))],
+                             RegSeq<255, 1, 2, "v">.ret>;
 
 // VGPR 96-bit registers
 def VGPR_96 : RegisterTuples<getSubRegs<3>.ret,
                              [(add (trunc VGPR_32, 254)),
                               (add (shl VGPR_32, 1)),
-                              (add (shl VGPR_32, 2))]>;
+                              (add (shl VGPR_32, 2))],
+                             RegSeq<255, 1, 3, "v">.ret>;
 
 // VGPR 128-bit registers
 def VGPR_128 : RegisterTuples<getSubRegs<4>.ret,
                               [(add (trunc VGPR_32, 253)),
                                (add (shl VGPR_32, 1)),
                                (add (shl VGPR_32, 2)),
-                               (add (shl VGPR_32, 3))]>;
+                               (add (shl VGPR_32, 3))],
+                              RegSeq<255, 1, 4, "v">.ret>;
 
 // VGPR 160-bit registers
 def VGPR_160 : RegisterTuples<getSubRegs<5>.ret,
@@ -478,7 +475,8 @@ def VGPR_160 : RegisterTuples<getSubRegs<5>.ret,
                               (add (shl VGPR_32, 1)),
                               (add (shl VGPR_32, 2)),
                               (add (shl VGPR_32, 3)),
-                              (add (shl VGPR_32, 4))]>;
+                              (add (shl VGPR_32, 4))],
+                             RegSeq<255, 1, 5, "v">.ret>;
 
 // VGPR 256-bit registers
 def VGPR_256 : RegisterTuples<getSubRegs<8>.ret,
@@ -489,7 +487,8 @@ def VGPR_256 : RegisterTuples<getSubRegs<8>.ret,
                                (add (shl VGPR_32, 4)),
                                (add (shl VGPR_32, 5)),
                                (add (shl VGPR_32, 6)),
-                               (add (shl VGPR_32, 7))]>;
+                               (add (shl VGPR_32, 7))],
+                              RegSeq<255, 1, 8, "v">.ret>;
 
 // VGPR 512-bit registers
 def VGPR_512 : RegisterTuples<getSubRegs<16>.ret,
@@ -508,7 +507,8 @@ def VGPR_512 : RegisterTuples<getSubRegs<16>.ret,
                                (add (shl VGPR_32, 12)),
                                (add (shl VGPR_32, 13)),
                                (add (shl VGPR_32, 14)),
-                               (add (shl VGPR_32, 15))]>;
+                               (add (shl VGPR_32, 15))],
+                              RegSeq<255, 1, 16, "v">.ret>;
 
 // VGPR 1024-bit registers
 def VGPR_1024 : RegisterTuples<getSubRegs<32>.ret,
@@ -543,7 +543,8 @@ def VGPR_1024 : RegisterTuples<getSubRegs<32>.ret,
                                (add (shl VGPR_32, 28)),
                                (add (shl VGPR_32, 29)),
                                (add (shl VGPR_32, 30)),
-                               (add (shl VGPR_32, 31))]>;
+                               (add (shl VGPR_32, 31))],
+                              RegSeq<255, 1, 32, "v">.ret>;
 
 // AccVGPR 32-bit registers
 def AGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
@@ -555,14 +556,16 @@ def AGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 // AGPR 64-bit registers
 def AGPR_64 : RegisterTuples<getSubRegs<2>.ret,
                              [(add (trunc AGPR_32, 255)),
-                              (add (shl AGPR_32, 1))]>;
+                              (add (shl AGPR_32, 1))],
+                             RegSeq<255, 1, 2, "a">.ret>;
 
 // AGPR 128-bit registers
 def AGPR_128 : RegisterTuples<getSubRegs<4>.ret,
                               [(add (trunc AGPR_32, 253)),
                                (add (shl AGPR_32, 1)),
                                (add (shl AGPR_32, 2)),
-                               (add (shl AGPR_32, 3))]>;
+                               (add (shl AGPR_32, 3))],
+                              RegSeq<255, 1, 4, "a">.ret>;
 
 // AGPR 512-bit registers
 def AGPR_512 : RegisterTuples<getSubRegs<16>.ret,
@@ -581,7 +584,8 @@ def AGPR_512 : RegisterTuples<getSubRegs<16>.ret,
                                (add (shl AGPR_32, 12)),
                                (add (shl AGPR_32, 13)),
                                (add (shl AGPR_32, 14)),
-                               (add (shl AGPR_32, 15))]>;
+                               (add (shl AGPR_32, 15))],
+                              RegSeq<255, 1, 16, "a">.ret>;
 
 // AGPR 1024-bit registers
 def AGPR_1024 : RegisterTuples<getSubRegs<32>.ret,
@@ -616,7 +620,8 @@ def AGPR_1024 : RegisterTuples<getSubRegs<32>.ret,
                                (add (shl AGPR_32, 28)),
                                (add (shl AGPR_32, 29)),
                                (add (shl AGPR_32, 30)),
-                               (add (shl AGPR_32, 31))]>;
+                               (add (shl AGPR_32, 31))],
+                              RegSeq<255, 1, 32, "a">.ret>;
 
 //===----------------------------------------------------------------------===//
 //  Register classes used as source and destination
@@ -629,7 +634,7 @@ def Pseudo_SReg_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16],
 }
 
 def Pseudo_SReg_128 : RegisterClass<"AMDGPU", [v4i32, v2i64, v2f64], 32,
-  (add PRIVATE_RSRC_REG), Reg128> {
+  (add PRIVATE_RSRC_REG)> {
   let isAllocatable = 0;
   let CopyCost = -1;
 }
@@ -672,14 +677,14 @@ def SRegOrLds_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16, i1
 }
 
 def SGPR_64 : RegisterClass<"AMDGPU", [v2i32, i64, v2f32, f64, v4i16, v4f16], 32,
-                            (add SGPR_64Regs), Reg64> {
+                            (add SGPR_64Regs)> {
   let CopyCost = 1;
   let AllocationPriority = 11;
 }
 
 // CCR (call clobbered registers) SGPR 64-bit registers
 def CCR_SGPR_64 : RegisterClass<"AMDGPU", SGPR_64.RegTypes, 32,
-                                (add (trunc SGPR_64, 16)), Reg64> {
+                                (add (trunc SGPR_64, 16))> {
   let CopyCost = SGPR_64.CopyCost;
   let AllocationPriority = SGPR_64.AllocationPriority;
 }
@@ -690,13 +695,13 @@ def TTMP_64 : RegisterClass<"AMDGPU", [v2i32, i64, f64, v4i16, v4f16], 32,
 }
 
 def SReg_64_XEXEC : RegisterClass<"AMDGPU", [v2i32, i64, v2f32, f64, i1, v4i16, v4f16], 32,
-  (add SGPR_64, VCC, FLAT_SCR, XNACK_MASK, TTMP_64, TBA, TMA), Reg64> {
+  (add SGPR_64, VCC, FLAT_SCR, XNACK_MASK, TTMP_64, TBA, TMA)> {
   let CopyCost = 1;
   let AllocationPriority = 13;
 }
 
 def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, v2f32, f64, i1, v4i16, v4f16], 32,
-  (add SReg_64_XEXEC, EXEC), Reg64> {
+  (add SReg_64_XEXEC, EXEC)> {
   let CopyCost = 1;
   let AllocationPriority = 13;
 }
@@ -719,17 +724,17 @@ let CopyCost = 2 in {
 // There are no 3-component scalar instructions, but this is needed
 // for symmetry with VGPRs.
 def SGPR_96 : RegisterClass<"AMDGPU", [v3i32, v3f32], 32,
-  (add SGPR_96Regs), Reg96> {
+  (add SGPR_96Regs)> {
   let AllocationPriority = 14;
 }
 
 def SReg_96 : RegisterClass<"AMDGPU", [v3i32, v3f32], 32,
-  (add SGPR_96), Reg96> {
+  (add SGPR_96)> {
   let AllocationPriority = 14;
 }
 
 def SGPR_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64], 32,
-                             (add SGPR_128Regs), Reg128> {
+                             (add SGPR_128Regs)> {
   let AllocationPriority = 15;
 }
 
@@ -739,7 +744,7 @@ def TTMP_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64], 32,
 }
 
 def SReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64, v2f64], 32,
-                             (add SGPR_128, TTMP_128), Reg128> {
+                             (add SGPR_128, TTMP_128)> {
   let AllocationPriority = 15;
 }
 
@@ -748,17 +753,16 @@ def SReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64, v2f64], 32,
 // There are no 5-component scalar instructions, but this is needed
 // for symmetry with VGPRs.
 def SGPR_160 : RegisterClass<"AMDGPU", [v5i32, v5f32], 32,
-                             (add SGPR_160Regs), Reg160> {
+                             (add SGPR_160Regs)> {
   let AllocationPriority = 16;
 }
 
 def SReg_160 : RegisterClass<"AMDGPU", [v5i32, v5f32], 32,
-                             (add SGPR_160), Reg160> {
+                             (add SGPR_160)> {
   let AllocationPriority = 16;
 }
 
-def SGPR_256 : RegisterClass<"AMDGPU", [v8i32, v8f32], 32, (add SGPR_256Regs),
-                             Reg256> {
+def SGPR_256 : RegisterClass<"AMDGPU", [v8i32, v8f32], 32, (add SGPR_256Regs)> {
   let AllocationPriority = 17;
 }
 
@@ -767,14 +771,14 @@ def TTMP_256 : RegisterClass<"AMDGPU", [v8i32, v8f32], 32, (add TTMP_256Regs)> {
 }
 
 def SReg_256 : RegisterClass<"AMDGPU", [v8i32, v8f32], 32,
-                             (add SGPR_256, TTMP_256), Reg256> {
+                             (add SGPR_256, TTMP_256)> {
   // Requires 4 s_mov_b64 to copy
   let CopyCost = 4;
   let AllocationPriority = 17;
 }
 
 def SGPR_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 32,
-                             (add SGPR_512Regs), Reg512> {
+                             (add SGPR_512Regs)> {
   let AllocationPriority = 18;
 }
 
@@ -784,7 +788,7 @@ def TTMP_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 32,
 }
 
 def SReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 32,
-                             (add SGPR_512, TTMP_512), Reg512> {
+                             (add SGPR_512, TTMP_512)> {
   // Requires 8 s_mov_b64 to copy
   let CopyCost = 8;
   let AllocationPriority = 18;
@@ -796,19 +800,19 @@ def VRegOrLds_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 3
 }
 
 def SGPR_1024 : RegisterClass<"AMDGPU", [v32i32, v32f32], 32,
-                              (add SGPR_1024Regs), Reg1024> {
+                              (add SGPR_1024Regs)> {
   let AllocationPriority = 19;
 }
 
 def SReg_1024 : RegisterClass<"AMDGPU", [v32i32, v32f32], 32,
-                              (add SGPR_1024), Reg1024> {
+                              (add SGPR_1024)> {
   let CopyCost = 16;
   let AllocationPriority = 19;
 }
 
 // Register class for all vector registers (VGPRs + Interploation Registers)
 def VReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32, v4f16, v4i16], 32,
-                            (add VGPR_64), Reg64> {
+                            (add VGPR_64)> {
   let Size = 64;
 
   // Requires 2 v_mov_b32 to copy
@@ -816,7 +820,7 @@ def VReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32, v4f16, v4i16], 32
   let AllocationPriority = 2;
 }
 
-def VReg_96 : RegisterClass<"AMDGPU", [v3i32, v3f32], 32, (add VGPR_96), Reg96> {
+def VReg_96 : RegisterClass<"AMDGPU", [v3i32, v3f32], 32, (add VGPR_96)> {
   let Size = 96;
 
   // Requires 3 v_mov_b32 to copy
@@ -825,7 +829,7 @@ def VReg_96 : RegisterClass<"AMDGPU", [v3i32, v3f32], 32, (add VGPR_96), Reg96> 
 }
 
 def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64, v2f64], 32,
-                             (add VGPR_128), Reg128> {
+                             (add VGPR_128)> {
   let Size = 128;
 
   // Requires 4 v_mov_b32 to copy
@@ -834,7 +838,7 @@ def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64, v2f64], 32,
 }
 
 def VReg_160 : RegisterClass<"AMDGPU", [v5i32, v5f32], 32,
-                             (add VGPR_160), Reg160> {
+                             (add VGPR_160)> {
   let Size = 160;
 
   // Requires 5 v_mov_b32 to copy
@@ -843,28 +847,28 @@ def VReg_160 : RegisterClass<"AMDGPU", [v5i32, v5f32], 32,
 }
 
 def VReg_256 : RegisterClass<"AMDGPU", [v8i32, v8f32], 32,
-                             (add VGPR_256), Reg256> {
+                             (add VGPR_256)> {
   let Size = 256;
   let CopyCost = 8;
   let AllocationPriority = 6;
 }
 
 def VReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 32,
-                             (add VGPR_512), Reg512> {
+                             (add VGPR_512)> {
   let Size = 512;
   let CopyCost = 16;
   let AllocationPriority = 7;
 }
 
 def VReg_1024 : RegisterClass<"AMDGPU", [v32i32, v32f32], 32,
-                              (add VGPR_1024), Reg1024> {
+                              (add VGPR_1024)> {
   let Size = 1024;
   let CopyCost = 32;
   let AllocationPriority = 8;
 }
 
 def AReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32, v4f16, v4i16], 32,
-                            (add AGPR_64), Reg64> {
+                            (add AGPR_64)> {
   let Size = 64;
 
   let CopyCost = 5;
@@ -872,7 +876,7 @@ def AReg_64 : RegisterClass<"AMDGPU", [i64, f64, v2i32, v2f32, v4f16, v4i16], 32
 }
 
 def AReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64, v2f64], 32,
-                             (add AGPR_128), Reg128> {
+                             (add AGPR_128)> {
   let Size = 128;
 
   // Requires 4 v_accvgpr_write and 4 v_accvgpr_read to copy + burn 1 vgpr
@@ -881,14 +885,14 @@ def AReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, v2i64, v2f64], 32,
 }
 
 def AReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 32,
-                             (add AGPR_512), Reg512> {
+                             (add AGPR_512)> {
   let Size = 512;
   let CopyCost = 33;
   let AllocationPriority = 7;
 }
 
 def AReg_1024 : RegisterClass<"AMDGPU", [v32i32, v32f32], 32,
-                              (add AGPR_1024), Reg1024> {
+                              (add AGPR_1024)> {
   let Size = 1024;
   let CopyCost = 65;
   let AllocationPriority = 8;
@@ -903,8 +907,7 @@ def VS_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
   let isAllocatable = 0;
 }
 
-def VS_64 : RegisterClass<"AMDGPU", [i64, f64], 32, (add VReg_64, SReg_64),
-                          Reg64> {
+def VS_64 : RegisterClass<"AMDGPU", [i64, f64], 32, (add VReg_64, SReg_64)> {
   let isAllocatable = 0;
 }
 
@@ -914,7 +917,7 @@ def AV_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 }
 
 def AV_64 : RegisterClass<"AMDGPU", [i64, f64, v4f16], 32,
-                          (add AReg_64, VReg_64), Reg64> {
+                          (add AReg_64, VReg_64)> {
   let isAllocatable = 0;
 }
 
