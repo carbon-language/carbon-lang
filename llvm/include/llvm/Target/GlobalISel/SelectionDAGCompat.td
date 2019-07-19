@@ -104,6 +104,10 @@ def : GINodeEquiv<G_SMIN, smin>;
 def : GINodeEquiv<G_SMAX, smax>;
 def : GINodeEquiv<G_UMIN, umin>;
 def : GINodeEquiv<G_UMAX, umax>;
+def : GINodeEquiv<G_FMINNUM, fminnum>;
+def : GINodeEquiv<G_FMAXNUM, fmaxnum>;
+def : GINodeEquiv<G_FMINNUM_IEEE, fminnum_ieee>;
+def : GINodeEquiv<G_FMAXNUM_IEEE, fmaxnum_ieee>;
 
 // Broadly speaking G_LOAD is equivalent to ISD::LOAD but there are some
 // complications that tablegen must take care of. For example, Predicates such
