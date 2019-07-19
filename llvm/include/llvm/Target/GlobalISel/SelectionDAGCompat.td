@@ -100,6 +100,7 @@ def : GINodeEquiv<G_FSQRT, fsqrt>;
 def : GINodeEquiv<G_FFLOOR, ffloor>;
 def : GINodeEquiv<G_FRINT, frint>;
 def : GINodeEquiv<G_FNEARBYINT, fnearbyint>;
+def : GINodeEquiv<G_FCOPYSIGN, fcopysign>;
 def : GINodeEquiv<G_SMIN, smin>;
 def : GINodeEquiv<G_SMAX, smax>;
 def : GINodeEquiv<G_UMIN, umin>;
