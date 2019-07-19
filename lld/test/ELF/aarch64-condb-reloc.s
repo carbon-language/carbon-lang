@@ -5,7 +5,7 @@
 # RUN: llvm-objdump -d --no-show-raw-insn %t | FileCheck %s
 # RUN: ld.lld -shared %t1.o %t2.o -o %t.so
 # RUN: llvm-objdump -d --no-show-raw-insn %t.so | FileCheck -check-prefix=DSO %s
-# RUN: llvm-readobj -S -r %t3 | FileCheck -check-prefix=DSOREL %s
+# RUN: llvm-readobj -S -r %t.so | FileCheck -check-prefix=DSOREL %s
 
 # 0x11024 - 36 = 0x11000
 # 0x11028 - 24 = 0x11010
