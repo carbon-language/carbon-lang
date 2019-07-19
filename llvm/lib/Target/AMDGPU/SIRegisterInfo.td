@@ -39,15 +39,36 @@ class getSubRegs<int size> {
 
 // Generates list of sequential register tuple names.
 // E.g. RegSeq<3,2,2,"s">.ret -> [ "s[0:1]", "s[2:3]" ]
-class RegSeq<int last_reg, int stride, int size, string prefix, int start = 0> {
+class RegSeqNames<int last_reg, int stride, int size, string prefix,
+                  int start = 0> {
   int next = !add(start, stride);
   int end_reg = !add(!add(start, size), -1);
   list<string> ret =
     !if(!le(end_reg, last_reg),
         !listconcat([prefix # "[" # start # ":" # end_reg # "]"],
-                    RegSeq<last_reg, stride, size, prefix, next>.ret),
+                    RegSeqNames<last_reg, stride, size, prefix, next>.ret),
                     []);
 }
+
+// Generates list of dags for register tupless.
+class RegSeqDags<RegisterClass RC, int last_reg, int stride, int size,
+                int start = 0> {
+  dag trunc_rc = (trunc RC,
+                  !if(!and(!eq(stride, 1), !eq(start, 0)),
+                      !add(!add(last_reg, 2), !mul(size, -1)),
+                      !add(last_reg, 1)));
+  list<dag> ret =
+    !if(!lt(start, size),
+        !listconcat([(add (decimate (shl trunc_rc, start), stride))],
+                    RegSeqDags<RC, last_reg, stride, size, !add(start, 1)>.ret),
+        []);
+}
+
+class SIRegisterTuples<list<SubRegIndex> Indices, RegisterClass RC,
+                       int last_reg, int stride, int size, string prefix> :
+  RegisterTuples<Indices,
+                 RegSeqDags<RC, last_reg, stride, size>.ret,
+                 RegSeqNames<last_reg, stride, size, prefix>.ret>;
 
 //===----------------------------------------------------------------------===//
 //  Declarations that describe the SI registers
@@ -214,102 +235,25 @@ def SGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 }
 
 // SGPR 64-bit registers
-def SGPR_64Regs : RegisterTuples<getSubRegs<2>.ret,
-                             [(add (decimate SGPR_32, 2)),
-                              (add (decimate (shl SGPR_32, 1), 2))],
-                             RegSeq<105, 2, 2, "s">.ret>;
+def SGPR_64Regs : SIRegisterTuples<getSubRegs<2>.ret, SGPR_32, 105, 2, 2, "s">;
 
 // SGPR 96-bit registers. No operations use these, but for symmetry with 96-bit VGPRs.
-def SGPR_96Regs : RegisterTuples<getSubRegs<3>.ret,
-                            [(add (decimate SGPR_32, 3)),
-                             (add (decimate (shl SGPR_32, 1), 3)),
-                             (add (decimate (shl SGPR_32, 2), 3))],
-                            RegSeq<105, 3, 3, "s">.ret>;
+def SGPR_96Regs : SIRegisterTuples<getSubRegs<3>.ret, SGPR_32, 105, 3, 3, "s">;
 
 // SGPR 128-bit registers
-def SGPR_128Regs : RegisterTuples<getSubRegs<4>.ret,
-                              [(add (decimate SGPR_32, 4)),
-                               (add (decimate (shl SGPR_32, 1), 4)),
-                               (add (decimate (shl SGPR_32, 2), 4)),
-                               (add (decimate (shl SGPR_32, 3), 4))],
-                              RegSeq<105, 4, 4, "s">.ret>;
+def SGPR_128Regs : SIRegisterTuples<getSubRegs<4>.ret, SGPR_32, 105, 4, 4, "s">;
 
 // SGPR 160-bit registers. No operations use these, but for symmetry with 160-bit VGPRs.
-def SGPR_160Regs : RegisterTuples<getSubRegs<5>.ret,
-                            [(add (decimate SGPR_32, 4)),
-                             (add (decimate (shl SGPR_32, 1), 4)),
-                             (add (decimate (shl SGPR_32, 2), 4)),
-                             (add (decimate (shl SGPR_32, 3), 4)),
-                             (add (decimate (shl SGPR_32, 4), 4))],
-                            RegSeq<105, 4, 5, "s">.ret>;
+def SGPR_160Regs : SIRegisterTuples<getSubRegs<5>.ret, SGPR_32, 105, 4, 5, "s">;
 
 // SGPR 256-bit registers
-def SGPR_256Regs : RegisterTuples<getSubRegs<8>.ret,
-                              [(add (decimate SGPR_32, 4)),
-                               (add (decimate (shl SGPR_32, 1), 4)),
-                               (add (decimate (shl SGPR_32, 2), 4)),
-                               (add (decimate (shl SGPR_32, 3), 4)),
-                               (add (decimate (shl SGPR_32, 4), 4)),
-                               (add (decimate (shl SGPR_32, 5), 4)),
-                               (add (decimate (shl SGPR_32, 6), 4)),
-                               (add (decimate (shl SGPR_32, 7), 4))],
-                              RegSeq<105, 4, 8, "s">.ret>;
+def SGPR_256Regs : SIRegisterTuples<getSubRegs<8>.ret, SGPR_32, 105, 4, 8, "s">;
 
 // SGPR 512-bit registers
-def SGPR_512Regs : RegisterTuples<getSubRegs<16>.ret,
-                              [(add (decimate SGPR_32, 4)),
-                               (add (decimate (shl SGPR_32, 1), 4)),
-                               (add (decimate (shl SGPR_32, 2), 4)),
-                               (add (decimate (shl SGPR_32, 3), 4)),
-                               (add (decimate (shl SGPR_32, 4), 4)),
-                               (add (decimate (shl SGPR_32, 5), 4)),
-                               (add (decimate (shl SGPR_32, 6), 4)),
-                               (add (decimate (shl SGPR_32, 7), 4)),
-                               (add (decimate (shl SGPR_32, 8), 4)),
-                               (add (decimate (shl SGPR_32, 9), 4)),
-                               (add (decimate (shl SGPR_32, 10), 4)),
-                               (add (decimate (shl SGPR_32, 11), 4)),
-                               (add (decimate (shl SGPR_32, 12), 4)),
-                               (add (decimate (shl SGPR_32, 13), 4)),
-                               (add (decimate (shl SGPR_32, 14), 4)),
-                               (add (decimate (shl SGPR_32, 15), 4))],
-                              RegSeq<105, 4, 16, "s">.ret>;
+def SGPR_512Regs : SIRegisterTuples<getSubRegs<16>.ret, SGPR_32, 105, 4, 16, "s">;
 
 // SGPR 1024-bit registers
-def SGPR_1024Regs : RegisterTuples<getSubRegs<32>.ret,
-                              [(add (decimate SGPR_32, 4)),
-                               (add (decimate (shl SGPR_32, 1), 4)),
-                               (add (decimate (shl SGPR_32, 2), 4)),
-                               (add (decimate (shl SGPR_32, 3), 4)),
-                               (add (decimate (shl SGPR_32, 4), 4)),
-                               (add (decimate (shl SGPR_32, 5), 4)),
-                               (add (decimate (shl SGPR_32, 6), 4)),
-                               (add (decimate (shl SGPR_32, 7), 4)),
-                               (add (decimate (shl SGPR_32, 8), 4)),
-                               (add (decimate (shl SGPR_32, 9), 4)),
-                               (add (decimate (shl SGPR_32, 10), 4)),
-                               (add (decimate (shl SGPR_32, 11), 4)),
-                               (add (decimate (shl SGPR_32, 12), 4)),
-                               (add (decimate (shl SGPR_32, 13), 4)),
-                               (add (decimate (shl SGPR_32, 14), 4)),
-                               (add (decimate (shl SGPR_32, 15), 4)),
-                               (add (decimate (shl SGPR_32, 16), 4)),
-                               (add (decimate (shl SGPR_32, 17), 4)),
-                               (add (decimate (shl SGPR_32, 18), 4)),
-                               (add (decimate (shl SGPR_32, 19), 4)),
-                               (add (decimate (shl SGPR_32, 20), 4)),
-                               (add (decimate (shl SGPR_32, 21), 4)),
-                               (add (decimate (shl SGPR_32, 22), 4)),
-                               (add (decimate (shl SGPR_32, 23), 4)),
-                               (add (decimate (shl SGPR_32, 24), 4)),
-                               (add (decimate (shl SGPR_32, 25), 4)),
-                               (add (decimate (shl SGPR_32, 26), 4)),
-                               (add (decimate (shl SGPR_32, 27), 4)),
-                               (add (decimate (shl SGPR_32, 28), 4)),
-                               (add (decimate (shl SGPR_32, 29), 4)),
-                               (add (decimate (shl SGPR_32, 30), 4)),
-                               (add (decimate (shl SGPR_32, 31), 4))],
-                              RegSeq<105, 4, 32, "s">.ret>;
+def SGPR_1024Regs : SIRegisterTuples<getSubRegs<32>.ret, SGPR_32, 105, 4, 32, "s">;
 
 // Trap handler TMP 32-bit registers
 def TTMP_32 : RegisterClass<"AMDGPU", [i32, f32, v2i16, v2f16], 32,
@@ -318,48 +262,14 @@ def TTMP_32 : RegisterClass<"AMDGPU", [i32, f32, v2i16, v2f16], 32,
 }
 
 // Trap handler TMP 64-bit registers
-def TTMP_64Regs : RegisterTuples<getSubRegs<2>.ret,
-                             [(add (decimate TTMP_32, 2)),
-                              (add (decimate (shl TTMP_32, 1), 2))],
-                             RegSeq<15, 2, 2, "ttmp">.ret>;
+def TTMP_64Regs : SIRegisterTuples<getSubRegs<2>.ret, TTMP_32, 15, 2, 2, "ttmp">;
 
 // Trap handler TMP 128-bit registers
-def TTMP_128Regs : RegisterTuples<getSubRegs<4>.ret,
-                              [(add (decimate TTMP_32, 4)),
-                               (add (decimate (shl TTMP_32, 1), 4)),
-                               (add (decimate (shl TTMP_32, 2), 4)),
-                               (add (decimate (shl TTMP_32, 3), 4))],
-                              RegSeq<15, 4, 4, "ttmp">.ret>;
+def TTMP_128Regs : SIRegisterTuples<getSubRegs<4>.ret, TTMP_32, 15, 4, 4, "ttmp">;
 
-def TTMP_256Regs : RegisterTuples<getSubRegs<8>.ret,
-                              [(add (decimate TTMP_32, 4)),
-                               (add (decimate (shl TTMP_32, 1), 4)),
-                               (add (decimate (shl TTMP_32, 2), 4)),
-                               (add (decimate (shl TTMP_32, 3), 4)),
-                               (add (decimate (shl TTMP_32, 4), 4)),
-                               (add (decimate (shl TTMP_32, 5), 4)),
-                               (add (decimate (shl TTMP_32, 6), 4)),
-                               (add (decimate (shl TTMP_32, 7), 4))],
-                              RegSeq<15, 4, 8, "ttmp">.ret>;
+def TTMP_256Regs : SIRegisterTuples<getSubRegs<8>.ret, TTMP_32, 15, 4, 8, "ttmp">;
 
-def TTMP_512Regs : RegisterTuples<getSubRegs<16>.ret,
-                              [(add (decimate TTMP_32, 4)),
-                               (add (decimate (shl TTMP_32, 1), 4)),
-                               (add (decimate (shl TTMP_32, 2), 4)),
-                               (add (decimate (shl TTMP_32, 3), 4)),
-                               (add (decimate (shl TTMP_32, 4), 4)),
-                               (add (decimate (shl TTMP_32, 5), 4)),
-                               (add (decimate (shl TTMP_32, 6), 4)),
-                               (add (decimate (shl TTMP_32, 7), 4)),
-                               (add (decimate (shl TTMP_32, 8), 4)),
-                               (add (decimate (shl TTMP_32, 9), 4)),
-                               (add (decimate (shl TTMP_32, 10), 4)),
-                               (add (decimate (shl TTMP_32, 11), 4)),
-                               (add (decimate (shl TTMP_32, 12), 4)),
-                               (add (decimate (shl TTMP_32, 13), 4)),
-                               (add (decimate (shl TTMP_32, 14), 4)),
-                               (add (decimate (shl TTMP_32, 15), 4))],
-                              RegSeq<15, 4, 16, "ttmp">.ret>;
+def TTMP_512Regs : SIRegisterTuples<getSubRegs<16>.ret, TTMP_32, 15, 4, 16, "ttmp">;
 
 class TmpRegTuplesBase<int index, int size,
                        list<Register> subRegs,
@@ -449,102 +359,25 @@ def VGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 }
 
 // VGPR 64-bit registers
-def VGPR_64 : RegisterTuples<getSubRegs<2>.ret,
-                             [(add (trunc VGPR_32, 255)),
-                              (add (shl VGPR_32, 1))],
-                             RegSeq<255, 1, 2, "v">.ret>;
+def VGPR_64 : SIRegisterTuples<getSubRegs<2>.ret, VGPR_32, 255, 1, 2, "v">;
 
 // VGPR 96-bit registers
-def VGPR_96 : RegisterTuples<getSubRegs<3>.ret,
-                             [(add (trunc VGPR_32, 254)),
-                              (add (shl VGPR_32, 1)),
-                              (add (shl VGPR_32, 2))],
-                             RegSeq<255, 1, 3, "v">.ret>;
+def VGPR_96 : SIRegisterTuples<getSubRegs<3>.ret, VGPR_32, 255, 1, 3, "v">;
 
 // VGPR 128-bit registers
-def VGPR_128 : RegisterTuples<getSubRegs<4>.ret,
-                              [(add (trunc VGPR_32, 253)),
-                               (add (shl VGPR_32, 1)),
-                               (add (shl VGPR_32, 2)),
-                               (add (shl VGPR_32, 3))],
-                              RegSeq<255, 1, 4, "v">.ret>;
+def VGPR_128 : SIRegisterTuples<getSubRegs<4>.ret, VGPR_32, 255, 1, 4, "v">;
 
 // VGPR 160-bit registers
-def VGPR_160 : RegisterTuples<getSubRegs<5>.ret,
-                             [(add (trunc VGPR_32, 252)),
-                              (add (shl VGPR_32, 1)),
-                              (add (shl VGPR_32, 2)),
-                              (add (shl VGPR_32, 3)),
-                              (add (shl VGPR_32, 4))],
-                             RegSeq<255, 1, 5, "v">.ret>;
+def VGPR_160 : SIRegisterTuples<getSubRegs<5>.ret, VGPR_32, 255, 1, 5, "v">;
 
 // VGPR 256-bit registers
-def VGPR_256 : RegisterTuples<getSubRegs<8>.ret,
-                              [(add (trunc VGPR_32, 249)),
-                               (add (shl VGPR_32, 1)),
-                               (add (shl VGPR_32, 2)),
-                               (add (shl VGPR_32, 3)),
-                               (add (shl VGPR_32, 4)),
-                               (add (shl VGPR_32, 5)),
-                               (add (shl VGPR_32, 6)),
-                               (add (shl VGPR_32, 7))],
-                              RegSeq<255, 1, 8, "v">.ret>;
+def VGPR_256 : SIRegisterTuples<getSubRegs<8>.ret, VGPR_32, 255, 1, 8, "v">;
 
 // VGPR 512-bit registers
-def VGPR_512 : RegisterTuples<getSubRegs<16>.ret,
-                              [(add (trunc VGPR_32, 241)),
-                               (add (shl VGPR_32, 1)),
-                               (add (shl VGPR_32, 2)),
-                               (add (shl VGPR_32, 3)),
-                               (add (shl VGPR_32, 4)),
-                               (add (shl VGPR_32, 5)),
-                               (add (shl VGPR_32, 6)),
-                               (add (shl VGPR_32, 7)),
-                               (add (shl VGPR_32, 8)),
-                               (add (shl VGPR_32, 9)),
-                               (add (shl VGPR_32, 10)),
-                               (add (shl VGPR_32, 11)),
-                               (add (shl VGPR_32, 12)),
-                               (add (shl VGPR_32, 13)),
-                               (add (shl VGPR_32, 14)),
-                               (add (shl VGPR_32, 15))],
-                              RegSeq<255, 1, 16, "v">.ret>;
+def VGPR_512 : SIRegisterTuples<getSubRegs<16>.ret, VGPR_32, 255, 1, 16, "v">;
 
 // VGPR 1024-bit registers
-def VGPR_1024 : RegisterTuples<getSubRegs<32>.ret,
-                              [(add (trunc VGPR_32, 225)),
-                               (add (shl VGPR_32, 1)),
-                               (add (shl VGPR_32, 2)),
-                               (add (shl VGPR_32, 3)),
-                               (add (shl VGPR_32, 4)),
-                               (add (shl VGPR_32, 5)),
-                               (add (shl VGPR_32, 6)),
-                               (add (shl VGPR_32, 7)),
-                               (add (shl VGPR_32, 8)),
-                               (add (shl VGPR_32, 9)),
-                               (add (shl VGPR_32, 10)),
-                               (add (shl VGPR_32, 11)),
-                               (add (shl VGPR_32, 12)),
-                               (add (shl VGPR_32, 13)),
-                               (add (shl VGPR_32, 14)),
-                               (add (shl VGPR_32, 15)),
-                               (add (shl VGPR_32, 16)),
-                               (add (shl VGPR_32, 17)),
-                               (add (shl VGPR_32, 18)),
-                               (add (shl VGPR_32, 19)),
-                               (add (shl VGPR_32, 20)),
-                               (add (shl VGPR_32, 21)),
-                               (add (shl VGPR_32, 22)),
-                               (add (shl VGPR_32, 23)),
-                               (add (shl VGPR_32, 24)),
-                               (add (shl VGPR_32, 25)),
-                               (add (shl VGPR_32, 26)),
-                               (add (shl VGPR_32, 27)),
-                               (add (shl VGPR_32, 28)),
-                               (add (shl VGPR_32, 29)),
-                               (add (shl VGPR_32, 30)),
-                               (add (shl VGPR_32, 31))],
-                              RegSeq<255, 1, 32, "v">.ret>;
+def VGPR_1024 : SIRegisterTuples<getSubRegs<32>.ret, VGPR_32, 255, 1, 32, "v">;
 
 // AccVGPR 32-bit registers
 def AGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
@@ -554,74 +387,16 @@ def AGPR_32 : RegisterClass<"AMDGPU", [i32, f32, i16, f16, v2i16, v2f16], 32,
 }
 
 // AGPR 64-bit registers
-def AGPR_64 : RegisterTuples<getSubRegs<2>.ret,
-                             [(add (trunc AGPR_32, 255)),
-                              (add (shl AGPR_32, 1))],
-                             RegSeq<255, 1, 2, "a">.ret>;
+def AGPR_64 : SIRegisterTuples<getSubRegs<2>.ret, AGPR_32, 255, 1, 2, "a">;
 
 // AGPR 128-bit registers
-def AGPR_128 : RegisterTuples<getSubRegs<4>.ret,
-                              [(add (trunc AGPR_32, 253)),
-                               (add (shl AGPR_32, 1)),
-                               (add (shl AGPR_32, 2)),
-                               (add (shl AGPR_32, 3))],
-                              RegSeq<255, 1, 4, "a">.ret>;
+def AGPR_128 : SIRegisterTuples<getSubRegs<4>.ret, AGPR_32, 255, 1, 4, "a">;
 
 // AGPR 512-bit registers
-def AGPR_512 : RegisterTuples<getSubRegs<16>.ret,
-                              [(add (trunc AGPR_32, 241)),
-                               (add (shl AGPR_32, 1)),
-                               (add (shl AGPR_32, 2)),
-                               (add (shl AGPR_32, 3)),
-                               (add (shl AGPR_32, 4)),
-                               (add (shl AGPR_32, 5)),
-                               (add (shl AGPR_32, 6)),
-                               (add (shl AGPR_32, 7)),
-                               (add (shl AGPR_32, 8)),
-                               (add (shl AGPR_32, 9)),
-                               (add (shl AGPR_32, 10)),
-                               (add (shl AGPR_32, 11)),
-                               (add (shl AGPR_32, 12)),
-                               (add (shl AGPR_32, 13)),
-                               (add (shl AGPR_32, 14)),
-                               (add (shl AGPR_32, 15))],
-                              RegSeq<255, 1, 16, "a">.ret>;
+def AGPR_512 : SIRegisterTuples<getSubRegs<16>.ret, AGPR_32, 255, 1, 16, "a">;
 
 // AGPR 1024-bit registers
-def AGPR_1024 : RegisterTuples<getSubRegs<32>.ret,
-                              [(add (trunc AGPR_32, 225)),
-                               (add (shl AGPR_32, 1)),
-                               (add (shl AGPR_32, 2)),
-                               (add (shl AGPR_32, 3)),
-                               (add (shl AGPR_32, 4)),
-                               (add (shl AGPR_32, 5)),
-                               (add (shl AGPR_32, 6)),
-                               (add (shl AGPR_32, 7)),
-                               (add (shl AGPR_32, 8)),
-                               (add (shl AGPR_32, 9)),
-                               (add (shl AGPR_32, 10)),
-                               (add (shl AGPR_32, 11)),
-                               (add (shl AGPR_32, 12)),
-                               (add (shl AGPR_32, 13)),
-                               (add (shl AGPR_32, 14)),
-                               (add (shl AGPR_32, 15)),
-                               (add (shl AGPR_32, 16)),
-                               (add (shl AGPR_32, 17)),
-                               (add (shl AGPR_32, 18)),
-                               (add (shl AGPR_32, 19)),
-                               (add (shl AGPR_32, 20)),
-                               (add (shl AGPR_32, 21)),
-                               (add (shl AGPR_32, 22)),
-                               (add (shl AGPR_32, 23)),
-                               (add (shl AGPR_32, 24)),
-                               (add (shl AGPR_32, 25)),
-                               (add (shl AGPR_32, 26)),
-                               (add (shl AGPR_32, 27)),
-                               (add (shl AGPR_32, 28)),
-                               (add (shl AGPR_32, 29)),
-                               (add (shl AGPR_32, 30)),
-                               (add (shl AGPR_32, 31))],
-                              RegSeq<255, 1, 32, "a">.ret>;
+def AGPR_1024 : SIRegisterTuples<getSubRegs<32>.ret, AGPR_32, 255, 1, 32, "a">;
 
 //===----------------------------------------------------------------------===//
 //  Register classes used as source and destination
