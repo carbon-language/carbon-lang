@@ -1596,29 +1596,32 @@ static void processShaderInputArgs(SmallVectorImpl<ISD::InputArg> &Splits,
 }
 
 // Allocate special inputs passed in VGPRs.
-static void allocateSpecialEntryInputVGPRs(CCState &CCInfo,
-                                           MachineFunction &MF,
-                                           const SIRegisterInfo &TRI,
-                                           SIMachineFunctionInfo &Info) {
+void SITargetLowering::allocateSpecialEntryInputVGPRs(CCState &CCInfo,
+                                                      MachineFunction &MF,
+                                                      const SIRegisterInfo &TRI,
+                                                      SIMachineFunctionInfo &Info) const {
+  const LLT S32 = LLT::scalar(32);
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
   if (Info.hasWorkItemIDX()) {
-    unsigned Reg = AMDGPU::VGPR0;
-    MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
+    Register Reg = AMDGPU::VGPR0;
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass), S32);
 
     CCInfo.AllocateReg(Reg);
     Info.setWorkItemIDX(ArgDescriptor::createRegister(Reg));
   }
 
   if (Info.hasWorkItemIDY()) {
-    unsigned Reg = AMDGPU::VGPR1;
-    MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
+    Register Reg = AMDGPU::VGPR1;
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass), S32);
 
     CCInfo.AllocateReg(Reg);
     Info.setWorkItemIDY(ArgDescriptor::createRegister(Reg));
   }
 
   if (Info.hasWorkItemIDZ()) {
-    unsigned Reg = AMDGPU::VGPR2;
-    MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
+    Register Reg = AMDGPU::VGPR2;
+    MRI.setType(MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass), S32);
 
     CCInfo.AllocateReg(Reg);
     Info.setWorkItemIDZ(ArgDescriptor::createRegister(Reg));
@@ -1678,10 +1681,10 @@ static ArgDescriptor allocateSGPR64Input(CCState &CCInfo) {
   return allocateSGPR32InputImpl(CCInfo, &AMDGPU::SGPR_64RegClass, 16);
 }
 
-static void allocateSpecialInputVGPRs(CCState &CCInfo,
-                                      MachineFunction &MF,
-                                      const SIRegisterInfo &TRI,
-                                      SIMachineFunctionInfo &Info) {
+void SITargetLowering::allocateSpecialInputVGPRs(CCState &CCInfo,
+                                                 MachineFunction &MF,
+                                                 const SIRegisterInfo &TRI,
+                                                 SIMachineFunctionInfo &Info) const {
   const unsigned Mask = 0x3ff;
   ArgDescriptor Arg;
 
@@ -1699,10 +1702,11 @@ static void allocateSpecialInputVGPRs(CCState &CCInfo,
     Info.setWorkItemIDZ(allocateVGPR32Input(CCInfo, Mask << 20, Arg));
 }
 
-static void allocateSpecialInputSGPRs(CCState &CCInfo,
-                                      MachineFunction &MF,
-                                      const SIRegisterInfo &TRI,
-                                      SIMachineFunctionInfo &Info) {
+void SITargetLowering::allocateSpecialInputSGPRs(
+  CCState &CCInfo,
+  MachineFunction &MF,
+  const SIRegisterInfo &TRI,
+  SIMachineFunctionInfo &Info) const {
   auto &ArgInfo = Info.getArgInfo();
 
   // TODO: Unify handling with private memory pointers.
@@ -1735,10 +1739,10 @@ static void allocateSpecialInputSGPRs(CCState &CCInfo,
 }
 
 // Allocate special inputs passed in user SGPRs.
-static void allocateHSAUserSGPRs(CCState &CCInfo,
-                                 MachineFunction &MF,
-                                 const SIRegisterInfo &TRI,
-                                 SIMachineFunctionInfo &Info) {
+void SITargetLowering::allocateHSAUserSGPRs(CCState &CCInfo,
+                                            MachineFunction &MF,
+                                            const SIRegisterInfo &TRI,
+                                            SIMachineFunctionInfo &Info) const {
   if (Info.hasImplicitBufferPtr()) {
     unsigned ImplicitBufferPtrReg = Info.addImplicitBufferPtr(TRI);
     MF.addLiveIn(ImplicitBufferPtrReg, &AMDGPU::SGPR_64RegClass);
@@ -1765,9 +1769,12 @@ static void allocateHSAUserSGPRs(CCState &CCInfo,
   }
 
   if (Info.hasKernargSegmentPtr()) {
-    unsigned InputPtrReg = Info.addKernargSegmentPtr(TRI);
-    MF.addLiveIn(InputPtrReg, &AMDGPU::SGPR_64RegClass);
+    MachineRegisterInfo &MRI = MF.getRegInfo();
+    Register InputPtrReg = Info.addKernargSegmentPtr(TRI);
     CCInfo.AllocateReg(InputPtrReg);
+
+    Register VReg = MF.addLiveIn(InputPtrReg, &AMDGPU::SGPR_64RegClass);
+    MRI.setType(VReg, LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
   }
 
   if (Info.hasDispatchID()) {
@@ -1787,11 +1794,11 @@ static void allocateHSAUserSGPRs(CCState &CCInfo,
 }
 
 // Allocate special input registers that are initialized per-wave.
-static void allocateSystemSGPRs(CCState &CCInfo,
-                                MachineFunction &MF,
-                                SIMachineFunctionInfo &Info,
-                                CallingConv::ID CallConv,
-                                bool IsShader) {
+void SITargetLowering::allocateSystemSGPRs(CCState &CCInfo,
+                                           MachineFunction &MF,
+                                           SIMachineFunctionInfo &Info,
+                                           CallingConv::ID CallConv,
+                                           bool IsShader) const {
   if (Info.hasWorkGroupIDX()) {
     unsigned Reg = Info.addWorkGroupIDX();
     MF.addLiveIn(Reg, &AMDGPU::SReg_32_XM0RegClass);
