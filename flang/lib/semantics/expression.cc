@@ -156,6 +156,11 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
   int symbolRank{symbol.Rank()};
   int subscripts{static_cast<int>(ref.size())};
   if (subscripts == 0) {
+    if (semantics::IsAssumedSizeArray(symbol)) {
+      // Don't introduce a triplet that would later be caught
+      // as being invalid.
+      return Designate(DataRef{std::move(ref)});
+    }
     // A -> A(:,:)
     for (; subscripts < symbolRank; ++subscripts) {
       ref.emplace_back(Triplet{});
