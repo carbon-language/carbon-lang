@@ -398,12 +398,23 @@ TEST(TweakTest, ExtractVariable) {
                        }
                  })cpp"},*/
           // ensure InsertionPoint isn't inside a macro
-          {R"cpp(#define LOOP(x) {int a = x + 1;}
+          // FIXME: SelectionTree needs to be fixed for macros
+          /*{R"cpp(#define LOOP(x) while (1) {a = x;}
                  void f(int a) {
                    if(1)
                     LOOP(5 + [[3]])
                  })cpp",
-           R"cpp(#define LOOP(x) {int a = x + 1;}
+             R"cpp(#define LOOP(x) while (1) {a = x;}
+                 void f(int a) {
+                   auto dummy = 3; if(1)
+                    LOOP(5 + dummy)
+                 })cpp"},*/
+          {R"cpp(#define LOOP(x) do {x;} while(1);
+                 void f(int a) {
+                   if(1)
+                    LOOP(5 + [[3]])
+                 })cpp",
+           R"cpp(#define LOOP(x) do {x;} while(1);
                  void f(int a) {
                    auto dummy = 3; if(1)
                     LOOP(5 + dummy)
