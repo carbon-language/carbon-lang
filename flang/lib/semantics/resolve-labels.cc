@@ -104,7 +104,8 @@ template<typename A> constexpr bool IsFormat(const parser::Statement<A> &) {
 
 template<typename A>
 constexpr Legality IsLegalBranchTarget(const parser::Statement<A> &) {
-  if (std::is_same_v<A, parser::AssociateStmt> ||
+  if (std::is_same_v<A, parser::ActionStmt> ||
+      std::is_same_v<A, parser::AssociateStmt> ||
       std::is_same_v<A, parser::EndAssociateStmt> ||
       std::is_same_v<A, parser::IfThenStmt> ||
       std::is_same_v<A, parser::EndIfStmt> ||
@@ -130,22 +131,6 @@ constexpr Legality IsLegalBranchTarget(const parser::Statement<A> &) {
     return Legality::always;
   } else {
     return Legality::never;
-  }
-}
-
-constexpr Legality IsLegalBranchTarget(
-    const parser::Statement<parser::ActionStmt> &actionStmt) {
-  if (!(std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
-            actionStmt.statement.u) ||
-          std::holds_alternative<common::Indirection<parser::AssignStmt>>(
-              actionStmt.statement.u) ||
-          std::holds_alternative<common::Indirection<parser::AssignedGotoStmt>>(
-              actionStmt.statement.u) ||
-          std::holds_alternative<common::Indirection<parser::PauseStmt>>(
-              actionStmt.statement.u))) {
-    return Legality::always;
-  } else {
-    return Legality::formerly;
   }
 }
 
