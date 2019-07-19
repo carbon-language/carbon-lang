@@ -275,7 +275,7 @@ void AMDGPUCallLowering::lowerParameter(MachineIRBuilder &MIRBuilder,
 
   MachineMemOperand *MMO =
       MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad |
-                                       MachineMemOperand::MONonTemporal |
+                                       MachineMemOperand::MODereferenceable |
                                        MachineMemOperand::MOInvariant,
                                        TypeSize, Align);
 
