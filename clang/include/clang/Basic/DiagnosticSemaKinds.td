@@ -7436,6 +7436,9 @@ def warn_side_effects_typeid : Warning<
 def warn_unused_result : Warning<
   "ignoring return value of function declared with %0 attribute">,
   InGroup<UnusedResult>;
+def warn_unused_result_msg : Warning<
+  "ignoring return value of function declared with %0 attribute: %1">,
+  InGroup<UnusedResult>;
 def warn_unused_volatile : Warning<
   "expression result unused; assign into a variable to force a volatile load">,
   InGroup<DiagGroup<"unused-volatile-lvalue">>;
@@ -7444,6 +7447,8 @@ def ext_cxx14_attr : Extension<
   "use of the %0 attribute is a C++14 extension">, InGroup<CXX14>;
 def ext_cxx17_attr : Extension<
   "use of the %0 attribute is a C++17 extension">, InGroup<CXX17>;
+def ext_cxx2a_attr : Extension<
+  "use of the %0 attribute is a C++2a extension">, InGroup<CXX2a>;
 
 def warn_unused_comparison : Warning<
   "%select{equality|inequality|relational|three-way}0 comparison result unused">,
