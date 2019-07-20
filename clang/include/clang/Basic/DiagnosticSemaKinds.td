@@ -5719,6 +5719,9 @@ def err_arithmetic_nonfragile_interface : Error<
   "arithmetic on pointer to interface %0, which is not a constant size for "
   "this architecture and platform">;
 
+def warn_deprecated_comma_subscript : Warning<
+  "top-level comma expression in array subscript is deprecated">,
+  InGroup<DeprecatedCommaSubscript>;
 
 def ext_subscript_non_lvalue : Extension<
   "ISO C90 does not allow subscripting non-lvalue array">;
