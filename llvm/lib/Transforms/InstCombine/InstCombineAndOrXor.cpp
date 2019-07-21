@@ -1196,14 +1196,16 @@ Value *InstCombiner::foldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS,
     default:
       llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_ULT:
-      if (LHSC == SubOne(RHSC)) // (X != 13 & X u< 14) -> X < 13
+      // (X != 13 & X u< 14) -> X < 13
+      if (LHSC->getValue() == (RHSC->getValue() - 1))
         return Builder.CreateICmpULT(LHS0, LHSC);
-      if (LHSC->isZero()) // (X !=  0 & X u< 14) -> X-1 u< 13
+      if (LHSC->isZero()) // (X != 0 & X u< 14) -> X-1 u< 13
         return insertRangeTest(LHS0, LHSC->getValue() + 1, RHSC->getValue(),
                                false, true);
       break; // (X != 13 & X u< 15) -> no change
     case ICmpInst::ICMP_SLT:
-      if (LHSC == SubOne(RHSC)) // (X != 13 & X s< 14) -> X < 13
+      // (X != 13 & X s< 14) -> X < 13
+      if (LHSC->getValue() == (RHSC->getValue() - 1))
         return Builder.CreateICmpSLT(LHS0, LHSC);
       break;                 // (X != 13 & X s< 15) -> no change
     case ICmpInst::ICMP_NE:
@@ -1216,7 +1218,8 @@ Value *InstCombiner::foldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS,
     default:
       llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_NE:
-      if (RHSC == AddOne(LHSC)) // (X u> 13 & X != 14) -> X u> 14
+      // (X u> 13 & X != 14) -> X u> 14
+      if (RHSC->getValue() == (LHSC->getValue() + 1))
         return Builder.CreateICmp(PredL, LHS0, RHSC);
       break;                 // (X u> 13 & X != 15) -> no change
     case ICmpInst::ICMP_ULT: // (X u> 13 & X u< 15) -> (X-14) <u 1
@@ -1229,7 +1232,8 @@ Value *InstCombiner::foldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS,
     default:
       llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_NE:
-      if (RHSC == AddOne(LHSC)) // (X s> 13 & X != 14) -> X s> 14
+      // (X s> 13 & X != 14) -> X s> 14
+      if (RHSC->getValue() == (LHSC->getValue() + 1))
         return Builder.CreateICmp(PredL, LHS0, RHSC);
       break;                 // (X s> 13 & X != 15) -> no change
     case ICmpInst::ICMP_SLT: // (X s> 13 & X s< 15) -> (X-14) s< 1
