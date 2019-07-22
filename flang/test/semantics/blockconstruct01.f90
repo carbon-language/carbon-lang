@@ -11,7 +11,8 @@
 ! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
-! C1107 -- COMMON, EQUIVALENCE, INTENT, NAMELIST, OPTIONAL, VALEU or
+
+! C1107 -- COMMON, EQUIVALENCE, INTENT, NAMELIST, OPTIONAL, VALUE or
 !          STATEMENT FUNCTIONS not allow in specification part
 
 subroutine s1_c1107

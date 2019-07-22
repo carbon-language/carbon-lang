@@ -11,6 +11,7 @@
 ! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
+
 ! C1108  --  Save statement in a BLOCK construct shall not conatin a
 !            saved-entity-list that does not specify a common-block-name
 
@@ -21,7 +22,7 @@ program  main
   !ERROR: 'argmnt1' appears as a COMMON block in a SAVE statement but not in a COMMON statement
   save /argmnt1/
   block
-    !ERROR: COMMON BLOCK NAME specifier not allowed in a BLOCK construct
+    !ERROR: COMMON BLOCK NAME statement is not allowed in a BLOCK construct
     save /argmnt2/
   end block
 end program

@@ -2714,7 +2714,7 @@ bool DeclarationVisitor::Pre(const parser::ExternalStmt &x) {
 bool DeclarationVisitor::Pre(const parser::IntentStmt &x) {
   auto &intentSpec{std::get<parser::IntentSpec>(x.t)};
   auto &names{std::get<std::list<parser::Name>>(x.t)};
-  return CheckNotInBlock("INTENT") && //C1107
+  return CheckNotInBlock("INTENT") &&  // C1107
       HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
 }
 bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
@@ -2733,14 +2733,14 @@ bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::OptionalStmt &x) {
-  return CheckNotInBlock("OPTIONAL") && //C1107
+  return CheckNotInBlock("OPTIONAL") &&  // C1107
       HandleAttributeStmt(Attr::OPTIONAL, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::ProtectedStmt &x) {
   return HandleAttributeStmt(Attr::PROTECTED, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::ValueStmt &x) {
-  return CheckNotInBlock("VALUE") && //C1107 
+  return CheckNotInBlock("VALUE") &&  // C1107
       HandleAttributeStmt(Attr::VALUE, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::VolatileStmt &x) {
@@ -2777,7 +2777,7 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
   symbol->attrs() = HandleSaveName(name.source, symbol->attrs());
   return *symbol;
 }
-//C1107
+// C1107
 bool DeclarationVisitor::CheckNotInBlock(const char *stmt) {
   if (currScope().kind() == Scope::Kind::Block) {
     Say(MessageFormattedText{
@@ -3531,7 +3531,7 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::NamelistStmt::Group &x) {
-  if (!CheckNotInBlock("NAMELIST")) { //C1107
+  if (!CheckNotInBlock("NAMELIST")) {  // C1107
     return false;
   }
 
@@ -3573,7 +3573,7 @@ bool DeclarationVisitor::Pre(const parser::IoControlSpec &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::CommonStmt::Block &x) {
-  CheckNotInBlock("COMMON");  //C1107
+  CheckNotInBlock("COMMON");  // C1107
   const auto &optName{std::get<std::optional<parser::Name>>(x.t)};
   parser::Name blankCommon;
   blankCommon.source = SourceName{currStmtSource()->begin(), std::size_t{0}};
@@ -3615,6 +3615,7 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
 
 bool DeclarationVisitor::Pre(const parser::EquivalenceStmt &x) {
   // save equivalence sets to be processed after specification part
+  CheckNotInBlock("EQUIVALENCE");
   for (const std::list<parser::EquivalenceObject> &set : x.v) {
     equivalenceSets_.push_back(&set);
   }
@@ -3655,8 +3656,12 @@ bool DeclarationVisitor::Pre(const parser::SaveStmt &x) {
       auto kind{std::get<parser::SavedEntity::Kind>(y.t)};
       const auto &name{std::get<parser::Name>(y.t)};
       if (kind == parser::SavedEntity::Kind::Common) {
-        MakeCommonBlockSymbol(name);
-        AddSaveName(saveInfo_.commons, name.source);
+        if (currScope().kind() == Scope::Kind::Block) {
+          CheckNotInBlock("COMMON BLOCK NAME");  // C1107
+        } else {
+          MakeCommonBlockSymbol(name);
+          AddSaveName(saveInfo_.commons, name.source);
+        }
       } else {
         HandleAttributeStmt(Attr::SAVE, name);
       }
@@ -3684,7 +3689,7 @@ void DeclarationVisitor::CheckSaveStmts() {
   for (const SourceName &name : saveInfo_.commons) {
     if (auto *symbol{currScope().FindCommonBlock(name)}) {
       auto &objects{symbol->get<CommonBlockDetails>().objects()};
-      if (objects.empty() && (currScope().kind() != Scope::Kind::Block)) {
+      if (objects.empty() && currScope().kind() != Scope::Kind::Block) {
         Say(name,
             "'%s' appears as a COMMON block in a SAVE statement but not in"
             " a COMMON statement"_err_en_US);
@@ -5231,7 +5236,7 @@ void ResolveNamesVisitor::CheckImport(
 }
 
 bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
-  return CheckNotInBlock("IMPLICIT") &&  //C1107
+  return CheckNotInBlock("IMPLICIT") &&  // C1107
       ImplicitRulesVisitor::Pre(x);
 }
 
@@ -5283,7 +5288,7 @@ void ResolveNamesVisitor::Post(const parser::TypeGuardStmt &x) {
   ConstructVisitor::Post(x);
 }
 bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
-  CheckNotInBlock("STATEMENT FUNCTION"); //C1107
+  CheckNotInBlock("STATEMENT FUNCTION");  // C1107
   if (!HandleStmtFunction(x)) {
     // This is an array element assignment: resolve names of indices
     const auto &names{std::get<std::list<parser::Name>>(x.t)};
