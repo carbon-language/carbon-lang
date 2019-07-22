@@ -319,9 +319,10 @@ const Symbol *FindSubprogram(const Symbol &symbol) {
 
 const Symbol *FindFunctionResult(const Symbol &symbol) {
   if (const Symbol * subp{FindSubprogram(symbol)}) {
-    const auto &details{subp->get<SubprogramDetails>()};
-    if (details.isFunction()) {
-      return &details.result();
+    if (const auto &subpDetails{subp->detailsIf<SubprogramDetails>()}) {
+      if (subpDetails->isFunction()) {
+        return &subpDetails->result();
+      }
     }
   }
   return nullptr;
