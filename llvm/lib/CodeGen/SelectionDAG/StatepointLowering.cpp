@@ -389,10 +389,17 @@ spillIncomingStatepointValue(SDValue Incoming, SDValue Chain,
            "Bad spill:  stack slot does not match!");
 #endif
 
+    // Note: Using the alignment of the spill slot (rather than the abi or
+    // preferred alignment) is required for correctness when dealing with spill
+    // slots with preferred alignments larger than frame alignment..
     auto &MF = Builder.DAG.getMachineFunction();
     auto PtrInfo = MachinePointerInfo::getFixedStack(MF, Index);
+    auto *StoreMMO =
+      MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore, 
+                              MFI.getObjectSize(Index),
+                              MFI.getObjectAlignment(Index));
     Chain = Builder.DAG.getStore(Chain, Builder.getCurSDLoc(), Incoming, Loc,
-                                 PtrInfo);
+                                 StoreMMO);
 
     MMO = getMachineMemOperand(MF, *cast<FrameIndexSDNode>(Loc));
     
