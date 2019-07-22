@@ -51,9 +51,11 @@
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCSectionXCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolELF.h"
+#include "llvm/MC/MCSymbolXCOFF.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGen.h"
@@ -164,6 +166,8 @@ public:
       : PPCAsmPrinter(TM, std::move(Streamer)) {}
 
   StringRef getPassName() const override { return "AIX PPC Assembly Printer"; }
+
+  void EmitGlobalVariable(const GlobalVariable *GV) override;
 };
 
 } // end anonymous namespace
@@ -1641,6 +1645,35 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   OutStreamer->EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
 
   return AsmPrinter::doFinalization(M);
+}
+
+void PPCAIXAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
+  // Early error checking limiting what is supported.
+  if (GV->isThreadLocal())
+    report_fatal_error("Thread local not yet supported on AIX.");
+
+  if (GV->hasSection())
+    report_fatal_error("Custom section for Data not yet supported.");
+
+  if (GV->hasComdat())
+    report_fatal_error("COMDAT not yet supported on AIX.");
+
+  SectionKind GVKind = getObjFileLowering().getKindForGlobal(GV, TM);
+  if (!GVKind.isCommon())
+    report_fatal_error("Only common variables are supported on AIX.");
+
+  // Create the containing csect and switch to it.
+  MCSectionXCOFF *CSect = dyn_cast<MCSectionXCOFF>(
+      getObjFileLowering().SectionForGlobal(GV, GVKind, TM));
+  OutStreamer->SwitchSection(CSect);
+
+  // Create the symbol and emit it.
+  MCSymbolXCOFF *XSym = dyn_cast<MCSymbolXCOFF>(getSymbol(GV));
+  auto DL = GV->getParent()->getDataLayout();
+  unsigned Align =
+      GV->getAlignment() ? GV->getAlignment() : DL.getPreferredAlignment(GV);
+  uint64_t Size = DL.getTypeAllocSize(GV->getType()->getElementType());
+  OutStreamer->EmitCommonSymbol(XSym, Size, Align);
 }
 
 /// createPPCAsmPrinterPass - Returns a pass that prints the PPC assembly code
