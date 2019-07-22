@@ -724,8 +724,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  case PPC::ADDIStocHA: {
-    // Transform %xd = ADDIStocHA %x2, @sym
+  case PPC::ADDIStocHA8: {
+    // Transform %xd = ADDIStocHA8 %x2, @sym
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, isDarwin);
 
     // Change the opcode to ADDIS8.  If the global address is external, has
@@ -736,7 +736,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineOperand &MO = MI->getOperand(2);
     assert((MO.isGlobal() || MO.isCPI() || MO.isJTI() ||
             MO.isBlockAddress()) &&
-           "Invalid operand for ADDIStocHA!");
+           "Invalid operand for ADDIStocHA8!");
     MCSymbol *MOSymbol = nullptr;
     bool GlobalToc = false;
 
@@ -803,7 +803,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
           unsigned char GVFlags = Subtarget->classifyGlobalReference(GV);
           assert((GVFlags & PPCII::MO_NLP_FLAG) &&
                  "LDtocL used on symbol that could be accessed directly is "
-                 "invalid. Must match ADDIStocHA."));
+                 "invalid. Must match ADDIStocHA8."));
       MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
     }
 
