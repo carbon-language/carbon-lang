@@ -19,12 +19,17 @@
 #include <type_traits>
 
 // Implements an expression traversal utility framework.
-// See fold.cc to see how this framework is used to implement detection
-// of constant expressions.
+// See fold.cc to see an example of how this framework was used to
+// implement then detection of constant expressions.
+//
+// The bases of references (component, array, coarray, substring, &
+// procedures) are visited before any subscript, cosubscript, or actual
+// arguments.  Visitors may rely on this ordering of descent.
 //
 // To use for non-mutating visitation, define one or more client visitation
 // classes of the form:
 //   class MyVisitor : public virtual VisitorBase<RESULT> {
+//   public:
 //     using Result = RESULT;
 //     explicit MyVisitor(ARGTYPE);  // single-argument constructor
 //     void Handle(const T1 &);  // callback for type T1 objects

@@ -18,6 +18,7 @@
 // Helper friend class templates for Visitor::Visit() and Rewriter::Traverse().
 
 #include "expression.h"
+#include "../semantics/type.h"
 
 namespace Fortran::evaluate {
 
