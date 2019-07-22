@@ -1964,7 +1964,7 @@ unsigned llvm::changeToUnreachable(Instruction *I, bool UseLLVMTrap,
 }
 
 /// changeToCall - Convert the specified invoke into a normal call.
-void llvm::changeToCall(InvokeInst *II, DomTreeUpdater *DTU) {
+static void changeToCall(InvokeInst *II, DomTreeUpdater *DTU = nullptr) {
   SmallVector<Value*, 8> Args(II->arg_begin(), II->arg_end());
   SmallVector<OperandBundleDef, 1> OpBundles;
   II->getOperandBundlesAsDefs(OpBundles);
