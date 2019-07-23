@@ -1544,8 +1544,6 @@ bool AAIsDeadFunction::explorePath(Attributor &A, Instruction *I) {
 }
 
 ChangeStatus AAIsDeadFunction::updateImpl(Attributor &A) {
-  Function &F = getAnchorScope();
-
   // Temporary collection to iterate over existing noreturn instructions. This
   // will alow easier modification of NoReturnCalls collection
   SmallVector<Instruction *, 8> NoReturnChanged;
@@ -1577,7 +1575,8 @@ ChangeStatus AAIsDeadFunction::updateImpl(Attributor &A) {
 
   LLVM_DEBUG(dbgs() << "[AAIsDead] AssumedLiveBlocks: "
                     << AssumedLiveBlocks.size()
-                    << "Total number of blocks: " << F.size() << "\n");
+                    << "Total number of blocks: "
+                    << getAnchorScope().size() << "\n");
 
   return Status;
 }
