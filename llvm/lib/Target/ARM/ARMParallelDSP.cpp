@@ -233,6 +233,9 @@ namespace {
     bool runOnLoop(Loop *TheLoop, LPPassManager &) override {
       if (DisableParallelDSP)
         return false;
+      if (skipLoop(TheLoop))
+        return false;
+
       L = TheLoop;
       SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
       AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
