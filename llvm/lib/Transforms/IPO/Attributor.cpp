@@ -1282,9 +1282,7 @@ struct AAWillReturnFunction final : AAWillReturnImpl {
       : AAWillReturnImpl(F, InfoCache) {}
 
   /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override {
-    return MP_FUNCTION;
-  }
+  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override;
@@ -1432,8 +1430,8 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A) {
 
     auto *NoAliasAA = A.getAAFor<AANoAlias>(*this, RV);
 
-    if (!ICS.returnDoesNotAlias() && (!NoAliasAA ||
-        !NoAliasAA->isAssumedNoAlias()))
+    if (!ICS.returnDoesNotAlias() &&
+        (!NoAliasAA || !NoAliasAA->isAssumedNoAlias()))
       return false;
 
     /// FIXME: We can improve capture check in two ways:
@@ -1442,7 +1440,6 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A) {
     if (PointerMayBeCaptured(&RV, /* ReturnCaptures */ false,
                              /* StoreCaptures */ true))
       return false;
-
 
     return true;
   };
@@ -1563,7 +1560,7 @@ bool AAIsDeadFunction::explorePath(Attributor &A, Instruction *I) {
       }
 
       if (ICS.hasFnAttr(Attribute::NoReturn)) {
-        if(!NoReturnCalls.insert(I))
+        if (!NoReturnCalls.insert(I))
           return false;
 
         return true;
