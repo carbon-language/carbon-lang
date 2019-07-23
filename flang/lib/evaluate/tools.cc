@@ -676,6 +676,8 @@ void GetLastTargetVisitor::Pre(const Component &x) {
   if (symbol.attrs().HasAny(
           {semantics::Attr::POINTER, semantics::Attr::TARGET})) {
     Return(&symbol);
+  } else if (symbol.attrs().test(semantics::Attr::ALLOCATABLE)) {
+    Return(nullptr);
   }
 }
 
