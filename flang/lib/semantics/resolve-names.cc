@@ -3615,7 +3615,7 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
 
 bool DeclarationVisitor::Pre(const parser::EquivalenceStmt &x) {
   // save equivalence sets to be processed after specification part
-  CheckNotInBlock("EQUIVALENCE");
+  CheckNotInBlock("EQUIVALENCE");  // C1107
   for (const std::list<parser::EquivalenceObject> &set : x.v) {
     equivalenceSets_.push_back(&set);
   }
@@ -3656,12 +3656,8 @@ bool DeclarationVisitor::Pre(const parser::SaveStmt &x) {
       auto kind{std::get<parser::SavedEntity::Kind>(y.t)};
       const auto &name{std::get<parser::Name>(y.t)};
       if (kind == parser::SavedEntity::Kind::Common) {
-        if (currScope().kind() == Scope::Kind::Block) {
-          CheckNotInBlock("COMMON BLOCK NAME");  // C1107
-        } else {
-          MakeCommonBlockSymbol(name);
-          AddSaveName(saveInfo_.commons, name.source);
-        }
+        MakeCommonBlockSymbol(name);
+        AddSaveName(saveInfo_.commons, name.source);
       } else {
         HandleAttributeStmt(Attr::SAVE, name);
       }
@@ -3689,10 +3685,16 @@ void DeclarationVisitor::CheckSaveStmts() {
   for (const SourceName &name : saveInfo_.commons) {
     if (auto *symbol{currScope().FindCommonBlock(name)}) {
       auto &objects{symbol->get<CommonBlockDetails>().objects()};
-      if (objects.empty() && currScope().kind() != Scope::Kind::Block) {
-        Say(name,
-            "'%s' appears as a COMMON block in a SAVE statement but not in"
-            " a COMMON statement"_err_en_US);
+      if (objects.empty()) {
+        if (currScope().kind() != Scope::Kind::Block) {
+          Say(name,
+              "'%s' appears as a COMMON block in a SAVE statement but not in"
+              " a COMMON statement"_err_en_US);
+        } else {  // C1108
+          Say(name,
+              "'%s' specifier is not allowed in a BLOCK Construct."
+              " It is a Common Block Name"_err_en_US);
+        }
       } else {
         for (Symbol *object : symbol->get<CommonBlockDetails>().objects()) {
           SetSaveAttr(*object);

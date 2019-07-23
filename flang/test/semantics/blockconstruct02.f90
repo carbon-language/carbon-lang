@@ -22,7 +22,7 @@ program  main
   !ERROR: 'argmnt1' appears as a COMMON block in a SAVE statement but not in a COMMON statement
   save /argmnt1/
   block
-    !ERROR: COMMON BLOCK NAME statement is not allowed in a BLOCK construct
+    !ERROR: 'argmnt2' specifier is not allowed in a BLOCK Construct. It is a Common Block Name
     save /argmnt2/
   end block
 end program
