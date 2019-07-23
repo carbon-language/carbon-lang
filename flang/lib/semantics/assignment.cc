@@ -113,21 +113,19 @@ template<typename T>
 void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, const Symbol &lhs,
     const Designator<T> &d) {
-  if (const auto *symbol{d.GetBaseObject().symbol()}) {
-    const Symbol &ultimate{symbol->GetUltimate()};
+  const Symbol *last{d.GetLastSymbol()}, *base{d.GetBaseObject().symbol()};
+  if (last != nullptr && base != nullptr) {
     std::optional<parser::MessageFixedText> error;
     if (IsProcedurePointer(lhs)) {
       // Shouldn't be here in this function unless lhs is an
       // object pointer.
       error = "In assignment to procedure pointer '%s', the "
               "target is not a procedure or procedure pointer"_err_en_US;
-    } else if (!ultimate.template has<semantics::ObjectEntityDetails>() ||
-        !ultimate.attrs().HasAny(semantics::Attrs(
-            {semantics::Attr::POINTER, semantics::Attr::TARGET}))) {
+    } else if (GetLastTarget(d) == nullptr) {
       error = "In assignment to object pointer '%s', the target '%s' "
               "is not an object with POINTER or TARGET attributes"_err_en_US;
-    } else if (auto rhsTypeAndShape{characteristics::TypeAndShape::Characterize(
-                   d.GetLastSymbol())}) {
+    } else if (auto rhsTypeAndShape{
+                   characteristics::TypeAndShape::Characterize(last)}) {
       if (auto lhsTypeAndShape{
               characteristics::TypeAndShape::Characterize(lhs)}) {
         if (!lhsTypeAndShape->IsCompatibleWith(messages, *rhsTypeAndShape)) {
@@ -137,9 +135,9 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
       }
     }
     if (error.has_value()) {
-      if (auto *msg{messages.Say(*error, lhs.name(), ultimate.name())}) {
+      if (auto *msg{messages.Say(*error, lhs.name(), last->name())}) {
         msg->Attach(lhs.name(), "Declaration of pointer being assigned"_en_US)
-            .Attach(ultimate.name(), "Declaration of pointer target"_en_US);
+            .Attach(last->name(), "Declaration of pointer target"_en_US);
       }
     }
   } else {
