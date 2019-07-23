@@ -222,8 +222,9 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
       continue;
     }
 
-    // CTCs
-    if (BC.MIB->getConditionalTailCall(*CondBranch)) {
+    // CTCs: instruction annotations could be stripped, hence check the number
+    // of successors to identify conditional tail calls.
+    if (BB->succ_size() == 1) {
       if (BB->branch_info_begin() != BB->branch_info_end())
         Stats[DynoStats::UNCOND_BRANCHES] += BB->branch_info_begin()->Count;
       continue;
