@@ -702,11 +702,10 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       break;
 
     // If we're taking in vectors, we have no choice but to put everything on
-    // FPRs.
+    // FPRs, except for the condition. The condition must always be on a GPR.
     LLT SrcTy = MRI.getType(MI.getOperand(2).getReg());
     if (SrcTy.isVector()) {
-      for (unsigned Idx = 0; Idx < 4; ++Idx)
-        OpRegBankIdx[Idx] = PMI_FirstFPR;
+      OpRegBankIdx = {PMI_FirstFPR, PMI_FirstGPR, PMI_FirstFPR, PMI_FirstFPR};
       break;
     }
 
@@ -750,8 +749,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // If we have more FP constraints than not, then move everything over to
     // FPR.
     if (NumFP >= 2)
-      for (unsigned Idx = 0; Idx < 4; ++Idx)
-        OpRegBankIdx[Idx] = PMI_FirstFPR;
+      OpRegBankIdx = {PMI_FirstFPR, PMI_FirstGPR, PMI_FirstFPR, PMI_FirstFPR};
 
     break;
   }
