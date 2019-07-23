@@ -432,6 +432,8 @@ public:
   // about a type; two names & locations
   void SayAlreadyDeclared(const SourceName &, Symbol &);
   void SayAlreadyDeclared(const parser::Name &, Symbol &);
+  void SayWithReason(
+      const parser::Name &, Symbol &, MessageFixedText &&, MessageFixedText &&);
   void SayWithDecl(const parser::Name &, Symbol &, MessageFixedText &&);
   void SayLocalMustBeVariable(const parser::Name &, Symbol &);
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
@@ -1527,12 +1529,17 @@ void ScopeHandler::SayAlreadyDeclared(const SourceName &name, Symbol &prev) {
   context().SetError(prev);
 }
 
+void ScopeHandler::SayWithReason(const parser::Name &name, Symbol &symbol,
+    MessageFixedText &&msg1, MessageFixedText &&msg2) {
+  Say2(name, std::move(msg1), symbol, std::move(msg2));
+  context().SetError(symbol, msg1.isFatal());
+}
+
 void ScopeHandler::SayWithDecl(
     const parser::Name &name, Symbol &symbol, MessageFixedText &&msg) {
-  Say2(name, std::move(msg), symbol,
+  SayWithReason(name, symbol, std::move(msg),
       symbol.test(Symbol::Flag::Implicit) ? "Implicit declaration of '%s'"_en_US
                                           : "Declaration of '%s'"_en_US);
-  context().SetError(symbol, msg.isFatal());
 }
 
 void ScopeHandler::SayLocalMustBeVariable(
@@ -3843,16 +3850,15 @@ bool DeclarationVisitor::PassesLocalityChecks(
         "Assumed size array '%s' not allowed in a locality-spec"_err_en_US);
     return false;
   }
-  if (!IsModifiable(symbol, currScope())) {  // C1128
-    SayWithDecl(name, symbol,
+  if (std::optional<MessageFixedText> msg{
+          WhyNotModifiable(symbol, currScope())}) {
+    SayWithReason(name, symbol,
         "'%s' must be able to appear in a variable definition context to "
-        "appear in a locality-spec"_err_en_US);
+        "appear in a locality-spec"_err_en_US,
+        std::move(*msg));
     return false;
   }
-  if (!PassesSharedLocalityChecks(name, symbol)) {
-    return false;
-  }
-  return true;
+  return PassesSharedLocalityChecks(name, symbol);
 }
 
 Symbol &DeclarationVisitor::FindOrDeclareEnclosingEntity(

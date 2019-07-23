@@ -24,6 +24,7 @@
 #include "../common/Fortran.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/variable.h"
+#include "../parser/message.h"
 #include "../parser/parse-tree.h"
 #include <functional>
 
@@ -45,6 +46,7 @@ const Symbol *FindPointerComponent(const Symbol &);
 const Symbol *FindInterface(const Symbol &);
 const Symbol *FindSubprogram(const Symbol &);
 const Symbol *FindFunctionResult(const Symbol &);
+const Symbol *GetAssociatedVariable(const AssocEntityDetails &);
 const Symbol *GetAssociationRoot(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
@@ -111,6 +113,8 @@ inline bool IsProtected(const Symbol &symbol) {
 bool IsFinalizable(const Symbol &symbol);
 bool IsCoarray(const Symbol &symbol);
 bool IsAssumedSizeArray(const Symbol &symbol);
+std::optional<parser::MessageFixedText> WhyNotModifiable(
+    const Symbol &symbol, const Scope &scope);
 // Is the symbol modifiable in this scope
 bool IsModifiable(const Symbol &symbol, const Scope &scope);
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope);

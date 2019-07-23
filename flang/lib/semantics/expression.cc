@@ -1335,7 +1335,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                 if (auto *msg{Say(expr.source,
                         "Externally visible object '%s' must not be "
                         "associated with pointer component '%s' in a "
-                        "PURE function"_err_en_US,
+                        "PURE procedure"_err_en_US,
                         object->name(), pointer->name())}) {
                   msg->Attach(object->name(), "Object declaration"_en_US)
                       .Attach(pointer->name(), "Pointer declaration"_en_US);

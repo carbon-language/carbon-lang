@@ -136,7 +136,8 @@ bool IsPointerDummy(const Symbol &symbol) {
 bool IsVariableName(const Symbol &symbol) {
   if (const Symbol * root{GetAssociationRoot(symbol)}) {
     return IsValueDummy(symbol) ||
-        (root->has<ObjectEntityDetails>() && !IsParameter(*root));
+        (root->has<ObjectEntityDetails>() && !IsParameter(*root) &&
+            !IsIntentIn(*root));
   } else {
     return false;
   }
@@ -265,7 +266,7 @@ const Symbol *FindExternallyVisibleObject(
   // once EQUIVALENCE is supported.
   if (IsUseAssociated(object, scope) || IsHostAssociated(object, scope) ||
       (IsPureProcedure(scope) && IsPointerDummy(object)) ||
-      (object.attrs().test(Attr::INTENT_IN) && IsDummy(object))) {
+      (IsIntentIn(object) && IsDummy(object))) {
     return &object;
   } else if (const Symbol * block{FindCommonBlockContaining(object)}) {
     return block;
@@ -336,26 +337,26 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
   return nullptr;
 }
 
-// Return the variable of a construct association, if associated
+const Symbol *GetAssociatedVariable(const AssocEntityDetails &details) {
+  if (const MaybeExpr & expr{details.expr()}) {
+    if (evaluate::IsVariable(*expr)) {
+      if (const Symbol * varSymbol{evaluate::GetLastSymbol(*expr)}) {
+        return GetAssociationRoot(*varSymbol);
+      }
+    }
+  }
+  return nullptr;
+}
+
+// Return the Symbol of the variable of a construct association, if it exists
 // Return nullptr if the name is associated with an expression
 const Symbol *GetAssociationRoot(const Symbol &symbol) {
   const Symbol &ultimate{symbol.GetUltimate()};
   if (ultimate.has<AssocEntityDetails>()) {  // construct association
-    auto &details{ultimate.get<AssocEntityDetails>()};
-    if (const MaybeExpr * pexpr{&details.expr()}) {
-      if (pexpr->has_value()) {
-        const SomeExpr &expr{**pexpr};
-        if (evaluate::IsVariable(expr)) {
-          if (const Symbol * varSymbol{evaluate::GetLastSymbol(expr)}) {
-            return GetAssociationRoot(*varSymbol);
-          }
-        } else {
-          return nullptr;
-        }
-      }
-    }
+    return GetAssociatedVariable(ultimate.get<AssocEntityDetails>());
+  } else {
+    return &ultimate;
   }
-  return &ultimate;
 }
 
 bool IsExtensibleType(const DerivedTypeSpec *derived) {
@@ -504,14 +505,28 @@ bool InProtectedContext(const Symbol &symbol, const Scope &currentScope) {
   return IsProtected(symbol) && !IsHostAssociated(symbol, currentScope);
 }
 
-bool IsModifiable(const Symbol &symbol, const Scope &scope) {
-  if (const Symbol * root{GetAssociationRoot(symbol)}) {
-    return IsVariableName(*root) && !InProtectedContext(*root, scope) &&
-        !IsExternalInPureContext(*root, scope) &&
-        !IsOrContainsEventOrLockComponent(*root);
+std::optional<parser::MessageFixedText> WhyNotModifiable(
+    const Symbol &symbol, const Scope &scope) {
+  const Symbol *root{GetAssociationRoot(symbol)};
+  if (!root) {
+    return "'%s' is construct associated with an expression"_en_US;
+  } else if (InProtectedContext(*root, scope)) {
+    return "'%s' is protected in this scope"_en_US;
+  } else if (IsExternalInPureContext(*root, scope)) {
+    return "'%s' is an external that is referenced in a PURE procedure"_en_US;
+  } else if (IsOrContainsEventOrLockComponent(*root)) {
+    return "'%s' is an entity with either an EVENT_TYPE or LOCK_TYPE"_en_US;
+  } else if (IsIntentIn(*root) && !IsValueDummy(*root)) {
+    return "'%s' is an INTENT(IN) dummy argument"_en_US;
+  } else if (!IsVariableName(*root)) {
+    return "'%s' is not a variable"_en_US;
   } else {
-    return false;
+    return std::nullopt;
   }
+}
+
+bool IsModifiable(const Symbol &symbol, const Scope &scope) {
+  return !WhyNotModifiable(symbol, scope);
 }
 
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,
