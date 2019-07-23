@@ -40,6 +40,10 @@
 // RESULT should have some default-constructible type, and it must be
 // the same type in all of the visitors that you combine in the next step.
 //
+// If Handle() and Pre()/Post() are defined for the same type,
+// Handle() has precedence.  This can arise when member function
+// templates are used as catch-alls.
+//
 // Then instantiate and construct a Visitor and its embedded visitors via:
 //   Visitor<MyVisitor, ...> v{value...};  // value is/are ARGTYPE &&
 // and call:
@@ -75,6 +79,12 @@ public:
 
   Result &result() { return result_; }
 
+  // These dummies prevent the "using A::Handle..., "
+  // statements in Visitor (below) from failing, while
+  // their odd result and argument types prevent them
+  // from clashing with actual member function callbacks
+  // and member function template callbacks in visitor
+  // instances.
   std::nullptr_t Handle(std::nullptr_t);
   std::nullptr_t Pre(std::nullptr_t);
   std::nullptr_t Post(std::nullptr_t);
@@ -99,6 +109,8 @@ using VisitorResultType = typename VisitorResultTypeHelper<A...>::type;
 
 // Some SFINAE-fu to enable detection of Handle(), Pre() and Post()
 // callbacks in "if constexpr ()" predicates that guard calls to them below.
+// These have to be declared outside Visitor because they rely on
+// specialization.
 template<typename A, typename B, typename = void>
 struct HasVisitorHandle : std::false_type {};
 template<typename A, typename B>
@@ -142,6 +154,9 @@ private:
   template<typename B> void Visit(const B &x) {
     if (!done_) {
       if constexpr ((... || HasVisitorHandle<A, B, void>::value)) {
+        // At least one visitor declares a member function
+        // or member function template Handle() for B.  This call
+        // will fail if more than one visitor has done so.
         Handle(x);
       } else {
         if constexpr ((... || HasVisitorPre<A, B, void>::value)) {
@@ -167,6 +182,8 @@ class RewriterBase {
 public:
   void Return() { done_ = true; }
 
+  // Dummy declarations to ensure that "using A::Handle..." &c.
+  // do not fail in Rewriter below.
   std::nullptr_t Handle(std::nullptr_t);
   std::nullptr_t Pre(std::nullptr_t);
   std::nullptr_t Post(std::nullptr_t);
