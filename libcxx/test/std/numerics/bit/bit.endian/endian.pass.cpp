@@ -9,8 +9,9 @@
 // UNSUPPORTED: c++98, c++03, c++11, c++14, c++17
 
 // enum class endian;
+// <bit>
 
-#include <type_traits>
+#include <bit>
 #include <cstring>
 #include <cassert>
 #include <cstdint>
