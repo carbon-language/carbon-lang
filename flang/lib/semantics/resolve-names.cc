@@ -909,6 +909,8 @@ public:
   void Post(const parser::EndAssociateStmt &);
   void Post(const parser::Association &);
   void Post(const parser::SelectTypeStmt &);
+  bool Pre(const parser::SelectTypeConstruct &);
+  void Post(const parser::SelectTypeConstruct &);
   bool Pre(const parser::SelectTypeConstruct::TypeCase &);
   void Post(const parser::SelectTypeConstruct::TypeCase &);
   void Post(const parser::TypeGuardStmt::Guard &);
@@ -926,6 +928,8 @@ public:
   bool Pre(const parser::NonLabelDoStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::IfThenStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::SelectCaseStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::SelectRankConstruct &);
+  void Post(const parser::SelectRankConstruct &);
   bool Pre(const parser::SelectRankStmt &x) {
     return CheckDef(std::get<0>(x.t));
   }
@@ -962,10 +966,11 @@ private:
     MaybeExpr expr;
   };
   // association -> [associate-name =>] selector
-  struct {
+  struct Association {
     const parser::Name *name{nullptr};
     Selector selector;
-  } association_;
+  };
+  std::vector<Association> associationStack_;
 
   template<typename T> bool CheckDef(const T &t) {
     return CheckDef(std::get<std::optional<parser::Name>>(t));
@@ -984,6 +989,9 @@ private:
   Selector ResolveSelector(const parser::Selector &);
   void ResolveControlExpressions(const parser::ConcurrentControl &control);
   void ResolveIndexName(const parser::ConcurrentControl &control);
+  Association &GetCurrentAssociation();
+  void PushAssociation();
+  void PopAssociation();
 };
 
 // Walk the parse tree and resolve names to symbols.
@@ -4217,31 +4225,35 @@ bool ConstructVisitor::Pre(const parser::EndBlockStmt &x) {
 }
 
 void ConstructVisitor::Post(const parser::Selector &x) {
-  association_.selector = ResolveSelector(x);
+  GetCurrentAssociation().selector = ResolveSelector(x);
 }
 
 bool ConstructVisitor::Pre(const parser::AssociateStmt &x) {
   CheckDef(x.t);
   PushScope(Scope::Kind::Block, nullptr);
+  PushAssociation();
   return true;
 }
 void ConstructVisitor::Post(const parser::EndAssociateStmt &x) {
+  PopAssociation();
   PopScope();
   CheckRef(x.v);
 }
 
 void ConstructVisitor::Post(const parser::Association &x) {
   const auto &name{std::get<parser::Name>(x.t)};
-  association_.name = &name;
+  GetCurrentAssociation().name = &name;
   if (auto *symbol{MakeAssocEntity()}) {
     SetTypeFromAssociation(*symbol);
     SetAttrsFromAssociation(*symbol);
   }
+  GetCurrentAssociation() = {};  // clean for further parser::Association.
 }
 
 bool ConstructVisitor::Pre(const parser::ChangeTeamStmt &x) {
   CheckDef(x.t);
   PushScope(Scope::Kind::Block, nullptr);
+  PushAssociation();
   return true;
 }
 
@@ -4265,28 +4277,39 @@ void ConstructVisitor::Post(const parser::CoarrayAssociation &x) {
 }
 
 void ConstructVisitor::Post(const parser::EndChangeTeamStmt &x) {
+  PopAssociation();
   PopScope();
   CheckRef(x.t);
 }
 
+bool ConstructVisitor::Pre(const parser::SelectTypeConstruct &) {
+  PushAssociation();
+  return true;
+}
+
+void ConstructVisitor::Post(const parser::SelectTypeConstruct &) {
+  PopAssociation();
+}
+
 void ConstructVisitor::Post(const parser::SelectTypeStmt &x) {
+  auto &association{GetCurrentAssociation()};
   if (const std::optional<parser::Name> &name{std::get<1>(x.t)}) {
     // This isn't a name in the current scope, it is in each TypeGuardStmt
     MakePlaceholder(*name, MiscDetails::Kind::SelectTypeAssociateName);
-    association_.name = &*name;
+    association.name = &*name;
   } else {
     if (const Symbol *
-        whole{UnwrapWholeSymbolDataRef(association_.selector.expr)}) {
+        whole{UnwrapWholeSymbolDataRef(association.selector.expr)}) {
       ConvertToObjectEntity(const_cast<Symbol &>(*whole));
       if (!IsVariableName(*whole)) {
-        Say(association_.selector.source,  // C901
+        Say(association.selector.source,  // C901
             "Selector is not a variable"_err_en_US);
-        association_ = {};
+        association = {};
       }
     } else {
-      Say(association_.selector.source,  // C1157
+      Say(association.selector.source,  // C1157
           "Selector is not a named variable: 'associate-name =>' is required"_err_en_US);
-      association_ = {};
+      association = {};
     }
   }
 }
@@ -4310,6 +4333,15 @@ void ConstructVisitor::Post(const parser::TypeGuardStmt::Guard &x) {
   }
 }
 
+bool ConstructVisitor::Pre(const parser::SelectRankConstruct &) {
+  PushAssociation();
+  return true;
+}
+
+void ConstructVisitor::Post(const parser::SelectRankConstruct &) {
+  PopAssociation();
+}
+
 bool ConstructVisitor::CheckDef(const std::optional<parser::Name> &x) {
   if (x) {
     MakeSymbol(*x, MiscDetails{MiscDetails::Kind::ConstructName});
@@ -4324,23 +4356,24 @@ void ConstructVisitor::CheckRef(const std::optional<parser::Name> &x) {
   }
 }
 
-// Make a symbol representing an associating entity from association_.
+// Make a symbol representing an associating entity from current association.
 Symbol *ConstructVisitor::MakeAssocEntity() {
   Symbol *symbol{nullptr};
-  if (association_.name) {
-    symbol = &MakeSymbol(*association_.name, UnknownDetails{});
+  auto &association{GetCurrentAssociation()};
+  if (association.name) {
+    symbol = &MakeSymbol(*association.name, UnknownDetails{});
     if (symbol->has<AssocEntityDetails>() && symbol->owner() == currScope()) {
-      Say(*association_.name,  // C1104
+      Say(*association.name,  // C1104
           "The associate name '%s' is already used in this associate statement"_err_en_US);
       return nullptr;
     }
   } else if (const Symbol *
-      whole{UnwrapWholeSymbolDataRef(association_.selector.expr)}) {
+      whole{UnwrapWholeSymbolDataRef(association.selector.expr)}) {
     symbol = &MakeSymbol(whole->name());
   } else {
     return nullptr;
   }
-  if (auto &expr{association_.selector.expr}) {
+  if (auto &expr{association.selector.expr}) {
     symbol->set_details(AssocEntityDetails{common::Clone(*expr)});
   } else {
     symbol->set_details(AssocEntityDetails{});
@@ -4353,7 +4386,7 @@ void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
   auto &details{symbol.get<AssocEntityDetails>()};
   const MaybeExpr *pexpr{&details.expr()};
   if (!pexpr->has_value()) {
-    pexpr = &association_.selector.expr;
+    pexpr = &GetCurrentAssociation().selector.expr;
   }
   if (pexpr->has_value()) {
     const SomeExpr &expr{**pexpr};
@@ -4385,7 +4418,7 @@ void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
 
 // If current selector is a variable, set some of its attributes on symbol.
 void ConstructVisitor::SetAttrsFromAssociation(Symbol &symbol) {
-  Attrs attrs{evaluate::GetAttrs(association_.selector.expr)};
+  Attrs attrs{evaluate::GetAttrs(GetCurrentAssociation().selector.expr)};
   symbol.attrs() |= attrs &
       Attrs{Attr::TARGET, Attr::ASYNCHRONOUS, Attr::VOLATILE, Attr::CONTIGUOUS};
   if (attrs.test(Attr::POINTER)) {
@@ -4405,6 +4438,20 @@ ConstructVisitor::Selector ConstructVisitor::ResolveSelector(
           },
       },
       x.u);
+}
+
+ConstructVisitor::Association &ConstructVisitor::GetCurrentAssociation() {
+  CHECK(associationStack_.size());
+  return associationStack_.back();
+}
+
+void ConstructVisitor::PushAssociation() {
+  associationStack_.emplace_back(Association{});
+}
+
+void ConstructVisitor::PopAssociation() {
+  CHECK(associationStack_.size());
+  associationStack_.pop_back();
 }
 
 const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
