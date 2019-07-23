@@ -113,7 +113,8 @@ template<typename T>
 void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, const Symbol &lhs,
     const Designator<T> &d) {
-  const Symbol *last{d.GetLastSymbol()}, *base{d.GetBaseObject().symbol()};
+  const Symbol *last{d.GetLastSymbol()};
+  const Symbol *base{d.GetBaseObject().symbol()};
   if (last != nullptr && base != nullptr) {
     std::optional<parser::MessageFixedText> error;
     if (IsProcedurePointer(lhs)) {
