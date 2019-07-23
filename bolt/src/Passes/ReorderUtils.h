@@ -106,6 +106,49 @@ private:
   BitVector Valid;
 };
 
+// This class holds cached results of specified type for a pair of Clusters.
+// It can invalidate all cache entries associated with a given Cluster.
+// The functions set, get and contains are thread safe when called with
+// distinct keys.
+template <typename Cluster, typename ValueType>
+class ClusterPairCacheThreadSafe {
+public:
+  explicit ClusterPairCacheThreadSafe(size_t Size)
+      : Size(Size), Cache(Size * Size), Valid(Size * Size, false) {}
+
+  bool contains(const Cluster *First, const Cluster *Second) const {
+    return Valid[index(First, Second)];
+  }
+
+  ValueType get(const Cluster *First, const Cluster *Second) const {
+    assert(contains(First, Second));
+    return Cache[index(First, Second)];
+  }
+
+  void set(const Cluster *First, const Cluster *Second, ValueType Value) {
+    const auto Index = index(First, Second);
+    Cache[Index] = Value;
+    Valid[Index] = true;
+  }
+
+  void invalidate(const Cluster *C) {
+    for (size_t idx = C->id() * Size; idx < (C->id() + 1) * Size; idx++)
+      Valid[idx] = false;
+
+    for (size_t id = 0; id < Size; id++)
+      Valid[(id * Size) + C->id()] = false;
+  }
+
+private:
+  size_t Size;
+  std::vector<ValueType> Cache;
+  std::vector<ValueType> Valid;
+
+  size_t index(const Cluster *First, const Cluster *Second) const {
+    return (First->id() * Size) + Second->id();
+  }
+};
+
 } // namespace bolt
 } // namespace llvm
 

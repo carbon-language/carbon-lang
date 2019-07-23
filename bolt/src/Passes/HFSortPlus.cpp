@@ -11,6 +11,7 @@
 
 #include "BinaryFunction.h"
 #include "HFSort.h"
+#include "ParallelUtilities.h"
 #include "ReorderUtils.h"
 #include "llvm/Support/Options.h"
 
@@ -319,50 +320,115 @@ public:
   /// Merge pairs of clusters while there is an improvement in the
   /// expected cache miss ratio
   void runPassTwo() {
-    while (Clusters.size() > 1) {
-      Cluster *BestClusterPred = nullptr;
-      Cluster *BestClusterSucc = nullptr;
-      double BestGain = -1;
-      for (auto ClusterPred : Clusters) {
-        // get candidates for merging with the current cluster
-        Adjacent.forAllAdjacent(
-          ClusterPred,
-          // find the best candidate
-          [&](Cluster *ClusterSucc) {
-            assert(ClusterPred != ClusterSucc && "loop edges are not supported");
-            // compute the gain of merging two clusters
-            const double Gain = mergeGain(ClusterPred, ClusterSucc);
+    // BucketsCount is hard-coded to make the algorithm determinestic regardless
+    // of the number of threads
+    const unsigned BucketsCount = 124;
+    unsigned IterationCount = 0;
 
-            // breaking ties by density to make the hottest clusters be merged first
-            if (Gain > BestGain || (std::abs(Gain - BestGain) < 1e-8 &&
-                                    compareClusterPairs(ClusterPred,
-                                                        ClusterSucc,
-                                                        BestClusterPred,
-                                                        BestClusterSucc))) {
-              BestGain = Gain;
-              BestClusterPred = ClusterPred;
-              BestClusterSucc = ClusterSucc;
-            }
-          });
+    llvm::ThreadPool *Pool;
+    if (!opts::NoThreads)
+      Pool = &ParallelUtilities::getThreadPool();
+
+    while (Clusters.size() > 1) {
+      MergeCandidateEntry GlobalMaximum;
+      std::vector<MergeCandidateEntry> LocalMaximums(BucketsCount);
+
+      // Compare two candidates with a given gain
+      auto compareCandidates = [](const MergeCandidateEntry &CandidateA,
+                                  const MergeCandidateEntry &CandidateB) {
+        // breaking ties by density to make the hottest clusters be
+        // merged first
+        return CandidateA.Gain > CandidateB.Gain ||
+               (std::abs(CandidateA.Gain - CandidateB.Gain) < 1e-8 &&
+                compareClusterPairs(
+                    CandidateA.ClusterPred, CandidateA.ClusterSucc,
+                    CandidateB.ClusterPred, CandidateB.ClusterSucc));
+      };
+
+      // find the best candidates to merge within a bucket range
+      auto findMaximaInBucket = [&](const unsigned Start, const unsigned End,
+                                    const unsigned BucketId) {
+        auto &LocalMaximum = LocalMaximums[BucketId];
+
+        for (unsigned Idx = Start; Idx < End; Idx++) {
+          if (Idx >= Clusters.size())
+            return;
+
+          auto ClusterPred = Clusters[Idx];
+
+          // get best candidates to merge with the current cluster
+          Adjacent.forAllAdjacent(
+              ClusterPred,
+              // find the best candidate
+              [&](Cluster *ClusterSucc) {
+                assert(ClusterPred != ClusterSucc &&
+                       "loop edges are not supported");
+
+                // compute the gain of merging two clusters
+                const double Gain = mergeGain(ClusterPred, ClusterSucc);
+
+                // create a new candidate
+                MergeCandidateEntry Candidate;
+                Candidate.Gain = Gain;
+                Candidate.ClusterPred = ClusterPred;
+                Candidate.ClusterSucc = ClusterSucc;
+
+                if (compareCandidates(Candidate, LocalMaximum))
+                  LocalMaximum = Candidate;
+              });
+        }
+      };
+
+      unsigned BucketSize = Clusters.size() / BucketsCount;
+      if (Clusters.size() % BucketsCount)
+        BucketSize++;
+
+      // find the best candidate within each bucket
+      unsigned BucketId = 0;
+      for (unsigned ClusterIdx = 0; ClusterIdx < Clusters.size();
+           ClusterIdx += BucketSize, BucketId++) {
+
+        if (opts::NoThreads) {
+          findMaximaInBucket(ClusterIdx, ClusterIdx + BucketSize, BucketId);
+        } else {
+          Pool->async(findMaximaInBucket, ClusterIdx, ClusterIdx + BucketSize,
+                      BucketId);
+        }
       }
 
-      // stop merging when there is no improvement
-      if (BestGain <= 0.0)
+      if (!opts::NoThreads)
+        Pool->wait();
+
+      // find glabal maximum
+      for (auto &LocalMaximum : LocalMaximums) {
+        if (LocalMaximum.Gain > 0 &&
+            compareCandidates(LocalMaximum, GlobalMaximum))
+          GlobalMaximum = LocalMaximum;
+      }
+
+      if (GlobalMaximum.Gain <= 0.0)
         break;
 
-      // merge the best pair of clusters
-      mergeClusters(BestClusterPred, BestClusterSucc);
+      DEBUG(outs() << "merging##" << GlobalMaximum.ClusterPred->id() << "##"
+                   << GlobalMaximum.ClusterSucc->id() << "@@"
+                   << GlobalMaximum.Gain << "\n");
+
+      mergeClusters(GlobalMaximum.ClusterPred, GlobalMaximum.ClusterSucc);
     }
+
+    DEBUG(outs() << "BOLT-INFO: hfsort+ pass two finished in" << IterationCount
+                 << " iterations.");
   }
 
   /// Run hfsort+ algorithm and return ordered set of function clusters.
   std::vector<Cluster> run() {
     DEBUG(dbgs() << "Starting hfsort+ w/"
-                 << (UseGainCache ? "gain cache" : "no cache")
-                 << " for " << Clusters.size() << " clusters "
+                 << (UseGainCache ? "gain cache" : "no cache") << " for "
+                 << Clusters.size() << " clusters "
                  << "with ITLBPageSize = " << ITLBPageSize << ", "
                  << "ITLBEntries = " << ITLBEntries << ", "
-                 << "and MergeProbability = " << opts::MergeProbability << "\n");
+                 << "and MergeProbability = " << opts::MergeProbability
+                 << "\n");
 
     // Pass 1
     runPassOne();
@@ -370,7 +436,8 @@ public:
     // Pass 2
     runPassTwo();
 
-    DEBUG(dbgs() << "Completed hfsort+ with " << Clusters.size() << " clusters\n");
+    DEBUG(dbgs() << "Completed hfsort+ with " << Clusters.size()
+                 << " clusters\n");
 
     // Sorting clusters by density in decreasing order
     std::stable_sort(Clusters.begin(), Clusters.end(), compareClusters);
@@ -418,6 +485,13 @@ public:
   }
 
 private:
+  /// A struct that is used to store a merge candidate
+  struct MergeCandidateEntry {
+    double Gain{-1};
+    Cluster *ClusterPred{nullptr};
+    Cluster *ClusterSucc{nullptr};
+  };
+
   /// Initialize the set of active clusters, function id to cluster mapping,
   /// total number of samples and function addresses.
   std::vector<Cluster *> initializeClusters() {
@@ -502,7 +576,7 @@ private:
   // when a pair of clusters (x,y) gets merged, we need to invalidate the pairs
   // containing both x and y and all clusters adjacent to x and y (and recompute
   // them on the next iteration).
-  mutable ClusterPairCache<Cluster, double> GainCache;
+  mutable ClusterPairCacheThreadSafe<Cluster, double> GainCache;
 };
 
 } // end namespace anonymous
