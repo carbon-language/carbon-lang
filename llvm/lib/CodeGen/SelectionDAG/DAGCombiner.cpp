@@ -14829,13 +14829,7 @@ CheckForMaskedLoad(SDValue V, SDValue Ptr, SDValue Chain) {
   else if (Chain->getOpcode() == ISD::TokenFactor &&
            SDValue(LD, 1).hasOneUse()) {
     // LD has only 1 chain use so they are no indirect dependencies.
-    bool isOk = false;
-    for (const SDValue &ChainOp : Chain->op_values())
-      if (ChainOp.getNode() == LD) {
-        isOk = true;
-        break;
-      }
-    if (!isOk)
+    if (!LD->isOperandOf(Chain.getNode()))
       return Result;
   } else
     return Result; // Fail.
