@@ -118,6 +118,7 @@ formatToSerializer(remarks::Format RemarksFormat, raw_ostream &OS) {
   case remarks::Format::YAMLStrTab:
     return llvm::make_unique<remarks::YAMLStrTabSerializer>(OS);
   };
+  llvm_unreachable("Unknown remarks::Format enum");
 }
 
 Expected<std::unique_ptr<ToolOutputFile>>
