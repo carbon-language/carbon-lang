@@ -75,11 +75,9 @@ public:
 
   Result &result() { return result_; }
 
-  // Note the odd return type; it distinguishes these default callbacks
-  // from any void-valued client callback.
-  template<typename A> std::nullptr_t Handle(const A &) { return nullptr; }
-  template<typename A> std::nullptr_t Pre(const A &) { return nullptr; }
-  template<typename A> std::nullptr_t Post(const A &) { return nullptr; }
+  std::nullptr_t Handle(std::nullptr_t);
+  std::nullptr_t Pre(std::nullptr_t);
+  std::nullptr_t Post(std::nullptr_t);
 
   void Return() { done_ = true; }
   void Return(RESULT &&x) {
@@ -99,13 +97,35 @@ template<typename A, typename... B> struct VisitorResultTypeHelper {
 template<typename... A>
 using VisitorResultType = typename VisitorResultTypeHelper<A...>::type;
 
+// Some SFINAE-fu to enable detection of Handle(), Pre() and Post()
+// callbacks in "if constexpr ()" predicates that guard calls to them below.
+template<typename A, typename B, typename = void>
+struct HasVisitorHandle : std::false_type {};
+template<typename A, typename B>
+struct HasVisitorHandle<A, B,
+    decltype(static_cast<A *>(nullptr)->Handle(
+        *static_cast<const B *>(nullptr)))> : std::true_type {};
+
+template<typename A, typename B, typename = void>
+struct HasVisitorPre : std::false_type {};
+template<typename A, typename B>
+struct HasVisitorPre<A, B,
+    decltype(static_cast<A *>(nullptr)->Pre(*static_cast<const B *>(nullptr)))>
+  : std::true_type {};
+
+template<typename A, typename B, typename = void>
+struct HasVisitorPost : std::false_type {};
+template<typename A, typename B>
+struct HasVisitorPost<A, B,
+    decltype(static_cast<A *>(nullptr)->Post(*static_cast<const B *>(nullptr)))>
+  : std::true_type {};
+
 template<typename... A>
 class Visitor : public virtual VisitorBase<VisitorResultType<A...>>,
                 public A... {
 public:
   using Result = VisitorResultType<A...>;
   using Base = VisitorBase<Result>;
-  using Base::Handle, Base::Pre, Base::Post;
   using A::Handle..., A::Pre..., A::Post...;
 
 private:
@@ -121,22 +141,20 @@ public:
 private:
   template<typename B> void Visit(const B &x) {
     if (!done_) {
-      if constexpr (std::is_same_v<std::decay_t<decltype(Handle(x))>,
-                        std::nullptr_t>) {
-        // No visitation class defines Handle(B), so try Pre()/Post().
-        Pre(x);
+      if constexpr ((... || HasVisitorHandle<A, B, void>::value)) {
+        Handle(x);
+      } else {
+        if constexpr ((... || HasVisitorPre<A, B, void>::value)) {
+          Pre(x);
+        }
         if (!done_) {
           descender_.Descend(x);
           if (!done_) {
-            Post(x);
+            if constexpr ((... || HasVisitorPost<A, B, void>::value)) {
+              Post(x);
+            }
           }
         }
-      } else {
-        static_assert(
-            std::is_same_v<std::decay_t<decltype(Pre(x))>, std::nullptr_t>);
-        static_assert(
-            std::is_same_v<std::decay_t<decltype(Post(x))>, std::nullptr_t>);
-        Handle(x);
       }
     }
   }
@@ -147,44 +165,62 @@ private:
 
 class RewriterBase {
 public:
-  template<typename A> common::IfNoLvalue<A, A> Handle(A &&x) {
-    defaultHandleCalled_ = true;
-    return std::move(x);
-  }
-  template<typename A> void Pre(const A &) {}
-  template<typename A> common::IfNoLvalue<A, A> Post(A &&x) {
-    return std::move(x);
-  }
-
   void Return() { done_ = true; }
+
+  std::nullptr_t Handle(std::nullptr_t);
+  std::nullptr_t Pre(std::nullptr_t);
+  std::nullptr_t Post(std::nullptr_t);
 
 protected:
   bool done_{false};
-  bool defaultHandleCalled_{false};
 };
+
+template<typename A, typename B, typename = B>
+struct HasMutatorHandle : std::false_type {};
+template<typename A, typename B>
+struct HasMutatorHandle<A, B,
+    decltype(static_cast<A *>(nullptr)->Handle(
+        static_cast<B &&>(*static_cast<B *>(nullptr))))> : std::true_type {};
+
+template<typename A, typename B, typename = void>
+struct HasMutatorPre : std::false_type {};
+template<typename A, typename B>
+struct HasMutatorPre<A, B,
+    decltype(static_cast<A *>(nullptr)->Pre(*static_cast<const B *>(nullptr)))>
+  : std::true_type {};
+
+template<typename A, typename B, typename = B>
+struct HasMutatorPost : std::false_type {};
+template<typename A, typename B>
+struct HasMutatorPost<A, B,
+    decltype(static_cast<A *>(nullptr)->Post(
+        static_cast<B &&>(*static_cast<B *>(nullptr))))> : std::true_type {};
 
 template<typename... A>
 class Rewriter : public virtual RewriterBase, public A... {
 public:
-  using RewriterBase::Handle, RewriterBase::Pre, RewriterBase::Post;
   using A::Handle..., A::Pre..., A::Post...;
 
   template<typename... B> Rewriter(B... x) : A{x}... {}
 
 private:
-  using RewriterBase::done_, RewriterBase::defaultHandleCalled_;
+  using RewriterBase::done_;
 
 public:
   template<typename B> common::IfNoLvalue<B, B> Traverse(B &&x) {
     if (!done_) {
-      defaultHandleCalled_ = false;
-      x = Handle(std::move(x));
-      if (defaultHandleCalled_) {
-        Pre(x);
+      if constexpr ((... || HasMutatorHandle<A, B, B>::value)) {
+        x = Handle(std::move(x));
+      } else {
+        if constexpr ((... || HasMutatorPre<A, B, B>::value)) {
+          Pre(x);
+        }
         if (!done_) {
           descender_.Descend(x);
           if (!done_) {
-            x = Post(std::move(x));
+            if constexpr ((... || HasMutatorPost<A, B, B>::value)) {
+              x = Post(std::move(x));
+            }
           }
         }
       }

@@ -42,7 +42,7 @@ subroutine s2
  !DEF: /s2/x ObjectEntity CHARACTER(4_4,1)
  !DEF: /s2/y ObjectEntity CHARACTER(4_4,1)
  character(len=4) x, y
- !DEF: /s2/Block1/z AssocEntity CHARACTER(4_4,1)
+ !DEF: /s2/Block1/z AssocEntity CHARACTER(4_8,1)
  !REF: /s2/x
  associate (z => x)
   !REF: /s2/Block1/z

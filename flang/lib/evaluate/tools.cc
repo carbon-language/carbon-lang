@@ -23,6 +23,22 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
+// IsVariable()
+IsVariableVisitor::IsVariableVisitor(std::nullptr_t) {}
+void IsVariableVisitor::Handle(const StaticDataObject &) { Return(false); }
+void IsVariableVisitor::Post(const Substring &) { Return(true); }
+void IsVariableVisitor::Pre(const Component &) { Return(true); }
+void IsVariableVisitor::Pre(const ArrayRef &) { Return(true); }
+void IsVariableVisitor::Pre(const CoarrayRef &) { Return(true); }
+void IsVariableVisitor::Pre(const ComplexPart &) { Return(true); }
+void IsVariableVisitor::Handle(const ProcedureDesignator &x) {
+  if (const semantics::Symbol * symbol{x.GetSymbol()}) {
+    Return(symbol->attrs().test(semantics::Attr::POINTER));
+  } else {
+    Return(false);
+  }
+}
+
 // Conversions of complex component expressions to REAL.
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
@@ -630,4 +646,37 @@ bool IsAssumedRank(const ActualArgument &arg) {
     return IsAssumedRank(*assumedTypeDummy);
   }
 }
+
+// GetLastSymbol()
+GetLastSymbolVisitor::GetLastSymbolVisitor(std::nullptr_t) {}
+void GetLastSymbolVisitor::Handle(const semantics::Symbol &symbol) {
+  Return(&symbol);
+}
+void GetLastSymbolVisitor::Handle(const Component &x) {
+  Return(&x.GetLastSymbol());
+}
+void GetLastSymbolVisitor::Handle(const NamedEntity &x) {
+  Return(&x.GetLastSymbol());
+}
+void GetLastSymbolVisitor::Handle(const ProcedureDesignator &x) {
+  Return(x.GetSymbol());
+}
+
+// GetLastTarget()
+GetLastTargetVisitor::GetLastTargetVisitor(std::nullptr_t) {}
+void GetLastTargetVisitor::Handle(const semantics::Symbol &x) {
+  if (x.attrs().HasAny({semantics::Attr::POINTER, semantics::Attr::TARGET})) {
+    Return(&x);
+  } else {
+    Return(nullptr);
+  }
+}
+void GetLastTargetVisitor::Pre(const Component &x) {
+  const semantics::Symbol &symbol{x.GetLastSymbol()};
+  if (symbol.attrs().HasAny(
+          {semantics::Attr::POINTER, semantics::Attr::TARGET})) {
+    Return(&symbol);
+  }
+}
+
 }
