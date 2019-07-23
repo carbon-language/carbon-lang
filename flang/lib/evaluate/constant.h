@@ -43,6 +43,14 @@ inline int GetRank(const ConstantSubscripts &s) {
 
 std::size_t TotalElementCount(const ConstantSubscripts &);
 
+// Validate dimension re-ordering like ORDER in RESHAPE.
+// On success, return a vector that can be used as dimOrder in
+// ConstantBound::IncrementSubscripts.
+std::optional<std::vector<int>> ValidateDimensionOrder(
+    int rank, const std::vector<int> &order);
+
+bool IsValidShape(const ConstantSubscripts &);
+
 class ConstantBounds {
 public:
   ConstantBounds() = default;
@@ -55,9 +63,13 @@ public:
   int Rank() const { return GetRank(shape_); }
   Constant<SubscriptInteger> SHAPE() const;
 
-  // Increments a vector of subscripts in Fortran array order (first dimension
-  // varying most quickly).  Returns false when last element was visited.
-  bool IncrementSubscripts(ConstantSubscripts &) const;
+  // If no optional dimension order argument is passed, increments a vector of
+  // subscripts in Fortran array order (first dimension varying most quickly).
+  // Otherwise, increments the vector of subscripts according to the given
+  // dimension order (dimension dimOrder[0] varying most quickly. Dimensions
+  // indexing is zero based here.) Returns false when last element was visited.
+  bool IncrementSubscripts(
+      ConstantSubscripts &, const std::vector<int> *dimOrder = nullptr) const;
 
 protected:
   ConstantSubscript SubscriptsToOffset(const ConstantSubscripts &) const;
@@ -100,6 +112,8 @@ public:
 
 protected:
   std::vector<Element> Reshape(const ConstantSubscripts &) const;
+  std::size_t CopyFrom(const ConstantBase &source, std::size_t count,
+      ConstantSubscripts &resultSubscripts, const std::vector<int> *dimOrder);
 
   Result result_;
   std::vector<Element> values_;
@@ -126,6 +140,8 @@ public:
   Element At(const ConstantSubscripts &) const;
 
   Constant Reshape(ConstantSubscripts &&) const;
+  std::size_t CopyFrom(const Constant &source, std::size_t count,
+      ConstantSubscripts &resultSubscripts, const std::vector<int> *dimOrder);
 };
 
 template<int KIND>
@@ -164,6 +180,8 @@ public:
   static constexpr DynamicType GetType() {
     return {TypeCategory::Character, KIND};
   }
+  std::size_t CopyFrom(const Constant &source, std::size_t count,
+      ConstantSubscripts &resultSubscripts, const std::vector<int> *dimOrder);
 
 private:
   Scalar<Result> values_;  // one contiguous string
@@ -196,6 +214,8 @@ public:
   StructureConstructor At(const ConstantSubscripts &) const;
 
   Constant Reshape(ConstantSubscripts &&) const;
+  std::size_t CopyFrom(const Constant &source, std::size_t count,
+      ConstantSubscripts &resultSubscripts, const std::vector<int> *dimOrder);
 };
 
 FOR_EACH_LENGTHLESS_INTRINSIC_KIND(extern template class ConstantBase, )

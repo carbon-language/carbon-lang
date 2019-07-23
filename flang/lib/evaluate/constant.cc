@@ -61,20 +61,51 @@ ConstantSubscript ConstantBounds::SubscriptsToOffset(
   return offset;
 }
 
-bool ConstantBounds::IncrementSubscripts(ConstantSubscripts &indices) const {
+bool ConstantBounds::IncrementSubscripts(
+    ConstantSubscripts &indices, const std::vector<int> *dimOrder) const {
   int rank{GetRank(shape_)};
   CHECK(GetRank(indices) == rank);
+  CHECK(!dimOrder || static_cast<int>(dimOrder->size()) == rank);
   for (int j{0}; j < rank; ++j) {
-    auto lb{lbounds_[j]};
-    CHECK(indices[j] >= lb);
-    if (++indices[j] < lb + shape_[j]) {
+    ConstantSubscript k{dimOrder ? (*dimOrder)[j] : j};
+    auto lb{lbounds_[k]};
+    CHECK(indices[k] >= lb);
+    if (++indices[k] < lb + shape_[k]) {
       return true;
     } else {
-      CHECK(indices[j] == lb + shape_[j]);
-      indices[j] = lb;
+      CHECK(indices[k] == lb + shape_[k]);
+      indices[k] = lb;
     }
   }
   return false;  // all done
+}
+
+std::optional<std::vector<int>> ValidateDimensionOrder(
+    int rank, const std::vector<int> &order) {
+  std::vector<int> dimOrder(rank);
+  if (static_cast<int>(order.size()) == rank) {
+    std::bitset<common::maxRank> seenDimensions;
+    for (int j{0}; j < rank; ++j) {
+      int dim{order[j]};
+      if (dim < 1 || dim > rank || seenDimensions.test(dim - 1)) {
+        return std::nullopt;
+      }
+      dimOrder[dim - 1] = j;
+      seenDimensions.set(dim - 1);
+    }
+    return dimOrder;
+  } else {
+    return std::nullopt;
+  }
+}
+
+bool IsValidShape(const ConstantSubscripts &shape) {
+  for (ConstantSubscript extent : shape) {
+    if (extent < 0) {
+      return false;
+    }
+  }
+  return shape.size() <= common::maxRank;
 }
 
 template<typename RESULT, typename ELEMENT>
@@ -108,6 +139,22 @@ auto ConstantBase<RESULT, ELEMENT>::Reshape(
   return elements;
 }
 
+template<typename RESULT, typename ELEMENT>
+std::size_t ConstantBase<RESULT, ELEMENT>::CopyFrom(
+    const ConstantBase<RESULT, ELEMENT> &source, std::size_t count,
+    ConstantSubscripts &resultSubscripts, const std::vector<int> *dimOrder) {
+  std::size_t copied{0};
+  ConstantSubscripts sourceSubscripts{source.lbounds()};
+  while (copied < count) {
+    values_.at(SubscriptsToOffset(resultSubscripts)) =
+        source.values_.at(source.SubscriptsToOffset(sourceSubscripts));
+    copied++;
+    source.IncrementSubscripts(sourceSubscripts);
+    IncrementSubscripts(resultSubscripts, dimOrder);
+  }
+  return copied;
+}
+
 template<typename T>
 auto Constant<T>::At(const ConstantSubscripts &index) const -> Element {
   return Base::values_.at(Base::SubscriptsToOffset(index));
@@ -116,6 +163,12 @@ auto Constant<T>::At(const ConstantSubscripts &index) const -> Element {
 template<typename T>
 auto Constant<T>::Reshape(ConstantSubscripts &&dims) const -> Constant {
   return {Base::Reshape(dims), std::move(dims)};
+}
+
+template<typename T>
+std::size_t Constant<T>::CopyFrom(const Constant<T> &source, std::size_t count,
+    ConstantSubscripts &resultSubscripts, const std::vector<int> *dimOrder) {
+  return Base::CopyFrom(source, count, resultSubscripts, dimOrder);
 }
 
 // Constant<Type<TypeCategory::Character, KIND> specializations
@@ -190,6 +243,27 @@ auto Constant<Type<TypeCategory::Character, KIND>>::Reshape(
   return {length_, std::move(elements), std::move(dims)};
 }
 
+template<int KIND>
+std::size_t Constant<Type<TypeCategory::Character, KIND>>::CopyFrom(
+    const Constant<Type<TypeCategory::Character, KIND>> &source,
+    std::size_t count, ConstantSubscripts &resultSubscripts,
+    const std::vector<int> *dimOrder) {
+  CHECK(length_ == source.length_);
+  std::size_t copied{0};
+  std::size_t elementBytes{length_ * sizeof(decltype(values_[0]))};
+  ConstantSubscripts sourceSubscripts{source.lbounds()};
+  while (copied < count) {
+    auto *dest{&values_.at(SubscriptsToOffset(resultSubscripts) * length_)};
+    const auto *src{&source.values_.at(
+        source.SubscriptsToOffset(sourceSubscripts) * length_)};
+    std::memcpy(dest, src, elementBytes);
+    copied++;
+    source.IncrementSubscripts(sourceSubscripts);
+    IncrementSubscripts(resultSubscripts, dimOrder);
+  }
+  return copied;
+}
+
 // Constant<SomeDerived> specialization
 Constant<SomeDerived>::Constant(const StructureConstructor &x)
   : Base{x.values(), Result{x.derivedTypeSpec()}} {}
@@ -231,6 +305,12 @@ StructureConstructor Constant<SomeDerived>::At(
 auto Constant<SomeDerived>::Reshape(ConstantSubscripts &&dims) const
     -> Constant {
   return {result().derivedTypeSpec(), Base::Reshape(dims), std::move(dims)};
+}
+
+std::size_t Constant<SomeDerived>::CopyFrom(const Constant<SomeDerived> &source,
+    std::size_t count, ConstantSubscripts &resultSubscripts,
+    const std::vector<int> *dimOrder) {
+  return Base::CopyFrom(source, count, resultSubscripts, dimOrder);
 }
 
 INSTANTIATE_CONSTANT_TEMPLATES

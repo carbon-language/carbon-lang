@@ -13,6 +13,8 @@ is clear on usage, follow it.
   follow it.  [Google's](https://google.github.io/styleguide/cppguide.html)
   is pretty good and comes with lots of justifications for its rules.
 * Reasonable exceptions to these guidelines can be made.
+* Be aware of some workarounds for known issues in older C++ compilers that should
+  still be able to compile f18. They are listed at the end of this document.
 ## In particular:
 ### Files
 1. File names should use dashes, not underscores.  C++ sources have the
@@ -227,6 +229,8 @@ build time; don't solve build time problems by writing programs that
 produce source code when macros and templates suffice; don't write macros
 when templates suffice.  Templates are statically typed, checked by the
 compiler, and are (or should be) visible to debuggers.
+
+
 ### Exceptions to these guidelines
 Reasonable exceptions will be allowed; these guidelines cannot anticipate
 all situations.
@@ -237,3 +241,39 @@ in a way that leads to weirdly capitalized abbreviations in names
 like `Http`.
 Consistency is one of many aspects in the pursuit of clarity,
 but not an end in itself.
+
+## C++ compiler bug workarounds
+Below is a list of workarounds for C++ compiler bugs met with f18 that, even
+if the bugs are fixed in latest C++ compiler versions, need to be applied so
+that all desired tool-chains can compile f18.
+### Explicitly move noncopyable local variable into optional results
+
+The following code is legal C++ but fails to compile with the
+default Ubuntu 18.04 g++ compiler (7.4.0-1ubuntu1~18.0.4.1):
+
+```
+class CantBeCopied {
+ public:
+ CantBeCopied(const CantBeCopied&) = delete;
+ CantBeCopied(CantBeCopied&&) = default;
+ CantBeCopied() {}
+};
+std::optional<CantBeCopied> fooNOK() {
+  CantBeCopied result;
+  return result; // Legal C++, but does not compile with Ubuntu 18.04 default g++
+}
+std::optional<CantBeCopied> fooOK() {
+  CantBeCopied result;
+  return {std::move(result)}; // Compiles OK everywhere
+}
+```
+The underlying bug is actually not specific to `std::optional` but this is the most common
+case in f18 where the issue may occur. The actual bug can be reproduced with any class `B`
+that has a perfect forwarding constructor taking `CantBeCopied` as argument:
+`template<typename CantBeCopied> B(CantBeCopied&& x) x_{std::forward<CantBeCopied>(x)} {}`.
+In such scenarios, Ubuntu 18.04 g++ fails to instantiate the move constructor
+and to construct the returned value as it should, instead it complains about a
+missing copy constructor.
+
+Local result variables do not need to and should not be explicitly moved into optionals
+if they have a copy constructor.

@@ -53,5 +53,8 @@ ENUM_CLASS(IoSpecKind, Access, Action, Advance, Asynchronous, Blank, Decimal,
     Convert,  // nonstandard
     Dispose,  // nonstandard
 )
+
+// Fortran arrays may have up to 15 dimensions (See Fortran 2018 section 5.4.6).
+static constexpr int maxRank{15};
 }
 #endif  // FORTRAN_COMMON_FORTRAN_H_
