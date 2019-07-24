@@ -19,16 +19,13 @@ header block) which dominates all other blocks within the cycle.
 Note that there are some important implications of this definition:
 
 * Not all cycles are loops.  There exist cycles that do not meet the
-  dominance requirement and such are not considered loops.  LoopInfo
-  does not include such cycles.
+  dominance requirement and such are not considered loops.  
 
 * Loops can contain non-loop cycles and non-loop cycles may contain
   loops.  Loops may also contain sub-loops.
 
 * Given the use of dominance in the definition, all loops are
-  statically reachable from the entry of the function.  Loops which
-  become statically unreachable during optimization *must* be removed
-  from LoopInfo. 
+  statically reachable from the entry of the function.  
 
 * Every loop must have a header block, and some set of predecessors
   outside the loop.  A loop is allowed to be statically infinite, so
@@ -96,7 +93,41 @@ of overflow when converting one to the other.
 It's important to note that the same basic block can play multiple
 roles in the same loop, or in different loops at once.  For example, a
 single block can be the header for two nested loops at once, while
-also being an exit block for a sibling loop.  
+also being an exiting block for the inner one only, and an exit block
+for a sibling loop.  Example:
+
+.. code-block:: C
+
+  while (..) {
+    for (..) {}
+    do {
+      do {
+        // <-- block of interest
+        if (exit) break;
+      } while (..);
+    } while (..)
+  }
+
+LoopInfo
+========
+
+LoopInfo is the core analysis for obtaining information about loops.
+There are few key implications of the definitions given above which
+are important for working successfully with this interface.
+
+* LoopInfo does not contain information about non-loop cycles.  As a
+  result, it is not suitable for any algorithm which requires complete
+  cycle detection for correctness.
+
+* LoopInfo provides an interface for enumerating all top level loops
+  (e.g. those not contained in any other loop).  From there, you may
+  walk the tree of sub-loops rooted in that top level loop.
+
+* Loops which become statically unreachable during optimization *must*
+  be removed from LoopInfo. If this can not be done for some reason,
+  then the optimization is *required* to preserve the static
+  reachability of the loop.
+  
 
 Loop Simplify Form
 ==================
