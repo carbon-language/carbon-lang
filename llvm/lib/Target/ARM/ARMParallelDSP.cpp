@@ -761,8 +761,8 @@ LoadInst* ARMParallelDSP::CreateWideLoad(SmallVectorImpl<LoadInst*> &Loads,
         return;
 
       Source->moveBefore(Sink);
-      for (auto &U : Source->uses())
-        MoveBefore(Source, U.getUser());
+      for (auto &Op : Source->operands())
+        MoveBefore(Op, Source);
     };
 
   // Insert the load at the point of the original dominating load.
