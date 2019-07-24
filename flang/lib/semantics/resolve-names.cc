@@ -4441,7 +4441,7 @@ ConstructVisitor::Selector ConstructVisitor::ResolveSelector(
 }
 
 ConstructVisitor::Association &ConstructVisitor::GetCurrentAssociation() {
-  CHECK(associationStack_.size());
+  CHECK(!associationStack_.empty());
   return associationStack_.back();
 }
 
@@ -4450,7 +4450,7 @@ void ConstructVisitor::PushAssociation() {
 }
 
 void ConstructVisitor::PopAssociation() {
-  CHECK(associationStack_.size());
+  CHECK(!associationStack_.empty());
   associationStack_.pop_back();
 }
 
