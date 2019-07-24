@@ -80,18 +80,23 @@ Preheader Block - A preheader is a (singular) loop predecessor which
 ends in an unconditional transfer of control to the loop header.  Note
 that not all loops have such blocks.
 
-Backedge Taken Count - The number of times the backedge will have
-executed before some interesting event happens.  Commonly used without
+Backedge Taken Count - The number of times the backedge will execute
+before some interesting event happens.  Commonly used without
 qualification of the event as a shorthand for when some exiting block
 branches to some exit block. May be zero, or not statically computable.
 
-Iteration Count - The number of times the header has executed before
-some interesting event happens.  Commonly used w/o qualification to
+Iteration Count - The number of times the header will execute before
+some interesting event happens.  Commonly used without qualification to
 refer to the iteration count at which the loop exits.  Will always be
-one greater than the backedge taken count.  (Warning: Preceding
+one greater than the backedge taken count.  *Warning*: Preceding
 statement is true in the *integer domain*; if you're dealing with fixed
 width integers (such as LLVM Values or SCEVs), you need to be cautious
-of overflow when converting one to the other.)
+of overflow when converting one to the other.
+
+It's important to note that the same basic block can play multiple
+roles in the same loop, or in different loops at once.  For example, a
+single block can be the header for two nested loops at once, while
+also being an exit block for a sibling loop.  
 
 Loop Simplify Form
 ==================
