@@ -2790,7 +2790,7 @@ protected:
   /// expected to be merged.
   unsigned GatherAllAliasesMaxDepth;
 
-  /// Specify maximum number of store instructions per memset call.
+  /// \brief Specify maximum number of store instructions per memset call.
   ///
   /// When lowering \@llvm.memset this field specifies the maximum number of
   /// store operations that may be substituted for the call to memset. Targets
@@ -2801,12 +2801,10 @@ protected:
   /// with 16-bit alignment would result in four 2-byte stores and one 1-byte
   /// store.  This only applies to setting a constant array of a constant size.
   unsigned MaxStoresPerMemset;
-
-  /// Maximum number of stores operations that may be substituted for the call
-  /// to memset, used for functions with OptSize attribute.
+  /// Likewise for functions with the OptSize attribute.
   unsigned MaxStoresPerMemsetOptSize;
 
-  /// Specify maximum bytes of store instructions per memcpy call.
+  /// \brief Specify maximum number of store instructions per memcpy call.
   ///
   /// When lowering \@llvm.memcpy this field specifies the maximum number of
   /// store operations that may be substituted for a call to memcpy. Targets
@@ -2818,8 +2816,8 @@ protected:
   /// and one 1-byte store. This only applies to copying a constant array of
   /// constant size.
   unsigned MaxStoresPerMemcpy;
-
-
+  /// Likewise for functions with the OptSize attribute.
+  unsigned MaxStoresPerMemcpyOptSize;
   /// \brief Specify max number of store instructions to glue in inlined memcpy.
   ///
   /// When memcpy is inlined based on MaxStoresPerMemcpy, specify maximum number
@@ -2827,13 +2825,22 @@ protected:
   //  vectorization later on.
   unsigned MaxGluedStoresPerMemcpy = 0;
 
-  /// Maximum number of store operations that may be substituted for a call to
-  /// memcpy, used for functions with OptSize attribute.
-  unsigned MaxStoresPerMemcpyOptSize;
+  /// \brief Specify maximum number of load instructions per memcmp call.
+  ///
+  /// When lowering \@llvm.memcmp this field specifies the maximum number of
+  /// pairs of load operations that may be substituted for a call to memcmp.
+  /// Targets must set this value based on the cost threshold for that target.
+  /// Targets should assume that the memcmp will be done using as many of the
+  /// largest load operations first, followed by smaller ones, if necessary, per
+  /// alignment restrictions. For example, loading 7 bytes on a 32-bit machine
+  /// with 32-bit alignment would result in one 4-byte load, a one 2-byte load
+  /// and one 1-byte load. This only applies to copying a constant array of
+  /// constant size.
   unsigned MaxLoadsPerMemcmp;
+  /// Likewise for functions with the OptSize attribute.
   unsigned MaxLoadsPerMemcmpOptSize;
 
-  /// Specify maximum bytes of store instructions per memmove call.
+  /// \brief Specify maximum number of store instructions per memmove call.
   ///
   /// When lowering \@llvm.memmove this field specifies the maximum number of
   /// store instructions that may be substituted for a call to memmove. Targets
@@ -2844,9 +2851,7 @@ protected:
   /// with 8-bit alignment would result in nine 1-byte stores.  This only
   /// applies to copying a constant array of constant size.
   unsigned MaxStoresPerMemmove;
-
-  /// Maximum number of store instructions that may be substituted for a call to
-  /// memmove, used for functions with OptSize attribute.
+  /// Likewise for functions with the OptSize attribute.
   unsigned MaxStoresPerMemmoveOptSize;
 
   /// Tells the code generator that select is more expensive than a branch if
