@@ -48,8 +48,6 @@ add_public_gen_version_target(GenBoltRevision)
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   BOLTPasses
-  BOLTTargetAArch64
-  BOLTTargetX86
   CodeGen
   Core
   DebugInfoDWARF
@@ -60,6 +58,18 @@ set(LLVM_LINK_COMPONENTS
   Orcjit
   Support
   )
+
+string(FIND "${LLVM_TARGETS_TO_BUILD}" "AArch64" POSITION)
+if (NOT ${POSITION} EQUAL -1)
+  list(APPEND LLVM_LINK_COMPONENTS BOLTTargetAArch64)
+  set(BOLT_AArcb64 On)
+endif()
+
+string(FIND "${LLVM_TARGETS_TO_BUILD}" "X86" POSITION)
+if (NOT ${POSITION} EQUAL -1)
+  list(APPEND LLVM_LINK_COMPONENTS BOLTTargetX86)
+  set(BOLT_X64 On)
+endif()
 
 add_llvm_tool(llvm-bolt
   llvm-bolt.cpp
@@ -92,6 +102,14 @@ add_llvm_tool(llvm-bolt
   DEPENDS
   intrinsics_gen
   )
+
+if (DEFINED BOLT_AArcb64)
+  target_compile_definitions(llvm-bolt PRIVATE AARCH64_AVAILABLE)
+endif()
+
+if (DEFINED BOLT_X64)
+  target_compile_definitions(llvm-bolt PRIVATE X86_AVAILABLE)
+endif()
 
 add_llvm_tool_symlink(perf2bolt llvm-bolt)
 add_llvm_tool_symlink(llvm-boltdiff llvm-bolt)

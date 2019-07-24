@@ -535,15 +535,18 @@ namespace {
 MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
     const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
     const MCRegisterInfo *RegInfo) {
-  if (Arch == Triple::x86_64) {
+#ifdef X86_AVAILABLE
+  if (Arch == Triple::x86_64)
     return createX86MCPlusBuilder(Analysis, Info, RegInfo);
-  } else if (Arch == Triple::aarch64) {
-    return createAArch64MCPlusBuilder(Analysis, Info, RegInfo);
-  } else {
-    llvm_unreachable("architecture unsupport by MCPlusBuilder");
-  }
-}
+#endif
 
+#ifdef AARCH64_AVAILABLE
+  if (Arch == Triple::aarch64)
+    return createAArch64MCPlusBuilder(Analysis, Info, RegInfo);
+#endif
+
+    llvm_unreachable("architecture unsupport by MCPlusBuilder");
+}
 }
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
