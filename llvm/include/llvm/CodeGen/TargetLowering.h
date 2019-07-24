@@ -539,6 +539,12 @@ public:
     return hasAndNotCompare(X);
   }
 
+  /// Return true if the target has a bit-test instruction:
+  ///   (X & (1 << Y)) ==/!= 0
+  /// This knowledge can be used to prevent breaking the pattern,
+  /// or creating it if it could be recognized.
+  virtual bool hasBitTest(SDValue X, SDValue Y) const { return false; }
+
   /// There are two ways to clear extreme bits (either low or high):
   /// Mask:    x &  (-1 << y)  (the instcombine canonical form)
   /// Shifts:  x >> y << y
@@ -569,6 +575,38 @@ public:
                                                     unsigned KeptBits) const {
     // By default, let's assume that no one prefers shifts.
     return false;
+  }
+
+  /// Given the pattern
+  ///   (X & (C l>>/<< Y)) ==/!= 0
+  /// return true if it should be transformed into:
+  ///   ((X <</l>> Y) & C) ==/!= 0
+  /// WARNING: if 'X' is a constant, the fold may deadlock!
+  /// FIXME: we could avoid passing XC, but we can't use isConstOrConstSplat()
+  ///        here because it can end up being not linked in.
+  virtual bool shouldProduceAndByConstByHoistingConstFromShiftsLHSOfAnd(
+      SDValue X, ConstantSDNode *XC, ConstantSDNode *CC, SDValue Y,
+      unsigned OldShiftOpcode, unsigned NewShiftOpcode,
+      SelectionDAG &DAG) const {
+    if (hasBitTest(X, Y)) {
+      // One interesting pattern that we'd want to form is 'bit test':
+      //   ((1 << Y) & C) ==/!= 0
+      // But we also need to be careful not to try to reverse that fold.
+
+      // Is this '1 << Y' ?
+      if (OldShiftOpcode == ISD::SHL && CC->isOne())
+        return false; // Keep the 'bit test' pattern.
+
+      // Will it be '1 << Y' after the transform ?
+      if (XC && NewShiftOpcode == ISD::SHL && XC->isOne())
+        return true; // Do form the 'bit test' pattern.
+    }
+
+    // If 'X' is a constant, and we transform, then we will immediately
+    // try to undo the fold, thus causing endless combine loop.
+    // So by default, let's assume everyone prefers the fold
+    // iff 'X' is not a constant.
+    return !XC;
   }
 
   /// These two forms are equivalent:
@@ -4107,6 +4145,11 @@ private:
                                                SDValue N1, ISD::CondCode Cond,
                                                DAGCombinerInfo &DCI,
                                                const SDLoc &DL) const;
+
+  // (X & (C l>>/<< Y)) ==/!= 0  -->  ((X <</l>> Y) & C) ==/!= 0
+  SDValue optimizeSetCCByHoistingAndByConstFromLogicalShift(
+      EVT SCCVT, SDValue N0, SDValue N1C, ISD::CondCode Cond,
+      DAGCombinerInfo &DCI, const SDLoc &DL) const;
 
   SDValue prepareUREMEqFold(EVT SETCCVT, SDValue REMNode,
                             SDValue CompTargetNode, ISD::CondCode Cond,

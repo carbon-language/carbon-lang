@@ -5022,6 +5022,33 @@ bool X86TargetLowering::hasAndNot(SDValue Y) const {
   return Subtarget.hasSSE2();
 }
 
+bool X86TargetLowering::hasBitTest(SDValue X, SDValue Y) const {
+  return X.getValueType().isScalarInteger(); // 'bt'
+}
+
+bool X86TargetLowering::
+    shouldProduceAndByConstByHoistingConstFromShiftsLHSOfAnd(
+        SDValue X, ConstantSDNode *XC, ConstantSDNode *CC, SDValue Y,
+        unsigned OldShiftOpcode, unsigned NewShiftOpcode,
+        SelectionDAG &DAG) const {
+  // Does baseline recommend not to perform the fold by default?
+  if (!TargetLowering::shouldProduceAndByConstByHoistingConstFromShiftsLHSOfAnd(
+          X, XC, CC, Y, OldShiftOpcode, NewShiftOpcode, DAG))
+    return false;
+  // For scalars this transform is always beneficial.
+  if (X.getValueType().isScalarInteger())
+    return true;
+  // If all the shift amounts are identical, then transform is beneficial even
+  // with rudimentary SSE2 shifts.
+  if (DAG.isSplatValue(Y, /*AllowUndefs=*/true))
+    return true;
+  // If we have AVX2 with it's powerful shift operations, then it's also good.
+  if (Subtarget.hasAVX2())
+    return true;
+  // Pre-AVX2 vector codegen for this pattern is best for variant with 'shl'.
+  return NewShiftOpcode == ISD::SHL;
+}
+
 bool X86TargetLowering::shouldFoldConstantShiftPairToMask(
     const SDNode *N, CombineLevel Level) const {
   assert(((N->getOpcode() == ISD::SHL &&

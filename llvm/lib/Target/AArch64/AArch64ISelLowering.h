@@ -488,6 +488,11 @@ public:
     return VT.getSizeInBits() >= 64; // vector 'bic'
   }
 
+  bool shouldProduceAndByConstByHoistingConstFromShiftsLHSOfAnd(
+      SDValue X, ConstantSDNode *XC, ConstantSDNode *CC, SDValue Y,
+      unsigned OldShiftOpcode, unsigned NewShiftOpcode,
+      SelectionDAG &DAG) const override;
+
   bool shouldExpandShift(SelectionDAG &DAG, SDNode *N) const override {
     if (DAG.getMachineFunction().getFunction().hasMinSize())
       return false;
