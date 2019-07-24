@@ -474,10 +474,18 @@ public:
     switch (Inst.getOpcode()) {
     case X86::NOOP:
     case X86::NOOPL:
+    case X86::NOOPLr:
+    case X86::NOOPQ:
+    case X86::NOOPQr:
     case X86::NOOPW:
+    case X86::NOOPWr:
       return true;
     }
     return false;
+  }
+
+  bool isBreakpoint(const MCInst &Inst) const override {
+    return Inst.getOpcode() == X86::INT3;
   }
 
   bool isPrefix(const MCInst &Inst) const override {

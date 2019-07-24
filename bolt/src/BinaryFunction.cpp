@@ -898,7 +898,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   NamedRegionTimer T("disassemble", "Disassemble function", "buildfuncs",
                      "Build Binary Functions", opts::TimeBuild);
 
-  assert(FunctionData.size() == getSize() &&
+  assert(FunctionData.size() == getMaxSize() &&
          "function size does not match raw data size");
 
   auto &Ctx = BC.Ctx;

@@ -26,6 +26,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
+#include <functional>
 #include <iterator>
 
 using namespace llvm;
@@ -603,6 +604,111 @@ std::string BinaryContext::generateJumpTableName(const BinaryFunction &BF,
           (Offset ? ("." + std::to_string(Offset)) : ""));
 }
 
+bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
+  // FIXME: aarch64 support is missing.
+  if (!isX86())
+    return true;
+
+  if (BF.getSize() == BF.getMaxSize())
+    return true;
+
+  auto FunctionData = getFunctionData(BF);
+  assert(FunctionData && "cannot get function as data");
+
+  uint64_t Offset = BF.getSize();
+  MCInst Instr;
+  uint64_t InstrSize{0};
+  uint64_t InstrAddress = BF.getAddress() + Offset;
+  using std::placeholders::_1;
+
+  // Skip instructions that satisfy the predicate condition.
+  auto skipInstructions = [&](std::function<bool(const MCInst &)> Predicate) {
+    const auto StartOffset = Offset;
+    for (; Offset < BF.getMaxSize();
+         Offset += InstrSize, InstrAddress += InstrSize) {
+      if (!DisAsm->getInstruction(Instr,
+                                  InstrSize,
+                                  FunctionData->slice(Offset),
+                                  InstrAddress,
+                                  nulls(),
+                                  nulls()))
+        break;
+      if (!Predicate(Instr))
+        break;
+    }
+
+    return Offset - StartOffset;
+  };
+
+  // Skip a sequence of zero bytes.
+  auto skipZeros = [&]() {
+    const auto StartOffset = Offset;
+    for (; Offset < BF.getMaxSize(); ++Offset)
+      if ((*FunctionData)[Offset] != 0)
+        break;
+
+    return Offset - StartOffset;
+  };
+
+  // Accept the whole padding area filled with breakpoints.
+  auto isBreakpoint = std::bind(&MCPlusBuilder::isBreakpoint, MIB.get(), _1);
+  if (skipInstructions(isBreakpoint) && Offset == BF.getMaxSize())
+    return true;
+
+  auto isNoop = std::bind(&MCPlusBuilder::isNoop, MIB.get(), _1);
+
+  // Some functions have a jump to the next function or to the padding area
+  // inserted after the body.
+  auto isSkipJump = [&](const MCInst &Instr) {
+    uint64_t TargetAddress{0};
+    if (MIB->isUnconditionalBranch(Instr) &&
+        MIB->evaluateBranch(Instr, InstrAddress, InstrSize, TargetAddress)) {
+      if (TargetAddress >= InstrAddress + InstrSize &&
+          TargetAddress <= BF.getAddress() + BF.getMaxSize()) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Skip over nops, jumps, and zero padding. Allow interleaving (this happens).
+  while (skipInstructions(isNoop) ||
+         skipInstructions(isSkipJump) ||
+         skipZeros())
+    ;
+
+  if (Offset == BF.getMaxSize())
+    return true;
+
+  if (opts::Verbosity >= 1) {
+    errs() << "BOLT-WARNING: bad padding at address 0x"
+           << Twine::utohexstr(BF.getAddress() + BF.getSize())
+           << " starting at offset "
+           << (Offset - BF.getSize()) << " in function "
+           << BF << '\n';
+    for (auto I = BF.getSize(); I < BF.getMaxSize(); ++I) {
+      errs() << format("%.2x ", (*FunctionData)[I]);
+    }
+    errs() << '\n';
+  }
+
+  return false;
+}
+
+void BinaryContext::adjustCodePadding() {
+  assert(!HasRelocations && "cannot adjust padding in relocation mode");
+
+  for (auto &BFI : BinaryFunctions) {
+    auto &BF = BFI.second;
+    if (!BF.isSimple())
+      continue;
+
+    if (!hasValidCodePadding(BF)) {
+      BF.setMaxSize(BF.getSize());
+    }
+  }
+}
+
 MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
                                                uint64_t Address,
                                                uint64_t Size,
@@ -856,8 +962,7 @@ void BinaryContext::processInterproceduralReferences() {
         errs() << "BOLT-WARNING: function " << *ContainingFunction
                << " has an object detected in a padding region at address 0x"
                << Twine::utohexstr(Addr) << '\n';
-        ContainingFunction->setMaxSize(Addr -
-                                       ContainingFunction->getAddress());
+        ContainingFunction->setMaxSize(ContainingFunction->getSize());
       }
     }
   }
@@ -1422,7 +1527,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
 ErrorOr<ArrayRef<uint8_t>>
 BinaryContext::getFunctionData(const BinaryFunction &Function) const {
   auto &Section = Function.getSection();
-  assert(Section.containsRange(Function.getAddress(), Function.getSize()) &&
+  assert(Section.containsRange(Function.getAddress(), Function.getMaxSize()) &&
          "wrong section for function");
 
   if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
@@ -1437,7 +1542,7 @@ BinaryContext::getFunctionData(const BinaryFunction &Function) const {
   // Function offset from the section start.
   auto FunctionOffset = Function.getAddress() - Section.getAddress();
   auto *Bytes = reinterpret_cast<const uint8_t *>(SectionContents.data());
-  return ArrayRef<uint8_t>(Bytes + FunctionOffset, Function.getSize());
+  return ArrayRef<uint8_t>(Bytes + FunctionOffset, Function.getMaxSize());
 }
 
 ErrorOr<BinarySection&> BinaryContext::getSectionForAddress(uint64_t Address) {

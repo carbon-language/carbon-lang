@@ -338,6 +338,13 @@ public:
   /// to function \p BF.
   std::string generateJumpTableName(const BinaryFunction &BF, uint64_t Address);
 
+  /// Return true if the array of bytes represents a valid code padding.
+  bool hasValidCodePadding(const BinaryFunction &BF);
+
+  /// Verify padding area between functions, and adjust max function size
+  /// accordingly.
+  void adjustCodePadding();
+
   /// Regular page size.
   static constexpr unsigned RegularPageSize = 0x1000;
 

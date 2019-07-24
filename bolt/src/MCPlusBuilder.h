@@ -463,6 +463,11 @@ public:
     return false;
   }
 
+  virtual bool isBreakpoint(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   virtual bool isPrefix(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;

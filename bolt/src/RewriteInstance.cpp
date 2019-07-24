@@ -2731,6 +2731,9 @@ void RewriteInstance::disassembleFunctions() {
     Function.postProcessJumpTables();
   }
 
+  if (!BC->HasRelocations)
+    BC->adjustCodePadding();
+
   for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
 
