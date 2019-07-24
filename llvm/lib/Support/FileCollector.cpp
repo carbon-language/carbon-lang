@@ -6,14 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Utility/FileCollector.h"
-
+#include "llvm/Support/FileCollector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 
-using namespace lldb_private;
 using namespace llvm;
 
 static bool IsCaseSensitivePath(StringRef path) {
@@ -34,9 +32,9 @@ static bool IsCaseSensitivePath(StringRef path) {
   return true;
 }
 
-FileCollector::FileCollector(const FileSpec &root, const FileSpec &overlay_root)
-    : m_root(root), m_overlay_root(overlay_root) {
-  sys::fs::create_directories(m_root.GetPath(), true);
+FileCollector::FileCollector(std::string root, std::string overlay_root)
+    : m_root(std::move(root)), m_overlay_root(std::move(overlay_root)) {
+  sys::fs::create_directories(this->m_root, true);
 }
 
 bool FileCollector::GetRealPath(StringRef src_path,
@@ -71,8 +69,6 @@ void FileCollector::AddFile(const Twine &file) {
 }
 
 void FileCollector::AddFileImpl(StringRef src_path) {
-  std::string root = m_root.GetPath();
-
   // We need an absolute src path to append to the root.
   SmallString<256> absolute_src = src_path;
   sys::fs::make_absolute(absolute_src);
@@ -94,7 +90,7 @@ void FileCollector::AddFileImpl(StringRef src_path) {
   if (!GetRealPath(absolute_src, copy_from))
     copy_from = virtual_path;
 
-  SmallString<256> dst_path = StringRef(root);
+  SmallString<256> dst_path = StringRef(m_root);
   sys::path::append(dst_path, sys::path::relative_path(copy_from));
 
   // Always map a canonical src path to its real path into the YAML, by doing
@@ -162,17 +158,16 @@ std::error_code FileCollector::CopyFiles(bool stop_on_error) {
   return {};
 }
 
-std::error_code FileCollector::WriteMapping(const FileSpec &mapping_file) {
+std::error_code FileCollector::WriteMapping(StringRef mapping_file) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  std::string root = m_overlay_root.GetPath();
-
+  StringRef root = m_overlay_root;
   m_vfs_writer.setOverlayDir(root);
   m_vfs_writer.setCaseSensitivity(IsCaseSensitivePath(root));
   m_vfs_writer.setUseExternalNames(false);
 
   std::error_code ec;
-  raw_fd_ostream os(mapping_file.GetPath(), ec, sys::fs::F_Text);
+  raw_fd_ostream os(mapping_file, ec, sys::fs::F_Text);
   if (ec)
     return ec;
 

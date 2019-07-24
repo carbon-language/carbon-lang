@@ -9,13 +9,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "lldb/Utility/FileCollector.h"
-#include "lldb/Utility/FileSpec.h"
-
+#include "llvm/Support/FileCollector.h"
 #include "llvm/Support/FileSystem.h"
 
 using namespace llvm;
-using namespace lldb_private;
 
 namespace llvm {
 namespace vfs {
@@ -35,8 +32,8 @@ public:
   using FileCollector::m_symlink_map;
   using FileCollector::m_vfs_writer;
 
-  bool HasSeen(FileSpec fs) {
-    return m_seen.find(fs.GetPath()) != m_seen.end();
+  bool HasSeen(StringRef fs) {
+    return m_seen.find(fs) != m_seen.end();
   }
 };
 
@@ -104,23 +101,23 @@ struct ScopedFile {
 
 TEST(FileCollectorTest, AddFile) {
   ScopedDir root("add_file_root", true);
-  FileSpec root_fs(root.Path);
+  std::string root_fs = root.Path.str();
   TestingFileCollector file_collector(root_fs, root_fs);
 
-  file_collector.AddFile(FileSpec("/path/to/a"));
-  file_collector.AddFile(FileSpec("/path/to/b"));
-  file_collector.AddFile(FileSpec("/path/to/c"));
+  file_collector.AddFile("/path/to/a");
+  file_collector.AddFile("/path/to/b");
+  file_collector.AddFile("/path/to/c");
 
   // Make sure the root is correct.
   EXPECT_EQ(file_collector.m_root, root_fs);
 
   // Make sure we've seen all the added files.
-  EXPECT_TRUE(file_collector.HasSeen(FileSpec("/path/to/a")));
-  EXPECT_TRUE(file_collector.HasSeen(FileSpec("/path/to/b")));
-  EXPECT_TRUE(file_collector.HasSeen(FileSpec("/path/to/c")));
+  EXPECT_TRUE(file_collector.HasSeen("/path/to/a"));
+  EXPECT_TRUE(file_collector.HasSeen("/path/to/b"));
+  EXPECT_TRUE(file_collector.HasSeen("/path/to/c"));
 
   // Make sure we've only seen the added files.
-  EXPECT_FALSE(file_collector.HasSeen(FileSpec("/path/to/d")));
+  EXPECT_FALSE(file_collector.HasSeen("/path/to/d"));
 }
 
 TEST(FileCollectorTest, CopyFiles) {
@@ -131,7 +128,7 @@ TEST(FileCollectorTest, CopyFiles) {
 
   // Create file collector and add files.
   ScopedDir root("copy_files_root", true);
-  FileSpec root_fs(root.Path);
+  std::string root_fs = root.Path.str();
   TestingFileCollector file_collector(root_fs, root_fs);
   file_collector.AddFile(a.Path);
   file_collector.AddFile(b.Path);
@@ -173,7 +170,7 @@ TEST(FileCollectorTest, Symlinks) {
 
   // Root where files are copied to.
   ScopedDir reproducer_root("reproducer_root", true);
-  FileSpec root_fs(reproducer_root.Path);
+  std::string root_fs = reproducer_root.Path.str();
   TestingFileCollector file_collector(root_fs, root_fs);
 
   // Add all the files to the collector.
