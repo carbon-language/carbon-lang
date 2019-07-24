@@ -2982,6 +2982,40 @@ def MVE_VCMPs8r  : MVE_VCMPqrs<"s8",  0b00>;
 def MVE_VCMPs16r : MVE_VCMPqrs<"s16", 0b01>;
 def MVE_VCMPs32r : MVE_VCMPqrs<"s32", 0b10>;
 
+multiclass unpred_vcmp_z<SDPatternOperator opnode, string suffix, int fc> {
+  def i8  : Pat<(v16i1 (opnode (v16i8 MQPR:$v1))),
+                (v16i1 (!cast<Instruction>("MVE_VCMP"#suffix#"8r") (v16i8 MQPR:$v1), ZR, fc))>;
+  def i16 : Pat<(v8i1 (opnode (v8i16 MQPR:$v1))),
+                (v8i1 (!cast<Instruction>("MVE_VCMP"#suffix#"16r") (v8i16 MQPR:$v1), ZR, fc))>;
+  def i32 : Pat<(v4i1 (opnode (v4i32 MQPR:$v1))),
+                (v4i1 (!cast<Instruction>("MVE_VCMP"#suffix#"32r") (v4i32 MQPR:$v1), ZR, fc))>;
+}
+
+multiclass unpred_vcmp_r<SDPatternOperator opnode, string suffix, int fc> {
+  def i8  : Pat<(v16i1 (opnode (v16i8 MQPR:$v1), (v16i8 MQPR:$v2))),
+                (v16i1 (!cast<Instruction>("MVE_VCMP"#suffix#"8") (v16i8 MQPR:$v1), (v16i8 MQPR:$v2), fc))>;
+  def i16 : Pat<(v8i1 (opnode (v8i16 MQPR:$v1), (v8i16 MQPR:$v2))),
+                (v8i1 (!cast<Instruction>("MVE_VCMP"#suffix#"16") (v8i16 MQPR:$v1), (v8i16 MQPR:$v2), fc))>;
+  def i32 : Pat<(v4i1 (opnode (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))),
+                (v4i1 (!cast<Instruction>("MVE_VCMP"#suffix#"32") (v4i32 MQPR:$v1), (v4i32 MQPR:$v2), fc))>;
+}
+
+let Predicates = [HasMVEInt] in {
+  defm MVE_VCEQZ  : unpred_vcmp_z<ARMvceqz, "i", 0>;
+  defm MVE_VCNEZ  : unpred_vcmp_z<ARMvcnez, "i", 1>;
+  defm MVE_VCLEZ  : unpred_vcmp_z<ARMvclez, "s", 13>;
+  defm MVE_VCGTZ  : unpred_vcmp_z<ARMvcgtz, "s", 12>;
+  defm MVE_VCLTZ  : unpred_vcmp_z<ARMvcltz, "s", 11>;
+  defm MVE_VCGEZ  : unpred_vcmp_z<ARMvcgez, "s", 10>;
+
+  defm MVE_VCEQ   : unpred_vcmp_r<ARMvceq, "i", 0>;
+  defm MVE_VCNE   : unpred_vcmp_r<ARMvcne, "i", 1>;
+  defm MVE_VCGT   : unpred_vcmp_r<ARMvcgt, "s", 12>;
+  defm MVE_VCGE   : unpred_vcmp_r<ARMvcge, "s", 10>;
+  defm MVE_VCGTU  : unpred_vcmp_r<ARMvcgtu, "u", 8>;
+  defm MVE_VCGEU  : unpred_vcmp_r<ARMvcgeu, "u", 2>;
+}
+
 // end of MVE compares
 
 // start of MVE_qDest_qSrc
@@ -4368,6 +4402,15 @@ foreach suffix = ["s8", "s16", "s32", "u8", "u16", "u32",
                   "i8", "i16", "i32",       "f16", "f32"] in
 def : MVEInstAlias<"vpsel${vp}." # suffix # "\t$Qd, $Qn, $Qm",
                    (MVE_VPSEL MQPR:$Qd, MQPR:$Qn, MQPR:$Qm, vpred_n:$vp)>;
+
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (vselect (v16i1 VCCR:$pred), (v16i8 MQPR:$v1), (v16i8 MQPR:$v2))),
+            (v16i8 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
+  def : Pat<(v8i16 (vselect (v8i1 VCCR:$pred), (v8i16 MQPR:$v1), (v8i16 MQPR:$v2))),
+            (v8i16 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
+  def : Pat<(v4i32 (vselect (v4i1 VCCR:$pred), (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))),
+            (v4i32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
+}
 
 def MVE_VPNOT : MVE_p<(outs), (ins), NoItinerary,
                       "vpnot", "", "", vpred_n, "", []> {
