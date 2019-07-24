@@ -3019,6 +3019,13 @@ multiclass unpred_vcmp_r<SDPatternOperator opnode, string suffix, int fc> {
             (v8i1 (!cast<Instruction>("MVE_VCMP"#suffix#"16") (v8i16 MQPR:$v1), (v8i16 MQPR:$v2), fc, 1, VCCR:$p1))>;
   def : Pat<(v4i1 (and (v4i1 VCCR:$p1), (v4i1 (opnode (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))))),
             (v4i1 (!cast<Instruction>("MVE_VCMP"#suffix#"32") (v4i32 MQPR:$v1), (v4i32 MQPR:$v2), fc, 1, VCCR:$p1))>;
+
+  def : Pat<(v16i1 (and (v16i1 VCCR:$p1), (v16i1 (opnode (v16i8 MQPR:$v1), (v16i8 (ARMvdup GPR:$v2)))))),
+            (v16i1 (!cast<Instruction>("MVE_VCMP"#suffix#"8r") (v16i8 MQPR:$v1), (i32 GPR:$v2), fc, 1, VCCR:$p1))>;
+  def : Pat<(v8i1 (and (v8i1 VCCR:$p1), (v8i1 (opnode (v8i16 MQPR:$v1), (v8i16 (ARMvdup GPR:$v2)))))),
+            (v8i1 (!cast<Instruction>("MVE_VCMP"#suffix#"16r") (v8i16 MQPR:$v1), (i32 GPR:$v2), fc, 1, VCCR:$p1))>;
+  def : Pat<(v4i1 (and (v4i1 VCCR:$p1), (v4i1 (opnode (v4i32 MQPR:$v1), (v4i32 (ARMvdup GPR:$v2)))))),
+            (v4i1 (!cast<Instruction>("MVE_VCMP"#suffix#"32r") (v4i32 MQPR:$v1), (i32 GPR:$v2), fc, 1, VCCR:$p1))>;
 }
 
 multiclass unpred_vcmpf_z<SDPatternOperator opnode, int fc> {
@@ -3048,6 +3055,11 @@ multiclass unpred_vcmpf_r<SDPatternOperator opnode, int fc> {
             (v8i1 (MVE_VCMPf16 (v8f16 MQPR:$v1), (v8f16 MQPR:$v2), fc, 1, VCCR:$p1))>;
   def : Pat<(v4i1 (and (v4i1 VCCR:$p1), (v4i1 (opnode (v4f32 MQPR:$v1), (v4f32 MQPR:$v2))))),
             (v4i1 (MVE_VCMPf32 (v4f32 MQPR:$v1), (v4f32 MQPR:$v2), fc, 1, VCCR:$p1))>;
+
+  def : Pat<(v8i1 (and (v8i1 VCCR:$p1), (v8i1 (opnode (v8f16 MQPR:$v1), (v8f16 (ARMvdup HPR:$v2)))))),
+            (v8i1 (MVE_VCMPf16r (v8f16 MQPR:$v1), (i32 (COPY_TO_REGCLASS (f16 HPR:$v2), rGPR)), fc, 1, VCCR:$p1))>;
+  def : Pat<(v4i1 (and (v4i1 VCCR:$p1), (v4i1 (opnode (v4f32 MQPR:$v1), (v4f32 (ARMvdup SPR:$v2)))))),
+            (v4i1 (MVE_VCMPf32r (v4f32 MQPR:$v1), (i32 (COPY_TO_REGCLASS (f32 SPR:$v2), rGPR)), fc, 1, VCCR:$p1))>;
 }
 
 let Predicates = [HasMVEInt] in {
