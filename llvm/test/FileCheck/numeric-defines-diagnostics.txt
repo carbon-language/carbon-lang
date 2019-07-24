@@ -2,24 +2,24 @@
 
 ; Invalid variable name: starts with a digit.
 RUN: not FileCheck -D#10VALUE=10 --input-file %s %s 2>&1 \
-RUN:   | FileCheck %s --strict-whitespace --match-full-lines --check-prefix NUMERRCLIFMT
+RUN:   | FileCheck %s --strict-whitespace --check-prefix NUMERRCLIFMT
 
-NUMERRCLIFMT:Global defines:1:46: error: invalid variable name
-NUMERRCLIFMT-NEXT:Global define #1: #10VALUE=10 (parsed as: {{\[\[#10VALUE:10\]\]}})
-    NUMERRCLIFMT-NEXT:                                             ^
+NUMERRCLIFMT: Global defines:1:46: error: invalid variable name
+NUMERRCLIFMT-NEXT: Global define #1: #10VALUE=10 (parsed as: {{\[\[#10VALUE:10\]\]}})
+NUMERRCLIFMT-NEXT: {{^                                             \^$}}
 
 ; Invalid definition of pseudo variable.
 RUN: not FileCheck -D#@VALUE=10 --input-file %s %s 2>&1 \
-RUN:   | FileCheck %s --strict-whitespace --match-full-lines --check-prefix NUMERRCLIPSEUDO
+RUN:   | FileCheck %s --strict-whitespace --check-prefix NUMERRCLIPSEUDO
 
-NUMERRCLIPSEUDO:Global defines:1:45: error: definition of pseudo numeric variable unsupported
-NUMERRCLIPSEUDO-NEXT:Global define #1: #@VALUE=10 (parsed as: {{\[\[#@VALUE:10\]\]}})
-    NUMERRCLIPSEUDO-NEXT:                                            ^
+NUMERRCLIPSEUDO: Global defines:1:45: error: definition of pseudo numeric variable unsupported
+NUMERRCLIPSEUDO-NEXT: Global define #1: #@VALUE=10 (parsed as: {{\[\[#@VALUE:10\]\]}})
+NUMERRCLIPSEUDO-NEXT: {{^                                            \^$}}
 
 ; Invalid definition of an expression.
 RUN: not FileCheck -D#VALUE+2=10 --input-file %s %s 2>&1 \
-RUN:   | FileCheck %s --strict-whitespace --match-full-lines --check-prefix NUMERRCLITRAIL
+RUN:   | FileCheck %s --strict-whitespace --check-prefix NUMERRCLITRAIL
 
-NUMERRCLITRAIL:Global defines:1:51: error: unexpected characters after numeric variable name
-NUMERRCLITRAIL-NEXT:Global define #1: #VALUE+2=10 (parsed as: {{\[\[#VALUE\+2:10\]\]}})
-     NUMERRCLITRAIL-NEXT:                                                  ^
+NUMERRCLITRAIL: Global defines:1:51: error: unexpected characters after numeric variable name
+NUMERRCLITRAIL-NEXT: Global define #1: #VALUE+2=10 (parsed as: {{\[\[#VALUE\+2:10\]\]}})
+NUMERRCLITRAIL-NEXT: {{^                                                  \^$}}
