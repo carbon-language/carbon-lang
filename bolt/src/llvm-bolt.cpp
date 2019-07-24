@@ -18,6 +18,7 @@
 #include "RewriteInstance.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
@@ -229,12 +230,24 @@ void boltMode(int argc, char **argv) {
   }
 }
 
+std::string GetExecutablePath(const char *Argv0) {
+  SmallString<128> ExecutablePath(Argv0);
+  // Do a PATH lookup if Argv0 isn't a valid path.
+  if (!llvm::sys::fs::exists(ExecutablePath))
+    if (llvm::ErrorOr<std::string> P =
+            llvm::sys::findProgramByName(ExecutablePath))
+      ExecutablePath = *P;
+  return ExecutablePath.str();
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  std::string ToolPath = GetExecutablePath(argv[0]);
 
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
@@ -309,7 +322,7 @@ int main(int argc, char **argv) {
     Binary &Binary = *BinaryOrErr.get().getBinary();
 
     if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
-      RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv);
+      RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv, ToolPath);
       RI.run();
     } else {
       report_error(opts::InputFilename, object_error::invalid_file_type);
@@ -342,8 +355,8 @@ int main(int argc, char **argv) {
 
   if (auto *ELFObj1 = dyn_cast<ELFObjectFileBase>(&Binary1)) {
     if (auto *ELFObj2 = dyn_cast<ELFObjectFileBase>(&Binary2)) {
-      RewriteInstance RI1(ELFObj1, *DR.get(), *DA.get(), argc, argv);
-      RewriteInstance RI2(ELFObj2, *DR2.get(), *DA.get(), argc, argv);
+      RewriteInstance RI1(ELFObj1, *DR.get(), *DA.get(), argc, argv, ToolPath);
+      RewriteInstance RI2(ELFObj2, *DR2.get(), *DA.get(), argc, argv, ToolPath);
       outs() << "BOLT-DIFF: *** Analyzing binary 1: " << opts::InputFilename
              << "\n";
       outs() << "BOLT-DIFF: *** Binary 1 fdata:     " << opts::InputDataFilename

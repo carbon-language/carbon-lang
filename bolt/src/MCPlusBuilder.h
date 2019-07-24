@@ -1738,28 +1738,6 @@ public:
     llvm_unreachable("not implemented");
     return BlocksVectorTy();
   }
-
-  /// Part of the runtime library for instrumented code, this runs at the end
-  /// of the process and writes the current instrumentation counters to a file
-  /// compatible with BOLT profile. \p Locs identifies the region in memory
-  /// where the counters are (\p NumLocs counters), \p Descriptions, the region
-  /// encoding information about each counter, which is the source of the branch
-  /// and the destination, \p Strings, the string table with function names used
-  /// in descriptions, \p FilenameSym, the profile file name to write to,
-  /// \p Chars, a 0 to F string used for printing hex/decimal numbers.
-  virtual MultiBlocksCode createInstrumentedDataDumpCode(
-      MCSymbol *Locs,
-      MCSymbol *Descriptions,
-      MCSymbol *Strings,
-      MCSymbol *FilenameSym,
-      MCSymbol *Spaces,
-      MCSymbol *Chars,
-      size_t NumLocs,
-      MCContext *Ctx
-  ) const {
-    llvm_unreachable("not implemented");
-    return MultiBlocksCode();
-  }
 };
 
 } // namespace bolt

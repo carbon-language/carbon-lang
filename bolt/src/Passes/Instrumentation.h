@@ -53,12 +53,6 @@ public:
   /// Emit data structures that will be necessary during runtime (second step)
   void emit(BinaryContext &BC, MCStreamer &Streamer);
 
-  /// Access the function injected by the instrumentation pass necessary to
-  /// write profile to a file. This is only valid after instrumentation
-  /// finished (step 1).
-  BinaryFunction *getDumpFunction() const {
-    return DumpFunction;
-  }
 private:
   // Instrumented branch location information
   struct CounterDescription {
@@ -67,10 +61,6 @@ private:
     uint32_t ToFuncStringIdx;
     uint32_t ToOffset;
   };
-
-  /// Create a new injected function that will be needed at runtime to write
-  /// profile
-  void createDumpFunction(BinaryContext &BC);
 
   /// Retrieve the string table index for the name of \p Function. We encode
   /// instrumented locations descriptions with the aid of a string table to
@@ -126,32 +116,6 @@ private:
 
   /// Identify all counters used in runtime while instrumentation is running
   std::vector<MCSymbol *> Labels;
-
-  /// Label marking start of the memory region containing instrumentation
-  /// counters, total vector size is Labels.size() 8-byte counters
-  MCSymbol *Locs;
-
-  /// Start of the vector with descriptions (one CounterDescription for each
-  /// counter), vector size is Labels.size() CounterDescription-sized elmts
-  MCSymbol *DescriptionsSym;
-
-  /// Label identifying where our string table was emitted to
-  MCSymbol *StringsSym;
-
-  /// File name where profile is going to written to after target binary
-  /// finishes a run
-  MCSymbol *FilenameSym;
-
-  /// Label for a string containing 8 spaces used by the algorithm that writes
-  /// profile during conversion of integer to string. \p Chars stores ASCII
-  /// representation of numbers from 0 to F.
-  MCSymbol *Spaces;
-  MCSymbol *Chars;
-
-  /// We keep a pointer to our injected function whose final address will be
-  /// needed later to patch the destructor routines in the binary to call us
-  /// upon end of execution
-  BinaryFunction *DumpFunction;
 };
 
 }

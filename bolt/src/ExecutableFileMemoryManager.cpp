@@ -13,7 +13,7 @@
 #include "RewriteInstance.h"
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "bolt"
+#define DEBUG_TYPE "efmm"
 
 using namespace llvm;
 using namespace object;
@@ -30,7 +30,7 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                                       bool IsCode,
                                                       bool IsReadOnly) {
   // Register a debug section as a note section.
-  if (RewriteInstance::isDebugSection(SectionName)) {
+  if (!ObjectsLoaded && RewriteInstance::isDebugSection(SectionName)) {
     uint8_t *DataCopy = new uint8_t[Size];
     auto &Section = BC.registerOrUpdateNoteSection(SectionName,
                                                    DataCopy,
@@ -52,6 +52,11 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   }
 
   const auto Flags = BinarySection::getFlags(IsReadOnly, IsCode, true);
+  SmallVector<char, 256> Buf;
+  if (ObjectsLoaded > 0)
+    SectionName = (Twine(SectionName) + ".bolt.extra." + Twine(ObjectsLoaded))
+                      .toStringRef(Buf);
+
   auto &Section = BC.registerOrUpdateSection(SectionName,
                                              ELF::SHT_PROGBITS,
                                              Flags,
@@ -94,6 +99,7 @@ uint8_t *ExecutableFileMemoryManager::recordNoteSection(
 
 bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
   DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
+  ++ObjectsLoaded;
   return SectionMemoryManager::finalizeMemory(ErrMsg);
 }
 

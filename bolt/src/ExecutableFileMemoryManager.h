@@ -55,6 +55,14 @@ private:
   bool AllowStubs;
 
 public:
+  // Our linker's main purpose is to handle a single object file, created
+  // by RewriteInstance after reading the input binary and reordering it.
+  // After objects finish loading, we increment this. Therefore, whenever
+  // this is greater than zero, we are dealing with additional objects that
+  // will not be managed by BinaryContext but only exist to support linking
+  // user-supplied objects into the main input executable.
+  uint32_t ObjectsLoaded{0};
+
   /// [start memory address] -> [segment info] mapping.
   std::map<uint64_t, SegmentInfo> SegmentMapInfo;
 

@@ -30,6 +30,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/BinaryFormat/Magic.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
@@ -53,6 +54,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
@@ -100,6 +102,13 @@ Instrument("instrument-experimental",
   cl::desc("instrument code to generate accurate profile data (experimental)"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
+
+static cl::opt<std::string>
+RuntimeInstrumentationLib("runtime-instrumentation-lib",
+    cl::desc("specify file name of the runtime instrumentation library"),
+    cl::ZeroOrMore,
+    cl::init("libbolt_rt.a"),
+    cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 ForceToDataRelocations("force-data-relocations",
@@ -591,6 +600,15 @@ void check_error(std::error_code EC, StringRef Message) {
   report_error(Message, EC);
 }
 
+void check_error(Error E, Twine Message) {
+  if (!E)
+    return;
+  handleAllErrors(std::move(E), [&](const llvm::ErrorInfoBase &EIB) {
+    llvm::errs() << "BOLT-ERROR: '" << Message << "': " << EIB.message()
+                 << '\n';
+    exit(1);
+  });
+}
 }
 }
 
@@ -750,8 +768,8 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
 
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
                                  DataAggregator &DA, const int Argc,
-                                 const char *const *Argv)
-    : InputFile(File), Argc(Argc), Argv(Argv), DA(DA),
+                                 const char *const *Argv, StringRef ToolPath)
+    : InputFile(File), Argc(Argc), Argv(Argv), ToolPath(ToolPath), DA(DA),
       BC(createBinaryContext(
           File, DR,
           DWARFContext::create(*File, nullptr,
@@ -1104,7 +1122,7 @@ void RewriteInstance::run() {
     if (opts::DiffOnly)
       return;
     runOptimizationPasses();
-    emitSections();
+    emitAndLink();
   };
 
   outs() << "BOLT-INFO: Target architecture: "
@@ -2997,8 +3015,8 @@ std::vector<T> singletonSet(T t) {
 
 } // anonymous namespace
 
-void RewriteInstance::emitSections() {
-  NamedRegionTimer T("emitSections", "emit sections", TimerGroupName,
+void RewriteInstance::emitAndLink() {
+  NamedRegionTimer T("emitAndLink", "emit and link", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
   std::error_code EC;
 
@@ -3071,12 +3089,18 @@ void RewriteInstance::emitSections() {
   auto Resolver = orc::createLegacyLookupResolver(
       [&](const std::string &Name) -> JITSymbol {
         DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
+        if (EFMM->ObjectsLoaded) {
+          return OLT->findSymbol(Name, false);
+        }
         if (auto *I = BC->getBinaryDataByName(Name)) {
           const uint64_t Address = I->isMoved() && !I->isJumpTable()
                                  ? I->getOutputAddress()
                                  : I->getAddress();
+          DEBUG(dbgs() << "Resolved to address 0x" << Twine::utohexstr(Address)
+                       << "\n");
           return JITSymbol(Address, JITSymbolFlags());
         }
+        DEBUG(dbgs() << "Resolved to address 0x0\n");
         return JITSymbol(nullptr);
       },
       [](Error Err) { cantFail(std::move(Err), "lookup failed"); });
@@ -3087,6 +3111,8 @@ void RewriteInstance::emitSections() {
 
   SSP.reset(new decltype(SSP)::element_type());
   ES.reset(new decltype(ES)::element_type(*SSP));
+  // Key for our main object created out of the input binary
+  auto K = ES->allocateVModule();
   OLT.reset(new decltype(OLT)::element_type(
       *ES,
       [this, &Resolver](orc::VModuleKey Key) {
@@ -3099,21 +3125,31 @@ void RewriteInstance::emitSections() {
       // Loaded notifier
       [&](orc::VModuleKey Key, const object::ObjectFile &Obj,
           const RuntimeDyld::LoadedObjectInfo &) {
-        // Assign addresses to all sections.
-        mapFileSections(Key);
+        // Assign addresses to all sections. If key corresponds to the object
+        // created by ourselves, call our regular mapping function. If we are
+        // loading additional objects as part of runtime libraries for
+        // instrumentation, treat them as extra sections.
+        if (Key == K) {
+          mapFileSections(Key);
+        } else {
+          mapExtraSections(Key);
+        }
       },
       // Finalized notifier
       [&](orc::VModuleKey Key) {
         // Update output addresses based on the new section map and
-        // layout.
-        updateOutputValues(FinalLayout);
+        // layout. Only do this for the object created by ourselves.
+        if (Key == K)
+          updateOutputValues(FinalLayout);
       }));
 
   OLT->setProcessAllSections(true);
-  auto K = ES->allocateVModule();
   cantFail(OLT->addObject(K, std::move(ObjectMemBuffer)));
-
   cantFail(OLT->emitAndFinalize(K));
+
+  // Link instrumentation runtime library
+  if (opts::Instrument)
+    linkRuntime();
 
   // Once the code is emitted, we can rename function sections to actual
   // output sections and de-register sections used for emission.
@@ -3138,6 +3174,58 @@ void RewriteInstance::emitSections() {
 
   if (opts::KeepTmp)
     TempOut->keep();
+}
+
+void RewriteInstance::linkRuntime() {
+  OLT->setProcessAllSections(false);
+  std::string Dir = llvm::sys::path::parent_path(ToolPath);
+  SmallString<128> P(Dir);
+  P = llvm::sys::path::parent_path(Dir);
+  llvm::sys::path::append(P, "lib", opts::RuntimeInstrumentationLib);
+  std::string LibPath = P.str();
+  if (!llvm::sys::fs::exists(LibPath)) {
+    errs() << "BOLT-ERROR: instrumentation library not found: " << LibPath
+           << "\n";
+    exit(1);
+  }
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MaybeBuf =
+      MemoryBuffer::getFile(LibPath, -1, false);
+  check_error(MaybeBuf.getError(), LibPath);
+  std::unique_ptr<MemoryBuffer> B = std::move(MaybeBuf.get());
+  file_magic Magic = identify_magic(B->getBuffer());
+
+  if (Magic == file_magic::archive) {
+    Error Err = Error::success();
+    object::Archive Archive(B.get()->getMemBufferRef(), Err);
+    for (auto &C : Archive.children(Err)) {
+      auto ChildKey = ES->allocateVModule();
+      auto ChildBuf =
+          MemoryBuffer::getMemBuffer(cantFail(C.getMemoryBufferRef()));
+      cantFail(OLT->addObject(ChildKey, std::move(ChildBuf)));
+      cantFail(OLT->emitAndFinalize(ChildKey));
+    }
+    check_error(std::move(Err), B->getBufferIdentifier());
+  } else if (Magic == file_magic::elf_relocatable ||
+             Magic == file_magic::elf_shared_object) {
+    auto K2 = ES->allocateVModule();
+    cantFail(OLT->addObject(K2, std::move(B)));
+    cantFail(OLT->emitAndFinalize(K2));
+  } else {
+    errs() << "BOLT-ERROR: unrecognized instrumentation library format: "
+           << LibPath << "\n";
+    exit(1);
+  }
+  InstrumentationRuntimeStartAddress =
+      cantFail(OLT->findSymbol("__bolt_instr_data_dump", false).getAddress());
+  if (!InstrumentationRuntimeStartAddress) {
+    errs() << "BOLT-ERROR: instrumentation library does not define "
+              "__bolt_instr_data_dump: "
+           << LibPath << "\n";
+    exit(1);
+  }
+  outs() << "BOLT-INFO: output linked against instrumentation runtime "
+            "library, lib entry point is 0x"
+         << Twine::utohexstr(InstrumentationRuntimeStartAddress) << "\n";
 }
 
 void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
@@ -3466,6 +3554,29 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
     OrgSection->setOutputAddress(Section.getAddress());
     OrgSection->setFileOffset(Section.getContents().data() -
                               InputFile->getData().data());
+  }
+}
+
+void RewriteInstance::mapExtraSections(orc::VModuleKey Key) {
+  assert(BC->HasRelocations && "Unsupported in non-relocation mode");
+
+  for (auto &Section : BC->allocatableSections()) {
+    if (Section.getOutputAddress() || !Section.hasValidSectionID())
+      continue;
+    NextAvailableAddress =
+        alignTo(NextAvailableAddress, Section.getAlignment());
+    Section.setOutputAddress(NextAvailableAddress);
+    NextAvailableAddress += Section.getOutputSize();
+
+    DEBUG(dbgs() << "BOLT: (extra) mapping " << Section.getName()
+          << " at 0x" << Twine::utohexstr(Section.getAllocAddress())
+          << " to 0x" << Twine::utohexstr(Section.getOutputAddress())
+          << '\n');
+
+    OLT->mapSectionAddress(Key, Section.getSectionID(),
+                           Section.getOutputAddress());
+    Section.setFileOffset(
+      getFileOffsetForAddress(Section.getOutputAddress()));
   }
 }
 
@@ -4716,6 +4827,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
                                 "error accessing dynamic table");
   const Elf_Dyn *DTE = cantFail(Obj->dynamic_table_end(DynamicPhdr),
                                 "error accessing dynamic table");
+  bool FiniFound = false;
   for (auto *DE = DTB; DE != DTE; ++DE) {
     auto NewDE = *DE;
     bool ShouldPatch = true;
@@ -4735,8 +4847,8 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       // FIXME: Put the old FINI pointer as a tail call in the generated
       // dumper function
       if (opts::Instrument && DE->getTag() == ELF::DT_FINI) {
-        NewDE.d_un.d_ptr =
-            Instrumenter->getDumpFunction()->getOutputAddress();
+        NewDE.d_un.d_ptr = InstrumentationRuntimeStartAddress;
+        FiniFound = true;
       }
       break;
     case ELF::DT_FLAGS:
@@ -4756,6 +4868,13 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       OS.pwrite(reinterpret_cast<const char *>(&NewDE), sizeof(NewDE),
                 DynamicOffset + (DE - DTB) * sizeof(*DE));
     }
+  }
+
+  if (opts::Instrument && !FiniFound) {
+    errs() << "BOLT-ERROR: input binary lacks DT_FINI entry in the dynamic "
+              "section but instrumentation currently relies on patching "
+              "DT_FINI to write the profile.\n";
+    exit(1);
   }
 
   if (BC->RequiresZNow && !ZNowSet) {

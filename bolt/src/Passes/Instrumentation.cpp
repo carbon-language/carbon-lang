@@ -235,49 +235,6 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
 
   outs() << "BOLT-INSTRUMENTER: Instrumented " << InstrumentationSites
          << " sites, " << InstrumentationSitesSavingFlags << " saving flags.\n";
-
-  createDumpFunction(BC);
-
-  DEBUG(DumpFunction->dump());
-}
-
-void Instrumentation::createDumpFunction(BinaryContext &BC) {
-  DumpFunction =
-      BC.createInjectedBinaryFunction("BOLTInstrumentationDataDump");
-  Locs = BC.Ctx->createTempSymbol("BOLTInstrumentationLocs", true);
-  DescriptionsSym =
-      BC.Ctx->createTempSymbol("BOLTInstrumentationDescriptions", true);
-  StringsSym = BC.Ctx->createTempSymbol("BOLTInstrumentationStrings", true);
-  FilenameSym = BC.Ctx->createTempSymbol("BOLTInstrumentationFilename", true);
-  Spaces = BC.Ctx->createTempSymbol("BOLTInstrumentationSpaces", true);
-  Chars = BC.Ctx->createTempSymbol("BOLTInstrumentationChars", true);
-  auto Code = BC.MIB->createInstrumentedDataDumpCode(
-      Locs, DescriptionsSym, StringsSym, FilenameSym, Spaces, Chars,
-      Labels.size(), &*BC.Ctx);
-
-  std::vector<std::unique_ptr<BinaryBasicBlock>> BBs;
-  for (auto &SymBlock : Code.Blocks) {
-    auto &Symbol = SymBlock.first;
-    auto &Block = SymBlock.second;
-    BBs.emplace_back(DumpFunction->createBasicBlock(
-        BinaryBasicBlock::INVALID_OFFSET, Symbol));
-    BBs.back()->addInstructions(Block.begin(), Block.end());
-    BBs.back()->setCFIState(0);
-  }
-  auto BBIter = BBs.begin();
-  for (auto &Succ : Code.Successors) {
-    if (Succ)
-      (*BBIter)->addSuccessor(DumpFunction->getBasicBlockForLabel(Succ), 0,
-                              0);
-    auto NextBBIter = std::next(BBIter);
-    if (NextBBIter != BBs.end())
-      (*BBIter)->addSuccessor(NextBBIter->get(), 0, 0);
-    ++BBIter;
-  }
-  DumpFunction->insertBasicBlocks(nullptr, std::move(BBs),
-                                  /*UpdateLayout=*/true,
-                                  /*UpdateCFIState=*/false);
-  DumpFunction->updateState(BinaryFunction::State::CFG_Finalized);
 }
 
 void Instrumentation::emitDescription(
@@ -295,22 +252,45 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
   auto *Section = BC.Ctx->getELFSection(".bolt.instrumentation",
                                         ELF::SHT_PROGBITS,
                                         Flags);
+
+  // All of the following symbols will be exported as globals to be used by the
+  // instrumentation runtime library to dump the instrumentation data to disk.
+  // Label marking start of the memory region containing instrumentation
+  // counters, total vector size is Labels.size() 8-byte counters
+  MCSymbol *Locs = BC.Ctx->getOrCreateSymbol("__bolt_instr_locations");
+  MCSymbol *NumLocs = BC.Ctx->getOrCreateSymbol("__bolt_instr_num_locs");
+  // Start of the vector with descriptions (one CounterDescription for each
+  // counter), vector size is Labels.size() CounterDescription-sized elmts
+  MCSymbol *DescriptionsSym =
+      BC.Ctx->getOrCreateSymbol("__bolt_instr_descriptions");
+  // Label identifying where our string table was emitted to
+  MCSymbol *StringsSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_strings");
+  /// File name where profile is going to written to after target binary
+  /// finishes a run
+  MCSymbol *FilenameSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_filename");
+
   Streamer.SwitchSection(Section);
   Streamer.EmitLabel(Locs);
+  Streamer.EmitSymbolAttribute(Locs,
+                               MCSymbolAttr::MCSA_Global);
   for (const auto &Label : Labels) {
     Streamer.EmitLabel(Label);
     Streamer.emitFill(8, 0);
   }
+  Streamer.EmitLabel(NumLocs);
+  Streamer.EmitSymbolAttribute(NumLocs,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitIntValue(Labels.size(), /*Size=*/4);
   Streamer.EmitLabel(DescriptionsSym);
+  Streamer.EmitSymbolAttribute(DescriptionsSym,
+                               MCSymbolAttr::MCSA_Global);
   for (const auto &Desc : Descriptions) {
     emitDescription(Desc, Streamer);
   }
   Streamer.EmitLabel(StringsSym);
+  Streamer.EmitSymbolAttribute(StringsSym,
+                               MCSymbolAttr::MCSA_Global);
   Streamer.EmitBytes(StringTable);
-  Streamer.EmitLabel(Spaces);
-  Streamer.EmitBytes("        ");
-  Streamer.EmitLabel(Chars);
-  Streamer.EmitBytes("0123456789abcdef");
   Streamer.EmitLabel(FilenameSym);
   Streamer.EmitBytes(opts::InstrumentationFilename);
   Streamer.emitFill(1, 0);

@@ -62,7 +62,7 @@ set(LLVM_LINK_COMPONENTS
 string(FIND "${LLVM_TARGETS_TO_BUILD}" "AArch64" POSITION)
 if (NOT ${POSITION} EQUAL -1)
   list(APPEND LLVM_LINK_COMPONENTS BOLTTargetAArch64)
-  set(BOLT_AArcb64 On)
+  set(BOLT_AArch64 On)
 endif()
 
 string(FIND "${LLVM_TARGETS_TO_BUILD}" "X86" POSITION)
@@ -101,9 +101,10 @@ add_llvm_tool(llvm-bolt
 
   DEPENDS
   intrinsics_gen
+  bolt_rt
   )
 
-if (DEFINED BOLT_AArcb64)
+if (DEFINED BOLT_AArch64)
   target_compile_definitions(llvm-bolt PRIVATE AARCH64_AVAILABLE)
 endif()
 

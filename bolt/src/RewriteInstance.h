@@ -47,7 +47,8 @@ class RewriteInstanceDiff;
 class RewriteInstance {
 public:
   RewriteInstance(llvm::object::ELFObjectFileBase *File, DataReader &DR,
-                  DataAggregator &DA, const int Argc, const char *const *Argv);
+                  DataAggregator &DA, const int Argc, const char *const *Argv,
+                  StringRef ToolPath);
   ~RewriteInstance();
 
   /// Reset all state except for split hints. Used to run a second pass with
@@ -97,7 +98,10 @@ public:
   /// Write code and data into an intermediary object file, map virtual to real
   /// addresses and link the object file, resolving all relocations and
   /// performing final relaxation.
-  void emitSections();
+  void emitAndLink();
+
+  /// Link additional runtime code to support instrumentation.
+  void linkRuntime();
 
   /// Emit function code.
   void emitFunctions(MCStreamer *Streamer);
@@ -121,6 +125,7 @@ public:
   void mapCodeSections(orc::VModuleKey ObjectsHandle);
   void mapDataSections(orc::VModuleKey ObjectsHandle);
   void mapFileSections(orc::VModuleKey ObjectsHandle);
+  void mapExtraSections(orc::VModuleKey ObjectsHandle);
 
   /// Update output object's values based on the final \p Layout.
   void updateOutputValues(const MCAsmLayout &Layout);
@@ -321,6 +326,7 @@ private:
   /// Command line args used to process binary.
   const int Argc;
   const char *const *Argv;
+  StringRef ToolPath;
 
   /// Holds our data aggregator in case user supplied a raw perf data file.
   DataAggregator &DA;
@@ -354,6 +360,9 @@ private:
   uint64_t NewTextSegmentAddress{0};
   uint64_t NewTextSegmentOffset{0};
   uint64_t NewTextSegmentSize{0};
+
+  /// Extra linking
+  uint64_t InstrumentationRuntimeStartAddress{0};
 
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
