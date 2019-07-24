@@ -9076,7 +9076,7 @@ SelectionDAG::matchBinOpReduction(SDNode *Extract, ISD::NodeType &BinOp,
 
     // Verify the shuffle has the expected (at this stage of the pyramid) mask.
     for (int Index = 0; Index < (int)MaskEnd; ++Index)
-      if (Shuffle->getMaskElt(Index) != (MaskEnd + Index))
+      if (Shuffle->getMaskElt(Index) != (int)(MaskEnd + Index))
         return PartialReduction(PrevOp, MaskEnd);
 
     PrevOp = Op;
