@@ -65,8 +65,8 @@ public:
   }
 
   // TODO: ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION,
-  // INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
-  // HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
+  // INT/NINT, NEAREST, OUT_OF_RANGE, DIGITS,
+  // RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
 
   constexpr bool IsNegative() const {
     return !IsNotANumber() && word_.BTEST(bits - 1);
@@ -127,6 +127,16 @@ public:
     epsilon.Normalize(false, exponentBias - precision, Fraction::MASKL(1));
     return epsilon;
   }
+  static constexpr Real HUGE() {
+    Real huge;
+    huge.Normalize(false, maxExponent - 1, Fraction::MASKR(precision));
+    return huge;
+  }
+  static constexpr Real TINY() {
+    Real tiny;
+    tiny.Normalize(false, 1, Fraction::MASKL(1));  // minimum *normal* number
+    return tiny;
+  }
 
 private:
   // LOG10(2.)*1E12
@@ -138,6 +148,9 @@ public:
 
   static constexpr int RANGE{static_cast<int>(
       (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
+
+  static constexpr int MAXEXPONENT{maxExponent - 1 - exponentBias};
+  static constexpr int MINEXPONENT{1 - exponentBias};
 
   constexpr Real FlushSubnormalToZero() const {
     if (IsSubnormal()) {

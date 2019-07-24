@@ -39,6 +39,10 @@
 #include <type_traits>
 #include <variant>
 
+// Some environments, viz. clang on Darwin, allow the macro HUGE
+// to leak out of <math.h> even when it is never directly included.
+#undef HUGE
+
 namespace Fortran::evaluate {
 
 // FoldOperation() rewrites expression tree nodes.
@@ -440,6 +444,15 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
           }
           return j.value;
         }));
+  } else if (name == "bit_size") {
+    if (auto *sx{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
+      return std::visit(
+          [](const auto &x) {
+            using TR = typename std::decay_t<decltype(x)>::Result;
+            return Expr<T>{Scalar<TR>::bits};
+          },
+          sx->u);
+    }
   } else if (name == "dim") {
     return FoldElementalIntrinsic<T, T, T>(
         context, std::move(funcRef), &Scalar<T>::DIM);
@@ -466,6 +479,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
     } else {
       common::die("exponent argument must be real");
     }
+  } else if (name == "huge") {
+    return Expr<T>{Scalar<T>::HUGE()};
   } else if (name == "iachar" || name == "ichar") {
     auto *someChar{UnwrapExpr<Expr<SomeCharacter>>(args[0])};
     CHECK(someChar != nullptr);
@@ -589,16 +604,34 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
       common::die("len() argument must be of character type");
     }
   } else if (name == "maskl" || name == "maskr") {
-    // Argument can be of any kind but value has to be smaller than bit_size.
+    // Argument can be of any kind but value has to be smaller than BIT_SIZE.
     // It can be safely converted to Int4 to simplify.
     const auto fptr{name == "maskl" ? &Scalar<T>::MASKL : &Scalar<T>::MASKR};
     return FoldElementalIntrinsic<T, Int4>(context, std::move(funcRef),
         ScalarFunc<T, Int4>([&fptr](const Scalar<Int4> &places) -> Scalar<T> {
           return fptr(static_cast<int>(places.ToInt64()));
         }));
+  } else if (name == "maxexponent") {
+    if (auto *sx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+      return std::visit(
+          [](const auto &x) {
+            using TR = typename std::decay_t<decltype(x)>::Result;
+            return Expr<T>{Scalar<TR>::MAXEXPONENT};
+          },
+          sx->u);
+    }
   } else if (name == "merge_bits") {
     return FoldElementalIntrinsic<T, T, T, T>(
         context, std::move(funcRef), &Scalar<T>::MERGE_BITS);
+  } else if (name == "minexponent") {
+    if (auto *sx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+      return std::visit(
+          [](const auto &x) {
+            using TR = typename std::decay_t<decltype(x)>::Result;
+            return Expr<T>{Scalar<TR>::MINEXPONENT};
+          },
+          sx->u);
+    }
   } else if (name == "precision") {
     if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
       return Expr<T>{std::visit(
@@ -827,16 +860,20 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
     }
     common::die("Wrong argument type in dprod()");
   } else if (name == "epsilon") {
-    return Expr<T>{Constant<T>{Scalar<T>::EPSILON()}};
+    return Expr<T>{Scalar<T>::EPSILON()};
+  } else if (name == "huge") {
+    return Expr<T>{Scalar<T>::HUGE()};
   } else if (name == "real") {
     if (auto *expr{args[0].value().UnwrapExpr()}) {
       return ToReal<KIND>(context, std::move(*expr));
     }
+  } else if (name == "tiny") {
+    return Expr<T>{Scalar<T>::TINY()};
   }
-  // TODO: anint, cshift, dim, dot_product, eoshift, fraction, huge, matmul,
+  // TODO: anint, cshift, dim, dot_product, eoshift, fraction, matmul,
   // max, maxval, merge, min, minval, modulo, nearest, norm2, pack, product,
   // reduce, rrspacing, scale, set_exponent, sign, spacing, spread,
-  // sum, tiny, transfer, transpose, unpack, bessel_jn (transformational) and
+  // sum, transfer, transpose, unpack, bessel_jn (transformational) and
   // bessel_yn (transformational)
   return Expr<T>{std::move(funcRef)};
 }

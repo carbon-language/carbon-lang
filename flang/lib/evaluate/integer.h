@@ -347,7 +347,6 @@ public:
     return result;
   }
 
-  static constexpr Integer BIT_SIZE() { return {bits}; }
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
 
   static constexpr int RANGE{// in the sense of SELECTED_INT_KIND

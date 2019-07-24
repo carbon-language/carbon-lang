@@ -296,6 +296,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"i", AnyInt, Rank::elementalOrBOZ},
             {"j", AnyInt, Rank::elementalOrBOZ}},
         DefaultLogical},
+    {"bit_size", {{"i", AnyInt, Rank::anyOrAssumedRank}}, DefaultInt,
+        Rank::scalar},
     {"ble",
         {{"i", AnyInt, Rank::elementalOrBOZ},
             {"j", AnyInt, Rank::elementalOrBOZ}},
@@ -362,6 +364,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"shift", AnyInt, Rank::dimRemoved},
             {"boundary", SameDerivedType, Rank::dimRemoved}, OptionalDIM},
         SameDerivedType, Rank::conformable},
+    {"epsilon", {{"x", SameReal, Rank::anyOrAssumedRank}}, SameReal,
+        Rank::scalar},
     {"erf", {{"x", SameReal}}, SameReal},
     {"erfc", {{"x", SameReal}}, SameReal},
     {"erfc_scaled", {{"x", SameReal}}, SameReal},
@@ -404,6 +408,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"floor", {{"a", AnyReal}, DefaultingKIND}, KINDInt},
     {"fraction", {{"x", SameReal}}, SameReal},
     {"gamma", {{"x", SameReal}}, SameReal},
+    {"huge", {{"x", SameIntOrReal, Rank::anyOrAssumedRank}}, SameIntOrReal,
+        Rank::scalar},
     {"hypot", {{"x", OperandReal}, {"y", OperandReal}}, OperandReal},
     {"iachar", {{"c", AnyChar}, DefaultingKIND}, KINDInt},
     {"iall", {{"array", SameInt, Rank::array}, OptionalDIM, OptionalMASK},
@@ -495,6 +501,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"a1", SameChar}, {"a2", SameChar},
             {"a3", SameChar, Rank::elemental, Optionality::repeats}},
         SameChar},
+    {"maxexponent", {{"x", AnyReal, Rank::anyOrAssumedRank}}, DefaultInt,
+        Rank::scalar},
     {"maxloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
             SubscriptDefaultKIND,
@@ -521,6 +529,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"a1", SameChar}, {"a2", SameChar},
             {"a3", SameChar, Rank::elemental, Optionality::repeats}},
         SameChar},
+    {"minexponent", {{"x", AnyReal, Rank::anyOrAssumedRank}}, DefaultInt,
+        Rank::scalar},
     {"minloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
             SubscriptDefaultKIND,
@@ -562,7 +572,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"precision", {{"x", AnyFloating, Rank::anyOrAssumedRank}}, DefaultInt},
     {"present", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultLogical},
     {"radix", {{"x", AnyNumeric, Rank::anyOrAssumedRank}}, DefaultInt},
-    {"range", {{"x", AnyNumeric, Rank::anyOrAssumedRank}}, DefaultInt},
+    {"range", {{"x", AnyNumeric, Rank::anyOrAssumedRank}}, DefaultInt,
+        Rank::scalar},
     {"rank", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultInt},
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
@@ -629,6 +640,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         SameNumeric, Rank::dimReduced},
     {"tan", {{"x", SameFloating}}, SameFloating},
     {"tanh", {{"x", SameFloating}}, SameFloating},
+    {"tiny", {{"x", SameReal, Rank::anyOrAssumedRank}}, SameReal, Rank::scalar},
     {"trailz", {{"i", AnyInt}}, DefaultInt},
     {"transfer",
         {{"source", Anything, Rank::known}, {"mold", SameType, Rank::scalar}},
@@ -666,11 +678,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE,
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
-//   EXTENDS_TYPE_OF, IS_CONTIGUOUS,
-//   SAME_TYPE, STORAGE_SIZE
+//   EXTENDS_TYPE_OF, IS_CONTIGUOUS, SAME_TYPE, STORAGE_SIZE
 // TODO: Type inquiry intrinsic functions - these return constants
-//  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
-//  NEW_LINE, TINY
+//  DIGITS, NEW_LINE
 // TODO: Non-standard intrinsic functions
 //  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
 //  COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL,
