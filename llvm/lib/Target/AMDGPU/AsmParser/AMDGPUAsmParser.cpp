@@ -1640,8 +1640,8 @@ bool AMDGPUOperand::isSDWAInt32Operand() const {
 }
 
 bool AMDGPUOperand::isBoolReg() const {
-  return AsmParser->getFeatureBits()[AMDGPU::FeatureWavefrontSize64] ?
-    isSCSrcB64() : isSCSrcB32();
+  return (AsmParser->getFeatureBits()[AMDGPU::FeatureWavefrontSize64] && isSCSrcB64()) ||
+         (AsmParser->getFeatureBits()[AMDGPU::FeatureWavefrontSize32] && isSCSrcB32());
 }
 
 uint64_t AMDGPUOperand::applyInputFPModifiers(uint64_t Val, unsigned Size) const
