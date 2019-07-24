@@ -447,3 +447,107 @@ entry:
   %s = select <2 x i1> %c, <2 x i32> %a, <2 x i32> %b
   ret <2 x i32> %s
 }
+
+define arm_aapcs_vfpcc <2 x i32> @vcmp_multi_v2i32(<2 x i64> %a, <2 x i32> %b, <2 x i32> %c) {
+; CHECK-LABEL: vcmp_multi_v2i32:
+; CHECK:       @ %bb.0:
+; CHECK-NEXT:    .save {r7, lr}
+; CHECK-NEXT:    push {r7, lr}
+; CHECK-NEXT:    .vsave {d8, d9, d10, d11}
+; CHECK-NEXT:    vpush {d8, d9, d10, d11}
+; CHECK-NEXT:    vmov r0, s1
+; CHECK-NEXT:    movs r3, #0
+; CHECK-NEXT:    vmov r1, s0
+; CHECK-NEXT:    vmov r2, s8
+; CHECK-NEXT:    vmov lr, s10
+; CHECK-NEXT:    orrs r0, r1
+; CHECK-NEXT:    vmov r1, s2
+; CHECK-NEXT:    clz r0, r0
+; CHECK-NEXT:    lsrs r0, r0, #5
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r0, #-1
+; CHECK-NEXT:    vmov.32 q3[0], r0
+; CHECK-NEXT:    vmov.32 q3[1], r0
+; CHECK-NEXT:    vmov r0, s3
+; CHECK-NEXT:    orrs r0, r1
+; CHECK-NEXT:    clz r0, r0
+; CHECK-NEXT:    lsrs r0, r0, #5
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r0, #-1
+; CHECK-NEXT:    vmov.32 q3[2], r0
+; CHECK-NEXT:    vmov.32 q3[3], r0
+; CHECK-NEXT:    vbic q0, q2, q3
+; CHECK-NEXT:    vmov r0, s0
+; CHECK-NEXT:    subs r1, r0, r2
+; CHECK-NEXT:    asr.w r12, r0, #31
+; CHECK-NEXT:    sbcs.w r1, r12, r2, asr #31
+; CHECK-NEXT:    mov.w r1, #0
+; CHECK-NEXT:    it lt
+; CHECK-NEXT:    movlt r1, #1
+; CHECK-NEXT:    cmp r1, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r1, #-1
+; CHECK-NEXT:    vmov.32 q3[0], r1
+; CHECK-NEXT:    vmov.32 q3[1], r1
+; CHECK-NEXT:    vmov r1, s2
+; CHECK-NEXT:    subs.w r2, r1, lr
+; CHECK-NEXT:    asr.w r12, r1, #31
+; CHECK-NEXT:    sbcs.w r2, r12, lr, asr #31
+; CHECK-NEXT:    it lt
+; CHECK-NEXT:    movlt r3, #1
+; CHECK-NEXT:    cmp r3, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r3, #-1
+; CHECK-NEXT:    cmp r0, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne r0, #1
+; CHECK-NEXT:    cmp r0, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r0, #-1
+; CHECK-NEXT:    vmov.32 q4[0], r0
+; CHECK-NEXT:    vmov.32 q4[1], r0
+; CHECK-NEXT:    vmov r0, s4
+; CHECK-NEXT:    cmp r1, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne r1, #1
+; CHECK-NEXT:    cmp r1, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r1, #-1
+; CHECK-NEXT:    vmov.32 q4[2], r1
+; CHECK-NEXT:    vmov.32 q3[2], r3
+; CHECK-NEXT:    vmov.32 q4[3], r1
+; CHECK-NEXT:    vmov.32 q3[3], r3
+; CHECK-NEXT:    cmp r0, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne r0, #1
+; CHECK-NEXT:    cmp r0, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r0, #-1
+; CHECK-NEXT:    vmov.32 q5[0], r0
+; CHECK-NEXT:    vmov.32 q5[1], r0
+; CHECK-NEXT:    vmov r0, s6
+; CHECK-NEXT:    cmp r0, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne r0, #1
+; CHECK-NEXT:    cmp r0, #0
+; CHECK-NEXT:    it ne
+; CHECK-NEXT:    movne.w r0, #-1
+; CHECK-NEXT:    vmov.32 q5[2], r0
+; CHECK-NEXT:    vmov.32 q5[3], r0
+; CHECK-NEXT:    vand q1, q5, q4
+; CHECK-NEXT:    vand q1, q3, q1
+; CHECK-NEXT:    vbic q0, q0, q1
+; CHECK-NEXT:    vand q1, q2, q1
+; CHECK-NEXT:    vorr q0, q1, q0
+; CHECK-NEXT:    vpop {d8, d9, d10, d11}
+; CHECK-NEXT:    pop {r7, pc}
+  %a4 = icmp eq <2 x i64> %a, zeroinitializer
+  %a5 = select <2 x i1> %a4, <2 x i32> zeroinitializer, <2 x i32> %c
+  %a6 = icmp ne <2 x i32> %b, zeroinitializer
+  %a7 = icmp slt <2 x i32> %a5, %c
+  %a8 = icmp ne <2 x i32> %a5, zeroinitializer
+  %a9 = and <2 x i1> %a6, %a8
+  %a10 = and <2 x i1> %a7, %a9
+  %a11 = select <2 x i1> %a10, <2 x i32> %c, <2 x i32> %a5
+  ret <2 x i32> %a11
+}

@@ -340,6 +340,13 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
   const MVT pTypes[] = {MVT::v16i1, MVT::v8i1, MVT::v4i1};
   for (auto VT : pTypes) {
     addRegisterClass(VT, &ARM::VCCRRegClass);
+    setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
+    setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS, VT, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Expand);
   }
 }
 
@@ -1505,6 +1512,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::WIN__CHKSTK:   return "ARMISD::WIN__CHKSTK";
   case ARMISD::WIN__DBZCHK:   return "ARMISD::WIN__DBZCHK";
 
+  case ARMISD::PREDICATE_CAST: return "ARMISD::PREDICATE_CAST";
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
   case ARMISD::VCEQZ:         return "ARMISD::VCEQZ";
   case ARMISD::VCNE:          return "ARMISD::VCNE";
@@ -6714,6 +6722,54 @@ static SDValue IsSingleInstrConstant(SDValue N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue LowerBUILD_VECTOR_i1(SDValue Op, SelectionDAG &DAG,
+                                    const ARMSubtarget *ST) {
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+
+  assert(ST->hasMVEIntegerOps() && "LowerBUILD_VECTOR_i1 called without MVE!");
+
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned BoolMask;
+  unsigned BitsPerBool;
+  if (NumElts == 4) {
+    BitsPerBool = 4;
+    BoolMask = 0xf;
+  } else if (NumElts == 8) {
+    BitsPerBool = 2;
+    BoolMask = 0x3;
+  } else if (NumElts == 16) {
+    BitsPerBool = 1;
+    BoolMask = 0x1;
+  } else
+    return SDValue();
+
+  // First create base with bits set where known
+  unsigned Bits32 = 0;
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDValue V = Op.getOperand(i);
+    if (!isa<ConstantSDNode>(V) && !V.isUndef())
+      continue;
+    bool BitSet = V.isUndef() ? false : cast<ConstantSDNode>(V)->getZExtValue();
+    if (BitSet)
+      Bits32 |= BoolMask << (i * BitsPerBool);
+  }
+
+  // Add in unknown nodes
+  // FIXME: Handle splats of the same value better.
+  SDValue Base = DAG.getNode(ARMISD::PREDICATE_CAST, dl, VT,
+                             DAG.getConstant(Bits32, dl, MVT::i32));
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDValue V = Op.getOperand(i);
+    if (isa<ConstantSDNode>(V) || V.isUndef())
+      continue;
+    Base = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Base, V,
+                       DAG.getConstant(i, dl, MVT::i32));
+  }
+
+  return Base;
+}
+
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.
 SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
@@ -6721,6 +6777,9 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   BuildVectorSDNode *BVN = cast<BuildVectorSDNode>(Op.getNode());
   SDLoc dl(Op);
   EVT VT = Op.getValueType();
+
+  if (ST->hasMVEIntegerOps() && VT.getScalarSizeInBits() == 1)
+    return LowerBUILD_VECTOR_i1(Op, DAG, ST);
 
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
@@ -7327,6 +7386,93 @@ static SDValue LowerReverse_VECTOR_SHUFFLEv16i8_v8i16(SDValue Op,
                      DAG.getConstant(ExtractNum, DL, MVT::i32));
 }
 
+static EVT getVectorTyFromPredicateVector(EVT VT) {
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::v4i1:
+    return MVT::v4i32;
+  case MVT::v8i1:
+    return MVT::v8i16;
+  case MVT::v16i1:
+    return MVT::v16i8;
+  default:
+    llvm_unreachable("Unexpected vector predicate type");
+  }
+}
+
+static SDValue PromoteMVEPredVector(SDLoc dl, SDValue Pred, EVT VT,
+                                    SelectionDAG &DAG) {
+  // Converting from boolean predicates to integers involves creating a vector
+  // of all ones or all zeroes and selecting the lanes based upon the real
+  // predicate.
+  SDValue AllOnes =
+      DAG.getTargetConstant(ARM_AM::createVMOVModImm(0xe, 0xff), dl, MVT::i32);
+  AllOnes = DAG.getNode(ARMISD::VMOVIMM, dl, MVT::v16i8, AllOnes);
+
+  SDValue AllZeroes =
+      DAG.getTargetConstant(ARM_AM::createVMOVModImm(0xe, 0x0), dl, MVT::i32);
+  AllZeroes = DAG.getNode(ARMISD::VMOVIMM, dl, MVT::v16i8, AllZeroes);
+
+  // Get full vector type from predicate type
+  EVT NewVT = getVectorTyFromPredicateVector(VT);
+
+  SDValue RecastV1;
+  // If the real predicate is an v8i1 or v4i1 (not v16i1) then we need to recast
+  // this to a v16i1. This cannot be done with an ordinary bitcast because the
+  // sizes are not the same. We have to use a MVE specific PREDICATE_CAST node,
+  // since we know in hardware the sizes are really the same.
+  if (VT != MVT::v16i1)
+    RecastV1 = DAG.getNode(ARMISD::PREDICATE_CAST, dl, MVT::v16i1, Pred);
+  else
+    RecastV1 = Pred;
+
+  // Select either all ones or zeroes depending upon the real predicate bits.
+  SDValue PredAsVector =
+      DAG.getNode(ISD::VSELECT, dl, MVT::v16i8, RecastV1, AllOnes, AllZeroes);
+
+  // Recast our new predicate-as-integer v16i8 vector into something
+  // appropriate for the shuffle, i.e. v4i32 for a real v4i1 predicate.
+  return DAG.getNode(ISD::BITCAST, dl, NewVT, PredAsVector);
+}
+
+static SDValue LowerVECTOR_SHUFFLE_i1(SDValue Op, SelectionDAG &DAG,
+                                      const ARMSubtarget *ST) {
+  EVT VT = Op.getValueType();
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
+  ArrayRef<int> ShuffleMask = SVN->getMask();
+
+  assert(ST->hasMVEIntegerOps() &&
+         "No support for vector shuffle of boolean predicates");
+
+  SDValue V1 = Op.getOperand(0);
+  SDLoc dl(Op);
+  if (isReverseMask(ShuffleMask, VT)) {
+    SDValue cast = DAG.getNode(ARMISD::PREDICATE_CAST, dl, MVT::i32, V1);
+    SDValue rbit = DAG.getNode(ISD::BITREVERSE, dl, MVT::i32, cast);
+    SDValue srl = DAG.getNode(ISD::SRL, dl, MVT::i32, rbit,
+                              DAG.getConstant(16, dl, MVT::i32));
+    return DAG.getNode(ARMISD::PREDICATE_CAST, dl, VT, srl);
+  }
+
+  // Until we can come up with optimised cases for every single vector
+  // shuffle in existence we have chosen the least painful strategy. This is
+  // to essentially promote the boolean predicate to a 8-bit integer, where
+  // each predicate represents a byte. Then we fall back on a normal integer
+  // vector shuffle and convert the result back into a predicate vector. In
+  // many cases the generated code might be even better than scalar code
+  // operating on bits. Just imagine trying to shuffle 8 arbitrary 2-bit
+  // fields in a register into 8 other arbitrary 2-bit fields!
+  SDValue PredAsVector = PromoteMVEPredVector(dl, V1, VT, DAG);
+  EVT NewVT = PredAsVector.getValueType();
+
+  // Do the shuffle!
+  SDValue Shuffled = DAG.getVectorShuffle(NewVT, dl, PredAsVector,
+                                          DAG.getUNDEF(NewVT), ShuffleMask);
+
+  // Now return the result of comparing the shuffled vector with zero,
+  // which will generate a real predicate, i.e. v4i1, v8i1 or v16i1.
+  return DAG.getNode(ARMISD::VCNEZ, dl, VT, Shuffled);
+}
+
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG,
                                    const ARMSubtarget *ST) {
   SDValue V1 = Op.getOperand(0);
@@ -7334,6 +7480,10 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG,
   SDLoc dl(Op);
   EVT VT = Op.getValueType();
   ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
+  unsigned EltSize = VT.getScalarSizeInBits();
+
+  if (ST->hasMVEIntegerOps() && EltSize == 1)
+    return LowerVECTOR_SHUFFLE_i1(Op, DAG, ST);
 
   // Convert shuffles that are directly supported on NEON to target-specific
   // DAG nodes, instead of keeping them as shuffles and matching them again
@@ -7343,7 +7493,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG,
   // of the same time so that they get CSEd properly.
   ArrayRef<int> ShuffleMask = SVN->getMask();
 
-  unsigned EltSize = VT.getScalarSizeInBits();
   if (EltSize <= 32) {
     if (SVN->isSplat()) {
       int Lane = SVN->getSplatIndex();
@@ -7513,8 +7662,29 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG,
   return SDValue();
 }
 
-SDValue ARMTargetLowering::
-LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerINSERT_VECTOR_ELT_i1(SDValue Op, SelectionDAG &DAG,
+                                         const ARMSubtarget *ST) {
+  EVT VecVT = Op.getOperand(0).getValueType();
+  SDLoc dl(Op);
+
+  assert(ST->hasMVEIntegerOps() &&
+         "LowerINSERT_VECTOR_ELT_i1 called without MVE!");
+
+  SDValue Conv =
+      DAG.getNode(ARMISD::PREDICATE_CAST, dl, MVT::i32, Op->getOperand(0));
+  unsigned Lane = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+  unsigned LaneWidth =
+      getVectorTyFromPredicateVector(VecVT).getScalarSizeInBits() / 8;
+  unsigned Mask = ((1 << LaneWidth) - 1) << Lane * LaneWidth;
+  SDValue Ext = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, MVT::i32,
+                            Op.getOperand(1), DAG.getValueType(MVT::i1));
+  SDValue BFI = DAG.getNode(ARMISD::BFI, dl, MVT::i32, Conv, Ext,
+                            DAG.getConstant(~Mask, dl, MVT::i32));
+  return DAG.getNode(ARMISD::PREDICATE_CAST, dl, Op.getValueType(), BFI);
+}
+
+SDValue ARMTargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
+                                                  SelectionDAG &DAG) const {
   // INSERT_VECTOR_ELT is legal only for immediate indexes.
   SDValue Lane = Op.getOperand(2);
   if (!isa<ConstantSDNode>(Lane))
@@ -7522,6 +7692,11 @@ LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue Elt = Op.getOperand(1);
   EVT EltVT = Elt.getValueType();
+
+  if (Subtarget->hasMVEIntegerOps() &&
+      Op.getValueType().getScalarSizeInBits() == 1)
+    return LowerINSERT_VECTOR_ELT_i1(Op, DAG, Subtarget);
+
   if (getTypeAction(*DAG.getContext(), EltVT) ==
       TargetLowering::TypePromoteFloat) {
     // INSERT_VECTOR_ELT doesn't want f16 operands promoting to f32,
@@ -7550,13 +7725,37 @@ LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
   return Op;
 }
 
-static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerEXTRACT_VECTOR_ELT_i1(SDValue Op, SelectionDAG &DAG,
+                                          const ARMSubtarget *ST) {
+  EVT VecVT = Op.getOperand(0).getValueType();
+  SDLoc dl(Op);
+
+  assert(ST->hasMVEIntegerOps() &&
+         "LowerINSERT_VECTOR_ELT_i1 called without MVE!");
+
+  SDValue Conv =
+      DAG.getNode(ARMISD::PREDICATE_CAST, dl, MVT::i32, Op->getOperand(0));
+  unsigned Lane = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  unsigned LaneWidth =
+      getVectorTyFromPredicateVector(VecVT).getScalarSizeInBits() / 8;
+  SDValue Shift = DAG.getNode(ISD::SRL, dl, MVT::i32, Conv,
+                              DAG.getConstant(Lane * LaneWidth, dl, MVT::i32));
+  return Shift;
+}
+
+static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG,
+                                       const ARMSubtarget *ST) {
   // EXTRACT_VECTOR_ELT is legal only for immediate indexes.
   SDValue Lane = Op.getOperand(1);
   if (!isa<ConstantSDNode>(Lane))
     return SDValue();
 
   SDValue Vec = Op.getOperand(0);
+  EVT VT = Vec.getValueType();
+
+  if (ST->hasMVEIntegerOps() && VT.getScalarSizeInBits() == 1)
+    return LowerEXTRACT_VECTOR_ELT_i1(Op, DAG, ST);
+
   if (Op.getValueType() == MVT::i32 && Vec.getScalarValueSizeInBits() < 32) {
     SDLoc dl(Op);
     return DAG.getNode(ARMISD::VGETLANEu, dl, MVT::i32, Vec, Lane);
@@ -7565,7 +7764,63 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   return Op;
 }
 
-static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerCONCAT_VECTORS_i1(SDValue Op, SelectionDAG &DAG,
+                                      const ARMSubtarget *ST) {
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+  EVT Op1VT = V1.getValueType();
+  EVT Op2VT = V2.getValueType();
+  unsigned NumElts = VT.getVectorNumElements();
+
+  assert(Op1VT == Op2VT && "Operand types don't match!");
+  assert(VT.getScalarSizeInBits() == 1 &&
+         "Unexpected custom CONCAT_VECTORS lowering");
+  assert(ST->hasMVEIntegerOps() &&
+         "CONCAT_VECTORS lowering only supported for MVE");
+
+  SDValue NewV1 = PromoteMVEPredVector(dl, V1, Op1VT, DAG);
+  SDValue NewV2 = PromoteMVEPredVector(dl, V2, Op2VT, DAG);
+
+  // We now have Op1 + Op2 promoted to vectors of integers, where v8i1 gets
+  // promoted to v8i16, etc.
+
+  MVT ElType = getVectorTyFromPredicateVector(VT).getScalarType().getSimpleVT();
+
+  // Extract the vector elements from Op1 and Op2 one by one and truncate them
+  // to be the right size for the destination. For example, if Op1 is v4i1 then
+  // the promoted vector is v4i32. The result of concatentation gives a v8i1,
+  // which when promoted is v8i16. That means each i32 element from Op1 needs
+  // truncating to i16 and inserting in the result.
+  EVT ConcatVT = MVT::getVectorVT(ElType, NumElts);
+  SDValue ConVec = DAG.getNode(ISD::UNDEF, dl, ConcatVT);
+  auto ExractInto = [&DAG, &dl](SDValue NewV, SDValue ConVec, unsigned &j) {
+    EVT NewVT = NewV.getValueType();
+    EVT ConcatVT = ConVec.getValueType();
+    for (unsigned i = 0, e = NewVT.getVectorNumElements(); i < e; i++, j++) {
+      SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32, NewV,
+                                DAG.getIntPtrConstant(i, dl));
+      ConVec = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, ConcatVT, ConVec, Elt,
+                           DAG.getConstant(j, dl, MVT::i32));
+    }
+    return ConVec;
+  };
+  unsigned j = 0;
+  ConVec = ExractInto(NewV1, ConVec, j);
+  ConVec = ExractInto(NewV2, ConVec, j);
+
+  // Now return the result of comparing the subvector with zero,
+  // which will generate a real predicate, i.e. v4i1, v8i1 or v16i1.
+  return DAG.getNode(ARMISD::VCNEZ, dl, VT, ConVec);
+}
+
+static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG,
+                                   const ARMSubtarget *ST) {
+  EVT VT = Op->getValueType(0);
+  if (ST->hasMVEIntegerOps() && VT.getScalarSizeInBits() == 1)
+    return LowerCONCAT_VECTORS_i1(Op, DAG, ST);
+
   // The only time a CONCAT_VECTORS operation can have legal types is when
   // two 64-bit vectors are concatenated to a 128-bit vector.
   assert(Op.getValueType().is128BitVector() && Op.getNumOperands() == 2 &&
@@ -7583,6 +7838,42 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
                       DAG.getNode(ISD::BITCAST, dl, MVT::f64, Op1),
                       DAG.getIntPtrConstant(1, dl));
   return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), Val);
+}
+
+static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, SelectionDAG &DAG,
+                                      const ARMSubtarget *ST) {
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+  EVT Op1VT = V1.getValueType();
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned Index = cast<ConstantSDNode>(V2)->getZExtValue();
+
+  assert(VT.getScalarSizeInBits() == 1 &&
+         "Unexpected custom EXTRACT_SUBVECTOR lowering");
+  assert(ST->hasMVEIntegerOps() &&
+         "EXTRACT_SUBVECTOR lowering only supported for MVE");
+
+  SDValue NewV1 = PromoteMVEPredVector(dl, V1, Op1VT, DAG);
+
+  // We now have Op1 promoted to a vector of integers, where v8i1 gets
+  // promoted to v8i16, etc.
+
+  MVT ElType = getVectorTyFromPredicateVector(VT).getScalarType().getSimpleVT();
+
+  EVT SubVT = MVT::getVectorVT(ElType, NumElts);
+  SDValue SubVec = DAG.getNode(ISD::UNDEF, dl, SubVT);
+  for (unsigned i = Index, j = 0; i < (Index + NumElts); i++, j++) {
+    SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32, NewV1,
+                              DAG.getIntPtrConstant(i, dl));
+    SubVec = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, SubVT, SubVec, Elt,
+                         DAG.getConstant(j, dl, MVT::i32));
+  }
+
+  // Now return the result of comparing the subvector with zero,
+  // which will generate a real predicate, i.e. v4i1, v8i1 or v16i1.
+  return DAG.getNode(ARMISD::VCNEZ, dl, VT, SubVec);
 }
 
 /// isExtendedBUILD_VECTOR - Check if N is a constant BUILD_VECTOR where each
@@ -7942,7 +8233,8 @@ static SDValue LowerSDIV_v4i16(SDValue N0, SDValue N1, const SDLoc &dl,
   return N0;
 }
 
-static SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG,
+                         const ARMSubtarget *ST) {
   EVT VT = Op.getValueType();
   assert((VT == MVT::v4i16 || VT == MVT::v8i8) &&
          "unexpected type for custom-lowering ISD::SDIV");
@@ -7969,7 +8261,7 @@ static SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) {
     N2 = LowerSDIV_v4i8(N2, N3, dl, DAG); // v4i16
 
     N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v8i16, N0, N2);
-    N0 = LowerCONCAT_VECTORS(N0, DAG);
+    N0 = LowerCONCAT_VECTORS(N0, DAG, ST);
 
     N0 = DAG.getNode(ISD::TRUNCATE, dl, MVT::v8i8, N0);
     return N0;
@@ -7977,7 +8269,8 @@ static SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) {
   return LowerSDIV_v4i16(N0, N1, dl, DAG);
 }
 
-static SDValue LowerUDIV(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerUDIV(SDValue Op, SelectionDAG &DAG,
+                         const ARMSubtarget *ST) {
   // TODO: Should this propagate fast-math-flags?
   EVT VT = Op.getValueType();
   assert((VT == MVT::v4i16 || VT == MVT::v8i8) &&
@@ -8005,7 +8298,7 @@ static SDValue LowerUDIV(SDValue Op, SelectionDAG &DAG) {
     N2 = LowerSDIV_v4i16(N2, N3, dl, DAG); // v4i16
 
     N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v8i16, N0, N2);
-    N0 = LowerCONCAT_VECTORS(N0, DAG);
+    N0 = LowerCONCAT_VECTORS(N0, DAG, ST);
 
     N0 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::v8i8,
                      DAG.getConstant(Intrinsic::arm_neon_vqmovnsu, dl,
@@ -8476,19 +8769,20 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ConstantFP:    return LowerConstantFP(Op, DAG, Subtarget);
   case ISD::BUILD_VECTOR:  return LowerBUILD_VECTOR(Op, DAG, Subtarget);
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG, Subtarget);
+  case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG, Subtarget);
   case ISD::INSERT_VECTOR_ELT: return LowerINSERT_VECTOR_ELT(Op, DAG);
-  case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
-  case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
+  case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG, Subtarget);
+  case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG, Subtarget);
   case ISD::FLT_ROUNDS_:   return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::MUL:           return LowerMUL(Op, DAG);
   case ISD::SDIV:
     if (Subtarget->isTargetWindows() && !Op.getValueType().isVector())
       return LowerDIV_Windows(Op, DAG, /* Signed */ true);
-    return LowerSDIV(Op, DAG);
+    return LowerSDIV(Op, DAG, Subtarget);
   case ISD::UDIV:
     if (Subtarget->isTargetWindows() && !Op.getValueType().isVector())
       return LowerDIV_Windows(Op, DAG, /* Signed */ false);
-    return LowerUDIV(Op, DAG);
+    return LowerUDIV(Op, DAG, Subtarget);
   case ISD::ADDCARRY:
   case ISD::SUBCARRY:      return LowerADDSUBCARRY(Op, DAG);
   case ISD::SADDO:

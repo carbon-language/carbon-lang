@@ -3016,6 +3016,26 @@ let Predicates = [HasMVEInt] in {
   defm MVE_VCGEU  : unpred_vcmp_r<ARMvcgeu, "u", 2>;
 }
 
+// Occasionally we need to cast between a i32 and a boolean vector, for
+// example when moving between rGPR and VPR.P0 as part of predicate vector
+// shuffles. We also sometimes need to cast between different predicate
+// vector types (v4i1<>v8i1, etc.) also as part of lowering vector shuffles.
+
+def predicate_cast : SDNode<"ARMISD::PREDICATE_CAST", SDTUnaryOp>;
+
+let Predicates = [HasMVEInt] in {
+  foreach VT = [ v4i1, v8i1, v16i1 ] in {
+    def : Pat<(i32 (predicate_cast (VT VCCR:$src))),
+              (i32 (COPY_TO_REGCLASS (VT VCCR:$src), VCCR))>;
+    def : Pat<(VT  (predicate_cast (i32 VCCR:$src))),
+              (VT  (COPY_TO_REGCLASS (i32 VCCR:$src), VCCR))>;
+
+    foreach VT2 = [ v4i1, v8i1, v16i1 ] in
+      def : Pat<(VT  (predicate_cast (VT2 VCCR:$src))),
+                (VT  (COPY_TO_REGCLASS (VT2 VCCR:$src), VCCR))>;
+  }
+}
+
 // end of MVE compares
 
 // start of MVE_qDest_qSrc
@@ -4410,6 +4430,37 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
   def : Pat<(v4i32 (vselect (v4i1 VCCR:$pred), (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))),
             (v4i32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
+
+  def : Pat<(v16i8 (vselect (v16i8 MQPR:$pred), (v16i8 MQPR:$v1), (v16i8 MQPR:$v2))),
+            (v16i8 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
+                              (MVE_VCMPi8 (v16i8 MQPR:$pred), (MVE_VMOVimmi8 0), 1)))>;
+  def : Pat<(v8i16 (vselect (v8i16 MQPR:$pred), (v8i16 MQPR:$v1), (v8i16 MQPR:$v2))),
+            (v8i16 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
+                              (MVE_VCMPi16 (v8i16 MQPR:$pred), (MVE_VMOVimmi16 0), 1)))>;
+  def : Pat<(v4i32 (vselect (v4i32 MQPR:$pred), (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))),
+            (v4i32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
+                              (MVE_VCMPi32 (v4i32 MQPR:$pred), (MVE_VMOVimmi32 0), 1)))>;
+
+  def : Pat<(v16i8 (zext  (v16i1 VCCR:$pred))),
+            (v16i8 (MVE_VPSEL (MVE_VMOVimmi8 1), (MVE_VMOVimmi8 0), 0, VCCR:$pred))>;
+  def : Pat<(v8i16 (zext  (v8i1  VCCR:$pred))),
+            (v8i16 (MVE_VPSEL (MVE_VMOVimmi16 1), (MVE_VMOVimmi16 0), 0, VCCR:$pred))>;
+  def : Pat<(v4i32 (zext  (v4i1  VCCR:$pred))),
+            (v4i32 (MVE_VPSEL (MVE_VMOVimmi32 1), (MVE_VMOVimmi32 0), 0, VCCR:$pred))>;
+
+  def : Pat<(v16i8 (sext  (v16i1 VCCR:$pred))),
+            (v16i8 (MVE_VPSEL (MVE_VMOVimmi8 255), (MVE_VMOVimmi8 0), 0, VCCR:$pred))>;
+  def : Pat<(v8i16 (sext  (v8i1  VCCR:$pred))),
+            (v8i16 (MVE_VPSEL (MVE_VMOVimmi8 255), (MVE_VMOVimmi16 0), 0, VCCR:$pred))>;
+  def : Pat<(v4i32 (sext  (v4i1  VCCR:$pred))),
+            (v4i32 (MVE_VPSEL (MVE_VMOVimmi8 255), (MVE_VMOVimmi32 0), 0, VCCR:$pred))>;
+
+  def : Pat<(v16i8 (anyext  (v16i1 VCCR:$pred))),
+            (v16i8 (MVE_VPSEL (MVE_VMOVimmi8 1), (MVE_VMOVimmi8 0), 0, VCCR:$pred))>;
+  def : Pat<(v8i16 (anyext  (v8i1  VCCR:$pred))),
+            (v8i16 (MVE_VPSEL (MVE_VMOVimmi16 1), (MVE_VMOVimmi16 0), 0, VCCR:$pred))>;
+  def : Pat<(v4i32 (anyext  (v4i1  VCCR:$pred))),
+            (v4i32 (MVE_VPSEL (MVE_VMOVimmi32 1), (MVE_VMOVimmi32 0), 0, VCCR:$pred))>;
 }
 
 def MVE_VPNOT : MVE_p<(outs), (ins), NoItinerary,

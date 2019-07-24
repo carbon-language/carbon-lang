@@ -129,6 +129,8 @@ class VectorType;
       LOOP_DEC,     // Really a part of LE, performs the sub
       LE,           // Low-overhead loops, Loop End
 
+      PREDICATE_CAST, // Predicate cast for MVE i1 types
+
       VCEQ,         // Vector compare equal.
       VCEQZ,        // Vector compare equal to zero.
       VCNE,         // Vector compare not equal (MVE)
