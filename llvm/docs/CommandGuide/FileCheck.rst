@@ -107,12 +107,12 @@ and from the command line.
   Sets a filecheck pattern variable ``VAR`` with value ``VALUE`` that can be
   used in ``CHECK:`` lines.
 
-.. option:: -D#<NUMVAR>=<NUMERIC EXPRESSION>
+.. option:: -D#<NUMVAR>=<VALUE EXPRESSION>
 
   Sets a filecheck numeric variable ``NUMVAR`` to the result of evaluating
-  ``<NUMERIC EXPRESSION>`` that can be used in ``CHECK:`` lines. See section
-  ``FileCheck Numeric Variables and Expressions`` for details on supported
-  numeric expressions.
+  ``<VALUE EXPRESSION>`` that can be used in ``CHECK:`` lines. See section
+  ``FileCheck Numeric Variables and Expressions`` for details on the format
+  and meaning of ``<VALUE EXPRESSION>``.
 
 .. option:: -version
 
@@ -625,27 +625,11 @@ but would not match the text:
 
 due to ``7`` being unequal to ``5 + 1``.
 
-The syntax also supports an empty expression, equivalent to writing {{[0-9]+}},
-for cases where the input must contain a numeric value but the value itself
-does not matter:
-
-.. code-block:: gas
-
-    ; CHECK-NOT: mov r0, r[[#]]
-
-to check that a value is synthesized rather than moved around.
-
-A numeric variable can also be defined to the result of a numeric expression,
-in which case the numeric expression is checked and if verified the variable is
-assigned to the value. The unified syntax for both defining numeric variables
-and checking a numeric expression is thus ``[[#<NUMVAR>: <expr>]]`` with each
-element as described previously.
-
 The ``--enable-var-scope`` option has the same effect on numeric variables as
 on string variables.
 
 Important note: In its current implementation, an expression cannot use a
-numeric variable with a non-empty expression defined on the same line.
+numeric variable defined on the same line.
 
 FileCheck Pseudo Numeric Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
