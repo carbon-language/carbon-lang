@@ -19,12 +19,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpnez_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpnez_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.i32 ne, q1, zr
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.i32 ne, q1, zr
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -38,12 +35,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpsltz_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpsltz_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 lt, q1, zr
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 lt, q1, zr
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -57,12 +51,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpsgtz_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpsgtz_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 gt, q1, zr
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 gt, q1, zr
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -76,12 +67,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpslez_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpslez_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 le, q1, zr
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 le, q1, zr
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -95,12 +83,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpsgez_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpsgez_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 ge, q1, zr
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 ge, q1, zr
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -127,12 +112,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpugtz_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpugtz_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.i32 ne, q1, zr
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.i32 ne, q1, zr
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -146,13 +128,10 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpulez_v4i1(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: cmpulez_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vmov.i32 q2, #0x0
-; CHECK-NEXT:    vcmp.u32 cs, q2, q1
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vmov.i32 q2, #0x0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.u32 cs, q2, q1
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -182,12 +161,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpeq_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpeq_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.i32 eq, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.i32 eq, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -201,12 +177,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpne_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpne_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.i32 ne, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.i32 ne, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -220,12 +193,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpslt_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpslt_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 gt, q2, q1
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 gt, q2, q1
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -239,12 +209,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpsgt_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpsgt_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 gt, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 gt, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -258,12 +225,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpsle_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpsle_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 ge, q2, q1
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 ge, q2, q1
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -277,12 +241,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpsge_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpsge_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.s32 ge, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.s32 ge, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -296,12 +257,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpult_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpult_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.u32 hi, q2, q1
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.u32 hi, q2, q1
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -315,12 +273,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpugt_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpugt_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.u32 hi, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.u32 hi, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -334,12 +289,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpule_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpule_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.u32 cs, q2, q1
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.u32 cs, q2, q1
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -353,12 +305,9 @@ entry:
 define arm_aapcs_vfpcc <4 x i32> @cmpuge_v4i1(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
 ; CHECK-LABEL: cmpuge_v4i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.u32 cs, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i32 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.u32 cs, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -390,12 +339,9 @@ entry:
 define arm_aapcs_vfpcc <8 x i16> @cmpeq_v8i1(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c) {
 ; CHECK-LABEL: cmpeq_v8i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.i16 eq, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i16 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.i16 eq, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
@@ -425,12 +371,9 @@ entry:
 define arm_aapcs_vfpcc <16 x i8> @cmpeq_v16i1(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c) {
 ; CHECK-LABEL: cmpeq_v16i1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vcmp.i8 eq, q1, q2
-; CHECK-NEXT:    vmrs r0, p0
 ; CHECK-NEXT:    vcmp.i8 eq, q0, zr
-; CHECK-NEXT:    vmrs r1, p0
-; CHECK-NEXT:    ands r0, r1
-; CHECK-NEXT:    vmsr p0, r0
+; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vcmpt.i8 eq, q1, q2
 ; CHECK-NEXT:    vpsel q0, q0, q1
 ; CHECK-NEXT:    bx lr
 entry:
