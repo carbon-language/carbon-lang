@@ -35688,7 +35688,7 @@ static SDValue combineReductionToHorizontal(SDNode *ExtElt, SelectionDAG &DAG,
 
   // TODO: Allow FADD with reduction and/or reassociation and no-signed-zeros.
   ISD::NodeType Opc;
-  SDValue Rdx = DAG.matchBinOpReduction(ExtElt, Opc, {ISD::ADD});
+  SDValue Rdx = DAG.matchBinOpReduction(ExtElt, Opc, {ISD::ADD}, true);
   if (!Rdx)
     return SDValue();
 
@@ -35697,7 +35697,7 @@ static SDValue combineReductionToHorizontal(SDNode *ExtElt, SelectionDAG &DAG,
          "Reduction doesn't end in an extract from index 0");
 
   EVT VT = ExtElt->getValueType(0);
-  EVT VecVT = ExtElt->getOperand(0).getValueType();
+  EVT VecVT = Rdx.getValueType();
   if (VecVT.getScalarType() != VT)
     return SDValue();
 
@@ -35711,14 +35711,14 @@ static SDValue combineReductionToHorizontal(SDNode *ExtElt, SelectionDAG &DAG,
   // vXi8 reduction - sum lo/hi halves then use PSADBW.
   if (VT == MVT::i8) {
     while (Rdx.getValueSizeInBits() > 128) {
-      EVT RdxVT = Rdx.getValueType();
-      unsigned HalfSize = RdxVT.getSizeInBits() / 2;
-      unsigned HalfElts = RdxVT.getVectorNumElements() / 2;
+      unsigned HalfSize = VecVT.getSizeInBits() / 2;
+      unsigned HalfElts = VecVT.getVectorNumElements() / 2;
       SDValue Lo = extractSubVector(Rdx, 0, DAG, DL, HalfSize);
       SDValue Hi = extractSubVector(Rdx, HalfElts, DAG, DL, HalfSize);
       Rdx = DAG.getNode(ISD::ADD, DL, Lo.getValueType(), Lo, Hi);
+      VecVT = Rdx.getValueType();
     }
-    assert(Rdx.getValueType() == MVT::v16i8 && "v16i8 reduction expected");
+    assert(VecVT == MVT::v16i8 && "v16i8 reduction expected");
 
     SDValue Hi = DAG.getVectorShuffle(
         MVT::v16i8, DL, Rdx, Rdx,
@@ -35746,15 +35746,14 @@ static SDValue combineReductionToHorizontal(SDNode *ExtElt, SelectionDAG &DAG,
     unsigned NumElts = VecVT.getVectorNumElements();
     SDValue Hi = extract128BitVector(Rdx, NumElts / 2, DAG, DL);
     SDValue Lo = extract128BitVector(Rdx, 0, DAG, DL);
-    VecVT = EVT::getVectorVT(*DAG.getContext(), VT, NumElts / 2);
-    Rdx = DAG.getNode(HorizOpcode, DL, VecVT, Hi, Lo);
+    Rdx = DAG.getNode(HorizOpcode, DL, Lo.getValueType(), Hi, Lo);
+    VecVT = Rdx.getValueType();
   }
   if (!((VecVT == MVT::v8i16 || VecVT == MVT::v4i32) && Subtarget.hasSSSE3()) &&
       !((VecVT == MVT::v4f32 || VecVT == MVT::v2f64) && Subtarget.hasSSE3()))
     return SDValue();
 
   // extract (add (shuf X), X), 0 --> extract (hadd X, X), 0
-  assert(Rdx.getValueType() == VecVT && "Unexpected reduction match");
   unsigned ReductionSteps = Log2_32(VecVT.getVectorNumElements());
   for (unsigned i = 0; i != ReductionSteps; ++i)
     Rdx = DAG.getNode(HorizOpcode, DL, VecVT, Rdx, Rdx);
