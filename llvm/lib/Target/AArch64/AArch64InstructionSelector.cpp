@@ -1572,6 +1572,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
       assert(SrcRB.getID() == AArch64::FPRRegBankID &&
              DstRB.getID() == AArch64::FPRRegBankID &&
              "Wrong extract regbank!");
+      (void)SrcRB;
 
       // Emit the same code as a vector extract.
       // Offset must be a multiple of 64.
