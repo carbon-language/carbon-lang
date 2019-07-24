@@ -275,8 +275,10 @@ public:
            isRegClass(AMDGPU::VReg_64RegClassID) ||
            isRegClass(AMDGPU::VReg_96RegClassID) ||
            isRegClass(AMDGPU::VReg_128RegClassID) ||
+           isRegClass(AMDGPU::VReg_160RegClassID) ||
            isRegClass(AMDGPU::VReg_256RegClassID) ||
-           isRegClass(AMDGPU::VReg_512RegClassID);
+           isRegClass(AMDGPU::VReg_512RegClassID) ||
+           isRegClass(AMDGPU::VReg_1024RegClassID);
   }
 
   bool isVReg32() const {
@@ -1872,8 +1874,10 @@ static int getRegClass(RegisterKind Is, unsigned RegWidth) {
       case 2: return AMDGPU::VReg_64RegClassID;
       case 3: return AMDGPU::VReg_96RegClassID;
       case 4: return AMDGPU::VReg_128RegClassID;
+      case 5: return AMDGPU::VReg_160RegClassID;
       case 8: return AMDGPU::VReg_256RegClassID;
       case 16: return AMDGPU::VReg_512RegClassID;
+      case 32: return AMDGPU::VReg_1024RegClassID;
     }
   } else if (Is == IS_TTMP) {
     switch (RegWidth) {
