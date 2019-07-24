@@ -3041,15 +3041,17 @@ multiclass unpred_vcmpf_r<SDPatternOperator opnode, int fc> {
 let Predicates = [HasMVEInt] in {
   defm MVE_VCEQZ  : unpred_vcmp_z<ARMvceqz, "i", 0>;
   defm MVE_VCNEZ  : unpred_vcmp_z<ARMvcnez, "i", 1>;
-  defm MVE_VCLEZ  : unpred_vcmp_z<ARMvclez, "s", 13>;
-  defm MVE_VCGTZ  : unpred_vcmp_z<ARMvcgtz, "s", 12>;
-  defm MVE_VCLTZ  : unpred_vcmp_z<ARMvcltz, "s", 11>;
   defm MVE_VCGEZ  : unpred_vcmp_z<ARMvcgez, "s", 10>;
+  defm MVE_VCLTZ  : unpred_vcmp_z<ARMvcltz, "s", 11>;
+  defm MVE_VCGTZ  : unpred_vcmp_z<ARMvcgtz, "s", 12>;
+  defm MVE_VCLEZ  : unpred_vcmp_z<ARMvclez, "s", 13>;
 
   defm MVE_VCEQ   : unpred_vcmp_r<ARMvceq, "i", 0>;
   defm MVE_VCNE   : unpred_vcmp_r<ARMvcne, "i", 1>;
-  defm MVE_VCGT   : unpred_vcmp_r<ARMvcgt, "s", 12>;
   defm MVE_VCGE   : unpred_vcmp_r<ARMvcge, "s", 10>;
+  defm MVE_VCLT   : unpred_vcmp_r<ARMvclt, "s", 11>;
+  defm MVE_VCGT   : unpred_vcmp_r<ARMvcgt, "s", 12>;
+  defm MVE_VCLE   : unpred_vcmp_r<ARMvcle, "s", 13>;
   defm MVE_VCGTU  : unpred_vcmp_r<ARMvcgtu, "u", 8>;
   defm MVE_VCGEU  : unpred_vcmp_r<ARMvcgeu, "u", 2>;
 }
@@ -3057,13 +3059,15 @@ let Predicates = [HasMVEInt] in {
 let Predicates = [HasMVEFloat] in {
   defm MVE_VFCEQZ  : unpred_vcmpf_z<ARMvceqz, 0>;
   defm MVE_VFCNEZ  : unpred_vcmpf_z<ARMvcnez, 1>;
-  defm MVE_VFCLEZ  : unpred_vcmpf_z<ARMvclez, 13>;
-  defm MVE_VFCGTZ  : unpred_vcmpf_z<ARMvcgtz, 12>;
-  defm MVE_VFCLTZ  : unpred_vcmpf_z<ARMvcltz, 11>;
   defm MVE_VFCGEZ  : unpred_vcmpf_z<ARMvcgez, 10>;
+  defm MVE_VFCLTZ  : unpred_vcmpf_z<ARMvcltz, 11>;
+  defm MVE_VFCGTZ  : unpred_vcmpf_z<ARMvcgtz, 12>;
+  defm MVE_VFCLEZ  : unpred_vcmpf_z<ARMvclez, 13>;
 
-  defm MVE_VFCGT   : unpred_vcmpf_r<ARMvcgt, 12>;
   defm MVE_VFCGE   : unpred_vcmpf_r<ARMvcge, 10>;
+  defm MVE_VFCLT   : unpred_vcmpf_r<ARMvclt, 11>;
+  defm MVE_VFCGT   : unpred_vcmpf_r<ARMvcgt, 12>;
+  defm MVE_VFCLE   : unpred_vcmpf_r<ARMvcle, 13>;
   defm MVE_VFCEQ   : unpred_vcmpf_r<ARMvceq, 0>;
   defm MVE_VFCNE   : unpred_vcmpf_r<ARMvcne, 1>;
 }

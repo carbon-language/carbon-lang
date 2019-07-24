@@ -274,10 +274,12 @@ def ARMvcne      : SDNode<"ARMISD::VCNE", SDTARMVCMP>;
 def ARMvcnez     : SDNode<"ARMISD::VCNEZ", SDTARMVCMPZ>;
 def ARMvcge      : SDNode<"ARMISD::VCGE", SDTARMVCMP>;
 def ARMvcgez     : SDNode<"ARMISD::VCGEZ", SDTARMVCMPZ>;
+def ARMvcle      : SDNode<"ARMISD::VCLE", SDTARMVCMP>;
 def ARMvclez     : SDNode<"ARMISD::VCLEZ", SDTARMVCMPZ>;
 def ARMvcgeu     : SDNode<"ARMISD::VCGEU", SDTARMVCMP>;
 def ARMvcgt      : SDNode<"ARMISD::VCGT", SDTARMVCMP>;
 def ARMvcgtz     : SDNode<"ARMISD::VCGTZ", SDTARMVCMPZ>;
+def ARMvclt      : SDNode<"ARMISD::VCLT", SDTARMVCMP>;
 def ARMvcltz     : SDNode<"ARMISD::VCLTZ", SDTARMVCMPZ>;
 def ARMvcgtu     : SDNode<"ARMISD::VCGTU", SDTARMVCMP>;
 

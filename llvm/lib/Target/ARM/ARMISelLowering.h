@@ -137,10 +137,12 @@ class VectorType;
       VCNEZ,        // Vector compare not equal to zero (MVE)
       VCGE,         // Vector compare greater than or equal.
       VCGEZ,        // Vector compare greater than or equal to zero.
+      VCLE,         // Vector compare less than or equal.
       VCLEZ,        // Vector compare less than or equal to zero.
       VCGEU,        // Vector compare unsigned greater than or equal.
       VCGT,         // Vector compare greater than.
       VCGTZ,        // Vector compare greater than zero.
+      VCLT,         // Vector compare less than.
       VCLTZ,        // Vector compare less than zero.
       VCGTU,        // Vector compare unsigned greater than.
       VTST,         // Vector test bits.

@@ -1521,10 +1521,12 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VCNEZ:         return "ARMISD::VCNEZ";
   case ARMISD::VCGE:          return "ARMISD::VCGE";
   case ARMISD::VCGEZ:         return "ARMISD::VCGEZ";
+  case ARMISD::VCLE:          return "ARMISD::VCLE";
   case ARMISD::VCLEZ:         return "ARMISD::VCLEZ";
   case ARMISD::VCGEU:         return "ARMISD::VCGEU";
   case ARMISD::VCGT:          return "ARMISD::VCGT";
   case ARMISD::VCGTZ:         return "ARMISD::VCGTZ";
+  case ARMISD::VCLT:          return "ARMISD::VCLT";
   case ARMISD::VCLTZ:         return "ARMISD::VCLTZ";
   case ARMISD::VCGTU:         return "ARMISD::VCGTU";
   case ARMISD::VTST:          return "ARMISD::VTST";
@@ -11820,6 +11822,57 @@ static SDValue PerformORCombineToBFI(SDNode *N,
   return SDValue();
 }
 
+static SDValue PerformORCombine_i1(SDNode *N,
+                                   TargetLowering::DAGCombinerInfo &DCI,
+                                   const ARMSubtarget *Subtarget) {
+  // Try to invert "or A, B" -> "and ~A, ~B", as the "and" is easier to chain
+  // together with predicates
+  struct Codes {
+    unsigned Opcode;
+    unsigned Opposite;
+  } InvertCodes[] = {
+      {ARMISD::VCEQ, ARMISD::VCNE},
+      {ARMISD::VCEQZ, ARMISD::VCNEZ},
+      {ARMISD::VCGE, ARMISD::VCLT},
+      {ARMISD::VCGEZ, ARMISD::VCLTZ},
+      {ARMISD::VCGT, ARMISD::VCLE},
+      {ARMISD::VCGTZ, ARMISD::VCLEZ},
+  };
+
+  EVT VT = N->getValueType(0);
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  unsigned Opposite0 = 0;
+  unsigned Opposite1 = 0;
+  for (auto Code : InvertCodes) {
+    if (N0->getOpcode() == Code.Opcode)
+      Opposite0 = Code.Opposite;
+    if (N0->getOpcode() == Code.Opposite)
+      Opposite0 = Code.Opcode;
+    if (N1->getOpcode() == Code.Opcode)
+      Opposite1 = Code.Opposite;
+    if (N1->getOpcode() == Code.Opposite)
+      Opposite1 = Code.Opcode;
+  }
+
+  if (!Opposite0 || !Opposite1)
+    return SDValue();
+
+  SmallVector<SDValue, 4> Ops0;
+  for (unsigned i = 0, e = N0->getNumOperands(); i != e; ++i)
+    Ops0.push_back(N0->getOperand(i));
+  SmallVector<SDValue, 4> Ops1;
+  for (unsigned i = 0, e = N1->getNumOperands(); i != e; ++i)
+    Ops1.push_back(N1->getOperand(i));
+
+  SDValue NewN0 = DCI.DAG.getNode(Opposite0, SDLoc(N0), VT, Ops0);
+  SDValue NewN1 = DCI.DAG.getNode(Opposite1, SDLoc(N1), VT, Ops1);
+  SDValue And = DCI.DAG.getNode(ISD::AND, SDLoc(N), VT, NewN0, NewN1);
+  return DCI.DAG.getNode(ISD::XOR, SDLoc(N), VT, And,
+                         DCI.DAG.getAllOnesConstant(SDLoc(N), VT));
+}
+
 /// PerformORCombine - Target-specific dag combine xforms for ISD::OR
 static SDValue PerformORCombine(SDNode *N,
                                 TargetLowering::DAGCombinerInfo &DCI,
@@ -11903,6 +11956,10 @@ static SDValue PerformORCombine(SDNode *N,
         }
     }
   }
+
+  if (Subtarget->hasMVEIntegerOps() &&
+      (VT == MVT::v4i1 || VT == MVT::v8i1 || VT == MVT::v16i1))
+    return PerformORCombine_i1(N, DCI, Subtarget);
 
   // Try to use the ARM/Thumb2 BFI (bitfield insert) instruction when
   // reasonable.
