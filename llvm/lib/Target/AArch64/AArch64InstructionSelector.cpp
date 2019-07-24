@@ -3523,7 +3523,7 @@ bool AArch64InstructionSelector::tryOptVectorDup(MachineInstr &I) const {
   int64_t Zero = 0;
   if (!mi_match(ZeroVec->getOperand(1).getReg(), MRI, m_ICst(Zero)) || Zero)
     return false;
-  for (unsigned i = 1, e = ZeroVec->getNumOperands() - 1; i < e; ++i) {
+  for (unsigned i = 1, e = ZeroVec->getNumOperands(); i < e; ++i) {
     if (ZeroVec->getOperand(i).getReg() != ZeroVec->getOperand(1).getReg())
       return false; // This wasn't an all zeros vector.
   }
