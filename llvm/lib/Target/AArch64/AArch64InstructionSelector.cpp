@@ -133,6 +133,8 @@ private:
   MachineInstr *emitIntegerCompare(MachineOperand &LHS, MachineOperand &RHS,
                                    MachineOperand &Predicate,
                                    MachineIRBuilder &MIRBuilder) const;
+  MachineInstr *emitADD(Register DefReg, MachineOperand &LHS, MachineOperand &RHS,
+                        MachineIRBuilder &MIRBuilder) const;
   MachineInstr *emitCMN(MachineOperand &LHS, MachineOperand &RHS,
                         MachineIRBuilder &MIRBuilder) const;
   MachineInstr *emitTST(const Register &LHS, const Register &RHS,
@@ -1829,8 +1831,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
       return selectVectorSHL(I, MRI);
     LLVM_FALLTHROUGH;
   case TargetOpcode::G_OR:
-  case TargetOpcode::G_LSHR:
-  case TargetOpcode::G_GEP: {
+  case TargetOpcode::G_LSHR: {
     // Reject the various things we don't support yet.
     if (unsupportedBinOp(I, RBI, MRI, TRI))
       return false;
@@ -1852,6 +1853,13 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
 
+  case TargetOpcode::G_GEP: {
+    MachineIRBuilder MIRBuilder(I);
+    emitADD(I.getOperand(0).getReg(), I.getOperand(1), I.getOperand(2),
+            MIRBuilder);
+    I.eraseFromParent();
+    return true;
+  }
   case TargetOpcode::G_UADDO: {
     // TODO: Support other types.
     unsigned OpSize = Ty.getSizeInBits();
@@ -3078,6 +3086,31 @@ getInsertVecEltOpInfo(const RegisterBank &RB, unsigned EltSize) {
     }
   }
   return std::make_pair(Opc, SubregIdx);
+}
+
+MachineInstr *
+AArch64InstructionSelector::emitADD(Register DefReg, MachineOperand &LHS,
+                                    MachineOperand &RHS,
+                                    MachineIRBuilder &MIRBuilder) const {
+  assert(LHS.isReg() && RHS.isReg() && "Expected LHS and RHS to be registers!");
+  MachineRegisterInfo &MRI = MIRBuilder.getMF().getRegInfo();
+  static const unsigned OpcTable[2][2]{{AArch64::ADDXrr, AArch64::ADDXri},
+                                       {AArch64::ADDWrr, AArch64::ADDWri}};
+  bool Is32Bit = MRI.getType(LHS.getReg()).getSizeInBits() == 32;
+  auto ImmFns = selectArithImmed(RHS);
+  unsigned Opc = OpcTable[Is32Bit][ImmFns.hasValue()];
+  auto AddMI = MIRBuilder.buildInstr(Opc, {DefReg}, {LHS.getReg()});
+
+  // If we matched a valid constant immediate, add those operands.
+  if (ImmFns) {
+    for (auto &RenderFn : *ImmFns)
+      RenderFn(AddMI);
+  } else {
+    AddMI.addUse(RHS.getReg());
+  }
+
+  constrainSelectedInstRegOperands(*AddMI, TII, TRI, RBI);
+  return &*AddMI;
 }
 
 MachineInstr *
