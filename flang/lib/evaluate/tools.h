@@ -56,18 +56,34 @@ std::optional<Variable<A>> AsVariable(const std::optional<Expr<A>> &expr) {
   }
 }
 
-// Predicate: true when an expression is a variable reference
+// Predicate: true when an expression is a variable reference, not an
+// operation.  Be advised: a call to a function that returns an object
+// pointer is a "variable" in Fortran (it can be the left-hand side of
+// an assignment).
 struct IsVariableVisitor : public virtual VisitorBase<std::optional<bool>> {
   // std::optional<> is used because it is default-constructible.
   using Result = std::optional<bool>;
-  explicit IsVariableVisitor(std::nullptr_t);
-  void Handle(const StaticDataObject &);  // constant Substring base -> false
-  void Post(const Substring &);
-  void Pre(const Component &);
-  void Pre(const ArrayRef &);
-  void Pre(const CoarrayRef &);
-  void Pre(const ComplexPart &);
+  explicit IsVariableVisitor(std::nullptr_t) {}
+  void Handle(const StaticDataObject &) { Return(false); }
+  void Handle(const DataRef &) { Return(true); }
+  void Pre(const Component &) { Return(true); }
+  void Pre(const ArrayRef &) { Return(true); }
+  void Pre(const CoarrayRef &) { Return(true); }
+  void Pre(const ComplexPart &) { Return(true); }
   void Handle(const ProcedureDesignator &);
+  template<TypeCategory CAT, int KIND>
+  void Pre(const Expr<Type<CAT, KIND>> &x) {
+    if (!std::holds_alternative<Designator<Type<CAT, KIND>>>(x.u) &&
+        !std::holds_alternative<FunctionRef<Type<CAT, KIND>>>(x.u)) {
+      Return(false);
+    }
+  }
+  void Pre(const Expr<SomeDerived> &x) {
+    if (!std::holds_alternative<Designator<SomeDerived>>(x.u) &&
+        !std::holds_alternative<FunctionRef<SomeDerived>>(x.u)) {
+      Return(false);
+    }
+  }
   template<typename A> void Post(const A &) { Return(false); }
 };
 
@@ -614,11 +630,22 @@ struct GetLastSymbolVisitor
   : public virtual VisitorBase<std::optional<const semantics::Symbol *>> {
   // std::optional<> is used because it is default-constructible.
   using Result = std::optional<const semantics::Symbol *>;
-  explicit GetLastSymbolVisitor(std::nullptr_t);
-  void Handle(const semantics::Symbol &);
-  void Handle(const Component &);
-  void Handle(const NamedEntity &);
-  void Handle(const ProcedureDesignator &);
+  explicit GetLastSymbolVisitor(std::nullptr_t) {}
+  void Handle(const semantics::Symbol &x) { Return(&x); }
+  void Handle(const Component &x) { Return(&x.GetLastSymbol()); }
+  void Handle(const NamedEntity &x) { Return(&x.GetLastSymbol()); }
+  void Handle(const ProcedureDesignator &x) { Return(x.GetSymbol()); }
+  template<TypeCategory CAT, int KIND>
+  void Pre(const Expr<Type<CAT, KIND>> &x) {
+    if (!std::holds_alternative<Designator<Type<CAT, KIND>>>(x.u)) {
+      Return(nullptr);
+    }
+  }
+  void Pre(const Expr<SomeDerived> &x) {
+    if (!std::holds_alternative<Designator<SomeDerived>>(x.u)) {
+      Return(nullptr);
+    }
+  }
 };
 
 template<typename A> const semantics::Symbol *GetLastSymbol(const A &x) {

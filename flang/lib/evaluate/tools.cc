@@ -24,13 +24,6 @@ using namespace Fortran::parser::literals;
 namespace Fortran::evaluate {
 
 // IsVariable()
-IsVariableVisitor::IsVariableVisitor(std::nullptr_t) {}
-void IsVariableVisitor::Handle(const StaticDataObject &) { Return(false); }
-void IsVariableVisitor::Post(const Substring &) { Return(true); }
-void IsVariableVisitor::Pre(const Component &) { Return(true); }
-void IsVariableVisitor::Pre(const ArrayRef &) { Return(true); }
-void IsVariableVisitor::Pre(const CoarrayRef &) { Return(true); }
-void IsVariableVisitor::Pre(const ComplexPart &) { Return(true); }
 void IsVariableVisitor::Handle(const ProcedureDesignator &x) {
   if (const semantics::Symbol * symbol{x.GetSymbol()}) {
     Return(symbol->attrs().test(semantics::Attr::POINTER));
@@ -645,21 +638,6 @@ bool IsAssumedRank(const ActualArgument &arg) {
     CHECK(assumedTypeDummy != nullptr);
     return IsAssumedRank(*assumedTypeDummy);
   }
-}
-
-// GetLastSymbol()
-GetLastSymbolVisitor::GetLastSymbolVisitor(std::nullptr_t) {}
-void GetLastSymbolVisitor::Handle(const semantics::Symbol &symbol) {
-  Return(&symbol);
-}
-void GetLastSymbolVisitor::Handle(const Component &x) {
-  Return(&x.GetLastSymbol());
-}
-void GetLastSymbolVisitor::Handle(const NamedEntity &x) {
-  Return(&x.GetLastSymbol());
-}
-void GetLastSymbolVisitor::Handle(const ProcedureDesignator &x) {
-  Return(x.GetSymbol());
 }
 
 // GetLastTarget()

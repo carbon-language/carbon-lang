@@ -4432,14 +4432,6 @@ void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
   }
   if (pexpr->has_value()) {
     const SomeExpr &expr{**pexpr};
-    if (evaluate::IsVariable(expr)) {
-      if (const Symbol * varSymbol{evaluate::GetLastSymbol(expr)}) {
-        if (const DeclTypeSpec * type{varSymbol->GetType()}) {
-          symbol.SetType(*type);
-          return;
-        }
-      }
-    }
     if (std::optional<evaluate::DynamicType> type{expr.GetType()}) {
       if (const auto *charExpr{
               evaluate::UnwrapExpr<evaluate::Expr<evaluate::SomeCharacter>>(
