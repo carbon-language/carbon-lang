@@ -3016,6 +3016,32 @@ let Predicates = [HasMVEInt] in {
   defm MVE_VCGEU  : unpred_vcmp_r<ARMvcgeu, "u", 2>;
 }
 
+
+// Extra "worst case" and/or/xor partterns, going into and out of GRP
+multiclass two_predops<SDPatternOperator opnode, Instruction insn> {
+  def v16i1 : Pat<(v16i1 (opnode (v16i1 VCCR:$p1), (v16i1 VCCR:$p2))),
+                  (v16i1 (COPY_TO_REGCLASS
+                           (insn (i32 (COPY_TO_REGCLASS (v16i1 VCCR:$p1), rGPR)),
+                                 (i32 (COPY_TO_REGCLASS (v16i1 VCCR:$p2), rGPR))),
+                           VCCR))>;
+  def v8i1  : Pat<(v8i1 (opnode (v8i1 VCCR:$p1), (v8i1 VCCR:$p2))),
+                  (v8i1 (COPY_TO_REGCLASS
+                          (insn (i32 (COPY_TO_REGCLASS (v8i1 VCCR:$p1), rGPR)),
+                                (i32 (COPY_TO_REGCLASS (v8i1 VCCR:$p2), rGPR))),
+                          VCCR))>;
+  def v4i1  : Pat<(v4i1 (opnode (v4i1 VCCR:$p1), (v4i1 VCCR:$p2))),
+                  (v4i1 (COPY_TO_REGCLASS
+                          (insn (i32 (COPY_TO_REGCLASS (v4i1 VCCR:$p1), rGPR)),
+                                (i32 (COPY_TO_REGCLASS (v4i1 VCCR:$p2), rGPR))),
+                          VCCR))>;
+}
+
+let Predicates = [HasMVEInt] in {
+  defm POR    : two_predops<or,  t2ORRrr>;
+  defm PAND   : two_predops<and, t2ANDrr>;
+  defm PEOR   : two_predops<xor, t2EORrr>;
+}
+
 // Occasionally we need to cast between a i32 and a boolean vector, for
 // example when moving between rGPR and VPR.P0 as part of predicate vector
 // shuffles. We also sometimes need to cast between different predicate
