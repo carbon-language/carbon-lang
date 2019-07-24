@@ -19,13 +19,13 @@ TEST_F(FileCheckTest, Literal) {
   // Eval returns the literal's value.
   FileCheckExpressionLiteral Ten(10);
   Expected<uint64_t> Value = Ten.eval();
-  ASSERT_TRUE(bool(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ(10U, *Value);
 
   // Max value can be correctly represented.
   FileCheckExpressionLiteral Max(std::numeric_limits<uint64_t>::max());
   Value = Max.eval();
-  ASSERT_TRUE(bool(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ(std::numeric_limits<uint64_t>::max(), *Value);
 }
 
@@ -68,7 +68,7 @@ TEST_F(FileCheckTest, NumericVariable) {
       FileCheckNumericVariableUse("FOO", &FooVar);
   EXPECT_FALSE(FooVar.getValue());
   Expected<uint64_t> EvalResult = FooVarUse.eval();
-  ASSERT_FALSE(EvalResult);
+  EXPECT_FALSE(EvalResult);
   expectUndefError("FOO", EvalResult.takeError());
 
   FooVar.setValue(42);
@@ -77,10 +77,10 @@ TEST_F(FileCheckTest, NumericVariable) {
   // return value set.
   EXPECT_TRUE(FooVar.isValueKnownAtMatchTime());
   Optional<uint64_t> Value = FooVar.getValue();
-  ASSERT_TRUE(bool(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ(42U, *Value);
   EvalResult = FooVarUse.eval();
-  ASSERT_TRUE(bool(EvalResult));
+  EXPECT_TRUE(bool(EvalResult));
   EXPECT_EQ(42U, *EvalResult);
 
   // Variable defined by numeric expression: isValueKnownAtMatchTime
@@ -95,11 +95,11 @@ TEST_F(FileCheckTest, NumericVariable) {
   FileCheckNumericVariable FoobarExprVar =
       FileCheckNumericVariable("FOOBAR", 2, &Binop);
   EXPECT_TRUE(FoobarExprVar.isValueKnownAtMatchTime());
-  ASSERT_FALSE(FoobarExprVar.getValue());
+  EXPECT_FALSE(FoobarExprVar.getValue());
   FileCheckNumericVariableUse FoobarExprVarUse =
       FileCheckNumericVariableUse("FOOBAR", &FoobarExprVar);
   EvalResult = FoobarExprVarUse.eval();
-  ASSERT_TRUE(bool(EvalResult));
+  EXPECT_TRUE(bool(EvalResult));
   EXPECT_EQ(43U, *EvalResult);
   EXPECT_TRUE(FoobarExprVar.getExpressionAST());
   FoobarExprVar.setValue(43);
@@ -115,10 +115,10 @@ TEST_F(FileCheckTest, NumericVariable) {
   EXPECT_FALSE(FooVar.getValue());
   EXPECT_FALSE(FoobarExprVar.getValue());
   EvalResult = FooVarUse.eval();
-  ASSERT_FALSE(EvalResult);
+  EXPECT_FALSE(EvalResult);
   expectUndefError("FOO", EvalResult.takeError());
   EvalResult = FoobarExprVarUse.eval();
-  ASSERT_FALSE(EvalResult);
+  EXPECT_FALSE(EvalResult);
   expectUndefError("FOOBAR", EvalResult.takeError());
 }
 
@@ -136,21 +136,21 @@ TEST_F(FileCheckTest, Binop) {
 
   // Defined variable: eval returns right value.
   Expected<uint64_t> Value = Binop.eval();
-  ASSERT_TRUE(bool(Value));
+  EXPECT_TRUE(bool(Value));
   EXPECT_EQ(60U, *Value);
 
   // 1 undefined variable: eval fails, error contains name of undefined
   // variable.
   FooVar.clearValue();
   Value = Binop.eval();
-  ASSERT_FALSE(Value);
+  EXPECT_FALSE(Value);
   expectUndefError("FOO", Value.takeError());
 
   // 2 undefined variables: eval fails, error contains names of all undefined
   // variables.
   BarVar.clearValue();
   Value = Binop.eval();
-  ASSERT_FALSE(Value);
+  EXPECT_FALSE(Value);
   expectUndefErrors({"FOO", "BAR"}, Value.takeError());
 }
 
@@ -180,21 +180,21 @@ TEST_F(FileCheckTest, ParseVar) {
   StringRef VarName = OrigVarName;
   Expected<FileCheckPattern::VariableProperties> ParsedVarResult =
       FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(ParsedVarResult->Name, OrigVarName);
   EXPECT_TRUE(VarName.empty());
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
 
   VarName = OrigVarName = bufferize(SM, "$GoodGlobalVar");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(ParsedVarResult->Name, OrigVarName);
   EXPECT_TRUE(VarName.empty());
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
 
   VarName = OrigVarName = bufferize(SM, "@GoodPseudoVar");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(ParsedVarResult->Name, OrigVarName);
   EXPECT_TRUE(VarName.empty());
   EXPECT_TRUE(ParsedVarResult->IsPseudo);
@@ -209,35 +209,35 @@ TEST_F(FileCheckTest, ParseVar) {
 
   VarName = OrigVarName = bufferize(SM, "B@dVar");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(VarName, OrigVarName.substr(1));
   EXPECT_EQ(ParsedVarResult->Name, "B");
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
 
   VarName = OrigVarName = bufferize(SM, "B$dVar");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(VarName, OrigVarName.substr(1));
   EXPECT_EQ(ParsedVarResult->Name, "B");
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
 
   VarName = bufferize(SM, "BadVar+");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(VarName, "+");
   EXPECT_EQ(ParsedVarResult->Name, "BadVar");
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
 
   VarName = bufferize(SM, "BadVar-");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(VarName, "-");
   EXPECT_EQ(ParsedVarResult->Name, "BadVar");
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
 
   VarName = bufferize(SM, "BadVar:");
   ParsedVarResult = FileCheckPattern::parseVariable(VarName, SM);
-  ASSERT_TRUE(bool(ParsedVarResult));
+  EXPECT_TRUE(bool(ParsedVarResult));
   EXPECT_EQ(VarName, ":");
   EXPECT_EQ(ParsedVarResult->Name, "BadVar");
   EXPECT_FALSE(ParsedVarResult->IsPseudo);
@@ -257,8 +257,6 @@ public:
     std::vector<std::string> GlobalDefines;
     GlobalDefines.emplace_back(std::string("#FOO=42"));
     GlobalDefines.emplace_back(std::string("BAR=BAZ"));
-    // An ASSERT_FALSE would make more sense but cannot be used in a
-    // constructor.
     EXPECT_FALSE(
         errorToBool(Context.defineCmdlineVariables(GlobalDefines, SM)));
     Context.createLineVariable();
@@ -336,13 +334,13 @@ TEST_F(FileCheckTest, ParseExpr) {
   // the same pattern object is used for the parsePatternExpect and
   // parseSubstExpect since no initNextPattern is called, thus appearing as
   // being on the same line from the pattern's point of view.
-  ASSERT_FALSE(Tester.parsePatternExpect("[[#LINE1VAR:FOO+1]]"));
+  EXPECT_FALSE(Tester.parsePatternExpect("[[#LINE1VAR:FOO+1]]"));
   EXPECT_FALSE(Tester.parseSubstExpect("LINE1VAR"));
 
   // Invalid use of variable defined on same line from input. As above, the
   // absence of a call to initNextPattern makes it appear to be on the same
   // line from the pattern's point of view.
-  ASSERT_FALSE(Tester.parsePatternExpect("[[#LINE2VAR:]]"));
+  EXPECT_FALSE(Tester.parsePatternExpect("[[#LINE2VAR:]]"));
   EXPECT_TRUE(Tester.parseSubstExpect("LINE2VAR"));
 
   // Unsupported operator.
@@ -443,7 +441,7 @@ TEST_F(FileCheckTest, Substitution) {
   FileCheckStringSubstitution StringSubstitution =
       FileCheckStringSubstitution(&Context, "VAR404", 42);
   Expected<std::string> SubstValue = StringSubstitution.getResult();
-  ASSERT_FALSE(bool(SubstValue));
+  EXPECT_FALSE(bool(SubstValue));
   expectUndefError("VAR404", SubstValue.takeError());
 
   // Substitutions of defined pseudo and non-pseudo numeric variables return
@@ -460,28 +458,28 @@ TEST_F(FileCheckTest, Substitution) {
   FileCheckNumericSubstitution SubstitutionN =
       FileCheckNumericSubstitution(&Context, "N", std::move(NVarUse), 30);
   SubstValue = SubstitutionLine.getResult();
-  ASSERT_TRUE(bool(SubstValue));
+  EXPECT_TRUE(bool(SubstValue));
   EXPECT_EQ("42", *SubstValue);
   SubstValue = SubstitutionN.getResult();
-  ASSERT_TRUE(bool(SubstValue));
+  EXPECT_TRUE(bool(SubstValue));
   EXPECT_EQ("10", *SubstValue);
 
   // Substitution of an undefined numeric variable fails, error holds name of
   // undefined variable.
   LineVar.clearValue();
   SubstValue = SubstitutionLine.getResult();
-  ASSERT_FALSE(bool(SubstValue));
+  EXPECT_FALSE(bool(SubstValue));
   expectUndefError("@LINE", SubstValue.takeError());
   NVar.clearValue();
   SubstValue = SubstitutionN.getResult();
-  ASSERT_FALSE(bool(SubstValue));
+  EXPECT_FALSE(bool(SubstValue));
   expectUndefError("N", SubstValue.takeError());
 
   // Substitution of a defined string variable returns the right value.
   FileCheckPattern P = FileCheckPattern(Check::CheckPlain, &Context, 1);
   StringSubstitution = FileCheckStringSubstitution(&Context, "FOO", 42);
   SubstValue = StringSubstitution.getResult();
-  ASSERT_TRUE(bool(SubstValue));
+  EXPECT_TRUE(bool(SubstValue));
   EXPECT_EQ("BAR", *SubstValue);
 }
 
@@ -540,7 +538,7 @@ TEST_F(FileCheckTest, FileCheckContext) {
   GlobalDefines.emplace_back(std::string("EmptyVar="));
   GlobalDefines.emplace_back(std::string("#LocalNumVar1=18"));
   GlobalDefines.emplace_back(std::string("#LocalNumVar2=LocalNumVar1+2"));
-  ASSERT_FALSE(errorToBool(Cxt.defineCmdlineVariables(GlobalDefines, SM)));
+  EXPECT_FALSE(errorToBool(Cxt.defineCmdlineVariables(GlobalDefines, SM)));
 
   // Check defined variables are present and undefined is absent.
   StringRef LocalVarStr = "LocalVar";
@@ -555,23 +553,23 @@ TEST_F(FileCheckTest, FileCheckContext) {
       P.parseNumericSubstitutionBlock(LocalNumVar1Ref, DefinedNumericVariable,
                                       /*IsLegacyLineExpr=*/false,
                                       /*LineNumber=*/1, &Cxt, SM);
-  ASSERT_TRUE(bool(LocalVar));
+  EXPECT_TRUE(bool(LocalVar));
   EXPECT_EQ(*LocalVar, "FOO");
   Expected<StringRef> EmptyVar = Cxt.getPatternVarValue(EmptyVarStr);
   Expected<StringRef> UnknownVar = Cxt.getPatternVarValue(UnknownVarStr);
-  ASSERT_TRUE(bool(ExpressionAST));
+  EXPECT_TRUE(bool(ExpressionAST));
   Expected<uint64_t> ExpressionVal = (*ExpressionAST)->eval();
-  ASSERT_TRUE(bool(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 18U);
   ExpressionAST =
       P.parseNumericSubstitutionBlock(LocalNumVar2Ref, DefinedNumericVariable,
                                       /*IsLegacyLineExpr=*/false,
                                       /*LineNumber=*/1, &Cxt, SM);
-  ASSERT_TRUE(bool(ExpressionAST));
+  EXPECT_TRUE(bool(ExpressionAST));
   ExpressionVal = (*ExpressionAST)->eval();
-  ASSERT_TRUE(bool(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 20U);
-  ASSERT_TRUE(bool(EmptyVar));
+  EXPECT_TRUE(bool(EmptyVar));
   EXPECT_EQ(*EmptyVar, "");
   EXPECT_TRUE(errorToBool(UnknownVar.takeError()));
 
@@ -588,13 +586,13 @@ TEST_F(FileCheckTest, FileCheckContext) {
   ExpressionAST = P.parseNumericSubstitutionBlock(
       LocalNumVar1Ref, DefinedNumericVariable, /*IsLegacyLineExpr=*/false,
       /*LineNumber=*/2, &Cxt, SM);
-  ASSERT_TRUE(bool(ExpressionAST));
+  EXPECT_TRUE(bool(ExpressionAST));
   ExpressionVal = (*ExpressionAST)->eval();
   EXPECT_TRUE(errorToBool(ExpressionVal.takeError()));
   ExpressionAST = P.parseNumericSubstitutionBlock(
       LocalNumVar2Ref, DefinedNumericVariable, /*IsLegacyLineExpr=*/false,
       /*LineNumber=*/2, &Cxt, SM);
-  ASSERT_TRUE(bool(ExpressionAST));
+  EXPECT_TRUE(bool(ExpressionAST));
   ExpressionVal = (*ExpressionAST)->eval();
   EXPECT_TRUE(errorToBool(ExpressionVal.takeError()));
   EmptyVar = Cxt.getPatternVarValue(EmptyVarStr);
@@ -606,19 +604,19 @@ TEST_F(FileCheckTest, FileCheckContext) {
   // Redefine global variables and check variables are defined again.
   GlobalDefines.emplace_back(std::string("$GlobalVar=BAR"));
   GlobalDefines.emplace_back(std::string("#$GlobalNumVar=36"));
-  ASSERT_FALSE(errorToBool(Cxt.defineCmdlineVariables(GlobalDefines, SM)));
+  EXPECT_FALSE(errorToBool(Cxt.defineCmdlineVariables(GlobalDefines, SM)));
   StringRef GlobalVarStr = "$GlobalVar";
   StringRef GlobalNumVarRef = bufferize(SM, "$GlobalNumVar");
   Expected<StringRef> GlobalVar = Cxt.getPatternVarValue(GlobalVarStr);
-  ASSERT_TRUE(bool(GlobalVar));
+  EXPECT_TRUE(bool(GlobalVar));
   EXPECT_EQ(*GlobalVar, "BAR");
   P = FileCheckPattern(Check::CheckPlain, &Cxt, 3);
   ExpressionAST = P.parseNumericSubstitutionBlock(
       GlobalNumVarRef, DefinedNumericVariable, /*IsLegacyLineExpr=*/false,
       /*LineNumber=*/3, &Cxt, SM);
-  ASSERT_TRUE(bool(ExpressionAST));
+  EXPECT_TRUE(bool(ExpressionAST));
   ExpressionVal = (*ExpressionAST)->eval();
-  ASSERT_TRUE(bool(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 36U);
 
   // Clear local variables and check global variables remain defined.
@@ -628,9 +626,9 @@ TEST_F(FileCheckTest, FileCheckContext) {
   ExpressionAST = P.parseNumericSubstitutionBlock(
       GlobalNumVarRef, DefinedNumericVariable, /*IsLegacyLineExpr=*/false,
       /*LineNumber=*/4, &Cxt, SM);
-  ASSERT_TRUE(bool(ExpressionAST));
+  EXPECT_TRUE(bool(ExpressionAST));
   ExpressionVal = (*ExpressionAST)->eval();
-  ASSERT_TRUE(bool(ExpressionVal));
+  EXPECT_TRUE(bool(ExpressionVal));
   EXPECT_EQ(*ExpressionVal, 36U);
 }
 } // namespace
