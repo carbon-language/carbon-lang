@@ -288,6 +288,7 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
     setOperationAction(ISD::BUILD_VECTOR, VT.getVectorElementType(), Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Legal);
+    setOperationAction(ISD::SETCC, VT, Custom);
 
     if (HasMVEFP) {
       setOperationAction(ISD::FMINNUM, VT, Legal);
@@ -346,6 +347,7 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     setOperationAction(ISD::CONCAT_VECTORS, VT, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::SETCC, VT, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Expand);
   }
 }
@@ -5895,6 +5897,11 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG,
     if (Op.getValueType().getVectorElementType() != MVT::i1)
       return SDValue();
 
+    // Make sure we expand floating point setcc to scalar if we do not have
+    // mve.fp, so that we can handle them from there.
+    if (Op0.getValueType().isFloatingPoint() && !ST->hasMVEFloatOps())
+      return SDValue();
+
     CmpVT = VT;
   }
 
@@ -5925,7 +5932,12 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG,
     switch (SetCCOpcode) {
     default: llvm_unreachable("Illegal FP comparison");
     case ISD::SETUNE:
-    case ISD::SETNE:  Invert = true; LLVM_FALLTHROUGH;
+    case ISD::SETNE:
+      if (ST->hasMVEFloatOps()) {
+        Opc = ARMISD::VCNE; break;
+      } else {
+        Invert = true; LLVM_FALLTHROUGH;
+      }
     case ISD::SETOEQ:
     case ISD::SETEQ:  Opc = ARMISD::VCEQ; break;
     case ISD::SETOLT:

@@ -3000,6 +3000,20 @@ multiclass unpred_vcmp_r<SDPatternOperator opnode, string suffix, int fc> {
                 (v4i1 (!cast<Instruction>("MVE_VCMP"#suffix#"32") (v4i32 MQPR:$v1), (v4i32 MQPR:$v2), fc))>;
 }
 
+multiclass unpred_vcmpf_z<SDPatternOperator opnode, int fc> {
+  def f16 : Pat<(v8i1 (opnode (v8f16 MQPR:$v1))),
+                (v8i1 (MVE_VCMPf16r (v8f16 MQPR:$v1), ZR, fc))>;
+  def f32 : Pat<(v4i1 (opnode (v4f32 MQPR:$v1))),
+                (v4i1 (MVE_VCMPf32r (v4f32 MQPR:$v1), ZR, fc))>;
+}
+
+multiclass unpred_vcmpf_r<SDPatternOperator opnode, int fc> {
+  def f16 : Pat<(v8i1 (opnode (v8f16 MQPR:$v1), (v8f16 MQPR:$v2))),
+                (v8i1 (MVE_VCMPf16 (v8f16 MQPR:$v1), (v8f16 MQPR:$v2), fc))>;
+  def f32 : Pat<(v4i1 (opnode (v4f32 MQPR:$v1), (v4f32 MQPR:$v2))),
+                (v4i1 (MVE_VCMPf32 (v4f32 MQPR:$v1), (v4f32 MQPR:$v2), fc))>;
+}
+
 let Predicates = [HasMVEInt] in {
   defm MVE_VCEQZ  : unpred_vcmp_z<ARMvceqz, "i", 0>;
   defm MVE_VCNEZ  : unpred_vcmp_z<ARMvcnez, "i", 1>;
@@ -3014,6 +3028,20 @@ let Predicates = [HasMVEInt] in {
   defm MVE_VCGE   : unpred_vcmp_r<ARMvcge, "s", 10>;
   defm MVE_VCGTU  : unpred_vcmp_r<ARMvcgtu, "u", 8>;
   defm MVE_VCGEU  : unpred_vcmp_r<ARMvcgeu, "u", 2>;
+}
+
+let Predicates = [HasMVEFloat] in {
+  defm MVE_VFCEQZ  : unpred_vcmpf_z<ARMvceqz, 0>;
+  defm MVE_VFCNEZ  : unpred_vcmpf_z<ARMvcnez, 1>;
+  defm MVE_VFCLEZ  : unpred_vcmpf_z<ARMvclez, 13>;
+  defm MVE_VFCGTZ  : unpred_vcmpf_z<ARMvcgtz, 12>;
+  defm MVE_VFCLTZ  : unpred_vcmpf_z<ARMvcltz, 11>;
+  defm MVE_VFCGEZ  : unpred_vcmpf_z<ARMvcgez, 10>;
+
+  defm MVE_VFCGT   : unpred_vcmpf_r<ARMvcgt, 12>;
+  defm MVE_VFCGE   : unpred_vcmpf_r<ARMvcge, 10>;
+  defm MVE_VFCEQ   : unpred_vcmpf_r<ARMvceq, 0>;
+  defm MVE_VFCNE   : unpred_vcmpf_r<ARMvcne, 1>;
 }
 
 
@@ -4457,6 +4485,11 @@ let Predicates = [HasMVEInt] in {
   def : Pat<(v4i32 (vselect (v4i1 VCCR:$pred), (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))),
             (v4i32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
 
+  def : Pat<(v8f16 (vselect (v8i1 VCCR:$pred), (v8f16 MQPR:$v1), (v8f16 MQPR:$v2))),
+            (v8f16 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
+  def : Pat<(v4f32 (vselect (v4i1 VCCR:$pred), (v4f32 MQPR:$v1), (v4f32 MQPR:$v2))),
+            (v4f32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0, VCCR:$pred))>;
+
   def : Pat<(v16i8 (vselect (v16i8 MQPR:$pred), (v16i8 MQPR:$v1), (v16i8 MQPR:$v2))),
             (v16i8 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
                               (MVE_VCMPi8 (v16i8 MQPR:$pred), (MVE_VMOVimmi8 0), 1)))>;
@@ -4465,6 +4498,13 @@ let Predicates = [HasMVEInt] in {
                               (MVE_VCMPi16 (v8i16 MQPR:$pred), (MVE_VMOVimmi16 0), 1)))>;
   def : Pat<(v4i32 (vselect (v4i32 MQPR:$pred), (v4i32 MQPR:$v1), (v4i32 MQPR:$v2))),
             (v4i32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
+                              (MVE_VCMPi32 (v4i32 MQPR:$pred), (MVE_VMOVimmi32 0), 1)))>;
+
+  def : Pat<(v8f16 (vselect (v8i16 MQPR:$pred), (v8f16 MQPR:$v1), (v8f16 MQPR:$v2))),
+            (v8f16 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
+                              (MVE_VCMPi16 (v8i16 MQPR:$pred), (MVE_VMOVimmi16 0), 1)))>;
+  def : Pat<(v4f32 (vselect (v4i32 MQPR:$pred), (v4f32 MQPR:$v1), (v4f32 MQPR:$v2))),
+            (v4f32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
                               (MVE_VCMPi32 (v4i32 MQPR:$pred), (MVE_VMOVimmi32 0), 1)))>;
 
   def : Pat<(v16i8 (zext  (v16i1 VCCR:$pred))),

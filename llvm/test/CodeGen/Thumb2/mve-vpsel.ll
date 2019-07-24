@@ -37,6 +37,30 @@ entry:
   ret <4 x i32> %1
 }
 
+define arm_aapcs_vfpcc <8 x half> @vpsel_f16(<8 x i1> *%mask, <8 x half> %src1, <8 x half> %src2) {
+; CHECK-LABEL: vpsel_f16:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vldr p0, [r0]
+; CHECK-NEXT:    vpsel q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = load <8 x i1>, <8 x i1>* %mask, align 4
+  %1 = select <8 x i1> %0, <8 x half> %src1, <8 x half> %src2
+  ret <8 x half> %1
+}
+
+define arm_aapcs_vfpcc <4 x float> @vpsel_f32(<4 x i1> *%mask, <4 x float> %src1, <4 x float> %src2) {
+; CHECK-LABEL: vpsel_f32:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    vldr p0, [r0]
+; CHECK-NEXT:    vpsel q0, q0, q1
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = load <4 x i1>, <4 x i1>* %mask, align 4
+  %1 = select <4 x i1> %0, <4 x float> %src1, <4 x float> %src2
+  ret <4 x float> %1
+}
+
 define arm_aapcs_vfpcc <4 x i32> @foo(<4 x i32> %vec.ind) {
 ; CHECK-LABEL: foo:
 ; CHECK:       @ %bb.0:
