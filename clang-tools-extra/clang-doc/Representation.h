@@ -350,7 +350,7 @@ struct ClangDocContext {
   tooling::ExecutionContext *ECtx;
   bool PublicOnly;
   std::string OutDirectory;
-  std::string ClangDocPath;
+  std::vector<std::string> UserStylesheets;
 };
 
 } // namespace doc

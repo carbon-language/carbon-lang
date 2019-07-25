@@ -62,6 +62,11 @@ static llvm::cl::opt<bool> DoxygenOnly(
     llvm::cl::desc("Use only doxygen-style comments to generate docs."),
     llvm::cl::init(false), llvm::cl::cat(ClangDocCategory));
 
+static llvm::cl::list<std::string> UserStylesheets(
+    "stylesheets", llvm::cl::CommaSeparated,
+    llvm::cl::desc("CSS stylesheets to extend the default styles."),
+    llvm::cl::cat(ClangDocCategory));
+
 enum OutputFormatTy {
   md,
   yaml,
@@ -201,12 +206,26 @@ int main(int argc, const char **argv) {
                                   tooling::ArgumentInsertPosition::END),
         ArgAdjuster);
 
+  clang::doc::ClangDocContext CDCtx = {
+      Exec->get()->getExecutionContext(),
+      PublicOnly,
+      OutDirectory,
+      {UserStylesheets.begin(), UserStylesheets.end()}};
+
+  if (Format == "html") {
+    void *MainAddr = (void *)(intptr_t)GetExecutablePath;
+    std::string ClangDocPath = GetExecutablePath(argv[0], MainAddr);
+    llvm::SmallString<128> DefaultStylesheet;
+    llvm::sys::path::native(ClangDocPath, DefaultStylesheet);
+    DefaultStylesheet = llvm::sys::path::parent_path(DefaultStylesheet);
+    llvm::sys::path::append(DefaultStylesheet,
+                            "../share/clang/clang-doc-default-stylesheet.css");
+    CDCtx.UserStylesheets.insert(CDCtx.UserStylesheets.begin(),
+                                 DefaultStylesheet.str());
+  }
+
   // Mapping phase
   llvm::outs() << "Mapping decls...\n";
-  void *MainAddr = (void *)(intptr_t)GetExecutablePath;
-  std::string ClangDocPath = GetExecutablePath(argv[0], MainAddr);
-  clang::doc::ClangDocContext CDCtx = {Exec->get()->getExecutionContext(),
-                                       PublicOnly, OutDirectory, ClangDocPath};
   auto Err =
       Exec->get()->execute(doc::newMapperActionFactory(CDCtx), ArgAdjuster);
   if (Err) {
@@ -245,7 +264,7 @@ int main(int argc, const char **argv) {
       continue;
     }
 
-    if (auto Err = G->get()->generateDocForInfo(I, InfoOS))
+    if (auto Err = G->get()->generateDocForInfo(I, InfoOS, CDCtx))
       llvm::errs() << toString(std::move(Err)) << "\n";
   }
 
