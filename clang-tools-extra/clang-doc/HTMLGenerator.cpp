@@ -44,9 +44,6 @@ public:
   operator bool() = delete;
 
   bool IsSelfClosing() const;
-
-  bool HasInlineChildren() const;
-
   llvm::SmallString<16> ToString() const;
 
 private:
@@ -67,29 +64,20 @@ struct HTMLNode {
 };
 
 struct TextNode : public HTMLNode {
-  TextNode(const Twine &Text, bool Indented = true)
-      : HTMLNode(NodeType::NODE_TEXT), Text(Text.str()), Indented(Indented) {}
+  TextNode(const Twine &Text)
+      : HTMLNode(NodeType::NODE_TEXT), Text(Text.str()) {}
 
   std::string Text; // Content of node
-  bool Indented; // Indicates if an indentation must be rendered before the text
   void Render(llvm::raw_ostream &OS, int IndentationLevel) override;
 };
 
 struct TagNode : public HTMLNode {
-  TagNode(HTMLTag Tag)
-      : HTMLNode(NodeType::NODE_TAG), Tag(Tag),
-        InlineChildren(Tag.HasInlineChildren()),
-        SelfClosing(Tag.IsSelfClosing()) {}
+  TagNode(HTMLTag Tag) : HTMLNode(NodeType::NODE_TAG), Tag(Tag) {}
   TagNode(HTMLTag Tag, const Twine &Text) : TagNode(Tag) {
-    Children.emplace_back(
-        llvm::make_unique<TextNode>(Text.str(), !InlineChildren));
+    Children.emplace_back(llvm::make_unique<TextNode>(Text.str()));
   }
 
-  HTMLTag Tag;         // Name of HTML Tag (p, div, h1)
-  bool InlineChildren; // Indicates if children nodes are rendered in the same
-                       // line as itself or if children must rendered in the
-                       // next line and with additional indentation
-  bool SelfClosing;    // Indicates if tag is self-closing
+  HTMLTag Tag; // Name of HTML Tag (p, div, h1)
   std::vector<std::unique_ptr<HTMLNode>> Children; // List of child nodes
   llvm::StringMap<llvm::SmallString<16>>
       Attributes; // List of key-value attributes for tag
@@ -130,24 +118,6 @@ bool HTMLTag::IsSelfClosing() const {
   llvm_unreachable("Unhandled HTMLTag::TagType");
 }
 
-bool HTMLTag::HasInlineChildren() const {
-  switch (Value) {
-  case HTMLTag::TAG_META:
-  case HTMLTag::TAG_TITLE:
-  case HTMLTag::TAG_H1:
-  case HTMLTag::TAG_H2:
-  case HTMLTag::TAG_H3:
-  case HTMLTag::TAG_LI:
-  case HTMLTag::TAG_A:
-    return true;
-  case HTMLTag::TAG_DIV:
-  case HTMLTag::TAG_P:
-  case HTMLTag::TAG_UL:
-    return false;
-  }
-  llvm_unreachable("Unhandled HTMLTag::TagType");
-}
-
 llvm::SmallString<16> HTMLTag::ToString() const {
   switch (Value) {
   case HTMLTag::TAG_META:
@@ -175,17 +145,23 @@ llvm::SmallString<16> HTMLTag::ToString() const {
 }
 
 void TextNode::Render(llvm::raw_ostream &OS, int IndentationLevel) {
-  if (Indented)
-    OS.indent(IndentationLevel * 2);
+  OS.indent(IndentationLevel * 2);
   printHTMLEscaped(Text, OS);
 }
 
 void TagNode::Render(llvm::raw_ostream &OS, int IndentationLevel) {
+  // Children nodes are rendered in the same line if all of them are text nodes
+  bool InlineChildren = true;
+  for (const auto &C : Children)
+    if (C->Type == NodeType::NODE_TAG) {
+      InlineChildren = false;
+      break;
+    }
   OS.indent(IndentationLevel * 2);
   OS << "<" << Tag.ToString();
   for (const auto &A : Attributes)
     OS << " " << A.getKey() << "=\"" << A.getValue() << "\"";
-  if (SelfClosing) {
+  if (Tag.IsSelfClosing()) {
     OS << "/>";
     return;
   }
@@ -385,7 +361,7 @@ static std::unique_ptr<HTMLNode> genHTML(const CommentInfo &I) {
   } else if (I.Kind == "TextComment") {
     if (I.Text == "")
       return nullptr;
-    return llvm::make_unique<TextNode>(I.Text, true);
+    return llvm::make_unique<TextNode>(I.Text);
   }
   return nullptr;
 }

@@ -56,9 +56,7 @@ TEST(HTMLGeneratorTest, emitNamespaceHTML) {
   <h2>Functions</h2>
   <div>
     <h3>OneFunction</h3>
-    <p>
-      OneFunction()
-    </p>
+    <p>OneFunction()</p>
   </div>
   <h2>Enums</h2>
   <div>
@@ -107,9 +105,7 @@ TEST(HTMLGeneratorTest, emitRecordHTML) {
 <title>class r</title>
 <div>
   <h1>class r</h1>
-  <p>
-    Defined at line 10 of test.cpp
-  </p>
+  <p>Defined at line 10 of test.cpp</p>
   <p>
     Inherits from 
     <a href=")raw" + std::string(PathToF.str()) +
@@ -118,8 +114,12 @@ TEST(HTMLGeneratorTest, emitRecordHTML) {
   </p>
   <h2>Members</h2>
   <ul>
-    <li>private <a href=")raw" +
-                         std::string(PathToInt.str()) + R"raw(">int</a> X</li>
+    <li>
+      private 
+      <a href=")raw" + std::string(PathToInt.str()) +
+                         R"raw(">int</a>
+       X
+    </li>
   </ul>
   <h2>Records</h2>
   <ul>
@@ -128,9 +128,7 @@ TEST(HTMLGeneratorTest, emitRecordHTML) {
   <h2>Functions</h2>
   <div>
     <h3>OneFunction</h3>
-    <p>
-      OneFunction()
-    </p>
+    <p>OneFunction()</p>
   </div>
   <h2>Enums</h2>
   <div>
@@ -180,9 +178,7 @@ TEST(HTMLGeneratorTest, emitFunctionHTML) {
                          R"raw(">int</a>
      P)
   </p>
-  <p>
-    Defined at line 10 of test.cpp
-  </p>
+  <p>Defined at line 10 of test.cpp</p>
 </div>
 )raw";
 
@@ -214,9 +210,7 @@ TEST(HTMLGeneratorTest, emitEnumHTML) {
   <ul>
     <li>X</li>
   </ul>
-  <p>
-    Defined at line 10 of test.cpp
-  </p>
+  <p>Defined at line 10 of test.cpp</p>
 </div>
 )raw";
 
@@ -280,23 +274,13 @@ TEST(HTMLGeneratorTest, emitCommentHTML) {
 <title></title>
 <div>
   <h3>f</h3>
-  <p>
-    void f(int I, int J)
-  </p>
-  <p>
-    Defined at line 10 of test.cpp
-  </p>
+  <p>void f(int I, int J)</p>
+  <p>Defined at line 10 of test.cpp</p>
   <div>
     <div>
-      <p>
-         Brief description.
-      </p>
-      <p>
-         Extended description that continues onto the next line.
-      </p>
-      <p>
-         Comment with html entities: &amp;, &lt;, &gt;, &quot;, &apos;.
-      </p>
+      <p> Brief description.</p>
+      <p> Extended description that continues onto the next line.</p>
+      <p> Comment with html entities: &amp;, &lt;, &gt;, &quot;, &apos;.</p>
     </div>
   </div>
 </div>
