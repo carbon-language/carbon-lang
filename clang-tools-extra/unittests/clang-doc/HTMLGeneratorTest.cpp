@@ -258,6 +258,15 @@ TEST(HTMLGeneratorTest, emitCommentHTML) {
   Extended->Children.back()->Kind = "TextComment";
   Extended->Children.back()->Text = " continues onto the next line.";
 
+  Top.Children.emplace_back(llvm::make_unique<CommentInfo>());
+  CommentInfo *Entities = Top.Children.back().get();
+  Entities->Kind = "ParagraphComment";
+  Entities->Children.emplace_back(llvm::make_unique<CommentInfo>());
+  Entities->Children.back()->Kind = "TextComment";
+  Entities->Children.back()->Name = "ParagraphComment";
+  Entities->Children.back()->Text =
+      " Comment with html entities: &, <, >, \", \'.";
+
   I.Description.emplace_back(std::move(Top));
 
   auto G = getHTMLGenerator();
@@ -284,6 +293,9 @@ TEST(HTMLGeneratorTest, emitCommentHTML) {
       </p>
       <p>
          Extended description that continues onto the next line.
+      </p>
+      <p>
+         Comment with html entities: &amp;, &lt;, &gt;, &quot;, &apos;.
       </p>
     </div>
   </div>

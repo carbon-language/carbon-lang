@@ -8,6 +8,7 @@
 
 #include "Generators.h"
 #include "Representation.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -176,7 +177,7 @@ llvm::SmallString<16> HTMLTag::ToString() const {
 void TextNode::Render(llvm::raw_ostream &OS, int IndentationLevel) {
   if (Indented)
     OS.indent(IndentationLevel * 2);
-  OS << Text;
+  printHTMLEscaped(Text, OS);
 }
 
 void TagNode::Render(llvm::raw_ostream &OS, int IndentationLevel) {
