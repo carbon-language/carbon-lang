@@ -2781,11 +2781,8 @@ void RewriteInstance::disassembleFunctions() {
           if (!BF.buildCFG(AllocId))
             return;
 
-          if (opts::PrintAll) {
-            static std::mutex CriticalSectionMutex;
-            std::lock_guard<std::mutex> Lock(CriticalSectionMutex);
+          if (opts::PrintAll)
             BF.print(outs(), "while building cfg", true);
-          }
         };
 
     ParallelUtilities::PredicateTy SkipPredicate =
@@ -2796,7 +2793,7 @@ void RewriteInstance::disassembleFunctions() {
     ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
         *BC, ParallelUtilities::SchedulingPolicy::SP_INST_LINEAR, WorkFun,
         SkipPredicate, "disassembleFunctions-buildCFG",
-        /*ForceSequential*/ opts::SequentialDisassembly);
+        /*ForceSequential*/ opts::SequentialDisassembly || opts::PrintAll);
   }
 
   BC->postProcessSymbolTable();
