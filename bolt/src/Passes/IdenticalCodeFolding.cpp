@@ -331,55 +331,26 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
   std::atomic<uint64_t> CallsSavedEstimate{0};
   std::atomic<uint64_t> NumFoldedLastIteration{0};
   CongruentBucketsMap CongruentBuckets;
-  std::unique_ptr<ThreadPool> ThPool;
-  if (!opts::NoThreads)
-    ThPool = std::make_unique<ThreadPool>(opts::ThreadCount);
 
   // Hash all the functions
   auto hashFunctions = [&]() {
     NamedRegionTimer HashFunctionsTimer("hashing", "hashing", "ICF breakdown",
                                         "ICF breakdown", opts::TimeICF);
+    ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
+      // Make sure indices are in-order.
+      BF.updateLayoutIndices();
 
-    // Perform hashing for a block of functions
-    auto hashBlock =
-        [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
-            std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
-        Timer T("hash block", "hash block");
-        DEBUG(T.startTimer());
-
-        for (auto It = BlockBegin; It != BlockEnd; ++It) {
-          auto &BF = It->second;
-          if (!this->shouldOptimize(BF))
-            continue;
-          // Make sure indices are in-order.
-          BF.updateLayoutIndices();
-
-          // Pre-compute hash before pushing into hashtable.
-          BF.hash(/*Recompute=*/true, opts::UseDFS);
-        }
-        DEBUG(T.stopTimer());
+      // Pre-compute hash before pushing into hashtable.
+      BF.hash(/*Recompute=*/true, opts::UseDFS);
     };
 
-    if (opts::NoThreads) {
-      hashBlock(BC.getBinaryFunctions().begin(), BC.getBinaryFunctions().end());
-      return;
-    }
+    ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
+      return !shouldOptimize(BF);
+    };
 
-    const unsigned BlockSize = OriginalFunctionCount / (2 * opts::ThreadCount);
-    unsigned Counter = 0;
-    auto BlockBegin = BC.getBinaryFunctions().begin();
-
-    for (auto It = BC.getBinaryFunctions().begin();
-         It != BC.getBinaryFunctions().end(); ++It, ++Counter) {
-      if (Counter >= BlockSize) {
-        ThPool->async(hashBlock, BlockBegin, std::next(It));
-        BlockBegin = std::next(It);
-        Counter = 0;
-      }
-    }
-    ThPool->async(hashBlock, BlockBegin, BC.getBinaryFunctions().end());
-
-    ThPool->wait();
+    ParallelUtilities::runOnEachFunction(
+        BC, ParallelUtilities::SchedulingPolicy::SP_TRIVIAL, WorkFun, SkipFunc,
+        "hashFunctions", /*ForceSequential*/ false, 2);
   };
 
   // Creates buckets with congruent functions - functions that potentially
@@ -405,8 +376,12 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
     Timer SinglePass("single fold pass", "single fold pass");
     DEBUG(SinglePass.startTimer());
 
-    // Perform the work for a single congruent list
-    auto performFoldingForItem = [&](std::set<BinaryFunction *> &Candidates) {
+    ThreadPool *ThPool;
+    if (!opts::NoThreads)
+      ThPool = &ParallelUtilities::getThreadPool();
+
+    // Fold identical functions within a single congruent bucket
+    auto procesSingleBucket = [&](std::set<BinaryFunction *> &Candidates) {
       Timer T("folding single congruent list", "folding single congruent list");
       DEBUG(T.startTimer());
 
@@ -426,7 +401,8 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         // different options.
         std::stable_sort(Twins.begin(), Twins.end(),
                          [](const BinaryFunction *A, const BinaryFunction *B) {
-                           return A->getFunctionNumber() < B->getFunctionNumber();
+                           return A->getFunctionNumber() <
+                                  B->getFunctionNumber();
                          });
 
         BinaryFunction *ParentBF = Twins[0];
@@ -457,21 +433,21 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
       DEBUG(T.stopTimer());
     };
 
-    // Create a task for each congruent list
+    // Create a task for each congruent bucket
     for (auto &Entry : CongruentBuckets) {
-      auto &Candidates = Entry.second;
-      if (Candidates.size() < 2)
+      auto &Bucket = Entry.second;
+      if (Bucket.size() < 2)
         continue;
 
       if (opts::NoThreads)
-        performFoldingForItem(Candidates);
+        procesSingleBucket(Bucket);
       else
-        ThPool->async(performFoldingForItem, std::ref(Candidates));
+        ThPool->async(procesSingleBucket, std::ref(Bucket));
     }
-    if (opts::NoThreads)
-      return;
 
-    ThPool->wait();
+    if (!opts::NoThreads)
+      ThPool->wait();
+
     DEBUG(SinglePass.stopTimer());
   };
 
