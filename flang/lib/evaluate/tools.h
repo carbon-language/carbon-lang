@@ -65,7 +65,7 @@ struct IsVariableVisitor : public virtual VisitorBase<std::optional<bool>> {
   using Result = std::optional<bool>;
   explicit IsVariableVisitor(std::nullptr_t) {}
   void Handle(const StaticDataObject &) { Return(false); }
-  void Handle(const DataRef &) { Return(true); }
+  void Handle(const Symbol &) { Return(true); }
   void Pre(const Component &) { Return(true); }
   void Pre(const ArrayRef &) { Return(true); }
   void Pre(const CoarrayRef &) { Return(true); }
