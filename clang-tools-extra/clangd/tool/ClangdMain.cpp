@@ -515,6 +515,11 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
   if (Tracer)
     TracingSession.emplace(*Tracer);
 
+  // If a user ran `clangd` in a terminal without redirecting anything,
+  // it's somewhat likely they're confused about how to use clangd.
+  // Show them the help overview, which explains.
+  if (llvm::outs().is_displayed() && llvm::errs().is_displayed())
+    llvm::errs() << Overview << "\n";
   // Use buffered stream to stderr (we still flush each log message). Unbuffered
   // stream can cause significant (non-deterministic) latency for the logger.
   llvm::errs().SetBuffered();
