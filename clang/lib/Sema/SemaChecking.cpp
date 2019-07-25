@@ -11400,55 +11400,6 @@ CheckImplicitConversion(Sema &S, Expr *E, QualType T, SourceLocation CC,
     }
   }
 
-  // If we are casting an integer type to a floating point type, we might
-  // lose accuracy if the floating point type has a narrower significand
-  // than the integer type. Issue warnings for that accuracy loss. 
-  if (SourceBT && TargetBT && SourceBT->isIntegerType() &&
-      TargetBT->isFloatingType()) {
-    // Determine the number of precision bits in the source integer type.
-    IntRange SourceRange = GetExprRange(S.Context, E, S.isConstantEvaluated());
-    unsigned int SourcePrecision = SourceRange.Width;
-
-    // Determine the number of precision bits in the
-    // target floating point type.
-    unsigned int TargetPrecision = llvm::APFloatBase::semanticsPrecision(
-      S.Context.getFloatTypeSemantics(QualType(TargetBT, 0)));
-
-    if (SourcePrecision > 0 && TargetPrecision > 0 &&
-        SourcePrecision > TargetPrecision) {
-
-      llvm::APSInt SourceInt;
-      if (E->isIntegerConstantExpr(SourceInt, S.Context)) {
-        // If the source integer is a constant, convert it to the target
-        // floating point type. Issue a warning if the value changes
-        // during the whole conversion.
-        llvm::APFloat TargetFloatValue(
-          S.Context.getFloatTypeSemantics(QualType(TargetBT, 0)));
-        llvm::APFloat::opStatus ConversionStatus =
-          TargetFloatValue.convertFromAPInt(SourceInt,
-          SourceBT->isSignedInteger(), llvm::APFloat::rmNearestTiesToEven);
-
-        if (ConversionStatus != llvm::APFloat::opOK) {
-          std::string PrettySourceValue = SourceInt.toString(10);
-          SmallString<32> PrettyTargetValue;
-          TargetFloatValue.toString(PrettyTargetValue,
-            TargetPrecision);
-          
-          S.DiagRuntimeBehavior(
-            E->getExprLoc(), E,
-            S.PDiag(diag::warn_impcast_integer_float_precision_constant)
-              << PrettySourceValue << PrettyTargetValue
-              << E->getType() << T
-              << E->getSourceRange() << clang::SourceRange(CC));
-        }
-      } else {
-        // Otherwise, the implicit conversion may lose precision.
-        DiagnoseImpCast(S, E, T, CC,
-          diag::warn_impcast_integer_float_precision);
-      }
-    }
-  }
-
   DiagnoseNullConversion(S, E, T, CC);
 
   S.DiscardMisalignedMemberAddress(Target, E);
