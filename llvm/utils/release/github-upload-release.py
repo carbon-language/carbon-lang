@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ===-- github-release.py  -------------------------------------------------===#
+# ===-- github-upload-release.py  ------------------------------------------===#
 #
 # Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 # See https://llvm.org/LICENSE.txt for license information.
@@ -18,13 +18,13 @@
 # https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line
 #
 # Create a new release from an existing tag:
-# ./github-release.py --token $github_token --release 8.0.1-rc4 create
+# ./github-upload-release.py --token $github_token --release 8.0.1-rc4 create
 #
 # Upload files for a release
-# ./github-release.py --token $github_token --release 8.0.1-rc4 upload --files llvm-8.0.1rc4.src.tar.xz
+# ./github-upload-release.py --token $github_token --release 8.0.1-rc4 upload --files llvm-8.0.1rc4.src.tar.xz
 #
 # You can upload as many files as you want at a time and use wildcards e.g.
-# ./github-release.py --token $github_token --release 8.0.1-rc4 upload --files *.src.*
+# ./github-upload-release.py --token $github_token --release 8.0.1-rc4 upload --files *.src.*
 #===------------------------------------------------------------------------===#
 
 
