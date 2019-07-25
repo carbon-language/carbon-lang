@@ -121,7 +121,7 @@ extern "C" const char *__crashreporter_info__
 asm(".desc ___crashreporter_info__, 0x10");
 #endif
 
-static void setCrashLogMessage(const char *msg) {
+static void setCrashLogMessage(const char *msg) LLVM_ATTRIBUTE_UNUSED {
 #ifdef HAVE_CRASHREPORTERCLIENT_H
   (void)CRSetCrashLogMessage(msg);
 #elif HAVE_CRASHREPORTER_INFO
