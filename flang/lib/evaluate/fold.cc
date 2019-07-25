@@ -445,14 +445,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
           return j.value;
         }));
   } else if (name == "bit_size") {
-    if (auto *sx{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
-      return std::visit(
-          [](const auto &x) {
-            using TR = typename std::decay_t<decltype(x)>::Result;
-            return Expr<T>{Scalar<TR>::bits};
-          },
-          sx->u);
-    }
+    return Expr<T>{Scalar<T>::bits};
   } else if (name == "dim") {
     return FoldElementalIntrinsic<T, T, T>(
         context, std::move(funcRef), &Scalar<T>::DIM);

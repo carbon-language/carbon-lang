@@ -296,7 +296,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"i", AnyInt, Rank::elementalOrBOZ},
             {"j", AnyInt, Rank::elementalOrBOZ}},
         DefaultLogical},
-    {"bit_size", {{"i", AnyInt, Rank::anyOrAssumedRank}}, DefaultInt,
+    {"bit_size", {{"i", SameInt, Rank::anyOrAssumedRank}}, SameInt,
         Rank::scalar},
     {"ble",
         {{"i", AnyInt, Rank::elementalOrBOZ},

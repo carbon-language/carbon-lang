@@ -56,7 +56,8 @@ std::optional<ConstantSubscripts> AsConstantExtents(const Shape &);
 
 inline int GetRank(const Shape &s) { return static_cast<int>(s.size()); }
 
-// The dimension here is zero-based, unlike DIM= arguments to many intrinsics.
+// The dimension argument to these inquiries is zero-based,
+// unlike the DIM= arguments to many intrinsics.
 MaybeExtentExpr GetLowerBound(
     FoldingContext &, const NamedEntity &, int dimension);
 Shape GetLowerBounds(FoldingContext &, const NamedEntity &);

@@ -658,6 +658,7 @@ public:
   using ScopeHandler::Post;
   using ScopeHandler::Pre;
 
+  bool Pre(const parser::Initialization &);
   void Post(const parser::EntityDecl &);
   void Post(const parser::ObjectDecl &);
   void Post(const parser::PointerDecl &);
@@ -2636,6 +2637,13 @@ void DeclarationVisitor::Post(const parser::CodimensionDecl &x) {
   DeclareObjectEntity(name, Attrs{});
 }
 
+bool DeclarationVisitor::Pre(const parser::Initialization &) {
+  // Defer inspection of initializers to Initialization() so that the
+  // symbol being initialized will be available within the initialization
+  // expression.
+  return false;
+}
+
 void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
@@ -2677,8 +2685,8 @@ bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
     return false;
   }
   const auto &expr{std::get<parser::ConstantExpr>(x.t)};
-  Walk(expr);
   ApplyImplicitRules(symbol);
+  Walk(expr);
   if (auto converted{
           EvaluateConvertedExpr(symbol, expr, expr.thing.value().source)}) {
     symbol.get<ObjectEntityDetails>().set_init(std::move(*converted));
@@ -4773,6 +4781,10 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
   if (name.symbol == nullptr) {
     return;
   }
+  // Traversal of the initializer was deferred to here so that the
+  // symbol being declared can be available for e.g.
+  //   real, parameter :: x = tiny(x)
+  Walk(init.u);
   Symbol &ultimate{name.symbol->GetUltimate()};
   if (auto *details{ultimate.detailsIf<ObjectEntityDetails>()}) {
     // TODO: check C762 - all bounds and type parameters of component
