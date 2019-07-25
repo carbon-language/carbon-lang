@@ -454,6 +454,22 @@ TEST_F(PatternMatchTest, SpecificIntSLE) {
           .match(NegOne));
 }
 
+TEST_F(PatternMatchTest, Unless) {
+  Value *X = IRB.CreateAdd(IRB.getInt32(1), IRB.getInt32(0));
+
+  EXPECT_TRUE(m_Add(m_One(), m_Zero()).match(X));
+  EXPECT_FALSE(m_Add(m_Zero(), m_One()).match(X));
+
+  EXPECT_FALSE(m_Unless(m_Add(m_One(), m_Zero())).match(X));
+  EXPECT_TRUE(m_Unless(m_Add(m_Zero(), m_One())).match(X));
+
+  EXPECT_TRUE(m_c_Add(m_One(), m_Zero()).match(X));
+  EXPECT_TRUE(m_c_Add(m_Zero(), m_One()).match(X));
+
+  EXPECT_FALSE(m_Unless(m_c_Add(m_One(), m_Zero())).match(X));
+  EXPECT_FALSE(m_Unless(m_c_Add(m_Zero(), m_One())).match(X));
+}
+
 TEST_F(PatternMatchTest, CommutativeDeferredValue) {
   Value *X = IRB.getInt32(1);
   Value *Y = IRB.getInt32(2);
