@@ -46,7 +46,6 @@ const Symbol *FindPointerComponent(const Symbol &);
 const Symbol *FindInterface(const Symbol &);
 const Symbol *FindSubprogram(const Symbol &);
 const Symbol *FindFunctionResult(const Symbol &);
-const Symbol *GetAssociatedVariable(const AssocEntityDetails &);
 const Symbol *GetAssociationRoot(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
@@ -56,7 +55,6 @@ bool IsUseAssociated(const Symbol *, const Scope &);
 bool IsHostAssociated(const Symbol &, const Scope &);
 bool IsDummy(const Symbol &);
 bool IsPointerDummy(const Symbol &);
-bool IsValueDummy(const Symbol &);
 bool IsFunction(const Symbol &);
 bool IsPureProcedure(const Symbol &);
 bool IsPureProcedure(const Scope &);
@@ -116,7 +114,6 @@ bool IsAssumedSizeArray(const Symbol &symbol);
 std::optional<parser::MessageFixedText> WhyNotModifiable(
     const Symbol &symbol, const Scope &scope);
 // Is the symbol modifiable in this scope
-bool IsModifiable(const Symbol &symbol, const Scope &scope);
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope);
 
 // Returns the complete list of derived type parameter symbols in

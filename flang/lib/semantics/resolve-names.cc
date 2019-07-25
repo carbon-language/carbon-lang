@@ -3853,8 +3853,8 @@ bool DeclarationVisitor::PassesLocalityChecks(
   if (std::optional<MessageFixedText> msg{
           WhyNotModifiable(symbol, currScope())}) {
     SayWithReason(name, symbol,
-        "'%s' must be able to appear in a variable definition context to "
-        "appear in a locality-spec"_err_en_US,
+        "'%s' may not appear in a locality-spec because it is not "
+        "definable"_err_en_US,
         std::move(*msg));
     return false;
   }

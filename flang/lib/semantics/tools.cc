@@ -124,10 +124,6 @@ bool IsDummy(const Symbol &symbol) {
   }
 }
 
-bool IsValueDummy(const Symbol &symbol) {
-  return IsDummy(symbol) && symbol.attrs().test(Attr::VALUE);
-}
-
 bool IsPointerDummy(const Symbol &symbol) {
   return IsPointer(symbol) && IsDummy(symbol);
 }
@@ -135,9 +131,7 @@ bool IsPointerDummy(const Symbol &symbol) {
 // variable-name
 bool IsVariableName(const Symbol &symbol) {
   if (const Symbol * root{GetAssociationRoot(symbol)}) {
-    return IsValueDummy(symbol) ||
-        (root->has<ObjectEntityDetails>() && !IsParameter(*root) &&
-            !IsIntentIn(*root));
+    return root->has<ObjectEntityDetails>() && !IsParameter(*root);
   } else {
     return false;
   }
@@ -337,7 +331,7 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
   return nullptr;
 }
 
-const Symbol *GetAssociatedVariable(const AssocEntityDetails &details) {
+static const Symbol *GetAssociatedVariable(const AssocEntityDetails &details) {
   if (const MaybeExpr & expr{details.expr()}) {
     if (evaluate::IsVariable(*expr)) {
       if (const Symbol * varSymbol{evaluate::GetLastSymbol(*expr)}) {
@@ -352,8 +346,9 @@ const Symbol *GetAssociatedVariable(const AssocEntityDetails &details) {
 // Return nullptr if the name is associated with an expression
 const Symbol *GetAssociationRoot(const Symbol &symbol) {
   const Symbol &ultimate{symbol.GetUltimate()};
-  if (ultimate.has<AssocEntityDetails>()) {  // construct association
-    return GetAssociatedVariable(ultimate.get<AssocEntityDetails>());
+  if (const auto *details{ultimate.detailsIf<AssocEntityDetails>()}) {
+    // We have a construct association
+    return GetAssociatedVariable(*details);
   } else {
     return &ultimate;
   }
@@ -435,10 +430,8 @@ bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
     if (const auto *details{root->detailsIf<ObjectEntityDetails>()}) {
       if (const DeclTypeSpec * type{details->type()}) {
         if (const DerivedTypeSpec * derived{type->AsDerived()}) {
-          if (IsEventTypeOrLockType(derived) ||
-              HasEventOrLockPotentialComponent(*derived)) {
-            return true;
-          }
+          return IsEventTypeOrLockType(derived) ||
+              HasEventOrLockPotentialComponent(*derived);
         }
       }
     }
@@ -493,7 +486,7 @@ bool IsAssumedSizeArray(const Symbol &symbol) {
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope) {
   if (const auto *pureProc{semantics::FindPureProcedureContaining(&scope)}) {
     if (const Symbol * root{GetAssociationRoot(symbol)}) {
-      if (semantics::FindExternallyVisibleObject(*root, *pureProc)) {
+      if (FindExternallyVisibleObject(*root, *pureProc)) {
         return true;
       }
     }
@@ -505,6 +498,9 @@ bool InProtectedContext(const Symbol &symbol, const Scope &currentScope) {
   return IsProtected(symbol) && !IsHostAssociated(symbol, currentScope);
 }
 
+// C1101 and C1158
+// TODO Need to check for the case of a variable that has a vector subscript
+// that is construct associated, also need to check for a coindexed object
 std::optional<parser::MessageFixedText> WhyNotModifiable(
     const Symbol &symbol, const Scope &scope) {
   const Symbol *root{GetAssociationRoot(symbol)};
@@ -513,20 +509,17 @@ std::optional<parser::MessageFixedText> WhyNotModifiable(
   } else if (InProtectedContext(*root, scope)) {
     return "'%s' is protected in this scope"_en_US;
   } else if (IsExternalInPureContext(*root, scope)) {
-    return "'%s' is an external that is referenced in a PURE procedure"_en_US;
+    return "'%s' is externally visible and referenced in a PURE"
+           " procedure"_en_US;
   } else if (IsOrContainsEventOrLockComponent(*root)) {
     return "'%s' is an entity with either an EVENT_TYPE or LOCK_TYPE"_en_US;
-  } else if (IsIntentIn(*root) && !IsValueDummy(*root)) {
+  } else if (IsIntentIn(*root)) {
     return "'%s' is an INTENT(IN) dummy argument"_en_US;
   } else if (!IsVariableName(*root)) {
     return "'%s' is not a variable"_en_US;
   } else {
     return std::nullopt;
   }
-}
-
-bool IsModifiable(const Symbol &symbol, const Scope &scope) {
-  return !WhyNotModifiable(symbol, scope);
 }
 
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,

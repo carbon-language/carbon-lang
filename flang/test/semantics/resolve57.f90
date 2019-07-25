@@ -52,7 +52,7 @@ subroutine s4()
   use m3
 
   ! C857 This is not OK because of the "protected" attribute
-!ERROR: 'prot' must be able to appear in a variable definition context to appear in a locality-spec
+!ERROR: 'prot' may not appear in a locality-spec because it is not definable
   do concurrent (i=1:5) local(prot)
   end do
 
@@ -71,7 +71,7 @@ subroutine s5()
     end do
 
     ! C1101 This is not OK because 'a' is not associated with a variable
-!ERROR: 'a' must be able to appear in a variable definition context to appear in a locality-spec
+!ERROR: 'a' may not appear in a locality-spec because it is not definable
     do concurrent (i=1:5) local(a)
     end do
   end associate
@@ -100,7 +100,7 @@ subroutine s6()
   select type ( a => func() )
   type is ( point )
     ! C1158 This is not OK because 'a' is not associated with a variable
-!ERROR: 'a' must be able to appear in a variable definition context to appear in a locality-spec
+!ERROR: 'a' may not appear in a locality-spec because it is not definable
     do concurrent (i=1:5) local(a)
     end do
   end select
@@ -121,7 +121,7 @@ pure subroutine s7()
   use m4
 
   ! C1594 This is not OK because we're in a PURE subroutine
-!ERROR: 'var' must be able to appear in a variable definition context to appear in a locality-spec
+!ERROR: 'var' may not appear in a locality-spec because it is not definable
   do concurrent (i=1:5) local(var)
   end do
 end subroutine s7
@@ -129,7 +129,7 @@ end subroutine s7
 subroutine s8()
   integer, parameter :: iconst = 343
 
-!ERROR: 'iconst' must be able to appear in a variable definition context to appear in a locality-spec
+!ERROR: 'iconst' may not appear in a locality-spec because it is not definable
   do concurrent (i=1:5) local(iconst)
   end do
 end subroutine s8
