@@ -91,6 +91,15 @@ std::string getFormatString() {
   llvm_unreachable("Unknown OutputFormatTy");
 }
 
+// This function isn't referenced outside its translation unit, but it
+// can't use the "static" keyword because its address is used for
+// GetMainExecutable (since some platforms don't support taking the
+// address of main, and some platforms can't implement GetMainExecutable
+// without being given the address of a function in the main executable).
+std::string GetExecutablePath(const char *Argv0, void *MainAddr) {
+  return llvm::sys::fs::getMainExecutable(Argv0, MainAddr);
+}
+
 bool CreateDirectory(const Twine &DirName, bool ClearDirectory = false) {
   std::error_code OK;
   llvm::SmallString<128> DocsRootPath;
@@ -129,7 +138,6 @@ llvm::Expected<llvm::SmallString<128>> getInfoOutputFile(StringRef Root,
                                                          StringRef RelativePath,
                                                          StringRef Name,
                                                          StringRef Ext) {
-  std::error_code OK;
   llvm::SmallString<128> Path;
   llvm::sys::path::native(Root, Path);
   llvm::sys::path::append(Path, RelativePath);
@@ -195,8 +203,10 @@ int main(int argc, const char **argv) {
 
   // Mapping phase
   llvm::outs() << "Mapping decls...\n";
+  void *MainAddr = (void *)(intptr_t)GetExecutablePath;
+  std::string ClangDocPath = GetExecutablePath(argv[0], MainAddr);
   clang::doc::ClangDocContext CDCtx = {Exec->get()->getExecutionContext(),
-                                       PublicOnly};
+                                       PublicOnly, OutDirectory, ClangDocPath};
   auto Err =
       Exec->get()->execute(doc::newMapperActionFactory(CDCtx), ArgAdjuster);
   if (Err) {
@@ -238,6 +248,9 @@ int main(int argc, const char **argv) {
     if (auto Err = G->get()->generateDocForInfo(I, InfoOS))
       llvm::errs() << toString(std::move(Err)) << "\n";
   }
+
+  if (!G->get()->createResources(CDCtx))
+    return 1;
 
   return 0;
 }

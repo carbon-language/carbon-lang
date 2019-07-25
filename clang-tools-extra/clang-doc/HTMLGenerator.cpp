@@ -35,6 +35,7 @@ public:
     TAG_UL,
     TAG_LI,
     TAG_A,
+    TAG_LINK,
   };
 
   HTMLTag() = default;
@@ -103,6 +104,7 @@ struct HTMLFile {
 bool HTMLTag::IsSelfClosing() const {
   switch (Value) {
   case HTMLTag::TAG_META:
+  case HTMLTag::TAG_LINK:
     return true;
   case HTMLTag::TAG_TITLE:
   case HTMLTag::TAG_DIV:
@@ -140,6 +142,8 @@ llvm::SmallString<16> HTMLTag::ToString() const {
     return llvm::SmallString<16>("li");
   case HTMLTag::TAG_A:
     return llvm::SmallString<16>("a");
+  case HTMLTag::TAG_LINK:
+    return llvm::SmallString<16>("link");
   }
   llvm_unreachable("Unhandled HTMLTag::TagType");
 }
@@ -526,6 +530,7 @@ public:
   static const char *Format;
 
   llvm::Error generateDocForInfo(Info *I, llvm::raw_ostream &OS) override;
+  bool createResources(ClangDocContext CDCtx) override;
 };
 
 const char *HTMLGenerator::Format = "html";
@@ -572,10 +577,38 @@ llvm::Error HTMLGenerator::generateDocForInfo(Info *I, llvm::raw_ostream &OS) {
 
   F.Children.emplace_back(
       llvm::make_unique<TagNode>(HTMLTag::TAG_TITLE, InfoTitle));
+  auto LinkNode = llvm::make_unique<TagNode>(HTMLTag::TAG_LINK);
+  LinkNode->Attributes.try_emplace("rel", "stylesheet");
+  SmallString<128> StylesheetPath = computeRelativePath("", I->Path);
+  llvm::sys::path::append(StylesheetPath, "clang-doc-default-stylesheet.css");
+  LinkNode->Attributes.try_emplace("href", StylesheetPath);
+  F.Children.emplace_back(std::move(LinkNode));
   F.Children.emplace_back(std::move(MainContentNode));
   F.Render(OS);
 
   return llvm::Error::success();
+}
+
+bool HTMLGenerator::createResources(ClangDocContext CDCtx) {
+  llvm::outs() << "Generating stylesheet for docs...\n";
+  llvm::SmallString<128> StylesheetPathWrite;
+  llvm::sys::path::native(CDCtx.OutDirectory, StylesheetPathWrite);
+  llvm::sys::path::append(StylesheetPathWrite,
+                          "clang-doc-default-stylesheet.css");
+  llvm::SmallString<128> StylesheetPathRead;
+  llvm::sys::path::native(CDCtx.ClangDocPath, StylesheetPathRead);
+  StylesheetPathRead = llvm::sys::path::parent_path(StylesheetPathRead);
+  llvm::sys::path::append(StylesheetPathRead, "..", "share", "clang",
+                          "clang-doc-default-stylesheet.css");
+  std::error_code OK;
+  std::error_code FileErr =
+      llvm::sys::fs::copy_file(StylesheetPathRead, StylesheetPathWrite);
+  if (FileErr != OK) {
+    llvm::errs() << "Error creating stylesheet file: " << FileErr.message()
+                 << "\n";
+    return false;
+  }
+  return true;
 }
 
 static GeneratorRegistry::Add<HTMLGenerator> HTML(HTMLGenerator::Format,

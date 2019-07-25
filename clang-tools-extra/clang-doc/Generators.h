@@ -27,6 +27,7 @@ public:
 
   // Write out the decl info in the specified format.
   virtual llvm::Error generateDocForInfo(Info *I, llvm::raw_ostream &OS) = 0;
+  virtual bool createResources(ClangDocContext CDCtx) = 0;
 };
 
 typedef llvm::Registry<Generator> GeneratorRegistry;

@@ -43,6 +43,7 @@ TEST(HTMLGeneratorTest, emitNamespaceHTML) {
   std::string Expected = R"raw(<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title>namespace Namespace</title>
+<link rel="stylesheet" href="clang-doc-default-stylesheet.css"/>
 <div>
   <h1>namespace Namespace</h1>
   <h2>Namespaces</h2>
@@ -103,6 +104,7 @@ TEST(HTMLGeneratorTest, emitRecordHTML) {
   std::string Expected = R"raw(<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title>class r</title>
+<link rel="stylesheet" href="../../../clang-doc-default-stylesheet.css"/>
 <div>
   <h1>class r</h1>
   <p>Defined at line 10 of test.cpp</p>
@@ -168,6 +170,7 @@ TEST(HTMLGeneratorTest, emitFunctionHTML) {
   std::string Expected = R"raw(<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title></title>
+<link rel="stylesheet" href="clang-doc-default-stylesheet.css"/>
 <div>
   <h3>f</h3>
   <p>
@@ -205,6 +208,7 @@ TEST(HTMLGeneratorTest, emitEnumHTML) {
   std::string Expected = R"raw(<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title></title>
+<link rel="stylesheet" href="clang-doc-default-stylesheet.css"/>
 <div>
   <h3>enum class e</h3>
   <ul>
@@ -272,6 +276,7 @@ TEST(HTMLGeneratorTest, emitCommentHTML) {
   std::string Expected = R"raw(<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title></title>
+<link rel="stylesheet" href="clang-doc-default-stylesheet.css"/>
 <div>
   <h3>f</h3>
   <p>void f(int I, int J)</p>

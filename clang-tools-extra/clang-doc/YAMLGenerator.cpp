@@ -244,6 +244,7 @@ public:
   static const char *Format;
 
   llvm::Error generateDocForInfo(Info *I, llvm::raw_ostream &OS) override;
+  bool createResources(ClangDocContext CDCtx) override { return true; }
 };
 
 const char *YAMLGenerator::Format = "yaml";
