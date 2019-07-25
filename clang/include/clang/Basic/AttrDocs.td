@@ -1500,6 +1500,33 @@ in any resulting diagnostics.
   }
   error_info &foo();
   void f() { foo(); } // Does not diagnose, error_info is a reference.
+
+Additionally, discarded temporaries resulting from a call to a constructor
+marked with ``[[nodiscard]]`` or a constructor of a type marked
+``[[nodiscard]]`` will also diagnose. This also applies to type conversions that
+use the annotated ``[[nodiscard]]`` constructor or result in an annotated type.
+
+.. code-block: c++
+  struct [[nodiscard]] marked_type {/*..*/ };
+  struct marked_ctor {
+    [[nodiscard]] marked_ctor();
+    marked_ctor(int);
+  };
+
+  struct S {
+    operator marked_type() const;
+    [[nodiscard]] operator int() const;
+  };
+
+  void usages() {
+    marked_type(); // diagnoses.
+    marked_ctor(); // diagnoses.
+    marked_ctor(3); // Does not diagnose, int constructor isn't marked nodiscard.
+
+    S s;
+    static_cast<marked_type>(s); // diagnoses
+    (int)s; // diagnoses
+  }
   }];
 }
 
