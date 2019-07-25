@@ -1495,13 +1495,6 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // initializers throws an exception.
   SmallVector<EHScopeStack::stable_iterator, 16> cleanups;
   llvm::Instruction *cleanupDominator = nullptr;
-  auto addCleanup = [&](const EHScopeStack::stable_iterator &cleanup) {
-    cleanups.push_back(cleanup);
-    if (!cleanupDominator) // create placeholder once needed
-      cleanupDominator = CGF.Builder.CreateAlignedLoad(
-          CGF.Int8Ty, llvm::Constant::getNullValue(CGF.Int8PtrTy),
-          CharUnits::One());
-  };
 
   unsigned curInitIndex = 0;
 
@@ -1526,7 +1519,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       if (QualType::DestructionKind dtorKind =
               Base.getType().isDestructedType()) {
         CGF.pushDestroy(dtorKind, V, Base.getType());
-        addCleanup(CGF.EHStack.stable_begin());
+        cleanups.push_back(CGF.EHStack.stable_begin());
       }
     }
   }
@@ -1603,9 +1596,15 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
           = field->getType().isDestructedType()) {
       assert(LV.isSimple());
       if (CGF.needsEHCleanup(dtorKind)) {
+        if (!cleanupDominator)
+          cleanupDominator = CGF.Builder.CreateAlignedLoad(
+              CGF.Int8Ty,
+              llvm::Constant::getNullValue(CGF.Int8PtrTy),
+              CharUnits::One()); // placeholder
+
         CGF.pushDestroy(EHCleanup, LV.getAddress(), field->getType(),
                         CGF.getDestroyer(dtorKind), false);
-        addCleanup(CGF.EHStack.stable_begin());
+        cleanups.push_back(CGF.EHStack.stable_begin());
         pushedCleanup = true;
       }
     }
@@ -1621,8 +1620,6 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   // Deactivate all the partial cleanups in reverse order, which
   // generally means popping them.
-  assert((cleanupDominator || cleanups.empty()) &&
-         "Missing cleanupDominator before deactivating cleanup blocks");
   for (unsigned i = cleanups.size(); i != 0; --i)
     CGF.DeactivateCleanupBlock(cleanups[i-1], cleanupDominator);
 
