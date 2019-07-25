@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../lib/evaluate/leading-zero-bit-count.h"
+#include "../../lib/common/leading-zero-bit-count.h"
 #include "testing.h"
 
-using Fortran::evaluate::LeadingZeroBitCount;
+using Fortran::common::LeadingZeroBitCount;
 
 int main() {
   MATCH(64, LeadingZeroBitCount(std::uint64_t{0}));

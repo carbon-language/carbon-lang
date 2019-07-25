@@ -17,8 +17,8 @@
 
 #include "common.h"
 #include "integer.h"
-#include "leading-zero-bit-count.h"
 #include "real.h"
+#include "../common/leading-zero-bit-count.h"
 #include <cinttypes>
 #include <limits>
 #include <ostream>
@@ -50,7 +50,7 @@ private:
   using Real = REAL;
   static constexpr int log10Radix{LOG10RADIX};
   static constexpr std::uint64_t uint64Radix{TenToThe(log10Radix)};
-  static constexpr int minDigitBits{64 - LeadingZeroBitCount(uint64Radix)};
+  static constexpr int minDigitBits{64 - common::LeadingZeroBitCount(uint64Radix)};
   using Digit = HostUnsignedInt<minDigitBits>;
   static constexpr Digit radix{uint64Radix};
   static_assert(radix < std::numeric_limits<Digit>::max() / 10,

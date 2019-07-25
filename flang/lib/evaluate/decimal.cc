@@ -14,9 +14,9 @@
 
 #include "decimal.h"
 #include "integer.h"
-#include "leading-zero-bit-count.h"
 #include "../common/bit-population-count.h"
 #include "../common/idioms.h"
+#include "../common/leading-zero-bit-count.h"
 
 namespace Fortran::evaluate::value {
 
@@ -120,7 +120,7 @@ public:
     if constexpr (Word::bits >= nBits) {
       word_ = n;
     } else {
-      int shift{nBits - LeadingZeroBitCount(n) - Word::bits};
+      int shift{nBits - common::LeadingZeroBitCount(n) - Word::bits};
       if (shift <= 0) {
         word_ = n;
       } else {

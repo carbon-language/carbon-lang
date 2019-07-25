@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_EVALUATE_LEADING_ZERO_BIT_COUNT_H_
-#define FORTRAN_EVALUATE_LEADING_ZERO_BIT_COUNT_H_
+#ifndef FORTRAN_COMMON_LEADING_ZERO_BIT_COUNT_H_
+#define FORTRAN_COMMON_LEADING_ZERO_BIT_COUNT_H_
 
 // A fast and portable function that implements Fortran's LEADZ intrinsic
 // function, which counts the number of leading (most significant) zero bit
@@ -24,7 +24,7 @@
 
 #include <cinttypes>
 
-namespace Fortran::evaluate {
+namespace Fortran::common {
 namespace {
 // The following magic constant is a binary deBruijn sequence.
 // It has the remarkable property that if one extends it
@@ -95,4 +95,4 @@ inline constexpr int LeadingZeroBitCount(std::uint8_t x) {
   return eightBitLeadingZeroBitCount[x];
 }
 }
-#endif  // FORTRAN_EVALUATE_LEADING_ZERO_BIT_COUNT_H_
+#endif  // FORTRAN_COMMON_LEADING_ZERO_BIT_COUNT_H_

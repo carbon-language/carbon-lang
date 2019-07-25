@@ -24,8 +24,8 @@
 // and signed-magnitude encodings appear to be extinct in 2018.)
 
 #include "common.h"
-#include "leading-zero-bit-count.h"
 #include "../common/bit-population-count.h"
+#include "../common/leading-zero-bit-count.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
@@ -380,13 +380,13 @@ public:
   // that are clear.
   constexpr int LEADZ() const {
     if (LEPart(parts - 1) != 0) {
-      int lzbc{LeadingZeroBitCount(LEPart(parts - 1))};
+      int lzbc{common::LeadingZeroBitCount(LEPart(parts - 1))};
       return lzbc - extraTopPartBits;
     }
     int upperZeroes{topPartBits};
     for (int j{1}; j < parts; ++j) {
       if (Part p{LEPart(parts - 1 - j)}) {
-        int lzbc{LeadingZeroBitCount(p)};
+        int lzbc{common::LeadingZeroBitCount(p)};
         return upperZeroes + lzbc - extraPartBits;
       }
       upperZeroes += partBits;
