@@ -1653,29 +1653,32 @@ void RewriteInstance::disassemblePLT() {
     }
 
     // To get the name we have to read a relocation against the address.
-    for (const auto &Rel : RelaPLTSection->getSectionRef().relocations()) {
-      if (Rel.getType() != ELF::R_X86_64_JUMP_SLOT)
-        continue;
-      if (Rel.getOffset() == TargetAddress) {
-        const auto SymbolIter = Rel.getSymbol();
-        assert(SymbolIter != InputFile->symbol_end() &&
-               "non-null symbol expected");
-        const auto SymbolName = cantFail((*SymbolIter).getName());
-        std::string Name = SymbolName.str() + "@PLT";
-        const auto PtrSize = BC->AsmInfo->getCodePointerSize();
-        auto *BF = BC->createBinaryFunction(Name,
-                                            *PLTSection,
-                                            InstrAddr,
-                                            0,
-                                            /*IsSimple=*/false,
-                                            PLTSize,
-                                            PLTAlignment);
-        auto TargetSymbol = BC->registerNameAtAddress(SymbolName.str() + "@GOT",
-                                                      TargetAddress,
-                                                      PtrSize,
-                                                      PLTAlignment);
-        BF->setPLTSymbol(TargetSymbol);
-        break;
+    if (RelaPLTSection) {
+      for (const auto &Rel : RelaPLTSection->getSectionRef().relocations()) {
+        if (Rel.getType() != ELF::R_X86_64_JUMP_SLOT)
+          continue;
+        if (Rel.getOffset() == TargetAddress) {
+          const auto SymbolIter = Rel.getSymbol();
+          assert(SymbolIter != InputFile->symbol_end() &&
+                 "non-null symbol expected");
+          const auto SymbolName = cantFail((*SymbolIter).getName());
+          std::string Name = SymbolName.str() + "@PLT";
+          const auto PtrSize = BC->AsmInfo->getCodePointerSize();
+          auto *BF = BC->createBinaryFunction(Name,
+                                              *PLTSection,
+                                              InstrAddr,
+                                              0,
+                                              /*IsSimple=*/false,
+                                              PLTSize,
+                                              PLTAlignment);
+          auto TargetSymbol =
+            BC->registerNameAtAddress(SymbolName.str() + "@GOT",
+                                      TargetAddress,
+                                      PtrSize,
+                                      PLTAlignment);
+          BF->setPLTSymbol(TargetSymbol);
+          break;
+        }
       }
     }
   }
