@@ -29,10 +29,15 @@ define i32 @truncload_small_deref(i64* dereferenceable(7) %ptr) {
 ; On little-endian, we can narrow the load without an offset.
 
 define i32 @truncload_deref(i64* dereferenceable(8) %ptr) {
-; CHECK-LABEL: @truncload_deref(
-; CHECK-NEXT:    [[X:%.*]] = load i64, i64* [[PTR:%.*]], align 4
-; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[X]] to i32
-; CHECK-NEXT:    ret i32 [[R]]
+; LE-LABEL: @truncload_deref(
+; LE-NEXT:    [[TMP1:%.*]] = bitcast i64* [[PTR:%.*]] to i32*
+; LE-NEXT:    [[R:%.*]] = load i32, i32* [[TMP1]], align 4
+; LE-NEXT:    ret i32 [[R]]
+;
+; BE-LABEL: @truncload_deref(
+; BE-NEXT:    [[X:%.*]] = load i64, i64* [[PTR:%.*]], align 4
+; BE-NEXT:    [[R:%.*]] = trunc i64 [[X]] to i32
+; BE-NEXT:    ret i32 [[R]]
 ;
   %x = load i64, i64* %ptr
   %r = trunc i64 %x to i32
@@ -42,10 +47,15 @@ define i32 @truncload_deref(i64* dereferenceable(8) %ptr) {
 ; Preserve alignment.
 
 define i16 @truncload_align(i32* dereferenceable(14) %ptr) {
-; CHECK-LABEL: @truncload_align(
-; CHECK-NEXT:    [[X:%.*]] = load i32, i32* [[PTR:%.*]], align 16
-; CHECK-NEXT:    [[R:%.*]] = trunc i32 [[X]] to i16
-; CHECK-NEXT:    ret i16 [[R]]
+; LE-LABEL: @truncload_align(
+; LE-NEXT:    [[TMP1:%.*]] = bitcast i32* [[PTR:%.*]] to i16*
+; LE-NEXT:    [[R:%.*]] = load i16, i16* [[TMP1]], align 16
+; LE-NEXT:    ret i16 [[R]]
+;
+; BE-LABEL: @truncload_align(
+; BE-NEXT:    [[X:%.*]] = load i32, i32* [[PTR:%.*]], align 16
+; BE-NEXT:    [[R:%.*]] = trunc i32 [[X]] to i16
+; BE-NEXT:    ret i16 [[R]]
 ;
   %x = load i32, i32* %ptr, align 16
   %r = trunc i32 %x to i16
@@ -98,12 +108,40 @@ define i32 @truncload_volatile(i64* dereferenceable(8) %ptr) {
 ; Preserve address space.
 
 define i32 @truncload_address_space(i64 addrspace(1)* dereferenceable(8) %ptr) {
-; CHECK-LABEL: @truncload_address_space(
-; CHECK-NEXT:    [[X:%.*]] = load i64, i64 addrspace(1)* [[PTR:%.*]], align 4
-; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[X]] to i32
-; CHECK-NEXT:    ret i32 [[R]]
+; LE-LABEL: @truncload_address_space(
+; LE-NEXT:    [[TMP1:%.*]] = bitcast i64 addrspace(1)* [[PTR:%.*]] to i32 addrspace(1)*
+; LE-NEXT:    [[R:%.*]] = load i32, i32 addrspace(1)* [[TMP1]], align 4
+; LE-NEXT:    ret i32 [[R]]
+;
+; BE-LABEL: @truncload_address_space(
+; BE-NEXT:    [[X:%.*]] = load i64, i64 addrspace(1)* [[PTR:%.*]], align 4
+; BE-NEXT:    [[R:%.*]] = trunc i64 [[X]] to i32
+; BE-NEXT:    ret i32 [[R]]
 ;
   %x = load i64, i64 addrspace(1)* %ptr, align 4
   %r = trunc i64 %x to i32
   ret i32 %r
 }
+
+; Most metadata should be transferred to the narrow load.
+; TODO: We lost the range.
+
+define i32 @truncload_metadata(i64* dereferenceable(8) %ptr) {
+; LE-LABEL: @truncload_metadata(
+; LE-NEXT:    [[TMP1:%.*]] = bitcast i64* [[PTR:%.*]] to i32*
+; LE-NEXT:    [[R:%.*]] = load i32, i32* [[TMP1]], align 4, !invariant.load !0, !nontemporal !1
+; LE-NEXT:    ret i32 [[R]]
+;
+; BE-LABEL: @truncload_metadata(
+; BE-NEXT:    [[X:%.*]] = load i64, i64* [[PTR:%.*]], align 4, !range !0, !invariant.load !1, !nontemporal !2
+; BE-NEXT:    [[R:%.*]] = trunc i64 [[X]] to i32
+; BE-NEXT:    ret i32 [[R]]
+;
+  %x = load i64, i64* %ptr, align 4, !invariant.load !0, !nontemporal !1, !range !2
+  %r = trunc i64 %x to i32
+  ret i32 %r
+}
+
+!0 = !{}
+!1 = !{i32 1}
+!2 = !{i64 0, i64 2}
