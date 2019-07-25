@@ -496,42 +496,19 @@ bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
 void FrameAnalysis::cleanAnnotations() {
   NamedRegionTimer T("cleanannotations", "clean annotations", "FA",
                      "FA breakdown", opts::TimeFA);
-  auto cleanBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
-                        std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
-    for (auto It = BlockBegin; It != BlockEnd; ++It) {
-      auto &BF = It->second;
 
-      for (auto &BB : BF) {
-        for (auto &Inst : BB) {
-          BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
-          BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
-        }
+  ParallelUtilities::WorkFuncTy CleanFunction = [&](BinaryFunction &BF) {
+    for (auto &BB : BF) {
+      for (auto &Inst : BB) {
+        BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
+        BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
       }
     }
   };
 
-  if (opts::NoThreads) {
-    cleanBlock(BC.getBinaryFunctions().begin(), BC.getBinaryFunctions().end());
-    return;
-  }
-
-  ThreadPool ThPool(opts::ThreadCount);
-  const unsigned TasksCount = 20 * opts::ThreadCount;
-  const unsigned SingleTaskSize = BC.getBinaryFunctions().size() / TasksCount;
-
-  auto BlockBegin = BC.getBinaryFunctions().begin();
-  unsigned CurSize = 0;
-  for (auto It = BC.getBinaryFunctions().begin();
-       It != BC.getBinaryFunctions().end(); ++It) {
-    CurSize++;
-    if (CurSize >= SingleTaskSize) {
-      ThPool.async(cleanBlock, BlockBegin, std::next(It));
-      BlockBegin = std::next(It);
-      CurSize = 0;
-    }
-  }
-  ThPool.async(cleanBlock, BlockBegin, BC.getBinaryFunctions().end());
-  ThPool.wait();
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_INST_LINEAR, CleanFunction,
+      ParallelUtilities::PredicateTy(nullptr), "cleanAnnotations");
 }
 
 FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
@@ -613,88 +590,31 @@ void FrameAnalysis::clearSPTMap() {
     return;
   }
 
-  auto clearBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
-                        std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
-    for (auto It = BlockBegin; It != BlockEnd; ++It) {
-      auto &BF = It->second;
-
-      if (!BF.isSimple() || !BF.hasCFG())
-        continue;
-
-      auto &SPTPtr = SPTMap.find(&BF)->second;
-      SPTPtr.reset();
-    }
+  ParallelUtilities::WorkFuncTy ClearFunctionSPT = [&](BinaryFunction &BF) {
+    auto &SPTPtr = SPTMap.find(&BF)->second;
+    SPTPtr.reset();
   };
 
-  ThreadPool ThPool(opts::ThreadCount);
-  unsigned CurId = 0;
-  auto BlockBegin = BC.getBinaryFunctions().begin();
+  ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
+    return !BF.isSimple() || !BF.hasCFG();
+  };
 
-  // Functions that use the same allocator id are on the same task
-  for (auto It = BC.getBinaryFunctions().begin();
-       It != BC.getBinaryFunctions().end(); ++It) {
-    auto &BF = It->second;
+  ParallelUtilities::runOnEachFunction(
+      BC, ParallelUtilities::SchedulingPolicy::SP_INST_LINEAR, ClearFunctionSPT,
+      SkipFunc, "clearSPTMap");
 
-    if (BF.isSimple() && BF.hasCFG()) {
-      auto &SPT = getSPT(BF);
-
-      // First valid allocator id is seen
-      if (CurId == 0) {
-        BlockBegin = It;
-        CurId = SPT.getAllocatorId();
-        continue;
-      }
-
-      if (CurId != SPT.getAllocatorId()) {
-        CurId = SPT.getAllocatorId();
-        ThPool.async(clearBlock, BlockBegin, It);
-        BlockBegin = It;
-      }
-    }
-  }
-
-  ThPool.async(clearBlock, BlockBegin, BC.getBinaryFunctions().end());
-  ThPool.wait();
   SPTMap.clear();
 }
 
 void FrameAnalysis::preComputeSPT() {
-  // Create a lock that postpone execution of tasks until all allocators are
-  // initialized
-  std::shared_timed_mutex Mutex;
-  std::unique_lock<std::shared_timed_mutex> MainLock(Mutex);
-
-  auto runBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
-                      std::map<uint64_t, BinaryFunction>::iterator BlockEnd,
-                      MCPlusBuilder::AllocatorIdTy AllocId) {
-    // Wait until all tasks are created
-    std::shared_lock<std::shared_timed_mutex> Lock(Mutex);
-
-    Timer T("preComputeSPT runBlock", "preComputeSPT runBlock");
-    DEBUG(T.startTimer());
-    for (auto It = BlockBegin; It != BlockEnd; ++It) {
-      auto &BF = It->second;
-
-      if (!BF.isSimple() || !BF.hasCFG())
-        continue;
-
-      auto &SPTPtr = SPTMap.find(&BF)->second;
-      SPTPtr = std::make_unique<StackPointerTracking>(BC, BF, AllocId);
-      SPTPtr->run();
-    }
-    DEBUG(T.stopTimer());
-  };
-
   // Make sure that the SPTMap is empty
   assert(SPTMap.size() == 0);
 
   // Create map entries to allow lock-free parallel execution
-  unsigned TotalCost = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &BF = BFI.second;
     if (!BF.isSimple() || !BF.hasCFG())
       continue;
-    TotalCost += BF.size() * BF.size();
     SPTMap.emplace(&BF, std::unique_ptr<StackPointerTracking>());
   }
 
@@ -702,38 +622,21 @@ void FrameAnalysis::preComputeSPT() {
   // execution
   BC.MIB->getOrCreateAnnotationIndex("StackPointerTracking");
 
-  // The runtime cost of a single function is estimated by the square of its
-  // size, the load distribution tries to create blocks of equal runtime.
-  ThreadPool ThPool(opts::ThreadCount);
-  const unsigned BlocksCount = 20 * opts::ThreadCount;
-  const unsigned SingleBlockCost = TotalCost / BlocksCount;
+  // Run SPT in parallel
+  ParallelUtilities::WorkFuncWithAllocTy ProcessFunction =
+      [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
+        auto &SPTPtr = SPTMap.find(&BF)->second;
+        SPTPtr = std::make_unique<StackPointerTracking>(BC, BF, AllocId);
+        SPTPtr->run();
+      };
 
-  // Split functions into tasks and run them in parallel each using its own
-  // allocator
-  auto BlockBegin = BC.getBinaryFunctions().begin();
-  unsigned CurBlockCost = 0;
-  for (auto It = BC.getBinaryFunctions().begin();
-       It != BC.getBinaryFunctions().end(); ++It) {
-    auto &BF = It->second;
+  ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
+    return !BF.isSimple() || !BF.hasCFG();
+  };
 
-    if (BF.isSimple() && BF.hasCFG())
-      CurBlockCost += BF.size() * BF.size();
-
-    if (CurBlockCost >= SingleBlockCost) {
-      auto AllocId = BC.MIB->initializeNewAnnotationAllocator();
-      SPTAllocatorsId.push_back(AllocId);
-      ThPool.async(runBlock, BlockBegin, std::next(It), AllocId);
-      BlockBegin = std::next(It);
-      CurBlockCost = 0;
-    }
-  }
-  auto AllocId = BC.MIB->initializeNewAnnotationAllocator();
-  SPTAllocatorsId.push_back(AllocId);
-  ThPool.async(runBlock, BlockBegin, BC.getBinaryFunctions().end(), AllocId);
-
-  // Start executing tasks
-  MainLock.unlock();
-  ThPool.wait();
+  ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
+      BC, ParallelUtilities::SchedulingPolicy::SP_BB_QUADRATIC, ProcessFunction,
+      SkipPredicate, "preComputeSPT");
 }
 
 } // namespace bolt
