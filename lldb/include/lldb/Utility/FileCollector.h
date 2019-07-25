@@ -22,17 +22,17 @@ public:
   FileCollector(const FileSpec &root, const FileSpec &overlay) :
     llvm::FileCollector(root.GetPath(), overlay.GetPath()) {}
 
-  using llvm::FileCollector::AddFile;
+  using llvm::FileCollector::addFile;
 
-  void AddFile(const FileSpec &file) {
-      std::string path = file.GetPath();
-      llvm::FileCollector::AddFile(path);
+  void addFile(const FileSpec &file) {
+    std::string path = file.GetPath();
+    llvm::FileCollector::addFile(path);
   }
 
   /// Write the yaml mapping (for the VFS) to the given file.
-  std::error_code WriteMapping(const FileSpec &mapping_file) {
+  std::error_code writeMapping(const FileSpec &mapping_file) {
     std::string path = mapping_file.GetPath();
-    return llvm::FileCollector::WriteMapping(path);
+    return llvm::FileCollector::writeMapping(path);
   }
 };
 
