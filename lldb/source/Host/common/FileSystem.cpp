@@ -49,7 +49,7 @@ void FileSystem::Initialize() {
   InstanceImpl().emplace();
 }
 
-void FileSystem::Initialize(lldb_private::FileCollector &collector) {
+void FileSystem::Initialize(FileCollector &collector) {
   lldbassert(!InstanceImpl() && "Already initialized.");
   InstanceImpl().emplace(collector);
 }
@@ -418,7 +418,7 @@ static mode_t GetOpenMode(uint32_t permissions) {
 Status FileSystem::Open(File &File, const FileSpec &file_spec, uint32_t options,
                         uint32_t permissions, bool should_close_fd) {
   if (m_collector)
-    m_collector->addFile(file_spec);
+    m_collector->addFile(file_spec.GetPath());
 
   if (File.IsValid())
     File.Close();
