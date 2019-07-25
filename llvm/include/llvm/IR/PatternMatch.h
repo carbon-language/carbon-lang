@@ -411,6 +411,18 @@ inline api_pred_ty<is_power2> m_Power2(const APInt *&V) {
   return V;
 }
 
+struct is_negated_power2 {
+  bool isValue(const APInt &C) { return (-C).isPowerOf2(); }
+};
+/// Match a integer or vector negated power-of-2.
+/// For vectors, this includes constants with undefined elements.
+inline cst_pred_ty<is_negated_power2> m_NegatedPower2() {
+  return cst_pred_ty<is_negated_power2>();
+}
+inline api_pred_ty<is_negated_power2> m_NegatedPower2(const APInt *&V) {
+  return V;
+}
+
 struct is_power2_or_zero {
   bool isValue(const APInt &C) { return !C || C.isPowerOf2(); }
 };

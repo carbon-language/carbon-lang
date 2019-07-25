@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/BasicBlock.h"
@@ -468,6 +469,26 @@ TEST_F(PatternMatchTest, Unless) {
 
   EXPECT_FALSE(m_Unless(m_c_Add(m_One(), m_Zero())).match(X));
   EXPECT_FALSE(m_Unless(m_c_Add(m_Zero(), m_One())).match(X));
+}
+
+TEST_F(PatternMatchTest, Power2) {
+  Value *C128 = IRB.getInt32(128);
+  Value *CNeg128 = ConstantExpr::getNeg(cast<Constant>(C128));
+
+  EXPECT_TRUE(m_Power2().match(C128));
+  EXPECT_FALSE(m_Power2().match(CNeg128));
+
+  EXPECT_FALSE(m_NegatedPower2().match(C128));
+  EXPECT_TRUE(m_NegatedPower2().match(CNeg128));
+
+  Value *CIntMin = IRB.getInt64(APSInt::getSignedMinValue(64).getSExtValue());
+  Value *CNegIntMin = ConstantExpr::getNeg(cast<Constant>(CIntMin));
+
+  EXPECT_TRUE(m_Power2().match(CIntMin));
+  EXPECT_TRUE(m_Power2().match(CNegIntMin));
+
+  EXPECT_TRUE(m_NegatedPower2().match(CIntMin));
+  EXPECT_TRUE(m_NegatedPower2().match(CNegIntMin));
 }
 
 TEST_F(PatternMatchTest, CommutativeDeferredValue) {
