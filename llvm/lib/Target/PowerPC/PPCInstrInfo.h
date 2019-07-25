@@ -140,6 +140,11 @@ class PPCInstrInfo : public PPCGenInstrInfo {
                                    unsigned &OpNoForForwarding,
                                    bool &SeenIntermediateUse) const;
 
+  // In PostRA phase, try to find instruction defines \p Reg before \p MI.
+  // \p SeenIntermediate is set to true if uses between DefMI and \p MI exist.
+  MachineInstr *getDefMIPostRA(unsigned Reg, MachineInstr &MI,
+                               bool &SeenIntermediateUse) const;
+
   // Can the user MI have it's source at index \p OpNoForForwarding
   // forwarded from an add-immediate that feeds it?
   bool isUseMIElgibleForForwarding(MachineInstr &MI, const ImmInstrInfo &III,
