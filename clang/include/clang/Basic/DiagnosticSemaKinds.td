@@ -2779,6 +2779,11 @@ def err_no_accessor_for_property : Error<
 def err_cannot_find_suitable_accessor : Error<
   "cannot find suitable %select{getter|setter}0 for property %1">;
 
+def warn_alloca : Warning<
+  "use of function %0 is discouraged; there is no way to check for failure but "
+  "failure may still occur, resulting in a possibly exploitable security vulnerability">,
+  InGroup<DiagGroup<"alloca">>, DefaultIgnore;
+
 def warn_alloca_align_alignof : Warning<
   "second argument to __builtin_alloca_with_align is supposed to be in bits">,
   InGroup<DiagGroup<"alloca-with-align-alignof">>;
