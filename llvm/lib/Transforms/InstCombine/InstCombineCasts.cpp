@@ -681,42 +681,6 @@ static Instruction *shrinkInsertElt(CastInst &Trunc,
   return nullptr;
 }
 
-static Instruction *narrowLoad(TruncInst &Trunc,
-                               InstCombiner::BuilderTy &Builder,
-                               const DataLayout &DL) {
-  // Check the layout to ensure we are not creating an unsupported operation.
-  // TODO: Create a GEP to offset the load?
-  if (!DL.isLittleEndian())
-    return nullptr;
-  unsigned NarrowBitWidth = Trunc.getDestTy()->getPrimitiveSizeInBits();
-  if (!DL.isLegalInteger(NarrowBitWidth))
-    return nullptr;
-
-  // Match a truncated load with no other uses.
-  Value *X;
-  if (!match(Trunc.getOperand(0), m_OneUse(m_Load(m_Value(X)))))
-    return nullptr;
-  LoadInst *WideLoad = cast<LoadInst>(Trunc.getOperand(0));
-  if (!WideLoad->isSimple())
-    return nullptr;
-
-  // Don't narrow this load if we would lose information about the
-  // dereferenceable range.
-  bool CanBeNull;
-  uint64_t DerefBits = X->getPointerDereferenceableBytes(DL, CanBeNull) * 8;
-  if (DerefBits < WideLoad->getType()->getPrimitiveSizeInBits())
-    return nullptr;
-
-  // trunc (load X) --> load (bitcast X)
-  PointerType *PtrTy = PointerType::get(Trunc.getDestTy(),
-                                        WideLoad->getPointerAddressSpace());
-  Value *Bitcast = Builder.CreatePointerCast(X, PtrTy);
-  LoadInst *NarrowLoad = new LoadInst(Trunc.getDestTy(), Bitcast);
-  NarrowLoad->setAlignment(WideLoad->getAlignment());
-  copyMetadataForLoad(*NarrowLoad, *WideLoad);
-  return NarrowLoad;
-}
-
 Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   if (Instruction *Result = commonCastTransforms(CI))
     return Result;
@@ -875,9 +839,6 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
 
   if (Instruction *I = foldVecTruncToExtElt(CI, *this))
     return I;
-
-  if (Instruction *NewLoad = narrowLoad(CI, Builder, DL))
-    return NewLoad;
 
   return nullptr;
 }
