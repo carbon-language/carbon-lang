@@ -114,10 +114,15 @@ TEST(HTMLGeneratorTest, emitRecordHTML) {
   llvm::sys::path::native("../../../path/to/F.html", PathToF);
   SmallString<16> PathToInt;
   llvm::sys::path::native("../int.html", PathToInt);
+  SmallString<16> PathToSylesheet;
+  llvm::sys::path::native("../../../clang-doc-default-stylesheet.css",
+                          PathToSylesheet);
   std::string Expected = R"raw(<!DOCTYPE html>
 <meta charset="utf-8"/>
 <title>class r</title>
-<link rel="stylesheet" href="../../../clang-doc-default-stylesheet.css"/>
+<link rel="stylesheet" href=")raw" +
+                         std::string(PathToSylesheet.str()) +
+                         R"raw("/>
 <div>
   <h1>class r</h1>
   <p>Defined at line 10 of test.cpp</p>
