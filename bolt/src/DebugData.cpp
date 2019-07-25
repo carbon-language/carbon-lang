@@ -172,7 +172,7 @@ uint64_t DebugLocWriter::addList(const DWARFDebugLoc::LocationList &LocList) {
   // unique and correct offsets in patches.
   std::lock_guard<std::mutex> Lock(WriterMutex);
   const auto EntryOffset = SectionOffset;
-  
+
   for (const auto &Entry : LocList.Entries) {
     Writer->writeLE64(Entry.Begin);
     Writer->writeLE64(Entry.End);

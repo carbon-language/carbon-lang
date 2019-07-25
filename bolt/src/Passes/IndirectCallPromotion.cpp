@@ -346,7 +346,7 @@ IndirectCallPromotion::getCallTargets(
   // indices and high mispredicts
   std::stable_sort(Targets.begin(), Targets.end(),
                    [](const Callsite &A, const Callsite &B) {
-                     if (A.Branches != B.Branches) 
+                     if (A.Branches != B.Branches)
                        return A.Branches > B.Branches;
                      else if (A.JTIndices.size() != B.JTIndices.size())
                        return A.JTIndices.size() < B.JTIndices.size();

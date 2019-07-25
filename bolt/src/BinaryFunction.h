@@ -1838,7 +1838,7 @@ public:
 
     // Register our island at global namespace
     Symbol = BC.getOrCreateGlobalSymbol(Address, "ISLANDat");
-    
+
     // Internal bookkeeping
     const auto Offset = Address - getAddress();
     assert((!IslandOffsets.count(Offset) || IslandOffsets[Offset] == Symbol) &&

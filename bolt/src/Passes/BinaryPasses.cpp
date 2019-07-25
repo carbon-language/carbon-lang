@@ -313,7 +313,7 @@ void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
   ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
     runOnFunction(BF);
   };
-  
+
   ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
     return !shouldOptimize(BF);
   };

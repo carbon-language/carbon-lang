@@ -181,14 +181,14 @@ protected:
   StringRef getAnnotationName() const {
     return StringRef("StackPointerTracking");
   }
-  
+
 public:
   StackPointerTrackingBase(const BinaryContext &BC, BinaryFunction &BF,
                            MCPlusBuilder::AllocatorIdTy AllocatorId = 0)
       : DataflowAnalysis<Derived, std::pair<int, int>>(BC, BF, AllocatorId) {}
 
   virtual ~StackPointerTrackingBase() {}
-  
+
   bool HasFramePointer{false};
 
   static constexpr int SUPERPOSITION = std::numeric_limits<int>::max();

@@ -44,7 +44,7 @@
 
 namespace llvm {
 namespace bolt {
-  
+
 /// Different types of indirect branches encountered during disassembly.
 enum class IndirectBranchType : char {
   UNKNOWN = 0,             /// Unable to determine type.
@@ -1503,7 +1503,7 @@ public:
         MCSymbolRefExpr::create(Label, MCSymbolRefExpr::VK_None, *Ctx)));
     return true;
   }
-  
+
   /// Return annotation index matching the \p Name.
   Optional<unsigned> getAnnotationIndex(StringRef Name) const {
     auto AI = AnnotationNameIndexMap.find(Name);
@@ -1675,7 +1675,7 @@ public:
   bool removeAnnotation(MCInst &Inst, unsigned Index);
 
   /// Remove annotation associated with \p Name.
-  /// 
+  ///
   /// Return true if the annotation was removed, false if the annotation
   /// was not present.
   bool removeAnnotation(MCInst &Inst, StringRef Name) {

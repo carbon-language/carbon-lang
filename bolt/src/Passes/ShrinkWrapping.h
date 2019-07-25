@@ -111,7 +111,7 @@ public:
   static StringRef getSaveTagName() {
     return StringRef("CSA-SavedReg");
   }
-  
+
   static StringRef getRestoreTagName() {
     return StringRef("CSA-RestoredReg");
   }

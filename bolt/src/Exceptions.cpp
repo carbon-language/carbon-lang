@@ -364,7 +364,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
 void BinaryFunction::updateEHRanges() {
   if (getSize() == 0)
     return;
-    
+
   assert(CurrentState == State::CFG_Finalized && "unexpected state");
 
   // Build call sites table.

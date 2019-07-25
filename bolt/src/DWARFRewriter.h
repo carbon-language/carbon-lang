@@ -33,11 +33,11 @@ class DWARFRewriter {
   SectionPatchersType &SectionPatchers;
 
   SimpleBinaryPatcher *DebugInfoPatcher{nullptr};
-  
+
   std::mutex DebugInfoPatcherMutex;
 
   DebugAbbrevPatcher *AbbrevPatcher{nullptr};
-  
+
   std::mutex AbbrevPatcherMutex;
 
   /// Stores and serializes information that will be put into the .debug_ranges
@@ -76,7 +76,7 @@ class DWARFRewriter {
 
   /// Abbreviations that were converted to use DW_AT_ranges.
   std::set<const DWARFAbbreviationDeclaration *> ConvertedRangesAbbrevs;
-  
+
   /// DIEs with abbrevs that were not converted to DW_AT_ranges.
   /// We only update those when all DIEs have been processed to guarantee that
   /// the abbrev (which is shared) is intact.

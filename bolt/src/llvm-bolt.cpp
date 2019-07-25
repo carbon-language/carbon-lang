@@ -104,7 +104,7 @@ PerfDataA("p",
   cl::desc("Alias for -perfdata"),
   cl::aliasopt(PerfData),
   cl::cat(AggregatorCategory));
-  
+
 } // namespace opts
 static StringRef ToolName;
 

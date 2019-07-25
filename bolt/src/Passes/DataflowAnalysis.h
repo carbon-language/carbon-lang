@@ -333,7 +333,7 @@ public:
   /// end.
   void run() {
     derived().preflight();
-   
+
       // Initialize state for all points of the function
       for (auto &BB : Func) {
         auto &St = getOrCreateStateAt(BB);

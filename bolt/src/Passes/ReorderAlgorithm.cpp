@@ -628,7 +628,7 @@ void OptimizeCacheReorderAlgorithm::reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
-    
+
   // Cluster basic blocks.
   CAlgo->clusterBasicBlocks(BF);
   std::vector<ClusterAlgorithm::ClusterTy> &Clusters = CAlgo->Clusters;
