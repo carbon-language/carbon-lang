@@ -2639,7 +2639,8 @@ AST_MATCHER_P(CXXRecordDecl, isDerivedFrom,
 
 /// Overloaded method as shortcut for \c isDerivedFrom(hasName(...)).
 AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isDerivedFrom, std::string, BaseName, 1) {
-  assert(!BaseName.empty());
+  if (BaseName.empty())
+    return false;
   return isDerivedFrom(hasName(BaseName)).matches(Node, Finder, Builder);
 }
 
@@ -2655,7 +2656,8 @@ AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isSameOrDerivedFrom,
 /// \c isSameOrDerivedFrom(hasName(...)).
 AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isSameOrDerivedFrom, std::string,
                        BaseName, 1) {
-  assert(!BaseName.empty());
+  if (BaseName.empty())
+    return false;
   return isSameOrDerivedFrom(hasName(BaseName)).matches(Node, Finder, Builder);
 }
 
@@ -2687,7 +2689,8 @@ AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isDirectlyDerivedFrom,
 /// Overloaded method as shortcut for \c isDirectlyDerivedFrom(hasName(...)).
 AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isDirectlyDerivedFrom, std::string,
                        BaseName, 1) {
-  assert(!BaseName.empty());
+  if (BaseName.empty())
+    return false;
   return isDirectlyDerivedFrom(hasName(BaseName))
       .matches(Node, Finder, Builder);
 }

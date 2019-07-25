@@ -566,6 +566,13 @@ TEST(DeclarationMatcher, ClassIsDerived) {
     cxxRecordDecl(isDerivedFrom(namedDecl(hasName("X"))))));
 }
 
+TEST(DeclarationMatcher, IsDerivedFromEmptyName) {
+  const char *const Code = "class X {}; class Y : public X {};";
+  EXPECT_TRUE(notMatches(Code, cxxRecordDecl(isDerivedFrom(""))));
+  EXPECT_TRUE(notMatches(Code, cxxRecordDecl(isDirectlyDerivedFrom(""))));
+  EXPECT_TRUE(notMatches(Code, cxxRecordDecl(isSameOrDerivedFrom(""))));
+}
+
 TEST(DeclarationMatcher, IsLambda) {
   const auto IsLambda = cxxMethodDecl(ofClass(cxxRecordDecl(isLambda())));
   EXPECT_TRUE(matches("auto x = []{};", IsLambda));
