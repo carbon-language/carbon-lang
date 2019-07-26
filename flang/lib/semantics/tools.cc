@@ -380,18 +380,6 @@ bool IsTeamType(const DerivedTypeSpec *derived) {
   return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
 }
 
-const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
-    std::function<bool(const Symbol &)> predicate) {
-  return ComponentVisitor{std::move(predicate)}
-      .VisitUltimateComponents(derivedTypeSpec)
-      .Result();
-}
-
-const Symbol *HasCoarrayUltimateComponent(
-    const DerivedTypeSpec &derivedTypeSpec) {
-  return FindUltimateComponent(derivedTypeSpec, IsCoarray);
-}
-
 const bool IsEventTypeOrLockType(const DerivedTypeSpec *derivedTypeSpec) {
   return IsDerivedTypeFromModule(
              derivedTypeSpec, "iso_fortran_env", "event_type") ||
@@ -412,19 +400,12 @@ bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
       if (const DeclTypeSpec * type{details->type()}) {
         if (const DerivedTypeSpec * derived{type->AsDerived()}) {
           return IsEventTypeOrLockType(derived) ||
-              HasEventOrLockPotentialComponent(*derived);
+              ComponentVisitor::HasEventOrLockPotential(*derived);
         }
       }
     }
   }
   return false;
-}
-
-const Symbol *HasEventOrLockPotentialComponent(
-    const DerivedTypeSpec &derivedTypeSpec) {
-  return ComponentVisitor{IsEventTypeOrLockTypeObjectEntity}
-      .VisitPotentialComponents(derivedTypeSpec)
-      .Result();
 }
 
 bool IsFinalizable(const Symbol &symbol) {
@@ -884,12 +865,25 @@ ComponentVisitor &ComponentVisitor::VisitDirectComponents(
   return *this;
 }
 
+ComponentVisitor ComponentVisitor::HasEventOrLockPotential(
+    const DerivedTypeSpec &derived) {
+  return ComponentVisitor{IsEventTypeOrLockTypeObjectEntity}
+      .VisitPotentialComponents(derived);
+}
+
 std::string ComponentVisitor::BuildResultDesignatorName() const {
   std::string designator{""};
   for (const Symbol *component : componentStack_) {
     designator += "%" + component->name().ToString();
   }
   return designator;
+}
+
+const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,
+    std::function<bool(const Symbol &)> predicate) {
+  return ComponentVisitor{std::move(predicate)}
+      .VisitUltimateComponents(derived)
+      .Result();
 }
 
 }

@@ -78,8 +78,6 @@ const bool IsEventTypeOrLockType(const DerivedTypeSpec *);
 // does not really matter for the checks where it is needed.
 const Symbol *HasCoarrayUltimateComponent(const DerivedTypeSpec &);
 // Same logic as HasCoarrayUltimateComponent, but looking for
-// potential component of EVENT_TYPE or LOCK_TYPE from
-// ISO_FORTRAN_ENV module.
 const Symbol *HasEventOrLockPotentialComponent(const DerivedTypeSpec &);
 bool IsOrContainsEventOrLockComponent(const Symbol &);
 
@@ -236,10 +234,14 @@ public:
   ComponentVisitor &VisitUltimateComponents(const DerivedTypeSpec &);
   ComponentVisitor &VisitDirectComponents(const DerivedTypeSpec &);
 
-  // predefined common tests
+  // Predefined common tests
+  // Look for an ultimate component that is a coarray.
   static ComponentVisitor HasCoarrayUltimate(const DerivedTypeSpec &derived) {
     return ComponentVisitor{IsCoarray}.VisitUltimateComponents(derived);
   }
+  // Look for a potential component of EVENT_TYPE or LOCK_TYPE from
+  // ISO_FORTRAN_ENV module.
+  static ComponentVisitor HasEventOrLockPotential(const DerivedTypeSpec &);
 
   const Symbol *Result() const {
     return componentStack_.empty() ? nullptr : componentStack_.back();
