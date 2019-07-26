@@ -191,6 +191,37 @@ void llvm::initializeLoopPassPass(PassRegistry &Registry) {
   INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 }
 
+/// Create MDNode for input string.
+static MDNode *createStringMetadata(Loop *TheLoop, StringRef Name, unsigned V) {
+  LLVMContext &Context = TheLoop->getHeader()->getContext();
+  Metadata *MDs[] = {
+      MDString::get(Context, Name),
+      ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(Context), V))};
+  return MDNode::get(Context, MDs);
+}
+
+/// Set input string into loop metadata by keeping other values intact.
+void llvm::addStringMetadataToLoop(Loop *TheLoop, const char *MDString,
+                                   unsigned V) {
+  SmallVector<Metadata *, 4> MDs(1);
+  // If the loop already has metadata, retain it.
+  MDNode *LoopID = TheLoop->getLoopID();
+  if (LoopID) {
+    for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
+      MDNode *Node = cast<MDNode>(LoopID->getOperand(i));
+      MDs.push_back(Node);
+    }
+  }
+  // Add new metadata.
+  MDs.push_back(createStringMetadata(TheLoop, MDString, V));
+  // Replace current metadata node with new one.
+  LLVMContext &Context = TheLoop->getHeader()->getContext();
+  MDNode *NewLoopID = MDNode::get(Context, MDs);
+  // Set operand 0 to refer to the loop id itself.
+  NewLoopID->replaceOperandWith(0, NewLoopID);
+  TheLoop->setLoopID(NewLoopID);
+}
+
 /// Find string metadata for loop
 ///
 /// If it has a value (e.g. {"llvm.distribute", 1} return the value as an
