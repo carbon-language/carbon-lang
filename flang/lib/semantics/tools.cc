@@ -380,6 +380,13 @@ bool IsTeamType(const DerivedTypeSpec *derived) {
   return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
 }
 
+const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
+    std::function<bool(const Symbol &)> predicate) {
+  return ComponentVisitor{std::move(predicate)}
+      .VisitUltimateComponents(derivedTypeSpec)
+      .Result();
+}
+
 const Symbol *HasCoarrayUltimateComponent(
     const DerivedTypeSpec &derivedTypeSpec) {
   return FindUltimateComponent(derivedTypeSpec, IsCoarray);
@@ -391,38 +398,12 @@ const bool IsEventTypeOrLockType(const DerivedTypeSpec *derivedTypeSpec) {
       IsDerivedTypeFromModule(derivedTypeSpec, "iso_fortran_env", "lock_type");
 }
 
-const Symbol *HasEventOrLockPotentialComponent(
-    const DerivedTypeSpec &derivedTypeSpec) {
-
-  const Symbol &symbol{derivedTypeSpec.typeSymbol()};
-  // TODO is it guaranteed that derived type symbol have a scope and is it the
-  // right scope to look into?
-  CHECK(symbol.scope());
-  for (const Symbol *componentSymbol :
-      symbol.get<DerivedTypeDetails>().OrderComponents(*symbol.scope())) {
-    CHECK(componentSymbol);
-    if (!IsPointer(*componentSymbol)) {
-      if (const DeclTypeSpec * declTypeSpec{componentSymbol->GetType()}) {
-        if (const DerivedTypeSpec *
-            componentDerivedTypeSpec{declTypeSpec->AsDerived()}) {
-          // Avoid infinite loop, that may happen if the component
-          // is an allocatable of the same type as the derived type.
-          // TODO: Is it legal to have longer type loops: i.e type B has a
-          // component of type A that has an allocatable component of type B?
-          if (&symbol != &componentDerivedTypeSpec->typeSymbol()) {
-            if (IsEventTypeOrLockType(componentDerivedTypeSpec)) {
-              return componentSymbol;
-            } else if (const Symbol *
-                subcomponent{HasEventOrLockPotentialComponent(
-                    *componentDerivedTypeSpec)}) {
-              return subcomponent;
-            }
-          }
-        }
-      }
-    }
+static const bool IsEventTypeOrLockTypeObjectEntity(const Symbol &symbol) {
+  if (symbol.has<ObjectEntityDetails>()) {
+    const DeclTypeSpec *type{symbol.GetType()};
+    return type && IsEventTypeOrLockType(type->AsDerived());
   }
-  return nullptr;
+  return false;
 }
 
 bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
@@ -439,25 +420,11 @@ bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
   return false;
 }
 
-const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
-    std::function<bool(const Symbol &)> predicate) {
-  const auto *scope{derivedTypeSpec.typeSymbol().scope()};
-  CHECK(scope);
-  for (const auto &pair : *scope) {
-    const Symbol &component{*pair.second};
-    const DeclTypeSpec *type{component.GetType()};
-    if (!type) {
-      continue;
-    }
-    const DerivedTypeSpec *derived{type->AsDerived()};
-    bool isUltimate{IsAllocatableOrPointer(component) || !derived};
-    if (const Symbol *
-        result{!isUltimate ? FindUltimateComponent(*derived, predicate)
-                           : predicate(component) ? &component : nullptr}) {
-      return result;
-    }
-  }
-  return nullptr;
+const Symbol *HasEventOrLockPotentialComponent(
+    const DerivedTypeSpec &derivedTypeSpec) {
+  return ComponentVisitor{IsEventTypeOrLockTypeObjectEntity}
+      .VisitPotentialComponents(derivedTypeSpec)
+      .Result();
 }
 
 bool IsFinalizable(const Symbol &symbol) {
@@ -788,6 +755,141 @@ static Symbol &InstantiateSymbol(
     }
   }
   return result;
+}
+
+enum class ComponentKind { Direct, Ultimate, Potential };
+
+template<ComponentKind componentKind> class ComponentVisitorImplementation {
+public:
+  ComponentVisitorImplementation(std::function<bool(const Symbol &)> &predicate)
+    : predicate_{predicate} {}
+  SymbolVector Visit(const DerivedTypeSpec &derived) {
+    TraverseDerivedType(derived);
+    return std::move(componentStack_);
+  }
+
+private:
+  const Symbol *TraverseDerivedType(const DerivedTypeSpec &derived) {
+    const Symbol &derivedTypeSymbol{derived.typeSymbol()};
+    // Avoid infinite loop if the type is already part of the types
+    // being visited. It is possible to have "loops in type" because
+    // C744 does not forbid to use not yet declared type for
+    // ALLOCATABLE or POINTER components.
+    // When looking for potential components, the search could fall
+    // in an infinite loop. Avoid these in other search for safety.
+    for (const Symbol *typeUnderVisit : typeStack_) {
+      if (typeUnderVisit == &derivedTypeSymbol) {
+        return nullptr;
+      }
+    }
+    typeStack_.push_back(&derivedTypeSymbol);
+    const Scope *scope{derivedTypeSymbol.scope()};
+    CHECK(scope);  // derived type symbol must have a scope
+    const Symbol *result{nullptr};
+    // Note: parent subcomponents are visited first, then the parent component
+    // (if any), then other components by order of declaration
+    SymbolVector orederedComponents{
+        derivedTypeSymbol.get<DerivedTypeDetails>().OrderComponents(*scope)};
+    for (const Symbol *component : orederedComponents) {
+      if (component->has<ProcEntityDetails>()) {
+        result = VisitProcedureComponent(*component);
+      } else if (component->has<ObjectEntityDetails>()) {
+        result = VisitDataComponent(*component);
+      }
+      if (result) {
+        return result;
+      }
+    }
+    typeStack_.pop_back();
+    return nullptr;
+  }
+
+  const Symbol *VisitProcedureComponent(const Symbol &component) {
+    // Procedure components are pointers (C756)
+    if constexpr (componentKind == ComponentKind::Ultimate ||
+        componentKind == ComponentKind::Direct) {
+      if (predicate_(component)) {
+        componentStack_.push_back(&component);
+        return &component;
+      }
+    }
+    return nullptr;
+  }
+
+  const Symbol *VisitDataComponent(const Symbol &component) {
+    const DeclTypeSpec *type{component.GetType()};
+    if (!type) {
+      return nullptr;  // error recovery ?
+    }
+    bool test{false}, descend{false};
+    if constexpr (componentKind == ComponentKind::Direct) {
+      test = true;
+      descend = !IsAllocatableOrPointer(component);
+    } else if constexpr (componentKind == ComponentKind::Ultimate) {
+      descend = !IsAllocatableOrPointer(component);
+      test = !descend || type->AsIntrinsic();
+    } else {  // Potential
+      test = descend = !IsPointer(component);
+    }
+
+    // Do not descend into parent components, their components were already
+    // included by DerivedTypeDetails::OrderComponents. However, parent
+    // components should still be checked against the predicate if relevant.
+    descend &= !component.test(Symbol::Flag::ParentComp);
+
+    if (test && predicate_(component)) {
+      componentStack_.push_back(&component);
+      return &component;
+    } else if (descend) {
+      if (const auto *derived{type->AsDerived()}) {
+        componentStack_.push_back(&component);
+        if (const Symbol * result{TraverseDerivedType(*derived)}) {
+          return result;
+        }
+        componentStack_.pop_back();
+      }
+    }
+    return nullptr;
+  }
+
+  std::vector<const Symbol *> componentStack_;  // to build message info
+  std::vector<const Symbol *> typeStack_;  // to avoid infinite loops
+  std::function<bool(const Symbol &)> &predicate_;
+};
+
+ComponentVisitor &ComponentVisitor::VisitPotentialComponents(
+    const DerivedTypeSpec &derived) {
+  componentStack_.clear();
+  componentStack_ =
+      ComponentVisitorImplementation<ComponentKind::Potential>{predicate_}
+          .Visit(derived);
+  return *this;
+}
+
+ComponentVisitor &ComponentVisitor::VisitUltimateComponents(
+    const DerivedTypeSpec &derived) {
+  componentStack_.clear();
+  componentStack_ =
+      ComponentVisitorImplementation<ComponentKind::Ultimate>{predicate_}.Visit(
+          derived);
+  return *this;
+}
+
+ComponentVisitor &ComponentVisitor::VisitDirectComponents(
+    const DerivedTypeSpec &derived) {
+  componentStack_.clear();
+  componentStack_ =
+      ComponentVisitorImplementation<ComponentKind::Direct>{predicate_}.Visit(
+          derived);
+  return *this;
+}
+
+std::string ComponentVisitor::BuildResultDesignatorName() const {
+  std::string designator{""};
+  for (const Symbol *component : componentStack_) {
+    designator += "%" + component->name().ToString();
+  }
+  return designator;
 }
 
 }

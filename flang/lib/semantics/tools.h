@@ -209,5 +209,51 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
   }
 }
 
+// Derived type component visitor that applies a predicate on all the direct,
+// ultimate or Potential components. It stops at the first component that
+// verifies the given predicate and keep the component path to the result
+// (included at the end of the path). If no component verifies the predicate
+// the path is empty.
+// The component tree is visited in component declaration order,
+// visiting the subcomponent of a component before visiting the next component.
+// Parent components and procedure pointer components are visited.
+// Note that it is made in such a way that one can easily test and build info
+// message in the following way:
+//    if (auto
+//      visitor{ComponentVisitor{predicate}.VisitDirectComponents(derived)}) {
+//       msg = visitor.BuildResultDesignatorName() + " verifies predicates";
+//       ....
+//    }
+// It is safe to re-use the same object several times, previous results are
+// cleared before each visit.
+class ComponentVisitor {
+public:
+  ComponentVisitor(std::function<bool(const Symbol &)> &&predicate)
+    : predicate_{std::move(predicate)} {}
+
+  // Object is updated with the result during visit and returned by ref
+  ComponentVisitor &VisitPotentialComponents(const DerivedTypeSpec &);
+  ComponentVisitor &VisitUltimateComponents(const DerivedTypeSpec &);
+  ComponentVisitor &VisitDirectComponents(const DerivedTypeSpec &);
+
+  // predefined common tests
+  static ComponentVisitor HasCoarrayUltimate(const DerivedTypeSpec &derived) {
+    return ComponentVisitor{IsCoarray}.VisitUltimateComponents(derived);
+  }
+
+  const Symbol *Result() const {
+    return componentStack_.empty() ? nullptr : componentStack_.back();
+  }
+
+  bool HasResult() const { return Result() != nullptr; }
+  explicit operator bool() const { return HasResult(); }
+  // build designator name for messages if there is a result
+  std::string BuildResultDesignatorName() const;
+
+private:
+  SymbolVector componentStack_;  // component path to result
+  std::function<bool(const Symbol &)> predicate_;
+};
+
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_
