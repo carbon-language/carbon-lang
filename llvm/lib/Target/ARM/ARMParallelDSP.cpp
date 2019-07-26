@@ -50,7 +50,7 @@ namespace {
   struct BinOpChain;
   class Reduction;
 
-  using OpChainList     = SmallVector<std::unique_ptr<OpChain>, 8>;
+  using OpChainList     = SmallVector<std::unique_ptr<BinOpChain>, 8>;
   using ReductionList   = SmallVector<Reduction, 8>;
   using ValueList       = SmallVector<Value*, 8>;
   using MemInstList     = SmallVector<LoadInst*, 8>;
@@ -59,15 +59,25 @@ namespace {
   using Instructions    = SmallVector<Instruction*,16>;
   using MemLocList      = SmallVector<MemoryLocation, 4>;
 
-  struct OpChain {
+  // 'BinOpChain' holds the multiplication instructions that are candidates
+  // for parallel execution.
+  struct BinOpChain {
     Instruction   *Root;
     ValueList     AllValues;
-    MemInstList   VecLd;    // List of all load instructions.
     MemInstList   Loads;
+    MemInstList   VecLd;    // List of all load instructions.
+    ValueList     LHS;      // List of all (narrow) left hand operands.
+    ValueList     RHS;      // List of all (narrow) right hand operands.
+    bool          Exchange = false;
     bool          ReadOnly = true;
 
-    OpChain(Instruction *I, ValueList &vl) : Root(I), AllValues(vl) { }
-    virtual ~OpChain() = default;
+    BinOpChain(Instruction *I, ValueList &lhs, ValueList &rhs) :
+      Root(I), LHS(lhs), RHS(rhs) {
+        for (auto *V : LHS)
+          AllValues.push_back(V);
+        for (auto *V : RHS)
+          AllValues.push_back(V);
+    }
 
     void PopulateLoads() {
       for (auto *V : AllValues) {
@@ -77,20 +87,6 @@ namespace {
     }
 
     unsigned size() const { return AllValues.size(); }
-  };
-
-  // 'BinOpChain' holds the multiplication instructions that are candidates
-  // for parallel execution.
-  struct BinOpChain : public OpChain {
-    ValueList     LHS;      // List of all (narrow) left hand operands.
-    ValueList     RHS;      // List of all (narrow) right hand operands.
-    bool Exchange = false;
-
-    BinOpChain(Instruction *I, ValueList &lhs, ValueList &rhs) :
-      OpChain(I, lhs), LHS(lhs), RHS(rhs) {
-        for (auto *V : RHS)
-          AllValues.push_back(V);
-      }
 
     bool AreSymmetrical(BinOpChain *Other);
   };
