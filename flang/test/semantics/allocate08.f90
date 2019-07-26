@@ -86,3 +86,54 @@ subroutine C945_a(srca, srcb, srcc, src_complex, src_logical, &
   !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(npca1, bp1, npbp1, mold=srcc)
 end subroutine
+
+module m
+  type :: t
+    real x(100)
+   contains
+    procedure :: f
+  end type
+ contains
+  function f(this) result (x)
+    class(t) :: this
+    class(t), allocatable :: x
+  end function
+  subroutine bar
+    type(t) :: o
+    type(t), allocatable :: p
+    real, allocatable :: rp
+    allocate(p, source=o%f())
+    !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
+    allocate(rp, source=o%f())
+  end subroutine
+end module
+
+! Related to C945, check typeless expression are caught
+
+subroutine sub
+end subroutine
+
+function func() result(x)
+  real :: x
+end function
+
+program test_typeless
+  class(*), allocatable :: x
+  procedure (sub), pointer :: subp => sub
+  procedure (func), pointer :: funcp => func
+
+  ! OK
+  allocate(x, mold=func())
+  allocate(x, source=funcp())
+
+  !ERROR: Typeless item not allowed as SOURCE or MOLD in ALLOCATE
+  allocate(x, mold=x'1')
+  !ERROR: Typeless item not allowed as SOURCE or MOLD in ALLOCATE
+  allocate(x, mold=sub)
+  !ERROR: Typeless item not allowed as SOURCE or MOLD in ALLOCATE
+  allocate(x, source=subp)
+  !ERROR: Typeless item not allowed as SOURCE or MOLD in ALLOCATE
+  allocate(x, mold=func)
+  !ERROR: Typeless item not allowed as SOURCE or MOLD in ALLOCATE
+  allocate(x, source=funcp)
+end program

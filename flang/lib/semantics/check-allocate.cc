@@ -195,7 +195,8 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     if (const auto *expr{GetExpr(DEREF(parserSourceExpr))}) {
       info.sourceExprType = expr->GetType();
       if (!info.sourceExprType.has_value()) {
-        CHECK(context.AnyFatalError());
+        context.Say(parserSourceExpr->source,
+            "Typeless item not allowed as SOURCE or MOLD in ALLOCATE"_err_en_US);
         return std::nullopt;
       }
       info.sourceExprRank = expr->Rank();
