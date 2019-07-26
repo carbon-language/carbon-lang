@@ -23,6 +23,7 @@ end
 function f() result(res)
   integer :: res
   !ERROR: 'f' is already declared in this scoping unit
+  !ERROR: The type of 'f' has already been declared
   real :: f
   res = 1
 end

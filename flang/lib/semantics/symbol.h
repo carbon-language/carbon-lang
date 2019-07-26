@@ -516,8 +516,10 @@ public:
                 return x.interface().type();
               }
             },
+            [&](const ProcBindingDetails &x) { return x.symbol().GetType(); },
             [](const TypeParamDetails &x) { return x.type(); },
             [](const UseDetails &x) { return x.symbol().GetType(); },
+            [](const HostAssocDetails &x) { return x.symbol().GetType(); },
             [](const auto &) -> const DeclTypeSpec * { return nullptr; },
         },
         details_);
