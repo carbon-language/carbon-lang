@@ -371,6 +371,8 @@ TEST(TweakTest, ExtractVariable) {
       auto lamb = [&[[a]], &[[b]]](int r = [[1]]) {return 1;}
       // assigment
       [[a = 5]];
+      [[a >>= 5]];
+      [[a *= 5]];
       // Variable DeclRefExpr
       a = [[b]];
       // label statement

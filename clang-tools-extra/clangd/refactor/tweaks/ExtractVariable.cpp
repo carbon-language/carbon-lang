@@ -272,7 +272,7 @@ bool ExtractVariable::computeExtractionContext(const SelectionTree::Node *N,
   // Extracting Exprs like a = 1 gives dummy = a = 1 which isn't useful.
   if (const BinaryOperator *BinOpExpr =
           dyn_cast_or_null<BinaryOperator>(SelectedExpr)) {
-    if (BinOpExpr->getOpcode() == BinaryOperatorKind::BO_Assign)
+    if (BinOpExpr->isAssignmentOp())
       return false;
   }
   // For function and member function DeclRefs, we look for a parent that is a
