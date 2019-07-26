@@ -418,8 +418,8 @@ for.body:
 define i32 @multi_uses(i32 %arg, i32* nocapture readnone %arg1, i16* nocapture readonly %arg2, i16* nocapture readonly %arg3) {
 ; CHECK-LE-LABEL: multi_uses:
 ; CHECK-LE:       @ %bb.0: @ %entry
-; CHECK-LE-NEXT:    .save {r4, r5, r7, lr}
-; CHECK-LE-NEXT:    push {r4, r5, r7, lr}
+; CHECK-LE-NEXT:    .save {r4, lr}
+; CHECK-LE-NEXT:    push {r4, lr}
 ; CHECK-LE-NEXT:    cmp r0, #1
 ; CHECK-LE-NEXT:    blt .LBB4_4
 ; CHECK-LE-NEXT:  @ %bb.1: @ %for.body.preheader
@@ -432,21 +432,20 @@ define i32 @multi_uses(i32 %arg, i32* nocapture readnone %arg1, i16* nocapture r
 ; CHECK-LE-NEXT:    @ =>This Inner Loop Header: Depth=1
 ; CHECK-LE-NEXT:    ldr r1, [r3, #2]!
 ; CHECK-LE-NEXT:    ldr r4, [r2, #2]!
-; CHECK-LE-NEXT:    sxth r5, r1
-; CHECK-LE-NEXT:    smlad lr, r4, r1, lr
-; CHECK-LE-NEXT:    eor.w r1, r5, r12
-; CHECK-LE-NEXT:    muls r1, r5, r1
 ; CHECK-LE-NEXT:    subs r0, #1
+; CHECK-LE-NEXT:    smlad lr, r4, r1, lr
+; CHECK-LE-NEXT:    eor.w r4, r1, r12
+; CHECK-LE-NEXT:    mul r1, r4, r1
 ; CHECK-LE-NEXT:    lsl.w r12, r1, #16
 ; CHECK-LE-NEXT:    bne .LBB4_2
 ; CHECK-LE-NEXT:  @ %bb.3: @ %for.cond.cleanup
 ; CHECK-LE-NEXT:    add.w r0, lr, r12
-; CHECK-LE-NEXT:    pop {r4, r5, r7, pc}
+; CHECK-LE-NEXT:    pop {r4, pc}
 ; CHECK-LE-NEXT:  .LBB4_4:
 ; CHECK-LE-NEXT:    mov.w lr, #0
 ; CHECK-LE-NEXT:    mov.w r12, #0
 ; CHECK-LE-NEXT:    add.w r0, lr, r12
-; CHECK-LE-NEXT:    pop {r4, r5, r7, pc}
+; CHECK-LE-NEXT:    pop {r4, pc}
 ;
 ; CHECK-BE-LABEL: multi_uses:
 ; CHECK-BE:       @ %bb.0: @ %entry
