@@ -201,7 +201,9 @@ static MDNode *createStringMetadata(Loop *TheLoop, StringRef Name, unsigned V) {
 }
 
 /// Set input string into loop metadata by keeping other values intact.
-void llvm::addStringMetadataToLoop(Loop *TheLoop, const char *MDString,
+/// If the string is already in loop metadata update value if it is
+/// different.
+void llvm::addStringMetadataToLoop(Loop *TheLoop, const char *StringMD,
                                    unsigned V) {
   SmallVector<Metadata *, 4> MDs(1);
   // If the loop already has metadata, retain it.
@@ -209,11 +211,25 @@ void llvm::addStringMetadataToLoop(Loop *TheLoop, const char *MDString,
   if (LoopID) {
     for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
       MDNode *Node = cast<MDNode>(LoopID->getOperand(i));
+      // If it is of form key = value, try to parse it.
+      if (Node->getNumOperands() == 2) {
+        MDString *S = dyn_cast<MDString>(Node->getOperand(0));
+        if (S && S->getString().equals(StringMD)) {
+          ConstantInt *IntMD =
+              mdconst::extract_or_null<ConstantInt>(Node->getOperand(1));
+          if (IntMD && IntMD->getSExtValue() == V)
+            // It is already in place. Do nothing.
+            return;
+          // We need to update the value, so just skip it here and it will
+          // be added after copying other existed nodes.
+          continue;
+        }
+      }
       MDs.push_back(Node);
     }
   }
   // Add new metadata.
-  MDs.push_back(createStringMetadata(TheLoop, MDString, V));
+  MDs.push_back(createStringMetadata(TheLoop, StringMD, V));
   // Replace current metadata node with new one.
   LLVMContext &Context = TheLoop->getHeader()->getContext();
   MDNode *NewLoopID = MDNode::get(Context, MDs);
