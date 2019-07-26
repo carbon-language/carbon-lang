@@ -335,38 +335,17 @@ bool ARMParallelDSP::AreSequentialLoads(LoadInst *Ld0, LoadInst *Ld1,
 // why we check that types are equal to MaxBitWidth, and not <= MaxBitWidth.
 template<unsigned MaxBitWidth>
 bool ARMParallelDSP::IsNarrowSequence(Value *V, ValueList &VL) {
-  ConstantInt *CInt;
-
-  if (match(V, m_ConstantInt(CInt))) {
-    // TODO: if a constant is used, it needs to fit within the bit width.
-    return false;
-  }
-
-  auto *I = dyn_cast<Instruction>(V);
-  if (!I)
-    return false;
-
-  Value *Val, *LHS, *RHS;
-  if (match(V, m_Trunc(m_Value(Val)))) {
-    if (cast<TruncInst>(I)->getDestTy()->getIntegerBitWidth() == MaxBitWidth)
-      return IsNarrowSequence<MaxBitWidth>(Val, VL);
-  } else if (match(V, m_Add(m_Value(LHS), m_Value(RHS)))) {
-    // TODO: we need to implement sadd16/sadd8 for this, which enables to
-    // also do the rewrite for smlad8.ll, but it is unsupported for now.
-    return false;
-  } else if (match(V, m_ZExtOrSExt(m_Value(Val)))) {
-    if (cast<CastInst>(I)->getSrcTy()->getIntegerBitWidth() != MaxBitWidth)
+  if (auto *SExt = dyn_cast<SExtInst>(V)) {
+    if (SExt->getSrcTy()->getIntegerBitWidth() != MaxBitWidth)
       return false;
 
-    if (match(Val, m_Load(m_Value()))) {
-      auto *Ld = cast<LoadInst>(Val);
-
+    if (auto *Ld = dyn_cast<LoadInst>(SExt->getOperand(0))) {
       // Check that these load could be paired.
       if (!LoadPairs.count(Ld) && !OffsetLoads.count(Ld))
         return false;
 
-      VL.push_back(Val);
-      VL.push_back(I);
+      VL.push_back(Ld);
+      VL.push_back(SExt);
       return true;
     }
   }
