@@ -569,6 +569,9 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op, const APInt &DemandedBits,
 SDValue TargetLowering::SimplifyMultipleUseDemandedBits(
     SDValue Op, const APInt &DemandedBits, const APInt &DemandedElts,
     SelectionDAG &DAG, unsigned Depth) const {
+  if (Depth == 6) // Limit search depth.
+    return SDValue();
+
   KnownBits LHSKnown, RHSKnown;
   switch (Op.getOpcode()) {
   case ISD::AND: {
