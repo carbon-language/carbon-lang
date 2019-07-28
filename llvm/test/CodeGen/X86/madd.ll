@@ -2677,9 +2677,9 @@ define i32 @madd_double_reduction(<8 x i16>* %arg, <8 x i16>* %arg1, <8 x i16>* 
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vmovdqu (%rdi), %xmm0
 ; AVX-NEXT:    vmovdqu (%rdx), %xmm1
-; AVX-NEXT:    vpmaddwd (%rsi), %xmm0, %xmm0
 ; AVX-NEXT:    vpmaddwd (%rcx), %xmm1, %xmm1
-; AVX-NEXT:    vpaddd %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vpmaddwd (%rsi), %xmm0, %xmm0
+; AVX-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
 ; AVX-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
