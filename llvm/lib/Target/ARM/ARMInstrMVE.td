@@ -4609,18 +4609,27 @@ let Predicates = [HasMVEFloat] in {
             (v8i1 (MVE_VCMPf16r (v8f16 MQPR:$v1), ZR, 1))>;
 }
 
-def MVE_VPNOT : MVE_p<(outs), (ins), NoItinerary,
+def MVE_VPNOT : MVE_p<(outs VCCR:$P0), (ins VCCR:$P0_in), NoItinerary,
                       "vpnot", "", "", vpred_n, "", []> {
   let Inst{31-0} = 0b11111110001100010000111101001101;
   let Unpredictable{19-17} = 0b111;
   let Unpredictable{12} = 0b1;
   let Unpredictable{7} = 0b1;
   let Unpredictable{5} = 0b1;
-  let Defs = [P0];
-  let Uses = [P0];
 
   let Constraints = "";
+  let DecoderMethod = "DecodeMVEVPNOT";
 }
+
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v4i1 (xor (v4i1 VCCR:$pred), (v4i1 (predicate_cast (i32 65535))))),
+            (v4i1 (MVE_VPNOT (v4i1 VCCR:$pred)))>;
+  def : Pat<(v8i1 (xor (v8i1 VCCR:$pred), (v8i1 (predicate_cast (i32 65535))))),
+            (v8i1 (MVE_VPNOT (v8i1 VCCR:$pred)))>;
+  def : Pat<(v16i1 (xor (v16i1 VCCR:$pred), (v16i1 (predicate_cast (i32 65535))))),
+            (v16i1 (MVE_VPNOT (v16i1 VCCR:$pred)))>;
+}
+
 
 class MVE_loltp_start<dag iops, string asm, string ops, bits<2> size>
   : t2LOL<(outs GPRlr:$LR), iops, asm, ops> {
