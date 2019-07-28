@@ -16,7 +16,7 @@ define i16 @t0(i32 %x, i16 %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = shl i32 [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc i32 [[T2]] to i16
-; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -2
+; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -24
 ; CHECK-NEXT:    [[T5:%.*]] = shl i16 [[T3]], [[T4]]
 ; CHECK-NEXT:    ret i16 [[T5]]
 ;
@@ -24,7 +24,7 @@ define i16 @t0(i32 %x, i16 %y) {
   %t1 = zext i16 %t0 to i32
   %t2 = shl i32 %x, %t1
   %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -2
+  %t4 = add i16 %y, -24
   %t5 = shl i16 %t3, %t4
   ret i16 %t5
 }
@@ -35,7 +35,7 @@ define <2 x i16> @t1_vec_splat(<2 x i32> %x, <2 x i16> %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext <2 x i16> [[T0]] to <2 x i32>
 ; CHECK-NEXT:    [[T2:%.*]] = shl <2 x i32> [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc <2 x i32> [[T2]] to <2 x i16>
-; CHECK-NEXT:    [[T4:%.*]] = add <2 x i16> [[Y]], <i16 -2, i16 -2>
+; CHECK-NEXT:    [[T4:%.*]] = add <2 x i16> [[Y]], <i16 -24, i16 -24>
 ; CHECK-NEXT:    [[T5:%.*]] = shl <2 x i16> [[T3]], [[T4]]
 ; CHECK-NEXT:    ret <2 x i16> [[T5]]
 ;
@@ -43,7 +43,7 @@ define <2 x i16> @t1_vec_splat(<2 x i32> %x, <2 x i16> %y) {
   %t1 = zext <2 x i16> %t0 to <2 x i32>
   %t2 = shl <2 x i32> %x, %t1
   %t3 = trunc <2 x i32> %t2 to <2 x i16>
-  %t4 = add <2 x i16> %y, <i16 -2, i16 -2>
+  %t4 = add <2 x i16> %y, <i16 -24, i16 -24>
   %t5 = shl <2 x i16> %t3, %t4
   ret <2 x i16> %t5
 }
@@ -54,7 +54,7 @@ define <2 x i16> @t2_vec_nonsplat(<2 x i32> %x, <2 x i16> %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext <2 x i16> [[T0]] to <2 x i32>
 ; CHECK-NEXT:    [[T2:%.*]] = shl <2 x i32> [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc <2 x i32> [[T2]] to <2 x i16>
-; CHECK-NEXT:    [[T4:%.*]] = add <2 x i16> [[Y]], <i16 -2, i16 0>
+; CHECK-NEXT:    [[T4:%.*]] = add <2 x i16> [[Y]], <i16 -24, i16 0>
 ; CHECK-NEXT:    [[T5:%.*]] = shl <2 x i16> [[T3]], [[T4]]
 ; CHECK-NEXT:    ret <2 x i16> [[T5]]
 ;
@@ -62,7 +62,7 @@ define <2 x i16> @t2_vec_nonsplat(<2 x i32> %x, <2 x i16> %y) {
   %t1 = zext <2 x i16> %t0 to <2 x i32>
   %t2 = shl <2 x i32> %x, %t1
   %t3 = trunc <2 x i32> %t2 to <2 x i16>
-  %t4 = add <2 x i16> %y, <i16 -2, i16 0>
+  %t4 = add <2 x i16> %y, <i16 -24, i16 0>
   %t5 = shl <2 x i16> %t3, %t4
   ret <2 x i16> %t5
 }
@@ -75,7 +75,7 @@ define <3 x i16> @t3_vec_nonsplat_undef0(<3 x i32> %x, <3 x i16> %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext <3 x i16> [[T0]] to <3 x i32>
 ; CHECK-NEXT:    [[T2:%.*]] = shl <3 x i32> [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc <3 x i32> [[T2]] to <3 x i16>
-; CHECK-NEXT:    [[T4:%.*]] = add <3 x i16> [[Y]], <i16 -2, i16 -2, i16 -2>
+; CHECK-NEXT:    [[T4:%.*]] = add <3 x i16> [[Y]], <i16 -24, i16 -24, i16 -24>
 ; CHECK-NEXT:    [[T5:%.*]] = shl <3 x i16> [[T3]], [[T4]]
 ; CHECK-NEXT:    ret <3 x i16> [[T5]]
 ;
@@ -83,7 +83,7 @@ define <3 x i16> @t3_vec_nonsplat_undef0(<3 x i32> %x, <3 x i16> %y) {
   %t1 = zext <3 x i16> %t0 to <3 x i32>
   %t2 = shl <3 x i32> %x, %t1
   %t3 = trunc <3 x i32> %t2 to <3 x i16>
-  %t4 = add <3 x i16> %y, <i16 -2, i16 -2, i16 -2>
+  %t4 = add <3 x i16> %y, <i16 -24, i16 -24, i16 -24>
   %t5 = shl <3 x i16> %t3, %t4
   ret <3 x i16> %t5
 }
@@ -94,7 +94,7 @@ define <3 x i16> @t4_vec_nonsplat_undef1(<3 x i32> %x, <3 x i16> %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext <3 x i16> [[T0]] to <3 x i32>
 ; CHECK-NEXT:    [[T2:%.*]] = shl <3 x i32> [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc <3 x i32> [[T2]] to <3 x i16>
-; CHECK-NEXT:    [[T4:%.*]] = add <3 x i16> [[Y]], <i16 -2, i16 undef, i16 -2>
+; CHECK-NEXT:    [[T4:%.*]] = add <3 x i16> [[Y]], <i16 -24, i16 undef, i16 -24>
 ; CHECK-NEXT:    [[T5:%.*]] = shl <3 x i16> [[T3]], [[T4]]
 ; CHECK-NEXT:    ret <3 x i16> [[T5]]
 ;
@@ -102,7 +102,7 @@ define <3 x i16> @t4_vec_nonsplat_undef1(<3 x i32> %x, <3 x i16> %y) {
   %t1 = zext <3 x i16> %t0 to <3 x i32>
   %t2 = shl <3 x i32> %x, %t1
   %t3 = trunc <3 x i32> %t2 to <3 x i16>
-  %t4 = add <3 x i16> %y, <i16 -2, i16 undef, i16 -2>
+  %t4 = add <3 x i16> %y, <i16 -24, i16 undef, i16 -24>
   %t5 = shl <3 x i16> %t3, %t4
   ret <3 x i16> %t5
 }
@@ -113,7 +113,7 @@ define <3 x i16> @t5_vec_nonsplat_undef1(<3 x i32> %x, <3 x i16> %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext <3 x i16> [[T0]] to <3 x i32>
 ; CHECK-NEXT:    [[T2:%.*]] = shl <3 x i32> [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc <3 x i32> [[T2]] to <3 x i16>
-; CHECK-NEXT:    [[T4:%.*]] = add <3 x i16> [[Y]], <i16 -2, i16 undef, i16 -2>
+; CHECK-NEXT:    [[T4:%.*]] = add <3 x i16> [[Y]], <i16 -24, i16 undef, i16 -24>
 ; CHECK-NEXT:    [[T5:%.*]] = shl <3 x i16> [[T3]], [[T4]]
 ; CHECK-NEXT:    ret <3 x i16> [[T5]]
 ;
@@ -121,7 +121,7 @@ define <3 x i16> @t5_vec_nonsplat_undef1(<3 x i32> %x, <3 x i16> %y) {
   %t1 = zext <3 x i16> %t0 to <3 x i32>
   %t2 = shl <3 x i32> %x, %t1
   %t3 = trunc <3 x i32> %t2 to <3 x i16>
-  %t4 = add <3 x i16> %y, <i16 -2, i16 undef, i16 -2>
+  %t4 = add <3 x i16> %y, <i16 -24, i16 undef, i16 -24>
   %t5 = shl <3 x i16> %t3, %t4
   ret <3 x i16> %t5
 }
@@ -136,18 +136,18 @@ define i16 @t6_extrause0(i32 %x, i16 %y) {
 ; CHECK-NEXT:    [[T0:%.*]] = sub i16 32, [[Y:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = shl i32 [[X:%.*]], [[T1]]
-; CHECK-NEXT:    call void @use32(i32 [[T2]])
 ; CHECK-NEXT:    [[T3:%.*]] = trunc i32 [[T2]] to i16
-; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -2
+; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -24
+; CHECK-NEXT:    call void @use16(i16 [[T3]])
 ; CHECK-NEXT:    [[T5:%.*]] = shl i16 [[T3]], [[T4]]
 ; CHECK-NEXT:    ret i16 [[T5]]
 ;
   %t0 = sub i16 32, %y
   %t1 = zext i16 %t0 to i32
   %t2 = shl i32 %x, %t1
-  call void @use32(i32 %t2)
   %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -2
+  %t4 = add i16 %y, -24
+  call void @use16(i16 %t3)
   %t5 = shl i16 %t3, %t4
   ret i16 %t5
 }
@@ -158,8 +158,8 @@ define i16 @t7_extrause1(i32 %x, i16 %y) {
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = shl i32 [[X:%.*]], [[T1]]
 ; CHECK-NEXT:    [[T3:%.*]] = trunc i32 [[T2]] to i16
-; CHECK-NEXT:    call void @use16(i16 [[T3]])
-; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -2
+; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -24
+; CHECK-NEXT:    call void @use16(i16 [[T4]])
 ; CHECK-NEXT:    [[T5:%.*]] = shl i16 [[T3]], [[T4]]
 ; CHECK-NEXT:    ret i16 [[T5]]
 ;
@@ -167,8 +167,8 @@ define i16 @t7_extrause1(i32 %x, i16 %y) {
   %t1 = zext i16 %t0 to i32
   %t2 = shl i32 %x, %t1
   %t3 = trunc i32 %t2 to i16
-  call void @use16(i16 %t3)
-  %t4 = add i16 %y, -2
+  %t4 = add i16 %y, -24
+  call void @use16(i16 %t4)
   %t5 = shl i16 %t3, %t4
   ret i16 %t5
 }
@@ -178,67 +178,32 @@ define i16 @t8_extrause2(i32 %x, i16 %y) {
 ; CHECK-NEXT:    [[T0:%.*]] = sub i16 32, [[Y:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = shl i32 [[X:%.*]], [[T1]]
-; CHECK-NEXT:    call void @use32(i32 [[T2]])
 ; CHECK-NEXT:    [[T3:%.*]] = trunc i32 [[T2]] to i16
+; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -24
 ; CHECK-NEXT:    call void @use16(i16 [[T3]])
-; CHECK-NEXT:    [[T4:%.*]] = add i16 [[Y]], -2
+; CHECK-NEXT:    call void @use16(i16 [[T4]])
 ; CHECK-NEXT:    [[T5:%.*]] = shl i16 [[T3]], [[T4]]
 ; CHECK-NEXT:    ret i16 [[T5]]
 ;
   %t0 = sub i16 32, %y
   %t1 = zext i16 %t0 to i32
   %t2 = shl i32 %x, %t1
-  call void @use32(i32 %t2)
   %t3 = trunc i32 %t2 to i16
+  %t4 = add i16 %y, -24
   call void @use16(i16 %t3)
-  %t4 = add i16 %y, -2
+  call void @use16(i16 %t4)
   %t5 = shl i16 %t3, %t4
   ret i16 %t5
 }
 
-; Special test
-
-; New shift amount is less than bitwidth after truncation, so we could pre-truncated.
-define i16 @t9_pretrunc(i32 %x, i16 %y) {
-; CHECK-LABEL: @t9_pretrunc(
-; CHECK-NEXT:    [[T0:%.*]] = sub i16 32, [[Y:%.*]]
-; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
-; CHECK-NEXT:    [[T2:%.*]] = shl i32 [[X:%.*]], [[T1]]
-; CHECK-NEXT:    [[T3:%.*]] = trunc i32 [[T2]] to i16
-; CHECK-NEXT:    ret i16 [[T3]]
-;
-  %t0 = sub i16 32, %y
-  %t1 = zext i16 %t0 to i32
-  %t2 = shl i32 %x, %t1
-  %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -18
-  %t5 = shl i16 %t3, %t4
-  ret i16 %t3
-}
-
 ; No 'nuw'/'nsw' flags are to be propagated!
-define i16 @t10_no_flags(i32 %x, i16 %y) {
-; CHECK-LABEL: @t10_no_flags(
-; CHECK-NEXT:    [[T0:%.*]] = sub i16 32, [[Y:%.*]]
-; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
-; CHECK-NEXT:    [[T2:%.*]] = shl nuw nsw i32 [[X:%.*]], [[T1]]
-; CHECK-NEXT:    [[T3:%.*]] = trunc i32 [[T2]] to i16
-; CHECK-NEXT:    ret i16 [[T3]]
-;
-  %t0 = sub i16 32, %y
-  %t1 = zext i16 %t0 to i32
-  %t2 = shl nuw nsw i32 %x, %t1
-  %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -2
-  %t5 = shl nuw nsw i16 %t3, %t4
-  ret i16 %t3
-}
+; But we can't test that, such IR does not reach that code.
 
 ; Negative tests
 
-; As-is this is not correct for other shift opcodes.
-define i16 @t11_shl(i32 %x, i16 %y) {
-; CHECK-LABEL: @t11_shl(
+; No folding possible for right-shifts..
+define i16 @t9_shl(i32 %x, i16 %y) {
+; CHECK-LABEL: @t9_shl(
 ; CHECK-NEXT:    [[T0:%.*]] = sub i16 32, [[Y:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = lshr i32 [[X:%.*]], [[T1]]
@@ -249,12 +214,12 @@ define i16 @t11_shl(i32 %x, i16 %y) {
   %t1 = zext i16 %t0 to i32
   %t2 = lshr i32 %x, %t1
   %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -2
+  %t4 = add i16 %y, -24
   %t5 = lshr i16 %t3, %t4
   ret i16 %t3
 }
-define i16 @t12_ashr(i32 %x, i16 %y) {
-; CHECK-LABEL: @t12_ashr(
+define i16 @t10_ashr(i32 %x, i16 %y) {
+; CHECK-LABEL: @t10_ashr(
 ; CHECK-NEXT:    [[T0:%.*]] = sub i16 32, [[Y:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = ashr i32 [[X:%.*]], [[T1]]
@@ -265,14 +230,14 @@ define i16 @t12_ashr(i32 %x, i16 %y) {
   %t1 = zext i16 %t0 to i32
   %t2 = ashr i32 %x, %t1
   %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -2
+  %t4 = add i16 %y, -24
   %t5 = ashr i16 %t3, %t4
   ret i16 %t3
 }
 
 ; Can't fold, total shift would be 32
-define i16 @n13(i32 %x, i16 %y) {
-; CHECK-LABEL: @n13(
+define i16 @n11(i32 %x, i16 %y) {
+; CHECK-LABEL: @n11(
 ; CHECK-NEXT:    [[T0:%.*]] = sub i16 30, [[Y:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = zext i16 [[T0]] to i32
 ; CHECK-NEXT:    [[T2:%.*]] = shl i32 [[X:%.*]], [[T1]]
@@ -283,7 +248,7 @@ define i16 @n13(i32 %x, i16 %y) {
   %t1 = zext i16 %t0 to i32
   %t2 = shl i32 %x, %t1
   %t3 = trunc i32 %t2 to i16
-  %t4 = add i16 %y, -2
+  %t4 = add i16 %y, -24
   %t5 = shl i16 %t3, %t4
   ret i16 %t3
 }
