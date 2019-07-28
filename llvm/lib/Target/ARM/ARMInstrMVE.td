@@ -4561,6 +4561,7 @@ let Predicates = [HasMVEInt] in {
             (v4f32 (MVE_VPSEL MQPR:$v1, MQPR:$v2, 0,
                               (MVE_VCMPi32 (v4i32 MQPR:$pred), (MVE_VMOVimmi32 0), 1)))>;
 
+  // Pred <-> Int
   def : Pat<(v16i8 (zext  (v16i1 VCCR:$pred))),
             (v16i8 (MVE_VPSEL (MVE_VMOVimmi8 1), (MVE_VMOVimmi8 0), 0, VCCR:$pred))>;
   def : Pat<(v8i16 (zext  (v8i1  VCCR:$pred))),
@@ -4581,6 +4582,31 @@ let Predicates = [HasMVEInt] in {
             (v8i16 (MVE_VPSEL (MVE_VMOVimmi16 1), (MVE_VMOVimmi16 0), 0, VCCR:$pred))>;
   def : Pat<(v4i32 (anyext  (v4i1  VCCR:$pred))),
             (v4i32 (MVE_VPSEL (MVE_VMOVimmi32 1), (MVE_VMOVimmi32 0), 0, VCCR:$pred))>;
+}
+
+let Predicates = [HasMVEFloat] in {
+  // Pred <-> Float
+  // 112 is 1.0 in float
+  def : Pat<(v4f32 (uint_to_fp (v4i1 VCCR:$pred))),
+            (v4f32 (MVE_VPSEL (v4f32 (MVE_VMOVimmf32 112)), (v4f32 (MVE_VMOVimmi32 0)), 0, VCCR:$pred))>;
+  // 2620 in 1.0 in half
+  def : Pat<(v8f16 (uint_to_fp (v8i1 VCCR:$pred))),
+            (v8f16 (MVE_VPSEL (v8f16 (MVE_VMOVimmi16 2620)), (v8f16 (MVE_VMOVimmi16 0)), 0, VCCR:$pred))>;
+  // 240 is -1.0 in float
+  def : Pat<(v4f32 (sint_to_fp (v4i1 VCCR:$pred))),
+            (v4f32 (MVE_VPSEL (v4f32 (MVE_VMOVimmf32 240)), (v4f32 (MVE_VMOVimmi32 0)), 0, VCCR:$pred))>;
+  // 2748 is -1.0 in half
+  def : Pat<(v8f16 (sint_to_fp (v8i1 VCCR:$pred))),
+            (v8f16 (MVE_VPSEL (v8f16 (MVE_VMOVimmi16 2748)), (v8f16 (MVE_VMOVimmi16 0)), 0, VCCR:$pred))>;
+
+  def : Pat<(v4i1 (fp_to_uint (v4f32 MQPR:$v1))),
+            (v4i1 (MVE_VCMPf32r (v4f32 MQPR:$v1), ZR, 1))>;
+  def : Pat<(v8i1 (fp_to_uint (v8f16 MQPR:$v1))),
+            (v8i1 (MVE_VCMPf16r (v8f16 MQPR:$v1), ZR, 1))>;
+  def : Pat<(v4i1 (fp_to_sint (v4f32 MQPR:$v1))),
+            (v4i1 (MVE_VCMPf32r (v4f32 MQPR:$v1), ZR, 1))>;
+  def : Pat<(v8i1 (fp_to_sint (v8f16 MQPR:$v1))),
+            (v8i1 (MVE_VCMPf16r (v8f16 MQPR:$v1), ZR, 1))>;
 }
 
 def MVE_VPNOT : MVE_p<(outs), (ins), NoItinerary,
