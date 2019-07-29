@@ -6668,7 +6668,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
 static bool resolveTargetShuffleInputs(SDValue Op,
                                        SmallVectorImpl<SDValue> &Inputs,
                                        SmallVectorImpl<int> &Mask,
-                                       SelectionDAG &DAG);
+                                       SelectionDAG &DAG, unsigned Depth);
 
 // Attempt to decode ops that could be represented as a shuffle mask.
 // The decoded shuffle mask may contain a different number of elements to the
@@ -6676,7 +6676,7 @@ static bool resolveTargetShuffleInputs(SDValue Op,
 static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
                                SmallVectorImpl<int> &Mask,
                                SmallVectorImpl<SDValue> &Ops,
-                               SelectionDAG &DAG) {
+                               SelectionDAG &DAG, unsigned Depth) {
   Mask.clear();
   Ops.clear();
 
@@ -6728,8 +6728,10 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
   case ISD::OR: {
     // Inspect each operand at the byte level. We can merge these into a
     // blend shuffle mask if for each byte at least one is masked out (zero).
-    KnownBits Known0 = DAG.computeKnownBits(N.getOperand(0), DemandedElts);
-    KnownBits Known1 = DAG.computeKnownBits(N.getOperand(1), DemandedElts);
+    KnownBits Known0 =
+        DAG.computeKnownBits(N.getOperand(0), DemandedElts, Depth + 1);
+    KnownBits Known1 =
+        DAG.computeKnownBits(N.getOperand(1), DemandedElts, Depth + 1);
     if (Known0.One.isNullValue() && Known1.One.isNullValue()) {
       bool IsByteMask = true;
       unsigned NumSizeInBytes = NumSizeInBits / 8;
@@ -6768,8 +6770,8 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
       return false;
     SmallVector<int, 64> SrcMask0, SrcMask1;
     SmallVector<SDValue, 2> SrcInputs0, SrcInputs1;
-    if (!resolveTargetShuffleInputs(N0, SrcInputs0, SrcMask0, DAG) ||
-        !resolveTargetShuffleInputs(N1, SrcInputs1, SrcMask1, DAG))
+    if (!resolveTargetShuffleInputs(N0, SrcInputs0, SrcMask0, DAG, Depth + 1) ||
+        !resolveTargetShuffleInputs(N1, SrcInputs1, SrcMask1, DAG, Depth + 1))
       return false;
     int MaskSize = std::max(SrcMask0.size(), SrcMask1.size());
     SmallVector<int, 64> Mask0, Mask1;
@@ -6819,7 +6821,7 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
     SmallVector<int, 64> SubMask;
     SmallVector<SDValue, 2> SubInputs;
     if (!resolveTargetShuffleInputs(peekThroughOneUseBitcasts(Sub), SubInputs,
-                                    SubMask, DAG))
+                                    SubMask, DAG, Depth + 1))
       return false;
     if (SubMask.size() != NumSubElts) {
       assert(((SubMask.size() % NumSubElts) == 0 ||
@@ -6943,14 +6945,16 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
     // as a truncation shuffle.
     if (Opcode == X86ISD::PACKSS) {
       if ((!N0.isUndef() &&
-           DAG.ComputeNumSignBits(N0, EltsLHS) <= NumBitsPerElt) ||
+           DAG.ComputeNumSignBits(N0, EltsLHS, Depth + 1) <= NumBitsPerElt) ||
           (!N1.isUndef() &&
-           DAG.ComputeNumSignBits(N1, EltsRHS) <= NumBitsPerElt))
+           DAG.ComputeNumSignBits(N1, EltsRHS, Depth + 1) <= NumBitsPerElt))
         return false;
     } else {
       APInt ZeroMask = APInt::getHighBitsSet(2 * NumBitsPerElt, NumBitsPerElt);
-      if ((!N0.isUndef() && !DAG.MaskedValueIsZero(N0, ZeroMask, EltsLHS)) ||
-          (!N1.isUndef() && !DAG.MaskedValueIsZero(N1, ZeroMask, EltsRHS)))
+      if ((!N0.isUndef() &&
+           !DAG.MaskedValueIsZero(N0, ZeroMask, EltsLHS, Depth + 1)) ||
+          (!N1.isUndef() &&
+           !DAG.MaskedValueIsZero(N1, ZeroMask, EltsRHS, Depth + 1)))
         return false;
     }
 
@@ -7101,11 +7105,11 @@ static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Inputs,
 static bool resolveTargetShuffleInputs(SDValue Op,
                                        SmallVectorImpl<SDValue> &Inputs,
                                        SmallVectorImpl<int> &Mask,
-                                       SelectionDAG &DAG) {
+                                       SelectionDAG &DAG, unsigned Depth) {
   unsigned NumElts = Op.getValueType().getVectorNumElements();
   APInt DemandedElts = APInt::getAllOnesValue(NumElts);
   if (!setTargetShuffleZeroElements(Op, Mask, Inputs))
-    if (!getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG))
+    if (!getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth))
       return false;
 
   resolveTargetShuffleInputsAndMask(Inputs, Mask);
@@ -32760,7 +32764,7 @@ static SDValue combineX86ShufflesRecursively(
   // Extract target shuffle mask and resolve sentinels and inputs.
   SmallVector<int, 64> OpMask;
   SmallVector<SDValue, 2> OpInputs;
-  if (!resolveTargetShuffleInputs(Op, OpInputs, OpMask, DAG))
+  if (!resolveTargetShuffleInputs(Op, OpInputs, OpMask, DAG, Depth))
     return SDValue();
 
   // Add the inputs to the Ops list, avoiding duplicates.
@@ -35552,7 +35556,7 @@ static SDValue combineExtractWithShuffle(SDNode *N, SelectionDAG &DAG,
   // Resolve the target shuffle inputs and mask.
   SmallVector<int, 16> Mask;
   SmallVector<SDValue, 2> Ops;
-  if (!resolveTargetShuffleInputs(SrcBC, Ops, Mask, DAG))
+  if (!resolveTargetShuffleInputs(SrcBC, Ops, Mask, DAG, 0))
     return SDValue();
 
   // Attempt to narrow/widen the shuffle mask to the correct size.
