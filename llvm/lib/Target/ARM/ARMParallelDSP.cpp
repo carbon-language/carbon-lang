@@ -64,7 +64,6 @@ namespace {
   struct BinOpChain {
     Instruction   *Root;
     ValueList     AllValues;
-    MemInstList   Loads;
     MemInstList   VecLd;    // List of all load instructions.
     ValueList     LHS;      // List of all (narrow) left hand operands.
     ValueList     RHS;      // List of all (narrow) right hand operands.
@@ -77,13 +76,6 @@ namespace {
           AllValues.push_back(V);
         for (auto *V : RHS)
           AllValues.push_back(V);
-    }
-
-    void PopulateLoads() {
-      for (auto *V : AllValues) {
-        if (auto *Ld = dyn_cast<LoadInst>(V))
-          Loads.push_back(Ld);
-      }
     }
 
     unsigned size() const { return AllValues.size(); }
@@ -563,7 +555,6 @@ bool ARMParallelDSP::CreateParallelPairs(Reduction &R) {
       LLVM_DEBUG(dbgs() << "Operand list too short.\n");
       return false;
     }
-    MulChain->PopulateLoads();
     ValueList &LHS = static_cast<BinOpChain*>(MulChain.get())->LHS;
     ValueList &RHS = static_cast<BinOpChain*>(MulChain.get())->RHS;
 
