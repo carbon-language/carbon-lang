@@ -118,11 +118,6 @@ endforeach()
 include_directories(..)
 include_directories(../../include)
 
-if(COMPILER_RT_USE_LIBCXX)
-  if (SANITIZER_CXX_ABI_LIBNAME STREQUAL "libc++")
-    set(SANITIZER_COMMON_CFLAGS "${SANITIZER_COMMON_CFLAGS} -isystem ${COMPILER_RT_LIBCXX_PATH}/include")
-  endif()
-endif()
 set(XRAY_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 set(XRAY_COMMON_DEFINITIONS XRAY_HAS_EXCEPTIONS=1)
 
