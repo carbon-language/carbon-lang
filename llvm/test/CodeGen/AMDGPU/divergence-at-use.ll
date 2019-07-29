@@ -3,7 +3,7 @@
 
 @local = addrspace(3) global i32 undef
 
-define void @reducible(i32 %x) {
+define amdgpu_kernel void @reducible(i32 %x) {
 ; CHECK-LABEL: reducible:
 ; CHECK-NOT: dpp
 entry:
