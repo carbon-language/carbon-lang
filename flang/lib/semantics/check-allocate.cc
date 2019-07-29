@@ -192,8 +192,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
   }
 
   if (info.gotSrc || info.gotMold) {
-    CHECK(parserSourceExpr);
-    if (const auto *expr{GetExpr(*parserSourceExpr)}) {
+    if (const auto *expr{GetExpr(DEREF(parserSourceExpr))}) {
       info.sourceExprType = expr->GetType();
       if (!info.sourceExprType.has_value()) {
         CHECK(context.AnyFatalError());
@@ -390,13 +389,10 @@ static bool HaveCompatibleKindParameters(
     return true;
   }
   if (const IntrinsicTypeSpec * intrinsicType1{type1.AsIntrinsic()}) {
-    const IntrinsicTypeSpec *intrinsicType2{type2.AsIntrinsic()};
-    CHECK(intrinsicType2);  // Violation of type compatibility hypothesis.
-    return intrinsicType1->kind() == intrinsicType2->kind();
+    return intrinsicType1->kind() == DEREF(type2.AsIntrinsic()).kind();
   } else if (const DerivedTypeSpec * derivedType1{type1.AsDerived()}) {
-    const DerivedTypeSpec *derivedType2{type2.AsDerived()};
-    CHECK(derivedType2);  // Violation of type compatibility hypothesis.
-    return HaveCompatibleKindParameters(*derivedType1, *derivedType2);
+    return HaveCompatibleKindParameters(
+        *derivedType1, DEREF(type2.AsDerived()));
   } else {
     common::die("unexpected type1 category");
   }

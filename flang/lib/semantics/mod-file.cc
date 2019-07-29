@@ -96,8 +96,7 @@ private:
   template<typename T> void DoExpr(evaluate::Expr<T> expr) {
     evaluate::Visitor<SymbolVisitor> visitor{0};
     for (const Symbol *symbol : visitor.Traverse(expr)) {
-      CHECK(symbol && "bad symbol from Traverse");
-      DoSymbol(*symbol);
+      DoSymbol(DEREF(symbol));
     }
   }
 };
@@ -403,8 +402,7 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
   }
   // sort normal symbols, then namelists, then common blocks:
   auto compareByOrder = [](const Symbol *x, const Symbol *y) {
-    CHECK(x != nullptr);
-    return x->name().begin() < y->name().begin();
+    return DEREF(x).name().begin() < DEREF(y).name().begin();
   };
   auto cursor{sorted.begin()};
   std::sort(cursor, sorted.end(), compareByOrder);
@@ -461,11 +459,7 @@ void PutShape(std::ostream &os, const ArraySpec &shape, char open, char close) {
 
 void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
   auto &details{symbol.get<ObjectEntityDetails>()};
-  PutEntity(os, symbol, [&]() {
-    auto *type{symbol.GetType()};
-    CHECK(type);
-    PutLower(os, *type);
-  });
+  PutEntity(os, symbol, [&]() { PutLower(os, DEREF(symbol.GetType())); });
   PutShape(os, details.shape(), '(', ')');
   PutShape(os, details.coshape(), '[', ']');
   PutInit(os, details.init());
@@ -500,9 +494,7 @@ void PutPassName(std::ostream &os, const SourceName *passName) {
 void PutTypeParam(std::ostream &os, const Symbol &symbol) {
   auto &details{symbol.get<TypeParamDetails>()};
   PutEntity(os, symbol, [&]() {
-    auto *type{symbol.GetType()};
-    CHECK(type);
-    PutLower(os, *type);
+    PutLower(os, DEREF(symbol.GetType()));
     PutLower(os << ',', common::EnumToString(details.attr()));
   });
   PutInit(os, details.init());
@@ -795,8 +787,7 @@ void SubprogramSymbolCollector::Collect() {
     DoSymbol(details.result());
   }
   for (const Symbol *dummyArg : details.dummyArgs()) {
-    CHECK(dummyArg);
-    DoSymbol(*dummyArg);
+    DoSymbol(DEREF(dummyArg));
   }
   for (const auto &pair : scope_) {
     const Symbol *symbol{pair.second};

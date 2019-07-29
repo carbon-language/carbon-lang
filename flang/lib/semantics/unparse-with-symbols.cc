@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -75,8 +75,7 @@ void SymbolDumpVisitor::Indent(std::ostream &out, int indent) const {
 void SymbolDumpVisitor::Post(const parser::Name &name) {
   if (const auto *symbol{name.symbol}) {
     if (!symbol->has<MiscDetails>()) {
-      CHECK(currStmt_);
-      symbols_.emplace(currStmt_->begin(), symbol);
+      symbols_.emplace(DEREF(currStmt_).begin(), symbol);
     }
   }
 }

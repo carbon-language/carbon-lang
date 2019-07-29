@@ -455,8 +455,7 @@ void AssignmentContext::Analyze(
 
 void AssignmentContext::Analyze(
     const parser::WhereConstruct::Elsewhere &elsewhere) {
-  CHECK(where_ != nullptr);
-  MaskExpr copyCumulative{where_->cumulativeMaskExpr};
+  MaskExpr copyCumulative{DEREF(where_).cumulativeMaskExpr};
   where_->thisMaskExpr = evaluate::LogicalNegation(std::move(copyCumulative));
   for (const auto &x :
       std::get<std::list<parser::WhereBodyConstruct>>(elsewhere.t)) {
@@ -465,8 +464,7 @@ void AssignmentContext::Analyze(
 }
 
 void AssignmentContext::Analyze(const parser::ConcurrentHeader &header) {
-  CHECK(forall_ != nullptr);
-  forall_->integerKind = GetIntegerKind(
+  DEREF(forall_).integerKind = GetIntegerKind(
       std::get<std::optional<parser::IntegerTypeSpec>>(header.t));
   for (const auto &control :
       std::get<std::list<parser::ConcurrentControl>>(header.t)) {

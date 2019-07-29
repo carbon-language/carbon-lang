@@ -89,11 +89,7 @@ public:
   const Symbol *GetSymbol() const;
   const Scope *GetDerivedTypeParent() const;
 
-  const SourceName &name() const {
-    const Symbol *sym{GetSymbol()};
-    CHECK(sym != nullptr);
-    return sym->name();
-  }
+  const SourceName &name() const { return DEREF(GetSymbol()).name(); }
 
   /// Make a scope nested in this one
   Scope &MakeScope(Kind kind, Symbol *symbol = nullptr);

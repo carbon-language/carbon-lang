@@ -174,8 +174,7 @@ DeclTypeSpec &Scope::MakeDerivedType(
 void Scope::set_chars(parser::CookedSource &cooked) {
   CHECK(kind_ == Kind::Module);
   CHECK(parent_.IsGlobal() || parent_.IsModuleFile());
-  CHECK(symbol_ != nullptr);
-  CHECK(symbol_->test(Symbol::Flag::ModFile));
+  CHECK(DEREF(symbol_).test(Symbol::Flag::ModFile));
   // TODO: Preserve the CookedSource rather than acquiring its string.
   chars_ = cooked.AcquireData();
 }

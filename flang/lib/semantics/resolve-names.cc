@@ -1552,8 +1552,7 @@ void ScopeHandler::SayLocalMustBeVariable(
 void ScopeHandler::SayDerivedType(
     const SourceName &name, MessageFixedText &&msg, const Scope &type) {
   const Symbol *typeSymbol{type.GetSymbol()};
-  CHECK(typeSymbol != nullptr);
-  Say(name, std::move(msg), name, typeSymbol->name())
+  Say(name, std::move(msg), name, DEREF(typeSymbol).name())
       .Attach(typeSymbol->name(), "Declaration of derived type '%s'"_en_US,
           typeSymbol->name());
 }

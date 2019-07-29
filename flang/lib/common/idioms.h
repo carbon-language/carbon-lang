@@ -130,6 +130,16 @@ template<typename A> struct ListItemCount {
         static_cast<int>(e), #__VA_ARGS__); \
   }
 
+// Check that a pointer is non-null and dereference it
+#define DEREF(p) Fortran::common::Deref(p, __FILE__, __LINE__)
+
+template<typename T> T &Deref(T *p, const char *file, int line) {
+  if (p == nullptr) {
+    Fortran::common::die("nullptr dereference at %s(%d)", file, line);
+  }
+  return *p;
+}
+
 // Given a const reference to a value, return a copy of the value.
 template<typename A> A Clone(const A &x) { return x; }
 
