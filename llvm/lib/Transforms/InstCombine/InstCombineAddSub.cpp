@@ -1387,6 +1387,24 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   if (match(&I, m_c_FAdd(m_FNeg(m_Value(X)), m_Value(Y))))
     return BinaryOperator::CreateFSubFMF(Y, X, &I);
 
+  // Similar to above, but look through fmul/fdiv for the negated term.
+  // (-X * Y) + Z --> Z - (X * Y) [4 commuted variants]
+  Value *Z;
+  if (match(&I, m_c_FAdd(m_OneUse(m_c_FMul(m_FNeg(m_Value(X)), m_Value(Y))),
+                         m_Value(Z)))) {
+    Value *XY = Builder.CreateFMulFMF(X, Y, &I);
+    return BinaryOperator::CreateFSubFMF(Z, XY, &I);
+  }
+  // (-X / Y) + Z --> Z - (X / Y) [2 commuted variants]
+  // (X / -Y) + Z --> Z - (X / Y) [2 commuted variants]
+  if (match(&I, m_c_FAdd(m_OneUse(m_FDiv(m_FNeg(m_Value(X)), m_Value(Y))),
+                         m_Value(Z))) ||
+      match(&I, m_c_FAdd(m_OneUse(m_FDiv(m_Value(X), m_FNeg(m_Value(Y)))),
+                         m_Value(Z)))) {
+    Value *XY = Builder.CreateFDivFMF(X, Y, &I);
+    return BinaryOperator::CreateFSubFMF(Z, XY, &I);
+  }
+
   // Check for (fadd double (sitofp x), y), see if we can merge this into an
   // integer add followed by a promotion.
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
