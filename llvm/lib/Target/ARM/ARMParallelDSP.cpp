@@ -79,8 +79,6 @@ namespace {
     }
 
     unsigned size() const { return AllValues.size(); }
-
-    bool AreSymmetrical(BinOpChain *Other);
   };
 
   /// Represent a sequence of multiply-accumulate operations with the aim to
@@ -566,9 +564,6 @@ bool ARMParallelDSP::CreateParallelPairs(Reduction &R) {
   }
 
   auto CanPair = [&](Reduction &R, BinOpChain *PMul0, BinOpChain *PMul1) {
-    if (!PMul0->AreSymmetrical(PMul1))
-      return false;
-
     // The first elements of each vector should be loads with sexts. If we
     // find that its two pairs of consecutive loads, then these can be
     // transformed into two wider loads and the users can be replaced with
@@ -764,44 +759,6 @@ LoadInst* ARMParallelDSP::CreateWideLoad(SmallVectorImpl<LoadInst*> &Loads,
   WideLoads.emplace(std::make_pair(Base,
                                    make_unique<WidenedLoad>(Loads, WideLoad)));
   return WideLoad;
-}
-
-// Compare the value lists in Other to this chain.
-bool BinOpChain::AreSymmetrical(BinOpChain *Other) {
-  // Element-by-element comparison of Value lists returning true if they are
-  // instructions with the same opcode or constants with the same value.
-  auto CompareValueList = [](const ValueList &VL0,
-                             const ValueList &VL1) {
-    if (VL0.size() != VL1.size()) {
-      LLVM_DEBUG(dbgs() << "Muls are mismatching operand list lengths: "
-                        << VL0.size() << " != " << VL1.size() << "\n");
-      return false;
-    }
-
-    const unsigned Pairs = VL0.size();
-
-    for (unsigned i = 0; i < Pairs; ++i) {
-      const Value *V0 = VL0[i];
-      const Value *V1 = VL1[i];
-      const auto *Inst0 = dyn_cast<Instruction>(V0);
-      const auto *Inst1 = dyn_cast<Instruction>(V1);
-
-      if (!Inst0 || !Inst1)
-        return false;
-
-      if (Inst0->isSameOperationAs(Inst1))
-        continue;
-
-      const APInt *C0, *C1;
-      if (!(match(V0, m_APInt(C0)) && match(V1, m_APInt(C1)) && C0 == C1))
-        return false;
-    }
-
-    return true;
-  };
-
-  return CompareValueList(LHS, Other->LHS) &&
-         CompareValueList(RHS, Other->RHS);
 }
 
 Pass *llvm::createARMParallelDSPPass() {
