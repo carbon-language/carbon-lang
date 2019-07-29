@@ -188,7 +188,7 @@ void DirectoryWatcherLinux::InotifyPollingLoop() {
     alignas(struct inotify_event) char buffer[EventBufferLength];
   };
   auto ManagedBuffer = llvm::make_unique<Buffer>();
-  char *const Buf = ManagedBuffer.buffer;
+  char *const Buf = ManagedBuffer->buffer;
 
   const int EpollFD = epoll_create1(EPOLL_CLOEXEC);
   if (EpollFD == -1) {
