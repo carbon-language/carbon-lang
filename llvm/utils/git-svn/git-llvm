@@ -617,5 +617,14 @@ if __name__ == '__main__':
     VERBOSE = args.verbose
     QUIET = args.quiet
 
+    # Python3 workaround, for when not arguments are provided.
+    # See https://bugs.python.org/issue16308
+    try:
+        func = args.func
+    except AttributeError:
+        # No arguments or subcommands were given.
+        parser.print_help()
+        parser.exit()
+
     # Dispatch to the right subcommand
     args.func(args)
