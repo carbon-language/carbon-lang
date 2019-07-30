@@ -3,8 +3,6 @@ import("//llvm/version.gni")
 
 # This build file is just enough to get check-clang to pass, it's missing
 # several things from the CMake build:
-# - linking in clangTidyPlugin and clangIncludeFixerPlugin from
-#   clang-tools-extra (which doesn't have any GN build files yet)
 # - using libclang.exports
 # - a build target copying the Python bindings
 # - the GN linux build always builds without -fPIC (as if LLVM_ENABLE_PIC=OFF
