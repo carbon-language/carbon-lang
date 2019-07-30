@@ -298,53 +298,35 @@ MaybeExtentExpr GetUpperBound(FoldingContext &context, MaybeExtentExpr &&lower,
   }
 }
 
-std::optional<Shape> GetShapeHelper::GetShape(const Symbol &symbol) {
-  return GetShape(NamedEntity{symbol});
+void GetShapeVisitor::Handle(const Symbol &symbol) {
+  Handle(NamedEntity{symbol});
 }
 
-std::optional<Shape> GetShapeHelper::GetShape(const Symbol *symbol) {
-  if (symbol != nullptr) {
-    return GetShape(*symbol);
-  } else {
-    return std::nullopt;
-  }
+void GetShapeVisitor::Handle(const Component &component) {
+  Handle(NamedEntity{Component{component}});
 }
 
-std::optional<Shape> GetShapeHelper::GetShape(const Component &component) {
-  return GetShape(NamedEntity{Component{component}});
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const NamedEntity &base) {
+void GetShapeVisitor::Handle(const NamedEntity &base) {
   const Symbol &symbol{base.GetLastSymbol()};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (IsImpliedShape(symbol)) {
-      return GetShape(*details->init());
+      Nested(details->init());
     } else {
       Shape result;
       int n{static_cast<int>(details->shape().size())};
       for (int dimension{0}; dimension < n; ++dimension) {
         result.emplace_back(GetExtent(context_, base, dimension));
       }
-      return result;
+      Return(std::move(result));
     }
   } else if (const auto *details{
                  symbol.detailsIf<semantics::AssocEntityDetails>()}) {
-    if (details->expr().has_value()) {
-      return GetShape(*details->expr());
-    }
+    Nested(details->expr());
   }
-  return std::nullopt;
+  Return();
 }
 
-std::optional<Shape> GetShapeHelper::GetShape(const BaseObject &object) {
-  if (const Symbol * symbol{object.symbol()}) {
-    return GetShape(*symbol);
-  } else {
-    return Shape{};
-  }
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const ArrayRef &arrayRef) {
+void GetShapeVisitor::Handle(const ArrayRef &arrayRef) {
   Shape shape;
   int dimension{0};
   for (const Subscript &ss : arrayRef.subscript()) {
@@ -354,13 +336,13 @@ std::optional<Shape> GetShapeHelper::GetShape(const ArrayRef &arrayRef) {
     ++dimension;
   }
   if (shape.empty()) {
-    return GetShape(arrayRef.base());
+    Nested(arrayRef.base());
   } else {
-    return shape;
+    Return(std::move(shape));
   }
 }
 
-std::optional<Shape> GetShapeHelper::GetShape(const CoarrayRef &coarrayRef) {
+void GetShapeVisitor::Handle(const CoarrayRef &coarrayRef) {
   Shape shape;
   NamedEntity base{coarrayRef.GetBase()};
   int dimension{0};
@@ -371,102 +353,45 @@ std::optional<Shape> GetShapeHelper::GetShape(const CoarrayRef &coarrayRef) {
     ++dimension;
   }
   if (shape.empty()) {
-    return GetShape(base);
+    Nested(base);
   } else {
-    return shape;
+    Return(std::move(shape));
   }
 }
 
-std::optional<Shape> GetShapeHelper::GetShape(const DataRef &dataRef) {
-  return GetShape(dataRef.u);
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const Substring &substring) {
-  if (const auto *dataRef{substring.GetParentIf<DataRef>()}) {
-    return GetShape(*dataRef);
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const ComplexPart &part) {
-  return GetShape(part.complex());
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const ActualArgument &arg) {
-  if (const auto *expr{arg.UnwrapExpr()}) {
-    return GetShape(*expr);
-  } else if (const Symbol * atDummy{arg.GetAssumedTypeDummy()}) {
-    return GetShape(*atDummy);
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const ProcedureDesignator &proc) {
-  if (const Symbol * symbol{proc.GetSymbol()}) {
-    return GetShape(*symbol);
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const ProcedureRef &call) {
+void GetShapeVisitor::Handle(const ProcedureRef &call) {
   if (call.Rank() == 0) {
-    return Shape{};
+    Scalar();
   } else if (call.IsElemental()) {
     for (const auto &arg : call.arguments()) {
       if (arg.has_value() && arg->Rank() > 0) {
-        return GetShape(*arg);
+        Nested(*arg);
+        return;
       }
     }
+    Scalar();
   } else if (const Symbol * symbol{call.proc().GetSymbol()}) {
-    return GetShape(*symbol);
+    Handle(*symbol);
   } else if (const auto *intrinsic{
                  std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
     if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
         intrinsic->name == "ubound") {
       const auto *expr{call.arguments().front().value().UnwrapExpr()};
       CHECK(expr != nullptr);
-      return Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}};
+      Return(Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}});
     } else if (intrinsic->name == "reshape") {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
         // SHAPE(RESHAPE(array,shape)) -> shape
         const auto *shapeExpr{call.arguments().at(1).value().UnwrapExpr()};
         CHECK(shapeExpr != nullptr);
         Expr<SomeInteger> shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
-        return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
+        Return(AsShape(context_, ConvertToType<ExtentType>(std::move(shape))));
       }
     } else {
       // TODO: shapes of other non-elemental intrinsic results
     }
   }
-  return std::nullopt;
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(
-    const Relational<SomeType> &relation) {
-  return GetShape(relation.u);
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const StructureConstructor &) {
-  return Shape{};  // always scalar
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const ImpliedDoIndex &) {
-  return Shape{};  // always scalar
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const DescriptorInquiry &) {
-  return Shape{};  // always scalar
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const BOZLiteralConstant &) {
-  return Shape{};  // always scalar
-}
-
-std::optional<Shape> GetShapeHelper::GetShape(const NullPointer &) {
-  return {};  // not an object
+  Return();
 }
 
 bool CheckConformance(parser::ContextualMessages &messages, const Shape &left,

@@ -20,6 +20,7 @@
 
 #include "expression.h"
 #include "tools.h"
+#include "traversal.h"
 #include "type.h"
 #include "variable.h"
 #include "../common/indirection.h"
@@ -41,6 +42,8 @@ using Shape = std::vector<MaybeExtentExpr>;
 
 bool IsImpliedShape(const Symbol &);
 bool IsExplicitShape(const Symbol &);
+
+template<typename A> std::optional<Shape> GetShape(FoldingContext &, const A &);
 
 // Conversions between various representations of shapes.
 Shape AsShape(const Constant<ExtentType> &);
@@ -87,98 +90,53 @@ bool CheckConformance(parser::ContextualMessages &, const Shape &,
     const Shape &, const char * = "left operand",
     const char * = "right operand");
 
-// The implementation of GetShape() is wrapped in a helper class
-// so that the member functions may mutually recurse without prototypes.
-class GetShapeHelper {
+class GetShapeVisitor : public virtual VisitorBase<std::optional<Shape>> {
 public:
-  explicit GetShapeHelper(FoldingContext &context) : context_{context} {}
+  using Result = std::optional<Shape>;
+  explicit GetShapeVisitor(FoldingContext &c) : context_{c} {}
 
-  template<typename T> std::optional<Shape> GetShape(const Expr<T> &expr) {
-    return GetShape(expr.u);
+  template<typename T> void Handle(const Constant<T> &c) {
+    Return(AsShape(c.SHAPE()));
   }
-
-  std::optional<Shape> GetShape(const Symbol &);
-  std::optional<Shape> GetShape(const Symbol *);
-  std::optional<Shape> GetShape(const Component &);
-  std::optional<Shape> GetShape(const NamedEntity &);
-  std::optional<Shape> GetShape(const BaseObject &);
-  std::optional<Shape> GetShape(const ArrayRef &);
-  std::optional<Shape> GetShape(const CoarrayRef &);
-  std::optional<Shape> GetShape(const DataRef &);
-  std::optional<Shape> GetShape(const Substring &);
-  std::optional<Shape> GetShape(const ComplexPart &);
-  std::optional<Shape> GetShape(const ActualArgument &);
-  std::optional<Shape> GetShape(const ProcedureDesignator &);
-  std::optional<Shape> GetShape(const ProcedureRef &);
-  std::optional<Shape> GetShape(const ImpliedDoIndex &);
-  std::optional<Shape> GetShape(const Relational<SomeType> &);
-  std::optional<Shape> GetShape(const StructureConstructor &);
-  std::optional<Shape> GetShape(const DescriptorInquiry &);
-  std::optional<Shape> GetShape(const BOZLiteralConstant &);
-  std::optional<Shape> GetShape(const NullPointer &);
-
-  template<typename T> std::optional<Shape> GetShape(const Constant<T> &c) {
-    Constant<ExtentType> shape{c.SHAPE()};
-    return AsShape(shape);
+  void Handle(const Symbol &);
+  void Handle(const Component &);
+  void Handle(const NamedEntity &);
+  void Handle(const StaticDataObject::Pointer &) { Scalar(); }
+  void Handle(const ArrayRef &);
+  void Handle(const CoarrayRef &);
+  void Handle(const ProcedureRef &);
+  void Handle(const StructureConstructor &) { Scalar(); }
+  template<typename T> void Handle(const ArrayConstructor<T> &aconst) {
+    Return(Shape{GetArrayConstructorExtent(aconst)});
   }
-
-  template<typename T>
-  std::optional<Shape> GetShape(const Designator<T> &designator) {
-    return GetShape(designator.u);
-  }
-
-  template<typename T>
-  std::optional<Shape> GetShape(const Variable<T> &variable) {
-    return GetShape(variable.u);
-  }
-
-  template<typename D, typename R, typename... O>
-  std::optional<Shape> GetShape(const Operation<D, R, O...> &operation) {
-    if constexpr (sizeof...(O) > 1) {
-      if (operation.right().Rank() > 0) {
-        return GetShape(operation.right());
-      }
-    }
-    return GetShape(operation.left());
-  }
-
-  template<int KIND>
-  std::optional<Shape> GetShape(const TypeParamInquiry<KIND> &) {
-    return Shape{};  // always scalar, even when applied to an array
-  }
-
-  template<typename T>
-  std::optional<Shape> GetShape(const ArrayConstructor<T> &aconst) {
-    return Shape{GetArrayConstructorExtent(aconst)};
-  }
-
-  template<typename... A>
-  std::optional<Shape> GetShape(const std::variant<A...> &u) {
-    return std::visit([&](const auto &x) { return GetShape(x); }, u);
-  }
-
-  template<typename A, bool COPY>
-  std::optional<Shape> GetShape(const common::Indirection<A, COPY> &p) {
-    return GetShape(p.value());
-  }
-
-  template<typename A>
-  std::optional<Shape> GetShape(const std::optional<A> &x) {
-    if (x.has_value()) {
-      return GetShape(*x);
+  void Handle(const ImpliedDoIndex &) { Scalar(); }
+  void Handle(const DescriptorInquiry &) { Scalar(); }
+  template<int KIND> void Handle(const TypeParamInquiry<KIND> &) { Scalar(); }
+  void Handle(const BOZLiteralConstant &) { Scalar(); }
+  void Handle(const NullPointer &) { Return(); }
+  template<typename D, typename R, typename LO, typename RO>
+  void Handle(const Operation<D, R, LO, RO> &operation) {
+    if (operation.right().Rank() > 0) {
+      Nested(operation.right());
     } else {
-      return std::nullopt;
+      Nested(operation.left());
     }
   }
 
 private:
+  void Scalar() { Return(Shape{}); }
+
+  template<typename A> void Nested(const A &x) {
+    Return(GetShape(context_, x));
+  }
+
   template<typename T>
   MaybeExtentExpr GetArrayConstructorValueExtent(
       const ArrayConstructorValue<T> &value) {
     return std::visit(
         common::visitors{
             [&](const Expr<T> &x) -> MaybeExtentExpr {
-              if (std::optional<Shape> xShape{GetShape(x)}) {
+              if (std::optional<Shape> xShape{GetShape(context_, x)}) {
                 // Array values in array constructors get linearized.
                 return GetSize(std::move(*xShape));
               } else {
@@ -221,7 +179,7 @@ private:
 
 template<typename A>
 std::optional<Shape> GetShape(FoldingContext &context, const A &x) {
-  return GetShapeHelper{context}.GetShape(x);
+  return Visitor<GetShapeVisitor>{context}.Traverse(x);
 }
 }
 #endif  // FORTRAN_EVALUATE_SHAPE_H_

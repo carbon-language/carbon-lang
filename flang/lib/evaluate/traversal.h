@@ -49,7 +49,7 @@
 // and call:
 //   RESULT result{v.Traverse(topLevelExpr)};
 // Within the callback routines (Handle, Pre, Post), one may call
-//   void Return(RESULT &&);  // to define the result and end traversal
+//   void Return(A &&);  // to assign to the result and end traversal
 //   void Return();  // to end traversal with current result
 //   RESULT &result();  // to reference the result to define or update it
 // For any given expression object type T for which a callback is defined
@@ -90,7 +90,8 @@ public:
   std::nullptr_t Post(std::nullptr_t);
 
   void Return() { done_ = true; }
-  void Return(RESULT &&x) {
+
+  template<typename A> void Return(A &&x) {
     result_ = std::move(x);
     done_ = true;
   }
@@ -150,7 +151,6 @@ public:
     return std::move(result_);
   }
 
-private:
   template<typename B> void Visit(const B &x) {
     if (!done_) {
       if constexpr ((... || HasVisitorHandle<A, B, void>::value)) {
@@ -174,6 +174,7 @@ private:
     }
   }
 
+private:
   friend class Descender<Visitor>;
   Descender<Visitor> descender_{*this};
 };
