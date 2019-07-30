@@ -1,4 +1,4 @@
-//===- DivRemPairs.cpp - Hoist/decompose division and remainder -*- C++ -*-===//
+//===- DivRemPairs.cpp - Hoist/[dr]ecompose division and remainder --------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass hoists and/or decomposes integer division and remainder
+// This pass hoists and/or decomposes/recomposes integer division and remainder
 // instructions to enable CFG improvements and better codegen.
 //
 //===----------------------------------------------------------------------===//
@@ -19,18 +19,58 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DebugCounter.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BypassSlowDivision.h"
+
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "div-rem-pairs"
 STATISTIC(NumPairs, "Number of div/rem pairs");
+STATISTIC(NumRecomposed, "Number of instructions recomposed");
 STATISTIC(NumHoisted, "Number of instructions hoisted");
 STATISTIC(NumDecomposed, "Number of instructions decomposed");
 DEBUG_COUNTER(DRPCounter, "div-rem-pairs-transform",
               "Controls transformations in div-rem-pairs pass");
+
+namespace {
+using InstructionWithInfo = PointerIntPair<Instruction *, 1, bool /*Expanded*/>;
+
+struct ExpandedMatch {
+  DivRemMapKey Key;
+  InstructionWithInfo Value;
+};
+} // namespace
+
+/// See if we can match: (which is the form we expand into)
+///   X - ((X ?/ Y) * Y)
+/// which is equivalent to:
+///   X ?% Y
+static llvm::Optional<ExpandedMatch> matchExpandedRem(Instruction &I) {
+  ExpandedMatch M;
+  M.Value.setPointer(&I);
+  M.Value.setInt(/*Expanded=*/true);
+
+  Value *XroundedDownToMultipleOfY;
+  if (!match(&I, m_Sub(m_Value(M.Key.Dividend),
+                       m_Value(XroundedDownToMultipleOfY))))
+    return llvm::None;
+
+  Instruction *Div;
+  // Look for  ((X / Y) * Y)
+  if (!match(XroundedDownToMultipleOfY,
+             m_c_Mul(m_CombineAnd(m_IDiv(m_Specific(M.Key.Dividend),
+                                         m_Value(M.Key.Divisor)),
+                                  m_Instruction(Div)),
+                     m_Deferred(M.Key.Divisor))))
+    return llvm::None;
+
+  M.Key.SignedOp = Div->getOpcode() == Instruction::SDiv;
+  return M;
+}
 
 /// Find matching pairs of integer div/rem ops (they have the same numerator,
 /// denominator, and signedness). If they exist in different basic blocks, bring
@@ -55,7 +95,7 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
   DenseMap<DivRemMapKey, Instruction *> DivMap;
   // Use a MapVector for RemMap so that instructions are moved/inserted in a
   // deterministic order.
-  MapVector<DivRemMapKey, Instruction *> RemMap;
+  MapVector<DivRemMapKey, InstructionWithInfo> RemMap;
   for (auto &BB : F) {
     for (auto &I : BB) {
       if (I.getOpcode() == Instruction::SDiv)
@@ -63,9 +103,13 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
       else if (I.getOpcode() == Instruction::UDiv)
         DivMap[DivRemMapKey(false, I.getOperand(0), I.getOperand(1))] = &I;
       else if (I.getOpcode() == Instruction::SRem)
-        RemMap[DivRemMapKey(true, I.getOperand(0), I.getOperand(1))] = &I;
+        RemMap[DivRemMapKey(true, I.getOperand(0), I.getOperand(1))] = {
+            &I, /*Expanded=*/false};
       else if (I.getOpcode() == Instruction::URem)
-        RemMap[DivRemMapKey(false, I.getOperand(0), I.getOperand(1))] = &I;
+        RemMap[DivRemMapKey(false, I.getOperand(0), I.getOperand(1))] = {
+            &I, /*Expanded=*/false};
+      else if (auto Match = matchExpandedRem(I))
+        RemMap[Match->Key] = Match->Value;
     }
   }
 
@@ -78,12 +122,44 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
     if (!DivInst)
       continue;
 
-    // We have a matching pair of div/rem instructions. If one dominates the
-    // other, hoist and/or replace one.
+    // We have a matching pair of div/rem instructions.
+    // If the rem is in expanded form, collapse it into rem first.
+    // If one dominates the other, hoist and/or replace one.
     NumPairs++;
-    Instruction *RemInst = RemPair.second;
-    bool IsSigned = DivInst->getOpcode() == Instruction::SDiv;
+    InstructionWithInfo RemLike = RemPair.second;
+    // NOTE: RemInst may be in expanded form!
+    Instruction *RemInst = RemLike.getPointer();
+    bool IsInExpandedForm = RemLike.getInt();
+    bool IsSigned = RemPair.first.SignedOp;
     bool HasDivRemOp = TTI.hasDivRemOp(DivInst->getType(), IsSigned);
+
+    if (!DebugCounter::shouldExecute(DRPCounter))
+      continue;
+
+    if (HasDivRemOp && IsInExpandedForm) {
+      // The target supports div+rem but the rem is expanded.
+      // We should recompose it first.
+      Value *X = RemPair.first.Dividend;
+      Value *Y = RemPair.first.Divisor;
+      Instruction *RealRem = IsSigned ? BinaryOperator::CreateSRem(X, Y)
+                                      : BinaryOperator::CreateURem(X, Y);
+      // Note that we place it right next to the original expanded instruction,
+      // and letting further handling to move it if needed.
+      RealRem->takeName(RemInst);
+      RealRem->insertAfter(RemInst);
+      RemInst->replaceAllUsesWith(RealRem);
+      RemInst->eraseFromParent();
+      RemInst = RealRem;
+      NumRecomposed++;
+      // Note that we have left ((X / Y) * Y) around.
+      // If it had other uses we could rewrite it as X - X % Y
+    }
+
+    assert(((RemInst->getOpcode() == Instruction::SRem ||
+             RemInst->getOpcode() == Instruction::URem) ||
+            !HasDivRemOp) &&
+           "*If* the target supports div-rem, then by now the RemInst *is* "
+           "Instruction::[US]Rem.");
 
     // If the target supports div+rem and the instructions are in the same block
     // already, there's nothing to do. The backend should handle this. If the
@@ -92,10 +168,17 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
       continue;
 
     bool DivDominates = DT.dominates(DivInst, RemInst);
-    if (!DivDominates && !DT.dominates(RemInst, DivInst))
+    if (!DivDominates && !DT.dominates(RemInst, DivInst)) {
+      // We have matching div-rem pair, but they are in two different blocks,
+      // neither of which dominates one another.
+      assert(!IsInExpandedForm && "Won't happen if matched expanded form.");
+      // FIXME: We could hoist both ops to the common predecessor block?
       continue;
+    }
 
-    if (!DebugCounter::shouldExecute(DRPCounter))
+    // The target does not have a single div/rem operation,
+    // and the rem is already in expanded form. Nothing to do.
+    if (!HasDivRemOp && IsInExpandedForm)
       continue;
 
     if (HasDivRemOp) {
@@ -107,8 +190,9 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
         DivInst->moveAfter(RemInst);
       NumHoisted++;
     } else {
-      // The target does not have a single div/rem operation. Decompose the
-      // remainder calculation as:
+      // The target does not have a single div/rem operation,
+      // and the rem is *not* in a already-expanded form.
+      // Decompose the remainder calculation as:
       // X % Y --> X - ((X / Y) * Y).
       Value *X = RemInst->getOperand(0);
       Value *Y = RemInst->getOperand(1);

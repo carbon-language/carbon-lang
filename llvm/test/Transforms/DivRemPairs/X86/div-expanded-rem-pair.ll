@@ -7,7 +7,7 @@ define void @decompose_illegal_srem_same_block(i32 %a, i32 %b) {
 ; CHECK-LABEL: @decompose_illegal_srem_same_block(
 ; CHECK-NEXT:    [[DIV:%.*]] = sdiv i32 [[A:%.*]], [[B:%.*]]
 ; CHECK-NEXT:    [[T0:%.*]] = mul i32 [[DIV]], [[B]]
-; CHECK-NEXT:    [[REM:%.*]] = sub i32 [[A]], [[T0]]
+; CHECK-NEXT:    [[REM:%.*]] = srem i32 [[A]], [[B]]
 ; CHECK-NEXT:    call void @foo(i32 [[REM]], i32 [[DIV]])
 ; CHECK-NEXT:    ret void
 ;
@@ -22,7 +22,7 @@ define void @decompose_illegal_urem_same_block(i32 %a, i32 %b) {
 ; CHECK-LABEL: @decompose_illegal_urem_same_block(
 ; CHECK-NEXT:    [[DIV:%.*]] = udiv i32 [[A:%.*]], [[B:%.*]]
 ; CHECK-NEXT:    [[T0:%.*]] = mul i32 [[DIV]], [[B]]
-; CHECK-NEXT:    [[REM:%.*]] = sub i32 [[A]], [[T0]]
+; CHECK-NEXT:    [[REM:%.*]] = urem i32 [[A]], [[B]]
 ; CHECK-NEXT:    call void @foo(i32 [[REM]], i32 [[DIV]])
 ; CHECK-NEXT:    ret void
 ;
@@ -39,11 +39,11 @@ define i16 @hoist_srem(i16 %a, i16 %b) {
 ; CHECK-LABEL: @hoist_srem(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[DIV:%.*]] = sdiv i16 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    [[REM:%.*]] = srem i16 [[A]], [[B]]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i16 [[DIV]], 42
 ; CHECK-NEXT:    br i1 [[CMP]], label [[IF:%.*]], label [[END:%.*]]
 ; CHECK:       if:
 ; CHECK-NEXT:    [[T0:%.*]] = mul i16 [[DIV]], [[B]]
-; CHECK-NEXT:    [[REM:%.*]] = sub i16 [[A]], [[T0]]
 ; CHECK-NEXT:    br label [[END]]
 ; CHECK:       end:
 ; CHECK-NEXT:    [[RET:%.*]] = phi i16 [ [[REM]], [[IF]] ], [ 3, [[ENTRY:%.*]] ]
@@ -70,11 +70,11 @@ define i8 @hoist_urem(i8 %a, i8 %b) {
 ; CHECK-LABEL: @hoist_urem(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[DIV:%.*]] = udiv i8 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    [[REM:%.*]] = urem i8 [[A]], [[B]]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[DIV]], 42
 ; CHECK-NEXT:    br i1 [[CMP]], label [[IF:%.*]], label [[END:%.*]]
 ; CHECK:       if:
 ; CHECK-NEXT:    [[T0:%.*]] = mul i8 [[DIV]], [[B]]
-; CHECK-NEXT:    [[REM:%.*]] = sub i8 [[A]], [[T0]]
 ; CHECK-NEXT:    br label [[END]]
 ; CHECK:       end:
 ; CHECK-NEXT:    [[RET:%.*]] = phi i8 [ [[REM]], [[IF]] ], [ 3, [[ENTRY:%.*]] ]

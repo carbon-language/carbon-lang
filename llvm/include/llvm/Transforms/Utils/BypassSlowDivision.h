@@ -31,6 +31,8 @@ struct DivRemMapKey {
   Value *Dividend;
   Value *Divisor;
 
+  DivRemMapKey() = default;
+
   DivRemMapKey(bool InSignedOp, Value *InDividend, Value *InDivisor)
       : SignedOp(InSignedOp), Dividend(InDividend), Divisor(InDivisor) {}
 };
