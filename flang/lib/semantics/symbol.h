@@ -402,11 +402,11 @@ public:
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
   void AddSpecificProcsFrom(const Symbol &generic);
 
+  // specific and derivedType indicate a specific procedure or derived type
+  // with the same name as this generic. Only one of them may be set.
   Symbol *specific() { return specific_; }
   const Symbol *specific() const { return specific_; }
   void set_specific(Symbol &specific);
-
-  // Derived type with same name as generic, if any.
   Symbol *derivedType() { return derivedType_; }
   const Symbol *derivedType() const { return derivedType_; }
   void set_derivedType(Symbol &derivedType);

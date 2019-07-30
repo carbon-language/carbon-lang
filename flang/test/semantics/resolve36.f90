@@ -49,7 +49,6 @@ module m2
     module integer function fun1()
     end function
   end interface
-  !ERROR: 't' is already declared in this scoping unit
   type t
   end type
   !ERROR: Declaration of 'i' conflicts with its use as module procedure
@@ -61,6 +60,7 @@ contains
   !ERROR: 'missing2' was not declared a separate module procedure
   module subroutine missing2
   end
+  !ERROR: 't' is already declared in this scoping unit
   !ERROR: 't' was not declared a separate module procedure
   module procedure t
   end

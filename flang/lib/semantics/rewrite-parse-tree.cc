@@ -57,6 +57,7 @@ public:
   // Don't bother resolving names in end statements.
   bool Pre(parser::EndBlockDataStmt &) { return false; }
   bool Pre(parser::EndFunctionStmt &) { return false; }
+  bool Pre(parser::EndInterfaceStmt &) { return false; }
   bool Pre(parser::EndModuleStmt &) { return false; }
   bool Pre(parser::EndMpSubprogramStmt &) { return false; }
   bool Pre(parser::EndProgramStmt &) { return false; }

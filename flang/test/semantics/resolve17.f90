@@ -21,17 +21,16 @@ module m
 end module
 
 module m2
-  !Note: PGI and GNU allow this; Intel, NAG, and Sun do not
-  !ERROR: 's' is already declared in this scoping unit
   interface s
   end interface
 contains
+  !ERROR: 's' may not be the name of both a generic interface and a procedure unless it is a specific procedure of the generic
   subroutine s
   end subroutine
 end module
 
 module m3
-  ! This is okay: so is generic and specific
+  ! This is okay: s is generic and specific
   interface s
     procedure s2
   end interface

@@ -80,9 +80,6 @@ module m2
   interface foo
     procedure foo
   end interface
-  type :: foo
-    real :: x
-  end type
 contains
   complex function foo()
     foo = 1.0
@@ -91,9 +88,6 @@ end
 !Expect: m2.mod
 !module m2
 ! generic::foo=>foo
-! type::foo
-!  real(4)::x
-! end type
 !contains
 ! function foo()
 !  complex(4)::foo

@@ -430,8 +430,9 @@ public:
 
   // Special messages: already declared; referencing symbol's declaration;
   // about a type; two names & locations
-  void SayAlreadyDeclared(const SourceName &, Symbol &);
   void SayAlreadyDeclared(const parser::Name &, Symbol &);
+  void SayAlreadyDeclared(const SourceName &, Symbol &);
+  void SayAlreadyDeclared(const SourceName &, const SourceName &);
   void SayWithReason(
       const parser::Name &, Symbol &, MessageFixedText &&, MessageFixedText &&);
   void SayWithDecl(const parser::Name &, Symbol &, MessageFixedText &&);
@@ -489,16 +490,18 @@ public:
     }
     if constexpr (std::is_same_v<DerivedTypeDetails, D>) {
       if (auto *d{symbol->detailsIf<GenericDetails>()}) {
-        // derived type with same name as a generic
-        auto *derivedType{d->derivedType()};
-        if (!derivedType) {
-          derivedType =
-              &currScope().MakeSymbol(name, attrs, std::move(details));
-          d->set_derivedType(*derivedType);
-        } else {
-          SayAlreadyDeclared(name, *derivedType);
+        if (!d->specific()) {
+          // derived type with same name as a generic
+          auto *derivedType{d->derivedType()};
+          if (!derivedType) {
+            derivedType =
+                &currScope().MakeSymbol(name, attrs, std::move(details));
+            d->set_derivedType(*derivedType);
+          } else {
+            SayAlreadyDeclared(name, *derivedType);
+          }
+          return *derivedType;
         }
-        return *derivedType;
       }
     }
     if (symbol->CanReplaceDetails(details)) {
@@ -513,7 +516,9 @@ public:
       SayAlreadyDeclared(name, *symbol);
       // replace the old symbol with a new one with correct details
       EraseSymbol(*symbol);
-      return MakeSymbol(name, attrs, std::move(details));
+      auto &result{MakeSymbol(name, attrs, std::move(details))};
+      context().SetError(result);
+      return result;
     }
   }
 
@@ -1029,7 +1034,7 @@ public:
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
 
-  void Post(const parser::SpecificationPart &);
+  bool Pre(const parser::SpecificationPart &);
   void Post(const parser::Program &);
   bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::PointerObject &);
@@ -1065,6 +1070,9 @@ private:
   std::optional<Symbol::Flag> expectedProcFlag_;
   const SourceName *prevImportStmt_{nullptr};
 
+  void PreSpecificationConstruct(const parser::SpecificationConstruct &);
+  void CreateGeneric(const parser::GenericSpec &);
+  void FinishSpecificationPart();
   void CheckImports();
   void CheckImport(const SourceName &, const SourceName &);
   void HandleCall(Symbol::Flag, const parser::Call &);
@@ -1517,16 +1525,26 @@ void ScopeHandler::SayAlreadyDeclared(const parser::Name &name, Symbol &prev) {
   SayAlreadyDeclared(name.source, prev);
 }
 void ScopeHandler::SayAlreadyDeclared(const SourceName &name, Symbol &prev) {
-  auto &msg{
-      Say(name, "'%s' is already declared in this scoping unit"_err_en_US)};
-  if (const auto *details{prev.detailsIf<UseDetails>()}) {
-    msg.Attach(details->location(),
-        "It is use-associated with '%s' in module '%s'"_err_en_US,
-        details->symbol().name(), details->module().name());
+  if (context().HasError(prev)) {
+    // don't report another error about prev
+  } else if (const auto *details{prev.detailsIf<UseDetails>()}) {
+    Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
+        .Attach(details->location(),
+            "It is use-associated with '%s' in module '%s'"_err_en_US,
+            details->symbol().name(), details->module().name());
   } else {
-    msg.Attach(prev.name(), "Previous declaration of '%s'"_en_US, prev.name());
+    SayAlreadyDeclared(name, prev.name());
   }
   context().SetError(prev);
+}
+void ScopeHandler::SayAlreadyDeclared(
+    const SourceName &name1, const SourceName &name2) {
+  if (name1.begin() < name2.begin()) {
+    SayAlreadyDeclared(name2, name1);
+  } else {
+    Say(name1, "'%s' is already declared in this scoping unit"_err_en_US)
+        .Attach(name2, "Previous declaration of '%s'"_en_US, name2);
+  }
 }
 
 void ScopeHandler::SayWithReason(const parser::Name &name, Symbol &symbol,
@@ -2067,65 +2085,9 @@ void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
 
 // Create a symbol in genericSymbol_ for this GenericSpec.
 bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
-  auto info{GenericSpecInfo{x}};
-  const SourceName &symbolName{info.symbolName()};
-  if (IsLogicalConstant(context(), symbolName)) {
-    Say(symbolName,
-        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
-    return false;
+  if (auto *symbol{currScope().FindSymbol(GenericSpecInfo{x}.symbolName())}) {
+    SetGenericSymbol(*symbol);
   }
-  Symbol *symbol{currScope().FindSymbol(symbolName)};
-  if (symbol) {
-    if (symbol->has<DerivedTypeDetails>()) {
-      // A generic and derived type with same name: create a generic symbol
-      // and save derived type in it.
-      CHECK(symbol->scope()->symbol() == symbol);
-      GenericDetails details;
-      details.set_derivedType(*symbol);
-      EraseSymbol(*symbol);
-      symbol = &MakeSymbol(symbolName);
-      symbol->set_details(details);
-      // preserve access attributes
-      symbol->attrs() |=
-          details.derivedType()->attrs() & Attrs{Attr::PUBLIC, Attr::PRIVATE};
-    } else if (symbol->has<UnknownDetails>()) {
-      // okay
-    } else if (!symbol->IsSubprogram()) {
-      SayAlreadyDeclared(symbolName, *symbol);
-      EraseSymbol(*symbol);
-      symbol = nullptr;
-    } else if (symbol->has<UseDetails>()) {
-      // copy the USEd symbol into this scope so we can modify it
-      const Symbol &ultimate{symbol->GetUltimate()};
-      EraseSymbol(*symbol);
-      symbol = &CopySymbol(symbolName, ultimate);
-      if (const auto *details{ultimate.detailsIf<GenericDetails>()}) {
-        symbol->set_details(GenericDetails{details->specificProcs()});
-      } else if (const auto *details{ultimate.detailsIf<SubprogramDetails>()}) {
-        symbol->set_details(SubprogramDetails{*details});
-      } else {
-        DIE("unexpected kind of symbol");
-      }
-    }
-  }
-  if (!symbol || symbol->has<UnknownDetails>()) {
-    symbol = &MakeSymbol(symbolName);
-    symbol->set_details(GenericDetails{});
-  }
-  if (symbol->has<GenericDetails>()) {
-    // okay
-  } else if (symbol->has<SubprogramDetails>() ||
-      symbol->has<SubprogramNameDetails>()) {
-    GenericDetails genericDetails;
-    genericDetails.set_specific(*symbol);
-    EraseSymbol(*symbol);
-    symbol = &MakeSymbol(symbolName);
-    symbol->set_details(genericDetails);
-  } else {
-    common::die("unexpected kind of symbol");
-  }
-  info.Resolve(symbol);
-  SetGenericSymbol(*symbol);
   return false;
 }
 
@@ -2237,7 +2199,14 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
   ResolveSpecificsInGeneric(generic);
   auto &details{generic.get<GenericDetails>()};
   if (auto *proc{details.CheckSpecific()}) {
-    SayAlreadyDeclared(generic.name(), *proc);
+    auto msg{
+        "'%s' may not be the name of both a generic interface and a"
+        " procedure unless it is a specific procedure of the generic"_err_en_US};
+    if (proc->name().begin() > generic.name().begin()) {
+      Say(proc->name(), std::move(msg));
+    } else {
+      Say(generic.name(), std::move(msg));
+    }
   }
   auto &specifics{details.specificProcs()};
   if (specifics.empty()) {
@@ -5027,7 +4996,77 @@ static bool NeedsExplicitType(const Symbol &symbol) {
   }
 }
 
-void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
+bool ResolveNamesVisitor::Pre(const parser::SpecificationPart &x) {
+  Walk(std::get<0>(x.t));
+  Walk(std::get<1>(x.t));
+  Walk(std::get<2>(x.t));
+  Walk(std::get<3>(x.t));
+  const std::list<parser::DeclarationConstruct> &decls{std::get<4>(x.t)};
+  for (const auto &decl : decls) {
+    if (const auto *spec{
+            std::get_if<parser::SpecificationConstruct>(&decl.u)}) {
+      PreSpecificationConstruct(*spec);
+    }
+  }
+  Walk(decls);
+  FinishSpecificationPart();
+  return false;
+}
+
+// Initial processing on specification constructs, before visiting them.
+void ResolveNamesVisitor::PreSpecificationConstruct(
+    const parser::SpecificationConstruct &spec) {
+  std::visit(
+      common::visitors{
+          [&](const Indirection<parser::DerivedTypeDef> &y) {},
+          [&](const parser::Statement<Indirection<parser::GenericStmt>> &y) {
+            CreateGeneric(std::get<parser::GenericSpec>(y.statement.value().t));
+          },
+          [&](const Indirection<parser::InterfaceBlock> &y) {
+            const auto &stmt{std::get<parser::Statement<parser::InterfaceStmt>>(
+                y.value().t)};
+            const auto *spec{std::get_if<std::optional<parser::GenericSpec>>(
+                &stmt.statement.u)};
+            if (spec && spec->has_value()) {
+              CreateGeneric(**spec);
+            }
+          },
+          [&](const auto &) {},
+      },
+      spec.u);
+}
+
+void ResolveNamesVisitor::CreateGeneric(const parser::GenericSpec &x) {
+  auto info{GenericSpecInfo{x}};
+  const SourceName &symbolName{info.symbolName()};
+  if (IsLogicalConstant(context(), symbolName)) {
+    Say(symbolName,
+        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
+    return;
+  }
+  GenericDetails genericDetails;
+  if (Symbol * existing{currScope().FindSymbol(symbolName)}) {
+    if (existing->has<GenericDetails>()) {
+      info.Resolve(existing);
+      return;  // already have generic, add to it
+    }
+    Symbol &ultimate{existing->GetUltimate()};
+    if (ultimate.has<GenericDetails>()) {
+      genericDetails.AddSpecificProcsFrom(ultimate);
+    } else if (ultimate.has<SubprogramDetails>() ||
+        ultimate.has<SubprogramNameDetails>()) {
+      genericDetails.set_specific(ultimate);
+    } else if (ultimate.has<DerivedTypeDetails>()) {
+      genericDetails.set_derivedType(ultimate);
+    } else {
+      SayAlreadyDeclared(symbolName, *existing);
+    }
+    EraseSymbol(*existing);
+  }
+  info.Resolve(&MakeSymbol(symbolName, Attrs{}, std::move(genericDetails)));
+}
+
+void ResolveNamesVisitor::FinishSpecificationPart() {
   badStmtFuncFound_ = false;
   CheckImports();
   bool inModule{currScope().kind() == Scope::Kind::Module};
