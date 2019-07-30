@@ -266,7 +266,7 @@ MaybeExtentExpr GetExtent(FoldingContext &context, const Subscript &subscript,
           [&](const Triplet &triplet) -> MaybeExtentExpr {
             MaybeExtentExpr upper{triplet.upper()};
             if (!upper.has_value()) {
-              upper = GetExtent(context, base, dimension);
+              upper = GetUpperBound(context, base, dimension);
             }
             MaybeExtentExpr lower{triplet.lower()};
             if (!lower.has_value()) {
@@ -298,12 +298,46 @@ MaybeExtentExpr GetUpperBound(FoldingContext &context, MaybeExtentExpr &&lower,
   }
 }
 
+MaybeExtentExpr GetUpperBound(
+    FoldingContext &context, const NamedEntity &base, int dimension) {
+  const Symbol &symbol{base.GetLastSymbol()};
+  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    int j{0};
+    for (const auto &shapeSpec : details->shape()) {
+      if (j++ == dimension) {
+        if (const auto &bound{shapeSpec.ubound().GetExplicit()}) {
+          return Fold(context, common::Clone(*bound));
+        } else if (details->IsAssumedSize() && dimension + 1 == symbol.Rank()) {
+          break;
+        } else {
+          return GetUpperBound(context, GetLowerBound(context, base, dimension),
+              GetExtent(context, base, dimension));
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
+  int rank{base.GetLastSymbol().Rank()};
+  Shape result;
+  for (int dim{0}; dim < rank; ++dim) {
+    result.emplace_back(GetUpperBound(context, base, dim));
+  }
+  return result;
+}
+
 void GetShapeVisitor::Handle(const Symbol &symbol) {
   Handle(NamedEntity{symbol});
 }
 
 void GetShapeVisitor::Handle(const Component &component) {
-  Handle(NamedEntity{Component{component}});
+  if (component.GetLastSymbol().Rank() > 0) {
+    Handle(NamedEntity{Component{component}});
+  } else {
+    Nested(component.base());
+  }
 }
 
 void GetShapeVisitor::Handle(const NamedEntity &base) {
@@ -324,6 +358,10 @@ void GetShapeVisitor::Handle(const NamedEntity &base) {
     Nested(details->expr());
   }
   Return();
+}
+
+void GetShapeVisitor::Handle(const Substring &substring) {
+  Nested(substring.parent());
 }
 
 void GetShapeVisitor::Handle(const ArrayRef &arrayRef) {

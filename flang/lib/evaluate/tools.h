@@ -209,7 +209,7 @@ template<typename A, typename B> A *UnwrapExpr(std::optional<B> &x) {
 // If an expression simply wraps a DataRef, extract and return it.
 template<typename A>
 common::IfNoLvalue<std::optional<DataRef>, A> ExtractDataRef(const A &) {
-  return std::nullopt;  // default base casec
+  return std::nullopt;  // default base case
 }
 template<typename T>
 std::optional<DataRef> ExtractDataRef(const Designator<T> &d) {
@@ -230,6 +230,24 @@ template<typename A>
 std::optional<DataRef> ExtractDataRef(const std::optional<A> &x) {
   if (x.has_value()) {
     return ExtractDataRef(*x);
+  } else {
+    return std::nullopt;
+  }
+}
+
+template<typename A> std::optional<NamedEntity> ExtractNamedEntity(const A &x) {
+  if (auto dataRef{ExtractDataRef(x)}) {
+    return std::visit(
+        common::visitors{
+            [](const Symbol *symbol) -> std::optional<NamedEntity> {
+              return NamedEntity{*symbol};
+            },
+            [](Component &&component) -> std::optional<NamedEntity> {
+              return NamedEntity{std::move(component)};
+            },
+            [](auto &&) -> std::optional<NamedEntity> { return std::nullopt; },
+        },
+        std::move(dataRef->u));
   } else {
     return std::nullopt;
   }

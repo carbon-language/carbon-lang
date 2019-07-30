@@ -69,6 +69,9 @@ MaybeExtentExpr GetExtent(
     FoldingContext &, const Subscript &, const NamedEntity &, int dimension);
 MaybeExtentExpr GetUpperBound(
     FoldingContext &, MaybeExtentExpr &&lower, MaybeExtentExpr &&extent);
+MaybeExtentExpr GetUpperBound(
+    FoldingContext &, const NamedEntity &, int dimension);
+Shape GetUpperBounds(FoldingContext &, const NamedEntity &);
 
 // Compute an element count for a triplet or trip count for a DO.
 ExtentExpr CountTrips(
@@ -104,6 +107,7 @@ public:
   void Handle(const StaticDataObject::Pointer &) { Scalar(); }
   void Handle(const ArrayRef &);
   void Handle(const CoarrayRef &);
+  void Handle(const Substring &);
   void Handle(const ProcedureRef &);
   void Handle(const StructureConstructor &) { Scalar(); }
   template<typename T> void Handle(const ArrayConstructor<T> &aconst) {

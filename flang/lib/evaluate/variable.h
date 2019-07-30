@@ -340,7 +340,7 @@ public:
 private:
   void SetBounds(std::optional<Expr<SubscriptInteger>> &,
       std::optional<Expr<SubscriptInteger>> &);
-  std::variant<DataRef, StaticDataObject::Pointer> parent_;
+  Parent parent_;
   std::optional<IndirectSubscriptIntegerExpr> lower_, upper_;
 };
 

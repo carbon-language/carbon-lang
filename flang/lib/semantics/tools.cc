@@ -478,11 +478,6 @@ bool IsFinalizable(const Symbol &symbol) {
 
 bool IsCoarray(const Symbol &symbol) { return symbol.Corank() > 0; }
 
-bool IsAssumedSizeArray(const Symbol &symbol) {
-  const auto *details{symbol.detailsIf<ObjectEntityDetails>()};
-  return details && details->IsAssumedSize();
-}
-
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope) {
   if (const auto *pureProc{semantics::FindPureProcedureContaining(&scope)}) {
     if (const Symbol * root{GetAssociationRoot(symbol)}) {

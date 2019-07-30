@@ -153,25 +153,15 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
 // subscripts are in hand.
 MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
   const Symbol &symbol{ref.GetLastSymbol().GetUltimate()};
+  const auto *object{symbol.detailsIf<semantics::ObjectEntityDetails>()};
   int symbolRank{symbol.Rank()};
   int subscripts{static_cast<int>(ref.size())};
   if (subscripts == 0) {
-    if (semantics::IsAssumedSizeArray(symbol)) {
-      // Don't introduce a triplet that would later be caught
-      // as being invalid.
-      return Designate(DataRef{std::move(ref)});
-    }
-    // A -> A(:,:)
-    for (; subscripts < symbolRank; ++subscripts) {
-      ref.emplace_back(Triplet{});
-    }
-  }
-  if (subscripts != symbolRank) {
+    // nothing to check
+  } else if (subscripts != symbolRank) {
     Say("Reference to rank-%d object '%s' has %d subscripts"_err_en_US,
         symbolRank, symbol.name(), subscripts);
     return std::nullopt;
-  } else if (subscripts == 0) {
-    // nothing to check
   } else if (Component * component{ref.base().UnwrapComponent()}) {
     int baseRank{component->base().Rank()};
     if (baseRank > 0) {
@@ -186,11 +176,10 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
         return std::nullopt;
       }
     }
-  } else if (const auto *details{
-                 symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+  } else if (object != nullptr) {
     // C928 & C1002
     if (Triplet * last{std::get_if<Triplet>(&ref.subscript().back().u)}) {
-      if (!last->upper().has_value() && details->IsAssumedSize()) {
+      if (!last->upper().has_value() && object->IsAssumedSize()) {
         Say("Assumed-size array '%s' must have explicit final "
             "subscript upper bound value"_err_en_US,
             symbol.name());
@@ -221,10 +210,8 @@ MaybeExpr ExpressionAnalyzer::ApplySubscripts(
       std::move(dataRef.u));
 }
 
-// Top-level checks for data references.  Unsubscripted whole array references
-// get expanded -- e.g., MATRIX becomes MATRIX(:,:).
+// Top-level checks for data references.
 MaybeExpr ExpressionAnalyzer::TopLevelChecks(DataRef &&dataRef) {
-  bool addSubscripts{false};
   if (Component * component{std::get_if<Component>(&dataRef.u)}) {
     const Symbol &symbol{component->GetLastSymbol()};
     int componentRank{symbol.Rank()};
@@ -234,17 +221,7 @@ MaybeExpr ExpressionAnalyzer::TopLevelChecks(DataRef &&dataRef) {
         Say("Reference to whole rank-%d component '%%%s' of "
             "rank-%d array of derived type is not allowed"_err_en_US,
             componentRank, symbol.name(), baseRank);
-      } else {
-        addSubscripts = true;
       }
-    }
-  } else if (const Symbol **symbol{std::get_if<const Symbol *>(&dataRef.u)}) {
-    addSubscripts = (*symbol)->Rank() > 0;
-  }
-  if (addSubscripts) {
-    if (MaybeExpr subscripted{
-            ApplySubscripts(std::move(dataRef), std::vector<Subscript>{})}) {
-      return subscripted;
     }
   }
   return Designate(std::move(dataRef));

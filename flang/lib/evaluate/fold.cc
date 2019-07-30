@@ -31,6 +31,7 @@
 #include "../parser/message.h"
 #include "../semantics/scope.h"
 #include "../semantics/symbol.h"
+#include "../semantics/tools.h"
 #include <cmath>
 #include <complex>
 #include <cstdio>
@@ -206,15 +207,13 @@ using ScalarFuncWithContext =
 template<typename T>
 static inline Constant<T> *FoldConvertedArg(
     FoldingContext &context, std::optional<ActualArgument> &arg) {
-  if (arg.has_value()) {
-    if (auto *expr{arg->UnwrapExpr()}) {
-      if (UnwrapExpr<Expr<T>>(*expr) == nullptr) {
-        if (auto converted{ConvertToType(T::GetType(), std::move(*expr))}) {
-          *expr = Fold(context, std::move(*converted));
-        }
+  if (auto *expr{UnwrapExpr<Expr<SomeType>>(arg)}) {
+    if (UnwrapExpr<Expr<T>>(*expr) == nullptr) {
+      if (auto converted{ConvertToType(T::GetType(), std::move(*expr))}) {
+        *expr = Fold(context, std::move(*converted));
       }
-      return UnwrapConstantValue<T>(*expr);
     }
+    return UnwrapConstantValue<T>(*expr);
   }
   return nullptr;
 }
@@ -533,7 +532,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
               return std::invoke(fptr, i, static_cast<int>(pos.ToInt64()));
             }));
   } else if (name == "int") {
-    if (auto *expr{args[0].value().UnwrapExpr()}) {
+    if (auto *expr{UnwrapExpr<Expr<SomeType>>(args[0])}) {
       return std::visit(
           [&](auto &&x) -> Expr<T> {
             using From = std::decay_t<decltype(x)>;
@@ -550,6 +549,52 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
       return Expr<T>{args[0].value().GetType()->kind()};
     } else {
       common::die("kind() result not integral");
+    }
+  } else if (name == "lbound") {
+    if (const auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
+      if (int rank{array->Rank()}) {
+        std::optional<std::int64_t> dim;
+        if (args[1].has_value()) {
+          dim = GetInt64Arg(args[1]);
+          if (!dim.has_value()) {
+            // DIM= is present but not constant
+            return Expr<T>{std::move(funcRef)};
+          } else if (*dim < 1 || *dim > rank) {
+            context.messages().Say(
+                "LBOUND(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
+                static_cast<std::intmax_t>(*dim), rank);
+            return Expr<T>(std::move(funcRef));
+          }
+        }
+        bool lowerBoundsAreOne{true};
+        if (auto named{ExtractNamedEntity(*array)}) {
+          const Symbol &symbol{named->GetLastSymbol()};
+          if (symbol.Rank() == rank) {
+            lowerBoundsAreOne = false;
+            if (dim.has_value()) {
+              if (auto lb{
+                      GetLowerBound(context, *named, static_cast<int>(*dim))}) {
+                return Fold(context, ConvertToType<T>(std::move(*lb)));
+              }
+            } else if (auto lbounds{
+                           AsConstantShape(GetLowerBounds(context, *named))}) {
+              return Fold(context,
+                  ConvertToType<T>(Expr<ExtentType>{std::move(*lbounds)}));
+            }
+          } else {
+            lowerBoundsAreOne = symbol.Rank() == 0;  // component
+          }
+        }
+        if (lowerBoundsAreOne) {
+          if (dim.has_value()) {
+            return Expr<T>{1};
+          } else {
+            std::vector<Scalar<T>> ones(rank, Scalar<T>{1});
+            return Expr<T>{
+                Constant<T>{std::move(ones), ConstantSubscripts{rank}}};
+          }
+        }
+      }
     }
   } else if (name == "leadz" || name == "trailz" || name == "poppar" ||
       name == "popcnt") {
@@ -688,16 +733,16 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
       }
     }
   } else if (name == "shape") {
-    if (auto shape{GetShape(context, args[0].value())}) {
+    if (auto shape{GetShape(context, args[0])}) {
       if (auto shapeExpr{AsExtentArrayExpr(*shape)}) {
         return Fold(context, ConvertToType<T>(std::move(*shapeExpr)));
       }
     }
   } else if (name == "size") {
-    if (auto shape{GetShape(context, args[0].value())}) {
+    if (auto shape{GetShape(context, args[0])}) {
       if (auto &dimArg{args[1]}) {  // DIM= is present, get one extent
         if (auto dim{GetInt64Arg(args[1])}) {
-          int rank = GetRank(*shape);
+          int rank{GetRank(*shape)};
           if (*dim >= 1 && *dim <= rank) {
             if (auto &extent{shape->at(*dim - 1)}) {
               return Fold(context, ConvertToType<T>(std::move(*extent)));
@@ -717,13 +762,70 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
         return Expr<T>{ConvertToType<T>(Fold(context, std::move(product)))};
       }
     }
+  } else if (name == "ubound") {
+    if (auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
+      if (int rank{array->Rank()}; rank > 0) {
+        std::optional<std::int64_t> dim;
+        if (args[1].has_value()) {
+          dim = GetInt64Arg(args[1]);
+          if (!dim.has_value()) {
+            // DIM= is present but not constant
+            return Expr<T>{std::move(funcRef)};
+          } else if (*dim < 1 || *dim > rank) {
+            context.messages().Say(
+                "UBOUND(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
+                static_cast<std::intmax_t>(*dim), rank);
+            return Expr<T>(std::move(funcRef));
+          }
+        }
+        bool takeBoundsFromShape{true};
+        if (auto named{ExtractNamedEntity(*array)}) {
+          const Symbol &symbol{named->GetLastSymbol()};
+          if (symbol.Rank() == rank) {
+            takeBoundsFromShape = false;
+            if (dim.has_value()) {
+              if (semantics::IsAssumedSizeArray(symbol) && *dim == rank) {
+                return Expr<T>{-1};
+              } else if (auto ub{GetUpperBound(
+                             context, *named, static_cast<int>(*dim))}) {
+                return Fold(context, ConvertToType<T>(std::move(*ub)));
+              }
+            } else {
+              Shape ubounds{GetUpperBounds(context, *named)};
+              if (semantics::IsAssumedSizeArray(symbol)) {
+                CHECK(!ubounds.back().has_value());
+                ubounds.back() = ExtentExpr{-1};
+              }
+              if (auto constant{AsConstantShape(ubounds)}) {
+                return Fold(context,
+                    ConvertToType<T>(Expr<ExtentType>{std::move(*constant)}));
+              }
+            }
+          } else {
+            takeBoundsFromShape = symbol.Rank() == 0;  // component
+          }
+        }
+        if (takeBoundsFromShape) {
+          if (auto shape{GetShape(context, *array)}) {
+            if (dim.has_value()) {
+              if (auto &dimSize{shape->at(*dim)}) {
+                return Fold(context,
+                    ConvertToType<T>(Expr<ExtentType>{std::move(*dimSize)}));
+              }
+            } else if (auto shapeExpr{AsExtentArrayExpr(*shape)}) {
+              return Fold(context, ConvertToType<T>(std::move(*shapeExpr)));
+            }
+          }
+        }
+      }
+    }
   }
   // TODO:
   // ceiling, count, cshift, dot_product, eoshift,
   // findloc, floor, iall, iany, iparity, ibits, image_status, index, ishftc,
-  // lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
+  // len_trim, matmul, max, maxloc, maxval, merge, min,
   // minloc, minval, mod, modulo, nint, not, pack, product, reduce,
-  // scan, sign, spread, sum, transfer, transpose, ubound, unpack, verify
+  // scan, sign, spread, sum, transfer, transpose, unpack, verify
   return Expr<T>{std::move(funcRef)};
 }
 

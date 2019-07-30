@@ -110,7 +110,10 @@ inline bool IsProtected(const Symbol &symbol) {
 }
 bool IsFinalizable(const Symbol &symbol);
 bool IsCoarray(const Symbol &symbol);
-bool IsAssumedSizeArray(const Symbol &symbol);
+inline bool IsAssumedSizeArray(const Symbol &symbol) {
+  const auto *details{symbol.detailsIf<ObjectEntityDetails>()};
+  return details && details->IsAssumedSize();
+}
 std::optional<parser::MessageFixedText> WhyNotModifiable(
     const Symbol &symbol, const Scope &scope);
 // Is the symbol modifiable in this scope
