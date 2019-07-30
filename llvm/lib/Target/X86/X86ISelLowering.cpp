@@ -43422,8 +43422,8 @@ static SDValue matchPMADDWD(SelectionDAG &DAG, SDValue Op0, SDValue Op1,
 }
 
 // Attempt to turn this pattern into PMADDWD.
-// (mul (add (zext (build_vector)), (zext (build_vector))),
-//      (add (zext (build_vector)), (zext (build_vector)))
+// (mul (add (sext (build_vector)), (sext (build_vector))),
+//      (add (sext (build_vector)), (sext (build_vector)))
 static SDValue matchPMADDWD_2(SelectionDAG &DAG, SDValue N0, SDValue N1,
                               const SDLoc &DL, EVT VT,
                               const X86Subtarget &Subtarget) {
