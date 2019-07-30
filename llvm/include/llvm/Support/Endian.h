@@ -203,10 +203,8 @@ inline void writeAtBitAlignment(void *memory, value_type value,
 
 namespace detail {
 
-template<typename ValueType,
-         endianness Endian,
-         std::size_t Alignment,
-         std::size_t ALIGN = PickAlignment<ValueType, Alignment>::value>
+template <typename ValueType, endianness Endian, std::size_t Alignment,
+          std::size_t ALIGN = PickAlignment<ValueType, Alignment>::value>
 struct packed_endian_specific_integral {
   using value_type = ValueType;
   static constexpr endianness endian = Endian;
@@ -248,7 +246,7 @@ struct packed_endian_specific_integral {
 
 private:
   struct {
-    LLVM_ALIGNAS(ALIGN) char buffer[sizeof(value_type)];
+    alignas(ALIGN) char buffer[sizeof(value_type)];
   } Value;
 
 public:
