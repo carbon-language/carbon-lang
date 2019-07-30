@@ -34214,14 +34214,16 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       // Subvector broadcast.
     case X86ISD::SUBV_BROADCAST: {
       SDLoc DL(Op);
-      SDValue Ext = Op.getOperand(0);
-      if (Ext.getValueSizeInBits() != ExtSizeInBits) {
-        MVT ExtSVT = Ext.getSimpleValueType().getScalarType();
-        MVT ExtVT =
-            MVT::getVectorVT(ExtSVT, ExtSizeInBits / ExtSVT.getSizeInBits());
-        Ext = TLO.DAG.getNode(X86ISD::SUBV_BROADCAST, DL, ExtVT, Ext);
+      SDValue Src = Op.getOperand(0);
+      if (Src.getValueSizeInBits() > ExtSizeInBits)
+        Src = extractSubVector(Src, 0, TLO.DAG, DL, ExtSizeInBits);
+      else if (Src.getValueSizeInBits() < ExtSizeInBits) {
+        MVT SrcSVT = Src.getSimpleValueType().getScalarType();
+        MVT SrcVT =
+            MVT::getVectorVT(SrcSVT, ExtSizeInBits / SrcSVT.getSizeInBits());
+        Src = TLO.DAG.getNode(X86ISD::SUBV_BROADCAST, DL, SrcVT, Src);
       }
-      return TLO.CombineTo(Op, insertSubVector(TLO.DAG.getUNDEF(VT), Ext, 0,
+      return TLO.CombineTo(Op, insertSubVector(TLO.DAG.getUNDEF(VT), Src, 0,
                                                TLO.DAG, DL, ExtSizeInBits));
     }
       // Byte shifts by immediate.
