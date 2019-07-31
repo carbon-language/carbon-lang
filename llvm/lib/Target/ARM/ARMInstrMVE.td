@@ -3655,8 +3655,8 @@ let Predicates = [HasMVEFloat] in {
 }
 
 class MVE_VFMAMLA_qr<string iname, string suffix,
-                   bit bit_28, bits<2> bits_21_20, bit S,
-                   list<dag> pattern=[]>
+                     bit bit_28, bits<2> bits_21_20, bit S,
+                     list<dag> pattern=[]>
   : MVE_qDestSrc_rSrc<iname, suffix, pattern> {
 
   let Inst{28} = bit_28;
