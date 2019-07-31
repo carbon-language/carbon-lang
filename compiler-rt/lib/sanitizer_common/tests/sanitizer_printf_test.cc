@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Tests for sanitizer_printf.cc
+// Tests for sanitizer_printf.cpp
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_common.h"

@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Implementation of weak hooks from sanitizer_symbolizer_posix_libcdep.cc.
+// Implementation of weak hooks from sanitizer_symbolizer_posix_libcdep.cpp.
 //
 //===----------------------------------------------------------------------===//
 
