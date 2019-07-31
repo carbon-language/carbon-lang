@@ -685,11 +685,9 @@ bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
            << Twine::utohexstr(BF.getAddress() + BF.getSize())
            << " starting at offset "
            << (Offset - BF.getSize()) << " in function "
-           << BF << '\n';
-    for (auto I = BF.getSize(); I < BF.getMaxSize(); ++I) {
-      errs() << format("%.2x ", (*FunctionData)[I]);
-    }
-    errs() << '\n';
+           << BF << '\n'
+           << FunctionData->slice(BF.getSize(), BF.getMaxSize() - BF.getSize())
+           << '\n';
   }
 
   return false;

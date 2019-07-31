@@ -81,11 +81,15 @@ AlignMacroOpFusion("align-macro-fusion",
   cl::cat(BoltRelocCategory));
 
 cl::opt<bool>
-PreserveBlocksAlignment("preserve-blocks-alignment",
-  cl::desc("try to preserve basic block alignment"),
+CheckEncoding("check-encoding",
+  cl::desc("perform verification of LLVM instruction encoding/decoding. "
+           "Every instruction in the input is decoded and re-encoded. "
+           "If the resulting bytes do not match the input, a warning message "
+           "is printed."),
   cl::init(false),
   cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 static cl::opt<bool>
 DotToolTipCode("dot-tooltip-code",
@@ -111,6 +115,13 @@ JumpTables("jump-tables",
       clEnumValN(JTS_AGGRESSIVE, "aggressive",
                  "aggressively split jump tables section based on usage "
                  "of the tables")),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<bool>
+PreserveBlocksAlignment("preserve-blocks-alignment",
+  cl::desc("try to preserve basic block alignment"),
+  cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -1014,6 +1025,23 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         }
       }
       break;
+    }
+
+    // Check integrity of LLVM assembler/disassembler.
+    if (opts::CheckEncoding && !BC.MIB->isBranch(Instruction) &&
+        !BC.MIB->isCall(Instruction) && !BC.MIB->isNoop(Instruction)) {
+      SmallString<256> Code;
+      SmallVector<MCFixup, 4> Fixups;
+      raw_svector_ostream VecOS(Code);
+      BC.MCE->encodeInstruction(Instruction, VecOS, Fixups, *BC.STI);
+      auto EncodedData = ArrayRef<uint8_t>((uint8_t *)Code.data(), Code.size());
+      if (FunctionData.slice(Offset, Size) != EncodedData) {
+        errs() << "BOLT-WARNING: mismatching LLVM encoding detected in "
+               << "function " << *this << ":\n";
+        BC.printInstruction(errs(), Instruction, AbsoluteInstrAddr);
+        errs() << "       input: " << FunctionData.slice(Offset, Size)
+               << "\n      output: " << EncodedData << "\n\n";
+      }
     }
 
     // Cannot process functions with AVX-512 instructions.

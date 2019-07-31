@@ -20,6 +20,7 @@
 #include "JumpTable.h"
 #include "MCPlusBuilder.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -46,6 +47,7 @@
 #include <shared_mutex>
 #include <string>
 #include <system_error>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -1038,6 +1040,18 @@ public:
     return MCEInstance;
   }
 };
+
+template <typename T,
+          typename = std::enable_if_t<sizeof(T) == 1> >
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const ArrayRef<T> &ByteArray) {
+  const char *Sep = "";
+  for (const auto Byte : ByteArray) {
+    OS << Sep << format("%.2x", Byte);
+    Sep = " ";
+  }
+  return OS;
+}
 
 } // namespace bolt
 } // namespace llvm
