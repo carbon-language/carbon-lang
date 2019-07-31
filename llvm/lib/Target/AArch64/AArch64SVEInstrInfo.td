@@ -1164,6 +1164,13 @@ let Predicates = [HasSVE2] in {
   defm SQRSHLR_ZPmZ : sve2_int_arith_pred<0b011100, "sqrshlr">;
   defm UQRSHLR_ZPmZ : sve2_int_arith_pred<0b011110, "uqrshlr">;
 
+  // SVE2 predicated shifts
+  defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
+  defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
+  defm SRSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1100, "srshr">;
+  defm URSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1101, "urshr">;
+  defm SQSHLU_ZPmI : sve_int_bin_pred_shift_imm_left< 0b1111, "sqshlu">;
+
   // SVE2 integer add/subtract long
   defm SADDLB_ZZZ : sve2_wide_int_arith_long<0b00000, "saddlb">;
   defm SADDLT_ZZZ : sve2_wide_int_arith_long<0b00001, "saddlt">;
@@ -1203,10 +1210,10 @@ let Predicates = [HasSVE2] in {
   defm SLI_ZZI : sve2_int_bin_shift_imm_left< 0b1, "sli">;
 
   // SVE2 bitwise shift right and accumulate
-  defm SSRA_ZZI  : sve2_int_bin_accum_cons_shift_imm_right<0b00, "ssra">;
-  defm USRA_ZZI  : sve2_int_bin_accum_cons_shift_imm_right<0b01, "usra">;
-  defm SRSRA_ZZI : sve2_int_bin_accum_cons_shift_imm_right<0b10, "srsra">;
-  defm URSRA_ZZI : sve2_int_bin_accum_cons_shift_imm_right<0b11, "ursra">;
+  defm SSRA_ZZI  : sve2_int_bin_accum_shift_imm_right<0b00, "ssra">;
+  defm USRA_ZZI  : sve2_int_bin_accum_shift_imm_right<0b01, "usra">;
+  defm SRSRA_ZZI : sve2_int_bin_accum_shift_imm_right<0b10, "srsra">;
+  defm URSRA_ZZI : sve2_int_bin_accum_shift_imm_right<0b11, "ursra">;
 
   // SVE2 complex integer add
   defm CADD_ZZI   : sve2_int_cadd<0b0, "cadd">;
@@ -1295,10 +1302,14 @@ let Predicates = [HasSVE2] in {
   // SVE2 histogram generation (vector)
   defm HISTCNT_ZPzZZ : sve2_hist_gen_vector<"histcnt">;
 
+  // SVE2 floating-point base 2 logarithm as integer
+  defm FLOGB_ZPmZ : sve2_fp_flogb<"flogb">;
+
   // SVE2 floating-point convert precision
   defm FCVTXNT_ZPmZ : sve2_fp_convert_down_odd_rounding<"fcvtxnt">;
   defm FCVTNT_ZPmZ  : sve2_fp_convert_down_narrow<"fcvtnt">;
   defm FCVTLT_ZPmZ  : sve2_fp_convert_up_long<"fcvtlt">;
+  def FCVTX_ZPmZ_DtoS : sve_fp_2op_p_zd<0b0001010, "fcvtx", ZPR64, ZPR32, ElementSizeD>;
 
   // SVE2 floating-point pairwise operations
   defm FADDP_ZPmZZ   : sve2_fp_pairwise_pred<0b000, "faddp">;
@@ -1327,17 +1338,12 @@ let Predicates = [HasSVE2] in {
   def BSL2N_ZZZZ_D  : sve2_int_bitwise_ternary_op_d<0b101, "bsl2n">;
   def NBSL_ZZZZ_D   : sve2_int_bitwise_ternary_op_d<0b111, "nbsl">;
 
-  // sve_int_rotate_imm
+  // SVE2 bitwise xor and rotate right by immediate
   defm XAR_ZZZI : sve2_int_rotate_right_imm<"xar">;
 
   // SVE2 extract vector (immediate offset, constructive)
   def EXT_ZZI_B : sve2_int_perm_extract_i_cons<"ext">;
 
-  // SVE floating-point convert precision
-  def FCVTX_ZPmZ_DtoS : sve_fp_2op_p_zd<0b0001010, "fcvtx", ZPR64, ZPR32, ElementSizeD>;
-
-  // SVE floating-point convert to integer
-  defm FLOGB_ZPmZ : sve2_fp_flogb<"flogb">;
 
   // Non-temporal contiguous loads (vector + register)
   defm LDNT1SB_ZZR_S : sve2_mem_cldnt_vs<0b00000, "ldnt1sb", Z_s, ZPR32>;
@@ -1357,12 +1363,6 @@ let Predicates = [HasSVE2] in {
   // SVE2 vector splice (constructive)
   defm SPLICE_ZPZZ : sve2_int_perm_splice_cons<"splice">;
 
-  // Predicated shifts
-  defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
-  defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
-  defm SRSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1100, "srshr">;
-  defm URSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1101, "urshr">;
-  defm SQSHLU_ZPmI : sve_int_bin_pred_shift_imm_left< 0b1111, "sqshlu">;
 
   // Non-temporal contiguous stores (vector + register)
   defm STNT1B_ZZR_S : sve2_mem_cstnt_vs<0b001, "stnt1b", Z_s, ZPR32>;
@@ -1374,11 +1374,11 @@ let Predicates = [HasSVE2] in {
   defm STNT1W_ZZR_D : sve2_mem_cstnt_vs<0b100, "stnt1w", Z_d, ZPR64>;
   defm STNT1D_ZZR_D : sve2_mem_cstnt_vs<0b110, "stnt1d", Z_d, ZPR64>;
 
-  // SVE table lookup (three sources)
+  // SVE2 table lookup (three sources)
   defm TBL_ZZZZ : sve2_int_perm_tbl<"tbl">;
   defm TBX_ZZZ  : sve2_int_perm_tbx<"tbx">;
 
-  // SVE integer compare scalar count and limit
+  // SVE2 integer compare scalar count and limit
   defm WHILEGE_PWW : sve_int_while4_rr<0b000, "whilege">;
   defm WHILEGT_PWW : sve_int_while4_rr<0b001, "whilegt">;
   defm WHILEHS_PWW : sve_int_while4_rr<0b100, "whilehs">;
@@ -1389,7 +1389,7 @@ let Predicates = [HasSVE2] in {
   defm WHILEHS_PXX : sve_int_while8_rr<0b100, "whilehs">;
   defm WHILEHI_PXX : sve_int_while8_rr<0b101, "whilehi">;
 
-  // SVE pointer conflict compare
+  // SVE2 pointer conflict compare
   defm WHILEWR_PXX : sve2_int_while_rr<0b0, "whilewr">;
   defm WHILERW_PXX : sve2_int_while_rr<0b1, "whilerw">;
 }

@@ -2530,8 +2530,8 @@ multiclass sve2_int_bin_shift_imm_right<bit opc, string asm> {
   }
 }
 
-class sve2_int_bin_accum_cons_shift_imm<bits<4> tsz8_64, bits<2> opc, string asm,
-                                        ZPRRegOp zprty, Operand immtype>
+class sve2_int_bin_accum_shift_imm<bits<4> tsz8_64, bits<2> opc, string asm,
+                                   ZPRRegOp zprty, Operand immtype>
 : I<(outs zprty:$Zda), (ins zprty:$_Zda, zprty:$Zn, immtype:$imm),
   asm, "\t$Zda, $Zn, $imm",
   "", []>, Sched<[]> {
@@ -2553,15 +2553,15 @@ class sve2_int_bin_accum_cons_shift_imm<bits<4> tsz8_64, bits<2> opc, string asm
   let ElementSize = ElementSizeNone;
 }
 
-multiclass sve2_int_bin_accum_cons_shift_imm_right<bits<2> opc, string asm> {
-  def _B : sve2_int_bin_accum_cons_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftR8>;
-  def _H : sve2_int_bin_accum_cons_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftR16> {
+multiclass sve2_int_bin_accum_shift_imm_right<bits<2> opc, string asm> {
+  def _B : sve2_int_bin_accum_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftR8>;
+  def _H : sve2_int_bin_accum_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftR16> {
     let Inst{19} = imm{3};
   }
-  def _S : sve2_int_bin_accum_cons_shift_imm<{0,1,?,?}, opc, asm, ZPR32, vecshiftR32> {
+  def _S : sve2_int_bin_accum_shift_imm<{0,1,?,?}, opc, asm, ZPR32, vecshiftR32> {
     let Inst{20-19} = imm{4-3};
   }
-  def _D : sve2_int_bin_accum_cons_shift_imm<{1,?,?,?}, opc, asm, ZPR64, vecshiftR64> {
+  def _D : sve2_int_bin_accum_shift_imm<{1,?,?,?}, opc, asm, ZPR64, vecshiftR64> {
     let Inst{22}    = imm{5};
     let Inst{20-19} = imm{4-3};
   }
