@@ -630,7 +630,8 @@ bool IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
         // and varies predictably *inside* the loop.  Evaluate the value it
         // contains when the loop exits, if possible.
         const SCEV *ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
-        if (!SE->isLoopInvariant(ExitValue, L) ||
+        if (isa<SCEVCouldNotCompute>(ExitValue) ||
+            !SE->isLoopInvariant(ExitValue, L) ||
             !isSafeToExpand(ExitValue, *SE))
           continue;
 
@@ -804,7 +805,7 @@ bool IndVarSimplify::canLoopBeDeleted(
   L->getExitingBlocks(ExitingBlocks);
   SmallVector<BasicBlock *, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() > 1 || ExitingBlocks.size() > 1)
+  if (ExitBlocks.size() != 1 || ExitingBlocks.size() != 1)
     return false;
 
   BasicBlock *ExitBlock = ExitBlocks[0];
@@ -2774,14 +2775,11 @@ bool IndVarSimplify::run(Loop *L) {
   Rewriter.disableCanonicalMode();
   Changed |= simplifyAndExtend(L, Rewriter, LI);
 
-  // Check to see if this loop has a computable loop-invariant execution count.
-  // If so, this means that we can compute the final value of any expressions
+  // Check to see if we can compute the final value of any expressions
   // that are recurrent in the loop, and substitute the exit values from the
-  // loop into any instructions outside of the loop that use the final values of
-  // the current expressions.
-  //
-  if (ReplaceExitValue != NeverRepl &&
-      !isa<SCEVCouldNotCompute>(BackedgeTakenCount))
+  // loop into any instructions outside of the loop that use the final values
+  // of the current expressions.
+  if (ReplaceExitValue != NeverRepl)
     Changed |= rewriteLoopExitValues(L, Rewriter);
 
   // Eliminate redundant IV cycles.
