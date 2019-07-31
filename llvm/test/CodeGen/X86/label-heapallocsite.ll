@@ -88,10 +88,10 @@ declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 ; CHECK: callq alloc_foo
 ; DAG:   .Lheapallocsite5:
 ; FAST:  .Lheapallocsite7:
-; DAG:   .Lheapallocsite8:
+; DAG:   .Lheapallocsite6:
 ; FAST:  .Lheapallocsite4:
 ; CHECK: callq alloc_foo
-; DAG:   .Lheapallocsite9:
+; DAG:   .Lheapallocsite7:
 ; FAST:  .Lheapallocsite5:
 
 ; CHECK-LABEL: .short  4423                    # Record kind: S_GPROC32_ID
@@ -113,12 +113,9 @@ declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 ; CHECK-NEXT:  .short .Lheapallocsite5-.Lheapallocsite4
 ; CHECK-NEXT:  .long 4099
 ; CHECK:       .short  4446                    # Record kind: S_HEAPALLOCSITE
-; FAST-NEXT:  .secrel32 .Lheapallocsite6
-; FAST-NEXT:  .secidx .Lheapallocsite6
-; FAST-NEXT:  .short .Lheapallocsite7-.Lheapallocsite6
-; DAG-NEXT:  .secrel32 .Lheapallocsite8
-; DAG-NEXT:  .secidx .Lheapallocsite8
-; DAG-NEXT:  .short .Lheapallocsite9-.Lheapallocsite8
+; CHECK-NEXT:  .secrel32 .Lheapallocsite6
+; CHECK-NEXT:  .secidx .Lheapallocsite6
+; CHECK-NEXT:  .short .Lheapallocsite7-.Lheapallocsite6
 ; CHECK-NEXT:  .long 4099
 
 attributes #0 = { nounwind "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "frame-pointer"="none" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-features"="+cx8,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
