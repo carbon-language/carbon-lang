@@ -188,7 +188,7 @@ TEST(Alignment, isAligned) {
 }
 
 TEST(Alignment, AlignComparisons) {
-  std::vector<size_t> ValidAlignments = getValidAlignments();
+  std::vector<uint64_t> ValidAlignments = getValidAlignments();
   std::sort(ValidAlignments.begin(), ValidAlignments.end());
   for (size_t I = 1; I < ValidAlignments.size(); ++I) {
     assert(I >= 1);
