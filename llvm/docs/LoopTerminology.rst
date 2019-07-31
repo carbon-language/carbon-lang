@@ -12,7 +12,7 @@ Loops are a core concept in any optimizer.  This page spells out some
 of the common terminology used within LLVM code to describe loop
 structures.
 
-First, let's start with the basics.  In LLVM, a Loop is a set of basic
+First, let's start with the basics. In LLVM, a Loop is a maximal set of basic
 blocks that form a strongly connected component (SCC) in the Control
 Flow Graph (CFG) where there exists a dedicated entry/header block that
 dominates all other blocks within the loop. Thus, without leaving the
