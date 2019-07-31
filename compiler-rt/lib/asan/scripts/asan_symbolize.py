@@ -756,7 +756,9 @@ def get_uuid_from_binary(path_to_binary, arch=None):
     uuid = split_uuid_line[1]
     break
   if uuid is None:
-    raise GetUUIDFromBinaryException('Failed to retrieve UUID')
+    logging.error('Failed to retrieve UUID from binary {}'.format(path_to_binary))
+    logging.error('otool output was:\n{}'.format(output_str))
+    raise GetUUIDFromBinaryException('Failed to retrieve UUID from binary "{}"'.format(path_to_binary))
   else:
     # Update cache
     _get_uuid_from_binary_cache[cache_key] = uuid
