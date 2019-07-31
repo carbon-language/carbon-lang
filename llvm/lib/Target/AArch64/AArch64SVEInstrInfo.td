@@ -1344,35 +1344,33 @@ let Predicates = [HasSVE2] in {
   // SVE2 extract vector (immediate offset, constructive)
   def EXT_ZZI_B : sve2_int_perm_extract_i_cons<"ext">;
 
+  // SVE2 non-temporal gather loads
+  defm LDNT1SB_ZZR_S : sve2_mem_gldnt_vs<0b00000, "ldnt1sb", Z_s, ZPR32>;
+  defm LDNT1B_ZZR_S  : sve2_mem_gldnt_vs<0b00001, "ldnt1b",  Z_s, ZPR32>;
+  defm LDNT1SH_ZZR_S : sve2_mem_gldnt_vs<0b00100, "ldnt1sh", Z_s, ZPR32>;
+  defm LDNT1H_ZZR_S  : sve2_mem_gldnt_vs<0b00101, "ldnt1h",  Z_s, ZPR32>;
+  defm LDNT1W_ZZR_S  : sve2_mem_gldnt_vs<0b01001, "ldnt1w",  Z_s, ZPR32>;
 
-  // Non-temporal contiguous loads (vector + register)
-  defm LDNT1SB_ZZR_S : sve2_mem_cldnt_vs<0b00000, "ldnt1sb", Z_s, ZPR32>;
-  defm LDNT1B_ZZR_S  : sve2_mem_cldnt_vs<0b00001, "ldnt1b",  Z_s, ZPR32>;
-  defm LDNT1SH_ZZR_S : sve2_mem_cldnt_vs<0b00100, "ldnt1sh", Z_s, ZPR32>;
-  defm LDNT1H_ZZR_S  : sve2_mem_cldnt_vs<0b00101, "ldnt1h",  Z_s, ZPR32>;
-  defm LDNT1W_ZZR_S  : sve2_mem_cldnt_vs<0b01001, "ldnt1w",  Z_s, ZPR32>;
-
-  defm LDNT1SB_ZZR_D : sve2_mem_cldnt_vs<0b10000, "ldnt1sb", Z_d, ZPR64>;
-  defm LDNT1B_ZZR_D  : sve2_mem_cldnt_vs<0b10010, "ldnt1b",  Z_d, ZPR64>;
-  defm LDNT1SH_ZZR_D : sve2_mem_cldnt_vs<0b10100, "ldnt1sh", Z_d, ZPR64>;
-  defm LDNT1H_ZZR_D  : sve2_mem_cldnt_vs<0b10110, "ldnt1h",  Z_d, ZPR64>;
-  defm LDNT1SW_ZZR_D : sve2_mem_cldnt_vs<0b11000, "ldnt1sw", Z_d, ZPR64>;
-  defm LDNT1W_ZZR_D  : sve2_mem_cldnt_vs<0b11010, "ldnt1w",  Z_d, ZPR64>;
-  defm LDNT1D_ZZR_D  : sve2_mem_cldnt_vs<0b11110, "ldnt1d",  Z_d, ZPR64>;
+  defm LDNT1SB_ZZR_D : sve2_mem_gldnt_vs<0b10000, "ldnt1sb", Z_d, ZPR64>;
+  defm LDNT1B_ZZR_D  : sve2_mem_gldnt_vs<0b10010, "ldnt1b",  Z_d, ZPR64>;
+  defm LDNT1SH_ZZR_D : sve2_mem_gldnt_vs<0b10100, "ldnt1sh", Z_d, ZPR64>;
+  defm LDNT1H_ZZR_D  : sve2_mem_gldnt_vs<0b10110, "ldnt1h",  Z_d, ZPR64>;
+  defm LDNT1SW_ZZR_D : sve2_mem_gldnt_vs<0b11000, "ldnt1sw", Z_d, ZPR64>;
+  defm LDNT1W_ZZR_D  : sve2_mem_gldnt_vs<0b11010, "ldnt1w",  Z_d, ZPR64>;
+  defm LDNT1D_ZZR_D  : sve2_mem_gldnt_vs<0b11110, "ldnt1d",  Z_d, ZPR64>;
 
   // SVE2 vector splice (constructive)
   defm SPLICE_ZPZZ : sve2_int_perm_splice_cons<"splice">;
 
+  // SVE2 non-temporal scatter stores
+  defm STNT1B_ZZR_S : sve2_mem_sstnt_vs<0b001, "stnt1b", Z_s, ZPR32>;
+  defm STNT1H_ZZR_S : sve2_mem_sstnt_vs<0b011, "stnt1h", Z_s, ZPR32>;
+  defm STNT1W_ZZR_S : sve2_mem_sstnt_vs<0b101, "stnt1w", Z_s, ZPR32>;
 
-  // Non-temporal contiguous stores (vector + register)
-  defm STNT1B_ZZR_S : sve2_mem_cstnt_vs<0b001, "stnt1b", Z_s, ZPR32>;
-  defm STNT1H_ZZR_S : sve2_mem_cstnt_vs<0b011, "stnt1h", Z_s, ZPR32>;
-  defm STNT1W_ZZR_S : sve2_mem_cstnt_vs<0b101, "stnt1w", Z_s, ZPR32>;
-
-  defm STNT1B_ZZR_D : sve2_mem_cstnt_vs<0b000, "stnt1b", Z_d, ZPR64>;
-  defm STNT1H_ZZR_D : sve2_mem_cstnt_vs<0b010, "stnt1h", Z_d, ZPR64>;
-  defm STNT1W_ZZR_D : sve2_mem_cstnt_vs<0b100, "stnt1w", Z_d, ZPR64>;
-  defm STNT1D_ZZR_D : sve2_mem_cstnt_vs<0b110, "stnt1d", Z_d, ZPR64>;
+  defm STNT1B_ZZR_D : sve2_mem_sstnt_vs<0b000, "stnt1b", Z_d, ZPR64>;
+  defm STNT1H_ZZR_D : sve2_mem_sstnt_vs<0b010, "stnt1h", Z_d, ZPR64>;
+  defm STNT1W_ZZR_D : sve2_mem_sstnt_vs<0b100, "stnt1w", Z_d, ZPR64>;
+  defm STNT1D_ZZR_D : sve2_mem_sstnt_vs<0b110, "stnt1d", Z_d, ZPR64>;
 
   // SVE2 table lookup (three sources)
   defm TBL_ZZZZ : sve2_int_perm_tbl<"tbl">;

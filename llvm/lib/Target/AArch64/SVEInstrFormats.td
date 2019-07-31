@@ -4008,9 +4008,9 @@ multiclass sve_mem_cstnt_ss<bits<2> msz, string asm, RegisterOperand listty,
                  (!cast<Instruction>(NAME) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, gprty:$Rm), 0>;
 }
 
-class sve2_mem_cstnt_vs_base<bits<3> opc, dag iops, string asm,
-                             RegisterOperand VecList>
-: I<(outs VecList:$Zt), iops,
+class sve2_mem_sstnt_vs_base<bits<3> opc, string asm,
+                             RegisterOperand listty, ZPRRegOp zprty>
+: I<(outs), (ins listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm),
   asm, "\t$Zt, $Pg, [$Zn, $Rm]",
   "",
   []>, Sched<[]> {
@@ -4030,17 +4030,14 @@ class sve2_mem_cstnt_vs_base<bits<3> opc, dag iops, string asm,
   let mayStore = 1;
 }
 
-multiclass sve2_mem_cstnt_vs<bits<3> opc, string asm,
+multiclass sve2_mem_sstnt_vs<bits<3> opc, string asm,
                              RegisterOperand listty, ZPRRegOp zprty> {
-  def _REAL : sve2_mem_cstnt_vs_base<opc, (ins PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm),
-                                     asm, listty>;
+  def _REAL : sve2_mem_sstnt_vs_base<opc, asm, listty, zprty>;
 
   def : InstAlias<asm # "\t$Zt, $Pg, [$Zn, $Rm]",
                  (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg, [$Zn]",
                  (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, zprty:$Zn, XZR), 0>;
-  def : InstAlias<asm # "\t$Zt, $Pg, [$Zn, $Rm]",
-                 (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg, [$Zn]",
                  (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, XZR), 1>;
 }
@@ -5216,7 +5213,7 @@ multiclass sve_mem_p_fill<string asm> {
                   (!cast<Instruction>(NAME) PPRAny:$Pt, GPR64sp:$Rn, 0), 1>;
 }
 
-class sve2_mem_cldnt_vs_base<bits<5> opc, dag iops, string asm,
+class sve2_mem_gldnt_vs_base<bits<5> opc, dag iops, string asm,
                              RegisterOperand VecList>
 : I<(outs VecList:$Zt), iops,
   asm, "\t$Zt, $Pg/z, [$Zn, $Rm]",
@@ -5241,17 +5238,15 @@ class sve2_mem_cldnt_vs_base<bits<5> opc, dag iops, string asm,
   let mayLoad = 1;
 }
 
-multiclass sve2_mem_cldnt_vs<bits<5> opc, string asm,
+multiclass sve2_mem_gldnt_vs<bits<5> opc, string asm,
                              RegisterOperand listty, ZPRRegOp zprty> {
-  def _REAL : sve2_mem_cldnt_vs_base<opc, (ins PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm),
+  def _REAL : sve2_mem_gldnt_vs_base<opc, (ins PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm),
                                      asm, listty>;
 
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn, $Rm]",
                  (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
                  (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, zprty:$Zn, XZR), 0>;
-  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn, $Rm]",
-                 (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
                  (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, XZR), 1>;
 }
