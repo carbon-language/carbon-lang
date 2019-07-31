@@ -87,6 +87,8 @@ private:
   using UP = llvm::Optional<Align>;
 
 public:
+  // Default is undefined.
+  MaybeAlign() = default;
   // Do not perform checks in case of copy/move construct/assign, because the
   // checks have been performed when building `Other`.
   MaybeAlign(const MaybeAlign &Other) = default;
