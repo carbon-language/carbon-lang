@@ -41,7 +41,7 @@ public:
   bool lowerCall(MachineIRBuilder &MIRBuilder, CallingConv::ID CallConv,
                  const MachineOperand &Callee, const ArgInfo &OrigRet,
                  ArrayRef<ArgInfo> OrigArgs,
-                 const MDNode *KnownCallees) const override;
+                 const MDNode *KnownCallees = nullptr) const override;
 
 private:
   bool lowerReturnVal(MachineIRBuilder &MIRBuilder, const Value *Val,

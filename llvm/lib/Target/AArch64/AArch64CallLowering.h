@@ -43,12 +43,12 @@ public:
   bool lowerCall(MachineIRBuilder &MIRBuilder, CallingConv::ID CallConv,
                  const MachineOperand &Callee, const ArgInfo &OrigRet,
                  ArrayRef<ArgInfo> OrigArgs, Register SwiftErrorVReg,
-                 const MDNode *KnownCallees) const override;
+                 const MDNode *KnownCallees = nullptr) const override;
 
   bool lowerCall(MachineIRBuilder &MIRBuilder, CallingConv::ID CallConv,
                  const MachineOperand &Callee, const ArgInfo &OrigRet,
                  ArrayRef<ArgInfo> OrigArgs,
-                 const MDNode *KnownCallees) const override {
+                 const MDNode *KnownCallees = nullptr) const override {
     return lowerCall(MIRBuilder, CallConv, Callee, OrigRet, OrigArgs, 0,
                      KnownCallees);
   }
