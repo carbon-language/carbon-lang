@@ -12,6 +12,7 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
+! C1122 The index-name shall be a named scalar variable of type integer.
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: Must have INTEGER type, but is REAL\\(4\\)
 
