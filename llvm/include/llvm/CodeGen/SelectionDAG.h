@@ -269,13 +269,7 @@ class SelectionDAG {
 
   using CallSiteInfo = MachineFunction::CallSiteInfo;
   using CallSiteInfoImpl = MachineFunction::CallSiteInfoImpl;
-
-  struct CallSiteDbgInfo {
-    CallSiteInfo CSInfo;
-    MDNode *HeapAllocSite = nullptr;
-  };
-
-  DenseMap<const SDNode *, CallSiteDbgInfo> SDCallSiteDbgInfo;
+  DenseMap<const SDNode *, CallSiteInfo> SDCallSiteInfo;
 
   uint16_t NextPersistentId = 0;
 
@@ -1669,26 +1663,14 @@ public:
   }
 
   void addCallSiteInfo(const SDNode *CallNode, CallSiteInfoImpl &&CallInfo) {
-    SDCallSiteDbgInfo[CallNode].CSInfo = std::move(CallInfo);
+    SDCallSiteInfo[CallNode] = std::move(CallInfo);
   }
 
   CallSiteInfo getSDCallSiteInfo(const SDNode *CallNode) {
-    auto I = SDCallSiteDbgInfo.find(CallNode);
-    if (I != SDCallSiteDbgInfo.end())
-      return std::move(I->second).CSInfo;
+    auto I = SDCallSiteInfo.find(CallNode);
+    if (I != SDCallSiteInfo.end())
+      return std::move(I->second);
     return CallSiteInfo();
-  }
-
-  void addHeapAllocSite(const SDNode *Node, MDNode *MD) {
-    SDCallSiteDbgInfo[Node].HeapAllocSite = MD;
-  }
-
-  /// Return the HeapAllocSite type associated with the SDNode, if it exists.
-  MDNode *getHeapAllocSite(const SDNode* Node) {
-    auto It = SDCallSiteDbgInfo.find(Node);
-    if (It == SDCallSiteDbgInfo.end())
-      return nullptr;
-    return It->second.HeapAllocSite;
   }
 
 private:
