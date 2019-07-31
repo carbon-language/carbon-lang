@@ -49,7 +49,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 		../../sanitizer_common/sanitizer_posix_libcdep.cpp
 		../../sanitizer_common/sanitizer_procmaps_common.cpp
 		../../sanitizer_common/sanitizer_procmaps_linux.cpp
-		../../sanitizer_common/sanitizer_linux.cp.cpp
+		../../sanitizer_common/sanitizer_linux.cpp
 		../../sanitizer_common/sanitizer_linux_libcdep.cpp
 		../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cpp
 		../../sanitizer_common/sanitizer_stoptheworld_netbsd_libcdep.cpp
