@@ -114,9 +114,6 @@ public:
   bool empty() const { return symbols_.empty(); }
 
   // Look for symbol by name in this scope and host (depending on imports).
-  // Be advised: when the scope is a derived type, the search begins in its
-  // enclosing scope and will not match any component or parameter of the
-  // derived type; use find() instead when seeking those.
   Symbol *FindSymbol(const SourceName &) const;
 
   /// Make a Symbol with unknown details.

@@ -13,12 +13,14 @@
 ! limitations under the License.
 
 module m2
-  public s2
+  public s2, s4
   private s3
 contains
   subroutine s2
   end
   subroutine s3
+  end
+  subroutine s4
   end
 end module
 
@@ -36,7 +38,7 @@ module m
     !ERROR: Procedure 'missing' not found
     procedure, nopass :: a => missing
     procedure, nopass :: b => s, s2
-    !ERROR: Procedure 'c' not found
+    !ERROR: 'c' is not a module procedure or external procedure with explicit interface
     procedure, nopass :: c
     !ERROR: DEFERRED is only allowed when an interface-name is provided
     procedure, nopass, deferred :: d => s
@@ -50,7 +52,7 @@ module m
     !ERROR: 'i' is not a module procedure or external procedure with explicit interface
     procedure, nopass :: i
     !ERROR: Type parameter, component, or procedure binding 'b' already defined in this type
-    procedure, nopass :: b => s2
+    procedure, nopass :: b => s4
     procedure(foo), nopass, deferred :: e
     procedure(s), nopass, deferred :: f
     !ERROR: Type parameter, component, or procedure binding 'f' already defined in this type

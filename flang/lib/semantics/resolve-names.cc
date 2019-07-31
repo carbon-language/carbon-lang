@@ -445,7 +445,8 @@ public:
   void Say2(
       const parser::Name &, MessageFixedText &&, Symbol &, MessageFixedText &&);
 
-  // Search for symbol by name in current and containing scopes
+  // Search for symbol by name in current, parent derived type, and
+  // containing scopes
   Symbol *FindSymbol(const parser::Name &);
   Symbol *FindSymbol(const Scope &, const parser::Name &);
   // Search for name only in scope, not in enclosing scopes.
@@ -1650,14 +1651,16 @@ Symbol *ScopeHandler::FindSymbol(const parser::Name &name) {
   return FindSymbol(currScope(), name);
 }
 Symbol *ScopeHandler::FindSymbol(const Scope &scope, const parser::Name &name) {
-  // Scope::FindSymbol() skips over innermost derived type scopes.
-  // Ensure that "bare" type parameter names are not overlooked.
-  if (Symbol * symbol{FindInTypeOrParents(scope, name.source)}) {
-    if (symbol->has<TypeParamDetails>()) {
-      return Resolve(name, symbol);
+  if (scope.IsDerivedType()) {
+    if (Symbol * symbol{FindInTypeOrParents(scope, name.source)}) {
+      if (!symbol->test(Symbol::Flag::ParentComp)) {
+        return Resolve(name, symbol);
+      }
     }
+    return FindSymbol(scope.parent(), name);
+  } else {
+    return Resolve(name, scope.FindSymbol(name.source));
   }
-  return Resolve(name, scope.FindSymbol(name.source));
 }
 
 Symbol &ScopeHandler::MakeSymbol(
