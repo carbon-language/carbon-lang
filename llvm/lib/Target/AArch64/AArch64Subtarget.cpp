@@ -206,7 +206,7 @@ const RegisterBankInfo *AArch64Subtarget::getRegBankInfo() const {
 
 /// Find the target operand flags that describe how a global value should be
 /// referenced for the current subtarget.
-unsigned char
+unsigned
 AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
                                           const TargetMachine &TM) const {
   // MachO large model always goes via a GOT, simply to get a single 8-byte
@@ -232,7 +232,7 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
   return AArch64II::MO_NO_FLAG;
 }
 
-unsigned char AArch64Subtarget::classifyGlobalFunctionReference(
+unsigned AArch64Subtarget::classifyGlobalFunctionReference(
     const GlobalValue *GV, const TargetMachine &TM) const {
   // MachO large model always goes via a GOT, because we don't have the
   // relocations available to do anything else..
