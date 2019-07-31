@@ -229,6 +229,13 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
       GV->hasExternalWeakLinkage())
     return AArch64II::MO_GOT;
 
+  // References to tagged globals are marked with MO_NC | MO_TAGGED to indicate
+  // that their nominal addresses are tagged and outside of the code model. In
+  // AArch64ExpandPseudo::expandMI we emit an additional instruction to set the
+  // tag if necessary based on MO_TAGGED.
+  if (AllowTaggedGlobals && !isa<FunctionType>(GV->getValueType()))
+    return AArch64II::MO_NC | AArch64II::MO_TAGGED;
+
   return AArch64II::MO_NO_FLAG;
 }
 

@@ -4739,7 +4739,8 @@ AArch64InstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
       {MO_COFFSTUB, "aarch64-coffstub"},
       {MO_GOT, "aarch64-got"},   {MO_NC, "aarch64-nc"},
       {MO_S, "aarch64-s"},       {MO_TLS, "aarch64-tls"},
-      {MO_DLLIMPORT, "aarch64-dllimport"}};
+      {MO_DLLIMPORT, "aarch64-dllimport"},
+      {MO_PREL, "aarch64-prel"}};
   return makeArrayRef(TargetFlags);
 }
 

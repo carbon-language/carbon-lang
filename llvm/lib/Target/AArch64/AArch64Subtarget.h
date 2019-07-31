@@ -191,6 +191,7 @@ protected:
   bool UseEL1ForTP = false;
   bool UseEL2ForTP = false;
   bool UseEL3ForTP = false;
+  bool AllowTaggedGlobals = false;
   uint8_t MaxInterleaveFactor = 2;
   uint8_t VectorInsertExtractBaseCost = 3;
   uint16_t CacheLineSize = 0;
