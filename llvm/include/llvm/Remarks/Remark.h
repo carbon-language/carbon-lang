@@ -23,8 +23,7 @@
 namespace llvm {
 namespace remarks {
 
-/// The current version of the remark entry.
-constexpr uint64_t CurrentRemarkVersion = 0;
+constexpr uint64_t Version = 0;
 
 /// The debug location used to track a remark back to the source file.
 struct RemarkLocation {
@@ -59,8 +58,7 @@ enum class Type {
   AnalysisFPCommute,
   AnalysisAliasing,
   Failure,
-  First = Unknown,
-  Last = Failure
+  LastTypeValue = Failure
 };
 
 /// A remark type used for both emission and parsing.

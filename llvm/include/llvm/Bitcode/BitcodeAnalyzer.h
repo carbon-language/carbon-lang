@@ -30,7 +30,6 @@ enum CurStreamTypeType {
   LLVMIRBitstream,
   ClangSerializedASTBitstream,
   ClangSerializedDiagnosticsBitstream,
-  LLVMBitstreamRemarks
 };
 
 struct BCDumpOptions {

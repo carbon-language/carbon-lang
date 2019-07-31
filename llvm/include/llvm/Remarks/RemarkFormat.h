@@ -22,7 +22,7 @@ namespace remarks {
 constexpr StringRef Magic("REMARKS", 7);
 
 /// The format used for serializing/deserializing remarks.
-enum class Format { Unknown, YAML, YAMLStrTab, Bitstream };
+enum class Format { Unknown, YAML, YAMLStrTab };
 
 /// Parse and validate a string for the remark format.
 Expected<Format> parseFormat(StringRef FormatStr);
