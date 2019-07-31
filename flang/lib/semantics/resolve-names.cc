@@ -1653,7 +1653,8 @@ Symbol *ScopeHandler::FindSymbol(const parser::Name &name) {
 Symbol *ScopeHandler::FindSymbol(const Scope &scope, const parser::Name &name) {
   if (scope.IsDerivedType()) {
     if (Symbol * symbol{FindInTypeOrParents(scope, name.source)}) {
-      if (!symbol->test(Symbol::Flag::ParentComp)) {
+      if (!symbol->has<ProcBindingDetails>() &&
+          !symbol->test(Symbol::Flag::ParentComp)) {
         return Resolve(name, symbol);
       }
     }
