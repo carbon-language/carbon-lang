@@ -1490,6 +1490,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::ADDE:          return "ARMISD::ADDE";
   case ARMISD::SUBC:          return "ARMISD::SUBC";
   case ARMISD::SUBE:          return "ARMISD::SUBE";
+  case ARMISD::LSLS:          return "ARMISD::LSLS";
 
   case ARMISD::VMOVRRD:       return "ARMISD::VMOVRRD";
   case ARMISD::VMOVDRR:       return "ARMISD::VMOVDRR";
@@ -4110,6 +4111,30 @@ SDValue ARMTargetLowering::getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
       }
     }
   }
+
+  // The specific comparison "(x<<c) > 0x80000000U" can be optimized to a
+  // single "lsls x, c+1".  The shift sets the "C" and "Z" flags the same
+  // way a cmp would.
+  // FIXME: Add support for ARM/Thumb2; this would need isel patterns, and
+  // some tweaks to the heuristics for the previous and->shift transform.
+  // FIXME: Optimize cases where the LHS isn't a shift.
+  if (Subtarget->isThumb1Only() && LHS->getOpcode() == ISD::SHL &&
+      isa<ConstantSDNode>(RHS) &&
+      cast<ConstantSDNode>(RHS)->getZExtValue() == 0x80000000U &&
+      CC == ISD::SETUGT && isa<ConstantSDNode>(LHS.getOperand(1)) &&
+      cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue() < 31) {
+    unsigned ShiftAmt =
+      cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue() + 1;
+    SDValue Shift = DAG.getNode(ARMISD::LSLS, dl,
+                                DAG.getVTList(MVT::i32, MVT::i32),
+                                LHS.getOperand(0),
+                                DAG.getConstant(ShiftAmt, dl, MVT::i32));
+    SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, ARM::CPSR,
+                                     Shift.getValue(1), SDValue());
+    ARMcc = DAG.getConstant(ARMCC::HI, dl, MVT::i32);
+    return Chain.getValue(1);
+  }
+
   ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
 
   // If the RHS is a constant zero then the V (overflow) flag will never be

@@ -31,10 +31,7 @@ define void @test2(i32 %x, void ()* %f)  {
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    .save {r7, lr}
 ; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    movs r2, #1
-; CHECK-NEXT:    lsls r2, r2, #31
-; CHECK-NEXT:    lsls r0, r0, #7
-; CHECK-NEXT:    cmp r0, r2
+; CHECK-NEXT:    lsls r0, r0, #8
 ; CHECK-NEXT:    bhi .LBB1_2
 ; CHECK-NEXT:  @ %bb.1: @ %if.then
 ; CHECK-NEXT:    blx r1
@@ -58,10 +55,7 @@ define void @test3(i32 %x, void ()* %f)  {
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    .save {r7, lr}
 ; CHECK-NEXT:    push {r7, lr}
-; CHECK-NEXT:    movs r2, #1
-; CHECK-NEXT:    lsls r2, r2, #31
-; CHECK-NEXT:    lsls r0, r0, #2
-; CHECK-NEXT:    cmp r0, r2
+; CHECK-NEXT:    lsls r0, r0, #3
 ; CHECK-NEXT:    bhi .LBB2_2
 ; CHECK-NEXT:  @ %bb.1: @ %if.then
 ; CHECK-NEXT:    blx r1
