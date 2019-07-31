@@ -831,8 +831,7 @@ void ComponentIterator<componentKind>::const_iterator::Increment() {
           : ComponentVisitState::Pre};
   while (level >= 0) {
     bool descend{false};
-    const Scope *scope{GetScope(componentPath_[level])};
-    CHECK(scope);
+    const Scope &scope{DEREF(GetScope(componentPath_[level]))};
     auto &levelIterator{GetIterator(componentPath_[level])};
     const auto &levelEndIterator{GetTypeSymbol(componentPath_[level])
                                      .template get<DerivedTypeDetails>()
@@ -844,8 +843,7 @@ void ComponentIterator<componentKind>::const_iterator::Increment() {
 
       switch (state) {
       case ComponentVisitState::Resume:
-        CHECK(component);
-        if (StopAtComponentPre<componentKind>(*component)) {
+        if (StopAtComponentPre<componentKind>(DEREF(component))) {
           // The symbol was not yet considered for
           // traversal.
           descend = PlanComponentTraversal(*component);
@@ -853,7 +851,7 @@ void ComponentIterator<componentKind>::const_iterator::Increment() {
         break;
       case ComponentVisitState::Pre:
         // Search iterator
-        if (auto iter{scope->find(*levelIterator)}; iter != scope->cend()) {
+        if (auto iter{scope.find(*levelIterator)}; iter != scope.cend()) {
           const Symbol *newComponent{iter->second};
           SetComponentSymbol(componentPath_[level], newComponent);
           if (StopAtComponentPre<componentKind>(*newComponent)) {
@@ -866,8 +864,7 @@ void ComponentIterator<componentKind>::const_iterator::Increment() {
         }
         break;
       case ComponentVisitState::Post:
-        CHECK(component);
-        if (StopAtComponentPost<componentKind>(*component)) {
+        if (StopAtComponentPost<componentKind>(DEREF(component))) {
           return;
         }
         break;
@@ -910,11 +907,8 @@ template class ComponentIterator<ComponentKind::Potential>;
 UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
     const DerivedTypeSpec &derived) {
   UltimateComponentIterator ultimates{derived};
-  return std::find_if(
-      ultimates.begin(), ultimates.end(), [](const Symbol *component) {
-        CHECK(component);
-        return component->Corank() > 0;
-      });
+  return std::find_if(ultimates.begin(), ultimates.end(),
+      [](const Symbol *component) { return DEREF(component).Corank() > 0; });
 }
 
 PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
@@ -922,8 +916,8 @@ PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
   PotentialComponentIterator potentials{derived};
   return std::find_if(
       potentials.begin(), potentials.end(), [](const Symbol *component) {
-        CHECK(component);
-        if (const auto *details{component->detailsIf<ObjectEntityDetails>()}) {
+        if (const auto *details{
+                DEREF(component).detailsIf<ObjectEntityDetails>()}) {
           const DeclTypeSpec *type{details->type()};
           return type && IsEventTypeOrLockType(type->AsDerived());
         }
@@ -936,8 +930,7 @@ const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,
   UltimateComponentIterator ultimates{derived};
   if (auto it{std::find_if(ultimates.begin(), ultimates.end(),
           [&predicate](const Symbol *component) -> bool {
-            CHECK(component);
-            return predicate(*component);
+            return predicate(DEREF(component));
           })}) {
     return *it;
   }
