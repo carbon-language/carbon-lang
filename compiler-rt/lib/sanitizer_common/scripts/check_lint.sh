@@ -76,7 +76,7 @@ run_lint ${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/*.cc \
 
 # Interception
 INTERCEPTION=${COMPILER_RT}/lib/interception
-run_lint ${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.cc \
+run_lint ${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.cpp \
                                  ${INTERCEPTION}/*.h &
 
 # ASan
