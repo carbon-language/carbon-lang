@@ -45,7 +45,10 @@ contains
 end
 !Expect: m.mod
 !module m
-! generic::foo=>s1,s2
+! interface foo
+!  procedure::s1
+!  procedure::s2
+! end interface
 ! interface
 !  function s1(x,y)
 !   real(4)::s1
@@ -60,9 +63,22 @@ end
 !   complex(4)::y
 !  end
 ! end interface
-! generic::operator(+)=>s1,s2
-! generic::bar=>s1,s2,s3,s4
-! generic::operator(.bar.)=>s1,s2,s3,s4
+! interface operator(+)
+!  procedure::s1
+!  procedure::s2
+! end interface
+! interface bar
+!  procedure::s1
+!  procedure::s2
+!  procedure::s3
+!  procedure::s4
+! end interface
+! interface operator(.bar.)
+!  procedure::s1
+!  procedure::s2
+!  procedure::s3
+!  procedure::s4
+! end interface
 !contains
 ! function s3(x,y)
 !  logical(4)::s3
@@ -87,11 +103,35 @@ contains
 end
 !Expect: m2.mod
 !module m2
-! generic::foo=>foo
+! interface foo
+!  procedure::foo
+! end interface
 !contains
 ! function foo()
 !  complex(4)::foo
 ! end
+!end
+
+module m2b
+  type :: foo
+    real :: x
+  end type
+  interface foo
+  end interface
+  private :: bar
+  interface bar
+  end interface
+end
+!Expect: m2b.mod
+!module m2b
+! interface foo
+! end interface
+! type::foo
+!  real(4)::x
+! end type
+! interface bar
+! end interface
+! private::bar
 !end
 
 ! Test interface nested inside another interface
@@ -111,7 +151,9 @@ module m3
 end
 !Expect: m3.mod
 !module m3
-! generic::g=>s1
+! interface g
+!  procedure::s1
+! end interface
 ! interface
 !  subroutine s1(f)
 !   interface

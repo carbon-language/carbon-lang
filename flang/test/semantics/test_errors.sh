@@ -54,6 +54,6 @@ else
   echo "$cmd"
   < $diffs \
     sed -n -e 's/^-\([0-9]\)/actual at \1/p' -e 's/^+\([0-9]\)/expect at \1/p' \
-    | sort -n -k 2
+    | sort -n -k 3
   die FAIL
 fi

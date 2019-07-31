@@ -333,22 +333,24 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   }
 }
 
+static std::ostream &PutGenericName(std::ostream &os, const Symbol &symbol) {
+  if (symbol.get<GenericDetails>().kind() == GenericKind::DefinedOp) {
+    return PutLower(os << "operator(", symbol) << ')';
+  } else {
+    return PutLower(os, symbol);
+  }
+}
+
 void ModFileWriter::PutGeneric(const Symbol &symbol) {
   auto &details{symbol.get<GenericDetails>()};
-  decls_ << "generic";
-  PutAttrs(decls_, symbol.attrs()) << "::";
-  if (details.kind() == GenericKind::DefinedOp) {
-    PutLower(decls_ << "operator(", symbol) << ')';
-  } else {
-    PutLower(decls_, symbol);
-  }
-  decls_ << "=>";
-  int n = 0;
+  PutGenericName(decls_ << "interface ", symbol) << '\n';
   for (auto *specific : details.specificProcs()) {
-    if (n++ > 0) decls_ << ',';
-    PutLower(decls_, *specific);
+    PutLower(decls_ << "procedure::", DEREF(specific)) << '\n';
   }
-  decls_ << '\n';
+  decls_ << "end interface\n";
+  if (symbol.attrs().test(Attr::PRIVATE)) {
+    PutGenericName(decls_ << "private::", symbol) << '\n';
+  }
 }
 
 void ModFileWriter::PutUse(const Symbol &symbol) {
