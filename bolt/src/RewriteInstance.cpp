@@ -439,6 +439,12 @@ SequentialDisassembly("sequential-disassembly",
   cl::init(false),
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+WriteBoltInfoSection("write-bolt-info-section",
+  cl::desc("write bolt info section in the output binary"),
+  cl::init(true),
+  cl::cat(BoltOutputCategory));
+
 bool isHotTextMover(const BinaryFunction &Function) {
   for (auto &SectionName : opts::HotTextMoveSections) {
     if (Function.getOriginSectionName() == SectionName)
@@ -1138,7 +1144,8 @@ void RewriteInstance::run() {
       DebugInfoRewriter->updateDebugInfo();
   }
 
-  addBoltInfoSection();
+  if (opts::WriteBoltInfoSection)
+    addBoltInfoSection();
 
   // Copy allocatable part of the input.
   std::error_code EC;
