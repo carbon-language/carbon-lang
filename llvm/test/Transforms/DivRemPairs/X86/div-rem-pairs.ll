@@ -173,11 +173,11 @@ define i32 @srem_of_srem_expanded(i32 %X, i32 %Y, i32 %Z) {
 ; CHECK-NEXT:    [[T0:%.*]] = mul nsw i32 [[Z:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    [[T1:%.*]] = sdiv i32 [[X:%.*]], [[T0]]
 ; CHECK-NEXT:    [[T2:%.*]] = mul nsw i32 [[T0]], [[T1]]
-; CHECK-NEXT:    [[T3:%.*]] = sub nsw i32 [[X]], [[T2]]
-; CHECK-NEXT:    [[T4:%.*]] = sdiv i32 [[T3]], [[Y]]
+; CHECK-NEXT:    [[T3_RECOMPOSED:%.*]] = srem i32 [[X]], [[T0]]
+; CHECK-NEXT:    [[T4:%.*]] = sdiv i32 [[T3_RECOMPOSED]], [[Y]]
 ; CHECK-NEXT:    [[T5:%.*]] = mul nsw i32 [[T4]], [[Y]]
-; CHECK-NEXT:    [[T6:%.*]] = sub nsw i32 [[T3]], [[T5]]
-; CHECK-NEXT:    ret i32 [[T6]]
+; CHECK-NEXT:    [[T6_RECOMPOSED:%.*]] = srem i32 [[T3_RECOMPOSED]], [[Y]]
+; CHECK-NEXT:    ret i32 [[T6_RECOMPOSED]]
 ;
   %t0 = mul nsw i32 %Z, %Y
   %t1 = sdiv i32 %X, %t0
