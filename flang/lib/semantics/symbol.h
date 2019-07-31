@@ -223,12 +223,9 @@ public:
   void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(&symbol); }
   void add_component(const Symbol &);
   void set_sequence(bool x = true) { sequence_ = x; }
-
-  // Returns the complete list of derived type components in the order
-  // in which their declarations appear in the derived type definitions
-  // (parents first).  Parent components appear in the list immediately
-  // after the components that belong to them.
-  SymbolVector OrderComponents(const Scope &) const;
+  const std::list<SourceName> &componentNames() const {
+    return componentNames_;
+  }
 
   // If this derived type extends another, locate the parent component's symbol.
   const Symbol *GetParentComponent(const Scope &) const;

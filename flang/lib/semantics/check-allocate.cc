@@ -119,14 +119,13 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     info.typeSpecLoc = parser::FindSourceLocation(*typeSpec);
     if (const DerivedTypeSpec * derived{info.typeSpec->AsDerived()}) {
       // C937
-      if (auto coarraySearch{ComponentVisitor::HasCoarrayUltimate(*derived)}) {
+      if (auto it{FindCoarrayUltimateComponent(*derived)}) {
         context
             .Say("Type-spec in ALLOCATE must not specify a type with a coarray"
                  " ultimate component"_err_en_US)
-            .Attach(coarraySearch.Result()->name(),
+            .Attach((*it)->name(),
                 "Type '%s' has coarray ultimate component '%s' declared here"_en_US,
-                info.typeSpec->AsFortran(),
-                coarraySearch.BuildResultDesignatorName());
+                info.typeSpec->AsFortran(), it.BuildResultDesignatorName());
       }
     }
   }
@@ -207,31 +206,30 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
         const DerivedTypeSpec &derived{
             info.sourceExprType.value().GetDerivedTypeSpec()};
         // C949
-        if (auto coarraySearch{ComponentVisitor::HasCoarrayUltimate(derived)}) {
+        if (auto it{FindCoarrayUltimateComponent(derived)}) {
           context
               .Say(parserSourceExpr->source,
                   "SOURCE or MOLD expression must not have a type with a coarray ultimate component"_err_en_US)
-              .Attach(coarraySearch.Result()->name(),
+              .Attach((*it)->name(),
                   "Type '%s' has coarray ultimate component '%s' declared here"_en_US,
                   info.sourceExprType.value().AsFortran(),
-                  coarraySearch.BuildResultDesignatorName());
+                  it.BuildResultDesignatorName());
         }
         if (info.gotSrc) {
           // C948
           if (IsEventTypeOrLockType(&derived)) {
             context.Say(parserSourceExpr->source,
                 "SOURCE expression type must not be EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US);
-          } else if (auto componentSearch{
-                         ComponentVisitor::HasEventOrLockPotential(derived)}) {
+          } else if (auto it{FindEventOrLockPotentialComponent(derived)}) {
             context
                 .Say(parserSourceExpr->source,
                     "SOURCE expression type must not have potential subobject "
                     "component"
                     " of type EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US)
-                .Attach(componentSearch.Result()->name(),
+                .Attach((*it)->name(),
                     "Type '%s' has potential ultimate component '%s' declared here"_en_US,
                     info.sourceExprType.value().AsFortran(),
-                    componentSearch.BuildResultDesignatorName());
+                    it.BuildResultDesignatorName());
           }
         }
       }

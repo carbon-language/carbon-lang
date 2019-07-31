@@ -1199,8 +1199,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   // produces the component list X, A, Y.
   // The order is important below because a structure constructor can
   // initialize X or A by name, but not both.
-  const auto &details{typeSymbol.get<semantics::DerivedTypeDetails>()};
-  semantics::SymbolVector components{details.OrderComponents(*spec.scope())};
+  auto components{semantics::OrderedComponentIterator{spec}};
   auto nextAnonymous{components.begin()};
 
   std::set<parser::CharBlock> unavailable;

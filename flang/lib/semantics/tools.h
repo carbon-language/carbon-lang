@@ -207,55 +207,160 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
   }
 }
 
-// Derived type component visitor that applies a predicate on all the direct,
-// ultimate or Potential components. It stops at the first component that
-// verifies the given predicate and keep the component path to the result
-// (included at the end of the path). If no component verifies the predicate
-// the path is empty.
-// The component tree is visited in component declaration order,
-// visiting the subcomponent of a component before visiting the next component.
-// Parent components and procedure pointer components are visited.
-// Note that it is made in such a way that one can easily test and build info
-// message in the following way:
-//    if (auto
-//      visitor{ComponentVisitor{predicate}.VisitDirectComponents(derived)}) {
-//       msg = visitor.BuildResultDesignatorName() + " verifies predicates";
+// Derived type component iterator that provides a C++ LegacyForwadIterator
+// iterator over the Ordered, Direct, Ultimate or Potential components of a
+// DerivedTypeSpec. These iterators can be used with STL algorithms
+// accepting LegacyForwadIterator.
+// The kind of component is a template argument of the iterator factory
+// ComponentIterator.
+//
+//
+// - Ordered components are the components from the component order defined
+// in 7.5.4.7, except that the parent components IS added between the parent
+// component order and the components in order of declaration.
+// This "deviation" is important for structure-constructor analysis.
+// For this kind of iterator, the component tree is recursively visited in the
+// following order:
+//  - first, the Ordered components of the parent type (if relevant)
+//  - then, the parent component (if relevant, different from 7.5.4.7!)
+//  - then, the components in declaration order (without visiting subcomponents)
+//
+// - Ultimate, Direct and Potential components are as defined in 7.5.1.
+// Parent and procedure components are considered against these definitions.
+// For this kind of iterator, the component tree is recursively visited in the
+// following order:
+//  - the parent component first (if relevant)
+//  - then, the components of the parent type (if relevant)
+//      + visiting the component and then, if it is derived type data component,
+//        visiting the subcomponents before visiting the next
+//        component in declaration order.
+//  - then, components in declaration order, similarly to components of parent
+//    type.
+//  Here, the parent component is visited first so that search for a component
+//  verifying a property will never descend into a component that already
+//  verifies the property (this helps giving clearer feedback).
+//
+// ComponentIterator::const_iterator remain valid during the whole lifetime of
+// the DerivedTypeSpec passed by reference to the ComponentIterator factory.
+// Their validity is independent of the ComponentIterator factory lifetime.
+//
+// For safety and simplicity, the iterators are read only and can only be
+// incremented. This could be changed if desired.
+//
+// Note that iterators are made in such a way that one can easily test and build
+// info message in the following way:
+//    ComponentIterator<ComponentIterator> comp{derived}
+//    if (auto it{std::find_if(comp.begin(), comp.end(), predicate)}) {
+//       msg = it.BuildResultDesignatorName() + " verifies predicates";
+//       const Symbol* component{*it};
 //       ....
 //    }
-// It is safe to re-use the same object several times, previous results are
-// cleared before each visit.
-class ComponentVisitor {
+
+ENUM_CLASS(ComponentKind, Ordered, Direct, Ultimate, Potential)
+
+template<ComponentKind componentKind> class ComponentIterator {
 public:
-  ComponentVisitor(std::function<bool(const Symbol &)> &&predicate)
-    : predicate_{std::move(predicate)} {}
+  ComponentIterator(const DerivedTypeSpec &derived) : derived_{derived} {}
+  class const_iterator {
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = const Symbol *;
+    using difference_type = void;
+    using pointer = const value_type *;
+    using reference = const value_type &;
 
-  // Object is updated with the result during visit and returned by ref
-  ComponentVisitor &VisitPotentialComponents(const DerivedTypeSpec &);
-  ComponentVisitor &VisitUltimateComponents(const DerivedTypeSpec &);
-  ComponentVisitor &VisitDirectComponents(const DerivedTypeSpec &);
+    static const_iterator Create(const DerivedTypeSpec &);
 
-  // Predefined common tests
-  // Look for an ultimate component that is a coarray.
-  static ComponentVisitor HasCoarrayUltimate(const DerivedTypeSpec &derived) {
-    return ComponentVisitor{IsCoarray}.VisitUltimateComponents(derived);
-  }
-  // Look for a potential component of EVENT_TYPE or LOCK_TYPE from
-  // ISO_FORTRAN_ENV module.
-  static ComponentVisitor HasEventOrLockPotential(const DerivedTypeSpec &);
+    const_iterator &operator++() {
+      Increment();
+      return *this;
+    }
+    const_iterator operator++(int) {
+      const_iterator tmp(*this);
+      Increment();
+      return tmp;
+    }
+    reference operator*() const {
+      CHECK(!componentPath_.empty());
+      return std::get<0>(componentPath_.back());
+    }
 
-  const Symbol *Result() const {
-    return componentStack_.empty() ? nullptr : componentStack_.back();
-  }
+    bool operator==(const const_iterator &other) const {
+      return componentPath_ == other.componentPath_;
+    }
+    bool operator!=(const const_iterator &other) const {
+      return !(*this == other);
+    }
 
-  bool HasResult() const { return Result() != nullptr; }
-  explicit operator bool() const { return HasResult(); }
-  // build designator name for messages if there is a result
-  std::string BuildResultDesignatorName() const;
+    // bool() operator indicates if the iterator can be dereferenced without
+    // having to check against an end() iterator.
+    explicit operator bool() const {
+      return !componentPath_.empty() &&
+          GetComponentSymbol(componentPath_.back());
+    }
+
+    // Build a designator name of the referenced component for messages.
+    // The designator helps when the component referred to by the iterator
+    // may be "buried" into other components. This gives the full
+    // path inside the iterated derived type: e.g "%a%b%c%ultimate"
+    // when (*it)->names() only gives "ultimate". Parent component are
+    // part of the path for clarity, even though they could be
+    // skipped.
+    std::string BuildResultDesignatorName() const;
+
+  private:
+    using name_iterator = typename std::list<SourceName>::const_iterator;
+    using ComponentPathNode =
+        std::tuple<const Symbol *, const DerivedTypeSpec *, name_iterator>;
+    using ComponentPath = std::vector<ComponentPathNode>;
+
+    static const Symbol *GetComponentSymbol(const ComponentPathNode &node) {
+      return std::get<0>(node);
+    }
+    static void SetComponentSymbol(ComponentPathNode &node, const Symbol *sym) {
+      std::get<0>(node) = sym;
+    }
+    static const Symbol &GetTypeSymbol(const ComponentPathNode &node) {
+      return std::get<1>(node)->typeSymbol();
+    }
+    static const Scope *GetScope(const ComponentPathNode &node) {
+      return std::get<1>(node)->scope();
+    }
+    static name_iterator &GetIterator(ComponentPathNode &node) {
+      return std::get<2>(node);
+    }
+    bool PlanComponentTraversal(const Symbol &component);
+    void Increment();
+    ComponentPath componentPath_;
+  };
+
+  const_iterator begin() { return cbegin(); }
+  const_iterator end() { return cend(); }
+  const_iterator cbegin() { return const_iterator::Create(derived_); }
+  const_iterator cend() { return const_iterator{}; }
 
 private:
-  SymbolVector componentStack_;  // component path to result
-  std::function<bool(const Symbol &)> predicate_;
+  const DerivedTypeSpec &derived_;
 };
 
+extern template class ComponentIterator<ComponentKind::Ordered>;
+extern template class ComponentIterator<ComponentKind::Direct>;
+extern template class ComponentIterator<ComponentKind::Ultimate>;
+extern template class ComponentIterator<ComponentKind::Potential>;
+using OrderedComponentIterator = ComponentIterator<ComponentKind::Ordered>;
+using DirectComponentIterator = ComponentIterator<ComponentKind::Direct>;
+using UltimateComponentIterator = ComponentIterator<ComponentKind::Ultimate>;
+using PotentialComponentIterator = ComponentIterator<ComponentKind::Potential>;
+
+// Common component searches, the iterator returned is referring to the first
+// component, according to the order defined for the related ComponentIterator,
+// that verifies the property from the name.
+// If no components verifies the property, an end iterator (casting to false)
+// is returned. Otherwise, the returned iterator cast to true and can be
+// dereferenced.
+PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
+    const DerivedTypeSpec &);
+UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
+    const DerivedTypeSpec &);
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

@@ -564,25 +564,6 @@ void DerivedTypeDetails::add_component(const Symbol &symbol) {
   componentNames_.push_back(symbol.name());
 }
 
-SymbolVector DerivedTypeDetails::OrderComponents(const Scope &scope) const {
-  SymbolVector result;
-  for (SourceName name : componentNames_) {
-    auto iter{scope.find(name)};
-    if (iter != scope.cend()) {
-      const Symbol &symbol{*iter->second};
-      if (symbol.test(Symbol::Flag::ParentComp)) {
-        CHECK(result.empty());  // parent component must appear first
-        const DerivedTypeSpec &spec{
-            symbol.get<ObjectEntityDetails>().type()->derivedTypeSpec()};
-        result = spec.typeSymbol().get<DerivedTypeDetails>().OrderComponents(
-            *spec.scope());
-      }
-      result.push_back(&symbol);
-    }
-  }
-  return result;
-}
-
 const Symbol *DerivedTypeDetails::GetParentComponent(const Scope &scope) const {
   if (auto extends{GetParentComponentName()}) {
     if (auto iter{scope.find(*extends)}; iter != scope.cend()) {

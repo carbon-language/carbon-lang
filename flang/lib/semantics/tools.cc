@@ -386,21 +386,13 @@ const bool IsEventTypeOrLockType(const DerivedTypeSpec *derivedTypeSpec) {
       IsDerivedTypeFromModule(derivedTypeSpec, "iso_fortran_env", "lock_type");
 }
 
-static const bool IsEventTypeOrLockTypeObjectEntity(const Symbol &symbol) {
-  if (symbol.has<ObjectEntityDetails>()) {
-    const DeclTypeSpec *type{symbol.GetType()};
-    return type && IsEventTypeOrLockType(type->AsDerived());
-  }
-  return false;
-}
-
 bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
   if (const Symbol * root{GetAssociationRoot(symbol)}) {
     if (const auto *details{root->detailsIf<ObjectEntityDetails>()}) {
       if (const DeclTypeSpec * type{details->type()}) {
         if (const DerivedTypeSpec * derived{type->AsDerived()}) {
           return IsEventTypeOrLockType(derived) ||
-              ComponentVisitor::HasEventOrLockPotential(*derived);
+              FindEventOrLockPotentialComponent(*derived);
         }
       }
     }
@@ -738,152 +730,218 @@ static Symbol &InstantiateSymbol(
   return result;
 }
 
-enum class ComponentKind { Direct, Ultimate, Potential };
+// ComponentIterator implementation
 
-template<ComponentKind componentKind> class ComponentVisitorImplementation {
-public:
-  ComponentVisitorImplementation(std::function<bool(const Symbol &)> &predicate)
-    : predicate_{predicate} {}
-  SymbolVector Visit(const DerivedTypeSpec &derived) {
-    TraverseDerivedType(derived);
-    return std::move(componentStack_);
+template<ComponentKind componentKind>
+typename ComponentIterator<componentKind>::const_iterator
+ComponentIterator<componentKind>::const_iterator::Create(
+    const DerivedTypeSpec &derived) {
+  const_iterator it{};
+  const std::list<SourceName> &names{
+      derived.typeSymbol().get<DerivedTypeDetails>().componentNames()};
+  if (names.empty()) {
+    return it;  // end iterator
+  } else {
+    it.componentPath_.emplace_back(
+        ComponentPathNode{nullptr, &derived, names.cbegin()});
+    it.Increment();  // search first relevant component (may be the end)
+    return it;
   }
+}
 
-private:
-  const Symbol *TraverseDerivedType(const DerivedTypeSpec &derived) {
-    const Symbol &derivedTypeSymbol{derived.typeSymbol()};
-    // Avoid infinite loop if the type is already part of the types
-    // being visited. It is possible to have "loops in type" because
-    // C744 does not forbid to use not yet declared type for
-    // ALLOCATABLE or POINTER components.
-    // When looking for potential components, the search could fall
-    // in an infinite loop. Avoid these in other search for safety.
-    for (const Symbol *typeUnderVisit : typeStack_) {
-      if (typeUnderVisit == &derivedTypeSymbol) {
-        return nullptr;
-      }
-    }
-    typeStack_.push_back(&derivedTypeSymbol);
-    const Scope *scope{derivedTypeSymbol.scope()};
-    CHECK(scope);  // derived type symbol must have a scope
-    const Symbol *result{nullptr};
-    // Note: parent subcomponents are visited first, then the parent component
-    // (if any), then other components by order of declaration
-    SymbolVector orederedComponents{
-        derivedTypeSymbol.get<DerivedTypeDetails>().OrderComponents(*scope)};
-    for (const Symbol *component : orederedComponents) {
-      if (component->has<ProcEntityDetails>()) {
-        result = VisitProcedureComponent(*component);
-      } else if (component->has<ObjectEntityDetails>()) {
-        result = VisitDataComponent(*component);
-      }
-      if (result) {
-        return result;
-      }
-    }
-    typeStack_.pop_back();
-    return nullptr;
-  }
-
-  const Symbol *VisitProcedureComponent(const Symbol &component) {
-    // Procedure components are pointers (C756)
-    if constexpr (componentKind == ComponentKind::Ultimate ||
-        componentKind == ComponentKind::Direct) {
-      if (predicate_(component)) {
-        componentStack_.push_back(&component);
-        return &component;
-      }
-    }
-    return nullptr;
-  }
-
-  const Symbol *VisitDataComponent(const Symbol &component) {
-    const DeclTypeSpec *type{component.GetType()};
+template<ComponentKind componentKind>
+bool ComponentIterator<componentKind>::const_iterator::PlanComponentTraversal(
+    const Symbol &component) {
+  // only data component can be traversed
+  if (const auto *details{component.detailsIf<ObjectEntityDetails>()}) {
+    const DeclTypeSpec *type{details->type()};
     if (!type) {
-      return nullptr;  // error recovery ?
-    }
-    bool test{false}, descend{false};
-    if constexpr (componentKind == ComponentKind::Direct) {
-      test = true;
-      descend = !IsAllocatableOrPointer(component);
-    } else if constexpr (componentKind == ComponentKind::Ultimate) {
-      descend = !IsAllocatableOrPointer(component);
-      test = !descend || type->AsIntrinsic();
-    } else {  // Potential
-      test = descend = !IsPointer(component);
-    }
-
-    // Do not descend into parent components, their components were already
-    // included by DerivedTypeDetails::OrderComponents. However, parent
-    // components should still be checked against the predicate if relevant.
-    descend &= !component.test(Symbol::Flag::ParentComp);
-
-    if (test && predicate_(component)) {
-      componentStack_.push_back(&component);
-      return &component;
-    } else if (descend) {
-      if (const auto *derived{type->AsDerived()}) {
-        componentStack_.push_back(&component);
-        if (const Symbol * result{TraverseDerivedType(*derived)}) {
-          return result;
-        }
-        componentStack_.pop_back();
+      return false;  // error recovery
+    } else if (const auto *derived{type->AsDerived()}) {
+      bool traverse{false};
+      if constexpr (componentKind == ComponentKind::Ordered) {
+        // Order Component (only visit parents)
+        traverse = component.test(Symbol::Flag::ParentComp);
+      } else if constexpr (componentKind == ComponentKind::Direct) {
+        traverse = !IsAllocatableOrPointer(component);
+      } else if constexpr (componentKind == ComponentKind::Ultimate) {
+        traverse = !IsAllocatableOrPointer(component);
+      } else if constexpr (componentKind == ComponentKind::Potential) {
+        traverse = !IsPointer(component);
       }
-    }
-    return nullptr;
+      if (traverse) {
+        const Symbol *newTypeSymbol{&derived->typeSymbol()};
+        // Avoid infinite loop if the type is already part of the types
+        // being visited. It is possible to have "loops in type" because
+        // C744 does not forbid to use not yet declared type for
+        // ALLOCATABLE or POINTER components.
+        for (const auto &node : componentPath_) {
+          if (newTypeSymbol == &GetTypeSymbol(node)) {
+            return false;
+          }
+        }
+        componentPath_.emplace_back(ComponentPathNode{nullptr, derived,
+            newTypeSymbol->get<DerivedTypeDetails>()
+                .componentNames()
+                .cbegin()});
+        return true;
+      }
+    }  // intrinsic & unlimited polymorphic not traversable
   }
-
-  std::vector<const Symbol *> componentStack_;  // to build message info
-  std::vector<const Symbol *> typeStack_;  // to avoid infinite loops
-  std::function<bool(const Symbol &)> &predicate_;
-};
-
-ComponentVisitor &ComponentVisitor::VisitPotentialComponents(
-    const DerivedTypeSpec &derived) {
-  componentStack_.clear();
-  componentStack_ =
-      ComponentVisitorImplementation<ComponentKind::Potential>{predicate_}
-          .Visit(derived);
-  return *this;
+  return false;
 }
 
-ComponentVisitor &ComponentVisitor::VisitUltimateComponents(
-    const DerivedTypeSpec &derived) {
-  componentStack_.clear();
-  componentStack_ =
-      ComponentVisitorImplementation<ComponentKind::Ultimate>{predicate_}.Visit(
-          derived);
-  return *this;
+template<ComponentKind componentKind>
+static bool StopAtComponentPre(const Symbol &component) {
+  if constexpr (componentKind == ComponentKind::Ordered) {
+    // Parent components need to be iterated upon after their
+    // sub-components in structure constructor analysis.
+    return !component.test(Symbol::Flag::ParentComp);
+  } else if constexpr (componentKind == ComponentKind::Direct) {
+    return true;
+  } else if constexpr (componentKind == ComponentKind::Ultimate) {
+    return component.has<ProcEntityDetails>() ||
+        IsAllocatableOrPointer(component) ||
+        (component.get<ObjectEntityDetails>().type() &&
+            component.get<ObjectEntityDetails>().type()->AsIntrinsic());
+  } else if constexpr (componentKind == ComponentKind::Potential) {
+    return !IsPointer(component);
+  }
 }
 
-ComponentVisitor &ComponentVisitor::VisitDirectComponents(
-    const DerivedTypeSpec &derived) {
-  componentStack_.clear();
-  componentStack_ =
-      ComponentVisitorImplementation<ComponentKind::Direct>{predicate_}.Visit(
-          derived);
-  return *this;
+template<ComponentKind componentKind>
+static bool StopAtComponentPost(const Symbol &component) {
+  if constexpr (componentKind == ComponentKind::Ordered) {
+    return component.test(Symbol::Flag::ParentComp);
+  } else {
+    return false;
+  }
 }
 
-ComponentVisitor ComponentVisitor::HasEventOrLockPotential(
-    const DerivedTypeSpec &derived) {
-  return ComponentVisitor{IsEventTypeOrLockTypeObjectEntity}
-      .VisitPotentialComponents(derived);
+enum class ComponentVisitState { Resume, Pre, Post };
+
+template<ComponentKind componentKind>
+void ComponentIterator<componentKind>::const_iterator::Increment() {
+  std::int64_t level{static_cast<std::int64_t>(componentPath_.size()) - 1};
+  // Need to know if this is the first incrementation or if the visit is resumed
+  // after a user increment.
+  ComponentVisitState state{
+      level >= 0 && GetComponentSymbol(componentPath_[level])
+          ? ComponentVisitState::Resume
+          : ComponentVisitState::Pre};
+  while (level >= 0) {
+    bool descend{false};
+    const Scope *scope{GetScope(componentPath_[level])};
+    CHECK(scope);
+    auto &levelIterator{GetIterator(componentPath_[level])};
+    const auto &levelEndIterator{GetTypeSymbol(componentPath_[level])
+                                     .template get<DerivedTypeDetails>()
+                                     .componentNames()
+                                     .cend()};
+
+    while (!descend && levelIterator != levelEndIterator) {
+      const Symbol *component{GetComponentSymbol(componentPath_[level])};
+
+      switch (state) {
+      case ComponentVisitState::Resume:
+        CHECK(component);
+        if (StopAtComponentPre<componentKind>(*component)) {
+          // The symbol was not yet considered for
+          // traversal.
+          descend = PlanComponentTraversal(*component);
+        }
+        break;
+      case ComponentVisitState::Pre:
+        // Search iterator
+        if (auto iter{scope->find(*levelIterator)}; iter != scope->cend()) {
+          const Symbol *newComponent{iter->second};
+          SetComponentSymbol(componentPath_[level], newComponent);
+          if (StopAtComponentPre<componentKind>(*newComponent)) {
+            return;
+          }
+          descend = PlanComponentTraversal(*newComponent);
+          if (!descend && StopAtComponentPost<componentKind>(*newComponent)) {
+            return;
+          }
+        }
+        break;
+      case ComponentVisitState::Post:
+        CHECK(component);
+        if (StopAtComponentPost<componentKind>(*component)) {
+          return;
+        }
+        break;
+      }
+
+      if (descend) {
+        level++;
+      } else {
+        SetComponentSymbol(componentPath_[level], nullptr);  // safety
+        levelIterator++;
+      }
+      state = ComponentVisitState::Pre;
+    }
+
+    if (!descend) {  // Finished level traversal
+      componentPath_.pop_back();
+      --level;
+      state = ComponentVisitState::Post;
+    }
+  }
+  // iterator reached end of components
 }
 
-std::string ComponentVisitor::BuildResultDesignatorName() const {
+template<ComponentKind componentKind>
+std::string
+ComponentIterator<componentKind>::const_iterator::BuildResultDesignatorName()
+    const {
   std::string designator{""};
-  for (const Symbol *component : componentStack_) {
-    designator += "%" + component->name().ToString();
+  for (const auto &node : componentPath_) {
+    designator += "%" + GetComponentSymbol(node)->name().ToString();
   }
   return designator;
 }
 
+template class ComponentIterator<ComponentKind::Ordered>;
+template class ComponentIterator<ComponentKind::Direct>;
+template class ComponentIterator<ComponentKind::Ultimate>;
+template class ComponentIterator<ComponentKind::Potential>;
+
+UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
+    const DerivedTypeSpec &derived) {
+  UltimateComponentIterator ultimates{derived};
+  return std::find_if(
+      ultimates.begin(), ultimates.end(), [](const Symbol *component) {
+        CHECK(component);
+        return component->Corank() > 0;
+      });
+}
+
+PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
+    const DerivedTypeSpec &derived) {
+  PotentialComponentIterator potentials{derived};
+  return std::find_if(
+      potentials.begin(), potentials.end(), [](const Symbol *component) {
+        CHECK(component);
+        if (const auto *details{component->detailsIf<ObjectEntityDetails>()}) {
+          const DeclTypeSpec *type{details->type()};
+          return type && IsEventTypeOrLockType(type->AsDerived());
+        }
+        return false;
+      });
+}
+
 const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,
     std::function<bool(const Symbol &)> predicate) {
-  return ComponentVisitor{std::move(predicate)}
-      .VisitUltimateComponents(derived)
-      .Result();
+  UltimateComponentIterator ultimates{derived};
+  if (auto it{std::find_if(ultimates.begin(), ultimates.end(),
+          [&predicate](const Symbol *component) -> bool {
+            CHECK(component);
+            return predicate(*component);
+          })}) {
+    return *it;
+  }
+  return nullptr;
 }
 
 }
