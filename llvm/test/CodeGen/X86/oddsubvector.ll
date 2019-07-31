@@ -349,19 +349,21 @@ define void @PR42833() {
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    movl {{.*}}(%rip), %eax
 ; AVX512-NEXT:    vmovdqu c+{{.*}}(%rip), %ymm0
+; AVX512-NEXT:    vmovdqu64 c+{{.*}}(%rip), %zmm1
 ; AVX512-NEXT:    addl c+{{.*}}(%rip), %eax
-; AVX512-NEXT:    vmovd %eax, %xmm1
-; AVX512-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0],mem[1,2,3,4,5,6,7]
-; AVX512-NEXT:    vpaddd %ymm1, %ymm0, %ymm2
-; AVX512-NEXT:    vpsllvd %ymm1, %ymm0, %ymm0
-; AVX512-NEXT:    vpblendd {{.*#+}} ymm0 = ymm2[0],ymm0[1,2,3,4,5,6,7]
-; AVX512-NEXT:    vmovdqa c+{{.*}}(%rip), %xmm1
+; AVX512-NEXT:    vmovd %eax, %xmm2
+; AVX512-NEXT:    vpblendd {{.*#+}} ymm2 = ymm2[0],mem[1,2,3,4,5,6,7]
+; AVX512-NEXT:    vpaddd %ymm2, %ymm0, %ymm3
+; AVX512-NEXT:    vpsllvd %ymm2, %ymm0, %ymm0
+; AVX512-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0],ymm0[1,2,3,4,5,6,7]
+; AVX512-NEXT:    vmovdqa c+{{.*}}(%rip), %xmm2
 ; AVX512-NEXT:    vmovdqu %ymm0, c+{{.*}}(%rip)
 ; AVX512-NEXT:    vmovdqu c+{{.*}}(%rip), %ymm0
-; AVX512-NEXT:    vmovdqu64 d+{{.*}}(%rip), %zmm2
-; AVX512-NEXT:    vpinsrd $0, %eax, %xmm1, %xmm1
+; AVX512-NEXT:    vmovdqu64 d+{{.*}}(%rip), %zmm3
+; AVX512-NEXT:    vpinsrd $0, %eax, %xmm2, %xmm2
+; AVX512-NEXT:    vinserti32x4 $0, %xmm2, %zmm1, %zmm1
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm1
-; AVX512-NEXT:    vpsubd %zmm1, %zmm2, %zmm1
+; AVX512-NEXT:    vpsubd %zmm1, %zmm3, %zmm1
 ; AVX512-NEXT:    vmovdqu64 %zmm1, d+{{.*}}(%rip)
 ; AVX512-NEXT:    vpaddd %ymm0, %ymm0, %ymm0
 ; AVX512-NEXT:    vmovdqu %ymm0, c+{{.*}}(%rip)
