@@ -16,7 +16,10 @@ static_library("builtins") {
   } else {
     output_name = "clang_rt.builtins$crt_current_target_suffix"
   }
+
   complete_static_lib = true
+  configs -= [ "//llvm/utils/gn/build:thin_archive" ]
+
   cflags = [
     "-fPIC",
     "-fno-builtin",
@@ -28,7 +31,6 @@ static_library("builtins") {
     cflags += [ "-fomit-frame-pointer" ]
   }
   cflags_c = [ "-std=c11" ]
-  configs -= [ "//llvm/utils/gn/build:thin_archive" ]
 
   sources = [
     "absvdi2.c",
