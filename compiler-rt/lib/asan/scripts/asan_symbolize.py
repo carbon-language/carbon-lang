@@ -463,6 +463,7 @@ class SymbolizationLoop(object):
         '^( *#([0-9]+) *)(0x[0-9a-f]+) *(?:in *.+)? *\((.*)\+(0x[0-9a-f]+)\)')
     match = re.match(stack_trace_line_format, line)
     if not match:
+      logging.debug('Line "{}" does not match regex'.format(line))
       return [self.current_line]
     logging.debug(line)
     _, frameno_str, addr, binary, offset = match.groups()
