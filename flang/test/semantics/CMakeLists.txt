@@ -136,6 +136,7 @@ set(ERROR_TESTS
   dosemantics02.f90
   dosemantics03.f90
   dosemantics04.f90
+  dosemantics05.f90
   expr-errors01.f90
   null01.f90
   omp-clause-validity01.f90
