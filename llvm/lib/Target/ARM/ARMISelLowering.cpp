@@ -4073,6 +4073,43 @@ SDValue ARMTargetLowering::getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     std::swap(LHS, RHS);
   }
 
+  // Thumb1 has very limited immediate modes, so turning an "and" into a
+  // shift can save multiple instructions.
+  //
+  // If we have (x & C1), and C1 is an appropriate mask, we can transform it
+  // into "((x << n) >> n)".  But that isn't necessarily profitable on its
+  // own. If it's the operand to an unsigned comparison with an immediate,
+  // we can eliminate one of the shifts: we transform
+  // "((x << n) >> n) == C2" to "(x << n) == (C2 << n)".
+  //
+  // We avoid transforming cases which aren't profitable due to encoding
+  // details:
+  //
+  // 1. C2 fits into the immediate field of a cmp, and the transformed version
+  // would not; in that case, we're essentially trading one immediate load for
+  // another.
+  // 2. C1 is 255 or 65535, so we can use uxtb or uxth.
+  // 3. C2 is zero; we have other code for this special case.
+  //
+  // FIXME: Figure out profitability for Thumb2; we usually can't save an
+  // instruction, since the AND is always one instruction anyway, but we could
+  // use narrow instructions in some cases.
+  if (Subtarget->isThumb1Only() && LHS->getOpcode() == ISD::AND &&
+      LHS->hasOneUse() && isa<ConstantSDNode>(LHS.getOperand(1)) &&
+      LHS.getValueType() == MVT::i32 && isa<ConstantSDNode>(RHS) &&
+      !isSignedIntSetCC(CC)) {
+    unsigned Mask = cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue();
+    auto *RHSC = cast<ConstantSDNode>(RHS.getNode());
+    uint64_t RHSV = RHSC->getZExtValue();
+    if (isMask_32(Mask) && (RHSV & ~Mask) == 0 && Mask != 255 && Mask != 65535) {
+      unsigned ShiftBits = countLeadingZeros(Mask);
+      if (RHSV && (RHSV > 255 || (RHSV << ShiftBits) <= 255)) {
+        SDValue ShiftAmt = DAG.getConstant(ShiftBits, dl, MVT::i32);
+        LHS = DAG.getNode(ISD::SHL, dl, MVT::i32, LHS.getOperand(0), ShiftAmt);
+        RHS = DAG.getConstant(RHSV << ShiftBits, dl, MVT::i32);
+      }
+    }
+  }
   ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
 
   // If the RHS is a constant zero then the V (overflow) flag will never be
