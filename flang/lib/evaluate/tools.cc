@@ -622,7 +622,8 @@ std::optional<Expr<SomeType>> ConvertToType(
   }
 }
 
-bool IsAssumedRank(const semantics::Symbol &symbol) {
+bool IsAssumedRank(const semantics::Symbol &symbol0) {
+  const semantics::Symbol &symbol{ResolveAssociations(symbol0)};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     return details->IsAssumedRank();
   } else {
@@ -657,6 +658,15 @@ void GetLastTargetVisitor::Pre(const Component &x) {
   } else if (symbol.attrs().test(semantics::Attr::ALLOCATABLE)) {
     Return(nullptr);
   }
+}
+
+const semantics::Symbol &ResolveAssociations(const semantics::Symbol &symbol) {
+  if (const auto *details{symbol.detailsIf<semantics::AssocEntityDetails>()}) {
+    if (const Symbol * nested{UnwrapWholeSymbolDataRef(details->expr())}) {
+      return ResolveAssociations(*nested);
+    }
+  }
+  return symbol;
 }
 
 }

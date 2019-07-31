@@ -1497,8 +1497,9 @@ static bool ApplySpecificChecks(
     if (const auto &arg{call.arguments[0]}) {
       if (const auto *expr{arg->UnwrapExpr()}) {
         if (const Symbol * symbol{GetLastSymbol(*expr)}) {
-          ok = symbol->has<semantics::ObjectEntityDetails>() &&
-              symbol->attrs().test(semantics::Attr::ALLOCATABLE);
+          const Symbol &resolved{ResolveAssociations(*symbol)};
+          ok = resolved.has<semantics::ObjectEntityDetails>() &&
+              resolved.attrs().test(semantics::Attr::ALLOCATABLE);
         }
       }
     }

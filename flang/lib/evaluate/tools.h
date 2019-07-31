@@ -744,5 +744,8 @@ template<typename A> const semantics::Symbol *GetLastTarget(const A &x) {
   }
 }
 
+// Resolve any whole ASSOCIATE(B=>A) associations
+const semantics::Symbol &ResolveAssociations(const semantics::Symbol &);
+
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

@@ -78,7 +78,8 @@ static bool IsDescriptor(const ProcEntityDetails &details) {
   return details.HasExplicitInterface();
 }
 
-bool IsDescriptor(const Symbol &symbol) {
+bool IsDescriptor(const Symbol &symbol0) {
+  const Symbol &symbol{evaluate::ResolveAssociations(symbol0)};
   if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
     return IsAllocatableOrPointer(symbol) || IsDescriptor(*objectDetails);
   } else if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {

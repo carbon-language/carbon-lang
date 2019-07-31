@@ -1125,7 +1125,8 @@ Expr<Type<TypeCategory::Character, KIND>> FoldIntrinsicFunction(
 // Get the value of a PARAMETER
 template<typename T>
 std::optional<Expr<T>> GetParameterValue(
-    FoldingContext &context, const Symbol &symbol) {
+    FoldingContext &context, const Symbol &symbol0) {
+  const Symbol &symbol{ResolveAssociations(symbol0)};
   if (symbol.attrs().test(semantics::Attr::PARAMETER)) {
     if (const auto *object{
             symbol.detailsIf<semantics::ObjectEntityDetails>()}) {

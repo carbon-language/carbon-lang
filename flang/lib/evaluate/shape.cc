@@ -24,7 +24,8 @@
 
 namespace Fortran::evaluate {
 
-bool IsImpliedShape(const Symbol &symbol) {
+bool IsImpliedShape(const Symbol &symbol0) {
+  const Symbol &symbol{ResolveAssociations(symbol0)};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (symbol.attrs().test(semantics::Attr::PARAMETER) &&
         details->init().has_value()) {
@@ -41,7 +42,8 @@ bool IsImpliedShape(const Symbol &symbol) {
   return false;
 }
 
-bool IsExplicitShape(const Symbol &symbol) {
+bool IsExplicitShape(const Symbol &symbol0) {
+  const Symbol &symbol{ResolveAssociations(symbol0)};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     for (const semantics::ShapeSpec &ss : details->shape()) {
       if (!ss.isExplicit()) {
@@ -190,7 +192,7 @@ bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
 
 MaybeExtentExpr GetLowerBound(
     FoldingContext &context, const NamedEntity &base, int dimension) {
-  const Symbol &symbol{base.GetLastSymbol()};
+  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
     for (const auto &shapeSpec : details->shape()) {
@@ -200,6 +202,8 @@ MaybeExtentExpr GetLowerBound(
         } else if (semantics::IsDescriptor(symbol)) {
           return ExtentExpr{DescriptorInquiry{
               base, DescriptorInquiry::Field::LowerBound, dimension}};
+        } else {
+          break;
         }
       }
     }
@@ -208,7 +212,7 @@ MaybeExtentExpr GetLowerBound(
 }
 
 Shape GetLowerBounds(FoldingContext &context, const NamedEntity &base) {
-  const Symbol &symbol{base.GetLastSymbol()};
+  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
   Shape result;
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int dim{0};
@@ -218,6 +222,8 @@ Shape GetLowerBounds(FoldingContext &context, const NamedEntity &base) {
       } else if (semantics::IsDescriptor(symbol)) {
         result.emplace_back(ExtentExpr{DescriptorInquiry{
             base, DescriptorInquiry::Field::LowerBound, dim}});
+      } else {
+        result.emplace_back(std::nullopt);
       }
       ++dim;
     }
@@ -228,7 +234,7 @@ Shape GetLowerBounds(FoldingContext &context, const NamedEntity &base) {
 MaybeExtentExpr GetExtent(
     FoldingContext &context, const NamedEntity &base, int dimension) {
   CHECK(dimension >= 0);
-  const Symbol &symbol{base.GetLastSymbol()};
+  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (IsImpliedShape(symbol)) {
       Shape shape{GetShape(context, symbol).value()};
@@ -300,7 +306,7 @@ MaybeExtentExpr GetUpperBound(FoldingContext &context, MaybeExtentExpr &&lower,
 
 MaybeExtentExpr GetUpperBound(
     FoldingContext &context, const NamedEntity &base, int dimension) {
-  const Symbol &symbol{base.GetLastSymbol()};
+  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
     for (const auto &shapeSpec : details->shape()) {
@@ -341,7 +347,7 @@ void GetShapeVisitor::Handle(const Component &component) {
 }
 
 void GetShapeVisitor::Handle(const NamedEntity &base) {
-  const Symbol &symbol{base.GetLastSymbol()};
+  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (IsImpliedShape(symbol)) {
       Nested(details->init());
