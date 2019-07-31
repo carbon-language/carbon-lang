@@ -286,10 +286,10 @@ define i128 @dont_hoist_urem(i128 %a, i128 %b) {
 ; CHECK-NEXT:    br i1 [[CMP]], label [[IF:%.*]], label [[END:%.*]]
 ; CHECK:       if:
 ; CHECK-NEXT:    [[TMP0:%.*]] = mul i128 [[DIV]], [[B]]
-; CHECK-NEXT:    [[TMP1:%.*]] = sub i128 [[A]], [[TMP0]]
+; CHECK-NEXT:    [[REM_DECOMPOSED:%.*]] = sub i128 [[A]], [[TMP0]]
 ; CHECK-NEXT:    br label [[END]]
 ; CHECK:       end:
-; CHECK-NEXT:    [[RET:%.*]] = phi i128 [ [[TMP1]], [[IF]] ], [ 3, [[ENTRY:%.*]] ]
+; CHECK-NEXT:    [[RET:%.*]] = phi i128 [ [[REM_DECOMPOSED]], [[IF]] ], [ 3, [[ENTRY:%.*]] ]
 ; CHECK-NEXT:    ret i128 [[RET]]
 ;
 entry:
