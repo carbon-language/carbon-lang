@@ -1,5 +1,4 @@
 #include <thread>
-#include <iostream>
 
 const size_t kAllocSize = 16;
 const size_t kInitialNumAllocs = 1 << 10;
@@ -8,8 +7,6 @@ const size_t kNumIterations = 1 << 7;
 const size_t kNumThreads = 16;
 
 void Thread() {
-  // int sp;
-  // std::cerr << "Thread starting, sp = " << &sp << std::endl;
   char *InitialAllocations[kInitialNumAllocs];
   char *PeriodicaAllocations[kPeriodicNumAllocs];
   for (auto &p : InitialAllocations) p = new char[kAllocSize];
@@ -26,8 +23,6 @@ void Thread() {
 }
 
 int main() {
-//  Thread();
-//  return 0;
   std::thread *Threads[kNumThreads];
   for (auto &T : Threads) T = new std::thread(&Thread);
   for (auto T : Threads) {

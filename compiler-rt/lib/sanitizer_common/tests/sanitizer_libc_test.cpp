@@ -8,7 +8,8 @@
 // Tests for sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
 #include <algorithm>
-#include <fstream>
+#include <vector>
+#include <stdio.h>
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_file.h"
@@ -173,9 +174,11 @@ class SanitizerCommonFileTest : public ::testing::TestWithParam<uptr> {
     temp_file_name(file_name_, sizeof(file_name_),
                    "sanitizer_common.ReadFile.tmp.");
 
-    std::ofstream f(file_name_, std::ios::out | std::ios::binary);
-    if (!data_.empty())
-      f.write(data_.data(), data_.size());
+    if (FILE *f = fopen(file_name_, "wb")) {
+      if (!data_.empty())
+        fwrite(data_.data(), data_.size(), 1, f);
+      fclose(f);
+    }
   }
 
   void TearDown() override { Unlink(file_name_); }
