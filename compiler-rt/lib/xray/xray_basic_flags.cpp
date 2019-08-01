@@ -1,4 +1,4 @@
-//===-- xray_fdr_flags.cc ---------------------------------------*- C++ -*-===//
+//===-- xray_basic_flags.cpp ------------------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,10 +8,10 @@
 //
 // This file is a part of XRay, a dynamic runtime instrumentation system.
 //
-// XRay FDR flag parsing logic.
+// XRay Basic flag parsing logic.
 //===----------------------------------------------------------------------===//
 
-#include "xray_fdr_flags.h"
+#include "xray_basic_flags.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -21,24 +21,26 @@ using namespace __sanitizer;
 
 namespace __xray {
 
-FDRFlags xray_fdr_flags_dont_use_directly; // use via fdrFlags().
+/// Use via basicFlags().
+BasicFlags xray_basic_flags_dont_use_directly;
 
-void FDRFlags::setDefaults() XRAY_NEVER_INSTRUMENT {
+void BasicFlags::setDefaults() XRAY_NEVER_INSTRUMENT {
 #define XRAY_FLAG(Type, Name, DefaultValue, Description) Name = DefaultValue;
-#include "xray_fdr_flags.inc"
+#include "xray_basic_flags.inc"
 #undef XRAY_FLAG
 }
 
-void registerXRayFDRFlags(FlagParser *P, FDRFlags *F) XRAY_NEVER_INSTRUMENT {
+void registerXRayBasicFlags(FlagParser *P,
+                            BasicFlags *F) XRAY_NEVER_INSTRUMENT {
 #define XRAY_FLAG(Type, Name, DefaultValue, Description)                       \
   RegisterFlag(P, #Name, Description, &F->Name);
-#include "xray_fdr_flags.inc"
+#include "xray_basic_flags.inc"
 #undef XRAY_FLAG
 }
 
-const char *useCompilerDefinedFDRFlags() XRAY_NEVER_INSTRUMENT {
-#ifdef XRAY_FDR_OPTIONS
-  return SANITIZER_STRINGIFY(XRAY_FDR_OPTIONS);
+const char *useCompilerDefinedBasicFlags() XRAY_NEVER_INSTRUMENT {
+#ifdef XRAY_BASIC_OPTIONS
+  return SANITIZER_STRINGIFY(XRAY_BASIC_OPTIONS);
 #else
   return "";
 #endif
