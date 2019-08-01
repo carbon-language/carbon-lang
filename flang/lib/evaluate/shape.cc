@@ -190,7 +190,7 @@ bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
   return Visitor<MyVisitor>{0}.Traverse(expr);
 }
 
-MaybeExtentExpr GetLowerBound(
+ExtentExpr GetLowerBound(
     FoldingContext &context, const NamedEntity &base, int dimension) {
   const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
@@ -208,7 +208,9 @@ MaybeExtentExpr GetLowerBound(
       }
     }
   }
-  return std::nullopt;
+  // When we don't know that we don't know the lower bound at compilation
+  // time, then we do know it, and it's one.  (See LBOUND, 16.9.109).
+  return ExtentExpr{1};
 }
 
 Shape GetLowerBounds(FoldingContext &context, const NamedEntity &base) {
@@ -300,11 +302,10 @@ MaybeExtentExpr GetExtent(FoldingContext &context, const Subscript &subscript,
       subscript.u);
 }
 
-MaybeExtentExpr GetUpperBound(FoldingContext &context, MaybeExtentExpr &&lower,
-    MaybeExtentExpr &&extent) {
-  if (lower.has_value() && extent.has_value()) {
-    return Fold(
-        context, std::move(*extent) - std::move(*lower) + ExtentExpr{1});
+MaybeExtentExpr GetUpperBound(
+    FoldingContext &context, ExtentExpr &&lower, MaybeExtentExpr &&extent) {
+  if (extent.has_value()) {
+    return Fold(context, std::move(*extent) - std::move(lower) + ExtentExpr{1});
   } else {
     return std::nullopt;
   }

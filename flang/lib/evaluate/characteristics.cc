@@ -438,7 +438,7 @@ std::optional<Procedure> Procedure::Characterize(
           [&](const semantics::HostAssocDetails &assoc) {
             return Characterize(assoc.symbol(), intrinsics);
           },
-          [](const auto &) -> std::optional<Procedure> { return std::nullopt; },
+          [](const auto &) { return std::optional<Procedure>{}; },
       },
       symbol.details());
 }

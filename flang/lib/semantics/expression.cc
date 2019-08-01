@@ -754,7 +754,7 @@ std::optional<Subscript> ExpressionAnalyzer::AnalyzeSectionSubscript(
           },
           [&](const auto &s) -> std::optional<Subscript> {
             if (auto subscriptExpr{AsSubscript(Analyze(s))}) {
-              return {Subscript{std::move(*subscriptExpr)}};
+              return Subscript{std::move(*subscriptExpr)};
             } else {
               return std::nullopt;
             }

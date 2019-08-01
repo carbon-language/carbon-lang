@@ -40,7 +40,7 @@ std::optional<Variable<A>> AsVariable(const Expr<A> &expr) {
   return std::visit(
       [](const auto &x) -> std::optional<Variable<A>> {
         if constexpr (common::HasMember<std::decay_t<decltype(x)>, Variant>) {
-          return std::make_optional<Variable<A>>(x);
+          return Variable<A>{x};
         }
         return std::nullopt;
       },
@@ -217,8 +217,9 @@ std::optional<DataRef> ExtractDataRef(const Designator<T> &d) {
       [](const auto &x) -> std::optional<DataRef> {
         if constexpr (common::HasMember<decltype(x), decltype(DataRef::u)>) {
           return DataRef{x};
+        } else {
+          return std::nullopt;
         }
-        return std::nullopt;
       },
       d.u);
 }
@@ -245,7 +246,7 @@ template<typename A> std::optional<NamedEntity> ExtractNamedEntity(const A &x) {
             [](Component &&component) -> std::optional<NamedEntity> {
               return NamedEntity{std::move(component)};
             },
-            [](auto &&) -> std::optional<NamedEntity> { return std::nullopt; },
+            [](auto &&) { return std::optional<NamedEntity>{}; },
         },
         std::move(dataRef->u));
   } else {

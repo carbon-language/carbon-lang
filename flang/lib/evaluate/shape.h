@@ -61,14 +61,13 @@ inline int GetRank(const Shape &s) { return static_cast<int>(s.size()); }
 
 // The dimension argument to these inquiries is zero-based,
 // unlike the DIM= arguments to many intrinsics.
-MaybeExtentExpr GetLowerBound(
-    FoldingContext &, const NamedEntity &, int dimension);
+ExtentExpr GetLowerBound(FoldingContext &, const NamedEntity &, int dimension);
 Shape GetLowerBounds(FoldingContext &, const NamedEntity &);
 MaybeExtentExpr GetExtent(FoldingContext &, const NamedEntity &, int dimension);
 MaybeExtentExpr GetExtent(
     FoldingContext &, const Subscript &, const NamedEntity &, int dimension);
 MaybeExtentExpr GetUpperBound(
-    FoldingContext &, MaybeExtentExpr &&lower, MaybeExtentExpr &&extent);
+    FoldingContext &, ExtentExpr &&lower, MaybeExtentExpr &&extent);
 MaybeExtentExpr GetUpperBound(
     FoldingContext &, const NamedEntity &, int dimension);
 Shape GetUpperBounds(FoldingContext &, const NamedEntity &);

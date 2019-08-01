@@ -430,10 +430,9 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
         if (symbol.Rank() == rank) {
           lowerBoundsAreOne = false;
           if (dim.has_value()) {
-            if (auto lb{
-                    GetLowerBound(context, *named, static_cast<int>(*dim))}) {
-              return Fold(context, ConvertToType<T>(std::move(*lb)));
-            }
+            return Fold(context,
+                ConvertToType<T>(
+                    GetLowerBound(context, *named, static_cast<int>(*dim))));
           } else if (auto lbounds{
                          AsConstantShape(GetLowerBounds(context, *named))}) {
             return Fold(context,
@@ -1448,8 +1447,8 @@ std::optional<Constant<T>> GetConstantComponent(FoldingContext &context,
               [&](Component &base) {
                 return GetConstantComponent<SomeDerived>(context, base);
               },
-              [&](CoarrayRef &) -> std::optional<Constant<SomeDerived>> {
-                return std::nullopt;
+              [&](CoarrayRef &) {
+                return std::optional<Constant<SomeDerived>>{};
               },
           },
           component.base().u)}) {
