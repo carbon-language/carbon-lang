@@ -292,9 +292,9 @@ diffHighlightings(ArrayRef<HighlightingToken> New,
   std::vector<LineHighlightings> DiffedLines;
   // ArrayRefs to the current line in the highlightings.
   ArrayRef<HighlightingToken> NewLine(New.begin(),
-                                      /*length*/0UL);
+                                      /*length*/ static_cast<size_t>(0));
   ArrayRef<HighlightingToken> OldLine(Old.begin(),
-                                      /*length*/ 0UL);
+                                      /*length*/ static_cast<size_t>(0));
   auto NewEnd = New.end();
   auto OldEnd = Old.end();
   auto NextLineNumber = [&]() {
