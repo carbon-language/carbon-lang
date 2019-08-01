@@ -91,10 +91,12 @@ define i64 @ashr_add_shl_i32(i64 %r) {
 define i64 @ashr_add_shl_i8(i64 %r) {
 ; CHECK-LABEL: ashr_add_shl_i8:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    sxtb x0, w0
+; CHECK-NEXT:    mov x8, #72057594037927936
+; CHECK-NEXT:    add x8, x8, x0, lsl #56
+; CHECK-NEXT:    asr x0, x8, #56
 ; CHECK-NEXT:    ret
   %conv = shl i64 %r, 56
-  %sext = add i64 %conv, 4294967296
+  %sext = add i64 %conv, 72057594037927936
   %conv1 = ashr i64 %sext, 56
   ret i64 %conv1
 }

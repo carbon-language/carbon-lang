@@ -182,17 +182,23 @@ define i64 @ashr_add_shl_i32(i64 %r) nounwind {
 define i64 @ashr_add_shl_i8(i64 %r) nounwind {
 ; X32-LABEL: ashr_add_shl_i8:
 ; X32:       # %bb.0:
-; X32-NEXT:    movsbl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movl %eax, %edx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    shll $24, %edx
+; X32-NEXT:    addl $16777216, %edx # imm = 0x1000000
+; X32-NEXT:    movl %edx, %eax
+; X32-NEXT:    sarl $24, %eax
 ; X32-NEXT:    sarl $31, %edx
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: ashr_add_shl_i8:
 ; X64:       # %bb.0:
-; X64-NEXT:    movsbq %dil, %rax
+; X64-NEXT:    shlq $56, %rdi
+; X64-NEXT:    movabsq $72057594037927936, %rax # imm = 0x100000000000000
+; X64-NEXT:    addq %rdi, %rax
+; X64-NEXT:    sarq $56, %rax
 ; X64-NEXT:    retq
   %conv = shl i64 %r, 56
-  %sext = add i64 %conv, 4294967296
+  %sext = add i64 %conv, 72057594037927936
   %conv1 = ashr i64 %sext, 56
   ret i64 %conv1
 }
