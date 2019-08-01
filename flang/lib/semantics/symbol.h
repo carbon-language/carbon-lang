@@ -393,14 +393,12 @@ class GenericDetails {
 public:
   GenericDetails() {}
   GenericDetails(const SymbolVector &specificProcs);
-  GenericDetails(Symbol *specific) : specific_{specific} {}
 
   GenericKind kind() const { return kind_; }
   void set_kind(GenericKind kind) { kind_ = kind; }
 
   const SymbolVector &specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
-  void AddSpecificProcsFrom(const Symbol &generic);
 
   // specific and derivedType indicate a specific procedure or derived type
   // with the same name as this generic. Only one of them may be set.
@@ -410,6 +408,9 @@ public:
   Symbol *derivedType() { return derivedType_; }
   const Symbol *derivedType() const { return derivedType_; }
   void set_derivedType(Symbol &derivedType);
+
+  // Copy in specificProcs, specific, and derivedType from another generic
+  void CopyFrom(const GenericDetails &);
 
   // Check that specific is one of the specificProcs. If not, return the
   // specific as a raw pointer.

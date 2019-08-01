@@ -1984,7 +1984,7 @@ void ModuleVisitor::AddUse(
       // new generic in this scope
       auto genericDetails{ultimate.get<GenericDetails>()};
       genericDetails.set_useDetails(*useDetails);
-      genericDetails.AddSpecificProcsFrom(useSymbol);
+      genericDetails.CopyFrom(useSymbol.get<GenericDetails>());
       EraseSymbol(localSymbol);
       MakeSymbol(
           localSymbol.name(), ultimate.attrs(), std::move(genericDetails));
@@ -1995,8 +1995,8 @@ void ModuleVisitor::AddUse(
     auto *genericDetails{localSymbol.detailsIf<GenericDetails>()};
     if (genericDetails && genericDetails->useDetails().has_value()) {
       // localSymbol came from merging two use-associated generics
-      if (useSymbol.has<GenericDetails>()) {
-        genericDetails->AddSpecificProcsFrom(useSymbol);
+      if (auto *useDetails{useSymbol.detailsIf<GenericDetails>()}) {
+        genericDetails->CopyFrom(*useDetails);
       } else {
         ConvertToUseError(localSymbol, location, *useModuleScope_);
       }
@@ -5051,8 +5051,8 @@ void ResolveNamesVisitor::CreateGeneric(const parser::GenericSpec &x) {
       return;  // already have generic, add to it
     }
     Symbol &ultimate{existing->GetUltimate()};
-    if (ultimate.has<GenericDetails>()) {
-      genericDetails.AddSpecificProcsFrom(ultimate);
+    if (auto *ultimateDetails{ultimate.detailsIf<GenericDetails>()}) {
+      genericDetails.CopyFrom(*ultimateDetails);
     } else if (ultimate.has<SubprogramDetails>() ||
         ultimate.has<SubprogramNameDetails>()) {
       genericDetails.set_specific(ultimate);

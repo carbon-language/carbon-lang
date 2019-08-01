@@ -76,3 +76,25 @@ contains
   function foo(x)
   end
 end
+
+! Use associating a name that is a generic and a derived type
+module m5a
+  interface g
+  end interface
+  type g
+  end type
+end module
+module m5b
+  use m5a
+  interface g
+    procedure f
+  end interface
+  type(g) :: x
+contains
+  function f(i)
+  end function
+end module
+subroutine s5
+  use m5b
+  type(g) :: y
+end

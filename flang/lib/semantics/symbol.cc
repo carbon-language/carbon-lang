@@ -182,8 +182,16 @@ Symbol *GenericDetails::CheckSpecific() {
   }
 }
 
-void GenericDetails::AddSpecificProcsFrom(const Symbol &generic) {
-  const auto &procs{generic.get<GenericDetails>().specificProcs()};
+void GenericDetails::CopyFrom(const GenericDetails &from) {
+  if (from.specific_) {
+    CHECK(!specific_);
+    specific_ = from.specific_;
+  }
+  if (from.derivedType_) {
+    CHECK(!derivedType_);
+    derivedType_ = from.derivedType_;
+  }
+  auto &procs{from.specificProcs_};
   specificProcs_.insert(specificProcs_.end(), procs.begin(), procs.end());
 }
 
