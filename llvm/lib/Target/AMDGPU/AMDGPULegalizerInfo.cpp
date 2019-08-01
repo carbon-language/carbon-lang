@@ -593,6 +593,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     Atomics.legalFor({{S32, FlatPtr}, {S64, FlatPtr}});
   }
 
+  getActionDefinitionsBuilder(G_ATOMICRMW_FADD)
+    .legalFor({{S32, LocalPtr}});
+
   // TODO: Pointer types, any 32-bit or 64-bit vector
   getActionDefinitionsBuilder(G_SELECT)
     .legalForCartesianProduct({S32, S64, S16, V2S32, V2S16, V4S16,

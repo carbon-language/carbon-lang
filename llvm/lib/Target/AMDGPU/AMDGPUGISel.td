@@ -87,6 +87,7 @@ def : GINodeEquiv<G_ATOMICRMW_MIN, atomic_load_min_glue>;
 def : GINodeEquiv<G_ATOMICRMW_MAX, atomic_load_max_glue>;
 def : GINodeEquiv<G_ATOMICRMW_UMIN, atomic_load_umin_glue>;
 def : GINodeEquiv<G_ATOMICRMW_UMAX, atomic_load_umax_glue>;
+def : GINodeEquiv<G_ATOMICRMW_FADD, atomic_load_fadd_glue>;
 
 
 class GISelSop2Pat <

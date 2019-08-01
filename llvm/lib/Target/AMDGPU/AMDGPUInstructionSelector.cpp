@@ -1395,6 +1395,7 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   case TargetOpcode::G_ATOMICRMW_MAX:
   case TargetOpcode::G_ATOMICRMW_UMIN:
   case TargetOpcode::G_ATOMICRMW_UMAX:
+  case TargetOpcode::G_ATOMICRMW_FADD:
     return selectG_LOAD_ATOMICRMW(I, CoverageInfo);
   case TargetOpcode::G_SELECT:
     return selectG_SELECT(I);
