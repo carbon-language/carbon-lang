@@ -842,56 +842,8 @@ bool AMDGPUInstructionSelector::selectG_SELECT(MachineInstr &I) const {
 
 bool AMDGPUInstructionSelector::selectG_STORE(
   MachineInstr &I, CodeGenCoverage &CoverageInfo) const {
-  MachineBasicBlock *BB = I.getParent();
-  MachineFunction *MF = BB->getParent();
-  MachineRegisterInfo &MRI = MF->getRegInfo();
-  const DebugLoc &DL = I.getDebugLoc();
-
-  LLT PtrTy = MRI.getType(I.getOperand(1).getReg());
-  if (PtrTy.getSizeInBits() != 64) {
-    initM0(I);
-    return selectImpl(I, CoverageInfo);
-  }
-
-  if (selectImpl(I, CoverageInfo))
-    return true;
-
-  unsigned StoreSize = RBI.getSizeInBits(I.getOperand(0).getReg(), MRI, TRI);
-  unsigned Opcode;
-
-  // FIXME: Remove this when integers > s32 naturally selected.
-  switch (StoreSize) {
-  default:
-    return false;
-  case 32:
-    Opcode = AMDGPU::FLAT_STORE_DWORD;
-    break;
-  case 64:
-    Opcode = AMDGPU::FLAT_STORE_DWORDX2;
-    break;
-  case 96:
-    Opcode = AMDGPU::FLAT_STORE_DWORDX3;
-    break;
-  case 128:
-    Opcode = AMDGPU::FLAT_STORE_DWORDX4;
-    break;
-  }
-
-  MachineInstr *Flat = BuildMI(*BB, &I, DL, TII.get(Opcode))
-          .add(I.getOperand(1))
-          .add(I.getOperand(0))
-          .addImm(0)  // offset
-          .addImm(0)  // glc
-          .addImm(0)  // slc
-          .addImm(0); // dlc
-
-
-  // Now that we selected an opcode, we need to constrain the register
-  // operands to use appropriate classes.
-  bool Ret = constrainSelectedInstRegOperands(*Flat, TII, TRI, RBI);
-
-  I.eraseFromParent();
-  return Ret;
+  initM0(I);
+  return selectImpl(I, CoverageInfo);
 }
 
 static int sizeToSubRegIndex(unsigned Size) {

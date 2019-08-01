@@ -777,8 +777,6 @@ def : FlatLoadPat <FLAT_LOAD_USHORT, extloadi16_flat, i32>;
 def : FlatLoadPat <FLAT_LOAD_USHORT, zextloadi16_flat, i32>;
 def : FlatLoadPat <FLAT_LOAD_USHORT, load_flat, i16>;
 def : FlatLoadPat <FLAT_LOAD_SSHORT, sextloadi16_flat, i32>;
-def : FlatLoadPat <FLAT_LOAD_DWORD, load_flat, i32>;
-def : FlatLoadPat <FLAT_LOAD_DWORDX2, load_flat, v2i32>;
 def : FlatLoadPat <FLAT_LOAD_DWORDX3, load_flat, v3i32>;
 def : FlatLoadPat <FLAT_LOAD_DWORDX4, load_flat, v4i32>;
 
@@ -787,8 +785,17 @@ def : FlatLoadAtomicPat <FLAT_LOAD_DWORDX2, atomic_load_64_flat, i64>;
 
 def : FlatStorePat <FLAT_STORE_BYTE, truncstorei8_flat, i32>;
 def : FlatStorePat <FLAT_STORE_SHORT, truncstorei16_flat, i32>;
-def : FlatStorePat <FLAT_STORE_DWORD, store_flat, i32>;
-def : FlatStorePat <FLAT_STORE_DWORDX2, store_flat, v2i32, VReg_64>;
+
+foreach vt = [i32, f32, v2i16, v2f16] in {
+def : FlatLoadPat <FLAT_LOAD_DWORD, load_flat, vt>;
+def : FlatStorePat <FLAT_STORE_DWORD, store_flat, vt>;
+}
+
+foreach vt = VReg_64.RegTypes in {
+def : FlatStorePat <FLAT_STORE_DWORDX2, store_flat, vt, VReg_64>;
+def : FlatLoadPat <FLAT_LOAD_DWORDX2, load_flat, vt>;
+}
+
 def : FlatStorePat <FLAT_STORE_DWORDX3, store_flat, v3i32, VReg_96>;
 def : FlatStorePat <FLAT_STORE_DWORDX4, store_flat, v4i32, VReg_128>;
 
@@ -860,8 +867,16 @@ def : FlatLoadSignedPat <GLOBAL_LOAD_USHORT, zextloadi16_global, i32>;
 def : FlatLoadSignedPat <GLOBAL_LOAD_SSHORT, sextloadi16_global, i32>;
 def : FlatLoadSignedPat <GLOBAL_LOAD_USHORT, load_global, i16>;
 
-def : FlatLoadSignedPat <GLOBAL_LOAD_DWORD, load_global, i32>;
-def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX2, load_global, v2i32>;
+foreach vt = [i32, f32, v2i16, v2f16] in {
+def : FlatLoadSignedPat <GLOBAL_LOAD_DWORD, load_global, vt>;
+def : FlatStoreSignedPat <GLOBAL_STORE_DWORD, store_global, vt, VGPR_32>;
+}
+
+foreach vt = VReg_64.RegTypes in {
+def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX2, load_global, vt>;
+def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX2, store_global, vt, VReg_64>;
+}
+
 def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX3, load_global, v3i32>;
 def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX4, load_global, v4i32>;
 
@@ -872,8 +887,6 @@ def : FlatStoreSignedPat <GLOBAL_STORE_BYTE, truncstorei8_global, i32, VGPR_32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_BYTE, truncstorei8_global, i16, VGPR_32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_SHORT, truncstorei16_global, i32, VGPR_32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_SHORT, store_global, i16, VGPR_32>;
-def : FlatStoreSignedPat <GLOBAL_STORE_DWORD, store_global, i32, VGPR_32>;
-def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX2, store_global, v2i32, VReg_64>;
 def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX3, store_global, v3i32, VReg_96>;
 def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX4, store_global, v4i32, VReg_128>;
 
