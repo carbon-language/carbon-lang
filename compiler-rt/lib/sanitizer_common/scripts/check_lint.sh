@@ -109,7 +109,7 @@ run_lint ${LSAN_LIT_TEST_LINT_FILTER} ${LIT_TESTS}/lsan/*/*.cc &
 
 # DFSan
 DFSAN_RTL=${COMPILER_RT}/lib/dfsan
-run_lint ${DFSAN_RTL_LINT_FILTER} ${DFSAN_RTL}/*.cc \
+run_lint ${DFSAN_RTL_LINT_FILTER} ${DFSAN_RTL}/*.cpp \
                                   ${DFSAN_RTL}/*.h &
 ${DFSAN_RTL}/scripts/check_custom_wrappers.sh >> $ERROR_LOG
 
