@@ -635,17 +635,6 @@ defm atomic_load_fadd : SIAtomicM0Glue2 <"LOAD_FADD", 0, SDTAtomic2_f32, 0>;
 defm atomic_load_fmin : SIAtomicM0Glue2 <"LOAD_FMIN", 1, SDTAtomic2_f32, 0>;
 defm atomic_load_fmax : SIAtomicM0Glue2 <"LOAD_FMAX", 1, SDTAtomic2_f32, 0>;
 
-def atomic_cmp_swap_glue : SDNode <"ISD::ATOMIC_CMP_SWAP", SDTAtomic3,
-  [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
->;
-
-// FIXME:
-def atomic_cmp_swap_local_m0_32 : AtomicCmpSwapLocal<atomic_cmp_swap_glue>;
-def atomic_cmp_swap_region_m0_32 : AtomicCmpSwapRegion<atomic_cmp_swap_glue>;
-def atomic_cmp_swap_local_m0_64 : AtomicCmpSwapLocal<atomic_cmp_swap_glue>;
-def atomic_cmp_swap_region_m0_64 : AtomicCmpSwapRegion<atomic_cmp_swap_glue>;
-
-
 def as_i1imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue(), SDLoc(N), MVT::i1);
 }]>;

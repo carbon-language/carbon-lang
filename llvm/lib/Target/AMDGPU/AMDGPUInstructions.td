@@ -303,6 +303,10 @@ def TEX_SHADOW_ARRAY : PatLeaf<
 // Load/Store Pattern Fragments
 //===----------------------------------------------------------------------===//
 
+def atomic_cmp_swap_glue : SDNode <"ISD::ATOMIC_CMP_SWAP", SDTAtomic3,
+  [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
+>;
+
 class AddressSpaceList<list<int> AS> {
   list<int> AddrSpaces = AS;
 }
@@ -555,23 +559,15 @@ def mskor_global : PatFrag<(ops node:$val, node:$ptr),
   return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
 }]>;
 
-class AtomicCmpSwapLocal <SDNode cmp_swap_node> : PatFrag<
-    (ops node:$ptr, node:$cmp, node:$swap),
-    (cmp_swap_node node:$ptr, node:$cmp, node:$swap), [{
-      AtomicSDNode *AN = cast<AtomicSDNode>(N);
-      return AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
-}]>;
+let AddressSpaces = StoreAddress_local.AddrSpaces in {
+defm atomic_cmp_swap_local : ternary_atomic_op<atomic_cmp_swap>;
+defm atomic_cmp_swap_local_m0 : ternary_atomic_op<atomic_cmp_swap_glue>;
+}
 
-class AtomicCmpSwapRegion <SDNode cmp_swap_node> : PatFrag<
-    (ops node:$ptr, node:$cmp, node:$swap),
-    (cmp_swap_node node:$ptr, node:$cmp, node:$swap), [{
-      AtomicSDNode *AN = cast<AtomicSDNode>(N);
-      return AN->getAddressSpace() == AMDGPUAS::REGION_ADDRESS;
-}]>;
-
-// FIXME: Actually set MemoryVT
-def atomic_cmp_swap_local_32 : AtomicCmpSwapLocal <atomic_cmp_swap>;
-def atomic_cmp_swap_local_64 : AtomicCmpSwapLocal <atomic_cmp_swap>;
+let AddressSpaces = StoreAddress_region.AddrSpaces in {
+defm atomic_cmp_swap_region : ternary_atomic_op<atomic_cmp_swap>;
+defm atomic_cmp_swap_region_m0 : ternary_atomic_op<atomic_cmp_swap_glue>;
+}
 
 class global_binary_atomic_op_frag<SDNode atomic_op> : PatFrag<
     (ops node:$ptr, node:$value),
