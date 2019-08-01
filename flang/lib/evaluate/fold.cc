@@ -433,10 +433,10 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
             return Fold(context,
                 ConvertToType<T>(
                     GetLowerBound(context, *named, static_cast<int>(*dim))));
-          } else if (auto lbounds{
-                         AsConstantShape(GetLowerBounds(context, *named))}) {
+          } else if (auto extents{
+                         AsExtentArrayExpr(GetLowerBounds(context, *named))}) {
             return Fold(context,
-                ConvertToType<T>(Expr<ExtentType>{std::move(*lbounds)}));
+                ConvertToType<T>(Expr<ExtentType>{std::move(*extents)}));
           }
         } else {
           lowerBoundsAreOne = symbol.Rank() == 0;  // LBOUND(array%component)
@@ -496,9 +496,9 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
               CHECK(!ubounds.back().has_value());
               ubounds.back() = ExtentExpr{-1};
             }
-            if (auto constant{AsConstantShape(ubounds)}) {
+            if (auto extents{AsExtentArrayExpr(ubounds)}) {
               return Fold(context,
-                  ConvertToType<T>(Expr<ExtentType>{std::move(*constant)}));
+                  ConvertToType<T>(Expr<ExtentType>{std::move(*extents)}));
             }
           }
         } else {
