@@ -309,6 +309,10 @@ def atomic_load_fadd_local : local_binary_atomic_op<atomic_load_fadd>;
 def atomic_load_fmin_local : local_binary_atomic_op<SIatomic_fmin>;
 def atomic_load_fmax_local : local_binary_atomic_op<SIatomic_fmax>;
 
+def atomic_fadd_global_noret    : global_binary_atomic_op_frag<SIglobal_atomic_fadd>;
+def atomic_pk_fadd_global_noret : global_binary_atomic_op_frag<SIglobal_atomic_pk_fadd>;
+
+
 //===----------------------------------------------------------------------===//
 // SDNodes PatFrags for loads/stores with a glue input.
 // This is for SDNodes and PatFrag for local loads and stores to

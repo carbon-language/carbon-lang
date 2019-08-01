@@ -686,10 +686,10 @@ let SubtargetPredicate = isGFX10Plus, is_flat_global = 1 in {
 let SubtargetPredicate = HasAtomicFaddInsts, is_flat_global = 1 in {
 
 defm GLOBAL_ATOMIC_ADD_F32 : FLAT_Global_Atomic_Pseudo_NO_RTN <
-  "global_atomic_add_f32", VGPR_32, f32, atomic_add_global
+  "global_atomic_add_f32", VGPR_32, f32, atomic_fadd_global_noret
 >;
 defm GLOBAL_ATOMIC_PK_ADD_F16 : FLAT_Global_Atomic_Pseudo_NO_RTN <
-  "global_atomic_pk_add_f16", VGPR_32, v2f16, atomic_add_global
+  "global_atomic_pk_add_f16", VGPR_32, v2f16, atomic_pk_fadd_global_noret
 >;
 
 } // End SubtargetPredicate = HasAtomicFaddInsts
@@ -847,9 +847,6 @@ def : FlatLoadPat_D16 <FLAT_LOAD_SHORT_D16, load_d16_lo_flat, v2f16>;
 
 } // End OtherPredicates = [HasFlatAddressSpace]
 
-def atomic_fadd_global    : global_binary_atomic_op_frag<SIglobal_atomic_fadd>;
-def atomic_pk_fadd_global : global_binary_atomic_op_frag<SIglobal_atomic_pk_fadd>;
-
 let OtherPredicates = [HasFlatGlobalInsts], AddedComplexity = 10 in {
 
 def : FlatLoadSignedPat <GLOBAL_LOAD_UBYTE, extloadi8_global, i32>;
@@ -930,8 +927,8 @@ def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SWAP_X2_RTN, atomic_swap_global, i64>;
 def : FlatSignedAtomicPat <GLOBAL_ATOMIC_CMPSWAP_X2_RTN, AMDGPUatomic_cmp_swap_global, i64, v2i64>;
 def : FlatSignedAtomicPat <GLOBAL_ATOMIC_XOR_X2_RTN, atomic_xor_global, i64>;
 
-def : FlatAtomicPatNoRtn <GLOBAL_ATOMIC_ADD_F32,    atomic_fadd_global, f32>;
-def : FlatAtomicPatNoRtn <GLOBAL_ATOMIC_PK_ADD_F16, atomic_pk_fadd_global, v2f16>;
+def : FlatAtomicPatNoRtn <GLOBAL_ATOMIC_ADD_F32,    atomic_fadd_global_noret, f32>;
+def : FlatAtomicPatNoRtn <GLOBAL_ATOMIC_PK_ADD_F16, atomic_pk_fadd_global_noret, v2f16>;
 
 } // End OtherPredicates = [HasFlatGlobalInsts], AddedComplexity = 10
 
