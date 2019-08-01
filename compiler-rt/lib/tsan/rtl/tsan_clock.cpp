@@ -40,7 +40,7 @@
 //     release(dst);
 //   }
 //
-// Conformance to this model is extensively verified in tsan_clock_test.cc.
+// Conformance to this model is extensively verified in tsan_clock_test.cpp.
 // However, the implementation is significantly more complex. The complexity
 // allows to implement important classes of use cases in O(1) instead of O(N).
 //
