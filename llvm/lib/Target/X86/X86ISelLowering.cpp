@@ -34577,6 +34577,11 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
                                KnownVec, TLO, Depth + 1))
         return true;
 
+      if (SDValue V = SimplifyMultipleUseDemandedBits(
+              Vec, DemandedVecBits, DemandedVecElts, TLO.DAG, Depth + 1))
+        return TLO.CombineTo(
+            Op, TLO.DAG.getNode(Opc, SDLoc(Op), VT, V, Op.getOperand(1)));
+
       Known = KnownVec.zext(BitWidth, true);
       return false;
     }
@@ -34676,6 +34681,28 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
 
   return TargetLowering::SimplifyDemandedBitsForTargetNode(
       Op, OriginalDemandedBits, OriginalDemandedElts, Known, TLO, Depth);
+}
+
+SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
+    SDValue Op, const APInt &DemandedBits, const APInt &DemandedElts,
+    SelectionDAG &DAG, unsigned Depth) const {
+  unsigned Opc = Op.getOpcode();
+  switch (Opc) {
+  case X86ISD::PINSRB:
+  case X86ISD::PINSRW: {
+    // If we don't demand the inserted element, return the base vector.
+    SDValue Vec = Op.getOperand(0);
+    auto *CIdx = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+    MVT VecVT = Vec.getSimpleValueType();
+    if (CIdx && CIdx->getAPIntValue().ult(VecVT.getVectorNumElements()) &&
+        !DemandedElts[CIdx->getZExtValue()])
+      return Vec;
+     break;
+  }
+  }
+
+  return TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
+      Op, DemandedBits, DemandedElts, DAG, Depth);
 }
 
 /// Check if a vector extract from a target-specific shuffle of a load can be
