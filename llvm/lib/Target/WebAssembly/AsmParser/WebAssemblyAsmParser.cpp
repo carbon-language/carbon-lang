@@ -763,6 +763,7 @@ public:
                                uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override {
     MCInst Inst;
+    Inst.setLoc(IDLoc);
     unsigned MatchResult =
         MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm);
     switch (MatchResult) {
