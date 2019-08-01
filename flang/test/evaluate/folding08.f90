@@ -59,4 +59,23 @@ module m
     integer, parameter :: ubfoo(:) = ubound(foo())
     logical, parameter :: test_ubfoo = all(ubfoo == [2,3])
   end subroutine
+  subroutine test2
+    real :: a(2:3,4:6)
+    associate (b => a)
+      block
+        integer, parameter :: lbb(:) = lbound(b)
+        logical, parameter :: test_lbb = all(lbb == [2,4])
+        integer, parameter :: ubb(:) = ubound(b)
+        logical, parameter :: test_ubb = all(ubb == [3,6])
+      end block
+    end associate
+    associate (b => a + 0)
+      block
+        integer, parameter :: lbb(:) = lbound(b)
+        logical, parameter :: test_lbb = all(lbb == [1,1])
+        integer, parameter :: ubb(:) = ubound(b)
+        logical, parameter :: test_ubb = all(ubb == [2,3])
+      end block
+    end associate
+  end subroutine
 end

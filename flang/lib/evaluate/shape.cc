@@ -406,7 +406,7 @@ void GetShapeVisitor::Handle(const NamedEntity &base) {
       Return(std::move(result));
     }
   } else {
-    Return();  // error recovery
+    Handle(symbol);
   }
 }
 
