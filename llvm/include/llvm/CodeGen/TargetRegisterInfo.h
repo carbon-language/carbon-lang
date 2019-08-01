@@ -87,11 +87,20 @@ public:
   /// Return true if the specified register is included in this register class.
   /// This does not include virtual registers.
   bool contains(unsigned Reg) const {
+    /// FIXME: Historically this function has returned false when given vregs
+    ///        but it should probably only receive physical registers
+    if (!Register::isPhysicalRegister(Reg))
+      return false;
     return MC->contains(Reg);
   }
 
   /// Return true if both registers are in this class.
   bool contains(unsigned Reg1, unsigned Reg2) const {
+    /// FIXME: Historically this function has returned false when given a vregs
+    ///        but it should probably only receive physical registers
+    if (!Register::isPhysicalRegister(Reg1) ||
+        !Register::isPhysicalRegister(Reg2))
+      return false;
     return MC->contains(Reg1, Reg2);
   }
 
