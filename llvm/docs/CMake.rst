@@ -426,6 +426,11 @@ LLVM-specific variables
   search. For example to link LLVM with the Gold linker, cmake can be invoked
   with ``-DLLVM_USE_LINKER=gold``.
 
+**LLVM_ENABLE_LIBCXX**:BOOL
+  If the host compiler and linker supports the stdlib flag, -stdlib=libc++ is
+  passed to invocations of both so that the project is built using libc++
+  instead of stdlibc++. Defaults to OFF.
+
 **LLVM_ENABLE_LLD**:BOOL
   This option is equivalent to `-DLLVM_USE_LINKER=lld`, except during a 2-stage
   build where a dependency is added from the first stage to the second ensuring
