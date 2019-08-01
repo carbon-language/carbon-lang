@@ -3,7 +3,7 @@
 set -e
 
 SRCS="
-	tsan_go.cc
+	tsan_go.cpp
 	../rtl/tsan_clock.cpp
 	../rtl/tsan_external.cpp
 	../rtl/tsan_flags.cpp
@@ -144,9 +144,9 @@ fi
 
 SRCS="$SRCS $ADD_SRCS"
 
-rm -f $DIR/gotsan.cc
+rm -f $DIR/gotsan.cpp
 for F in $SRCS; do
-	cat $F >> $DIR/gotsan.cc
+	cat $F >> $DIR/gotsan.cpp
 done
 
 FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -std=c++11 -Wall -fno-exceptions -fno-rtti -DSANITIZER_GO=1 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS $ARCHCFLAGS"
@@ -162,9 +162,9 @@ else
 fi
 
 if [ "$SILENT" != "1" ]; then
-  echo $CC gotsan.cc -c -o $DIR/race_$SUFFIX.syso $FLAGS $CFLAGS
+  echo $CC gotsan.cpp -c -o $DIR/race_$SUFFIX.syso $FLAGS $CFLAGS
 fi
-$CC $DIR/gotsan.cc -c -o $DIR/race_$SUFFIX.syso $FLAGS $CFLAGS
+$CC $DIR/gotsan.cpp -c -o $DIR/race_$SUFFIX.syso $FLAGS $CFLAGS
 
 $CC $OSCFLAGS $ARCHCFLAGS test.c $DIR/race_$SUFFIX.syso -g -o $DIR/test $OSLDFLAGS $LDFLAGS
 
