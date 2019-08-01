@@ -2758,7 +2758,10 @@ bool IndVarSimplify::run(Loop *L) {
   // transform them to use integer recurrences.
   Changed |= rewriteNonIntegerIVs(L);
 
+#ifndef NDEBUG
+  // Used below for a consistency check only
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+#endif
 
   // Create a rewriter object which we'll use to transform the code with.
   SCEVExpander Rewriter(*SE, DL, "indvars");
