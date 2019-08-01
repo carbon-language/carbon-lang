@@ -15,7 +15,7 @@
 
 ! Test folding of LBOUND and UBOUND
 
-subroutine testlbound(n1,a1,a2)
+subroutine test(n1,a1,a2)
   integer, intent(in) :: n1
   real, intent(in) :: a1(0:n1), a2(0:*)
   type :: t

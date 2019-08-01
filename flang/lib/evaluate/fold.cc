@@ -348,9 +348,9 @@ std::optional<std::vector<A>> GetIntegerVector(const B &x) {
 // gets re-folded.
 template<typename T> Expr<T> MakeInvalidIntrinsic(FunctionRef<T> &&funcRef) {
   SpecificIntrinsic invalid{std::get<SpecificIntrinsic>(funcRef.proc().u)};
-  invalid.name = "invalid";
-  return Expr<T>{FunctionRef<T>{
-      ProcedureDesignator{std::move(invalid)}, std::move(funcRef.arguments())}};
+  invalid.name = "(invalid intrinsic function call)";
+  return Expr<T>{FunctionRef<T>{ProcedureDesignator{std::move(invalid)},
+      ActualArguments{ActualArgument{AsGenericExpr(std::move(funcRef))}}}};
 }
 
 template<typename T>
@@ -563,7 +563,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
             context.messages().Say(
                 "LBOUND(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
                 static_cast<std::intmax_t>(*dim), rank);
-            return Expr<T>(std::move(funcRef));
+            return MakeInvalidIntrinsic<T>(std::move(funcRef));
           }
         }
         bool lowerBoundsAreOne{true};
@@ -775,7 +775,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
             context.messages().Say(
                 "UBOUND(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
                 static_cast<std::intmax_t>(*dim), rank);
-            return Expr<T>(std::move(funcRef));
+            return MakeInvalidIntrinsic<T>(std::move(funcRef));
           }
         }
         bool takeBoundsFromShape{true};

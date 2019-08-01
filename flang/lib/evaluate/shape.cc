@@ -227,7 +227,13 @@ Shape GetLowerBounds(FoldingContext &context, const NamedEntity &base) {
       }
       ++dim;
     }
+  } else {
+    int rank{base.Rank()};
+    for (int dim{0}; dim < rank; ++dim) {
+      result.emplace_back(ExtentExpr{1});
+    }
   }
+  CHECK(GetRank(result) == symbol.Rank());
   return result;
 }
 
@@ -326,12 +332,27 @@ MaybeExtentExpr GetUpperBound(
 }
 
 Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
-  int rank{base.GetLastSymbol().Rank()};
-  Shape result;
-  for (int dim{0}; dim < rank; ++dim) {
-    result.emplace_back(GetUpperBound(context, base, dim));
+  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
+  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    Shape result;
+    int dim{0};
+    for (const auto &shapeSpec : details->shape()) {
+      if (const auto &bound{shapeSpec.ubound().GetExplicit()}) {
+        result.emplace_back(Fold(context, common::Clone(*bound)));
+      } else if (details->IsAssumedSize()) {
+        CHECK(dim + 1 == base.Rank());
+        result.emplace_back(std::nullopt);  // UBOUND folding replaces with -1
+      } else {
+        result.emplace_back(GetUpperBound(context,
+            GetLowerBound(context, base, dim), GetExtent(context, base, dim)));
+      }
+      ++dim;
+    }
+    CHECK(GetRank(result) == symbol.Rank());
+    return result;
+  } else {
+    return std::move(GetShape(context, base).value());
   }
-  return result;
 }
 
 void GetShapeVisitor::Handle(const Symbol &symbol) {

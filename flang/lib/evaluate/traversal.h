@@ -54,8 +54,6 @@
 //   RESULT &result();  // to reference the result to define or update it
 // For any given expression object type T for which a callback is defined
 // in any visitor class, the callback must be distinct from all others.
-// Further, if there is a Handle(const T &) callback, there cannot be a
-// Pre(const T &) or a Post(const T &).
 //
 // For rewriting traversals, the paradigm is similar; however, the
 // argument types are rvalues and the non-void result types match
@@ -91,7 +89,7 @@ public:
 
   void Return() { done_ = true; }
 
-  template<typename A> void Return(A &&x) {
+  template<typename A> common::IfNoLvalue<void, A> Return(A &&x) {
     result_ = std::move(x);
     done_ = true;
   }
