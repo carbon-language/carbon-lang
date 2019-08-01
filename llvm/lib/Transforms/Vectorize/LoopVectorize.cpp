@@ -4767,8 +4767,6 @@ Optional<unsigned> LoopVectorizationCostModel::computeMaxVF() {
   }
 
   switch (ScalarEpilogueStatus) {
-  default:
-    return None;
   case CM_ScalarEpilogueAllowed:
     return computeFeasibleMaxVF(TC);
   case CM_ScalarEpilogueNotNeededPredicatePragma:
