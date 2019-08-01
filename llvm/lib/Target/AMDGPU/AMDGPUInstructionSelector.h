@@ -92,7 +92,7 @@ private:
   bool selectSMRD(MachineInstr &I, ArrayRef<GEPInfo> AddrInfo) const;
 
   void initM0(MachineInstr &I) const;
-  bool selectG_LOAD(MachineInstr &I, CodeGenCoverage &CoverageInfo) const;
+  bool selectG_LOAD_ATOMICRMW(MachineInstr &I, CodeGenCoverage &CoverageInfo) const;
   bool selectG_STORE(MachineInstr &I, CodeGenCoverage &CoverageInfo) const;
   bool selectG_SELECT(MachineInstr &I) const;
   bool selectG_BRCOND(MachineInstr &I) const;

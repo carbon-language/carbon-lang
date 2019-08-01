@@ -76,6 +76,17 @@ def gi_ds_1addr_1offset :
 def : GINodeEquiv<G_LOAD, AMDGPUld_glue>;
 def : GINodeEquiv<G_STORE, AMDGPUst_glue>;
 
+def : GINodeEquiv<G_ATOMIC_CMPXCHG, atomic_cmp_swap_glue>;
+def : GINodeEquiv<G_ATOMICRMW_XCHG, atomic_swap_glue>;
+def : GINodeEquiv<G_ATOMICRMW_ADD, atomic_load_add_glue>;
+def : GINodeEquiv<G_ATOMICRMW_SUB, atomic_load_sub_glue>;
+def : GINodeEquiv<G_ATOMICRMW_AND, atomic_load_and_glue>;
+def : GINodeEquiv<G_ATOMICRMW_OR, atomic_load_or_glue>;
+def : GINodeEquiv<G_ATOMICRMW_XOR, atomic_load_xor_glue>;
+def : GINodeEquiv<G_ATOMICRMW_MIN, atomic_load_min_glue>;
+def : GINodeEquiv<G_ATOMICRMW_MAX, atomic_load_max_glue>;
+def : GINodeEquiv<G_ATOMICRMW_UMIN, atomic_load_umin_glue>;
+def : GINodeEquiv<G_ATOMICRMW_UMAX, atomic_load_umax_glue>;
 
 
 class GISelSop2Pat <
