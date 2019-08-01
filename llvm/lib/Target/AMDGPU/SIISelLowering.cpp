@@ -6735,15 +6735,6 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
       AMDGPUISD::EXPORT : AMDGPUISD::EXPORT_DONE;
     return DAG.getNode(Opc, DL, Op->getVTList(), Ops);
   }
-  case Intrinsic::amdgcn_s_sendmsg:
-  case Intrinsic::amdgcn_s_sendmsghalt: {
-    unsigned NodeOp = (IntrinsicID == Intrinsic::amdgcn_s_sendmsg) ?
-      AMDGPUISD::SENDMSG : AMDGPUISD::SENDMSGHALT;
-    Chain = copyToM0(DAG, Chain, DL, Op.getOperand(3));
-    SDValue Glue = Chain.getValue(1);
-    return DAG.getNode(NodeOp, DL, MVT::Other, Chain,
-                       Op.getOperand(2), Glue);
-  }
   case Intrinsic::amdgcn_init_exec: {
     return DAG.getNode(AMDGPUISD::INIT_EXEC, DL, MVT::Other, Chain,
                        Op.getOperand(2));
