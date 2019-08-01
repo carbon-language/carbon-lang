@@ -357,7 +357,31 @@ Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
 }
 
 void GetShapeVisitor::Handle(const Symbol &symbol) {
-  Handle(NamedEntity{symbol});
+  std::visit(
+      common::visitors{
+          [&](const semantics::ObjectEntityDetails &object) {
+            Handle(NamedEntity{symbol});
+          },
+          [&](const semantics::AssocEntityDetails &assoc) {
+            Nested(assoc.expr());
+          },
+          [&](const semantics::SubprogramDetails &subp) {
+            if (subp.isFunction()) {
+              Handle(subp.result());
+            } else {
+              Return();
+            }
+          },
+          [&](const semantics::ProcBindingDetails &binding) {
+            Handle(binding.symbol());
+          },
+          [&](const semantics::UseDetails &use) { Handle(use.symbol()); },
+          [&](const semantics::HostAssocDetails &assoc) {
+            Handle(assoc.symbol());
+          },
+          [&](const auto &) { Return(); },
+      },
+      symbol.details());
 }
 
 void GetShapeVisitor::Handle(const Component &component) {
@@ -369,23 +393,21 @@ void GetShapeVisitor::Handle(const Component &component) {
 }
 
 void GetShapeVisitor::Handle(const NamedEntity &base) {
-  const Symbol &symbol{ResolveAssociations(base.GetLastSymbol())};
-  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+  const Symbol &symbol{base.GetLastSymbol()};
+  if (const auto *object{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (IsImpliedShape(symbol)) {
-      Nested(details->init());
+      Nested(object->init());
     } else {
       Shape result;
-      int n{static_cast<int>(details->shape().size())};
+      int n{static_cast<int>(object->shape().size())};
       for (int dimension{0}; dimension < n; ++dimension) {
         result.emplace_back(GetExtent(context_, base, dimension));
       }
       Return(std::move(result));
     }
-  } else if (const auto *details{
-                 symbol.detailsIf<semantics::AssocEntityDetails>()}) {
-    Nested(details->expr());
+  } else {
+    Return();  // error recovery
   }
-  Return();
 }
 
 void GetShapeVisitor::Handle(const Substring &substring) {
