@@ -668,7 +668,7 @@ def : DSReadPat_D16<DS_READ_I8_D16, sextloadi8_d16_lo_local, v2f16>;
 
 class DSWritePat <DS_Pseudo inst, ValueType vt, PatFrag frag, int gds=0> : GCNPat <
   (frag vt:$value, (DS1Addr1Offset i32:$ptr, i16:$offset)),
-  (inst $ptr, $value, offset:$offset, (i1 gds))
+  (inst $ptr, getVregSrcForVT<vt>.ret:$value, offset:$offset, (i1 gds))
 >;
 
 multiclass DSWritePat_mc <DS_Pseudo inst, ValueType vt, string frag> {

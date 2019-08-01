@@ -840,16 +840,21 @@ bool AMDGPUInstructionSelector::selectG_SELECT(MachineInstr &I) const {
   return Ret;
 }
 
-bool AMDGPUInstructionSelector::selectG_STORE(MachineInstr &I) const {
+bool AMDGPUInstructionSelector::selectG_STORE(
+  MachineInstr &I, CodeGenCoverage &CoverageInfo) const {
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  DebugLoc DL = I.getDebugLoc();
-  unsigned PtrSize = RBI.getSizeInBits(I.getOperand(1).getReg(), MRI, TRI);
-  if (PtrSize != 64) {
-    LLVM_DEBUG(dbgs() << "Unhandled address space\n");
-    return false;
+  const DebugLoc &DL = I.getDebugLoc();
+
+  LLT PtrTy = MRI.getType(I.getOperand(1).getReg());
+  if (PtrTy.getSizeInBits() != 64) {
+    initM0(I);
+    return selectImpl(I, CoverageInfo);
   }
+
+  if (selectImpl(I, CoverageInfo))
+    return true;
 
   unsigned StoreSize = RBI.getSizeInBits(I.getOperand(0).getReg(), MRI, TRI);
   unsigned Opcode;
@@ -1243,8 +1248,7 @@ bool AMDGPUInstructionSelector::hasVgprParts(ArrayRef<GEPInfo> AddrInfo) const {
   return false;
 }
 
-bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I,
-                                             CodeGenCoverage &CoverageInfo) const {
+void AMDGPUInstructionSelector::initM0(MachineInstr &I) const {
   MachineBasicBlock *BB = I.getParent();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
@@ -1257,7 +1261,11 @@ bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I,
     BuildMI(*BB, &I, I.getDebugLoc(), TII.get(AMDGPU::S_MOV_B32), AMDGPU::M0)
       .addImm(-1);
   }
+}
 
+bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I,
+                                             CodeGenCoverage &CoverageInfo) const {
+  initM0(I);
   return selectImpl(I, CoverageInfo);
 }
 
@@ -1377,12 +1385,11 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
     return selectImpl(I, CoverageInfo);
   case TargetOpcode::G_LOAD:
     return selectG_LOAD(I, CoverageInfo);
+
   case TargetOpcode::G_SELECT:
     return selectG_SELECT(I);
   case TargetOpcode::G_STORE:
-    if (selectImpl(I, CoverageInfo))
-      return true;
-    return selectG_STORE(I);
+    return selectG_STORE(I, CoverageInfo);
   case TargetOpcode::G_TRUNC:
     return selectG_TRUNC(I);
   case TargetOpcode::G_SEXT:

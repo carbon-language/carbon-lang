@@ -493,11 +493,13 @@ def load_align16_local : PatFrag <(ops node:$ptr), (load_local node:$ptr)> {
 def store_align8_local: PatFrag<(ops node:$val, node:$ptr),
                                 (store_local node:$val, node:$ptr)>, Aligned<8> {
   let IsStore = 1;
-
+  let IsTruncStore = 0;
 }
+
 def store_align16_local: PatFrag<(ops node:$val, node:$ptr),
                                 (store_local node:$val, node:$ptr)>, Aligned<16> {
   let IsStore = 1;
+  let IsTruncStore = 0;
 }
 
 

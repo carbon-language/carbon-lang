@@ -74,6 +74,7 @@ def gi_ds_1addr_1offset :
 // directly before before selecting a glue-less load, so hide this
 // distinction.
 def : GINodeEquiv<G_LOAD, AMDGPUld_glue>;
+def : GINodeEquiv<G_STORE, AMDGPUst_glue>;
 
 
 

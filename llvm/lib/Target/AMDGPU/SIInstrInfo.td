@@ -475,13 +475,34 @@ def store_glue_align8 : PatFrag<(ops node:$val, node:$ptr),
 def store_glue_align16 : PatFrag<(ops node:$val, node:$ptr),
                                 (store_glue node:$val, node:$ptr)>, Aligned<16>;
 
-def store_local_m0 : StoreFrag<store_glue>, LocalAddress;
-def truncstorei8_local_m0 : StoreFrag<truncstorei8_glue>, LocalAddress;
-def truncstorei16_local_m0 : StoreFrag<truncstorei16_glue>, LocalAddress;
-def atomic_store_local_m0 : StoreFrag<AMDGPUatomic_st_glue>, LocalAddress;
+def store_local_m0 : PatFrag<(ops node:$val, node:$ptr),
+                             (unindexedstore_glue node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let IsTruncStore = 0;
+}
 
-def store_align8_local_m0 : StoreFrag<store_glue_align8>, LocalAddress;
-def store_align16_local_m0 : StoreFrag<store_glue_align16>, LocalAddress;
+def truncstorei8_local_m0 : PatFrag<(ops node:$val, node:$ptr),
+                                    (unindexedstore_glue node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let MemoryVT = i8;
+}
+
+
+def truncstorei16_local_m0 : PatFrag<(ops node:$val, node:$ptr),
+                                    (unindexedstore_glue node:$val, node:$ptr)> {
+  let IsStore = 1;
+  let MemoryVT = i16;
+}
+
+// FIXME: atomic store doesn't work.
+def atomic_store_local_m0 : StoreFrag<AMDGPUatomic_st_glue>, LocalAddress;
+def store_align8_local_m0 : StoreFrag<store_glue_align8>, LocalAddress {
+  let IsTruncStore = 0;
+}
+
+def store_align16_local_m0 : StoreFrag<store_glue_align16>, LocalAddress {
+  let IsTruncStore = 0;
+}
 }
 
 def si_setcc_uniform : PatFrag <
