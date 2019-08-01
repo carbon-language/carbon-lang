@@ -300,18 +300,36 @@ class isPackedType<ValueType SrcVT> {
 // PatFrags for global memory operations
 //===----------------------------------------------------------------------===//
 
-defm atomic_inc_global : global_binary_atomic_op<SIatomic_inc>;
-defm atomic_dec_global : global_binary_atomic_op<SIatomic_dec>;
+foreach as = [ "global", "flat", "constant", "local", "private", "region" ] in {
+let AddressSpaces = !cast<AddressSpaceList>("LoadAddress_"#as).AddrSpaces in {
 
-def atomic_inc_local : local_binary_atomic_op<SIatomic_inc>;
-def atomic_dec_local : local_binary_atomic_op<SIatomic_dec>;
-def atomic_load_fadd_local : local_binary_atomic_op<atomic_load_fadd>;
-def atomic_load_fmin_local : local_binary_atomic_op<SIatomic_fmin>;
-def atomic_load_fmax_local : local_binary_atomic_op<SIatomic_fmax>;
 
-def atomic_fadd_global_noret    : global_binary_atomic_op_frag<SIglobal_atomic_fadd>;
-def atomic_pk_fadd_global_noret : global_binary_atomic_op_frag<SIglobal_atomic_pk_fadd>;
+defm atomic_inc_#as : binary_atomic_op<SIatomic_inc>;
+defm atomic_dec_#as : binary_atomic_op<SIatomic_dec>;
+defm atomic_load_fmin_#as : binary_atomic_op<SIatomic_fmin, 0>;
+defm atomic_load_fmax_#as : binary_atomic_op<SIatomic_fmax, 0>;
 
+
+} // End let AddressSpaces = ...
+} // End foreach AddrSpace
+
+def atomic_fadd_global_noret : PatFrag<
+  (ops node:$ptr, node:$value),
+  (SIglobal_atomic_fadd node:$ptr, node:$value)> {
+  // FIXME: Move this
+  let MemoryVT = f32;
+  let IsAtomic = 1;
+  let AddressSpaces = StoreAddress_global.AddrSpaces;
+}
+
+def atomic_pk_fadd_global_noret : PatFrag<
+    (ops node:$ptr, node:$value),
+    (SIglobal_atomic_pk_fadd node:$ptr, node:$value)> {
+  // FIXME: Move this
+  let MemoryVT = v2f16;
+  let IsAtomic = 1;
+  let AddressSpaces = StoreAddress_global.AddrSpaces;
+}
 
 //===----------------------------------------------------------------------===//
 // SDNodes PatFrags for loads/stores with a glue input.
@@ -584,15 +602,21 @@ def lshl_rev : PatFrag <
 >;
 
 multiclass SIAtomicM0Glue2 <string op_name, bit is_amdgpu = 0,
-                            SDTypeProfile tc = SDTAtomic2> {
+                            SDTypeProfile tc = SDTAtomic2,
+                            bit IsInt = 1> {
 
   def _glue : SDNode <
     !if(is_amdgpu, "AMDGPUISD", "ISD")#"::ATOMIC_"#op_name, tc,
     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
   >;
 
-  def _local_m0 : local_binary_atomic_op <!cast<SDNode>(NAME#"_glue")>;
-  def _region_m0 : region_binary_atomic_op <!cast<SDNode>(NAME#"_glue")>;
+  let AddressSpaces = StoreAddress_local.AddrSpaces in {
+    defm _local_m0 : binary_atomic_op <!cast<SDNode>(NAME#"_glue"), IsInt>;
+  }
+
+  let AddressSpaces = StoreAddress_region.AddrSpaces in {
+    defm _region_m0 : binary_atomic_op <!cast<SDNode>(NAME#"_glue"), IsInt>;
+  }
 }
 
 defm atomic_load_add : SIAtomicM0Glue2 <"LOAD_ADD">;
@@ -607,16 +631,19 @@ defm atomic_load_xor : SIAtomicM0Glue2 <"LOAD_XOR">;
 defm atomic_load_umin : SIAtomicM0Glue2 <"LOAD_UMIN">;
 defm atomic_load_umax : SIAtomicM0Glue2 <"LOAD_UMAX">;
 defm atomic_swap : SIAtomicM0Glue2 <"SWAP">;
-defm atomic_load_fadd : SIAtomicM0Glue2 <"LOAD_FADD", 0, SDTAtomic2_f32>;
-defm atomic_load_fmin : SIAtomicM0Glue2 <"LOAD_FMIN", 1, SDTAtomic2_f32>;
-defm atomic_load_fmax : SIAtomicM0Glue2 <"LOAD_FMAX", 1, SDTAtomic2_f32>;
+defm atomic_load_fadd : SIAtomicM0Glue2 <"LOAD_FADD", 0, SDTAtomic2_f32, 0>;
+defm atomic_load_fmin : SIAtomicM0Glue2 <"LOAD_FMIN", 1, SDTAtomic2_f32, 0>;
+defm atomic_load_fmax : SIAtomicM0Glue2 <"LOAD_FMAX", 1, SDTAtomic2_f32, 0>;
 
 def atomic_cmp_swap_glue : SDNode <"ISD::ATOMIC_CMP_SWAP", SDTAtomic3,
   [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
 >;
 
-def atomic_cmp_swap_local_m0 : AtomicCmpSwapLocal<atomic_cmp_swap_glue>;
-def atomic_cmp_swap_region_m0 : AtomicCmpSwapRegion<atomic_cmp_swap_glue>;
+// FIXME:
+def atomic_cmp_swap_local_m0_32 : AtomicCmpSwapLocal<atomic_cmp_swap_glue>;
+def atomic_cmp_swap_region_m0_32 : AtomicCmpSwapRegion<atomic_cmp_swap_glue>;
+def atomic_cmp_swap_local_m0_64 : AtomicCmpSwapLocal<atomic_cmp_swap_glue>;
+def atomic_cmp_swap_region_m0_64 : AtomicCmpSwapRegion<atomic_cmp_swap_glue>;
 
 
 def as_i1imm : SDNodeXForm<imm, [{

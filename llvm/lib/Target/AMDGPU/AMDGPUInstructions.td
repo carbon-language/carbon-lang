@@ -466,6 +466,35 @@ defm atomic_store_#as : binary_atomic_op<atomic_store>;
 } // End foreach AddrSpace
 
 
+multiclass ret_noret_binary_atomic_op<SDNode atomic_op, bit IsInt = 1> {
+  foreach as = [ "global", "flat", "constant", "local", "private", "region" ] in {
+    let AddressSpaces = !cast<AddressSpaceList>("LoadAddress_"#as).AddrSpaces in {
+      defm "_"#as : binary_atomic_op<atomic_op, IsInt>;
+
+      let PredicateCode = [{return (SDValue(N, 0).use_empty());}] in {
+        defm "_"#as#"_noret" : binary_atomic_op<atomic_op, IsInt>;
+      }
+
+      let PredicateCode = [{return !(SDValue(N, 0).use_empty());}] in {
+        defm "_"#as#"_ret" : binary_atomic_op<atomic_op, IsInt>;
+      }
+    }
+  }
+}
+
+defm atomic_swap : ret_noret_binary_atomic_op<atomic_swap>;
+defm atomic_load_add : ret_noret_binary_atomic_op<atomic_load_add>;
+defm atomic_load_and : ret_noret_binary_atomic_op<atomic_load_and>;
+defm atomic_load_max : ret_noret_binary_atomic_op<atomic_load_max>;
+defm atomic_load_min : ret_noret_binary_atomic_op<atomic_load_min>;
+defm atomic_load_or : ret_noret_binary_atomic_op<atomic_load_or>;
+defm atomic_load_sub : ret_noret_binary_atomic_op<atomic_load_sub>;
+defm atomic_load_umax : ret_noret_binary_atomic_op<atomic_load_umax>;
+defm atomic_load_umin : ret_noret_binary_atomic_op<atomic_load_umin>;
+defm atomic_load_xor : ret_noret_binary_atomic_op<atomic_load_xor>;
+defm atomic_load_fadd : ret_noret_binary_atomic_op<atomic_load_fadd, 0>;
+
+
 def store_hi16_private : StoreHi16 <truncstorei16>, PrivateAddress;
 def truncstorei8_hi16_private : StoreHi16<truncstorei8>, PrivateAddress;
 
@@ -521,18 +550,6 @@ class region_binary_atomic_op<SDNode atomic_op> :
 }]>;
 
 
-def atomic_swap_local : local_binary_atomic_op<atomic_swap>;
-def atomic_load_add_local : local_binary_atomic_op<atomic_load_add>;
-def atomic_load_sub_local : local_binary_atomic_op<atomic_load_sub>;
-def atomic_load_and_local : local_binary_atomic_op<atomic_load_and>;
-def atomic_load_or_local : local_binary_atomic_op<atomic_load_or>;
-def atomic_load_xor_local : local_binary_atomic_op<atomic_load_xor>;
-def atomic_load_nand_local : local_binary_atomic_op<atomic_load_nand>;
-def atomic_load_min_local : local_binary_atomic_op<atomic_load_min>;
-def atomic_load_max_local : local_binary_atomic_op<atomic_load_max>;
-def atomic_load_umin_local : local_binary_atomic_op<atomic_load_umin>;
-def atomic_load_umax_local : local_binary_atomic_op<atomic_load_umax>;
-
 def mskor_global : PatFrag<(ops node:$val, node:$ptr),
                             (AMDGPUstore_mskor node:$val, node:$ptr), [{
   return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
@@ -552,37 +569,14 @@ class AtomicCmpSwapRegion <SDNode cmp_swap_node> : PatFrag<
       return AN->getAddressSpace() == AMDGPUAS::REGION_ADDRESS;
 }]>;
 
-def atomic_cmp_swap_local : AtomicCmpSwapLocal <atomic_cmp_swap>;
+// FIXME: Actually set MemoryVT
+def atomic_cmp_swap_local_32 : AtomicCmpSwapLocal <atomic_cmp_swap>;
+def atomic_cmp_swap_local_64 : AtomicCmpSwapLocal <atomic_cmp_swap>;
 
 class global_binary_atomic_op_frag<SDNode atomic_op> : PatFrag<
     (ops node:$ptr, node:$value),
     (atomic_op node:$ptr, node:$value),
     [{return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;}]>;
-
-multiclass global_binary_atomic_op<SDNode atomic_op> {
-  def "" : global_binary_atomic_op_frag<atomic_op>;
-
-  def _noret : PatFrag<
-        (ops node:$ptr, node:$value),
-        (atomic_op node:$ptr, node:$value),
-        [{return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS && (SDValue(N, 0).use_empty());}]>;
-
-  def _ret : PatFrag<
-        (ops node:$ptr, node:$value),
-        (atomic_op node:$ptr, node:$value),
-        [{return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS && (!SDValue(N, 0).use_empty());}]>;
-}
-
-defm atomic_swap_global : global_binary_atomic_op<atomic_swap>;
-defm atomic_add_global : global_binary_atomic_op<atomic_load_add>;
-defm atomic_and_global : global_binary_atomic_op<atomic_load_and>;
-defm atomic_max_global : global_binary_atomic_op<atomic_load_max>;
-defm atomic_min_global : global_binary_atomic_op<atomic_load_min>;
-defm atomic_or_global : global_binary_atomic_op<atomic_load_or>;
-defm atomic_sub_global : global_binary_atomic_op<atomic_load_sub>;
-defm atomic_umax_global : global_binary_atomic_op<atomic_load_umax>;
-defm atomic_umin_global : global_binary_atomic_op<atomic_load_umin>;
-defm atomic_xor_global : global_binary_atomic_op<atomic_load_xor>;
 
 // Legacy.
 def AMDGPUatomic_cmp_swap_global : PatFrag<

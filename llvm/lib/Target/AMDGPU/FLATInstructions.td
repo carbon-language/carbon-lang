@@ -564,76 +564,76 @@ defm GLOBAL_ATOMIC_CMPSWAP_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_cmpswa
                                   v2i64, VReg_128>;
 
 defm GLOBAL_ATOMIC_SWAP : FLAT_Global_Atomic_Pseudo <"global_atomic_swap",
-                             VGPR_32, i32, atomic_swap_global>;
+                             VGPR_32, i32, atomic_swap_global_32>;
 
 defm GLOBAL_ATOMIC_SWAP_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_swap_x2",
-                                VReg_64, i64, atomic_swap_global>;
+                                VReg_64, i64, atomic_swap_global_64>;
 
 defm GLOBAL_ATOMIC_ADD : FLAT_Global_Atomic_Pseudo <"global_atomic_add",
-                           VGPR_32, i32, atomic_add_global>;
+                           VGPR_32, i32, atomic_load_add_global_32>;
 
 defm GLOBAL_ATOMIC_SUB : FLAT_Global_Atomic_Pseudo <"global_atomic_sub",
-                           VGPR_32, i32, atomic_sub_global>;
+                           VGPR_32, i32, atomic_load_sub_global_32>;
 
 defm GLOBAL_ATOMIC_SMIN : FLAT_Global_Atomic_Pseudo <"global_atomic_smin",
-                            VGPR_32, i32, atomic_min_global>;
+                            VGPR_32, i32, atomic_load_min_global_32>;
 
 defm GLOBAL_ATOMIC_UMIN : FLAT_Global_Atomic_Pseudo <"global_atomic_umin",
-                            VGPR_32, i32, atomic_umin_global>;
+                            VGPR_32, i32, atomic_load_umin_global_32>;
 
 defm GLOBAL_ATOMIC_SMAX : FLAT_Global_Atomic_Pseudo <"global_atomic_smax",
-                            VGPR_32, i32, atomic_max_global>;
+                            VGPR_32, i32, atomic_load_max_global_32>;
 
 defm GLOBAL_ATOMIC_UMAX : FLAT_Global_Atomic_Pseudo <"global_atomic_umax",
-                            VGPR_32, i32, atomic_umax_global>;
+                            VGPR_32, i32, atomic_load_umax_global_32>;
 
 defm GLOBAL_ATOMIC_AND : FLAT_Global_Atomic_Pseudo <"global_atomic_and",
-                           VGPR_32, i32, atomic_and_global>;
+                           VGPR_32, i32, atomic_load_and_global_32>;
 
 defm GLOBAL_ATOMIC_OR : FLAT_Global_Atomic_Pseudo <"global_atomic_or",
-                          VGPR_32, i32, atomic_or_global>;
+                          VGPR_32, i32, atomic_load_or_global_32>;
 
 defm GLOBAL_ATOMIC_XOR : FLAT_Global_Atomic_Pseudo <"global_atomic_xor",
-                           VGPR_32, i32, atomic_xor_global>;
+                           VGPR_32, i32, atomic_load_xor_global_32>;
 
 defm GLOBAL_ATOMIC_INC : FLAT_Global_Atomic_Pseudo <"global_atomic_inc",
-                           VGPR_32, i32, atomic_inc_global>;
+                           VGPR_32, i32, atomic_inc_global_32>;
 
 defm GLOBAL_ATOMIC_DEC : FLAT_Global_Atomic_Pseudo <"global_atomic_dec",
-                           VGPR_32, i32, atomic_dec_global>;
+                           VGPR_32, i32, atomic_dec_global_32>;
 
 defm GLOBAL_ATOMIC_ADD_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_add_x2",
-                              VReg_64, i64, atomic_add_global>;
+                              VReg_64, i64, atomic_load_add_global_64>;
 
 defm GLOBAL_ATOMIC_SUB_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_sub_x2",
-                              VReg_64, i64, atomic_sub_global>;
+                              VReg_64, i64, atomic_load_sub_global_64>;
 
 defm GLOBAL_ATOMIC_SMIN_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_smin_x2",
-                               VReg_64, i64, atomic_min_global>;
+                               VReg_64, i64, atomic_load_min_global_64>;
 
 defm GLOBAL_ATOMIC_UMIN_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_umin_x2",
-                               VReg_64, i64, atomic_umin_global>;
+                               VReg_64, i64, atomic_load_umin_global_64>;
 
 defm GLOBAL_ATOMIC_SMAX_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_smax_x2",
-                               VReg_64, i64, atomic_max_global>;
+                               VReg_64, i64, atomic_load_max_global_64>;
 
 defm GLOBAL_ATOMIC_UMAX_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_umax_x2",
-                               VReg_64, i64, atomic_umax_global>;
+                               VReg_64, i64, atomic_load_umax_global_64>;
 
 defm GLOBAL_ATOMIC_AND_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_and_x2",
-                              VReg_64, i64, atomic_and_global>;
+                              VReg_64, i64, atomic_load_and_global_64>;
 
 defm GLOBAL_ATOMIC_OR_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_or_x2",
-                             VReg_64, i64, atomic_or_global>;
+                             VReg_64, i64, atomic_load_or_global_64>;
 
 defm GLOBAL_ATOMIC_XOR_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_xor_x2",
-                              VReg_64, i64, atomic_xor_global>;
+                              VReg_64, i64, atomic_load_xor_global_64>;
 
 defm GLOBAL_ATOMIC_INC_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_inc_x2",
-                              VReg_64, i64, atomic_inc_global>;
+                              VReg_64, i64, atomic_inc_global_64>;
 
 defm GLOBAL_ATOMIC_DEC_X2 : FLAT_Global_Atomic_Pseudo <"global_atomic_dec_x2",
-                              VReg_64, i64, atomic_dec_global>;
+                              VReg_64, i64, atomic_dec_global_64>;
 } // End is_flat_global = 1
 
 } // End SubtargetPredicate = HasFlatGlobalInsts
@@ -795,33 +795,33 @@ def : FlatStorePat <FLAT_STORE_DWORDX4, store_flat, v4i32, VReg_128>;
 def : FlatStoreAtomicPat <FLAT_STORE_DWORD, atomic_store_flat_32, i32>;
 def : FlatStoreAtomicPat <FLAT_STORE_DWORDX2, atomic_store_flat_64, i64, VReg_64>;
 
-def : FlatAtomicPat <FLAT_ATOMIC_ADD_RTN, atomic_add_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_SUB_RTN, atomic_sub_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_INC_RTN, atomic_inc_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_DEC_RTN, atomic_dec_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_AND_RTN, atomic_and_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_SMAX_RTN, atomic_max_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_UMAX_RTN, atomic_umax_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_SMIN_RTN, atomic_min_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_UMIN_RTN, atomic_umin_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_OR_RTN, atomic_or_global, i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_SWAP_RTN, atomic_swap_global, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_ADD_RTN, atomic_load_add_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_SUB_RTN, atomic_load_sub_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_INC_RTN, atomic_inc_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_DEC_RTN, atomic_dec_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_AND_RTN, atomic_load_and_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_SMAX_RTN, atomic_load_max_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_UMAX_RTN, atomic_load_umax_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_SMIN_RTN, atomic_load_min_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_UMIN_RTN, atomic_load_umin_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_OR_RTN, atomic_load_or_global_32, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_SWAP_RTN, atomic_swap_global_32, i32>;
 def : FlatAtomicPat <FLAT_ATOMIC_CMPSWAP_RTN, AMDGPUatomic_cmp_swap_global, i32, v2i32>;
-def : FlatAtomicPat <FLAT_ATOMIC_XOR_RTN, atomic_xor_global, i32>;
+def : FlatAtomicPat <FLAT_ATOMIC_XOR_RTN, atomic_load_xor_global_32, i32>;
 
-def : FlatAtomicPat <FLAT_ATOMIC_ADD_X2_RTN, atomic_add_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_SUB_X2_RTN, atomic_sub_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_INC_X2_RTN, atomic_inc_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_DEC_X2_RTN, atomic_dec_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_AND_X2_RTN, atomic_and_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_SMAX_X2_RTN, atomic_max_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_UMAX_X2_RTN, atomic_umax_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_SMIN_X2_RTN, atomic_min_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_UMIN_X2_RTN, atomic_umin_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_OR_X2_RTN, atomic_or_global, i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_SWAP_X2_RTN, atomic_swap_global, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_ADD_X2_RTN, atomic_load_add_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_SUB_X2_RTN, atomic_load_sub_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_INC_X2_RTN, atomic_inc_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_DEC_X2_RTN, atomic_dec_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_AND_X2_RTN, atomic_load_and_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_SMAX_X2_RTN, atomic_load_max_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_UMAX_X2_RTN, atomic_load_umax_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_SMIN_X2_RTN, atomic_load_min_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_UMIN_X2_RTN, atomic_load_umin_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_OR_X2_RTN, atomic_load_or_global_64, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_SWAP_X2_RTN, atomic_swap_global_64, i64>;
 def : FlatAtomicPat <FLAT_ATOMIC_CMPSWAP_X2_RTN, AMDGPUatomic_cmp_swap_global, i64, v2i64>;
-def : FlatAtomicPat <FLAT_ATOMIC_XOR_X2_RTN, atomic_xor_global, i64>;
+def : FlatAtomicPat <FLAT_ATOMIC_XOR_X2_RTN, atomic_load_xor_global_64, i64>;
 
 def : FlatStorePat <FLAT_STORE_BYTE, truncstorei8_flat, i16>;
 def : FlatStorePat <FLAT_STORE_SHORT, store_flat, i16>;
@@ -899,33 +899,33 @@ def : FlatSignedLoadPat_D16 <GLOBAL_LOAD_SHORT_D16, load_d16_lo_global, v2f16>;
 def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORD, store_atomic_global, i32>;
 def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORDX2, store_atomic_global, i64, VReg_64>;
 
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_ADD_RTN, atomic_add_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SUB_RTN, atomic_sub_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_INC_RTN, atomic_inc_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_DEC_RTN, atomic_dec_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_AND_RTN, atomic_and_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMAX_RTN, atomic_max_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMAX_RTN, atomic_umax_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMIN_RTN, atomic_min_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMIN_RTN, atomic_umin_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_OR_RTN, atomic_or_global, i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SWAP_RTN, atomic_swap_global, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_ADD_RTN, atomic_load_add_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SUB_RTN, atomic_load_sub_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_INC_RTN, atomic_inc_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_DEC_RTN, atomic_dec_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_AND_RTN, atomic_load_and_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMAX_RTN, atomic_load_max_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMAX_RTN, atomic_load_umax_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMIN_RTN, atomic_load_min_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMIN_RTN, atomic_load_umin_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_OR_RTN, atomic_load_or_global_32, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SWAP_RTN, atomic_swap_global_32, i32>;
 def : FlatSignedAtomicPat <GLOBAL_ATOMIC_CMPSWAP_RTN, AMDGPUatomic_cmp_swap_global, i32, v2i32>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_XOR_RTN, atomic_xor_global, i32>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_XOR_RTN, atomic_load_xor_global_32, i32>;
 
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_ADD_X2_RTN, atomic_add_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SUB_X2_RTN, atomic_sub_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_INC_X2_RTN, atomic_inc_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_DEC_X2_RTN, atomic_dec_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_AND_X2_RTN, atomic_and_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMAX_X2_RTN, atomic_max_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMAX_X2_RTN, atomic_umax_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMIN_X2_RTN, atomic_min_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMIN_X2_RTN, atomic_umin_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_OR_X2_RTN, atomic_or_global, i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SWAP_X2_RTN, atomic_swap_global, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_ADD_X2_RTN, atomic_load_add_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SUB_X2_RTN, atomic_load_sub_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_INC_X2_RTN, atomic_inc_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_DEC_X2_RTN, atomic_dec_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_AND_X2_RTN, atomic_load_and_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMAX_X2_RTN, atomic_load_max_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMAX_X2_RTN, atomic_load_umax_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SMIN_X2_RTN, atomic_load_min_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_UMIN_X2_RTN, atomic_load_umin_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_OR_X2_RTN, atomic_load_or_global_64, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SWAP_X2_RTN, atomic_swap_global_64, i64>;
 def : FlatSignedAtomicPat <GLOBAL_ATOMIC_CMPSWAP_X2_RTN, AMDGPUatomic_cmp_swap_global, i64, v2i64>;
-def : FlatSignedAtomicPat <GLOBAL_ATOMIC_XOR_X2_RTN, atomic_xor_global, i64>;
+def : FlatSignedAtomicPat <GLOBAL_ATOMIC_XOR_X2_RTN, atomic_load_xor_global_64, i64>;
 
 def : FlatAtomicPatNoRtn <GLOBAL_ATOMIC_ADD_F32,    atomic_fadd_global_noret, f32>;
 def : FlatAtomicPatNoRtn <GLOBAL_ATOMIC_PK_ADD_F16, atomic_pk_fadd_global_noret, v2f16>;
