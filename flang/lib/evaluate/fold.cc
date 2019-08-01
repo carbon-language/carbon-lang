@@ -402,6 +402,127 @@ Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
   return MakeInvalidIntrinsic(std::move(funcRef));
 }
 
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef) {
+  using T = Type<TypeCategory::Integer, KIND>;
+  ActualArguments &args{funcRef.arguments()};
+  if (const auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
+    if (int rank{array->Rank()}; rank > 0) {
+      std::optional<std::int64_t> dim;
+      if (args[1].has_value()) {
+        // Optional DIM= argument is present: return a scalar.
+        dim = GetInt64Arg(args[1]);
+        if (!dim.has_value()) {
+          // DIM= is present but not constant
+          return Expr<T>{std::move(funcRef)};
+        } else if (*dim < 1 || *dim > rank) {
+          context.messages().Say(
+              "LBOUND(array,dim=%jd) dimension is out of range for "
+              "rank-%d array"_en_US,
+              static_cast<std::intmax_t>(*dim), rank);
+          return MakeInvalidIntrinsic<T>(std::move(funcRef));
+        }
+      }
+      bool lowerBoundsAreOne{true};
+      if (auto named{ExtractNamedEntity(*array)}) {
+        const Symbol &symbol{named->GetLastSymbol()};
+        if (symbol.Rank() == rank) {
+          lowerBoundsAreOne = false;
+          if (dim.has_value()) {
+            if (auto lb{
+                    GetLowerBound(context, *named, static_cast<int>(*dim))}) {
+              return Fold(context, ConvertToType<T>(std::move(*lb)));
+            }
+          } else if (auto lbounds{
+                         AsConstantShape(GetLowerBounds(context, *named))}) {
+            return Fold(context,
+                ConvertToType<T>(Expr<ExtentType>{std::move(*lbounds)}));
+          }
+        } else {
+          lowerBoundsAreOne = symbol.Rank() == 0;  // LBOUND(array%component)
+        }
+      }
+      if (lowerBoundsAreOne) {
+        if (dim.has_value()) {
+          return Expr<T>{1};
+        } else {
+          std::vector<Scalar<T>> ones(rank, Scalar<T>{1});
+          return Expr<T>{
+              Constant<T>{std::move(ones), ConstantSubscripts{rank}}};
+        }
+      }
+    }
+  }
+  return Expr<T>{std::move(funcRef)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef) {
+  using T = Type<TypeCategory::Integer, KIND>;
+  ActualArguments &args{funcRef.arguments()};
+  if (auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
+    if (int rank{array->Rank()}; rank > 0) {
+      std::optional<std::int64_t> dim;
+      if (args[1].has_value()) {
+        // Optional DIM= argument is present: return a scalar.
+        dim = GetInt64Arg(args[1]);
+        if (!dim.has_value()) {
+          // DIM= is present but not constant
+          return Expr<T>{std::move(funcRef)};
+        } else if (*dim < 1 || *dim > rank) {
+          context.messages().Say(
+              "UBOUND(array,dim=%jd) dimension is out of range for "
+              "rank-%d array"_en_US,
+              static_cast<std::intmax_t>(*dim), rank);
+          return MakeInvalidIntrinsic<T>(std::move(funcRef));
+        }
+      }
+      bool takeBoundsFromShape{true};
+      if (auto named{ExtractNamedEntity(*array)}) {
+        const Symbol &symbol{named->GetLastSymbol()};
+        if (symbol.Rank() == rank) {
+          takeBoundsFromShape = false;
+          if (dim.has_value()) {
+            if (semantics::IsAssumedSizeArray(symbol) && *dim == rank) {
+              return Expr<T>{-1};
+            } else if (auto ub{GetUpperBound(
+                           context, *named, static_cast<int>(*dim))}) {
+              return Fold(context, ConvertToType<T>(std::move(*ub)));
+            }
+          } else {
+            Shape ubounds{GetUpperBounds(context, *named)};
+            if (semantics::IsAssumedSizeArray(symbol)) {
+              CHECK(!ubounds.back().has_value());
+              ubounds.back() = ExtentExpr{-1};
+            }
+            if (auto constant{AsConstantShape(ubounds)}) {
+              return Fold(context,
+                  ConvertToType<T>(Expr<ExtentType>{std::move(*constant)}));
+            }
+          }
+        } else {
+          takeBoundsFromShape = symbol.Rank() == 0;  // UBOUND(array%component)
+        }
+      }
+      if (takeBoundsFromShape) {
+        if (auto shape{GetShape(context, *array)}) {
+          if (dim.has_value()) {
+            if (auto &dimSize{shape->at(*dim)}) {
+              return Fold(context,
+                  ConvertToType<T>(Expr<ExtentType>{std::move(*dimSize)}));
+            }
+          } else if (auto shapeExpr{AsExtentArrayExpr(*shape)}) {
+            return Fold(context, ConvertToType<T>(std::move(*shapeExpr)));
+          }
+        }
+      }
+    }
+  }
+  return Expr<T>{std::move(funcRef)};
+}
+
 template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   ActualArguments &args{funcRef.arguments()};
@@ -551,51 +672,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
       common::die("kind() result not integral");
     }
   } else if (name == "lbound") {
-    if (const auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
-      if (int rank{array->Rank()}) {
-        std::optional<std::int64_t> dim;
-        if (args[1].has_value()) {
-          dim = GetInt64Arg(args[1]);
-          if (!dim.has_value()) {
-            // DIM= is present but not constant
-            return Expr<T>{std::move(funcRef)};
-          } else if (*dim < 1 || *dim > rank) {
-            context.messages().Say(
-                "LBOUND(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
-                static_cast<std::intmax_t>(*dim), rank);
-            return MakeInvalidIntrinsic<T>(std::move(funcRef));
-          }
-        }
-        bool lowerBoundsAreOne{true};
-        if (auto named{ExtractNamedEntity(*array)}) {
-          const Symbol &symbol{named->GetLastSymbol()};
-          if (symbol.Rank() == rank) {
-            lowerBoundsAreOne = false;
-            if (dim.has_value()) {
-              if (auto lb{
-                      GetLowerBound(context, *named, static_cast<int>(*dim))}) {
-                return Fold(context, ConvertToType<T>(std::move(*lb)));
-              }
-            } else if (auto lbounds{
-                           AsConstantShape(GetLowerBounds(context, *named))}) {
-              return Fold(context,
-                  ConvertToType<T>(Expr<ExtentType>{std::move(*lbounds)}));
-            }
-          } else {
-            lowerBoundsAreOne = symbol.Rank() == 0;  // component
-          }
-        }
-        if (lowerBoundsAreOne) {
-          if (dim.has_value()) {
-            return Expr<T>{1};
-          } else {
-            std::vector<Scalar<T>> ones(rank, Scalar<T>{1});
-            return Expr<T>{
-                Constant<T>{std::move(ones), ConstantSubscripts{rank}}};
-          }
-        }
-      }
-    }
+    return LBOUND(context, std::move(funcRef));
   } else if (name == "leadz" || name == "trailz" || name == "poppar" ||
       name == "popcnt") {
     if (auto *sn{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
@@ -763,62 +840,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
       }
     }
   } else if (name == "ubound") {
-    if (auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
-      if (int rank{array->Rank()}; rank > 0) {
-        std::optional<std::int64_t> dim;
-        if (args[1].has_value()) {
-          dim = GetInt64Arg(args[1]);
-          if (!dim.has_value()) {
-            // DIM= is present but not constant
-            return Expr<T>{std::move(funcRef)};
-          } else if (*dim < 1 || *dim > rank) {
-            context.messages().Say(
-                "UBOUND(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
-                static_cast<std::intmax_t>(*dim), rank);
-            return MakeInvalidIntrinsic<T>(std::move(funcRef));
-          }
-        }
-        bool takeBoundsFromShape{true};
-        if (auto named{ExtractNamedEntity(*array)}) {
-          const Symbol &symbol{named->GetLastSymbol()};
-          if (symbol.Rank() == rank) {
-            takeBoundsFromShape = false;
-            if (dim.has_value()) {
-              if (semantics::IsAssumedSizeArray(symbol) && *dim == rank) {
-                return Expr<T>{-1};
-              } else if (auto ub{GetUpperBound(
-                             context, *named, static_cast<int>(*dim))}) {
-                return Fold(context, ConvertToType<T>(std::move(*ub)));
-              }
-            } else {
-              Shape ubounds{GetUpperBounds(context, *named)};
-              if (semantics::IsAssumedSizeArray(symbol)) {
-                CHECK(!ubounds.back().has_value());
-                ubounds.back() = ExtentExpr{-1};
-              }
-              if (auto constant{AsConstantShape(ubounds)}) {
-                return Fold(context,
-                    ConvertToType<T>(Expr<ExtentType>{std::move(*constant)}));
-              }
-            }
-          } else {
-            takeBoundsFromShape = symbol.Rank() == 0;  // component
-          }
-        }
-        if (takeBoundsFromShape) {
-          if (auto shape{GetShape(context, *array)}) {
-            if (dim.has_value()) {
-              if (auto &dimSize{shape->at(*dim)}) {
-                return Fold(context,
-                    ConvertToType<T>(Expr<ExtentType>{std::move(*dimSize)}));
-              }
-            } else if (auto shapeExpr{AsExtentArrayExpr(*shape)}) {
-              return Fold(context, ConvertToType<T>(std::move(*shapeExpr)));
-            }
-          }
-        }
-      }
-    }
+    return UBOUND(context, std::move(funcRef));
   }
   // TODO:
   // ceiling, count, cshift, dot_product, eoshift,
