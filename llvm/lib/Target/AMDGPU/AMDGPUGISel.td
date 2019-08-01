@@ -12,10 +12,6 @@
 
 include "AMDGPU.td"
 
-def p0 : PtrValueType<i64, 0>;
-def p1 : PtrValueType<i64, 1>;
-def p4 : PtrValueType<i64, 4>;
-
 def sd_vsrc0 : ComplexPattern<i32, 1, "">;
 def gi_vsrc0 :
     GIComplexOperandMatcher<s32, "selectVSRC0">,
