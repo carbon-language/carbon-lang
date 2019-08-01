@@ -398,7 +398,7 @@ LLVM-specific variables
   tools.
   Defaults to ON.
 
-  **LLVM_USE_PERF**:BOOL
+**LLVM_USE_PERF**:BOOL
   Enable building support for Perf (linux profiling tool) JIT support. Defaults to OFF.
 
 **LLVM_ENABLE_ZLIB**:BOOL
