@@ -81,7 +81,7 @@ run_lint ${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.cpp \
 
 # ASan
 ASAN_RTL=${COMPILER_RT}/lib/asan
-run_lint ${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.cc \
+run_lint ${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.cpp \
                                  ${ASAN_RTL}/*.h &
 run_lint ${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.cc \
                                   ${ASAN_RTL}/tests/*.h &
