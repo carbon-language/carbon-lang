@@ -79,7 +79,7 @@ template <typename T> struct TrailingZerosCounter<T, 4> {
     if (ZB != ZB_Undefined && Val == 0)
       return 32;
 
-#if __has_builtin(__builtin_ctz) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_ctz)
     return __builtin_ctz(Val);
 #elif defined(_MSC_VER)
     unsigned long Index;
@@ -95,7 +95,7 @@ template <typename T> struct TrailingZerosCounter<T, 8> {
     if (ZB != ZB_Undefined && Val == 0)
       return 64;
 
-#if __has_builtin(__builtin_ctzll) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_ctzll)
     return __builtin_ctzll(Val);
 #elif defined(_MSC_VER)
     unsigned long Index;
@@ -148,7 +148,7 @@ template <typename T> struct LeadingZerosCounter<T, 4> {
     if (ZB != ZB_Undefined && Val == 0)
       return 32;
 
-#if __has_builtin(__builtin_clz) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_clz)
     return __builtin_clz(Val);
 #elif defined(_MSC_VER)
     unsigned long Index;
@@ -164,7 +164,7 @@ template <typename T> struct LeadingZerosCounter<T, 8> {
     if (ZB != ZB_Undefined && Val == 0)
       return 64;
 
-#if __has_builtin(__builtin_clzll) || LLVM_GNUC_PREREQ(4, 0, 0)
+#if __has_builtin(__builtin_clzll)
     return __builtin_clzll(Val);
 #elif defined(_MSC_VER)
     unsigned long Index;
