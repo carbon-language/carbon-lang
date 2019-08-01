@@ -75,7 +75,6 @@
 #define LLVM_MSC_PREREQ(version) 0
 #endif
 
-/// \macro LLVM_HAS_RVALUE_REFERENCE_THIS
 /// Does the compiler support ref-qualifiers for *this?
 ///
 /// Sadly, this is separate from just rvalue reference support because GCC
@@ -86,7 +85,6 @@
 #define LLVM_HAS_RVALUE_REFERENCE_THIS 0
 #endif
 
-/// \macro LLVM_LVALUE_FUNCTION
 /// Expands to '&' if ref-qualifiers for *this are supported.
 ///
 /// This can be used to provide lvalue/rvalue overrides of member functions.
@@ -97,35 +95,31 @@
 #define LLVM_LVALUE_FUNCTION
 #endif
 
-/// \macro LLVM_LIBRARY_VISIBILITY
-/// If a class marked with this attribute is linked into a shared library, then
-/// the class should be private to the library and not accessible from outside
-/// it. Can also be used to mark variables and functions, making them private to
-/// any shared library they are linked into. On PE/COFF targets, library
-/// visibility is the default, so this isn't needed.
-#if __has_attribute(visibility) &&                                      \
+/// LLVM_LIBRARY_VISIBILITY - If a class marked with this attribute is linked
+/// into a shared library, then the class should be private to the library and
+/// not accessible from outside it.  Can also be used to mark variables and
+/// functions, making them private to any shared library they are linked into.
+/// On PE/COFF targets, library visibility is the default, so this isn't needed.
+#if (__has_attribute(visibility) || LLVM_GNUC_PREREQ(4, 0, 0)) &&              \
     !defined(__MINGW32__) && !defined(__CYGWIN__) && !defined(_WIN32)
 #define LLVM_LIBRARY_VISIBILITY __attribute__ ((visibility("hidden")))
 #else
 #define LLVM_LIBRARY_VISIBILITY
 #endif
 
-/// \macro LLVM_PREFETCH
 #if defined(__GNUC__)
 #define LLVM_PREFETCH(addr, rw, locality) __builtin_prefetch(addr, rw, locality)
 #else
 #define LLVM_PREFETCH(addr, rw, locality)
 #endif
 
-/// \macro LLVM_ATTRIBUTE_USED
-#if __has_attribute(used)
+#if __has_attribute(used) || LLVM_GNUC_PREREQ(3, 1, 0)
 #define LLVM_ATTRIBUTE_USED __attribute__((__used__))
 #else
 #define LLVM_ATTRIBUTE_USED
 #endif
 
-/// \macro LLVM_NODISCARD
-/// Warn if a type or return value is discarded.
+/// LLVM_NODISCARD - Warn if a type or return value is discarded.
 #if __cplusplus > 201402L && __has_cpp_attribute(nodiscard)
 #define LLVM_NODISCARD [[nodiscard]]
 #elif !__cplusplus
@@ -138,47 +132,43 @@
 #define LLVM_NODISCARD
 #endif
 
-/// \macro LLVM_ATTRIBUTE_REINITIALIZES
-///
-/// Indicate that a non-static, non-const C++ member function reinitializes the
-/// entire object to a known state, independent of the previous state of the
-/// object.
-///
-/// The clang-tidy check bugprone-use-after-move recognizes this attribute as a
-/// marker that a moved-from object has left the indeterminate state and can be
-/// reused.
+// Indicate that a non-static, non-const C++ member function reinitializes
+// the entire object to a known state, independent of the previous state of
+// the object.
+//
+// The clang-tidy check bugprone-use-after-move recognizes this attribute as a
+// marker that a moved-from object has left the indeterminate state and can be
+// reused.
 #if __has_cpp_attribute(clang::reinitializes)
 #define LLVM_ATTRIBUTE_REINITIALIZES [[clang::reinitializes]]
 #else
 #define LLVM_ATTRIBUTE_REINITIALIZES
 #endif
 
-/// \macro LLVM_ATTRIBUTE_UNUSED
-///
-/// Some compilers warn about unused functions. When a function is sometimes
-/// used or not depending on build settings (e.g. a function only called from
-/// within "assert"), this attribute can be used to suppress such warnings.
-///
-/// However, it shouldn't be used for unused *variables*, as those have a much
-/// more portable solution:
-///   (void)unused_var_name;
-/// Prefer cast-to-void wherever it is sufficient.
-#if __has_attribute(unused)
+// Some compilers warn about unused functions. When a function is sometimes
+// used or not depending on build settings (e.g. a function only called from
+// within "assert"), this attribute can be used to suppress such warnings.
+//
+// However, it shouldn't be used for unused *variables*, as those have a much
+// more portable solution:
+//   (void)unused_var_name;
+// Prefer cast-to-void wherever it is sufficient.
+#if __has_attribute(unused) || LLVM_GNUC_PREREQ(3, 1, 0)
 #define LLVM_ATTRIBUTE_UNUSED __attribute__((__unused__))
 #else
 #define LLVM_ATTRIBUTE_UNUSED
 #endif
 
-/// \macro LLVM_ATTRIBUTE_WEAK
 // FIXME: Provide this for PE/COFF targets.
-#if __has_attribute(weak) &&                                            \
+#if (__has_attribute(weak) || LLVM_GNUC_PREREQ(4, 0, 0)) &&                    \
     (!defined(__MINGW32__) && !defined(__CYGWIN__) && !defined(_WIN32))
 #define LLVM_ATTRIBUTE_WEAK __attribute__((__weak__))
 #else
 #define LLVM_ATTRIBUTE_WEAK
 #endif
 
-/// \macro LLVM_READNONE
+// Prior to clang 3.2, clang did not accept any spelling of
+// __has_attribute(const), so assume it is supported.
 #if defined(__clang__) || defined(__GNUC__)
 // aka 'CONST' but following LLVM Conventions.
 #define LLVM_READNONE __attribute__((__const__))
@@ -186,7 +176,6 @@
 #define LLVM_READNONE
 #endif
 
-/// \macro LLVM_READONLY
 #if __has_attribute(pure) || defined(__GNUC__)
 // aka 'PURE' but following LLVM Conventions.
 #define LLVM_READONLY __attribute__((__pure__))
@@ -194,9 +183,7 @@
 #define LLVM_READONLY
 #endif
 
-/// \macro LLVM_LIKELY
-/// \macro LLVM_UNLIKELY
-#if __has_builtin(__builtin_expect)
+#if __has_builtin(__builtin_expect) || LLVM_GNUC_PREREQ(4, 0, 0)
 #define LLVM_LIKELY(EXPR) __builtin_expect((bool)(EXPR), true)
 #define LLVM_UNLIKELY(EXPR) __builtin_expect((bool)(EXPR), false)
 #else
@@ -204,10 +191,9 @@
 #define LLVM_UNLIKELY(EXPR) (EXPR)
 #endif
 
-/// \macro LLVM_ATTRIBUTE_NOINLINE
-/// On compilers where we have a directive to do so, mark a method "not for
-/// inlining".
-#if __has_attribute(noinline)
+/// LLVM_ATTRIBUTE_NOINLINE - On compilers where we have a directive to do so,
+/// mark a method "not for inlining".
+#if __has_attribute(noinline) || LLVM_GNUC_PREREQ(3, 4, 0)
 #define LLVM_ATTRIBUTE_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
 #define LLVM_ATTRIBUTE_NOINLINE __declspec(noinline)
@@ -215,12 +201,11 @@
 #define LLVM_ATTRIBUTE_NOINLINE
 #endif
 
-/// \macro LLVM_ATTRIBUTE_ALWAYS_INLINE
-/// On compilers where we have a directive to do so, mark a method "always
-/// inline" because it is performance sensitive. GCC 3.4 supported this but is
-/// buggy in various cases and produces unimplemented errors, just use it in GCC
-/// 4.0 and later.
-#if __has_attribute(always_inline)
+/// LLVM_ATTRIBUTE_ALWAYS_INLINE - On compilers where we have a directive to do
+/// so, mark a method "always inline" because it is performance sensitive. GCC
+/// 3.4 supported this but is buggy in various cases and produces unimplemented
+/// errors, just use it in GCC 4.0 and later.
+#if __has_attribute(always_inline) || LLVM_GNUC_PREREQ(4, 0, 0)
 #define LLVM_ATTRIBUTE_ALWAYS_INLINE __attribute__((always_inline))
 #elif defined(_MSC_VER)
 #define LLVM_ATTRIBUTE_ALWAYS_INLINE __forceinline
@@ -228,7 +213,6 @@
 #define LLVM_ATTRIBUTE_ALWAYS_INLINE
 #endif
 
-/// \macro LLVM_ATTRIBUTE_NORETURN
 #ifdef __GNUC__
 #define LLVM_ATTRIBUTE_NORETURN __attribute__((noreturn))
 #elif defined(_MSC_VER)
@@ -237,7 +221,6 @@
 #define LLVM_ATTRIBUTE_NORETURN
 #endif
 
-/// \macro LLVM_ATTRIBUTE_RETURNS_NONNULL
 #if __has_attribute(returns_nonnull) || LLVM_GNUC_PREREQ(4, 9, 0)
 #define LLVM_ATTRIBUTE_RETURNS_NONNULL __attribute__((returns_nonnull))
 #elif defined(_MSC_VER)
@@ -246,9 +229,8 @@
 #define LLVM_ATTRIBUTE_RETURNS_NONNULL
 #endif
 
-/// \macro LLVM_ATTRIBUTE_RETURNS_NOALIAS
-/// Used to mark a function as returning a pointer that does not alias any other
-/// valid pointer.
+/// \macro LLVM_ATTRIBUTE_RETURNS_NOALIAS Used to mark a function as returning a
+/// pointer that does not alias any other valid pointer.
 #ifdef __GNUC__
 #define LLVM_ATTRIBUTE_RETURNS_NOALIAS __attribute__((__malloc__))
 #elif defined(_MSC_VER)
@@ -257,8 +239,7 @@
 #define LLVM_ATTRIBUTE_RETURNS_NOALIAS
 #endif
 
-/// \macro LLVM_FALLTHROUGH
-/// Mark fallthrough cases in switch statements.
+/// LLVM_FALLTHROUGH - Mark fallthrough cases in switch statements.
 #if __cplusplus > 201402L && __has_cpp_attribute(fallthrough)
 #define LLVM_FALLTHROUGH [[fallthrough]]
 #elif __has_cpp_attribute(gnu::fallthrough)
@@ -273,8 +254,8 @@
 #define LLVM_FALLTHROUGH
 #endif
 
-/// \macro LLVM_REQUIRE_CONSTANT_INITIALIZATION
-/// Apply this to globals to ensure that they are constant initialized.
+/// LLVM_REQUIRE_CONSTANT_INITIALIZATION - Apply this to globals to ensure that
+/// they are constant initialized.
 #if __has_cpp_attribute(clang::require_constant_initialization)
 #define LLVM_REQUIRE_CONSTANT_INITIALIZATION                                   \
   [[clang::require_constant_initialization]]
@@ -282,8 +263,8 @@
 #define LLVM_REQUIRE_CONSTANT_INITIALIZATION
 #endif
 
-/// \macro LLVM_EXTENSION
-/// Support compilers where we have a keyword to suppress pedantic diagnostics.
+/// LLVM_EXTENSION - Support compilers where we have a keyword to suppress
+/// pedantic diagnostics.
 #ifdef __GNUC__
 #define LLVM_EXTENSION __extension__
 #else
@@ -305,18 +286,18 @@
   decl
 #endif
 
-/// On compilers which support it, expands to an expression which states that it
-/// is undefined behavior for the compiler to reach this point. Otherwise is not
-/// defined.
-#if __has_builtin(__builtin_unreachable)
+/// LLVM_BUILTIN_UNREACHABLE - On compilers which support it, expands
+/// to an expression which states that it is undefined behavior for the
+/// compiler to reach this point.  Otherwise is not defined.
+#if __has_builtin(__builtin_unreachable) || LLVM_GNUC_PREREQ(4, 5, 0)
 # define LLVM_BUILTIN_UNREACHABLE __builtin_unreachable()
 #elif defined(_MSC_VER)
 # define LLVM_BUILTIN_UNREACHABLE __assume(false)
 #endif
 
-/// On compilers which support it, expands to an expression which causes the
-/// program to exit abnormally.
-#if __has_builtin(__builtin_trap)
+/// LLVM_BUILTIN_TRAP - On compilers which support it, expands to an expression
+/// which causes the program to exit abnormally.
+#if __has_builtin(__builtin_trap) || LLVM_GNUC_PREREQ(4, 3, 0)
 # define LLVM_BUILTIN_TRAP __builtin_trap()
 #elif defined(_MSC_VER)
 // The __debugbreak intrinsic is supported by MSVC, does not require forward
@@ -328,9 +309,9 @@
 # define LLVM_BUILTIN_TRAP *(volatile int*)0x11 = 0
 #endif
 
-/// \macro LLVM_BUILTIN_DEBUGTRAP
-/// On compilers which support it, expands to an expression which causes the
-/// program to break while running under a debugger.
+/// LLVM_BUILTIN_DEBUGTRAP - On compilers which support it, expands to
+/// an expression which causes the program to break while running
+/// under a debugger.
 #if __has_builtin(__builtin_debugtrap)
 # define LLVM_BUILTIN_DEBUGTRAP __builtin_debugtrap()
 #elif defined(_MSC_VER)
@@ -347,7 +328,7 @@
 
 /// \macro LLVM_ASSUME_ALIGNED
 /// Returns a pointer with an assumed alignment.
-#if __has_builtin(__builtin_assume_aligned)
+#if __has_builtin(__builtin_assume_aligned) || LLVM_GNUC_PREREQ(4, 7, 0)
 # define LLVM_ASSUME_ALIGNED(p, a) __builtin_assume_aligned(p, a)
 #elif defined(LLVM_BUILTIN_UNREACHABLE)
 // As of today, clang does not support __builtin_assume_aligned.
@@ -474,7 +455,6 @@ void AnnotateIgnoreWritesEnd(const char *file, int line);
 #define LLVM_NO_SANITIZE(KIND)
 #endif
 
-/// \macro LLVM_DUMP_METHOD
 /// Mark debug helper function definitions like dump() that should not be
 /// stripped from debug builds.
 /// Note that you should also surround dump() functions with

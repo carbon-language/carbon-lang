@@ -199,7 +199,7 @@ class is_trivially_copyable<T*> : public std::true_type {
 // macro will be left undefined.
 #if __cplusplus >= 201402L || defined(_MSC_VER)
 #define LLVM_IS_FINAL(Ty) std::is_final<Ty>()
-#elif __has_feature(is_final)
+#elif __has_feature(is_final) || LLVM_GNUC_PREREQ(4, 7, 0)
 #define LLVM_IS_FINAL(Ty) __is_final(Ty)
 #endif
 
