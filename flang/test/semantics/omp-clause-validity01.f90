@@ -154,6 +154,53 @@
      enddo
   enddo
 
+! 2.7.2 sections-clause -> private-clause |
+!                         firstprivate-clause |
+!                         lastprivate-clause |
+!                         reduction-clause
+
+  !$omp parallel
+  !$omp sections
+  !$omp section
+  a = 0.0
+  !$omp section
+  b = 1
+  !$omp end sections nowait
+  !$omp end parallel
+
+  !ERROR: SECTION directive must appear within the SECTIONS construct
+  !$omp section
+  a = 0.0
+  !$omp parallel
+  !ERROR: SECTION directive must appear within the SECTIONS construct
+  !$omp section
+  a = 3.14
+  !$omp end parallel
+
+! 2.7.3 single-clause -> private-clause |
+!                        firstprivate-clause
+!   end-single-clause -> copyprivate-clause |
+!                        nowait-clause
+
+  !$omp parallel
+  b = 1
+  !ERROR: LASTPRIVATE clause is not allowed on the SINGLE directive
+  !$omp single private(a) lastprivate(a)
+  a = 3.14
+  !ERROR: The COPYPRIVATE clause must not be used with the NOWAIT clause
+  !ERROR: At most one NOWAIT clause can appear on the END SINGLE directive
+  !$omp end single copyprivate(a) nowait nowait
+  c = 2
+  !$omp end parallel
+
+! 2.7.4 workshare
+
+  !$omp parallel
+  !$omp workshare
+  a = 1.0
+  !$omp end workshare nowait
+  !$omp end parallel
+
 ! 2.8.1 simd-clause -> safelen-clause |
 !                      simdlen-clause |
 !                      linear-clause |

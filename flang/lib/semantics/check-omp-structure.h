@@ -26,14 +26,14 @@
 
 namespace Fortran::semantics {
 
-ENUM_CLASS(OmpDirective, PARALLEL, DO, SECTIONS, SECTION, SINGLE, WORKSHARE,
-    SIMD, DECLARE_SIMD, DO_SIMD, TASK, TASKLOOP, TASKLOOP_SIMD, TASKYIELD,
-    TARGET_DATA, TARGET_ENTER_DATA, TARGET_EXIT_DATA, TARGET, TARGET_UPDATE,
-    DECLARE_TARGET, TEAMS, DISTRIBUTE, DISTRIBUTE_SIMD, DISTRIBUTE_PARALLEL_DO,
-    DISTRIBUTE_PARALLEL_DO_SIMD, PARALLEL_DO, PARALLEL_SECTIONS,
-    PARALLEL_WORKSHARE, PARALLEL_DO_SIMD, TARGET_PARALLEL, TARGET_PARALLEL_DO,
-    TARGET_PARALLEL_DO_SIMD, TARGET_SIMD, TARGET_TEAMS, TEAMS_DISTRIBUTE,
-    TEAMS_DISTRIBUTE_SIMD, TARGET_TEAMS_DISTRIBUTE,
+ENUM_CLASS(OmpDirective, PARALLEL, DO, SECTIONS, SECTION, SINGLE, END_SINGLE,
+    WORKSHARE, SIMD, DECLARE_SIMD, DO_SIMD, TASK, TASKLOOP, TASKLOOP_SIMD,
+    TASKYIELD, TARGET_DATA, TARGET_ENTER_DATA, TARGET_EXIT_DATA, TARGET,
+    TARGET_UPDATE, DECLARE_TARGET, TEAMS, DISTRIBUTE, DISTRIBUTE_SIMD,
+    DISTRIBUTE_PARALLEL_DO, DISTRIBUTE_PARALLEL_DO_SIMD, PARALLEL_DO,
+    PARALLEL_SECTIONS, PARALLEL_WORKSHARE, PARALLEL_DO_SIMD, TARGET_PARALLEL,
+    TARGET_PARALLEL_DO, TARGET_PARALLEL_DO_SIMD, TARGET_SIMD, TARGET_TEAMS,
+    TEAMS_DISTRIBUTE, TEAMS_DISTRIBUTE_SIMD, TARGET_TEAMS_DISTRIBUTE,
     TARGET_TEAMS_DISTRIBUTE_SIMD, TEAMS_DISTRIBUTE_PARALLEL_DO,
     TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO, TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
     TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD, MASTER, CRITICAL, BARRIER,
@@ -64,8 +64,21 @@ public:
   void Leave(const parser::OpenMPBlockConstruct &);
   void Enter(const parser::OmpBlockDirective &);
 
+  void Enter(const parser::OpenMPSectionsConstruct &);
+  void Leave(const parser::OpenMPSectionsConstruct &);
+  void Enter(const parser::OmpSection &);
+
+  void Enter(const parser::OpenMPSingleConstruct &x);
+  void Leave(const parser::OpenMPSingleConstruct &x);
+  void Enter(const parser::OmpEndSingle &x);
+  void Leave(const parser::OmpEndSingle &x);
+
+  void Enter(const parser::OpenMPWorkshareConstruct &x);
+  void Leave(const parser::OpenMPWorkshareConstruct &x);
+
   void Leave(const parser::OmpClauseList &);
   void Enter(const parser::OmpClause &);
+  void Enter(const parser::OmpNowait &);
   void Enter(const parser::OmpClause::Defaultmap &);
   void Enter(const parser::OmpClause::Inbranch &);
   void Enter(const parser::OmpClause::Mergeable &);
@@ -120,25 +133,28 @@ private:
     std::multimap<OmpClause, const parser::OmpClause *> clauseInfo;
   };
   // back() is the top of the stack
-  const OmpContext &GetContext() const { return ompContext_.back(); }
+  OmpContext &GetContext() {
+    CHECK(!ompContext_.empty());
+    return ompContext_.back();
+  }
   void SetContextDirectiveSource(const parser::CharBlock &directive) {
-    ompContext_.back().directiveSource = directive;
+    GetContext().directiveSource = directive;
   }
   void SetContextClause(const parser::OmpClause &clause) {
-    ompContext_.back().clauseSource = clause.source;
-    ompContext_.back().clause = &clause;
+    GetContext().clauseSource = clause.source;
+    GetContext().clause = &clause;
   }
   void SetContextDirectiveEnum(const OmpDirective &dir) {
-    ompContext_.back().directive = dir;
+    GetContext().directive = dir;
   }
   void SetContextAllowed(const OmpClauseSet &allowed) {
-    ompContext_.back().allowedClauses = allowed;
+    GetContext().allowedClauses = allowed;
   }
   void SetContextAllowedOnce(const OmpClauseSet &allowedOnce) {
-    ompContext_.back().allowedOnceClauses = allowedOnce;
+    GetContext().allowedOnceClauses = allowedOnce;
   }
   void SetContextClauseInfo(const OmpClause &type) {
-    ompContext_.back().clauseInfo.emplace(type, ompContext_.back().clause);
+    GetContext().clauseInfo.emplace(type, GetContext().clause);
   }
   const parser::OmpClause *FindClause(const OmpClause &type) {
     auto it{GetContext().clauseInfo.find(type)};
@@ -146,6 +162,13 @@ private:
       return it->second;
     }
     return nullptr;
+  }
+  void PushContext(const parser::CharBlock &source) {
+    ompContext_.push_back(OmpContext{source});
+  }
+  void PushContext(const parser::CharBlock &source, const OmpDirective &dir) {
+    PushContext(source);
+    SetContextDirectiveEnum(dir);
   }
 
   bool CurrentDirectiveIsNested() { return ompContext_.size() > 0; };

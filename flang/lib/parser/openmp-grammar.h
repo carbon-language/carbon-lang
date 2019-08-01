@@ -463,8 +463,9 @@ TYPE_PARSER(construct<OpenMPStandaloneConstruct>(
     Parser<OmpStandaloneDirective>{}, Parser<OmpClauseList>{} / endOmpLine))
 
 // OMP SINGLE
-TYPE_PARSER(startOmpLine >> "END"_tok >>
-    construct<OmpEndSingle>("SINGLE" >> Parser<OmpClauseList>{}) / endOmpLine)
+TYPE_PARSER(startOmpLine >> construct<OmpEndSingle>(verbatim("END SINGLE"_tok),
+                                Parser<OmpClauseList>{}) /
+        endOmpLine)
 
 TYPE_PARSER(construct<OpenMPSingleConstruct>(verbatim("SINGLE"_tok),
     Parser<OmpClauseList>{} / endOmpLine, block, Parser<OmpEndSingle>{}))
@@ -490,10 +491,9 @@ TYPE_PARSER(startOmpLine >> "END SECTIONS"_tok >>
 TYPE_PARSER(construct<OpenMPSectionsConstruct>(verbatim("SECTIONS"_tok),
     Parser<OmpClauseList>{} / endOmpLine, block, Parser<OmpEndSections>{}))
 
-// OMP END PARALLEL SECTIONS [NOWAIT]
-TYPE_PARSER(startOmpLine >> "END PARALLEL SECTIONS"_tok >>
-    construct<OmpEndParallelSections>(
-        maybe("NOWAIT" >> construct<OmpNowait>()) / endOmpLine))
+// OMP END PARALLEL SECTIONS
+TYPE_PARSER(construct<OmpEndParallelSections>(
+    startOmpLine >> "END PARALLEL SECTIONS"_tok / endOmpLine))
 
 // OMP PARALLEL SECTIONS
 TYPE_PARSER(construct<OpenMPParallelSectionsConstruct>(
