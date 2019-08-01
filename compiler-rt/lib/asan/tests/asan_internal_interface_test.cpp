@@ -1,4 +1,4 @@
-//===-- asan_internal_interface_test.cc -----------------------------------===//
+//===-- asan_internal_interface_test.cpp ----------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
