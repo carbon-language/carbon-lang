@@ -4,22 +4,22 @@ set -e
 
 SRCS="
 	tsan_go.cc
-	../rtl/tsan_clock.cc
-	../rtl/tsan_external.cc
-	../rtl/tsan_flags.cc
-	../rtl/tsan_interface_atomic.cc
-	../rtl/tsan_md5.cc
-	../rtl/tsan_mutex.cc
-	../rtl/tsan_report.cc
-	../rtl/tsan_rtl.cc
-	../rtl/tsan_rtl_mutex.cc
-	../rtl/tsan_rtl_report.cc
-	../rtl/tsan_rtl_thread.cc
-	../rtl/tsan_rtl_proc.cc
-	../rtl/tsan_stack_trace.cc
-	../rtl/tsan_stat.cc
-	../rtl/tsan_suppressions.cc
-	../rtl/tsan_sync.cc
+	../rtl/tsan_clock.cpp
+	../rtl/tsan_external.cpp
+	../rtl/tsan_flags.cpp
+	../rtl/tsan_interface_atomic.cpp
+	../rtl/tsan_md5.cpp
+	../rtl/tsan_mutex.cpp
+	../rtl/tsan_report.cpp
+	../rtl/tsan_rtl.cpp
+	../rtl/tsan_rtl_mutex.cpp
+	../rtl/tsan_rtl_report.cpp
+	../rtl/tsan_rtl_thread.cpp
+	../rtl/tsan_rtl_proc.cpp
+	../rtl/tsan_stack_trace.cpp
+	../rtl/tsan_stat.cpp
+	../rtl/tsan_suppressions.cpp
+	../rtl/tsan_sync.cpp
 	../../sanitizer_common/sanitizer_allocator.cpp
 	../../sanitizer_common/sanitizer_common.cpp
 	../../sanitizer_common/sanitizer_common_libcdep.cpp
@@ -44,7 +44,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS="
 		$SRCS
-		../rtl/tsan_platform_linux.cc
+		../rtl/tsan_platform_linux.cpp
 		../../sanitizer_common/sanitizer_posix.cpp
 		../../sanitizer_common/sanitizer_posix_libcdep.cpp
 		../../sanitizer_common/sanitizer_procmaps_common.cpp
@@ -72,7 +72,7 @@ elif [ "`uname -a | grep FreeBSD`" != "" ]; then
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS="
 		$SRCS
-		../rtl/tsan_platform_linux.cc
+		../rtl/tsan_platform_linux.cpp
 		../../sanitizer_common/sanitizer_posix.cpp
 		../../sanitizer_common/sanitizer_posix_libcdep.cpp
 		../../sanitizer_common/sanitizer_procmaps_bsd.cpp
@@ -89,7 +89,7 @@ elif [ "`uname -a | grep NetBSD`" != "" ]; then
 	OSLDFLAGS="-lpthread -fPIC -fpie"
 	SRCS="
 		$SRCS
-		../rtl/tsan_platform_linux.cc
+		../rtl/tsan_platform_linux.cpp
 		../../sanitizer_common/sanitizer_posix.cpp
 		../../sanitizer_common/sanitizer_posix_libcdep.cpp
 		../../sanitizer_common/sanitizer_procmaps_bsd.cpp
@@ -107,7 +107,7 @@ elif [ "`uname -a | grep Darwin`" != "" ]; then
 	OSLDFLAGS="-lpthread -fPIC -fpie -mmacosx-version-min=10.7"
 	SRCS="
 		$SRCS
-		../rtl/tsan_platform_mac.cc
+		../rtl/tsan_platform_mac.cpp
 		../../sanitizer_common/sanitizer_mac.cpp
 		../../sanitizer_common/sanitizer_posix.cpp
 		../../sanitizer_common/sanitizer_posix_libcdep.cpp
@@ -120,7 +120,7 @@ elif [ "`uname -a | grep MINGW`" != "" ]; then
 	OSLDFLAGS=""
 	SRCS="
 		$SRCS
-		../rtl/tsan_platform_windows.cc
+		../rtl/tsan_platform_windows.cpp
 		../../sanitizer_common/sanitizer_win.cpp
 	"
 else

@@ -89,7 +89,7 @@ run_lint ${ASAN_LIT_TEST_LINT_FILTER} ${LIT_TESTS}/asan/*/*.cc &
 
 # TSan
 TSAN_RTL=${COMPILER_RT}/lib/tsan
-run_lint ${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.cc \
+run_lint ${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.cpp \
                                  ${TSAN_RTL}/rtl/*.h &
 run_lint ${TSAN_TEST_LINT_FILTER} ${TSAN_RTL}/tests/rtl/*.cc \
                                   ${TSAN_RTL}/tests/rtl/*.h \
