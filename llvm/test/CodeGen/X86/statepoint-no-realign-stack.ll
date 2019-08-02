@@ -90,7 +90,7 @@ define <4 x i8 addrspace(1)*> @spillfill_no_realign(<4 x i8 addrspace(1)*> %obj)
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    callq do_safepoint
 ; CHECK-NEXT:  .Ltmp3:
-; CHECK-NEXT:    vmovaps (%rsp), %ymm0
+; CHECK-NEXT:    vmovups (%rsp), %ymm0
 ; CHECK-NEXT:    addq $40, %rsp
 ; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    retq
