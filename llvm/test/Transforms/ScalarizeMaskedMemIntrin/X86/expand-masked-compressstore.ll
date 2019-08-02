@@ -3,20 +3,23 @@
 
 define void @scalarize_v2i64(i64* %p, <2 x i1> %mask, <2 x i64> %data) {
 ; CHECK-LABEL: @scalarize_v2i64(
-; CHECK-NEXT:    [[TMP1:%.*]] = extractelement <2 x i1> [[MASK:%.*]], i64 0
-; CHECK-NEXT:    br i1 [[TMP1]], label [[COND_STORE:%.*]], label [[ELSE:%.*]]
+; CHECK-NEXT:    [[SCALAR_MASK:%.*]] = bitcast <2 x i1> [[MASK:%.*]] to i2
+; CHECK-NEXT:    [[TMP1:%.*]] = and i2 [[SCALAR_MASK]], 1
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ne i2 [[TMP1]], 0
+; CHECK-NEXT:    br i1 [[TMP2]], label [[COND_STORE:%.*]], label [[ELSE:%.*]]
 ; CHECK:       cond.store:
-; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <2 x i64> [[DATA:%.*]], i64 0
-; CHECK-NEXT:    store i64 [[TMP2]], i64* [[P:%.*]], align 1
-; CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds i64, i64* [[P]], i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = extractelement <2 x i64> [[DATA:%.*]], i64 0
+; CHECK-NEXT:    store i64 [[TMP3]], i64* [[P:%.*]], align 1
+; CHECK-NEXT:    [[TMP4:%.*]] = getelementptr inbounds i64, i64* [[P]], i32 1
 ; CHECK-NEXT:    br label [[ELSE]]
 ; CHECK:       else:
-; CHECK-NEXT:    [[PTR_PHI_ELSE:%.*]] = phi i64* [ [[TMP3]], [[COND_STORE]] ], [ [[P]], [[TMP0:%.*]] ]
-; CHECK-NEXT:    [[TMP4:%.*]] = extractelement <2 x i1> [[MASK]], i64 1
-; CHECK-NEXT:    br i1 [[TMP4]], label [[COND_STORE1:%.*]], label [[ELSE2:%.*]]
+; CHECK-NEXT:    [[PTR_PHI_ELSE:%.*]] = phi i64* [ [[TMP4]], [[COND_STORE]] ], [ [[P]], [[TMP0:%.*]] ]
+; CHECK-NEXT:    [[TMP5:%.*]] = and i2 [[SCALAR_MASK]], -2
+; CHECK-NEXT:    [[TMP6:%.*]] = icmp ne i2 [[TMP5]], 0
+; CHECK-NEXT:    br i1 [[TMP6]], label [[COND_STORE1:%.*]], label [[ELSE2:%.*]]
 ; CHECK:       cond.store1:
-; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x i64> [[DATA]], i64 1
-; CHECK-NEXT:    store i64 [[TMP5]], i64* [[PTR_PHI_ELSE]], align 1
+; CHECK-NEXT:    [[TMP7:%.*]] = extractelement <2 x i64> [[DATA]], i64 1
+; CHECK-NEXT:    store i64 [[TMP7]], i64* [[PTR_PHI_ELSE]], align 1
 ; CHECK-NEXT:    br label [[ELSE2]]
 ; CHECK:       else2:
 ; CHECK-NEXT:    ret void
