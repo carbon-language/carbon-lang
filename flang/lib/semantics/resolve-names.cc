@@ -839,6 +839,8 @@ private:
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
   ParamValue GetParamValue(const parser::TypeParamValue &);
+  ParamValue GetLenParamValue(const parser::TypeParamValue &);
+  ParamValue GetLenParamValue(common::ConstantSubscript);
   Symbol &MakeCommonBlockSymbol(const parser::Name &);
   void CheckCommonBlockDerivedType(const SourceName &, const Symbol &);
   std::optional<MessageFixedText> CheckSaveAttr(const Symbol &);
@@ -2871,7 +2873,7 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
 }
 void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   if (!charInfo_.length) {
-    charInfo_.length = ParamValue{1};
+    charInfo_.length = GetLenParamValue(1);
   }
   if (!charInfo_.kind.has_value()) {
     charInfo_.kind =
@@ -2884,19 +2886,19 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
 void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
   charInfo_.kind = EvaluateSubscriptIntExpr(x.kind);
   if (x.length) {
-    charInfo_.length = GetParamValue(*x.length);
+    charInfo_.length = GetLenParamValue(*x.length);
   }
 }
 void DeclarationVisitor::Post(const parser::CharLength &x) {
   if (const auto *length{std::get_if<std::int64_t>(&x.u)}) {
-    charInfo_.length = ParamValue{*length};
+    charInfo_.length = GetLenParamValue(*length);
   } else {
-    charInfo_.length = GetParamValue(std::get<parser::TypeParamValue>(x.u));
+    charInfo_.length = GetLenParamValue(std::get<parser::TypeParamValue>(x.u));
   }
 }
 void DeclarationVisitor::Post(const parser::LengthSelector &x) {
   if (const auto *param{std::get_if<parser::TypeParamValue>(&x.u)}) {
-    charInfo_.length = GetParamValue(*param);
+    charInfo_.length = GetLenParamValue(*param);
   }
 }
 
@@ -4065,6 +4067,19 @@ ParamValue DeclarationVisitor::GetParamValue(const parser::TypeParamValue &x) {
           },
       },
       x.u);
+}
+
+ParamValue DeclarationVisitor::GetLenParamValue(
+    const parser::TypeParamValue &x) {
+  ParamValue param{GetParamValue(x)};
+  param.set_attr(common::TypeParamAttr::Len);
+  return param;
+}
+
+ParamValue DeclarationVisitor::GetLenParamValue(common::ConstantSubscript l) {
+  ParamValue param{l};
+  param.set_attr(common::TypeParamAttr::Len);
+  return param;
 }
 
 // ConstructVisitor implementation

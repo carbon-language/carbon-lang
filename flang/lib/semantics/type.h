@@ -90,7 +90,7 @@ public:
   ParamValue(const ParamValue &) = default;
   explicit ParamValue(MaybeIntExpr &&);
   explicit ParamValue(SomeIntExpr &&);
-  explicit ParamValue(std::int64_t);
+  explicit ParamValue(common::ConstantSubscript);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }

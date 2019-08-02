@@ -129,7 +129,7 @@ bool IsExplicit(const ArraySpec &arraySpec) {
 
 ParamValue::ParamValue(MaybeIntExpr &&expr) : expr_{std::move(expr)} {}
 ParamValue::ParamValue(SomeIntExpr &&expr) : expr_{std::move(expr)} {}
-ParamValue::ParamValue(std::int64_t value)
+ParamValue::ParamValue(common::ConstantSubscript value)
   : ParamValue(SomeIntExpr{evaluate::Expr<evaluate::SubscriptInteger>{value}}) {
 }
 
