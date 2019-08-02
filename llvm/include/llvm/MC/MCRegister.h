@@ -9,6 +9,7 @@
 #ifndef LLVM_MC_REGISTER_H
 #define LLVM_MC_REGISTER_H
 
+#include "llvm/ADT/DenseMapInfo.h"
 #include <cassert>
 
 namespace llvm {
@@ -61,6 +62,22 @@ public:
 
   bool isValid() const {
     return Reg != 0;
+  }
+};
+
+// Provide DenseMapInfo for MCRegister
+template<> struct DenseMapInfo<MCRegister> {
+  static inline unsigned getEmptyKey() {
+    return DenseMapInfo<unsigned>::getEmptyKey();
+  }
+  static inline unsigned getTombstoneKey() {
+    return DenseMapInfo<unsigned>::getTombstoneKey();
+  }
+  static unsigned getHashValue(const unsigned &Val) {
+    return DenseMapInfo<unsigned>::getHashValue(Val);
+  }
+  static bool isEqual(const unsigned &LHS, const unsigned &RHS) {
+    return DenseMapInfo<unsigned>::isEqual(LHS, RHS);
   }
 };
 
