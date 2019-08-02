@@ -302,7 +302,7 @@ MaybeExtentExpr GetExtent(FoldingContext &context, const Subscript &subscript,
       subscript.u);
 }
 
-MaybeExtentExpr GetUpperBound(
+MaybeExtentExpr ComputeUpperBound(
     FoldingContext &context, ExtentExpr &&lower, MaybeExtentExpr &&extent) {
   if (extent.has_value()) {
     return Fold(context, std::move(*extent) - std::move(lower) + ExtentExpr{1});
@@ -323,7 +323,8 @@ MaybeExtentExpr GetUpperBound(
         } else if (details->IsAssumedSize() && dimension + 1 == symbol.Rank()) {
           break;
         } else {
-          return GetUpperBound(context, GetLowerBound(context, base, dimension),
+          return ComputeUpperBound(context,
+              GetLowerBound(context, base, dimension),
               GetExtent(context, base, dimension));
         }
       }
@@ -344,7 +345,7 @@ Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
         CHECK(dim + 1 == base.Rank());
         result.emplace_back(std::nullopt);  // UBOUND folding replaces with -1
       } else {
-        result.emplace_back(GetUpperBound(context,
+        result.emplace_back(ComputeUpperBound(context,
             GetLowerBound(context, base, dim), GetExtent(context, base, dim)));
       }
       ++dim;

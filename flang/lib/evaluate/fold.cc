@@ -409,19 +409,21 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
   ActualArguments &args{funcRef.arguments()};
   if (const auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
     if (int rank{array->Rank()}; rank > 0) {
-      std::optional<std::int64_t> dim;
+      std::optional<int> dim;
       if (args[1].has_value()) {
-        // Optional DIM= argument is present: return a scalar.
-        dim = GetInt64Arg(args[1]);
-        if (!dim.has_value()) {
+        // Optional DIM= argument is present: result is scalar.
+        if (auto dim64{GetInt64Arg(args[1])}) {
+          if (*dim64 < 1 || *dim64 > rank) {
+            context.messages().Say("DIM=%jd dimension is out of range for "
+                                   "rank-%d array"_en_US,
+                static_cast<std::intmax_t>(*dim64), rank);
+            return MakeInvalidIntrinsic<T>(std::move(funcRef));
+          } else {
+            dim = *dim64 - 1;  // 1-based to 0-based
+          }
+        } else {
           // DIM= is present but not constant
           return Expr<T>{std::move(funcRef)};
-        } else if (*dim < 1 || *dim > rank) {
-          context.messages().Say(
-              "LBOUND(array,dim=%jd) dimension is out of range for "
-              "rank-%d array"_en_US,
-              static_cast<std::intmax_t>(*dim), rank);
-          return MakeInvalidIntrinsic<T>(std::move(funcRef));
         }
       }
       bool lowerBoundsAreOne{true};
@@ -431,8 +433,7 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
           lowerBoundsAreOne = false;
           if (dim.has_value()) {
             return Fold(context,
-                ConvertToType<T>(
-                    GetLowerBound(context, *named, static_cast<int>(*dim))));
+                ConvertToType<T>(GetLowerBound(context, *named, *dim)));
           } else if (auto extents{
                          AsExtentArrayExpr(GetLowerBounds(context, *named))}) {
             return Fold(context,
@@ -463,19 +464,21 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
   ActualArguments &args{funcRef.arguments()};
   if (auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
     if (int rank{array->Rank()}; rank > 0) {
-      std::optional<std::int64_t> dim;
+      std::optional<int> dim;
       if (args[1].has_value()) {
-        // Optional DIM= argument is present: return a scalar.
-        dim = GetInt64Arg(args[1]);
-        if (!dim.has_value()) {
+        // Optional DIM= argument is present: result is scalar.
+        if (auto dim64{GetInt64Arg(args[1])}) {
+          if (*dim64 < 1 || *dim64 > rank) {
+            context.messages().Say("DIM=%jd dimension is out of range for "
+                                   "rank-%d array"_en_US,
+                static_cast<std::intmax_t>(*dim64), rank);
+            return MakeInvalidIntrinsic<T>(std::move(funcRef));
+          } else {
+            dim = *dim64 - 1;  // 1-based to 0-based
+          }
+        } else {
           // DIM= is present but not constant
           return Expr<T>{std::move(funcRef)};
-        } else if (*dim < 1 || *dim > rank) {
-          context.messages().Say(
-              "UBOUND(array,dim=%jd) dimension is out of range for "
-              "rank-%d array"_en_US,
-              static_cast<std::intmax_t>(*dim), rank);
-          return MakeInvalidIntrinsic<T>(std::move(funcRef));
         }
       }
       bool takeBoundsFromShape{true};
@@ -486,8 +489,7 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
           if (dim.has_value()) {
             if (semantics::IsAssumedSizeArray(symbol) && *dim == rank) {
               return Expr<T>{-1};
-            } else if (auto ub{GetUpperBound(
-                           context, *named, static_cast<int>(*dim))}) {
+            } else if (auto ub{GetUpperBound(context, *named, *dim)}) {
               return Fold(context, ConvertToType<T>(std::move(*ub)));
             }
           } else {
@@ -1262,8 +1264,9 @@ static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
               lower = GetLowerBound(context, base, dim);
             }
             if (!upper.has_value()) {
-              upper = GetUpperBound(context, GetLowerBound(context, base, dim),
-                  GetExtent(context, base, dim));
+              upper =
+                  ComputeUpperBound(context, GetLowerBound(context, base, dim),
+                      GetExtent(context, base, dim));
             }
             auto lbi{ToInt64(lower)}, ubi{ToInt64(upper)};
             if (lbi.has_value() && ubi.has_value() && stride.has_value() &&

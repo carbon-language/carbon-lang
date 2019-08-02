@@ -6,9 +6,9 @@ Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 * Use *clang-format* on all C++ source and header files before
   every merge to master.  All code layout should be determined
   by means of clang-format.
-* Where [LLVM's C++ style guide](https://llvm.org/docs/CodingStandards.html#style-issues)
+* Where a clear precedent exists in the project, follow it.
+* Otherwise, where [LLVM's C++ style guide](https://llvm.org/docs/CodingStandards.html#style-issues)
 is clear on usage, follow it.
-* Otherwise, where a clear precedent exists in the project, follow it.
 * Otherwise, where a good public C++ style guide is relevant and clear,
   follow it.  [Google's](https://google.github.io/styleguide/cppguide.html)
   is pretty good and comes with lots of justifications for its rules.
@@ -39,10 +39,12 @@ headers, also alphabetically; then C and system headers.
 1. Don't use `#include <iostream>`.  If you need it for temporary debugging,
 remove the inclusion before committing.
 ### Naming
-1. C++ names that correspond to well-known interfaces from the STL and LLVM
+1. C++ names that correspond to well-known interfaces from the STL, LLVM,
+and Fortran standard
 can and should look like their models when the reader can safely assume that
 they mean the same thing -- e.g., `clear()` and `size()` member functions
 in a class that implements an STL-ish container.
+Fortran intrinsic function names are conventionally in ALL CAPS.
 1. Non-public data members should be named with leading miniscule (lower-case)
 letters, internal camelCase capitalization, and a trailing underscore,
 e.g. `DoubleEntryBookkeepingSystem myLedger_;`.  POD structures with
