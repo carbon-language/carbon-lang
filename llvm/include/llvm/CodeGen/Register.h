@@ -105,6 +105,10 @@ public:
     return Reg;
   }
 
+  operator MCRegister() const {
+    return MCRegister(Reg);
+  }
+
   bool isValid() const {
     return Reg != 0;
   }

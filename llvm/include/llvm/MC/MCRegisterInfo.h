@@ -18,6 +18,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/MC/LaneBitmask.h"
+#include "llvm/MC/MCRegister.h"
 #include <cassert>
 #include <cstdint>
 #include <utility>
@@ -65,16 +66,17 @@ public:
 
   /// contains - Return true if the specified register is included in this
   /// register class.  This does not include virtual registers.
-  bool contains(unsigned Reg) const {
-    unsigned InByte = Reg % 8;
-    unsigned Byte = Reg / 8;
+  bool contains(MCRegister Reg) const {
+    unsigned RegNo = unsigned(Reg);
+    unsigned InByte = RegNo % 8;
+    unsigned Byte = RegNo / 8;
     if (Byte >= RegSetSize)
       return false;
     return (RegSet[Byte] & (1 << InByte)) != 0;
   }
 
   /// contains - Return true if both registers are in this class.
-  bool contains(unsigned Reg1, unsigned Reg2) const {
+  bool contains(MCRegister Reg1, MCRegister Reg2) const {
     return contains(Reg1) && contains(Reg2);
   }
 

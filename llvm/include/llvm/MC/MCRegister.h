@@ -14,10 +14,12 @@
 namespace llvm {
 
 /// Wrapper class representing physical registers. Should be passed by value.
-/// Note that this class is not fully implemented at this time. A more complete
-/// implementation will follow.
 class MCRegister {
+  unsigned Reg;
+
 public:
+  MCRegister(unsigned Val = 0): Reg(Val) {}
+
   // Register numbers can represent physical registers, virtual registers, and
   // sometimes stack slots. The unsigned values are divided into these ranges:
   //
@@ -46,9 +48,22 @@ public:
     assert(!isStackSlot(Reg) && "Not a register! Check isStackSlot() first.");
     return int(Reg) > 0;
   }
+
+  /// Return true if the specified register number is in the physical register
+  /// namespace.
+  bool isPhysical() const {
+    return isPhysicalRegister(Reg);
+  }
+
+  operator unsigned() const {
+    return Reg;
+  }
+
+  bool isValid() const {
+    return Reg != 0;
+  }
 };
 
 }
 
 #endif // ifndef LLVM_MC_REGISTER_H
-
