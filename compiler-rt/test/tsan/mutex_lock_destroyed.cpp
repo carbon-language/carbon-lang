@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   pthread_mutex_lock(m);
   // CHECK: WARNING: ThreadSanitizer: use of an invalid mutex (e.g. uninitialized or destroyed)
   // CHECK:   #0 pthread_mutex_lock
-  // CHECK:   #1 main {{.*}}mutex_lock_destroyed.cc:[[@LINE-3]]
+  // CHECK:   #1 main {{.*}}mutex_lock_destroyed.cpp:[[@LINE-3]]
 
   return 0;
 }

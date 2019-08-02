@@ -15,8 +15,8 @@ int main() {
 // CHECK: ThreadSanitizer: main thread finished with ignores enabled
 // CHECK:   Ignore was enabled at:
 // CHECK:     #0 AnnotateIgnoreReadsBegin
-// CHECK:     #1 main {{.*}}thread_end_with_ignore3.cc:10
+// CHECK:     #1 main {{.*}}thread_end_with_ignore3.cpp:10
 // CHECK:   Ignore was enabled at:
 // CHECK:     #0 AnnotateIgnoreReadsBegin
-// CHECK:     #1 main {{.*}}thread_end_with_ignore3.cc:11
+// CHECK:     #1 main {{.*}}thread_end_with_ignore3.cpp:11
 

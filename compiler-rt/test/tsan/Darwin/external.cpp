@@ -1,12 +1,12 @@
-// RUN: %clangxx_tsan %p/external-lib.cc -shared \
+// RUN: %clangxx_tsan %p/external-lib.cpp -shared \
 // RUN:                               -o %t-lib-instrumented.dylib \
 // RUN:   -install_name @rpath/`basename %t-lib-instrumented.dylib`
 
-// RUN: %clangxx_tsan %p/external-lib.cc -shared -fno-sanitize=thread \
+// RUN: %clangxx_tsan %p/external-lib.cpp -shared -fno-sanitize=thread \
 // RUN:                               -o %t-lib-noninstrumented.dylib \
 // RUN:   -install_name @rpath/`basename %t-lib-noninstrumented.dylib`
 
-// RUN: %clangxx_tsan %p/external-lib.cc -shared -fno-sanitize=thread -DUSE_TSAN_CALLBACKS \
+// RUN: %clangxx_tsan %p/external-lib.cpp -shared -fno-sanitize=thread -DUSE_TSAN_CALLBACKS \
 // RUN:                               -o %t-lib-noninstrumented-callbacks.dylib \
 // RUN:   -install_name @rpath/`basename %t-lib-noninstrumented-callbacks.dylib`
 

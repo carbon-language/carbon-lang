@@ -31,6 +31,6 @@ int main(int argc, char *argv[]) {
 
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK:   Write of size 4 at {{.*}} by thread T1{{.*}}:
-// CHECK:     #0 Thread1(void*) {{.*}}write_in_reader_lock.cc:12
+// CHECK:     #0 Thread1(void*) {{.*}}write_in_reader_lock.cpp:12
 // CHECK:   Previous read of size 4 at {{.*}} by main thread{{.*}}:
-// CHECK:     #0 main {{.*}}write_in_reader_lock.cc:23
+// CHECK:     #0 main {{.*}}write_in_reader_lock.cpp:23

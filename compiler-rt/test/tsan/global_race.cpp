@@ -1,15 +1,15 @@
 // RUN: rm -rf %t-dir
 // RUN: mkdir %t-dir
 
-// RUN: %clangxx_tsan -O1 %s -o %t-dir/global_race.cc.exe && %deflake %run %t-dir/global_race.cc.exe 2>&1 \
+// RUN: %clangxx_tsan -O1 %s -o %t-dir/global_race.cpp.exe && %deflake %run %t-dir/global_race.cpp.exe 2>&1 \
 // RUN:   | FileCheck %s
 
 // Also check that memory access instrumentation can be configured by either
 // driver or legacy flags:
 
-// RUN: %clangxx_tsan -O1 %s -o %t-dir/global_race.cc.exe -fno-sanitize-thread-memory-access && not %deflake %run %t-dir/global_race.cc.exe 2>&1 \
+// RUN: %clangxx_tsan -O1 %s -o %t-dir/global_race.cpp.exe -fno-sanitize-thread-memory-access && not %deflake %run %t-dir/global_race.cpp.exe 2>&1 \
 // RUN:   | FileCheck --allow-empty --check-prefix=CHECK-MEMORY-ACCESS-OFF %s
-// RUN: %clangxx_tsan -O1 %s -o %t-dir/global_race.cc.exe -mllvm -tsan-instrument-memory-accesses=0 && not %deflake %run %t-dir/global_race.cc.exe 2>&1 \
+// RUN: %clangxx_tsan -O1 %s -o %t-dir/global_race.cpp.exe -mllvm -tsan-instrument-memory-accesses=0 && not %deflake %run %t-dir/global_race.cpp.exe 2>&1 \
 // RUN:   | FileCheck --allow-empty --check-prefix=CHECK-MEMORY-ACCESS-OFF %s
 
 #include "test.h"
@@ -34,6 +34,6 @@ int main() {
 
 // CHECK: addr=[[ADDR:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK: Location is global 'GlobalData' {{(of size 40 )?}}at [[ADDR]] (global_race.cc.exe+0x{{[0-9,a-f]+}})
+// CHECK: Location is global 'GlobalData' {{(of size 40 )?}}at [[ADDR]] (global_race.cpp.exe+0x{{[0-9,a-f]+}})
 
 // CHECK-MEMORY-ACCESS-OFF-NOT: WARNING: ThreadSanitizer: data race

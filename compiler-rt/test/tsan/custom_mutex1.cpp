@@ -35,5 +35,5 @@ int main() {
 
 // CHECK: ThreadSanitizer: data race
 // CHECK-NEXT:   Write of size 8 at {{.*}} by main thread:
-// CHECK-NEXT:     #0 main {{.*}}custom_mutex1.cc:29
+// CHECK-NEXT:     #0 main {{.*}}custom_mutex1.cpp:29
 // CHECK: DONE

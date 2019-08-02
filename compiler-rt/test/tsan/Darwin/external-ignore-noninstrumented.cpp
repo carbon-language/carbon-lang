@@ -1,7 +1,7 @@
-// RUN: %clangxx_tsan -shared %p/external-lib.cc -fno-sanitize=thread -DUSE_TSAN_CALLBACKS \
+// RUN: %clangxx_tsan -shared %p/external-lib.cpp -fno-sanitize=thread -DUSE_TSAN_CALLBACKS \
 // RUN:   -o %t-lib.dylib -install_name @rpath/`basename %t-lib.dylib`
 
-// RUN: %clangxx_tsan -shared %p/external-noninstrumented-module.cc %t-lib.dylib -fno-sanitize=thread \
+// RUN: %clangxx_tsan -shared %p/external-noninstrumented-module.cpp %t-lib.dylib -fno-sanitize=thread \
 // RUN:   -o %t-module.dylib -install_name @rpath/`basename %t-module.dylib`
 
 // RUN: %clangxx_tsan %s %t-module.dylib -o %t

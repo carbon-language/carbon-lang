@@ -39,10 +39,10 @@ int main() {
 
 // Previously this test produced bogus stack traces like:
 //   Previous write of size 8 at 0x0000006a8ff8 by thread T17:
-//     #0 foo() restore_stack.cc:13:5 (restore_stack.cc.exe+0x00000040622c)
-//     #1 Thread(void*) restore_stack.cc:18:3 (restore_stack.cc.exe+0x000000406283)
-//     #2 __tsan_thread_start_func rtl/tsan_interceptors.cpp:886 (restore_stack.cc.exe+0x00000040a749)
-//     #3 Thread(void*) restore_stack.cc:18:3 (restore_stack.cc.exe+0x000000406283)
+//     #0 foo() restore_stack.cpp:13:5 (restore_stack.cpp.exe+0x00000040622c)
+//     #1 Thread(void*) restore_stack.cpp:18:3 (restore_stack.cpp.exe+0x000000406283)
+//     #2 __tsan_thread_start_func rtl/tsan_interceptors.cpp:886 (restore_stack.cpp.exe+0x00000040a749)
+//     #3 Thread(void*) restore_stack.cpp:18:3 (restore_stack.cpp.exe+0x000000406283)
 
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK-NOT: __tsan_thread_start_func
