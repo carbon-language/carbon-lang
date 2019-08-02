@@ -315,7 +315,7 @@ Error CVSymbolDumperImpl::visitKnownRecord(
 
 Error CVSymbolDumperImpl::visitKnownRecord(
     CVSymbol &CVR, DefRangeFramePointerRelSym &DefRangeFramePointerRel) {
-  W.printNumber("Offset", DefRangeFramePointerRel.Hdr.Offset);
+  W.printNumber("Offset", DefRangeFramePointerRel.Offset);
   printLocalVariableAddrRange(DefRangeFramePointerRel.Range,
                               DefRangeFramePointerRel.getRelocationOffset());
   printLocalVariableAddrGap(DefRangeFramePointerRel.Gaps);
