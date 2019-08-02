@@ -4648,7 +4648,7 @@ const parser::Name *DeclarationVisitor::FindComponent(
   if (!base || !base->symbol) {
     return nullptr;
   }
-  auto &symbol{*base->symbol};
+  auto &symbol{base->symbol->GetUltimate()};
   if (!symbol.has<AssocEntityDetails>() && !ConvertToObjectEntity(symbol)) {
     SayWithDecl(*base, symbol,
         "'%s' is an invalid base for a component reference"_err_en_US);
