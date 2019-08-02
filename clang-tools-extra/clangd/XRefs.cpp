@@ -208,10 +208,8 @@ public:
 
 private:
   void finish() override {
-    if (auto DefinedMacro = locateMacroAt(SearchedLocation, PP)) {
+    if (auto DefinedMacro = locateMacroAt(SearchedLocation, PP))
       MacroInfos.push_back(*DefinedMacro);
-      assert(Decls.empty());
-    }
   }
 };
 
@@ -438,6 +436,7 @@ std::vector<DocumentHighlight> findDocumentHighlights(ParsedAST &AST,
   const SourceManager &SM = AST.getSourceManager();
   auto Symbols = getSymbolAtPosition(
       AST, getBeginningOfIdentifier(AST, Pos, SM.getMainFileID()));
+  // FIXME: show references to macro within file?
   auto References = findRefs(Symbols.Decls, AST);
 
   std::vector<DocumentHighlight> Result;
