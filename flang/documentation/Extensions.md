@@ -139,6 +139,9 @@ Extensions and legacy features deliberately not supported
   multiple modules, the name must refer to a generic interface; PGI
   allows a name to be a procedure from one module and a generic interface
   from another.
+* Type parameter declarations must come first in a derived type definition;
+  some compilers allow them to follow `PRIVATE`, or be intermixed with the
+  component declarations.
 
 Preprocessing behavior
 ======================
