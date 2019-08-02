@@ -151,14 +151,11 @@ bool DynamicType::IsTypeCompatibleWith(const DynamicType &that) const {
 // corresponding kind type parameters of the type2?
 static bool IsKindCompatible(const semantics::DerivedTypeSpec &type1,
     const semantics::DerivedTypeSpec &type2) {
-  for (const auto &[name, symbol] : *type1.scope()) {
-    if (const auto *details{symbol->detailsIf<semantics::TypeParamDetails>()}) {
-      if (details->attr() == common::TypeParamAttr::Kind) {
-        const semantics::ParamValue *param1{type1.FindParameter(name)};
-        const semantics::ParamValue *param2{type2.FindParameter(name)};
-        if (!PointeeComparison(param1, param2)) {
-          return false;
-        }
+  for (const auto &[name, param1] : type1.parameters()) {
+    if (param1.isKind()) {
+      const semantics::ParamValue *param2{type2.FindParameter(name)};
+      if (!PointeeComparison(&param1, param2)) {
+        return false;
       }
     }
   }
