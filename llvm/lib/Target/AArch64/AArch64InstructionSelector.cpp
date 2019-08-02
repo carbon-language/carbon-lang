@@ -2045,6 +2045,23 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
     if (DstTy.isVector())
       return false; // Should be handled by imported patterns.
 
+    // First check if we're extending the result of a load which has a dest type
+    // smaller than 32 bits, then this zext is redundant. GPR32 is the smallest
+    // GPR register on AArch64 and all loads which are smaller automatically
+    // zero-extend the upper bits. E.g.
+    // %v(s8) = G_LOAD %p, :: (load 1)
+    // %v2(s32) = G_ZEXT %v(s8)
+    if (!IsSigned) {
+      auto *LoadMI = getOpcodeDef(TargetOpcode::G_LOAD, SrcReg, MRI);
+      if (LoadMI &&
+          RBI.getRegBank(SrcReg, MRI, TRI)->getID() == AArch64::GPRRegBankID) {
+        const MachineMemOperand *MemOp = *LoadMI->memoperands_begin();
+        unsigned BytesLoaded = MemOp->getSize();
+        if (BytesLoaded < 4 && SrcTy.getSizeInBytes() == BytesLoaded)
+          return selectCopy(I, TII, MRI, TRI, RBI);
+      }
+    }
+
     if (DstSize == 64) {
       // FIXME: Can we avoid manually doing this?
       if (!RBI.constrainGenericRegister(SrcReg, AArch64::GPR32RegClass, MRI)) {
