@@ -49,7 +49,6 @@ namespace {
 
   using MulCandList     = SmallVector<std::unique_ptr<MulCandidate>, 8>;
   using ReductionList   = SmallVector<Reduction, 8>;
-  using ValueList       = SmallVector<Value*, 8>;
   using MemInstList     = SmallVector<LoadInst*, 8>;
   using PMACPair        = std::pair<MulCandidate*,MulCandidate*>;
   using PMACPairList    = SmallVector<PMACPair, 8>;
@@ -64,8 +63,8 @@ namespace {
     bool          Exchange = false;
     bool          ReadOnly = true;
 
-    MulCandidate(Instruction *I, ValueList &lhs, ValueList &rhs) :
-      Root(I), LHS(lhs.front()), RHS(rhs.front()) { }
+    MulCandidate(Instruction *I, Value *lhs, Value *rhs) :
+      Root(I), LHS(lhs), RHS(rhs) { }
 
     bool HasTwoLoadInputs() const {
       return isa<LoadInst>(LHS) && isa<LoadInst>(RHS);
@@ -95,7 +94,7 @@ namespace {
 
     /// Record a MulCandidate, rooted at a Mul instruction, that is a part of
     /// this reduction.
-    void InsertMul(Instruction *I, ValueList &LHS, ValueList &RHS) {
+    void InsertMul(Instruction *I, Value *LHS, Value *RHS) {
       Muls.push_back(make_unique<MulCandidate>(I, LHS, RHS));
     }
 
@@ -171,7 +170,7 @@ namespace {
     std::map<LoadInst*, std::unique_ptr<WidenedLoad>> WideLoads;
 
     template<unsigned>
-    bool IsNarrowSequence(Value *V, ValueList &VL);
+    bool IsNarrowSequence(Value *V, Value *&Src);
 
     bool RecordMemoryOps(BasicBlock *BB);
     void InsertParallelMACs(Reduction &Reduction);
@@ -283,7 +282,7 @@ bool ARMParallelDSP::AreSequentialLoads(LoadInst *Ld0, LoadInst *Ld1,
 // TODO: we currently only collect i16, and will support i8 later, so that's
 // why we check that types are equal to MaxBitWidth, and not <= MaxBitWidth.
 template<unsigned MaxBitWidth>
-bool ARMParallelDSP::IsNarrowSequence(Value *V, ValueList &VL) {
+bool ARMParallelDSP::IsNarrowSequence(Value *V, Value *&Src) {
   if (auto *SExt = dyn_cast<SExtInst>(V)) {
     if (SExt->getSrcTy()->getIntegerBitWidth() != MaxBitWidth)
       return false;
@@ -293,8 +292,7 @@ bool ARMParallelDSP::IsNarrowSequence(Value *V, ValueList &VL) {
       if (!LoadPairs.count(Ld) && !OffsetLoads.count(Ld))
         return false;
 
-      VL.push_back(Ld);
-      VL.push_back(SExt);
+      Src = Ld;
       return true;
     }
   }
@@ -461,8 +459,8 @@ bool ARMParallelDSP::MatchSMLAD(Function &F) {
       Value *MulOp0 = I->getOperand(0);
       Value *MulOp1 = I->getOperand(1);
       if (isa<SExtInst>(MulOp0) && isa<SExtInst>(MulOp1)) {
-        ValueList LHS;
-        ValueList RHS;
+        Value *LHS = nullptr;
+        Value *RHS = nullptr;
         if (IsNarrowSequence<16>(MulOp0, LHS) &&
             IsNarrowSequence<16>(MulOp1, RHS)) {
           R.InsertMul(I, LHS, RHS);
