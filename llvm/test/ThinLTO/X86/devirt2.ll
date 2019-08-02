@@ -4,7 +4,7 @@
 
 ; Generate split module with summary for hybrid Thin/Regular LTO WPD.
 ; RUN: opt -thinlto-bc -thinlto-split-lto-unit -o %t1.o %s
-; RUN: opt -thinlto-bc -thinlto-split-lto-unit -o %t2.o %p/Inputs/devirt3.ll
+; RUN: opt -thinlto-bc -thinlto-split-lto-unit -o %t2.o %p/Inputs/devirt2.ll
 
 ; Check that we have module flag showing splitting enabled, and that we don't
 ; generate summary information needed for index-based WPD.
