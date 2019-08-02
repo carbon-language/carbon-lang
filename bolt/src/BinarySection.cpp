@@ -160,3 +160,23 @@ void BinarySection::reorderContents(const std::vector<BinaryData *> &Order,
   Contents = OutputContents = StringRef(NewData, OS.str().size());
   OutputSize = Contents.size();
 }
+
+std::string BinarySection::encodeELFNote(StringRef NameStr, StringRef DescStr,
+                                         uint32_t Type) {
+  std::string Str;
+  raw_string_ostream OS(Str);
+  const uint32_t NameSz = NameStr.size() + 1;
+  const uint32_t DescSz = DescStr.size();
+  OS.write(reinterpret_cast<const char *>(&(NameSz)), 4);
+  OS.write(reinterpret_cast<const char *>(&(DescSz)), 4);
+  OS.write(reinterpret_cast<const char *>(&(Type)), 4);
+  OS << NameStr << '\0';
+  for (uint64_t I = NameSz; I < alignTo(NameSz, 4); ++I) {
+    OS << '\0';
+  }
+  OS << DescStr;
+  for (uint64_t I = DescStr.size(); I < alignTo(DescStr.size(), 4); ++I) {
+    OS << '\0';
+  }
+  return OS.str();
+}

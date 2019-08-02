@@ -144,8 +144,7 @@ std::error_code BoltAddressTranslation::parse(StringRef Buf) {
   const uint32_t DescSz = DE.getU32(&Offset);
   const uint32_t Type = DE.getU32(&Offset);
 
-  // Note type reserved for BAT
-  if (Type != 1 ||
+  if (Type != BinarySection::NT_BOLT_BAT ||
       Buf.size() + Offset < alignTo(NameSz, 4) + DescSz)
     return make_error_code(llvm::errc::io_error);
 

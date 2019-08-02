@@ -416,6 +416,18 @@ public:
   void reorderContents(const std::vector<BinaryData *> &Order, bool Inplace);
 
   void print(raw_ostream &OS) const;
+
+  /// Write the contents of an ELF note section given the name of the producer,
+  /// a number identifying the type of note and the contents of the note in
+  /// \p DescStr.
+  static std::string encodeELFNote(StringRef NameStr, StringRef DescStr,
+                                   uint32_t Type);
+
+  /// Code for ELF notes written by producer 'BOLT'
+  enum {
+    NT_BOLT_BAT = 1,
+    NT_BOLT_INSTRUMENTATION_TABLES = 2
+  };
 };
 
 inline uint8_t *copyByteArray(const uint8_t *Data, uint64_t Size) {

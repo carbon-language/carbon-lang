@@ -96,7 +96,11 @@ private:
                            BinaryFunction &ToFunc, BinaryBasicBlock *TargetBB,
                            uint32_t ToOffset);
 
-  void emitDescription(const CounterDescription &Desc, MCStreamer &Streamer);
+  /// Create a non-allocatable ELF section with read-only tables necessary for
+  /// writing the instrumented data profile during program finish. The runtime
+  /// library needs to open the program executable file and read this data from
+  /// disk, this is not loaded by the system.
+  void emitTablesAsELFNote(BinaryContext &BC);
 
   /// Critical edges worklist
   /// This worklist keeps track of CFG edges <From-To> that needs to be split.

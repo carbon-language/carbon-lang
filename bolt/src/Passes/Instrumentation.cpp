@@ -137,9 +137,14 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
   const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
                                              /*IsText=*/false,
                                              /*IsAllocatable=*/true);
-  BC.registerOrUpdateSection(".bolt.instrumentation", ELF::SHT_PROGBITS, Flags,
+  BC.registerOrUpdateSection(".bolt.instr.counters", ELF::SHT_PROGBITS, Flags,
                              nullptr, 0, 1,
                              /*local=*/true);
+
+  BC.registerOrUpdateNoteSection(".bolt.instr.tables", nullptr,
+                                  0,
+                                  /*Alignment=*/1,
+                                  /*IsReadOnly=*/true, ELF::SHT_NOTE);
 
   uint64_t InstrumentationSites{0ULL};
   uint64_t InstrumentationSitesSavingFlags{0ULL};
@@ -237,19 +242,36 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
          << " sites, " << InstrumentationSitesSavingFlags << " saving flags.\n";
 }
 
-void Instrumentation::emitDescription(
-    const Instrumentation::CounterDescription &Desc, MCStreamer &Streamer) {
-  Streamer.EmitIntValue(Desc.FromFuncStringIdx, /*Size=*/4);
-  Streamer.EmitIntValue(Desc.FromOffset, /*Size=*/4);
-  Streamer.EmitIntValue(Desc.ToFuncStringIdx, /*Size=*/4);
-  Streamer.EmitIntValue(Desc.ToOffset, /*Size=*/4);
+void Instrumentation::emitTablesAsELFNote(BinaryContext &BC) {
+  std::string TablesStr;
+  raw_string_ostream OS(TablesStr);
+
+  // Start of the vector with descriptions (one CounterDescription for each
+  // counter), vector size is Labels.size() CounterDescription-sized elmts
+  for (const auto &Desc : Descriptions) {
+    OS.write(reinterpret_cast<const char *>(&Desc.FromFuncStringIdx), 4);
+    OS.write(reinterpret_cast<const char *>(&Desc.FromOffset), 4);
+    OS.write(reinterpret_cast<const char *>(&Desc.ToFuncStringIdx), 4);
+    OS.write(reinterpret_cast<const char *>(&Desc.ToOffset), 4);
+  }
+  // Our string table lives immediately after descriptions vector
+  OS << StringTable;
+  OS.flush();
+  const auto BoltInfo = BinarySection::encodeELFNote(
+      "BOLT", TablesStr, BinarySection::NT_BOLT_INSTRUMENTATION_TABLES);
+  BC.registerOrUpdateNoteSection(".bolt.instr.tables", copyByteArray(BoltInfo),
+                                 BoltInfo.size(),
+                                 /*Alignment=*/1,
+                                 /*IsReadOnly=*/true, ELF::SHT_NOTE);
 }
 
 void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
+  emitTablesAsELFNote(BC);
+
   const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
                                              /*IsText=*/false,
                                              /*IsAllocatable=*/true);
-  auto *Section = BC.Ctx->getELFSection(".bolt.instrumentation",
+  auto *Section = BC.Ctx->getELFSection(".bolt.instr.counters",
                                         ELF::SHT_PROGBITS,
                                         Flags);
 
@@ -259,12 +281,6 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
   // counters, total vector size is Labels.size() 8-byte counters
   MCSymbol *Locs = BC.Ctx->getOrCreateSymbol("__bolt_instr_locations");
   MCSymbol *NumLocs = BC.Ctx->getOrCreateSymbol("__bolt_instr_num_locs");
-  // Start of the vector with descriptions (one CounterDescription for each
-  // counter), vector size is Labels.size() CounterDescription-sized elmts
-  MCSymbol *DescriptionsSym =
-      BC.Ctx->getOrCreateSymbol("__bolt_instr_descriptions");
-  // Label identifying where our string table was emitted to
-  MCSymbol *StringsSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_strings");
   /// File name where profile is going to written to after target binary
   /// finishes a run
   MCSymbol *FilenameSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_filename");
@@ -281,27 +297,15 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
   Streamer.EmitSymbolAttribute(NumLocs,
                                MCSymbolAttr::MCSA_Global);
   Streamer.EmitIntValue(Labels.size(), /*Size=*/4);
-  Streamer.EmitLabel(DescriptionsSym);
-  Streamer.EmitSymbolAttribute(DescriptionsSym,
-                               MCSymbolAttr::MCSA_Global);
-  for (const auto &Desc : Descriptions) {
-    emitDescription(Desc, Streamer);
-  }
-  Streamer.EmitLabel(StringsSym);
-  Streamer.EmitSymbolAttribute(StringsSym,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitBytes(StringTable);
   Streamer.EmitLabel(FilenameSym);
   Streamer.EmitBytes(opts::InstrumentationFilename);
   Streamer.emitFill(1, 0);
-  outs() << "BOLT-INSTRUMENTER: Total size of string table emitted: "
-         << StringTable.size() << " bytes\n";
   outs() << "BOLT-INSTRUMENTER: Total size of counters: "
-         << (Labels.size() * 8) << " bytes\n";
+         << (Labels.size() * 8) << " bytes (static alloc memory)\n";
+  outs() << "BOLT-INSTRUMENTER: Total size of string table emitted: "
+         << StringTable.size() << " bytes in file\n";
   outs() << "BOLT-INSTRUMENTER: Total size of descriptors: "
-         << (Labels.size() * 16) << " bytes\n";
-  outs() << "BOLT-INSTRUMENTER: Total data: "
-         << (Labels.size() * 24 + StringTable.size()) << " bytes\n";
+         << (Labels.size() * 16) << " bytes in file\n";
   outs() << "BOLT-INSTRUMENTER: Profile will be saved to file "
          << opts::InstrumentationFilename << "\n";
 }

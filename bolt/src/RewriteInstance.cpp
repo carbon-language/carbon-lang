@@ -3090,7 +3090,14 @@ void RewriteInstance::emitAndLink() {
       [&](const std::string &Name) -> JITSymbol {
         DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
         if (EFMM->ObjectsLoaded) {
-          return OLT->findSymbol(Name, false);
+          auto Result = OLT->findSymbol(Name, false);
+          if (cantFail(Result.getAddress()) == 0) {
+            errs()
+                << "BOLT-ERROR: symbol not found required by runtime library: "
+                << Name << "\n";
+            exit(1);
+          }
+          return Result;
         }
         if (auto *I = BC->getBinaryDataByName(Name)) {
           const uint64_t Address = I->isMoved() && !I->isJumpTable()
@@ -3503,7 +3510,7 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
   // The order is important.
   std::vector<std::string> Sections = {
       ".eh_frame", ".eh_frame_old", ".gcc_except_table",
-      ".rodata",   ".rodata.cold",  ".bolt.instrumentation"};
+      ".rodata",   ".rodata.cold",  ".bolt.instr.counters"};
   for (auto &SectionName : Sections) {
     auto Section = BC->getUniqueSectionByName(SectionName);
     if (!Section || !Section->isAllocatable() || !Section->isFinalized())
@@ -4073,29 +4080,6 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
                                   ELF::SHT_STRTAB);
 }
 
-namespace {
-
-std::string encodeELFNote(StringRef NameStr, StringRef DescStr, uint32_t Type) {
-  std::string Str;
-  raw_string_ostream OS(Str);
-  const uint32_t NameSz = NameStr.size() + 1;
-  const uint32_t DescSz = DescStr.size();
-  OS.write(reinterpret_cast<const char *>(&(NameSz)), 4);
-  OS.write(reinterpret_cast<const char *>(&(DescSz)), 4);
-  OS.write(reinterpret_cast<const char *>(&(Type)), 4);
-  OS << NameStr << '\0';
-  for (uint64_t I = NameSz; I < alignTo(NameSz, 4); ++I) {
-    OS << '\0';
-  }
-  OS << DescStr;
-  for (uint64_t I = DescStr.size(); I < alignTo(DescStr.size(), 4); ++I) {
-    OS << '\0';
-  }
-  return OS.str();
-}
-
-}
-
 void RewriteInstance::addBoltInfoSection() {
   std::string DescStr;
   raw_string_ostream DescOS(DescStr);
@@ -4107,8 +4091,9 @@ void RewriteInstance::addBoltInfoSection() {
   }
   DescOS.flush();
 
+  // Encode as GNU GOLD VERSION so it is easily printable by 'readelf -n'
   const auto BoltInfo =
-      encodeELFNote("GNU", DescStr, 4 /*NT_GNU_GOLD_VERSION*/);
+      BinarySection::encodeELFNote("GNU", DescStr, 4 /*NT_GNU_GOLD_VERSION*/);
   BC->registerOrUpdateNoteSection(".note.bolt_info", copyByteArray(BoltInfo),
                                   BoltInfo.size(),
                                   /*Alignment=*/1,
@@ -4129,7 +4114,8 @@ void RewriteInstance::encodeBATSection() {
   BAT->write(DescOS);
   DescOS.flush();
 
-  const auto BoltInfo = encodeELFNote("BOLT", DescStr, 0x1);
+  const auto BoltInfo =
+      BinarySection::encodeELFNote("BOLT", DescStr, BinarySection::NT_BOLT_BAT);
   BC->registerOrUpdateNoteSection(BoltAddressTranslation::SECTION_NAME,
                                   copyByteArray(BoltInfo), BoltInfo.size(),
                                   /*Alignment=*/1,
