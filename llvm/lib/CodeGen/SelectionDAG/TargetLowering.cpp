@@ -680,7 +680,7 @@ SDValue TargetLowering::SimplifyMultipleUseDemandedBits(
     // If we don't demand the inserted element, return the base vector.
     SDValue Vec = Op.getOperand(0);
     auto *CIdx = dyn_cast<ConstantSDNode>(Op.getOperand(2));
-    MVT VecVT = Vec.getSimpleValueType();
+    EVT VecVT = Vec.getValueType();
     if (CIdx && CIdx->getAPIntValue().ult(VecVT.getVectorNumElements()) &&
         !DemandedElts[CIdx->getZExtValue()])
       return Vec;
