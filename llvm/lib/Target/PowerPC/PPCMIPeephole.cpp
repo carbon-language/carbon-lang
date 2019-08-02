@@ -1426,6 +1426,12 @@ bool PPCMIPeephole::combineSEXTAndSHL(MachineInstr &MI,
   if (!MRI->hasOneNonDBGUse(SrcReg))
     return false;
 
+  assert(SrcMI->getNumOperands() == 2 && "EXTSW should have 2 operands");
+  assert(SrcMI->getOperand(1).isReg() &&
+         "EXTSW's second operand should be a register");
+  if (!Register::isVirtualRegister(SrcMI->getOperand(1).getReg()))
+    return false;
+
   LLVM_DEBUG(dbgs() << "Combining pair: ");
   LLVM_DEBUG(SrcMI->dump());
   LLVM_DEBUG(MI.dump());
