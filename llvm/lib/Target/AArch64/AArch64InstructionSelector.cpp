@@ -162,7 +162,9 @@ private:
   ComplexRendererFns selectShiftA_64(const MachineOperand &Root) const;
   ComplexRendererFns selectShiftB_64(const MachineOperand &Root) const;
 
+  ComplexRendererFns select12BitValueWithLeftShift(uint64_t Immed) const;
   ComplexRendererFns selectArithImmed(MachineOperand &Root) const;
+  ComplexRendererFns selectNegArithImmed(MachineOperand &Root) const;
 
   ComplexRendererFns selectAddrModeUnscaled(MachineOperand &Root,
                                             unsigned Size) const;
@@ -4081,22 +4083,15 @@ AArch64InstructionSelector::selectShiftB_64(const MachineOperand &Root) const {
   return {{[=](MachineInstrBuilder &MIB) { MIB.addImm(Enc); }}};
 }
 
-/// SelectArithImmed - Select an immediate value that can be represented as
-/// a 12-bit value shifted left by either 0 or 12.  If so, return true with
-/// Val set to the 12-bit value and Shift set to the shifter operand.
+/// Helper to select an immediate value that can be represented as a 12-bit
+/// value shifted left by either 0 or 12. If it is possible to do so, return
+/// the immediate and shift value. If not, return None.
+///
+/// Used by selectArithImmed and selectNegArithImmed.
 InstructionSelector::ComplexRendererFns
-AArch64InstructionSelector::selectArithImmed(MachineOperand &Root) const {
-  // This function is called from the addsub_shifted_imm ComplexPattern,
-  // which lists [imm] as the list of opcode it's interested in, however
-  // we still need to check whether the operand is actually an immediate
-  // here because the ComplexPattern opcode list is only used in
-  // root-level opcode matching.
-  auto MaybeImmed = getImmedFromMO(Root);
-  if (MaybeImmed == None)
-    return None;
-  uint64_t Immed = *MaybeImmed;
+AArch64InstructionSelector::select12BitValueWithLeftShift(
+    uint64_t Immed) const {
   unsigned ShiftAmt;
-
   if (Immed >> 12 == 0) {
     ShiftAmt = 0;
   } else if ((Immed & 0xfff) == 0 && Immed >> 24 == 0) {
@@ -4110,6 +4105,56 @@ AArch64InstructionSelector::selectArithImmed(MachineOperand &Root) const {
       [=](MachineInstrBuilder &MIB) { MIB.addImm(Immed); },
       [=](MachineInstrBuilder &MIB) { MIB.addImm(ShVal); },
   }};
+}
+
+/// SelectArithImmed - Select an immediate value that can be represented as
+/// a 12-bit value shifted left by either 0 or 12.  If so, return true with
+/// Val set to the 12-bit value and Shift set to the shifter operand.
+InstructionSelector::ComplexRendererFns
+AArch64InstructionSelector::selectArithImmed(MachineOperand &Root) const {
+  // This function is called from the addsub_shifted_imm ComplexPattern,
+  // which lists [imm] as the list of opcode it's interested in, however
+  // we still need to check whether the operand is actually an immediate
+  // here because the ComplexPattern opcode list is only used in
+  // root-level opcode matching.
+  auto MaybeImmed = getImmedFromMO(Root);
+  if (MaybeImmed == None)
+    return None;
+  return select12BitValueWithLeftShift(*MaybeImmed);
+}
+
+/// SelectNegArithImmed - As above, but negates the value before trying to
+/// select it.
+InstructionSelector::ComplexRendererFns
+AArch64InstructionSelector::selectNegArithImmed(MachineOperand &Root) const {
+  // We need a register here, because we need to know if we have a 64 or 32
+  // bit immediate.
+  if (!Root.isReg())
+    return None;
+  auto MaybeImmed = getImmedFromMO(Root);
+  if (MaybeImmed == None)
+    return None;
+  uint64_t Immed = *MaybeImmed;
+
+  // This negation is almost always valid, but "cmp wN, #0" and "cmn wN, #0"
+  // have the opposite effect on the C flag, so this pattern mustn't match under
+  // those circumstances.
+  if (Immed == 0)
+    return None;
+
+  // Check if we're dealing with a 32-bit type on the root or a 64-bit type on
+  // the root.
+  MachineRegisterInfo &MRI = Root.getParent()->getMF()->getRegInfo();
+  if (MRI.getType(Root.getReg()).getSizeInBits() == 32)
+    Immed = ~((uint32_t)Immed) + 1;
+  else
+    Immed = ~Immed + 1ULL;
+
+  if (Immed & 0xFFFFFFFFFF000000ULL)
+    return None;
+
+  Immed &= 0xFFFFFFULL;
+  return select12BitValueWithLeftShift(Immed);
 }
 
 /// Return true if it is worth folding MI into an extended register. That is,
