@@ -124,13 +124,14 @@ std::string ErrorHandler::getLocation(const Twine &msg) {
   std::string str = msg.str();
 
   for (std::regex &re : regexes) {
-    std::smatch match;
-    if (!std::regex_search(str, match, re))
+    std::smatch m;
+    if (!std::regex_search(str, m, re))
       continue;
+    assert(m.size() == 2 || m.size() == 3);
 
-    if (match.size() > 2)
-      return match.str(1) + "(" + match.str(2) + ")";
-    return match.str(1);
+    if (m.size() == 2)
+      return m.str(1);
+    return m.str(1) + "(" + m.str(2) + ")";
   }
 
   return logName;
