@@ -3,7 +3,7 @@
 
 define <2 x i64> @test5(i64* %base, <2 x i64> %src0) {
 ; CHECK-LABEL: test5:
-; CHECK:       # %bb.0: # %else
+; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpinsrq $1, (%rdi), %xmm0, %xmm0
 ; CHECK-NEXT:    retq
  %res = call <2 x i64> @llvm.masked.expandload.v2i64(i64* %base, <2 x i1> <i1 false, i1 true>, <2 x i64> %src0)

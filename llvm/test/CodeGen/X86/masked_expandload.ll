@@ -1368,7 +1368,7 @@ define <2 x float> @expandload_v2f32_v2i1(float* %base, <2 x float> %src0, <2 x 
 
 define <4 x float> @expandload_v4f32_const(float* %base, <4 x float> %src0) {
 ; SSE2-LABEL: expandload_v4f32_const:
-; SSE2:       ## %bb.0: ## %cond.load
+; SSE2:       ## %bb.0:
 ; SSE2-NEXT:    movss {{.*#+}} xmm2 = mem[0],zero,zero,zero
 ; SSE2-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; SSE2-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,0],xmm2[0,0]
@@ -1379,7 +1379,7 @@ define <4 x float> @expandload_v4f32_const(float* %base, <4 x float> %src0) {
 ; SSE2-NEXT:    retq
 ;
 ; SSE42-LABEL: expandload_v4f32_const:
-; SSE42:       ## %bb.0: ## %cond.load
+; SSE42:       ## %bb.0:
 ; SSE42-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; SSE42-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; SSE42-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[2,3]
@@ -1387,7 +1387,7 @@ define <4 x float> @expandload_v4f32_const(float* %base, <4 x float> %src0) {
 ; SSE42-NEXT:    retq
 ;
 ; AVX1OR2-LABEL: expandload_v4f32_const:
-; AVX1OR2:       ## %bb.0: ## %cond.load
+; AVX1OR2:       ## %bb.0:
 ; AVX1OR2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; AVX1OR2-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; AVX1OR2-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[2,3]
@@ -1423,7 +1423,7 @@ define <4 x float> @expandload_v4f32_const(float* %base, <4 x float> %src0) {
 
 define <16 x float> @expandload_v16f32_const(float* %base, <16 x float> %src0) {
 ; SSE2-LABEL: expandload_v16f32_const:
-; SSE2:       ## %bb.0: ## %cond.load
+; SSE2:       ## %bb.0:
 ; SSE2-NEXT:    movups (%rdi), %xmm0
 ; SSE2-NEXT:    movups 16(%rdi), %xmm1
 ; SSE2-NEXT:    movss {{.*#+}} xmm5 = mem[0],zero,zero,zero
@@ -1443,7 +1443,7 @@ define <16 x float> @expandload_v16f32_const(float* %base, <16 x float> %src0) {
 ; SSE2-NEXT:    retq
 ;
 ; SSE42-LABEL: expandload_v16f32_const:
-; SSE42:       ## %bb.0: ## %cond.load
+; SSE42:       ## %bb.0:
 ; SSE42-NEXT:    movups (%rdi), %xmm0
 ; SSE42-NEXT:    movups 16(%rdi), %xmm1
 ; SSE42-NEXT:    movss {{.*#+}} xmm4 = mem[0],zero,zero,zero
@@ -1457,7 +1457,7 @@ define <16 x float> @expandload_v16f32_const(float* %base, <16 x float> %src0) {
 ; SSE42-NEXT:    retq
 ;
 ; AVX1OR2-LABEL: expandload_v16f32_const:
-; AVX1OR2:       ## %bb.0: ## %cond.load
+; AVX1OR2:       ## %bb.0:
 ; AVX1OR2-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
 ; AVX1OR2-NEXT:    vblendps {{.*#+}} ymm0 = ymm2[0],ymm0[1,2,3,4,5,6,7]
 ; AVX1OR2-NEXT:    vinsertps {{.*#+}} xmm2 = xmm0[0],mem[0],xmm0[2,3]
@@ -1507,7 +1507,7 @@ define <16 x float> @expandload_v16f32_const(float* %base, <16 x float> %src0) {
 
 define <16 x float> @expandload_v16f32_const_undef(float* %base) {
 ; SSE2-LABEL: expandload_v16f32_const_undef:
-; SSE2:       ## %bb.0: ## %cond.load
+; SSE2:       ## %bb.0:
 ; SSE2-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; SSE2-NEXT:    movsd {{.*#+}} xmm2 = mem[0],zero
 ; SSE2-NEXT:    movlhps {{.*#+}} xmm2 = xmm2[0],xmm0[0]
@@ -1517,7 +1517,7 @@ define <16 x float> @expandload_v16f32_const_undef(float* %base) {
 ; SSE2-NEXT:    retq
 ;
 ; SSE42-LABEL: expandload_v16f32_const_undef:
-; SSE42:       ## %bb.0: ## %cond.load
+; SSE42:       ## %bb.0:
 ; SSE42-NEXT:    movsd {{.*#+}} xmm2 = mem[0],zero
 ; SSE42-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
 ; SSE42-NEXT:    movups (%rdi), %xmm0
@@ -1526,7 +1526,7 @@ define <16 x float> @expandload_v16f32_const_undef(float* %base) {
 ; SSE42-NEXT:    retq
 ;
 ; AVX1OR2-LABEL: expandload_v16f32_const_undef:
-; AVX1OR2:       ## %bb.0: ## %cond.load
+; AVX1OR2:       ## %bb.0:
 ; AVX1OR2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX1OR2-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
 ; AVX1OR2-NEXT:    vinsertf128 $1, 44(%rdi), %ymm0, %ymm1
@@ -2991,18 +2991,18 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 
 define <2 x i64> @expandload_v2i64_const(i64* %base, <2 x i64> %src0) {
 ; SSE2-LABEL: expandload_v2i64_const:
-; SSE2:       ## %bb.0: ## %else
+; SSE2:       ## %bb.0:
 ; SSE2-NEXT:    movsd {{.*#+}} xmm1 = mem[0],zero
 ; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE2-NEXT:    retq
 ;
 ; SSE42-LABEL: expandload_v2i64_const:
-; SSE42:       ## %bb.0: ## %else
+; SSE42:       ## %bb.0:
 ; SSE42-NEXT:    pinsrq $1, (%rdi), %xmm0
 ; SSE42-NEXT:    retq
 ;
 ; AVX1OR2-LABEL: expandload_v2i64_const:
-; AVX1OR2:       ## %bb.0: ## %else
+; AVX1OR2:       ## %bb.0:
 ; AVX1OR2-NEXT:    vpinsrq $1, (%rdi), %xmm0, %xmm0
 ; AVX1OR2-NEXT:    retq
 ;

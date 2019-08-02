@@ -1123,7 +1123,7 @@ define void @compressstore_v8f32_v8i1(float* %base, <8 x float> %V, <8 x i1> %ma
 
 define void @compressstore_v16f32_const(float* %base, <16 x float> %V) {
 ; SSE2-LABEL: compressstore_v16f32_const:
-; SSE2:       ## %bb.0: ## %cond.store
+; SSE2:       ## %bb.0:
 ; SSE2-NEXT:    movss %xmm0, (%rdi)
 ; SSE2-NEXT:    movaps %xmm0, %xmm4
 ; SSE2-NEXT:    shufps {{.*#+}} xmm4 = xmm4[1,1],xmm0[2,3]
@@ -1160,7 +1160,7 @@ define void @compressstore_v16f32_const(float* %base, <16 x float> %V) {
 ; SSE2-NEXT:    retq
 ;
 ; SSE42-LABEL: compressstore_v16f32_const:
-; SSE42:       ## %bb.0: ## %cond.store
+; SSE42:       ## %bb.0:
 ; SSE42-NEXT:    movups %xmm0, (%rdi)
 ; SSE42-NEXT:    movups %xmm1, 16(%rdi)
 ; SSE42-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm3[0]
@@ -1171,7 +1171,7 @@ define void @compressstore_v16f32_const(float* %base, <16 x float> %V) {
 ; SSE42-NEXT:    retq
 ;
 ; AVX1-LABEL: compressstore_v16f32_const:
-; AVX1:       ## %bb.0: ## %cond.store
+; AVX1:       ## %bb.0:
 ; AVX1-NEXT:    vmovups %ymm0, (%rdi)
 ; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
 ; AVX1-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
@@ -1183,7 +1183,7 @@ define void @compressstore_v16f32_const(float* %base, <16 x float> %V) {
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: compressstore_v16f32_const:
-; AVX2:       ## %bb.0: ## %cond.store
+; AVX2:       ## %bb.0:
 ; AVX2-NEXT:    vmovups %ymm0, (%rdi)
 ; AVX2-NEXT:    vmovaps {{.*#+}} xmm0 = [0,1,2,4]
 ; AVX2-NEXT:    vpermps %ymm1, %ymm0, %ymm0
