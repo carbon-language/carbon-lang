@@ -1016,6 +1016,8 @@ bool LinearizedRegion::hasNoDef(unsigned Reg, MachineRegisterInfo *MRI) {
 // before are no longer register kills.
 void LinearizedRegion::removeFalseRegisterKills(MachineRegisterInfo *MRI) {
   const TargetRegisterInfo *TRI = MRI->getTargetRegisterInfo();
+  (void)TRI; // It's used by LLVM_DEBUG.
+
   for (auto MBBI : MBBs) {
     MachineBasicBlock *MBB = MBBI;
     for (auto &II : *MBB) {
