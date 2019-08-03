@@ -123,10 +123,10 @@ template<> struct DenseMapInfo<Register> {
   static inline unsigned getTombstoneKey() {
     return DenseMapInfo<unsigned>::getTombstoneKey();
   }
-  static unsigned getHashValue(const unsigned &Val) {
+  static unsigned getHashValue(const Register &Val) {
     return DenseMapInfo<unsigned>::getHashValue(Val);
   }
-  static bool isEqual(const unsigned &LHS, const unsigned &RHS) {
+  static bool isEqual(const Register &LHS, const Register &RHS) {
     return DenseMapInfo<unsigned>::isEqual(LHS, RHS);
   }
 };
