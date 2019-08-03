@@ -44,6 +44,7 @@ TEST(AsmWriterTest, DebugPrintDetachedArgument) {
   raw_string_ostream OS(S);
   Arg->print(OS);
   EXPECT_EQ(S, "i32 <badref>");
+  delete Arg;
 }
 
 TEST(AsmWriterTest, DumpDIExpression) {
