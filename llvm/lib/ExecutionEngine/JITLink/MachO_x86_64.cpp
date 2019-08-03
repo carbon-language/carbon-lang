@@ -94,7 +94,7 @@ private:
         ", symbolnum=" + formatv("{0:x6}", RI.r_symbolnum) +
         ", kind=" + formatv("{0:x1}", RI.r_type) +
         ", pc_rel=" + (RI.r_pcrel ? "true" : "false") +
-        ", extern= " + (RI.r_extern ? "true" : "false") +
+        ", extern=" + (RI.r_extern ? "true" : "false") +
         ", length=" + formatv("{0:d}", RI.r_length));
   }
 
