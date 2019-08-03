@@ -2053,10 +2053,12 @@ struct AADereferenceableCallSiteArgument : AADereferenceableImpl {
   void initialize(Attributor &A) override {
     CallSite CS(&getAnchoredValue());
     if (CS.paramHasAttr(ArgNo, Attribute::Dereferenceable))
-      takeKnownDerefBytesMaximum(CS.getDereferenceableBytes(ArgNo));
+      takeKnownDerefBytesMaximum(
+          CS.getDereferenceableBytes(ArgNo + AttributeList::FirstArgIndex));
 
     if (CS.paramHasAttr(ArgNo, Attribute::DereferenceableOrNull))
-      takeKnownDerefBytesMaximum(CS.getDereferenceableOrNullBytes(ArgNo));
+      takeKnownDerefBytesMaximum(CS.getDereferenceableOrNullBytes(
+          ArgNo + AttributeList::FirstArgIndex));
   }
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
