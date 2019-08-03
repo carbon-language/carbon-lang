@@ -166,7 +166,7 @@ named_func_addr_quad:
 # Check X86_64_RELOC_UNSIGNED / long / extern handling by putting the address of
 # an external function (defined to reside in the low 4Gb) into a long symbol.
 #
-# jitlink-check: *{8}named_func_addr_long = external_func
+# jitlink-check: *{4}named_func_addr_long = external_func
         .globl  named_func_addr_long
         .p2align  2
 named_func_addr_long:
