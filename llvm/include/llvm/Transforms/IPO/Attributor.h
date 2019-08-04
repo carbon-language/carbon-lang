@@ -871,26 +871,25 @@ struct AAIsDead : public AbstractAttribute {
       Attribute::AttrKind(Attribute::EndAttrKinds + 1);
 
   /// Returns true if \p BB is assumed dead.
-  virtual bool isAssumedDead(BasicBlock *BB) const = 0;
+  virtual bool isAssumedDead(const BasicBlock *BB) const = 0;
 
   /// Returns true if \p BB is known dead.
-  virtual bool isKnownDead(BasicBlock *BB) const = 0;
+  virtual bool isKnownDead(const BasicBlock *BB) const = 0;
 
   /// Returns true if \p I is assumed dead.
-  virtual bool isAssumedDead(Instruction *I) const = 0;
+  virtual bool isAssumedDead(const Instruction *I) const = 0;
 
   /// Returns true if \p I is known dead.
-  virtual bool isKnownDead(Instruction *I) const = 0;
+  virtual bool isKnownDead(const Instruction *I) const = 0;
 
   /// This method is used to check if at least one instruction in a collection
   /// of instructions is live.
   template <typename T> bool isLiveInstSet(T begin, T end) const {
-    for (T I = begin; I != end; ++I) {
-      assert(isa<Instruction>(*I) && "It has to be collection of Instructions");
-      assert((*I)->getParent()->getParent() == &getAnchorScope() &&
+    for (const auto &I : llvm::make_range(begin, end)) {
+      assert(I->getFunction() == &getAnchorScope() &&
              "Instruction must be in the same anchor scope function.");
 
-      if (!isAssumedDead(*I))
+      if (!isAssumedDead(I))
         return true;
     }
 
