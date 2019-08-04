@@ -2488,6 +2488,12 @@ void Attributor::identifyDefaultAbstractAttributes(
     Function &F, InformationCache &InfoCache,
     DenseSet</* Attribute::AttrKind */ unsigned> *Whitelist) {
 
+  // Check for dead BasicBlocks in every function.
+  registerAA(*new AAIsDeadFunction(F, InfoCache));
+
+  // Every function might be "will-return".
+  registerAA(*new AAWillReturnFunction(F, InfoCache));
+
   // Every function can be nounwind.
   registerAA(*new AANoUnwindFunction(F, InfoCache));
 
@@ -2541,12 +2547,6 @@ void Attributor::identifyDefaultAbstractAttributes(
         registerAA(*new AAAlignArgument(Arg, InfoCache));
     }
   }
-
-  // Every function might be "will-return".
-  registerAA(*new AAWillReturnFunction(F, InfoCache));
-
-  // Check for dead BasicBlocks in every function.
-  registerAA(*new AAIsDeadFunction(F, InfoCache));
 
   // Walk all instructions to find more attribute opportunities and also
   // interesting instructions that might be queried by abstract attributes
