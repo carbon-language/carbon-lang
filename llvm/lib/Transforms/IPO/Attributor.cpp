@@ -488,10 +488,8 @@ ChangeStatus AANoUnwindFunction::updateImpl(Attributor &A) {
 
       auto *NoUnwindAA = A.getAAFor<AANoUnwind>(*this, *I);
 
-      if (!NoUnwindAA || !NoUnwindAA->isAssumedNoUnwind()) {
-        indicatePessimisticFixpoint();
-        return ChangeStatus::CHANGED;
-      }
+      if (!NoUnwindAA || !NoUnwindAA->isAssumedNoUnwind())
+        return indicatePessimisticFixpoint();
     }
   }
   return ChangeStatus::UNCHANGED;
@@ -625,14 +623,16 @@ public:
   bool isValidState() const override { return IsValidState; }
 
   /// See AbstractState::indicateOptimisticFixpoint(...).
-  void indicateOptimisticFixpoint() override {
+  ChangeStatus indicateOptimisticFixpoint() override {
     IsFixed = true;
     IsValidState &= true;
+    return ChangeStatus::UNCHANGED;
   }
 
-  void indicatePessimisticFixpoint() override {
+  ChangeStatus indicatePessimisticFixpoint() override {
     IsFixed = true;
     IsValidState = false;
+    return ChangeStatus::CHANGED;
   }
 };
 
@@ -1000,10 +1000,8 @@ ChangeStatus AANoSyncFunction::updateImpl(Attributor &A) {
       continue;
 
     if (ICS && (!NoSyncAA || !NoSyncAA->isAssumedNoSync()) &&
-        !ICS.hasFnAttr(Attribute::NoSync)) {
-      indicatePessimisticFixpoint();
-      return ChangeStatus::CHANGED;
-    }
+        !ICS.hasFnAttr(Attribute::NoSync))
+      return indicatePessimisticFixpoint();
 
     if (ICS)
       continue;
@@ -1011,8 +1009,7 @@ ChangeStatus AANoSyncFunction::updateImpl(Attributor &A) {
     if (!isVolatile(I) && !isNonRelaxedAtomic(I))
       continue;
 
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
+    return indicatePessimisticFixpoint();
   }
 
   auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
@@ -1035,8 +1032,7 @@ ChangeStatus AANoSyncFunction::updateImpl(Attributor &A) {
       if (!ICS.isConvergent())
         continue;
 
-      indicatePessimisticFixpoint();
-      return ChangeStatus::CHANGED;
+      return indicatePessimisticFixpoint();
     }
   }
 
@@ -1100,10 +1096,8 @@ ChangeStatus AANoFreeFunction::updateImpl(Attributor &A) {
       auto *NoFreeAA = A.getAAFor<AANoFreeFunction>(*this, *I);
 
       if ((!NoFreeAA || !NoFreeAA->isAssumedNoFree()) &&
-          !ICS.hasFnAttr(Attribute::NoFree)) {
-        indicatePessimisticFixpoint();
-        return ChangeStatus::CHANGED;
-      }
+          !ICS.hasFnAttr(Attribute::NoFree))
+        return indicatePessimisticFixpoint();
     }
   }
   return ChangeStatus::UNCHANGED;
@@ -1203,18 +1197,14 @@ ChangeStatus AANonNullReturned::updateImpl(Attributor &A) {
   Function &F = getAnchorScope();
 
   auto *AARetVal = A.getAAFor<AAReturnedValues>(*this, F);
-  if (!AARetVal) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetVal)
+    return indicatePessimisticFixpoint();
 
   std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
       this->generatePredicate(A);
 
-  if (!AARetVal->checkForallReturnedValues(Pred)) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetVal->checkForallReturnedValues(Pred))
+    return indicatePessimisticFixpoint();
   return ChangeStatus::UNCHANGED;
 }
 
@@ -1300,10 +1290,8 @@ ChangeStatus AANonNullArgument::updateImpl(Attributor &A) {
 
     return false;
   };
-  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this)) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this))
+    return indicatePessimisticFixpoint();
   return ChangeStatus::UNCHANGED;
 }
 
@@ -1315,10 +1303,8 @@ ChangeStatus AANonNullCallSiteArgument::updateImpl(Attributor &A) {
 
   auto *NonNullAA = A.getAAFor<AANonNull>(*this, V);
 
-  if (!NonNullAA || !NonNullAA->isAssumedNonNull()) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!NonNullAA || !NonNullAA->isAssumedNonNull())
+    return indicatePessimisticFixpoint();
 
   return ChangeStatus::UNCHANGED;
 }
@@ -1416,10 +1402,8 @@ ChangeStatus AAWillReturnFunction::updateImpl(Attributor &A) {
         continue;
 
       auto *WillReturnAA = A.getAAFor<AAWillReturn>(*this, *I);
-      if (!WillReturnAA || !WillReturnAA->isAssumedWillReturn()) {
-        indicatePessimisticFixpoint();
-        return ChangeStatus::CHANGED;
-      }
+      if (!WillReturnAA || !WillReturnAA->isAssumedWillReturn())
+        return indicatePessimisticFixpoint();
 
       auto *NoRecurseAA = A.getAAFor<AANoRecurse>(*this, *I);
 
@@ -1428,10 +1412,8 @@ ChangeStatus AAWillReturnFunction::updateImpl(Attributor &A) {
       //        regarded as having recursion.
       //       Code below should be
       //       if ((!NoRecurseAA || !NoRecurseAA->isAssumedNoRecurse()) &&
-      if (!NoRecurseAA && !ICS.hasFnAttr(Attribute::NoRecurse)) {
-        indicatePessimisticFixpoint();
-        return ChangeStatus::CHANGED;
-      }
+      if (!NoRecurseAA && !ICS.hasFnAttr(Attribute::NoRecurse))
+        return indicatePessimisticFixpoint();
     }
   }
 
@@ -1492,10 +1474,8 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A) {
   Function &F = getAnchorScope();
 
   auto *AARetValImpl = A.getAAFor<AAReturnedValuesImpl>(*this, F);
-  if (!AARetValImpl) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetValImpl)
+    return indicatePessimisticFixpoint();
 
   std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
       [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
@@ -1525,10 +1505,8 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A) {
     return true;
   };
 
-  if (!AARetValImpl->checkForallReturnedValues(Pred)) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetValImpl->checkForallReturnedValues(Pred))
+    return indicatePessimisticFixpoint();
 
   return ChangeStatus::UNCHANGED;
 }
@@ -1764,15 +1742,17 @@ struct DerefState : AbstractState {
   }
 
   /// See AbstractState::indicateOptimisticFixpoint(...)
-  void indicateOptimisticFixpoint() override {
+  ChangeStatus indicateOptimisticFixpoint() override {
     DerefBytesState.indicateOptimisticFixpoint();
     NonNullGlobalState.indicateOptimisticFixpoint();
+    return ChangeStatus::UNCHANGED;
   }
 
   /// See AbstractState::indicatePessimisticFixpoint(...)
-  void indicatePessimisticFixpoint() override {
+  ChangeStatus indicatePessimisticFixpoint() override {
     DerefBytesState.indicatePessimisticFixpoint();
     NonNullGlobalState.indicatePessimisticFixpoint();
+    return ChangeStatus::CHANGED;
   }
 
   /// Update known dereferenceable bytes.
@@ -1958,10 +1938,8 @@ ChangeStatus AADereferenceableReturned::updateImpl(Attributor &A) {
   syncNonNull(A.getAAFor<AANonNull>(*this, F));
 
   auto *AARetVal = A.getAAFor<AAReturnedValues>(*this, F);
-  if (!AARetVal) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetVal)
+    return indicatePessimisticFixpoint();
 
   bool IsNonNull = isAssumedNonNull();
   bool IsGlobal = isAssumedGlobal();
@@ -1979,8 +1957,7 @@ ChangeStatus AADereferenceableReturned::updateImpl(Attributor &A) {
                ? ChangeStatus::UNCHANGED
                : ChangeStatus::CHANGED;
   }
-  indicatePessimisticFixpoint();
-  return ChangeStatus::CHANGED;
+  return indicatePessimisticFixpoint();
 }
 
 struct AADereferenceableArgument : AADereferenceableImpl {
@@ -2030,10 +2007,8 @@ ChangeStatus AADereferenceableArgument::updateImpl(Attributor &A) {
     return isValidState();
   };
 
-  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this)) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this))
+    return indicatePessimisticFixpoint();
 
   updateAssumedNonNullGlobalState(IsNonNull, IsGlobal);
 
@@ -2171,10 +2146,8 @@ struct AAAlignReturned : AAAlignImpl {
 ChangeStatus AAAlignReturned::updateImpl(Attributor &A) {
   Function &F = getAnchorScope();
   auto *AARetValImpl = A.getAAFor<AAReturnedValuesImpl>(*this, F);
-  if (!AARetValImpl) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetValImpl)
+    return indicatePessimisticFixpoint();
 
   // Currently, align<n> is deduced if alignments in return values are assumed
   // as greater than n. We reach pessimistic fixpoint if any of the return value
@@ -2196,10 +2169,8 @@ ChangeStatus AAAlignReturned::updateImpl(Attributor &A) {
     return isValidState();
   };
 
-  if (!AARetValImpl->checkForallReturnedValues(Pred)) {
-    indicatePessimisticFixpoint();
-    return ChangeStatus::CHANGED;
-  }
+  if (!AARetValImpl->checkForallReturnedValues(Pred))
+    return indicatePessimisticFixpoint();
 
   return (getAssumed() != BeforeState) ? ChangeStatus::CHANGED
                                        : ChangeStatus::UNCHANGED;
