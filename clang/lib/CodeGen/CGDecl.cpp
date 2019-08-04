@@ -2530,11 +2530,10 @@ void CodeGenModule::EmitOMPDeclareReduction(const OMPDeclareReductionDecl *D,
 }
 
 void CodeGenModule::EmitOMPDeclareMapper(const OMPDeclareMapperDecl *D,
-                                         CodeGenFunction *CGF) {
-  if (!LangOpts.OpenMP || LangOpts.OpenMPSimd ||
-      (!LangOpts.EmitAllDecls && !D->isUsed()))
+                                            CodeGenFunction *CGF) {
+  if (!LangOpts.OpenMP || (!LangOpts.EmitAllDecls && !D->isUsed()))
     return;
-  getOpenMPRuntime().emitUserDefinedMapper(D, CGF);
+  // FIXME: need to implement mapper code generation
 }
 
 void CodeGenModule::EmitOMPRequiresDecl(const OMPRequiresDecl *D) {
