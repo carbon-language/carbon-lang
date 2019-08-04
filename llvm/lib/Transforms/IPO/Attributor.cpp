@@ -1757,9 +1757,10 @@ struct DerefState : AbstractState {
   /// See AbstractState::isValidState()
   bool isValidState() const override { return DerefBytesState.isValidState(); }
 
-  // See AbstractState::isAtFixpoint()
+  /// See AbstractState::isAtFixpoint()
   bool isAtFixpoint() const override {
-    return DerefBytesState.isAtFixpoint() && NonNullGlobalState.isAtFixpoint();
+    return !isValidState() || (DerefBytesState.isAtFixpoint() &&
+                               NonNullGlobalState.isAtFixpoint());
   }
 
   /// See AbstractState::indicateOptimisticFixpoint(...)
