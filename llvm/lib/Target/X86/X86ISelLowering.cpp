@@ -34731,7 +34731,7 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
     // If all the demanded elts are from one operand and are inline,
     // then we can use the operand directly.
     int NumOps = ShuffleOps.size();
-    if (ShuffleMask.size() == NumElts &&
+    if (ShuffleMask.size() == (unsigned)NumElts &&
         llvm::all_of(ShuffleOps, [VT](SDValue V) {
           return VT.getSizeInBits() == V.getValueSizeInBits();
         })) {
