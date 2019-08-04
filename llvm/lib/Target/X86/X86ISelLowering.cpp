@@ -34706,7 +34706,10 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
 SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
     SDValue Op, const APInt &DemandedBits, const APInt &DemandedElts,
     SelectionDAG &DAG, unsigned Depth) const {
+  int NumElts = DemandedElts.getBitWidth();
   unsigned Opc = Op.getOpcode();
+  EVT VT = Op.getValueType();
+
   switch (Opc) {
   case X86ISD::PINSRB:
   case X86ISD::PINSRW: {
@@ -34719,6 +34722,49 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
       return Vec;
      break;
   }
+  }
+
+  SmallVector<int, 16> ShuffleMask;
+  SmallVector<SDValue, 2> ShuffleOps;
+  if (VT.isSimple() && VT.isVector() &&
+      resolveTargetShuffleInputs(Op, ShuffleOps, ShuffleMask, DAG, Depth)) {
+    // If all the demanded elts are from one operand and are inline,
+    // then we can use the operand directly.
+    int NumOps = ShuffleOps.size();
+    if (ShuffleMask.size() == NumElts &&
+        llvm::all_of(ShuffleOps, [VT](SDValue V) {
+          return VT.getSizeInBits() == V.getValueSizeInBits();
+        })) {
+
+      // Bitmask that indicates which ops have only been accessed 'inline'.
+      APInt IdentityOp = APInt::getAllOnesValue(NumOps);
+      bool AllUndef = true;
+
+      for (int i = 0; i != NumElts; ++i) {
+        int M = ShuffleMask[i];
+        if (SM_SentinelUndef == M || !DemandedElts[i])
+          continue;
+        AllUndef = false;
+        int Op = M / NumElts;
+        int Index = M % NumElts;
+        if (M < 0 || Index != i) {
+          IdentityOp.clearAllBits();
+          break;
+        }
+        IdentityOp &= APInt::getOneBitSet(NumOps, Op);
+        if (IdentityOp == 0)
+          break;
+      }
+      assert((IdentityOp == 0 || IdentityOp.countPopulation() == 1) &&
+             "Multiple identity shuffles detected");
+
+      if (AllUndef)
+        return DAG.getUNDEF(VT);
+
+      for (int i = 0; i != NumOps; ++i)
+        if (IdentityOp[i])
+          return DAG.getBitcast(VT, ShuffleOps[i]);
+    }
   }
 
   return TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
