@@ -665,7 +665,8 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
 
 const std::string AAReturnedValuesImpl::getAsStr() const {
   return (isAtFixpoint() ? "returns(#" : "may-return(#") +
-         (isValidState() ? std::to_string(getNumReturnValues()) : "?") + ")";
+         (isValidState() ? std::to_string(getNumReturnValues()) : "?") +
+         ")[OD: " + std::to_string(HasOverdefinedReturnedCalls) + "]";
 }
 
 Optional<Value *> AAReturnedValuesImpl::getAssumedUniqueReturnValue(
