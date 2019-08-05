@@ -1221,6 +1221,77 @@ define <2 x i64> @shl_zext_splat_vec(<2 x i32> %t) {
   ret <2 x i64> %shl
 }
 
+define i64 @shl_zext_mul(i32 %t) {
+; CHECK-LABEL: @shl_zext_mul(
+; CHECK-NEXT:    [[MUL:%.*]] = mul i32 [[T:%.*]], 16777215
+; CHECK-NEXT:    [[EXT:%.*]] = zext i32 [[MUL]] to i64
+; CHECK-NEXT:    [[SHL:%.*]] = shl nuw i64 [[EXT]], 32
+; CHECK-NEXT:    ret i64 [[SHL]]
+;
+  %mul = mul i32 %t, 16777215
+  %ext = zext i32 %mul to i64
+  %shl = shl i64 %ext, 32
+  ret i64 %shl
+}
+
+define <3 x i17> @shl_zext_mul_splat(<3 x i5> %t) {
+; CHECK-LABEL: @shl_zext_mul_splat(
+; CHECK-NEXT:    [[MUL:%.*]] = mul <3 x i5> [[T:%.*]], <i5 13, i5 13, i5 13>
+; CHECK-NEXT:    [[EXT:%.*]] = zext <3 x i5> [[MUL]] to <3 x i17>
+; CHECK-NEXT:    [[SHL:%.*]] = shl nuw <3 x i17> [[EXT]], <i17 12, i17 12, i17 12>
+; CHECK-NEXT:    ret <3 x i17> [[SHL]]
+;
+  %mul = mul <3 x i5> %t, <i5 13, i5 13, i5 13>
+  %ext = zext <3 x i5> %mul to <3 x i17>
+  %shl = shl <3 x i17> %ext, <i17 12, i17 12, i17 12>
+  ret <3 x i17> %shl
+}
+
+define i64 @shl_zext_mul_low_shift_amount(i32 %t) {
+; CHECK-LABEL: @shl_zext_mul_low_shift_amount(
+; CHECK-NEXT:    [[MUL:%.*]] = mul i32 [[T:%.*]], 16777215
+; CHECK-NEXT:    [[EXT:%.*]] = zext i32 [[MUL]] to i64
+; CHECK-NEXT:    [[SHL:%.*]] = shl nuw nsw i64 [[EXT]], 31
+; CHECK-NEXT:    ret i64 [[SHL]]
+;
+  %mul = mul i32 %t, 16777215
+  %ext = zext i32 %mul to i64
+  %shl = shl i64 %ext, 31
+  ret i64 %shl
+}
+
+define i64 @shl_zext_mul_extra_use1(i32 %t) {
+; CHECK-LABEL: @shl_zext_mul_extra_use1(
+; CHECK-NEXT:    [[MUL:%.*]] = mul i32 [[T:%.*]], 16777215
+; CHECK-NEXT:    [[EXT:%.*]] = zext i32 [[MUL]] to i64
+; CHECK-NEXT:    call void @use(i64 [[EXT]])
+; CHECK-NEXT:    [[SHL:%.*]] = shl nuw i64 [[EXT]], 32
+; CHECK-NEXT:    ret i64 [[SHL]]
+;
+  %mul = mul i32 %t, 16777215
+  %ext = zext i32 %mul to i64
+  call void @use(i64 %ext)
+  %shl = shl i64 %ext, 32
+  ret i64 %shl
+}
+
+declare void @use_i32(i32)
+
+define i64 @shl_zext_mul_extra_use2(i32 %t) {
+; CHECK-LABEL: @shl_zext_mul_extra_use2(
+; CHECK-NEXT:    [[MUL:%.*]] = mul i32 [[T:%.*]], 16777215
+; CHECK-NEXT:    call void @use_i32(i32 [[MUL]])
+; CHECK-NEXT:    [[EXT:%.*]] = zext i32 [[MUL]] to i64
+; CHECK-NEXT:    [[SHL:%.*]] = shl nuw i64 [[EXT]], 32
+; CHECK-NEXT:    ret i64 [[SHL]]
+;
+  %mul = mul i32 %t, 16777215
+  call void @use_i32(i32 %mul)
+  %ext = zext i32 %mul to i64
+  %shl = shl i64 %ext, 32
+  ret i64 %shl
+}
+
 define <2 x i8> @ashr_demanded_bits_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @ashr_demanded_bits_splat(
 ; CHECK-NEXT:    [[SHR:%.*]] = ashr <2 x i8> %x, <i8 7, i8 7>
