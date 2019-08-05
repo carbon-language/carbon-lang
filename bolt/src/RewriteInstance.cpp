@@ -440,9 +440,11 @@ SequentialDisassembly("sequential-disassembly",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-WriteBoltInfoSection("write-bolt-info-section",
+WriteBoltInfoSection("bolt-info",
   cl::desc("write bolt info section in the output binary"),
   cl::init(true),
+  cl::ZeroOrMore,
+  cl::Hidden,
   cl::cat(BoltOutputCategory));
 
 bool isHotTextMover(const BinaryFunction &Function) {
