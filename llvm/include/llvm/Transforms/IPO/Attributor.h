@@ -156,7 +156,7 @@ struct Attributor {
   /// as the Attributor is not destroyed (it owns the attributes now).
   ///
   /// \Returns CHANGED if the IR was changed, otherwise UNCHANGED.
-  ChangeStatus run();
+  ChangeStatus run(InformationCache &InfoCache);
 
   /// Lookup an abstract attribute of type \p AAType anchored at value \p V and
   /// argument number \p ArgNo. If no attribute is found and \p V is a call base
@@ -557,15 +557,11 @@ struct AbstractAttribute {
   ///
   /// \param AssociatedVal The value this abstract attribute is associated with.
   /// \param AnchoredVal The value this abstract attributes is anchored at.
-  /// \param InfoCache Cached information accessible to the abstract attribute.
-  AbstractAttribute(Value *AssociatedVal, Value &AnchoredVal,
-                    InformationCache &InfoCache)
-      : AssociatedVal(AssociatedVal), AnchoredVal(AnchoredVal),
-        InfoCache(InfoCache) {}
+  AbstractAttribute(Value *AssociatedVal, Value &AnchoredVal)
+      : AssociatedVal(AssociatedVal), AnchoredVal(AnchoredVal) {}
 
   /// An abstract attribute associated with and anchored at \p V.
-  AbstractAttribute(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(&V, V, InfoCache) {}
+  AbstractAttribute(Value &V) : AbstractAttribute(&V, V) {}
 
   /// Virtual destructor.
   virtual ~AbstractAttribute() {}
@@ -578,7 +574,7 @@ struct AbstractAttribute {
   ///  - perform any work that is not going to change over time, e.g., determine
   ///    a subset of the IR, or attributes in-flight, that have to be looked at
   ///    in the `updateImpl` method.
-  virtual void initialize(Attributor &A) {}
+  virtual void initialize(Attributor &A, InformationCache &InfoCache) {}
 
   /// Return the internal abstract state for inspection.
   virtual const AbstractState &getState() const = 0;
@@ -642,7 +638,7 @@ protected:
   /// otherwise it delegates to `AbstractAttribute::updateImpl`.
   ///
   /// \Return CHANGED if the internal state changed, otherwise UNCHANGED.
-  ChangeStatus update(Attributor &A);
+  ChangeStatus update(Attributor &A, InformationCache &InfoCache);
 
   /// Hook for the Attributor to trigger the manifestation of the information
   /// represented by the abstract attribute in the LLVM-IR.
@@ -660,16 +656,14 @@ protected:
   /// the current information is still valid or adjust it otherwise.
   ///
   /// \Return CHANGED if the internal state changed, otherwise UNCHANGED.
-  virtual ChangeStatus updateImpl(Attributor &A) = 0;
+  virtual ChangeStatus updateImpl(Attributor &A,
+                                  InformationCache &InfoCache) = 0;
 
   /// The value this abstract attribute is associated with.
   Value *AssociatedVal;
 
   /// The value this abstract attribute is anchored at.
   Value &AnchoredVal;
-
-  /// The information cache accessible to this abstract attribute.
-  InformationCache &InfoCache;
 };
 
 /// Forward declarations of output streams for debug purposes.
@@ -694,8 +688,7 @@ Pass *createAttributorLegacyPass();
 /// An abstract attribute for the returned values of a function.
 struct AAReturnedValues : public AbstractAttribute {
   /// See AbstractAttribute::AbstractAttribute(...).
-  AAReturnedValues(Function &F, InformationCache &InfoCache)
-      : AbstractAttribute(F, InfoCache) {}
+  AAReturnedValues(Function &F) : AbstractAttribute(F) {}
 
   /// Check \p Pred on all returned values.
   ///
@@ -715,8 +708,7 @@ struct AAReturnedValues : public AbstractAttribute {
 
 struct AANoUnwind : public AbstractAttribute {
   /// An abstract interface for all nosync attributes.
-  AANoUnwind(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AANoUnwind(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind()/
   Attribute::AttrKind getAttrKind() const override { return ID; }
@@ -732,8 +724,7 @@ struct AANoUnwind : public AbstractAttribute {
 
 struct AANoSync : public AbstractAttribute {
   /// An abstract interface for all nosync attributes.
-  AANoSync(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AANoSync(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind().
   Attribute::AttrKind getAttrKind() const override { return ID; }
@@ -752,13 +743,11 @@ struct AANoSync : public AbstractAttribute {
 struct AANonNull : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AANonNull(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AANonNull(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AANonNull(Value *AssociatedVal, Value &AnchoredValue,
-            InformationCache &InfoCache)
-      : AbstractAttribute(AssociatedVal, AnchoredValue, InfoCache) {}
+  AANonNull(Value *AssociatedVal, Value &AnchoredValue)
+      : AbstractAttribute(AssociatedVal, AnchoredValue) {}
 
   /// Return true if we assume that the underlying value is nonnull.
   virtual bool isAssumedNonNull() const = 0;
@@ -777,8 +766,7 @@ struct AANonNull : public AbstractAttribute {
 struct AANoRecurse : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AANoRecurse(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AANoRecurse(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind()
   virtual Attribute::AttrKind getAttrKind() const override {
@@ -799,8 +787,7 @@ struct AANoRecurse : public AbstractAttribute {
 struct AAWillReturn : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AAWillReturn(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AAWillReturn(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind()
   virtual Attribute::AttrKind getAttrKind() const override {
@@ -821,8 +808,7 @@ struct AAWillReturn : public AbstractAttribute {
 struct AANoAlias : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AANoAlias(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AANoAlias(Value &V) : AbstractAttribute(V) {}
 
   /// Return true if we assume that the underlying value is alias.
   virtual bool isAssumedNoAlias() const = 0;
@@ -841,8 +827,7 @@ struct AANoAlias : public AbstractAttribute {
 struct AANoReturn : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AANoReturn(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AANoReturn(Value &V) : AbstractAttribute(V) {}
 
   /// Return true if the underlying object is known to never return.
   virtual bool isKnownNoReturn() const = 0;
@@ -861,8 +846,7 @@ struct AANoReturn : public AbstractAttribute {
 struct AAIsDead : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AAIsDead(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AAIsDead(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind()
   Attribute::AttrKind getAttrKind() const override { return ID; }
@@ -901,13 +885,11 @@ struct AAIsDead : public AbstractAttribute {
 struct AADereferenceable : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AADereferenceable(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AADereferenceable(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AADereferenceable(Value *AssociatedVal, Value &AnchoredValue,
-                    InformationCache &InfoCache)
-      : AbstractAttribute(AssociatedVal, AnchoredValue, InfoCache) {}
+  AADereferenceable(Value *AssociatedVal, Value &AnchoredValue)
+      : AbstractAttribute(AssociatedVal, AnchoredValue) {}
 
   /// Return true if we assume that the underlying value is nonnull.
   virtual bool isAssumedNonNull() const = 0;
@@ -940,13 +922,11 @@ struct AADereferenceable : public AbstractAttribute {
 struct AAAlign : public AbstractAttribute {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AAAlign(Value &V, InformationCache &InfoCache)
-      : AbstractAttribute(V, InfoCache) {}
+  AAAlign(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AAAlign(Value *AssociatedVal, Value &AnchoredValue,
-          InformationCache &InfoCache)
-      : AbstractAttribute(AssociatedVal, AnchoredValue, InfoCache) {}
+  AAAlign(Value *AssociatedVal, Value &AnchoredValue)
+      : AbstractAttribute(AssociatedVal, AnchoredValue) {}
 
   /// See AbastractState::getAttrKind().
   Attribute::AttrKind getAttrKind() const override { return ID; }
