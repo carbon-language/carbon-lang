@@ -188,7 +188,7 @@ template <typename T> static bool hasBodyOrInit(const T *D) {
 }
 
 CrossTranslationUnitContext::CrossTranslationUnitContext(CompilerInstance &CI)
-    : CI(CI), Context(CI.getASTContext()), ASTStorage(CI),
+    : Context(CI.getASTContext()), ASTStorage(CI),
       CTULoadThreshold(CI.getAnalyzerOpts()->CTUImportThreshold) {}
 
 CrossTranslationUnitContext::~CrossTranslationUnitContext() {}

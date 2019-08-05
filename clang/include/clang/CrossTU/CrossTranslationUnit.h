@@ -197,7 +197,6 @@ private:
 
   ImporterMapTy ASTUnitImporterMap;
 
-  CompilerInstance &CI;
   ASTContext &Context;
   std::shared_ptr<ASTImporterSharedState> ImporterSharedSt;
   /// Map of imported FileID's (in "To" context) to FileID in "From" context
