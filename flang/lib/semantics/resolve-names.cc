@@ -759,6 +759,9 @@ public:
   bool Pre(const parser::EquivalenceStmt &);
   bool Pre(const parser::SaveStmt &);
 
+  void PointerInitialization(
+      const parser::Name &, const parser::InitialDataTarget &);
+
 protected:
   bool BeginDecl();
   void EndDecl();
@@ -4866,8 +4869,12 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
   if (name.symbol == nullptr) {
     return;
   }
+  if (std::holds_alternative<parser::InitialDataTarget>(init.u) &&
+      !currScope().IsParameterizedDerivedType()) {
+    return;  // deferred to the end of the specification parts
+  }
   // Traversal of the initializer was deferred to here so that the
-  // symbol being declared can be available for e.g.
+  // symbol being declared can be available for use in the expression, e.g.:
   //   real, parameter :: x = tiny(x)
   Walk(init.u);
   Symbol &ultimate{name.symbol->GetUltimate()};
@@ -4896,12 +4903,7 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
               details->set_init(SomeExpr{evaluate::NullPointer{}});
             },
             [&](const parser::InitialDataTarget &initExpr) {
-              isPointer = true;
-              if (MaybeExpr expr{EvaluateExpr(initExpr)}) {
-                CheckInitialDataTarget(
-                    ultimate, *expr, initExpr.value().source);
-                details->set_init(std::move(*expr));
-              }
+              common::die("InitialDataTarget not deferred");
             },
             [&](const std::list<common::Indirection<parser::DataStmtValue>>
                     &list) {
@@ -4926,6 +4928,27 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
       } else if (IsAllocatable(ultimate)) {
         Say(name, "Allocatable component '%s' cannot be initialized"_err_en_US);
       }
+    }
+  }
+}
+
+void DeclarationVisitor::PointerInitialization(
+    const parser::Name &name, const parser::InitialDataTarget &target) {
+  if (name.symbol != nullptr) {
+    Symbol &ultimate{name.symbol->GetUltimate()};
+    if (IsPointer(ultimate)) {
+      if (auto *details{ultimate.detailsIf<ObjectEntityDetails>()}) {
+        if (!details->init().has_value()) {
+          Walk(target);
+          if (MaybeExpr expr{EvaluateExpr(target)}) {
+            CheckInitialDataTarget(ultimate, *expr, target.value().source);
+            details->set_init(std::move(*expr));
+          }
+        }
+      }
+    } else {
+      Say(name,
+          "Non-pointer component '%s' initialized with pointer target"_err_en_US);
     }
   }
 }
@@ -5418,6 +5441,46 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   }
 }
 
+// The processing of initializers of pointers is deferred until all of
+// the pertinent specification parts have been visited, so that forward
+// references work.
+class DeferredPointerInitializationVisitor {
+public:
+  explicit DeferredPointerInitializationVisitor(ResolveNamesVisitor &resolver)
+    : resolver_{resolver} {}
+
+  void Walk(const parser::SpecificationPart &spec) {
+    parser::Walk(spec, *this);
+  }
+
+  template<typename A> bool Pre(const A &) { return true; }
+  template<typename A> void Post(const A &) {}
+
+  bool Pre(const parser::EntityDecl &decl) {
+    Init(std::get<parser::Name>(decl.t),
+        std::get<std::optional<parser::Initialization>>(decl.t));
+    return false;
+  }
+  bool Pre(const parser::ComponentDecl &decl) {
+    Init(std::get<parser::Name>(decl.t),
+        std::get<std::optional<parser::Initialization>>(decl.t));
+    return false;
+  }
+
+private:
+  void Init(const parser::Name &name,
+      const std::optional<parser::Initialization> &init) {
+    if (init.has_value()) {
+      if (const auto *target{
+              std::get_if<parser::InitialDataTarget>(&init->u)}) {
+        resolver_.PointerInitialization(name, *target);
+      }
+    }
+  }
+
+  ResolveNamesVisitor &resolver_;
+};
+
 // Perform checks that need to happen after all of the specification parts
 // but before any of the execution parts.
 void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
@@ -5433,6 +5496,7 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
       CheckExplicitInterface(symbol);
     }
   }
+  DeferredPointerInitializationVisitor{*this}.Walk(node.spec());
   for (Scope &childScope : currScope().children()) {
     if (childScope.IsDerivedType() && childScope.symbol()) {
       FinishDerivedType(childScope);
