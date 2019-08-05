@@ -44400,14 +44400,12 @@ static SDValue combineExtInVec(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  // Combine (ext_invec (ext_invec X)) -> (ext_invec X)
   // Disabling for widening legalization for now. We can enable if we find a
   // case that needs it. Otherwise it can be deleted when we switch to
   // widening legalization.
-  if (ExperimentalVectorWideningLegalization)
-    return SDValue();
-
-  // Combine (ext_invec (ext_invec X)) -> (ext_invec X)
-  if (In.getOpcode() == N->getOpcode() &&
+  if (!ExperimentalVectorWideningLegalization &&
+      In.getOpcode() == N->getOpcode() &&
       TLI.isTypeLegal(VT) && TLI.isTypeLegal(In.getOperand(0).getValueType()))
     return DAG.getNode(N->getOpcode(), SDLoc(N), VT, In.getOperand(0));
 
