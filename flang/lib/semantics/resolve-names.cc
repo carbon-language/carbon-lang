@@ -421,7 +421,12 @@ public:
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
     messageHandler().set_currStmtSource(&x.source);
-    currScope_->AddSourceRange(x.source);
+    for (auto *scope = currScope_; scope; scope = &scope->parent()) {
+      scope->AddSourceRange(x.source);
+      if (scope->IsGlobal()) {
+        break;
+      }
+    }
     return true;
   }
   template<typename T> void Post(const parser::Statement<T> &) {
