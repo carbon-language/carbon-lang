@@ -12,7 +12,8 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! Intrinsics SELECTED_INT_KIND, SELECTED_REAL_KIND, PRECISION, RANGE, RADIX
+! Intrinsics SELECTED_INT_KIND, SELECTED_REAL_KIND, PRECISION, RANGE,
+! RADIX, DIGITS
 
 module m1
   ! INTEGER(KIND=1)  handles  0 <= P < 3
@@ -64,6 +65,15 @@ module m1
   logical, parameter :: radixcheck = &
     all([radix(0._2), radix(0._3), radix(0._4), radix(0._8), &
          radix(0._10), radix(0._16)] == 2)
+  integer, parameter :: intdigits(:) = &
+    [digits(0_1), digits(0_2), digits(0_4), digits(0_8), digits(0_16)]
+  logical, parameter :: intdigitscheck = &
+    all([7, 15, 31, 63, 127] == intdigits)
+  integer, parameter :: realdigits(:) = &
+    [digits(0._2), digits(0._3), digits(0._4), digits(0._8), digits(0._10), &
+     digits(0._16)]
+  logical, parameter :: realdigitscheck = &
+    all([11, 8, 24, 53, 64, 112] == realdigits)
 end module m1
 !Expect: m1.mod
 !module m1
@@ -83,4 +93,8 @@ end module m1
 !integer(4),parameter::realrkinds(1_8:)=[Integer(4)::2_4,2_4,3_4,3_4,8_4,8_4,10_4,10_4,16_4,16_4,-2_4]
 !logical(4),parameter::realrcheck=.true._4
 !logical(4),parameter::radixcheck=.true._4
+!integer(4),parameter::intdigits(1_8:)=[Integer(4)::7_4,15_4,31_4,63_4,127_4]
+!logical(4),parameter::intdigitscheck=.true._4
+!integer(4),parameter::realdigits(1_8:)=[Integer(4)::11_4,8_4,24_4,53_4,64_4,112_4]
+!logical(4),parameter::realdigitscheck=.true._4
 !end

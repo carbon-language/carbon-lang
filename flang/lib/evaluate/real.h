@@ -143,12 +143,11 @@ private:
   static constexpr std::int64_t ScaledLogBaseTenOfTwo{301029995664};
 
 public:
+  static constexpr int DIGITS{precision};
   static constexpr int PRECISION{static_cast<int>(
       (precision - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
-
   static constexpr int RANGE{static_cast<int>(
       (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
-
   static constexpr int MAXEXPONENT{maxExponent - 1 - exponentBias};
   static constexpr int MINEXPONENT{1 - exponentBias};
 

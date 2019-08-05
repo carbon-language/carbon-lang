@@ -567,6 +567,26 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
         }));
   } else if (name == "bit_size") {
     return Expr<T>{Scalar<T>::bits};
+  } else if (name == "digits") {
+    if (const auto *cx{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
+      return Expr<T>{std::visit(
+          [](const auto &kx) {
+            return Scalar<ResultType<decltype(kx)>>::DIGITS;
+          },
+          cx->u)};
+    } else if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+      return Expr<T>{std::visit(
+          [](const auto &kx) {
+            return Scalar<ResultType<decltype(kx)>>::DIGITS;
+          },
+          cx->u)};
+    } else if (const auto *cx{UnwrapExpr<Expr<SomeComplex>>(args[0])}) {
+      return Expr<T>{std::visit(
+          [](const auto &kx) {
+            return Scalar<typename ResultType<decltype(kx)>::Part>::DIGITS;
+          },
+          cx->u)};
+    }
   } else if (name == "dim") {
     return FoldElementalIntrinsic<T, T, T>(
         context, std::move(funcRef), &Scalar<T>::DIM);
@@ -816,6 +836,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
         return Fold(context, ConvertToType<T>(std::move(*shapeExpr)));
       }
     }
+  } else if (name == "sign") {
+    // TODO pmk
   } else if (name == "size") {
     if (auto shape{GetShape(context, args[0])}) {
       if (auto &dimArg{args[1]}) {  // DIM= is present, get one extent
@@ -985,12 +1007,14 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
     if (auto *expr{args[0].value().UnwrapExpr()}) {
       return ToReal<KIND>(context, std::move(*expr));
     }
+  } else if (name == "sign") {
+    // TODO pmk
   } else if (name == "tiny") {
     return Expr<T>{Scalar<T>::TINY()};
   }
   // TODO: anint, cshift, dim, dot_product, eoshift, fraction, matmul,
   // max, maxval, merge, min, minval, modulo, nearest, norm2, pack, product,
-  // reduce, rrspacing, scale, set_exponent, sign, spacing, spread,
+  // reduce, rrspacing, scale, set_exponent, spacing, spread,
   // sum, transfer, transpose, unpack, bessel_jn (transformational) and
   // bessel_yn (transformational)
   return Expr<T>{std::move(funcRef)};
