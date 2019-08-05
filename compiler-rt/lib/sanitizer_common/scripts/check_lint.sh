@@ -85,7 +85,7 @@ run_lint ${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.cpp \
                                  ${ASAN_RTL}/*.h &
 run_lint ${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.cpp \
                                   ${ASAN_RTL}/tests/*.h &
-run_lint ${ASAN_LIT_TEST_LINT_FILTER} ${LIT_TESTS}/asan/*/*.cc &
+run_lint ${ASAN_LIT_TEST_LINT_FILTER} ${LIT_TESTS}/asan/*/*.cpp &
 
 # TSan
 TSAN_RTL=${COMPILER_RT}/lib/tsan
@@ -122,7 +122,7 @@ run_lint ${SCUDO_RTL_LINT_FILTER} ${SCUDO_RTL}/*.cpp \
 FILES=${COMMON_RTL}/*.inc
 TMPFILES=""
 for FILE in $FILES; do
-  TMPFILE="$(${MKTEMP}).$(basename ${FILE}).cc"
+  TMPFILE="$(${MKTEMP}).$(basename ${FILE}).cpp"
   cp -f $FILE $TMPFILE
   run_lint ${COMMON_RTL_INC_LINT_FILTER} $TMPFILE &
   TMPFILES="$TMPFILES $TMPFILE"
