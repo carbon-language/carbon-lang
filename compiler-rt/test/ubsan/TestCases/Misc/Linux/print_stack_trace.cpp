@@ -19,5 +19,5 @@ int main() {
   return 0;
 }
 
-// CHECK: {{.*}} in FooBarBaz{{.*}}print_stack_trace.cc{{.*}}
-// CHECK: {{.*}} in main{{.*}}print_stack_trace.cc{{.*}}
+// CHECK: {{.*}} in FooBarBaz{{.*}}print_stack_trace.cpp{{.*}}
+// CHECK: {{.*}} in main{{.*}}print_stack_trace.cpp{{.*}}

@@ -12,7 +12,7 @@ extern "C" const char *__ubsan_default_options() {
 
 int main() {
   (void)(uint64_t(10000000000000000000ull) + uint64_t(9000000000000000000ull));
-  // CHECK: ubsan_options.cc:[[@LINE-1]]:44: runtime error: unsigned integer overflow
+  // CHECK: ubsan_options.cpp:[[@LINE-1]]:44: runtime error: unsigned integer overflow
   return 0;
 }
 
