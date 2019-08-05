@@ -545,30 +545,6 @@ Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   return Expr<T>{std::move(funcRef)};
 }
 
-// TODO pmk rm
-template<typename RESULT, typename TO, typename FROM>
-Expr<RESULT> SIGN(
-    FoldingContext &context, const Scalar<TO> &to, const Scalar<FROM> &from) {
-  bool isNegative{false};
-  if constexpr (FROM::category == TypeCategory::Integer) {
-    isNegative = from.IsNegative();
-  } else {
-    static_assert(FROM::category == TypeCategory::Real);
-    isNegative = from.IsSignBitSet();
-  }
-  if constexpr (TO::category == TypeCategory::Integer) {
-    auto result{to.SIGN(isNegative)};
-    if (result.overflow) {
-      context.messages().Say(
-          "SIGN() folding overflows integer(kind=%d)"_en_US, TO::kind);
-    }
-    return Expr<RESULT>{Constant<RESULT>{std::move(result.value)}};
-  } else {
-    static_assert(TO::category == TypeCategory::Real);
-    return Expr<RESULT>{Constant<RESULT>{to.SIGN(isNegative)}};
-  }
-}
-
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
     FoldingContext &context,
