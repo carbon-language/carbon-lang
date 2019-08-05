@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wall %s -std=c11
 
 int test1(int *a) {
   return a == '\0'; // expected-warning {{comparing a pointer to a null character constant; did you mean to compare to (void *)0?}}
