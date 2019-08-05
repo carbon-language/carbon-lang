@@ -76,6 +76,7 @@ STATISTIC(NumCSArgumentDereferenceable,
 STATISTIC(NumFnReturnedAlign, "Number of function return values marked align");
 STATISTIC(NumFnArgumentAlign, "Number of function arguments marked align");
 STATISTIC(NumCSArgumentAlign, "Number of call site arguments marked align");
+STATISTIC(NumFnNoReturn, "Number of functions marked noreturn");
 
 // TODO: Determine a good default value.
 //
@@ -179,6 +180,9 @@ static void bookkeeping(AbstractAttribute::ManifestPosition MP,
   case Attribute::WillReturn:
     NumFnWillReturn++;
     break;
+  case Attribute::NoReturn:
+    NumFnNoReturn++;
+    return;
   case Attribute::NoAlias:
     NumFnArgumentNoAlias++;
     return;
@@ -2336,6 +2340,60 @@ ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A) {
                                      : ChangeStatus::CHANGED;
 }
 
+/// ------------------ Function No-Return Attribute ----------------------------
+struct AANoReturnFunction final : public AANoReturn, BooleanState {
+
+  AANoReturnFunction(Function &F, InformationCache &InfoCache)
+      : AANoReturn(F, InfoCache) {}
+
+  /// See AbstractAttribute::getState()
+  /// {
+  AbstractState &getState() override { return *this; }
+  const AbstractState &getState() const override { return *this; }
+  /// }
+
+  /// Return true if the underlying object is known to never return.
+  bool isKnownNoReturn() const override { return getKnown(); }
+
+  /// Return true if the underlying object is assumed to never return.
+  bool isAssumedNoReturn() const override { return getAssumed(); }
+
+  /// See AbstractAttribute::getManifestPosition().
+  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
+
+  /// See AbstractAttribute::getAsStr().
+  const std::string getAsStr() const override {
+    return getAssumed() ? "noreturn" : "may-return";
+  }
+
+  /// See AbstractAttribute::initialize(...).
+  void initialize(Attributor &A) override {
+    Function &F = getAnchorScope();
+    if (F.hasFnAttribute(getAttrKind()))
+      indicateOptimisticFixpoint();
+  }
+
+  /// See AbstractAttribute::updateImpl(Attributor &A).
+  virtual ChangeStatus updateImpl(Attributor &A) override {
+    Function &F = getAnchorScope();
+
+    // The map from instruction opcodes to those instructions in the function.
+    auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
+
+    // Look at all return instructions.
+    auto &ReturnInsts = OpcodeInstMap[Instruction::Ret];
+    if (ReturnInsts.empty())
+      return indicateOptimisticFixpoint();
+
+    auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
+    if (!LivenessAA ||
+        LivenessAA->isLiveInstSet(ReturnInsts.begin(), ReturnInsts.end()))
+      return indicatePessimisticFixpoint();
+
+    return ChangeStatus::UNCHANGED;
+  }
+};
+
 /// ----------------------------------------------------------------------------
 ///                               Attributor
 /// ----------------------------------------------------------------------------
@@ -2538,6 +2596,9 @@ void Attributor::identifyDefaultAbstractAttributes(
 
   // Every function might be "no-free".
   registerAA(*new AANoFreeFunction(F, InfoCache));
+
+  // Every function might be "no-return".
+  registerAA(*new AANoReturnFunction(F, InfoCache));
 
   // Return attributes are only appropriate if the return type is non void.
   Type *ReturnType = F.getReturnType();
