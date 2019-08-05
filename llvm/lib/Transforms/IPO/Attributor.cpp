@@ -1577,6 +1577,11 @@ struct AAIsDeadFunction : AAIsDead, BooleanState {
       Instruction *SplitPos = I->getNextNode();
 
       if (auto *II = dyn_cast<InvokeInst>(I)) {
+        // If we keep the invoke the split position is at the beginning of the
+        // normal desitination block (it invokes a noreturn function after all).
+        BasicBlock *NormalDestBB = II->getNormalDest();
+        SplitPos = &NormalDestBB->front();
+
         /// Invoke is replaced with a call and unreachable is placed after it if
         /// the callee is nounwind and noreturn. Otherwise, we keep the invoke
         /// and only place an unreachable in the normal successor.
@@ -1587,17 +1592,26 @@ struct AAIsDeadFunction : AAIsDead, BooleanState {
                 (AANoUnw && AANoUnw->isAssumedNoUnwind())) {
               LLVM_DEBUG(dbgs()
                          << "[AAIsDead] Replace invoke with call inst\n");
-              changeToCall(II);
-              changeToUnreachable(BB->getTerminator(), /* UseLLVMTrap */ false);
-              continue;
+              // We do not need an invoke (II) but instead want a call followed
+              // by an unreachable. However, we do not remove II as other
+              // abstract attributes might have it cached as part of their
+              // results. Given that we modify the CFG anyway, we simply keep II
+              // around but in a new dead block. To avoid II being live through
+              // a different edge we have to ensure the block we place it in is
+              // only reached from the current block of II and then not reached
+              // at all when we insert the unreachable.
+              SplitBlockPredecessors(NormalDestBB, {BB}, ".i2c");
+              CallInst *CI = createCallMatchingInvoke(II);
+              CI->insertBefore(II);
+              CI->takeName(II);
+              II->replaceAllUsesWith(CI);
+              SplitPos = CI->getNextNode();
             }
           }
         }
-
-        BB = II->getNormalDest();
-        SplitPos = &BB->front();
       }
 
+      BB = SplitPos->getParent();
       SplitBlock(BB, SplitPos);
       changeToUnreachable(BB->getTerminator(), /* UseLLVMTrap */ false);
       HasChanged = ChangeStatus::CHANGED;
