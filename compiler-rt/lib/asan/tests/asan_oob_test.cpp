@@ -37,7 +37,7 @@ static std::string GetLeftOOBMessage(int off) {
 static std::string GetRightOOBMessage(int off) {
   char str[100];
   // FIXME: Fix PR42868 and remove SEGV match.
-  sprintf(str, "(is located.*%d byte.*to the right|SEGV)", off);
+  sprintf(str, "is located.*%d byte.*to the right|SEGV", off);
   return str;
 }
 
