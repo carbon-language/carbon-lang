@@ -499,7 +499,7 @@ MachineBasicBlock::addLiveIn(MCPhysReg PhysReg, const TargetRegisterClass *RC) {
   // Look for an existing copy.
   if (LiveIn)
     for (;I != E && I->isCopy(); ++I)
-      if (I->getOperand(1).getReg() == PhysReg) {
+      if (I->getOperand(1).getReg() == Register(PhysReg)) {
         unsigned VirtReg = I->getOperand(0).getReg();
         if (!MRI.constrainRegClass(VirtReg, RC))
           llvm_unreachable("Incompatible live-in register class.");
