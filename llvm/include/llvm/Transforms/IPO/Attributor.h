@@ -176,8 +176,6 @@ struct Attributor {
     static_assert(std::is_base_of<AbstractAttribute, AAType>::value,
                   "Cannot query an attribute with a type not derived from "
                   "'AbstractAttribute'!");
-    assert(AAType::ID != Attribute::None &&
-           "Cannot lookup generic abstract attributes!");
 
     // Determine the argument number automatically for llvm::Arguments if none
     // is set. Do not override a given one as it could be a use of the argument
@@ -198,7 +196,7 @@ struct Attributor {
     // registering a dependence of QueryingAA on the one returned attribute.
     const auto &KindToAbstractAttributeMap = AAMap.lookup({&V, ArgNo});
     if (AAType *AA = static_cast<AAType *>(
-            KindToAbstractAttributeMap.lookup(AAType::ID))) {
+            KindToAbstractAttributeMap.lookup(&AAType::ID))) {
       // Do not return an attribute with an invalid state. This minimizes checks
       // at the calls sites and allows the fallback below to kick in.
       if (AA->getState().isValidState()) {
@@ -225,7 +223,7 @@ struct Attributor {
   /// Attributes are identified by
   ///  (1) their anchored value (see AA.getAnchoredValue()),
   ///  (2) their argument number (\p ArgNo, or Argument::getArgNo()), and
-  ///  (3) their default attribute kind (see AAType::ID).
+  ///  (3) the address of their static member (see AAType::ID).
   template <typename AAType> AAType &registerAA(AAType &AA, int ArgNo = -1) {
     static_assert(std::is_base_of<AbstractAttribute, AAType>::value,
                   "Cannot register an attribute with a type not derived from "
@@ -242,7 +240,7 @@ struct Attributor {
 
     // Put the attribute in the lookup map structure and the container we use to
     // keep track of all attributes.
-    AAMap[{&AnchoredVal, ArgNo}][AAType::ID] = &AA;
+    AAMap[{&AnchoredVal, ArgNo}][&AAType::ID] = &AA;
     AllAbstractAttributes.push_back(&AA);
     return AA;
   }
@@ -261,7 +259,7 @@ struct Attributor {
   /// various places.
   void identifyDefaultAbstractAttributes(
       Function &F, InformationCache &InfoCache,
-      DenseSet</* Attribute::AttrKind */ unsigned> *Whitelist = nullptr);
+      DenseSet<const char *> *Whitelist = nullptr);
 
   /// Check \p Pred on all function call sites.
   ///
@@ -279,10 +277,11 @@ private:
   ///}
 
   /// A nested map to lookup abstract attributes based on the anchored value and
-  /// an argument positions (or -1) on the outer level, and attribute kinds
-  /// (Attribute::AttrKind) on the inner level.
+  /// an argument positions (or -1) on the outer level, and the addresses of the
+  /// static member (AAType::ID) on the inner level.
   ///{
-  using KindToAbstractAttributeMap = DenseMap<unsigned, AbstractAttribute *>;
+  using KindToAbstractAttributeMap =
+      DenseMap<const char *, AbstractAttribute *>;
   DenseMap<std::pair<const Value *, int>, KindToAbstractAttributeMap> AAMap;
   ///}
 
@@ -700,10 +699,12 @@ struct AAReturnedValues : public AbstractAttribute {
       const = 0;
 
   /// See AbstractAttribute::getAttrKind()
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::Returned;
+  }
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::Returned;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 struct AANoUnwind : public AbstractAttribute {
@@ -711,15 +712,18 @@ struct AANoUnwind : public AbstractAttribute {
   AANoUnwind(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind()/
-  Attribute::AttrKind getAttrKind() const override { return ID; }
-
-  static constexpr Attribute::AttrKind ID = Attribute::NoUnwind;
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::NoUnwind;
+  }
 
   /// Returns true if nounwind is assumed.
   virtual bool isAssumedNoUnwind() const = 0;
 
   /// Returns true if nounwind is known.
   virtual bool isKnownNoUnwind() const = 0;
+
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 struct AANoSync : public AbstractAttribute {
@@ -727,16 +731,16 @@ struct AANoSync : public AbstractAttribute {
   AANoSync(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return ID; }
-
-  static constexpr Attribute::AttrKind ID =
-      Attribute::AttrKind(Attribute::NoSync);
+  Attribute::AttrKind getAttrKind() const override { return Attribute::NoSync; }
 
   /// Returns true if "nosync" is assumed.
   virtual bool isAssumedNoSync() const = 0;
 
   /// Returns true if "nosync" is known.
   virtual bool isKnownNoSync() const = 0;
+
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract interface for all nonnull attributes.
@@ -756,10 +760,12 @@ struct AANonNull : public AbstractAttribute {
   virtual bool isKnownNonNull() const = 0;
 
   /// See AbastractState::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::NonNull;
+  }
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::NonNull;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract attribute for norecurse.
@@ -779,8 +785,8 @@ struct AANoRecurse : public AbstractAttribute {
   /// Return true if "norecurse" is assumed.
   virtual bool isAssumedNoRecurse() const = 0;
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::NoRecurse;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract attribute for willreturn.
@@ -800,8 +806,8 @@ struct AAWillReturn : public AbstractAttribute {
   /// Return true if "willreturn" is assumed.
   virtual bool isAssumedWillReturn() const = 0;
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::WillReturn;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract interface for all noalias attributes.
@@ -817,10 +823,12 @@ struct AANoAlias : public AbstractAttribute {
   virtual bool isKnownNoAlias() const = 0;
 
   /// See AbastractState::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::NoAlias;
+  }
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::NoAlias;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An AbstractAttribute for noreturn.
@@ -836,10 +844,12 @@ struct AANoReturn : public AbstractAttribute {
   virtual bool isAssumedNoReturn() const = 0;
 
   /// See AbstractAttribute::getAttrKind()
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::NoReturn;
+  }
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::NoReturn;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract interface for liveness abstract attribute.
@@ -849,10 +859,7 @@ struct AAIsDead : public AbstractAttribute {
   AAIsDead(Value &V) : AbstractAttribute(V) {}
 
   /// See AbstractAttribute::getAttrKind()
-  Attribute::AttrKind getAttrKind() const override { return ID; }
-
-  static constexpr Attribute::AttrKind ID =
-      Attribute::AttrKind(Attribute::EndAttrKinds + 1);
+  Attribute::AttrKind getAttrKind() const override { return Attribute::None; }
 
   /// Returns true if \p BB is assumed dead.
   virtual bool isAssumedDead(const BasicBlock *BB) const = 0;
@@ -879,6 +886,9 @@ struct AAIsDead : public AbstractAttribute {
 
     return false;
   }
+
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract interface for all dereferenceable attribute.
@@ -912,10 +922,12 @@ struct AADereferenceable : public AbstractAttribute {
   virtual uint32_t getKnownDereferenceableBytes() const = 0;
 
   /// See AbastractState::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::Dereferenceable;
+  }
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::Dereferenceable;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 /// An abstract interface for all align attributes.
@@ -929,7 +941,9 @@ struct AAAlign : public AbstractAttribute {
       : AbstractAttribute(AssociatedVal, AnchoredValue) {}
 
   /// See AbastractState::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override {
+    return Attribute::Alignment;
+  }
 
   /// Return assumed alignment.
   virtual unsigned getAssumedAlign() const = 0;
@@ -937,8 +951,8 @@ struct AAAlign : public AbstractAttribute {
   /// Return known alignemnt.
   virtual unsigned getKnownAlign() const = 0;
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::Alignment;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 } // end namespace llvm

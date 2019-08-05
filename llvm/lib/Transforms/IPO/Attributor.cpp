@@ -1074,7 +1074,7 @@ struct AANoFreeFunction : AbstractAttribute, BooleanState {
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
 
   /// See AbstractAttribute::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return ID; }
+  Attribute::AttrKind getAttrKind() const override { return Attribute::NoFree; }
 
   /// Return true if "nofree" is assumed.
   bool isAssumedNoFree() const { return getAssumed(); }
@@ -1082,8 +1082,8 @@ struct AANoFreeFunction : AbstractAttribute, BooleanState {
   /// Return true if "nofree" is known.
   bool isKnownNoFree() const { return getKnown(); }
 
-  /// The identifier used by the Attributor for this class of attributes.
-  static constexpr Attribute::AttrKind ID = Attribute::NoFree;
+  /// Unique ID (due to the unique address)
+  static const char ID;
 };
 
 ChangeStatus AANoFreeFunction::updateImpl(Attributor &A,
@@ -2177,8 +2177,9 @@ struct AAAlignImpl : AAAlign, IntegerState {
         getAttrIndex(getManifestPosition(), getArgNo(getAnchoredValue()));
 
     // Already the function has align attribute on return value or argument.
-    if (F.getAttributes().hasAttribute(AttrIdx, ID))
-      addKnownBits(F.getAttribute(AttrIdx, ID).getAlignment());
+    if (F.getAttributes().hasAttribute(AttrIdx, Attribute::Alignment))
+      addKnownBits(
+          F.getAttribute(AttrIdx, Attribute::Alignment).getAlignment());
   }
 
   /// See AbstractAttribute::getDeducedAttributes
@@ -2580,7 +2581,7 @@ ChangeStatus Attributor::run(InformationCache &InfoCache) {
 
 void Attributor::identifyDefaultAbstractAttributes(
     Function &F, InformationCache &InfoCache,
-    DenseSet</* Attribute::AttrKind */ unsigned> *Whitelist) {
+    DenseSet<const char *> *Whitelist) {
 
   // Check for dead BasicBlocks in every function.
   registerAA(*new AAIsDeadFunction(F));
@@ -2605,26 +2606,26 @@ void Attributor::identifyDefaultAbstractAttributes(
   if (!ReturnType->isVoidTy()) {
     // Argument attribute "returned" --- Create only one per function even
     // though it is an argument attribute.
-    if (!Whitelist || Whitelist->count(AAReturnedValues::ID))
+    if (!Whitelist || Whitelist->count(&AAReturnedValues::ID))
       registerAA(*new AAReturnedValuesImpl(F));
 
     if (ReturnType->isPointerTy()) {
       // Every function with pointer return type might be marked align.
-      if (!Whitelist || Whitelist->count(AAAlignReturned::ID))
+      if (!Whitelist || Whitelist->count(&AAAlignReturned::ID))
         registerAA(*new AAAlignReturned(F));
 
       // Every function with pointer return type might be marked nonnull.
-      if (!Whitelist || Whitelist->count(AANonNullReturned::ID))
+      if (!Whitelist || Whitelist->count(&AANonNullReturned::ID))
         registerAA(*new AANonNullReturned(F));
 
       // Every function with pointer return type might be marked noalias.
-      if (!Whitelist || Whitelist->count(AANoAliasReturned::ID))
+      if (!Whitelist || Whitelist->count(&AANoAliasReturned::ID))
         registerAA(*new AANoAliasReturned(F));
 
       // Every function with pointer return type might be marked
       // dereferenceable.
       if (ReturnType->isPointerTy() &&
-          (!Whitelist || Whitelist->count(AADereferenceableReturned::ID)))
+          (!Whitelist || Whitelist->count(&AADereferenceableReturned::ID)))
         registerAA(*new AADereferenceableReturned(F));
     }
   }
@@ -2632,15 +2633,15 @@ void Attributor::identifyDefaultAbstractAttributes(
   for (Argument &Arg : F.args()) {
     if (Arg.getType()->isPointerTy()) {
       // Every argument with pointer type might be marked nonnull.
-      if (!Whitelist || Whitelist->count(AANonNullArgument::ID))
+      if (!Whitelist || Whitelist->count(&AANonNullArgument::ID))
         registerAA(*new AANonNullArgument(Arg));
 
       // Every argument with pointer type might be marked dereferenceable.
-      if (!Whitelist || Whitelist->count(AADereferenceableArgument::ID))
+      if (!Whitelist || Whitelist->count(&AADereferenceableArgument::ID))
         registerAA(*new AADereferenceableArgument(Arg));
 
       // Every argument with pointer type might be marked align.
-      if (!Whitelist || Whitelist->count(AAAlignArgument::ID))
+      if (!Whitelist || Whitelist->count(&AAAlignArgument::ID))
         registerAA(*new AAAlignArgument(Arg));
     }
   }
@@ -2686,16 +2687,16 @@ void Attributor::identifyDefaultAbstractAttributes(
           continue;
 
         // Call site argument attribute "non-null".
-        if (!Whitelist || Whitelist->count(AANonNullCallSiteArgument::ID))
+        if (!Whitelist || Whitelist->count(&AANonNullCallSiteArgument::ID))
           registerAA(*new AANonNullCallSiteArgument(CS, i), i);
 
         // Call site argument attribute "dereferenceable".
         if (!Whitelist ||
-            Whitelist->count(AADereferenceableCallSiteArgument::ID))
+            Whitelist->count(&AADereferenceableCallSiteArgument::ID))
           registerAA(*new AADereferenceableCallSiteArgument(CS, i), i);
 
         // Call site argument attribute "align".
-        if (!Whitelist || Whitelist->count(AAAlignCallSiteArgument::ID))
+        if (!Whitelist || Whitelist->count(&AAAlignCallSiteArgument::ID))
           registerAA(*new AAAlignCallSiteArgument(CS, i), i);
       }
     }
@@ -2817,6 +2818,20 @@ struct AttributorLegacyPass : public ModulePass {
 Pass *llvm::createAttributorLegacyPass() { return new AttributorLegacyPass(); }
 
 char AttributorLegacyPass::ID = 0;
+
+const char AAReturnedValues::ID = 0;
+const char AANoUnwind::ID = 0;
+const char AANoSync::ID = 0;
+const char AANoFreeFunction::ID = 0;
+const char AANonNull::ID = 0;
+const char AANoRecurse::ID = 0;
+const char AAWillReturn::ID = 0;
+const char AANoAlias::ID = 0;
+const char AANoReturn::ID = 0;
+const char AAIsDead::ID = 0;
+const char AADereferenceable::ID = 0;
+const char AAAlign::ID = 0;
+
 INITIALIZE_PASS_BEGIN(AttributorLegacyPass, "attributor",
                       "Deduce and propagate attributes", false, false)
 INITIALIZE_PASS_END(AttributorLegacyPass, "attributor",
