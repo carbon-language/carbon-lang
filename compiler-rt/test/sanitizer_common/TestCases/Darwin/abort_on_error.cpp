@@ -1,5 +1,5 @@
 // Check that sanitizers on OS X crash the process by default (i.e.
-// abort_on_error=1). See also Linux/abort_on_error.cc.
+// abort_on_error=1). See also Linux/abort_on_error.cpp.
 
 // RUN: %clangxx -DUSING_%tool_name %s -o %t
 

@@ -35,7 +35,7 @@ int main() {
 // CHECK-NEXT: foo
 // CHECK-NEXT: SanitizerCoverage: ./sanitizer_coverage_trace_pc_guard.{{.*}}.sancov: 2 PCs written
 //
-// CHECK-SANCOV: sanitizer_coverage_trace_pc_guard.cc:[[@LINE-16]] foo
-// CHECK-SANCOV-NEXT: sanitizer_coverage_trace_pc_guard.cc:[[@LINE-12]] main
+// CHECK-SANCOV: sanitizer_coverage_trace_pc_guard.cpp:[[@LINE-16]] foo
+// CHECK-SANCOV-NEXT: sanitizer_coverage_trace_pc_guard.cpp:[[@LINE-12]] main
 //
 // CHECK-NOCOV-NOT: SanitizerCoverage

@@ -1,5 +1,5 @@
 // Check that sanitizers call _exit() on Linux by default (i.e.
-// abort_on_error=0). See also Darwin/abort_on_error.cc.
+// abort_on_error=0). See also Darwin/abort_on_error.cpp.
 
 // RUN: %clangxx %s -o %t
 

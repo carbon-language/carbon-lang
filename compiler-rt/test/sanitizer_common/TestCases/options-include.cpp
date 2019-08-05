@@ -4,7 +4,7 @@
 // RUN: echo "symbolize=1" > %t.options1.txt
 // RUN: echo "include='%t.options2.txt'" >>%t.options1.txt
 // RUN: echo "help=1" >%t.options2.txt
-// RUN: echo "help=1" >%t.options.options-include.cc.tmp
+// RUN: echo "help=1" >%t.options.options-include.cpp.tmp
 // RUN: cat %t.options1.txt
 // RUN: cat %t.options2.txt
 

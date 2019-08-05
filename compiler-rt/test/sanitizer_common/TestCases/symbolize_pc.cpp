@@ -48,8 +48,8 @@ int main() {
   // CHECK: PARTIAL '0x{{.*}}'
   SymbolizeSmallBuffer();
 
-  // CHECK: FIRST_FORMAT 0x{{.*}} in main symbolize_pc.cc:[[@LINE+2]]
-  // CHECK: SECOND_FORMAT FUNC:main LINE:[[@LINE+1]] FILE:symbolize_pc.cc
+  // CHECK: FIRST_FORMAT 0x{{.*}} in main symbolize_pc.cpp:[[@LINE+2]]
+  // CHECK: SECOND_FORMAT FUNC:main LINE:[[@LINE+1]] FILE:symbolize_pc.cpp
   SymbolizeCaller();
 
   // CHECK: GLOBAL: GLOBAL_VAR_ABC

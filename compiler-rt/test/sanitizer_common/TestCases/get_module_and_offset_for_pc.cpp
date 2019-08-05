@@ -62,5 +62,5 @@ int main() {
 }
 #endif
 // CHECK: NOT FOUND null: {{.*}}
-// CHECK-NEXT: FOUND callerpc: {{.*}}/get_module_and_offset_for_pc.cc.tmp {{.*}}
+// CHECK-NEXT: FOUND callerpc: {{.*}}/get_module_and_offset_for_pc.cpp.tmp {{.*}}
 // CHECK-NEXT: FOUND foo: {{.*}}/get_module_and_offset_for_pc.so {{.*}}

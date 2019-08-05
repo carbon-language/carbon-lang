@@ -12,8 +12,8 @@ int main() {
   return 0;
 }
 // CHECK: {{    #0 0x.* in __sanitizer_print_stack_trace}}
-// CHECK: {{    #1 0x.* in FooBarBaz(\(\))? .*}}print-stack-trace.cc:[[@LINE-8]]
-// CHECK: {{    #2 0x.* in main.*}}print-stack-trace.cc:[[@LINE-5]]
+// CHECK: {{    #1 0x.* in FooBarBaz(\(\))? .*}}print-stack-trace.cpp:[[@LINE-8]]
+// CHECK: {{    #2 0x.* in main.*}}print-stack-trace.cpp:[[@LINE-5]]
 
 // CUSTOM: frame:1 lineno:[[@LINE-11]]
 // CUSTOM: frame:2 lineno:[[@LINE-8]]
