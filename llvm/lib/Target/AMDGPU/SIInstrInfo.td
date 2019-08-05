@@ -266,11 +266,6 @@ def SIload_d16_hi_i8 : SDNode<"AMDGPUISD::LOAD_D16_HI_I8",
   [SDNPMayLoad, SDNPMemOperand, SDNPHasChain]
 >;
 
-def SIdenorm_mode : SDNode<"AMDGPUISD::DENORM_MODE",
-  SDTypeProfile<0 ,1, [SDTCisInt<0>]>,
-  [SDNPHasChain, SDNPSideEffect, SDNPOptInGlue, SDNPOutGlue]
->;
-
 //===----------------------------------------------------------------------===//
 // ValueType helpers
 //===----------------------------------------------------------------------===//
@@ -694,7 +689,7 @@ def SIMM16bit : ImmLeaf <i32,
 >;
 
 def UIMM16bit : ImmLeaf <i32,
-  [{return isUInt<16>(Imm);}]
+  [{return isUInt<16>(Imm); }]
 >;
 
 class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
