@@ -41,7 +41,7 @@ TEST(RecursiveASTVisitor, CXXCtorInitializerVisitNoImplicit) {
   for (bool VisitImplCode : {true, false}) {
     CXXCtorInitializerVisitor Visitor(VisitImplCode);
     Visitor.ExpectMatch("initializer", 7, 17);
-    auto Code = R"cpp(
+    llvm::StringRef Code = R"cpp(
         class A {};
         class B : public A {
           B() {};
