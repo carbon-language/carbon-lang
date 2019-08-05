@@ -332,21 +332,21 @@ ChangeStatus AbstractAttribute::update(Attributor &A,
   return HasChanged;
 }
 
-ChangeStatus AbstractAttribute::manifest(Attributor &A) {
-  assert(getState().isValidState() &&
+template <Attribute::AttrKind AK, typename Base>
+ChangeStatus IRAttribute<AK, Base>::manifest(Attributor &A) {
+  assert(this->getState().isValidState() &&
          "Attempted to manifest an invalid state!");
   assert(getIRPosition().getAssociatedValue() &&
          "Attempted to manifest an attribute without associated value!");
 
   ChangeStatus HasChanged = ChangeStatus::UNCHANGED;
 
-  IRPosition &Pos = getIRPosition();
-  Function &ScopeFn = Pos.getAnchorScope();
+  Function &ScopeFn = getAnchorScope();
   LLVMContext &Ctx = ScopeFn.getContext();
-  IRPosition::Kind PK = Pos.getPositionKind();
+  IRPosition::Kind PK = getPositionKind();
 
   SmallVector<Attribute, 4> DeducedAttrs;
-  getDeducedAttributes(DeducedAttrs);
+  getDeducedAttributes(Ctx, DeducedAttrs);
 
   // In the following some generic code that will manifest attributes in
   // DeducedAttrs if they improve the current IR. Due to the different
@@ -360,12 +360,12 @@ ChangeStatus AbstractAttribute::manifest(Attributor &A) {
     Attrs = ScopeFn.getAttributes();
     break;
   case IRPosition::IRP_CALL_SITE_ARGUMENT:
-    Attrs = ImmutableCallSite(&Pos.getAnchorValue()).getAttributes();
+    Attrs = ImmutableCallSite(&getAnchorValue()).getAttributes();
     break;
   }
 
   for (const Attribute &Attr : DeducedAttrs) {
-    if (!addIfNotExistent(Ctx, Attr, Attrs, Pos.getAttrIdx()))
+    if (!addIfNotExistent(Ctx, Attr, Attrs, getAttrIdx()))
       continue;
 
     HasChanged = ChangeStatus::CHANGED;
@@ -382,7 +382,7 @@ ChangeStatus AbstractAttribute::manifest(Attributor &A) {
     ScopeFn.setAttributes(Attrs);
     break;
   case IRPosition::IRP_CALL_SITE_ARGUMENT:
-    CallSite(&Pos.getAnchorValue()).setAttributes(Attrs);
+    CallSite(&getAnchorValue()).setAttributes(Attrs);
   }
 
   return HasChanged;
@@ -390,18 +390,8 @@ ChangeStatus AbstractAttribute::manifest(Attributor &A) {
 
 /// -----------------------NoUnwind Function Attribute--------------------------
 
-#define IRPositionConstructorForward(NAME)                                     \
-  NAME(Argument &Arg) : IRPosition(Arg) {}                                     \
-  NAME(Function &Fn, IRPosition::Kind PK) : IRPosition(Fn, PK) {}              \
-  NAME(Value *AssociatedVal, Value &AnchorVal, unsigned ArgumentNo)            \
-      : IRPosition(AssociatedVal, AnchorVal, ArgumentNo) {}
-#define IRPositionGetter(IRP)                                                  \
-  IRPosition &getIRPosition() override { return IRP; }                         \
-  const IRPosition &getIRPosition() const override { return IRP; }
-
-struct AANoUnwindImpl : AANoUnwind, BooleanState, IRPosition {
-  IRPositionConstructorForward(AANoUnwindImpl);
-  IRPositionGetter(*this);
+struct AANoUnwindImpl : AANoUnwind, BooleanState {
+  IRPositionConstructorForward(AANoUnwindImpl, AANoUnwind);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -465,9 +455,7 @@ ChangeStatus AANoUnwindImpl::updateImpl(Attributor &A,
 ///
 /// If there is a unique returned value R, the manifest method will:
 ///   - mark R with the "returned" attribute, if R is an argument.
-class AAReturnedValuesImpl : public AAReturnedValues,
-                             public AbstractState,
-                             public IRPosition {
+class AAReturnedValuesImpl : public AAReturnedValues, public AbstractState {
 
   /// Mapping of values potentially returned by the associated function to the
   /// return instructions that might return them.
@@ -504,8 +492,7 @@ class AAReturnedValuesImpl : public AAReturnedValues,
   }
 
 public:
-  IRPositionConstructorForward(AAReturnedValuesImpl);
-  IRPositionGetter(*this);
+  IRPositionConstructorForward(AAReturnedValuesImpl, AAReturnedValues);
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -621,7 +608,7 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
   if (auto *UniqueRVArg = dyn_cast<Argument>(UniqueRV.getValue())) {
     setAssociatedValue(UniqueRVArg);
     setAttributeIdx(UniqueRVArg->getArgNo() + AttributeList::FirstArgIndex);
-    Changed = AbstractAttribute::manifest(A) | Changed;
+    Changed = IRAttribute::manifest(A) | Changed;
   }
 
   return Changed;
@@ -821,9 +808,8 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A,
 
 /// ------------------------ NoSync Function Attribute -------------------------
 
-struct AANoSyncImpl : AANoSync, BooleanState, IRPosition {
-  IRPositionConstructorForward(AANoSyncImpl);
-  IRPositionGetter(*this);
+struct AANoSyncImpl : AANoSync, BooleanState {
+  IRPositionConstructorForward(AANoSyncImpl, AANoSync);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1011,9 +997,8 @@ ChangeStatus AANoSyncImpl::updateImpl(Attributor &A,
 
 /// ------------------------ No-Free Attributes ----------------------------
 
-struct AANoFreeImpl : AbstractAttribute, BooleanState, IRPosition {
-  IRPositionConstructorForward(AANoFreeImpl);
-  IRPositionGetter(*this);
+struct AANoFreeImpl : public AANoFree, BooleanState {
+  IRPositionConstructorForward(AANoFreeImpl, AANoFree);
 
   /// See AbstractAttribute::getState()
   ///{
@@ -1029,17 +1014,11 @@ struct AANoFreeImpl : AbstractAttribute, BooleanState, IRPosition {
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
 
-  /// See AbstractAttribute::getAttrKind().
-  Attribute::AttrKind getAttrKind() const override { return Attribute::NoFree; }
-
   /// Return true if "nofree" is assumed.
-  bool isAssumedNoFree() const { return getAssumed(); }
+  bool isAssumedNoFree() const override { return getAssumed(); }
 
   /// Return true if "nofree" is known.
-  bool isKnownNoFree() const { return getKnown(); }
-
-  /// Unique ID (due to the unique address)
-  static const char ID;
+  bool isKnownNoFree() const override { return getKnown(); }
 };
 
 struct AANoFreeFunction final : public AANoFreeImpl {
@@ -1074,9 +1053,8 @@ ChangeStatus AANoFreeImpl::updateImpl(Attributor &A,
 }
 
 /// ------------------------ NonNull Argument Attribute ------------------------
-struct AANonNullImpl : AANonNull, BooleanState, IRPosition {
-  IRPositionConstructorForward(AANonNullImpl);
-  IRPositionGetter(*this);
+struct AANonNullImpl : AANonNull, BooleanState {
+  IRPositionConstructorForward(AANonNullImpl, AANonNull);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1260,9 +1238,8 @@ AANonNullCallSiteArgument::updateImpl(Attributor &A,
 
 /// ------------------------ Will-Return Attributes ----------------------------
 
-struct AAWillReturnImpl : public AAWillReturn, BooleanState, IRPosition {
-  IRPositionConstructorForward(AAWillReturnImpl);
-  IRPositionGetter(*this);
+struct AAWillReturnImpl : public AAWillReturn, BooleanState {
+  IRPositionConstructorForward(AAWillReturnImpl, AAWillReturn);
 
   /// See AAWillReturn::isKnownWillReturn().
   bool isKnownWillReturn() const override { return getKnown(); }
@@ -1367,9 +1344,8 @@ ChangeStatus AAWillReturnFunction::updateImpl(Attributor &A,
 
 /// ------------------------ NoAlias Argument Attribute ------------------------
 
-struct AANoAliasImpl : AANoAlias, BooleanState, IRPosition {
-  IRPositionConstructorForward(AANoAliasImpl);
-  IRPositionGetter(*this);
+struct AANoAliasImpl : AANoAlias, BooleanState {
+  IRPositionConstructorForward(AANoAliasImpl, AANoAlias);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1453,9 +1429,8 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
 
 /// -------------------AAIsDead Function Attribute-----------------------
 
-struct AAIsDeadImpl : public AAIsDead, BooleanState, IRPosition {
-  IRPositionConstructorForward(AAIsDeadImpl);
-  IRPositionGetter(*this);
+struct AAIsDeadImpl : public AAIsDead, BooleanState {
+  IRPositionConstructorForward(AAIsDeadImpl, AAIsDead);
 
   void initialize(Attributor &A, InformationCache &InfoCache) override {
     Function &F = getAnchorScope();
@@ -1775,9 +1750,8 @@ struct DerefState : AbstractState {
   }
 };
 
-struct AADereferenceableImpl : AADereferenceable, DerefState, IRPosition {
-  IRPositionConstructorForward(AADereferenceableImpl);
-  IRPositionGetter(*this);
+struct AADereferenceableImpl : AADereferenceable, DerefState {
+  IRPositionConstructorForward(AADereferenceableImpl, AADereferenceable);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1829,9 +1803,8 @@ struct AADereferenceableImpl : AADereferenceable, DerefState, IRPosition {
     return NonNullGlobalState.isKnown(DEREF_NONNULL);
   }
 
-  void getDeducedAttributes(SmallVectorImpl<Attribute> &Attrs) const override {
-    LLVMContext &Ctx = AnchorVal.getContext();
-
+  void getDeducedAttributes(LLVMContext &Ctx,
+                            SmallVectorImpl<Attribute> &Attrs) const override {
     // TODO: Add *_globally support
     if (isAssumedNonNull())
       Attrs.emplace_back(Attribute::getWithDereferenceableBytes(
@@ -2052,9 +2025,8 @@ AADereferenceableCallSiteArgument::updateImpl(Attributor &A,
 
 // ------------------------ Align Argument Attribute ------------------------
 
-struct AAAlignImpl : AAAlign, IntegerState, IRPosition {
-  IRPositionConstructorForward(AAAlignImpl);
-  IRPositionGetter(*this);
+struct AAAlignImpl : AAAlign, IntegerState {
+  IRPositionConstructorForward(AAAlignImpl, AAAlign);
 
   // Max alignemnt value allowed in IR
   static const unsigned MAX_ALIGN = 1U << 29;
@@ -2093,9 +2065,8 @@ struct AAAlignImpl : AAAlign, IntegerState, IRPosition {
 
   /// See AbstractAttribute::getDeducedAttributes
   virtual void
-  getDeducedAttributes(SmallVectorImpl<Attribute> &Attrs) const override {
-    LLVMContext &Ctx = AnchorVal.getContext();
-
+  getDeducedAttributes(LLVMContext &Ctx,
+                       SmallVectorImpl<Attribute> &Attrs) const override {
     Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
   }
 };
@@ -2229,9 +2200,8 @@ ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A,
 }
 
 /// ------------------ Function No-Return Attribute ----------------------------
-struct AANoReturnImpl : public AANoReturn, BooleanState, IRPosition {
-  IRPositionConstructorForward(AANoReturnImpl);
-  IRPositionGetter(*this);
+struct AANoReturnImpl : public AANoReturn, BooleanState {
+  IRPositionConstructorForward(AANoReturnImpl, AANoReturn);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -2716,7 +2686,7 @@ char AttributorLegacyPass::ID = 0;
 const char AAReturnedValues::ID = 0;
 const char AANoUnwind::ID = 0;
 const char AANoSync::ID = 0;
-const char AANoFreeImpl::ID = 0;
+const char AANoFree::ID = 0;
 const char AANonNull::ID = 0;
 const char AANoRecurse::ID = 0;
 const char AAWillReturn::ID = 0;
