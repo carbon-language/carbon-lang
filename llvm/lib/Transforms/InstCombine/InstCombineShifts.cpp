@@ -718,7 +718,7 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
     // shl (zext X), ShAmt --> zext (shl X, ShAmt)
     // This is only valid if X would have zeros shifted out.
     Value *X;
-    if (match(Op0, m_ZExt(m_Value(X)))) {
+    if (match(Op0, m_OneUse(m_ZExt(m_Value(X))))) {
       unsigned SrcWidth = X->getType()->getScalarSizeInBits();
       if (ShAmt < SrcWidth &&
           MaskedValueIsZero(X, APInt::getHighBitsSet(SrcWidth, ShAmt), 0, &I))
