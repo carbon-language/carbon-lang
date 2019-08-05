@@ -153,6 +153,15 @@ void OmpStructureChecker::Leave(const parser::OpenMPWorkshareConstruct &x) {
   ompContext_.pop_back();
 }
 
+void OmpStructureChecker::Enter(const parser::OpenMPDeclareSimdConstruct &x) {
+  const auto &dir{std::get<parser::Verbatim>(x.t)};
+  PushContext(dir.source, OmpDirective::DECLARE_SIMD);
+}
+
+void OmpStructureChecker::Leave(const parser::OpenMPDeclareSimdConstruct &x) {
+  ompContext_.pop_back();
+}
+
 void OmpStructureChecker::Enter(const parser::OmpBlockDirective &x) {
   switch (x.v) {
   // 2.5 parallel-clause -> if-clause |

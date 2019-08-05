@@ -68,13 +68,16 @@ public:
   void Leave(const parser::OpenMPSectionsConstruct &);
   void Enter(const parser::OmpSection &);
 
-  void Enter(const parser::OpenMPSingleConstruct &x);
-  void Leave(const parser::OpenMPSingleConstruct &x);
-  void Enter(const parser::OmpEndSingle &x);
-  void Leave(const parser::OmpEndSingle &x);
+  void Enter(const parser::OpenMPSingleConstruct &);
+  void Leave(const parser::OpenMPSingleConstruct &);
+  void Enter(const parser::OmpEndSingle &);
+  void Leave(const parser::OmpEndSingle &);
 
-  void Enter(const parser::OpenMPWorkshareConstruct &x);
-  void Leave(const parser::OpenMPWorkshareConstruct &x);
+  void Enter(const parser::OpenMPWorkshareConstruct &);
+  void Leave(const parser::OpenMPWorkshareConstruct &);
+
+  void Enter(const parser::OpenMPDeclareSimdConstruct &);
+  void Leave(const parser::OpenMPDeclareSimdConstruct &);
 
   void Leave(const parser::OmpClauseList &);
   void Enter(const parser::OmpClause &);

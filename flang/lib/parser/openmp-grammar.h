@@ -336,29 +336,33 @@ TYPE_PARSER(construct<OmpReductionInitializerClause>(
     "INITIALIZER" >> parenthesized("OMP_PRIV =" >> expr)))
 
 // Declare Reduction Construct
-TYPE_PARSER(construct<OpenMPDeclareReductionConstruct>(
+TYPE_PARSER(sourced(construct<OpenMPDeclareReductionConstruct>(
+    verbatim("DECLARE REDUCTION"_tok),
     "(" >> Parser<OmpReductionOperator>{} / ":",
     nonemptyList(Parser<DeclarationTypeSpec>{}) / ":",
     Parser<OmpReductionCombiner>{} / ")",
-    maybe(Parser<OmpReductionInitializerClause>{})))
+    maybe(Parser<OmpReductionInitializerClause>{}))))
 
 // declare-target-map-type
 TYPE_PARSER(construct<OmpDeclareTargetMapType>(
     "LINK" >> pure(OmpDeclareTargetMapType::Type::Link) ||
     "TO" >> pure(OmpDeclareTargetMapType::Type::To)))
 
-// Declarative directives
-TYPE_PARSER(construct<OpenMPDeclareTargetConstruct>(
-    construct<OpenMPDeclareTargetConstruct>(
-        construct<OpenMPDeclareTargetConstruct::WithClause>(
-            Parser<OmpDeclareTargetMapType>{},
-            parenthesized(Parser<OmpObjectList>{}))) ||
+// declare-target-specifier
+TYPE_PARSER(construct<OpenMPDeclareTargetSpecifier>(
+                construct<OpenMPDeclareTargetSpecifier::WithClause>(
+                    Parser<OmpDeclareTargetMapType>{},
+                    parenthesized(Parser<OmpObjectList>{}))) ||
     lookAhead(endOfLine) >>
-        construct<OpenMPDeclareTargetConstruct>(
-            construct<OpenMPDeclareTargetConstruct::Implicit>()) ||
-    construct<OpenMPDeclareTargetConstruct>(
-        parenthesized(construct<OpenMPDeclareTargetConstruct::WithExtendedList>(
-            Parser<OmpObjectList>{})))))
+        construct<OpenMPDeclareTargetSpecifier>(
+            construct<OpenMPDeclareTargetSpecifier::Implicit>()) ||
+    construct<OpenMPDeclareTargetSpecifier>(
+        parenthesized(construct<OpenMPDeclareTargetSpecifier::WithExtendedList>(
+            Parser<OmpObjectList>{}))))
+
+// Declare Target Construct
+TYPE_PARSER(sourced(construct<OpenMPDeclareTargetConstruct>(
+    verbatim("DECLARE TARGET"_tok), Parser<OpenMPDeclareTargetSpecifier>{})))
 
 TYPE_PARSER(construct<OmpReductionCombiner>(Parser<AssignmentStmt>{}) ||
     construct<OmpReductionCombiner>(
@@ -426,25 +430,24 @@ TYPE_PARSER(construct<OpenMPCriticalConstruct>(
     Parser<OmpEndCritical>{}))
 
 // Declare Simd construct
-TYPE_PARSER(sourced(construct<OpenMPDeclareSimdConstruct>(
-    maybe(parenthesized(name)), Parser<OmpClauseList>{})))
+TYPE_PARSER(
+    sourced(construct<OpenMPDeclareSimdConstruct>(verbatim("DECLARE SIMD"_tok),
+        maybe(parenthesized(name)), Parser<OmpClauseList>{})))
 
-// Declarative construct & Threadprivate directive
+// Threadprivate directive
+TYPE_PARSER(sourced(construct<OpenMPThreadprivate>(
+    verbatim("THREADPRIVATE"_tok), parenthesized(Parser<OmpObjectList>{}))))
+
+// Declarative constructs
 TYPE_PARSER(startOmpLine >>
-    sourced("DECLARE REDUCTION" >>
-            construct<OpenMPDeclarativeConstruct>(
-                construct<OpenMPDeclarativeConstruct>(
-                    Parser<OpenMPDeclareReductionConstruct>{})) ||
-        "DECLARE SIMD" >> construct<OpenMPDeclarativeConstruct>(
-                              Parser<OpenMPDeclareSimdConstruct>{}) ||
-        "DECLARE TARGET" >> construct<OpenMPDeclarativeConstruct>(
-                                construct<OpenMPDeclarativeConstruct>(
-                                    Parser<OpenMPDeclareTargetConstruct>{})) ||
-        "THREADPRIVATE" >>
-            construct<OpenMPDeclarativeConstruct>(
-                construct<OpenMPDeclarativeConstruct::Threadprivate>(
-                    parenthesized(Parser<OmpObjectList>{}))) /
-                endOmpLine))
+    sourced(construct<OpenMPDeclarativeConstruct>(
+                Parser<OpenMPDeclareReductionConstruct>{}) ||
+        construct<OpenMPDeclarativeConstruct>(
+            Parser<OpenMPDeclareSimdConstruct>{}) ||
+        construct<OpenMPDeclarativeConstruct>(
+            Parser<OpenMPDeclareTargetConstruct>{}) ||
+        construct<OpenMPDeclarativeConstruct>(Parser<OpenMPThreadprivate>{})) /
+        endOmpLine)
 
 // Block Construct
 TYPE_PARSER(construct<OpenMPBlockConstruct>(Parser<OmpBlockDirective>{},

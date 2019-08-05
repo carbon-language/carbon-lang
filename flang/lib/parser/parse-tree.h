@@ -3511,8 +3511,8 @@ struct OmpDeclareTargetMapType {
   WRAPPER_CLASS_BOILERPLATE(OmpDeclareTargetMapType, Type);
 };
 
-struct OpenMPDeclareTargetConstruct {
-  UNION_CLASS_BOILERPLATE(OpenMPDeclareTargetConstruct);
+struct OpenMPDeclareTargetSpecifier {
+  UNION_CLASS_BOILERPLATE(OpenMPDeclareTargetSpecifier);
   struct WithClause {
     BOILERPLATE(WithClause);
     WithClause(OmpDeclareTargetMapType &&m, OmpObjectList &&n)
@@ -3529,6 +3529,12 @@ struct OpenMPDeclareTargetConstruct {
   std::variant<WithClause, WithExtendedList, Implicit> u;
 };
 
+struct OpenMPDeclareTargetConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPDeclareTargetConstruct);
+  CharBlock source;
+  std::tuple<Verbatim, OpenMPDeclareTargetSpecifier> t;
+};
+
 struct OmpReductionCombiner {
   UNION_CLASS_BOILERPLATE(OmpReductionCombiner);
   WRAPPER_CLASS(FunctionCombiner, Call);
@@ -3539,7 +3545,8 @@ WRAPPER_CLASS(OmpReductionInitializerClause, Expr);
 
 struct OpenMPDeclareReductionConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPDeclareReductionConstruct);
-  std::tuple<OmpReductionOperator, std::list<DeclarationTypeSpec>,
+  CharBlock source;
+  std::tuple<Verbatim, OmpReductionOperator, std::list<DeclarationTypeSpec>,
       OmpReductionCombiner, std::optional<OmpReductionInitializerClause>>
       t;
 };
@@ -3547,15 +3554,20 @@ struct OpenMPDeclareReductionConstruct {
 struct OpenMPDeclareSimdConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPDeclareSimdConstruct);
   CharBlock source;
-  std::tuple<std::optional<Name>, OmpClauseList> t;
+  std::tuple<Verbatim, std::optional<Name>, OmpClauseList> t;
+};
+
+struct OpenMPThreadprivate {
+  TUPLE_CLASS_BOILERPLATE(OpenMPThreadprivate);
+  CharBlock source;
+  std::tuple<Verbatim, OmpObjectList> t;
 };
 
 struct OpenMPDeclarativeConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPDeclarativeConstruct);
-  WRAPPER_CLASS(Threadprivate, OmpObjectList);
   CharBlock source;
   std::variant<OpenMPDeclareReductionConstruct, OpenMPDeclareSimdConstruct,
-      OpenMPDeclareTargetConstruct, Threadprivate>
+      OpenMPDeclareTargetConstruct, OpenMPThreadprivate>
       u;
 };
 

@@ -2168,10 +2168,10 @@ public:
     Put("\n");
     EndOpenMP();
   }
-  void Unparse(const OpenMPDeclareTargetConstruct::WithClause &x) {
+  void Unparse(const OpenMPDeclareTargetSpecifier::WithClause &x) {
     Walk(x.maptype), Put("("), Walk(x.names), Put(")");
   }
-  void Unparse(const OpenMPDeclareTargetConstruct::WithExtendedList &x) {
+  void Unparse(const OpenMPDeclareTargetSpecifier::WithExtendedList &x) {
     Put("("), Walk(x.names), Put(")");
   }
   void Unparse(const OmpReductionInitializerClause &x) {
@@ -2220,7 +2220,7 @@ public:
               Word("DECLARE TARGET ");
               return true;
             },
-            [&](const OpenMPDeclarativeConstruct::Threadprivate &y) {
+            [&](const OpenMPThreadprivate &y) {
               Word("THREADPRIVATE (");
               return true;
             },
@@ -2231,7 +2231,7 @@ public:
     Put("\n");
     EndOpenMP();
   }
-  void Post(const OpenMPDeclarativeConstruct::Threadprivate &x) {
+  void Post(const OpenMPThreadprivate &x) {
     Put(")\n");
     EndOpenMP();
   }
