@@ -276,14 +276,14 @@ private:
   /// The number successfully loaded ASTs. Used to indicate, and  - with the
   /// appropriate threshold value - limit the  memory usage of the
   /// CrossTranslationUnitContext.
-  unsigned NumASTLoaded;
+  unsigned NumASTLoaded{0u};
 
   /// RAII counter to signal 'threshold reached' condition, and to increment the
   /// NumASTLoaded counter upon a successful load.
   class LoadGuard {
   public:
     LoadGuard(unsigned Limit, unsigned &Counter)
-        : Counter(Counter), Enabled(Counter < Limit){};
+        : Counter(Counter), Enabled(Counter < Limit) {}
     ~LoadGuard() {
       if (StoreSuccess)
         ++Counter;
@@ -295,7 +295,7 @@ private:
     void storedSuccessfully() { StoreSuccess = true; }
     /// Indicates, whether a new load operation is permitted, it is within the
     /// threshold.
-    operator bool() const { return Enabled; };
+    operator bool() const { return Enabled; }
 
   private:
     /// The number of ASTs actually imported. LoadGuard does not own the
