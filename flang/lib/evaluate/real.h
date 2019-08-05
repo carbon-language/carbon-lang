@@ -65,11 +65,12 @@ public:
   }
 
   // TODO: ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION,
-  // INT/NINT, NEAREST, OUT_OF_RANGE, DIGITS,
-  // RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
+  // INT/NINT, NEAREST, OUT_OF_RANGE,
+  // RRSPACING/SPACING, SCALE, SET_EXPONENT
 
+  constexpr bool IsSignBitSet() const { return word_.BTEST(bits - 1); }
   constexpr bool IsNegative() const {
-    return !IsNotANumber() && word_.BTEST(bits - 1);
+    return !IsNotANumber() && IsSignBitSet();
   }
   constexpr bool IsNotANumber() const {
     return Exponent() == maxExponent && !GetSignificand().IsZero();
@@ -94,6 +95,14 @@ public:
   constexpr Real ABS() const {  // non-arithmetic, no flags returned
     return {word_.IBCLR(bits - 1)};
   }
+  constexpr Real SetSign(bool toNegative) const {  // non-arithmetic
+    if (toNegative) {
+      return {word_.IBSET(bits - 1)};
+    } else {
+      return ABS();
+    }
+  }
+  constexpr Real SIGN(const Real &x) const { return SetSign(x.IsSignBitSet()); }
 
   constexpr Real Negate() const { return {word_.IEOR(word_.MASKL(1))}; }
 

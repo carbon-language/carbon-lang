@@ -545,6 +545,30 @@ Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   return Expr<T>{std::move(funcRef)};
 }
 
+// TODO pmk rm
+template<typename RESULT, typename TO, typename FROM>
+Expr<RESULT> SIGN(
+    FoldingContext &context, const Scalar<TO> &to, const Scalar<FROM> &from) {
+  bool isNegative{false};
+  if constexpr (FROM::category == TypeCategory::Integer) {
+    isNegative = from.IsNegative();
+  } else {
+    static_assert(FROM::category == TypeCategory::Real);
+    isNegative = from.IsSignBitSet();
+  }
+  if constexpr (TO::category == TypeCategory::Integer) {
+    auto result{to.SIGN(isNegative)};
+    if (result.overflow) {
+      context.messages().Say(
+          "SIGN() folding overflows integer(kind=%d)"_en_US, TO::kind);
+    }
+    return Expr<RESULT>{Constant<RESULT>{std::move(result.value)}};
+  } else {
+    static_assert(TO::category == TypeCategory::Real);
+    return Expr<RESULT>{Constant<RESULT>{to.SIGN(isNegative)}};
+  }
+}
+
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
     FoldingContext &context,
@@ -837,7 +861,16 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
       }
     }
   } else if (name == "sign") {
-    // TODO pmk
+    return FoldElementalIntrinsic<T, T, T>(context, std::move(funcRef),
+        ScalarFunc<T, T, T>(
+            [&context](const Scalar<T> &j, const Scalar<T> &k) -> Scalar<T> {
+              typename Scalar<T>::ValueWithOverflow result{j.SIGN(k)};
+              if (result.overflow) {
+                context.messages().Say(
+                    "sign(integer(kind=%d)) folding overflowed"_en_US, KIND);
+              }
+              return result.value;
+            }));
   } else if (name == "size") {
     if (auto shape{GetShape(context, args[0])}) {
       if (auto &dimArg{args[1]}) {  // DIM= is present, get one extent
@@ -1008,7 +1041,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
       return ToReal<KIND>(context, std::move(*expr));
     }
   } else if (name == "sign") {
-    // TODO pmk
+    return FoldElementalIntrinsic<T, T, T>(
+        context, std::move(funcRef), &Scalar<T>::SIGN);
   } else if (name == "tiny") {
     return Expr<T>{Scalar<T>::TINY()};
   }

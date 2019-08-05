@@ -774,15 +774,18 @@ public:
     }
   }
 
-  constexpr ValueWithOverflow SIGN(const Integer &sign) const {
-    bool goNegative{sign.IsNegative()};
-    if (goNegative == IsNegative()) {
+  constexpr ValueWithOverflow SIGN(bool toNegative) const {
+    if (toNegative == IsNegative()) {
       return {*this, false};
-    } else if (goNegative) {
+    } else if (toNegative) {
       return Negate();
     } else {
       return ABS();
     }
+  }
+
+  constexpr ValueWithOverflow SIGN(const Integer &sign) const {
+    return SIGN(sign.IsNegative());
   }
 
   constexpr Product MultiplyUnsigned(const Integer &y) const {
