@@ -114,21 +114,20 @@ ChangeStatus llvm::operator&(ChangeStatus l, ChangeStatus r) {
 ///}
 
 /// Helper to adjust the statistics.
-static void bookkeeping(AbstractAttribute::ManifestPosition MP,
-                        const Attribute &Attr) {
+static void bookkeeping(IRPosition::Kind PK, const Attribute &Attr) {
   if (!AreStatisticsEnabled())
     return;
 
   switch (Attr.getKindAsEnum()) {
   case Attribute::Alignment:
-    switch (MP) {
-    case AbstractAttribute::MP_RETURNED:
+    switch (PK) {
+    case IRPosition::IRP_RETURNED:
       NumFnReturnedAlign++;
       break;
-    case AbstractAttribute::MP_ARGUMENT:
+    case IRPosition::IRP_ARGUMENT:
       NumFnArgumentAlign++;
       break;
-    case AbstractAttribute::MP_CALL_SITE_ARGUMENT:
+    case IRPosition::IRP_CALL_SITE_ARGUMENT:
       NumCSArgumentAlign++;
       break;
     default:
@@ -136,14 +135,14 @@ static void bookkeeping(AbstractAttribute::ManifestPosition MP,
     }
     break;
   case Attribute::Dereferenceable:
-    switch (MP) {
-    case AbstractAttribute::MP_RETURNED:
+    switch (PK) {
+    case IRPosition::IRP_RETURNED:
       NumFnReturnedDereferenceable++;
       break;
-    case AbstractAttribute::MP_ARGUMENT:
+    case IRPosition::IRP_ARGUMENT:
       NumFnArgumentDereferenceable++;
       break;
-    case AbstractAttribute::MP_CALL_SITE_ARGUMENT:
+    case IRPosition::IRP_CALL_SITE_ARGUMENT:
       NumCSArgumentDereferenceable++;
       break;
     default:
@@ -163,14 +162,14 @@ static void bookkeeping(AbstractAttribute::ManifestPosition MP,
     NumFnNoFree++;
     break;
   case Attribute::NonNull:
-    switch (MP) {
-    case AbstractAttribute::MP_RETURNED:
+    switch (PK) {
+    case IRPosition::IRP_RETURNED:
       NumFnReturnedNonNull++;
       break;
-    case AbstractAttribute::MP_ARGUMENT:
+    case IRPosition::IRP_ARGUMENT:
       NumFnArgumentNonNull++;
       break;
-    case AbstractAttribute::MP_CALL_SITE_ARGUMENT:
+    case IRPosition::IRP_CALL_SITE_ARGUMENT:
       NumCSArgumentNonNull++;
       break;
     default:
@@ -274,21 +273,6 @@ static bool genericValueTraversal(
   return true;
 }
 
-/// Helper to identify the correct offset into an attribute list.
-static unsigned getAttrIndex(AbstractAttribute::ManifestPosition MP,
-                             unsigned ArgNo = 0) {
-  switch (MP) {
-  case AbstractAttribute::MP_ARGUMENT:
-  case AbstractAttribute::MP_CALL_SITE_ARGUMENT:
-    return ArgNo + AttributeList::FirstArgIndex;
-  case AbstractAttribute::MP_FUNCTION:
-    return AttributeList::FunctionIndex;
-  case AbstractAttribute::MP_RETURNED:
-    return AttributeList::ReturnIndex;
-  }
-  llvm_unreachable("Unknown manifest position!");
-}
-
 /// Return true if \p New is equal or worse than \p Old.
 static bool isEqualOrWorse(const Attribute &New, const Attribute &Old) {
   if (!Old.isIntAttribute())
@@ -299,12 +283,9 @@ static bool isEqualOrWorse(const Attribute &New, const Attribute &Old) {
 
 /// Return true if the information provided by \p Attr was added to the
 /// attribute list \p Attrs. This is only the case if it was not already present
-/// in \p Attrs at the position describe by \p MP and \p ArgNo.
+/// in \p Attrs at the position describe by \p PK and \p AttrIdx.
 static bool addIfNotExistent(LLVMContext &Ctx, const Attribute &Attr,
-                             AttributeList &Attrs,
-                             AbstractAttribute::ManifestPosition MP,
-                             unsigned ArgNo = 0) {
-  unsigned AttrIdx = getAttrIndex(MP, ArgNo);
+                             AttributeList &Attrs, int AttrIdx) {
 
   if (Attr.isEnumAttribute()) {
     Attribute::AttrKind Kind = Attr.getKindAsEnum();
@@ -354,107 +335,79 @@ ChangeStatus AbstractAttribute::update(Attributor &A,
 ChangeStatus AbstractAttribute::manifest(Attributor &A) {
   assert(getState().isValidState() &&
          "Attempted to manifest an invalid state!");
-  assert(getAssociatedValue() &&
+  assert(getIRPosition().getAssociatedValue() &&
          "Attempted to manifest an attribute without associated value!");
 
   ChangeStatus HasChanged = ChangeStatus::UNCHANGED;
+
+  IRPosition &Pos = getIRPosition();
+  Function &ScopeFn = Pos.getAnchorScope();
+  LLVMContext &Ctx = ScopeFn.getContext();
+  IRPosition::Kind PK = Pos.getPositionKind();
+
   SmallVector<Attribute, 4> DeducedAttrs;
   getDeducedAttributes(DeducedAttrs);
-
-  Function &ScopeFn = getAnchorScope();
-  LLVMContext &Ctx = ScopeFn.getContext();
-  ManifestPosition MP = getManifestPosition();
-
-  AttributeList Attrs;
-  SmallVector<unsigned, 4> ArgNos;
 
   // In the following some generic code that will manifest attributes in
   // DeducedAttrs if they improve the current IR. Due to the different
   // annotation positions we use the underlying AttributeList interface.
-  // Note that MP_CALL_SITE_ARGUMENT can annotate multiple locations.
 
-  switch (MP) {
-  case MP_ARGUMENT:
-    ArgNos.push_back(cast<Argument>(getAssociatedValue())->getArgNo());
+  AttributeList Attrs;
+  switch (PK) {
+  case IRPosition::IRP_ARGUMENT:
+  case IRPosition::IRP_FUNCTION:
+  case IRPosition::IRP_RETURNED:
     Attrs = ScopeFn.getAttributes();
     break;
-  case MP_FUNCTION:
-  case MP_RETURNED:
-    ArgNos.push_back(0);
-    Attrs = ScopeFn.getAttributes();
+  case IRPosition::IRP_CALL_SITE_ARGUMENT:
+    Attrs = ImmutableCallSite(&Pos.getAnchorValue()).getAttributes();
     break;
-  case MP_CALL_SITE_ARGUMENT: {
-    CallSite CS(&getAnchoredValue());
-    for (unsigned u = 0, e = CS.getNumArgOperands(); u != e; u++)
-      if (CS.getArgOperand(u) == getAssociatedValue())
-        ArgNos.push_back(u);
-    Attrs = CS.getAttributes();
-  }
   }
 
   for (const Attribute &Attr : DeducedAttrs) {
-    for (unsigned ArgNo : ArgNos) {
-      if (!addIfNotExistent(Ctx, Attr, Attrs, MP, ArgNo))
-        continue;
+    if (!addIfNotExistent(Ctx, Attr, Attrs, Pos.getAttrIdx()))
+      continue;
 
-      HasChanged = ChangeStatus::CHANGED;
-      bookkeeping(MP, Attr);
-    }
+    HasChanged = ChangeStatus::CHANGED;
+    bookkeeping(PK, Attr);
   }
 
   if (HasChanged == ChangeStatus::UNCHANGED)
     return HasChanged;
 
-  switch (MP) {
-  case MP_ARGUMENT:
-  case MP_FUNCTION:
-  case MP_RETURNED:
+  switch (PK) {
+  case IRPosition::IRP_ARGUMENT:
+  case IRPosition::IRP_FUNCTION:
+  case IRPosition::IRP_RETURNED:
     ScopeFn.setAttributes(Attrs);
     break;
-  case MP_CALL_SITE_ARGUMENT:
-    CallSite(&getAnchoredValue()).setAttributes(Attrs);
+  case IRPosition::IRP_CALL_SITE_ARGUMENT:
+    CallSite(&Pos.getAnchorValue()).setAttributes(Attrs);
   }
 
   return HasChanged;
 }
 
-Function &AbstractAttribute::getAnchorScope() {
-  Value &V = getAnchoredValue();
-  if (isa<Function>(V))
-    return cast<Function>(V);
-  if (isa<Argument>(V))
-    return *cast<Argument>(V).getParent();
-  if (isa<Instruction>(V))
-    return *cast<Instruction>(V).getFunction();
-  llvm_unreachable("No scope for anchored value found!");
-}
-
-const Function &AbstractAttribute::getAnchorScope() const {
-  return const_cast<AbstractAttribute *>(this)->getAnchorScope();
-}
-
-// Helper function that returns argument index of value.
-// If the value is not an argument, this returns -1.
-static int getArgNo(Value &V) {
-  if (auto *Arg = dyn_cast<Argument>(&V))
-    return Arg->getArgNo();
-  return -1;
-}
-
 /// -----------------------NoUnwind Function Attribute--------------------------
 
-struct AANoUnwindFunction : AANoUnwind, BooleanState {
+#define IRPositionConstructorForward(NAME)                                     \
+  NAME(Argument &Arg) : IRPosition(Arg) {}                                     \
+  NAME(Function &Fn, IRPosition::Kind PK) : IRPosition(Fn, PK) {}              \
+  NAME(Value *AssociatedVal, Value &AnchorVal, unsigned ArgumentNo)            \
+      : IRPosition(AssociatedVal, AnchorVal, ArgumentNo) {}
+#define IRPositionGetter(IRP)                                                  \
+  IRPosition &getIRPosition() override { return IRP; }                         \
+  const IRPosition &getIRPosition() const override { return IRP; }
 
-  AANoUnwindFunction(Function &F) : AANoUnwind(F) {}
+struct AANoUnwindImpl : AANoUnwind, BooleanState, IRPosition {
+  IRPositionConstructorForward(AANoUnwindImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   /// {
   AbstractState &getState() override { return *this; }
   const AbstractState &getState() const override { return *this; }
   /// }
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
 
   const std::string getAsStr() const override {
     return getAssumed() ? "nounwind" : "may-unwind";
@@ -470,8 +423,12 @@ struct AANoUnwindFunction : AANoUnwind, BooleanState {
   bool isKnownNoUnwind() const override { return getKnown(); }
 };
 
-ChangeStatus AANoUnwindFunction::updateImpl(Attributor &A,
-                                            InformationCache &InfoCache) {
+struct AANoUnwindFunction final : public AANoUnwindImpl {
+  AANoUnwindFunction(Function &F) : AANoUnwindImpl(F, IRP_FUNCTION) {}
+};
+
+ChangeStatus AANoUnwindImpl::updateImpl(Attributor &A,
+                                        InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
   // The map from instruction opcodes to those instructions in the function.
@@ -508,7 +465,9 @@ ChangeStatus AANoUnwindFunction::updateImpl(Attributor &A,
 ///
 /// If there is a unique returned value R, the manifest method will:
 ///   - mark R with the "returned" attribute, if R is an argument.
-class AAReturnedValuesImpl final : public AAReturnedValues, AbstractState {
+class AAReturnedValuesImpl : public AAReturnedValues,
+                             public AbstractState,
+                             public IRPosition {
 
   /// Mapping of values potentially returned by the associated function to the
   /// return instructions that might return them.
@@ -545,11 +504,8 @@ class AAReturnedValuesImpl final : public AAReturnedValues, AbstractState {
   }
 
 public:
-  /// See AbstractAttribute::AbstractAttribute(...).
-  AAReturnedValuesImpl(Function &F) : AAReturnedValues(F) {
-    // We do not have an associated argument yet.
-    AssociatedVal = nullptr;
-  }
+  IRPositionConstructorForward(AAReturnedValuesImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -560,7 +516,7 @@ public:
     HasOverdefinedReturnedCalls = false;
     ReturnedValues.clear();
 
-    Function &F = cast<Function>(getAnchoredValue());
+    Function &F = cast<Function>(getAnchorValue());
 
     // The map from instruction opcodes to those instructions in the function.
     auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
@@ -595,9 +551,6 @@ public:
 
   /// See AbstractAttribute::getState(...).
   const AbstractState &getState() const override { return *this; }
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_ARGUMENT; }
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
@@ -641,6 +594,11 @@ public:
   }
 };
 
+struct AAReturnedValuesFunction final : public AAReturnedValuesImpl {
+  AAReturnedValuesFunction(Function &F)
+      : AAReturnedValuesImpl(F, IRP_FUNCTION) {}
+};
+
 ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
   ChangeStatus Changed = ChangeStatus::UNCHANGED;
 
@@ -661,7 +619,8 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
 
   // If the assumed unique return value is an argument, annotate it.
   if (auto *UniqueRVArg = dyn_cast<Argument>(UniqueRV.getValue())) {
-    AssociatedVal = UniqueRVArg;
+    setAssociatedValue(UniqueRVArg);
+    setAttributeIdx(UniqueRVArg->getArgNo() + AttributeList::FirstArgIndex);
     Changed = AbstractAttribute::manifest(A) | Changed;
   }
 
@@ -862,18 +821,15 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A,
 
 /// ------------------------ NoSync Function Attribute -------------------------
 
-struct AANoSyncFunction : AANoSync, BooleanState {
-
-  AANoSyncFunction(Function &F) : AANoSync(F) {}
+struct AANoSyncImpl : AANoSync, BooleanState, IRPosition {
+  IRPositionConstructorForward(AANoSyncImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   /// {
   AbstractState &getState() override { return *this; }
   const AbstractState &getState() const override { return *this; }
   /// }
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
 
   const std::string getAsStr() const override {
     return getAssumed() ? "nosync" : "may-sync";
@@ -901,7 +857,11 @@ struct AANoSyncFunction : AANoSync, BooleanState {
   static bool isNoSyncIntrinsic(Instruction *I);
 };
 
-bool AANoSyncFunction::isNonRelaxedAtomic(Instruction *I) {
+struct AANoSyncFunction final : public AANoSyncImpl {
+  AANoSyncFunction(Function &F) : AANoSyncImpl(F, IRP_FUNCTION) {}
+};
+
+bool AANoSyncImpl::isNonRelaxedAtomic(Instruction *I) {
   if (!I->isAtomic())
     return false;
 
@@ -950,7 +910,7 @@ bool AANoSyncFunction::isNonRelaxedAtomic(Instruction *I) {
 
 /// Checks if an intrinsic is nosync. Currently only checks mem* intrinsics.
 /// FIXME: We should ipmrove the handling of intrinsics.
-bool AANoSyncFunction::isNoSyncIntrinsic(Instruction *I) {
+bool AANoSyncImpl::isNoSyncIntrinsic(Instruction *I) {
   if (auto *II = dyn_cast<IntrinsicInst>(I)) {
     switch (II->getIntrinsicID()) {
     /// Element wise atomic memory intrinsics are can only be unordered,
@@ -972,7 +932,7 @@ bool AANoSyncFunction::isNoSyncIntrinsic(Instruction *I) {
   return false;
 }
 
-bool AANoSyncFunction::isVolatile(Instruction *I) {
+bool AANoSyncImpl::isVolatile(Instruction *I) {
   assert(!ImmutableCallSite(I) && !isa<CallBase>(I) &&
          "Calls should not be checked here");
 
@@ -990,8 +950,8 @@ bool AANoSyncFunction::isVolatile(Instruction *I) {
   }
 }
 
-ChangeStatus AANoSyncFunction::updateImpl(Attributor &A,
-                                          InformationCache &InfoCache) {
+ChangeStatus AANoSyncImpl::updateImpl(Attributor &A,
+                                      InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
   auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
@@ -1004,7 +964,7 @@ ChangeStatus AANoSyncFunction::updateImpl(Attributor &A,
       continue;
 
     ImmutableCallSite ICS(I);
-    auto *NoSyncAA = A.getAAFor<AANoSyncFunction>(*this, *I);
+    auto *NoSyncAA = A.getAAFor<AANoSyncImpl>(*this, *I);
 
     if (isa<IntrinsicInst>(I) && isNoSyncIntrinsic(I))
       continue;
@@ -1051,19 +1011,15 @@ ChangeStatus AANoSyncFunction::updateImpl(Attributor &A,
 
 /// ------------------------ No-Free Attributes ----------------------------
 
-struct AANoFreeFunction : AbstractAttribute, BooleanState {
-
-  /// See AbstractAttribute::AbstractAttribute(...).
-  AANoFreeFunction(Function &F) : AbstractAttribute(F) {}
+struct AANoFreeImpl : AbstractAttribute, BooleanState, IRPosition {
+  IRPositionConstructorForward(AANoFreeImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   ///{
   AbstractState &getState() override { return *this; }
   const AbstractState &getState() const override { return *this; }
   ///}
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
@@ -1086,8 +1042,12 @@ struct AANoFreeFunction : AbstractAttribute, BooleanState {
   static const char ID;
 };
 
-ChangeStatus AANoFreeFunction::updateImpl(Attributor &A,
-                                          InformationCache &InfoCache) {
+struct AANoFreeFunction final : public AANoFreeImpl {
+  AANoFreeFunction(Function &F) : AANoFreeImpl(F, IRP_FUNCTION) {}
+};
+
+ChangeStatus AANoFreeImpl::updateImpl(Attributor &A,
+                                      InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
   auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
@@ -1103,7 +1063,7 @@ ChangeStatus AANoFreeFunction::updateImpl(Attributor &A,
       if (LivenessAA && LivenessAA->isAssumedDead(I))
         continue;
       auto ICS = ImmutableCallSite(I);
-      auto *NoFreeAA = A.getAAFor<AANoFreeFunction>(*this, *I);
+      auto *NoFreeAA = A.getAAFor<AANoFreeImpl>(*this, *I);
 
       if ((!NoFreeAA || !NoFreeAA->isAssumedNoFree()) &&
           !ICS.hasFnAttr(Attribute::NoFree))
@@ -1114,12 +1074,9 @@ ChangeStatus AANoFreeFunction::updateImpl(Attributor &A,
 }
 
 /// ------------------------ NonNull Argument Attribute ------------------------
-struct AANonNullImpl : AANonNull, BooleanState {
-
-  AANonNullImpl(Value &V) : AANonNull(V) {}
-
-  AANonNullImpl(Value *AssociatedVal, Value &AnchoredValue)
-      : AANonNull(AssociatedVal, AnchoredValue) {}
+struct AANonNullImpl : AANonNull, BooleanState, IRPosition {
+  IRPositionConstructorForward(AANonNullImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1179,10 +1136,7 @@ AANonNullImpl::generatePredicate(Attributor &A) {
 /// NonNull attribute for function return value.
 struct AANonNullReturned : AANonNullImpl {
 
-  AANonNullReturned(Function &F) : AANonNullImpl(F) {}
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_RETURNED; }
+  AANonNullReturned(Function &F) : AANonNullImpl(F, IRP_RETURNED) {}
 
   /// See AbstractAttriubute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -1221,9 +1175,6 @@ struct AANonNullArgument : AANonNullImpl {
 
   AANonNullArgument(Argument &A) : AANonNullImpl(A) {}
 
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_ARGUMENT; }
-
   /// See AbstractAttriubute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
     Argument *Arg = cast<Argument>(getAssociatedValue());
@@ -1240,14 +1191,13 @@ struct AANonNullCallSiteArgument : AANonNullImpl {
 
   /// See AANonNullImpl::AANonNullImpl(...).
   AANonNullCallSiteArgument(CallSite CS, unsigned ArgNo)
-      : AANonNullImpl(CS.getArgOperand(ArgNo), *CS.getInstruction()),
-        ArgNo(ArgNo) {}
+      : AANonNullImpl(CS.getArgOperand(ArgNo), *CS.getInstruction(), ArgNo) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
-    CallSite CS(&getAnchoredValue());
-    if (CS.paramHasAttr(ArgNo, getAttrKind()) ||
-        CS.paramHasAttr(ArgNo, Attribute::Dereferenceable) ||
+    CallSite CS(&getAnchorValue());
+    if (CS.paramHasAttr(getArgNo(), getAttrKind()) ||
+        CS.paramHasAttr(getArgNo(), Attribute::Dereferenceable) ||
         isKnownNonZero(getAssociatedValue(),
                        getAnchorScope().getParent()->getDataLayout()))
       indicateOptimisticFixpoint();
@@ -1255,23 +1205,12 @@ struct AANonNullCallSiteArgument : AANonNullImpl {
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override {
-    return MP_CALL_SITE_ARGUMENT;
-  };
-
-  // Return argument index of associated value.
-  int getArgNo() const { return ArgNo; }
-
-private:
-  unsigned ArgNo;
 };
 
 ChangeStatus AANonNullArgument::updateImpl(Attributor &A,
                                            InformationCache &InfoCache) {
   Function &F = getAnchorScope();
-  Argument &Arg = cast<Argument>(getAnchoredValue());
+  Argument &Arg = cast<Argument>(getAnchorValue());
 
   unsigned ArgNo = Arg.getArgNo();
 
@@ -1283,7 +1222,7 @@ ChangeStatus AANonNullArgument::updateImpl(Attributor &A,
 
     // Check that NonNullAA is AANonNullCallSiteArgument.
     if (NonNullAA) {
-      ImmutableCallSite ICS(&NonNullAA->getAnchoredValue());
+      ImmutableCallSite ICS(&NonNullAA->getIRPosition().getAnchorValue());
       if (ICS && CS.getInstruction() == ICS.getInstruction())
         return NonNullAA->isAssumedNonNull();
       return false;
@@ -1321,10 +1260,9 @@ AANonNullCallSiteArgument::updateImpl(Attributor &A,
 
 /// ------------------------ Will-Return Attributes ----------------------------
 
-struct AAWillReturnImpl : public AAWillReturn, BooleanState {
-
-  /// See AbstractAttribute::AbstractAttribute(...).
-  AAWillReturnImpl(Function &F) : AAWillReturn(F) {}
+struct AAWillReturnImpl : public AAWillReturn, BooleanState, IRPosition {
+  IRPositionConstructorForward(AAWillReturnImpl);
+  IRPositionGetter(*this);
 
   /// See AAWillReturn::isKnownWillReturn().
   bool isKnownWillReturn() const override { return getKnown(); }
@@ -1347,10 +1285,7 @@ struct AAWillReturnImpl : public AAWillReturn, BooleanState {
 struct AAWillReturnFunction final : AAWillReturnImpl {
 
   /// See AbstractAttribute::AbstractAttribute(...).
-  AAWillReturnFunction(Function &F) : AAWillReturnImpl(F) {}
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
+  AAWillReturnFunction(Function &F) : AAWillReturnImpl(F, IRP_FUNCTION) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override;
@@ -1432,9 +1367,9 @@ ChangeStatus AAWillReturnFunction::updateImpl(Attributor &A,
 
 /// ------------------------ NoAlias Argument Attribute ------------------------
 
-struct AANoAliasImpl : AANoAlias, BooleanState {
-
-  AANoAliasImpl(Value &V) : AANoAlias(V) {}
+struct AANoAliasImpl : AANoAlias, BooleanState, IRPosition {
+  IRPositionConstructorForward(AANoAliasImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1456,12 +1391,7 @@ struct AANoAliasImpl : AANoAlias, BooleanState {
 /// NoAlias attribute for function return value.
 struct AANoAliasReturned : AANoAliasImpl {
 
-  AANoAliasReturned(Function &F) : AANoAliasImpl(F) {}
-
-  /// See AbstractAttribute::getManifestPosition().
-  virtual ManifestPosition getManifestPosition() const override {
-    return MP_RETURNED;
-  }
+  AANoAliasReturned(Function &F) : AANoAliasImpl(F, IRP_RETURNED) {}
 
   /// See AbstractAttriubute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -1523,18 +1453,9 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
 
 /// -------------------AAIsDead Function Attribute-----------------------
 
-struct AAIsDeadFunction : AAIsDead, BooleanState {
-
-  AAIsDeadFunction(Function &F) : AAIsDead(F) {}
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
+struct AAIsDeadImpl : public AAIsDead, BooleanState, IRPosition {
+  IRPositionConstructorForward(AAIsDeadImpl);
+  IRPositionGetter(*this);
 
   void initialize(Attributor &A, InformationCache &InfoCache) override {
     Function &F = getAnchorScope();
@@ -1672,6 +1593,12 @@ struct AAIsDeadFunction : AAIsDead, BooleanState {
     return F.hasPersonalityFn() && !canSimplifyInvokeNoUnwind(&F);
   }
 
+  /// See AbstractAttribute::getState()
+  /// {
+  AbstractState &getState() override { return *this; }
+  const AbstractState &getState() const override { return *this; }
+  /// }
+
   /// Collection of to be explored paths.
   SmallSetVector<const Instruction *, 8> ToBeExploredPaths;
 
@@ -1682,7 +1609,11 @@ struct AAIsDeadFunction : AAIsDead, BooleanState {
   SmallSetVector<const Instruction *, 4> NoReturnCalls;
 };
 
-bool AAIsDeadFunction::isAfterNoReturn(const Instruction *I) const {
+struct AAIsDeadFunction final : public AAIsDeadImpl {
+  AAIsDeadFunction(Function &F) : AAIsDeadImpl(F, IRP_FUNCTION) {}
+};
+
+bool AAIsDeadImpl::isAfterNoReturn(const Instruction *I) const {
   const Instruction *PrevI = I->getPrevNode();
   while (PrevI) {
     if (NoReturnCalls.count(PrevI))
@@ -1692,8 +1623,8 @@ bool AAIsDeadFunction::isAfterNoReturn(const Instruction *I) const {
   return false;
 }
 
-const Instruction *AAIsDeadFunction::findNextNoReturn(Attributor &A,
-                                                      const Instruction *I) {
+const Instruction *AAIsDeadImpl::findNextNoReturn(Attributor &A,
+                                                  const Instruction *I) {
   const BasicBlock *BB = I->getParent();
   const Function &F = *BB->getParent();
 
@@ -1743,8 +1674,8 @@ const Instruction *AAIsDeadFunction::findNextNoReturn(Attributor &A,
   return nullptr;
 }
 
-ChangeStatus AAIsDeadFunction::updateImpl(Attributor &A,
-                                          InformationCache &InfoCache) {
+ChangeStatus AAIsDeadImpl::updateImpl(Attributor &A,
+                                      InformationCache &InfoCache) {
   // Temporary collection to iterate over existing noreturn instructions. This
   // will alow easier modification of NoReturnCalls collection
   SmallVector<const Instruction *, 8> NoReturnChanged;
@@ -1843,12 +1774,10 @@ struct DerefState : AbstractState {
            this->NonNullGlobalState == R.NonNullGlobalState;
   }
 };
-struct AADereferenceableImpl : AADereferenceable, DerefState {
 
-  AADereferenceableImpl(Value &V) : AADereferenceable(V) {}
-
-  AADereferenceableImpl(Value *AssociatedVal, Value &AnchoredValue)
-      : AADereferenceable(AssociatedVal, AnchoredValue) {}
+struct AADereferenceableImpl : AADereferenceable, DerefState, IRPosition {
+  IRPositionConstructorForward(AADereferenceableImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1901,7 +1830,7 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
   }
 
   void getDeducedAttributes(SmallVectorImpl<Attribute> &Attrs) const override {
-    LLVMContext &Ctx = AnchoredVal.getContext();
+    LLVMContext &Ctx = AnchorVal.getContext();
 
     // TODO: Add *_globally support
     if (isAssumedNonNull())
@@ -1916,8 +1845,7 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
 
   void initialize(Attributor &A, InformationCache &InfoCache) override {
     Function &F = getAnchorScope();
-    unsigned AttrIdx =
-        getAttrIndex(getManifestPosition(), getArgNo(getAnchoredValue()));
+    unsigned AttrIdx = getIRPosition().getAttrIdx();
 
     for (Attribute::AttrKind AK :
          {Attribute::Dereferenceable, Attribute::DereferenceableOrNull})
@@ -1938,10 +1866,8 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
 };
 
 struct AADereferenceableReturned : AADereferenceableImpl {
-  AADereferenceableReturned(Function &F) : AADereferenceableImpl(F) {}
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_RETURNED; }
+  AADereferenceableReturned(Function &F)
+      : AADereferenceableImpl(F, IRP_RETURNED) {}
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
@@ -2027,9 +1953,6 @@ AADereferenceableReturned::updateImpl(Attributor &A,
 struct AADereferenceableArgument : AADereferenceableImpl {
   AADereferenceableArgument(Argument &A) : AADereferenceableImpl(A) {}
 
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_ARGUMENT; }
-
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
 };
@@ -2038,7 +1961,7 @@ ChangeStatus
 AADereferenceableArgument::updateImpl(Attributor &A,
                                       InformationCache &InfoCache) {
   Function &F = getAnchorScope();
-  Argument &Arg = cast<Argument>(getAnchoredValue());
+  Argument &Arg = cast<Argument>(getAnchorValue());
 
   auto BeforeState = static_cast<DerefState>(*this);
 
@@ -2056,7 +1979,8 @@ AADereferenceableArgument::updateImpl(Attributor &A,
     // Check that DereferenceableAA is AADereferenceableCallSiteArgument.
     if (auto *DereferenceableAA =
             A.getAAFor<AADereferenceable>(*this, *CS.getInstruction(), ArgNo)) {
-      ImmutableCallSite ICS(&DereferenceableAA->getAnchoredValue());
+      ImmutableCallSite ICS(
+          &DereferenceableAA->getIRPosition().getAnchorValue());
       if (ICS && CS.getInstruction() == ICS.getInstruction()) {
         takeAssumedDerefBytesMinimum(
             DereferenceableAA->getAssumedDereferenceableBytes());
@@ -2086,34 +2010,21 @@ struct AADereferenceableCallSiteArgument : AADereferenceableImpl {
 
   /// See AADereferenceableImpl::AADereferenceableImpl(...).
   AADereferenceableCallSiteArgument(CallSite CS, unsigned ArgNo)
-      : AADereferenceableImpl(CS.getArgOperand(ArgNo), *CS.getInstruction()),
-        ArgNo(ArgNo) {}
+      : AADereferenceableImpl(CS.getArgOperand(ArgNo), *CS.getInstruction(),
+                              ArgNo) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
-    CallSite CS(&getAnchoredValue());
-    if (CS.paramHasAttr(ArgNo, Attribute::Dereferenceable))
-      takeKnownDerefBytesMaximum(
-          CS.getDereferenceableBytes(ArgNo + AttributeList::FirstArgIndex));
+    CallSite CS(&getAnchorValue());
+    if (CS.paramHasAttr(getArgNo(), Attribute::Dereferenceable))
+      takeKnownDerefBytesMaximum(CS.getDereferenceableBytes(getArgNo()));
 
-    if (CS.paramHasAttr(ArgNo, Attribute::DereferenceableOrNull))
-      takeKnownDerefBytesMaximum(CS.getDereferenceableOrNullBytes(
-          ArgNo + AttributeList::FirstArgIndex));
+    if (CS.paramHasAttr(getArgNo(), Attribute::DereferenceableOrNull))
+      takeKnownDerefBytesMaximum(CS.getDereferenceableOrNullBytes(getArgNo()));
   }
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override {
-    return MP_CALL_SITE_ARGUMENT;
-  };
-
-  // Return argument index of associated value.
-  int getArgNo() const { return ArgNo; }
-
-private:
-  unsigned ArgNo;
 };
 
 ChangeStatus
@@ -2127,7 +2038,7 @@ AADereferenceableCallSiteArgument::updateImpl(Attributor &A,
 
   auto BeforeState = static_cast<DerefState>(*this);
 
-  syncNonNull(A.getAAFor<AANonNull>(*this, getAnchoredValue(), ArgNo));
+  syncNonNull(A.getAAFor<AANonNull>(*this, getAnchorValue(), getArgNo()));
   bool IsNonNull = isAssumedNonNull();
   bool IsGlobal = isKnownGlobal();
 
@@ -2141,15 +2052,12 @@ AADereferenceableCallSiteArgument::updateImpl(Attributor &A,
 
 // ------------------------ Align Argument Attribute ------------------------
 
-struct AAAlignImpl : AAAlign, IntegerState {
+struct AAAlignImpl : AAAlign, IntegerState, IRPosition {
+  IRPositionConstructorForward(AAAlignImpl);
+  IRPositionGetter(*this);
 
   // Max alignemnt value allowed in IR
   static const unsigned MAX_ALIGN = 1U << 29;
-
-  AAAlignImpl(Value *AssociatedVal, Value &AnchoredValue)
-      : AAAlign(AssociatedVal, AnchoredValue), IntegerState(MAX_ALIGN) {}
-
-  AAAlignImpl(Value &V) : AAAlignImpl(&V, V) {}
 
   /// See AbstractAttribute::getState()
   /// {
@@ -2171,10 +2079,11 @@ struct AAAlignImpl : AAAlign, IntegerState {
 
   /// See AbstractAttriubute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
+    takeAssumedMinimum(MAX_ALIGN);
+
     Function &F = getAnchorScope();
 
-    unsigned AttrIdx =
-        getAttrIndex(getManifestPosition(), getArgNo(getAnchoredValue()));
+    unsigned AttrIdx = getIRPosition().getAttrIdx();
 
     // Already the function has align attribute on return value or argument.
     if (F.getAttributes().hasAttribute(AttrIdx, Attribute::Alignment))
@@ -2185,21 +2094,16 @@ struct AAAlignImpl : AAAlign, IntegerState {
   /// See AbstractAttribute::getDeducedAttributes
   virtual void
   getDeducedAttributes(SmallVectorImpl<Attribute> &Attrs) const override {
-    LLVMContext &Ctx = AnchoredVal.getContext();
+    LLVMContext &Ctx = AnchorVal.getContext();
 
     Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
   }
 };
 
 /// Align attribute for function return value.
-struct AAAlignReturned : AAAlignImpl {
+struct AAAlignReturned final : AAAlignImpl {
 
-  AAAlignReturned(Function &F) : AAAlignImpl(F) {}
-
-  /// See AbstractAttribute::getManifestPosition().
-  virtual ManifestPosition getManifestPosition() const override {
-    return MP_RETURNED;
-  }
+  AAAlignReturned(Function &F) : AAAlignImpl(F, IRP_RETURNED) {}
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
@@ -2240,14 +2144,9 @@ ChangeStatus AAAlignReturned::updateImpl(Attributor &A,
 }
 
 /// Align attribute for function argument.
-struct AAAlignArgument : AAAlignImpl {
+struct AAAlignArgument final : AAAlignImpl {
 
   AAAlignArgument(Argument &A) : AAAlignImpl(A) {}
-
-  /// See AbstractAttribute::getManifestPosition().
-  virtual ManifestPosition getManifestPosition() const override {
-    return MP_ARGUMENT;
-  }
 
   /// See AbstractAttribute::updateImpl(...).
   virtual ChangeStatus updateImpl(Attributor &A,
@@ -2258,7 +2157,7 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
                                          InformationCache &InfoCache) {
 
   Function &F = getAnchorScope();
-  Argument &Arg = cast<Argument>(getAnchoredValue());
+  Argument &Arg = cast<Argument>(getAnchorValue());
 
   unsigned ArgNo = Arg.getArgNo();
   const DataLayout &DL = F.getParent()->getDataLayout();
@@ -2273,7 +2172,7 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
 
     // Check that AlignAA is AAAlignCallSiteArgument.
     if (AlignAA) {
-      ImmutableCallSite ICS(&AlignAA->getAnchoredValue());
+      ImmutableCallSite ICS(&AlignAA->getIRPosition().getAnchorValue());
       if (ICS && CS.getInstruction() == ICS.getInstruction()) {
         takeAssumedMinimum(AlignAA->getAssumedAlign());
         return isValidState();
@@ -2292,33 +2191,21 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
                                      : ChangeStatus ::CHANGED;
 }
 
-struct AAAlignCallSiteArgument : AAAlignImpl {
+struct AAAlignCallSiteArgument final : AAAlignImpl {
 
   /// See AANonNullImpl::AANonNullImpl(...).
   AAAlignCallSiteArgument(CallSite CS, unsigned ArgNo)
-      : AAAlignImpl(CS.getArgOperand(ArgNo), *CS.getInstruction()),
-        ArgNo(ArgNo) {}
+      : AAAlignImpl(CS.getArgOperand(ArgNo), *CS.getInstruction(), ArgNo) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
-    CallSite CS(&getAnchoredValue());
+    CallSite CS(&getAnchorValue());
     takeKnownMaximum(getAssociatedValue()->getPointerAlignment(
         getAnchorScope().getParent()->getDataLayout()));
   }
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override {
-    return MP_CALL_SITE_ARGUMENT;
-  };
-
-  // Return argument index of associated value.
-  int getArgNo() const { return ArgNo; }
-
-private:
-  unsigned ArgNo;
 };
 
 ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A,
@@ -2342,9 +2229,9 @@ ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A,
 }
 
 /// ------------------ Function No-Return Attribute ----------------------------
-struct AANoReturnFunction final : public AANoReturn, BooleanState {
-
-  AANoReturnFunction(Function &F) : AANoReturn(F) {}
+struct AANoReturnImpl : public AANoReturn, BooleanState, IRPosition {
+  IRPositionConstructorForward(AANoReturnImpl);
+  IRPositionGetter(*this);
 
   /// See AbstractAttribute::getState()
   /// {
@@ -2357,9 +2244,6 @@ struct AANoReturnFunction final : public AANoReturn, BooleanState {
 
   /// Return true if the underlying object is assumed to never return.
   bool isAssumedNoReturn() const override { return getAssumed(); }
-
-  /// See AbstractAttribute::getManifestPosition().
-  ManifestPosition getManifestPosition() const override { return MP_FUNCTION; }
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
@@ -2393,6 +2277,10 @@ struct AANoReturnFunction final : public AANoReturn, BooleanState {
 
     return ChangeStatus::UNCHANGED;
   }
+};
+
+struct AANoReturnFunction final : AANoReturnImpl {
+  AANoReturnFunction(Function &F) : AANoReturnImpl(F, IRP_FUNCTION) {}
 };
 
 /// ----------------------------------------------------------------------------
@@ -2607,7 +2495,7 @@ void Attributor::identifyDefaultAbstractAttributes(
     // Argument attribute "returned" --- Create only one per function even
     // though it is an argument attribute.
     if (!Whitelist || Whitelist->count(&AAReturnedValues::ID))
-      registerAA(*new AAReturnedValuesImpl(F));
+      registerAA(*new AAReturnedValuesFunction(F));
 
     if (ReturnType->isPointerTy()) {
       // Every function with pointer return type might be marked align.
@@ -2710,19 +2598,25 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, ChangeStatus S) {
   return OS << (S == ChangeStatus::CHANGED ? "changed" : "unchanged");
 }
 
-raw_ostream &llvm::operator<<(raw_ostream &OS,
-                              AbstractAttribute::ManifestPosition AP) {
+raw_ostream &llvm::operator<<(raw_ostream &OS, IRPosition::Kind AP) {
   switch (AP) {
-  case AbstractAttribute::MP_ARGUMENT:
+  case IRPosition::IRP_ARGUMENT:
     return OS << "arg";
-  case AbstractAttribute::MP_CALL_SITE_ARGUMENT:
+  case IRPosition::IRP_CALL_SITE_ARGUMENT:
     return OS << "cs_arg";
-  case AbstractAttribute::MP_FUNCTION:
+  case IRPosition::IRP_FUNCTION:
     return OS << "fn";
-  case AbstractAttribute::MP_RETURNED:
+  case IRPosition::IRP_RETURNED:
     return OS << "fn_ret";
   }
   llvm_unreachable("Unknown attribute position!");
+}
+
+raw_ostream &llvm::operator<<(raw_ostream &OS, const IRPosition &Pos) {
+  const Value *AV = Pos.getAssociatedValue();
+  return OS << "{" << Pos.getPositionKind() << ":"
+            << (AV ? AV->getName() : "n/a") << " ["
+            << Pos.getAnchorValue().getName() << "@" << Pos.getArgNo() << "]}";
 }
 
 raw_ostream &llvm::operator<<(raw_ostream &OS, const AbstractState &S) {
@@ -2735,8 +2629,8 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const AbstractAttribute &AA) {
 }
 
 void AbstractAttribute::print(raw_ostream &OS) const {
-  OS << "[" << getManifestPosition() << "][" << getAsStr() << "]["
-     << AnchoredVal.getName() << "]";
+  OS << "[P: " << getIRPosition() << "][" << getAsStr() << "][S: " << getState()
+     << "]";
 }
 ///}
 
@@ -2822,7 +2716,7 @@ char AttributorLegacyPass::ID = 0;
 const char AAReturnedValues::ID = 0;
 const char AANoUnwind::ID = 0;
 const char AANoSync::ID = 0;
-const char AANoFreeFunction::ID = 0;
+const char AANoFreeImpl::ID = 0;
 const char AANonNull::ID = 0;
 const char AANoRecurse::ID = 0;
 const char AAWillReturn::ID = 0;
