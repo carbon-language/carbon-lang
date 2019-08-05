@@ -1,6 +1,6 @@
 #include "comdat_rename.h"
 // callee's out-of-line instance profile data -- it comes
-// from external calls to it from comdat_rename_2.cc.
+// from external calls to it from comdat_rename_2.cpp.
 // Its inline instance copy's profile data is different and
 // is collected in 'caller''s context. 
 int FOO::callee() {
