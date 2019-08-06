@@ -1140,8 +1140,8 @@ struct AANonNullArgument : AANonNullImpl {
 struct AANonNullCallSiteArgument : AANonNullImpl {
 
   /// See AANonNullImpl::AANonNullImpl(...).
-  AANonNullCallSiteArgument(CallSite CS, unsigned ArgNo)
-      : AANonNullImpl(CS.getArgOperand(ArgNo), *CS.getInstruction(), ArgNo) {}
+  AANonNullCallSiteArgument(Instruction &I, unsigned ArgNo)
+      : AANonNullImpl(CallSite(&I).getArgOperand(ArgNo), I, ArgNo) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -1942,9 +1942,8 @@ AADereferenceableArgument::updateImpl(Attributor &A,
 struct AADereferenceableCallSiteArgument : AADereferenceableImpl {
 
   /// See AADereferenceableImpl::AADereferenceableImpl(...).
-  AADereferenceableCallSiteArgument(CallSite CS, unsigned ArgNo)
-      : AADereferenceableImpl(CS.getArgOperand(ArgNo), *CS.getInstruction(),
-                              ArgNo) {}
+  AADereferenceableCallSiteArgument(Instruction &I, unsigned ArgNo)
+      : AADereferenceableImpl(CallSite(&I).getArgOperand(ArgNo), I, ArgNo) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -2125,8 +2124,8 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
 struct AAAlignCallSiteArgument final : AAAlignImpl {
 
   /// See AANonNullImpl::AANonNullImpl(...).
-  AAAlignCallSiteArgument(CallSite CS, unsigned ArgNo)
-      : AAAlignImpl(CS.getArgOperand(ArgNo), *CS.getInstruction(), ArgNo) {}
+  AAAlignCallSiteArgument(Instruction &I, unsigned ArgNo)
+      : AAAlignImpl(CallSite(&I).getArgOperand(ArgNo), I, ArgNo) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -2409,70 +2408,85 @@ ChangeStatus Attributor::run(InformationCache &InfoCache) {
   return ManifestChange;
 }
 
+/// Helper function that checks if an abstract attribute of type \p AAType
+/// should be created for \p V (with argument number \p ArgNo) and if so creates
+/// and registers it with the Attributor \p A.
+///
+/// This method will look at the provided whitelist. If one is given and the
+/// kind \p AAType::ID is not contained, no abstract attribute is created.
+///
+/// \returns The created abstract argument, or nullptr if none was created.
+template <typename AAType, typename ValueType, typename... ArgsTy>
+static AAType *checkAndRegisterAA(const Function &F, Attributor &A,
+                                  DenseSet<const char *> *Whitelist,
+                                  ValueType &V, int ArgNo, ArgsTy... Args) {
+  if (Whitelist && !Whitelist->count(&AAType::ID))
+    return nullptr;
+
+  return &A.registerAA<AAType>(*new AAType(V, Args...), ArgNo);
+}
+
 void Attributor::identifyDefaultAbstractAttributes(
     Function &F, InformationCache &InfoCache,
     DenseSet<const char *> *Whitelist) {
 
   // Check for dead BasicBlocks in every function.
-  registerAA(*new AAIsDeadFunction(F));
+  // We need dead instruction detection because we do not want to deal with
+  // broken IR in which SSA rules do not apply.
+  checkAndRegisterAA<AAIsDeadFunction>(F, *this, /* Whitelist */ nullptr, F,
+                                       -1);
 
   // Every function might be "will-return".
-  registerAA(*new AAWillReturnFunction(F));
+  checkAndRegisterAA<AAWillReturnFunction>(F, *this, Whitelist, F, -1);
 
   // Every function can be nounwind.
-  registerAA(*new AANoUnwindFunction(F));
+  checkAndRegisterAA<AANoUnwindFunction>(F, *this, Whitelist, F, -1);
 
   // Every function might be marked "nosync"
-  registerAA(*new AANoSyncFunction(F));
+  checkAndRegisterAA<AANoSyncFunction>(F, *this, Whitelist, F, -1);
 
   // Every function might be "no-free".
-  registerAA(*new AANoFreeFunction(F));
+  checkAndRegisterAA<AANoFreeFunction>(F, *this, Whitelist, F, -1);
 
   // Every function might be "no-return".
-  registerAA(*new AANoReturnFunction(F));
+  checkAndRegisterAA<AANoReturnFunction>(F, *this, Whitelist, F, -1);
 
   // Return attributes are only appropriate if the return type is non void.
   Type *ReturnType = F.getReturnType();
   if (!ReturnType->isVoidTy()) {
     // Argument attribute "returned" --- Create only one per function even
     // though it is an argument attribute.
-    if (!Whitelist || Whitelist->count(&AAReturnedValues::ID))
-      registerAA(*new AAReturnedValuesFunction(F));
+    checkAndRegisterAA<AAReturnedValuesFunction>(F, *this, Whitelist, F, -1);
 
     if (ReturnType->isPointerTy()) {
       // Every function with pointer return type might be marked align.
-      if (!Whitelist || Whitelist->count(&AAAlignReturned::ID))
-        registerAA(*new AAAlignReturned(F));
+      checkAndRegisterAA<AAAlignReturned>(F, *this, Whitelist, F, -1);
 
       // Every function with pointer return type might be marked nonnull.
-      if (!Whitelist || Whitelist->count(&AANonNullReturned::ID))
-        registerAA(*new AANonNullReturned(F));
+      checkAndRegisterAA<AANonNullReturned>(F, *this, Whitelist, F, -1);
 
       // Every function with pointer return type might be marked noalias.
-      if (!Whitelist || Whitelist->count(&AANoAliasReturned::ID))
-        registerAA(*new AANoAliasReturned(F));
+      checkAndRegisterAA<AANoAliasReturned>(F, *this, Whitelist, F, -1);
 
       // Every function with pointer return type might be marked
       // dereferenceable.
-      if (ReturnType->isPointerTy() &&
-          (!Whitelist || Whitelist->count(&AADereferenceableReturned::ID)))
-        registerAA(*new AADereferenceableReturned(F));
+      checkAndRegisterAA<AADereferenceableReturned>(F, *this, Whitelist, F, -1);
     }
   }
 
   for (Argument &Arg : F.args()) {
     if (Arg.getType()->isPointerTy()) {
       // Every argument with pointer type might be marked nonnull.
-      if (!Whitelist || Whitelist->count(&AANonNullArgument::ID))
-        registerAA(*new AANonNullArgument(Arg));
+      checkAndRegisterAA<AANonNullArgument>(F, *this, Whitelist, Arg,
+                                            Arg.getArgNo());
 
       // Every argument with pointer type might be marked dereferenceable.
-      if (!Whitelist || Whitelist->count(&AADereferenceableArgument::ID))
-        registerAA(*new AADereferenceableArgument(Arg));
+      checkAndRegisterAA<AADereferenceableArgument>(F, *this, Whitelist, Arg,
+                                                    Arg.getArgNo());
 
       // Every argument with pointer type might be marked align.
-      if (!Whitelist || Whitelist->count(&AAAlignArgument::ID))
-        registerAA(*new AAAlignArgument(Arg));
+      checkAndRegisterAA<AAAlignArgument>(F, *this, Whitelist, Arg,
+                                          Arg.getArgNo());
     }
   }
 
@@ -2517,17 +2531,16 @@ void Attributor::identifyDefaultAbstractAttributes(
           continue;
 
         // Call site argument attribute "non-null".
-        if (!Whitelist || Whitelist->count(&AANonNullCallSiteArgument::ID))
-          registerAA(*new AANonNullCallSiteArgument(CS, i), i);
+        checkAndRegisterAA<AANonNullCallSiteArgument>(F, *this, Whitelist, I, i,
+                                                      i);
 
         // Call site argument attribute "dereferenceable".
-        if (!Whitelist ||
-            Whitelist->count(&AADereferenceableCallSiteArgument::ID))
-          registerAA(*new AADereferenceableCallSiteArgument(CS, i), i);
+        checkAndRegisterAA<AADereferenceableCallSiteArgument>(
+            F, *this, Whitelist, I, i, i);
 
         // Call site argument attribute "align".
-        if (!Whitelist || Whitelist->count(&AAAlignCallSiteArgument::ID))
-          registerAA(*new AAAlignCallSiteArgument(CS, i), i);
+        checkAndRegisterAA<AAAlignCallSiteArgument>(F, *this, Whitelist, I, i,
+                                                    i);
       }
     }
   }
