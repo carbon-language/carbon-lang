@@ -13,7 +13,7 @@
 ! limitations under the License.
 
 subroutine s1
-  !ERROR: The shape of common block object 'z' must be explicit
+  !ERROR: Array 'z' without ALLOCATABLE or POINTER attribute must have explicit shape
   common x, y(4), z(:)
 end
 

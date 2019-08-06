@@ -41,8 +41,8 @@ add_executable(expression-test
 
 target_link_libraries(expression-test
   FortranEvaluateTesting
-  FortranSemantics
   FortranEvaluate
+  FortranSemantics
   FortranParser
 )
 
@@ -61,8 +61,8 @@ add_executable(intrinsics-test
 
 target_link_libraries(intrinsics-test
   FortranEvaluateTesting
-  FortranSemantics
   FortranEvaluate
+  FortranSemantics
   FortranParser
   FortranRuntime
 )
@@ -118,8 +118,8 @@ add_executable(folding-test
 
 target_link_libraries(folding-test
   FortranEvaluateTesting
-  FortranSemantics
   FortranEvaluate
+  FortranSemantics
 )
 
 set(FOLDING_TESTS

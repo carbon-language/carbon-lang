@@ -1086,6 +1086,8 @@ TYPE_PARSER(construct<ExplicitCoshapeSpec>(
 //        implied-shape-or-assumed-size-spec | assumed-rank-spec
 // N.B. Parenthesized here rather than around references to avoid
 // a need for forced look-ahead.
+// Shape specs that could be deferred-shape-spec or assumed-shape-spec
+// (e.g. '(:,:)') are parsed as the former.
 TYPE_PARSER(
     construct<ArraySpec>(parenthesized(nonemptyList(explicitShapeSpec))) ||
     construct<ArraySpec>(parenthesized(deferredShapeSpecList)) ||
