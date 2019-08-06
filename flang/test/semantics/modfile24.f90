@@ -49,7 +49,7 @@ end
 ! coarray-spec in components and with non-constants bounds
 module m3
   type t
-    real, allocatable :: c(1:5)[1:10,1:*]
+    real, allocatable :: c(:)[1:10,1:*]
     complex, allocatable, codimension[5,*] :: d
   end type
   real, allocatable :: e[:,:,:]
@@ -63,7 +63,7 @@ end
 !Expect: m3.mod
 !module m3
 ! type::t
-!  real(4),allocatable::c(1_8:5_8)[1_8:10_8,1_8:*]
+!  real(4),allocatable::c(:)[1_8:10_8,1_8:*]
 !  complex(4),allocatable::d[1_8:5_8,1_8:*]
 ! end type
 ! real(4),allocatable::e[:,:,:]

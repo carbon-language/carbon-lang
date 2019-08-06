@@ -20,16 +20,16 @@ module iso_fortran_env
   integer, parameter :: atomic_int_kind = 8
   integer, parameter :: atomic_logical_kind = 8
 
-  integer, parameter :: character_kinds(:) = [1, 2, 4]
+  integer, parameter :: character_kinds(*) = [1, 2, 4]
   integer, parameter :: int8 = 1, int16 = 2, int32 = 4, int64 = 8, int128 = 16
-  integer, parameter :: integer_kinds(:) = [int8, int16, int32, int64, int128]
+  integer, parameter :: integer_kinds(*) = [int8, int16, int32, int64, int128]
   integer, parameter :: &
     logical8 = 1, logical16 = 2, logical32 = 4, logical64 = 8
-  integer, parameter :: logical_kinds(:) = &
+  integer, parameter :: logical_kinds(*) = &
     [logical8, logical16, logical32, logical64]
   integer, parameter :: &
     real16 = 2, real32 = 4, real64 = 8, real80 = 10, real128 = 16
-  integer, parameter :: real_kinds(:) = &
+  integer, parameter :: real_kinds(*) = &
     [real16, 3, real32, real64, real80, real128]
 
   integer, parameter :: current_team = -1, initial_team = -2, parent_team = -3

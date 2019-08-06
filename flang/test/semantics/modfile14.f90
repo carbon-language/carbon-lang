@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ end
 !    class(t1),intent(inout)::dtv
 !    integer(4),intent(in)::unit
 !    character(*,1),intent(in)::iotype
-!    integer(4),intent(in)::v_list(1_8:)
+!    integer(4),intent(in)::v_list(:)
 !    integer(4),intent(out)::iostat
 !    character(*,1),intent(inout)::iomsg
 !  end

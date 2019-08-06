@@ -18,11 +18,11 @@ program main
   integer, pointer :: p_i
   integer(kind = 1) :: invalid = 0
   integer, dimension(1:100) :: iarray
-  integer, dimension(1:100), pointer :: p_iarray
-  integer, allocatable, dimension(1:100) :: aiarray
+  integer, dimension(:), pointer :: p_iarray
+  integer, allocatable, dimension(:) :: aiarray
   logical :: l = .false.
   logical, dimension(1:100) :: larray
-  logical, allocatable, dimension(1:100) :: alarray
+  logical, allocatable, dimension(:) :: alarray
   character(len = 128) :: chr1
   character(kind = 4, len = 128) :: chr2
 

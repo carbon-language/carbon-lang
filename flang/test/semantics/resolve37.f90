@@ -41,7 +41,7 @@ integer, parameter ::  p = 0/0
 integer, parameter ::  q = 1+2*(1/0)
 !ERROR: Must be a constant value
 integer(kind=2/0) r
-integer, parameter :: sok(:)=[1,2]/[1,2]
+integer, parameter :: sok(*)=[1,2]/[1,2]
 !ERROR: Must be a constant value
-integer, parameter :: snok(:)=[1,2]/[1,0]
+integer, parameter :: snok(*)=[1,2]/[1,0]
 end

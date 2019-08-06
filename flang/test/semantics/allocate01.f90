@@ -44,7 +44,7 @@ subroutine C932(ed1, ed5, ed7, edc9, edc10, okad1, okpd1, okacd5)
   use :: m, only: a_type
   type TestType1
     integer, allocatable :: ok(:)
-    integer :: nok(:)
+    integer :: nok(10)
   end type
   type TestType2
     integer, pointer :: ok

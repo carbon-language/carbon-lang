@@ -25,7 +25,7 @@ subroutine C941_C942b_C950(xsrc, x1, a2, b2, cx1, ca2, cb1, cb2, c1)
   end type
 
   type type2
-    type(type1) :: t1(:)
+    type(type1), pointer :: t1(:)
   end type
 
   type A

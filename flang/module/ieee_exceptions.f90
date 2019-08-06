@@ -28,9 +28,9 @@ module ieee_exceptions
     ieee_inexact = ieee_flag_type(16)
 
   type(ieee_flag_type), parameter :: &
-    ieee_usual(:) = [ &
+    ieee_usual(*) = [ &
       ieee_overflow, ieee_divide_by_zero, ieee_invalid ], &
-    ieee_all(:) = [ &
+    ieee_all(*) = [ &
       ieee_usual, ieee_underflow, ieee_inexact ]
 
   type :: ieee_modes_type ! Fortran 2018, 17.7
