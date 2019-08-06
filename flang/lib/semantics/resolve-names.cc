@@ -761,6 +761,8 @@ public:
 
   void PointerInitialization(
       const parser::Name &, const parser::InitialDataTarget &);
+  void PointerInitialization(
+      const parser::Name &, const parser::ProcPointerInit &);
 
 protected:
   bool BeginDecl();
@@ -856,6 +858,7 @@ private:
   bool HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
   const parser::Name *FindComponent(const parser::Name *, const parser::Name &);
   void CheckInitialDataTarget(const Symbol &, const SomeExpr &, SourceName);
+  void CheckInitialProcTarget(const Symbol &, const parser::Name &);
   void Initialization(const parser::Name &, const parser::Initialization &,
       bool inComponentDecl);
   bool PassesLocalityChecks(const parser::Name &name, Symbol &symbol);
@@ -4864,6 +4867,11 @@ void DeclarationVisitor::CheckInitialDataTarget(
   // TODO: check contiguity if pointer is CONTIGUOUS
 }
 
+void DeclarationVisitor::CheckInitialProcTarget(
+    const Symbol &pointer, const parser::Name &target) {
+  // TODO pmk write
+}
+
 void DeclarationVisitor::Initialization(const parser::Name &name,
     const parser::Initialization &init, bool inComponentDecl) {
   if (name.symbol == nullptr) {
@@ -4903,7 +4911,12 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
               details->set_init(SomeExpr{evaluate::NullPointer{}});
             },
             [&](const parser::InitialDataTarget &initExpr) {
-              common::die("InitialDataTarget not deferred");
+              isPointer = true;
+              if (MaybeExpr expr{EvaluateExpr(initExpr)}) {
+                CheckInitialDataTarget(
+                    ultimate, *expr, initExpr.value().source);
+                details->set_init(std::move(*expr));
+              }
             },
             [&](const std::list<common::Indirection<parser::DataStmtValue>>
                     &list) {
@@ -4947,8 +4960,29 @@ void DeclarationVisitor::PointerInitialization(
         }
       }
     } else {
+      Say(name, "'%s' is not a pointer but is initialized like one"_err_en_US);
+    }
+  }
+}
+void DeclarationVisitor::PointerInitialization(
+    const parser::Name &name, const parser::ProcPointerInit &target) {
+  if (name.symbol != nullptr) {
+    Symbol &ultimate{name.symbol->GetUltimate()};
+    if (IsProcedurePointer(ultimate)) {
+      auto &details{ultimate.get<ProcEntityDetails>()};
+      if (details.init() == nullptr) {
+        Walk(target);
+        if (const auto *targetName{std::get_if<parser::Name>(&target.u)}) {
+          CheckInitialProcTarget(ultimate, *targetName);
+          if (targetName->symbol != nullptr) {
+            details.set_init(*targetName->symbol);
+          }
+        }
+      }
+    } else {
       Say(name,
-          "Non-pointer component '%s' initialized with pointer target"_err_en_US);
+          "'%s' is not a procedure pointer but is initialized "
+          "like one"_err_en_US);
     }
   }
 }
@@ -5442,8 +5476,8 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
 }
 
 // The processing of initializers of pointers is deferred until all of
-// the pertinent specification parts have been visited, so that forward
-// references work.
+// the pertinent specification parts have been visited.  This deferral
+// allows forward references to work.
 class DeferredPointerInitializationVisitor {
 public:
   explicit DeferredPointerInitializationVisitor(ResolveNamesVisitor &resolver)
@@ -5464,6 +5498,13 @@ public:
   bool Pre(const parser::ComponentDecl &decl) {
     Init(std::get<parser::Name>(decl.t),
         std::get<std::optional<parser::Initialization>>(decl.t));
+    return false;
+  }
+  bool Pre(const parser::ProcDecl &decl) {
+    if (const auto &init{
+            std::get<std::optional<parser::ProcPointerInit>>(decl.t)}) {
+      resolver_.PointerInitialization(std::get<parser::Name>(decl.t), *init);
+    }
     return false;
   }
 
