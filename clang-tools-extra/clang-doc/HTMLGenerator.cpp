@@ -256,6 +256,8 @@ genJsScriptsHTML(StringRef InfoPath, const ClangDocContext &CDCtx) {
     auto ScriptNode = llvm::make_unique<TagNode>(HTMLTag::TAG_SCRIPT);
     SmallString<128> ScriptPath = computeRelativePath("", InfoPath);
     llvm::sys::path::append(ScriptPath, llvm::sys::path::filename(FilePath));
+    // Paths in HTML must be in posix-style
+    llvm::sys::path::native(ScriptPath, llvm::sys::path::Style::posix);
     ScriptNode->Attributes.try_emplace("src", ScriptPath);
     Out.emplace_back(std::move(ScriptNode));
   }
