@@ -1642,6 +1642,44 @@ struct Assumption {
   BasicBlock *BB;
 };
 
+/// Build the conditions sets for the branch condition @p Condition in
+/// the @p Domain.
+///
+/// This will fill @p ConditionSets with the conditions under which control
+/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
+/// have as many elements as @p TI has successors. If @p TI is nullptr the
+/// context under which @p Condition is true/false will be returned as the
+/// new elements of @p ConditionSets.
+bool buildConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
+                        Instruction *TI, Loop *L, __isl_keep isl_set *Domain,
+                        DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
+                        SmallVectorImpl<__isl_give isl_set *> &ConditionSets);
+
+/// Build condition sets for unsigned ICmpInst(s).
+/// Special handling is required for unsigned operands to ensure that if
+/// MSB (aka the Sign bit) is set for an operands in an unsigned ICmpInst
+/// it should wrap around.
+///
+/// @param IsStrictUpperBound holds information on the predicate relation
+/// between TestVal and UpperBound, i.e,
+/// TestVal < UpperBound  OR  TestVal <= UpperBound
+__isl_give isl_set *
+buildUnsignedConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
+                           __isl_keep isl_set *Domain, const SCEV *SCEV_TestVal,
+                           const SCEV *SCEV_UpperBound,
+                           DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
+                           bool IsStrictUpperBound);
+
+/// Build the conditions sets for the terminator @p TI in the @p Domain.
+///
+/// This will fill @p ConditionSets with the conditions under which control
+/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
+/// have as many elements as @p TI has successors.
+bool buildConditionSets(Scop &S, BasicBlock *BB, Instruction *TI, Loop *L,
+                        __isl_keep isl_set *Domain,
+                        DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
+                        SmallVectorImpl<__isl_give isl_set *> &ConditionSets);
+
 /// Static Control Part
 ///
 /// A Scop is the polyhedral representation of a control flow region detected
@@ -2040,28 +2078,11 @@ private:
   /// Build the Context of the Scop.
   void buildContext();
 
-  /// Add user provided parameter constraints to context (source code).
-  void addUserAssumptions(AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI,
-                          DenseMap<BasicBlock *, isl::set> &InvalidDomainMap);
-
   /// Add the bounds of the parameters to the context.
   void addParameterBounds();
 
   /// Simplify the assumed and invalid context.
   void simplifyContexts();
-
-  /// Get the representing SCEV for @p S if applicable, otherwise @p S.
-  ///
-  /// Invariant loads of the same location are put in an equivalence class and
-  /// only one of them is chosen as a representing element that will be
-  /// modeled as a parameter. The others have to be normalized, i.e.,
-  /// replaced by the representing element of their equivalence class, in order
-  /// to get the correct parameter value, e.g., in the SCEVAffinator.
-  ///
-  /// @param S The SCEV to normalize.
-  ///
-  /// @return The representing SCEV for invariant loads or @p S if none.
-  const SCEV *getRepresentingInvariantLoadSCEV(const SCEV *S) const;
 
   /// Create a new SCoP statement for @p BB.
   ///
@@ -2204,6 +2225,9 @@ public:
   ///
   /// @return The count of parameters used in this Scop.
   size_t getNumParams() const { return Parameters.size(); }
+
+  /// Return whether given SCEV is used as the parameter in this Scop.
+  bool isParam(const SCEV *Param) const { return Parameters.count(Param); }
 
   /// Take a list of parameters and add the new ones to the scop.
   void addParams(const ParameterSetTy &NewParameters);
@@ -2768,6 +2792,19 @@ public:
   /// This function returns a unique index which can be used to identify a
   /// statement.
   long getNextStmtIdx() { return StmtIdx++; }
+
+  /// Get the representing SCEV for @p S if applicable, otherwise @p S.
+  ///
+  /// Invariant loads of the same location are put in an equivalence class and
+  /// only one of them is chosen as a representing element that will be
+  /// modeled as a parameter. The others have to be normalized, i.e.,
+  /// replaced by the representing element of their equivalence class, in order
+  /// to get the correct parameter value, e.g., in the SCEVAffinator.
+  ///
+  /// @param S The SCEV to normalize.
+  ///
+  /// @return The representing SCEV for invariant loads or @p S if none.
+  const SCEV *getRepresentingInvariantLoadSCEV(const SCEV *S) const;
 
   /// Return the MemoryAccess that writes an llvm::Value, represented by a
   /// ScopArrayInfo.

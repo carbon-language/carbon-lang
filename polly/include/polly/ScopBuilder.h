@@ -442,6 +442,10 @@ class ScopBuilder {
   /// Add user provided parameter constraints to context (command line).
   void addUserContext();
 
+  /// Add user provided parameter constraints to context (source code).
+  void addUserAssumptions(AssumptionCache &AC,
+                          DenseMap<BasicBlock *, isl::set> &InvalidDomainMap);
+
   /// Add all recorded assumptions to the assumed context.
   void addRecordedAssumptions();
 

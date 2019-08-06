@@ -27,6 +27,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
@@ -619,6 +620,82 @@ void ScopBuilder::addRecordedAssumptions() {
     scop->addAssumption(AS.Kind, isl::manage(S), AS.Loc, AS_RESTRICTION, AS.BB);
   }
   scop->clearRecordedAssumptions();
+}
+
+void ScopBuilder::addUserAssumptions(
+    AssumptionCache &AC, DenseMap<BasicBlock *, isl::set> &InvalidDomainMap) {
+  for (auto &Assumption : AC.assumptions()) {
+    auto *CI = dyn_cast_or_null<CallInst>(Assumption);
+    if (!CI || CI->getNumArgOperands() != 1)
+      continue;
+
+    bool InScop = scop->contains(CI);
+    if (!InScop && !scop->isDominatedBy(DT, CI->getParent()))
+      continue;
+
+    auto *L = LI.getLoopFor(CI->getParent());
+    auto *Val = CI->getArgOperand(0);
+    ParameterSetTy DetectedParams;
+    auto &R = scop->getRegion();
+    if (!isAffineConstraint(Val, &R, L, SE, DetectedParams)) {
+      ORE.emit(
+          OptimizationRemarkAnalysis(DEBUG_TYPE, "IgnoreUserAssumption", CI)
+          << "Non-affine user assumption ignored.");
+      continue;
+    }
+
+    // Collect all newly introduced parameters.
+    ParameterSetTy NewParams;
+    for (auto *Param : DetectedParams) {
+      Param = extractConstantFactor(Param, SE).second;
+      Param = scop->getRepresentingInvariantLoadSCEV(Param);
+      if (scop->isParam(Param))
+        continue;
+      NewParams.insert(Param);
+    }
+
+    SmallVector<isl_set *, 2> ConditionSets;
+    auto *TI = InScop ? CI->getParent()->getTerminator() : nullptr;
+    BasicBlock *BB = InScop ? CI->getParent() : R.getEntry();
+    auto *Dom = InScop ? isl_set_copy(scop->getDomainConditions(BB).get())
+                       : isl_set_copy(scop->getContext().get());
+    assert(Dom && "Cannot propagate a nullptr.");
+    bool Valid = buildConditionSets(*scop, BB, Val, TI, L, Dom,
+                                    InvalidDomainMap, ConditionSets);
+    isl_set_free(Dom);
+
+    if (!Valid)
+      continue;
+
+    isl_set *AssumptionCtx = nullptr;
+    if (InScop) {
+      AssumptionCtx = isl_set_complement(isl_set_params(ConditionSets[1]));
+      isl_set_free(ConditionSets[0]);
+    } else {
+      AssumptionCtx = isl_set_complement(ConditionSets[1]);
+      AssumptionCtx = isl_set_intersect(AssumptionCtx, ConditionSets[0]);
+    }
+
+    // Project out newly introduced parameters as they are not otherwise useful.
+    if (!NewParams.empty()) {
+      for (unsigned u = 0; u < isl_set_n_param(AssumptionCtx); u++) {
+        auto *Id = isl_set_get_dim_id(AssumptionCtx, isl_dim_param, u);
+        auto *Param = static_cast<const SCEV *>(isl_id_get_user(Id));
+        isl_id_free(Id);
+
+        if (!NewParams.count(Param))
+          continue;
+
+        AssumptionCtx =
+            isl_set_project_out(AssumptionCtx, isl_dim_param, u--, 1);
+      }
+    }
+    ORE.emit(OptimizationRemarkAnalysis(DEBUG_TYPE, "UserAssumption", CI)
+             << "Use user assumption: " << stringFromIslObj(AssumptionCtx));
+    isl::set newContext =
+        scop->getContext().intersect(isl::manage(AssumptionCtx));
+    scop->setContext(newContext);
+  }
 }
 
 bool ScopBuilder::buildAccessMultiDimFixed(MemAccInst Inst, ScopStmt *Stmt) {
@@ -2683,7 +2760,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC) {
     return;
   }
 
-  scop->addUserAssumptions(AC, DT, LI, InvalidDomainMap);
+  addUserAssumptions(AC, InvalidDomainMap);
 
   // Initialize the invalid domain.
   for (ScopStmt &Stmt : scop->Stmts)

@@ -1336,12 +1336,11 @@ bool buildConditionSets(Scop &S, BasicBlock *BB, SwitchInst *SI, Loop *L,
 /// @param IsStrictUpperBound holds information on the predicate relation
 /// between TestVal and UpperBound, i.e,
 /// TestVal < UpperBound  OR  TestVal <= UpperBound
-__isl_give isl_set *
-buildUnsignedConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
-                           __isl_keep isl_set *Domain, const SCEV *SCEV_TestVal,
-                           const SCEV *SCEV_UpperBound,
-                           DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
-                           bool IsStrictUpperBound) {
+__isl_give isl_set *polly::buildUnsignedConditionSets(
+    Scop &S, BasicBlock *BB, Value *Condition, __isl_keep isl_set *Domain,
+    const SCEV *SCEV_TestVal, const SCEV *SCEV_UpperBound,
+    DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
+    bool IsStrictUpperBound) {
   // Do not take NonNeg assumption on TestVal
   // as it might have MSB (Sign bit) set.
   isl_pw_aff *TestVal = getPwAff(S, BB, InvalidDomainMap, SCEV_TestVal, false);
@@ -1367,18 +1366,11 @@ buildUnsignedConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
   return ConsequenceCondSet;
 }
 
-/// Build the conditions sets for the branch condition @p Condition in
-/// the @p Domain.
-///
-/// This will fill @p ConditionSets with the conditions under which control
-/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
-/// have as many elements as @p TI has successors. If @p TI is nullptr the
-/// context under which @p Condition is true/false will be returned as the
-/// new elements of @p ConditionSets.
-bool buildConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
-                        Instruction *TI, Loop *L, __isl_keep isl_set *Domain,
-                        DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
-                        SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
+bool polly::buildConditionSets(
+    Scop &S, BasicBlock *BB, Value *Condition, Instruction *TI, Loop *L,
+    __isl_keep isl_set *Domain,
+    DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
+    SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
   ScalarEvolution &SE = *S.getSE();
   isl_set *ConsequenceCondSet = nullptr;
 
@@ -1511,15 +1503,11 @@ bool buildConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
   return true;
 }
 
-/// Build the conditions sets for the terminator @p TI in the @p Domain.
-///
-/// This will fill @p ConditionSets with the conditions under which control
-/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
-/// have as many elements as @p TI has successors.
-bool buildConditionSets(Scop &S, BasicBlock *BB, Instruction *TI, Loop *L,
-                        __isl_keep isl_set *Domain,
-                        DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
-                        SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
+bool polly::buildConditionSets(
+    Scop &S, BasicBlock *BB, Instruction *TI, Loop *L,
+    __isl_keep isl_set *Domain,
+    DenseMap<BasicBlock *, isl::set> &InvalidDomainMap,
+    SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI))
     return buildConditionSets(S, BB, SI, L, Domain, InvalidDomainMap,
                               ConditionSets);
@@ -1896,79 +1884,6 @@ isl::id Scop::getIdForParam(const SCEV *Parameter) const {
 
 bool Scop::isDominatedBy(const DominatorTree &DT, BasicBlock *BB) const {
   return DT.dominates(BB, getEntry());
-}
-
-void Scop::addUserAssumptions(
-    AssumptionCache &AC, DominatorTree &DT, LoopInfo &LI,
-    DenseMap<BasicBlock *, isl::set> &InvalidDomainMap) {
-  for (auto &Assumption : AC.assumptions()) {
-    auto *CI = dyn_cast_or_null<CallInst>(Assumption);
-    if (!CI || CI->getNumArgOperands() != 1)
-      continue;
-
-    bool InScop = contains(CI);
-    if (!InScop && !isDominatedBy(DT, CI->getParent()))
-      continue;
-
-    auto *L = LI.getLoopFor(CI->getParent());
-    auto *Val = CI->getArgOperand(0);
-    ParameterSetTy DetectedParams;
-    if (!isAffineConstraint(Val, &R, L, *SE, DetectedParams)) {
-      ORE.emit(
-          OptimizationRemarkAnalysis(DEBUG_TYPE, "IgnoreUserAssumption", CI)
-          << "Non-affine user assumption ignored.");
-      continue;
-    }
-
-    // Collect all newly introduced parameters.
-    ParameterSetTy NewParams;
-    for (auto *Param : DetectedParams) {
-      Param = extractConstantFactor(Param, *SE).second;
-      Param = getRepresentingInvariantLoadSCEV(Param);
-      if (Parameters.count(Param))
-        continue;
-      NewParams.insert(Param);
-    }
-
-    SmallVector<isl_set *, 2> ConditionSets;
-    auto *TI = InScop ? CI->getParent()->getTerminator() : nullptr;
-    BasicBlock *BB = InScop ? CI->getParent() : getRegion().getEntry();
-    auto *Dom = InScop ? DomainMap[BB].copy() : Context.copy();
-    assert(Dom && "Cannot propagate a nullptr.");
-    bool Valid = buildConditionSets(*this, BB, Val, TI, L, Dom,
-                                    InvalidDomainMap, ConditionSets);
-    isl_set_free(Dom);
-
-    if (!Valid)
-      continue;
-
-    isl_set *AssumptionCtx = nullptr;
-    if (InScop) {
-      AssumptionCtx = isl_set_complement(isl_set_params(ConditionSets[1]));
-      isl_set_free(ConditionSets[0]);
-    } else {
-      AssumptionCtx = isl_set_complement(ConditionSets[1]);
-      AssumptionCtx = isl_set_intersect(AssumptionCtx, ConditionSets[0]);
-    }
-
-    // Project out newly introduced parameters as they are not otherwise useful.
-    if (!NewParams.empty()) {
-      for (unsigned u = 0; u < isl_set_n_param(AssumptionCtx); u++) {
-        auto *Id = isl_set_get_dim_id(AssumptionCtx, isl_dim_param, u);
-        auto *Param = static_cast<const SCEV *>(isl_id_get_user(Id));
-        isl_id_free(Id);
-
-        if (!NewParams.count(Param))
-          continue;
-
-        AssumptionCtx =
-            isl_set_project_out(AssumptionCtx, isl_dim_param, u--, 1);
-      }
-    }
-    ORE.emit(OptimizationRemarkAnalysis(DEBUG_TYPE, "UserAssumption", CI)
-             << "Use user assumption: " << stringFromIslObj(AssumptionCtx));
-    Context = Context.intersect(isl::manage(AssumptionCtx));
-  }
 }
 
 void Scop::buildContext() {
@@ -2902,6 +2817,7 @@ std::pair<std::string, std::string> Scop::getEntryExitStr() const {
 }
 
 isl::set Scop::getContext() const { return Context; }
+
 isl::space Scop::getParamSpace() const { return getContext().get_space(); }
 
 isl::space Scop::getFullParamSpace() const {
