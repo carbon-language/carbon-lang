@@ -2974,10 +2974,12 @@ void AArch64InstrInfo::loadRegFromStackSlot(
 
 void llvm::emitFrameOffset(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, const DebugLoc &DL,
-                           unsigned DestReg, unsigned SrcReg, int Offset,
-                           const TargetInstrInfo *TII,
+                           unsigned DestReg, unsigned SrcReg,
+                           StackOffset SOffset, const TargetInstrInfo *TII,
                            MachineInstr::MIFlag Flag, bool SetNZCV,
                            bool NeedsWinCFI, bool *HasWinCFI) {
+  int64_t Offset;
+  SOffset.getForFrameOffset(Offset);
   if (DestReg == SrcReg && Offset == 0)
     return;
 
@@ -3239,7 +3241,8 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
   return nullptr;
 }
 
-int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
+int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI,
+                                    StackOffset &SOffset,
                                     bool *OutUseUnscaledOp,
                                     unsigned *OutUnscaledOp,
                                     int *EmittableOffset) {
@@ -3283,7 +3286,7 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
   // Construct the complete offset.
   const MachineOperand &ImmOpnd =
       MI.getOperand(AArch64InstrInfo::getLoadStoreImmIdx(MI.getOpcode()));
-  Offset += ImmOpnd.getImm() * Scale;
+  int Offset = SOffset.getBytes() + ImmOpnd.getImm() * Scale;
 
   // If the offset doesn't match the scale, we rewrite the instruction to
   // use the unscaled instruction instead. Likewise, if we have a negative
@@ -3315,23 +3318,24 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
   if (OutUnscaledOp && UnscaledOp)
     *OutUnscaledOp = *UnscaledOp;
 
+  SOffset = StackOffset(Offset, MVT::i8);
   return AArch64FrameOffsetCanUpdate |
          (Offset == 0 ? AArch64FrameOffsetIsLegal : 0);
 }
 
 bool llvm::rewriteAArch64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                                    unsigned FrameReg, int &Offset,
+                                    unsigned FrameReg, StackOffset &Offset,
                                     const AArch64InstrInfo *TII) {
   unsigned Opcode = MI.getOpcode();
   unsigned ImmIdx = FrameRegIdx + 1;
 
   if (Opcode == AArch64::ADDSXri || Opcode == AArch64::ADDXri) {
-    Offset += MI.getOperand(ImmIdx).getImm();
+    Offset += StackOffset(MI.getOperand(ImmIdx).getImm(), MVT::i8);
     emitFrameOffset(*MI.getParent(), MI, MI.getDebugLoc(),
                     MI.getOperand(0).getReg(), FrameReg, Offset, TII,
                     MachineInstr::NoFlags, (Opcode == AArch64::ADDSXri));
     MI.eraseFromParent();
-    Offset = 0;
+    Offset = StackOffset();
     return true;
   }
 
@@ -3348,7 +3352,7 @@ bool llvm::rewriteAArch64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       MI.setDesc(TII->get(UnscaledOp));
 
     MI.getOperand(ImmIdx).ChangeToImmediate(NewOffset);
-    return Offset == 0;
+    return !Offset;
   }
 
   return false;
