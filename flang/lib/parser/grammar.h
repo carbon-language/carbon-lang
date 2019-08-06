@@ -1088,9 +1088,9 @@ TYPE_PARSER(construct<ExplicitCoshapeSpec>(
 // a need for forced look-ahead.
 TYPE_PARSER(
     construct<ArraySpec>(parenthesized(nonemptyList(explicitShapeSpec))) ||
+    construct<ArraySpec>(parenthesized(deferredShapeSpecList)) ||
     construct<ArraySpec>(
         parenthesized(nonemptyList(Parser<AssumedShapeSpec>{}))) ||
-    construct<ArraySpec>(parenthesized(deferredShapeSpecList)) ||
     construct<ArraySpec>(parenthesized(Parser<AssumedSizeSpec>{})) ||
     construct<ArraySpec>(parenthesized(Parser<ImpliedShapeSpec>{})) ||
     construct<ArraySpec>(parenthesized(Parser<AssumedRankSpec>{})))
