@@ -544,7 +544,7 @@ static bool isValidCopy(const MachineInstr &I, const RegisterBank &DstBank,
 /// SubRegCopy (To class) = COPY CopyReg:SubReg
 /// Dst = COPY SubRegCopy
 static bool selectSubregisterCopy(MachineInstr &I, MachineRegisterInfo &MRI,
-                                  const RegisterBankInfo &RBI, unsigned SrcReg,
+                                  const RegisterBankInfo &RBI, Register SrcReg,
                                   const TargetRegisterClass *From,
                                   const TargetRegisterClass *To,
                                   unsigned SubReg) {
