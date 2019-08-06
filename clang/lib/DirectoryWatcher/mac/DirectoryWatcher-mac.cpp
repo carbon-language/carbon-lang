@@ -210,7 +210,7 @@ llvm::Expected<std::unique_ptr<DirectoryWatcher>> clang::DirectoryWatcher::creat
 
   assert(!Path.empty() && "Path.empty()");
   auto EventStream = createFSEventStream(Path, Receiver, Queue);
-  assert(EventStream && "EventStream expected to be non-null.")
+  assert(EventStream && "EventStream expected to be non-null");
 
   std::unique_ptr<DirectoryWatcher> Result =
       llvm::make_unique<DirectoryWatcherMac>(EventStream, Receiver, Path);
