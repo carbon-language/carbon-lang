@@ -266,7 +266,29 @@ struct Attributor {
   /// true if \p Pred holds in every call sites. However, this is only possible
   /// all call sites are known, hence the function has internal linkage.
   bool checkForAllCallSites(Function &F, std::function<bool(CallSite)> &Pred,
-                            bool RequireAllCallSites, AbstractAttribute &AA);
+                            AbstractAttribute &QueryingAA,
+                            bool RequireAllCallSites);
+
+  /// Check \p Pred on all instructions with an opcode present in \p Opcodes.
+  ///
+  /// This method will evaluate \p Pred on all instructions with an opcode
+  /// present in \p Opcode and return true if \p Pred holds on all of them.
+  bool checkForAllInstructions(
+      const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
+      AbstractAttribute &QueryingAA, InformationCache &InfoCache,
+      const ArrayRef<unsigned> &Opcodes);
+
+  /// Check \p Pred on all call-like instructions (=CallBased derived).
+  ///
+  /// See checkForAllCallLikeInstructions(...) for more information.
+  bool checkForAllCallLikeInstructions(
+      const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
+      AbstractAttribute &QueryingAA, InformationCache &InfoCache) {
+    return checkForAllInstructions(F, Pred, QueryingAA, InfoCache,
+                                   {(unsigned)Instruction::Invoke,
+                                    (unsigned)Instruction::CallBr,
+                                    (unsigned)Instruction::Call});
+  }
 
 private:
   /// The set of all abstract attributes.

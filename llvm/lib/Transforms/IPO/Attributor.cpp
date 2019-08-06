@@ -422,29 +422,23 @@ ChangeStatus AANoUnwindImpl::updateImpl(Attributor &A,
   Function &F = getAnchorScope();
 
   // The map from instruction opcodes to those instructions in the function.
-  auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
   auto Opcodes = {
       (unsigned)Instruction::Invoke,      (unsigned)Instruction::CallBr,
       (unsigned)Instruction::Call,        (unsigned)Instruction::CleanupRet,
       (unsigned)Instruction::CatchSwitch, (unsigned)Instruction::Resume};
 
-  auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
+  auto CheckForNoUnwind = [&](Instruction &I) {
+    if (!I.mayThrow())
+      return true;
 
-  for (unsigned Opcode : Opcodes) {
-    for (Instruction *I : OpcodeInstMap[Opcode]) {
-      // Skip dead instructions.
-      if (LivenessAA && LivenessAA->isAssumedDead(I))
-        continue;
+    auto *NoUnwindAA = A.getAAFor<AANoUnwind>(*this, I);
+    return NoUnwindAA && NoUnwindAA->isAssumedNoUnwind();
+  };
 
-      if (!I->mayThrow())
-        continue;
+  if (!A.checkForAllInstructions(F, CheckForNoUnwind, *this, InfoCache,
+                                 Opcodes))
+    return indicatePessimisticFixpoint();
 
-      auto *NoUnwindAA = A.getAAFor<AANoUnwind>(*this, *I);
-
-      if (!NoUnwindAA || !NoUnwindAA->isAssumedNoUnwind())
-        return indicatePessimisticFixpoint();
-    }
-  }
   return ChangeStatus::UNCHANGED;
 }
 
@@ -968,30 +962,18 @@ ChangeStatus AANoSyncImpl::updateImpl(Attributor &A,
     return indicatePessimisticFixpoint();
   }
 
-  auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
-  auto Opcodes = {(unsigned)Instruction::Invoke, (unsigned)Instruction::CallBr,
-                  (unsigned)Instruction::Call};
+  auto CheckForNoSync = [&](Instruction &I) {
+    // At this point we handled all read/write effects and they are all
+    // nosync, so they can be skipped.
+    if (I.mayReadOrWriteMemory())
+      return true;
 
-  for (unsigned Opcode : Opcodes) {
-    for (Instruction *I : OpcodeInstMap[Opcode]) {
-      // Skip assumed dead instructions.
-      if (LivenessAA && LivenessAA->isAssumedDead(I))
-        continue;
-      // At this point we handled all read/write effects and they are all
-      // nosync, so they can be skipped.
-      if (I->mayReadOrWriteMemory())
-        continue;
+    // non-convergent and readnone imply nosync.
+    return !ImmutableCallSite(&I).isConvergent();
+  };
 
-      ImmutableCallSite ICS(I);
-
-      // non-convergent and readnone imply nosync.
-      if (!ICS.isConvergent())
-        continue;
-
-      return indicatePessimisticFixpoint();
-    }
-  }
-
+  if (!A.checkForAllCallLikeInstructions(F, CheckForNoSync, *this, InfoCache))
+    return indicatePessimisticFixpoint();
   return ChangeStatus::UNCHANGED;
 }
 
@@ -1029,26 +1011,16 @@ ChangeStatus AANoFreeImpl::updateImpl(Attributor &A,
                                       InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
-  auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
+  auto CheckForNoFree = [&](Instruction &I) {
+    if (ImmutableCallSite(&I).hasFnAttr(Attribute::NoFree))
+      return true;
 
-  // The map from instruction opcodes to those instructions in the function.
-  auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
+    auto *NoFreeAA = A.getAAFor<AANoFreeImpl>(*this, I);
+    return NoFreeAA && NoFreeAA->isAssumedNoFree();
+  };
 
-  for (unsigned Opcode :
-       {(unsigned)Instruction::Invoke, (unsigned)Instruction::CallBr,
-        (unsigned)Instruction::Call}) {
-    for (Instruction *I : OpcodeInstMap[Opcode]) {
-      // Skip assumed dead instructions.
-      if (LivenessAA && LivenessAA->isAssumedDead(I))
-        continue;
-      auto ICS = ImmutableCallSite(I);
-      auto *NoFreeAA = A.getAAFor<AANoFreeImpl>(*this, *I);
-
-      if ((!NoFreeAA || !NoFreeAA->isAssumedNoFree()) &&
-          !ICS.hasFnAttr(Attribute::NoFree))
-        return indicatePessimisticFixpoint();
-    }
-  }
+  if (!A.checkForAllCallLikeInstructions(F, CheckForNoFree, *this, InfoCache))
+    return indicatePessimisticFixpoint();
   return ChangeStatus::UNCHANGED;
 }
 
@@ -1215,7 +1187,7 @@ ChangeStatus AANonNullArgument::updateImpl(Attributor &A,
 
     return false;
   };
-  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this))
+  if (!A.checkForAllCallSites(F, CallSiteCheck, *this, true))
     return indicatePessimisticFixpoint();
   return ChangeStatus::UNCHANGED;
 }
@@ -1303,41 +1275,29 @@ void AAWillReturnFunction::initialize(Attributor &A,
 
 ChangeStatus AAWillReturnFunction::updateImpl(Attributor &A,
                                               InformationCache &InfoCache) {
-  Function &F = getAnchorScope();
-
+  const Function &F = getAnchorScope();
   // The map from instruction opcodes to those instructions in the function.
-  auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
 
-  auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
+  auto CheckForWillReturn = [&](Instruction &I) {
+    ImmutableCallSite ICS(&I);
+    if (ICS.hasFnAttr(Attribute::WillReturn))
+      return true;
 
-  for (unsigned Opcode :
-       {(unsigned)Instruction::Invoke, (unsigned)Instruction::CallBr,
-        (unsigned)Instruction::Call}) {
-    for (Instruction *I : OpcodeInstMap[Opcode]) {
-      // Skip assumed dead instructions.
-      if (LivenessAA && LivenessAA->isAssumedDead(I))
-        continue;
+    auto *WillReturnAA = A.getAAFor<AAWillReturn>(*this, I);
+    if (!WillReturnAA || !WillReturnAA->isAssumedWillReturn())
+      return false;
 
-      auto ICS = ImmutableCallSite(I);
+    // FIXME: Prohibit any recursion for now.
+    if (ICS.hasFnAttr(Attribute::NoRecurse))
+      return true;
 
-      if (ICS.hasFnAttr(Attribute::WillReturn))
-        continue;
+    auto *NoRecurseAA = A.getAAFor<AANoRecurse>(*this, I);
+    return NoRecurseAA && NoRecurseAA->isAssumedNoRecurse();
+  };
 
-      auto *WillReturnAA = A.getAAFor<AAWillReturn>(*this, *I);
-      if (!WillReturnAA || !WillReturnAA->isAssumedWillReturn())
-        return indicatePessimisticFixpoint();
-
-      auto *NoRecurseAA = A.getAAFor<AANoRecurse>(*this, *I);
-
-      // FIXME: (i) Prohibit any recursion for now.
-      //        (ii) AANoRecurse isn't implemented yet so currently any call is
-      //        regarded as having recursion.
-      //       Code below should be
-      //       if ((!NoRecurseAA || !NoRecurseAA->isAssumedNoRecurse()) &&
-      if (!NoRecurseAA && !ICS.hasFnAttr(Attribute::NoRecurse))
-        return indicatePessimisticFixpoint();
-    }
-  }
+  if (!A.checkForAllCallLikeInstructions(F, CheckForWillReturn, *this,
+                                         InfoCache))
+    return indicatePessimisticFixpoint();
 
   return ChangeStatus::UNCHANGED;
 }
@@ -1969,7 +1929,7 @@ AADereferenceableArgument::updateImpl(Attributor &A,
     return isValidState();
   };
 
-  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this))
+  if (!A.checkForAllCallSites(F, CallSiteCheck, *this, true))
     return indicatePessimisticFixpoint();
 
   updateAssumedNonNullGlobalState(IsNonNull, IsGlobal);
@@ -2155,7 +2115,7 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
     return isValidState();
   };
 
-  if (!A.checkForAllCallSites(F, CallSiteCheck, true, *this))
+  if (!A.checkForAllCallSites(F, CallSiteCheck, *this, true))
     indicatePessimisticFixpoint();
 
   return BeforeState == getAssumed() ? ChangeStatus::UNCHANGED
@@ -2230,21 +2190,11 @@ struct AANoReturnImpl : public AANoReturn, BooleanState {
   /// See AbstractAttribute::updateImpl(Attributor &A).
   virtual ChangeStatus updateImpl(Attributor &A,
                                   InformationCache &InfoCache) override {
-    Function &F = getAnchorScope();
-
-    // The map from instruction opcodes to those instructions in the function.
-    auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
-
-    // Look at all return instructions.
-    auto &ReturnInsts = OpcodeInstMap[Instruction::Ret];
-    if (ReturnInsts.empty())
-      return indicateOptimisticFixpoint();
-
-    auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
-    if (!LivenessAA ||
-        LivenessAA->isLiveInstSet(ReturnInsts.begin(), ReturnInsts.end()))
+    const Function &F = getAnchorScope();
+    auto CheckForNoReturn = [](Instruction &) { return false; };
+    if (!A.checkForAllInstructions(F, CheckForNoReturn, *this, InfoCache,
+                                   {(unsigned)Instruction::Ret}))
       return indicatePessimisticFixpoint();
-
     return ChangeStatus::UNCHANGED;
   }
 };
@@ -2259,8 +2209,8 @@ struct AANoReturnFunction final : AANoReturnImpl {
 
 bool Attributor::checkForAllCallSites(Function &F,
                                       std::function<bool(CallSite)> &Pred,
-                                      bool RequireAllCallSites,
-                                      AbstractAttribute &AA) {
+                                      AbstractAttribute &QueryingAA,
+                                      bool RequireAllCallSites) {
   // We can try to determine information from
   // the call sites. However, this is only possible all call sites are known,
   // hence the function has internal linkage.
@@ -2276,7 +2226,7 @@ bool Attributor::checkForAllCallSites(Function &F,
     Instruction *I = cast<Instruction>(U.getUser());
     Function *AnchorValue = I->getParent()->getParent();
 
-    auto *LivenessAA = getAAFor<AAIsDead>(AA, *AnchorValue);
+    auto *LivenessAA = getAAFor<AAIsDead>(QueryingAA, *AnchorValue);
 
     // Skip dead calls.
     if (LivenessAA && LivenessAA->isAssumedDead(I))
@@ -2298,6 +2248,28 @@ bool Attributor::checkForAllCallSites(Function &F,
     LLVM_DEBUG(dbgs() << "Attributor: Call site callback failed for "
                       << *CS.getInstruction() << "\n");
     return false;
+  }
+
+  return true;
+}
+
+bool Attributor::checkForAllInstructions(
+    const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
+    AbstractAttribute &QueryingAA, InformationCache &InfoCache,
+    const ArrayRef<unsigned> &Opcodes) {
+
+  auto *LivenessAA = getAAFor<AAIsDead>(QueryingAA, F);
+
+  auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
+  for (unsigned Opcode : Opcodes) {
+    for (Instruction *I : OpcodeInstMap[Opcode]) {
+      // Skip dead instructions.
+      if (LivenessAA && LivenessAA->isAssumedDead(I))
+        continue;
+
+      if (!Pred(*I))
+        return false;
+    }
   }
 
   return true;
