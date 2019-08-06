@@ -204,13 +204,13 @@ public:
   void set_interface(const ProcInterface &interface) { interface_ = interface; }
   inline bool HasExplicitInterface() const;
 
-  const Symbol *init() const { return init_; }
-  Symbol *init() { return init_; }
-  void set_init(Symbol &symbol) { init_ = &symbol; }
+  std::optional<const Symbol *> init() const { return init_; }
+  void set_init(const Symbol &symbol) { init_ = &symbol; }
+  void set_init(std::nullptr_t) { init_ = nullptr; }
 
 private:
   ProcInterface interface_;
-  Symbol *init_{nullptr};
+  std::optional<const Symbol *> init_;  // if present but null => NULL()
   friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 

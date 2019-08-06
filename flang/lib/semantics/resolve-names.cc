@@ -858,7 +858,7 @@ private:
   bool HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
   const parser::Name *FindComponent(const parser::Name *, const parser::Name &);
   void CheckInitialDataTarget(const Symbol &, const SomeExpr &, SourceName);
-  void CheckInitialProcTarget(const Symbol &, const parser::Name &);
+  void CheckInitialProcTarget(const Symbol &, const parser::Name &, SourceName);
   void Initialization(const parser::Name &, const parser::Initialization &,
       bool inComponentDecl);
   bool PassesLocalityChecks(const parser::Name &name, Symbol &symbol);
@@ -3754,17 +3754,9 @@ void DeclarationVisitor::AddSaveName(
 
 // Set the SAVE attribute on symbol unless it is implicitly saved anyway.
 void DeclarationVisitor::SetSaveAttr(Symbol &symbol) {
-  auto scopeKind{symbol.owner().kind()};
-  if (scopeKind == Scope::Kind::MainProgram ||
-      scopeKind == Scope::Kind::Module) {
-    return;
+  if (!IsSaved(symbol)) {
+    symbol.attrs().set(Attr::SAVE);
   }
-  if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-    if (details->init()) {
-      return;
-    }
-  }
-  symbol.attrs().set(Attr::SAVE);
 }
 
 // Check types of common block objects, now that they are known.
@@ -4854,7 +4846,7 @@ void DeclarationVisitor::CheckInitialDataTarget(
             pointer.name(), ultimate.name());
         return;
       }
-      if (!ultimate.attrs().test(Attr::SAVE)) {
+      if (!IsSaved(ultimate)) {
         Say(source,
             "Pointer '%s' cannot be initialized with a reference to an object '%s' that lacks the SAVE attribute"_err_en_US,
             pointer.name(), ultimate.name());
@@ -4868,8 +4860,27 @@ void DeclarationVisitor::CheckInitialDataTarget(
 }
 
 void DeclarationVisitor::CheckInitialProcTarget(
-    const Symbol &pointer, const parser::Name &target) {
-  // TODO pmk write
+    const Symbol &pointer, const parser::Name &target, SourceName source) {
+  // C1519 - must be nonelemental external or module procedure,
+  // or an unrestricted specific intrinsic function.
+  if (const Symbol * targetSym{target.symbol}) {
+    const Symbol &ultimate{targetSym->GetUltimate()};
+    if (ultimate.attrs().test(Attr::INTRINSIC)) {
+    } else if (!ultimate.attrs().test(Attr::EXTERNAL) &&
+        ultimate.owner().kind() != Scope::Kind::Module) {
+      Say(source,
+          "Procedure pointer '%s' initializer '%s' is neither "
+          "an external nor a module procedure"_err_en_US,
+          pointer.name(), ultimate.name());
+    } else if (ultimate.attrs().test(Attr::ELEMENTAL)) {
+      Say(source,
+          "Procedure pointer '%s' cannot be initialized with the "
+          "elemental procedure '%s"_err_en_US,
+          pointer.name(), ultimate.name());
+    } else {
+      // TODO: Check the "shalls" in the 15.4.3.6 paragraphs 7-10.
+    }
+  }
 }
 
 void DeclarationVisitor::Initialization(const parser::Name &name,
@@ -4970,13 +4981,15 @@ void DeclarationVisitor::PointerInitialization(
     Symbol &ultimate{name.symbol->GetUltimate()};
     if (IsProcedurePointer(ultimate)) {
       auto &details{ultimate.get<ProcEntityDetails>()};
-      if (details.init() == nullptr) {
+      if (!details.init().has_value()) {
         Walk(target);
         if (const auto *targetName{std::get_if<parser::Name>(&target.u)}) {
-          CheckInitialProcTarget(ultimate, *targetName);
+          CheckInitialProcTarget(ultimate, *targetName, name.source);
           if (targetName->symbol != nullptr) {
             details.set_init(*targetName->symbol);
           }
+        } else {
+          details.set_init(nullptr);  // NULL()
         }
       }
     } else {

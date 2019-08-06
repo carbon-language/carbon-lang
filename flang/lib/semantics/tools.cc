@@ -400,6 +400,45 @@ bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
   return false;
 }
 
+bool IsSaved(const Symbol &symbol) {
+  auto scopeKind{symbol.owner().kind()};
+  if (scopeKind == Scope::Kind::MainProgram ||
+      scopeKind == Scope::Kind::Module) {
+    return true;
+  } else if (scopeKind == Scope::Kind::DerivedType) {
+    return false;  // this is a component
+  } else if (symbol.attrs().test(Attr::SAVE)) {
+    return true;
+  } else if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+    return object->init().has_value();
+  } else if (IsProcedurePointer(symbol)) {
+    return symbol.get<ProcEntityDetails>().init().has_value();
+  } else {
+    return false;
+  }
+}
+
+const Symbol *FindUltimateComponent(const DerivedTypeSpec &derivedTypeSpec,
+    std::function<bool(const Symbol &)> predicate) {
+  const auto *scope{derivedTypeSpec.typeSymbol().scope()};
+  CHECK(scope);
+  for (const auto &pair : *scope) {
+    const Symbol &component{*pair.second};
+    const DeclTypeSpec *type{component.GetType()};
+    if (!type) {
+      continue;
+    }
+    const DerivedTypeSpec *derived{type->AsDerived()};
+    bool isUltimate{IsAllocatableOrPointer(component) || !derived};
+    if (const Symbol *
+        result{!isUltimate ? FindUltimateComponent(*derived, predicate)
+                           : predicate(component) ? &component : nullptr}) {
+      return result;
+    }
+  }
+  return nullptr;
+}
+
 bool IsFinalizable(const Symbol &symbol) {
   if (const DeclTypeSpec * type{symbol.GetType()}) {
     if (const DerivedTypeSpec * derived{type->AsDerived()}) {

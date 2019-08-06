@@ -51,7 +51,7 @@ module module1
  type :: derived1
   !REF: /module1/abstract1
   !DEF: /module1/derived1/p1 NOPASS, POINTER ProcEntity REAL(4)
-  !DEF: /module1/nested1 ELEMENTAL, PUBLIC Subprogram REAL(4)
+  !DEF: /module1/nested1 PUBLIC Subprogram REAL(4)
   procedure(abstract1), pointer, nopass :: p1 => nested1
   !REF: /module1/explicit1
   !DEF: /module1/derived1/p2 NOPASS, POINTER ProcEntity REAL(4)
@@ -84,7 +84,7 @@ contains
 
  !REF: /module1/nested1
  !DEF: /module1/nested1/x INTENT(IN) ObjectEntity REAL(4)
- real elemental function nested1(x)
+ real function nested1(x)
   !REF: /module1/nested1/x
   real, intent(in) :: x
   !DEF: /module1/nested1/nested1 ObjectEntity REAL(4)

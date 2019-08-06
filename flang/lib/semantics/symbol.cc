@@ -359,8 +359,12 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
   }
   DumpOptional(os, "bindName", x.bindName());
   DumpOptional(os, "passName", x.passName());
-  if (x.init_ != nullptr) {
-    os << " => " << x.init_->name();
+  if (x.init()) {
+    if (const Symbol * target{*x.init()}) {
+      os << " => " << target->name();
+    } else {
+      os << " => NULL()";
+    }
   }
   return os;
 }
