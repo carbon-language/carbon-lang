@@ -284,6 +284,7 @@ TEST(DirectoryWatcherTest, InitialScanSync) {
         TestConsumer.consume(Events, IsInitial);
       },
       /*waitForInitialSync=*/true);
+  if (!DW) return;
 
   checkEventualResultWithTimeout(TestConsumer);
 }
@@ -315,6 +316,7 @@ TEST(DirectoryWatcherTest, InitialScanAsync) {
         TestConsumer.consume(Events, IsInitial);
       },
       /*waitForInitialSync=*/false);
+  if (!DW) return;
 
   checkEventualResultWithTimeout(TestConsumer);
 }
@@ -335,6 +337,7 @@ TEST(DirectoryWatcherTest, AddFiles) {
         TestConsumer.consume(Events, IsInitial);
       },
       /*waitForInitialSync=*/true);
+  if (!DW) return;
 
   fixture.addFile("a");
   fixture.addFile("b");
@@ -360,6 +363,7 @@ TEST(DirectoryWatcherTest, ModifyFile) {
         TestConsumer.consume(Events, IsInitial);
       },
       /*waitForInitialSync=*/true);
+  if (!DW) return;
 
   // modify the file
   {
@@ -390,6 +394,7 @@ TEST(DirectoryWatcherTest, DeleteFile) {
         TestConsumer.consume(Events, IsInitial);
       },
       /*waitForInitialSync=*/true);
+  if (!DW) return;
 
   fixture.deleteFile("a");
 
@@ -411,6 +416,7 @@ TEST(DirectoryWatcherTest, DeleteWatchedDir) {
         TestConsumer.consume(Events, IsInitial);
       },
       /*waitForInitialSync=*/true);
+  if (!DW) return;
 
   remove_directories(fixture.TestWatchedDir);
 
@@ -431,6 +437,7 @@ TEST(DirectoryWatcherTest, InvalidatedWatcher) {
           TestConsumer.consume(Events, IsInitial);
         },
         /*waitForInitialSync=*/true);
+    if (!DW) return;
   } // DW is destructed here.
 
   checkEventualResultWithTimeout(TestConsumer);
