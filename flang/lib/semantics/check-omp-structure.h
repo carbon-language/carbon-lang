@@ -79,6 +79,16 @@ public:
   void Enter(const parser::OpenMPDeclareSimdConstruct &);
   void Leave(const parser::OpenMPDeclareSimdConstruct &);
 
+  void Enter(const parser::OpenMPSimpleStandaloneConstruct &);
+  void Leave(const parser::OpenMPSimpleStandaloneConstruct &);
+  void Enter(const parser::OmpSimpleStandaloneDirective &);
+  void Enter(const parser::OpenMPFlushConstruct &);
+  void Leave(const parser::OpenMPFlushConstruct &);
+  void Enter(const parser::OpenMPCancelConstruct &);
+  void Leave(const parser::OpenMPCancelConstruct &);
+  void Enter(const parser::OpenMPCancellationPointConstruct &);
+  void Leave(const parser::OpenMPCancellationPointConstruct &);
+
   void Leave(const parser::OmpClauseList &);
   void Enter(const parser::OmpClause &);
   void Enter(const parser::OmpNowait &);

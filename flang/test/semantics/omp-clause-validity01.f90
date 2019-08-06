@@ -25,6 +25,10 @@
   integer :: b = 128
   integer :: c = 32
   integer, parameter :: num = 16
+  real(8) :: arrayA(256), arrayB(512)
+
+  arrayA = 1.414
+  arrayB = 3.14
   N = 1024
 
 ! 2.5 parallel-clause -> if-clause |
@@ -276,4 +280,19 @@
         a = 3.14
      enddo
   enddo
-end
+
+! Standalone Directives (basic)
+
+  !$omp taskyield
+  !$omp barrier
+  !$omp taskwait
+  ! !$omp target enter data map(to:arrayA) map(alloc:arrayB)
+  ! !$omp target update from(arrayA) to(arrayB)
+  ! !$omp target exit data map(from:arrayA) map(delete:arrayB)
+  !$omp ordered depend(source)
+  !ERROR: Internal: no symbol found for 'i'
+  !$omp ordered depend(sink:i-1)
+  !$omp flush (c)
+  !$omp cancel DO
+  !$omp cancellation point parallel
+end program

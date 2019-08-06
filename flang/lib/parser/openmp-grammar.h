@@ -297,25 +297,42 @@ TYPE_PARSER(sourced(construct<OmpCancelType>(
         "TASKGROUP" >> pure(OmpCancelType::Type::Taskgroup)))))
 
 // Cancellation Point construct
-TYPE_PARSER(construct<OpenMPCancellationPointConstruct>(
-    sourced("CANCELLATION POINT" >> Parser<OmpCancelType>{})))
+TYPE_PARSER(sourced(construct<OpenMPCancellationPointConstruct>(
+    verbatim("CANCELLATION POINT"_tok), Parser<OmpCancelType>{})))
 
 // Cancel construct
-TYPE_PARSER(construct<OpenMPCancelConstruct>(
-    sourced("CANCEL" >> Parser<OmpCancelType>{}),
-    maybe("IF" >> parenthesized(scalarLogicalExpr))))
+TYPE_PARSER(sourced(construct<OpenMPCancelConstruct>(verbatim("CANCEL"_tok),
+    Parser<OmpCancelType>{}, maybe("IF" >> parenthesized(scalarLogicalExpr)))))
 
 // Flush construct
 TYPE_PARSER(sourced(construct<OpenMPFlushConstruct>(
-    "FLUSH" >> maybe(parenthesized(Parser<OmpObjectList>{})))))
+    verbatim("FLUSH"_tok), maybe(parenthesized(Parser<OmpObjectList>{})))))
 
-// Standalone directives
-TYPE_PARSER(sourced(construct<OmpStandaloneDirective>(first(
+// Simple Standalone Directives
+TYPE_PARSER(sourced(construct<OmpSimpleStandaloneDirective>(first(
+    "BARRIER" >> pure(OmpSimpleStandaloneDirective::Directive::Barrier),
+    "ORDERED" >> pure(OmpSimpleStandaloneDirective::Directive::Ordered),
     "TARGET ENTER DATA" >>
-        pure(OmpStandaloneDirective::Directive::TargetEnterData),
+        pure(OmpSimpleStandaloneDirective::Directive::TargetEnterData),
     "TARGET EXIT DATA" >>
-        pure(OmpStandaloneDirective::Directive::TargetExitData),
-    "TARGET UPDATE" >> pure(OmpStandaloneDirective::Directive::TargetUpdate)))))
+        pure(OmpSimpleStandaloneDirective::Directive::TargetExitData),
+    "TARGET UPDATE" >>
+        pure(OmpSimpleStandaloneDirective::Directive::TargetUpdate),
+    "TASKWAIT" >> pure(OmpSimpleStandaloneDirective::Directive::Taskwait),
+    "TASKYIELD" >> pure(OmpSimpleStandaloneDirective::Directive::Taskyield)))))
+
+TYPE_PARSER(sourced(construct<OpenMPSimpleStandaloneConstruct>(
+    Parser<OmpSimpleStandaloneDirective>{}, Parser<OmpClauseList>{})))
+
+// Standalone Constructs
+TYPE_PARSER(
+    sourced(construct<OpenMPStandaloneConstruct>(
+                Parser<OpenMPSimpleStandaloneConstruct>{}) ||
+        construct<OpenMPStandaloneConstruct>(Parser<OpenMPFlushConstruct>{}) ||
+        construct<OpenMPStandaloneConstruct>(Parser<OpenMPCancelConstruct>{}) ||
+        construct<OpenMPStandaloneConstruct>(
+            Parser<OpenMPCancellationPointConstruct>{})) /
+    endOfLine)
 
 // Directives enclosing structured-block
 TYPE_PARSER(sourced(construct<OmpBlockDirective>(
@@ -454,17 +471,6 @@ TYPE_PARSER(construct<OpenMPBlockConstruct>(Parser<OmpBlockDirective>{},
     Parser<OmpClauseList>{} / endOmpLine, block,
     Parser<OmpEndBlockDirective>{}))
 
-// Simple constructs without clauses
-TYPE_PARSER(
-    sourced(construct<OpenMPSimpleConstruct>(first(
-        "BARRIER" >> pure(OpenMPSimpleConstruct::Directive::Barrier),
-        "TASKWAIT" >> pure(OpenMPSimpleConstruct::Directive::Taskwait),
-        "TASKYIELD" >> pure(OpenMPSimpleConstruct::Directive::Taskyield)))) /
-    endOmpLine)
-
-TYPE_PARSER(construct<OpenMPStandaloneConstruct>(
-    Parser<OmpStandaloneDirective>{}, Parser<OmpClauseList>{} / endOmpLine))
-
 // OMP SINGLE
 TYPE_PARSER(startOmpLine >> construct<OmpEndSingle>(verbatim("END SINGLE"_tok),
                                 Parser<OmpClauseList>{}) /
@@ -507,21 +513,18 @@ TYPE_PARSER(construct<OmpSection>(verbatim("SECTION"_tok) / endOmpLine))
 
 TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
     startOmpLine >>
-        first(construct<OpenMPConstruct>(Parser<OpenMPStandaloneConstruct>{}),
-            construct<OpenMPConstruct>(Parser<OpenMPSimpleConstruct>{}),
-            construct<OpenMPConstruct>(Parser<OpenMPSingleConstruct>{}),
+        first(construct<OpenMPConstruct>(Parser<OpenMPSingleConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPSectionsConstruct>{}),
             construct<OpenMPConstruct>(
                 Parser<OpenMPParallelSectionsConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPWorkshareConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPLoopConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPBlockConstruct>{}),
+            // OpenMPBlockConstruct is attempted before
+            // OpenMPStandaloneConstruct to resolve !$OMP ORDERED
+            construct<OpenMPConstruct>(Parser<OpenMPStandaloneConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPAtomicConstruct>{}),
             construct<OpenMPConstruct>(Parser<OpenMPCriticalConstruct>{}),
-            construct<OpenMPConstruct>(Parser<OpenMPCancelConstruct>{}),
-            construct<OpenMPConstruct>(
-                Parser<OpenMPCancellationPointConstruct>{}),
-            construct<OpenMPConstruct>(Parser<OpenMPFlushConstruct>{}),
             construct<OpenMPConstruct>(Parser<OmpSection>{})))
 
 // END OMP Block directives

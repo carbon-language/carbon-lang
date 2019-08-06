@@ -3666,38 +3666,47 @@ struct OmpCancelType {
 };
 
 // CANCELLATION POINT
-WRAPPER_CLASS(OpenMPCancellationPointConstruct, OmpCancelType);
+struct OpenMPCancellationPointConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPCancellationPointConstruct);
+  CharBlock source;
+  std::tuple<Verbatim, OmpCancelType> t;
+};
 
 // CANCEL
 struct OpenMPCancelConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPCancelConstruct);
   WRAPPER_CLASS(If, ScalarLogicalExpr);
-  std::tuple<OmpCancelType, std::optional<If>> t;
+  CharBlock source;
+  std::tuple<Verbatim, OmpCancelType, std::optional<If>> t;
 };
 
 // FLUSH
 struct OpenMPFlushConstruct {
-  WRAPPER_CLASS_BOILERPLATE(OpenMPFlushConstruct, std::optional<OmpObjectList>);
+  TUPLE_CLASS_BOILERPLATE(OpenMPFlushConstruct);
   CharBlock source;
+  std::tuple<Verbatim, std::optional<OmpObjectList>> t;
 };
 
 // These simple constructs do not have clauses.
-struct OpenMPSimpleConstruct {
-  ENUM_CLASS(Directive, Barrier, Taskwait, Taskyield)
-  WRAPPER_CLASS_BOILERPLATE(OpenMPSimpleConstruct, Directive);
+struct OmpSimpleStandaloneDirective {
+  ENUM_CLASS(Directive, Barrier, Taskwait, Taskyield, TargetEnterData,
+      TargetExitData, TargetUpdate, Ordered)
+  WRAPPER_CLASS_BOILERPLATE(OmpSimpleStandaloneDirective, Directive);
   CharBlock source;
 };
 
-// Standalone constructs; these can have clauses.
-struct OmpStandaloneDirective {
-  ENUM_CLASS(Directive, TargetEnterData, TargetExitData, TargetUpdate)
-  WRAPPER_CLASS_BOILERPLATE(OmpStandaloneDirective, Directive);
+struct OpenMPSimpleStandaloneConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPSimpleStandaloneConstruct);
   CharBlock source;
+  std::tuple<OmpSimpleStandaloneDirective, OmpClauseList> t;
 };
 
 struct OpenMPStandaloneConstruct {
-  TUPLE_CLASS_BOILERPLATE(OpenMPStandaloneConstruct);
-  std::tuple<OmpStandaloneDirective, OmpClauseList> t;
+  UNION_CLASS_BOILERPLATE(OpenMPStandaloneConstruct);
+  CharBlock source;
+  std::variant<OpenMPSimpleStandaloneConstruct, OpenMPFlushConstruct,
+      OpenMPCancelConstruct, OpenMPCancellationPointConstruct>
+      u;
 };
 
 WRAPPER_CLASS(OmpEndBlockDirective, OmpBlockDirective);
@@ -3722,13 +3731,10 @@ struct OpenMPLoopConstruct {
 
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
-  std::variant<OpenMPStandaloneConstruct, OpenMPSimpleConstruct,
-      OpenMPSingleConstruct, OpenMPSectionsConstruct,
-      OpenMPParallelSectionsConstruct, OpenMPWorkshareConstruct,
-      OpenMPLoopConstruct, OpenMPBlockConstruct,
-      OpenMPCancellationPointConstruct, OpenMPCancelConstruct,
-      OpenMPFlushConstruct, OpenMPAtomicConstruct, OpenMPCriticalConstruct,
-      OmpSection>
+  std::variant<OpenMPStandaloneConstruct, OpenMPSingleConstruct,
+      OpenMPSectionsConstruct, OpenMPParallelSectionsConstruct,
+      OpenMPWorkshareConstruct, OpenMPLoopConstruct, OpenMPBlockConstruct,
+      OpenMPAtomicConstruct, OpenMPCriticalConstruct, OmpSection>
       u;
 };
 }

@@ -104,7 +104,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPSectionsConstruct &x) {
   SetContextAllowed(allowed);
 }
 
-void OmpStructureChecker::Leave(const parser::OpenMPSectionsConstruct &x) {
+void OmpStructureChecker::Leave(const parser::OpenMPSectionsConstruct &) {
   ompContext_.pop_back();
 }
 
@@ -126,7 +126,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPSingleConstruct &x) {
   SetContextAllowed(allowed);
 }
 
-void OmpStructureChecker::Leave(const parser::OpenMPSingleConstruct &x) {
+void OmpStructureChecker::Leave(const parser::OpenMPSingleConstruct &) {
   ompContext_.pop_back();
 }
 
@@ -140,7 +140,7 @@ void OmpStructureChecker::Enter(const parser::OmpEndSingle &x) {
   SetContextAllowedOnce(allowedOnce);
 }
 
-void OmpStructureChecker::Leave(const parser::OmpEndSingle &x) {
+void OmpStructureChecker::Leave(const parser::OmpEndSingle &) {
   ompContext_.pop_back();
 }
 
@@ -149,7 +149,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPWorkshareConstruct &x) {
   PushContext(dir.source, OmpDirective::WORKSHARE);
 }
 
-void OmpStructureChecker::Leave(const parser::OpenMPWorkshareConstruct &x) {
+void OmpStructureChecker::Leave(const parser::OpenMPWorkshareConstruct &) {
   ompContext_.pop_back();
 }
 
@@ -158,8 +158,62 @@ void OmpStructureChecker::Enter(const parser::OpenMPDeclareSimdConstruct &x) {
   PushContext(dir.source, OmpDirective::DECLARE_SIMD);
 }
 
-void OmpStructureChecker::Leave(const parser::OpenMPDeclareSimdConstruct &x) {
+void OmpStructureChecker::Leave(const parser::OpenMPDeclareSimdConstruct &) {
   ompContext_.pop_back();
+}
+
+void OmpStructureChecker::Enter(
+    const parser::OpenMPSimpleStandaloneConstruct &x) {
+  const auto &dir{std::get<parser::OmpSimpleStandaloneDirective>(x.t)};
+  PushContext(dir.source);
+}
+
+void OmpStructureChecker::Leave(
+    const parser::OpenMPSimpleStandaloneConstruct &) {
+  ompContext_.pop_back();
+}
+
+void OmpStructureChecker::Enter(const parser::OpenMPFlushConstruct &x) {
+  const auto &dir{std::get<parser::Verbatim>(x.t)};
+  PushContext(dir.source, OmpDirective::FLUSH);
+}
+
+void OmpStructureChecker::Leave(const parser::OpenMPFlushConstruct &) {
+  ompContext_.pop_back();
+}
+
+void OmpStructureChecker::Enter(const parser::OpenMPCancelConstruct &x) {
+  const auto &dir{std::get<parser::Verbatim>(x.t)};
+  PushContext(dir.source, OmpDirective::CANCEL);
+}
+
+void OmpStructureChecker::Leave(const parser::OpenMPCancelConstruct &) {
+  ompContext_.pop_back();
+}
+
+void OmpStructureChecker::Enter(
+    const parser::OpenMPCancellationPointConstruct &x) {
+  const auto &dir{std::get<parser::Verbatim>(x.t)};
+  PushContext(dir.source, OmpDirective::CANCELLATION_POINT);
+}
+
+void OmpStructureChecker::Leave(
+    const parser::OpenMPCancellationPointConstruct &) {
+  ompContext_.pop_back();
+}
+
+void OmpStructureChecker::Enter(const parser::OmpSimpleStandaloneDirective &x) {
+  switch (x.v) {
+  case parser::OmpSimpleStandaloneDirective::Directive::Ordered: {
+    // 2.13.8 ordered-construct-clause -> depend-clause
+    SetContextDirectiveEnum(OmpDirective::ORDERED);
+    OmpClauseSet allowed{OmpClause::DEPEND};
+    SetContextAllowed(allowed);
+  }
+  default:
+    // TODO others
+    break;
+  }
 }
 
 void OmpStructureChecker::Enter(const parser::OmpBlockDirective &x) {
