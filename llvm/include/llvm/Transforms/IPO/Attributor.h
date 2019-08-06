@@ -333,7 +333,7 @@ struct InformationCache {
 
   /// Return the map that relates "interesting" opcodes with all instructions
   /// with that opcode in \p F.
-  OpcodeInstMapTy &getOpcodeInstMapForFunction(Function &F) {
+  OpcodeInstMapTy &getOpcodeInstMapForFunction(const Function &F) {
     return FuncInstOpcodeMap[&F];
   }
 
@@ -341,16 +341,16 @@ struct InformationCache {
   using InstructionVectorTy = std::vector<Instruction *>;
 
   /// Return the instructions in \p F that may read or write memory.
-  InstructionVectorTy &getReadOrWriteInstsForFunction(Function &F) {
+  InstructionVectorTy &getReadOrWriteInstsForFunction(const Function &F) {
     return FuncRWInstsMap[&F];
   }
 
 private:
   /// A map type from functions to opcode to instruction maps.
-  using FuncInstOpcodeMapTy = DenseMap<Function *, OpcodeInstMapTy>;
+  using FuncInstOpcodeMapTy = DenseMap<const Function *, OpcodeInstMapTy>;
 
   /// A map type from functions to their read or write instructions.
-  using FuncRWInstsMapTy = DenseMap<Function *, InstructionVectorTy>;
+  using FuncRWInstsMapTy = DenseMap<const Function *, InstructionVectorTy>;
 
   /// A nested map that remembers all instructions in a function with a certain
   /// instruction opcode (Instruction::getOpcode()).
