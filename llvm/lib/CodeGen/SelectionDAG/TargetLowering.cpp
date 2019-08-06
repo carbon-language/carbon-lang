@@ -2536,6 +2536,12 @@ void TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
   Known.resetAll();
 }
 
+void TargetLowering::computeKnownBitsForTargetInstr(
+    Register R, KnownBits &Known, const APInt &DemandedElts,
+    const MachineRegisterInfo &MRI, unsigned Depth) const {
+  Known.resetAll();
+}
+
 void TargetLowering::computeKnownBitsForFrameIndex(const SDValue Op,
                                                    KnownBits &Known,
                                                    const APInt &DemandedElts,
