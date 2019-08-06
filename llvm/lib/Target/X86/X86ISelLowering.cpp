@@ -34758,11 +34758,12 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
         if (IdentityOp == 0)
           break;
       }
-      assert((IdentityOp == 0 || IdentityOp.countPopulation() == 1) &&
-             "Multiple identity shuffles detected");
 
       if (AllUndef)
         return DAG.getUNDEF(VT);
+
+      assert((IdentityOp == 0 || IdentityOp.countPopulation() == 1) &&
+             "Multiple identity shuffles detected");
 
       for (int i = 0; i != NumOps; ++i)
         if (IdentityOp[i])
