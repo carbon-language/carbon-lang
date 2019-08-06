@@ -5135,6 +5135,15 @@ unsigned LoopVectorizationCostModel::selectInterleaveCount(unsigned VF,
   else if (IC < 1)
     IC = 1;
 
+  // If the trip count is constant, clamp the calculated IC to be between 1 and
+  // the trip count divided by VF.
+  if (TC > 0) {
+    if ((TC / VF) < IC)
+      IC = (TC / VF);
+    if (IC < 1)
+      IC = 1;
+  }
+
   // Interleave if we vectorized this loop and there is a reduction that could
   // benefit from interleaving.
   if (VF > 1 && !Legal->getReductionVars()->empty()) {
