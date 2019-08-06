@@ -66,7 +66,7 @@ public:
   void changedInstr(MachineInstr &MI) override{};
 
 protected:
-  constexpr unsigned getMaxDepth() const { return 6; }
+  unsigned getMaxDepth() const { return 6; }
 };
 
 /// To use KnownBitsInfo analysis in a pass,

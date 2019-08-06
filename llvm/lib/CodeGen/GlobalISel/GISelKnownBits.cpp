@@ -260,7 +260,7 @@ void GISelKnownBits::computeKnownBitsImpl(Register R, KnownBits &Known,
                          Depth + 1);
     if (!RHSKnown.isConstant()) {
       LLVM_DEBUG(
-          MachineInstr *RHSMI = MRI->getVRegDef(MI.getOperand(2).getReg());
+          MachineInstr *RHSMI = MRI.getVRegDef(MI.getOperand(2).getReg());
           dbgs() << '[' << Depth << "] Shift not known constant: " << *RHSMI);
       break;
     }
