@@ -126,6 +126,9 @@ public:
   bool operator!=(unsigned Other) const { return Reg != Other; }
   bool operator==(int Other) const { return Reg == unsigned(Other); }
   bool operator!=(int Other) const { return Reg != unsigned(Other); }
+  // MSVC requires that we explicitly declare these two as well.
+  bool operator==(MCPhysReg Other) const { return Reg == unsigned(Other); }
+  bool operator!=(MCPhysReg Other) const { return Reg != unsigned(Other); }
 };
 
 // Provide DenseMapInfo for Register
