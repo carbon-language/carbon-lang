@@ -85,12 +85,16 @@ private:
 // A type parameter value: integer expression or assumed or deferred.
 class ParamValue {
 public:
-  static ParamValue Assumed() { return Category::Assumed; }
-  static ParamValue Deferred() { return Category::Deferred; }
+  static ParamValue Assumed(common::TypeParamAttr attr) {
+    return ParamValue{Category::Assumed, attr};
+  }
+  static ParamValue Deferred(common::TypeParamAttr attr) {
+    return ParamValue{Category::Deferred, attr};
+  }
   ParamValue(const ParamValue &) = default;
-  explicit ParamValue(MaybeIntExpr &&);
-  explicit ParamValue(SomeIntExpr &&);
-  explicit ParamValue(common::ConstantSubscript);
+  explicit ParamValue(MaybeIntExpr &&, common::TypeParamAttr);
+  explicit ParamValue(SomeIntExpr &&, common::TypeParamAttr attr);
+  explicit ParamValue(common::ConstantSubscript, common::TypeParamAttr attr);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }
@@ -106,7 +110,8 @@ public:
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
-  ParamValue(Category category) : category_{category} {}
+  ParamValue(Category category, common::TypeParamAttr attr)
+    : category_{category}, attr_{attr} {}
   Category category_{Category::Explicit};
   common::TypeParamAttr attr_{common::TypeParamAttr::Kind};
   MaybeIntExpr expr_;

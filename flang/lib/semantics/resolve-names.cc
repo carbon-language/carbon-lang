@@ -838,9 +838,8 @@ private:
   Symbol *MakeTypeSymbol(const SourceName &, Details &&);
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
-  ParamValue GetParamValue(const parser::TypeParamValue &);
-  ParamValue GetLenParamValue(const parser::TypeParamValue &);
-  ParamValue GetLenParamValue(common::ConstantSubscript);
+  ParamValue GetParamValue(
+      const parser::TypeParamValue &, common::TypeParamAttr attr);
   Symbol &MakeCommonBlockSymbol(const parser::Name &);
   void CheckCommonBlockDerivedType(const SourceName &, const Symbol &);
   std::optional<MessageFixedText> CheckSaveAttr(const Symbol &);
@@ -2873,7 +2872,7 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
 }
 void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   if (!charInfo_.length) {
-    charInfo_.length = GetLenParamValue(1);
+    charInfo_.length = ParamValue{1, common::TypeParamAttr::Len};
   }
   if (!charInfo_.kind.has_value()) {
     charInfo_.kind =
@@ -2886,19 +2885,20 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
 void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
   charInfo_.kind = EvaluateSubscriptIntExpr(x.kind);
   if (x.length) {
-    charInfo_.length = GetLenParamValue(*x.length);
+    charInfo_.length = GetParamValue(*x.length, common::TypeParamAttr::Len);
   }
 }
 void DeclarationVisitor::Post(const parser::CharLength &x) {
   if (const auto *length{std::get_if<std::int64_t>(&x.u)}) {
-    charInfo_.length = GetLenParamValue(*length);
+    charInfo_.length = ParamValue{*length, common::TypeParamAttr::Len};
   } else {
-    charInfo_.length = GetLenParamValue(std::get<parser::TypeParamValue>(x.u));
+    charInfo_.length = GetParamValue(
+        std::get<parser::TypeParamValue>(x.u), common::TypeParamAttr::Len);
   }
 }
 void DeclarationVisitor::Post(const parser::LengthSelector &x) {
   if (const auto *param{std::get_if<parser::TypeParamValue>(&x.u)}) {
-    charInfo_.length = GetLenParamValue(*param);
+    charInfo_.length = GetParamValue(*param, common::TypeParamAttr::Len);
   }
 }
 
@@ -2961,6 +2961,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     const auto &optKeyword{
         std::get<std::optional<parser::Keyword>>(typeParamSpec.t)};
     SourceName name;
+    common::TypeParamAttr attr{common::TypeParamAttr::Kind};
     if (optKeyword.has_value()) {
       seenAnyName = true;
       name = optKeyword->v.source;
@@ -2970,6 +2971,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
         Say(name,
             "'%s' is not the name of a parameter for this type"_err_en_US);
       } else {
+        attr = (*it)->get<TypeParamDetails>().attr();
         Resolve(optKeyword->v, const_cast<Symbol *>(*it));
       }
     } else if (seenAnyName) {
@@ -2977,6 +2979,11 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       continue;
     } else if (nextNameIter != parameterNames.end()) {
       name = *nextNameIter++;
+      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
+          [&](const Symbol *symbol) { return symbol->name() == name; })};
+      if (it != parameterDecls.end()) {
+        attr = (*it)->get<TypeParamDetails>().attr();
+      }
     } else {
       Say(typeName.source,
           "Too many type parameters given for derived type '%s'"_err_en_US);
@@ -2987,7 +2994,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
           "Multiple values given for type parameter '%s'"_err_en_US, name);
     } else {
       const auto &value{std::get<parser::TypeParamValue>(typeParamSpec.t)};
-      ParamValue param{GetParamValue(value)};  // folded
+      ParamValue param{GetParamValue(value, attr)};  // folded
       if (!param.isExplicit() || param.GetExplicit().has_value()) {
         spec.AddParamValue(name, std::move(param));
       }
@@ -4055,31 +4062,19 @@ bool DeclarationVisitor::OkToAddComponent(
   return true;
 }
 
-ParamValue DeclarationVisitor::GetParamValue(const parser::TypeParamValue &x) {
+ParamValue DeclarationVisitor::GetParamValue(
+    const parser::TypeParamValue &x, common::TypeParamAttr attr) {
   return std::visit(
       common::visitors{
           [=](const parser::ScalarIntExpr &x) {
-            return ParamValue{EvaluateIntExpr(x)};
+            return ParamValue{EvaluateIntExpr(x), attr};
           },
-          [](const parser::Star &) { return ParamValue::Assumed(); },
-          [](const parser::TypeParamValue::Deferred &) {
-            return ParamValue::Deferred();
+          [=](const parser::Star &) { return ParamValue::Assumed(attr); },
+          [=](const parser::TypeParamValue::Deferred &) {
+            return ParamValue::Deferred(attr);
           },
       },
       x.u);
-}
-
-ParamValue DeclarationVisitor::GetLenParamValue(
-    const parser::TypeParamValue &x) {
-  ParamValue param{GetParamValue(x)};
-  param.set_attr(common::TypeParamAttr::Len);
-  return param;
-}
-
-ParamValue DeclarationVisitor::GetLenParamValue(common::ConstantSubscript l) {
-  ParamValue param{l};
-  param.set_attr(common::TypeParamAttr::Len);
-  return param;
 }
 
 // ConstructVisitor implementation
@@ -4521,10 +4516,12 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
   CHECK(type.category() == common::TypeCategory::Character);
   if (length.has_value()) {
     return currScope().MakeCharacterType(
-        ParamValue{SomeIntExpr{*std::move(length)}}, KindExpr{type.kind()});
+        ParamValue{SomeIntExpr{*std::move(length)}, common::TypeParamAttr::Len},
+        KindExpr{type.kind()});
   } else {
     return currScope().MakeCharacterType(
-        ParamValue::Deferred(), KindExpr{type.kind()});
+        ParamValue::Deferred(common::TypeParamAttr::Len),
+        KindExpr{type.kind()});
   }
 }
 

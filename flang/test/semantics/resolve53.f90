@@ -251,10 +251,22 @@ end module
 
 ! Types distinguished by kind (but not length) parameters
 module m15
-  type :: t(k, l)
-    integer, kind :: k = 1
-    integer, len :: l
+  type :: t1(k1, l1)
+    integer, kind :: k1 = 1
+    integer, len :: l1 = 101
   end type
+
+  type, extends(t1) :: t2(k2a, l2, k2b)
+    integer, kind :: k2a = 2
+    integer, kind :: k2b = 3
+    integer, len :: l2 = 102
+  end type
+
+  type, extends(t2) :: t3(l3, k3)
+    integer, kind :: k3 = 4
+    integer, len :: l3 = 103
+  end type
+
   interface g1
     procedure s1
     procedure s2
@@ -264,17 +276,72 @@ module m15
     procedure s1
     procedure s3
   end interface
+  !ERROR: Generic 'g3' may not have specific procedures 's4' and 's5' as their interfaces are not distinguishable
+  interface g3
+    procedure s4
+    procedure s5
+  end interface
+  interface g4
+    procedure s5
+    procedure s6
+    procedure s9
+  end interface
+  interface g5
+    procedure s4
+    procedure s7
+    procedure s9
+  end interface
+  interface g6
+    procedure s5
+    procedure s8
+    procedure s9
+  end interface
+  !ERROR: Generic 'g7' may not have specific procedures 's6' and 's7' as their interfaces are not distinguishable
+  interface g7
+    procedure s6
+    procedure s7
+  end interface
+  !ERROR: Generic 'g8' may not have specific procedures 's6' and 's8' as their interfaces are not distinguishable
+  interface g8
+    procedure s6
+    procedure s8
+  end interface
+  !ERROR: Generic 'g9' may not have specific procedures 's7' and 's8' as their interfaces are not distinguishable
+  interface g9
+    procedure s7
+    procedure s8
+  end interface
+
 contains
   subroutine s1(x)
-    type(t(1, 4)) :: x
+    type(t1(1, 4)) :: x
   end
   subroutine s2(x)
-    type(t(2, 4)) :: x
+    type(t1(2, 4)) :: x
   end
   subroutine s3(x)
-    type(t(l=5)) :: x
+    type(t1(l1=5)) :: x
   end
+  subroutine s4(x)
+    type(t3(1, 101, 2, 102, 3, 103, 4)) :: x
+  end subroutine
+  subroutine s5(x)
+    type(t3) :: x
+  end subroutine
+  subroutine s6(x)
+    type(t3(1, 99, k2b=2, k2a=3, l2=*, l3=97, k3=4)) :: x
+  end subroutine
+  subroutine s7(x)
+    type(t3(k1=1, l1=99, k2a=3, k2b=2, k3=4)) :: x
+  end subroutine
+  subroutine s8(x)
+    type(t3(1, :, 3, :, 2, :, 4)), allocatable :: x
+  end subroutine
+  subroutine s9(x)
+    type(t3(k1=2)) :: x
+  end subroutine
 end
+
 
 ! Check that specifics for type-bound generics can be distinguished
 module m16

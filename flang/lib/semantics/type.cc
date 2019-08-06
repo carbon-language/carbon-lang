@@ -127,11 +127,14 @@ bool IsExplicit(const ArraySpec &arraySpec) {
   return true;
 }
 
-ParamValue::ParamValue(MaybeIntExpr &&expr) : expr_{std::move(expr)} {}
-ParamValue::ParamValue(SomeIntExpr &&expr) : expr_{std::move(expr)} {}
-ParamValue::ParamValue(common::ConstantSubscript value)
-  : ParamValue(SomeIntExpr{evaluate::Expr<evaluate::SubscriptInteger>{value}}) {
-}
+ParamValue::ParamValue(MaybeIntExpr &&expr, common::TypeParamAttr attr)
+  : attr_{attr}, expr_{std::move(expr)} {}
+ParamValue::ParamValue(SomeIntExpr &&expr, common::TypeParamAttr attr)
+  : attr_{attr}, expr_{std::move(expr)} {}
+ParamValue::ParamValue(
+    common::ConstantSubscript value, common::TypeParamAttr attr)
+  : ParamValue(
+        SomeIntExpr{evaluate::Expr<evaluate::SubscriptInteger>{value}}, attr) {}
 
 void ParamValue::SetExplicit(SomeIntExpr &&x) {
   category_ = Category::Explicit;
