@@ -15,29 +15,22 @@
 #ifndef FORTRAN_SEMANTICS_TYPE_H_
 #define FORTRAN_SEMANTICS_TYPE_H_
 
-#include "attr.h"
 #include "../common/Fortran.h"
 #include "../common/idioms.h"
-#include "../common/indirection.h"
 #include "../evaluate/expression.h"
 #include "../parser/char-block.h"
-#include <list>
-#include <memory>
+#include <algorithm>
+#include <iosfwd>
+#include <map>
 #include <optional>
-#include <ostream>
 #include <string>
-#include <unordered_map>
 #include <variant>
-
-namespace Fortran::parser {
-struct Expr;
-}
+#include <vector>
 
 namespace Fortran::semantics {
 
 class Scope;
 class Symbol;
-class ExprResolver;
 
 /// A SourceName is a name in the cooked character stream,
 /// i.e. a range of lower-case characters with provenance.
@@ -204,8 +197,6 @@ public:
   ShapeSpec &operator=(const ShapeSpec &) = default;
   ShapeSpec &operator=(ShapeSpec &&) = default;
 
-  bool isExplicit() const { return ub_.isExplicit(); }
-  bool isDeferred() const { return lb_.isDeferred(); }
   Bound &lbound() { return lb_; }
   const Bound &lbound() const { return lb_; }
   Bound &ubound() { return ub_; }
@@ -215,12 +206,26 @@ private:
   ShapeSpec(Bound &&lb, Bound &&ub) : lb_{std::move(lb)}, ub_{std::move(ub)} {}
   Bound lb_;
   Bound ub_;
-  friend ExprResolver;
   friend std::ostream &operator<<(std::ostream &, const ShapeSpec &);
 };
 
-using ArraySpec = std::list<ShapeSpec>;
-bool IsExplicit(const ArraySpec &);
+struct ArraySpec : public std::vector<ShapeSpec> {
+  ArraySpec() {}
+  int Rank() const { return size(); }
+  bool IsExplicitShape() const;
+  bool IsAssumedShape() const;
+  bool IsDeferredShape() const;
+  bool IsImpliedShape() const;
+  bool IsAssumedSize() const;
+  bool IsAssumedRank() const;
+
+private:
+  // Check non-empty and predicate is true for each element.
+  template<typename P> bool CheckAll(P predicate) const {
+    return !empty() && std::all_of(begin(), end(), predicate);
+  }
+};
+std::ostream &operator<<(std::ostream &, const ArraySpec &);
 
 class DerivedTypeSpec {
 public:

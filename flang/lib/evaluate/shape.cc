@@ -29,14 +29,7 @@ bool IsImpliedShape(const Symbol &symbol0) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (symbol.attrs().test(semantics::Attr::PARAMETER) &&
         details->init().has_value()) {
-      for (const semantics::ShapeSpec &ss : details->shape()) {
-        if (!ss.ubound().isDeferred()) {
-          // ss.isDeferred() can't be used because the lower bounds are
-          // implicitly set to 1 in the symbol table.
-          return false;
-        }
-      }
-      return !details->shape().empty();
+      return details->shape().IsImpliedShape();
     }
   }
   return false;
@@ -45,12 +38,8 @@ bool IsImpliedShape(const Symbol &symbol0) {
 bool IsExplicitShape(const Symbol &symbol0) {
   const Symbol &symbol{ResolveAssociations(symbol0)};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-    for (const semantics::ShapeSpec &ss : details->shape()) {
-      if (!ss.isExplicit()) {
-        return false;
-      }
-    }
-    return true;  // even if scalar
+    const auto &shape{details->shape()};
+    return shape.Rank() == 0 || shape.IsExplicitShape();  // even if scalar
   } else {
     return false;
   }
@@ -251,7 +240,7 @@ MaybeExtentExpr GetExtent(
     int j{0};
     for (const auto &shapeSpec : details->shape()) {
       if (j++ == dimension) {
-        if (shapeSpec.isExplicit()) {
+        if (shapeSpec.ubound().isExplicit()) {
           if (const auto &ubound{shapeSpec.ubound().GetExplicit()}) {
             if (const auto &lbound{shapeSpec.lbound().GetExplicit()}) {
               return Fold(context,
@@ -400,7 +389,7 @@ void GetShapeVisitor::Handle(const NamedEntity &base) {
       Nested(object->init());
     } else {
       Shape result;
-      int n{static_cast<int>(object->shape().size())};
+      int n{object->shape().Rank()};
       for (int dimension{0}; dimension < n; ++dimension) {
         result.emplace_back(GetExtent(context_, base, dimension));
       }

@@ -118,6 +118,7 @@ add_executable(folding-test
 
 target_link_libraries(folding-test
   FortranEvaluateTesting
+  FortranSemantics
   FortranEvaluate
 )
 

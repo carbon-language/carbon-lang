@@ -53,8 +53,7 @@ static void DumpType(std::ostream &os, const DeclTypeSpec *type) {
 }
 
 template<typename T>
-static void DumpList(
-    std::ostream &os, const char *label, const std::list<T> &list) {
+static void DumpList(std::ostream &os, const char *label, const T &list) {
   if (!list.empty()) {
     os << ' ' << label << ':';
     char sep{' '};

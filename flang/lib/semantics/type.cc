@@ -17,7 +17,7 @@
 #include "symbol.h"
 #include "../evaluate/fold.h"
 #include "../parser/characters.h"
-#include <algorithm>
+#include <ostream>
 #include <sstream>
 
 namespace Fortran::semantics {
@@ -106,6 +106,30 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
   return o;
 }
 
+bool ArraySpec::IsExplicitShape() const {
+  return CheckAll([](const ShapeSpec &x) { return x.ubound().isExplicit(); });
+}
+bool ArraySpec::IsAssumedShape() const {
+  return CheckAll([](const ShapeSpec &x) { return x.ubound().isDeferred(); });
+}
+bool ArraySpec::IsDeferredShape() const {
+  return CheckAll([](const ShapeSpec &x) {
+    return x.lbound().isDeferred() && x.ubound().isDeferred();
+  });
+}
+bool ArraySpec::IsImpliedShape() const {
+  return CheckAll([](const ShapeSpec &x) { return x.ubound().isAssumed(); });
+}
+bool ArraySpec::IsAssumedSize() const {
+  return !empty() &&
+      std::all_of(begin(), end() - 1,
+          [](const ShapeSpec &x) { return x.ubound().isExplicit(); }) &&
+      back().ubound().isAssumed();
+}
+bool ArraySpec::IsAssumedRank() const {
+  return Rank() == 1 && front().lbound().isAssumed();
+}
+
 std::ostream &operator<<(std::ostream &os, const ArraySpec &arraySpec) {
   char sep{'('};
   for (auto &shape : arraySpec) {
@@ -116,15 +140,6 @@ std::ostream &operator<<(std::ostream &os, const ArraySpec &arraySpec) {
     os << ')';
   }
   return os;
-}
-
-bool IsExplicit(const ArraySpec &arraySpec) {
-  for (const auto &shapeSpec : arraySpec) {
-    if (!shapeSpec.isExplicit()) {
-      return false;
-    }
-  }
-  return true;
 }
 
 ParamValue::ParamValue(MaybeIntExpr &&expr, common::TypeParamAttr attr)

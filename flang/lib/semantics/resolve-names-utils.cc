@@ -211,6 +211,7 @@ ArraySpec AnalyzeCoarraySpec(
 
 ArraySpec ArraySpecAnalyzer::Analyze(const parser::ComponentArraySpec &x) {
   std::visit([this](const auto &y) { Analyze(y); }, x.u);
+  CHECK(!arraySpec_.empty());
   return arraySpec_;
 }
 ArraySpec ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
@@ -224,6 +225,7 @@ ArraySpec ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
           [&](const auto &y) { Analyze(y); },
       },
       x.u);
+  CHECK(!arraySpec_.empty());
   return arraySpec_;
 }
 ArraySpec ArraySpecAnalyzer::Analyze(const parser::CoarraySpec &x) {
@@ -237,6 +239,7 @@ ArraySpec ArraySpecAnalyzer::Analyze(const parser::CoarraySpec &x) {
           },
       },
       x.u);
+  CHECK(!arraySpec_.empty());
   return arraySpec_;
 }
 

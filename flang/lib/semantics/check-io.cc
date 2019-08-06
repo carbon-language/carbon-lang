@@ -17,6 +17,7 @@
 #include "tools.h"
 #include "../common/format.h"
 #include "../parser/tools.h"
+#include <unordered_map>
 
 namespace Fortran::semantics {
 

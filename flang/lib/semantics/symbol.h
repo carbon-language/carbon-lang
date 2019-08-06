@@ -163,22 +163,12 @@ public:
   }
   bool IsArray() const { return !shape_.empty(); }
   bool IsCoarray() const { return !coshape_.empty(); }
-  bool IsAssumedShape() const {
-    return isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
-        !shape_.back().lbound().isDeferred();
-  }
+  bool IsAssumedShape() const { return isDummy() && shape_.IsAssumedShape(); }
   bool IsDeferredShape() const {
-    return !isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
-        shape_.back().lbound().isDeferred();
+    return !isDummy() && shape_.IsDeferredShape();
   }
-  bool IsAssumedSize() const {
-    return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
-        !shape_.back().lbound().isAssumed();
-  }
-  bool IsAssumedRank() const {
-    return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
-        shape_.back().lbound().isAssumed();
-  }
+  bool IsAssumedSize() const { return isDummy() && shape_.IsAssumedSize(); }
+  bool IsAssumedRank() const { return isDummy() && shape_.IsAssumedRank(); }
 
 private:
   MaybeExpr init_;
@@ -577,9 +567,7 @@ public:
             },
             [](const UseDetails &x) { return x.symbol().Rank(); },
             [](const HostAssocDetails &x) { return x.symbol().Rank(); },
-            [](const ObjectEntityDetails &oed) {
-              return static_cast<int>(oed.shape().size());
-            },
+            [](const ObjectEntityDetails &oed) { return oed.shape().Rank(); },
             [](const AssocEntityDetails &aed) {
               if (const auto &expr{aed.expr()}) {
                 return expr->Rank();
@@ -603,9 +591,7 @@ public:
             },
             [](const UseDetails &x) { return x.symbol().Corank(); },
             [](const HostAssocDetails &x) { return x.symbol().Corank(); },
-            [](const ObjectEntityDetails &oed) {
-              return static_cast<int>(oed.coshape().size());
-            },
+            [](const ObjectEntityDetails &oed) { return oed.coshape().Rank(); },
             [](const auto &) { return 0; },
         },
         details_);
