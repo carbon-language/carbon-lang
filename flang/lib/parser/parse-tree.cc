@@ -244,9 +244,7 @@ CharBlock Variable::GetSource() const {
 std::ostream &operator<<(std::ostream &os, const Name &x) {
   return os << x.ToString();
 }
-std::ostream &operator<<(std::ostream &os, const CharBlock &x) {
-  return os << x.ToString();
-}
+
 }
 
 template class std::unique_ptr<Fortran::evaluate::GenericExprWrapper>;

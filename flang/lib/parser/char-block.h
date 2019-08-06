@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <iosfwd>
 #include <string>
 #include <utility>
 
@@ -138,6 +139,11 @@ inline bool operator>=(const char *left, const CharBlock &right) {
 inline bool operator>(const char *left, const CharBlock &right) {
   return right < left;
 }
+
+inline std::ostream &operator<<(std::ostream &os, const CharBlock &x) {
+  return os << x.ToString();
+}
+
 }
 
 // Specializations to enable std::unordered_map<CharBlock, ...> &c.
