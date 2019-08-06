@@ -84,7 +84,7 @@ def main():
 
   for test in test_paths:
     if args.verbose:
-      print('Scanning for RUN lines in test file: %s' + test, file=sys.stderr)
+      print('Scanning for RUN lines in test file: ' + test, file=sys.stderr)
     with open(test) as f:
       input_lines = [l.rstrip() for l in f]
 
