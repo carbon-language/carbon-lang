@@ -448,6 +448,9 @@ function(llvm_add_library name)
     list(APPEND objlibs ${obj_name})
 
     set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
+    if(ARG_DEPENDS)
+      add_dependencies(${obj_name} ${ARG_DEPENDS})
+    endif()
   endif()
 
   if(ARG_SHARED AND ARG_STATIC)
