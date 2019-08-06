@@ -8,7 +8,6 @@ unittest("ObjectYAMLTests") {
   ]
   sources = [
     "MinidumpYAMLTest.cpp",
-    "YAML2ObjTest.cpp",
     "YAMLTest.cpp",
   ]
 }
