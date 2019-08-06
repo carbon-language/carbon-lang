@@ -31,6 +31,7 @@ set $src
 touch $actual
 for src in "$@"; do
   [[ ! -f $src ]] && echo "File not found: $src" && exit 1
+  path=$(git ls-files --full-name $src 2>/dev/null || echo $src)
   (
     cd $temp
     ls -1 *.mod > prev_files
@@ -41,14 +42,12 @@ for src in "$@"; do
   extra_files=$(echo "$expected_files" | comm -23 $actual_files -)
   if [[ ! -z "$extra_files" ]]; then
     echo "Unexpected .mod files produced:" $extra_files
-    echo FAIL
-    exit 1
+    die FAIL $path
   fi
   for mod in $expected_files; do
     if [[ ! -f $temp/$mod ]]; then
       echo "Compilation did not produce expected mod file: $mod"
-      echo FAIL
-      exit 1
+      die FAIL $path
     fi
     # The first three bytes of the file are a UTF-8 BOM
     sed '/^[^!]*!mod\$/d' $temp/$mod > $actual
@@ -56,8 +55,7 @@ for src in "$@"; do
     if ! diff -U999999 $expect $actual > $diffs; then
       echo "Module file $mod differs from expected:"
       sed '1,2d' $diffs
-      echo FAIL
-      exit 1
+      die FAIL $path
     fi
   done
   rm -f $actual $expect
