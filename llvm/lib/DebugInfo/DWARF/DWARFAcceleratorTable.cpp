@@ -629,7 +629,7 @@ DWARFDebugNames::NameIndex::getEntry(uint32_t *Offset) const {
   uint64_t Offset64 = *Offset;
   auto Result = getEntry(&Offset64);
   *Offset = Offset64;
-  return std::move(Result);
+  return Result;
 }
 
 DWARFDebugNames::NameTableEntry
