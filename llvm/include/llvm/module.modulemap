@@ -332,6 +332,12 @@ module LLVM_TableGen {
 module LLVM_Transforms {
   requires cplusplus
   umbrella "Transforms"
+
+  // FIXME: This is far from a perfect solution but at the moment this header
+  // is difficult to modularize and would require splitting it up. Exclude it
+  // completely to avoid a link failure with modular builds.
+  exclude header "Transforms/IPO/Attributor.h"
+
   module * { export * }
 }
 
