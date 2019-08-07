@@ -29,8 +29,8 @@
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
-#include "llvm/Support/MutexGuard.h"
 #include <cstdio>
+#include <mutex>
 #include <utility>
 
 using namespace clang;
@@ -132,12 +132,12 @@ public:
   }
 
   void copyTo(PPRegionSetTy &Set) {
-    llvm::MutexGuard MG(Mux);
+    std::lock_guard<llvm::sys::Mutex> MG(Mux);
     Set = ParsedRegions;
   }
 
   void update(ArrayRef<PPRegion> Regions) {
-    llvm::MutexGuard MG(Mux);
+    std::lock_guard<llvm::sys::Mutex> MG(Mux);
     ParsedRegions.insert(Regions.begin(), Regions.end());
   }
 };
