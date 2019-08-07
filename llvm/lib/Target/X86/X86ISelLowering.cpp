@@ -7631,6 +7631,9 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
                                         const SDLoc &DL, SelectionDAG &DAG,
                                         const X86Subtarget &Subtarget,
                                         bool isAfterLegalize) {
+  if ((VT.getScalarSizeInBits() % 8) != 0)
+    return SDValue();
+
   unsigned NumElems = Elts.size();
 
   int LastLoadedElt = -1;
