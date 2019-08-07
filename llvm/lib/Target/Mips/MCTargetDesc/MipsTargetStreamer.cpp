@@ -216,6 +216,19 @@ void MipsTargetStreamer::emitRRR(unsigned Opcode, unsigned Reg0, unsigned Reg1,
   emitRRX(Opcode, Reg0, Reg1, MCOperand::createReg(Reg2), IDLoc, STI);
 }
 
+void MipsTargetStreamer::emitRRRX(unsigned Opcode, unsigned Reg0, unsigned Reg1,
+                                  unsigned Reg2, MCOperand Op3, SMLoc IDLoc,
+                                  const MCSubtargetInfo *STI) {
+  MCInst TmpInst;
+  TmpInst.setOpcode(Opcode);
+  TmpInst.addOperand(MCOperand::createReg(Reg0));
+  TmpInst.addOperand(MCOperand::createReg(Reg1));
+  TmpInst.addOperand(MCOperand::createReg(Reg2));
+  TmpInst.addOperand(Op3);
+  TmpInst.setLoc(IDLoc);
+  getStreamer().EmitInstruction(TmpInst, *STI);
+}
+
 void MipsTargetStreamer::emitRRI(unsigned Opcode, unsigned Reg0, unsigned Reg1,
                                  int16_t Imm, SMLoc IDLoc,
                                  const MCSubtargetInfo *STI) {
@@ -328,6 +341,36 @@ void MipsTargetStreamer::emitStoreWithSymOffset(
   emitRRX(Opcode, SrcReg, ATReg, LoOperand, IDLoc, STI);
 }
 
+/// Emit a store instruction with an symbol offset.
+void MipsTargetStreamer::emitSCWithSymOffset(unsigned Opcode, unsigned SrcReg,
+                                             unsigned BaseReg,
+                                             MCOperand &HiOperand,
+                                             MCOperand &LoOperand,
+                                             unsigned ATReg, SMLoc IDLoc,
+                                             const MCSubtargetInfo *STI) {
+  // sc $8, sym => lui $at, %hi(sym)
+  //               sc $8, %lo(sym)($at)
+
+  // Generate the base address in ATReg.
+  emitRX(Mips::LUi, ATReg, HiOperand, IDLoc, STI);
+  if (!isMicroMips(STI) && isMipsR6(STI)) {
+    // For non-micromips r6 offset for 'sc' is not in the lower 16 bits so we
+    // put it in 'at'.
+    // sc $8, sym => lui $at, %hi(sym)
+    //               addiu $at, $at, %lo(sym)
+    //               sc $8, 0($at)
+    emitRRX(Mips::ADDiu, ATReg, ATReg, LoOperand, IDLoc, STI);
+    MCOperand Offset = MCOperand::createImm(0);
+    // Emit the store with the adjusted base and offset.
+    emitRRRX(Opcode, SrcReg, SrcReg, ATReg, Offset, IDLoc, STI);
+  } else {
+    if (BaseReg != Mips::ZERO)
+      emitRRR(Mips::ADDu, ATReg, ATReg, BaseReg, IDLoc, STI);
+    // Emit the store with the adjusted base and offset.
+    emitRRRX(Opcode, SrcReg, SrcReg, ATReg, LoOperand, IDLoc, STI);
+  }
+}
+
 /// Emit a load instruction with an immediate offset. DstReg and TmpReg are
 /// permitted to be the same register iff DstReg is distinct from BaseReg and
 /// DstReg is a GPR. It is the callers responsibility to identify such cases
@@ -386,6 +429,15 @@ void MipsTargetStreamer::emitLoadWithSymOffset(unsigned Opcode, unsigned DstReg,
     emitRRR(Mips::ADDu, TmpReg, TmpReg, BaseReg, IDLoc, STI);
   // Emit the load with the adjusted base and offset.
   emitRRX(Opcode, DstReg, TmpReg, LoOperand, IDLoc, STI);
+}
+
+bool MipsTargetStreamer::isMipsR6(const MCSubtargetInfo *STI) const {
+  return STI->getFeatureBits()[Mips::FeatureMips32r6] ||
+         STI->getFeatureBits()[Mips::FeatureMips64r6];
+}
+
+bool MipsTargetStreamer::isMicroMips(const MCSubtargetInfo *STI) const {
+  return STI->getFeatureBits()[Mips::FeatureMicroMips];
 }
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
