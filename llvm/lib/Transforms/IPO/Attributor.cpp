@@ -385,14 +385,8 @@ ChangeStatus AbstractAttribute::update(Attributor &A,
 
 /// -----------------------NoUnwind Function Attribute--------------------------
 
-struct AANoUnwindImpl : AANoUnwind, BooleanState {
+struct AANoUnwindImpl : AANoUnwind {
   IRPositionConstructorForward(AANoUnwindImpl, AANoUnwind);
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
 
   const std::string getAsStr() const override {
     return getAssumed() ? "nounwind" : "may-unwind";
@@ -400,12 +394,6 @@ struct AANoUnwindImpl : AANoUnwind, BooleanState {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
-
-  /// See AANoUnwind::isAssumedNoUnwind().
-  bool isAssumedNoUnwind() const override { return getAssumed(); }
-
-  /// See AANoUnwind::isKnownNoUnwind().
-  bool isKnownNoUnwind() const override { return getKnown(); }
 };
 
 struct AANoUnwindFunction final : public AANoUnwindImpl {
@@ -787,14 +775,8 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A,
 
 /// ------------------------ NoSync Function Attribute -------------------------
 
-struct AANoSyncImpl : AANoSync, BooleanState {
+struct AANoSyncImpl : AANoSync {
   IRPositionConstructorForward(AANoSyncImpl, AANoSync);
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
 
   const std::string getAsStr() const override {
     return getAssumed() ? "nosync" : "may-sync";
@@ -802,12 +784,6 @@ struct AANoSyncImpl : AANoSync, BooleanState {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
-
-  /// See AANoSync::isAssumedNoSync()
-  bool isAssumedNoSync() const override { return getAssumed(); }
-
-  /// See AANoSync::isKnownNoSync()
-  bool isKnownNoSync() const override { return getKnown(); }
 
   /// Helper function used to determine whether an instruction is non-relaxed
   /// atomic. In other words, if an atomic instruction does not have unordered
@@ -962,14 +938,8 @@ ChangeStatus AANoSyncImpl::updateImpl(Attributor &A,
 
 /// ------------------------ No-Free Attributes ----------------------------
 
-struct AANoFreeImpl : public AANoFree, BooleanState {
+struct AANoFreeImpl : public AANoFree {
   IRPositionConstructorForward(AANoFreeImpl, AANoFree);
-
-  /// See AbstractAttribute::getState()
-  ///{
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  ///}
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
@@ -978,12 +948,6 @@ struct AANoFreeImpl : public AANoFree, BooleanState {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
-
-  /// Return true if "nofree" is assumed.
-  bool isAssumedNoFree() const override { return getAssumed(); }
-
-  /// Return true if "nofree" is known.
-  bool isKnownNoFree() const override { return getKnown(); }
 };
 
 struct AANoFreeFunction final : public AANoFreeImpl {
@@ -1008,25 +972,14 @@ ChangeStatus AANoFreeImpl::updateImpl(Attributor &A,
 }
 
 /// ------------------------ NonNull Argument Attribute ------------------------
-struct AANonNullImpl : AANonNull, BooleanState {
+struct AANonNullImpl : AANonNull {
   IRPositionConstructorForward(AANonNullImpl, AANonNull);
 
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
     return getAssumed() ? "nonnull" : "may-null";
   }
-
-  /// See AANonNull::isAssumedNonNull().
-  bool isAssumedNonNull() const override { return getAssumed(); }
-
-  /// See AANonNull::isKnownNonNull().
-  bool isKnownNonNull() const override { return getKnown(); }
 
   /// Generate a predicate that checks if a given value is assumed nonnull.
   /// The generated function returns true if a value satisfies any of
@@ -1189,20 +1142,8 @@ AANonNullCallSiteArgument::updateImpl(Attributor &A,
 
 /// ------------------------ Will-Return Attributes ----------------------------
 
-struct AAWillReturnImpl : public AAWillReturn, BooleanState {
+struct AAWillReturnImpl : public AAWillReturn {
   IRPositionConstructorForward(AAWillReturnImpl, AAWillReturn);
-
-  /// See AAWillReturn::isKnownWillReturn().
-  bool isKnownWillReturn() const override { return getKnown(); }
-
-  /// See AAWillReturn::isAssumedWillReturn().
-  bool isAssumedWillReturn() const override { return getAssumed(); }
-
-  /// See AbstractAttribute::getState(...).
-  AbstractState &getState() override { return *this; }
-
-  /// See AbstractAttribute::getState(...).
-  const AbstractState &getState() const override { return *this; }
 
   /// See AbstractAttribute::getAsStr()
   const std::string getAsStr() const override {
@@ -1283,24 +1224,12 @@ ChangeStatus AAWillReturnFunction::updateImpl(Attributor &A,
 
 /// ------------------------ NoAlias Argument Attribute ------------------------
 
-struct AANoAliasImpl : AANoAlias, BooleanState {
+struct AANoAliasImpl : AANoAlias {
   IRPositionConstructorForward(AANoAliasImpl, AANoAlias);
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
 
   const std::string getAsStr() const override {
     return getAssumed() ? "noalias" : "may-alias";
   }
-
-  /// See AANoAlias::isAssumedNoAlias().
-  bool isAssumedNoAlias() const override { return getAssumed(); }
-
-  /// See AANoAlias::isKnowndNoAlias().
-  bool isKnownNoAlias() const override { return getKnown(); }
 };
 
 /// NoAlias attribute for function return value.
@@ -1363,7 +1292,7 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
 
 /// -------------------AAIsDead Function Attribute-----------------------
 
-struct AAIsDeadImpl : public AAIsDead, BooleanState {
+struct AAIsDeadImpl : public AAIsDead {
   IRPositionConstructorForward(AAIsDeadImpl, AAIsDead);
 
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -1501,12 +1430,6 @@ struct AAIsDeadImpl : public AAIsDead, BooleanState {
   static bool mayCatchAsynchronousExceptions(const Function &F) {
     return F.hasPersonalityFn() && !canSimplifyInvokeNoUnwind(&F);
   }
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
 
   /// Collection of to be explored paths.
   SmallSetVector<const Instruction *, 8> ToBeExploredPaths;
@@ -1696,11 +1619,12 @@ struct DerefState : AbstractState {
 
 struct AADereferenceableImpl : AADereferenceable, DerefState {
   IRPositionConstructorForward(AADereferenceableImpl, AADereferenceable);
+  using StateType = DerefState;
 
   /// See AbstractAttribute::getState()
   /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
+  StateType &getState() override { return *this; }
+  const StateType &getState() const override { return *this; }
   /// }
 
   /// See AADereferenceable::getAssumedDereferenceableBytes().
@@ -1963,29 +1887,17 @@ AADereferenceableCallSiteArgument::updateImpl(Attributor &A,
 
 // ------------------------ Align Argument Attribute ------------------------
 
-struct AAAlignImpl : AAAlign, IntegerState {
+struct AAAlignImpl : AAAlign {
   IRPositionConstructorForward(AAAlignImpl, AAAlign);
 
   // Max alignemnt value allowed in IR
   static const unsigned MAX_ALIGN = 1U << 29;
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
 
   virtual const std::string getAsStr() const override {
     return getAssumedAlign() ? ("align<" + std::to_string(getKnownAlign()) +
                                 "-" + std::to_string(getAssumedAlign()) + ">")
                              : "unknown-align";
   }
-
-  /// See AAAlign::getAssumedAlign().
-  unsigned getAssumedAlign() const override { return getAssumed(); }
-
-  /// See AAAlign::getKnownAlign().
-  unsigned getKnownAlign() const override { return getKnown(); }
 
   /// See AbstractAttriubute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
@@ -2135,20 +2047,8 @@ ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A,
 }
 
 /// ------------------ Function No-Return Attribute ----------------------------
-struct AANoReturnImpl : public AANoReturn, BooleanState {
+struct AANoReturnImpl : public AANoReturn {
   IRPositionConstructorForward(AANoReturnImpl, AANoReturn);
-
-  /// See AbstractAttribute::getState()
-  /// {
-  AbstractState &getState() override { return *this; }
-  const AbstractState &getState() const override { return *this; }
-  /// }
-
-  /// Return true if the underlying object is known to never return.
-  bool isKnownNoReturn() const override { return getKnown(); }
-
-  /// Return true if the underlying object is assumed to never return.
-  bool isAssumedNoReturn() const override { return getAssumed(); }
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
