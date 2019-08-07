@@ -217,9 +217,8 @@ std::optional<DataRef> ExtractDataRef(const Designator<T> &d) {
       [](const auto &x) -> std::optional<DataRef> {
         if constexpr (common::HasMember<decltype(x), decltype(DataRef::u)>) {
           return DataRef{x};
-        } else {
-          return std::nullopt;
         }
+        return std::nullopt;  // w/o "else" to dodge bogus g++ 8.1 warning
       },
       d.u);
 }

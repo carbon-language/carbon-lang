@@ -88,9 +88,8 @@ std::optional<DynamicType> ExpressionBase<A>::GetType() const {
         [&](const auto &x) -> std::optional<DynamicType> {
           if constexpr (!common::HasMember<decltype(x), TypelessExpression>) {
             return x.GetType();
-          } else {
-            return std::nullopt;
           }
+          return std::nullopt;  // w/o "else" to dodge bogus g++ 8.1 warning
         },
         derived().u);
   }
