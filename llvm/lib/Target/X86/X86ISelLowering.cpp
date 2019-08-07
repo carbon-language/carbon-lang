@@ -40898,8 +40898,8 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
 static SDValue combineVectorSignBitsTruncation(SDNode *N, const SDLoc &DL,
                                                SelectionDAG &DAG,
                                                const X86Subtarget &Subtarget) {
-  // Requires SSE2 but AVX512 has fast truncate.
-  if (!Subtarget.hasSSE2() || Subtarget.hasAVX512())
+  // Requires SSE2.
+  if (!Subtarget.hasSSE2())
     return SDValue();
 
   if (!N->getValueType(0).isVector() || !N->getValueType(0).isSimple())
@@ -40921,6 +40921,13 @@ static SDValue combineVectorSignBitsTruncation(SDNode *N, const SDLoc &DL,
   if (SVT != MVT::i8 && SVT != MVT::i16 && SVT != MVT::i32)
     return SDValue();
   if (InSVT != MVT::i16 && InSVT != MVT::i32 && InSVT != MVT::i64)
+    return SDValue();
+
+  // AVX512 has fast truncate, but if the input is already going to be split,
+  // there's no harm in trying pack.
+  if (Subtarget.hasAVX512() &&
+      !(!Subtarget.useAVX512Regs() && VT.is256BitVector() &&
+        InVT.is512BitVector()))
     return SDValue();
 
   unsigned NumPackedSignBits = std::min<unsigned>(SVT.getSizeInBits(), 16);

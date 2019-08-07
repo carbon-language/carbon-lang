@@ -757,9 +757,8 @@ define <8 x i32> @trunc_v8i64_v8i32_zeroes(<8 x i64>* %x) nounwind "min-legal-ve
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsrlq $48, 32(%rdi), %ymm0
 ; CHECK-NEXT:    vpsrlq $48, (%rdi), %ymm1
-; CHECK-NEXT:    vpmovqd %ymm1, %xmm1
-; CHECK-NEXT:    vpmovqd %ymm0, %xmm0
-; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpackusdw %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; CHECK-NEXT:    retq
   %a = load <8 x i64>, <8 x i64>* %x
   %b = lshr <8 x i64> %a, <i64 48, i64 48, i64 48, i64 48, i64 48, i64 48, i64 48, i64 48>
@@ -770,11 +769,9 @@ define <8 x i32> @trunc_v8i64_v8i32_zeroes(<8 x i64>* %x) nounwind "min-legal-ve
 define <16 x i16> @trunc_v16i32_v16i16_zeroes(<16 x i32>* %x) nounwind "min-legal-vector-width"="256" {
 ; CHECK-LABEL: trunc_v16i32_v16i16_zeroes:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vpsrld $16, 32(%rdi), %ymm0
-; CHECK-NEXT:    vpsrld $16, (%rdi), %ymm1
-; CHECK-NEXT:    vpmovdw %ymm1, %xmm1
-; CHECK-NEXT:    vpmovdw %ymm0, %xmm0
-; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; CHECK-NEXT:    vmovdqa (%rdi), %ymm1
+; CHECK-NEXT:    vmovdqa {{.*#+}} ymm0 = [1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31]
+; CHECK-NEXT:    vpermi2w 32(%rdi), %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %a = load <16 x i32>, <16 x i32>* %x
   %b = lshr <16 x i32> %a, <i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16>
@@ -787,9 +784,8 @@ define <32 x i8> @trunc_v32i16_v32i8_zeroes(<32 x i16>* %x) nounwind "min-legal-
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsrlw $8, 32(%rdi), %ymm0
 ; CHECK-NEXT:    vpsrlw $8, (%rdi), %ymm1
-; CHECK-NEXT:    vpmovwb %ymm1, %xmm1
-; CHECK-NEXT:    vpmovwb %ymm0, %xmm0
-; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpackuswb %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; CHECK-NEXT:    retq
   %a = load <32 x i16>, <32 x i16>* %x
   %b = lshr <32 x i16> %a, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
@@ -802,9 +798,8 @@ define <8 x i32> @trunc_v8i64_v8i32_sign(<8 x i64>* %x) nounwind "min-legal-vect
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsraq $48, 32(%rdi), %ymm0
 ; CHECK-NEXT:    vpsraq $48, (%rdi), %ymm1
-; CHECK-NEXT:    vpmovqd %ymm1, %xmm1
-; CHECK-NEXT:    vpmovqd %ymm0, %xmm0
-; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpackssdw %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; CHECK-NEXT:    retq
   %a = load <8 x i64>, <8 x i64>* %x
   %b = ashr <8 x i64> %a, <i64 48, i64 48, i64 48, i64 48, i64 48, i64 48, i64 48, i64 48>
@@ -817,9 +812,8 @@ define <16 x i16> @trunc_v16i32_v16i16_sign(<16 x i32>* %x) nounwind "min-legal-
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsrad $16, 32(%rdi), %ymm0
 ; CHECK-NEXT:    vpsrad $16, (%rdi), %ymm1
-; CHECK-NEXT:    vpmovdw %ymm1, %xmm1
-; CHECK-NEXT:    vpmovdw %ymm0, %xmm0
-; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpackssdw %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; CHECK-NEXT:    retq
   %a = load <16 x i32>, <16 x i32>* %x
   %b = ashr <16 x i32> %a, <i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16>
@@ -832,9 +826,8 @@ define <32 x i8> @trunc_v32i16_v32i8_sign(<32 x i16>* %x) nounwind "min-legal-ve
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsraw $8, 32(%rdi), %ymm0
 ; CHECK-NEXT:    vpsraw $8, (%rdi), %ymm1
-; CHECK-NEXT:    vpmovwb %ymm1, %xmm1
-; CHECK-NEXT:    vpmovwb %ymm0, %xmm0
-; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpacksswb %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; CHECK-NEXT:    retq
   %a = load <32 x i16>, <32 x i16>* %x
   %b = ashr <32 x i16> %a, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
