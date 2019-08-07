@@ -5360,6 +5360,21 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
   AddSubpNames(node);
   std::visit([&](const auto *x) { Walk(*x); }, node.stmt());
   Walk(node.spec());
+  // If this is a function, convert result to an object. This is to prevent the
+  // result to be converted later to a function symbol if it is called inside
+  // the function.
+  // If the result is function pointer, then ConvertToObjectEntity will not
+  // convert the result to an object, and calling the symbol inside the function
+  // will result in calls to the result pointer.
+  // A function cannot be called recursively if RESULT was not used to define a
+  // distinct result name (15.6.2.2 point 4.).
+  if (Symbol * symbol{scope.symbol()}) {
+    if (auto *details{symbol->detailsIf<SubprogramDetails>()}) {
+      if (details->isFunction()) {
+        ConvertToObjectEntity(const_cast<Symbol &>(details->result()));
+      }
+    }
+  }
   if (node.IsModule()) {
     ApplyDefaultAccess();
   }

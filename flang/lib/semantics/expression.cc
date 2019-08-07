@@ -1830,6 +1830,35 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
   return std::nullopt;
 }
 
+static void CheckFuncRefToArrayElementRefHasSubscripts(
+    semantics::SemanticsContext &context,
+    const parser::FunctionReference &funcRef) {
+  // Emit message if the function reference fix will end-up an array element
+  // reference with no subscripts because it will not be possible to later tell
+  // the difference in expressions between empty subscript list due to bad
+  // subscripts error recovery or because the user did not put any.
+  if (std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t).empty()) {
+    auto &proc{std::get<parser::ProcedureDesignator>(funcRef.v.t)};
+    const auto *name{std::get_if<parser::Name>(&proc.u)};
+    name = {name
+            ? name
+            : &std::get<parser::ProcComponentRef>(proc.u).v.thing.component};
+    auto &msg{context.Say(funcRef.v.source,
+        "Reference to array '%s' with empty subscript list"_err_en_US,
+        name->source)};
+    if (name->symbol) {
+      if (semantics::IsFunctionResultWithSameNameAsFunction(*name->symbol)) {
+        msg.Attach(name->source,
+            "A result variable must be declared with RESULT to allow recursive "
+            "function calls"_en_US);
+      } else {
+        msg.Attach(
+            name->symbol->name(), "'%s' was declared here"_en_US, name->source);
+      }
+    }
+  }
+}
+
 // Converts, if appropriate, an original misparse of ambiguous syntax like
 // A(1) as a function reference into an array reference or a structure
 // constructor.
@@ -1856,6 +1885,7 @@ static void FixMisparsedFunctionReference(
       if (symbol.has<semantics::ObjectEntityDetails>()) {
         if constexpr (common::HasMember<common::Indirection<parser::Designator>,
                           uType>) {
+          CheckFuncRefToArrayElementRefHasSubscripts(context, funcRef);
           u = common::Indirection{funcRef.ConvertToArrayElementRef()};
         } else {
           common::die("can't fix misparsed function as array reference");
