@@ -478,7 +478,7 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
 
     // Don't fall back to DW_AT_GNU_ranges_base: it should be ignored for
     // skeleton CU DIE, so that DWARF users not aware of it are not broken.
-    }
+  }
 
   return DieArray.size();
 }
