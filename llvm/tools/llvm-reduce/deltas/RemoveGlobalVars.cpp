@@ -21,7 +21,7 @@ extractGVsFromModule(std::vector<Chunk> ChunksToKeep, Module *Program) {
 
   // Get GVs inside desired chunks
   std::set<GlobalVariable *> GVsToKeep;
-  int I = 0, GVCount = 1;
+  unsigned I = 0, GVCount = 1;
   for (auto &GV : Clone->globals()) {
     if (GV.hasInitializer() && I < ChunksToKeep.size()) {
       if (GVCount >= ChunksToKeep[I].begin && GVCount <= ChunksToKeep[I].end)

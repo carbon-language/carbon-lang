@@ -85,7 +85,7 @@ static bool increaseGranularity(std::vector<Chunk> &Chunks) {
     if (C.end - C.begin == 0)
       NewChunks.push_back(C);
     else {
-      int Half = (C.begin + C.end) / 2;
+      unsigned Half = (C.begin + C.end) / 2;
       NewChunks.push_back({C.begin, Half});
       NewChunks.push_back({Half + 1, C.end});
       SplitOne = true;
@@ -100,7 +100,7 @@ static bool increaseGranularity(std::vector<Chunk> &Chunks) {
 }
 
 void llvm::runDeltaPass(
-    TestRunner &Test, int Targets,
+    TestRunner &Test, unsigned Targets,
     std::function<std::unique_ptr<Module>(std::vector<Chunk>, Module *)>
         ExtractChunksFromModule) {
   if (!Targets)

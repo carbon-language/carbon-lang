@@ -23,7 +23,7 @@ extractFunctionsFromModule(std::vector<Chunk> ChunksToKeep, Module *Program) {
 
   // Get functions inside desired chunks
   std::set<Function *> FuncsToKeep;
-  int I = 0, FunctionCount = 1;
+  unsigned I = 0, FunctionCount = 1;
   for (auto &F : *Clone) {
     if (!F.isDeclaration() && I < ChunksToKeep.size()) {
       if (FunctionCount >= ChunksToKeep[I].begin &&

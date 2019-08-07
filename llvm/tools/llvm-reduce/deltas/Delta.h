@@ -28,8 +28,8 @@
 using namespace llvm;
 
 struct Chunk {
-  int begin;
-  int end;
+  unsigned begin;
+  unsigned end;
 
   /// Operator when populating CurrentChunks in Generic Delta Pass
   friend bool operator!=(const Chunk &C1, const Chunk &C2) {
@@ -66,7 +66,7 @@ namespace llvm {
 /// Other implementations of the Delta Debugging algorithm can also be found in
 /// the CReduce, Delta, and Lithium projects.
 void runDeltaPass(
-    TestRunner &Test, int Targets,
+    TestRunner &Test, unsigned Targets,
     std::function<std::unique_ptr<Module>(std::vector<Chunk>, Module *)>
         ExtractChunksFromModule);
 
