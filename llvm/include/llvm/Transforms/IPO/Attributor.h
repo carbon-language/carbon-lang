@@ -832,6 +832,14 @@ protected:
   virtual ChangeStatus manifest(Attributor &A) {
     return ChangeStatus::UNCHANGED;
   }
+
+  /// Hook to enable custom statistic tracking, called after manifest that
+  /// resulted in a change if statistics are enabled.
+  ///
+  /// We require subclasses to provide an implementation so we remember to
+  /// add statistics for them.
+  virtual void trackStatistics() const = 0;
+
   /// Return an IR position, see struct IRPosition.
   virtual IRPosition &getIRPosition() = 0;
 

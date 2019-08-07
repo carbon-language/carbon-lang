@@ -53,30 +53,38 @@ STATISTIC(NumAttributesValidFixpoint,
           "Number of abstract attributes in a valid fixpoint state");
 STATISTIC(NumAttributesManifested,
           "Number of abstract attributes manifested in IR");
-STATISTIC(NumFnNoUnwind, "Number of functions marked nounwind");
 
-STATISTIC(NumFnUniqueReturned, "Number of function with unique return");
-STATISTIC(NumFnKnownReturns, "Number of function with known return values");
-STATISTIC(NumFnArgumentReturned,
-          "Number of function arguments marked returned");
-STATISTIC(NumFnNoSync, "Number of functions marked nosync");
-STATISTIC(NumFnNoFree, "Number of functions marked nofree");
-STATISTIC(NumFnReturnedNonNull,
-          "Number of function return values marked nonnull");
-STATISTIC(NumFnArgumentNonNull, "Number of function arguments marked nonnull");
-STATISTIC(NumCSArgumentNonNull, "Number of call site arguments marked nonnull");
-STATISTIC(NumFnWillReturn, "Number of functions marked willreturn");
-STATISTIC(NumFnArgumentNoAlias, "Number of function arguments marked noalias");
-STATISTIC(NumFnReturnedDereferenceable,
-          "Number of function return values marked dereferenceable");
-STATISTIC(NumFnArgumentDereferenceable,
-          "Number of function arguments marked dereferenceable");
-STATISTIC(NumCSArgumentDereferenceable,
-          "Number of call site arguments marked dereferenceable");
-STATISTIC(NumFnReturnedAlign, "Number of function return values marked align");
-STATISTIC(NumFnArgumentAlign, "Number of function arguments marked align");
-STATISTIC(NumCSArgumentAlign, "Number of call site arguments marked align");
-STATISTIC(NumFnNoReturn, "Number of functions marked noreturn");
+// Some helper macros to deal with statistics tracking.
+//
+// Usage:
+// For simple IR attribute tracking overload trackStatistics in the abstract
+// attribute and choose the right STATS_DECL_AND_TRACK_********* macro,
+// e.g.,:
+//  void trackStatistics() const override {
+//    STATS_DECL_AND_TRACK_ARG_ATTR(returned)
+//  }
+// If there is a single "increment" side one can use the macro
+// STATS_DECL_AND_TRACK with a custom message. If there are multiple increment
+// sides, STATS_DECL and STATS_TRACK can also be used separatly.
+//
+#define BUILD_STAT_MSG_IR_ATTR(TYPE, NAME)                                     \
+  ("Number of " #TYPE " marked '" #NAME "'")
+#define BUILD_STAT_NAME(NAME, TYPE) NumIR##TYPE##_##NAME
+#define STATS_DECL(NAME, TYPE, MSG) STATISTIC(BUILD_STAT_NAME(NAME, TYPE), MSG);
+#define STATS_TRACK(NAME, TYPE) ++(BUILD_STAT_NAME(NAME, TYPE));
+#define STATS_DECL_AND_TRACK(NAME, TYPE, MSG)                                  \
+  STATS_DECL(NAME, TYPE, MSG)                                                  \
+  STATS_TRACK(NAME, TYPE)
+#define STATS_DECL_AND_TRACK_ARG_ATTR(NAME)                                    \
+  STATS_DECL_AND_TRACK(NAME, Arguments, BUILD_STAT_MSG_IR_ATTR(arguments, NAME))
+#define STATS_DECL_AND_TRACK_CSARG_ATTR(NAME)                                  \
+  STATS_DECL_AND_TRACK(NAME, CSArguments,                                      \
+                       BUILD_STAT_MSG_IR_ATTR(call site arguments, NAME))
+#define STATS_DECL_AND_TRACK_FN_ATTR(NAME)                                     \
+  STATS_DECL_AND_TRACK(NAME, Function, BUILD_STAT_MSG_IR_ATTR(functions, NAME))
+#define STATS_DECL_AND_TRACK_FNRET_ATTR(NAME)                                  \
+  STATS_DECL_AND_TRACK(NAME, FunctionReturn,                                   \
+                       BUILD_STAT_MSG_IR_ATTR(function returns, NAME));
 
 // TODO: Determine a good default value.
 //
@@ -112,83 +120,6 @@ ChangeStatus llvm::operator&(ChangeStatus l, ChangeStatus r) {
   return l == ChangeStatus::UNCHANGED ? l : r;
 }
 ///}
-
-/// Helper to adjust the statistics.
-static void bookkeeping(IRPosition::Kind PK, const Attribute &Attr) {
-  if (!AreStatisticsEnabled())
-    return;
-
-  switch (Attr.getKindAsEnum()) {
-  case Attribute::Alignment:
-    switch (PK) {
-    case IRPosition::IRP_RETURNED:
-      NumFnReturnedAlign++;
-      break;
-    case IRPosition::IRP_ARGUMENT:
-      NumFnArgumentAlign++;
-      break;
-    case IRPosition::IRP_CALL_SITE_ARGUMENT:
-      NumCSArgumentAlign++;
-      break;
-    default:
-      break;
-    }
-    break;
-  case Attribute::Dereferenceable:
-    switch (PK) {
-    case IRPosition::IRP_RETURNED:
-      NumFnReturnedDereferenceable++;
-      break;
-    case IRPosition::IRP_ARGUMENT:
-      NumFnArgumentDereferenceable++;
-      break;
-    case IRPosition::IRP_CALL_SITE_ARGUMENT:
-      NumCSArgumentDereferenceable++;
-      break;
-    default:
-      break;
-    }
-    break;
-  case Attribute::NoUnwind:
-    NumFnNoUnwind++;
-    return;
-  case Attribute::Returned:
-    NumFnArgumentReturned++;
-    return;
-  case Attribute::NoSync:
-    NumFnNoSync++;
-    break;
-  case Attribute::NoFree:
-    NumFnNoFree++;
-    break;
-  case Attribute::NonNull:
-    switch (PK) {
-    case IRPosition::IRP_RETURNED:
-      NumFnReturnedNonNull++;
-      break;
-    case IRPosition::IRP_ARGUMENT:
-      NumFnArgumentNonNull++;
-      break;
-    case IRPosition::IRP_CALL_SITE_ARGUMENT:
-      NumCSArgumentNonNull++;
-      break;
-    default:
-      break;
-    }
-    break;
-  case Attribute::WillReturn:
-    NumFnWillReturn++;
-    break;
-  case Attribute::NoReturn:
-    NumFnNoReturn++;
-    return;
-  case Attribute::NoAlias:
-    NumFnArgumentNoAlias++;
-    return;
-  default:
-    return;
-  }
-}
 
 template <typename StateTy>
 using followValueCB_t = std::function<bool(Value *, StateTy &State)>;
@@ -332,8 +263,9 @@ ChangeStatus AbstractAttribute::update(Attributor &A,
   return HasChanged;
 }
 
- ChangeStatus IRAttributeManifest::manifestAttrs(Attributor &A, IRPosition
-     &IRP, const ArrayRef<Attribute> &DeducedAttrs) {
+ChangeStatus
+IRAttributeManifest::manifestAttrs(Attributor &A, IRPosition &IRP,
+                                   const ArrayRef<Attribute> &DeducedAttrs) {
   assert(IRP.getAssociatedValue() &&
          "Attempted to manifest an attribute without associated value!");
 
@@ -364,7 +296,6 @@ ChangeStatus AbstractAttribute::update(Attributor &A,
       continue;
 
     HasChanged = ChangeStatus::CHANGED;
-    bookkeeping(PK, Attr);
   }
 
   if (HasChanged == ChangeStatus::UNCHANGED)
@@ -398,6 +329,11 @@ struct AANoUnwindImpl : AANoUnwind {
 
 struct AANoUnwindFunction final : public AANoUnwindImpl {
   AANoUnwindFunction(Function &F) : AANoUnwindImpl(F, IRP_FUNCTION) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FN_ATTR(nounwind)
+  }
 };
 
 ChangeStatus AANoUnwindImpl::updateImpl(Attributor &A,
@@ -563,6 +499,11 @@ public:
 struct AAReturnedValuesFunction final : public AAReturnedValuesImpl {
   AAReturnedValuesFunction(Function &F)
       : AAReturnedValuesImpl(F, IRP_FUNCTION) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_ARG_ATTR(returned)
+  }
 };
 
 ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
@@ -570,7 +511,8 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
 
   // Bookkeeping.
   assert(isValidState());
-  NumFnKnownReturns++;
+  STATS_DECL_AND_TRACK(KnownReturnValues, FunctionReturn,
+                       "Number of function with known return values");
 
   // Check if we have an assumed unique return value that we could manifest.
   Optional<Value *> UniqueRV = getAssumedUniqueReturnValue(A);
@@ -579,7 +521,8 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
     return Changed;
 
   // Bookkeeping.
-  NumFnUniqueReturned++;
+  STATS_DECL_AND_TRACK(UniqueReturnValue, FunctionReturn,
+                       "Number of function with unique return");
 
   // If the assumed unique return value is an argument, annotate it.
   if (auto *UniqueRVArg = dyn_cast<Argument>(UniqueRV.getValue())) {
@@ -800,6 +743,9 @@ struct AANoSyncImpl : AANoSync {
 
 struct AANoSyncFunction final : public AANoSyncImpl {
   AANoSyncFunction(Function &F) : AANoSyncImpl(F, IRP_FUNCTION) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECL_AND_TRACK_FN_ATTR(nosync) }
 };
 
 bool AANoSyncImpl::isNonRelaxedAtomic(Instruction *I) {
@@ -952,6 +898,9 @@ struct AANoFreeImpl : public AANoFree {
 
 struct AANoFreeFunction final : public AANoFreeImpl {
   AANoFreeFunction(Function &F) : AANoFreeImpl(F, IRP_FUNCTION) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECL_AND_TRACK_FN_ATTR(nofree) }
 };
 
 ChangeStatus AANoFreeImpl::updateImpl(Attributor &A,
@@ -1036,6 +985,11 @@ struct AANonNullReturned final : AANonNullImpl {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FNRET_ATTR(nonnull)
+  }
 };
 
 ChangeStatus AANonNullReturned::updateImpl(Attributor &A,
@@ -1063,6 +1017,11 @@ struct AANonNullArgument final : AANonNullImpl {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_ARG_ATTR(nonnull)
+  }
 };
 
 /// NonNull attribute for a call site argument.
@@ -1082,6 +1041,11 @@ struct AANonNullCallSiteArgument final : AANonNullImpl {
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_CSARG_ATTR(nonnull)
+  }
 };
 
 ChangeStatus AANonNullArgument::updateImpl(Attributor &A,
@@ -1153,6 +1117,11 @@ struct AAWillReturnFunction final : AAWillReturnImpl {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FN_ATTR(willreturn)
+  }
 };
 
 // Helper function that checks whether a function has any cycle.
@@ -1242,6 +1211,11 @@ struct AANoAliasReturned final : AANoAliasImpl {
   /// See AbstractAttribute::updateImpl(...).
   virtual ChangeStatus updateImpl(Attributor &A,
                                   InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FNRET_ATTR(noalias)
+  }
 };
 
 ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
@@ -1436,6 +1410,17 @@ struct AAIsDeadImpl : public AAIsDead {
 
 struct AAIsDeadFunction final : public AAIsDeadImpl {
   AAIsDeadFunction(Function &F) : AAIsDeadImpl(F, IRP_FUNCTION) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL(DeadBlocks, Function,
+               "Number of basic blocks classified as dead");
+    BUILD_STAT_NAME(DeadBlocks, Function) +=
+        getAnchorScope().size() - AssumedLiveBlocks.size();
+    STATS_DECL(PartiallyDeadBlocks, Function,
+               "Number of basic blocks classified as partially dead");
+    BUILD_STAT_NAME(PartiallyDeadBlocks, Function) += NoReturnCalls.size();
+  }
 };
 
 bool AAIsDeadImpl::isAfterNoReturn(const Instruction *I) const {
@@ -1705,6 +1690,11 @@ struct AADereferenceableReturned final : AADereferenceableImpl {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FNRET_ATTR(dereferenceable)
+  }
 };
 
 // Helper function that returns dereferenceable bytes.
@@ -1784,6 +1774,11 @@ struct AADereferenceableArgument final : AADereferenceableImpl {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_ARG_ATTR(dereferenceable)
+  }
 };
 
 ChangeStatus
@@ -1851,6 +1846,11 @@ struct AADereferenceableCallSiteArgument final : AADereferenceableImpl {
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_CSARG_ATTR(dereferenceable)
+  }
 };
 
 ChangeStatus
@@ -1917,6 +1917,11 @@ struct AAAlignReturned final : AAAlignImpl {
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FNRET_ATTR(aligned)
+  }
 };
 
 ChangeStatus AAAlignReturned::updateImpl(Attributor &A,
@@ -1957,6 +1962,9 @@ struct AAAlignArgument final : AAAlignImpl {
   /// See AbstractAttribute::updateImpl(...).
   virtual ChangeStatus updateImpl(Attributor &A,
                                   InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override{STATS_DECL_AND_TRACK_ARG_ATTR(aligned)};
 };
 
 ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
@@ -2010,6 +2018,11 @@ struct AAAlignCallSiteArgument final : AAAlignImpl {
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   ChangeStatus updateImpl(Attributor &A, InformationCache &InfoCache) override;
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_CSARG_ATTR(aligned)
+  }
 };
 
 ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A,
@@ -2062,6 +2075,11 @@ struct AANoReturnImpl : public AANoReturn {
 
 struct AANoReturnFunction final : AANoReturnImpl {
   AANoReturnFunction(Function &F) : AANoReturnImpl(F, IRP_FUNCTION) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECL_AND_TRACK_FN_ATTR(noreturn)
+  }
 };
 
 /// ----------------------------------------------------------------------------
@@ -2305,6 +2323,9 @@ ChangeStatus Attributor::run(InformationCache &InfoCache) {
 
     // Manifest the state and record if we changed the IR.
     ChangeStatus LocalChange = AA->manifest(*this);
+    if (LocalChange == ChangeStatus::CHANGED && AreStatisticsEnabled())
+      AA->trackStatistics();
+
     ManifestChange = ManifestChange | LocalChange;
 
     NumAtFixpoint++;
