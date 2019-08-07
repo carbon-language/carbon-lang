@@ -673,6 +673,13 @@ def ImmSExti64i8AsmOperand : ImmSExtAsmOperandClass {
                       ImmSExti64i32AsmOperand];
 }
 
+// 4-bit immediate used by some XOP instructions
+// [0, 0xF]
+def ImmUnsignedi4AsmOperand : AsmOperandClass {
+  let Name = "ImmUnsignedi4";
+  let RenderMethod = "addImmOperands";
+}
+
 // Unsigned immediate used by SSE/AVX instructions
 // [0, 0xFF]
 //   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
@@ -702,6 +709,13 @@ def i64i32imm  : Operand<i64> {
 // 64-bits but only 8 bits are significant.
 def i64i8imm   : Operand<i64> {
   let ParserMatchClass = ImmSExti64i8AsmOperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
+// Unsigned 4-bit immediate used by some XOP instructions.
+def u4imm : Operand<i8> {
+  let PrintMethod = "printU8Imm";
+  let ParserMatchClass = ImmUnsignedi4AsmOperand;
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
