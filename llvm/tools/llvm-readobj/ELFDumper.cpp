@@ -4383,15 +4383,6 @@ void GNUStyle<ELFT>::printELFLinkerOptions(const ELFFile<ELFT> *Obj) {
   OS << "printELFLinkerOptions not implemented!\n";
 }
 
-// FIXME: As soon as the DataExtractor interface handles uint64_t *, this 
-// should be eliminated. See upstream review https://reviews.llvm.org/D64006.
-inline uint32_t *AdjustPtr(uint64_t *Offset) {
-  uint32_t *Ptr = reinterpret_cast<uint32_t *>(Offset);
-  if (sys::IsBigEndianHost)
-    Ptr++;
-  return Ptr;
-}
-
 template <class ELFT>
 void DumpStyle<ELFT>::printFunctionStackSize(
     const ELFObjectFile<ELFT> *Obj, uint64_t SymValue, SectionRef FunctionSec,
@@ -4431,7 +4422,7 @@ void DumpStyle<ELFT>::printFunctionStackSize(
   // Extract the size. The expectation is that Offset is pointing to the right
   // place, i.e. past the function address.
   uint64_t PrevOffset = *Offset;
-  uint64_t StackSize = Data.getULEB128(AdjustPtr(Offset));
+  uint64_t StackSize = Data.getULEB128(Offset);
   // getULEB128() does not advance Offset if it is not able to extract a valid
   // integer.
   if (*Offset == PrevOffset)
@@ -4504,7 +4495,7 @@ void DumpStyle<ELFT>::printStackSize(const ELFObjectFile<ELFT> *Obj,
                              "while trying to extract a stack size entry",
                              StackSizeSectionName.data()));
 
-  uint64_t Addend = Data.getAddress(AdjustPtr(&Offset));
+  uint64_t Addend = Data.getAddress(&Offset);
   uint64_t SymValue = Resolver(Reloc, RelocSymValue, Addend);
   this->printFunctionStackSize(Obj, SymValue, FunctionSec, StackSizeSectionName,
                                Data, &Offset);
@@ -4553,7 +4544,7 @@ void DumpStyle<ELFT>::printNonRelocatableStackSizes(
                 "section %s ended while trying to extract a stack size entry",
                 SectionName.data()));
       }
-      uint64_t SymValue = Data.getAddress(AdjustPtr(&Offset));
+      uint64_t SymValue = Data.getAddress(&Offset);
       printFunctionStackSize(Obj, SymValue,
                              toSectionRef<ELFT>(Obj, FunctionELFSec),
                              SectionName, Data, &Offset);
