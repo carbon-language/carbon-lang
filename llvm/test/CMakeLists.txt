@@ -89,7 +89,6 @@ set(LLVM_TEST_DEPENDS
           llvm-rc
           llvm-readobj
           llvm-readelf
-          llvm-reduce
           llvm-rtdyld
           llvm-size
           llvm-split
