@@ -444,6 +444,9 @@ ChangeStatus AANoUnwindImpl::updateImpl(Attributor &A,
 ///
 /// If there is a unique returned value R, the manifest method will:
 ///   - mark R with the "returned" attribute, if R is an argument.
+///
+/// TODO: We should use liveness during construction of the returned values map
+///       and before we set HasOverdefinedReturnedCalls.
 class AAReturnedValuesImpl : public AAReturnedValues, public AbstractState {
 
   /// Mapping of values potentially returned by the associated function to the
@@ -539,13 +542,12 @@ public:
   /// Return an assumed unique return value if a single candidate is found. If
   /// there cannot be one, return a nullptr. If it is not clear yet, return the
   /// Optional::NoneType.
-  Optional<Value *>
-  getAssumedUniqueReturnValue(const AAIsDead *LivenessAA) const;
+  Optional<Value *> getAssumedUniqueReturnValue(Attributor &A) const;
 
-  /// See AbstractState::checkForallReturnedValues(...).
-  bool checkForallReturnedValues(
-      std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> &Pred)
-      const override;
+  /// See AbstractState::checkForAllReturnedValues(...).
+  bool checkForAllReturnedValuesAndReturnInsts(
+      const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+          &Pred) const override;
 
   /// Pretty print the attribute similar to the IR representation.
   const std::string getAsStr() const override;
@@ -582,10 +584,8 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
   assert(isValidState());
   NumFnKnownReturns++;
 
-  auto *LivenessAA = A.getAAFor<AAIsDead>(*this, getAnchorScope());
-
   // Check if we have an assumed unique return value that we could manifest.
-  Optional<Value *> UniqueRV = getAssumedUniqueReturnValue(LivenessAA);
+  Optional<Value *> UniqueRV = getAssumedUniqueReturnValue(A);
 
   if (!UniqueRV.hasValue() || !UniqueRV.getValue())
     return Changed;
@@ -609,23 +609,16 @@ const std::string AAReturnedValuesImpl::getAsStr() const {
          ")[OD: " + std::to_string(HasOverdefinedReturnedCalls) + "]";
 }
 
-Optional<Value *> AAReturnedValuesImpl::getAssumedUniqueReturnValue(
-    const AAIsDead *LivenessAA) const {
-  // If checkForallReturnedValues provides a unique value, ignoring potential
+Optional<Value *>
+AAReturnedValuesImpl::getAssumedUniqueReturnValue(Attributor &A) const {
+  // If checkForAllReturnedValues provides a unique value, ignoring potential
   // undef values that can also be present, it is assumed to be the actual
   // return value and forwarded to the caller of this method. If there are
   // multiple, a nullptr is returned indicating there cannot be a unique
   // returned value.
   Optional<Value *> UniqueRV;
 
-  std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
-      [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
-    // If all ReturnInsts are dead, then ReturnValue is dead as well
-    // and can be ignored.
-    if (LivenessAA &&
-        !LivenessAA->isLiveInstSet(RetInsts.begin(), RetInsts.end()))
-      return true;
-
+  auto Pred = [&](Value &RV) -> bool {
     // If we found a second returned value and neither the current nor the saved
     // one is an undef, there is no unique returned value. Undefs are special
     // since we can pretend they have any value.
@@ -642,15 +635,15 @@ Optional<Value *> AAReturnedValuesImpl::getAssumedUniqueReturnValue(
     return true;
   };
 
-  if (!checkForallReturnedValues(Pred))
+  if (!A.checkForAllReturnedValues(getAnchorScope(), Pred, *this))
     UniqueRV = nullptr;
 
   return UniqueRV;
 }
 
-bool AAReturnedValuesImpl::checkForallReturnedValues(
-    std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> &Pred)
-    const {
+bool AAReturnedValuesImpl::checkForAllReturnedValuesAndReturnInsts(
+    const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+        &Pred) const {
   if (!isValidState())
     return false;
 
@@ -728,11 +721,8 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A,
       continue;
     }
 
-    auto *LivenessCSAA = A.getAAFor<AAIsDead>(*this, RetCSAA->getAnchorScope());
-
     // Try to find a assumed unique return value for the called function.
-    Optional<Value *> AssumedUniqueRV =
-        RetCSAA->getAssumedUniqueReturnValue(LivenessCSAA);
+    Optional<Value *> AssumedUniqueRV = RetCSAA->getAssumedUniqueReturnValue(A);
 
     // If no assumed unique return value was found due to the lack of
     // candidates, we may need to resolve more calls (through more update
@@ -1101,14 +1091,10 @@ ChangeStatus AANonNullReturned::updateImpl(Attributor &A,
                                            InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
-  auto *AARetVal = A.getAAFor<AAReturnedValues>(*this, F);
-  if (!AARetVal)
-    return indicatePessimisticFixpoint();
-
   std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
       this->generatePredicate(A);
 
-  if (!AARetVal->checkForallReturnedValues(Pred))
+  if (!A.checkForAllReturnedValuesAndReturnInsts(F, Pred, *this))
     return indicatePessimisticFixpoint();
   return ChangeStatus::UNCHANGED;
 }
@@ -1342,12 +1328,7 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
                                            InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
-  auto *AARetValImpl = A.getAAFor<AAReturnedValuesImpl>(*this, F);
-  if (!AARetValImpl)
-    return indicatePessimisticFixpoint();
-
-  std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
-      [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
+  auto CheckReturnValue = [&](Value &RV) -> bool {
     if (Constant *C = dyn_cast<Constant>(&RV))
       if (C->isNullValue() || isa<UndefValue>(C))
         return true;
@@ -1358,11 +1339,11 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
     if (!ICS)
       return false;
 
-    auto *NoAliasAA = A.getAAFor<AANoAlias>(*this, RV);
-
-    if (!ICS.returnDoesNotAlias() &&
-        (!NoAliasAA || !NoAliasAA->isAssumedNoAlias()))
-      return false;
+    if (!ICS.returnDoesNotAlias()) {
+      auto *NoAliasAA = A.getAAFor<AANoAlias>(*this, RV);
+      if (!NoAliasAA || !NoAliasAA->isAssumedNoAlias())
+        return false;
+    }
 
     /// FIXME: We can improve capture check in two ways:
     /// 1. Use the AANoCapture facilities.
@@ -1374,7 +1355,7 @@ ChangeStatus AANoAliasReturned::updateImpl(Attributor &A,
     return true;
   };
 
-  if (!AARetValImpl->checkForallReturnedValues(Pred))
+  if (!A.checkForAllReturnedValues(F, CheckReturnValue, *this))
     return indicatePessimisticFixpoint();
 
   return ChangeStatus::UNCHANGED;
@@ -1853,21 +1834,16 @@ AADereferenceableReturned::updateImpl(Attributor &A,
 
   syncNonNull(A.getAAFor<AANonNull>(*this, F));
 
-  auto *AARetVal = A.getAAFor<AAReturnedValues>(*this, F);
-  if (!AARetVal)
-    return indicatePessimisticFixpoint();
-
   bool IsNonNull = isAssumedNonNull();
   bool IsGlobal = isAssumedGlobal();
 
-  std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
-      [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
+  auto CheckReturnValue = [&](Value &RV) -> bool {
     takeAssumedDerefBytesMinimum(
         computeAssumedDerefenceableBytes(A, RV, IsNonNull, IsGlobal));
     return isValidState();
   };
 
-  if (AARetVal->checkForallReturnedValues(Pred)) {
+  if (A.checkForAllReturnedValues(F, CheckReturnValue, *this)) {
     updateAssumedNonNullGlobalState(IsNonNull, IsGlobal);
     return BeforeState == static_cast<DerefState>(*this)
                ? ChangeStatus::UNCHANGED
@@ -2035,9 +2011,6 @@ struct AAAlignReturned final : AAAlignImpl {
 ChangeStatus AAAlignReturned::updateImpl(Attributor &A,
                                          InformationCache &InfoCache) {
   Function &F = getAnchorScope();
-  auto *AARetValImpl = A.getAAFor<AAReturnedValuesImpl>(*this, F);
-  if (!AARetValImpl)
-    return indicatePessimisticFixpoint();
 
   // Currently, align<n> is deduced if alignments in return values are assumed
   // as greater than n. We reach pessimistic fixpoint if any of the return value
@@ -2045,7 +2018,7 @@ ChangeStatus AAAlignReturned::updateImpl(Attributor &A,
   // optimistic fixpoint is reached earlier.
 
   base_t BeforeState = getAssumed();
-  std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
+  auto CheckReturnValue =
       [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
     auto *AlignAA = A.getAAFor<AAAlign>(*this, RV);
 
@@ -2059,7 +2032,7 @@ ChangeStatus AAAlignReturned::updateImpl(Attributor &A,
     return isValidState();
   };
 
-  if (!AARetValImpl->checkForallReturnedValues(Pred))
+  if (!A.checkForAllReturnedValuesAndReturnInsts(F, CheckReturnValue, *this))
     return indicatePessimisticFixpoint();
 
   return (getAssumed() != BeforeState) ? ChangeStatus::CHANGED
@@ -2201,7 +2174,7 @@ struct AANoReturnFunction final : AANoReturnImpl {
 
 bool Attributor::checkForAllCallSites(Function &F,
                                       std::function<bool(CallSite)> &Pred,
-                                      AbstractAttribute &QueryingAA,
+                                      const AbstractAttribute &QueryingAA,
                                       bool RequireAllCallSites) {
   // We can try to determine information from
   // the call sites. However, this is only possible all call sites are known,
@@ -2245,9 +2218,62 @@ bool Attributor::checkForAllCallSites(Function &F,
   return true;
 }
 
+bool Attributor::checkForAllReturnedValuesAndReturnInsts(
+    const Function &F,
+    const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+        &Pred,
+    const AbstractAttribute &QueryingAA) {
+
+  auto *AARetVal = getAAFor<AAReturnedValues>(QueryingAA, F);
+  if (!AARetVal)
+    return false;
+
+  auto *LivenessAA = getAAFor<AAIsDead>(QueryingAA, F);
+  if (!LivenessAA)
+    return AARetVal->checkForAllReturnedValuesAndReturnInsts(Pred);
+
+  auto LivenessFilter = [&](Value &RV,
+                            const SmallPtrSetImpl<ReturnInst *> &ReturnInsts) {
+    SmallPtrSet<ReturnInst *, 4> FilteredReturnInsts;
+    for (ReturnInst *RI : ReturnInsts)
+      if (!LivenessAA->isAssumedDead(RI))
+        FilteredReturnInsts.insert(RI);
+    if (!FilteredReturnInsts.empty())
+      return Pred(RV, FilteredReturnInsts);
+    return true;
+  };
+
+  return AARetVal->checkForAllReturnedValuesAndReturnInsts(LivenessFilter);
+}
+
+bool Attributor::checkForAllReturnedValues(
+    const Function &F, const function_ref<bool(Value &)> &Pred,
+    const AbstractAttribute &QueryingAA) {
+
+  auto *AARetVal = getAAFor<AAReturnedValues>(QueryingAA, F);
+  if (!AARetVal)
+    return false;
+
+  auto *LivenessAA = getAAFor<AAIsDead>(QueryingAA, F);
+  if (!LivenessAA)
+    return AARetVal->checkForAllReturnedValuesAndReturnInsts(
+        [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &) {
+          return Pred(RV);
+        });
+
+  auto LivenessFilter = [&](Value &RV,
+                            const SmallPtrSetImpl<ReturnInst *> &ReturnInsts) {
+    if (LivenessAA->isLiveInstSet(ReturnInsts.begin(), ReturnInsts.end()))
+      return Pred(RV);
+    return true;
+  };
+
+  return AARetVal->checkForAllReturnedValuesAndReturnInsts(LivenessFilter);
+}
+
 bool Attributor::checkForAllInstructions(
     const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
-    AbstractAttribute &QueryingAA, InformationCache &InfoCache,
+    const AbstractAttribute &QueryingAA, InformationCache &InfoCache,
     const ArrayRef<unsigned> &Opcodes) {
 
   auto *LivenessAA = getAAFor<AAIsDead>(QueryingAA, F);

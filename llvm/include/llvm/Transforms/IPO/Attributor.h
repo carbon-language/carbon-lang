@@ -170,7 +170,7 @@ struct Attributor {
   /// the one reasoning about the "captured" state for the argument or the one
   /// reasoning on the memory access behavior of the function as a whole.
   template <typename AAType>
-  const AAType *getAAFor(AbstractAttribute &QueryingAA, const Value &V,
+  const AAType *getAAFor(const AbstractAttribute &QueryingAA, const Value &V,
                          int ArgNo = -1) {
     static_assert(std::is_base_of<AbstractAttribute, AAType>::value,
                   "Cannot query an attribute with a type not derived from "
@@ -199,7 +199,7 @@ struct Attributor {
       // Do not return an attribute with an invalid state. This minimizes checks
       // at the calls sites and allows the fallback below to kick in.
       if (AA->getState().isValidState()) {
-        QueryMap[AA].insert(&QueryingAA);
+        QueryMap[AA].insert(const_cast<AbstractAttribute *>(&QueryingAA));
         return AA;
       }
     }
@@ -266,24 +266,43 @@ struct Attributor {
   /// true if \p Pred holds in every call sites. However, this is only possible
   /// all call sites are known, hence the function has internal linkage.
   bool checkForAllCallSites(Function &F, std::function<bool(CallSite)> &Pred,
-                            AbstractAttribute &QueryingAA,
+                            const AbstractAttribute &QueryingAA,
                             bool RequireAllCallSites);
+
+  /// Check \p Pred on all values potentially returned by \p F.
+  ///
+  /// This method will evaluate \p Pred on all values potentially returned by
+  /// \p F associated to their respective return instructions. Return true if
+  /// \p Pred holds on all of them.
+  bool checkForAllReturnedValuesAndReturnInsts(
+      const Function &F,
+      const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+          &Pred,
+      const AbstractAttribute &QueryingAA);
+
+  /// Check \p Pred on all values potentially returned by \p F.
+  ///
+  /// This is the context insensitive version of the method above.
+  bool checkForAllReturnedValues(const Function &F,
+                                 const function_ref<bool(Value &)> &Pred,
+                                 const AbstractAttribute &QueryingAA);
 
   /// Check \p Pred on all instructions with an opcode present in \p Opcodes.
   ///
   /// This method will evaluate \p Pred on all instructions with an opcode
   /// present in \p Opcode and return true if \p Pred holds on all of them.
-  bool checkForAllInstructions(
-      const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
-      AbstractAttribute &QueryingAA, InformationCache &InfoCache,
-      const ArrayRef<unsigned> &Opcodes);
+  bool checkForAllInstructions(const Function &F,
+                               const function_ref<bool(Instruction &)> &Pred,
+                               const AbstractAttribute &QueryingAA,
+                               InformationCache &InfoCache,
+                               const ArrayRef<unsigned> &Opcodes);
 
   /// Check \p Pred on all call-like instructions (=CallBased derived).
   ///
   /// See checkForAllCallLikeInstructions(...) for more information.
   bool checkForAllCallLikeInstructions(
-      const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
-      AbstractAttribute &QueryingAA, InformationCache &InfoCache) {
+      const Function &F, const function_ref<bool(Instruction &)> &Pred,
+      const AbstractAttribute &QueryingAA, InformationCache &InfoCache) {
     return checkForAllInstructions(F, Pred, QueryingAA, InfoCache,
                                    {(unsigned)Instruction::Invoke,
                                     (unsigned)Instruction::CallBr,
@@ -845,9 +864,12 @@ struct AAReturnedValues
   /// This method will evaluate \p Pred on returned values and return
   /// true if (1) all returned values are known, and (2) \p Pred returned true
   /// for all returned values.
-  virtual bool checkForallReturnedValues(
-      std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> &Pred)
-      const = 0;
+  ///
+  /// Note: Unlike the Attributor::checkForAllReturnedValuesAndReturnInsts
+  /// method, this one will not filter dead return instructions.
+  virtual bool checkForAllReturnedValuesAndReturnInsts(
+      const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+          &Pred) const = 0;
 
   /// Unique ID (due to the unique address)
   static const char ID;
