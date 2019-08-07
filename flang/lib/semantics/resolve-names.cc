@@ -3691,7 +3691,9 @@ void DeclarationVisitor::CheckSaveStmts() {
               "'%s' appears as a COMMON block in a SAVE statement but not in"
               " a COMMON statement"_err_en_US);
         } else {  // C1108
-          Say(name,"SAVE statement in BLOCK construct may not contain a common block name '%s'"_err_en_US);
+          Say(name,
+             "SAVE statement in BLOCK construct may not contain a"
+             " common block name '%s'"_err_en_US);
         }
       } else {
         for (Symbol *object : symbol->get<CommonBlockDetails>().objects()) {

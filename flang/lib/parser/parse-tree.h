@@ -2092,9 +2092,6 @@ WRAPPER_CLASS(BlockSpecificationPart, SpecificationPart);
 // SpecificationPart, it can misrecognize an ImplicitPart as part of
 // the BlockSpecificationPart during parsing, and we have to detect and
 // flag such usage in semantics.
-// TODO: error if any COMMON, EQUIVALENCE, INTENT, NAMELIST, OPTIONAL,
-// VALUE, ENTRY, SAVE /common/, or statement function definition statement
-// appears in a block-specification part (C1107, C1570).
 
 // R1107 block-construct ->
 //         block-stmt [block-specification-part] block end-block-stmt
