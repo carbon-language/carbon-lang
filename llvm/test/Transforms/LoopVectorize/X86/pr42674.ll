@@ -3,24 +3,44 @@
 
 @bytes = global [128 x i8] zeroinitializer, align 16
 
-; FIXME: We should end up with vector code for this loop, but don't because
-; we try to create VF=64,UF=4 loop, but the scalar trip count is only 128 so
-; the vector loop becomes dead code leaving only a scalar remainder.
+; Make sure we end up with vector code for this loop. We used to try to create
+; a VF=64,UF=4 loop, but the scalar trip count is only 128 so
+; the vector loop was dead code leaving only a scalar remainder.
 define zeroext i8 @sum() {
 ; CHECK-LABEL: @sum(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    br label [[FOR_BODY:%.*]]
-; CHECK:       for.body:
-; CHECK-NEXT:    [[INDVARS_IV:%.*]] = phi i64 [ 0, [[ENTRY:%.*]] ], [ [[INDVARS_IV_NEXT:%.*]], [[FOR_BODY]] ]
-; CHECK-NEXT:    [[R_010:%.*]] = phi i8 [ 0, [[ENTRY]] ], [ [[ADD:%.*]], [[FOR_BODY]] ]
-; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds [128 x i8], [128 x i8]* @bytes, i64 0, i64 [[INDVARS_IV]]
-; CHECK-NEXT:    [[TMP0:%.*]] = load i8, i8* [[ARRAYIDX]], align 1
-; CHECK-NEXT:    [[ADD]] = add i8 [[TMP0]], [[R_010]]
-; CHECK-NEXT:    [[INDVARS_IV_NEXT]] = add nuw nsw i64 [[INDVARS_IV]], 1
-; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp eq i64 [[INDVARS_IV_NEXT]], 128
-; CHECK-NEXT:    br i1 [[EXITCOND]], label [[FOR_END:%.*]], label [[FOR_BODY]], !llvm.loop !0
-; CHECK:       for.end:
-; CHECK-NEXT:    ret i8 [[ADD]]
+; CHECK-NEXT:    br label [[VECTOR_BODY:%.*]]
+; CHECK:       vector.body:
+; CHECK-NEXT:    [[INDEX:%.*]] = phi i64 [ 0, [[ENTRY:%.*]] ], [ [[INDEX_NEXT:%.*]], [[VECTOR_BODY]] ]
+; CHECK-NEXT:    [[VEC_PHI:%.*]] = phi <64 x i8> [ zeroinitializer, [[ENTRY]] ], [ [[TMP4:%.*]], [[VECTOR_BODY]] ]
+; CHECK-NEXT:    [[VEC_PHI2:%.*]] = phi <64 x i8> [ zeroinitializer, [[ENTRY]] ], [ [[TMP5:%.*]], [[VECTOR_BODY]] ]
+; CHECK-NEXT:    [[TMP0:%.*]] = getelementptr inbounds [128 x i8], [128 x i8]* @bytes, i64 0, i64 [[INDEX]]
+; CHECK-NEXT:    [[TMP1:%.*]] = bitcast i8* [[TMP0]] to <64 x i8>*
+; CHECK-NEXT:    [[WIDE_LOAD:%.*]] = load <64 x i8>, <64 x i8>* [[TMP1]], align 16
+; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr inbounds i8, i8* [[TMP0]], i64 64
+; CHECK-NEXT:    [[TMP3:%.*]] = bitcast i8* [[TMP2]] to <64 x i8>*
+; CHECK-NEXT:    [[WIDE_LOAD3:%.*]] = load <64 x i8>, <64 x i8>* [[TMP3]], align 16
+; CHECK-NEXT:    [[TMP4]] = add <64 x i8> [[WIDE_LOAD]], [[VEC_PHI]]
+; CHECK-NEXT:    [[TMP5]] = add <64 x i8> [[WIDE_LOAD3]], [[VEC_PHI2]]
+; CHECK-NEXT:    [[INDEX_NEXT]] = add i64 [[INDEX]], 128
+; CHECK-NEXT:    [[TMP6:%.*]] = icmp eq i64 [[INDEX]], 0
+; CHECK-NEXT:    br i1 [[TMP6]], label [[MIDDLE_BLOCK:%.*]], label [[VECTOR_BODY]], !llvm.loop !0
+; CHECK:       middle.block:
+; CHECK-NEXT:    [[BIN_RDX:%.*]] = add <64 x i8> [[TMP5]], [[TMP4]]
+; CHECK-NEXT:    [[RDX_SHUF:%.*]] = shufflevector <64 x i8> [[BIN_RDX]], <64 x i8> undef, <64 x i32> <i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BIN_RDX4:%.*]] = add <64 x i8> [[BIN_RDX]], [[RDX_SHUF]]
+; CHECK-NEXT:    [[RDX_SHUF5:%.*]] = shufflevector <64 x i8> [[BIN_RDX4]], <64 x i8> undef, <64 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BIN_RDX6:%.*]] = add <64 x i8> [[BIN_RDX4]], [[RDX_SHUF5]]
+; CHECK-NEXT:    [[RDX_SHUF7:%.*]] = shufflevector <64 x i8> [[BIN_RDX6]], <64 x i8> undef, <64 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BIN_RDX8:%.*]] = add <64 x i8> [[BIN_RDX6]], [[RDX_SHUF7]]
+; CHECK-NEXT:    [[RDX_SHUF9:%.*]] = shufflevector <64 x i8> [[BIN_RDX8]], <64 x i8> undef, <64 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BIN_RDX10:%.*]] = add <64 x i8> [[BIN_RDX8]], [[RDX_SHUF9]]
+; CHECK-NEXT:    [[RDX_SHUF11:%.*]] = shufflevector <64 x i8> [[BIN_RDX10]], <64 x i8> undef, <64 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BIN_RDX12:%.*]] = add <64 x i8> [[BIN_RDX10]], [[RDX_SHUF11]]
+; CHECK-NEXT:    [[RDX_SHUF13:%.*]] = shufflevector <64 x i8> [[BIN_RDX12]], <64 x i8> undef, <64 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BIN_RDX14:%.*]] = add <64 x i8> [[BIN_RDX12]], [[RDX_SHUF13]]
+; CHECK-NEXT:    [[TMP7:%.*]] = extractelement <64 x i8> [[BIN_RDX14]], i32 0
+; CHECK-NEXT:    ret i8 [[TMP7]]
 ;
 entry:
   br label %for.body
