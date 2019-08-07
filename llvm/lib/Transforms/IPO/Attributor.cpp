@@ -1617,6 +1617,16 @@ ChangeStatus AAIsDeadImpl::updateImpl(Attributor &A,
       dbgs() << "[AAIsDead] AssumedLiveBlocks: " << AssumedLiveBlocks.size()
              << " Total number of blocks: " << getAnchorScope().size() << "\n");
 
+  // If we know everything is live there is no need to query for liveness.
+  if (NoReturnCalls.empty() &&
+      getAnchorScope().size() == AssumedLiveBlocks.size()) {
+    // Indicating a pessimistic fixpoint will cause the state to be "invalid"
+    // which will cause the Attributor to not return the AAIsDead on request,
+    // which will prevent us from querying isAssumedDead().
+    indicatePessimisticFixpoint();
+    assert(!isValidState() && "Expected an invalid state!");
+  }
+
   return Status;
 }
 
