@@ -290,6 +290,15 @@ struct Attributor {
                                     (unsigned)Instruction::Call});
   }
 
+  /// Check \p Pred on all Read/Write instructions.
+  ///
+  /// This method will evaluate \p Pred on all instructions that read or write
+  /// to memory present in \p InfoCache and return true if \p Pred holds on all
+  /// of them.
+  bool checkForAllReadWriteInstructions(
+      const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
+      AbstractAttribute &QueryingAA, InformationCache &InfoCache);
+
 private:
   /// The set of all abstract attributes.
   ///{

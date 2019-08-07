@@ -929,33 +929,28 @@ ChangeStatus AANoSyncImpl::updateImpl(Attributor &A,
                                       InformationCache &InfoCache) {
   Function &F = getAnchorScope();
 
-  auto *LivenessAA = A.getAAFor<AAIsDead>(*this, F);
+  auto CheckRWInstForNoSync = [&](Instruction &I) {
+    /// We are looking for volatile instructions or Non-Relaxed atomics.
+    /// FIXME: We should ipmrove the handling of intrinsics.
 
-  /// We are looking for volatile instructions or Non-Relaxed atomics.
-  /// FIXME: We should ipmrove the handling of intrinsics.
-  for (Instruction *I : InfoCache.getReadOrWriteInstsForFunction(F)) {
-    // Skip assumed dead instructions.
-    if (LivenessAA && LivenessAA->isAssumedDead(I))
-      continue;
+    ImmutableCallSite ICS(&I);
+    auto *NoSyncAA = A.getAAFor<AANoSyncImpl>(*this, I);
 
-    ImmutableCallSite ICS(I);
-    auto *NoSyncAA = A.getAAFor<AANoSyncImpl>(*this, *I);
-
-    if (isa<IntrinsicInst>(I) && isNoSyncIntrinsic(I))
-      continue;
+    if (isa<IntrinsicInst>(&I) && isNoSyncIntrinsic(&I))
+      return true;
 
     if (ICS && (!NoSyncAA || !NoSyncAA->isAssumedNoSync()) &&
         !ICS.hasFnAttr(Attribute::NoSync))
-      return indicatePessimisticFixpoint();
+      return false;
 
     if (ICS)
-      continue;
+      return true;
 
-    if (!isVolatile(I) && !isNonRelaxedAtomic(I))
-      continue;
+    if (!isVolatile(&I) && !isNonRelaxedAtomic(&I))
+      return true;
 
-    return indicatePessimisticFixpoint();
-  }
+    return false;
+  };
 
   auto CheckForNoSync = [&](Instruction &I) {
     // At this point we handled all read/write effects and they are all
@@ -967,8 +962,11 @@ ChangeStatus AANoSyncImpl::updateImpl(Attributor &A,
     return !ImmutableCallSite(&I).isConvergent();
   };
 
-  if (!A.checkForAllCallLikeInstructions(F, CheckForNoSync, *this, InfoCache))
+  if (!A.checkForAllReadWriteInstructions(F, CheckRWInstForNoSync, *this,
+                                          InfoCache) ||
+      !A.checkForAllCallLikeInstructions(F, CheckForNoSync, *this, InfoCache))
     return indicatePessimisticFixpoint();
+
   return ChangeStatus::UNCHANGED;
 }
 
@@ -2264,6 +2262,24 @@ bool Attributor::checkForAllInstructions(
       if (!Pred(*I))
         return false;
     }
+  }
+
+  return true;
+}
+
+bool Attributor::checkForAllReadWriteInstructions(
+    const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
+    AbstractAttribute &QueryingAA, InformationCache &InfoCache) {
+
+  auto *LivenessAA = getAAFor<AAIsDead>(QueryingAA, F);
+
+  for (Instruction *I : InfoCache.getReadOrWriteInstsForFunction(F)) {
+    // Skip dead instructions.
+    if (LivenessAA && LivenessAA->isAssumedDead(I))
+      continue;
+
+    if (!Pred(*I))
+      return false;
   }
 
   return true;
