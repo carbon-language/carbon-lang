@@ -390,6 +390,9 @@ public:
 
   /// A mutex that is used to control parallel accesses to Ctx
   mutable std::shared_timed_mutex CtxMutex;
+  std::unique_lock<std::shared_timed_mutex> scopeLock() const {
+    return std::unique_lock<std::shared_timed_mutex>(CtxMutex);
+  }
 
   std::unique_ptr<DWARFContext> DwCtx;
 

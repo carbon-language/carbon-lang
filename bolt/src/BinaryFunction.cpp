@@ -898,7 +898,7 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   }
   MCSymbol *Result;
   {
-    std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+    auto L = BC.scopeLock();
     Result = BC.Ctx->createTempSymbol();
   }
   Labels[Offset] = Result;
@@ -1767,7 +1767,7 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
       } else {
         MCSymbol *Label;
         {
-          std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+          auto L = BC.scopeLock();
           Label = BC.Ctx->createTempSymbol("FT", true);
         }
         InsertBB = addBasicBlock(
@@ -3304,12 +3304,12 @@ void BinaryFunction::fixBranches() {
       if (NextBB && NextBB == TSuccessor) {
         std::swap(TSuccessor, FSuccessor);
         {
-          std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+          auto L = BC.scopeLock();
           MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
         }
         BB->swapConditionalSuccessors();
       } else {
-        std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+        auto L = BC.scopeLock();
         MIB->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
       }
       if (TSuccessor == FSuccessor) {
@@ -3324,7 +3324,7 @@ void BinaryFunction::fixBranches() {
             BB->isCold() != TSuccessor->isCold()) {
           std::swap(TSuccessor, FSuccessor);
           {
-            std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
+            auto L = BC.scopeLock();
             MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(),
                                         Ctx);
           }
@@ -3675,7 +3675,8 @@ bool BinaryFunction::checkForAmbiguousJumpTables() {
   return false;
 }
 
-void BinaryFunction::disambiguateJumpTables() {
+void BinaryFunction::disambiguateJumpTables(
+    MCPlusBuilder::AllocatorIdTy AllocId) {
   assert((opts::JumpTables != JTS_BASIC && isSimple()) || BC.HasRelocations);
   SmallPtrSet<JumpTable *, 4> JumpTables;
   for (auto &BB : BasicBlocks) {
@@ -3744,10 +3745,13 @@ void BinaryFunction::disambiguateJumpTables() {
       const MCSymbol *NewJTLabel;
       std::tie(NewJumpTableID, NewJTLabel) =
           BC.duplicateJumpTable(*this, JT, Target);
-      BC.MIB->replaceMemOperandDisp(*JTLoadInst, NewJTLabel, BC.Ctx.get());
+      {
+        auto L = BC.scopeLock();
+        BC.MIB->replaceMemOperandDisp(*JTLoadInst, NewJTLabel, BC.Ctx.get());
+      }
       // We use a unique ID with the high bit set as address for this "injected"
       // jump table (not originally in the input binary).
-      BC.MIB->setJumpTable(Inst, NewJumpTableID, 0);
+      BC.MIB->setJumpTable(Inst, NewJumpTableID, 0, AllocId);
     }
   }
 }
@@ -3773,7 +3777,7 @@ BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
   // Create intermediate BB
   MCSymbol *Tmp;
   {
-    std::unique_lock<std::shared_timed_mutex> WrLock(BC.CtxMutex);
+    auto L = BC.scopeLock();
     Tmp = BC.Ctx->createTempSymbol("SplitEdge", true);
   }
   // Link new BBs to the original input offset of the From BB, so we can map

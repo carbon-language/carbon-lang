@@ -545,6 +545,7 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
 std::pair<uint64_t, const MCSymbol *>
 BinaryContext::duplicateJumpTable(BinaryFunction &Function, JumpTable *JT,
                                   const MCSymbol *OldLabel) {
+  auto L = scopeLock();
   unsigned Offset = 0;
   bool Found = false;
   for (auto Elmt : JT->Labels) {

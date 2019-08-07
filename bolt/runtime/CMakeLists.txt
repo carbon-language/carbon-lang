@@ -8,5 +8,7 @@ project(libbolt_rt_project)
 add_library(bolt_rt STATIC
   instr.cpp
   )
+# Don't let the compiler think it can create calls to standard libs
+target_compile_options(bolt_rt PRIVATE -ffreestanding)
 
 install(TARGETS bolt_rt DESTINATION lib)

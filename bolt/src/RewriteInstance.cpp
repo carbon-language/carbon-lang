@@ -3098,9 +3098,13 @@ void RewriteInstance::emitAndLink() {
         if (EFMM->ObjectsLoaded) {
           auto Result = OLT->findSymbol(Name, false);
           if (cantFail(Result.getAddress()) == 0) {
-            errs()
-                << "BOLT-ERROR: symbol not found required by runtime library: "
-                << Name << "\n";
+            // Resolve to a PLT entry if possible
+            if (auto *I = BC->getBinaryDataByName(Name + "@PLT"))
+              return JITSymbol(I->getAddress(), JITSymbolFlags());
+
+            errs() << "BOLT-ERROR: symbol not found required by runtime "
+                      "library: "
+                   << Name << "\n";
             exit(1);
           }
           return Result;

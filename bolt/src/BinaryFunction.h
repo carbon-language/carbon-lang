@@ -1487,7 +1487,7 @@ public:
   /// by an indirect branch, e.g.: instrumentation or shrink wrapping. However,
   /// this is only possible if we are not updating jump tables in place, but are
   /// writing it to a new location (moving them).
-  void disambiguateJumpTables();
+  void disambiguateJumpTables(MCPlusBuilder::AllocatorIdTy AllocId);
 
   /// Change \p OrigDest to \p NewDest in the jump table used at the end of
   /// \p BB. Returns false if \p OrigDest couldn't be find as a valid target

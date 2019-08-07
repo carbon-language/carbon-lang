@@ -54,13 +54,41 @@ public:
   void emit(BinaryContext &BC, MCStreamer &Streamer);
 
 private:
-  // Instrumented branch location information
-  struct CounterDescription {
-    uint32_t FromFuncStringIdx;
-    uint32_t FromOffset;
-    uint32_t ToFuncStringIdx;
-    uint32_t ToOffset;
+  // Location information -- this is a location in the program binary
+  struct LocDescription {
+    uint32_t FuncString;
+    uint32_t Offset;
   };
+
+  // Inter-function control flow transfer instrumentation
+  struct CallDescription {
+    LocDescription FromLoc;
+    LocDescription ToLoc;
+    uint32_t Counter;
+  };
+
+  // Intra-function control flow transfer instrumentation
+  struct EdgeDescription {
+    LocDescription FromLoc;
+    uint32_t FromNode;
+    LocDescription ToLoc;
+    uint32_t ToNode;
+    uint32_t Counter;
+  };
+
+  struct InstrumentedNode {
+    uint32_t Node;
+    uint32_t Counter;
+  };
+
+  struct FunctionDescription {
+    std::vector<InstrumentedNode> ExitNodes;
+    std::vector<EdgeDescription> Edges;
+    DenseSet<std::pair<uint32_t, uint32_t>> EdgesSet;
+  };
+
+  void instrumentFunction(BinaryContext &BC, BinaryFunction &Function,
+                          MCPlusBuilder::AllocatorIdTy = 0);
 
   /// Retrieve the string table index for the name of \p Function. We encode
   /// instrumented locations descriptions with the aid of a string table to
@@ -73,53 +101,69 @@ private:
   /// branch source location in terms of function name plus offset, as well as
   /// branch destination (also name + offset). This will be encoded in the
   /// binary as static data and function name strings will reference a strtab.
-  CounterDescription createDescription(const BinaryFunction &FromFunction,
-                                       uint32_t From,
-                                       const BinaryFunction &ToFunction,
-                                       uint32_t To);
-
+  void createCallDescription(const BinaryFunction &FromFunction, uint32_t From,
+                             const BinaryFunction &ToFunction, uint32_t To);
+  bool createEdgeDescription(FunctionDescription &FuncDesc,
+                             const BinaryFunction &FromFunction, uint32_t From,
+                             uint32_t FromNodeID,
+                             const BinaryFunction &ToFunction, uint32_t To,
+                             uint32_t ToNodeID, bool Instrumented);
+  void createExitNodeDescription(FunctionDescription &FuncDesc, uint32_t Node);
 
   /// Create the sequence of instructions to instrument a branch happening
   /// at \p FromFunction + \p FromOffset to \p ToFunc + \p ToOffset
-  std::vector<MCInst> createInstrumentationSnippet(BinaryFunction &FromFunction,
-                                                   uint32_t FromOffset,
-                                                   BinaryFunction &ToFunc,
-                                                   uint32_t ToOffset);
+  std::vector<MCInst> createInstrumentationSnippet(BinaryContext &BC,
+                                                   bool IsLeaf);
+
+  // Critical edges worklist
+  // This worklist keeps track of CFG edges <From-To> that needs to be split.
+  // This task is deferred until we finish processing all BBs because we can't
+  // modify the CFG while iterating over it. For each edge, \p SplitInstrsTy
+  // stores the list of instrumentation instructions as a vector of MCInsts.
+  // instrumentOneTarget() populates this, runOnFunctions() consumes.
+  using SplitWorklistTy =
+      std::vector<std::pair<BinaryBasicBlock *, BinaryBasicBlock *>>;
+  using SplitInstrsTy = std::vector<std::vector<MCInst>>;
 
   /// Instrument the branch in \p Iter located at \p FromFunction + \p From,
   /// basic block \p FromBB. The destination of the branch is \p ToFunc +
   /// \p ToOffset. \p TargetBB should be non-null if this is a local branch
   /// and null if it is a call. Return true on success.
-  bool instrumentOneTarget(BinaryBasicBlock::iterator &Iter,
+  bool instrumentOneTarget(SplitWorklistTy &SplitWorklist,
+                           SplitInstrsTy &SplitInstrs,
+                           BinaryBasicBlock::iterator &Iter,
                            BinaryFunction &FromFunction,
                            BinaryBasicBlock &FromBB, uint32_t From,
                            BinaryFunction &ToFunc, BinaryBasicBlock *TargetBB,
-                           uint32_t ToOffset);
+                           uint32_t ToOffset, bool IsLeaf,
+                           FunctionDescription *FuncDesc = nullptr,
+                           uint32_t FromNodeID = 0, uint32_t ToNodeID = 0);
 
+  void instrumentExitNode(BinaryContext &BC, BinaryBasicBlock &BB,
+                          BinaryBasicBlock::iterator Iter, bool IsLeaf,
+                          FunctionDescription &FuncDesc, uint32_t Node);
+
+  uint32_t getFDSize() const;
   /// Create a non-allocatable ELF section with read-only tables necessary for
   /// writing the instrumented data profile during program finish. The runtime
   /// library needs to open the program executable file and read this data from
   /// disk, this is not loaded by the system.
   void emitTablesAsELFNote(BinaryContext &BC);
 
-  /// Critical edges worklist
-  /// This worklist keeps track of CFG edges <From-To> that needs to be split.
-  /// This task is deferred until we finish processing all BBs because we can't
-  /// modify the CFG while iterating over it. For each edge, \p SplitInstrs
-  /// stores the list of instrumentation instructions as a vector of MCInsts.
-  /// instrumentOneTarget() populates this, runOnFunctions() consumes.
-  std::vector<std::pair<BinaryBasicBlock *, BinaryBasicBlock *>> SplitWorklist;
-  std::vector<std::vector<MCInst>> SplitInstrs;
-
   /// Stores function names, to be emitted to the runtime
   std::string StringTable;
 
   /// strtab indices in StringTable for each function name
   std::unordered_map<const BinaryFunction *, uint32_t> FuncToStringIdx;
-  std::vector<CounterDescription> Descriptions;
+  /// Intra-function control flow
+  std::vector<FunctionDescription> FunctionDescriptions;
+  mutable std::shared_timed_mutex FDMutex;
+
+  /// Inter-function control flow
+  std::vector<CallDescription> CallDescriptions;
 
   /// Identify all counters used in runtime while instrumentation is running
-  std::vector<MCSymbol *> Labels;
+  std::vector<MCSymbol *> Counters;
 };
 
 }
