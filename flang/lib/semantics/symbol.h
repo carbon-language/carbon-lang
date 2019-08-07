@@ -263,7 +263,7 @@ public:
   const Symbol &symbol() const { return *symbol_; }
 
 private:
-  const Symbol *symbol_;  // procedure bound to
+  const Symbol *symbol_;  // procedure bound to; may be forward
 };
 
 ENUM_CLASS(GenericKind,  // Kinds of generic-spec

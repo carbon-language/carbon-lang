@@ -420,8 +420,7 @@ std::optional<Procedure> Procedure::Characterize(
             return result;
           },
           [&](const semantics::ProcBindingDetails &binding) {
-            auto result{Characterize(binding.symbol(), intrinsics)};
-            if (result) {
+            if (auto result{Characterize(binding.symbol(), intrinsics)}) {
               if (const auto passIndex{binding.passIndex()}) {
                 auto &passArg{result->dummyArguments.at(*passIndex)};
                 passArg.pass = true;
@@ -429,8 +428,9 @@ std::optional<Procedure> Procedure::Characterize(
                   CHECK(passArg.name == passName->ToString());
                 }
               }
+              return result;
             }
-            return result;
+            return std::optional<Procedure>{};
           },
           [&](const semantics::UseDetails &use) {
             return Characterize(use.symbol(), intrinsics);

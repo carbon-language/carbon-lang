@@ -1627,7 +1627,7 @@ public:
     Word("EXTERNAL :: "), Walk(x.v, ", ");
   }
   void Unparse(const ProcedureDeclarationStmt &x) {  // R1512
-    Word("PROCEDURE ("), Walk(std::get<std::optional<ProcInterface>>(x.t));
+    Word("PROCEDURE("), Walk(std::get<std::optional<ProcInterface>>(x.t));
     Put(')'), Walk(", ", std::get<std::list<ProcAttrSpec>>(x.t), ", ");
     Put(" :: "), Walk(std::get<std::list<ProcDecl>>(x.t), ", ");
   }

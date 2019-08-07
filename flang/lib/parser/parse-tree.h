@@ -1073,6 +1073,8 @@ struct TypeBoundProcDecl {
 // R749 type-bound-procedure-stmt ->
 //        PROCEDURE [[, bind-attr-list] ::] type-bound-proc-decl-list |
 //        PROCEDURE ( interface-name ) , bind-attr-list :: binding-name-list
+// The second form, with interface-name, requires DEFERRED in bind-attr-list,
+// and thus can appear only in an abstract type.
 struct TypeBoundProcedureStmt {
   UNION_CLASS_BOILERPLATE(TypeBoundProcedureStmt);
   struct WithoutInterface {
