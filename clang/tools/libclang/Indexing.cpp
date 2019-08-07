@@ -28,7 +28,6 @@
 #include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Mutex.h"
 #include <cstdio>
 #include <mutex>
 #include <utility>
@@ -122,22 +121,21 @@ namespace llvm {
 namespace {
 
 class SessionSkipBodyData {
-  llvm::sys::Mutex Mux;
+  std::mutex Mux;
   PPRegionSetTy ParsedRegions;
 
 public:
-  SessionSkipBodyData() : Mux(/*recursive=*/false) {}
   ~SessionSkipBodyData() {
     //llvm::errs() << "RegionData: " << Skipped.size() << " - " << Skipped.getMemorySize() << "\n";
   }
 
   void copyTo(PPRegionSetTy &Set) {
-    std::lock_guard<llvm::sys::Mutex> MG(Mux);
+    std::lock_guard<std::mutex> MG(Mux);
     Set = ParsedRegions;
   }
 
   void update(ArrayRef<PPRegion> Regions) {
-    std::lock_guard<llvm::sys::Mutex> MG(Mux);
+    std::lock_guard<std::mutex> MG(Mux);
     ParsedRegions.insert(Regions.begin(), Regions.end());
   }
 };
