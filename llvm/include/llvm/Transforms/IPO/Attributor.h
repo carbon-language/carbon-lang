@@ -687,7 +687,7 @@ protected:
 /// IRAttribute::manifest is defined in the Attributor.cpp.
 struct IRAttributeManifest {
   static ChangeStatus manifestAttrs(Attributor &A, IRPosition &IRP,
-      const ArrayRef<Attribute> &DeducedAttrs);
+                                    const ArrayRef<Attribute> &DeducedAttrs);
 };
 
 /// Helper to tie a abstract state implementation to an abstract attribute.
@@ -705,7 +705,8 @@ struct StateWrapper : public StateTy, public Base {
 
 /// Helper class that provides common functionality to manifest IR attributes.
 template <Attribute::AttrKind AK, typename Base>
-struct IRAttribute : public IRPosition, public Base, public IRAttributeManifest {
+struct IRAttribute : public IRPosition,
+                     public Base {
   ~IRAttribute() {}
 
   /// Constructors for the IRPosition.
