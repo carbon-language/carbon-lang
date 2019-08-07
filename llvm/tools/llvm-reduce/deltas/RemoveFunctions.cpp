@@ -1,4 +1,4 @@
-//===- llvm-reduce.cpp - The LLVM Delta Reduction utility -----------------===//
+//===- RemoveFunctions.cpp - Specialized Delta Pass -----------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,33 +6,30 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file is a Specialized Delta Pass, which removes the functions that are
-// not in the provided function-chunks.
+// This file implements a function which calls the Generic Delta pass in order
+// to reduce functions (and any instruction that calls it) in the provided
+// Module.
 //
 //===----------------------------------------------------------------------===//
 
 #include "RemoveFunctions.h"
 
-using namespace llvm;
-
 /// Removes all the Defined Functions (as well as their calls)
 /// that aren't inside any of the desired Chunks.
 /// @returns the Module stripped of out-of-chunk functions
-std::unique_ptr<Module>
-RemoveFunctions::extractChunksFromModule(std::vector<Chunk> ChunksToKeep,
-                                         Module *Program) {
+static std::unique_ptr<Module>
+extractFunctionsFromModule(std::vector<Chunk> ChunksToKeep, Module *Program) {
   std::unique_ptr<Module> Clone = CloneModule(*Program);
 
   // Get functions inside desired chunks
   std::set<Function *> FuncsToKeep;
   int I = 0, FunctionCount = 1;
   for (auto &F : *Clone) {
-    if (!F.isDeclaration()) {
+    if (!F.isDeclaration() && I < ChunksToKeep.size()) {
       if (FunctionCount >= ChunksToKeep[I].begin &&
-          FunctionCount <= ChunksToKeep[I].end) {
+          FunctionCount <= ChunksToKeep[I].end)
         FuncsToKeep.insert(&F);
-      }
-      if (FunctionCount >= ChunksToKeep[I].end)
+      if (FunctionCount == ChunksToKeep[I].end)
         ++I;
       ++FunctionCount;
     }
@@ -68,11 +65,11 @@ RemoveFunctions::extractChunksFromModule(std::vector<Chunk> ChunksToKeep,
 }
 
 /// Counts the amount of non-declaration functions and prints their
-/// respective index & name
-int RemoveFunctions::getTargetCount(Module *Program) {
+/// respective name & index
+static int countFunctions(Module *Program) {
   // TODO: Silence index with --quiet flag
   outs() << "----------------------------\n";
-  outs() << "Chunk Index Reference:\n";
+  outs() << "Function Index Reference:\n";
   int FunctionCount = 0;
   for (auto &F : *Program)
     if (!F.isDeclaration()) {
@@ -81,4 +78,9 @@ int RemoveFunctions::getTargetCount(Module *Program) {
     }
   outs() << "----------------------------\n";
   return FunctionCount;
+}
+
+void llvm::removeFunctionsDeltaPass(TestRunner &Test) {
+  int FunctionCount = countFunctions(Test.getProgram());
+  runDeltaPass(Test, FunctionCount, extractFunctionsFromModule);
 }

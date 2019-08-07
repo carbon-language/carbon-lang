@@ -1,4 +1,4 @@
-//===- llvm-reduce.cpp - The LLVM Delta Reduction utility -----------------===//
+//===- Delta.h - Delta Debugging Algorithm Implementation -----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -42,180 +42,33 @@ struct Chunk {
   }
 };
 
-/// Writes IR code to the given Filepath
-inline bool writeProgramToFile(StringRef Filepath, int FD, const Module &M) {
-  ToolOutputFile Out(Filepath, FD);
-  M.print(Out.os(), /*AnnotationWriter=*/nullptr);
-  Out.os().close();
-
-  if (!Out.os().has_error()) {
-    Out.keep();
-    return false;
-  }
-  return true;
-}
-
-/// Creates a temporary (and unique) file inside the tmp folder and outputs
-/// the module inside it.
-inline SmallString<128> createTmpFile(Module *M, StringRef TmpDir) {
-  SmallString<128> UniqueFilepath;
-  int UniqueFD;
-
-  std::error_code EC = sys::fs::createUniqueFile(TmpDir + "/tmp-%%%.ll",
-                                                 UniqueFD, UniqueFilepath);
-  if (EC) {
-    errs() << "Error making unique filename: " << EC.message() << "!\n";
-    exit(1);
-  }
-
-  if (writeProgramToFile(UniqueFilepath, UniqueFD, *M)) {
-    errs() << "Error emitting bitcode to file '" << UniqueFilepath << "'!\n";
-    exit(1);
-  }
-  return UniqueFilepath;
-}
-
-/// Prints the Chunk Indexes with the following format: [start, end], if
-/// chunk is at minimum size (1), then it just displays [start].
-inline void printChunks(std::vector<Chunk> Chunks, bool Oneline = false) {
-  for (auto C : Chunks) {
-    if (!Oneline)
-      outs() << '\t';
-    outs() << "[" << C.begin;
-    if (C.end - C.begin != 0)
-      outs() << "," << C.end;
-    outs() << "]";
-    if (!Oneline)
-      outs() << '\n';
-  }
-}
-
-/// Counts the amount of lines for a given file
-inline unsigned getLines(StringRef Filepath) {
-  unsigned Lines = 0;
-  std::string CurrLine;
-  std::ifstream FileStream(Filepath);
-
-  while (std::getline(FileStream, CurrLine))
-    ++Lines;
-
-  return Lines;
-}
-
-/// Splits Chunks in half and prints them.
-/// If unable to split (when chunk size is 1) returns false.
-inline bool increaseGranularity(std::vector<Chunk> &Chunks) {
-  outs() << "Increasing granularity...";
-  std::vector<Chunk> NewChunks;
-  bool SplitOne = false;
-
-  for (auto &C : Chunks) {
-    if (C.end - C.begin == 0)
-      NewChunks.push_back(C);
-    else {
-      int Half = (C.begin + C.end) / 2;
-      NewChunks.push_back({C.begin, Half});
-      NewChunks.push_back({Half + 1, C.end});
-      SplitOne = true;
-    }
-  }
-  if (SplitOne) {
-    Chunks = NewChunks;
-    outs() << "Success! New Chunks:\n";
-    printChunks(Chunks);
-  }
-  return SplitOne;
-}
-
 namespace llvm {
 
-/// This class implements the Delta Debugging algorithm, it receives a set of
-/// Targets (e.g. Functions, Instructions, Basic Blocks, etc.) and splits them
-/// in half; these chunks of targets are then tested while ignoring one chunk,
-/// if a chunk is proven to be uninteresting (i.e. fails the test) it is
-/// removed from consideration. Otherwise, the algorithm will attempt to split
-/// the Chunks in half and start the process again, until it can't split chunks
+/// This function implements the Delta Debugging algorithm, it receives a
+/// number of Targets (e.g. Functions, Instructions, Basic Blocks, etc.) and
+/// splits them in half; these chunks of targets are then tested while ignoring
+/// one chunk, if a chunk is proven to be uninteresting (i.e. fails the test)
+/// it is removed from consideration. The algorithm will attempt to split the
+/// Chunks in half and start the process again until it can't split chunks
 /// anymore.
 ///
-/// The class is intended to be called statically by the DeltaManager class
-/// alongside a specialized delta pass (e.g. RemoveFunctions) passed as a
-/// template.
-/// This specialized pass implements two functions:
-///   * getTargetCount, which returns the amount of targets (e.g. Functions)
-///     there are in the Module.
-///   * extractChunksFromModule, which clones the given Module and modifies it
-///     so it only contains Chunk Targets.
+/// This function is intended to be called by each specialized delta pass (e.g.
+/// RemoveFunctions) and receives three key parameters:
+/// * Test: The main TestRunner instance which is used to run the provided
+/// interesting-ness test, as well as to store and access the reduced Program.
+/// * Targets: The amount of Targets that are going to be reduced by the
+/// algorithm, for example, the RemoveGlobalVars pass would send the amount of
+/// initialized GVs.
+/// * ExtractChunksFromModule: A function used to tailor the main program so it
+/// only contains Targets that are inside Chunks of the given iteration.
+/// Note: This function is implemented by each specialized Delta pass
 ///
-/// Other implementations of the Delta Debugging algorithm can be found in the
-/// CReduce, Delta, and Lithium projects.
-template <class P> class Delta {
-public:
-  /// Runs the Delta Debugging algorithm, splits the code into chunks and
-  /// reduces the amount of chunks that are considered interesting by the
-  /// given test.
-  static void run(TestRunner &Test) {
-    int TargetCount = P::getTargetCount(Test.getProgram());
-    std::vector<Chunk> Chunks = {{1, TargetCount}};
-    std::set<Chunk> UninterestingChunks;
-    std::unique_ptr<Module> ReducedProgram;
-
-    if (Test.run(Test.getReducedFilepath()))
-      increaseGranularity(Chunks);
-    else {
-      outs() << "Error: input file isnt interesting\n";
-      exit(1);
-    }
-
-    do {
-      UninterestingChunks = {};
-      for (int I = Chunks.size() - 1; I >= 0; --I) {
-        std::vector<Chunk> CurrentChunks;
-
-        for (auto C : Chunks)
-          if (!UninterestingChunks.count(C) && C != Chunks[I])
-            CurrentChunks.push_back(C);
-
-        // Generate Module with only Targets inside Current Chunks
-        std::unique_ptr<Module> CurrentProgram =
-            P::extractChunksFromModule(CurrentChunks, Test.getProgram());
-        // Write Module to tmp file
-        SmallString<128> CurrentFilepath =
-            createTmpFile(CurrentProgram.get(), Test.getTmpDir());
-
-        outs() << "Testing with: ";
-        printChunks(CurrentChunks, /*Oneline=*/true);
-        outs() << " | " << sys::path::filename(CurrentFilepath);
-
-        // Current Chunks aren't interesting
-        if (!Test.run(CurrentFilepath)) {
-          outs() << "\n";
-          continue;
-        }
-
-        // We only care about interesting chunks if they reduce the testcase
-        if (getLines(CurrentFilepath) < getLines(Test.getReducedFilepath())) {
-          UninterestingChunks.insert(Chunks[I]);
-          Test.setReducedFilepath(CurrentFilepath);
-          ReducedProgram = std::move(CurrentProgram);
-          outs() << " **** SUCCESS | lines: " << getLines(CurrentFilepath);
-        }
-        outs() << "\n";
-      }
-      // Delete uninteresting chunks
-      auto UnwantedChunks = Chunks.end();
-      UnwantedChunks = std::remove_if(Chunks.begin(), Chunks.end(),
-                                      [UninterestingChunks](const Chunk &C) {
-                                        return UninterestingChunks.count(C);
-                                      });
-      Chunks.erase(UnwantedChunks, Chunks.end());
-    } while (!UninterestingChunks.empty() || increaseGranularity(Chunks));
-
-    // If we reduced the testcase replace it
-    if (ReducedProgram)
-      Test.setProgram(std::move(ReducedProgram));
-    outs() << "Couldn't increase anymore.\n";
-  }
-};
+/// Other implementations of the Delta Debugging algorithm can also be found in
+/// the CReduce, Delta, and Lithium projects.
+void runDeltaPass(
+    TestRunner &Test, int Targets,
+    std::function<std::unique_ptr<Module>(std::vector<Chunk>, Module *)>
+        ExtractChunksFromModule);
 
 } // namespace llvm
 

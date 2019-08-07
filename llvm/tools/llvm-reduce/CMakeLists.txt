@@ -15,7 +15,9 @@ set(LLVM_NO_DEAD_STRIP 1)
 add_llvm_tool(llvm-reduce
   llvm-reduce.cpp
   TestRunner.cpp
+  deltas/Delta.cpp
   deltas/RemoveFunctions.cpp
+  deltas/RemoveGlobalVars.cpp
 
   DEPENDS
   intrinsics_gen
