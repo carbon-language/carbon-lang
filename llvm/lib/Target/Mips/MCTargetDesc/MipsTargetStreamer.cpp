@@ -34,6 +34,15 @@ static cl::opt<bool> RoundSectionSizes(
     cl::desc("Round section sizes up to the section alignment"), cl::Hidden);
 } // end anonymous namespace
 
+static bool isMipsR6(const MCSubtargetInfo *STI) {
+  return STI->getFeatureBits()[Mips::FeatureMips32r6] ||
+         STI->getFeatureBits()[Mips::FeatureMips64r6];
+}
+
+static bool isMicroMips(const MCSubtargetInfo *STI) {
+  return STI->getFeatureBits()[Mips::FeatureMicroMips];
+}
+
 MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S)
     : MCTargetStreamer(S), GPReg(Mips::GP), ModuleDirectiveAllowed(true) {
   GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
@@ -428,15 +437,6 @@ void MipsTargetStreamer::emitLoadWithSymOffset(unsigned Opcode, unsigned DstReg,
     emitRRR(Mips::ADDu, TmpReg, TmpReg, BaseReg, IDLoc, STI);
   // Emit the load with the adjusted base and offset.
   emitRRX(Opcode, DstReg, TmpReg, LoOperand, IDLoc, STI);
-}
-
-bool MipsTargetStreamer::isMipsR6(const MCSubtargetInfo *STI) const {
-  return STI->getFeatureBits()[Mips::FeatureMips32r6] ||
-         STI->getFeatureBits()[Mips::FeatureMips64r6];
-}
-
-bool MipsTargetStreamer::isMicroMips(const MCSubtargetInfo *STI) const {
-  return STI->getFeatureBits()[Mips::FeatureMicroMips];
 }
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,

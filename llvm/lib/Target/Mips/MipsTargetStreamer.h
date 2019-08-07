@@ -191,9 +191,6 @@ public:
     return *ABI;
   }
 
-  bool isMipsR6(const MCSubtargetInfo *STI) const;
-  bool isMicroMips(const MCSubtargetInfo *STI) const;
-
 protected:
   llvm::Optional<MipsABIInfo> ABI;
   MipsABIFlagsSection ABIFlagsSection;
