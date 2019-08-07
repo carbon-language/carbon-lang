@@ -477,13 +477,13 @@ public:
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
     // Reset the state.
-    AssociatedVal = nullptr;
+    setAssociatedValue(nullptr);
     IsFixed = false;
     IsValidState = true;
     HasOverdefinedReturnedCalls = false;
     ReturnedValues.clear();
 
-    Function &F = cast<Function>(getAnchorValue());
+    Function &F = getAnchorScope();
 
     // The map from instruction opcodes to those instructions in the function.
     auto &OpcodeInstMap = InfoCache.getOpcodeInstMapForFunction(F);
@@ -975,7 +975,6 @@ ChangeStatus AANoFreeImpl::updateImpl(Attributor &A,
 struct AANonNullImpl : AANonNull {
   IRPositionConstructorForward(AANonNullImpl, AANonNull);
 
-
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
     return getAssumed() ? "nonnull" : "may-null";
@@ -1020,11 +1019,10 @@ AANonNullImpl::generatePredicate(Attributor &A) {
 }
 
 /// NonNull attribute for function return value.
-struct AANonNullReturned : AANonNullImpl {
-
+struct AANonNullReturned final : AANonNullImpl {
   AANonNullReturned(Function &F) : AANonNullImpl(F, IRP_RETURNED) {}
 
-  /// See AbstractAttriubute::initialize(...).
+  /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A, InformationCache &InfoCache) override {
     Function &F = getAnchorScope();
 
@@ -1053,8 +1051,7 @@ ChangeStatus AANonNullReturned::updateImpl(Attributor &A,
 }
 
 /// NonNull attribute for function argument.
-struct AANonNullArgument : AANonNullImpl {
-
+struct AANonNullArgument final : AANonNullImpl {
   AANonNullArgument(Argument &A) : AANonNullImpl(A) {}
 
   /// See AbstractAttriubute::initialize(...).
@@ -1069,9 +1066,7 @@ struct AANonNullArgument : AANonNullImpl {
 };
 
 /// NonNull attribute for a call site argument.
-struct AANonNullCallSiteArgument : AANonNullImpl {
-
-  /// See AANonNullImpl::AANonNullImpl(...).
+struct AANonNullCallSiteArgument final : AANonNullImpl {
   AANonNullCallSiteArgument(Instruction &I, unsigned ArgNo)
       : AANonNullImpl(CallSite(&I).getArgOperand(ArgNo), I, ArgNo) {}
 
@@ -1092,19 +1087,18 @@ struct AANonNullCallSiteArgument : AANonNullImpl {
 ChangeStatus AANonNullArgument::updateImpl(Attributor &A,
                                            InformationCache &InfoCache) {
   Function &F = getAnchorScope();
-  Argument &Arg = cast<Argument>(getAnchorValue());
-
-  unsigned ArgNo = Arg.getArgNo();
+  unsigned ArgNo = getArgNo();
 
   // Callback function
   std::function<bool(CallSite)> CallSiteCheck = [&](CallSite CS) {
     assert(CS && "Sanity check: Call site was not initialized properly!");
 
-    auto *NonNullAA = A.getAAFor<AANonNull>(*this, *CS.getInstruction(), ArgNo);
+    auto *NonNullAA =
+        A.getAAFor<AANonNullImpl>(*this, *CS.getInstruction(), ArgNo);
 
     // Check that NonNullAA is AANonNullCallSiteArgument.
     if (NonNullAA) {
-      ImmutableCallSite ICS(&NonNullAA->getIRPosition().getAnchorValue());
+      ImmutableCallSite ICS(&NonNullAA->getAnchorValue());
       if (ICS && CS.getInstruction() == ICS.getInstruction())
         return NonNullAA->isAssumedNonNull();
       return false;
@@ -1152,8 +1146,6 @@ struct AAWillReturnImpl : public AAWillReturn {
 };
 
 struct AAWillReturnFunction final : AAWillReturnImpl {
-
-  /// See AbstractAttribute::AbstractAttribute(...).
   AAWillReturnFunction(Function &F) : AAWillReturnImpl(F, IRP_FUNCTION) {}
 
   /// See AbstractAttribute::initialize(...).
@@ -1233,8 +1225,7 @@ struct AANoAliasImpl : AANoAlias {
 };
 
 /// NoAlias attribute for function return value.
-struct AANoAliasReturned : AANoAliasImpl {
-
+struct AANoAliasReturned final : AANoAliasImpl {
   AANoAliasReturned(Function &F) : AANoAliasImpl(F, IRP_RETURNED) {}
 
   /// See AbstractAttriubute::initialize(...).
@@ -1296,7 +1287,7 @@ struct AAIsDeadImpl : public AAIsDead {
   IRPositionConstructorForward(AAIsDeadImpl, AAIsDead);
 
   void initialize(Attributor &A, InformationCache &InfoCache) override {
-    Function &F = getAnchorScope();
+    const Function &F = getAnchorScope();
 
     ToBeExploredPaths.insert(&(F.getEntryBlock().front()));
     AssumedLiveBlocks.insert(&(F.getEntryBlock()));
@@ -1316,9 +1307,11 @@ struct AAIsDeadImpl : public AAIsDead {
   ///          starting from, thus including, \p I.
   const Instruction *findNextNoReturn(Attributor &A, const Instruction *I);
 
+  /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
-    return "LiveBBs(" + std::to_string(AssumedLiveBlocks.size()) + "/" +
-           std::to_string(getAnchorScope().size()) + ")";
+    return "Live[#BB " + std::to_string(AssumedLiveBlocks.size()) + "/" +
+           std::to_string(getAnchorScope().size()) + "][#NRI " +
+           std::to_string(NoReturnCalls.size()) + "]";
   }
 
   /// See AbstractAttribute::manifest(...).
@@ -1329,9 +1322,9 @@ struct AAIsDeadImpl : public AAIsDead {
     ChangeStatus HasChanged = ChangeStatus::UNCHANGED;
     const Function &F = getAnchorScope();
 
-    // Flag to determine if we can change an invoke to a call assuming the callee
-    // is nounwind. This is not possible if the personality of the function allows
-    // to catch asynchronous exceptions.
+    // Flag to determine if we can change an invoke to a call assuming the
+    // callee is nounwind. This is not possible if the personality of the
+    // function allows to catch asynchronous exceptions.
     bool Invoke2CallAllowed = !mayCatchAsynchronousExceptions(F);
 
     for (const Instruction *NRC : NoReturnCalls) {
@@ -1706,7 +1699,7 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
   }
 };
 
-struct AADereferenceableReturned : AADereferenceableImpl {
+struct AADereferenceableReturned final : AADereferenceableImpl {
   AADereferenceableReturned(Function &F)
       : AADereferenceableImpl(F, IRP_RETURNED) {}
 
@@ -1786,7 +1779,7 @@ AADereferenceableReturned::updateImpl(Attributor &A,
   return indicatePessimisticFixpoint();
 }
 
-struct AADereferenceableArgument : AADereferenceableImpl {
+struct AADereferenceableArgument final : AADereferenceableImpl {
   AADereferenceableArgument(Argument &A) : AADereferenceableImpl(A) {}
 
   /// See AbstractAttribute::updateImpl(...).
@@ -1842,9 +1835,7 @@ AADereferenceableArgument::updateImpl(Attributor &A,
 }
 
 /// Dereferenceable attribute for a call site argument.
-struct AADereferenceableCallSiteArgument : AADereferenceableImpl {
-
-  /// See AADereferenceableImpl::AADereferenceableImpl(...).
+struct AADereferenceableCallSiteArgument final : AADereferenceableImpl {
   AADereferenceableCallSiteArgument(Instruction &I, unsigned ArgNo)
       : AADereferenceableImpl(CallSite(&I).getArgOperand(ArgNo), I, ArgNo) {}
 
@@ -1893,7 +1884,7 @@ struct AAAlignImpl : AAAlign {
   // Max alignemnt value allowed in IR
   static const unsigned MAX_ALIGN = 1U << 29;
 
-  virtual const std::string getAsStr() const override {
+  const std::string getAsStr() const override {
     return getAssumedAlign() ? ("align<" + std::to_string(getKnownAlign()) +
                                 "-" + std::to_string(getAssumedAlign()) + ">")
                              : "unknown-align";
@@ -1905,8 +1896,7 @@ struct AAAlignImpl : AAAlign {
 
     Function &F = getAnchorScope();
 
-    unsigned AttrIdx = getIRPosition().getAttrIdx();
-
+    unsigned AttrIdx = getAttrIdx();
     // Already the function has align attribute on return value or argument.
     if (F.getAttributes().hasAttribute(AttrIdx, Attribute::Alignment))
       addKnownBits(
@@ -1923,7 +1913,6 @@ struct AAAlignImpl : AAAlign {
 
 /// Align attribute for function return value.
 struct AAAlignReturned final : AAAlignImpl {
-
   AAAlignReturned(Function &F) : AAAlignImpl(F, IRP_RETURNED) {}
 
   /// See AbstractAttribute::updateImpl(...).
@@ -1963,7 +1952,6 @@ ChangeStatus AAAlignReturned::updateImpl(Attributor &A,
 
 /// Align attribute for function argument.
 struct AAAlignArgument final : AAAlignImpl {
-
   AAAlignArgument(Argument &A) : AAAlignImpl(A) {}
 
   /// See AbstractAttribute::updateImpl(...).
@@ -2010,8 +1998,6 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A,
 }
 
 struct AAAlignCallSiteArgument final : AAAlignImpl {
-
-  /// See AANonNullImpl::AANonNullImpl(...).
   AAAlignCallSiteArgument(Instruction &I, unsigned ArgNo)
       : AAAlignImpl(CallSite(&I).getArgOperand(ArgNo), I, ArgNo) {}
 
