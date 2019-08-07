@@ -124,6 +124,7 @@ define double @fsub_nnan(i1 %cond, double %val, double %val2) {
   ret double %add
 }
 
+; TODO combine selects feeding fdiv like we do for fmul, fadd and fsub
 define double @fdiv_nnan_nsz(i1 %cond, double %val, double %val2) {
 ; CHECK-LABEL: @fdiv_nnan_nsz(
 ; CHECK-NEXT:    [[LHS:%.*]] = select i1 [[COND:%.*]], double [[VAL2:%.*]], double 0.000000e+00
