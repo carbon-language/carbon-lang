@@ -10,8 +10,9 @@ declare float @llvm.copysign.f32(float, float)
 
 define double @fabs_copysign(double %x) {
 ; CHECK-LABEL: @fabs_copysign(
-; CHECK-NEXT:    [[TMP1:%.*]] = call nnan ninf double @llvm.copysign.f64(double 1.000000e+00, double [[X:%.*]])
-; CHECK-NEXT:    ret double [[TMP1]]
+; CHECK-NEXT:    [[F:%.*]] = tail call double @llvm.fabs.f64(double [[X:%.*]])
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv nnan ninf double [[X]], [[F]]
+; CHECK-NEXT:    ret double [[DIV]]
 ;
   %f = tail call double @llvm.fabs.f64(double %x)
   %div = fdiv nnan ninf double %x, %f
@@ -21,8 +22,9 @@ define double @fabs_copysign(double %x) {
 
 define float @fabs_copysignf(float %x) {
 ; CHECK-LABEL: @fabs_copysignf(
-; CHECK-NEXT:    [[TMP1:%.*]] = call nnan ninf float @llvm.copysign.f32(float 1.000000e+00, float [[X:%.*]])
-; CHECK-NEXT:    ret float [[TMP1]]
+; CHECK-NEXT:    [[F:%.*]] = tail call float @llvm.fabs.f32(float [[X:%.*]])
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv nnan ninf float [[X]], [[F]]
+; CHECK-NEXT:    ret float [[DIV]]
 ;
   %f = tail call float @llvm.fabs.f32(float %x)
   %div = fdiv nnan ninf float %x, %f
@@ -31,8 +33,9 @@ define float @fabs_copysignf(float %x) {
 
 define double @fabs_copysign_use(double %x) {
 ; CHECK-LABEL: @fabs_copysign_use(
-; CHECK-NEXT:    [[TMP1:%.*]] = call nnan ninf double @llvm.copysign.f64(double 1.000000e+00, double [[X:%.*]])
-; CHECK-NEXT:    ret double [[TMP1]]
+; CHECK-NEXT:    [[F:%.*]] = tail call double @llvm.fabs.f64(double [[X:%.*]])
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv nnan ninf double [[X]], [[F]]
+; CHECK-NEXT:    ret double [[DIV]]
 ;
   %f = tail call double @llvm.fabs.f64(double %x)
   %div = fdiv nnan ninf double %x, %f
