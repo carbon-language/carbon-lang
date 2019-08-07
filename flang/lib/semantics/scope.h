@@ -89,6 +89,8 @@ public:
   const Symbol *GetSymbol() const;
   const Scope *GetDerivedTypeParent() const;
 
+  // It is only safe to call name() for kind of scopes for which GetSymbol
+  // will return a symbol (e.g, it will die if the scope is a Block).
   const SourceName &name() const { return DEREF(GetSymbol()).name(); }
 
   /// Make a scope nested in this one

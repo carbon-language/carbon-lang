@@ -58,6 +58,12 @@ function f
   import, all
 end
 
+subroutine sub2()
+  block
+    import, all !OK
+  end block
+end
+
 !ERROR: IMPORT is not allowed in a main program scoping unit
 import
 end

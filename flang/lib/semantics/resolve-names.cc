@@ -5297,7 +5297,7 @@ void ResolveNamesVisitor::CheckImports() {
     // C8102: all entities in host must not be hidden
     for (const auto &pair : scope.parent()) {
       auto &name{pair.first};
-      if (name != scope.name()) {
+      if (!scope.GetSymbol() || name != scope.name()) {
         CheckImport(*prevImportStmt_, name);
       }
     }
