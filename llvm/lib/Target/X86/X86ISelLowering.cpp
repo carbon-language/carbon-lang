@@ -29431,7 +29431,9 @@ static bool checkAndUpdateEFLAGSKill(MachineBasicBlock::iterator SelectItr,
 static bool isCMOVPseudo(MachineInstr &MI) {
   switch (MI.getOpcode()) {
   case X86::CMOV_FR32:
+  case X86::CMOV_FR32X:
   case X86::CMOV_FR64:
+  case X86::CMOV_FR64X:
   case X86::CMOV_GR8:
   case X86::CMOV_GR16:
   case X86::CMOV_GR32:
