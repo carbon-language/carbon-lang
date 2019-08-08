@@ -527,8 +527,10 @@ static void createOptionalSymbols() {
   if (!config->relocatable)
     WasmSym::dsoHandle = symtab->addOptionalDataSymbol("__dso_handle");
 
-  if (!config->isPic) {
+  if (!config->shared)
     WasmSym::dataEnd = symtab->addOptionalDataSymbol("__data_end");
+
+  if (!config->isPic) {
     WasmSym::globalBase = symtab->addOptionalDataSymbol("__global_base");
     WasmSym::heapBase = symtab->addOptionalDataSymbol("__heap_base");
   }
