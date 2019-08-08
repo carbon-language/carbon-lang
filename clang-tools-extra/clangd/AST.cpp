@@ -73,26 +73,6 @@ bool isImplementationDetail(const Decl *D) {
                             D->getASTContext().getSourceManager());
 }
 
-// Returns true if the complete name of decl \p D is spelled in the source code.
-// This is not the case for:
-//   * symbols formed via macro concatenation, the spelling location will
-//     be "<scratch space>"
-//   * symbols controlled and defined by a compile command-line option
-//     `-DName=foo`, the spelling location will be "<command line>".
-bool isSpelledInSourceCode(const Decl *D) {
-  const auto &SM = D->getASTContext().getSourceManager();
-  auto Loc = D->getLocation();
-  // FIXME: Revisit the strategy, the heuristic is limitted when handling
-  // macros, we should use the location where the whole definition occurs.
-  if (Loc.isMacroID()) {
-    std::string PrintLoc = SM.getSpellingLoc(Loc).printToString(SM);
-    if (llvm::StringRef(PrintLoc).startswith("<scratch") ||
-        llvm::StringRef(PrintLoc).startswith("<command line>"))
-      return false;
-  }
-  return true;
-}
-
 SourceLocation findName(const clang::Decl *D) {
   return D->getLocation();
 }
