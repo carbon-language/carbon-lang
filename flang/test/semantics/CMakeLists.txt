@@ -134,11 +134,15 @@ set(ERROR_TESTS
   allocate11.f90
   allocate12.f90
   allocate13.f90
+  doconcurrent01.f90
   dosemantics01.f90
   dosemantics02.f90
   dosemantics03.f90
   dosemantics04.f90
   dosemantics05.f90
+  dosemantics06.f90
+  dosemantics07.f90
+  dosemantics08.f90
   expr-errors01.f90
   null01.f90
   omp-clause-validity01.f90
@@ -214,7 +218,13 @@ set(LABEL_TESTS
 )
 
 set(DOCONCURRENT_TESTS
-  doconcurrent*.[Ff]90
+  doconcurrent02.f90
+  doconcurrent03.f90
+  doconcurrent04.f90
+  doconcurrent05.f90
+  doconcurrent06.f90
+  doconcurrent07.f90
+  doconcurrent08.f90
 )
 
 set(CANONDO_TESTS

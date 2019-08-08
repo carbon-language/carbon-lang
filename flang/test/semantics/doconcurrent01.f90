@@ -11,21 +11,34 @@
 ! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
-
-! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: image control statement not allowed in DO CONCURRENT
-! CHECK: RETURN not allowed in DO CONCURRENT
-! CHECK: call to impure subroutine in DO CONCURRENT not allowed
-! CHECK: IEEE_GET_FLAG not allowed in DO CONCURRENT
-! CHECK: ADVANCE specifier not allowed in DO CONCURRENT
-! CHECK: SYNC ALL
-! CHECK: SYNC IMAGES
+!
+! C1141
+! A reference to the procedure IEEE_GET_FLAG, IEEE_SET_HALTING_MODE, or
+! IEEE_GET_- HALTING_MODE from the intrinsic module IEEE_EXCEPTIONS, shall not
+! appear within a DO CONCURRENT construct.
+!
+! C1137
+! An image control statement shall not appear within a DO CONCURRENT construct.
+!
+! C1136 
+! A RETURN statement shall not appear within a DO CONCURRENT construct.
+!
+! (11.1.7.5), paragraph 4
+! In a DO CONCURRENT, can't have an i/o statement with an ADVANCE= specifier
 
 module ieee_exceptions
   interface
      subroutine ieee_get_flag(i, j)
        integer :: i, j
      end subroutine ieee_get_flag
+     subroutine ieee_get_halting_mode(i, j)
+       integer :: i
+       logical :: j
+     end subroutine ieee_get_halting_mode
+     subroutine ieee_set_halting_mode(i, j)
+       integer :: i
+       logical :: j
+     end subroutine ieee_set_halting_mode
   end interface
 end module ieee_exceptions
 
@@ -38,8 +51,11 @@ subroutine do_concurrent_test1(i,n)
   implicit none
   integer :: i, n
   do 10 concurrent (i = 1:n)
+!ERROR: image control statement not allowed in DO CONCURRENT
      SYNC ALL
+!ERROR: image control statement not allowed in DO CONCURRENT
      SYNC IMAGES (*)
+!ERROR: RETURN not allowed in DO CONCURRENT
      return
 10 continue
 end subroutine do_concurrent_test1
@@ -49,11 +65,22 @@ subroutine do_concurrent_test2(i,j,n,flag)
   use iso_fortran_env, only: team_type
   implicit none
   integer :: i, n, flag, flag2
+  logical :: halting
   type(team_type) :: j
   do concurrent (i = 1:n)
     change team (j)
+!ERROR: call to impure subroutine in DO CONCURRENT not allowed
+!ERROR: IEEE_GET_FLAG not allowed in DO CONCURRENT
       call ieee_get_flag(flag, flag2)
+!ERROR: call to impure subroutine in DO CONCURRENT not allowed
+!ERROR: IEEE_GET_HALTING_MODE not allowed in DO CONCURRENT
+      call ieee_get_halting_mode(flag, halting)
+!ERROR: call to impure subroutine in DO CONCURRENT not allowed
+!ERROR: IEEE_SET_HALTING_MODE not allowed in DO CONCURRENT
+      call ieee_set_halting_mode(flag, halting)
+!ERROR: image control statement not allowed in DO CONCURRENT
     end team
+!ERROR: ADVANCE specifier not allowed in DO CONCURRENT
     write(*,'(a35)',advance='no')
   end do
 end subroutine do_concurrent_test2
