@@ -5,6 +5,9 @@
 // RUN: not %clang %s -c -o %t.o -target i686-pc-linux-gnu -integrated-as -Wa,--fatal-warnings 2>&1 | FileCheck --check-prefix=CHECK-AS-FATAL %s
 // RUN: not %clang %s -c -o %t.o -target i686-pc-linux-gnu -fno-integrated-as -Wa,--fatal-warnings 2>&1 | FileCheck --check-prefix=CHECK-AS-FATAL %s
 
+// REQUIRES: clang-driver
+// REQUIRES: x86-registered-target
+
 // CHECK: "-cc1" {{.*}} "-massembler-no-warn"
 // CHECK-NOIAS: "--no-warn"
 // CHECK-AS-NOWARN-NOT: warning:
