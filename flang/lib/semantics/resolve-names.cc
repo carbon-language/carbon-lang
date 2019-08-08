@@ -2302,6 +2302,9 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
   using evaluate::characteristics::Procedure;
   std::vector<Procedure> procs;
   for (const Symbol *symbol : specifics) {
+    if (context().HasError(*symbol)) {
+      return;
+    }
     auto proc{Procedure::Characterize(*symbol, context().intrinsics())};
     if (!proc) {
       return;
@@ -2509,8 +2512,8 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
       }
     }
     symbol = &MakeSymbol(name, SubprogramDetails{});
-    symbol->set(subpFlag);
   }
+  symbol->set(subpFlag);
   PushScope(Scope::Kind::Subprogram, symbol);
   auto &details{symbol->get<SubprogramDetails>()};
   if (inInterfaceBlock()) {
@@ -2533,21 +2536,16 @@ Symbol *SubprogramVisitor::GetSpecificFromGeneric(const parser::Name &name) {
     if (auto *details{symbol->detailsIf<GenericDetails>()}) {
       // found generic, want subprogram
       auto *specific{details->specific()};
-      if (isGeneric()) {
-        if (specific) {
-          SayAlreadyDeclared(name, *specific);
-        } else {
-          EraseSymbol(name);
-          specific = &MakeSymbol(name, Attrs{}, SubprogramDetails{});
-          GetGenericDetails().set_specific(*specific);
-        }
+      if (!specific) {
+        specific =
+            &currScope().MakeSymbol(name.source, Attrs{}, SubprogramDetails{});
+        details->set_specific(Resolve(name, *specific));
+      } else if (isGeneric()) {
+        SayAlreadyDeclared(name, *specific);
+      } else if (!specific->has<SubprogramDetails>()) {
+        specific->set_details(SubprogramDetails{});
       }
-      if (specific) {
-        if (!specific->has<SubprogramDetails>()) {
-          specific->set_details(SubprogramDetails{});
-        }
-        return specific;
-      }
+      return specific;
     }
   }
   return nullptr;

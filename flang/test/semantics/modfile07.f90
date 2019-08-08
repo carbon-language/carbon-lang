@@ -168,3 +168,71 @@ end
 !  end
 ! end interface
 !end
+
+module m4
+  interface foo
+    integer function foo()
+    end function
+    integer function f(x)
+    end function
+  end interface
+end
+subroutine s4
+  use m4
+  i = foo()
+end
+!Expect: m4.mod
+!module m4
+! interface foo
+!  procedure::foo
+!  procedure::f
+! end interface
+! interface
+!  function foo()
+!   integer(4)::foo
+!  end
+! end interface
+! interface
+!  function f(x)
+!   integer(4)::f
+!   real(4)::x
+!  end
+! end interface
+!end
+
+! Compile contents of m4.mod and verify it gets the same thing again.
+module m5
+ interface foo
+  procedure::foo
+  procedure::f
+ end interface
+ interface
+  function foo()
+   integer(4)::foo
+  end
+ end interface
+ interface
+  function f(x)
+   integer(4)::f
+   real(4)::x
+  end
+ end interface
+end
+!Expect: m5.mod
+!module m5
+! interface foo
+!  procedure::foo
+!  procedure::f
+! end interface
+! interface
+!  function foo()
+!   integer(4)::foo
+!  end
+! end interface
+! interface
+!  function f(x)
+!   integer(4)::f
+!   real(4)::x
+!  end
+! end interface
+!end

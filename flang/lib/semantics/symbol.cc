@@ -102,7 +102,7 @@ std::ostream &operator<<(std::ostream &os, const SubprogramDetails &x) {
       os << sep << arg->name();
       sep = ',';
     }
-    os << ')';
+    os << (sep == '(' ? "()" : ")");
   }
   return os;
 }
