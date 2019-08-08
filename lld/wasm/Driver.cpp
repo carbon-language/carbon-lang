@@ -508,19 +508,9 @@ static void createSyntheticSymbols() {
     WasmSym::memoryBase->markLive();
     WasmSym::tableBase->markLive();
   } else {
-    llvm::wasm::WasmGlobal global;
-    global.Type = {WASM_TYPE_I32, true};
-    global.InitExpr.Value.Int32 = 0;
-    global.InitExpr.Opcode = WASM_OPCODE_I32_CONST;
-    global.SymbolName = "__stack_pointer";
-    auto *stackPointer = make<InputGlobal>(global, nullptr);
-    stackPointer->live = true;
     // For non-PIC code
-    // TODO(sbc): Remove WASM_SYMBOL_VISIBILITY_HIDDEN when the mutable global
-    // spec proposal is implemented in all major browsers.
-    // See: https://github.com/WebAssembly/mutable-global
-    WasmSym::stackPointer = symtab->addSyntheticGlobal(
-        "__stack_pointer", WASM_SYMBOL_VISIBILITY_HIDDEN, stackPointer);
+    WasmSym::stackPointer = createGlobalVariable("__stack_pointer", true, 0);
+    WasmSym::stackPointer->markLive();
   }
 
   if (config->sharedMemory && !config->shared) {
