@@ -74,18 +74,19 @@ public:
   // Get the implicit type for identifiers starting with ch. May be null.
   const DeclTypeSpec *GetType(char ch) const;
   // Record the implicit type for this range of characters.
-  void SetType(const DeclTypeSpec &type, parser::Location lo, parser::Location,
-      bool isDefault = false);
+  void SetType(const DeclTypeSpec &type, parser::Location lo, parser::Location);
 
 private:
   static char Incr(char ch);
 
   ImplicitRules *parent_;
   SemanticsContext &context_;
-  bool inheritFromParent_;  // look in parent if not specified here
-  std::optional<bool> isImplicitNoneType_;
-  std::optional<bool> isImplicitNoneExternal_;
-  // map initial character of identifier to nullptr or its default type
+  bool inheritFromParent_{false};  // look in parent if not specified here
+  bool isImplicitNoneType_{false};
+  bool isImplicitNoneExternal_{false};
+  // map_ contains the mapping between letters and types that were defined
+  // by the IMPLICIT statements of the related scope. It does not contain
+  // the default Fortran mappings nor the mapping defined in parents.
   std::map<char, const DeclTypeSpec *> map_;
 
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
@@ -1109,9 +1110,9 @@ private:
 // ImplicitRules implementation
 
 bool ImplicitRules::isImplicitNoneType() const {
-  if (isImplicitNoneType_.has_value()) {
-    return isImplicitNoneType_.value();
-  } else if (inheritFromParent_) {
+  if (isImplicitNoneType_) {
+    return true;
+  } else if (map_.empty() && inheritFromParent_) {
     return parent_->isImplicitNoneType();
   } else {
     return false;  // default if not specified
@@ -1119,8 +1120,8 @@ bool ImplicitRules::isImplicitNoneType() const {
 }
 
 bool ImplicitRules::isImplicitNoneExternal() const {
-  if (isImplicitNoneExternal_.has_value()) {
-    return isImplicitNoneExternal_.value();
+  if (isImplicitNoneExternal_) {
+    return true;
   } else if (inheritFromParent_) {
     return parent_->isImplicitNoneExternal();
   } else {
@@ -1129,7 +1130,7 @@ bool ImplicitRules::isImplicitNoneExternal() const {
 }
 
 const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
-  if (isImplicitNoneType()) {
+  if (isImplicitNoneType_) {
     return nullptr;
   } else if (auto it{map_.find(ch)}; it != map_.end()) {
     return it->second;
@@ -1144,13 +1145,11 @@ const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   }
 }
 
-// isDefault is set when we are applying the default rules, so it is not
-// an error if the type is already set.
-void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
-    parser::Location hi, bool isDefault) {
+void ImplicitRules::SetType(
+    const DeclTypeSpec &type, parser::Location lo, parser::Location hi) {
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
     auto res{map_.emplace(ch, &type)};
-    if (!res.second && !isDefault) {
+    if (!res.second) {
       context_.Say(parser::CharBlock{lo},
           "More than one implicit type specified for '%c'"_err_en_US, ch);
     }
