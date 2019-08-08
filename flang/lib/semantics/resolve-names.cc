@@ -5001,14 +5001,11 @@ void DeclarationVisitor::PointerInitialization(
     Symbol &ultimate{name.symbol->GetUltimate()};
     if (IsPointer(ultimate)) {
       if (auto *details{ultimate.detailsIf<ObjectEntityDetails>()}) {
-        // Initialization may have already been performed in the
-        // case of a pointer component in a parameterized derived type.
-        if (!details->init().has_value()) {
-          Walk(target);
-          if (MaybeExpr expr{EvaluateExpr(target)}) {
-            CheckInitialDataTarget(ultimate, *expr, target.value().source);
-            details->set_init(std::move(*expr));
-          }
+        CHECK(!details->init().has_value());
+        Walk(target);
+        if (MaybeExpr expr{EvaluateExpr(target)}) {
+          CheckInitialDataTarget(ultimate, *expr, target.value().source);
+          details->set_init(std::move(*expr));
         }
       }
     } else {
@@ -5022,16 +5019,15 @@ void DeclarationVisitor::PointerInitialization(
     Symbol &ultimate{name.symbol->GetUltimate()};
     if (IsProcedurePointer(ultimate)) {
       auto &details{ultimate.get<ProcEntityDetails>()};
-      if (!details.init().has_value()) {
-        Walk(target);
-        if (const auto *targetName{std::get_if<parser::Name>(&target.u)}) {
-          CheckInitialProcTarget(ultimate, *targetName, name.source);
-          if (targetName->symbol != nullptr) {
-            details.set_init(*targetName->symbol);
-          }
-        } else {
-          details.set_init(nullptr);  // NULL()
+      CHECK(!details.init().has_value());
+      Walk(target);
+      if (const auto *targetName{std::get_if<parser::Name>(&target.u)}) {
+        CheckInitialProcTarget(ultimate, *targetName, name.source);
+        if (targetName->symbol != nullptr) {
+          details.set_init(*targetName->symbol);
         }
+      } else {
+        details.set_init(nullptr);  // NULL()
       }
     } else {
       Say(name,
@@ -5537,9 +5533,7 @@ public:
   explicit DeferredPointerInitializationVisitor(ResolveNamesVisitor &resolver)
     : resolver_{resolver} {}
 
-  void Walk(const parser::SpecificationPart &spec) {
-    parser::Walk(spec, *this);
-  }
+  template<typename A> void Walk(const A &x) { parser::Walk(x, *this); }
 
   template<typename A> bool Pre(const A &) { return true; }
   template<typename A> void Post(const A &) {}
@@ -5600,14 +5594,19 @@ private:
   bool pushedScope_{false};
 };
 
-// Perform checks that need to happen after all of the specification parts
-// but before any of the execution parts.
+// Perform checks and completions that need to happen after all of
+// the specification parts but before any of the execution parts.
 void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
   if (!node.scope()) {
     return;  // error occurred creating scope
   }
   SetScope(*node.scope());
+  // The initializers of pointers, pointer components, and non-deferred
+  // type-bound procedure bindings have not yet been traversed.
+  // We do that now, when any (formerly) forward references that appear
+  // in those initializers will resolve to the right symbols.
   DeferredPointerInitializationVisitor{*this}.Walk(node.spec());
+  DeferredPointerInitializationVisitor{*this}.Walk(node.exec());  // for BLOCK
   for (auto &pair : currScope()) {
     Symbol &symbol{*pair.second};
     if (const auto *details{symbol.detailsIf<GenericDetails>()}) {
@@ -5616,6 +5615,9 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
       CheckExplicitInterface(symbol);
     }
   }
+  // Finish the definitions of derived types and parameterized derived
+  // type instantiations.  The original derived type definitions need to
+  // be finished before the instantiations can be.
   for (Scope &childScope : currScope().children()) {
     if (childScope.IsDerivedType() && childScope.symbol()) {
       FinishDerivedTypeDefinition(childScope);
