@@ -364,7 +364,5 @@ PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
     const DerivedTypeSpec &);
 UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
     const DerivedTypeSpec &);
-bool IsFunctionResultWithSameNameAsFunction(const Symbol &);
-
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_
