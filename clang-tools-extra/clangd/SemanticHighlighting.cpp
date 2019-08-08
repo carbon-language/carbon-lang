@@ -138,9 +138,13 @@ public:
 
 private:
   void addTypeLoc(SourceLocation Loc, const TypeLoc &TL) {
-    if (const Type *TP = TL.getTypePtr())
+    if (const Type *TP = TL.getTypePtr()) {
       if (const TagDecl *TD = TP->getAsTagDecl())
         addToken(Loc, TD);
+      if (TP->isBuiltinType())
+        // Builtins must be special cased as they do not have a TagDecl.
+        addToken(Loc, HighlightingKind::Primitive);
+    }
   }
 
   void addToken(SourceLocation Loc, const NamedDecl *D) {
@@ -386,6 +390,8 @@ llvm::StringRef toTextMateScope(HighlightingKind Kind) {
     return "entity.name.namespace.cpp";
   case HighlightingKind::TemplateParameter:
     return "entity.name.type.template.cpp";
+  case HighlightingKind::Primitive:
+    return "storage.type.primitive.cpp";
   case HighlightingKind::NumKinds:
     llvm_unreachable("must not pass NumKinds to the function");
   }
