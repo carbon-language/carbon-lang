@@ -28,16 +28,6 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
-static bool isPure(const Attrs &attrs) {
-  return attrs.test(Attr::PURE) ||
-      (attrs.test(Attr::ELEMENTAL) && !attrs.test(Attr::IMPURE));
-}
-
-static bool isProcedure(const Symbol::Flags &flags) {
-  return flags.test(Symbol::Flag::Function) ||
-      flags.test(Symbol::Flag::Subroutine);
-}
-
 // 11.1.7.5 - enforce semantics constraints on a DO CONCURRENT loop body
 class DoConcurrentEnforcement {
 public:
@@ -171,7 +161,7 @@ public:
         }
       }
       // C1139: call to impure procedure
-      if (name->symbol && !isPure(name->symbol->attrs())) {
+      if (name->symbol && !IsPureProcedure(*name->symbol)) {
         context_.Say(currentStatementSourcePosition_,
             "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
       }
@@ -191,7 +181,7 @@ public:
       // C1139: this a procedure component
       auto &component{std::get<parser::ProcComponentRef>(procedureDesignator.u)
                           .v.thing.component};
-      if (component.symbol && !isPure(component.symbol->attrs())) {
+      if (component.symbol && !IsPureProcedure(*component.symbol)) {
         context_.Say(currentStatementSourcePosition_,
             "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
       }
@@ -353,54 +343,6 @@ private:
   const Scope &blockScope_;
 };  // class DoConcurrentVariableEnforce
 
-using SymbolContainer = std::set<const Symbol *>;
-
-enum GatherWhichVariables { All, NotShared, Local };
-
-static SymbolContainer GatherVariables(
-    const std::list<parser::LocalitySpec> &localitySpecs,
-    GatherWhichVariables which) {
-  SymbolContainer symbols;
-  for (auto &ls : localitySpecs) {
-    auto names{std::visit(
-        [=](const auto &x) {
-          using T = std::decay_t<decltype(x)>;
-          using namespace parser;
-          if constexpr (!std::is_same_v<T, LocalitySpec::DefaultNone>) {
-            if (which == GatherWhichVariables::All ||
-                (which == GatherWhichVariables::NotShared &&
-                    !std::is_same_v<T, LocalitySpec::Shared>) ||
-                (which == GatherWhichVariables::Local &&
-                    std::is_same_v<T, LocalitySpec::Local>)) {
-              return x.v;
-            }
-          }
-          return std::list<parser::Name>{};
-        },
-        ls.u)};
-    for (const auto &name : names) {
-      if (name.symbol) {
-        symbols.insert(name.symbol);
-      }
-    }
-  }
-  return symbols;
-}
-
-static SymbolContainer GatherReferencesFromExpression(
-    const parser::Expr &expression) {
-  if (const auto *expr{GetExpr(expression)}) {
-    struct CollectSymbols
-      : public virtual evaluate::VisitorBase<SymbolContainer> {
-      explicit CollectSymbols(int) {}
-      void Handle(const Symbol *symbol) { result().insert(symbol); }
-    };
-    return evaluate::Visitor<CollectSymbols>{0}.Traverse(*expr);
-  } else {
-    return {};
-  }
-}
-
 // Find a DO statement and enforce semantics checks on its body
 class DoContext {
 public:
@@ -523,13 +465,61 @@ private:
     }
   }
 
+  using SymbolSet = std::set<const Symbol *>;
+
+  enum GatherWhichVariables { All, NotShared, Local };
+
+  static SymbolSet GatherVariables(
+      const std::list<parser::LocalitySpec> &localitySpecs,
+      GatherWhichVariables which) {
+    SymbolSet symbols;
+    for (auto &ls : localitySpecs) {
+      auto names{std::visit(
+          [=](const auto &x) {
+            using T = std::decay_t<decltype(x)>;
+            using namespace parser;
+            if constexpr (!std::is_same_v<T, LocalitySpec::DefaultNone>) {
+              if (which == GatherWhichVariables::All ||
+                  (which == GatherWhichVariables::NotShared &&
+                      !std::is_same_v<T, LocalitySpec::Shared>) ||
+                  (which == GatherWhichVariables::Local &&
+                      std::is_same_v<T, LocalitySpec::Local>)) {
+                return x.v;
+              }
+            }
+            return std::list<parser::Name>{};
+          },
+          ls.u)};
+      for (const auto &name : names) {
+        if (name.symbol) {
+          symbols.insert(name.symbol);
+        }
+      }
+    }
+    return symbols;
+  }
+
+  static SymbolSet GatherReferencesFromExpression(
+      const parser::Expr &expression) {
+    if (const auto *expr{GetExpr(expression)}) {
+      struct CollectSymbols
+        : public virtual evaluate::VisitorBase<SymbolSet> {
+        explicit CollectSymbols(int) {}
+        void Handle(const Symbol *symbol) { result().insert(symbol); }
+      };
+      return evaluate::Visitor<CollectSymbols>{0}.Traverse(*expr);
+    } else {
+      return {};
+    }
+  }
+
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
     // C1121 - procedures in mask must be pure
     // TODO - add the name of the impure procedure to the message
-    SymbolContainer references{
+    SymbolSet references{
         GatherReferencesFromExpression(mask.thing.thing.value())};
-    for (auto *r : references) {
-      if (isProcedure(r->flags()) && !isPure(r->attrs())) {
+    for (const Symbol *ref : references) {
+      if (IsProcedure(*ref) && !IsPureProcedure(*ref)) {
         context_.Say(currentStatementSourcePosition_,
             "concurrent-header mask expression cannot reference an impure"
             " procedure"_err_en_US);
@@ -538,8 +528,8 @@ private:
     }
   }
 
-  void CheckNoCollisions(const SymbolContainer &refs,
-      const SymbolContainer &defs,
+  void CheckNoCollisions(const SymbolSet &refs,
+      const SymbolSet &defs,
       const parser::MessageFixedText &errorMessage) const {
     for (const Symbol *ref : refs) {
       if (defs.find(ref) != defs.end()) {
@@ -549,16 +539,16 @@ private:
     }
   }
 
-  void HasNoReferences(const SymbolContainer &indexNames,
+  void HasNoReferences(const SymbolSet &indexNames,
       const parser::ScalarIntExpr &expression) const {
-    const SymbolContainer references{
+    const SymbolSet references{
         GatherReferencesFromExpression(expression.thing.thing.value())};
     CheckNoCollisions(references, indexNames,
         "concurrent-control expression references index-name '%s'"_err_en_US);
   }
 
   void CheckMaskDoesNotReferenceLocal(const parser::ScalarLogicalExpr &mask,
-      const SymbolContainer &symbols) const {
+      const SymbolSet &symbols) const {
     // C1129
     CheckNoCollisions(GatherReferencesFromExpression(mask.thing.thing.value()),
         symbols,
@@ -590,7 +580,7 @@ private:
 
     auto &header{std::get<parser::ConcurrentHeader>(concurrent.t)};
     auto &controls{std::get<std::list<parser::ConcurrentControl>>(header.t)};
-    SymbolContainer indexNames;
+    SymbolSet indexNames;
     for (auto &c : controls) {
       auto &indexName{std::get<parser::Name>(c.t)};
       if (indexName.symbol) {
