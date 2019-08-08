@@ -216,7 +216,7 @@ void Scope::add_importName(const SourceName &name) {
 
 // true if name can be imported or host-associated from parent scope.
 bool Scope::CanImport(const SourceName &name) const {
-  if (IsGlobal()) {
+  if (IsGlobal() || parent_.IsGlobal()) {
     return false;
   }
   switch (GetImportKind()) {

@@ -763,6 +763,7 @@ public:
       const parser::Name &, const parser::InitialDataTarget &);
   void PointerInitialization(
       const parser::Name &, const parser::ProcPointerInit &);
+  void CheckExplicitInterface(const parser::Name &);
   void CheckBindings(const parser::TypeBoundProcedureStmt::WithoutInterface &);
 
 protected:
@@ -799,8 +800,6 @@ protected:
   const parser::Name *ResolveName(const parser::Name &);
   bool PassesSharedLocalityChecks(const parser::Name &name, Symbol &symbol);
   Symbol *NoteInterfaceName(const parser::Name &);
-  void CheckExplicitInterface(Symbol &);
-  void CheckBinding(Symbol &);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -845,7 +844,6 @@ private:
   Symbol &DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   void SetType(const parser::Name &, const DeclTypeSpec &);
   const Symbol *ResolveDerivedType(const parser::Name &);
-  bool CanBeTypeBoundProc(const Symbol &);
   Symbol *MakeTypeSymbol(const SourceName &, Details &&);
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
@@ -1660,7 +1658,8 @@ void ScopeHandler::PopScope() {
   // assumed to be objects.
   // TODO: Statement functions
   for (auto &pair : currScope()) {
-    ConvertToObjectEntity(*pair.second);
+    Symbol &symbol{*pair.second};
+    ConvertToObjectEntity(symbol);
   }
   SetScope(currScope_->parent());
 }
@@ -3435,13 +3434,21 @@ void DeclarationVisitor::CheckBindings(
     auto &bindingName{std::get<parser::Name>(declaration.t)};
     if (Symbol * binding{FindInScope(currScope(), bindingName)}) {
       if (auto *details{binding->detailsIf<ProcBindingDetails>()}) {
-        const Symbol &procedure{details->symbol().GetUltimate()};
+        const Symbol *procedure{FindSubprogram(details->symbol())};
         if (!CanBeTypeBoundProc(procedure)) {
-          auto &optName{std::get<std::optional<parser::Name>>(declaration.t)};
-          const parser::Name &procedureName{optName ? *optName : bindingName};
-          SayWithDecl(procedureName, const_cast<Symbol &>(procedure),
-              "'%s' is not a module procedure or external procedure"
-              " with explicit interface"_err_en_US);
+          if (details->symbol().name() != binding->name()) {
+            Say(binding->name(),
+                "The binding of '%s' ('%s') must be either an accessible "
+                "module procedure or an external procedure with "
+                "an explicit interface"_err_en_US,
+                binding->name(), details->symbol().name());
+          } else {
+            Say(binding->name(),
+                "'%s' must be either an accessible module procedure "
+                "or an external procedure with an explicit interface"_err_en_US,
+                binding->name());
+          }
+          context().SetError(*binding);
         }
       }
     }
@@ -4067,55 +4074,23 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
   return symbol;
 }
 
-// Check this symbol suitable as a type-bound procedure - C769
-bool DeclarationVisitor::CanBeTypeBoundProc(const Symbol &symbol) {
-  if (symbol.has<SubprogramNameDetails>()) {
-    return symbol.owner().kind() == Scope::Kind::Module;
-  } else if (auto *details{symbol.detailsIf<SubprogramDetails>()}) {
-    return symbol.owner().kind() == Scope::Kind::Module ||
-        details->isInterface();
-  } else if (auto *proc{symbol.detailsIf<ProcEntityDetails>()}) {
-    return !symbol.IsDummy() && !symbol.attrs().test(Attr::POINTER) &&
-        proc->HasExplicitInterface();
-  } else {
-    return false;
-  }
-}
-
 Symbol *DeclarationVisitor::NoteInterfaceName(const parser::Name &name) {
-  // The symbol is checked later by CheckExplicitInterface() or
-  // CheckBinding() to ensure that it defines an explicit interface
-  // or binds to a procedure.  The name can be a forward reference.
+  // The symbol is checked later by CheckExplicitInterface() and
+  // CheckBindings().  It can be a forward reference.
   if (!NameIsKnownOrIntrinsic(name)) {
-    Resolve(name, MakeSymbol(InclusiveScope(), name.source, Attrs{}));
+    Symbol &symbol{MakeSymbol(InclusiveScope(), name.source, Attrs{})};
+    Resolve(name, symbol);
   }
   return name.symbol;
 }
 
-void DeclarationVisitor::CheckExplicitInterface(Symbol &symbol) {
-  if (const Symbol * interface{FindInterface(symbol)}) {
-    const Symbol *subp{FindSubprogram(*interface)};
-    if (subp == nullptr || !subp->HasExplicitInterface()) {
-      Say(symbol.name(),
-          "The interface of '%s' ('%s') is not an abstract interface or a "
-          "procedure with an explicit interface"_err_en_US,
-          symbol.name(), interface->name());
-      context().SetError(symbol);
-    }
-  }
-}
-
-void DeclarationVisitor::CheckBinding(Symbol &symbol) {
-  if (const auto *details{symbol.detailsIf<ProcBindingDetails>()}) {
-    const Symbol &binding{details->symbol()};
-    const Symbol *subp{FindSubprogram(binding)};
-    if (subp == nullptr || !subp->HasExplicitInterface() || IsDummy(*subp) ||
-        IsProcedurePointer(*subp)) {
-      Say(symbol.name(),
-          "The binding of '%s' ('%s') is not a "
-          "procedure with an explicit interface"_err_en_US,
-          symbol.name(), binding.name());
-      context().SetError(symbol);
+void DeclarationVisitor::CheckExplicitInterface(const parser::Name &name) {
+  if (const Symbol * symbol{name.symbol}) {
+    if (!symbol->HasExplicitInterface()) {
+      Say(name,
+          "'%s' must be an abstract interface or a procedure with "
+          "an explicit interface"_err_en_US,
+          symbol->name());
     }
   }
 }
@@ -4764,11 +4739,6 @@ const parser::Name *DeclarationVisitor::ResolveName(const parser::Name &name) {
     }
     return &name;
   }
-  // TODO pmk: if in a variable or component initialization with deferred
-  // semantic analysis, just MakeSymbol() for now and don't apply any
-  // implicit typing rules.  Then do object conversion and implicit
-  // typing (or not) in DeferredInitializationHelper (taking Pointer
-  // out of the name).  Still not sure how to deal with PDT components.
   if (isImplicitNoneType()) {
     Say(name, "No explicit type declared for '%s'"_err_en_US);
     return nullptr;
@@ -5027,7 +4997,7 @@ void DeclarationVisitor::PointerInitialization(
           details.set_init(*targetName->symbol);
         }
       } else {
-        details.set_init(nullptr);  // NULL()
+        details.set_init(nullptr);  // explicit NULL()
       }
     } else {
       Say(name,
@@ -5074,9 +5044,7 @@ void ResolveNamesVisitor::HandleProcedureName(
       }
       MakeExternal(*symbol);
     }
-    if (!symbol->has<ProcEntityDetails>()) {
-      ConvertToProcEntity(*symbol);
-    }
+    ConvertToProcEntity(*symbol);
     SetProcFlag(name, *symbol, flag);
   } else if (symbol->has<UnknownDetails>()) {
     CHECK(!"unexpected UnknownDetails");
@@ -5525,12 +5493,13 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   }
 }
 
-// The processing of initializers of pointers is deferred until all of
-// the pertinent specification parts have been visited.  This deferred
-// processing enables the use of forward references in those initializers.
-class DeferredPointerInitializationVisitor {
+// Some analyses and checks, such as the processing of initializers of
+// pointers, is deferred until all of the pertinent specification parts
+// have been visited.  This deferred processing enables the use of forward
+// references in these circumstances.
+class DeferredCheckVisitor {
 public:
-  explicit DeferredPointerInitializationVisitor(ResolveNamesVisitor &resolver)
+  explicit DeferredCheckVisitor(ResolveNamesVisitor &resolver)
     : resolver_{resolver} {}
 
   template<typename A> void Walk(const A &x) { parser::Walk(x, *this); }
@@ -5539,7 +5508,7 @@ public:
   template<typename A> void Post(const A &) {}
 
   void Post(const parser::DerivedTypeStmt &x) {
-    auto &name{std::get<parser::Name>(x.t)};
+    const auto &name{std::get<parser::Name>(x.t)};
     if (Symbol * symbol{name.symbol}) {
       if (Scope * scope{symbol->scope()}) {
         if (scope->kind() == Scope::Kind::DerivedType) {
@@ -5556,6 +5525,11 @@ public:
     }
   }
 
+  void Post(const parser::ProcInterface &pi) {
+    if (const auto *name{std::get_if<parser::Name>(&pi.u)}) {
+      resolver_.CheckExplicitInterface(*name);
+    }
+  }
   bool Pre(const parser::EntityDecl &decl) {
     Init(std::get<parser::Name>(decl.t),
         std::get<std::optional<parser::Initialization>>(decl.t));
@@ -5572,6 +5546,9 @@ public:
       resolver_.PointerInitialization(std::get<parser::Name>(decl.t), *init);
     }
     return false;
+  }
+  void Post(const parser::TypeBoundProcedureStmt::WithInterface &tbps) {
+    resolver_.CheckExplicitInterface(tbps.interfaceName);
   }
   void Post(const parser::TypeBoundProcedureStmt::WithoutInterface &tbps) {
     if (pushedScope_) {
@@ -5605,14 +5582,12 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
   // type-bound procedure bindings have not yet been traversed.
   // We do that now, when any (formerly) forward references that appear
   // in those initializers will resolve to the right symbols.
-  DeferredPointerInitializationVisitor{*this}.Walk(node.spec());
-  DeferredPointerInitializationVisitor{*this}.Walk(node.exec());  // for BLOCK
+  DeferredCheckVisitor{*this}.Walk(node.spec());
+  DeferredCheckVisitor{*this}.Walk(node.exec());  // for BLOCK
   for (auto &pair : currScope()) {
     Symbol &symbol{*pair.second};
     if (const auto *details{symbol.detailsIf<GenericDetails>()}) {
       CheckSpecificsAreDistinguishable(symbol, details->specificProcs());
-    } else if (symbol.has<ProcEntityDetails>()) {
-      CheckExplicitInterface(symbol);
     }
   }
   // Finish the definitions of derived types and parameterized derived
@@ -5643,7 +5618,7 @@ static int FindIndexOfName(
   return -1;
 }
 
-// Perform checks on procedure bindings of this type
+// Perform final checks on a derived type and set the pass arguments.
 void ResolveNamesVisitor::FinishDerivedTypeDefinition(Scope &scope) {
   CHECK(scope.IsDerivedType() && scope.symbol());
   for (auto &pair : scope) {
@@ -5652,12 +5627,8 @@ void ResolveNamesVisitor::FinishDerivedTypeDefinition(Scope &scope) {
         common::visitors{
             [&](ProcEntityDetails &x) {
               SetPassArg(comp, x.interface().symbol(), x);
-              CheckExplicitInterface(comp);
             },
-            [&](ProcBindingDetails &x) {
-              SetPassArg(comp, &x.symbol(), x);
-              CheckBinding(comp);
-            },
+            [&](ProcBindingDetails &x) { SetPassArg(comp, &x.symbol(), x); },
             [](auto &) {},
         },
         comp.details());

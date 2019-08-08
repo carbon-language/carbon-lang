@@ -35,21 +35,21 @@ module m
   type t1
     integer :: c
   contains
-    !ERROR: Procedure 'missing' not found
+    !ERROR: The binding of 'a' ('missing') must be either an accessible module procedure or an external procedure with an explicit interface
     procedure, nopass :: a => missing
     procedure, nopass :: b => s, s2
-    !ERROR: 'c' is not a module procedure or external procedure with explicit interface
+    !ERROR: Type parameter, component, or procedure binding 'c' already defined in this type
     procedure, nopass :: c
     !ERROR: DEFERRED is only allowed when an interface-name is provided
     procedure, nopass, deferred :: d => s
     !Note: s3 not found because it's not accessible -- should we issue a message
     !to that effect?
-    !ERROR: Procedure 's3' not found
+    !ERROR: 's3' must be either an accessible module procedure or an external procedure with an explicit interface
     procedure, nopass :: s3
     procedure, nopass :: foo
-    !ERROR: 'bar' is not a module procedure or external procedure with explicit interface
+    !ERROR: 'bar' must be either an accessible module procedure or an external procedure with an explicit interface
     procedure, nopass :: bar
-    !ERROR: 'i' is not a module procedure or external procedure with explicit interface
+    !ERROR: 'i' must be either an accessible module procedure or an external procedure with an explicit interface
     procedure, nopass :: i
     !ERROR: Type parameter, component, or procedure binding 'b' already defined in this type
     procedure, nopass :: b => s4
@@ -59,7 +59,7 @@ module m
     procedure(foo), nopass, deferred :: f
     !ERROR: DEFERRED is required when an interface-name is provided
     procedure(foo), nopass :: g
-    !ERROR: The interface of 'h' ('bar') is not an abstract interface or a procedure with an explicit interface
+    !ERROR: 'bar' must be an abstract interface or a procedure with an explicit interface
     procedure(bar), nopass, deferred :: h
   end type
   type t2

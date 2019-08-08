@@ -84,6 +84,7 @@ const Symbol *HasEventOrLockPotentialComponent(const DerivedTypeSpec &);
 bool IsOrContainsEventOrLockComponent(const Symbol &);
 // Has an explicit or implied SAVE attribute
 bool IsSaved(const Symbol &);
+bool CanBeTypeBoundProc(const Symbol *);
 
 // Return an ultimate component of type that matches predicate, or nullptr.
 const Symbol *FindUltimateComponent(

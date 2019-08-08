@@ -418,6 +418,23 @@ bool IsSaved(const Symbol &symbol) {
   }
 }
 
+// Check this symbol suitable as a type-bound procedure - C769
+bool CanBeTypeBoundProc(const Symbol *symbol) {
+  if (symbol == nullptr || IsDummy(*symbol) || IsProcedurePointer(*symbol)) {
+    return false;
+  } else if (symbol->has<SubprogramNameDetails>()) {
+    return symbol->owner().kind() == Scope::Kind::Module;
+  } else if (auto *details{symbol->detailsIf<SubprogramDetails>()}) {
+    return symbol->owner().kind() == Scope::Kind::Module ||
+        details->isInterface();
+  } else if (const auto *proc{symbol->detailsIf<ProcEntityDetails>()}) {
+    return !symbol->attrs().test(Attr::INTRINSIC) &&
+        proc->HasExplicitInterface();
+  } else {
+    return false;
+  }
+}
+
 bool IsFinalizable(const Symbol &symbol) {
   if (const DeclTypeSpec * type{symbol.GetType()}) {
     if (const DerivedTypeSpec * derived{type->AsDerived()}) {

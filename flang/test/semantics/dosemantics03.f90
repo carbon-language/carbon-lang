@@ -25,12 +25,6 @@
 ! C1120 -- DO variable (and associated expressions) must be INTEGER.
 ! This is extended by allowing REAL and DOUBLE PRECISION
 
-SUBROUTINE sub()
-END SUBROUTINE sub
-
-FUNCTION ifunc()
-END FUNCTION ifunc
-
 MODULE share
   INTEGER :: intvarshare
   REAL :: realvarshare
@@ -56,6 +50,12 @@ PROGRAM do_issue_458
   REAL, POINTER :: prvar
   DOUBLE PRECISION, POINTER :: pdvar
   LOGICAL, POINTER :: plvar
+  INTERFACE
+    SUBROUTINE sub()
+    END SUBROUTINE sub
+    FUNCTION ifunc()
+    END FUNCTION ifunc
+  END INTERFACE
   PROCEDURE(ifunc), POINTER :: pifunc => NULL()
 
 ! DO variables

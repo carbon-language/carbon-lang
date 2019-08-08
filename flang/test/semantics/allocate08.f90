@@ -119,6 +119,12 @@ end function
 
 program test_typeless
   class(*), allocatable :: x
+  interface
+    subroutine sub
+    end subroutine
+    real function func()
+    end function
+  end interface
   procedure (sub), pointer :: subp => sub
   procedure (func), pointer :: funcp => func
 
