@@ -31901,15 +31901,15 @@ static bool matchBinaryPermuteShuffle(
     }
   }
 
-  // Attempt to combine to INSERTPS.
+  // Attempt to combine to INSERTPS, but only if it has elements that need to
+  // be set to zero.
   if (AllowFloatDomain && EltSizeInBits == 32 && Subtarget.hasSSE41() &&
-      MaskVT.is128BitVector()) {
-    if (Zeroable.getBoolValue() &&
-        matchShuffleAsInsertPS(V1, V2, PermuteImm, Zeroable, Mask, DAG)) {
-      Shuffle = X86ISD::INSERTPS;
-      ShuffleVT = MVT::v4f32;
-      return true;
-    }
+      MaskVT.is128BitVector() &&
+      llvm::any_of(Mask, [](int M) { return M == SM_SentinelZero; }) &&
+      matchShuffleAsInsertPS(V1, V2, PermuteImm, Zeroable, Mask, DAG)) {
+    Shuffle = X86ISD::INSERTPS;
+    ShuffleVT = MVT::v4f32;
+    return true;
   }
 
   // Attempt to combine to SHUFPD.
@@ -31969,6 +31969,15 @@ static bool matchBinaryPermuteShuffle(
         return true;
       }
     }
+  }
+
+  // Attempt to combine to INSERTPS more generally if X86ISD::SHUFP failed.
+  if (AllowFloatDomain && EltSizeInBits == 32 && Subtarget.hasSSE41() &&
+      MaskVT.is128BitVector() &&
+      matchShuffleAsInsertPS(V1, V2, PermuteImm, Zeroable, Mask, DAG)) {
+    Shuffle = X86ISD::INSERTPS;
+    ShuffleVT = MVT::v4f32;
+    return true;
   }
 
   return false;
