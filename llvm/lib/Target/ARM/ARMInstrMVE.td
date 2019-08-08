@@ -4820,13 +4820,6 @@ let Predicates = [HasMVEInt, IsLE] in {
   defm : MVE_unpred_vector_load<MVE_VLDRBU8, byte_alignedload, 0>;
   defm : MVE_unpred_vector_load<MVE_VLDRHU16, hword_alignedload, 1>;
   defm : MVE_unpred_vector_load<MVE_VLDRWU32, alignedload32, 2>;
-
-  def  : Pat<(v16i1 (load t2addrmode_imm7<2>:$addr)),
-             (v16i1 (VLDR_P0_off t2addrmode_imm7<2>:$addr))>;
-  def  : Pat<(v8i1 (load t2addrmode_imm7<2>:$addr)),
-             (v8i1 (VLDR_P0_off t2addrmode_imm7<2>:$addr))>;
-  def  : Pat<(v4i1 (load t2addrmode_imm7<2>:$addr)),
-             (v4i1 (VLDR_P0_off t2addrmode_imm7<2>:$addr))>;
 }
 
 let Predicates = [HasMVEInt, IsBE] in {
@@ -4841,6 +4834,41 @@ let Predicates = [HasMVEInt, IsBE] in {
   def : MVE_unpred_vector_load_typed<v8f16, MVE_VLDRHU16, alignedload16, 1>;
   def : MVE_unpred_vector_load_typed<v4i32, MVE_VLDRWU32, alignedload32, 2>;
   def : MVE_unpred_vector_load_typed<v4f32, MVE_VLDRWU32, alignedload32, 2>;
+
+  // Other unaligned loads/stores need to go though a VREV
+  def : Pat<(v2f64 (load t2addrmode_imm7<0>:$addr)),
+            (v2f64 (MVE_VREV64_8 (MVE_VLDRBU8 t2addrmode_imm7<0>:$addr)))>;
+  def : Pat<(v2i64 (load t2addrmode_imm7<0>:$addr)),
+            (v2i64 (MVE_VREV64_8 (MVE_VLDRBU8 t2addrmode_imm7<0>:$addr)))>;
+  def : Pat<(v4i32 (load t2addrmode_imm7<0>:$addr)),
+            (v4i32 (MVE_VREV32_8 (MVE_VLDRBU8 t2addrmode_imm7<0>:$addr)))>;
+  def : Pat<(v4f32 (load t2addrmode_imm7<0>:$addr)),
+            (v4f32 (MVE_VREV32_8 (MVE_VLDRBU8 t2addrmode_imm7<0>:$addr)))>;
+  def : Pat<(v8i16 (load t2addrmode_imm7<0>:$addr)),
+            (v8i16 (MVE_VREV16_8 (MVE_VLDRBU8 t2addrmode_imm7<0>:$addr)))>;
+  def : Pat<(v8f16 (load t2addrmode_imm7<0>:$addr)),
+            (v8f16 (MVE_VREV16_8 (MVE_VLDRBU8 t2addrmode_imm7<0>:$addr)))>;
+  def : Pat<(store (v2f64 MQPR:$val), t2addrmode_imm7<0>:$addr),
+            (MVE_VSTRBU8 (MVE_VREV64_8 MQPR:$val), t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(store (v2i64 MQPR:$val), t2addrmode_imm7<0>:$addr),
+            (MVE_VSTRBU8 (MVE_VREV64_8 MQPR:$val), t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(store (v4i32 MQPR:$val), t2addrmode_imm7<0>:$addr),
+            (MVE_VSTRBU8 (MVE_VREV32_8 MQPR:$val), t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(store (v4f32 MQPR:$val), t2addrmode_imm7<0>:$addr),
+            (MVE_VSTRBU8 (MVE_VREV32_8 MQPR:$val), t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(store (v8i16 MQPR:$val), t2addrmode_imm7<0>:$addr),
+            (MVE_VSTRBU8 (MVE_VREV16_8 MQPR:$val), t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(store (v8f16 MQPR:$val), t2addrmode_imm7<0>:$addr),
+            (MVE_VSTRBU8 (MVE_VREV16_8 MQPR:$val), t2addrmode_imm7<0>:$addr)>;
+}
+
+let Predicates = [HasMVEInt] in {
+  def  : Pat<(v16i1 (load t2addrmode_imm7<2>:$addr)),
+             (v16i1 (VLDR_P0_off t2addrmode_imm7<2>:$addr))>;
+  def  : Pat<(v8i1 (load t2addrmode_imm7<2>:$addr)),
+             (v8i1 (VLDR_P0_off t2addrmode_imm7<2>:$addr))>;
+  def  : Pat<(v4i1 (load t2addrmode_imm7<2>:$addr)),
+             (v4i1 (VLDR_P0_off t2addrmode_imm7<2>:$addr))>;
 }
 
 

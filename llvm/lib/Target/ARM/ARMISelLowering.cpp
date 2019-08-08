@@ -14075,45 +14075,21 @@ bool ARMTargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
     return true;
   }
 
-  if (Ty != MVT::v16i8 && Ty != MVT::v8i16 && Ty != MVT::v8f16 &&
-      Ty != MVT::v4i32 && Ty != MVT::v4f32 && Ty != MVT::v2i64 &&
-      Ty != MVT::v2f64)
-    return false;
-
-  if (Subtarget->isLittle()) {
-    // In little-endian MVE, the store instructions VSTRB.U8,
-    // VSTRH.U16 and VSTRW.U32 all store the vector register in
-    // exactly the same format, and differ only in the range of
-    // their immediate offset field and the required alignment.
-    //
-    // In particular, VSTRB.U8 can store a vector at byte alignment.
-    // So at this stage we can simply say that loads/stores of all
-    // 128-bit wide vector types are permitted at any alignment,
-    // because we know at least _one_ instruction can manage that.
-    //
-    // Later on we might find that some of those loads are better
-    // generated as VLDRW.U32 if alignment permits, to take
-    // advantage of the larger immediate range. But for the moment,
-    // all that matters is that if we don't lower the load then
-    // _some_ instruction can handle it.
+  // In little-endian MVE, the store instructions VSTRB.U8, VSTRH.U16 and
+  // VSTRW.U32 all store the vector register in exactly the same format, and
+  // differ only in the range of their immediate offset field and the required
+  // alignment. So there is always a store that can be used, regardless of
+  // actual type.
+  //
+  // For big endian, that is not the case. But can still emit a (VSTRB.U8;
+  // VREV64.8) pair and get the same effect. This will likely be better than
+  // aligning the vector through the stack.
+  if (Ty == MVT::v16i8 || Ty == MVT::v8i16 || Ty == MVT::v8f16 ||
+      Ty == MVT::v4i32 || Ty == MVT::v4f32 || Ty == MVT::v2i64 ||
+      Ty == MVT::v2f64) {
     if (Fast)
       *Fast = true;
     return true;
-  } else {
-    // In big-endian MVE, those instructions aren't so similar
-    // after all, because they reorder the bytes of the vector
-    // differently. So this time we can only store a particular
-    // kind of vector if its alignment is at least the element
-    // type. And we can't store vectors of i64 or f64 at all
-    // without having to do some postprocessing, because there's
-    // no VSTRD.U64.
-    if (Ty == MVT::v16i8 ||
-        ((Ty == MVT::v8i16 || Ty == MVT::v8f16) && Alignment >= 2) ||
-        ((Ty == MVT::v4i32 || Ty == MVT::v4f32) && Alignment >= 4)) {
-      if (Fast)
-        *Fast = true;
-      return true;
-    }
   }
 
   return false;
