@@ -4839,36 +4839,48 @@ let Predicates = [HasMVEInt, IsBE] in {
 
 // Widening/Narrowing Loads/Stores
 
+let MinAlignment = 2 in {
+  def truncstorevi16_align2 : PatFrag<(ops node:$val, node:$ptr),
+                                      (truncstorevi16 node:$val, node:$ptr)>;
+}
+
 let Predicates = [HasMVEInt] in {
-  def : Pat<(truncstorevi8  (v8i16 MQPR:$val), t2addrmode_imm7<1>:$addr),
-             (MVE_VSTRB16 MQPR:$val, t2addrmode_imm7<1>:$addr)>;
-  def : Pat<(truncstorevi8  (v4i32 MQPR:$val), t2addrmode_imm7<1>:$addr),
-             (MVE_VSTRB32 MQPR:$val, t2addrmode_imm7<1>:$addr)>;
-  def : Pat<(truncstorevi16 (v4i32 MQPR:$val), t2addrmode_imm7<2>:$addr),
-             (MVE_VSTRH32 MQPR:$val, t2addrmode_imm7<2>:$addr)>;
+  def : Pat<(truncstorevi8  (v8i16 MQPR:$val), t2addrmode_imm7<0>:$addr),
+             (MVE_VSTRB16 MQPR:$val, t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(truncstorevi8  (v4i32 MQPR:$val), t2addrmode_imm7<0>:$addr),
+             (MVE_VSTRB32 MQPR:$val, t2addrmode_imm7<0>:$addr)>;
+  def : Pat<(truncstorevi16_align2 (v4i32 MQPR:$val), t2addrmode_imm7<1>:$addr),
+             (MVE_VSTRH32 MQPR:$val, t2addrmode_imm7<1>:$addr)>;
+}
+
+
+let MinAlignment = 2 in {
+  def extloadvi16_align2  : PatFrag<(ops node:$ptr), (extloadvi16 node:$ptr)>;
+  def sextloadvi16_align2 : PatFrag<(ops node:$ptr), (sextloadvi16 node:$ptr)>;
+  def zextloadvi16_align2 : PatFrag<(ops node:$ptr), (zextloadvi16 node:$ptr)>;
 }
 
 multiclass MVEExtLoad<string DestLanes, string DestElemBits,
                       string SrcElemBits, string SrcElemType,
-                      Operand am> {
+                      string Align, Operand am> {
   def _Any : Pat<(!cast<ValueType>("v" # DestLanes # "i" # DestElemBits)
-                   (!cast<PatFrag>("extloadvi"  # SrcElemBits) am:$addr)),
+                   (!cast<PatFrag>("extloadvi"  # SrcElemBits # Align) am:$addr)),
                  (!cast<Instruction>("MVE_VLDR" # SrcElemType # "U" # DestElemBits)
                    am:$addr)>;
   def _Z   : Pat<(!cast<ValueType>("v" # DestLanes # "i" # DestElemBits)
-                   (!cast<PatFrag>("zextloadvi"  # SrcElemBits) am:$addr)),
+                   (!cast<PatFrag>("zextloadvi"  # SrcElemBits # Align) am:$addr)),
                  (!cast<Instruction>("MVE_VLDR" # SrcElemType # "U" # DestElemBits)
                    am:$addr)>;
   def _S   : Pat<(!cast<ValueType>("v" # DestLanes # "i" # DestElemBits)
-                   (!cast<PatFrag>("sextloadvi"  # SrcElemBits) am:$addr)),
+                   (!cast<PatFrag>("sextloadvi"  # SrcElemBits # Align) am:$addr)),
                  (!cast<Instruction>("MVE_VLDR" # SrcElemType # "S" # DestElemBits)
                    am:$addr)>;
 }
 
 let Predicates = [HasMVEInt] in {
-  defm : MVEExtLoad<"4", "32", "8",  "B", t2addrmode_imm7<1>>;
-  defm : MVEExtLoad<"8", "16", "8",  "B", t2addrmode_imm7<1>>;
-  defm : MVEExtLoad<"4", "32", "16", "H", t2addrmode_imm7<2>>;
+  defm : MVEExtLoad<"4", "32", "8",  "B", "", t2addrmode_imm7<0>>;
+  defm : MVEExtLoad<"8", "16", "8",  "B", "", t2addrmode_imm7<0>>;
+  defm : MVEExtLoad<"4", "32", "16", "H", "_align2", t2addrmode_imm7<1>>;
 }
 
 

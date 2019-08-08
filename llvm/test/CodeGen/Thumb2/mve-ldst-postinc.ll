@@ -774,9 +774,16 @@ entry:
 define i8* @ldrhi32_align1(i8* %x, i8* %y) {
 ; CHECK-LABEL: ldrhi32_align1:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    vldrh.s32 q0, [r0]
+; CHECK-NEXT:    .pad #8
+; CHECK-NEXT:    sub sp, #8
+; CHECK-NEXT:    ldr r3, [r0, #4]
+; CHECK-NEXT:    ldr r2, [r0]
 ; CHECK-NEXT:    adds r0, #3
+; CHECK-NEXT:    strd r2, r3, [sp]
+; CHECK-NEXT:    mov r2, sp
+; CHECK-NEXT:    vldrh.s32 q0, [r2]
 ; CHECK-NEXT:    vstrw.32 q0, [r1]
+; CHECK-NEXT:    add sp, #8
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %x, i32 3
@@ -1360,9 +1367,16 @@ entry:
 define i8* @strhi32_align1(i8* %y, i8* %x) {
 ; CHECK-LABEL: strhi32_align1:
 ; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    .pad #8
+; CHECK-NEXT:    sub sp, #8
 ; CHECK-NEXT:    vldrw.u32 q0, [r1]
-; CHECK-NEXT:    vstrh.32 q0, [r0]
+; CHECK-NEXT:    mov r1, sp
+; CHECK-NEXT:    vstrh.32 q0, [r1]
+; CHECK-NEXT:    ldrd r1, r2, [sp]
+; CHECK-NEXT:    str r1, [r0]
+; CHECK-NEXT:    str r2, [r0, #4]
 ; CHECK-NEXT:    adds r0, #3
+; CHECK-NEXT:    add sp, #8
 ; CHECK-NEXT:    bx lr
 entry:
   %z = getelementptr inbounds i8, i8* %y, i32 3
