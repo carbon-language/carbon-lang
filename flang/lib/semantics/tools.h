@@ -211,7 +211,7 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
   }
 }
 
-// Derived type component iterator that provides a C++ LegacyForwadIterator
+// Derived type component iterator that provides a C++ LegacyForwardIterator
 // iterator over the Ordered, Direct, Ultimate or Potential components of a
 // DerivedTypeSpec. These iterators can be used with STL algorithms
 // accepting LegacyForwadIterator.
@@ -220,7 +220,7 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
 //
 //
 // - Ordered components are the components from the component order defined
-// in 7.5.4.7, except that the parent components IS added between the parent
+// in 7.5.4.7, except that the parent component IS added between the parent
 // component order and the components in order of declaration.
 // This "deviation" is important for structure-constructor analysis.
 // For this kind of iterator, the component tree is recursively visited in the
