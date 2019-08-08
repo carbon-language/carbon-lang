@@ -1840,9 +1840,9 @@ static void CheckFuncRefToArrayElementRefHasSubscripts(
   if (std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t).empty()) {
     auto &proc{std::get<parser::ProcedureDesignator>(funcRef.v.t)};
     const auto *name{std::get_if<parser::Name>(&proc.u)};
-    name = {name
-            ? name
-            : &std::get<parser::ProcComponentRef>(proc.u).v.thing.component};
+    if (name == nullptr) {
+      name = &std::get<parser::ProcComponentRef>(proc.u).v.thing.component;
+    }
     auto &msg{context.Say(funcRef.v.source,
         "Reference to array '%s' with empty subscript list"_err_en_US,
         name->source)};
