@@ -7,6 +7,7 @@
 
 // REQUIRES: clang-driver
 // REQUIRES: x86-registered-target
+// REQUIRES: linux
 
 // CHECK: "-cc1" {{.*}} "-massembler-no-warn"
 // CHECK-NOIAS: "--no-warn"
