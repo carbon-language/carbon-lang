@@ -2646,6 +2646,13 @@ let Predicates = [HasMVEFloat, UseFusedMAC] in {
             (v4f32 (MVE_VFMSf32 $src1, $src2, $src3))>;
 }
 
+let Predicates = [HasMVEFloat] in {
+  def : Pat<(v8f16 (fma (v8f16 MQPR:$src1), (v8f16 MQPR:$src2), (v8f16 MQPR:$src3))),
+            (v8f16 (MVE_VFMAf16 $src3, $src1, $src2))>;
+  def : Pat<(v4f32 (fma (v4f32 MQPR:$src1), (v4f32 MQPR:$src2), (v4f32 MQPR:$src3))),
+            (v4f32 (MVE_VFMAf32 $src3, $src1, $src2))>;
+}
+
 
 def MVE_VADDf32 : MVE_VADDSUBFMA_fp<"vadd", "f32", 0b0, 0b0, 0b1, 0b0>;
 def MVE_VADDf16 : MVE_VADDSUBFMA_fp<"vadd", "f16", 0b1, 0b0, 0b1, 0b0>;
