@@ -52,6 +52,10 @@ public:
       // When calling the destructor manually like: AAA::~A(); The ~ is a
       // MemberExpr. Other methods should still be highlighted though.
       return true;
+    if (isa<CXXConversionDecl>(MD))
+      // The MemberLoc is invalid for C++ conversion operators. We do not
+      // attempt to add tokens with invalid locations.
+      return true;
     addToken(ME->getMemberLoc(), MD);
     return true;
   }

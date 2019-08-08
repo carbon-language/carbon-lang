@@ -255,6 +255,23 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
       struct $Class[[Tmpl]] {$TemplateParameter[[T]] $Field[[x]] = 0;};
       extern template struct $Class[[Tmpl]]<float>;
       template struct $Class[[Tmpl]]<double>;
+    )cpp",
+    // This test is to guard against highlightings disappearing when using
+    // conversion operators as their behaviour in the clang AST differ from
+    // other CXXMethodDecls.
+    R"cpp(
+      class $Class[[Foo]] {};
+      struct $Class[[Bar]] {
+        explicit operator $Class[[Foo]]*() const;
+        explicit operator int() const;
+        operator $Class[[Foo]]();
+      };
+      void $Function[[f]]() {
+        $Class[[Bar]] $Variable[[B]];
+        $Class[[Foo]] $Variable[[F]] = $Variable[[B]];
+        $Class[[Foo]] *$Variable[[FP]] = ($Class[[Foo]]*)$Variable[[B]];
+        int $Variable[[I]] = (int)$Variable[[B]];
+      }
     )cpp"};
   for (const auto &TestCase : TestCases) {
     checkHighlightings(TestCase);
