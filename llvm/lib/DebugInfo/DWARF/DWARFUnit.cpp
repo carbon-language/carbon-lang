@@ -569,9 +569,9 @@ DWARFUnit::findRnglistFromIndex(uint32_t Index) {
   if (RngListTable)
     return createStringError(errc::invalid_argument,
                              "invalid range list table index %d", Index);
-  else
-    return createStringError(errc::invalid_argument,
-                             "missing or invalid range list table");
+
+  return createStringError(errc::invalid_argument,
+                           "missing or invalid range list table");
 }
 
 Expected<DWARFAddressRangesVector> DWARFUnit::collectAddressRanges() {
