@@ -24,6 +24,7 @@ add_executable(leading-zero-bit-count-test
 target_link_libraries(leading-zero-bit-count-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranSemantics
 )
 
 add_executable(bit-population-count-test
@@ -33,6 +34,7 @@ add_executable(bit-population-count-test
 target_link_libraries(bit-population-count-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranSemantics
 )
 
 add_executable(expression-test
@@ -53,6 +55,7 @@ add_executable(integer-test
 target_link_libraries(integer-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranSemantics
 )
 
 add_executable(intrinsics-test
@@ -74,6 +77,7 @@ add_executable(logical-test
 target_link_libraries(logical-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranSemantics
 )
 
 # GCC -fno-exceptions breaks the fenv.h interfaces needed to capture
@@ -88,6 +92,7 @@ add_executable(real-test
 target_link_libraries(real-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranSemantics
   m
 )
 
@@ -109,6 +114,7 @@ add_executable(ISO-Fortran-binding-test
 target_link_libraries(ISO-Fortran-binding-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranSemantics
   FortranRuntime
 )
 
