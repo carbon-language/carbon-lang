@@ -671,6 +671,23 @@ TEST(Matcher, IgnoresElidableDoesNotPreventMatches) {
                       LanguageMode::Cxx11OrLater));
 }
 
+TEST(Matcher, IgnoresElidableInVarInit) {
+  auto matcher =
+      varDecl(hasInitializer(ignoringElidableConstructorCall(callExpr())));
+  EXPECT_TRUE(matches("struct H {};"
+                      "H G();"
+                      "void f(H D = G()) {"
+                      "  return;"
+                      "}",
+                      matcher, LanguageMode::Cxx11OrLater));
+  EXPECT_TRUE(matches("struct H {};"
+                      "H G();"
+                      "void f() {"
+                      "  H D = G();"
+                      "}",
+                      matcher, LanguageMode::Cxx11OrLater));
+}
+
 TEST(Matcher, BindTheSameNameInAlternatives) {
   StatementMatcher matcher = anyOf(
     binaryOperator(hasOperatorName("+"),
