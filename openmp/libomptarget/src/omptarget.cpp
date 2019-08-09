@@ -290,7 +290,7 @@ int target_data_begin(DeviceTy &Device, int32_t arg_num,
 
     if (arg_types[i] & OMP_TGT_MAPTYPE_TO) {
       bool copy = false;
-      if (!(Device.RTLRequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY)) {
+      if (!(RTLs.RequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY)) {
         if (IsNew || (arg_types[i] & OMP_TGT_MAPTYPE_ALWAYS)) {
           copy = true;
         } else if (arg_types[i] & OMP_TGT_MAPTYPE_MEMBER_OF) {
@@ -390,7 +390,7 @@ int target_data_end(DeviceTy &Device, int32_t arg_num, void **args_base,
       if (arg_types[i] & OMP_TGT_MAPTYPE_FROM) {
         bool Always = arg_types[i] & OMP_TGT_MAPTYPE_ALWAYS;
         bool CopyMember = false;
-        if (!(Device.RTLRequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY)) {
+        if (!(RTLs.RequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY)) {
           if ((arg_types[i] & OMP_TGT_MAPTYPE_MEMBER_OF) &&
               !(arg_types[i] & OMP_TGT_MAPTYPE_PTR_AND_OBJ)) {
             // Copy data only if the "parent" struct has RefCount==1.
@@ -404,7 +404,7 @@ int target_data_end(DeviceTy &Device, int32_t arg_num, void **args_base,
         }
 
         if ((DelEntry || Always || CopyMember) &&
-            !(Device.RTLRequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY &&
+            !(RTLs.RequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY &&
               TgtPtrBegin == HstPtrBegin)) {
           DP("Moving %" PRId64 " bytes (tgt:" DPxMOD ") -> (hst:" DPxMOD ")\n",
               data_size, DPxPTR(TgtPtrBegin), DPxPTR(HstPtrBegin));
@@ -486,7 +486,7 @@ int target_data_update(DeviceTy &Device, int32_t arg_num,
       continue;
     }
 
-    if (Device.RTLRequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY &&
+    if (RTLs.RequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY &&
         TgtPtrBegin == HstPtrBegin) {
       DP("hst data:" DPxMOD " unified and shared, becomes a noop\n",
          DPxPTR(HstPtrBegin));
@@ -669,7 +669,7 @@ int target(int64_t device_id, void *host_ptr, int32_t arg_num,
              DPxPTR(HstPtrVal));
           continue;
         }
-        if (Device.RTLRequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY &&
+        if (RTLs.RequiresFlags & OMP_REQ_UNIFIED_SHARED_MEMORY &&
             TgtPtrBegin == HstPtrBegin) {
           DP("Unified memory is active, no need to map lambda captured"
              "variable (" DPxMOD ")\n", DPxPTR(HstPtrVal));
