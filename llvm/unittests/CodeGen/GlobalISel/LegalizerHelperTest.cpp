@@ -1100,14 +1100,12 @@ TEST_F(GISelMITest, NarrowSEXTINREG) {
       TargetOpcode::G_SEXT_INREG, {LLT::scalar(16)},
       {B.buildInstr(TargetOpcode::G_TRUNC, {LLT::scalar(16)}, {Copies[0]}),
        uint64_t(8)});
-  MIB->getParent()->dump();
   AInfo Info(MF->getSubtarget());
   DummyGISelObserver Observer;
   LegalizerHelper Helper(*MF, Info, Observer, B);
   // Perform Legalization
   ASSERT_TRUE(Helper.narrowScalar(*MIB, 0, LLT::scalar(10)) ==
               LegalizerHelper::LegalizeResult::Legalized);
-  MIB->getParent()->dump();
 
   auto CheckStr = R"(
   CHECK: [[T0:%[0-9]+]]:_(s16) = G_TRUNC
@@ -1138,7 +1136,6 @@ TEST_F(GISelMITest, NarrowSEXTINREG2) {
   // Perform Legalization
   ASSERT_TRUE(Helper.narrowScalar(*MIB, 0, LLT::scalar(8)) ==
               LegalizerHelper::LegalizeResult::Legalized);
-  MF->dump();
 
   auto CheckStr = R"(
   CHECK: [[T0:%[0-9]+]]:_(s32) = G_TRUNC
@@ -1171,7 +1168,6 @@ TEST_F(GISelMITest, LowerSEXTINREG) {
   // Perform Legalization
   ASSERT_TRUE(Helper.lower(*MIB, 0, LLT()) ==
               LegalizerHelper::LegalizeResult::Legalized);
-  MF->dump();
 
   auto CheckStr = R"(
   CHECK: [[T1:%[0-9]+]]:_(s32) = G_TRUNC
