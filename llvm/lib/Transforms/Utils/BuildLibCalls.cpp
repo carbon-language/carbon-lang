@@ -760,9 +760,8 @@ bool llvm::inferLibFuncAttributes(Function &F, const TargetLibraryInfo &TLI) {
   }
 }
 
-bool llvm::hasUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
-                           LibFunc DoubleFn, LibFunc FloatFn,
-                           LibFunc LongDoubleFn) {
+bool llvm::hasFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
+                      LibFunc DoubleFn, LibFunc FloatFn, LibFunc LongDoubleFn) {
   switch (Ty->getTypeID()) {
   case Type::HalfTyID:
     return false;
@@ -775,10 +774,10 @@ bool llvm::hasUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
   }
 }
 
-StringRef llvm::getUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
-                                LibFunc DoubleFn, LibFunc FloatFn,
-                                LibFunc LongDoubleFn) {
-  assert(hasUnaryFloatFn(TLI, Ty, DoubleFn, FloatFn, LongDoubleFn) &&
+StringRef llvm::getFloatFnName(const TargetLibraryInfo *TLI, Type *Ty,
+                               LibFunc DoubleFn, LibFunc FloatFn,
+                               LibFunc LongDoubleFn) {
+  assert(hasFloatFn(TLI, Ty, DoubleFn, FloatFn, LongDoubleFn) &&
          "Cannot get name for unavailable function!");
 
   switch (Ty->getTypeID()) {
@@ -1045,8 +1044,8 @@ Value *llvm::emitUnaryFloatFnCall(Value *Op, const TargetLibraryInfo *TLI,
                                   LibFunc LongDoubleFn, IRBuilder<> &B,
                                   const AttributeList &Attrs) {
   // Get the name of the function according to TLI.
-  StringRef Name = getUnaryFloatFn(TLI, Op->getType(),
-                                   DoubleFn, FloatFn, LongDoubleFn);
+  StringRef Name = getFloatFnName(TLI, Op->getType(),
+                                  DoubleFn, FloatFn, LongDoubleFn);
 
   return emitUnaryFloatFnCallHelper(Op, Name, B, Attrs);
 }

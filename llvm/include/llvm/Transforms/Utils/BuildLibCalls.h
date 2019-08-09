@@ -32,15 +32,14 @@ namespace llvm {
 
   /// Check whether the overloaded unary floating point function
   /// corresponding to \a Ty is available.
-  bool hasUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
-                       LibFunc DoubleFn, LibFunc FloatFn,
-                       LibFunc LongDoubleFn);
+  bool hasFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
+                  LibFunc DoubleFn, LibFunc FloatFn, LibFunc LongDoubleFn);
 
   /// Get the name of the overloaded unary floating point function
   /// corresponding to \a Ty.
-  StringRef getUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
-                            LibFunc DoubleFn, LibFunc FloatFn,
-                            LibFunc LongDoubleFn);
+  StringRef getFloatFnName(const TargetLibraryInfo *TLI, Type *Ty,
+                           LibFunc DoubleFn, LibFunc FloatFn,
+                           LibFunc LongDoubleFn);
 
   /// Return V if it is an i8*, otherwise cast it to i8*.
   Value *castToCStr(Value *V, IRBuilder<> &B);
