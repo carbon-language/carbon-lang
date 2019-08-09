@@ -39760,10 +39760,6 @@ static SDValue combineMaskedStore(SDNode *N, SelectionDAG &DAG,
       return SDValue(N, 0);
   }
 
-  // TODO: AVX512 targets should also be able to simplify something like the
-  // pattern above, but that pattern will be different. It will either need to
-  // match setcc more generally or match PCMPGTM later (in tablegen?).
-
   SDValue Value = Mst->getValue();
   if (Value.getOpcode() == ISD::TRUNCATE && Value.getNode()->hasOneUse() &&
       TLI.isTruncStoreLegal(Value.getOperand(0).getValueType(),
