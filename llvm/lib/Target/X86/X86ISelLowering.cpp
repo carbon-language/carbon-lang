@@ -21422,11 +21422,10 @@ static SDValue LowerLoad(SDValue Op, const X86Subtarget &Subtarget,
 
   LoadSDNode *Ld = cast<LoadSDNode>(Op.getNode());
   SDLoc dl(Ld);
-  EVT MemVT = Ld->getMemoryVT();
 
   // Without AVX512DQ, we need to use a scalar type for v2i1/v4i1/v8i1 loads.
   if (RegVT.getVectorElementType() == MVT::i1) {
-    assert(EVT(RegVT) == MemVT && "Expected non-extending load");
+    assert(EVT(RegVT) == Ld->getMemoryVT() && "Expected non-extending load");
     assert(RegVT.getVectorNumElements() <= 8 && "Unexpected VT");
     assert(Subtarget.hasAVX512() && !Subtarget.hasDQI() &&
            "Expected AVX512F without AVX512DQI");
