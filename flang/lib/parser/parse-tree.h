@@ -3584,12 +3584,20 @@ struct OpenMPCriticalConstruct {
 // END ATOMIC
 EMPTY_CLASS(OmpEndAtomic);
 
+// ATOMIC Memory related clause
+struct OmpMemoryClause {
+  ENUM_CLASS(MemoryOrder, SeqCst)
+  WRAPPER_CLASS_BOILERPLATE(OmpMemoryClause, MemoryOrder);
+  CharBlock source;
+};
+
+WRAPPER_CLASS(OmpMemoryClauseList, std::list<OmpMemoryClause>);
+WRAPPER_CLASS(OmpMemoryClausePostList, std::list<OmpMemoryClause>);
+
 // ATOMIC READ
 struct OmpAtomicRead {
   TUPLE_CLASS_BOILERPLATE(OmpAtomicRead);
-  EMPTY_CLASS(SeqCst1);
-  EMPTY_CLASS(SeqCst2);
-  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>,
+  std::tuple<OmpMemoryClauseList, Verbatim, OmpMemoryClausePostList,
       Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
       t;
 };
@@ -3597,9 +3605,7 @@ struct OmpAtomicRead {
 // ATOMIC WRITE
 struct OmpAtomicWrite {
   TUPLE_CLASS_BOILERPLATE(OmpAtomicWrite);
-  EMPTY_CLASS(SeqCst1);
-  EMPTY_CLASS(SeqCst2);
-  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>,
+  std::tuple<OmpMemoryClauseList, Verbatim, OmpMemoryClausePostList,
       Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
       t;
 };
@@ -3607,9 +3613,7 @@ struct OmpAtomicWrite {
 // ATOMIC UPDATE
 struct OmpAtomicUpdate {
   TUPLE_CLASS_BOILERPLATE(OmpAtomicUpdate);
-  EMPTY_CLASS(SeqCst1);
-  EMPTY_CLASS(SeqCst2);
-  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>,
+  std::tuple<OmpMemoryClauseList, Verbatim, OmpMemoryClausePostList,
       Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
       t;
 };
@@ -3617,20 +3621,17 @@ struct OmpAtomicUpdate {
 // ATOMIC CAPTURE
 struct OmpAtomicCapture {
   TUPLE_CLASS_BOILERPLATE(OmpAtomicCapture);
-  EMPTY_CLASS(SeqCst1);
-  EMPTY_CLASS(SeqCst2);
   WRAPPER_CLASS(Stmt1, Statement<AssignmentStmt>);
   WRAPPER_CLASS(Stmt2, Statement<AssignmentStmt>);
-  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>, Stmt1, Stmt2,
-      OmpEndAtomic>
+  std::tuple<OmpMemoryClauseList, Verbatim, OmpMemoryClausePostList, Stmt1,
+      Stmt2, OmpEndAtomic>
       t;
 };
 
 // ATOMIC
 struct OmpAtomic {
   TUPLE_CLASS_BOILERPLATE(OmpAtomic);
-  EMPTY_CLASS(SeqCst);
-  std::tuple<std::optional<SeqCst>, Statement<AssignmentStmt>,
+  std::tuple<Verbatim, OmpMemoryClauseList, Statement<AssignmentStmt>,
       std::optional<OmpEndAtomic>>
       t;
 };

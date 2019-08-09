@@ -390,47 +390,53 @@ TYPE_PARSER(construct<OmpReductionCombiner>(Parser<AssignmentStmt>{}) ||
 // OMP END ATOMIC
 TYPE_PARSER(construct<OmpEndAtomic>(startOmpLine >> "END ATOMIC"_tok))
 
+// ATOMIC Memory related clause
+TYPE_PARSER(sourced(construct<OmpMemoryClause>(
+    "SEQ_CST" >> pure(OmpMemoryClause::MemoryOrder::SeqCst))))
+
+// ATOMIC Memory Clause List
+TYPE_PARSER(construct<OmpMemoryClauseList>(
+    many(maybe(","_tok) >> Parser<OmpMemoryClause>{})))
+
+TYPE_PARSER(construct<OmpMemoryClausePostList>(
+    many(maybe(","_tok) >> Parser<OmpMemoryClause>{})))
+
 // OMP [SEQ_CST] ATOMIC READ [SEQ_CST]
-TYPE_PARSER(construct<OmpAtomicRead>(
-    maybe("SEQ_CST" >> construct<OmpAtomicRead::SeqCst1>() / maybe(","_tok)),
-    "READ" >> maybe(","_tok) >>
-        maybe("SEQ_CST" >> construct<OmpAtomicRead::SeqCst2>()) / endOmpLine,
-    statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
+TYPE_PARSER("ATOMIC" >>
+    construct<OmpAtomicRead>(Parser<OmpMemoryClauseList>{} / maybe(","_tok),
+        verbatim("READ"_tok), Parser<OmpMemoryClausePostList>{} / endOmpLine,
+        statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
 
 // OMP ATOMIC [SEQ_CST] CAPTURE [SEQ_CST]
-TYPE_PARSER(construct<OmpAtomicCapture>(
-    maybe("SEQ_CST" >> construct<OmpAtomicCapture::SeqCst1>() / maybe(","_tok)),
-    "CAPTURE" >> maybe(","_tok) >>
-        maybe("SEQ_CST" >> construct<OmpAtomicCapture::SeqCst2>()) / endOmpLine,
-    statement(assignmentStmt), statement(assignmentStmt),
-    Parser<OmpEndAtomic>{} / endOmpLine))
+TYPE_PARSER("ATOMIC" >>
+    construct<OmpAtomicCapture>(Parser<OmpMemoryClauseList>{} / maybe(","_tok),
+        verbatim("CAPTURE"_tok), Parser<OmpMemoryClausePostList>{} / endOmpLine,
+        statement(assignmentStmt), statement(assignmentStmt),
+        Parser<OmpEndAtomic>{} / endOmpLine))
 
 // OMP ATOMIC [SEQ_CST] UPDATE [SEQ_CST]
-TYPE_PARSER(construct<OmpAtomicUpdate>(
-    maybe("SEQ_CST" >> construct<OmpAtomicUpdate::SeqCst1>() / maybe(","_tok)),
-    "UPDATE" >> maybe(","_tok) >>
-        maybe("SEQ_CST" >> construct<OmpAtomicUpdate::SeqCst2>()) / endOmpLine,
-    statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
+TYPE_PARSER("ATOMIC" >>
+    construct<OmpAtomicUpdate>(Parser<OmpMemoryClauseList>{} / maybe(","_tok),
+        verbatim("UPDATE"_tok), Parser<OmpMemoryClausePostList>{} / endOmpLine,
+        statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
 
 // OMP ATOMIC [SEQ_CST]
-TYPE_PARSER(construct<OmpAtomic>(
-    maybe("SEQ_CST" >> construct<OmpAtomic::SeqCst>()) / endOmpLine,
-    statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
+TYPE_PARSER(construct<OmpAtomic>(verbatim("ATOMIC"_tok),
+    Parser<OmpMemoryClauseList>{} / endOmpLine, statement(assignmentStmt),
+    maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
 
 // ATOMIC [SEQ_CST] WRITE [SEQ_CST]
-TYPE_PARSER(construct<OmpAtomicWrite>(
-    maybe("SEQ_CST" >> construct<OmpAtomicWrite::SeqCst1>() / maybe(","_tok)),
-    "WRITE" >> maybe(","_tok) >>
-        maybe("SEQ_CST" >> construct<OmpAtomicWrite::SeqCst2>()) / endOmpLine,
-    statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
+TYPE_PARSER("ATOMIC" >>
+    construct<OmpAtomicWrite>(Parser<OmpMemoryClauseList>{} / maybe(","_tok),
+        verbatim("WRITE"_tok), Parser<OmpMemoryClausePostList>{} / endOmpLine,
+        statement(assignmentStmt), maybe(Parser<OmpEndAtomic>{} / endOmpLine)))
 
 // Atomic Construct
-TYPE_PARSER("ATOMIC" >>
-    (construct<OpenMPAtomicConstruct>(Parser<OmpAtomicRead>{}) ||
-        construct<OpenMPAtomicConstruct>(Parser<OmpAtomicCapture>{}) ||
-        construct<OpenMPAtomicConstruct>(Parser<OmpAtomicWrite>{}) ||
-        construct<OpenMPAtomicConstruct>(Parser<OmpAtomicUpdate>{}) ||
-        construct<OpenMPAtomicConstruct>(Parser<OmpAtomic>{})))
+TYPE_PARSER(construct<OpenMPAtomicConstruct>(Parser<OmpAtomicRead>{}) ||
+    construct<OpenMPAtomicConstruct>(Parser<OmpAtomicCapture>{}) ||
+    construct<OpenMPAtomicConstruct>(Parser<OmpAtomicWrite>{}) ||
+    construct<OpenMPAtomicConstruct>(Parser<OmpAtomicUpdate>{}) ||
+    construct<OpenMPAtomicConstruct>(Parser<OmpAtomic>{}))
 
 // OMP CRITICAL
 TYPE_PARSER(startOmpLine >> "END CRITICAL"_tok >>
