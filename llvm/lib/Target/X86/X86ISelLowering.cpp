@@ -36615,6 +36615,12 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
   if (SDValue V = narrowVectorSelect(N, DAG, Subtarget))
     return V;
 
+  // select(~Cond, X, Y) -> select(Cond, Y, X)
+  if (CondVT.getScalarType() != MVT::i1)
+    if (SDValue CondNot = IsNOT(Cond, DAG))
+      return DAG.getNode(N->getOpcode(), DL, VT,
+                         DAG.getBitcast(CondVT, CondNot), RHS, LHS);
+
   // Custom action for SELECT MMX
   if (VT == MVT::x86mmx) {
     LHS = DAG.getBitcast(MVT::i64, LHS);
