@@ -201,13 +201,6 @@ void danglingReferenceFromTempOwner() {
 std::vector<int> getTempVec();
 std::optional<std::vector<int>> getTempOptVec();
 
-void testLoops() {
-  for (auto i : getTempVec()) // ok
-    ;
-  for (auto i : *getTempOptVec()) // expected-warning {{object backing the pointer will be destroyed at the end of the full-expression}}
-    ;
-}
-
 int &usedToBeFalsePositive(std::vector<int> &v) {
   std::vector<int>::iterator it = v.begin();
   int& value = *it;
