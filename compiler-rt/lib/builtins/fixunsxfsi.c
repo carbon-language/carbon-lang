@@ -25,13 +25,6 @@
 // eeee | 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm
 // mmmm mmmm mmmm
 
-#ifdef _MSC_VER && !defined(__clang__)
-// MSVC throws a warning about 'unitialized variable use' here,
-// disable it for builds that warn-as-error
-#pragma warning(push)
-#pragma warning(disable : 4700)
-#endif
-
 COMPILER_RT_ABI su_int __fixunsxfsi(long double a) {
   long_double_bits fb;
   fb.f = a;
@@ -42,9 +35,5 @@ COMPILER_RT_ABI su_int __fixunsxfsi(long double a) {
     return ~(su_int)0;
   return fb.u.low.s.high >> (31 - e);
 }
-
-#ifdef _MSC_VER && !defined(__clang__)
-#pragma warning(pop)
-#endif
 
 #endif // !_ARCH_PPC
