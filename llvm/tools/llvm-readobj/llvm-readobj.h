@@ -33,17 +33,6 @@ namespace llvm {
     return std::move(*E);
   }
 
-  // TODO: This one is deprecated. Use one with a Input name below.
-  template <class T> T unwrapOrError(Expected<T> EO) {
-    if (EO)
-      return *EO;
-    std::string Buf;
-    raw_string_ostream OS(Buf);
-    logAllUnhandledErrors(EO.takeError(), OS);
-    OS.flush();
-    reportError(Buf);
-  }
-
   template <class T> T unwrapOrError(StringRef Input, Expected<T> EO) {
     if (EO)
       return *EO;
