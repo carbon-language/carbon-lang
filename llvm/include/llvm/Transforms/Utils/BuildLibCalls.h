@@ -163,6 +163,13 @@ namespace llvm {
   Value *emitBinaryFloatFnCall(Value *Op1, Value *Op2, StringRef Name,
                                IRBuilder<> &B, const AttributeList &Attrs);
 
+  /// Emit a call to the binary function DoubleFn, FloatFn or LongDoubleFn,
+  /// depending of the type of Op1.
+  Value *emitBinaryFloatFnCall(Value *Op1, Value *Op2,
+                               const TargetLibraryInfo *TLI, LibFunc DoubleFn,
+                               LibFunc FloatFn, LibFunc LongDoubleFn,
+                               IRBuilder<> &B, const AttributeList &Attrs);
+
   /// Emit a call to the putchar function. This assumes that Char is an integer.
   Value *emitPutChar(Value *Char, IRBuilder<> &B, const TargetLibraryInfo *TLI);
 
