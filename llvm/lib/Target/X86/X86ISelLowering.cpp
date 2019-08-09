@@ -858,13 +858,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
-    // Provide custom widening for v2f32 setcc. This is really for VLX when
-    // setcc result type returns v2i1/v4i1 vector for v2f32/v4f32 leading to
-    // type legalization changing the result type to v4i1 during widening.
-    // It works fine for SSE2 and is probably faster so no need to qualify with
-    // VLX support.
-    setOperationAction(ISD::SETCC,               MVT::v2i32, Custom);
-
     for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v2i64 }) {
       setOperationAction(ISD::SETCC,              VT, Custom);
       setOperationAction(ISD::CTPOP,              VT, Custom);
@@ -27536,26 +27529,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     Lo = DAG.getNode(ISD::XOR, dl, HalfT, Tmp, Lo);
     Results.push_back(Lo);
     Results.push_back(Hi);
-    return;
-  }
-  case ISD::SETCC: {
-    // Widen v2i32 (setcc v2f32). This is really needed for AVX512VL when
-    // setCC result type is v2i1 because type legalzation will end up with
-    // a v4i1 setcc plus an extend.
-    assert(N->getValueType(0) == MVT::v2i32 && "Unexpected type");
-    if (N->getOperand(0).getValueType() != MVT::v2f32 ||
-        getTypeAction(*DAG.getContext(), MVT::v2i32) == TypeWidenVector)
-      return;
-    SDValue UNDEF = DAG.getUNDEF(MVT::v2f32);
-    SDValue LHS = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32,
-                              N->getOperand(0), UNDEF);
-    SDValue RHS = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32,
-                              N->getOperand(1), UNDEF);
-    SDValue Res = DAG.getNode(ISD::SETCC, dl, MVT::v4i32, LHS, RHS,
-                              N->getOperand(2));
-    Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i32, Res,
-                      DAG.getIntPtrConstant(0, dl));
-    Results.push_back(Res);
     return;
   }
   // We might have generated v2f32 FMIN/FMAX operations. Widen them to v4f32.
