@@ -1048,7 +1048,8 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       // To find the active frame description, search this array for the
       // smallest PC range that includes the current PC.
       for (const auto &FD : FrameData) {
-        StringRef FrameFunc = error(CVStringTable.getString(FD.FrameFunc));
+        StringRef FrameFunc = unwrapOrError(
+            Obj->getFileName(), CVStringTable.getString(FD.FrameFunc));
 
         DictScope S(W, "FrameData");
         W.printHex("RvaStart", FD.RvaStart);
@@ -1169,7 +1170,8 @@ void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
   for (auto &FC : Checksums) {
     DictScope S(W, "FileChecksum");
 
-    StringRef Filename = error(CVStringTable.getString(FC.FileNameOffset));
+    StringRef Filename = unwrapOrError(
+        Obj->getFileName(), CVStringTable.getString(FC.FileNameOffset));
     W.printHex("Filename", Filename, FC.FileNameOffset);
     W.printHex("ChecksumSize", FC.Checksum.size());
     W.printEnum("ChecksumKind", uint8_t(FC.Kind),
@@ -1211,7 +1213,8 @@ StringRef COFFDumper::getFileNameForFileOffset(uint32_t FileOffset) {
   if (Iter == CVFileChecksumTable.end())
     error(object_error::parse_failed);
 
-  return error(CVStringTable.getString(Iter->FileNameOffset));
+  return unwrapOrError(Obj->getFileName(),
+                       CVStringTable.getString(Iter->FileNameOffset));
 }
 
 void COFFDumper::printFileNameForOffset(StringRef Label, uint32_t FileOffset) {
