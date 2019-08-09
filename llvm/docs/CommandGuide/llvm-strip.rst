@@ -135,7 +135,7 @@ them.
 
  Keep symbols of type `STT_FILE`, even if they would otherwise be stripped.
 
- .. option:: --keep-section <section>
+.. option:: --keep-section <section>
 
  When removing sections from the output, do not remove sections named
  ``<section>``. Can be specified multiple times to keep multiple sections.
