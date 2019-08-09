@@ -3429,7 +3429,7 @@ void DeclarationVisitor::Post(
 
 void DeclarationVisitor::CheckBindings(
     const parser::TypeBoundProcedureStmt::WithoutInterface &tbps) {
-  CHECK(currScope().kind() == Scope::Kind::DerivedType);
+  CHECK(currScope().IsDerivedType());
   for (auto &declaration : tbps.declarations) {
     auto &bindingName{std::get<parser::Name>(declaration.t)};
     if (Symbol * binding{FindInScope(currScope(), bindingName)}) {
@@ -5511,7 +5511,7 @@ public:
     const auto &name{std::get<parser::Name>(x.t)};
     if (Symbol * symbol{name.symbol}) {
       if (Scope * scope{symbol->scope()}) {
-        if (scope->kind() == Scope::Kind::DerivedType) {
+        if (scope->IsDerivedType()) {
           resolver_.PushScope(*scope);
           pushedScope_ = true;
         }
