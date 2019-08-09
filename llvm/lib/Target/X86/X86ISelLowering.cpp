@@ -27633,8 +27633,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   }
   case ISD::TRUNCATE: {
     MVT VT = N->getSimpleValueType(0);
-    if (getTypeAction(*DAG.getContext(), VT) != TypeWidenVector)
-      return;
+    assert(getTypeAction(*DAG.getContext(), VT) == TypeWidenVector &&
+           "Unexpected type action!");
 
     // The generic legalizer will try to widen the input type to the same
     // number of elements as the widened result type. But this isn't always
@@ -27688,8 +27688,9 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue In = N->getOperand(0);
     EVT InVT = In.getValueType();
     if (!Subtarget.hasSSE41() && VT == MVT::v4i64 &&
-        (InVT == MVT::v4i16 || InVT == MVT::v4i8) &&
-        getTypeAction(*DAG.getContext(), InVT) == TypeWidenVector) {
+        (InVT == MVT::v4i16 || InVT == MVT::v4i8)){
+      assert(getTypeAction(*DAG.getContext(), InVT) == TypeWidenVector &&
+             "Unexpected type action!");
       assert(N->getOpcode() == ISD::SIGN_EXTEND && "Unexpected opcode");
       // Custom split this so we can extend i8/i16->i32 invec. This is better
       // since sign_extend_inreg i8/i16->i64 requires an extend to i32 using
