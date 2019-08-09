@@ -27470,10 +27470,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(Res);
     return;
   }
-  case ISD::UADDSAT:
-  case ISD::SADDSAT:
-  case ISD::USUBSAT:
-  case ISD::SSUBSAT:
   case X86ISD::VPMADDWD:
   case X86ISD::AVG: {
     // Legalize types for ISD::UADDSAT/SADDSAT/USUBSAT/SSUBSAT and
@@ -27484,6 +27480,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     EVT InVT = N->getOperand(0).getValueType();
     assert(VT.getSizeInBits() < 128 && 128 % VT.getSizeInBits() == 0 &&
            "Expected a VT that divides into 128 bits.");
+    assert(getTypeAction(*DAG.getContext(), VT) == TypeWidenVector &&
+           "Unexpected type action!");
     unsigned NumConcat = 128 / InVT.getSizeInBits();
 
     EVT InWideVT = EVT::getVectorVT(*DAG.getContext(),
@@ -27500,9 +27498,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue InVec1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, InWideVT, Ops);
 
     SDValue Res = DAG.getNode(N->getOpcode(), dl, WideVT, InVec0, InVec1);
-    if (getTypeAction(*DAG.getContext(), VT) != TypeWidenVector)
-      Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Res,
-                        DAG.getIntPtrConstant(0, dl));
     Results.push_back(Res);
     return;
   }
@@ -27710,8 +27705,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     EVT SrcVT = Src.getValueType();
 
     if (VT.isVector() && VT.getScalarSizeInBits() < 32) {
-      if (getTypeAction(*DAG.getContext(), VT) != TypeWidenVector)
-        return;
+      assert(getTypeAction(*DAG.getContext(), VT) == TypeWidenVector &&
+             "Unexpected type action!");
 
       // Try to create a 128 bit vector, but don't exceed a 32 bit element.
       unsigned NewEltWidth = std::min(128 / VT.getVectorNumElements(), 32U);
