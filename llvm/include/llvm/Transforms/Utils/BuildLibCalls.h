@@ -30,12 +30,12 @@ namespace llvm {
   bool inferLibFuncAttributes(Function &F, const TargetLibraryInfo &TLI);
   bool inferLibFuncAttributes(Module *M, StringRef Name, const TargetLibraryInfo &TLI);
 
-  /// Check whether the overloaded unary floating point function
+  /// Check whether the overloaded floating point function
   /// corresponding to \a Ty is available.
   bool hasFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
                   LibFunc DoubleFn, LibFunc FloatFn, LibFunc LongDoubleFn);
 
-  /// Get the name of the overloaded unary floating point function
+  /// Get the name of the overloaded floating point function
   /// corresponding to \a Ty.
   StringRef getFloatFnName(const TargetLibraryInfo *TLI, Type *Ty,
                            LibFunc DoubleFn, LibFunc FloatFn,
