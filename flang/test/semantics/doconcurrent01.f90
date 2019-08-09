@@ -14,7 +14,7 @@
 !
 ! C1141
 ! A reference to the procedure IEEE_GET_FLAG, IEEE_SET_HALTING_MODE, or
-! IEEE_GET_- HALTING_MODE from the intrinsic module IEEE_EXCEPTIONS, shall not
+! IEEE_GET_HALTING_MODE from the intrinsic module IEEE_EXCEPTIONS, shall not
 ! appear within a DO CONCURRENT construct.
 !
 ! C1137
@@ -25,27 +25,6 @@
 !
 ! (11.1.7.5), paragraph 4
 ! In a DO CONCURRENT, can't have an i/o statement with an ADVANCE= specifier
-
-module ieee_exceptions
-  interface
-     subroutine ieee_get_flag(i, j)
-       integer :: i, j
-     end subroutine ieee_get_flag
-     subroutine ieee_get_halting_mode(i, j)
-       integer :: i
-       logical :: j
-     end subroutine ieee_get_halting_mode
-     subroutine ieee_set_halting_mode(i, j)
-       integer :: i
-       logical :: j
-     end subroutine ieee_set_halting_mode
-  end interface
-end module ieee_exceptions
-
-module iso_fortran_env
-  type :: team_type
-  end type
-end
 
 subroutine do_concurrent_test1(i,n)
   implicit none
@@ -75,7 +54,6 @@ subroutine do_concurrent_test2(i,j,n,flag)
 !ERROR: call to impure subroutine in DO CONCURRENT not allowed
 !ERROR: IEEE_GET_HALTING_MODE not allowed in DO CONCURRENT
       call ieee_get_halting_mode(flag, halting)
-!ERROR: call to impure subroutine in DO CONCURRENT not allowed
 !ERROR: IEEE_SET_HALTING_MODE not allowed in DO CONCURRENT
       call ieee_set_halting_mode(flag, halting)
 !ERROR: image control statement not allowed in DO CONCURRENT

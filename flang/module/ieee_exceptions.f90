@@ -42,22 +42,49 @@ module ieee_exceptions
   end type ieee_status_type
 
  contains
+  subroutine ieee_get_flag(flag, flag_value)
+    type(ieee_flag_type), intent(in) :: flag
+    logical, intent(out) :: flag_value
+  end subroutine ieee_get_flag
+
+  subroutine ieee_get_halting_mode(flag, halting)
+    type(ieee_flag_type), intent(in) :: flag
+    logical, intent(out) :: halting
+  end subroutine ieee_get_halting_mode
+
   subroutine ieee_get_modes(modes)
     type(ieee_modes_type), intent(out) :: modes
   end subroutine ieee_get_modes
-
-  subroutine ieee_set_modes(modes)
-    type(ieee_modes_type), intent(in) :: modes
-  end subroutine ieee_set_modes
 
   subroutine ieee_get_status(status)
     type(ieee_status_type), intent(out) :: status
   end subroutine ieee_get_status
 
+  pure subroutine ieee_set_flag(flag, flag_value)
+    type(ieee_flag_type), intent(in) :: flag
+    logical, intent(in) :: flag_value
+  end subroutine ieee_set_flag
+
+  pure subroutine ieee_set_halting_mode(flag, halting)
+    type(ieee_flag_type), intent(in) :: flag
+    logical, intent(in) :: halting
+  end subroutine ieee_set_halting_mode
+
+  subroutine ieee_set_modes(modes)
+    type(ieee_modes_type), intent(in) :: modes
+  end subroutine ieee_set_modes
+
   subroutine ieee_set_status(status)
     type(ieee_status_type), intent(in) :: status
   end subroutine ieee_set_status
 
-  ! TODO: other interfaces (see Table 17.3)
+  subroutine ieee_support_flag(flag, x)
+    type(ieee_flag_type), intent(in) :: flag
+    real, intent(in), optional :: x
+  end subroutine ieee_support_flag
+
+  subroutine ieee_support_halting(flag)
+    type(ieee_flag_type), intent(in) :: flag
+  end subroutine ieee_support_halting
 
 end module ieee_exceptions
