@@ -46,3 +46,4 @@ COMPILER_RT_ABI du_int __fixunsxfdi(long double a) {
 #ifdef _MSC_VER && !defined(__clang__)
 #pragma warning(pop)
 #endif
+#endif
