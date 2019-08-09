@@ -66,7 +66,8 @@
   do i = 1, N
      a = 3.14
   enddo
-  !$omp end parallel
+  !ERROR: NUM_THREADS clause is not allowed on the END PARALLEL directive
+  !$omp end parallel num_threads(4)
 
   !ERROR: LASTPRIVATE clause is not allowed on the PARALLEL directive
   !ERROR: NUM_TASKS clause is not allowed on the PARALLEL directive
@@ -203,6 +204,11 @@
   !$omp workshare
   a = 1.0
   !$omp end workshare nowait
+  !ERROR: NUM_THREADS clause is not allowed on the WORKSHARE directive
+  !$omp workshare num_threads(4)
+  a = 1.0
+  !ERROR: COPYPRIVATE clause is not allowed on the END WORKSHARE directive
+  !$omp end workshare nowait copyprivate(a)
   !$omp end parallel
 
 ! 2.8.1 simd-clause -> safelen-clause |

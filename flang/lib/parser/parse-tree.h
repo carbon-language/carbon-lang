@@ -3481,26 +3481,11 @@ struct OpenMPParallelSectionsConstruct {
   std::tuple<Verbatim, OmpClauseList, Block, OmpEndParallelSections> t;
 };
 
-// WORKSHARE
-struct OpenMPWorkshareConstruct {
-  TUPLE_CLASS_BOILERPLATE(OpenMPWorkshareConstruct);
-  std::tuple<Verbatim, Block, std::optional<OmpNowait>> t;
-};
-
-// SINGLE
-struct OmpEndSingle {
-  TUPLE_CLASS_BOILERPLATE(OmpEndSingle);
-  std::tuple<Verbatim, OmpClauseList> t;
-};
-struct OpenMPSingleConstruct {
-  TUPLE_CLASS_BOILERPLATE(OpenMPSingleConstruct);
-  std::tuple<Verbatim, OmpClauseList, Block, OmpEndSingle> t;
-};
-
 // OpenMP directive beginning or ending a block
 struct OmpBlockDirective {
-  ENUM_CLASS(Directive, Master, Ordered, Parallel, ParallelWorkshare, Target,
-      TargetData, TargetParallel, TargetTeams, Task, Taskgroup, Teams);
+  ENUM_CLASS(Directive, Master, Ordered, Parallel, ParallelWorkshare, Single,
+      Target, TargetData, TargetParallel, TargetTeams, Task, Taskgroup, Teams,
+      Workshare);
   WRAPPER_CLASS_BOILERPLATE(OmpBlockDirective, Directive);
   CharBlock source;
 };
@@ -3709,8 +3694,6 @@ struct OpenMPStandaloneConstruct {
       u;
 };
 
-WRAPPER_CLASS(OmpEndBlockDirective, OmpBlockDirective);
-
 // DO / DO SIMD
 WRAPPER_CLASS(OmpEndDoSimd, std::optional<OmpNowait>);
 WRAPPER_CLASS(OmpEndDo, std::optional<OmpNowait>);
@@ -3719,9 +3702,19 @@ struct OpenMPEndLoopDirective {
   std::variant<OmpEndDoSimd, OmpEndDo, OmpLoopDirective> u;
 };
 
+struct OmpBeginBlockDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpBeginBlockDirective);
+  std::tuple<OmpBlockDirective, OmpClauseList> t;
+};
+
+struct OmpEndBlockDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpEndBlockDirective);
+  std::tuple<OmpBlockDirective, OmpClauseList> t;
+};
+
 struct OpenMPBlockConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPBlockConstruct);
-  std::tuple<OmpBlockDirective, OmpClauseList, Block, OmpEndBlockDirective> t;
+  std::tuple<OmpBeginBlockDirective, Block, OmpEndBlockDirective> t;
 };
 
 struct OpenMPLoopConstruct {
@@ -3731,10 +3724,10 @@ struct OpenMPLoopConstruct {
 
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
-  std::variant<OpenMPStandaloneConstruct, OpenMPSingleConstruct,
-      OpenMPSectionsConstruct, OpenMPParallelSectionsConstruct,
-      OpenMPWorkshareConstruct, OpenMPLoopConstruct, OpenMPBlockConstruct,
-      OpenMPAtomicConstruct, OpenMPCriticalConstruct, OmpSection>
+  std::variant<OpenMPStandaloneConstruct, OpenMPSectionsConstruct,
+      OpenMPParallelSectionsConstruct, OpenMPLoopConstruct,
+      OpenMPBlockConstruct, OpenMPAtomicConstruct, OpenMPCriticalConstruct,
+      OmpSection>
       u;
 };
 }

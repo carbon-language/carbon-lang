@@ -2079,6 +2079,7 @@ public:
       Word("PARALLEL WORKSHARE ");
       break;
     case OmpBlockDirective::Directive::Parallel: Word("PARALLEL "); break;
+    case OmpBlockDirective::Directive::Single: Word("SINGLE "); break;
     case OmpBlockDirective::Directive::TargetData: Word("TARGET DATA "); break;
     case OmpBlockDirective::Directive::TargetParallel:
       Word("TARGET PARALLEL ");
@@ -2090,6 +2091,7 @@ public:
     case OmpBlockDirective::Directive::Taskgroup: Word("TASKGROUP "); break;
     case OmpBlockDirective::Directive::Task: Word("TASK "); break;
     case OmpBlockDirective::Directive::Teams: Word("TEAMS "); break;
+    case OmpBlockDirective::Directive::Workshare: Word("WORKSHARE "); break;
     }
   }
   void Unparse(const OmpMemoryClause &x) {
@@ -2266,19 +2268,6 @@ public:
     Walk(x.v);
     EndOpenMP();
   }
-  void Unparse(const OpenMPSingleConstruct &x) {
-    BeginOpenMP();
-    Word("!$OMP SINGLE");
-    Walk(std::get<OmpClauseList>(x.t));
-    EndOpenMP();
-    Put("\n");
-    Walk(std::get<Block>(x.t), "");
-    BeginOpenMP();
-    Word("!$OMP END SINGLE ");
-    Walk(std::get<OmpEndSingle>(x.t));
-    Put("\n");
-    EndOpenMP();
-  }
   void Unparse(const OmpSection &x) {
     BeginOpenMP();
     Word("!$OMP SECTION");
@@ -2306,18 +2295,6 @@ public:
     Walk(std::get<Block>(x.t), "");
     BeginOpenMP();
     Word("!$OMP END PARALLEL SECTIONS");
-    Put("\n");
-    EndOpenMP();
-  }
-  void Unparse(const OpenMPWorkshareConstruct &x) {
-    BeginOpenMP();
-    Word("!$OMP WORKSHARE");
-    Put("\n");
-    EndOpenMP();
-    Walk(std::get<Block>(x.t), "");
-    BeginOpenMP();
-    Word("!$OMP END WORKSHARE ");
-    Walk(std::get<std::optional<OmpNowait>>(x.t));
     Put("\n");
     EndOpenMP();
   }
@@ -2364,8 +2341,7 @@ public:
   void Unparse(const OpenMPBlockConstruct &x) {
     BeginOpenMP();
     Word("!$OMP ");
-    Walk(std::get<OmpBlockDirective>(x.t));
-    Walk(std::get<OmpClauseList>(x.t));
+    Walk(std::get<OmpBeginBlockDirective>(x.t));
     Put("\n");
     EndOpenMP();
     Walk(std::get<Block>(x.t), "");

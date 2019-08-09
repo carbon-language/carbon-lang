@@ -26,28 +26,29 @@
 
 namespace Fortran::semantics {
 
-ENUM_CLASS(OmpDirective, PARALLEL, DO, SECTIONS, SECTION, SINGLE, END_SINGLE,
-    WORKSHARE, SIMD, DECLARE_SIMD, DO_SIMD, TASK, TASKLOOP, TASKLOOP_SIMD,
-    TASKYIELD, TARGET_DATA, TARGET_ENTER_DATA, TARGET_EXIT_DATA, TARGET,
-    TARGET_UPDATE, DECLARE_TARGET, TEAMS, DISTRIBUTE, DISTRIBUTE_SIMD,
-    DISTRIBUTE_PARALLEL_DO, DISTRIBUTE_PARALLEL_DO_SIMD, PARALLEL_DO,
-    PARALLEL_SECTIONS, PARALLEL_WORKSHARE, PARALLEL_DO_SIMD, TARGET_PARALLEL,
-    TARGET_PARALLEL_DO, TARGET_PARALLEL_DO_SIMD, TARGET_SIMD, TARGET_TEAMS,
-    TEAMS_DISTRIBUTE, TEAMS_DISTRIBUTE_SIMD, TARGET_TEAMS_DISTRIBUTE,
-    TARGET_TEAMS_DISTRIBUTE_SIMD, TEAMS_DISTRIBUTE_PARALLEL_DO,
-    TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO, TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD, MASTER, CRITICAL, BARRIER,
-    TASKWAIT, TASKGROUP, ATOMIC, FLUSH, ORDERED, CANCEL, CANCELLATION_POINT,
-    THREADPRIVATE, DECLARE_REDUCTION)
+ENUM_CLASS(OmpDirective, ATOMIC, BARRIER, CANCEL, CANCELLATION_POINT, CRITICAL,
+    DECLARE_REDUCTION, DECLARE_SIMD, DECLARE_TARGET, DISTRIBUTE,
+    DISTRIBUTE_PARALLEL_DO, DISTRIBUTE_PARALLEL_DO_SIMD, DISTRIBUTE_SIMD, DO,
+    DO_SIMD, END_CRITICAL, END_DO, END_DO_SIMD, END_SECTIONS, END_SINGLE,
+    END_WORKSHARE, FLUSH, MASTER, ORDERED, PARALLEL, PARALLEL_DO,
+    PARALLEL_DO_SIMD, PARALLEL_SECTIONS, PARALLEL_WORKSHARE, SECTION, SECTIONS,
+    SIMD, SINGLE, TARGET, TARGET_DATA, TARGET_ENTER_DATA, TARGET_EXIT_DATA,
+    TARGET_PARALLEL, TARGET_PARALLEL_DO, TARGET_PARALLEL_DO_SIMD, TARGET_SIMD,
+    TARGET_TEAMS, TARGET_TEAMS_DISTRIBUTE, TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
+    TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD, TARGET_TEAMS_DISTRIBUTE_SIMD,
+    TARGET_UPDATE, TASK, TASKGROUP, TASKLOOP, TASKLOOP_SIMD, TASKWAIT,
+    TASKYIELD, TEAMS, TEAMS_DISTRIBUTE, TEAMS_DISTRIBUTE_PARALLEL_DO,
+    TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD, TEAMS_DISTRIBUTE_SIMD, THREADPRIVATE,
+    WORKSHARE)
 
 using OmpDirectiveSet = common::EnumSet<OmpDirective, OmpDirective_enumSize>;
 
-ENUM_CLASS(OmpClause, DEFAULTMAP, INBRANCH, MERGEABLE, NOGROUP, NOTINBRANCH,
-    NOWAIT, UNTIED, THREADS, SIMD, COLLAPSE, COPYIN, COPYPRIVATE, DEVICE,
-    DIST_SCHEDULE, FINAL, FIRSTPRIVATE, FROM, GRAINSIZE, LASTPRIVATE, NUM_TASKS,
-    NUM_TEAMS, NUM_THREADS, ORDERED, PRIORITY, PRIVATE, SAFELEN, SHARED,
-    SIMDLEN, THREAD_LIMIT, TO, LINK, UNIFORM, USE_DEVICE_PTR, IS_DEVICE_PTR,
-    ALIGNED, DEFAULT, DEPEND, IF, LINEAR, MAP, PROC_BIND, REDUCTION, SCHEDULE)
+ENUM_CLASS(OmpClause, ALIGNED, COLLAPSE, COPYIN, COPYPRIVATE, DEFAULT,
+    DEFAULTMAP, DEPEND, DEVICE, DIST_SCHEDULE, FINAL, FIRSTPRIVATE, FROM,
+    GRAINSIZE, IF, INBRANCH, IS_DEVICE_PTR, LASTPRIVATE, LINEAR, LINK, MAP,
+    MERGEABLE, NOGROUP, NOTINBRANCH, NOWAIT, NUM_TASKS, NUM_TEAMS, NUM_THREADS,
+    ORDERED, PRIORITY, PRIVATE, PROC_BIND, REDUCTION, SAFELEN, SCHEDULE, SHARED,
+    SIMD, SIMDLEN, THREAD_LIMIT, THREADS, TO, UNIFORM, UNTIED, USE_DEVICE_PTR)
 
 using OmpClauseSet = common::EnumSet<OmpClause, OmpClause_enumSize>;
 
@@ -58,30 +59,20 @@ public:
   void Enter(const parser::OpenMPConstruct &);
   void Enter(const parser::OpenMPLoopConstruct &);
   void Leave(const parser::OpenMPLoopConstruct &);
-  void Enter(const parser::OmpLoopDirective &);
 
   void Enter(const parser::OpenMPBlockConstruct &);
   void Leave(const parser::OpenMPBlockConstruct &);
-  void Enter(const parser::OmpBlockDirective &);
+  void Enter(const parser::OmpEndBlockDirective &);
 
   void Enter(const parser::OpenMPSectionsConstruct &);
   void Leave(const parser::OpenMPSectionsConstruct &);
   void Enter(const parser::OmpSection &);
-
-  void Enter(const parser::OpenMPSingleConstruct &);
-  void Leave(const parser::OpenMPSingleConstruct &);
-  void Enter(const parser::OmpEndSingle &);
-  void Leave(const parser::OmpEndSingle &);
-
-  void Enter(const parser::OpenMPWorkshareConstruct &);
-  void Leave(const parser::OpenMPWorkshareConstruct &);
 
   void Enter(const parser::OpenMPDeclareSimdConstruct &);
   void Leave(const parser::OpenMPDeclareSimdConstruct &);
 
   void Enter(const parser::OpenMPSimpleStandaloneConstruct &);
   void Leave(const parser::OpenMPSimpleStandaloneConstruct &);
-  void Enter(const parser::OmpSimpleStandaloneDirective &);
   void Enter(const parser::OpenMPFlushConstruct &);
   void Leave(const parser::OpenMPFlushConstruct &);
   void Enter(const parser::OpenMPCancelConstruct &);
@@ -150,6 +141,15 @@ private:
     CHECK(!ompContext_.empty());
     return ompContext_.back();
   }
+  // reset source location, check information, and
+  // collected information for END directive
+  void ResetPartialContext(const parser::CharBlock &source) {
+    CHECK(!ompContext_.empty());
+    SetContextDirectiveSource(source);
+    GetContext().allowedClauses = {};
+    GetContext().allowedOnceClauses = {};
+    GetContext().clauseInfo = {};
+  }
   void SetContextDirectiveSource(const parser::CharBlock &directive) {
     GetContext().directiveSource = directive;
   }
@@ -176,11 +176,8 @@ private:
     }
     return nullptr;
   }
-  void PushContext(const parser::CharBlock &source) {
-    ompContext_.push_back(OmpContext{source});
-  }
   void PushContext(const parser::CharBlock &source, const OmpDirective &dir) {
-    PushContext(source);
+    ompContext_.push_back(OmpContext{source});
     SetContextDirectiveEnum(dir);
   }
 
