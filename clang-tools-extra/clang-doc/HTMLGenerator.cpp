@@ -813,6 +813,24 @@ static bool SerializeIndex(ClangDocContext &CDCtx) {
   return true;
 }
 
+static bool GenIndex(const ClangDocContext &CDCtx) {
+  std::error_code FileErr, OK;
+  llvm::SmallString<128> IndexPath;
+  llvm::sys::path::native(CDCtx.OutDirectory, IndexPath);
+  llvm::sys::path::append(IndexPath, "index.html");
+  llvm::raw_fd_ostream IndexOS(IndexPath, FileErr, llvm::sys::fs::F_None);
+  if (FileErr != OK) {
+    llvm::errs() << "Error creating main index: " << FileErr.message() << "\n";
+    return false;
+  }
+  HTMLFile F;
+  std::vector<std::unique_ptr<TagNode>> BasicNodes =
+      genCommonFileNodes("Index", "", CDCtx);
+  AppendVector(std::move(BasicNodes), F.Children);
+  F.Render(IndexOS);
+  return true;
+}
+
 static bool CopyFile(StringRef FilePath, StringRef OutDirectory) {
   llvm::SmallString<128> PathWrite;
   llvm::sys::path::native(OutDirectory, PathWrite);
@@ -831,7 +849,7 @@ static bool CopyFile(StringRef FilePath, StringRef OutDirectory) {
 }
 
 bool HTMLGenerator::createResources(ClangDocContext &CDCtx) {
-  if (!SerializeIndex(CDCtx))
+  if (!SerializeIndex(CDCtx) || !GenIndex(CDCtx))
     return false;
   for (const auto &FilePath : CDCtx.UserStylesheets)
     if (!CopyFile(FilePath, CDCtx.OutDirectory))
