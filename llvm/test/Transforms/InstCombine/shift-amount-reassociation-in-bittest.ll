@@ -279,8 +279,8 @@ define i1 @t18_const_oneuse0(i32 %x, i32 %y) {
 ; CHECK-LABEL: @t18_const_oneuse0(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
-; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 [[Y:%.*]], 2
-; CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[TMP1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr i32 [[X]], 2
+; CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[TMP1]], [[Y:%.*]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = icmp ne i32 [[TMP2]], 0
 ; CHECK-NEXT:    ret i1 [[TMP3]]
 ;
@@ -585,8 +585,8 @@ define i1 @t34_commutativity0_oneuse0(i32 %x) {
 ; CHECK-NEXT:    [[Y:%.*]] = call i32 @gen32()
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X:%.*]], 1
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
-; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 [[Y]], 2
-; CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[TMP1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr i32 [[X]], 2
+; CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[TMP1]], [[Y]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = icmp ne i32 [[TMP2]], 0
 ; CHECK-NEXT:    ret i1 [[TMP3]]
 ;
@@ -622,8 +622,8 @@ define i1 @t36_commutativity1_oneuse0(i32 %y) {
 ; CHECK-NEXT:    [[X:%.*]] = call i32 @gen32()
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i32 [[X]], 1
 ; CHECK-NEXT:    call void @use32(i32 [[T0]])
-; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 [[Y:%.*]], 2
-; CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[TMP1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr i32 [[X]], 2
+; CHECK-NEXT:    [[TMP2:%.*]] = and i32 [[TMP1]], [[Y:%.*]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = icmp ne i32 [[TMP2]], 0
 ; CHECK-NEXT:    ret i1 [[TMP3]]
 ;

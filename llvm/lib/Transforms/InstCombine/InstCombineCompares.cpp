@@ -3318,8 +3318,8 @@ foldShiftIntoShiftInAnotherHandOfAndInICmp(ICmpInst &I, const SimplifyQuery SQ,
                      m_CombineAnd(m_AnyLogicalShift, m_Value(YShift)))))
     return nullptr;
 
-  // If YShift is a single-use 'lshr', swap the shifts around.
-  if (match(YShift, m_OneUse(m_AnyLShr)))
+  // If YShift is a 'lshr', swap the shifts around.
+  if (match(YShift, m_AnyLShr))
     std::swap(XShift, YShift);
 
   // The shifts must be in opposite directions.
