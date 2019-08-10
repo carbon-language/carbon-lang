@@ -534,9 +534,9 @@ define i1 @t32_shift_of_const_oneuse0(i32 %x, i32 %y, i32 %len) {
 ; CHECK-NEXT:    call void @use32(i32 [[T2]])
 ; CHECK-NEXT:    [[T3:%.*]] = shl i32 [[Y:%.*]], [[T2]]
 ; CHECK-NEXT:    call void @use32(i32 [[T3]])
-; CHECK-NEXT:    [[T4:%.*]] = and i32 [[T1]], [[T3]]
-; CHECK-NEXT:    [[T5:%.*]] = icmp ne i32 [[T4]], 0
-; CHECK-NEXT:    ret i1 [[T5]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[Y]], 1
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ne i32 [[TMP1]], 0
+; CHECK-NEXT:    ret i1 [[TMP2]]
 ;
   %t0 = sub i32 32, %len
   call void @use32(i32 %t0)
@@ -561,9 +561,7 @@ define i1 @t33_shift_of_const_oneuse1(i32 %x, i32 %y, i32 %len) {
 ; CHECK-NEXT:    call void @use32(i32 [[T2]])
 ; CHECK-NEXT:    [[T3:%.*]] = shl i32 -52543054, [[T2]]
 ; CHECK-NEXT:    call void @use32(i32 [[T3]])
-; CHECK-NEXT:    [[T4:%.*]] = and i32 [[T1]], [[T3]]
-; CHECK-NEXT:    [[T5:%.*]] = icmp ne i32 [[T4]], 0
-; CHECK-NEXT:    ret i1 [[T5]]
+; CHECK-NEXT:    ret i1 false
 ;
   %t0 = sub i32 32, %len
   call void @use32(i32 %t0)
