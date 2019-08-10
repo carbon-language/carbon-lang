@@ -44970,3 +44970,16 @@ X86TargetLowering::getStackProbeSymbolName(MachineFunction &MF) const {
     return Subtarget.isTargetCygMing() ? "___chkstk_ms" : "__chkstk";
   return Subtarget.isTargetCygMing() ? "_alloca" : "_chkstk";
 }
+
+unsigned
+X86TargetLowering::getStackProbeSize(MachineFunction &MF) const {
+  // The default stack probe size is 4096 if the function has no stackprobesize
+  // attribute.
+  unsigned StackProbeSize = 4096;
+  const Function &Fn = MF.getFunction();
+  if (Fn.hasFnAttribute("stack-probe-size"))
+    Fn.getFnAttribute("stack-probe-size")
+        .getValueAsString()
+        .getAsInteger(0, StackProbeSize);
+  return StackProbeSize;
+}
