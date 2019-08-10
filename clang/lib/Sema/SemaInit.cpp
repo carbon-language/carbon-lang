@@ -7217,6 +7217,11 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
         if (pathContainsInit(Path))
           return false;
 
+        // Suppress false positives for code like the below:
+        //   Ctor(unique_ptr<T> up) : member(*up), member2(move(up)) {}
+        if (IsLocalGslOwner && pathOnlyInitializesGslPointer(Path))
+          return false;
+
         auto *DRE = dyn_cast<DeclRefExpr>(L);
         auto *VD = DRE ? dyn_cast<VarDecl>(DRE->getDecl()) : nullptr;
         if (!VD) {
