@@ -3343,8 +3343,8 @@ foldShiftIntoShiftInAnotherHandOfAndInICmp(ICmpInst &I, const SimplifyQuery SQ,
   }
 
   // Can we fold (XShAmt+YShAmt) ?
-  Value *NewShAmt = SimplifyBinOp(Instruction::BinaryOps::Add, XShAmt, YShAmt,
-                                  SQ.getWithInstruction(&I));
+  Value *NewShAmt = SimplifyAddInst(XShAmt, YShAmt, /*IsNSW=*/false,
+                                    /*IsNUW=*/false, SQ.getWithInstruction(&I));
   if (!NewShAmt)
     return nullptr;
   // Is the new shift amount smaller than the bit width?
