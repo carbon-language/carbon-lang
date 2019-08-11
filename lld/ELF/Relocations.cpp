@@ -513,7 +513,6 @@ static void replaceWithDefined(Symbol &sym, SectionBase *sec, uint64_t value,
   sym.isPreemptible = true;
   sym.exportDynamic = true;
   sym.isUsedInRegularObj = true;
-  sym.used = true;
 }
 
 // Reserve space in .bss or .bss.rel.ro for copy relocation.
