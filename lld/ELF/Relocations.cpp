@@ -770,8 +770,7 @@ static bool maybeReportUndefined(Symbol &sym, InputSectionBase &sec,
   if (!sym.isUndefined() || sym.isWeak())
     return false;
 
-  bool canBeExternal = !sym.isLocal() && sym.computeBinding() != STB_LOCAL &&
-                       sym.visibility == STV_DEFAULT;
+  bool canBeExternal = !sym.isLocal() && sym.visibility == STV_DEFAULT;
   if (config->unresolvedSymbols == UnresolvedPolicy::Ignore && canBeExternal)
     return false;
 
