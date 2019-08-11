@@ -16,5 +16,3 @@ add_llvm_library(LLVMProfileData
   )
 
 add_subdirectory(Coverage)
-
-
