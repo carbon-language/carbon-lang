@@ -96,9 +96,9 @@
 #ifndef LLVM_TRANSFORMS_IPO_ATTRIBUTOR_H
 #define LLVM_TRANSFORMS_IPO_ATTRIBUTOR_H
 
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/ADT/SetVector.h"
 
 namespace llvm {
 
@@ -147,6 +147,7 @@ ChangeStatus operator&(ChangeStatus l, ChangeStatus r);
 /// NOTE: The mechanics of adding a new "concrete" abstract attribute are
 ///       described in the file comment.
 struct Attributor {
+  Attributor(InformationCache &InfoCache) : InfoCache(InfoCache) {}
   ~Attributor() { DeleteContainerPointers(AllAbstractAttributes); }
 
   /// Run the analyses until a fixpoint is reached or enforced (timeout).
@@ -155,7 +156,7 @@ struct Attributor {
   /// as the Attributor is not destroyed (it owns the attributes now).
   ///
   /// \Returns CHANGED if the IR was changed, otherwise UNCHANGED.
-  ChangeStatus run(InformationCache &InfoCache);
+  ChangeStatus run();
 
   /// Lookup an abstract attribute of type \p AAType anchored at value \p V and
   /// argument number \p ArgNo. If no attribute is found and \p V is a call base
@@ -244,11 +245,13 @@ struct Attributor {
     return AA;
   }
 
+  /// Return the internal information cache.
+  InformationCache &getInfoCache() { return InfoCache; }
+
   /// Determine opportunities to derive 'default' attributes in \p F and create
   /// abstract attribute objects for them.
   ///
   /// \param F The function that is checked for attribute opportunities.
-  /// \param InfoCache A cache for information queryable by the new attributes.
   /// \param Whitelist If not null, a set limiting the attribute opportunities.
   ///
   /// Note that abstract attribute instances are generally created even if the
@@ -257,8 +260,7 @@ struct Attributor {
   /// instance, which can be queried without the need to look at the IR in
   /// various places.
   void identifyDefaultAbstractAttributes(
-      Function &F, InformationCache &InfoCache,
-      DenseSet<const char *> *Whitelist = nullptr);
+      Function &F, DenseSet<const char *> *Whitelist = nullptr);
 
   /// Check \p Pred on all function call sites.
   ///
@@ -294,16 +296,16 @@ struct Attributor {
   bool checkForAllInstructions(const Function &F,
                                const function_ref<bool(Instruction &)> &Pred,
                                const AbstractAttribute &QueryingAA,
-                               InformationCache &InfoCache,
                                const ArrayRef<unsigned> &Opcodes);
 
   /// Check \p Pred on all call-like instructions (=CallBased derived).
   ///
   /// See checkForAllCallLikeInstructions(...) for more information.
-  bool checkForAllCallLikeInstructions(
-      const Function &F, const function_ref<bool(Instruction &)> &Pred,
-      const AbstractAttribute &QueryingAA, InformationCache &InfoCache) {
-    return checkForAllInstructions(F, Pred, QueryingAA, InfoCache,
+  bool
+  checkForAllCallLikeInstructions(const Function &F,
+                                  const function_ref<bool(Instruction &)> &Pred,
+                                  const AbstractAttribute &QueryingAA) {
+    return checkForAllInstructions(F, Pred, QueryingAA,
                                    {(unsigned)Instruction::Invoke,
                                     (unsigned)Instruction::CallBr,
                                     (unsigned)Instruction::Call});
@@ -312,11 +314,11 @@ struct Attributor {
   /// Check \p Pred on all Read/Write instructions.
   ///
   /// This method will evaluate \p Pred on all instructions that read or write
-  /// to memory present in \p InfoCache and return true if \p Pred holds on all
-  /// of them.
+  /// to memory present in the information cache and return true if \p Pred
+  /// holds on all of them.
   bool checkForAllReadWriteInstructions(
       const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
-      AbstractAttribute &QueryingAA, InformationCache &InfoCache);
+      AbstractAttribute &QueryingAA);
 
 private:
   /// The set of all abstract attributes.
@@ -341,6 +343,9 @@ private:
       DenseMap<AbstractAttribute *, SetVector<AbstractAttribute *>>;
   QueryMapTy QueryMap;
   ///}
+
+  /// The information cache that holds pre-processed (LLVM-IR) information.
+  InformationCache &InfoCache;
 };
 
 /// Data structure to hold cached (LLVM-IR) information.
@@ -356,6 +361,8 @@ private:
 /// reusable, it is advised to inherit from the InformationCache and cast the
 /// instance down in the abstract attributes.
 struct InformationCache {
+  InformationCache(const DataLayout &DL) : DL(DL) {}
+
   /// A map type from opcodes to instructions with this opcode.
   using OpcodeInstMapTy = DenseMap<unsigned, SmallVector<Instruction *, 32>>;
 
@@ -386,6 +393,9 @@ private:
 
   /// A map from functions to their instructions that may read or write memory.
   FuncRWInstsMapTy FuncRWInstsMap;
+
+  /// The datalayout used in the module.
+  const DataLayout &DL;
 
   /// Give the Attributor access to the members so
   /// Attributor::identifyDefaultAbstractAttributes(...) can initialize them.
@@ -705,8 +715,7 @@ struct StateWrapper : public StateTy, public Base {
 
 /// Helper class that provides common functionality to manifest IR attributes.
 template <Attribute::AttrKind AK, typename Base>
-struct IRAttribute : public IRPosition,
-                     public Base {
+struct IRAttribute : public IRPosition, public Base {
   ~IRAttribute() {}
 
   /// Constructors for the IRPosition.
@@ -796,7 +805,7 @@ struct AbstractAttribute {
   ///  - perform any work that is not going to change over time, e.g., determine
   ///    a subset of the IR, or attributes in-flight, that have to be looked at
   ///    in the `updateImpl` method.
-  virtual void initialize(Attributor &A, InformationCache &InfoCache) {}
+  virtual void initialize(Attributor &A) {}
 
   /// Return the internal abstract state for inspection.
   virtual StateType &getState() = 0;
@@ -824,7 +833,7 @@ protected:
   /// otherwise it delegates to `AbstractAttribute::updateImpl`.
   ///
   /// \Return CHANGED if the internal state changed, otherwise UNCHANGED.
-  ChangeStatus update(Attributor &A, InformationCache &InfoCache);
+  ChangeStatus update(Attributor &A);
 
   /// Hook for the Attributor to trigger the manifestation of the information
   /// represented by the abstract attribute in the LLVM-IR.
@@ -851,8 +860,7 @@ protected:
   /// the current information is still valid or adjust it otherwise.
   ///
   /// \Return CHANGED if the internal state changed, otherwise UNCHANGED.
-  virtual ChangeStatus updateImpl(Attributor &A,
-                                  InformationCache &InfoCache) = 0;
+  virtual ChangeStatus updateImpl(Attributor &A) = 0;
 };
 
 /// Forward declarations of output streams for debug purposes.
