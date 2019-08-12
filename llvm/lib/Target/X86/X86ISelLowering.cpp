@@ -39617,11 +39617,12 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
     // Check if we can detect an AVG pattern from the truncation. If yes,
     // replace the trunc store by a normal store with the result of X86ISD::AVG
     // instruction.
-    if (SDValue Avg = detectAVGPattern(St->getValue(), St->getMemoryVT(), DAG,
-                                       Subtarget, dl))
-      return DAG.getStore(St->getChain(), dl, Avg, St->getBasePtr(),
-                          St->getPointerInfo(), St->getAlignment(),
-                          St->getMemOperand()->getFlags());
+    if (DCI.isBeforeLegalize() || TLI.isTypeLegal(St->getMemoryVT()))
+      if (SDValue Avg = detectAVGPattern(St->getValue(), St->getMemoryVT(), DAG,
+                                         Subtarget, dl))
+        return DAG.getStore(St->getChain(), dl, Avg, St->getBasePtr(),
+                            St->getPointerInfo(), St->getAlignment(),
+                            St->getMemOperand()->getFlags());
 
     if (TLI.isTruncStoreLegal(VT, StVT)) {
       if (SDValue Val = detectSSatPattern(St->getValue(), St->getMemoryVT()))
