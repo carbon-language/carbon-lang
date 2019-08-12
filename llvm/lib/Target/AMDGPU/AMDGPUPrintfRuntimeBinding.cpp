@@ -65,8 +65,6 @@ private:
                                StringRef fmt, size_t num_ops) const;
 
   bool shouldPrintAsStr(char Specifier, Type *OpType) const;
-  bool confirmSpirModule(Module &M) const;
-  bool confirmOpenCLVersion200(Module &M) const;
   bool lowerPrintfForGpu(Module &M);
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -106,20 +104,6 @@ ModulePass *createAMDGPUPrintfRuntimeBinding() {
 AMDGPUPrintfRuntimeBinding::AMDGPUPrintfRuntimeBinding()
     : ModulePass(ID), TD(nullptr), DT(nullptr), TLI(nullptr) {
   initializeAMDGPUPrintfRuntimeBindingPass(*PassRegistry::getPassRegistry());
-}
-
-bool AMDGPUPrintfRuntimeBinding::confirmOpenCLVersion200(Module &M) const {
-  NamedMDNode *OCLVersion = M.getNamedMetadata("opencl.ocl.version");
-  if (!OCLVersion || OCLVersion->getNumOperands() != 1)
-    return false;
-  MDNode *Ver = OCLVersion->getOperand(0);
-  if (Ver->getNumOperands() != 2)
-    return false;
-  ConstantInt *Major = mdconst::dyn_extract<ConstantInt>(Ver->getOperand(0));
-  ConstantInt *Minor = mdconst::dyn_extract<ConstantInt>(Ver->getOperand(1));
-  if (!Major || !Minor)
-    return false;
-  return Major->getZExtValue() == 2;
 }
 
 void AMDGPUPrintfRuntimeBinding::getConversionSpecifiers(
@@ -166,11 +150,6 @@ bool AMDGPUPrintfRuntimeBinding::shouldPrintAsStr(char Specifier,
     return false;
   IntegerType *ElemIType = cast<IntegerType>(ElemType);
   return ElemIType->getBitWidth() == 8;
-}
-
-bool AMDGPUPrintfRuntimeBinding::confirmSpirModule(Module &M) const {
-  NamedMDNode *SPIRVersion = M.getNamedMetadata("opencl.spir.version");
-  return SPIRVersion ? true : false;
 }
 
 bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(Module &M) {
