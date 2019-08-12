@@ -55,7 +55,8 @@ class FoldingContext;
 // that can also be typeless values are encoded with an "elementalOrBOZ"
 // rank pattern.
 // Assumed-type (TYPE(*)) dummy arguments can be forwarded along to some
-// intrinsic functions that accept AnyType + Rank::anyOrAssumedRank.
+// intrinsic functions that accept AnyType + Rank::anyOrAssumedRank or
+// AnyType + Kind::addressable.
 using CategorySet = common::EnumSet<TypeCategory, 8>;
 static constexpr CategorySet IntType{TypeCategory::Integer};
 static constexpr CategorySet RealType{TypeCategory::Real};
@@ -84,6 +85,7 @@ ENUM_CLASS(KindCode, none, defaultIntegerKind,
     dimArg,  // this argument is DIM=
     likeMultiply,  // for DOT_PRODUCT and MATMUL
     subscript,  // address-sized integer
+    addressable,  // for PRESENT(), &c.; anything (incl. procedure) but BOZ
 )
 
 struct TypePattern {
@@ -122,6 +124,9 @@ static constexpr TypePattern AnyLogical{LogicalType, KindCode::any};
 static constexpr TypePattern AnyRelatable{RelatableType, KindCode::any};
 static constexpr TypePattern AnyIntrinsic{IntrinsicType, KindCode::any};
 static constexpr TypePattern Anything{AnyType, KindCode::any};
+
+// Type is irrelevant, but not BOZ (for PRESENT(), OPTIONAL(), &c.)
+static constexpr TypePattern Addressable{AnyType, KindCode::addressable};
 
 // Match some kind of some intrinsic type(s); all "Same" values must match,
 // even when not in the same category (e.g., SameComplex and SameReal).
@@ -267,8 +272,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"asin", {{"x", SameFloating}}, SameFloating},
     {"asinh", {{"x", SameFloating}}, SameFloating},
     {"associated",
-        {{"pointer", Anything, Rank::known},
-            {"target", Anything, Rank::known, Optionality::optional}},
+        {{"pointer", Addressable, Rank::known},
+            {"target", Addressable, Rank::known, Optionality::optional}},
         DefaultLogical},
     {"atan", {{"x", SameFloating}}, SameFloating},
     {"atan", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
@@ -463,7 +468,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"lgt", {{"string_a", SameChar}, {"string_b", SameChar}}, DefaultLogical},
     {"lle", {{"string_a", SameChar}, {"string_b", SameChar}}, DefaultLogical},
     {"llt", {{"string_a", SameChar}, {"string_b", SameChar}}, DefaultLogical},
-    {"loc", {{"x", Anything, Rank::anyOrAssumedRank}}, SubscriptInt,
+    {"loc", {{"x", Addressable, Rank::anyOrAssumedRank}}, SubscriptInt,
         Rank::scalar},
     {"log", {{"x", SameFloating}}, SameFloating},
     {"log10", {{"x", SameReal}}, SameReal},
@@ -573,7 +578,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         SameNumeric, Rank::dimReduced},
     {"precision", {{"x", AnyFloating, Rank::anyOrAssumedRank}}, DefaultInt,
         Rank::scalar},
-    {"present", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultLogical,
+    {"present", {{"a", Addressable, Rank::anyOrAssumedRank}}, DefaultLogical,
         Rank::scalar},
     {"radix", {{"x", AnyIntOrReal, Rank::anyOrAssumedRank}}, DefaultInt,
         Rank::scalar},
@@ -970,8 +975,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     if (arg->GetAssumedTypeDummy()) {
       // TYPE(*) assumed-type dummy argument forwarded to intrinsic
       if (d.typePattern.categorySet == AnyType &&
-          d.typePattern.kindCode == KindCode::any &&
-          d.rank == Rank::anyOrAssumedRank) {
+          d.rank == Rank::anyOrAssumedRank &&
+          (d.typePattern.kindCode == KindCode::any ||
+              d.typePattern.kindCode == KindCode::addressable)) {
         continue;
       } else {
         messages.Say("Assumed type TYPE(*) dummy argument not allowed "
@@ -996,7 +1002,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         }
       } else {
         // NULL(), pointer to subroutine, &c.
-        if ("loc"s != name) {
+        if (d.typePattern.kindCode == KindCode::addressable) {
+          continue;
+        } else {
           messages.Say("Typeless item not allowed for '%s=' argument"_err_en_US,
               d.keyword);
         }
@@ -1066,6 +1074,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
                   "for intrinsic '%s'",
           d.keyword, name);
       break;
+    case KindCode::addressable: argOk = true; break;
     default: CRASH_NO_CASE;
     }
     if (!argOk) {
