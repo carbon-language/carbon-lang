@@ -2799,9 +2799,6 @@ void CastOperation::CheckCStyleCast() {
 
 void CastOperation::CheckBuiltinBitCast() {
   QualType SrcType = SrcExpr.get()->getType();
-  if (SrcExpr.get()->isRValue())
-    SrcExpr = Self.CreateMaterializeTemporaryExpr(SrcType, SrcExpr.get(),
-                                                  /*IsLValueReference=*/false);
 
   if (Self.RequireCompleteType(OpRange.getBegin(), DestType,
                                diag::err_typecheck_cast_to_incomplete) ||
@@ -2810,6 +2807,10 @@ void CastOperation::CheckBuiltinBitCast() {
     SrcExpr = ExprError();
     return;
   }
+
+  if (SrcExpr.get()->isRValue())
+    SrcExpr = Self.CreateMaterializeTemporaryExpr(SrcType, SrcExpr.get(),
+                                                  /*IsLValueReference=*/false);
 
   CharUnits DestSize = Self.Context.getTypeSizeInChars(DestType);
   CharUnits SourceSize = Self.Context.getTypeSizeInChars(SrcType);
