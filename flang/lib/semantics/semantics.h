@@ -121,7 +121,7 @@ public:
 
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
-  const parser::LanguageFeatureControl &languageFeatures_;
+  const parser::LanguageFeatureControl languageFeatures_;
   parser::AllSources &allSources_;
   const parser::CharBlock *location_{nullptr};
   std::vector<std::string> searchDirectories_;
