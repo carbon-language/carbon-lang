@@ -39024,7 +39024,8 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
       return DAG.getNode(X86ISD::VTRUNCUS, DL, VT, USatVal);
   }
   if (VT.isVector() && isPowerOf2_32(VT.getVectorNumElements()) &&
-      !Subtarget.hasAVX512() &&
+      !(Subtarget.hasAVX512() && InSVT == MVT::i32) &&
+      !(Subtarget.hasBWI() && InSVT == MVT::i16) &&
       (SVT == MVT::i8 || SVT == MVT::i16) &&
       (InSVT == MVT::i16 || InSVT == MVT::i32)) {
     if (auto USatVal = detectSSatPattern(In, VT, true)) {
