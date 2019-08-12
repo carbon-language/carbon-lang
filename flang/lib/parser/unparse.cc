@@ -2166,28 +2166,26 @@ public:
     Walk(std::get<std::optional<OmpEndAtomic>>(x.t), "!$OMP END ATOMIC\n");
     EndOpenMP();
   }
-  void Unparse(const OmpEndCritical &x) {
-    Walk(" (", x.v, ")");
-    EndOpenMP();
-  }
-  void Unparse(const OpenMPCriticalConstructDirective &x) {
+  void Unparse(const OmpCriticalDirective &x) {
     BeginOpenMP();
     Word("!$OMP CRITICAL");
     Walk(" (", std::get<std::optional<Name>>(x.t), ")");
-    Walk(" HINT(",
-        std::get<std::optional<OpenMPCriticalConstructDirective::Hint>>(x.t),
+    Walk(" HINT(", std::get<std::optional<OmpCriticalDirective::Hint>>(x.t),
         ")");
     Put("\n");
     EndOpenMP();
   }
-  void Unparse(const OpenMPCriticalConstruct &x) {
-    Walk(std::get<OpenMPCriticalConstructDirective>(x.t));
-    Walk(std::get<Block>(x.t), "");
+  void Unparse(const OmpEndCriticalDirective &x) {
     BeginOpenMP();
     Word("!$OMP END CRITICAL");
-    Walk(std::get<OmpEndCritical>(x.t));
+    Walk(" (", std::get<std::optional<Name>>(x.t), ")");
     Put("\n");
     EndOpenMP();
+  }
+  void Unparse(const OpenMPCriticalConstruct &x) {
+    Walk(std::get<OmpCriticalDirective>(x.t));
+    Walk(std::get<Block>(x.t), "");
+    Walk(std::get<OmpEndCriticalDirective>(x.t));
   }
   void Unparse(const OpenMPDeclareTargetSpecifier::WithClause &x) {
     Walk(x.maptype), Put("("), Walk(x.names), Put(")");

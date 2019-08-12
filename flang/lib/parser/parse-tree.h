@@ -3556,16 +3556,20 @@ struct OpenMPDeclarativeConstruct {
 };
 
 // CRITICAL [Name] <block> END CRITICAL [Name]
-WRAPPER_CLASS(OmpEndCritical, std::optional<Name>);
-struct OpenMPCriticalConstructDirective {
-  TUPLE_CLASS_BOILERPLATE(OpenMPCriticalConstructDirective);
+struct OmpCriticalDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpCriticalDirective);
   WRAPPER_CLASS(Hint, ConstantExpr);
   CharBlock source;
-  std::tuple<std::optional<Name>, std::optional<Hint>> t;
+  std::tuple<Verbatim, std::optional<Name>, std::optional<Hint>> t;
+};
+struct OmpEndCriticalDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpEndCriticalDirective);
+  CharBlock source;
+  std::tuple<Verbatim, std::optional<Name>> t;
 };
 struct OpenMPCriticalConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPCriticalConstruct);
-  std::tuple<OpenMPCriticalConstructDirective, Block, OmpEndCritical> t;
+  std::tuple<OmpCriticalDirective, Block, OmpEndCriticalDirective> t;
 };
 
 // END ATOMIC

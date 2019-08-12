@@ -301,4 +301,12 @@
   !$omp flush (c)
   !$omp cancel DO
   !$omp cancellation point parallel
+
+! 2.13.2 critical Construct
+
+  !ERROR: Internal: no symbol found for 'first'
+  !$omp critical (first)
+  a = 3.14
+  !ERROR: Internal: no symbol found for 'first'
+  !$omp end critical (first)
 end program

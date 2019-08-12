@@ -444,18 +444,18 @@ TYPE_PARSER(construct<OpenMPAtomicConstruct>(Parser<OmpAtomicRead>{}) ||
     construct<OpenMPAtomicConstruct>(Parser<OmpAtomic>{}))
 
 // OMP CRITICAL
-TYPE_PARSER(startOmpLine >> "END CRITICAL"_tok >>
-    construct<OmpEndCritical>(maybe(parenthesized(name))) / endOmpLine)
-
-TYPE_PARSER(
-    sourced(construct<OpenMPCriticalConstructDirective>(
-        "CRITICAL" >> maybe(parenthesized(name)),
-        maybe("HINT" >> construct<OpenMPCriticalConstructDirective::Hint>(
-                            parenthesized(constantExpr))))) /
+TYPE_PARSER(startOmpLine >>
+    sourced(construct<OmpEndCriticalDirective>(
+        verbatim("END CRITICAL"_tok), maybe(parenthesized(name)))) /
+        endOmpLine)
+TYPE_PARSER(sourced(construct<OmpCriticalDirective>(verbatim("CRITICAL"_tok),
+                maybe(parenthesized(name)),
+                maybe("HINT" >> construct<OmpCriticalDirective::Hint>(
+                                    parenthesized(constantExpr))))) /
     endOmpLine)
+
 TYPE_PARSER(construct<OpenMPCriticalConstruct>(
-    Parser<OpenMPCriticalConstructDirective>{}, block,
-    Parser<OmpEndCritical>{}))
+    Parser<OmpCriticalDirective>{}, block, Parser<OmpEndCriticalDirective>{}))
 
 // Declare Simd construct
 TYPE_PARSER(
