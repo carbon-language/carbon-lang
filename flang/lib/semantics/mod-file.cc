@@ -786,11 +786,11 @@ static std::string ModFilePath(const std::string &dir, const SourceName &name,
 void SubprogramSymbolCollector::Collect() {
   const auto &details{symbol_.get<SubprogramDetails>()};
   isInterface_ = details.isInterface();
-  if (details.isFunction()) {
-    DoSymbol(details.result());
-  }
   for (const Symbol *dummyArg : details.dummyArgs()) {
     DoSymbol(DEREF(dummyArg));
+  }
+  if (details.isFunction()) {
+    DoSymbol(details.result());
   }
   for (const auto &pair : scope_) {
     const Symbol *symbol{pair.second};

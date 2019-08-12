@@ -51,16 +51,16 @@ end
 ! end interface
 ! interface
 !  function s1(x,y)
-!   real(4)::s1
 !   real(4)::x
 !   real(4)::y
+!   real(4)::s1
 !  end
 ! end interface
 ! interface
 !  function s2(x,y)
-!   complex(4)::s2
 !   complex(4)::x
 !   complex(4)::y
+!   complex(4)::s2
 !  end
 ! end interface
 ! interface operator(+)
@@ -81,14 +81,14 @@ end
 ! end interface
 !contains
 ! function s3(x,y)
-!  logical(4)::s3
 !  logical(4)::x
 !  logical(4)::y
+!  logical(4)::s3
 ! end
 ! function s4(x,y)
-!  integer(4)::s4
 !  integer(4)::x
 !  integer(4)::y
+!  integer(4)::s4
 ! end
 !end
 
@@ -158,11 +158,11 @@ end
 !  subroutine s1(f)
 !   interface
 !    function f(x)
-!     real(4)::f
 !     interface
 !      subroutine x()
 !      end
 !     end interface
+!     real(4)::f
 !    end
 !   end interface
 !  end
@@ -194,8 +194,8 @@ end
 ! end interface
 ! interface
 !  function f(x)
-!   integer(4)::f
 !   real(4)::x
+!   integer(4)::f
 !  end
 ! end interface
 !end
@@ -231,8 +231,8 @@ end
 ! end interface
 ! interface
 !  function f(x)
-!   integer(4)::f
 !   real(4)::x
+!   integer(4)::f
 !  end
 ! end interface
 !end

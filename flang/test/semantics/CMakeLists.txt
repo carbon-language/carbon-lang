@@ -211,6 +211,7 @@ set(MODFILE_TESTS
   modfile27.f90
   modfile28.f90
   modfile29.f90
+  modfile30.f90
 )
 
 set(LABEL_TESTS

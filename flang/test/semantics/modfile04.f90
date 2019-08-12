@@ -65,8 +65,8 @@ end
 !real(4)::x
 !end
 !function f2(y)
-!real(4)::f2
 !complex(4)::y
+!real(4)::f2
 !end
 !end
 
@@ -75,12 +75,12 @@ end
 !contains
 !function f3(x)
 ! use m1,only:t
-! type(t)::f3
 ! type::t2(b)
 !  integer(4),kind::b=2_4
 !  integer(4)::y
 ! end type
 ! type(t2(b=2_4))::x
+! type(t)::f3
 !end
 !function f4() result(x)
 !complex(4)::x
