@@ -941,9 +941,8 @@ AANonNullImpl::generatePredicate(Attributor &A) {
 
   std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
       [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
-    Function &F = getAnchorScope();
 
-    if (isKnownNonZero(&RV, F.getParent()->getDataLayout()))
+    if (isKnownNonZero(&RV, A.getDataLayout()))
       return true;
 
     auto *NonNullAA = A.getAAFor<AANonNull>(*this, RV);
@@ -1026,8 +1025,7 @@ struct AANonNullCallSiteArgument final : AANonNullImpl {
     CallSite CS(&getAnchorValue());
     if (CS.paramHasAttr(getArgNo(), getAttrKind()) ||
         CS.paramHasAttr(getArgNo(), Attribute::Dereferenceable) ||
-        isKnownNonZero(getAssociatedValue(),
-                       getAnchorScope().getParent()->getDataLayout()))
+        isKnownNonZero(getAssociatedValue(), A.getDataLayout()))
       indicateOptimisticFixpoint();
   }
 
@@ -1063,7 +1061,7 @@ ChangeStatus AANonNullArgument::updateImpl(Attributor &A) {
       return true;
 
     Value *V = CS.getArgOperand(ArgNo);
-    if (isKnownNonZero(V, getAnchorScope().getParent()->getDataLayout()))
+    if (isKnownNonZero(V, A.getDataLayout()))
       return true;
 
     return false;
@@ -1700,7 +1698,7 @@ uint64_t AADereferenceableImpl::computeAssumedDerefenceableBytes(
   }
 
   // Otherwise, we try to compute assumed bytes from base pointer.
-  const DataLayout &DL = getAnchorScope().getParent()->getDataLayout();
+  const DataLayout &DL = A.getDataLayout();
   unsigned IdxWidth =
       DL.getIndexSizeInBits(V.getType()->getPointerAddressSpace());
   APInt Offset(IdxWidth, 0);
@@ -1918,8 +1916,7 @@ ChangeStatus AAAlignReturned::updateImpl(Attributor &A) {
       takeAssumedMinimum(AlignAA->getAssumedAlign());
     else
       // Use IR information.
-      takeAssumedMinimum(RV.getPointerAlignment(
-          getAnchorScope().getParent()->getDataLayout()));
+      takeAssumedMinimum(RV.getPointerAlignment(A.getDataLayout()));
 
     return isValidState();
   };
@@ -1948,7 +1945,7 @@ ChangeStatus AAAlignArgument::updateImpl(Attributor &A) {
   Argument &Arg = cast<Argument>(getAnchorValue());
 
   unsigned ArgNo = Arg.getArgNo();
-  const DataLayout &DL = F.getParent()->getDataLayout();
+  const DataLayout &DL = A.getDataLayout();
 
   auto BeforeState = getAssumed();
 
@@ -1986,8 +1983,8 @@ struct AAAlignCallSiteArgument final : AAAlignImpl {
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
     CallSite CS(&getAnchorValue());
-    takeKnownMaximum(getAssociatedValue()->getPointerAlignment(
-        getAnchorScope().getParent()->getDataLayout()));
+    takeKnownMaximum(
+        getAssociatedValue()->getPointerAlignment(A.getDataLayout()));
   }
 
   /// See AbstractAttribute::updateImpl(Attributor &A).

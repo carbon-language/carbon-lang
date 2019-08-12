@@ -119,6 +119,60 @@ ChangeStatus operator|(ChangeStatus l, ChangeStatus r);
 ChangeStatus operator&(ChangeStatus l, ChangeStatus r);
 ///}
 
+/// Data structure to hold cached (LLVM-IR) information.
+///
+/// All attributes are given an InformationCache object at creation time to
+/// avoid inspection of the IR by all of them individually. This default
+/// InformationCache will hold information required by 'default' attributes,
+/// thus the ones deduced when Attributor::identifyDefaultAbstractAttributes(..)
+/// is called.
+///
+/// If custom abstract attributes, registered manually through
+/// Attributor::registerAA(...), need more information, especially if it is not
+/// reusable, it is advised to inherit from the InformationCache and cast the
+/// instance down in the abstract attributes.
+struct InformationCache {
+  InformationCache(const DataLayout &DL) : DL(DL) {}
+
+  /// A map type from opcodes to instructions with this opcode.
+  using OpcodeInstMapTy = DenseMap<unsigned, SmallVector<Instruction *, 32>>;
+
+  /// Return the map that relates "interesting" opcodes with all instructions
+  /// with that opcode in \p F.
+  OpcodeInstMapTy &getOpcodeInstMapForFunction(const Function &F) {
+    return FuncInstOpcodeMap[&F];
+  }
+
+  /// A vector type to hold instructions.
+  using InstructionVectorTy = std::vector<Instruction *>;
+
+  /// Return the instructions in \p F that may read or write memory.
+  InstructionVectorTy &getReadOrWriteInstsForFunction(const Function &F) {
+    return FuncRWInstsMap[&F];
+  }
+
+private:
+  /// A map type from functions to opcode to instruction maps.
+  using FuncInstOpcodeMapTy = DenseMap<const Function *, OpcodeInstMapTy>;
+
+  /// A map type from functions to their read or write instructions.
+  using FuncRWInstsMapTy = DenseMap<const Function *, InstructionVectorTy>;
+
+  /// A nested map that remembers all instructions in a function with a certain
+  /// instruction opcode (Instruction::getOpcode()).
+  FuncInstOpcodeMapTy FuncInstOpcodeMap;
+
+  /// A map from functions to their instructions that may read or write memory.
+  FuncRWInstsMapTy FuncRWInstsMap;
+
+  /// The datalayout used in the module.
+  const DataLayout &DL;
+
+  /// Give the Attributor access to the members so
+  /// Attributor::identifyDefaultAbstractAttributes(...) can initialize them.
+  friend struct Attributor;
+};
+
 /// The fixpoint analysis framework that orchestrates the attribute deduction.
 ///
 /// The Attributor provides a general abstract analysis framework (guided
@@ -320,6 +374,9 @@ struct Attributor {
       const Function &F, const llvm::function_ref<bool(Instruction &)> &Pred,
       AbstractAttribute &QueryingAA);
 
+  /// Return the data layout associated with the anchor scope.
+  const DataLayout &getDataLayout() const { return InfoCache.DL; }
+
 private:
   /// The set of all abstract attributes.
   ///{
@@ -346,60 +403,6 @@ private:
 
   /// The information cache that holds pre-processed (LLVM-IR) information.
   InformationCache &InfoCache;
-};
-
-/// Data structure to hold cached (LLVM-IR) information.
-///
-/// All attributes are given an InformationCache object at creation time to
-/// avoid inspection of the IR by all of them individually. This default
-/// InformationCache will hold information required by 'default' attributes,
-/// thus the ones deduced when Attributor::identifyDefaultAbstractAttributes(..)
-/// is called.
-///
-/// If custom abstract attributes, registered manually through
-/// Attributor::registerAA(...), need more information, especially if it is not
-/// reusable, it is advised to inherit from the InformationCache and cast the
-/// instance down in the abstract attributes.
-struct InformationCache {
-  InformationCache(const DataLayout &DL) : DL(DL) {}
-
-  /// A map type from opcodes to instructions with this opcode.
-  using OpcodeInstMapTy = DenseMap<unsigned, SmallVector<Instruction *, 32>>;
-
-  /// Return the map that relates "interesting" opcodes with all instructions
-  /// with that opcode in \p F.
-  OpcodeInstMapTy &getOpcodeInstMapForFunction(const Function &F) {
-    return FuncInstOpcodeMap[&F];
-  }
-
-  /// A vector type to hold instructions.
-  using InstructionVectorTy = std::vector<Instruction *>;
-
-  /// Return the instructions in \p F that may read or write memory.
-  InstructionVectorTy &getReadOrWriteInstsForFunction(const Function &F) {
-    return FuncRWInstsMap[&F];
-  }
-
-private:
-  /// A map type from functions to opcode to instruction maps.
-  using FuncInstOpcodeMapTy = DenseMap<const Function *, OpcodeInstMapTy>;
-
-  /// A map type from functions to their read or write instructions.
-  using FuncRWInstsMapTy = DenseMap<const Function *, InstructionVectorTy>;
-
-  /// A nested map that remembers all instructions in a function with a certain
-  /// instruction opcode (Instruction::getOpcode()).
-  FuncInstOpcodeMapTy FuncInstOpcodeMap;
-
-  /// A map from functions to their instructions that may read or write memory.
-  FuncRWInstsMapTy FuncRWInstsMap;
-
-  /// The datalayout used in the module.
-  const DataLayout &DL;
-
-  /// Give the Attributor access to the members so
-  /// Attributor::identifyDefaultAbstractAttributes(...) can initialize them.
-  friend struct Attributor;
 };
 
 /// An interface to query the internal state of an abstract attribute.
