@@ -91,7 +91,8 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
     Scalar<Result> value{values_.substr(j * length_, length_)};
     if (j > 0) {
       o << ',';
-    } else if (Rank() == 0 && (Result::kind != 1 || !formatForPGF90)) {
+    }
+    if (Result::kind != 1 || !formatForPGF90) {
       o << Result::kind << '_';
     }
     o << parser::QuoteCharacterLiteral(value);
