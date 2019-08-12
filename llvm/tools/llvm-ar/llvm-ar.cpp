@@ -476,7 +476,7 @@ static void doDisplayTable(StringRef Name, const object::Archive::Child &C) {
 
 static std::string normalizePath(StringRef Path) {
   return CompareFullPath ? sys::path::convert_to_slash(Path)
-                         : sys::path::filename(Path);
+                         : std::string(sys::path::filename(Path));
 }
 
 // Implement the 'x' operation. This function extracts files back to the file
