@@ -46,7 +46,7 @@ static void PutProcEntity(std::ostream &, const Symbol &);
 static void PutPassName(std::ostream &, const SourceName *);
 static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
-static void PutInit(std::ostream &, const MaybeExpr &);
+static void PutInit(std::ostream &, const Symbol &, const MaybeExpr &);
 static void PutInit(std::ostream &, const MaybeIntExpr &);
 static void PutBound(std::ostream &, const Bound &);
 static std::ostream &PutAttrs(std::ostream &, Attrs,
@@ -386,7 +386,8 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
   sorted.reserve(scope.size() + scope.commonBlocks().size());
   for (const auto &pair : scope) {
     auto *symbol{pair.second};
-    if (!symbol->test(Symbol::Flag::ParentComp)) {
+    if (!symbol->test(Symbol::Flag::ParentComp) &&
+        !symbol->attrs().test(Attr::INTRINSIC)) {
       if (symbols.insert(symbol).second) {
         if (symbol->has<NamelistDetails>()) {
           namelist.push_back(symbol);
@@ -464,7 +465,7 @@ void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
   PutEntity(os, symbol, [&]() { PutLower(os, DEREF(symbol.GetType())); });
   PutShape(os, details.shape(), '(', ')');
   PutShape(os, details.coshape(), '[', ']');
-  PutInit(os, details.init());
+  PutInit(os, symbol, details.init());
   os << '\n';
 }
 
@@ -503,9 +504,13 @@ void PutTypeParam(std::ostream &os, const Symbol &symbol) {
   os << '\n';
 }
 
-void PutInit(std::ostream &os, const MaybeExpr &init) {
+void PutInit(std::ostream &os, const Symbol &symbol, const MaybeExpr &init) {
   if (init) {
-    init->AsFortran(os << '=');
+    if (symbol.attrs().test(Attr::PARAMETER) ||
+        symbol.owner().IsDerivedType()) {
+      os << (symbol.attrs().test(Attr::POINTER) ? "=>" : "=");
+      init->AsFortran(os);
+    }
   }
 }
 

@@ -54,3 +54,44 @@ end
 ! end type
 ! type(t),parameter::a=t()
 !end
+
+! Don't write out intrinsics
+module m3a
+  integer, parameter :: i4 = selected_int_kind(9)
+end
+module m3b
+  use m3a
+  integer(i4) :: j
+end
+
+!Expect: m3a.mod
+!module m3a
+! integer(4),parameter::i4=4_4
+!end
+
+!Expect: m3b.mod
+!module m3b
+! use m3a,only:i4
+! integer(4)::j
+!end
+
+! Test that character literals written with backslash escapes are read correctly.
+module m4a
+  character(1), parameter :: a = achar(1)
+end
+module m4b
+  use m4a
+  character(1), parameter :: b = a
+end
+
+!Expect: m4a.mod
+!module m4a
+! character(1_4,1),parameter::a=1_"\001"
+!end
+
+!Expect: m4b.mod
+!module m4b
+! use m4a,only:a
+! character(1_4,1),parameter::b=1_"\001"
+!end
+
