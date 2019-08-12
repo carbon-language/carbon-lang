@@ -6,8 +6,7 @@
 define <2 x i64> @combine_psadbw_shift(<16 x i8> %0, <16 x i8> %1) {
 ; CHECK-LABEL: combine_psadbw_shift:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    psadbw %xmm1, %xmm0
-; CHECK-NEXT:    psrlq $48, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    ret{{[l|q]}}
   %3 = tail call <2 x i64> @llvm.x86.sse2.psad.bw(<16 x i8> %0, <16 x i8> %1)
   %4 = lshr <2 x i64> %3, <i64 48, i64 48>
