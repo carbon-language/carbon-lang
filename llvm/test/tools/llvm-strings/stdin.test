@@ -13,7 +13,7 @@ CASE3:      abcd
 CASE3-NEXT: efgh
 
 ## Case 4: output containing unprintable characters.
-RUN: echo -e "abcd\x00ef\x1fghij\x7fklmn" | llvm-strings - | FileCheck %s --check-prefix=CASE4 --implicit-check-not={{.}} 
+RUN: echo -e "abcd\x00ef\x1fghij\x7fklmn" | llvm-strings - | FileCheck %s --check-prefix=CASE4 --implicit-check-not={{.}}
 CASE4:      abcd
 CASE4-NEXT: ghij
 CASE4-NEXT: klmn
