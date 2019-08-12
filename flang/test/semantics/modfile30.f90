@@ -39,3 +39,18 @@ end
 !  integer(4)::f2(1_8:1_8*size(x,dim=1))
 ! end
 !end
+
+! Order of names in PUBLIC statement shouldn't affect .mod file.
+module m2
+  public :: a
+  type t
+  end type
+  type(t), parameter :: a = t()
+end
+
+!Expect: m2.mod
+!module m2
+! type::t
+! end type
+! type(t),parameter::a=t()
+!end

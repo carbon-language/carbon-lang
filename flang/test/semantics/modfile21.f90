@@ -35,9 +35,9 @@ end
 !  real(4)::c
 !  real(4)::y
 !  real(4)::z
-!  complex(4)::w
 !  real(4)::u
 !  real(4)::v
+!  complex(4)::w
 !  real(4)::cb
 !  common/cb2/a,b,c
 !  bind(c)::/cb2/

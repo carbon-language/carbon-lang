@@ -247,6 +247,13 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
   }
 }
 
+// Usually a symbol's name is the first occurrence in the source, but sometimes
+// we want to replace it with one at a different location (but same characters).
+void Symbol::ReplaceName(const SourceName &name) {
+  CHECK(name == name_);
+  name_ = name;
+}
+
 Symbol &Symbol::GetUltimate() {
   return const_cast<Symbol &>(const_cast<const Symbol *>(this)->GetUltimate());
 }

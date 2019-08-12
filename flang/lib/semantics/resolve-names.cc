@@ -2647,6 +2647,7 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   const auto &name{std::get<parser::ObjectName>(x.t)};
   Attrs attrs{attrs_ ? HandleSaveName(name.source, *attrs_) : Attrs{}};
   Symbol &symbol{DeclareUnknownEntity(name, attrs)};
+  symbol.ReplaceName(name.source);
   if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
     if (ConvertToObjectEntity(symbol)) {
       Initialization(name, *init, false);
@@ -2658,7 +2659,8 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
 
 void DeclarationVisitor::Post(const parser::PointerDecl &x) {
   const auto &name{std::get<parser::Name>(x.t)};
-  DeclareUnknownEntity(name, Attrs{Attr::POINTER});
+  Symbol &symbol{DeclareUnknownEntity(name, Attrs{Attr::POINTER})};
+  symbol.ReplaceName(name.source);
 }
 
 bool DeclarationVisitor::Pre(const parser::BindEntity &x) {
@@ -3219,6 +3221,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
     }
   }
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
+  symbol.ReplaceName(name.source);
   derivedTypeInfo_.type = &symbol;
   PushScope(Scope::Kind::DerivedType, &symbol);
   if (extendsType != nullptr) {

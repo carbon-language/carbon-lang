@@ -25,9 +25,9 @@ end
 !Expect: m.mod
 !module m
 !  real(4)::x
-!  real(4)::y
 !  integer(4)::i
 !  complex(8)::z
+!  real(4)::y
 !  namelist/nl1/x,y,i,z
 !  namelist/nl2/y,x
 !end

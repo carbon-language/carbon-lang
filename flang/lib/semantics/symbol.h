@@ -465,6 +465,8 @@ public:
   Scope *scope() { return scope_; }
   const Scope *scope() const { return scope_; }
   void set_scope(Scope *scope) { scope_ = scope; }
+  // Give the symbol a name with a different source location but same chars.
+  void ReplaceName(const SourceName &);
 
   // Does symbol have this type of details?
   template<typename D> bool has() const {
