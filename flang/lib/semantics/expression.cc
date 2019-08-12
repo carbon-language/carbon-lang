@@ -1191,7 +1191,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     }
   }
 
-  // This list holds all of the components in the derived type and its
+  // This iterator traverses all of the components in the derived type and its
   // parents.  The symbols for whole parent components appear after their
   // own components and before the components of the types that extend them.
   // E.g., TYPE :: A; REAL X; END TYPE
@@ -1334,6 +1334,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         if (IsPointer(*symbol)) {
           CheckPointerAssignment(messages, context_.intrinsics(), *symbol,
               *value);  // C7104, C7105
+          result.Add(*symbol, Fold(GetFoldingContext(), std::move(*value)));
         } else if (MaybeExpr converted{
                        ConvertToType(*symbol, std::move(*value))}) {
           result.Add(*symbol, std::move(*converted));
