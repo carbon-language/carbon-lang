@@ -2498,6 +2498,11 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const IRPosition &Pos) {
             << Pos.getAnchorValue().getName() << "@" << Pos.getArgNo() << "]}";
 }
 
+raw_ostream &llvm::operator<<(raw_ostream &OS, const IntegerState &S) {
+  return OS << "(" << S.getKnown() << "-" << S.getAssumed() << ")"
+            << static_cast<const AbstractState &>(S);
+}
+
 raw_ostream &llvm::operator<<(raw_ostream &OS, const AbstractState &S) {
   return OS << (!S.isValidState() ? "top" : (S.isAtFixpoint() ? "fix" : ""));
 }

@@ -871,6 +871,7 @@ raw_ostream &operator<<(raw_ostream &OS, ChangeStatus S);
 raw_ostream &operator<<(raw_ostream &OS, IRPosition::Kind);
 raw_ostream &operator<<(raw_ostream &OS, const IRPosition &);
 raw_ostream &operator<<(raw_ostream &OS, const AbstractState &State);
+raw_ostream &operator<<(raw_ostream &OS, const IntegerState &S);
 ///}
 
 struct AttributorPass : public PassInfoMixin<AttributorPass> {
