@@ -94,5 +94,9 @@ static constexpr std::uint8_t eightBitLeadingZeroBitCount[256]{8, 7, 6, 6, 5, 5,
 inline constexpr int LeadingZeroBitCount(std::uint8_t x) {
   return eightBitLeadingZeroBitCount[x];
 }
+
+template<typename A> inline constexpr int BitsNeededFor(A x) {
+  return 8 * sizeof x - LeadingZeroBitCount(x);
+}
 }
 #endif  // FORTRAN_COMMON_LEADING_ZERO_BIT_COUNT_H_

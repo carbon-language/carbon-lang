@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,7 +83,11 @@ template<typename UINT> inline constexpr bool Parity(UINT x) {
 // "Parity is for farmers." -- Seymour R. Cray
 
 template<typename UINT> inline constexpr int TrailingZeroBitCount(UINT x) {
-  return BitPopulationCount(x ^ (x - 1)) - !!x;
+  if ((x & 1) != 0) {
+    return 0;  // fast path for odd values
+  } else {
+    return BitPopulationCount(x ^ (x - 1)) - !!x;
+  }
 }
 }
 #endif  // FORTRAN_COMMON_BIT_POPULATION_COUNT_H_
