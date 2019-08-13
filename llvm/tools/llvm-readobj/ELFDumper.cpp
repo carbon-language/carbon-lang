@@ -4363,6 +4363,78 @@ static AMDGPUNote getAMDGPUNote(uint32_t NoteType, ArrayRef<uint8_t> Desc) {
   }
 }
 
+struct CoreFileMapping {
+  uint64_t Start, End, Offset;
+  StringRef Filename;
+};
+
+struct CoreNote {
+  uint64_t PageSize;
+  std::vector<CoreFileMapping> Mappings;
+};
+
+static Expected<CoreNote> readCoreNote(DataExtractor Desc) {
+  // Expected format of the NT_FILE note description:
+  // 1. # of file mappings (call it N)
+  // 2. Page size
+  // 3. N (start, end, offset) triples
+  // 4. N packed filenames (null delimited)
+  // Each field is an Elf_Addr, except for filenames which are char* strings.
+
+  CoreNote Ret;
+  const int Bytes = Desc.getAddressSize();
+
+  if (!Desc.isValidOffsetForAddress(2))
+    return createStringError(object_error::parse_failed,
+                             "malformed note: header too short");
+  if (Desc.getData().back() != 0)
+    return createStringError(object_error::parse_failed,
+                             "malformed note: not NUL terminated");
+
+  uint64_t DescOffset = 0;
+  uint64_t FileCount = Desc.getAddress(&DescOffset);
+  Ret.PageSize = Desc.getAddress(&DescOffset);
+
+  if (!Desc.isValidOffsetForAddress(3 * FileCount * Bytes))
+    return createStringError(object_error::parse_failed,
+                             "malformed note: too short for number of files");
+
+  uint64_t FilenamesOffset = 0;
+  DataExtractor Filenames(
+      Desc.getData().drop_front(DescOffset + 3 * FileCount * Bytes),
+      Desc.isLittleEndian(), Desc.getAddressSize());
+
+  Ret.Mappings.resize(FileCount);
+  for (CoreFileMapping &Mapping : Ret.Mappings) {
+    if (!Filenames.isValidOffsetForDataOfSize(FilenamesOffset, 1))
+      return createStringError(object_error::parse_failed,
+                               "malformed note: too few filenames");
+    Mapping.Start = Desc.getAddress(&DescOffset);
+    Mapping.End = Desc.getAddress(&DescOffset);
+    Mapping.Offset = Desc.getAddress(&DescOffset);
+    Mapping.Filename = Filenames.getCStrRef(&FilenamesOffset);
+  }
+
+  return Ret;
+}
+
+template <typename ELFT>
+static void printCoreNote(raw_ostream &OS, const CoreNote &Note) {
+  // Length of "0x<address>" string.
+  const int FieldWidth = ELFT::Is64Bits ? 18 : 10;
+
+  OS << "    Page size: " << format_decimal(Note.PageSize, 0) << '\n';
+  OS << "    " << right_justify("Start", FieldWidth) << "  "
+     << right_justify("End", FieldWidth) << "  "
+     << right_justify("Page Offset", FieldWidth) << '\n';
+  for (const CoreFileMapping &Mapping : Note.Mappings) {
+    OS << "    " << format_hex(Mapping.Start, FieldWidth) << "  "
+       << format_hex(Mapping.End, FieldWidth) << "  "
+       << format_hex(Mapping.Offset, FieldWidth) << "\n        "
+       << Mapping.Filename << '\n';
+  }
+}
+
 template <class ELFT>
 void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
   auto PrintHeader = [&](const typename ELFT::Off Offset,
@@ -4377,34 +4449,57 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
     ArrayRef<uint8_t> Descriptor = Note.getDesc();
     Elf_Word Type = Note.getType();
 
+    // Print the note owner/type.
     OS << "  " << left_justify(Name, 20) << ' '
        << format_hex(Descriptor.size(), 10) << '\t';
-
     if (Name == "GNU") {
       OS << getGNUNoteTypeName(Type) << '\n';
-      printGNUNote<ELFT>(OS, Type, Descriptor);
     } else if (Name == "FreeBSD") {
       OS << getFreeBSDNoteTypeName(Type) << '\n';
     } else if (Name == "AMD") {
       OS << getAMDNoteTypeName(Type) << '\n';
-      const AMDNote N = getAMDNote<ELFT>(Type, Descriptor);
-      if (!N.Type.empty())
-        OS << "    " << N.Type << ":\n        " << N.Value << '\n';
     } else if (Name == "AMDGPU") {
       OS << getAMDGPUNoteTypeName(Type) << '\n';
-      const AMDGPUNote N = getAMDGPUNote<ELFT>(Type, Descriptor);
-      if (!N.Type.empty())
-        OS << "    " << N.Type << ":\n        " << N.Value << '\n';
     } else {
       StringRef NoteType = Obj->getHeader()->e_type == ELF::ET_CORE
                                ? getCoreNoteTypeName(Type)
                                : getGenericNoteTypeName(Type);
       if (!NoteType.empty())
-        OS << NoteType;
+        OS << NoteType << '\n';
       else
-        OS << "Unknown note type: (" << format_hex(Type, 10) << ')';
+        OS << "Unknown note type: (" << format_hex(Type, 10) << ")\n";
     }
-    OS << '\n';
+
+    // Print the description, or fallback to printing raw bytes for unknown
+    // owners.
+    if (Name == "GNU") {
+      printGNUNote<ELFT>(OS, Type, Descriptor);
+    } else if (Name == "AMD") {
+      const AMDNote N = getAMDNote<ELFT>(Type, Descriptor);
+      if (!N.Type.empty())
+        OS << "    " << N.Type << ":\n        " << N.Value << '\n';
+    } else if (Name == "AMDGPU") {
+      const AMDGPUNote N = getAMDGPUNote<ELFT>(Type, Descriptor);
+      if (!N.Type.empty())
+        OS << "    " << N.Type << ":\n        " << N.Value << '\n';
+    } else if (Name == "CORE") {
+      if (Type == ELF::NT_FILE) {
+        DataExtractor DescExtractor(
+            StringRef(reinterpret_cast<const char *>(Descriptor.data()),
+                      Descriptor.size()),
+            ELFT::TargetEndianness == support::little, sizeof(Elf_Addr));
+        Expected<CoreNote> Note = readCoreNote(DescExtractor);
+        if (Note)
+          printCoreNote<ELFT>(OS, *Note);
+        else
+          warn(Note.takeError());
+      }
+    } else if (!Descriptor.empty()) {
+      OS << "   description data:";
+      for (uint8_t B : Descriptor)
+        OS << " " << format("%02x", B);
+      OS << '\n';
+    }
   };
 
   if (Obj->getHeader()->e_type == ELF::ET_CORE) {
@@ -5513,6 +5608,17 @@ static void printGNUNoteLLVMStyle(uint32_t NoteType, ArrayRef<uint8_t> Desc,
   }
 }
 
+static void printCoreNoteLLVMStyle(const CoreNote &Note, ScopedPrinter &W) {
+  W.printNumber("Page Size", Note.PageSize);
+  for (const CoreFileMapping &Mapping : Note.Mappings) {
+    ListScope D(W, "Mapping");
+    W.printHex("Start", Mapping.Start);
+    W.printHex("End", Mapping.End);
+    W.printHex("Offset", Mapping.Offset);
+    W.printString("Filename", Mapping.Filename);
+  }
+}
+
 template <class ELFT>
 void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
   ListScope L(W, "Notes");
@@ -5529,23 +5635,17 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
     ArrayRef<uint8_t> Descriptor = Note.getDesc();
     Elf_Word Type = Note.getType();
 
+    // Print the note owner/type.
     W.printString("Owner", Name);
     W.printHex("Data size", Descriptor.size());
     if (Name == "GNU") {
       W.printString("Type", getGNUNoteTypeName(Type));
-      printGNUNoteLLVMStyle<ELFT>(Type, Descriptor, W);
     } else if (Name == "FreeBSD") {
       W.printString("Type", getFreeBSDNoteTypeName(Type));
     } else if (Name == "AMD") {
       W.printString("Type", getAMDNoteTypeName(Type));
-      const AMDNote N = getAMDNote<ELFT>(Type, Descriptor);
-      if (!N.Type.empty())
-        W.printString(N.Type, N.Value);
     } else if (Name == "AMDGPU") {
       W.printString("Type", getAMDGPUNoteTypeName(Type));
-      const AMDGPUNote N = getAMDGPUNote<ELFT>(Type, Descriptor);
-      if (!N.Type.empty())
-        W.printString(N.Type, N.Value);
     } else {
       StringRef NoteType = Obj->getHeader()->e_type == ELF::ET_CORE
                                ? getCoreNoteTypeName(Type)
@@ -5555,6 +5655,34 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
       else
         W.printString("Type",
                       "Unknown (" + to_string(format_hex(Type, 10)) + ")");
+    }
+
+    // Print the description, or fallback to printing raw bytes for unknown
+    // owners.
+    if (Name == "GNU") {
+      printGNUNoteLLVMStyle<ELFT>(Type, Descriptor, W);
+    } else if (Name == "AMD") {
+      const AMDNote N = getAMDNote<ELFT>(Type, Descriptor);
+      if (!N.Type.empty())
+        W.printString(N.Type, N.Value);
+    } else if (Name == "AMDGPU") {
+      const AMDGPUNote N = getAMDGPUNote<ELFT>(Type, Descriptor);
+      if (!N.Type.empty())
+        W.printString(N.Type, N.Value);
+    } else if (Name == "CORE") {
+      if (Type == ELF::NT_FILE) {
+        DataExtractor DescExtractor(
+            StringRef(reinterpret_cast<const char *>(Descriptor.data()),
+                      Descriptor.size()),
+            ELFT::TargetEndianness == support::little, sizeof(Elf_Addr));
+        Expected<CoreNote> Note = readCoreNote(DescExtractor);
+        if (Note)
+          printCoreNoteLLVMStyle(*Note, W);
+        else
+          warn(Note.takeError());
+      }
+    } else if (!Descriptor.empty()) {
+      W.printBinaryBlock("Description data", Descriptor);
     }
   };
 
