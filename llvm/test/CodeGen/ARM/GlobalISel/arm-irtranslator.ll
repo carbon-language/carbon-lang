@@ -446,6 +446,17 @@ define i32 @test_shufflevector_s32_v2s32(i32 %arg) {
   ret i32 %res
 }
 
+define i32 @test_shufflevector_s32_s32_s32(i32 %arg) {
+; CHECK-LABEL: name: test_shufflevector_s32_s32_s32
+; CHECK: [[ARG:%[0-9]+]]:_(s32) = COPY $r0
+; CHECK-DAG: [[UNDEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+; CHECK: [[VEC:%[0-9]+]]:_(s32) = G_SHUFFLE_VECTOR [[ARG]](s32), [[UNDEF]], shufflemask(0)
+  %vec = insertelement <1 x i32> undef, i32 %arg, i32 0
+  %shuffle = shufflevector <1 x i32> %vec, <1 x i32> undef, <1 x i32> zeroinitializer
+  %res = extractelement <1 x i32> %shuffle, i32 0
+  ret i32 %res
+}
+
 define i32 @test_shufflevector_v2s32_v3s32(i32 %arg1, i32 %arg2) {
 ; CHECK-LABEL: name: test_shufflevector_v2s32_v3s32
 ; CHECK: [[ARG1:%[0-9]+]]:_(s32) = COPY $r0
