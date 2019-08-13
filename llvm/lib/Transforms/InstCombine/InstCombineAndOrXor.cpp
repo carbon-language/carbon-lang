@@ -2651,7 +2651,11 @@ static Instruction *foldXorToXor(BinaryOperator &I,
   return nullptr;
 }
 
-Value *InstCombiner::foldXorOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
+Value *InstCombiner::foldXorOfICmps(ICmpInst *LHS, ICmpInst *RHS,
+                                    BinaryOperator &I) {
+  assert(I.getOpcode() == Instruction::Xor && I.getOperand(0) == LHS &&
+         I.getOperand(1) == RHS && "Should be 'xor' with these operands");
+
   if (predicatesFoldable(LHS->getPredicate(), RHS->getPredicate())) {
     if (LHS->getOperand(0) == RHS->getOperand(1) &&
         LHS->getOperand(1) == RHS->getOperand(0))
@@ -2706,14 +2710,35 @@ Value *InstCombiner::foldXorOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     // TODO: If OrICmp is false, the whole thing is false (InstSimplify?).
     if (Value *AndICmp = SimplifyBinOp(Instruction::And, LHS, RHS, SQ)) {
       // TODO: Independently handle cases where the 'and' side is a constant.
-      if (OrICmp == LHS && AndICmp == RHS && RHS->hasOneUse()) {
-        // (LHS | RHS) & !(LHS & RHS) --> LHS & !RHS
-        RHS->setPredicate(RHS->getInversePredicate());
-        return Builder.CreateAnd(LHS, RHS);
+      ICmpInst *X = nullptr, *Y = nullptr;
+      if (OrICmp == LHS && AndICmp == RHS) {
+        // (LHS | RHS) & !(LHS & RHS) --> LHS & !RHS  --> X & !Y
+        X = LHS;
+        Y = RHS;
       }
-      if (OrICmp == RHS && AndICmp == LHS && LHS->hasOneUse()) {
-        // !(LHS & RHS) & (LHS | RHS) --> !LHS & RHS
-        LHS->setPredicate(LHS->getInversePredicate());
+      if (OrICmp == RHS && AndICmp == LHS) {
+        // !(LHS & RHS) & (LHS | RHS) --> !LHS & RHS  --> !Y & X
+        X = RHS;
+        Y = LHS;
+      }
+      if (X && Y && (Y->hasOneUse() || canFreelyInvertAllUsersOf(Y, &I))) {
+        // Invert the predicate of 'Y', thus inverting its output.
+        Y->setPredicate(Y->getInversePredicate());
+        // So, are there other uses of Y?
+        if (!Y->hasOneUse()) {
+          // We need to adapt other uses of Y though. Get a value that matches
+          // the original value of Y before inversion. While this increases
+          // immediate instruction count, we have just ensured that all the
+          // users are freely-invertible, so that 'not' *will* get folded away.
+          BuilderTy::InsertPointGuard Guard(Builder);
+          // Set insertion point to right after the Y.
+          Builder.SetInsertPoint(Y->getParent(), ++(Y->getIterator()));
+          Value *NotY = Builder.CreateNot(Y, Y->getName() + ".not");
+          // Replace all uses of Y (excluding the one in NotY!) with NotY.
+          Y->replaceUsesWithIf(NotY,
+                               [NotY](Use &U) { return U.getUser() != NotY; });
+        }
+        // All done.
         return Builder.CreateAnd(LHS, RHS);
       }
     }
@@ -3038,7 +3063,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   if (auto *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
     if (auto *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
-      if (Value *V = foldXorOfICmps(LHS, RHS))
+      if (Value *V = foldXorOfICmps(LHS, RHS, I))
         return replaceInstUsesWith(I, V);
 
   if (Instruction *CastedXor = foldCastedBitwiseLogic(I))
