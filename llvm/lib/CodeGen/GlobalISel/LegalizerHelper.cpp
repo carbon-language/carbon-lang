@@ -171,6 +171,26 @@ bool LegalizerHelper::extractParts(Register Reg, LLT RegTy,
   return true;
 }
 
+static LLT getGCDType(LLT OrigTy, LLT TargetTy) {
+  if (OrigTy.isVector() && TargetTy.isVector()) {
+    assert(OrigTy.getElementType() == TargetTy.getElementType());
+    int GCD = greatestCommonDivisor(OrigTy.getNumElements(),
+                                    TargetTy.getNumElements());
+    return LLT::scalarOrVector(GCD, OrigTy.getElementType());
+  }
+
+  if (OrigTy.isVector() && !TargetTy.isVector()) {
+    assert(OrigTy.getElementType() == TargetTy);
+    return TargetTy;
+  }
+
+  assert(!OrigTy.isVector() && !TargetTy.isVector());
+
+  int GCD = greatestCommonDivisor(OrigTy.getSizeInBits(),
+                                  TargetTy.getSizeInBits());
+  return LLT::scalar(GCD);
+}
+
 void LegalizerHelper::insertParts(Register DstReg,
                                   LLT ResultTy, LLT PartTy,
                                   ArrayRef<Register> PartRegs,
@@ -2574,6 +2594,46 @@ LegalizerHelper::fewerElementsVectorPhi(MachineInstr &MI, unsigned TypeIdx,
 }
 
 LegalizerHelper::LegalizeResult
+LegalizerHelper::fewerElementsVectorUnmergeValues(MachineInstr &MI,
+                                                  unsigned TypeIdx,
+                                                  LLT NarrowTy) {
+  if (TypeIdx != 1)
+    return UnableToLegalize;
+
+  const int NumDst = MI.getNumOperands() - 1;
+  const Register SrcReg = MI.getOperand(NumDst).getReg();
+  LLT SrcTy = MRI.getType(SrcReg);
+
+  LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
+
+  // TODO: Create sequence of extracts.
+  if (DstTy == NarrowTy)
+    return UnableToLegalize;
+
+  LLT GCDTy = getGCDType(SrcTy, NarrowTy);
+  if (DstTy == GCDTy) {
+    // This would just be a copy of the same unmerge.
+    // TODO: Create extracts, pad with undef and create intermediate merges.
+    return UnableToLegalize;
+  }
+
+  auto Unmerge = MIRBuilder.buildUnmerge(GCDTy, SrcReg);
+  const int NumUnmerge = Unmerge->getNumOperands() - 1;
+  const int PartsPerUnmerge = NumDst / NumUnmerge;
+
+  for (int I = 0; I != NumUnmerge; ++I) {
+    auto MIB = MIRBuilder.buildInstr(TargetOpcode::G_UNMERGE_VALUES);
+
+    for (int J = 0; J != PartsPerUnmerge; ++J)
+      MIB.addDef(MI.getOperand(I * PartsPerUnmerge + J).getReg());
+    MIB.addUse(Unmerge.getReg(I));
+  }
+
+  MI.eraseFromParent();
+  return Legalized;
+}
+
+LegalizerHelper::LegalizeResult
 LegalizerHelper::reduceLoadStoreWidth(MachineInstr &MI, unsigned TypeIdx,
                                       LLT NarrowTy) {
   // FIXME: Don't know how to handle secondary types yet.
@@ -2744,6 +2804,8 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     return fewerElementsVectorSelect(MI, TypeIdx, NarrowTy);
   case G_PHI:
     return fewerElementsVectorPhi(MI, TypeIdx, NarrowTy);
+  case G_UNMERGE_VALUES:
+    return fewerElementsVectorUnmergeValues(MI, TypeIdx, NarrowTy);
   case G_LOAD:
   case G_STORE:
     return reduceLoadStoreWidth(MI, TypeIdx, NarrowTy);

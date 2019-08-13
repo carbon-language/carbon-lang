@@ -200,6 +200,9 @@ public:
   LegalizeResult moreElementsVectorPhi(MachineInstr &MI, unsigned TypeIdx,
                                        LLT MoreTy);
 
+  LegalizeResult fewerElementsVectorUnmergeValues(MachineInstr &MI,
+                                                  unsigned TypeIdx,
+                                                  LLT NarrowTy);
   LegalizeResult
   reduceLoadStoreWidth(MachineInstr &MI, unsigned TypeIdx, LLT NarrowTy);
 

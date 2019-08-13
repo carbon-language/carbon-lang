@@ -98,6 +98,12 @@ static LegalityPredicate isRegisterType(unsigned TypeIdx) {
   };
 }
 
+static LegalityPredicate elementTypeIs(unsigned TypeIdx, LLT Type) {
+  return [=](const LegalityQuery &Query) {
+    return Query.Types[TypeIdx].getElementType() == Type;
+  };
+}
+
 AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                                          const GCNTargetMachine &TM)
   :  ST(ST_) {
@@ -731,7 +737,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       // valid.
       .clampScalar(LitTyIdx, S16, S256)
       .widenScalarToNextPow2(LitTyIdx, /*Min*/ 32)
-
+      .legalIf(all(typeIs(0, S16), typeIs(1, LLT::vector(3, 16)))) // FIXME: Testing hack
+      .fewerElementsIf(all(typeIs(0, S16), vectorWiderThan(1, 32),
+                           elementTypeIs(1, S16)),
+                       changeTo(1, V2S16))
       // Break up vectors with weird elements into scalars
       .fewerElementsIf(
         [=](const LegalityQuery &Query) { return notValidElt(Query, 0); },
