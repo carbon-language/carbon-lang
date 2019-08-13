@@ -4866,7 +4866,7 @@ TargetLowering::prepareUREMEqFold(EVT SETCCVT, SDValue REMNode,
   // fold (seteq/ne (urem N, D), 0) -> (setule/ugt (rotr (mul N, P), K), Q)
   // - D must be constant, with D = D0 * 2^K where D0 is odd
   // - P is the multiplicative inverse of D0 modulo 2^W
-  // - Q = floor((2^W - 1) / D0)
+  // - Q = floor(((2^W) - 1) / D)
   // where W is the width of the common type of N and D.
   assert((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
          "Only applicable for (in)equality comparisons.");
