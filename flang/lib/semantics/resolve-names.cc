@@ -2768,16 +2768,21 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
     Say(name.source, "'%s' is not a known intrinsic procedure"_err_en_US);
   }
   auto *symbol{FindInScope(currScope(), name)};
-  if (symbol) {
-    // symbol was already there: set attribute on it
-    if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
-      // TODO: if in a BLOCK, attribute should only be set while in the block
-    } else if (symbol->has<UseDetails>()) {
-      Say(*currStmtSource(),
-          "Cannot change %s attribute on use-associated '%s'"_err_en_US,
-          EnumToString(attr), name.source);
+  if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
+    // these can be set on a symbol that is host-assoc into block or use-assoc
+    if (!symbol && currScope().kind() == Scope::Kind::Block) {
+      if (auto *hostSymbol{FindSymbol(name)}) {
+        name.symbol = nullptr;
+        symbol = &MakeSymbol(name, HostAssocDetails{*hostSymbol});
+      }
     }
-  } else {
+  } else if (symbol && symbol->has<UseDetails>()) {
+    Say(*currStmtSource(),
+        "Cannot change %s attribute on use-associated '%s'"_err_en_US,
+        EnumToString(attr), name.source);
+    return *symbol;
+  }
+  if (!symbol) {
     symbol = &MakeSymbol(name, EntityDetails{});
   }
   symbol->attrs().set(attr);

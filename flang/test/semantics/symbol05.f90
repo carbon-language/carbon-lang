@@ -96,3 +96,35 @@ subroutine s5
  !DEF: /s5/x (implicit) ObjectEntity REAL(4)
  x = 1.0
 end subroutine
+
+!DEF: /s6 Subprogram
+subroutine s6
+  !DEF: /s6/i ObjectEntity INTEGER(4)
+  !DEF: /s6/j ObjectEntity INTEGER(4)
+  !DEF: /s6/k ObjectEntity INTEGER(4)
+  integer i, j, k
+  block
+    !DEF: /s6/Block1/i ASYNCHRONOUS, VOLATILE HostAssoc INTEGER(4)
+    volatile :: i
+    !DEF: /s6/Block1/j ASYNCHRONOUS HostAssoc INTEGER(4)
+    asynchronous :: j
+    !REF: /s6/Block1/i
+    asynchronous :: i
+    !DEF: /s6/Block1/k TARGET(implicit) ObjectEntity INTEGER(4)
+    target :: k
+  end block
+end subroutine
+
+!DEF: /m7 Module
+module m7
+  !DEF: /m7/i PUBLIC ObjectEntity INTEGER(4)
+  !DEF: /m7/j PUBLIC ObjectEntity INTEGER(4)
+  integer i, j
+end module
+!DEF: /s7 Subprogram
+subroutine s7
+  !REF: /m7
+  use :: m7
+  !DEF: /s7/j VOLATILE Use INTEGER(4)
+  volatile :: j
+end subroutine
