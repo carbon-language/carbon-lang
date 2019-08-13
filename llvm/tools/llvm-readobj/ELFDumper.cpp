@@ -4713,7 +4713,7 @@ void DumpStyle<ELFT>::printRelocatableStackSizes(
   // Build a map between stack size sections and their corresponding relocation
   // sections.
   llvm::MapVector<SectionRef, SectionRef> StackSizeRelocMap;
-  const SectionRef NullSection;
+  const SectionRef NullSection{};
 
   for (const SectionRef &Sec : Obj->sections()) {
     StringRef SectionName;
