@@ -51,8 +51,17 @@ public:
                              const AArch64Subtarget &STI,
                              const AArch64RegisterBankInfo &RBI);
 
-  bool select(MachineInstr &I, CodeGenCoverage &CoverageInfo) const override;
+  bool select(MachineInstr &I) override;
   static const char *getName() { return DEBUG_TYPE; }
+
+  void setupMF(MachineFunction &MF, CodeGenCoverage &CoverageInfo) override {
+    InstructionSelector::setupMF(MF, CoverageInfo);
+
+    // hasFnAttribute() is expensive to call on every BRCOND selection, so
+    // cache it here for each run of the selector.
+    ProduceNonFlagSettingCondBr =
+        !MF.getFunction().hasFnAttribute(Attribute::SpeculativeLoadHardening);
+  }
 
 private:
   /// tblgen-erated 'select' implementation, used as the initial selector for
@@ -221,6 +230,8 @@ private:
   const AArch64InstrInfo &TII;
   const AArch64RegisterInfo &TRI;
   const AArch64RegisterBankInfo &RBI;
+
+  bool ProduceNonFlagSettingCondBr = false;
 
 #define GET_GLOBALISEL_PREDICATES_DECL
 #include "AArch64GenGlobalISel.inc"
@@ -1315,8 +1326,7 @@ bool AArch64InstructionSelector::earlySelect(MachineInstr &I) const {
   }
 }
 
-bool AArch64InstructionSelector::select(MachineInstr &I,
-                                        CodeGenCoverage &CoverageInfo) const {
+bool AArch64InstructionSelector::select(MachineInstr &I) {
   assert(I.getParent() && "Instruction should be in a basic block!");
   assert(I.getParent()->getParent() && "Instruction should be in a function!");
 
@@ -1385,7 +1395,7 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
   if (earlySelect(I))
     return true;
 
-  if (selectImpl(I, CoverageInfo))
+  if (selectImpl(I, *CoverageInfo))
     return true;
 
   LLT Ty =
