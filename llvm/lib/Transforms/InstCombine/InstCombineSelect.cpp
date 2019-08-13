@@ -1338,7 +1338,7 @@ Instruction *InstCombiner::foldSPFofSPF(Instruction *Inner,
       return true;
     }
 
-    if (IsFreeToInvert(V, !V->hasNUsesOrMore(3))) {
+    if (isFreeToInvert(V, !V->hasNUsesOrMore(3))) {
       NotV = nullptr;
       return true;
     }
@@ -2098,9 +2098,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       auto moveNotAfterMinMax = [&](Value *X, Value *Y) -> Instruction * {
         Value *A;
         if (match(X, m_Not(m_Value(A))) && !X->hasNUsesOrMore(3) &&
-            !IsFreeToInvert(A, A->hasOneUse()) &&
+            !isFreeToInvert(A, A->hasOneUse()) &&
             // Passing false to only consider m_Not and constants.
-            IsFreeToInvert(Y, false)) {
+            isFreeToInvert(Y, false)) {
           Value *B = Builder.CreateNot(Y);
           Value *NewMinMax = createMinMax(Builder, getInverseMinMaxFlavor(SPF),
                                           A, B);

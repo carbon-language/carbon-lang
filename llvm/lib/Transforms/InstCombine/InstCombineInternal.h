@@ -141,7 +141,7 @@ static inline Constant *SubOne(Constant *C) {
 /// uses of V and only keep uses of ~V.
 ///
 /// See also: canFreelyInvertAllUsersOf()
-static inline bool IsFreeToInvert(Value *V, bool WillInvertAllUses) {
+static inline bool isFreeToInvert(Value *V, bool WillInvertAllUses) {
   // ~(~(X)) -> X.
   if (match(V, m_Not(m_Value())))
     return true;
@@ -172,7 +172,7 @@ static inline bool IsFreeToInvert(Value *V, bool WillInvertAllUses) {
 
 /// Given i1 V, can every user of V be freely adapted if V is changed to !V ?
 ///
-/// See also: IsFreeToInvert()
+/// See also: isFreeToInvert()
 static inline bool canFreelyInvertAllUsersOf(Value *V, Value *IgnoredUser) {
   // Look at every user of V.
   for (User *U : V->users()) {

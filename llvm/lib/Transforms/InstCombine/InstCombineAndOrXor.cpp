@@ -1366,8 +1366,8 @@ static Instruction *matchDeMorgansLaws(BinaryOperator &I,
   Value *A, *B;
   if (match(I.getOperand(0), m_OneUse(m_Not(m_Value(A)))) &&
       match(I.getOperand(1), m_OneUse(m_Not(m_Value(B)))) &&
-      !IsFreeToInvert(A, A->hasOneUse()) &&
-      !IsFreeToInvert(B, B->hasOneUse())) {
+      !isFreeToInvert(A, A->hasOneUse()) &&
+      !isFreeToInvert(B, B->hasOneUse())) {
     Value *AndOr = Builder.CreateBinOp(Opcode, A, B, I.getName() + ".demorgan");
     return BinaryOperator::CreateNot(AndOr);
   }
@@ -1784,13 +1784,13 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     // (A ^ B) & ((B ^ C) ^ A) -> (A ^ B) & ~C
     if (match(Op0, m_Xor(m_Value(A), m_Value(B))))
       if (match(Op1, m_Xor(m_Xor(m_Specific(B), m_Value(C)), m_Specific(A))))
-        if (Op1->hasOneUse() || IsFreeToInvert(C, C->hasOneUse()))
+        if (Op1->hasOneUse() || isFreeToInvert(C, C->hasOneUse()))
           return BinaryOperator::CreateAnd(Op0, Builder.CreateNot(C));
 
     // ((A ^ C) ^ B) & (B ^ A) -> (B ^ A) & ~C
     if (match(Op0, m_Xor(m_Xor(m_Value(A), m_Value(C)), m_Value(B))))
       if (match(Op1, m_Xor(m_Specific(B), m_Specific(A))))
-        if (Op0->hasOneUse() || IsFreeToInvert(C, C->hasOneUse()))
+        if (Op0->hasOneUse() || isFreeToInvert(C, C->hasOneUse()))
           return BinaryOperator::CreateAnd(Op1, Builder.CreateNot(C));
 
     // (A | B) & ((~A) ^ B) -> (A & B)
@@ -2806,9 +2806,9 @@ static Instruction *sinkNotIntoXor(BinaryOperator &I,
     return nullptr;
 
   // We only want to do the transform if it is free to do.
-  if (IsFreeToInvert(X, X->hasOneUse())) {
+  if (isFreeToInvert(X, X->hasOneUse())) {
     // Ok, good.
-  } else if (IsFreeToInvert(Y, Y->hasOneUse())) {
+  } else if (isFreeToInvert(Y, Y->hasOneUse())) {
     std::swap(X, Y);
   } else
     return nullptr;
@@ -2886,9 +2886,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       // Apply DeMorgan's Law when inverts are free:
       // ~(X & Y) --> (~X | ~Y)
       // ~(X | Y) --> (~X & ~Y)
-      if (IsFreeToInvert(NotVal->getOperand(0),
+      if (isFreeToInvert(NotVal->getOperand(0),
                          NotVal->getOperand(0)->hasOneUse()) &&
-          IsFreeToInvert(NotVal->getOperand(1),
+          isFreeToInvert(NotVal->getOperand(1),
                          NotVal->getOperand(1)->hasOneUse())) {
         Value *NotX = Builder.CreateNot(NotVal->getOperand(0), "notlhs");
         Value *NotY = Builder.CreateNot(NotVal->getOperand(1), "notrhs");
@@ -3111,7 +3111,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (SelectPatternResult::isMinOrMax(SPF)) {
       // It's possible we get here before the not has been simplified, so make
       // sure the input to the not isn't freely invertible.
-      if (match(LHS, m_Not(m_Value(X))) && !IsFreeToInvert(X, X->hasOneUse())) {
+      if (match(LHS, m_Not(m_Value(X))) && !isFreeToInvert(X, X->hasOneUse())) {
         Value *NotY = Builder.CreateNot(RHS);
         return SelectInst::Create(
             Builder.CreateICmp(getInverseMinMaxPred(SPF), X, NotY), X, NotY);
@@ -3119,7 +3119,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
       // It's possible we get here before the not has been simplified, so make
       // sure the input to the not isn't freely invertible.
-      if (match(RHS, m_Not(m_Value(Y))) && !IsFreeToInvert(Y, Y->hasOneUse())) {
+      if (match(RHS, m_Not(m_Value(Y))) && !isFreeToInvert(Y, Y->hasOneUse())) {
         Value *NotX = Builder.CreateNot(LHS);
         return SelectInst::Create(
             Builder.CreateICmp(getInverseMinMaxPred(SPF), NotX, Y), NotX, Y);
@@ -3127,8 +3127,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
       // If both sides are freely invertible, then we can get rid of the xor
       // completely.
-      if (IsFreeToInvert(LHS, !LHS->hasNUsesOrMore(3)) &&
-          IsFreeToInvert(RHS, !RHS->hasNUsesOrMore(3))) {
+      if (isFreeToInvert(LHS, !LHS->hasNUsesOrMore(3)) &&
+          isFreeToInvert(RHS, !RHS->hasNUsesOrMore(3))) {
         Value *NotLHS = Builder.CreateNot(LHS);
         Value *NotRHS = Builder.CreateNot(RHS);
         return SelectInst::Create(
