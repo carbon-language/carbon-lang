@@ -2384,13 +2384,14 @@ bool AArch64InstructionSelector::selectTLSGlobalValue(
   MIB.buildInstr(AArch64::LOADgot, {AArch64::X0}, {})
       .addGlobalAddress(&GV, 0, AArch64II::MO_TLS);
 
-  Register DestReg = MRI.createVirtualRegister(&AArch64::GPR64commonRegClass);
-  MIB.buildInstr(AArch64::LDRXui, {DestReg}, {Register(AArch64::X0)}).addImm(0);
+  auto Load = MIB.buildInstr(AArch64::LDRXui, {&AArch64::GPR64commonRegClass},
+                             {Register(AArch64::X0)})
+                  .addImm(0);
 
   // TLS calls preserve all registers except those that absolutely must be
   // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
-  MIB.buildInstr(AArch64::BLR, {}, {DestReg})
+  MIB.buildInstr(AArch64::BLR, {}, {Load})
       .addDef(AArch64::X0, RegState::Implicit)
       .addRegMask(TRI.getTLSCallPreservedMask());
 
