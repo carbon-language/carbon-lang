@@ -1,0 +1,29 @@
+# RUN: not llc -o - -march=arm64 -global-isel -run-pass=none -verify-machineinstrs %s 2>&1 | FileCheck %s
+# REQUIRES: aarch64-registered-target
+---
+name:            g_shuffle_vector
+tracksRegLiveness: true
+liveins:
+body:             |
+  bb.0:
+    %0:_(<2 x s32>) = G_IMPLICIT_DEF
+    %1:_(<2 x s32>) = G_IMPLICIT_DEF
+    %2:_(<4 x s32>) = G_IMPLICIT_DEF
+
+    %3:_(s32) = G_CONSTANT i32 0
+    %4:_(s32) = G_CONSTANT i32 1
+    %5:_(<2 x s32>) = G_BUILD_VECTOR %3, %4
+
+    ; CHECK: Bad machine code: Incorrect mask operand type for G_SHUFFLE_VECTOR
+    %6:_(<4 x s32>) = G_SHUFFLE_VECTOR %0, %1, %2
+
+    ; CHECK: Bad machine code: Incorrect mask operand type for G_SHUFFLE_VECTOR
+    %7:_(<4 x s32>) = G_SHUFFLE_VECTOR %0, %1, %5
+
+    ; CHECK: Bad machine code: Incorrect mask operand type for G_SHUFFLE_VECTOR
+    %8:_(<4 x s32>) = G_SHUFFLE_VECTOR %0, %1, 0
+
+    ; CHECK: Bad machine code: Incorrect mask operand type for G_SHUFFLE_VECTOR
+    %9:_(<4 x s32>) = G_SHUFFLE_VECTOR %0, %1, i32 0
+
+...

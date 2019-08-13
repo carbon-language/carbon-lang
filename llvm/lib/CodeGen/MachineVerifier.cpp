@@ -1387,6 +1387,22 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
       report("G_SEXT_INREG size must be less than source bit width", MI);
     break;
   }
+  case TargetOpcode::G_SHUFFLE_VECTOR: {
+    const MachineOperand &MaskOp = MI->getOperand(3);
+    if (!MaskOp.isShuffleMask()) {
+      report("Incorrect mask operand type for G_SHUFFLE_VECTOR", MI);
+      break;
+    }
+
+    const Constant *Mask = MaskOp.getShuffleMask();
+    if (!Mask->getAggregateElement(0u)) {
+      report("Invalid shufflemask constant type", MI);
+      break;
+    }
+
+    // TODO: Verify element numbers consistent
+    break;
+  }
   default:
     break;
   }
