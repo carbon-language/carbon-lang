@@ -52,9 +52,10 @@ def patch_gn_file(gn_file, add, remove):
 
 def sync_source_lists(write):
     # Use shell=True on Windows in case git is a bat file.
-    git_want_shell = os.name == 'nt'
-    gn_files = subprocess.check_output(['git', 'ls-files', '*BUILD.gn'],
-                                       shell=git_want_shell).splitlines()
+    def git(args): subprocess.check_call(['git'] + args, shell=os.name == 'nt')
+    def git_out(args):
+        return subprocess.check_output(['git'] + args, shell=os.name == 'nt')
+    gn_files = git_out(['ls-files', '*BUILD.gn']).splitlines()
 
     # Matches e.g. |   "foo.cpp",|, captures |foo| in group 1.
     gn_cpp_re = re.compile(r'^\s*"([^"]+\.(?:cpp|c|h|S))",$', re.MULTILINE)
@@ -65,9 +66,8 @@ def sync_source_lists(write):
     changes_by_rev = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     def find_gitrev(touched_line, in_file):
-        return subprocess.check_output(
-            ['git', 'log', '--format=%h', '-1', '-S' + touched_line, in_file],
-            shell=git_want_shell).rstrip()
+        return git_out(
+            ['log', '--format=%h', '-1', '-S' + touched_line, in_file]).rstrip()
     def svnrev_from_gitrev(gitrev):
         git_llvm = os.path.join(
             os.path.dirname(__file__), '..', '..', 'git-svn', 'git-llvm')
@@ -111,8 +111,7 @@ def sync_source_lists(write):
             remove = data.get('remove', [])
             if write:
                 patch_gn_file(gn_file, add, remove)
-                subprocess.check_call(['git', 'add', gn_file],
-                                      shell=git_want_shell)
+                git(['add', gn_file])
             else:
                 print('  ' + gn_file)
                 if add:
@@ -121,9 +120,7 @@ def sync_source_lists(write):
                     print('   remove:\n    ' + '\n    '.join(remove))
                 print()
         if write:
-            subprocess.check_call(
-                ['git', 'commit', '-m', 'gn build: Merge r%d' % svnrev],
-                shell=git_want_shell)
+            git(['commit', '-m', 'gn build: Merge r%d' % svnrev])
         else:
             print()
 
