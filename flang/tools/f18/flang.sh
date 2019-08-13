@@ -19,4 +19,4 @@ function abspath() {
 
 wd=`abspath $(dirname "$0")/..`
 
-$wd/bin/f18 -fdebug-semantics -module-suffix .fmf -I $wd/include $*
+${wd}/bin/f18 -fdebug-semantics -module-suffix .f18.mod -intrinsic-module-directory ${wd}/include $*

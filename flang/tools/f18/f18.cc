@@ -471,6 +471,9 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-module-suffix") {
       driver.moduleFileSuffix = args.front();
       args.pop_front();
+    } else if (arg == "-intrinsic-module-directory") {
+      driver.searchDirectories.push_back(args.front());
+      args.pop_front();
     } else if (arg == "-futf-8") {
       driver.encoding = Fortran::parser::Encoding::UTF_8;
     } else if (arg == "-flatin") {

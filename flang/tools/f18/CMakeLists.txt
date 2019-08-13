@@ -55,15 +55,15 @@ foreach(filename ${MODULES})
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include"
     DEPENDS f18 ${PROJECT_SOURCE_DIR}/module/${filename}.f90
   )
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.fmf
-    COMMAND f18 -fparse-only -fdebug-semantics -module-suffix .fmf ${PROJECT_SOURCE_DIR}/module/${filename}.f90
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.f18.mod
+    COMMAND f18 -fparse-only -fdebug-semantics -module-suffix .f18.mod ${PROJECT_SOURCE_DIR}/module/${filename}.f90
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include"
     DEPENDS f18 ${PROJECT_SOURCE_DIR}/module/${filename}.f90
   )
   list(APPEND MODULE_FILES "${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.mod")
-  list(APPEND MODULE_FILES "${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.fmf")
+  list(APPEND MODULE_FILES "${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.f18.mod")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.mod DESTINATION include)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.fmf DESTINATION include)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.f18.mod DESTINATION include)
 endforeach()
 
 add_custom_target(module_files ALL DEPENDS ${MODULE_FILES})
