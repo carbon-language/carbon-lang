@@ -4417,7 +4417,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
       for (const auto &Note : Obj->notes(P, Err))
         ProcessNote(Note);
       if (Err)
-        error(std::move(Err));
+        reportError(std::move(Err), this->FileName);
     }
   } else {
     for (const auto &S :
@@ -4429,7 +4429,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
       for (const auto &Note : Obj->notes(S, Err))
         ProcessNote(Note);
       if (Err)
-        error(std::move(Err));
+        reportError(std::move(Err), this->FileName);
     }
   }
 }
@@ -4483,10 +4483,10 @@ void DumpStyle<ELFT>::printFunctionStackSize(
   // integer.
   if (*Offset == PrevOffset)
     reportError(
-        FileStr,
         createStringError(object_error::parse_failed,
                           "could not extract a valid stack size in section %s",
-                          SectionName.data()));
+                          SectionName.data()),
+        FileStr);
 
   printStackSizeEntry(StackSize, FuncName);
 }
@@ -4545,11 +4545,12 @@ void DumpStyle<ELFT>::printStackSize(const ELFObjectFile<ELFT> *Obj,
 
   uint64_t Offset = Reloc.getOffset();
   if (!Data.isValidOffsetForDataOfSize(Offset, sizeof(Elf_Addr) + 1))
-    reportError(FileStr, createStringError(
-                             object_error::parse_failed,
-                             "found invalid relocation offset into section %s "
-                             "while trying to extract a stack size entry",
-                             StackSizeSectionName.data()));
+    reportError(
+        createStringError(object_error::parse_failed,
+                          "found invalid relocation offset into section %s "
+                          "while trying to extract a stack size entry",
+                          StackSizeSectionName.data()),
+        FileStr);
 
   uint64_t Addend = Data.getAddress(&Offset);
   uint64_t SymValue = Resolver(Reloc, RelocSymValue, Addend);
@@ -4595,11 +4596,11 @@ void DumpStyle<ELFT>::printNonRelocatableStackSizes(
       // size. Check for an extra byte before we try to process the entry.
       if (!Data.isValidOffsetForDataOfSize(Offset, sizeof(Elf_Addr) + 1)) {
         reportError(
-            FileStr,
             createStringError(
                 object_error::parse_failed,
                 "section %s ended while trying to extract a stack size entry",
-                SectionName.data()));
+                SectionName.data()),
+            FileStr);
       }
       uint64_t SymValue = Data.getAddress(&Offset);
       printFunctionStackSize(Obj, SymValue,
@@ -4689,10 +4690,10 @@ void DumpStyle<ELFT>::printRelocatableStackSizes(
         RelocSec.getName(RelocSectionName);
         StringRef RelocName = EF->getRelocationTypeName(Reloc.getType());
         reportError(
-            FileStr,
             createStringError(object_error::parse_failed,
                               "unsupported relocation type in section %s: %s",
-                              RelocSectionName.data(), RelocName.data()));
+                              RelocSectionName.data(), RelocName.data()),
+            FileStr);
       }
       this->printStackSize(Obj, Reloc, FunctionSec, StackSizeSectionName,
                            Resolver, Data);
@@ -5568,7 +5569,7 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
       for (const auto &Note : Obj->notes(P, Err))
         ProcessNote(Note);
       if (Err)
-        error(std::move(Err));
+        reportError(std::move(Err), this->FileName);
     }
   } else {
     for (const auto &S : unwrapOrError(this->FileName, Obj->sections())) {
@@ -5580,7 +5581,7 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
       for (const auto &Note : Obj->notes(S, Err))
         ProcessNote(Note);
       if (Err)
-        error(std::move(Err));
+        reportError(std::move(Err), this->FileName);
     }
   }
 }
