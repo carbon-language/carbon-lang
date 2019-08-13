@@ -3855,8 +3855,6 @@ bool llvm::UpgradeRetainReleaseMarker(Module &M) {
 }
 
 void llvm::UpgradeARCRuntimeCalls(Module &M) {
-  // This lambda converts normal function calls to ARC runtime functions to
-  // intrinsic calls.
   auto UpgradeToIntrinsic = [&](const char *OldFunc,
                                 llvm::Intrinsic::ID IntrinsicFunc) {
     Function *Fn = M.getFunction(OldFunc);
@@ -3865,43 +3863,11 @@ void llvm::UpgradeARCRuntimeCalls(Module &M) {
       return;
 
     Function *NewFn = llvm::Intrinsic::getDeclaration(&M, IntrinsicFunc);
-    for (Use &U : Fn->uses()) {
-      CallInst *CI = dyn_cast<CallInst>(U.getUser());
-      if (!CI || CI->getCalledFunction() != Fn)
-        continue;
-
-      IRBuilder<> Builder(CI->getParent(), CI->getIterator());
-      FunctionType *NewFuncTy = NewFn->getFunctionType();
-      SmallVector<Value *, 2> Args;
-
-      for (unsigned I = 0, E = CI->getNumArgOperands(); I != E; ++I) {
-        Value *Arg = CI->getArgOperand(I);
-        // Bitcast argument to the parameter type of the new function if it's
-        // not a variadic argument.
-        if (I < NewFuncTy->getNumParams())
-          Arg = Builder.CreateBitCast(Arg, NewFuncTy->getParamType(I));
-        Args.push_back(Arg);
-      }
-
-      // Create a call instruction that calls the new function.
-      CallInst *NewCall = Builder.CreateCall(NewFuncTy, NewFn, Args);
-      NewCall->setTailCallKind(cast<CallInst>(CI)->getTailCallKind());
-      NewCall->setName(CI->getName());
-
-      // Bitcast the return value back to the type of the old call.
-      Value *NewRetVal = Builder.CreateBitCast(NewCall, CI->getType());
-
-      if (!CI->use_empty())
-        CI->replaceAllUsesWith(NewRetVal);
-      CI->eraseFromParent();
-    }
-
-    if (Fn->use_empty())
-      Fn->eraseFromParent();
+    Fn->replaceAllUsesWith(NewFn);
+    Fn->eraseFromParent();
   };
 
-  // Unconditionally convert a call to "clang.arc.use" to a call to
-  // "llvm.objc.clang.arc.use".
+  // Unconditionally convert "clang.arc.use" to "llvm.objc.clang.arc.use".
   UpgradeToIntrinsic("clang.arc.use", llvm::Intrinsic::objc_clang_arc_use);
 
   // Return if the bitcode doesn't have the arm64 retainAutoreleasedReturnValue
