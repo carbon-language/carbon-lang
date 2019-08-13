@@ -778,6 +778,8 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"ddim", {{"x", DoublePrecision}, {"y", DoublePrecision}},
          DoublePrecision},
         "dim"},
+    {{"dimag", {{"a", DoublePrecisionComplex}}, DoublePrecision},
+        "aimag"},
     {{"dexp", {{"x", DoublePrecision}}, DoublePrecision}, "exp"},
     {{"dim", {{"x", DefaultReal}, {"y", DefaultReal}}, DefaultReal}},
     {{"dint", {{"a", DoublePrecision}}, DoublePrecision}, "aint"},

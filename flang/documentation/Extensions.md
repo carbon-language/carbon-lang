@@ -94,6 +94,7 @@ Extensions, deletions, and legacy features supported by default
   we allow distinct types to be used, promoting
   the arguments as if they were operands to an intrinsic `+` operator,
   and defining the result type accordingly.
+* DOUBLE COMPLEX intrinsics DCONJG and DIMAG.
 
 Extensions supported when enabled by options
 --------------------------------------------
