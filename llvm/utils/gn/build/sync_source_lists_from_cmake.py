@@ -12,6 +12,7 @@ binaries have corresponding BUILD.gn files.
 
 from __future__ import print_function
 
+from collections import defaultdict
 import os
 import re
 import subprocess
@@ -29,10 +30,23 @@ def sync_source_lists():
     cmake_cpp_re = re.compile(r'^\s*([A-Za-z_0-9./-]+\.(?:cpp|c|h|S))$',
                               re.MULTILINE)
 
-    changed = False
+    changes_by_rev = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
+    def find_gitrev(touched_line, in_file):
+        return subprocess.check_output(
+            ['git', 'log', '--format=%h', '-1', '-S' + touched_line, in_file],
+            shell=os.name == 'nt').rstrip()
+    def svnrev_from_gitrev(gitrev):
+        git_llvm = os.path.join(
+            os.path.dirname(__file__), '..', '..', 'git-svn', 'git-llvm')
+        return int(subprocess.check_output(
+            [sys.executable, git_llvm, 'svn-lookup', gitrev],
+            shell=os.name == 'nt').rstrip().lstrip('r'))
+
+    # Collect changes to gn files, grouped by revision.
     for gn_file in gn_files:
         # The CMakeLists.txt for llvm/utils/gn/secondary/foo/BUILD.gn is
-        # directly at foo/CMakeLists.txt.
+        # at foo/CMakeLists.txt.
         strip_prefix = 'llvm/utils/gn/secondary/'
         if not gn_file.startswith(strip_prefix):
             continue
@@ -49,16 +63,29 @@ def sync_source_lists():
         if gn_cpp == cmake_cpp:
             continue
 
-        changed = True
-        print(gn_file)
-        add = sorted(cmake_cpp - gn_cpp)
-        if add:
-            print('add:\n' + '\n'.join('    "%s",' % a for a in add))
-        remove = sorted(gn_cpp - cmake_cpp)
-        if remove:
-            print('remove:\n' + '\n'.join(remove))
+        def by_rev(files, key):
+            for f in files:
+                svnrev = svnrev_from_gitrev(find_gitrev(f, cmake_file))
+                changes_by_rev[svnrev][gn_file][key].append(f)
+        by_rev(sorted(cmake_cpp - gn_cpp), 'add')
+        by_rev(sorted(gn_cpp - cmake_cpp), 'remove')
+
+    # Output necessary changes grouped by revision.
+    for svnrev in sorted(changes_by_rev.keys()):
+        print('gn build: Merge r{0} -- https://reviews.llvm.org/rL{0}'
+            .format(svnrev))
+        for gn_file, data in sorted(changes_by_rev[svnrev].items()):
+            print('  ' + gn_file)
+            add = data.get('add')
+            if add:
+                print('    add:\n' + '\n'.join('    "%s",' % a for a in add))
+            remove = data.get('remove')
+            if remove:
+                print('    remove:\n    ' + '\n    '.join(remove))
+            print()
         print()
-    return changed
+
+    return bool(changes_by_rev)
 
 
 def sync_unittests():
