@@ -2096,6 +2096,8 @@ LegalizerHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
     MI.eraseFromParent();
     return Legalized;
   }
+  case G_SHUFFLE_VECTOR:
+    return lowerShuffleVector(MI);
   }
 }
 
@@ -3750,4 +3752,42 @@ LegalizerHelper::lowerUnmergeValues(MachineInstr &MI) {
   }
 
   return UnableToLegalize;
+}
+
+LegalizerHelper::LegalizeResult
+LegalizerHelper::lowerShuffleVector(MachineInstr &MI) {
+  Register DstReg = MI.getOperand(0).getReg();
+  Register Src0Reg = MI.getOperand(1).getReg();
+  Register Src1Reg = MI.getOperand(2).getReg();
+  LLT DstTy = MRI.getType(DstReg);
+  LLT EltTy = DstTy.getElementType();
+  int NumElts = DstTy.getNumElements();
+  LLT IdxTy = LLT::scalar(32);
+
+  const Constant *ShufMask = MI.getOperand(3).getShuffleMask();
+
+  SmallVector<int, 32> Mask;
+  ShuffleVectorInst::getShuffleMask(ShufMask, Mask);
+
+  Register Undef;
+  SmallVector<Register, 32> BuildVec;
+
+  for (int Idx : Mask) {
+    if (Idx < 0) {
+      if (!Undef.isValid())
+        Undef = MIRBuilder.buildUndef(EltTy).getReg(0);
+      BuildVec.push_back(Undef);
+      continue;
+    }
+
+    Register SrcVec = Idx < NumElts ? Src0Reg : Src1Reg;
+    int ExtractIdx = Idx < NumElts ? Idx : Idx - NumElts;
+    auto IdxK = MIRBuilder.buildConstant(IdxTy, ExtractIdx);
+    auto Extract = MIRBuilder.buildExtractVectorElement(EltTy, SrcVec, IdxK);
+    BuildVec.push_back(Extract.getReg(0));
+  }
+
+  MIRBuilder.buildBuildVector(DstReg, BuildVec);
+  MI.eraseFromParent();
+  return Legalized;
 }
