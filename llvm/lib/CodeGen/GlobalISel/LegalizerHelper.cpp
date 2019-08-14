@@ -3824,7 +3824,6 @@ LegalizerHelper::lowerShuffleVector(MachineInstr &MI) {
   LLT Src0Ty = MRI.getType(Src0Reg);
   LLT DstTy = MRI.getType(DstReg);
   LLT EltTy = DstTy.getElementType();
-  int NumElts = DstTy.getNumElements();
   LLT IdxTy = LLT::scalar(32);
 
   const Constant *ShufMask = MI.getOperand(3).getShuffleMask();
@@ -3846,6 +3845,7 @@ LegalizerHelper::lowerShuffleVector(MachineInstr &MI) {
     if (Src0Ty.isScalar()) {
       BuildVec.push_back(Idx == 0 ? Src0Reg : Src1Reg);
     } else {
+      int NumElts = Src0Ty.getNumElements();
       Register SrcVec = Idx < NumElts ? Src0Reg : Src1Reg;
       int ExtractIdx = Idx < NumElts ? Idx : Idx - NumElts;
       auto IdxK = MIRBuilder.buildConstant(IdxTy, ExtractIdx);

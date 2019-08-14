@@ -183,6 +183,28 @@ body: |
 ...
 
 ---
+name: shufflevector_v3s32_3_2_1_smaller
+tracksRegLiveness: true
+
+body: |
+  bb.0:
+    liveins: $vgpr0_vgpr1_vgpr2, $vgpr3_vgpr4_vgpr5
+
+    ; CHECK-LABEL: name: shufflevector_v3s32_3_2_1_smaller
+    ; CHECK: liveins: $vgpr0_vgpr1_vgpr2, $vgpr3_vgpr4_vgpr5
+    ; CHECK: [[COPY:%[0-9]+]]:_(<3 x s32>) = COPY $vgpr0_vgpr1_vgpr2
+    ; CHECK: [[COPY1:%[0-9]+]]:_(<3 x s32>) = COPY $vgpr3_vgpr4_vgpr5
+    ; CHECK: [[EXTRACT:%[0-9]+]]:_(s32) = G_EXTRACT [[COPY]](<3 x s32>), 64
+    ; CHECK: [[EXTRACT1:%[0-9]+]]:_(s32) = G_EXTRACT [[COPY]](<3 x s32>), 32
+    ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s32>) = G_BUILD_VECTOR [[EXTRACT]](s32), [[EXTRACT1]](s32)
+    ; CHECK: $vgpr0_vgpr1 = COPY [[BUILD_VECTOR]](<2 x s32>)
+    %0:_(<3 x s32>) = COPY $vgpr0_vgpr1_vgpr2
+    %1:_(<3 x s32>) = COPY $vgpr3_vgpr4_vgpr5
+    %2:_(<2 x s32>) = G_SHUFFLE_VECTOR %0, %1, shufflemask(2, 1)
+    $vgpr0_vgpr1 = COPY %2
+
+...
+---
 name: shufflevector_v2s16_0_1
 tracksRegLiveness: true
 
@@ -247,7 +269,7 @@ body: |
     ; CHECK: [[SEXT1:%[0-9]+]]:_(s32) = G_SEXT [[UV1]](s16)
     ; CHECK: [[SEXT2:%[0-9]+]]:_(s32) = G_SEXT [[UV2]](s16)
     ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:_(<3 x s32>) = G_BUILD_VECTOR [[SEXT]](s32), [[SEXT1]](s32), [[SEXT2]](s32)
-    ; CHECK: [[EXTRACT2:%[0-9]+]]:_(s32) = G_EXTRACT [[BUILD_VECTOR]](<3 x s32>), 32
+    ; CHECK: [[EXTRACT2:%[0-9]+]]:_(s32) = G_EXTRACT [[BUILD_VECTOR]](<3 x s32>), 64
     ; CHECK: [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[EXTRACT2]](s32)
     ; CHECK: [[UV3:%[0-9]+]]:_(s16), [[UV4:%[0-9]+]]:_(s16), [[UV5:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[EXTRACT]](<3 x s16>)
     ; CHECK: [[SEXT3:%[0-9]+]]:_(s32) = G_SEXT [[UV3]](s16)
@@ -256,17 +278,22 @@ body: |
     ; CHECK: [[BUILD_VECTOR1:%[0-9]+]]:_(<3 x s32>) = G_BUILD_VECTOR [[SEXT3]](s32), [[SEXT4]](s32), [[SEXT5]](s32)
     ; CHECK: [[EXTRACT3:%[0-9]+]]:_(s32) = G_EXTRACT [[BUILD_VECTOR1]](<3 x s32>), 32
     ; CHECK: [[TRUNC1:%[0-9]+]]:_(s16) = G_TRUNC [[EXTRACT3]](s32)
-    ; CHECK: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
-    ; CHECK: [[TRUNC2:%[0-9]+]]:_(s16) = G_TRUNC [[DEF]](s32)
-    ; CHECK: [[UV6:%[0-9]+]]:_(s16), [[UV7:%[0-9]+]]:_(s16), [[UV8:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[EXTRACT]](<3 x s16>)
+    ; CHECK: [[UV6:%[0-9]+]]:_(s16), [[UV7:%[0-9]+]]:_(s16), [[UV8:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[EXTRACT1]](<3 x s16>)
     ; CHECK: [[SEXT6:%[0-9]+]]:_(s32) = G_SEXT [[UV6]](s16)
     ; CHECK: [[SEXT7:%[0-9]+]]:_(s32) = G_SEXT [[UV7]](s16)
     ; CHECK: [[SEXT8:%[0-9]+]]:_(s32) = G_SEXT [[UV8]](s16)
     ; CHECK: [[BUILD_VECTOR2:%[0-9]+]]:_(<3 x s32>) = G_BUILD_VECTOR [[SEXT6]](s32), [[SEXT7]](s32), [[SEXT8]](s32)
     ; CHECK: [[EXTRACT4:%[0-9]+]]:_(s32) = G_EXTRACT [[BUILD_VECTOR2]](<3 x s32>), 0
-    ; CHECK: [[TRUNC3:%[0-9]+]]:_(s16) = G_TRUNC [[EXTRACT4]](s32)
-    ; CHECK: [[BUILD_VECTOR3:%[0-9]+]]:_(<4 x s16>) = G_BUILD_VECTOR [[TRUNC]](s16), [[TRUNC1]](s16), [[TRUNC2]](s16), [[TRUNC3]](s16)
-    ; CHECK: $vgpr0_vgpr1 = COPY [[BUILD_VECTOR3]](<4 x s16>)
+    ; CHECK: [[TRUNC2:%[0-9]+]]:_(s16) = G_TRUNC [[EXTRACT4]](s32)
+    ; CHECK: [[UV9:%[0-9]+]]:_(s16), [[UV10:%[0-9]+]]:_(s16), [[UV11:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[EXTRACT]](<3 x s16>)
+    ; CHECK: [[SEXT9:%[0-9]+]]:_(s32) = G_SEXT [[UV9]](s16)
+    ; CHECK: [[SEXT10:%[0-9]+]]:_(s32) = G_SEXT [[UV10]](s16)
+    ; CHECK: [[SEXT11:%[0-9]+]]:_(s32) = G_SEXT [[UV11]](s16)
+    ; CHECK: [[BUILD_VECTOR3:%[0-9]+]]:_(<3 x s32>) = G_BUILD_VECTOR [[SEXT9]](s32), [[SEXT10]](s32), [[SEXT11]](s32)
+    ; CHECK: [[EXTRACT5:%[0-9]+]]:_(s32) = G_EXTRACT [[BUILD_VECTOR3]](<3 x s32>), 0
+    ; CHECK: [[TRUNC3:%[0-9]+]]:_(s16) = G_TRUNC [[EXTRACT5]](s32)
+    ; CHECK: [[BUILD_VECTOR4:%[0-9]+]]:_(<4 x s16>) = G_BUILD_VECTOR [[TRUNC]](s16), [[TRUNC1]](s16), [[TRUNC2]](s16), [[TRUNC3]](s16)
+    ; CHECK: $vgpr0_vgpr1 = COPY [[BUILD_VECTOR4]](<4 x s16>)
     %0:_(<4 x s16>) = COPY $vgpr0_vgpr1
     %1:_(<4 x s16>) = COPY $vgpr2_vgpr3
     %2:_(<3 x s16>) = G_EXTRACT %0, 0
