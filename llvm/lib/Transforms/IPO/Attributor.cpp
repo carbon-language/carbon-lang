@@ -1609,35 +1609,29 @@ struct DerefState : AbstractState {
   /// State representing for dereferenceable bytes.
   IntegerState DerefBytesState;
 
-  /// State representing that whether the value is nonnull or global.
-  IntegerState NonNullGlobalState;
-
-  /// Bits encoding for NonNullGlobalState.
-  enum {
-    DEREF_NONNULL = 1 << 0,
-    DEREF_GLOBAL = 1 << 1,
-  };
+  /// State representing that whether the value is globaly dereferenceable.
+  BooleanState GlobalState;
 
   /// See AbstractState::isValidState()
   bool isValidState() const override { return DerefBytesState.isValidState(); }
 
   /// See AbstractState::isAtFixpoint()
   bool isAtFixpoint() const override {
-    return !isValidState() || (DerefBytesState.isAtFixpoint() &&
-                               NonNullGlobalState.isAtFixpoint());
+    return !isValidState() ||
+           (DerefBytesState.isAtFixpoint() && GlobalState.isAtFixpoint());
   }
 
   /// See AbstractState::indicateOptimisticFixpoint(...)
   ChangeStatus indicateOptimisticFixpoint() override {
     DerefBytesState.indicateOptimisticFixpoint();
-    NonNullGlobalState.indicateOptimisticFixpoint();
+    GlobalState.indicateOptimisticFixpoint();
     return ChangeStatus::UNCHANGED;
   }
 
   /// See AbstractState::indicatePessimisticFixpoint(...)
   ChangeStatus indicatePessimisticFixpoint() override {
     DerefBytesState.indicatePessimisticFixpoint();
-    NonNullGlobalState.indicatePessimisticFixpoint();
+    GlobalState.indicatePessimisticFixpoint();
     return ChangeStatus::CHANGED;
   }
 
@@ -1651,24 +1645,26 @@ struct DerefState : AbstractState {
     DerefBytesState.takeAssumedMinimum(Bytes);
   }
 
-  /// Update assumed NonNullGlobalState
-  void updateAssumedNonNullGlobalState(bool IsNonNull, bool IsGlobal) {
-    if (!IsNonNull)
-      NonNullGlobalState.removeAssumedBits(DEREF_NONNULL);
-    if (!IsGlobal)
-      NonNullGlobalState.removeAssumedBits(DEREF_GLOBAL);
-  }
-
   /// Equality for DerefState.
   bool operator==(const DerefState &R) {
     return this->DerefBytesState == R.DerefBytesState &&
-           this->NonNullGlobalState == R.NonNullGlobalState;
+           this->GlobalState == R.GlobalState;
   }
 };
 
 struct AADereferenceableImpl : AADereferenceable, DerefState {
   AADereferenceableImpl(const IRPosition &IRP) : AADereferenceable(IRP) {}
   using StateType = DerefState;
+
+  void initialize(Attributor &A) override {
+    SmallVector<Attribute, 4> Attrs;
+    getAttrs({Attribute::Dereferenceable, Attribute::DereferenceableOrNull},
+             Attrs);
+    for (const Attribute &Attr : Attrs)
+      takeKnownDerefBytesMaximum(Attr.getValueAsInt());
+
+    NonNullAA = A.getAAFor<AANonNull>(*this, getIRPosition());
+  }
 
   /// See AbstractAttribute::getState()
   /// {
@@ -1686,38 +1682,14 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
     return DerefBytesState.getKnown();
   }
 
-  // Helper function for syncing nonnull state.
-  void syncNonNull(const AANonNull *NonNullAA) {
-    if (!NonNullAA) {
-      NonNullGlobalState.removeAssumedBits(DEREF_NONNULL);
-      return;
-    }
-
-    if (NonNullAA->isKnownNonNull())
-      NonNullGlobalState.addKnownBits(DEREF_NONNULL);
-
-    if (!NonNullAA->isAssumedNonNull())
-      NonNullGlobalState.removeAssumedBits(DEREF_NONNULL);
-  }
-
   /// See AADereferenceable::isAssumedGlobal().
-  bool isAssumedGlobal() const override {
-    return NonNullGlobalState.isAssumed(DEREF_GLOBAL);
-  }
+  bool isAssumedGlobal() const override { return GlobalState.getAssumed(); }
 
   /// See AADereferenceable::isKnownGlobal().
-  bool isKnownGlobal() const override {
-    return NonNullGlobalState.isKnown(DEREF_GLOBAL);
-  }
+  bool isKnownGlobal() const override { return GlobalState.getKnown(); }
 
-  /// See AADereferenceable::isAssumedNonNull().
   bool isAssumedNonNull() const override {
-    return NonNullGlobalState.isAssumed(DEREF_NONNULL);
-  }
-
-  /// See AADereferenceable::isKnownNonNull().
-  bool isKnownNonNull() const override {
-    return NonNullGlobalState.isKnown(DEREF_NONNULL);
+    return NonNullAA && NonNullAA->isAssumedNonNull();
   }
 
   void getDeducedAttributes(LLVMContext &Ctx,
@@ -1731,15 +1703,7 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
           Ctx, getAssumedDereferenceableBytes()));
   }
   uint64_t computeAssumedDerefenceableBytes(Attributor &A, Value &V,
-                                            bool &IsNonNull, bool &IsGlobal);
-
-  void initialize(Attributor &A) override {
-    SmallVector<Attribute, 4> Attrs;
-    getAttrs({Attribute::Dereferenceable, Attribute::DereferenceableOrNull},
-             Attrs);
-    for (const Attribute &Attr : Attrs)
-      takeKnownDerefBytesMaximum(Attr.getValueAsInt());
-  }
+                                            bool &IsGlobal);
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
@@ -1751,6 +1715,9 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
            std::to_string(getKnownDereferenceableBytes()) + "-" +
            std::to_string(getAssumedDereferenceableBytes()) + ">";
   }
+
+private:
+  const AANonNull *NonNullAA = nullptr;
 };
 
 struct AADereferenceableReturned final : AADereferenceableImpl {
@@ -1774,15 +1741,15 @@ static uint64_t calcDifferenceIfBaseIsNonNull(int64_t DerefBytes,
   return std::max((int64_t)0, DerefBytes - Offset);
 }
 
-uint64_t AADereferenceableImpl::computeAssumedDerefenceableBytes(
-    Attributor &A, Value &V, bool &IsNonNull, bool &IsGlobal) {
+uint64_t
+AADereferenceableImpl::computeAssumedDerefenceableBytes(Attributor &A, Value &V,
+                                                        bool &IsGlobal) {
   // TODO: Tracking the globally flag.
   IsGlobal = false;
 
   // First, we try to get information about V from Attributor.
   if (auto *DerefAA =
           A.getAAFor<AADereferenceable>(*this, IRPosition::value(V))) {
-    IsNonNull &= DerefAA->isAssumedNonNull();
     return DerefAA->getAssumedDereferenceableBytes();
   }
 
@@ -1795,7 +1762,6 @@ uint64_t AADereferenceableImpl::computeAssumedDerefenceableBytes(
 
   if (auto *BaseDerefAA =
           A.getAAFor<AADereferenceable>(*this, IRPosition::value(*Base))) {
-    IsNonNull &= Offset != 0;
     return calcDifferenceIfBaseIsNonNull(
         BaseDerefAA->getAssumedDereferenceableBytes(), Offset.getSExtValue(),
         Offset != 0 || BaseDerefAA->isAssumedNonNull());
@@ -1810,26 +1776,22 @@ uint64_t AADereferenceableImpl::computeAssumedDerefenceableBytes(
         !NullPointerIsDefined(getAnchorScope(),
                               V.getType()->getPointerAddressSpace()));
 
-  IsNonNull = false;
   return 0;
 }
 
 ChangeStatus AADereferenceableReturned::updateImpl(Attributor &A) {
   auto BeforeState = static_cast<DerefState>(*this);
 
-  syncNonNull(A.getAAFor<AANonNull>(*this, getIRPosition()));
-
-  bool IsNonNull = isAssumedNonNull();
   bool IsGlobal = isAssumedGlobal();
 
   auto CheckReturnValue = [&](Value &RV) -> bool {
     takeAssumedDerefBytesMinimum(
-        computeAssumedDerefenceableBytes(A, RV, IsNonNull, IsGlobal));
+        computeAssumedDerefenceableBytes(A, RV, IsGlobal));
     return isValidState();
   };
 
   if (A.checkForAllReturnedValues(CheckReturnValue, *this)) {
-    updateAssumedNonNullGlobalState(IsNonNull, IsGlobal);
+    GlobalState.intersectAssumedBits(IsGlobal);
     return BeforeState == static_cast<DerefState>(*this)
                ? ChangeStatus::UNCHANGED
                : ChangeStatus::CHANGED;
@@ -1857,9 +1819,6 @@ ChangeStatus AADereferenceableArgument::updateImpl(Attributor &A) {
 
   unsigned ArgNo = Arg.getArgNo();
 
-  syncNonNull(A.getAAFor<AANonNull>(*this, getIRPosition()));
-
-  bool IsNonNull = isAssumedNonNull();
   bool IsGlobal = isAssumedGlobal();
 
   // Callback function
@@ -1874,14 +1833,13 @@ ChangeStatus AADereferenceableArgument::updateImpl(Attributor &A) {
       if (ICS && CS.getInstruction() == ICS.getInstruction()) {
         takeAssumedDerefBytesMinimum(
             DereferenceableAA->getAssumedDereferenceableBytes());
-        IsNonNull &= DereferenceableAA->isAssumedNonNull();
         IsGlobal &= DereferenceableAA->isAssumedGlobal();
         return isValidState();
       }
     }
 
     takeAssumedDerefBytesMinimum(computeAssumedDerefenceableBytes(
-        A, *CS.getArgOperand(ArgNo), IsNonNull, IsGlobal));
+        A, *CS.getArgOperand(ArgNo), IsGlobal));
 
     return isValidState();
   };
@@ -1889,7 +1847,7 @@ ChangeStatus AADereferenceableArgument::updateImpl(Attributor &A) {
   if (!A.checkForAllCallSites(CallSiteCheck, *this, true))
     return indicatePessimisticFixpoint();
 
-  updateAssumedNonNullGlobalState(IsNonNull, IsGlobal);
+  GlobalState.intersectAssumedBits(IsGlobal);
 
   return BeforeState == static_cast<DerefState>(*this) ? ChangeStatus::UNCHANGED
                                                        : ChangeStatus::CHANGED;
@@ -1918,13 +1876,11 @@ ChangeStatus AADereferenceableCallSiteArgument::updateImpl(Attributor &A) {
 
   auto BeforeState = static_cast<DerefState>(*this);
 
-  syncNonNull(A.getAAFor<AANonNull>(*this, getIRPosition()));
-  bool IsNonNull = isAssumedNonNull();
-  bool IsGlobal = isKnownGlobal();
+  bool IsGlobal = isAssumedGlobal();
 
   takeAssumedDerefBytesMinimum(
-      computeAssumedDerefenceableBytes(A, V, IsNonNull, IsGlobal));
-  updateAssumedNonNullGlobalState(IsNonNull, IsGlobal);
+      computeAssumedDerefenceableBytes(A, V, IsGlobal));
+  GlobalState.intersectAssumedBits(IsGlobal);
 
   return BeforeState == static_cast<DerefState>(*this) ? ChangeStatus::UNCHANGED
                                                        : ChangeStatus::CHANGED;

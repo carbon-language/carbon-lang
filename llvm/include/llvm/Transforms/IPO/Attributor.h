@@ -1297,9 +1297,6 @@ struct AADereferenceable
   /// Return true if we assume that the underlying value is nonnull.
   virtual bool isAssumedNonNull() const = 0;
 
-  /// Return true if we know that underlying value is nonnull.
-  virtual bool isKnownNonNull() const = 0;
-
   /// Return true if we assume that underlying value is
   /// dereferenceable(_or_null) globally.
   virtual bool isAssumedGlobal() const = 0;
