@@ -24,6 +24,10 @@
 #include <cmath>
 using namespace llvm;
 
+static cl::extrahelp FileCheckOptsEnv(
+    "\nOptions are parsed from the environment variable FILECHECK_OPTS and\n"
+    "from the command line.\n");
+
 static cl::opt<std::string>
     CheckFilename(cl::Positional, cl::desc("<check-file>"), cl::Optional);
 
