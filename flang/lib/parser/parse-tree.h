@@ -3468,17 +3468,28 @@ struct OmpClauseList {
 };
 
 // SECTIONS, PARALLEL SECTIONS
-WRAPPER_CLASS(OmpEndSections, std::optional<OmpNowait>);
-WRAPPER_CLASS(OmpSection, Verbatim);
-struct OpenMPSectionsConstruct {
-  TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
-  std::tuple<Verbatim, OmpClauseList, Block, OmpEndSections> t;
+struct OmpSectionsDirective {
+  ENUM_CLASS(Directive, Sections, ParallelSections);
+  WRAPPER_CLASS_BOILERPLATE(OmpSectionsDirective, Directive);
+  CharBlock source;
 };
 
-EMPTY_CLASS(OmpEndParallelSections);
-struct OpenMPParallelSectionsConstruct {
-  TUPLE_CLASS_BOILERPLATE(OpenMPParallelSectionsConstruct);
-  std::tuple<Verbatim, OmpClauseList, Block, OmpEndParallelSections> t;
+struct OmpBeginSectionsDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpBeginSectionsDirective);
+  std::tuple<OmpSectionsDirective, OmpClauseList> t;
+};
+struct OmpEndSectionsDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpEndSectionsDirective);
+  std::tuple<OmpSectionsDirective, OmpClauseList> t;
+};
+
+WRAPPER_CLASS(OmpSectionBlocks, std::list<Block>);
+
+struct OpenMPSectionsConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
+  std::tuple<OmpBeginSectionsDirective, OmpSectionBlocks,
+      OmpEndSectionsDirective>
+      t;
 };
 
 // OpenMP directive beginning or ending a block
@@ -3729,9 +3740,8 @@ struct OpenMPLoopConstruct {
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
   std::variant<OpenMPStandaloneConstruct, OpenMPSectionsConstruct,
-      OpenMPParallelSectionsConstruct, OpenMPLoopConstruct,
-      OpenMPBlockConstruct, OpenMPAtomicConstruct, OpenMPCriticalConstruct,
-      OmpSection>
+      OpenMPLoopConstruct, OpenMPBlockConstruct, OpenMPAtomicConstruct,
+      OpenMPCriticalConstruct>
       u;
 };
 }

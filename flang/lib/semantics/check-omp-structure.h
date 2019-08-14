@@ -66,7 +66,7 @@ public:
 
   void Enter(const parser::OpenMPSectionsConstruct &);
   void Leave(const parser::OpenMPSectionsConstruct &);
-  void Enter(const parser::OmpSection &);
+  void Enter(const parser::OmpEndSectionsDirective &);
 
   void Enter(const parser::OpenMPDeclareSimdConstruct &);
   void Leave(const parser::OpenMPDeclareSimdConstruct &);

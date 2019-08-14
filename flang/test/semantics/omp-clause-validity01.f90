@@ -173,13 +173,15 @@
   !$omp end sections nowait
   !$omp end parallel
 
-  !ERROR: SECTION directive must appear within the SECTIONS construct
-  !$omp section
-  a = 0.0
   !$omp parallel
-  !ERROR: SECTION directive must appear within the SECTIONS construct
+  !$omp sections
+  a = 0.0
+  b = 1
   !$omp section
-  a = 3.14
+  c = 1
+  d = 2
+  !ERROR: NUM_THREADS clause is not allowed on the END SECTIONS directive
+  !$omp end sections num_threads(4)
   !$omp end parallel
 
 ! 2.7.3 single-clause -> private-clause |

@@ -2266,33 +2266,33 @@ public:
     Walk(x.v);
     EndOpenMP();
   }
-  void Unparse(const OmpSection &x) {
-    BeginOpenMP();
-    Word("!$OMP SECTION");
-    Put("\n");
-    EndOpenMP();
+  void Unparse(const OmpSectionsDirective &x) {
+    switch (x.v) {
+    case OmpSectionsDirective::Directive::Sections: Word("SECTIONS "); break;
+    case OmpSectionsDirective::Directive::ParallelSections:
+      Word("PARALLEL SECTIONS ");
+      break;
+    }
+  }
+  void Unparse(const OmpSectionBlocks &x) {
+    for (const auto &y : x.v) {
+      BeginOpenMP();
+      Word("!$OMP SECTION");
+      Put("\n");
+      EndOpenMP();
+      Walk(y, "");  // y is Block
+    }
   }
   void Unparse(const OpenMPSectionsConstruct &x) {
     BeginOpenMP();
-    Word("!$OMP SECTIONS");
-    Walk(std::get<OmpClauseList>(x.t));
+    Word("!$OMP ");
+    Walk(std::get<OmpBeginSectionsDirective>(x.t));
     Put("\n");
     EndOpenMP();
-    Walk(std::get<Block>(x.t), "");
+    Walk(std::get<OmpSectionBlocks>(x.t));
     BeginOpenMP();
-    Word("!$OMP END SECTIONS");
-    Put("\n");
-    EndOpenMP();
-  }
-  void Unparse(const OpenMPParallelSectionsConstruct &x) {
-    BeginOpenMP();
-    Word("!$OMP PARALLEL SECTIONS");
-    Walk(std::get<OmpClauseList>(x.t));
-    Put("\n");
-    EndOpenMP();
-    Walk(std::get<Block>(x.t), "");
-    BeginOpenMP();
-    Word("!$OMP END PARALLEL SECTIONS");
+    Word("!$OMP END ");
+    Walk(std::get<OmpEndSectionsDirective>(x.t));
     Put("\n");
     EndOpenMP();
   }

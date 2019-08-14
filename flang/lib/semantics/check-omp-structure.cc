@@ -212,25 +212,43 @@ void OmpStructureChecker::Leave(const parser::OpenMPBlockConstruct &) {
 }
 
 void OmpStructureChecker::Enter(const parser::OpenMPSectionsConstruct &x) {
-  const auto &dir{std::get<parser::Verbatim>(x.t)};
-  PushContext(dir.source, OmpDirective::SECTIONS);
-  OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
-      OmpClause::LASTPRIVATE, OmpClause::REDUCTION};
-  SetContextAllowed(allowed);
+  const auto &beginSectionsDir{
+      std::get<parser::OmpBeginSectionsDirective>(x.t)};
+  const auto &beginDir{
+      std::get<parser::OmpSectionsDirective>(beginSectionsDir.t)};
+  switch (beginDir.v) {
+  // 2.7.2 sections-clause -> private-clause |
+  //                          firstprivate-clause |
+  //                          lastprivate-clause |
+  //                          reduction-clause
+  case parser::OmpSectionsDirective::Directive::Sections: {
+    PushContext(beginDir.source, OmpDirective::SECTIONS);
+    OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
+        OmpClause::LASTPRIVATE, OmpClause::REDUCTION};
+    SetContextAllowed(allowed);
+  } break;
+  case parser::OmpSectionsDirective::Directive::ParallelSections: {
+    // TODO
+  } break;
+  }
 }
 
 void OmpStructureChecker::Leave(const parser::OpenMPSectionsConstruct &) {
   ompContext_.pop_back();
 }
 
-void OmpStructureChecker::Enter(const parser::OmpSection &x) {
-  const auto &dir{x.v};  // Verbatim
-  if (!CurrentDirectiveIsNested() ||
-      GetContext().directive != OmpDirective::SECTIONS) {
-    // if not currently nested, SECTION is orphaned
-    context_.Say(dir.source,
-        "SECTION directive must appear within "
-        "the SECTIONS construct"_err_en_US);
+void OmpStructureChecker::Enter(const parser::OmpEndSectionsDirective &x) {
+  const auto &dir{std::get<parser::OmpSectionsDirective>(x.t)};
+  ResetPartialContext(dir.source);
+  switch (dir.v) {
+    // 2.7.2 end-sections -> END SECTIONS [nowait-clause]
+  case parser::OmpSectionsDirective::Directive::Sections:
+    SetContextDirectiveEnum(OmpDirective::END_SECTIONS);
+    SetContextAllowed(OmpClauseSet{OmpClause::NOWAIT});
+    break;
+  default:
+    // no clauses are allowed
+    break;
   }
 }
 
