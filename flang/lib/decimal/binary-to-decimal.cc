@@ -111,9 +111,9 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::BigRadixFloatingPointNumber(
 template<int PREC, int LOG10RADIX>
 ConversionToDecimalResult
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(
-    char *buffer, std::size_t n, int flags, int digits) const {
-  if (n < (digits_ + 1) * LOG10RADIX) {  // pmk revisit
-    return {nullptr, 0, 0};
+    char *buffer, std::size_t n, int flags, int maxDigits) const {
+  if (n < 3 + digits_ * LOG10RADIX || maxDigits < 1) {
+    return {nullptr, 0, 0, Overflow};
   }
   char *start{buffer};
   if (isNegative_) {
@@ -121,12 +121,12 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(
   } else if (flags & AlwaysSign) {
     *start++ = '+';
   }
-  char *p{start};
   if (IsZero()) {
-    *p++ = '0';
-    *p = '\0';
-    return {buffer, static_cast<std::size_t>(p - buffer), 0};
+    *start++ = '0';
+    *start = '\0';
+    return {buffer, static_cast<std::size_t>(start - buffer), 0};
   }
+  char *p{start};
   static_assert((LOG10RADIX % 2) == 0, "radix not a power of 100");
   static const char lut[] = "0001020304050607080910111213141516171819"
                             "2021222324252627282930313233343536373839"
@@ -157,12 +157,46 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(
       *p++ = q[1];
     }
   }
+  // Adjust exponent so the effective decimal point is to
+  // the left of the first digit.
   int expo = exponent_ + p - start;
+  // Trim trailing zeroes.
   while (p[-1] == '0') {
     --p;
   }
-  *p = '\0';
-  return {buffer, static_cast<std::size_t>(p - buffer), expo};
+  if (p <= start + maxDigits) {
+    *p = '\0';
+    return {buffer, static_cast<std::size_t>(p - buffer), expo, Exact};
+  } else {
+    // Apply a digit limit, possibly with rounding.
+    char *end{start + maxDigits};
+    bool incr{false};
+    switch (rounding_) {
+    case RoundNearest:
+    case RoundDefault:
+      incr =
+          *end > '5' || (*end == '5' && (p > end || ((p[-1] - '0') & 1) != 0));
+      break;
+    case RoundUp: incr = !isNegative_; break;
+    case RoundDown: incr = isNegative_; break;
+    case RoundToZero: break;
+    case RoundCompatible: incr = *end >= '5'; break;
+    }
+    p = end;
+    if (incr) {
+      while (p > start && p[-1] == '9') {
+        --p;
+      }
+      if (p == start) {
+        *p++ = '1';
+        ++expo;
+      } else {
+        ++p[-1];
+      }
+    }
+    *p = '\0';
+    return {buffer, static_cast<std::size_t>(p - buffer), expo, Inexact};
+  }
 }
 
 template<int PREC, int LOG10RADIX>
@@ -261,9 +295,9 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
     int digits, enum FortranRounding rounding,
     BinaryFloatingPointNumber<PREC> x) {
   if (x.IsNaN()) {
-    return {"NaN", 3, 0};
+    return {"NaN", 3, 0, Invalid};
   } else if (x.IsInfinite()) {
-    return {x.IsNegative() ? "-Inf" : "+Inf", 4, 0};
+    return {x.IsNegative() ? "-Inf" : "+Inf", 4, 0, Exact};
   } else {
     using Binary = BinaryFloatingPointNumber<PREC>;
     using Big = BigRadixFloatingPointNumber<PREC>;
@@ -285,7 +319,7 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
       }
       number.Minimize(Big{less, rounding}, Big{more, rounding});
     }
-    number.Clamp(digits);
+    number.Clamp(digits);  // todo pmk retain Clamp?
     return number.ConvertToDecimal(buffer, size, flags, digits);
   }
 }

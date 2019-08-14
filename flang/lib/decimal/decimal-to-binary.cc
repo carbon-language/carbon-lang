@@ -194,7 +194,7 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
     flags |= Inexact;
   }
   if (fraction == 0 && guard <= topBit) {
-    return {Binary{}, static_cast<enum BinaryConversionResultFlags>(flags)};
+    return {Binary{}, static_cast<enum ConversionResultFlags>(flags)};
   }
   // The value is nonzero; normalize it.
   while (fraction < topBit && expo > 1) {
@@ -238,7 +238,7 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
     fraction &= ~topBit;
   }
   raw |= fraction;
-  return {Binary(raw), static_cast<enum BinaryConversionResultFlags>(flags)};
+  return {Binary(raw), static_cast<enum ConversionResultFlags>(flags)};
 }
 
 template<int PREC, int LOG10RADIX>

@@ -20,10 +20,28 @@
 #include "binary-floating-point.h"
 #include <stddef.h>
 
+// Binary-to-decimal conversions (formatting) produce a sequence of decimal
+// digit characters in a NUL-terminated user-supplied buffer that constitute
+// a decimal fraction (or zero), accompanied by a decimal exponent that
+// you'll get to adjust and format yourself.  There can be a leading sign
+// character.
+// Negative zero is "-0".  The result can also be "NaN", "Inf", "+Inf",
+// or "-Inf".
+// If the conversion can't fit in the user-supplied buffer, a null pointer
+// is returned.
+
+enum ConversionResultFlags {
+  Exact = 0,
+  Overflow = 1,
+  Inexact = 2,
+  Invalid = 4,
+};
+
 struct ConversionToDecimalResult {
   const char *str; /* may not be original buffer pointer; null if overflow */
-  size_t length; /* not including NUL terminator */
+  size_t length; /* does not include NUL terminator */
   int decimalExponent; /* assuming decimal point to the left of first digit */
+  enum ConversionResultFlags flags;
 };
 
 enum FortranRounding {
@@ -43,13 +61,6 @@ enum FortranRounding {
 enum DecimalConversionFlags {
   Minimize = 1, /* Minimize # of digits */
   AlwaysSign = 2, /* emit leading '+' if not negative */
-};
-
-enum BinaryConversionResultFlags {
-  Exact = 0,
-  Overflow = 1,
-  Inexact = 2,
-  Invalid = 4,
 };
 
 #ifdef __cplusplus
@@ -75,7 +86,7 @@ extern template ConversionToDecimalResult ConvertToDecimal<112>(char *, size_t,
 
 template<int PREC> struct ConversionToBinaryResult {
   BinaryFloatingPointNumber<PREC> binary;
-  enum BinaryConversionResultFlags flags { Exact };
+  enum ConversionResultFlags flags { Exact };
 };
 
 template<int PREC>
