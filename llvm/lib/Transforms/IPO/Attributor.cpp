@@ -735,7 +735,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
   // Callback for all "return intructions" live in the associated function.
   auto CheckReturnInst = [this, &VisitReturnedValue, &Changed](Instruction &I) {
     ReturnInst &Ret = cast<ReturnInst>(I);
-    RVState RVS({ReturnedValues, false});
+    RVState RVS({ReturnedValues, false, {}});
     RVS.RetInsts.insert(&Ret);
     Changed |= RVS.Changed;
     return VisitReturnedValue(*Ret.getReturnValue(), RVS);
