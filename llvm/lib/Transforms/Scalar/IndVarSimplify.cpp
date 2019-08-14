@@ -2647,11 +2647,11 @@ bool IndVarSimplify::optimizeLoopExits(Loop *L) {
 
   // Form an expression for the maximum exit count possible for this loop. We
   // merge the max and exact information to approximate a version of
-  // getMaxBackedgeTakenInfo which isn't restricted to just constants.
-  // TODO: factor this out as a version of getMaxBackedgeTakenCount which
+  // getConstantMaxBackedgeTakenCount which isn't restricted to just constants.
+  // TODO: factor this out as a version of getConstantMaxBackedgeTakenCount which
   // isn't guaranteed to return a constant.
   SmallVector<const SCEV*, 4> ExitCounts;
-  const SCEV *MaxConstEC = SE->getMaxBackedgeTakenCount(L);
+  const SCEV *MaxConstEC = SE->getConstantMaxBackedgeTakenCount(L);
   if (!isa<SCEVCouldNotCompute>(MaxConstEC))
     ExitCounts.push_back(MaxConstEC);
   for (BasicBlock *ExitingBB : ExitingBlocks) {
