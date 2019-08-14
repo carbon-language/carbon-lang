@@ -21,8 +21,7 @@ def L: JoinedOrSeparate<["-"], "L">, MetaVarName<"<dir>">,
 def Bdynamic: F<"Bdynamic">, HelpText<"Link against shared libraries">;
 def Bstatic: F<"Bstatic">, HelpText<"Do not link against shared libraries">;
 def dynamicbase: F<"dynamicbase">, HelpText<"Enable ASLR">;
-def entry: S<"entry">, MetaVarName<"<entry>">,
-  HelpText<"Name of entry point symbol">;
+defm entry: Eq<"entry", "Name of entry point symbol">, MetaVarName<"<entry>">;
 def exclude_all_symbols: F<"exclude-all-symbols">,
     HelpText<"Don't automatically export any symbols">;
 def export_all_symbols: F<"export-all-symbols">,
@@ -55,8 +54,8 @@ def large_address_aware: Flag<["--"], "large-address-aware">,
 def no_gc_sections: F<"no-gc-sections">, HelpText<"Don't remove unused sections">;
 def o: JoinedOrSeparate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
-defm out_implib: EqLong<"out-implib", "Import library name">;
-def output_def: S<"output-def">, HelpText<"Output def file">;
+defm out_implib: Eq<"out-implib", "Import library name">;
+defm output_def: Eq<"output-def", "Output def file">;
 def shared: F<"shared">, HelpText<"Build a shared object">;
 defm subs: Eq<"subsystem", "Specify subsystem">;
 def stack: S<"stack">;
@@ -87,7 +86,7 @@ def Xlink : J<"Xlink=">, MetaVarName<"<arg>">,
 def alias_entry_e: JoinedOrSeparate<["-"], "e">, Alias<entry>;
 def alias_strip_s: Flag<["-"], "s">, Alias<strip_all>;
 def alias_strip_S: Flag<["-"], "S">, Alias<strip_debug>;
-def alias_undefined_u: S<"u">, Alias<undefined>;
+def alias_undefined_u: JoinedOrSeparate<["-"], "u">, Alias<undefined>;
 
 // Ignored options
 def: Joined<["-"], "O">;
