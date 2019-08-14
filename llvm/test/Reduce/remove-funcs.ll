@@ -28,7 +28,4 @@ entry:
 }
 
 ; CHECK-NOT: uninteresting3()
-define i32 @uninteresting3() {
-entry:
-  ret i32 10
-}
+declare void @uninteresting3()
