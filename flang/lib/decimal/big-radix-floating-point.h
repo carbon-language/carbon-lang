@@ -43,10 +43,11 @@ static constexpr std::uint64_t TenToThe(int power) {
 // even, so that pairs of decimal digits do not straddle Digits.
 // So LOG10RADIX must be 16 or 6.
 template<int PREC, int LOG10RADIX = 16> class BigRadixFloatingPointNumber {
-private:
+public:
   using Real = BinaryFloatingPointNumber<PREC>;
-
   static constexpr int log10Radix{LOG10RADIX};
+
+private:
   static constexpr std::uint64_t uint64Radix{TenToThe(log10Radix)};
   static constexpr int minDigitBits{
       64 - common::LeadingZeroBitCount(uint64Radix)};
@@ -103,8 +104,8 @@ public:
 
 private:
   BigRadixFloatingPointNumber(const BigRadixFloatingPointNumber &that)
-    : digits_{that.digits_}, exponent_{that.exponent_}, isNegative_{
-                                                            that.isNegative_} {
+    : digits_{that.digits_}, exponent_{that.exponent_},
+      isNegative_{that.isNegative_}, rounding_{that.rounding_} {
     for (int j{0}; j < digits_; ++j) {
       digit_[j] = that.digit_[j];
     }

@@ -21,12 +21,13 @@ template<int PREC, int LOG10RADIX>
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::BigRadixFloatingPointNumber(
     BinaryFloatingPointNumber<PREC> x, enum FortranRounding rounding)
   : rounding_{rounding} {
-  if (x.IsNegative() < 0) {
-    isNegative_ = true;
-    x.Negate();
-  }
+  bool negative{x.IsNegative()};
   if (x.IsZero()) {
+    isNegative_ = negative;
     return;
+  }
+  if (negative) {
+    x.Negate();
   }
   int twoPow{x.UnbiasedExponent()};
   twoPow -= x.bits - 1;
@@ -44,6 +45,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::BigRadixFloatingPointNumber(
   auto word{x.Fraction()};
   word <<= lshift;
   SetTo(word);
+  isNegative_ = negative;
 
   // The significand is now encoded in *this as an integer (D) and
   // decimal exponent (E):  x = D * 10.**E * 2.**twoPow
@@ -297,9 +299,9 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
   if (x.IsNaN()) {
     return {"NaN", 3, 0, Invalid};
   } else if (x.IsInfinite()) {
-    return {x.IsNegative() ? "-Inf" : "+Inf", 4, 0, Exact};
+    return {x.IsNegative() ? "-Inf" : (flags & AlwaysSign) ? "+Inf" : "Inf", 4,
+        0, Exact};
   } else {
-    using Binary = BinaryFloatingPointNumber<PREC>;
     using Big = BigRadixFloatingPointNumber<PREC>;
     Big number{x, rounding};
     if ((flags & Minimize) && !x.IsZero()) {
@@ -311,6 +313,7 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
       // the bounds of the range of decimal values that will map back to the
       // original binary value, and find a (not necessary unique) shortest
       // decimal sequence in that range.
+      using Binary = typename Big::Real;
       Binary less{x};
       --less.raw;
       Binary more{x};

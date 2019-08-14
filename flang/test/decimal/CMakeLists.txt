@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(decimal)
-add_subdirectory(evaluate)
-add_subdirectory(semantics)
+add_executable(quick-sanity-test
+  quick-sanity-test.cc
+)
+
+target_link_libraries(quick-sanity-test
+  FortranDecimal
+)
+
+# add_executable(thorough-test
+#   thorough-test.cc
+# )
+
+# target_link_libraries(thorough-test
+#   FortranDecimal
+# )
+
+# add_executable(benchmark01
+#   benchmark01.cc
+# )
+
+# target_link_libraries(benchmark01
+#   FortranDecimal
+# )
+
+add_test(Sanity quick-sanity-test)

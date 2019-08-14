@@ -67,22 +67,28 @@ enum DecimalConversionFlags {
 namespace Fortran::decimal {
 
 template<int PREC>
-ConversionToDecimalResult ConvertToDecimal(char *, size_t, int flags,
-    int digits, enum FortranRounding rounding,
-    BinaryFloatingPointNumber<PREC> x);
+ConversionToDecimalResult ConvertToDecimal(char *, size_t,
+    enum DecimalConversionFlags flags, int digits,
+    enum FortranRounding rounding, BinaryFloatingPointNumber<PREC> x);
 
 extern template ConversionToDecimalResult ConvertToDecimal<8>(char *, size_t,
-    int, int, enum FortranRounding, BinaryFloatingPointNumber<8>);
+    enum DecimalConversionFlags, int, enum FortranRounding,
+    BinaryFloatingPointNumber<8>);
 extern template ConversionToDecimalResult ConvertToDecimal<11>(char *, size_t,
-    int, int, enum FortranRounding, BinaryFloatingPointNumber<11>);
+    enum DecimalConversionFlags, int, enum FortranRounding,
+    BinaryFloatingPointNumber<11>);
 extern template ConversionToDecimalResult ConvertToDecimal<24>(char *, size_t,
-    int, int, enum FortranRounding, BinaryFloatingPointNumber<24>);
+    enum DecimalConversionFlags, int, enum FortranRounding,
+    BinaryFloatingPointNumber<24>);
 extern template ConversionToDecimalResult ConvertToDecimal<53>(char *, size_t,
-    int, int, enum FortranRounding, BinaryFloatingPointNumber<53>);
+    enum DecimalConversionFlags, int, enum FortranRounding,
+    BinaryFloatingPointNumber<53>);
 extern template ConversionToDecimalResult ConvertToDecimal<64>(char *, size_t,
-    int, int, enum FortranRounding, BinaryFloatingPointNumber<64>);
+    enum DecimalConversionFlags, int, enum FortranRounding,
+    BinaryFloatingPointNumber<64>);
 extern template ConversionToDecimalResult ConvertToDecimal<112>(char *, size_t,
-    int, int, enum FortranRounding, BinaryFloatingPointNumber<112>);
+    enum DecimalConversionFlags, int, enum FortranRounding,
+    BinaryFloatingPointNumber<112>);
 
 template<int PREC> struct ConversionToBinaryResult {
   BinaryFloatingPointNumber<PREC> binary;
@@ -105,7 +111,7 @@ extern template ConversionToBinaryResult<64> ConvertToBinary<64>(
     const char *&, enum FortranRounding = RoundNearest);
 extern template ConversionToBinaryResult<112> ConvertToBinary<112>(
     const char *&, enum FortranRounding = RoundNearest);
-}  // namespace
+}
 extern "C" {
 #endif /* C++ */
 
@@ -118,7 +124,16 @@ ConversionToDecimalResult ConvertLongDoubleToDecimal(
     char *, size_t, int flags, int digits, enum FortranRounding, long double);
 #endif
 
+ConversionResultFlags ConvertDecimalToFloat(
+    const char **, float *, enum FortranRounding);
+ConversionResultFlags ConvertDecimalToDouble(
+    const char **, double *, enum FortranRounding);
+#if __x86_64__
+ConversionResultFlags ConvertDecimalToLongDouble(
+    const char **, long double *, enum FortranRounding);
+#endif
+
 #ifdef __cplusplus
 }
 #endif /* C++ */
-#endif /* DECIMAL_H_ */
+#endif

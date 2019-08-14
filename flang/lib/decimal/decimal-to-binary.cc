@@ -409,3 +409,26 @@ template ConversionToBinaryResult<112> ConvertToBinary<112>(
     const char *&, enum FortranRounding);
 
 }
+
+extern "C" {
+ConversionResultFlags ConvertDecimalToFloat(
+    const char **p, float *f, enum FortranRounding rounding) {
+  auto result{Fortran::decimal::ConvertToBinary<24>(*p, rounding)};
+  *f = *reinterpret_cast<const float *>(&result.binary);
+  return result.flags;
+}
+ConversionResultFlags ConvertDecimalToDouble(
+    const char **p, double *d, enum FortranRounding rounding) {
+  auto result{Fortran::decimal::ConvertToBinary<53>(*p, rounding)};
+  *d = *reinterpret_cast<const double *>(&result.binary);
+  return result.flags;
+}
+#if __x86_64__
+ConversionResultFlags ConvertDecimalToLongDouble(
+    const char **p, long double *ld, enum FortranRounding rounding) {
+  auto result{Fortran::decimal::ConvertToBinary<64>(*p, rounding)};
+  *ld = *reinterpret_cast<const long double *>(&result.binary);
+  return result.flags;
+}
+#endif
+}
