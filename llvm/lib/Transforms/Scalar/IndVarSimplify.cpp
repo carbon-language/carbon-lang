@@ -628,13 +628,29 @@ bool IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 
         // Okay, this instruction has a user outside of the current loop
         // and varies predictably *inside* the loop.  Evaluate the value it
-        // contains when the loop exits, if possible.
+        // contains when the loop exits, if possible.  We prefer to start with
+        // expressions which are true for all exits (so as to maximize
+        // expression reuse by the SCEVExpander), but resort to per-exit
+        // evaluation if that fails.  
         const SCEV *ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
         if (isa<SCEVCouldNotCompute>(ExitValue) ||
             !SE->isLoopInvariant(ExitValue, L) ||
-            !isSafeToExpand(ExitValue, *SE))
-          continue;
-
+            !isSafeToExpand(ExitValue, *SE)) {
+          // TODO: This should probably be sunk into SCEV in some way; maybe a
+          // getSCEVForExit(SCEV*, L, ExitingBB)?  It can be generalized for
+          // most SCEV expressions and other recurrence types (e.g. shift
+          // recurrences).  Is there existing code we can reuse?
+          const SCEV *ExitCount = SE->getExitCount(L, PN->getIncomingBlock(i));
+          if (isa<SCEVCouldNotCompute>(ExitCount))
+            continue;
+          if (auto *AddRec = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(Inst)))
+            ExitValue = AddRec->evaluateAtIteration(ExitCount, *SE);
+          if (isa<SCEVCouldNotCompute>(ExitValue) ||
+              !SE->isLoopInvariant(ExitValue, L) ||
+              !isSafeToExpand(ExitValue, *SE))
+            continue;
+        }
+        
         // Computing the value outside of the loop brings no benefit if it is
         // definitely used inside the loop in a way which can not be optimized
         // away.  Avoid doing so unless we know we have a value which computes
