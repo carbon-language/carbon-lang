@@ -249,7 +249,9 @@ void BigRadixFloatingPointNumber<PREC, LOG10RADIX>::Minimize(
   if (less.Mean(*this)) {
     less.AddCarry();  // round up
   }
-  more.Mean(*this);  // rounded down
+  if (!more.Mean(*this)) {
+    more.Decrement();  // round down
+  }
   while (less.digits_ < more.digits_) {
     less.digit_[less.digits_++] = 0;
   }

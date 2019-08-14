@@ -240,6 +240,12 @@ private:
     return carry;
   }
 
+  void Decrement() {
+    for (int j{0}; digit_[j]-- == 0; ++j) {
+      digit_[j] = radix - 1;
+    }
+  }
+
   template<int N> int MultiplyByHelper(int carry = 0) {
     for (int j{0}; j < digits_; ++j) {
       digit_[j] = N * digit_[j] + carry;
