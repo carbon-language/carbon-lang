@@ -269,8 +269,8 @@ bool InferAddressSpaces::rewriteIntrinsicOperands(IntrinsicInst *II,
   case Intrinsic::amdgcn_ds_fadd:
   case Intrinsic::amdgcn_ds_fmin:
   case Intrinsic::amdgcn_ds_fmax: {
-    const ConstantInt *IsVolatile = dyn_cast<ConstantInt>(II->getArgOperand(4));
-    if (!IsVolatile || !IsVolatile->isZero())
+    const ConstantInt *IsVolatile = cast<ConstantInt>(II->getArgOperand(4));
+    if (!IsVolatile->isZero())
       return false;
 
     LLVM_FALLTHROUGH;
