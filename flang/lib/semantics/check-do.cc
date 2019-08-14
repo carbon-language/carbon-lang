@@ -29,9 +29,9 @@ namespace Fortran::semantics {
 using namespace parser::literals;
 
 // 11.1.7.5 - enforce semantics constraints on a DO CONCURRENT loop body
-class DoConcurrentEnforcement {
+class DoConcurrentBodyEnforce {
 public:
-  DoConcurrentEnforcement(SemanticsContext &context) : context_{context} {}
+  DoConcurrentBodyEnforce(SemanticsContext &context) : context_{context} {}
   std::set<parser::Label> labels() { return labels_; }
   std::set<parser::CharBlock> names() { return names_; }
   template<typename T> bool Pre(const T &) { return true; }
@@ -222,7 +222,7 @@ private:
   std::set<parser::Label> labels_;
   parser::CharBlock currentStatementSourcePosition_;
   SemanticsContext &context_;
-};  // class DoConcurrentEnforcement
+};  // class DoConcurrentBodyEnforce
 
 class DoConcurrentLabelEnforce {
 public:
@@ -372,8 +372,8 @@ private:
     context_.Say(sourceLocation, "DO controls should be INTEGER"_err_en_US);
   }
 
-  void CheckDoControl(parser::CharBlock sourceLocation, bool isReal) {
-    bool warn{context_.warnOnNonstandardUsage() ||
+  void CheckDoControl(const parser::CharBlock &sourceLocation, bool isReal) {
+    const bool warn{context_.warnOnNonstandardUsage() ||
         context_.ShouldWarn(parser::LanguageFeature::RealDoControls)};
     if (isReal && !warn) {
       // No messages for the default case
@@ -387,8 +387,7 @@ private:
 
   void CheckDoVariable(const parser::ScalarName &scalarName) {
     const parser::CharBlock &sourceLocation{scalarName.thing.source};
-    const Symbol *symbol{scalarName.thing.symbol};
-    if (symbol) {
+    if (const Symbol * symbol{scalarName.thing.symbol}) {
       if (!IsVariableName(*symbol)) {
         context_.Say(
             sourceLocation, "DO control must be an INTEGER variable"_err_en_US);
@@ -435,77 +434,58 @@ private:
     currentStatementSourcePosition_ = doStmt.source;
 
     const parser::Block &block{std::get<parser::Block>(doConstruct.t)};
-    DoConcurrentEnforcement doConcurrentEnforcement{context_};
-    parser::Walk(block, doConcurrentEnforcement);
+    DoConcurrentBodyEnforce doConcurrentBodyEnforce{context_};
+    parser::Walk(block, doConcurrentBodyEnforce);
 
     DoConcurrentLabelEnforce doConcurrentLabelEnforce{context_,
-        doConcurrentEnforcement.labels(), doConcurrentEnforcement.names(),
+        doConcurrentBodyEnforce.labels(), doConcurrentBodyEnforce.names(),
         currentStatementSourcePosition_};
     parser::Walk(block, doConcurrentLabelEnforce);
 
-    auto &loopControl{
+    const auto &loopControl{
         std::get<std::optional<parser::LoopControl>>(doStmt.statement.t)};
-    auto &concurrent{std::get<parser::LoopControl::Concurrent>(loopControl->u)};
-    EnforceConcurrentLoopControl(concurrent, block);
-  }
-
-  void CheckZeroOrOneDefaultNone(
-      const std::list<parser::LocalitySpec> &localitySpecs) const {
-    // C1127
-    int count{0};
-    for (auto &ls : localitySpecs) {
-      if (std::holds_alternative<parser::LocalitySpec::DefaultNone>(ls.u)) {
-        ++count;
-        if (count > 1) {
-          context_.Say(currentStatementSourcePosition_,
-              "only one DEFAULT(NONE) may appear"_en_US);
-          return;
-        }
-      }
-    }
+    const auto &concurrent{
+        std::get<parser::LoopControl::Concurrent>(loopControl->u)};
+    CheckConcurrentLoopControl(concurrent, block);
   }
 
   using SymbolSet = std::set<const Symbol *>;
 
-  enum GatherWhichVariables { All, NotShared, Local };
-
-  static SymbolSet GatherVariables(
-      const std::list<parser::LocalitySpec> &localitySpecs,
-      GatherWhichVariables which) {
+  // Return a set of symbols whose names are in a Local locality-spec.  Look
+  // the names up in the scope that encloses the DO construct to avoid getting
+  // the local versions of them.  Then follow the host-, use-, and
+  // construct-associations to get the root symbols
+  SymbolSet GatherLocals(
+      const std::list<parser::LocalitySpec> &localitySpecs) const {
     SymbolSet symbols;
-    for (auto &ls : localitySpecs) {
-      auto names{std::visit(
-          [=](const auto &x) {
-            using T = std::decay_t<decltype(x)>;
-            using namespace parser;
-            if constexpr (!std::is_same_v<T, LocalitySpec::DefaultNone>) {
-              if (which == GatherWhichVariables::All ||
-                  (which == GatherWhichVariables::NotShared &&
-                      !std::is_same_v<T, LocalitySpec::Shared>) ||
-                  (which == GatherWhichVariables::Local &&
-                      std::is_same_v<T, LocalitySpec::Local>)) {
-                return x.v;
-              }
+    const Scope &scope{
+        context_.FindScope(currentStatementSourcePosition_).parent()};
+    // Loop through the LocalitySpec::Local locality-specs
+    for (const auto &ls : localitySpecs) {
+      if (const auto *names{std::get_if<parser::LocalitySpec::Local>(&ls.u)}) {
+        // Loop through the names in the Local locality-spec getting their
+        // symbols
+        for (const parser::Name &name : names->v) {
+          if (const Symbol * symbol{scope.FindSymbol(name.source)}) {
+            if (const Symbol * root{GetAssociationRoot(*symbol)}) {
+              symbols.insert(root);
             }
-            return std::list<parser::Name>{};
-          },
-          ls.u)};
-      for (const auto &name : names) {
-        if (name.symbol) {
-          symbols.insert(name.symbol);
+          }
         }
       }
     }
     return symbols;
   }
 
-  static SymbolSet GatherReferencesFromExpression(
-      const parser::Expr &expression) {
+  static SymbolSet GatherSymbolsFromExpression(const parser::Expr &expression) {
     if (const auto *expr{GetExpr(expression)}) {
-      struct CollectSymbols
-        : public virtual evaluate::VisitorBase<SymbolSet> {
+      struct CollectSymbols : public virtual evaluate::VisitorBase<SymbolSet> {
         explicit CollectSymbols(int) {}
-        void Handle(const Symbol *symbol) { result().insert(symbol); }
+        void Handle(const Symbol *symbol) {
+          if (const Symbol * root{GetAssociationRoot(*symbol)}) {
+            result().insert(root);
+          }
+        }
       };
       return evaluate::Visitor<CollectSymbols>{0}.Traverse(*expr);
     } else {
@@ -513,57 +493,78 @@ private:
     }
   }
 
+  // C1121 - procedures in mask must be pure
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
-    // C1121 - procedures in mask must be pure
-    // TODO - add the name of the impure procedure to the message
-    SymbolSet references{
-        GatherReferencesFromExpression(mask.thing.thing.value())};
+    SymbolSet references{GatherSymbolsFromExpression(mask.thing.thing.value())};
     for (const Symbol *ref : references) {
       if (IsProcedure(*ref) && !IsPureProcedure(*ref)) {
-        context_.Say(currentStatementSourcePosition_,
-            "concurrent-header mask expression cannot reference an impure"
-            " procedure"_err_en_US);
+        const parser::CharBlock &name{ref->name()};
+        context_
+            .Say(currentStatementSourcePosition_,
+                "concurrent-header mask expression cannot reference an impure"
+                " procedure"_err_en_US)
+            .Attach(name, "Declaration of impure procedure '%s'"_en_US, name);
         return;
       }
     }
   }
 
-  void CheckNoCollisions(const SymbolSet &refs,
-      const SymbolSet &defs,
-      const parser::MessageFixedText &errorMessage) const {
+  void CheckNoCollisions(const SymbolSet &refs, const SymbolSet &set,
+      const parser::MessageFixedText &errorMessage,
+      const parser::CharBlock &refPosition) const {
     for (const Symbol *ref : refs) {
-      if (defs.find(ref) != defs.end()) {
-        context_.Say(ref->name(), errorMessage, ref->name());
+      if (set.find(ref) != set.end()) {
+        const parser::CharBlock &name{ref->name()};
+        context_.Say(refPosition, errorMessage, name)
+            .Attach(name, "Declaration of '%s'"_en_US, name);
         return;
       }
     }
   }
 
-  void HasNoReferences(const SymbolSet &indexNames,
-      const parser::ScalarIntExpr &expression) const {
-    const SymbolSet references{
-        GatherReferencesFromExpression(expression.thing.thing.value())};
-    CheckNoCollisions(references, indexNames,
-        "concurrent-control expression references index-name '%s'"_err_en_US);
+  void HasNoReferences(
+      const SymbolSet &indexNames, const parser::ScalarIntExpr &expr) const {
+    CheckNoCollisions(GatherSymbolsFromExpression(expr.thing.thing.value()),
+        indexNames,
+        "concurrent-control expression references index-name '%s'"_err_en_US,
+        expr.thing.thing.value().source);
   }
 
-  void CheckMaskDoesNotReferenceLocal(const parser::ScalarLogicalExpr &mask,
-      const SymbolSet &symbols) const {
-    // C1129
-    CheckNoCollisions(GatherReferencesFromExpression(mask.thing.thing.value()),
-        symbols,
-        "concurrent-header mask-expr references name '%s'"
-        " in locality-spec"_err_en_US);
+  // C1129, names in local locality-specs can't be in limit or step expressions
+  void CheckMaskDoesNotReferenceLocal(
+      const parser::ScalarLogicalExpr &mask, const SymbolSet &localVars) const {
+    CheckNoCollisions(GatherSymbolsFromExpression(mask.thing.thing.value()),
+        localVars,
+        "concurrent-header mask-expr references variable '%s'"
+        " in locality-spec"_err_en_US,
+        mask.thing.thing.value().source);
   }
+
+  // C1129, names in local locality-specs can't be in limit or step expressions
+  void CheckExprDoesNotReferenceLocal(
+      const parser::ScalarIntExpr &expr, const SymbolSet &localVars) const {
+    CheckNoCollisions(GatherSymbolsFromExpression(expr.thing.thing.value()),
+        localVars,
+        "concurrent-header expression references variable '%s'"
+        " in locality-spec"_err_en_US,
+        expr.thing.thing.value().source);
+  }
+
+  // C1130, default(none) locality requires names to be in locality-specs to be
+  // used in the body of the DO loop
   void CheckDefaultNoneImpliesExplicitLocality(
       const std::list<parser::LocalitySpec> &localitySpecs,
       const parser::Block &block) const {
-    // C1130
     bool hasDefaultNone{false};
     for (auto &ls : localitySpecs) {
       if (std::holds_alternative<parser::LocalitySpec::DefaultNone>(ls.u)) {
+        if (hasDefaultNone) {
+          // C1127, you can only have one DEFAULT(NONE)
+          context_.Say(currentStatementSourcePosition_,
+              "only one DEFAULT(NONE) may appear"_en_US);
+          break;
+        }
         hasDefaultNone = true;
-        break;
       }
     }
     if (hasDefaultNone) {
@@ -573,46 +574,66 @@ private:
     }
   }
 
-  // check constraints [C1121 .. C1130]
-  void EnforceConcurrentLoopControl(
-      const parser::LoopControl::Concurrent &concurrent,
-      const parser::Block &block) const {
-
-    auto &header{std::get<parser::ConcurrentHeader>(concurrent.t)};
+  // C1123, concurrent limit or step expressions can't reference index-names
+  void CheckConcurrentHeader(const parser::ConcurrentHeader &header) const {
     auto &controls{std::get<std::list<parser::ConcurrentControl>>(header.t)};
     SymbolSet indexNames;
-    for (auto &c : controls) {
-      auto &indexName{std::get<parser::Name>(c.t)};
+    for (const auto &c : controls) {
+      const auto &indexName{std::get<parser::Name>(c.t)};
       if (indexName.symbol) {
         indexNames.insert(indexName.symbol);
       }
     }
     if (!indexNames.empty()) {
-      for (auto &c : controls) {
-        // C1123
+      for (const auto &c : controls) {
         HasNoReferences(indexNames, std::get<1>(c.t));
         HasNoReferences(indexNames, std::get<2>(c.t));
-        if (auto &expression{
+        if (const auto &expr{
                 std::get<std::optional<parser::ScalarIntExpr>>(c.t)}) {
-          HasNoReferences(indexNames, *expression);
+          HasNoReferences(indexNames, *expr);
         }
       }
     }
+  }
 
-    auto &mask{std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)};
-    if (mask.has_value()) {
-      CheckMaskIsPure(*mask);
-    }
-    auto &localitySpecs{
+  void CheckLocalitySpecs(const parser::LoopControl::Concurrent &concurrent,
+      const parser::Block &block) const {
+    const auto &header{std::get<parser::ConcurrentHeader>(concurrent.t)};
+    const auto &controls{
+        std::get<std::list<parser::ConcurrentControl>>(header.t)};
+    const auto &localitySpecs{
         std::get<std::list<parser::LocalitySpec>>(concurrent.t)};
     if (!localitySpecs.empty()) {
-      CheckZeroOrOneDefaultNone(localitySpecs);
-      if (mask) {
-        CheckMaskDoesNotReferenceLocal(
-            *mask, GatherVariables(localitySpecs, GatherWhichVariables::Local));
+      const SymbolSet &localVars{GatherLocals(localitySpecs)};
+      for (const auto &c : controls) {
+        CheckExprDoesNotReferenceLocal(std::get<1>(c.t), localVars);
+        CheckExprDoesNotReferenceLocal(std::get<2>(c.t), localVars);
+        if (const auto &expr{
+                std::get<std::optional<parser::ScalarIntExpr>>(c.t)}) {
+          CheckExprDoesNotReferenceLocal(*expr, localVars);
+        }
+      }
+      if (const auto &mask{
+              std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)}) {
+        CheckMaskDoesNotReferenceLocal(*mask, localVars);
       }
       CheckDefaultNoneImpliesExplicitLocality(localitySpecs, block);
     }
+  }
+
+  // check constraints [C1121 .. C1130]
+  void CheckConcurrentLoopControl(
+      const parser::LoopControl::Concurrent &concurrent,
+      const parser::Block &block) const {
+
+    const auto &header{std::get<parser::ConcurrentHeader>(concurrent.t)};
+    const auto &mask{
+        std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)};
+    if (mask.has_value()) {
+      CheckMaskIsPure(*mask);
+    }
+    CheckConcurrentHeader(header);
+    CheckLocalitySpecs(concurrent, block);
   }
 
   SemanticsContext &context_;
