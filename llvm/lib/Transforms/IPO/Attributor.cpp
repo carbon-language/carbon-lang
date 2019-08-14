@@ -1650,6 +1650,30 @@ struct DerefState : AbstractState {
     return this->DerefBytesState == R.DerefBytesState &&
            this->GlobalState == R.GlobalState;
   }
+
+  /// Inequality for IntegerState.
+  bool operator!=(const DerefState &R) { return !(*this == R); }
+
+  /// See IntegerState::operator^=
+  DerefState operator^=(const DerefState &R) {
+    DerefBytesState ^= R.DerefBytesState;
+    GlobalState ^= R.GlobalState;
+    return *this;
+  }
+
+  /// See IntegerState::operator&=
+  DerefState operator&=(const DerefState &R) {
+    DerefBytesState &= R.DerefBytesState;
+    GlobalState &= R.GlobalState;
+    return *this;
+  }
+
+  /// See IntegerState::operator|=
+  DerefState operator|=(const DerefState &R) {
+    DerefBytesState |= R.DerefBytesState;
+    GlobalState |= R.GlobalState;
+    return *this;
+  }
 };
 
 struct AADereferenceableImpl : AADereferenceable, DerefState {

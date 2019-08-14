@@ -887,6 +887,31 @@ struct IntegerState : public AbstractState {
            this->getKnown() == R.getKnown();
   }
 
+  /// Inequality for IntegerState.
+  bool operator!=(const IntegerState &R) const { return !(*this == R); }
+
+  /// "Clamp" this state with \p R. The result is the maximum of the known
+  /// information but the minimum of the assumed.
+  IntegerState operator^=(const IntegerState &R) {
+    takeKnownMaximum(R.Known);
+    takeAssumedMinimum(R.Assumed);
+    return *this;
+  }
+
+  /// Make this the minimum, known and assumed, of this state and \p R.
+  IntegerState operator&=(const IntegerState &R) {
+    Known = std::min(Known, R.Known);
+    Assumed = std::min(Assumed, R.Assumed);
+    return *this;
+  }
+
+  /// Make this the maximum, known and assumed, of this state and \p R.
+  IntegerState operator|=(const IntegerState &R) {
+    Known = std::max(Known, R.Known);
+    Assumed = std::max(Assumed, R.Assumed);
+    return *this;
+  }
+
 private:
   /// The known state encoding in an integer of type base_t.
   base_t Known = getWorstState();
