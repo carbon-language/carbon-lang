@@ -8444,7 +8444,7 @@ ClangASTContext::CreateBaseClassSpecifier(lldb::opaque_compiler_type_t type,
   if (!type)
     return nullptr;
 
-  return llvm::make_unique<clang::CXXBaseSpecifier>(
+  return std::make_unique<clang::CXXBaseSpecifier>(
       clang::SourceRange(), is_virtual, base_of_class,
       ClangASTContext::ConvertAccessTypeToAccessSpecifier(access),
       getASTContext()->getTrivialTypeSourceInfo(GetQualType(type)),
