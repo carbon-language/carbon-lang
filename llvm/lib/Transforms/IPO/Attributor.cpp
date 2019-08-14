@@ -1076,7 +1076,6 @@ AANonNullImpl::generatePredicate(Attributor &A) {
 
   std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
       [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
-
     if (isKnownNonZero(&RV, A.getDataLayout()))
       return true;
 
@@ -2143,6 +2142,23 @@ struct AANoReturnFunction final : AANoReturnImpl {
 ///                               Attributor
 /// ----------------------------------------------------------------------------
 
+bool Attributor::isAssumedDead(const AbstractAttribute &AA,
+                               const AAIsDead *LivenessAA) {
+  const Instruction *CtxI = AA.getIRPosition().getCtxI();
+  if (!CtxI)
+    return false;
+
+  if (!LivenessAA)
+    LivenessAA =
+        getAAFor<AAIsDead>(AA, IRPosition::function(*CtxI->getFunction()));
+  if (!LivenessAA || !LivenessAA->isAssumedDead(CtxI))
+    return false;
+
+  // TODO: Do not track dependences automatically but add it here as only a
+  //       "is-assumed-dead" result causes a dependence.
+  return true;
+}
+
 bool Attributor::checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
                                       const AbstractAttribute &QueryingAA,
                                       bool RequireAllCallSites) {
@@ -2354,8 +2370,9 @@ ChangeStatus Attributor::run() {
     // Update all abstract attribute in the work list and record the ones that
     // changed.
     for (AbstractAttribute *AA : Worklist)
-      if (AA->update(*this) == ChangeStatus::CHANGED)
-        ChangedAAs.push_back(AA);
+      if (!isAssumedDead(*AA, nullptr))
+        if (AA->update(*this) == ChangeStatus::CHANGED)
+          ChangedAAs.push_back(AA);
 
     // Reset the work list and repopulate with the changed abstract attributes.
     // Note that dependent ones are added above.
@@ -2415,6 +2432,9 @@ ChangeStatus Attributor::run() {
     if (!State.isValidState())
       continue;
 
+    // Skip dead code.
+    if (isAssumedDead(*AA, nullptr))
+      continue;
     // Manifest the state and record if we changed the IR.
     ChangeStatus LocalChange = AA->manifest(*this);
     if (LocalChange == ChangeStatus::CHANGED && AreStatisticsEnabled())

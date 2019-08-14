@@ -104,6 +104,7 @@ namespace llvm {
 
 struct AbstractAttribute;
 struct InformationCache;
+struct AAIsDead;
 
 class Function;
 
@@ -651,6 +652,11 @@ struct Attributor {
   /// various places.
   void identifyDefaultAbstractAttributes(
       Function &F, DenseSet<const char *> *Whitelist = nullptr);
+
+  /// Return true if \p AA (or its context instruction) is assumed dead.
+  ///
+  /// If \p LivenessAA is not provided it is queried.
+  bool isAssumedDead(const AbstractAttribute &AA, const AAIsDead *LivenessAA);
 
   /// Check \p Pred on all function call sites.
   ///
