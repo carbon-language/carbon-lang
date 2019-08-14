@@ -11,9 +11,7 @@
 ; RUN: llc -march=mips64el -mcpu=mips64r2 -target-abi n64 \
 ; RUN:     -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
 ; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -mattr=+mips16 \
-; RUN:     -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-MIPS16-1
-; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -mattr=+mips16 \
-; RUN:     -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-MIPS16-2
+; RUN:     -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-MIPS16
 
 @reg = common global i8* null, align 4
 
@@ -54,13 +52,12 @@ entry:
 ; STATIC-N64: dsll $[[R4:[0-9]]], $[[R3]], 16
 ; STATIC-N64: daddiu $[[R5:[0-9]]], $[[R4]], %lo(.Ltmp[[L0]])
 
-; STATIC-MIPS16-1: .ent	f
-; STATIC-MIPS16-2: .ent	f
-; STATIC-MIPS16-1: li  $[[R1_16:[0-9]+]], %hi($tmp[[TI_16:[0-9]+]])
-; STATIC-MIPS16-1: sll ${{[0-9]+}},  $[[R1_16]], 16
-; STATIC-MIPS16-2: li  ${{[0-9]+}}, %lo($tmp{{[0-9]+}})
-; STATIC-MIPS16-1: jal	dummy
-; STATIC-MIPS16-2: jal	dummy
+; STATIC-MIPS16: .ent	f
+; STATIC-MIPS16: li   $[[R0:[0-9]+]], %hi($tmp[[L0:[0-9]+]])
+; STATIC-MIPS16: sll  $[[R1:[0-9]+]], $[[R0]], 16
+; STATIC-MIPS16: li   $[[R2:[0-9]+]], %lo($tmp[[L0]])
+; STATIC-MIPS16: addu $[[R3:[0-9]+]], $[[R1]], $[[R2]]
+; STATIC-MIPS16: jal	dummy
 
 define void @f() nounwind {
 entry:
