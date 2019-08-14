@@ -75,14 +75,14 @@ module iso_c_binding
   integer, parameter :: c_char = 1
 
   ! C characters with special semantics
-  character(kind=c_char, len=1), parameter :: c_null_char = '\0'
-  character(kind=c_char, len=1), parameter :: c_alert = '\a'
-  character(kind=c_char, len=1), parameter :: c_backspace = '\b'
-  character(kind=c_char, len=1), parameter :: c_form_feed = '\f'
-  character(kind=c_char, len=1), parameter :: c_new_line = '\n'
-  character(kind=c_char, len=1), parameter :: c_carriage_return = '\r'
-  character(kind=c_char, len=1), parameter :: c_horizontal_tab = '\t'
-  character(kind=c_char, len=1), parameter :: c_vertical_tab =  '\v'
+  character(kind=c_char, len=1), parameter :: c_null_char = achar(0)
+  character(kind=c_char, len=1), parameter :: c_alert = achar(7)
+  character(kind=c_char, len=1), parameter :: c_backspace = achar(8)
+  character(kind=c_char, len=1), parameter :: c_form_feed = achar(12)
+  character(kind=c_char, len=1), parameter :: c_new_line = achar(10)
+  character(kind=c_char, len=1), parameter :: c_carriage_return = achar(13)
+  character(kind=c_char, len=1), parameter :: c_horizontal_tab = achar(9)
+  character(kind=c_char, len=1), parameter :: c_vertical_tab =  achar(11)
 
  contains
 
