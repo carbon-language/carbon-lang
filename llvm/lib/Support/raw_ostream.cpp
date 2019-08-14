@@ -139,6 +139,11 @@ raw_ostream &raw_ostream::operator<<(long long N) {
   return *this;
 }
 
+raw_ostream &raw_ostream::operator<<(std::error_code EC) {
+  return *this << EC.message() << " (" << EC.category().name() << ':'
+               << EC.value() << ')';
+}
+
 raw_ostream &raw_ostream::write_hex(unsigned long long N) {
   llvm::write_hex(*this, N, HexPrintStyle::Lower);
   return *this;

@@ -223,6 +223,8 @@ public:
 
   raw_ostream &operator<<(double N);
 
+  raw_ostream &operator<<(std::error_code EC);
+
   /// Output \p N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);
 

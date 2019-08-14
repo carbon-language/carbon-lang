@@ -933,7 +933,7 @@ public:
 
 class TestErrorCategory : public std::error_category {
 public:
-  const char *name() const noexcept override { return "error"; }
+  const char *name() const noexcept override { return "test_error"; }
   std::string message(int Condition) const override {
     switch (static_cast<test_error_code>(Condition)) {
     case test_error_code::unspecified:
@@ -973,6 +973,13 @@ TEST(Error, SubtypeStringErrorTest) {
                 .compare("Error 1. Detailed information\n"
                          "Error 2."),
             0);
+}
+
+TEST(Error, error_codeErrorMessageTest) {
+  EXPECT_NONFATAL_FAILURE(
+      EXPECT_EQ(make_error_code(test_error_code::unspecified),
+                make_error_code(test_error_code::error_2)),
+      "Which is: An unknown error has occurred. (test_error:1)");
 }
 
 } // namespace
