@@ -2126,7 +2126,7 @@ bool Attributor::checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
   if (RequireAllCallSites && !AssociatedFunction->hasInternalLinkage()) {
     LLVM_DEBUG(
         dbgs()
-        << "Attributor: Function " << AssociatedFunction->getName()
+        << "[Attributor] Function " << AssociatedFunction->getName()
         << " has no internal linkage, hence not all call sites are known\n");
     return false;
   }
@@ -2147,7 +2147,7 @@ bool Attributor::checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
       if (!RequireAllCallSites)
         continue;
 
-      LLVM_DEBUG(dbgs() << "Attributor: User " << *U.getUser()
+      LLVM_DEBUG(dbgs() << "[Attributor] User " << *U.getUser()
                         << " is an invalid use of "
                         << AssociatedFunction->getName() << "\n");
       return false;
@@ -2156,7 +2156,7 @@ bool Attributor::checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
     if (Pred(CS))
       continue;
 
-    LLVM_DEBUG(dbgs() << "Attributor: Call site callback failed for "
+    LLVM_DEBUG(dbgs() << "[Attributor] Call site callback failed for "
                       << *CS.getInstruction() << "\n");
     return false;
   }
@@ -2410,7 +2410,7 @@ ChangeStatus Attributor::run() {
 ///
 /// \returns The created abstract argument, or nullptr if none was created.
 template <typename AAType>
-static AAType *checkAndRegisterAA(IRPosition &IRP, Attributor &A,
+static AAType *checkAndRegisterAA(const IRPosition &IRP, Attributor &A,
                                   DenseSet<const char *> *Whitelist) {
   if (Whitelist && !Whitelist->count(&AAType::ID))
     return nullptr;
