@@ -319,8 +319,9 @@ IRAttributeManifest::manifestAttrs(Attributor &A, IRPosition &IRP,
   case IRPosition::IRP_CALL_SITE_RETURNED:
   case IRPosition::IRP_CALL_SITE_ARGUMENT:
     CallSite(&IRP.getAnchorValue()).setAttributes(Attrs);
-  case IRPosition::IRP_FLOAT:
+    break;
   case IRPosition::IRP_INVALID:
+  case IRPosition::IRP_FLOAT:
     break;
   }
 
@@ -413,6 +414,7 @@ void IRPosition::verify() {
       assert(Arg == &getAssociatedValue() && "Associated value mismatch!");
     } else {
       auto &CB = cast<CallBase>(*AnchorVal);
+      (void)CB;
       assert(CB.arg_size() > unsigned(getArgNo()) &&
              "Call site argument number mismatch!");
       assert(CB.getArgOperand(getArgNo()) == &getAssociatedValue() &&
