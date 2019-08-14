@@ -35,8 +35,16 @@ void sleep_for(unsigned int seconds) {
 #error sleep_for is not implemented on your platform.
 #endif
 
-#define ASSERT_NO_ERROR(x) ASSERT_EQ(x, std::error_code())
-
+#define ASSERT_NO_ERROR(x)                                                     \
+  if (std::error_code ASSERT_NO_ERROR_ec = x) {                                \
+    SmallString<128> MessageStorage;                                           \
+    raw_svector_ostream Message(MessageStorage);                               \
+    Message << #x ": did not return errc::success.\n"                          \
+            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n"          \
+            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n";      \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
+  } else {                                                                     \
+  }
 // From TestMain.cpp.
 extern const char *TestMainArgv0;
 

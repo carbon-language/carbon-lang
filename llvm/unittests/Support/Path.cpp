@@ -38,8 +38,24 @@
 using namespace llvm;
 using namespace llvm::sys;
 
-#define ASSERT_NO_ERROR(x) ASSERT_EQ(x, std::error_code())
-#define ASSERT_ERROR(x) ASSERT_NE(x, std::error_code())
+#define ASSERT_NO_ERROR(x)                                                     \
+  if (std::error_code ASSERT_NO_ERROR_ec = x) {                                \
+    SmallString<128> MessageStorage;                                           \
+    raw_svector_ostream Message(MessageStorage);                               \
+    Message << #x ": did not return errc::success.\n"                          \
+            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n"          \
+            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n";      \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
+  } else {                                                                     \
+  }
+
+#define ASSERT_ERROR(x)                                                        \
+  if (!x) {                                                                    \
+    SmallString<128> MessageStorage;                                           \
+    raw_svector_ostream Message(MessageStorage);                               \
+    Message << #x ": did not return a failure error code.\n";                  \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
+  }
 
 namespace {
 
@@ -1249,7 +1265,7 @@ TEST_F(FileSystemTest, OpenFileForRead) {
   int FileDescriptor2;
   SmallString<64> ResultPath;
   ASSERT_NO_ERROR(fs::openFileForRead(Twine(TempPath), FileDescriptor2,
-                                      fs::OF_None, &ResultPath));
+                                      fs::OF_None, &ResultPath))
 
   // If we succeeded, check that the paths are the same (modulo case):
   if (!ResultPath.empty()) {

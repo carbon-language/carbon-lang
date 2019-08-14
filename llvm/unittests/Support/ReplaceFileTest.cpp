@@ -17,7 +17,14 @@
 using namespace llvm;
 using namespace llvm::sys;
 
-#define ASSERT_NO_ERROR(x) ASSERT_EQ(x, std::error_code())
+#define ASSERT_NO_ERROR(x)                                                 \
+  do {                                                                     \
+    if (std::error_code ASSERT_NO_ERROR_ec = x) {                          \
+      errs() << #x ": did not return errc::success.\n"                     \
+             << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n"     \
+             << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n"; \
+    }                                                                      \
+  } while (false)
 
 namespace {
 std::error_code CreateFileWithContent(const SmallString<128> &FilePath,
