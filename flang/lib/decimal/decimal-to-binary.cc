@@ -168,7 +168,7 @@ public:
   }
 
   ConversionToBinaryResult<PREC> ToBinary(
-      bool isNegative = false, bool rounding = true) const;
+      bool isNegative, enum FortranRounding) const;
 
 private:
   IntType value_{0}, guard_{0};
@@ -177,7 +177,7 @@ private:
 
 template<int PREC>
 ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
-    bool isNegative, bool rounding) const {
+    bool isNegative, enum FortranRounding rounding) const {
   using Binary = BinaryFloatingPointNumber<PREC>;
   // Create a fraction with a binary point to the left of the integer
   // value_, and bias the exponent.
@@ -189,15 +189,12 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
     fraction >>= 1;
     ++expo;
   }
-  int flags{0};
+  int flags{Exact};
   if (guard != 0) {
     flags |= Inexact;
-    if (!rounding) {
-      guard = 0;
-    }
   }
   if (fraction == 0 && guard <= topBit) {
-    return {Binary{}, static_cast<enum BinaryConversionFlags>(flags)};
+    return {Binary{}, static_cast<enum BinaryConversionResultFlags>(flags)};
   }
   // The value is nonzero; normalize it.
   while (fraction < topBit && expo > 1) {
@@ -206,8 +203,18 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
     guard = (guard & 1) | ((guard & (topBit - 2)) << 1);
   }
   // Apply rounding
-  if (guard > topBit || (guard == topBit && (fraction & 1))) {
-    // round fraction up
+  bool incr{false};
+  switch (rounding) {
+  case RoundNearest:
+  case RoundDefault:
+    incr = guard > topBit || (guard == topBit && (fraction & 1));
+    break;
+  case RoundUp: incr = guard > 0 && !isNegative; break;
+  case RoundDown: incr = guard > 0 && isNegative; break;
+  case RoundToZero: break;
+  case RoundCompatible: incr = guard >= topBit; break;
+  }
+  if (incr) {
     if (fraction == mask) {
       // rounding causes a carry
       ++expo;
@@ -231,12 +238,12 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
     fraction &= ~topBit;
   }
   raw |= fraction;
-  return {Binary(raw), static_cast<enum BinaryConversionFlags>(flags)};
+  return {Binary(raw), static_cast<enum BinaryConversionResultFlags>(flags)};
 }
 
 template<int PREC, int LOG10RADIX>
 ConversionToBinaryResult<PREC>
-BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(bool rounding) {
+BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   using Binary = BinaryFloatingPointNumber<PREC>;
   // *this holds a multi-precision integer value in a radix of a large power
   // of ten.  Its radix point is defined to be to the right of its digits,
@@ -245,9 +252,9 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(bool rounding) {
     if (isNegative_) {
       using Raw = typename Binary::RawType;
       Raw negZero{static_cast<Raw>(1) << (Binary::bits - 1)};
-      return {Binary{negZero}, static_cast<enum BinaryConversionFlags>(0)};
+      return {Binary{negZero}};
     } else {
-      return {Binary{}, static_cast<enum BinaryConversionFlags>(0)};
+      return {Binary{}};
     }
   }
 
@@ -299,7 +306,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(bool rounding) {
   if (exponent_ == (1 - digits_) * log10Radix) {
     f.SetTo(digit_[--digits_]);
     if (f.IsFull()) {
-      return f.ToBinary(isNegative_, rounding);
+      return f.ToBinary(isNegative_, rounding_);
     }
   }
 
@@ -347,15 +354,14 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(bool rounding) {
     }
     f.SetGuard(guard);
   }
-  return f.ToBinary(isNegative_, rounding);
+  return f.ToBinary(isNegative_, rounding_);
 }
 
 template<int PREC, int LOG10RADIX>
 ConversionToBinaryResult<PREC>
-BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(
-    const char *&p, bool rounding) {
+BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(const char *&p) {
   if (ParseNumber(p)) {
-    return ConvertToBinary(rounding);
+    return ConvertToBinary();
   } else {
     // Could not parse a decimal floating-point number.  p has been
     // advanced over any leading spaces.
@@ -370,7 +376,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(
     if (toupper(p[0]) == 'N' && toupper(p[1]) == 'A' && toupper(p[2]) == 'N') {
       // NaN
       p += 3;
-      return {Binary{nan}, static_cast<enum BinaryConversionFlags>(0)};
+      return {Binary{nan}};
     } else {
       // Try to parse Inf, maybe with a sign
       const char *q{p};
@@ -380,8 +386,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(
       }
       if (toupper(q[0]) == 'I' && toupper(q[1]) == 'N' &&
           toupper(q[2]) == 'F') {
-        return {Binary(isNegative ? negInf : inf),
-            static_cast<enum BinaryConversionFlags>(0)};
+        return {Binary(isNegative ? negInf : inf)};
       } else {
         // Invalid input
         return {Binary{nan}, Invalid};
@@ -391,22 +396,22 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(
 }
 
 template<int PREC>
-ConversionToBinaryResult<PREC> ConvertToBinary(const char *&p, bool rounding) {
-  BigRadixFloatingPointNumber<PREC> n;
-  return n.ConvertToBinary(p, rounding);
+ConversionToBinaryResult<PREC> ConvertToBinary(
+    const char *&p, enum FortranRounding rounding) {
+  return BigRadixFloatingPointNumber<PREC>{rounding}.ConvertToBinary(p);
 }
 
 template ConversionToBinaryResult<8> ConvertToBinary<8>(
-    const char *&, bool rounding);
+    const char *&, enum FortranRounding);
 template ConversionToBinaryResult<11> ConvertToBinary<11>(
-    const char *&, bool rounding);
+    const char *&, enum FortranRounding);
 template ConversionToBinaryResult<24> ConvertToBinary<24>(
-    const char *&, bool rounding);
+    const char *&, enum FortranRounding);
 template ConversionToBinaryResult<53> ConvertToBinary<53>(
-    const char *&, bool rounding);
+    const char *&, enum FortranRounding);
 template ConversionToBinaryResult<64> ConvertToBinary<64>(
-    const char *&, bool rounding);
+    const char *&, enum FortranRounding);
 template ConversionToBinaryResult<112> ConvertToBinary<112>(
-    const char *&, bool rounding);
+    const char *&, enum FortranRounding);
 
 }

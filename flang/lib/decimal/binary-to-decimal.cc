@@ -19,7 +19,8 @@ namespace Fortran::decimal {
 
 template<int PREC, int LOG10RADIX>
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::BigRadixFloatingPointNumber(
-    BinaryFloatingPointNumber<PREC> x) {
+    BinaryFloatingPointNumber<PREC> x, enum FortranRounding rounding)
+  : rounding_{rounding} {
   if (x.IsNegative() < 0) {
     isNegative_ = true;
     x.Negate();
@@ -110,8 +111,8 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::BigRadixFloatingPointNumber(
 template<int PREC, int LOG10RADIX>
 ConversionToDecimalResult
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(
-    char *buffer, std::size_t n, int flags) const {
-  if (n < (digits_ + 1) * LOG10RADIX) {
+    char *buffer, std::size_t n, int flags, int digits) const {
+  if (n < (digits_ + 1) * LOG10RADIX) {  // pmk revisit
     return {nullptr, 0, 0};
   }
   char *start{buffer};
@@ -257,61 +258,70 @@ void BigRadixFloatingPointNumber<PREC, LOG10RADIX>::Minimize(
 
 template<int PREC>
 ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
-    int digits, bool minimal, BinaryFloatingPointNumber<PREC> x) {
+    int digits, enum FortranRounding rounding,
+    BinaryFloatingPointNumber<PREC> x) {
   if (x.IsNaN()) {
     return {"NaN", 3, 0};
   } else if (x.IsInfinite()) {
     return {x.IsNegative() ? "-Inf" : "+Inf", 4, 0};
   } else {
     using Binary = BinaryFloatingPointNumber<PREC>;
-    using Decimal = BigRadixFloatingPointNumber<PREC>;
-    Decimal number{x};
-    if (minimal && !x.IsZero()) {  //  && x.UnbiasedExponent() < PREC) {
+    using Big = BigRadixFloatingPointNumber<PREC>;
+    Big number{x, rounding};
+    if ((flags & Minimize) && !x.IsZero()) {
+      // To emit the fewest decimal digits necessary to represent the value
+      // in such a way that decimal-to-binary conversion to the same format
+      // with a fixed assumption about rounding will return the same binary
+      // value, we also perform binary-to-decimal conversion on the two
+      // binary values immediately adjacent to this one, use them to identify
+      // the bounds of the range of decimal values that will map back to the
+      // original binary value, and find a (not necessary unique) shortest
+      // decimal sequence in that range.
       Binary less{x};
       --less.raw;
       Binary more{x};
       if (!x.IsMaximalFiniteMagnitude()) {
         ++more.raw;
       }
-      number.Minimize(Decimal{less}, Decimal{more});
+      number.Minimize(Big{less, rounding}, Big{more, rounding});
     }
     number.Clamp(digits);
-    return number.ConvertToDecimal(buffer, size, flags);
+    return number.ConvertToDecimal(buffer, size, flags, digits);
   }
 }
 
-template ConversionToDecimalResult ConvertToDecimal<8>(
-    char *, size_t, int, int, bool, BinaryFloatingPointNumber<8>);
-template ConversionToDecimalResult ConvertToDecimal<11>(
-    char *, size_t, int, int, bool, BinaryFloatingPointNumber<11>);
-template ConversionToDecimalResult ConvertToDecimal<24>(
-    char *, size_t, int, int, bool, BinaryFloatingPointNumber<24>);
-template ConversionToDecimalResult ConvertToDecimal<53>(
-    char *, size_t, int, int, bool, BinaryFloatingPointNumber<53>);
-template ConversionToDecimalResult ConvertToDecimal<64>(
-    char *, size_t, int, int, bool, BinaryFloatingPointNumber<64>);
-template ConversionToDecimalResult ConvertToDecimal<112>(
-    char *, size_t, int, int, bool, BinaryFloatingPointNumber<112>);
+template ConversionToDecimalResult ConvertToDecimal<8>(char *, size_t, int, int,
+    enum FortranRounding, BinaryFloatingPointNumber<8>);
+template ConversionToDecimalResult ConvertToDecimal<11>(char *, size_t, int,
+    int, enum FortranRounding, BinaryFloatingPointNumber<11>);
+template ConversionToDecimalResult ConvertToDecimal<24>(char *, size_t, int,
+    int, enum FortranRounding, BinaryFloatingPointNumber<24>);
+template ConversionToDecimalResult ConvertToDecimal<53>(char *, size_t, int,
+    int, enum FortranRounding, BinaryFloatingPointNumber<53>);
+template ConversionToDecimalResult ConvertToDecimal<64>(char *, size_t, int,
+    int, enum FortranRounding, BinaryFloatingPointNumber<64>);
+template ConversionToDecimalResult ConvertToDecimal<112>(char *, size_t, int,
+    int, enum FortranRounding, BinaryFloatingPointNumber<112>);
 }
 
 extern "C" {
-ConversionToDecimalResult ConvertFloatToDecimal(
-    char *buffer, size_t size, int flags, int digits, bool minimal, float x) {
-  return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits, minimal,
-      Fortran::decimal::BinaryFloatingPointNumber<24>(x));
+ConversionToDecimalResult ConvertFloatToDecimal(char *buffer, size_t size,
+    int flags, int digits, enum FortranRounding rounding, float x) {
+  return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits,
+      rounding, Fortran::decimal::BinaryFloatingPointNumber<24>(x));
 }
 
-ConversionToDecimalResult ConvertDoubleToDecimal(
-    char *buffer, size_t size, int flags, int digits, bool minimal, double x) {
-  return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits, minimal,
-      Fortran::decimal::BinaryFloatingPointNumber<53>(x));
+ConversionToDecimalResult ConvertDoubleToDecimal(char *buffer, size_t size,
+    int flags, int digits, enum FortranRounding rounding, double x) {
+  return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits,
+      rounding, Fortran::decimal::BinaryFloatingPointNumber<53>(x));
 }
 
 #if __x86_64__
 ConversionToDecimalResult ConvertLongDoubleToDecimal(char *buffer, size_t size,
-    int flags, int digits, bool minimal, long double x) {
-  return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits, minimal,
-      Fortran::decimal::BinaryFloatingPointNumber<64>(x));
+    int flags, int digits, enum FortranRounding rounding, long double x) {
+  return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits,
+      rounding, Fortran::decimal::BinaryFloatingPointNumber<64>(x));
 }
 #endif
 }

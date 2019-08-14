@@ -48,7 +48,8 @@ private:
 
   static constexpr int log10Radix{LOG10RADIX};
   static constexpr std::uint64_t uint64Radix{TenToThe(log10Radix)};
-  static constexpr int minDigitBits{64 - common::LeadingZeroBitCount(uint64Radix)};
+  static constexpr int minDigitBits{
+      64 - common::LeadingZeroBitCount(uint64Radix)};
   using Digit = HostUnsignedIntType<minDigitBits>;
   static constexpr Digit radix{uint64Radix};
   static_assert(radix < std::numeric_limits<Digit>::max() / 1000,
@@ -63,11 +64,13 @@ private:
   static constexpr int maxDigits{3 - minLog2AnyBit / log10Radix};
 
 public:
-  BigRadixFloatingPointNumber() {}
+  explicit BigRadixFloatingPointNumber(
+      enum FortranRounding rounding = RoundDefault)
+    : rounding_{rounding} {}
 
-  // Converts a binary floating point value, the key step
-  // in binary-to-decimal conversion.
-  explicit BigRadixFloatingPointNumber(Real);
+  // Converts a binary floating point value.
+  explicit BigRadixFloatingPointNumber(
+      Real, enum FortranRounding = RoundDefault);
 
   BigRadixFloatingPointNumber &SetToZero() {
     isNegative_ = false;
@@ -92,15 +95,14 @@ public:
   bool ParseNumber(const char *&);
 
   // Converts decimal floating-point to binary.
-  ConversionToBinaryResult<PREC> ConvertToBinary(bool roundToNearest = true);
+  ConversionToBinaryResult<PREC> ConvertToBinary();
 
   // Parses and converts to binary.  Also handles "NaN" & "Inf".
-  ConversionToBinaryResult<PREC> ConvertToBinary(
-      const char *&, bool roundToNearest = true);
+  ConversionToBinaryResult<PREC> ConvertToBinary(const char *&);
 
   // Formats a decimal floating-point number.
   ConversionToDecimalResult ConvertToDecimal(
-      char *, std::size_t, int flags) const;
+      char *, std::size_t, int flags, int digits) const;
 
   // Discard decimal digits not needed to distinguish this value
   // from the decimal encodings of two others (viz., the nearest binary
@@ -280,11 +282,19 @@ private:
       }
       digit_[digits_ - 1] = 0;
       exponent_ += log10Radix;
-      if (LSD > radix / 2 || (digit_[0] % 2 != 0 && LSD == radix / 2)) {
-        // round up, ties to even
-        for (int j{0}; ++digit_[j] == radix; ++j) {
-          digit_[j] = 0;
-        }
+      bool incr{false};
+      switch (rounding_) {
+      case RoundNearest:
+      case RoundDefault:
+        incr = LSD > radix / 2 || (LSD == radix / 2 && digit_[0] % 2 != 0);
+        break;
+      case RoundUp: incr = LSD > 0 && !isNegative_; break;
+      case RoundDown: incr = LSD > 0 && isNegative_; break;
+      case RoundToZero: break;
+      case RoundCompatible: incr = LSD >= radix / 2; break;
+      }
+      for (int j{0}; (digit_[j] += incr) == radix; ++j) {
+        digit_[j] = 0;
       }
     }
   }
@@ -306,6 +316,7 @@ private:
   int digitLimit_{maxDigits};  // precision clamp
   int exponent_{0};  // signed power of ten
   bool isNegative_{false};
+  enum FortranRounding rounding_ { RoundDefault };
 };
 }
 #endif
