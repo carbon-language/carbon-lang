@@ -284,14 +284,14 @@ public:
     // Look for and record the EH frame section IDs.
     for (const auto &SectionPair : SectionMap) {
       const object::SectionRef &Section = SectionPair.first;
-      Expected<StringRef> NameOrErr = Section.getName();
-      if (!NameOrErr)
-        return NameOrErr.takeError();
+      StringRef Name;
+      if (auto EC = Section.getName(Name))
+        return errorCodeToError(EC);
 
       // Note unwind info is stored in .pdata but often points to .xdata
       // with an IMAGE_REL_AMD64_ADDR32NB relocation. Using a memory manager
       // that keeps sections ordered in relation to __ImageBase is necessary.
-      if ((*NameOrErr) == ".pdata")
+      if (Name == ".pdata")
         UnregisteredEHFrameSections.push_back(SectionPair.second);
     }
     return Error::success();

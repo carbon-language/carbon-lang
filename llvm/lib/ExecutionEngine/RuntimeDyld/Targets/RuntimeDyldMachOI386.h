@@ -128,10 +128,7 @@ public:
   Error finalizeSection(const ObjectFile &Obj, unsigned SectionID,
                        const SectionRef &Section) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Section.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
+    Section.getName(Name);
 
     if (Name == "__jump_table")
       return populateJumpTable(cast<MachOObjectFile>(Obj), Section, SectionID);

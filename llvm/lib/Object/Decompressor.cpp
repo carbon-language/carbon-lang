@@ -77,15 +77,10 @@ bool Decompressor::isGnuStyle(StringRef Name) {
 }
 
 bool Decompressor::isCompressed(const object::SectionRef &Section) {
-  if (Section.isCompressed())
-    return true;
-
-  Expected<StringRef> SecNameOrErr = Section.getName();
-  if (SecNameOrErr)
-    return isGnuStyle(*SecNameOrErr);
-
-  consumeError(SecNameOrErr.takeError());
-  return false;
+  StringRef Name;
+  if (Section.getName(Name))
+    return false;
+  return Section.isCompressed() || isGnuStyle(Name);
 }
 
 bool Decompressor::isCompressedELFSection(uint64_t Flags, StringRef Name) {

@@ -96,10 +96,9 @@ Error MachOAtomGraphBuilder::parseSections() {
     assert((SecRef.getAlignment() <= std::numeric_limits<uint32_t>::max()) &&
            "Section alignment does not fit in 32 bits");
 
-    Expected<StringRef> NameOrErr = SecRef.getName();
-    if (!NameOrErr)
-      return NameOrErr.takeError();
-    StringRef Name = *NameOrErr;
+    StringRef Name;
+    if (auto EC = SecRef.getName(Name))
+      return errorCodeToError(EC);
 
     unsigned SectionIndex = SecRef.getIndex() + 1;
 

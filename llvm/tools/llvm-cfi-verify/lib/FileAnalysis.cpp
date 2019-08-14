@@ -449,10 +449,9 @@ Error FileAnalysis::parseCodeSections() {
 
     // Avoid checking the PLT since it produces spurious failures on AArch64
     // when ignoring DWARF data.
-    Expected<StringRef> NameOrErr = Section.getName();
-    if (NameOrErr && *NameOrErr == ".plt")
+    StringRef SectionName;
+    if (!Section.getName(SectionName) && SectionName == ".plt")
       continue;
-    consumeError(NameOrErr.takeError());
 
     Expected<StringRef> Contents = Section.getContents();
     if (!Contents)

@@ -112,14 +112,10 @@ initializeFileAndStringTable(const llvm::object::COFFObjectFile &Obj,
     if (SC.hasStrings() && SC.hasChecksums())
       break;
 
-    Expected<StringRef> SectionNameOrErr = S.getName();
-    if (!SectionNameOrErr) {
-      consumeError(SectionNameOrErr.takeError());
-      continue;
-    }
-
+    StringRef SectionName;
+    S.getName(SectionName);
     ArrayRef<uint8_t> sectionData;
-    if ((*SectionNameOrErr) != ".debug$S")
+    if (SectionName != ".debug$S")
       continue;
 
     const object::coff_section *COFFSection = Obj.getCOFFSection(S);
@@ -159,12 +155,7 @@ void COFFDumper::dumpSections(unsigned NumSections) {
   for (const auto &ObjSection : Obj.sections()) {
     const object::coff_section *COFFSection = Obj.getCOFFSection(ObjSection);
     COFFYAML::Section NewYAMLSection;
-
-    if (Expected<StringRef> NameOrErr = ObjSection.getName())
-      NewYAMLSection.Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
-
+    ObjSection.getName(NewYAMLSection.Name);
     NewYAMLSection.Header.Characteristics = COFFSection->Characteristics;
     NewYAMLSection.Header.VirtualAddress = COFFSection->VirtualAddress;
     NewYAMLSection.Header.VirtualSize = COFFSection->VirtualSize;

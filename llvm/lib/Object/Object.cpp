@@ -251,10 +251,10 @@ void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI) {
 
 // SectionRef accessors
 const char *LLVMGetSectionName(LLVMSectionIteratorRef SI) {
-  auto NameOrErr = (*unwrap(SI))->getName();
-  if (!NameOrErr)
-    report_fatal_error(NameOrErr.takeError());
-  return NameOrErr->data();
+  StringRef ret;
+  if (std::error_code ec = (*unwrap(SI))->getName(ret))
+   report_fatal_error(ec.message());
+  return ret.data();
 }
 
 uint64_t LLVMGetSectionSize(LLVMSectionIteratorRef SI) {

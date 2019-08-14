@@ -406,10 +406,9 @@ static Error handleSection(
   if (Section.isVirtual())
     return Error::success();
 
-  Expected<StringRef> NameOrErr = Section.getName();
-  if (!NameOrErr)
-    return NameOrErr.takeError();
-  StringRef Name = *NameOrErr;
+  StringRef Name;
+  if (std::error_code Err = Section.getName(Name))
+    return errorCodeToError(Err);
 
   Expected<StringRef> ContentsOrErr = Section.getContents();
   if (!ContentsOrErr)

@@ -49,7 +49,8 @@ getSectionRefsByNameOrIndex(const object::ObjectFile *Obj,
 
   SecIndex = Obj->isELF() ? 0 : 1;
   for (object::SectionRef SecRef : Obj->sections()) {
-    StringRef SecName = unwrapOrError(Obj->getFileName(), SecRef.getName());
+    StringRef SecName;
+    error(SecRef.getName(SecName));
     auto NameIt = SecNames.find(SecName);
     if (NameIt != SecNames.end())
       NameIt->second = true;
@@ -76,9 +77,8 @@ void ObjDumper::printSectionsAsString(const object::ObjectFile *Obj,
   bool First = true;
   for (object::SectionRef Section :
        getSectionRefsByNameOrIndex(Obj, Sections)) {
-    StringRef SectionName =
-        unwrapOrError(Obj->getFileName(), Section.getName());
-
+    StringRef SectionName;
+    error(Section.getName(SectionName));
     if (!First)
       W.startLine() << '\n';
     First = false;
@@ -111,9 +111,8 @@ void ObjDumper::printSectionsAsHex(const object::ObjectFile *Obj,
   bool First = true;
   for (object::SectionRef Section :
        getSectionRefsByNameOrIndex(Obj, Sections)) {
-    StringRef SectionName =
-        unwrapOrError(Obj->getFileName(), Section.getName());
-
+    StringRef SectionName;
+    error(Section.getName(SectionName));
     if (!First)
       W.startLine() << '\n';
     First = false;

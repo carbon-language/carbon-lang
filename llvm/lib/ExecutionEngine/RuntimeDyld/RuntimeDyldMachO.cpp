@@ -233,10 +233,7 @@ RuntimeDyldMachOCRTPBase<Impl>::finalizeLoad(const ObjectFile &Obj,
 
   for (const auto &Section : Obj.sections()) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Section.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
+    Section.getName(Name);
 
     // Force emission of the __text, __eh_frame, and __gcc_except_tab sections
     // if they're present. Otherwise call down to the impl to handle other

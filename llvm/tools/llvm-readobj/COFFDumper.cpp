@@ -891,14 +891,16 @@ void COFFDumper::printBaseOfDataField(const pe32plus_header *) {}
 void COFFDumper::printCodeViewDebugInfo() {
   // Print types first to build CVUDTNames, then print symbols.
   for (const SectionRef &S : Obj->sections()) {
-    StringRef SectionName = unwrapOrError(Obj->getFileName(), S.getName());
+    StringRef SectionName;
+    error(S.getName(SectionName));
     // .debug$T is a standard CodeView type section, while .debug$P is the same
     // format but used for MSVC precompiled header object files.
     if (SectionName == ".debug$T" || SectionName == ".debug$P")
       printCodeViewTypeSection(SectionName, S);
   }
   for (const SectionRef &S : Obj->sections()) {
-    StringRef SectionName = unwrapOrError(Obj->getFileName(), S.getName());
+    StringRef SectionName;
+    error(S.getName(SectionName));
     if (SectionName == ".debug$S")
       printCodeViewSymbolSection(SectionName, S);
   }
@@ -1240,7 +1242,8 @@ void COFFDumper::mergeCodeViewTypes(MergingTypeTableBuilder &CVIDs,
                                     GlobalTypeTableBuilder &GlobalCVTypes,
                                     bool GHash) {
   for (const SectionRef &S : Obj->sections()) {
-    StringRef SectionName = unwrapOrError(Obj->getFileName(), S.getName());
+    StringRef SectionName;
+    error(S.getName(SectionName));
     if (SectionName == ".debug$T") {
       StringRef Data = unwrapOrError(Obj->getFileName(), S.getContents());
       uint32_t Magic;
@@ -1308,7 +1311,8 @@ void COFFDumper::printSectionHeaders() {
     ++SectionNumber;
     const coff_section *Section = Obj->getCOFFSection(Sec);
 
-    StringRef Name = unwrapOrError(Obj->getFileName(), Sec.getName());
+    StringRef Name;
+    error(Sec.getName(Name));
 
     DictScope D(W, "Section");
     W.printNumber("Number", SectionNumber);
@@ -1355,7 +1359,8 @@ void COFFDumper::printRelocations() {
   int SectionNumber = 0;
   for (const SectionRef &Section : Obj->sections()) {
     ++SectionNumber;
-    StringRef Name = unwrapOrError(Obj->getFileName(), Section.getName());
+    StringRef Name;
+    error(Section.getName(Name));
 
     bool PrintedGroup = false;
     for (const RelocationRef &Reloc : Section.relocations()) {
@@ -1684,7 +1689,9 @@ void COFFDumper::printCOFFExports() {
 
 void COFFDumper::printCOFFDirectives() {
   for (const SectionRef &Section : Obj->sections()) {
-    StringRef Name = unwrapOrError(Obj->getFileName(), Section.getName());
+    StringRef Name;
+
+    error(Section.getName(Name));
     if (Name != ".drectve")
       continue;
 
@@ -1723,7 +1730,8 @@ void COFFDumper::printCOFFBaseReloc() {
 void COFFDumper::printCOFFResources() {
   ListScope ResourcesD(W, "Resources");
   for (const SectionRef &S : Obj->sections()) {
-    StringRef Name = unwrapOrError(Obj->getFileName(), S.getName());
+    StringRef Name;
+    error(S.getName(Name));
     if (!Name.startswith(".rsrc"))
       continue;
 
@@ -1847,11 +1855,7 @@ void COFFDumper::printStackMap() const {
   object::SectionRef StackMapSection;
   for (auto Sec : Obj->sections()) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Sec.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
-
+    Sec.getName(Name);
     if (Name == ".llvm_stackmaps") {
       StackMapSection = Sec;
       break;
@@ -1878,11 +1882,7 @@ void COFFDumper::printAddrsig() {
   object::SectionRef AddrsigSection;
   for (auto Sec : Obj->sections()) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Sec.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
-
+    Sec.getName(Name);
     if (Name == ".llvm_addrsig") {
       AddrsigSection = Sec;
       break;

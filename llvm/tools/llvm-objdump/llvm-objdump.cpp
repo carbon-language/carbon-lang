@@ -344,14 +344,10 @@ typedef std::vector<std::tuple<uint64_t, StringRef, uint8_t>> SectionSymbolsTy;
 static bool shouldKeep(object::SectionRef S) {
   if (FilterSections.empty())
     return true;
-
-  Expected<StringRef> SecNameOrErr = S.getName();
-  if (!SecNameOrErr) {
-    consumeError(SecNameOrErr.takeError());
+  StringRef SecName;
+  std::error_code error = S.getName(SecName);
+  if (error)
     return false;
-  }
-  StringRef SecName = *SecNameOrErr;
-
   // StringSet does not allow empty key so avoid adding sections with
   // no name (such as the section with index 0) here.
   if (!SecName.empty())
@@ -924,12 +920,10 @@ static void addPltEntries(const ObjectFile *Obj,
                           StringSaver &Saver) {
   Optional<SectionRef> Plt = None;
   for (const SectionRef &Section : Obj->sections()) {
-    Expected<StringRef> SecNameOrErr = Section.getName();
-    if (!SecNameOrErr) {
-      consumeError(SecNameOrErr.takeError());
+    StringRef Name;
+    if (Section.getName(Name))
       continue;
-    }
-    if (*SecNameOrErr == ".plt")
+    if (Name == ".plt")
       Plt = Section;
   }
   if (!Plt)
@@ -1212,8 +1206,9 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
       DataRefImpl DR = Section.getRawDataRefImpl();
       SegmentName = MachO->getSectionFinalSegmentName(DR);
     }
+    StringRef SectionName;
+    error(Section.getName(SectionName));
 
-    StringRef SectionName = unwrapOrError(Section.getName(), Obj->getFileName());
     // If the section has no symbol at the start, just insert a dummy one.
     if (Symbols.empty() || std::get<0>(Symbols[0]) != 0) {
       Symbols.insert(
@@ -1586,7 +1581,8 @@ void printRelocations(const ObjectFile *Obj) {
   }
 
   for (std::pair<SectionRef, std::vector<SectionRef>> &P : SecToRelSec) {
-    StringRef SecName = unwrapOrError(P.first.getName(), Obj->getFileName());
+    StringRef SecName;
+    error(P.first.getName(SecName));
     outs() << "RELOCATION RECORDS FOR [" << SecName << "]:\n";
 
     for (SectionRef Section : P.second) {
@@ -1658,7 +1654,8 @@ void printSectionHeaders(const ObjectFile *Obj) {
               "Idx Name          Size     VMA          Type\n";
 
   for (const SectionRef &Section : ToolSectionFilter(*Obj)) {
-    StringRef Name = unwrapOrError(Section.getName(), Obj->getFileName());
+    StringRef Name;
+    error(Section.getName(Name));
     uint64_t VMA = Section.getAddress();
     if (shouldAdjustVA(Section))
       VMA += AdjustVMA;
@@ -1685,7 +1682,8 @@ void printSectionHeaders(const ObjectFile *Obj) {
 
 void printSectionContents(const ObjectFile *Obj) {
   for (const SectionRef &Section : ToolSectionFilter(*Obj)) {
-    StringRef Name = unwrapOrError(Section.getName(), Obj->getFileName());
+    StringRef Name;
+    error(Section.getName(Name));
     uint64_t BaseAddr = Section.getAddress();
     uint64_t Size = Section.getSize();
     if (!Size)
@@ -1749,16 +1747,11 @@ void printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
     section_iterator Section = unwrapOrError(Symbol.getSection(), ArchiveName,
                                              FileName, ArchitectureName);
     StringRef Name;
-    if (Type == SymbolRef::ST_Debug && Section != O->section_end()) {
-      if (Expected<StringRef> NameOrErr = Section->getName())
-        Name = *NameOrErr;
-      else
-        consumeError(NameOrErr.takeError());
-
-    } else {
+    if (Type == SymbolRef::ST_Debug && Section != O->section_end())
+      Section->getName(Name);
+    else
       Name = unwrapOrError(Symbol.getName(), ArchiveName, FileName,
                            ArchitectureName);
-    }
 
     bool Global = Flags & SymbolRef::SF_Global;
     bool Weak = Flags & SymbolRef::SF_Weak;
@@ -1804,8 +1797,8 @@ void printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
         StringRef SegmentName = MachO->getSectionFinalSegmentName(DR);
         outs() << SegmentName << ",";
       }
-      StringRef SectionName =
-          unwrapOrError(Section->getName(), O->getFileName());
+      StringRef SectionName;
+      error(Section->getName(SectionName));
       outs() << SectionName;
     }
 
@@ -1878,11 +1871,7 @@ void printRawClangAST(const ObjectFile *Obj) {
   Optional<object::SectionRef> ClangASTSection;
   for (auto Sec : ToolSectionFilter(*Obj)) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Sec.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
-
+    Sec.getName(Name);
     if (Name == ClangASTSectionName) {
       ClangASTSection = Sec;
       break;
@@ -1914,11 +1903,7 @@ static void printFaultMaps(const ObjectFile *Obj) {
 
   for (auto Sec : ToolSectionFilter(*Obj)) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Sec.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
-
+    Sec.getName(Name);
     if (Name == FaultMapSectionName) {
       FaultMapSection = Sec;
       break;

@@ -442,7 +442,8 @@ static bool getPDataSection(const COFFObjectFile *Obj,
                             std::vector<RelocationRef> &Rels,
                             const RuntimeFunction *&RFStart, int &NumRFs) {
   for (const SectionRef &Section : Obj->sections()) {
-    StringRef Name = unwrapOrError(Section.getName(), Obj->getFileName());
+    StringRef Name;
+    error(Section.getName(Name));
     if (Name != ".pdata")
       continue;
 

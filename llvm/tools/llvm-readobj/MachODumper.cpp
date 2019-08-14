@@ -440,7 +440,10 @@ void MachODumper::printSectionHeaders(const MachOObjectFile *Obj) {
     MachOSection MOSection;
     getSection(Obj, Section.getRawDataRefImpl(), MOSection);
     DataRefImpl DR = Section.getRawDataRefImpl();
-    StringRef Name = unwrapOrError(Obj->getFileName(), Section.getName());
+
+    StringRef Name;
+    error(Section.getName(Name));
+
     ArrayRef<char> RawName = Obj->getSectionRawName(DR);
     StringRef SegmentName = Obj->getSectionFinalSegmentName(DR);
     ArrayRef<char> RawSegmentName = Obj->getSectionRawFinalSegmentName(DR);
@@ -491,7 +494,9 @@ void MachODumper::printRelocations() {
 
   std::error_code EC;
   for (const SectionRef &Section : Obj->sections()) {
-    StringRef Name = unwrapOrError(Obj->getFileName(), Section.getName());
+    StringRef Name;
+    error(Section.getName(Name));
+
     bool PrintedGroup = false;
     for (const RelocationRef &Reloc : Section.relocations()) {
       if (!PrintedGroup) {
@@ -536,8 +541,9 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
     }
   } else if (!IsScattered) {
     section_iterator SecI = Obj->getRelocationSection(DR);
-    if (SecI != Obj->section_end())
-      TargetName = unwrapOrError(Obj->getFileName(), SecI->getName());
+    if (SecI != Obj->section_end()) {
+      error(SecI->getName(TargetName));
+    }
   }
   if (TargetName.empty())
     TargetName = "-";
@@ -608,7 +614,7 @@ void MachODumper::printSymbol(const SymbolRef &Symbol) {
   error(errorToErrorCode(SecIOrErr.takeError()));
   section_iterator SecI = *SecIOrErr;
   if (SecI != Obj->section_end())
-    SectionName = unwrapOrError(Obj->getFileName(), SecI->getName());
+    error(SecI->getName(SectionName));
 
   DictScope D(W, "Symbol");
   W.printNumber("Name", SymbolName, MOSymbol.StringIndex);
@@ -638,11 +644,7 @@ void MachODumper::printStackMap() const {
   object::SectionRef StackMapSection;
   for (auto Sec : Obj->sections()) {
     StringRef Name;
-    if (Expected<StringRef> NameOrErr = Sec.getName())
-      Name = *NameOrErr;
-    else
-      consumeError(NameOrErr.takeError());
-
+    Sec.getName(Name);
     if (Name == "__llvm_stackmaps") {
       StackMapSection = Sec;
       break;
