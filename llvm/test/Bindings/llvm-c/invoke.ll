@@ -55,12 +55,12 @@ catch:                                            ; preds = %unwind5, %unwind3, 
   ret i32 %merge
 
 unwind3:                                          ; preds = %landingPad
-  %8 = tail call i32 @llvm.eh.typeid.for(i8* nonnull bitcast (%C6object9ClassInfo* @C6object9Exception__ClassInfo to i8*))
+  %8 = musttail call i32 @llvm.eh.typeid.for(i8* nonnull bitcast (%C6object9ClassInfo* @C6object9Exception__ClassInfo to i8*))
   %9 = icmp eq i32 %8, %5
   br i1 %9, label %catch, label %unwind5
 
 unwind5:                                          ; preds = %unwind3
-  %10 = tail call i32 @llvm.eh.typeid.for(i8* nonnull bitcast (%C6object9ClassInfo* @C6object9Throwable__ClassInfo to i8*))
+  %10 = notail call i32 @llvm.eh.typeid.for(i8* nonnull bitcast (%C6object9ClassInfo* @C6object9Throwable__ClassInfo to i8*))
   %11 = icmp eq i32 %10, %5
   br i1 %11, label %catch, label %unwind7
 

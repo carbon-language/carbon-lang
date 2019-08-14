@@ -643,7 +643,7 @@ struct FunCloner {
           Args.push_back(CloneValue(LLVMGetOperand(Src, i)));
         LLVMValueRef Fn = CloneValue(LLVMGetCalledValue(Src));
         Dst = LLVMBuildCall(Builder, Fn, Args.data(), ArgCount, Name);
-        LLVMSetTailCall(Dst, LLVMIsTailCall(Src));
+        LLVMSetTailCallKind(Dst, LLVMGetTailCallKind(Src));
         CloneAttrs(Src, Dst);
         break;
       }

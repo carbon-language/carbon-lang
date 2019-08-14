@@ -2844,6 +2844,39 @@ void LLVMSetTailCall(LLVMValueRef Call, LLVMBool isTailCall) {
   unwrap<CallInst>(Call)->setTailCall(isTailCall);
 }
 
+LLVMTailCallKind LLVMGetTailCallKind(LLVMValueRef Call) {
+  switch (unwrap<CallInst>(Call)->getTailCallKind()) {
+  case CallInst::TailCallKind::TCK_None:
+    return LLVMTailCallKindNone;
+  case CallInst::TailCallKind::TCK_Tail:
+    return LLVMTailCallKindTail;
+  case CallInst::TailCallKind::TCK_MustTail:
+    return LLVMTailCallKindMustTail;
+  case CallInst::TailCallKind::TCK_NoTail:
+    return LLVMTailCallKindNoTail;
+  }
+}
+
+void LLVMSetTailCallKind(LLVMValueRef Call, LLVMTailCallKind TCK) {
+  CallInst::TailCallKind kind;
+  switch (TCK) {
+  case LLVMTailCallKindNone:
+    kind = CallInst::TailCallKind::TCK_None;
+    break;
+  case LLVMTailCallKindTail:
+    kind = CallInst::TailCallKind::TCK_Tail;
+    break;
+  case LLVMTailCallKindMustTail:
+    kind = CallInst::TailCallKind::TCK_MustTail;
+    break;
+  case LLVMTailCallKindNoTail:
+    kind = CallInst::TailCallKind::TCK_NoTail;
+    break;
+  }
+
+  unwrap<CallInst>(Call)->setTailCallKind(kind);
+}
+
 /*--.. Operations on invoke instructions (only) ............................--*/
 
 LLVMBasicBlockRef LLVMGetNormalDest(LLVMValueRef Invoke) {
