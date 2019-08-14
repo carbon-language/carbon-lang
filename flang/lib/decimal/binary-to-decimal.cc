@@ -319,7 +319,6 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
       }
       number.Minimize(Big{less, rounding}, Big{more, rounding});
     }
-    number.Clamp(digits);  // todo pmk retain Clamp?
     return number.ConvertToDecimal(buffer, size, flags, digits);
   }
 }

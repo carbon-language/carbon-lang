@@ -143,15 +143,9 @@ public:
     ++exponent_;
   }
 
-  // Multiply by 2 and add an incoming carry (pmk: simplify now that it's 2)
-  template<int N> void MultiplyAndAdd(int carry = 0) {
-    static_assert(N > 1 && N < 16);
-    HostUnsignedIntType<precision + 4> v{value_}, g{guard_};
-    g *= N;
-    guard_ = (guard_ & 1) | (g & mask);
-    g >>= precision;
-    v *= N;
-    v += g + carry;
+  void DoubleAndAdd(int carry = 0) {
+    HostUnsignedIntType<precision + 1> v;
+    v = value_ + value_ + carry;
     value_ = v & mask;
     for (v >>= precision; v > 0; v >>= 1) {
       ShiftDown();
@@ -171,7 +165,7 @@ public:
       bool isNegative, enum FortranRounding) const;
 
 private:
-  IntType value_{0}, guard_{0};
+  IntType value_{0}, guard_{0};  // todo pmk: back to 3-bit guard
   int exponent_{0};
 };
 
@@ -340,9 +334,9 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
     if (carry != 0 && exponent_ < 0) {
       digit_[digits_++] = carry;
       exponent_ += log10Radix;
-      f.template MultiplyAndAdd<2>(0);
+      f.DoubleAndAdd(0);
     } else {
-      f.template MultiplyAndAdd<2>(carry);
+      f.DoubleAndAdd(carry);
     }
   }
   if (!IsZero()) {

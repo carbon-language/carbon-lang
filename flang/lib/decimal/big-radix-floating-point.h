@@ -79,15 +79,6 @@ public:
     return *this;
   }
 
-  BigRadixFloatingPointNumber &Clamp(int decimals) {
-    if (decimals >= maxDigits * log10Radix) {
-      digitLimit_ = maxDigits;
-    } else {
-      digitLimit_ = (decimals + log10Radix - 1) / log10Radix;
-    }
-    return *this;
-  }
-
   // Reads a character representation of a floating-point value into
   // this decimal floating-point representation.  The reference argument
   // is a pointer that is left pointing to the first character that wasn't
