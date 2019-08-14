@@ -261,7 +261,7 @@ struct AssignedGotoStmt;
 struct PauseStmt;
 struct OpenMPConstruct;
 struct OpenMPDeclarativeConstruct;
-struct OpenMPEndLoopDirective;
+struct OmpEndLoopDirective;
 
 // Cooked character stream locations
 using Location = const char *;
@@ -513,7 +513,7 @@ struct ExecutableConstruct {
       common::Indirection<WhereConstruct>, common::Indirection<ForallConstruct>,
       common::Indirection<CompilerDirective>,
       common::Indirection<OpenMPConstruct>,
-      common::Indirection<OpenMPEndLoopDirective>>
+      common::Indirection<OmpEndLoopDirective>>
       u;
 };
 
@@ -3709,12 +3709,14 @@ struct OpenMPStandaloneConstruct {
       u;
 };
 
-// DO / DO SIMD
-WRAPPER_CLASS(OmpEndDoSimd, std::optional<OmpNowait>);
-WRAPPER_CLASS(OmpEndDo, std::optional<OmpNowait>);
-struct OpenMPEndLoopDirective {
-  UNION_CLASS_BOILERPLATE(OpenMPEndLoopDirective);
-  std::variant<OmpEndDoSimd, OmpEndDo, OmpLoopDirective> u;
+struct OmpBeginLoopDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpBeginLoopDirective);
+  std::tuple<OmpLoopDirective, OmpClauseList> t;
+};
+
+struct OmpEndLoopDirective {
+  TUPLE_CLASS_BOILERPLATE(OmpEndLoopDirective);
+  std::tuple<OmpLoopDirective, OmpClauseList> t;
 };
 
 struct OmpBeginBlockDirective {
@@ -3734,7 +3736,11 @@ struct OpenMPBlockConstruct {
 
 struct OpenMPLoopConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPLoopConstruct);
-  std::tuple<OmpLoopDirective, OmpClauseList> t;
+  OpenMPLoopConstruct(OmpBeginLoopDirective &&a)
+    : t({std::move(a), std::nullopt, std::nullopt}) {}
+  std::tuple<OmpBeginLoopDirective, std::optional<DoConstruct>,
+      std::optional<OmpEndLoopDirective>>
+      t;
 };
 
 struct OpenMPConstruct {

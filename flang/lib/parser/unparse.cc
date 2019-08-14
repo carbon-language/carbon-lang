@@ -2254,18 +2254,6 @@ public:
     Put(")\n");
     EndOpenMP();
   }
-  void Unparse(const OmpEndDoSimd &x) {
-    BeginOpenMP();
-    Word("DO SIMD ");
-    Walk(x.v);
-    EndOpenMP();
-  }
-  void Unparse(const OmpEndDo &x) {
-    BeginOpenMP();
-    Word("DO ");
-    Walk(x.v);
-    EndOpenMP();
-  }
   void Unparse(const OmpSectionsDirective &x) {
     switch (x.v) {
     case OmpSectionsDirective::Directive::Sections: Word("SECTIONS "); break;
@@ -2318,12 +2306,11 @@ public:
     Put("\n");
     EndOpenMP();
   }
-  bool Pre(const OpenMPEndLoopDirective &x) {
+  void Unparse(const OmpEndLoopDirective &x) {
     BeginOpenMP();
     Word("!$OMP END ");
-    return true;
-  }
-  void Post(const OpenMPEndLoopDirective &x) {
+    Walk(std::get<OmpLoopDirective>(x.t));
+    Walk(std::get<OmpClauseList>(x.t));
     Put("\n");
     EndOpenMP();
   }
@@ -2352,8 +2339,7 @@ public:
   void Unparse(const OpenMPLoopConstruct &x) {
     BeginOpenMP();
     Word("!$OMP ");
-    Walk(std::get<OmpLoopDirective>(x.t));
-    Walk(std::get<OmpClauseList>(x.t));
+    Walk(std::get<OmpBeginLoopDirective>(x.t));
     Put("\n");
     EndOpenMP();
   }

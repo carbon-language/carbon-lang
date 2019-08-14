@@ -150,6 +150,6 @@ constexpr Parser<ContainsStmt> containsStmt;  // R1543
 constexpr Parser<CompilerDirective> compilerDirective;
 constexpr Parser<OpenMPConstruct> openmpConstruct;
 constexpr Parser<OpenMPDeclarativeConstruct> openmpDeclarativeConstruct;
-constexpr Parser<OpenMPEndLoopDirective> openmpEndLoopDirective;
+constexpr Parser<OmpEndLoopDirective> ompEndLoopDirective;
 }
 #endif  // FORTRAN_PARSER_TYPE_PARSERS_H_

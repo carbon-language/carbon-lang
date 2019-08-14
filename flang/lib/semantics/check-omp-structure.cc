@@ -70,8 +70,9 @@ void OmpStructureChecker::Enter(const parser::OpenMPConstruct &x) {
 }
 
 void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
-  const auto &dir{std::get<parser::OmpLoopDirective>(x.t)};
-  switch (dir.v) {
+  const auto &beginLoopDir{std::get<parser::OmpBeginLoopDirective>(x.t)};
+  const auto &beginDir{std::get<parser::OmpLoopDirective>(beginLoopDir.t)};
+  switch (beginDir.v) {
   // 2.7.1 do-clause -> private-clause |
   //                    firstprivate-clause |
   //                    lastprivate-clause |
@@ -82,13 +83,13 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   //                    ordered-clause
   case parser::OmpLoopDirective::Directive::Do: {
     // nesting check
-    HasInvalidWorksharingNesting(dir.source,
+    HasInvalidWorksharingNesting(beginDir.source,
         {OmpDirective::DO, OmpDirective::SECTIONS, OmpDirective::SINGLE,
             OmpDirective::WORKSHARE, OmpDirective::TASK, OmpDirective::TASKLOOP,
             OmpDirective::CRITICAL, OmpDirective::ORDERED, OmpDirective::ATOMIC,
             OmpDirective::MASTER});
 
-    PushContext(dir.source, OmpDirective::DO);
+    PushContext(beginDir.source, OmpDirective::DO);
     OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
         OmpClause::LASTPRIVATE, OmpClause::LINEAR, OmpClause::REDUCTION};
     SetContextAllowed(allowed);
@@ -100,7 +101,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   // 2.11.1 parallel-do-clause -> parallel-clause |
   //                              do-clause
   case parser::OmpLoopDirective::Directive::ParallelDo: {
-    PushContext(dir.source, OmpDirective::PARALLEL_DO);
+    PushContext(beginDir.source, OmpDirective::PARALLEL_DO);
     OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
         OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
         OmpClause::REDUCTION, OmpClause::LASTPRIVATE, OmpClause::LINEAR};
@@ -120,7 +121,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   //                      reduction-clause |
   //                      collapse-clause
   case parser::OmpLoopDirective::Directive::Simd: {
-    PushContext(dir.source, OmpDirective::SIMD);
+    PushContext(beginDir.source, OmpDirective::SIMD);
     OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
         OmpClause::PRIVATE, OmpClause::LASTPRIVATE, OmpClause::REDUCTION};
     SetContextAllowed(allowed);
@@ -132,7 +133,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   // 2.8.3 do-simd-clause -> do-clause |
   //                         simd-clause
   case parser::OmpLoopDirective::Directive::DoSimd: {
-    PushContext(dir.source, OmpDirective::DO_SIMD);
+    PushContext(beginDir.source, OmpDirective::DO_SIMD);
     OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
         OmpClause::LASTPRIVATE, OmpClause::LINEAR, OmpClause::REDUCTION,
         OmpClause::ALIGNED};
@@ -145,7 +146,7 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   // 2.11.4 parallel-do-simd-clause -> parallel-clause |
   //                                   do-simd-clause
   case parser::OmpLoopDirective::Directive::ParallelDoSimd: {
-    PushContext(dir.source, OmpDirective::PARALLEL_DO_SIMD);
+    PushContext(beginDir.source, OmpDirective::PARALLEL_DO_SIMD);
     OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
         OmpClause::FIRSTPRIVATE, OmpClause::SHARED, OmpClause::COPYIN,
         OmpClause::REDUCTION, OmpClause::LASTPRIVATE, OmpClause::LINEAR,
@@ -165,6 +166,26 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
 
 void OmpStructureChecker::Leave(const parser::OpenMPLoopConstruct &) {
   ompContext_.pop_back();
+}
+
+void OmpStructureChecker::Enter(const parser::OmpEndLoopDirective &x) {
+  const auto &dir{std::get<parser::OmpLoopDirective>(x.t)};
+  ResetPartialContext(dir.source);
+  switch (dir.v) {
+  // 2.7.1 end-do -> END DO [nowait-clause]
+  // 2.8.3 end-do-simd -> END DO SIMD [nowait-clause]
+  case parser::OmpLoopDirective::Directive::Do:
+    SetContextDirectiveEnum(OmpDirective::END_DO);
+    SetContextAllowed(OmpClauseSet{OmpClause::NOWAIT});
+    break;
+  case parser::OmpLoopDirective::Directive::DoSimd:
+    SetContextDirectiveEnum(OmpDirective::END_DO_SIMD);
+    SetContextAllowed(OmpClauseSet{OmpClause::NOWAIT});
+    break;
+  default:
+    // no clauses are allowed
+    break;
+  }
 }
 
 void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
