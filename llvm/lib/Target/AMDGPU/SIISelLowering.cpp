@@ -178,6 +178,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::STORE, MVT::v32i32, Custom);
 
   setTruncStoreAction(MVT::v2i32, MVT::v2i16, Expand);
+  setTruncStoreAction(MVT::v3i32, MVT::v3i16, Expand);
   setTruncStoreAction(MVT::v4i32, MVT::v4i16, Expand);
   setTruncStoreAction(MVT::v8i32, MVT::v8i16, Expand);
   setTruncStoreAction(MVT::v16i32, MVT::v16i16, Expand);
@@ -215,6 +216,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i8, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i8, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i16, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v3i16, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i16, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Custom);
 
