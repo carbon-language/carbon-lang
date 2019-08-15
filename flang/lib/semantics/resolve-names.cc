@@ -73,8 +73,10 @@ public:
   void set_inheritFromParent(bool x) { inheritFromParent_ = x; }
   // Get the implicit type for identifiers starting with ch. May be null.
   const DeclTypeSpec *GetType(char ch) const;
-  // Record the implicit type for this range of characters.
-  void SetType(const DeclTypeSpec &type, parser::Location lo, parser::Location);
+  // Record the implicit type for the range of characters [fromLetter,
+  // toLetter].
+  void SetTypeMapping(const DeclTypeSpec &type, parser::Location fromLetter,
+      parser::Location toLetter);
 
 private:
   static char Incr(char ch);
@@ -1145,15 +1147,15 @@ const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   }
 }
 
-void ImplicitRules::SetType(
-    const DeclTypeSpec &type, parser::Location lo, parser::Location hi) {
-  for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
+void ImplicitRules::SetTypeMapping(const DeclTypeSpec &type,
+    parser::Location fromLetter, parser::Location toLetter) {
+  for (char ch = *fromLetter; ch; ch = ImplicitRules::Incr(ch)) {
     auto res{map_.emplace(ch, &type)};
     if (!res.second) {
-      context_.Say(parser::CharBlock{lo},
+      context_.Say(parser::CharBlock{fromLetter},
           "More than one implicit type specified for '%c'"_err_en_US, ch);
     }
-    if (ch == *hi) {
+    if (ch == *toLetter) {
       break;
     }
   }
@@ -1417,7 +1419,7 @@ bool ImplicitRulesVisitor::Pre(const parser::LetterSpec &x) {
       return false;
     }
   }
-  implicitRules().SetType(*GetDeclTypeSpec(), loLoc, hiLoc);
+  implicitRules().SetTypeMapping(*GetDeclTypeSpec(), loLoc, hiLoc);
   return false;
 }
 
@@ -1768,18 +1770,16 @@ static bool NeedsType(const Symbol &symbol) {
 }
 void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   if (NeedsType(symbol)) {
-    if (const auto *type{GetImplicitType(symbol)}) {
+    if (const DeclTypeSpec * type{GetImplicitType(symbol)}) {
       symbol.set(Symbol::Flag::Implicit);
       symbol.SetType(*type);
+    } else if (symbol.has<ProcEntityDetails>() &&
+        !symbol.attrs().test(Attr::EXTERNAL) &&
+        context().intrinsics().IsIntrinsic(symbol.name().ToString())) {
+      // type will be determined in expression semantics
+      symbol.attrs().set(Attr::INTRINSIC);
     } else {
-      if (symbol.has<ProcEntityDetails>() &&
-          !symbol.attrs().test(Attr::EXTERNAL) &&
-          context().intrinsics().IsIntrinsic(symbol.name().ToString())) {
-        // type will be determined in expression semantics
-        symbol.attrs().set(Attr::INTRINSIC);
-      } else {
-        Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
-      }
+      Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
     }
   }
 }
