@@ -26200,7 +26200,8 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget &Subtarget,
           SrcVT == MVT::i64) && "Unexpected VT!");
 
   assert(Subtarget.hasSSE2() && "Requires at least SSE2!");
-  if (DstVT != MVT::f64 && DstVT != MVT::i64 &&
+  if (DstVT != MVT::i64 &&
+      !(DstVT == MVT::f64 && SrcVT == MVT::i64) &&
       !(DstVT == MVT::x86mmx && SrcVT.isVector()))
     // This conversion needs to be expanded.
     return SDValue();
