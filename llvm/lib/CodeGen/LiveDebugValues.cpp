@@ -898,8 +898,8 @@ void LiveDebugValues::transferRegisterCopy(MachineInstr &MI,
     return false;
   };
 
-  unsigned SrcReg = SrcRegOp->getReg();
-  unsigned DestReg = DestRegOp->getReg();
+  Register SrcReg = SrcRegOp->getReg();
+  Register DestReg = DestRegOp->getReg();
 
   // We want to recognize instructions where destination register is callee
   // saved register. If register that could be clobbered by the call is
@@ -1182,7 +1182,7 @@ bool LiveDebugValues::ExtendRanges(MachineFunction &MF) {
 
   const TargetLowering *TLI = MF.getSubtarget().getTargetLowering();
   unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
-  unsigned FP = TRI->getFrameRegister(MF);
+  Register FP = TRI->getFrameRegister(MF);
   auto IsRegOtherThanSPAndFP = [&](const MachineOperand &Op) -> bool {
     return Op.isReg() && Op.getReg() != SP && Op.getReg() != FP;
   };

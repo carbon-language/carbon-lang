@@ -332,7 +332,7 @@ GISelInstProfileBuilder::addNodeIDFlag(unsigned Flag) const {
 const GISelInstProfileBuilder &GISelInstProfileBuilder::addNodeIDMachineOperand(
     const MachineOperand &MO) const {
   if (MO.isReg()) {
-    unsigned Reg = MO.getReg();
+    Register Reg = MO.getReg();
     if (!MO.isDef())
       addNodeIDRegNum(Reg);
     LLT Ty = MRI.getType(Reg);
