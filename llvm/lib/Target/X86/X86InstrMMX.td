@@ -574,7 +574,7 @@ def MMX_X86movdq2q : SDNode<"X86ISD::MOVDQ2Q", SDTypeProfile<1, 1,
 def : Pat<(x86mmx (MMX_X86movdq2q VR128:$src)),
           (x86mmx (MMX_MOVDQ2Qrr VR128:$src))>;
 
-def : Pat<(x86mmx (MMX_X86movdq2q (loadv2i64 addr:$src))),
+def : Pat<(x86mmx (MMX_X86movdq2q (v2i64 (nonvolatile_load addr:$src)))),
           (x86mmx (MMX_MOVQ64rm addr:$src))>;
 
 // Misc.
