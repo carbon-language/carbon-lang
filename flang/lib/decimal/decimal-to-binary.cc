@@ -380,6 +380,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(const char *&p) {
       }
       if (toupper(q[0]) == 'I' && toupper(q[1]) == 'N' &&
           toupper(q[2]) == 'F') {
+        p = q + 3;
         return {Binary(isNegative ? negInf : inf)};
       } else {
         // Invalid input

@@ -20,20 +20,12 @@ target_link_libraries(quick-sanity-test
   FortranDecimal
 )
 
-# add_executable(thorough-test
-#   thorough-test.cc
-# )
+add_executable(thorough-test
+  thorough-test.cc
+)
 
-# target_link_libraries(thorough-test
-#   FortranDecimal
-# )
-
-# add_executable(benchmark01
-#   benchmark01.cc
-# )
-
-# target_link_libraries(benchmark01
-#   FortranDecimal
-# )
+target_link_libraries(thorough-test
+  FortranDecimal
+)
 
 add_test(Sanity quick-sanity-test)

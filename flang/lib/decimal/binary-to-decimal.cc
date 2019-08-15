@@ -301,8 +301,13 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size, int flags,
   if (x.IsNaN()) {
     return {"NaN", 3, 0, Invalid};
   } else if (x.IsInfinite()) {
-    return {x.IsNegative() ? "-Inf" : (flags & AlwaysSign) ? "+Inf" : "Inf", 4,
-        0, Exact};
+    if (x.IsNegative()) {
+      return {"-Inf", 4, 0, Exact};
+    } else if (flags & AlwaysSign) {
+      return {"+Inf", 4, 0, Exact};
+    } else {
+      return {"Inf", 3, 0, Exact};
+    }
   } else {
     using Big = BigRadixFloatingPointNumber<PREC>;
     Big number{x, rounding};

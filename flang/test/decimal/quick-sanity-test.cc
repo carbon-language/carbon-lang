@@ -57,13 +57,21 @@ void testReadback(float x, int flags) {
     if (*q == '-' || *q == '+') {
       ++expo;
     }
-    std::sprintf(q + result.length, "e%d", expo);
+    if (q >= buffer && q < buffer + sizeof buffer) {
+      std::sprintf(q + result.length, "e%d", expo);
+    }
     const char *p{q};
-    auto flags{ConvertDecimalToFloat(&p, &y, RoundNearest)};
-    if (x != y || *p != '\0' || (flags & Invalid)) {
-      failed(x) << ' ' << flags << ": -> '" << buffer << "' -> 0x" << std::hex
-                << *reinterpret_cast<std::uint32_t *>(&y) << std::dec << " '"
-                << p << "'\n";
+    auto rflags{ConvertDecimalToFloat(&p, &y, RoundNearest)};
+    if (!(x == x)) {
+      if (y == y || *p != '\0' || (rflags & Invalid)) {
+        failed(x) << " (NaN) " << flags << ": -> '" << result.str << "' -> 0x"
+                  << std::hex << *reinterpret_cast<std::uint32_t *>(&y)
+                  << std::dec << " '" << p << "' " << rflags << '\n';
+      }
+    } else if (x != y || *p != '\0' || (rflags & Invalid)) {
+      failed(x) << ' ' << flags << ": -> '" << result.str << "' -> 0x"
+                << std::hex << *reinterpret_cast<std::uint32_t *>(&y)
+                << std::dec << " '" << p << "' " << rflags << '\n';
     }
   }
 }
@@ -110,7 +118,7 @@ int main() {
     testReadback(x, Minimize);
     testReadback(-x, Minimize);
   }
-  for (*ix = 0x7f7ffff0; *ix < 0x7f800000; ++*ix) {
+  for (*ix = 0x7f7ffff0; *ix < 0x7f800010; ++*ix) {
     testReadback(x, 0);
     testReadback(-x, 0);
     testReadback(x, Minimize);
