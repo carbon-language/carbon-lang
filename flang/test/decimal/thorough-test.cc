@@ -29,13 +29,12 @@ std::ostream &failed(float x) {
 
 void testReadback(float x, int flags) {
   char buffer[1024];
-  ++tests;
-  if (!(tests & 0xffff)) {
+  if (!(tests & 0x3fffff)) {
+    std::cerr << "\n0x" << std::hex << *reinterpret_cast<std::uint32_t *>(&x) << std::dec << ' ';
+  } else if (!(tests & 0xffff)) {
     std::cerr << '.';
   }
-  if (!(tests & 0x3fffff)) {
-    std::cerr << '\n';
-  }
+  ++tests;
   auto result{ConvertFloatToDecimal(buffer, sizeof buffer,
       static_cast<enum DecimalConversionFlags>(flags), 1024, RoundNearest, x)};
   if (result.str == nullptr) {
@@ -43,12 +42,14 @@ void testReadback(float x, int flags) {
   } else {
     float y{0};
     char *q{const_cast<char *>(result.str)};
-    int expo{result.decimalExponent};
-    expo -= result.length;
-    if (*q == '-' || *q == '+') {
-      ++expo;
+    if ((*q >= '0' && *q <= '9') || ((*q == '-' || *q == '+') && q[1] >= '0' && q[1] <= '9')) {
+      int expo{result.decimalExponent};
+      expo -= result.length;
+      if (*q == '-' || *q == '+') {
+        ++expo;
+      }
+      std::sprintf(q + result.length, "e%d", expo);
     }
-    std::sprintf(q + result.length, "e%d", expo);
     const char *p{q};
     auto rflags{ConvertDecimalToFloat(&p, &y, RoundNearest)};
     if (!(x == x)) {
@@ -68,7 +69,7 @@ void testReadback(float x, int flags) {
 int main() {
   float x;
   std::uint32_t *ix{reinterpret_cast<std::uint32_t *>(&x)};
-  for (*ix = 0; *ix < 0x7f800010; ++*ix) {
+  for (*ix = 0x7f7ffff0 /*pmk!! 0*/; *ix < 0x7f800010; ++*ix) {
     testReadback(x, 0);
     testReadback(-x, 0);
     testReadback(x, Minimize);

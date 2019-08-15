@@ -39,6 +39,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
   while (*q == '0') {
     ++q;
   }
+  // TODO pmk replace with faster idea
   for (; *q >= '0' && *q <= '9' && !IsFull(); ++q) {
     MultiplyBy<10>(*q - '0');
   }

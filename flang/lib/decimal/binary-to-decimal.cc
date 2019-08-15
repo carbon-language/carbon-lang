@@ -114,7 +114,7 @@ template<int PREC, int LOG10RADIX>
 ConversionToDecimalResult
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(
     char *buffer, std::size_t n, int flags, int maxDigits) const {
-  if (n < 3 + digits_ * LOG10RADIX || maxDigits < 1) {
+  if (n < static_cast<std::size_t>(3 + digits_ * LOG10RADIX) || maxDigits < 1) {
     return {nullptr, 0, 0, Overflow};
   }
   char *start{buffer};
