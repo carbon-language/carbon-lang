@@ -38,9 +38,8 @@ void Scheduler::dump() const {
 #endif
 
 Scheduler::Status Scheduler::isAvailable(const InstRef &IR) {
-  const InstrDesc &Desc = IR.getInstruction()->getDesc();
-
-  ResourceStateEvent RSE = Resources->canBeDispatched(Desc.UsedBuffers);
+  ResourceStateEvent RSE =
+      Resources->canBeDispatched(IR.getInstruction()->getUsedBuffers());
   HadTokenStall = RSE != RS_BUFFER_AVAILABLE;
 
   switch (RSE) {
@@ -106,7 +105,7 @@ void Scheduler::issueInstruction(
   bool HasDependentUsers = Inst.hasDependentUsers();
   HasDependentUsers |= Inst.isMemOp() && LSU.hasDependentUsers(IR);
 
-  Resources->releaseBuffers(Inst.getDesc().UsedBuffers);
+  Resources->releaseBuffers(Inst.getUsedBuffers());
   issueInstructionImpl(IR, UsedResources);
   // Instructions that have been issued during this cycle might have unblocked
   // other dependent instructions. Dependent instructions may be issued during
@@ -300,8 +299,7 @@ bool Scheduler::mustIssueImmediately(const InstRef &IR) const {
 
 bool Scheduler::dispatch(InstRef &IR) {
   Instruction &IS = *IR.getInstruction();
-  const InstrDesc &Desc = IS.getDesc();
-  Resources->reserveBuffers(Desc.UsedBuffers);
+  Resources->reserveBuffers(IS.getUsedBuffers());
 
   // If necessary, reserve queue entries in the load-store unit (LSU).
   if (IS.isMemOp())

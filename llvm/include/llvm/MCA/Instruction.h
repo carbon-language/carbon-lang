@@ -417,6 +417,7 @@ public:
   const InstrDesc &getDesc() const { return Desc; }
 
   unsigned getLatency() const { return Desc.MaxLatency; }
+  unsigned getNumMicroOps() const { return Desc.NumMicroOps; }
 
   bool hasDependentUsers() const {
     return any_of(Defs,
@@ -466,6 +467,12 @@ class Instruction : public InstructionBase {
   // operation.
   unsigned LSUTokenID;
 
+  // A resource mask which identifies buffered resources consumed by this
+  // instruction at dispatch stage. In the absence of macro-fusion, this value
+  // should always match the value of field `UsedBuffers` from the instruction
+  // descriptor (see field InstrBase::Desc).
+  uint64_t UsedBuffers;
+
   // Critical register dependency.
   CriticalDependency CriticalRegDep;
 
@@ -483,12 +490,18 @@ class Instruction : public InstructionBase {
 public:
   Instruction(const InstrDesc &D)
       : InstructionBase(D), Stage(IS_INVALID), CyclesLeft(UNKNOWN_CYCLES),
-        RCUTokenID(0), LSUTokenID(0), CriticalRegDep(), CriticalMemDep(),
-        CriticalResourceMask(0), IsEliminated(false) {}
+        RCUTokenID(0), LSUTokenID(0), UsedBuffers(D.UsedBuffers),
+        CriticalRegDep(), CriticalMemDep(), CriticalResourceMask(0),
+        IsEliminated(false) {}
 
   unsigned getRCUTokenID() const { return RCUTokenID; }
   unsigned getLSUTokenID() const { return LSUTokenID; }
   void setLSUTokenID(unsigned LSUTok) { LSUTokenID = LSUTok; }
+
+  uint64_t getUsedBuffers() const { return UsedBuffers; }
+  void setUsedBuffers(uint64_t Mask) { UsedBuffers = Mask; }
+  void clearUsedBuffers() { UsedBuffers = 0ULL; }
+
   int getCyclesLeft() const { return CyclesLeft; }
 
   // Transition to the dispatch stage, and assign a RCUToken to this

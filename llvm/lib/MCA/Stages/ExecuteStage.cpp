@@ -56,12 +56,13 @@ Error ExecuteStage::issueInstruction(InstRef &IR) {
   SmallVector<InstRef, 4> Ready;
 
   HWS.issueInstruction(IR, Used, Pending, Ready);
-  NumIssuedOpcodes += IR.getInstruction()->getDesc().NumMicroOps;
+  Instruction &IS = *IR.getInstruction();
+  NumIssuedOpcodes += IS.getNumMicroOps();
 
   notifyReservedOrReleasedBuffers(IR, /* Reserved */ false);
 
   notifyInstructionIssued(IR, Used);
-  if (IR.getInstruction()->isExecuted()) {
+  if (IS.isExecuted()) {
     notifyInstructionExecuted(IR);
     // FIXME: add a buffer of executed instructions.
     if (Error S = moveToTheNextStage(IR))
@@ -199,7 +200,8 @@ Error ExecuteStage::execute(InstRef &IR) {
   // units have been consumed.
   bool IsReadyInstruction = HWS.dispatch(IR);
   const Instruction &Inst = *IR.getInstruction();
-  NumDispatchedOpcodes += Inst.getDesc().NumMicroOps;
+  unsigned NumMicroOps = Inst.getNumMicroOps();
+  NumDispatchedOpcodes += NumMicroOps;
   notifyReservedOrReleasedBuffers(IR, /* Reserved */ true);
  
   if (!IsReadyInstruction) {
