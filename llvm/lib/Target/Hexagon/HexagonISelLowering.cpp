@@ -870,15 +870,20 @@ SDValue
 HexagonTargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
   SDValue PredOp = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1), Op2 = Op.getOperand(2);
-  EVT OpVT = Op1.getValueType();
-  SDLoc DL(Op);
+  MVT OpTy = ty(Op1);
+  const SDLoc &dl(Op);
 
-  if (OpVT == MVT::v2i16) {
-    SDValue X1 = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::v2i32, Op1);
-    SDValue X2 = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::v2i32, Op2);
-    SDValue SL = DAG.getNode(ISD::VSELECT, DL, MVT::v2i32, PredOp, X1, X2);
-    SDValue TR = DAG.getNode(ISD::TRUNCATE, DL, MVT::v2i16, SL);
-    return TR;
+  if (OpTy == MVT::v2i16 || OpTy == MVT::v4i8) {
+    MVT ElemTy = OpTy.getVectorElementType();
+    assert(ElemTy.isScalarInteger());
+    MVT WideTy = MVT::getVectorVT(MVT::getIntegerVT(2*ElemTy.getSizeInBits()),
+                                  OpTy.getVectorNumElements());
+    // Generate (trunc (select (_, sext, sext))).
+    return DAG.getSExtOrTrunc(
+              DAG.getSelect(dl, WideTy, PredOp,
+                            DAG.getSExtOrTrunc(Op1, dl, WideTy),
+                            DAG.getSExtOrTrunc(Op2, dl, WideTy)),
+              dl, OpTy);
   }
 
   return SDValue();
@@ -1506,6 +1511,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   // Custom-lower bitcasts from i8 to v8i1.
   setOperationAction(ISD::BITCAST,        MVT::i8,    Custom);
   setOperationAction(ISD::SETCC,          MVT::v2i16, Custom);
+  setOperationAction(ISD::VSELECT,        MVT::v4i8,  Custom);
   setOperationAction(ISD::VSELECT,        MVT::v2i16, Custom);
   setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i8,  Custom);
   setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i16, Custom);
