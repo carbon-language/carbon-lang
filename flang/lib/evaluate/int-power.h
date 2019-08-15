@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,14 +40,15 @@ ValueWithRealFlags<REAL> TimesIntPowerOf(const REAL &factor, const REAL &base,
     for (int j{0}; j < nbits; ++j) {
       if (absPower.BTEST(j)) {
         if (negativePower) {
-          result.value =
-              result.value.Divide(squares).AccumulateFlags(result.flags);
+          result.value = result.value.Divide(squares, rounding)
+                             .AccumulateFlags(result.flags);
         } else {
-          result.value =
-              result.value.Multiply(squares).AccumulateFlags(result.flags);
+          result.value = result.value.Multiply(squares, rounding)
+                             .AccumulateFlags(result.flags);
         }
       }
-      squares = squares.Multiply(squares).AccumulateFlags(result.flags);
+      squares =
+          squares.Multiply(squares, rounding).AccumulateFlags(result.flags);
     }
   }
   return result;

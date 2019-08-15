@@ -822,8 +822,8 @@ LabeledStatementInfoTuplePOD GetLabel(
 
 // 11.1.7.3
 void CheckBranchesIntoDoBody(const SourceStmtList &branches,
-    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
-    const IndexList &loopBodies, SemanticsContext &context) {
+    const TargetStmtMap &labels, const IndexList &loopBodies,
+    SemanticsContext &context) {
   for (const auto branch : branches) {
     const auto &label{branch.parserLabel};
     auto branchTarget{GetLabel(labels, label)};
@@ -922,7 +922,7 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
     }
   }
 
-  CheckBranchesIntoDoBody(branches, labels, scopes, loopBodies, context);
+  CheckBranchesIntoDoBody(branches, labels, loopBodies, context);
   CheckDoNesting(loopBodies, context);
 }
 

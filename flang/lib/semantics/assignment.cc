@@ -41,9 +41,8 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
       symbol.name());
 }
 
-void CheckPointerAssignment(parser::ContextualMessages &messages,
-    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
-    const NullPointer &f) {
+void CheckPointerAssignment(parser::ContextualMessages &,
+    const IntrinsicProcTable &, const Symbol &, const NullPointer &) {
   // LHS = NULL() without MOLD=; this is always fine
 }
 
@@ -111,8 +110,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
 
 template<typename T>
 void CheckPointerAssignment(parser::ContextualMessages &messages,
-    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
-    const Designator<T> &d) {
+    const IntrinsicProcTable &, const Symbol &lhs, const Designator<T> &d) {
   const Symbol *last{d.GetLastSymbol()};
   const Symbol *base{d.GetBaseObject().symbol()};
   if (last != nullptr && base != nullptr) {
@@ -339,7 +337,7 @@ private:
 
 namespace Fortran::semantics {
 
-void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
+void AssignmentContext::Analyze(const parser::AssignmentStmt &) {
   if (forall_ != nullptr) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
@@ -348,7 +346,7 @@ void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
   // (re)allocation of LHS array when unallocated or nonconformable)
 }
 
-void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
+void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &) {
   CHECK(!where_);
   if (forall_ != nullptr) {
     // TODO: Warn if some name in forall_->activeNames or its outer

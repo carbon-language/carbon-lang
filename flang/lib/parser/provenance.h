@@ -153,7 +153,7 @@ public:
 private:
   struct Inclusion {
     const SourceFile &source;
-    bool isModule;
+    bool isModule{false};
   };
   struct Module {
     const SourceFile &source;

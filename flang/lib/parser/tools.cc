@@ -93,7 +93,7 @@ const CoindexedNamedObject *GetCoindexedNamedObject(
           [](const StructureComponent &x) -> const CoindexedNamedObject * {
             return GetCoindexedNamedObject(x.base);
           },
-          [](const auto &x) -> const CoindexedNamedObject * { return nullptr; },
+          [](const auto &) -> const CoindexedNamedObject * { return nullptr; },
       },
       allocateObject.u);
 }

@@ -148,19 +148,19 @@ void IoChecker::Enter(const parser::ConnectSpec::Recl &spec) {
   }
 }
 
-void IoChecker::Enter(const parser::EndLabel &spec) {
+void IoChecker::Enter(const parser::EndLabel &) {
   SetSpecifier(IoSpecKind::End);
 }
 
-void IoChecker::Enter(const parser::EorLabel &spec) {
+void IoChecker::Enter(const parser::EorLabel &) {
   SetSpecifier(IoSpecKind::Eor);
 }
 
-void IoChecker::Enter(const parser::ErrLabel &spec) {
+void IoChecker::Enter(const parser::ErrLabel &) {
   SetSpecifier(IoSpecKind::Err);
 }
 
-void IoChecker::Enter(const parser::FileUnitNumber &spec) {
+void IoChecker::Enter(const parser::FileUnitNumber &) {
   SetSpecifier(IoSpecKind::Unit);
   flags_.set(Flag::NumberUnit);
 }
@@ -217,9 +217,7 @@ void IoChecker::Enter(const parser::Format &spec) {
       spec.u);
 }
 
-void IoChecker::Enter(const parser::IdExpr &spec) {
-  SetSpecifier(IoSpecKind::Id);
-}
+void IoChecker::Enter(const parser::IdExpr &) { SetSpecifier(IoSpecKind::Id); }
 
 void IoChecker::Enter(const parser::IdVariable &spec) {
   SetSpecifier(IoSpecKind::Id);
@@ -363,15 +361,15 @@ void IoChecker::Enter(const parser::IoControlSpec::CharExpr &spec) {
   }
 }
 
-void IoChecker::Enter(const parser::IoControlSpec::Pos &spec) {
+void IoChecker::Enter(const parser::IoControlSpec::Pos &) {
   SetSpecifier(IoSpecKind::Pos);
 }
 
-void IoChecker::Enter(const parser::IoControlSpec::Rec &spec) {
+void IoChecker::Enter(const parser::IoControlSpec::Rec &) {
   SetSpecifier(IoSpecKind::Rec);
 }
 
-void IoChecker::Enter(const parser::IoControlSpec::Size &spec) {
+void IoChecker::Enter(const parser::IoControlSpec::Size &) {
   SetSpecifier(IoSpecKind::Size);
 }
 
@@ -393,11 +391,11 @@ void IoChecker::Enter(const parser::IoUnit &spec) {
   }
 }
 
-void IoChecker::Enter(const parser::MsgVariable &spec) {
+void IoChecker::Enter(const parser::MsgVariable &) {
   SetSpecifier(IoSpecKind::Iomsg);
 }
 
-void IoChecker::Enter(const parser::OutputItem &spec) {
+void IoChecker::Enter(const parser::OutputItem &) {
   flags_.set(Flag::DataList);
   // TODO: C1233 - output item must not be a procedure pointer
 }
@@ -426,29 +424,29 @@ void IoChecker::Enter(const parser::StatusExpr &spec) {
   }
 }
 
-void IoChecker::Enter(const parser::StatVariable &spec) {
+void IoChecker::Enter(const parser::StatVariable &) {
   SetSpecifier(IoSpecKind::Iostat);
 }
 
-void IoChecker::Leave(const parser::BackspaceStmt &stmt) {
+void IoChecker::Leave(const parser::BackspaceStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::CloseStmt &stmt) {
+void IoChecker::Leave(const parser::CloseStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1208
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::EndfileStmt &stmt) {
+void IoChecker::Leave(const parser::EndfileStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::FlushStmt &stmt) {
+void IoChecker::Leave(const parser::FlushStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1243
   stmt_ = IoStmtKind::None;
@@ -466,7 +464,7 @@ void IoChecker::Leave(const parser::InquireStmt &stmt) {
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::OpenStmt &stmt) {
+void IoChecker::Leave(const parser::OpenStmt &) {
   CheckForRequiredSpecifier(specifierSet_.test(IoSpecKind::Unit) ||
           specifierSet_.test(IoSpecKind::Newunit),
       "UNIT or NEWUNIT");  // C1204, C1205
@@ -498,11 +496,9 @@ void IoChecker::Leave(const parser::OpenStmt &stmt) {
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::PrintStmt &stmt) {
-  stmt_ = IoStmtKind::None;
-}
+void IoChecker::Leave(const parser::PrintStmt &) { stmt_ = IoStmtKind::None; }
 
-void IoChecker::Leave(const parser::ReadStmt &stmt) {
+void IoChecker::Leave(const parser::ReadStmt &) {
   if (!flags_.test(Flag::IoControlList)) {
     return;
   }
@@ -520,19 +516,19 @@ void IoChecker::Leave(const parser::ReadStmt &stmt) {
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::RewindStmt &stmt) {
+void IoChecker::Leave(const parser::RewindStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::WaitStmt &stmt) {
+void IoChecker::Leave(const parser::WaitStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1237
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::WriteStmt &stmt) {
+void IoChecker::Leave(const parser::WriteStmt &) {
   LeaveReadWrite();
   CheckForProhibitedSpecifier(IoSpecKind::Blank);  // C1213
   CheckForProhibitedSpecifier(IoSpecKind::End);  // C1213

@@ -123,19 +123,19 @@ void GenericSpecInfo::Analyze(const parser::GenericSpec &x) {
                 },
                 y.u);
           },
-          [&](const parser::GenericSpec::Assignment &y) {
+          [&](const parser::GenericSpec::Assignment &) {
             return GenericKind::Assignment;
           },
-          [&](const parser::GenericSpec::ReadFormatted &y) {
+          [&](const parser::GenericSpec::ReadFormatted &) {
             return GenericKind::ReadFormatted;
           },
-          [&](const parser::GenericSpec::ReadUnformatted &y) {
+          [&](const parser::GenericSpec::ReadUnformatted &) {
             return GenericKind::ReadUnformatted;
           },
-          [&](const parser::GenericSpec::WriteFormatted &y) {
+          [&](const parser::GenericSpec::WriteFormatted &) {
             return GenericKind::WriteFormatted;
           },
-          [&](const parser::GenericSpec::WriteUnformatted &y) {
+          [&](const parser::GenericSpec::WriteUnformatted &) {
             return GenericKind::WriteUnformatted;
           },
       },
@@ -472,7 +472,7 @@ bool EquivalenceSets::CheckDataRef(
             for (const auto &subscript : elem.value().subscripts) {
               ok &= std::visit(
                   common::visitors{
-                      [&](const parser::SubscriptTriplet &y) {
+                      [&](const parser::SubscriptTriplet &) {
                         context_.Say(source,  // C924, R872
                             "Array section '%s' is not allowed in an equivalence set"_err_en_US,
                             source);

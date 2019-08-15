@@ -2551,7 +2551,7 @@ template<typename A> bool IsInitialDataTarget(const A &) { return false; }
 template<typename... A> bool IsInitialDataTarget(const std::variant<A...> &);
 bool IsInitialDataTarget(const DataRef &);
 template<typename T> bool IsInitialDataTarget(const Expr<T> &);
-bool IsInitialDataTarget(const semantics::Symbol &s) { return true; }
+bool IsInitialDataTarget(const semantics::Symbol &) { return true; }
 bool IsInitialDataTarget(const semantics::Symbol *s) {
   return IsInitialDataTarget(*s);
 }

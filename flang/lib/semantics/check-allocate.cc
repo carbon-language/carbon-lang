@@ -138,14 +138,14 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
             [&](const parser::StatOrErrmsg &statOrErr) {
               std::visit(
                   common::visitors{
-                      [&](const parser::StatVariable &statVariable) {
+                      [&](const parser::StatVariable &) {
                         if (info.gotStat) {  // C943
                           context.Say(
                               "STAT may not be duplicated in a ALLOCATE statement"_err_en_US);
                         }
                         info.gotStat = true;
                       },
-                      [&](const parser::MsgVariable &msgVariable) {
+                      [&](const parser::MsgVariable &) {
                         if (info.gotMsg) {  // C943
                           context.Say(
                               "ERRMSG may not be duplicated in a ALLOCATE statement"_err_en_US);

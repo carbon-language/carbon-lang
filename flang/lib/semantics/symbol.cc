@@ -386,8 +386,8 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
   os << DetailsToString(details);
   std::visit(
       common::visitors{
-          [&](const UnknownDetails &x) {},
-          [&](const MainProgramDetails &x) {},
+          [&](const UnknownDetails &) {},
+          [&](const MainProgramDetails &) {},
           [&](const ModuleDetails &x) {
             if (x.isSubmodule()) {
               os << " (";

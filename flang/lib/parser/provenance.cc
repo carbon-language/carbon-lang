@@ -212,7 +212,7 @@ void AllSources::EmitMessage(std::ostream &o,
               o << "^\n";
             }
           },
-          [&](const CompilerInsertion &ins) { o << message << '\n'; },
+          [&](const CompilerInsertion &) { o << message << '\n'; },
       },
       origin.u);
 }
@@ -228,7 +228,7 @@ const SourceFile *AllSources::GetSourceFile(
             }
             return &inc.source;
           },
-          [&](const Macro &mac) {
+          [&](const Macro &) {
             return GetSourceFile(origin.replaces.start(), offset);
           },
           [offset](const CompilerInsertion &) {

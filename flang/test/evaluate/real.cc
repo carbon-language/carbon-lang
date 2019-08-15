@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       TEST(ivf.flags.empty())(ldesc);
       MATCH(x, ivf.value.ToUInt64())(ldesc);
       std::stringstream ss;
-      vr.value.AsFortran(ss, kind, rounding);
+      vr.value.AsFortran(ss, kind);
       std::string decimal{ss.str()};
       const char *p{decimal.data()};
       MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))(ldesc);
@@ -406,7 +406,7 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
 
       static constexpr int kind{REAL::bits / 8};
       std::stringstream ss, css;
-      x.AsFortran(ss, kind, rounding);
+      x.AsFortran(ss, kind);
       std::string s{ss.str()};
       if (IsNaN(rj)) {
         css << "(0._" << kind << "/0.)";

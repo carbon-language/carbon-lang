@@ -372,17 +372,17 @@ std::optional<Expr<SomeType>> Negation(
           [&](Expr<SomeInteger> &&x) { return Package(-std::move(x)); },
           [&](Expr<SomeReal> &&x) { return Package(-std::move(x)); },
           [&](Expr<SomeComplex> &&x) { return Package(-std::move(x)); },
-          [&](Expr<SomeCharacter> &&x) {
+          [&](Expr<SomeCharacter> &&) {
             // TODO: defined operator
             messages.Say("CHARACTER cannot be negated"_err_en_US);
             return NoExpr();
           },
-          [&](Expr<SomeLogical> &&x) {
+          [&](Expr<SomeLogical> &&) {
             // TODO: defined operator
             messages.Say("LOGICAL cannot be negated"_err_en_US);
             return NoExpr();
           },
-          [&](Expr<SomeDerived> &&x) {
+          [&](Expr<SomeDerived> &&) {
             // TODO: defined operator
             messages.Say("Operand cannot be negated"_err_en_US);
             return NoExpr();

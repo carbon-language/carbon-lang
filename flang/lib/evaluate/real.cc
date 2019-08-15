@@ -432,8 +432,7 @@ std::string Real<W, P, IM>::DumpHexadecimal() const {
 }
 
 template<typename W, int P, bool IM>
-std::ostream &Real<W, P, IM>::AsFortran(
-    std::ostream &o, int kind, Rounding rounding) const {
+std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
   if (IsNotANumber()) {
     o << "(0._" << kind << "/0.)";
   } else if (IsInfinite()) {

@@ -102,7 +102,7 @@ ProgramTree ProgramTree::Build(const parser::Submodule &x) {
   return BuildModuleTree(name, x).set_stmt(stmt).set_endStmt(end);
 }
 
-ProgramTree ProgramTree::Build(const parser::BlockData &x) {
+ProgramTree ProgramTree::Build(const parser::BlockData &) {
   DIE("BlockData not yet implemented");
 }
 

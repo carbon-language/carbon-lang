@@ -701,7 +701,7 @@ public:
     return true;
   }
   void Post(const parser::AllocatableStmt &) { objectDeclAttr_ = std::nullopt; }
-  bool Pre(const parser::TargetStmt &x) {
+  bool Pre(const parser::TargetStmt &) {
     objectDeclAttr_ = Attr::TARGET;
     return true;
   }
@@ -724,13 +724,13 @@ public:
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   void Post(const parser::DerivedTypeSpec &);
   bool Pre(const parser::DerivedTypeDef &);
-  bool Pre(const parser::DerivedTypeStmt &x);
-  void Post(const parser::DerivedTypeStmt &x);
-  bool Pre(const parser::TypeParamDefStmt &x) { return BeginDecl(); }
+  bool Pre(const parser::DerivedTypeStmt &);
+  void Post(const parser::DerivedTypeStmt &);
+  bool Pre(const parser::TypeParamDefStmt &) { return BeginDecl(); }
   void Post(const parser::TypeParamDefStmt &);
-  bool Pre(const parser::TypeAttrSpec::Extends &x);
-  bool Pre(const parser::PrivateStmt &x);
-  bool Pre(const parser::SequenceStmt &x);
+  bool Pre(const parser::TypeAttrSpec::Extends &);
+  bool Pre(const parser::PrivateStmt &);
+  bool Pre(const parser::SequenceStmt &);
   bool Pre(const parser::ComponentDefStmt &) { return BeginDecl(); }
   void Post(const parser::ComponentDefStmt &) { EndDecl(); }
   void Post(const parser::ComponentDecl &);
@@ -951,7 +951,7 @@ public:
   bool Pre(const parser::WhereConstructStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::ForallConstructStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::CriticalStmt &x) { return CheckDef(x.t); }
-  bool Pre(const parser::LabelDoStmt &x) {
+  bool Pre(const parser::LabelDoStmt &) {
     return false;  // error recovery
   }
   bool Pre(const parser::NonLabelDoStmt &x) { return CheckDef(x.t); }
@@ -1382,17 +1382,17 @@ Message &MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
 
 // ImplicitRulesVisitor implementation
 
-void ImplicitRulesVisitor::Post(const parser::ParameterStmt &x) {
+void ImplicitRulesVisitor::Post(const parser::ParameterStmt &) {
   prevParameterStmt_ = currStmtSource();
 }
 
 bool ImplicitRulesVisitor::Pre(const parser::ImplicitStmt &x) {
   bool result{std::visit(
       common::visitors{
-          [&](const std::list<ImplicitNoneNameSpec> &x) {
-            return HandleImplicitNone(x);
+          [&](const std::list<ImplicitNoneNameSpec> &y) {
+            return HandleImplicitNone(y);
           },
-          [&](const std::list<parser::ImplicitSpec> &x) {
+          [&](const std::list<parser::ImplicitSpec> &) {
             if (prevImplicitNoneType_) {
               Say("IMPLICIT statement after IMPLICIT NONE or "
                   "IMPLICIT NONE(TYPE) statement"_err_en_US);
@@ -2126,7 +2126,7 @@ bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
   return false;
 }
 
-bool InterfaceVisitor::Pre(const parser::GenericStmt &x) {
+bool InterfaceVisitor::Pre(const parser::GenericStmt &) {
   genericInfo_.emplace(/*isInterface*/ false);
   return true;
 }
@@ -2331,7 +2331,7 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
 
 // SubprogramVisitor implementation
 
-void SubprogramVisitor::Post(const parser::StmtFunctionStmt &x) {
+void SubprogramVisitor::Post(const parser::StmtFunctionStmt &) {
   if (badStmtFuncFound_) {
     return;  // This wasn't really a stmt function so no scope was created
   }
@@ -2424,10 +2424,10 @@ void SubprogramVisitor::Post(const parser::InterfaceBody::Function &) {
   EndSubprogram();
 }
 
-bool SubprogramVisitor::Pre(const parser::SubroutineStmt &stmt) {
+bool SubprogramVisitor::Pre(const parser::SubroutineStmt &) {
   return BeginAttrs();
 }
-bool SubprogramVisitor::Pre(const parser::FunctionStmt &stmt) {
+bool SubprogramVisitor::Pre(const parser::FunctionStmt &) {
   return BeginAttrs();
 }
 
@@ -2970,7 +2970,7 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Complex &x) {
 void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
   SetDeclTypeSpec(MakeLogicalType(x.kind));
 }
-void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
+void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &) {
   if (!charInfo_.length) {
     charInfo_.length = ParamValue{1, common::TypeParamAttr::Len};
   }
@@ -3014,12 +3014,12 @@ bool DeclarationVisitor::Pre(const parser::KindParam &x) {
   return false;
 }
 
-bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Type &x) {
+bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Type &) {
   CHECK(GetDeclTypeSpecCategory() == DeclTypeSpec::Category::TypeDerived);
   return true;
 }
 
-bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Class &x) {
+bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Class &) {
   SetDeclTypeSpecCategory(DeclTypeSpec::Category::ClassDerived);
   return true;
 }
@@ -3202,7 +3202,7 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeDef &x) {
   PopScope();
   return false;
 }
-bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
+bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &) {
   return BeginAttrs();
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
@@ -3269,7 +3269,7 @@ bool DeclarationVisitor::Pre(const parser::TypeAttrSpec::Extends &x) {
   return false;
 }
 
-bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
+bool DeclarationVisitor::Pre(const parser::PrivateStmt &) {
   if (!currScope().parent().IsModule()) {
     Say("PRIVATE is only allowed in a derived type that is"
         " in a module"_err_en_US);  // C766
@@ -3283,7 +3283,7 @@ bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
   }
   return false;
 }
-bool DeclarationVisitor::Pre(const parser::SequenceStmt &x) {
+bool DeclarationVisitor::Pre(const parser::SequenceStmt &) {
   derivedTypeInfo_.sequence = true;
   return false;
 }
@@ -3366,7 +3366,7 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   }
 }
 
-bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {
+bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &) {
   derivedTypeInfo_.sawContains = true;
   return true;
 }
@@ -3615,7 +3615,7 @@ void DeclarationVisitor::Post(const parser::CommonStmt::Block &) {
   commonBlockInfo_.curr = nullptr;
 }
 
-bool DeclarationVisitor::Pre(const parser::CommonBlockObject &x) {
+bool DeclarationVisitor::Pre(const parser::CommonBlockObject &) {
   BeginArraySpec();
   return true;
 }
@@ -4940,8 +4940,7 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
                 details->set_init(std::move(*expr));
               }
             },
-            [&](const std::list<common::Indirection<parser::DataStmtValue>>
-                    &list) {
+            [&](const std::list<common::Indirection<parser::DataStmtValue>> &) {
               if (inComponentDecl) {
                 Say(name,
                     "Component '%s' initialized with DATA statement values"_err_en_US);
@@ -5209,7 +5208,7 @@ void ResolveNamesVisitor::PreSpecificationConstruct(
     const parser::SpecificationConstruct &spec) {
   std::visit(
       common::visitors{
-          [&](const Indirection<parser::DerivedTypeDef> &y) {},
+          [&](const Indirection<parser::DerivedTypeDef> &) {},
           [&](const parser::Statement<Indirection<parser::GenericStmt>> &y) {
             CreateGeneric(std::get<parser::GenericSpec>(y.statement.value().t));
           },

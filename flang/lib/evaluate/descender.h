@@ -342,8 +342,8 @@ public:
     }
   }
 
-  void Descend(const SpecificIntrinsic &si) {}
-  void Descend(SpecificIntrinsic &si) {}
+  void Descend(const SpecificIntrinsic &) {}
+  void Descend(SpecificIntrinsic &) {}
 
   void Descend(const ProcedureDesignator &p) { Visit(p.u); }
   void Descend(ProcedureDesignator &p) { Visit(p.u); }

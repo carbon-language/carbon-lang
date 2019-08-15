@@ -909,7 +909,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
   return std::nullopt;
 }
 
-MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &co) {
+MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &) {
   Say("TODO: CoindexedNamedObject unimplemented"_err_en_US);
   return std::nullopt;
 }

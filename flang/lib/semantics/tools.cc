@@ -146,7 +146,7 @@ bool IsFunction(const Symbol &symbol) {
   return std::visit(
       common::visitors{
           [](const SubprogramDetails &x) { return x.isFunction(); },
-          [&](const SubprogramNameDetails &x) {
+          [&](const SubprogramNameDetails &) {
             return symbol.test(Symbol::Flag::Function);
           },
           [](const ProcEntityDetails &x) {

@@ -349,7 +349,7 @@ Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
 void GetShapeVisitor::Handle(const Symbol &symbol) {
   std::visit(
       common::visitors{
-          [&](const semantics::ObjectEntityDetails &object) {
+          [&](const semantics::ObjectEntityDetails &) {
             Handle(NamedEntity{symbol});
           },
           [&](const semantics::AssocEntityDetails &assoc) {

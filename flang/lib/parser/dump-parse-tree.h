@@ -698,7 +698,7 @@ public:
     return true;
   }
 
-  template<typename T> void Post(const T &x) {
+  template<typename T> void Post(const T &) {
     if constexpr (!HasSource<T>::value && (UnionTrait<T> || WrapperTrait<T>)) {
       EndLineIfNonempty();
     } else {
@@ -726,8 +726,7 @@ public:
     EndLine();
     return true;
   }
-
-  void Post(const std::int64_t &x) { --indent_; }
+  void Post(const std::int64_t &) { --indent_; }
 
   bool Pre(const std::uint64_t &x) {
     IndentEmptyLine();

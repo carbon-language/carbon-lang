@@ -364,8 +364,7 @@ public:
 
   // Emits a character representation for an equivalent Fortran constant
   // or parenthesized constant expression that produces this value.
-  std::ostream &AsFortran(
-      std::ostream &, int kind, Rounding rounding = defaultRounding) const;
+  std::ostream &AsFortran(std::ostream &, int kind) const;
 
 private:
   using Significand = Integer<significandBits>;  // no implicit bit

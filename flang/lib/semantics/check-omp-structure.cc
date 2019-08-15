@@ -65,7 +65,7 @@ void OmpStructureChecker::CheckAllowed(OmpClause type) {
   SetContextClauseInfo(type);
 }
 
-void OmpStructureChecker::Enter(const parser::OpenMPConstruct &x) {
+void OmpStructureChecker::Enter(const parser::OpenMPConstruct &) {
   // 2.8.1 TODO: Simd Construct with Ordered Construct Nesting check
 }
 
