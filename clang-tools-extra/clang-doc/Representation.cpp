@@ -257,8 +257,12 @@ ClangDocContext::ClangDocContext(tooling::ExecutionContext *ECtx,
                                  std::vector<std::string> UserStylesheets,
                                  std::vector<std::string> JsScripts)
     : ECtx(ECtx), PublicOnly(PublicOnly), OutDirectory(OutDirectory),
-      SourceRoot(SourceRoot), UserStylesheets(UserStylesheets),
-      JsScripts(JsScripts) {
+      UserStylesheets(UserStylesheets), JsScripts(JsScripts) {
+  llvm::SmallString<128> SourceRootDir(SourceRoot);
+  if (SourceRoot.empty())
+    // If no SourceRoot was provided the current path is used as the default
+    llvm::sys::fs::current_path(SourceRootDir);
+  this->SourceRoot = SourceRootDir.str();
   if (!RepositoryUrl.empty()) {
     this->RepositoryUrl = RepositoryUrl;
     if (!RepositoryUrl.empty() && RepositoryUrl.find("http://") != 0 &&
