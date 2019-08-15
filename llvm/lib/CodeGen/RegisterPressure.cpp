@@ -134,6 +134,22 @@ void PressureDiff::dump(const TargetRegisterInfo &TRI) const {
   }
   dbgs() << '\n';
 }
+
+LLVM_DUMP_METHOD
+void PressureChange::dump() const {
+  dbgs() << "[" << getPSetOrMax() << ", " << getUnitInc() << "]\n";
+}
+
+void RegPressureDelta::dump() const {
+  dbgs() << "[Excess=";
+  Excess.dump();
+  dbgs() << ", CriticalMax=";
+  CriticalMax.dump();
+  dbgs() << ", CurrentMax=";
+  CurrentMax.dump();
+  dbgs() << "]\n";
+}
+
 #endif
 
 void RegPressureTracker::increaseRegPressure(unsigned RegUnit,
