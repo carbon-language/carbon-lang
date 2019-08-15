@@ -961,6 +961,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
             ExpressionValue(token, operandPrecedence[op], atToken, error)};
         left = left != 0 ? right : third;
       }
+      break;
     case COMMA: left = right; break;
     default: CRASH_NO_CASE;
     }

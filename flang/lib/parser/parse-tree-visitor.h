@@ -106,29 +106,33 @@ template<typename M> void Walk(Block &x, M &mutator) {
 }
 template<std::size_t I = 0, typename Func, typename T>
 void ForEachInTuple(const T &tuple, Func func) {
-  if constexpr (I < std::tuple_size_v<T>) {
-    func(std::get<I>(tuple));
+  func(std::get<I>(tuple));
+  if constexpr (I + 1 < std::tuple_size_v<T>) {
     ForEachInTuple<I + 1>(tuple, func);
   }
 }
 template<typename V, typename... A>
 void Walk(const std::tuple<A...> &x, V &visitor) {
-  if (visitor.Pre(x)) {
-    ForEachInTuple(x, [&](const auto &y) { Walk(y, visitor); });
-    visitor.Post(x);
+  if (sizeof...(A) > 0) {
+    if (visitor.Pre(x)) {
+      ForEachInTuple(x, [&](const auto &y) { Walk(y, visitor); });
+      visitor.Post(x);
+    }
   }
 }
 template<std::size_t I = 0, typename Func, typename T>
 void ForEachInTuple(T &tuple, Func func) {
-  if constexpr (I < std::tuple_size_v<T>) {
-    func(std::get<I>(tuple));
+  func(std::get<I>(tuple));
+  if constexpr (I + 1 < std::tuple_size_v<T>) {
     ForEachInTuple<I + 1>(tuple, func);
   }
 }
 template<typename M, typename... A> void Walk(std::tuple<A...> &x, M &mutator) {
-  if (mutator.Pre(x)) {
-    ForEachInTuple(x, [&](auto &y) { Walk(y, mutator); });
-    mutator.Post(x);
+  if (sizeof...(A) > 0) {
+    if (mutator.Pre(x)) {
+      ForEachInTuple(x, [&](auto &y) { Walk(y, mutator); });
+      mutator.Post(x);
+    }
   }
 }
 template<typename V, typename... A>

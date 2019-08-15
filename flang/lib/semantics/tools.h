@@ -72,7 +72,7 @@ bool IsDerivedTypeFromModule(
 bool IsTeamType(const DerivedTypeSpec *);
 // Is this derived type either C_PTR or C_FUNPTR from module ISO_C_BINDING
 bool IsIsoCType(const DerivedTypeSpec *);
-const bool IsEventTypeOrLockType(const DerivedTypeSpec *);
+bool IsEventTypeOrLockType(const DerivedTypeSpec *);
 // Returns an ultimate component symbol that is a
 // coarray or nullptr if there are no such component.
 // There is no guarantee regarding which ultimate coarray

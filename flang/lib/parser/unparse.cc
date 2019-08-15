@@ -2479,10 +2479,10 @@ private:
   // Traverse a std::tuple<>, with an optional separator.
   template<std::size_t J = 0, typename T>
   void WalkTupleElements(const T &tuple, const char *separator) {
+    if (J > 0 && J < std::tuple_size_v<T>) {
+      Word(separator);  // this usage dodges "unused parameter" warning
+    }
     if constexpr (J < std::tuple_size_v<T>) {
-      if (J > 0) {
-        Word(separator);
-      }
       Walk(std::get<J>(tuple));
       WalkTupleElements<J + 1>(tuple, separator);
     }

@@ -216,7 +216,7 @@ public:
   }
 
 private:
-  bitsetType bitset_;
+  bitsetType bitset_{};
 };
 }
 
