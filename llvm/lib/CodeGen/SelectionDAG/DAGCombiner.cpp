@@ -15396,7 +15396,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
 
   bool RV = false;
   while (StoreNodes.size() > 1) {
-    unsigned StartIdx = 0;
+    size_t StartIdx = 0;
     while ((StartIdx + 1 < StoreNodes.size()) &&
            StoreNodes[StartIdx].OffsetFromBase + ElementSizeBytes !=
                StoreNodes[StartIdx + 1].OffsetFromBase)
