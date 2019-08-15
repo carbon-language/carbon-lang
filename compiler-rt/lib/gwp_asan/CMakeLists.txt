@@ -101,7 +101,7 @@ if (COMPILER_RT_HAS_GWP_ASAN)
 
   # Build the stack trace compressor fuzzer.
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_llvm_executable(stack_trace_compressor_fuzzer
+    add_executable(stack_trace_compressor_fuzzer
       stack_trace_compressor_fuzzer.cpp
       ${GWP_ASAN_SOURCES}
       ${GWP_ASAN_HEADERS})
