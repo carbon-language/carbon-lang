@@ -269,13 +269,17 @@ void ExecuteStage::notifyInstructionIssued(
 
 void ExecuteStage::notifyReservedOrReleasedBuffers(const InstRef &IR,
                                                    bool Reserved) const {
-  const InstrDesc &Desc = IR.getInstruction()->getDesc();
-  if (Desc.Buffers.empty())
+  uint64_t UsedBuffers = IR.getInstruction()->getDesc().UsedBuffers;
+  if (!UsedBuffers)
     return;
 
-  SmallVector<unsigned, 4> BufferIDs(Desc.Buffers.begin(), Desc.Buffers.end());
-  std::transform(Desc.Buffers.begin(), Desc.Buffers.end(), BufferIDs.begin(),
-                 [&](uint64_t Op) { return HWS.getResourceID(Op); });
+  SmallVector<unsigned, 4> BufferIDs(countPopulation(UsedBuffers), 0);
+  for (unsigned I = 0, E = BufferIDs.size(); I < E; ++I) {
+    uint64_t CurrentBufferMask = UsedBuffers & (-UsedBuffers);
+    BufferIDs[I] = HWS.getResourceID(CurrentBufferMask);
+    UsedBuffers ^= CurrentBufferMask;
+  }
+
   if (Reserved) {
     for (HWEventListener *Listener : getListeners())
       Listener->onReservedBuffers(IR, BufferIDs);

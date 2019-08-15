@@ -352,11 +352,14 @@ struct InstrDesc {
   // reports the number of "consumed cycles".
   SmallVector<std::pair<uint64_t, ResourceUsage>, 4> Resources;
 
-  // A list of buffered resources consumed by this instruction.
-  SmallVector<uint64_t, 4> Buffers;
+  // A bitmask of used hardware buffers.
+  uint64_t UsedBuffers;
 
-  unsigned UsedProcResUnits;
-  unsigned UsedProcResGroups;
+  // A bitmask of used processor resource units.
+  uint64_t UsedProcResUnits;
+
+  // A bitmask of used processor resource groups.
+  uint64_t UsedProcResGroups;
 
   unsigned MaxLatency;
   // Number of MicroOps for this instruction.

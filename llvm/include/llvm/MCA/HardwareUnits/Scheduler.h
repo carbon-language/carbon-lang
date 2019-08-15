@@ -228,6 +228,9 @@ public:
                   SmallVectorImpl<InstRef> &Ready);
 
   /// Convert a resource mask into a valid llvm processor resource identifier.
+  ///
+  /// Only the most significant bit of the Mask is used by this method to
+  /// identify the processor resource.
   unsigned getResourceID(uint64_t Mask) const {
     return Resources->resolveResourceMask(Mask);
   }
