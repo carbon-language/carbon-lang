@@ -452,13 +452,6 @@ enum {
 
 typedef unsigned LLVMAttributeIndex;
 
-typedef enum {
-  LLVMTailCallKindNone,
-  LLVMTailCallKindTail,
-  LLVMTailCallKindMustTail,
-  LLVMTailCallKindNoTail
-} LLVMTailCallKind;
-
 /**
  * @}
  */
@@ -3269,24 +3262,6 @@ LLVMBool LLVMIsTailCall(LLVMValueRef CallInst);
  * @see llvm::CallInst::setTailCall()
  */
 void LLVMSetTailCall(LLVMValueRef CallInst, LLVMBool IsTailCall);
-
-/**
- * Obtains the kind of tail call for a call instruction.
- *
- * This only works on llvm::CallInst instructions.
- *
- * @see llvm::CallInst::getTailCallKind()
- */
-LLVMTailCallKind LLVMGetTailCallKind(LLVMValueRef CallInst);
-
-/**
- * Set the kind of tail call for a call instruction.
- *
- * This only works on llvm::CallInst instructions.
- *
- * @see llvm::CallInst::setTailCallKind()
- */
-void LLVMSetTailCallKind(LLVMValueRef CallInst, LLVMTailCallKind TCK);
 
 /**
  * Return the normal destination basic block.
