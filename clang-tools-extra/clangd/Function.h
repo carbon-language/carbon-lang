@@ -59,14 +59,14 @@ private:
 public:
   template <class... RestArgs>
   auto operator()(RestArgs &&... Rest)
-      -> decltype(this->CallImpl(llvm::index_sequence_for<Args...>(),
+      -> decltype(this->CallImpl(std::index_sequence_for<Args...>(),
                                  std::forward<RestArgs>(Rest)...)) {
 
 #ifndef NDEBUG
     assert(!WasCalled && "Can only call result of Bind once.");
     WasCalled = true;
 #endif
-    return CallImpl(llvm::index_sequence_for<Args...>(),
+    return CallImpl(std::index_sequence_for<Args...>(),
                     std::forward<RestArgs>(Rest)...);
   }
 };
