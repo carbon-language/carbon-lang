@@ -27823,6 +27823,15 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       return;
     }
 
+    if (DstVT.isVector() && SrcVT == MVT::x86mmx) {
+      assert(getTypeAction(*DAG.getContext(), DstVT) == TypeWidenVector &&
+             "Unexpected type action!");
+      EVT WideVT = getTypeToTransformTo(*DAG.getContext(), DstVT);
+      SDValue Res = DAG.getNode(X86ISD::MOVQ2DQ, dl, WideVT, N->getOperand(0));
+      Results.push_back(Res);
+      return;
+    }
+
     return;
   }
   case ISD::MGATHER: {
@@ -27934,6 +27943,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::WrapperRIP:         return "X86ISD::WrapperRIP";
+  case X86ISD::MOVQ2DQ:            return "X86ISD::MOVQ2DQ";
   case X86ISD::MOVDQ2Q:            return "X86ISD::MOVDQ2Q";
   case X86ISD::MMX_MOVD2W:         return "X86ISD::MMX_MOVD2W";
   case X86ISD::MMX_MOVW2D:         return "X86ISD::MMX_MOVW2D";
