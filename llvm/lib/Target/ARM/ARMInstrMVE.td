@@ -4846,11 +4846,11 @@ def aligned32_post_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
 }]>;
 def aligned16_pre_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
                                   (pre_store node:$val, node:$ptr, node:$offset), [{
-  return cast<StoreSDNode>(N)->getAlignment() == 2;
+  return cast<StoreSDNode>(N)->getAlignment() >= 2;
 }]>;
 def aligned16_post_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
                                   (post_store node:$val, node:$ptr, node:$offset), [{
-  return cast<StoreSDNode>(N)->getAlignment() == 2;
+  return cast<StoreSDNode>(N)->getAlignment() >= 2;
 }]>;
 
 let Predicates = [HasMVEInt, IsLE] in {
