@@ -577,6 +577,10 @@ def : Pat<(x86mmx (MMX_X86movdq2q VR128:$src)),
 def : Pat<(x86mmx (MMX_X86movdq2q (v2i64 (nonvolatile_load addr:$src)))),
           (x86mmx (MMX_MOVQ64rm addr:$src))>;
 
+def : Pat<(v2i64 (X86vzmovl (scalar_to_vector
+                             (i64 (bitconvert (x86mmx VR64:$src)))))),
+          (MMX_MOVQ2DQrr VR64:$src)>;
+
 // Misc.
 let SchedRW = [SchedWriteShuffle.MMX] in {
 let Uses = [EDI], Predicates = [HasMMX, HasSSE1,Not64BitMode] in
