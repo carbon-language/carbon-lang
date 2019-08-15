@@ -268,11 +268,13 @@ enum FlagBits {
   Inexact = 16,
 };
 
-std::uint32_t FlagsToBits(const RealFlags &flags) {
+#ifdef __clang__
+// clang support for fenv.h is broken, so tests of flag settings
+// are disabled.
+inline std::uint32_t FlagsToBits(const RealFlags &) { return 0; }
+#else
+inline std::uint32_t FlagsToBits(const RealFlags &flags) {
   std::uint32_t bits{0};
-#ifndef __clang__
-  // TODO: clang support for fenv.h is broken, so tests of flag settings
-  // are disabled.
   if (flags.test(RealFlag::Overflow)) {
     bits |= Overflow;
   }
@@ -288,9 +290,9 @@ std::uint32_t FlagsToBits(const RealFlags &flags) {
   if (flags.test(RealFlag::Inexact)) {
     bits |= Inexact;
   }
-#endif  // __clang__
   return bits;
 }
+#endif  // __clang__
 
 template<typename UINT = std::uint32_t, typename FLT = float, typename REAL>
 void inttest(std::int64_t x, int pass, Rounding rounding) {

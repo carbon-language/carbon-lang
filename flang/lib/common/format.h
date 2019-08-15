@@ -712,7 +712,7 @@ template<typename CHAR> bool FormatValidator<CHAR>::Check() {
       }
       hasDataEditDesc = false;
       NextToken();
-      // fall through
+      [[fallthrough]];
     case TokenKind::LParen:
       if (knrValue_ == 0) {
         ReportError("List repeat specifier must be positive", knrToken_);
@@ -748,7 +748,7 @@ template<typename CHAR> bool FormatValidator<CHAR>::Check() {
       if (suppressMessageCascade_ || reporterExit_) {
         break;
       }
-      // fall through
+      [[fallthrough]];
     default: ReportError("Unexpected '%s' in format expression"); NextToken();
     }
 
