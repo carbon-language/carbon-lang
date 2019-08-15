@@ -116,7 +116,7 @@ template<typename A> struct ValueWithRealFlags {
     return value;
   }
   A value;
-  RealFlags flags;
+  RealFlags flags{};
 };
 
 ENUM_CLASS(RoundingMode, TiesToEven, ToZero, Down, Up, TiesAwayFromZero)

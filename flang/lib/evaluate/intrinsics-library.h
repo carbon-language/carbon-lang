@@ -35,6 +35,7 @@ class FoldingContext;
 using TypeCode = unsigned char;
 
 template<typename TR, typename... TA> using FuncPointer = TR (*)(TA...);
+using GenericFunctionPointer = FuncPointer<void *>;
 
 enum class PassBy { Ref, Val };
 template<typename TA, PassBy Pass = PassBy::Ref> struct ArgumentInfo {
@@ -57,7 +58,7 @@ struct IntrinsicProcedureRuntimeDescription {
   const std::vector<TypeCode> argumentsType;
   const std::vector<PassBy> argumentsPassedBy;
   const bool isElemental;
-  const FuncPointer<void *> callable;
+  const GenericFunctionPointer callable;
   // Construct from description using host independent types (RuntimeTypes)
   template<typename TR, typename... ArgInfo>
   IntrinsicProcedureRuntimeDescription(
@@ -73,9 +74,9 @@ struct HostRuntimeIntrinsicProcedure : IntrinsicProcedureRuntimeDescription {
       FuncPointer<HostTR, HostTA...> func, bool isElemental = false);
   HostRuntimeIntrinsicProcedure(
       const IntrinsicProcedureRuntimeDescription &rteProc,
-      FuncPointer<void *> handle)
+      GenericFunctionPointer handle)
     : IntrinsicProcedureRuntimeDescription{rteProc}, handle{handle} {}
-  const FuncPointer<void *> handle;
+  GenericFunctionPointer handle;
 };
 
 // Defines a wrapper type that indirects calls to host runtime functions.

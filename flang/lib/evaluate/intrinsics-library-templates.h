@@ -126,13 +126,35 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
   }
 };
 
+template<typename TR, typename... TA>
+inline GenericFunctionPointer ToGenericFunctionPointer(
+    FuncPointer<TR, TA...> f) {
+  union {
+    GenericFunctionPointer gp;
+    FuncPointer<TR, TA...> fp;
+  } u;
+  u.fp = f;
+  return u.gp;
+}
+
+template<typename TR, typename... TA>
+inline FuncPointer<TR, TA...> FromGenericFunctionPointer(
+    GenericFunctionPointer g) {
+  union {
+    GenericFunctionPointer gp;
+    FuncPointer<TR, TA...> fp;
+  } u;
+  u.gp = g;
+  return u.fp;
+}
+
 template<typename TR, typename... ArgInfo>
 IntrinsicProcedureRuntimeDescription::IntrinsicProcedureRuntimeDescription(
     const Signature<TR, ArgInfo...> &signature, bool isElemental)
   : name{signature.name}, returnType{typeCodeOf<TR>},
     argumentsType{typeCodeOf<typename ArgInfo::Type>...},
     argumentsPassedBy{ArgInfo::pass...}, isElemental{isElemental},
-    callable{reinterpret_cast<FuncPointer<void *>>(
+    callable{ToGenericFunctionPointer(
         CallableHostWrapper<TR, ArgInfo...>::MakeScalarCallable())} {}
 
 template<typename HostTA> static constexpr inline PassBy PassByMethod() {
@@ -158,7 +180,7 @@ HostRuntimeIntrinsicProcedure::HostRuntimeIntrinsicProcedure(
     bool isElemental)
   : IntrinsicProcedureRuntimeDescription(
         SignatureFromHostFuncPointer<HostTR, HostTA...>{name}, isElemental),
-    handle{reinterpret_cast<FuncPointer<void *>>(func)} {}
+    handle{ToGenericFunctionPointer(func)} {}
 
 template<template<typename> typename ConstantContainer, typename TR,
     typename... TA>
@@ -187,10 +209,9 @@ HostIntrinsicProceduresLibrary::GetHostProcedureWrapper(
           return {HostProcedureWrapper<ConstantContainer, TR, TA...>{
               [=](FoldingContext &context,
                   const ConstantContainer<TA> &... args) {
-                auto callable{reinterpret_cast<
-                    FuncPointer<ConstantContainer<TR>, FoldingContext &,
-                        FuncPointer<void *>, const ConstantContainer<TA> &...>>(
-                    iter->second.callable)};
+                auto callable{FromGenericFunctionPointer<ConstantContainer<TR>,
+                    FoldingContext &, GenericFunctionPointer,
+                    const ConstantContainer<TA> &...>(iter->second.callable)};
                 return callable(context, iter->second.handle, args...);
               }}};
         }

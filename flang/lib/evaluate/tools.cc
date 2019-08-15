@@ -210,7 +210,7 @@ std::optional<Expr<SomeType>> MixedComplexLeft(
               AsExpr(RealToIntPower<Ty>{std::move(zxk), std::move(iry)}));
         },
         std::move(zx.u)));
-  } else {
+  } else if (defaultRealKind != 666) {  // dodge unused parameter warning
     // (a,b) ** x -> (a,b) ** (x,0)
     Expr<SomeComplex> zy{ConvertTo(zx, std::move(iry))};
     return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
@@ -244,7 +244,7 @@ std::optional<Expr<SomeType>> MixedComplexRight(
       return Package(ConstructComplex(messages, std::move(*rr),
           AsGenericExpr(-std::move(zi)), defaultRealKind));
     }
-  } else {
+  } else if (defaultRealKind != 666) {  // dodge unused parameter warning
     // x / (a,b) -> (x,0) / (a,b)
     Expr<SomeComplex> zx{ConvertTo(zy, std::move(irx))};
     return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));

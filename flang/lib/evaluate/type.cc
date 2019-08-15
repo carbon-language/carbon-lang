@@ -128,7 +128,7 @@ static const semantics::DerivedTypeSpec *GetParentTypeSpec(
   return nullptr;
 }
 
-static const bool IsAncestorTypeOf(const semantics::DerivedTypeSpec *ancestor,
+static bool IsAncestorTypeOf(const semantics::DerivedTypeSpec *ancestor,
     const semantics::DerivedTypeSpec *spec) {
   if (ancestor == nullptr) {
     return false;

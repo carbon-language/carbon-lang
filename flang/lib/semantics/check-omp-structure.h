@@ -128,11 +128,13 @@ public:
 
 private:
   struct OmpContext {
+    OmpContext(parser::CharBlock source, OmpDirective d)
+      : directiveSource{source}, directive{d} {}
     parser::CharBlock directiveSource{nullptr};
     parser::CharBlock clauseSource{nullptr};
     OmpDirective directive;
-    OmpClauseSet allowedClauses;
-    OmpClauseSet allowedOnceClauses;
+    OmpClauseSet allowedClauses{};
+    OmpClauseSet allowedOnceClauses{};
 
     const parser::OmpClause *clause{nullptr};
     std::multimap<OmpClause, const parser::OmpClause *> clauseInfo;
@@ -158,7 +160,7 @@ private:
     GetContext().clauseSource = clause.source;
     GetContext().clause = &clause;
   }
-  void SetContextDirectiveEnum(const OmpDirective &dir) {
+  void SetContextDirectiveEnum(OmpDirective dir) {
     GetContext().directive = dir;
   }
   void SetContextAllowed(const OmpClauseSet &allowed) {
@@ -167,25 +169,24 @@ private:
   void SetContextAllowedOnce(const OmpClauseSet &allowedOnce) {
     GetContext().allowedOnceClauses = allowedOnce;
   }
-  void SetContextClauseInfo(const OmpClause &type) {
+  void SetContextClauseInfo(OmpClause type) {
     GetContext().clauseInfo.emplace(type, GetContext().clause);
   }
-  const parser::OmpClause *FindClause(const OmpClause &type) {
+  const parser::OmpClause *FindClause(OmpClause type) {
     auto it{GetContext().clauseInfo.find(type)};
     if (it != GetContext().clauseInfo.end()) {
       return it->second;
     }
     return nullptr;
   }
-  void PushContext(const parser::CharBlock &source, const OmpDirective &dir) {
-    ompContext_.push_back(OmpContext{source});
-    SetContextDirectiveEnum(dir);
+  void PushContext(const parser::CharBlock &source, OmpDirective dir) {
+    ompContext_.emplace_back(source, dir);
   }
 
   bool CurrentDirectiveIsNested() { return ompContext_.size() > 0; };
   bool HasInvalidWorksharingNesting(
       const parser::CharBlock &, const OmpDirectiveSet &);
-  void CheckAllowed(const OmpClause &);
+  void CheckAllowed(OmpClause);
   std::string ContextDirectiveAsFortran();
 
   // specific clause related

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ static void check_CFI_establish(CFI_cdesc_t *dv, void *base_addr,
     ++numErr;
     expectedRetCode = CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
-  if (rank < 0 || rank > CFI_MAX_RANK) {
+  if (rank > CFI_MAX_RANK) {
     ++numErr;
     expectedRetCode = CFI_INVALID_RANK;
   }
@@ -342,7 +342,7 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
   // Success/failure according to standard
   int numErr{0};
   int expectedRetCode{CFI_SUCCESS};
-  if (rank < 0 || rank > CFI_MAX_RANK) {
+  if (rank > CFI_MAX_RANK) {
     ++numErr;
     expectedRetCode = CFI_INVALID_RANK;
   }

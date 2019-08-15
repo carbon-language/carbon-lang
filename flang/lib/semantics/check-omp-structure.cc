@@ -46,7 +46,7 @@ bool OmpStructureChecker::HasInvalidWorksharingNesting(
   return false;
 }
 
-void OmpStructureChecker::CheckAllowed(const OmpClause &type) {
+void OmpStructureChecker::CheckAllowed(OmpClause type) {
   if (!GetContext().allowedClauses.test(type) &&
       !GetContext().allowedOnceClauses.test(type)) {
     context_.Say(GetContext().clauseSource,
