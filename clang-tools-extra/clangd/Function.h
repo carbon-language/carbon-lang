@@ -46,7 +46,7 @@ public:
 
 private:
   template <std::size_t... Indexes, class... RestArgs>
-  auto CallImpl(llvm::integer_sequence<std::size_t, Indexes...> Seq,
+  auto CallImpl(std::integer_sequence<std::size_t, Indexes...> Seq,
                 RestArgs &&... Rest)
       -> decltype(std::get<0>(this->FuncWithArguments)(
           std::forward<Args>(std::get<Indexes + 1>(this->FuncWithArguments))...,
