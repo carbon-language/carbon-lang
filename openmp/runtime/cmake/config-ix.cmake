@@ -52,7 +52,6 @@ check_cxx_compiler_flag(-Wno-class-memaccess LIBOMP_HAVE_WNO_CLASS_MEMACCESS_FLA
 check_cxx_compiler_flag(-Wno-covered-switch-default LIBOMP_HAVE_WNO_COVERED_SWITCH_DEFAULT_FLAG)
 check_cxx_compiler_flag(-Wno-frame-address LIBOMP_HAVE_WNO_FRAME_ADDRESS_FLAG)
 check_cxx_compiler_flag(-Wno-implicit-fallthrough LIBOMP_HAVE_WNO_IMPLICIT_FALLTHROUGH_FLAG)
-check_cxx_compiler_flag(-Wno-int-in-bool-context LIBOMP_HAVE_WNO_INT_IN_BOOL_CONTEXT_FLAG)
 check_cxx_compiler_flag(-Wno-missing-braces LIBOMP_HAVE_WNO_MISSING_BRACES_FLAG)
 check_cxx_compiler_flag(-Wno-parentheses LIBOMP_HAVE_WNO_PARENTHESES_FLAG)
 check_cxx_compiler_flag(-Wno-strict-aliasing LIBOMP_HAVE_WNO_STRICT_ALIASING_FLAG)
