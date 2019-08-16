@@ -5798,8 +5798,7 @@ Expr *OpenMPIterationSpaceChecker::buildPreCond(
     Scope *S, Expr *Cond,
     llvm::MapVector<const Expr *, DeclRefExpr *> &Captures) const {
   // Try to build LB <op> UB, where <op> is <, >, <=, or >=.
-  bool Suppress = SemaRef.getDiagnostics().getSuppressAllDiagnostics();
-  SemaRef.getDiagnostics().setSuppressAllDiagnostics(/*Val=*/true);
+  Sema::TentativeAnalysisScope Trap(SemaRef);
 
   ExprResult NewLB =
       InitDependOnLC ? LB : tryBuildCapture(SemaRef, LB, Captures);
@@ -5821,7 +5820,7 @@ Expr *OpenMPIterationSpaceChecker::buildPreCond(
           CondExpr.get(), SemaRef.Context.BoolTy, /*Action=*/Sema::AA_Casting,
           /*AllowExplicit=*/true);
   }
-  SemaRef.getDiagnostics().setSuppressAllDiagnostics(Suppress);
+
   // Otherwise use original loop condition and evaluate it in runtime.
   return CondExpr.isUsable() ? CondExpr.get() : Cond;
 }
@@ -6243,8 +6242,8 @@ static ExprResult buildCounterUpdate(
   if (VarRef.get()->getType()->isOverloadableType() ||
       NewStart.get()->getType()->isOverloadableType() ||
       Update.get()->getType()->isOverloadableType()) {
-    bool Suppress = SemaRef.getDiagnostics().getSuppressAllDiagnostics();
-    SemaRef.getDiagnostics().setSuppressAllDiagnostics(/*Val=*/true);
+    Sema::TentativeAnalysisScope Trap(SemaRef);
+
     Update =
         SemaRef.BuildBinOp(S, Loc, BO_Assign, VarRef.get(), NewStart.get());
     if (Update.isUsable()) {
@@ -6256,7 +6255,6 @@ static ExprResult buildCounterUpdate(
                                             UpdateVal.get());
       }
     }
-    SemaRef.getDiagnostics().setSuppressAllDiagnostics(Suppress);
   }
 
   // Second attempt: try to build 'VarRef = Start (+|-) Iter * Step'.
@@ -13605,11 +13603,13 @@ Sema::ActOnOpenMPDependClause(OpenMPDependClauseKind DepKind,
             << RefExpr->getSourceRange();
         continue;
       }
-      bool Suppress = getDiagnostics().getSuppressAllDiagnostics();
-      getDiagnostics().setSuppressAllDiagnostics(/*Val=*/true);
-      ExprResult Res =
-          CreateBuiltinUnaryOp(ELoc, UO_AddrOf, RefExpr->IgnoreParenImpCasts());
-      getDiagnostics().setSuppressAllDiagnostics(Suppress);
+
+      ExprResult Res;
+      {
+        Sema::TentativeAnalysisScope Trap(*this);
+        Res = CreateBuiltinUnaryOp(ELoc, UO_AddrOf,
+                                   RefExpr->IgnoreParenImpCasts());
+      }
       if (!Res.isUsable() && !isa<OMPArraySectionExpr>(SimpleExpr)) {
         Diag(ELoc, diag::err_omp_expected_addressable_lvalue_or_array_item)
             << RefExpr->getSourceRange();
