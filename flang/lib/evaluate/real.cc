@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "real.h"
-#include "decimal.h"
 #include "int-power.h"
 #include "../common/idioms.h"
+#include "../decimal/decimal.h"
 #include "../parser/characters.h"
 #include <limits>
 
@@ -377,11 +377,38 @@ void Real<W, P, IM>::NormalizeAndRound(ValueWithRealFlags<Real> &result,
   result.flags |= result.value.Round(rounding, roundingBits, multiply);
 }
 
+inline enum decimal::FortranRounding MapRoundingMode(RoundingMode rounding) {
+  switch (rounding) {
+  case RoundingMode::TiesToEven: break;
+  case RoundingMode::ToZero: return decimal::RoundToZero;
+  case RoundingMode::Down: return decimal::RoundDown;
+  case RoundingMode::Up: return decimal::RoundUp;
+  case RoundingMode::TiesAwayFromZero: return decimal::RoundCompatible;
+  }
+  return decimal::RoundNearest;  // dodge gcc warning about lack of result
+}
+
+inline RealFlags MapFlags(decimal::ConversionResultFlags flags) {
+  RealFlags result;
+  if (flags & decimal::Overflow) {
+    result.set(RealFlag::Overflow);
+  }
+  if (flags & decimal::Inexact) {
+    result.set(RealFlag::Inexact);
+  }
+  if (flags & decimal::Invalid) {
+    result.set(RealFlag::InvalidArgument);
+  }
+  return result;
+}
+
 template<typename W, int P, bool IM>
 ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Read(
     const char *&p, Rounding rounding) {
-  Decimal<Real> decimal;
-  return decimal.ToReal(p, rounding);
+  auto converted{
+      decimal::ConvertToBinary<P>(p, MapRoundingMode(rounding.mode))};
+  const auto *value{reinterpret_cast<Real<W, P, IM> *>(&converted.binary)};
+  return {*value, MapFlags(converted.flags)};
 }
 
 template<typename W, int P, bool IM>
@@ -446,8 +473,21 @@ std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
     if (parenthesize) {
       o << "(";
     }
-    Decimal<Real> decimal;
-    o << decimal.FromReal(*this).ToString() << '_' << kind;
+    using B = decimal::BinaryFloatingPointNumber<P>;
+    const auto *value{reinterpret_cast<const B *>(this)};
+    char buffer[1024];
+    auto result{decimal::ConvertToDecimal<P>(buffer, sizeof buffer,
+        static_cast<decimal::DecimalConversionFlags>(0) /*Minimize pmk*/, 1024,
+        decimal::RoundNearest, *value)};
+    const char *p{result.str};
+    if (*p == '-' || *p == '+') {
+      o << *p++;
+    }
+    o << *p << '.' << (p + 1);
+    if (result.decimalExponent != 1) {
+      o << 'e' << (result.decimalExponent - 1);
+    }
+    o << '_' << kind;
     if (parenthesize) {
       o << ')';
     }

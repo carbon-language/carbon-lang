@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_TESTING_H_
 #define FORTRAN_EVALUATE_TESTING_H_
 
+#include <cinttypes>
 #include <string>
 
 namespace testing {
@@ -37,14 +38,13 @@ int Complete();
 using FailureDetailPrinter = void (*)(const char *, ...);
 FailureDetailPrinter Test(
     const char *file, int line, const char *predicate, bool pass);
-FailureDetailPrinter Match(const char *file, int line, unsigned long long want,
-    const char *gots, unsigned long long got);
+FailureDetailPrinter Match(const char *file, int line, std::uint64_t want,
+    const char *gots, std::uint64_t got);
 FailureDetailPrinter Match(const char *file, int line, const char *want,
     const char *gots, const std::string &got);
 FailureDetailPrinter Match(const char *file, int line, const std::string &want,
     const char *gots, const std::string &got);
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
-    const char *rel, const char *ys, unsigned long long x,
-    unsigned long long y);
+    const char *rel, const char *ys, std::uint64_t x, std::uint64_t y);
 }
 #endif  // FORTRAN_EVALUATE_TESTING_H_

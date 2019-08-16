@@ -80,21 +80,17 @@ public:
     return *this;
   }
 
-  // Reads a character representation of a floating-point value into
-  // this decimal floating-point representation.  The reference argument
-  // is a pointer that is left pointing to the first character that wasn't
-  // included.
-  bool ParseNumber(const char *&);
-
   // Converts decimal floating-point to binary.
   ConversionToBinaryResult<PREC> ConvertToBinary();
 
   // Parses and converts to binary.  Also handles "NaN" & "Inf".
+  // The reference argument is a pointer that is left pointing to
+  // the first character that wasn't included.
   ConversionToBinaryResult<PREC> ConvertToBinary(const char *&);
 
   // Formats a decimal floating-point number.
   ConversionToDecimalResult ConvertToDecimal(
-      char *, std::size_t, int flags, int digits) const;
+      char *, std::size_t, enum DecimalConversionFlags, int digits) const;
 
   // Discard decimal digits not needed to distinguish this value
   // from the decimal encodings of two others (viz., the nearest binary
@@ -308,6 +304,8 @@ private:
   // Assumes same exponent and sign.
   // Returns true when the the result has effectively been rounded down.
   bool Mean(const BigRadixFloatingPointNumber &);
+
+  bool ParseNumber(const char *&, bool &inexact);
 
   Digit digit_[maxDigits];  // in little-endian order: digit_[0] is LSD
   int digits_{0};  // # of elements in digit_[] array; zero when zero

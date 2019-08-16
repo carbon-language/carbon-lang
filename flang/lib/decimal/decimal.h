@@ -30,6 +30,10 @@
 // If the conversion can't fit in the user-supplied buffer, a null pointer
 // is returned.
 
+#ifdef __cplusplus
+namespace Fortran::decimal {
+#endif
+
 enum ConversionResultFlags {
   Exact = 0,
   Overflow = 1,
@@ -64,12 +68,10 @@ enum DecimalConversionFlags {
 };
 
 #ifdef __cplusplus
-namespace Fortran::decimal {
-
 template<int PREC>
 ConversionToDecimalResult ConvertToDecimal(char *, size_t,
-    enum DecimalConversionFlags flags, int digits,
-    enum FortranRounding rounding, BinaryFloatingPointNumber<PREC> x);
+    DecimalConversionFlags, int digits, enum FortranRounding rounding,
+    BinaryFloatingPointNumber<PREC> x);
 
 extern template ConversionToDecimalResult ConvertToDecimal<8>(char *, size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
@@ -111,29 +113,36 @@ extern template ConversionToBinaryResult<64> ConvertToBinary<64>(
     const char *&, enum FortranRounding = RoundNearest);
 extern template ConversionToBinaryResult<112> ConvertToBinary<112>(
     const char *&, enum FortranRounding = RoundNearest);
-}
+}  // namespace Fortran::decimal
 extern "C" {
+#define NS(x) Fortran::decimal::x
+#else
+#define NS(x) x
 #endif /* C++ */
 
-ConversionToDecimalResult ConvertFloatToDecimal(
-    char *, size_t, int flags, int digits, enum FortranRounding, float);
-ConversionToDecimalResult ConvertDoubleToDecimal(
-    char *, size_t, int flags, int digits, enum FortranRounding, double);
+NS(ConversionToDecimalResult)
+ConvertFloatToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
+    int digits, enum NS(FortranRounding), float);
+NS(ConversionToDecimalResult)
+ConvertDoubleToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
+    int digits, enum NS(FortranRounding), double);
 #if __x86_64__
-ConversionToDecimalResult ConvertLongDoubleToDecimal(
-    char *, size_t, int flags, int digits, enum FortranRounding, long double);
+NS(ConversionToDecimalResult)
+ConvertLongDoubleToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
+    int digits, enum NS(FortranRounding), long double);
 #endif
 
-ConversionResultFlags ConvertDecimalToFloat(
-    const char **, float *, enum FortranRounding);
-ConversionResultFlags ConvertDecimalToDouble(
-    const char **, double *, enum FortranRounding);
+NS(ConversionResultFlags)
+ConvertDecimalToFloat(const char **, float *, enum NS(FortranRounding));
+NS(ConversionResultFlags)
+ConvertDecimalToDouble(const char **, double *, enum NS(FortranRounding));
 #if __x86_64__
-ConversionResultFlags ConvertDecimalToLongDouble(
-    const char **, long double *, enum FortranRounding);
+NS(ConversionResultFlags)
+ConvertDecimalToLongDouble(
+    const char **, long double *, enum NS(FortranRounding));
 #endif
-
+#undef NS
 #ifdef __cplusplus
-}
-#endif /* C++ */
+}  // extern "C"
+#endif
 #endif

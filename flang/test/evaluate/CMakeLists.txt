@@ -65,6 +65,7 @@ add_executable(intrinsics-test
 target_link_libraries(intrinsics-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranDecimal
   FortranSemantics
   FortranParser
   FortranRuntime
@@ -92,6 +93,7 @@ add_executable(real-test
 target_link_libraries(real-test
   FortranEvaluateTesting
   FortranEvaluate
+  FortranDecimal
   FortranSemantics
   m
 )

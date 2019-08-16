@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,15 +48,15 @@ FailureDetailPrinter Test(
   }
 }
 
-FailureDetailPrinter Match(const char *file, int line, unsigned long long want,
-    const char *gots, unsigned long long got) {
+FailureDetailPrinter Match(const char *file, int line, std::uint64_t want,
+    const char *gots, std::uint64_t got) {
   if (want == got) {
     ++passes;
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL: %s == 0x%llx, not 0x%llx\n", file, line, gots,
-        got, want);
+    fprintf(stderr, "%s:%d: FAIL: %s == 0x%jx, not 0x%jx\n", file, line, gots,
+        static_cast<std::uintmax_t>(got), static_cast<std::uintmax_t>(want));
     return PrintFailureDetails;
   }
 }
@@ -80,8 +80,7 @@ FailureDetailPrinter Match(const char *file, int line, const std::string &want,
 }
 
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
-    const char *rel, const char *ys, unsigned long long x,
-    unsigned long long y) {
+    const char *rel, const char *ys, std::uint64_t x, std::uint64_t y) {
   while (*rel == ' ') {
     ++rel;
   }
@@ -108,8 +107,8 @@ FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL: %s[0x%llx] %s %s[0x%llx]\n", file, line, xs,
-        x, rel, ys, y);
+    fprintf(stderr, "%s:%d: FAIL: %s[0x%jx] %s %s[0x%jx]\n", file, line, xs,
+        static_cast<std::uint64_t>(x), rel, ys, static_cast<std::uint64_t>(y));
     return PrintFailureDetails;
   }
 }

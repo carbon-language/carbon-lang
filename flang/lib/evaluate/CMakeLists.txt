@@ -18,7 +18,6 @@ add_library(FortranEvaluate
   common.cc
   complex.cc
   constant.cc
-  decimal.cc
   expression.cc
   fold.cc
   formatting.cc
@@ -37,6 +36,7 @@ add_library(FortranEvaluate
 
 target_link_libraries(FortranEvaluate
   FortranCommon
+  FortranDecimal
   FortranParser
   m
 )

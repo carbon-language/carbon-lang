@@ -142,8 +142,8 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
     char ldesc[128];
     std::uint64_t x{1};
     x <<= j;
-    std::snprintf(ldesc, sizeof ldesc, "%s j=%d x=0x%llx rm=%d", desc,
-        static_cast<int>(j), static_cast<unsigned long long>(x), rm);
+    std::snprintf(ldesc, sizeof ldesc, "%s j=%d x=0x%jx rm=%d", desc,
+        static_cast<int>(j), static_cast<std::intmax_t>(x), rm);
     Integer8 ix{x};
     TEST(!ix.IsNegative())(ldesc);
     MATCH(x, ix.ToUInt64())(ldesc);
@@ -162,15 +162,18 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       TEST(!vr.value.IsInfinite())(ldesc);
       TEST(ivf.flags.empty())(ldesc);
       MATCH(x, ivf.value.ToUInt64())(ldesc);
-      std::stringstream ss;
-      vr.value.AsFortran(ss, kind);
-      std::string decimal{ss.str()};
-      const char *p{decimal.data()};
-      MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))(ldesc);
-      auto check{R::Read(p, rounding)};
-      auto icheck{check.value.template ToInteger<Integer8>()};
-      MATCH(x, icheck.value.ToUInt64())(ldesc);
-      TEST(vr.value.Compare(check.value) == Relation::Equal)(ldesc);
+      if (rounding.mode == RoundingMode::TiesToEven) {  // to match stold()
+        std::stringstream ss;
+        vr.value.AsFortran(ss, kind);
+        std::string decimal{ss.str()};
+        const char *p{decimal.data()};
+        MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))
+        ("%s %s", ldesc, p);
+        auto check{R::Read(p, rounding)};
+        auto icheck{check.value.template ToInteger<Integer8>()};
+        MATCH(x, icheck.value.ToUInt64())(ldesc);
+        TEST(vr.value.Compare(check.value) == Relation::Equal)(ldesc);
+      }
     }
     TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
     ix = ix.Negate().value;
@@ -395,16 +398,16 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       UINT rcheck{NormalizeNaN(u.ui)};
       UINT check = aint.value.RawBits().ToUInt64();
       MATCH(rcheck, check)
-      ("%d AINT(0x%llx)", pass, static_cast<long long>(rj));
+      ("%d AINT(0x%jx)", pass, static_cast<std::intmax_t>(rj));
       MATCH(actualFlags, FlagsToBits(aint.flags))
-      ("%d AINT(0x%llx)", pass, static_cast<long long>(rj));
+      ("%d AINT(0x%jx)", pass, static_cast<std::intmax_t>(rj));
     }
 
     {
       MATCH(IsNaN(rj), x.IsNotANumber())
-      ("%d IsNaN(0x%llx)", pass, static_cast<long long>(rj));
+      ("%d IsNaN(0x%jx)", pass, static_cast<std::intmax_t>(rj));
       MATCH(IsInfinite(rj), x.IsInfinite())
-      ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
+      ("%d IsInfinite(0x%jx)", pass, static_cast<std::intmax_t>(rj));
 
       static constexpr int kind{REAL::bits / 8};
       std::stringstream ss, css;
@@ -413,7 +416,7 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       if (IsNaN(rj)) {
         css << "(0._" << kind << "/0.)";
         MATCH(css.str(), s)
-        ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
+        ("%d invalid(0x%jx)", pass, static_cast<std::intmax_t>(rj));
       } else if (IsInfinite(rj)) {
         css << '(';
         if (IsNegative(rj)) {
@@ -421,7 +424,7 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         }
         css << "1._" << kind << "/0.)";
         MATCH(css.str(), s)
-        ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
+        ("%d overflow(0x%jx)", pass, static_cast<std::intmax_t>(rj));
       } else {
         const char *p = s.data();
         if (*p == '(') {
@@ -429,11 +432,12 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         }
         auto readBack{REAL::Read(p, rounding)};
         MATCH(rj, readBack.value.RawBits().ToUInt64())
-        ("%d Read(AsFortran()) 0x%llx %s %g", pass, static_cast<long long>(rj),
-            s.data(), static_cast<double>(fj));
+        ("%d Read(AsFortran()) 0x%jx %s %g", pass,
+            static_cast<std::intmax_t>(rj), s.data(), static_cast<double>(fj));
         MATCH('_', *p)
-        ("%d Read(AsFortran()) 0x%llx %s %d", pass, static_cast<long long>(rj),
-            s.data(), static_cast<int>(p - s.data()));
+        ("%d Read(AsFortran()) 0x%jx %s %d", pass,
+            static_cast<std::intmax_t>(rj), s.data(),
+            static_cast<int>(p - s.data()));
       }
     }
 
@@ -454,11 +458,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = sum.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-        ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx + 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
         MATCH(actualFlags, FlagsToBits(sum.flags))
-        ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx + 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
       }
       {
         ValueWithRealFlags<REAL> diff{x.Subtract(y, rounding)};
@@ -471,11 +475,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = diff.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-        ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx - 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
         MATCH(actualFlags, FlagsToBits(diff.flags))
-        ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx - 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
       }
       {
         ValueWithRealFlags<REAL> prod{x.Multiply(y, rounding)};
@@ -488,11 +492,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = prod.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-        ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx * 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
         MATCH(actualFlags, FlagsToBits(prod.flags))
-        ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx * 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
       }
       {
         ValueWithRealFlags<REAL> quot{x.Divide(y, rounding)};
@@ -505,11 +509,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = quot.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-        ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx / 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
         MATCH(actualFlags, FlagsToBits(quot.flags))
-        ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
-            static_cast<long long>(rk));
+        ("%d 0x%jx / 0x%jx", pass, static_cast<std::intmax_t>(rj),
+            static_cast<std::intmax_t>(rk));
       }
     }
   }

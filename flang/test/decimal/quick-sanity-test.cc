@@ -18,6 +18,8 @@
 #include <cstring>
 #include <iostream>
 
+using namespace Fortran::decimal;
+
 static int tests{0};
 static int fails{0};
 

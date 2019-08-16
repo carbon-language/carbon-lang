@@ -18,6 +18,8 @@
 #include <cstring>
 #include <iostream>
 
+using namespace Fortran::decimal;
+
 static std::uint64_t tests{0};
 static std::uint64_t fails{0};
 
@@ -30,7 +32,8 @@ std::ostream &failed(float x) {
 void testReadback(float x, int flags) {
   char buffer[1024];
   if (!(tests & 0x3fffff)) {
-    std::cerr << "\n0x" << std::hex << *reinterpret_cast<std::uint32_t *>(&x) << std::dec << ' ';
+    std::cerr << "\n0x" << std::hex << *reinterpret_cast<std::uint32_t *>(&x)
+              << std::dec << ' ';
   } else if (!(tests & 0xffff)) {
     std::cerr << '.';
   }
@@ -42,7 +45,8 @@ void testReadback(float x, int flags) {
   } else {
     float y{0};
     char *q{const_cast<char *>(result.str)};
-    if ((*q >= '0' && *q <= '9') || ((*q == '-' || *q == '+') && q[1] >= '0' && q[1] <= '9')) {
+    if ((*q >= '0' && *q <= '9') ||
+        ((*q == '-' || *q == '+') && q[1] >= '0' && q[1] <= '9')) {
       int expo{result.decimalExponent};
       expo -= result.length;
       if (*q == '-' || *q == '+') {

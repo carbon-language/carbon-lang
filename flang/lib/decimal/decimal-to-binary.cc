@@ -24,7 +24,7 @@ namespace Fortran::decimal {
 
 template<int PREC, int LOG10RADIX>
 bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
-    const char *&p) {
+    const char *&p, bool &inexact) {
   SetToZero();
   while (*p == ' ') {
     ++p;
@@ -35,11 +35,9 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
     ++q;
   }
   const char *start{q};
-  bool inexact{false};
   while (*q == '0') {
     ++q;
   }
-  // TODO pmk replace with faster idea
   for (; *q >= '0' && *q <= '9' && !IsFull(); ++q) {
     MultiplyBy<10>(*q - '0');
   }
@@ -65,8 +63,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
     }
   }
   if (q == start || (q == start + 1 && *start == '.')) {
-    // No digits?  No bueno.
-    return false;
+    return false;  // require at least one digit
   }
 
   switch (*q) {
@@ -163,7 +160,7 @@ public:
   }
 
   ConversionToBinaryResult<PREC> ToBinary(
-      bool isNegative, enum FortranRounding) const;
+      bool isNegative, FortranRounding) const;
 
 private:
   IntType value_{0}, guard_{0};  // todo pmk: back to 3-bit guard
@@ -172,7 +169,7 @@ private:
 
 template<int PREC>
 ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
-    bool isNegative, enum FortranRounding rounding) const {
+    bool isNegative, FortranRounding rounding) const {
   using Binary = BinaryFloatingPointNumber<PREC>;
   // Create a fraction with a binary point to the left of the integer
   // value_, and bias the exponent.
@@ -355,8 +352,14 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
 template<int PREC, int LOG10RADIX>
 ConversionToBinaryResult<PREC>
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(const char *&p) {
-  if (ParseNumber(p)) {
-    return ConvertToBinary();
+  bool inexact{false};
+  if (ParseNumber(p, inexact)) {
+    auto result{ConvertToBinary()};
+    if (inexact) {
+      result.flags =
+          static_cast<enum ConversionResultFlags>(result.flags | Inexact);
+    }
+    return result;
   } else {
     // Could not parse a decimal floating-point number.  p has been
     // advanced over any leading spaces.
@@ -410,27 +413,26 @@ template ConversionToBinaryResult<64> ConvertToBinary<64>(
 template ConversionToBinaryResult<112> ConvertToBinary<112>(
     const char *&, enum FortranRounding);
 
-}
-
 extern "C" {
-ConversionResultFlags ConvertDecimalToFloat(
+enum ConversionResultFlags ConvertDecimalToFloat(
     const char **p, float *f, enum FortranRounding rounding) {
   auto result{Fortran::decimal::ConvertToBinary<24>(*p, rounding)};
   *f = *reinterpret_cast<const float *>(&result.binary);
   return result.flags;
 }
-ConversionResultFlags ConvertDecimalToDouble(
+enum ConversionResultFlags ConvertDecimalToDouble(
     const char **p, double *d, enum FortranRounding rounding) {
   auto result{Fortran::decimal::ConvertToBinary<53>(*p, rounding)};
   *d = *reinterpret_cast<const double *>(&result.binary);
   return result.flags;
 }
 #if __x86_64__
-ConversionResultFlags ConvertDecimalToLongDouble(
+enum ConversionResultFlags ConvertDecimalToLongDouble(
     const char **p, long double *ld, enum FortranRounding rounding) {
   auto result{Fortran::decimal::ConvertToBinary<64>(*p, rounding)};
   *ld = *reinterpret_cast<const long double *>(&result.binary);
   return result.flags;
 }
 #endif
+}
 }
