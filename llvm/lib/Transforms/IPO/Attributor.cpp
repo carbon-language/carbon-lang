@@ -943,12 +943,35 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
                       << static_cast<const AbstractAttribute &>(RetValAA)
                       << "\n");
 
-    // If we know something but not everyting about the returned values, keep
-    // track of that too. Hence, remember transitively unresolved calls.
-    UnresolvedCalls.insert(RetValAA.getUnresolvedCalls().begin(),
-                           RetValAA.getUnresolvedCalls().end());
+    // Do not try to learn partial information. If the callee has unresolved
+    // return values we will treat the call as unresolved/opaque.
+    auto &RetValAAUnresolvedCalls = RetValAA.getUnresolvedCalls();
+    if (!RetValAAUnresolvedCalls.empty()) {
+      UnresolvedCalls.insert(CB);
+      continue;
+    }
 
-    // Now track transitively returned values.
+    // Now check if we can track transitively returned values. If possible, thus
+    // if all return value can be represented in the current scope, do so.
+    bool Unresolved = false;
+    for (auto &RetValAAIt : RetValAA.returned_values()) {
+      Value *RetVal = RetValAAIt.first;
+      if (isa<Argument>(RetVal) || isa<CallBase>(RetVal) ||
+          isa<Constant>(RetVal))
+        continue;
+      // Anything that did not fit in the above categories cannot be resolved,
+      // mark the call as unresolved.
+      LLVM_DEBUG(dbgs() << "[AAReturnedValues] transitively returned value "
+                           "cannot be translated: "
+                        << *RetVal << "\n");
+      UnresolvedCalls.insert(CB);
+      Unresolved = true;
+      break;
+    }
+
+    if (Unresolved)
+      continue;
+
     for (auto &RetValAAIt : RetValAA.returned_values()) {
       Value *RetVal = RetValAAIt.first;
       if (Argument *Arg = dyn_cast<Argument>(RetVal)) {
@@ -967,12 +990,6 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
         NewRVsMap[RetVal].insert(It.second.begin(), It.second.end());
         continue;
       }
-      // Anything that did not fit in the above categories cannot be resolved,
-      // mark the call as unresolved.
-      LLVM_DEBUG(dbgs() << "[AAReturnedValues] transitively returned value "
-                           "cannot be translated: "
-                        << *RetVal << "\n");
-      UnresolvedCalls.insert(CB);
     }
   }
 
