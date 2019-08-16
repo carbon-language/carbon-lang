@@ -1359,6 +1359,39 @@ struct AANonNullCallSiteArgument final : AANonNullImpl {
 /// NonNull attribute deduction for a call sites.
 using AANonNullCallSiteReturned = AANonNullReturned;
 
+/// ------------------------ No-Recurse Attributes ----------------------------
+
+struct AANoRecurseImpl : public AANoRecurse {
+  AANoRecurseImpl(const IRPosition &IRP) : AANoRecurse(IRP) {}
+
+  /// See AbstractAttribute::initialize(...).
+  void initialize(Attributor &A) override {
+    if (hasAttr({getAttrKind()})) {
+      indicateOptimisticFixpoint();
+      return;
+    }
+  }
+
+  /// See AbstractAttribute::getAsStr()
+  const std::string getAsStr() const override {
+    return getAssumed() ? "norecurse" : "may-recurse";
+  }
+};
+
+struct AANoRecurseFunction final : AANoRecurseImpl {
+  AANoRecurseFunction(const IRPosition &IRP) : AANoRecurseImpl(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    // TODO: Implement this.
+    return indicatePessimisticFixpoint();
+  }
+
+  void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(norecurse) }
+};
+
+using AANoRecurseCallSite = AANoRecurseFunction;
+
 /// ------------------------ Will-Return Attributes ----------------------------
 
 // Helper function that checks whether a function has any cycle.
@@ -1381,34 +1414,27 @@ static bool containsCycle(Function &F) {
 // endless loop
 // FIXME: Any cycle is regarded as endless loop for now.
 //        We have to allow some patterns.
-static bool containsPossiblyEndlessLoop(Function &F) {
-  return containsCycle(F);
+static bool containsPossiblyEndlessLoop(Function *F) {
+  return !F || !F->hasExactDefinition() || containsCycle(*F);
 }
 
 struct AAWillReturnImpl : public AAWillReturn {
   AAWillReturnImpl(const IRPosition &IRP) : AAWillReturn(IRP) {}
 
-  /// See AbstractAttribute::getAsStr()
-  const std::string getAsStr() const override {
-    return getAssumed() ? "willreturn" : "may-noreturn";
-  }
-};
-
-struct AAWillReturnFunction final : AAWillReturnImpl {
-  AAWillReturnFunction(const IRPosition &IRP) : AAWillReturnImpl(IRP) {}
-
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
-    Function &F = *getAnchorScope();
+    if (hasAttr({Attribute::WillReturn})) {
+      indicateOptimisticFixpoint();
+      return;
+    }
 
+    Function *F = getAssociatedFunction();
     if (containsPossiblyEndlessLoop(F))
       indicatePessimisticFixpoint();
   }
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A) override {
-    // The map from instruction opcodes to those instructions in the function.
-
     auto CheckForWillReturn = [&](Instruction &I) {
       ImmutableCallSite ICS(&I);
       if (ICS.hasFnAttr(Attribute::WillReturn))
@@ -1433,8 +1459,17 @@ struct AAWillReturnFunction final : AAWillReturnImpl {
     return ChangeStatus::UNCHANGED;
   }
 
+  /// See AbstractAttribute::getAsStr()
+  const std::string getAsStr() const override {
+    return getAssumed() ? "willreturn" : "may-noreturn";
+  }
+};
+
+struct AAWillReturnFunction final : AAWillReturnImpl {
+  AAWillReturnFunction(const IRPosition &IRP) : AAWillReturnImpl(IRP) {}
+
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(norecurse) }
+  void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(willreturn) }
 };
 
 /// WillReturn attribute deduction for a call sites.
@@ -1445,25 +1480,63 @@ using AAWillReturnCallSite = AAWillReturnFunction;
 struct AANoAliasImpl : AANoAlias {
   AANoAliasImpl(const IRPosition &IRP) : AANoAlias(IRP) {}
 
+  /// See AbstractAttribute::initialize(...).
+  void initialize(Attributor &A) override {
+    if (hasAttr({Attribute::NoAlias}))
+      indicateOptimisticFixpoint();
+  }
+
   const std::string getAsStr() const override {
     return getAssumed() ? "noalias" : "may-alias";
   }
 };
 
+/// NoAlias attribute for a floating value.
+struct AANoAliasFloating final : AANoAliasImpl {
+  AANoAliasFloating(const IRPosition &IRP) : AANoAliasImpl(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    // TODO: Implement this.
+    return indicatePessimisticFixpoint();
+  }
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECLTRACK_FLOATING_ATTR(noalias)
+  }
+};
+
+/// NoAlias attribute for an argument.
+struct AANoAliasArgument final : AANoAliasImpl {
+  AANoAliasArgument(const IRPosition &IRP) : AANoAliasImpl(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    // TODO: Implement this.
+    return indicatePessimisticFixpoint();
+  }
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECLTRACK_ARG_ATTR(noalias) }
+};
+
+struct AANoAliasCallSiteArgument final : AANoAliasImpl {
+  AANoAliasCallSiteArgument(const IRPosition &IRP) : AANoAliasImpl(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    // TODO: Implement this.
+    return indicatePessimisticFixpoint();
+  }
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECLTRACK_ARG_ATTR(noalias) }
+};
+
 /// NoAlias attribute for function return value.
 struct AANoAliasReturned final : AANoAliasImpl {
   AANoAliasReturned(const IRPosition &IRP) : AANoAliasImpl(IRP) {}
-
-  /// See AbstractAttribute::initialize(...).
-  void initialize(Attributor &A) override {
-    Function &F = *getAnchorScope();
-
-    // Already noalias.
-    if (F.returnDoesNotAlias()) {
-      indicateOptimisticFixpoint();
-      return;
-    }
-  }
 
   /// See AbstractAttribute::updateImpl(...).
   virtual ChangeStatus updateImpl(Attributor &A) override {
@@ -1515,10 +1588,14 @@ struct AAIsDeadImpl : public AAIsDead {
   AAIsDeadImpl(const IRPosition &IRP) : AAIsDead(IRP) {}
 
   void initialize(Attributor &A) override {
-    const Function &F = *getAnchorScope();
+    const Function *F = getAssociatedFunction();
+    if (!F || !F->hasExactDefinition()) {
+      indicatePessimisticFixpoint();
+      return;
+    }
 
-    ToBeExploredPaths.insert(&(F.getEntryBlock().front()));
-    AssumedLiveBlocks.insert(&(F.getEntryBlock()));
+    ToBeExploredPaths.insert(&(F->getEntryBlock().front()));
+    AssumedLiveBlocks.insert(&(F->getEntryBlock()));
     for (size_t i = 0; i < ToBeExploredPaths.size(); ++i)
       if (const Instruction *NextNoReturnI =
               findNextNoReturn(A, ToBeExploredPaths[i]))
@@ -1538,7 +1615,7 @@ struct AAIsDeadImpl : public AAIsDead {
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
     return "Live[#BB " + std::to_string(AssumedLiveBlocks.size()) + "/" +
-           std::to_string(getAnchorScope()->size()) + "][#NRI " +
+           std::to_string(getAssociatedFunction()->size()) + "][#NRI " +
            std::to_string(NoReturnCalls.size()) + "]";
   }
 
@@ -1610,7 +1687,7 @@ struct AAIsDeadImpl : public AAIsDead {
 
   /// See AAIsDead::isAssumedDead(BasicBlock *).
   bool isAssumedDead(const BasicBlock *BB) const override {
-    assert(BB->getParent() == getAnchorScope() &&
+    assert(BB->getParent() == getAssociatedFunction() &&
            "BB must be in the same anchor scope function.");
 
     if (!getAssumed())
@@ -1625,7 +1702,7 @@ struct AAIsDeadImpl : public AAIsDead {
 
   /// See AAIsDead::isAssumed(Instruction *I).
   bool isAssumedDead(const Instruction *I) const override {
-    assert(I->getParent()->getParent() == getAnchorScope() &&
+    assert(I->getParent()->getParent() == getAssociatedFunction() &&
            "Instruction must be in the same anchor scope function.");
 
     if (!getAssumed())
@@ -1671,7 +1748,7 @@ struct AAIsDeadFunction final : public AAIsDeadImpl {
     STATS_DECL(DeadBlocks, Function,
                "Number of basic blocks classified as dead");
     BUILD_STAT_NAME(DeadBlocks, Function) +=
-        getAnchorScope()->size() - AssumedLiveBlocks.size();
+        getAssociatedFunction()->size() - AssumedLiveBlocks.size();
     STATS_DECL(PartiallyDeadBlocks, Function,
                "Number of basic blocks classified as partially dead");
     BUILD_STAT_NAME(PartiallyDeadBlocks, Function) += NoReturnCalls.size();
@@ -1771,11 +1848,11 @@ ChangeStatus AAIsDeadImpl::updateImpl(Attributor &A) {
 
   LLVM_DEBUG(dbgs() << "[AAIsDead] AssumedLiveBlocks: "
                     << AssumedLiveBlocks.size() << " Total number of blocks: "
-                    << getAnchorScope()->size() << "\n");
+                    << getAssociatedFunction()->size() << "\n");
 
   // If we know everything is live there is no need to query for liveness.
   if (NoReturnCalls.empty() &&
-      getAnchorScope()->size() == AssumedLiveBlocks.size()) {
+      getAssociatedFunction()->size() == AssumedLiveBlocks.size()) {
     // Indicating a pessimistic fixpoint will cause the state to be "invalid"
     // which will cause the Attributor to not return the AAIsDead on request,
     // which will prevent us from querying isAssumedDead().
@@ -1787,6 +1864,11 @@ ChangeStatus AAIsDeadImpl::updateImpl(Attributor &A) {
 }
 
 /// Liveness information for a call sites.
+//
+// TODO: Once we have call site specific value information we can provide call
+//       site specific liveness liveness information and then it makes sense to
+//       specialize attributes for call sites instead of redirecting requests to
+//       the callee.
 using AAIsDeadCallSite = AAIsDeadFunction;
 
 /// -------------------- Dereferenceable Argument Attribute --------------------
