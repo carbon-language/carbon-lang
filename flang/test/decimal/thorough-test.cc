@@ -73,7 +73,7 @@ void testReadback(float x, int flags) {
 int main() {
   float x;
   std::uint32_t *ix{reinterpret_cast<std::uint32_t *>(&x)};
-  for (*ix = 0x7f7ffff0 /*pmk!! 0*/; *ix < 0x7f800010; ++*ix) {
+  for (*ix = 0; *ix < 0x7f800010; ++*ix) {
     testReadback(x, 0);
     testReadback(-x, 0);
     testReadback(x, Minimize);
