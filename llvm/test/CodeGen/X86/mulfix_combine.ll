@@ -13,7 +13,6 @@ define i32 @smulfix_undef(i32 %y) nounwind {
 ; CHECK-LABEL: smulfix_undef:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
 ; CHECK-NEXT:    retq
   %tmp = call i32 @llvm.smul.fix.i32(i32 undef, i32 %y, i32 2)
   ret i32 %tmp
@@ -23,7 +22,6 @@ define i32 @smulfix_zero(i32 %y) nounwind {
 ; CHECK-LABEL: smulfix_zero:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
 ; CHECK-NEXT:    retq
   %tmp = call i32 @llvm.smul.fix.i32(i32 0, i32 %y, i32 2)
   ret i32 %tmp
@@ -33,7 +31,6 @@ define i32 @umulfix_undef(i32 %y) nounwind {
 ; CHECK-LABEL: umulfix_undef:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
 ; CHECK-NEXT:    retq
   %tmp = call i32 @llvm.umul.fix.i32(i32 undef, i32 %y, i32 2)
   ret i32 %tmp
@@ -43,7 +40,6 @@ define i32 @umulfix_zero(i32 %y) nounwind {
 ; CHECK-LABEL: umulfix_zero:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
 ; CHECK-NEXT:    retq
   %tmp = call i32 @llvm.umul.fix.i32(i32 0, i32 %y, i32 2)
   ret i32 %tmp
@@ -53,15 +49,6 @@ define i32 @smulfixsat_undef(i32 %y) nounwind {
 ; CHECK-LABEL: smulfixsat_undef:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
-; CHECK-NEXT:    movl $1, %ecx
-; CHECK-NEXT:    negl %ecx
-; CHECK-NEXT:    movl $2147483647, %ecx # imm = 0x7FFFFFFF
-; CHECK-NEXT:    cmovlel %eax, %ecx
-; CHECK-NEXT:    movl $-2, %eax
-; CHECK-NEXT:    negl %eax
-; CHECK-NEXT:    movl $-2147483648, %eax # imm = 0x80000000
-; CHECK-NEXT:    cmovgel %ecx, %eax
 ; CHECK-NEXT:    retq
   %tmp = call i32 @llvm.smul.fix.sat.i32(i32 undef, i32 %y, i32 2)
   ret i32 %tmp
@@ -71,15 +58,6 @@ define i32 @smulfixsat_zero(i32 %y) nounwind {
 ; CHECK-LABEL: smulfixsat_zero:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
-; CHECK-NEXT:    movl $1, %ecx
-; CHECK-NEXT:    negl %ecx
-; CHECK-NEXT:    movl $2147483647, %ecx # imm = 0x7FFFFFFF
-; CHECK-NEXT:    cmovlel %eax, %ecx
-; CHECK-NEXT:    movl $-2, %eax
-; CHECK-NEXT:    negl %eax
-; CHECK-NEXT:    movl $-2147483648, %eax # imm = 0x80000000
-; CHECK-NEXT:    cmovgel %ecx, %eax
 ; CHECK-NEXT:    retq
   %tmp = call i32 @llvm.smul.fix.sat.i32(i32 0, i32 %y, i32 2)
   ret i32 %tmp
@@ -88,17 +66,7 @@ define i32 @smulfixsat_zero(i32 %y) nounwind {
 define <4 x i32> @vec_smulfix_undef(<4 x i32> %y) nounwind {
 ; CHECK-LABEL: vec_smulfix_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; CHECK-NEXT:    pxor %xmm2, %xmm2
-; CHECK-NEXT:    pcmpgtd %xmm0, %xmm2
-; CHECK-NEXT:    pand %xmm0, %xmm2
-; CHECK-NEXT:    pmuludq %xmm0, %xmm0
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,3,2,3]
-; CHECK-NEXT:    pmuludq %xmm0, %xmm1
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[1,3,2,3]
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; CHECK-NEXT:    psubd %xmm2, %xmm0
-; CHECK-NEXT:    pslld $30, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = call <4 x i32> @llvm.smul.fix.v4i32(<4 x i32> undef, <4 x i32> %y, i32 2)
   ret <4 x i32> %tmp
@@ -107,20 +75,7 @@ define <4 x i32> @vec_smulfix_undef(<4 x i32> %y) nounwind {
 define <4 x i32> @vec_smulfix_zero(<4 x i32> %y) nounwind {
 ; CHECK-LABEL: vec_smulfix_zero:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    pxor %xmm1, %xmm1
-; CHECK-NEXT:    pxor %xmm2, %xmm2
-; CHECK-NEXT:    pmuludq %xmm0, %xmm2
-; CHECK-NEXT:    pshufd {{.*#+}} xmm3 = xmm2[0,2,2,3]
-; CHECK-NEXT:    pshufd {{.*#+}} xmm4 = xmm0[1,1,3,3]
-; CHECK-NEXT:    pmuludq %xmm1, %xmm4
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm4[0,2,2,3]
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1]
-; CHECK-NEXT:    psrld $2, %xmm3
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[1,3,2,3]
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm4[1,3,2,3]
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; CHECK-NEXT:    pslld $30, %xmm0
-; CHECK-NEXT:    por %xmm3, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = call <4 x i32> @llvm.smul.fix.v4i32(<4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32> %y, i32 2)
   ret <4 x i32> %tmp
@@ -129,13 +84,7 @@ define <4 x i32> @vec_smulfix_zero(<4 x i32> %y) nounwind {
 define <4 x i32> @vec_umulfix_undef(<4 x i32> %y) nounwind {
 ; CHECK-LABEL: vec_umulfix_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; CHECK-NEXT:    pmuludq %xmm0, %xmm0
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,3,2,3]
-; CHECK-NEXT:    pmuludq %xmm0, %xmm1
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[1,3,2,3]
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; CHECK-NEXT:    pslld $30, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = call <4 x i32> @llvm.umul.fix.v4i32(<4 x i32> undef, <4 x i32> %y, i32 2)
   ret <4 x i32> %tmp
@@ -144,20 +93,7 @@ define <4 x i32> @vec_umulfix_undef(<4 x i32> %y) nounwind {
 define <4 x i32> @vec_umulfix_zero(<4 x i32> %y) nounwind {
 ; CHECK-LABEL: vec_umulfix_zero:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    pxor %xmm1, %xmm1
-; CHECK-NEXT:    pxor %xmm2, %xmm2
-; CHECK-NEXT:    pmuludq %xmm0, %xmm2
-; CHECK-NEXT:    pshufd {{.*#+}} xmm3 = xmm2[0,2,2,3]
-; CHECK-NEXT:    pshufd {{.*#+}} xmm4 = xmm0[1,1,3,3]
-; CHECK-NEXT:    pmuludq %xmm1, %xmm4
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm4[0,2,2,3]
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1]
-; CHECK-NEXT:    psrld $2, %xmm3
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[1,3,2,3]
-; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm4[1,3,2,3]
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; CHECK-NEXT:    pslld $30, %xmm0
-; CHECK-NEXT:    por %xmm3, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = call <4 x i32> @llvm.umul.fix.v4i32(<4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32> %y, i32 2)
   ret <4 x i32> %tmp
@@ -166,19 +102,7 @@ define <4 x i32> @vec_umulfix_zero(<4 x i32> %y) nounwind {
 define <4 x i32> @vec_smulfixsat_undef(<4 x i32> %y) nounwind {
 ; CHECK-LABEL: vec_smulfixsat_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
-; CHECK-NEXT:    movl $1, %ecx
-; CHECK-NEXT:    negl %ecx
-; CHECK-NEXT:    movl $2147483647, %ecx # imm = 0x7FFFFFFF
-; CHECK-NEXT:    cmovlel %eax, %ecx
-; CHECK-NEXT:    movl $-2, %eax
-; CHECK-NEXT:    negl %eax
-; CHECK-NEXT:    movl $-2147483648, %eax # imm = 0x80000000
-; CHECK-NEXT:    cmovgel %ecx, %eax
-; CHECK-NEXT:    movd %eax, %xmm0
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0,0,1,1]
-; CHECK-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0,0]
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = call <4 x i32> @llvm.smul.fix.sat.v4i32(<4 x i32> undef, <4 x i32> %y, i32 2)
   ret <4 x i32> %tmp
@@ -187,19 +111,7 @@ define <4 x i32> @vec_smulfixsat_undef(<4 x i32> %y) nounwind {
 define <4 x i32> @vec_smulfixsat_zero(<4 x i32> %y) nounwind {
 ; CHECK-LABEL: vec_smulfixsat_zero:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    shrdl $2, %eax, %eax
-; CHECK-NEXT:    movl $1, %ecx
-; CHECK-NEXT:    negl %ecx
-; CHECK-NEXT:    movl $2147483647, %ecx # imm = 0x7FFFFFFF
-; CHECK-NEXT:    cmovlel %eax, %ecx
-; CHECK-NEXT:    movl $-2, %eax
-; CHECK-NEXT:    negl %eax
-; CHECK-NEXT:    movl $-2147483648, %eax # imm = 0x80000000
-; CHECK-NEXT:    cmovgel %ecx, %eax
-; CHECK-NEXT:    movd %eax, %xmm0
-; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0,0,1,1]
-; CHECK-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0,0]
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = call <4 x i32> @llvm.smul.fix.sat.v4i32(<4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32> %y, i32 2)
   ret <4 x i32> %tmp
