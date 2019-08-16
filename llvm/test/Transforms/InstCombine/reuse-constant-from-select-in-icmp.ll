@@ -14,14 +14,16 @@
 ; Canonical scalar predicates
 ;------------------------------------------------------------------------------;
 
+!0 = !{!"branch_weights", i32 2000, i32 1}
+
 define i32 @p0_ult_65536(i32 %x, i32 %y) {
 ; CHECK-LABEL: @p0_ult_65536(
 ; CHECK-NEXT:    [[T:%.*]] = icmp ult i32 [[X:%.*]], 65536
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[T]], i32 [[Y:%.*]], i32 65535
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[T]], i32 [[Y:%.*]], i32 65535, !prof !0
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t = icmp ult i32 %x, 65536
-  %r = select i1 %t, i32 %y, i32 65535
+  %r = select i1 %t, i32 %y, i32 65535, !prof !0
   ret i32 %r
 }
 define i32 @p1_ugt(i32 %x, i32 %y) {
@@ -318,3 +320,7 @@ define i32 @n26_all_good1(i32 %x, i32 %y) {
   %r = select i1 %t, i32 65536, i32 65535
   ret i32 %r
 }
+
+
+
+; CHECK: !0 = !{!"branch_weights", i32 2000, i32 1}
