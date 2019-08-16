@@ -4502,7 +4502,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
     }
   };
 
-  if (Obj->getHeader()->e_type == ELF::ET_CORE) {
+  if (Obj->getHeader()->e_type == ELF::ET_CORE || Obj->sections()->empty()) {
     for (const auto &P :
          unwrapOrError(this->FileName, Obj->program_headers())) {
       if (P.p_type != PT_NOTE)
@@ -5703,7 +5703,7 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
     }
   };
 
-  if (Obj->getHeader()->e_type == ELF::ET_CORE) {
+  if (Obj->getHeader()->e_type == ELF::ET_CORE || Obj->sections()->empty()) {
     for (const auto &P :
          unwrapOrError(this->FileName, Obj->program_headers())) {
       if (P.p_type != PT_NOTE)
