@@ -24,7 +24,10 @@
 #include <libkern/OSAtomic.h>
 #include <objc/objc-sync.h>
 #include <sys/ucontext.h>
+
+#if defined(__has_include) && __has_include(<xpc/xpc.h>)
 #include <xpc/xpc.h>
+#endif  // #if defined(__has_include) && __has_include(<xpc/xpc.h>)
 
 typedef long long_t;  // NOLINT
 
@@ -296,6 +299,8 @@ TSAN_INTERCEPTOR(void, os_unfair_lock_unlock, void *lock) {
   REAL(os_unfair_lock_unlock)(lock);
 }
 
+#if defined(__has_include) && __has_include(<xpc/xpc.h>)
+
 TSAN_INTERCEPTOR(void, xpc_connection_set_event_handler,
                  xpc_connection_t connection, xpc_handler_t handler) {
   SCOPED_TSAN_INTERCEPTOR(xpc_connection_set_event_handler, connection,
@@ -347,6 +352,8 @@ TSAN_INTERCEPTOR(void, xpc_connection_cancel, xpc_connection_t connection) {
   Release(thr, pc, (uptr)connection);
   REAL(xpc_connection_cancel)(connection);
 }
+
+#endif  // #if defined(__has_include) && __has_include(<xpc/xpc.h>)
 
 // Determines whether the Obj-C object pointer is a tagged pointer. Tagged
 // pointers encode the object data directly in their pointer bits and do not
