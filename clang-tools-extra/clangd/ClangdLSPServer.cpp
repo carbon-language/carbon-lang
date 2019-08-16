@@ -617,7 +617,7 @@ void ClangdLSPServer::onCommand(const ExecuteCommandParams &Params,
       if (!R)
         return Reply(R.takeError());
 
-      assert(R->ShowMessage || R->ApplyEdit && "tweak has no effect");
+      assert(R->ShowMessage || (R->ApplyEdit && "tweak has no effect"));
 
       if (R->ShowMessage) {
         ShowMessageParams Msg;
