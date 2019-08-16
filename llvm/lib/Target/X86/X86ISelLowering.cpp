@@ -7089,18 +7089,25 @@ static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Inputs,
 /// remaining input indices in case we now have a unary shuffle and adjust the
 /// inputs accordingly.
 /// Returns true if the target shuffle mask was decoded.
-static bool resolveTargetShuffleInputs(SDValue Op,
+static bool resolveTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
                                        SmallVectorImpl<SDValue> &Inputs,
                                        SmallVectorImpl<int> &Mask,
                                        SelectionDAG &DAG, unsigned Depth) {
-  unsigned NumElts = Op.getValueType().getVectorNumElements();
-  APInt DemandedElts = APInt::getAllOnesValue(NumElts);
   if (!setTargetShuffleZeroElements(Op, Mask, Inputs))
     if (!getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth))
       return false;
 
   resolveTargetShuffleInputsAndMask(Inputs, Mask);
   return true;
+}
+
+static bool resolveTargetShuffleInputs(SDValue Op,
+                                       SmallVectorImpl<SDValue> &Inputs,
+                                       SmallVectorImpl<int> &Mask,
+                                       SelectionDAG &DAG, unsigned Depth) {
+  unsigned NumElts = Op.getValueType().getVectorNumElements();
+  APInt DemandedElts = APInt::getAllOnesValue(NumElts);
+  return resolveTargetShuffleInputs(Op, DemandedElts, Inputs, Mask, DAG, Depth);
 }
 
 /// Returns the scalar element that will make up the ith
