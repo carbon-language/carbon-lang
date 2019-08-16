@@ -452,6 +452,172 @@ void IRPosition::verify() {
   }
 }
 
+/// Helper functions to clamp a state \p S of type \p StateType with the
+/// information in \p R and indicate/return if \p S did change (as-in update is
+/// required to be run again).
+///
+///{
+template <typename StateType>
+ChangeStatus clampStateAndIndicateChange(StateType &S, const StateType &R);
+
+template <>
+ChangeStatus clampStateAndIndicateChange<IntegerState>(IntegerState &S,
+                                                       const IntegerState &R) {
+  auto Assumed = S.getAssumed();
+  S ^= R;
+  return Assumed == S.getAssumed() ? ChangeStatus::UNCHANGED
+                                   : ChangeStatus::CHANGED;
+}
+///}
+
+/// Clamp the information known for all returned values of a function
+/// (identified by \p QueryingAA) into \p S.
+template <typename AAType, typename StateType = typename AAType::StateType>
+static void clampReturnedValueStates(Attributor &A, const AAType &QueryingAA,
+                                     StateType &S) {
+  LLVM_DEBUG(dbgs() << "[Attributor] Clamp return value states for "
+                    << static_cast<const AbstractAttribute &>(QueryingAA)
+                    << " into " << S << "\n");
+
+  assert((QueryingAA.getIRPosition().getPositionKind() ==
+              IRPosition::IRP_RETURNED ||
+          QueryingAA.getIRPosition().getPositionKind() ==
+              IRPosition::IRP_CALL_SITE_RETURNED) &&
+         "Can only clamp returned value states for a function returned or call "
+         "site returned position!");
+
+  // Use an optional state as there might not be any return values and we want
+  // to join (IntegerState::operator&) the state of all there are.
+  Optional<StateType> T;
+
+  // Callback for each possibly returned value.
+  auto CheckReturnValue = [&](Value &RV) -> bool {
+    const IRPosition &RVPos = IRPosition::value(RV);
+    const AAType *AA = A.getAAFor<AAType>(QueryingAA, RVPos);
+    LLVM_DEBUG(dbgs() << "[Attributor] RV: " << RV
+                      << " AA: " << (AA ? AA->getAsStr() : "n/a") << " @ "
+                      << RVPos << "\n");
+    // TODO: We should create abstract attributes on-demand, patches are already
+    //       prepared, pending approval.
+    if (!AA || AA->getIRPosition() != RVPos)
+      return false;
+    const StateType &AAS = static_cast<const StateType &>(AA->getState());
+    if (T.hasValue())
+      *T &= AAS;
+    else
+      T = AAS;
+    LLVM_DEBUG(dbgs() << "[Attributor] AA State: " << AAS << " RV State: " << T
+                      << "\n");
+    return T->isValidState();
+  };
+
+  if (!A.checkForAllReturnedValues(CheckReturnValue, QueryingAA))
+    S.indicatePessimisticFixpoint();
+  else if (T.hasValue())
+    S ^= *T;
+}
+
+/// Helper class for generic deduction: return value -> returned position.
+template <typename AAType, typename StateType = typename AAType::StateType>
+struct AAReturnedFromReturnedValues : public AAType {
+  AAReturnedFromReturnedValues(const IRPosition &IRP) : AAType(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    StateType S;
+    clampReturnedValueStates<AAType, StateType>(A, *this, S);
+    return clampStateAndIndicateChange<StateType>(this->getState(), S);
+  }
+};
+
+/// Clamp the information known at all call sites for a given argument
+/// (identified by \p QueryingAA) into \p S.
+template <typename AAType, typename StateType = typename AAType::StateType>
+static void clampCallSiteArgumentStates(Attributor &A, const AAType &QueryingAA,
+                                        StateType &S) {
+  LLVM_DEBUG(dbgs() << "[Attributor] Clamp call site argument states for "
+                    << static_cast<const AbstractAttribute &>(QueryingAA)
+                    << " into " << S << "\n");
+
+  assert(QueryingAA.getIRPosition().getPositionKind() ==
+             IRPosition::IRP_ARGUMENT &&
+         "Can only clamp call site argument states for an argument position!");
+
+  // Use an optional state as there might not be any return values and we want
+  // to join (IntegerState::operator&) the state of all there are.
+  Optional<StateType> T;
+
+  // The argument number which is also the call site argument number.
+  unsigned ArgNo = QueryingAA.getIRPosition().getArgNo();
+
+  auto CallSiteCheck = [&](CallSite CS) {
+    const IRPosition &CSArgPos = IRPosition::callsite_argument(CS, ArgNo);
+    const AAType *AA = A.getAAFor<AAType>(QueryingAA, CSArgPos);
+    LLVM_DEBUG(dbgs() << "[Attributor] CS: " << *CS.getInstruction()
+                      << " AA: " << (AA ? AA->getAsStr() : "n/a") << " @"
+                      << CSArgPos << "\n");
+    // TODO: We should create abstract attributes on-demand, patches are already
+    //       prepared, pending approval.
+    if (!AA || AA->getIRPosition() != CSArgPos)
+      return false;
+    const StateType &AAS = static_cast<const StateType &>(AA->getState());
+    if (T.hasValue())
+      *T &= AAS;
+    else
+      T = AAS;
+    LLVM_DEBUG(dbgs() << "[Attributor] AA State: " << AAS << " CSA State: " << T
+                      << "\n");
+    return T->isValidState();
+  };
+
+  if (!A.checkForAllCallSites(CallSiteCheck, QueryingAA, true))
+    S.indicatePessimisticFixpoint();
+  else if (T.hasValue())
+    S ^= *T;
+}
+
+/// Helper class for generic deduction: call site argument -> argument position.
+template <typename AAType, typename StateType = typename AAType::StateType>
+struct AAArgumentFromCallSiteArguments : public AAType {
+  AAArgumentFromCallSiteArguments(const IRPosition &IRP) : AAType(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    StateType S;
+    clampCallSiteArgumentStates<AAType, StateType>(A, *this, S);
+    return clampStateAndIndicateChange<StateType>(this->getState(), S);
+  }
+};
+
+/// Helper class for generic replication: function returned -> cs returned.
+template <typename AAType>
+struct AACallSiteReturnedFromReturned : public AAType {
+  AACallSiteReturnedFromReturned(const IRPosition &IRP) : AAType(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    assert(this->getIRPosition().getPositionKind() ==
+               IRPosition::IRP_CALL_SITE_RETURNED &&
+           "Can only wrap function returned positions for call site returned "
+           "positions!");
+    auto &S = this->getState();
+
+    const Function *AssociatedFunction =
+        this->getIRPosition().getAssociatedFunction();
+    if (!AssociatedFunction)
+      return S.indicatePessimisticFixpoint();
+
+    IRPosition FnPos = IRPosition::returned(*AssociatedFunction);
+    // TODO: We should create abstract attributes on-demand, patches are already
+    //       prepared, pending approval.
+    const AAType *AA = A.getAAFor<AAType>(*this, FnPos);
+    if (!AA)
+      return S.indicatePessimisticFixpoint();
+    return clampStateAndIndicateChange(
+        S, static_cast<const typename AAType::StateType &>(AA->getState()));
+  }
+};
+
 /// -----------------------NoUnwind Function Attribute--------------------------
 
 struct AANoUnwindImpl : AANoUnwind {
@@ -1288,7 +1454,7 @@ struct AANoAliasImpl : AANoAlias {
 struct AANoAliasReturned final : AANoAliasImpl {
   AANoAliasReturned(const IRPosition &IRP) : AANoAliasImpl(IRP) {}
 
-  /// See AbstractAttriubute::initialize(...).
+  /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
     Function &F = *getAnchorScope();
 
@@ -1942,13 +2108,7 @@ struct AAAlignImpl : AAAlign {
   // Max alignemnt value allowed in IR
   static const unsigned MAX_ALIGN = 1U << 29;
 
-  const std::string getAsStr() const override {
-    return getAssumedAlign() ? ("align<" + std::to_string(getKnownAlign()) +
-                                "-" + std::to_string(getAssumedAlign()) + ">")
-                             : "unknown-align";
-  }
-
-  /// See AbstractAttriubute::initialize(...).
+  /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
     takeAssumedMinimum(MAX_ALIGN);
 
@@ -1962,130 +2122,81 @@ struct AAAlignImpl : AAAlign {
   virtual void
   getDeducedAttributes(LLVMContext &Ctx,
                        SmallVectorImpl<Attribute> &Attrs) const override {
-    Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
+    if (getAssumedAlign() > 1)
+      Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
+  }
+
+  /// See AbstractAttribute::getAsStr().
+  const std::string getAsStr() const override {
+    return getAssumedAlign() ? ("align<" + std::to_string(getKnownAlign()) +
+                                "-" + std::to_string(getAssumedAlign()) + ">")
+                             : "unknown-align";
   }
 };
 
-/// Align attribute for function return value.
-struct AAAlignReturned final : AAAlignImpl {
-  AAAlignReturned(const IRPosition &IRP) : AAAlignImpl(IRP) {}
+/// Align attribute for a floating value.
+struct AAAlignFloating : AAAlignImpl {
+  AAAlignFloating(const IRPosition &IRP) : AAAlignImpl(IRP) {}
 
   /// See AbstractAttribute::updateImpl(...).
-  ChangeStatus updateImpl(Attributor &A) override;
+  ChangeStatus updateImpl(Attributor &A) override {
+    const DataLayout &DL = A.getDataLayout();
+
+    auto VisitValueCB = [&](Value &V, AAAlign::StateType &T, bool Stripped) {
+      if (!Stripped &&
+          getIRPosition().getPositionKind() == IRPosition::IRP_FLOAT) {
+        // Use only IR information if we did not strip anything.
+        T.takeKnownMaximum(V.getPointerAlignment(DL));
+        T.indicatePessimisticFixpoint();
+      } else if (const auto *AA =
+                     A.getAAFor<AAAlign>(*this, IRPosition::value(V))) {
+        // Try to use abstract attribute information.
+        const AAAlign::StateType &DS =
+            static_cast<const AAAlign::StateType &>(AA->getState());
+        T.takeAssumedMinimum(DS.getAssumed());
+      } else {
+        // Last resort, look into the IR.
+        T.takeKnownMaximum(V.getPointerAlignment(DL));
+        T.indicatePessimisticFixpoint();
+      }
+    };
+
+    StateType T;
+    if (!genericValueTraversal<AAAlign, StateType>(A, getIRPosition(), *this, T,
+                                                   VisitValueCB))
+      indicatePessimisticFixpoint();
+
+    return clampStateAndIndicateChange(getState(), T);
+  }
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECLTRACK_FLOATING_ATTR(align) }
+};
+
+/// Align attribute for function return value.
+struct AAAlignReturned final : AAReturnedFromReturnedValues<AAAlignImpl> {
+  AAAlignReturned(const IRPosition &IRP)
+      : AAReturnedFromReturnedValues<AAAlignImpl>(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_FNRET_ATTR(aligned) }
 };
 
-ChangeStatus AAAlignReturned::updateImpl(Attributor &A) {
-
-  // Currently, align<n> is deduced if alignments in return values are assumed
-  // as greater than n. We reach pessimistic fixpoint if any of the return value
-  // wouldn't have align. If no assumed state was used for reasoning, an
-  // optimistic fixpoint is reached earlier.
-
-  base_t BeforeState = getAssumed();
-  auto CheckReturnValue =
-      [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
-    auto *AlignAA = A.getAAFor<AAAlign>(*this, IRPosition::value(RV));
-
-    if (AlignAA)
-      takeAssumedMinimum(AlignAA->getAssumedAlign());
-    else
-      // Use IR information.
-      takeAssumedMinimum(RV.getPointerAlignment(A.getDataLayout()));
-
-    return isValidState();
-  };
-
-  if (!A.checkForAllReturnedValuesAndReturnInsts(CheckReturnValue, *this))
-    return indicatePessimisticFixpoint();
-
-  return (getAssumed() != BeforeState) ? ChangeStatus::CHANGED
-                                       : ChangeStatus::UNCHANGED;
-}
-
 /// Align attribute for function argument.
-struct AAAlignArgument final : AAAlignImpl {
-  AAAlignArgument(const IRPosition &IRP) : AAAlignImpl(IRP) {}
-
-  /// See AbstractAttribute::updateImpl(...).
-  virtual ChangeStatus updateImpl(Attributor &A) override;
+struct AAAlignArgument final : AAArgumentFromCallSiteArguments<AAAlignImpl> {
+  AAAlignArgument(const IRPosition &IRP)
+      : AAArgumentFromCallSiteArguments<AAAlignImpl>(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override{STATS_DECLTRACK_ARG_ATTR(aligned)};
 };
 
-ChangeStatus AAAlignArgument::updateImpl(Attributor &A) {
-
-  Argument &Arg = cast<Argument>(getAnchorValue());
-
-  unsigned ArgNo = Arg.getArgNo();
-  const DataLayout &DL = A.getDataLayout();
-
-  auto BeforeState = getAssumed();
-
-  // Callback function
-  std::function<bool(CallSite)> CallSiteCheck = [&](CallSite CS) {
-    assert(CS && "Sanity check: Call site was not initialized properly!");
-
-    auto *AlignAA =
-        A.getAAFor<AAAlign>(*this, IRPosition::callsite_argument(CS, ArgNo));
-
-    // Check that AlignAA is AAAlignCallSiteArgument.
-    if (AlignAA) {
-      ImmutableCallSite ICS(&AlignAA->getIRPosition().getAnchorValue());
-      if (ICS && CS.getInstruction() == ICS.getInstruction()) {
-        takeAssumedMinimum(AlignAA->getAssumedAlign());
-        return isValidState();
-      }
-    }
-
-    Value *V = CS.getArgOperand(ArgNo);
-    takeAssumedMinimum(V->getPointerAlignment(DL));
-    return isValidState();
-  };
-
-  if (!A.checkForAllCallSites(CallSiteCheck, *this, true))
-    indicatePessimisticFixpoint();
-
-  return BeforeState == getAssumed() ? ChangeStatus::UNCHANGED
-                                     : ChangeStatus ::CHANGED;
-}
-
-struct AAAlignCallSiteArgument final : AAAlignImpl {
-  AAAlignCallSiteArgument(const IRPosition &IRP) : AAAlignImpl(IRP) {}
-
-  /// See AbstractAttribute::initialize(...).
-  void initialize(Attributor &A) override {
-    takeKnownMaximum(
-        getAssociatedValue().getPointerAlignment(A.getDataLayout()));
-  }
-
-  /// See AbstractAttribute::updateImpl(Attributor &A).
-  ChangeStatus updateImpl(Attributor &A) override;
+struct AAAlignCallSiteArgument final : AAAlignFloating {
+  AAAlignCallSiteArgument(const IRPosition &IRP) : AAAlignFloating(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(aligned) }
 };
-
-ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A) {
-  // NOTE: Never look at the argument of the callee in this method.
-  //       If we do this, "align" is always deduced because of the assumption.
-
-  auto BeforeState = getAssumed();
-
-  Value &V = getAssociatedValue();
-  auto *AlignAA = A.getAAFor<AAAlign>(*this, IRPosition::value(V));
-
-  if (AlignAA)
-    takeAssumedMinimum(AlignAA->getAssumedAlign());
-  else
-    indicatePessimisticFixpoint();
-
-  return BeforeState == getAssumed() ? ChangeStatus::UNCHANGED
-                                     : ChangeStatus::CHANGED;
-}
 
 /// Align attribute deduction for a call site return value.
 using AAAlignCallSiteReturned = AAAlignReturned;
