@@ -496,6 +496,9 @@ struct AANoUnwindFunction final : public AANoUnwindImpl {
   void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(nounwind) }
 };
 
+/// NoUnwind attribute deduction for a call sites.
+using AANoUnwindCallSite = AANoUnwindFunction;
+
 /// --------------------- Function Return Values -------------------------------
 
 /// "Attribute" that collects all potential returned values and the return
@@ -831,6 +834,9 @@ struct AAReturnedValuesFunction final : public AAReturnedValuesImpl {
   void trackStatistics() const override { STATS_DECLTRACK_ARG_ATTR(returned) }
 };
 
+/// Returned values information for a call sites.
+using AAReturnedValuesCallSite = AAReturnedValuesFunction;
+
 /// ------------------------ NoSync Function Attribute -------------------------
 
 struct AANoSyncImpl : AANoSync {
@@ -860,13 +866,6 @@ struct AANoSyncImpl : AANoSync {
   /// Helper function uset to check if intrinsic is volatile (memcpy, memmove,
   /// memset).
   static bool isNoSyncIntrinsic(Instruction *I);
-};
-
-struct AANoSyncFunction final : public AANoSyncImpl {
-  AANoSyncFunction(const IRPosition &IRP) : AANoSyncImpl(IRP) {}
-
-  /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(nosync) }
 };
 
 bool AANoSyncImpl::isNonRelaxedAtomic(Instruction *I) {
@@ -1001,6 +1000,16 @@ ChangeStatus AANoSyncImpl::updateImpl(Attributor &A) {
   return ChangeStatus::UNCHANGED;
 }
 
+struct AANoSyncFunction final : public AANoSyncImpl {
+  AANoSyncFunction(const IRPosition &IRP) : AANoSyncImpl(IRP) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(nosync) }
+};
+
+/// NoSync attribute deduction for a call sites.
+using AANoSyncCallSite = AANoSyncFunction;
+
 /// ------------------------ No-Free Attributes ----------------------------
 
 struct AANoFreeImpl : public AANoFree {
@@ -1041,6 +1050,9 @@ struct AANoFreeFunction final : public AANoFreeImpl {
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(nofree) }
 };
+
+/// NoFree attribute deduction for a call sites.
+using AANoFreeCallSite = AANoFreeFunction;
 
 /// ------------------------ NonNull Argument Attribute ------------------------
 struct AANonNullImpl : AANonNull {
@@ -1178,6 +1190,9 @@ struct AANonNullCallSiteArgument final : AANonNullImpl {
   void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(nonnull) }
 };
 
+/// NonNull attribute deduction for a call sites.
+using AANonNullCallSiteReturned = AANonNullReturned;
+
 /// ------------------------ Will-Return Attributes ----------------------------
 
 // Helper function that checks whether a function has any cycle.
@@ -1256,6 +1271,9 @@ struct AAWillReturnFunction final : AAWillReturnImpl {
   void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(norecurse) }
 };
 
+/// WillReturn attribute deduction for a call sites.
+using AAWillReturnCallSite = AAWillReturnFunction;
+
 /// ------------------------ NoAlias Argument Attribute ------------------------
 
 struct AANoAliasImpl : AANoAlias {
@@ -1321,6 +1339,9 @@ struct AANoAliasReturned final : AANoAliasImpl {
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_FNRET_ATTR(noalias) }
 };
+
+/// NoAlias attribute deduction for a call site return value.
+using AANoAliasCallSiteReturned = AANoAliasReturned;
 
 /// -------------------AAIsDead Function Attribute-----------------------
 
@@ -1598,6 +1619,9 @@ ChangeStatus AAIsDeadImpl::updateImpl(Attributor &A) {
 
   return Status;
 }
+
+/// Liveness information for a call sites.
+using AAIsDeadCallSite = AAIsDeadFunction;
 
 /// -------------------- Dereferenceable Argument Attribute --------------------
 
@@ -1907,6 +1931,9 @@ ChangeStatus AADereferenceableCallSiteArgument::updateImpl(Attributor &A) {
                                                        : ChangeStatus::CHANGED;
 }
 
+/// Dereferenceable attribute deduction for a call site return value.
+using AADereferenceableCallSiteReturned = AADereferenceableReturned;
+
 // ------------------------ Align Argument Attribute ------------------------
 
 struct AAAlignImpl : AAAlign {
@@ -2060,6 +2087,9 @@ ChangeStatus AAAlignCallSiteArgument::updateImpl(Attributor &A) {
                                      : ChangeStatus::CHANGED;
 }
 
+/// Align attribute deduction for a call site return value.
+using AAAlignCallSiteReturned = AAAlignReturned;
+
 /// ------------------ Function No-Return Attribute ----------------------------
 struct AANoReturnImpl : public AANoReturn {
   AANoReturnImpl(const IRPosition &IRP) : AANoReturn(IRP) {}
@@ -2091,6 +2121,9 @@ struct AANoReturnFunction final : AANoReturnImpl {
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_FN_ATTR(noreturn) }
 };
+
+/// NoReturn attribute deduction for a call sites.
+using AANoReturnCallSite = AANoReturnFunction;
 
 /// ----------------------------------------------------------------------------
 ///                               Attributor
