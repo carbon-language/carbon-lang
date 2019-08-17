@@ -556,7 +556,7 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
     if (Symbol != Obj->symbol_end()) {
       Expected<StringRef> TargetNameOrErr = Symbol->getName();
       if (!TargetNameOrErr)
-        reportError(TargetNameOrErr.takeError(), Obj->getFileName());
+        error(errorToErrorCode(TargetNameOrErr.takeError()));
       TargetName = *TargetNameOrErr;
     }
   } else if (!IsScattered) {
@@ -630,9 +630,7 @@ void MachODumper::printSymbol(const SymbolRef &Symbol) {
 
   StringRef SectionName = "";
   Expected<section_iterator> SecIOrErr = Symbol.getSection();
-  if (!SecIOrErr)
-    reportError(SecIOrErr.takeError(), Obj->getFileName());
-
+  error(errorToErrorCode(SecIOrErr.takeError()));
   section_iterator SecI = *SecIOrErr;
   if (SecI != Obj->section_end())
     SectionName = unwrapOrError(Obj->getFileName(), SecI->getName());

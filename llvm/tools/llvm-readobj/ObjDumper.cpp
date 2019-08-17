@@ -23,10 +23,6 @@
 
 namespace llvm {
 
-static inline Error createError(const Twine &Msg) {
-  return createStringError(object::object_error::parse_failed, Msg);
-}
-
 ObjDumper::ObjDumper(ScopedPrinter &Writer) : W(Writer) {}
 
 ObjDumper::~ObjDumper() {
@@ -67,15 +63,10 @@ getSectionRefsByNameOrIndex(const object::ObjectFile *Obj,
 
   for (const std::pair<std::string, bool> &S : SecNames)
     if (!S.second)
-      reportWarning(
-          createError(formatv("could not find section '{0}'", S.first).str()),
-          Obj->getFileName());
-
+      reportWarning(formatv("could not find section '{0}'", S.first).str());
   for (std::pair<unsigned, bool> S : SecIndices)
     if (!S.second)
-      reportWarning(
-          createError(formatv("could not find section {0}", S.first).str()),
-          Obj->getFileName());
+      reportWarning(formatv("could not find section {0}", S.first).str());
 
   return Ret;
 }

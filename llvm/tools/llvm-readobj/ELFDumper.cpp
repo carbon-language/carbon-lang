@@ -122,9 +122,9 @@ template <class ELFT> class DumpStyle;
 /// the size, entity size and virtual address are different entries in arbitrary
 /// order (DT_REL, DT_RELSZ, DT_RELENT for example).
 struct DynRegionInfo {
-  DynRegionInfo(StringRef ObjName) : FileName(ObjName) {}
-  DynRegionInfo(const void *A, uint64_t S, uint64_t ES, StringRef ObjName)
-      : Addr(A), Size(S), EntSize(ES), FileName(ObjName) {}
+  DynRegionInfo() = default;
+  DynRegionInfo(const void *A, uint64_t S, uint64_t ES)
+      : Addr(A), Size(S), EntSize(ES) {}
 
   /// Address in current address space.
   const void *Addr = nullptr;
@@ -133,18 +133,14 @@ struct DynRegionInfo {
   /// Size of each entity in the region.
   uint64_t EntSize = 0;
 
-  /// Name of the file. Used for error reporting.
-  StringRef FileName;
-
   template <typename Type> ArrayRef<Type> getAsArrayRef() const {
     const Type *Start = reinterpret_cast<const Type *>(Addr);
     if (!Start)
       return {Start, Start};
     if (EntSize != sizeof(Type) || Size % EntSize) {
       // TODO: Add a section index to this warning.
-      reportWarning(createError("invalid section size (" + Twine(Size) +
-                                ") or entity size (" + Twine(EntSize) + ")"),
-                    FileName);
+      reportWarning("invalid section size (" + Twine(Size) +
+                    ") or entity size (" + Twine(EntSize) + ")");
       return {Start, Start};
     }
     return {Start, Start + (Size / EntSize)};
@@ -203,19 +199,18 @@ private:
     if (DRI.Addr < Obj->base() ||
         reinterpret_cast<const uint8_t *>(DRI.Addr) + DRI.Size >
             Obj->base() + Obj->getBufSize())
-      reportError(llvm::object::object_error::parse_failed,
-                  ObjF->getFileName());
+      error(llvm::object::object_error::parse_failed);
     return DRI;
   }
 
   DynRegionInfo createDRIFrom(const Elf_Phdr *P, uintX_t EntSize) {
-    return checkDRI({ObjF->getELFFile()->base() + P->p_offset, P->p_filesz,
-                     EntSize, ObjF->getFileName()});
+    return checkDRI(
+        {ObjF->getELFFile()->base() + P->p_offset, P->p_filesz, EntSize});
   }
 
   DynRegionInfo createDRIFrom(const Elf_Shdr *S) {
-    return checkDRI({ObjF->getELFFile()->base() + S->sh_offset, S->sh_size,
-                     S->sh_entsize, ObjF->getFileName()});
+    return checkDRI(
+        {ObjF->getELFFile()->base() + S->sh_offset, S->sh_size, S->sh_entsize});
   }
 
   void loadDynamicTable(const ELFFile<ELFT> *Obj);
@@ -367,7 +362,7 @@ public:
     // It does not print the same warning more than once.
     WarningHandler = [this](const Twine &Msg) {
       if (Warnings.insert(Msg.str()).second)
-        reportWarning(createError(Msg), FileName);
+        reportWarning(FileName, createError(Msg));
       return Error::success();
     };
   }
@@ -745,7 +740,7 @@ std::string ELFDumper<ELFT>::getStaticSymbolName(uint32_t Index) const {
   Elf_Sym_Range Syms =
       unwrapOrError(ObjF->getFileName(), Obj->symbols(DotSymtabSec));
   if (Index >= Syms.size())
-    reportError(createError("Invalid symbol index"), ObjF->getFileName());
+    reportError("Invalid symbol index");
   const Elf_Sym *Sym = &Syms[Index];
   return maybeDemangle(
       unwrapOrError(ObjF->getFileName(), Sym->getName(StrTable)));
@@ -766,7 +761,7 @@ StringRef ELFDumper<ELFT>::getSymbolVersionByIndex(StringRef StrTab,
   // Lookup this symbol in the version table.
   LoadVersionMap();
   if (VersionIndex >= VersionMap.size() || VersionMap[VersionIndex].isNull())
-    reportError(createError("Invalid version entry"), ObjF->getFileName());
+    reportError("Invalid version entry");
   const VersionMapEntry &Entry = VersionMap[VersionIndex];
 
   // Get the version name string.
@@ -780,7 +775,7 @@ StringRef ELFDumper<ELFT>::getSymbolVersionByIndex(StringRef StrTab,
     IsDefault = false;
   }
   if (NameOffset >= StrTab.size())
-    reportError(createError("Invalid string offset"), ObjF->getFileName());
+    reportError("Invalid string offset");
   return StrTab.data() + NameOffset;
 }
 
@@ -1433,9 +1428,8 @@ void ELFDumper<ELFT>::loadDynamicTable(const ELFFile<ELFT> *Obj) {
   // This allows us to dump the dynamic sections with a broken sh_entsize
   // field.
   if (DynamicSec) {
-    DynamicTable =
-        checkDRI({ObjF->getELFFile()->base() + DynamicSec->sh_offset,
-                  DynamicSec->sh_size, sizeof(Elf_Dyn), ObjF->getFileName()});
+    DynamicTable = checkDRI({ObjF->getELFFile()->base() + DynamicSec->sh_offset,
+                             DynamicSec->sh_size, sizeof(Elf_Dyn)});
     parseDynamicTable();
   }
 
@@ -1447,9 +1441,7 @@ void ELFDumper<ELFT>::loadDynamicTable(const ELFFile<ELFT> *Obj) {
   if (DynamicPhdr->p_offset + DynamicPhdr->p_filesz >
       ObjF->getMemoryBufferRef().getBufferSize()) {
     reportWarning(
-        createError(
-            "PT_DYNAMIC segment offset + size exceeds the size of the file"),
-        ObjF->getFileName());
+        "PT_DYNAMIC segment offset + size exceeds the size of the file");
     return;
   }
 
@@ -1464,26 +1456,22 @@ void ELFDumper<ELFT>::loadDynamicTable(const ELFFile<ELFT> *Obj) {
   if (DynamicSec->sh_addr + DynamicSec->sh_size >
           DynamicPhdr->p_vaddr + DynamicPhdr->p_memsz ||
       DynamicSec->sh_addr < DynamicPhdr->p_vaddr)
-    reportWarning(createError("The SHT_DYNAMIC section '" + Name +
-                              "' is not contained within the "
-                              "PT_DYNAMIC segment"),
-                  ObjF->getFileName());
+    reportWarning("The SHT_DYNAMIC section '" + Name +
+                  "' is not contained within the "
+                  "PT_DYNAMIC segment");
 
   if (DynamicSec->sh_addr != DynamicPhdr->p_vaddr)
-    reportWarning(createError("The SHT_DYNAMIC section '" + Name +
-                              "' is not at the start of "
-                              "PT_DYNAMIC segment"),
-                  ObjF->getFileName());
+    reportWarning("The SHT_DYNAMIC section '" + Name +
+                  "' is not at the start of "
+                  "PT_DYNAMIC segment");
 }
 
 template <typename ELFT>
 ELFDumper<ELFT>::ELFDumper(const object::ELFObjectFile<ELFT> *ObjF,
-                           ScopedPrinter &Writer)
-    : ObjDumper(Writer), ObjF(ObjF), DynRelRegion(ObjF->getFileName()),
-      DynRelaRegion(ObjF->getFileName()), DynRelrRegion(ObjF->getFileName()),
-      DynPLTRelRegion(ObjF->getFileName()), DynSymRegion(ObjF->getFileName()),
-      DynamicTable(ObjF->getFileName()) {
+    ScopedPrinter &Writer)
+    : ObjDumper(Writer), ObjF(ObjF) {
   const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+
   for (const Elf_Shdr &Sec :
        unwrapOrError(ObjF->getFileName(), Obj->sections())) {
     switch (Sec.sh_type) {
@@ -1502,7 +1490,7 @@ ELFDumper<ELFT>::ELFDumper(const object::ELFObjectFile<ELFT> *ObjF,
         if (Expected<StringRef> E = Obj->getStringTableForSymtab(Sec))
           DynamicStringTable = *E;
         else
-          reportWarning(E.takeError(), ObjF->getFileName());
+          warn(E.takeError());
       }
       break;
     case ELF::SHT_SYMTAB_SHNDX:
@@ -1611,13 +1599,10 @@ template <typename ELFT> void ELFDumper<ELFT>::parseDynamicTable() {
   auto toMappedAddr = [&](uint64_t Tag, uint64_t VAddr) -> const uint8_t * {
     auto MappedAddrOrError = ObjF->getELFFile()->toMappedAddr(VAddr);
     if (!MappedAddrOrError) {
-      Error Err =
-          createError("Unable to parse DT_" +
-                      Twine(getTypeString(
-                          ObjF->getELFFile()->getHeader()->e_machine, Tag)) +
-                      ": " + llvm::toString(MappedAddrOrError.takeError()));
-
-      reportWarning(std::move(Err), ObjF->getFileName());
+      reportWarning("Unable to parse DT_" +
+                    Twine(getTypeString(
+                        ObjF->getELFFile()->getHeader()->e_machine, Tag)) +
+                    ": " + llvm::toString(MappedAddrOrError.takeError()));
       return nullptr;
     }
     return MappedAddrOrError.get();
@@ -1686,9 +1671,8 @@ template <typename ELFT> void ELFDumper<ELFT>::parseDynamicTable() {
       else if (Dyn.getVal() == DT_RELA)
         DynPLTRelRegion.EntSize = sizeof(Elf_Rela);
       else
-        reportError(createError(Twine("unknown DT_PLTREL value of ") +
-                                Twine((uint64_t)Dyn.getVal())),
-                    ObjF->getFileName());
+        reportError(Twine("unknown DT_PLTREL value of ") +
+                    Twine((uint64_t)Dyn.getVal()));
       break;
     case ELF::DT_JMPREL:
       DynPLTRelRegion.Addr = toMappedAddr(Dyn.getTag(), Dyn.getPtr());
@@ -2110,7 +2094,7 @@ template <typename ELFT> void ELFDumper<ELFT>::printGnuHashTable() {
   Elf_Sym_Range Syms = dynamic_symbols();
   unsigned NumSyms = std::distance(Syms.begin(), Syms.end());
   if (!NumSyms)
-    reportError(createError("No dynamic symbol section"), ObjF->getFileName());
+    reportError("No dynamic symbol section");
   W.printHexList("Values", GnuHashTable->values(NumSyms));
 }
 
@@ -2223,7 +2207,7 @@ MipsGOTParser<ELFT>::MipsGOTParser(const ELFO *Obj, StringRef FileName,
   if (IsStatic) {
     GotSec = findSectionByName(*Obj, FileName, ".got");
     if (!GotSec)
-      reportError(createError("Cannot find .got section"), FileName);
+      reportError("Cannot find .got section");
 
     ArrayRef<uint8_t> Content =
         unwrapOrError(FileName, Obj->getSectionContents(GotSec));
@@ -2270,15 +2254,12 @@ MipsGOTParser<ELFT>::MipsGOTParser(const ELFO *Obj, StringRef FileName,
 
     size_t DynSymTotal = DynSyms.size();
     if (*DtGotSym > DynSymTotal)
-      reportError(
-          createError("MIPS_GOTSYM exceeds a number of dynamic symbols"),
-          FileName);
+      reportError("MIPS_GOTSYM exceeds a number of dynamic symbols");
 
     GotSec = findNotEmptySectionByAddress(Obj, FileName, *DtPltGot);
     if (!GotSec)
-      reportError(createError("There is no not empty GOT section at 0x" +
-                              Twine::utohexstr(*DtPltGot)),
-                  FileName);
+      reportError("There is no not empty GOT section at 0x" +
+                  Twine::utohexstr(*DtPltGot));
 
     LocalNum = *DtLocalGotNum;
     GlobalNum = DynSymTotal - *DtGotSym;
@@ -2428,8 +2409,7 @@ MipsGOTParser<ELFT>::getPltSym(const Entry *E) const {
 template <class ELFT> void ELFDumper<ELFT>::printMipsPLTGOT() {
   const ELFFile<ELFT> *Obj = ObjF->getELFFile();
   if (Obj->getHeader()->e_machine != EM_MIPS)
-    reportError(createError("MIPS PLT GOT is available for MIPS targets only"),
-                ObjF->getFileName());
+    reportError("MIPS PLT GOT is available for MIPS targets only");
 
   MipsGOTParser<ELFT> Parser(Obj, ObjF->getFileName(), dynamic_table(),
                              dynamic_symbols());
@@ -4512,7 +4492,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
         if (Note)
           printCoreNote<ELFT>(OS, *Note);
         else
-          reportWarning(Note.takeError(), this->FileName);
+          warn(Note.takeError());
       }
     } else if (!Descriptor.empty()) {
       OS << "   description data:";
@@ -4576,6 +4556,7 @@ void DumpStyle<ELFT>::printFunctionStackSize(
     }
   }
 
+  StringRef FileStr = Obj->getFileName();
   std::string FuncName = "?";
   // A valid SymbolRef has a non-null object file pointer.
   if (FuncSym.BasicSymbolRef::getObject()) {
@@ -4585,11 +4566,9 @@ void DumpStyle<ELFT>::printFunctionStackSize(
       FuncName = maybeDemangle(*FuncNameOrErr);
     else
       consumeError(FuncNameOrErr.takeError());
-  } else {
-    reportWarning(
-        createError("could not identify function symbol for stack size entry"),
-        Obj->getFileName());
-  }
+  } else
+    reportWarning(" '" + FileStr +
+                  "': could not identify function symbol for stack size entry");
 
   // Extract the size. The expectation is that Offset is pointing to the right
   // place, i.e. past the function address.
@@ -4602,7 +4581,7 @@ void DumpStyle<ELFT>::printFunctionStackSize(
         createStringError(object_error::parse_failed,
                           "could not extract a valid stack size in section %s",
                           SectionName.data()),
-        Obj->getFileName());
+        FileStr);
 
   printStackSizeEntry(StackSize, FuncName);
 }
@@ -4640,14 +4619,13 @@ void DumpStyle<ELFT>::printStackSize(const ELFObjectFile<ELFT> *Obj,
 
     auto SectionOrErr = RelocSym->getSection();
     if (!SectionOrErr) {
-      reportWarning(
-          createError("cannot identify the section for relocation symbol " +
-                      SymName),
-          FileStr);
+      reportWarning(" '" + FileStr +
+                    "': cannot identify the section for relocation symbol " +
+                    SymName);
+      consumeError(SectionOrErr.takeError());
     } else if (*SectionOrErr != FunctionSec) {
-      reportWarning(createError("relocation symbol " + SymName +
-                                " is not in the expected section"),
-                    FileStr);
+      reportWarning(" '" + FileStr + "': relocation symbol " + SymName +
+                    " is not in the expected section");
       // Pretend that the symbol is in the correct section and report its
       // stack size anyway.
       FunctionSec = **SectionOrErr;
@@ -4735,7 +4713,7 @@ template <class ELFT>
 void DumpStyle<ELFT>::printRelocatableStackSizes(
     const ELFObjectFile<ELFT> *Obj, std::function<void()> PrintHeader) {
   const ELFFile<ELFT> *EF = Obj->getELFFile();
-
+  StringRef FileStr = Obj->getFileName();
   // Build a map between stack size sections and their corresponding relocation
   // sections.
   llvm::MapVector<SectionRef, SectionRef> StackSizeRelocMap;
@@ -4790,10 +4768,9 @@ void DumpStyle<ELFT>::printRelocatableStackSizes(
       consumeError(NameOrErr.takeError());
 
     if (RelocSec == NullSection) {
-      reportWarning(createError("section " + StackSizeSectionName +
-                                " does not have a corresponding "
-                                "relocation section"),
-                    Obj->getFileName());
+      reportWarning(" '" + FileStr + "': section " + StackSizeSectionName +
+                    " does not have a corresponding "
+                    "relocation section");
       continue;
     }
 
@@ -4828,7 +4805,7 @@ void DumpStyle<ELFT>::printRelocatableStackSizes(
             createStringError(object_error::parse_failed,
                               "unsupported relocation type in section %s: %s",
                               RelocSectionName.data(), RelocName.data()),
-            Obj->getFileName());
+            FileStr);
       }
       this->printStackSize(Obj, Reloc, FunctionSec, StackSizeSectionName,
                            Resolver, Data);
@@ -5248,10 +5225,9 @@ void LLVMStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
             this->FileName,
             Obj->getSection(&Sym, Symtab, this->dumper()->getShndxTable()));
         if (SymSec == &Sec)
-          printSymbol(
-              Obj, &Sym,
+          printSymbol(Obj, &Sym,
               unwrapOrError(this->FileName, Obj->symbols(Symtab)).begin(),
-              StrTable, false);
+                      StrTable, false);
       }
     }
 
@@ -5611,8 +5587,7 @@ void LLVMStyle<ELFT>::printAddrsig(const ELFFile<ELFT> *Obj) {
     const char *Err;
     uint64_t SymIndex = decodeULEB128(Cur, &Size, End, &Err);
     if (Err)
-      reportError(createError(Err), this->FileName);
-
+      reportError(Err);
     W.printNumber("Sym", this->dumper()->getStaticSymbolName(SymIndex),
                   SymIndex);
     Cur += Size;
@@ -5721,7 +5696,7 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
         if (Note)
           printCoreNoteLLVMStyle(*Note, W);
         else
-          reportWarning(Note.takeError(), this->FileName);
+          warn(Note.takeError());
       }
     } else if (!Descriptor.empty()) {
       W.printBinaryBlock("Description data", Descriptor);

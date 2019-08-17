@@ -632,14 +632,12 @@ void COFFDumper::printFileHeaders() {
   // Print PE header. This header does not exist if this is an object file and
   // not an executable.
   const pe32_header *PEHeader = nullptr;
-  if (std::error_code EC = Obj->getPE32Header(PEHeader))
-    reportError(EC, Obj->getFileName());
+  error(Obj->getPE32Header(PEHeader));
   if (PEHeader)
     printPEHeader<pe32_header>(PEHeader);
 
   const pe32plus_header *PEPlusHeader = nullptr;
-  if (std::error_code EC = Obj->getPE32PlusHeader(PEPlusHeader))
-    reportError(EC, Obj->getFileName());
+  error(Obj->getPE32PlusHeader(PEPlusHeader));
   if (PEPlusHeader)
     printPEHeader<pe32plus_header>(PEPlusHeader);
 
@@ -734,9 +732,7 @@ void COFFDumper::printCOFFDebugDirectory() {
     if (D.Type == COFF::IMAGE_DEBUG_TYPE_CODEVIEW) {
       const codeview::DebugInfo *DebugInfo;
       StringRef PDBFileName;
-      if (std::error_code EC = Obj->getDebugPDBInfo(&D, DebugInfo, PDBFileName))
-        reportError(EC, Obj->getFileName());
-
+      error(Obj->getDebugPDBInfo(&D, DebugInfo, PDBFileName));
       DictScope PDBScope(W, "PDBInfo");
       W.printHex("PDBSignature", DebugInfo->Signature.CVSignature);
       if (DebugInfo->Signature.CVSignature == OMF::Signature::PDB70) {
@@ -748,9 +744,8 @@ void COFFDumper::printCOFFDebugDirectory() {
       // FIXME: Type values of 12 and 13 are commonly observed but are not in
       // the documented type enum.  Figure out what they mean.
       ArrayRef<uint8_t> RawData;
-      if (std::error_code EC = Obj->getRvaAndSizeAsBytes(D.AddressOfRawData,
-                                                         D.SizeOfData, RawData))
-        reportError(EC, Obj->getFileName());
+      error(
+          Obj->getRvaAndSizeAsBytes(D.AddressOfRawData, D.SizeOfData, RawData));
       W.printBinaryBlock("RawData", RawData);
     }
   }
@@ -759,11 +754,8 @@ void COFFDumper::printCOFFDebugDirectory() {
 void COFFDumper::printRVATable(uint64_t TableVA, uint64_t Count,
                                uint64_t EntrySize, PrintExtraCB PrintExtra) {
   uintptr_t TableStart, TableEnd;
-  if (std::error_code EC = Obj->getVaPtr(TableVA, TableStart))
-    reportError(EC, Obj->getFileName());
-  if (std::error_code EC =
-          Obj->getVaPtr(TableVA + Count * EntrySize - 1, TableEnd))
-    reportError(EC, Obj->getFileName());
+  error(Obj->getVaPtr(TableVA, TableStart));
+  error(Obj->getVaPtr(TableVA + Count * EntrySize - 1, TableEnd));
   TableEnd++;
   for (uintptr_t I = TableStart; I < TableEnd; I += EntrySize) {
     uint32_t RVA = *reinterpret_cast<const ulittle32_t *>(I);
@@ -967,7 +959,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
 
   W.printHex("Magic", Magic);
   if (Magic != COFF::DEBUG_SECTION_MAGIC)
-    reportError(object_error::parse_failed, Obj->getFileName());
+    return error(object_error::parse_failed);
 
   BinaryStreamReader FSReader(Data, support::little);
   initializeFileAndStringTables(FSReader);
@@ -993,7 +985,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
 
     // Get the contents of the subsection.
     if (SubSectionSize > Data.size())
-      return reportError(object_error::parse_failed, Obj->getFileName());
+      return error(object_error::parse_failed);
     StringRef Contents = Data.substr(0, SubSectionSize);
 
     // Add SubSectionSize to the current offset and align that offset to find
@@ -1002,7 +994,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
     size_t NextOffset = SectionOffset + SubSectionSize;
     NextOffset = alignTo(NextOffset, 4);
     if (NextOffset > SectionContents.size())
-      return reportError(object_error::parse_failed, Obj->getFileName());
+      return error(object_error::parse_failed);
     Data = SectionContents.drop_front(NextOffset);
 
     // Optionally print the subsection bytes in case our parsing gets confused
@@ -1032,19 +1024,17 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       if (SubSectionSize < 12) {
         // There should be at least three words to store two function
         // relocations and size of the code.
-        reportError(object_error::parse_failed, Obj->getFileName());
+        error(object_error::parse_failed);
         return;
       }
 
       StringRef LinkageName;
-      if (std::error_code EC = resolveSymbolName(Obj->getCOFFSection(Section),
-                                                 SectionOffset, LinkageName))
-        reportError(EC, Obj->getFileName());
-
+      error(resolveSymbolName(Obj->getCOFFSection(Section), SectionOffset,
+                              LinkageName));
       W.printString("LinkageName", LinkageName);
       if (FunctionLineTables.count(LinkageName) != 0) {
         // Saw debug info for this function already?
-        reportError(object_error::parse_failed, Obj->getFileName());
+        error(object_error::parse_failed);
         return;
       }
 
@@ -1061,10 +1051,8 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
         reportError(std::move(E), Obj->getFileName());
 
       StringRef LinkageName;
-      if (std::error_code EC =
-              resolveSymbolName(Obj->getCOFFSection(Section), SectionContents,
-                                FrameData.getRelocPtr(), LinkageName))
-        reportError(EC, Obj->getFileName());
+      error(resolveSymbolName(Obj->getCOFFSection(Section), SectionContents,
+                              FrameData.getRelocPtr(), LinkageName));
       W.printString("LinkageName", LinkageName);
 
       // To find the active frame description, search this array for the
@@ -1134,7 +1122,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       uint32_t ColumnIndex = 0;
       for (const auto &Line : Entry.LineNumbers) {
         if (Line.Offset >= LineInfo.header()->CodeSize) {
-          reportError(object_error::parse_failed, Obj->getFileName());
+          error(object_error::parse_failed);
           return;
         }
 
@@ -1171,9 +1159,10 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
                       CompilationCPUType, opts::CodeViewSubsectionBytes);
   CVSymbolArray Symbols;
   BinaryStreamReader Reader(BinaryData, llvm::support::little);
-  if (Error E = Reader.readArray(Symbols, Reader.getLength())) {
+  if (auto EC = Reader.readArray(Symbols, Reader.getLength())) {
+    consumeError(std::move(EC));
     W.flush();
-    reportError(std::move(E), Obj->getFileName());
+    error(object_error::parse_failed);
   }
 
   if (Error E = CVSD.dump(Symbols)) {
@@ -1229,13 +1218,13 @@ void COFFDumper::printCodeViewInlineeLines(StringRef Subsection) {
 StringRef COFFDumper::getFileNameForFileOffset(uint32_t FileOffset) {
   // The file checksum subsection should precede all references to it.
   if (!CVFileChecksumTable.valid() || !CVStringTable.valid())
-    reportError(object_error::parse_failed, Obj->getFileName());
+    error(object_error::parse_failed);
 
   auto Iter = CVFileChecksumTable.getArray().at(FileOffset);
 
   // Check if the file checksum table offset is valid.
   if (Iter == CVFileChecksumTable.end())
-    reportError(object_error::parse_failed, Obj->getFileName());
+    error(object_error::parse_failed);
 
   return unwrapOrError(Obj->getFileName(),
                        CVStringTable.getString(Iter->FileNameOffset));
@@ -1259,14 +1248,14 @@ void COFFDumper::mergeCodeViewTypes(MergingTypeTableBuilder &CVIDs,
         reportError(std::move(E), Obj->getFileName());
 
       if (Magic != 4)
-        reportError(object_error::parse_failed, Obj->getFileName());
+        error(object_error::parse_failed);
 
       CVTypeArray Types;
       BinaryStreamReader Reader(Data, llvm::support::little);
       if (auto EC = Reader.readArray(Types, Reader.getLength())) {
         consumeError(std::move(EC));
         W.flush();
-        reportError(object_error::parse_failed, Obj->getFileName());
+        error(object_error::parse_failed);
       }
       SmallVector<TypeIndex, 128> SourceToDest;
       Optional<uint32_t> PCHSignature;
@@ -1301,7 +1290,7 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
 
   W.printHex("Magic", Magic);
   if (Magic != COFF::DEBUG_SECTION_MAGIC)
-    reportError(object_error::parse_failed, Obj->getFileName());
+    return error(object_error::parse_failed);
 
   Types.reset(Data, 100);
 
@@ -1397,9 +1386,7 @@ void COFFDumper::printRelocation(const SectionRef &Section,
   int64_t SymbolIndex = -1;
   if (Symbol != Obj->symbol_end()) {
     Expected<StringRef> SymbolNameOrErr = Symbol->getName();
-    if (!SymbolNameOrErr)
-      reportError(SymbolNameOrErr.takeError(), Obj->getFileName());
-
+    error(errorToErrorCode(SymbolNameOrErr.takeError()));
     SymbolName = *SymbolNameOrErr;
     SymbolIndex = Obj->getSymbolIndex(Obj->getCOFFSymbol(*Symbol));
   }
@@ -1476,8 +1463,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
   for (uint8_t I = 0; I < Symbol.getNumberOfAuxSymbols(); ++I) {
     if (Symbol.isFunctionDefinition()) {
       const coff_aux_function_definition *Aux;
-      if (std::error_code EC = getSymbolAuxData(Obj, Symbol, I, Aux))
-        reportError(EC, Obj->getFileName());
+      error(getSymbolAuxData(Obj, Symbol, I, Aux));
 
       DictScope AS(W, "AuxFunctionDef");
       W.printNumber("TagIndex", Aux->TagIndex);
@@ -1487,15 +1473,14 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
     } else if (Symbol.isAnyUndefined()) {
       const coff_aux_weak_external *Aux;
-      if (std::error_code EC = getSymbolAuxData(Obj, Symbol, I, Aux))
-        reportError(EC, Obj->getFileName());
+      error(getSymbolAuxData(Obj, Symbol, I, Aux));
 
       Expected<COFFSymbolRef> Linked = Obj->getSymbol(Aux->TagIndex);
       StringRef LinkedName;
       std::error_code EC = errorToErrorCode(Linked.takeError());
       if (EC || (EC = Obj->getSymbolName(*Linked, LinkedName))) {
         LinkedName = "";
-        reportError(EC, Obj->getFileName());
+        error(EC);
       }
 
       DictScope AS(W, "AuxWeakExternal");
@@ -1505,8 +1490,8 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
     } else if (Symbol.isFileRecord()) {
       const char *FileName;
-      if (std::error_code EC = getSymbolAuxData(Obj, Symbol, I, FileName))
-        reportError(EC, Obj->getFileName());
+      error(getSymbolAuxData(Obj, Symbol, I, FileName));
+
       DictScope AS(W, "AuxFileRecord");
 
       StringRef Name(FileName, Symbol.getNumberOfAuxSymbols() *
@@ -1515,8 +1500,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       break;
     } else if (Symbol.isSectionDefinition()) {
       const coff_aux_section_definition *Aux;
-      if (std::error_code EC = getSymbolAuxData(Obj, Symbol, I, Aux))
-        reportError(EC, Obj->getFileName());
+      error(getSymbolAuxData(Obj, Symbol, I, Aux));
 
       int32_t AuxNumber = Aux->getNumber(Symbol.isBigObj());
 
@@ -1533,7 +1517,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
         const coff_section *Assoc;
         StringRef AssocName = "";
         if (std::error_code EC = Obj->getSection(AuxNumber, Assoc))
-          reportError(EC, Obj->getFileName());
+          error(EC);
         Expected<StringRef> Res = getSectionName(Obj, AuxNumber, Assoc);
         if (!Res)
           reportError(Res.takeError(), Obj->getFileName());
@@ -1543,8 +1527,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       }
     } else if (Symbol.isCLRToken()) {
       const coff_aux_clr_token *Aux;
-      if (std::error_code EC = getSymbolAuxData(Obj, Symbol, I, Aux))
-        reportError(EC, Obj->getFileName());
+      error(getSymbolAuxData(Obj, Symbol, I, Aux));
 
       Expected<COFFSymbolRef> ReferredSym =
           Obj->getSymbol(Aux->SymbolTableIndex);
@@ -1552,7 +1535,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       std::error_code EC = errorToErrorCode(ReferredSym.takeError());
       if (EC || (EC = Obj->getSymbolName(*ReferredSym, ReferredName))) {
         ReferredName = "";
-        reportError(EC, Obj->getFileName());
+        error(EC);
       }
 
       DictScope AS(W, "AuxCLRToken");
@@ -1619,11 +1602,9 @@ void COFFDumper::printImportedSymbols(
     iterator_range<imported_symbol_iterator> Range) {
   for (const ImportedSymbolRef &I : Range) {
     StringRef Sym;
-    if (std::error_code EC = I.getSymbolName(Sym))
-      reportError(EC, Obj->getFileName());
+    error(I.getSymbolName(Sym));
     uint16_t Ordinal;
-    if (std::error_code EC = I.getOrdinal(Ordinal))
-      reportError(EC, Obj->getFileName());
+    error(I.getOrdinal(Ordinal));
     W.printNumber("Symbol", Sym, Ordinal);
   }
 }
@@ -1635,17 +1616,12 @@ void COFFDumper::printDelayImportedSymbols(
   for (const ImportedSymbolRef &S : Range) {
     DictScope Import(W, "Import");
     StringRef Sym;
-    if (std::error_code EC = S.getSymbolName(Sym))
-      reportError(EC, Obj->getFileName());
-
+    error(S.getSymbolName(Sym));
     uint16_t Ordinal;
-    if (std::error_code EC = S.getOrdinal(Ordinal))
-      reportError(EC, Obj->getFileName());
+    error(S.getOrdinal(Ordinal));
     W.printNumber("Symbol", Sym, Ordinal);
-
     uint64_t Addr;
-    if (std::error_code EC = I.getImportAddress(Index++, Addr))
-      reportError(EC, Obj->getFileName());
+    error(I.getImportAddress(Index++, Addr));
     W.printHex("Address", Addr);
   }
 }
@@ -1655,16 +1631,13 @@ void COFFDumper::printCOFFImports() {
   for (const ImportDirectoryEntryRef &I : Obj->import_directories()) {
     DictScope Import(W, "Import");
     StringRef Name;
-    if (std::error_code EC = I.getName(Name))
-      reportError(EC, Obj->getFileName());
+    error(I.getName(Name));
     W.printString("Name", Name);
     uint32_t ILTAddr;
-    if (std::error_code EC = I.getImportLookupTableRVA(ILTAddr))
-      reportError(EC, Obj->getFileName());
+    error(I.getImportLookupTableRVA(ILTAddr));
     W.printHex("ImportLookupTableRVA", ILTAddr);
     uint32_t IATAddr;
-    if (std::error_code EC = I.getImportAddressTableRVA(IATAddr))
-      reportError(EC, Obj->getFileName());
+    error(I.getImportAddressTableRVA(IATAddr));
     W.printHex("ImportAddressTableRVA", IATAddr);
     // The import lookup table can be missing with certain older linkers, so
     // fall back to the import address table in that case.
@@ -1678,12 +1651,10 @@ void COFFDumper::printCOFFImports() {
   for (const DelayImportDirectoryEntryRef &I : Obj->delay_import_directories()) {
     DictScope Import(W, "DelayImport");
     StringRef Name;
-    if (std::error_code EC = I.getName(Name))
-      reportError(EC, Obj->getFileName());
+    error(I.getName(Name));
     W.printString("Name", Name);
     const delay_import_directory_table_entry *Table;
-    if (std::error_code EC = I.getDelayImportTable(Table))
-      reportError(EC, Obj->getFileName());
+    error(I.getDelayImportTable(Table));
     W.printHex("Attributes", Table->Attributes);
     W.printHex("ModuleHandle", Table->ModuleHandle);
     W.printHex("ImportAddressTable", Table->DelayImportAddressTable);
@@ -1701,12 +1672,9 @@ void COFFDumper::printCOFFExports() {
     StringRef Name;
     uint32_t Ordinal, RVA;
 
-    if (std::error_code EC = E.getSymbolName(Name))
-      reportError(EC, Obj->getFileName());
-    if (std::error_code EC = E.getOrdinal(Ordinal))
-      reportError(EC, Obj->getFileName());
-    if (std::error_code EC = E.getExportRVA(RVA))
-      reportError(EC, Obj->getFileName());
+    error(E.getSymbolName(Name));
+    error(E.getOrdinal(Ordinal));
+    error(E.getExportRVA(RVA));
 
     W.printNumber("Ordinal", Ordinal);
     W.printString("Name", Name);
@@ -1744,10 +1712,8 @@ void COFFDumper::printCOFFBaseReloc() {
   for (const BaseRelocRef &I : Obj->base_relocs()) {
     uint8_t Type;
     uint32_t RVA;
-    if (std::error_code EC = I.getRVA(RVA))
-      reportError(EC, Obj->getFileName());
-    if (std::error_code EC = I.getType(Type))
-      reportError(EC, Obj->getFileName());
+    error(I.getRVA(RVA));
+    error(I.getType(Type));
     DictScope Import(W, "Entry");
     W.printString("Type", getBaseRelocTypeName(Type));
     W.printHex("Address", RVA);
@@ -1831,7 +1797,7 @@ void COFFDumper::printResourceDirectoryTable(
       }
       std::string EntryNameString;
       if (!llvm::convertUTF16ToUTF8String(RawEntryNameString, EntryNameString))
-        reportError(object_error::parse_failed, Obj->getFileName());
+        error(object_error::parse_failed);
       OS << ": ";
       OS << EntryNameString;
     } else {
@@ -1939,14 +1905,14 @@ void COFFDumper::printAddrsig() {
     const char *Err;
     uint64_t SymIndex = decodeULEB128(Cur, &Size, End, &Err);
     if (Err)
-      reportError(createError(Err), Obj->getFileName());
+      reportError(Err);
 
     Expected<COFFSymbolRef> Sym = Obj->getSymbol(SymIndex);
     StringRef SymName;
     std::error_code EC = errorToErrorCode(Sym.takeError());
     if (EC || (EC = Obj->getSymbolName(*Sym, SymName))) {
       SymName = "";
-      reportError(EC, Obj->getFileName());
+      error(EC);
     }
 
     W.printNumber("Sym", SymName, SymIndex);
