@@ -395,14 +395,14 @@ LLVM_ATTRIBUTE_NORETURN void reportError(Error Err, StringRef Input) {
 
 void reportWarning(Error Err, StringRef Input) {
   assert(Err);
+  // Flush the standard output to print the warning at a
+  // proper place.
+  fouts().flush();
   if (Input == "-")
     Input = "<stdin>";
 
   handleAllErrors(createFileError(Input, std::move(Err)),
                   [&](const ErrorInfoBase &EI) {
-                    // Flush the standard output to print the warning at a
-                    // proper place.
-                    fouts().flush();
                     errs() << "\n";
                     WithColor::warning(errs()) << EI.message() << "\n";
                   });
