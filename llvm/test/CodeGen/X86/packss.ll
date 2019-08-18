@@ -267,16 +267,15 @@ define <16 x i8> @packsswb_icmp_zero_128(<8 x i16> %a0) {
 ; SSE-LABEL: packsswb_icmp_zero_128:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    pxor %xmm1, %xmm1
-; SSE-NEXT:    pcmpeqw %xmm0, %xmm1
-; SSE-NEXT:    packsswb %xmm0, %xmm1
-; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm1[0],zero
+; SSE-NEXT:    pcmpeqw %xmm1, %xmm0
+; SSE-NEXT:    packsswb %xmm1, %xmm0
 ; SSE-NEXT:    ret{{[l|q]}}
 ;
 ; AVX-LABEL: packsswb_icmp_zero_128:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; AVX-NEXT:    vpcmpeqw %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
+; AVX-NEXT:    vpacksswb %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    ret{{[l|q]}}
   %1 = icmp eq <8 x i16> %a0, zeroinitializer
   %2 = sext <8 x i1> %1 to <8 x i8>
@@ -311,10 +310,11 @@ define <32 x i8> @packsswb_icmp_zero_256(<16 x i16> %a0) {
 ; SSE-NEXT:    pxor %xmm2, %xmm2
 ; SSE-NEXT:    pcmpeqw %xmm2, %xmm1
 ; SSE-NEXT:    pcmpeqw %xmm2, %xmm0
-; SSE-NEXT:    packsswb %xmm0, %xmm0
-; SSE-NEXT:    movsd {{.*#+}} xmm0 = xmm2[0],xmm0[1]
-; SSE-NEXT:    packsswb %xmm1, %xmm1
-; SSE-NEXT:    movsd {{.*#+}} xmm1 = xmm2[0],xmm1[1]
+; SSE-NEXT:    pxor %xmm3, %xmm3
+; SSE-NEXT:    packsswb %xmm0, %xmm3
+; SSE-NEXT:    packsswb %xmm1, %xmm2
+; SSE-NEXT:    movdqa %xmm3, %xmm0
+; SSE-NEXT:    movdqa %xmm2, %xmm1
 ; SSE-NEXT:    ret{{[l|q]}}
 ;
 ; AVX1-LABEL: packsswb_icmp_zero_256:
@@ -323,9 +323,8 @@ define <32 x i8> @packsswb_icmp_zero_256(<16 x i16> %a0) {
 ; AVX1-NEXT:    vpcmpeqw %xmm1, %xmm0, %xmm2
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
 ; AVX1-NEXT:    vpcmpeqw %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm1 = [128,128,128,128,128,128,128,128,0,2,4,6,8,10,12,14]
-; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vpshufb %xmm1, %xmm2, %xmm1
+; AVX1-NEXT:    vpacksswb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vpacksswb %xmm2, %xmm1, %xmm1
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    ret{{[l|q]}}
 ;
@@ -333,7 +332,7 @@ define <32 x i8> @packsswb_icmp_zero_256(<16 x i16> %a0) {
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; AVX2-NEXT:    vpcmpeqw %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpshufb {{.*#+}} ymm0 = zero,zero,zero,zero,zero,zero,zero,zero,ymm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,18,20,22,24,26,28,30]
+; AVX2-NEXT:    vpacksswb %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    ret{{[l|q]}}
   %1 = icmp eq <16 x i16> %a0, zeroinitializer
   %2 = sext <16 x i1> %1 to <16 x i16>
