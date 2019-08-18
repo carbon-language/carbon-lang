@@ -162,15 +162,6 @@ public:
     PB.registerFunctionAnalyses(FAM);
   }
 
-  template <
-      typename AnalysisTy,
-      typename std::enable_if<
-          std::is_base_of<AnalysisInfoMixin<AnalysisTy>, AnalysisTy>::value,
-          bool>::type = true>
-  void registerAnalysis() {
-    FAM.registerPass([]() { return AnalysisTy(); });
-  }
-
   void emit(MaterializationResponsibility R, ThreadSafeModule TSM);
 
 private:
