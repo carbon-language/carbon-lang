@@ -9823,30 +9823,47 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
   assert(NumOperands > 1 && isPowerOf2_32(NumOperands) &&
          "Unexpected number of operands in CONCAT_VECTORS");
 
-  unsigned NumZero = 0;
-  unsigned NumNonZero = 0;
+  uint64_t Zeros = 0;
   uint64_t NonZeros = 0;
   for (unsigned i = 0; i != NumOperands; ++i) {
     SDValue SubVec = Op.getOperand(i);
     if (SubVec.isUndef())
       continue;
+    assert(i < sizeof(NonZeros) * CHAR_BIT); // Ensure the shift is in range.
     if (ISD::isBuildVectorAllZeros(SubVec.getNode()))
-      ++NumZero;
-    else {
-      assert(i < sizeof(NonZeros) * CHAR_BIT); // Ensure the shift is in range.
+      Zeros |= (uint64_t)1 << i;
+    else
       NonZeros |= (uint64_t)1 << i;
-      ++NumNonZero;
-    }
   }
 
+  unsigned NumElems = ResVT.getVectorNumElements();
+
+  // If we are inserting non-zero vector and there are zeros in LSBs and undef
+  // in the MSBs we need to emit a KSHIFTL. The generic lowering to
+  // insert_subvector will give us two kshifts.
+  if (isPowerOf2_64(NonZeros) && Zeros != 0 && NonZeros > Zeros &&
+      Log2_64(NonZeros) != NumOperands - 1) {
+    MVT ShiftVT = ResVT;
+    if ((!Subtarget.hasDQI() && NumElems == 8) || NumElems < 8)
+      ShiftVT = Subtarget.hasDQI() ? MVT::v8i1 : MVT::v16i1;
+    unsigned Idx = Log2_64(NonZeros);
+    SDValue SubVec = Op.getOperand(Idx);
+    unsigned SubVecNumElts = SubVec.getSimpleValueType().getVectorNumElements();
+    SubVec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ShiftVT,
+                         DAG.getUNDEF(ShiftVT), SubVec,
+                         DAG.getIntPtrConstant(0, dl));
+    Op = DAG.getNode(X86ISD::KSHIFTL, dl, ShiftVT, SubVec,
+                     DAG.getConstant(Idx * SubVecNumElts, dl, MVT::i8));
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResVT, Op,
+                       DAG.getIntPtrConstant(0, dl));
+  }
 
   // If there are zero or one non-zeros we can handle this very simply.
-  if (NumNonZero <= 1) {
-    SDValue Vec = NumZero ? getZeroVector(ResVT, Subtarget, DAG, dl)
-                          : DAG.getUNDEF(ResVT);
-    if (!NumNonZero)
+  if (NonZeros == 0 || isPowerOf2_64(NonZeros)) {
+    SDValue Vec = Zeros ? DAG.getConstant(0, dl, ResVT) : DAG.getUNDEF(ResVT);
+    if (!NonZeros)
       return Vec;
-    unsigned Idx = countTrailingZeros(NonZeros);
+    unsigned Idx = Log2_64(NonZeros);
     SDValue SubVec = Op.getOperand(Idx);
     unsigned SubVecNumElts = SubVec.getSimpleValueType().getVectorNumElements();
     return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, Vec, SubVec,
@@ -9864,7 +9881,7 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
     return DAG.getNode(ISD::CONCAT_VECTORS, dl, ResVT, Lo, Hi);
   }
 
-  assert(NumNonZero == 2 && "Simple cases not handled?");
+  assert(countPopulation(NonZeros) == 2 && "Simple cases not handled?");
 
   if (ResVT.getVectorNumElements() >= 16)
     return Op; // The operation is legal with KUNPCK
@@ -9872,7 +9889,6 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
   SDValue Vec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT,
                             DAG.getUNDEF(ResVT), Op.getOperand(0),
                             DAG.getIntPtrConstant(0, dl));
-  unsigned NumElems = ResVT.getVectorNumElements();
   return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, Vec, Op.getOperand(1),
                      DAG.getIntPtrConstant(NumElems/2, dl));
 }
