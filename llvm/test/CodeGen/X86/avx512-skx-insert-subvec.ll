@@ -163,3 +163,42 @@ define <8 x i1> @test11(<4 x i1> %a, <4 x i1>%b) {
   %res = shufflevector <4 x i1> %a, <4 x i1> undef, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 0, i32 1, i32 2, i32 3>
   ret <8 x i1> %res
 }
+
+define <16 x i1> @test12(<2 x i1> %a) {
+; CHECK-LABEL: test12:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vpsllq $63, %xmm0, %xmm0
+; CHECK-NEXT:    vpmovq2m %xmm0, %k0
+; CHECK-NEXT:    kshiftlw $14, %k0, %k0
+; CHECK-NEXT:    kshiftrw $4, %k0, %k0
+; CHECK-NEXT:    vpmovm2b %k0, %xmm0
+; CHECK-NEXT:    retq
+  %res = shufflevector <2 x i1> %a, <2 x i1> zeroinitializer, <16 x i32> <i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <16 x i1> %res
+}
+
+define <32 x i1> @test13(<2 x i1> %a) {
+; CHECK-LABEL: test13:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vpsllq $63, %xmm0, %xmm0
+; CHECK-NEXT:    vpmovq2m %xmm0, %k0
+; CHECK-NEXT:    kshiftld $30, %k0, %k0
+; CHECK-NEXT:    kshiftrd $20, %k0, %k0
+; CHECK-NEXT:    vpmovm2b %k0, %ymm0
+; CHECK-NEXT:    retq
+  %res = shufflevector <2 x i1> %a, <2 x i1> zeroinitializer, <32 x i32> <i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <32 x i1> %res
+}
+
+define <64 x i1> @test14(<2 x i1> %a) {
+; CHECK-LABEL: test14:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vpsllq $63, %xmm0, %xmm0
+; CHECK-NEXT:    vpmovq2m %xmm0, %k0
+; CHECK-NEXT:    kshiftlq $62, %k0, %k0
+; CHECK-NEXT:    kshiftrq $52, %k0, %k0
+; CHECK-NEXT:    vpmovm2b %k0, %zmm0
+; CHECK-NEXT:    retq
+  %res = shufflevector <2 x i1> %a, <2 x i1> zeroinitializer, <64 x i32> <i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3, i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <64 x i1> %res
+}
