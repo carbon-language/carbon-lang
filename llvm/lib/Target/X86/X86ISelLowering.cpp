@@ -5579,7 +5579,7 @@ static SDValue insert1BitVector(SDValue Op, SelectionDAG &DAG,
   if (IdxVal == 0 && ISD::isBuildVectorAllZeros(Vec.getNode())) {
     // May need to promote to a legal type.
     Op = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, WideOpVT,
-                     getZeroVector(WideOpVT, Subtarget, DAG, dl),
+                     DAG.getConstant(0, dl, WideOpVT),
                      SubVec, Idx);
     return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, OpVT, Op, ZeroIdx);
   }
@@ -5602,7 +5602,7 @@ static SDValue insert1BitVector(SDValue Op, SelectionDAG &DAG,
     Vec = DAG.getNode(X86ISD::KSHIFTL, dl, WideOpVT, Vec, ShiftBits);
     // Merge them together, SubVec should be zero extended.
     SubVec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, WideOpVT,
-                         getZeroVector(WideOpVT, Subtarget, DAG, dl),
+                         DAG.getConstant(0, dl, WideOpVT),
                          SubVec, ZeroIdx);
     Op = DAG.getNode(ISD::OR, dl, WideOpVT, Vec, SubVec);
     return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, OpVT, Op, ZeroIdx);
@@ -5640,7 +5640,7 @@ static SDValue insert1BitVector(SDValue Op, SelectionDAG &DAG,
       // isel to opimitize when bits are known zero.
       Vec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, SubVecVT, Vec, ZeroIdx);
       Vec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, WideOpVT,
-                        getZeroVector(WideOpVT, Subtarget, DAG, dl),
+                        DAG.getConstant(0, dl, WideOpVT),
                         Vec, ZeroIdx);
     } else {
       // Otherwise use explicit shifts to zero the bits.
@@ -16557,7 +16557,7 @@ static SDValue lower1BitShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, ExtractVT,
                                   V1, DAG.getIntPtrConstant(0, DL));
     return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT,
-                       getZeroVector(VT, Subtarget, DAG, DL),
+                       DAG.getConstant(0, DL, VT),
                        Extract, DAG.getIntPtrConstant(0, DL));
   }
 
