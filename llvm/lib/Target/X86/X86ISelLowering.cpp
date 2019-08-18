@@ -16562,18 +16562,34 @@ static SDValue lower1BitShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   }
 
   // Try to match KSHIFTs.
-  // TODO: Support narrower than legal shifts by widening and extracting.
-  if (NumElts >= 16 || (Subtarget.hasDQI() && NumElts == 8)) {
-    unsigned Offset = 0;
-    for (SDValue V : { V1, V2 }) {
-      unsigned Opcode;
-      int ShiftAmt = match1BitShuffleAsKSHIFT(Opcode, Mask, Offset, Zeroable);
-      if (ShiftAmt >= 0)
+  unsigned Offset = 0;
+  for (SDValue V : { V1, V2 }) {
+    unsigned Opcode;
+    int ShiftAmt = match1BitShuffleAsKSHIFT(Opcode, Mask, Offset, Zeroable);
+    if (ShiftAmt >= 0) {
+      // FIXME: We can't easily widen an illegal right shift if we need to shift
+      // in zeroes.
+      if (Opcode == X86ISD::KSHIFTR &&
+          (NumElts >= 16 || (Subtarget.hasDQI() && NumElts == 8)))
         return DAG.getNode(Opcode, DL, VT, V,
                            DAG.getConstant(ShiftAmt, DL, MVT::i8));
-      Offset += NumElts; // Increment for next iteration.
+      if (Opcode == X86ISD::KSHIFTL) {
+        // If this is a shift left we can widen the VT to a suported kshiftl.
+        MVT WideVT = VT;
+        if ((!Subtarget.hasDQI() && NumElts == 8) || NumElts < 8)
+          WideVT = Subtarget.hasDQI() ? MVT::v8i1 : MVT::v16i1;
+        SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, WideVT,
+                                  DAG.getUNDEF(WideVT), V,
+                                  DAG.getIntPtrConstant(0, DL));
+        Res = DAG.getNode(Opcode, DL, WideVT, V,
+                          DAG.getConstant(ShiftAmt, DL, MVT::i8));
+        return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, Res,
+                           DAG.getIntPtrConstant(0, DL));
+      }
     }
+    Offset += NumElts; // Increment for next iteration.
   }
+
 
 
   MVT ExtVT;
