@@ -10095,8 +10095,8 @@ static bool isTargetShuffleEquivalent(ArrayRef<int> Mask,
   // equivalent inputs that make the shuffles equivalent.
   auto *BV1 = dyn_cast_or_null<BuildVectorSDNode>(V1);
   auto *BV2 = dyn_cast_or_null<BuildVectorSDNode>(V2);
-  BV1 = ((BV1 && BV1->getNumOperands() != Size) ? nullptr : BV1);
-  BV2 = ((BV2 && BV2->getNumOperands() != Size) ? nullptr : BV2);
+  BV1 = ((BV1 && Size != (int)BV1->getNumOperands()) ? nullptr : BV1);
+  BV2 = ((BV2 && Size != (int)BV2->getNumOperands()) ? nullptr : BV2);
 
   for (int i = 0; i < Size; ++i) {
     if (Mask[i] == SM_SentinelUndef || Mask[i] == ExpectedMask[i])
