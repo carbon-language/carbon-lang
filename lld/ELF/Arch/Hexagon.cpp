@@ -87,6 +87,20 @@ static uint32_t applyMask(uint32_t mask, uint32_t data) {
 RelExpr Hexagon::getRelExpr(RelType type, const Symbol &s,
                             const uint8_t *loc) const {
   switch (type) {
+  case R_HEX_NONE:
+    return R_NONE;
+  case R_HEX_6_X:
+  case R_HEX_8_X:
+  case R_HEX_9_X:
+  case R_HEX_10_X:
+  case R_HEX_11_X:
+  case R_HEX_12_X:
+  case R_HEX_16_X:
+  case R_HEX_32:
+  case R_HEX_32_6_X:
+  case R_HEX_HI16:
+  case R_HEX_LO16:
+    return R_ABS;
   case R_HEX_B9_PCREL:
   case R_HEX_B9_PCREL_X:
   case R_HEX_B13_PCREL:
@@ -111,7 +125,9 @@ RelExpr Hexagon::getRelExpr(RelType type, const Symbol &s,
   case R_HEX_GOT_32_6_X:
     return R_GOTPLT;
   default:
-    return R_ABS;
+    error(getErrorLocation(loc) + "unknown relocation (" + Twine(type) +
+          ") against symbol " + toString(s));
+    return R_NONE;
   }
 }
 
@@ -258,8 +274,7 @@ void Hexagon::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
     or32le(loc, applyMask(0x00c03fff, val));
     break;
   default:
-    error(getErrorLocation(loc) + "unrecognized relocation " + toString(type));
-    break;
+    llvm_unreachable("unknown relocation");
   }
 }
 
