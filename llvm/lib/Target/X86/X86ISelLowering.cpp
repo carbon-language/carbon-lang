@@ -16654,7 +16654,7 @@ static SDValue lower1BitShuffle(const SDLoc &DL, ArrayRef<int> Mask,
         SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, WideVT,
                                   DAG.getUNDEF(WideVT), V,
                                   DAG.getIntPtrConstant(0, DL));
-        Res = DAG.getNode(Opcode, DL, WideVT, V,
+        Res = DAG.getNode(Opcode, DL, WideVT, Res,
                           DAG.getConstant(ShiftAmt, DL, MVT::i8));
         return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, Res,
                            DAG.getIntPtrConstant(0, DL));
