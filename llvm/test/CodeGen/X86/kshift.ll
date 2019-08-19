@@ -676,12 +676,9 @@ define i8 @kshiftr_v8i1_1u3u567z(<8 x i64> %x, <8 x i64> %y) {
 define i8 @kshiftr_v8i1_234567uu(<8 x i64> %x, <8 x i64> %y) {
 ; KNL-LABEL: kshiftr_v8i1_234567uu:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; KNL-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
-; KNL-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm0[2,3,4,5,6,7,0,1]
-; KNL-NEXT:    vpsllq $63, %zmm0, %zmm0
-; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; KNL-NEXT:    vptestmq %zmm0, %zmm0, %k0 {%k1}
+; KNL-NEXT:    vptestnmq %zmm0, %zmm0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0 {%k1}
 ; KNL-NEXT:    kmovw %k0, %eax
 ; KNL-NEXT:    # kill: def $al killed $al killed $eax
 ; KNL-NEXT:    vzeroupper
