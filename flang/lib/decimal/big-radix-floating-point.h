@@ -123,7 +123,7 @@ private:
   // there are more digits in the input string than can be
   // represented precisely.)
   bool IsFull() const {
-    return digits_ == digitLimit_ && 10 * digit_[digits_ - 1] >= radix;
+    return digits_ == digitLimit_ && digit_[digits_ - 1] >= radix / 10;
   }
 
   // Set to an unsigned integer value.

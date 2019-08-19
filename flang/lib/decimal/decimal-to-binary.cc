@@ -98,8 +98,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
 // This local utility class represents an unrounded nonnegative
 // binary floating-point value with an unbiased (i.e., signed)
 // binary exponent, an integer value (not a fraction) with an implied
-// binary point to its *right*, and the usual three guard/round/sticky
-// bits for rounding.
+// binary point to its *right*, and some guard bits for rounding.
 template<int PREC> class IntermediateFloat {
 public:
   static constexpr int precision{PREC};
@@ -111,59 +110,41 @@ public:
   IntermediateFloat(const IntermediateFloat &) = default;
 
   // Assumes that exponent_ is valid on entry, and may increment it.
-  template<typename UINT> void SetTo(UINT n) {
+  // Returns the number of guard_ bits that also been determined.
+  template<typename UINT> bool SetTo(UINT n) {
     static constexpr int nBits{CHAR_BIT * sizeof n};
     if constexpr (precision >= nBits) {
       value_ = n;
       guard_ = 0;
+      return 0;
     } else {
-      int shift{nBits - common::LeadingZeroBitCount(n) - precision};
+      int shift{common::BitsNeededFor(n) - precision};
       if (shift <= 0) {
         value_ = n;
         guard_ = 0;
+        return 0;
       } else {
         value_ = n >> shift;
         exponent_ += shift;
-        if (shift <= precision) {
-          guard_ = (n << (precision - shift)) & mask;
-        } else {
-          bool sticky{
-              (n & ((static_cast<UINT>(1) << (shift - precision)) - 1)) != 0};
-          guard_ = ((n >> (shift - precision)) & mask) | sticky;
-        }
+        n <<= nBits - shift;
+        guard_ = (n >> (nBits - precision)) | ((n << precision) != 0);
+        return shift;
       }
     }
   }
 
-  void ShiftDown() {
-    guard_ = (guard_ & 1) | (guard_ >> 1) | ((value_ & 1) << (precision - 1));
-    value_ >>= 1;
-    ++exponent_;
-  }
-
-  void DoubleAndAdd(int carry = 0) {
-    HostUnsignedIntType<precision + 1> v;
-    v = value_ + value_ + carry;
-    value_ = v & mask;
-    for (v >>= precision; v > 0; v >>= 1) {
-      ShiftDown();
-      value_ |= static_cast<IntType>(v & 1) << (precision - 1);
-    }
-  }
-
+  void ShiftIn(int bit = 0) { value_ = value_ + value_ + bit; }
   bool IsFull() const { return value_ >= topBit; }
-  bool IsEmpty() const { return value_ == 0; }
   void AdjustExponent(int by) { exponent_ += by; }
   void SetGuard(int g) {
-    guard_ = g;
-    guard_ = ((guard_ & 6) << (precision - 3)) | (guard_ & 1);
+    guard_ |= (static_cast<IntType>(g & 6) << (precision - 3)) | (g & 1);
   }
 
   ConversionToBinaryResult<PREC> ToBinary(
       bool isNegative, FortranRounding) const;
 
 private:
-  IntType value_{0}, guard_{0};  // todo pmk: back to 3-bit guard
+  IntType value_{0}, guard_{0};  // TODO pmk revert to 3-bit guard?
   int exponent_{0};
 };
 
@@ -237,10 +218,11 @@ template<int PREC, int LOG10RADIX>
 ConversionToBinaryResult<PREC>
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   using Binary = BinaryFloatingPointNumber<PREC>;
-  // *this holds a multi-precision integer value in a radix of a large power
-  // of ten.  Its radix point is defined to be to the right of its digits,
-  // and "exponent_" is the power of ten by which it is to be scaled.
-  if (IsZero()) {
+  // On entry, *this holds a multi-precision integer value in a radix of a
+  // large power of ten.  Its radix point is defined to be to the right of its
+  // digits, and "exponent_" is the power of ten by which it is to be scaled.
+  Normalize();
+  if (digits_ == 0) {
     if (isNegative_) {
       using Raw = typename Binary::RawType;
       Raw negZero{static_cast<Raw>(1) << (Binary::bits - 1)};
@@ -249,103 +231,63 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
       return {Binary{}};
     }
   }
-
-  Normalize();
-  IntermediateFloat<PREC> f;
-
-  // Align the decimal exponent to be a multiple of log10(radix) so
-  // that the digits can be viewed as having an effective radix point.
-  if (int align{exponent_ % log10Radix}) {
-    int adjust{align < 0 ? log10Radix + align : align};
-    exponent_ -= adjust;
-    f.AdjustExponent(adjust);
-    digitLimit_ = maxDigits;
-    for (; adjust >= 4; adjust -= 4) {
-      MultiplyBy<(5 * 5 * 5 * 5)>();
-    }
-    for (; adjust > 0; --adjust) {
-      MultiplyBy<5>();
-    }
-  }
-
-  if (exponent_ > 0) {
-    int adjust{exponent_};
-    f.AdjustExponent(adjust);
-    digitLimit_ = maxDigits;
-    exponent_ -= adjust;
-    for (; adjust >= 4; adjust -= 4) {
-      MultiplyBy<(5 * 5 * 5 * 5)>();
-    }
-    for (; adjust > 0; --adjust) {
-      MultiplyBy<5>();
-    }
-  }
-
-  // Isolate the integer part, if any, into a single digit.
-  while (exponent_ > (1 - digits_) * log10Radix) {
-    int shift{common::BitsNeededFor(digit_[digits_ - 1])};
-    if (shift > log10Radix) {
-      shift = log10Radix;
-    }
-    DivideByPowerOfTwo(shift);
-    f.AdjustExponent(shift);
-    RemoveLeadingZeroDigits();
-  }
-
-  // Transfer the single digit of the integer part (if any) to
-  // constitute the initial integer part (not fraction!) of the
-  // binary result.
-  if (exponent_ == (1 - digits_) * log10Radix) {
-    f.SetTo(digit_[--digits_]);
-    if (f.IsFull()) {
-      return f.ToBinary(isNegative_, rounding_);
-    }
-  }
-
-  // Shift the radix (& decimal) point to the *left* of the remaining
-  // digits, turning them into a fraction, by augmenting the decimal exponent.
+  // The value is not zero.
+  // Shift our perspective on the radix (& decimal) point so that
+  // it sits to the *left* of the digits.
   exponent_ += digits_ * log10Radix;
-
-  // Convert the remaining fraction into bits of the
-  // resulting floating-point value until it is normalized.
-  if (!IsZero() && f.IsEmpty() && exponent_ < 0) {
-    // fast-forward
-    while (true) {
-      digitLimit_ = digits_;
-      std::uint32_t carry = MultiplyWithoutNormalization<512>();
-      RemoveLeastOrderZeroDigits();
-      f.AdjustExponent(-9);
-      if (carry != 0) {
-        digit_[digits_++] = carry;
-        exponent_ += log10Radix;
-        if (exponent_ >= 0) {
-          break;
-        }
-      }
-    }
-  }
-  while (!f.IsFull() && !IsZero()) {
-    f.AdjustExponent(-1);
+  // Apply any negative decimal exponent by multiplication
+  // by a power of two, adjusting the binary exponent to compensate.
+  IntermediateFloat<PREC> f;
+  while (exponent_ < log10Radix) {
+    f.AdjustExponent(-9);
     digitLimit_ = digits_;
-    std::uint32_t carry = MultiplyWithoutNormalization<2>();
+    std::uint32_t carry = MultiplyWithoutNormalization<512>();
     RemoveLeastOrderZeroDigits();
-    if (carry != 0 && exponent_ < 0) {
+    if (carry != 0) {
       digit_[digits_++] = carry;
       exponent_ += log10Radix;
-      f.DoubleAndAdd(0);
+    }
+  }
+  // Apply any positive decimal exponent greater than
+  // is needed to treat the topmost digit as an integer
+  // part by multiplying by 10 or 10000 repeatedly.
+  while (exponent_ > log10Radix) {
+    digitLimit_ = digits_;
+    std::uint32_t carry;
+    if (exponent_ >= log10Radix + 4) {
+      exponent_ -= 4;
+      carry = MultiplyBy<(5 * 5 * 5 * 5)>();
+      f.AdjustExponent(4);
     } else {
-      f.DoubleAndAdd(carry);
+      --exponent_;
+      carry = MultiplyBy<5>();
+      f.AdjustExponent(1);
+    }
+    RemoveLeastOrderZeroDigits();
+    if (carry > 0) {
+      digit_[digits_++] = carry;
+      exponent_ += log10Radix;
     }
   }
+  // So exponent_ is now log10Radix, meaning that the
+  // MSD can be taken as an integer part and transferred
+  // to the binary result.
+  int guardShift{f.SetTo(digit_[--digits_])};
+  // Transfer additional bits until the result is normal.
+  digitLimit_ = digits_;
+  while (!f.IsFull()) {
+    f.AdjustExponent(-1);
+    std::uint32_t carry = MultiplyWithoutNormalization<2>();
+    f.ShiftIn(carry);
+  }
+  // Get the next few bits for rounding.  Allow for some guard bits
+  // that may have already been set in f.SetTo() above.
+  int guard{MultiplyBy<8>()};
   if (!IsZero()) {
-    // Get the next two bits for use as guard & round bits, then
-    // set the sticky bit if anything else is left.
-    int guard{MultiplyBy<4>() * 2};
-    if (!IsZero()) {
-      guard |= 1;
-    }
-    f.SetGuard(guard);
+    guard |= 1;
   }
+  guard = (guard >> guardShift) | (((guard << guardShift) & 7) != 0);
+  f.SetGuard(guard);
   return f.ToBinary(isNegative_, rounding_);
 }
 

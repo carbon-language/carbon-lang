@@ -475,12 +475,12 @@ std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
     }
     using B = decimal::BinaryFloatingPointNumber<P>;
     const auto *value{reinterpret_cast<const B *>(this)};
-    char buffer[1024];
+    char buffer[24000];  // accommodate real*16
     auto result{decimal::ConvertToDecimal<P>(buffer, sizeof buffer,
-        static_cast<decimal::DecimalConversionFlags>(0) /*Minimize pmk*/, 1024,
-        decimal::RoundNearest, *value)};
+        static_cast<decimal::DecimalConversionFlags>(0) /*Minimize pmk*/,
+        999999, decimal::RoundNearest, *value)};
     const char *p{result.str};
-    if (*p == '-' || *p == '+') {
+    if (DEREF(p) == '-' || *p == '+') {
       o << *p++;
     }
     o << *p << '.' << (p + 1);

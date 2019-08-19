@@ -126,7 +126,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(char *buffer,
   if (IsZero()) {
     *start++ = '0';
     *start = '\0';
-    return {buffer, static_cast<std::size_t>(start - buffer), 0};
+    return {buffer, static_cast<std::size_t>(start - buffer), 0, Exact};
   }
   char *p{start};
   static_assert((LOG10RADIX % 2) == 0, "radix not a power of 100");
