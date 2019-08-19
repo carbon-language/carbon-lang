@@ -205,12 +205,8 @@ define i8 @test15(<2 x i64> %x) {
 ; CHECK-LABEL: test15:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k0
-; CHECK-NEXT:    vpmovm2d %k0, %ymm0
-; CHECK-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; CHECK-NEXT:    vpmovd2m %ymm0, %k0
 ; CHECK-NEXT:    kmovd %k0, %eax
 ; CHECK-NEXT:    # kill: def $al killed $al killed $eax
-; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %a = icmp eq <2 x i64> %x, zeroinitializer
   %b = shufflevector <2 x i1> %a, <2 x i1> <i1 false, i1 undef>, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
