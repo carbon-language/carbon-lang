@@ -76,7 +76,7 @@ endif()
 
 if(COMPILER_RT_INTERCEPT_LIBDISPATCH)
   list(APPEND TSAN_SOURCES
-    rtl/tsan_libdispatch.cpp
+    rtl/tsan_libdispatch_interceptors.cpp
     )
   list(APPEND TSAN_RTL_CFLAGS ${COMPILER_RT_LIBDISPATCH_CFLAGS})
 endif()
