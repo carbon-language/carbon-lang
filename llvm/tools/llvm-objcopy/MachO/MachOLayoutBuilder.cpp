@@ -17,7 +17,7 @@ namespace macho {
 uint32_t MachOLayoutBuilder::computeSizeOfCmds() const {
   uint32_t Size = 0;
   for (const auto &LC : O.LoadCommands) {
-    auto &MLC = LC.MachOLoadCommand;
+    const MachO::macho_load_command &MLC = LC.MachOLoadCommand;
     auto cmd = MLC.load_command_data.cmd;
     switch (cmd) {
     case MachO::LC_SEGMENT:
@@ -101,20 +101,25 @@ void MachOLayoutBuilder::updateDySymTab(MachO::macho_load_command &MLC) {
 uint64_t MachOLayoutBuilder::layoutSegments() {
   auto HeaderSize =
       Is64Bit ? sizeof(MachO::mach_header_64) : sizeof(MachO::mach_header);
-  auto Offset = HeaderSize + O.Header.SizeOfCmds;
-
-  // Lay out sections.
+  const bool IsObjectFile =
+      O.Header.FileType == MachO::HeaderFileType::MH_OBJECT;
+  uint64_t Offset = IsObjectFile ? (HeaderSize + O.Header.SizeOfCmds) : 0;
   for (auto &LC : O.LoadCommands) {
-    uint64_t FileOff = Offset;
     auto &MLC = LC.MachOLoadCommand;
     StringRef Segname;
+    uint64_t SegmentVmAddr;
+    uint64_t SegmentVmSize;
     switch (MLC.load_command_data.cmd) {
     case MachO::LC_SEGMENT:
+      SegmentVmAddr = MLC.segment_command_data.vmaddr;
+      SegmentVmSize = MLC.segment_command_data.vmsize;
       Segname = StringRef(MLC.segment_command_data.segname,
                           strnlen(MLC.segment_command_data.segname,
                                   sizeof(MLC.segment_command_data.segname)));
       break;
     case MachO::LC_SEGMENT_64:
+      SegmentVmAddr = MLC.segment_command_64_data.vmaddr;
+      SegmentVmSize = MLC.segment_command_64_data.vmsize;
       Segname = StringRef(MLC.segment_command_64_data.segname,
                           strnlen(MLC.segment_command_64_data.segname,
                                   sizeof(MLC.segment_command_64_data.segname)));
@@ -131,43 +136,64 @@ uint64_t MachOLayoutBuilder::layoutSegments() {
     }
 
     // Update file offsets and sizes of sections.
+    uint64_t SegOffset = Offset;
+    uint64_t SegFileSize = 0;
     uint64_t VMSize = 0;
-    uint64_t FileOffsetInSegment = 0;
     for (auto &Sec : LC.Sections) {
-      if (!Sec.isVirtualSection()) {
-        auto FilePaddingSize =
-            OffsetToAlignment(FileOffsetInSegment, 1ull << Sec.Align);
-        Sec.Offset = Offset + FileOffsetInSegment + FilePaddingSize;
-        Sec.Size = Sec.Content.size();
-        FileOffsetInSegment += FilePaddingSize + Sec.Size;
+      if (IsObjectFile) {
+        if (Sec.isVirtualSection()) {
+          Sec.Offset = 0;
+        } else {
+          uint64_t PaddingSize = OffsetToAlignment(SegFileSize, 1 << Sec.Align);
+          Sec.Offset = SegOffset + SegFileSize + PaddingSize;
+          Sec.Size = Sec.Content.size();
+          SegFileSize += PaddingSize + Sec.Size;
+        }
+        VMSize = std::max(VMSize, Sec.Addr + Sec.Size);
+      } else {
+        if (Sec.isVirtualSection()) {
+          Sec.Offset = 0;
+          VMSize += Sec.Size;
+        } else {
+          uint32_t SectOffset = Sec.Addr - SegmentVmAddr;
+          Sec.Offset = SegOffset + SectOffset;
+          Sec.Size = Sec.Content.size();
+          SegFileSize = std::max(SegFileSize, SectOffset + Sec.Size);
+          VMSize = std::max(VMSize, SegFileSize);
+        }
       }
-
-      VMSize = std::max(VMSize, Sec.Addr + Sec.Size);
     }
 
-    // TODO: Handle the __PAGEZERO segment.
+    if (IsObjectFile) {
+      Offset += SegFileSize;
+    } else {
+      Offset = alignTo(Offset + SegFileSize, PageSize);
+      SegFileSize = alignTo(SegFileSize, PageSize);
+      // Use the original vmsize if the segment is __PAGEZERO.
+      VMSize =
+          Segname == "__PAGEZERO" ? SegmentVmSize : alignTo(VMSize, PageSize);
+    }
+
     switch (MLC.load_command_data.cmd) {
     case MachO::LC_SEGMENT:
       MLC.segment_command_data.cmdsize =
           sizeof(MachO::segment_command) +
           sizeof(MachO::section) * LC.Sections.size();
       MLC.segment_command_data.nsects = LC.Sections.size();
-      MLC.segment_command_data.fileoff = FileOff;
+      MLC.segment_command_data.fileoff = SegOffset;
       MLC.segment_command_data.vmsize = VMSize;
-      MLC.segment_command_data.filesize = FileOffsetInSegment;
+      MLC.segment_command_data.filesize = SegFileSize;
       break;
     case MachO::LC_SEGMENT_64:
       MLC.segment_command_64_data.cmdsize =
           sizeof(MachO::segment_command_64) +
           sizeof(MachO::section_64) * LC.Sections.size();
       MLC.segment_command_64_data.nsects = LC.Sections.size();
-      MLC.segment_command_64_data.fileoff = FileOff;
+      MLC.segment_command_64_data.fileoff = SegOffset;
       MLC.segment_command_64_data.vmsize = VMSize;
-      MLC.segment_command_64_data.filesize = FileOffsetInSegment;
+      MLC.segment_command_64_data.filesize = SegFileSize;
       break;
     }
-
-    Offset += FileOffsetInSegment;
   }
 
   return Offset;
