@@ -292,6 +292,7 @@ static void printTLSDirectory(const COFFObjectFile *Obj) {
 }
 
 static void printLoadConfiguration(const COFFObjectFile *Obj) {
+  // Skip if it's not executable.
   if (!Obj->getPE32Header())
     return;
 
