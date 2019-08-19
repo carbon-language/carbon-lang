@@ -25,7 +25,7 @@ namespace ns1 {
 namespace ns2 {
   auto L = [](int I) constexpr { if (I == 5) asm("non-constexpr");  };
 #if __cpp_constexpr < 201907L
-  //expected-error@-2{{use of this statement in a constexpr function is a C++2a extension}}
+  //expected-warning@-2{{use of this statement in a constexpr function is a C++2a extension}}
 #endif
 } // end ns1
 
@@ -71,9 +71,16 @@ namespace ns2 {
   static_assert(L(3.14) == 3.14);
 }
 namespace ns3 {
-  auto L = [](auto a) { asm("non-constexpr"); return a; }; //expected-note{{declared here}}
+  auto L = [](auto a) { asm("non-constexpr"); return a; };
   constexpr int I =  //expected-error{{must be initialized by a constant expression}}
-      L(3); //expected-note{{non-constexpr function}}
+      L(3);
+#if __cpp_constexpr < 201907L
+//expected-note@-2{{non-constexpr function}}
+//expected-note@-5{{declared here}}
+#else
+//expected-note@-7{{subexpression not valid in a constant expression}}
+//expected-note@-6{{in call to}}
+#endif
 } 
 
 } // end ns test_constexpr_call
@@ -170,7 +177,7 @@ static_assert(I == 12);
 namespace contained_lambdas_call_operator_is_not_constexpr {
 constexpr auto f(int i) {
   double d = 3.14;
-  auto L = [=](auto a) { //expected-note{{declared here}}
+  auto L = [=](auto a) {
     int Isz = sizeof(i);
     asm("hello");
     return sizeof(i) + sizeof(a) + sizeof(d); 
@@ -181,8 +188,14 @@ constexpr auto f(int i) {
 constexpr auto L = f(3);
 
 constexpr auto M =  // expected-error{{must be initialized by}} 
-    L("abc"); //expected-note{{non-constexpr function}}
-
+    L("abc");
+#if __cpp_constexpr < 201907L
+//expected-note@-2{{non-constexpr function}}
+//expected-note@-14{{declared here}}
+#else
+//expected-note@-14{{subexpression not valid in a constant expression}}
+//expected-note@-6{{in call to}}
+#endif
 } // end ns contained_lambdas_call_operator_is_not_constexpr
 
 
