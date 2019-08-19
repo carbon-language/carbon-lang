@@ -878,7 +878,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
     // The map in which we collect return values -> return instrs.
     decltype(ReturnedValues) &RetValsMap;
     // The flag to indicate a change.
-    bool &Changed;
+    bool Changed;
     // The return instrs we come from.
     SmallPtrSet<ReturnInst *, 2> RetInsts;
   };
@@ -906,8 +906,9 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
   // Callback for all "return intructions" live in the associated function.
   auto CheckReturnInst = [this, &VisitReturnedValue, &Changed](Instruction &I) {
     ReturnInst &Ret = cast<ReturnInst>(I);
-    RVState RVS({ReturnedValues, Changed, {}});
+    RVState RVS({ReturnedValues, false, {}});
     RVS.RetInsts.insert(&Ret);
+    Changed |= RVS.Changed;
     return VisitReturnedValue(*Ret.getReturnValue(), RVS);
   };
 
@@ -954,8 +955,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
       if (Argument *Arg = dyn_cast<Argument>(RetVal)) {
         // Arguments are mapped to call site operands and we begin the traversal
         // again.
-        bool Unused;
-        RVState RVS({NewRVsMap, Unused, RetValAAIt.second});
+        RVState RVS({NewRVsMap, false, RetValAAIt.second});
         VisitReturnedValue(*CB->getArgOperand(Arg->getArgNo()), RVS);
         continue;
       } else if (isa<CallBase>(RetVal)) {
