@@ -32,7 +32,6 @@ JumpTable::JumpTable(StringRef Name,
                      uint64_t Address,
                      std::size_t EntrySize,
                      JumpTableType Type,
-                     OffsetEntriesType &&OffsetEntries,
                      LabelMapType &&Labels,
                      BinaryFunction &BF,
                      BinarySection &Section)
@@ -40,7 +39,6 @@ JumpTable::JumpTable(StringRef Name,
     EntrySize(EntrySize),
     OutputEntrySize(EntrySize),
     Type(Type),
-    OffsetEntries(OffsetEntries),
     Labels(Labels),
     Parent(&BF) {
 }

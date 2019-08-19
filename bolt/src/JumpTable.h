@@ -68,8 +68,8 @@ public:
   std::vector<MCSymbol *> Entries;
 
   /// All the entries as offsets into a function. Invalid after CFG is built.
-  using OffsetEntriesType = std::vector<uint64_t>;
-  OffsetEntriesType OffsetEntries;
+  using OffsetsType = std::vector<uint64_t>;
+  OffsetsType OffsetEntries;
 
   /// Map <Offset> -> <Label> used for embedded jump tables. Label at 0 offset
   /// is the main label for the jump table.
@@ -93,7 +93,6 @@ private:
             uint64_t Address,
             std::size_t EntrySize,
             JumpTableType Type,
-            OffsetEntriesType &&OffsetEntries,
             LabelMapType &&Labels,
             BinaryFunction &BF,
             BinarySection &Section);

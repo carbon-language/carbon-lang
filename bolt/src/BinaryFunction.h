@@ -916,6 +916,10 @@ public:
   /// CFG is constructed or while instruction offsets are available in CFG.
   MCInst *getInstructionAtOffset(uint64_t Offset);
 
+  const MCInst *getInstructionAtOffset(uint64_t Offset) const {
+    return const_cast<BinaryFunction *>(this)->getInstructionAtOffset(Offset);
+  }
+
   /// Return jump table that covers a given \p Address in memory.
   JumpTable *getJumpTableContainingAddress(uint64_t Address) {
     auto JTI = JumpTables.upper_bound(Address);

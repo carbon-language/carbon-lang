@@ -1418,9 +1418,8 @@ void BinaryFunction::postProcessJumpTables() {
     const auto JTSiteOffset = JTSite.first;
     const auto JTAddress = JTSite.second;
     const auto *JT = getJumpTableContainingAddress(JTAddress);
-    if (!JT)
-      continue;
     assert(JT && "cannot find jump table for address");
+
     auto EntryOffset = JTAddress - JT->getAddress();
     while (EntryOffset < JT->getSize()) {
       auto TargetOffset = JT->OffsetEntries[EntryOffset / JT->EntrySize];

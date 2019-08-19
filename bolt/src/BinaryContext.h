@@ -226,6 +226,11 @@ public:
         getBinaryFunctionAtAddress(Address, Shallow);
   }
 
+  /// Return size of an entry for the given jump table \p Type.
+  uint64_t getJumpTableEntrySize(JumpTable::JumpTableType Type) const {
+    return Type == JumpTable::JTT_PIC ? 4 : AsmInfo->getCodePointerSize();
+  }
+
   /// Return JumpTable containing a given \p Address.
   JumpTable *getJumpTableContainingAddress(uint64_t Address) {
     auto JTI = JumpTables.upper_bound(Address);
@@ -323,6 +328,22 @@ public:
   const MCSymbol *getOrCreateJumpTable(BinaryFunction &Function,
                                        uint64_t Address,
                                        JumpTable::JumpTableType Type);
+
+  /// Analyze a possible jump table of type \p Type at a given \p Address.
+  /// \p BF is a function referencing the jump table.
+  /// Return true if the jump table was detected at \p Address, and false
+  /// otherwise.
+  ///
+  /// If \p NextJTAddress is different from zero, it is used as an upper
+  /// bound for jump table memory layout.
+  ///
+  /// Optionally, populate \p Offsets with jump table entries. The entries
+  /// could be partially populated if the jump table detection fails.
+  bool analyzeJumpTable(const uint64_t Address,
+                        const JumpTable::JumpTableType Type,
+                        const BinaryFunction &BF,
+                        const uint64_t NextJTAddress = 0,
+                        JumpTable::OffsetsType *Offsets = nullptr);
 
   /// After jump table locations are established, this function will populate
   /// their OffsetEntries based on memory contents.

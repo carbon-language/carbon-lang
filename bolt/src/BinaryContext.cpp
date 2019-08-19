@@ -284,17 +284,16 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
     }
   }
 
-  const auto MemType = analyzeMemoryAt(Address, BF);
-  // FIXME: this is too permissive in creating jump tables. This is a random
-  // memory access we did not necessarily match against an indirect jump. Only
-  // do this for strict mode, for now. We should revisit this and come up with a
-  // better heuristic.
-  if (opts::StrictMode &&
-      MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
-    const MCSymbol *Symbol =
-      getOrCreateJumpTable(BF, Address, JumpTable::JTT_PIC);
+  // In strict relocation mode, we have to catch jump table references outside
+  // of the basic block containing the indirect jump.
+  if (opts::StrictMode) {
+    const auto MemType = analyzeMemoryAt(Address, BF);
+    if (MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
+      const MCSymbol *Symbol =
+        getOrCreateJumpTable(BF, Address, JumpTable::JTT_PIC);
 
-    return std::make_pair(Symbol, Addend);
+      return std::make_pair(Symbol, Addend);
+    }
   }
 
   if (auto *BD = getBinaryDataContainingAddress(Address)) {
@@ -334,59 +333,87 @@ BinaryContext::analyzeMemoryAt(uint64_t Address, BinaryFunction &BF) {
   if (Section->isText())
     return MemoryContentsType::UNKNOWN;
 
-  auto couldBeJumpTable = [&](const uint64_t JTAddress,
-                              JumpTable::JumpTableType Type) {
-    const auto EntrySize =
-      Type == JumpTable::JTT_PIC ? 4 : AsmInfo->getCodePointerSize();
-    auto ValueAddress = JTAddress;
-    auto UpperBound = Section->getEndAddress();
-    const auto *JumpTableBD = getBinaryDataAtAddress(JTAddress);
-    if (JumpTableBD && JumpTableBD->getSize()) {
-      UpperBound = JumpTableBD->getEndAddress();
-      assert(UpperBound <= Section->getEndAddress() &&
-             "data object cannot cross a section boundary");
-    }
-
-    while (ValueAddress <= UpperBound - EntrySize) {
-      DEBUG(dbgs() << "BOLT-DEBUG: analyzing memory at 0x"
-                   << Twine::utohexstr(ValueAddress));
-      uint64_t Value;
-      if (Type == JumpTable::JTT_PIC) {
-        Value = JTAddress + *getSignedValueAtAddress(ValueAddress, EntrySize);
-      } else {
-        Value = *getPointerAtAddress(ValueAddress);
-      }
-      DEBUG(dbgs() << ", which contains value 0x"
-                   << Twine::utohexstr(Value) << '\n');
-
-      ValueAddress += EntrySize;
-
-      // We assume that a jump table cannot have function start as an entry.
-      if (BF.containsAddress(Value) && Value != BF.getAddress())
-        return true;
-
-      // Potentially a jump table can contain __builtin_unreachable() entry
-      // pointing just right after the function. In this case we have to check
-      // another entry. Otherwise the entry is outside of this function scope
-      // and it's not a jump table.
-      if (Value == BF.getAddress() + BF.getSize())
-        continue;
-
-      return false;
-    }
-
-    return false;
-  };
-
   // Start with checking for PIC jump table. We expect non-PIC jump tables
   // to have high 32 bits set to 0.
-  if (couldBeJumpTable(Address, JumpTable::JTT_PIC))
+  if (analyzeJumpTable(Address, JumpTable::JTT_PIC, BF))
     return MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE;
 
-  if (couldBeJumpTable(Address, JumpTable::JTT_NORMAL))
+  if (analyzeJumpTable(Address, JumpTable::JTT_NORMAL, BF))
     return MemoryContentsType::POSSIBLE_JUMP_TABLE;
 
   return MemoryContentsType::UNKNOWN;
+}
+
+bool BinaryContext::analyzeJumpTable(const uint64_t Address,
+                                     const JumpTable::JumpTableType Type,
+                                     const BinaryFunction &BF,
+                                     const uint64_t NextJTAddress,
+                                     JumpTable::OffsetsType *Offsets) {
+  // Is one of the targets __builtin_unreachable?
+  bool HasUnreachable{false};
+
+  // Number of targets other than __builtin_unreachable.
+  uint64_t NumRealEntries{0};
+
+  auto addOffset = [&](uint64_t Offset) {
+    if (Offsets)
+      Offsets->emplace_back(Offset);
+  };
+
+  auto Section = getSectionForAddress(Address);
+  if (!Section)
+    return false;
+
+  // The upper bound is defined by containing object, section limits, and
+  // the next jump table in memory.
+  auto UpperBound = Section->getEndAddress();
+  const auto *JumpTableBD = getBinaryDataAtAddress(Address);
+  if (JumpTableBD && JumpTableBD->getSize()) {
+    assert(JumpTableBD->getEndAddress() <= UpperBound &&
+           "data object cannot cross a section boundary");
+    UpperBound = JumpTableBD->getEndAddress();
+  }
+  if (NextJTAddress) {
+    UpperBound = std::min(NextJTAddress, UpperBound);
+  }
+
+  const auto EntrySize = getJumpTableEntrySize(Type);
+  for (auto EntryAddress = Address; EntryAddress <= UpperBound - EntrySize;
+       EntryAddress += EntrySize) {
+    // Check if there's a proper relocation against the jump table entry.
+    if (HasRelocations &&
+        ((Type == JumpTable::JTT_PIC && !PCRelocation.count(EntryAddress)) ||
+         (Type == JumpTable::JTT_NORMAL && !getRelocationAt(EntryAddress))))
+      break;
+
+    const uint64_t Value = (Type == JumpTable::JTT_PIC)
+      ? Address + *getSignedValueAtAddress(EntryAddress, EntrySize)
+      : *getPointerAtAddress(EntryAddress);
+
+    // __builtin_unreachable() case.
+    if (Value == BF.getAddress() + BF.getSize()) {
+      addOffset(Value - BF.getAddress());
+      HasUnreachable = true;
+      continue;
+    }
+
+    // We assume that a jump table cannot have function start as an entry.
+    if (!BF.containsAddress(Value) || Value == BF.getAddress())
+      break;
+
+    // Check there's an instruction at this offset.
+    if (BF.getState() == BinaryFunction::State::Disassembled &&
+        !BF.getInstructionAtOffset(Value - BF.getAddress()))
+      break;
+
+    addOffset(Value - BF.getAddress());
+    ++NumRealEntries;
+  }
+
+  // It's a jump table if the number of real entries is more than 1, or there's
+  // one real entry and "unreachable" targets. If there are only multiple
+  // "unreachable" targets, then it's not a jump table.
+  return NumRealEntries + HasUnreachable >= 2;
 }
 
 void BinaryContext::populateJumpTables() {
@@ -395,57 +422,19 @@ void BinaryContext::populateJumpTables() {
     auto *JT = JTI->second;
     auto &BF = *JT->Parent;
 
-    DEBUG(dbgs() << "BOLT-DEBUG: populating jump table "
-                 << JT->getName() << '\n');
-
-    // The upper bound is defined by containing object, section limits, and
-    // the next jump table in memory.
-    auto UpperBound = JT->getSection().getEndAddress();
-    const auto *JumpTableBD = getBinaryDataAtAddress(JT->getAddress());
-    if (JumpTableBD && JumpTableBD->getSize()) {
-      assert(JumpTableBD->getEndAddress() <= UpperBound &&
-             "data object cannot cross a section boundary");
-      UpperBound = JumpTableBD->getEndAddress();
-    }
+    uint64_t NextJTAddress{0};
     auto NextJTI = std::next(JTI);
     if (NextJTI != JTE) {
-      assert (UpperBound != JT->getAddress());
-      UpperBound = std::min(NextJTI->second->getAddress(), UpperBound);
+      NextJTAddress = NextJTI->second->getAddress();
     }
 
-    for (auto EntryAddress = JT->getAddress();
-         EntryAddress <= UpperBound - JT->EntrySize;
-         EntryAddress += JT->EntrySize) {
-      uint64_t Value;
-      if (JT->Type == JumpTable::JTT_PIC) {
-        Value = JT->getAddress() +
-                *getSignedValueAtAddress(EntryAddress, JT->EntrySize);
-      } else {
-        Value = *getPointerAtAddress(EntryAddress);
-      }
-
-      // __builtin_unreachable() case.
-      if (Value == BF.getAddress() + BF.getSize()) {
-        JT->OffsetEntries.emplace_back(Value - BF.getAddress());
-        BF.IgnoredBranches.emplace_back(Value - BF.getAddress(), BF.getSize());
-        continue;
-      }
-
-      // We assume that a jump table cannot have function start as an entry.
-      if (!BF.containsAddress(Value) || Value == BF.getAddress())
-        break;
-
-      // Check there's an instruction at this offset.
-      if (!BF.getInstructionAtOffset(Value - BF.getAddress()))
-        break;
-
-      BF.registerReferencedOffset(Value - BF.getAddress());
-      JT->OffsetEntries.emplace_back(Value - BF.getAddress());
-    }
-
-    if (JT->OffsetEntries.size() <= 1) {
-      dbgs() << "JT with size " << JT->OffsetEntries.size() << " detected in "
-             << BF << '\n';
+    const auto Success = analyzeJumpTable(JT->getAddress(),
+                                          JT->Type,
+                                          BF,
+                                          NextJTAddress,
+                                          &JT->OffsetEntries);
+    if (!Success) {
+      dbgs() << "failed to analyze jump table in function " << BF << '\n';
       JT->print(dbgs());
       if (NextJTI != JTE) {
         dbgs() << "next jump table at 0x"
@@ -453,21 +442,23 @@ void BinaryContext::populateJumpTables() {
                << " belongs to function " << *NextJTI->second->Parent << '\n';
         NextJTI->second->print(dbgs());
       }
+      llvm_unreachable("jump table heuristic failure");
     }
-    assert(JT->OffsetEntries.size() > 1 &&
-           "expected more than one jump table entry");
 
-    // Check there are relocations against JT entries.
-    if (opts::StrictMode) {
+    for (auto EntryOffset : JT->OffsetEntries) {
+      if (EntryOffset == BF.getSize())
+        BF.IgnoredBranches.emplace_back(EntryOffset, BF.getSize());
+      else
+        BF.registerReferencedOffset(EntryOffset);
+    }
+
+    // In strict mode, erase PC-relative relocation record. Later we check that
+    // all such records are erased and thus have been accounted for.
+    if (opts::StrictMode && JT->Type == JumpTable::JTT_PIC) {
       for (auto Address = JT->getAddress();
            Address < JT->getAddress() + JT->getSize();
            Address += JT->EntrySize) {
-        if (JT->Type == JumpTable::JTT_PIC) {
-          assert(PCRelocation.count(Address) && "no matching relocation");
-          PCRelocation.erase(PCRelocation.find(Address));
-        } else {
-          assert(getRelocationAt(Address) && "missing relocation");
-        }
+        PCRelocation.erase(PCRelocation.find(Address));
       }
     }
   }
@@ -518,15 +509,14 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
     return JT->getFirstLabel();
   }
 
-  const auto EntrySize =
-    Type == JumpTable::JTT_PIC ? 4 : AsmInfo->getCodePointerSize();
-
   // Re-use the existing symbol if possible.
   MCSymbol *JTLabel{nullptr};
   if (auto *Object = getBinaryDataAtAddress(Address)) {
     if (!isInternalSymbolName(Object->getSymbol()->getName()))
       JTLabel = Object->getSymbol();
   }
+
+  const auto EntrySize = getJumpTableEntrySize(Type);
   if (!JTLabel) {
     const auto JumpTableName = generateJumpTableName(Function, Address);
     JTLabel = Ctx->getOrCreateSymbol(JumpTableName);
@@ -541,7 +531,6 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
                            Address,
                            EntrySize,
                            Type,
-                           {},
                            JumpTable::LabelMapType{{0, JTLabel}},
                            Function,
                            *getSectionForAddress(Address));
@@ -571,7 +560,6 @@ BinaryContext::duplicateJumpTable(BinaryFunction &Function, JumpTable *JT,
                               JT->getAddress(),
                               JT->EntrySize,
                               JT->Type,
-                              {},
                               JumpTable::LabelMapType{{Offset, NewLabel}},
                               Function,
                               *getSectionForAddress(JT->getAddress()));
