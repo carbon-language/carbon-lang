@@ -23,10 +23,16 @@ using namespace Fortran::decimal;
 static int tests{0};
 static int fails{0};
 
+union u {
+  float x;
+  std::uint32_t u;
+};
+
 std::ostream &failed(float x) {
   ++fails;
-  return std::cout << "FAIL: 0x" << std::hex
-                   << *reinterpret_cast<std::uint32_t *>(&x) << std::dec;
+  union u u;
+  u.x = x;
+  return std::cout << "FAIL: 0x" << std::hex << u.u << std::dec;
 }
 
 void testDirect(float x, const char *expect, int expectExpo, int flags = 0) {
@@ -64,23 +70,25 @@ void testReadback(float x, int flags) {
     }
     const char *p{q};
     auto rflags{ConvertDecimalToFloat(&p, &y, RoundNearest)};
+    union u u;
     if (!(x == x)) {
       if (y == y || *p != '\0' || (rflags & Invalid)) {
+        u.x = y;
         failed(x) << " (NaN) " << flags << ": -> '" << result.str << "' -> 0x"
-                  << std::hex << *reinterpret_cast<std::uint32_t *>(&y)
-                  << std::dec << " '" << p << "' " << rflags << '\n';
+                  << std::hex << u.u << std::dec << " '" << p << "' " << rflags
+                  << '\n';
       }
     } else if (x != y || *p != '\0' || (rflags & Invalid)) {
+      u.x = y;
       failed(x) << ' ' << flags << ": -> '" << result.str << "' -> 0x"
-                << std::hex << *reinterpret_cast<std::uint32_t *>(&y)
-                << std::dec << " '" << p << "' " << rflags << '\n';
+                << std::hex << u.u << std::dec << " '" << p << "' " << rflags
+                << '\n';
     }
   }
 }
 
 int main() {
-  float x;
-  std::uint32_t *ix{reinterpret_cast<std::uint32_t *>(&x)};
+  union u u;
   testDirect(-1.0, "-1", 1);
   testDirect(0.0, "0", 0);
   testDirect(0.0, "+0", 0, AlwaysSign);
@@ -89,60 +97,60 @@ int main() {
   testDirect(-1.0, "-1", 1);
   testDirect(314159, "314159", 6);
   testDirect(0.0625, "625", -1);
-  *ix = 0x80000000;
-  testDirect(x, "-0", 0);
-  *ix = 0x7f800000;
-  testDirect(x, "Inf", 0);
-  testDirect(x, "+Inf", 0, AlwaysSign);
-  *ix = 0xff800000;
-  testDirect(x, "-Inf", 0);
-  *ix = 0xffffffff;
-  testDirect(x, "NaN", 0);
-  testDirect(x, "NaN", 0, AlwaysSign);
-  *ix = 1;
-  testDirect(x,
+  u.u = 0x80000000;
+  testDirect(u.x, "-0", 0);
+  u.u = 0x7f800000;
+  testDirect(u.x, "Inf", 0);
+  testDirect(u.x, "+Inf", 0, AlwaysSign);
+  u.u = 0xff800000;
+  testDirect(u.x, "-Inf", 0);
+  u.u = 0xffffffff;
+  testDirect(u.x, "NaN", 0);
+  testDirect(u.x, "NaN", 0, AlwaysSign);
+  u.u = 1;
+  testDirect(u.x,
       "140129846432481707092372958328991613128026194187651577175706828388979108"
       "268586060148663818836212158203125",
       -44, 0);
-  testDirect(x, "1", -44, Minimize);
-  *ix = 0x7f777777;
-  testDirect(x, "3289396118917826996438159226753253376", 39, 0);
-  testDirect(x, "32893961", 39, Minimize);
-  for (*ix = 0; *ix < 16; ++*ix) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  testDirect(u.x, "1", -44, Minimize);
+  u.u = 0x7f777777;
+  testDirect(u.x, "3289396118917826996438159226753253376", 39, 0);
+  testDirect(u.x, "32893961", 39, Minimize);
+  for (u.u = 0; u.u < 16; ++u.u) {
+    testReadback(u.x, 0);
+    testReadback(-u.x, 0);
+    testReadback(u.x, Minimize);
+    testReadback(-u.x, Minimize);
   }
-  for (*ix = 1; *ix < 0x7f800000; *ix *= 2) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  for (u.u = 1; u.u < 0x7f800000; u.u *= 2) {
+    testReadback(u.x, 0);
+    testReadback(-u.x, 0);
+    testReadback(u.x, Minimize);
+    testReadback(-u.x, Minimize);
   }
-  for (*ix = 0x7f7ffff0; *ix < 0x7f800010; ++*ix) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  for (u.u = 0x7f7ffff0; u.u < 0x7f800010; ++u.u) {
+    testReadback(u.x, 0);
+    testReadback(-u.x, 0);
+    testReadback(u.x, Minimize);
+    testReadback(-u.x, Minimize);
   }
-  for (*ix = 0; *ix < 0x7f800000; *ix += 65536) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  for (u.u = 0; u.u < 0x7f800000; u.u += 65536) {
+    testReadback(u.x, 0);
+    testReadback(-u.x, 0);
+    testReadback(u.x, Minimize);
+    testReadback(-u.x, Minimize);
   }
-  for (*ix = 0; *ix < 0x7f800000; *ix += 99999) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  for (u.u = 0; u.u < 0x7f800000; u.u += 99999) {
+    testReadback(u.x, 0);
+    testReadback(-u.x, 0);
+    testReadback(u.x, Minimize);
+    testReadback(-u.x, Minimize);
   }
-  for (*ix = 0; *ix < 0x7f800000; *ix += 32767) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  for (u.u = 0; u.u < 0x7f800000; u.u += 32767) {
+    testReadback(u.x, 0);
+    testReadback(-u.x, 0);
+    testReadback(u.x, Minimize);
+    testReadback(-u.x, Minimize);
   }
   std::cout << tests << " tests run, " << fails << " tests failed\n";
   return fails > 0;

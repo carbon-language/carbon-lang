@@ -17,6 +17,7 @@
 
 #include <cinttypes>
 #include <climits>
+#include <cstring>
 #include <type_traits>
 
 namespace Fortran::decimal {
@@ -65,9 +66,10 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   BinaryFloatingPointNumber &operator=(
       BinaryFloatingPointNumber &&that) = default;
 
-  template<typename A>
-  explicit constexpr BinaryFloatingPointNumber(A x)
-    : raw{*reinterpret_cast<RawType *>(&x)} {}
+  template<typename A> explicit constexpr BinaryFloatingPointNumber(A x) {
+    std::memcpy(reinterpret_cast<void *>(&raw),
+        reinterpret_cast<const void *>(&x), sizeof raw);
+  }
 
   constexpr int BiasedExponent() const {
     return static_cast<int>(

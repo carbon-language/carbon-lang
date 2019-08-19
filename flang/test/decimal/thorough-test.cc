@@ -18,22 +18,33 @@
 #include <cstring>
 #include <iostream>
 
+static constexpr int incr{1};  // steps through all values
+static constexpr bool doNegative{true};
+static constexpr bool doMinimize{true};
+
 using namespace Fortran::decimal;
 
 static std::uint64_t tests{0};
 static std::uint64_t fails{0};
 
+union u {
+  float x;
+  std::uint32_t u;
+};
+
 std::ostream &failed(float x) {
   ++fails;
-  return std::cout << "FAIL: 0x" << std::hex
-                   << *reinterpret_cast<std::uint32_t *>(&x) << std::dec;
+  union u u;
+  u.x = x;
+  return std::cout << "FAIL: 0x" << std::hex << u.u << std::dec;
 }
 
 void testReadback(float x, int flags) {
   char buffer[1024];
+  union u u;
+  u.x = x;
   if (!(tests & 0x3fffff)) {
-    std::cerr << "\n0x" << std::hex << *reinterpret_cast<std::uint32_t *>(&x)
-              << std::dec << ' ';
+    std::cerr << "\n0x" << std::hex << u.u << std::dec << ' ';
   } else if (!(tests & 0xffff)) {
     std::cerr << '.';
   }
@@ -58,26 +69,33 @@ void testReadback(float x, int flags) {
     auto rflags{ConvertDecimalToFloat(&p, &y, RoundNearest)};
     if (!(x == x)) {
       if (y == y || *p != '\0' || (rflags & Invalid)) {
+        u.x = y;
         failed(x) << " (NaN) " << flags << ": -> '" << result.str << "' -> 0x"
-                  << std::hex << *reinterpret_cast<std::uint32_t *>(&y)
-                  << std::dec << " '" << p << "' " << rflags << '\n';
+                  << std::hex << u.u << std::dec << " '" << p << "' " << rflags
+                  << '\n';
       }
     } else if (x != y || *p != '\0' || (rflags & Invalid)) {
+      u.x = y;
       failed(x) << ' ' << flags << ": -> '" << result.str << "' -> 0x"
-                << std::hex << *reinterpret_cast<std::uint32_t *>(&y)
-                << std::dec << " '" << p << "' " << rflags << '\n';
+                << std::hex << u.u << std::dec << " '" << p << "' " << rflags
+                << '\n';
     }
   }
 }
 
 int main() {
-  float x;
-  std::uint32_t *ix{reinterpret_cast<std::uint32_t *>(&x)};
-  for (*ix = 0; *ix < 0x7f800010; ++*ix) {
-    testReadback(x, 0);
-    testReadback(-x, 0);
-    testReadback(x, Minimize);
-    testReadback(-x, Minimize);
+  union u u;
+  for (u.u = 0; u.u < 0x7f800010; u.u += incr) {
+    testReadback(u.x, 0);
+    if constexpr (doNegative) {
+      testReadback(-u.x, 0);
+    }
+    if constexpr (doMinimize) {
+      testReadback(u.x, Minimize);
+      if constexpr (doNegative) {
+        testReadback(-u.x, Minimize);
+      }
+    }
   }
   std::cout << '\n' << tests << " tests run, " << fails << " tests failed\n";
   return fails > 0;

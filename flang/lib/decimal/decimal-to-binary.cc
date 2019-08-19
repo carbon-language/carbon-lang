@@ -18,6 +18,7 @@
 #include "../common/bit-population-count.h"
 #include "../common/leading-zero-bit-count.h"
 #include <cinttypes>
+#include <cstring>
 #include <ctype.h>
 
 namespace Fortran::decimal {
@@ -241,7 +242,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   while (exponent_ < log10Radix) {
     f.AdjustExponent(-9);
     digitLimit_ = digits_;
-    std::uint32_t carry = MultiplyWithoutNormalization<512>();
+    int carry = MultiplyWithoutNormalization<512>();
     RemoveLeastOrderZeroDigits();
     if (carry != 0) {
       digit_[digits_++] = carry;
@@ -253,18 +254,18 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   // part by multiplying by 10 or 10000 repeatedly.
   while (exponent_ > log10Radix) {
     digitLimit_ = digits_;
-    std::uint32_t carry;
+    int carry;
     if (exponent_ >= log10Radix + 4) {
       exponent_ -= 4;
-      carry = MultiplyBy<(5 * 5 * 5 * 5)>();
+      carry = MultiplyWithoutNormalization<(5 * 5 * 5 * 5)>();
       f.AdjustExponent(4);
     } else {
       --exponent_;
-      carry = MultiplyBy<5>();
+      carry = MultiplyWithoutNormalization<5>();
       f.AdjustExponent(1);
     }
     RemoveLeastOrderZeroDigits();
-    if (carry > 0) {
+    if (carry != 0) {
       digit_[digits_++] = carry;
       exponent_ += log10Radix;
     }
@@ -282,11 +283,13 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   }
   // Get the next few bits for rounding.  Allow for some guard bits
   // that may have already been set in f.SetTo() above.
-  int guard{MultiplyBy<8>()};
-  if (!IsZero()) {
-    guard |= 1;
+  int guard{0};
+  if (guardShift == 0) {
+    guard = MultiplyWithoutNormalization<4>();
+  } else if (guardShift == 1) {
+    guard = MultiplyWithoutNormalization<2>();
   }
-  guard = (guard >> guardShift) | (((guard << guardShift) & 7) != 0);
+  guard = guard + guard + !IsZero();
   f.SetGuard(guard);
   return f.ToBinary(isNegative_, rounding_);
 }
@@ -359,20 +362,23 @@ extern "C" {
 enum ConversionResultFlags ConvertDecimalToFloat(
     const char **p, float *f, enum FortranRounding rounding) {
   auto result{Fortran::decimal::ConvertToBinary<24>(*p, rounding)};
-  *f = *reinterpret_cast<const float *>(&result.binary);
+  std::memcpy(reinterpret_cast<void *>(f),
+      reinterpret_cast<const void *>(&result.binary), sizeof *f);
   return result.flags;
 }
 enum ConversionResultFlags ConvertDecimalToDouble(
     const char **p, double *d, enum FortranRounding rounding) {
   auto result{Fortran::decimal::ConvertToBinary<53>(*p, rounding)};
-  *d = *reinterpret_cast<const double *>(&result.binary);
+  std::memcpy(reinterpret_cast<void *>(d),
+      reinterpret_cast<const void *>(&result.binary), sizeof *d);
   return result.flags;
 }
 #if __x86_64__
 enum ConversionResultFlags ConvertDecimalToLongDouble(
     const char **p, long double *ld, enum FortranRounding rounding) {
   auto result{Fortran::decimal::ConvertToBinary<64>(*p, rounding)};
-  *ld = *reinterpret_cast<const long double *>(&result.binary);
+  std::memcpy(reinterpret_cast<void *>(ld),
+      reinterpret_cast<const void *>(&result.binary), sizeof *ld);
   return result.flags;
 }
 #endif
