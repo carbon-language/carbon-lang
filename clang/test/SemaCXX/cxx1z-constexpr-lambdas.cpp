@@ -23,7 +23,10 @@ namespace ns1 {
 } // end ns1
 
 namespace ns2 {
-  auto L = [](int I) constexpr { asm("non-constexpr");  }; //expected-error{{not allowed in constexpr function}}
+  auto L = [](int I) constexpr { if (I == 5) asm("non-constexpr");  };
+#if __cpp_constexpr < 201907L
+  //expected-error@-2{{use of this statement in a constexpr function is a C++2a extension}}
+#endif
 } // end ns1
 
 // This is not constexpr until C++20, as the requirements on constexpr
