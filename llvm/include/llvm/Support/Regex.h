@@ -44,6 +44,9 @@ namespace llvm {
 
     Regex();
     /// Compiles the given regular expression \p Regex.
+    ///
+    /// \param Regex - referenced string is no longer needed after this
+    /// constructor does finish.  Only its compiled form is kept stored.
     Regex(StringRef Regex, unsigned Flags = NoFlags);
     Regex(const Regex &) = delete;
     Regex &operator=(Regex regex) {
