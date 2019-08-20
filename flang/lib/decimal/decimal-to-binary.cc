@@ -143,7 +143,7 @@ public:
   IntermediateFloat(const IntermediateFloat &) = default;
 
   // Assumes that exponent_ is valid on entry, and may increment it.
-  // Returns the number of guard_ bits that also been determined.
+  // Returns the number of guard_ bits that have been determined.
   template<typename UINT> bool SetTo(UINT n) {
     static constexpr int nBits{CHAR_BIT * sizeof n};
     if constexpr (precision >= nBits) {
@@ -160,7 +160,7 @@ public:
         value_ = n >> shift;
         exponent_ += shift;
         n <<= nBits - shift;
-        guard_ = (n >> (nBits - precision)) | ((n << precision) != 0);
+        guard_ = (n >> (nBits - guardBits)) | ((n << guardBits) != 0);
         return shift;
       }
     }
@@ -170,14 +170,20 @@ public:
   bool IsFull() const { return value_ >= topBit; }
   void AdjustExponent(int by) { exponent_ += by; }
   void SetGuard(int g) {
-    guard_ |= (static_cast<IntType>(g & 6) << (precision - 3)) | (g & 1);
+    guard_ |= (static_cast<GuardType>(g & 6) << (guardBits - 3)) | (g & 1);
   }
 
   ConversionToBinaryResult<PREC> ToBinary(
       bool isNegative, FortranRounding) const;
 
 private:
-  IntType value_{0}, guard_{0};  // TODO pmk revert to 3-bit guard?
+  static constexpr int guardBits{3};  // guard, round, sticky
+  using GuardType = int;
+  static constexpr GuardType oneHalf{
+      static_cast<GuardType>(1) << (guardBits - 1)};
+
+  IntType value_{0};
+  GuardType guard_{0};
   int exponent_{0};
 };
 
@@ -188,10 +194,11 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
   // Create a fraction with a binary point to the left of the integer
   // value_, and bias the exponent.
   IntType fraction{value_};
-  IntType guard{guard_};
+  GuardType guard{guard_};
   int expo{exponent_ + Binary::exponentBias + (precision - 1)};
-  while (expo < 1 && (fraction > 0 || guard > topBit)) {
-    guard = (guard & 1) | (guard >> 1) | ((fraction & 1) << (precision - 1));
+  while (expo < 1 && (fraction > 0 || guard > oneHalf)) {
+    guard = (guard & 1) | (guard >> 1) |
+        ((static_cast<GuardType>(fraction) & 1) << (guardBits - 1));
     fraction >>= 1;
     ++expo;
   }
@@ -199,26 +206,26 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
   if (guard != 0) {
     flags |= Inexact;
   }
-  if (fraction == 0 && guard <= topBit) {
+  if (fraction == 0 && guard <= oneHalf) {
     return {Binary{}, static_cast<enum ConversionResultFlags>(flags)};
   }
   // The value is nonzero; normalize it.
   while (fraction < topBit && expo > 1) {
     --expo;
-    fraction = 2 * fraction + ((guard & topBit) >> (precision - 2));
-    guard = (guard & 1) | ((guard & (topBit - 2)) << 1);
+    fraction = 2 * fraction + (guard >> (guardBits - 2));
+    guard = (((guard >> (guardBits - 2)) & 1) << (guardBits - 1)) | (guard & 1);
   }
   // Apply rounding
   bool incr{false};
   switch (rounding) {
   case RoundNearest:
   case RoundDefault:
-    incr = guard > topBit || (guard == topBit && (fraction & 1));
+    incr = guard > oneHalf || (guard == oneHalf && (fraction & 1));
     break;
-  case RoundUp: incr = guard > 0 && !isNegative; break;
-  case RoundDown: incr = guard > 0 && isNegative; break;
+  case RoundUp: incr = guard != 0 && !isNegative; break;
+  case RoundDown: incr = guard != 0 && isNegative; break;
   case RoundToZero: break;
-  case RoundCompatible: incr = guard >= topBit; break;
+  case RoundCompatible: incr = guard >= oneHalf; break;
   }
   if (incr) {
     if (fraction == mask) {
