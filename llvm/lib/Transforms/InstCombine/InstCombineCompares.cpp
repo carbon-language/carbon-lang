@@ -4128,27 +4128,21 @@ Instruction *InstCombiner::foldICmpWithCastOp(ICmpInst &ICmp) {
   // The re-extended constant changed, partly changed (in the case of a vector),
   // or could not be determined to be equal (in the case of a constant
   // expression), so the constant cannot be represented in the shorter type.
-  // Consequently, we cannot emit a simple comparison.
   // All the cases that fold to true or false will have already been handled
   // by SimplifyICmpInst, so only deal with the tricky case.
-
   if (isSignedCmp || !isSignedExt || !isa<ConstantInt>(C))
     return nullptr;
 
-  // Evaluate the comparison for LT (we invert for GT below). LE and GE cases
-  // should have been folded away previously and not enter in here.
-
-  // We're performing an unsigned comp with a sign extended value.
-  // This is true if the input is >= 0. [aka >s -1]
-  Constant *NegOne = Constant::getAllOnesValue(SrcTy);
-  Value *Result = Builder.CreateICmpSGT(Op0Src, NegOne, ICmp.getName());
-
-  // Finally, return the value computed.
+  // Is source op positive?
+  // icmp ult (sext X), C --> icmp sgt X, -1
   if (ICmp.getPredicate() == ICmpInst::ICMP_ULT)
-    return replaceInstUsesWith(ICmp, Result);
+    return new ICmpInst(CmpInst::ICMP_SGT, Op0Src,
+                        Constant::getAllOnesValue(SrcTy));
 
+  // Is source op negative?
+  // icmp ugt (sext X), C --> icmp slt X, 0
   assert(ICmp.getPredicate() == ICmpInst::ICMP_UGT && "ICmp should be folded!");
-  return BinaryOperator::CreateNot(Result);
+  return new ICmpInst(CmpInst::ICMP_SLT, Op0Src, Constant::getNullValue(SrcTy));
 }
 
 static bool isNeutralValue(Instruction::BinaryOps BinaryOp, Value *RHS) {
