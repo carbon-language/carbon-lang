@@ -52,7 +52,7 @@ void AsanStats::Print() {
              mmaps, munmaps);
 
   PrintMallocStatsArray("  mallocs by size class: ", malloced_by_size,
-                        get_allocator().KMaxSize());
+                        get_allocator().KNumClasses());
   Printf("Stats: malloc large: %zu\n", malloc_large);
 }
 
