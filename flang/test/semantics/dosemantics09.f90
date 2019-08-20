@@ -31,14 +31,8 @@ subroutine s2()
   end do
 end subroutine s2
 
-subroutine s3()
-!ERROR: 'i' is already declared in this scoping unit
-  do concurrent (i=i:10) shared(i)
-  end do
-end subroutine s3
-
 subroutine s4()
-!ERROR: concurrent-header expression references variable 'i' in locality-spec
+!ERROR: concurrent-header expression references variable 'i' in LOCAL locality-spec
   do concurrent (j=i:10) local(i)
   end do
 end subroutine s4
@@ -56,7 +50,7 @@ subroutine s6()
 end subroutine s6
 
 subroutine s7()
-!ERROR: concurrent-header expression references variable 'i' in locality-spec
+!ERROR: concurrent-header expression references variable 'i' in LOCAL locality-spec
   do concurrent (j=1:i) local(i)
   end do
 end subroutine s7
@@ -74,7 +68,7 @@ subroutine s9()
 end subroutine s9
 
 subroutine s10()
-!ERROR: concurrent-header expression references variable 'i' in locality-spec
+!ERROR: concurrent-header expression references variable 'i' in LOCAL locality-spec
   do concurrent (j=1:10:i) local(i)
   end do
 end subroutine s10
@@ -95,7 +89,7 @@ subroutine s13()
   ! Test construct-association, in this case, established by the "shared"
   integer :: ivar
   associate (avar => ivar)
-!ERROR: concurrent-header expression references variable 'ivar' in locality-spec
+!ERROR: concurrent-header expression references variable 'ivar' in LOCAL locality-spec
     do concurrent (j=1:10:avar) local(avar)
     end do
   end associate
@@ -108,7 +102,7 @@ subroutine s14()
   ! Test use-association, in this case, established by the "shared"
   use m1
 
-!ERROR: concurrent-header expression references variable 'mvar' in locality-spec
+!ERROR: concurrent-header expression references variable 'mvar' in LOCAL locality-spec
   do concurrent (k=mvar:10) local(mvar)
   end do
 end subroutine s14
@@ -118,7 +112,7 @@ subroutine s15()
   ! locality-spec
   ivar = 3
   do concurrent (j=ivar:10) shared(ivar)
-!ERROR: concurrent-header expression references variable 'ivar' in locality-spec
+!ERROR: concurrent-header expression references variable 'ivar' in LOCAL locality-spec
     do concurrent (k=ivar:10) local(ivar)
     end do
   end do

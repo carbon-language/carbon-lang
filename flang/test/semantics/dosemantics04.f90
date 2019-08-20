@@ -18,12 +18,12 @@ PROGRAM dosemantics04
   IMPLICIT NONE
   INTEGER :: a, i, j, k, n
 
-!ERROR: concurrent-header mask-expr references variable 'n' in locality-spec
+!ERROR: concurrent-header mask-expr references variable 'n' in LOCAL locality-spec
   DO CONCURRENT (INTEGER *2 :: i = 1:10, i < j + n) LOCAL(n)
     PRINT *, "hello"
   END DO
 
-!ERROR: concurrent-header mask-expr references variable 'a' in locality-spec
+!ERROR: concurrent-header mask-expr references variable 'a' in LOCAL locality-spec
   DO 30 CONCURRENT (i = 1:n:1, j=1:n:2, k=1:n:3, a<3) LOCAL (a)
     PRINT *, "hello"
 30 END DO

@@ -458,7 +458,7 @@ private:
   SymbolSet GatherLocals(
       const std::list<parser::LocalitySpec> &localitySpecs) const {
     SymbolSet symbols;
-    const Scope &scope{
+    const Scope &parentScope{
         context_.FindScope(currentStatementSourcePosition_).parent()};
     // Loop through the LocalitySpec::Local locality-specs
     for (const auto &ls : localitySpecs) {
@@ -466,7 +466,7 @@ private:
         // Loop through the names in the Local locality-spec getting their
         // symbols
         for (const parser::Name &name : names->v) {
-          if (const Symbol * symbol{scope.FindSymbol(name.source)}) {
+          if (const Symbol * symbol{parentScope.FindSymbol(name.source)}) {
             if (const Symbol * root{GetAssociationRoot(*symbol)}) {
               symbols.insert(root);
             }
@@ -509,11 +509,11 @@ private:
     }
   }
 
-  void CheckNoCollisions(const SymbolSet &refs, const SymbolSet &set,
+  void CheckNoCollisions(const SymbolSet &refs, const SymbolSet &uses,
       const parser::MessageFixedText &errorMessage,
       const parser::CharBlock &refPosition) const {
     for (const Symbol *ref : refs) {
-      if (set.find(ref) != set.end()) {
+      if (uses.find(ref) != uses.end()) {
         const parser::CharBlock &name{ref->name()};
         context_.Say(refPosition, errorMessage, name)
             .Attach(name, "Declaration of '%s'"_en_US, name);
@@ -530,13 +530,13 @@ private:
         expr.thing.thing.value().source);
   }
 
-  // C1129, names in local locality-specs can't be in limit or step expressions
+  // C1129, names in local locality-specs can't be in mask expressions
   void CheckMaskDoesNotReferenceLocal(
       const parser::ScalarLogicalExpr &mask, const SymbolSet &localVars) const {
     CheckNoCollisions(GatherSymbolsFromExpression(mask.thing.thing.value()),
         localVars,
         "concurrent-header mask-expr references variable '%s'"
-        " in locality-spec"_err_en_US,
+        " in LOCAL locality-spec"_err_en_US,
         mask.thing.thing.value().source);
   }
 
@@ -546,7 +546,7 @@ private:
     CheckNoCollisions(GatherSymbolsFromExpression(expr.thing.thing.value()),
         localVars,
         "concurrent-header expression references variable '%s'"
-        " in locality-spec"_err_en_US,
+        " in LOCAL locality-spec"_err_en_US,
         expr.thing.thing.value().source);
   }
 
