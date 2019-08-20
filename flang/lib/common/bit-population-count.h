@@ -86,7 +86,7 @@ template<typename UINT> inline constexpr int TrailingZeroBitCount(UINT x) {
   if ((x & 1) != 0) {
     return 0;  // fast path for odd values
   } else {
-    return BitPopulationCount(x ^ (x - 1)) - !!x;
+    return BitPopulationCount(static_cast<UINT>(x ^ (x - 1))) - !!x;
   }
 }
 }

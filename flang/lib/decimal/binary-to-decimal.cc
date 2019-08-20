@@ -139,7 +139,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(char *buffer,
   // Treat the MSD specially: don't emit leading zeroes.
   Digit dig{digit_[digits_ - 1]};
   for (int k{0}; k < LOG10RADIX; k += 2) {
-    Digit d{FastDivision<Digit, hundredth>(dig)};
+    Digit d{common::DivideUnsignedBy<Digit, hundredth>(dig)};
     dig = 100 * (dig - d * hundredth);
     const char *q{lut + 2 * d};
     if (q[0] != '0' || p > start) {
@@ -152,7 +152,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(char *buffer,
   for (int j{digits_ - 1}; j-- > 0;) {
     Digit dig{digit_[j]};
     for (int k{0}; k < log10Radix; k += 2) {
-      Digit d{FastDivision<Digit, hundredth>(dig)};
+      Digit d{common::DivideUnsignedBy<Digit, hundredth>(dig)};
       dig = 100 * (dig - d * hundredth);
       const char *q = lut + 2 * d;
       *p++ = q[0];
@@ -276,9 +276,9 @@ void BigRadixFloatingPointNumber<PREC, LOG10RADIX>::Minimize(
   Digit least{less.digit_[offset]};
   Digit my{digit_[0]};
   while (true) {
-    Digit q{FastDivision<Digit, 10>(my)};
+    Digit q{common::DivideUnsignedBy<Digit, 10>(my)};
     Digit r{my - 10 * q};
-    Digit lq{FastDivision<Digit, 10>(least)};
+    Digit lq{common::DivideUnsignedBy<Digit, 10>(least)};
     Digit lr{least - 10 * lq};
     if (r != 0 && lq == q) {
       Digit sub{(r - lr) >> 1};

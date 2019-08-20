@@ -18,9 +18,9 @@
 #include <cstring>
 #include <iostream>
 
-static constexpr int incr{1};  // steps through all values
-static constexpr bool doNegative{true};
-static constexpr bool doMinimize{true};
+static constexpr int incr{10};  // steps through all values
+static constexpr bool doNegative{};  // true};
+static constexpr bool doMinimize{};  // true};
 
 using namespace Fortran::decimal;
 

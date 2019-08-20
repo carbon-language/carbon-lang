@@ -27,9 +27,9 @@
 
 #include "binary-floating-point.h"
 #include "decimal.h"
-#include "int-divide-workaround.h"
 #include "../common/bit-population-count.h"
 #include "../common/leading-zero-bit-count.h"
+#include "../common/unsigned-const-division.h"
 #include <cinttypes>
 #include <limits>
 #include <type_traits>
@@ -134,7 +134,7 @@ private:
         std::is_same_v<UINT, __uint128_t> || std::is_unsigned_v<UINT>);
     SetToZero();
     while (n != 0) {
-      auto q{FastDivision<UINT, 10>(n)};
+      auto q{common::DivideUnsignedBy<UINT, 10>(n)};
       if (n != 10 * q) {
         break;
       }
@@ -148,7 +148,7 @@ private:
       return 0;
     } else {
       while (n != 0 && digits_ < digitLimit_) {
-        auto q{FastDivision<UINT, radix>(n)};
+        auto q{common::DivideUnsignedBy<UINT, radix>(n)};
         digit_[digits_++] = n - radix * q;
         n = q;
       }
@@ -196,7 +196,7 @@ private:
     Digit remainder{0};
     for (int j{digits_ - 1}; j >= 0; --j) {
       // N.B. Because DIVISOR is a constant, these operations should be cheap.
-      Digit q{FastDivision<Digit, DIVISOR>(digit_[j])};
+      Digit q{common::DivideUnsignedBy<Digit, DIVISOR>(digit_[j])};
       Digit nrem{digit_[j] - DIVISOR * q};
       digit_[j] = q + (radix / DIVISOR) * remainder;
       remainder = nrem;
@@ -246,7 +246,7 @@ private:
   template<int N> int MultiplyByHelper(int carry = 0) {
     for (int j{0}; j < digits_; ++j) {
       auto v{N * digit_[j] + carry};
-      carry = FastDivision<Digit, radix>(v);
+      carry = common::DivideUnsignedBy<Digit, radix>(v);
       digit_[j] = v - carry * radix;  // i.e., v % radix
     }
     return carry;
