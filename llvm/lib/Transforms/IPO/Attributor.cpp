@@ -73,8 +73,10 @@ STATISTIC(NumAttributesManifested,
 #define STATS_DECL(NAME, TYPE, MSG) STATISTIC(BUILD_STAT_NAME(NAME, TYPE), MSG);
 #define STATS_TRACK(NAME, TYPE) ++(BUILD_STAT_NAME(NAME, TYPE));
 #define STATS_DECLTRACK(NAME, TYPE, MSG)                                       \
-  STATS_DECL(NAME, TYPE, MSG)                                                  \
-  STATS_TRACK(NAME, TYPE)
+  {                                                                            \
+    STATS_DECL(NAME, TYPE, MSG)                                                \
+    STATS_TRACK(NAME, TYPE)                                                    \
+  }
 #define STATS_DECLTRACK_ARG_ATTR(NAME)                                         \
   STATS_DECLTRACK(NAME, Arguments, BUILD_STAT_MSG_IR_ATTR(arguments, NAME))
 #define STATS_DECLTRACK_CSARG_ATTR(NAME)                                       \
@@ -2099,7 +2101,8 @@ struct AADereferenceableArgument final
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override{
-      STATS_DECLTRACK_ARG_ATTR(dereferenceable)};
+    STATS_DECLTRACK_ARG_ATTR(dereferenceable)
+  }
 };
 
 /// Dereferenceable attribute for a call site argument.
@@ -2208,7 +2211,7 @@ struct AAAlignArgument final : AAArgumentFromCallSiteArguments<AAAlignImpl> {
       : AAArgumentFromCallSiteArguments<AAAlignImpl>(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override{STATS_DECLTRACK_ARG_ATTR(aligned)};
+  void trackStatistics() const override { STATS_DECLTRACK_ARG_ATTR(aligned) }
 };
 
 struct AAAlignCallSiteArgument final : AAAlignFloating {
