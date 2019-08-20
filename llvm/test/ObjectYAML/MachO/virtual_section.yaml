@@ -175,7 +175,7 @@ LinkEditData:
 # CHECK-NEXT:        reserved1:       0x00000000
 # CHECK-NEXT:        reserved2:       0x00000000
 # CHECK-NEXT:        reserved3:       0x00000000
-# CHECK-NEXT:        content:         {{(EFBEADDE){18}$}}
+# CHECK-NEXT:        content:         {{(DEADBEEF|EFBEADDE){18}$}}
 # CHECK-NEXT:      - sectname:        __data
 # CHECK-NEXT:        segname:         __DATA
 # CHECK-NEXT:        addr:            0x0000000000000048
@@ -188,7 +188,7 @@ LinkEditData:
 # CHECK-NEXT:        reserved1:       0x00000000
 # CHECK-NEXT:        reserved2:       0x00000000
 # CHECK-NEXT:        reserved3:       0x00000000
-# CHECK-NEXT:        content:         EFBEADDE{{$}}
+# CHECK-NEXT:        content:         {{(DEADBEEF|EFBEADDE)$}}
 # CHECK-NEXT:      - sectname:        __bss
 # CHECK-NEXT:        segname:         __DATA
 # CHECK-NEXT:        addr:            0x00000000000000A0
