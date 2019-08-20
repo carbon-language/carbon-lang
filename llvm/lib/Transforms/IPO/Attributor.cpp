@@ -526,6 +526,8 @@ struct AAReturnedFromReturnedValues : public AAType {
   ChangeStatus updateImpl(Attributor &A) override {
     StateType S;
     clampReturnedValueStates<AAType, StateType>(A, *this, S);
+    // TODO: If we know we visited all returned values, thus no are assumed
+    // dead, we can take the known information from the state T.
     return clampStateAndIndicateChange<StateType>(this->getState(), S);
   }
 };
@@ -585,6 +587,8 @@ struct AAArgumentFromCallSiteArguments : public AAType {
   ChangeStatus updateImpl(Attributor &A) override {
     StateType S;
     clampCallSiteArgumentStates<AAType, StateType>(A, *this, S);
+    // TODO: If we know we visited all incoming values, thus no are assumed
+    // dead, we can take the known information from the state T.
     return clampStateAndIndicateChange<StateType>(this->getState(), S);
   }
 };
@@ -2265,6 +2269,8 @@ struct AAAlignFloating : AAAlignImpl {
                                                    VisitValueCB))
       indicatePessimisticFixpoint();
 
+    // TODO: If we know we visited all incoming values, thus no are assumed
+    // dead, we can take the known information from the state T.
     return clampStateAndIndicateChange(getState(), T);
   }
 

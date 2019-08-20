@@ -890,10 +890,13 @@ struct IntegerState : public AbstractState {
   /// Inequality for IntegerState.
   bool operator!=(const IntegerState &R) const { return !(*this == R); }
 
-  /// "Clamp" this state with \p R. The result is the maximum of the known
-  /// information but the minimum of the assumed.
+  /// "Clamp" this state with \p R. The result is the minimum of the assumed
+  /// information but not less than what was known before.
+  ///
+  /// TODO: Consider replacing the operator with a call or using it only when
+  ///       we can also take the maximum of the known information, thus when
+  ///       \p R is not dependent on additional assumed state.
   IntegerState operator^=(const IntegerState &R) {
-    takeKnownMaximum(R.Known);
     takeAssumedMinimum(R.Assumed);
     return *this;
   }
