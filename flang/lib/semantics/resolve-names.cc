@@ -5063,7 +5063,8 @@ void ResolveNamesVisitor::HandleProcedureName(
       return;  // reported error
     }
     if (IsProcedure(*symbol) || symbol->has<DerivedTypeDetails>() ||
-        symbol->has<ObjectEntityDetails>()) {
+        symbol->has<ObjectEntityDetails>() ||
+        symbol->has<AssocEntityDetails>()) {
       // these are all valid as procedure-designators
     } else if (symbol->test(Symbol::Flag::Implicit)) {
       Say(name,
