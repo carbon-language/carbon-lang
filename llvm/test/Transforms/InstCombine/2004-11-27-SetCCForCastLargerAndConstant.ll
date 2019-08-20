@@ -425,8 +425,8 @@ define i1 @different_size_sext_zext_ne(i7 %x, i4 %y) {
 
 declare void @use(i25)
 
-define i1 @different_size_sext_sext_ule_extra_use(i7 %x, i4 %y) {
-; CHECK-LABEL: @different_size_sext_sext_ule_extra_use(
+define i1 @different_size_sext_sext_ule_extra_use1(i7 %x, i4 %y) {
+; CHECK-LABEL: @different_size_sext_sext_ule_extra_use1(
 ; CHECK-NEXT:    [[SX:%.*]] = sext i7 [[X:%.*]] to i25
 ; CHECK-NEXT:    [[SY:%.*]] = sext i4 [[Y:%.*]] to i25
 ; CHECK-NEXT:    call void @use(i25 [[SY]])
@@ -434,6 +434,38 @@ define i1 @different_size_sext_sext_ule_extra_use(i7 %x, i4 %y) {
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %sx = sext i7 %x to i25
+  %sy = sext i4 %y to i25
+  call void @use(i25 %sy)
+  %r = icmp ule i25 %sx, %sy
+  ret i1 %r
+}
+
+define i1 @different_size_sext_sext_ule_extra_use2(i7 %x, i4 %y) {
+; CHECK-LABEL: @different_size_sext_sext_ule_extra_use2(
+; CHECK-NEXT:    [[SX:%.*]] = sext i7 [[X:%.*]] to i25
+; CHECK-NEXT:    call void @use(i25 [[SX]])
+; CHECK-NEXT:    [[SY:%.*]] = sext i4 [[Y:%.*]] to i25
+; CHECK-NEXT:    [[R:%.*]] = icmp ule i25 [[SX]], [[SY]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %sx = sext i7 %x to i25
+  call void @use(i25 %sx)
+  %sy = sext i4 %y to i25
+  %r = icmp ule i25 %sx, %sy
+  ret i1 %r
+}
+
+define i1 @different_size_sext_sext_ule_extra_use3(i7 %x, i4 %y) {
+; CHECK-LABEL: @different_size_sext_sext_ule_extra_use3(
+; CHECK-NEXT:    [[SX:%.*]] = sext i7 [[X:%.*]] to i25
+; CHECK-NEXT:    call void @use(i25 [[SX]])
+; CHECK-NEXT:    [[SY:%.*]] = sext i4 [[Y:%.*]] to i25
+; CHECK-NEXT:    call void @use(i25 [[SY]])
+; CHECK-NEXT:    [[R:%.*]] = icmp ule i25 [[SX]], [[SY]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %sx = sext i7 %x to i25
+  call void @use(i25 %sx)
   %sy = sext i4 %y to i25
   call void @use(i25 %sy)
   %r = icmp ule i25 %sx, %sy
