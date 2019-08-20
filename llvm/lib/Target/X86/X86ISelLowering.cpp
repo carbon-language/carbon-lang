@@ -44504,6 +44504,20 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  // If we are extracting from an insert into a zero vector, replace with a
+  // smaller insert into zero if we don't access less than the original
+  // subvector. Don't do this for i1 vectors.
+  if (VT.getVectorElementType() != MVT::i1 &&
+      InVec.getOpcode() == ISD::INSERT_SUBVECTOR && IdxVal == 0 &&
+      InVec.hasOneUse() && isNullConstant(InVec.getOperand(2)) &&
+      ISD::isBuildVectorAllZeros(InVec.getOperand(0).getNode()) &&
+      InVec.getOperand(1).getValueSizeInBits() <= VT.getSizeInBits()) {
+    SDLoc DL(N);
+    return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT,
+                       getZeroVector(VT, Subtarget, DAG, DL),
+                       InVec.getOperand(1), InVec.getOperand(2));
+  }
+
   // If we're extracting from a broadcast then we're better off just
   // broadcasting to the smaller type directly, assuming this is the only use.
   // As its a broadcast we don't care about the extraction index.
