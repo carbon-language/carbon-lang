@@ -13,7 +13,7 @@
 ! limitations under the License.
 
 ! Check modfile generation for generic interfaces
-module m
+module m1
   interface foo
     real function s1(x,y)
       real x,y
@@ -43,8 +43,8 @@ contains
     integer x,y
   end function
 end
-!Expect: m.mod
-!module m
+!Expect: m1.mod
+!module m1
 ! interface foo
 !  procedure::s1
 !  procedure::s2
@@ -90,6 +90,35 @@ end
 !  integer(4)::y
 !  integer(4)::s4
 ! end
+!end
+
+module m1b
+  use m1
+end
+!Expect: m1b.mod
+!module m1b
+! use m1,only:foo
+! use m1,only:s1
+! use m1,only:s2
+! use m1,only:operator(+)
+! use m1,only:bar
+! use m1,only:operator(.bar.)
+! use m1,only:s3
+! use m1,only:s4
+!end
+
+module m1c
+  use m1, only: myfoo => foo
+  use m1, only: operator(.bar.)
+  use m1, only: operator(.mybar.) => operator(.bar.)
+  use m1, only: operator(+)
+end
+!Expect: m1c.mod
+!module m1c
+! use m1,only:myfoo=>foo
+! use m1,only:operator(.bar.)
+! use m1,only:operator(.mybar.)=>operator(.bar.)
+! use m1,only:operator(+)
 !end
 
 module m2

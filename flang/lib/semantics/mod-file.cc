@@ -334,7 +334,8 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
 }
 
 static std::ostream &PutGenericName(std::ostream &os, const Symbol &symbol) {
-  if (symbol.get<GenericDetails>().kind() == GenericKind::DefinedOp) {
+  const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
+  if (details && details->kind() == GenericKind::DefinedOp) {
     return PutLower(os << "operator(", symbol) << ')';
   } else {
     return PutLower(os, symbol);
@@ -357,9 +358,9 @@ void ModFileWriter::PutUse(const Symbol &symbol) {
   auto &details{symbol.get<UseDetails>()};
   auto &use{details.symbol()};
   PutLower(uses_ << "use ", details.module());
-  PutLower(uses_ << ",only:", symbol);
+  PutGenericName(uses_ << ",only:", symbol);
   if (use.name() != symbol.name()) {
-    PutLower(uses_ << "=>", use);
+    PutGenericName(uses_ << "=>", use);
   }
   uses_ << '\n';
   PutUseExtraAttr(Attr::VOLATILE, symbol, use);
