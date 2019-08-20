@@ -821,35 +821,5 @@ void Walk(OmpLinearClause::WithoutModifier &x, M &mutator) {
     mutator.Post(x);
   }
 }
-template<typename V>
-void Walk(const OpenMPDeclareTargetSpecifier::WithClause &x, V &visitor) {
-  if (visitor.Pre(x)) {
-    Walk(x.maptype, visitor);
-    Walk(x.names, visitor);
-    visitor.Post(x);
-  }
-}
-template<typename M>
-void Walk(OpenMPDeclareTargetSpecifier::WithClause &x, M &mutator) {
-  if (mutator.Pre(x)) {
-    Walk(x.maptype, mutator);
-    Walk(x.names, mutator);
-    mutator.Post(x);
-  }
-}
-template<typename V>
-void Walk(const OpenMPDeclareTargetSpecifier::WithExtendedList &x, V &visitor) {
-  if (visitor.Pre(x)) {
-    Walk(x.names, visitor);
-    visitor.Post(x);
-  }
-}
-template<typename M>
-void Walk(OpenMPDeclareTargetSpecifier::WithExtendedList &x, M &mutator) {
-  if (mutator.Pre(x)) {
-    Walk(x.names, mutator);
-    mutator.Post(x);
-  }
-}
 }
 #endif  // FORTRAN_PARSER_PARSE_TREE_VISITOR_H_

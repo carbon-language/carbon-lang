@@ -368,26 +368,22 @@ TYPE_PARSER(sourced(construct<OpenMPDeclareReductionConstruct>(
     Parser<OmpReductionCombiner>{} / ")",
     maybe(Parser<OmpReductionInitializerClause>{}))))
 
-// declare-target-map-type
-TYPE_PARSER(construct<OmpDeclareTargetMapType>(
-    "LINK" >> pure(OmpDeclareTargetMapType::Type::Link) ||
-    "TO" >> pure(OmpDeclareTargetMapType::Type::To)))
+// declare-target with list
+TYPE_PARSER(sourced(construct<OmpDeclareTargetWithList>(
+    parenthesized(Parser<OmpObjectList>{}))))
+
+// declare-target with clause
+TYPE_PARSER(
+    sourced(construct<OmpDeclareTargetWithClause>(Parser<OmpClauseList>{})))
 
 // declare-target-specifier
-TYPE_PARSER(construct<OpenMPDeclareTargetSpecifier>(
-                construct<OpenMPDeclareTargetSpecifier::WithClause>(
-                    Parser<OmpDeclareTargetMapType>{},
-                    parenthesized(Parser<OmpObjectList>{}))) ||
-    lookAhead(endOfLine) >>
-        construct<OpenMPDeclareTargetSpecifier>(
-            construct<OpenMPDeclareTargetSpecifier::Implicit>()) ||
-    construct<OpenMPDeclareTargetSpecifier>(
-        parenthesized(construct<OpenMPDeclareTargetSpecifier::WithExtendedList>(
-            Parser<OmpObjectList>{}))))
+TYPE_PARSER(
+    construct<OmpDeclareTargetSpecifier>(Parser<OmpDeclareTargetWithList>{}) ||
+    construct<OmpDeclareTargetSpecifier>(Parser<OmpDeclareTargetWithClause>{}))
 
 // Declare Target Construct
 TYPE_PARSER(sourced(construct<OpenMPDeclareTargetConstruct>(
-    verbatim("DECLARE TARGET"_tok), Parser<OpenMPDeclareTargetSpecifier>{})))
+    verbatim("DECLARE TARGET"_tok), Parser<OmpDeclareTargetSpecifier>{})))
 
 TYPE_PARSER(construct<OmpReductionCombiner>(Parser<AssignmentStmt>{}) ||
     construct<OmpReductionCombiner>(

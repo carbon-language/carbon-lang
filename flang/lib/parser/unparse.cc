@@ -2187,11 +2187,8 @@ public:
     Walk(std::get<Block>(x.t), "");
     Walk(std::get<OmpEndCriticalDirective>(x.t));
   }
-  void Unparse(const OpenMPDeclareTargetSpecifier::WithClause &x) {
-    Walk(x.maptype), Put("("), Walk(x.names), Put(")");
-  }
-  void Unparse(const OpenMPDeclareTargetSpecifier::WithExtendedList &x) {
-    Put("("), Walk(x.names), Put(")");
+  void Unparse(const OmpDeclareTargetWithList &x) {
+    Put("("), Walk(x.v), Put(")");
   }
   void Unparse(const OmpReductionInitializerClause &x) {
     Word(" INITIALIZER(OMP_PRIV = ");
@@ -2415,7 +2412,6 @@ public:
   WALK_NESTED_ENUM(OmpScheduleClause, ScheduleType)  // OMP schedule-type
   WALK_NESTED_ENUM(
       OmpIfClause, DirectiveNameModifier)  // OMP directive-modifier
-  WALK_NESTED_ENUM(OmpDeclareTargetMapType, Type)  // OMP DeclareTarget map-type
   WALK_NESTED_ENUM(OmpCancelType, Type)  // OMP cancel-type
 #undef WALK_NESTED_ENUM
 

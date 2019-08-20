@@ -282,6 +282,19 @@ void OmpStructureChecker::Leave(const parser::OpenMPDeclareSimdConstruct &) {
   ompContext_.pop_back();
 }
 
+void OmpStructureChecker::Enter(const parser::OpenMPDeclareTargetConstruct &x) {
+  const auto &dir{std::get<parser::Verbatim>(x.t)};
+  PushContext(dir.source, OmpDirective::DECLARE_TARGET);
+  const auto &spec{std::get<parser::OmpDeclareTargetSpecifier>(x.t)};
+  if (std::holds_alternative<parser::OmpDeclareTargetWithClause>(spec.u)) {
+    SetContextAllowed(OmpClauseSet{OmpClause::TO, OmpClause::LINK});
+  }
+}
+
+void OmpStructureChecker::Leave(const parser::OpenMPDeclareTargetConstruct &) {
+  ompContext_.pop_back();
+}
+
 void OmpStructureChecker::Enter(
     const parser::OpenMPSimpleStandaloneConstruct &x) {
   const auto &dir{std::get<parser::OmpSimpleStandaloneDirective>(x.t)};

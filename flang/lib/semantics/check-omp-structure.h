@@ -71,6 +71,8 @@ public:
 
   void Enter(const parser::OpenMPDeclareSimdConstruct &);
   void Leave(const parser::OpenMPDeclareSimdConstruct &);
+  void Enter(const parser::OpenMPDeclareTargetConstruct &);
+  void Leave(const parser::OpenMPDeclareTargetConstruct &);
 
   void Enter(const parser::OpenMPSimpleStandaloneConstruct &);
   void Leave(const parser::OpenMPSimpleStandaloneConstruct &);

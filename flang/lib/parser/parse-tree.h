@@ -3501,33 +3501,25 @@ struct OmpBlockDirective {
   CharBlock source;
 };
 
-struct OmpDeclareTargetMapType {
-  ENUM_CLASS(Type, Link, To)
-  WRAPPER_CLASS_BOILERPLATE(OmpDeclareTargetMapType, Type);
+struct OmpDeclareTargetWithList {
+  WRAPPER_CLASS_BOILERPLATE(OmpDeclareTargetWithList, OmpObjectList);
+  CharBlock source;
 };
 
-struct OpenMPDeclareTargetSpecifier {
-  UNION_CLASS_BOILERPLATE(OpenMPDeclareTargetSpecifier);
-  struct WithClause {
-    BOILERPLATE(WithClause);
-    WithClause(OmpDeclareTargetMapType &&m, OmpObjectList &&n)
-      : maptype(std::move(m)), names(std::move(n)) {}
-    OmpDeclareTargetMapType maptype;
-    OmpObjectList names;
-  };
-  struct WithExtendedList {
-    BOILERPLATE(WithExtendedList);
-    WithExtendedList(OmpObjectList &&n) : names(std::move(n)) {}
-    OmpObjectList names;
-  };
-  EMPTY_CLASS(Implicit);
-  std::variant<WithClause, WithExtendedList, Implicit> u;
+struct OmpDeclareTargetWithClause {
+  WRAPPER_CLASS_BOILERPLATE(OmpDeclareTargetWithClause, OmpClauseList);
+  CharBlock source;
+};
+
+struct OmpDeclareTargetSpecifier {
+  UNION_CLASS_BOILERPLATE(OmpDeclareTargetSpecifier);
+  std::variant<OmpDeclareTargetWithList, OmpDeclareTargetWithClause> u;
 };
 
 struct OpenMPDeclareTargetConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPDeclareTargetConstruct);
   CharBlock source;
-  std::tuple<Verbatim, OpenMPDeclareTargetSpecifier> t;
+  std::tuple<Verbatim, OmpDeclareTargetSpecifier> t;
 };
 
 struct OmpReductionCombiner {

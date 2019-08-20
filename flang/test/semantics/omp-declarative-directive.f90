@@ -56,16 +56,17 @@ end subroutine sub1
 ! 2.15.2 threadprivate
 
 module m2
-  !$omp declare target
-  !$omp declare target (N)
-  !$omp declare target to(Q)
-  integer, parameter :: N=10000, M=1024
-  integer :: i
-  real :: Q(N, N)
-  !$omp threadprivate(i)
-
 contains
   subroutine foo
+    !$omp declare target
+    !$omp declare target (foo, N, M)
+    !$omp declare target to(Q, S) link(R)
+    !ERROR: MAP clause is not allowed on the DECLARE TARGET directive
+    !$omp declare target map(from:Q)
+    integer, parameter :: N=10000, M=1024
+    integer :: i
+    real :: Q(N, N), R(N,M), S(M,M)
+    !$omp threadprivate(i)
   end subroutine foo
 end module m2
 
