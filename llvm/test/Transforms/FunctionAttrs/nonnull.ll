@@ -8,18 +8,13 @@ declare nonnull i8* @ret_nonnull()
 
 ; Return a pointer trivially nonnull (call return attribute)
 define i8* @test1() {
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
-; FNATTR: define nonnull i8* @test1
-; ATTRIBUTOR: define i8* @test1
+; BOTH: define nonnull i8* @test1
   %ret = call i8* @ret_nonnull()
   ret i8* %ret
 }
 
 ; Return a pointer trivially nonnull (argument attribute)
 define i8* @test2(i8* nonnull %p) {
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
 ; BOTH: define nonnull i8* @test2
   ret i8* %p
 }
@@ -38,10 +33,7 @@ end:
 }
 
 define i8* @test3(i1 %c) {
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
-; FNATTR: define nonnull i8* @test3
-; ATTRIBUTOR: define i8* @test3
+; BOTH: define nonnull i8* @test3
   call i8* @scc_binder(i1 %c)
   %ret = call i8* @ret_nonnull()
   ret i8* %ret
@@ -87,10 +79,7 @@ define i8* @test5(i1 %c) {
 ; Local analysis, but going through a self recursive phi
 define i8* @test6() {
 entry:
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
-; FNATTR: define nonnull i8* @test6
-; ATTRIBUTOR: define i8* @test6
+; BOTH: define nonnull i8* @test6
   %ret = call i8* @ret_nonnull()
   br label %loop
 loop:
@@ -106,10 +95,7 @@ define i8* @test7(i8* %a) {
   ret i8* %b
 }
 
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
-; FNATTR: define nonnull i8* @test8
-; ATTRIBUTOR: define i8* @test8
+; BOTH: define nonnull i8* @test8
 define i8* @test8(i8* %a) {
   %b = getelementptr inbounds i8, i8* %a, i64 1
   ret i8* %b
@@ -193,7 +179,7 @@ declare nonnull i8* @nonnull()
 
 define internal i32* @f1(i32* %arg) {
 ; FIXME: missing nonnull It should be nonnull @f1(i32* nonnull %arg)
-; ATTRIBUTOR: define internal i32* @f1(i32* %arg)
+; ATTRIBUTOR: define internal nonnull i32* @f1(i32* %arg)
 
 bb:
   %tmp = icmp eq i32* %arg, null
@@ -212,7 +198,7 @@ bb4:                                              ; preds = %bb1
 
 bb6:                                              ; preds = %bb1
 ; FIXME: missing nonnull. It should be @f2(i32* nonnull %arg)
-; ATTRIBUTOR: %tmp7 = tail call i32* @f2(i32* %arg)
+; ATTRIBUTOR: %tmp7 = tail call nonnull i32* @f2(i32* %arg)
   %tmp7 = tail call i32* @f2(i32* %arg)
   ret i32* %tmp7
 
@@ -223,11 +209,11 @@ bb9:                                              ; preds = %bb4, %bb
 
 define internal i32* @f2(i32* %arg) {
 ; FIXME: missing nonnull. It should be nonnull @f2(i32* nonnull %arg) 
-; ATTRIBUTOR: define internal i32* @f2(i32* %arg)
+; ATTRIBUTOR: define internal nonnull i32* @f2(i32* %arg)
 bb:
 
 ; FIXME: missing nonnull. It should be @f1(i32* nonnull %arg) 
-; ATTRIBUTOR:   %tmp = tail call i32* @f1(i32* %arg)
+; ATTRIBUTOR:   %tmp = tail call nonnull i32* @f1(i32* %arg)
   %tmp = tail call i32* @f1(i32* %arg)
   ret i32* %tmp
 }
@@ -443,10 +429,7 @@ exc:
   unreachable
 }
 
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
-; FNATTR:     define nonnull i32* @gep1(
-; ATTRIBUTOR: define i32* @gep1(
+; BOTH: define nonnull i32* @gep1(
 define i32* @gep1(i32* %p) {
   %q = getelementptr inbounds i32, i32* %p, i32 1
   ret i32* %q
@@ -465,10 +448,7 @@ define i32 addrspace(3)* @gep2(i32 addrspace(3)* %p) {
   ret i32 addrspace(3)* %q
 }
 
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
-; FNATTR: define internal nonnull i32* @g2()
-; ATTRIBUTOR: define internal i32* @g2()
+; BOTH: define internal nonnull i32* @g2()
 define internal i32* @g2() {
   ret i32* inttoptr (i64 4 to i32*)
 }

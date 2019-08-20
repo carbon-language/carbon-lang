@@ -27,11 +27,8 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; FNATTR: Function Attrs: norecurse nounwind optsize readnone ssp uwtable
 ; FNATTR-NEXT: define nonnull i32* @foo(%struct.ST* readnone %s)
-; FIXME: Until we have "on-demand" attribute generation we do not determine the
-;        return value properties.
 ; ATTRIBUTOR: Function Attrs: nofree nosync nounwind optsize readnone ssp uwtable
-;                  define nonnull i32* @foo(%struct.ST* %s)
-; ATTRIBUTOR-NEXT: define i32* @foo(%struct.ST* %s)
+; ATTRIBUTOR-NEXT: define nonnull i32* @foo(%struct.ST* %s)
 define i32* @foo(%struct.ST* %s) nounwind uwtable readnone optsize ssp {
 entry:
   %arrayidx = getelementptr inbounds %struct.ST, %struct.ST* %s, i64 1, i32 2, i32 1, i64 5, i64 13
