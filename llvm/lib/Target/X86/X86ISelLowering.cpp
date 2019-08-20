@@ -44293,10 +44293,10 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
     // least as large as the original insertion. Just insert the original
     // subvector into a zero vector.
     if (SubVec.getOpcode() == ISD::EXTRACT_SUBVECTOR && IdxVal == 0 &&
-        SubVec.getConstantOperandAPInt(1) == 0 &&
+        isNullConstant(SubVec.getOperand(1)) &&
         SubVec.getOperand(0).getOpcode() == ISD::INSERT_SUBVECTOR) {
       SDValue Ins = SubVec.getOperand(0);
-      if (Ins.getConstantOperandAPInt(2) == 0 &&
+      if (isNullConstant(Ins.getOperand(2)) &&
           ISD::isBuildVectorAllZeros(Ins.getOperand(0).getNode()) &&
           Ins.getOperand(1).getValueSizeInBits() <= SubVecVT.getSizeInBits())
         return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT,
