@@ -365,9 +365,18 @@ def JWriteCMPXCHGVariant :  SchedWriteVariant<[
   SchedVar<MCSchedPredicate<IsRegRegCompareAndSwap_8>,  [JWriteCMPXCHG8rr]>,
   SchedVar<NoSchedPred,                                 [WriteCMPXCHG]>
 ]>;
-def : InstRW<[JWriteCMPXCHGVariant], (instrs CMPXCHG8rr, LCMPXCHG8, CMPXCHG8rm,
-                                             CMPXCHG16rm, CMPXCHG32rm, CMPXCHG64rm,
-                                             LCMPXCHG16, LCMPXCHG32, LCMPXCHG64,
+
+// The first five reads are contributed by the memory load operand.
+// We ignore those reads and set a read-advance for the other input operands
+// including the implicit read of RAX.
+def : InstRW<[JWriteCMPXCHGVariant,
+              ReadDefault, ReadDefault, ReadDefault, ReadDefault, ReadDefault,
+              ReadAfterLd, ReadAfterLd], (instrs LCMPXCHG8, LCMPXCHG16,
+                                                 LCMPXCHG32, LCMPXCHG64,
+                                                 CMPXCHG8rm, CMPXCHG16rm,
+                                                 CMPXCHG32rm, CMPXCHG64rm )>;
+
+def : InstRW<[JWriteCMPXCHGVariant], (instrs CMPXCHG8rr, CMPXCHG16rr, CMPXCHG32rr, CMPXCHG64rr,
                                              CMPXCHG8B, CMPXCHG16B,
                                              LCMPXCHG8B, LCMPXCHG16B)>;
 
