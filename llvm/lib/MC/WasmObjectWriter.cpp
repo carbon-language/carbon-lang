@@ -426,10 +426,8 @@ void WasmObjectWriter::recordRelocation(MCAssembler &Asm,
                                         const MCFragment *Fragment,
                                         const MCFixup &Fixup, MCValue Target,
                                         uint64_t &FixedValue) {
-  MCAsmBackend &Backend = Asm.getBackend();
-
   // The WebAssembly backend should never generate FKF_IsPCRel fixups
-  assert(!(Backend.getFixupKindInfo(Fixup.getKind()).Flags &
+  assert(!(Asm.getBackend().getFixupKindInfo(Fixup.getKind()).Flags &
            MCFixupKindInfo::FKF_IsPCRel));
 
   const auto &FixupSection = cast<MCSectionWasm>(*Fragment->getParent());
