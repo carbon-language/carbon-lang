@@ -50,8 +50,8 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
   if (q == start || (q == start + 1 && *start == '.')) {
     return false;  // require at least one digit
   }
-  auto times{radix};
   const char *d{q};
+  // Strip off trailing zeroes
   if (point != nullptr) {
     while (d > firstDigit && d[-1] == '0') {
       --d;
@@ -68,11 +68,12 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
     }
   }
   if (d == firstDigit) {
-    exponent_ = 0;
+    exponent_ = 0;  // all zeros
   }
   if (point != nullptr) {
     exponent_ -= static_cast<int>(d - point - 1);
   }
+  // Trim any excess digits
   const char *limit{firstDigit + maxDigits * log10Radix + (point != nullptr)};
   if (d > limit) {
     inexact = true;
@@ -85,7 +86,8 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
       }
     }
   }
-  while (d-- > firstDigit) {
+  // Rack the decimal digits up into big Digits.
+  for (auto times{radix}; d-- > firstDigit;) {
     if (*d != '.') {
       if (times == radix) {
         digit_[digits_++] = *d - '0';
@@ -253,7 +255,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   // large power of ten.  Its radix point is defined to be to the right of its
   // digits, and "exponent_" is the power of ten by which it is to be scaled.
   Normalize();
-  if (digits_ == 0) {
+  if (digits_ == 0) {  // zero value
     if (isNegative_) {
       using Raw = typename Binary::RawType;
       Raw negZero{static_cast<Raw>(1) << (Binary::bits - 1)};
@@ -263,12 +265,22 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
     }
   }
   // The value is not zero.
+  IntermediateFloat<PREC> f;
+#if 0  // actually a small loss
+  // Make the value odd.
+  if (int trailing0s{common::TrailingZeroBitCount(digit_[0])}) {
+    f.AdjustExponent(trailing0s);
+    for (; trailing0s > log10Radix; trailing0s -= log10Radix) {
+      DivideByPowerOfTwo(log10Radix);
+    }
+    DivideByPowerOfTwo(trailing0s);
+  }
+#endif
   // Shift our perspective on the radix (& decimal) point so that
   // it sits to the *left* of the digits.
   exponent_ += digits_ * log10Radix;
   // Apply any negative decimal exponent by multiplication
   // by a power of two, adjusting the binary exponent to compensate.
-  IntermediateFloat<PREC> f;
   while (exponent_ < log10Radix) {
     f.AdjustExponent(-9);
     digitLimit_ = digits_;
