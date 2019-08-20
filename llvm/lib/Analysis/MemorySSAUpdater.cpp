@@ -341,16 +341,20 @@ void MemorySSAUpdater::insertDef(MemoryDef *MD, bool RenameUses) {
       IDFs.setDefiningBlocks(DefiningBlocks);
       IDFs.calculate(IDFBlocks);
       SmallVector<AssertingVH<MemoryPhi>, 4> NewInsertedPHIs;
-      for (auto *BBIDF : IDFBlocks)
-        if (!MSSA->getMemoryAccess(BBIDF)) {
-          auto *MPhi = MSSA->createMemoryPhi(BBIDF);
+      for (auto *BBIDF : IDFBlocks) {
+        auto *MPhi = MSSA->getMemoryAccess(BBIDF);
+        if (!MPhi) {
+          MPhi = MSSA->createMemoryPhi(BBIDF);
           NewInsertedPHIs.push_back(MPhi);
-          // Add the phis created into the IDF blocks to NonOptPhis, so they are
-          // not optimized out as trivial by the call to getPreviousDefFromEnd
-          // below. Once they are complete, all these Phis are added to the
-          // FixupList, and removed from NonOptPhis inside fixupDefs().
-          NonOptPhis.insert(MPhi);
         }
+        // Add the phis created into the IDF blocks to NonOptPhis, so they are
+        // not optimized out as trivial by the call to getPreviousDefFromEnd
+        // below. Once they are complete, all these Phis are added to the
+        // FixupList, and removed from NonOptPhis inside fixupDefs().
+        // Existing Phis in IDF may need fixing as well, and potentially be
+        // trivial before this insertion, hence add all IDF Phis. See PR43044.
+        NonOptPhis.insert(MPhi);
+      }
 
       for (auto &MPhi : NewInsertedPHIs) {
         auto *BBIDF = MPhi->getBlock();
