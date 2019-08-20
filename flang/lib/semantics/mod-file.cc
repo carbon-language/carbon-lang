@@ -274,6 +274,10 @@ void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
   decls_ << "end type\n";
 }
 
+// Attributes that may be in a subprogram prefix
+static const Attrs subprogramPrefixAttrs{Attr::ELEMENTAL, Attr::IMPURE,
+    Attr::MODULE, Attr::NON_RECURSIVE, Attr::PURE, Attr::RECURSIVE};
+
 void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   auto attrs{symbol.attrs()};
   auto &details{symbol.get<SubprogramDetails>()};
@@ -283,17 +287,22 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
     bindAttrs.set(Attr::BIND_C, true);
     attrs.set(Attr::BIND_C, false);
   }
-  if (attrs.test(Attr::PRIVATE)) {
-    PutAttr(decls_, Attr::PRIVATE) << "::";
+  Attrs prefixAttrs{subprogramPrefixAttrs};
+  prefixAttrs &= attrs;
+  // emit any non-prefix attributes in an attribute statement
+  attrs &= ~subprogramPrefixAttrs;
+  std::stringstream ss;
+  PutAttrs(ss, attrs);
+  if (!ss.str().empty()) {
+    decls_ << ss.str().substr(1) << "::";
     PutLower(decls_, symbol) << "\n";
-    attrs.set(Attr::PRIVATE, false);
   }
   bool isInterface{details.isInterface()};
   std::ostream &os{isInterface ? decls_ : contains_};
   if (isInterface) {
     os << "interface\n";
   }
-  PutAttrs(os, attrs, std::nullopt, ""s, " "s);
+  PutAttrs(os, prefixAttrs, std::nullopt, ""s, " "s);
   os << (details.isFunction() ? "function " : "subroutine ");
   PutLower(os, symbol) << '(';
   int n = 0;

@@ -80,3 +80,29 @@ end
 !  real(4)::f2
 ! end
 !end
+
+! Test optional dummy procedure
+module m4
+contains
+  subroutine s(f)
+    interface
+      logical recursive function f()
+        implicit none
+      end function
+    end interface
+    optional f
+  end
+end
+
+!Expect: m4.mod
+!module m4
+!contains
+! subroutine s(f)
+!  optional::f
+!  interface
+!   recursive function f()
+!    logical(4)::f
+!   end
+!  end interface
+! end
+!end
