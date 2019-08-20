@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BIG_RADIX_FLOATING_POINT_H_
-#define BIG_RADIX_FLOATING_POINT_H_
+#ifndef FORTRAN_DECIMAL_BIG_RADIX_FLOATING_POINT_H_
+#define FORTRAN_DECIMAL_BIG_RADIX_FLOATING_POINT_H_
 
 // This is a helper class for use in floating-point conversions
 // to and from decimal representations.  It holds a multiple-precision

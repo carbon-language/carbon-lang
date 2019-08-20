@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BINARY_FLOATING_POINT_H_
-#define BINARY_FLOATING_POINT_H_
+#ifndef FORTRAN_DECIMAL_BINARY_FLOATING_POINT_H_
+#define FORTRAN_DECIMAL_BINARY_FLOATING_POINT_H_
+
+// Access the fields of an IEEE-754 binary floating-point value.
 
 #include <cinttypes>
 #include <climits>
