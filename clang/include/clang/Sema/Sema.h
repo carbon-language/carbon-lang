@@ -405,6 +405,12 @@ public:
   /// Source location for newly created implicit MSInheritanceAttrs
   SourceLocation ImplicitMSInheritanceAttrLoc;
 
+  /// Holds TypoExprs that are created from `createDelayedTypo`. This is used by
+  /// `TransformTypos` in order to keep track of any TypoExprs that are created
+  /// recursively during typo correction and wipe them away if the correction
+  /// fails.
+  llvm::SmallVector<TypoExpr *, 2> TypoExprs;
+
   /// pragma clang section kind
   enum PragmaClangSectionKind {
     PCSK_Invalid      = 0,
