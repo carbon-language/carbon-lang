@@ -218,7 +218,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::Mean(
       carry = 0;
     }
   }
-  if (carry > 0) {
+  if (carry != 0) {
     AddCarry(that.digits_, carry);
   }
   return DivideBy<2>() != 0;

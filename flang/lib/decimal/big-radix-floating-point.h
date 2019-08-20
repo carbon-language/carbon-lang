@@ -260,12 +260,16 @@ private:
   }
 
   template<int N> int MultiplyWithoutNormalization() {
-    int carry{MultiplyByHelper<N>(0)};
-    if (carry > 0 && digits_ < digitLimit_) {
-      digit_[digits_++] = carry;
-      carry = 0;
+    if (int carry{MultiplyByHelper<N>(0)}) {
+      if (digits_ < digitLimit_) {
+        digit_[digits_++] = carry;
+        return 0;
+      } else {
+        return carry;
+      }
+    } else {
+      return 0;
     }
-    return carry;
   }
 
   void LoseLeastSignificantDigit() {

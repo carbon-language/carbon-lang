@@ -39,32 +39,62 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
   while (*q == '0') {
     ++q;
   }
-  for (; *q >= '0' && *q <= '9' && !IsFull(); ++q) {
-    MultiplyBy<10>(*q - '0');
+  const char *firstDigit{q};
+  for (; *q >= '0' && *q <= '9'; ++q) {
   }
-  if (IsFull()) {
-    for (; *q >= '0' && *q <= '9'; ++q) {
-      if (*q != '0') {
-        inexact = true;
-      }
-      ++exponent_;
-    }
-  }
-  if (*q == '.') {
-    for (++q; *q >= '0' && *q <= '9' && !IsFull(); ++q) {
-      MultiplyBy<10>(*q - '0');
-      --exponent_;
-    }
-    if (IsFull()) {
-      for (; *q >= '0' && *q <= '9'; ++q) {
-        if (*q != '0') {
-          inexact = true;
-        }
-      }
+  const char *point{*q == '.' ? q : nullptr};
+  if (point) {
+    for (++q; *q >= '0' && *q <= '9'; ++q) {
     }
   }
   if (q == start || (q == start + 1 && *start == '.')) {
     return false;  // require at least one digit
+  }
+  auto times{radix};
+  const char *d{q};
+  if (point != nullptr) {
+    while (d > firstDigit && d[-1] == '0') {
+      --d;
+    }
+    if (d[-1] == '.') {
+      point = nullptr;
+      --d;
+    }
+  }
+  if (point == nullptr) {
+    while (d > firstDigit && d[-1] == '0') {
+      --d;
+      ++exponent_;
+    }
+  }
+  if (d == firstDigit) {
+    exponent_ = 0;
+  }
+  if (point != nullptr) {
+    exponent_ -= static_cast<int>(d - point - 1);
+  }
+  const char *limit{firstDigit + maxDigits * log10Radix + (point != nullptr)};
+  if (d > limit) {
+    inexact = true;
+    while (d-- > limit) {
+      if (*d == '.') {
+        point = nullptr;
+        --limit;
+      } else if (point == nullptr) {
+        ++exponent_;
+      }
+    }
+  }
+  while (d-- > firstDigit) {
+    if (*d != '.') {
+      if (times == radix) {
+        digit_[digits_++] = *d - '0';
+        times = 10;
+      } else {
+        digit_[digits_ - 1] += times * (*d - '0');
+        times *= 10;
+      }
+    }
   }
 
   switch (*q) {
@@ -242,7 +272,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   while (exponent_ < log10Radix) {
     f.AdjustExponent(-9);
     digitLimit_ = digits_;
-    int carry = MultiplyWithoutNormalization<512>();
+    int carry{MultiplyWithoutNormalization<512>()};
     RemoveLeastOrderZeroDigits();
     if (carry != 0) {
       digit_[digits_++] = carry;
