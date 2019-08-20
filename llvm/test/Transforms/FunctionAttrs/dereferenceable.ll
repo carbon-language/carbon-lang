@@ -22,20 +22,23 @@ define i32* @test2(i32* dereferenceable_or_null(4) %0, double* dereferenceable(8
 ; TEST 3
 ; GEP inbounds
 define i32* @test3_1(i32* dereferenceable(8) %0) local_unnamed_addr {
-; ATTRIBUTOR: define nonnull dereferenceable(4) i32* @test3_1(i32* nonnull dereferenceable(8) %0)
+;             define nonnull dereferenceable(4) i32* @test3_1(i32* nonnull dereferenceable(8) %0)
+; ATTRIBUTOR: define dereferenceable_or_null(4) i32* @test3_1(i32* nonnull dereferenceable(8) %0)
   %ret = getelementptr inbounds i32, i32* %0, i64 1
   ret i32* %ret
 }
 
 define i32* @test3_2(i32* dereferenceable_or_null(32) %0) local_unnamed_addr {
 ; FIXME: Argument should be mark dereferenceable because of GEP `inbounds`.
-; ATTRIBUTOR: define nonnull dereferenceable(16) i32* @test3_2(i32* dereferenceable_or_null(32) %0)
+;             define nonnull dereferenceable(16) i32* @test3_2(i32* dereferenceable_or_null(32) %0)
+; ATTRIBUTOR: define dereferenceable_or_null(16) i32* @test3_2(i32* dereferenceable_or_null(32) %0)
   %ret = getelementptr inbounds i32, i32* %0, i64 4
   ret i32* %ret
 }
 
 define i32* @test3_3(i32* dereferenceable(8) %0, i32* dereferenceable(16) %1, i1 %2) local_unnamed_addr {
-; ATTRIBUTOR: define nonnull dereferenceable(4) i32* @test3_3(i32* nonnull dereferenceable(8) %0, i32* nonnull dereferenceable(16) %1, i1 %2) local_unnamed_addr
+;             define nonnull dereferenceable(4) i32* @test3_3(i32* nonnull dereferenceable(8) %0, i32* nonnull dereferenceable(16) %1, i1 %2) local_unnamed_addr
+; ATTRIBUTOR: define dereferenceable_or_null(4) i32* @test3_3(i32* nonnull dereferenceable(8) %0, i32* nonnull dereferenceable(16) %1, i1 %2) local_unnamed_addr
   %ret1 = getelementptr inbounds i32, i32* %0, i64 1
   %ret2 = getelementptr inbounds i32, i32* %1, i64 2
   %ret = select i1 %2, i32* %ret1, i32* %ret2

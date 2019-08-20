@@ -139,7 +139,7 @@ ChangeStatus llvm::operator&(ChangeStatus l, ChangeStatus r) {
 template <typename AAType, typename StateTy>
 bool genericValueTraversal(
     Attributor &A, IRPosition IRP, const AAType &QueryingAA, StateTy &State,
-    const function_ref<void(Value &, StateTy &, bool)> &VisitValueCB,
+    const function_ref<bool(Value &, StateTy &, bool)> &VisitValueCB,
     int MaxValues = 8) {
 
   const AAIsDead *LivenessAA = nullptr;
@@ -204,7 +204,8 @@ bool genericValueTraversal(
     }
 
     // Once a leaf is reached we inform the user through the callback.
-    VisitValueCB(*V, State, Iteration > 1);
+    if (!VisitValueCB(*V, State, Iteration > 1))
+      return false;
   } while (!Worklist.empty());
 
   // All values have been visited.
@@ -467,6 +468,12 @@ ChangeStatus clampStateAndIndicateChange<IntegerState>(IntegerState &S,
   S ^= R;
   return Assumed == S.getAssumed() ? ChangeStatus::UNCHANGED
                                    : ChangeStatus::CHANGED;
+}
+
+template <>
+ChangeStatus clampStateAndIndicateChange<BooleanState>(BooleanState &S,
+                                                       const BooleanState &R) {
+  return clampStateAndIndicateChange<IntegerState>(S, R);
 }
 ///}
 
@@ -888,7 +895,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
   };
 
   // Callback for a leaf value returned by the associated function.
-  auto VisitValueCB = [](Value &Val, RVState &RVS, bool) {
+  auto VisitValueCB = [](Value &Val, RVState &RVS, bool) -> bool {
     auto Size = RVS.RetValsMap[&Val].size();
     RVS.RetValsMap[&Val].insert(RVS.RetInsts.begin(), RVS.RetInsts.end());
     bool Inserted = RVS.RetValsMap[&Val].size() != Size;
@@ -898,6 +905,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
         dbgs() << "[AAReturnedValues] 1 Add new returned value " << Val
                << " => " << RVS.RetInsts.size() << "\n";
     });
+    return true;
   };
 
   // Helper method to invoke the generic value traversal.
@@ -1245,140 +1253,110 @@ using AANoFreeCallSite = AANoFreeFunction;
 struct AANonNullImpl : AANonNull {
   AANonNullImpl(const IRPosition &IRP) : AANonNull(IRP) {}
 
-  /// See AbstractAttribute::getAsStr().
-  const std::string getAsStr() const override {
-    return getAssumed() ? "nonnull" : "may-null";
-  }
-
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
     if (hasAttr({Attribute::NonNull, Attribute::Dereferenceable}))
       indicateOptimisticFixpoint();
   }
 
-  /// Generate a predicate that checks if a given value is assumed nonnull.
-  /// The generated function returns true if a value satisfies any of
-  /// following conditions.
-  /// (i) A value is known nonZero(=nonnull).
-  /// (ii) A value is associated with AANonNull and its isAssumedNonNull() is
-  /// true.
-  std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
-  generatePredicate(Attributor &);
+  /// See AbstractAttribute::getAsStr().
+  const std::string getAsStr() const override {
+    return getAssumed() ? "nonnull" : "may-null";
+  }
 };
 
-std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
-AANonNullImpl::generatePredicate(Attributor &A) {
-  // FIXME: The `AAReturnedValues` should provide the predicate with the
-  // `ReturnInst` vector as well such that we can use the control flow sensitive
-  // version of `isKnownNonZero`. This should fix `test11` in
-  // `test/Transforms/FunctionAttrs/nonnull.ll`
+/// NonNull attribute for a floating value.
+struct AANonNullFloating : AANonNullImpl {
+  AANonNullFloating(const IRPosition &IRP) : AANonNullImpl(IRP) {}
 
-  std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
-      [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &RetInsts) -> bool {
-    if (isKnownNonZero(&RV, A.getDataLayout()))
-      return true;
+  /// See AbstractAttribute::initialize(...).
+  void initialize(Attributor &A) override {
+    AANonNullImpl::initialize(A);
 
-    if (ImmutableCallSite ICS = ImmutableCallSite(&RV))
-      if (ICS.hasRetAttr(Attribute::NonNull))
-        return true;
+    if (isAtFixpoint())
+      return;
 
-    auto *NonNullAA = A.getAAFor<AANonNull>(*this, IRPosition::value(RV));
-    return (NonNullAA && NonNullAA->isAssumedNonNull());
-  };
+    const IRPosition &IRP = getIRPosition();
+    const Value &V = IRP.getAssociatedValue();
+    const DataLayout &DL = A.getDataLayout();
 
-  return Pred;
-}
-
-/// NonNull attribute for function return value.
-struct AANonNullReturned final : AANonNullImpl {
-  AANonNullReturned(const IRPosition &IRP) : AANonNullImpl(IRP) {}
+    // TODO: This context sensitive query should be removed once we can do
+    // context sensitive queries in the genericValueTraversal below.
+    if (isKnownNonZero(&V, DL, 0, /* TODO: AC */ nullptr, IRP.getCtxI(),
+                       /* TODO: DT */ nullptr))
+      indicateOptimisticFixpoint();
+  }
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A) override {
-    std::function<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)> Pred =
-        this->generatePredicate(A);
+    const DataLayout &DL = A.getDataLayout();
 
-    if (!A.checkForAllReturnedValuesAndReturnInsts(Pred, *this))
+    auto VisitValueCB = [&](Value &V, AAAlign::StateType &T,
+                            bool Stripped) -> bool {
+      if (isKnownNonZero(&V, DL, 0, /* TODO: AC */ nullptr,
+                         /* TODO: CtxI */ nullptr,
+                         /* TODO: DT */ nullptr)) {
+        // Known non-zero, all good.
+      } else if (const auto *AA =
+                     A.getAAFor<AANonNull>(*this, IRPosition::value(V))) {
+        // Try to use abstract attribute information.
+        if (!AA->isAssumedNonNull())
+          T.indicatePessimisticFixpoint();
+      } else {
+        // IR information was not sufficient and we did not find an abstract
+        // attribute to use. TODO: on-demand attribute creation!
+        T.indicatePessimisticFixpoint();
+      }
+      return T.isValidState();
+    };
+
+    StateType T;
+    if (!genericValueTraversal<AANonNull, StateType>(A, getIRPosition(), *this,
+                                                     T, VisitValueCB))
       return indicatePessimisticFixpoint();
-    return ChangeStatus::UNCHANGED;
+
+    return clampStateAndIndicateChange(getState(), T);
   }
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_FNRET_ATTR(nonnull) }
 };
 
+/// NonNull attribute for function return value.
+struct AANonNullReturned final : AAReturnedFromReturnedValues<AANonNullImpl> {
+  AANonNullReturned(const IRPosition &IRP)
+      : AAReturnedFromReturnedValues<AANonNullImpl>(IRP) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECLTRACK_FNRET_ATTR(nonnull) }
+};
+
 /// NonNull attribute for function argument.
-struct AANonNullArgument final : AANonNullImpl {
-  AANonNullArgument(const IRPosition &IRP) : AANonNullImpl(IRP) {}
-
-  /// See AbstractAttribute::updateImpl(...).
-  ChangeStatus updateImpl(Attributor &A) override {
-    unsigned ArgNo = getArgNo();
-
-    // Callback function
-    std::function<bool(CallSite)> CallSiteCheck = [&](CallSite CS) {
-      assert(CS && "Sanity check: Call site was not initialized properly!");
-
-      IRPosition CSArgPos = IRPosition::callsite_argument(CS, ArgNo);
-      if (CSArgPos.hasAttr({Attribute::NonNull, Attribute::Dereferenceable}))
-        return true;
-
-      // Check that NonNullAA is AANonNullCallSiteArgument.
-      if (auto *NonNullAA = A.getAAFor<AANonNullImpl>(*this, CSArgPos)) {
-        ImmutableCallSite ICS(&NonNullAA->getAnchorValue());
-        if (ICS && CS.getInstruction() == ICS.getInstruction())
-          return NonNullAA->isAssumedNonNull();
-        return false;
-      }
-
-      Value *V = CS.getArgOperand(ArgNo);
-      if (isKnownNonZero(V, A.getDataLayout()))
-        return true;
-
-      return false;
-    };
-    if (!A.checkForAllCallSites(CallSiteCheck, *this, true))
-      return indicatePessimisticFixpoint();
-    return ChangeStatus::UNCHANGED;
-  }
+struct AANonNullArgument final
+    : AAArgumentFromCallSiteArguments<AANonNullImpl> {
+  AANonNullArgument(const IRPosition &IRP)
+      : AAArgumentFromCallSiteArguments<AANonNullImpl>(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_ARG_ATTR(nonnull) }
 };
 
-/// NonNull attribute for a call site argument.
-struct AANonNullCallSiteArgument final : AANonNullImpl {
-  AANonNullCallSiteArgument(const IRPosition &IRP) : AANonNullImpl(IRP) {}
-
-  /// See AbstractAttribute::initialize(...).
-  void initialize(Attributor &A) override {
-    AANonNullImpl::initialize(A);
-    if (!isKnownNonNull() &&
-        isKnownNonZero(&getAssociatedValue(), A.getDataLayout()))
-      indicateOptimisticFixpoint();
-  }
-
-  /// See AbstractAttribute::updateImpl(Attributor &A).
-  ChangeStatus updateImpl(Attributor &A) override {
-    // NOTE: Never look at the argument of the callee in this method.
-    //       If we do this, "nonnull" is always deduced because of the
-    //       assumption.
-
-    Value &V = getAssociatedValue();
-    auto *NonNullAA = A.getAAFor<AANonNull>(*this, IRPosition::value(V));
-
-    if (!NonNullAA || !NonNullAA->isAssumedNonNull())
-      return indicatePessimisticFixpoint();
-
-    return ChangeStatus::UNCHANGED;
-  }
+struct AANonNullCallSiteArgument final : AANonNullFloating {
+  AANonNullCallSiteArgument(const IRPosition &IRP) : AANonNullFloating(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(nonnull) }
+  void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(aligned) }
 };
 
-/// NonNull attribute deduction for a call sites.
-using AANonNullCallSiteReturned = AANonNullReturned;
+/// NonNull attribute for a call site return position.
+struct AANonNullCallSiteReturned final
+    : AACallSiteReturnedFromReturned<AANonNullImpl> {
+  AANonNullCallSiteReturned(const IRPosition &IRP)
+      : AACallSiteReturnedFromReturned<AANonNullImpl>(IRP) {}
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override { STATS_DECLTRACK_CSRET_ATTR(nonnull) }
+};
 
 /// ------------------------ No-Recurse Attributes ----------------------------
 
@@ -2245,7 +2223,8 @@ struct AAAlignFloating : AAAlignImpl {
   ChangeStatus updateImpl(Attributor &A) override {
     const DataLayout &DL = A.getDataLayout();
 
-    auto VisitValueCB = [&](Value &V, AAAlign::StateType &T, bool Stripped) {
+    auto VisitValueCB = [&](Value &V, AAAlign::StateType &T,
+                            bool Stripped) -> bool {
       if (!Stripped &&
           getIRPosition().getPositionKind() == IRPosition::IRP_FLOAT) {
         // Use only IR information if we did not strip anything.
@@ -2262,6 +2241,7 @@ struct AAAlignFloating : AAAlignImpl {
         T.takeKnownMaximum(V.getPointerAlignment(DL));
         T.indicatePessimisticFixpoint();
       }
+      return T.isValidState();
     };
 
     StateType T;
