@@ -62,7 +62,7 @@ private:
   // The base-2 logarithm of the least significant bit that can arise
   // in a subnormal IEEE floating-point number.
   static constexpr int minLog2AnyBit{
-      -static_cast<int>(Real::exponentBias) - Real::precision};
+      -int{Real::exponentBias} - Real::precision};
   static constexpr int maxDigits{3 - minLog2AnyBit / log10Radix};
 
 public:

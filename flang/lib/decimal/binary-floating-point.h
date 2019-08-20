@@ -55,8 +55,7 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   static constexpr int exponentBits{bits - 1 - significandBits};
   static constexpr int maxExponent{(1 << exponentBits) - 1};
   static constexpr int exponentBias{maxExponent / 2};
-  static constexpr RawType significandMask{
-      (static_cast<RawType>(1) << significandBits) - 1};
+  static constexpr RawType significandMask{(RawType{1} << significandBits) - 1};
 
   BinaryFloatingPointNumber() {}  // zero
   BinaryFloatingPointNumber(const BinaryFloatingPointNumber &that) = default;
@@ -83,13 +82,13 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   constexpr RawType Fraction() const {
     RawType sig{Significand()};
     if (implicitMSB && BiasedExponent() > 0) {
-      sig |= static_cast<RawType>(1) << significandBits;
+      sig |= RawType{1} << significandBits;
     }
     return sig;
   }
 
   constexpr bool IsZero() const {
-    return (raw & ((static_cast<RawType>(1) << (bits - 1)) - 1)) == 0;
+    return (raw & ((RawType{1} << (bits - 1)) - 1)) == 0;
   }
   constexpr bool IsNaN() const {
     return BiasedExponent() == maxExponent && Significand() != 0;
@@ -103,7 +102,7 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   }
   constexpr bool IsNegative() const { return (raw >> (bits - 1)) & 1; }
 
-  constexpr void Negate() { raw ^= static_cast<RawType>(1) << (bits - 1); }
+  constexpr void Negate() { raw ^= RawType{1} << (bits - 1); }
 
   RawType raw{0};
 };

@@ -33,48 +33,70 @@ template<typename UINT, UINT DENOM> inline constexpr UINT FastDivision(UINT n) {
 }
 
 #if USE_INT_DIVIDE_WORKAROUNDS
-template<> inline constexpr std::uint64_t FastDivision<std::uint64_t, 10000000000000000u>(std::uint64_t n) {
-  return (static_cast<__uint128_t>(0x39a5652fb1137857) * n) >> (64 + 51);
+template<>
+inline constexpr std::uint64_t FastDivision<std::uint64_t, 10000000000000000u>(
+    std::uint64_t n) {
+  cast<__uint128_t{0x39a5652fb1137857} * n) >> (64 + 51);
 }
 
-template<> inline constexpr std::uint64_t FastDivision<std::uint64_t, 100000000000000u>(std::uint64_t n) {
-  return (static_cast<__uint128_t>(0xb424dc35095cd81) * n) >> (64 + 42);
+template<>
+inline constexpr std::uint64_t FastDivision<std::uint64_t, 100000000000000u>(
+    std::uint64_t n) {
+  return (__uint128_t{0xb424dc35095cd81} * n) >> (64 + 42);
 }
 
-template<> inline constexpr std::uint32_t FastDivision<std::uint32_t, 1000000u>(std::uint32_t n) {
-  return (static_cast<std::uint64_t>(0x431bde83) * n) >> (32 + 18);
+template<>
+inline constexpr std::uint32_t FastDivision<std::uint32_t, 1000000u>(
+    std::uint32_t n) {
+  return (std::uint64_t{0x431bde83} * n) >> (32 + 18);
 }
 
-template<> inline constexpr std::uint32_t FastDivision<std::uint32_t, 10000u>(std::uint32_t n) {
-  return (static_cast<std::uint64_t>(0xd1b71759) * n) >> (32 + 13);
+template<>
+inline constexpr std::uint32_t FastDivision<std::uint32_t, 10000u>(
+    std::uint32_t n) {
+  return (std::uint64_t{0xd1b71759} * n) >> (32 + 13);
 }
 
-template<> inline constexpr std::uint64_t FastDivision<std::uint64_t, 10u>(std::uint64_t n) {
-  return (static_cast<__uint128_t>(0xcccccccccccccccd) * n) >> (64 + 3);
+template<>
+inline constexpr std::uint64_t FastDivision<std::uint64_t, 10u>(
+    std::uint64_t n) {
+  return (__uint128_t{0xcccccccccccccccd} * n) >> (64 + 3);
 }
 
-template<> inline constexpr std::uint32_t FastDivision<std::uint32_t, 10u>(std::uint32_t n) {
-  return (static_cast<std::uint64_t>(0xcccccccd) * n) >> (32 + 3);
+template<>
+inline constexpr std::uint32_t FastDivision<std::uint32_t, 10u>(
+    std::uint32_t n) {
+  return (std::uint64_t{0xcccccccd} * n) >> (32 + 3);
 }
 
-template<> inline constexpr std::uint64_t FastDivision<std::uint64_t, 5u>(std::uint64_t n) {
-  return (static_cast<__uint128_t>(0xcccccccccccccccd) * n) >> (64 + 2);
+template<>
+inline constexpr std::uint64_t FastDivision<std::uint64_t, 5u>(
+    std::uint64_t n) {
+  return (__uint128_t{0xcccccccccccccccd} * n) >> (64 + 2);
 }
 
-template<> inline constexpr std::uint32_t FastDivision<std::uint32_t, 5u>(std::uint32_t n) {
-  return (static_cast<std::uint64_t>(0xcccccccd) * n) >> (32 + 2);
+template<>
+inline constexpr std::uint32_t FastDivision<std::uint32_t, 5u>(
+    std::uint32_t n) {
+  return (std::uint64_t{0xcccccccd} * n) >> (32 + 2);
 }
 #endif
 
-static_assert(FastDivision<std::uint64_t, 10000000000000000u>(9999999999999999u) == 0);
-static_assert(FastDivision<std::uint64_t, 10000000000000000u>(10000000000000000u) == 1);
-static_assert(FastDivision<std::uint64_t, 100000000000000u>(99999999999999u) == 0);
-static_assert(FastDivision<std::uint64_t, 100000000000000u>(100000000000000u) == 1);
+static_assert(
+    FastDivision<std::uint64_t, 10000000000000000u>(9999999999999999u) == 0);
+static_assert(
+    FastDivision<std::uint64_t, 10000000000000000u>(10000000000000000u) == 1);
+static_assert(
+    FastDivision<std::uint64_t, 100000000000000u>(99999999999999u) == 0);
+static_assert(
+    FastDivision<std::uint64_t, 100000000000000u>(100000000000000u) == 1);
 static_assert(FastDivision<std::uint32_t, 1000000u>(999999u) == 0);
 static_assert(FastDivision<std::uint32_t, 1000000u>(1000000u) == 1);
-static_assert(FastDivision<std::uint64_t, 10>(18446744073709551615u) == 1844674407370955161u);
+static_assert(FastDivision<std::uint64_t, 10>(18446744073709551615u) ==
+    1844674407370955161u);
 static_assert(FastDivision<std::uint32_t, 10>(4294967295u) == 429496729u);
-static_assert(FastDivision<std::uint64_t, 5>(18446744073709551615u) == 3689348814741910323u);
+static_assert(FastDivision<std::uint64_t, 5>(18446744073709551615u) ==
+    3689348814741910323u);
 static_assert(FastDivision<std::uint32_t, 5>(4294967295u) == 858993459u);
 }
 #endif

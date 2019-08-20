@@ -136,7 +136,7 @@ template<int PREC> class IntermediateFloat {
 public:
   static constexpr int precision{PREC};
   using IntType = HostUnsignedIntType<precision>;
-  static constexpr IntType topBit{static_cast<IntType>(1) << (precision - 1)};
+  static constexpr IntType topBit{IntType{1} << (precision - 1)};
   static constexpr IntType mask{topBit + (topBit - 1)};
 
   IntermediateFloat() {}
@@ -179,8 +179,7 @@ public:
 private:
   static constexpr int guardBits{3};  // guard, round, sticky
   using GuardType = int;
-  static constexpr GuardType oneHalf{
-      static_cast<GuardType>(1) << (guardBits - 1)};
+  static constexpr GuardType oneHalf{GuardType{1} << (guardBits - 1)};
 
   IntType value_{0};
   GuardType guard_{0};
@@ -265,7 +264,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
   if (digits_ == 0) {  // zero value
     if (isNegative_) {
       using Raw = typename Binary::RawType;
-      Raw negZero{static_cast<Raw>(1) << (Binary::bits - 1)};
+      Raw negZero{Raw{1} << (Binary::bits - 1)};
       return {Binary{negZero}};
     } else {
       return {Binary{}};
@@ -360,11 +359,9 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(const char *&p) {
     using Binary = BinaryFloatingPointNumber<PREC>;
     using Raw = typename Binary::RawType;
     static constexpr Raw inf{
-        static_cast<Raw>(Binary::maxExponent) << Binary::significandBits};
-    static constexpr Raw nan{
-        inf | (static_cast<Raw>(1) << (Binary::significandBits - 2))};
-    static constexpr Raw negInf{
-        inf | (static_cast<Raw>(1) << (Binary::bits - 1))};
+        Raw{Binary::maxExponent} << Binary::significandBits};
+    static constexpr Raw nan{inf | (Raw{1} << (Binary::significandBits - 2))};
+    static constexpr Raw negInf{inf | (Raw{1} << (Binary::bits - 1))};
     if (toupper(p[0]) == 'N' && toupper(p[1]) == 'A' && toupper(p[2]) == 'N') {
       // NaN
       p += 3;
