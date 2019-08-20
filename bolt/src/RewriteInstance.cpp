@@ -1087,6 +1087,9 @@ void RewriteInstance::run() {
     discoverFileObjects();
 
     std::thread PreProcessProfileThread([&]() {
+      if (!DA.started())
+        return;
+
       outs() << "BOLT-INFO: spawning thread to pre-process profile\n";
       preprocessProfileData();
     });
@@ -2656,9 +2659,6 @@ void RewriteInstance::readDebugInfo() {
 }
 
 void RewriteInstance::preprocessProfileData() {
-  if (!DA.started())
-    return;
-
   NamedRegionTimer T("preprocessprofile", "pre-process profile data",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
   if (BAT->enabledFor(InputFile)) {
