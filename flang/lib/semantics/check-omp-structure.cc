@@ -276,6 +276,16 @@ void OmpStructureChecker::Enter(const parser::OmpEndSectionsDirective &x) {
 void OmpStructureChecker::Enter(const parser::OpenMPDeclareSimdConstruct &x) {
   const auto &dir{std::get<parser::Verbatim>(x.t)};
   PushContext(dir.source, OmpDirective::DECLARE_SIMD);
+  // 2.8.2 declare-simd-clause -> simdlen-clause |
+  //                              linear-clause |
+  //                              aligned-clause |
+  //                              uniform-clause |
+  //                              inbranch-clause |
+  //                              notinbranch-clause
+  OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
+      OmpClause::UNIFORM, OmpClause::INBRANCH, OmpClause::NOTINBRANCH};
+  SetContextAllowed(allowed);
+  SetContextAllowedOnce({OmpClause::SIMDLEN});
 }
 
 void OmpStructureChecker::Leave(const parser::OpenMPDeclareSimdConstruct &) {

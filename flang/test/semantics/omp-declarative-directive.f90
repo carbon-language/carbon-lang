@@ -24,7 +24,8 @@
 subroutine declare_simd_1(a, b)
   real(8), intent(inout) :: a, b
   !ERROR: Internal: no symbol found for 'declare_simd_1'
-  !$omp declare simd(declare_simd_1)
+  !ERROR: Internal: no symbol found for 'a'
+  !$omp declare simd(declare_simd_1) aligned(a)
   a = 3.14 + b
 end subroutine declare_simd_1
 
