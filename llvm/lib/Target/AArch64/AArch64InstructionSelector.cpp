@@ -209,6 +209,20 @@ private:
   ComplexRendererFns selectAddrModeXRO(MachineOperand &Root,
                                        unsigned SizeInBytes) const;
 
+  ComplexRendererFns selectShiftedRegister(MachineOperand &Root) const;
+
+  ComplexRendererFns selectArithShiftedRegister(MachineOperand &Root) const {
+    return selectShiftedRegister(Root);
+  }
+
+  ComplexRendererFns selectLogicalShiftedRegister(MachineOperand &Root) const {
+    // TODO: selectShiftedRegister should allow for rotates on logical shifts.
+    // For now, make them the same. The only difference between the two is that
+    // logical shifts are allowed to fold in rotates. Otherwise, these are
+    // functionally the same.
+    return selectShiftedRegister(Root);
+  }
+
   void renderTruncImm(MachineInstrBuilder &MIB, const MachineInstr &MI) const;
 
   // Materialize a GlobalValue or BlockAddress using a movz+movk sequence.
@@ -4490,6 +4504,65 @@ AArch64InstructionSelector::selectAddrModeIndexed(MachineOperand &Root,
       [=](MachineInstrBuilder &MIB) { MIB.add(Root); },
       [=](MachineInstrBuilder &MIB) { MIB.addImm(0); },
   }};
+}
+
+/// Given a shift instruction, return the correct shift type for that
+/// instruction.
+static AArch64_AM::ShiftExtendType getShiftTypeForInst(MachineInstr &MI) {
+  // TODO: Handle AArch64_AM::ROR
+  switch (MI.getOpcode()) {
+  default:
+    return AArch64_AM::InvalidShiftExtend;
+  case TargetOpcode::G_SHL:
+    return AArch64_AM::LSL;
+  case TargetOpcode::G_LSHR:
+    return AArch64_AM::LSR;
+  case TargetOpcode::G_ASHR:
+    return AArch64_AM::ASR;
+  }
+}
+
+/// Select a "shifted register" operand. If the value is not shifted, set the
+/// shift operand to a default value of "lsl 0".
+///
+/// TODO: Allow shifted register to be rotated in logical instructions.
+InstructionSelector::ComplexRendererFns
+AArch64InstructionSelector::selectShiftedRegister(MachineOperand &Root) const {
+  if (!Root.isReg())
+    return None;
+  MachineRegisterInfo &MRI =
+      Root.getParent()->getParent()->getParent()->getRegInfo();
+
+  // Check if the operand is defined by an instruction which corresponds to
+  // a ShiftExtendType. E.g. a G_SHL, G_LSHR, etc.
+  //
+  // TODO: Handle AArch64_AM::ROR for logical instructions.
+  MachineInstr *ShiftInst = MRI.getVRegDef(Root.getReg());
+  if (!ShiftInst)
+    return None;
+  AArch64_AM::ShiftExtendType ShType = getShiftTypeForInst(*ShiftInst);
+  if (ShType == AArch64_AM::InvalidShiftExtend)
+    return None;
+  if (!isWorthFoldingIntoExtendedReg(*ShiftInst, MRI))
+    return None;
+
+  // Need an immediate on the RHS.
+  MachineOperand &ShiftRHS = ShiftInst->getOperand(2);
+  auto Immed = getImmedFromMO(ShiftRHS);
+  if (!Immed)
+    return None;
+
+  // We have something that we can fold. Fold in the shift's LHS and RHS into
+  // the instruction.
+  MachineOperand &ShiftLHS = ShiftInst->getOperand(1);
+  Register ShiftReg = ShiftLHS.getReg();
+
+  unsigned NumBits = MRI.getType(ShiftReg).getSizeInBits();
+  unsigned Val = *Immed & (NumBits - 1);
+  unsigned ShiftVal = AArch64_AM::getShifterImm(ShType, Val);
+
+  return {{[=](MachineInstrBuilder &MIB) { MIB.addUse(ShiftReg); },
+           [=](MachineInstrBuilder &MIB) { MIB.addImm(ShiftVal); }}};
 }
 
 void AArch64InstructionSelector::renderTruncImm(MachineInstrBuilder &MIB,
