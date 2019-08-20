@@ -1944,6 +1944,16 @@ struct DerefState : AbstractState {
   }
 };
 
+template <>
+ChangeStatus clampStateAndIndicateChange<DerefState>(DerefState &S,
+                                                     const DerefState &R) {
+  ChangeStatus CS0 = clampStateAndIndicateChange<IntegerState>(
+      S.DerefBytesState, R.DerefBytesState);
+  ChangeStatus CS1 =
+      clampStateAndIndicateChange<IntegerState>(S.GlobalState, R.GlobalState);
+  return CS0 | CS1;
+}
+
 struct AADereferenceableImpl : AADereferenceable, DerefState {
   AADereferenceableImpl(const IRPosition &IRP) : AADereferenceable(IRP) {}
   using StateType = DerefState;
@@ -1994,8 +2004,6 @@ struct AADereferenceableImpl : AADereferenceable, DerefState {
       Attrs.emplace_back(Attribute::getWithDereferenceableOrNullBytes(
           Ctx, getAssumedDereferenceableBytes()));
   }
-  uint64_t computeAssumedDerefenceableBytes(Attributor &A, Value &V,
-                                            bool &IsGlobal);
 
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
@@ -2012,12 +2020,70 @@ private:
   const AANonNull *NonNullAA = nullptr;
 };
 
-struct AADereferenceableReturned final : AADereferenceableImpl {
-  AADereferenceableReturned(const IRPosition &IRP)
+/// Dereferenceable attribute for a floating value.
+struct AADereferenceableFloating : AADereferenceableImpl {
+  AADereferenceableFloating(const IRPosition &IRP)
       : AADereferenceableImpl(IRP) {}
 
   /// See AbstractAttribute::updateImpl(...).
-  ChangeStatus updateImpl(Attributor &A) override;
+  ChangeStatus updateImpl(Attributor &A) override {
+    const DataLayout &DL = A.getDataLayout();
+
+    auto VisitValueCB = [&](Value &V, DerefState &T, bool Stripped) -> bool {
+      unsigned IdxWidth =
+          DL.getIndexSizeInBits(V.getType()->getPointerAddressSpace());
+      APInt Offset(IdxWidth, 0);
+      const Value *Base =
+          V.stripAndAccumulateInBoundsConstantOffsets(DL, Offset);
+
+      const auto *AA =
+            A.getAAFor<AADereferenceable>(*this, IRPosition::value(*Base));
+      int64_t DerefBytes = 0;
+      if (!AA || (!Stripped &&
+                  getIRPosition().getPositionKind() == IRPosition::IRP_FLOAT)) {
+        // Use IR information if we did not strip anything.
+        // TODO: track globally.
+        bool CanBeNull;
+        DerefBytes = Base->getPointerDereferenceableBytes(DL, CanBeNull);
+        T.GlobalState.indicatePessimisticFixpoint();
+      } else {
+        const DerefState &DS = static_cast<const DerefState &>(AA->getState());
+        DerefBytes = DS.DerefBytesState.getAssumed();
+        T.GlobalState &= DS.GlobalState;
+      }
+
+      T.takeAssumedDerefBytesMinimum(
+          std::max(int64_t(0), DerefBytes - Offset.getSExtValue()));
+
+      if (!Stripped &&
+          getIRPosition().getPositionKind() == IRPosition::IRP_FLOAT) {
+        T.takeKnownDerefBytesMaximum(
+            std::max(int64_t(0), DerefBytes - Offset.getSExtValue()));
+        T.indicatePessimisticFixpoint();
+      }
+
+      return T.isValidState();
+    };
+
+    DerefState T;
+    if (!genericValueTraversal<AADereferenceable, DerefState>(
+            A, getIRPosition(), *this, T, VisitValueCB))
+      return indicatePessimisticFixpoint();
+
+    return clampStateAndIndicateChange(getState(), T);
+  }
+
+  /// See AbstractAttribute::trackStatistics()
+  void trackStatistics() const override {
+    STATS_DECLTRACK_FLOATING_ATTR(dereferenceable)
+  }
+};
+
+/// Dereferenceable attribute for a return value.
+struct AADereferenceableReturned final
+    : AAReturnedFromReturnedValues<AADereferenceableImpl> {
+  AADereferenceableReturned(const IRPosition &IRP)
+      : AAReturnedFromReturnedValues<AADereferenceableImpl>(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override {
@@ -2025,158 +2091,27 @@ struct AADereferenceableReturned final : AADereferenceableImpl {
   }
 };
 
-// Helper function that returns dereferenceable bytes.
-static uint64_t calcDifferenceIfBaseIsNonNull(int64_t DerefBytes,
-                                              int64_t Offset, bool IsNonNull) {
-  if (!IsNonNull)
-    return 0;
-  return std::max((int64_t)0, DerefBytes - Offset);
-}
-
-uint64_t
-AADereferenceableImpl::computeAssumedDerefenceableBytes(Attributor &A, Value &V,
-                                                        bool &IsGlobal) {
-  // TODO: Tracking the globally flag.
-  IsGlobal = false;
-
-  // First, we try to get information about V from Attributor.
-  if (auto *DerefAA =
-          A.getAAFor<AADereferenceable>(*this, IRPosition::value(V))) {
-    return DerefAA->getAssumedDereferenceableBytes();
-  }
-
-  // Otherwise, we try to compute assumed bytes from base pointer.
-  const DataLayout &DL = A.getDataLayout();
-  unsigned IdxWidth =
-      DL.getIndexSizeInBits(V.getType()->getPointerAddressSpace());
-  APInt Offset(IdxWidth, 0);
-  Value *Base = V.stripAndAccumulateInBoundsConstantOffsets(DL, Offset);
-
-  if (auto *BaseDerefAA =
-          A.getAAFor<AADereferenceable>(*this, IRPosition::value(*Base))) {
-    return calcDifferenceIfBaseIsNonNull(
-        BaseDerefAA->getAssumedDereferenceableBytes(), Offset.getSExtValue(),
-        Offset != 0 || BaseDerefAA->isAssumedNonNull());
-  }
-
-  // Then, use IR information.
-
-  if (isDereferenceablePointer(Base, Base->getType(), DL))
-    return calcDifferenceIfBaseIsNonNull(
-        DL.getTypeStoreSize(Base->getType()->getPointerElementType()),
-        Offset.getSExtValue(),
-        !NullPointerIsDefined(getAnchorScope(),
-                              V.getType()->getPointerAddressSpace()));
-
-  return 0;
-}
-
-ChangeStatus AADereferenceableReturned::updateImpl(Attributor &A) {
-  auto BeforeState = static_cast<DerefState>(*this);
-
-  bool IsGlobal = isAssumedGlobal();
-
-  auto CheckReturnValue = [&](Value &RV) -> bool {
-    takeAssumedDerefBytesMinimum(
-        computeAssumedDerefenceableBytes(A, RV, IsGlobal));
-    return isValidState();
-  };
-
-  if (A.checkForAllReturnedValues(CheckReturnValue, *this)) {
-    GlobalState.intersectAssumedBits(IsGlobal);
-    return BeforeState == static_cast<DerefState>(*this)
-               ? ChangeStatus::UNCHANGED
-               : ChangeStatus::CHANGED;
-  }
-  return indicatePessimisticFixpoint();
-}
-
-struct AADereferenceableArgument final : AADereferenceableImpl {
+/// Dereferenceable attribute for an argument
+struct AADereferenceableArgument final
+    : AAArgumentFromCallSiteArguments<AADereferenceableImpl> {
   AADereferenceableArgument(const IRPosition &IRP)
-      : AADereferenceableImpl(IRP) {}
-
-  /// See AbstractAttribute::updateImpl(...).
-  ChangeStatus updateImpl(Attributor &A) override;
+      : AAArgumentFromCallSiteArguments<AADereferenceableImpl>(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override {
-    STATS_DECLTRACK_ARG_ATTR(dereferenceable)
-  }
+  void trackStatistics() const override{
+      STATS_DECLTRACK_ARG_ATTR(dereferenceable)};
 };
 
-ChangeStatus AADereferenceableArgument::updateImpl(Attributor &A) {
-  Argument &Arg = cast<Argument>(getAnchorValue());
-
-  auto BeforeState = static_cast<DerefState>(*this);
-
-  unsigned ArgNo = Arg.getArgNo();
-
-  bool IsGlobal = isAssumedGlobal();
-
-  // Callback function
-  std::function<bool(CallSite)> CallSiteCheck = [&](CallSite CS) -> bool {
-    assert(CS && "Sanity check: Call site was not initialized properly!");
-
-    // Check that DereferenceableAA is AADereferenceableCallSiteArgument.
-    if (auto *DereferenceableAA = A.getAAFor<AADereferenceable>(
-            *this, IRPosition::callsite_argument(CS, ArgNo))) {
-      ImmutableCallSite ICS(
-          &DereferenceableAA->getIRPosition().getAnchorValue());
-      if (ICS && CS.getInstruction() == ICS.getInstruction()) {
-        takeAssumedDerefBytesMinimum(
-            DereferenceableAA->getAssumedDereferenceableBytes());
-        IsGlobal &= DereferenceableAA->isAssumedGlobal();
-        return isValidState();
-      }
-    }
-
-    takeAssumedDerefBytesMinimum(computeAssumedDerefenceableBytes(
-        A, *CS.getArgOperand(ArgNo), IsGlobal));
-
-    return isValidState();
-  };
-
-  if (!A.checkForAllCallSites(CallSiteCheck, *this, true))
-    return indicatePessimisticFixpoint();
-
-  GlobalState.intersectAssumedBits(IsGlobal);
-
-  return BeforeState == static_cast<DerefState>(*this) ? ChangeStatus::UNCHANGED
-                                                       : ChangeStatus::CHANGED;
-}
-
 /// Dereferenceable attribute for a call site argument.
-struct AADereferenceableCallSiteArgument final : AADereferenceableImpl {
+struct AADereferenceableCallSiteArgument final : AADereferenceableFloating {
   AADereferenceableCallSiteArgument(const IRPosition &IRP)
-      : AADereferenceableImpl(IRP) {}
-
-  /// See AbstractAttribute::updateImpl(Attributor &A).
-  ChangeStatus updateImpl(Attributor &A) override;
+      : AADereferenceableFloating(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override {
     STATS_DECLTRACK_CSARG_ATTR(dereferenceable)
   }
 };
-
-ChangeStatus AADereferenceableCallSiteArgument::updateImpl(Attributor &A) {
-  // NOTE: Never look at the argument of the callee in this method.
-  //       If we do this, "dereferenceable" is always deduced because of the
-  //       assumption.
-
-  Value &V = getAssociatedValue();
-
-  auto BeforeState = static_cast<DerefState>(*this);
-
-  bool IsGlobal = isAssumedGlobal();
-
-  takeAssumedDerefBytesMinimum(
-      computeAssumedDerefenceableBytes(A, V, IsGlobal));
-  GlobalState.intersectAssumedBits(IsGlobal);
-
-  return BeforeState == static_cast<DerefState>(*this) ? ChangeStatus::UNCHANGED
-                                                       : ChangeStatus::CHANGED;
-}
 
 /// Dereferenceable attribute deduction for a call site return value.
 using AADereferenceableCallSiteReturned = AADereferenceableReturned;
@@ -2247,7 +2182,7 @@ struct AAAlignFloating : AAAlignImpl {
     StateType T;
     if (!genericValueTraversal<AAAlign, StateType>(A, getIRPosition(), *this, T,
                                                    VisitValueCB))
-      indicatePessimisticFixpoint();
+      return indicatePessimisticFixpoint();
 
     // TODO: If we know we visited all incoming values, thus no are assumed
     // dead, we can take the known information from the state T.

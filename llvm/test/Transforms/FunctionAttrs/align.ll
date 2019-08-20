@@ -92,12 +92,12 @@ define internal i8* @f1(i8* readnone %0) local_unnamed_addr #0 {
 ; FIXME: Until we have "on-demand" attribute generation we do not determine the
 ;        alignment for the return value here.
 ;             define internal nonnull align 8 i8* @f1(i8* nonnull readnone align 8 %0)
-; ATTRIBUTOR: define internal i8* @f1(i8* nonnull readnone align 8 %0)
+; ATTRIBUTOR: define internal i8* @f1(i8* nonnull readnone align 8 dereferenceable(1) %0)
   %2 = icmp eq i8* %0, null
   br i1 %2, label %3, label %5
 
 ; <label>:3:                                      ; preds = %1
-; ATTRIBUTOR: %4 = tail call i8* @f2(i8* nonnull align 8 @a1)
+; ATTRIBUTOR: %4 = tail call i8* @f2(i8* nonnull align 8 dereferenceable(1) @a1)
   %4 = tail call i8* @f2(i8* nonnull @a1)
   br label %5
 
@@ -111,18 +111,18 @@ define internal i8* @f2(i8* readnone %0) local_unnamed_addr #0 {
 ; FIXME: Until we have "on-demand" attribute generation we do not determine the
 ;        alignment for the return value here.
 ;             define internal nonnull align 8 i8* @f2(i8* nonnull readnone align 8 %0)
-; ATTRIBUTOR: define internal i8* @f2(i8* nonnull readnone align 8 %0)
+; ATTRIBUTOR: define internal i8* @f2(i8* nonnull readnone align 8 dereferenceable(1) %0)
   %2 = icmp eq i8* %0, null
   br i1 %2, label %5, label %3
 
 ; <label>:3:                                      ; preds = %1
 
-; ATTRIBUTOR: %4 = tail call i8* @f1(i8* nonnull align 8 %0)
+; ATTRIBUTOR: %4 = tail call i8* @f1(i8* nonnull align 8 dereferenceable(1) %0)
   %4 = tail call i8* @f1(i8* nonnull %0)
   br label %7
 
 ; <label>:5:                                      ; preds = %1
-; ATTRIBUTOR: %6 = tail call i8* @f3(i8* nonnull align 16 @a2)
+; ATTRIBUTOR: %6 = tail call i8* @f3(i8* nonnull align 16 dereferenceable(1) @a2)
   %6 = tail call i8* @f3(i8* nonnull @a2)
   br label %7
 
@@ -136,12 +136,12 @@ define internal i8* @f3(i8* readnone %0) local_unnamed_addr #0 {
 ; FIXME: Until we have "on-demand" attribute generation we do not determine the
 ;        alignment for the return value here.
 ;             define internal nonnull align 8 i8* @f3(i8* nonnull readnone align 16 %0)
-; ATTRIBUTOR: define internal i8* @f3(i8* nonnull readnone align 16 %0)
+; ATTRIBUTOR: define internal i8* @f3(i8* nonnull readnone align 16 dereferenceable(1) %0)
   %2 = icmp eq i8* %0, null
   br i1 %2, label %3, label %5
 
 ; <label>:3:                                      ; preds = %1
-; ATTRIBUTOR: %4 = tail call i8* @f1(i8* nonnull align 16 @a2)
+; ATTRIBUTOR: %4 = tail call i8* @f1(i8* nonnull align 16 dereferenceable(1) @a2)
   %4 = tail call i8* @f1(i8* nonnull @a2)
   br label %5
 
