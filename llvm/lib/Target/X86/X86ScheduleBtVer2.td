@@ -371,6 +371,20 @@ def : InstRW<[JWriteCMPXCHGVariant], (instrs CMPXCHG8rr, LCMPXCHG8, CMPXCHG8rm,
                                              CMPXCHG8B, CMPXCHG16B,
                                              LCMPXCHG8B, LCMPXCHG16B)>;
 
+def JWriteLOCK_ALURMW : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 19;
+  let ResourceCycles = [1,19,19];
+  let NumMicroOps = 1;
+}
+
+def JWriteLOCK_ALURMWVariant :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<CheckLockPrefix>, [JWriteLOCK_ALURMW]>,
+  SchedVar<NoSchedPred,                       [WriteALURMW]>
+]>;
+def : InstRW<[JWriteLOCK_ALURMWVariant], (instrs INC8m, INC16m, INC32m, INC64m,
+                                                 DEC8m, DEC16m, DEC32m, DEC64m,
+                                                 NOT8m, NOT16m, NOT32m, NOT64m,
+                                                 NEG8m, NEG16m, NEG32m, NEG64m)>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Floating point. This covers both scalar and vector operations.

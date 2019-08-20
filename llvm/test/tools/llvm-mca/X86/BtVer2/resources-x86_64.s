@@ -1307,16 +1307,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      100   0.50                  U     cpuid
 # CHECK-NEXT:  1      1     0.50                        decb	%dil
 # CHECK-NEXT:  1      5     1.00    *      *            decb	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		decb	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		decb	(%rax)
 # CHECK-NEXT:  1      1     0.50                        decw	%di
 # CHECK-NEXT:  1      5     1.00    *      *            decw	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		decw	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		decw	(%rax)
 # CHECK-NEXT:  1      1     0.50                        decl	%edi
 # CHECK-NEXT:  1      5     1.00    *      *            decl	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		decl	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		decl	(%rax)
 # CHECK-NEXT:  1      1     0.50                        decq	%rdi
 # CHECK-NEXT:  1      5     1.00    *      *            decq	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		decq	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		decq	(%rax)
 # CHECK-NEXT:  1      12    12.00                 U     divb	%dil
 # CHECK-NEXT:  1      15    12.00   *             U     divb	(%rax)
 # CHECK-NEXT:  2      17    17.00                 U     divw	%si
@@ -1368,16 +1368,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      100   0.50                  U     inl	%dx, %eax
 # CHECK-NEXT:  1      1     0.50                        incb	%dil
 # CHECK-NEXT:  1      5     1.00    *      *            incb	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		incb	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		incb	(%rax)
 # CHECK-NEXT:  1      1     0.50                        incw	%di
 # CHECK-NEXT:  1      5     1.00    *      *            incw	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		incw	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		incw	(%rax)
 # CHECK-NEXT:  1      1     0.50                        incl	%edi
 # CHECK-NEXT:  1      5     1.00    *      *            incl	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		incl	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		incl	(%rax)
 # CHECK-NEXT:  1      1     0.50                        incq	%rdi
 # CHECK-NEXT:  1      5     1.00    *      *            incq	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		incq	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		incq	(%rax)
 # CHECK-NEXT:  1      100   0.50                  U     insb	%dx, %es:(%rdi)
 # CHECK-NEXT:  1      100   0.50                  U     insw	%dx, %es:(%rdi)
 # CHECK-NEXT:  1      100   0.50                  U     insl	%dx, %es:(%rdi)
@@ -1426,16 +1426,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  2      9     4.00    *                   mulq	(%rax)
 # CHECK-NEXT:  1      1     0.50                        negb	%dil
 # CHECK-NEXT:  1      5     1.00    *      *            negb	(%r8)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		negb	(%r8)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		negb	(%r8)
 # CHECK-NEXT:  1      1     0.50                        negw	%si
 # CHECK-NEXT:  1      5     1.00    *      *            negw	(%r9)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		negw	(%r9)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		negw	(%r9)
 # CHECK-NEXT:  1      1     0.50                        negl	%edx
 # CHECK-NEXT:  1      5     1.00    *      *            negl	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		negl	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		negl	(%rax)
 # CHECK-NEXT:  1      1     0.50                        negq	%rcx
 # CHECK-NEXT:  1      5     1.00    *      *            negq	(%r10)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		negq	(%r10)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		negq	(%r10)
 # CHECK-NEXT:  1      1     0.50                        nop
 # CHECK-NEXT:  1      1     0.50                        nopw	%di
 # CHECK-NEXT:  1      1     0.50                        nopw	(%rcx)
@@ -1445,16 +1445,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      1     0.50                        nopq	(%r9)
 # CHECK-NEXT:  1      1     0.50                        notb	%dil
 # CHECK-NEXT:  1      5     1.00    *      *            notb	(%r8)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		notb	(%r8)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		notb	(%r8)
 # CHECK-NEXT:  1      1     0.50                        notw	%si
 # CHECK-NEXT:  1      5     1.00    *      *            notw	(%r9)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		notw	(%r9)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		notw	(%r9)
 # CHECK-NEXT:  1      1     0.50                        notl	%edx
 # CHECK-NEXT:  1      5     1.00    *      *            notl	(%rax)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		notl	(%rax)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		notl	(%rax)
 # CHECK-NEXT:  1      1     0.50                        notq	%rcx
 # CHECK-NEXT:  1      5     1.00    *      *            notq	(%r10)
-# CHECK-NEXT:  1      5     1.00    *      *            lock		notq	(%r10)
+# CHECK-NEXT:  1      19    19.00   *      *            lock		notq	(%r10)
 # CHECK-NEXT:  1      1     0.50                        orb	$7, %al
 # CHECK-NEXT:  1      1     0.50                        orb	$7, %dil
 # CHECK-NEXT:  1      5     1.00    *      *            orb	$7, (%rax)
@@ -1959,7 +1959,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]
-# CHECK-NEXT: 702.50 752.50 380.00  -      -      -      -     524.00 64.00  425.00  -      -      -      -
+# CHECK-NEXT: 702.50 752.50 380.00  -      -      -      -     812.00 64.00  713.00  -      -      -      -
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]   Instructions:
@@ -2240,16 +2240,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     cpuid
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     decb	%dil
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     decb	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		decb	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		decb	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     decw	%di
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     decw	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		decw	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		decw	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     decl	%edi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     decl	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		decl	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		decl	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     decq	%rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     decq	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		decq	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		decq	(%rax)
 # CHECK-NEXT:  -     1.00   12.00   -      -      -      -      -      -      -      -      -      -      -     divb	%dil
 # CHECK-NEXT:  -     1.00   12.00   -      -      -      -     1.00    -      -      -      -      -      -     divb	(%rax)
 # CHECK-NEXT:  -     1.00   17.00   -      -      -      -      -      -      -      -      -      -      -     divw	%si
@@ -2301,16 +2301,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     inl	%dx, %eax
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     incb	%dil
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     incb	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		incb	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		incb	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     incw	%di
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     incw	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		incw	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		incw	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     incl	%edi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     incl	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		incl	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		incl	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     incq	%rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     incq	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		incq	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		incq	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     insb	%dx, %es:(%rdi)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     insw	%dx, %es:(%rdi)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     insl	%dx, %es:(%rdi)
@@ -2359,16 +2359,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   4.00    -      -      -      -      -     mulq	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     negb	%dil
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     negb	(%r8)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		negb	(%r8)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		negb	(%r8)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     negw	%si
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     negw	(%r9)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		negw	(%r9)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		negw	(%r9)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     negl	%edx
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     negl	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		negl	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		negl	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     negq	%rcx
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     negq	(%r10)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		negq	(%r10)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		negq	(%r10)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     nop
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     nopw	%di
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     nopw	(%rcx)
@@ -2378,16 +2378,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     nopq	(%r9)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     notb	%dil
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     notb	(%r8)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		notb	(%r8)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		notb	(%r8)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     notw	%si
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     notw	(%r9)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		notw	(%r9)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		notw	(%r9)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     notl	%edx
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     notl	(%rax)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		notl	(%rax)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		notl	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     notq	%rcx
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     notq	(%r10)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		notq	(%r10)
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     19.00   -     19.00   -      -      -      -     lock		notq	(%r10)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     orb	$7, %al
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     orb	$7, %dil
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     orb	$7, (%rax)
