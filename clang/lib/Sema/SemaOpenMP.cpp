@@ -15365,7 +15365,7 @@ static void checkDeclInTargetContext(SourceLocation SL, SourceRange SR,
       // directive, all variables that are captured by the lambda
       // expression must also appear in a to clause.
       SemaRef.Diag(VD->getLocation(),
-                   diag::omp_lambda_capture_in_declare_target_not_to);
+                   diag::err_omp_lambda_capture_in_declare_target_not_to);
       SemaRef.Diag(SL, diag::note_var_explicitly_captured_here)
           << VD << 0 << SR;
       return;
