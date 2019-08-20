@@ -191,10 +191,10 @@ defm : X86WriteRes<WriteRMW, [JSAGU], 1, [1], 0>;
 defm : JWriteResIntPair<WriteALU,    [JALU01], 1>;
 defm : JWriteResIntPair<WriteADC,    [JALU01], 1, [2]>;
 
-defm : X86WriteRes<WriteBSWAP32, [JALU01], 1, [1], 1>;
-defm : X86WriteRes<WriteBSWAP64, [JALU01], 1, [1], 1>;
-defm : X86WriteRes<WriteCMPXCHG,[JALU01], 1, [1], 1>;
-defm : X86WriteRes<WriteCMPXCHGRMW,[JALU01, JSAGU, JLAGU], 4, [1, 1, 1], 2>;
+defm : X86WriteRes<WriteBSWAP32,     [JALU01], 1, [1], 1>;
+defm : X86WriteRes<WriteBSWAP64,     [JALU01], 1, [1], 1>;
+defm : X86WriteRes<WriteCMPXCHG,     [JALU01], 3, [3], 5>;
+defm : X86WriteRes<WriteCMPXCHGRMW,  [JALU01, JSAGU, JLAGU], 11, [3, 1, 1], 6>;
 defm : X86WriteRes<WriteXCHG,        [JALU01], 1, [1], 1>;
 
 defm : JWriteResIntPair<WriteIMul8,     [JALU1, JMul], 3, [1, 1], 2>;
@@ -304,6 +304,73 @@ def : WriteRes<WriteFence,  [JSAGU]>;
 // Nops don't have dependencies, so there's no actual latency, but we set this
 // to '1' to tell the scheduler that the nop uses an ALU slot for a cycle.
 def : WriteRes<WriteNop, [JALU01]> { let Latency = 1; }
+
+def JWriteCMPXCHG8rr : SchedWriteRes<[JALU01]> {
+  let Latency = 3;
+  let ResourceCycles = [3];
+  let NumMicroOps = 3;
+}
+
+def JWriteLOCK_CMPXCHG8rm : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 16;
+  let ResourceCycles = [3,16,16];
+  let NumMicroOps = 5;
+}
+
+def JWriteLOCK_CMPXCHGrm : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 17;
+  let ResourceCycles = [3,17,17];
+  let NumMicroOps = 6;
+}
+
+def JWriteCMPXCHG8rm : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 11;
+  let ResourceCycles = [3,1,1];
+  let NumMicroOps = 5;
+}
+
+def JWriteCMPXCHG8B : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 11;
+  let ResourceCycles = [3,1,1];
+  let NumMicroOps = 18;
+}
+
+def JWriteCMPXCHG16B : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 32;
+  let ResourceCycles = [6,1,1];
+  let NumMicroOps = 28;
+}
+
+def JWriteLOCK_CMPXCHG8B : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 19;
+  let ResourceCycles = [3,19,19];
+  let NumMicroOps = 18;
+}
+
+def JWriteLOCK_CMPXCHG16B : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
+  let Latency = 38;
+  let ResourceCycles = [6,38,38];
+  let NumMicroOps = 28;
+}
+
+def JWriteCMPXCHGVariant :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsAtomicCompareAndSwap8B>,  [JWriteLOCK_CMPXCHG8B]>,
+  SchedVar<MCSchedPredicate<IsAtomicCompareAndSwap16B>, [JWriteLOCK_CMPXCHG16B]>,
+  SchedVar<MCSchedPredicate<IsAtomicCompareAndSwap_8>,  [JWriteLOCK_CMPXCHG8rm]>,
+  SchedVar<MCSchedPredicate<IsAtomicCompareAndSwap>,    [JWriteLOCK_CMPXCHGrm]>,
+  SchedVar<MCSchedPredicate<IsCompareAndSwap8B>,        [JWriteCMPXCHG8B]>,
+  SchedVar<MCSchedPredicate<IsCompareAndSwap16B>,       [JWriteCMPXCHG16B]>,
+  SchedVar<MCSchedPredicate<IsRegMemCompareAndSwap_8>,  [JWriteCMPXCHG8rm]>,
+  SchedVar<MCSchedPredicate<IsRegMemCompareAndSwap>,    [WriteCMPXCHGRMW]>,
+  SchedVar<MCSchedPredicate<IsRegRegCompareAndSwap_8>,  [JWriteCMPXCHG8rr]>,
+  SchedVar<NoSchedPred,                                 [WriteCMPXCHG]>
+]>;
+def : InstRW<[JWriteCMPXCHGVariant], (instrs CMPXCHG8rr, LCMPXCHG8, CMPXCHG8rm,
+                                             CMPXCHG16rm, CMPXCHG32rm, CMPXCHG64rm,
+                                             LCMPXCHG16, LCMPXCHG32, LCMPXCHG64,
+                                             CMPXCHG8B, CMPXCHG16B,
+                                             LCMPXCHG8B, LCMPXCHG16B)>;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Floating point. This covers both scalar and vector operations.
