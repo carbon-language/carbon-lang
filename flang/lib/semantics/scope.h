@@ -89,9 +89,13 @@ public:
   const Symbol *GetSymbol() const;
   const Scope *GetDerivedTypeParent() const;
 
-  // It is only safe to call name() for kind of scopes for which GetSymbol
-  // will return a symbol (e.g, it will die if the scope is a Block).
-  const SourceName &name() const { return DEREF(GetSymbol()).name(); }
+  std::optional<SourceName> GetName() const {
+    if (const auto *sym{GetSymbol()}) {
+      return sym->name();
+    } else {
+      return std::nullopt;
+    }
+  }
 
   /// Make a scope nested in this one
   Scope &MakeScope(Kind kind, Symbol *symbol = nullptr);

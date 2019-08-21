@@ -126,7 +126,7 @@ void ModFileWriter::WriteOne(const Scope &scope) {
 // Write the module file for symbol, which must be a module or submodule.
 void ModFileWriter::Write(const Symbol &symbol) {
   auto *ancestor{symbol.get<ModuleDetails>().ancestor()};
-  auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
+  auto ancestorName{ancestor ? ancestor->GetName().value().ToString() : ""s};
   auto path{ModFilePath(context_.moduleDirectory(), symbol.name(), ancestorName,
       context_.moduleFileSuffix())};
   PutSymbols(*symbol.scope());
@@ -680,7 +680,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
     if (auto *scope{ancestor->FindSubmodule(name)}) {
       return scope;
     }
-    ancestorName = ancestor->name().ToString();
+    ancestorName = ancestor->GetName().value().ToString();
   } else {
     auto it{context_.globalScope().find(name)};
     if (it != context_.globalScope().end()) {

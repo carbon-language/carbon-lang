@@ -367,7 +367,7 @@ bool IsDerivedTypeFromModule(
   } else {
     const auto &symbol{derived->typeSymbol()};
     return symbol.name() == name && symbol.owner().IsModule() &&
-        symbol.owner().name() == module;
+        symbol.owner().GetName().value() == module;
   }
 }
 

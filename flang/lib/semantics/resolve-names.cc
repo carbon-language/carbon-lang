@@ -1968,7 +1968,7 @@ ModuleVisitor::SymbolRename ModuleVisitor::AddUse(
         IsDefinedOperator(useName)
             ? "Operator '%s' not found in module '%s'"_err_en_US
             : "'%s' not found in module '%s'"_err_en_US,
-        useName, useModuleScope_->name());
+        useName, useModuleScope_->GetName().value());
     return {};
   }
   if (useSymbol->attrs().test(Attr::PRIVATE)) {
@@ -1976,7 +1976,7 @@ ModuleVisitor::SymbolRename ModuleVisitor::AddUse(
         IsDefinedOperator(useName)
             ? "Operator '%s' is PRIVATE in '%s'"_err_en_US
             : "'%s' is PRIVATE in '%s'"_err_en_US,
-        useName, useModuleScope_->name());
+        useName, useModuleScope_->GetName().value());
     return {};
   }
   auto &localSymbol{MakeSymbol(localName)};
@@ -2583,7 +2583,7 @@ bool DeclarationVisitor::CheckUseError(const parser::Name &name) {
   Message &msg{Say(name, "Reference to '%s' is ambiguous"_err_en_US)};
   for (const auto &[location, module] : details->occurrences()) {
     msg.Attach(location, "'%s' was use-associated from module '%s'"_en_US,
-        name.source, module->name());
+        name.source, module->GetName().value());
   }
   return true;
 }
@@ -2620,7 +2620,7 @@ bool DeclarationVisitor::CheckAccessibleComponent(
     }
     Say(name,
         "PRIVATE component '%s' is only accessible within module '%s'"_err_en_US,
-        name.ToString(), moduleScope->name());
+        name.ToString(), moduleScope->GetName().value());
   } else {
     Say(name,
         "PRIVATE component '%s' is only accessible within its module"_err_en_US,
@@ -5303,7 +5303,8 @@ void ResolveNamesVisitor::CheckImports() {
     // C8102: all entities in host must not be hidden
     for (const auto &pair : scope.parent()) {
       auto &name{pair.first};
-      if (!scope.GetSymbol() || name != scope.name()) {
+      std::optional<SourceName> scopeName{scope.GetName()};
+      if (!scopeName.has_value() || name != *scopeName) {
         CheckImport(prevImportStmt_.value(), name);
       }
     }

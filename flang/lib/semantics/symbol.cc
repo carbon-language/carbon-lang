@@ -392,10 +392,10 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             if (x.isSubmodule()) {
               os << " (";
               if (x.ancestor()) {
-                auto &ancestor{x.ancestor()->name()};
+                auto ancestor{x.ancestor()->GetName().value()};
                 os << ancestor;
                 if (x.parent()) {
-                  auto &parent{x.parent()->name()};
+                  auto parent{x.parent()->GetName().value()};
                   if (ancestor != parent) {
                     os << ':' << parent;
                   }
@@ -430,7 +430,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const UseErrorDetails &x) {
             os << " uses:";
             for (const auto &[location, module] : x.occurrences()) {
-              os << " from " << module->name() << " at " << location;
+              os << " from " << module->GetName().value() << " at " << location;
             }
           },
           [](const HostAssocDetails &) {},

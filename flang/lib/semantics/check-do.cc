@@ -206,7 +206,8 @@ private:
   bool EndTDeallocatesCoarray() { return false; }  // FIXME placeholder
   bool fromScope(const Symbol &symbol, const std::string &moduleName) {
     if (symbol.GetUltimate().owner().IsModule() &&
-        symbol.GetUltimate().owner().name().ToString() == moduleName) {
+        symbol.GetUltimate().owner().GetName().value().ToString() ==
+            moduleName) {
       return true;
     }
     return false;
