@@ -2,8 +2,8 @@
 
 // RUN: llvm-mc -filetype=obj -triple=armv7a-none-linux-gnueabi %p/Inputs/arm-shared.s -o %t.a32.so.o
 // RUN: ld.lld -shared %t.a32.so.o -soname=so -o %t.a32.so
-// RUN: llvm-mc -filetype=obj -triple=armv7a-none-linux-gnueabi %s -o %t.a32
-// RUN: ld.lld -pie --pack-dyn-relocs=none %t.a32 %t.a32.so -o %t2.a32
+// RUN: llvm-mc -filetype=obj -triple=armv7a-none-linux-gnueabi %s -o %t.a32.o
+// RUN: ld.lld -pie --pack-dyn-relocs=none %t.a32.o %t.a32.so -o %t2.a32
 // RUN: llvm-readobj -r %t2.a32 | FileCheck --check-prefix=UNPACKED32 %s
 
 // Unpacked should have the relative relocations in their natural order.
@@ -46,7 +46,7 @@
 // UNPACKED32-NEXT:     0x2040 R_ARM_ABS32 zed2 0x0
 // UNPACKED32-NEXT:     }
 
-// RUN: ld.lld -pie --pack-dyn-relocs=android %t.a32 %t.a32.so -o %t3.a32
+// RUN: ld.lld -pie --pack-dyn-relocs=android %t.a32.o %t.a32.so -o %t3.a32
 // RUN: llvm-readobj -S --dynamic-table %t3.a32 | FileCheck --check-prefix=ANDROID32-HEADERS %s
 // RUN: llvm-readobj -r %t3.a32 | FileCheck --check-prefix=ANDROID32 %s
 
@@ -113,7 +113,7 @@
 // ANDROID32-NEXT:     0x2040 R_ARM_ABS32 zed2 0x0
 // ANDROID32-NEXT:     }
 
-// RUN: ld.lld -pie --pack-dyn-relocs=relr %t.a32 %t.a32.so -o %t4.a32
+// RUN: ld.lld -pie --pack-dyn-relocs=relr %t.a32.o %t.a32.so -o %t4.a32
 // RUN: llvm-readobj -S --dynamic-table %t4.a32 | FileCheck --check-prefix=RELR32-HEADERS %s
 // RUN: llvm-readobj -r --raw-relr %t4.a32 | FileCheck --check-prefix=RAW-RELR32 %s
 // RUN: llvm-readobj -r %t4.a32 | FileCheck --check-prefix=RELR32 %s
@@ -190,8 +190,8 @@
 
 // RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %p/Inputs/shared2.s -o %t.a64.so.o
 // RUN: ld.lld -shared %t.a64.so.o -soname=so -o %t.a64.so
-// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %t.a64
-// RUN: ld.lld -pie --pack-dyn-relocs=none %t.a64 %t.a64.so -o %t2.a64
+// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %t.a64.o
+// RUN: ld.lld -pie --pack-dyn-relocs=none %t.a64.o %t.a64.so -o %t2.a64
 // RUN: llvm-readobj -r %t2.a64 | FileCheck --check-prefix=UNPACKED64 %s
 
 // UNPACKED64:          Section ({{.+}}) .rela.dyn {
@@ -233,7 +233,7 @@
 // UNPACKED64-NEXT:     0x30700 R_AARCH64_ABS64 zed2 0x0
 // UNPACKED64-NEXT:     }
 
-// RUN: ld.lld -pie --pack-dyn-relocs=android %t.a64 %t.a64.so -o %t3.a64
+// RUN: ld.lld -pie --pack-dyn-relocs=android %t.a64.o %t.a64.so -o %t3.a64
 // RUN: llvm-readobj -S --dynamic-table %t3.a64 | FileCheck --check-prefix=ANDROID64-HEADERS %s
 // RUN: llvm-readobj -r %t3.a64 | FileCheck --check-prefix=ANDROID64 %s
 
@@ -295,7 +295,7 @@
 // ANDROID64-NEXT:     0x304D9 R_AARCH64_ABS64 bar2 0x1
 // ANDROID64-NEXT:     }
 
-// RUN: ld.lld -pie --pack-dyn-relocs=relr %t.a64 %t.a64.so -o %t4.a64
+// RUN: ld.lld -pie --pack-dyn-relocs=relr %t.a64.o %t.a64.so -o %t4.a64
 // RUN: llvm-readobj -S --dynamic-table %t4.a64 | FileCheck --check-prefix=RELR64-HEADERS %s
 // RUN: llvm-readobj -r --raw-relr %t4.a64 | FileCheck --check-prefix=RAW-RELR64 %s
 // RUN: llvm-readobj -r %t4.a64 | FileCheck --check-prefix=RELR64 %s
@@ -340,6 +340,32 @@
 // RELR64-NEXT:   0x30579 R_AARCH64_ABS64 bar2 0x1
 // RELR64-NEXT:   0x30581 R_AARCH64_ABS64 bar2 0x0
 // RELR64-NEXT:   0x30500 R_AARCH64_ABS64 zed2 0x0
+// RELR64-NEXT: }
+// RELR64-NEXT: Section ({{.+}}) .relr.dyn {
+// RELR64-NEXT:   0x30480 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30488 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30490 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30498 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304A0 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304A8 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304B0 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304B8 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304C8 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304D0 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304D8 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304E0 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304E8 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304F0 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x304F8 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30510 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30518 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30520 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30528 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30530 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30538 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30540 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30548 R_AARCH64_RELATIVE - 0x0
+// RELR64-NEXT:   0x30550 R_AARCH64_RELATIVE - 0x0
 // RELR64-NEXT: }
 
 .data
