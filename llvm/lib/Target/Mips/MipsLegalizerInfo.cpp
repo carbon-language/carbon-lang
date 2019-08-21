@@ -54,6 +54,10 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
                                {s32, p0, 16, 8}})
       .minScalar(0, s32);
 
+  getActionDefinitionsBuilder({G_ZEXT, G_SEXT})
+      .legalIf([](const LegalityQuery &Query) { return false; })
+      .maxScalar(0, s32);
+
   getActionDefinitionsBuilder(G_TRUNC)
       .legalIf([](const LegalityQuery &Query) { return false; })
       .maxScalar(1, s32);
