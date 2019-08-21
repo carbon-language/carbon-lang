@@ -471,7 +471,7 @@ def cmd_push(args):
                    for c in revs)))
 
     # Ask confirmation if multiple commits are about to be pushed
-    if len(revs) != 1:
+    if not args.force and len(revs) != 1:
         if not ask_confirm("Are you sure you want to create %d commits?" % len(revs)):
             die("Aborting")
 
@@ -626,6 +626,11 @@ if __name__ == '__main__':
         help='Do everything other than commit to svn.  Leaves junk in the svn '
         'repo, so probably will not work well if you try to commit more '
         'than one rev.')
+    parser_push.add_argument(
+        '-f',
+        '--force',
+        action='store_true',
+        help='Do not ask for confirmation when pushing multiple commits.')
     parser_push.add_argument(
         'rev_range',
         metavar='GIT_REVS',
