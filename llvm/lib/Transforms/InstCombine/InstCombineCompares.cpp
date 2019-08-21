@@ -2411,6 +2411,11 @@ Instruction *InstCombiner::foldICmpSubConstant(ICmpInst &Cmp,
   const APInt *C2;
   APInt SubResult;
 
+  // icmp eq/ne (sub C, Y), C -> icmp eq/ne Y, 0
+  if (match(X, m_APInt(C2)) && *C2 == C && Cmp.isEquality())
+    return new ICmpInst(Cmp.getPredicate(), Y,
+                        ConstantInt::get(Y->getType(), 0));
+
   // (icmp P (sub nuw|nsw C2, Y), C) -> (icmp swap(P) Y, C2-C)
   if (match(X, m_APInt(C2)) &&
       ((Cmp.isUnsigned() && Sub->hasNoUnsignedWrap()) ||

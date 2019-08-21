@@ -84,3 +84,43 @@ define i1 @test_negative_combined_sub_signed_overflow(i8 %x) {
   %z = icmp slt i8 %y, -1
   ret i1 %z
 }
+
+define i1 @test_sub_0_Y_eq_0(i8 %y) {
+; CHECK-LABEL: @test_sub_0_Y_eq_0(
+; CHECK-NEXT:    [[Z:%.*]] = icmp eq i8 [[Y:%.*]], 0
+; CHECK-NEXT:    ret i1 [[Z]]
+;
+  %s = sub i8 0, %y
+  %z = icmp eq i8 %s, 0
+  ret i1 %z
+}
+
+define i1 @test_sub_0_Y_ne_0(i8 %y) {
+; CHECK-LABEL: @test_sub_0_Y_ne_0(
+; CHECK-NEXT:    [[Z:%.*]] = icmp ne i8 [[Y:%.*]], 0
+; CHECK-NEXT:    ret i1 [[Z]]
+;
+  %s = sub i8 0, %y
+  %z = icmp ne i8 %s, 0
+  ret i1 %z
+}
+
+define i1 @test_sub_4_Y_ne_4(i8 %y) {
+; CHECK-LABEL: @test_sub_4_Y_ne_4(
+; CHECK-NEXT:    [[Z:%.*]] = icmp ne i8 [[Y:%.*]], 0
+; CHECK-NEXT:    ret i1 [[Z]]
+;
+  %s = sub i8 4, %y
+  %z = icmp ne i8 %s, 4
+  ret i1 %z
+}
+
+define i1 @test_sub_127_Y_eq_127(i8 %y) {
+; CHECK-LABEL: @test_sub_127_Y_eq_127(
+; CHECK-NEXT:    [[Z:%.*]] = icmp eq i8 [[Y:%.*]], 0
+; CHECK-NEXT:    ret i1 [[Z]]
+;
+  %s = sub i8 127, %y
+  %z = icmp eq i8 %s, 127
+  ret i1 %z
+}
