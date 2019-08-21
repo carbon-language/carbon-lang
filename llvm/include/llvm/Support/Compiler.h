@@ -16,7 +16,9 @@
 
 #include "llvm/Config/llvm-config.h"
 
+#ifdef __cplusplus
 #include <new>
+#endif
 #include <stddef.h>
 
 #if defined(_MSC_VER)
@@ -252,10 +254,8 @@
 #define LLVM_FALLTHROUGH [[fallthrough]]
 #elif __has_cpp_attribute(gnu::fallthrough)
 #define LLVM_FALLTHROUGH [[gnu::fallthrough]]
-#elif !__cplusplus
-// Workaround for llvm.org/PR23435, since clang 3.6 and below emit a spurious
-// error when __has_cpp_attribute is given a scoped attribute in C mode.
-#define LLVM_FALLTHROUGH
+#elif !defined(__cplusplus) && __has_attribute(fallthrough)
+#define LLVM_FALLTHROUGH __attribute__((fallthrough))
 #elif __has_cpp_attribute(clang::fallthrough)
 #define LLVM_FALLTHROUGH [[clang::fallthrough]]
 #else
@@ -527,6 +527,7 @@ void AnnotateIgnoreWritesEnd(const char *file, int line);
 #define LLVM_ENABLE_EXCEPTIONS 1
 #endif
 
+#ifdef __cplusplus
 namespace llvm {
 
 /// Allocate a buffer of memory with the given size and alignment.
@@ -569,4 +570,5 @@ inline void deallocate_buffer(void *Ptr, size_t Size, size_t Alignment) {
 
 } // End namespace llvm
 
+#endif // __cplusplus
 #endif
