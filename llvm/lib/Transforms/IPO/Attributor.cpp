@@ -88,7 +88,7 @@ STATISTIC(NumAttributesManifested,
   STATS_DECLTRACK(NAME, CS, BUILD_STAT_MSG_IR_ATTR(call site, NAME))
 #define STATS_DECLTRACK_FNRET_ATTR(NAME)                                       \
   STATS_DECLTRACK(NAME, FunctionReturn,                                        \
-                  BUILD_STAT_MSG_IR_ATTR(function returns, NAME));
+                  BUILD_STAT_MSG_IR_ATTR(function returns, NAME))
 #define STATS_DECLTRACK_CSRET_ATTR(NAME)                                       \
   STATS_DECLTRACK(NAME, CSReturn,                                              \
                   BUILD_STAT_MSG_IR_ATTR(call site returns, NAME))
