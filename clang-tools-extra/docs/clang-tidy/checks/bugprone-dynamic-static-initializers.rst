@@ -17,11 +17,11 @@ problems.
 
 Consider the following code:
 
--- code-block:: c
+.. code-block:: c
 
-int foo() {
-  static int k = bar();
-  return k;
-}
+  int foo() {
+    static int k = bar();
+    return k;
+  }
 
 When synchronization of static initialization is disabled, if two threads both call `foo` for the first time, there is the possibility that `k` will be double initialized, creating a race condition.
