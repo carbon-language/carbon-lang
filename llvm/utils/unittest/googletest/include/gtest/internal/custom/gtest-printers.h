@@ -39,33 +39,4 @@
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_CUSTOM_GTEST_PRINTERS_H_
 #define GTEST_INCLUDE_GTEST_INTERNAL_CUSTOM_GTEST_PRINTERS_H_
 
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringRef.h"
-#include <ostream>
-
-namespace llvm {
-
-// Printing of llvm String types.
-// gtest sees these as containers of char (they have nested iterator types),
-// so their operator<< is never considered unless we provide PrintTo().
-// PrintStringTo provides quotes and escaping, at the cost of a copy.
-
-inline void PrintTo(llvm::StringRef S, std::ostream *OS) {
-  *OS << ::testing::PrintToString(S.str());
-}
-// We need both SmallString<N> and SmallVectorImpl<char> overloads:
-//  - the SmallString<N> template is needed as overload resolution will
-//    instantiate generic PrintTo<T> rather than do derived-to-base conversion
-//  - but SmallVectorImpl<char> is sometimes the actual static type, in code
-//    that erases the small size
-template <unsigned N>
-inline void PrintTo(const SmallString<N> &S, std::ostream *OS) {
-  *OS << ::testing::PrintToString(std::string(S.data(), S.size()));
-}
-inline void PrintTo(const SmallVectorImpl<char> &S, std::ostream *OS) {
-  *OS << ::testing::PrintToString(std::string(S.data(), S.size()));
-}
-
-} // namespace llvm
-
 #endif  // GTEST_INCLUDE_GTEST_INTERNAL_CUSTOM_GTEST_PRINTERS_H_
