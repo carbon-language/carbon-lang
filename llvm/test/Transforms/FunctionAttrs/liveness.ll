@@ -408,3 +408,13 @@ define internal i8* @f3(i8* readnone %0) local_unnamed_addr #0 {
   %6 = phi i8* [ %4, %3 ], [ @a1, %1 ]
   ret i8* %6
 }
+
+define void @test_unreachable() {
+; CHECK:       define void @test_unreachable()
+; CHECK-NEXT:    call void @test_unreachable()
+; CHECK-NEXT:    unreachable
+; CHECK-NEXT:  }
+  call void @test_unreachable()
+  unreachable
+}
+

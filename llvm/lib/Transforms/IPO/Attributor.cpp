@@ -1631,6 +1631,9 @@ struct AAIsDeadImpl : public AAIsDead {
       Instruction *I = const_cast<Instruction *>(NRC);
       BasicBlock *BB = I->getParent();
       Instruction *SplitPos = I->getNextNode();
+      // TODO: mark stuff before unreachable instructions as dead.
+      if (isa_and_nonnull<UnreachableInst>(SplitPos))
+        continue;
 
       if (auto *II = dyn_cast<InvokeInst>(I)) {
         // If we keep the invoke the split position is at the beginning of the
