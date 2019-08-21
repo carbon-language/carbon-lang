@@ -183,13 +183,13 @@ private:
 // passIndex is set based on passName or the PASS attr.
 class WithPassArg {
 public:
-  const SourceName *passName() const { return passName_; }
-  void set_passName(const SourceName &passName) { passName_ = &passName; }
+  const std::optional<SourceName> &passName() const { return passName_; }
+  void set_passName(const SourceName &passName) { passName_ = passName; }
   std::optional<int> passIndex() const { return passIndex_; }
   void set_passIndex(int index) { passIndex_ = index; }
 
 private:
-  const SourceName *passName_{nullptr};
+  std::optional<SourceName> passName_;
   std::optional<int> passIndex_;
 };
 

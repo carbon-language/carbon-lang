@@ -35,16 +35,16 @@ public:
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
   template<typename T> bool Pre(const parser::Statement<T> &stmt) {
-    currStmt_ = &stmt.source;
+    currStmt_ = stmt.source;
     return true;
   }
   template<typename T> void Post(const parser::Statement<T> &) {
-    currStmt_ = nullptr;
+    currStmt_ = std::nullopt;
   }
   void Post(const parser::Name &name);
 
 private:
-  const SourceName *currStmt_{nullptr};  // current statement we are processing
+  std::optional<SourceName> currStmt_;  // current statement we are processing
   std::multimap<const char *, const Symbol *> symbols_;  // location to symbol
   std::set<const Symbol *> symbolsDefined_;  // symbols that have been processed
   void Indent(std::ostream &, int) const;
@@ -75,7 +75,7 @@ void SymbolDumpVisitor::Indent(std::ostream &out, int indent) const {
 void SymbolDumpVisitor::Post(const parser::Name &name) {
   if (const auto *symbol{name.symbol}) {
     if (!symbol->has<MiscDetails>()) {
-      symbols_.emplace(DEREF(currStmt_).begin(), symbol);
+      symbols_.emplace(currStmt_.value().begin(), symbol);
     }
   }
 }

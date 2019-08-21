@@ -54,7 +54,7 @@ public:
   int quadPrecisionKind() const { return defaultKinds_.quadPrecisionKind(); }
   bool IsEnabled(parser::LanguageFeature) const;
   bool ShouldWarn(parser::LanguageFeature) const;
-  const parser::CharBlock *location() const { return location_; }
+  const std::optional<parser::CharBlock> &location() const { return location_; }
   const std::vector<std::string> &searchDirectories() const {
     return searchDirectories_;
   }
@@ -68,7 +68,8 @@ public:
   evaluate::FoldingContext &foldingContext() { return foldingContext_; }
   parser::AllSources &allSources() { return allSources_; }
 
-  SemanticsContext &set_location(const parser::CharBlock *location) {
+  SemanticsContext &set_location(
+      const std::optional<parser::CharBlock> &location) {
     location_ = location;
     return *this;
   }
@@ -105,7 +106,7 @@ public:
   void SetError(Symbol &, bool = true);
 
   template<typename... A> parser::Message &Say(A &&... args) {
-    CHECK(location_);
+    CHECK(location_.has_value());
     return messages_.Say(*location_, std::forward<A>(args)...);
   }
   template<typename... A>
@@ -123,7 +124,7 @@ private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   const parser::LanguageFeatureControl languageFeatures_;
   parser::AllSources &allSources_;
-  const parser::CharBlock *location_{nullptr};
+  std::optional<parser::CharBlock> location_;
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
   std::string moduleFileSuffix_{".mod"};

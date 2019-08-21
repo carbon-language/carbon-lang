@@ -98,16 +98,16 @@ void GenericSpecInfo::Resolve(Symbol *symbol) {
 void GenericSpecInfo::Analyze(const parser::DefinedOpName &name) {
   kind_ = GenericKind::DefinedOp;
   parseName_ = &name.v;
-  symbolName_ = &name.v.source;
+  symbolName_ = name.v.source;
 }
 
 void GenericSpecInfo::Analyze(const parser::GenericSpec &x) {
-  symbolName_ = &x.source;
+  symbolName_ = x.source;
   kind_ = std::visit(
       common::visitors{
           [&](const parser::Name &y) {
             parseName_ = &y;
-            symbolName_ = &y.source;
+            symbolName_ = y.source;
             return GenericKind::Name;
           },
           [&](const parser::DefinedOperator &y) {

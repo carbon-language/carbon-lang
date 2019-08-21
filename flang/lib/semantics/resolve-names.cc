@@ -100,8 +100,10 @@ class MessageHandler {
 public:
   Messages &messages() { return context_->messages(); };
   void set_context(SemanticsContext &context) { context_ = &context; }
-  const SourceName *currStmtSource() { return context_->location(); }
-  void set_currStmtSource(const SourceName *source) {
+  const std::optional<SourceName> &currStmtSource() {
+    return context_->location();
+  }
+  void set_currStmtSource(const std::optional<SourceName> &source) {
     context_->set_location(source);
   }
 
@@ -140,7 +142,9 @@ public:
   void set_this(ResolveNamesVisitor *x) { this_ = x; }
 
   MessageHandler &messageHandler() { return messageHandler_; }
-  const SourceName *currStmtSource() { return context_->location(); }
+  const std::optional<SourceName> &currStmtSource() {
+    return context_->location();
+  }
   SemanticsContext &context() const { return *context_; }
   void set_context(SemanticsContext &);
   evaluate::FoldingContext &GetFoldingContext() const {
@@ -279,7 +283,7 @@ protected:
 
 private:
   MaybeExpr bindName_;  // from BIND(C, NAME="...")
-  const SourceName *passName_{nullptr};  // from PASS(...)
+  std::optional<SourceName> passName_;  // from PASS(...)
 };
 
 // Find and create types from declaration-type-spec nodes.
@@ -364,10 +368,10 @@ private:
   std::map<const Scope *, ImplicitRules> implicitRulesMap_;
   // implicit rules in effect for current scope
   ImplicitRules *implicitRules_{nullptr};
-  const SourceName *prevImplicit_{nullptr};
-  const SourceName *prevImplicitNone_{nullptr};
-  const SourceName *prevImplicitNoneType_{nullptr};
-  const SourceName *prevParameterStmt_{nullptr};
+  std::optional<SourceName> prevImplicit_;
+  std::optional<SourceName> prevImplicitNone_;
+  std::optional<SourceName> prevImplicitNoneType_;
+  std::optional<SourceName> prevParameterStmt_;
 
   bool HandleImplicitNone(const std::list<ImplicitNoneNameSpec> &nameSpecs);
 };
@@ -427,7 +431,7 @@ public:
   void SetScope(Scope &);
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
-    messageHandler().set_currStmtSource(&x.source);
+    messageHandler().set_currStmtSource(x.source);
     for (auto *scope = currScope_; scope; scope = &scope->parent()) {
       scope->AddSourceRange(x.source);
       if (scope->IsGlobal()) {
@@ -437,7 +441,7 @@ public:
     return true;
   }
   template<typename T> void Post(const parser::Statement<T> &) {
-    messageHandler().set_currStmtSource(nullptr);
+    messageHandler().set_currStmtSource(std::nullopt);
   }
 
   // Special messages: already declared; referencing symbol's declaration;
@@ -570,7 +574,7 @@ private:
   // The default access spec for this module.
   Attr defaultAccess_{Attr::PUBLIC};
   // The location of the last AccessStmt without access-ids, if any.
-  const SourceName *prevAccessStmt_{nullptr};
+  std::optional<SourceName> prevAccessStmt_;
   // The scope of the module during a UseStmt
   const Scope *useModuleScope_{nullptr};
 
@@ -662,7 +666,7 @@ private:
     const parser::DeclarationTypeSpec *parsedType{nullptr};
     const parser::Name *resultName{nullptr};
     Symbol *resultSymbol{nullptr};
-    const SourceName *source{nullptr};
+    std::optional<SourceName> source;
   } funcInfo_;
 
   // Create a subprogram symbol in the current scope and push a new scope.
@@ -831,7 +835,7 @@ private:
   } commonBlockInfo_;
   // Info about about SAVE statements and attributes in current scope
   struct {
-    const SourceName *saveAll{nullptr};  // "SAVE" without entity list
+    std::optional<SourceName> saveAll;  // "SAVE" without entity list
     std::set<SourceName> entities;  // names of entities with save attr
     std::set<SourceName> commons;  // names of common blocks with save attr
   } saveInfo_;
@@ -1089,7 +1093,7 @@ public:
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
   std::optional<Symbol::Flag> expectedProcFlag_;
-  const SourceName *prevImportStmt_{nullptr};
+  std::optional<SourceName> prevImportStmt_;
 
   void PreSpecificationConstruct(const parser::SpecificationConstruct &);
   void CreateGeneric(const parser::GenericSpec &);
@@ -1221,7 +1225,7 @@ Attrs AttrsVisitor::GetAttrs() {
 Attrs AttrsVisitor::EndAttrs() {
   Attrs result{GetAttrs()};
   attrs_.reset();
-  passName_ = nullptr;
+  passName_ = std::nullopt;
   bindName_.reset();
   return result;
 }
@@ -1275,7 +1279,7 @@ bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
 }
 bool AttrsVisitor::Pre(const parser::Pass &x) {
   if (x.v) {
-    passName_ = &x.v->source;
+    passName_ = x.v->source;
     MakePlaceholder(*x.v, MiscDetails::Kind::PassName);
   } else {
     attrs_->set(Attr::PASS);
@@ -1371,10 +1375,10 @@ KindExpr DeclTypeSpecVisitor::GetKindParamExpr(
 // MessageHandler implementation
 
 Message &MessageHandler::Say(MessageFixedText &&msg) {
-  return context_->Say(*currStmtSource(), std::move(msg));
+  return context_->Say(currStmtSource().value(), std::move(msg));
 }
 Message &MessageHandler::Say(MessageFormattedText &&msg) {
-  return context_->Say(*currStmtSource(), std::move(msg));
+  return context_->Say(currStmtSource().value(), std::move(msg));
 }
 Message &MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
   return Say(name, std::move(msg), name);
@@ -1434,10 +1438,10 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
 
 void ImplicitRulesVisitor::SetScope(const Scope &scope) {
   implicitRules_ = &implicitRulesMap_.at(&scope);
-  prevImplicit_ = nullptr;
-  prevImplicitNone_ = nullptr;
-  prevImplicitNoneType_ = nullptr;
-  prevParameterStmt_ = nullptr;
+  prevImplicit_ = std::nullopt;
+  prevImplicitNone_ = std::nullopt;
+  prevImplicitNoneType_ = std::nullopt;
+  prevParameterStmt_ = std::nullopt;
 }
 void ImplicitRulesVisitor::BeginScope(const Scope &scope) {
   // find or create implicit rules for this scope
@@ -1448,12 +1452,12 @@ void ImplicitRulesVisitor::BeginScope(const Scope &scope) {
 // TODO: for all of these errors, reference previous statement too
 bool ImplicitRulesVisitor::HandleImplicitNone(
     const std::list<ImplicitNoneNameSpec> &nameSpecs) {
-  if (prevImplicitNone_ != nullptr) {
+  if (prevImplicitNone_.has_value()) {
     Say("More than one IMPLICIT NONE statement"_err_en_US);
     Say(*prevImplicitNone_, "Previous IMPLICIT NONE statement"_en_US);
     return false;
   }
-  if (prevParameterStmt_ != nullptr) {
+  if (prevParameterStmt_.has_value()) {
     Say("IMPLICIT NONE statement after PARAMETER statement"_err_en_US);
     return false;
   }
@@ -2065,7 +2069,7 @@ void ModuleVisitor::BeginModule(const parser::Name &name, bool isSubmodule) {
   PushScope(Scope::Kind::Module, &symbol);
   details.set_scope(&currScope());
   defaultAccess_ = Attr::PUBLIC;
-  prevAccessStmt_ = nullptr;
+  prevAccessStmt_ = std::nullopt;
 }
 
 // Find a module or submodule by name and return its scope.
@@ -2777,7 +2781,7 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
       }
     }
   } else if (symbol && symbol->has<UseDetails>()) {
-    Say(*currStmtSource(),
+    Say(currStmtSource().value(),
         "Cannot change %s attribute on use-associated '%s'"_err_en_US,
         EnumToString(attr), name.source);
     return *symbol;
@@ -3144,7 +3148,8 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       // context of a parameterized derived type definition, so we need to
       // clone its contents, specialize them with the actual type parameter
       // values, and check constraints.
-      auto save{GetFoldingContext().messages().SetLocation(*currStmtSource())};
+      auto save{
+          GetFoldingContext().messages().SetLocation(currStmtSource().value())};
       InstantiateDerivedType(type.derivedTypeSpec(), currScope(), context());
     }
     SetDeclTypeSpec(type);
@@ -3609,7 +3614,8 @@ bool DeclarationVisitor::Pre(const parser::CommonStmt::Block &x) {
   CheckNotInBlock("COMMON");  // C1107
   const auto &optName{std::get<std::optional<parser::Name>>(x.t)};
   parser::Name blankCommon;
-  blankCommon.source = SourceName{currStmtSource()->begin(), std::size_t{0}};
+  blankCommon.source =
+      SourceName{currStmtSource().value().begin(), std::size_t{0}};
   CHECK(!commonBlockInfo_.curr);
   commonBlockInfo_.curr =
       &MakeCommonBlockSymbol(optName ? *optName : blankCommon);
@@ -5133,7 +5139,7 @@ bool ResolveNamesVisitor::SetProcFlag(
 bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
   Attr accessAttr{AccessSpecToAttr(std::get<parser::AccessSpec>(x.t))};
   if (currScope().kind() != Scope::Kind::Module) {
-    Say(*currStmtSource(),
+    Say(currStmtSource().value(),
         "%s statement may only appear in the specification part of a module"_err_en_US,
         EnumToString(accessAttr));
     return false;
@@ -5298,7 +5304,7 @@ void ResolveNamesVisitor::CheckImports() {
     for (const auto &pair : scope.parent()) {
       auto &name{pair.first};
       if (!scope.GetSymbol() || name != scope.name()) {
-        CheckImport(*prevImportStmt_, name);
+        CheckImport(prevImportStmt_.value(), name);
       }
     }
     break;
@@ -5719,7 +5725,7 @@ void ResolveNamesVisitor::SetPassArg(
         interface->name());
     return;
   }
-  const SourceName *passName{details.passName()};
+  std::optional<SourceName> passName{details.passName()};
   const auto &dummyArgs{subprogram->dummyArgs()};
   if (!passName && dummyArgs.empty()) {
     Say(name,
@@ -5733,7 +5739,7 @@ void ResolveNamesVisitor::SetPassArg(
   }
   int passArgIndex{0};
   if (!passName) {
-    passName = &dummyArgs[0]->name();
+    passName = dummyArgs[0]->name();
   } else {
     passArgIndex = FindIndexOfName(*passName, dummyArgs);
     if (passArgIndex < 0) {
@@ -5762,7 +5768,7 @@ void ResolveNamesVisitor::SetPassArg(
           " must be scalar"_err_en_US;
   }
   if (msg) {
-    Say(name, std::move(*msg), *passName, name);
+    Say(name, std::move(*msg), passName.value(), name);
     return;
   }
   const DeclTypeSpec *type{passArg.GetType()};
@@ -5775,7 +5781,7 @@ void ResolveNamesVisitor::SetPassArg(
     Say(name,
         "Passed-object dummy argument '%s' of procedure '%s'"
         " must be of type '%s' but is '%s'"_err_en_US,
-        *passName, name, typeSymbol.name(), type->AsFortran());
+        passName.value(), name, typeSymbol.name(), type->AsFortran());
     return;
   }
   if (IsExtensibleType(derived) != type->IsPolymorphic()) {
@@ -5785,7 +5791,7 @@ void ResolveNamesVisitor::SetPassArg(
               " must not be polymorphic because '%s' is not extensible"_err_en_US
             : "Passed-object dummy argument '%s' of procedure '%s'"
               " must polymorphic because '%s' is extensible"_err_en_US,
-        *passName, name, typeSymbol.name());
+        passName.value(), name, typeSymbol.name());
     return;
   }
   for (const auto &[paramName, paramValue] : derived->parameters()) {
@@ -5793,7 +5799,7 @@ void ResolveNamesVisitor::SetPassArg(
       Say(name,
           "Passed-object dummy argument '%s' of procedure '%s'"
           " has non-assumed length parameter '%s'"_err_en_US,
-          *passName, name, paramName);
+          passName.value(), name, paramName);
     }
   }
   details.set_passIndex(passArgIndex);

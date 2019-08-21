@@ -301,8 +301,8 @@ public:
   void Analyze(const parser::ConcurrentHeader &);
 
   template<typename A> void Analyze(const parser::Statement<A> &stmt) {
-    const auto *saveLocation{context_.location()};
-    context_.set_location(&stmt.source);
+    std::optional<parser::CharBlock> saveLocation{context_.location()};
+    context_.set_location(stmt.source);
     Analyze(stmt.statement);
     context_.set_location(saveLocation);
   }
@@ -408,7 +408,7 @@ void AssignmentContext::Analyze(const parser::ForallConstruct &construct) {
   AssignmentContext nested{*this, forall};
   const auto &forallStmt{
       std::get<parser::Statement<parser::ForallConstructStmt>>(construct.t)};
-  context_.set_location(&forallStmt.source);
+  context_.set_location(forallStmt.source);
   nested.Analyze(std::get<common::Indirection<parser::ConcurrentHeader>>(
       forallStmt.statement.t));
   for (const auto &body :
@@ -422,7 +422,7 @@ void AssignmentContext::Analyze(
   CHECK(where_ != nullptr);
   const auto &elsewhereStmt{
       std::get<parser::Statement<parser::MaskedElsewhereStmt>>(elsewhere.t)};
-  context_.set_location(&elsewhereStmt.source);
+  context_.set_location(elsewhereStmt.source);
   MaskExpr mask{
       GetMask(std::get<parser::LogicalExpr>(elsewhereStmt.statement.t))};
   MaskExpr copyCumulative{where_->cumulativeMaskExpr};

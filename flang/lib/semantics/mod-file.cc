@@ -36,14 +36,15 @@ using namespace parser::literals;
 // are using another encoding.
 static constexpr auto magic{"\xef\xbb\xbf!mod$ v1 sum:"};
 
-static const SourceName *GetSubmoduleParent(const parser::Program &);
+static const std::optional<SourceName> GetSubmoduleParent(
+    const parser::Program &);
 static std::string ModFilePath(const std::string &dir, const SourceName &,
     const std::string &ancestor, const std::string &suffix);
 static std::vector<const Symbol *> CollectSymbols(const Scope &);
 static void PutEntity(std::ostream &, const Symbol &);
 static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
-static void PutPassName(std::ostream &, const SourceName *);
+static void PutPassName(std::ostream &, const std::optional<SourceName> &);
 static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
 static void PutInit(std::ostream &, const Symbol &, const MaybeExpr &);
@@ -488,7 +489,7 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
   os << '\n';
 }
 
-void PutPassName(std::ostream &os, const SourceName *passName) {
+void PutPassName(std::ostream &os, const std::optional<SourceName> &passName) {
   if (passName) {
     PutLower(os << ",pass(", passName->ToString()) << ')';
   }
@@ -713,7 +714,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   Scope *parentScope;  // the scope this module/submodule goes into
   if (!ancestor) {
     parentScope = &context_.globalScope();
-  } else if (auto *parent{GetSubmoduleParent(*parseTree)}) {
+  } else if (std::optional<SourceName> parent{GetSubmoduleParent(*parseTree)}) {
     parentScope = Read(*parent, ancestor);
   } else {
     parentScope = ancestor;
@@ -760,7 +761,8 @@ std::optional<std::string> ModFileReader::FindModFile(
 
 // program was read from a .mod file for a submodule; return the name of the
 // submodule's parent submodule, nullptr if none.
-static const SourceName *GetSubmoduleParent(const parser::Program &program) {
+static const std::optional<SourceName> GetSubmoduleParent(
+    const parser::Program &program) {
   CHECK(program.v.size() == 1);
   auto &unit{program.v.front()};
   auto &submod{std::get<common::Indirection<parser::Submodule>>(unit.u)};
@@ -768,9 +770,9 @@ static const SourceName *GetSubmoduleParent(const parser::Program &program) {
       std::get<parser::Statement<parser::SubmoduleStmt>>(submod.value().t)};
   auto &parentId{std::get<parser::ParentIdentifier>(stmt.statement.t)};
   if (auto &parent{std::get<std::optional<parser::Name>>(parentId.t)}) {
-    return &parent->source;
+    return parent->source;
   } else {
-    return nullptr;
+    return std::nullopt;
   }
 }
 

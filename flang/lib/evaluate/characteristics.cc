@@ -424,7 +424,7 @@ std::optional<Procedure> Procedure::Characterize(
               if (const auto passIndex{binding.passIndex()}) {
                 auto &passArg{result->dummyArguments.at(*passIndex)};
                 passArg.pass = true;
-                if (const auto *passName{binding.passName()}) {
+                if (const auto passName{binding.passName()}) {
                   CHECK(passArg.name == passName->ToString());
                 }
               }

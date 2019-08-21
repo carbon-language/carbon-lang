@@ -59,7 +59,7 @@ public:
   GenericSpecInfo(const parser::DefinedOpName &x) { Analyze(x); }
   GenericSpecInfo(const parser::GenericSpec &x) { Analyze(x); }
 
-  const SourceName &symbolName() const { return *symbolName_; }
+  const SourceName &symbolName() const { return symbolName_.value(); }
   // Set the GenericKind in this symbol and resolve the corresponding
   // name if there is one
   void Resolve(Symbol *);
@@ -67,7 +67,7 @@ public:
 private:
   GenericKind kind_;
   const parser::Name *parseName_{nullptr};
-  const SourceName *symbolName_{nullptr};
+  std::optional<SourceName> symbolName_;
 
   void Analyze(const parser::DefinedOpName &);
   void Analyze(const parser::GenericSpec &);
