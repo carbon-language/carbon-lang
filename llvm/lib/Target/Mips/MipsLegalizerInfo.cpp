@@ -54,6 +54,10 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
                                {s32, p0, 16, 8}})
       .minScalar(0, s32);
 
+  getActionDefinitionsBuilder(G_TRUNC)
+      .legalIf([](const LegalityQuery &Query) { return false; })
+      .maxScalar(1, s32);
+
   getActionDefinitionsBuilder(G_SELECT)
       .legalForCartesianProduct({p0, s32, s64}, {s32})
       .minScalar(0, s32)
