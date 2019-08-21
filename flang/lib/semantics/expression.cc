@@ -1885,6 +1885,8 @@ static void FixMisparsedFunctionReference(
       Symbol &symbol{origSymbol->GetUltimate()};
       if (symbol.has<semantics::ObjectEntityDetails>() ||
           symbol.has<semantics::AssocEntityDetails>()) {
+        // Note that expression in AssocEntityDetails cannot be a procedure
+        // pointer as per C1105 so this cannot be a function reference.
         if constexpr (common::HasMember<common::Indirection<parser::Designator>,
                           uType>) {
           CheckFuncRefToArrayElementRefHasSubscripts(context, funcRef);

@@ -28,3 +28,18 @@ subroutine s2
   associate (a => z'1')
   end associate
 end
+
+subroutine s3
+! Test that associated entities are not preventing to fix
+! mis-parsed function references into array references
+  real :: a(10)
+  associate (b => a(2:10:2))
+    ! Check no complains about "Use of 'b' as a procedure"
+    print *, b(1) ! OK
+  end associate
+  associate (c => a(2:10:2))
+    ! Check the function reference has been fixed to an array reference
+    !ERROR: Reference to array 'c' with empty subscript list
+    print *, c()
+  end associate
+end
