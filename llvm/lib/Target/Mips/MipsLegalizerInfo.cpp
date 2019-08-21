@@ -50,9 +50,9 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
      .legalFor({{s64, s32}});
 
   getActionDefinitionsBuilder({G_ZEXTLOAD, G_SEXTLOAD})
-    .legalForTypesWithMemDesc({{s32, p0, 8, 8},
-                               {s32, p0, 16, 8}})
-      .minScalar(0, s32);
+      .legalForTypesWithMemDesc({{s32, p0, 8, 8},
+                                 {s32, p0, 16, 8}})
+      .clampScalar(0, s32, s32);
 
   getActionDefinitionsBuilder({G_ZEXT, G_SEXT})
       .legalIf([](const LegalityQuery &Query) { return false; })
