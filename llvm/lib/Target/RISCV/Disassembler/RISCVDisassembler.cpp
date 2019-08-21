@@ -306,7 +306,6 @@ static DecodeStatus decodeRVCInstrSImm(MCInst &Inst, unsigned Insn,
   DecodeStatus Result = decodeSImmOperand<6>(Inst, SImm6, Address, Decoder);
   (void)Result;
   assert(Result == MCDisassembler::Success && "Invalid immediate");
-  (void)SImm6;
   return MCDisassembler::Success;
 }
 
@@ -319,7 +318,6 @@ static DecodeStatus decodeRVCInstrRdSImm(MCInst &Inst, unsigned Insn,
   DecodeStatus Result = decodeSImmOperand<6>(Inst, SImm6, Address, Decoder);
   (void)Result;
   assert(Result == MCDisassembler::Success && "Invalid immediate");
-  (void)SImm6;
   return MCDisassembler::Success;
 }
 
@@ -333,7 +331,6 @@ static DecodeStatus decodeRVCInstrRdRs1UImm(MCInst &Inst, unsigned Insn,
   DecodeStatus Result = decodeUImmOperand<6>(Inst, UImm6, Address, Decoder);
   (void)Result;
   assert(Result == MCDisassembler::Success && "Invalid immediate");
-  (void)UImm6;
   return MCDisassembler::Success;
 }
 
