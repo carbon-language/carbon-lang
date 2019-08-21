@@ -61,6 +61,7 @@ The stubs follow the same general pattern (example ``malloc()`` pseudocode
 below):
 
 .. code:: cpp
+
   #ifdef INSTALL_GWP_ASAN_STUBS
     gwp_asan::GuardedPoolAllocator GWPASanAllocator;
   #endif
