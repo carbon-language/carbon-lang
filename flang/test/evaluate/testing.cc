@@ -108,7 +108,8 @@ FailureDetailPrinter Compare(const char *file, int line, const char *xs,
   } else {
     ++failures;
     fprintf(stderr, "%s:%d: FAIL: %s[0x%jx] %s %s[0x%jx]\n", file, line, xs,
-        static_cast<std::uint64_t>(x), rel, ys, static_cast<std::uint64_t>(y));
+        static_cast<std::uintmax_t>(x), rel, ys,
+        static_cast<std::uintmax_t>(y));
     return PrintFailureDetails;
   }
 }

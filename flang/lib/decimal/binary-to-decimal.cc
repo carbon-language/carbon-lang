@@ -297,27 +297,24 @@ void BigRadixFloatingPointNumber<PREC, LOG10RADIX>::Minimize(
 template<int PREC, int LOG10RADIX>
 void BigRadixFloatingPointNumber<PREC,
     LOG10RADIX>::LoseLeastSignificantDigit() {
-  if (digits_ >= 2) {
-    Digit LSD{digit_[0]};
-    for (int j{0}; j < digits_ - 1; ++j) {
-      digit_[j] = digit_[j + 1];
-    }
-    digit_[digits_ - 1] = 0;
-    exponent_ += log10Radix;
-    bool incr{false};
-    switch (rounding_) {
-    case RoundNearest:
-    case RoundDefault:
-      incr = LSD > radix / 2 || (LSD == radix / 2 && digit_[0] % 2 != 0);
-      break;
-    case RoundUp: incr = LSD > 0 && !isNegative_; break;
-    case RoundDown: incr = LSD > 0 && isNegative_; break;
-    case RoundToZero: break;
-    case RoundCompatible: incr = LSD >= radix / 2; break;
-    }
-    for (int j{0}; (digit_[j] += incr) == radix; ++j) {
-      digit_[j] = 0;
-    }
+  Digit LSD{digit_[0]};
+  for (int j{0}; j < digits_ - 1; ++j) {
+    digit_[j] = digit_[j + 1];
+  }
+  digit_[digits_ - 1] = 0;
+  bool incr{false};
+  switch (rounding_) {
+  case RoundNearest:
+  case RoundDefault:
+    incr = LSD > radix / 2 || (LSD == radix / 2 && digit_[0] % 2 != 0);
+    break;
+  case RoundUp: incr = LSD > 0 && !isNegative_; break;
+  case RoundDown: incr = LSD > 0 && isNegative_; break;
+  case RoundToZero: break;
+  case RoundCompatible: incr = LSD >= radix / 2; break;
+  }
+  for (int j{0}; (digit_[j] += incr) == radix; ++j) {
+    digit_[j] = 0;
   }
 }
 

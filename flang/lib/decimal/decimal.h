@@ -14,8 +14,8 @@
 
 // C and C++ API for binary-to/from-decimal conversion package.
 
-#ifndef FORTRAN_DECIMAL_H_
-#define FORTRAN_DECIMAL_H_
+#ifndef FORTRAN_DECIMAL_DECIMAL_H_
+#define FORTRAN_DECIMAL_DECIMAL_H_
 
 #include "binary-floating-point.h"
 #include <stddef.h>

@@ -39,11 +39,12 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
   while (*q == '0') {
     ++q;
   }
-  const char *firstDigit{q};
+  const char *first{q};
   for (; *q >= '0' && *q <= '9'; ++q) {
   }
-  const char *point{*q == '.' ? q : nullptr};
-  if (point) {
+  const char *point{nullptr};
+  if (*q == '.') {
+    point = q;
     for (++q; *q >= '0' && *q <= '9'; ++q) {
     }
   }
@@ -55,7 +56,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
   p = q;
   // Strip off trailing zeroes
   if (point != nullptr) {
-    while (q > firstDigit && q[-1] == '0') {
+    while (q[-1] == '0') {
       --q;
     }
     if (q[-1] == '.') {
@@ -64,32 +65,32 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
     }
   }
   if (point == nullptr) {
-    while (q > firstDigit && q[-1] == '0') {
+    while (q > first && q[-1] == '0') {
       --q;
       ++exponent_;
     }
   }
-  if (q == firstDigit) {
-    exponent_ = 0;  // all zeros
+  // Trim any excess digits
+  const char *limit{first + maxDigits * log10Radix + (point != nullptr)};
+  if (q > limit) {
+    inexact = true;
+    if (point >= limit) {
+      q = point;
+      point = nullptr;
+    }
+    if (point == nullptr) {
+      exponent_ += q - limit;
+    }
+    q = limit;
   }
   if (point != nullptr) {
     exponent_ -= static_cast<int>(q - point - 1);
   }
-  // Trim any excess digits
-  const char *limit{firstDigit + maxDigits * log10Radix + (point != nullptr)};
-  if (q > limit) {
-    inexact = true;
-    while (q-- > limit) {
-      if (*q == '.') {
-        point = nullptr;
-        --limit;
-      } else if (point == nullptr) {
-        ++exponent_;
-      }
-    }
+  if (q == first) {
+    exponent_ = 0;  // all zeros
   }
   // Rack the decimal digits up into big Digits.
-  for (auto times{radix}; q-- > firstDigit;) {
+  for (auto times{radix}; q-- > first;) {
     if (*q != '.') {
       if (times == radix) {
         digit_[digits_++] = *q - '0';
@@ -285,11 +286,9 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
     // x = 0.D * 10.**E * 2.**(f.ex) -> 512 * 0.D * 10.**E * 2.**(f.ex-9)
     f.AdjustExponent(-9);
     digitLimit_ = digits_;
-    int carry{MultiplyWithoutNormalization<512>()};
-    RemoveLeastOrderZeroDigits();
-    if (carry != 0) {
+    if (int carry{MultiplyWithoutNormalization<512>()}) {
       // x = c.D * 10.**E * 2.**(f.ex) -> .cD * 10.**(E+16) * 2.**(f.ex)
-      digit_[digits_++] = carry;
+      PushCarry(carry);
       exponent_ += log10Radix;
     }
   }
@@ -310,10 +309,9 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
       carry = MultiplyWithoutNormalization<5>();
       f.AdjustExponent(1);
     }
-    RemoveLeastOrderZeroDigits();
     if (carry != 0) {
       // x = c.D * 10.**E * 2.**(f.ex) -> .cD * 10.**(E+16) * 2.**(f.ex)
-      digit_[digits_++] = carry;
+      PushCarry(carry);
       exponent_ += log10Radix;
     }
   }

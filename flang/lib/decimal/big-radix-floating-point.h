@@ -292,10 +292,20 @@ private:
     if (int carry{MultiplyBy<N>()}) {
       LoseLeastSignificantDigit();
       digit_[digits_ - 1] += carry;
+      exponent_ += log10Radix;
     }
   }
 
   void LoseLeastSignificantDigit();  // with rounding
+
+  void PushCarry(int carry) {
+    if (digits_ == maxDigits && RemoveLeastOrderZeroDigits() == 0) {
+      LoseLeastSignificantDigit();
+      digit_[digits_ - 1] += carry;
+    } else {
+      digit_[digits_++] = carry;
+    }
+  }
 
   // Adds another number and then divides by two.
   // Assumes same exponent and sign.
