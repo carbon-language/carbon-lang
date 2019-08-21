@@ -305,6 +305,7 @@ static DecodeStatus decodeRVCInstrSImm(MCInst &Inst, unsigned Insn,
       fieldFromInstruction(Insn, 12, 1) << 5 | fieldFromInstruction(Insn, 2, 5);
   assert(decodeSImmOperand<6>(Inst, SImm6, Address, Decoder) ==
       MCDisassembler::Success && "Invalid immediate");
+  (void)SImm6;
   return MCDisassembler::Success;
 }
 
@@ -316,6 +317,7 @@ static DecodeStatus decodeRVCInstrRdSImm(MCInst &Inst, unsigned Insn,
       fieldFromInstruction(Insn, 12, 1) << 5 | fieldFromInstruction(Insn, 2, 5);
   assert(decodeSImmOperand<6>(Inst, SImm6, Address, Decoder) ==
       MCDisassembler::Success && "Invalid immediate");
+  (void)SImm6;
   return MCDisassembler::Success;
 }
 
@@ -328,6 +330,7 @@ static DecodeStatus decodeRVCInstrRdRs1UImm(MCInst &Inst, unsigned Insn,
       fieldFromInstruction(Insn, 12, 1) << 5 | fieldFromInstruction(Insn, 2, 5);
   assert(decodeUImmOperand<6>(Inst, UImm6, Address, Decoder) ==
       MCDisassembler::Success && "Invalid immediate");
+  (void)UImm6;
   return MCDisassembler::Success;
 }
 
