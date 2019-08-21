@@ -2321,7 +2321,11 @@ bool Attributor::checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
   }
 
   for (const Use &U : AssociatedFunction->uses()) {
-    Instruction *I = cast<Instruction>(U.getUser());
+    Instruction *I = dyn_cast<Instruction>(U.getUser());
+    // TODO: Deal with abstract call sites here.
+    if (!I)
+      return false;
+
     Function *Caller = I->getFunction();
 
     const auto &LivenessAA =
