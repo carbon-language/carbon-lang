@@ -16,10 +16,12 @@
 #define FORTRAN_DECIMAL_BIG_RADIX_FLOATING_POINT_H_
 
 // This is a helper class for use in floating-point conversions
-// to and from decimal representations.  It holds a multiple-precision
-// integer value using digits of a radix that is a large even power of ten.
-// The digits are accompanied by a signed exponent that denotes multiplication
-// by a power of ten.
+// between binary decimal representations.  It holds a multiple-precision
+// integer value using digits of a radix that is a large even power of ten
+// (10,000,000,000,000,000 by default, 10**16).  These digits are accompanied
+// by a signed exponent that denotes multiplication by a power of ten.
+// The effective radix point is to the right of the digits (i.e., they do
+// not represent a fraction).
 //
 // The operations supported by this class are limited to those required
 // for conversions between binary and decimal representations; it is not
@@ -63,6 +65,8 @@ private:
   // in a subnormal IEEE floating-point number.
   static constexpr int minLog2AnyBit{
       -int{Real::exponentBias} - Real::precision};
+
+  // The number of Digits needed to represent the smallest subnormal.
   static constexpr int maxDigits{3 - minLog2AnyBit / log10Radix};
 
 public:
@@ -84,18 +88,31 @@ public:
   // Converts decimal floating-point to binary.
   ConversionToBinaryResult<PREC> ConvertToBinary();
 
-  // Parses and converts to binary.  Also handles "NaN" & "Inf".
-  // The reference argument is a pointer that is left pointing to
-  // the first character that wasn't included.
+  // Parses and converts to binary.  Handles leading spaces,
+  // "NaN", & optionally-signed "Inf".  Does not skip internal
+  // spaces.
+  // The argument is a reference to a pointer that is left
+  // pointing to the first character that wasn't parsed.
   ConversionToBinaryResult<PREC> ConvertToBinary(const char *&);
 
-  // Formats a decimal floating-point number.
+  // Formats a decimal floating-point number to a user buffer.
+  // May emit "NaN" or "Inf", or an possibly-signed integer.
+  // No decimal point is written, but if it were, it would be
+  // after the last digit; the effective decimal exponent is
+  // returned as part of the result structure so that it can be
+  // formatted by the client.
   ConversionToDecimalResult ConvertToDecimal(
       char *, std::size_t, enum DecimalConversionFlags, int digits) const;
 
   // Discard decimal digits not needed to distinguish this value
   // from the decimal encodings of two others (viz., the nearest binary
   // floating-point numbers immediately below and above this one).
+  // The last decimal digit may not be uniquely determined in all
+  // cases, and will be the mean value when that is so (e.g., if
+  // last decimal digit values 6-8 would all work, it'll be a 7).
+  // This minimization necessarily assumes that the value will be
+  // emitted and read back into the same (or less precise) format
+  // with default rounding to the nearest value.
   void Minimize(
       BigRadixFloatingPointNumber &&less, BigRadixFloatingPointNumber &&more);
 
@@ -109,6 +126,7 @@ private:
   }
 
   bool IsZero() const {
+    // Don't assume normalization.
     for (int j{0}; j < digits_; ++j) {
       if (digit_[j] != 0) {
         return false;
@@ -116,8 +134,6 @@ private:
     }
     return true;
   }
-
-  bool IsOdd() const { return digits_ > 0 && (digit_[0] & 1); }
 
   // Predicate: true when 10*value would cause a carry.
   // (When this happens during decimal-to-binary conversion,
@@ -128,7 +144,7 @@ private:
   }
 
   // Set to an unsigned integer value.
-  // Returns any remainder (usually zero).
+  // Returns any remainder.
   template<typename UINT> UINT SetTo(UINT n) {
     static_assert(
         std::is_same_v<UINT, __uint128_t> || std::is_unsigned_v<UINT>);
@@ -186,7 +202,7 @@ private:
   }
 
   // This limited divisibility test only works for even divisors of the radix,
-  // which is fine since it's only used with 2 and 5.
+  // which is fine since it's only ever used with 2 and 5.
   template<int N> bool IsDivisibleBy() const {
     static_assert(N > 1 && radix % N == 0, "bad modulus");
     return digits_ == 0 || (digit_[0] % N) == 0;
@@ -195,7 +211,6 @@ private:
   template<unsigned DIVISOR> int DivideBy() {
     Digit remainder{0};
     for (int j{digits_ - 1}; j >= 0; --j) {
-      // N.B. Because DIVISOR is a constant, these operations should be cheap.
       Digit q{common::DivideUnsignedBy<Digit, DIVISOR>(digit_[j])};
       Digit nrem{digit_[j] - DIVISOR * q};
       digit_[j] = q + (radix / DIVISOR) * remainder;
@@ -273,37 +288,14 @@ private:
     }
   }
 
-  void LoseLeastSignificantDigit() {
-    if (digits_ >= 2) {
-      Digit LSD{digit_[0]};
-      for (int j{0}; j < digits_ - 1; ++j) {
-        digit_[j] = digit_[j + 1];
-      }
-      digit_[digits_ - 1] = 0;
-      exponent_ += log10Radix;
-      bool incr{false};
-      switch (rounding_) {
-      case RoundNearest:
-      case RoundDefault:
-        incr = LSD > radix / 2 || (LSD == radix / 2 && digit_[0] % 2 != 0);
-        break;
-      case RoundUp: incr = LSD > 0 && !isNegative_; break;
-      case RoundDown: incr = LSD > 0 && isNegative_; break;
-      case RoundToZero: break;
-      case RoundCompatible: incr = LSD >= radix / 2; break;
-      }
-      for (int j{0}; (digit_[j] += incr) == radix; ++j) {
-        digit_[j] = 0;
-      }
-    }
-  }
-
   template<int N> void MultiplyByRounded() {
     if (int carry{MultiplyBy<N>()}) {
       LoseLeastSignificantDigit();
       digit_[digits_ - 1] += carry;
     }
   }
+
+  void LoseLeastSignificantDigit();  // with rounding
 
   // Adds another number and then divides by two.
   // Assumes same exponent and sign.

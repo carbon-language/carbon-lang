@@ -15,7 +15,8 @@
 #ifndef FORTRAN_DECIMAL_BINARY_FLOATING_POINT_H_
 #define FORTRAN_DECIMAL_BINARY_FLOATING_POINT_H_
 
-// Access the fields of an IEEE-754 binary floating-point value.
+// Access and manipulate the fields of an IEEE-754 binary
+// floating-point value via a generalized template.
 
 #include <cinttypes>
 #include <climits>
@@ -33,7 +34,6 @@ template<int BITS> struct HostUnsignedIntTypeHelper {
 template<int BITS>
 using HostUnsignedIntType = typename HostUnsignedIntTypeHelper<BITS>::type;
 
-namespace {
 static constexpr int BitsForPrecision(int prec) {
   switch (prec) {
   case 8: return 16;
@@ -44,7 +44,6 @@ static constexpr int BitsForPrecision(int prec) {
   case 112: return 128;
   default: return -1;
   }
-}
 }
 
 template<int PRECISION> struct BinaryFloatingPointNumber {
