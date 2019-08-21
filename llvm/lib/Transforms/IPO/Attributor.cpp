@@ -1336,7 +1336,7 @@ struct AANonNullCallSiteArgument final : AANonNullFloating {
   AANonNullCallSiteArgument(const IRPosition &IRP) : AANonNullFloating(IRP) {}
 
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(aligned) }
+  void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(nonnul) }
 };
 
 /// NonNull attribute for a call site return position.
