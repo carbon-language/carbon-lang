@@ -38,8 +38,6 @@ public:
 
   void SkipSpaces();
 
-  std::string &GetStringRef() { return m_packet; }
-
   const std::string &GetStringRef() const { return m_packet; }
 
   bool Empty() { return m_packet.empty(); }
