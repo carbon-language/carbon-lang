@@ -63,8 +63,7 @@ private:
 
   // The base-2 logarithm of the least significant bit that can arise
   // in a subnormal IEEE floating-point number.
-  static constexpr int minLog2AnyBit{
-      -int{Real::exponentBias} - Real::precision};
+  static constexpr int minLog2AnyBit{-Real::exponentBias - Real::precision};
 
   // The number of Digits needed to represent the smallest subnormal.
   static constexpr int maxDigits{3 - minLog2AnyBit / log10Radix};
@@ -313,6 +312,16 @@ private:
   bool Mean(const BigRadixFloatingPointNumber &);
 
   bool ParseNumber(const char *&, bool &inexact);
+
+  using Raw = typename Real::RawType;
+  constexpr Raw SignBit() const { return Raw{isNegative_} << (Real::bits - 1); }
+  constexpr Raw Infinity() const {
+    return (Raw{Real::maxExponent} << Real::significandBits) | SignBit();
+  }
+  static constexpr Raw NaN() {
+    return (Raw{Real::maxExponent} << Real::significandBits) |
+        (Raw{1} << (Real::significandBits - 2));
+  }
 
   Digit digit_[maxDigits];  // in little-endian order: digit_[0] is LSD
   int digits_{0};  // # of elements in digit_[] array; zero when zero

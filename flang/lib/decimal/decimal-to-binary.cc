@@ -116,8 +116,20 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
     }
     if (*q >= '0' && *q <= '9') {
       int expo{0};
-      for (int j{0}; j < 8 && *q >= '0' && *q <= '9'; ++j) {
+      while (*q == '0') {
+        ++q;
+      }
+      const char *expDig{q};
+      while (*q >= '0' && *q <= '9') {
         expo = 10 * expo + *q++ - '0';
+      }
+      if (q >= expDig + 8) {
+        // There's a ridiculous number of nonzero exponent digits.
+        // The decimal->binary conversion routine will cope with
+        // returning 0 or Inf, but we must ensure that "expo" didn't
+        // overflow back around to something legal.
+        expo = 10 * Real::RANGE;
+        exponent_ = 0;
       }
       p = q;  // exponent was valid
       if (negExpo) {
@@ -260,28 +272,27 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
 template<int PREC, int LOG10RADIX>
 ConversionToBinaryResult<PREC>
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary() {
-  using Binary = BinaryFloatingPointNumber<PREC>;
   // On entry, *this holds a multi-precision integer value in a radix of a
   // large power of ten.  Its radix point is defined to be to the right of its
   // digits, and "exponent_" is the power of ten by which it is to be scaled.
   Normalize();
   if (digits_ == 0) {  // zero value
-    if (isNegative_) {
-      using Raw = typename Binary::RawType;
-      Raw negZero{Raw{1} << (Binary::bits - 1)};
-      return {Binary{negZero}};
-    } else {
-      return {Binary{}};
-    }
+    return {Real{SignBit()}};
   }
-  // The value is not zero.
-  // x = D. * 10.**E
-  IntermediateFloat<PREC> f;
+  // The value is not zero:  x = D. * 10.**E
   // Shift our perspective on the radix (& decimal) point so that
   // it sits to the *left* of the digits: i.e., x = .D * 10.**E
   exponent_ += digits_ * log10Radix;
+  // Sanity checks for ridiculous exponents
+  static constexpr int crazy{2 * Real::RANGE + log10Radix};
+  if (exponent_ < -crazy) {  // underflow to +/-0.
+    return {Real{SignBit()}, Inexact};
+  } else if (exponent_ > crazy) {  // overflow to +/-Inf.
+    return {Real{Infinity()}, Overflow};
+  }
   // Apply any negative decimal exponent by multiplication
   // by a power of two, adjusting the binary exponent to compensate.
+  IntermediateFloat<PREC> f;
   while (exponent_ < log10Radix) {
     // x = 0.D * 10.**E * 2.**(f.ex) -> 512 * 0.D * 10.**E * 2.**(f.ex-9)
     f.AdjustExponent(-9);
@@ -355,30 +366,24 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToBinary(const char *&p) {
   } else {
     // Could not parse a decimal floating-point number.  p has been
     // advanced over any leading spaces.
-    using Binary = BinaryFloatingPointNumber<PREC>;
-    using Raw = typename Binary::RawType;
-    static constexpr Raw inf{
-        Raw{Binary::maxExponent} << Binary::significandBits};
-    static constexpr Raw nan{inf | (Raw{1} << (Binary::significandBits - 2))};
-    static constexpr Raw negInf{inf | (Raw{1} << (Binary::bits - 1))};
     if (toupper(p[0]) == 'N' && toupper(p[1]) == 'A' && toupper(p[2]) == 'N') {
       // NaN
       p += 3;
-      return {Binary{nan}};
+      return {Real{NaN()}};
     } else {
       // Try to parse Inf, maybe with a sign
       const char *q{p};
-      bool isNegative{*q == '-'};
+      isNegative_ = *q == '-';
       if (*q == '-' || *q == '+') {
         ++q;
       }
       if (toupper(q[0]) == 'I' && toupper(q[1]) == 'N' &&
           toupper(q[2]) == 'F') {
         p = q + 3;
-        return {Binary(isNegative ? negInf : inf)};
+        return {Real{Infinity()}};
       } else {
         // Invalid input
-        return {Binary{nan}, Invalid};
+        return {Real{NaN()}, Invalid};
       }
     }
   }

@@ -46,6 +46,9 @@ static constexpr int BitsForPrecision(int prec) {
   }
 }
 
+// LOG10(2.)*1E12
+static constexpr std::int64_t ScaledLogBaseTenOfTwo{301029995664};
+
 template<int PRECISION> struct BinaryFloatingPointNumber {
   static constexpr int precision{PRECISION};
   static constexpr int bits{BitsForPrecision(precision)};
@@ -57,6 +60,8 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   static constexpr int maxExponent{(1 << exponentBits) - 1};
   static constexpr int exponentBias{maxExponent / 2};
   static constexpr RawType significandMask{(RawType{1} << significandBits) - 1};
+  static constexpr int RANGE{static_cast<int>(
+      (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
 
   BinaryFloatingPointNumber() {}  // zero
   BinaryFloatingPointNumber(const BinaryFloatingPointNumber &that) = default;
@@ -67,7 +72,7 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
       BinaryFloatingPointNumber &&that) = default;
 
   template<typename A> explicit constexpr BinaryFloatingPointNumber(A x) {
-    static_assert(sizeof raw == sizeof x);
+    static_assert(sizeof raw <= sizeof x);
     std::memcpy(reinterpret_cast<void *>(&raw),
         reinterpret_cast<const void *>(&x), sizeof raw);
   }
