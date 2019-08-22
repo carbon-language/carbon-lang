@@ -95,18 +95,6 @@ template <class Ty> struct identity {
   }
 };
 
-template <class Ty> struct less_ptr {
-  bool operator()(const Ty* left, const Ty* right) const {
-    return *left < *right;
-  }
-};
-
-template <class Ty> struct greater_ptr {
-  bool operator()(const Ty* left, const Ty* right) const {
-    return *right < *left;
-  }
-};
-
 /// An efficient, type-erasing, non-owning reference to a callable. This is
 /// intended for use as the type of a function parameter that is not used
 /// after the function in question returns.
