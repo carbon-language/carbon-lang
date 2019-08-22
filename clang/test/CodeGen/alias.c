@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck -check-prefix=CHECKBASIC %s
 // RUN: %clang_cc1 -triple armv7a-eabi -mfloat-abi hard -emit-llvm -o - %s | FileCheck -check-prefix=CHECKCC %s
 // RUN: %clang_cc1 -triple armv7a-eabi -mfloat-abi hard -S -o - %s | FileCheck -check-prefix=CHECKASM %s
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck -check-prefix=CHECKGLOBALS %s
+// RUN: %clang_cc1 -triple aarch64-linux-gnu -emit-llvm -o - %s | FileCheck -check-prefix=CHECKGLOBALS %s
 
 int g0;
 // CHECKBASIC-DAG: @g0 = common global i32 0
