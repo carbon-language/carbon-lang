@@ -36,8 +36,7 @@ using namespace parser::literals;
 // are using another encoding.
 static constexpr auto magic{"\xef\xbb\xbf!mod$ v1 sum:"};
 
-static const std::optional<SourceName> GetSubmoduleParent(
-    const parser::Program &);
+static std::optional<SourceName> GetSubmoduleParent(const parser::Program &);
 static std::string ModFilePath(const std::string &dir, const SourceName &,
     const std::string &ancestor, const std::string &suffix);
 static std::vector<const Symbol *> CollectSymbols(const Scope &);
@@ -761,7 +760,7 @@ std::optional<std::string> ModFileReader::FindModFile(
 
 // program was read from a .mod file for a submodule; return the name of the
 // submodule's parent submodule, nullptr if none.
-static const std::optional<SourceName> GetSubmoduleParent(
+static std::optional<SourceName> GetSubmoduleParent(
     const parser::Program &program) {
   CHECK(program.v.size() == 1);
   auto &unit{program.v.front()};
