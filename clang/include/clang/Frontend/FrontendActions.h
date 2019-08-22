@@ -139,6 +139,12 @@ protected:
                                                  StringRef InFile) override;
 };
 
+class GenerateInterfaceIfsExpV1Action : public GenerateInterfaceStubAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
+};
+
 class GenerateModuleFromModuleMapAction : public GenerateModuleAction {
 private:
   bool BeginSourceFileAction(CompilerInstance &CI) override;

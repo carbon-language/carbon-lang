@@ -354,9 +354,55 @@ public:
       OS.flush();
     };
 
+    auto writeIfsV1 =
+        [this](const llvm::Triple &T, const MangledSymbols &Symbols,
+               const ASTContext &context, StringRef Format,
+               raw_ostream &OS) -> void {
+      OS << "--- !" << Format << "\n";
+      OS << "IfsVersion: 1.0\n";
+      OS << "Triple: " << T.str() << "\n";
+      OS << "ObjectFileFormat: " << "ELF" << "\n"; // TODO: For now, just ELF.
+      OS << "Symbols:\n";
+      for (const auto &E : Symbols) {
+        const MangledSymbol &Symbol = E.second;
+        for (auto Name : Symbol.Names) {
+          OS << "  "
+             << (Symbol.ParentName.empty() || Instance.getLangOpts().CPlusPlus
+                     ? ""
+                     : (Symbol.ParentName + "."))
+             << Name << ": { Type: ";
+          switch (Symbol.Type) {
+          default:
+            llvm_unreachable(
+                "clang -emit-iterface-stubs: Unexpected symbol type.");
+          case llvm::ELF::STT_NOTYPE:
+            OS << "NoType";
+            break;
+          case llvm::ELF::STT_OBJECT: {
+            auto VD = cast<ValueDecl>(E.first)->getType();
+            OS << "Object, Size: "
+               << context.getTypeSizeInChars(VD).getQuantity();
+            break;
+          }
+          case llvm::ELF::STT_FUNC:
+            OS << "Func";
+            break;
+          }
+          if (Symbol.Binding == llvm::ELF::STB_WEAK)
+            OS << ", Weak: true";
+          OS << " }\n";
+        }
+      }
+      OS << "...\n";
+      OS.flush();
+    };
+
     if (Format == "experimental-yaml-elf-v1")
       writeIfoYaml(Instance.getTarget().getTriple(), Symbols, context, Format,
                    *OS);
+    else if (Format == "experimental-ifs-v1")
+      writeIfsV1(Instance.getTarget().getTriple(), Symbols, context, Format,
+                 *OS);
     else
       writeIfoElfAbiYaml(Instance.getTarget().getTriple(), Symbols, context,
                          Format, *OS);
@@ -375,4 +421,11 @@ GenerateInterfaceTBEExpV1Action::CreateASTConsumer(CompilerInstance &CI,
                                                    StringRef InFile) {
   return std::make_unique<InterfaceStubFunctionsConsumer>(
       CI, InFile, "experimental-tapi-elf-v1");
+}
+
+std::unique_ptr<ASTConsumer>
+GenerateInterfaceIfsExpV1Action::CreateASTConsumer(CompilerInstance &CI,
+                                                   StringRef InFile) {
+  return std::make_unique<InterfaceStubFunctionsConsumer>(
+      CI, InFile, "experimental-ifs-v1");
 }

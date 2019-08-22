@@ -92,6 +92,7 @@ enum ActionKind {
   /// Generate Interface Stub Files.
   GenerateInterfaceYAMLExpV1,
   GenerateInterfaceTBEExpV1,
+  GenerateInterfaceIfsExpV1,
 
   /// Only execute frontend initialization.
   InitOnly,

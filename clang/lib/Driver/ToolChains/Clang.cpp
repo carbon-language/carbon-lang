@@ -3638,12 +3638,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                   : "")
               .Case("experimental-yaml-elf-v1", "experimental-yaml-elf-v1")
               .Case("experimental-tapi-elf-v1", "experimental-tapi-elf-v1")
+              .Case("experimental-ifs-v1", "experimental-ifs-v1")
               .Default("");
 
       if (StubFormat.empty())
         D.Diag(diag::err_drv_invalid_value)
             << "Must specify a valid interface stub format type using "
             << "-interface-stub-version=<experimental-tapi-elf-v1 | "
+               "experimental-ifs-v1 | "
                "experimental-yaml-elf-v1>";
 
       CmdArgs.push_back("-emit-interface-stubs");
