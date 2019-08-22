@@ -1871,33 +1871,33 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      4     1.00    *                   testq	%rsi, (%rax)
 # CHECK-NEXT:  1      100   0.50    *             U     ud2
 # CHECK-NEXT:  1      100   0.50                  U     wrmsr
-# CHECK-NEXT:  1      1     0.50                        xaddb	%bl, %cl
-# CHECK-NEXT:  1      4     1.00    *      *            xaddb	%bl, (%rcx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xaddb	%bl, (%rcx)
-# CHECK-NEXT:  1      1     0.50                        xaddw	%bx, %cx
-# CHECK-NEXT:  1      4     1.00    *      *            xaddw	%ax, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xaddw	%ax, (%rbx)
-# CHECK-NEXT:  1      1     0.50                        xaddl	%ebx, %ecx
-# CHECK-NEXT:  1      4     1.00    *      *            xaddl	%eax, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xaddl	%eax, (%rbx)
-# CHECK-NEXT:  1      1     0.50                        xaddq	%rbx, %rcx
-# CHECK-NEXT:  1      4     1.00    *      *            xaddq	%rax, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xaddq	%rax, (%rbx)
-# CHECK-NEXT:  1      1     0.50                        xchgb	%bl, %cl
-# CHECK-NEXT:  1      4     1.00    *      *            xchgb	%bl, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xchgb	%bl, (%rbx)
-# CHECK-NEXT:  1      1     0.50                        xchgw	%bx, %ax
-# CHECK-NEXT:  1      1     0.50                        xchgw	%bx, %cx
-# CHECK-NEXT:  1      4     1.00    *      *            xchgw	%ax, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xchgw	%ax, (%rbx)
-# CHECK-NEXT:  1      1     0.50                        xchgl	%ebx, %eax
-# CHECK-NEXT:  1      1     0.50                        xchgl	%ebx, %ecx
-# CHECK-NEXT:  1      4     1.00    *      *            xchgl	%eax, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xchgl	%eax, (%rbx)
-# CHECK-NEXT:  1      1     0.50                        xchgq	%rbx, %rax
-# CHECK-NEXT:  1      1     0.50                        xchgq	%rbx, %rcx
-# CHECK-NEXT:  1      4     1.00    *      *            xchgq	%rax, (%rbx)
-# CHECK-NEXT:  1      4     1.00    *      *            lock		xchgq	%rax, (%rbx)
+# CHECK-NEXT:  3      2     1.50                        xaddb	%bl, %cl
+# CHECK-NEXT:  4      11    1.50    *      *            xaddb	%bl, (%rcx)
+# CHECK-NEXT:  4      16    16.00   *      *            lock		xaddb	%bl, (%rcx)
+# CHECK-NEXT:  3      2     1.50                        xaddw	%bx, %cx
+# CHECK-NEXT:  4      11    1.50    *      *            xaddw	%ax, (%rbx)
+# CHECK-NEXT:  4      16    16.00   *      *            lock		xaddw	%ax, (%rbx)
+# CHECK-NEXT:  3      2     1.50                        xaddl	%ebx, %ecx
+# CHECK-NEXT:  4      11    1.50    *      *            xaddl	%eax, (%rbx)
+# CHECK-NEXT:  4      16    16.00   *      *            lock		xaddl	%eax, (%rbx)
+# CHECK-NEXT:  3      2     1.50                        xaddq	%rbx, %rcx
+# CHECK-NEXT:  4      11    1.50    *      *            xaddq	%rax, (%rbx)
+# CHECK-NEXT:  4      16    16.00   *      *            lock		xaddq	%rax, (%rbx)
+# CHECK-NEXT:  3      2     1.50                        xchgb	%bl, %cl
+# CHECK-NEXT:  3      16    16.00   *      *            xchgb	%bl, (%rbx)
+# CHECK-NEXT:  3      16    16.00   *      *            lock		xchgb	%bl, (%rbx)
+# CHECK-NEXT:  2      1     1.00                        xchgw	%bx, %ax
+# CHECK-NEXT:  2      1     1.00                        xchgw	%bx, %cx
+# CHECK-NEXT:  3      16    16.00   *      *            xchgw	%ax, (%rbx)
+# CHECK-NEXT:  3      16    16.00   *      *            lock		xchgw	%ax, (%rbx)
+# CHECK-NEXT:  2      1     1.00                        xchgl	%ebx, %eax
+# CHECK-NEXT:  2      1     1.00                        xchgl	%ebx, %ecx
+# CHECK-NEXT:  3      16    16.00   *      *            xchgl	%eax, (%rbx)
+# CHECK-NEXT:  3      16    16.00   *      *            lock		xchgl	%eax, (%rbx)
+# CHECK-NEXT:  2      1     1.00                        xchgq	%rbx, %rax
+# CHECK-NEXT:  2      1     1.00                        xchgq	%rbx, %rcx
+# CHECK-NEXT:  3      16    16.00   *      *            xchgq	%rax, (%rbx)
+# CHECK-NEXT:  3      16    16.00   *      *            lock		xchgq	%rax, (%rbx)
 # CHECK-NEXT:  1      3     1.00    *                   xlatb
 # CHECK-NEXT:  1      1     0.50                        xorb	$7, %al
 # CHECK-NEXT:  1      1     0.50                        xorb	$7, %dil
@@ -1959,7 +1959,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]
-# CHECK-NEXT: 702.50 752.50 380.00  -      -      -      -     812.00 64.00  713.00  -      -      -      -
+# CHECK-NEXT: 722.50 772.50 380.00  -      -      -      -     992.00 64.00  893.00  -      -      -      -
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]   Instructions:
@@ -2804,33 +2804,33 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -      -      -      -      -      -     testq	%rsi, (%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     ud2
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     wrmsr
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddb	%bl, %cl
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddb	%bl, (%rcx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xaddb	%bl, (%rcx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddw	%bx, %cx
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddw	%ax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xaddw	%ax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddl	%ebx, %ecx
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddl	%eax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xaddl	%eax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddq	%rbx, %rcx
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddq	%rax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xaddq	%rax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgb	%bl, %cl
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xchgb	%bl, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xchgb	%bl, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgw	%bx, %ax
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgw	%bx, %cx
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xchgw	%ax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xchgw	%ax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgl	%ebx, %eax
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgl	%ebx, %ecx
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xchgl	%eax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xchgl	%eax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgq	%rbx, %rax
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgq	%rbx, %rcx
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xchgq	%rax, (%rbx)
-# CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     lock		xchgq	%rax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddb	%bl, %cl
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddb	%bl, (%rcx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xaddb	%bl, (%rcx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddw	%bx, %cx
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddw	%ax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xaddw	%ax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddl	%ebx, %ecx
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddl	%eax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xaddl	%eax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -      -      -      -      -      -      -      -     xaddq	%rbx, %rcx
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     1.00    -     1.00    -      -      -      -     xaddq	%rax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xaddq	%rax, (%rbx)
+# CHECK-NEXT: 1.50   1.50    -      -      -      -      -      -      -      -      -      -      -      -     xchgb	%bl, %cl
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     xchgb	%bl, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xchgb	%bl, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -      -      -      -      -      -      -      -     xchgw	%bx, %ax
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -      -      -      -      -      -      -      -     xchgw	%bx, %cx
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     xchgw	%ax, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xchgw	%ax, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -      -      -      -      -      -      -      -     xchgl	%ebx, %eax
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -      -      -      -      -      -      -      -     xchgl	%ebx, %ecx
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     xchgl	%eax, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xchgl	%eax, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -      -      -      -      -      -      -      -     xchgq	%rbx, %rax
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -      -      -      -      -      -      -      -     xchgq	%rbx, %rcx
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     xchgq	%rax, (%rbx)
+# CHECK-NEXT: 1.00   1.00    -      -      -      -      -     16.00   -     16.00   -      -      -      -     lock		xchgq	%rax, (%rbx)
 # CHECK-NEXT:  -      -      -      -      -      -      -     1.00    -      -      -      -      -      -     xlatb
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xorb	$7, %al
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     xorb	$7, %dil
