@@ -15,6 +15,7 @@
 #include "semantics.h"
 #include "assignment.h"
 #include "canonicalize-do.h"
+#include "canonicalize-omp.h"
 #include "check-allocate.h"
 #include "check-arithmeticif.h"
 #include "check-coarray.h"
@@ -170,6 +171,7 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
 bool Semantics::Perform() {
   return ValidateLabels(context_, program_) &&
       parser::CanonicalizeDo(program_) &&  // force line break
+      CanonicalizeOmp(context_.messages(), program_) &&
       PerformStatementSemantics(context_, program_) &&
       ModFileWriter{context_}.WriteAll();
 }
