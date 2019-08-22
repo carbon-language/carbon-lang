@@ -1389,20 +1389,6 @@ struct pair_hash {
   }
 };
 
-/// A functor like C++14's std::less<void> in its absence.
-struct less {
-  template <typename A, typename B> bool operator()(A &&a, B &&b) const {
-    return std::forward<A>(a) < std::forward<B>(b);
-  }
-};
-
-/// A functor like C++14's std::equal<void> in its absence.
-struct equal {
-  template <typename A, typename B> bool operator()(A &&a, B &&b) const {
-    return std::forward<A>(a) == std::forward<B>(b);
-  }
-};
-
 /// Binary functor that adapts to any other binary functor after dereferencing
 /// operands.
 template <typename T> struct deref {
