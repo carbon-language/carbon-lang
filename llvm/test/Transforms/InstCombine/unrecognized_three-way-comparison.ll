@@ -610,7 +610,7 @@ define i32 @compare_against_arbitrary_value_commutativity1(i32 %x, i32 %c) {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp eq i32 [[X:%.*]], [[C:%.*]]
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp sgt i32 [[C]], [[X]]
-; CHECK-NEXT:    [[SELECT1:%.*]] = select i1 [[CMP2]], i32 1, i32 -1
+; CHECK-NEXT:    [[SELECT1:%.*]] = select i1 [[CMP2]], i32 -1, i32 1
 ; CHECK-NEXT:    [[SELECT2:%.*]] = select i1 [[CMP1]], i32 0, i32 [[SELECT1]]
 ; CHECK-NEXT:    [[COND:%.*]] = icmp sgt i32 [[SELECT2]], 0
 ; CHECK-NEXT:    br i1 [[COND]], label [[CALLFOO:%.*]], label [[EXIT:%.*]]
@@ -622,8 +622,8 @@ define i32 @compare_against_arbitrary_value_commutativity1(i32 %x, i32 %c) {
 ;
 entry:
   %cmp1 = icmp eq i32 %x, %c
-  %cmp2 = icmp sgt i32 %c, %x ; inverted
-  %select1 = select i1 %cmp2, i32 1, i32 -1 ; swapped
+  %cmp2 = icmp sgt i32 %c, %x ; swapped
+  %select1 = select i1 %cmp2, i32 -1, i32 1
   %select2 = select i1 %cmp1, i32 0, i32 %select1
   %cond = icmp sgt i32 %select2, 0
   br i1 %cond, label %callfoo, label %exit
@@ -673,7 +673,7 @@ define i32 @compare_against_arbitrary_value_commutativity3(i32 %x, i32 %c) {
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp ne i32 [[X:%.*]], [[C:%.*]]
 ; CHECK-NEXT:    call void @use1(i1 [[CMP1]])
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp sgt i32 [[C]], [[X]]
-; CHECK-NEXT:    [[SELECT1:%.*]] = select i1 [[CMP2]], i32 1, i32 -1
+; CHECK-NEXT:    [[SELECT1:%.*]] = select i1 [[CMP2]], i32 -1, i32 1
 ; CHECK-NEXT:    [[SELECT2:%.*]] = select i1 [[CMP1]], i32 [[SELECT1]], i32 0
 ; CHECK-NEXT:    [[COND:%.*]] = icmp sgt i32 [[SELECT2]], 0
 ; CHECK-NEXT:    br i1 [[COND]], label [[CALLFOO:%.*]], label [[EXIT:%.*]]
@@ -686,8 +686,8 @@ define i32 @compare_against_arbitrary_value_commutativity3(i32 %x, i32 %c) {
 entry:
   %cmp1 = icmp ne i32 %x, %c ; inverted
   call void @use1(i1 %cmp1)
-  %cmp2 = icmp sgt i32 %c, %x ; inverted
-  %select1 = select i1 %cmp2, i32 1, i32 -1 ; swapped
+  %cmp2 = icmp sgt i32 %c, %x ; swapped
+  %select1 = select i1 %cmp2, i32 -1, i32 1
   %select2 = select i1 %cmp1, i32 %select1, i32 0 ; swapped
   %cond = icmp sgt i32 %select2, 0
   br i1 %cond, label %callfoo, label %exit
