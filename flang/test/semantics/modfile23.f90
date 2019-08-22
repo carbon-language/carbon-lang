@@ -184,3 +184,34 @@ end
 !  character(i,1)::x
 ! end
 !end
+
+module m8
+  use m1, only: t1, t2
+  interface
+    subroutine s1(x)
+      import
+      type(t1) :: x
+    end subroutine
+    subroutine s2(x)
+      import :: t2
+      type(t2) :: x
+    end subroutine
+  end interface
+end
+!Expect: m8.mod
+!module m8
+! use m1,only:t1
+! use m1,only:t2
+! interface
+!  subroutine s1(x)
+!   import::t1
+!   type(t1)::x
+!  end
+! end interface
+! interface
+!  subroutine s2(x)
+!   import::t2
+!   type(t2)::x
+!  end
+! end interface
+!end

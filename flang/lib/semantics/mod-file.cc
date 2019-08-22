@@ -86,6 +86,7 @@ private:
   void DoType(const DeclTypeSpec *);
   void DoBound(const Bound &);
   void DoParamValue(const ParamValue &);
+  bool NeedImport(const Symbol &);
 
   struct SymbolVisitor : public virtual evaluate::VisitorBase<SymbolVector> {
     using Result = SymbolVector;
@@ -824,7 +825,8 @@ void SubprogramSymbolCollector::DoSymbol(const Symbol &symbol) {
   if (scope != scope_ && !scope.IsDerivedType()) {
     if (scope != scope_.parent()) {
       useSet_.insert(&symbol);
-    } else if (isInterface_) {
+    }
+    if (NeedImport(symbol)) {
       imports_.insert(&symbol);
     }
     return;
@@ -899,6 +901,19 @@ void SubprogramSymbolCollector::DoBound(const Bound &bound) {
 void SubprogramSymbolCollector::DoParamValue(const ParamValue &paramValue) {
   if (const auto &expr{paramValue.GetExplicit()}) {
     DoExpr(*expr);
+  }
+}
+
+// Do we need a IMPORT of this symbol into an interface block?
+bool SubprogramSymbolCollector::NeedImport(const Symbol &symbol) {
+  if (!isInterface_) {
+    return false;
+  } else if (symbol.owner() != scope_.parent()) {
+    // detect import from parent of use-associated symbol
+    const auto *found{scope_.FindSymbol(symbol.name())};
+    return DEREF(found).has<UseDetails>() && found->owner() != scope_;
+  } else {
+    return true;
   }
 }
 
