@@ -1334,32 +1334,32 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  2      28    25.00   *             U     idivl	(%rax)
 # CHECK-NEXT:  2      41    41.00                 U     idivq	%rcx
 # CHECK-NEXT:  2      44    41.00   *             U     idivq	(%rax)
-# CHECK-NEXT:  2      3     1.00                        imulb	%dil
-# CHECK-NEXT:  2      6     1.00    *                   imulb	(%rax)
-# CHECK-NEXT:  2      3     1.00                        imulw	%di
-# CHECK-NEXT:  2      6     1.00    *                   imulw	(%rax)
-# CHECK-NEXT:  2      3     1.00                        imulw	%si, %di
-# CHECK-NEXT:  2      6     1.00    *                   imulw	(%rax), %di
-# CHECK-NEXT:  2      3     1.00                        imulw	$511, %si, %di
-# CHECK-NEXT:  2      6     1.00    *                   imulw	$511, (%rax), %di
-# CHECK-NEXT:  2      3     1.00                        imulw	$7, %si, %di
-# CHECK-NEXT:  2      6     1.00    *                   imulw	$7, (%rax), %di
-# CHECK-NEXT:  2      3     1.00                        imull	%edi
-# CHECK-NEXT:  2      6     1.00    *                   imull	(%rax)
-# CHECK-NEXT:  2      3     1.00                        imull	%esi, %edi
-# CHECK-NEXT:  2      6     1.00    *                   imull	(%rax), %edi
-# CHECK-NEXT:  2      3     1.00                        imull	$665536, %esi, %edi
-# CHECK-NEXT:  2      6     1.00    *                   imull	$665536, (%rax), %edi
-# CHECK-NEXT:  2      3     1.00                        imull	$7, %esi, %edi
-# CHECK-NEXT:  2      6     1.00    *                   imull	$7, (%rax), %edi
+# CHECK-NEXT:  1      3     1.00                        imulb	%dil
+# CHECK-NEXT:  1      6     1.00    *                   imulb	(%rax)
+# CHECK-NEXT:  3      3     3.00                        imulw	%di
+# CHECK-NEXT:  3      6     3.00    *                   imulw	(%rax)
+# CHECK-NEXT:  1      3     1.00                        imulw	%si, %di
+# CHECK-NEXT:  1      6     1.00    *                   imulw	(%rax), %di
+# CHECK-NEXT:  2      4     2.00                        imulw	$511, %si, %di
+# CHECK-NEXT:  2      7     2.00    *                   imulw	$511, (%rax), %di
+# CHECK-NEXT:  2      4     2.00                        imulw	$7, %si, %di
+# CHECK-NEXT:  2      7     2.00    *                   imulw	$7, (%rax), %di
+# CHECK-NEXT:  2      3     2.00                        imull	%edi
+# CHECK-NEXT:  2      6     2.00    *                   imull	(%rax)
+# CHECK-NEXT:  1      3     1.00                        imull	%esi, %edi
+# CHECK-NEXT:  1      6     1.00    *                   imull	(%rax), %edi
+# CHECK-NEXT:  1      3     1.00                        imull	$665536, %esi, %edi
+# CHECK-NEXT:  1      6     1.00    *                   imull	$665536, (%rax), %edi
+# CHECK-NEXT:  1      3     1.00                        imull	$7, %esi, %edi
+# CHECK-NEXT:  1      6     1.00    *                   imull	$7, (%rax), %edi
 # CHECK-NEXT:  2      6     4.00                        imulq	%rdi
 # CHECK-NEXT:  2      9     4.00    *                   imulq	(%rax)
-# CHECK-NEXT:  2      6     4.00                        imulq	%rsi, %rdi
-# CHECK-NEXT:  2      9     4.00    *                   imulq	(%rax), %rdi
-# CHECK-NEXT:  2      6     4.00                        imulq	$665536, %rsi, %rdi
-# CHECK-NEXT:  2      9     4.00    *                   imulq	$665536, (%rax), %rdi
-# CHECK-NEXT:  2      6     4.00                        imulq	$7, %rsi, %rdi
-# CHECK-NEXT:  2      9     4.00    *                   imulq	$7, (%rax), %rdi
+# CHECK-NEXT:  1      6     4.00                        imulq	%rsi, %rdi
+# CHECK-NEXT:  1      9     4.00    *                   imulq	(%rax), %rdi
+# CHECK-NEXT:  1      6     4.00                        imulq	$665536, %rsi, %rdi
+# CHECK-NEXT:  1      9     4.00    *                   imulq	$665536, (%rax), %rdi
+# CHECK-NEXT:  1      6     4.00                        imulq	$7, %rsi, %rdi
+# CHECK-NEXT:  1      9     4.00    *                   imulq	$7, (%rax), %rdi
 # CHECK-NEXT:  1      100   0.50                  U     inb	$7, %al
 # CHECK-NEXT:  1      100   0.50                  U     inb	%dx, %al
 # CHECK-NEXT:  1      100   0.50                  U     inw	$7, %ax
@@ -1416,12 +1416,12 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      4     1.00    *                   movzwq	(%rax), %rdi
 # CHECK-NEXT:  1      1     0.50                        movslq	%eax, %rdi
 # CHECK-NEXT:  1      4     1.00    *                   movslq	(%rax), %rdi
-# CHECK-NEXT:  2      3     1.00                        mulb	%dil
-# CHECK-NEXT:  2      6     1.00    *                   mulb	(%rax)
-# CHECK-NEXT:  2      3     1.00                        mulw	%si
-# CHECK-NEXT:  2      6     1.00    *                   mulw	(%rax)
-# CHECK-NEXT:  2      3     1.00                        mull	%edx
-# CHECK-NEXT:  2      6     1.00    *                   mull	(%rax)
+# CHECK-NEXT:  1      3     1.00                        mulb	%dil
+# CHECK-NEXT:  1      6     1.00    *                   mulb	(%rax)
+# CHECK-NEXT:  3      3     3.00                        mulw	%si
+# CHECK-NEXT:  3      6     3.00    *                   mulw	(%rax)
+# CHECK-NEXT:  2      3     2.00                        mull	%edx
+# CHECK-NEXT:  2      6     2.00    *                   mull	(%rax)
 # CHECK-NEXT:  2      6     4.00                        mulq	%rcx
 # CHECK-NEXT:  2      9     4.00    *                   mulq	(%rax)
 # CHECK-NEXT:  1      1     0.50                        negb	%dil
@@ -1959,7 +1959,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]
-# CHECK-NEXT: 722.50 772.50 380.00  -      -      -      -     992.00 64.00  893.00  -      -      -      -
+# CHECK-NEXT: 722.50 772.50 380.00  -      -      -      -     992.00 80.00  893.00  -      -      -      -
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]   Instructions:
@@ -2269,16 +2269,16 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  -     1.00   41.00   -      -      -      -     1.00    -      -      -      -      -      -     idivq	(%rax)
 # CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imulb	%dil
 # CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imulb	(%rax)
-# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imulw	%di
-# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imulw	(%rax)
+# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     3.00    -      -      -      -      -     imulw	%di
+# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   3.00    -      -      -      -      -     imulw	(%rax)
 # CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imulw	%si, %di
 # CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imulw	(%rax), %di
-# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imulw	$511, %si, %di
-# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imulw	$511, (%rax), %di
-# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imulw	$7, %si, %di
-# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imulw	$7, (%rax), %di
-# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imull	%edi
-# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imull	(%rax)
+# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     2.00    -      -      -      -      -     imulw	$511, %si, %di
+# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   2.00    -      -      -      -      -     imulw	$511, (%rax), %di
+# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     2.00    -      -      -      -      -     imulw	$7, %si, %di
+# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   2.00    -      -      -      -      -     imulw	$7, (%rax), %di
+# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     2.00    -      -      -      -      -     imull	%edi
+# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   2.00    -      -      -      -      -     imull	(%rax)
 # CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imull	%esi, %edi
 # CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     imull	(%rax), %edi
 # CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     imull	$665536, %esi, %edi
@@ -2351,10 +2351,10 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -     1.00    -      -      -      -      -      -     movslq	(%rax), %rdi
 # CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     mulb	%dil
 # CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     mulb	(%rax)
-# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     mulw	%si
-# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     mulw	(%rax)
-# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     1.00    -      -      -      -      -     mull	%edx
-# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   1.00    -      -      -      -      -     mull	(%rax)
+# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     3.00    -      -      -      -      -     mulw	%si
+# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   3.00    -      -      -      -      -     mulw	(%rax)
+# CHECK-NEXT:  -     1.00    -      -      -      -      -      -     2.00    -      -      -      -      -     mull	%edx
+# CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   2.00    -      -      -      -      -     mull	(%rax)
 # CHECK-NEXT:  -     1.00    -      -      -      -      -      -     4.00    -      -      -      -      -     mulq	%rcx
 # CHECK-NEXT:  -     1.00    -      -      -      -      -     1.00   4.00    -      -      -      -      -     mulq	(%rax)
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     negb	%dil
