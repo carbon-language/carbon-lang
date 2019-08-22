@@ -57,8 +57,6 @@ entry:
   ret <4 x double> %r
 }
 
-; FIXME: We're currently loading two constants here (1.5 and -1.5), and using
-;        an qvfmadd instead of a qvfnmsubs
 define <4 x double> @foof_fmf(<4 x double> %a, <4 x float> %b) nounwind {
 ; CHECK-LABEL: foof_fmf:
 ; CHECK:       # %bb.0: # %entry
@@ -66,12 +64,9 @@ define <4 x double> @foof_fmf(<4 x double> %a, <4 x float> %b) nounwind {
 ; CHECK-NEXT:    qvfrsqrtes 3, 2
 ; CHECK-NEXT:    addi 3, 3, .LCPI2_0@toc@l
 ; CHECK-NEXT:    qvlfsx 0, 0, 3
-; CHECK-NEXT:    addis 3, 2, .LCPI2_1@toc@ha
-; CHECK-NEXT:    addi 3, 3, .LCPI2_1@toc@l
-; CHECK-NEXT:    qvlfsx 4, 0, 3
-; CHECK-NEXT:    qvfmadds 0, 2, 0, 2
-; CHECK-NEXT:    qvfmuls 2, 3, 3
-; CHECK-NEXT:    qvfmadds 0, 0, 2, 4
+; CHECK-NEXT:    qvfmuls 4, 3, 3
+; CHECK-NEXT:    qvfnmsubs 2, 2, 0, 2
+; CHECK-NEXT:    qvfmadds 0, 2, 4, 0
 ; CHECK-NEXT:    qvfmuls 0, 3, 0
 ; CHECK-NEXT:    qvfmul 1, 1, 0
 ; CHECK-NEXT:    blr
@@ -179,8 +174,6 @@ entry:
   ret <4 x float> %r
 }
 
-; FIXME: We're currently loading two constants here (1.5 and -1.5), and using
-;        an qvfmadd instead of a qvfnmsubs
 define <4 x float> @goo_fmf(<4 x float> %a, <4 x float> %b) nounwind {
 ; CHECK-LABEL: goo_fmf:
 ; CHECK:       # %bb.0: # %entry
@@ -188,12 +181,9 @@ define <4 x float> @goo_fmf(<4 x float> %a, <4 x float> %b) nounwind {
 ; CHECK-NEXT:    qvfrsqrtes 3, 2
 ; CHECK-NEXT:    addi 3, 3, .LCPI6_0@toc@l
 ; CHECK-NEXT:    qvlfsx 0, 0, 3
-; CHECK-NEXT:    addis 3, 2, .LCPI6_1@toc@ha
-; CHECK-NEXT:    addi 3, 3, .LCPI6_1@toc@l
-; CHECK-NEXT:    qvlfsx 4, 0, 3
-; CHECK-NEXT:    qvfmadds 0, 2, 0, 2
-; CHECK-NEXT:    qvfmuls 2, 3, 3
-; CHECK-NEXT:    qvfmadds 0, 0, 2, 4
+; CHECK-NEXT:    qvfmuls 4, 3, 3
+; CHECK-NEXT:    qvfnmsubs 2, 2, 0, 2
+; CHECK-NEXT:    qvfmadds 0, 2, 4, 0
 ; CHECK-NEXT:    qvfmuls 0, 3, 0
 ; CHECK-NEXT:    qvfmuls 1, 1, 0
 ; CHECK-NEXT:    blr
@@ -360,8 +350,6 @@ entry:
   ret <4 x double> %r
 }
 
-; FIXME: We're currently loading two constants here (1.5 and -1.5), and using
-;        an qvfmadds instead of a qvfnmsubs
 define <4 x float> @goo3_fmf(<4 x float> %a) nounwind {
 ; CHECK-LABEL: goo3_fmf:
 ; CHECK:       # %bb.0: # %entry
@@ -369,14 +357,11 @@ define <4 x float> @goo3_fmf(<4 x float> %a) nounwind {
 ; CHECK-NEXT:    qvfrsqrtes 2, 1
 ; CHECK-NEXT:    addi 3, 3, .LCPI14_1@toc@l
 ; CHECK-NEXT:    qvlfsx 0, 0, 3
-; CHECK-NEXT:    addis 3, 2, .LCPI14_2@toc@ha
-; CHECK-NEXT:    addi 3, 3, .LCPI14_2@toc@l
-; CHECK-NEXT:    qvlfsx 3, 0, 3
 ; CHECK-NEXT:    addis 3, 2, .LCPI14_0@toc@ha
-; CHECK-NEXT:    qvfmuls 4, 2, 2
 ; CHECK-NEXT:    addi 3, 3, .LCPI14_0@toc@l
-; CHECK-NEXT:    qvfmadds 0, 1, 0, 1
-; CHECK-NEXT:    qvfmadds 0, 0, 4, 3
+; CHECK-NEXT:    qvfmuls 4, 2, 2
+; CHECK-NEXT:    qvfnmsubs 3, 1, 0, 1
+; CHECK-NEXT:    qvfmadds 0, 3, 4, 0
 ; CHECK-NEXT:    qvlfsx 3, 0, 3
 ; CHECK-NEXT:    qvfmuls 0, 2, 0
 ; CHECK-NEXT:    qvfmuls 0, 0, 1
