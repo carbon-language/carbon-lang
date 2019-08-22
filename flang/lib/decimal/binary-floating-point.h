@@ -67,6 +67,7 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
       BinaryFloatingPointNumber &&that) = default;
 
   template<typename A> explicit constexpr BinaryFloatingPointNumber(A x) {
+    static_assert(sizeof raw == sizeof x);
     std::memcpy(reinterpret_cast<void *>(&raw),
         reinterpret_cast<const void *>(&x), sizeof raw);
   }

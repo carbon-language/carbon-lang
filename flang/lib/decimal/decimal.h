@@ -1,25 +1,26 @@
-// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/* Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-// C and C++ API for binary-to/from-decimal conversion package.
+/* C and C++ API for binary-to/from-decimal conversion package. */
 
 #ifndef FORTRAN_DECIMAL_DECIMAL_H_
 #define FORTRAN_DECIMAL_DECIMAL_H_
 
-#include "binary-floating-point.h"
 #include <stddef.h>
 
+#ifdef __cplusplus
 // Binary-to-decimal conversions (formatting) produce a sequence of decimal
 // digit characters in a NUL-terminated user-supplied buffer that constitute
 // a decimal fraction (or zero), accompanied by a decimal exponent that
@@ -30,9 +31,9 @@
 // If the conversion can't fit in the user-supplied buffer, a null pointer
 // is returned.
 
-#ifdef __cplusplus
+#include "binary-floating-point.h"
 namespace Fortran::decimal {
-#endif
+#endif /* C++ */
 
 enum ConversionResultFlags {
   Exact = 0,
@@ -116,29 +117,28 @@ extern template ConversionToBinaryResult<112> ConvertToBinary<112>(
 }  // namespace Fortran::decimal
 extern "C" {
 #define NS(x) Fortran::decimal::x
-#else
+#else /* C++ */
 #define NS(x) x
 #endif /* C++ */
 
-NS(ConversionToDecimalResult)
-ConvertFloatToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
-    int digits, enum NS(FortranRounding), float);
-NS(ConversionToDecimalResult)
-ConvertDoubleToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
-    int digits, enum NS(FortranRounding), double);
+struct NS(ConversionToDecimalResult)
+    ConvertFloatToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
+        int digits, enum NS(FortranRounding), float);
+struct NS(ConversionToDecimalResult)
+    ConvertDoubleToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
+        int digits, enum NS(FortranRounding), double);
 #if __x86_64__
-NS(ConversionToDecimalResult)
-ConvertLongDoubleToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
-    int digits, enum NS(FortranRounding), long double);
+struct NS(ConversionToDecimalResult)
+    ConvertLongDoubleToDecimal(char *, size_t, enum NS(DecimalConversionFlags),
+        int digits, enum NS(FortranRounding), long double);
 #endif
 
-NS(ConversionResultFlags)
-ConvertDecimalToFloat(const char **, float *, enum NS(FortranRounding));
-NS(ConversionResultFlags)
-ConvertDecimalToDouble(const char **, double *, enum NS(FortranRounding));
+enum NS(ConversionResultFlags)
+    ConvertDecimalToFloat(const char **, float *, enum NS(FortranRounding));
+enum NS(ConversionResultFlags)
+    ConvertDecimalToDouble(const char **, double *, enum NS(FortranRounding));
 #if __x86_64__
-NS(ConversionResultFlags)
-ConvertDecimalToLongDouble(
+enum NS(ConversionResultFlags) ConvertDecimalToLongDouble(
     const char **, long double *, enum NS(FortranRounding));
 #endif
 #undef NS
