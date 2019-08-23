@@ -682,13 +682,18 @@ class AAReturnedValuesImpl : public AAReturnedValues, public AbstractState {
   /// return instructions that might return them.
   DenseMap<Value *, SmallSetVector<ReturnInst *, 4>> ReturnedValues;
 
+  /// Mapping to remember the number of returned values for a call site such
+  /// that we can avoid updates if nothing changed.
+  DenseMap<const CallBase *, unsigned> NumReturnedValuesPerKnownAA;
+
+  /// Set of unresolved calls returned by the associated function.
   SmallSetVector<CallBase *, 4> UnresolvedCalls;
 
   /// State flags
   ///
   ///{
-  bool IsFixed;
-  bool IsValidState;
+  bool IsFixed = false;
+  bool IsValidState = true;
   ///}
 
 public:
@@ -774,7 +779,6 @@ public:
   /// See AbstractState::indicateOptimisticFixpoint(...).
   ChangeStatus indicateOptimisticFixpoint() override {
     IsFixed = true;
-    IsValidState &= true;
     return ChangeStatus::UNCHANGED;
   }
 
@@ -973,6 +977,15 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
 
     if (Unresolved)
       continue;
+
+    // Now track transitively returned values.
+    unsigned &NumRetAA = NumReturnedValuesPerKnownAA[CB];
+    if (NumRetAA == RetValAA.getNumReturnValues()) {
+      LLVM_DEBUG(dbgs() << "[AAReturnedValues] Skip call as it has not "
+                           "changed since it was seen last\n");
+      continue;
+    }
+    NumRetAA = RetValAA.getNumReturnValues();
 
     for (auto &RetValAAIt : RetValAA.returned_values()) {
       Value *RetVal = RetValAAIt.first;
