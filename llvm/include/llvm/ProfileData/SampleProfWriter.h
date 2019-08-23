@@ -109,12 +109,12 @@ private:
 /// Sample-based profile writer (binary format).
 class SampleProfileWriterBinary : public SampleProfileWriter {
 public:
-  virtual std::error_code writeSample(const FunctionSamples &S) override;
-
-protected:
   SampleProfileWriterBinary(std::unique_ptr<raw_ostream> &OS)
       : SampleProfileWriter(OS) {}
 
+  virtual std::error_code writeSample(const FunctionSamples &S) override;
+
+protected:
   virtual std::error_code writeMagicIdent(SampleProfileFormat Format);
   virtual std::error_code writeNameTable();
   virtual std::error_code
@@ -176,7 +176,7 @@ class SampleProfileWriterExtBinary : public SampleProfileWriterExtBinaryBase {
   using SampleProfileWriterExtBinaryBase::SampleProfileWriterExtBinaryBase;
 
 private:
-  virtual void initSectionLayout() {
+  virtual void initSectionLayout() override {
     SectionLayout = {SecProfSummary, SecNameTable, SecLBRProfile};
   };
   virtual std::error_code

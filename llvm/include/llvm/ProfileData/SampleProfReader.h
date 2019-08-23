@@ -480,7 +480,7 @@ protected:
   std::error_code readSecHdrTableEntry();
   std::error_code readSecHdrTable();
   virtual std::error_code readHeader() override;
-  virtual std::error_code verifySPMagic(uint64_t Magic) = 0;
+  virtual std::error_code verifySPMagic(uint64_t Magic) override = 0;
 
 public:
   SampleProfileReaderExtBinaryBase(std::unique_ptr<MemoryBuffer> B,
