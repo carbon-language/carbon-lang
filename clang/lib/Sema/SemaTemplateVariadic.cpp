@@ -313,10 +313,17 @@ Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
 
     if (auto *LSI = dyn_cast<sema::LambdaScopeInfo>(Func)) {
       if (N == FunctionScopes.size()) {
+        const DeclContext *LambdaDC = LSI->CallOperator;
+        // While we're parsing the lambda-declarator, we don't have a call
+        // operator yet and the parameters instead get temporarily attached
+        // to the translation unit.
+        if (!LambdaDC)
+          LambdaDC = Context.getTranslationUnitDecl();
+
         for (auto &Pack : Unexpanded) {
           auto *VD = dyn_cast_or_null<VarDecl>(
               Pack.first.dyn_cast<NamedDecl *>());
-          if (VD && VD->getDeclContext() == LSI->CallOperator)
+          if (VD && VD->getDeclContext() == LambdaDC)
             LambdaParamPackReferences.push_back(Pack);
         }
       }

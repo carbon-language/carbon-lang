@@ -122,3 +122,11 @@ namespace PR33082 {
     b(Pack<int*, float*>(), 1, 2, 3); // expected-note {{instantiation of}}
   }
 }
+
+void pr42587() {
+  (void)[](auto... args) -> decltype(args) {}; // expected-error {{type contains unexpanded parameter pack}}
+  (void)[](auto... args, int = args) {}; // expected-error {{default argument contains unexpanded parameter pack}}
+  (void)[](auto... args, decltype(args)) {}; // expected-error {{type contains unexpanded parameter pack}}
+  (void)[](auto... args, decltype(args)...) {}; // (ok)
+  (void)[](auto... args, int = [=] { return args; }()) {}; // expected-error {{default argument contains unexpanded parameter pack}}
+}
