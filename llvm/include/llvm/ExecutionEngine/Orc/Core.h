@@ -51,8 +51,7 @@ using SymbolMap = DenseMap<SymbolStringPtr, JITEvaluatedSymbol>;
 /// A map from symbol names (as SymbolStringPtrs) to JITSymbolFlags.
 using SymbolFlagsMap = DenseMap<SymbolStringPtr, JITSymbolFlags>;
 
-/// A base class for materialization failures that allows the failing
-///        symbols to be obtained for logging.
+/// A map from JITDylibs to sets of symbols.
 using SymbolDependenceMap = DenseMap<JITDylib *, SymbolNameSet>;
 
 /// A list of (JITDylib*, bool) pairs.
