@@ -43647,10 +43647,13 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
   // The output of PSADBW is a vector of i64.
   // We need to turn the vector of i64 into a vector of i32.
   // If the reduction vector is at least as wide as the psadbw result, just
-  // bitcast. If it's narrower, truncate - the high i32 of each i64 is zero
-  // anyway.
+  // bitcast. If it's narrower which can only occur for v2i32, bits 127:16 of
+  // the PSADBW will be zero. If we promote/ narrow vectors, truncate the v2i64
+  // result to v2i32 which will be removed by type legalization. If we/ widen
+  // narrow vectors then we bitcast to v4i32 and extract v2i32.
   MVT ResVT = MVT::getVectorVT(MVT::i32, Sad.getValueSizeInBits() / 32);
-  if (VT.getSizeInBits() >= ResVT.getSizeInBits())
+  if (ExperimentalVectorWideningLegalization ||
+      VT.getSizeInBits() >= ResVT.getSizeInBits())
     Sad = DAG.getNode(ISD::BITCAST, DL, ResVT, Sad);
   else
     Sad = DAG.getNode(ISD::TRUNCATE, DL, VT, Sad);
@@ -43659,6 +43662,10 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
     // Fill the upper elements with zero to match the add width.
     SDValue Zero = DAG.getConstant(0, DL, VT);
     Sad = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, Zero, Sad,
+                      DAG.getIntPtrConstant(0, DL));
+  } else if (ExperimentalVectorWideningLegalization &&
+             VT.getSizeInBits() < ResVT.getSizeInBits()) {
+    Sad = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, Sad,
                       DAG.getIntPtrConstant(0, DL));
   }
 
