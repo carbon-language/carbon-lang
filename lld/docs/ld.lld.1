@@ -424,6 +424,8 @@ and
 .It Fl -script Ns = Ns Ar file , Fl T Ar file
 Read linker script from
 .Ar file .
+If multiple linker scripts are given, they are processed as if they
+were concatenated in the order they appeared on the command line.
 .It Fl -section-start Ns = Ns Ar section Ns = Ns Ar address
 Set address of section.
 .It Fl -shared , Fl -Bsharable
