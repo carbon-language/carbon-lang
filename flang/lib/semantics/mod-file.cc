@@ -288,8 +288,7 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
     bindAttrs.set(Attr::BIND_C, true);
     attrs.set(Attr::BIND_C, false);
   }
-  Attrs prefixAttrs{subprogramPrefixAttrs};
-  prefixAttrs &= attrs;
+  Attrs prefixAttrs{subprogramPrefixAttrs & attrs};
   // emit any non-prefix attributes in an attribute statement
   attrs &= ~subprogramPrefixAttrs;
   std::stringstream ss;

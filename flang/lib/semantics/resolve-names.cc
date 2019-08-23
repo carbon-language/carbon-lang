@@ -1999,8 +1999,7 @@ static void ConvertToUseError(
 
 void ModuleVisitor::AddUse(
     const SourceName &location, Symbol &localSymbol, const Symbol &useSymbol) {
-  localSymbol.attrs() = useSymbol.attrs();
-  localSymbol.attrs() &= ~Attrs{Attr::PUBLIC, Attr::PRIVATE};
+  localSymbol.attrs() = useSymbol.attrs() & ~Attrs{Attr::PUBLIC, Attr::PRIVATE};
   localSymbol.flags() = useSymbol.flags();
   if (auto *useDetails{localSymbol.detailsIf<UseDetails>()}) {
     const Symbol &ultimate{localSymbol.GetUltimate()};

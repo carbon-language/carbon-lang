@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ private:
 
 public:
   using enumSetType::enumSetType;
+  Attrs(const enumSetType &attrs) : enumSetType(attrs) {}
+  Attrs(enumSetType &&attrs) : enumSetType(std::move(attrs)) {}
   constexpr bool HasAny(const Attrs &x) const { return !(*this & x).none(); }
   constexpr bool HasAll(const Attrs &x) const { return (~*this & x).none(); }
   // Internal error if any of these attributes are not in allowed.
