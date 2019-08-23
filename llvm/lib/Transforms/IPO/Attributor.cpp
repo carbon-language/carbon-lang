@@ -1985,6 +1985,12 @@ struct AADereferenceableFloating : AADereferenceableImpl {
         T.GlobalState &= DS.GlobalState;
       }
 
+      // For now we do not try to "increase" dereferenceability due to negative
+      // indices as we first have to come up with code to deal with loops and
+      // for overflows of the dereferenceable bytes.
+      if (Offset.getSExtValue() < 0)
+        Offset = 0;
+
       T.takeAssumedDerefBytesMinimum(
           std::max(int64_t(0), DerefBytes - Offset.getSExtValue()));
 
