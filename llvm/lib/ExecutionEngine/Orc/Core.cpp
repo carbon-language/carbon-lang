@@ -1031,6 +1031,7 @@ Error JITDylib::resolve(const SymbolMap &Resolved) {
       auto &MI = MaterializingInfos[Name];
       for (auto &Q : MI.takeQueriesMeeting(SymbolState::Resolved)) {
         Q->notifySymbolMetRequiredState(Name, ResolvedSym);
+        Q->removeQueryDependence(*this, Name);
         if (Q->isComplete())
           CompletedQueries.insert(std::move(Q));
       }

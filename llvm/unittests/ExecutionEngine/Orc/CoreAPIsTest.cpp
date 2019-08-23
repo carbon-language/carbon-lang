@@ -935,7 +935,7 @@ TEST_F(CoreAPIsStandardTest, FailResolution) {
   }
 }
 
-TEST_F(CoreAPIsStandardTest, FailEmissionEarly) {
+TEST_F(CoreAPIsStandardTest, FailEmissionAfterResolution) {
 
   cantFail(JD.define(absoluteSymbols({{Baz, BazSym}})));
 
@@ -968,6 +968,30 @@ TEST_F(CoreAPIsStandardTest, FailEmissionEarly) {
 
   EXPECT_THAT_EXPECTED(std::move(Result), Failed())
       << "Unexpected success while trying to test error propagation";
+}
+
+TEST_F(CoreAPIsStandardTest, FailAfterPartialResolution) {
+
+  cantFail(JD.define(absoluteSymbols({{Foo, FooSym}})));
+
+  // Fail materialization of bar.
+  auto BarMU = std::make_unique<SimpleMaterializationUnit>(
+      SymbolFlagsMap({{Bar, BarSym.getFlags()}}),
+      [&](MaterializationResponsibility R) { R.failMaterialization(); });
+
+  cantFail(JD.define(std::move(BarMU)));
+
+  bool QueryHandlerRun = false;
+  ES.lookup(
+      JITDylibSearchList({{&JD, false}}), SymbolNameSet({Foo, Bar}),
+      SymbolState::Resolved,
+      [&](Expected<SymbolMap> Result) {
+        EXPECT_THAT_EXPECTED(std::move(Result), Failed())
+            << "Expected query to fail";
+        QueryHandlerRun = true;
+      },
+      NoDependenciesToRegister);
+  EXPECT_TRUE(QueryHandlerRun) << "Query handler never ran";
 }
 
 TEST_F(CoreAPIsStandardTest, TestLookupWithUnthreadedMaterialization) {
