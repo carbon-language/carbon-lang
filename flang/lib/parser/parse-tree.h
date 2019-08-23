@@ -2932,7 +2932,7 @@ struct GenericStmt {
 struct InterfaceStmt {
   UNION_CLASS_BOILERPLATE(InterfaceStmt);
   // Workaround for clang with libstc++10 bug
-  InterfaceStmt(Abstract x) : u(x) {}
+  InterfaceStmt(Abstract x) : u{x} {}
 
   std::variant<std::optional<GenericSpec>, Abstract> u;
 };
