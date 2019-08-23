@@ -43660,9 +43660,11 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
 
   if (VT.getSizeInBits() > ResVT.getSizeInBits()) {
     // Fill the upper elements with zero to match the add width.
-    SDValue Zero = DAG.getConstant(0, DL, VT);
-    Sad = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, Zero, Sad,
-                      DAG.getIntPtrConstant(0, DL));
+    assert(VT.getSizeInBits() % ResVT.getSizeInBits() == 0 && "Unexpected VTs");
+    unsigned NumConcats = VT.getSizeInBits() / ResVT.getSizeInBits();
+    SmallVector<SDValue, 4> Ops(NumConcats, DAG.getConstant(0, DL, ResVT));
+    Ops[0] = Sad;
+    Sad = DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Ops);
   } else if (ExperimentalVectorWideningLegalization &&
              VT.getSizeInBits() < ResVT.getSizeInBits()) {
     Sad = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, Sad,
