@@ -164,7 +164,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       MATCH(x, ivf.value.ToUInt64())(ldesc);
       if (rounding.mode == RoundingMode::TiesToEven) {  // to match stold()
         std::stringstream ss;
-        vr.value.AsFortran(ss, kind);
+        vr.value.AsFortran(ss, kind, false /*exact*/);
         std::string decimal{ss.str()};
         const char *p{decimal.data()};
         MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))
@@ -411,7 +411,7 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
 
       static constexpr int kind{REAL::bits / 8};
       std::stringstream ss, css;
-      x.AsFortran(ss, kind);
+      x.AsFortran(ss, kind, false /*exact*/);
       std::string s{ss.str()};
       if (IsNaN(rj)) {
         css << "(0._" << kind << "/0.)";

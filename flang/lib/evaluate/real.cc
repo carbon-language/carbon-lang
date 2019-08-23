@@ -459,7 +459,8 @@ std::string Real<W, P, IM>::DumpHexadecimal() const {
 }
 
 template<typename W, int P, bool IM>
-std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
+std::ostream &Real<W, P, IM>::AsFortran(
+    std::ostream &o, int kind, bool minimal) const {
   if (IsNotANumber()) {
     o << "(0._" << kind << "/0.)";
   } else if (IsInfinite()) {
@@ -476,8 +477,11 @@ std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
     using B = decimal::BinaryFloatingPointNumber<P>;
     const auto *value{reinterpret_cast<const B *>(this)};
     char buffer[24000];  // accommodate real*16
-    auto result{decimal::ConvertToDecimal<P>(buffer, sizeof buffer,
-        static_cast<decimal::DecimalConversionFlags>(0),
+    decimal::DecimalConversionFlags flags{};  // default: exact representation
+    if (minimal) {
+      flags = decimal::Minimize;
+    }
+    auto result{decimal::ConvertToDecimal<P>(buffer, sizeof buffer, flags,
         static_cast<int>(sizeof buffer), decimal::RoundNearest, *value)};
     const char *p{result.str};
     if (DEREF(p) == '-' || *p == '+') {
