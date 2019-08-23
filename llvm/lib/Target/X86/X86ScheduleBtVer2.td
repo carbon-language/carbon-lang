@@ -180,9 +180,11 @@ multiclass JWriteResYMMPair<X86FoldableSchedWrite SchedRW,
 
 // Instructions that have local forwarding disabled have an extra +1cy latency.
 
-// A folded store needs a cycle on the SAGU for the store data,
-// most RMW instructions don't need an extra uop.
-defm : X86WriteRes<WriteRMW, [JSAGU], 1, [1], 0>;
+// A folded store needs a cycle on the SAGU for the store data, most RMW
+// instructions don't need an extra uop.  ALU RMW operations don't seem to
+// benefit from STLF, and their observed latency is 6cy. That is the reason why
+// this write adds two extra cycles (instead of just 1cy for the store).
+defm : X86WriteRes<WriteRMW, [JSAGU], 2, [1], 0>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Arithmetic.
