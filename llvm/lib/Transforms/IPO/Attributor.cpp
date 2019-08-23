@@ -1988,16 +1988,27 @@ struct AADereferenceableFloating : AADereferenceableImpl {
       // For now we do not try to "increase" dereferenceability due to negative
       // indices as we first have to come up with code to deal with loops and
       // for overflows of the dereferenceable bytes.
-      if (Offset.getSExtValue() < 0)
+      int64_t OffsetSExt = Offset.getSExtValue();
+      if (OffsetSExt < 0)
         Offset = 0;
 
       T.takeAssumedDerefBytesMinimum(
-          std::max(int64_t(0), DerefBytes - Offset.getSExtValue()));
+          std::max(int64_t(0), DerefBytes - OffsetSExt));
 
-      if (!Stripped && this == &AA) {
-        T.takeKnownDerefBytesMaximum(
-            std::max(int64_t(0), DerefBytes - Offset.getSExtValue()));
-        T.indicatePessimisticFixpoint();
+      if (this == &AA) {
+        if (!Stripped) {
+          // If nothing was stripped IR information is all we got.
+          T.takeKnownDerefBytesMaximum(
+              std::max(int64_t(0), DerefBytes - OffsetSExt));
+          T.indicatePessimisticFixpoint();
+        } else if (OffsetSExt > 0) {
+          // If something was stripped but there is circular reasoning we look
+          // for the offset. If it is positive we basically decrease the
+          // dereferenceable bytes in a circluar loop now, which will simply
+          // drive them down to the known value in a very slow way which we
+          // can accelerate.
+          T.indicatePessimisticFixpoint();
+        }
       }
 
       return T.isValidState();
