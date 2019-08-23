@@ -2113,6 +2113,10 @@ struct AAAlignImpl : AAAlign {
       takeKnownMaximum(Attr.getValueAsInt());
   }
 
+  // TODO: Provide a helper to determine the implied ABI alignment and check in
+  //       the existing manifest method and a new one for AAAlignImpl that value
+  //       to avoid making the alignment explicit if it did not improve.
+
   /// See AbstractAttribute::getDeducedAttributes
   virtual void
   getDeducedAttributes(LLVMContext &Ctx,
@@ -2132,6 +2136,35 @@ struct AAAlignImpl : AAAlign {
 /// Align attribute for a floating value.
 struct AAAlignFloating : AAAlignImpl {
   AAAlignFloating(const IRPosition &IRP) : AAAlignImpl(IRP) {}
+
+  /// See AbstractAttribute::manifest(...).
+  ChangeStatus manifest(Attributor &A) override {
+    ChangeStatus Changed = ChangeStatus::UNCHANGED;
+
+    // Check for users that allow alignment annotations.
+    Value &AnchorVal = getIRPosition().getAnchorValue();
+    for (const Use &U : AnchorVal.uses()) {
+      if (auto *SI = dyn_cast<StoreInst>(U.getUser())) {
+        if (SI->getPointerOperand() == &AnchorVal)
+          if (SI->getAlignment() < getAssumedAlign()) {
+            STATS_DECLTRACK(AAAlign, Store,
+                            "Number of times alignemnt added to a store");
+            SI->setAlignment(getAssumedAlign());
+            Changed = ChangeStatus::CHANGED;
+          }
+      } else if (auto *LI = dyn_cast<LoadInst>(U.getUser())) {
+        if (LI->getPointerOperand() == &AnchorVal)
+          if (LI->getAlignment() < getAssumedAlign()) {
+            LI->setAlignment(getAssumedAlign());
+            STATS_DECLTRACK(AAAlign, Load,
+                            "Number of times alignemnt added to a load");
+            Changed = ChangeStatus::CHANGED;
+          }
+      }
+    }
+
+    return AAAlignImpl::manifest(A) | Changed;
+  }
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A) override {
@@ -2189,6 +2222,11 @@ struct AAAlignArgument final
 
 struct AAAlignCallSiteArgument final : AAAlignFloating {
   AAAlignCallSiteArgument(const IRPosition &IRP) : AAAlignFloating(IRP) {}
+
+  /// See AbstractAttribute::manifest(...).
+  ChangeStatus manifest(Attributor &A) override {
+    return AAAlignImpl::manifest(A);
+  }
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(aligned) }
@@ -2664,6 +2702,18 @@ void Attributor::identifyDefaultAbstractAttributes(
       assert((!ImmutableCallSite(&I)) && (!isa<CallBase>(&I)) &&
              "New call site/base instruction type needs to be known int the "
              "attributor.");
+      break;
+    case Instruction::Load:
+      // The alignment of a pointer is interesting for loads.
+      checkAndRegisterAA<AAAlignFloating>(
+          IRPosition::value(*cast<LoadInst>(I).getPointerOperand()), *this,
+          Whitelist);
+      break;
+    case Instruction::Store:
+      // The alignment of a pointer is interesting for stores.
+      checkAndRegisterAA<AAAlignFloating>(
+          IRPosition::value(*cast<StoreInst>(I).getPointerOperand()), *this,
+          Whitelist);
       break;
     case Instruction::Call:
     case Instruction::CallBr:
