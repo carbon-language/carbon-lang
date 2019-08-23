@@ -35380,6 +35380,26 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
     // type, widen both sides to avoid a trip through memory.
     if ((SrcVT == MVT::v4i1 || SrcVT == MVT::v2i1) && VT.isScalarInteger() &&
         Subtarget.hasAVX512()) {
+      // Use zeros for the widening if we already have some zeroes. This can
+      // allow SimplifyDemandedBits to remove scalar ANDs that may be down
+      // stream of this.
+      // FIXME: It might make sense to detect a concat_vectors with a mix of
+      // zeroes and undef and turn it into insert_subvector for i1 vectors as
+      // a separate combine. What we can't do is canonicalize the operands of
+      // such a concat or we'll get into a loop with SimplifyDemandedBits.
+      if (N0.getOpcode() == ISD::CONCAT_VECTORS) {
+        SDValue LastOp = N0.getOperand(N0.getNumOperands() - 1);
+        if (ISD::isBuildVectorAllZeros(LastOp.getNode())) {
+          SrcVT = LastOp.getValueType();
+          unsigned NumConcats = 8 / SrcVT.getVectorNumElements();
+          SmallVector<SDValue, 4> Ops(N0->op_begin(), N0->op_end());
+          Ops.resize(NumConcats, DAG.getConstant(0, dl, SrcVT));
+          N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v8i1, Ops);
+          N0 = DAG.getBitcast(MVT::i8, N0);
+          return DAG.getNode(ISD::TRUNCATE, dl, VT, N0);
+        }
+      }
+
       unsigned NumConcats = 8 / SrcVT.getVectorNumElements();
       SmallVector<SDValue, 4> Ops(NumConcats, DAG.getUNDEF(SrcVT));
       Ops[0] = N0;
