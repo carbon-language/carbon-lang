@@ -1618,40 +1618,34 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
        ++specIter) {
     // We only need to check the cases with distinct generic names.
     if (const char *genericName{specIter->second->generic}) {
-      auto genericRange{genericFuncs_.equal_range(genericName)};
-      for (auto genIter{genericRange.first}; genIter != genericRange.second;
-           ++genIter) {
-        if (auto specificCall{genIter->second->Match(
-                call, defaults_, arguments, localContext)}) {
-          specificCall->specificIntrinsic.name = genericName;
-          specificCall->specificIntrinsic.isRestrictedSpecific =
-              specIter->second->isRestrictedSpecific;
-          if (finalBuffer != nullptr) {
-            finalBuffer->Annex(std::move(localBuffer));
-          }
-          if (specIter->second->forceResultType) {
-            // Force the result type on AMAX0/1, MIN0/1, &c.
-            TypeCategory category{TypeCategory::Integer};
-            switch (specIter->second->result.kindCode) {
-            case KindCode::defaultIntegerKind: break;
-            case KindCode::defaultRealKind:
-              category = TypeCategory::Real;
-              break;
-            default: CRASH_NO_CASE;
-            }
-            DynamicType newType{category, defaults_.GetDefaultKind(category)};
-            specificCall->specificIntrinsic.characteristics.value()
-                .functionResult.value()
-                .SetType(newType);
-          }
-          // TODO test feature AdditionalIntrinsics, warn on nonstandard
-          // specifics with DoublePrecisionComplex arguments.
-          return specificCall;
-        } else if (specificBuffer.empty()) {
-          specificBuffer.Annex(std::move(localBuffer));
-        } else {
-          specificBuffer.clear();
+      if (auto specificCall{specIter->second->Match(
+              call, defaults_, arguments, localContext)}) {
+        specificCall->specificIntrinsic.name = genericName;
+        specificCall->specificIntrinsic.isRestrictedSpecific =
+            specIter->second->isRestrictedSpecific;
+        if (finalBuffer != nullptr) {
+          finalBuffer->Annex(std::move(localBuffer));
         }
+        if (specIter->second->forceResultType) {
+          // Force the result type on AMAX0/1, MIN0/1, &c.
+          TypeCategory category{TypeCategory::Integer};
+          switch (specIter->second->result.kindCode) {
+          case KindCode::defaultIntegerKind: break;
+          case KindCode::defaultRealKind: category = TypeCategory::Real; break;
+          default: CRASH_NO_CASE;
+          }
+          DynamicType newType{category, defaults_.GetDefaultKind(category)};
+          specificCall->specificIntrinsic.characteristics.value()
+              .functionResult.value()
+              .SetType(newType);
+        }
+        // TODO test feature AdditionalIntrinsics, warn on nonstandard
+        // specifics with DoublePrecisionComplex arguments.
+        return specificCall;
+      } else if (specificBuffer.empty()) {
+        specificBuffer.Annex(std::move(localBuffer));
+      } else {
+        specificBuffer.clear();
       }
     }
   }

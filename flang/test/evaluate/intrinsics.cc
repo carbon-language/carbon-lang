@@ -119,19 +119,21 @@ struct TestCall {
     if (resultType.has_value()) {
       TEST(si.has_value());
       TEST(buffer.empty());
-      const auto &proc{si->specificIntrinsic.characteristics.value()};
-      const auto &fr{proc.functionResult};
-      TEST(fr.has_value());
-      if (fr) {
-        const auto *ts{fr->GetTypeAndShape()};
-        TEST(ts != nullptr);
-        if (ts) {
-          TEST(*resultType == ts->type());
-          MATCH(rank, ts->Rank());
+      if (si) {
+        const auto &proc{si->specificIntrinsic.characteristics.value()};
+        const auto &fr{proc.functionResult};
+        TEST(fr.has_value());
+        if (fr) {
+          const auto *ts{fr->GetTypeAndShape()};
+          TEST(ts != nullptr);
+          if (ts) {
+            TEST(*resultType == ts->type());
+            MATCH(rank, ts->Rank());
+          }
         }
+        MATCH(isElemental,
+            proc.attrs.test(characteristics::Procedure::Attr::Elemental));
       }
-      MATCH(isElemental,
-          proc.attrs.test(characteristics::Procedure::Attr::Elemental));
     } else {
       TEST(!si.has_value());
       TEST(!buffer.empty() || name == "bad");
@@ -203,21 +205,26 @@ void TestIntrinsics() {
 
   TestCall maxCallR{table, "max"}, maxCallI{table, "min"},
       max0Call{table, "max0"}, max1Call{table, "max1"},
-      amin0Call{table, "amin0"}, amin1Call{table, "amin1"};
+      amin0Call{table, "amin0"}, amin1Call{table, "amin1"},
+      max0WrongCall{table, "max0"}, amin1WrongCall{table, "amin1"};
   for (int j{0}; j < 10; ++j) {
     maxCallR.Push(Const(Scalar<Real4>{}));
     maxCallI.Push(Const(Scalar<Int4>{}));
-    max0Call.Push(Const(Scalar<Real4>{}));
+    max0Call.Push(Const(Scalar<Int4>{}));
+    max0WrongCall.Push(Const(Scalar<Real4>{}));
     max1Call.Push(Const(Scalar<Real4>{}));
     amin0Call.Push(Const(Scalar<Int4>{}));
-    amin1Call.Push(Const(Scalar<Int4>{}));
+    amin1WrongCall.Push(Const(Scalar<Int4>{}));
+    amin1Call.Push(Const(Scalar<Real4>{}));
   }
   maxCallR.DoCall(Real4::GetType());
   maxCallI.DoCall(Int4::GetType());
   max0Call.DoCall(Int4::GetType());
+  max0WrongCall.DoCall();
   max1Call.DoCall(Int4::GetType());
   amin0Call.DoCall(Real4::GetType());
   amin1Call.DoCall(Real4::GetType());
+  amin1WrongCall.DoCall();
 
   // TODO: test other intrinsics
 }
