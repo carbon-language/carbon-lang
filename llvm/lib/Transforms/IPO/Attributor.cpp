@@ -2397,15 +2397,15 @@ ChangeStatus Attributor::run() {
         if (AA->update(*this) == ChangeStatus::CHANGED)
           ChangedAAs.push_back(AA);
 
+    // Add attributes to the changed set if they have been created in the last
+    // iteration.
+    ChangedAAs.append(AllAbstractAttributes.begin() + NumAAs,
+                      AllAbstractAttributes.end());
+
     // Reset the work list and repopulate with the changed abstract attributes.
     // Note that dependent ones are added above.
     Worklist.clear();
     Worklist.insert(ChangedAAs.begin(), ChangedAAs.end());
-
-    // Add attributes to the worklist that have been created in the last
-    // iteration.
-    Worklist.insert(AllAbstractAttributes.begin() + NumAAs,
-                    AllAbstractAttributes.end());
 
   } while (!Worklist.empty() && ++IterationCounter < MaxFixpointIterations);
 
