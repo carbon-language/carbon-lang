@@ -1901,7 +1901,7 @@ public:
   }
   void Unparse(const OmpClause::From &x) {
     Word("FROM(");
-    Walk(x.v, ",");
+    Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Grainsize &x) {
@@ -1965,12 +1965,12 @@ public:
   }
   void Unparse(const OmpClause::To &x) {
     Word("TO(");
-    Walk(x.v, ",");
+    Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Link &x) {
     Word("LINK(");
-    Walk(x.v, ",");
+    Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Uniform &x) {
