@@ -29,6 +29,7 @@ Calls to procedures with some post-'77 features require an explicit interface
   (specification expression, `DO CONCURRENT`, `FORALL`)
 * dummy arguments with these attributes: `ALLOCATABLE`, `POINTER`,
   `VALUE`, `TARGET`, `OPTIONAL`, `ASYNCHRONOUS`, `VOLATILE`
+  (but *not* `CONTIGUOUS` or `INTENT()`!)
 * dummy arguments that are coarrays, have assumed-shape/-rank,
   have parameterized derived types, &/or are polymorphic
 * function results that are arrays, `ALLOCATABLE`, `POINTER`,
@@ -41,9 +42,6 @@ always have explicit interfaces.
 
 Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
-
-Note that `INTENT` attributes do not, by themselves, require the use of
-explicit interface; neither do dummy procedures.
 
 ### Implicit interfaces
 
@@ -74,6 +72,13 @@ of host variable blocks for dummy procedures (see below), and they can
 return only scalar values of intrinsic types.
 None of their arguments or results are implemented with descriptors.
 
+Note that `INTENT` and `CONTIGUOUS` attributes do not, by themselves,
+require the use of explicit interface; neither do dummy procedures.
+Analyses of calls to procedures with implicit interfaces must make
+allowances or impose restrictions capable of dealing with any of the
+invisible `INTENT` and `CONTIGUOUS` attributes of dummy arguments
+in the called procedure.
+
 ## Protocol overview
 
 Here is a summary script of all of the actions that may need to be taken
@@ -90,10 +95,10 @@ some design alternatives that are explored further below.
 1. Create and populate descriptors for assumed-shape/-rank arrays,
    parameterized derived types with length, polymorphic types,
    coarrays, and non-`POINTER` actual arguments (that are`TARGET`
-   or procedures) associated with `INTENT(IN) POINTER` non-`CONTIGUOUS'
+   or procedures) associated with `INTENT(IN) POINTER`
    dummy arrays (15.5.2.7, C.10.4).
 1. Possibly allocate function result storage,
-   if its size can be known by all callers; function results that are
+   when its size can be known by all callers; function results that are
    neither `POINTER` nor `ALLOCATABLE` must have explicit shapes (C816).
 1. Create and populate a descriptor for the function result, if it
    needs one (deferred-shape/-length `POINTER`, any `ALLOCATABLE`,
@@ -114,8 +119,10 @@ some design alternatives that are explored further below.
    by the caller (as I think it should be).
 1. Finalize &/or re-initialize `INTENT(OUT)` non-pointer non-allocatable
    actual arguments (see below).
-1. Optionally compact assumed-shape arguments for contiguity to enable
-   better SIMD vectorization, if not `TARGET` and not already contiguous.
+1. Optionally compact assumed-shape arguments for contiguity on one
+   or more leading dimensions to improve SIMD vectorization, if not
+   `TARGET` and not already sufficiently contiguous.
+   (PGI does this in the caller, whether the callee needs it or not.)
 1. Complete allocation of function result storage, if that has
    not been done by the caller.
 1. Initialize components of derived type local variables,
@@ -129,13 +136,14 @@ the subroutine's alternate return.
 1. Deallocate `VALUE` argument temporaries.
    (But don't finalize them; see 7.5.6.3(3)).
 1. Replace any assumed-shape argument data that were compacted on
-   entry for contiguity for SIMD vectorization, if possibly modified
-   (and never when `INTENT(IN)` or `VALUE`).
+   entry for partial contiguity for SIMD vectorization, if possibly
+   modified across the call (never when `INTENT(IN)` or `VALUE`).
 1. Identify alternate `RETURN` to caller.
 1. Marshal results.
 1. Jump
 
 ### On return to the caller:
+1. Save the result registers, if any.
 1. Copy actual argument array designator data that was copied into
    a temporary back into its original storage (see below).
 1. Complete deallocation of actual argument temporaries (not `VALUE`).
@@ -157,20 +165,22 @@ need to be computed and captured into memory in order to be passed
 by reference.
 This includes parenthesized designators like `(X)` as an important
 special case, which are expressions in Fortran.
-This case should also include constants.
-The dummy argument cannot have `INTENT(OUT)` or `INTENT(IN OUT)`.
+(This case also technically includes constants, but those are better
+implemented by passing addresses in read-only memory.)
+The dummy argument cannot be known to have `INTENT(OUT)` or
+`INTENT(IN OUT)`.
 
 Small scalar or elemental `VALUE` arguments may be passed in registers.
 Multiple elemental `VALUE` arguments might be packed into SIMD registers.
 
-Actual arguments that are designators, not expressions, must
-be copied into temporaries in many situations.
+Actual arguments that are designators, not expressions, must also
+be copied into temporaries in the following situations.
 
 1. Coindexed objects need to be copied into the local image.
-   (This can get very involved if they contain `ALLOCATABLE`
+   This can get very involved if they contain `ALLOCATABLE`
    components, which also need to be copied, along with their
    `ALLOCATABLE` components, and may be best implemented with a runtime
-   library routine working off a description of the type.)
+   library routine working off a description of the type.
 1. Actual arguments associated with dummies with the `VALUE`
    attribute need to copied; this could be done on either
    side of the call, but there are optimization opportunities
@@ -180,28 +190,32 @@ be copied into temporaries in many situations.
    These actual arguments are not definable, and they are not allowed to
    be associated with non-`VALUE` dummy arguments with the attributes
    `INTENT(IN)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, or `VOLATILE`
-   (15.4.2.4(21)).
-1. Non-contiguous arrays being passed to dummy arguments that
-   must be contiguous due to a `CONTIGUOUS` attribute or not
-   being assumed-shape/-rank.
+   (15.4.2.4(21)); `INTENT()` can't always be checked.
+1. Non-simply-contiguous (9.5.4) arrays being passed to non-`POINTER`
+   dummy arguments that must be contiguous due to a `CONTIGUOUS`
+   attribute, implicit interface, or not being assumed-shape/-rank.
    This should be a runtime decision, so that actual arguments
    that turn out to be contiguous can be passed cheaply.
-   In some situations, however, this case is obviated by a
-   requirement that the actual argument be "simply contiguous" (9.5.4)
-   at compilation time: coarray dummies (15.5.2.8).
+   This rule does not apply to coarray dummies, whose actual arguments
+   are required to be simply contiguous when this rule would otherwise
+   force the use of a temporary (15.5.2.8); neither does it apply
+   to `ASYNCHRONOUS` and `VOLATILE` actual arguments, which are
+   disallowed when it matters (C1539, C1540).
+   *Only temporaries created by this contiguity requirement are
+   subject to being copied back to the original variable after
+   the call* (see below).
 
-While we are unlikely to want to needlessly use a temporary for
+While we are unlikely to want to _needlessly_ use a temporary for
 an actual argument that does not require one for any of these
 reasons above, we are specifically disallowed from doing so
 by the standard in cases where pointers to the original target
 data are required to be valid across the call (15.5.2.4(9-10)).
+In particular, compaction of assumed-shape arrays for contiguity
+on the leading dimension to ease SIMD vectorization cannot be
+done safely for `TARGET` dummies.
 
-Further, `ASYNCHRONOUS` and `VOLATILE` actual arguments cannot
-be used as arguments that would otherwise require the use of
-temporary storage (C1539, C1540).
-
-Actual arguments associated with `INTENT(OUT)` dummies that require
-allocation of a temporary -- and this can only be for reasons of
+Actual arguments associated with known `INTENT(OUT)` dummies that
+require allocation of a temporary -- and this can only be for reasons of
 contiguity -- don't have to populate it, but they do have to perform
 minimal initialization of any `ALLOCATABLE` components so that
 the runtime doesn't crash when the callee finalizes and deallocates
@@ -209,12 +223,12 @@ them.
 Note that calls to implicit interfaces must conservatively allow
 for the use of `INTENT(OUT)` by the callee.
 
-Except for `VALUE` and `INTENT(IN)` dummy arguments, the original
+Except for `VALUE` and known `INTENT(IN)` dummy arguments, the original
 contents of local designators that have been compacted into temporaries
 could optionally have their `ALLOCATABLE` components invalidated
 across the call as an aid to debugging.
 
-Except for `VALUE` and `INTENT(IN)` dummy arguments, the contents of
+Except for `VALUE` and known `INTENT(IN)` dummy arguments, the contents of
 the temporary storage will be copied back into the actual argument
 designator after control returns from the procedure, and it may be necessary
 to preserve addresses (or the values of subscripts and cosubscripts
@@ -248,7 +262,7 @@ arguments.
 
 ### Copying temporary storage back into actual argument designators
 
-Except for `VALUE` and `INTENT(IN)` dummy arguments and array sections
+Except for `VALUE` and known `INTENT(IN)` dummy arguments and array sections
 with vector-valued subscripts (15.5.2.4(21)), temporary storage into
 which actual argument data were compacted for contiguity before the call
 must be redistributed back to its original storage by the caller after
@@ -310,16 +324,16 @@ storage link addresses.
 * Alternate return specifiers
 * `%VAL()` and `%REF()`
 * Unrestricted specific intrinsic functions as actual arguments
-* Check definability of `INTENT(OUT)` and `INTENT(IN OUT)` actuals.
+* Check definability of known `INTENT(OUT)` and `INTENT(IN OUT)` actuals.
 * Whether lower bounds in argument descriptors should be
   initialized (they shouldn't be used)
 
 ### Naming
-* Modules
-* Submodules
-* Subprograms
+* Modules and submodules
+* Procedures that can be called with implicit interfaces
+* Procedures that must be called with explicit interfaces (possibly
+  with versioning)
 * SIMD vs. scalar versions of `ELEMENTAL` procedures
-* Mangling explicit interfaces, possibly with versioning
 * Unrestricted specific intrinsic functions (and perhaps SIMD variants)
 
 ### Other
