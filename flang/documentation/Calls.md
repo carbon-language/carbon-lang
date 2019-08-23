@@ -42,6 +42,9 @@ always have explicit interfaces.
 Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
 
+Note that `INTENT` attributes do not, by themselves, require the use of
+explicit interface; neither do dummy procedures.
+
 ### Implicit interfaces
 
 In the absence of any characteristic or context that requires an
@@ -81,15 +84,16 @@ The order of these steps is not particularly strict, and we have
 some design alternatives that are explored further below.
 
 ### Before the call:
+
 1. Compute &/or copy into temporary storage the values of
    some actual argument expressions and designators (see below).
-1. Finalize &/or re-initialize `INTENT(OUT)` non-pointer non-allocatable
-   actual arguments (see below).
 1. Create and populate descriptors for assumed-shape/-rank arrays,
    parameterized derived types with length, polymorphic types,
-   & coarrays.
-1. Possibly allocating function result storage,
-   if its size can be known by the caller; function results that are
+   coarrays, and non-`POINTER` actual arguments (that are`TARGET`
+   or procedures) associated with `INTENT(IN) POINTER` non-`CONTIGUOUS'
+   dummy arrays (15.5.2.7, C.10.4).
+1. Possibly allocate function result storage,
+   if its size can be known by all callers; function results that are
    neither `POINTER` nor `ALLOCATABLE` must have explicit shapes (C816).
 1. Create and populate a descriptor for the function result, if it
    needs one (deferred-shape/-length `POINTER`, any `ALLOCATABLE`,
@@ -106,9 +110,10 @@ some design alternatives that are explored further below.
 
 ### On entry:
 1. Shuffle `ENTRY` dummy arguments & jump to common entry point.
-1. Complete `VALUE` copying and `INTENT(OUT)` finalization and
-   reinitialization if these steps are not always done by the caller
-   (as I think they will be).
+1. Complete `VALUE` copying if this step will not always be done
+   by the caller (as I think it should be).
+1. Finalize &/or re-initialize `INTENT(OUT)` non-pointer non-allocatable
+   actual arguments (see below).
 1. Optionally compact assumed-shape arguments for contiguity to enable
    better SIMD vectorization, if not `TARGET` and not already contiguous.
 1. Complete allocation of function result storage, if that has
@@ -181,11 +186,28 @@ be copied into temporaries in many situations.
    being assumed-shape/-rank.
    This should be a runtime decision, so that actual arguments
    that turn out to be contiguous can be passed cheaply.
+   In some situations, however, this case is obviated by a
+   requirement that the actual argument be "simply contiguous" (9.5.4)
+   at compilation time: coarray dummies (15.5.2.8).
+
+While we are unlikely to want to needlessly use a temporary for
+an actual argument that does not require one for any of these
+reasons above, we are specifically disallowed from doing so
+by the standard in cases where pointers to the original target
+data are required to be valid across the call (15.5.2.4(9-10)).
+
+Further, `ASYNCHRONOUS` and `VOLATILE` actual arguments cannot
+be used as arguments that would otherwise require the use of
+temporary storage (C1539, C1540).
 
 Actual arguments associated with `INTENT(OUT)` dummies that require
-allocation of a temporary don't have to populate it, but they
-do have to initialize the storage when a derived type has
-component initializations.
+allocation of a temporary -- and this can only be for reasons of
+contiguity -- don't have to populate it, but they do have to perform
+minimal initialization of any `ALLOCATABLE` components so that
+the runtime doesn't crash when the callee finalizes and deallocates
+them.
+Note that calls to implicit interfaces must conservatively allow
+for the use of `INTENT(OUT)` by the callee.
 
 Except for `VALUE` and `INTENT(IN)` dummy arguments, the original
 contents of local designators that have been compacted into temporaries
@@ -200,16 +222,22 @@ needed to recalculate them) of the actual argument designator, or its
 elements, in additional temporary storage if they can't be safely or
 quickly recomputed after the call.
 
+
 ### `INTENT(OUT)` preparation
+
 Actual arguments that are associated with `INTENT(OUT)`
 dummy arguments are required to be definable.
+This cannot always be checked, as the use of `INTENT(OUT)`
+does not by itself mandate the use of an explicit interface.
 
-Such arguments are finalized (as if) on entry to the called
+`INTENT(OUT)` arguments are finalized (as if) on entry to the called
 procedure.  In particular, in calls to elemental procedures,
 the elements of an array are finalized by a scalar or elemental
 `FINAL` procedure (7.5.6.3(7)).
 
-Derived type components with initializers are (re)initialized.
+Derived type components that are `ALLOCATABLE` are finalized
+and deallocated.
+Components with initializers are (re)initialized.
 
 The preparation of actual arguments for `INTENT(OUT)` could be
 done on either side of the call.  If the preparation is
@@ -283,6 +311,8 @@ storage link addresses.
 * `%VAL()` and `%REF()`
 * Unrestricted specific intrinsic functions as actual arguments
 * Check definability of `INTENT(OUT)` and `INTENT(IN OUT)` actuals.
+* Whether lower bounds in argument descriptors should be
+  initialized (they shouldn't be used)
 
 ### Naming
 * Modules
