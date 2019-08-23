@@ -257,7 +257,7 @@ bool SomeKind<TypeCategory::Derived>::operator==(
   return PointeeComparison(derivedTypeSpec_, that.derivedTypeSpec_);
 }
 
-int SelectedCharKind(const std::string &s) {  // 16.9.168
+int SelectedCharKind(const std::string &s, int defaultKind) {  // 16.9.168
   auto lower{parser::ToLowerCaseLetters(s)};
   auto n{lower.size()};
   while (n > 0 && lower[0] == ' ') {
@@ -273,6 +273,8 @@ int SelectedCharKind(const std::string &s) {  // 16.9.168
     return 2;
   } else if (lower == "iso_10646" || lower == "ucs-4") {
     return 4;
+  } else if (lower == "default") {
+    return defaultKind;
   } else {
     return -1;
   }

@@ -442,7 +442,7 @@ template<typename CONST> struct TypeOfHelper {
 
 template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
-int SelectedCharKind(const std::string &);
+int SelectedCharKind(const std::string &, int defaultKind);
 int SelectedIntKind(std::int64_t precision = 0);
 int SelectedRealKind(
     std::int64_t precision = 0, std::int64_t range = 0, std::int64_t radix = 2);

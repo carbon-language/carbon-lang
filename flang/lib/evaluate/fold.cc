@@ -810,12 +810,9 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
   } else if (name == "selected_char_kind") {
     if (const auto *chCon{UnwrapExpr<Constant<TypeOf<std::string>>>(args[0])}) {
       if (std::optional<std::string> value{chCon->GetScalarValue()}) {
-        if (*value == "default") {
-          return Expr<T>{
-              context.defaults().GetDefaultKind(TypeCategory::Character)};
-        } else {
-          return Expr<T>{SelectedCharKind(*value)};
-        }
+        int defaultKind{
+            context.defaults().GetDefaultKind(TypeCategory::Character)};
+        return Expr<T>{SelectedCharKind(*value, defaultKind)};
       }
     }
   } else if (name == "selected_int_kind") {
