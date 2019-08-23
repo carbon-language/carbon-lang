@@ -144,13 +144,13 @@
 # CHECK-LE: sw      $10, -7616($1)            # encoding: [0x40,0xe2,0x2a,0xac]
 
   lw $8, symbol+8
-# CHECK-LE: lw      $8, %got(symbol+8)($gp)   # encoding: [A,A,0x88,0x8f]
-# CHECK-LE:                                   #   fixup A - offset: 0, value: %got(symbol+8), kind: fixup_Mips_GOT
+# CHECK-LE: lw      $8, %got(symbol)($gp)     # encoding: [A,A,0x88,0x8f]
+# CHECK-LE:                                   #   fixup A - offset: 0, value: %got(symbol), kind: fixup_Mips_GOT
 # CHECK-LE: addiu   $8, $8, 8                 # encoding: [0x08,0x00,0x08,0x25]
 # CHECK-LE: lw      $8, 0($8)                 # encoding: [0x00,0x00,0x08,0x8d]
   sw $8, symbol+8
-# CHECK-LE: lw      $1, %got(symbol+8)($gp)   # encoding: [A,A,0x81,0x8f]
-# CHECK-LE:                                   #   fixup A - offset: 0, value: %got(symbol+8), kind: fixup_Mips_GOT
+# CHECK-LE: lw      $1, %got(symbol)($gp)     # encoding: [A,A,0x81,0x8f]
+# CHECK-LE:                                   #   fixup A - offset: 0, value: %got(symbol), kind: fixup_Mips_GOT
 # CHECK-LE: addiu   $1, $1, 8                 # encoding: [0x08,0x00,0x21,0x24]
 # CHECK-LE: sw      $8, 0($1)                 # encoding: [0x00,0x00,0x28,0xac]
 
