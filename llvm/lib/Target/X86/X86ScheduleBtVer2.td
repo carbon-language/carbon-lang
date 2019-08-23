@@ -376,11 +376,17 @@ def : InstRW<[JWriteCMPXCHGVariant,
               ReadAfterLd, ReadAfterLd], (instrs LCMPXCHG8, LCMPXCHG16,
                                                  LCMPXCHG32, LCMPXCHG64,
                                                  CMPXCHG8rm, CMPXCHG16rm,
-                                                 CMPXCHG32rm, CMPXCHG64rm )>;
+                                                 CMPXCHG32rm, CMPXCHG64rm)>;
 
-def : InstRW<[JWriteCMPXCHGVariant], (instrs CMPXCHG8rr, CMPXCHG16rr, CMPXCHG32rr, CMPXCHG64rr,
-                                             CMPXCHG8B, CMPXCHG16B,
-                                             LCMPXCHG8B, LCMPXCHG16B)>;
+def : InstRW<[JWriteCMPXCHGVariant], (instrs CMPXCHG8rr, CMPXCHG16rr,
+                                             CMPXCHG32rr, CMPXCHG64rr)>;
+
+def : InstRW<[JWriteCMPXCHGVariant,
+              // Ignore reads contributed by the memory operand.
+              ReadDefault, ReadDefault, ReadDefault, ReadDefault, ReadDefault,
+              // Add a read-advance to every implicit register read.
+              ReadAfterLd, ReadAfterLd, ReadAfterLd, ReadAfterLd], (instrs LCMPXCHG8B, LCMPXCHG16B,
+                                                                           CMPXCHG8B, CMPXCHG16B)>;
 
 def JWriteLOCK_ALURMW : SchedWriteRes<[JALU01, JLAGU, JSAGU]> {
   let Latency = 19;
