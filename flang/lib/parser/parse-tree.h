@@ -632,7 +632,7 @@ WRAPPER_CLASS(IntegerTypeSpec, std::optional<KindSelector>);
 // R723 char-length -> ( type-param-value ) | digit-string
 struct CharLength {
   UNION_CLASS_BOILERPLATE(CharLength);
-  std::variant<TypeParamValue, std::int64_t> u;
+  std::variant<TypeParamValue, std::uint64_t> u;
 };
 
 // R722 length-selector -> ( [LEN =] type-param-value ) | * char-length [,]
@@ -2931,6 +2931,9 @@ struct GenericStmt {
 // R1503 interface-stmt -> INTERFACE [generic-spec] | ABSTRACT INTERFACE
 struct InterfaceStmt {
   UNION_CLASS_BOILERPLATE(InterfaceStmt);
+  // Workaround for clang with libstc++10 bug
+  InterfaceStmt(Abstract x) : u(x) {}
+
   std::variant<std::optional<GenericSpec>, Abstract> u;
 };
 

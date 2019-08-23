@@ -2997,8 +2997,9 @@ void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
   }
 }
 void DeclarationVisitor::Post(const parser::CharLength &x) {
-  if (const auto *length{std::get_if<std::int64_t>(&x.u)}) {
-    charInfo_.length = ParamValue{*length, common::TypeParamAttr::Len};
+  if (const auto *length{std::get_if<std::uint64_t>(&x.u)}) {
+    charInfo_.length = ParamValue{static_cast<ConstantSubscript>(*length),
+                                  common::TypeParamAttr::Len};
   } else {
     charInfo_.length = GetParamValue(
         std::get<parser::TypeParamValue>(x.u), common::TypeParamAttr::Len);
