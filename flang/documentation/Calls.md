@@ -117,7 +117,7 @@ some design alternatives that are explored further below.
 1. Shuffle `ENTRY` dummy arguments & jump to common entry point.
 1. Complete `VALUE` copying if this step will not always be done
    by the caller (as I think it should be).
-1. Finalize &/or re-initialize `INTENT(OUT)` non-pointer non-allocatable
+1. Finalize &/or re-initialize `INTENT(OUT)` non-pointer
    actual arguments (see below).
 1. Optionally compact assumed-shape arguments for contiguity on one
    or more leading dimensions to improve SIMD vectorization, if not
@@ -147,7 +147,8 @@ the subroutine's alternate return.
 1. Copy actual argument array designator data that was copied into
    a temporary back into its original storage (see below).
 1. Complete deallocation of actual argument temporaries (not `VALUE`).
-1. Reload host-escaping local objects from memory.
+1. Reload definable host-escaping local objects from memory, if they
+   were saved to memory by the host before the call.
 1. `GO TO` alternate return, if any.
 1. Use the function result in an expression.
 1. Eventually, finalize &/or deallocate the function result.
@@ -166,7 +167,8 @@ by reference.
 This includes parenthesized designators like `(X)` as an important
 special case, which are expressions in Fortran.
 (This case also technically includes constants, but those are better
-implemented by passing addresses in read-only memory.)
+implemented by passing addresses in read-only memory when the interface
+is explicit.)
 The dummy argument cannot be known to have `INTENT(OUT)` or
 `INTENT(IN OUT)`.
 
