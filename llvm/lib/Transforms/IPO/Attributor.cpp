@@ -17,7 +17,6 @@
 
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -681,9 +680,9 @@ class AAReturnedValuesImpl : public AAReturnedValues, public AbstractState {
 
   /// Mapping of values potentially returned by the associated function to the
   /// return instructions that might return them.
-  DenseMap<Value *, SmallPtrSet<ReturnInst *, 2>> ReturnedValues;
+  DenseMap<Value *, SmallSetVector<ReturnInst *, 4>> ReturnedValues;
 
-  SmallPtrSet<CallBase *, 8> UnresolvedCalls;
+  SmallSetVector<CallBase *, 4> UnresolvedCalls;
 
   /// State flags
   ///
@@ -744,7 +743,7 @@ public:
     return llvm::make_range(ReturnedValues.begin(), ReturnedValues.end());
   }
 
-  const SmallPtrSetImpl<CallBase *> &getUnresolvedCalls() const override {
+  const SmallSetVector<CallBase *, 4> &getUnresolvedCalls() const override {
     return UnresolvedCalls;
   }
 
@@ -760,7 +759,7 @@ public:
 
   /// See AbstractState::checkForAllReturnedValues(...).
   bool checkForAllReturnedValuesAndReturnInsts(
-      const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+      const function_ref<bool(Value &, const SmallSetVector<ReturnInst *, 4> &)>
           &Pred) const override;
 
   /// Pretty print the attribute similar to the IR representation.
@@ -852,7 +851,7 @@ AAReturnedValuesImpl::getAssumedUniqueReturnValue(Attributor &A) const {
 }
 
 bool AAReturnedValuesImpl::checkForAllReturnedValuesAndReturnInsts(
-    const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+    const function_ref<bool(Value &, const SmallSetVector<ReturnInst *, 4> &)>
         &Pred) const {
   if (!isValidState())
     return false;
@@ -861,13 +860,12 @@ bool AAReturnedValuesImpl::checkForAllReturnedValuesAndReturnInsts(
   // encountered an overdefined one during an update.
   for (auto &It : ReturnedValues) {
     Value *RV = It.first;
-    const SmallPtrSetImpl<ReturnInst *> &RetInsts = It.second;
 
     CallBase *CB = dyn_cast<CallBase>(RV);
     if (CB && !UnresolvedCalls.count(CB))
       continue;
 
-    if (!Pred(*RV, RetInsts))
+    if (!Pred(*RV, It.second))
       return false;
   }
 
@@ -885,7 +883,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
     // The flag to indicate a change.
     bool &Changed;
     // The return instrs we come from.
-    SmallPtrSet<ReturnInst *, 2> RetInsts;
+    SmallSetVector<ReturnInst *, 4> RetInsts;
   };
 
   // Callback for a leaf value returned by the associated function.
@@ -1003,7 +1001,7 @@ ChangeStatus AAReturnedValuesImpl::updateImpl(Attributor &A) {
     assert(!It.second.empty() && "Entry does not add anything.");
     auto &ReturnInsts = ReturnedValues[It.first];
     for (ReturnInst *RI : It.second)
-      if (ReturnInsts.insert(RI).second) {
+      if (ReturnInsts.insert(RI)) {
         LLVM_DEBUG(dbgs() << "[AAReturnedValues] Add new returned value "
                           << *It.first << " => " << *RI << "\n");
         Changed = true;
@@ -2263,7 +2261,7 @@ bool Attributor::checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
 }
 
 bool Attributor::checkForAllReturnedValuesAndReturnInsts(
-    const function_ref<bool(Value &, const SmallPtrSetImpl<ReturnInst *> &)>
+    const function_ref<bool(Value &, const SmallSetVector<ReturnInst *, 4> &)>
         &Pred,
     const AbstractAttribute &QueryingAA) {
 
@@ -2299,7 +2297,7 @@ bool Attributor::checkForAllReturnedValues(
     return false;
 
   return AARetVal.checkForAllReturnedValuesAndReturnInsts(
-      [&](Value &RV, const SmallPtrSetImpl<ReturnInst *> &) {
+      [&](Value &RV, const SmallSetVector<ReturnInst *, 4> &) {
         return Pred(RV);
       });
 }
