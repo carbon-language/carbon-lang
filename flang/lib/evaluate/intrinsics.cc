@@ -1206,10 +1206,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
           DynamicType{*category, defaults.GetDefaultKind(TypeCategory::Real)};
       break;
     case KindCode::doublePrecision:
-      CHECK(result.categorySet == RealType);
-      CHECK(*category == TypeCategory::Real);
-      resultType =
-          DynamicType{TypeCategory::Real, defaults.doublePrecisionKind()};
+      CHECK(result.categorySet == CategorySet{*category});
+      CHECK(FloatingType.test(*category));
+      resultType = DynamicType{*category, defaults.doublePrecisionKind()};
       break;
     case KindCode::defaultCharKind:
       CHECK(result.categorySet == CharType);

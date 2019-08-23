@@ -226,6 +226,16 @@ void TestIntrinsics() {
   amin1Call.DoCall(Real4::GetType());
   amin1WrongCall.DoCall();
 
+  TestCall{table, "conjg"}
+      .Push(Const(Scalar<Complex4>{}))
+      .DoCall(Complex4::GetType());
+  TestCall{table, "conjg"}
+      .Push(Const(Scalar<Complex8>{}))
+      .DoCall(Complex8::GetType());
+  TestCall{table, "dconjg"}.Push(Const(Scalar<Complex4>{})).DoCall();
+  TestCall{table, "dconjg"}
+      .Push(Const(Scalar<Complex8>{}))
+      .DoCall(Complex8::GetType());
   // TODO: test other intrinsics
 }
 }
