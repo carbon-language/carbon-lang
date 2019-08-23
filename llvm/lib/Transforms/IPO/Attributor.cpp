@@ -807,10 +807,34 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
   STATS_DECLTRACK(UniqueReturnValue, FunctionReturn,
                   "Number of function with unique return");
 
+  // Callback to replace the uses of CB with the constant C.
+  auto ReplaceCallSiteUsersWith = [](CallBase &CB, Constant &C) {
+    if (CB.getNumUses() == 0)
+      return ChangeStatus::UNCHANGED;
+    CB.replaceAllUsesWith(&C);
+    return ChangeStatus::CHANGED;
+  };
+
   // If the assumed unique return value is an argument, annotate it.
   if (auto *UniqueRVArg = dyn_cast<Argument>(UniqueRV.getValue())) {
     getIRPosition() = IRPosition::argument(*UniqueRVArg);
-    Changed = IRAttribute::manifest(A) | Changed;
+    Changed = IRAttribute::manifest(A);
+  } else if (auto *RVC = dyn_cast<Constant>(UniqueRV.getValue())) {
+    // We can replace the returned value with the unique returned constant.
+    Value &AnchorValue = getAnchorValue();
+    if (Function *F = dyn_cast<Function>(&AnchorValue)) {
+      for (const Use &U : F->uses())
+        if (CallBase *CB = dyn_cast<CallBase>(U.getUser()))
+          if (CB->isCallee(&U))
+            Changed = ReplaceCallSiteUsersWith(*CB, *RVC) | Changed;
+    } else {
+      assert(isa<CallBase>(AnchorValue) &&
+             "Expcected a function or call base anchor!");
+      Changed = ReplaceCallSiteUsersWith(cast<CallBase>(AnchorValue), *RVC);
+    }
+    if (Changed == ChangeStatus::CHANGED)
+      STATS_DECLTRACK(UniqueConstantReturnValue, FunctionReturn,
+                      "Number of function returns replaced by constant return");
   }
 
   return Changed;
