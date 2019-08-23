@@ -914,7 +914,10 @@ Instruction *InstCombiner::foldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
     // In general, we're allowed to make values less poison (i.e. remove
     //   sources of full UB), so in this case, we just select between the two
     //   non-poison cases (1 and 4 above).
-    return new ICmpInst(Cond, GEPLHS->getPointerOperand(), RHS);
+    auto *Base = GEPLHS->getPointerOperand();
+    return new ICmpInst(Cond, Base,
+                        ConstantExpr::getBitCast(cast<Constant>(RHS),
+                                                 Base->getType()));
   } else if (GEPOperator *GEPRHS = dyn_cast<GEPOperator>(RHS)) {
     // If the base pointers are different, but the indices are the same, just
     // compare the base pointer.

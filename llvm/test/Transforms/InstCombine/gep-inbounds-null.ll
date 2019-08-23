@@ -102,6 +102,19 @@ entry:
   ret <2 x i1> %cnd
 }
 
+define <2 x i1> @test_vector_both(<2 x i8*> %base, <2 x i64> %idx) {
+; CHECK-LABEL: @test_vector_both(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds i8, <2 x i8*> [[BASE:%.*]], <2 x i64> [[IDX:%.*]]
+; CHECK-NEXT:    [[CND:%.*]] = icmp eq <2 x i8*> [[GEP]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CND]]
+;
+entry:
+  %gep = getelementptr inbounds i8, <2 x i8*> %base, <2 x i64> %idx
+  %cnd = icmp eq <2 x i8*> %gep, zeroinitializer
+  ret <2 x i1> %cnd
+}
+
 ;; These two show instsimplify's reasoning getting to the non-zero offsets
 ;; before instcombine does.
 
@@ -151,6 +164,19 @@ define i1 @test_size0_nonzero_offset({}* %base) {
 entry:
   %gep = getelementptr inbounds {}, {}* %base, i64 15
   %cnd = icmp ne {}* %gep, null
+  ret i1 %cnd
+}
+
+
+define i1 @test_index_type([10 x i8]* %base, i64 %idx) {
+; CHECK-LABEL: @test_index_type(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[CND:%.*]] = icmp eq [10 x i8]* [[BASE:%.*]], null
+; CHECK-NEXT:    ret i1 [[CND]]
+;
+entry:
+  %gep = getelementptr inbounds [10 x i8], [10 x i8]* %base, i64 %idx, i64 %idx
+  %cnd = icmp eq i8* %gep, null
   ret i1 %cnd
 }
 
