@@ -3198,8 +3198,8 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
               I, TargetTransformInfo::TCK_RecipThroughput);
         }
       }
-      for (Value *i : VL) {
-        Instruction *I = cast<Instruction>(i);
+      for (Value *V : VL) {
+        Instruction *I = cast<Instruction>(V);
         assert(E->isOpcodeOrAlt(I) && "Unexpected main/alternate opcode");
         ScalarCost += TTI->getInstructionCost(
             I, TargetTransformInfo::TCK_RecipThroughput);
@@ -5484,8 +5484,7 @@ bool SLPVectorizerPass::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   SmallVector<WeakTrackingVH, 8> TrackValues(VL.begin(), VL.end());
 
   unsigned NextInst = 0, MaxInst = VL.size();
-  for (unsigned VF = MaxVF; NextInst + 1 < MaxInst && VF >= MinVF;
-       VF /= 2) {
+  for (unsigned VF = MaxVF; NextInst + 1 < MaxInst && VF >= MinVF; VF /= 2) {
     // No actual vectorization should happen, if number of parts is the same as
     // provided vectorization factor (i.e. the scalar type is used for vector
     // code during codegen).
