@@ -3655,17 +3655,25 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
     if (inPicMode()) {
       // FIXME:
       // a) Fix lw/sw $reg, symbol($reg) instruction expanding.
-      // b) If expression includes offset (sym + number), do not
-      //    encode the offset into a relocation. Take it in account
-      //    in the last load/store instruction.
       // c) Check that immediates of R_MIPS_GOT16/R_MIPS_LO16 relocations
       //    do not exceed 16-bit.
       // d) Use R_MIPS_GOT_PAGE/R_MIPS_GOT_OFST relocations instead
       //    of R_MIPS_GOT_DISP in appropriate cases to reduce number
       //    of GOT entries.
-      loadAndAddSymbolAddress(OffsetOp.getExpr(), TmpReg, Mips::NoRegister,
+      MCValue Res;
+      if (!OffsetOp.getExpr()->evaluateAsRelocatable(Res, nullptr, nullptr)) {
+        Error(IDLoc, "expected relocatable expression");
+        return;
+      }
+      if (Res.getSymB() != nullptr) {
+        Error(IDLoc, "expected relocatable expression with only one symbol");
+        return;
+      }
+
+      loadAndAddSymbolAddress(Res.getSymA(), TmpReg, Mips::NoRegister,
                               !ABI.ArePtrs64bit(), IDLoc, Out, STI);
-      TOut.emitRRI(Inst.getOpcode(), DstReg, TmpReg, 0, IDLoc, STI);
+      TOut.emitRRI(Inst.getOpcode(), DstReg, TmpReg, Res.getConstant(), IDLoc,
+                   STI);
     } else {
       const MCExpr *ExprOffset = OffsetOp.getExpr();
       MCOperand LoOperand = MCOperand::createExpr(
