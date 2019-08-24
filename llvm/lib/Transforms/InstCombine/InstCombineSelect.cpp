@@ -1296,18 +1296,6 @@ tryToReuseConstantFromSelectInComparison(SelectInst &Sel, ICmpInst &Cmp,
 
   // FIXME: are there any magic icmp predicate+constant pairs we must not touch?
 
-  auto ConstantsAreElementWiseEqual = [](Constant *Cx, Value *Y) {
-    // Are they fully identical?
-    if (Cx == Y)
-      return true;
-    // They may still be identical element-wise (if they have `undef`s).
-    auto *Cy = dyn_cast<Constant>(Y);
-    if (!Cy)
-      return false;
-    return match(ConstantExpr::getICmp(ICmpInst::Predicate::ICMP_EQ, Cx, Cy),
-                 m_One());
-  };
-
   Value *SelVal0, *SelVal1; // We do not care which one is from where.
   match(&Sel, m_Select(m_Value(), m_Value(SelVal0), m_Value(SelVal1)));
   // At least one of these values we are selecting between must be a constant
@@ -1317,10 +1305,8 @@ tryToReuseConstantFromSelectInComparison(SelectInst &Sel, ICmpInst &Cmp,
     return nullptr;
 
   // Does this constant C match any of the `select` values?
-  auto MatchesSelectValue = [ConstantsAreElementWiseEqual, SelVal0,
-                             SelVal1](Constant *C) {
-    return ConstantsAreElementWiseEqual(C, SelVal0) ||
-           ConstantsAreElementWiseEqual(C, SelVal1);
+  auto MatchesSelectValue = [SelVal0, SelVal1](Constant *C) {
+    return C->isElementWiseEqual(SelVal0) || C->isElementWiseEqual(SelVal1);
   };
 
   // If C0 *already* matches true/false value of select, we are done.
