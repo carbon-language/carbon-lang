@@ -50,7 +50,7 @@ protected:
   }
 
 public:
-  FeatureBitset() = default;
+  constexpr FeatureBitset() = default;
   constexpr FeatureBitset(std::initializer_list<unsigned> Init) {
     for (auto I : Init)
       set(I);
