@@ -36,10 +36,14 @@ exit:
 define i32 @compare_against_zero(i32 %x) {
 ; CHECK-LABEL: @compare_against_zero(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[X:%.*]], 0
-; CHECK-NEXT:    br i1 [[TMP0]], label [[CALLFOO:%.*]], label [[EXIT:%.*]]
+; CHECK-NEXT:    [[CMP1:%.*]] = icmp eq i32 [[X:%.*]], 0
+; CHECK-NEXT:    [[CMP2_INV:%.*]] = icmp sgt i32 [[X]], -1
+; CHECK-NEXT:    [[SELECT1:%.*]] = select i1 [[CMP2_INV]], i32 1, i32 -1
+; CHECK-NEXT:    [[SELECT2:%.*]] = select i1 [[CMP1]], i32 0, i32 [[SELECT1]]
+; CHECK-NEXT:    [[COND:%.*]] = icmp sgt i32 [[SELECT2]], 0
+; CHECK-NEXT:    br i1 [[COND]], label [[CALLFOO:%.*]], label [[EXIT:%.*]]
 ; CHECK:       callfoo:
-; CHECK-NEXT:    call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 [[SELECT2]])
 ; CHECK-NEXT:    br label [[EXIT]]
 ; CHECK:       exit:
 ; CHECK-NEXT:    ret i32 42
@@ -92,10 +96,14 @@ exit:
 define i32 @compare_against_two(i32 %x) {
 ; CHECK-LABEL: @compare_against_two(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[X:%.*]], 2
-; CHECK-NEXT:    br i1 [[TMP0]], label [[CALLFOO:%.*]], label [[EXIT:%.*]]
+; CHECK-NEXT:    [[CMP1:%.*]] = icmp eq i32 [[X:%.*]], 2
+; CHECK-NEXT:    [[CMP2_INV:%.*]] = icmp sgt i32 [[X]], 1
+; CHECK-NEXT:    [[SELECT1:%.*]] = select i1 [[CMP2_INV]], i32 1, i32 -1
+; CHECK-NEXT:    [[SELECT2:%.*]] = select i1 [[CMP1]], i32 0, i32 [[SELECT1]]
+; CHECK-NEXT:    [[COND:%.*]] = icmp sgt i32 [[SELECT2]], 0
+; CHECK-NEXT:    br i1 [[COND]], label [[CALLFOO:%.*]], label [[EXIT:%.*]]
 ; CHECK:       callfoo:
-; CHECK-NEXT:    call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 [[SELECT2]])
 ; CHECK-NEXT:    br label [[EXIT]]
 ; CHECK:       exit:
 ; CHECK-NEXT:    ret i32 42

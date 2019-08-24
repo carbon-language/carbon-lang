@@ -4912,20 +4912,27 @@ llvm::Optional<std::pair<CmpInst::Predicate, Constant *>>
 llvm::getFlippedStrictnessPredicateAndConstant(CmpInst::Predicate Pred,
                                                Constant *C) {
   assert(ICmpInst::isRelational(Pred) && ICmpInst::isIntPredicate(Pred) &&
-         !isCanonicalPredicate(Pred) &&
-         "Only for non-canonical relational integer predicates.");
+         "Only for relational integer predicates.");
 
-  // Check if the constant operand can be safely incremented/decremented without
-  // overflowing/underflowing. For scalars, SimplifyICmpInst should have already
-  // handled the edge cases for us, so we just assert on them.
-  // For vectors, we must handle the edge cases.
   Type *Type = C->getType();
   bool IsSigned = ICmpInst::isSigned(Pred);
-  bool IsLE = (Pred == ICmpInst::ICMP_SLE || Pred == ICmpInst::ICMP_ULE);
-  auto *CI = dyn_cast<ConstantInt>(C);
-  if (CI) {
+
+  CmpInst::Predicate UnsignedPred = ICmpInst::getUnsignedPredicate(Pred);
+  bool WillIncrement =
+      UnsignedPred == ICmpInst::ICMP_ULE || UnsignedPred == ICmpInst::ICMP_UGT;
+
+  // Check if the constant operand can be safely incremented/decremented
+  // without overflowing/underflowing.
+  auto ConstantIsOk = [WillIncrement, IsSigned](ConstantInt *C) {
+    return WillIncrement ? !C->isMaxValue(IsSigned) : !C->isMinValue(IsSigned);
+  };
+
+  // For scalars, SimplifyICmpInst should have already handled
+  // the edge cases for us, so we just assert on them.
+  // For vectors, we must handle the edge cases.
+  if (auto *CI = dyn_cast<ConstantInt>(C)) {
     // A <= MAX -> TRUE ; A >= MIN -> TRUE
-    assert(IsLE ? !CI->isMaxValue(IsSigned) : !CI->isMinValue(IsSigned));
+    assert(ConstantIsOk(CI));
   } else if (Type->isVectorTy()) {
     // TODO? If the edge cases for vectors were guaranteed to be handled as they
     // are for scalar, we could remove the min/max checks. However, to do that,
@@ -4942,7 +4949,7 @@ llvm::getFlippedStrictnessPredicateAndConstant(CmpInst::Predicate Pred,
       // Bail out if we can't determine if this constant is min/max or if we
       // know that this constant is min/max.
       auto *CI = dyn_cast<ConstantInt>(Elt);
-      if (!CI || (IsLE ? CI->isMaxValue(IsSigned) : CI->isMinValue(IsSigned)))
+      if (!CI || !ConstantIsOk(CI))
         return llvm::None;
     }
   } else {
@@ -4953,7 +4960,7 @@ llvm::getFlippedStrictnessPredicateAndConstant(CmpInst::Predicate Pred,
   CmpInst::Predicate NewPred = CmpInst::getFlippedStrictnessPredicate(Pred);
 
   // Increment or decrement the constant.
-  Constant *OneOrNegOne = ConstantInt::get(Type, IsLE ? 1 : -1, true);
+  Constant *OneOrNegOne = ConstantInt::get(Type, WillIncrement ? 1 : -1, true);
   Constant *NewC = ConstantExpr::getAdd(C, OneOrNegOne);
 
   return std::make_pair(NewPred, NewC);
