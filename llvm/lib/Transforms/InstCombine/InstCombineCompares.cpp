@@ -2562,20 +2562,49 @@ bool InstCombiner::matchThreeWayIntCompare(SelectInst *SI, Value *&LHS,
   // TODO: Generalize this to work with other comparison idioms or ensure
   // they get canonicalized into this form.
 
-  // select i1 (a == b), i32 Equal, i32 (select i1 (a < b), i32 Less, i32
-  // Greater), where Equal, Less and Greater are placeholders for any three
-  // constants.
-  ICmpInst::Predicate PredA, PredB;
-  if (match(SI->getTrueValue(), m_ConstantInt(Equal)) &&
-      match(SI->getCondition(), m_ICmp(PredA, m_Value(LHS), m_Value(RHS))) &&
-      PredA == ICmpInst::ICMP_EQ &&
-      match(SI->getFalseValue(),
-            m_Select(m_ICmp(PredB, m_Specific(LHS), m_Specific(RHS)),
-                     m_ConstantInt(Less), m_ConstantInt(Greater))) &&
-      PredB == ICmpInst::ICMP_SLT) {
-    return true;
+  // select i1 (a == b),
+  //        i32 Equal,
+  //        i32 (select i1 (a < b), i32 Less, i32 Greater)
+  // where Equal, Less and Greater are placeholders for any three constants.
+  ICmpInst::Predicate PredA;
+  if (!match(SI->getCondition(), m_ICmp(PredA, m_Value(LHS), m_Value(RHS))) ||
+      !ICmpInst::isEquality(PredA))
+    return false;
+  Value *EqualVal = SI->getTrueValue();
+  Value *UnequalVal = SI->getFalseValue();
+  // We still can get non-canonical predicate here, so canonicalize.
+  if (PredA == ICmpInst::ICMP_NE)
+    std::swap(EqualVal, UnequalVal);
+  if (!match(EqualVal, m_ConstantInt(Equal)))
+    return false;
+  ICmpInst::Predicate PredB;
+  Value *LHS2, *RHS2;
+  if (!match(UnequalVal, m_Select(m_ICmp(PredB, m_Value(LHS2), m_Value(RHS2)),
+                                  m_ConstantInt(Less), m_ConstantInt(Greater))))
+    return false;
+  // We can get predicate mismatch here, so canonicalize if possible:
+  // First, ensure that 'LHS' match.
+  if (LHS2 != LHS) {
+    // x sgt y <--> y slt x
+    std::swap(LHS2, RHS2);
+    PredB = ICmpInst::getSwappedPredicate(PredB);
   }
-  return false;
+  if (LHS2 != LHS)
+    return false;
+  // We also need to canonicalize 'RHS'.
+  if (PredB == ICmpInst::ICMP_SGT && isa<Constant>(RHS2)) {
+    // x sgt C-1  <-->  x sge C  <-->  not(x slt C)
+    auto FlippedStrictness =
+        getFlippedStrictnessPredicateAndConstant(PredB, cast<Constant>(RHS2));
+    if (!FlippedStrictness)
+      return false;
+    assert(FlippedStrictness->first == ICmpInst::ICMP_SGE && "Sanity check");
+    RHS2 = FlippedStrictness->second;
+    // And kind-of perform the result swap.
+    std::swap(Less, Greater);
+    PredB = ICmpInst::ICMP_SLT;
+  }
+  return PredB == ICmpInst::ICMP_SLT && RHS == RHS2;
 }
 
 Instruction *InstCombiner::foldICmpSelectConstant(ICmpInst &Cmp,
