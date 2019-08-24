@@ -62,17 +62,23 @@ public:
   }
 
   constexpr FeatureBitset &set(unsigned I) {
-    Bits[I / 64] |= uint64_t(1) << (I % 64);
+    // GCC <6.2 crashes if this is written in a single statement.
+    uint64_t NewBits = Bits[I / 64] | (uint64_t(1) << (I % 64));
+    Bits[I / 64] = NewBits;
     return *this;
   }
 
   constexpr FeatureBitset &reset(unsigned I) {
-    Bits[I / 64] &= ~(uint64_t(1) << (I % 64));
+    // GCC <6.2 crashes if this is written in a single statement.
+    uint64_t NewBits = Bits[I / 64] & ~(uint64_t(1) << (I % 64));
+    Bits[I / 64] = NewBits;
     return *this;
   }
 
   constexpr FeatureBitset &flip(unsigned I) {
-    Bits[I / 64] ^= uint64_t(1) << (I % 64);
+    // GCC <6.2 crashes if this is written in a single statement.
+    uint64_t NewBits = Bits[I / 64] ^ (uint64_t(1) << (I % 64));
+    Bits[I / 64] = NewBits;
     return *this;
   }
 
