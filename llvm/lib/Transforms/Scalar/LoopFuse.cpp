@@ -354,15 +354,15 @@ using LoopVector = SmallVector<Loop *, 4>;
 using FusionCandidateSet = std::set<FusionCandidate, FusionCandidateCompare>;
 using FusionCandidateCollection = SmallVector<FusionCandidateSet, 4>;
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+#if !defined(NDEBUG)
+static llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
                                      const FusionCandidateSet &CandSet) {
-  for (auto IT : CandSet)
-    OS << IT << "\n";
+  for (const FusionCandidate &FC : CandSet)
+    OS << FC << '\n';
 
   return OS;
 }
 
-#if !defined(NDEBUG)
 static void
 printFusionCandidates(const FusionCandidateCollection &FusionCandidates) {
   dbgs() << "Fusion Candidates: \n";
