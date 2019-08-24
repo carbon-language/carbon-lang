@@ -499,13 +499,7 @@ void OmpStructureChecker::Enter(const parser::OmpClause &x) {
 }
 
 void OmpStructureChecker::Enter(const parser::OmpNowait &) {
-  switch (GetContext().directive) {
-  case OmpDirective::SECTIONS:
-  case OmpDirective::WORKSHARE:
-  case OmpDirective::DO_SIMD:
-  case OmpDirective::DO: break;  // NOWAIT is handled by parser
-  default: CheckAllowed(OmpClause::NOWAIT); break;
-  }
+  CheckAllowed(OmpClause::NOWAIT);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Defaultmap &) {
   CheckAllowed(OmpClause::DEFAULTMAP);

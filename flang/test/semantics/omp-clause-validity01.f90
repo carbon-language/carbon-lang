@@ -90,7 +90,8 @@
   do i = 1, N
      a = 3.14
   enddo
-  !$omp end parallel
+  !ERROR: NOWAIT clause is not allowed on the END PARALLEL directive
+  !$omp end parallel nowait
 
   !$omp parallel num_threads(num-10)
   do i = 1, N
