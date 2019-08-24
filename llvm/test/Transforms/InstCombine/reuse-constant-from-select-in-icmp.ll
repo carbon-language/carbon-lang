@@ -263,15 +263,25 @@ define i32 @n21_equality(i32 %x, i32 %y) {
   ret i32 %r
 }
 
-; We don't touch sign checks
-define i32 @n22_sign_check(i32 %x, i32 %y) {
-; CHECK-LABEL: @n22_sign_check(
+; There is nothing special about sign-bit-tests, we can fold them.
+define i32 @t22_sign_check(i32 %x, i32 %y) {
+; CHECK-LABEL: @t22_sign_check(
 ; CHECK-NEXT:    [[T:%.*]] = icmp slt i32 [[X:%.*]], 0
 ; CHECK-NEXT:    [[R:%.*]] = select i1 [[T]], i32 -1, i32 [[Y:%.*]]
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t = icmp slt i32 %x, 0
   %r = select i1 %t, i32 -1, i32 %y
+  ret i32 %r
+}
+define i32 @t22_sign_check2(i32 %x, i32 %y) {
+; CHECK-LABEL: @t22_sign_check2(
+; CHECK-NEXT:    [[T:%.*]] = icmp sgt i32 [[X:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[T]], i32 0, i32 [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %t = icmp sgt i32 %x, -1
+  %r = select i1 %t, i32 0, i32 %y
   ret i32 %r
 }
 
