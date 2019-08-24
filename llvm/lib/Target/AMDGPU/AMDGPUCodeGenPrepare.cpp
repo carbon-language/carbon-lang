@@ -515,7 +515,9 @@ bool AMDGPUCodeGenPrepare::replaceMulWithMul24(BinaryOperator &I) const {
     }
   }
 
-  I.replaceAllUsesWith(insertValues(Builder, Ty, ResultVals));
+  Value *NewVal = insertValues(Builder, Ty, ResultVals);
+  NewVal->takeName(&I);
+  I.replaceAllUsesWith(NewVal);
   I.eraseFromParent();
 
   return true;
