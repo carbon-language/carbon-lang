@@ -5,12 +5,11 @@
 define i64 @imm1_Oz(i32 %x, i32 %y) minsize nounwind {
 ; CHECK-LABEL: imm1_Oz:
 ; CHECK:       # %bb.0:
+; CHECK-NEXT:    # kill: def $esi killed $esi def $rsi
 ; CHECK-NEXT:    # kill: def $edi killed $edi def $rdi
-; CHECK-NEXT:    pushq $1
-; CHECK-NEXT:    popq %rax
-; CHECK-NEXT:    leal (%rdi,%rax), %ecx
-; CHECK-NEXT:    addl %esi, %eax
-; CHECK-NEXT:    addq %rcx, %rax
+; CHECK-NEXT:    leal 1(%rdi), %eax
+; CHECK-NEXT:    incl %esi
+; CHECK-NEXT:    addq %rsi, %rax
 ; CHECK-NEXT:    retq
   %x1 = add i32 %x, 1
   %y1 = add i32 %y, 1
@@ -21,23 +20,14 @@ define i64 @imm1_Oz(i32 %x, i32 %y) minsize nounwind {
 }
 
 define i64 @imm1_Os(i32 %x, i32 %y) optsize nounwind {
-; FAST-INCDEC-LABEL: imm1_Os:
-; FAST-INCDEC:       # %bb.0:
-; FAST-INCDEC-NEXT:    # kill: def $edi killed $edi def $rdi
-; FAST-INCDEC-NEXT:    movl $1, %eax
-; FAST-INCDEC-NEXT:    leal (%rdi,%rax), %ecx
-; FAST-INCDEC-NEXT:    addl %esi, %eax
-; FAST-INCDEC-NEXT:    addq %rcx, %rax
-; FAST-INCDEC-NEXT:    retq
-;
-; SLOW-INCDEC-LABEL: imm1_Os:
-; SLOW-INCDEC:       # %bb.0:
-; SLOW-INCDEC-NEXT:    movl $1, %eax
-; SLOW-INCDEC-NEXT:    # kill: def $edi killed $edi def $rdi
-; SLOW-INCDEC-NEXT:    leal (%rdi,%rax), %ecx
-; SLOW-INCDEC-NEXT:    addl %esi, %eax
-; SLOW-INCDEC-NEXT:    addq %rcx, %rax
-; SLOW-INCDEC-NEXT:    retq
+; CHECK-LABEL: imm1_Os:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    # kill: def $esi killed $esi def $rsi
+; CHECK-NEXT:    # kill: def $edi killed $edi def $rdi
+; CHECK-NEXT:    leal 1(%rdi), %eax
+; CHECK-NEXT:    incl %esi
+; CHECK-NEXT:    addq %rsi, %rax
+; CHECK-NEXT:    retq
   %x1 = add i32 %x, 1
   %y1 = add i32 %y, 1
   %x1z = zext i32 %x1 to i64
