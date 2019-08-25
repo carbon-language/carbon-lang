@@ -20,10 +20,9 @@ b0:
   ret i32 %v3
 }
 
-define i64 @is_upper_bit_clear_i64(i64 %x) {
+define i64 @is_upper_bit_clear_i64(i64 %x) #0 {
 ; CHECK-LABEL: is_upper_bit_clear_i64:
-; CHECK:         .cfi_startproc
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    {
 ; CHECK-NEXT:     r1:0 = extractu(r1:0,#1,#37)
 ; CHECK-NEXT:    }
@@ -38,10 +37,9 @@ define i64 @is_upper_bit_clear_i64(i64 %x) {
   ret i64 %r
 }
 
-define i64 @is_lower_bit_clear_i64(i64 %x) {
+define i64 @is_lower_bit_clear_i64(i64 %x) #0 {
 ; CHECK-LABEL: is_lower_bit_clear_i64:
-; CHECK:         .cfi_startproc
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    {
 ; CHECK-NEXT:     r1:0 = extractu(r1:0,#1,#27)
 ; CHECK-NEXT:    }
@@ -56,10 +54,9 @@ define i64 @is_lower_bit_clear_i64(i64 %x) {
   ret i64 %r
 }
 
-define i32 @is_bit_clear_i32(i32 %x) {
+define i32 @is_bit_clear_i32(i32 %x) #0 {
 ; CHECK-LABEL: is_bit_clear_i32:
-; CHECK:         .cfi_startproc
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    {
 ; CHECK-NEXT:     r1 = #-1
 ; CHECK-NEXT:    }
@@ -76,10 +73,9 @@ define i32 @is_bit_clear_i32(i32 %x) {
   ret i32 %r
 }
 
-define i16 @is_bit_clear_i16(i16 %x) {
+define i16 @is_bit_clear_i16(i16 %x) #0 {
 ; CHECK-LABEL: is_bit_clear_i16:
-; CHECK:         .cfi_startproc
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    {
 ; CHECK-NEXT:     r1 = #-1
 ; CHECK-NEXT:    }
@@ -96,10 +92,9 @@ define i16 @is_bit_clear_i16(i16 %x) {
   ret i16 %r
 }
 
-define i8 @is_bit_clear_i8(i8 %x) {
+define i8 @is_bit_clear_i8(i8 %x) #0 {
 ; CHECK-LABEL: is_bit_clear_i8:
-; CHECK:         .cfi_startproc
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    {
 ; CHECK-NEXT:     r1 = #-1
 ; CHECK-NEXT:    }
