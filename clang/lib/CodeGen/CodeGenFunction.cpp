@@ -47,13 +47,9 @@ static bool shouldEmitLifetimeMarkers(const CodeGenOptions &CGOpts,
   if (CGOpts.DisableLifetimeMarkers)
     return false;
 
-  // Disable lifetime markers in msan builds.
-  // FIXME: Remove this when msan works with lifetime markers.
-  if (LangOpts.Sanitize.has(SanitizerKind::Memory))
-    return false;
-
-  // Asan uses markers for use-after-scope checks.
-  if (CGOpts.SanitizeAddressUseAfterScope)
+  // Sanitizers may use markers.
+  if (CGOpts.SanitizeAddressUseAfterScope ||
+      LangOpts.Sanitize.has(SanitizerKind::Memory))
     return true;
 
   // For now, only in optimized builds.
