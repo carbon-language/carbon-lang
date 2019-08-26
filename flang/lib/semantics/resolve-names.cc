@@ -2941,11 +2941,11 @@ bool DeclarationVisitor::CheckArraySpec(const parser::Name &name,
     Say(name, "Assumed-rank array '%s' must be a dummy argument"_err_en_US);
     return false;
   } else if (isImplied) {
-    if (!symbol.attrs().test(Attr::PARAMETER)) {  // C836
+    if (!IsNamedConstant(symbol)) {  // C836
       Say(name, "Implied-shape array '%s' must be a named constant"_err_en_US);
       return false;
     }
-  } else if (symbol.attrs().test(Attr::PARAMETER)) {
+  } else if (IsNamedConstant(symbol)) {
     if (!isExplicit && !isImplied) {
       Say(name,
           "Named constant '%s' array must have explicit or implied shape"_err_en_US);

@@ -99,7 +99,7 @@ inline bool IsAllocatable(const Symbol &symbol) {
 inline bool IsAllocatableOrPointer(const Symbol &symbol) {
   return IsPointer(symbol) || IsAllocatable(symbol);
 }
-inline bool IsParameter(const Symbol &symbol) {
+inline bool IsNamedConstant(const Symbol &symbol) {
   return symbol.attrs().test(Attr::PARAMETER);
 }
 inline bool IsOptional(const Symbol &symbol) {

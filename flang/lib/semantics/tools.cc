@@ -131,7 +131,7 @@ bool IsPointerDummy(const Symbol &symbol) {
 // variable-name
 bool IsVariableName(const Symbol &symbol) {
   if (const Symbol * root{GetAssociationRoot(symbol)}) {
-    return root->has<ObjectEntityDetails>() && !IsParameter(*root);
+    return root->has<ObjectEntityDetails>() && !IsNamedConstant(*root);
   } else {
     return false;
   }

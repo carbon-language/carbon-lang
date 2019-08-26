@@ -1180,10 +1180,10 @@ Expr<Type<TypeCategory::Character, KIND>> FoldIntrinsicFunction(
 
 // Get the value of a PARAMETER
 template<typename T>
-std::optional<Expr<T>> GetParameterValue(
+std::optional<Expr<T>> GetNamedConstantValue(
     FoldingContext &context, const Symbol &symbol0) {
   const Symbol &symbol{ResolveAssociations(symbol0)};
-  if (symbol.attrs().test(semantics::Attr::PARAMETER)) {
+  if (IsNamedConstant(symbol)) {
     if (const auto *object{
             symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       if (object->initWasValidated()) {
@@ -1263,9 +1263,9 @@ std::optional<Expr<T>> GetParameterValue(
 }
 
 template<typename T>
-static std::optional<Constant<T>> GetFoldedParameterValue(
+static std::optional<Constant<T>> GetFoldedNamedConstantValue(
     FoldingContext &context, const Symbol &symbol) {
-  if (auto value{GetParameterValue<T>(context, symbol)}) {
+  if (auto value{GetNamedConstantValue<T>(context, symbol)}) {
     Expr<T> folded{Fold(context, std::move(*value))};
     if (const Constant<T> *value{UnwrapConstantValue<T>(folded)}) {
       return *value;
@@ -1460,7 +1460,7 @@ std::optional<Constant<T>> FoldArrayRef(
   }
   if (Component * component{aRef.base().UnwrapComponent()}) {
     return GetConstantComponent<T>(context, *component, &subscripts);
-  } else if (std::optional<Constant<T>> array{GetFoldedParameterValue<T>(
+  } else if (std::optional<Constant<T>> array{GetFoldedNamedConstantValue<T>(
                  context, aRef.base().GetLastSymbol())}) {
     return ApplySubscripts(context.messages(), *array, subscripts);
   } else {
@@ -1475,7 +1475,8 @@ std::optional<Constant<T>> GetConstantComponent(FoldingContext &context,
   if (std::optional<Constant<SomeDerived>> structures{std::visit(
           common::visitors{
               [&](const Symbol *symbol) {
-                return GetFoldedParameterValue<SomeDerived>(context, *symbol);
+                return GetFoldedNamedConstantValue<SomeDerived>(
+                    context, *symbol);
               },
               [&](ArrayRef &aRef) {
                 return FoldArrayRef<SomeDerived>(context, aRef);
@@ -1515,7 +1516,8 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
       common::visitors{
           [&](const Symbol *symbol) {
             if (symbol != nullptr) {
-              if (auto constant{GetFoldedParameterValue<T>(context, *symbol)}) {
+              if (auto constant{
+                      GetFoldedNamedConstantValue<T>(context, *symbol)}) {
                 return Expr<T>{std::move(*constant)};
               }
             }
@@ -2490,7 +2492,7 @@ public:
         common::TypeParamAttr::Kind);
   }
   void Handle(const semantics::Symbol &symbol) {
-    Check(symbol.attrs().test(semantics::Attr::PARAMETER));
+    Check(IsNamedConstant(symbol));
   }
   void Handle(const CoarrayRef &) { Return(false); }
   void Pre(const semantics::ParamValue &param) { Check(param.isExplicit()); }

@@ -536,7 +536,7 @@ bool EquivalenceSets::CheckObject(const parser::Name &name) {
   } else if (symbol.attrs().test(Attr::TARGET)) {  // C8108
     msg = "Variable '%s' with TARGET attribute"
           " is not allowed in an equivalence set"_err_en_US;
-  } else if (symbol.attrs().test(Attr::PARAMETER)) {  // C8106
+  } else if (IsNamedConstant(symbol)) {  // C8106
     msg = "Named constant '%s' is not allowed in an equivalence set"_err_en_US;
   } else if (InCommonWithBind(symbol)) {  // C8106
     msg = "Variable '%s' in common block with BIND attribute"
