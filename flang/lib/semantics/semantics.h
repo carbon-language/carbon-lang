@@ -20,6 +20,7 @@
 #include "../evaluate/intrinsics.h"
 #include "../parser/features.h"
 #include "../parser/message.h"
+#include "../parser/parse-tree.h"
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -120,6 +121,12 @@ public:
   const Scope &FindScope(parser::CharBlock) const;
   Scope &FindScope(parser::CharBlock);
 
+  const std::vector<const parser::ExecutableConstruct *> executables() const {
+    return executables_;
+  }
+  void PushExecutable(const parser::ExecutableConstruct &executable);
+  void PopExecutable();
+
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   const parser::LanguageFeatureControl languageFeatures_;
@@ -136,6 +143,7 @@ private:
   evaluate::FoldingContext foldingContext_{defaultKinds_};
 
   bool CheckError(bool);
+  std::vector<const parser::ExecutableConstruct *> executables_;
 };
 
 class Semantics {

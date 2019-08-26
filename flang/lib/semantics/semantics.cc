@@ -67,9 +67,29 @@ public:
     Enter(node);
     return true;
   }
+  template<typename T> bool Pre(const parser::UnlabeledStatement<T> &node) {
+    context_.set_location(node.source);
+    Enter(node);
+    return true;
+  }
   template<typename T> void Post(const parser::Statement<T> &node) {
     Leave(node);
     context_.set_location(std::nullopt);
+  }
+  template<typename T> void Post(const parser::UnlabeledStatement<T> &node) {
+    Leave(node);
+    context_.set_location(std::nullopt);
+  }
+
+  bool Pre(const parser::ExecutableConstruct &executable) {
+    context_.PushExecutable(executable);
+    Enter(executable);
+    return true;
+  }
+
+  void Post(const parser::ExecutableConstruct &executable) {
+    Leave(executable);
+    context_.PopExecutable();
   }
 
   bool Walk(const parser::Program &program) {
@@ -166,6 +186,16 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
   } else {
     common::die("invalid source location");
   }
+}
+
+void SemanticsContext::PushExecutable(
+    const parser::ExecutableConstruct &executable) {
+  executables_.push_back(&executable);
+}
+
+void SemanticsContext::PopExecutable() {
+  CHECK(executables_.size() > 0);
+  executables_.pop_back();
 }
 
 bool Semantics::Perform() {

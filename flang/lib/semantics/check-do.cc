@@ -647,4 +647,21 @@ void DoChecker::Leave(const parser::DoConstruct &x) {
   doContext.Check(x);
 }
 
+void DoChecker::CheckLoneStmt(const char *stmtString) const {
+  for (auto &executable : context_.executables()) {
+    if (std::holds_alternative<common::Indirection<parser::DoConstruct>>(
+            executable->u)) {
+      return;
+    }
+  }
+  context_.Say(*context_.location(),
+      "%s must be within a DO construct"_err_en_US, stmtString);
+}
+
+// C1134
+void DoChecker::Enter(const parser::CycleStmt &) { CheckLoneStmt("CYCLE"); }
+
+// C1166
+void DoChecker::Enter(const parser::ExitStmt &) { CheckLoneStmt("EXIT"); }
+
 }  // namespace Fortran::semantics

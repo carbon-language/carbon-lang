@@ -27,8 +27,12 @@ class DoChecker : public virtual BaseChecker {
 public:
   explicit DoChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::DoConstruct &);
+  void Enter(const parser::CycleStmt &);
+  void Enter(const parser::ExitStmt &);
 
 private:
+  void CheckLoneStmt(const char *const) const;
+
   SemanticsContext &context_;
 };
 }
