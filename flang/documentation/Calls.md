@@ -418,12 +418,13 @@ elemental SIMD width, and are followed by the external name.
 The parts of the external name can be separated by some character that
 is acceptable for use in LLVM IR and assembly language but not in user
 Fortran or C code, or by switching case
-(so long as there's a way to copy with extension names that don't begin
+(so long as there's a way to cope with extension names that don't begin
 with letters).
 
 In particular, the period (`.`) seems safe to use as a separator character,
-and a leading `_Fa.` can serve to isolate these names from other uses and
-identify the earliest link-compatible version.
+so a `Fa.` prefix can serve to isolate these discretionary names from
+other uses and to identify the earliest link-compatible version.
+For examples: `Fa.foo`, `Fa.mod.foo`, `Fa.mod.submod.foo`.
 
 ## Further topics to document
 
