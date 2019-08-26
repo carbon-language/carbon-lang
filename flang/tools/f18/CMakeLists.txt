@@ -46,6 +46,7 @@ set(MODULES
   "ieee_features"
   "iso_c_binding"
   "iso_fortran_env"
+  "omp_lib"
 )
 
 # Create module files directly from the top-level module source directory
