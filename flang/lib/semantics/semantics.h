@@ -181,6 +181,7 @@ public:
   bool AnyFatalError() const { return context_.AnyFatalError(); }
   void EmitMessages(std::ostream &) const;
   void DumpSymbols(std::ostream &);
+  void DumpSymbolsSources(std::ostream &) const;
 
 private:
   SemanticsContext &context_;

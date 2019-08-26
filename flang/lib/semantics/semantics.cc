@@ -40,7 +40,9 @@
 
 namespace Fortran::semantics {
 
+using NameToSymbolMap = std::map<const char *, const Symbol *>;
 static void DoDumpSymbols(std::ostream &, const Scope &, int indent = 0);
+static void GetSymbolNames(const Scope &, NameToSymbolMap &);
 static void PutIndent(std::ostream &, int indent);
 
 // A parse tree visitor that calls Enter/Leave functions from each checker
@@ -266,6 +268,36 @@ void DoDumpSymbols(std::ostream &os, const Scope &scope, int indent) {
     DoDumpSymbols(os, child, indent);
   }
   --indent;
+}
+
+void Semantics::DumpSymbolsSources(std::ostream &os) const {
+  NameToSymbolMap symbols;
+  GetSymbolNames(context_.globalScope(), symbols);
+  for (const auto pair : symbols) {
+    const Symbol &symbol{*pair.second};
+    auto sourceInfo{cooked_.GetSourcePositionRange(symbol.name())};
+    if (sourceInfo) {
+      os << symbol.name().ToString() << ": " << sourceInfo->first.file.path()
+         << ", " << sourceInfo->first.line << ", " << sourceInfo->first.column
+         << "-" << sourceInfo->second.column << "\n";
+    } else if (symbol.has<semantics::UseDetails>()) {
+      os << symbol.name().ToString() << ": "
+         << symbol.GetUltimate().owner().symbol()->name().ToString() << "\n";
+    }
+  }
+}
+
+void GetSymbolNames(const Scope &scope, NameToSymbolMap &symbols) {
+  // Finds all symbol names in the scope without collecting duplicates.
+  for (const auto &pair : scope) {
+    symbols.emplace(pair.second->name().begin(), pair.second);
+  }
+  for (const auto &pair : scope.commonBlocks()) {
+    symbols.emplace(pair.second->name().begin(), pair.second);
+  }
+  for (const auto &child : scope.children()) {
+    GetSymbolNames(child, symbols);
+  }
 }
 
 static void PutIndent(std::ostream &os, int indent) {

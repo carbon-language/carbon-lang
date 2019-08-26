@@ -53,6 +53,10 @@ gr=0
 for input in ${srcdir}/$*; do
   CMD=$(cat ${input} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
   CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
+  if egrep -q -e '%t' <<< ${CMD} ; then
+    temp=`mktemp`
+    CMD=$(echo ${CMD} | sed -e "s:%t:${temp}:g")
+  fi
   if $(eval $CMD); then
     echo "PASS  ${input}"
   else
