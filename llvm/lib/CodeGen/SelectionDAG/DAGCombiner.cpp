@@ -19448,33 +19448,35 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
     }
   }
 
-  // Make sure all but the first op are undef.
-  auto ConcatWithUndef = [](SDValue Concat) {
+  // Make sure all but the first op are undef or constant.
+  auto ConcatWithConstantOrUndef = [](SDValue Concat) {
     return Concat.getOpcode() == ISD::CONCAT_VECTORS &&
            std::all_of(std::next(Concat->op_begin()), Concat->op_end(),
-                       [](const SDValue &Op) {
-                         return Op.isUndef();
-                       });
+                     [](const SDValue &Op) {
+                       return Op.isUndef() ||
+                              ISD::isBuildVectorOfConstantSDNodes(Op.getNode());
+                     });
   };
 
   // The following pattern is likely to emerge with vector reduction ops. Moving
   // the binary operation ahead of the concat may allow using a narrower vector
   // instruction that has better performance than the wide version of the op:
-  // VBinOp (concat X, undef), (concat Y, undef) --> concat (VBinOp X, Y), VecC
-  if (ConcatWithUndef(LHS) && ConcatWithUndef(RHS) &&
+  // VBinOp (concat X, undef/constant), (concat Y, undef/constant) -->
+  //   concat (VBinOp X, Y), VecC
+  if (ConcatWithConstantOrUndef(LHS) && ConcatWithConstantOrUndef(RHS) &&
       (LHS.hasOneUse() || RHS.hasOneUse())) {
-    SDValue X = LHS.getOperand(0);
-    SDValue Y = RHS.getOperand(0);
-    EVT NarrowVT = X.getValueType();
-    if (NarrowVT == Y.getValueType() &&
+    EVT NarrowVT = LHS.getOperand(0).getValueType();
+    if (NarrowVT == RHS.getOperand(0).getValueType() &&
         TLI.isOperationLegalOrCustomOrPromote(Opcode, NarrowVT)) {
-      // (binop undef, undef) may not return undef, so compute that result.
       SDLoc DL(N);
-      SDValue VecC =
-          DAG.getNode(Opcode, DL, NarrowVT, DAG.getUNDEF(NarrowVT),
-                      DAG.getUNDEF(NarrowVT));
-      SmallVector<SDValue, 4> Ops(LHS.getNumOperands(), VecC);
-      Ops[0] = DAG.getNode(Opcode, DL, NarrowVT, X, Y);
+      unsigned NumOperands = LHS.getNumOperands();
+      SmallVector<SDValue, 4> Ops;
+      for (unsigned i = 0; i != NumOperands; ++i) {
+        // This constant fold for operands 1 and up.
+        Ops.push_back(DAG.getNode(Opcode, DL, NarrowVT, LHS.getOperand(i),
+                                  RHS.getOperand(i)));
+      }
+
       return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Ops);
     }
   }
