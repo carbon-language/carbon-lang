@@ -174,8 +174,9 @@ TEST(TransformerClangTidyCheckTest, DisableByConfig) {
 
 RewriteRule replaceCall(IncludeFormat Format) {
   using namespace ::clang::ast_matchers;
-  RewriteRule Rule = makeRule(callExpr(callee(functionDecl(hasName("f")))),
-                              change(text("other()")), text("no message"));
+  RewriteRule Rule =
+      tooling::makeRule(callExpr(callee(functionDecl(hasName("f")))),
+                        change(text("other()")), text("no message"));
   addInclude(Rule, "clang/OtherLib.h", Format);
   return Rule;
 }
