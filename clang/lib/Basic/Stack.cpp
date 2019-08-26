@@ -1,4 +1,4 @@
-//===--- Stack.h - Utilities for dealing with stack space -------*- C++ -*-===//
+//===--- Stack.cpp - Utilities for dealing with stack space ---------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
