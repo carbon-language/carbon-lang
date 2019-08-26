@@ -11,7 +11,7 @@
 #undef __private_extern__
 #endif
 
-__thread int t1; // thread-local-warning {{_Thread_local thread-local-warning}}
+__thread int t1; // thread-local-warning {{_Thread_local is a C11 extension}}
 __thread extern int t2; // thread-local-warning {{_Thread_local is a C11 extension}}
 __thread static int t3; // thread-local-warning {{_Thread_local is a C11 extension}}
 #ifdef GNU
