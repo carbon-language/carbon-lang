@@ -15,6 +15,10 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 
+#ifdef _MSC_VER
+#include <intrin.h>  // for _AddressOfReturnAddress
+#endif
+
 static LLVM_THREAD_LOCAL void *BottomOfStack = nullptr;
 
 static void *getStackPointer() {
