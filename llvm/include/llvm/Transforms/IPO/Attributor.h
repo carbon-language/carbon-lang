@@ -97,6 +97,7 @@
 #define LLVM_TRANSFORMS_IPO_ATTRIBUTOR_H
 
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/PassManager.h"
 
@@ -758,7 +759,7 @@ private:
   /// to the getAAFor<...>(...) method.
   ///{
   using QueryMapTy =
-      DenseMap<AbstractAttribute *, SetVector<AbstractAttribute *>>;
+      MapVector<AbstractAttribute *, SetVector<AbstractAttribute *>>;
   QueryMapTy QueryMap;
   ///}
 
@@ -1157,9 +1158,9 @@ struct AAReturnedValues
       const function_ref<bool(Value &, const SmallSetVector<ReturnInst *, 4> &)>
           &Pred) const = 0;
 
-  using iterator = DenseMap<Value *, SmallSetVector<ReturnInst *, 4>>::iterator;
+  using iterator = MapVector<Value *, SmallSetVector<ReturnInst *, 4>>::iterator;
   using const_iterator =
-      DenseMap<Value *, SmallSetVector<ReturnInst *, 4>>::const_iterator;
+      MapVector<Value *, SmallSetVector<ReturnInst *, 4>>::const_iterator;
   virtual llvm::iterator_range<iterator> returned_values() = 0;
   virtual llvm::iterator_range<const_iterator> returned_values() const = 0;
 

@@ -689,7 +689,7 @@ class AAReturnedValuesImpl : public AAReturnedValues, public AbstractState {
 
   /// Mapping of values potentially returned by the associated function to the
   /// return instructions that might return them.
-  DenseMap<Value *, SmallSetVector<ReturnInst *, 4>> ReturnedValues;
+  MapVector<Value *, SmallSetVector<ReturnInst *, 4>> ReturnedValues;
 
   /// Mapping to remember the number of returned values for a call site such
   /// that we can avoid updates if nothing changed.
