@@ -8,7 +8,7 @@ Fortran function and subroutine references are complicated.
 This document attempts to collect the requirements imposed by the 2018
 standard (and legacy extensions) on programs and implementations, work
 through the implications of the various features, and propose both a
-runtime model and compiler design.
+runtime model and a compiler design.
 
 All section, requirement, and constraint numbers herein pertain to
 the Fortran 2018 standard.
@@ -21,15 +21,16 @@ functions, or calls to internal runtime support library routines.
 Referenced procedures may or may not have declared interfaces
 available to their call sites.
 
-Calls to procedures with some post-'77 features require an explicit interface
- (15.4.2.2):
+Calls to procedures with some post-Fortran '77 features require an
+explicit interface (15.4.2.2):
+
 * keyword arguments
 * procedures that are `ELEMENTAL` or `BIND(C)`
 * procedures that are required to be `PURE` due to the context of the call
   (specification expression, `DO CONCURRENT`, `FORALL`)
 * dummy arguments with these attributes: `ALLOCATABLE`, `POINTER`,
   `VALUE`, `TARGET`, `OPTIONAL`, `ASYNCHRONOUS`, `VOLATILE`
-  (but *not* `CONTIGUOUS`, `INTENT()`, or nonparameterized derived type)
+  (but *not* `CONTIGUOUS`, `INTENT()`)
 * dummy arguments that are coarrays, have assumed-shape/-rank,
   have parameterized derived types, &/or are polymorphic
 * function results that are arrays, `ALLOCATABLE`, `POINTER`,
@@ -42,6 +43,11 @@ always have explicit interfaces.
 
 Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
+
+Note that non-parameterized monomorphic derived type arguments do
+not by themselves require the use of an explicit interface; we should perhaps emit a warning
+when the derived type of an actual argument to an implicit interface is
+not a `SEQUENCE` type (7.5.2.3).
 
 ### Implicit interfaces
 
@@ -296,7 +302,7 @@ when copying the data back.
 
 ### Polymorphic bindings
 
-Calls to the type-bound procedures of non-polymorphic types are
+Calls to the type-bound procedures of monomorphic types are
 resolved at compilation time, as are calls to `NON_OVERRIDABLE`
 type-bound procedures.
 The resolution of calls to overridable type-bound procedures of
@@ -374,11 +380,11 @@ with `BIND(C)` (R808) have linker-visible names that are either explicitly
 specified in the program or determined by straightforward rules.
 The names of other external procedures that might be called via an
 implicit interface should respect the conventions of the target architecture
-for legacy Fortran '77 programs.
+for legacy Fortran '77 programs; this is typically something like `foo_`.
 
 In other cases, however, we have no constraints on external naming
 (other than extreme length and maybe good taste), and some additional
-requirements.
+requirements and goals.
 
 Module procedures need to be distinguished by the name of their module
 and (when they have one) the submodule where their interface was
@@ -397,21 +403,27 @@ to do so and causing them to fail with link errors.
 
 We may also choose to distinguish both of these classes of names with
 extra characters that make it impossible to link with code compiled
-by other Fortran compilers or other incompatible versions of F18.
+by other Fortran compilers or other incompatible versions of this one.
 
 Last, there must be reasonably permanent naming conventions used
 by the F18 runtime library for those unrestricted specific intrinsic
 functions (table 16.2 in 16.8) and extensions that can be passed as
 arguments.
 
-I suggest that in these cases where external naming is at the discretion
-of the implementation, we use names that are not in the C language
+In these cases where external naming is at the discretion
+of the implementation, we should use names that are not in the C language
 user namespace, begin with something that identifies
 the current incompatible version of F18, the module, the submodule, and
 elemental SIMD width, and are followed by the external name.
 The parts of the external name can be separated by some character that
 is acceptable for use in LLVM IR and assembly language but not in user
-Fortran or C code, or by switching case (e.g., `__f18a_moduleSUBMODULEentry`).
+Fortran or C code, or by switching case
+(so long as there's a way to copy with extension names that don't begin
+with letters).
+
+In particular, the period (`.`) seems safe to use as a separator character,
+and a leading `_Fa.` can serve to isolate these names from other uses and
+identify the earliest link-compatible version.
 
 ## Further topics to document
 
