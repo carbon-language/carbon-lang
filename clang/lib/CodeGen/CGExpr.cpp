@@ -521,6 +521,7 @@ EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *M) {
       ConditionalEvaluation *OldConditional = nullptr;
       CGBuilderTy::InsertPoint OldIP;
       if (isInConditionalBranch() && !E->getType().isDestructedType() &&
+          !SanOpts.has(SanitizerKind::HWAddress) &&
           !SanOpts.has(SanitizerKind::Memory) &&
           !CGM.getCodeGenOpts().SanitizeAddressUseAfterScope) {
         OldConditional = OutermostConditional;
