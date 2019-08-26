@@ -591,9 +591,16 @@ struct Attributor {
   /// most optimistic information for other abstract attributes in-flight, e.g.
   /// the one reasoning about the "captured" state for the argument or the one
   /// reasoning on the memory access behavior of the function as a whole.
+  ///
+  /// If the flag \p TrackDependence is set to false the dependence from
+  /// \p QueryingAA to the return abstract attribute is not automatically
+  /// recorded. This should only be used if the caller will record the
+  /// dependence explicitly if necessary, thus if it the returned abstract
+  /// attribute is used for reasoning. To record the dependences explicitly use
+  /// the `Attributor::recordDependence` method.
   template <typename AAType>
   const AAType &getAAFor(const AbstractAttribute &QueryingAA,
-                         const IRPosition &IRP) {
+                         const IRPosition &IRP, bool TrackDependence = true) {
     static_assert(std::is_base_of<AbstractAttribute, AAType>::value,
                   "Cannot query an attribute with a type not derived from "
                   "'AbstractAttribute'!");
@@ -605,7 +612,7 @@ struct Attributor {
     if (AAType *AA = static_cast<AAType *>(
             KindToAbstractAttributeMap.lookup(&AAType::ID))) {
       // Do not registr a dependence on an attribute with an invalid state.
-      if (AA->getState().isValidState())
+      if (TrackDependence && AA->getState().isValidState())
         QueryMap[AA].insert(const_cast<AbstractAttribute *>(&QueryingAA));
       return *AA;
     }
@@ -613,9 +620,22 @@ struct Attributor {
     // No matching attribute found, create one.
     auto &AA = AAType::createForPosition(IRP, *this);
     registerAA(AA);
-    if (AA.getState().isValidState())
+    if (TrackDependence && AA.getState().isValidState())
       QueryMap[&AA].insert(const_cast<AbstractAttribute *>(&QueryingAA));
     return AA;
+  }
+
+  /// Explicitly record a dependence from \p FromAA to \p ToAA, that is if
+  /// \p FromAA changes \p ToAA should be updated as well.
+  ///
+  /// This method should be used in conjunction with the `getAAFor` method and
+  /// with the TrackDependence flag passed to the method set to false. This can
+  /// be beneficial to avoid false dependences but it requires the users of
+  /// `getAAFor` to explicitly record true dependences through this method.
+  void recordDependence(const AbstractAttribute &FromAA,
+                        const AbstractAttribute &ToAA) {
+    QueryMap[const_cast<AbstractAttribute *>(&FromAA)].insert(
+        const_cast<AbstractAttribute *>(&ToAA));
   }
 
   /// Introduce a new abstract attribute into the fixpoint analysis.
