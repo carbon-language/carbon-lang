@@ -890,6 +890,11 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   assert(!getFrontendOpts().ShowHelp && "Client must handle '-help'!");
   assert(!getFrontendOpts().ShowVersion && "Client must handle '-version'!");
 
+  // Mark this point as the bottom of the stack if we don't have somewhere
+  // better. We generally expect frontend actions to be invoked with (nearly)
+  // DesiredStackSpace available.
+  noteBottomOfStack();
+
   // FIXME: Take this as an argument, once all the APIs we used have moved to
   // taking it as an input instead of hard-coding llvm::errs.
   raw_ostream &OS = llvm::errs();
