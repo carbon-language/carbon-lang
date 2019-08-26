@@ -226,6 +226,26 @@ entry:
   unreachable
 }
 
+; Tests if SSA rewrite works when a use and its def are within the same BB.
+define void @ssa_rewite_in_same_bb() {
+entry:
+  call void @foo()
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  ; CHECK: %{{.*}} = phi i32 [ %var[[VARNO:.*]], %for.inc.split ]
+  %0 = phi i32 [ %var, %for.inc ], [ undef, %entry ]
+  %var = add i32 0, 0
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.cond
+  %call5 = call i32 @setjmp(%struct.__jmp_buf_tag* undef) #0
+  br label %for.cond
+
+; CHECK: for.inc.split:
+  ; CHECK: %var[[VARNO]] = phi i32 [ %var, %for.inc ]
+}
+
 declare void @foo()
 ; Function Attrs: returns_twice
 declare i32 @setjmp(%struct.__jmp_buf_tag*) #0
