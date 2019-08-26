@@ -892,9 +892,13 @@ void DwarfCompileUnit::constructAbstractSubprogramScopeDIE(
     ContextCU->addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 
+/// Whether to use the GNU analog for a DWARF5 tag, attribute, or location atom.
+static bool useGNUAnalogForDwarf5Feature(DwarfDebug *DD) {
+  return DD->getDwarfVersion() == 4 && DD->tuneForGDB();
+}
+
 dwarf::Tag DwarfCompileUnit::getDwarf5OrGNUCallSiteTag(dwarf::Tag Tag) const {
-  bool ApplyGNUExtensions = DD->getDwarfVersion() == 4 && DD->tuneForGDB();
-  if (!ApplyGNUExtensions)
+  if (!useGNUAnalogForDwarf5Feature(DD))
     return Tag;
   switch (Tag) {
   case dwarf::DW_TAG_call_site:
@@ -908,8 +912,7 @@ dwarf::Tag DwarfCompileUnit::getDwarf5OrGNUCallSiteTag(dwarf::Tag Tag) const {
 
 dwarf::Attribute
 DwarfCompileUnit::getDwarf5OrGNUCallSiteAttr(dwarf::Attribute Attr) const {
-  bool ApplyGNUExtensions = DD->getDwarfVersion() == 4 && DD->tuneForGDB();
-  if (!ApplyGNUExtensions)
+  if (!useGNUAnalogForDwarf5Feature(DD))
     return Attr;
   switch (Attr) {
   case dwarf::DW_AT_call_all_calls:
@@ -926,6 +929,18 @@ DwarfCompileUnit::getDwarf5OrGNUCallSiteAttr(dwarf::Attribute Attr) const {
     return dwarf::DW_AT_GNU_tail_call;
   default:
     llvm_unreachable("unhandled call site attribute");
+  }
+}
+
+dwarf::LocationAtom
+DwarfCompileUnit::getDwarf5OrGNULocationAtom(dwarf::LocationAtom Loc) const {
+  if (!useGNUAnalogForDwarf5Feature(DD))
+    return Loc;
+  switch (Loc) {
+  case dwarf::DW_OP_entry_value:
+    return dwarf::DW_OP_GNU_entry_value;
+  default:
+    llvm_unreachable("DWARF5 location atom with no GNU analog");
   }
 }
 

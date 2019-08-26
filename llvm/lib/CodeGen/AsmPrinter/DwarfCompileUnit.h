@@ -234,6 +234,9 @@ public:
   /// GNU attribute if needed.
   dwarf::Attribute getDwarf5OrGNUCallSiteAttr(dwarf::Attribute Attr) const;
 
+  /// This takes a DWARF 5 location atom and either returns it or a GNU analog.
+  dwarf::LocationAtom getDwarf5OrGNULocationAtom(dwarf::LocationAtom Loc) const;
+
   /// Construct a call site entry DIE describing a call within \p Scope to a
   /// callee described by \p CalleeSP.
   /// \p IsTail specifies whether the call is a tail call.
