@@ -1,6 +1,6 @@
-========
+=============
 Configuration
-========
+=============
 
 .. contents::
 
@@ -28,6 +28,7 @@ For example if you have your compilers at:
  - `/path/to/my-custom/toolchain1/arm-none-eabi-gcc`,
  - `/path/to/my-custom/toolchain2/arm-none-eabi-g++`,
  - `/path/to/my-custom2/toolchain/arm-none-eabi-g++`,
+   
 you can provide clangd with
 `--query-driver=/path/to/my-custom/**/arm-none-eabi*` to enable execution of
 any binary that has a name starting with `arm-none-eabi` and under
