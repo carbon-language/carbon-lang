@@ -686,6 +686,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
           },
           std::move(expr->u));
     }
+  } else if (name == "int_ptr_kind") {
+    return Expr<T>{8};
   } else if (name == "kind") {
     if constexpr (common::HasMember<T, IntegerTypes>) {
       return Expr<T>{args[0].value().GetType()->kind()};

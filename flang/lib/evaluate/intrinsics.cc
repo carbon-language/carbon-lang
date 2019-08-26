@@ -443,6 +443,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             SubscriptDefaultKIND},
         KINDInt},
     {"int", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND}, KINDInt},
+    {"int_ptr_kind", {}, DefaultInt, Rank::scalar},
     {"ior", {{"i", SameInt}, {"j", SameInt, Rank::elementalOrBOZ}}, SameInt},
     {"ior", {{"i", BOZ}, {"j", SameInt}}, SameInt},
     {"ishft", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
