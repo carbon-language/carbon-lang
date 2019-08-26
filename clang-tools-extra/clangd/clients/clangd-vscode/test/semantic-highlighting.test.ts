@@ -107,7 +107,7 @@ suite('SemanticHighlighting Tests', () => {
     highlighter.highlight('file1', []);
     assert.deepEqual(highlighter.applicationUriHistory, [ 'file1' ]);
     highlighter.initialize(tm);
-    assert.deepEqual(highlighter.applicationUriHistory, [ 'file1', 'file1' ]);
+    assert.deepEqual(highlighter.applicationUriHistory, [ 'file1', 'file1', 'file2' ]);
     // Groups decorations into the scopes used.
     let highlightingsInLine: semanticHighlighting.SemanticHighlightingLine[] = [
       {
@@ -129,7 +129,7 @@ suite('SemanticHighlighting Tests', () => {
 
     highlighter.highlight('file1', highlightingsInLine);
     assert.deepEqual(highlighter.applicationUriHistory,
-                     [ 'file1', 'file1', 'file1' ]);
+                     [ 'file1', 'file1', 'file2', 'file1' ]);
     assert.deepEqual(highlighter.getDecorationRanges('file1'),
                      createHighlightingScopeRanges(highlightingsInLine));
     // Keeps state separate between files.
@@ -142,18 +142,24 @@ suite('SemanticHighlighting Tests', () => {
     };
     highlighter.highlight('file2', [ highlightingsInLine1 ]);
     assert.deepEqual(highlighter.applicationUriHistory,
-                     [ 'file1', 'file1', 'file1', 'file2' ]);
+                     [ 'file1', 'file1', 'file2', 'file1', 'file2' ]);
     assert.deepEqual(highlighter.getDecorationRanges('file2'),
                      createHighlightingScopeRanges([ highlightingsInLine1 ]));
     // Does full colorizations.
     highlighter.highlight('file1', [ highlightingsInLine1 ]);
     assert.deepEqual(highlighter.applicationUriHistory,
-                     [ 'file1', 'file1', 'file1', 'file2', 'file1' ]);
+                     [ 'file1', 'file1', 'file2', 'file1', 'file2', 'file1' ]);
     // After the incremental update to line 1, the old highlightings at line 1
     // will no longer exist in the array.
     assert.deepEqual(
         highlighter.getDecorationRanges('file1'),
         createHighlightingScopeRanges(
             [ highlightingsInLine1, ...highlightingsInLine.slice(1) ]));
+    // Closing a text document removes all highlightings for the file and no
+    // other files.
+    highlighter.removeFileHighlightings('file1');
+    assert.deepEqual(highlighter.getDecorationRanges('file1'), []);
+    assert.deepEqual(highlighter.getDecorationRanges('file2'),
+                     createHighlightingScopeRanges([ highlightingsInLine1 ]));
   });
 });

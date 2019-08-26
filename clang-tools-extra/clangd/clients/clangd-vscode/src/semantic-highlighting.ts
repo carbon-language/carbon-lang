@@ -89,6 +89,13 @@ export class SemanticHighlightingFeature implements vscodelc.StaticFeature {
     // highlighter being created.
     this.highlighter = new Highlighter(this.scopeLookupTable);
     this.loadCurrentTheme();
+    // Event handling for handling with TextDocuments/Editors lifetimes.
+    vscode.window.onDidChangeVisibleTextEditors(
+        (editors: vscode.TextEditor[]) =>
+            editors.forEach((e) => this.highlighter.applyHighlights(
+                                e.document.uri.toString())));
+    vscode.workspace.onDidCloseTextDocument(
+        (doc) => this.highlighter.removeFileHighlightings(doc.uri.toString()));
   }
 
   handleNotification(params: SemanticHighlightingParams) {
@@ -150,12 +157,8 @@ export class Highlighter {
       };
       return vscode.window.createTextEditorDecorationType(options);
     });
-    this.getVisibleTextEditorUris().forEach((fileUri) => {
-      // A TextEditor might not be a cpp file. So we must check we have
-      // highlightings for the file before applying them.
-      if (this.files.has(fileUri))
-        this.applyHighlights(fileUri);
-    })
+    this.getVisibleTextEditorUris().forEach((fileUri) =>
+                                                this.applyHighlights(fileUri));
   }
 
   // Adds incremental highlightings to the current highlightings for the file
@@ -171,6 +174,13 @@ export class Highlighter {
     this.applyHighlights(fileUri);
   }
 
+  // Called when a text document is closed. Removes any highlighting entries for
+  // the text document that was closed.
+  public removeFileHighlightings(fileUri: string) {
+    // If there exists no entry the call to delete just returns false.
+    this.files.delete(fileUri);
+  }
+
   // Gets the uris as strings for the currently visible text editors.
   protected getVisibleTextEditorUris(): string[] {
     return vscode.window.visibleTextEditors.map((e) =>
@@ -180,6 +190,11 @@ export class Highlighter {
   // Returns the ranges that should be used when decorating. Index i in the
   // range array has the decoration type at index i of this.decorationTypes.
   protected getDecorationRanges(fileUri: string): vscode.Range[][] {
+    if (!this.files.has(fileUri))
+      // this.files should always have an entry for fileUri if we are here. But
+      // if there isn't one we don't want to crash the extension. This is also
+      // useful for tests.
+      return [];
     const lines: SemanticHighlightingLine[] =
         Array.from(this.files.get(fileUri).values());
     const decorations: vscode.Range[][] = this.decorationTypes.map(() => []);
@@ -194,7 +209,11 @@ export class Highlighter {
   }
 
   // Applies all the highlightings currently stored for a file with fileUri.
-  protected applyHighlights(fileUri: string) {
+  public applyHighlights(fileUri: string) {
+    if (!this.files.has(fileUri))
+      // There are no highlightings for this file, must return early or will get
+      // out of bounds when applying the decorations below.
+      return;
     if (!this.decorationTypes.length)
       // Can't apply any decorations when there is no theme loaded.
       return;
