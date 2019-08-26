@@ -29,7 +29,7 @@ Calls to procedures with some post-'77 features require an explicit interface
   (specification expression, `DO CONCURRENT`, `FORALL`)
 * dummy arguments with these attributes: `ALLOCATABLE`, `POINTER`,
   `VALUE`, `TARGET`, `OPTIONAL`, `ASYNCHRONOUS`, `VOLATILE`
-  (but *not* `CONTIGUOUS` or `INTENT()`!)
+  (but *not* `CONTIGUOUS`, `INTENT()`, or nonparameterized derived type)
 * dummy arguments that are coarrays, have assumed-shape/-rank,
   have parameterized derived types, &/or are polymorphic
 * function results that are arrays, `ALLOCATABLE`, `POINTER`,
@@ -46,8 +46,8 @@ such as procedure pointer assignment, type-bound procedure bindings, &c.
 ### Implicit interfaces
 
 In the absence of any characteristic or context that requires an
-explicit interface (see above), a top-level function or subroutine
-can be called via its implicit interface.
+explicit interface (see above), an external function or subroutine (R503)
+or `ENTRY` (R1541) can be called directly or indirectly via its implicit interface.
 Each of the arguments can be passed as a simple address, including
 dummy procedures.
 Procedures that *can* be called via an implicit interface can
@@ -55,25 +55,26 @@ enjoy more thorough checking
 by semantics when they do have a visible external interface, but must be
 compiled as if all calls to them were through the implicit interface.
 
-Internal and module procedures that are ever passed as arguments &/or
-used as targets of procedure pointers are also potentially at risk of
-being called through internal interfaces.
+Internal and module subprograms that are ever passed as arguments &/or
+assigned as targets of procedure pointers are also potentially at risk of
+being called indirectly through internal interfaces.
 
-Procedures that can be called via an implicit interface should respect
-the naming conventions (when not internal or module) and legacy ABI (if any)
-used for Fortran '77 programs
-on the target architecture, so that portable libraries can be compiled
+Every procedure callable via an implicit interface
+can and must be distiguished at compilation time.
+Such procedures should respect the external naming conventions (when external)
+and any legacy ABI used for Fortran '77 programs on the target architecture,
+so that portable libraries can be compiled
 and used by distinct implementations (and their versions)
 of Fortran.
 
-Note that functions with implicit interfaces still have known result
+Note that functions callable via implicit interfaces still have known result
 types, possibly by means of implicit typing of their names.
 They can also be `CHARACTER(*)` assumed-length character functions.
 
 In other words: procedures that can be referenced with implicit interfaces
 have argument lists that comprise only addresses of actual arguments,
-ad the length of an assumed-length `CHARACTER(*)` result, and they can
-return only scalar values of intrinsic types.
+and possibly the length of an assumed-length `CHARACTER(*)` result,
+and they can return only scalar values of intrinsic types.
 None of their arguments or results need be (or can be) implemented
 with descriptors,
 and any internal procedures passed to them as arguments must be
@@ -252,7 +253,6 @@ needed to recalculate them) of the actual argument designator, or its
 elements, in additional temporary storage if they can't be safely or
 quickly recomputed after the call.
 
-
 ### `INTENT(OUT)` preparation
 
 Actual arguments that are associated with `INTENT(OUT)`
@@ -294,6 +294,24 @@ are required to be associated only with dummy arguments with the
 requirement that the local image somehow reallocate remote storage
 when copying the data back.
 
+### Polymorphic bindings
+
+Calls to the type-bound procedures of non-polymorphic types are
+resolved at compilation time, as are calls to `NON_OVERRIDABLE`
+type-bound procedures.
+The resolution of calls to overridable type-bound procedures of
+polymorphic types must be completed at execution (generic resolution
+of type-bound procedure bindings from actual argument types, kinds,
+and ranks is always a compilation-time task (C.10.6)).
+
+Each derived type that declares or inherits any overridable
+type-bound procedure bindings must correspond to a static constant
+table of code addresses (or, more likely, a static constant type
+description containing or pointing to such a table, along with
+information used by the runtime support library for initialization,
+copying, finalization, and I/O of type instances).  Each overridable
+type-bound procedure in the type corresponds to an index into this table.
+
 ### Host association linkage
 
 Calls to dummy procedures and procedure pointers that resolve to
@@ -322,9 +340,9 @@ represent a procedure pointer.
 It also needs to be conveyed alongside the text address for a
 dummy procedure.
 
-For subprograms that can be called with an implicit interface,
-we cannot use a "procedure pointer descriptor" to represent a
-a dummy procedure -- a Fortran '77 routine
+For procedures that can be called with an implicit interface,
+we cannot use a "procedure pointer descriptor" to pass them an
+a procedure argument -- a Fortran '77 routine
 with an `EXTERNAL` dummy argument expects to receive a single
 address argument.  Instead, when passing an actual procedure
 to a procedure that can be called with an implicit interface,
@@ -339,21 +357,63 @@ to their construction and a reclamation obligation;
 NAG Fortran manages a static fixed-sized stack of trampolines
 per call site, imposing a hidden limit on recursion and foregoing
 reentrancy;
-PGI uses descriptors, but loses the host link when
-passing the dummy procedure code address over an implicit interface,
-leading to crashes when they turn out to be needed.
+PGI passes host variable links in descriptors in additional arguments
+that are not always successfully forwarded across implicit interfaces,
+sometimes leading to crashes when they turn out to be needed.
 
-F18 will use both descriptors and a pool of trampolines in its runtime support library,
-and use the trampolines only for calls to routines that need to support an
+F18 will use descriptors in most cases to pass procedures as arguments,
+but also maintain a pool of trampolines in its runtime support library
+to implement calls to routines that need to support an
 implicit interface.
 
-## Further topics to document
 
-### Target resolution
-* polymorphic bindings
-* procedure pointers
-* dummy procedures
-* generic resolution
+### Naming
+
+External subroutines and functions (R503) and `ENTRY` points (R1541)
+with `BIND(C)` (R808) have linker-visible names that are either explicitly
+specified in the program or determined by straightforward rules.
+The names of other external procedures that might be called via an
+implicit interface should respect the conventions of the target architecture
+for legacy Fortran '77 programs.
+
+In other cases, however, we have no constraints on external naming
+(other than extreme length and maybe good taste), and some additional
+requirements.
+
+Module procedures need to be distinguished by the name of their module
+and (when they have one) the submodule where their interface was
+defined.
+Note that submodule names are distinct in their modules, not hierarchical,
+so at most two levels of qualification are needed.
+
+Pure `ELEMENTAL` functions (15.8) must use distinct names for any alternate
+entry points used for packed SIMD arguments of various widths if we support
+calls to these functions in SIMD parallel contexts.
+There are already conventions for these names in `libpgmath`.
+
+We may choose to distinguish the names of external procedures that cannot
+be called via an implicit interface as a means for catching attempts
+to do so and causing them to fail with link errors.
+
+We may also choose to distinguish both of these classes of names with
+extra characters that make it impossible to link with code compiled
+by other Fortran compilers or other incompatible versions of F18.
+
+Last, there must be reasonably permanent naming conventions used
+by the F18 runtime library for those unrestricted specific intrinsic
+functions (table 16.2 in 16.8) and extensions that can be passed as
+arguments.
+
+I suggest that in these cases where external naming is at the discretion
+of the implementation, we use names that are not in the C language
+user namespace, begin with something that identifies
+the current incompatible version of F18, the module, the submodule, and
+elemental SIMD width, and are followed by the external name.
+The parts of the external name can be separated by some character that
+is acceptable for use in LLVM IR and assembly language but not in user
+Fortran or C code, or by switching case (e.g., `__f18a_moduleSUBMODULEentry`).
+
+## Further topics to document
 
 ### Arguments
 * Alternate return specifiers
@@ -362,14 +422,6 @@ implicit interface.
 * Check definability of known `INTENT(OUT)` and `INTENT(IN OUT)` actuals.
 * Whether lower bounds in argument descriptors should be
   initialized (they shouldn't be used)
-
-### Naming
-* Modules and submodules
-* Procedures that can be called with implicit interfaces
-* Procedures that must be called with explicit interfaces (possibly
-  with versioning)
-* SIMD vs. scalar versions of `ELEMENTAL` procedures
-* Unrestricted specific intrinsic functions (and perhaps SIMD variants)
 
 ### Other
 * SIMD variants of `ELEMENTAL` procedures (& unrestricted specific intrinsics)
