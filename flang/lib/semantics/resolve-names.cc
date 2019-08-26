@@ -2353,7 +2353,7 @@ bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
     }
     // TODO: check that attrs are compatible with stmt func
     resultType = details->type();
-    EraseSymbol(name);
+    symbol->details() = UnknownDetails{};  // will be replaced below
   }
   if (badStmtFuncFound_) {
     Say(name, "'%s' has not been declared as an array"_err_en_US);
@@ -2372,7 +2372,7 @@ bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
     }
     details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
   }
-  EraseSymbol(name);  // added by PushSubprogramScope
+  EraseSymbol(symbol);  // added by PushSubprogramScope
   EntityDetails resultDetails;
   if (resultType) {
     resultDetails.set_type(*resultType);
