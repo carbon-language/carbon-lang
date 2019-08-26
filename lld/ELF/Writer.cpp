@@ -174,7 +174,7 @@ static void copySectionsIntoPartitions() {
                        newSections.end());
 }
 
-template <class ELFT> static void combineEhSections() {
+void elf::combineEhSections() {
   for (InputSectionBase *&s : inputSections) {
     // Ignore dead sections and the partition end marker (.part.end),
     // whose partition number is out of bounds.
@@ -183,7 +183,7 @@ template <class ELFT> static void combineEhSections() {
 
     Partition &part = s->getPartition();
     if (auto *es = dyn_cast<EhInputSection>(s)) {
-      part.ehFrame->addSection<ELFT>(es);
+      part.ehFrame->addSection(es);
       s = nullptr;
     } else if (s->kind() == SectionBase::Regular && part.armExidx &&
                part.armExidx->addSection(cast<InputSection>(s))) {
@@ -552,7 +552,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   // into synthetic sections. Do that now so that they aren't assigned to
   // output sections in the usual way.
   if (!config->relocatable)
-    combineEhSections<ELFT>();
+    combineEhSections();
 
   // We want to process linker script commands. When SECTIONS command
   // is given we let it create sections.
