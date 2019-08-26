@@ -1187,6 +1187,8 @@ void JITDylib::notifyFailed(const SymbolFlagsMap &FailedSymbols) {
   AsynchronousSymbolQuerySet FailedQueries;
 
   ES.runSessionLocked([&]() {
+    std::vector<const SymbolStringPtr *> MaterializerNamesToFail;
+
     for (auto &KV : FailedSymbols) {
       auto &Name = KV.first;
 
@@ -1207,6 +1209,7 @@ void JITDylib::notifyFailed(const SymbolFlagsMap &FailedSymbols) {
         continue;
 
       auto &MI = MII->second;
+      MaterializerNamesToFail.push_back(&KV.first);
 
       // Move all dependants to the error state and disconnect from them.
       for (auto &KV : MI.Dependants) {
@@ -1261,9 +1264,9 @@ void JITDylib::notifyFailed(const SymbolFlagsMap &FailedSymbols) {
       Q->detach();
 
     // Remove the MaterializingInfos.
-    for (auto &KV : FailedSymbols) {
-      assert(MaterializingInfos.count(KV.first) && "Expected MI for Name");
-      MaterializingInfos.erase(KV.first);
+    while (!MaterializerNamesToFail.empty()) {
+      MaterializingInfos.erase(*MaterializerNamesToFail.back());
+      MaterializerNamesToFail.pop_back();
     }
   });
 

@@ -718,6 +718,35 @@ TEST_F(CoreAPIsStandardTest, AddDependencyOnFailedSymbol) {
       << "Lookup on failed symbol should fail";
 }
 
+TEST_F(CoreAPIsStandardTest, FailMaterializerWithUnqueriedSymbols) {
+  // Make sure that symbols with no queries aganist them still
+  // fail correctly.
+
+  bool MaterializerRun = false;
+  auto MU = std::make_unique<SimpleMaterializationUnit>(
+      SymbolFlagsMap(
+          {{Foo, JITSymbolFlags::Exported}, {Bar, JITSymbolFlags::Exported}}),
+      [&](MaterializationResponsibility R) {
+        MaterializerRun = true;
+        R.failMaterialization();
+      });
+
+  cantFail(JD.define(std::move(MU)));
+
+  // Issue a query for Foo, but not bar.
+  EXPECT_THAT_EXPECTED(ES.lookup({&JD}, {Foo}), Failed())
+      << "Expected lookup to fail.";
+
+  // Check that the materializer (and therefore failMaterialization) ran.
+  EXPECT_TRUE(MaterializerRun) << "Expected materializer to have run by now";
+
+  // Check that subsequent queries against both symbols fail.
+  EXPECT_THAT_EXPECTED(ES.lookup({&JD}, {Foo}), Failed())
+      << "Expected lookup for Foo to fail.";
+  EXPECT_THAT_EXPECTED(ES.lookup({&JD}, {Bar}), Failed())
+      << "Expected lookup for Bar to fail.";
+}
+
 TEST_F(CoreAPIsStandardTest, DropMaterializerWhenEmpty) {
   bool DestructorRun = false;
 
