@@ -55,10 +55,15 @@ enjoy more thorough checking
 by semantics when they do have a visible external interface, but must be
 compiled as if all calls to them were through the implicit interface.
 
+Internal and module procedures that are ever passed as arguments &/or
+used as targets of procedure pointers are also potentially at risk of
+being called through internal interfaces.
+
 Procedures that can be called via an implicit interface should respect
-the naming conventions and ABI, if any, used for Fortran '77 programs
+the naming conventions (when not internal or module) and legacy ABI (if any)
+used for Fortran '77 programs
 on the target architecture, so that portable libraries can be compiled
-and used by distinct implementations (and versions of implementations)
+and used by distinct implementations (and their versions)
 of Fortran.
 
 Note that functions with implicit interfaces still have known result
@@ -67,10 +72,12 @@ They can also be `CHARACTER(*)` assumed-length character functions.
 
 In other words: procedures that can be referenced with implicit interfaces
 have argument lists that comprise only addresses of actual arguments,
-the length of an assumed-length `CHARACTER(*)` result, and links to
-of host variable blocks for dummy procedures (see below), and they can
+ad the length of an assumed-length `CHARACTER(*)` result, and they can
 return only scalar values of intrinsic types.
-None of their arguments or results are implemented with descriptors.
+None of their arguments or results need be (or can be) implemented
+with descriptors,
+and any internal procedures passed to them as arguments must be
+addresses of trampolines.
 
 Note that `INTENT` and `CONTIGUOUS` attributes do not, by themselves,
 require the use of explicit interface; neither do dummy procedures.
@@ -97,6 +104,11 @@ some design alternatives that are explored further below.
    coarrays, and non-`POINTER` actual arguments (that are`TARGET`
    or procedures) associated with `INTENT(IN) POINTER`
    dummy arrays (15.5.2.7, C.10.4).
+1. When passing internal procedures, procedure pointers, or dummy
+   procedure descriptors as arguments to target procedures
+   that can be called via implicit interfaces, package them as
+   trampolines; pass or forward other possible internal procedures
+   as descriptors containing host variable links.
 1. Possibly allocate function result storage,
    when its size can be known by all callers; function results that are
    neither `POINTER` nor `ALLOCATABLE` must have explicit shapes (C816).
@@ -108,9 +120,11 @@ some design alternatives that are explored further below.
    for calls that pass internal procedures as arguments).
 1. Resolve the target procedure's polymorphic binding, if any.
 1. Marshal actual argument addresses/values into registers.
-1. Marshal extra arguments for assumed-length `CHARACTER` result length,
-   function result descriptor, target host variable link, &/or dummy
-   procedure host variable links
+1. Marshal an extra argument for the assumed-length `CHARACTER` result
+   length or the function result descriptor.
+1. Set the host variable link register when calling an internal procedure
+   from its host or another internal procedure, a procedure pointer,
+   or dummy procedure (when it has a descriptor).
 1. Jump.
 
 ### On entry:
@@ -290,6 +304,9 @@ actual argument or associated with a procedure pointer.
 This is similar to a static link in implementations of programming
 languages with nested subprograms, although Fortran only allows
 one level of nesting.
+The 64-bit x86 and little-endian OpenPower ABIs reserve registers
+for this purpose (`%r10` & `R11`); 64-bit ARM has a reserved register
+that can be used (`x18`).
 
 The host subprogram objects that are visible to any of their internal
 subprograms need to be resident in memory across any calls to them
@@ -302,17 +319,33 @@ identify all of these escaping objects and their definable subset.
 The address of the host subprogram storage used to hold the escaping
 objects needs to be saved alongside the code address(es) that
 represent a procedure pointer.
-It also needs to be conveyed alongside the actual argument for a
+It also needs to be conveyed alongside the text address for a
 dummy procedure.
 
 For subprograms that can be called with an implicit interface,
-we cannot use a "procedure pointer descriptor" to represent an
-actual argument for a dummy procedure -- a Fortran '77 routine
+we cannot use a "procedure pointer descriptor" to represent a
+a dummy procedure -- a Fortran '77 routine
 with an `EXTERNAL` dummy argument expects to receive a single
-address.  Instead, when passing an actual procedure on a call
+address argument.  Instead, when passing an actual procedure
 to a procedure that can be called with an implicit interface,
-we will need to use additional arguments to convey the host
-storage link addresses.
+we will need to package the host link in a trampoline.
+
+GNU Fortran and Intel Fortran construct trampolines by writing
+a sequence of machine instructions to a block of storage in the
+host's stack frame, which requires the stack to be executable,
+which seems inadvisable for security reasons;
+XLF manages trampolines in its runtime support library, which adds some overhead
+to their construction and a reclamation obligation;
+NAG Fortran manages a static fixed-sized stack of trampolines
+per call site, imposing a hidden limit on recursion and foregoing
+reentrancy;
+PGI uses descriptors, but loses the host link when
+passing the dummy procedure code address over an implicit interface,
+leading to crashes when they turn out to be needed.
+
+F18 will use both descriptors and a pool of trampolines in its runtime support library,
+and use the trampolines only for calls to routines that need to support an
+implicit interface.
 
 ## Further topics to document
 
