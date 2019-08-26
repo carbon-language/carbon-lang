@@ -409,6 +409,7 @@ private:
   ///
   /// Contains relocations against .got.plt.
   ErrorOr<BinarySection &> RelaPLTSection{std::errc::bad_address};
+  ErrorOr<BinarySection &> RelaDynSection{std::errc::bad_address};
 
   /// .note.gnu.build-id section.
   ErrorOr<BinarySection &> BuildIDSection{std::errc::bad_address};

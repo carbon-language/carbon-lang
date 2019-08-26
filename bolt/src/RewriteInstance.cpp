@@ -1351,8 +1351,9 @@ void RewriteInstance::discoverFileObjects() {
     std::string UniqueName;
     std::string AlternativeName;
     if (Name.empty()) {
-      if (PLTSection && PLTSection->getAddress() == Address) {
-        // Don't register BOLT_PLT_PSEUDO twice.
+      // Symbols that will be registered by disassemblePLT()
+      if ((PLTSection && PLTSection->getAddress() == Address) ||
+          (PLTGOTSection && PLTGOTSection->getAddress() == Address)) {
         continue;
       }
       UniqueName = "ANONYMOUS." + std::to_string(AnonymousId++);
@@ -1660,88 +1661,92 @@ void RewriteInstance::discoverFileObjects() {
 }
 
 void RewriteInstance::disassemblePLT() {
-  if (!PLTSection)
-    return;
+  // Used to analyze both the .plt section (most common) and the less common
+  // .plt.got created by the BFD linker.
+  auto analyzeOnePLTSection = [&](BinarySection &Section,
+                                  BinarySection *RelocsSection,
+                                  uint64_t RelocType, uint64_t EntrySize) {
+    const auto PLTAddress = Section.getAddress();
+    StringRef PLTContents = Section.getContents();
+    ArrayRef<uint8_t> PLTData(
+        reinterpret_cast<const uint8_t *>(PLTContents.data()),
+        Section.getSize());
 
-  const auto PLTAddress = PLTSection->getAddress();
-  StringRef PLTContents = PLTSection->getContents();
-  ArrayRef<uint8_t> PLTData(
-      reinterpret_cast<const uint8_t *>(PLTContents.data()),
-      PLTSection->getSize());
+    for (uint64_t Offset = 0; Offset < Section.getSize();
+         Offset += EntrySize) {
+      uint64_t InstrSize;
+      MCInst Instruction;
+      const uint64_t InstrAddr = PLTAddress + Offset;
+      if (!BC->DisAsm->getInstruction(Instruction, InstrSize,
+                                      PLTData.slice(Offset), InstrAddr, nulls(),
+                                      nulls())) {
+        errs() << "BOLT-ERROR: unable to disassemble instruction in PLT "
+                  "section "
+               << Section.getName() << " at offset 0x"
+               << Twine::utohexstr(Offset) << '\n';
+        exit(1);
+      }
 
-  // Pseudo function for the start of PLT. The table could have a matching
-  // FDE that we want to match to pseudo function.
-  BC->createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection, PLTAddress, 0,
-                           false, PLTSize, PLTAlignment);
-  for (uint64_t Offset = 0; Offset < PLTSection->getSize(); Offset += PLTSize) {
-    uint64_t InstrSize;
-    MCInst Instruction;
-    const uint64_t InstrAddr = PLTAddress + Offset;
-    if (!BC->DisAsm->getInstruction(Instruction,
-                                    InstrSize,
-                                    PLTData.slice(Offset),
-                                    InstrAddr,
-                                    nulls(),
-                                    nulls())) {
-      errs() << "BOLT-ERROR: unable to disassemble instruction in .plt "
-             << "at offset 0x" << Twine::utohexstr(Offset) << '\n';
-      exit(1);
-    }
+      if (!BC->MIB->isIndirectBranch(Instruction))
+        continue;
 
-    if (!BC->MIB->isIndirectBranch(Instruction))
-      continue;
+      uint64_t TargetAddress;
+      if (!BC->MIB->evaluateMemOperandTarget(Instruction, TargetAddress,
+                                             InstrAddr, InstrSize)) {
+        errs() << "BOLT-ERROR: error evaluating PLT instruction at offset 0x"
+               << Twine::utohexstr(InstrAddr) << '\n';
+        exit(1);
+      }
 
-    uint64_t TargetAddress;
-    if (!BC->MIB->evaluateMemOperandTarget(Instruction,
-                                           TargetAddress,
-                                           InstrAddr,
-                                           InstrSize)) {
-      errs() << "BOLT-ERROR: error evaluating PLT instruction at offset 0x"
-             << Twine::utohexstr(InstrAddr) << '\n';
-      exit(1);
-    }
-
-    // To get the name we have to read a relocation against the address.
-    if (RelaPLTSection) {
-      for (const auto &Rel : RelaPLTSection->getSectionRef().relocations()) {
-        if (Rel.getType() != ELF::R_X86_64_JUMP_SLOT)
-          continue;
-        if (Rel.getOffset() == TargetAddress) {
-          const auto SymbolIter = Rel.getSymbol();
-          assert(SymbolIter != InputFile->symbol_end() &&
-                 "non-null symbol expected");
-          const auto SymbolName = cantFail((*SymbolIter).getName());
-          std::string Name = SymbolName.str() + "@PLT";
-          const auto PtrSize = BC->AsmInfo->getCodePointerSize();
-          auto *BF = BC->createBinaryFunction(Name,
-                                              *PLTSection,
-                                              InstrAddr,
-                                              0,
-                                              /*IsSimple=*/false,
-                                              PLTSize,
-                                              PLTAlignment);
-          auto TargetSymbol =
-            BC->registerNameAtAddress(SymbolName.str() + "@GOT",
-                                      TargetAddress,
-                                      PtrSize,
-                                      PLTAlignment);
-          BF->setPLTSymbol(TargetSymbol);
-          break;
+      // To get the name we have to read a relocation against the address.
+      if (RelocsSection) {
+        for (const auto &Rel : RelocsSection->getSectionRef().relocations()) {
+          if (Rel.getType() != RelocType)
+            continue;
+          if (Rel.getOffset() == TargetAddress) {
+            const auto SymbolIter = Rel.getSymbol();
+            assert(SymbolIter != InputFile->symbol_end() &&
+                   "non-null symbol expected");
+            const auto SymbolName = cantFail((*SymbolIter).getName());
+            std::string Name = SymbolName.str() + "@PLT";
+            const auto PtrSize = BC->AsmInfo->getCodePointerSize();
+            auto *BF = BC->createBinaryFunction(Name, Section, InstrAddr, 0,
+                                                /*IsSimple=*/false, EntrySize,
+                                                PLTAlignment);
+            auto TargetSymbol =
+                BC->registerNameAtAddress(SymbolName.str() + "@GOT",
+                                          TargetAddress, PtrSize, PLTAlignment);
+            BF->setPLTSymbol(TargetSymbol);
+            break;
+          }
         }
       }
     }
+  };
+
+  if (PLTSection) {
+    // Pseudo function for the start of PLT. The table could have a matching
+    // FDE that we want to match to pseudo function.
+    BC->createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection,
+                             PLTSection->getAddress(), 0, false, PLTSize,
+                             PLTAlignment);
+    analyzeOnePLTSection(*PLTSection,
+                         RelaPLTSection ? &*RelaPLTSection : nullptr,
+                         ELF::R_X86_64_JUMP_SLOT, PLTSize);
   }
 
   if (PLTGOTSection) {
-    // Check if we need to create a function for .plt.got. Some linkers
-    // (depending on the version) would mark it with FDE while others wouldn't.
-    if (!BC->getBinaryFunctionAtAddress(PLTGOTSection->getAddress())) {
-      BC->createBinaryFunction("__BOLT_PLT_GOT_PSEUDO",
-                               *PLTGOTSection,
-                               PLTGOTSection->getAddress(),
-                               0,
-                               false,
-                               PLTAlignment);
+    analyzeOnePLTSection(*PLTGOTSection,
+                         RelaDynSection ? &*RelaDynSection : nullptr,
+                         ELF::R_X86_64_GLOB_DAT,
+                         /*Size=*/8);
+    // If we did not register any function at PLTGOT start, we may be missing
+    // relocs. Add a function at the start to mark this section.
+    if (BC->getBinaryFunctions().find(PLTGOTSection->getAddress()) ==
+        BC->getBinaryFunctions().end()) {
+      BC->createBinaryFunction("__BOLT_PLTGOT_PSEUDO", *PLTGOTSection,
+                               PLTGOTSection->getAddress(), 0, false,
+                               /*Size*/ 8, PLTAlignment);
     }
   }
 }
@@ -1763,7 +1768,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
       static bool PrintedWarning = false;
       if (BC->HasRelocations && !PrintedWarning) {
         errs() << "BOLT-WARNING: split function detected on input : "
-               << *FragName <<". The support is limited in relocation mode.\n";
+               << *FragName << ". The support is limited in relocation mode.\n";
         PrintedWarning = true;
       }
       Function.IsFragment = true;
@@ -1810,8 +1815,8 @@ void RewriteInstance::adjustFunctionBoundaries() {
     }
     // Or till the next function not marked by a symbol.
     if (NextFunction) {
-      NextObjectAddress = std::min(NextFunction->getAddress(),
-                                   NextObjectAddress);
+      NextObjectAddress =
+          std::min(NextFunction->getAddress(), NextObjectAddress);
     }
 
     const auto MaxSize = NextObjectAddress - Function.getAddress();
@@ -1827,8 +1832,8 @@ void RewriteInstance::adjustFunctionBoundaries() {
       // Some assembly functions have their size set to 0, use the max
       // size as their real size.
       if (opts::Verbosity >= 1) {
-        outs() << "BOLT-INFO: setting size of function " << Function
-               << " to " << Function.getMaxSize() << " (was 0)\n";
+        outs() << "BOLT-INFO: setting size of function " << Function << " to "
+               << Function.getMaxSize() << " (was 0)\n";
       }
       Function.setSize(Function.getMaxSize());
     }
@@ -1935,6 +1940,7 @@ void RewriteInstance::readSpecialSections() {
   GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
   PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
   RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
+  RelaDynSection = BC->getUniqueSectionByName(".rela.dyn");
   BuildIDSection = BC->getUniqueSectionByName(".note.gnu.build-id");
   SDTSection = BC->getUniqueSectionByName(".note.stapsdt");
 
