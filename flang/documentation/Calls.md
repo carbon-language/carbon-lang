@@ -52,7 +52,9 @@ not a `SEQUENCE` type (7.5.2.3).
 A procedure that requires an explicit interface must, in a strict
 reading of the standard (15.4.2.2, and see 7.4.4.2(5) for assumed-length
 `CHARACTER(*)`) have that interface available when the procedure is
-passed as an actual argument.
+passed as an actual argument (but see 15.5.2.9(2), which explicitly
+allows an assumed-length `CHARACTER(*)` function to be passed as an actual
+argument to an explicit-length dummy).
 
 ### Implicit interfaces
 
@@ -126,10 +128,10 @@ some design alternatives that are explored further below.
    for calls that pass internal procedures as arguments).
 1. Resolve the target procedure's polymorphic binding, if any.
 1. Marshal actual argument addresses/values into registers.
-1. Marshal an extra argument for the assumed-length `CHARACTER` result
-   length or the function result descriptor.
-1. Set the host variable link register when calling an internal procedure
-   from its host or another internal procedure, a procedure pointer,
+1. Marshal an extra argument for the `CHARACTER` result
+   length (assumed or explicit) or the function result descriptor.
+1. Set the "host instance" (static link) register when calling an internal
+   procedure from its host or another internal procedure, a procedure pointer,
    or dummy procedure (when it has a descriptor).
 1. Jump.
 
@@ -332,8 +334,10 @@ but can't be returned in registers.
 This allows a function result to be written directly into a local
 variable or temporary when it is safe to treat the variable as if
 it were an additional `INTENT(OUT)` argument.
-(Storage for assumed-length `CHARACTER(*)` results is always
-allocated by the caller.)
+(Storage for `CHARACTER` results, assumed or explicit, is always
+allocated by the caller, and the length is always passed so that
+an assumed-length external function will work when called in an
+explicit-length context (15.5.2.9 (2)).)
 
 
 ### Copying temporary storage back into actual argument designators
@@ -362,7 +366,7 @@ type-bound procedures.
 The resolution of calls to overridable type-bound procedures of
 polymorphic types must be completed at execution (generic resolution
 of type-bound procedure bindings from actual argument types, kinds,
-and ranks is always a compilation-time task (C.10.6)).
+and ranks is always a compilation-time task (15.5.6, C.10.6)).
 
 Each derived type that declares or inherits any overridable
 type-bound procedure bindings must correspond to a static constant
@@ -372,11 +376,11 @@ information used by the runtime support library for initialization,
 copying, finalization, and I/O of type instances).  Each overridable
 type-bound procedure in the type corresponds to an index into this table.
 
-### Host association linkage
+### Host instance linkage
 
 Calls to dummy procedures and procedure pointers that resolve to
-internal procedures need to pass an additional argument that
-addresses on block of storage in the stack frame of the their
+internal procedures need to pass an additional "host instance" argument that
+addresses a block of storage in the stack frame of the their
 host subprogram that was active at the time they were passed as an
 actual argument or associated with a procedure pointer.
 This is similar to a static link in implementations of programming
@@ -406,7 +410,8 @@ a procedure argument -- a Fortran '77 routine
 with an `EXTERNAL` dummy argument expects to receive a single
 address argument.  Instead, when passing an actual procedure
 to a procedure that can be called with an implicit interface,
-we will need to package the host link in a trampoline.
+we will need to package the host instance link in a trampoline
+that loads its address into the designated register.
 
 GNU Fortran and Intel Fortran construct trampolines by writing
 a sequence of machine instructions to a block of storage in the
@@ -417,7 +422,7 @@ to their construction and a reclamation obligation;
 NAG Fortran manages a static fixed-sized stack of trampolines
 per call site, imposing a hidden limit on recursion and foregoing
 reentrancy;
-PGI passes host variable links in descriptors in additional arguments
+PGI passes host instance links in descriptors in additional arguments
 that are not always successfully forwarded across implicit interfaces,
 sometimes leading to crashes when they turn out to be needed.
 
@@ -456,7 +461,7 @@ There are already conventions for these names in `libpgmath`.
 It would be great to have the option of distinguishing the names of
 external procedures that cannot be called via an implicit interface
 as a means for catching attempts to do so and causing them to fail with
-link errors.
+link-time errors.
 But this turns out to not be possible due to the possibility of passing
 an `EXTERNAL` procedure without an interface as an argument to
 another procedure with an implicit interface.
@@ -481,6 +486,75 @@ In particular, the period (`.`) seems safe to use as a separator character,
 so a `Fa.` prefix can serve to isolate these discretionary names from
 other uses and to identify the earliest link-compatible version.
 For examples: `Fa.mod.foo`, `Fa.mod.submod.foo`.
+
+## Summary of checks to be enforced in semantics analysis
+
+15.5.1 procedure references:
+* C1533 (can't pass non-intrinsic `ELEMENTAL` as argument)
+* C1536 alternate return labels must be in the inclusive scope
+* C1537 coindexed argument cannot have a `POINTER` ultimate component
+
+15.5.2.4 requirements for non-`POINTER` non-`ALLOCATABLE` dummies:
+* (2) dummy must be monomorphic for coindexed polymorphic actual
+* (2) dummy must be polymorphic for assumed-size polymorphic actual
+* (2) dummy cannot be `TYPE(*)` if actual is PDT or has TBPs or `FINAL`
+* (4) character length of actual cannot be less than dummy
+* (6) coindexed actual with `ALLOCATABLE` ultimate component requires
+      `INTENT(IN)` &/or `VALUE` dummy
+* (13) a coindexed scalar actual requires a scalar dummy
+* (14) a non-conindexed scalar usually requires a scalar dummy, with some exceptions
+* (15-17) array rank agreement
+* (20) `INTENT(OUT)` & `INTENT(IN OUT)` dummies require definable actuals
+* (21) array sections with vector subscripts can't be passed to definable dummies
+       (`INTENT(OUT)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, `VOLATILE`)
+* (22) `VOLATILE` attributes must match when dummy has a coarray ultimate component
+* C1538 - C1540: checks for `ASYNCHRONOUS` and `VOLATILE`
+
+15.5.2.5 requirements for `ALLOCATABLE` & `POINTER` arguments when both
+the dummy and actual arguments have the same attributes:
+* (2) both or neither can be polymorphic
+* (2) both are unlimited polymorphic or both have the same declared type
+* (3) rank compatibility
+* (4) actual argument must have deferred the same type parameters as the dummy
+
+15.5.2.6 `ALLOCATABLE` dummy arguments:
+* (2) actual must be `ALLOCATABLE`
+* (3) corank must match
+* (4) coindexed actual requires `INTENT(IN)` dummy
+* (7) `INTENT(OUT)` & `INTENT(IN OUT)` dummies require definable actuals
+
+15.5.2.7 `POINTER` dummy arguments:
+* C1541: `CONTIGUOUS` dummy requires simply contiguous actual
+* C1542: actual argument cannot be coindexed unless procedure is intrinsic
+* (2) actual argument must be `POINTER` unless dummy is `INTENT(IN)` and
+  actual could be the right-hand side of a pointer assignment statement
+
+15.5.2.8 corray dummy arguments:
+* (1) actual argument must be coarray
+* (1) `VOLATILE` attributes must match
+* (2) `CONTIGUOUS` dummy (or implicitly contiguous non-assumed-shape array) requires simply contiguous actual
+
+15.5.2.9 dummy procedures:
+* (1) explicit dummy procedure interface must have same characteristics as actual
+* (5) dummy procedure `POINTER` requirements on actual arguments
+
+15.6.2.1 procedure definitions:
+* `NON_RECURSIVE` procedures cannot recurse.
+* Functions with assumed type parameter values cannot invoke themselves recursively.
+
+`PURE` requirements (15.7): C1583 - C1599.
+These also apply to `ELEMENTAL` procedures that are not `IMPURE`.
+
+`ELEMENTAL` requirements (15.8.1): C15100-C15103,
+and C1533 (can't pass as actual argument unless intrinsic)
+
+For interoperable procedures and interfaces (18.3.6):
+* C1552 - C1559
+* function result is scalar and of interoperable type (C1553, 18.3.1-3)
+* `VALUE` arguments are scalar and of interoperable type
+* `POINTER` dummies cannot be `CONTIGUOUS` (18.3.6 paragraph 2(5))
+* assumed-type dummies cannot be `ALLOCATABLE`, `POINTER`, assumed-shape, or assumed-rank (18.3.6 paragraph 2 (5))
+* `CHARACTER` dummies that are `ALLOCATABLE` or `POINTER` must be deferred-length
 
 ## Further topics to document
 
