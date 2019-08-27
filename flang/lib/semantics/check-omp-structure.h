@@ -190,6 +190,15 @@ private:
       const parser::CharBlock &, const OmpDirectiveSet &);
   void CheckAllowed(OmpClause);
   std::string ContextDirectiveAsFortran();
+  void SayNotMatching(const parser::CharBlock &, const parser::CharBlock &);
+  template<typename A, typename B>
+  void CheckMatching(const A &begin, const B &end) {
+    static_assert(
+        std::is_same_v<A, B>, "unmatched Begin and End directive types");
+    if (begin.v != end.v) {
+      SayNotMatching(begin.source, end.source);
+    }
+  }
 
   // specific clause related
   bool ScheduleModifierHasType(const parser::OmpScheduleClause &,

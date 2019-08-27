@@ -105,6 +105,12 @@
   enddo
   !$omp end parallel
 
+  !$omp parallel
+  do i = 1, N
+  enddo
+  !ERROR: Unmatched END TARGET directive
+  !$omp end target
+
 ! 2.7.1  do-clause -> private-clause |
 !                     firstprivate-clause |
 !                     lastprivate-clause |
@@ -160,6 +166,17 @@
      enddo
   enddo
 
+  !$omp parallel do simd
+  do i = 1, N
+  enddo
+  !$omp end parallel do simd
+
+  !$omp parallel do
+  do i = 1, N
+  enddo
+  !ERROR: Unmatched END SIMD directive
+  !$omp end simd
+
 ! 2.7.2 sections-clause -> private-clause |
 !                         firstprivate-clause |
 !                         lastprivate-clause |
@@ -172,6 +189,14 @@
   !$omp section
   b = 1
   !$omp end sections nowait
+  !$omp end parallel
+
+  !$omp parallel
+  !$omp sections
+  !$omp section
+  a = 0.0
+  !ERROR: Unmatched END PARALLEL SECTIONS directive
+  !$omp end parallel sections
   !$omp end parallel
 
   !$omp parallel

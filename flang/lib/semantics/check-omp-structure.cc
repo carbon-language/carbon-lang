@@ -32,6 +32,14 @@ std::string OmpStructureChecker::ContextDirectiveAsFortran() {
   return dir;
 }
 
+void OmpStructureChecker::SayNotMatching(
+    const parser::CharBlock &beginSource, const parser::CharBlock &endSource) {
+  context_
+      .Say(endSource, "Unmatched %s directive"_err_en_US,
+          parser::ToUpperCaseLetters(endSource.ToString()))
+      .Attach(beginSource, "Potential matching directive"_en_US);
+}
+
 bool OmpStructureChecker::HasInvalidWorksharingNesting(
     const parser::CharBlock &source, const OmpDirectiveSet &set) {
   // set contains all the invalid closely nested directives
@@ -72,6 +80,14 @@ void OmpStructureChecker::Enter(const parser::OpenMPConstruct &) {
 void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
   const auto &beginLoopDir{std::get<parser::OmpBeginLoopDirective>(x.t)};
   const auto &beginDir{std::get<parser::OmpLoopDirective>(beginLoopDir.t)};
+
+  // check matching, End directive is optional
+  if (const auto &endLoopDir{
+          std::get<std::optional<parser::OmpEndLoopDirective>>(x.t)}) {
+    const auto &endDir{std::get<parser::OmpLoopDirective>(endLoopDir->t)};
+    CheckMatching(beginDir, endDir);
+  }
+
   switch (beginDir.v) {
   // 2.7.1 do-clause -> private-clause |
   //                    firstprivate-clause |
@@ -191,6 +207,12 @@ void OmpStructureChecker::Enter(const parser::OmpEndLoopDirective &x) {
 void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
   const auto &beginBlockDir{std::get<parser::OmpBeginBlockDirective>(x.t)};
   const auto &beginDir{std::get<parser::OmpBlockDirective>(beginBlockDir.t)};
+
+  // check matching
+  const auto &endBlockDir{std::get<parser::OmpEndBlockDirective>(x.t)};
+  const auto &endDir{std::get<parser::OmpBlockDirective>(endBlockDir.t)};
+  CheckMatching(beginDir, endDir);
+
   switch (beginDir.v) {
   // 2.5 parallel-clause -> if-clause |
   //                        num-threads-clause |
@@ -237,6 +259,12 @@ void OmpStructureChecker::Enter(const parser::OpenMPSectionsConstruct &x) {
       std::get<parser::OmpBeginSectionsDirective>(x.t)};
   const auto &beginDir{
       std::get<parser::OmpSectionsDirective>(beginSectionsDir.t)};
+
+  // check matching
+  const auto &endSectionsDir{std::get<parser::OmpEndSectionsDirective>(x.t)};
+  const auto &endDir{std::get<parser::OmpSectionsDirective>(endSectionsDir.t)};
+  CheckMatching(beginDir, endDir);
+
   switch (beginDir.v) {
   // 2.7.2 sections-clause -> private-clause |
   //                          firstprivate-clause |
