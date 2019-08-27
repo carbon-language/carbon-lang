@@ -277,7 +277,14 @@ void OmpStructureChecker::Enter(const parser::OpenMPSectionsConstruct &x) {
     SetContextAllowed(allowed);
   } break;
   case parser::OmpSectionsDirective::Directive::ParallelSections: {
-    // TODO
+    PushContext(beginDir.source, OmpDirective::PARALLEL_SECTIONS);
+    OmpClauseSet allowed{OmpClause::DEFAULT, OmpClause::PRIVATE,
+        OmpClause::FIRSTPRIVATE, OmpClause::LASTPRIVATE, OmpClause::SHARED,
+        OmpClause::COPYIN, OmpClause::REDUCTION};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{
+        OmpClause::IF, OmpClause::NUM_THREADS, OmpClause::PROC_BIND};
+    SetContextAllowedOnce(allowedOnce);
   } break;
   }
 }

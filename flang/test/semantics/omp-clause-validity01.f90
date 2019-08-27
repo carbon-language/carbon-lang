@@ -210,6 +210,28 @@
   !$omp end sections num_threads(4)
   !$omp end parallel
 
+! 2.11.2 parallel-sections-clause -> parallel-clause |
+!                                    sections-clause
+
+  !$omp parallel sections num_threads(4) private(b) lastprivate(d)
+  a = 0.0
+  !$omp section
+  b = 1
+  c = 2
+  !$omp section
+  d = 3
+  !$omp end parallel sections
+
+  !ERROR: At most one NUM_THREADS clause can appear on the PARALLEL SECTIONS directive
+  !$omp parallel sections num_threads(1) num_threads(4)
+  a = 0.0
+  !ERROR: Unmatched END SECTIONS directive
+  !$omp end sections
+
+  !$omp parallel sections
+  !ERROR: NOWAIT clause is not allowed on the END PARALLEL SECTIONS directive
+  !$omp end parallel sections nowait
+
 ! 2.7.3 single-clause -> private-clause |
 !                        firstprivate-clause
 !   end-single-clause -> copyprivate-clause |
