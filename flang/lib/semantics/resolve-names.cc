@@ -5723,7 +5723,7 @@ void ResolveNamesVisitor::SetPassArg(
   const auto *subprogram{interface->detailsIf<SubprogramDetails>()};
   if (!subprogram) {
     Say(name, "Procedure component '%s' has invalid interface '%s'"_err_en_US,
-        interface->name());
+        name, interface->name());
     return;
   }
   std::optional<SourceName> passName{details.passName()};

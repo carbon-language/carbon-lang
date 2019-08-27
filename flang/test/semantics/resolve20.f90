@@ -63,6 +63,14 @@ module m
   !ERROR: PARAMETER attribute not allowed on 'bar'
   parameter(bar=2)
 
+  type, abstract :: t1
+    integer :: i
+  contains
+    !ERROR: 'proc' must be an abstract interface or a procedure with an explicit interface
+    !ERROR: Procedure component 'p1' has invalid interface 'proc'
+    procedure(proc), deferred :: p1
+  end type t1
+
 contains
   subroutine bar
   end subroutine
