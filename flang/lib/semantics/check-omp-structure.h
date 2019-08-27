@@ -191,13 +191,14 @@ private:
   void CheckAllowed(OmpClause);
   std::string ContextDirectiveAsFortran();
   void SayNotMatching(const parser::CharBlock &, const parser::CharBlock &);
-  template<typename A, typename B>
-  void CheckMatching(const A &begin, const B &end) {
-    static_assert(
-        std::is_same_v<A, B>, "unmatched Begin and End directive types");
+  template<typename A, typename B, typename C>
+  const A &CheckMatching(const B &beginDir, const C &endDir) {
+    const A &begin{std::get<A>(beginDir.t)};
+    const A &end{std::get<A>(endDir.t)};
     if (begin.v != end.v) {
       SayNotMatching(begin.source, end.source);
     }
+    return begin;
   }
 
   // specific clause related
