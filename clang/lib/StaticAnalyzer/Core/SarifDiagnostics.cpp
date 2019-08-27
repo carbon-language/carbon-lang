@@ -143,11 +143,17 @@ static json::Object createFileLocation(const FileEntry &FE,
 }
 
 static json::Object createTextRegion(SourceRange R, const SourceManager &SM) {
-  return json::Object{
+  json::Object Region{
       {"startLine", SM.getExpansionLineNumber(R.getBegin())},
-      {"endLine", SM.getExpansionLineNumber(R.getEnd())},
       {"startColumn", SM.getExpansionColumnNumber(R.getBegin())},
-      {"endColumn", SM.getExpansionColumnNumber(R.getEnd())}};
+  };
+  if (R.getBegin() == R.getEnd()) {
+    Region["endColumn"] = SM.getExpansionColumnNumber(R.getBegin());
+  } else {
+    Region["endLine"] = SM.getExpansionLineNumber(R.getEnd());
+    Region["endColumn"] = SM.getExpansionColumnNumber(R.getEnd()) + 1;
+  }
+  return Region;
 }
 
 static json::Object createPhysicalLocation(SourceRange R, const FileEntry &FE,

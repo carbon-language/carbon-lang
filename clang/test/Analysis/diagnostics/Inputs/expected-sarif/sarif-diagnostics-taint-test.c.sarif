@@ -44,7 +44,7 @@
                             "fileIndex": 0,
                           },
                           "region": {
-                            "endColumn": 5,
+                            "endColumn": 6,
                             "endLine": 13,
                             "startColumn": 3,
                             "startLine": 13
@@ -63,7 +63,7 @@
                             "fileIndex": 0,
                           },
                           "region": {
-                            "endColumn": 17,
+                            "endColumn": 18,
                             "endLine": 9,
                             "startColumn": 11,
                             "startLine": 9
@@ -83,7 +83,7 @@
                   "fileIndex": 0,
                 },
                 "region": {
-                  "endColumn": 17,
+                  "endColumn": 18,
                   "endLine": 9,
                   "startColumn": 11,
                   "startLine": 9
