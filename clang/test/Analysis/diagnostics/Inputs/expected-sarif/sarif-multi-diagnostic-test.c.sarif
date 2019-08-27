@@ -6,7 +6,7 @@
         {
           "fileLocation": {
           },
-          "length": 686,
+          "length": 951,
           "mimeType": "text/plain",
           "roles": [
             "resultFile"
@@ -43,6 +43,16 @@
             "name": {
               "text": "core.DivideZero"
             }
+          },
+          {
+            "fullDescription": {
+              "text": "Check for memory leaks, double free, and use-after-free problems. Traces memory managed by malloc()/free()."
+            },
+            "helpUri": "https://clang-analyzer.llvm.org/available_checks.html#unix.Malloc",
+            "id": "unix.Malloc",
+            "name": {
+              "text": "unix.Malloc"
+            }
           }
         ]
       },
@@ -65,9 +75,9 @@
                           },
                           "region": {
                             "endColumn": 6,
-                            "endLine": 24,
+                            "endLine": 34,
                             "startColumn": 3,
-                            "startLine": 24
+                            "startLine": 34
                           }
                         }
                       }
@@ -84,9 +94,9 @@
                           },
                           "region": {
                             "endColumn": 18,
-                            "endLine": 9,
+                            "endLine": 11,
                             "startColumn": 11,
-                            "startLine": 9
+                            "startLine": 11
                           }
                         }
                       }
@@ -104,9 +114,9 @@
                 },
                 "region": {
                   "endColumn": 18,
-                  "endLine": 9,
+                  "endLine": 11,
                   "startColumn": 11,
-                  "startLine": 9
+                  "startLine": 11
                 }
               }
             }
@@ -135,9 +145,9 @@
                           },
                           "region": {
                             "endColumn": 6,
-                            "endLine": 25,
+                            "endLine": 35,
                             "startColumn": 3,
-                            "startLine": 25
+                            "startLine": 35
                           }
                         }
                       }
@@ -154,9 +164,9 @@
                           },
                           "region": {
                             "endColumn": 11,
-                            "endLine": 13,
+                            "endLine": 15,
                             "startColumn": 3,
-                            "startLine": 13
+                            "startLine": 15
                           }
                         }
                       }
@@ -173,9 +183,9 @@
                           },
                           "region": {
                             "endColumn": 9,
-                            "endLine": 14,
+                            "endLine": 16,
                             "startColumn": 3,
-                            "startLine": 14
+                            "startLine": 16
                           }
                         }
                       }
@@ -193,9 +203,9 @@
                 },
                 "region": {
                   "endColumn": 9,
-                  "endLine": 14,
+                  "endLine": 16,
                   "startColumn": 3,
-                  "startLine": 14
+                  "startLine": 16
                 }
               }
             }
@@ -224,9 +234,9 @@
                           },
                           "region": {
                             "endColumn": 13,
-                            "endLine": 18,
+                            "endLine": 20,
                             "startColumn": 7,
-                            "startLine": 18
+                            "startLine": 20
                           }
                         }
                       }
@@ -244,7 +254,7 @@
                           "region": {
                             "endColumn": 3,
                             "startColumn": 3,
-                            "startLine": 18
+                            "startLine": 20
                           }
                         }
                       }
@@ -262,7 +272,7 @@
                           "region": {
                             "endColumn": 14,
                             "startColumn": 14,
-                            "startLine": 19
+                            "startLine": 21
                           }
                         }
                       }
@@ -281,7 +291,7 @@
                 "region": {
                   "endColumn": 14,
                   "startColumn": 14,
-                  "startLine": 19
+                  "startLine": 21
                 }
               }
             }
@@ -291,6 +301,111 @@
           },
           "ruleId": "core.DivideZero",
           "ruleIndex": 2
+        },
+        {
+          "codeFlows": [
+            {
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "importance": "essential",
+                      "location": {
+                        "message": {
+                          "text": "Memory is allocated"
+                        },
+                        "physicalLocation": {
+                          "fileLocation": {
+                            "fileIndex": 0,
+                          },
+                          "region": {
+                            "endColumn": 24,
+                            "endLine": 26,
+                            "startColumn": 15,
+                            "startLine": 26
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "importance": "important",
+                      "location": {
+                        "message": {
+                          "text": "Assuming 'i' is < 4"
+                        },
+                        "physicalLocation": {
+                          "fileLocation": {
+                            "fileIndex": 0,
+                          },
+                          "region": {
+                            "endColumn": 12,
+                            "endLine": 27,
+                            "startColumn": 7,
+                            "startLine": 27
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "importance": "unimportant",
+                      "location": {
+                        "message": {
+                          "text": "Taking true branch"
+                        },
+                        "physicalLocation": {
+                          "fileLocation": {
+                            "fileIndex": 0,
+                          },
+                          "region": {
+                            "endColumn": 3,
+                            "startColumn": 3,
+                            "startLine": 27
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "importance": "essential",
+                      "location": {
+                        "message": {
+                          "text": "Potential leak of memory pointed to by 'mem'"
+                        },
+                        "physicalLocation": {
+                          "fileLocation": {
+                            "fileIndex": 0,
+                          },
+                          "region": {
+                            "endColumn": 12,
+                            "startColumn": 12,
+                            "startLine": 28
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "locations": [
+            {
+              "physicalLocation": {
+                "fileLocation": {
+                  "fileIndex": 0,
+                },
+                "region": {
+                  "endColumn": 12,
+                  "startColumn": 12,
+                  "startLine": 28
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Potential leak of memory pointed to by 'mem'"
+          },
+          "ruleId": "unix.Malloc",
+          "ruleIndex": 3
         }
       ],
       "tool": {

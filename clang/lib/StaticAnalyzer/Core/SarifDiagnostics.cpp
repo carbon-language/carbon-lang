@@ -219,9 +219,10 @@ static json::Object createThreadFlow(const PathPieces &Pieces,
   for (const auto &Piece : Pieces) {
     const PathDiagnosticLocation &P = Piece->getLocation();
     Locations.push_back(createThreadFlowLocation(
-        createLocation(createPhysicalLocation(P.asRange(),
-                                              *P.asLocation().getFileEntry(),
-                                              SMgr, Files),
+        createLocation(createPhysicalLocation(
+                           P.asRange(),
+                           *P.asLocation().getExpansionLoc().getFileEntry(),
+                           SMgr, Files),
                        Piece->getString()),
         calculateImportance(*Piece)));
   }
@@ -255,7 +256,8 @@ static json::Object createResult(const PathDiagnostic &Diag, json::Array &Files,
       {"locations",
        json::Array{createLocation(createPhysicalLocation(
            Diag.getLocation().asRange(),
-           *Diag.getLocation().asLocation().getFileEntry(), SMgr, Files))}},
+           *Diag.getLocation().asLocation().getExpansionLoc().getFileEntry(),
+           SMgr, Files))}},
       {"ruleIndex", Iter->getValue()},
       {"ruleId", Diag.getCheckName()}};
 }
