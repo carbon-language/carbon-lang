@@ -3,7 +3,7 @@
 // RUN: ld.lld %t -o %t2
 // RUN: llvm-mc %s -o %t.o -filetype=obj -triple=armv7a-linux-gnueabi
 // RUN: llvm-objdump -s %t2 | FileCheck %s
-// RUN: ld.lld --hash-style=sysv %t --shared -o %t3.so
+// RUN: ld.lld %t --shared -o %t3.so
 // RUN: llvm-objdump -s %t3.so | FileCheck -check-prefix=CHECK-SHARED %s
 
 // For an executable, we write the module index 1 and the offset into the TLS
@@ -68,5 +68,5 @@ x4:
 // CHECK-NEXT:  12018 01000000 08000000 01000000 0c000000
 
 // CHECK-SHARED: Contents of section .got:
-// CHECK-SHARED-NEXT:  2050 00000000 00000000 00000000 04000000
-// CHECK-SHARED-NEXT:  2060 00000000 00000000 00000000 00000000
+// CHECK-SHARED-NEXT:  2058 00000000 00000000 00000000 04000000
+// CHECK-SHARED-NEXT:  2068 00000000 00000000 00000000 00000000

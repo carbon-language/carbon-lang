@@ -1,7 +1,7 @@
 // REQUIRES: arm
 
 // RUN: llvm-mc -filetype=obj -triple=armv7a-none-linux-gnueabi %p/Inputs/arm-shared.s -o %t.so.o
-// RUN: ld.lld -shared %t.so.o -o %t.so
+// RUN: ld.lld -shared %t.so.o -soname=t.so -o %t.so
 
 // RUN: llvm-mc -filetype=obj -triple=armv7a-none-linux-gnueabi %s -o %t.o
 // RUN: ld.lld -pie --pack-dyn-relocs=relr %t.o %t.so -o %t.exe

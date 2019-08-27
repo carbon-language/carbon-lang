@@ -33,8 +33,8 @@ foo4:   .space 4
 // CHECK: Disassembly of section .text:
 // CHECK-EMPTY:
 // CHECK-NEXT: _start:
-// CHECK-NEXT:    11000:        1e ff 2f e1     bx      lr
-// CHECK:         11004:        00 00 00 00     .word   0x00000000
-// CHECK-NEXT:    11008:        04 00 00 00     .word   0x00000004
-// CHECK-NEXT:    1100c:        08 00 00 00     .word   0x00000008
-// CHECK-NEXT:    11010:        0c 00 00 00     .word   0x0000000c
+// CHECK-NEXT:    1e ff 2f e1     bx      lr
+// CHECK:         00 00 00 00     .word   0x00000000
+// CHECK-NEXT:    04 00 00 00     .word   0x00000004
+// CHECK-NEXT:    08 00 00 00     .word   0x00000008
+// CHECK-NEXT:    0c 00 00 00     .word   0x0000000c

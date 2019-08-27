@@ -29,7 +29,6 @@ _start:
 
 // CHECK: Disassembly of section .text:
 // CHECK-EMPTY:
-// 69636 = 0x11004
 // CHECK:         11000: {{.*}} b       #-4 <_start+0x4>
 // CHECK-NEXT:    11004: {{.*}} bl      #-4 <_start+0x8>
 // blx is transformed into bl so we don't change state
@@ -37,4 +36,3 @@ _start:
 // CHECK-NEXT:    1100c: {{.*}} movt    r0, #0
 // CHECK-NEXT:    11010: {{.*}} movw    r0, #0
 // CHECK:         11014: {{.*}} .word   0x00000000
-

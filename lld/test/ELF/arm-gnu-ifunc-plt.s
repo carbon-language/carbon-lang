@@ -1,6 +1,6 @@
 // REQUIRES: arm
 // RUN: llvm-mc -filetype=obj -triple=armv7a-linux-gnueabihf %S/Inputs/arm-shared.s -o %t1.o
-// RUN: ld.lld %t1.o --shared -o %t.so
+// RUN: ld.lld %t1.o --shared -soname=t.so -o %t.so
 // RUN: llvm-mc -filetype=obj -triple=armv7a-linux-gnueabihf %s -o %t.o
 // RUN: ld.lld --hash-style=sysv %t.so %t.o -o %tout
 // RUN: llvm-objdump -triple=armv7a-linux-gnueabihf -d --no-show-raw-insn %tout | FileCheck %s --check-prefix=DISASM

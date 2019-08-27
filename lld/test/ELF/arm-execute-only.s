@@ -4,9 +4,6 @@
 // RUN: ld.lld %t.o -o %t.so -shared
 // RUN: llvm-readelf -l %t.so | FileCheck --implicit-check-not=LOAD %s
 
-// RUN: ld.lld %t.o %t.o -o %t.so -shared
-// RUN: llvm-readelf -l %t.so | FileCheck --implicit-check-not=LOAD %s
-
 // RUN: echo ".section .foo,\"ax\"; \
 // RUN:       bx lr" > %t.s
 // RUN: llvm-mc -filetype=obj -triple=armv7-pc-linux %t.s -o %t2.o
