@@ -6,3 +6,6 @@ double _Imaginary foo; // ext-warning {{'_Imaginary' is a C99 extension}} \
                        // expected-error {{imaginary types are not supported}}
 double _Complex bar; // ext-warning {{'_Complex' is a C99 extension}}
 
+#if !defined(__cplusplus)
+_Bool baz; // ext-warning {{'_Bool' is a C99 extension}}
+#endif
