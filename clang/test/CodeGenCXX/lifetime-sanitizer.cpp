@@ -24,28 +24,31 @@ struct Y {
 
 extern "C" void a(), b(), c(), d();
 
-// CHECK-LABEL: @_Z3foo
+// CHECK: define dso_local void @_Z3fooi(i32 %[[N:[^)]+]])
 void foo(int n) {
+  // CHECK: store i32 %[[N]], i32* %[[NADDR:[^,]+]]
   // CHECK-LABEL: call void @a()
   a();
 
   // CHECK-LABEL: call void @b()
+  // CHECK: [[NARG:%[^ ]+]] = load i32, i32* %[[NADDR]]
+  // CHECK: [[BOOL:%[^ ]+]] = icmp ne i32 [[NARG]], 0
   // CHECK: store i1 false
-  // CHECK-LABEL: br i1
+  // CHECK: br i1 [[BOOL]], label %[[ONTRUE:[^,]+]], label %[[ONFALSE:[^,]+]]
   //
-  // CHECK-LABEL: cond.true:
+  // CHECK: [[ONTRUE]]:
   // LIFETIME: @llvm.lifetime.start
   // LIFETIME: store i1 true
   // LIFETIME: call void @_ZN1XC
-  // CHECK-LABEL: br label
+  // CHECK: br label %[[END:[^,]+]]
   //
-  // CHECK-LABEL: cond.false:
+  // CHECK: [[ONFALSE]]:
   // LIFETIME: @llvm.lifetime.start
   // LIFETIME: store i1 true
   // LIFETIME: call void @_ZN1YC
-  // CHECK-LABEL: br label
+  // CHECK: br label %[[END]]
   //
-  // CHECK-LABEL: cond.end:
+  // CHECK: [[END]]:
   // CHECK: call void @c()
   // LIFETIME: @llvm.lifetime.end
   // LIFETIME: @llvm.lifetime.end
