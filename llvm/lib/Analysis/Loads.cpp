@@ -64,9 +64,9 @@ static bool isDereferenceableAndAlignedPointer(
                         V->getPointerDereferenceableBytes(DL, CheckForNonNull));
   if (KnownDerefBytes.getBoolValue() && KnownDerefBytes.uge(Size))
     if (!CheckForNonNull || isKnownNonZero(V, DL, 0, nullptr, CtxI, DT)) {
-      // FIXME: We need to pass through original size/offset when we recurse,
-      // the result here is wrong for cases such as a 4 byte load, 2 bytes
-      // off a 8 byte aligned base.
+      // As we recursed through GEPs to get here, we've incrementally checked
+      // that each step advanced by a multiple of the alignment. If our base is
+      // properly aligned, then the original offset accessed must also be.  
       Type *Ty = V->getType();
       assert(Ty->isSized() && "must be sized");
       APInt Offset(DL.getTypeStoreSizeInBits(Ty), 0);
