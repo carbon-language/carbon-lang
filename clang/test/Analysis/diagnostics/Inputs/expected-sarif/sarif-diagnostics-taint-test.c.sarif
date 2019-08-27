@@ -1,31 +1,18 @@
 {
-  "$schema": "http://json.schemastore.org/sarif-2.0.0-csd.2.beta.2018-11-28",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
   "runs": [
     {
-      "files": [
+      "artifacts": [
         {
-          "fileLocation": {
-          },
           "length": 434,
+          "location": {
+          },
           "mimeType": "text/plain",
           "roles": [
             "resultFile"
           ]
         }
       ],
-      "resources": {
-        "rules": [
-          {
-            "fullDescription": {
-              "text": "Mark tainted symbols as such."
-            },
-            "id": "debug.TaintTest",
-            "name": {
-              "text": "debug.TaintTest"
-            }
-          }
-        ]
-      },      
       "results": [
         {
           "codeFlows": [
@@ -40,8 +27,8 @@
                           "text": "Calling 'f'"
                         },
                         "physicalLocation": {
-                          "fileLocation": {
-                            "fileIndex": 0,
+                          "artifactLocation": {
+                            "index": 0,
                           },
                           "region": {
                             "endColumn": 6,
@@ -59,8 +46,8 @@
                           "text": "tainted"
                         },
                         "physicalLocation": {
-                          "fileLocation": {
-                            "fileIndex": 0,
+                          "artifactLocation": {
+                            "index": 0,
                           },
                           "region": {
                             "endColumn": 18,
@@ -79,8 +66,8 @@
           "locations": [
             {
               "physicalLocation": {
-                "fileLocation": {
-                  "fileIndex": 0,
+                "artifactLocation": {
+                  "index": 0,
                 },
                 "region": {
                   "endColumn": 18,
@@ -99,9 +86,20 @@
         }
       ],
       "tool": {
-        "fullName": "clang static analyzer",
-        "language": "en-US",
-        "name": "clang",
+        "driver": {
+          "fullName": "clang static analyzer",
+          "language": "en-US",
+          "name": "clang",
+          "rules": [
+            {
+              "fullDescription": {
+                "text": "Mark tainted symbols as such."
+              },
+              "id": "debug.TaintTest",
+              "name": "debug.TaintTest"
+            }
+          ],
+        }
       }
     }
   ],
