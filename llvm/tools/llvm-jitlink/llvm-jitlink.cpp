@@ -627,9 +627,8 @@ int main(int argc, char *argv[]) {
     ExitOnErr(loadProcessSymbols(S));
   ExitOnErr(loadDylibs());
 
-  TimerGroup JITLinkTimers;
-  // ("llvm-jitlink timers",
-  //                            "timers for llvm-jitlink phases");
+  TimerGroup JITLinkTimers("llvm-jitlink timers",
+                           "timers for llvm-jitlink phases");
 
   {
     Timer LoadObjectsTimer(
