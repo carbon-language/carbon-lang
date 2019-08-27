@@ -551,7 +551,7 @@ $foo^#include "foo.inc"
             Test.llvm::Annotations::point("foo"));
   FileID Bar = SM.getFileID(findDecl(AST, "bar").getLocation());
   EXPECT_EQ(SM.getFileOffset(includeHashLoc(Bar, SM)),
-            Test.llvm::Annotations::point("foo"));
+            Test.llvm::Annotations::point("bar"));
 }
 
 } // namespace
