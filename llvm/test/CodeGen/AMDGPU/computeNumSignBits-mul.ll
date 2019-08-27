@@ -7,7 +7,7 @@ define i16 @num_sign_bits_mul_i48_0(i8 %X, i8 %Y, i8 %Z, i8 %W) {
 ; GFX9-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; GFX9-NEXT:    v_mul_i32_i24_sdwa v0, sext(v0), sext(v1) dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:BYTE_0
 ; GFX9-NEXT:    v_mul_i32_i24_sdwa v1, sext(v2), sext(v3) dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:BYTE_0
-; GFX9-NEXT:    v_mul_lo_u32 v0, v0, v1
+; GFX9-NEXT:    v_mul_i32_i24_e32 v0, v0, v1
 ; GFX9-NEXT:    s_setpc_b64 s[30:31]
   %A = sext i8 %X to i48
   %B = sext i8 %Y to i48
@@ -24,19 +24,10 @@ define i16 @num_sign_bits_mul_i48_1(i8 %X, i8 %Y, i8 %Z, i8 %W) {
 ; GFX9-LABEL: num_sign_bits_mul_i48_1:
 ; GFX9:       ; %bb.0:
 ; GFX9-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX9-NEXT:    v_bfe_i32 v1, v1, 0, 8
-; GFX9-NEXT:    v_bfe_i32 v0, v0, 0, 8
-; GFX9-NEXT:    v_mul_hi_i32_i24_e32 v4, v0, v1
-; GFX9-NEXT:    v_mul_i32_i24_e32 v0, v0, v1
-; GFX9-NEXT:    v_bfe_i32 v1, v3, 0, 8
-; GFX9-NEXT:    v_bfe_i32 v2, v2, 0, 8
-; GFX9-NEXT:    v_mul_hi_i32_i24_e32 v3, v2, v1
-; GFX9-NEXT:    v_mul_i32_i24_e32 v1, v2, v1
-; GFX9-NEXT:    v_mul_lo_u32 v2, v4, v1
-; GFX9-NEXT:    v_mul_lo_u32 v3, v0, v3
-; GFX9-NEXT:    v_mul_hi_u32 v4, v0, v1
-; GFX9-NEXT:    v_mul_lo_u32 v0, v0, v1
-; GFX9-NEXT:    v_add3_u32 v1, v4, v3, v2
+; GFX9-NEXT:    v_mul_i32_i24_sdwa v0, sext(v0), sext(v1) dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:BYTE_0
+; GFX9-NEXT:    v_mul_i32_i24_sdwa v2, sext(v2), sext(v3) dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:BYTE_0
+; GFX9-NEXT:    v_mul_hi_i32_i24_e32 v1, v0, v2
+; GFX9-NEXT:    v_mul_i32_i24_e32 v0, v0, v2
 ; GFX9-NEXT:    v_lshrrev_b64 v[0:1], 24, v[0:1]
 ; GFX9-NEXT:    s_setpc_b64 s[30:31]
   %A = sext i8 %X to i48
