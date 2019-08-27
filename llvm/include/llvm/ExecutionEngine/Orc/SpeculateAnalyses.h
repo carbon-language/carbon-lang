@@ -35,13 +35,6 @@ public:
   ResultTy operator()(Function &F, FunctionAnalysisManager &FAM);
 };
 
-// Walk the CFG by exploting BranchProbabilityInfo
-class CFGWalkQuery {
-public:
-  using ResultTy = Optional<DenseMap<StringRef, DenseSet<StringRef>>>;
-  ResultTy operator()(Function &F, FunctionAnalysisManager &FAM);
-};
-
 } // namespace orc
 } // namespace llvm
 
