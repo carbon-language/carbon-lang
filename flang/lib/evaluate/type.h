@@ -54,6 +54,7 @@ using common::TypeCategory;
 template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
+using CInteger = Type<TypeCategory::Integer, 4>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 

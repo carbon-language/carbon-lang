@@ -747,5 +747,12 @@ template<typename A> const semantics::Symbol *GetLastTarget(const A &x) {
 // Resolve any whole ASSOCIATE(B=>A) associations
 const semantics::Symbol &ResolveAssociations(const semantics::Symbol &);
 
+// Increment Integer expression
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> Increment(
+    Expr<Type<TypeCategory::Integer, KIND>> &&expr) {
+  using IntT = Type<TypeCategory::Integer, KIND>;
+  return Expr<IntT>{Add<IntT>{std::move(expr), Expr<IntT>{1}}};
+}
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_
