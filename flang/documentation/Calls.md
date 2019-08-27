@@ -49,6 +49,9 @@ not by themselves require the use of an explicit interface; we should perhaps em
 when the derived type of an actual argument to an implicit interface is
 not a `SEQUENCE` type (7.5.2.3).
 
+A procedure that can be called with an implicit interface can
+have a dummy procedure that requires an explicit interface.
+
 ### Implicit interfaces
 
 In the absence of any characteristic or context that requires an
@@ -63,7 +66,7 @@ compiled as if all calls to them were through the implicit interface.
 
 Internal and module subprograms that are ever passed as arguments &/or
 assigned as targets of procedure pointers are also potentially at risk of
-being called indirectly through internal interfaces.
+being called indirectly through implicit interfaces.
 
 Every procedure callable via an implicit interface
 can and must be distiguished at compilation time.
@@ -367,24 +370,26 @@ PGI passes host variable links in descriptors in additional arguments
 that are not always successfully forwarded across implicit interfaces,
 sometimes leading to crashes when they turn out to be needed.
 
-F18 will use descriptors in most cases to pass procedures as arguments,
-but also maintain a pool of trampolines in its runtime support library
-to implement calls to routines that need to support an
-implicit interface.
-
+F18 will manage a pool of trampolines in its runtime support library
+that can be used to pass internal procedures as actual arguments
+to targets that might be called with an implicit interface, so that
+a bare code address is used to represent the actual argument.
+But targets that can only be called with an explicit interface
+have the option of using a "fat pointer" (or additional argument)
+to represent a dummy procedure so as
+to avoid the overhead of constructing and reclaiming a trampoline.
 
 ### Naming
 
 External subroutines and functions (R503) and `ENTRY` points (R1541)
 with `BIND(C)` (R808) have linker-visible names that are either explicitly
 specified in the program or determined by straightforward rules.
-The names of other external procedures that might be called via an
-implicit interface should respect the conventions of the target architecture
+The names of other external procedures that might be called
+via an implicit interface should respect the conventions of the target architecture
 for legacy Fortran '77 programs; this is typically something like `foo_`.
 
-In other cases, however, we have no constraints on external naming
-(other than extreme length and maybe good taste), and some additional
-requirements and goals.
+In other cases, however, we have fewer constraints on external naming,
+as well as some additional requirements and goals.
 
 Module procedures need to be distinguished by the name of their module
 and (when they have one) the submodule where their interface was
@@ -397,13 +402,13 @@ entry points used for packed SIMD arguments of various widths if we support
 calls to these functions in SIMD parallel contexts.
 There are already conventions for these names in `libpgmath`.
 
-We may choose to distinguish the names of external procedures that cannot
-be called via an implicit interface as a means for catching attempts
-to do so and causing them to fail with link errors.
-
-We may also choose to distinguish both of these classes of names with
-extra characters that make it impossible to link with code compiled
-by other Fortran compilers or other incompatible versions of this one.
+It would be great to have the option of distinguishing the names of
+external procedures that cannot be called via an implicit interface
+as a means for catching attempts to do so and causing them to fail with
+link errors.
+But this turns out to not be possible due to the possibility of passing
+an `EXTERNAL` procedure without an interface as an argument to
+another procedure with an implicit interface.
 
 Last, there must be reasonably permanent naming conventions used
 by the F18 runtime library for those unrestricted specific intrinsic
@@ -424,7 +429,7 @@ with letters).
 In particular, the period (`.`) seems safe to use as a separator character,
 so a `Fa.` prefix can serve to isolate these discretionary names from
 other uses and to identify the earliest link-compatible version.
-For examples: `Fa.foo`, `Fa.mod.foo`, `Fa.mod.submod.foo`.
+For examples: `Fa.mod.foo`, `Fa.mod.submod.foo`.
 
 ## Further topics to document
 
