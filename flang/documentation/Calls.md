@@ -45,12 +45,14 @@ Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
 
 Note that non-parameterized monomorphic derived type arguments do
-not by themselves require the use of an explicit interface; we should perhaps emit a warning
+not by themselves require the use of an explicit interface; we could perhaps emit a warning
 when the derived type of an actual argument to an implicit interface is
 not a `SEQUENCE` type (7.5.2.3).
 
-A procedure that can be called with an implicit interface can
-have a dummy procedure that requires an explicit interface.
+A procedure that requires an explicit interface must, in a strict
+reading of the standard (15.4.2.2, and see 7.4.4.2(5) for assumed-length
+`CHARACTER(*)`) have that interface available when the procedure is
+passed as an actual argument.
 
 ### Implicit interfaces
 
@@ -90,7 +92,9 @@ and any internal procedures passed to them as arguments must be
 addresses of trampolines.
 
 Note that `INTENT` and `CONTIGUOUS` attributes do not, by themselves,
-require the use of explicit interface; neither do dummy procedures.
+require the use of explicit interface; neither does the use of dummy
+procedures (implicit or explicit in their interfaces).
+
 Analyses of calls to procedures with implicit interfaces must make
 allowances or impose restrictions capable of dealing with any of the
 invisible `INTENT` and `CONTIGUOUS` attributes of dummy arguments
@@ -109,16 +113,8 @@ some design alternatives that are explored further below.
 
 1. Compute &/or copy into temporary storage the values of
    some actual argument expressions and designators (see below).
-1. Create and populate descriptors for assumed-shape/-rank arrays,
-   parameterized derived types with length, polymorphic types,
-   coarrays, and non-`POINTER` actual arguments (that are`TARGET`
-   or procedures) associated with `INTENT(IN) POINTER`
-   dummy arrays (15.5.2.7, C.10.4).
-1. When passing internal procedures, procedure pointers, or dummy
-   procedure descriptors as arguments to target procedures
-   that can be called via implicit interfaces, package them as
-   trampolines; pass or forward other possible internal procedures
-   as descriptors containing host variable links.
+1. Create and populate descriptors for arguments that use them
+   (see below).
 1. Possibly allocate function result storage,
    when its size can be known by all callers; function results that are
    neither `POINTER` nor `ALLOCATABLE` must have explicit shapes (C816).
@@ -143,6 +139,9 @@ some design alternatives that are explored further below.
    by the caller (as I think it should be).
 1. Finalize &/or re-initialize `INTENT(OUT)` non-pointer
    actual arguments (see below).
+1. For interoperable procedures called from C: compact discontiguous
+   dummy argument values when necessary (`CONTIGUOUS` &/or
+   explicit-shape/assumed-size arrays of assumed-length `CHARACTER`).
 1. Optionally compact assumed-shape arguments for contiguity on one
    or more leading dimensions to improve SIMD vectorization, if not
    `TARGET` and not already sufficiently contiguous.
@@ -160,7 +159,7 @@ the subroutine's alternate return.
 1. Deallocate `VALUE` argument temporaries.
    (But don't finalize them; see 7.5.6.3(3)).
 1. Replace any assumed-shape argument data that were compacted on
-   entry for partial contiguity for SIMD vectorization, if possibly
+   entry for contiguity when the data were possibly
    modified across the call (never when `INTENT(IN)` or `VALUE`).
 1. Identify alternate `RETURN` to caller.
 1. Marshal results.
@@ -231,14 +230,29 @@ be copied into temporaries in the following situations.
    subject to being copied back to the original variable after
    the call* (see below).
 
+Fortran requires (18.3.6(5)) that interoperable procedure dummy
+arguments with `CONTIGUOUS` &/or assumed-length `CHARACTER`
+explicit-shape/assumed-size arrays handle the compaction of
+discontiguous data *in the callee*, at least when called from C.
+And discontiguous data must be compacted on the *caller's* side
+when passed from Fortran to C (18.3.6(6)).
+
+We could perform all argument compaction (discretionary or
+required) in the callee, but there are many cases where the
+compiler knows that the actual argument data are contiguous
+when compiling the caller (a temporary is needed for other reasons,
+or the actual argument is simply contiguous) and a run-time test for
+discontiguity in the callee can be avoided by using a caller-compaction
+convention when we have the freedom to choose.
+
 While we are unlikely to want to _needlessly_ use a temporary for
 an actual argument that does not require one for any of these
 reasons above, we are specifically disallowed from doing so
 by the standard in cases where pointers to the original target
 data are required to be valid across the call (15.5.2.4(9-10)).
-In particular, compaction of assumed-shape arrays for contiguity
-on the leading dimension to ease SIMD vectorization cannot be
-done safely for `TARGET` dummies.
+In particular, compaction of assumed-shape arrays for discretionary
+contiguity on the leading dimension to ease SIMD vectorization
+cannot be done safely for `TARGET` dummies.
 
 Actual arguments associated with known `INTENT(OUT)` dummies that
 require allocation of a temporary -- and this can only be for reasons of
@@ -284,6 +298,43 @@ done by the caller, there is an optimization opportunity
 in situations where unmodified incoming `INTENT(OUT)` dummy
 arguments are being passed onward as outgoing `INTENT(OUT)`
 arguments.
+
+### Arguments and function results requiring descriptors
+
+Dummy arguments are represented with the addresses of descriptors
+when they have any of the following characteristics:
+
+1. assumed-shape array (`DIMENSION(:)`)
+1. assumed-rank array (`DIMENSION(..)`)
+1. parameterized derived type with assumed `LEN` parameters
+1. assumed-length `CHARACTER(*)`
+1. polymorphic (`CLASS(T)`, `CLASS(*)`)
+1. assumed-type (`TYPE(*)`)
+1. coarray dummy argument
+1. `INTENT(IN) POINTER` argument (15.5.2.7, C.10.4)
+1. dummy procedure in a procedure that can only be
+   called via its explicit interface
+
+Function results are described by the caller & callee in
+a caller-supplied descriptor when they have any of the following
+characteristics, some which necessitate an explicit interface:
+
+1. deferred-shape array (so `ALLOCATABLE` or `POINTER`)
+1. derived type with any non-constant `LEN` parameter
+1. procedure pointer result (when the interface must be explicit)
+
+Storage for a function call's result is allocated by the caller when
+possible: the result is neither `ALLOCATABLE` nor `POINTER`,
+the shape is scalar or explicit, and the type has `LEN` parameters
+that are constant expressions.
+In other words, the result doesn't require the use of a descriptor
+but can't be returned in registers.
+This allows a function result to be written directly into a local
+variable or temporary when it is safe to treat the variable as if
+it were an additional `INTENT(OUT)` argument.
+(Storage for assumed-length `CHARACTER(*)` results is always
+allocated by the caller.)
+
 
 ### Copying temporary storage back into actual argument designators
 
