@@ -118,6 +118,12 @@ bool llvm::isDereferenceableAndAlignedPointer(const Value *V, unsigned Align,
                                               const DataLayout &DL,
                                               const Instruction *CtxI,
                                               const DominatorTree *DT) {
+  assert(Align != 0 && "expected explicitly set alignment");
+  // Note: At the moment, Size can be zero.  This ends up being interpreted as
+  // a query of whether [Base, V] is dereferenceable and V is aligned (since
+  // that's what the implementation happened to do).  It's unclear if this is
+  // the desired semantic, but at least SelectionDAG does exercise this case.  
+  
   SmallPtrSet<const Value *, 32> Visited;
   return ::isDereferenceableAndAlignedPointer(V, Align, Size, DL, CtxI, DT,
                                               Visited);
@@ -139,12 +145,11 @@ bool llvm::isDereferenceableAndAlignedPointer(const Value *V, Type *Ty,
 
   if (!Ty->isSized())
     return false;
-
-  SmallPtrSet<const Value *, 32> Visited;
-  return ::isDereferenceableAndAlignedPointer(
-      V, Align,
-      APInt(DL.getIndexTypeSizeInBits(V->getType()), DL.getTypeStoreSize(Ty)),
-      DL, CtxI, DT, Visited);
+  
+  APInt AccessSize(DL.getIndexTypeSizeInBits(V->getType()),
+                   DL.getTypeStoreSize(Ty));
+  return isDereferenceableAndAlignedPointer(V, Align, AccessSize,
+                                            DL, CtxI, DT);
 }
 
 bool llvm::isDereferenceablePointer(const Value *V, Type *Ty,
