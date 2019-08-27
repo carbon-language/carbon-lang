@@ -221,6 +221,11 @@
 // RUN: diff %t.empty %t.res.tgt1
 // RUN: diff %t.empty %t.res.tgt2
 
+// Check that we do not have to unbundle all available bundles from the fat binary.
+// RUN: clang-offload-bundler -type=ast -targets=host-%itanium_abi_triple,openmp-x86_64-pc-linux-gnu -outputs=%t.res.ast,%t.res.tgt2 -inputs=%t.bundle3.unordered.ast -unbundle
+// RUN: diff %t.ast %t.res.ast
+// RUN: diff %t.tgt2 %t.res.tgt2
+
 //
 // Check object bundle/unbundle. The content should be bundled into an ELF
 // section (we are using a PowerPC little-endian host which uses ELF). We

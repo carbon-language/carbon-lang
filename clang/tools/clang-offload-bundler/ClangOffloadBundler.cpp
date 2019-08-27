@@ -215,6 +215,7 @@ class BinaryFileHandler final : public FileHandler {
 
   /// Iterator for the bundle information that is being read.
   StringMap<BundleInfo>::iterator CurBundleInfo;
+  StringMap<BundleInfo>::iterator NextBundleInfo;
 
 public:
   BinaryFileHandler() : FileHandler() {}
@@ -284,19 +285,19 @@ public:
       BundlesInfo[Triple] = BundleInfo(Size, Offset);
     }
     // Set the iterator to where we will start to read.
-    CurBundleInfo = BundlesInfo.begin();
+    CurBundleInfo = BundlesInfo.end();
+    NextBundleInfo = BundlesInfo.begin();
   }
 
   StringRef ReadBundleStart(MemoryBuffer &Input) final {
-    if (CurBundleInfo == BundlesInfo.end())
+    if (NextBundleInfo == BundlesInfo.end())
       return StringRef();
-
+    CurBundleInfo = NextBundleInfo++;
     return CurBundleInfo->first();
   }
 
   void ReadBundleEnd(MemoryBuffer &Input) final {
     assert(CurBundleInfo != BundlesInfo.end() && "Invalid reader info!");
-    ++CurBundleInfo;
   }
 
   void ReadBundle(raw_fd_ostream &OS, MemoryBuffer &Input) final {
