@@ -137,6 +137,7 @@ private:
     OmpDirective directive;
     OmpClauseSet allowedClauses{};
     OmpClauseSet allowedOnceClauses{};
+    OmpClauseSet allowedExclusiveClauses{};
 
     const parser::OmpClause *clause{nullptr};
     std::multimap<OmpClause, const parser::OmpClause *> clauseInfo;
@@ -153,6 +154,7 @@ private:
     SetContextDirectiveSource(source);
     GetContext().allowedClauses = {};
     GetContext().allowedOnceClauses = {};
+    GetContext().allowedExclusiveClauses = {};
     GetContext().clauseInfo = {};
   }
   void SetContextDirectiveSource(const parser::CharBlock &directive) {
@@ -171,6 +173,9 @@ private:
   void SetContextAllowedOnce(const OmpClauseSet &allowedOnce) {
     GetContext().allowedOnceClauses = allowedOnce;
   }
+  void SetContextAllowedExclusive(const OmpClauseSet &allowedExclusive) {
+    GetContext().allowedExclusiveClauses = allowedExclusive;
+  }
   void SetContextClauseInfo(OmpClause type) {
     GetContext().clauseInfo.emplace(type, GetContext().clause);
   }
@@ -184,6 +189,11 @@ private:
   void PushContext(const parser::CharBlock &source, OmpDirective dir) {
     ompContext_.emplace_back(source, dir);
   }
+
+  void RequiresConstantPositiveParameter(
+      const OmpClause &clause, const parser::ScalarIntConstantExpr &i);
+  void RequiresPositiveParameter(
+      const OmpClause &clause, const parser::ScalarIntExpr &i);
 
   bool CurrentDirectiveIsNested() { return ompContext_.size() > 0; };
   bool HasInvalidWorksharingNesting(

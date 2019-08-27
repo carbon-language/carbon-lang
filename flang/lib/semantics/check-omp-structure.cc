@@ -56,21 +56,65 @@ bool OmpStructureChecker::HasInvalidWorksharingNesting(
 
 void OmpStructureChecker::CheckAllowed(OmpClause type) {
   if (!GetContext().allowedClauses.test(type) &&
-      !GetContext().allowedOnceClauses.test(type)) {
+      !GetContext().allowedOnceClauses.test(type) &&
+      !GetContext().allowedExclusiveClauses.test(type)) {
     context_.Say(GetContext().clauseSource,
         "%s clause is not allowed on the %s directive"_err_en_US,
         EnumToString(type),
         parser::ToUpperCaseLetters(GetContext().directiveSource.ToString()));
     return;
   }
-  if (GetContext().allowedOnceClauses.test(type) && FindClause(type)) {
+  if ((GetContext().allowedOnceClauses.test(type) ||
+          GetContext().allowedExclusiveClauses.test(type)) &&
+      FindClause(type)) {
     context_.Say(GetContext().clauseSource,
         "At most one %s clause can appear on the %s directive"_err_en_US,
         EnumToString(type),
         parser::ToUpperCaseLetters(GetContext().directiveSource.ToString()));
     return;
   }
+  if (GetContext().allowedExclusiveClauses.test(type)) {
+    std::vector<OmpClause> others;
+    GetContext().allowedExclusiveClauses.IterateOverMembers([&](OmpClause o) {
+      if (FindClause(o)) {
+        others.emplace_back(o);
+      }
+    });
+    for (const auto &e : others) {
+      context_.Say(GetContext().clauseSource,
+          "%s and %s are mutually exclusive and may not appear on the same %s directive"_err_en_US,
+          EnumToString(type), EnumToString(e),
+          parser::ToUpperCaseLetters(GetContext().directiveSource.ToString()));
+    }
+    if (!others.empty()) {
+      return;
+    }
+  }
   SetContextClauseInfo(type);
+}
+
+void OmpStructureChecker::RequiresConstantPositiveParameter(
+    const OmpClause &clause, const parser::ScalarIntConstantExpr &i) {
+  if (const auto v{GetIntValue(i)}) {
+    if (*v <= 0) {
+      context_.Say(GetContext().clauseSource,
+          "The parameter of the %s clause must be "
+          "a constant positive integer expression"_err_en_US,
+          EnumToString(clause));
+    }
+  }
+}
+
+void OmpStructureChecker::RequiresPositiveParameter(
+    const OmpClause &clause, const parser::ScalarIntExpr &i) {
+  if (const auto v{GetIntValue(i)}) {
+    if (*v <= 0) {
+      context_.Say(GetContext().clauseSource,
+          "The parameter of the %s clause must be "
+          "a positive integer expression"_err_en_US,
+          EnumToString(clause));
+    }
+  }
 }
 
 void OmpStructureChecker::Enter(const parser::OpenMPConstruct &) {
@@ -171,6 +215,33 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
         OmpClause::PROC_BIND, OmpClause::SCHEDULE, OmpClause::COLLAPSE,
         OmpClause::ORDERED, OmpClause::SAFELEN, OmpClause::SIMDLEN};
     SetContextAllowedOnce(allowedOnce);
+  } break;
+
+  // 2.9.2 taskloop-clause -> if-clause |
+  //                          shared-clause |
+  //                          private-clause |
+  //                          firstprivate-clause |
+  //                          lastprivate-clause |
+  //                          default-clause |
+  //                          grainsize-clause |
+  //                          num-tasks-clause |
+  //                          collapse-clause |
+  //                          final-clause |
+  //                          priority-clause |
+  //                          untied-clause |
+  //                          mergeable-clause |
+  //                          nogroup-clause
+  case parser::OmpLoopDirective::Directive::Taskloop: {
+    PushContext(beginDir.source, OmpDirective::TASKLOOP);
+    OmpClauseSet allowed{OmpClause::SHARED, OmpClause::PRIVATE,
+        OmpClause::FIRSTPRIVATE, OmpClause::LASTPRIVATE, OmpClause::DEFAULT,
+        OmpClause::UNTIED, OmpClause::MERGEABLE, OmpClause::NOGROUP};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::COLLAPSE, OmpClause::IF,
+        OmpClause::FINAL, OmpClause::PRIORITY};
+    SetContextAllowedOnce(allowedOnce);
+    OmpClauseSet allowedExclusive{OmpClause::GRAINSIZE, OmpClause::NUM_TASKS};
+    SetContextAllowedExclusive(allowedExclusive);
   } break;
 
   default:
@@ -550,13 +621,7 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Untied &) {
 void OmpStructureChecker::Enter(const parser::OmpClause::Collapse &x) {
   CheckAllowed(OmpClause::COLLAPSE);
   // collapse clause must have a parameter
-  if (const auto v{GetIntValue(x.v)}) {
-    if (*v <= 0) {
-      context_.Say(GetContext().clauseSource,
-          "The parameter of the COLLAPSE clause must be "
-          "a constant positive integer expression"_err_en_US);
-    }
-  }
+  RequiresConstantPositiveParameter(OmpClause::COLLAPSE, x.v);
 }
 
 void OmpStructureChecker::Enter(const parser::OmpClause::Copyin &) {
@@ -580,27 +645,23 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Firstprivate &) {
 void OmpStructureChecker::Enter(const parser::OmpClause::From &) {
   CheckAllowed(OmpClause::FROM);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Grainsize &) {
+void OmpStructureChecker::Enter(const parser::OmpClause::Grainsize &x) {
   CheckAllowed(OmpClause::GRAINSIZE);
+  RequiresPositiveParameter(OmpClause::GRAINSIZE, x.v);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Lastprivate &) {
   CheckAllowed(OmpClause::LASTPRIVATE);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::NumTasks &) {
+void OmpStructureChecker::Enter(const parser::OmpClause::NumTasks &x) {
   CheckAllowed(OmpClause::NUM_TASKS);
+  RequiresPositiveParameter(OmpClause::NUM_TASKS, x.v);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::NumTeams &) {
   CheckAllowed(OmpClause::NUM_TEAMS);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::NumThreads &x) {
   CheckAllowed(OmpClause::NUM_THREADS);
-  if (const auto v{GetIntValue(x.v)}) {
-    if (*v <= 0) {
-      context_.Say(GetContext().clauseSource,
-          "The parameter of the NUM_THREADS clause must be "
-          "a positive integer expression"_err_en_US);
-    }
-  }
+  RequiresPositiveParameter(OmpClause::NUM_THREADS, x.v);
   // if parameter is variable, defer to Expression Analysis
 }
 
@@ -608,13 +669,7 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Ordered &x) {
   CheckAllowed(OmpClause::ORDERED);
   // the parameter of ordered clause is optional
   if (const auto &expr{x.v}) {
-    if (const auto v{GetIntValue(expr)}) {
-      if (*v <= 0) {
-        context_.Say(GetContext().clauseSource,
-            "The parameter of the ORDERED clause must be "
-            "a constant positive integer expression"_err_en_US);
-      }
-    }
+    RequiresConstantPositiveParameter(OmpClause::ORDERED, *expr);
 
     // 2.8.3 Loop SIMD Construct Restriction
     if (doSimdSet.test(GetContext().directive)) {
@@ -633,28 +688,14 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Private &) {
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Safelen &x) {
   CheckAllowed(OmpClause::SAFELEN);
-
-  if (const auto v{GetIntValue(x.v)}) {
-    if (*v <= 0) {
-      context_.Say(GetContext().clauseSource,
-          "The parameter of the SAFELEN clause must be "
-          "a constant positive integer expression"_err_en_US);
-    }
-  }
+  RequiresConstantPositiveParameter(OmpClause::SAFELEN, x.v);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Shared &) {
   CheckAllowed(OmpClause::SHARED);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Simdlen &x) {
   CheckAllowed(OmpClause::SIMDLEN);
-
-  if (const auto v{GetIntValue(x.v)}) {
-    if (*v <= 0) {
-      context_.Say(GetContext().clauseSource,
-          "The parameter of the SIMDLEN clause must be "
-          "a constant positive integer expression"_err_en_US);
-    }
-  }
+  RequiresConstantPositiveParameter(OmpClause::SIMDLEN, x.v);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::ThreadLimit &) {
   CheckAllowed(OmpClause::THREAD_LIMIT);

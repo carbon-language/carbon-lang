@@ -337,6 +337,46 @@
      enddo
   enddo
 
+! 2.9.2 taskloop -> TASKLOOP [taskloop-clause[ [,] taskloop-clause]...]
+!       taskloop-clause -> if-clause |
+!                          shared-clause |
+!                          private-clause |
+!                          firstprivate-clause |
+!                          lastprivate-clause |
+!                          default-clause |
+!                          grainsize-clause |
+!                          num-tasks-clause |
+!                          collapse-clause |
+!                          final-clause |
+!                          priority-clause |
+!                          untied-clause |
+!                          mergeable-clause |
+!                          nogroup-clause
+
+  !$omp taskloop
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: SCHEDULE clause is not allowed on the TASKLOOP directive
+  !$omp taskloop schedule(static)
+  do i = 1, N
+     a = 3.14
+  enddo
+
+  !ERROR: GRAINSIZE and NUM_TASKS are mutually exclusive and may not appear on the same TASKLOOP directive
+  !$omp taskloop num_tasks(3) grainsize(2)
+  do i = 1,N
+     a = 3.14
+  enddo
+
+  !ERROR: At most one NUM_TASKS clause can appear on the TASKLOOP directive
+  !$omp taskloop num_tasks(3) num_tasks(2)
+  do i = 1,N
+    a = 3.14
+  enddo
+
+
 ! Standalone Directives (basic)
 
   !$omp taskyield
