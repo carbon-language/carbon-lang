@@ -4711,7 +4711,14 @@ const parser::Name *DeclarationVisitor::ResolveDataRef(
           [=](const Indirection<parser::StructureComponent> &y) {
             return ResolveStructureComponent(y.value());
           },
-          [=](const auto &y) { return ResolveDataRef(y.value().base); },
+          [&](const common::Indirection<parser::ArrayElement> &y) {
+            Walk(y.value().subscripts);
+            return ResolveDataRef(y.value().base);
+          },
+          [&](const common::Indirection<parser::CoindexedNamedObject> &y) {
+            Walk(y.value().imageSelector);
+            return ResolveDataRef(y.value().base);
+          },
       },
       x.u);
 }

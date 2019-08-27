@@ -45,3 +45,14 @@ program p3
   a(n:,n:) => b
   a(1:n,1:n) => b
 end
+
+! Test pointer assignment to array element
+program p4
+  type :: t
+    real, pointer :: a
+  end type
+  type(t) :: x(10)
+  integer :: i
+  real, target :: y
+  x(i)%a => y
+end program
