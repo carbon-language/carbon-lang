@@ -675,6 +675,15 @@ struct Attributor {
   void identifyDefaultAbstractAttributes(
       Function &F, DenseSet<const char *> *Whitelist = nullptr);
 
+  /// Record that \p I is deleted after information was manifested.
+  void deleteAfterManifest(Instruction &I) { ToBeDeletedInsts.insert(&I); }
+
+  /// Record that \p BB is deleted after information was manifested.
+  void deleteAfterManifest(BasicBlock &BB) { ToBeDeletedBlocks.insert(&BB); }
+
+  /// Record that \p F is deleted after information was manifested.
+  void deleteAfterManifest(Function &F) { ToBeDeletedFunctions.insert(&F); }
+
   /// Return true if \p AA (or its context instruction) is assumed dead.
   ///
   /// If \p LivenessAA is not provided it is queried.
@@ -765,6 +774,14 @@ private:
 
   /// The information cache that holds pre-processed (LLVM-IR) information.
   InformationCache &InfoCache;
+
+  /// Functions, blocks, and instructions we delete after manifest is done.
+  ///
+  ///{
+  SmallPtrSet<Function *, 8> ToBeDeletedFunctions;
+  SmallPtrSet<BasicBlock *, 8> ToBeDeletedBlocks;
+  SmallPtrSet<Instruction *, 8> ToBeDeletedInsts;
+  ///}
 };
 
 /// An interface to query the internal state of an abstract attribute.
