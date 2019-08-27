@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions %s -emit-llvm -o- | FileCheck %s
+// RUN: %clang_cc1 -triple=i686-pc-win32 -fms-extensions %s -emit-llvm -o- | FileCheck %s
 
 union A {
   int *&ref;
@@ -8,7 +8,7 @@ union A {
 int *f1(A *a) {
   return a->ref;
 }
-// CHECK-LABEL: define {{.*}}i32* @_Z2f1P1A(%union.A* %a)
+// CHECK-LABEL: define {{.*}}i32* @"?f1@@YAPAHPATA@@@Z"(%union.A* %a)
 // CHECK:       [[REF:%[^[:space:]]+]] = bitcast %union.A* %{{.*}} to i32***
 // CHECK:       [[IPP:%[^[:space:]]+]] = load i32**, i32*** [[REF]]
 // CHECK:       [[IP:%[^[:space:]]+]]  = load i32*, i32** [[IPP]]
@@ -17,7 +17,7 @@ int *f1(A *a) {
 void f2(A *a) {
   *a->ref = 1;
 }
-// CHECK-LABEL: define {{.*}}void @_Z2f2P1A(%union.A* %a)
+// CHECK-LABEL: define {{.*}}void @"?f2@@YAXPATA@@@Z"(%union.A* %a)
 // CHECK:       [[REF:%[^[:space:]]+]] = bitcast %union.A* %{{.*}} to i32***
 // CHECK:       [[IPP:%[^[:space:]]+]] = load i32**, i32*** [[REF]]
 // CHECK:       [[IP:%[^[:space:]]+]]  = load i32*, i32** [[IPP]]
@@ -26,7 +26,7 @@ void f2(A *a) {
 bool f3(A *a, int *b) {
   return a->ref != b;
 }
-// CHECK-LABEL: define {{.*}}i1 @_Z2f3P1APi(%union.A* %a, i32* %b)
+// CHECK-LABEL: define {{.*}}i1 @"?f3@@YA_NPATA@@PAH@Z"(%union.A* %a, i32* %b)
 // CHECK:       [[REF:%[^[:space:]]+]] = bitcast %union.A* %{{.*}} to i32***
 // CHECK:       [[IPP:%[^[:space:]]+]] = load i32**, i32*** [[REF]]
 // CHECK:       [[IP:%[^[:space:]]+]]  = load i32*, i32** [[IPP]]
