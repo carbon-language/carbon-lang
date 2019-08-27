@@ -20707,11 +20707,11 @@ bool DAGCombiner::parallelizeChainedStores(StoreSDNode *St) {
   SDValue TF = DAG.getTokenFactor(SDLoc(STChain), TFOps);
   CombineTo(St, TF);
 
-  AddToWorklist(STChain);
-  // Add TF operands worklist in reverse order.
-  for (auto I = TF->getNumOperands(); I;)
-    AddToWorklist(TF->getOperand(--I).getNode());
+  // Add TF and its operands to the worklist.
   AddToWorklist(TF.getNode());
+  for (const SDValue &Op : TF->ops())
+    AddToWorklist(Op.getNode());
+  AddToWorklist(STChain);
   return true;
 }
 
