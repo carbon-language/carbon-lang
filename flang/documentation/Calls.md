@@ -1,4 +1,4 @@
-<!--
+ <!--
 Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
@@ -45,9 +45,7 @@ Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
 
 Note that non-parameterized monomorphic derived type arguments do
-not by themselves require the use of an explicit interface; we could perhaps emit a warning
-when the derived type of an actual argument to an implicit interface is
-not a `SEQUENCE` type (7.5.2.3).
+not by themselves require the use of an explicit interface.
 
 A procedure that requires an explicit interface must, in a strict
 reading of the standard (15.4.2.2, and see 7.4.4.2(5) for assumed-length
@@ -85,8 +83,8 @@ types, possibly by means of implicit typing of their names.
 They can also be `CHARACTER(*)` assumed-length character functions.
 
 In other words: procedures that can be referenced with implicit interfaces
-have argument lists that comprise only addresses of actual arguments,
-and possibly the length of an assumed-length `CHARACTER(*)` result,
+have argument lists that comprise only addresses of actual arguments
+and the length of a `CHARACTER` function result (if any),
 and they can return only scalar values of intrinsic types.
 None of their arguments or results need be (or can be) implemented
 with descriptors,
@@ -213,7 +211,7 @@ be copied into temporaries in the following situations.
    side of the call, but there are optimization opportunities
    on the caller's side.
 1. In non-elemental calls, the values of array sections with
-   vector-valued subscripts need to be compacted into temporaries.
+   vector-valued subscripts need to be gathered into temporaries.
    These actual arguments are not definable, and they are not allowed to
    be associated with non-`VALUE` dummy arguments with the attributes
    `INTENT(IN)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, or `VOLATILE`
@@ -254,7 +252,7 @@ by the standard in cases where pointers to the original target
 data are required to be valid across the call (15.5.2.4(9-10)).
 In particular, compaction of assumed-shape arrays for discretionary
 contiguity on the leading dimension to ease SIMD vectorization
-cannot be done safely for `TARGET` dummies.
+cannot be done safely for `TARGET` dummies without `VALUE`.
 
 Actual arguments associated with known `INTENT(OUT)` dummies that
 require allocation of a temporary -- and this can only be for reasons of
@@ -339,6 +337,23 @@ allocated by the caller, and the length is always passed so that
 an assumed-length external function will work when called in an
 explicit-length context (15.5.2.9 (2)).)
 
+Note that the lower bounds of the dimensions of non-`POINTER`
+non-`ALLOCATABLE` dummy argument arrays are determined by the
+callee, not the caller.
+(A Fortran pitfall: declaring `A(0:9)`, passing it to a dummy
+array `D(:)`, and assuming that `LBOUND(D,1)` will be zero
+in the callee.)
+If the declaration of an assumed-shape dummy argument array
+contains an explicit lower bound expression (R819), its value
+needs to be computed by the callee;
+it may be captured and saved in the incoming descriptor
+as long as we assume that argument descriptors can be modified
+by callees.
+Callers should fill in all of the fields of outgoing
+non-`POINTER` non-`ALLOCATABLE` argument
+descriptors with the assumption that the callee will use 1 for
+lower bound values, and callees can rely on them being 1 if
+not modified.
 
 ### Copying temporary storage back into actual argument designators
 
@@ -432,8 +447,9 @@ to targets that might be called with an implicit interface, so that
 a bare code address is used to represent the actual argument.
 But targets that can only be called with an explicit interface
 have the option of using a "fat pointer" (or additional argument)
-to represent a dummy procedure so as
+to represent a dummy procedure closure so as
 to avoid the overhead of constructing and reclaiming a trampoline.
+Procedure descriptors can also support multiple code addresses.
 
 ### Naming
 
@@ -558,16 +574,8 @@ For interoperable procedures and interfaces (18.3.6):
 
 ## Further topics to document
 
-### Arguments
 * Alternate return specifiers
 * `%VAL()` and `%REF()`
 * Unrestricted specific intrinsic functions as actual arguments
-* Check definability of known `INTENT(OUT)` and `INTENT(IN OUT)` actuals.
-* Whether lower bounds in argument descriptors should be
-  initialized (they shouldn't be used)
-
-### Other
 * SIMD variants of `ELEMENTAL` procedures (& unrestricted specific intrinsics)
-* Interoperable procedures
-* Multiple code addresses for dummy procedures
-* Elemental calls with array arguments
+* Elemental subroutine calls with array arguments
