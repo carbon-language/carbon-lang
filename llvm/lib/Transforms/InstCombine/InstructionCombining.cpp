@@ -610,7 +610,6 @@ Value *InstCombiner::tryFactorization(BinaryOperator &I,
           HasNUW &= ROBO->hasNoUnsignedWrap();
         }
 
-        const APInt *CInt;
         if (TopLevelOpcode == Instruction::Add &&
             InnerOpcode == Instruction::Mul) {
           // We can propagate 'nsw' if we know that
@@ -620,6 +619,7 @@ Value *InstCombiner::tryFactorization(BinaryOperator &I,
           //  %Z = mul nsw i16 %X, C+1
           //
           // iff C+1 isn't INT_MIN
+          const APInt *CInt;
           if (match(V, m_APInt(CInt))) {
             if (!CInt->isMinSignedValue())
               BO->setHasNoSignedWrap(HasNSW);
