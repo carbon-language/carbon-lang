@@ -1361,7 +1361,7 @@ enum CXTranslationUnit_Flags {
   /**
    * Tells the preprocessor not to skip excluded conditional blocks.
    */
-  CXTranslationUnit_RetainExcludedConditionalBlocks = 0x8000,
+  CXTranslationUnit_RetainExcludedConditionalBlocks = 0x8000
 };
 
 /**
