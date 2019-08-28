@@ -32,9 +32,10 @@ functions, or calls to internal runtime support library routines.
   upper bounds take their values from the *shape* of the effective
   argument; lower bounds can be set by the procedure that receives
   them and default to 1.
-* An *assumed-length* `CHARACTER(*)` dummy argument or function
-  takes its length from the effective argument or from its
-  eventual declaration in a calling scope (respectively).
+* An *assumed-length* `CHARACTER(*)` dummy argument
+  takes its length from the effective argument.
+* An *assumed-length* `CHARACTER(*)` function result
+  takes its length from its eventual declaration in a calling scope.
 * An *assumed-rank* dummy argument array has an unknown number
   of dimensions.
 * A *polymorphic* dummy argument has a specific derived type or any
@@ -65,6 +66,9 @@ explicit interface (15.4.2.2):
 Module procedures, internal procedures, procedure pointers,
 type-bound procedures, and recursive references by a procedure to itself
 always have explicit interfaces.
+(Consequentially, they cannot be assumed-length `CHARACTER(*)` functions;
+in fact, recursive function calls cannot have results with assumed
+parameters of any type (15.6.2.1(3))).
 
 Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
@@ -345,13 +349,21 @@ when they have any of the following characteristics:
 1. assumed-shape array (`DIMENSION(:)`)
 1. assumed-rank array (`DIMENSION(..)`)
 1. parameterized derived type with assumed `LEN` parameters
-1. assumed-length `CHARACTER(*)`
 1. polymorphic (`CLASS(T)`, `CLASS(*)`)
 1. assumed-type (`TYPE(*)`)
 1. coarray dummy argument
 1. `INTENT(IN) POINTER` argument (15.5.2.7, C.10.4)
-1. dummy procedure in a procedure that can only be
-   called via its explicit interface
+
+In procedures that cannot be called with an implicit interface
+due to their other characteristics, two other kinds of dummy
+arguments are represented with descriptors:
+
+1. assumed-length `CHARACTER(*)`
+1. dummy procedure
+
+When the procedure can be called with an implicit interface,
+other means are used to convey character length and host instance
+links (respectively) for these arguments.
 
 Function results are described by the caller & callee in
 a caller-supplied descriptor when they have any of the following
@@ -360,6 +372,10 @@ characteristics, some which necessitate an explicit interface:
 1. deferred-shape array (so `ALLOCATABLE` or `POINTER`)
 1. derived type with any non-constant `LEN` parameter
 1. procedure pointer result (when the interface must be explicit)
+
+A `CHARACTER` function that can be called with an implicit interface
+is passed its result length as an additional value argument in case
+it might be defined as assumed-length `CHARACTER(*)`.
 
 Storage for a function call's result is allocated by the caller when
 possible: the result is neither `ALLOCATABLE` nor `POINTER`,
@@ -594,7 +610,9 @@ the dummy and effective arguments have the same attributes:
 
 15.6.2.1 procedure definitions:
 * `NON_RECURSIVE` procedures cannot recurse.
-* Functions with assumed type parameter values cannot invoke themselves recursively.
+* Functions with assumed type parameter values (including `CHARACTER(*)`) are not `RECURSIVE` by
+  default, cannot be `RECURSIVE`, array-valued, `POINTER`, `ELEMENTAL`, or `PURE' (C723),
+  and cannot be called recursively (15.6.2.1(3)).
 
 `PURE` requirements (15.7): C1583 - C1599.
 These also apply to `ELEMENTAL` procedures that are not `IMPURE`.
