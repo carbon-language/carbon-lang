@@ -107,12 +107,7 @@ struct Symbol {
   ELF_STB Binding;
   llvm::yaml::Hex64 Value;
   llvm::yaml::Hex64 Size;
-  Optional<uint8_t> Other;
-
-  // This can be used to set any custom value for the st_other field
-  // when it is not possible to do so using the "Other" field, which only takes
-  // specific named constants.
-  Optional<uint8_t> StOther;
+  uint8_t Other;
 };
 
 struct SectionOrType {
