@@ -123,6 +123,11 @@ static cl::opt<bool> VerifyAttributor(
              "manifestation of attributes -- may issue false-positive errors"),
     cl::init(false));
 
+static cl::opt<unsigned> DepRecInterval(
+    "attributor-dependence-recompute-interval", cl::Hidden,
+    cl::desc("Number of iterations until dependences are recomputed."),
+    cl::init(4));
+
 /// Logic operators for the change status enum class.
 ///
 ///{
@@ -2548,11 +2553,24 @@ ChangeStatus Attributor::run() {
   SetVector<AbstractAttribute *> Worklist;
   Worklist.insert(AllAbstractAttributes.begin(), AllAbstractAttributes.end());
 
+  bool RecomputeDependences = false;
+
   do {
     // Remember the size to determine new attributes.
     size_t NumAAs = AllAbstractAttributes.size();
     LLVM_DEBUG(dbgs() << "\n\n[Attributor] #Iteration: " << IterationCounter
                       << ", Worklist size: " << Worklist.size() << "\n");
+
+    // If dependences (=QueryMap) are recomputed we have to look at all abstract
+    // attributes again, regardless of what changed in the last iteration.
+    if (RecomputeDependences) {
+      LLVM_DEBUG(
+          dbgs() << "[Attributor] Run all AAs to recompute dependences\n");
+      QueryMap.clear();
+      ChangedAAs.clear();
+      Worklist.insert(AllAbstractAttributes.begin(),
+                      AllAbstractAttributes.end());
+    }
 
     // Add all abstract attributes that are potentially dependent on one that
     // changed to the work list.
@@ -2575,6 +2593,10 @@ ChangeStatus Attributor::run() {
         if (AA->update(*this) == ChangeStatus::CHANGED)
           ChangedAAs.push_back(AA);
 
+    // Check if we recompute the dependences in the next iteration.
+    RecomputeDependences = (DepRecomputeInterval > 0 &&
+                            IterationCounter % DepRecomputeInterval == 0);
+
     // Add attributes to the changed set if they have been created in the last
     // iteration.
     ChangedAAs.append(AllAbstractAttributes.begin() + NumAAs,
@@ -2589,13 +2611,18 @@ ChangeStatus Attributor::run() {
 
   size_t NumFinalAAs = AllAbstractAttributes.size();
 
+  if (VerifyMaxFixpointIterations && IterationCounter != MaxFixpointIterations) {
+    errs() << "\n[Attributor] Fixpoint iteration done after: "
+           << IterationCounter << "/" << MaxFixpointIterations
+           << " iterations\n";
+    llvm_unreachable("The fixpoint was not reached with exactly the number of "
+                     "specified iterations!");
+  }
+
   LLVM_DEBUG(dbgs() << "\n[Attributor] Fixpoint iteration done after: "
                     << IterationCounter << "/" << MaxFixpointIterations
                     << " iterations\n");
 
-  if (VerifyMaxFixpointIterations && IterationCounter != MaxFixpointIterations)
-    llvm_unreachable("The fixpoint was not reached with exactly the number of "
-                     "specified iterations!");
 
   bool FinishedAtFixpoint = Worklist.empty();
 
@@ -2930,7 +2957,7 @@ static bool runAttributorOnModule(Module &M) {
   // Create an Attributor and initially empty information cache that is filled
   // while we identify default attribute opportunities.
   InformationCache InfoCache(M.getDataLayout());
-  Attributor A(InfoCache);
+  Attributor A(InfoCache, DepRecInterval);
 
   for (Function &F : M) {
     // TODO: Not all attributes require an exact definition. Find a way to
