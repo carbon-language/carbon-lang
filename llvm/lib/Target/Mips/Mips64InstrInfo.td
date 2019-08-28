@@ -651,6 +651,7 @@ def : MipsPat<(MipsTlsHi tglobaltlsaddr:$in), (LUi64 tglobaltlsaddr:$in)>,
 let AdditionalPredicates = [NotInMicroMips] in {
   def : MipsPat<(MipsJmpLink (i64 texternalsym:$dst)),
                 (JAL texternalsym:$dst)>, ISA_MIPS3, GPR_64, SYM_64;
+
   def : MipsPat<(MipsHighest (i64 tglobaladdr:$in)),
                 (LUi64 tglobaladdr:$in)>, ISA_MIPS3, GPR_64, SYM_64;
   def : MipsPat<(MipsHighest (i64 tblockaddress:$in)),
