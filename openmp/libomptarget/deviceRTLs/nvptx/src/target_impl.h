@@ -63,6 +63,15 @@ INLINE int32_t __kmpc_impl_shfl_down_sync(__kmpc_impl_lanemask_t Mask,
 #endif // CUDA_VERSION
 }
 
+INLINE void __kmpc_impl_syncthreads() {
+  // Use original __syncthreads if compiled by nvcc or clang >= 9.0.
+#if !defined(__clang__) || __clang_major__ >= 9
+  __syncthreads();
+#else
+  asm volatile("bar.sync %0;" : : "r"(0) : "memory");
+#endif // __clang__
+}
+
 INLINE void __kmpc_impl_syncwarp(__kmpc_impl_lanemask_t Mask) {
 #if CUDA_VERSION >= 9000
   __syncwarp(Mask);
