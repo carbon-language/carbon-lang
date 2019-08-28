@@ -51,6 +51,7 @@ INLINE int32_t __kmpc_impl_shfl_sync(__kmpc_impl_lanemask_t Mask, int32_t Var,
 #else
   return __shfl(Var, SrcLane);
 #endif // CUDA_VERSION
+}
 
 INLINE int32_t __kmpc_impl_shfl_down_sync(__kmpc_impl_lanemask_t Mask,
                                           int32_t Var, uint32_t Delta,
