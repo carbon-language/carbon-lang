@@ -1,6 +1,6 @@
 # OpenMP Semantic Analysis
 
-## F18 for OpenMP
+## OpenMP for F18
 
 1. Define and document the parse tree representation for
     * Directives (listed below)
@@ -26,7 +26,7 @@ The directives that are in the same categories share some characteristics.
 
 #### Declarative directives
 
-An OpenMP directive that may only be placed in a declarative context.
+An OpenMP directive may only be placed in a declarative context.
 A declarative directive results in one or more declarations only;
 it is not associated with the immediate execution of any user code.
 
@@ -50,14 +50,14 @@ holds all four of the node types as discriminated unions
 along with the source provenance for the entire directive
 starting from `!$OMP`.
 
-In the `parser-tree.h`,
+In `parser-tree.h`,
 `OpenMPDeclarativeConstruct` is part
 of the `SpecificationConstruct` and `SpecificationPart`
 in F18 because
 a declarative directive can only be placed in the specification part
 of a Fortran program.
 
-All the `_Names` or `_Designators` associated
+All the `Names` or `Designators` associated
 with the declarative directive will be resolved in later phases.
 
 #### Executable directives
@@ -88,7 +88,7 @@ listed above as discriminated unions.
 In the `parse-tree.h`, `OpenMPConstruct` is an element
 of the `ExecutableConstruct`.
 
-All the `_Names` or `_Designators` associated
+All the `Names` or `Designators` associated
 with the executable directive will be resolved in Semantic Analysis.
 
 When the backtracking parser can not identify the associated code blocks,
@@ -111,7 +111,7 @@ List of existing ones:
 * cancel
 * cancellation point
 
-A higher-level class is created for each categorys
+A higher-level class is created for each category
 which contains directives listed above that share a similar structure:
 * OpenMPSimpleStandaloneConstruct
 (taskyield, barrier, taskwait,
@@ -129,9 +129,12 @@ the source provenance for the directive name itself.
 ### Clauses
 
 Each clause represented as a distinct class in `parse-tree.h`.
-A top-level class, `OmpClause`, includes all the clauses as discriminated unions. The parser node for `OmpClause` saves the source provenance for the entire clause.
+A top-level class, `OmpClause`,
+includes all the clauses as discriminated unions.
+The parser node for `OmpClause` saves the source provenance
+for the entire clause.
 
-All the `_Names` or `_Designators` associated
+All the `Names` or `Designators` associated
 with the clauses will be resolved in Semantic Analysis.
 
 Note that the backtracking parser will not validate
@@ -163,7 +166,8 @@ compiler needs to determine two kinds of _access_
 to variables used in the directive’s associated structured block:
 **shared** and **private**.
 Each variable referenced in the structured block
-has an original variable immediately outside of the OpenMP constructs. Reference to a shared variable in the structured block
+has an original variable immediately outside of the OpenMP constructs.
+Reference to a shared variable in the structured block
 becomes a reference to the original variable.
 However, each private variable referenced in the structured block,
 a new version of the original variable (of the same type and size)
@@ -218,7 +222,8 @@ w/
    </td>
    <td>-
    </td>
-   <td>The name of the enclosing function, subroutine, or interface body to which it applies, or proc-name
+   <td>The name of the enclosing function, subroutine, or interface body
+   to which it applies, or proc-name
    </td>
    <td>OmpDeclareSimd
    </td>
@@ -228,7 +233,8 @@ w/
    </td>
    <td>-
    </td>
-   <td>The name of the enclosing function, subroutine, or interface body to which it applies
+   <td>The name of the enclosing function, subroutine, or interface body
+   to which it applies
    </td>
    <td>OmpDeclareTarget
    </td>
@@ -556,7 +562,9 @@ data-mapping attribute
 for variables referenced in a _target_ construct
 that are _not_ declared in the construct and
 do not appear in data-sharing attribute or map clauses:
-    * If a variable appears in a _to _or _link _clause on a _declare target _directive then it is treated as if it had appeared in a _map _clause with a _map-type_ of **tofrom**
+    * If a variable appears in a _to_ or _link_ clause
+    on a _declare target_ directive then it is treated
+    as if it had appeared in a _map_ clause with a _map-type_ of **tofrom**
 3. Otherwise, the following implicit data-mapping attribute rules apply:
     * If a _defaultmap(tofrom:scalar)_ clause is _not_ present
     then a scalar variable is not mapped,
@@ -568,11 +576,16 @@ do not appear in data-sharing attribute or map clauses:
     then it is treated as if it had appeared in a map clause
     with a _map-type_ of **tofrom**
 
-After the completion of the Name Resolution phase, all the data-sharing or data-mapping attributes marked for the `Symbols` may be used later in the Semantics Analysis and in the Code Generation.
+After the completion of the Name Resolution phase,
+all the data-sharing or data-mapping attributes marked for the `Symbols`
+may be used later in the Semantics Analysis and in the Code Generation.
 
 ## Module File Extensions for OpenMP
 
-After the successful compilation of modules and submodules that may contain the following Declarative Directives, the entire directive starts from `!$OMP` needs to be written out into `.mod` files in their corresponding Specification Part:
+After the successful compilation of modules and submodules
+that may contain the following Declarative Directives,
+the entire directive starting from `!$OMP` needs to be written out
+into `.mod` files in their corresponding Specification Part:
 
 * _declare simd_ or _declare target_
 
@@ -619,7 +632,8 @@ After the successful compilation of modules and submodules that may contain the 
     We should abort in case of errors
     because there is no point to perform further checks
     if it is not a legal OpenMP construct
-    4. N.B. Consider moving this code and the do-loops code to the parser namespace.
+    4. N.B. Consider moving this code and the do-loops code
+    to the parser namespace.
 3. Validate the structured-block
     1. Structured-block is a block of executable statements
     1. Single entry and single exit
