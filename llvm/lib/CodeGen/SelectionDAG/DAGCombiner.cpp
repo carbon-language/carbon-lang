@@ -19552,14 +19552,14 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
         TLI.isOperationLegalOrCustomOrPromote(Opcode, NarrowVT)) {
       SDLoc DL(N);
       unsigned NumOperands = LHS.getNumOperands();
-      SmallVector<SDValue, 4> Ops;
+      SmallVector<SDValue, 4> ConcatOps;
       for (unsigned i = 0; i != NumOperands; ++i) {
         // This constant fold for operands 1 and up.
-        Ops.push_back(DAG.getNode(Opcode, DL, NarrowVT, LHS.getOperand(i),
-                                  RHS.getOperand(i)));
+        ConcatOps.push_back(DAG.getNode(Opcode, DL, NarrowVT, LHS.getOperand(i),
+                                        RHS.getOperand(i)));
       }
 
-      return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Ops);
+      return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, ConcatOps);
     }
   }
 
