@@ -58,8 +58,8 @@ private:
 // Descriptor (CFI_cdesc_t) generic descriptor.  Space matters here, since
 // descriptors serve as POINTER and ALLOCATABLE components of derived type
 // instances.  The presence of this structure is implied by the flag
-// (CFI_cdesc_t.extra & ADDENDUM) != 0, and the number of elements in
-// the len_[] array is determined by DerivedType::lenParameters().
+// CFI_cdesc_t.f18Addendum, and the number of elements in the len_[]
+// array is determined by DerivedType::lenParameters().
 class DescriptorAddendum {
 public:
   enum Flags {

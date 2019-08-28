@@ -125,7 +125,7 @@ some design alternatives that are explored further below.
    package them into single address (for calls to internal procedures &
    for calls that pass internal procedures as arguments).
 1. Resolve the target procedure's polymorphic binding, if any.
-1. Marshal actual argument addresses/values into registers.
+1. Marshal actual argument addresses (or values for `VALUE`/`%VAL()`) into registers.
 1. Marshal an extra argument for the `CHARACTER` result
    length (assumed or explicit) or the function result descriptor.
 1. Set the "host instance" (static link) register when calling an internal
@@ -187,15 +187,16 @@ argument.
 First, actual arguments that are expressions, not designators, obviously
 need to be computed and captured into memory in order to be passed
 by reference.
-This includes parenthesized designators like `(X)` as an important
-special case, which are expressions in Fortran.
-(This case also technically includes constants, but those are better
-implemented by passing addresses in read-only memory when the interface
-is explicit.)
+This includes parenthesized designators like `(X)`, which are
+expressions in Fortran, as an important special case.
+(This case also technically includes unparenthesized constants,
+but those are better implemented by passing addresses in read-only
+memory.)
 The dummy argument cannot be known to have `INTENT(OUT)` or
 `INTENT(IN OUT)`.
 
-Small scalar or elemental `VALUE` arguments may be passed in registers.
+Small scalar or elemental `VALUE` arguments may be passed in registers,
+as should arguments wrapped in the legacy VMS `%VAL()` notation.
 Multiple elemental `VALUE` arguments might be packed into SIMD registers.
 
 Actual arguments that are designators, not expressions, must also
@@ -506,9 +507,9 @@ For examples: `Fa.mod.foo`, `Fa.mod.submod.foo`.
 ## Summary of checks to be enforced in semantics analysis
 
 15.5.1 procedure references:
-* C1533 (can't pass non-intrinsic `ELEMENTAL` as argument)
-* C1536 alternate return labels must be in the inclusive scope
-* C1537 coindexed argument cannot have a `POINTER` ultimate component
+* (C1533) can't pass non-intrinsic `ELEMENTAL` as argument
+* (C1536) alternate return labels must be in the inclusive scope
+* (C1537) coindexed argument cannot have a `POINTER` ultimate component
 
 15.5.2.4 requirements for non-`POINTER` non-`ALLOCATABLE` dummies:
 * (2) dummy must be monomorphic for coindexed polymorphic actual
@@ -524,7 +525,7 @@ For examples: `Fa.mod.foo`, `Fa.mod.submod.foo`.
 * (21) array sections with vector subscripts can't be passed to definable dummies
        (`INTENT(OUT)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, `VOLATILE`)
 * (22) `VOLATILE` attributes must match when dummy has a coarray ultimate component
-* C1538 - C1540: checks for `ASYNCHRONOUS` and `VOLATILE`
+* (C1538 - C1540) checks for `ASYNCHRONOUS` and `VOLATILE`
 
 15.5.2.5 requirements for `ALLOCATABLE` & `POINTER` arguments when both
 the dummy and actual arguments have the same attributes:
@@ -540,8 +541,8 @@ the dummy and actual arguments have the same attributes:
 * (7) `INTENT(OUT)` & `INTENT(IN OUT)` dummies require definable actuals
 
 15.5.2.7 `POINTER` dummy arguments:
-* C1541: `CONTIGUOUS` dummy requires simply contiguous actual
-* C1542: actual argument cannot be coindexed unless procedure is intrinsic
+* (C1541) `CONTIGUOUS` dummy requires simply contiguous actual
+* (C1542) actual argument cannot be coindexed unless procedure is intrinsic
 * (2) actual argument must be `POINTER` unless dummy is `INTENT(IN)` and
   actual could be the right-hand side of a pointer assignment statement
 
@@ -575,7 +576,7 @@ For interoperable procedures and interfaces (18.3.6):
 ## Further topics to document
 
 * Alternate return specifiers
-* `%VAL()` and `%REF()`
+* `%VAL()`, `%REF()`, and `%DESCR()` legacy VMS interoperability extensions
 * Unrestricted specific intrinsic functions as actual arguments
 * SIMD variants of `ELEMENTAL` procedures (& unrestricted specific intrinsics)
 * Elemental subroutine calls with array arguments
