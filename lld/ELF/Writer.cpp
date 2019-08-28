@@ -2224,9 +2224,9 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
       // and non-executable segments.
       //
       // TODO Enable this technique on all targets.
-      bool enable =
-          config->emachine != EM_HEXAGON && config->emachine != EM_MIPS &&
-          config->emachine != EM_RISCV && config->emachine != EM_X86_64;
+      bool enable = config->emachine != EM_HEXAGON &&
+                    config->emachine != EM_MIPS &&
+                    config->emachine != EM_X86_64;
 
       if (!enable || (config->zSeparateCode && prev &&
                       (prev->p_flags & PF_X) != (p->p_flags & PF_X)))
