@@ -26,7 +26,7 @@ functions, or calls to internal runtime support library routines.
   and their contents are contiguous.
 * An *assumed-size* array is an explicit-shape array with `*` as its
   final dimension, which the most-significant one in Fortran.
-* A *deferred-shape* array is a `POINTER` or `ALLOCATABLE`.
+* A *deferred-shape* array (`DIMENSION(:)`) is a `POINTER` or `ALLOCATABLE`.
   `POINTER` target data might not be contiguous.
 * An *assumed-shape* (not size!) array is a dummy argument whose
   upper bounds take their values from the *shape* of the effective
@@ -34,102 +34,111 @@ functions, or calls to internal runtime support library routines.
   them and default to 1.
 * An *assumed-length* `CHARACTER(*)` dummy argument
   takes its length from the effective argument.
-* An *assumed-length* `CHARACTER(*)` function result
-  takes its length from its eventual declaration in a calling scope.
-* An *assumed-rank* dummy argument array has an unknown number
+* An *assumed-length* `CHARACTER(*)` result of an external function (C721)
+  has its length determined by its eventual declaration in a calling scope.
+* An *assumed-rank* `DIMENSION(..)` dummy argument array has an unknown number
   of dimensions.
-* A *polymorphic* dummy argument has a specific derived type or any
+* A *polymorphic* `CLASS(t)` dummy argument has a specific derived type or any
   possible extension of that type.  An *unlimited polymorphic*
-  dummy argument can have any type.
+  `CLASS(*)` dummy argument can have intrinsic or derived type.
+* *Interoperable* `BIND(C)` procedures are written in C or callable from C.
 
 ## Interfaces
 
 Referenced procedures may or may not have declared interfaces
 available to their call sites.
 
-Calls to procedures with some post-Fortran '77 features require an
-explicit interface (15.4.2.2):
+Procedures with some post-Fortran '77 features *require* an
+explicit interface to be called (15.4.2.2) or even passed (4.3.4(2)):
 
-* use of argument keywords
+* use of argument keywords in a call
 * procedures that are `ELEMENTAL` or `BIND(C)`
 * procedures that are required to be `PURE` due to the context of the call
   (specification expression, `DO CONCURRENT`, `FORALL`)
 * dummy arguments with these attributes: `ALLOCATABLE`, `POINTER`,
   `VALUE`, `TARGET`, `OPTIONAL`, `ASYNCHRONOUS`, `VOLATILE`
-  (but *not* `CONTIGUOUS`, `INTENT()`)
-* dummy arguments that are coarrays, have assumed-shape/-rank,
-  have parameterized derived types, &/or are polymorphic
-* function results that are arrays, `ALLOCATABLE`, `POINTER`,
-  or have derived types with any length parameters that are
-  neither constant nor assumed
+  (but *not* `CONTIGUOUS` or `INTENT()`)
+* dummy arguments that are coarrays
+* dummy arguments that are assumed-shape or assumed-rank arrays
+* dummy arguments with parameterized derived types
+* dummy arguments that are polymorphic
+* function result that is an array
+* function result that is `ALLOCATABLE` or `POINTER`
+* `CHARACTER` function result whose length is neither constant
+  nor assumed
+* derived type function result with `LEN` type parameter value that is
+  not constant
+  (note that result derived type parameters cannot be assumed (C795))
 
 Module procedures, internal procedures, procedure pointers,
 type-bound procedures, and recursive references by a procedure to itself
 always have explicit interfaces.
 (Consequentially, they cannot be assumed-length `CHARACTER(*)` functions;
-in fact, recursive function calls cannot have results with assumed
-parameters of any type (15.6.2.1(3))).
+conveniently, assumed-length `CHARACTER(*)` functions are prohibited from
+recursion (15.6.2.1(3))).
 
 Other uses of procedures besides calls may also require explicit interfaces,
 such as procedure pointer assignment, type-bound procedure bindings, &c.
 
 Note that non-parameterized monomorphic derived type arguments do
-not by themselves require the use of an explicit interface.
+*not* by themselves require the use of an explicit interface.
+However, dummy arguments with any derived type parameters *do*
+require an explicit interface, even if they are all `KIND` type
+parameters.
 
-A procedure that requires an explicit interface must, in a strict
-reading of the standard (4.3.4(2) & 15.4.2.2),
-have that interface available when the procedure is passed as an
-argument.
-
-As a special case, see also 15.5.2.9(2), which explicitly
-allows an assumed-length `CHARACTER(*)` function to be passed as an actual
-argument to an explicit-length dummy); this has implications for
-calls to character-valued dummy functions and function pointers.
+15.5.2.9(2) explicitly allows an assumed-length `CHARACTER(*)` function
+to be passed as an actual argument to an explicit-length dummy);
+this has implications for calls to character-valued dummy functions
+and function pointers.
 (In the scopes that reference `CHARACTER` functions, they must have
 visible definitions with explicit result lengths.)
 
 ### Implicit interfaces
 
-In the absence of any characteristic or context that requires an
+In the absence of any characteristic or context that *requires* an
 explicit interface (see above), an external function or subroutine (R503)
 or `ENTRY` (R1541) can be called directly or indirectly via its implicit interface.
 Each of the arguments can be passed as a simple address, including
 dummy procedures.
 Procedures that *can* be called via an implicit interface can
-enjoy more thorough checking
-by semantics when they do have a visible external interface, but must be
+undergo more thorough checking
+by semantics when an explicit interface for them exists, but they must be
 compiled as if all calls to them were through the implicit interface.
+This note will mention special handling for procedures that are exposed
+to the possibility of being called with an implicit interface as *F77ish* procedures
+below; this is of course not standard terminology.
 
 Internal and module subprograms that are ever passed as arguments &/or
-assigned as targets of procedure pointers are also potentially at risk of
-being called indirectly through implicit interfaces.
+assigned as targets of procedure pointers may be F77ish.
 
-Every procedure callable via an implicit interface
-can and must be distiguished at compilation time.
+Every F77ish procedure can and must be distiguished at compilation time.
 Such procedures should respect the external naming conventions (when external)
 and any legacy ABI used for Fortran '77 programs on the target architecture,
 so that portable libraries can be compiled
 and used by distinct implementations (and their versions)
 of Fortran.
 
-Note that functions callable via implicit interfaces still have known result
-types, possibly by means of implicit typing of their names.
+Note that F77ish functions still have known result types, possibly by means
+of implicit typing of their names.
 They can also be `CHARACTER(*)` assumed-length character functions.
 
-In other words: procedures that can be referenced with implicit interfaces
-have argument lists that comprise only addresses of effective arguments
-and the length of a `CHARACTER` function result (if any),
-and they can return only scalar values of intrinsic types.
+In other words: these F77sh procedures that do not require the use of an explicit
+interface and that can possibly be referenced, directly or indirectly,
+with implicit interfaces are limited to argument lists that comprise
+only the addresses of effective arguments and the length of a `CHARACTER` function result
+(when there is one), and they can return only scalar values with constant
+type parameter values.
 None of their arguments or results need be (or can be) implemented
 with descriptors,
 and any internal procedures passed to them as arguments must be
-addresses of trampolines.
+simple addresses of non-internal subprograms or trampolines for
+internal procedures.
 
 Note that `INTENT` and `CONTIGUOUS` attributes do not, by themselves,
-require the use of explicit interface; neither does the use of dummy
-procedures (implicit or explicit in their interfaces).
+require the use of explicit interface; neither does the use of a dummy
+procedure (implicit or explicit in their interfaces).
 
-Analyses of calls to procedures with implicit interfaces must make
+Analyses of calls to F77ish procedures must make
 allowances or impose restrictions capable of dealing with any of the
 invisible `INTENT` and `CONTIGUOUS` attributes of dummy arguments
 in the called procedure.
@@ -154,7 +163,7 @@ some design alternatives that are explored further below.
    neither `POINTER` nor `ALLOCATABLE` must have explicit shapes (C816).
 1. Create and populate a descriptor for the function result, if it
    needs one (deferred-shape/-length `POINTER`, any `ALLOCATABLE`,
-   parameterized derived type with non-constant length parameters, &c.).
+   derived type with non-constant length parameters, &c.).
 1. Capture the values of host-escaping local objects in memory;
    package them into single address (for calls to internal procedures &
    for calls that pass internal procedures as arguments).
@@ -162,10 +171,8 @@ some design alternatives that are explored further below.
 1. Marshal effective argument addresses (or values for `VALUE`/`%VAL()`) into registers.
 1. Marshal `CHARACTER` argument lengths in additional value arguments for
    `CHARACTER` effective arguments not passed via descriptors.
-1. Marshal an extra argument for the `CHARACTER` result
-   length when calling a `CHARACTER`-valued function, if there is a chance
-   that it might be assumed-length or could be called over an implicit
-   interface.
+1. Marshal an extra argument for the length of a `CHARACTER` function
+   result if the function is F77ish.
 1. Marshal an extra argument for the function result's descriptor,
    if it needs one.
 1. Set the "host instance" (static link) register when calling an internal
@@ -260,7 +267,8 @@ be copied into temporaries in the following situations.
    (15.4.2.4(21)); `INTENT()` can't always be checked.
 1. Non-simply-contiguous (9.5.4) arrays being passed to non-`POINTER`
    dummy arguments that must be contiguous due to a `CONTIGUOUS`
-   attribute, implicit interface, or not being assumed-shape/-rank.
+   attribute or not being assumed-shape or assumed-rank (which
+   is always the case for F77ish procedures).
    This should be a runtime decision, so that effective arguments
    that turn out to be contiguous can be passed cheaply.
    This rule does not apply to coarray dummies, whose effective arguments
@@ -354,15 +362,13 @@ when they have any of the following characteristics:
 1. coarray dummy argument
 1. `INTENT(IN) POINTER` argument (15.5.2.7, C.10.4)
 
-In procedures that cannot be called with an implicit interface
-due to their other characteristics, two other kinds of dummy
-arguments are represented with descriptors:
+Non-F77ish procedures use descriptors to represent two further
+kinds of dummy arguments:
 
 1. assumed-length `CHARACTER(*)`
-1. dummy procedure
+1. dummy procedures
 
-When the procedure can be called with an implicit interface,
-other means are used to convey character length and host instance
+F77ish procedures use other means to convey character length and host instance
 links (respectively) for these arguments.
 
 Function results are described by the caller & callee in
@@ -371,11 +377,8 @@ characteristics, some which necessitate an explicit interface:
 
 1. deferred-shape array (so `ALLOCATABLE` or `POINTER`)
 1. derived type with any non-constant `LEN` parameter
+   (C795 prohibit assumed lengths)
 1. procedure pointer result (when the interface must be explicit)
-
-A `CHARACTER` function that can be called with an implicit interface
-is passed its result length as an additional value argument in case
-it might be defined as assumed-length `CHARACTER(*)`.
 
 Storage for a function call's result is allocated by the caller when
 possible: the result is neither `ALLOCATABLE` nor `POINTER`,
@@ -474,13 +477,10 @@ represent a procedure pointer.
 It also needs to be conveyed alongside the text address for a
 dummy procedure.
 
-For procedures that can be called with an implicit interface,
-we cannot use a "procedure pointer descriptor" to pass them an
-a procedure argument -- a Fortran '77 routine
-with an `EXTERNAL` dummy argument expects to receive a single
-address argument.  Instead, when passing an effective procedure
-to a procedure that can be called with an implicit interface,
-we will need to package the host instance link in a trampoline
+For F77ish procedures, we cannot use a "procedure pointer descriptor"
+to pass a procedure argument -- they expect to receive a single
+address argument.
+We will need to package the host instance link in a trampoline
 that loads its address into the designated register.
 
 GNU Fortran and Intel Fortran construct trampolines by writing
@@ -498,8 +498,8 @@ sometimes leading to crashes when they turn out to be needed.
 
 F18 will manage a pool of trampolines in its runtime support library
 that can be used to pass internal procedures as effective arguments
-to targets that might be called with an implicit interface, so that
-a bare code address is used to represent the effective argument.
+to F77ish procedures, so that
+a bare code address can serve to represent the effective argument.
 But targets that can only be called with an explicit interface
 have the option of using a "fat pointer" (or additional argument)
 to represent a dummy procedure closure so as
@@ -511,9 +511,9 @@ Procedure descriptors can also support multiple code addresses.
 External subroutines and functions (R503) and `ENTRY` points (R1541)
 with `BIND(C)` (R808) have linker-visible names that are either explicitly
 specified in the program or determined by straightforward rules.
-The names of other external procedures that might be called
-via an implicit interface should respect the conventions of the target architecture
-for legacy Fortran '77 programs; this is typically something like `foo_`.
+The names of other F77ish external procedures should respect the conventions
+of the target architecture for legacy Fortran '77 programs; this is typically
+something like `foo_`.
 
 In other cases, however, we have fewer constraints on external naming,
 as well as some additional requirements and goals.
@@ -529,7 +529,7 @@ entry points used for packed SIMD arguments of various widths if we support
 calls to these functions in SIMD parallel contexts.
 There are already conventions for these names in `libpgmath`.
 
-The names of external procedures that cannot be called via an implicit interface
+The names of non-F77ish external procedures
 should be distinguished as such so that incorrect attempts to call or pass
 them with an implicit interface will fail to resolve at link time.
 Fortran 2018 explicitly enables us to do this with a correction to Fortran
@@ -602,7 +602,7 @@ the dummy and effective arguments have the same attributes:
 15.5.2.8 corray dummy arguments:
 * (1) effective argument must be coarray
 * (1) `VOLATILE` attributes must match
-* (2) `CONTIGUOUS` dummy (or implicitly contiguous non-assumed-shape array) requires simply contiguous actual
+* (2) `CONTIGUOUS` dummy (or implicitly contiguous non-assumed-shape/-rank array) requires simply contiguous actual
 
 15.5.2.9 dummy procedures:
 * (1) explicit dummy procedure interface must have same characteristics as actual
@@ -610,9 +610,8 @@ the dummy and effective arguments have the same attributes:
 
 15.6.2.1 procedure definitions:
 * `NON_RECURSIVE` procedures cannot recurse.
-* Functions with assumed type parameter values (including `CHARACTER(*)`) are not `RECURSIVE` by
-  default, cannot be `RECURSIVE`, array-valued, `POINTER`, `ELEMENTAL`, or `PURE' (C723),
-  and cannot be called recursively (15.6.2.1(3)).
+* Assumed-length `CHARACTER(*)` functions cannot be declared as `RECURSIVE`, array-valued,
+  `POINTER`, `ELEMENTAL`, or `PURE' (C723), and cannot be called recursively (15.6.2.1(3)).
 
 `PURE` requirements (15.7): C1583 - C1599.
 These also apply to `ELEMENTAL` procedures that are not `IMPURE`.
