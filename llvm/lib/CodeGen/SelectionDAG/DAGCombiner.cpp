@@ -14132,7 +14132,7 @@ struct LoadedSlice {
   /// Helper structure used to compute the cost of a slice.
   struct Cost {
     /// Are we optimizing for code size.
-    bool ForCodeSize;
+    bool ForCodeSize = false;
 
     /// Various cost.
     unsigned Loads = 0;
@@ -14141,10 +14141,10 @@ struct LoadedSlice {
     unsigned ZExts = 0;
     unsigned Shift = 0;
 
-    Cost(bool ForCodeSize = false) : ForCodeSize(ForCodeSize) {}
+    explicit Cost(bool ForCodeSize) : ForCodeSize(ForCodeSize) {}
 
     /// Get the cost of one isolated slice.
-    Cost(const LoadedSlice &LS, bool ForCodeSize = false)
+    Cost(const LoadedSlice &LS, bool ForCodeSize)
         : ForCodeSize(ForCodeSize), Loads(1) {
       EVT TruncType = LS.Inst->getValueType(0);
       EVT LoadedType = LS.getLoadedType();
