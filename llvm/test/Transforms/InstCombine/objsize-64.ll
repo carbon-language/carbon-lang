@@ -8,7 +8,6 @@ declare i32 @__gxx_personality_v0(...)
 declare void @__cxa_call_unexpected(i8*)
 declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
 
-; CHECK-LABEL: @f1(
 define i64 @f1(i8 **%esc) {
 ; CHECK-LABEL: @f1(
 ; CHECK-NEXT:    [[CALL:%.*]] = call dereferenceable_or_null(4) i8* @malloc(i32 4)
@@ -22,7 +21,6 @@ define i64 @f1(i8 **%esc) {
 }
 
 
-; CHECK-LABEL: @f2(
 define i64 @f2(i8** %esc) nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; CHECK-LABEL: @f2(
 ; CHECK-NEXT:  entry:
