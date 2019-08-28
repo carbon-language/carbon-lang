@@ -38,6 +38,20 @@ INLINE int __kmpc_impl_ffs(uint32_t x) { return __ffs(x); }
 
 INLINE int __kmpc_impl_popc(uint32_t x) { return __popc(x); }
 
+#ifndef CUDA_VERSION
+#error CUDA_VERSION macro is undefined, something wrong with cuda.
+#endif
+
+// In Cuda 9.0, the *_sync() version takes an extra argument 'mask'.
+INLINE int32_t __kmpc_impl_shfl_sync(__kmpc_impl_lanemask_t Mask, int32_t Var,
+                                     int32_t SrcLane) {
+#if CUDA_VERSION >= 9000
+  return __shfl_sync(Mask, Var, SrcLane);
+#else
+  return __shfl(Var, SrcLane);
+#endif // CUDA_VERSION
+}
+
 INLINE void __kmpc_impl_syncwarp(int32_t Mask) { __SYNCWARP(Mask); }
 
 #endif
