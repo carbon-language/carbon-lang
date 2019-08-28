@@ -2717,14 +2717,16 @@ bool DeclarationVisitor::Pre(const parser::Enumerator &enumerator) {
   const parser::Name &name{std::get<parser::NamedConstant>(enumerator.t).v};
   Symbol *symbol{FindSymbol(name)};
   if (symbol) {
-    // Enumerator names should not appear in any statement before the enum
-    // Technically, the standard does not really prevent them from
-    // appearing in things like a DIMENSION statement, but it would
-    // either be wrong or useless as they are scalars and the user should
-    // not try to temper with enumerator type and attributes.
+    // Contrary to named constants appearing in a PARAMETER statement,
+    // enumerator names should not have their type, dimension or any other
+    // attributes defined before they are declared in the enumerator statement.
+    // This is not explicitly forbidden by the standard, but they are scalars
+    // which type is left for the compiler to chose, so do not let users try to
+    // tamper with that.
     SayAlreadyDeclared(name, *symbol);
     symbol = nullptr;
   } else {
+    // Enumerators are treated as PARAMETER (section 7.6 paragraph (4))
     symbol = &MakeSymbol(name, Attrs{Attr::PARAMETER}, ObjectEntityDetails{});
     symbol->SetType(context().MakeNumericType(
         TypeCategory::Integer, evaluate::CInteger::kind));
@@ -2732,7 +2734,7 @@ bool DeclarationVisitor::Pre(const parser::Enumerator &enumerator) {
 
   if (auto &init{std::get<std::optional<parser::ScalarIntConstantExpr>>(
           enumerator.t)}) {
-    Walk(*init);  // resolve names in expression before evaluation.
+    Walk(*init);  // Resolve names in expression before evaluation.
     if (MaybeIntExpr expr{EvaluateIntExpr(*init)}) {
       // Cast all init expressions to C_INT so that they can then be
       // safely incremented (see 7.6 Note 2).
