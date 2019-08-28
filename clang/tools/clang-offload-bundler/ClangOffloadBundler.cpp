@@ -791,8 +791,9 @@ static bool UnbundleFiles() {
     return false;
   }
 
-  // If we found elements, we emit an error if none of those were for the host.
-  if (!FoundHostBundle) {
+  // If we found elements, we emit an error if none of those were for the host
+  // in case host bundle name was provided in command line.
+  if (!FoundHostBundle && HostInputIndex != ~0u) {
     errs() << "error: Can't find bundle for the host target\n";
     return true;
   }
@@ -895,7 +896,9 @@ int main(int argc, const char **argv) {
     ++Index;
   }
 
-  if (HostTargetNum != 1) {
+  // Host triple is not really needed for unbundling operation, so do not
+  // treat missing host triple as error if we do unbundling.
+  if ((Unbundle && HostTargetNum > 1) || (!Unbundle && HostTargetNum != 1)) {
     Error = true;
     errs() << "error: expecting exactly one host target but got "
            << HostTargetNum << ".\n";
