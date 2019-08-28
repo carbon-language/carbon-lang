@@ -26,5 +26,6 @@ add_clang_library(clangDaemonTweaks OBJECT
   clangBasic
   clangDaemon
   clangToolingCore
+  clangToolingRefactoring
   clangToolingSyntax
   )
