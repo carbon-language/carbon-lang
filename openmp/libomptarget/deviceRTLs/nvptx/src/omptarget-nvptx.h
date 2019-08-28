@@ -52,11 +52,8 @@
 #error CUDA_VERSION macro is undefined, something wrong with cuda.
 #elif CUDA_VERSION >= 9000
 #define __ACTIVEMASK() __activemask()
-#define __SYNCWARP(Mask) __syncwarp(Mask)
 #else
 #define __ACTIVEMASK() __ballot(1)
-// In Cuda < 9.0 no need to sync threads in warps.
-#define __SYNCWARP(Mask)
 #endif // CUDA_VERSION
 
 #define __SYNCTHREADS_N(n) asm volatile("bar.sync %0;" : : "r"(n) : "memory");

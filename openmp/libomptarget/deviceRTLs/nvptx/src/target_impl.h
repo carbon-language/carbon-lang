@@ -63,6 +63,12 @@ INLINE int32_t __kmpc_impl_shfl_down_sync(__kmpc_impl_lanemask_t Mask,
 #endif // CUDA_VERSION
 }
 
-INLINE void __kmpc_impl_syncwarp(int32_t Mask) { __SYNCWARP(Mask); }
+INLINE void __kmpc_impl_syncwarp(__kmpc_impl_lanemask_t Mask) {
+#if CUDA_VERSION >= 9000
+  __syncwarp(Mask);
+#else
+  // In Cuda < 9.0 no need to sync threads in warps.
+#endif // CUDA_VERSION
+}
 
 #endif
