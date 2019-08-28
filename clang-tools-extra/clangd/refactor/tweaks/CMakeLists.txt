@@ -16,6 +16,7 @@ add_clang_library(clangDaemonTweaks OBJECT
   DumpAST.cpp
   ExpandAutoType.cpp
   ExpandMacro.cpp
+  ExtractFunction.cpp
   ExtractVariable.cpp
   RawStringLiteral.cpp
   SwapIfBranches.cpp
