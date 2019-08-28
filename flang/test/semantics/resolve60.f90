@@ -44,6 +44,7 @@
   end enum
 
   enum, bind(C)
+    !ERROR: Enumerator value could not be computed from the given expression
     !ERROR: Must be a constant value
     enumerator :: wrong = 0/0
   end enum

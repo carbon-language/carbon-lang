@@ -849,8 +849,7 @@ private:
   // Info about current ENUM
   struct EnumeratorState {
     // Enum value must hold inside a C_INT (7.6.2).
-    using CIntExpr = evaluate::Expr<evaluate::CInteger>;
-    std::optional<CIntExpr> value{CIntExpr{-1}};
+    std::optional<int> value{0};
   } enumerationState_;
 
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
@@ -2735,27 +2734,31 @@ bool DeclarationVisitor::Pre(const parser::Enumerator &enumerator) {
   if (auto &init{std::get<std::optional<parser::ScalarIntConstantExpr>>(
           enumerator.t)}) {
     Walk(*init);  // Resolve names in expression before evaluation.
-    if (MaybeIntExpr expr{EvaluateIntExpr(*init)}) {
+    MaybeIntExpr expr{EvaluateIntExpr(*init)};
+    if (auto value{evaluate::ToInt64(expr)}) {
       // Cast all init expressions to C_INT so that they can then be
       // safely incremented (see 7.6 Note 2).
-      enumerationState_.value =
-          evaluate::ConvertToType<evaluate::CInteger>(std::move(*expr));
+      enumerationState_.value = static_cast<int>(*value);
     } else {
-      // Error in expr, prevent resolution of next enumerators value
+      Say(name,
+          "Enumerator value could not be computed "
+          "from the given expression"_err_en_US);
+      // Prevent resolution of next enumerators value
       enumerationState_.value = std::nullopt;
     }
-  } else if (enumerationState_.value) {
-    enumerationState_.value =
-        FoldExpr(evaluate::Increment(std::move(*enumerationState_.value)));
   }
 
   if (symbol) {
     if (enumerationState_.value.has_value()) {
-      symbol->get<ObjectEntityDetails>().set_init(
-          SomeExpr{*enumerationState_.value});
+      symbol->get<ObjectEntityDetails>().set_init(SomeExpr{
+          evaluate::Expr<evaluate::CInteger>{*enumerationState_.value}});
     } else {
       context().SetError(*symbol);
     }
+  }
+
+  if (enumerationState_.value) {
+    (*enumerationState_.value)++;
   }
   return false;
 }
