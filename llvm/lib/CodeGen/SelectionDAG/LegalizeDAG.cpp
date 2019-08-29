@@ -904,11 +904,10 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
         if (SrcVT.getScalarType() == MVT::f16) {
           EVT ISrcVT = SrcVT.changeTypeToInteger();
           EVT IDestVT = DestVT.changeTypeToInteger();
-          EVT LoadVT = TLI.getRegisterType(IDestVT.getSimpleVT());
+          EVT ILoadVT = TLI.getRegisterType(IDestVT.getSimpleVT());
 
-          SDValue Result = DAG.getExtLoad(ISD::ZEXTLOAD, dl, LoadVT,
-                                          Chain, Ptr, ISrcVT,
-                                          LD->getMemOperand());
+          SDValue Result = DAG.getExtLoad(ISD::ZEXTLOAD, dl, ILoadVT, Chain,
+                                          Ptr, ISrcVT, LD->getMemOperand());
           Value = DAG.getNode(ISD::FP16_TO_FP, dl, DestVT, Result);
           Chain = Result.getValue(1);
           break;
