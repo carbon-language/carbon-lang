@@ -1284,31 +1284,16 @@ defm VPBROADCASTDr : avx512_int_broadcast_reg_vl<0x7C, avx512vl_i32_info,
 defm VPBROADCASTQr : avx512_int_broadcast_reg_vl<0x7C, avx512vl_i64_info,
                                                  X86VBroadcast, GR64, HasAVX512>, VEX_W;
 
-// Provide aliases for broadcast from the same register class that
-// automatically does the extract.
-multiclass avx512_int_broadcast_rm_lowering<string Name,
-                                            X86VectorVTInfo DestInfo,
-                                            X86VectorVTInfo SrcInfo,
-                                            X86VectorVTInfo ExtInfo> {
-  def : Pat<(DestInfo.VT (X86VBroadcast (SrcInfo.VT SrcInfo.RC:$src))),
-            (!cast<Instruction>(Name#DestInfo.ZSuffix#"r")
-                (ExtInfo.VT (EXTRACT_SUBREG (SrcInfo.VT SrcInfo.RC:$src), sub_xmm)))>;
-}
-
 multiclass avx512_int_broadcast_rm_vl<bits<8> opc, string OpcodeStr,
                                         AVX512VLVectorVTInfo _, Predicate prd> {
   let Predicates = [prd] in {
     defm Z :   avx512_broadcast_rm<opc, OpcodeStr, NAME, WriteShuffle256,
                                    WriteShuffle256Ld, _.info512, _.info128>,
-               avx512_int_broadcast_rm_lowering<NAME, _.info512, _.info256, _.info128>,
                                   EVEX_V512;
-    // Defined separately to avoid redefinition.
-    defm Z_Alt : avx512_int_broadcast_rm_lowering<NAME, _.info512, _.info512, _.info128>;
   }
   let Predicates = [prd, HasVLX] in {
     defm Z256 : avx512_broadcast_rm<opc, OpcodeStr, NAME, WriteShuffle256,
                                     WriteShuffle256Ld, _.info256, _.info128>,
-                avx512_int_broadcast_rm_lowering<NAME, _.info256, _.info256, _.info128>,
                                  EVEX_V256;
     defm Z128 : avx512_broadcast_rm<opc, OpcodeStr, NAME, WriteShuffle,
                                     WriteShuffleXLd, _.info128, _.info128>,
@@ -1653,23 +1638,6 @@ defm VBROADCASTI32X2  : avx512_common_broadcast_i32x2<0x59, "vbroadcasti32x2",
                                           avx512vl_i32_info, avx512vl_i64_info>;
 defm VBROADCASTF32X2  : avx512_common_broadcast_32x2<0x19, "vbroadcastf32x2",
                                           avx512vl_f32_info, avx512vl_f64_info>;
-
-let Predicates = [HasVLX] in {
-def : Pat<(v8f32 (X86VBroadcast (v8f32 VR256X:$src))),
-          (VBROADCASTSSZ256r (v4f32 (EXTRACT_SUBREG (v8f32 VR256X:$src), sub_xmm)))>;
-def : Pat<(v4f64 (X86VBroadcast (v4f64 VR256X:$src))),
-          (VBROADCASTSDZ256r (v2f64 (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm)))>;
-}
-
-def : Pat<(v16f32 (X86VBroadcast (v16f32 VR512:$src))),
-          (VBROADCASTSSZr (v4f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm)))>;
-def : Pat<(v16f32 (X86VBroadcast (v8f32 VR256X:$src))),
-          (VBROADCASTSSZr (v4f32 (EXTRACT_SUBREG (v8f32 VR256X:$src), sub_xmm)))>;
-
-def : Pat<(v8f64 (X86VBroadcast (v8f64 VR512:$src))),
-          (VBROADCASTSDZr (v2f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm)))>;
-def : Pat<(v8f64 (X86VBroadcast (v4f64 VR256X:$src))),
-          (VBROADCASTSDZr (v2f64 (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm)))>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 BROADCAST MASK TO VECTOR REGISTER
