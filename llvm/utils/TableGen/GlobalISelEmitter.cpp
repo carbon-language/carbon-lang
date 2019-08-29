@@ -1064,6 +1064,7 @@ public:
     OPM_SameOperand,
     OPM_ComplexPattern,
     OPM_IntrinsicID,
+    OPM_CmpPredicate,
     OPM_Instruction,
     OPM_Int,
     OPM_LiteralInt,
@@ -1386,6 +1387,36 @@ public:
           << MatchTable::Comment("MI") << MatchTable::IntValue(InsnVarID)
           << MatchTable::Comment("Op") << MatchTable::IntValue(OpIdx)
           << MatchTable::IntValue(Value) << MatchTable::LineBreak;
+  }
+};
+
+/// Generates code to check that an operand is an CmpInst predicate
+class CmpPredicateOperandMatcher : public OperandPredicateMatcher {
+protected:
+  std::string PredName;
+
+public:
+  CmpPredicateOperandMatcher(unsigned InsnVarID, unsigned OpIdx,
+                             std::string P)
+    : OperandPredicateMatcher(OPM_CmpPredicate, InsnVarID, OpIdx), PredName(P) {}
+
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return OperandPredicateMatcher::isIdentical(B) &&
+           PredName == cast<CmpPredicateOperandMatcher>(&B)->PredName;
+  }
+
+  static bool classof(const PredicateMatcher *P) {
+    return P->getKind() == OPM_CmpPredicate;
+  }
+
+  void emitPredicateOpcodes(MatchTable &Table,
+                            RuleMatcher &Rule) const override {
+    Table << MatchTable::Opcode("GIM_CheckCmpPredicate")
+          << MatchTable::Comment("MI") << MatchTable::IntValue(InsnVarID)
+          << MatchTable::Comment("Op") << MatchTable::IntValue(OpIdx)
+          << MatchTable::Comment("Predicate")
+          << MatchTable::NamedValue("CmpInst", PredName)
+          << MatchTable::LineBreak;
   }
 };
 
@@ -3256,6 +3287,13 @@ Record *GlobalISelEmitter::findNodeEquiv(Record *N) const {
 
 const CodeGenInstruction *
 GlobalISelEmitter::getEquivNode(Record &Equiv, const TreePatternNode *N) const {
+  if (N->getNumChildren() >= 1) {
+    // setcc operation maps to two different G_* instructions based on the type.
+    if (!Equiv.isValueUnset("IfFloatingPoint") &&
+        MVT(N->getChild(0)->getSimpleType(0)).isFloatingPoint())
+      return &Target.getInstruction(Equiv.getValueAsDef("IfFloatingPoint"));
+  }
+
   for (const TreePredicateCall &Call : N->getPredicateCalls()) {
     const TreePredicateFn &Predicate = Call.Fn;
     if (!Equiv.isValueUnset("IfSignExtend") && Predicate.isLoad() &&
@@ -3265,6 +3303,7 @@ GlobalISelEmitter::getEquivNode(Record &Equiv, const TreePatternNode *N) const {
         Predicate.isZeroExtLoad())
       return &Target.getInstruction(Equiv.getValueAsDef("IfZeroExtend"));
   }
+
   return &Target.getInstruction(Equiv.getValueAsDef("I"));
 }
 
@@ -3505,6 +3544,34 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
       return InsnMatcher;
     }
 
+    // Special case because the operand order is changed from setcc. The
+    // predicate operand needs to be swapped from the last operand to the first
+    // source.
+
+    unsigned NumChildren = Src->getNumChildren();
+    bool IsFCmp = SrcGIOrNull->TheDef->getName() == "G_FCMP";
+
+    if (IsFCmp || SrcGIOrNull->TheDef->getName() == "G_ICMP") {
+      TreePatternNode *SrcChild = Src->getChild(NumChildren - 1);
+      if (SrcChild->isLeaf()) {
+        DefInit *DI = dyn_cast<DefInit>(SrcChild->getLeafValue());
+        Record *CCDef = DI ? DI->getDef() : nullptr;
+        if (!CCDef || !CCDef->isSubClassOf("CondCode"))
+          return failedImport("Unable to handle CondCode");
+
+        OperandMatcher &OM =
+          InsnMatcher.addOperand(OpIdx++, SrcChild->getName(), TempOpIdx);
+        StringRef PredType = IsFCmp ? CCDef->getValueAsString("FCmpPredicate") :
+                                      CCDef->getValueAsString("ICmpPredicate");
+
+        if (!PredType.empty()) {
+          OM.addPredicate<CmpPredicateOperandMatcher>(PredType);
+          // Process the other 2 operands normally.
+          --NumChildren;
+        }
+      }
+    }
+
     // Match the used operands (i.e. the children of the operator).
     bool IsIntrinsic =
         SrcGIOrNull->TheDef->getName() == "G_INTRINSIC" ||
@@ -3513,7 +3580,7 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
     if (IsIntrinsic && !II)
       return failedImport("Expected IntInit containing intrinsic ID)");
 
-    for (unsigned i = 0, e = Src->getNumChildren(); i != e; ++i) {
+    for (unsigned i = 0; i != NumChildren; ++i) {
       TreePatternNode *SrcChild = Src->getChild(i);
 
       // SelectionDAG allows pointers to be represented with iN since it doesn't
