@@ -132,6 +132,7 @@ const Node *getParentOfRootStmts(const Node *CommonAnc) {
     // always unselected.
     return Parent->ASTNode.get<DeclStmt>() ? Parent->Parent : Parent;
   }
+  llvm_unreachable("Unhandled SelectionTree::Selection enum");
 }
 
 // The ExtractionZone class forms a view of the code wrt Zone.
