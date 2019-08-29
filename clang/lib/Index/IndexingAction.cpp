@@ -23,7 +23,7 @@ using namespace clang::index;
 
 namespace {
 
-class IndexASTConsumer : public ASTConsumer {
+class IndexASTConsumer final : public ASTConsumer {
   std::shared_ptr<Preprocessor> PP;
   std::shared_ptr<IndexingContext> IndexCtx;
 
@@ -55,7 +55,7 @@ protected:
   }
 };
 
-class IndexPPCallbacks : public PPCallbacks {
+class IndexPPCallbacks final : public PPCallbacks {
   std::shared_ptr<IndexingContext> IndexCtx;
 
 public:
@@ -110,7 +110,7 @@ protected:
   }
 };
 
-class IndexAction : public ASTFrontendAction, IndexActionBase {
+class IndexAction final : public ASTFrontendAction, IndexActionBase {
 public:
   IndexAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
               IndexingOptions Opts)
@@ -133,7 +133,7 @@ protected:
   }
 };
 
-class WrappingIndexAction : public WrapperFrontendAction, IndexActionBase {
+class WrappingIndexAction final : public WrapperFrontendAction, IndexActionBase {
   bool IndexActionFailed = false;
 
 public:
