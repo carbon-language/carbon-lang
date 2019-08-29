@@ -113,39 +113,57 @@ declare i64 @llvm.aarch64.ldxr.p0i16(i16*) nounwind
 declare i64 @llvm.aarch64.ldxr.p0i32(i32*) nounwind
 declare i64 @llvm.aarch64.ldxr.p0i64(i64*) nounwind
 
+; FALLBACK-NOT: remark:{{.*}}test_store_i8
 define i32 @test_store_i8(i32, i8 %val, i8* %addr) {
 ; CHECK-LABEL: test_store_i8:
 ; CHECK-NOT: uxtb
 ; CHECK-NOT: and
 ; CHECK: stxrb w0, w1, [x2]
+; GISEL-LABEL: test_store_i8:
+; GISEL-NOT: uxtb
+; GISEL-NOT: and
+; GISEL: stxrb w0, w1, [x2]
   %extval = zext i8 %val to i64
   %res = call i32 @llvm.aarch64.stxr.p0i8(i64 %extval, i8* %addr)
   ret i32 %res
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_store_i16
 define i32 @test_store_i16(i32, i16 %val, i16* %addr) {
 ; CHECK-LABEL: test_store_i16:
 ; CHECK-NOT: uxth
 ; CHECK-NOT: and
 ; CHECK: stxrh w0, w1, [x2]
+; GISEL-LABEL: test_store_i16:
+; GISEL-NOT: uxth
+; GISEL-NOT: and
+; GISEL: stxrh w0, w1, [x2]
   %extval = zext i16 %val to i64
   %res = call i32 @llvm.aarch64.stxr.p0i16(i64 %extval, i16* %addr)
   ret i32 %res
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_store_i32
 define i32 @test_store_i32(i32, i32 %val, i32* %addr) {
 ; CHECK-LABEL: test_store_i32:
 ; CHECK-NOT: uxtw
 ; CHECK-NOT: and
 ; CHECK: stxr w0, w1, [x2]
+; GISEL-LABEL: test_store_i32:
+; GISEL-NOT: uxtw
+; GISEL-NOT: and
+; GISEL: stxr w0, w1, [x2]
   %extval = zext i32 %val to i64
   %res = call i32 @llvm.aarch64.stxr.p0i32(i64 %extval, i32* %addr)
   ret i32 %res
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_store_i64
 define i32 @test_store_i64(i32, i64 %val, i64* %addr) {
 ; CHECK-LABEL: test_store_i64:
 ; CHECK: stxr w0, x1, [x2]
+; GISEL-LABEL: test_store_i64:
+; GISEL: stxr w0, x1, [x2]
   %res = call i32 @llvm.aarch64.stxr.p0i64(i64 %val, i64* %addr)
   ret i32 %res
 }
