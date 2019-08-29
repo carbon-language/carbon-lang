@@ -54,8 +54,9 @@ public:
   bool select(MachineInstr &I) override;
   static const char *getName() { return DEBUG_TYPE; }
 
-  void setupMF(MachineFunction &MF, CodeGenCoverage &CoverageInfo) override {
-    InstructionSelector::setupMF(MF, CoverageInfo);
+  void setupMF(MachineFunction &MF, GISelKnownBits &KB,
+               CodeGenCoverage &CoverageInfo) override {
+    InstructionSelector::setupMF(MF, KB, CoverageInfo);
 
     // hasFnAttribute() is expensive to call on every BRCOND selection, so
     // cache it here for each run of the selector.
