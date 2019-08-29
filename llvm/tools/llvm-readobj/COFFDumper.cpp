@@ -1864,6 +1864,13 @@ void COFFDumper::printResourceDirectoryTable(
       W.printNumber("Major Version", Table.MajorVersion);
       W.printNumber("Minor Version", Table.MinorVersion);
       W.printNumber("Characteristics", Table.Characteristics);
+      ListScope DataScope(W, "Data");
+      auto &DataEntry =
+          unwrapOrError(Obj->getFileName(), RSF.getEntryData(Entry));
+      W.printHex("DataRVA", DataEntry.DataRVA);
+      W.printNumber("DataSize", DataEntry.DataSize);
+      W.printNumber("Codepage", DataEntry.Codepage);
+      W.printNumber("Reserved", DataEntry.Reserved);
     }
   }
 }

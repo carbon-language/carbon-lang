@@ -1707,9 +1707,27 @@ ResourceSectionRef::getTableEntryAtOffset(uint32_t Offset) {
   return *Entry;
 }
 
+Expected<const coff_resource_data_entry &>
+ResourceSectionRef::getDataEntryAtOffset(uint32_t Offset) {
+  const coff_resource_data_entry *Entry = nullptr;
+
+  BinaryStreamReader Reader(BBS);
+  Reader.setOffset(Offset);
+  RETURN_IF_ERROR(Reader.readObject(Entry));
+  assert(Entry != nullptr);
+  return *Entry;
+}
+
 Expected<const coff_resource_dir_table &>
 ResourceSectionRef::getEntrySubDir(const coff_resource_dir_entry &Entry) {
+  assert(Entry.Offset.isSubDir());
   return getTableAtOffset(Entry.Offset.value());
+}
+
+Expected<const coff_resource_data_entry &>
+ResourceSectionRef::getEntryData(const coff_resource_dir_entry &Entry) {
+  assert(!Entry.Offset.isSubDir());
+  return getDataEntryAtOffset(Entry.Offset.value());
 }
 
 Expected<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
