@@ -3525,6 +3525,50 @@ foldShiftIntoShiftInAnotherHandOfAndInICmp(ICmpInst &I, const SimplifyQuery SQ,
                             Constant::getNullValue(WidestTy));
 }
 
+/// Fold
+///   (-1 u/ x) u< y
+/// to
+///   @llvm.umul.with.overflow(x, y) plus extraction of overflow bit
+/// Note that the comparison is commutative, while inverted (u>=) predicate
+/// will mean that we are looking for the opposite answer.
+static Value *
+foldUnsignedMultiplicationOverflowCheck(ICmpInst &I,
+                                        InstCombiner::BuilderTy &Builder) {
+  ICmpInst::Predicate Pred;
+  Value *X, *Y;
+  bool NeedNegation;
+  // Look for: (-1 u/ x) u</u>= y
+  if (!I.isEquality() &&
+      match(&I, m_c_ICmp(Pred, m_OneUse(m_UDiv(m_AllOnes(), m_Value(X))),
+                         m_Value(Y)))) {
+    // Canonicalize as-if y was on RHS.
+    if (I.getOperand(1) != Y)
+      Pred = I.getSwappedPredicate();
+
+    // Are we checking that overflow does not happen, or does happen?
+    switch (Pred) {
+    case ICmpInst::Predicate::ICMP_ULT:
+      NeedNegation = false;
+      break; // OK
+    case ICmpInst::Predicate::ICMP_UGE:
+      NeedNegation = true;
+      break; // OK
+    default:
+      return nullptr; // Wrong predicate.
+    }
+  } else
+    return nullptr;
+
+  Function *F = Intrinsic::getDeclaration(
+      I.getModule(), Intrinsic::umul_with_overflow, X->getType());
+  CallInst *Call = Builder.CreateCall(F, {X, Y}, "umul");
+  Value *Res = Builder.CreateExtractValue(Call, 1, "umul.ov");
+  if (NeedNegation) // This technically increases instruction count.
+    Res = Builder.CreateNot(Res, "umul.not.ov");
+
+  return Res;
+}
+
 /// Try to fold icmp (binop), X or icmp X, (binop).
 /// TODO: A large part of this logic is duplicated in InstSimplify's
 /// simplifyICmpWithBinOp(). We should be able to share that and avoid the code
@@ -3873,6 +3917,9 @@ Instruction *InstCombiner::foldICmpBinOp(ICmpInst &I) {
       return new ICmpInst(ICmpInst::ICMP_NE, Op1, Zero);
     }
   }
+
+  if (Value *V = foldUnsignedMultiplicationOverflowCheck(I, Builder))
+    return replaceInstUsesWith(I, V);
 
   if (Value *V = foldICmpWithLowBitMaskedVal(I, Builder))
     return replaceInstUsesWith(I, V);
