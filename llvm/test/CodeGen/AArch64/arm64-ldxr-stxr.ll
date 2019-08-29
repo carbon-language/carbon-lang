@@ -33,6 +33,7 @@ declare i32 @llvm.aarch64.stxp(i64, i64, i8*) nounwind
 
 @var = global i64 0, align 8
 
+; FALLBACK-NOT: remark:{{.*}}test_load_i8
 define void @test_load_i8(i8* %addr) {
 ; CHECK-LABEL: test_load_i8:
 ; CHECK: ldxrb w[[LOADVAL:[0-9]+]], [x0]
@@ -40,6 +41,12 @@ define void @test_load_i8(i8* %addr) {
 ; CHECK-NOT: and
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; FIXME: GlobalISel doesn't fold ands/adds into load/store addressing modes
+; right now/ So, we won't get the :lo12:var.
+; GISEL-LABEL: test_load_i8:
+; GISEL: ldxrb w[[LOADVAL:[0-9]+]], [x0]
+; GISEL-NOT: uxtb
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldxr.p0i8(i8* %addr)
   %shortval = trunc i64 %val to i8
   %extval = zext i8 %shortval to i64
@@ -47,6 +54,7 @@ define void @test_load_i8(i8* %addr) {
   ret void
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_load_i16
 define void @test_load_i16(i16* %addr) {
 ; CHECK-LABEL: test_load_i16:
 ; CHECK: ldxrh w[[LOADVAL:[0-9]+]], [x0]
@@ -54,6 +62,10 @@ define void @test_load_i16(i16* %addr) {
 ; CHECK-NOT: and
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; GISEL-LABEL: test_load_i16:
+; GISEL: ldxrh w[[LOADVAL:[0-9]+]], [x0]
+; GISEL-NOT: uxtb
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldxr.p0i16(i16* %addr)
   %shortval = trunc i64 %val to i16
   %extval = zext i16 %shortval to i64
@@ -61,6 +73,7 @@ define void @test_load_i16(i16* %addr) {
   ret void
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_load_i32
 define void @test_load_i32(i32* %addr) {
 ; CHECK-LABEL: test_load_i32:
 ; CHECK: ldxr w[[LOADVAL:[0-9]+]], [x0]
@@ -68,6 +81,10 @@ define void @test_load_i32(i32* %addr) {
 ; CHECK-NOT: and
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; GISEL-LABEL: test_load_i32:
+; GISEL: ldxr w[[LOADVAL:[0-9]+]], [x0]
+; GISEL-NOT: uxtb
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldxr.p0i32(i32* %addr)
   %shortval = trunc i64 %val to i32
   %extval = zext i32 %shortval to i64
@@ -75,11 +92,16 @@ define void @test_load_i32(i32* %addr) {
   ret void
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_load_i64
 define void @test_load_i64(i64* %addr) {
 ; CHECK-LABEL: test_load_i64:
 ; CHECK: ldxr x[[LOADVAL:[0-9]+]], [x0]
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; GISEL-LABEL: test_load_i64:
+; GISEL: ldxr x[[LOADVAL:[0-9]+]], [x0]
+; GISEL-NOT: uxtb
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldxr.p0i64(i64* %addr)
   store i64 %val, i64* @var, align 8
   ret void
