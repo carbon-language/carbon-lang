@@ -3675,18 +3675,23 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
       TOut.emitRRI(Inst.getOpcode(), DstReg, TmpReg, Res.getConstant(), IDLoc,
                    STI);
     } else {
+      // FIXME: Implement 64-bit case.
+      // 1) lw $8, sym => lui $8,  %hi(sym)
+      //                  lw  $8,  %lo(sym)($8)
+      // 2) sw $8, sym => lui $at, %hi(sym)
+      //                  sw  $8,  %lo(sym)($at)
       const MCExpr *ExprOffset = OffsetOp.getExpr();
       MCOperand LoOperand = MCOperand::createExpr(
           MipsMCExpr::create(MipsMCExpr::MEK_LO, ExprOffset, getContext()));
       MCOperand HiOperand = MCOperand::createExpr(
           MipsMCExpr::create(MipsMCExpr::MEK_HI, ExprOffset, getContext()));
 
-      if (IsLoad)
-        TOut.emitLoadWithSymOffset(Inst.getOpcode(), DstReg, BaseReg, HiOperand,
-                                   LoOperand, TmpReg, IDLoc, STI);
-      else
-        TOut.emitStoreWithSymOffset(Inst.getOpcode(), DstReg, BaseReg,
-                                    HiOperand, LoOperand, TmpReg, IDLoc, STI);
+      // Generate the base address in TmpReg.
+      TOut.emitRX(Mips::LUi, TmpReg, HiOperand, IDLoc, STI);
+      if (BaseReg != Mips::ZERO)
+        TOut.emitRRR(Mips::ADDu, TmpReg, TmpReg, BaseReg, IDLoc, STI);
+      // Emit the load or store with the adjusted base and offset.
+      TOut.emitRRX(Inst.getOpcode(), DstReg, TmpReg, LoOperand, IDLoc, STI);
     }
     return;
   }
