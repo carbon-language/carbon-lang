@@ -2870,7 +2870,8 @@ bool MipsAsmParser::loadAndAddSymbolAddress(const MCExpr *SymExpr,
                                             const MCSubtargetInfo *STI) {
   // FIXME: These expansions do not respect -mxgot.
   MipsTargetStreamer &TOut = getTargetStreamer();
-  bool UseSrcReg = SrcReg != Mips::NoRegister;
+  bool UseSrcReg = SrcReg != Mips::NoRegister && SrcReg != Mips::ZERO &&
+                   SrcReg != Mips::ZERO_64;
   warnIfNoMacro(IDLoc);
 
   if (inPicMode() && ABI.IsO32()) {
@@ -3654,7 +3655,6 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   if (OffsetOp.isExpr()) {
     if (inPicMode()) {
       // FIXME:
-      // a) Fix lw/sw $reg, symbol($reg) instruction expanding.
       // c) Check that immediates of R_MIPS_GOT16/R_MIPS_LO16 relocations
       //    do not exceed 16-bit.
       // d) Use R_MIPS_GOT_PAGE/R_MIPS_GOT_OFST relocations instead
@@ -3670,7 +3670,7 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
         return;
       }
 
-      loadAndAddSymbolAddress(Res.getSymA(), TmpReg, Mips::NoRegister,
+      loadAndAddSymbolAddress(Res.getSymA(), TmpReg, BaseReg,
                               !ABI.ArePtrs64bit(), IDLoc, Out, STI);
       TOut.emitRRI(Inst.getOpcode(), DstReg, TmpReg, Res.getConstant(), IDLoc,
                    STI);
