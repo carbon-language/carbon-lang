@@ -895,8 +895,12 @@ bool DAGTypeLegalizer::CanSkipSoftenFloatOperand(SDNode *N, unsigned OpNo) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_BITCAST(SDNode *N) {
-  return DAG.getNode(ISD::BITCAST, SDLoc(N), N->getValueType(0),
-                     GetSoftenedFloat(N->getOperand(0)));
+  SDValue Op0 = GetSoftenedFloat(N->getOperand(0));
+
+  if (Op0 == N->getOperand(0))
+    return SDValue();
+
+  return DAG.getNode(ISD::BITCAST, SDLoc(N), N->getValueType(0), Op0);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_COPY_TO_REG(SDNode *N) {
