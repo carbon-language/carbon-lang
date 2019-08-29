@@ -25,8 +25,9 @@ functions, or calls to internal runtime support library routines.
   bounds default to 1.  These can be passed by with a single address
   and their contents are contiguous.
 * An *assumed-size* array is an explicit-shape array with `*` as its
-  final dimension, which the most-significant one in Fortran.
-* A *deferred-shape* array (`DIMENSION(:)`) is a `POINTER` or `ALLOCATABLE`.
+  final dimension, which is the most-significant one in Fortran
+  and whose value does not affect indexed address calculations.
+* A *deferred-shape* array (`DIMENSION::A(:)`) is a `POINTER` or `ALLOCATABLE`.
   `POINTER` target data might not be contiguous.
 * An *assumed-shape* (not size!) array is a dummy argument whose
   upper bounds take their values from the *shape* of the effective
@@ -36,8 +37,8 @@ functions, or calls to internal runtime support library routines.
   takes its length from the effective argument.
 * An *assumed-length* `CHARACTER(*)` result of an external function (C721)
   has its length determined by its eventual declaration in a calling scope.
-* An *assumed-rank* `DIMENSION(..)` dummy argument array has an unknown number
-  of dimensions.
+* An *assumed-rank* `DIMENSION::A(..)` dummy argument array has an unknown
+  number of dimensions.
 * A *polymorphic* `CLASS(t)` dummy argument has a specific derived type or any
   possible extension of that type.  An *unlimited polymorphic*
   `CLASS(*)` dummy argument can have intrinsic or derived type.
@@ -49,15 +50,16 @@ Referenced procedures may or may not have declared interfaces
 available to their call sites.
 
 Procedures with some post-Fortran '77 features *require* an
-explicit interface to be called (15.4.2.2) or even passed (4.3.4(2)):
+explicit interface to be called (15.4.2.2) or even passed (4.3.4(5)):
 
 * use of argument keywords in a call
 * procedures that are `ELEMENTAL` or `BIND(C)`
 * procedures that are required to be `PURE` due to the context of the call
   (specification expression, `DO CONCURRENT`, `FORALL`)
 * dummy arguments with these attributes: `ALLOCATABLE`, `POINTER`,
-  `VALUE`, `TARGET`, `OPTIONAL`, `ASYNCHRONOUS`, `VOLATILE`
-  (but *not* `CONTIGUOUS` or `INTENT()`)
+  `VALUE`, `TARGET`, `OPTIONAL`, `ASYNCHRONOUS`, `VOLATILE`,
+  and, as a consequence of limitations on its use, `CONTIGUOUS`;
+  `INTENT()`, however, does *not* require an explicit interface
 * dummy arguments that are coarrays
 * dummy arguments that are assumed-shape or assumed-rank arrays
 * dummy arguments with parameterized derived types
@@ -73,7 +75,7 @@ explicit interface to be called (15.4.2.2) or even passed (4.3.4(2)):
 Module procedures, internal procedures, procedure pointers,
 type-bound procedures, and recursive references by a procedure to itself
 always have explicit interfaces.
-(Consequentially, they cannot be assumed-length `CHARACTER(*)` functions;
+(Consequently, they cannot be assumed-length `CHARACTER(*)` functions;
 conveniently, assumed-length `CHARACTER(*)` functions are prohibited from
 recursion (15.6.2.1(3))).
 
@@ -87,7 +89,7 @@ require an explicit interface, even if they are all `KIND` type
 parameters.
 
 15.5.2.9(2) explicitly allows an assumed-length `CHARACTER(*)` function
-to be passed as an actual argument to an explicit-length dummy);
+to be passed as an actual argument to an explicit-length dummy;
 this has implications for calls to character-valued dummy functions
 and function pointers.
 (In the scopes that reference `CHARACTER` functions, they must have
@@ -134,14 +136,11 @@ and any internal procedures passed to them as arguments must be
 simple addresses of non-internal subprograms or trampolines for
 internal procedures.
 
-Note that `INTENT` and `CONTIGUOUS` attributes do not, by themselves,
+Note that the `INTENT` attribute does not, by itself,
 require the use of explicit interface; neither does the use of a dummy
 procedure (implicit or explicit in their interfaces).
-
-Analyses of calls to F77ish procedures must make
-allowances or impose restrictions capable of dealing with any of the
-invisible `INTENT` and `CONTIGUOUS` attributes of dummy arguments
-in the called procedure.
+So the analyis of calls to F77ish procedures must allow for the
+invisible use of `INTENT(OUT)`.
 
 ## Protocol overview
 
@@ -224,6 +223,10 @@ the subroutine's alternate return.
 1. Use the function result in an expression.
 1. Eventually, finalize &/or deallocate the function result.
 
+(I've omitted some obvious steps, like preserving/restoring callee-saved
+registers on entry/exit, dealing with caller-saved registers before/after
+calls, and architecture-dependent ABI requirements.)
+
 ## The messy details
 
 ### Copying effective argument values into temporary storage
@@ -256,18 +259,18 @@ be copied into temporaries in the following situations.
    `ALLOCATABLE` components, and may be best implemented with a runtime
    library routine working off a description of the type.
 1. Effective arguments associated with dummies with the `VALUE`
-   attribute need to copied; this could be done on either
+   attribute need to be copied; this can be done on either
    side of the call, but there are optimization opportunities
-   on the caller's side.
+   available when the caller's side bears the responsibility.
 1. In non-elemental calls, the values of array sections with
    vector-valued subscripts need to be gathered into temporaries.
    These effective arguments are not definable, and they are not allowed to
    be associated with non-`VALUE` dummy arguments with the attributes
-   `INTENT(IN)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, or `VOLATILE`
-   (15.4.2.4(21)); `INTENT()` can't always be checked.
+   `INTENT(OUT)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, or `VOLATILE`
+   (15.5.2.4(21)); `INTENT()` can't always be checked.
 1. Non-simply-contiguous (9.5.4) arrays being passed to non-`POINTER`
-   dummy arguments that must be contiguous due to a `CONTIGUOUS`
-   attribute or not being assumed-shape or assumed-rank (which
+   dummy arguments that must be contiguous (due to a `CONTIGUOUS`
+   attribute, or not being assumed-shape or assumed-rank; this
    is always the case for F77ish procedures).
    This should be a runtime decision, so that effective arguments
    that turn out to be contiguous can be passed cheaply.
@@ -280,10 +283,10 @@ be copied into temporaries in the following situations.
    candidates for being copied back to the original variable after
    the call* (see below).
 
-Fortran requires (18.3.6(5)) that interoperable procedure dummy
-arguments with `CONTIGUOUS` &/or assumed-length `CHARACTER(*)`
-explicit-shape/assumed-size arrays handle the compaction of
-discontiguous data *in the callee*, at least when called from C.
+Fortran requires (18.3.6(5)) that calls to interoperable procedures
+with dummy argument arrays with contiguity requirements
+handle the compaction of discontiguous data *in the Fortran callee*,
+at least when called from C.
 And discontiguous data must be compacted on the *caller's* side
 when passed from Fortran to C (18.3.6(6)).
 
@@ -346,21 +349,24 @@ The preparation of effective arguments for `INTENT(OUT)` could be
 done on either side of the call.  If the preparation is
 done by the caller, there is an optimization opportunity
 in situations where unmodified incoming `INTENT(OUT)` dummy
-arguments are being passed onward as outgoing `INTENT(OUT)`
-arguments.
+arguments whose types lack `FINAL` procedures are being passed
+onward as outgoing `INTENT(OUT)` arguments.
 
 ### Arguments and function results requiring descriptors
 
-Dummy arguments are represented with the addresses of descriptors
+Dummy arguments are represented with the addresses of new descriptors
 when they have any of the following characteristics:
 
-1. assumed-shape array (`DIMENSION(:)`)
-1. assumed-rank array (`DIMENSION(..)`)
+1. assumed-shape array (`DIMENSION::A(:)`)
+1. assumed-rank array (`DIMENSION::A(..)`)
 1. parameterized derived type with assumed `LEN` parameters
 1. polymorphic (`CLASS(T)`, `CLASS(*)`)
 1. assumed-type (`TYPE(*)`)
 1. coarray dummy argument
 1. `INTENT(IN) POINTER` argument (15.5.2.7, C.10.4)
+
+`ALLOCATABLE` and other `POINTER` arguments can be passed by simple
+address.
 
 Non-F77ish procedures use descriptors to represent two further
 kinds of dummy arguments:
@@ -422,8 +428,9 @@ must be redistributed back to its original storage by the caller after
 the return.
 
 In conjunction with saved cosubscript values, a standard descriptor
-suffices to represent a pointer to the original storage into which the
-temporary data should be redistributed.
+would suffice to represent a pointer to the original storage into which the
+temporary data should be redistributed;
+the descriptor need not be fully populated with type information.
 
 Note that coindexed objects with `ALLOCATABLE` ultimate components
 are required to be associated only with dummy arguments with the
@@ -533,7 +540,7 @@ The names of non-F77ish external procedures
 should be distinguished as such so that incorrect attempts to call or pass
 them with an implicit interface will fail to resolve at link time.
 Fortran 2018 explicitly enables us to do this with a correction to Fortran
-2003 in 4.3.4(2).
+2003 in 4.3.4(5).
 
 Last, there must be reasonably permanent naming conventions used
 by the F18 runtime library for those unrestricted specific intrinsic
@@ -572,7 +579,9 @@ subprogram that requires an explicit interface) `Fa.foo`.
 * (6) coindexed effective with `ALLOCATABLE` ultimate component requires
       `INTENT(IN)` &/or `VALUE` dummy
 * (13) a coindexed scalar effective requires a scalar dummy
-* (14) a non-conindexed scalar usually requires a scalar dummy, with some exceptions
+* (14) a non-conindexed scalar effective usually requires a scalar dummy,
+  but there are some exceptions that allow elements of storage sequences
+  to be passed and treated like arrays
 * (15-17) array rank agreement
 * (20) `INTENT(OUT)` & `INTENT(IN OUT)` dummies require definable actuals
 * (21) array sections with vector subscripts can't be passed to definable dummies
@@ -602,7 +611,7 @@ the dummy and effective arguments have the same attributes:
 15.5.2.8 corray dummy arguments:
 * (1) effective argument must be coarray
 * (1) `VOLATILE` attributes must match
-* (2) `CONTIGUOUS` dummy (or implicitly contiguous non-assumed-shape/-rank array) requires simply contiguous actual
+* (2) explicitly or implicitly contiguous dummy array requires a simply contiguous actual
 
 15.5.2.9 dummy procedures:
 * (1) explicit dummy procedure interface must have same characteristics as actual
