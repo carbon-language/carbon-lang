@@ -1,8 +1,5 @@
 ; RUN: llc -filetype=obj -O0 < %s | llvm-dwarfdump -v - | FileCheck %s
 
-; XFAIL: *
-; PR43058
-
 ; debug_info content
 ; CHECK: DW_AT_name {{.*}} "foobar_func_block_invoke_0"
 ; CHECK-NOT: DW_TAG_subprogram

@@ -875,6 +875,7 @@ void LiveDebugValues::transferSpillOrRestoreInst(MachineInstr &MI,
       LLVM_DEBUG(dbgs() << "Spilling Register " << printReg(Reg, TRI) << '('
                         << VarLocIDs[ID].Var.getVar()->getName() << ")\n");
     } else if (TKind == TransferKind::TransferRestore &&
+               VarLocIDs[ID].Kind == VarLoc::SpillLocKind &&
                VarLocIDs[ID].Loc.SpillLocation == *Loc) {
       LLVM_DEBUG(dbgs() << "Restoring Register " << printReg(Reg, TRI) << '('
                         << VarLocIDs[ID].Var.getVar()->getName() << ")\n");
