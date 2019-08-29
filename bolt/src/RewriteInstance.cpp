@@ -1101,7 +1101,7 @@ void RewriteInstance::run() {
 
     // Skip disassembling if we have a translation table and we are running an
     // aggregation job.
-    if (!opts::AggregateOnly || !DA.usesBAT()) {
+    if (!opts::AggregateOnly || !BAT->enabledFor(InputFile)) {
       disassembleFunctions();
     }
 
