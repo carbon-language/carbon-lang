@@ -54,13 +54,20 @@ public:
 };
 
 class IndexASTConsumer final : public ASTConsumer {
-  std::shared_ptr<Preprocessor> PP;
+  std::shared_ptr<IndexDataConsumer> DataConsumer;
   std::shared_ptr<IndexingContext> IndexCtx;
+  std::shared_ptr<Preprocessor> PP;
 
 public:
-  IndexASTConsumer(std::shared_ptr<Preprocessor> PP,
-                   std::shared_ptr<IndexingContext> IndexCtx)
-      : PP(std::move(PP)), IndexCtx(std::move(IndexCtx)) {}
+  IndexASTConsumer(std::shared_ptr<IndexDataConsumer> DataConsumer,
+                   const IndexingOptions &Opts,
+                   std::shared_ptr<Preprocessor> PP)
+      : DataConsumer(std::move(DataConsumer)),
+        IndexCtx(new IndexingContext(Opts, *this->DataConsumer)),
+        PP(std::move(PP)) {
+    assert(this->DataConsumer != nullptr);
+    assert(this->PP != nullptr);
+  }
 
 protected:
   void Initialize(ASTContext &Context) override {
@@ -83,27 +90,25 @@ protected:
   }
 
   void HandleTranslationUnit(ASTContext &Ctx) override {
+    DataConsumer->finish();
   }
 };
 
 class IndexActionBase {
 protected:
   std::shared_ptr<IndexDataConsumer> DataConsumer;
-  std::shared_ptr<IndexingContext> IndexCtx;
+  IndexingOptions Opts;
 
-  IndexActionBase(std::shared_ptr<IndexDataConsumer> dataConsumer,
+  IndexActionBase(std::shared_ptr<IndexDataConsumer> DataConsumer,
                   IndexingOptions Opts)
-      : DataConsumer(std::move(dataConsumer)),
-        IndexCtx(new IndexingContext(Opts, *DataConsumer)) {}
+      : DataConsumer(std::move(DataConsumer)), Opts(Opts) {
+    assert(this->DataConsumer != nullptr);
+  }
 
   std::unique_ptr<IndexASTConsumer>
   createIndexASTConsumer(CompilerInstance &CI) {
-    return std::make_unique<IndexASTConsumer>(CI.getPreprocessorPtr(),
-                                               IndexCtx);
-  }
-
-  void finish() {
-    DataConsumer->finish();
+    return std::make_unique<IndexASTConsumer>(DataConsumer, Opts,
+                                              CI.getPreprocessorPtr());
   }
 };
 
@@ -118,16 +123,10 @@ protected:
                                                  StringRef InFile) override {
     return createIndexASTConsumer(CI);
   }
-
-  void EndSourceFileAction() override {
-    FrontendAction::EndSourceFileAction();
-    finish();
-  }
 };
 
-class WrappingIndexAction final : public WrapperFrontendAction, IndexActionBase {
-  bool IndexActionFailed = false;
-
+class WrappingIndexAction final : public WrapperFrontendAction,
+                                  IndexActionBase {
 public:
   WrappingIndexAction(std::unique_ptr<FrontendAction> WrappedAction,
                       std::shared_ptr<IndexDataConsumer> DataConsumer,
@@ -140,7 +139,6 @@ protected:
                                                  StringRef InFile) override {
     auto OtherConsumer = WrapperFrontendAction::CreateASTConsumer(CI, InFile);
     if (!OtherConsumer) {
-      IndexActionFailed = true;
       return nullptr;
     }
 
@@ -148,13 +146,6 @@ protected:
     Consumers.push_back(std::move(OtherConsumer));
     Consumers.push_back(createIndexASTConsumer(CI));
     return std::make_unique<MultiplexConsumer>(std::move(Consumers));
-  }
-
-  void EndSourceFileAction() override {
-    // Invoke wrapped action's method.
-    WrapperFrontendAction::EndSourceFileAction();
-    if (!IndexActionFailed)
-      finish();
   }
 };
 
@@ -164,10 +155,11 @@ std::unique_ptr<FrontendAction>
 index::createIndexingAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
                             IndexingOptions Opts,
                             std::unique_ptr<FrontendAction> WrappedAction) {
+  assert(DataConsumer != nullptr);
+
   if (WrappedAction)
     return std::make_unique<WrappingIndexAction>(std::move(WrappedAction),
-                                                  std::move(DataConsumer),
-                                                  Opts);
+                                                 std::move(DataConsumer), Opts);
   return std::make_unique<IndexAction>(std::move(DataConsumer), Opts);
 }
 
