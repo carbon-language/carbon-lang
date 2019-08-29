@@ -7067,25 +7067,25 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   // fold (not (or x, y)) -> (and (not x), (not y)) iff x or y are setcc
   if (isOneConstant(N1) && VT == MVT::i1 && N0.hasOneUse() &&
       (N0Opcode == ISD::OR || N0Opcode == ISD::AND)) {
-    SDValue LHS = N0.getOperand(0), RHS = N0.getOperand(1);
-    if (isOneUseSetCC(RHS) || isOneUseSetCC(LHS)) {
+    SDValue N00 = N0.getOperand(0), N01 = N0.getOperand(1);
+    if (isOneUseSetCC(N01) || isOneUseSetCC(N00)) {
       unsigned NewOpcode = N0Opcode == ISD::AND ? ISD::OR : ISD::AND;
-      LHS = DAG.getNode(ISD::XOR, SDLoc(LHS), VT, LHS, N1); // LHS = ~LHS
-      RHS = DAG.getNode(ISD::XOR, SDLoc(RHS), VT, RHS, N1); // RHS = ~RHS
-      AddToWorklist(LHS.getNode()); AddToWorklist(RHS.getNode());
-      return DAG.getNode(NewOpcode, DL, VT, LHS, RHS);
+      N00 = DAG.getNode(ISD::XOR, SDLoc(N00), VT, N00, N1); // N00 = ~N00
+      N01 = DAG.getNode(ISD::XOR, SDLoc(N01), VT, N01, N1); // N01 = ~N01
+      AddToWorklist(N00.getNode()); AddToWorklist(N01.getNode());
+      return DAG.getNode(NewOpcode, DL, VT, N00, N01);
     }
   }
   // fold (not (or x, y)) -> (and (not x), (not y)) iff x or y are constants
   if (isAllOnesConstant(N1) && N0.hasOneUse() &&
       (N0Opcode == ISD::OR || N0Opcode == ISD::AND)) {
-    SDValue LHS = N0.getOperand(0), RHS = N0.getOperand(1);
-    if (isa<ConstantSDNode>(RHS) || isa<ConstantSDNode>(LHS)) {
+    SDValue N00 = N0.getOperand(0), N01 = N0.getOperand(1);
+    if (isa<ConstantSDNode>(N01) || isa<ConstantSDNode>(N00)) {
       unsigned NewOpcode = N0Opcode == ISD::AND ? ISD::OR : ISD::AND;
-      LHS = DAG.getNode(ISD::XOR, SDLoc(LHS), VT, LHS, N1); // LHS = ~LHS
-      RHS = DAG.getNode(ISD::XOR, SDLoc(RHS), VT, RHS, N1); // RHS = ~RHS
-      AddToWorklist(LHS.getNode()); AddToWorklist(RHS.getNode());
-      return DAG.getNode(NewOpcode, DL, VT, LHS, RHS);
+      N00 = DAG.getNode(ISD::XOR, SDLoc(N00), VT, N00, N1); // N00 = ~N00
+      N01 = DAG.getNode(ISD::XOR, SDLoc(N01), VT, N01, N1); // N01 = ~N01
+      AddToWorklist(N00.getNode()); AddToWorklist(N01.getNode());
+      return DAG.getNode(NewOpcode, DL, VT, N00, N01);
     }
   }
 
