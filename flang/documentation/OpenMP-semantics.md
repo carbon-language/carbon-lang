@@ -632,8 +632,6 @@ into `.mod` files in their corresponding Specification Part:
     We should abort in case of errors
     because there is no point to perform further checks
     if it is not a legal OpenMP construct
-    4. N.B. Consider moving this code and the do-loops code
-    to the parser namespace.
 3. Validate the structured-block
     1. Structured-block is a block of executable statements
     1. Single entry and single exit
