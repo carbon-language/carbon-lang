@@ -167,7 +167,8 @@ some design alternatives that are explored further below.
    package them into single address (for calls to internal procedures &
    for calls that pass internal procedures as arguments).
 1. Resolve the target procedure's polymorphic binding, if any.
-1. Marshal effective argument addresses (or values for `VALUE`/`%VAL()`) into registers.
+1. Marshal effective argument addresses (or values for `%VAL()` and some
+   discretionary `VALUE` arguments) into registers.
 1. Marshal `CHARACTER` argument lengths in additional value arguments for
    `CHARACTER` effective arguments not passed via descriptors.
 1. Marshal an extra argument for the length of a `CHARACTER` function
@@ -180,7 +181,10 @@ some design alternatives that are explored further below.
 1. Jump.
 
 ### On entry:
-1. Shuffle `ENTRY` dummy arguments & jump to common entry point.
+1. For subprograms with alternate `ENTRY` points: shuffle `ENTRY` dummy arguments
+   set a compiler-generated variable to identify the alternate entry point,
+   and jump to the common entry point for common processing and a `switch()`
+   to the statement after the `ENTRY`.
 1. Capture `CHARACTER` argument &/or assumed-length result length values.
 1. Complete `VALUE` copying if this step will not always be done
    by the caller (as I think it should be).
@@ -278,7 +282,7 @@ be copied into temporaries in the following situations.
    are required to be simply contiguous when this rule would otherwise
    force the use of a temporary (15.5.2.8); neither does it apply
    to `ASYNCHRONOUS` and `VOLATILE` effective arguments, which are
-   disallowed when it matters (C1539, C1540).
+   disallowed when copies would be necessary (C1538 - C1540).
    *Only temporaries created by this contiguity requirement are
    candidates for being copied back to the original variable after
    the call* (see below).
@@ -313,6 +317,8 @@ contiguity -- don't have to populate it, but they do have to perform
 minimal initialization of any `ALLOCATABLE` components so that
 the runtime doesn't crash when the callee finalizes and deallocates
 them.
+`ALLOCATABLE` coarrays are prohibited from being affected by `INTENT(OUT)`
+(see C846).
 Note that calls to implicit interfaces must conservatively allow
 for the use of `INTENT(OUT)` by the callee.
 
@@ -342,7 +348,7 @@ the elements of an array are finalized by a scalar or elemental
 `FINAL` procedure (7.5.6.3(7)).
 
 Derived type components that are `ALLOCATABLE` are finalized
-and deallocated.
+and deallocated; they are prohibited from being coarrays.
 Components with initializers are (re)initialized.
 
 The preparation of effective arguments for `INTENT(OUT)` could be
@@ -566,6 +572,18 @@ subprogram that requires an explicit interface) `Fa.foo`.
 
 ## Summary of checks to be enforced in semantics analysis
 
+8.5.10 `INTENT` attributes
+* (C846) An `INTENT(OUT)` argument shall not be associated with an
+  object that is or has an allocatable coarray.
+* (C847) An `INTENT(OUT)` argument shall not have `LOCK_TYPE` or `EVENT_TYPE`.
+
+8.5.18 `VALUE` attribute
+* (C863) The argument cannot be assumed-size, a coarray, or have a coarray
+  ultimate component.
+* (C864) The argument cannot be `ALLOCATABLE`, `POINTER`, `INTENT(OUT)`,
+  `INTENT(IN OUT)`, or `VOLATILE`.
+* (C865) If the procedure is `BIND(C)`, the argument cannot be `OPTIONAL`.
+
 15.5.1 procedure references:
 * (C1533) can't pass non-intrinsic `ELEMENTAL` as argument
 * (C1536) alternate return labels must be in the inclusive scope
@@ -581,8 +599,9 @@ subprogram that requires an explicit interface) `Fa.foo`.
 * (13) a coindexed scalar effective requires a scalar dummy
 * (14) a non-conindexed scalar effective usually requires a scalar dummy,
   but there are some exceptions that allow elements of storage sequences
-  to be passed and treated like arrays
-* (15-17) array rank agreement
+  to be passed and treated like explicit-shape or assumed-size arrays
+  (see 15.5.2.11)
+* (16) array rank agreement
 * (20) `INTENT(OUT)` & `INTENT(IN OUT)` dummies require definable actuals
 * (21) array sections with vector subscripts can't be passed to definable dummies
        (`INTENT(OUT)`, `INTENT(IN OUT)`, `ASYNCHRONOUS`, `VOLATILE`)
