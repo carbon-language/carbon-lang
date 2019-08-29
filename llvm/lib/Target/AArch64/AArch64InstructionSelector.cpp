@@ -3912,23 +3912,6 @@ static unsigned findIntrinsicID(MachineInstr &I) {
   return IntrinOp->getIntrinsicID();
 }
 
-/// Helper function to emit the correct opcode for a llvm.aarch64.stlxr
-/// intrinsic.
-static unsigned getStlxrOpcode(unsigned NumBytesToStore) {
-  switch (NumBytesToStore) {
-  // TODO: 1 and 2 byte stores
-  case 4:
-    return AArch64::STLXRW;
-  case 8:
-    return AArch64::STLXRX;
-  default:
-    LLVM_DEBUG(dbgs() << "Unexpected number of bytes to store! ("
-                      << NumBytesToStore << ")\n");
-    break;
-  }
-  return 0;
-}
-
 bool AArch64InstructionSelector::selectIntrinsicWithSideEffects(
     MachineInstr &I, MachineRegisterInfo &MRI) const {
   // Find the intrinsic ID.
@@ -3949,48 +3932,6 @@ bool AArch64InstructionSelector::selectIntrinsicWithSideEffects(
       return false;
     MIRBuilder.buildInstr(AArch64::BRK, {}, {}).addImm(0xF000);
     break;
-  case Intrinsic::aarch64_stlxr:
-    Register StatReg = I.getOperand(0).getReg();
-    assert(RBI.getSizeInBits(StatReg, MRI, TRI) == 32 &&
-           "Status register must be 32 bits!");
-    Register SrcReg = I.getOperand(2).getReg();
-
-    if (RBI.getSizeInBits(SrcReg, MRI, TRI) != 64) {
-      LLVM_DEBUG(dbgs() << "Only support 64-bit sources right now.\n");
-      return false;
-    }
-
-    Register PtrReg = I.getOperand(3).getReg();
-    assert(MRI.getType(PtrReg).isPointer() && "Expected pointer operand");
-
-    // Expect only one memory operand.
-    if (!I.hasOneMemOperand())
-      return false;
-
-    const MachineMemOperand *MemOp = *I.memoperands_begin();
-    unsigned NumBytesToStore = MemOp->getSize();
-    unsigned Opc = getStlxrOpcode(NumBytesToStore);
-    if (!Opc)
-      return false;
-    unsigned NumBitsToStore = NumBytesToStore * 8;
-    if (NumBitsToStore != 64) {
-      // The intrinsic always has a 64-bit source, but we might actually want
-      // a differently-sized source for the instruction. Try to get it.
-      // TODO: For 1 and 2-byte stores, this will have a G_AND. For now, let's
-      // just handle 4-byte stores.
-      // TODO: If we don't find a G_ZEXT, we'll have to truncate the value down
-      // to the right size for the STLXR.
-      MachineInstr *Zext = getOpcodeDef(TargetOpcode::G_ZEXT, SrcReg, MRI);
-      if (!Zext)
-        return false;
-      SrcReg = Zext->getOperand(1).getReg();
-      // We should get an appropriately-sized register here.
-      if (RBI.getSizeInBits(SrcReg, MRI, TRI) != NumBitsToStore)
-        return false;
-    }
-    auto StoreMI = MIRBuilder.buildInstr(Opc, {StatReg}, {SrcReg, PtrReg})
-                       .addMemOperand(*I.memoperands_begin());
-    constrainSelectedInstRegOperands(*StoreMI, TII, TRI, RBI);
   }
 
   I.eraseFromParent();
