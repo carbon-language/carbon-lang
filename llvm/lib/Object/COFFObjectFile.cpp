@@ -1662,9 +1662,12 @@ std::error_code BaseRelocRef::getRVA(uint32_t &Result) const {
   return std::error_code();
 }
 
-#define RETURN_IF_ERROR(E)                                                     \
-  if (E)                                                                       \
-    return E;
+#define RETURN_IF_ERROR(Expr)                                                  \
+  do {                                                                         \
+    Error E = (Expr);                                                          \
+    if (E)                                                                     \
+      return std::move(E);                                                     \
+  } while (0)
 
 Expected<ArrayRef<UTF16>>
 ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
