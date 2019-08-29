@@ -19,6 +19,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Index/IndexingAction.h"
 #include "clang/Lex/HeaderSearch.h"
@@ -367,14 +368,16 @@ public:
 
 class IndexingFrontendAction : public ASTFrontendAction {
   std::shared_ptr<CXIndexDataConsumer> DataConsumer;
+  IndexingOptions Opts;
 
   SharedParsedRegionsStorage *SKData;
   std::unique_ptr<ParsedSrcLocationsTracker> ParsedLocsTracker;
 
 public:
   IndexingFrontendAction(std::shared_ptr<CXIndexDataConsumer> dataConsumer,
+                         const IndexingOptions &Opts,
                          SharedParsedRegionsStorage *skData)
-      : DataConsumer(std::move(dataConsumer)), SKData(skData) {}
+      : DataConsumer(std::move(dataConsumer)), Opts(Opts), SKData(skData) {}
 
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) override {
@@ -398,8 +401,12 @@ public:
           std::make_unique<ParsedSrcLocationsTracker>(*SKData, *PPRec, PP);
     }
 
-    return std::make_unique<IndexingConsumer>(*DataConsumer,
-                                              ParsedLocsTracker.get());
+    std::vector<std::unique_ptr<ASTConsumer>> Consumers;
+    Consumers.push_back(std::make_unique<IndexingConsumer>(
+        *DataConsumer, ParsedLocsTracker.get()));
+    Consumers.push_back(
+        createIndexingASTConsumer(DataConsumer, Opts, CI.getPreprocessorPtr()));
+    return std::make_unique<MultiplexConsumer>(std::move(Consumers));
   }
 
   TranslationUnitKind getTranslationUnitKind() override {
@@ -569,12 +576,9 @@ static CXErrorCode clang_indexSourceFile_Impl(
   auto DataConsumer =
     std::make_shared<CXIndexDataConsumer>(client_data, CB, index_options,
                                           CXTU->getTU());
-  auto InterAction = std::make_unique<IndexingFrontendAction>(DataConsumer,
-                         SkipBodies ? IdxSession->SkipBodyData.get() : nullptr);
-  std::unique_ptr<FrontendAction> IndexAction;
-  IndexAction = createIndexingAction(DataConsumer,
-                                getIndexingOptionsFromCXOptions(index_options),
-                                     std::move(InterAction));
+  auto IndexAction = std::make_unique<IndexingFrontendAction>(
+      DataConsumer, getIndexingOptionsFromCXOptions(index_options),
+      SkipBodies ? IdxSession->SkipBodyData.get() : nullptr);
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<FrontendAction>
@@ -995,4 +999,3 @@ CXSourceLocation clang_indexLoc_getCXSourceLocation(CXIdxLoc location) {
       *static_cast<CXIndexDataConsumer*>(location.ptr_data[0]);
   return cxloc::translateSourceLocation(DataConsumer.getASTContext(), Loc);
 }
-

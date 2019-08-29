@@ -94,72 +94,38 @@ protected:
   }
 };
 
-class IndexActionBase {
-protected:
+class IndexAction final : public ASTFrontendAction {
   std::shared_ptr<IndexDataConsumer> DataConsumer;
   IndexingOptions Opts;
 
-  IndexActionBase(std::shared_ptr<IndexDataConsumer> DataConsumer,
-                  IndexingOptions Opts)
+public:
+  IndexAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
+              const IndexingOptions &Opts)
       : DataConsumer(std::move(DataConsumer)), Opts(Opts) {
     assert(this->DataConsumer != nullptr);
   }
 
-  std::unique_ptr<IndexASTConsumer>
-  createIndexASTConsumer(CompilerInstance &CI) {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override {
     return std::make_unique<IndexASTConsumer>(DataConsumer, Opts,
                                               CI.getPreprocessorPtr());
   }
 };
 
-class IndexAction final : public ASTFrontendAction, IndexActionBase {
-public:
-  IndexAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
-              IndexingOptions Opts)
-    : IndexActionBase(std::move(DataConsumer), Opts) {}
-
-protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override {
-    return createIndexASTConsumer(CI);
-  }
-};
-
-class WrappingIndexAction final : public WrapperFrontendAction,
-                                  IndexActionBase {
-public:
-  WrappingIndexAction(std::unique_ptr<FrontendAction> WrappedAction,
-                      std::shared_ptr<IndexDataConsumer> DataConsumer,
-                      IndexingOptions Opts)
-    : WrapperFrontendAction(std::move(WrappedAction)),
-      IndexActionBase(std::move(DataConsumer), Opts) {}
-
-protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override {
-    auto OtherConsumer = WrapperFrontendAction::CreateASTConsumer(CI, InFile);
-    if (!OtherConsumer) {
-      return nullptr;
-    }
-
-    std::vector<std::unique_ptr<ASTConsumer>> Consumers;
-    Consumers.push_back(std::move(OtherConsumer));
-    Consumers.push_back(createIndexASTConsumer(CI));
-    return std::make_unique<MultiplexConsumer>(std::move(Consumers));
-  }
-};
-
 } // anonymous namespace
+
+std::unique_ptr<ASTConsumer>
+index::createIndexingASTConsumer(std::shared_ptr<IndexDataConsumer> DataConsumer,
+                          const IndexingOptions &Opts,
+                          std::shared_ptr<Preprocessor> PP) {
+  return std::make_unique<IndexASTConsumer>(DataConsumer, Opts, PP);
+}
 
 std::unique_ptr<FrontendAction>
 index::createIndexingAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
-                            IndexingOptions Opts,
-                            std::unique_ptr<FrontendAction> WrappedAction) {
+                            const IndexingOptions &Opts) {
   assert(DataConsumer != nullptr);
-
-  if (WrappedAction)
-    return std::make_unique<WrappingIndexAction>(std::move(WrappedAction),
-                                                 std::move(DataConsumer), Opts);
   return std::make_unique<IndexAction>(std::move(DataConsumer), Opts);
 }
 
