@@ -81,15 +81,125 @@ public:
     context_.set_location(std::nullopt);
   }
 
-  bool Pre(const parser::ExecutableConstruct &executable) {
-    context_.PushExecutable(executable);
-    Enter(executable);
+  bool Pre(const parser::AssociateConstruct &associateConstruct) {
+    context_.PushConstruct(&associateConstruct);
+    Enter(associateConstruct);
     return true;
   }
 
-  void Post(const parser::ExecutableConstruct &executable) {
-    Leave(executable);
-    context_.PopExecutable();
+  bool Pre(const parser::BlockConstruct &blockConstruct) {
+    context_.PushConstruct(&blockConstruct);
+    Enter(blockConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::CaseConstruct &caseConstruct) {
+    context_.PushConstruct(&caseConstruct);
+    Enter(caseConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::DoConstruct &doConstruct) {
+    context_.PushConstruct(&doConstruct);
+    Enter(doConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::CriticalConstruct &criticalConstruct) {
+    context_.PushConstruct(&criticalConstruct);
+    Enter(criticalConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::ChangeTeamConstruct &changeTeamConstruct) {
+    context_.PushConstruct(&changeTeamConstruct);
+    Enter(changeTeamConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::ForAllConstruct &forAllConstruct) {
+    context_.PushConstruct(&forAllConstruct);
+    Enter(forAllConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::IfConstruct &ifConstruct) {
+    context_.PushConstruct(&ifConstruct);
+    Enter(ifConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::SelectRankConstruct &selectRankConstruct) {
+    context_.PushConstruct(&selectRankConstruct);
+    Enter(selectRankConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::SelectTypeConstruct &selectTypeConstruct) {
+    context_.PushConstruct(&selectTypeConstruct);
+    Enter(selectTypeConstruct);
+    return true;
+  }
+
+  bool Pre(const parser::WhereConstruct &whereConstruct) {
+    context_.PushConstruct(&whereConstruct);
+    Enter(whereConstruct);
+    return true;
+  }
+
+  void Post(const parser::AssociateConstruct &associateConstruct) {
+    Leave(associateConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::BlockConstruct &blockConstruct) {
+    Leave(blockConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::CaseConstruct &caseConstruct) {
+    Leave(caseConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::DoConstruct &doConstruct) {
+    Leave(doConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::CriticalConstruct &criticalConstruct) {
+    Leave(criticalConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::ChangeTeamConstruct &changeTeamConstruct) {
+    Leave(changeTeamConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::ForAllConstruct &forAllConstruct) {
+    Leave(forAllConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::IfConstruct &ifConstruct) {
+    Leave(ifConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::SelectRankConstruct &selectRankConstruct) {
+    Leave(selectRankConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::SelectTypeConstruct &selectTypeConstruct) {
+    Leave(selectTypeConstruct);
+    context_.PopConstruct();
+  }
+
+  void Post(const parser::WhereConstruct &whereConstruct) {
+    Leave(whereConstruct);
+    context_.PopConstruct();
   }
 
   bool Walk(const parser::Program &program) {
@@ -188,14 +298,22 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
   }
 }
 
-void SemanticsContext::PushExecutable(
-    const parser::ExecutableConstruct &executable) {
-  executables_.push_back(&executable);
+void SemanticsContext::PushConstruct(const ConstructNode &construct) {
+  constructStack_.emplace_back(construct);
 }
 
-void SemanticsContext::PopExecutable() {
-  CHECK(executables_.size() > 0);
-  executables_.pop_back();
+void SemanticsContext::PopConstruct() {
+  CHECK(!constructStack_.empty());
+  constructStack_.pop_back();
+}
+
+bool SemanticsContext::InsideDoConstruct() const {
+  for (const ConstructNode construct : constructStack_) {
+    if (std::holds_alternative<const parser::DoConstruct *>(construct)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool Semantics::Perform() {

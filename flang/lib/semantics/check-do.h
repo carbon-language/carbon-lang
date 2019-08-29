@@ -19,6 +19,8 @@
 
 namespace Fortran::parser {
 struct DoConstruct;
+struct CycleStmt;
+struct ExitStmt;
 }
 
 namespace Fortran::semantics {
@@ -31,8 +33,6 @@ public:
   void Enter(const parser::ExitStmt &);
 
 private:
-  void CheckLoneStmt(const char *const) const;
-
   SemanticsContext &context_;
 };
 }

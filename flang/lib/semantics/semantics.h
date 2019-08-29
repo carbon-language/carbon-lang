@@ -20,7 +20,6 @@
 #include "../evaluate/intrinsics.h"
 #include "../parser/features.h"
 #include "../parser/message.h"
-#include "../parser/parse-tree.h"
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -33,11 +32,30 @@ namespace Fortran::parser {
 struct Name;
 struct Program;
 class CookedSource;
+struct AssociateConstruct;
+struct BlockConstruct;
+struct CaseConstruct;
+struct DoConstruct;
+struct CriticalConstruct;
+struct ChangeTeamConstruct;
+struct ForAllConstruct;
+struct IfConstruct;
+struct SelectRankConstruct;
+struct SelectTypeConstruct;
+struct WhereConstruct;
 }
 
 namespace Fortran::semantics {
 
 class Symbol;
+
+using ConstructNode = std::variant<const parser::AssociateConstruct *,
+    const parser::BlockConstruct *, const parser::CaseConstruct *,
+    const parser::ChangeTeamConstruct *, const parser::CriticalConstruct *,
+    const parser::DoConstruct *, const parser::ForAllConstruct *,
+    const parser::IfConstruct *, const parser::SelectRankConstruct *,
+    const parser::SelectTypeConstruct *, const parser::WhereConstruct *>;
+using ConstructStack = std::vector<ConstructNode>;
 
 class SemanticsContext {
 public:
@@ -121,11 +139,10 @@ public:
   const Scope &FindScope(parser::CharBlock) const;
   Scope &FindScope(parser::CharBlock);
 
-  const std::vector<const parser::ExecutableConstruct *> executables() const {
-    return executables_;
-  }
-  void PushExecutable(const parser::ExecutableConstruct &executable);
-  void PopExecutable();
+  const ConstructStack &constructStack() const { return constructStack_; }
+  void PushConstruct(const ConstructNode &construct);
+  void PopConstruct();
+  bool InsideDoConstruct() const;
 
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
@@ -143,7 +160,7 @@ private:
   evaluate::FoldingContext foldingContext_{defaultKinds_};
 
   bool CheckError(bool);
-  std::vector<const parser::ExecutableConstruct *> executables_;
+  ConstructStack constructStack_;
 };
 
 class Semantics {

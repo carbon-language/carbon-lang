@@ -17,6 +17,25 @@
 ! C1166 An EXIT statement must be within a DO construct
 
 subroutine s1()
+! this one's OK
+  do i = 1,10
+    cycle
+  end do
+
+! this one's OK
+  do i = 1,10
+    exit
+  end do
+
+! all of these are OK
+  outer: do i = 1,10
+    cycle
+    inner: do j = 1,10
+      cycle
+    end do inner
+    cycle
+  end do outer
+
 !ERROR: CYCLE must be within a DO construct
   cycle
 
