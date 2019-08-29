@@ -16460,7 +16460,8 @@ SDValue DAGCombiner::combineInsertEltToShuffle(SDNode *N, unsigned InsIndex) {
 
       auto *ExtrIndex = cast<ConstantSDNode>(InsertVal.getOperand(1));
       NewMask[InsIndex] = XOffset + ExtrIndex->getZExtValue();
-      assert(NewMask[InsIndex] < 2 * Vec.getValueType().getVectorNumElements() &&
+      assert(NewMask[InsIndex] <
+                 (int)(2 * Vec.getValueType().getVectorNumElements()) &&
              NewMask[InsIndex] >= 0 && "NewMask[InsIndex] is out of bound");
 
       SDValue LegalShuffle =
