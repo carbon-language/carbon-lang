@@ -1209,11 +1209,15 @@ public:
   Expected<const coff_resource_dir_table &>
   getEntrySubDir(const coff_resource_dir_entry &Entry);
   Expected<const coff_resource_dir_table &> getBaseTable();
+  Expected<const coff_resource_dir_entry &>
+  getTableEntry(const coff_resource_dir_table &Table, uint32_t Index);
 
 private:
   BinaryByteStream BBS;
 
   Expected<const coff_resource_dir_table &> getTableAtOffset(uint32_t Offset);
+  Expected<const coff_resource_dir_entry &>
+  getTableEntryAtOffset(uint32_t Offset);
   Expected<ArrayRef<UTF16>> getDirStringAtOffset(uint32_t Offset);
 };
 

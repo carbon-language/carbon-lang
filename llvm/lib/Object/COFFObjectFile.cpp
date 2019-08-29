@@ -1696,6 +1696,17 @@ ResourceSectionRef::getTableAtOffset(uint32_t Offset) {
   return *Table;
 }
 
+Expected<const coff_resource_dir_entry &>
+ResourceSectionRef::getTableEntryAtOffset(uint32_t Offset) {
+  const coff_resource_dir_entry *Entry = nullptr;
+
+  BinaryStreamReader Reader(BBS);
+  Reader.setOffset(Offset);
+  RETURN_IF_ERROR(Reader.readObject(Entry));
+  assert(Entry != nullptr);
+  return *Entry;
+}
+
 Expected<const coff_resource_dir_table &>
 ResourceSectionRef::getEntrySubDir(const coff_resource_dir_entry &Entry) {
   return getTableAtOffset(Entry.Offset.value());
@@ -1703,4 +1714,15 @@ ResourceSectionRef::getEntrySubDir(const coff_resource_dir_entry &Entry) {
 
 Expected<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
   return getTableAtOffset(0);
+}
+
+Expected<const coff_resource_dir_entry &>
+ResourceSectionRef::getTableEntry(const coff_resource_dir_table &Table,
+                                  uint32_t Index) {
+  if (Index >= (uint32_t)(Table.NumberOfNameEntries + Table.NumberOfIDEntries))
+    return createStringError(object_error::parse_failed, "index out of range");
+  const uint8_t *TablePtr = reinterpret_cast<const uint8_t *>(&Table);
+  ptrdiff_t TableOffset = TablePtr - BBS.data().data();
+  return getTableEntryAtOffset(TableOffset + sizeof(Table) +
+                               Index * sizeof(coff_resource_dir_entry));
 }

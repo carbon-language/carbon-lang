@@ -171,9 +171,6 @@ private:
   void printDelayImportedSymbols(
       const DelayImportDirectoryEntryRef &I,
       iterator_range<imported_symbol_iterator> Range);
-  Expected<const coff_resource_dir_entry &>
-  getResourceDirectoryTableEntry(const coff_resource_dir_table &Table,
-                                 uint32_t Index);
 
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
@@ -1790,8 +1787,7 @@ COFFDumper::countTotalTableEntries(ResourceSectionRef RSF,
   uint32_t TotalEntries = 0;
   for (int i = 0; i < Table.NumberOfNameEntries + Table.NumberOfIDEntries;
        i++) {
-    auto Entry = unwrapOrError(Obj->getFileName(),
-                               getResourceDirectoryTableEntry(Table, i));
+    auto Entry = unwrapOrError(Obj->getFileName(), RSF.getTableEntry(Table, i));
     if (Entry.Offset.isSubDir()) {
       StringRef NextLevel;
       if (Level == "Name")
@@ -1818,8 +1814,7 @@ void COFFDumper::printResourceDirectoryTable(
   // Iterate through level in resource directory tree.
   for (int i = 0; i < Table.NumberOfNameEntries + Table.NumberOfIDEntries;
        i++) {
-    auto Entry = unwrapOrError(Obj->getFileName(),
-                               getResourceDirectoryTableEntry(Table, i));
+    auto Entry = unwrapOrError(Obj->getFileName(), RSF.getTableEntry(Table, i));
     StringRef Name;
     SmallString<20> IDStr;
     raw_svector_ostream OS(IDStr);
@@ -1871,15 +1866,6 @@ void COFFDumper::printResourceDirectoryTable(
       W.printNumber("Characteristics", Table.Characteristics);
     }
   }
-}
-
-Expected<const coff_resource_dir_entry &>
-COFFDumper::getResourceDirectoryTableEntry(const coff_resource_dir_table &Table,
-                                           uint32_t Index) {
-  if (Index >= (uint32_t)(Table.NumberOfNameEntries + Table.NumberOfIDEntries))
-    return createError("can't get resource directory table entry");
-  auto TablePtr = reinterpret_cast<const coff_resource_dir_entry *>(&Table + 1);
-  return TablePtr[Index];
 }
 
 void COFFDumper::printStackMap() const {
