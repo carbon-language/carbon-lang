@@ -459,6 +459,7 @@ CapturedZoneInfo captureZoneInfo(const ExtractionZone &ExtZone) {
 // Adds parameters to ExtractedFunc.
 // Returns true if able to find the parameters successfully and no hoisting
 // needed.
+// FIXME: Check if the declaration has a local/anonymous type
 bool createParameters(NewFunction &ExtractedFunc,
                       const CapturedZoneInfo &CapturedInfo) {
   for (const auto &KeyVal : CapturedInfo.DeclInfoMap) {
