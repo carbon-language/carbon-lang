@@ -3469,12 +3469,6 @@ public:
     return IsVirtual;
   }
 
-  /// Get the constructor or constructor template in the derived class
-  /// correspnding to this using shadow declaration, if it has been implicitly
-  /// declared already.
-  CXXConstructorDecl *getConstructor() const;
-  void setConstructor(NamedDecl *Ctor);
-
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == ConstructorUsingShadow; }
 };
