@@ -2608,22 +2608,14 @@ ChangeStatus Attributor::run() {
     Worklist.clear();
     Worklist.insert(ChangedAAs.begin(), ChangedAAs.end());
 
-  } while (!Worklist.empty() && IterationCounter++ < MaxFixpointIterations);
-
-  size_t NumFinalAAs = AllAbstractAttributes.size();
-
-  if (VerifyMaxFixpointIterations && IterationCounter != MaxFixpointIterations) {
-    errs() << "\n[Attributor] Fixpoint iteration done after: "
-           << IterationCounter << "/" << MaxFixpointIterations
-           << " iterations\n";
-    llvm_unreachable("The fixpoint was not reached with exactly the number of "
-                     "specified iterations!");
-  }
+  } while (!Worklist.empty() && (IterationCounter++ < MaxFixpointIterations ||
+                                 VerifyMaxFixpointIterations));
 
   LLVM_DEBUG(dbgs() << "\n[Attributor] Fixpoint iteration done after: "
                     << IterationCounter << "/" << MaxFixpointIterations
                     << " iterations\n");
 
+  size_t NumFinalAAs = AllAbstractAttributes.size();
 
   bool FinishedAtFixpoint = Worklist.empty();
 
@@ -2735,6 +2727,15 @@ ChangeStatus Attributor::run() {
   for (Function *Fn : ToBeDeletedFunctions) {
     Fn->replaceAllUsesWith(UndefValue::get(Fn->getType()));
     Fn->eraseFromParent();
+  }
+
+  if (VerifyMaxFixpointIterations &&
+      IterationCounter != MaxFixpointIterations) {
+    errs() << "\n[Attributor] Fixpoint iteration done after: "
+           << IterationCounter << "/" << MaxFixpointIterations
+           << " iterations\n";
+    llvm_unreachable("The fixpoint was not reached with exactly the number of "
+                     "specified iterations!");
   }
 
   return ManifestChange;
