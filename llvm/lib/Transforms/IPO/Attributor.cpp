@@ -1956,6 +1956,7 @@ ChangeStatus AAIsDeadImpl::updateImpl(Attributor &A) {
     // which will prevent us from querying isAssumedDead().
     indicatePessimisticFixpoint();
     assert(!isValidState() && "Expected an invalid state!");
+    Status = ChangeStatus::CHANGED;
   }
 
   return Status;
