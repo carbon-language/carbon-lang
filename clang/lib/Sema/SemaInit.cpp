@@ -274,11 +274,10 @@ namespace {
 /// initialize the subobjects after the one designated.
 class InitListChecker {
   Sema &SemaRef;
-  bool hadError;
+  bool hadError = false;
   bool VerifyOnly; // no diagnostics, no structure building
   bool TreatUnavailableAsInvalid; // Used only in VerifyOnly mode.
-  llvm::DenseMap<InitListExpr *, InitListExpr *> SyntacticToSemantic;
-  InitListExpr *FullyStructuredList;
+  InitListExpr *FullyStructuredList = nullptr;
 
   void CheckImplicitInitList(const InitializedEntity &Entity,
                              InitListExpr *ParentIList, QualType T,
@@ -842,18 +841,18 @@ InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
 }
 
 InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
-                                 InitListExpr *IL, QualType &T,
-                                 bool VerifyOnly,
+                                 InitListExpr *IL, QualType &T, bool VerifyOnly,
                                  bool TreatUnavailableAsInvalid)
   : SemaRef(S), VerifyOnly(VerifyOnly),
     TreatUnavailableAsInvalid(TreatUnavailableAsInvalid) {
   // FIXME: Check that IL isn't already the semantic form of some other
   // InitListExpr. If it is, we'd create a broken AST.
 
-  hadError = false;
-
-  FullyStructuredList =
-      getStructuredSubobjectInit(IL, 0, T, nullptr, 0, IL->getSourceRange());
+  if (!VerifyOnly) {
+    FullyStructuredList =
+        getStructuredSubobjectInit(IL, 0, T, nullptr, 0, IL->getSourceRange());
+    FullyStructuredList->setSyntacticForm(IL);
+  }
   CheckExplicitInitList(Entity, IL, T, FullyStructuredList,
                         /*TopLevelObject=*/true);
 
@@ -1075,11 +1074,6 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *IList, QualType &T,
                                             InitListExpr *StructuredList,
                                             bool TopLevelObject) {
-  if (!VerifyOnly) {
-    SyntacticToSemantic[IList] = StructuredList;
-    StructuredList->setSyntacticForm(IList);
-  }
-
   unsigned Index = 0, StructuredIndex = 0;
   CheckListElementTypes(Entity, IList, T, /*SubobjectIsDesignatorContext=*/true,
                         Index, StructuredList, StructuredIndex, TopLevelObject);
@@ -1231,29 +1225,8 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
         IsStringInit(SubInitList->getInit(0), ElemType, SemaRef.Context) ==
         SIF_None) {
       expr = SubInitList->getInit(0);
-    } else if (!SemaRef.getLangOpts().CPlusPlus) {
-      InitListExpr *InnerStructuredList
-        = getStructuredSubobjectInit(IList, Index, ElemType,
-                                     StructuredList, StructuredIndex,
-                                     SubInitList->getSourceRange(), true);
-      CheckExplicitInitList(Entity, SubInitList, ElemType,
-                            InnerStructuredList);
-
-      if (!hadError && !VerifyOnly) {
-        bool RequiresSecondPass = false;
-        FillInEmptyInitializations(Entity, InnerStructuredList,
-                                   RequiresSecondPass, StructuredList,
-                                   StructuredIndex);
-        if (RequiresSecondPass && !hadError)
-          FillInEmptyInitializations(Entity, InnerStructuredList,
-                                     RequiresSecondPass, StructuredList,
-                                     StructuredIndex);
-      }
-      ++StructuredIndex;
-      ++Index;
-      return;
     }
-    // C++ initialization is handled later.
+    // Nested aggregate initialization and C++ initialization are handled later.
   } else if (isa<ImplicitValueInitExpr>(expr)) {
     // This happens during template instantiation when we see an InitListExpr
     // that we've already checked once.
@@ -1265,7 +1238,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     return;
   }
 
-  if (SemaRef.getLangOpts().CPlusPlus) {
+  if (SemaRef.getLangOpts().CPlusPlus || isa<InitListExpr>(expr)) {
     // C++ [dcl.init.aggr]p2:
     //   Each member is copy-initialized from the corresponding
     //   initializer-clause.
@@ -2316,7 +2289,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     // Determine the structural initializer list that corresponds to the
     // current subobject.
     if (IsFirstDesignator)
-      StructuredList = SyntacticToSemantic.lookup(IList);
+      StructuredList = FullyStructuredList;
     else {
       Expr *ExistingInit = StructuredIndex < StructuredList->getNumInits() ?
           StructuredList->getInit(StructuredIndex) : nullptr;
@@ -2833,9 +2806,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
   if (VerifyOnly)
     return nullptr; // No structured list in verification-only mode.
   Expr *ExistingInit = nullptr;
-  if (!StructuredList)
-    ExistingInit = SyntacticToSemantic.lookup(IList);
-  else if (StructuredIndex < StructuredList->getNumInits())
+  if (StructuredList && StructuredIndex < StructuredList->getNumInits())
     ExistingInit = StructuredList->getInit(StructuredIndex);
 
   if (InitListExpr *Result = dyn_cast_or_null<InitListExpr>(ExistingInit))
@@ -2918,10 +2889,6 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
   // lists.
   if (StructuredList)
     StructuredList->updateInit(SemaRef.Context, StructuredIndex, Result);
-  else {
-    Result->setSyntacticForm(IList);
-    SyntacticToSemantic[IList] = Result;
-  }
 
   return Result;
 }
