@@ -1844,7 +1844,6 @@ void COFFDumper::printResourceDirectoryTable(
       if (Level == "Type") {
         OS << ": ";
         printResourceTypeName(Entry.Identifier.ID, OS);
-        IDStr = IDStr.slice(0, IDStr.find_first_of(")", 0) + 1);
       } else {
         OS << ": (ID " << Entry.Identifier.ID << ")";
       }
