@@ -3379,7 +3379,7 @@ foldICmpWithTruncSignExtendedVal(ICmpInst &I,
 // we should move shifts to the same hand of 'and', i.e. rewrite as
 //   icmp eq/ne (and (x shift (Q+K)), y), 0  iff (Q+K) u< bitwidth(x)
 // We are only interested in opposite logical shifts here.
-// One of the shifts can be truncated. For now, it can only be 'shl'.
+// One of the shifts can be truncated.
 // If we can, we want to end up creating 'lshr' shift.
 static Value *
 foldShiftIntoShiftInAnotherHandOfAndInICmp(ICmpInst &I, const SimplifyQuery SQ,
@@ -3412,14 +3412,6 @@ foldShiftIntoShiftInAnotherHandOfAndInICmp(ICmpInst &I, const SimplifyQuery SQ,
   assert(NarrowestShift->getType() == I.getOperand(0)->getType() &&
          "We did not look past any shifts while matching XShift though.");
   bool HadTrunc = WidestTy != I.getOperand(0)->getType();
-
-  if (HadTrunc) {
-    // We did indeed have a truncation. For now, let's only proceed if the 'shl'
-    // was truncated, since that does not require any extra legality checks.
-    // FIXME: trunc-of-lshr.
-    if (!match(YShift, m_Shl(m_Value(), m_Value())))
-      return nullptr;
-  }
 
   // If YShift is a 'lshr', swap the shifts around.
   if (match(YShift, m_LShr(m_Value(), m_Value())))
@@ -3462,16 +3454,68 @@ foldShiftIntoShiftInAnotherHandOfAndInICmp(ICmpInst &I, const SimplifyQuery SQ,
                       /*isNUW=*/false, SQ.getWithInstruction(&I)));
   if (!NewShAmt)
     return nullptr;
+  NewShAmt = ConstantExpr::getZExtOrBitCast(NewShAmt, WidestTy);
+  unsigned WidestBitWidth = WidestTy->getScalarSizeInBits();
+
   // Is the new shift amount smaller than the bit width?
   // FIXME: could also rely on ConstantRange.
-  if (!match(NewShAmt, m_SpecificInt_ICMP(
-                           ICmpInst::Predicate::ICMP_ULT,
-                           APInt(NewShAmt->getType()->getScalarSizeInBits(),
-                                 WidestTy->getScalarSizeInBits()))))
+  if (!match(NewShAmt,
+             m_SpecificInt_ICMP(ICmpInst::Predicate::ICMP_ULT,
+                                APInt(WidestBitWidth, WidestBitWidth))))
     return nullptr;
+
+  // An extra legality check is needed if we had trunc-of-lshr.
+  if (HadTrunc && match(WidestShift, m_LShr(m_Value(), m_Value()))) {
+    auto CanFold = [NewShAmt, WidestBitWidth, NarrowestShift, SQ,
+                    WidestShift]() {
+      // It isn't obvious whether it's worth it to analyze non-constants here.
+      // Also, let's basically give up on non-splat cases, pessimizing vectors.
+      // If *any* of these preconditions matches we can perform the fold.
+      Constant *NewShAmtSplat = NewShAmt->getType()->isVectorTy()
+                                    ? NewShAmt->getSplatValue()
+                                    : NewShAmt;
+      // If it's edge-case shift (by 0 or by WidestBitWidth-1) we can fold.
+      if (NewShAmtSplat &&
+          (NewShAmtSplat->isNullValue() ||
+           NewShAmtSplat->getUniqueInteger() == WidestBitWidth - 1))
+        return true;
+      // We consider *min* leading zeros so a single outlier
+      // blocks the transform as opposed to allowing it.
+      if (auto *C = dyn_cast<Constant>(NarrowestShift->getOperand(0))) {
+        KnownBits Known = computeKnownBits(C, SQ.DL);
+        unsigned MinLeadZero = Known.countMinLeadingZeros();
+        // If the value being shifted has at most lowest bit set we can fold.
+        unsigned MaxActiveBits = Known.getBitWidth() - MinLeadZero;
+        if (MaxActiveBits <= 1)
+          return true;
+        // Precondition:  NewShAmt u<= countLeadingZeros(C)
+        if (NewShAmtSplat && NewShAmtSplat->getUniqueInteger().ule(MinLeadZero))
+          return true;
+      }
+      if (auto *C = dyn_cast<Constant>(WidestShift->getOperand(0))) {
+        KnownBits Known = computeKnownBits(C, SQ.DL);
+        unsigned MinLeadZero = Known.countMinLeadingZeros();
+        // If the value being shifted has at most lowest bit set we can fold.
+        unsigned MaxActiveBits = Known.getBitWidth() - MinLeadZero;
+        if (MaxActiveBits <= 1)
+          return true;
+        // Precondition:  ((WidestBitWidth-1)-NewShAmt) u<= countLeadingZeros(C)
+        if (NewShAmtSplat) {
+          APInt AdjNewShAmt =
+              (WidestBitWidth - 1) - NewShAmtSplat->getUniqueInteger();
+          if (AdjNewShAmt.ule(MinLeadZero))
+            return true;
+        }
+      }
+      return false; // Can't tell if it's ok.
+    };
+    if (!CanFold())
+      return nullptr;
+  }
+
   // All good, we can do this fold.
-  NewShAmt = ConstantExpr::getZExtOrBitCast(NewShAmt, WidestTy);
   X = Builder.CreateZExt(X, WidestTy);
+  Y = Builder.CreateZExt(Y, WidestTy);
   // The shift is the same that was for X.
   Value *T0 = XShiftOpcode == Instruction::BinaryOps::LShr
                   ? Builder.CreateLShr(X, NewShAmt)
