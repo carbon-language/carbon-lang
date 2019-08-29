@@ -297,53 +297,19 @@ public:
 
 class IndexingConsumer : public ASTConsumer {
   CXIndexDataConsumer &DataConsumer;
-  ParsedSrcLocationsTracker *ParsedLocsTracker;
 
 public:
   IndexingConsumer(CXIndexDataConsumer &dataConsumer,
                    ParsedSrcLocationsTracker *parsedLocsTracker)
-      : DataConsumer(dataConsumer), ParsedLocsTracker(parsedLocsTracker) {}
-
-  // ASTConsumer Implementation
+      : DataConsumer(dataConsumer) {}
 
   void Initialize(ASTContext &Context) override {
     DataConsumer.setASTContext(Context);
     DataConsumer.startedTranslationUnit();
   }
 
-  void HandleTranslationUnit(ASTContext &Ctx) override {
-    if (ParsedLocsTracker)
-      ParsedLocsTracker->syncWithStorage();
-  }
-
   bool HandleTopLevelDecl(DeclGroupRef DG) override {
     return !DataConsumer.shouldAbort();
-  }
-
-  bool shouldSkipFunctionBody(Decl *D) override {
-    if (!ParsedLocsTracker) {
-      // Always skip bodies.
-      return true;
-    }
-
-    const SourceManager &SM = DataConsumer.getASTContext().getSourceManager();
-    SourceLocation Loc = D->getLocation();
-    if (Loc.isMacroID())
-      return false;
-    if (SM.isInSystemHeader(Loc))
-      return true; // always skip bodies from system headers.
-
-    FileID FID;
-    unsigned Offset;
-    std::tie(FID, Offset) = SM.getDecomposedLoc(Loc);
-    // Don't skip bodies from main files; this may be revisited.
-    if (SM.getMainFileID() == FID)
-      return false;
-    const FileEntry *FE = SM.getFileEntryForID(FID);
-    if (!FE)
-      return false;
-
-    return ParsedLocsTracker->hasAlredyBeenParsed(Loc, FID, FE);
   }
 };
 
@@ -404,9 +370,36 @@ public:
     std::vector<std::unique_ptr<ASTConsumer>> Consumers;
     Consumers.push_back(std::make_unique<IndexingConsumer>(
         *DataConsumer, ParsedLocsTracker.get()));
-    Consumers.push_back(
-        createIndexingASTConsumer(DataConsumer, Opts, CI.getPreprocessorPtr()));
+    Consumers.push_back(createIndexingASTConsumer(
+        DataConsumer, Opts, CI.getPreprocessorPtr(),
+        [this](const Decl *D) { return this->shouldSkipFunctionBody(D); }));
     return std::make_unique<MultiplexConsumer>(std::move(Consumers));
+  }
+
+  bool shouldSkipFunctionBody(const Decl *D) {
+    if (!ParsedLocsTracker) {
+      // Always skip bodies.
+      return true;
+    }
+
+    const SourceManager &SM = D->getASTContext().getSourceManager();
+    SourceLocation Loc = D->getLocation();
+    if (Loc.isMacroID())
+      return false;
+    if (SM.isInSystemHeader(Loc))
+      return true; // always skip bodies from system headers.
+
+    FileID FID;
+    unsigned Offset;
+    std::tie(FID, Offset) = SM.getDecomposedLoc(Loc);
+    // Don't skip bodies from main files; this may be revisited.
+    if (SM.getMainFileID() == FID)
+      return false;
+    const FileEntry *FE = SM.getFileEntryForID(FID);
+    if (!FE)
+      return false;
+
+    return ParsedLocsTracker->hasAlredyBeenParsed(Loc, FID, FE);
   }
 
   TranslationUnitKind getTranslationUnitKind() override {
@@ -416,6 +409,11 @@ public:
       return TU_Prefix;
   }
   bool hasCodeCompletionSupport() const override { return false; }
+
+  void EndSourceFileAction() override {
+    if (ParsedLocsTracker)
+      ParsedLocsTracker->syncWithStorage();
+  }
 };
 
 //===----------------------------------------------------------------------===//

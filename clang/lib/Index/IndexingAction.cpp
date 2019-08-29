@@ -57,14 +57,17 @@ class IndexASTConsumer final : public ASTConsumer {
   std::shared_ptr<IndexDataConsumer> DataConsumer;
   std::shared_ptr<IndexingContext> IndexCtx;
   std::shared_ptr<Preprocessor> PP;
+  std::function<bool(const Decl *)> ShouldSkipFunctionBody;
 
 public:
   IndexASTConsumer(std::shared_ptr<IndexDataConsumer> DataConsumer,
                    const IndexingOptions &Opts,
-                   std::shared_ptr<Preprocessor> PP)
+                   std::shared_ptr<Preprocessor> PP,
+                   std::function<bool(const Decl *)> ShouldSkipFunctionBody)
       : DataConsumer(std::move(DataConsumer)),
         IndexCtx(new IndexingContext(Opts, *this->DataConsumer)),
-        PP(std::move(PP)) {
+        PP(std::move(PP)),
+        ShouldSkipFunctionBody(std::move(ShouldSkipFunctionBody)) {
     assert(this->DataConsumer != nullptr);
     assert(this->PP != nullptr);
   }
@@ -92,6 +95,10 @@ protected:
   void HandleTranslationUnit(ASTContext &Ctx) override {
     DataConsumer->finish();
   }
+
+  bool shouldSkipFunctionBody(Decl *D) override {
+    return ShouldSkipFunctionBody(D);
+  }
 };
 
 class IndexAction final : public ASTFrontendAction {
@@ -108,18 +115,20 @@ public:
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) override {
-    return std::make_unique<IndexASTConsumer>(DataConsumer, Opts,
-                                              CI.getPreprocessorPtr());
+    return std::make_unique<IndexASTConsumer>(
+        DataConsumer, Opts, CI.getPreprocessorPtr(),
+        /*ShouldSkipFunctionBody=*/[](const Decl *) { return false; });
   }
 };
 
 } // anonymous namespace
 
-std::unique_ptr<ASTConsumer>
-index::createIndexingASTConsumer(std::shared_ptr<IndexDataConsumer> DataConsumer,
-                          const IndexingOptions &Opts,
-                          std::shared_ptr<Preprocessor> PP) {
-  return std::make_unique<IndexASTConsumer>(DataConsumer, Opts, PP);
+std::unique_ptr<ASTConsumer> index::createIndexingASTConsumer(
+    std::shared_ptr<IndexDataConsumer> DataConsumer,
+    const IndexingOptions &Opts, std::shared_ptr<Preprocessor> PP,
+    std::function<bool(const Decl *)> ShouldSkipFunctionBody) {
+  return std::make_unique<IndexASTConsumer>(DataConsumer, Opts, PP,
+                                            ShouldSkipFunctionBody);
 }
 
 std::unique_ptr<FrontendAction>

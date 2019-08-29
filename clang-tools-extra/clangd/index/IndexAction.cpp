@@ -121,30 +121,6 @@ private:
   IncludeGraph &IG;
 };
 
-/// An ASTConsumer that instructs the parser to skip bodies of functions in the
-/// files that should not be processed.
-class SkipProcessedFunctions : public ASTConsumer {
-public:
-  SkipProcessedFunctions(std::function<bool(FileID)> FileFilter)
-      : ShouldIndexFile(std::move(FileFilter)), Context(nullptr) {
-    assert(this->ShouldIndexFile);
-  }
-
-  void Initialize(ASTContext &Context) override { this->Context = &Context; }
-  bool shouldSkipFunctionBody(Decl *D) override {
-    assert(Context && "Initialize() was never called.");
-    auto &SM = Context->getSourceManager();
-    auto FID = SM.getFileID(SM.getExpansionLoc(D->getLocation()));
-    if (!FID.isValid())
-      return false;
-    return !ShouldIndexFile(FID);
-  }
-
-private:
-  std::function<bool(FileID)> ShouldIndexFile;
-  const ASTContext *Context;
-};
-
 // Wraps the index action and reports index data after each translation unit.
 class IndexAction : public ASTFrontendAction {
 public:
@@ -169,12 +145,15 @@ public:
       CI.getPreprocessor().addPPCallbacks(
           std::make_unique<IncludeGraphCollector>(CI.getSourceManager(), IG));
 
-    std::vector<std::unique_ptr<ASTConsumer>> Consumers;
-    Consumers.push_back(std::make_unique<SkipProcessedFunctions>(
-        [this](FileID FID) { return Collector->shouldIndexFile(FID); }));
-    Consumers.push_back(index::createIndexingASTConsumer(
-        Collector, Opts, CI.getPreprocessorPtr()));
-    return std::make_unique<MultiplexConsumer>(std::move(Consumers));
+    return index::createIndexingASTConsumer(
+        Collector, Opts, CI.getPreprocessorPtr(),
+        /*ShouldSkipFunctionBody=*/[this](const Decl *D) {
+          auto &SM = D->getASTContext().getSourceManager();
+          auto FID = SM.getFileID(SM.getExpansionLoc(D->getLocation()));
+          if (!FID.isValid())
+            return false;
+          return !Collector->shouldIndexFile(FID);
+        });
   }
 
   bool BeginInvocation(CompilerInstance &CI) override {
