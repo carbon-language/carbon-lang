@@ -170,6 +170,7 @@ entry:
 declare %0 @llvm.aarch64.ldaxp(i8*) nounwind
 declare i32 @llvm.aarch64.stlxp(i64, i64, i8*) nounwind
 
+; FALLBACK-NOT: remark:{{.*}}test_load_acquire_i8
 define void @test_load_acquire_i8(i8* %addr) {
 ; CHECK-LABEL: test_load_acquire_i8:
 ; CHECK: ldaxrb w[[LOADVAL:[0-9]+]], [x0]
@@ -177,6 +178,11 @@ define void @test_load_acquire_i8(i8* %addr) {
 ; CHECK-NOT: and
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; FIXME: GlobalISel doesn't fold ands/adds into load/store addressing modes
+; right now/ So, we won't get the :lo12:var.
+; GISEL-LABEL: test_load_acquire_i8:
+; GISEL: ldaxrb w[[LOADVAL:[0-9]+]], [x0]
+; GISEL-DAG: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldaxr.p0i8(i8* %addr)
   %shortval = trunc i64 %val to i8
   %extval = zext i8 %shortval to i64
@@ -184,6 +190,7 @@ define void @test_load_acquire_i8(i8* %addr) {
   ret void
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_load_acquire_i16
 define void @test_load_acquire_i16(i16* %addr) {
 ; CHECK-LABEL: test_load_acquire_i16:
 ; CHECK: ldaxrh w[[LOADVAL:[0-9]+]], [x0]
@@ -191,6 +198,9 @@ define void @test_load_acquire_i16(i16* %addr) {
 ; CHECK-NOT: and
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; GISEL-LABEL: test_load_acquire_i16:
+; GISEL: ldaxrh w[[LOADVAL:[0-9]+]], [x0]
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldaxr.p0i16(i16* %addr)
   %shortval = trunc i64 %val to i16
   %extval = zext i16 %shortval to i64
@@ -198,6 +208,7 @@ define void @test_load_acquire_i16(i16* %addr) {
   ret void
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_load_acquire_i32
 define void @test_load_acquire_i32(i32* %addr) {
 ; CHECK-LABEL: test_load_acquire_i32:
 ; CHECK: ldaxr w[[LOADVAL:[0-9]+]], [x0]
@@ -205,6 +216,9 @@ define void @test_load_acquire_i32(i32* %addr) {
 ; CHECK-NOT: and
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; GISEL-LABEL: test_load_acquire_i32:
+; GISEL: ldaxr w[[LOADVAL:[0-9]+]], [x0]
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldaxr.p0i32(i32* %addr)
   %shortval = trunc i64 %val to i32
   %extval = zext i32 %shortval to i64
@@ -212,11 +226,15 @@ define void @test_load_acquire_i32(i32* %addr) {
   ret void
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_load_acquire_i64
 define void @test_load_acquire_i64(i64* %addr) {
 ; CHECK-LABEL: test_load_acquire_i64:
 ; CHECK: ldaxr x[[LOADVAL:[0-9]+]], [x0]
 ; CHECK: str x[[LOADVAL]], [{{x[0-9]+}}, :lo12:var]
 
+; GISEL-LABEL: test_load_acquire_i64:
+; GISEL: ldaxr x[[LOADVAL:[0-9]+]], [x0]
+; GISEL: str x[[LOADVAL]], [{{x[0-9]+}}]
   %val = call i64 @llvm.aarch64.ldaxr.p0i64(i64* %addr)
   store i64 %val, i64* @var, align 8
   ret void

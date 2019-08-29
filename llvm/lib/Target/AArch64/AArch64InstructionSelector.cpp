@@ -242,6 +242,9 @@ private:
                                       MachineOperand &Predicate,
                                       MachineIRBuilder &MIRBuilder) const;
 
+  /// Return true if \p MI is a load or store of \p NumBytes bytes.
+  bool isLoadStoreOfNumBytes(const MachineInstr &MI, unsigned NumBytes) const;
+
   const AArch64TargetMachine &TM;
   const AArch64Subtarget &STI;
   const AArch64InstrInfo &TII;
@@ -4550,6 +4553,15 @@ void AArch64InstructionSelector::renderLogicalImm64(
   uint64_t CstVal = I.getOperand(1).getCImm()->getZExtValue();
   uint64_t Enc = AArch64_AM::encodeLogicalImmediate(CstVal, 64);
   MIB.addImm(Enc);
+}
+
+bool AArch64InstructionSelector::isLoadStoreOfNumBytes(
+    const MachineInstr &MI, unsigned NumBytes) const {
+  if (!MI.mayLoadOrStore())
+    return false;
+  assert(MI.hasOneMemOperand() &&
+         "Expected load/store to have only one mem op!");
+  return (*MI.memoperands_begin())->getSize() == NumBytes;
 }
 
 namespace llvm {
