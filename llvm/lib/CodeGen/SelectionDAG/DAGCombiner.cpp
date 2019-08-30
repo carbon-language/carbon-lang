@@ -10246,11 +10246,11 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   SDValue Load;
   if (ExtType == ISD::NON_EXTLOAD)
-    Load = DAG.getLoad(VT, SDLoc(N0), LN0->getChain(), NewPtr,
+    Load = DAG.getLoad(VT, DL, LN0->getChain(), NewPtr,
                        LN0->getPointerInfo().getWithOffset(PtrOff), NewAlign,
                        LN0->getMemOperand()->getFlags(), LN0->getAAInfo());
   else
-    Load = DAG.getExtLoad(ExtType, SDLoc(N0), VT, LN0->getChain(), NewPtr,
+    Load = DAG.getExtLoad(ExtType, DL, VT, LN0->getChain(), NewPtr,
                           LN0->getPointerInfo().getWithOffset(PtrOff), ExtVT,
                           NewAlign, LN0->getMemOperand()->getFlags(),
                           LN0->getAAInfo());
@@ -10269,7 +10269,6 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     // no larger than the source) then the useful bits of the result are
     // zero; we can't simply return the shortened shift, because the result
     // of that operation is undefined.
-    SDLoc DL(N0);
     if (ShLeftAmt >= VT.getSizeInBits())
       Result = DAG.getConstant(0, DL, VT);
     else
