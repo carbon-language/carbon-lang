@@ -629,6 +629,11 @@ struct Attributor {
     // No matching attribute found, create one.
     auto &AA = AAType::createForPosition(IRP, *this);
     registerAA(AA);
+
+    // Bootstrap the new attribute with an initial update to propagate
+    // information, e.g., function -> call site.
+    AA.update(*this);
+
     if (TrackDependence && AA.getState().isValidState())
       QueryMap[&AA].insert(const_cast<AbstractAttribute *>(&QueryingAA));
     return AA;
