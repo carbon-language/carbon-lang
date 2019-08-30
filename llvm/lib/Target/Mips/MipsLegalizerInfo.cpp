@@ -141,6 +141,7 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
 
   getActionDefinitionsBuilder(G_FPTOUI)
       .libcallForCartesianProduct({s64}, {s64, s32})
+      .lowerForCartesianProduct({s32}, {s64, s32})
       .minScalar(0, s32);
 
   // Int to FP conversion instructions
