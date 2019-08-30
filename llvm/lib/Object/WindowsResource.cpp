@@ -30,6 +30,18 @@ namespace object {
   if (auto EC = X)                                                             \
     return EC;
 
+#define UNWRAP_REF_OR_RETURN(Name, Expr)                                       \
+  auto Name##OrErr = Expr;                                                     \
+  if (!Name##OrErr)                                                            \
+    return Name##OrErr.takeError();                                            \
+  const auto &Name = *Name##OrErr;
+
+#define UNWRAP_OR_RETURN(Name, Expr)                                           \
+  auto Name##OrErr = Expr;                                                     \
+  if (!Name##OrErr)                                                            \
+    return Name##OrErr.takeError();                                            \
+  auto Name = *Name##OrErr;
+
 const uint32_t MIN_HEADER_SIZE = 7 * sizeof(uint32_t) + 2 * sizeof(uint16_t);
 
 // COFF files seem to be inconsistent with alignment between sections, just use
@@ -197,6 +209,48 @@ static std::string makeDuplicateResourceError(
   return OS.str();
 }
 
+static void printStringOrID(const WindowsResourceParser::StringOrID &S,
+                            raw_string_ostream &OS, bool IsType, bool IsID) {
+  if (S.IsString) {
+    std::string UTF8;
+    if (!convertUTF16LEToUTF8String(S.String, UTF8))
+      UTF8 = "(failed conversion from UTF16)";
+    OS << '\"' << UTF8 << '\"';
+  } else if (IsType)
+    printResourceTypeName(S.ID, OS);
+  else if (IsID)
+    OS << "ID " << S.ID;
+  else
+    OS << S.ID;
+}
+
+static std::string makeDuplicateResourceError(
+    const std::vector<WindowsResourceParser::StringOrID> &Context,
+    StringRef File1, StringRef File2) {
+  std::string Ret;
+  raw_string_ostream OS(Ret);
+
+  OS << "duplicate resource:";
+
+  if (Context.size() >= 1) {
+    OS << " type ";
+    printStringOrID(Context[0], OS, /* IsType */ true, /* IsID */ true);
+  }
+
+  if (Context.size() >= 2) {
+    OS << "/name ";
+    printStringOrID(Context[1], OS, /* IsType */ false, /* IsID */ true);
+  }
+
+  if (Context.size() >= 3) {
+    OS << "/language ";
+    printStringOrID(Context[2], OS, /* IsType */ false, /* IsID */ false);
+  }
+  OS << ", in " << File1 << " and in " << File2;
+
+  return OS.str();
+}
+
 Error WindowsResourceParser::parse(WindowsResource *WR,
                                    std::vector<std::string> &Duplicates) {
   auto EntryOrErr = WR->getHeadEntry();
@@ -234,6 +288,15 @@ Error WindowsResourceParser::parse(WindowsResource *WR,
   return Error::success();
 }
 
+Error WindowsResourceParser::parse(ResourceSectionRef &RSR, StringRef Filename,
+                                   std::vector<std::string> &Duplicates) {
+  UNWRAP_REF_OR_RETURN(BaseTable, RSR.getBaseTable());
+  uint32_t Origin = InputFilenames.size();
+  InputFilenames.push_back(Filename);
+  std::vector<StringOrID> Context;
+  return addChildren(Root, RSR, BaseTable, Origin, Context, Duplicates);
+}
+
 void WindowsResourceParser::printTree(raw_ostream &OS) const {
   ScopedPrinter Writer(OS);
   Root.print(Writer, "Resource Tree");
@@ -246,6 +309,67 @@ bool WindowsResourceParser::TreeNode::addEntry(
   TreeNode &TypeNode = addTypeNode(Entry, StringTable);
   TreeNode &NameNode = TypeNode.addNameNode(Entry, StringTable);
   return NameNode.addLanguageNode(Entry, Origin, Data, Result);
+}
+
+Error WindowsResourceParser::addChildren(TreeNode &Node,
+                                         ResourceSectionRef &RSR,
+                                         const coff_resource_dir_table &Table,
+                                         uint32_t Origin,
+                                         std::vector<StringOrID> &Context,
+                                         std::vector<std::string> &Duplicates) {
+
+  for (int i = 0; i < Table.NumberOfNameEntries + Table.NumberOfIDEntries;
+       i++) {
+    UNWRAP_REF_OR_RETURN(Entry, RSR.getTableEntry(Table, i));
+    TreeNode *Child;
+
+    if (Entry.Offset.isSubDir()) {
+
+      // Create a new subdirectory and recurse
+      if (i < Table.NumberOfNameEntries) {
+        UNWRAP_OR_RETURN(NameString, RSR.getEntryNameString(Entry));
+        Child = &Node.addNameChild(NameString, StringTable);
+        Context.push_back(StringOrID(NameString));
+      } else {
+        Child = &Node.addIDChild(Entry.Identifier.ID);
+        Context.push_back(StringOrID(Entry.Identifier.ID));
+      }
+
+      UNWRAP_REF_OR_RETURN(NextTable, RSR.getEntrySubDir(Entry));
+      Error E =
+          addChildren(*Child, RSR, NextTable, Origin, Context, Duplicates);
+      if (E)
+        return E;
+      Context.pop_back();
+
+    } else {
+
+      // Data leaves are supposed to have a numeric ID as identifier (language).
+      if (Table.NumberOfNameEntries > 0)
+        return createStringError(object_error::parse_failed,
+                                 "unexpected string key for data object");
+
+      // Try adding a data leaf
+      UNWRAP_REF_OR_RETURN(DataEntry, RSR.getEntryData(Entry));
+      TreeNode *Child;
+      Context.push_back(StringOrID(Entry.Identifier.ID));
+      bool Added = Node.addDataChild(Entry.Identifier.ID, Table.MajorVersion,
+                                     Table.MinorVersion, Table.Characteristics,
+                                     Origin, Data.size(), Child);
+      if (Added) {
+        UNWRAP_OR_RETURN(Contents, RSR.getContents(DataEntry));
+        Data.push_back(ArrayRef<uint8_t>(
+            reinterpret_cast<const uint8_t *>(Contents.data()),
+            Contents.size()));
+      } else {
+        Duplicates.push_back(makeDuplicateResourceError(
+            Context, InputFilenames[Child->Origin], InputFilenames.back()));
+      }
+      Context.pop_back();
+
+    }
+  }
+  return Error::success();
 }
 
 WindowsResourceParser::TreeNode::TreeNode(uint32_t StringIndex)

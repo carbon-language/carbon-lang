@@ -31,6 +31,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/BinaryFormat/COFF.h"
 #include "llvm/Object/Binary.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/BinaryStreamReader.h"
@@ -48,6 +49,7 @@ class ScopedPrinter;
 namespace object {
 
 class WindowsResource;
+class ResourceSectionRef;
 
 const size_t WIN_RES_MAGIC_SIZE = 16;
 const size_t WIN_RES_NULL_ENTRY_SIZE = 16;
@@ -153,6 +155,8 @@ public:
   class TreeNode;
   WindowsResourceParser();
   Error parse(WindowsResource *WR, std::vector<std::string> &Duplicates);
+  Error parse(ResourceSectionRef &RSR, StringRef Filename,
+              std::vector<std::string> &Duplicates);
   void printTree(raw_ostream &OS) const;
   const TreeNode &getTree() const { return Root; }
   const ArrayRef<std::vector<uint8_t>> getData() const { return Data; }
@@ -227,7 +231,21 @@ public:
     uint32_t Origin;
   };
 
+  struct StringOrID {
+    bool IsString;
+    ArrayRef<UTF16> String;
+    uint32_t ID;
+
+    StringOrID(uint32_t ID) : IsString(false), ID(ID) {}
+    StringOrID(ArrayRef<UTF16> String) : IsString(true), String(String) {}
+  };
+
 private:
+  Error addChildren(TreeNode &Node, ResourceSectionRef &RSR,
+                    const coff_resource_dir_table &Table, uint32_t Origin,
+                    std::vector<StringOrID> &Context,
+                    std::vector<std::string> &Duplicates);
+
   TreeNode Root;
   std::vector<std::vector<uint8_t>> Data;
   std::vector<std::vector<UTF16>> StringTable;
