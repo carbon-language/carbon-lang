@@ -436,6 +436,21 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
         assert($Variable[[x]] != $Variable[[y]]);
         assert($Variable[[x]] != $Function[[f]]());
       }
+    )cpp",
+    R"cpp(
+      struct $Class[[S]] {
+        $Primitive[[float]] $Field[[Value]];
+        $Class[[S]] *$Field[[Next]];
+      };
+      $Class[[S]] $Variable[[Global]][2] = {$Class[[S]](), $Class[[S]]()};
+      $Primitive[[void]] $Function[[f]]($Class[[S]] $Parameter[[P]]) {
+        $Primitive[[int]] $LocalVariable[[A]][2] = {1,2};
+        auto [$Variable[[B1]], $Variable[[B2]]] = $LocalVariable[[A]];
+        auto [$Variable[[G1]], $Variable[[G2]]] = $Variable[[Global]];
+        $Class[[auto]] [$Variable[[P1]], $Variable[[P2]]] = $Parameter[[P]];
+        // Highlights references to BindingDecls.
+        $Variable[[B1]]++;
+      }
     )cpp"};
   for (const auto &TestCase : TestCases) {
     checkHighlightings(TestCase);

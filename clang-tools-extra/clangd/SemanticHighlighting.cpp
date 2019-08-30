@@ -233,6 +233,10 @@ private:
                                                : HighlightingKind::Variable);
       return;
     }
+    if (isa<BindingDecl>(D)) {
+      addToken(Loc, HighlightingKind::Variable);
+      return;
+    }
     if (isa<FunctionDecl>(D)) {
       addToken(Loc, HighlightingKind::Function);
       return;
