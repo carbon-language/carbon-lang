@@ -317,8 +317,7 @@ public:
   /// Open the specified file as a MemoryBuffer, returning a new
   /// MemoryBuffer if successful, otherwise returning null.
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
-  getBufferForFile(const FileEntry *Entry, bool isVolatile = false,
-                   bool ShouldCloseOpenFile = true);
+  getBufferForFile(const FileEntry *Entry, bool isVolatile = false);
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
   getBufferForFile(StringRef Filename, bool isVolatile = false) {
     return getBufferForFileImpl(Filename, /*FileSize=*/-1, isVolatile);
