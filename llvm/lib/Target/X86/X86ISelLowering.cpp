@@ -78,6 +78,13 @@ static cl::opt<int> ExperimentalPrefLoopAlignment(
              " of the loop header PC will be 0)."),
     cl::Hidden);
 
+// Added in 10.0.
+static cl::opt<bool> EnableOldKNLABI(
+    "x86-enable-old-knl-abi", cl::init(false),
+    cl::desc("Enables passing v32i16 and v64i8 in 2 YMM registers instead of "
+             "one ZMM register on AVX512F, but not AVX512BW targets."),
+    cl::Hidden);
+
 static cl::opt<bool> MulConstantOptimization(
     "mul-constant-optimization", cl::init(true),
     cl::desc("Replace 'mul x, Const' with more effective instructions like "
@@ -1960,6 +1967,10 @@ MVT X86TargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
                                                      EVT VT) const {
   if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
     return MVT::v32i8;
+  // FIXME: Should we just make these types legal and custom split operations?
+  if ((VT == MVT::v32i16 || VT == MVT::v64i8) &&
+      Subtarget.hasAVX512() && !Subtarget.hasBWI() && !EnableOldKNLABI)
+    return MVT::v16i32;
   return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
 }
 
@@ -1967,6 +1978,10 @@ unsigned X86TargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
                                                           CallingConv::ID CC,
                                                           EVT VT) const {
   if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
+    return 1;
+  // FIXME: Should we just make these types legal and custom split operations?
+  if ((VT == MVT::v32i16 || VT == MVT::v64i8) &&
+      Subtarget.hasAVX512() && !Subtarget.hasBWI() && !EnableOldKNLABI)
     return 1;
   return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
 }
