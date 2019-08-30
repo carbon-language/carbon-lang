@@ -2185,30 +2185,6 @@ struct AAAlignImpl : AAAlign {
       takeKnownMaximum(Attr.getValueAsInt());
   }
 
-  // TODO: Provide a helper to determine the implied ABI alignment and check in
-  //       the existing manifest method and a new one for AAAlignImpl that value
-  //       to avoid making the alignment explicit if it did not improve.
-
-  /// See AbstractAttribute::getDeducedAttributes
-  virtual void
-  getDeducedAttributes(LLVMContext &Ctx,
-                       SmallVectorImpl<Attribute> &Attrs) const override {
-    if (getAssumedAlign() > 1)
-      Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
-  }
-
-  /// See AbstractAttribute::getAsStr().
-  const std::string getAsStr() const override {
-    return getAssumedAlign() ? ("align<" + std::to_string(getKnownAlign()) +
-                                "-" + std::to_string(getAssumedAlign()) + ">")
-                             : "unknown-align";
-  }
-};
-
-/// Align attribute for a floating value.
-struct AAAlignFloating : AAAlignImpl {
-  AAAlignFloating(const IRPosition &IRP) : AAAlignImpl(IRP) {}
-
   /// See AbstractAttribute::manifest(...).
   ChangeStatus manifest(Attributor &A) override {
     ChangeStatus Changed = ChangeStatus::UNCHANGED;
@@ -2235,8 +2211,32 @@ struct AAAlignFloating : AAAlignImpl {
       }
     }
 
-    return AAAlignImpl::manifest(A) | Changed;
+    return AAAlign::manifest(A) | Changed;
   }
+
+  // TODO: Provide a helper to determine the implied ABI alignment and check in
+  //       the existing manifest method and a new one for AAAlignImpl that value
+  //       to avoid making the alignment explicit if it did not improve.
+
+  /// See AbstractAttribute::getDeducedAttributes
+  virtual void
+  getDeducedAttributes(LLVMContext &Ctx,
+                       SmallVectorImpl<Attribute> &Attrs) const override {
+    if (getAssumedAlign() > 1)
+      Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
+  }
+
+  /// See AbstractAttribute::getAsStr().
+  const std::string getAsStr() const override {
+    return getAssumedAlign() ? ("align<" + std::to_string(getKnownAlign()) +
+                                "-" + std::to_string(getAssumedAlign()) + ">")
+                             : "unknown-align";
+  }
+};
+
+/// Align attribute for a floating value.
+struct AAAlignFloating : AAAlignImpl {
+  AAAlignFloating(const IRPosition &IRP) : AAAlignImpl(IRP) {}
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A) override {
