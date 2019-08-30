@@ -2292,7 +2292,14 @@ Expr<T> FoldOperation(FoldingContext &context, Power<T> &&x) {
       }
       return Expr<T>{Constant<T>{power.power}};
     } else {
-      // TODO: real & complex power with non-integral exponent
+      if (auto callable{context.hostIntrinsicsLibrary()
+                            .GetHostProcedureWrapper<Scalar, T, T, T>("pow")}) {
+        return Expr<T>{
+            Constant<T>{(*callable)(context, folded->first, folded->second)}};
+      } else {
+        context.messages().Say(
+            "Power for %s cannot be folded on host"_en_US, T{}.AsFortran());
+      }
     }
   }
   return Expr<T>{std::move(x)};

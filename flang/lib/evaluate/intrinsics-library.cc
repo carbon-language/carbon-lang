@@ -66,9 +66,10 @@ static void AddLibmRealHostProcedures(
       {"exp", F{std::exp}, true}, {"gamma", F{std::tgamma}, true},
       {"hypot", F2{std::hypot}, true}, {"log", F{std::log}, true},
       {"log10", F{std::log10}, true}, {"log_gamma", F{std::lgamma}, true},
-      {"mod", F2{std::fmod}, true}, {"sin", F{std::sin}, true},
-      {"sinh", F{std::sinh}, true}, {"sqrt", F{std::sqrt}, true},
-      {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
+      {"mod", F2{std::fmod}, true}, {"pow", F2{std::pow}, true},
+      {"sin", F{std::sin}, true}, {"sinh", F{std::sinh}, true},
+      {"sqrt", F{std::sqrt}, true}, {"tan", F{std::tan}, true},
+      {"tanh", F{std::tanh}, true}};
   // Note: cmath does not have modulo and erfc_scaled equivalent
 
   // Note regarding  lack of bessel function support:
@@ -92,6 +93,12 @@ template<typename HostT>
 static void AddLibmComplexHostProcedures(
     HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
   using F = FuncPointer<std::complex<HostT>, const std::complex<HostT> &>;
+  using F2 = FuncPointer<std::complex<HostT>, const std::complex<HostT> &,
+      const std::complex<HostT> &>;
+  using F2a = FuncPointer<std::complex<HostT>, const HostT &,
+      const std::complex<HostT> &>;
+  using F2b = FuncPointer<std::complex<HostT>, const std::complex<HostT> &,
+      const HostT &>;
   HostRuntimeIntrinsicProcedure libmSymbols[]{
       {"abs", FuncPointer<HostT, const std::complex<HostT> &>{std::abs}, true},
       {"acos", F{std::acos}, true}, {"acosh", F{std::acosh}, true},
@@ -99,9 +106,10 @@ static void AddLibmComplexHostProcedures(
       {"atan", F{std::atan}, true}, {"atanh", F{std::atanh}, true},
       {"cos", F{std::cos}, true}, {"cosh", F{std::cosh}, true},
       {"exp", F{std::exp}, true}, {"log", F{std::log}, true},
-      {"sin", F{std::sin}, true}, {"sinh", F{std::sinh}, true},
-      {"sqrt", F{std::sqrt}, true}, {"tan", F{std::tan}, true},
-      {"tanh", F{std::tanh}, true}};
+      {"pow", F2{std::pow}, true}, {"pow", F2a{std::pow}, true},
+      {"pow", F2b{std::pow}, true}, {"sin", F{std::sin}, true},
+      {"sinh", F{std::sinh}, true}, {"sqrt", F{std::sqrt}, true},
+      {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
 
   for (auto sym : libmSymbols) {
     if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
@@ -170,6 +178,7 @@ enum class I {
   log10,
   log_gamma,
   mod,
+  pow,
   sin,
   sinh,
   sqrt,
@@ -252,6 +261,78 @@ template<L, I, typename> constexpr auto Sym{NoSuchRuntimeSymbol{}};
   DECLARE_PGMATH_REAL(func) \
   DECLARE_PGMATH_COMPLEX(func)
 
+// Macros to declare fast/relaxed/precise libpgmath variants with two arguments.
+#define DECLARE_PGMATH_FAST_REAL2(func) \
+  extern "C" float __fs_##func##_1(float, float); \
+  extern "C" double __fd_##func##_1(double, double); \
+  template<> constexpr auto Sym<L::F, I::func, float>{__fs_##func##_1}; \
+  template<> constexpr auto Sym<L::F, I::func, double>{__fd_##func##_1};
+
+#define DECLARE_PGMATH_FAST_COMPLEX2(func) \
+  extern "C" float _Complex __fc_##func##_1(float _Complex, float _Complex); \
+  extern "C" double _Complex __fz_##func##_1( \
+      double _Complex, double _Complex); \
+  template<> \
+  constexpr auto Sym<L::F, I::func, std::complex<float>>{__fc_##func##_1}; \
+  template<> \
+  constexpr auto Sym<L::F, I::func, std::complex<double>>{__fz_##func##_1};
+
+#define DECLARE_PGMATH_FAST_ALL_FP2(func) \
+  DECLARE_PGMATH_FAST_REAL2(func) \
+  DECLARE_PGMATH_FAST_COMPLEX2(func)
+
+#define DECLARE_PGMATH_PRECISE_REAL2(func) \
+  extern "C" float __ps_##func##_1(float, float); \
+  extern "C" double __pd_##func##_1(double, double); \
+  template<> constexpr auto Sym<L::P, I::func, float>{__ps_##func##_1}; \
+  template<> constexpr auto Sym<L::P, I::func, double>{__pd_##func##_1};
+
+#define DECLARE_PGMATH_PRECISE_COMPLEX2(func) \
+  extern "C" float _Complex __pc_##func##_1(float _Complex, float _Complex); \
+  extern "C" double _Complex __pz_##func##_1( \
+      double _Complex, double _Complex); \
+  template<> \
+  constexpr auto Sym<L::P, I::func, std::complex<float>>{__pc_##func##_1}; \
+  template<> \
+  constexpr auto Sym<L::P, I::func, std::complex<double>>{__pz_##func##_1};
+
+#define DECLARE_PGMATH_PRECISE_ALL_FP2(func) \
+  DECLARE_PGMATH_PRECISE_REAL2(func) \
+  DECLARE_PGMATH_PRECISE_COMPLEX2(func)
+
+#define DECLARE_PGMATH_RELAXED_REAL2(func) \
+  extern "C" float __rs_##func##_1(float, float); \
+  extern "C" double __rd_##func##_1(double, double); \
+  template<> constexpr auto Sym<L::R, I::func, float>{__rs_##func##_1}; \
+  template<> constexpr auto Sym<L::R, I::func, double>{__rd_##func##_1};
+
+#define DECLARE_PGMATH_RELAXED_COMPLEX2(func) \
+  extern "C" float _Complex __rc_##func##_1(float _Complex, float _Complex); \
+  extern "C" double _Complex __rz_##func##_1( \
+      double _Complex, double _Complex); \
+  template<> \
+  constexpr auto Sym<L::R, I::func, std::complex<float>>{__rc_##func##_1}; \
+  template<> \
+  constexpr auto Sym<L::R, I::func, std::complex<double>>{__rz_##func##_1};
+
+#define DECLARE_PGMATH_RELAXED_ALL_FP2(func) \
+  DECLARE_PGMATH_RELAXED_REAL2(func) \
+  DECLARE_PGMATH_RELAXED_COMPLEX2(func)
+
+#define DECLARE_PGMATH_REAL2(func) \
+  DECLARE_PGMATH_FAST_REAL2(func) \
+  DECLARE_PGMATH_PRECISE_REAL2(func) \
+  DECLARE_PGMATH_RELAXED_REAL2(func)
+
+#define DECLARE_PGMATH_COMPLEX2(func) \
+  DECLARE_PGMATH_FAST_COMPLEX2(func) \
+  DECLARE_PGMATH_PRECISE_COMPLEX2(func) \
+  DECLARE_PGMATH_RELAXED_COMPLEX2(func)
+
+#define DECLARE_PGMATH_ALL2(func) \
+  DECLARE_PGMATH_REAL2(func) \
+  DECLARE_PGMATH_COMPLEX2(func)
+
 // Marcos to declare __mth_i libpgmath variants
 #define DECLARE_PGMATH_MTH_VERSION_REAL(func) \
   extern "C" float __mth_i_##func(float); \
@@ -269,19 +350,7 @@ DECLARE_PGMATH_MTH_VERSION_REAL(acosh)
 DECLARE_PGMATH_ALL(asin)
 DECLARE_PGMATH_MTH_VERSION_REAL(asinh)
 DECLARE_PGMATH_ALL(atan)
-// atan2 has 2 args
-extern "C" float __fs_atan2_1(float, float);
-extern "C" double __fd_atan2_1(double, double);
-extern "C" float __ps_atan2_1(float, float);
-extern "C" double __pd_atan2_1(double, double);
-extern "C" float __rs_atan2_1(float, float);
-extern "C" double __rd_atan2_1(double, double);
-template<> constexpr auto Sym<L::F, I::atan2, float>{__fs_atan2_1};
-template<> constexpr auto Sym<L::F, I::atan2, double>{__fd_atan2_1};
-template<> constexpr auto Sym<L::P, I::atan2, float>{__ps_atan2_1};
-template<> constexpr auto Sym<L::P, I::atan2, double>{__pd_atan2_1};
-template<> constexpr auto Sym<L::R, I::atan2, float>{__rs_atan2_1};
-template<> constexpr auto Sym<L::R, I::atan2, double>{__rd_atan2_1};
+DECLARE_PGMATH_REAL2(atan2)
 DECLARE_PGMATH_MTH_VERSION_REAL(atanh)
 DECLARE_PGMATH_MTH_VERSION_REAL(bessel_j0)
 DECLARE_PGMATH_MTH_VERSION_REAL(bessel_j1)
@@ -331,6 +400,7 @@ template<> constexpr auto Sym<L::P, I::mod, float>{__fs_mod_1};
 template<> constexpr auto Sym<L::P, I::mod, double>{__fd_mod_1};
 template<> constexpr auto Sym<L::R, I::mod, float>{__fs_mod_1};
 template<> constexpr auto Sym<L::R, I::mod, double>{__fd_mod_1};
+DECLARE_PGMATH_ALL2(pow)
 DECLARE_PGMATH_ALL(sin)
 DECLARE_PGMATH_ALL(sinh)
 DECLARE_PGMATH_MTH_VERSION_REAL(sqrt)
@@ -370,6 +440,7 @@ static void AddLibpgmathRealHostProcedures(
       {"log10", Sym<Lib, I::log10, HostT>, true},
       {"log_gamma", Sym<Lib, I::log_gamma, HostT>, true},
       {"mod", Sym<Lib, I::mod, HostT>, true},
+      {"pow", Sym<Lib, I::pow, HostT>, true},
       {"sin", Sym<Lib, I::sin, HostT>, true},
       {"sinh", Sym<Lib, I::sinh, HostT>, true},
       {"sqrt", Sym<Lib, I::sqrt, HostT>, true},
@@ -398,6 +469,22 @@ static std::complex<double> ComplexCFuncWrapper(std::complex<double> &arg) {
   return *reinterpret_cast<std::complex<double> *>(&res);
 }
 
+template<FuncPointer<float _Complex, float _Complex, float _Complex> func>
+static std::complex<float> ComplexCFuncWrapper(
+    std::complex<float> &arg1, std::complex<float> &arg2) {
+  float _Complex res{func(*reinterpret_cast<float _Complex *>(&arg1),
+      *reinterpret_cast<float _Complex *>(&arg2))};
+  return *reinterpret_cast<std::complex<float> *>(&res);
+}
+
+template<FuncPointer<double _Complex, double _Complex, double _Complex> func>
+static std::complex<double> ComplexCFuncWrapper(
+    std::complex<double> &arg1, std::complex<double> &arg2) {
+  double _Complex res{func(*reinterpret_cast<double _Complex *>(&arg1),
+      *reinterpret_cast<double _Complex *>(&arg2))};
+  return *reinterpret_cast<std::complex<double> *>(&res);
+}
+
 template<L Lib, typename HostT>
 static void AddLibpgmathComplexHostProcedures(
     HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
@@ -417,6 +504,7 @@ static void AddLibpgmathComplexHostProcedures(
       {"cosh", ComplexCFuncWrapper<Sym<Lib, I::cosh, CHostT>>, true},
       {"exp", ComplexCFuncWrapper<Sym<Lib, I::exp, CHostT>>, true},
       {"log", ComplexCFuncWrapper<Sym<Lib, I::log, CHostT>>, true},
+      {"pow", ComplexCFuncWrapper<Sym<Lib, I::pow, CHostT>>, true},
       {"sin", ComplexCFuncWrapper<Sym<Lib, I::sin, CHostT>>, true},
       {"sinh", ComplexCFuncWrapper<Sym<Lib, I::sinh, CHostT>>, true},
       {"sqrt", ComplexCFuncWrapper<Sym<Lib, I::sqrt, CHostT>>, true},
