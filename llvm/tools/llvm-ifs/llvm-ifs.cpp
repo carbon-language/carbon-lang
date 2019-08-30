@@ -85,8 +85,6 @@ struct IFSSymbol {
   bool operator<(const IFSSymbol &RHS) const { return Name < RHS.Name; }
 };
 
-namespace llvm {
-namespace yaml {
 /// YAML traits for IFSSymbolType.
 template <> struct llvm::yaml::ScalarEnumerationTraits<IFSSymbolType> {
   static void enumeration(IO &IO, IFSSymbolType &SymbolType) {
@@ -154,8 +152,6 @@ template <> struct llvm::yaml::CustomMappingTraits<std::set<IFSSymbol>> {
       IO.mapRequired(Sym.Name.c_str(), const_cast<IFSSymbol &>(Sym));
   }
 };
-} // End yaml namespace
-} // End llvm namespace
 
 // A cumulative representation of ELF stubs.
 // Both textual and binary stubs will read into and write from this object.
@@ -181,8 +177,6 @@ public:
         Symbols(std::move(Stub.Symbols)) {}
 };
 
-namespace llvm {
-namespace yaml {
 /// YAML traits for IFSStub objects.
 template <> struct llvm::yaml::MappingTraits<IFSStub> {
   static void mapping(IO &IO, IFSStub &Stub) {
@@ -196,8 +190,6 @@ template <> struct llvm::yaml::MappingTraits<IFSStub> {
     IO.mapRequired("Symbols", Stub.Symbols);
   }
 };
-} // End yaml namespace
-} // End llvm namespace
 
 static Expected<std::unique_ptr<IFSStub>> readInputFile(StringRef FilePath) {
   // Read in file.
