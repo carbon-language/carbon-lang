@@ -1,9 +1,9 @@
-; RUN: llc -relocation-model=static -verify-machineinstrs -O0 < %s -mcpu=ppc64 | FileCheck -check-prefix=OPT0 %s
-; RUN: llc -relocation-model=static -verify-machineinstrs -O1 < %s -mcpu=ppc64 | FileCheck -check-prefix=OPT1 %s
+; RUN: llc -relocation-model=static -verify-machineinstrs -mtriple=powerpc64-unknown-linux-gnu \
+; RUN:     -O0 < %s -mcpu=ppc64 | FileCheck -check-prefix=OPT0 %s
+; RUN: llc -relocation-model=static -verify-machineinstrs -mtriple=powerpc64-unknown-linux-gnu \
+; RUN:     -O1 < %s -mcpu=ppc64 | FileCheck -check-prefix=OPT1 %s
 ; RUN: llc -verify-machineinstrs -O0 < %s -mtriple=ppc32-- -mcpu=ppc | FileCheck -check-prefix=OPT0-PPC32 %s
 ; RUN: llc -relocation-model=pic -verify-machineinstrs -O0 < %s -mtriple=ppc32-- -mcpu=ppc | FileCheck -check-prefix=OPT0-PPC32-PIC %s
-
-target triple = "powerpc64-unknown-linux-gnu"
 
 @a = thread_local global i32 0, align 4
 
