@@ -4183,10 +4183,10 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
 
   if (VT.isVector()) {
     // fold (mulhs x, 0) -> 0
-    if (ISD::isBuildVectorAllZeros(N1.getNode()))
-      return N1;
-    if (ISD::isBuildVectorAllZeros(N0.getNode()))
-      return N0;
+    // do not return N0/N1, because undef node may exist.
+    if (ISD::isBuildVectorAllZeros(N0.getNode()) ||
+        ISD::isBuildVectorAllZeros(N1.getNode()))
+      return DAG.getConstant(0, DL, VT);
   }
 
   // fold (mulhs x, 0) -> 0
@@ -4230,10 +4230,10 @@ SDValue DAGCombiner::visitMULHU(SDNode *N) {
 
   if (VT.isVector()) {
     // fold (mulhu x, 0) -> 0
-    if (ISD::isBuildVectorAllZeros(N1.getNode()))
-      return N1;
-    if (ISD::isBuildVectorAllZeros(N0.getNode()))
-      return N0;
+    // do not return N0/N1, because undef node may exist.
+    if (ISD::isBuildVectorAllZeros(N0.getNode()) ||
+        ISD::isBuildVectorAllZeros(N1.getNode()))
+      return DAG.getConstant(0, DL, VT);
   }
 
   // fold (mulhu x, 0) -> 0
