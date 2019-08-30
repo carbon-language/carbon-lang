@@ -415,7 +415,7 @@ for a sequential loop in a _parallel_ or task generating construct
 is **private** in the innermost such construct that encloses the loop
 * Implied-do indices and _forall_ indices are **private**
 * The loop iteration variable in the associated _do-loop_
-of a _simd_ construct with just one associated _do-_taskloop_
+of a _simd_ construct with just one associated _do-loop_
 is **linear** with a linear-step
 that is the increment of the associated _do-loop_
 * The loop iteration variables in the associated _do-loop(s)_ of a _simd_
@@ -470,13 +470,13 @@ if no _default_ clause is present, dummy arguments are **firstprivate**
 * In a task generating construct, if no _default_ clause is present,
 a variable for which the data-sharing attribute is not determined
 by the rules above is **firstprivate**
-* For constructs other than task generating constructs or _target_constructs,
+* For constructs other than task generating constructs or _target_ constructs,
 if no _default_ clause is present,
 these variables reference the variables with the same names
 that exist in the enclosing context
 * In a _parallel_, _teams_, or task generating construct,
 the data-sharing attributes of these variables are determined
-by the _default_clause, if present:
+by the _default_ clause, if present:
     * _default(shared)_
     clause causes all variables referenced in the construct
     that have _implicitly determined_ data-sharing attributes
@@ -532,7 +532,7 @@ data-mapping attribute
    </td>
   </tr>
   <tr>
-   <td>tofrom \
+   <td>tofrom
 (default if map-type is not present)
    </td>
    <td>OmpMapTo & OmpMapFrom
@@ -611,7 +611,7 @@ into `.mod` files in their corresponding Specification Part:
 ## Phases of OpenMP Analysis
 
 1. Create the parse tree for OpenMP
-    1. Add types for directives and clauses.
+    1. Add types for directives and clauses
         1. Add type(s) that will be used for directives
         2. Add type(s) that will be used for clauses
         3. Add other types, e.g. wrappers or other containers
