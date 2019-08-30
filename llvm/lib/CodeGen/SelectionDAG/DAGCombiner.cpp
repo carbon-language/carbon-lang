@@ -8711,7 +8711,6 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
       isAbs = ISD::isBuildVectorAllZeros(N1.getOperand(0).getNode());
 
     if (isAbs) {
-      EVT VT = LHS.getValueType();
       if (TLI.isOperationLegalOrCustom(ISD::ABS, VT))
         return DAG.getNode(ISD::ABS, DL, VT, LHS);
 
