@@ -88,7 +88,7 @@ struct IFSSymbol {
 namespace llvm {
 namespace yaml {
 /// YAML traits for IFSSymbolType.
-template <> struct ScalarEnumerationTraits<IFSSymbolType> {
+template <> struct llvm::yaml::ScalarEnumerationTraits<IFSSymbolType> {
   static void enumeration(IO &IO, IFSSymbolType &SymbolType) {
     IO.enumCase(SymbolType, "NoType", IFSSymbolType::NoType);
     IO.enumCase(SymbolType, "Func", IFSSymbolType::Func);
@@ -100,7 +100,7 @@ template <> struct ScalarEnumerationTraits<IFSSymbolType> {
   }
 };
 
-template <> struct ScalarTraits<VersionTuple> {
+template <> struct llvm::yaml::ScalarTraits<VersionTuple> {
   static void output(const VersionTuple &Value, void *,
                      llvm::raw_ostream &Out) {
     Out << Value.getAsString();
@@ -122,7 +122,7 @@ template <> struct ScalarTraits<VersionTuple> {
 };
 
 /// YAML traits for IFSSymbol.
-template <> struct MappingTraits<IFSSymbol> {
+template <> struct llvm::yaml::MappingTraits<IFSSymbol> {
   static void mapping(IO &IO, IFSSymbol &Symbol) {
     IO.mapRequired("Type", Symbol.Type);
     // The need for symbol size depends on the symbol type.
@@ -141,7 +141,7 @@ template <> struct MappingTraits<IFSSymbol> {
 };
 
 /// YAML traits for set of IFSSymbols.
-template <> struct CustomMappingTraits<std::set<IFSSymbol>> {
+template <> struct llvm::yaml::CustomMappingTraits<std::set<IFSSymbol>> {
   static void inputOne(IO &IO, StringRef Key, std::set<IFSSymbol> &Set) {
     std::string Name = Key.str();
     IFSSymbol Sym(Name);
@@ -184,7 +184,7 @@ public:
 namespace llvm {
 namespace yaml {
 /// YAML traits for IFSStub objects.
-template <> struct MappingTraits<IFSStub> {
+template <> struct llvm::yaml::MappingTraits<IFSStub> {
   static void mapping(IO &IO, IFSStub &Stub) {
     if (!IO.mapTag("!experimental-ifs-v1", true))
       IO.setError("Not a .ifs YAML file.");
