@@ -2234,15 +2234,7 @@ void SwingSchedulerDAG::generateEpilog(SMSchedule &Schedule, unsigned LastStage,
   }
 
   // Fix any Phi nodes in the loop exit block.
-  for (MachineInstr &MI : *LoopExitBB) {
-    if (!MI.isPHI())
-      break;
-    for (unsigned i = 2, e = MI.getNumOperands() + 1; i != e; i += 2) {
-      MachineOperand &MO = MI.getOperand(i);
-      if (MO.getMBB() == BB)
-        MO.setMBB(PredBB);
-    }
-  }
+  LoopExitBB->replacePhiUsesWith(BB, PredBB);
 
   // Create a branch to the new epilog from the kernel.
   // Remove the original branch and add a new branch to the epilog.
