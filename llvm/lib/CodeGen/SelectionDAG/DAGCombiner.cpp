@@ -8715,9 +8715,9 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
       if (TLI.isOperationLegalOrCustom(ISD::ABS, VT))
         return DAG.getNode(ISD::ABS, DL, VT, LHS);
 
-      SDValue Shift = DAG.getNode(
-          ISD::SRA, DL, VT, LHS,
-          DAG.getConstant(VT.getScalarSizeInBits() - 1, DL, VT));
+      SDValue Shift = DAG.getNode(ISD::SRA, DL, VT, LHS,
+                                  DAG.getConstant(VT.getScalarSizeInBits() - 1,
+                                                  DL, getShiftAmountTy(VT)));
       SDValue Add = DAG.getNode(ISD::ADD, DL, VT, LHS, Shift);
       AddToWorklist(Shift.getNode());
       AddToWorklist(Add.getNode());
