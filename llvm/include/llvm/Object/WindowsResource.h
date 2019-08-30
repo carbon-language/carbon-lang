@@ -181,32 +181,37 @@ public:
   private:
     friend class WindowsResourceParser;
 
-    static uint32_t StringCount;
-    static uint32_t DataCount;
-
-    static std::unique_ptr<TreeNode> createStringNode();
+    // Index is the StringTable vector index for this node's name.
+    static std::unique_ptr<TreeNode> createStringNode(uint32_t Index);
     static std::unique_ptr<TreeNode> createIDNode();
+    // DataIndex is the Data vector index that the data node points at.
     static std::unique_ptr<TreeNode> createDataNode(uint16_t MajorVersion,
                                                     uint16_t MinorVersion,
                                                     uint32_t Characteristics,
-                                                    uint32_t Origin);
+                                                    uint32_t Origin,
+                                                    uint32_t DataIndex);
 
-    explicit TreeNode(bool IsStringNode);
+    explicit TreeNode(uint32_t StringIndex);
     TreeNode(uint16_t MajorVersion, uint16_t MinorVersion,
-             uint32_t Characteristics, uint32_t Origin);
+             uint32_t Characteristics, uint32_t Origin, uint32_t DataIndex);
 
     bool addEntry(const ResourceEntryRef &Entry, uint32_t Origin,
-                  bool &IsNewTypeString, bool &IsNewNameString,
+                  std::vector<std::vector<uint8_t>> &Data,
+                  std::vector<std::vector<UTF16>> &StringTable,
                   TreeNode *&Result);
-    TreeNode &addTypeNode(const ResourceEntryRef &Entry, bool &IsNewTypeString);
-    TreeNode &addNameNode(const ResourceEntryRef &Entry, bool &IsNewNameString);
+    TreeNode &addTypeNode(const ResourceEntryRef &Entry,
+                          std::vector<std::vector<UTF16>> &StringTable);
+    TreeNode &addNameNode(const ResourceEntryRef &Entry,
+                          std::vector<std::vector<UTF16>> &StringTable);
     bool addLanguageNode(const ResourceEntryRef &Entry, uint32_t Origin,
+                         std::vector<std::vector<uint8_t>> &Data,
                          TreeNode *&Result);
     bool addDataChild(uint32_t ID, uint16_t MajorVersion, uint16_t MinorVersion,
                       uint32_t Characteristics, uint32_t Origin,
-                      TreeNode *&Result);
+                      uint32_t DataIndex, TreeNode *&Result);
     TreeNode &addIDChild(uint32_t ID);
-    TreeNode &addNameChild(ArrayRef<UTF16> NameRef, bool &IsNewString);
+    TreeNode &addNameChild(ArrayRef<UTF16> NameRef,
+                           std::vector<std::vector<UTF16>> &StringTable);
 
     bool IsDataNode = false;
     uint32_t StringIndex;

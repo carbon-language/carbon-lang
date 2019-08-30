@@ -36,9 +36,6 @@ const uint32_t MIN_HEADER_SIZE = 7 * sizeof(uint32_t) + 2 * sizeof(uint16_t);
 // 8-byte because it makes everyone happy.
 const uint32_t SECTION_ALIGNMENT = sizeof(uint64_t);
 
-uint32_t WindowsResourceParser::TreeNode::StringCount = 0;
-uint32_t WindowsResourceParser::TreeNode::DataCount = 0;
-
 WindowsResource::WindowsResource(MemoryBufferRef Source)
     : Binary(Binary::ID_WinRes, Source) {
   size_t LeadingSize = WIN_RES_MAGIC_SIZE + WIN_RES_NULL_ENTRY_SIZE;
@@ -223,24 +220,13 @@ Error WindowsResourceParser::parse(WindowsResource *WR,
   InputFilenames.push_back(WR->getFileName());
   bool End = false;
   while (!End) {
-    Data.push_back(Entry.getData());
-
-    bool IsNewTypeString = false;
-    bool IsNewNameString = false;
 
     TreeNode *Node;
-    bool IsNewNode =
-        Root.addEntry(Entry, Origin, IsNewTypeString, IsNewNameString, Node);
+    bool IsNewNode = Root.addEntry(Entry, Origin, Data, StringTable, Node);
     if (!IsNewNode) {
       Duplicates.push_back(makeDuplicateResourceError(
           Entry, InputFilenames[Node->Origin], WR->getFileName()));
     }
-
-    if (IsNewTypeString)
-      StringTable.push_back(Entry.getTypeString());
-
-    if (IsNewNameString)
-      StringTable.push_back(Entry.getNameString());
 
     RETURN_IF_ERROR(Entry.moveNext(End));
   }
@@ -253,79 +239,81 @@ void WindowsResourceParser::printTree(raw_ostream &OS) const {
   Root.print(Writer, "Resource Tree");
 }
 
-bool WindowsResourceParser::TreeNode::addEntry(const ResourceEntryRef &Entry,
-                                               uint32_t Origin,
-                                               bool &IsNewTypeString,
-                                               bool &IsNewNameString,
-                                               TreeNode *&Result) {
-  TreeNode &TypeNode = addTypeNode(Entry, IsNewTypeString);
-  TreeNode &NameNode = TypeNode.addNameNode(Entry, IsNewNameString);
-  return NameNode.addLanguageNode(Entry, Origin, Result);
+bool WindowsResourceParser::TreeNode::addEntry(
+    const ResourceEntryRef &Entry, uint32_t Origin,
+    std::vector<std::vector<uint8_t>> &Data,
+    std::vector<std::vector<UTF16>> &StringTable, TreeNode *&Result) {
+  TreeNode &TypeNode = addTypeNode(Entry, StringTable);
+  TreeNode &NameNode = TypeNode.addNameNode(Entry, StringTable);
+  return NameNode.addLanguageNode(Entry, Origin, Data, Result);
 }
 
-WindowsResourceParser::TreeNode::TreeNode(bool IsStringNode) {
-  if (IsStringNode)
-    StringIndex = StringCount++;
-}
+WindowsResourceParser::TreeNode::TreeNode(uint32_t StringIndex)
+    : StringIndex(StringIndex) {}
 
 WindowsResourceParser::TreeNode::TreeNode(uint16_t MajorVersion,
                                           uint16_t MinorVersion,
                                           uint32_t Characteristics,
-                                          uint32_t Origin)
-    : IsDataNode(true), MajorVersion(MajorVersion), MinorVersion(MinorVersion),
-      Characteristics(Characteristics), Origin(Origin) {
-  DataIndex = DataCount++;
-}
+                                          uint32_t Origin, uint32_t DataIndex)
+    : IsDataNode(true), DataIndex(DataIndex), MajorVersion(MajorVersion),
+      MinorVersion(MinorVersion), Characteristics(Characteristics),
+      Origin(Origin) {}
 
 std::unique_ptr<WindowsResourceParser::TreeNode>
-WindowsResourceParser::TreeNode::createStringNode() {
-  return std::unique_ptr<TreeNode>(new TreeNode(true));
+WindowsResourceParser::TreeNode::createStringNode(uint32_t Index) {
+  return std::unique_ptr<TreeNode>(new TreeNode(Index));
 }
 
 std::unique_ptr<WindowsResourceParser::TreeNode>
 WindowsResourceParser::TreeNode::createIDNode() {
-  return std::unique_ptr<TreeNode>(new TreeNode(false));
+  return std::unique_ptr<TreeNode>(new TreeNode(0));
 }
 
 std::unique_ptr<WindowsResourceParser::TreeNode>
 WindowsResourceParser::TreeNode::createDataNode(uint16_t MajorVersion,
                                                 uint16_t MinorVersion,
                                                 uint32_t Characteristics,
-                                                uint32_t Origin) {
-  return std::unique_ptr<TreeNode>(
-      new TreeNode(MajorVersion, MinorVersion, Characteristics, Origin));
+                                                uint32_t Origin,
+                                                uint32_t DataIndex) {
+  return std::unique_ptr<TreeNode>(new TreeNode(
+      MajorVersion, MinorVersion, Characteristics, Origin, DataIndex));
 }
 
-WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addTypeNode(const ResourceEntryRef &Entry,
-                                             bool &IsNewTypeString) {
+WindowsResourceParser::TreeNode &WindowsResourceParser::TreeNode::addTypeNode(
+    const ResourceEntryRef &Entry,
+    std::vector<std::vector<UTF16>> &StringTable) {
   if (Entry.checkTypeString())
-    return addNameChild(Entry.getTypeString(), IsNewTypeString);
+    return addNameChild(Entry.getTypeString(), StringTable);
   else
     return addIDChild(Entry.getTypeID());
 }
 
-WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addNameNode(const ResourceEntryRef &Entry,
-                                             bool &IsNewNameString) {
+WindowsResourceParser::TreeNode &WindowsResourceParser::TreeNode::addNameNode(
+    const ResourceEntryRef &Entry,
+    std::vector<std::vector<UTF16>> &StringTable) {
   if (Entry.checkNameString())
-    return addNameChild(Entry.getNameString(), IsNewNameString);
+    return addNameChild(Entry.getNameString(), StringTable);
   else
     return addIDChild(Entry.getNameID());
 }
 
 bool WindowsResourceParser::TreeNode::addLanguageNode(
-    const ResourceEntryRef &Entry, uint32_t Origin, TreeNode *&Result) {
-  return addDataChild(Entry.getLanguage(), Entry.getMajorVersion(),
-                      Entry.getMinorVersion(), Entry.getCharacteristics(),
-                      Origin, Result);
+    const ResourceEntryRef &Entry, uint32_t Origin,
+    std::vector<std::vector<uint8_t>> &Data, TreeNode *&Result) {
+  bool Added = addDataChild(Entry.getLanguage(), Entry.getMajorVersion(),
+                            Entry.getMinorVersion(), Entry.getCharacteristics(),
+                            Origin, Data.size(), Result);
+  if (Added)
+    Data.push_back(Entry.getData());
+  return Added;
 }
 
 bool WindowsResourceParser::TreeNode::addDataChild(
     uint32_t ID, uint16_t MajorVersion, uint16_t MinorVersion,
-    uint32_t Characteristics, uint32_t Origin, TreeNode *&Result) {
-  auto NewChild =
-      createDataNode(MajorVersion, MinorVersion, Characteristics, Origin);
+    uint32_t Characteristics, uint32_t Origin, uint32_t DataIndex,
+    TreeNode *&Result) {
+  auto NewChild = createDataNode(MajorVersion, MinorVersion, Characteristics,
+                                 Origin, DataIndex);
   auto ElementInserted = IDChildren.emplace(ID, std::move(NewChild));
   Result = ElementInserted.first->second.get();
   return ElementInserted.second;
@@ -343,16 +331,15 @@ WindowsResourceParser::TreeNode &WindowsResourceParser::TreeNode::addIDChild(
     return *(Child->second);
 }
 
-WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addNameChild(ArrayRef<UTF16> NameRef,
-                                              bool &IsNewString) {
+WindowsResourceParser::TreeNode &WindowsResourceParser::TreeNode::addNameChild(
+    ArrayRef<UTF16> NameRef, std::vector<std::vector<UTF16>> &StringTable) {
   std::string NameString;
   convertUTF16LEToUTF8String(NameRef, NameString);
 
   auto Child = StringChildren.find(NameString);
   if (Child == StringChildren.end()) {
-    auto NewChild = createStringNode();
-    IsNewString = true;
+    auto NewChild = createStringNode(StringTable.size());
+    StringTable.push_back(NameRef);
     WindowsResourceParser::TreeNode &Node = *NewChild;
     StringChildren.emplace(NameString, std::move(NewChild));
     return Node;
