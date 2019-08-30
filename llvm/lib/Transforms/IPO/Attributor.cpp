@@ -1592,8 +1592,10 @@ struct AANoAliasCallSiteArgument final : AANoAliasImpl {
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
-    // TODO: It isn't sound to initialize as the same with `AANoAliasImpl`
-    // because `noalias` may not be valid in the current position.
+    // See callsite argument attribute and callee argument attribute.
+    ImmutableCallSite ICS(&getAnchorValue());
+    if (ICS.paramHasAttr(getArgNo(), Attribute::NoAlias))
+      indicateOptimisticFixpoint();
   }
 
   /// See AbstractAttribute::updateImpl(...).
