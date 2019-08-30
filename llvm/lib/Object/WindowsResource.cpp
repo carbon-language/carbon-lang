@@ -219,6 +219,8 @@ Error WindowsResourceParser::parse(WindowsResource *WR,
   }
 
   ResourceEntryRef Entry = EntryOrErr.get();
+  uint32_t Origin = InputFilenames.size();
+  InputFilenames.push_back(WR->getFileName());
   bool End = false;
   while (!End) {
     Data.push_back(Entry.getData());
@@ -226,10 +228,9 @@ Error WindowsResourceParser::parse(WindowsResource *WR,
     bool IsNewTypeString = false;
     bool IsNewNameString = false;
 
-    TreeNode* Node;
-    bool IsNewNode = Root.addEntry(Entry, InputFilenames.size(),
-                                   IsNewTypeString, IsNewNameString, Node);
-    InputFilenames.push_back(WR->getFileName());
+    TreeNode *Node;
+    bool IsNewNode =
+        Root.addEntry(Entry, Origin, IsNewTypeString, IsNewNameString, Node);
     if (!IsNewNode) {
       Duplicates.push_back(makeDuplicateResourceError(
           Entry, InputFilenames[Node->Origin], WR->getFileName()));
