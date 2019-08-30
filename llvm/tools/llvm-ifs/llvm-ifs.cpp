@@ -85,8 +85,10 @@ struct IFSSymbol {
   bool operator<(const IFSSymbol &RHS) const { return Name < RHS.Name; }
 };
 
+namespace llvm {
+namespace yaml {
 /// YAML traits for IFSSymbolType.
-template <> struct llvm::yaml::ScalarEnumerationTraits<IFSSymbolType> {
+template <> struct ScalarEnumerationTraits<IFSSymbolType> {
   static void enumeration(IO &IO, IFSSymbolType &SymbolType) {
     IO.enumCase(SymbolType, "NoType", IFSSymbolType::NoType);
     IO.enumCase(SymbolType, "Func", IFSSymbolType::Func);
@@ -98,7 +100,7 @@ template <> struct llvm::yaml::ScalarEnumerationTraits<IFSSymbolType> {
   }
 };
 
-template <> struct llvm::yaml::ScalarTraits<VersionTuple> {
+template <> struct ScalarTraits<VersionTuple> {
   static void output(const VersionTuple &Value, void *,
                      llvm::raw_ostream &Out) {
     Out << Value.getAsString();
@@ -120,7 +122,7 @@ template <> struct llvm::yaml::ScalarTraits<VersionTuple> {
 };
 
 /// YAML traits for IFSSymbol.
-template <> struct llvm::yaml::MappingTraits<IFSSymbol> {
+template <> struct MappingTraits<IFSSymbol> {
   static void mapping(IO &IO, IFSSymbol &Symbol) {
     IO.mapRequired("Type", Symbol.Type);
     // The need for symbol size depends on the symbol type.
@@ -139,7 +141,7 @@ template <> struct llvm::yaml::MappingTraits<IFSSymbol> {
 };
 
 /// YAML traits for set of IFSSymbols.
-template <> struct llvm::yaml::CustomMappingTraits<std::set<IFSSymbol>> {
+template <> struct CustomMappingTraits<std::set<IFSSymbol>> {
   static void inputOne(IO &IO, StringRef Key, std::set<IFSSymbol> &Set) {
     std::string Name = Key.str();
     IFSSymbol Sym(Name);
@@ -152,6 +154,8 @@ template <> struct llvm::yaml::CustomMappingTraits<std::set<IFSSymbol>> {
       IO.mapRequired(Sym.Name.c_str(), const_cast<IFSSymbol &>(Sym));
   }
 };
+} // End yaml namespace
+} // End llvm namespace
 
 // A cumulative representation of ELF stubs.
 // Both textual and binary stubs will read into and write from this object.
@@ -177,8 +181,10 @@ public:
         Symbols(std::move(Stub.Symbols)) {}
 };
 
+namespace llvm {
+namespace yaml {
 /// YAML traits for IFSStub objects.
-template <> struct llvm::yaml::MappingTraits<IFSStub> {
+template <> struct MappingTraits<IFSStub> {
   static void mapping(IO &IO, IFSStub &Stub) {
     if (!IO.mapTag("!experimental-ifs-v1", true))
       IO.setError("Not a .ifs YAML file.");
@@ -190,6 +196,8 @@ template <> struct llvm::yaml::MappingTraits<IFSStub> {
     IO.mapRequired("Symbols", Stub.Symbols);
   }
 };
+} // End yaml namespace
+} // End llvm namespace
 
 static Expected<std::unique_ptr<IFSStub>> readInputFile(StringRef FilePath) {
   // Read in file.
