@@ -2367,6 +2367,29 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
                                             bool FinishSubobjectInit,
                                             bool TopLevelObject) {
   if (DesigIdx == DIE->size()) {
+    // C++20 designated initialization can result in direct-list-initialization
+    // of the designated subobject. This is the only way that we can end up
+    // performing direct initialization as part of aggregate initialization, so
+    // it needs special handling.
+    if (DIE->isDirectInit()) {
+      Expr *Init = DIE->getInit();
+      assert(isa<InitListExpr>(Init) &&
+             "designator result in direct non-list initialization?");
+      InitializationKind Kind = InitializationKind::CreateDirectList(
+          DIE->getBeginLoc(), Init->getBeginLoc(), Init->getEndLoc());
+      InitializationSequence Seq(SemaRef, Entity, Kind, Init,
+                                 /*TopLevelOfInitList*/ true);
+      if (StructuredList) {
+        ExprResult Result = VerifyOnly
+                                ? getDummyInit()
+                                : Seq.Perform(SemaRef, Entity, Kind, Init);
+        UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                    Result.get());
+      }
+      ++Index;
+      return !Seq;
+    }
+
     // Check the actual initialization for the designated object type.
     bool prevHadError = hadError;
 
@@ -3101,7 +3124,7 @@ CheckArrayDesignatorExpr(Sema &S, Expr *Index, llvm::APSInt &Value) {
 }
 
 ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
-                                            SourceLocation Loc,
+                                            SourceLocation EqualOrColonLoc,
                                             bool GNUSyntax,
                                             ExprResult Init) {
   typedef DesignatedInitExpr::Designator ASTDesignator;
@@ -3189,8 +3212,9 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   // Clear out the expressions within the designation.
   Desig.ClearExprs(*this);
 
-  return DesignatedInitExpr::Create(Context, Designators, InitExpressions, Loc,
-                                    GNUSyntax, Init.getAs<Expr>());
+  return DesignatedInitExpr::Create(Context, Designators, InitExpressions,
+                                    EqualOrColonLoc, GNUSyntax,
+                                    Init.getAs<Expr>());
 }
 
 //===----------------------------------------------------------------------===//
