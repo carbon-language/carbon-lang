@@ -211,7 +211,8 @@ std::error_code ProfileSymbolList::read(uint64_t CompressSize,
     StringRef CompressedStrings(reinterpret_cast<const char *>(Data),
                                 CompressSize);
     char *Buffer = Allocator.Allocate<char>(UncompressSize);
-    llvm::Error E = zlib::uncompress(CompressedStrings, Buffer, UncompressSize);
+    size_t UCSize = UncompressSize;
+    llvm::Error E = zlib::uncompress(CompressedStrings, Buffer, UCSize);
     if (E)
       return sampleprof_error::uncompress_failed;
     ListStart = Buffer;

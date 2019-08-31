@@ -637,7 +637,7 @@ static int merge_main(int argc, const char *argv[]) {
       cl::desc("Path to file containing the list of function symbols "
                "used to populate profile symbol list"));
   cl::opt<bool> CompressProfSymList(
-      "compress-prof-sym-list", cl::init(true), cl::Hidden,
+      "compress-prof-sym-list", cl::init(false), cl::Hidden,
       cl::desc("Compress profile symbol list before write it into profile. "));
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");

@@ -637,7 +637,7 @@ private:
   // Determine whether or not to compress the symbol list when
   // writing it into profile. The variable is unused when the symbol
   // list is read from an existing profile.
-  bool ToCompress = true;
+  bool ToCompress = false;
   DenseSet<StringRef> Syms;
   BumpPtrAllocator Allocator;
 };
