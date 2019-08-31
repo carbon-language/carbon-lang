@@ -21962,10 +21962,10 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
         if (Cmp == Cond.getOperand(1).getOperand(1) &&
             isX86LogicalCmp(Cmp) &&
             Op.getNode()->hasOneUse()) {
-          X86::CondCode CCode =
-            (X86::CondCode)Cond.getOperand(0).getConstantOperandVal(0);
-          CCode = X86::GetOppositeBranchCondition(CCode);
-          CC = DAG.getConstant(CCode, dl, MVT::i8);
+          X86::CondCode CCode0 =
+              (X86::CondCode)Cond.getOperand(0).getConstantOperandVal(0);
+          CCode0 = X86::GetOppositeBranchCondition(CCode0);
+          CC = DAG.getConstant(CCode0, dl, MVT::i8);
           SDNode *User = *Op.getNode()->use_begin();
           // Look for an unconditional branch following this conditional branch.
           // We need this because we need to reverse the successors in order
@@ -21978,12 +21978,12 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
             (void)NewBR;
             Dest = FalseBB;
 
-            Chain = DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
-                                Chain, Dest, CC, Cmp);
-            X86::CondCode CCode =
-              (X86::CondCode)Cond.getOperand(1).getConstantOperandVal(0);
-            CCode = X86::GetOppositeBranchCondition(CCode);
-            CC = DAG.getConstant(CCode, dl, MVT::i8);
+            Chain = DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(), Chain,
+                                Dest, CC, Cmp);
+            X86::CondCode CCode1 =
+                (X86::CondCode)Cond.getOperand(1).getConstantOperandVal(0);
+            CCode1 = X86::GetOppositeBranchCondition(CCode1);
+            CC = DAG.getConstant(CCode1, dl, MVT::i8);
             Cond = Cmp;
             addTest = false;
           }
