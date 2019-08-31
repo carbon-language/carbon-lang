@@ -14737,9 +14737,14 @@ ShrinkLoadReplaceStoreWithStore(const std::pair<unsigned, unsigned> &MaskInfo,
 
   // Check that it is legal on the target to do this.  It is legal if the new
   // VT we're shrinking to (i8/i16/i32) is legal or we're still before type
-  // legalization.
-  MVT VT = MVT::getIntegerVT(NumBytes*8);
+  // legalization (and the target doesn't explicitly think this is a bad idea).
+  MVT VT = MVT::getIntegerVT(NumBytes * 8);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!DC->isTypeLegal(VT))
+    return SDValue();
+  if (St->getMemOperand() &&
+      !TLI.allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(), VT,
+                              *St->getMemOperand()))
     return SDValue();
 
   // Okay, we can do this!  Replace the 'St' store with a store of IVal that is
