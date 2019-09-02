@@ -109,8 +109,8 @@ private:
 public:
   /// Constructor for a variable \p Name defined at line \p DefLineNumber or
   /// defined before input is parsed if \p DefLineNumber is None.
-  FileCheckNumericVariable(StringRef Name,
-                           Optional<size_t> DefLineNumber = None)
+  explicit FileCheckNumericVariable(StringRef Name,
+                                    Optional<size_t> DefLineNumber = None)
       : Name(Name), DefLineNumber(DefLineNumber) {}
 
   /// \returns name of this numeric variable.
