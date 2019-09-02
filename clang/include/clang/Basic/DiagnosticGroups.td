@@ -146,9 +146,9 @@ def Deprecated : DiagGroup<"deprecated", [DeprecatedAttributes,
                                           DeprecatedWritableStr]>,
                  DiagCategory<"Deprecations">;
 
-def CXX2aDesignator : DiagGroup<"c++20-designator">;
+def CXX2aDesignator : DiagGroup<"c++2a-designator">;
 // Allow -Wno-c99-designator to be used to turn off all warnings on valid C99
-// designators (including the warning controlled by -Wc++20-designator).
+// designators (including the warning controlled by -Wc++2a-designator).
 def C99Designator : DiagGroup<"c99-designator", [CXX2aDesignator]>;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 
