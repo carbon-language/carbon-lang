@@ -148,6 +148,18 @@ int llvm::dlltoolDriverMain(llvm::ArrayRef<const char *> ArgsArr) {
 
   std::string Path = Args.getLastArgValue(OPT_l);
 
+  // If ExtName is set (if the "ExtName = Name" syntax was used), overwrite
+  // Name with ExtName and clear ExtName. When only creating an import
+  // library and not linking, the internal name is irrelevant. This avoids
+  // cases where writeImportLibrary tries to transplant decoration from
+  // symbol decoration onto ExtName.
+  for (COFFShortExport& E : Def->Exports) {
+    if (!E.ExtName.empty()) {
+      E.Name = E.ExtName;
+      E.ExtName.clear();
+    }
+  }
+
   if (Machine == IMAGE_FILE_MACHINE_I386 && Args.getLastArg(OPT_k)) {
     for (COFFShortExport& E : Def->Exports) {
       if (!E.AliasTarget.empty() || (!E.Name.empty() && E.Name[0] == '?'))
@@ -162,7 +174,6 @@ int llvm::dlltoolDriverMain(llvm::ArrayRef<const char *> ArgsArr) {
       // By making sure E.SymbolName != E.Name for decorated symbols,
       // writeImportLibrary writes these symbols with the type
       // IMPORT_NAME_UNDECORATE.
-      E.ExtName = E.ExtName.substr(0, E.ExtName.find('@', 1));
     }
   }
 
