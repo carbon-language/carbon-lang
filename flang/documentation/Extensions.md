@@ -94,7 +94,7 @@ Extensions, deletions, and legacy features supported by default
   we allow distinct types to be used, promoting
   the arguments as if they were operands to an intrinsic `+` operator,
   and defining the result type accordingly.
-* DOUBLE COMPLEX intrinsics DCMPLX, DCONJG and DIMAG.
+* DOUBLE COMPLEX intrinsics DREAL, DCMPLX, DCONJG and DIMAG.
 * INT_PTR_KIND intrinsic returns the kind of c_intptr_t.
 
 Extensions supported when enabled by options

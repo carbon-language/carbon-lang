@@ -778,6 +778,7 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
              {"y", AnyIntOrReal, Rank::elementalOrBOZ, Optionality::optional}},
          DoublePrecisionComplex},
         "cmplx"},
+    {{"dreal", {{"a", DoublePrecisionComplex}}, DoublePrecision}, "real"},
     {{"dconjg", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex},
         "conjg"},
     {{"dcos", {{"x", DoublePrecision}}, DoublePrecision}, "cos"},
