@@ -1854,6 +1854,8 @@ static bool isInlineValue(unsigned Reg) {
   case AMDGPU::SRC_EXECZ:
   case AMDGPU::SRC_SCC:
     return true;
+  case AMDGPU::SGPR_NULL:
+    return true;
   default:
     return false;
   }
