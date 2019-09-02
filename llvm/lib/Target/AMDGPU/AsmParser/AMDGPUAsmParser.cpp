@@ -2657,7 +2657,6 @@ unsigned AMDGPUAsmParser::findImplicitSGPRReadInVOP(const MCInst &Inst) const {
     case AMDGPU::VCC_LO:
     case AMDGPU::VCC_HI:
     case AMDGPU::M0:
-    case AMDGPU::SGPR_NULL:
       return Reg;
     default:
       break;
@@ -2731,9 +2730,13 @@ bool AMDGPUAsmParser::usesConstantBus(const MCInst &Inst, unsigned OpIdx) {
   const MCOperand &MO = Inst.getOperand(OpIdx);
   if (MO.isImm()) {
     return !isInlineConstant(Inst, OpIdx);
+  } else if (MO.isReg()) {
+    auto Reg = MO.getReg();
+    const MCRegisterInfo *TRI = getContext().getRegisterInfo();
+    return isSGPR(mc2PseudoReg(Reg), TRI) && Reg != SGPR_NULL;
+  } else {
+    return true;
   }
-  return !MO.isReg() ||
-         isSGPR(mc2PseudoReg(MO.getReg()), getContext().getRegisterInfo());
 }
 
 bool AMDGPUAsmParser::validateConstantBusLimitations(const MCInst &Inst) {
