@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -std=c++2a %s -verify=expected,pedantic,override,reorder -pedantic-errors
-// RUN: %clang_cc1 -std=c++2a %s -verify=expected,pedantic -Werror=c99-designator -Wno-reorder -Wno-initializer-overrides
-// RUN: %clang_cc1 -std=c++2a %s -verify=expected,reorder -Wno-c99-designator -Werror=reorder -Wno-initializer-overrides
-// RUN: %clang_cc1 -std=c++2a %s -verify=expected,override -Wno-c99-designator -Wno-reorder -Werror=initializer-overrides
-// RUN: %clang_cc1 -std=c++2a %s -verify -Wno-c99-designator -Wno-reorder -Wno-initializer-overrides
+// RUN: %clang_cc1 -std=c++2a %s -verify=expected,pedantic -Werror=c99-designator -Wno-reorder-init-list -Wno-initializer-overrides
+// RUN: %clang_cc1 -std=c++2a %s -verify=expected,reorder -Wno-c99-designator -Werror=reorder-init-list -Wno-initializer-overrides
+// RUN: %clang_cc1 -std=c++2a %s -verify=expected,override -Wno-c99-designator -Wno-reorder-init-list -Werror=initializer-overrides
+// RUN: %clang_cc1 -std=c++2a %s -verify -Wno-c99-designator -Wno-reorder-init-list -Wno-initializer-overrides
 
 
 namespace class_with_ctor {
