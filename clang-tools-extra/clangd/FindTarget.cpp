@@ -364,7 +364,7 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, DeclRelation R) {
     REL_CASE(TemplateInstantiation);
     REL_CASE(TemplatePattern);
 #undef REL_CASE
-  };
+  }
   llvm_unreachable("Unhandled DeclRelation enum");
 }
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, DeclRelationSet RS) {
