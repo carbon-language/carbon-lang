@@ -6,9 +6,7 @@ define i32 @csinc_const_65(i32 %a) {
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    movs r1, #5
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt r1, #6
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinc r0, r1, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -19,11 +17,9 @@ entry:
 define i32 @csinc_const_56(i32 %a) {
 ; CHECK-LABEL: csinc_const_56:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    movs r1, #6
+; CHECK-NEXT:    movs r1, #5
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt r1, #5
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinc r0, r1, r1, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -34,11 +30,8 @@ entry:
 define i32 @csinc_const_zext(i32 %a) {
 ; CHECK-LABEL: csinc_const_zext:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    movs r1, #0
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt r1, #1
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinc r0, zr, zr, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -49,11 +42,9 @@ entry:
 define i32 @csinv_const_56(i32 %a) {
 ; CHECK-LABEL: csinv_const_56:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    movs r1, #5
+; CHECK-NEXT:    mvn r1, #5
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    mvngt r1, #5
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinv r0, r1, r1, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -64,11 +55,9 @@ entry:
 define i32 @csinv_const_65(i32 %a) {
 ; CHECK-LABEL: csinv_const_65:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    mvn r1, #5
+; CHECK-NEXT:    movs r1, #5
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt r1, #5
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinv r0, r1, r1, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -79,11 +68,8 @@ entry:
 define i32 @csinv_const_sext(i32 %a) {
 ; CHECK-LABEL: csinv_const_sext:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    movs r1, #0
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt.w r1, #-1
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinv r0, zr, zr, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -94,11 +80,9 @@ entry:
 define i32 @csneg_const(i32 %a) {
 ; CHECK-LABEL: csneg_const:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    mov.w r1, #-1
+; CHECK-NEXT:    movs r1, #1
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt r1, #1
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csneg r0, r1, r1, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -109,11 +93,9 @@ entry:
 define i32 @csneg_const_r(i32 %a) {
 ; CHECK-LABEL: csneg_const_r:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    movs r1, #1
+; CHECK-NEXT:    mov.w r1, #-1
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    movgt.w r1, #-1
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csneg r0, r1, r1, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -139,9 +121,7 @@ define i32 @csinc_var(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csinc_var:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it le
-; CHECK-NEXT:    addle r1, r2, #1
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinc r0, r1, r2, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -154,9 +134,7 @@ define i32 @csinc_swap_var(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csinc_swap_var:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    addgt r2, r1, #1
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csinc r0, r2, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -169,9 +147,7 @@ define i32 @csinv_var(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csinv_var:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it le
-; CHECK-NEXT:    mvnle r1, r2
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csinv r0, r1, r2, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -184,9 +160,7 @@ define i32 @csinv_swap_var(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csinv_swap_var:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    mvngt r2, r1
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csinv r0, r2, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -199,9 +173,7 @@ define i32 @csneg_var(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_var:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it le
-; CHECK-NEXT:    rsble r1, r2, #0
-; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    csneg r0, r1, r2, gt
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -214,9 +186,7 @@ define i32 @csneg_swap_var_sgt(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_sgt:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    rsbgt r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -229,9 +199,7 @@ define i32 @csneg_swap_var_sge(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_sge:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #44
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    rsbgt r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sge i32 %a, 45
@@ -244,9 +212,7 @@ define i32 @csneg_swap_var_sle(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_sle:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #46
-; CHECK-NEXT:    it lt
-; CHECK-NEXT:    rsblt r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, ge
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sle i32 %a, 45
@@ -259,9 +225,7 @@ define i32 @csneg_swap_var_slt(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_slt:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it lt
-; CHECK-NEXT:    rsblt r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, ge
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp slt i32 %a, 45
@@ -274,9 +238,7 @@ define i32 @csneg_swap_var_ugt(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_ugt:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it hi
-; CHECK-NEXT:    rsbhi r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, ls
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp ugt i32 %a, 45
@@ -289,9 +251,7 @@ define i32 @csneg_swap_var_uge(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_uge:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #44
-; CHECK-NEXT:    it hi
-; CHECK-NEXT:    rsbhi r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, ls
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp uge i32 %a, 45
@@ -304,9 +264,7 @@ define i32 @csneg_swap_var_ule(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_ule:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #46
-; CHECK-NEXT:    it lo
-; CHECK-NEXT:    rsblo r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, hs
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp ule i32 %a, 45
@@ -319,9 +277,7 @@ define i32 @csneg_swap_var_ult(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_ult:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it lo
-; CHECK-NEXT:    rsblo r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, hs
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp ult i32 %a, 45
@@ -334,9 +290,7 @@ define i32 @csneg_swap_var_ne(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_ne:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it eq
-; CHECK-NEXT:    rsbeq r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, ne
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp eq i32 %a, 45
@@ -349,9 +303,7 @@ define i32 @csneg_swap_var_eq(i32 %a, i32 %b, i32 %c) {
 ; CHECK-LABEL: csneg_swap_var_eq:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    it ne
-; CHECK-NEXT:    rsbne r2, r1, #0
-; CHECK-NEXT:    mov r0, r2
+; CHECK-NEXT:    csneg r0, r2, r1, eq
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp ne i32 %a, 45
@@ -364,8 +316,7 @@ define i32 @csinc_inplace(i32 %a, i32 %b) {
 ; CHECK-LABEL: csinc_inplace:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r1, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    addgt r0, #1
+; CHECK-NEXT:    csinc r0, r0, r0, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %b, 45
@@ -378,8 +329,7 @@ define i32 @csinv_inplace(i32 %a, i32 %b) {
 ; CHECK-LABEL: csinv_inplace:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r1, #45
-; CHECK-NEXT:    it gt
-; CHECK-NEXT:    mvngt r0, r0
+; CHECK-NEXT:    csinv r0, r0, r0, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %b, 45

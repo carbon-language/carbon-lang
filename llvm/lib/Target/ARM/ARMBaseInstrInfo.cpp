@@ -3040,18 +3040,22 @@ bool ARMBaseInstrInfo::optimizeCompareInstr(
         break;
       case ARM::VSELEQD:
       case ARM::VSELEQS:
+      case ARM::VSELEQH:
         CC = ARMCC::EQ;
         break;
       case ARM::VSELGTD:
       case ARM::VSELGTS:
+      case ARM::VSELGTH:
         CC = ARMCC::GT;
         break;
       case ARM::VSELGED:
       case ARM::VSELGES:
+      case ARM::VSELGEH:
         CC = ARMCC::GE;
         break;
-      case ARM::VSELVSS:
       case ARM::VSELVSD:
+      case ARM::VSELVSS:
+      case ARM::VSELVSH:
         CC = ARMCC::VS;
         break;
       }

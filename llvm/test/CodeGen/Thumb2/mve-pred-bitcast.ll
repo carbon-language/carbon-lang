@@ -155,11 +155,10 @@ define arm_aapcs_vfpcc i2 @bitcast_from_v2i1(<2 x i64> %a) {
 ; CHECK-NEXT:    vmov r2, s2
 ; CHECK-NEXT:    orrs r0, r1
 ; CHECK-NEXT:    vmov r1, s3
-; CHECK-NEXT:    clz r0, r0
-; CHECK-NEXT:    lsrs r0, r0, #5
+; CHECK-NEXT:    csinc r0, zr, zr, ne
 ; CHECK-NEXT:    orrs r1, r2
-; CHECK-NEXT:    clz r1, r1
-; CHECK-NEXT:    lsrs r1, r1, #5
+; CHECK-NEXT:    csinc r1, zr, zr, ne
+; CHECK-NEXT:    ands r1, r1, #1
 ; CHECK-NEXT:    it ne
 ; CHECK-NEXT:    mvnne r1, #1
 ; CHECK-NEXT:    bfi r1, r0, #0, #1
