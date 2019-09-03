@@ -6242,7 +6242,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       if (const FinalAttr *FA = dtor->getAttr<FinalAttr>()) {
         Diag(FA->getLocation(), diag::warn_final_dtor_non_final_class)
             << FA->isSpelledAsSealed()
-            << FixItHint::CreateRemoval(FA->getLocation())
             << FixItHint::CreateInsertion(
                    getLocForEndOfToken(Record->getLocation()),
                    (FA->isSpelledAsSealed() ? " sealed" : " final"));

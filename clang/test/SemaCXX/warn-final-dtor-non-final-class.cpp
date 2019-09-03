@@ -8,7 +8,6 @@ class A {
 class B { // expected-note {{mark 'B' as 'final' to silence this warning}}
     // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:8-[[@LINE-1]]:8}:" final"
     virtual ~B() final; // expected-warning {{class with destructor marked 'final' cannot be inherited from}}
-    // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:18-[[@LINE-1]]:23}:""
 };
 
 class C final {
