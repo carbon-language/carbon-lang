@@ -2695,8 +2695,8 @@ void InnerLoopVectorizer::emitSCEVChecks(Loop *L, BasicBlock *Bypass) {
     if (C->isZero())
       return;
 
-  assert(!Cost->foldTailByMasking() &&
-         "Cannot SCEV check stride or overflow when folding tail");
+  assert(!BB->getParent()->hasOptSize() &&
+         "Cannot SCEV check stride or overflow when optimizing for size");
 
   // Create a new block containing the stride check.
   BB->setName("vector.scevcheck");
