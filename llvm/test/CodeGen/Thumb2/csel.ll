@@ -42,9 +42,9 @@ entry:
 define i32 @csinv_const_56(i32 %a) {
 ; CHECK-LABEL: csinv_const_56:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    mvn r1, #5
+; CHECK-NEXT:    movs r1, #5
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    csinv r0, r1, r1, gt
+; CHECK-NEXT:    csinv r0, r1, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
@@ -93,9 +93,9 @@ entry:
 define i32 @csneg_const_r(i32 %a) {
 ; CHECK-LABEL: csneg_const_r:
 ; CHECK:       @ %bb.0: @ %entry
-; CHECK-NEXT:    mov.w r1, #-1
+; CHECK-NEXT:    movs r1, #1
 ; CHECK-NEXT:    cmp r0, #45
-; CHECK-NEXT:    csneg r0, r1, r1, gt
+; CHECK-NEXT:    csneg r0, r1, r1, le
 ; CHECK-NEXT:    bx lr
 entry:
   %cmp = icmp sgt i32 %a, 45
