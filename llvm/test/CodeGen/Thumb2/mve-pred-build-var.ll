@@ -7,7 +7,7 @@ define arm_aapcs_vfpcc <4 x i32> @build_var0_v4i1(i32 %s, i32 %t, <4 x i32> %a, 
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #0, #4
@@ -26,7 +26,7 @@ define arm_aapcs_vfpcc <4 x i32> @build_var3_v4i1(i32 %s, i32 %t, <4 x i32> %a, 
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #12, #4
@@ -45,7 +45,7 @@ define arm_aapcs_vfpcc <4 x i32> @build_varN_v4i1(i32 %s, i32 %t, <4 x i32> %a, 
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #0, #4
@@ -69,7 +69,7 @@ define arm_aapcs_vfpcc <8 x i16> @build_var0_v8i1(i32 %s, i32 %t, <8 x i16> %a, 
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #0, #2
@@ -88,7 +88,7 @@ define arm_aapcs_vfpcc <8 x i16> @build_var3_v8i1(i32 %s, i32 %t, <8 x i16> %a, 
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #6, #2
@@ -107,7 +107,7 @@ define arm_aapcs_vfpcc <8 x i16> @build_varN_v8i1(i32 %s, i32 %t, <8 x i16> %a, 
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #0, #2
@@ -135,7 +135,7 @@ define arm_aapcs_vfpcc <16 x i8> @build_var0_v16i1(i32 %s, i32 %t, <16 x i8> %a,
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #0, #1
@@ -154,7 +154,7 @@ define arm_aapcs_vfpcc <16 x i8> @build_var3_v16i1(i32 %s, i32 %t, <16 x i8> %a,
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #3, #1
@@ -173,7 +173,7 @@ define arm_aapcs_vfpcc <16 x i8> @build_varN_v16i1(i32 %s, i32 %t, <16 x i8> %a,
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
 ; CHECK-NEXT:    mov.w r1, #0
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    bfi r1, r0, #0, #1
@@ -208,7 +208,7 @@ define arm_aapcs_vfpcc <2 x i64> @build_var0_v2i1(i32 %s, i32 %t, <2 x i64> %a, 
 ; CHECK-LABEL: build_var0_v2i1:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    vmov s8, r0
@@ -234,7 +234,7 @@ define arm_aapcs_vfpcc <2 x i64> @build_var1_v2i1(i32 %s, i32 %t, <2 x i64> %a, 
 ; CHECK-LABEL: build_var1_v2i1:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    vmov s10, r0
@@ -260,7 +260,7 @@ define arm_aapcs_vfpcc <2 x i64> @build_varN_v2i1(i32 %s, i32 %t, <2 x i64> %a, 
 ; CHECK-LABEL: build_varN_v2i1:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    cmp r0, r1
-; CHECK-NEXT:    csinc r0, zr, zr, hs
+; CHECK-NEXT:    cset r0, lo
 ; CHECK-NEXT:    and r0, r0, #1
 ; CHECK-NEXT:    rsbs r0, r0, #0
 ; CHECK-NEXT:    vdup.32 q2, r0

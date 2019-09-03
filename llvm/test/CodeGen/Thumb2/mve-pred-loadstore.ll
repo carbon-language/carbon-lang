@@ -167,9 +167,9 @@ define arm_aapcs_vfpcc void @store_v2i1(<2 x i1> *%dst, <2 x i64> %a) {
 ; CHECK-LE-NEXT:    vmov r3, s2
 ; CHECK-LE-NEXT:    orrs r1, r2
 ; CHECK-LE-NEXT:    vmov r2, s3
-; CHECK-LE-NEXT:    csinc r1, zr, zr, ne
+; CHECK-LE-NEXT:    cset r1, eq
 ; CHECK-LE-NEXT:    orrs r2, r3
-; CHECK-LE-NEXT:    csinc r2, zr, zr, ne
+; CHECK-LE-NEXT:    cset r2, eq
 ; CHECK-LE-NEXT:    ands r2, r2, #1
 ; CHECK-LE-NEXT:    it ne
 ; CHECK-LE-NEXT:    mvnne r2, #1
@@ -186,9 +186,9 @@ define arm_aapcs_vfpcc void @store_v2i1(<2 x i1> *%dst, <2 x i64> %a) {
 ; CHECK-BE-NEXT:    vmov r3, s5
 ; CHECK-BE-NEXT:    orrs r1, r2
 ; CHECK-BE-NEXT:    vmov r2, s4
-; CHECK-BE-NEXT:    csinc r1, zr, zr, ne
+; CHECK-BE-NEXT:    cset r1, eq
 ; CHECK-BE-NEXT:    orrs r2, r3
-; CHECK-BE-NEXT:    csinc r2, zr, zr, ne
+; CHECK-BE-NEXT:    cset r2, eq
 ; CHECK-BE-NEXT:    ands r2, r2, #1
 ; CHECK-BE-NEXT:    it ne
 ; CHECK-BE-NEXT:    mvnne r2, #1

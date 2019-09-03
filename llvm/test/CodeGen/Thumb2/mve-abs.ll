@@ -49,7 +49,7 @@ define arm_aapcs_vfpcc <2 x i64> @abs_v2i64(<2 x i64> %s1) {
 ; CHECK-NEXT:    rsbs.w r3, lr, #0
 ; CHECK-NEXT:    sbc.w r2, r12, r0
 ; CHECK-NEXT:    cmp r0, #0
-; CHECK-NEXT:    csinc r1, zr, zr, pl
+; CHECK-NEXT:    cset r1, mi
 ; CHECK-NEXT:    ands r1, r1, #1
 ; CHECK-NEXT:    itt eq
 ; CHECK-NEXT:    moveq r2, r0
@@ -61,7 +61,7 @@ define arm_aapcs_vfpcc <2 x i64> @abs_v2i64(<2 x i64> %s1) {
 ; CHECK-NEXT:    rsbs.w r2, lr, #0
 ; CHECK-NEXT:    sbc.w r3, r12, r0
 ; CHECK-NEXT:    cmp r0, #0
-; CHECK-NEXT:    csinc r1, zr, zr, pl
+; CHECK-NEXT:    cset r1, mi
 ; CHECK-NEXT:    ands r1, r1, #1
 ; CHECK-NEXT:    it eq
 ; CHECK-NEXT:    moveq r2, lr
