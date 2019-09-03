@@ -27,7 +27,7 @@ namespace clang {
 namespace clangd {
 namespace {
 
-LLVM_DUMP_METHOD std::string
+LLVM_ATTRIBUTE_UNUSED std::string
 nodeToString(const ast_type_traits::DynTypedNode &N) {
   std::string S = N.getNodeKind().asStringRef();
   {
