@@ -1868,7 +1868,7 @@ struct AAIsDeadImpl : public AAIsDead {
     Function &F = *getAssociatedFunction();
 
     if (AssumedLiveBlocks.empty()) {
-      F.replaceAllUsesWith(UndefValue::get(F.getType()));
+      A.deleteAfterManifest(F);
       return ChangeStatus::CHANGED;
     }
 
@@ -1918,6 +1918,9 @@ struct AAIsDeadImpl : public AAIsDead {
             }
           }
         }
+
+        if (SplitPos == &NormalDestBB->front())
+          AssumedLiveBlocks.insert(NormalDestBB);
       }
 
       BB = SplitPos->getParent();
@@ -1925,6 +1928,10 @@ struct AAIsDeadImpl : public AAIsDead {
       changeToUnreachable(BB->getTerminator(), /* UseLLVMTrap */ false);
       HasChanged = ChangeStatus::CHANGED;
     }
+
+    for (BasicBlock &BB : F)
+      if (!AssumedLiveBlocks.count(&BB))
+        A.deleteAfterManifest(BB);
 
     return HasChanged;
   }
@@ -3309,14 +3316,18 @@ ChangeStatus Attributor::run() {
                     << " blocks and " << ToBeDeletedInsts.size()
                     << " instructions\n");
   for (Instruction *I : ToBeDeletedInsts) {
-    if (I->hasNUsesOrMore(1))
+    if (!I->use_empty())
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
     I->eraseFromParent();
   }
-  for (BasicBlock *BB : ToBeDeletedBlocks) {
-    // TODO: Check if we need to replace users (PHIs, indirect branches?)
-    BB->eraseFromParent();
+
+  if (unsigned NumDeadBlocks = ToBeDeletedBlocks.size()) {
+    SmallVector<BasicBlock *, 8> ToBeDeletedBBs;
+    ToBeDeletedBBs.reserve(NumDeadBlocks);
+    ToBeDeletedBBs.append(ToBeDeletedBlocks.begin(), ToBeDeletedBlocks.end());
+    DeleteDeadBlocks(ToBeDeletedBBs);
   }
+
   for (Function *Fn : ToBeDeletedFunctions) {
     Fn->replaceAllUsesWith(UndefValue::get(Fn->getType()));
     Fn->eraseFromParent();

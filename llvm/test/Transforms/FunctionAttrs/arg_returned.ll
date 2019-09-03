@@ -804,10 +804,8 @@ attributes #0 = { noinline nounwind uwtable }
 ; BOTH-DAG: attributes #{{[0-9]*}} = { nofree noinline nosync nounwind readnone uwtable }
 ; BOTH-DAG: attributes #{{[0-9]*}} = { nofree noinline noreturn nosync nounwind readonly uwtable }
 ; BOTH-DAG: attributes #{{[0-9]*}} = { noinline nounwind uwtable }
-; BOTH-DAG: attributes #{{[0-9]*}} = { nofree noinline nosync nounwind readnone uwtable willreturn }
-; BOTH-DAG: attributes #{{[0-9]*}} = { nofree noinline nosync nounwind uwtable willreturn }
+; BOTH-DAG: attributes #{{[0-9]*}} = { noreturn }
 ; BOTH-DAG: attributes #{{[0-9]*}} = { nofree nosync willreturn }
 ; BOTH-DAG: attributes #{{[0-9]*}} = { nofree nosync }
 ; BOTH-DAG: attributes #{{[0-9]*}} = { nofree noreturn nosync }
-; BOTH-DAG: attributes #{{[0-9]*}} = { noreturn }
 ; BOTH-NOT: attributes #
