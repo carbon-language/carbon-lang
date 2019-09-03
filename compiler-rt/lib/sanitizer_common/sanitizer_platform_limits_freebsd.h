@@ -114,7 +114,7 @@ namespace __sanitizer {
     long key;
   };
 
-#if defined(__LP64___)
+#if !defined(__i386__)
   typedef long long __sanitizer_time_t;
 #else
   typedef long __sanitizer_time_t;
