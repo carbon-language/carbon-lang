@@ -40,6 +40,17 @@ was built, so you can always use
 .Nm
 as a native linker as well as a cross linker.
 .Sh OPTIONS
+Many options have both a single-letter and long form.
+When using the long form options other than those beginning with the
+letter
+.Cm o
+may be specified using either one or two dashes preceding the option name.
+Long options beginning with
+.Cm o
+require two dashes to avoid confusion with the
+.Fl o Ar path
+option.
+.Pp
 .Bl -tag -width indent
 .It Fl -allow-multiple-definition
 Do not error if a symbol is defined multiple times.
