@@ -130,16 +130,13 @@ SymbolLocation getPreferredLocation(const Location &ASTLoc,
 }
 
 /// Finds declarations locations that a given source location refers to.
-class DeclarationAndMacrosFinder : public index::IndexDataConsumer {
-  std::vector<DefinedMacro> MacroInfos;
+class DeclarationFinder : public index::IndexDataConsumer {
   llvm::DenseSet<const Decl *> Decls;
   const SourceLocation &SearchedLocation;
-  Preprocessor &PP;
 
 public:
-  DeclarationAndMacrosFinder(const SourceLocation &SearchedLocation,
-                             Preprocessor &PP)
-      : SearchedLocation(SearchedLocation), PP(PP) {}
+  DeclarationFinder(const SourceLocation &SearchedLocation)
+      : SearchedLocation(SearchedLocation) {}
 
   // The results are sorted by declaration location.
   std::vector<const Decl *> getFoundDecls() const {
@@ -151,22 +148,6 @@ public:
       return L->getBeginLoc() < R->getBeginLoc();
     });
     return Result;
-  }
-
-  std::vector<DefinedMacro> takeMacroInfos() {
-    // Don't keep the same Macro info multiple times.
-    llvm::sort(MacroInfos,
-               [](const DefinedMacro &Left, const DefinedMacro &Right) {
-                 return Left.Info < Right.Info;
-               });
-
-    auto Last =
-        std::unique(MacroInfos.begin(), MacroInfos.end(),
-                    [](const DefinedMacro &Left, const DefinedMacro &Right) {
-                      return Left.Info == Right.Info;
-                    });
-    MacroInfos.erase(Last, MacroInfos.end());
-    return std::move(MacroInfos);
   }
 
   bool
@@ -210,22 +191,11 @@ public:
     }
     return true;
   }
-
-private:
-  void finish() override {
-    if (auto DefinedMacro = locateMacroAt(SearchedLocation, PP))
-      MacroInfos.push_back(*DefinedMacro);
-  }
 };
 
-struct IdentifiedSymbol {
-  std::vector<const Decl *> Decls;
-  std::vector<DefinedMacro> Macros;
-};
-
-IdentifiedSymbol getSymbolAtPosition(ParsedAST &AST, SourceLocation Pos) {
-  auto DeclMacrosFinder =
-      DeclarationAndMacrosFinder(Pos, AST.getPreprocessor());
+std::vector<const Decl *> getDeclAtPosition(ParsedAST &AST,
+                                            SourceLocation Pos) {
+  DeclarationFinder Finder(Pos);
   index::IndexingOptions IndexOpts;
   IndexOpts.SystemSymbolFilter =
       index::IndexingOptions::SystemSymbolFilterKind::All;
@@ -233,9 +203,9 @@ IdentifiedSymbol getSymbolAtPosition(ParsedAST &AST, SourceLocation Pos) {
   IndexOpts.IndexParametersInDeclarations = true;
   IndexOpts.IndexTemplateParameters = true;
   indexTopLevelDecls(AST.getASTContext(), AST.getPreprocessor(),
-                     AST.getLocalTopLevelDecls(), DeclMacrosFinder, IndexOpts);
+                     AST.getLocalTopLevelDecls(), Finder, IndexOpts);
 
-  return {DeclMacrosFinder.getFoundDecls(), DeclMacrosFinder.takeMacroInfos()};
+  return Finder.getFoundDecls();
 }
 
 llvm::Optional<Location> makeLocation(ASTContext &AST, SourceLocation TokLoc,
@@ -286,16 +256,15 @@ std::vector<LocatedSymbol> locateSymbolAt(ParsedAST &AST, Position Pos,
 
   SourceLocation SourceLocationBeg =
       getBeginningOfIdentifier(AST, Pos, SM.getMainFileID());
-  auto Symbols = getSymbolAtPosition(AST, SourceLocationBeg);
 
   // Macros are simple: there's no declaration/definition distinction.
   // As a consequence, there's no need to look them up in the index either.
   std::vector<LocatedSymbol> Result;
-  for (auto M : Symbols.Macros) {
-    if (auto Loc = makeLocation(AST.getASTContext(), M.Info->getDefinitionLoc(),
-                                *MainFilePath)) {
+  if (auto M = locateMacroAt(SourceLocationBeg, AST.getPreprocessor())) {
+    if (auto Loc = makeLocation(AST.getASTContext(),
+                                M->Info->getDefinitionLoc(), *MainFilePath)) {
       LocatedSymbol Macro;
-      Macro.Name = M.Name;
+      Macro.Name = M->Name;
       Macro.PreferredDeclaration = *Loc;
       Macro.Definition = Loc;
       Result.push_back(std::move(Macro));
@@ -312,7 +281,7 @@ std::vector<LocatedSymbol> locateSymbolAt(ParsedAST &AST, Position Pos,
   llvm::DenseMap<SymbolID, size_t> ResultIndex;
 
   // Emit all symbol locations (declaration or definition) from AST.
-  for (const Decl *D : Symbols.Decls) {
+  for (const Decl *D : getDeclAtPosition(AST, SourceLocationBeg)) {
     auto Loc =
         makeLocation(AST.getASTContext(), spellingLocIfSpelled(findName(D), SM),
                      *MainFilePath);
@@ -438,10 +407,11 @@ findRefs(const std::vector<const Decl *> &Decls, ParsedAST &AST) {
 std::vector<DocumentHighlight> findDocumentHighlights(ParsedAST &AST,
                                                       Position Pos) {
   const SourceManager &SM = AST.getSourceManager();
-  auto Symbols = getSymbolAtPosition(
-      AST, getBeginningOfIdentifier(AST, Pos, SM.getMainFileID()));
   // FIXME: show references to macro within file?
-  auto References = findRefs(Symbols.Decls, AST);
+  auto References =
+      findRefs(getDeclAtPosition(
+                   AST, getBeginningOfIdentifier(AST, Pos, SM.getMainFileID())),
+               AST);
 
   // FIXME: we may get multiple DocumentHighlights with the same location and
   // different kinds, deduplicate them.
@@ -907,23 +877,22 @@ llvm::Optional<HoverInfo> getHover(ParsedAST &AST, Position Pos,
   llvm::Optional<HoverInfo> HI;
   SourceLocation SourceLocationBeg = getBeginningOfIdentifier(
       AST, Pos, AST.getSourceManager().getMainFileID());
-  // Identified symbols at a specific position.
-  auto Symbols = getSymbolAtPosition(AST, SourceLocationBeg);
 
-  if (!Symbols.Macros.empty())
-    HI = getHoverContents(Symbols.Macros[0], AST);
-  else if (!Symbols.Decls.empty())
-    HI = getHoverContents(Symbols.Decls[0], Index);
-  else {
-    if (!hasDeducedType(AST, SourceLocationBeg))
-      return None;
-
+  if (auto M = locateMacroAt(SourceLocationBeg, AST.getPreprocessor())) {
+    HI = getHoverContents(*M, AST);
+  } else {
+    auto Decls = getDeclAtPosition(AST, SourceLocationBeg);
+    if (!Decls.empty())
+      HI = getHoverContents(Decls.front(), Index);
+  }
+  if (!HI && hasDeducedType(AST, SourceLocationBeg)) {
     DeducedTypeVisitor V(SourceLocationBeg);
     V.TraverseAST(AST.getASTContext());
-    if (V.DeducedType.isNull())
-      return None;
-    HI = getHoverContents(V.DeducedType, V.D, AST.getASTContext(), Index);
+    if (!V.DeducedType.isNull())
+      HI = getHoverContents(V.DeducedType, V.D, AST.getASTContext(), Index);
   }
+  if (!HI)
+    return llvm::None;
 
   auto Replacements = format::reformat(
       Style, HI->Definition, tooling::Range(0, HI->Definition.size()));
@@ -950,11 +919,11 @@ std::vector<Location> findReferences(ParsedAST &AST, Position Pos,
     return Results;
   }
   auto Loc = getBeginningOfIdentifier(AST, Pos, SM.getMainFileID());
-  auto Symbols = getSymbolAtPosition(AST, Loc);
+  // TODO: should we handle macros, too?
+  auto Decls = getDeclAtPosition(AST, Loc);
 
   // We traverse the AST to find references in the main file.
-  // TODO: should we handle macros, too?
-  auto MainFileRefs = findRefs(Symbols.Decls, AST);
+  auto MainFileRefs = findRefs(Decls, AST);
   // We may get multiple refs with the same location and different Roles, as
   // cross-reference is only interested in locations, we deduplicate them
   // by the location to avoid emitting duplicated locations.
@@ -980,7 +949,7 @@ std::vector<Location> findReferences(ParsedAST &AST, Position Pos,
     RefsRequest Req;
     Req.Limit = Limit;
 
-    for (const Decl *D : Symbols.Decls) {
+    for (const Decl *D : Decls) {
       // Not all symbols can be referenced from outside (e.g. function-locals).
       // TODO: we could skip TU-scoped symbols here (e.g. static functions) if
       // we know this file isn't a header. The details might be tricky.
@@ -1007,11 +976,10 @@ std::vector<SymbolDetails> getSymbolInfo(ParsedAST &AST, Position Pos) {
   const SourceManager &SM = AST.getSourceManager();
 
   auto Loc = getBeginningOfIdentifier(AST, Pos, SM.getMainFileID());
-  auto Symbols = getSymbolAtPosition(AST, Loc);
 
   std::vector<SymbolDetails> Results;
 
-  for (const Decl *D : Symbols.Decls) {
+  for (const Decl *D : getDeclAtPosition(AST, Loc)) {
     SymbolDetails NewSymbol;
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
       std::string QName = printQualifiedName(*ND);
@@ -1032,12 +1000,12 @@ std::vector<SymbolDetails> getSymbolInfo(ParsedAST &AST, Position Pos) {
     Results.push_back(std::move(NewSymbol));
   }
 
-  for (const auto &Macro : Symbols.Macros) {
+  if (auto M = locateMacroAt(Loc, AST.getPreprocessor())) {
     SymbolDetails NewMacro;
-    NewMacro.name = Macro.Name;
+    NewMacro.name = M->Name;
     llvm::SmallString<32> USR;
-    if (!index::generateUSRForMacro(NewMacro.name,
-                                    Macro.Info->getDefinitionLoc(), SM, USR)) {
+    if (!index::generateUSRForMacro(NewMacro.name, M->Info->getDefinitionLoc(),
+                                    SM, USR)) {
       NewMacro.USR = USR.str();
       NewMacro.ID = SymbolID(NewMacro.USR);
     }
@@ -1179,11 +1147,11 @@ static void fillSuperTypes(const CXXRecordDecl &CXXRD, ASTContext &ASTCtx,
 const CXXRecordDecl *findRecordTypeAt(ParsedAST &AST, Position Pos) {
   SourceLocation SourceLocationBeg = getBeginningOfIdentifier(
       AST, Pos, AST.getSourceManager().getMainFileID());
-  IdentifiedSymbol Symbols = getSymbolAtPosition(AST, SourceLocationBeg);
-  if (Symbols.Decls.empty())
+  auto Decls = getDeclAtPosition(AST, SourceLocationBeg);
+  if (Decls.empty())
     return nullptr;
 
-  const Decl *D = Symbols.Decls[0];
+  const Decl *D = Decls[0];
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     // If this is a variable, use the type of the variable.
