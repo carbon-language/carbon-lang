@@ -136,6 +136,10 @@ class DataAggregator : public DataReader {
   PerfProcessInfo MMapEventsPPI;
   PerfProcessInfo TaskEventsPPI;
 
+  /// Kernel VM starts at fixed based address
+  /// https://www.kernel.org/doc/Documentation/x86/x86_64/mm.txt
+  static constexpr uint64_t KernelBaseAddr = 0xffff800000000000;
+
   /// Current list of created temporary files
   std::vector<std::string> TempFiles;
 
@@ -388,6 +392,9 @@ class DataAggregator : public DataReader {
     adjustAddress(LBR.From, MMI);
     adjustAddress(LBR.To, MMI);
   }
+
+  /// Ignore kernel/user transition LBR if requested
+  bool ignoreKernelInterrupt(LBREntry &LBR) const;
 
 public:
   DataAggregator(raw_ostream &Diag, StringRef BinaryName)

@@ -110,6 +110,13 @@ WriteAutoFDOData("autofdo",
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
 
+static cl::opt<bool>
+IgnoreInterruptLBR("ignore-interrupt-lbr",
+  cl::desc("Ignore kernel interrupt LBR that happens asynchronously"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(AggregatorCategory));
+
 }
 
 namespace {
@@ -898,6 +905,8 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
     if (std::error_code EC = LBRRes.getError())
       return EC;
     auto LBR = LBRRes.get();
+    if (ignoreKernelInterrupt(LBR))
+      continue;
     if (!BC->HasFixedLoadAddress)
       adjustLBR(LBR, MMapInfoIter->second);
     Res.LBR.push_back(LBR);
@@ -1079,6 +1088,11 @@ bool DataAggregator::hasData() {
     return false;
 
   return true;
+}
+
+bool DataAggregator::ignoreKernelInterrupt(LBREntry &LBR) const {
+  return opts::IgnoreInterruptLBR &&
+         (LBR.From >= KernelBaseAddr || LBR.To >= KernelBaseAddr);
 }
 
 std::error_code DataAggregator::printLBRHeatMap() {
