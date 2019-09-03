@@ -1277,10 +1277,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::STORE,              VT, Custom);
     }
 
-    if (HasInt256)
-      setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
-
     if (HasInt256) {
+      setOperationAction(ISD::VSELECT, MVT::v32i8, Legal);
+
       // Custom legalize 2x32 to get a little better code.
       setOperationAction(ISD::MGATHER, MVT::v2f32, Custom);
       setOperationAction(ISD::MGATHER, MVT::v2i32, Custom);
