@@ -287,19 +287,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::FP_TO_UINT   , MVT::i64  , Expand);
     }
   } else if (!Subtarget.useSoftFloat()) {
-    // Since AVX is a superset of SSE3, only check for SSE here.
-    if (Subtarget.hasSSE1() && !Subtarget.hasSSE3())
-      // Expand FP_TO_UINT into a select.
-      // FIXME: We would like to use a Custom expander here eventually to do
-      // the optimal thing for SSE vs. the default expansion in the legalizer.
-      setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Expand);
-    else
-      // With AVX512 we can use vcvts[ds]2usi for f32/f64->i32, f80 is custom.
-      // With SSE3 we can use fisttpll to convert to a signed i64; without
-      // SSE, we're stuck with a fistpll.
-      setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Custom);
-
-    setOperationAction(ISD::FP_TO_UINT     , MVT::i64  , Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
   }
 
   // TODO: when we have SSE, these could be more efficient, by using movd/movq.
@@ -19424,6 +19413,11 @@ SDValue X86TargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) const {
   // If this is a SINT_TO_FP using SSEReg we're done.
   if (UseSSEReg && IsSigned)
     return Op;
+
+  // Use default expansion for SSE1/2 targets without SSE3. With SSE3 we can use
+  // fisttp.
+  if (!IsSigned && UseSSEReg && !Subtarget.hasSSE3())
+    return SDValue();
 
   // Fall back to X87.
   if (SDValue V = FP_TO_INTHelper(Op, DAG, IsSigned))

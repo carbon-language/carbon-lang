@@ -257,74 +257,36 @@ define i32 @d_to_u32(double %a) nounwind {
 ;
 ; SSE_32_WIN-LABEL: d_to_u32:
 ; SSE_32_WIN:       # %bb.0:
+; SSE_32_WIN-NEXT:    pushl %ebp
+; SSE_32_WIN-NEXT:    movl %esp, %ebp
+; SSE_32_WIN-NEXT:    andl $-8, %esp
 ; SSE_32_WIN-NEXT:    subl $16, %esp
-; SSE_32_WIN-NEXT:    fldl {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    flds __real@4f000000
-; SSE_32_WIN-NEXT:    fld %st(1)
-; SSE_32_WIN-NEXT:    fsub %st(1), %st
+; SSE_32_WIN-NEXT:    fldl 8(%ebp)
 ; SSE_32_WIN-NEXT:    fnstcw {{[0-9]+}}(%esp)
 ; SSE_32_WIN-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
 ; SSE_32_WIN-NEXT:    orl $3072, %eax # imm = 0xC00
 ; SSE_32_WIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
 ; SSE_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fistpl {{[0-9]+}}(%esp)
+; SSE_32_WIN-NEXT:    fistpll {{[0-9]+}}(%esp)
 ; SSE_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fnstcw (%esp)
-; SSE_32_WIN-NEXT:    movzwl (%esp), %eax
-; SSE_32_WIN-NEXT:    orl $3072, %eax # imm = 0xC00
-; SSE_32_WIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fxch %st(1)
-; SSE_32_WIN-NEXT:    fistl {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fldcw (%esp)
-; SSE_32_WIN-NEXT:    fxch %st(1)
-; SSE_32_WIN-NEXT:    fucompi %st(1), %st
-; SSE_32_WIN-NEXT:    fstp %st(0)
-; SSE_32_WIN-NEXT:    jbe LBB2_1
-; SSE_32_WIN-NEXT:  # %bb.2:
 ; SSE_32_WIN-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; SSE_32_WIN-NEXT:    addl $16, %esp
-; SSE_32_WIN-NEXT:    retl
-; SSE_32_WIN-NEXT:  LBB2_1:
-; SSE_32_WIN-NEXT:    movl $-2147483648, %eax # imm = 0x80000000
-; SSE_32_WIN-NEXT:    xorl {{[0-9]+}}(%esp), %eax
-; SSE_32_WIN-NEXT:    addl $16, %esp
+; SSE_32_WIN-NEXT:    movl %ebp, %esp
+; SSE_32_WIN-NEXT:    popl %ebp
 ; SSE_32_WIN-NEXT:    retl
 ;
 ; SSE_32_LIN-LABEL: d_to_u32:
 ; SSE_32_LIN:       # %bb.0:
-; SSE_32_LIN-NEXT:    subl $16, %esp
+; SSE_32_LIN-NEXT:    subl $20, %esp
 ; SSE_32_LIN-NEXT:    fldl {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    flds {{\.LCPI.*}}
-; SSE_32_LIN-NEXT:    fld %st(1)
-; SSE_32_LIN-NEXT:    fsub %st(1), %st
 ; SSE_32_LIN-NEXT:    fnstcw {{[0-9]+}}(%esp)
 ; SSE_32_LIN-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
 ; SSE_32_LIN-NEXT:    orl $3072, %eax # imm = 0xC00
 ; SSE_32_LIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
 ; SSE_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fistpl {{[0-9]+}}(%esp)
+; SSE_32_LIN-NEXT:    fistpll {{[0-9]+}}(%esp)
 ; SSE_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fnstcw (%esp)
-; SSE_32_LIN-NEXT:    movzwl (%esp), %eax
-; SSE_32_LIN-NEXT:    orl $3072, %eax # imm = 0xC00
-; SSE_32_LIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fxch %st(1)
-; SSE_32_LIN-NEXT:    fistl {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fldcw (%esp)
-; SSE_32_LIN-NEXT:    fxch %st(1)
-; SSE_32_LIN-NEXT:    fucompi %st(1), %st
-; SSE_32_LIN-NEXT:    fstp %st(0)
-; SSE_32_LIN-NEXT:    jbe .LBB2_1
-; SSE_32_LIN-NEXT:  # %bb.2:
 ; SSE_32_LIN-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; SSE_32_LIN-NEXT:    addl $16, %esp
-; SSE_32_LIN-NEXT:    retl
-; SSE_32_LIN-NEXT:  .LBB2_1:
-; SSE_32_LIN-NEXT:    movl $-2147483648, %eax # imm = 0x80000000
-; SSE_32_LIN-NEXT:    xorl {{[0-9]+}}(%esp), %eax
-; SSE_32_LIN-NEXT:    addl $16, %esp
+; SSE_32_LIN-NEXT:    addl $20, %esp
 ; SSE_32_LIN-NEXT:    retl
 ;
 ; X87_WIN-LABEL: d_to_u32:
@@ -507,52 +469,36 @@ define i32 @x_to_u32(x86_fp80 %a) nounwind {
 ;
 ; SSE2_32_WIN-LABEL: x_to_u32:
 ; SSE2_32_WIN:       # %bb.0:
-; SSE2_32_WIN-NEXT:    subl $8, %esp
-; SSE2_32_WIN-NEXT:    fldt {{[0-9]+}}(%esp)
-; SSE2_32_WIN-NEXT:    flds __real@4f000000
-; SSE2_32_WIN-NEXT:    fld %st(1)
-; SSE2_32_WIN-NEXT:    fsub %st(1), %st
-; SSE2_32_WIN-NEXT:    xorl %eax, %eax
-; SSE2_32_WIN-NEXT:    fxch %st(1)
-; SSE2_32_WIN-NEXT:    fucompi %st(2), %st
-; SSE2_32_WIN-NEXT:    fcmovnbe %st(1), %st
-; SSE2_32_WIN-NEXT:    fstp %st(1)
-; SSE2_32_WIN-NEXT:    setbe %al
-; SSE2_32_WIN-NEXT:    fnstcw (%esp)
-; SSE2_32_WIN-NEXT:    movzwl (%esp), %ecx
-; SSE2_32_WIN-NEXT:    orl $3072, %ecx # imm = 0xC00
-; SSE2_32_WIN-NEXT:    movw %cx, {{[0-9]+}}(%esp)
+; SSE2_32_WIN-NEXT:    pushl %ebp
+; SSE2_32_WIN-NEXT:    movl %esp, %ebp
+; SSE2_32_WIN-NEXT:    andl $-8, %esp
+; SSE2_32_WIN-NEXT:    subl $16, %esp
+; SSE2_32_WIN-NEXT:    fldt 8(%ebp)
+; SSE2_32_WIN-NEXT:    fnstcw {{[0-9]+}}(%esp)
+; SSE2_32_WIN-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; SSE2_32_WIN-NEXT:    orl $3072, %eax # imm = 0xC00
+; SSE2_32_WIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
 ; SSE2_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE2_32_WIN-NEXT:    fistpl {{[0-9]+}}(%esp)
-; SSE2_32_WIN-NEXT:    fldcw (%esp)
-; SSE2_32_WIN-NEXT:    shll $31, %eax
-; SSE2_32_WIN-NEXT:    xorl {{[0-9]+}}(%esp), %eax
-; SSE2_32_WIN-NEXT:    addl $8, %esp
+; SSE2_32_WIN-NEXT:    fistpll {{[0-9]+}}(%esp)
+; SSE2_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
+; SSE2_32_WIN-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE2_32_WIN-NEXT:    movl %ebp, %esp
+; SSE2_32_WIN-NEXT:    popl %ebp
 ; SSE2_32_WIN-NEXT:    retl
 ;
 ; SSE2_32_LIN-LABEL: x_to_u32:
 ; SSE2_32_LIN:       # %bb.0:
-; SSE2_32_LIN-NEXT:    subl $8, %esp
+; SSE2_32_LIN-NEXT:    subl $20, %esp
 ; SSE2_32_LIN-NEXT:    fldt {{[0-9]+}}(%esp)
-; SSE2_32_LIN-NEXT:    flds {{\.LCPI.*}}
-; SSE2_32_LIN-NEXT:    fld %st(1)
-; SSE2_32_LIN-NEXT:    fsub %st(1), %st
-; SSE2_32_LIN-NEXT:    xorl %eax, %eax
-; SSE2_32_LIN-NEXT:    fxch %st(1)
-; SSE2_32_LIN-NEXT:    fucompi %st(2), %st
-; SSE2_32_LIN-NEXT:    fcmovnbe %st(1), %st
-; SSE2_32_LIN-NEXT:    fstp %st(1)
-; SSE2_32_LIN-NEXT:    setbe %al
-; SSE2_32_LIN-NEXT:    fnstcw (%esp)
-; SSE2_32_LIN-NEXT:    movzwl (%esp), %ecx
-; SSE2_32_LIN-NEXT:    orl $3072, %ecx # imm = 0xC00
-; SSE2_32_LIN-NEXT:    movw %cx, {{[0-9]+}}(%esp)
+; SSE2_32_LIN-NEXT:    fnstcw {{[0-9]+}}(%esp)
+; SSE2_32_LIN-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; SSE2_32_LIN-NEXT:    orl $3072, %eax # imm = 0xC00
+; SSE2_32_LIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
 ; SSE2_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE2_32_LIN-NEXT:    fistpl {{[0-9]+}}(%esp)
-; SSE2_32_LIN-NEXT:    fldcw (%esp)
-; SSE2_32_LIN-NEXT:    shll $31, %eax
-; SSE2_32_LIN-NEXT:    xorl {{[0-9]+}}(%esp), %eax
-; SSE2_32_LIN-NEXT:    addl $8, %esp
+; SSE2_32_LIN-NEXT:    fistpll {{[0-9]+}}(%esp)
+; SSE2_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
+; SSE2_32_LIN-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE2_32_LIN-NEXT:    addl $20, %esp
 ; SSE2_32_LIN-NEXT:    retl
 ;
 ; SSE2_64_WIN-LABEL: x_to_u32:
@@ -585,52 +531,36 @@ define i32 @x_to_u32(x86_fp80 %a) nounwind {
 ;
 ; SSE_32_WIN-LABEL: x_to_u32:
 ; SSE_32_WIN:       # %bb.0:
-; SSE_32_WIN-NEXT:    subl $8, %esp
-; SSE_32_WIN-NEXT:    fldt {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    flds __real@4f000000
-; SSE_32_WIN-NEXT:    fld %st(1)
-; SSE_32_WIN-NEXT:    fsub %st(1), %st
-; SSE_32_WIN-NEXT:    xorl %eax, %eax
-; SSE_32_WIN-NEXT:    fxch %st(1)
-; SSE_32_WIN-NEXT:    fucompi %st(2), %st
-; SSE_32_WIN-NEXT:    fcmovnbe %st(1), %st
-; SSE_32_WIN-NEXT:    fstp %st(1)
-; SSE_32_WIN-NEXT:    setbe %al
-; SSE_32_WIN-NEXT:    fnstcw (%esp)
-; SSE_32_WIN-NEXT:    movzwl (%esp), %ecx
-; SSE_32_WIN-NEXT:    orl $3072, %ecx # imm = 0xC00
-; SSE_32_WIN-NEXT:    movw %cx, {{[0-9]+}}(%esp)
+; SSE_32_WIN-NEXT:    pushl %ebp
+; SSE_32_WIN-NEXT:    movl %esp, %ebp
+; SSE_32_WIN-NEXT:    andl $-8, %esp
+; SSE_32_WIN-NEXT:    subl $16, %esp
+; SSE_32_WIN-NEXT:    fldt 8(%ebp)
+; SSE_32_WIN-NEXT:    fnstcw {{[0-9]+}}(%esp)
+; SSE_32_WIN-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; SSE_32_WIN-NEXT:    orl $3072, %eax # imm = 0xC00
+; SSE_32_WIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
 ; SSE_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fistpl {{[0-9]+}}(%esp)
-; SSE_32_WIN-NEXT:    fldcw (%esp)
-; SSE_32_WIN-NEXT:    shll $31, %eax
-; SSE_32_WIN-NEXT:    xorl {{[0-9]+}}(%esp), %eax
-; SSE_32_WIN-NEXT:    addl $8, %esp
+; SSE_32_WIN-NEXT:    fistpll {{[0-9]+}}(%esp)
+; SSE_32_WIN-NEXT:    fldcw {{[0-9]+}}(%esp)
+; SSE_32_WIN-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE_32_WIN-NEXT:    movl %ebp, %esp
+; SSE_32_WIN-NEXT:    popl %ebp
 ; SSE_32_WIN-NEXT:    retl
 ;
 ; SSE_32_LIN-LABEL: x_to_u32:
 ; SSE_32_LIN:       # %bb.0:
-; SSE_32_LIN-NEXT:    subl $8, %esp
+; SSE_32_LIN-NEXT:    subl $20, %esp
 ; SSE_32_LIN-NEXT:    fldt {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    flds {{\.LCPI.*}}
-; SSE_32_LIN-NEXT:    fld %st(1)
-; SSE_32_LIN-NEXT:    fsub %st(1), %st
-; SSE_32_LIN-NEXT:    xorl %eax, %eax
-; SSE_32_LIN-NEXT:    fxch %st(1)
-; SSE_32_LIN-NEXT:    fucompi %st(2), %st
-; SSE_32_LIN-NEXT:    fcmovnbe %st(1), %st
-; SSE_32_LIN-NEXT:    fstp %st(1)
-; SSE_32_LIN-NEXT:    setbe %al
-; SSE_32_LIN-NEXT:    fnstcw (%esp)
-; SSE_32_LIN-NEXT:    movzwl (%esp), %ecx
-; SSE_32_LIN-NEXT:    orl $3072, %ecx # imm = 0xC00
-; SSE_32_LIN-NEXT:    movw %cx, {{[0-9]+}}(%esp)
+; SSE_32_LIN-NEXT:    fnstcw {{[0-9]+}}(%esp)
+; SSE_32_LIN-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; SSE_32_LIN-NEXT:    orl $3072, %eax # imm = 0xC00
+; SSE_32_LIN-NEXT:    movw %ax, {{[0-9]+}}(%esp)
 ; SSE_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fistpl {{[0-9]+}}(%esp)
-; SSE_32_LIN-NEXT:    fldcw (%esp)
-; SSE_32_LIN-NEXT:    shll $31, %eax
-; SSE_32_LIN-NEXT:    xorl {{[0-9]+}}(%esp), %eax
-; SSE_32_LIN-NEXT:    addl $8, %esp
+; SSE_32_LIN-NEXT:    fistpll {{[0-9]+}}(%esp)
+; SSE_32_LIN-NEXT:    fldcw {{[0-9]+}}(%esp)
+; SSE_32_LIN-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE_32_LIN-NEXT:    addl $20, %esp
 ; SSE_32_LIN-NEXT:    retl
 ;
 ; X87_WIN-LABEL: x_to_u32:
