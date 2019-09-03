@@ -1754,9 +1754,6 @@ void GVN::assignBlockRPONumber(Function &F) {
 }
 
 bool GVN::replaceOperandsForInBlockEquality(Instruction *Instr) const {
-  // TODO: We can remove the separate ReplaceOperandsWithMap data structure in
-  // favor of putting equalitys into the leader table and using findLeader
-  // here. 
   bool Changed = false;
   for (unsigned OpNum = 0; OpNum < Instr->getNumOperands(); ++OpNum) {
     Value *Operand = Instr->getOperand(OpNum); 
