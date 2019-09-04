@@ -69,7 +69,9 @@ STATISTIC(NumAttributesManifested,
 #define BUILD_STAT_MSG_IR_ATTR(TYPE, NAME)                                     \
   ("Number of " #TYPE " marked '" #NAME "'")
 #define BUILD_STAT_NAME(NAME, TYPE) NumIR##TYPE##_##NAME
-#define STATS_DECL(NAME, TYPE, MSG) STATISTIC(BUILD_STAT_NAME(NAME, TYPE), MSG);
+#define STATS_DECL_(NAME, MSG) STATISTIC(NAME, MSG);
+#define STATS_DECL(NAME, TYPE, MSG)                                            \
+  STATS_DECL_(BUILD_STAT_NAME(NAME, TYPE), MSG);
 #define STATS_TRACK(NAME, TYPE) ++(BUILD_STAT_NAME(NAME, TYPE));
 #define STATS_DECLTRACK(NAME, TYPE, MSG)                                       \
   {                                                                            \
