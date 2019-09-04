@@ -1,4 +1,4 @@
-; RUN: opt -attributor --attributor-disable=false -attributor-max-iterations-verify -attributor-max-iterations=4 -S < %s | FileCheck %s
+; RUN: opt -attributor --attributor-disable=false -attributor-max-iterations-verify -attributor-max-iterations=7 -S < %s | FileCheck %s
 
 declare void @no_return_call() nofree noreturn nounwind readnone
 
@@ -15,7 +15,7 @@ declare i32 @bar() nosync readnone
 ; This internal function has no live call sites, so all its BBs are considered dead,
 ; and nothing should be deduced for it.
 
-; CHECK-NOT: define internal i32 @dead_internal_func(i32 %0)
+; FIXME-NOT: define internal i32 @dead_internal_func(i32 %0)
 define internal i32 @dead_internal_func(i32 %0) {
   %2 = icmp slt i32 %0, 1
   br i1 %2, label %3, label %5

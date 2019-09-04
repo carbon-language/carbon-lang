@@ -1790,16 +1790,8 @@ struct AAIsDeadImpl : public AAIsDead {
 
   void initialize(Attributor &A) override {
     const Function *F = getAssociatedFunction();
-
-    if (F->hasInternalLinkage())
-      return;
-
-    if (!F || !F->hasExactDefinition()) {
-      indicatePessimisticFixpoint();
-      return;
-    }
-
-    exploreFromEntry(A, F);
+    if (F && !F->isDeclaration())
+      exploreFromEntry(A, F);
   }
 
   void exploreFromEntry(Attributor &A, const Function *F) {
@@ -2355,6 +2347,11 @@ struct AAAlignImpl : AAAlign {
     getAttrs({Attribute::Alignment}, Attrs);
     for (const Attribute &Attr : Attrs)
       takeKnownMaximum(Attr.getValueAsInt());
+
+    if (getIRPosition().isFnInterfaceKind() &&
+        (!getAssociatedFunction() ||
+         !getAssociatedFunction()->hasExactDefinition()))
+      indicatePessimisticFixpoint();
   }
 
   /// See AbstractAttribute::manifest(...).
@@ -3311,70 +3308,52 @@ ChangeStatus Attributor::run() {
   return ManifestChange;
 }
 
-/// Helper function that checks if an abstract attribute of type \p AAType
-/// should be created for IR position \p IRP and if so creates and registers it
-/// with the Attributor \p A.
-///
-/// This method will look at the provided whitelist. If one is given and the
-/// kind \p AAType::ID is not contained, no abstract attribute is created.
-///
-/// \returns The created abstract argument, or nullptr if none was created.
-template <typename AAType>
-static const AAType *checkAndRegisterAA(const IRPosition &IRP, Attributor &A,
-                                        DenseSet<const char *> *Whitelist) {
-  if (Whitelist && !Whitelist->count(&AAType::ID))
-    return nullptr;
-
-  return &A.registerAA<AAType>(*new AAType(IRP));
-}
-
-void Attributor::identifyDefaultAbstractAttributes(
-    Function &F, DenseSet<const char *> *Whitelist) {
+void Attributor::identifyDefaultAbstractAttributes(Function &F) {
 
   IRPosition FPos = IRPosition::function(F);
 
   // Check for dead BasicBlocks in every function.
   // We need dead instruction detection because we do not want to deal with
   // broken IR in which SSA rules do not apply.
-  checkAndRegisterAA<AAIsDeadFunction>(FPos, *this, /* Whitelist */ nullptr);
+  getOrCreateAAFor<AAIsDead>(FPos);
 
   // Every function might be "will-return".
-  checkAndRegisterAA<AAWillReturnFunction>(FPos, *this, Whitelist);
+  getOrCreateAAFor<AAWillReturn>(FPos);
 
   // Every function can be nounwind.
-  checkAndRegisterAA<AANoUnwindFunction>(FPos, *this, Whitelist);
+  getOrCreateAAFor<AANoUnwind>(FPos);
 
   // Every function might be marked "nosync"
-  checkAndRegisterAA<AANoSyncFunction>(FPos, *this, Whitelist);
+  getOrCreateAAFor<AANoSync>(FPos);
 
   // Every function might be "no-free".
-  checkAndRegisterAA<AANoFreeFunction>(FPos, *this, Whitelist);
+  getOrCreateAAFor<AANoFree>(FPos);
 
   // Every function might be "no-return".
-  checkAndRegisterAA<AANoReturnFunction>(FPos, *this, Whitelist);
+  getOrCreateAAFor<AANoReturn>(FPos);
 
   // Return attributes are only appropriate if the return type is non void.
   Type *ReturnType = F.getReturnType();
   if (!ReturnType->isVoidTy()) {
     // Argument attribute "returned" --- Create only one per function even
     // though it is an argument attribute.
-    checkAndRegisterAA<AAReturnedValuesFunction>(FPos, *this, Whitelist);
+    getOrCreateAAFor<AAReturnedValues>(FPos);
 
     if (ReturnType->isPointerTy()) {
       IRPosition RetPos = IRPosition::returned(F);
 
       // Every function with pointer return type might be marked align.
-      checkAndRegisterAA<AAAlignReturned>(RetPos, *this, Whitelist);
+      getOrCreateAAFor<AAAlign>(RetPos);
 
       // Every function with pointer return type might be marked nonnull.
-      checkAndRegisterAA<AANonNullReturned>(RetPos, *this, Whitelist);
+      getOrCreateAAFor<AANonNull>(RetPos);
 
       // Every function with pointer return type might be marked noalias.
-      checkAndRegisterAA<AANoAliasReturned>(RetPos, *this, Whitelist);
+      getOrCreateAAFor<AANoAlias>(RetPos);
 
       // Every function with pointer return type might be marked
       // dereferenceable.
-      checkAndRegisterAA<AADereferenceableReturned>(RetPos, *this, Whitelist);
+      getOrCreateAAFor<AADereferenceable>(RetPos);
     }
   }
 
@@ -3382,19 +3361,19 @@ void Attributor::identifyDefaultAbstractAttributes(
     if (Arg.getType()->isPointerTy()) {
       IRPosition ArgPos = IRPosition::argument(Arg);
       // Every argument with pointer type might be marked nonnull.
-      checkAndRegisterAA<AANonNullArgument>(ArgPos, *this, Whitelist);
+      getOrCreateAAFor<AANonNull>(ArgPos);
 
       // Every argument with pointer type might be marked noalias.
-      checkAndRegisterAA<AANoAliasArgument>(ArgPos, *this, Whitelist);
+      getOrCreateAAFor<AANoAlias>(ArgPos);
 
       // Every argument with pointer type might be marked dereferenceable.
-      checkAndRegisterAA<AADereferenceableArgument>(ArgPos, *this, Whitelist);
+      getOrCreateAAFor<AADereferenceable>(ArgPos);
 
       // Every argument with pointer type might be marked align.
-      checkAndRegisterAA<AAAlignArgument>(ArgPos, *this, Whitelist);
+      getOrCreateAAFor<AAAlign>(ArgPos);
 
       // Every argument with pointer type might be marked nocapture.
-      checkAndRegisterAA<AANoCaptureArgument>(ArgPos, *this, Whitelist);
+      getOrCreateAAFor<AANoCapture>(ArgPos);
     }
   }
 
@@ -3420,15 +3399,13 @@ void Attributor::identifyDefaultAbstractAttributes(
       break;
     case Instruction::Load:
       // The alignment of a pointer is interesting for loads.
-      checkAndRegisterAA<AAAlignFloating>(
-          IRPosition::value(*cast<LoadInst>(I).getPointerOperand()), *this,
-          Whitelist);
+      getOrCreateAAFor<AAAlign>(
+          IRPosition::value(*cast<LoadInst>(I).getPointerOperand()));
       break;
     case Instruction::Store:
       // The alignment of a pointer is interesting for stores.
-      checkAndRegisterAA<AAAlignFloating>(
-          IRPosition::value(*cast<StoreInst>(I).getPointerOperand()), *this,
-          Whitelist);
+      getOrCreateAAFor<AAAlign>(
+          IRPosition::value(*cast<StoreInst>(I).getPointerOperand()));
       break;
     case Instruction::Call:
     case Instruction::CallBr:
@@ -3452,19 +3429,16 @@ void Attributor::identifyDefaultAbstractAttributes(
         IRPosition CSArgPos = IRPosition::callsite_argument(CS, i);
 
         // Call site argument attribute "non-null".
-        checkAndRegisterAA<AANonNullCallSiteArgument>(CSArgPos, *this,
-                                                      Whitelist);
+        getOrCreateAAFor<AANonNull>(CSArgPos);
 
         // Call site argument attribute "no-alias".
-        checkAndRegisterAA<AANoAliasCallSiteArgument>(CSArgPos, *this,
-                                                      Whitelist);
+        getOrCreateAAFor<AANoAlias>(CSArgPos);
 
         // Call site argument attribute "dereferenceable".
-        checkAndRegisterAA<AADereferenceableCallSiteArgument>(CSArgPos, *this,
-                                                              Whitelist);
+        getOrCreateAAFor<AADereferenceable>(CSArgPos);
 
         // Call site argument attribute "align".
-        checkAndRegisterAA<AAAlignCallSiteArgument>(CSArgPos, *this, Whitelist);
+        getOrCreateAAFor<AAAlign>(CSArgPos);
       }
     }
   }
@@ -3633,7 +3607,6 @@ const char AANoCapture::ID = 0;
       SWITCH_PK_CREATE(CLASS, IRP, IRP_FUNCTION, Function)                     \
       SWITCH_PK_CREATE(CLASS, IRP, IRP_CALL_SITE, CallSite)                    \
     }                                                                          \
-    AA->initialize(A);                                                         \
     return *AA;                                                                \
   }
 
@@ -3650,7 +3623,6 @@ const char AANoCapture::ID = 0;
       SWITCH_PK_CREATE(CLASS, IRP, IRP_CALL_SITE_RETURNED, CallSiteReturned)   \
       SWITCH_PK_CREATE(CLASS, IRP, IRP_CALL_SITE_ARGUMENT, CallSiteArgument)   \
     }                                                                          \
-    AA->initialize(A);                                                         \
     return *AA;                                                                \
   }
 

@@ -606,8 +606,11 @@ struct Attributor {
   ///                  the abstract attributes.
   /// \param DepRecomputeInterval Number of iterations until the dependences
   ///                             between abstract attributes are recomputed.
-  Attributor(InformationCache &InfoCache, unsigned DepRecomputeInterval)
-      : InfoCache(InfoCache), DepRecomputeInterval(DepRecomputeInterval) {}
+  /// \param Whitelist If not null, a set limiting the attribute opportunities.
+  Attributor(InformationCache &InfoCache, unsigned DepRecomputeInterval,
+             DenseSet<const char *> *Whitelist = nullptr)
+      : InfoCache(InfoCache), DepRecomputeInterval(DepRecomputeInterval),
+        Whitelist(Whitelist) {}
 
   ~Attributor() { DeleteContainerPointers(AllAbstractAttributes); }
 
@@ -642,33 +645,7 @@ struct Attributor {
   template <typename AAType>
   const AAType &getAAFor(const AbstractAttribute &QueryingAA,
                          const IRPosition &IRP, bool TrackDependence = true) {
-    static_assert(std::is_base_of<AbstractAttribute, AAType>::value,
-                  "Cannot query an attribute with a type not derived from "
-                  "'AbstractAttribute'!");
-
-    // Lookup the abstract attribute of type AAType. If found, return it after
-    // registering a dependence of QueryingAA on the one returned attribute.
-    const auto &KindToAbstractAttributeMap =
-        AAMap.lookup(const_cast<IRPosition &>(IRP));
-    if (AAType *AA = static_cast<AAType *>(
-            KindToAbstractAttributeMap.lookup(&AAType::ID))) {
-      // Do not registr a dependence on an attribute with an invalid state.
-      if (TrackDependence && AA->getState().isValidState())
-        QueryMap[AA].insert(const_cast<AbstractAttribute *>(&QueryingAA));
-      return *AA;
-    }
-
-    // No matching attribute found, create one.
-    auto &AA = AAType::createForPosition(IRP, *this);
-    registerAA(AA);
-
-    // Bootstrap the new attribute with an initial update to propagate
-    // information, e.g., function -> call site.
-    AA.update(*this);
-
-    if (TrackDependence && AA.getState().isValidState())
-      QueryMap[&AA].insert(const_cast<AbstractAttribute *>(&QueryingAA));
-    return AA;
+    return getOrCreateAAFor<AAType>(IRP, &QueryingAA, TrackDependence);
   }
 
   /// Explicitly record a dependence from \p FromAA to \p ToAA, that is if
@@ -709,15 +686,13 @@ struct Attributor {
   /// abstract attribute objects for them.
   ///
   /// \param F The function that is checked for attribute opportunities.
-  /// \param Whitelist If not null, a set limiting the attribute opportunities.
   ///
   /// Note that abstract attribute instances are generally created even if the
   /// IR already contains the information they would deduce. The most important
   /// reason for this is the single interface, the one of the abstract attribute
   /// instance, which can be queried without the need to look at the IR in
   /// various places.
-  void identifyDefaultAbstractAttributes(
-      Function &F, DenseSet<const char *> *Whitelist = nullptr);
+  void identifyDefaultAbstractAttributes(Function &F);
 
   /// Record that \p I is deleted after information was manifested.
   void deleteAfterManifest(Instruction &I) { ToBeDeletedInsts.insert(&I); }
@@ -793,6 +768,61 @@ struct Attributor {
   const DataLayout &getDataLayout() const { return InfoCache.DL; }
 
 private:
+
+  /// The private version of getAAFor that allows to omit a querying abstract
+  /// attribute. See also the public getAAFor method.
+  template <typename AAType>
+  const AAType &getOrCreateAAFor(const IRPosition &IRP,
+                         const AbstractAttribute *QueryingAA = nullptr,
+                         bool TrackDependence = false) {
+    if (const AAType *AAPtr =
+            lookupAAFor<AAType>(IRP, QueryingAA, TrackDependence))
+      return *AAPtr;
+
+    // No matching attribute found, create one.
+    // Use the static create method.
+    auto &AA = AAType::createForPosition(IRP, *this);
+    registerAA(AA);
+    AA.initialize(*this);
+
+    // Bootstrap the new attribute with an initial update to propagate
+    // information, e.g., function -> call site. If it is not on a given
+    // whitelist we will not perform updates at all.
+    if (Whitelist && !Whitelist->count(&AAType::ID))
+      AA.getState().indicatePessimisticFixpoint();
+    else
+      AA.update(*this);
+
+    if (TrackDependence && AA.getState().isValidState())
+      QueryMap[&AA].insert(const_cast<AbstractAttribute *>(QueryingAA));
+    return AA;
+  }
+
+  /// Return the attribute of \p AAType for \p IRP if existing.
+  template <typename AAType>
+  const AAType *lookupAAFor(const IRPosition &IRP,
+                            const AbstractAttribute *QueryingAA = nullptr,
+                            bool TrackDependence = false) {
+    static_assert(std::is_base_of<AbstractAttribute, AAType>::value,
+                  "Cannot query an attribute with a type not derived from "
+                  "'AbstractAttribute'!");
+    assert((QueryingAA || !TrackDependence) &&
+           "Cannot track dependences without a QueryingAA!");
+
+    // Lookup the abstract attribute of type AAType. If found, return it after
+    // registering a dependence of QueryingAA on the one returned attribute.
+    const auto &KindToAbstractAttributeMap =
+        AAMap.lookup(const_cast<IRPosition &>(IRP));
+    if (AAType *AA = static_cast<AAType *>(
+            KindToAbstractAttributeMap.lookup(&AAType::ID))) {
+      // Do not register a dependence on an attribute with an invalid state.
+      if (TrackDependence && AA->getState().isValidState())
+        QueryMap[AA].insert(const_cast<AbstractAttribute *>(QueryingAA));
+      return AA;
+    }
+    return nullptr;
+  }
+
   /// The set of all abstract attributes.
   ///{
   using AAVector = SmallVector<AbstractAttribute *, 64>;
@@ -822,6 +852,9 @@ private:
   /// Number of iterations until the dependences between abstract attributes are
   /// recomputed.
   const unsigned DepRecomputeInterval;
+
+  /// If not null, a set limiting the attribute opportunities.
+  const DenseSet<const char *> *Whitelist;
 
   /// Functions, blocks, and instructions we delete after manifest is done.
   ///
