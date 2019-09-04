@@ -2101,23 +2101,19 @@ template <class ELFT> Error ELFWriter<ELFT>::finalize() {
 }
 
 Error BinaryWriter::write() {
-  for (const SectionBase &Sec : Obj.sections())
-    if (Sec.Flags & SHF_ALLOC)
-      Sec.accept(*SecWriter);
+  for (const SectionBase &Sec : Obj.allocSections())
+    Sec.accept(*SecWriter);
   return Buf.commit();
 }
 
 Error BinaryWriter::finalize() {
-  // TODO: Create a filter range to construct OrderedSegments from so that this
-  // code can be deduped with assignOffsets above. This should also solve the
-  // todo below for LayoutSections.
   // We need a temporary list of segments that has a special order to it
   // so that we know that anytime ->ParentSegment is set that segment has
   // already had it's offset properly set. We only want to consider the segments
   // that will affect layout of allocated sections so we only add those.
   std::vector<Segment *> OrderedSegments;
-  for (const SectionBase &Sec : Obj.sections())
-    if ((Sec.Flags & SHF_ALLOC) != 0 && Sec.ParentSegment != nullptr)
+  for (const SectionBase &Sec : Obj.allocSections())
+    if (Sec.ParentSegment != nullptr)
       OrderedSegments.push_back(Sec.ParentSegment);
 
   // For binary output, we're going to use physical addresses instead of
@@ -2161,24 +2157,16 @@ Error BinaryWriter::finalize() {
     }
   }
 
-  // TODO: generalize layoutSections to take a range. Pass a special range
-  // constructed from an iterator that skips values for which a predicate does
-  // not hold. Then pass such a range to layoutSections instead of constructing
-  // AllocatedSections here.
-  std::vector<SectionBase *> AllocatedSections;
-  for (SectionBase &Sec : Obj.sections())
-    if (Sec.Flags & SHF_ALLOC)
-      AllocatedSections.push_back(&Sec);
-  layoutSections(make_pointee_range(AllocatedSections), Offset);
+  layoutSections(Obj.allocSections(), Offset);
 
   // Now that every section has been laid out we just need to compute the total
   // file size. This might not be the same as the offset returned by
   // layoutSections, because we want to truncate the last segment to the end of
   // its last section, to match GNU objcopy's behaviour.
   TotalSize = 0;
-  for (SectionBase *Sec : AllocatedSections)
-    if (Sec->Type != SHT_NOBITS)
-      TotalSize = std::max(TotalSize, Sec->Offset + Sec->Size);
+  for (const SectionBase &Sec : Obj.allocSections())
+    if (Sec.Type != SHT_NOBITS)
+      TotalSize = std::max(TotalSize, Sec.Offset + Sec.Size);
 
   if (Error E = Buf.allocate(TotalSize))
     return E;
