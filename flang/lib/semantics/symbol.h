@@ -447,6 +447,7 @@ public:
       Implicit,  // symbol is implicitly typed
       ModFile,  // symbol came from .mod file
       ParentComp,  // symbol is the "parent component" of an extended type
+      CrayPointer, CrayPointee,
       LocalityLocal,  // named in LOCAL locality-spec
       LocalityLocalInit,  // named in LOCAL_INIT locality-spec
       LocalityShared  // named in SHARED locality-spec

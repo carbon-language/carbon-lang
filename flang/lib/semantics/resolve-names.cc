@@ -383,7 +383,7 @@ private:
 // 3. ALLOCATABLE :: x(:)
 // 4. DIMENSION :: x(10)
 // 5. COMMON x(10)
-// 6. TODO: BasedPointerStmt
+// 6. BasedPointerStmt
 class ArraySpecVisitor : public virtual BaseVisitor {
 public:
   void Post(const parser::ArraySpec &);
@@ -768,6 +768,7 @@ public:
   void Post(const parser::CommonBlockObject &);
   bool Pre(const parser::EquivalenceStmt &);
   bool Pre(const parser::SaveStmt &);
+  bool Pre(const parser::BasedPointerStmt &);
 
   void PointerInitialization(
       const parser::Name &, const parser::InitialDataTarget &);
@@ -2696,7 +2697,9 @@ bool DeclarationVisitor::Pre(const parser::BindEntity &x) {
 bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
   auto &name{std::get<parser::NamedConstant>(x.t).v};
   auto &symbol{HandleAttributeStmt(Attr::PARAMETER, name)};
-  if (!ConvertToObjectEntity(symbol)) {
+  if (!ConvertToObjectEntity(symbol) ||
+      symbol.test(Symbol::Flag::CrayPointer) ||
+      symbol.test(Symbol::Flag::CrayPointee)) {
     SayWithDecl(
         name, symbol, "PARAMETER attribute not allowed on '%s'"_err_en_US);
     return false;
@@ -2969,13 +2972,20 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
 // - A single "*" or "lb:*" might be assumed-size or implied-shape-list
 bool DeclarationVisitor::CheckArraySpec(const parser::Name &name,
     const Symbol &symbol, const ArraySpec &arraySpec) {
-  CHECK(arraySpec.Rank() > 0);
+  if (arraySpec.Rank() == 0) {
+    return true;
+  }
   bool isExplicit{arraySpec.IsExplicitShape()};
   bool isDeferred{arraySpec.IsDeferredShape()};
   bool isImplied{arraySpec.IsImpliedShape()};
   bool isAssumedShape{arraySpec.IsAssumedShape()};
   bool isAssumedSize{arraySpec.IsAssumedSize()};
   bool isAssumedRank{arraySpec.IsAssumedRank()};
+  if (symbol.test(Symbol::Flag::CrayPointee) && !isExplicit && !isAssumedSize) {
+    Say(name,
+        "Cray pointee '%s' must have must have explicit shape or assumed size"_err_en_US);
+    return false;
+  }
   if (IsAllocatableOrPointer(symbol) && !isDeferred && !isAssumedRank) {
     if (symbol.owner().IsDerivedType()) {  // C745
       if (IsAllocatable(symbol)) {
@@ -3634,6 +3644,79 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
         }
         CheckAccessibleComponent(kw->v.source, *symbol);
       }
+    }
+  }
+  return false;
+}
+
+bool DeclarationVisitor::Pre(const parser::BasedPointerStmt &x) {
+  for (const parser::BasedPointer &bp : x.v) {
+    const parser::ObjectName &pointerName{std::get<0>(bp.t)};
+    const parser::ObjectName &pointeeName{std::get<1>(bp.t)};
+    auto *pointer{FindSymbol(pointerName)};
+    if (!pointer) {
+      pointer = &MakeSymbol(pointerName, ObjectEntityDetails{});
+    } else if (!ConvertToObjectEntity(*pointer) || IsNamedConstant(*pointer)) {
+      SayWithDecl(pointerName, *pointer, "'%s' is not a variable"_err_en_US);
+    } else if (pointer->Rank() > 0) {
+      SayWithDecl(pointerName, *pointer,
+          "Cray pointer '%s' must be a scalar"_err_en_US);
+    } else if (pointer->test(Symbol::Flag::CrayPointee)) {
+      Say(pointerName,
+          "'%s' cannot be a Cray pointer as it is already a Cray pointee"_err_en_US);
+    }
+    pointer->set(Symbol::Flag::CrayPointer);
+    const DeclTypeSpec &pointerType{MakeNumericType(TypeCategory::Integer,
+        context().defaultKinds().subscriptIntegerKind())};
+    const auto *type{pointer->GetType()};
+    if (!type) {
+      pointer->SetType(pointerType);
+    } else if (*type != pointerType) {
+      Say(pointerName.source, "Cray pointer '%s' must have type %s"_err_en_US,
+          pointerName.source, pointerType.AsFortran());
+    }
+    if (ResolveName(pointeeName)) {
+      Symbol &pointee{*pointeeName.symbol};
+      if (pointee.has<UseDetails>()) {
+        Say(pointeeName,
+            "'%s' cannot be a Cray pointee as it is use-associated"_err_en_US);
+        continue;
+      } else if (!ConvertToObjectEntity(pointee) || IsNamedConstant(pointee)) {
+        Say(pointeeName, "'%s' is not a variable"_err_en_US);
+        continue;
+      } else if (pointee.test(Symbol::Flag::CrayPointer)) {
+        Say(pointeeName,
+            "'%s' cannot be a Cray pointee as it is already a Cray pointer"_err_en_US);
+      } else if (pointee.test(Symbol::Flag::CrayPointee)) {
+        Say(pointeeName,
+            "'%s' was already declared as a Cray pointee"_err_en_US);
+      } else {
+        pointee.set(Symbol::Flag::CrayPointee);
+      }
+      if (const auto *pointeeType{pointee.GetType()}) {
+        if (const auto *derived{pointeeType->AsDerived()}) {
+          if (!derived->typeSymbol().get<DerivedTypeDetails>().sequence()) {
+            Say(pointeeName,
+                "Type of Cray pointee '%s' is a non-sequence derived type"_err_en_US);
+          }
+        }
+      }
+      // process the pointee array-spec, if present
+      BeginArraySpec();
+      Walk(std::get<std::optional<parser::ArraySpec>>(bp.t));
+      const auto &spec{arraySpec()};
+      if (spec.empty()) {
+        // No array spec
+        CheckArraySpec(
+            pointeeName, pointee, pointee.get<ObjectEntityDetails>().shape());
+      } else if (pointee.Rank() > 0) {
+        SayWithDecl(pointeeName, pointee,
+            "Array spec was already declared for '%s'"_err_en_US);
+      } else if (CheckArraySpec(pointeeName, pointee, spec)) {
+        pointee.get<ObjectEntityDetails>().set_shape(spec);
+      }
+      ClearArraySpec();
+      currScope().add_crayPointer(pointeeName.source, *pointer);
     }
   }
   return false;

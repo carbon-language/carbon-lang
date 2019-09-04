@@ -143,6 +143,9 @@ public:
 
   const std::list<EquivalenceSet> &equivalenceSets() const;
   void add_equivalenceSet(EquivalenceSet &&);
+  // Cray pointers are saved as map of pointee name -> pointer symbol
+  const mapType &crayPointers() const { return crayPointers_; }
+  void add_crayPointer(const SourceName &, Symbol &);
   mapType &commonBlocks() { return commonBlocks_; }
   const mapType &commonBlocks() const { return commonBlocks_; }
   Symbol &MakeCommonBlock(const SourceName &);
@@ -219,6 +222,7 @@ private:
   mapType symbols_;
   mapType commonBlocks_;
   std::list<EquivalenceSet> equivalenceSets_;
+  mapType crayPointers_;
   std::map<SourceName, Scope *> submodules_;
   std::list<DeclTypeSpec> declTypeSpecs_;
   std::string chars_;

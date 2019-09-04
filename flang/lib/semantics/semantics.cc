@@ -188,7 +188,7 @@ void DoDumpSymbols(std::ostream &os, const Scope &scope, int indent) {
   PutIndent(os, indent);
   os << Scope::EnumToString(scope.kind()) << " scope:";
   if (const auto *symbol{scope.symbol()}) {
-    os << ' ' << symbol->name().ToString();
+    os << ' ' << symbol->name();
   }
   os << '\n';
   ++indent;
@@ -216,6 +216,13 @@ void DoDumpSymbols(std::ostream &os, const Scope &scope, int indent) {
       os << ')';
     }
     os << '\n';
+  }
+  if (!scope.crayPointers().empty()) {
+    PutIndent(os, indent);
+    os << "Cray Pointers:";
+    for (const auto &[pointee, pointer] : scope.crayPointers()) {
+      os << " (" << pointer->name() << ',' << pointee << ')';
+    }
   }
   for (const auto &pair : scope.commonBlocks()) {
     const auto &symbol{*pair.second};

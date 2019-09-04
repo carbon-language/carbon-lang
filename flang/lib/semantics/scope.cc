@@ -92,6 +92,11 @@ void Scope::add_equivalenceSet(EquivalenceSet &&set) {
   equivalenceSets_.emplace_back(std::move(set));
 }
 
+void Scope::add_crayPointer(const SourceName &name, Symbol &pointer) {
+  CHECK(pointer.test(Symbol::Flag::CrayPointer));
+  crayPointers_.emplace(name, &pointer);
+}
+
 Symbol &Scope::MakeCommonBlock(const SourceName &name) {
   const auto it{commonBlocks_.find(name)};
   if (it != commonBlocks_.end()) {
