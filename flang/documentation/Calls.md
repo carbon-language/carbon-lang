@@ -21,6 +21,11 @@ functions, or calls to internal runtime support library routines.
 * A *dummy argument* is a function or subroutine parameter.
   It is *associated* with an *effective argument* at each call
   to the procedure.
+* The *shape* of an array is a vector containing its extent (size)
+  on each dimension; the *rank* of an array is the number of its
+  dimensions (i.e., the shape of its shape).
+  The absolute values of the lower and upper bounds of the dimensions
+  of an array are not part of its shape, just their difference (plus 1).
 * An *explicit-shape* array has all of its bounds specified; lower
   bounds default to 1.  These can be passed by with a single address
   and their contents are contiguous.
@@ -29,19 +34,21 @@ functions, or calls to internal runtime support library routines.
   and whose value does not affect indexed address calculations.
 * A *deferred-shape* array (`DIMENSION::A(:)`) is a `POINTER` or `ALLOCATABLE`.
   `POINTER` target data might not be contiguous.
-* An *assumed-shape* (not size!) array is a dummy argument whose
-  upper bounds take their values from the *shape* of the effective
-  argument; lower bounds can be set by the procedure that receives
-  them and default to 1.
+* An *assumed-shape* (not size!) array (`DIMENSION::A(:)`) is a dummy argument
+  that is neither `POINTER` nor `ALLOCATABLE`; its lower bounds can be set
+  by the procedure that receives them (defaulting to 1), and its
+  upper bounds are functions of the lower bounds and the extents of
+  dimensions in the *shape* of the effective argument.
 * An *assumed-length* `CHARACTER(*)` dummy argument
   takes its length from the effective argument.
-* An *assumed-length* `CHARACTER(*)` result of an external function (C721)
+* An *assumed-length* `CHARACTER(*)` *result* of an external function (C721)
   has its length determined by its eventual declaration in a calling scope.
 * An *assumed-rank* `DIMENSION::A(..)` dummy argument array has an unknown
   number of dimensions.
-* A *polymorphic* `CLASS(t)` dummy argument has a specific derived type or any
-  possible extension of that type.  An *unlimited polymorphic*
-  `CLASS(*)` dummy argument can have intrinsic or derived type.
+* A *polymorphic* `CLASS(t)` dummy argument, `ALLOCATABLE`, or `POINTER`
+  has a specific derived type or some extension of that type.
+  An *unlimited polymorphic* `CLASS(*)` object can have any
+  intrinsic or derived type.
 * *Interoperable* `BIND(C)` procedures are written in C or callable from C.
 
 ## Interfaces
@@ -569,6 +576,8 @@ so a `Fa.` prefix can serve to isolate these discretionary names from
 other uses and to identify the earliest link-compatible version.
 For examples: `Fa.mod.foo`, `Fa.mod.submod.foo`, and (for an external
 subprogram that requires an explicit interface) `Fa.foo`.
+When the ABI changes in the future in an incompatible way, the
+initial prefix becomes `Fb.`, `Fc.`, &c.
 
 ## Summary of checks to be enforced in semantics analysis
 
@@ -640,6 +649,7 @@ the dummy and effective arguments have the same attributes:
 * `NON_RECURSIVE` procedures cannot recurse.
 * Assumed-length `CHARACTER(*)` functions cannot be declared as `RECURSIVE`, array-valued,
   `POINTER`, `ELEMENTAL`, or `PURE' (C723), and cannot be called recursively (15.6.2.1(3)).
+* (C823) A function result cannot be a coarray or contain a coarray ultimate component.
 
 `PURE` requirements (15.7): C1583 - C1599.
 These also apply to `ELEMENTAL` procedures that are not `IMPURE`.
