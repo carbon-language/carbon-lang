@@ -74,6 +74,19 @@ define i32 @sub_to_xor_or_commuted(i32 %x, i32 %y) {
   ret i32 %sub
 }
 
+define i32 @sub_to_xor_and_commuted(i32 %x, i32 %y) {
+; CHECK-LABEL: @sub_to_xor_and_commuted(
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[Y]], [[X]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    ret i32 [[SUB]]
+;
+  %or = or i32 %x, %y
+  %and = and i32 %y, %x
+  %sub = sub i32 %or, %and
+  ret i32 %sub
+}
+
 define <2 x i32> @sub_to_xor_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @sub_to_xor_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[X:%.*]], [[Y:%.*]]
