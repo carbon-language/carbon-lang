@@ -12,6 +12,7 @@
 #include "Diagnostics.h"
 #include "Matchers.h"
 #include "Path.h"
+#include "Preamble.h"
 #include "TUScheduler.h"
 #include "TestFS.h"
 #include "Threading.h"

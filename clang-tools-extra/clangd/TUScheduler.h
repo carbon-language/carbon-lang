@@ -9,7 +9,7 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_TUSCHEDULER_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_TUSCHEDULER_H
 
-#include "ClangdUnit.h"
+#include "Compiler.h"
 #include "Diagnostics.h"
 #include "Function.h"
 #include "GlobalCompilationDatabase.h"
@@ -24,6 +24,8 @@
 
 namespace clang {
 namespace clangd {
+class ParsedAST;
+struct PreambleData;
 
 /// Returns a number of a default async threads to use for TUScheduler.
 /// Returned value is always >= 1 (i.e. will not cause requests to be processed

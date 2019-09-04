@@ -11,64 +11,23 @@
 
 #include "Compiler.h"
 #include "Diagnostics.h"
-#include "FS.h"
-#include "Function.h"
 #include "Headers.h"
 #include "Path.h"
-#include "Protocol.h"
+#include "Preamble.h"
 #include "index/CanonicalIncludes.h"
-#include "index/Index.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/PrecompiledPreamble.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Tooling/CompilationDatabase.h"
-#include "clang/Tooling/Core/Replacement.h"
 #include "clang/Tooling/Syntax/Tokens.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace llvm {
-class raw_ostream;
-
-namespace vfs {
-class FileSystem;
-} // namespace vfs
-} // namespace llvm
-
 namespace clang {
-
-namespace tooling {
-struct CompileCommand;
-} // namespace tooling
-
 namespace clangd {
-
-// Stores Preamble and associated data.
-struct PreambleData {
-  PreambleData(PrecompiledPreamble Preamble, std::vector<Diag> Diags,
-               IncludeStructure Includes,
-               std::vector<std::string> MainFileMacros,
-               std::unique_ptr<PreambleFileStatusCache> StatCache,
-               CanonicalIncludes CanonIncludes);
-
-  tooling::CompileCommand CompileCommand;
-  PrecompiledPreamble Preamble;
-  std::vector<Diag> Diags;
-  // Processes like code completions and go-to-definitions will need #include
-  // information, and their compile action skips preamble range.
-  IncludeStructure Includes;
-  // Macros defined in the preamble section of the main file.
-  // Users care about headers vs main-file, not preamble vs non-preamble.
-  // These should be treated as main-file entities e.g. for code completion.
-  std::vector<std::string> MainFileMacros;
-  // Cache of FS operations performed when building the preamble.
-  // When reusing a preamble, this cache can be consumed to save IO.
-  std::unique_ptr<PreambleFileStatusCache> StatCache;
-  CanonicalIncludes CanonIncludes;
-};
+class SymbolIndex;
 
 /// Stores and provides access to parsed AST.
 class ParsedAST {
@@ -160,23 +119,6 @@ private:
   IncludeStructure Includes;
   CanonicalIncludes CanonIncludes;
 };
-
-using PreambleParsedCallback =
-    std::function<void(ASTContext &, std::shared_ptr<clang::Preprocessor>,
-                       const CanonicalIncludes &)>;
-
-/// Rebuild the preamble for the new inputs unless the old one can be reused.
-/// If \p OldPreamble can be reused, it is returned unchanged.
-/// If \p OldPreamble is null, always builds the preamble.
-/// If \p PreambleCallback is set, it will be run on top of the AST while
-/// building the preamble. Note that if the old preamble was reused, no AST is
-/// built and, therefore, the callback will not be executed.
-std::shared_ptr<const PreambleData>
-buildPreamble(PathRef FileName, CompilerInvocation &CI,
-              std::shared_ptr<const PreambleData> OldPreamble,
-              const tooling::CompileCommand &OldCompileCommand,
-              const ParseInputs &Inputs, bool StoreInMemory,
-              PreambleParsedCallback PreambleCallback);
 
 /// Build an AST from provided user inputs. This function does not check if
 /// preamble can be reused, as this function expects that \p Preamble is the

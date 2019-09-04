@@ -13,6 +13,7 @@
 #include "Format.h"
 #include "FormattedString.h"
 #include "Headers.h"
+#include "Preamble.h"
 #include "Protocol.h"
 #include "SemanticHighlighting.h"
 #include "SourceCode.h"

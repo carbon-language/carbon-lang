@@ -62,6 +62,7 @@ add_clang_library(clangDaemon
   Logger.cpp
   Protocol.cpp
   Quality.cpp
+  Preamble.cpp
   RIFF.cpp
   Selection.cpp
   SemanticHighlighting.cpp
