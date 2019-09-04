@@ -5,9 +5,8 @@ declare void @use(i32)
 
 define i32 @sub_to_and(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_and(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[TMP1]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -18,9 +17,8 @@ define i32 @sub_to_and(i32 %x, i32 %y) {
 
 define i32 @sub_to_and_extra_use_sub(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_and_extra_use_sub(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[TMP1]]
 ; CHECK-NEXT:    call void @use(i32 [[SUB]])
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
@@ -33,10 +31,10 @@ define i32 @sub_to_and_extra_use_sub(i32 %x, i32 %y) {
 
 define i32 @sub_to_and_extra_use_and(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_and_extra_use_and(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[X]], [[Y]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[XOR]])
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X]], [[Y]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[TMP1]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -50,8 +48,8 @@ define i32 @sub_to_and_extra_use_or(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_and_extra_use_or(
 ; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[OR]])
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X]], [[Y]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[TMP1]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -63,9 +61,8 @@ define i32 @sub_to_and_extra_use_or(i32 %x, i32 %y) {
 
 define i32 @sub_to_and_or_commuted(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_and_or_commuted(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[TMP1]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %y, %x
@@ -76,9 +73,8 @@ define i32 @sub_to_and_or_commuted(i32 %x, i32 %y) {
 
 define i32 @sub_to_and_and_commuted(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_and_and_commuted(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[Y]], [[X]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[TMP1]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -89,9 +85,8 @@ define i32 @sub_to_and_and_commuted(i32 %x, i32 %y) {
 
 define <2 x i32> @sub_to_and_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @sub_to_and_vec(
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor <2 x i32> [[Y]], [[X]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> [[XOR]], [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i32> [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> zeroinitializer, [[TMP1]]
 ; CHECK-NEXT:    ret <2 x i32> [[SUB]]
 ;
   %or = or <2 x i32> %x, %y
