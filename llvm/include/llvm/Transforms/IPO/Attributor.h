@@ -674,7 +674,10 @@ struct Attributor {
     // Put the attribute in the lookup map structure and the container we use to
     // keep track of all attributes.
     IRPosition &IRP = AA.getIRPosition();
-    AAMap[IRP][&AAType::ID] = &AA;
+    auto &KindToAbstractAttributeMap = AAMap[IRP];
+    assert(!KindToAbstractAttributeMap.count(&AAType::ID) &&
+           "Attribute already in map!");
+    KindToAbstractAttributeMap[&AAType::ID] = &AA;
     AllAbstractAttributes.push_back(&AA);
     return AA;
   }
@@ -821,8 +824,7 @@ private:
 
     // Lookup the abstract attribute of type AAType. If found, return it after
     // registering a dependence of QueryingAA on the one returned attribute.
-    const auto &KindToAbstractAttributeMap =
-        AAMap.lookup(const_cast<IRPosition &>(IRP));
+    const auto &KindToAbstractAttributeMap = AAMap.lookup(IRP);
     if (AAType *AA = static_cast<AAType *>(
             KindToAbstractAttributeMap.lookup(&AAType::ID))) {
       // Do not register a dependence on an attribute with an invalid state.
