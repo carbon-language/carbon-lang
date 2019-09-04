@@ -1386,8 +1386,6 @@ Register KernelRewriter::remapUse(Register Reg, MachineInstr &MI) {
     assert(LoopProducer);
   }
   int LoopProducerStage = S.getStage(LoopProducer);
-  int LoopProducerCycle = S.getCycle(LoopProducer);
-  int ConsumerCycle = S.getCycle(&MI);
 
   Optional<Register> IllegalPhiDefault;
 
@@ -1396,7 +1394,12 @@ Register KernelRewriter::remapUse(Register Reg, MachineInstr &MI) {
   } else if (LoopProducerStage > ConsumerStage) {
     // This schedule is only representable if ProducerStage == ConsumerStage+1.
     // In addition, Consumer's cycle must be scheduled after Producer in the
-    // rescheduled loop.
+    // rescheduled loop. This is enforced by the pipeliner's ASAP and ALAP
+    // functions.
+#ifndef NDEBUG // Silence unused variables in non-asserts mode.
+    int LoopProducerCycle = S.getCycle(LoopProducer);
+    int ConsumerCycle = S.getCycle(&MI);
+#endif
     assert(LoopProducerCycle <= ConsumerCycle);
     assert(LoopProducerStage == ConsumerStage + 1);
     // Peel off the first phi from Defaults and insert a phi between producer
@@ -1637,9 +1640,9 @@ void PeelingModuloScheduleExpander::validateAgainstModuloScheduleExpander() {
 
   if (Failed) {
     errs() << "Golden reference kernel:\n";
-    ExpandedKernel->dump();
+    ExpandedKernel->print(errs());
     errs() << "New kernel:\n";
-    BB->dump();
+    BB->print(errs());
     errs() << ScheduleDump;
     report_fatal_error(
         "Modulo kernel validation (-pipeliner-experimental-cg) failed");
