@@ -91,11 +91,11 @@ define <2 x i32> @sub_to_xor_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @sub_to_xor_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[Y]], [[X]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> [[AND]], [[OR]]
 ; CHECK-NEXT:    ret <2 x i32> [[SUB]]
 ;
   %or = or <2 x i32> %x, %y
   %and = and <2 x i32> %y, %x
-  %sub = sub <2 x i32> %or, %and
+  %sub = sub <2 x i32> %and, %or
   ret <2 x i32> %sub
 }
