@@ -18,13 +18,28 @@
 
 namespace Fortran::semantics {
 
-static constexpr OmpDirectiveSet doSet{OmpDirective::DO,
-    OmpDirective::PARALLEL_DO, OmpDirective::DO_SIMD,
-    OmpDirective::PARALLEL_DO_SIMD};
+static constexpr OmpDirectiveSet doSet{OmpDirective::DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL_DO,
+    OmpDirective::PARALLEL_DO_SIMD, OmpDirective::DO, OmpDirective::DO_SIMD,
+    OmpDirective::TARGET_PARALLEL_DO, OmpDirective::TARGET_PARALLEL_DO_SIMD,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
+    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
 static constexpr OmpDirectiveSet simdSet{
-    OmpDirective::SIMD, OmpDirective::DO_SIMD, OmpDirective::PARALLEL_DO_SIMD};
+    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::DISTRIBUTE_SIMD,
+    OmpDirective::PARALLEL_DO_SIMD, OmpDirective::DO_SIMD, OmpDirective::SIMD,
+    OmpDirective::TARGET_PARALLEL_DO_SIMD,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_SIMD, OmpDirective::TARGET_SIMD,
+    OmpDirective::TASKLOOP_SIMD,
+    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
+    OmpDirective::TEAMS_DISTRIBUTE_SIMD};
 static constexpr OmpDirectiveSet doSimdSet{
-    OmpDirective::DO_SIMD, OmpDirective::PARALLEL_DO_SIMD};
+    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL_DO_SIMD,
+    OmpDirective::DO_SIMD, OmpDirective::TARGET_PARALLEL_DO_SIMD,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
+    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
 
 std::string OmpStructureChecker::ContextDirectiveAsFortran() {
   auto dir{EnumToString(GetContext().directive)};
