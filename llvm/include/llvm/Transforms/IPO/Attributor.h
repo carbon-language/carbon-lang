@@ -289,6 +289,19 @@ struct IRPosition {
   }
   ///}
 
+  /// Return true if the position refers to a function interface, that is the
+  /// function scope, the function return, or an argumnt.
+  bool isFnInterfaceKind() const {
+    switch (getPositionKind()) {
+    case IRPosition::IRP_FUNCTION:
+    case IRPosition::IRP_RETURNED:
+    case IRPosition::IRP_ARGUMENT:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   /// Return the Function surrounding the anchor value.
   ///
   ///{
@@ -1034,6 +1047,27 @@ template <Attribute::AttrKind AK, typename Base>
 struct IRAttribute : public IRPosition, public Base {
   IRAttribute(const IRPosition &IRP) : IRPosition(IRP) {}
   ~IRAttribute() {}
+
+  /// See AbstractAttribute::initialize(...).
+  virtual void initialize(Attributor &A) override {
+    if (hasAttr(getAttrKind())) {
+      this->getState().indicateOptimisticFixpoint();
+      return;
+    }
+
+    const IRPosition &IRP = this->getIRPosition();
+    bool IsFnInterface = IRP.isFnInterfaceKind();
+    const Function *FnScope = IRP.getAnchorScope();
+    // TODO: Not all attributes require an exact definition. Find a way to
+    //       enable deduction for some but not all attributes in case the
+    //       definition might be changed at runtime, see also
+    //       http://lists.llvm.org/pipermail/llvm-dev/2018-February/121275.html.
+    // TODO: We could always determine abstract attributes and if sufficient
+    //       information was found we could duplicate the functions that do not
+    //       have an exact definition.
+    if (IsFnInterface && (!FnScope || !FnScope->hasExactDefinition()))
+      this->getState().indicatePessimisticFixpoint();
+  }
 
   /// See AbstractAttribute::manifest(...).
   ChangeStatus manifest(Attributor &A) override {

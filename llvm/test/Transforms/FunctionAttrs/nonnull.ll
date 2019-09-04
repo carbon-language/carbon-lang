@@ -458,4 +458,16 @@ define  i32* @g1() {
   ret i32* %c
 }
 
+; ATTRIBUTOR: define internal void @called_by_weak(i32* nocapture nonnull %a)
+define internal void @called_by_weak(i32* %a) {
+  ret void
+}
+
+; Check we do not annotate the function interface of this weak function.
+; ATTRIBUTOR: define weak_odr void @weak_caller(i32* nonnull %a)
+define weak_odr void @weak_caller(i32* nonnull %a) {
+  call void @called_by_weak(i32* %a)
+  ret void
+}
+
 attributes #0 = { "null-pointer-is-valid"="true" }
