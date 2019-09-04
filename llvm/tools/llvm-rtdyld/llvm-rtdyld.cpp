@@ -146,11 +146,10 @@ static cl::opt<bool> ShowTimes("show-times",
 ExitOnError ExitOnErr;
 
 struct RTDyldTimers {
-  TimerGroup RTDyldTimers{"llvm-rtdyld timers",
-                          "timers for llvm-rtdyld phases"};
-  Timer LoadObjectsTimer{"load", "time to load/add object files", RTDyldTimers};
-  Timer LinkTimer{"link", "time to link object files", RTDyldTimers};
-  Timer RunTimer{"run", "time to execute jitlink'd code", RTDyldTimers};
+  TimerGroup RTDyldTG{"llvm-rtdyld timers", "timers for llvm-rtdyld phases"};
+  Timer LoadObjectsTimer{"load", "time to load/add object files", RTDyldTG};
+  Timer LinkTimer{"link", "time to link object files", RTDyldTG};
+  Timer RunTimer{"run", "time to execute jitlink'd code", RTDyldTG};
 };
 
 std::unique_ptr<RTDyldTimers> Timers;
