@@ -5,9 +5,7 @@ declare void @use(i32)
 
 define i32 @sub_to_xor(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_xor(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -18,9 +16,7 @@ define i32 @sub_to_xor(i32 %x, i32 %y) {
 
 define i32 @sub_to_xor_extra_use_sub(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_xor_extra_use_sub(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[SUB]])
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
@@ -33,10 +29,9 @@ define i32 @sub_to_xor_extra_use_sub(i32 %x, i32 %y) {
 
 define i32 @sub_to_xor_extra_use_and(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_xor_extra_use_and(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[AND]])
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor i32 [[X]], [[Y]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -50,8 +45,7 @@ define i32 @sub_to_xor_extra_use_or(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_xor_extra_use_or(
 ; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[OR]])
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor i32 [[X]], [[Y]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -63,9 +57,7 @@ define i32 @sub_to_xor_extra_use_or(i32 %x, i32 %y) {
 
 define i32 @sub_to_xor_or_commuted(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_xor_or_commuted(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor i32 [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %y, %x
@@ -76,9 +68,7 @@ define i32 @sub_to_xor_or_commuted(i32 %x, i32 %y) {
 
 define i32 @sub_to_xor_and_commuted(i32 %x, i32 %y) {
 ; CHECK-LABEL: @sub_to_xor_and_commuted(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[Y]], [[X]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor i32 [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
@@ -89,9 +79,7 @@ define i32 @sub_to_xor_and_commuted(i32 %x, i32 %y) {
 
 define <2 x i32> @sub_to_xor_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @sub_to_xor_vec(
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[Y]], [[X]]
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i32> [[OR]], [[AND]]
+; CHECK-NEXT:    [[SUB:%.*]] = xor <2 x i32> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[SUB]]
 ;
   %or = or <2 x i32> %x, %y
