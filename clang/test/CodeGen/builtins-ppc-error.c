@@ -73,3 +73,8 @@ void testUnpack128(int index) {
   __builtin_unpack_vector_int128(vsllli, index); //expected-error {{argument to '__builtin_unpack_vector_int128' must be a constant integer}}
   __builtin_unpack_vector_int128(vsllli, 5); //expected-error {{argument value 5 is outside the valid range [0, 1]}}
 }
+
+void testDSS(int index) {
+  vec_dss(index); //expected-error {{argument to '__builtin_altivec_dss' must be a constant integer}}
+  vec_dss(5); //expected-error {{argument value 5 is outside the valid range [0, 3]}}
+}
