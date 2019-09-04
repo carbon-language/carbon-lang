@@ -182,6 +182,7 @@ module m01
 
   subroutine test11(in) ! C15.5.2.4(20)
     real, intent(in) :: in
+    real :: x
     ! ERROR: effective argument associated with INTENT(OUT) dummy must be definable
     call intentout(in)
     ! ERROR: effective argument associated with INTENT(OUT) dummy must be definable
@@ -194,6 +195,10 @@ module m01
     call intentinout(3.14159)
     ! ERROR: effective argument associated with INTENT(IN OUT) dummy must be definable
     call intentinout(in + 1.)
+    x = 0.
+    call intentinout(x) ! ok
+    ! ERROR: effective argument associated with INTENT(IN OUT) dummy must be definable
+    call intentinout((x))
   end subroutine
 
   subroutine test12 ! 15.5.2.4(21)
