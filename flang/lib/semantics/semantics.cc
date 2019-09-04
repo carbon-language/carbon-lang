@@ -100,7 +100,7 @@ private:
 
 using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
-    ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
+    ArithmeticIfStmtChecker, AssignmentChecker, CallChecker, CoarrayChecker,
     DeallocateChecker, DoChecker, IfStmtChecker, IoChecker, NullifyChecker,
     OmpStructureChecker, ReturnStmtChecker, StopChecker>;
 

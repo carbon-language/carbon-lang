@@ -235,6 +235,8 @@ public:
   }
   MaybeExpr Analyze(const parser::StructureComponent &);
 
+  void Analyze(const parser::CallStmt &);
+
 protected:
   int IntegerTypeSpecKind(const parser::IntegerTypeSpec &);
 
@@ -317,6 +319,10 @@ private:
     ProcedureDesignator procedureDesignator;
     ActualArguments arguments;
   };
+
+  MaybeExpr AnalyzeCall(const parser::Call &, bool isSubroutine);
+  std::optional<ActualArguments> AnalyzeArguments(
+      const parser::Call &, bool isSubroutine);
   std::optional<CalleeAndArguments> Procedure(
       const parser::ProcedureDesignator &, ActualArguments &);
   bool EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,
@@ -373,7 +379,7 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
 // decorated with typed representations for top-level expressions.
 class ExprChecker {
 public:
-  explicit ExprChecker(SemanticsContext &context) : context_{context} {}
+  explicit ExprChecker(SemanticsContext &);
 
   template<typename A> bool Pre(const A &) { return true; }
   template<typename A> void Post(const A &) {}
@@ -412,5 +418,18 @@ public:
 private:
   SemanticsContext &context_;
 };
+
+// Semantic analysis of all CALL statements in a parse tree.
+// (Function references are processed as primary expressions.)
+class CallChecker {
+public:
+  explicit CallChecker(SemanticsContext &);
+  void Enter(const parser::CallStmt &);
+  void Leave(const parser::CallStmt &);
+
+private:
+  evaluate::ExpressionAnalyzer analyzer_;
+};
+
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

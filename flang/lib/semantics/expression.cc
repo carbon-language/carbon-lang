@@ -1513,17 +1513,42 @@ std::optional<ActualArgument> ExpressionAnalyzer::AnalyzeActualArgument(
 
 MaybeExpr ExpressionAnalyzer::Analyze(
     const parser::FunctionReference &funcRef) {
+  return AnalyzeCall(funcRef.v, false);
+}
+
+void ExpressionAnalyzer::Analyze(const parser::CallStmt &call) {
+  AnalyzeCall(call.v, true);
+}
+
+MaybeExpr ExpressionAnalyzer::AnalyzeCall(
+    const parser::Call &call, bool isSubroutine) {
+  auto save{GetContextualMessages().SetLocation(call.source)};
+  if (auto arguments{AnalyzeArguments(call, isSubroutine)}) {
+    // TODO: map non-intrinsic generic procedure to specific procedure
+    if (std::optional<CalleeAndArguments> callee{Procedure(
+            std::get<parser::ProcedureDesignator>(call.t), *arguments)}) {
+      if (isSubroutine) {
+        // TODO
+      } else {
+        return MakeFunctionRef(std::move(*callee));
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<ActualArguments> ExpressionAnalyzer::AnalyzeArguments(
+    const parser::Call &call, bool isSubroutine) {
+  evaluate::ActualArguments arguments;
   // TODO: C1002: Allow a whole assumed-size array to appear if the dummy
   // argument would accept it.  Handle by special-casing the context
   // ActualArg -> Variable -> Designator.
   // TODO: Actual arguments that are procedures and procedure pointers need to
   // be detected and represented (they're not expressions).
   // TODO: C1534: Don't allow a "restricted" specific intrinsic to be passed.
-  auto save{GetContextualMessages().SetLocation(funcRef.v.source)};
-  ActualArguments arguments;
-  for (const auto &arg :
-      std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {
-    std::optional<ActualArgument> actual;
+  // TODO: map non-intrinsic generic procedure to specific procedure
+  for (const auto &arg : std::get<std::list<parser::ActualArgSpec>>(call.t)) {
+    std::optional<evaluate::ActualArgument> actual;
     std::visit(
         common::visitors{
             [&](const common::Indirection<parser::Expr> &x) {
@@ -1532,7 +1557,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(
               actual = AnalyzeActualArgument(x.value());
             },
             [&](const parser::AltReturnSpec &) {
-              Say("alternate return specification may not appear on function reference"_err_en_US);
+              if (!isSubroutine) {
+                Say("alternate return specification may not appear on function reference"_err_en_US);
+              }
             },
             [&](const parser::ActualArg::PercentRef &) {
               Say("TODO: %REF() argument"_err_en_US);
@@ -1551,15 +1578,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       return std::nullopt;
     }
   }
-
-  // TODO: map non-intrinsic generic procedure to specific procedure
-  if (std::optional<CalleeAndArguments> callee{Procedure(
-          std::get<parser::ProcedureDesignator>(funcRef.v.t), arguments)}) {
-    if (MaybeExpr funcRef{MakeFunctionRef(std::move(*callee))}) {
-      return funcRef;
-    }
-  }
-  return std::nullopt;
+  return arguments;
 }
 
 // Unary operations
@@ -2152,8 +2171,18 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
   return analyzer.AnalyzeKindSelector(category, selector);
 }
 
+ExprChecker::ExprChecker(SemanticsContext &context) : context_{context} {}
+
 bool ExprChecker::Walk(const parser::Program &program) {
   parser::Walk(program, *this);
   return !context_.AnyFatalError();
 }
+
+CallChecker::CallChecker(SemanticsContext &context) : analyzer_{context} {}
+
+void CallChecker::Enter(const parser::CallStmt &call) {
+  analyzer_.Analyze(call);
+}
+
+void CallChecker::Leave(const parser::CallStmt &) {}
 }
