@@ -370,7 +370,7 @@ static bool isUseTriviallyOptimizableToLiveOnEntry(AliasAnalysisType &AA,
                                                    const Instruction *I) {
   // If the memory can't be changed, then loads of the memory can't be
   // clobbered.
-  return isa<LoadInst>(I) && (I->getMetadata(LLVMContext::MD_invariant_load) ||
+  return isa<LoadInst>(I) && (I->hasMetadata(LLVMContext::MD_invariant_load) ||
                               AA.pointsToConstantMemory(MemoryLocation(
                                   cast<LoadInst>(I)->getPointerOperand())));
 }

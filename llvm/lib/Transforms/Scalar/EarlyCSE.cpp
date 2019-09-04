@@ -791,7 +791,7 @@ bool EarlyCSE::isOperatingOnInvariantMemAt(Instruction *I, unsigned GenAt) {
   // A location loaded from with an invariant_load is assumed to *never* change
   // within the visible scope of the compilation.
   if (auto *LI = dyn_cast<LoadInst>(I))
-    if (LI->getMetadata(LLVMContext::MD_invariant_load))
+    if (LI->hasMetadata(LLVMContext::MD_invariant_load))
       return true;
 
   auto MemLocOpt = MemoryLocation::getOrNone(I);
