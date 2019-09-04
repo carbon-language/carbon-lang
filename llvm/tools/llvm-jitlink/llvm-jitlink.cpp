@@ -612,8 +612,8 @@ Expected<int> runEntryPoint(Session &S, JITEvaluatedSymbol EntryPoint) {
 struct JITLinkTimers {
   TimerGroup JITLinkTimers{"llvm-jitlink timers",
                            "timers for llvm-jitlink phases"};
-  Timer LoadObjectsTimer{
-      "load", "time to load/add object files to llvm-jitlink", JITLinkTimers};
+  Timer LoadObjectsTimer{"load", "time to load/add object files",
+                         JITLinkTimers};
   Timer LinkTimer{"link", "time to link object files", JITLinkTimers};
   Timer RunTimer{"run", "time to execute jitlink'd code", JITLinkTimers};
 };
