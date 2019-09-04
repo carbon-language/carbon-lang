@@ -99,3 +99,22 @@ define <2 x i32> @sub_to_xor_vec(<2 x i32> %x, <2 x i32> %y) {
   %sub = sub <2 x i32> %and, %or
   ret <2 x i32> %sub
 }
+
+; Negative tests
+
+define i32 @sub_to_xor_extra_use_and_or(i32 %x, i32 %y) {
+; CHECK-LABEL: @sub_to_xor_extra_use_and_or(
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    call void @use(i32 [[OR]])
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
+; CHECK-NEXT:    call void @use(i32 [[AND]])
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[AND]], [[OR]]
+; CHECK-NEXT:    ret i32 [[SUB]]
+;
+  %or = or i32 %x, %y
+  call void @use(i32 %or)
+  %and = and i32 %x, %y
+  call void @use(i32 %and)
+  %sub = sub i32 %and, %or
+  ret i32 %sub
+}
