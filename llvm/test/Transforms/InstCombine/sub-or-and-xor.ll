@@ -90,15 +90,15 @@ define <2 x i32> @sub_to_xor_vec(<2 x i32> %x, <2 x i32> %y) {
 
 ; Negative tests
 
-define i32 @sub_to_xor_wrong_sub(i32 %x, i32 %y) {
-; CHECK-LABEL: @sub_to_xor_wrong_sub(
+define i32 @sub_to_xor_wrong_arg(i32 %x, i32 %y, i32 %z) {
+; CHECK-LABEL: @sub_to_xor_wrong_arg(
 ; CHECK-NEXT:    [[OR:%.*]] = or i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Y]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X]], [[Z:%.*]]
 ; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[AND]], [[OR]]
 ; CHECK-NEXT:    ret i32 [[SUB]]
 ;
   %or = or i32 %x, %y
-  %and = and i32 %x, %y
+  %and = and i32 %x, %z
   %sub = sub i32 %and, %or
   ret i32 %sub
 }
