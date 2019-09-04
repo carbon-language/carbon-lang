@@ -1418,8 +1418,8 @@ struct AAIsDead : public StateWrapper<BooleanState, AbstractAttribute>,
   /// Return an IR position, see struct IRPosition.
   ///
   ///{
-  IRPosition &getIRPosition() { return *this; }
-  const IRPosition &getIRPosition() const { return *this; }
+  IRPosition &getIRPosition() override { return *this; }
+  const IRPosition &getIRPosition() const override { return *this; }
   ///}
 
   /// Create an abstract attribute view for the position \p IRP.
