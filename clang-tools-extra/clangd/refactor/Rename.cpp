@@ -8,8 +8,8 @@
 
 #include "refactor/Rename.h"
 #include "AST.h"
-#include "ClangdUnit.h"
 #include "Logger.h"
+#include "ParsedAST.h"
 #include "SourceCode.h"
 #include "index/SymbolCollector.h"
 #include "clang/Tooling/Refactoring/Rename/RenamingAction.h"

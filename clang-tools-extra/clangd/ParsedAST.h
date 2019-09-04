@@ -1,13 +1,25 @@
-//===--- ClangdUnit.h --------------------------------------------*- C++-*-===//
+//===--- ParsedAST.h - Building translation units ----------------*- C++-*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+//
+// This file exposes building a file as if it were open in clangd, and defines
+// the ParsedAST structure that holds the results.
+//
+// This is similar to a clang -fsyntax-only run that produces a clang AST, but
+// we have several customizations:
+//  - preamble handling
+//  - capturing diagnostics for later access
+//  - running clang-tidy checks checks
+//
+//
+//===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_PARSEDAST_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANGD_PARSEDAST_H
 
 #include "Compiler.h"
 #include "Diagnostics.h"
@@ -136,4 +148,4 @@ void dumpAST(ParsedAST &AST, llvm::raw_ostream &OS);
 } // namespace clangd
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANGD_PARSEDAST_H

@@ -11,6 +11,7 @@
 #include "FindSymbols.h"
 #include "FormattedString.h"
 #include "Logger.h"
+#include "ParsedAST.h"
 #include "Protocol.h"
 #include "SourceCode.h"
 #include "URI.h"

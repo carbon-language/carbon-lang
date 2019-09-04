@@ -43,11 +43,11 @@
 
 #include "TUScheduler.h"
 #include "Cancellation.h"
-#include "ClangdUnit.h"
 #include "Compiler.h"
 #include "Diagnostics.h"
 #include "GlobalCompilationDatabase.h"
 #include "Logger.h"
+#include "ParsedAST.h"
 #include "Preamble.h"
 #include "Trace.h"
 #include "index/CanonicalIncludes.h"

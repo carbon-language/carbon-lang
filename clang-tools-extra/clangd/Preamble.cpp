@@ -25,7 +25,7 @@ bool compileCommandsAreEqual(const tooling::CompileCommand &LHS,
 }
 
 // This collects macro definitions in the *preamble region* of the main file.
-// (Contrast with CollectMainFileMacroExpansions in ClangdUnit.cpp, which
+// (Contrast with CollectMainFileMacroExpansions in ParsedAST.cpp, which
 // collects macro *expansions* in the rest of the main file.
 class CollectMainFileMacros : public PPCallbacks {
 public:

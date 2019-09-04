@@ -1,4 +1,4 @@
-//===--- ClangdUnit.cpp ------------------------------------------*- C++-*-===//
+//===--- ParsedAST.cpp -------------------------------------------*- C++-*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ClangdUnit.h"
+#include "ParsedAST.h"
 #include "../clang-tidy/ClangTidyDiagnosticConsumer.h"
 #include "../clang-tidy/ClangTidyModuleRegistry.h"
 #include "AST.h"
