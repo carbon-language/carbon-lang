@@ -32,3 +32,10 @@ inline void inline_func() {
 void call_inline_func() {
   inline_func();
 }
+
+template<typename> void f() {
+  // CHECK: define linkonce_odr {{.*}} @_ZZ1fIiEvvENKUlT_E_clIiEEDaS0_(
+  auto x = [](auto){};
+  x(0);
+}
+void use_f() { f<int>(); }
