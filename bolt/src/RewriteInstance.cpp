@@ -5005,9 +5005,9 @@ void RewriteInstance::rewriteFile() {
            << " functions were overwritten.\n";
     if (BC->TotalScore != 0) {
       double Coverage = OverwrittenScore / (double) BC->TotalScore * 100.0;
-      outs() << format("BOLT: Rewritten functions cover %.2lf", Coverage)
+      outs() << format("BOLT-INFO: rewritten functions cover %.2lf", Coverage)
              << "% of the execution count of simple functions of "
-                "this binary.\n";
+                "this binary\n";
     }
   }
 

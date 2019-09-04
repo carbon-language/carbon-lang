@@ -117,6 +117,13 @@ IgnoreInterruptLBR("ignore-interrupt-lbr",
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
 
+static cl::opt<unsigned long long>
+FilterPID("pid",
+  cl::desc("Only use samples from process with specified PID"),
+  cl::init(0),
+  cl::Optional,
+  cl::cat(AggregatorCategory));
+
 }
 
 namespace {
@@ -450,6 +457,30 @@ std::error_code DataAggregator::writeAutoFDOData() {
   return std::error_code();
 }
 
+void DataAggregator::filterBinaryMMapInfo() {
+  if (opts::FilterPID) {
+    auto MMapInfoIter = BinaryMMapInfo.find(opts::FilterPID);
+    if (MMapInfoIter != BinaryMMapInfo.end()) {
+      auto MMap = MMapInfoIter->second;
+      BinaryMMapInfo.clear();
+      BinaryMMapInfo.insert(std::make_pair(MMap.PID, MMap));
+    } else {
+      if (errs().has_colors())
+        errs().changeColor(raw_ostream::RED);
+      errs() << "PERF2BOLT-ERROR: could not find a profile matching PID \""
+             << opts::FilterPID << "\"" << " for binary \"" << BinaryName <<"\".";
+      assert(!BinaryMMapInfo.empty() && "No memory map for matching binary");
+      errs() << " Profile for the following process is available:\n";
+      for (auto &MMI : BinaryMMapInfo)
+        outs() << "  " << MMI.second.PID << (MMI.second.Forked ? " (forked)\n" : "\n");
+      if (errs().has_colors())
+        errs().resetColor();
+
+      exit(1);
+    }
+  }
+}
+
 void DataAggregator::parseProfile(BinaryContext &BC) {
   this->BC = &BC;
 
@@ -506,6 +537,7 @@ void DataAggregator::parseProfile(BinaryContext &BC) {
     errs() << "PERF2BOLT: failed to parse task events\n";
   }
 
+  filterBinaryMMapInfo();
   prepareToParse("events", MainEventsPPI);
 
   if (opts::HeatmapMode) {

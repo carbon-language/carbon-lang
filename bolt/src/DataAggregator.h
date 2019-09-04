@@ -427,6 +427,9 @@ public:
   /// Dump data structures into a file readable by llvm-bolt
   std::error_code writeAggregatedFile() const;
 
+  /// Filter out binaries based on PID
+  void filterBinaryMMapInfo();
+
   /// Parse profile and mark functions/objects with profile.
   /// Don't assign profile to functions yet.
   void parseProfile(BinaryContext &BC);
