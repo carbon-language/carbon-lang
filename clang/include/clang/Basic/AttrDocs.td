@@ -2637,7 +2637,7 @@ is retained by the return value of the annotated function
 It is only supported in C++.
 
 This attribute provides an experimental implementation of the facility
-described in the C++ committee paper [http://wg21.link/p0936r0](P0936R0),
+described in the C++ committee paper `P0936R0 <http://wg21.link/p0936r0>`_,
 and is subject to change as the design of the corresponding functionality
 changes.
   }];
