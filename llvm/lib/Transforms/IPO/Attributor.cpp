@@ -1716,7 +1716,7 @@ struct AANoAliasCallSiteArgument final : AANoAliasImpl {
   }
 
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override { STATS_DECLTRACK_ARG_ATTR(noalias) }
+  void trackStatistics() const override { STATS_DECLTRACK_CSARG_ATTR(noalias) }
 };
 
 /// NoAlias attribute for function return value.
@@ -1782,7 +1782,7 @@ struct AANoAliasCallSiteReturned final : AANoAliasImpl {
   }
 
   /// See AbstractAttribute::trackStatistics()
-  void trackStatistics() const override { STATS_DECLTRACK_CS_ATTR(noalias); }
+  void trackStatistics() const override { STATS_DECLTRACK_CSRET_ATTR(noalias); }
 };
 
 /// -------------------AAIsDead Function Attribute-----------------------
