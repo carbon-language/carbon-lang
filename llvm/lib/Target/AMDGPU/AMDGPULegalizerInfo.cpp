@@ -433,7 +433,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     .widenScalarToNextPow2(1, 32);
 
   // TODO: Expand for > s32
-  getActionDefinitionsBuilder(G_BSWAP)
+  getActionDefinitionsBuilder({G_BSWAP, G_BITREVERSE})
     .legalFor({S32})
     .clampScalar(0, S32, S32)
     .scalarize(0);
