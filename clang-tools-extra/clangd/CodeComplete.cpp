@@ -31,7 +31,7 @@
 #include "Protocol.h"
 #include "Quality.h"
 #include "SourceCode.h"
-#include "TUScheduler.h"
+#include "Threading.h"
 #include "Trace.h"
 #include "URI.h"
 #include "index/Index.h"
