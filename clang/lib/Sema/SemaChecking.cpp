@@ -3231,6 +3231,11 @@ bool Sema::CheckPPCBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case PPC::BI__builtin_tabortdci:
     return SemaBuiltinConstantArgRange(TheCall, 0, 0, 31) ||
            SemaBuiltinConstantArgRange(TheCall, 2, 0, 31);
+  case PPC::BI__builtin_altivec_dst:
+  case PPC::BI__builtin_altivec_dstt:
+  case PPC::BI__builtin_altivec_dstst:
+  case PPC::BI__builtin_altivec_dststt:
+    return SemaBuiltinConstantArgRange(TheCall, 2, 0, 3);
   case PPC::BI__builtin_vsx_xxpermdi:
   case PPC::BI__builtin_vsx_xxsldwi:
     return SemaBuiltinVSX(TheCall);
