@@ -652,7 +652,7 @@ private:
 
     bool isInvariantLoad() const {
       if (auto *LI = dyn_cast<LoadInst>(Inst))
-        return LI->getMetadata(LLVMContext::MD_invariant_load) != nullptr;
+        return LI->hasMetadata(LLVMContext::MD_invariant_load);
       return false;
     }
 
