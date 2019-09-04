@@ -79,3 +79,23 @@ contains
   module procedure sub
   end procedure
 end module
+
+! Separate module procedure defined in a submodule
+module m4
+  interface
+    module subroutine a
+    end subroutine
+    module subroutine b
+    end subroutine
+  end interface
+end module
+submodule(m4) s4a
+contains
+  module procedure a
+  end procedure
+end submodule
+submodule(m4:s4a) s4b
+contains
+  module procedure b
+  end procedure
+end

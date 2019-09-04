@@ -653,6 +653,7 @@ public:
 
   bool BeginSubprogram(
       const parser::Name &, Symbol::Flag, bool hasModulePrefix = false);
+  bool BeginMpSubprogram(const parser::Name &);
   void EndSubprogram();
 
 protected:
@@ -2489,23 +2490,30 @@ SubprogramDetails &SubprogramVisitor::PostSubprogramStmt(
   return symbol.get<SubprogramDetails>();
 }
 
+// A subprogram declared with MODULE PROCEDURE
+bool SubprogramVisitor::BeginMpSubprogram(const parser::Name &name) {
+  auto *symbol{FindSymbol(name)};
+  if (symbol && symbol->has<SubprogramNameDetails>()) {
+    symbol = FindSymbol(currScope().parent(), name);
+  }
+  if (!symbol || !symbol->IsSeparateModuleProc()) {
+    Say(name, "'%s' was not declared a separate module procedure"_err_en_US);
+    return false;
+  }
+  if (symbol->owner() != currScope()) {
+    symbol = &MakeSymbol(name, SubprogramDetails{});
+  }
+  PushScope(Scope::Kind::Subprogram, symbol);
+  return true;
+}
+
 bool SubprogramVisitor::BeginSubprogram(
     const parser::Name &name, Symbol::Flag subpFlag, bool hasModulePrefix) {
   if (hasModulePrefix && !inInterfaceBlock()) {
-    auto *symbol{FindSymbol(name)};
-    if (!symbol || !symbol->IsSeparateModuleProc()) {
-      Say(name, "'%s' was not declared a separate module procedure"_err_en_US);
-      return false;
-    }
-    if (symbol->owner() == currScope()) {
-      // separate module procedure declared and defined in same module
-      PushScope(*symbol->scope());
-    } else {
-      PushSubprogramScope(name, subpFlag);
-    }
-  } else {
-    PushSubprogramScope(name, subpFlag);
+    Say(name, "'%s' was not declared a separate module procedure"_err_en_US);
+    return false;
   }
+  PushSubprogramScope(name, subpFlag);
   return true;
 }
 void SubprogramVisitor::EndSubprogram() { PopScope(); }
@@ -5571,9 +5579,7 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   case ProgramTree::Kind::Subroutine:
     return BeginSubprogram(
         node.name(), node.GetSubpFlag(), node.HasModulePrefix());
-  case ProgramTree::Kind::MpSubprogram:
-    return BeginSubprogram(
-        node.name(), Symbol::Flag::Subroutine, /*hasModulePrefix*/ true);
+  case ProgramTree::Kind::MpSubprogram: return BeginMpSubprogram(node.name());
   case ProgramTree::Kind::Module: BeginModule(node.name(), false); return true;
   case ProgramTree::Kind::Submodule:
     return BeginSubmodule(node.name(), node.GetParentId());
