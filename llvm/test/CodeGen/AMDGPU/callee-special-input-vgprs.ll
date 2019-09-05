@@ -489,16 +489,15 @@ define void @too_many_args_use_workitem_id_x_byval(
 
 ; GCN-LABEL: {{^}}kern_call_too_many_args_use_workitem_id_x_byval:
 ; GCN: enable_vgpr_workitem_id = 0
-
-; GCN: s_mov_b32 s33, s7
+; GCN-DAG: s_mov_b32 s33, s7
+; GCN-DAG: v_mov_b32_e32 [[K:v[0-9]+]], 0x3e7{{$}}
+; GCN: buffer_store_dword [[K]], off, s[0:3], s33 offset:4
+; GCN: buffer_load_dword [[RELOAD_BYVAL:v[0-9]+]], off, s[0:3], s33 offset:4
 ; GCN: s_add_u32 s32, s33, 0x400{{$}}
 
 ; GCN-NOT: s32
-; GCN-DAG: v_mov_b32_e32 [[K:v[0-9]+]], 0x3e7{{$}}
-; GCN: buffer_store_dword [[K]], off, s[0:3], s33 offset:4
 ; GCN: buffer_store_dword v0, off, s[0:3], s32 offset:4
 
-; GCN: buffer_load_dword [[RELOAD_BYVAL:v[0-9]+]], off, s[0:3], s33 offset:4
 ; GCN: buffer_store_dword [[RELOAD_BYVAL]], off, s[0:3], s32{{$}}
 ; GCN: v_mov_b32_e32 [[RELOAD_BYVAL]],
 ; GCN: s_swappc_b64
@@ -521,9 +520,8 @@ define amdgpu_kernel void @kern_call_too_many_args_use_workitem_id_x_byval() #1 
 ; GCN-LABEL: {{^}}func_call_too_many_args_use_workitem_id_x_byval:
 ; GCN: v_mov_b32_e32 [[K:v[0-9]+]], 0x3e7{{$}}
 ; GCN: buffer_store_dword [[K]], off, s[0:3], s34{{$}}
-; GCN: buffer_store_dword v0, off, s[0:3], s32 offset:4
-
 ; GCN: buffer_load_dword [[RELOAD_BYVAL:v[0-9]+]], off, s[0:3], s34{{$}}
+; GCN: buffer_store_dword v0, off, s[0:3], s32 offset:4
 ; GCN: buffer_store_dword [[RELOAD_BYVAL]], off, s[0:3], s32{{$}}
 ; GCN: v_mov_b32_e32 [[RELOAD_BYVAL]],
 ; GCN: s_swappc_b64
