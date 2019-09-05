@@ -376,7 +376,6 @@
     a = 3.14
   enddo
 
-
 ! Standalone Directives (basic)
 
   !$omp taskyield
@@ -399,4 +398,30 @@
   a = 3.14
   !ERROR: Internal: no symbol found for 'first'
   !$omp end critical (first)
+
+! 2.9.1 task-clause -> if-clause |
+!                      final-clause |
+!                      untied-clause |
+!                      default-clause |
+!                      mergeable-clause |
+!                      private-clause |
+!                      firstprivate-clause |
+!                      shared-clause |
+!                      depend-clause |
+!                      priority-clause
+
+  !$omp task shared(a) default(none) if(task:a > 1.)
+  a = 1.
+  !$omp end task
+
+  !ERROR: LASTPRIVATE clause is not allowed on the TASK directive
+  !ERROR: At most one FINAL clause can appear on the TASK directive
+  !$omp task lastprivate(b) final(a.GE.1) final(.false.)
+  b = 1
+  !$omp end task
+
+  !ERROR: The parameter of the PRIORITY clause must be a positive integer expression
+  !$omp task priority(-1) firstprivate(a) mergeable
+  a = 3.14
+  !$omp end task
 end program

@@ -97,7 +97,8 @@ void OmpStructureChecker::CheckAllowed(OmpClause type) {
     });
     for (const auto &e : others) {
       context_.Say(GetContext().clauseSource,
-          "%s and %s are mutually exclusive and may not appear on the same %s directive"_err_en_US,
+          "%s and %s are mutually exclusive and may not appear on the "
+          "same %s directive"_err_en_US,
           EnumToString(type), EnumToString(e),
           parser::ToUpperCaseLetters(GetContext().directiveSource.ToString()));
     }
@@ -326,6 +327,26 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
   case parser::OmpBlockDirective::Directive::Workshare:
     PushContext(beginDir.source, OmpDirective::WORKSHARE);
     break;
+    // 2.9.1 task-clause -> if-clause |
+    //                      final-clause |
+    //                      untied-clause |
+    //                      default-clause |
+    //                      mergeable-clause |
+    //                      private-clause |
+    //                      firstprivate-clause |
+    //                      shared-clause |
+    //                      depend-clause |
+    //                      priority-clause
+  case parser::OmpBlockDirective::Directive::Task: {
+    PushContext(beginDir.source, OmpDirective::TASK);
+    OmpClauseSet allowed{OmpClause::UNTIED, OmpClause::DEFAULT,
+        OmpClause::MERGEABLE, OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
+        OmpClause::SHARED, OmpClause::DEPEND};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{
+        OmpClause::IF, OmpClause::FINAL, OmpClause::PRIORITY};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
   default:
     // TODO others
     break;
@@ -695,8 +716,9 @@ void OmpStructureChecker::Enter(const parser::OmpClause::Ordered &x) {
     }
   }
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Priority &) {
+void OmpStructureChecker::Enter(const parser::OmpClause::Priority &x) {
   CheckAllowed(OmpClause::PRIORITY);
+  RequiresPositiveParameter(OmpClause::PRIORITY, x.v);
 }
 void OmpStructureChecker::Enter(const parser::OmpClause::Private &) {
   CheckAllowed(OmpClause::PRIVATE);

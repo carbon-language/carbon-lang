@@ -107,8 +107,8 @@ TYPE_PARSER(construct<OmpIfClause>(
               "TARGET UPDATE" >>
                   pure(OmpIfClause::DirectiveNameModifier::TargetUpdate) ||
               "TARGET" >> pure(OmpIfClause::DirectiveNameModifier::Target) ||
-              "TASK"_id >> pure(OmpIfClause::DirectiveNameModifier::Taskloop) ||
-              "TASKLOOP" >> pure(OmpIfClause::DirectiveNameModifier::Task)) /
+              "TASK"_id >> pure(OmpIfClause::DirectiveNameModifier::Task) ||
+              "TASKLOOP" >> pure(OmpIfClause::DirectiveNameModifier::Taskloop)) /
         ":"),
     scalarLogicalExpr))
 
