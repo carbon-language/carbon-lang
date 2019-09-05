@@ -110,7 +110,8 @@ export function activate(context: vscode.ExtensionContext) {
   const clangdClient = new ClangdLanguageClient('Clang Language Server',
                                                 serverOptions, clientOptions);
   const semanticHighlightingFeature =
-      new semanticHighlighting.SemanticHighlightingFeature();
+      new semanticHighlighting.SemanticHighlightingFeature(clangdClient,
+                                                           context);
   context.subscriptions.push(
       vscode.Disposable.from(semanticHighlightingFeature));
   clangdClient.registerFeature(semanticHighlightingFeature);
@@ -144,14 +145,9 @@ export function activate(context: vscode.ExtensionContext) {
       clangdClient.onNotification(
           'textDocument/clangd.fileStatus',
           (fileStatus) => { status.onFileUpdated(fileStatus); });
-      clangdClient.onNotification(
-          semanticHighlighting.NotificationType,
-          semanticHighlightingFeature.handleNotification.bind(
-              semanticHighlightingFeature));
     } else if (newState == vscodelc.State.Stopped) {
       // Clear all cached statuses when clangd crashes.
       status.clear();
-      semanticHighlightingFeature.dispose();
     }
   }));
   // An empty place holder for the activate command, otherwise we'll get an
