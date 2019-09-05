@@ -894,8 +894,10 @@ struct NormalizedOther {
     if (to_integer(Name, Val))
       return Val;
 
-    YamlIO.setError("an unknown value is used for symbol's 'Other' field: " +
-                    Name);
+    llvm::WithColor::error()
+        << "an unknown value is used for symbol's 'Other' field: " << Name
+        << ".\n";
+    exit(1);
   }
 
   Optional<uint8_t> denormalize(IO &) {
@@ -940,7 +942,7 @@ struct NormalizedOther {
     return Map;
   }
 
-  IO &YamlIO;
+  const IO &YamlIO;
   Optional<std::vector<StOtherPiece>> Other;
   std::string UnknownFlagsHolder;
 };
