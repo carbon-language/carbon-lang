@@ -20098,8 +20098,9 @@ X86TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
 
   // fold (sdiv X, pow2)
   EVT VT = N->getValueType(0);
-  // FIXME: Support i8/i16.
-  if ((VT != MVT::i32 && !(Subtarget.is64Bit() && VT == MVT::i64)))
+  // FIXME: Support i8.
+  if (VT != MVT::i16 && VT != MVT::i32 &&
+      !(Subtarget.is64Bit() && VT == MVT::i64))
     return SDValue();
 
   unsigned Lg2 = Divisor.countTrailingZeros();

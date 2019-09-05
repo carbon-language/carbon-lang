@@ -480,13 +480,12 @@ define i16 @combine_i16_srem_pow2(i16 %x) {
 ; CHECK-LABEL: combine_i16_srem_pow2:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movl %edi, %eax
-; CHECK-NEXT:    movswl %ax, %ecx
-; CHECK-NEXT:    shrl $27, %ecx
-; CHECK-NEXT:    andl $15, %ecx
-; CHECK-NEXT:    addl %edi, %ecx
+; CHECK-NEXT:    leal 15(%rax), %ecx
+; CHECK-NEXT:    testw %ax, %ax
+; CHECK-NEXT:    cmovnsl %edi, %ecx
 ; CHECK-NEXT:    andl $-16, %ecx
 ; CHECK-NEXT:    subl %ecx, %eax
-; CHECK-NEXT:    # kill: def $ax killed $ax killed $eax
+; CHECK-NEXT:    # kill: def $ax killed $ax killed $rax
 ; CHECK-NEXT:    retq
   %1 = srem i16 %x, 16
   ret i16 %1
@@ -496,13 +495,12 @@ define i16 @combine_i16_srem_negpow2(i16 %x) {
 ; CHECK-LABEL: combine_i16_srem_negpow2:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movl %edi, %eax
-; CHECK-NEXT:    movswl %ax, %ecx
-; CHECK-NEXT:    shrl $23, %ecx
-; CHECK-NEXT:    movzbl %cl, %ecx
-; CHECK-NEXT:    addl %edi, %ecx
+; CHECK-NEXT:    leal 255(%rax), %ecx
+; CHECK-NEXT:    testw %ax, %ax
+; CHECK-NEXT:    cmovnsl %edi, %ecx
 ; CHECK-NEXT:    andl $-256, %ecx
 ; CHECK-NEXT:    subl %ecx, %eax
-; CHECK-NEXT:    # kill: def $ax killed $ax killed $eax
+; CHECK-NEXT:    # kill: def $ax killed $ax killed $rax
 ; CHECK-NEXT:    retq
   %1 = srem i16 %x, -256
   ret i16 %1
