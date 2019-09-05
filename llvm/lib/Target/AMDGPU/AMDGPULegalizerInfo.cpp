@@ -1326,10 +1326,16 @@ bool AMDGPULegalizerInfo::loadInputValue(Register DstReg, MachineIRBuilder &B,
   // Insert the argument copy if it doens't already exist.
   // FIXME: It seems EmitLiveInCopies isn't called anywhere?
   if (!MRI.getVRegDef(LiveIn)) {
+    // FIXME: Should have scoped insert pt
+    MachineBasicBlock &OrigInsBB = B.getMBB();
+    auto OrigInsPt = B.getInsertPt();
+
     MachineBasicBlock &EntryMBB = B.getMF().front();
     EntryMBB.addLiveIn(Arg->getRegister());
     B.setInsertPt(EntryMBB, EntryMBB.begin());
     B.buildCopy(LiveIn, Arg->getRegister());
+
+    B.setInsertPt(OrigInsBB, OrigInsPt);
   }
 
   return true;
