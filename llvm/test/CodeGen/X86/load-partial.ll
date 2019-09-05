@@ -374,19 +374,24 @@ define void @PR43227(i32* %explicit_0, <8 x i32>* %explicit_1) {
 ;
 ; SSE41-LABEL: PR43227:
 ; SSE41:       # %bb.0:
-; SSE41-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; SSE41-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; SSE41-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0],xmm0[0]
-; SSE41-NEXT:    xorps %xmm0, %xmm0
-; SSE41-NEXT:    movaps %xmm0, 672(%rsi)
-; SSE41-NEXT:    movaps %xmm1, 688(%rsi)
+; SSE41-NEXT:    movq {{.*#+}} xmm0 = mem[0],zero
+; SSE41-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; SSE41-NEXT:    pxor %xmm1, %xmm1
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; SSE41-NEXT:    movd {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; SSE41-NEXT:    movdqa %xmm1, 672(%rsi)
+; SSE41-NEXT:    movdqa %xmm0, 688(%rsi)
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: PR43227:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; AVX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; AVX-NEXT:    vblendps {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; AVX-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
 ; AVX-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX-NEXT:    vmovaps %ymm0, 672(%rsi)
