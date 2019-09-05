@@ -166,12 +166,13 @@
      enddo
   enddo
 
-  !$omp parallel do simd
+  !$omp parallel do simd if(parallel:a>1.)
   do i = 1, N
   enddo
   !$omp end parallel do simd
 
-  !$omp parallel do
+  !ERROR: Unmatched directive name modifier TARGET on the IF clause
+  !$omp parallel do if(target:a>1.)
   do i = 1, N
   enddo
   !ERROR: Unmatched END SIMD directive

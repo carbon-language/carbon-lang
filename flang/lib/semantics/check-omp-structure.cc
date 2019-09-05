@@ -18,6 +18,17 @@
 
 namespace Fortran::semantics {
 
+static constexpr OmpDirectiveSet parallelSet{
+    OmpDirective::DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL,
+    OmpDirective::PARALLEL_DO, OmpDirective::PARALLEL_DO_SIMD,
+    OmpDirective::PARALLEL_SECTIONS, OmpDirective::PARALLEL_WORKSHARE,
+    OmpDirective::TARGET_PARALLEL, OmpDirective::TARGET_PARALLEL_DO,
+    OmpDirective::TARGET_PARALLEL_DO_SIMD,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
+    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
 static constexpr OmpDirectiveSet doSet{OmpDirective::DISTRIBUTE_PARALLEL_DO,
     OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL_DO,
     OmpDirective::PARALLEL_DO_SIMD, OmpDirective::DO, OmpDirective::DO_SIMD,
@@ -40,6 +51,15 @@ static constexpr OmpDirectiveSet doSimdSet{
     OmpDirective::DO_SIMD, OmpDirective::TARGET_PARALLEL_DO_SIMD,
     OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
     OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
+static constexpr OmpDirectiveSet taskloopSet{
+    OmpDirective::TASKLOOP, OmpDirective::TASKLOOP_SIMD};
+static constexpr OmpDirectiveSet targetSet{OmpDirective::TARGET,
+    OmpDirective::TARGET_PARALLEL, OmpDirective::TARGET_PARALLEL_DO,
+    OmpDirective::TARGET_PARALLEL_DO_SIMD, OmpDirective::TARGET_SIMD,
+    OmpDirective::TARGET_TEAMS, OmpDirective::TARGET_TEAMS_DISTRIBUTE,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
+    OmpDirective::TARGET_TEAMS_DISTRIBUTE_SIMD};
 
 std::string OmpStructureChecker::ContextDirectiveAsFortran() {
   auto dir{EnumToString(GetContext().directive)};
@@ -797,27 +817,27 @@ void OmpStructureChecker::Enter(const parser::OmpIfClause &x) {
   CheckAllowed(OmpClause::IF);
 
   using dirNameModifier = parser::OmpIfClause::DirectiveNameModifier;
-  static std::unordered_map<dirNameModifier, OmpDirective> dirNameModifierMap{
-      {dirNameModifier::Parallel, OmpDirective::PARALLEL},
-      {dirNameModifier::Target, OmpDirective::TARGET},
-      {dirNameModifier::TargetEnterData, OmpDirective::TARGET_ENTER_DATA},
-      {dirNameModifier::TargetExitData, OmpDirective::TARGET_EXIT_DATA},
-      {dirNameModifier::TargetData, OmpDirective::TARGET_DATA},
-      {dirNameModifier::TargetUpdate, OmpDirective::TARGET_UPDATE},
-      {dirNameModifier::Task, OmpDirective::TASK},
-      {dirNameModifier::Taskloop, OmpDirective::TASKLOOP}};
+  static std::unordered_map<dirNameModifier, OmpDirectiveSet>
+      dirNameModifierMap{{dirNameModifier::Parallel, parallelSet},
+          {dirNameModifier::Target, targetSet},
+          {dirNameModifier::TargetEnterData, {OmpDirective::TARGET_ENTER_DATA}},
+          {dirNameModifier::TargetExitData, {OmpDirective::TARGET_EXIT_DATA}},
+          {dirNameModifier::TargetData, {OmpDirective::TARGET_DATA}},
+          {dirNameModifier::TargetUpdate, {OmpDirective::TARGET_UPDATE}},
+          {dirNameModifier::Task, {OmpDirective::TASK}},
+          {dirNameModifier::Taskloop, taskloopSet}};
   if (const auto &directiveName{
           std::get<std::optional<dirNameModifier>>(x.t)}) {
     auto search{dirNameModifierMap.find(*directiveName)};
     if (search == dirNameModifierMap.end() ||
-        search->second != GetContext().directive) {
+        !search->second.test(GetContext().directive)) {
       context_
           .Say(GetContext().clauseSource,
               "Unmatched directive name modifier %s on the IF clause"_err_en_US,
               parser::ToUpperCaseLetters(
                   parser::OmpIfClause::EnumToString(*directiveName)))
           .Attach(
-              GetContext().directiveSource, "Does not match directive"_en_US);
+              GetContext().directiveSource, "Cannot apply to directive"_en_US);
     }
   }
 }
