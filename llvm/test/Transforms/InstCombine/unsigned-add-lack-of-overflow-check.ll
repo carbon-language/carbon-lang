@@ -10,8 +10,8 @@
 
 define i1 @t0_basic(i8 %x, i8 %y) {
 ; CHECK-LABEL: @t0_basic(
-; CHECK-NEXT:    [[T0:%.*]] = add i8 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[T0]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[Y:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = add i8 %x, %y
@@ -21,8 +21,8 @@ define i1 @t0_basic(i8 %x, i8 %y) {
 
 define <2 x i1> @t1_vec(<2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @t1_vec(
-; CHECK-NEXT:    [[T0:%.*]] = add <2 x i8> [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp uge <2 x i8> [[T0]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor <2 x i8> [[Y:%.*]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[R:%.*]] = icmp uge <2 x i8> [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i1> [[R]]
 ;
   %t0 = add <2 x i8> %x, %y
@@ -34,8 +34,8 @@ define <2 x i1> @t1_vec(<2 x i8> %x, <2 x i8> %y) {
 
 define i1 @t2_symmetry(i8 %x, i8 %y) {
 ; CHECK-LABEL: @t2_symmetry(
-; CHECK-NEXT:    [[T0:%.*]] = add i8 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[T0]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[X:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[TMP1]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = add i8 %x, %y
@@ -48,8 +48,8 @@ declare i8 @gen8()
 define i1 @t3_commutative(i8 %x) {
 ; CHECK-LABEL: @t3_commutative(
 ; CHECK-NEXT:    [[Y:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[T0:%.*]] = add i8 [[Y]], [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[T0]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[Y]], -1
+; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %y = call i8 @gen8()
@@ -60,8 +60,8 @@ define i1 @t3_commutative(i8 %x) {
 
 define i1 @t4_commutative(i8 %x, i8 %y) {
 ; CHECK-LABEL: @t4_commutative(
-; CHECK-NEXT:    [[T0:%.*]] = add i8 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[T0]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[Y:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = add i8 %x, %y
@@ -72,8 +72,8 @@ define i1 @t4_commutative(i8 %x, i8 %y) {
 define i1 @t5_commutative(i8 %x) {
 ; CHECK-LABEL: @t5_commutative(
 ; CHECK-NEXT:    [[Y:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[T0:%.*]] = add i8 [[Y]], [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp ule i8 [[Y]], [[T0]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[Y]], -1
+; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %y = call i8 @gen8()
