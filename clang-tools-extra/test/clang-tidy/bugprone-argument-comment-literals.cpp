@@ -69,18 +69,29 @@ void test() {
   // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'fabc' [bugprone-argument-comment]
   // CHECK-FIXES: a.foo(/*fabc=*/1.0f);
 
+  a.foo(-1.0f);
+  // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'fabc' [bugprone-argument-comment]
+  // CHECK-FIXES: a.foo(/*fabc=*/-1.0f);
+
   a.foo(1.0);
   // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'dabc' [bugprone-argument-comment]
   // CHECK-FIXES: a.foo(/*dabc=*/1.0);
 
+  a.foo(-1.0);
+  // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'dabc' [bugprone-argument-comment]
+  // CHECK-FIXES: a.foo(/*dabc=*/-1.0);
+
   int val3 = 10;
   a.foo(val3);
+  a.foo(-val3);
 
   float val4 = 10.0;
   a.foo(val4);
+  a.foo(-val4);
 
   double val5 = 10.0;
   a.foo(val5);
+  a.foo(-val5);
 
   a.foo("Hello World");
   // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'strabc' [bugprone-argument-comment]
@@ -98,14 +109,22 @@ void test() {
   // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'dabc' [bugprone-argument-comment]
   // CHECK-FIXES: a.foo(/*dabc=*/402.0_km);
 
+  a.foo(-402.0_km);
+  // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'dabc' [bugprone-argument-comment]
+  // CHECK-FIXES: a.foo(/*dabc=*/-402.0_km);
+
   a.foo('A');
   // CHECK-MESSAGES: [[@LINE-1]]:9: warning: argument comment missing for literal argument 'chabc' [bugprone-argument-comment]
   // CHECK-FIXES: a.foo(/*chabc=*/'A');
 
   g(FOO);
+  g(-FOO);
   h(1.0f);
   // CHECK-MESSAGES: [[@LINE-1]]:5: warning: argument comment missing for literal argument 'b' [bugprone-argument-comment]
   // CHECK-FIXES: h(/*b=*/1.0f);
+  h(-1.0f);
+  // CHECK-MESSAGES: [[@LINE-1]]:5: warning: argument comment missing for literal argument 'b' [bugprone-argument-comment]
+  // CHECK-FIXES: h(/*b=*/-1.0f);
   i(__FILE__);
 
   j(1, X(1), X(1));

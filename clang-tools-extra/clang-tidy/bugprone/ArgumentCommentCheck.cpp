@@ -230,9 +230,11 @@ static const FunctionDecl *resolveMocks(const FunctionDecl *Func) {
 // Given the argument type and the options determine if we should
 // be adding an argument comment.
 bool ArgumentCommentCheck::shouldAddComment(const Expr *Arg) const {
+  Arg = Arg->IgnoreImpCasts();
+  if (isa<UnaryOperator>(Arg))
+    Arg = cast<UnaryOperator>(Arg)->getSubExpr();
   if (Arg->getExprLoc().isMacroID())
     return false;
-  Arg = Arg->IgnoreImpCasts();
   return (CommentBoolLiterals && isa<CXXBoolLiteralExpr>(Arg)) ||
          (CommentIntegerLiterals && isa<IntegerLiteral>(Arg)) ||
          (CommentFloatLiterals && isa<FloatingLiteral>(Arg)) ||
