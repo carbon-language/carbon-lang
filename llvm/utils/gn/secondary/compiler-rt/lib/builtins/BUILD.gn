@@ -191,6 +191,30 @@ static_library("builtins") {
     ]
   }
 
+  if ((target_cpu == "x64" && target_os != "win") || target_cpu == "arm64") {
+    # GENERIC_TF_SOURCES
+    sources += [
+      "comparetf2.c",
+      "extenddftf2.c",
+      "extendsftf2.c",
+      "fixtfdi.c",
+      "fixtfsi.c",
+      "fixtfti.c",
+      "fixunstfdi.c",
+      "fixunstfsi.c",
+      "fixunstfti.c",
+      "floatditf.c",
+      "floatsitf.c",
+      "floattitf.c",
+      "floatunditf.c",
+      "floatunsitf.c",
+      "floatuntitf.c",
+      "multc3.c",
+      "trunctfdf2.c",
+      "trunctfsf2.c",
+    ]
+  }
+
   if (target_cpu == "x86" || target_cpu == "x64") {
     sources += [
       "cpu_model.c",
@@ -336,24 +360,6 @@ static_library("builtins") {
   if (target_cpu == "arm64") {
     sources += [
       "aarch64/fp_mode.c",
-      "comparetf2.c",
-      "extenddftf2.c",
-      "extendsftf2.c",
-      "fixtfdi.c",
-      "fixtfsi.c",
-      "fixtfti.c",
-      "fixunstfdi.c",
-      "fixunstfsi.c",
-      "fixunstfti.c",
-      "floatditf.c",
-      "floatsitf.c",
-      "floattitf.c",
-      "floatunditf.c",
-      "floatunsitf.c",
-      "floatuntitf.c",
-      "multc3.c",
-      "trunctfdf2.c",
-      "trunctfsf2.c",
     ]
     if (target_os == "mingw") {
       sources += [
