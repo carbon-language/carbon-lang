@@ -198,7 +198,7 @@ class DWARFUnit {
   DWARFUnitHeader Header;
   const DWARFDebugAbbrev *Abbrev;
   const DWARFSection *RangeSection;
-  uint32_t RangeSectionBase;
+  uint64_t RangeSectionBase;
   /// We either keep track of the location list section or its data, depending
   /// on whether we are handling a split DWARF section or not.
   union {
@@ -304,7 +304,7 @@ public:
   /// Recursively update address to Die map.
   void updateAddressDieMap(DWARFDie Die);
 
-  void setRangesSection(const DWARFSection *RS, uint32_t Base) {
+  void setRangesSection(const DWARFSection *RS, uint64_t Base) {
     RangeSection = RS;
     RangeSectionBase = Base;
   }
