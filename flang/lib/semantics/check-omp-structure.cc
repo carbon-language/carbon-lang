@@ -260,6 +260,23 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
     SetContextAllowedExclusive(allowedExclusive);
   } break;
 
+  // 2.9.3 taskloop-simd-clause -> taskloop-clause |
+  //                               simd-clause
+  case parser::OmpLoopDirective::Directive::TaskloopSimd: {
+    PushContext(beginDir.source, OmpDirective::TASKLOOP_SIMD);
+    OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
+        OmpClause::SHARED, OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
+        OmpClause::LASTPRIVATE, OmpClause::DEFAULT, OmpClause::UNTIED,
+        OmpClause::MERGEABLE, OmpClause::NOGROUP};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::COLLAPSE, OmpClause::SAFELEN,
+        OmpClause::SIMDLEN, OmpClause::IF, OmpClause::FINAL,
+        OmpClause::PRIORITY};
+    SetContextAllowedOnce(allowedOnce);
+    OmpClauseSet allowedExclusive{OmpClause::GRAINSIZE, OmpClause::NUM_TASKS};
+    SetContextAllowedExclusive(allowedExclusive);
+  } break;
+
   default:
     // TODO others
     break;
@@ -775,6 +792,7 @@ void OmpStructureChecker::Enter(const parser::OmpDefaultClause &) {
 void OmpStructureChecker::Enter(const parser::OmpDependClause &) {
   CheckAllowed(OmpClause::DEPEND);
 }
+
 void OmpStructureChecker::Enter(const parser::OmpIfClause &x) {
   CheckAllowed(OmpClause::IF);
 
@@ -803,6 +821,7 @@ void OmpStructureChecker::Enter(const parser::OmpIfClause &x) {
     }
   }
 }
+
 void OmpStructureChecker::Enter(const parser::OmpLinearClause &x) {
   CheckAllowed(OmpClause::LINEAR);
 

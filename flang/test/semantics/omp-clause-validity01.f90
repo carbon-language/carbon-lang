@@ -429,4 +429,35 @@
   !$omp task priority(-1) firstprivate(a) mergeable
   a = 3.14
   !$omp end task
+
+! 2.9.3 taskloop-simd-clause -> taskloop-clause |
+!                               simd-clause
+
+  !$omp taskloop simd
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end taskloop simd
+
+  !ERROR: REDUCTION clause is not allowed on the TASKLOOP SIMD directive
+  !$omp taskloop simd reduction(+:a)
+  do i = 1, N
+     a = a + 3.14
+  enddo
+  !ERROR: Unmatched END TASKLOOP directive
+  !$omp end taskloop
+
+  !ERROR: GRAINSIZE and NUM_TASKS are mutually exclusive and may not appear on the same TASKLOOP SIMD directive
+  !$omp taskloop simd num_tasks(3) grainsize(2)
+  do i = 1,N
+     a = 3.14
+  enddo
+
+  !ERROR: The parameter of the SIMDLEN clause must be a constant positive integer expression
+  !ERROR: The ALIGNMENT parameter of the ALIGNED clause must be a constant positive integer expression
+  !ERROR: Internal: no symbol found for 'a'
+  !$omp taskloop simd simdlen(-1) aligned(a:-2)
+  do i = 1, N
+     a = 3.14
+  enddo
 end program
