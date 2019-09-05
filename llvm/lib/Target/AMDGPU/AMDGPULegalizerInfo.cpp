@@ -878,8 +878,9 @@ Register AMDGPULegalizerInfo::getSegmentAperture(
   Register QueuePtr = MRI.createGenericVirtualRegister(
     LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64));
 
-  // FIXME: Placeholder until we can track the input registers.
-  MIRBuilder.buildConstant(QueuePtr, 0xdeadbeef);
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  if (!loadInputValue(QueuePtr, MIRBuilder, &MFI->getArgInfo().QueuePtr))
+    return Register();
 
   // Offset into amd_queue_t for group_segment_aperture_base_hi /
   // private_segment_aperture_base_hi.
@@ -990,6 +991,8 @@ bool AMDGPULegalizerInfo::legalizeAddrSpaceCast(
       MIRBuilder.buildConstant(DstTy, TM.getNullPointerValue(DestAS));
 
   Register ApertureReg = getSegmentAperture(DestAS, MRI, MIRBuilder);
+  if (!ApertureReg.isValid())
+    return false;
 
   Register CmpRes = MRI.createGenericVirtualRegister(LLT::scalar(1));
   MIRBuilder.buildICmp(CmpInst::ICMP_NE, CmpRes, Src, SegmentNull.getReg(0));
@@ -1298,10 +1301,9 @@ Register AMDGPULegalizerInfo::getLiveInRegister(MachineRegisterInfo &MRI,
 
 bool AMDGPULegalizerInfo::loadInputValue(Register DstReg, MachineIRBuilder &B,
                                          const ArgDescriptor *Arg) const {
-  if (!Arg->isRegister())
+  if (!Arg->isRegister() || !Arg->getRegister().isValid())
     return false; // TODO: Handle these
 
-  assert(Arg->getRegister() != 0);
   assert(Arg->getRegister().isPhysical());
 
   MachineRegisterInfo &MRI = *B.getMRI();
