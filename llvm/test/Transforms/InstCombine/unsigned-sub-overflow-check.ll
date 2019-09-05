@@ -8,7 +8,7 @@
 
 define i1 @t0_basic(i8 %x, i8 %y) {
 ; CHECK-LABEL: @t0_basic(
-; CHECK-NEXT:    [[R:%.*]] = icmp ult i8 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ugt i8 [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = sub i8 %x, %y
@@ -18,7 +18,7 @@ define i1 @t0_basic(i8 %x, i8 %y) {
 
 define <2 x i1> @t1_vec(<2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @t1_vec(
-; CHECK-NEXT:    [[R:%.*]] = icmp ult <2 x i8> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ugt <2 x i8> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i1> [[R]]
 ;
   %t0 = sub <2 x i8> %x, %y
@@ -30,7 +30,7 @@ define <2 x i1> @t1_vec(<2 x i8> %x, <2 x i8> %y) {
 
 define i1 @t2_commutative(i8 %x, i8 %y) {
 ; CHECK-LABEL: @t2_commutative(
-; CHECK-NEXT:    [[R:%.*]] = icmp ult i8 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ugt i8 [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = sub i8 %x, %y
