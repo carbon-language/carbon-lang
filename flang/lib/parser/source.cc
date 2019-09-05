@@ -223,7 +223,7 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
     --openFileDescriptors;
   }
   fileDescriptor_ = -1;
-  if (buffer.size() == 0) {
+  if (buffer.bytes() == 0) {
     // empty file
     address_ = content_ = nullptr;
     size_ = bytes_ = 0;

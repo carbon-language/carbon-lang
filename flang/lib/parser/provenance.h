@@ -90,10 +90,10 @@ using ProvenanceRange = common::Interval<Provenance>;
 class OffsetToProvenanceMappings {
 public:
   OffsetToProvenanceMappings() {}
-  std::size_t size() const;
   void clear();
   void swap(OffsetToProvenanceMappings &);
   void shrink_to_fit();
+  std::size_t SizeInBytes() const;
   void Put(ProvenanceRange);
   void Put(const OffsetToProvenanceMappings &);
   ProvenanceRange Map(std::size_t at) const;
@@ -106,6 +106,8 @@ private:
     ProvenanceRange range;
   };
 
+  // Elements appear in ascending order of distinct .start values;
+  // their .range values are disjoint and not necessarily adjacent.
   std::vector<ContiguousProvenanceMapping> provenanceMap_;
 };
 
@@ -143,7 +145,6 @@ public:
       const std::string &message, bool echoSourceLine = false) const;
   const SourceFile *GetSourceFile(
       Provenance, std::size_t *offset = nullptr) const;
-  ProvenanceRange GetContiguousRangeAround(ProvenanceRange) const;
   std::string GetPath(Provenance) const;  // __FILE__
   int GetLineNumber(Provenance) const;  // __LINE__
   Provenance CompilerInsertionProvenance(char ch);
@@ -154,9 +155,6 @@ private:
   struct Inclusion {
     const SourceFile &source;
     bool isModule{false};
-  };
-  struct Module {
-    const SourceFile &source;
   };
   struct Macro {
     ProvenanceRange definition;
@@ -182,6 +180,7 @@ private:
 
   const Origin &MapToOrigin(Provenance) const;
 
+  // Elements are in ascending & contiguous order of .covers.
   std::vector<Origin> origin_;
   ProvenanceRange range_;
   std::map<char, Provenance> compilerInsertionProvenance_;

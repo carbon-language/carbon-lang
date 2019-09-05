@@ -28,12 +28,13 @@ void OffsetToProvenanceMappings::shrink_to_fit() {
   provenanceMap_.shrink_to_fit();
 }
 
-std::size_t OffsetToProvenanceMappings::size() const {
+std::size_t OffsetToProvenanceMappings::SizeInBytes() const {
   if (provenanceMap_.empty()) {
     return 0;
+  } else {
+    const ContiguousProvenanceMapping &last{provenanceMap_.back()};
+    return last.start + last.range.size();
   }
-  const ContiguousProvenanceMapping &last{provenanceMap_.back()};
-  return last.start + last.range.size();
 }
 
 void OffsetToProvenanceMappings::Put(ProvenanceRange range) {
@@ -241,14 +242,6 @@ const SourceFile *AllSources::GetSourceFile(
       origin.u);
 }
 
-ProvenanceRange AllSources::GetContiguousRangeAround(
-    ProvenanceRange range) const {
-  CHECK(IsValid(range));
-  const Origin &origin{MapToOrigin(range.start())};
-  CHECK(origin.covers.Contains(range));
-  return origin.covers;
-}
-
 std::string AllSources::GetPath(Provenance at) const {
   const SourceFile *source{GetSourceFile(at)};
   return source ? source->path() : ""s;
@@ -329,7 +322,7 @@ std::optional<ProvenanceRange> CookedSource::GetProvenanceRange(
 }
 
 void CookedSource::Marshal() {
-  CHECK(provenanceMap_.size() == buffer_.size());
+  CHECK(provenanceMap_.SizeInBytes() == buffer_.bytes());
   provenanceMap_.Put(allSources_.AddCompilerInsertion("(after end of source)"));
   data_ = buffer_.Marshal();
   buffer_.clear();

@@ -44,7 +44,7 @@ public:
   }
 
   bool empty() const { return bytes_ == 0; }
-  std::size_t size() const { return bytes_; }
+  std::size_t bytes() const { return bytes_; }
 
   void clear() {
     blocks_.clear();
