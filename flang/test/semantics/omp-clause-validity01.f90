@@ -414,6 +414,11 @@
   a = 1.
   !$omp end task
 
+  !ERROR: Unmatched directive name modifier TASKLOOP on the IF clause
+  !$omp task private(a) if(taskloop:a.eq.1)
+  a = 1.
+  !$omp end task
+
   !ERROR: LASTPRIVATE clause is not allowed on the TASK directive
   !ERROR: At most one FINAL clause can appear on the TASK directive
   !$omp task lastprivate(b) final(a.GE.1) final(.false.)

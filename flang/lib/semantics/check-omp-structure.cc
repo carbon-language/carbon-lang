@@ -774,8 +774,33 @@ void OmpStructureChecker::Enter(const parser::OmpDefaultClause &) {
 void OmpStructureChecker::Enter(const parser::OmpDependClause &) {
   CheckAllowed(OmpClause::DEPEND);
 }
-void OmpStructureChecker::Enter(const parser::OmpIfClause &) {
+void OmpStructureChecker::Enter(const parser::OmpIfClause &x) {
   CheckAllowed(OmpClause::IF);
+
+  using dirNameModifier = parser::OmpIfClause::DirectiveNameModifier;
+  static std::unordered_map<dirNameModifier, OmpDirective> dirNameModifierMap{
+      {dirNameModifier::Parallel, OmpDirective::PARALLEL},
+      {dirNameModifier::Target, OmpDirective::TARGET},
+      {dirNameModifier::TargetEnterData, OmpDirective::TARGET_ENTER_DATA},
+      {dirNameModifier::TargetExitData, OmpDirective::TARGET_EXIT_DATA},
+      {dirNameModifier::TargetData, OmpDirective::TARGET_DATA},
+      {dirNameModifier::TargetUpdate, OmpDirective::TARGET_UPDATE},
+      {dirNameModifier::Task, OmpDirective::TASK},
+      {dirNameModifier::Taskloop, OmpDirective::TASKLOOP}};
+  if (const auto &directiveName{
+          std::get<std::optional<dirNameModifier>>(x.t)}) {
+    auto search{dirNameModifierMap.find(*directiveName)};
+    if (search == dirNameModifierMap.end() ||
+        search->second != GetContext().directive) {
+      context_
+          .Say(GetContext().clauseSource,
+              "Unmatched directive name modifier %s on the IF clause"_err_en_US,
+              parser::ToUpperCaseLetters(
+                  parser::OmpIfClause::EnumToString(*directiveName)))
+          .Attach(
+              GetContext().directiveSource, "Does not match directive"_en_US);
+    }
+  }
 }
 void OmpStructureChecker::Enter(const parser::OmpLinearClause &x) {
   CheckAllowed(OmpClause::LINEAR);
