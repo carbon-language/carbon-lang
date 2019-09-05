@@ -181,8 +181,8 @@ TYPE_PARSER("ALIGNED" >>
                     parenthesized(scalarIntExpr))) ||
     "DIST_SCHEDULE" >> construct<OmpClause>(construct<OmpClause::DistSchedule>(
                            parenthesized("STATIC ," >> scalarIntExpr))) ||
-    "FINAL" >> construct<OmpClause>(
-                   construct<OmpClause::Final>(parenthesized(scalarIntExpr))) ||
+    "FINAL" >> construct<OmpClause>(construct<OmpClause::Final>(
+                   parenthesized(scalarLogicalExpr))) ||
     "FIRSTPRIVATE" >> construct<OmpClause>(construct<OmpClause::Firstprivate>(
                           parenthesized(Parser<OmpObjectList>{}))) ||
     "FROM" >> construct<OmpClause>(construct<OmpClause::From>(
