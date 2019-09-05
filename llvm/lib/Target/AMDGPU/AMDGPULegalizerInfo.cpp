@@ -1436,6 +1436,18 @@ bool AMDGPULegalizerInfo::legalizeImplicitArgPtr(MachineInstr &MI,
   return true;
 }
 
+bool AMDGPULegalizerInfo::legalizeIsAddrSpace(MachineInstr &MI,
+                                              MachineRegisterInfo &MRI,
+                                              MachineIRBuilder &B,
+                                              unsigned AddrSpace) const {
+  B.setInstr(MI);
+  Register ApertureReg = getSegmentAperture(AddrSpace, MRI, B);
+  auto Hi32 = B.buildExtract(LLT::scalar(32), MI.getOperand(2).getReg(), 32);
+  B.buildICmp(ICmpInst::ICMP_EQ, MI.getOperand(0), Hi32, ApertureReg);
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             MachineIRBuilder &B) const {
@@ -1518,6 +1530,10 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
                                       AMDGPUFunctionArgInfo::DISPATCH_ID);
   case Intrinsic::amdgcn_fdiv_fast:
     return legalizeFDIVFast(MI, MRI, B);
+  case Intrinsic::amdgcn_is_shared:
+    return legalizeIsAddrSpace(MI, MRI, B, AMDGPUAS::LOCAL_ADDRESS);
+  case Intrinsic::amdgcn_is_private:
+    return legalizeIsAddrSpace(MI, MRI, B, AMDGPUAS::PRIVATE_ADDRESS);
   default:
     return true;
   }
