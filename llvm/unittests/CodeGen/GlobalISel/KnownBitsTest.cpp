@@ -19,7 +19,7 @@ TEST_F(GISelMITest, TestKnownBitsCst) {
   unsigned CopyReg = Copies[Copies.size() - 1];
   MachineInstr *FinalCopy = MRI->getVRegDef(CopyReg);
   unsigned SrcReg = FinalCopy->getOperand(1).getReg();
-  unsigned DstReg = FinalCopy->getOperand(1).getReg();
+  unsigned DstReg = FinalCopy->getOperand(0).getReg();
   GISelKnownBits Info(*MF);
   KnownBits Res = Info.getKnownBits(SrcReg);
   EXPECT_EQ((uint64_t)1, Res.One.getZExtValue());
