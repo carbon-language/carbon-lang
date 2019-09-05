@@ -2124,7 +2124,7 @@ protected:
     PrefLoopLogAlignment = LogAlign;
   }
 
-  /// Set the minimum stack alignment of an argument (in log2(bytes)).
+  /// Set the minimum stack alignment of an argument.
   void setMinStackArgumentAlignment(unsigned Align) {
     MinStackArgumentAlignment = Align;
   }
