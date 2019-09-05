@@ -99,6 +99,7 @@ static_library("builtins") {
     "floatunsisf.c",
     "floatuntidf.c",
     "floatuntisf.c",
+    "fp_mode.c",
     "int_util.c",
     "lshrdi3.c",
     "lshrti3.c",
@@ -294,6 +295,7 @@ static_library("builtins") {
         "arm/comparesf2.S",
         "arm/divmodsi4.S",
         "arm/divsi3.S",
+        "arm/fp_mode.c",
         "arm/modsi3.S",
         "arm/sync_fetch_and_add_4.S",
         "arm/sync_fetch_and_add_8.S",
@@ -333,6 +335,7 @@ static_library("builtins") {
 
   if (target_cpu == "arm64") {
     sources += [
+      "aarch64/fp_mode.c",
       "comparetf2.c",
       "extenddftf2.c",
       "extendsftf2.c",
