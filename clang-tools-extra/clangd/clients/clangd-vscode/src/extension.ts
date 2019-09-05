@@ -109,12 +109,14 @@ export function activate(context: vscode.ExtensionContext) {
 
   const clangdClient = new ClangdLanguageClient('Clang Language Server',
                                                 serverOptions, clientOptions);
-  const semanticHighlightingFeature =
+  if (getConfig<boolean>('semanticHighlighting')) {
+    const semanticHighlightingFeature =
       new semanticHighlighting.SemanticHighlightingFeature(clangdClient,
-                                                           context);
-  context.subscriptions.push(
+        context);
+    context.subscriptions.push(
       vscode.Disposable.from(semanticHighlightingFeature));
-  clangdClient.registerFeature(semanticHighlightingFeature);
+    clangdClient.registerFeature(semanticHighlightingFeature);
+  }
   console.log('Clang Language Server is now active!');
   context.subscriptions.push(clangdClient.start());
   context.subscriptions.push(vscode.commands.registerCommand(
