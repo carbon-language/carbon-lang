@@ -416,10 +416,11 @@ void OmpStructureChecker::Enter(const parser::OpenMPDeclareSimdConstruct &x) {
   //                              uniform-clause |
   //                              inbranch-clause |
   //                              notinbranch-clause
-  OmpClauseSet allowed{OmpClause::LINEAR, OmpClause::ALIGNED,
-      OmpClause::UNIFORM, OmpClause::INBRANCH, OmpClause::NOTINBRANCH};
+  OmpClauseSet allowed{
+      OmpClause::LINEAR, OmpClause::ALIGNED, OmpClause::UNIFORM};
   SetContextAllowed(allowed);
   SetContextAllowedOnce({OmpClause::SIMDLEN});
+  SetContextAllowedExclusive({OmpClause::INBRANCH, OmpClause::NOTINBRANCH});
 }
 
 void OmpStructureChecker::Leave(const parser::OpenMPDeclareSimdConstruct &) {
