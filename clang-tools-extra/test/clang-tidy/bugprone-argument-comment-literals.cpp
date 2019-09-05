@@ -1,5 +1,12 @@
 // RUN: %check_clang_tidy %s bugprone-argument-comment %t -- \
-// RUN:   -config="{CheckOptions: [{key: CommentBoolLiterals, value: 1},{key: CommentIntegerLiterals, value: 1}, {key: CommentFloatLiterals, value: 1}, {key: CommentUserDefinedLiterals, value: 1}, {key: CommentStringLiterals, value: 1}, {key: CommentNullPtrs, value: 1}, {key: CommentCharacterLiterals, value: 1}]}" --
+// RUN:   -config="{CheckOptions: [ \
+// RUN:     {key: bugprone-argument-comment.CommentBoolLiterals, value: 1}, \
+// RUN:     {key: bugprone-argument-comment.CommentIntegerLiterals, value: 1}, \
+// RUN:     {key: bugprone-argument-comment.CommentFloatLiterals, value: 1}, \
+// RUN:     {key: bugprone-argument-comment.CommentUserDefinedLiterals, value: 1}, \
+// RUN:     {key: bugprone-argument-comment.CommentStringLiterals, value: 1}, \
+// RUN:     {key: bugprone-argument-comment.CommentNullPtrs, value: 1}, \
+// RUN:     {key: bugprone-argument-comment.CommentCharacterLiterals, value: 1}]}" --
 
 struct A {
   void foo(bool abc);

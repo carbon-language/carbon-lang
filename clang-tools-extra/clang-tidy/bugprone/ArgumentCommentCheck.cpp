@@ -25,19 +25,14 @@ ArgumentCommentCheck::ArgumentCommentCheck(StringRef Name,
     : ClangTidyCheck(Name, Context),
       StrictMode(Options.getLocalOrGlobal("StrictMode", 0) != 0),
       IgnoreSingleArgument(Options.get("IgnoreSingleArgument", 0) != 0),
-      CommentBoolLiterals(Options.getLocalOrGlobal("CommentBoolLiterals", 0) !=
-                          0),
-      CommentIntegerLiterals(
-          Options.getLocalOrGlobal("CommentIntegerLiterals", 0) != 0),
-      CommentFloatLiterals(
-          Options.getLocalOrGlobal("CommentFloatLiterals", 0) != 0),
-      CommentStringLiterals(
-          Options.getLocalOrGlobal("CommentStringLiterals", 0) != 0),
-      CommentUserDefinedLiterals(
-          Options.getLocalOrGlobal("CommentUserDefinedLiterals", 0) != 0),
-      CommentCharacterLiterals(
-          Options.getLocalOrGlobal("CommentCharacterLiterals", 0) != 0),
-      CommentNullPtrs(Options.getLocalOrGlobal("CommentNullPtrs", 0) != 0),
+      CommentBoolLiterals(Options.get("CommentBoolLiterals", 0) != 0),
+      CommentIntegerLiterals(Options.get("CommentIntegerLiterals", 0) != 0),
+      CommentFloatLiterals(Options.get("CommentFloatLiterals", 0) != 0),
+      CommentStringLiterals(Options.get("CommentStringLiterals", 0) != 0),
+      CommentUserDefinedLiterals(Options.get("CommentUserDefinedLiterals", 0) !=
+                                 0),
+      CommentCharacterLiterals(Options.get("CommentCharacterLiterals", 0) != 0),
+      CommentNullPtrs(Options.get("CommentNullPtrs", 0) != 0),
       IdentRE("^(/\\* *)([_A-Za-z][_A-Za-z0-9]*)( *= *\\*/)$") {}
 
 void ArgumentCommentCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
