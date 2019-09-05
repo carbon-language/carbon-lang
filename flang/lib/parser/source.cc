@@ -256,10 +256,10 @@ void SourceFile::Close() {
   path_.clear();
 }
 
-std::pair<int, int> SourceFile::FindOffsetLineAndColumn(std::size_t at) const {
+SourcePosition SourceFile::FindOffsetLineAndColumn(std::size_t at) const {
   CHECK(at < bytes_);
   if (lineStart_.empty()) {
-    return {1, static_cast<int>(at + 1)};
+    return {*this, 1, static_cast<int>(at + 1)};
   }
   std::size_t low{0}, count{lineStart_.size()};
   while (count > 1) {
@@ -271,7 +271,7 @@ std::pair<int, int> SourceFile::FindOffsetLineAndColumn(std::size_t at) const {
       low = mid;
     }
   }
-  return {
-      static_cast<int>(low + 1), static_cast<int>(at - lineStart_[low] + 1)};
+  return {*this, static_cast<int>(low + 1),
+      static_cast<int>(at - lineStart_[low] + 1)};
 }
 }

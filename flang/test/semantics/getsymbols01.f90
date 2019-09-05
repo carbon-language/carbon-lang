@@ -43,10 +43,10 @@ contains
 end module
 
 ! RUN: ${F18} -fget-symbols-sources -fparse-only -fdebug-semantics %s 2>&1 | ${FileCheck} %s
-! CHECK:m:.*getsymbols01.f90, 18, 8-9
-! CHECK:f:.*getsymbols01.f90, 37, 26-27
-! CHECK:s:.*getsymbols01.f90, 25, 18-19
-! CHECK:ss:.*getsymbols01.f90, 32, 19-21
-! CHECK:x:.*getsymbols01.f90, 25, 21-22
-! CHECK:y:.*getsymbols01.f90, 25, 24-25
-! CHECK:x:.*getsymbols01.f90, 39, 24-25
+! CHECK-ONCE:m:.*getsymbols01.f90, 18, 8-9
+! CHECK-ONCE:f:.*getsymbols01.f90, 37, 26-27
+! CHECK-ONCE:s:.*getsymbols01.f90, 25, 18-19
+! CHECK-ONCE:ss:.*getsymbols01.f90, 32, 19-21
+! CHECK-ONCE:x:.*getsymbols01.f90, 25, 21-22
+! CHECK-ONCE:y:.*getsymbols01.f90, 25, 24-25
+! CHECK-ONCE:x:.*getsymbols01.f90, 39, 24-25

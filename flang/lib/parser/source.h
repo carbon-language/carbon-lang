@@ -33,6 +33,18 @@ std::string DirectoryName(std::string path);
 std::string LocateSourceFile(
     std::string name, const std::vector<std::string> &searchPath);
 
+class SourceFile;
+
+struct SourcePosition {
+  SourcePosition(const SourceFile &file, int line, int column)
+    : file{file}, line{line}, column{column} {}
+  SourcePosition(const SourceFile &file, std::pair<int, int> pos)
+    : file{file}, line{pos.first}, column{pos.second} {}
+
+  const SourceFile &file;
+  int line, column;
+};
+
 class SourceFile {
 public:
   explicit SourceFile(Encoding e) : encoding_{e} {}
@@ -46,7 +58,7 @@ public:
   bool Open(std::string path, std::stringstream *error);
   bool ReadStandardInput(std::stringstream *error);
   void Close();
-  std::pair<int, int> FindOffsetLineAndColumn(std::size_t) const;
+  SourcePosition FindOffsetLineAndColumn(std::size_t) const;
   std::size_t GetLineStartOffset(int lineNumber) const {
     return lineStart_.at(lineNumber - 1);
   }

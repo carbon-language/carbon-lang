@@ -239,18 +239,18 @@ void AllSources::EmitMessage(std::ostream &o,
           [&](const Inclusion &inc) {
             o << inc.source.path();
             std::size_t offset{origin.covers.MemberOffset(range->start())};
-            std::pair<int, int> pos{inc.source.FindOffsetLineAndColumn(offset)};
-            o << ':' << pos.first << ':' << pos.second;
+            SourcePosition pos{inc.source.FindOffsetLineAndColumn(offset)};
+            o << ':' << pos.line << ':' << pos.column;
             o << ": " << message << '\n';
             if (echoSourceLine) {
               const char *text{inc.source.content() +
-                  inc.source.GetLineStartOffset(pos.first)};
+                  inc.source.GetLineStartOffset(pos.line)};
               o << "  ";
               for (const char *p{text}; *p != '\n'; ++p) {
                 o << *p;
               }
               o << "\n  ";
-              for (int j{1}; j < pos.second; ++j) {
+              for (int j{1}; j < pos.column; ++j) {
                 char ch{text[j - 1]};
                 o << (ch == '\t' ? '\t' : ' ');
               }
@@ -260,8 +260,8 @@ void AllSources::EmitMessage(std::ostream &o,
                 if (&MapToOrigin(last) == &origin) {
                   auto endOffset{origin.covers.MemberOffset(last)};
                   auto endPos{inc.source.FindOffsetLineAndColumn(endOffset)};
-                  if (pos.first == endPos.first) {
-                    for (int j{pos.second}; j < endPos.second; ++j) {
+                  if (pos.line == endPos.line) {
+                    for (int j{pos.column}; j < endPos.column; ++j) {
                       o << '^';
                     }
                   }
@@ -322,7 +322,7 @@ std::optional<SourcePosition> AllSources::GetSourcePosition(
   const Origin &origin{MapToOrigin(prov)};
   if (const auto *inc{std::get_if<Inclusion>(&origin.u)}) {
     std::size_t offset{origin.covers.MemberOffset(prov)};
-    return SourcePosition{inc->source, offset};
+    return inc->source.FindOffsetLineAndColumn(offset);
   } else {
     return std::nullopt;
   }
@@ -345,7 +345,7 @@ std::string AllSources::GetPath(Provenance at) const {
 int AllSources::GetLineNumber(Provenance at) const {
   std::size_t offset{0};
   const SourceFile *source{GetSourceFile(at, &offset)};
-  return source ? source->FindOffsetLineAndColumn(offset).first : 0;
+  return source ? source->FindOffsetLineAndColumn(offset).line : 0;
 }
 
 Provenance AllSources::CompilerInsertionProvenance(char ch) {

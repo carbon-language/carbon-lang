@@ -138,17 +138,6 @@ private:
   std::vector<ContiguousProvenanceMapping> provenanceMap_;
 };
 
-struct SourcePosition {
-  SourcePosition(const SourceFile &file, int line, int column)
-    : file{file}, line{line}, column{column} {}
-  SourcePosition(const SourceFile &file, std::pair<int, int> pos)
-    : file{file}, line{pos.first}, column{pos.second} {}
-  SourcePosition(const SourceFile &, std::size_t);
-
-  const SourceFile &file;
-  int line, column;
-};
-
 // A singleton AllSources instance for the whole compilation
 // is shared by reference.
 class AllSources {

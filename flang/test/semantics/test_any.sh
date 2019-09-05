@@ -45,6 +45,18 @@ function internal_check() {
       r=false
     fi
   done < ${lcheck}
+  egrep '^[[:space:]]*![[:space:]]*CHECK-ONCE:[[:space:]]*' ${linput} | sed -e 's/^[[:space:]]*![[:space:]]*CHECK-ONCE:[[:space:]]*//' > ${lcheck} 2>/dev/null
+  while read p; do
+    count=$(egrep -o -e "${p}" ${lstdin} | wc -l)
+    if [ ${count} -eq 0 ]; then
+      echo "Not found: ${p}" >&2
+      r=false
+    fi
+    if [ ${count} -gt 1 ]; then
+      echo "Found duplicates: ${p}" >&2
+      r=false
+    fi
+  done < ${lcheck}
   rm -f ${lstdin} ${lcheck}
   ${r}
 }
@@ -55,6 +67,7 @@ for input in ${srcdir}/$*; do
   CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
   if egrep -q -e '%t' <<< ${CMD} ; then
     temp=`mktemp`
+    trap "rm -f ${temp}" EXIT
     CMD=$(echo ${CMD} | sed -e "s:%t:${temp}:g")
   fi
   if $(eval $CMD); then

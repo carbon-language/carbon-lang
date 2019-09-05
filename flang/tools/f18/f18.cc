@@ -76,6 +76,12 @@ void CleanUpAtExit() {
   }
 }
 
+struct GetDefinitionArgs {
+  GetDefinitionArgs(int line, int startColumn, int endColumn)
+    : line{line}, startColumn{startColumn}, endColumn{endColumn} {}
+  int line, startColumn, endColumn;
+};
+
 struct DriverOptions {
   DriverOptions() {}
   bool verbose{false};  // -v
@@ -102,7 +108,7 @@ struct DriverOptions {
   std::vector<std::string> pgf90Args;
   const char *prefix{nullptr};
   bool getDefinition{false};
-  int getDefinitionArgs[3];  // line, startColumn, endColumn.
+  GetDefinitionArgs getDefinitionArgs{0, 0, 0};
   bool getSymbolsSources{false};
 };
 
@@ -258,8 +264,8 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     if (driver.getDefinition) {
       std::string notFoundText{"Symbol not found.\n"};
       auto cb{parsing.cooked().GetCharBlockFromLineAndColumns(
-          driver.getDefinitionArgs[0], driver.getDefinitionArgs[1],
-          driver.getDefinitionArgs[2])};
+          driver.getDefinitionArgs.line, driver.getDefinitionArgs.startColumn,
+          driver.getDefinitionArgs.endColumn)};
       if (!cb) {
         std::cerr << notFoundText;
         exitStatus = EXIT_FAILURE;
@@ -526,13 +532,13 @@ int main(int argc, char *const argv[]) {
       // Receives 3 arguments: line, startColumn, endColumn.
       driver.getDefinition = true;
       char *endptr;
+      int arguments[3];
       for (int i = 0; i < 3; i++) {
         if (args.empty()) {
           std::cerr << "Must provide 3 arguments for -fget-definitions.\n";
           return EXIT_FAILURE;
         }
-        driver.getDefinitionArgs[i] =
-            std::strtol(args.front().c_str(), &endptr, 10);
+        arguments[i] = std::strtol(args.front().c_str(), &endptr, 10);
         if (*endptr != '\0') {
           std::cerr << "Invalid argument to -fget-definitions: " << args.front()
                     << '\n';
@@ -540,6 +546,7 @@ int main(int argc, char *const argv[]) {
         }
         args.pop_front();
       }
+      driver.getDefinitionArgs = {arguments[0], arguments[1], arguments[2]};
     } else if (arg == "-fget-symbols-sources") {
       driver.getSymbolsSources = true;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
