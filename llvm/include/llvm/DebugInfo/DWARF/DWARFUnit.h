@@ -416,7 +416,7 @@ public:
   /// Return a rangelist's offset based on an index. The index designates
   /// an entry in the rangelist table's offset array and is supplied by
   /// DW_FORM_rnglistx.
-  Optional<uint32_t> getRnglistOffset(uint32_t Index) {
+  Optional<uint64_t> getRnglistOffset(uint32_t Index) {
     if (RngListTable)
       return RngListTable->getOffsetEntry(Index);
     return None;
