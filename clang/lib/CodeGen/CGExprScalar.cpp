@@ -4662,6 +4662,8 @@ CodeGenFunction::EmitCheckedInBoundsGEP(Value *Ptr, ArrayRef<Value *> IdxList,
   auto *IntPtr = Builder.CreatePtrToInt(GEP->getPointerOperand(), IntPtrTy);
   auto *ComputedGEP = Builder.CreateAdd(IntPtr, EvaluatedGEP.TotalOffset);
 
+  llvm::SmallVector<std::pair<llvm::Value *, SanitizerMask>, 1> Checks;
+
   // The GEP is valid if:
   // 1) The total offset doesn't overflow, and
   // 2) The sign of the difference between the computed address and the base
@@ -4693,12 +4695,14 @@ CodeGenFunction::EmitCheckedInBoundsGEP(Value *Ptr, ArrayRef<Value *> IdxList,
     ValidGEP = Builder.CreateICmpULE(ComputedGEP, IntPtr);
   }
   ValidGEP = Builder.CreateAnd(ValidGEP, NoOffsetOverflow);
+  Checks.emplace_back(ValidGEP, SanitizerKind::PointerOverflow);
+
+  assert(!Checks.empty() && "Should have produced some checks.");
 
   llvm::Constant *StaticArgs[] = {EmitCheckSourceLocation(Loc)};
   // Pass the computed GEP to the runtime to avoid emitting poisoned arguments.
   llvm::Value *DynamicArgs[] = {IntPtr, ComputedGEP};
-  EmitCheck(std::make_pair(ValidGEP, SanitizerKind::PointerOverflow),
-            SanitizerHandler::PointerOverflow, StaticArgs, DynamicArgs);
+  EmitCheck(Checks, SanitizerHandler::PointerOverflow, StaticArgs, DynamicArgs);
 
   return GEPVal;
 }
