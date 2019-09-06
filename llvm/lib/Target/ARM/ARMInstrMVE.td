@@ -3730,6 +3730,15 @@ def MVE_VMUL_qr_i8  : MVE_VMUL_qr_int<"vmul", "i8",  0b00>;
 def MVE_VMUL_qr_i16 : MVE_VMUL_qr_int<"vmul", "i16", 0b01>;
 def MVE_VMUL_qr_i32 : MVE_VMUL_qr_int<"vmul", "i32", 0b10>;
 
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 (mul (v16i8 MQPR:$val1), (v16i8 (ARMvdup GPR:$val2)))),
+            (v16i8 (MVE_VMUL_qr_i8 (v16i8 MQPR:$val1), (i32 GPR:$val2)))>;
+  def : Pat<(v8i16 (mul (v8i16 MQPR:$val1), (v8i16 (ARMvdup GPR:$val2)))),
+            (v8i16 (MVE_VMUL_qr_i16 (v8i16 MQPR:$val1), (i32 GPR:$val2)))>;
+  def : Pat<(v4i32 (mul (v4i32 MQPR:$val1), (v4i32 (ARMvdup GPR:$val2)))),
+            (v4i32 (MVE_VMUL_qr_i32 (v4i32 MQPR:$val1), (i32 GPR:$val2)))>;
+}
+
 class MVE_VxxMUL_qr<string iname, string suffix,
                     bit bit_28, bits<2> bits_21_20, list<dag> pattern=[]>
   : MVE_qDest_rSrc<iname, suffix, pattern> {
