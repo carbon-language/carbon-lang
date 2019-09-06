@@ -640,7 +640,7 @@ defm : DSReadPat_mc <DS_READ_U16, i32, "extloadi16_local">;
 defm : DSReadPat_mc <DS_READ_U16, i32, "zextloadi16_local">;
 defm : DSReadPat_mc <DS_READ_U16, i16, "load_local">;
 
-foreach vt = [i32, f32, v2i16, v2f16, p2, p3, p5, p6] in {
+foreach vt = Reg32Types.types in {
 defm : DSReadPat_mc <DS_READ_B32, vt, "load_local">;
 }
 
