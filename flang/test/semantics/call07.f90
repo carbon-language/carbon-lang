@@ -30,7 +30,7 @@ module m
   subroutine test
     ! ERROR: CONTIGUOUS pointer must be an array
     real, pointer, contiguous :: a01 ! C830
-    real, pointer :: a02
+    real, pointer :: a02(:)
     real, target :: a03(10)
     real :: a04(10) ! not TARGET
     call s01(a03) ! ok

@@ -18,12 +18,12 @@ module m
 
   type :: t
    contains
-    procedure :: tbp => pure
+    procedure, nopass :: tbp => pure
   end type
   type, extends(t) :: t2
    contains
     ! ERROR: An overridden PURE type-bound procedure binding must also be PURE
-    procedure :: tbp => impure ! 7.5.7.3
+    procedure, nopass :: tbp => impure ! 7.5.7.3
   end type
 
  contains
@@ -45,9 +45,9 @@ module m
       ! ERROR: A procedure referenced in a FORALL body must be PURE.
       a(j) = impure(j) ! C1037
     end forall
-    ! ERROR: A procedure referenced in a mask expression must be PURE.
+    ! ERROR: concurrent-header mask expression cannot reference an impure procedure
     do concurrent (j=1:1, impure(j) /= 0) ! C1121
-      ! ERROR: A procedure referenced in a DO CONCURRENT body must be PURE.
+      ! ERROR: call to impure subroutine in DO CONCURRENT not allowed
       a(j) = impure(j) ! C1139
     end do
   end subroutine

@@ -14,7 +14,7 @@
 
 ! Test 15.7 (C1583-C1590, C1592-C1599) constraints and restrictions
 ! for PURE procedures.
-! (C1591 is tested in call11.f90.)
+! (C1591 is tested in call11.f90; C1594 in call12.f90.)
 
 module m
 
@@ -33,11 +33,17 @@ module m
     end subroutine
   end interface
 
+  real, volatile, target :: volatile
+
  contains
 
   subroutine impure(x)
     type(impureFinal) :: x
   end subroutine
+  integer impure function notpure(n)
+    integer, value :: n
+    notpure = n
+  end function
 
   pure real function f01(a)
     real, intent(in) :: a ! ok
@@ -125,7 +131,78 @@ module m
     ! ERROR: A dummy procedure of a PURE subprogram must be PURE.
     procedure(impure) :: p
   end subroutine
-
-  ! pmk: Continue with C1592 - C1599
+  ! C1591 is tested in call11.f90.
+  pure subroutine s07 ! C1592
+   contains
+    pure subroutine pure ! ok
+    end subroutine
+    ! ERROR: An internal subprogram of a PURE subprogram must also be PURE.
+    subroutine impure1
+    end subroutine
+    ! ERROR: An internal subprogram of a PURE subprogram must also be PURE.
+    impure subroutine impure2
+    end subroutine
+  end subroutine
+  function volptr
+    real, pointer, volatile :: volptr
+    volptr => volatile
+  end function
+  pure subroutine s08 ! C1593
+    real :: x
+    ! ERROR: A VOLATILE variable may not appear in a PURE subprogram.
+    x = volatile
+    ! ERROR: A VOLATILE variable may not appear in a PURE subprogram.
+    x = volptr
+  end subroutine
+  ! C1594 is tested in call12.f90.
+  pure subroutine s09 ! C1595
+    integer :: n
+    ! ERROR: Any procedure referenced in a PURE subprogram must also be PURE.
+    n = notpure(1)
+  end subroutine
+  pure subroutine s10(to) ! C1596
+    type(polyAlloc) :: auto, to
+    ! ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram.
+    to = auto
+    ! Implicit deallocation at the end of the subroutine:
+    ! ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram.
+  end subroutine
+  pure subroutine s11
+    character :: buff(20)
+    real :: x
+    write(buff, *) 1.0 ! ok
+    read(buff, *) x ! ok
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    print *, 'hi' ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    open(1, 'launch-codes') ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    close(1) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    backspace(1) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    endfile(1) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    rewind(1) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    flush(1) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    wait(1) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    inquire(1, name=buff) ! C1597
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    read(5, *) x ! C1598
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    read(*, *) x ! C1598
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    write(6, *) ! C1598
+    ! ERROR: External I/O is not allowed in a PURE subprogram
+    write(*, *) ! C1598
+  end subroutine
+  pure subroutine s12
+    ! ERROR: An image control statement is not allowed in a PURE subprogram.
+    sync all ! C1599
+    ! TODO others from 11.6.1 (many)
+  end subroutine
 
 end module
