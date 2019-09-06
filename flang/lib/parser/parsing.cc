@@ -78,6 +78,9 @@ void Parsing::Prescan(const std::string &path, Options options) {
       *sourceFile, ProvenanceRange{}, options.isModuleFile)};
   prescanner.Prescan(range);
   cooked_.Marshal();
+  if (options.needProvenanceRangeToCharBlockMappings) {
+    cooked_.CompileProvenanceRangeToOffsetMappings();
+  }
 }
 
 void Parsing::DumpCookedChars(std::ostream &out) const {

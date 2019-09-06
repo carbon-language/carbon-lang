@@ -22,6 +22,7 @@
 #include "../common/idioms.h"
 #include "../common/interval.h"
 #include <cstddef>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -51,6 +52,8 @@ namespace Fortran::parser {
 // cap the time by the use of an intermediate table that would be indexed
 // by the upper bits of an offset, but that does not appear to be
 // necessary.)
+
+class AllSources;
 
 class Provenance {
 public:
@@ -83,6 +86,31 @@ private:
 
 using ProvenanceRange = common::Interval<Provenance>;
 
+// Maps contiguous ranges of byte offsets in original source files to
+// contiguous ranges in the cooked character stream; essentially a
+// partial inversion of OffsetToProvenanceMappings (below).
+// Used for implementing the first step of mapping an identifier
+// selected in a code editor to one of its declarative statements.
+class ProvenanceRangeToOffsetMappings {
+public:
+  ProvenanceRangeToOffsetMappings();
+  ~ProvenanceRangeToOffsetMappings();
+  bool empty() const { return map_.empty(); }
+  void Put(ProvenanceRange, std::size_t offset);
+  std::optional<std::size_t> Map(ProvenanceRange) const;
+  std::ostream &Dump(std::ostream &) const;
+
+private:
+  // A comparison function object for use in std::multimap<Compare=>.
+  // Intersecting intervals will effectively compare equal, not being
+  // either < nor >= each other.
+  struct WhollyPrecedes {
+    bool operator()(ProvenanceRange, ProvenanceRange) const;
+  };
+
+  std::multimap<ProvenanceRange, std::size_t, WhollyPrecedes> map_;
+};
+
 // Maps 0-based local offsets in some contiguous range (e.g., a token
 // sequence) to their provenances.  Lookup time is on the order of
 // O(log(#of intervals with contiguous provenances)).  As mentioned
@@ -98,6 +126,7 @@ public:
   void Put(const OffsetToProvenanceMappings &);
   ProvenanceRange Map(std::size_t at) const;
   void RemoveLastBytes(std::size_t);
+  ProvenanceRangeToOffsetMappings Invert(const AllSources &) const;
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -149,6 +178,7 @@ public:
   int GetLineNumber(Provenance) const;  // __LINE__
   Provenance CompilerInsertionProvenance(char ch);
   Provenance CompilerInsertionProvenance(const char *, std::size_t);
+  ProvenanceRange IntersectionWithSourceFiles(ProvenanceRange) const;
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -207,6 +237,7 @@ public:
   bool IsValid(ProvenanceRange r) const { return allSources_.IsValid(r); }
 
   std::optional<ProvenanceRange> GetProvenanceRange(CharBlock) const;
+  std::optional<CharBlock> GetCharBlock(ProvenanceRange) const;
 
   // The result of a Put() is the offset that the new data
   // will have in the eventually marshaled contiguous buffer.
@@ -227,6 +258,7 @@ public:
   }
 
   void Marshal();  // marshals text into one contiguous block
+  void CompileProvenanceRangeToOffsetMappings();
   std::string AcquireData() { return std::move(data_); }
   std::ostream &Dump(std::ostream &) const;
 
@@ -235,6 +267,7 @@ private:
   CharBuffer buffer_;  // before Marshal()
   std::string data_;  // all of it, prescanned and preprocessed
   OffsetToProvenanceMappings provenanceMap_;
+  ProvenanceRangeToOffsetMappings invertedMap_;
 };
 }
 #endif  // FORTRAN_PARSER_PROVENANCE_H_

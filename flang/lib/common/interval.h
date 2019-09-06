@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public:
     return start_ == that.start_ && size_ == that.size_;
   }
   constexpr bool operator!=(const Interval &that) const {
-    return start_ != that.start_ || size_ != that.size_;
+    return !(*this == that);
   }
 
   constexpr const A &start() const { return start_; }
@@ -99,16 +99,16 @@ public:
   }
 
   constexpr Interval Intersection(const Interval &that) const {
-    if (start_ >= that.NextAfter()) {
+    if (that.NextAfter() <= start_) {
       return {};
-    } else if (start_ >= that.start_) {
+    } else if (that.start_ <= start_) {
       auto skip{start_ - that.start_};
       return {start_, std::min(size_, that.size_ - skip)};
     } else if (NextAfter() <= that.start_) {
       return {};
     } else {
       auto skip{that.start_ - start_};
-      return {that.start_, std::min(that.size_ - size_ - skip)};
+      return {that.start_, std::min(that.size_, size_ - skip)};
     }
   }
 

@@ -41,6 +41,7 @@ struct Options {
   std::vector<Predefinition> predefinitions;
   bool instrumentedParse{false};
   bool isModuleFile{false};
+  bool needProvenanceRangeToCharBlockMappings{false};
 };
 
 class Parsing {

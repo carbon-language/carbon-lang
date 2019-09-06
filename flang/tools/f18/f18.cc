@@ -424,6 +424,7 @@ int main(int argc, char *const argv[]) {
           arg == "-fxor-operator");
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
+      options.needProvenanceRangeToCharBlockMappings = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
       driver.dumpParseTree = true;
     } else if (arg == "-fdebug-dump-symbols") {
