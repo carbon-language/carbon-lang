@@ -12,6 +12,7 @@
 #include "llvm/ExecutionEngine/Orc/RawByteChannel.h"
 #include "llvm/Support/Error.h"
 
+#include <atomic>
 #include <condition_variable>
 #include <queue>
 
