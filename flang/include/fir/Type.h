@@ -30,25 +30,25 @@ class FIROpsDialect;
 using KindTy = int;
 
 namespace detail {
-struct FIRBoxTypeStorage;
-struct FIRBoxCharTypeStorage;
-struct FIRBoxProcTypeStorage;
-struct FIRCharacterTypeStorage;
-struct FIRCplxTypeStorage;
-struct FIRDimsTypeStorage;
-struct FIRFieldTypeStorage;
-struct FIRHeapTypeStorage;
-struct FIRIntTypeStorage;
-struct FIRLogicalTypeStorage;
-struct FIRPointerTypeStorage;
-struct FIRRealTypeStorage;
-struct FIRRecordTypeStorage;
-struct FIRReferenceTypeStorage;
-struct FIRSequenceTypeStorage;
-struct FIRTypeDescTypeStorage;
+struct BoxTypeStorage;
+struct BoxCharTypeStorage;
+struct BoxProcTypeStorage;
+struct CharacterTypeStorage;
+struct CplxTypeStorage;
+struct DimsTypeStorage;
+struct FieldTypeStorage;
+struct HeapTypeStorage;
+struct IntTypeStorage;
+struct LogicalTypeStorage;
+struct PointerTypeStorage;
+struct RealTypeStorage;
+struct RecordTypeStorage;
+struct ReferenceTypeStorage;
+struct SequenceTypeStorage;
+struct TypeDescTypeStorage;
 }
 
-enum FIRTypeKind {
+enum TypeKind {
   // The enum starts at the range reserved for this dialect.
   FIR_TYPE = mlir::Type::FIRST_FIR_TYPE,
   FIR_BOX,
@@ -80,8 +80,8 @@ template<typename A, unsigned Id> struct IntrinsicTypeMixin {
 
 class CharacterType
   : public mlir::Type::TypeBase<CharacterType, mlir::Type,
-        detail::FIRCharacterTypeStorage>,
-    public IntrinsicTypeMixin<CharacterType, FIRTypeKind::FIR_CHARACTER> {
+        detail::CharacterTypeStorage>,
+    public IntrinsicTypeMixin<CharacterType, TypeKind::FIR_CHARACTER> {
 public:
   using Base::Base;
   static CharacterType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -90,8 +90,8 @@ public:
 };
 
 class IntType
-  : public mlir::Type::TypeBase<IntType, mlir::Type, detail::FIRIntTypeStorage>,
-    public IntrinsicTypeMixin<IntType, FIRTypeKind::FIR_INT> {
+  : public mlir::Type::TypeBase<IntType, mlir::Type, detail::IntTypeStorage>,
+    public IntrinsicTypeMixin<IntType, TypeKind::FIR_INT> {
 public:
   using Base::Base;
   static IntType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -101,8 +101,8 @@ public:
 
 class LogicalType
   : public mlir::Type::TypeBase<LogicalType, mlir::Type,
-        detail::FIRLogicalTypeStorage>,
-    public IntrinsicTypeMixin<LogicalType, FIRTypeKind::FIR_LOGICAL> {
+        detail::LogicalTypeStorage>,
+    public IntrinsicTypeMixin<LogicalType, TypeKind::FIR_LOGICAL> {
 public:
   using Base::Base;
   static LogicalType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -110,9 +110,9 @@ public:
   KindTy getFKind() const { return getSizeInBits() / 8; }
 };
 
-class RealType : public mlir::Type::TypeBase<RealType, mlir::Type,
-                     detail::FIRRealTypeStorage>,
-                 public IntrinsicTypeMixin<RealType, FIRTypeKind::FIR_REAL> {
+class RealType
+  : public mlir::Type::TypeBase<RealType, mlir::Type, detail::RealTypeStorage>,
+    public IntrinsicTypeMixin<RealType, TypeKind::FIR_REAL> {
 public:
   using Base::Base;
   static RealType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -120,9 +120,9 @@ public:
   KindTy getFKind() const { return getSizeInBits() / 8; }
 };
 
-class CplxType : public mlir::Type::TypeBase<CplxType, mlir::Type,
-                     detail::FIRCplxTypeStorage>,
-                 public IntrinsicTypeMixin<CplxType, FIRTypeKind::FIR_COMPLEX> {
+class CplxType
+  : public mlir::Type::TypeBase<CplxType, mlir::Type, detail::CplxTypeStorage>,
+    public IntrinsicTypeMixin<CplxType, TypeKind::FIR_COMPLEX> {
 public:
   using Base::Base;
   static CplxType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -132,86 +132,84 @@ public:
 
 // FIR support types
 
-class BoxType : public mlir::Type::TypeBase<BoxType, mlir::Type,
-                    detail::FIRBoxTypeStorage> {
+class BoxType
+  : public mlir::Type::TypeBase<BoxType, mlir::Type, detail::BoxTypeStorage> {
 public:
   using Base::Base;
   static BoxType get(mlir::Type eleTy);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_BOX; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_BOX; }
   mlir::Type getEleTy() const;
 };
 
 class BoxCharType : public mlir::Type::TypeBase<BoxCharType, mlir::Type,
-                        detail::FIRBoxCharTypeStorage> {
+                        detail::BoxCharTypeStorage> {
 public:
   using Base::Base;
   static BoxCharType get(mlir::MLIRContext *ctxt, KindTy kind);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_BOXCHAR; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_BOXCHAR; }
   CharacterType getEleTy() const;
 };
 
 class BoxProcType : public mlir::Type::TypeBase<BoxProcType, mlir::Type,
-                        detail::FIRBoxProcTypeStorage> {
+                        detail::BoxProcTypeStorage> {
 public:
   using Base::Base;
   static BoxProcType get(mlir::Type eleTy);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_BOXPROC; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_BOXPROC; }
   mlir::Type getEleTy() const;
 };
 
-class DimsType : public mlir::Type::TypeBase<DimsType, mlir::Type,
-                     detail::FIRDimsTypeStorage> {
+class DimsType
+  : public mlir::Type::TypeBase<DimsType, mlir::Type, detail::DimsTypeStorage> {
 public:
   using Base::Base;
   static DimsType get(mlir::MLIRContext *ctx, unsigned rank);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_DIMS; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_DIMS; }
 
   /// returns -1 if the rank is unknown
   int getRank() const;
 };
 
 class FieldType : public mlir::Type::TypeBase<FieldType, mlir::Type,
-                      detail::FIRFieldTypeStorage> {
+                      detail::FieldTypeStorage> {
 public:
   using Base::Base;
   static FieldType get(mlir::MLIRContext *ctxt, KindTy _ = 0);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_FIELD; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_FIELD; }
 };
 
-class HeapType : public mlir::Type::TypeBase<HeapType, mlir::Type,
-                     detail::FIRHeapTypeStorage> {
+class HeapType
+  : public mlir::Type::TypeBase<HeapType, mlir::Type, detail::HeapTypeStorage> {
 public:
   using Base::Base;
   static HeapType get(mlir::Type elementType);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_HEAP; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_HEAP; }
 
   mlir::Type getEleTy() const;
 };
 
 class PointerType : public mlir::Type::TypeBase<PointerType, mlir::Type,
-                        detail::FIRPointerTypeStorage> {
+                        detail::PointerTypeStorage> {
 public:
   using Base::Base;
   static PointerType get(mlir::Type elementType);
-  static bool kindof(unsigned kind) { return kind == FIRTypeKind::FIR_POINTER; }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_POINTER; }
 
   mlir::Type getEleTy() const;
 };
 
 class ReferenceType : public mlir::Type::TypeBase<ReferenceType, mlir::Type,
-                          detail::FIRReferenceTypeStorage> {
+                          detail::ReferenceTypeStorage> {
 public:
   using Base::Base;
   static ReferenceType get(mlir::Type elementType);
-  static bool kindof(unsigned kind) {
-    return kind == FIRTypeKind::FIR_REFERENCE;
-  }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_REFERENCE; }
 
   mlir::Type getEleTy() const;
 };
 
 class SequenceType : public mlir::Type::TypeBase<SequenceType, mlir::Type,
-                         detail::FIRSequenceTypeStorage> {
+                         detail::SequenceTypeStorage> {
 public:
   using Base::Base;
   using BoundInfo = int64_t;
@@ -232,9 +230,7 @@ public:
   Shape getShape() const;
 
   static SequenceType get(const Shape &shape, mlir::Type elementType);
-  static bool kindof(unsigned kind) {
-    return kind == FIRTypeKind::FIR_SEQUENCE;
-  }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_SEQUENCE; }
 };
 
 bool operator==(const SequenceType::Shape &, const SequenceType::Shape &);
@@ -242,20 +238,18 @@ llvm::hash_code hash_value(const SequenceType::Extent &);
 llvm::hash_code hash_value(const SequenceType::Shape &);
 
 class TypeDescType : public mlir::Type::TypeBase<TypeDescType, mlir::Type,
-                         detail::FIRTypeDescTypeStorage> {
+                         detail::TypeDescTypeStorage> {
 public:
   using Base::Base;
   static TypeDescType get(mlir::Type ofType);
-  static bool kindof(unsigned kind) {
-    return kind == FIRTypeKind::FIR_TYPEDESC;
-  }
+  static bool kindof(unsigned kind) { return kind == TypeKind::FIR_TYPEDESC; }
   mlir::Type getOfTy() const;
 };
 
 // Derived types
 
 class RecordType : public mlir::Type::TypeBase<RecordType, mlir::Type,
-                       detail::FIRRecordTypeStorage> {
+                       detail::RecordTypeStorage> {
 public:
   using Base::Base;
   using TypePair = std::pair<std::string, mlir::Type>;
@@ -269,7 +263,7 @@ public:
       llvm::ArrayRef<TypePair> lenPList = {},
       llvm::ArrayRef<TypePair> typeList = {});
   constexpr static bool kindof(unsigned kind) { return kind == getId(); }
-  constexpr static unsigned getId() { return FIRTypeKind::FIR_DERIVED; }
+  constexpr static unsigned getId() { return TypeKind::FIR_DERIVED; }
 };
 
 mlir::Type parseFirType(
