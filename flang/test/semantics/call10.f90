@@ -28,11 +28,6 @@ module m
     class(t), allocatable :: a
   end type
 
-  abstract interface
-    subroutine impure
-    end subroutine
-  end interface
-
   real, volatile, target :: volatile
 
  contains
@@ -127,12 +122,12 @@ module m
       real, volatile :: v2
     end block
   end subroutine
-  pure subroutine s06(p) ! C1590
+  pure subroutine s07(p) ! C1590
     ! ERROR: A dummy procedure of a PURE subprogram must be PURE.
     procedure(impure) :: p
   end subroutine
   ! C1591 is tested in call11.f90.
-  pure subroutine s07 ! C1592
+  pure subroutine s08 ! C1592
    contains
     pure subroutine pure ! ok
     end subroutine
@@ -147,7 +142,7 @@ module m
     real, pointer, volatile :: volptr
     volptr => volatile
   end function
-  pure subroutine s08 ! C1593
+  pure subroutine s09 ! C1593
     real :: x
     ! ERROR: A VOLATILE variable may not appear in a PURE subprogram.
     x = volatile
@@ -155,27 +150,27 @@ module m
     x = volptr
   end subroutine
   ! C1594 is tested in call12.f90.
-  pure subroutine s09 ! C1595
+  pure subroutine s10 ! C1595
     integer :: n
     ! ERROR: Any procedure referenced in a PURE subprogram must also be PURE.
     n = notpure(1)
   end subroutine
-  pure subroutine s10(to) ! C1596
+  pure subroutine s11(to) ! C1596
     type(polyAlloc) :: auto, to
     ! ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram.
     to = auto
     ! Implicit deallocation at the end of the subroutine:
     ! ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram.
   end subroutine
-  pure subroutine s11
-    character :: buff(20)
+  pure subroutine s12
+    character(20) :: buff
     real :: x
     write(buff, *) 1.0 ! ok
     read(buff, *) x ! ok
     ! ERROR: External I/O is not allowed in a PURE subprogram
     print *, 'hi' ! C1597
     ! ERROR: External I/O is not allowed in a PURE subprogram
-    open(1, 'launch-codes') ! C1597
+    open(1, file='launch-codes') ! C1597
     ! ERROR: External I/O is not allowed in a PURE subprogram
     close(1) ! C1597
     ! ERROR: External I/O is not allowed in a PURE subprogram
@@ -199,7 +194,7 @@ module m
     ! ERROR: External I/O is not allowed in a PURE subprogram
     write(*, *) ! C1598
   end subroutine
-  pure subroutine s12
+  pure subroutine s13
     ! ERROR: An image control statement is not allowed in a PURE subprogram.
     sync all ! C1599
     ! TODO others from 11.6.1 (many)
