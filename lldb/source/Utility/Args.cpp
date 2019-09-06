@@ -260,12 +260,6 @@ const char *Args::GetArgumentAtIndex(size_t idx) const {
   return nullptr;
 }
 
-char Args::GetArgumentQuoteCharAtIndex(size_t idx) const {
-  if (idx < m_entries.size())
-    return m_entries[idx].quote;
-  return '\0';
-}
-
 char **Args::GetArgumentVector() {
   assert(!m_argv.empty());
   // TODO: functions like execve and posix_spawnp exhibit undefined behavior

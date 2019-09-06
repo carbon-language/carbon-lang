@@ -121,7 +121,6 @@ public:
   const char *GetArgumentAtIndex(size_t idx) const;
 
   llvm::ArrayRef<ArgEntry> entries() const { return m_entries; }
-  char GetArgumentQuoteCharAtIndex(size_t idx) const;
 
   using const_iterator = std::vector<ArgEntry>::const_iterator;
 
