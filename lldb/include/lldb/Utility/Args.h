@@ -251,10 +251,6 @@ public:
   // For re-setting or blanking out the list of arguments.
   void Clear();
 
-  static const char *StripSpaces(std::string &s, bool leading = true,
-                                 bool trailing = true,
-                                 bool return_null_if_empty = true);
-
   static bool UInt64ValueIsValidForByteSize(uint64_t uval64,
                                             size_t total_byte_size) {
     if (total_byte_size > 8)
