@@ -4732,17 +4732,17 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
       MachineSDNode *Move;
       if (tryFoldLoad(Node, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N0.getOperand(0) };
-        Move = CurDAG->getMachineNode(X86::MOVZX32rm8, dl, MVT::i32,
+        Move = CurDAG->getMachineNode(X86::MOVZX16rm8, dl, MVT::i32,
                                       MVT::Other, Ops);
         Chain = SDValue(Move, 1);
         ReplaceUses(N0.getValue(1), Chain);
         // Record the mem-refs
         CurDAG->setNodeMemRefs(Move, {cast<LoadSDNode>(N0)->getMemOperand()});
       } else {
-        Move = CurDAG->getMachineNode(X86::MOVZX32rr8, dl, MVT::i32, N0);
+        Move = CurDAG->getMachineNode(X86::MOVZX16rr8, dl, MVT::i32, N0);
         Chain = CurDAG->getEntryNode();
       }
-      Chain  = CurDAG->getCopyToReg(Chain, dl, X86::EAX, SDValue(Move, 0),
+      Chain  = CurDAG->getCopyToReg(Chain, dl, X86::AX, SDValue(Move, 0),
                                     SDValue());
       InFlag = Chain.getValue(1);
     } else {

@@ -81,15 +81,12 @@ define <3 x i8> @test_uchar_div(<3 x i8> %num, <3 x i8> %div) {
 ; CHECK-LABEL: test_uchar_div:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movzbl %dil, %eax
-; CHECK-NEXT:    # kill: def $eax killed $eax def $ax
 ; CHECK-NEXT:    divb %cl
 ; CHECK-NEXT:    movl %eax, %edi
 ; CHECK-NEXT:    movzbl %sil, %eax
-; CHECK-NEXT:    # kill: def $eax killed $eax def $ax
 ; CHECK-NEXT:    divb %r8b
 ; CHECK-NEXT:    movl %eax, %esi
 ; CHECK-NEXT:    movzbl %dl, %eax
-; CHECK-NEXT:    # kill: def $eax killed $eax def $ax
 ; CHECK-NEXT:    divb %r9b
 ; CHECK-NEXT:    movl %eax, %ecx
 ; CHECK-NEXT:    movl %edi, %eax
