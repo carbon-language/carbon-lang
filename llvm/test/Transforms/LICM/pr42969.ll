@@ -1,7 +1,6 @@
-; RUN: opt %s -S -scoped-noalias -enable-mssa-loop-dependency=true -licm -debug-only=licm | FileCheck %s
+; RUN: opt %s -S -scoped-noalias -enable-mssa-loop-dependency=true -licm | FileCheck %s
 
 define i16 @main(i1 %a_b_mayalias, i16* %a, i16* %b) {
-; CHECK-NOT: LICM: Promoting value stored to in loop
 ; CHECK:       scalar.body:
 ; CHECK-NEXT:    [[J:%.*]] = phi i64
 ; CHECK-NEXT:    [[TMP3:%.*]] = load i16
