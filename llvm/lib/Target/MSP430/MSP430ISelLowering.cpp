@@ -327,7 +327,7 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM,
   setLibcallCallingConv(RTLIB::OGT_F64, CallingConv::MSP430_BUILTIN);
   // TODO: __mspabi_srall, __mspabi_srlll, __mspabi_sllll
 
-  setMinFunctionLogAlignment(1);
+  setMinFunctionAlignment(llvm::Align(2));
   setPrefFunctionLogAlignment(1);
 }
 

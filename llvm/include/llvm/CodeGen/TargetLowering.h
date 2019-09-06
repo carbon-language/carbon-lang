@@ -2104,9 +2104,9 @@ protected:
     TargetDAGCombineArray[NT >> 3] |= 1 << (NT&7);
   }
 
-  /// Set the target's minimum function alignment (in log2(bytes))
-  void setMinFunctionLogAlignment(unsigned LogAlign) {
-    MinFunctionAlignment = llvm::Align(1ULL << LogAlign);
+  /// Set the target's minimum function alignment.
+  void setMinFunctionAlignment(llvm::Align Align) {
+    MinFunctionAlignment = Align;
   }
 
   /// Set the target's preferred function alignment.  This should be set if

@@ -640,7 +640,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   EnableExtLdPromotion = true;
 
   // Set required alignment.
-  setMinFunctionLogAlignment(2);
+  setMinFunctionAlignment(llvm::Align(4));
   // Set preferred alignments.
   setPrefFunctionLogAlignment(STI.getPrefFunctionLogAlignment());
   setPrefLoopLogAlignment(STI.getPrefLoopLogAlignment());

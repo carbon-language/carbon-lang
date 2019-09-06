@@ -1180,7 +1180,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
     setJumpIsExpensive();
   }
 
-  setMinFunctionLogAlignment(2);
+  setMinFunctionAlignment(llvm::Align(4));
   if (Subtarget.isDarwin())
     setPrefFunctionLogAlignment(4);
 

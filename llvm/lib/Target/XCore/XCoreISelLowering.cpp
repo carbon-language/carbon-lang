@@ -171,7 +171,7 @@ XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM,
   setTargetDAGCombine(ISD::INTRINSIC_VOID);
   setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
 
-  setMinFunctionLogAlignment(1);
+  setMinFunctionAlignment(llvm::Align(2));
   setPrefFunctionLogAlignment(2);
 }
 

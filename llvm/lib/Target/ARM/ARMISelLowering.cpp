@@ -1421,7 +1421,8 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
 
   setPrefLoopLogAlignment(Subtarget->getPrefLoopLogAlignment());
 
-  setMinFunctionLogAlignment(Subtarget->isThumb() ? 1 : 2);
+  setMinFunctionAlignment(Subtarget->isThumb() ? llvm::Align(2)
+                                               : llvm::Align(4));
 
   if (Subtarget->isThumb() || Subtarget->isThumb2())
     setTargetDAGCombine(ISD::ABS);

@@ -133,7 +133,7 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2)
-  setMinFunctionLogAlignment(3);
+  setMinFunctionAlignment(llvm::Align(8));
   setPrefFunctionLogAlignment(3);
 
   if (BPFExpandMemcpyInOrder) {

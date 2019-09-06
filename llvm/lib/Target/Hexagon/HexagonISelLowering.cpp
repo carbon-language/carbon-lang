@@ -1237,7 +1237,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
 
   setPrefLoopLogAlignment(4);
   setPrefFunctionLogAlignment(4);
-  setMinFunctionLogAlignment(2);
+  setMinFunctionAlignment(llvm::Align(4));
   setStackPointerRegisterToSaveRestore(HRI.getStackRegister());
   setBooleanContents(TargetLoweringBase::UndefinedBooleanContent);
   setBooleanVectorContents(TargetLoweringBase::UndefinedBooleanContent);
