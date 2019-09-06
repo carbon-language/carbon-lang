@@ -4643,19 +4643,29 @@ Value *CodeGenFunction::EmitCheckedInBoundsGEP(Value *Ptr,
   llvm::Value *ValidGEP;
   auto *NoOffsetOverflow = Builder.CreateNot(OffsetOverflows);
   if (SignedIndices) {
+    // GEP is computed as `unsigned base + signed offset`, therefore:
+    // * If offset was positive, then the computed pointer can not be
+    //   [unsigned] less than the base pointer, unless it overflowed.
+    // * If offset was negative, then the computed pointer can not be
+    //   [unsigned] greater than the bas pointere, unless it overflowed.
     auto *PosOrZeroValid = Builder.CreateICmpUGE(ComputedGEP, IntPtr);
     auto *PosOrZeroOffset = Builder.CreateICmpSGE(TotalOffset, Zero);
     llvm::Value *NegValid = Builder.CreateICmpULT(ComputedGEP, IntPtr);
-    ValidGEP = Builder.CreateAnd(
-        Builder.CreateSelect(PosOrZeroOffset, PosOrZeroValid, NegValid),
-        NoOffsetOverflow);
-  } else if (!SignedIndices && !IsSubtraction) {
-    auto *PosOrZeroValid = Builder.CreateICmpUGE(ComputedGEP, IntPtr);
-    ValidGEP = Builder.CreateAnd(PosOrZeroValid, NoOffsetOverflow);
+    ValidGEP = Builder.CreateSelect(PosOrZeroOffset, PosOrZeroValid, NegValid);
+  } else if (!IsSubtraction) {
+    // GEP is computed as `unsigned base + unsigned offset`,  therefore the
+    // computed pointer can not be [unsigned] less than base pointer,
+    // unless there was an overflow.
+    // Equivalent to `@llvm.uadd.with.overflow(%base, %offset)`.
+    ValidGEP = Builder.CreateICmpUGE(ComputedGEP, IntPtr);
   } else {
-    auto *NegOrZeroValid = Builder.CreateICmpULE(ComputedGEP, IntPtr);
-    ValidGEP = Builder.CreateAnd(NegOrZeroValid, NoOffsetOverflow);
+    // GEP is computed as `unsigned base - unsigned offset`, therefore the
+    // computed pointer can not be [unsigned] greater than base pointer,
+    // unless there was an overflow.
+    // Equivalent to `@llvm.usub.with.overflow(%base, sub(0, %offset))`.
+    ValidGEP = Builder.CreateICmpULE(ComputedGEP, IntPtr);
   }
+  ValidGEP = Builder.CreateAnd(ValidGEP, NoOffsetOverflow);
 
   llvm::Constant *StaticArgs[] = {EmitCheckSourceLocation(Loc)};
   // Pass the computed GEP to the runtime to avoid emitting poisoned arguments.
