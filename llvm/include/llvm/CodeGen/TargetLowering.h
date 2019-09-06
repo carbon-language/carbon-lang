@@ -2110,10 +2110,9 @@ protected:
   }
 
   /// Set the target's preferred function alignment.  This should be set if
-  /// there is a performance benefit to higher-than-minimum alignment (in
-  /// log2(bytes))
-  void setPrefFunctionLogAlignment(unsigned LogAlign) {
-    PrefFunctionAlignment = llvm::Align(1ULL << LogAlign);
+  /// there is a performance benefit to higher-than-minimum alignment
+  void setPrefFunctionAlignment(llvm::Align Align) {
+    PrefFunctionAlignment = Align;
   }
 
   /// Set the target's preferred loop alignment. Default alignment is one, it

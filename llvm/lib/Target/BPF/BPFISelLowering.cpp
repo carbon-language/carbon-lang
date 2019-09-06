@@ -132,9 +132,9 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
 
   setBooleanContents(ZeroOrOneBooleanContent);
 
-  // Function alignments (log2)
+  // Function alignments
   setMinFunctionAlignment(llvm::Align(8));
-  setPrefFunctionLogAlignment(3);
+  setPrefFunctionAlignment(llvm::Align(8));
 
   if (BPFExpandMemcpyInOrder) {
     // LLVM generic code will try to expand memcpy into load/store pairs at this

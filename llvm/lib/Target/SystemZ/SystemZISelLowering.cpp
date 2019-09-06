@@ -122,7 +122,7 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
   // Instructions are strings of 2-byte aligned 2-byte values.
   setMinFunctionAlignment(llvm::Align(2));
   // For performance reasons we prefer 16-byte alignment.
-  setPrefFunctionLogAlignment(4);
+  setPrefFunctionAlignment(llvm::Align(16));
 
   // Handle operations that are handled in a similar way for all types.
   for (unsigned I = MVT::FIRST_INTEGER_VALUETYPE;

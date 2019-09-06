@@ -1182,7 +1182,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
 
   setMinFunctionAlignment(llvm::Align(4));
   if (Subtarget.isDarwin())
-    setPrefFunctionLogAlignment(4);
+    setPrefFunctionAlignment(llvm::Align(16));
 
   switch (Subtarget.getDarwinDirective()) {
   default: break;
@@ -1199,8 +1199,8 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
   case PPC::DIR_PWR7:
   case PPC::DIR_PWR8:
   case PPC::DIR_PWR9:
-    setPrefFunctionLogAlignment(4);
     setPrefLoopAlignment(llvm::Align(16));
+    setPrefFunctionAlignment(llvm::Align(16));
     break;
   }
 
