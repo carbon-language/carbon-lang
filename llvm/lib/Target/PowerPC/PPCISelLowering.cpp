@@ -1200,7 +1200,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
   case PPC::DIR_PWR8:
   case PPC::DIR_PWR9:
     setPrefFunctionLogAlignment(4);
-    setPrefLoopLogAlignment(4);
+    setPrefLoopAlignment(llvm::Align(16));
     break;
   }
 

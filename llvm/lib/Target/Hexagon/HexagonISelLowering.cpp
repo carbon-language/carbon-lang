@@ -1235,7 +1235,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       Subtarget(ST) {
   auto &HRI = *Subtarget.getRegisterInfo();
 
-  setPrefLoopLogAlignment(4);
+  setPrefLoopAlignment(llvm::Align(16));
   setPrefFunctionLogAlignment(4);
   setMinFunctionAlignment(llvm::Align(4));
   setStackPointerRegisterToSaveRestore(HRI.getStackRegister());

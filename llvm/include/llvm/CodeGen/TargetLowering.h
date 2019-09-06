@@ -2116,13 +2116,10 @@ protected:
     PrefFunctionAlignment = llvm::Align(1ULL << LogAlign);
   }
 
-  /// Set the target's preferred loop alignment. Default alignment is zero, it
-  /// means the target does not care about loop alignment.  The alignment is
-  /// specified in log2(bytes). The target may also override
-  /// getPrefLoopAlignment to provide per-loop values.
-  void setPrefLoopLogAlignment(unsigned LogAlign) {
-    PrefLoopAlignment = llvm::Align(1ULL << LogAlign);
-  }
+  /// Set the target's preferred loop alignment. Default alignment is one, it
+  /// means the target does not care about loop alignment. The target may also
+  /// override getPrefLoopAlignment to provide per-loop values.
+  void setPrefLoopAlignment(llvm::Align Align) { PrefLoopAlignment = Align; }
 
   /// Set the minimum stack alignment of an argument.
   void setMinStackArgumentAlignment(unsigned Align) {
