@@ -20,12 +20,12 @@
 # I386-NEXT:  Machine: EM_386 (0x3)
 # I386-NEXT:  Version: 1
 # I386-NEXT:  Entry: 0x0
-# I386-NEXT:  ProgramHeaderOffset: 0x34
+# I386-NEXT:  ProgramHeaderOffset: 0x0
 # I386-NEXT:  SectionHeaderOffset: 0x64
 # I386-NEXT:  Flags [ (0x0)
 # I386-NEXT:  ]
 # I386-NEXT:  HeaderSize: 52
-# I386-NEXT:  ProgramHeaderEntrySize: 32
+# I386-NEXT:  ProgramHeaderEntrySize: 0
 # I386-NEXT:  ProgramHeaderCount: 0
 # I386-NEXT:  SectionHeaderEntrySize: 40
 # I386-NEXT:  SectionHeaderCount: 4
