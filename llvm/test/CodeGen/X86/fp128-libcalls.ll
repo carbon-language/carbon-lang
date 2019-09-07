@@ -148,3 +148,90 @@ entry:
   store fp128 %div, fp128* @vf128, align 16
   ret void
 }
+
+define void @Test128Rem(fp128 %d1, fp128 %d2){
+; CHECK-LABEL: Test128Rem:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    callq fmodl
+; CHECK-NEXT:    movaps %xmm0, {{.*}}(%rip)
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %div = frem fp128 %d1, %d2
+  store fp128 %div, fp128* @vf128, align 16
+  ret void
+}
+
+define void @Test128_1Rem(fp128 %d1){
+; CHECK-LABEL: Test128_1Rem:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    movaps %xmm0, %xmm1
+; CHECK-NEXT:    movaps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    callq fmodl
+; CHECK-NEXT:    movaps %xmm0, {{.*}}(%rip)
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %0 = load fp128, fp128* @vf128, align 16
+  %div = frem fp128 %0, %d1
+  store fp128 %div, fp128* @vf128, align 16
+  ret void
+}
+
+define void @Test128Sqrt(fp128 %d1){
+; CHECK-LABEL: Test128Sqrt:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    callq sqrtl
+; CHECK-NEXT:    movaps %xmm0, {{.*}}(%rip)
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %sqrt = call fp128 @llvm.sqrt.f128(fp128 %d1)
+  store fp128 %sqrt, fp128* @vf128, align 16
+  ret void
+}
+declare fp128 @llvm.sqrt.f128(fp128)
+
+define void @Test128Sin(fp128 %d1){
+; CHECK-LABEL: Test128Sin:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    callq sinl
+; CHECK-NEXT:    movaps %xmm0, {{.*}}(%rip)
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %sqrt = call fp128 @llvm.sin.f128(fp128 %d1)
+  store fp128 %sqrt, fp128* @vf128, align 16
+  ret void
+}
+declare fp128 @llvm.sin.f128(fp128)
+
+define void @Test128Cos(fp128 %d1){
+; CHECK-LABEL: Test128Cos:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    callq cosl
+; CHECK-NEXT:    movaps %xmm0, {{.*}}(%rip)
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %sqrt = call fp128 @llvm.cos.f128(fp128 %d1)
+  store fp128 %sqrt, fp128* @vf128, align 16
+  ret void
+}
+declare fp128 @llvm.cos.f128(fp128)
+
