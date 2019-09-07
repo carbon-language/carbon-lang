@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -fobjc-runtime-has-weak -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -fobjc-runtime-has-weak -I %S/Inputs -verify %s
+
+#include "non-trivial-c-union.h"
 
 typedef union { // expected-note 12 {{'U0' has subobjects that are non-trivial to default-initialize}} expected-note 36 {{'U0' has subobjects that are non-trivial to destruct}} expected-note 28 {{'U0' has subobjects that are non-trivial to copy}}
   id f0; // expected-note 12 {{f0 has type '__strong id' that is non-trivial to default-initialize}} expected-note 36 {{f0 has type '__strong id' that is non-trivial to destruct}} expected-note 28 {{f0 has type '__strong id' that is non-trivial to copy}}
@@ -80,3 +82,7 @@ void testBlockCapture(void) {
 void testVolatileLValueToRValue(volatile U0 *a) {
   (void)*a; // expected-error {{cannot use volatile type 'volatile U0' where it causes an lvalue-to-rvalue conversion since it is a union that is non-trivial to destruct}} // expected-error {{cannot use volatile type 'volatile U0' where it causes an lvalue-to-rvalue conversion since it is a union that is non-trivial to copy}}
 }
+
+void unionInSystemHeader0(U0_SystemHeader);
+
+void unionInSystemHeader1(U1_SystemHeader); // expected-error {{cannot use type 'U1_SystemHeader' for a function/method parameter since it is a union that is non-trivial to destruct}} expected-error {{cannot use type 'U1_SystemHeader' for a function/method parameter since it is a union that is non-trivial to copy}}

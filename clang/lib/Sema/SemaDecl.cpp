@@ -11255,6 +11255,15 @@ void Sema::checkNonTrivialCUnionInInitializer(const Expr *Init,
 
 namespace {
 
+bool shouldIgnoreForRecordTriviality(const FieldDecl *FD) {
+  // Ignore unavailable fields. A field can be marked as unavailable explicitly
+  // in the source code or implicitly by the compiler if it is in a union
+  // defined in a system header and has non-trivial ObjC ownership
+  // qualifications. We don't want those fields to participate in determining
+  // whether the containing union is non-trivial.
+  return FD->hasAttr<UnavailableAttr>();
+}
+
 struct DiagNonTrivalCUnionDefaultInitializeVisitor
     : DefaultInitializedTypeVisitor<DiagNonTrivalCUnionDefaultInitializeVisitor,
                                     void> {
@@ -11308,7 +11317,8 @@ struct DiagNonTrivalCUnionDefaultInitializeVisitor
           << 0 << 0 << QT.getUnqualifiedType() << "";
 
     for (const FieldDecl *FD : RD->fields())
-      asDerived().visit(FD->getType(), FD, InNonTrivialUnion);
+      if (!shouldIgnoreForRecordTriviality(FD))
+        asDerived().visit(FD->getType(), FD, InNonTrivialUnion);
   }
 
   void visitTrivial(QualType QT, const FieldDecl *FD, bool InNonTrivialUnion) {}
@@ -11372,7 +11382,8 @@ struct DiagNonTrivalCUnionDestructedTypeVisitor
           << 0 << 1 << QT.getUnqualifiedType() << "";
 
     for (const FieldDecl *FD : RD->fields())
-      asDerived().visit(FD->getType(), FD, InNonTrivialUnion);
+      if (!shouldIgnoreForRecordTriviality(FD))
+        asDerived().visit(FD->getType(), FD, InNonTrivialUnion);
   }
 
   void visitTrivial(QualType QT, const FieldDecl *FD, bool InNonTrivialUnion) {}
@@ -11437,7 +11448,8 @@ struct DiagNonTrivalCUnionCopyVisitor
           << 0 << 2 << QT.getUnqualifiedType() << "";
 
     for (const FieldDecl *FD : RD->fields())
-      asDerived().visit(FD->getType(), FD, InNonTrivialUnion);
+      if (!shouldIgnoreForRecordTriviality(FD))
+        asDerived().visit(FD->getType(), FD, InNonTrivialUnion);
   }
 
   void preVisit(QualType::PrimitiveCopyKind PCK, QualType QT,
@@ -16509,6 +16521,21 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
         << FixItHint::CreateInsertion(FD->getLocation(), "*");
       QualType T = Context.getObjCObjectPointerType(FD->getType());
       FD->setType(T);
+    } else if (Record && Record->isUnion() &&
+               FD->getType().hasNonTrivialObjCLifetime() &&
+               getSourceManager().isInSystemHeader(FD->getLocation()) &&
+               !getLangOpts().CPlusPlus && !FD->hasAttr<UnavailableAttr>() &&
+               (FD->getType().getObjCLifetime() != Qualifiers::OCL_Strong ||
+                !Context.hasDirectOwnershipQualifier(FD->getType()))) {
+      // For backward compatibility, fields of C unions declared in system
+      // headers that have non-trivial ObjC ownership qualifications are marked
+      // as unavailable unless the qualifier is explicit and __strong. This can
+      // break ABI compatibility between programs compiled with ARC and MRR, but
+      // is a better option than rejecting programs using those unions under
+      // ARC.
+      FD->addAttr(UnavailableAttr::CreateImplicit(
+          Context, "", UnavailableAttr::IR_ARCFieldWithOwnership,
+          FD->getLocation()));
     } else if (getLangOpts().ObjC &&
                getLangOpts().getGC() != LangOptions::NonGC &&
                Record && !Record->hasObjectMember()) {
@@ -16526,7 +16553,8 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
       }
     }
 
-    if (Record && !getLangOpts().CPlusPlus && !FD->hasAttr<UnavailableAttr>()) {
+    if (Record && !getLangOpts().CPlusPlus &&
+        !shouldIgnoreForRecordTriviality(FD)) {
       QualType FT = FD->getType();
       if (FT.isNonTrivialToPrimitiveDefaultInitialize()) {
         Record->setNonTrivialToPrimitiveDefaultInitialize(true);

@@ -6027,36 +6027,6 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   }
 }
 
-/// Does this type have a "direct" ownership qualifier?  That is,
-/// is it written like "__strong id", as opposed to something like
-/// "typeof(foo)", where that happens to be strong?
-static bool hasDirectOwnershipQualifier(QualType type) {
-  // Fast path: no qualifier at all.
-  assert(type.getQualifiers().hasObjCLifetime());
-
-  while (true) {
-    // __strong id
-    if (const AttributedType *attr = dyn_cast<AttributedType>(type)) {
-      if (attr->getAttrKind() == attr::ObjCOwnership)
-        return true;
-
-      type = attr->getModifiedType();
-
-    // X *__strong (...)
-    } else if (const ParenType *paren = dyn_cast<ParenType>(type)) {
-      type = paren->getInnerType();
-
-    // That's it for things we want to complain about.  In particular,
-    // we do not want to look through typedefs, typeof(expr),
-    // typeof(type), or any other way that the type is somehow
-    // abstracted.
-    } else {
-
-      return false;
-    }
-  }
-}
-
 /// handleObjCOwnershipTypeAttr - Process an objc_ownership
 /// attribute on the specified type.
 ///
@@ -6132,7 +6102,7 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
   if (Qualifiers::ObjCLifetime previousLifetime
         = type.getQualifiers().getObjCLifetime()) {
     // If it's written directly, that's an error.
-    if (hasDirectOwnershipQualifier(type)) {
+    if (S.Context.hasDirectOwnershipQualifier(type)) {
       S.Diag(AttrLoc, diag::err_attr_objc_ownership_redundant)
         << type;
       return true;
