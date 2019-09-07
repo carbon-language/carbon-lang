@@ -6800,26 +6800,37 @@ TargetLowering::expandFixedPointMul(SDNode *Node, SelectionDAG &DAG) const {
   }
 
   // Signed overflow happened if the upper (VTSize - Scale + 1) bits (of the
-  // widened multiplication) aren't all ones or all zeroes. We handled Scale==0
-  // above so all the bits to examine is in Hi.
+  // widened multiplication) aren't all ones or all zeroes.
+
+  SDValue SatMin = DAG.getConstant(APInt::getSignedMinValue(VTSize), dl, VT);
+  SDValue SatMax = DAG.getConstant(APInt::getSignedMaxValue(VTSize), dl, VT);
+
+  if (Scale == 0) {
+    SDValue Sign = DAG.getNode(ISD::SRA, dl, VT, Lo,
+                               DAG.getConstant(VTSize - 1, dl, ShiftTy));
+    SDValue Overflow = DAG.getSetCC(dl, BoolVT, Hi, Sign, ISD::SETNE);
+    // Saturated to SatMin if wide product is negative, and SatMax if wide
+    // product is positive ...
+    SDValue Zero = DAG.getConstant(0, dl, VT);
+    SDValue ResultIfOverflow = DAG.getSelectCC(dl, Hi, Zero, SatMin, SatMax,
+                                               ISD::SETLT);
+    // ... but only if we overflowed.
+    return DAG.getSelect(dl, VT, Overflow, ResultIfOverflow, Result);
+  }
+
+  //  We handled Scale==0 above so all the bits to examine is in Hi.
 
   // Saturate to max if ((Hi >> (Scale - 1)) > 0),
   // which is the same as if (Hi > (1 << (Scale - 1)) - 1)
-  APInt MaxVal = APInt::getSignedMaxValue(VTSize);
   SDValue LowMask = DAG.getConstant(APInt::getLowBitsSet(VTSize, Scale - 1),
                                     dl, VT);
-  Result = DAG.getSelectCC(dl, Hi, LowMask,
-                           DAG.getConstant(MaxVal, dl, VT), Result,
-                           ISD::SETGT);
+  Result = DAG.getSelectCC(dl, Hi, LowMask, SatMax, Result, ISD::SETGT);
   // Saturate to min if (Hi >> (Scale - 1)) < -1),
   // which is the same as if (HI < (-1 << (Scale - 1))
-  APInt MinVal = APInt::getSignedMinValue(VTSize);
   SDValue HighMask =
       DAG.getConstant(APInt::getHighBitsSet(VTSize, VTSize - Scale + 1),
                       dl, VT);
-  Result = DAG.getSelectCC(dl, Hi, HighMask,
-                           DAG.getConstant(MinVal, dl, VT), Result,
-                           ISD::SETLT);
+  Result = DAG.getSelectCC(dl, Hi, HighMask, SatMin, Result, ISD::SETLT);
   return Result;
 }
 
