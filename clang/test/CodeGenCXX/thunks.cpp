@@ -148,7 +148,7 @@ namespace Test4B {
   }
 }
 // Not sure why this isn't delayed like in Itanium.
-// WIN64-LABEL: define internal void @"?f@C@?A0xAEF74CE7@Test4B@@UEAAXXZ"(
+// WIN64-LABEL: define internal void @"?f@C@?A{{.*}}@Test4B@@UEAAXXZ"(
 
 namespace Test5 {
 
