@@ -234,8 +234,8 @@ entry:
   %conv28 = trunc i64 %shr26 to i8
   store i8 %conv28, i8* %p, align 1
   ret void
-; CEHCK-PPC64LE: stdbrx [[REG2]], 0, 4
-; CEHCK-PPC64: stdx [[REG2]], 0, 4
+; CHECK-PPC64LE: stdbrx [[REG2]], 0, 4
+; CHECK-PPC64: stdx [[REG2]], 0, 4
 }
 
 ; One of the stores is volatile
