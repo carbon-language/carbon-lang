@@ -2435,7 +2435,8 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
     ParsingLambdaParamsAtLevel = (size_t)-1;
     TryToParseTemplateArgs = true;
     PermitForwardTemplateReferences = false;
-    NumSyntheticTemplateParameters = {};
+    for (int I = 0; I != 3; ++I)
+      NumSyntheticTemplateParameters[I] = 0;
     ASTAllocator.reset();
   }
 
