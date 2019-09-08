@@ -7547,6 +7547,11 @@ X86InstrInfo::describeLoadedValue(const MachineInstr &MI) const {
 
     return ParamLoadedValue(*Op, Expr);;
   }
+  case X86::XOR32rr: {
+    if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg())
+      return ParamLoadedValue(MachineOperand::CreateImm(0), Expr);
+    return None;
+  }
   default:
     return TargetInstrInfo::describeLoadedValue(MI);
   }
