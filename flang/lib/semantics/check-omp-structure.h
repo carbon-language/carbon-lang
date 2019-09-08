@@ -86,7 +86,6 @@ public:
   void Leave(const parser::OmpClauseList &);
   void Enter(const parser::OmpClause &);
   void Enter(const parser::OmpNowait &);
-  void Enter(const parser::OmpClause::Defaultmap &);
   void Enter(const parser::OmpClause::Inbranch &);
   void Enter(const parser::OmpClause::Mergeable &);
   void Enter(const parser::OmpClause::Nogroup &);
@@ -120,6 +119,7 @@ public:
 
   void Enter(const parser::OmpAlignedClause &);
   void Enter(const parser::OmpDefaultClause &);
+  void Enter(const parser::OmpDefaultmapClause &);
   void Enter(const parser::OmpDependClause &);
   void Enter(const parser::OmpIfClause &);
   void Enter(const parser::OmpLinearClause &);

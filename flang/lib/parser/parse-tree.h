@@ -3311,6 +3311,14 @@ struct OmpMapClause {
   std::tuple<std::optional<OmpMapType>, OmpObjectList> t;
 };
 
+// 2.15.5.2 defaultmap -> DEFAULTMAP (implicit-behavior[:variable-category])
+struct OmpDefaultmapClause {
+  TUPLE_CLASS_BOILERPLATE(OmpDefaultmapClause);
+  ENUM_CLASS(ImplicitBehavior, Tofrom)
+  ENUM_CLASS(VariableCategory, Scalar)
+  std::tuple<ImplicitBehavior, std::optional<VariableCategory>> t;
+};
+
 // 2.7.1 sched-modifier -> MONOTONIC | NONMONOTONIC | SIMD
 struct OmpScheduleModifierType {
   ENUM_CLASS(ModType, Monotonic, Nonmonotonic, Simd)
@@ -3429,7 +3437,6 @@ EMPTY_CLASS(OmpNowait);
 // OpenMP Clauses
 struct OmpClause {
   UNION_CLASS_BOILERPLATE(OmpClause);
-  EMPTY_CLASS(Defaultmap);
   EMPTY_CLASS(Inbranch);
   EMPTY_CLASS(Mergeable);
   EMPTY_CLASS(Nogroup);
@@ -3463,14 +3470,14 @@ struct OmpClause {
   WRAPPER_CLASS(Uniform, std::list<Name>);
   WRAPPER_CLASS(UseDevicePtr, std::list<Name>);
   CharBlock source;
-  std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, OmpNowait,
-      Untied, Threads, Simd, Collapse, Copyin, Copyprivate, Device,
-      DistSchedule, Final, Firstprivate, From, Grainsize, Lastprivate, NumTasks,
-      NumTeams, NumThreads, Ordered, Priority, Private, Safelen, Shared,
-      Simdlen, ThreadLimit, To, Link, Uniform, UseDevicePtr, IsDevicePtr,
-      OmpAlignedClause, OmpDefaultClause, OmpDependClause, OmpIfClause,
-      OmpLinearClause, OmpMapClause, OmpProcBindClause, OmpReductionClause,
-      OmpScheduleClause>
+  std::variant<Inbranch, Mergeable, Nogroup, Notinbranch, OmpNowait, Untied,
+      Threads, Simd, Collapse, Copyin, Copyprivate, Device, DistSchedule, Final,
+      Firstprivate, From, Grainsize, Lastprivate, NumTasks, NumTeams,
+      NumThreads, Ordered, Priority, Private, Safelen, Shared, Simdlen,
+      ThreadLimit, To, Link, Uniform, UseDevicePtr, IsDevicePtr,
+      OmpAlignedClause, OmpDefaultClause, OmpDefaultmapClause, OmpDependClause,
+      OmpIfClause, OmpLinearClause, OmpMapClause, OmpProcBindClause,
+      OmpReductionClause, OmpScheduleClause>
       u;
 };
 

@@ -75,6 +75,13 @@ TYPE_PARSER(construct<OmpMapType>(
 TYPE_PARSER(construct<OmpMapClause>(
     maybe(Parser<OmpMapType>{}), Parser<OmpObjectList>{}))
 
+// 2.15.5.2 defaultmap -> DEFAULTMAP (TOFROM:SCALAR)
+TYPE_PARSER(construct<OmpDefaultmapClause>(
+    construct<OmpDefaultmapClause::ImplicitBehavior>(
+        "TOFROM" >> pure(OmpDefaultmapClause::ImplicitBehavior::Tofrom)),
+    maybe(":" >> construct<OmpDefaultmapClause::VariableCategory>("SCALAR" >>
+                     pure(OmpDefaultmapClause::VariableCategory::Scalar)))))
+
 // 2.7.1 SCHEDULE ([modifier1 [, modifier2]:]kind[, chunk_size])
 //       Modifier ->  MONITONIC | NONMONOTONIC | SIMD
 //       kind -> STATIC | DYNAMIC | GUIDED | AUTO | RUNTIME
@@ -97,18 +104,19 @@ TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
 
 // 2.12 IF (directive-name-modifier: scalar-logical-expr)
 TYPE_PARSER(construct<OmpIfClause>(
-    maybe(("PARALLEL" >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
-              "TARGET ENTER DATA" >>
-                  pure(OmpIfClause::DirectiveNameModifier::TargetEnterData) ||
-              "TARGET EXIT DATA" >>
-                  pure(OmpIfClause::DirectiveNameModifier::TargetExitData) ||
-              "TARGET DATA" >>
-                  pure(OmpIfClause::DirectiveNameModifier::TargetData) ||
-              "TARGET UPDATE" >>
-                  pure(OmpIfClause::DirectiveNameModifier::TargetUpdate) ||
-              "TARGET" >> pure(OmpIfClause::DirectiveNameModifier::Target) ||
-              "TASK"_id >> pure(OmpIfClause::DirectiveNameModifier::Task) ||
-              "TASKLOOP" >> pure(OmpIfClause::DirectiveNameModifier::Taskloop)) /
+    maybe(
+        ("PARALLEL" >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
+            "TARGET ENTER DATA" >>
+                pure(OmpIfClause::DirectiveNameModifier::TargetEnterData) ||
+            "TARGET EXIT DATA" >>
+                pure(OmpIfClause::DirectiveNameModifier::TargetExitData) ||
+            "TARGET DATA" >>
+                pure(OmpIfClause::DirectiveNameModifier::TargetData) ||
+            "TARGET UPDATE" >>
+                pure(OmpIfClause::DirectiveNameModifier::TargetUpdate) ||
+            "TARGET" >> pure(OmpIfClause::DirectiveNameModifier::Target) ||
+            "TASK"_id >> pure(OmpIfClause::DirectiveNameModifier::Task) ||
+            "TASKLOOP" >> pure(OmpIfClause::DirectiveNameModifier::Taskloop)) /
         ":"),
     scalarLogicalExpr))
 
@@ -173,8 +181,8 @@ TYPE_PARSER("ALIGNED" >>
                          (parenthesized(Parser<OmpObjectList>{})))) ||
     "DEFAULT"_id >>
         construct<OmpClause>(parenthesized(Parser<OmpDefaultClause>{})) ||
-    "DEFAULTMAP" >> construct<OmpClause>(construct<OmpClause::Defaultmap>(
-                        "( TOFROM : SCALAR )"_tok)) ||
+    "DEFAULTMAP" >>
+        construct<OmpClause>(parenthesized(Parser<OmpDefaultmapClause>{})) ||
     "DEPEND" >>
         construct<OmpClause>(parenthesized(Parser<OmpDependClause>{})) ||
     "DEVICE" >> construct<OmpClause>(construct<OmpClause::Device>(

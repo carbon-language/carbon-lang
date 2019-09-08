@@ -1853,8 +1853,12 @@ public:
     return true;
   }
   void Post(const OmpProcBindClause &) { Put(")"); }
-  void Before(const OmpClause::Defaultmap &) {
-    Word("DEFAULTMAP(TOFROM:SCALAR)");
+  void Unparse(const OmpDefaultmapClause &x) {
+    Word("DEFAULTMAP(");
+    Walk(std::get<OmpDefaultmapClause::ImplicitBehavior>(x.t));
+    Walk(":",
+        std::get<std::optional<OmpDefaultmapClause::VariableCategory>>(x.t));
+    Word(")");
   }
   void Before(const OmpClause::Inbranch &) { Word("INBRANCH"); }
   void Before(const OmpClause::Mergeable &) { Word("MERGEABLE"); }
@@ -2407,6 +2411,8 @@ public:
   WALK_NESTED_ENUM(UseStmt, ModuleNature)  // R1410
   WALK_NESTED_ENUM(OmpProcBindClause, Type)  // OMP PROC_BIND
   WALK_NESTED_ENUM(OmpDefaultClause, Type)  // OMP DEFAULT
+  WALK_NESTED_ENUM(OmpDefaultmapClause, ImplicitBehavior)  // OMP DEFAULTMAP
+  WALK_NESTED_ENUM(OmpDefaultmapClause, VariableCategory)  // OMP DEFAULTMAP
   WALK_NESTED_ENUM(OmpScheduleModifierType, ModType)  // OMP schedule-modifier
   WALK_NESTED_ENUM(OmpLinearModifier, Type)  // OMP linear-modifier
   WALK_NESTED_ENUM(OmpDependenceType, Type)  // OMP dependence-type

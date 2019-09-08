@@ -674,9 +674,6 @@ void OmpStructureChecker::Enter(const parser::OmpClause &x) {
 void OmpStructureChecker::Enter(const parser::OmpNowait &) {
   CheckAllowed(OmpClause::NOWAIT);
 }
-void OmpStructureChecker::Enter(const parser::OmpClause::Defaultmap &) {
-  CheckAllowed(OmpClause::DEFAULTMAP);
-}
 void OmpStructureChecker::Enter(const parser::OmpClause::Inbranch &) {
   CheckAllowed(OmpClause::INBRANCH);
 }
@@ -809,6 +806,9 @@ void OmpStructureChecker::Enter(const parser::OmpAlignedClause &x) {
 }
 void OmpStructureChecker::Enter(const parser::OmpDefaultClause &) {
   CheckAllowed(OmpClause::DEFAULT);
+}
+void OmpStructureChecker::Enter(const parser::OmpDefaultmapClause &) {
+  CheckAllowed(OmpClause::DEFAULTMAP);
 }
 void OmpStructureChecker::Enter(const parser::OmpDependClause &) {
   CheckAllowed(OmpClause::DEPEND);
