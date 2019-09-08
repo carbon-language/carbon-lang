@@ -413,6 +413,9 @@ def AVX512_512_SETALLONES : I<0, Pseudo, (outs VR512:$dst), (ins), "",
 }
 
 let Predicates = [HasAVX512] in {
+def : Pat<(v64i8 immAllZerosV), (AVX512_512_SET0)>;
+def : Pat<(v32i16 immAllZerosV), (AVX512_512_SET0)>;
+def : Pat<(v8i64 immAllZerosV), (AVX512_512_SET0)>;
 def : Pat<(v16f32 immAllZerosV), (AVX512_512_SET0)>;
 def : Pat<(v8f64 immAllZerosV), (AVX512_512_SET0)>;
 }
@@ -442,8 +445,14 @@ def AVX512_256_SET0 : I<0, Pseudo, (outs VR256X:$dst), (ins), "",
 }
 
 let Predicates = [HasAVX512] in {
+def : Pat<(v8i16 immAllZerosV), (AVX512_128_SET0)>;
+def : Pat<(v16i8 immAllZerosV), (AVX512_128_SET0)>;
+def : Pat<(v2i64 immAllZerosV), (AVX512_128_SET0)>;
 def : Pat<(v4f32 immAllZerosV), (AVX512_128_SET0)>;
 def : Pat<(v2f64 immAllZerosV), (AVX512_128_SET0)>;
+def : Pat<(v32i8 immAllZerosV), (AVX512_256_SET0)>;
+def : Pat<(v16i16 immAllZerosV), (AVX512_256_SET0)>;
+def : Pat<(v4i64 immAllZerosV), (AVX512_256_SET0)>;
 def : Pat<(v8f32 immAllZerosV), (AVX512_256_SET0)>;
 def : Pat<(v4f64 immAllZerosV), (AVX512_256_SET0)>;
 }

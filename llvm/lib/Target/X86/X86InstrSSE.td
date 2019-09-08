@@ -134,7 +134,10 @@ def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
 }
 
 let Predicates = [NoAVX512] in {
+def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
+def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
 def : Pat<(v4i32 immAllZerosV), (V_SET0)>;
+def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
 def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
 }
 
@@ -150,6 +153,9 @@ def AVX_SET0 : I<0, Pseudo, (outs VR256:$dst), (ins), "",
 }
 
 let Predicates = [NoAVX512] in {
+def : Pat<(v32i8 immAllZerosV), (AVX_SET0)>;
+def : Pat<(v16i16 immAllZerosV), (AVX_SET0)>;
+def : Pat<(v4i64 immAllZerosV), (AVX_SET0)>;
 def : Pat<(v8f32 immAllZerosV), (AVX_SET0)>;
 def : Pat<(v4f64 immAllZerosV), (AVX_SET0)>;
 }
