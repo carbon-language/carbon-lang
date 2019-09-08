@@ -35944,7 +35944,8 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
     CondCode = ISD::CondCode::SETNE;
   } else {
     // all_of -> MOVMSK == ((1 << NumElts) - 1)
-    CmpC = DAG.getConstant((1ULL << NumElts) - 1, DL, CmpVT);
+    CmpC = DAG.getConstant(APInt::getLowBitsSet(CmpVT.getSizeInBits(), NumElts),
+                           DL, CmpVT);
     CondCode = ISD::CondCode::SETEQ;
   }
 

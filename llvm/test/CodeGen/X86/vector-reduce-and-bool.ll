@@ -866,7 +866,7 @@ define i1 @trunc_v64i8_v64i1(<64 x i8>) {
 ; AVX512BW-NEXT:    vpsllw $7, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpmovb2m %zmm0, %k0
 ; AVX512BW-NEXT:    kortestq %k0, %k0
-; AVX512BW-NEXT:    sete %al
+; AVX512BW-NEXT:    setb %al
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
@@ -875,7 +875,7 @@ define i1 @trunc_v64i8_v64i1(<64 x i8>) {
 ; AVX512VL-NEXT:    vpsllw $7, %zmm0, %zmm0
 ; AVX512VL-NEXT:    vpmovb2m %zmm0, %k0
 ; AVX512VL-NEXT:    kortestq %k0, %k0
-; AVX512VL-NEXT:    sete %al
+; AVX512VL-NEXT:    setb %al
 ; AVX512VL-NEXT:    vzeroupper
 ; AVX512VL-NEXT:    retq
   %a = trunc <64 x i8> %0 to <64 x i1>
@@ -1744,7 +1744,7 @@ define i1 @icmp_v64i8_v64i1(<64 x i8>) {
 ; AVX512BW:       # %bb.0:
 ; AVX512BW-NEXT:    vptestnmb %zmm0, %zmm0, %k0
 ; AVX512BW-NEXT:    kortestq %k0, %k0
-; AVX512BW-NEXT:    sete %al
+; AVX512BW-NEXT:    setb %al
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
@@ -1752,7 +1752,7 @@ define i1 @icmp_v64i8_v64i1(<64 x i8>) {
 ; AVX512VL:       # %bb.0:
 ; AVX512VL-NEXT:    vptestnmb %zmm0, %zmm0, %k0
 ; AVX512VL-NEXT:    kortestq %k0, %k0
-; AVX512VL-NEXT:    sete %al
+; AVX512VL-NEXT:    setb %al
 ; AVX512VL-NEXT:    vzeroupper
 ; AVX512VL-NEXT:    retq
   %a = icmp eq <64 x i8> %0, zeroinitializer
