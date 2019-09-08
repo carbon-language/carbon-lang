@@ -655,12 +655,12 @@ static void collectCallSiteParameters(const MachineInstr *CallMI,
     unsigned Reg = Defs[0];
 
     if (auto ParamValue = TII->describeLoadedValue(*I)) {
-      if (ParamValue->first->isImm()) {
-        unsigned Val = ParamValue->first->getImm();
+      if (ParamValue->first.isImm()) {
+        unsigned Val = ParamValue->first.getImm();
         DbgValueLoc DbgLocVal(ParamValue->second, Val);
         finishCallSiteParam(DbgLocVal, Reg);
-      } else if (ParamValue->first->isReg()) {
-        Register RegLoc = ParamValue->first->getReg();
+      } else if (ParamValue->first.isReg()) {
+        Register RegLoc = ParamValue->first.getReg();
         unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
         Register FP = TRI->getFrameRegister(*MF);
         bool IsSPorFP = (RegLoc == SP) || (RegLoc == FP);

@@ -7545,7 +7545,7 @@ X86InstrInfo::describeLoadedValue(const MachineInstr &MI) const {
     DIExpression::appendOffset(Ops, Offset);
     Expr = DIExpression::get(MI.getMF()->getFunction().getContext(), Ops);
 
-    return ParamLoadedValue(Op, Expr);;
+    return ParamLoadedValue(*Op, Expr);;
   }
   default:
     return TargetInstrInfo::describeLoadedValue(MI);
