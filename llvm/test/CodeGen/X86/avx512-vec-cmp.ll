@@ -1101,20 +1101,12 @@ define i16 @pcmpeq_mem_2(<16 x i32> %a, <16 x i32>* %b) {
 define <2 x i64> @PR41066(<2 x i64> %t0, <2 x double> %x, <2 x double> %y) {
 ; AVX512-LABEL: PR41066:
 ; AVX512:       ## %bb.0:
-; AVX512-NEXT:    ## kill: def $xmm2 killed $xmm2 def $zmm2
-; AVX512-NEXT:    ## kill: def $xmm1 killed $xmm1 def $zmm1
-; AVX512-NEXT:    vcmpltpd %zmm1, %zmm2, %k1 ## encoding: [0x62,0xf1,0xed,0x48,0xc2,0xc9,0x01]
-; AVX512-NEXT:    vpxor %xmm0, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xef,0xc0]
-; AVX512-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z} ## encoding: [0x62,0xf1,0xfd,0xc9,0x6f,0xc0]
-; AVX512-NEXT:    ## kill: def $xmm0 killed $xmm0 killed $zmm0
-; AVX512-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
+; AVX512-NEXT:    vxorps %xmm0, %xmm0, %xmm0 ## encoding: [0xc5,0xf8,0x57,0xc0]
 ; AVX512-NEXT:    retq ## encoding: [0xc3]
 ;
 ; SKX-LABEL: PR41066:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vcmpltpd %xmm1, %xmm2, %k1 ## encoding: [0x62,0xf1,0xed,0x08,0xc2,0xc9,0x01]
-; SKX-NEXT:    vpxor %xmm0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xef,0xc0]
-; SKX-NEXT:    vmovdqa64 %xmm0, %xmm0 {%k1} {z} ## encoding: [0x62,0xf1,0xfd,0x89,0x6f,0xc0]
+; SKX-NEXT:    vxorps %xmm0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf8,0x57,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
   %t1 = fcmp ogt <2 x double> %x, %y
   %t2 = select <2 x i1> %t1, <2 x i64> <i64 undef, i64 0>, <2 x i64> zeroinitializer
