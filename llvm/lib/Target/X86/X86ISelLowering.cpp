@@ -22706,8 +22706,16 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return false;
   };
   auto isRoundModeSAE = [](SDValue Rnd) {
-    if (auto *C = dyn_cast<ConstantSDNode>(Rnd))
-      return C->getAPIntValue() == X86::STATIC_ROUNDING::NO_EXC;
+    if (auto *C = dyn_cast<ConstantSDNode>(Rnd)) {
+      unsigned RC = C->getZExtValue();
+      if (RC & X86::STATIC_ROUNDING::NO_EXC) {
+        // Clear the NO_EXC bit and check remaining bits.
+        RC ^= X86::STATIC_ROUNDING::NO_EXC;
+        // As a convenience we allow no other bits or explicitly
+        // current direction.
+        return RC == 0 || RC == X86::STATIC_ROUNDING::CUR_DIRECTION;
+      }
+    }
 
     return false;
   };
