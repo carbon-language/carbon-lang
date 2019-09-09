@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(burnside)
-add_subdirectory(common)
-add_subdirectory(decimal)
-add_subdirectory(evaluate)
-add_subdirectory(parser)
-add_subdirectory(semantics)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+
+add_library(FortranBurnside
+  flattened.cc
+)
+
+install (TARGETS FortranBurnside
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
