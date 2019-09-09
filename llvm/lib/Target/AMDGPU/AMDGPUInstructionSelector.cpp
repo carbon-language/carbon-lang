@@ -1289,11 +1289,9 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I) {
     return selectImpl(I, *CoverageInfo);
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB:
-    if (selectG_ADD_SUB(I))
+    if (selectImpl(I, *CoverageInfo))
       return true;
-    LLVM_FALLTHROUGH;
-  default:
-    return selectImpl(I, *CoverageInfo);
+    return selectG_ADD_SUB(I);
   case TargetOpcode::G_INTTOPTR:
   case TargetOpcode::G_BITCAST:
     return selectCOPY(I);
@@ -1355,6 +1353,8 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I) {
     // is checking for G_CONSTANT
     I.setDesc(TII.get(AMDGPU::ATOMIC_FENCE));
     return true;
+  default:
+    return selectImpl(I, *CoverageInfo);
   }
   return false;
 }
