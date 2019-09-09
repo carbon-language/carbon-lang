@@ -628,6 +628,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::FABS , MVT::f128, Custom);
       setOperationAction(ISD::FNEG , MVT::f128, Custom);
       setOperationAction(ISD::FCOPYSIGN, MVT::f128, Custom);
+
+      addLegalFPImmediate(APFloat::getZero(APFloat::IEEEquad())); // xorps
     }
 
     addRegisterClass(MVT::f80, &X86::RFP80RegClass);

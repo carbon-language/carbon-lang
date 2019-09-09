@@ -680,6 +680,57 @@ entry:
   ret i32 %conv
 }
 
+
+define i32 @TestConst128Zero(fp128 %v) nounwind {
+; X64-SSE-LABEL: TestConst128Zero:
+; X64-SSE:       # %bb.0: # %entry
+; X64-SSE-NEXT:    pushq %rax
+; X64-SSE-NEXT:    xorps %xmm1, %xmm1
+; X64-SSE-NEXT:    callq __gttf2
+; X64-SSE-NEXT:    xorl %ecx, %ecx
+; X64-SSE-NEXT:    testl %eax, %eax
+; X64-SSE-NEXT:    setg %cl
+; X64-SSE-NEXT:    movl %ecx, %eax
+; X64-SSE-NEXT:    popq %rcx
+; X64-SSE-NEXT:    retq
+;
+; X32-LABEL: TestConst128Zero:
+; X32:       # %bb.0: # %entry
+; X32-NEXT:    subl $12, %esp
+; X32-NEXT:    pushl $0
+; X32-NEXT:    pushl $0
+; X32-NEXT:    pushl $0
+; X32-NEXT:    pushl $0
+; X32-NEXT:    pushl {{[0-9]+}}(%esp)
+; X32-NEXT:    pushl {{[0-9]+}}(%esp)
+; X32-NEXT:    pushl {{[0-9]+}}(%esp)
+; X32-NEXT:    pushl {{[0-9]+}}(%esp)
+; X32-NEXT:    calll __gttf2
+; X32-NEXT:    addl $32, %esp
+; X32-NEXT:    xorl %ecx, %ecx
+; X32-NEXT:    testl %eax, %eax
+; X32-NEXT:    setg %cl
+; X32-NEXT:    movl %ecx, %eax
+; X32-NEXT:    addl $12, %esp
+; X32-NEXT:    retl
+;
+; X64-AVX-LABEL: TestConst128Zero:
+; X64-AVX:       # %bb.0: # %entry
+; X64-AVX-NEXT:    pushq %rax
+; X64-AVX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; X64-AVX-NEXT:    callq __gttf2
+; X64-AVX-NEXT:    xorl %ecx, %ecx
+; X64-AVX-NEXT:    testl %eax, %eax
+; X64-AVX-NEXT:    setg %cl
+; X64-AVX-NEXT:    movl %ecx, %eax
+; X64-AVX-NEXT:    popq %rcx
+; X64-AVX-NEXT:    retq
+entry:
+  %cmp = fcmp ogt fp128 %v, 0xL00000000000000000000000000000000
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}
+
 ; C code:
 ;  struct TestBits_ieee_ext {
 ;    unsigned v1;
@@ -833,7 +884,7 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X64-SSE-LABEL: TestTruncCopysign:
 ; X64-SSE:       # %bb.0: # %entry
 ; X64-SSE-NEXT:    cmpl $50001, %edi # imm = 0xC351
-; X64-SSE-NEXT:    jl .LBB17_2
+; X64-SSE-NEXT:    jl .LBB18_2
 ; X64-SSE-NEXT:  # %bb.1: # %if.then
 ; X64-SSE-NEXT:    pushq %rax
 ; X64-SSE-NEXT:    callq __trunctfdf2
@@ -842,7 +893,7 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X64-SSE-NEXT:    orps %xmm1, %xmm0
 ; X64-SSE-NEXT:    callq __extenddftf2
 ; X64-SSE-NEXT:    addq $8, %rsp
-; X64-SSE-NEXT:  .LBB17_2: # %cleanup
+; X64-SSE-NEXT:  .LBB18_2: # %cleanup
 ; X64-SSE-NEXT:    retq
 ;
 ; X32-LABEL: TestTruncCopysign:
@@ -856,7 +907,7 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %edi
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
 ; X32-NEXT:    cmpl $50001, {{[0-9]+}}(%esp) # imm = 0xC351
-; X32-NEXT:    jl .LBB17_4
+; X32-NEXT:    jl .LBB18_4
 ; X32-NEXT:  # %bb.1: # %if.then
 ; X32-NEXT:    pushl %eax
 ; X32-NEXT:    pushl %ecx
@@ -868,11 +919,11 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X32-NEXT:    testb $-128, {{[0-9]+}}(%esp)
 ; X32-NEXT:    flds {{\.LCPI.*}}
 ; X32-NEXT:    flds {{\.LCPI.*}}
-; X32-NEXT:    jne .LBB17_3
+; X32-NEXT:    jne .LBB18_3
 ; X32-NEXT:  # %bb.2: # %if.then
 ; X32-NEXT:    fstp %st(1)
 ; X32-NEXT:    fldz
-; X32-NEXT:  .LBB17_3: # %if.then
+; X32-NEXT:  .LBB18_3: # %if.then
 ; X32-NEXT:    fstp %st(0)
 ; X32-NEXT:    subl $16, %esp
 ; X32-NEXT:    leal {{[0-9]+}}(%esp), %eax
@@ -884,7 +935,7 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %edi
-; X32-NEXT:  .LBB17_4: # %cleanup
+; X32-NEXT:  .LBB18_4: # %cleanup
 ; X32-NEXT:    movl %edx, (%esi)
 ; X32-NEXT:    movl %edi, 4(%esi)
 ; X32-NEXT:    movl %ecx, 8(%esi)
@@ -898,7 +949,7 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X64-AVX-LABEL: TestTruncCopysign:
 ; X64-AVX:       # %bb.0: # %entry
 ; X64-AVX-NEXT:    cmpl $50001, %edi # imm = 0xC351
-; X64-AVX-NEXT:    jl .LBB17_2
+; X64-AVX-NEXT:    jl .LBB18_2
 ; X64-AVX-NEXT:  # %bb.1: # %if.then
 ; X64-AVX-NEXT:    pushq %rax
 ; X64-AVX-NEXT:    callq __trunctfdf2
@@ -908,7 +959,7 @@ define fp128 @TestTruncCopysign(fp128 %x, i32 %n) nounwind {
 ; X64-AVX-NEXT:    vorps %xmm0, %xmm1, %xmm0
 ; X64-AVX-NEXT:    callq __extenddftf2
 ; X64-AVX-NEXT:    addq $8, %rsp
-; X64-AVX-NEXT:  .LBB17_2: # %cleanup
+; X64-AVX-NEXT:  .LBB18_2: # %cleanup
 ; X64-AVX-NEXT:    retq
 entry:
   %cmp = icmp sgt i32 %n, 50000
@@ -928,7 +979,7 @@ cleanup:                                          ; preds = %entry, %if.then
 define i1 @PR34866(i128 %x) nounwind {
 ; X64-SSE-LABEL: PR34866:
 ; X64-SSE:       # %bb.0:
-; X64-SSE-NEXT:    movaps {{.*}}(%rip), %xmm0
+; X64-SSE-NEXT:    xorps %xmm0, %xmm0
 ; X64-SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; X64-SSE-NEXT:    xorq -{{[0-9]+}}(%rsp), %rsi
 ; X64-SSE-NEXT:    xorq -{{[0-9]+}}(%rsp), %rdi
@@ -948,7 +999,7 @@ define i1 @PR34866(i128 %x) nounwind {
 ;
 ; X64-AVX-LABEL: PR34866:
 ; X64-AVX:       # %bb.0:
-; X64-AVX-NEXT:    vmovaps {{.*}}(%rip), %xmm0
+; X64-AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X64-AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
 ; X64-AVX-NEXT:    xorq -{{[0-9]+}}(%rsp), %rsi
 ; X64-AVX-NEXT:    xorq -{{[0-9]+}}(%rsp), %rdi
@@ -963,7 +1014,7 @@ define i1 @PR34866(i128 %x) nounwind {
 define i1 @PR34866_commute(i128 %x) nounwind {
 ; X64-SSE-LABEL: PR34866_commute:
 ; X64-SSE:       # %bb.0:
-; X64-SSE-NEXT:    movaps {{.*}}(%rip), %xmm0
+; X64-SSE-NEXT:    xorps %xmm0, %xmm0
 ; X64-SSE-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
 ; X64-SSE-NEXT:    xorq -{{[0-9]+}}(%rsp), %rsi
 ; X64-SSE-NEXT:    xorq -{{[0-9]+}}(%rsp), %rdi
@@ -983,7 +1034,7 @@ define i1 @PR34866_commute(i128 %x) nounwind {
 ;
 ; X64-AVX-LABEL: PR34866_commute:
 ; X64-AVX:       # %bb.0:
-; X64-AVX-NEXT:    vmovaps {{.*}}(%rip), %xmm0
+; X64-AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; X64-AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
 ; X64-AVX-NEXT:    xorq -{{[0-9]+}}(%rsp), %rsi
 ; X64-AVX-NEXT:    xorq -{{[0-9]+}}(%rsp), %rdi

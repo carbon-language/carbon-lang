@@ -464,7 +464,9 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
   def AVX512_FsFLD0SS : I<0, Pseudo, (outs FR32X:$dst), (ins), "",
                           [(set FR32X:$dst, fp32imm0)]>;
   def AVX512_FsFLD0SD : I<0, Pseudo, (outs FR64X:$dst), (ins), "",
-                          [(set FR64X:$dst, fpimm0)]>;
+                          [(set FR64X:$dst, fp64imm0)]>;
+  def AVX512_FsFLD0F128 : I<0, Pseudo, (outs VR128X:$dst), (ins), "",
+                            [(set VR128X:$dst, fp128imm0)]>;
 }
 
 //===----------------------------------------------------------------------===//

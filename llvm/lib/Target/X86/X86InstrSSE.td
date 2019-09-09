@@ -115,7 +115,9 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
   def FsFLD0SS : I<0, Pseudo, (outs FR32:$dst), (ins), "",
                    [(set FR32:$dst, fp32imm0)]>, Requires<[HasSSE1, NoAVX512]>;
   def FsFLD0SD : I<0, Pseudo, (outs FR64:$dst), (ins), "",
-                   [(set FR64:$dst, fpimm0)]>, Requires<[HasSSE2, NoAVX512]>;
+                   [(set FR64:$dst, fp64imm0)]>, Requires<[HasSSE2, NoAVX512]>;
+  def FsFLD0F128 : I<0, Pseudo, (outs VR128:$dst), (ins), "",
+                     [(set VR128:$dst, fp128imm0)]>, Requires<[HasSSE1, NoAVX512]>;
 }
 
 //===----------------------------------------------------------------------===//
