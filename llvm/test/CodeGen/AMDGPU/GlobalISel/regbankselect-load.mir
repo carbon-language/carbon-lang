@@ -1,5 +1,5 @@
-# RUN: llc -march=amdgcn -run-pass=regbankselect %s -verify-machineinstrs -o - -regbankselect-fast | FileCheck %s
-# RUN: llc -march=amdgcn -run-pass=regbankselect %s -verify-machineinstrs -o - -regbankselect-greedy | FileCheck %s
+# RUN: llc -mtriple=amdgcn-amd-amdhsa -run-pass=regbankselect %s -verify-machineinstrs -o - -regbankselect-fast | FileCheck %s
+# RUN: llc -mtriple=amdgcn-amd-amdhsa -run-pass=regbankselect %s -verify-machineinstrs -o - -regbankselect-greedy | FileCheck %s
 
 --- |
   define amdgpu_kernel void @load_global_v8i32_non_uniform(<8 x i32> addrspace(1)* %in) {
@@ -65,6 +65,9 @@
   define amdgpu_kernel void @extload_global_i8_to_i32_uniform() { ret void }
   define amdgpu_kernel void @extload_constant_i16_to_i32_uniform() { ret void }
   define amdgpu_kernel void @extload_global_i16_to_i32_uniform() { ret void }
+  define amdgpu_kernel void @load_constant_i32_uniform_align4() {ret void}
+  define amdgpu_kernel void @load_constant_i32_uniform_align2() {ret void}
+  define amdgpu_kernel void @load_constant_i32_uniform_align1() {ret void}
 
   declare i32 @llvm.amdgcn.workitem.id.x() #0
   attributes #0 = { nounwind readnone }
@@ -585,4 +588,50 @@ body: |
 
     %0:_(p4) = COPY $sgpr0_sgpr1
     %1:_(s32) = G_LOAD %0 :: (load 2, addrspace 1, align 2)
+...
+
+---
+name: load_constant_i32_uniform_align4
+legalized: true
+
+body: |
+  bb.0:
+    liveins: $sgpr0_sgpr1
+    ; CHECK-LABEL: name: load_constant_i32_uniform_align4
+    ; CHECK: %0:sgpr(p4) = COPY $sgpr0_sgpr1
+    ; CHECK: %1:sgpr(s32) = G_LOAD %0(p4) :: (load 4, addrspace 4)
+    %0:_(p4) = COPY $sgpr0_sgpr1
+    %1:_(s32) = G_LOAD %0 :: (load 4, addrspace 4, align 4)
+...
+
+---
+name: load_constant_i32_uniform_align2
+legalized: true
+
+body: |
+  bb.0:
+    liveins: $sgpr0_sgpr1
+    ; CHECK-LABEL: name: load_constant_i32_uniform_align2
+    ; CHECK: %0:sgpr(p4) = COPY $sgpr0_sgpr1
+    ; CHECK: %2:vgpr(p4) = COPY %0(p4)
+    ; CHECK: %1:vgpr(s32) = G_LOAD %2(p4) :: (load 4, align 2, addrspace 4)
+
+    %0:_(p4) = COPY $sgpr0_sgpr1
+    %1:_(s32) = G_LOAD %0 :: (load 4, addrspace 4, align 2)
+...
+
+---
+name: load_constant_i32_uniform_align1
+legalized: true
+
+body: |
+  bb.0:
+    liveins: $sgpr0_sgpr1
+
+    ; CHECK-LABEL: name: load_constant_i32_uniform_align1
+    ; CHECK: %0:sgpr(p4) = COPY $sgpr0_sgpr1
+    ; CHECK: %2:vgpr(p4) = COPY %0(p4)
+    ; CHECK: %1:vgpr(s32) = G_LOAD %2(p4) :: (load 4, align 1, addrspace 4)
+    %0:_(p4) = COPY $sgpr0_sgpr1
+    %1:_(s32) = G_LOAD %0 :: (load 4, addrspace 4, align 1)
 ...
