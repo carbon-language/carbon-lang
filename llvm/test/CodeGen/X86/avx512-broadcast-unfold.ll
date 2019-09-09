@@ -2079,12 +2079,13 @@ define void @bcast_unfold_fmax_v4f32(float* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmax_v4f32:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    vbroadcastss {{.*#+}} xmm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB60_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %xmm0
-; CHECK-NEXT:    vmaxps {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; CHECK-NEXT:    vmovups %xmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %xmm1
+; CHECK-NEXT:    vmaxps %xmm0, %xmm1, %xmm1
+; CHECK-NEXT:    vmovups %xmm1, 4096(%rdi,%rax)
 ; CHECK-NEXT:    addq $16, %rax
 ; CHECK-NEXT:    jne .LBB60_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2113,12 +2114,13 @@ define void @bcast_unfold_fmax_v8f32(float* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmax_v8f32:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    vbroadcastss {{.*#+}} ymm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB61_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %ymm0
-; CHECK-NEXT:    vmaxps {{.*}}(%rip){1to8}, %ymm0, %ymm0
-; CHECK-NEXT:    vmovups %ymm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %ymm1
+; CHECK-NEXT:    vmaxps %ymm0, %ymm1, %ymm1
+; CHECK-NEXT:    vmovups %ymm1, 4096(%rdi,%rax)
 ; CHECK-NEXT:    addq $32, %rax
 ; CHECK-NEXT:    jne .LBB61_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2148,12 +2150,13 @@ define void @bcast_unfold_fmax_v16f32(float* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmax_v16f32:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    vbroadcastss {{.*#+}} zmm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB62_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %zmm0
-; CHECK-NEXT:    vmaxps {{.*}}(%rip){1to16}, %zmm0, %zmm0
-; CHECK-NEXT:    vmovups %zmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %zmm1
+; CHECK-NEXT:    vmaxps %zmm0, %zmm1, %zmm1
+; CHECK-NEXT:    vmovups %zmm1, 4096(%rdi,%rax)
 ; CHECK-NEXT:    addq $64, %rax
 ; CHECK-NEXT:    jne .LBB62_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2218,12 +2221,13 @@ define void @bcast_unfold_fmax_v4f64(double* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmax_v4f64:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    vbroadcastsd {{.*#+}} ymm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB64_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %ymm0
-; CHECK-NEXT:    vmaxpd {{.*}}(%rip){1to4}, %ymm0, %ymm0
-; CHECK-NEXT:    vmovupd %ymm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %ymm1
+; CHECK-NEXT:    vmaxpd %ymm0, %ymm1, %ymm1
+; CHECK-NEXT:    vmovupd %ymm1, 8192(%rdi,%rax)
 ; CHECK-NEXT:    addq $32, %rax
 ; CHECK-NEXT:    jne .LBB64_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2253,12 +2257,13 @@ define void @bcast_unfold_fmax_v8f64(double* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmax_v8f64:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    vbroadcastsd {{.*#+}} zmm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB65_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %zmm0
-; CHECK-NEXT:    vmaxpd {{.*}}(%rip){1to8}, %zmm0, %zmm0
-; CHECK-NEXT:    vmovupd %zmm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %zmm1
+; CHECK-NEXT:    vmaxpd %zmm0, %zmm1, %zmm1
+; CHECK-NEXT:    vmovupd %zmm1, 8192(%rdi,%rax)
 ; CHECK-NEXT:    addq $64, %rax
 ; CHECK-NEXT:    jne .LBB65_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2288,12 +2293,13 @@ define void @bcast_unfold_fmin_v4f32(float* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmin_v4f32:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    vbroadcastss {{.*#+}} xmm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB66_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %xmm0
-; CHECK-NEXT:    vminps {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; CHECK-NEXT:    vmovups %xmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %xmm1
+; CHECK-NEXT:    vminps %xmm0, %xmm1, %xmm1
+; CHECK-NEXT:    vmovups %xmm1, 4096(%rdi,%rax)
 ; CHECK-NEXT:    addq $16, %rax
 ; CHECK-NEXT:    jne .LBB66_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2322,12 +2328,13 @@ define void @bcast_unfold_fmin_v8f32(float* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmin_v8f32:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    vbroadcastss {{.*#+}} ymm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB67_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %ymm0
-; CHECK-NEXT:    vminps {{.*}}(%rip){1to8}, %ymm0, %ymm0
-; CHECK-NEXT:    vmovups %ymm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %ymm1
+; CHECK-NEXT:    vminps %ymm0, %ymm1, %ymm1
+; CHECK-NEXT:    vmovups %ymm1, 4096(%rdi,%rax)
 ; CHECK-NEXT:    addq $32, %rax
 ; CHECK-NEXT:    jne .LBB67_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2357,12 +2364,13 @@ define void @bcast_unfold_fmin_v16f32(float* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmin_v16f32:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    vbroadcastss {{.*#+}} zmm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB68_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %zmm0
-; CHECK-NEXT:    vminps {{.*}}(%rip){1to16}, %zmm0, %zmm0
-; CHECK-NEXT:    vmovups %zmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %zmm1
+; CHECK-NEXT:    vminps %zmm0, %zmm1, %zmm1
+; CHECK-NEXT:    vmovups %zmm1, 4096(%rdi,%rax)
 ; CHECK-NEXT:    addq $64, %rax
 ; CHECK-NEXT:    jne .LBB68_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2427,12 +2435,13 @@ define void @bcast_unfold_fmin_v4f64(double* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmin_v4f64:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    vbroadcastsd {{.*#+}} ymm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB70_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %ymm0
-; CHECK-NEXT:    vminpd {{.*}}(%rip){1to4}, %ymm0, %ymm0
-; CHECK-NEXT:    vmovupd %ymm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %ymm1
+; CHECK-NEXT:    vminpd %ymm0, %ymm1, %ymm1
+; CHECK-NEXT:    vmovupd %ymm1, 8192(%rdi,%rax)
 ; CHECK-NEXT:    addq $32, %rax
 ; CHECK-NEXT:    jne .LBB70_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
@@ -2462,12 +2471,13 @@ define void @bcast_unfold_fmin_v8f64(double* %arg) {
 ; CHECK-LABEL: bcast_unfold_fmin_v8f64:
 ; CHECK:       # %bb.0: # %bb
 ; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    vbroadcastsd {{.*#+}} zmm0 = [2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0,2.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB71_1: # %bb1
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %zmm0
-; CHECK-NEXT:    vminpd {{.*}}(%rip){1to8}, %zmm0, %zmm0
-; CHECK-NEXT:    vmovupd %zmm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    vmovupd 8192(%rdi,%rax), %zmm1
+; CHECK-NEXT:    vminpd %zmm0, %zmm1, %zmm1
+; CHECK-NEXT:    vmovupd %zmm1, 8192(%rdi,%rax)
 ; CHECK-NEXT:    addq $64, %rax
 ; CHECK-NEXT:    jne .LBB71_1
 ; CHECK-NEXT:  # %bb.2: # %bb10
