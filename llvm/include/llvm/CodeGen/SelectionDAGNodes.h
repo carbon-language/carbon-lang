@@ -1361,6 +1361,9 @@ public:
   /// aliasing rules.
   bool isUnordered() const { return MMO->isUnordered(); }
 
+  /// Returns true if the memory operation is neither atomic or volatile.
+  bool isSimple() const { return !isAtomic() && !isVolatile(); }
+
   /// Return the type of the in-memory value.
   EVT getMemoryVT() const { return MemoryVT; }
 
