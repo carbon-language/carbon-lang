@@ -46,12 +46,19 @@ def gi_smrd_sgpr :
     GIComplexOperandMatcher<s64, "selectSmrdSgpr">,
     GIComplexPatternEquiv<SMRDSgpr>;
 
+// FIXME: Why are the atomic versions separated?
 def gi_flat_offset :
     GIComplexOperandMatcher<s64, "selectFlatOffset">,
     GIComplexPatternEquiv<FLATOffset>;
 def gi_flat_offset_signed :
     GIComplexOperandMatcher<s64, "selectFlatOffsetSigned">,
     GIComplexPatternEquiv<FLATOffsetSigned>;
+def gi_flat_atomic :
+    GIComplexOperandMatcher<s64, "selectFlatOffset">,
+    GIComplexPatternEquiv<FLATAtomic>;
+def gi_flat_signed_atomic :
+    GIComplexOperandMatcher<s64, "selectFlatOffsetSigned">,
+    GIComplexPatternEquiv<FLATSignedAtomic>;
 
 def gi_mubuf_scratch_offset :
     GIComplexOperandMatcher<s32, "selectMUBUFScratchOffset">,
@@ -69,6 +76,7 @@ def gi_ds_1addr_1offset :
 // SelectionDAG. The GISel selector can just insert m0 initialization
 // directly before before selecting a glue-less load, so hide this
 // distinction.
+
 def : GINodeEquiv<G_LOAD, AMDGPUld_glue> {
   let CheckMMOIsNonAtomic = 1;
 }
@@ -76,6 +84,11 @@ def : GINodeEquiv<G_LOAD, AMDGPUld_glue> {
 def : GINodeEquiv<G_STORE, AMDGPUst_glue> {
   let CheckMMOIsNonAtomic = 1;
 }
+
+def : GINodeEquiv<G_LOAD, AMDGPUatomic_ld_glue> {
+  bit CheckMMOIsAtomic = 1;
+}
+
 
 
 def : GINodeEquiv<G_ATOMIC_CMPXCHG, atomic_cmp_swap_glue>;

@@ -456,16 +456,16 @@ def load_align16_local_m0 : PatFrag<(ops node:$ptr),
 
 } // End IsLoad = 1
 
-let AddressSpaces = LoadAddress_local.AddrSpaces in {
-
+let IsAtomic = 1, AddressSpaces = LoadAddress_local.AddrSpaces in {
 def atomic_load_32_local_m0 : PatFrag<(ops node:$ptr),
                                       (atomic_load_32_glue node:$ptr)> {
-  let IsAtomic = 1;
+  let MemoryVT = i32;
 }
 def atomic_load_64_local_m0 : PatFrag<(ops node:$ptr),
-                                      (atomic_load_64_glue node:$ptr)> {
-  let IsAtomic = 1;
+                                       (atomic_load_64_glue node:$ptr)> {
+  let MemoryVT = i64;
 }
+
 } // End let AddressSpaces = LoadAddress_local.AddrSpaces
 
 
