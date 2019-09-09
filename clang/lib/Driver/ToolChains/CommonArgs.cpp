@@ -525,6 +525,8 @@ bool tools::addOpenMPRuntime(ArgStringList &CmdArgs, const ToolChain &TC,
   case Driver::OMPRT_IOMP5:
     CmdArgs.push_back("-liomp5");
     break;
+  case Driver::OMPRT_Unknown:
+    break;
   }
 
   if (ForceStaticHostRuntime)
