@@ -353,6 +353,7 @@ Error BitstreamRemarkParser::parseMeta() {
   case BitstreamRemarkContainerType::SeparateRemarksMeta:
     return processSeparateRemarksMetaMeta(MetaHelper);
   }
+  llvm_unreachable("Unknown BitstreamRemarkContainerType enum");
 }
 
 Error BitstreamRemarkParser::processCommonMeta(
