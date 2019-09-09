@@ -11,11 +11,6 @@
 
 #include "../test.h"
 
-void AnnotateIgnoreReadsBegin(const char *f, int l);
-void AnnotateIgnoreReadsEnd(const char *f, int l);
-void AnnotateIgnoreWritesBegin(const char *f, int l);
-void AnnotateIgnoreWritesEnd(const char *f, int l);
-
 static int *global_ptr;
 const mach_vm_size_t alloc_size = sizeof(int);
 
