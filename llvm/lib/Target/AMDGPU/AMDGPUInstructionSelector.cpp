@@ -19,6 +19,7 @@
 #include "AMDGPUTargetMachine.h"
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "SIMachineFunctionInfo.h"
+#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelectorImpl.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
@@ -1564,12 +1565,6 @@ AMDGPUInstructionSelector::selectFlatOffsetSigned(MachineOperand &Root) const {
   return selectFlatOffsetImpl<true>(Root);
 }
 
-// FIXME: Implement
-static bool signBitIsZero(const MachineOperand &Op,
-                          const MachineRegisterInfo &MRI) {
-  return false;
-}
-
 static bool isStackPtrRelative(const MachinePointerInfo &PtrInfo) {
   auto PSV = PtrInfo.V.dyn_cast<const PseudoSourceValue *>();
   return PSV && PSV->isStack();
@@ -1630,7 +1625,7 @@ AMDGPUInstructionSelector::selectMUBUFScratchOffen(MachineOperand &Root) const {
             RHSDef->getOperand(1).getCImm()->getSExtValue();
         if (SIInstrInfo::isLegalMUBUFImmOffset(PossibleOffset) &&
             (!STI.privateMemoryResourceIsRangeChecked() ||
-             signBitIsZero(LHS, MRI))) {
+             KnownBits->signBitIsZero(LHS.getReg()))) {
           if (LHSDef->getOpcode() == AMDGPU::G_FRAME_INDEX)
             FI = LHSDef->getOperand(1).getIndex();
           else
@@ -1680,7 +1675,7 @@ bool AMDGPUInstructionSelector::isDSOffsetLegal(const MachineRegisterInfo &MRI,
 
   // On Southern Islands instruction with a negative base value and an offset
   // don't seem to work.
-  return signBitIsZero(Base, MRI);
+  return KnownBits->signBitIsZero(Base.getReg());
 }
 
 InstructionSelector::ComplexRendererFns
