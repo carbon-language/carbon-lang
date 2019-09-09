@@ -386,9 +386,11 @@ bool CombinerHelper::findPostIndexCandidate(MachineInstr &MI, Register &Addr,
   auto &MF = *MI.getParent()->getParent();
   const auto &TLI = *MF.getSubtarget().getTargetLowering();
 
+#ifndef NDEBUG
   unsigned Opcode = MI.getOpcode();
   assert(Opcode == TargetOpcode::G_LOAD || Opcode == TargetOpcode::G_SEXTLOAD ||
          Opcode == TargetOpcode::G_ZEXTLOAD || Opcode == TargetOpcode::G_STORE);
+#endif
 
   Base = MI.getOperand(1).getReg();
   MachineInstr *BaseDef = MRI.getUniqueVRegDef(Base);
@@ -451,9 +453,11 @@ bool CombinerHelper::findPreIndexCandidate(MachineInstr &MI, Register &Addr,
   auto &MF = *MI.getParent()->getParent();
   const auto &TLI = *MF.getSubtarget().getTargetLowering();
 
+#ifndef NDEBUG
   unsigned Opcode = MI.getOpcode();
   assert(Opcode == TargetOpcode::G_LOAD || Opcode == TargetOpcode::G_SEXTLOAD ||
          Opcode == TargetOpcode::G_ZEXTLOAD || Opcode == TargetOpcode::G_STORE);
+#endif
 
   Addr = MI.getOperand(1).getReg();
   MachineInstr *AddrDef = getOpcodeDef(TargetOpcode::G_GEP, Addr, MRI);
