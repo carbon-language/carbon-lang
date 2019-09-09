@@ -1207,7 +1207,7 @@ bool AMDGPULegalizerInfo::legalizeMinNumMaxNum(
   MachineIRBuilder HelperBuilder(MI);
   GISelObserverWrapper DummyObserver;
   LegalizerHelper Helper(MF, DummyObserver, HelperBuilder);
-  HelperBuilder.setMBB(*MI.getParent());
+  HelperBuilder.setInstr(MI);
   return Helper.lowerFMinNumMaxNum(MI) == LegalizerHelper::Legalized;
 }
 
