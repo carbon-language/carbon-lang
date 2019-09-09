@@ -48,10 +48,10 @@ subroutine do_concurrent_test2(i,j,n,flag)
   type(team_type) :: j
   do concurrent (i = 1:n)
     change team (j)
-!ERROR: call to impure subroutine in DO CONCURRENT not allowed
+!ERROR: call to impure procedure in DO CONCURRENT not allowed
 !ERROR: IEEE_GET_FLAG not allowed in DO CONCURRENT
       call ieee_get_flag(flag, flag2)
-!ERROR: call to impure subroutine in DO CONCURRENT not allowed
+!ERROR: call to impure procedure in DO CONCURRENT not allowed
 !ERROR: IEEE_GET_HALTING_MODE not allowed in DO CONCURRENT
       call ieee_get_halting_mode(flag, halting)
 !ERROR: IEEE_SET_HALTING_MODE not allowed in DO CONCURRENT

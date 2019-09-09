@@ -18,7 +18,7 @@
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK-NOT: image control statement not allowed in DO CONCURRENT
 ! CHECK-NOT: RETURN not allowed in DO CONCURRENT
-! CHECK-NOT: call to impure subroutine in DO CONCURRENT not allowed
+! CHECK-NOT: call to impure procedure in DO CONCURRENT not allowed
 ! CHECK-NOT: IEEE_GET_FLAG not allowed in DO CONCURRENT
 ! CHECK-NOT: ADVANCE specifier not allowed in DO CONCURRENT
 ! CHECK-NOT: SYNC ALL

@@ -47,7 +47,7 @@ module m
     end forall
     ! ERROR: concurrent-header mask expression cannot reference an impure procedure
     do concurrent (j=1:1, impure(j) /= 0) ! C1121
-      ! ERROR: call to impure subroutine in DO CONCURRENT not allowed
+      ! ERROR: call to impure procedure in DO CONCURRENT not allowed
       a(j) = impure(j) ! C1139
     end do
   end subroutine
