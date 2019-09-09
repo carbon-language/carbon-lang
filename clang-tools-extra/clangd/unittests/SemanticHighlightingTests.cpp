@@ -474,7 +474,7 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
         $Macro[[assert]]($Variable[[x]] != $Function[[f]]());
       }
     )cpp",
-    R"cpp(
+      R"cpp(
       struct $Class[[S]] {
         $Primitive[[float]] $Field[[Value]];
         $Class[[S]] *$Field[[Next]];
@@ -488,6 +488,21 @@ TEST(SemanticHighlighting, GetsCorrectTokens) {
         // Highlights references to BindingDecls.
         $Variable[[B1]]++;
       }
+    )cpp",
+      R"cpp(
+      template<class $TemplateParameter[[T]]>
+      class $Class[[A]] {
+        using $TemplateParameter[[TemplateParam1]] = $TemplateParameter[[T]];
+        typedef $TemplateParameter[[T]] $TemplateParameter[[TemplateParam2]];
+        using $Primitive[[IntType]] = $Primitive[[int]];
+
+        // These typedefs are not yet highlighted, their types are complicated.
+        using Pointer = $TemplateParameter[[T]] *;
+        using LVReference = $TemplateParameter[[T]] &;
+        using RVReference = $TemplateParameter[[T]]&&;
+        using Array = $TemplateParameter[[T]]*[3];
+        using MemberPointer = $Primitive[[int]] (A::*)($Primitive[[int]]);
+      };
     )cpp"};
   for (const auto &TestCase : TestCases) {
     checkHighlightings(TestCase);

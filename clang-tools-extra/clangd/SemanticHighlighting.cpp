@@ -15,6 +15,8 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/Type.h"
+#include "clang/AST/TypeLoc.h"
 #include <algorithm>
 
 namespace clang {
@@ -128,13 +130,12 @@ public:
     return true;
   }
 
-  bool VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc &TL) {
-    // TemplateTypeParmTypeLoc does not have a TagDecl in its type ptr.
-    addToken(TL.getBeginLoc(), TL.getDecl());
+  bool VisitTypedefTypeLoc(TypedefTypeLoc TL) {
+    addType(TL.getBeginLoc(), TL.getTypePtr());
     return true;
   }
 
-  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc &TL) {
+  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
     if (const TemplateDecl *TD =
             TL.getTypePtr()->getTemplateName().getAsTemplateDecl())
       addToken(TL.getBeginLoc(), TD);
@@ -187,7 +188,10 @@ private:
     if (TP->isBuiltinType())
       // Builtins must be special cased as they do not have a TagDecl.
       addToken(Loc, HighlightingKind::Primitive);
-    if (const TagDecl *TD = TP->getAsTagDecl())
+    if (auto *TD = dyn_cast<TemplateTypeParmType>(TP))
+      // TemplateTypeParmType also do not have a TagDecl.
+      addToken(Loc, TD->getDecl());
+    if (auto *TD = TP->getAsTagDecl())
       addToken(Loc, TD);
   }
 
