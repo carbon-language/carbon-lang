@@ -18,6 +18,7 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_SEMANTICHIGHLIGHTING_H
 
 #include "Protocol.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 namespace clangd {
@@ -42,6 +43,7 @@ enum class HighlightingKind {
 
   NumKinds,
 };
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, HighlightingKind K);
 
 // Contains all information needed for the highlighting a token.
 struct HighlightingToken {

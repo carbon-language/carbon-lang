@@ -351,6 +351,43 @@ takeLine(ArrayRef<HighlightingToken> AllTokens,
 }
 } // namespace
 
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, HighlightingKind K) {
+  switch (K) {
+  case HighlightingKind::Variable:
+    return OS << "Variable";
+  case HighlightingKind::LocalVariable:
+    return OS << "LocalVariable";
+  case HighlightingKind::Parameter:
+    return OS << "Parameter";
+  case HighlightingKind::Function:
+    return OS << "Function";
+  case HighlightingKind::Method:
+    return OS << "Method";
+  case HighlightingKind::StaticMethod:
+    return OS << "StaticMethod";
+  case HighlightingKind::Field:
+    return OS << "Field";
+  case HighlightingKind::StaticField:
+    return OS << "StaticField";
+  case HighlightingKind::Class:
+    return OS << "Class";
+  case HighlightingKind::Enum:
+    return OS << "Enum";
+  case HighlightingKind::EnumConstant:
+    return OS << "EnumConstant";
+  case HighlightingKind::Namespace:
+    return OS << "Namespace";
+  case HighlightingKind::TemplateParameter:
+    return OS << "TemplateParameter";
+  case HighlightingKind::Primitive:
+    return OS << "Primitive";
+  case HighlightingKind::Macro:
+    return OS << "Macro";
+  case HighlightingKind::NumKinds:
+    llvm_unreachable("NumKinds is not a valid HighlightingKind");
+  }
+}
+
 std::vector<LineHighlightings>
 diffHighlightings(ArrayRef<HighlightingToken> New,
                   ArrayRef<HighlightingToken> Old) {
