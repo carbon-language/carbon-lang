@@ -2358,9 +2358,6 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
       assert(Parser->TemplateParams.size() >= OldNumTemplateParamLists);
       Parser->TemplateParams.dropBack(OldNumTemplateParamLists);
     }
-    void push_back(Node *Param) {
-      Params.push_back(Param);
-    }
   };
 
   // Template parameter table. Like the above, but referenced like "T42_".
@@ -2702,7 +2699,6 @@ AbstractManglingParser<Derived, Alloc>::parseUnnamedTypeName(NameState *State) {
       Node *T = parseTemplateParamDecl();
       if (!T)
         return nullptr;
-      LambdaTemplateParams.push_back(T);
       Names.push_back(T);
     }
     NodeArray TempParams = popTrailingNodeArray(ParamsBegin);
