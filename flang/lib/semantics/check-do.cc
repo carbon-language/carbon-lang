@@ -163,7 +163,7 @@ public:
       // C1139: call to impure procedure
       if (name->symbol && !IsPureProcedure(*name->symbol)) {
         context_.Say(currentStatementSourcePosition_,
-            "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
+            "call to impure procedure in DO CONCURRENT not allowed"_err_en_US);
       }
       if (name->symbol && fromScope(*name->symbol, "ieee_exceptions"s)) {
         if (name->source == "ieee_get_flag") {
@@ -183,7 +183,7 @@ public:
                           .v.thing.component};
       if (component.symbol && !IsPureProcedure(*component.symbol)) {
         context_.Say(currentStatementSourcePosition_,
-            "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
+            "call to impure procedure in DO CONCURRENT not allowed"_err_en_US);
       }
     }
   }

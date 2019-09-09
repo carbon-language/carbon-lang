@@ -16,9 +16,10 @@
 
 module m
   type :: t
+    sequence
     real :: a
   end type
-  type(t) :: x
+  type(t), target :: x
   type :: hasPtr
     real, pointer :: p
   end type
@@ -34,9 +35,9 @@ pure function test(ptr, in)
   type(t), pointer :: ptr, ptr2
   type(t), target, intent(in) :: in
   type(t), save :: co[*]
-  type(t) :: y, z
+  type(t), target :: y, z
   type(hasPtr) :: hp
-  type(hasPtr) :: alloc
+  type(hasPtr), allocatable :: alloc
   integer :: n
   common /block/ y
   ! ERROR: A PURE subprogram must not define an object in COMMON.
@@ -57,11 +58,11 @@ pure function test(ptr, in)
   ptr2 => ptr ! C1594(3)
   ! ERROR: A PURE subprogram must not use an INTENT(IN) dummy argument as the target of pointer assignment.
   ptr2 => in ! C1594(3)
-  ! ERROR: A PURE subprogram must not use an object in COMMON as the target of pointer assignment.
+  ! ERROR: Externally visible object 'block' must not be associated with pointer component 'p' in a PURE procedure
   n = size([hasPtr(y%a)]) ! C1594(4)
-  ! ERROR: A PURE subprogram must not use a USE-associated object as the target of pointer assignment.
+  ! ERROR: Externally visible object 'x' must not be associated with pointer component 'p' in a PURE procedure
   n = size([hasPtr(x%a)]) ! C1594(4)
-  ! ERROR: A PURE function must not use a pointer dummy argument as the target of pointer assignment.
+  ! ERROR: Externally visible object 'ptr' must not be associated with pointer component 'p' in a PURE procedure
   n = size([hasPtr(ptr%a)]) ! C1594(4)
   ! ERROR: A PURE subprogram must not use an INTENT(IN) dummy argument as the target of pointer assignment.
   n = size([hasPtr(in%a)]) ! C1594(4)
@@ -73,7 +74,7 @@ pure function test(ptr, in)
   pure subroutine internal
     ! ERROR: A PURE subprogram must not define a host-associated object.
     z%a = 0.
-    ! ERROR: A PURE subprogram must not use a host-associated object as the target of pointer assignment.
+    ! ERROR: Externally visible object 'z' must not be associated with pointer component 'p' in a PURE procedure
     hp = hasPtr(z%a)
   end subroutine
 end function

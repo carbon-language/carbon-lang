@@ -254,7 +254,7 @@ module m01
   end subroutine
 
   subroutine test15() ! C1539
-    real, pointer :: a(10)
+    real, pointer :: a(:)
     real, asynchronous :: b(10)
     real, volatile :: c(10)
     real, asynchronous, volatile :: d(10)
