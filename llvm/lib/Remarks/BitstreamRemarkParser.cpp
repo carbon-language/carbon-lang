@@ -365,8 +365,8 @@ Error BitstreamRemarkParser::processCommonMeta(
         "Error while parsing BLOCK_META: missing container version.");
 
   if (Optional<uint8_t> Type = MetaHelper.ContainerType) {
-    if (*Type < static_cast<uint8_t>(BitstreamRemarkContainerType::First) ||
-        *Type > static_cast<uint8_t>(BitstreamRemarkContainerType::Last))
+    // Always >= BitstreamRemarkContainerType::First since it's unsigned.
+    if (*Type > static_cast<uint8_t>(BitstreamRemarkContainerType::Last))
       return createStringError(
           std::make_error_code(std::errc::illegal_byte_sequence),
           "Error while parsing BLOCK_META: invalid container type.");
@@ -493,8 +493,8 @@ BitstreamRemarkParser::processRemark(BitstreamRemarkParserHelper &Helper) {
         std::make_error_code(std::errc::illegal_byte_sequence),
         "Error while parsing BLOCK_REMARK: missing remark type.");
 
-  if (*Helper.Type < static_cast<uint8_t>(Type::First) ||
-      *Helper.Type > static_cast<uint8_t>(Type::Last))
+  // Always >= Type::First since it's unsigned.
+  if (*Helper.Type > static_cast<uint8_t>(Type::Last))
     return createStringError(
         std::make_error_code(std::errc::illegal_byte_sequence),
         "Error while parsing BLOCK_REMARK: unknown remark type.");
