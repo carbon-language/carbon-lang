@@ -3064,3 +3064,108 @@ define i64 @fold_invariant_fence(i64* dereferenceable(8) %p, i64 %arg) {
   ret i64 %ret
 }
 
+
+; Exercise a few cases involving any extend idioms
+
+define i16 @load_i8_anyext_i16(i8* %ptr) {
+; CHECK-O0-LABEL: load_i8_anyext_i16:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movb (%rdi), %al
+; CHECK-O0-NEXT:    movzbl %al, %ecx
+; CHECK-O0-NEXT:    # kill: def $cx killed $cx killed $ecx
+; CHECK-O0-NEXT:    movw %cx, %ax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_i8_anyext_i16:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movzbl (%rdi), %eax
+; CHECK-O3-NEXT:    # kill: def $ax killed $ax killed $eax
+; CHECK-O3-NEXT:    retq
+;
+; CHECK-EX-LABEL: load_i8_anyext_i16:
+; CHECK-EX:       # %bb.0:
+; CHECK-EX-NEXT:    vpbroadcastb (%rdi), %xmm0
+; CHECK-EX-NEXT:    vmovd %xmm0, %eax
+; CHECK-EX-NEXT:    # kill: def $ax killed $ax killed $eax
+; CHECK-EX-NEXT:    retq
+  %v = load atomic i8, i8* %ptr unordered, align 2
+  %vec = insertelement <2 x i8> undef, i8 %v, i32 0
+  %res = bitcast <2 x i8> %vec to i16
+  ret i16 %res
+}
+
+define i32 @load_i8_anyext_i32(i8* %ptr) {
+; CHECK-O0-LABEL: load_i8_anyext_i32:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movb (%rdi), %al
+; CHECK-O0-NEXT:    movzbl %al, %eax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_i8_anyext_i32:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movzbl (%rdi), %eax
+; CHECK-O3-NEXT:    retq
+;
+; CHECK-EX-LABEL: load_i8_anyext_i32:
+; CHECK-EX:       # %bb.0:
+; CHECK-EX-NEXT:    vpbroadcastb (%rdi), %xmm0
+; CHECK-EX-NEXT:    vmovd %xmm0, %eax
+; CHECK-EX-NEXT:    retq
+  %v = load atomic i8, i8* %ptr unordered, align 4
+  %vec = insertelement <4 x i8> undef, i8 %v, i32 0
+  %res = bitcast <4 x i8> %vec to i32
+  ret i32 %res
+}
+
+define i32 @load_i16_anyext_i32(i16* %ptr) {
+; CHECK-O0-LABEL: load_i16_anyext_i32:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movw (%rdi), %ax
+; CHECK-O0-NEXT:    # implicit-def: $ecx
+; CHECK-O0-NEXT:    movw %ax, %cx
+; CHECK-O0-NEXT:    movl %ecx, %eax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_i16_anyext_i32:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movzwl (%rdi), %eax
+; CHECK-O3-NEXT:    retq
+;
+; CHECK-EX-LABEL: load_i16_anyext_i32:
+; CHECK-EX:       # %bb.0:
+; CHECK-EX-NEXT:    vpbroadcastw (%rdi), %xmm0
+; CHECK-EX-NEXT:    vmovd %xmm0, %eax
+; CHECK-EX-NEXT:    retq
+  %v = load atomic i16, i16* %ptr unordered, align 4
+  %vec = insertelement <2 x i16> undef, i16 %v, i64 0
+  %res = bitcast <2 x i16> %vec to i32
+  ret i32 %res
+}
+
+define i64 @load_i16_anyext_i64(i16* %ptr) {
+; CHECK-O0-LABEL: load_i16_anyext_i64:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movw (%rdi), %ax
+; CHECK-O0-NEXT:    # implicit-def: $ecx
+; CHECK-O0-NEXT:    movw %ax, %cx
+; CHECK-O0-NEXT:    vmovd %ecx, %xmm0
+; CHECK-O0-NEXT:    vmovq %xmm0, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_i16_anyext_i64:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movzwl (%rdi), %eax
+; CHECK-O3-NEXT:    vmovd %eax, %xmm0
+; CHECK-O3-NEXT:    vmovq %xmm0, %rax
+; CHECK-O3-NEXT:    retq
+;
+; CHECK-EX-LABEL: load_i16_anyext_i64:
+; CHECK-EX:       # %bb.0:
+; CHECK-EX-NEXT:    vpbroadcastw (%rdi), %xmm0
+; CHECK-EX-NEXT:    vmovq %xmm0, %rax
+; CHECK-EX-NEXT:    retq
+  %v = load atomic i16, i16* %ptr unordered, align 8
+  %vec = insertelement <4 x i16> undef, i16 %v, i64 0
+  %res = bitcast <4 x i16> %vec to i64
+  ret i64 %res
+}
