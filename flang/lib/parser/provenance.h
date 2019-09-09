@@ -22,7 +22,6 @@
 #include "../common/idioms.h"
 #include "../common/interval.h"
 #include <cstddef>
-#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
