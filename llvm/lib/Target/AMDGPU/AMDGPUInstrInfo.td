@@ -110,28 +110,27 @@ def AMDGPUdwordaddr : SDNode<"AMDGPUISD::DWORDADDR", SDTIntUnaryOp>;
 // Force dependencies for vector trunc stores
 def R600dummy_chain : SDNode<"AMDGPUISD::DUMMY_CHAIN", SDTNone, [SDNPHasChain]>;
 
-def AMDGPUcos : SDNode<"AMDGPUISD::COS_HW", SDTFPUnaryOp>;
-def AMDGPUsin : SDNode<"AMDGPUISD::SIN_HW", SDTFPUnaryOp>;
-
+def AMDGPUcos_impl : SDNode<"AMDGPUISD::COS_HW", SDTFPUnaryOp>;
+def AMDGPUsin_impl : SDNode<"AMDGPUISD::SIN_HW", SDTFPUnaryOp>;
 // out = a - floor(a)
-def AMDGPUfract : SDNode<"AMDGPUISD::FRACT", SDTFPUnaryOp>;
+def AMDGPUfract_impl : SDNode<"AMDGPUISD::FRACT", SDTFPUnaryOp>;
 
 // out = 1.0 / a
-def AMDGPUrcp : SDNode<"AMDGPUISD::RCP", SDTFPUnaryOp>;
+def AMDGPUrcp_impl : SDNode<"AMDGPUISD::RCP", SDTFPUnaryOp>;
 
 // out = 1.0 / sqrt(a)
-def AMDGPUrsq : SDNode<"AMDGPUISD::RSQ", SDTFPUnaryOp>;
+def AMDGPUrsq_impl : SDNode<"AMDGPUISD::RSQ", SDTFPUnaryOp>;
 
 // out = 1.0 / sqrt(a)
-def AMDGPUrcp_legacy : SDNode<"AMDGPUISD::RCP_LEGACY", SDTFPUnaryOp>;
-def AMDGPUrsq_legacy : SDNode<"AMDGPUISD::RSQ_LEGACY", SDTFPUnaryOp>;
+def AMDGPUrsq_legacy_impl : SDNode<"AMDGPUISD::RSQ_LEGACY", SDTFPUnaryOp>;
+def AMDGPUrcp_legacy_impl : SDNode<"AMDGPUISD::RCP_LEGACY", SDTFPUnaryOp>;
 
 def AMDGPUrcp_iflag : SDNode<"AMDGPUISD::RCP_IFLAG", SDTFPUnaryOp>;
 
 // out = 1.0 / sqrt(a) result clamped to +/- max_float.
-def AMDGPUrsq_clamp : SDNode<"AMDGPUISD::RSQ_CLAMP", SDTFPUnaryOp>;
+def AMDGPUrsq_clamp_impl : SDNode<"AMDGPUISD::RSQ_CLAMP", SDTFPUnaryOp>;
 
-def AMDGPUldexp : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
+def AMDGPUldexp_impl : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
 
 def AMDGPUpkrtz_f16_f32 : SDNode<"AMDGPUISD::CVT_PKRTZ_F16_F32", AMDGPUFPPackOp>;
 def AMDGPUpknorm_i16_f32 : SDNode<"AMDGPUISD::CVT_PKNORM_I16_F32", AMDGPUFPPackOp>;
@@ -408,3 +407,33 @@ def AMDGPUreturn_to_epilog : SDNode<"AMDGPUISD::RETURN_TO_EPILOG", SDTNone,
 def AMDGPUret_flag : SDNode<"AMDGPUISD::RET_FLAG", SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>,
   [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]
 >;
+
+
+//===----------------------------------------------------------------------===//
+// Intrinsic/Custom node compatability PatFrags
+//===----------------------------------------------------------------------===//
+
+def AMDGPUrcp : PatFrags<(ops node:$src), [(int_amdgcn_rcp node:$src),
+                                           (AMDGPUrcp_impl node:$src)]>;
+def AMDGPUrcp_legacy : PatFrags<(ops node:$src), [(int_amdgcn_rcp_legacy node:$src),
+                                                  (AMDGPUrcp_legacy_impl node:$src)]>;
+
+def AMDGPUrsq_legacy : PatFrags<(ops node:$src), [(int_amdgcn_rsq_legacy node:$src),
+                                                  (AMDGPUrsq_legacy_impl node:$src)]>;
+
+def AMDGPUrsq : PatFrags<(ops node:$src), [(int_amdgcn_rsq node:$src),
+                                           (AMDGPUrsq_impl node:$src)]>;
+
+def AMDGPUrsq_clamp : PatFrags<(ops node:$src), [(int_amdgcn_rsq_clamp node:$src),
+                                                 (AMDGPUrsq_clamp_impl node:$src)]>;
+
+def AMDGPUsin : PatFrags<(ops node:$src), [(int_amdgcn_sin node:$src),
+                                           (AMDGPUsin_impl node:$src)]>;
+def AMDGPUcos : PatFrags<(ops node:$src), [(int_amdgcn_cos node:$src),
+                                           (AMDGPUcos_impl node:$src)]>;
+def AMDGPUfract : PatFrags<(ops node:$src), [(int_amdgcn_fract node:$src),
+                                             (AMDGPUfract_impl node:$src)]>;
+
+def AMDGPUldexp : PatFrags<(ops node:$src0, node:$src1),
+  [(int_amdgcn_ldexp node:$src0, node:$src1),
+   (AMDGPUldexp_impl node:$src0, node:$src1)]>;
