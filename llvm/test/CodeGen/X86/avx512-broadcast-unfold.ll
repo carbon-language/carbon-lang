@@ -3334,3 +3334,871 @@ bb1:                                              ; preds = %bb1, %bb
 bb10:                                             ; preds = %bb1
   ret void
 }
+
+define void @bcast_unfold_pcmpgt_v4i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpgt_v4i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB96_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 4096(%rdi,%rax), %xmm0
+; CHECK-NEXT:    vpcmpgtd {{.*}}(%rip){1to4}, %xmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm0 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    addq $16, %rax
+; CHECK-NEXT:    jne .LBB96_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <4 x i32>*
+  %tmp4 = load <4 x i32>, <4 x i32>* %tmp3, align 4
+  %tmp5 = icmp sgt <4 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i32> <i32 3, i32 3, i32 3, i32 3>, <4 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <4 x i32>*
+  store <4 x i32> %tmp6, <4 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpgt_v8i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpgt_v8i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB97_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 4096(%rdi,%rax), %ymm0
+; CHECK-NEXT:    vpcmpgtd {{.*}}(%rip){1to8}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    addq $32, %rax
+; CHECK-NEXT:    jne .LBB97_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <8 x i32>*
+  %tmp4 = load <8 x i32>, <8 x i32>* %tmp3, align 4
+  %tmp5 = icmp sgt <8 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <8 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <8 x i32>*
+  store <8 x i32> %tmp6, <8 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpgt_v16i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpgt_v16i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB98_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 4096(%rdi,%rax), %zmm0
+; CHECK-NEXT:    vpcmpgtd {{.*}}(%rip){1to16}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    addq $64, %rax
+; CHECK-NEXT:    jne .LBB98_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <16 x i32>*
+  %tmp4 = load <16 x i32>, <16 x i32>* %tmp3, align 4
+  %tmp5 = icmp sgt <16 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <16 x i1> %tmp5, <16 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <16 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <16 x i32>*
+  store <16 x i32> %tmp6, <16 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 16
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpgt_v2i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpgt_v2i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    vmovdqa {{.*#+}} xmm0 = [1,1]
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB99_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 8192(%rdi,%rax), %xmm1
+; CHECK-NEXT:    vpcmpgtq %xmm0, %xmm1, %k1
+; CHECK-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm1 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm1, 8192(%rdi,%rax)
+; CHECK-NEXT:    addq $16, %rax
+; CHECK-NEXT:    jne .LBB99_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <2 x i64>*
+  %tmp4 = load <2 x i64>, <2 x i64>* %tmp3, align 4
+  %tmp5 = icmp sgt <2 x i64> %tmp4, <i64 1, i64 1>
+  %tmp6 = select <2 x i1> %tmp5, <2 x i64> <i64 3, i64 3>, <2 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <2 x i64>*
+  store <2 x i64> %tmp6, <2 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 2
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+define void @bcast_unfold_pcmpgt_v4i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpgt_v4i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB100_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 8192(%rdi,%rax), %ymm0
+; CHECK-NEXT:    vpcmpgtq {{.*}}(%rip){1to4}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    addq $32, %rax
+; CHECK-NEXT:    jne .LBB100_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <4 x i64>*
+  %tmp4 = load <4 x i64>, <4 x i64>* %tmp3, align 4
+  %tmp5 = icmp sgt <4 x i64> %tmp4, <i64 1, i64 1, i64 1, i64 1>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i64> <i64 3, i64 3, i64 3, i64 3>, <4 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <4 x i64>*
+  store <4 x i64> %tmp6, <4 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpgt_v8i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpgt_v8i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB101_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 8192(%rdi,%rax), %zmm0
+; CHECK-NEXT:    vpcmpgtq {{.*}}(%rip){1to8}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    addq $64, %rax
+; CHECK-NEXT:    jne .LBB101_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <8 x i64>*
+  %tmp4 = load <8 x i64>, <8 x i64>* %tmp3, align 4
+  %tmp5 = icmp sgt <8 x i64> %tmp4, <i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i64> <i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3>, <8 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <8 x i64>*
+  store <8 x i64> %tmp6, <8 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpeq_v4i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpeq_v4i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB102_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 4096(%rdi,%rax), %xmm0
+; CHECK-NEXT:    vpcmpeqd {{.*}}(%rip){1to4}, %xmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm0 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    addq $16, %rax
+; CHECK-NEXT:    jne .LBB102_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <4 x i32>*
+  %tmp4 = load <4 x i32>, <4 x i32>* %tmp3, align 4
+  %tmp5 = icmp eq <4 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i32> <i32 3, i32 3, i32 3, i32 3>, <4 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <4 x i32>*
+  store <4 x i32> %tmp6, <4 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpeq_v8i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpeq_v8i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB103_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 4096(%rdi,%rax), %ymm0
+; CHECK-NEXT:    vpcmpeqd {{.*}}(%rip){1to8}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    addq $32, %rax
+; CHECK-NEXT:    jne .LBB103_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <8 x i32>*
+  %tmp4 = load <8 x i32>, <8 x i32>* %tmp3, align 4
+  %tmp5 = icmp eq <8 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <8 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <8 x i32>*
+  store <8 x i32> %tmp6, <8 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpeq_v16i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpeq_v16i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-4096, %rax # imm = 0xF000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB104_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 4096(%rdi,%rax), %zmm0
+; CHECK-NEXT:    vpcmpeqd {{.*}}(%rip){1to16}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, 4096(%rdi,%rax)
+; CHECK-NEXT:    addq $64, %rax
+; CHECK-NEXT:    jne .LBB104_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <16 x i32>*
+  %tmp4 = load <16 x i32>, <16 x i32>* %tmp3, align 4
+  %tmp5 = icmp eq <16 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <16 x i1> %tmp5, <16 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <16 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <16 x i32>*
+  store <16 x i32> %tmp6, <16 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 16
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpeq_v2i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpeq_v2i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    vmovdqa {{.*#+}} xmm0 = [1,1]
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB105_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 8192(%rdi,%rax), %xmm1
+; CHECK-NEXT:    vpcmpeqq %xmm0, %xmm1, %k1
+; CHECK-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm1 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm1, 8192(%rdi,%rax)
+; CHECK-NEXT:    addq $16, %rax
+; CHECK-NEXT:    jne .LBB105_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <2 x i64>*
+  %tmp4 = load <2 x i64>, <2 x i64>* %tmp3, align 4
+  %tmp5 = icmp eq <2 x i64> %tmp4, <i64 1, i64 1>
+  %tmp6 = select <2 x i1> %tmp5, <2 x i64> <i64 3, i64 3>, <2 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <2 x i64>*
+  store <2 x i64> %tmp6, <2 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 2
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+define void @bcast_unfold_pcmpeq_v4i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpeq_v4i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB106_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu 8192(%rdi,%rax), %ymm0
+; CHECK-NEXT:    vpcmpeqq {{.*}}(%rip){1to4}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    addq $32, %rax
+; CHECK-NEXT:    jne .LBB106_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <4 x i64>*
+  %tmp4 = load <4 x i64>, <4 x i64>* %tmp3, align 4
+  %tmp5 = icmp eq <4 x i64> %tmp4, <i64 1, i64 1, i64 1, i64 1>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i64> <i64 3, i64 3, i64 3, i64 3>, <4 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <4 x i64>*
+  store <4 x i64> %tmp6, <4 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpeq_v8i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpeq_v8i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    movq $-8192, %rax # imm = 0xE000
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB107_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 8192(%rdi,%rax), %zmm0
+; CHECK-NEXT:    vpcmpeqq {{.*}}(%rip){1to8}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, 8192(%rdi,%rax)
+; CHECK-NEXT:    addq $64, %rax
+; CHECK-NEXT:    jne .LBB107_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <8 x i64>*
+  %tmp4 = load <8 x i64>, <8 x i64>* %tmp3, align 4
+  %tmp5 = icmp eq <8 x i64> %tmp4, <i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i64> <i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3>, <8 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <8 x i64>*
+  store <8 x i64> %tmp6, <8 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp eq i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmp_v4i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmp_v4i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB108_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,4), %xmm0
+; CHECK-NEXT:    vpcmpltd {{.*}}(%rip){1to4}, %xmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm0 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm0, (%rdi,%rax,4)
+; CHECK-NEXT:    addq $4, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    jg .LBB108_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <4 x i32>*
+  %tmp4 = load <4 x i32>, <4 x i32>* %tmp3, align 4
+  %tmp5 = icmp slt <4 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i32> <i32 3, i32 3, i32 3, i32 3>, <4 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <4 x i32>*
+  store <4 x i32> %tmp6, <4 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp slt i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmp_v8i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmp_v8i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB109_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,4), %ymm0
+; CHECK-NEXT:    vpcmpltd {{.*}}(%rip){1to8}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, (%rdi,%rax,4)
+; CHECK-NEXT:    addq $8, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    jg .LBB109_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <8 x i32>*
+  %tmp4 = load <8 x i32>, <8 x i32>* %tmp3, align 4
+  %tmp5 = icmp slt <8 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <8 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <8 x i32>*
+  store <8 x i32> %tmp6, <8 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp slt i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmp_v16i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmp_v16i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB110_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 (%rdi,%rax,4), %zmm0
+; CHECK-NEXT:    vpcmpltd {{.*}}(%rip){1to16}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, (%rdi,%rax,4)
+; CHECK-NEXT:    addq $16, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    jg .LBB110_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <16 x i32>*
+  %tmp4 = load <16 x i32>, <16 x i32>* %tmp3, align 4
+  %tmp5 = icmp slt <16 x i32> %tmp4, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %tmp6 = select <16 x i1> %tmp5, <16 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <16 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <16 x i32>*
+  store <16 x i32> %tmp6, <16 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 16
+  %tmp9 = icmp slt i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmp_v2i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmp_v2i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    vmovdqa {{.*#+}} xmm0 = [1,1]
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB111_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,8), %xmm1
+; CHECK-NEXT:    vpcmpltq %xmm0, %xmm1, %k1
+; CHECK-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm1 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm1, (%rdi,%rax,8)
+; CHECK-NEXT:    addq $2, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    jg .LBB111_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <2 x i64>*
+  %tmp4 = load <2 x i64>, <2 x i64>* %tmp3, align 4
+  %tmp5 = icmp slt <2 x i64> %tmp4, <i64 1, i64 1>
+  %tmp6 = select <2 x i1> %tmp5, <2 x i64> <i64 3, i64 3>, <2 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <2 x i64>*
+  store <2 x i64> %tmp6, <2 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 2
+  %tmp9 = icmp slt i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+define void @bcast_unfold_pcmp_v4i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmp_v4i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB112_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,8), %ymm0
+; CHECK-NEXT:    vpcmpltq {{.*}}(%rip){1to4}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, (%rdi,%rax,8)
+; CHECK-NEXT:    addq $4, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    jg .LBB112_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <4 x i64>*
+  %tmp4 = load <4 x i64>, <4 x i64>* %tmp3, align 4
+  %tmp5 = icmp slt <4 x i64> %tmp4, <i64 1, i64 1, i64 1, i64 1>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i64> <i64 3, i64 3, i64 3, i64 3>, <4 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <4 x i64>*
+  store <4 x i64> %tmp6, <4 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp slt i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmp_v8i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmp_v8i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB113_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 (%rdi,%rax,8), %zmm0
+; CHECK-NEXT:    vpcmpltq {{.*}}(%rip){1to8}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, (%rdi,%rax,8)
+; CHECK-NEXT:    addq $8, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    jg .LBB113_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <8 x i64>*
+  %tmp4 = load <8 x i64>, <8 x i64>* %tmp3, align 4
+  %tmp5 = icmp slt <8 x i64> %tmp4, <i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i64> <i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3>, <8 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <8 x i64>*
+  store <8 x i64> %tmp6, <8 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp slt i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpu_v4i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpu_v4i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB114_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,4), %xmm0
+; CHECK-NEXT:    vpcmpltud {{.*}}(%rip){1to4}, %xmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm0 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm0, (%rdi,%rax,4)
+; CHECK-NEXT:    addq $4, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    ja .LBB114_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <4 x i32>*
+  %tmp4 = load <4 x i32>, <4 x i32>* %tmp3, align 4
+  %tmp5 = icmp ult <4 x i32> %tmp4, <i32 2, i32 2, i32 2, i32 2>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i32> <i32 3, i32 3, i32 3, i32 3>, <4 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <4 x i32>*
+  store <4 x i32> %tmp6, <4 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp ult i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpu_v8i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpu_v8i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB115_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,4), %ymm0
+; CHECK-NEXT:    vpcmpltud {{.*}}(%rip){1to8}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, (%rdi,%rax,4)
+; CHECK-NEXT:    addq $8, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    ja .LBB115_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <8 x i32>*
+  %tmp4 = load <8 x i32>, <8 x i32>* %tmp3, align 4
+  %tmp5 = icmp ult <8 x i32> %tmp4, <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <8 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <8 x i32>*
+  store <8 x i32> %tmp6, <8 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp ult i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpu_v16i32(i32* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpu_v16i32:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB116_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 (%rdi,%rax,4), %zmm0
+; CHECK-NEXT:    vpcmpltud {{.*}}(%rip){1to16}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, (%rdi,%rax,4)
+; CHECK-NEXT:    addq $16, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    ja .LBB116_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i32, i32* %arg, i64 %tmp
+  %tmp3 = bitcast i32* %tmp2 to <16 x i32>*
+  %tmp4 = load <16 x i32>, <16 x i32>* %tmp3, align 4
+  %tmp5 = icmp ult <16 x i32> %tmp4, <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
+  %tmp6 = select <16 x i1> %tmp5, <16 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>, <16 x i32> %tmp4
+  %tmp7 = bitcast i32* %tmp2 to <16 x i32>*
+  store <16 x i32> %tmp6, <16 x i32>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 16
+  %tmp9 = icmp ult i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpu_v2i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpu_v2i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    vmovdqa {{.*#+}} xmm0 = [2,2]
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB117_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,8), %xmm1
+; CHECK-NEXT:    vpcmpltuq %xmm0, %xmm1, %k1
+; CHECK-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm1 {%k1}
+; CHECK-NEXT:    vmovdqu %xmm1, (%rdi,%rax,8)
+; CHECK-NEXT:    addq $2, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    ja .LBB117_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <2 x i64>*
+  %tmp4 = load <2 x i64>, <2 x i64>* %tmp3, align 4
+  %tmp5 = icmp ult <2 x i64> %tmp4, <i64 2, i64 2>
+  %tmp6 = select <2 x i1> %tmp5, <2 x i64> <i64 3, i64 3>, <2 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <2 x i64>*
+  store <2 x i64> %tmp6, <2 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 2
+  %tmp9 = icmp ult i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+define void @bcast_unfold_pcmpu_v4i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpu_v4i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB118_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu (%rdi,%rax,8), %ymm0
+; CHECK-NEXT:    vpcmpltuq {{.*}}(%rip){1to4}, %ymm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqu %ymm0, (%rdi,%rax,8)
+; CHECK-NEXT:    addq $4, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    ja .LBB118_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <4 x i64>*
+  %tmp4 = load <4 x i64>, <4 x i64>* %tmp3, align 4
+  %tmp5 = icmp ult <4 x i64> %tmp4, <i64 2, i64 2, i64 2, i64 2>
+  %tmp6 = select <4 x i1> %tmp5, <4 x i64> <i64 3, i64 3, i64 3, i64 3>, <4 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <4 x i64>*
+  store <4 x i64> %tmp6, <4 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 4
+  %tmp9 = icmp ult i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
+
+define void @bcast_unfold_pcmpu_v8i64(i64* %arg) {
+; CHECK-LABEL: bcast_unfold_pcmpu_v8i64:
+; CHECK:       # %bb.0: # %bb
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  .LBB119_1: # %bb1
+; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmovdqu64 (%rdi,%rax,8), %zmm0
+; CHECK-NEXT:    vpcmpltuq {{.*}}(%rip){1to8}, %zmm0, %k1
+; CHECK-NEXT:    vpbroadcastq {{.*}}(%rip), %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqu64 %zmm0, (%rdi,%rax,8)
+; CHECK-NEXT:    addq $8, %rax
+; CHECK-NEXT:    cmpq $1023, %rax # imm = 0x3FF
+; CHECK-NEXT:    ja .LBB119_1
+; CHECK-NEXT:  # %bb.2: # %bb10
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %tmp = phi i64 [ 0, %bb ], [ %tmp8, %bb1 ]
+  %tmp2 = getelementptr inbounds i64, i64* %arg, i64 %tmp
+  %tmp3 = bitcast i64* %tmp2 to <8 x i64>*
+  %tmp4 = load <8 x i64>, <8 x i64>* %tmp3, align 4
+  %tmp5 = icmp ult <8 x i64> %tmp4, <i64 2, i64 2, i64 2, i64 2, i64 2, i64 2, i64 2, i64 2>
+  %tmp6 = select <8 x i1> %tmp5, <8 x i64> <i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3, i64 3>, <8 x i64> %tmp4
+  %tmp7 = bitcast i64* %tmp2 to <8 x i64>*
+  store <8 x i64> %tmp6, <8 x i64>* %tmp7, align 4
+  %tmp8 = add i64 %tmp, 8
+  %tmp9 = icmp ult i64 %tmp8, 1024
+  br i1 %tmp9, label %bb10, label %bb1
+
+bb10:                                             ; preds = %bb1
+  ret void
+}
