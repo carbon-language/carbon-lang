@@ -385,6 +385,24 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
         OmpClause::IF, OmpClause::FINAL, OmpClause::PRIORITY};
     SetContextAllowedOnce(allowedOnce);
   } break;
+  // 2.10.4 target-clause -> if-clause |
+  //                         device-clause |
+  //                         private-clause |
+  //                         firstprivate-clause |
+  //                         map-clause |
+  //                         is-device-ptr-clause |
+  //                         defaultmap-clause |
+  //                         nowait-clause |
+  //                         depend-clause
+  case parser::OmpBlockDirective::Directive::Target: {
+    PushContext(beginDir.source, OmpDirective::TARGET);
+    OmpClauseSet allowed{OmpClause::IF, OmpClause::PRIVATE, OmpClause::MAP,
+        OmpClause::DEPEND, OmpClause::FIRSTPRIVATE, OmpClause::IS_DEVICE_PTR};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{
+        OmpClause::DEVICE, OmpClause::DEFAULTMAP, OmpClause::NOWAIT};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
   default:
     // TODO others
     break;

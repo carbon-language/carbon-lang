@@ -154,6 +154,7 @@ set(ERROR_TESTS
 #  omp-nested01.f90
   omp-declarative-directive.f90
   omp-atomic.f90
+  omp-device-constructs.f90
   equivalence01.f90
   init01.f90
   if_arith01.f90
