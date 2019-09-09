@@ -69,8 +69,14 @@ def gi_ds_1addr_1offset :
 // SelectionDAG. The GISel selector can just insert m0 initialization
 // directly before before selecting a glue-less load, so hide this
 // distinction.
-def : GINodeEquiv<G_LOAD, AMDGPUld_glue>;
-def : GINodeEquiv<G_STORE, AMDGPUst_glue>;
+def : GINodeEquiv<G_LOAD, AMDGPUld_glue> {
+  let CheckMMOIsNonAtomic = 1;
+}
+
+def : GINodeEquiv<G_STORE, AMDGPUst_glue> {
+  let CheckMMOIsNonAtomic = 1;
+}
+
 
 def : GINodeEquiv<G_ATOMIC_CMPXCHG, atomic_cmp_swap_glue>;
 def : GINodeEquiv<G_ATOMICRMW_XCHG, atomic_swap_glue>;
