@@ -719,6 +719,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       .legalIf(isRegisterType(0))
       .minScalarOrElt(0, S32);
 
+  if (ST.hasScalarPackInsts()) {
+    getActionDefinitionsBuilder(G_BUILD_VECTOR_TRUNC)
+      .legalFor({V2S16, S32})
+      .lower();
+  } else {
+    getActionDefinitionsBuilder(G_BUILD_VECTOR_TRUNC)
+      .lower();
+  }
+
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
     .legalIf(isRegisterType(0));
 

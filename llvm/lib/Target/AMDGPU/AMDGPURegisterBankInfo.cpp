@@ -1305,6 +1305,44 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     MI.eraseFromParent();
     return;
   }
+  case AMDGPU::G_BUILD_VECTOR_TRUNC: {
+    assert(MI.getNumOperands() == 3 && empty(OpdMapper.getVRegs(0)));
+    substituteSimpleCopyRegs(OpdMapper, 1);
+    substituteSimpleCopyRegs(OpdMapper, 2);
+
+    Register DstReg = MI.getOperand(0).getReg();
+    const RegisterBank *DstBank = getRegBank(DstReg, MRI, *TRI);
+    if (DstBank == &AMDGPU::SGPRRegBank)
+      break; // Can use S_PACK_* instructions.
+
+    MachineIRBuilder B(MI);
+
+    Register Lo = MI.getOperand(1).getReg();
+    Register Hi = MI.getOperand(2).getReg();
+
+    const RegisterBank *BankLo = getRegBank(Lo, MRI, *TRI);
+    const RegisterBank *BankHi = getRegBank(Hi, MRI, *TRI);
+
+    const LLT S32 = LLT::scalar(32);
+    auto MaskLo = B.buildConstant(S32, 0xffff);
+    MRI.setRegBank(MaskLo.getReg(0), *BankLo);
+
+    auto ShiftAmt = B.buildConstant(S32, 16);
+    MRI.setRegBank(ShiftAmt.getReg(0), *BankHi);
+
+    auto ShiftHi = B.buildShl(S32, Hi, ShiftAmt);
+    MRI.setRegBank(ShiftHi.getReg(0), *BankHi);
+
+    auto Masked = B.buildAnd(S32, Lo, MaskLo);
+    MRI.setRegBank(Masked.getReg(0), *BankLo);
+
+    auto Or = B.buildOr(S32, Masked, ShiftHi);
+    MRI.setRegBank(Or.getReg(0), *DstBank);
+
+    B.buildBitcast(DstReg, Or);
+    MI.eraseFromParent();
+    return;
+  }
   case AMDGPU::G_EXTRACT_VECTOR_ELT:
     applyDefaultMapping(OpdMapper);
     executeInWaterfallLoop(MI, MRI, { 2 });
@@ -1511,6 +1549,11 @@ AMDGPURegisterBankInfo::getRegBankID(Register Reg,
 
   const RegisterBank *Bank = getRegBank(Reg, MRI, TRI);
   return Bank ? Bank->getID() : Default;
+}
+
+static unsigned regBankUnion(unsigned RB0, unsigned RB1) {
+  return (RB0 == AMDGPU::SGPRRegBankID && RB1 == AMDGPU::SGPRRegBankID) ?
+    AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
 }
 
 ///
@@ -1772,6 +1815,20 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // Op1 and Dst should use the same register bank.
     for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i)
       OpdsMapping[i] = AMDGPU::getValueMapping(Bank, SrcSize);
+    break;
+  }
+  case AMDGPU::G_BUILD_VECTOR_TRUNC: {
+    assert(MI.getNumOperands() == 3);
+
+    unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+    unsigned SrcSize = MRI.getType(MI.getOperand(1).getReg()).getSizeInBits();
+    unsigned Src0BankID = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI);
+    unsigned Src1BankID = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI);
+    unsigned DstBankID = regBankUnion(Src0BankID, Src1BankID);
+
+    OpdsMapping[0] = AMDGPU::getValueMapping(DstBankID, DstSize);
+    OpdsMapping[1] = AMDGPU::getValueMapping(Src0BankID, SrcSize);
+    OpdsMapping[2] = AMDGPU::getValueMapping(Src1BankID, SrcSize);
     break;
   }
   case AMDGPU::G_BITCAST:
