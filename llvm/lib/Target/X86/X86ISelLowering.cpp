@@ -92,6 +92,13 @@ static cl::opt<bool> MulConstantOptimization(
              "SHIFT, LEA, etc."),
     cl::Hidden);
 
+static cl::opt<bool> ExperimentalUnorderedISEL(
+    "x86-experimental-unordered-atomic-isel", cl::init(false),
+    cl::desc("Use LoadSDNode and StoreSDNode instead of "
+             "AtomicSDNode for unordered atomic loads and "
+             "stores respectively."),
+    cl::Hidden);
+
 /// Call this when the user attempts to do something unsupported, like
 /// returning a double without SSE2 enabled on x86_64. This is not fatal, unlike
 /// report_fatal_error, so calling code should attempt to recover without
@@ -26492,6 +26499,18 @@ X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
   AI->eraseFromParent();
   return Loaded;
 }
+
+bool X86TargetLowering::lowerAtomicStoreAsStoreSDNode(const StoreInst &SI) const {
+  if (!SI.isUnordered())
+    return false;
+  return ExperimentalUnorderedISEL;
+}
+bool X86TargetLowering::lowerAtomicLoadAsLoadSDNode(const LoadInst &LI) const {
+  if (!LI.isUnordered())
+    return false;
+  return ExperimentalUnorderedISEL;
+}
+
 
 /// Emit a locked operation on a stack location which does not change any
 /// memory location, but does involve a lock prefix.  Location is chosen to be

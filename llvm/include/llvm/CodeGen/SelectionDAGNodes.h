@@ -2197,8 +2197,6 @@ public:
       : MemSDNode(NodeTy, Order, dl, VTs, MemVT, MMO) {
     LSBaseSDNodeBits.AddressingMode = AM;
     assert(getAddressingMode() == AM && "Value truncated");
-    assert((!MMO->isAtomic() || MMO->isVolatile()) &&
-           "use an AtomicSDNode instead for non-volatile atomics");
   }
 
   const SDValue &getOffset() const {
