@@ -713,14 +713,19 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
 
   }
 
-  getActionDefinitionsBuilder(G_BUILD_VECTOR)
-      .legalForCartesianProduct(AllS32Vectors, {S32})
-      .legalForCartesianProduct(AllS64Vectors, {S64})
-      .clampNumElements(0, V16S32, V16S32)
-      .clampNumElements(0, V2S64, V8S64)
-      .minScalarSameAs(1, 0)
-      .legalIf(isRegisterType(0))
-      .minScalarOrElt(0, S32);
+  auto &BuildVector = getActionDefinitionsBuilder(G_BUILD_VECTOR)
+    .legalForCartesianProduct(AllS32Vectors, {S32})
+    .legalForCartesianProduct(AllS64Vectors, {S64})
+    .clampNumElements(0, V16S32, V16S32)
+    .clampNumElements(0, V2S64, V8S64);
+
+  if (ST.hasScalarPackInsts())
+    BuildVector.legalFor({V2S16, S32});
+
+  BuildVector
+    .minScalarSameAs(1, 0)
+    .legalIf(isRegisterType(0))
+    .minScalarOrElt(0, S32);
 
   if (ST.hasScalarPackInsts()) {
     getActionDefinitionsBuilder(G_BUILD_VECTOR_TRUNC)
