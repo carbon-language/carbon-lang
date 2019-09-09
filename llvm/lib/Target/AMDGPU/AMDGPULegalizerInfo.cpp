@@ -392,6 +392,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     .legalForCartesianProduct(AddrSpaces32, {S32})
     .scalarize(0);
 
+  getActionDefinitionsBuilder(G_PTR_MASK)
+    .scalarize(0)
+    .alwaysLegal();
+
   setAction({G_BLOCK_ADDR, CodePtr}, Legal);
 
   auto &CmpBuilder =
