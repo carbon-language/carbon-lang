@@ -403,6 +403,8 @@ std::optional<ProvenanceRange> CookedSource::GetProvenanceRange(
 
 std::optional<CharBlock> CookedSource::GetCharBlock(
     ProvenanceRange range) const {
+  CHECK(!invertedMap_.empty() &&
+      "CompileProvenanceRangeToOffsetMappings not called");
   if (auto to{invertedMap_.Map(range)}) {
     return CharBlock{data_.c_str() + *to, range.size()};
   } else {
