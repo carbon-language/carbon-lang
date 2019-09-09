@@ -43,7 +43,7 @@ public:
       llvm::StringRef rawData, mlir::Location loc) const override;
   void printType(mlir::Type ty, llvm::raw_ostream &os) const override;
 
-  mlir::Attribute parseAttribute(llvm::StringRef attrData, mlir::Type type,
+  mlir::Attribute parseAttribute(llvm::StringRef rawText, mlir::Type type,
       mlir::Location loc) const override;
   void printAttribute(
       mlir::Attribute attr, llvm::raw_ostream &os) const override;
