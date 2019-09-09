@@ -115,6 +115,11 @@ private:
   selectVOP3Mods(MachineOperand &Root) const;
 
   InstructionSelector::ComplexRendererFns
+  selectVOP3OpSelMods0(MachineOperand &Root) const;
+  InstructionSelector::ComplexRendererFns
+  selectVOP3OpSelMods(MachineOperand &Root) const;
+
+  InstructionSelector::ComplexRendererFns
   selectSmrdImm(MachineOperand &Root) const;
   InstructionSelector::ComplexRendererFns
   selectSmrdImm32(MachineOperand &Root) const;
