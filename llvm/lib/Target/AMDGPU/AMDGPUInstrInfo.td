@@ -141,7 +141,7 @@ def AMDGPUfp_to_f16 : SDNode<"AMDGPUISD::FP_TO_FP16" , SDTFPToIntOp>;
 def AMDGPUfp16_zext : SDNode<"AMDGPUISD::FP16_ZEXT" , SDTFPToIntOp>;
 
 
-def AMDGPUfp_class : SDNode<"AMDGPUISD::FP_CLASS", AMDGPUFPClassOp>;
+def AMDGPUfp_class_impl : SDNode<"AMDGPUISD::FP_CLASS", AMDGPUFPClassOp>;
 
 // out = max(a, b) a and b are floats, where a nan comparison fails.
 // This is not commutative because this gives the second operand:
@@ -437,6 +437,10 @@ def AMDGPUfract : PatFrags<(ops node:$src), [(int_amdgcn_fract node:$src),
 def AMDGPUldexp : PatFrags<(ops node:$src0, node:$src1),
   [(int_amdgcn_ldexp node:$src0, node:$src1),
    (AMDGPUldexp_impl node:$src0, node:$src1)]>;
+
+def AMDGPUfp_class : PatFrags<(ops node:$src0, node:$src1),
+  [(int_amdgcn_class node:$src0, node:$src1),
+  (AMDGPUfp_class_impl node:$src0, node:$src1)]>;
 
 def AMDGPUfmed3 : PatFrags<(ops node:$src0, node:$src1, node:$src2),
   [(int_amdgcn_fmed3 node:$src0, node:$src1, node:$src2),
