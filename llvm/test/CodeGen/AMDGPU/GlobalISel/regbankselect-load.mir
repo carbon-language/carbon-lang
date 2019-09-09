@@ -1,8 +1,6 @@
 # RUN: llc -march=amdgcn -run-pass=regbankselect %s -verify-machineinstrs -o - -regbankselect-fast | FileCheck %s
 # RUN: llc -march=amdgcn -run-pass=regbankselect %s -verify-machineinstrs -o - -regbankselect-greedy | FileCheck %s
 
-# REQUIRES: global-isel
-
 --- |
   define amdgpu_kernel void @load_global_v8i32_non_uniform(<8 x i32> addrspace(1)* %in) {
     %tmp0 = call i32 @llvm.amdgcn.workitem.id.x() #0
@@ -56,10 +54,14 @@
     %tmp2 = load <8 x i64>, <8 x i64> addrspace(4)* %constant.not.uniform.v8i64
     ret void
   }
+
   define amdgpu_kernel void @load_constant_v8i32_uniform() {ret void}
   define amdgpu_kernel void @load_constant_v4i64_uniform() {ret void}
   define amdgpu_kernel void @load_constant_v16i32_uniform() {ret void}
   define amdgpu_kernel void @load_constant_v8i64_uniform() {ret void}
+  define amdgpu_kernel void @load_local_uniform() { ret void }
+  define amdgpu_kernel void @load_region_uniform() { ret void }
+
   declare i32 @llvm.amdgcn.workitem.id.x() #0
   attributes #0 = { nounwind readnone }
 ...
@@ -485,4 +487,35 @@ body: |
     ; CHECK (<8 x s64>) = G_LOAD %0 :: (load 64, addrspace 4)
     %0:_(p4) = COPY $sgpr0_sgpr1
     %1:_(<8 x s64>) = G_LOAD %0 :: (load 64, addrspace 4)
+...
+
+---
+name : load_local_uniform
+legalized: true
+body: |
+  bb.0:
+    liveins: $sgpr0
+    ; CHECK-LABEL: load_local_uniform
+    ; CHECK: %0:sgpr(p3) = COPY $sgpr0
+    ; CHECK: %2:vgpr(p3) = COPY %0(p3)
+    ; CHECK: %1:vgpr(s32) = G_LOAD %2(p3) :: (load 4, addrspace 3)
+
+    %0:_(p3) = COPY $sgpr0
+    %1:_(s32) = G_LOAD %0 :: (load 4, addrspace 3)
+
+...
+---
+name : load_region_uniform
+legalized: true
+body: |
+  bb.0:
+    liveins: $sgpr0
+    ; CHECK-LABEL: load_region_uniform
+    ; CHECK: %0:sgpr(p3) = COPY $sgpr0
+    ; CHECK: %2:vgpr(p3) = COPY %0(p3)
+    ; CHECK: %1:vgpr(s32) = G_LOAD %2(p3) :: (load 4, addrspace 5)
+
+    %0:_(p3) = COPY $sgpr0
+    %1:_(s32) = G_LOAD %0 :: (load 4, addrspace 5)
+
 ...
