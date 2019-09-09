@@ -2,7 +2,7 @@
 
 # RUN: yaml2obj --docnum=1 %s -o %t1
 # RUN: llvm-readobj --sections %t1 | FileCheck %s --check-prefix=SECTION
-# RUN: llvm-nm --dynamic %t | FileCheck %s --check-prefix=SYMBOL
+# RUN: llvm-nm --dynamic %t1 | FileCheck %s --check-prefix=SYMBOL
 
 --- !ELF
 FileHeader:
