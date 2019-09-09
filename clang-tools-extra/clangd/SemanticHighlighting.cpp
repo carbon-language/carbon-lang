@@ -383,9 +383,8 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, HighlightingKind K) {
     return OS << "Primitive";
   case HighlightingKind::Macro:
     return OS << "Macro";
-  case HighlightingKind::NumKinds:
-    llvm_unreachable("NumKinds is not a valid HighlightingKind");
   }
+  llvm_unreachable("invalid HighlightingKind");
 }
 
 std::vector<LineHighlightings>
@@ -511,8 +510,6 @@ llvm::StringRef toTextMateScope(HighlightingKind Kind) {
     return "storage.type.primitive.cpp";
   case HighlightingKind::Macro:
     return "entity.name.function.preprocessor.cpp";
-  case HighlightingKind::NumKinds:
-    llvm_unreachable("must not pass NumKinds to the function");
   }
   llvm_unreachable("unhandled HighlightingKind");
 }

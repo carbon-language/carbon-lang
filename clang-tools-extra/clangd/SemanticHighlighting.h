@@ -41,7 +41,7 @@ enum class HighlightingKind {
   Primitive,
   Macro,
 
-  NumKinds,
+  LastKind = Macro
 };
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, HighlightingKind K);
 
