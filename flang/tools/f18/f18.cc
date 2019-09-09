@@ -77,8 +77,6 @@ void CleanUpAtExit() {
 }
 
 struct GetDefinitionArgs {
-  GetDefinitionArgs(int line, int startColumn, int endColumn)
-    : line{line}, startColumn{startColumn}, endColumn{endColumn} {}
   int line, startColumn, endColumn;
 };
 
@@ -262,38 +260,28 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       return {};
     }
     if (driver.getDefinition) {
-      std::string notFoundText{"Symbol not found.\n"};
-      auto cb{parsing.cooked().GetCharBlockFromLineAndColumns(
-          driver.getDefinitionArgs.line, driver.getDefinitionArgs.startColumn,
-          driver.getDefinitionArgs.endColumn)};
-      if (!cb) {
-        std::cerr << notFoundText;
-        exitStatus = EXIT_FAILURE;
-        return {};
+      if (auto cb{parsing.cooked().GetCharBlockFromLineAndColumns(
+              driver.getDefinitionArgs.line,
+              driver.getDefinitionArgs.startColumn,
+              driver.getDefinitionArgs.endColumn)}) {
+        std::cerr << "String range: >" << cb->ToString() << "<\n";
+        if (auto symbol{semanticsContext.FindScope(*cb).FindSymbol(*cb)}) {
+          std::cerr << "Found symbol name: " << symbol->name().ToString()
+                    << "\n";
+          if (auto sourceInfo{
+                  parsing.cooked().GetSourcePositionRange(symbol->name())}) {
+            std::cout << symbol->name().ToString() << ": "
+                      << sourceInfo->first.file.path() << ", "
+                      << sourceInfo->first.line << ", "
+                      << sourceInfo->first.column << "-"
+                      << sourceInfo->second.column << "\n";
+            exitStatus = EXIT_SUCCESS;
+            return {};
+          }
+        }
       }
-      std::cerr << "String range: >" << std::string(cb->begin(), cb->size())
-                << "<\n";
-      auto &scope{semanticsContext.FindScope(*cb)};
-      auto symbol{scope.FindSymbol(*cb)};
-      if (!symbol) {
-        std::cerr << notFoundText;
-        exitStatus = EXIT_FAILURE;
-        return {};
-      }
-      std::cerr << "Found symbol name: "
-                << std::string(symbol->name().begin(), symbol->name().size())
-                << "\n";
-      auto sourceInfo{parsing.cooked().GetSourcePositionRange(symbol->name())};
-      if (!sourceInfo) {
-        std::cerr << notFoundText;
-        exitStatus = EXIT_FAILURE;
-        return {};
-      }
-      std::cout << symbol->name().ToString() << ": "
-                << sourceInfo->first.file.path() << ", "
-                << sourceInfo->first.line << ", " << sourceInfo->first.column
-                << "-" << sourceInfo->second.column << "\n";
-      exitStatus = EXIT_SUCCESS;
+      std::cerr << "Symbol not found.\n";
+      exitStatus = EXIT_FAILURE;
       return {};
     }
   }
@@ -530,6 +518,7 @@ int main(int argc, char *const argv[]) {
       driver.encoding = Fortran::parser::Encoding::LATIN_1;
     } else if (arg == "-fget-definition") {
       // Receives 3 arguments: line, startColumn, endColumn.
+      options.needProvenanceRangeToCharBlockMappings = true;
       driver.getDefinition = true;
       char *endptr;
       int arguments[3];

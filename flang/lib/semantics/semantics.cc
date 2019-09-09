@@ -236,8 +236,7 @@ void Semantics::DumpSymbolsSources(std::ostream &os) const {
   GetSymbolNames(context_.globalScope(), symbols);
   for (const auto pair : symbols) {
     const Symbol &symbol{*pair.second};
-    auto sourceInfo{cooked_.GetSourcePositionRange(symbol.name())};
-    if (sourceInfo) {
+    if (auto sourceInfo{cooked_.GetSourcePositionRange(symbol.name())}) {
       os << symbol.name().ToString() << ": " << sourceInfo->first.file.path()
          << ", " << sourceInfo->first.line << ", " << sourceInfo->first.column
          << "-" << sourceInfo->second.column << "\n";

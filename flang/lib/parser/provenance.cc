@@ -111,17 +111,6 @@ ProvenanceRange OffsetToProvenanceMappings::Map(std::size_t at) const {
   return provenanceMap_[low].range.Suffix(offset);
 }
 
-std::optional<std::size_t> OffsetToProvenanceMappings::ReverseMap(
-    Provenance at) const {
-  for (const auto &[start, range] : provenanceMap_) {
-    if (range.Contains(at)) {
-      std::size_t offset{at.offset() - range.start().offset()};
-      return start + offset;
-    }
-  }
-  return std::nullopt;
-}
-
 void OffsetToProvenanceMappings::RemoveLastBytes(std::size_t bytes) {
   for (; bytes > 0; provenanceMap_.pop_back()) {
     CHECK(!provenanceMap_.empty());
@@ -432,38 +421,19 @@ std::optional<ProvenanceRange> CookedSource::GetProvenanceRange(
   return {ProvenanceRange{first.start(), last.start() - first.start()}};
 }
 
-std::optional<CharBlock> CookedSource::GetCharBlock(
-    ProvenanceRange range) const {
-  CHECK(!invertedMap_.empty() &&
-      "CompileProvenanceRangeToOffsetMappings not called");
-  if (auto to{invertedMap_.Map(range)}) {
-    return CharBlock{data_.c_str() + *to, range.size()};
-  } else {
-    return std::nullopt;
-  }
-}
-
 std::optional<CharBlock> CookedSource::GetCharBlockFromLineAndColumns(
     int line, int startColumn, int endColumn) const {
   // 2nd column is exclusive, meaning it is target column + 1.
   CHECK(line > 0 && startColumn > 0 && endColumn > 0);
+  CHECK(startColumn < endColumn);
   auto provenanceStart{allSources_.GetFirstFileProvenance().value().start()};
   if (auto sourceFile{allSources_.GetSourceFile(provenanceStart)}) {
     CHECK(line <= static_cast<int>(sourceFile->lines()));
-    if (auto firstOffset{
-            provenanceMap_.ReverseMap(sourceFile->GetLineStartOffset(line) +
-                provenanceStart.offset() + startColumn - 1)}) {
-      if (auto secondOffset{
-              provenanceMap_.ReverseMap(sourceFile->GetLineStartOffset(line) +
-                  provenanceStart.offset() + endColumn - 2)}) {
-        if (*secondOffset >= *firstOffset) {
-          // Returned 2nd column is also exclusive.
-          return CharBlock(
-              &data_[*firstOffset], *secondOffset - *firstOffset + 1);
-        }
-      }
-    }
+    return GetCharBlock(ProvenanceRange(sourceFile->GetLineStartOffset(line) +
+            provenanceStart.offset() + startColumn - 1,
+        endColumn - startColumn));
   }
+  return std::nullopt;
 }
 
 std::optional<std::pair<SourcePosition, SourcePosition>>
@@ -477,6 +447,17 @@ CookedSource::GetSourcePositionRange(CharBlock cookedRange) const {
     }
   }
   return std::nullopt;
+}
+
+std::optional<CharBlock> CookedSource::GetCharBlock(
+    ProvenanceRange range) const {
+  CHECK(!invertedMap_.empty() &&
+      "CompileProvenanceRangeToOffsetMappings not called");
+  if (auto to{invertedMap_.Map(range)}) {
+    return CharBlock{data_.c_str() + *to, range.size()};
+  } else {
+    return std::nullopt;
+  }
 }
 
 void CookedSource::Marshal() {

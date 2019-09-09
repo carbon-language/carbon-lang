@@ -52,6 +52,8 @@ namespace Fortran::parser {
 // by the upper bits of an offset, but that does not appear to be
 // necessary.)
 
+class AllSources;
+
 class Provenance {
 public:
   Provenance() {}
@@ -122,7 +124,6 @@ public:
   void Put(ProvenanceRange);
   void Put(const OffsetToProvenanceMappings &);
   ProvenanceRange Map(std::size_t at) const;
-  std::optional<std::size_t> ReverseMap(Provenance) const;
   void RemoveLastBytes(std::size_t);
   ProvenanceRangeToOffsetMappings Invert(const AllSources &) const;
   std::ostream &Dump(std::ostream &) const;
@@ -173,7 +174,7 @@ public:
   const SourceFile *GetSourceFile(
       Provenance, std::size_t *offset = nullptr) const;
   std::optional<SourcePosition> GetSourcePosition(Provenance) const;
-  std::optional<ProvenanceRange> GetFirstFileProvenance();
+  std::optional<ProvenanceRange> GetFirstFileProvenance() const;
   std::string GetPath(Provenance) const;  // __FILE__
   int GetLineNumber(Provenance) const;  // __LINE__
   Provenance CompilerInsertionProvenance(char ch);
@@ -237,11 +238,11 @@ public:
   bool IsValid(ProvenanceRange r) const { return allSources_.IsValid(r); }
 
   std::optional<ProvenanceRange> GetProvenanceRange(CharBlock) const;
-  std::optional<CharBlock> GetCharBlock(ProvenanceRange) const;
   std::optional<CharBlock> GetCharBlockFromLineAndColumns(
       int line, int startColumn, int endColumn) const;
   std::optional<std::pair<SourcePosition, SourcePosition>>
       GetSourcePositionRange(CharBlock) const;
+  std::optional<CharBlock> GetCharBlock(ProvenanceRange) const;
 
   // The result of a Put() is the offset that the new data
   // will have in the eventually marshaled contiguous buffer.

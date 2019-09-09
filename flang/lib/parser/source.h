@@ -36,11 +36,6 @@ std::string LocateSourceFile(
 class SourceFile;
 
 struct SourcePosition {
-  SourcePosition(const SourceFile &file, int line, int column)
-    : file{file}, line{line}, column{column} {}
-  SourcePosition(const SourceFile &file, std::pair<int, int> pos)
-    : file{file}, line{pos.first}, column{pos.second} {}
-
   const SourceFile &file;
   int line, column;
 };
