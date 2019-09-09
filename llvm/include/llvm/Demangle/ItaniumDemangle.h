@@ -2063,8 +2063,6 @@ public:
 class LambdaExpr : public Node {
   const Node *Type;
 
-  void printLambdaDeclarator(OutputStream &S) const;
-
 public:
   LambdaExpr(const Node *Type_) : Node(KLambdaExpr), Type(Type_) {}
 
@@ -2072,7 +2070,8 @@ public:
 
   void printLeft(OutputStream &S) const override {
     S += "[]";
-    printLambdaDeclarator(S);
+    if (Type->getKind() == KClosureTypeName)
+      static_cast<const ClosureTypeName *>(Type)->printDeclarator(S);
     S += "{...}";
   }
 };
@@ -2208,39 +2207,6 @@ FOR_EACH_NODE_KIND(SPECIALIZATION)
 #undef SPECIALIZATION
 
 #undef FOR_EACH_NODE_KIND
-
-inline void LambdaExpr::printLambdaDeclarator(OutputStream &S) const {
-  struct LambdaDeclaratorPrinter {
-    OutputStream &S;
-    void operator()(const ClosureTypeName *LambdaType) {
-      LambdaType->printDeclarator(S);
-    }
-
-    // Walk through any qualifiers to find the lambda-expression.
-    void operator()(const SpecialName *Name) {
-      Name->match([&](StringView, const Node *Name) { Name->visit(*this); });
-    }
-    void operator()(const NestedName *Name) {
-      Name->match([&](const Node *, const Node *Name) { Name->visit(*this); });
-    }
-    void operator()(const LocalName *Name) {
-      Name->match([&](const Node *, const Node *Name) { Name->visit(*this); });
-    }
-    void operator()(const QualifiedName *Name) {
-      Name->match([&](const Node *, const Node *Name) { Name->visit(*this); });
-    }
-    void operator()(const GlobalQualifiedName *Name) {
-      Name->match([&](const Node *Child) { Child->visit(*this); });
-    }
-    void operator()(const StdQualifiedName *Name) {
-      Name->match([&](const Node *Child) { Child->visit(*this); });
-    }
-    void operator()(const Node *) {
-      // If we can't find the lambda type, just print '[]{...}'.
-    }
-  };
-  return Type->visit(LambdaDeclaratorPrinter{S});
-}
 
 template <class T, size_t N>
 class PODSmallVector {
@@ -4324,20 +4290,26 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExprPrimary() {
     // Invalid mangled name per
     //   http://sourcerytools.com/pipermail/cxx-abi-dev/2011-August/002422.html
     return nullptr;
+  case 'U': {
+    // FIXME: Should we support LUb... for block literals?
+    if (look(1) != 'l')
+      return nullptr;
+    Node *T = parseUnnamedTypeName(nullptr);
+    if (!T || !consumeIf('E'))
+      return nullptr;
+    return make<LambdaExpr>(T);
+  }
   default: {
     // might be named type
     Node *T = getDerived().parseType();
     if (T == nullptr)
       return nullptr;
     StringView N = parseNumber();
-    if (!N.empty()) {
-      if (!consumeIf('E'))
-        return nullptr;
-      return make<IntegerCastExpr>(T, N);
-    }
-    if (consumeIf('E'))
-      return make<LambdaExpr>(T);
-    return nullptr;
+    if (N.empty())
+      return nullptr;
+    if (!consumeIf('E'))
+      return nullptr;
+    return make<IntegerCastExpr>(T, N);
   }
   }
 }
