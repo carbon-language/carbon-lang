@@ -85,6 +85,26 @@ define double @minsize(double %x, double %y) minsize {
   ret double %t6
 }
 
+; Partial reg avoidance may involve register allocation
+; rather than adding an instruction.
+
+define double @partial_dep_minsize(double %x, double %y) minsize {
+; SSE-LABEL: partial_dep_minsize:
+; SSE:       # %bb.0:
+; SSE-NEXT:    sqrtsd %xmm1, %xmm0
+; SSE-NEXT:    addsd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: partial_dep_minsize:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm0
+; AVX-NEXT:    vaddsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t6 = tail call fast double @llvm.sqrt.f64(double %y)
+  %t = fadd fast double %t6, %y
+  ret double %t
+}
+
 declare float @sqrtf(float)
 declare double @sqrt(double)
 declare double @llvm.sqrt.f64(double)
