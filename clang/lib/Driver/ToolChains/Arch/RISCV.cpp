@@ -12,6 +12,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "ToolChains/CommonArgs.h"
@@ -353,14 +354,18 @@ static bool getArchFeatures(const Driver &D, StringRef MArch,
   return true;
 }
 
-void riscv::getRISCVTargetFeatures(const Driver &D, const ArgList &Args,
+void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+                                   const ArgList &Args,
                                    std::vector<StringRef> &Features) {
-  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    StringRef MArch = A->getValue();
+  llvm::Optional<StringRef> MArch;
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
+    MArch = A->getValue();
+  else if (Triple.getOS() == llvm::Triple::Linux)
+    // RISC-V Linux defaults to rv{32,64}gc.
+    MArch = Triple.getArch() == llvm::Triple::riscv32 ? "rv32gc" : "rv64gc";
 
-    if (!getArchFeatures(D, MArch, Features, Args))
-      return;
-  }
+  if (MArch.hasValue() && !getArchFeatures(D, *MArch, Features, Args))
+    return;
 
   // -mrelax is default, unless -mno-relax is specified.
   if (Args.hasFlag(options::OPT_mrelax, options::OPT_mno_relax, true))
