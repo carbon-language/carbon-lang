@@ -175,16 +175,11 @@ define void @test_extern_weak() {
   ret void
 }
 
-; Right now, mismatched calling conventions should not be tail called.
-; TODO: Support this.
 declare fastcc void @fast_fn()
 define void @test_mismatched_caller() {
   ; COMMON-LABEL: name: test_mismatched_caller
   ; COMMON: bb.1 (%ir-block.0):
-  ; COMMON:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-  ; COMMON:   BL @fast_fn, csr_aarch64_aapcs, implicit-def $lr, implicit $sp
-  ; COMMON:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; COMMON:   RET_ReallyLR
+  ; COMMON:   TCRETURNdi @fast_fn, 0, csr_aarch64_aapcs, implicit $sp
   tail call fastcc void @fast_fn()
   ret void
 }
