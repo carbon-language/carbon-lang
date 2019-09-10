@@ -969,21 +969,6 @@ static bool isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
                                             DL, HeaderFirstNonPHI, &DT);
 }
 
-/// Return true if speculation of the given load must be suppressed for
-/// correctness reasons.  If not suppressed, dereferenceability and alignment
-/// must be proven.
-/// TODO: Move to ValueTracking.h/cpp in a separate change
-static bool mustSuppressSpeculation(const LoadInst &LI) {
-  if (!LI.isUnordered())
-    return true;
-  const Function &F = *LI.getFunction();
-  // Speculative load may create a race that did not exist in the source.
-  return F.hasFnAttribute(Attribute::SanitizeThread) ||
-    // Speculative load may load data from dirty regions.
-    F.hasFnAttribute(Attribute::SanitizeAddress) ||
-    F.hasFnAttribute(Attribute::SanitizeHWAddress);
-}
-
 bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   if (!EnableIfConversion) {
     reportVectorizationFailure("If-conversion is disabled",
