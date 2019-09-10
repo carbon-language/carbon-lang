@@ -284,7 +284,7 @@ def AMDGPUbfi : SDNode<"AMDGPUISD::BFI", AMDGPUDTIntTernaryOp>;
 def AMDGPUbfm : SDNode<"AMDGPUISD::BFM", SDTIntBinOp>;
 
 def AMDGPUffbh_u32 : SDNode<"AMDGPUISD::FFBH_U32", SDTIntUnaryOp>;
-def AMDGPUffbh_i32 : SDNode<"AMDGPUISD::FFBH_I32", SDTIntUnaryOp>;
+def AMDGPUffbh_i32_impl : SDNode<"AMDGPUISD::FFBH_I32", SDTIntUnaryOp>;
 
 def AMDGPUffbl_b32 : SDNode<"AMDGPUISD::FFBL_B32", SDTIntUnaryOp>;
 
@@ -445,3 +445,7 @@ def AMDGPUfp_class : PatFrags<(ops node:$src0, node:$src1),
 def AMDGPUfmed3 : PatFrags<(ops node:$src0, node:$src1, node:$src2),
   [(int_amdgcn_fmed3 node:$src0, node:$src1, node:$src2),
    (AMDGPUfmed3_impl node:$src0, node:$src1, node:$src2)]>;
+
+def AMDGPUffbh_i32 : PatFrags<(ops node:$src),
+  [(int_amdgcn_sffbh node:$src),
+   (AMDGPUffbh_i32_impl node:$src)]>;
