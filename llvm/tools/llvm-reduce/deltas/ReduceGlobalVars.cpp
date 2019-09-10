@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReduceGlobalVars.h"
+#include <set>
 
 using namespace llvm;
 

@@ -14,6 +14,7 @@
 
 #include "ReduceFunctions.h"
 #include "Delta.h"
+#include <set>
 
 using namespace llvm;
 

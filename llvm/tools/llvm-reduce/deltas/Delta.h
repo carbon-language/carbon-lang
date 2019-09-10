@@ -15,16 +15,10 @@
 #ifndef LLVM_TOOLS_LLVMREDUCE_LLVMREDUCE_DELTA_H
 #define LLVM_TOOLS_LLVMREDUCE_LLVMREDUCE_DELTA_H
 
-#include "../TestRunner.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/ScopedPrinter.h"
-#include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include <fstream>
-#include <set>
+#include "TestRunner.h"
 #include <vector>
+#include <utility>
+#include <functional>
 
 namespace llvm {
 
