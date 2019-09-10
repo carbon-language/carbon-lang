@@ -78,13 +78,13 @@ module ieee_exceptions
     type(ieee_status_type), intent(in) :: status
   end subroutine ieee_set_status
 
-  subroutine ieee_support_flag(flag, x)
+  pure logical function ieee_support_flag(flag, x)
     type(ieee_flag_type), intent(in) :: flag
     real, intent(in), optional :: x
-  end subroutine ieee_support_flag
+  end function ieee_support_flag
 
-  subroutine ieee_support_halting(flag)
+  pure logical function ieee_support_halting(flag)
     type(ieee_flag_type), intent(in) :: flag
-  end subroutine ieee_support_halting
+  end function ieee_support_halting
 
 end module ieee_exceptions
