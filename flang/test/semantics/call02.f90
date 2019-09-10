@@ -27,7 +27,7 @@ subroutine s01(elem, subr)
     end subroutine
   end interface
   call subr(cos) ! not an error
-  ! ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
+  !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
   call subr(elem)
 end subroutine
 
@@ -47,13 +47,13 @@ module m01
   end function
   subroutine test
     call callme(cos) ! not an error
-    ! ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
+    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
     call callme(elem01)
-    ! ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
+    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
     call callme(elem02)
-    ! ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
+    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
     call callme(elem03)
-    ! ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
+    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
     call callme(elem04)
    contains
     elemental real function elem04(x)
@@ -72,7 +72,7 @@ module m02
 1   continue
    contains
     subroutine internal
-      ! ERROR: alternate return label must be in the inclusive scope
+      !ERROR: alternate return label must be in the inclusive scope
       call altreturn(*1)
     end subroutine
   end subroutine
@@ -88,7 +88,7 @@ module m03
     type(t), intent(in) :: x
   end subroutine
   subroutine test
-    ! ERROR: coindexed argument cannot have a POINTER ultimate component
+    !ERROR: coindexed argument cannot have a POINTER ultimate component
     call callee(coarray[1])
   end subroutine
 end module

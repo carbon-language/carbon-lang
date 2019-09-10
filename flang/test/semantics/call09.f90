@@ -39,13 +39,13 @@ module m
     call s01(null(p)) ! ok
     call s01(sin) ! ok
     call s02(p) ! ok
-    ! ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
+    !ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
     call s02(procptr())
-    ! ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
+    !ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
     call s02(null())
-    ! ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
+    !ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
     call s02(null(p))
-    ! ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
+    !ERROR: Effective argument associated with dummy procedure pointer must be a procedure pointer unless INTENT(IN)
     call s02(sin)
   end subroutine
 

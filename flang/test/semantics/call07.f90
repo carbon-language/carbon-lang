@@ -28,27 +28,27 @@ module m
   end subroutine
 
   subroutine test
-    ! ERROR: CONTIGUOUS pointer must be an array
+    !ERROR: CONTIGUOUS pointer must be an array
     real, pointer, contiguous :: a01 ! C830
     real, pointer :: a02(:)
     real, target :: a03(10)
     real :: a04(10) ! not TARGET
     call s01(a03) ! ok
-    ! ERROR: Effective argument associated with CONTIGUOUS POINTER dummy argument must be simply contiguous
+    !ERROR: Effective argument associated with CONTIGUOUS POINTER dummy argument must be simply contiguous
     call s01(a02)
-    ! ERROR: Effective argument associated with CONTIGUOUS POINTER dummy argument must be simply contiguous
+    !ERROR: Effective argument associated with CONTIGUOUS POINTER dummy argument must be simply contiguous
     call s01(a03(::2))
-    ! ERROR: Effective argument associated with CONTIGUOUS POINTER dummy argument must be simply contiguous
+    !ERROR: Effective argument associated with CONTIGUOUS POINTER dummy argument must be simply contiguous
     call s01(a03([1,2,4]))
     call s02(a02) ! ok
     call s03(a03) ! ok
-    ! ERROR: Effective argument associated with POINTER dummy argument must be POINTER unless INTENT(IN)
+    !ERROR: Effective argument associated with POINTER dummy argument must be POINTER unless INTENT(IN)
     call s02(a03)
-    ! ERROR: Effective argument associated with POINTER INTENT(IN) dummy argument must be a valid target if not a POINTER
+    !ERROR: Effective argument associated with POINTER INTENT(IN) dummy argument must be a valid target if not a POINTER
     call s03(a03([1,2,4]))
-    ! ERROR: Effective argument associated with POINTER INTENT(IN) dummy argument must be a valid target if not a POINTER
+    !ERROR: Effective argument associated with POINTER INTENT(IN) dummy argument must be a valid target if not a POINTER
     call s03([1.])
-    ! ERROR: Effective argument associated with POINTER INTENT(IN) dummy argument must be a valid target if not a POINTER
+    !ERROR: Effective argument associated with POINTER INTENT(IN) dummy argument must be a valid target if not a POINTER
     call s03(a04)
   end subroutine
 end module

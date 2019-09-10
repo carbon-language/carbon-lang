@@ -162,6 +162,7 @@ set(ERROR_TESTS
   blockconstruct01.f90
   blockconstruct02.f90
   blockconstruct03.f90
+  call01.f90
 )
 
 # These test files have expected symbols in the source

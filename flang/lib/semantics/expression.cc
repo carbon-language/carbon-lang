@@ -1447,6 +1447,27 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 return std::nullopt;
               }
             }
+            if (const auto *scope{symbol.scope()}) {
+              if (scope->sourceRange().Contains(n.source)) {
+                if (symbol.attrs().test(
+                        semantics::Attr::NON_RECURSIVE)) {  // 15.6.2.1(3)
+                  if (auto *msg{Say(
+                          "NON_RECURSIVE procedure '%s' cannot call itself"_err_en_US,
+                          n.source)}) {
+                    msg->Attach(
+                        symbol.name(), "definition of '%s'"_en_US, n.source);
+                  }
+                } else if (IsAssumedLengthCharacterFunction(
+                               symbol)) {  // 15.6.2.1(3)
+                  if (auto *msg{Say(
+                          "assumed-length CHARACTER(*) function '%s' cannot call itself"_err_en_US,
+                          n.source)}) {
+                    msg->Attach(
+                        symbol.name(), "definition of '%s'"_en_US, n.source);
+                  }
+                }
+              }
+            }
             if (symbol.HasExplicitInterface()) {
               // TODO: check actual arguments vs. interface
             } else {

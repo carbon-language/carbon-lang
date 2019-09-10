@@ -76,41 +76,41 @@ module m
     call sma(ma) ! ok
     call spp(pp) ! ok
     call spa(pa) ! ok
-    ! ERROR: If a dummy or effective argument is polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is polymorphic, both must be so.
     call smp(pp)
-    ! ERROR: If a dummy or effective argument is polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is polymorphic, both must be so.
     call sma(pp)
-    ! ERROR: If a dummy or effective argument is polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is polymorphic, both must be so.
     call spp(mp)
-    ! ERROR: If a dummy or effective argument is polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is polymorphic, both must be so.
     call spa(mp)
-    ! ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
     call sup(pp)
-    ! ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
     call sua(pa)
-    ! ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
     call spp(up)
-    ! ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
+    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so.
     call spa(ua)
-    ! ERROR: Dummy and effective arguments must have the same declared type.
+    !ERROR: Dummy and effective arguments must have the same declared type.
     call spp(pp2)
-    ! ERROR: Dummy and effective arguments must have the same declared type.
+    !ERROR: Dummy and effective arguments must have the same declared type.
     call spa(pa2)
-    ! ERROR: Dummy argument has rank 1, but effective argument has rank 2.
+    !ERROR: Dummy argument has rank 1, but effective argument has rank 2.
     call smp(mpmat)
-    ! ERROR: Dummy argument has rank 1, but effective argument has rank 2.
+    !ERROR: Dummy argument has rank 1, but effective argument has rank 2.
     call sma(mamat)
     call sdmp(dmp) ! ok
     call sdma(dma) ! ok
     call snmp(nmp) ! ok
     call snma(nma) ! ok
-    ! ERROR: Dummy and effective arguments must defer the same type parameters.
+    !ERROR: Dummy and effective arguments must defer the same type parameters.
     call sdmp(nmp)
-    ! ERROR: Dummy and effective arguments must defer the same type parameters.
+    !ERROR: Dummy and effective arguments must defer the same type parameters.
     call sdma(nma)
-    ! ERROR: Dummy and effective arguments must defer the same type parameters.
+    !ERROR: Dummy and effective arguments must defer the same type parameters.
     call snmp(dmp)
-    ! ERROR: Dummy and effective arguments must defer the same type parameters.
+    !ERROR: Dummy and effective arguments must defer the same type parameters.
     call snma(dma)
   end subroutine
 

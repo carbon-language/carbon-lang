@@ -453,6 +453,22 @@ bool IsFinalizable(const Symbol &symbol) {
 
 bool IsCoarray(const Symbol &symbol) { return symbol.Corank() > 0; }
 
+bool IsAssumedLengthCharacter(const Symbol &symbol) {
+  if (const DeclTypeSpec * type{symbol.GetType()}) {
+    return type->category() == DeclTypeSpec::Character &&
+        type->characterTypeSpec().length().isAssumed();
+  } else {
+    return false;
+  }
+}
+
+bool IsAssumedLengthCharacterFunction(const Symbol &symbol) {
+  // Assumed-length character functions only appear as such in their
+  // definitions; their interfaces, pointers to them, and dummy procedures
+  // cannot be assumed-length.
+  return symbol.has<SubprogramDetails>() && IsAssumedLengthCharacter(symbol);
+}
+
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope) {
   if (const auto *pureProc{semantics::FindPureProcedureContaining(&scope)}) {
     if (const Symbol * root{GetAssociationRoot(symbol)}) {
