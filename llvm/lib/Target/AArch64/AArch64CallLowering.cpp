@@ -233,17 +233,6 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
                                       const Value *Val,
                                       ArrayRef<Register> VRegs,
                                       Register SwiftErrorVReg) const {
-
-  // Check if a tail call was lowered in this block. If so, we already handled
-  // the terminator.
-  MachineFunction &MF = MIRBuilder.getMF();
-  if (MF.getFrameInfo().hasTailCall()) {
-    MachineBasicBlock &MBB = MIRBuilder.getMBB();
-    auto FirstTerm = MBB.getFirstTerminator();
-    if (FirstTerm != MBB.end() && FirstTerm->isCall())
-      return true;
-  }
-
   auto MIB = MIRBuilder.buildInstrNoInsert(AArch64::RET_ReallyLR);
   assert(((Val && !VRegs.empty()) || (!Val && VRegs.empty())) &&
          "Return value without a vreg");
