@@ -45,6 +45,24 @@ static cl::opt<bool>
                           "ABI names (such as x2 instead of sp)"),
                  cl::init(false), cl::Hidden);
 
+// The command-line flags above are used by llvm-mc and llc. They can be used by
+// `llvm-objdump`, but we override their values here to handle options passed to
+// `llvm-objdump` with `-M` (which matches GNU objdump). There did not seem to
+// be an easier way to allow these options in all these tools, without doing it
+// this way.
+bool RISCVInstPrinter::applyTargetSpecificCLOption(StringRef Opt) {
+  if (Opt == "no-aliases") {
+    NoAliases = true;
+    return true;
+  }
+  if (Opt == "numeric") {
+    ArchRegNames = true;
+    return true;
+  }
+
+  return false;
+}
+
 void RISCVInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                  StringRef Annot, const MCSubtargetInfo &STI) {
   bool Res = false;

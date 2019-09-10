@@ -25,6 +25,8 @@ public:
                    const MCRegisterInfo &MRI)
       : MCInstPrinter(MAI, MII, MRI) {}
 
+  bool applyTargetSpecificCLOption(StringRef Opt) override;
+
   void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
                  const MCSubtargetInfo &STI) override;
   void printRegName(raw_ostream &O, unsigned RegNo) const override;
