@@ -11,6 +11,8 @@ declare void @use1(i1)
 declare {i8, i1} @llvm.usub.with.overflow(i8, i8)
 declare void @useagg({i8, i1})
 
+declare void @llvm.assume(i1)
+
 ; There is a number of base patterns..
 
 define i1 @t0_noncanonical_ignoreme(i8 %base, i8 %offset) {
@@ -371,7 +373,7 @@ define i1 @t12(i8 %base, i8 %offset) {
 ;
   %adjusted = sub i8 %base, %offset
   call void @use8(i8 %adjusted)
-  %underflow = icmp ugt i8 %adjusted, %base
+  %underflow = icmp ult i8 %base, %offset
   call void @use1(i1 %underflow)
   %null = icmp eq i8 %adjusted, 0
   call void @use1(i1 %null)
@@ -419,5 +421,59 @@ define i1 @t13(i8 %base, i8 %offset) {
   call void @use1(i1 %underflow)
   %null = icmp eq i8 %adjusted, 0
   %r = and i1 %null, %underflow
+  ret i1 %r
+}
+
+;-------------------------------------------------------------------------------
+
+define i1 @t15(i8 %base, i8 %offset) {
+; CHECK-LABEL: @t15(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i8 [[OFFSET:%.*]], 0
+; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[ADJUSTED:%.*]] = sub i8 [[BASE:%.*]], [[OFFSET]]
+; CHECK-NEXT:    call void @use8(i8 [[ADJUSTED]])
+; CHECK-NEXT:    [[NO_UNDERFLOW:%.*]] = icmp ult i8 [[ADJUSTED]], [[BASE]]
+; CHECK-NEXT:    call void @use1(i1 [[NO_UNDERFLOW]])
+; CHECK-NEXT:    [[NOT_NULL:%.*]] = icmp ne i8 [[ADJUSTED]], 0
+; CHECK-NEXT:    call void @use1(i1 [[NOT_NULL]])
+; CHECK-NEXT:    [[R:%.*]] = and i1 [[NOT_NULL]], [[NO_UNDERFLOW]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %cmp = icmp ne i8 %offset, 0
+  call void @llvm.assume(i1 %cmp)
+
+  %adjusted = sub i8 %base, %offset
+  call void @use8(i8 %adjusted)
+  %no_underflow = icmp ult i8 %adjusted, %base
+  call void @use1(i1 %no_underflow)
+  %not_null = icmp ne i8 %adjusted, 0
+  call void @use1(i1 %not_null)
+  %r = and i1 %not_null, %no_underflow
+  ret i1 %r
+}
+
+define i1 @t20(i8 %base, i8 %offset) {
+; CHECK-LABEL: @t20(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i8 [[OFFSET:%.*]], 0
+; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[ADJUSTED:%.*]] = sub i8 [[BASE:%.*]], [[OFFSET]]
+; CHECK-NEXT:    call void @use8(i8 [[ADJUSTED]])
+; CHECK-NEXT:    [[NO_UNDERFLOW:%.*]] = icmp uge i8 [[ADJUSTED]], [[BASE]]
+; CHECK-NEXT:    call void @use1(i1 [[NO_UNDERFLOW]])
+; CHECK-NEXT:    [[NOT_NULL:%.*]] = icmp eq i8 [[ADJUSTED]], 0
+; CHECK-NEXT:    call void @use1(i1 [[NOT_NULL]])
+; CHECK-NEXT:    [[R:%.*]] = or i1 [[NOT_NULL]], [[NO_UNDERFLOW]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %cmp = icmp ne i8 %offset, 0
+  call void @llvm.assume(i1 %cmp)
+
+  %adjusted = sub i8 %base, %offset
+  call void @use8(i8 %adjusted)
+  %no_underflow = icmp uge i8 %adjusted, %base
+  call void @use1(i1 %no_underflow)
+  %not_null = icmp eq i8 %adjusted, 0
+  call void @use1(i1 %not_null)
+  %r = or i1 %not_null, %no_underflow
   ret i1 %r
 }
