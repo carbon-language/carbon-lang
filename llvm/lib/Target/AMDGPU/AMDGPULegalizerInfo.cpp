@@ -313,7 +313,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
 
 
   auto &FPOpActions = getActionDefinitionsBuilder(
-    { G_FADD, G_FMUL, G_FNEG, G_FABS, G_FMA, G_FCANONICALIZE})
+    { G_FADD, G_FMUL, G_FMA, G_FCANONICALIZE})
     .legalFor({S32, S64});
   auto &TrigActions = getActionDefinitionsBuilder({G_FSIN, G_FCOS})
     .customFor({S32, S64});
@@ -345,9 +345,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       .scalarize(0);
   }
 
-  // TODO: Implement
-  getActionDefinitionsBuilder({G_FMINIMUM, G_FMAXIMUM}).lower();
-
   if (ST.hasVOP3PInsts())
     FPOpActions.clampMaxNumElements(0, S16, 2);
 
@@ -358,6 +355,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   TrigActions
     .scalarize(0)
     .clampScalar(0, ST.has16BitInsts() ? S16 : S32, S64);
+
+  getActionDefinitionsBuilder({G_FNEG, G_FABS})
+    .legalFor(FPTypesPK16)
+    .clampMaxNumElements(0, S16, 2)
+    .scalarize(0)
+    .clampScalar(0, S16, S64);
+
+  // TODO: Implement
+  getActionDefinitionsBuilder({G_FMINIMUM, G_FMAXIMUM}).lower();
 
   if (ST.has16BitInsts()) {
     getActionDefinitionsBuilder(G_FSQRT)
