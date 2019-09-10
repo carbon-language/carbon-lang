@@ -55,3 +55,35 @@ loop:
 ret:
   ret void
 }
+
+define void @t2_minsize(<4 x i8> *%in, <4 x i8> *%out, i32 %n) minsize {
+; CHECK-LABEL: t2_minsize:
+; CHECK:       @ %bb.0: @ %entry
+; CHECK-NEXT:    add r0, r0, #4
+; CHECK-NEXT:    add r1, r1, #4
+; CHECK-NEXT:  .LBB2_1: @ %loop
+; CHECK-NEXT:    @ =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vmov.f64 d16, #5.000000e-01
+; CHECK-NEXT:    vld1.32 {d16[0]}, [r0:32]
+; CHECK-NEXT:    vmovl.u8 q8, d16
+; CHECK-NEXT:    vuzp.8 d16, d18
+; CHECK-NEXT:    vst1.32 {d16[0]}, [r1:32]!
+; CHECK-NEXT:    add r0, r0, #4
+; CHECK-NEXT:    subs r2, r2, #1
+; CHECK-NEXT:    beq .LBB2_1
+; CHECK-NEXT:  @ %bb.2: @ %ret
+; CHECK-NEXT:    bx lr
+entry:
+  br label %loop
+loop:
+  %oldcount = phi i32 [0, %entry], [%newcount, %loop]
+  %newcount = add i32 %oldcount, 1
+  %p1 = getelementptr <4 x i8>, <4 x i8> *%in, i32 %newcount
+  %p2 = getelementptr <4 x i8>, <4 x i8> *%out, i32 %newcount
+  %tmp1 = load <4 x i8> , <4 x i8> *%p1, align 4
+  store <4 x i8> %tmp1, <4 x i8> *%p2
+  %cmp = icmp eq i32 %newcount, %n
+  br i1 %cmp, label %loop, label %ret
+ret:
+  ret void
+}
