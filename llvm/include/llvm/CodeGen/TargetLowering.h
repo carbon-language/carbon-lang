@@ -1578,8 +1578,8 @@ public:
   }
 
   /// Return the minimum stack alignment of an argument.
-  unsigned getMinStackArgumentAlignment() const {
-    return MinStackArgumentAlignment.value();
+  llvm::Align getMinStackArgumentAlignment() const {
+    return MinStackArgumentAlignment;
   }
 
   /// Return the minimum function alignment.
@@ -2122,8 +2122,8 @@ protected:
   void setPrefLoopAlignment(llvm::Align Align) { PrefLoopAlignment = Align; }
 
   /// Set the minimum stack alignment of an argument.
-  void setMinStackArgumentAlignment(unsigned Align) {
-    MinStackArgumentAlignment = llvm::Align(Align);
+  void setMinStackArgumentAlignment(llvm::Align Align) {
+    MinStackArgumentAlignment = Align;
   }
 
   /// Set the maximum atomic operation size supported by the
