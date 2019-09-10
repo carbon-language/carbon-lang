@@ -693,7 +693,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE,
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
-//   EXTENDS_TYPE_OF, IS_CONTIGUOUS, SAME_TYPE, STORAGE_SIZE
+//   EXTENDS_TYPE_OF, IS_CONTIGUOUS, SAME_TYPE
 // TODO: Type inquiry intrinsic functions - these return constants
 //  DIGITS, NEW_LINE
 // TODO: Non-standard intrinsic functions
