@@ -26,10 +26,10 @@ void test() {
 
 // RUN: rm -rf %t
 // Check that libclang crash-recovery works; both with a module building crash...
-// RUN: not env CINDEXTEST_FAILONERROR=1 c-index-test -test-load-source all -fmodules -fmodules-cache-path=%t -Xclang -fdisable-module-hash -I %S/Inputs/Headers -DCRASH -DLIBCLANG_CRASH %s > /dev/null 2> %t.err
+// RUN: env CINDEXTEST_FAILONERROR=1 not c-index-test -test-load-source all -fmodules -fmodules-cache-path=%t -Xclang -fdisable-module-hash -I %S/Inputs/Headers -DCRASH -DLIBCLANG_CRASH %s > /dev/null 2> %t.err
 // RUN: FileCheck < %t.err -check-prefix=CHECK-LIBCLANG-CRASH %s
 // ...and with module building successful.
-// RUN: not env CINDEXTEST_FAILONERROR=1 c-index-test -test-load-source all -fmodules -fmodules-cache-path=%t -Xclang -fdisable-module-hash -I %S/Inputs/Headers -DLIBCLANG_CRASH %s > /dev/null 2> %t.err
+// RUN: env CINDEXTEST_FAILONERROR=1 not c-index-test -test-load-source all -fmodules -fmodules-cache-path=%t -Xclang -fdisable-module-hash -I %S/Inputs/Headers -DLIBCLANG_CRASH %s > /dev/null 2> %t.err
 // RUN: FileCheck < %t.err -check-prefix=CHECK-LIBCLANG-CRASH %s
 // CHECK-LIBCLANG-CRASH: libclang: crash detected during parsing
 // CHECK-LIBCLANG-CRASH: Unable to load translation unit!
