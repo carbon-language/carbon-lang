@@ -665,6 +665,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                                       {S128, ConstantPtr, 128, GlobalAlign32},
                                       {V2S32, ConstantPtr, 32, GlobalAlign32}});
     Actions
+        .customIf(typeIs(1, Constant32Ptr))
         .narrowScalarIf(
             [=](const LegalityQuery &Query) -> bool {
               return !Query.Types[0].isVector() && needToSplitLoad(Query);
@@ -1039,6 +1040,8 @@ bool AMDGPULegalizerInfo::legalizeCustom(MachineInstr &MI,
     return legalizeSinCos(MI, MRI, B);
   case TargetOpcode::G_GLOBAL_VALUE:
     return legalizeGlobalValue(MI, MRI, B);
+  case TargetOpcode::G_LOAD:
+    return legalizeLoad(MI, MRI, B, Observer);
   default:
     return false;
   }
@@ -1520,6 +1523,18 @@ bool AMDGPULegalizerInfo::legalizeGlobalValue(
   DiagnosticInfoUnsupported BadInit(
     Fn, "unsupported initializer for address space", MI.getDebugLoc());
   Fn.getContext().diagnose(BadInit);
+  return true;
+}
+
+bool AMDGPULegalizerInfo::legalizeLoad(
+  MachineInstr &MI, MachineRegisterInfo &MRI,
+  MachineIRBuilder &B, GISelChangeObserver &Observer) const {
+  B.setInstr(MI);
+  LLT ConstPtr = LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64);
+  auto Cast = B.buildAddrSpaceCast(ConstPtr, MI.getOperand(1).getReg());
+  Observer.changingInstr(MI);
+  MI.getOperand(1).setReg(Cast.getReg(0));
+  Observer.changedInstr(MI);
   return true;
 }
 
