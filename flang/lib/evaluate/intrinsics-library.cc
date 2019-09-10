@@ -57,19 +57,32 @@ static void AddLibmRealHostProcedures(
     HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
   using F = FuncPointer<HostT, HostT>;
   using F2 = FuncPointer<HostT, HostT, HostT>;
-  HostRuntimeIntrinsicProcedure libmSymbols[]{{"acos", F{std::acos}, true},
-      {"acosh", F{std::acosh}, true}, {"asin", F{std::asin}, true},
-      {"asinh", F{std::asinh}, true}, {"atan", F{std::atan}, true},
-      {"atan", F2{std::atan2}, true}, {"atanh", F{std::atanh}, true},
-      {"cos", F{std::cos}, true}, {"cosh", F{std::cosh}, true},
-      {"erf", F{std::erf}, true}, {"erfc", F{std::erfc}, true},
-      {"exp", F{std::exp}, true}, {"gamma", F{std::tgamma}, true},
-      {"hypot", F2{std::hypot}, true}, {"log", F{std::log}, true},
-      {"log10", F{std::log10}, true}, {"log_gamma", F{std::lgamma}, true},
-      {"mod", F2{std::fmod}, true}, {"pow", F2{std::pow}, true},
-      {"sin", F{std::sin}, true}, {"sinh", F{std::sinh}, true},
-      {"sqrt", F{std::sqrt}, true}, {"tan", F{std::tan}, true},
-      {"tanh", F{std::tanh}, true}};
+  HostRuntimeIntrinsicProcedure libmSymbols[]{
+      {"acos", F{std::acos}, true},
+      {"acosh", F{std::acosh}, true},
+      {"asin", F{std::asin}, true},
+      {"asinh", F{std::asinh}, true},
+      {"atan", F{std::atan}, true},
+      {"atan", F2{std::atan2}, true},
+      {"atanh", F{std::atanh}, true},
+      {"cos", F{std::cos}, true},
+      {"cosh", F{std::cosh}, true},
+      {"erf", F{std::erf}, true},
+      {"erfc", F{std::erfc}, true},
+      {"exp", F{std::exp}, true},
+      {"gamma", F{std::tgamma}, true},
+      {"hypot", F2{std::hypot}, true},
+      {"log", F{std::log}, true},
+      {"log10", F{std::log10}, true},
+      {"log_gamma", F{std::lgamma}, true},
+      {"mod", F2{std::fmod}, true},
+      {"pow", F2{std::pow}, true},
+      {"sin", F{std::sin}, true},
+      {"sinh", F{std::sinh}, true},
+      {"sqrt", F{std::sqrt}, true},
+      {"tan", F{std::tan}, true},
+      {"tanh", F{std::tanh}, true},
+  };
   // Note: cmath does not have modulo and erfc_scaled equivalent
 
   // Note regarding  lack of bessel function support:
@@ -101,15 +114,25 @@ static void AddLibmComplexHostProcedures(
       const HostT &>;
   HostRuntimeIntrinsicProcedure libmSymbols[]{
       {"abs", FuncPointer<HostT, const std::complex<HostT> &>{std::abs}, true},
-      {"acos", F{std::acos}, true}, {"acosh", F{std::acosh}, true},
-      {"asin", F{std::asin}, true}, {"asinh", F{std::asinh}, true},
-      {"atan", F{std::atan}, true}, {"atanh", F{std::atanh}, true},
-      {"cos", F{std::cos}, true}, {"cosh", F{std::cosh}, true},
-      {"exp", F{std::exp}, true}, {"log", F{std::log}, true},
-      {"pow", F2{std::pow}, true}, {"pow", F2a{std::pow}, true},
-      {"pow", F2b{std::pow}, true}, {"sin", F{std::sin}, true},
-      {"sinh", F{std::sinh}, true}, {"sqrt", F{std::sqrt}, true},
-      {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
+      {"acos", F{std::acos}, true},
+      {"acosh", F{std::acosh}, true},
+      {"asin", F{std::asin}, true},
+      {"asinh", F{std::asinh}, true},
+      {"atan", F{std::atan}, true},
+      {"atanh", F{std::atanh}, true},
+      {"cos", F{std::cos}, true},
+      {"cosh", F{std::cosh}, true},
+      {"exp", F{std::exp}, true},
+      {"log", F{std::log}, true},
+      {"pow", F2{std::pow}, true},
+      {"pow", F2a{std::pow}, true},
+      {"pow", F2b{std::pow}, true},
+      {"sin", F{std::sin}, true},
+      {"sinh", F{std::sinh}, true},
+      {"sqrt", F{std::sqrt}, true},
+      {"tan", F{std::tan}, true},
+      {"tanh", F{std::tanh}, true},
+  };
 
   for (auto sym : libmSymbols) {
     if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
@@ -445,7 +468,8 @@ static void AddLibpgmathRealHostProcedures(
       {"sinh", Sym<Lib, I::sinh, HostT>, true},
       {"sqrt", Sym<Lib, I::sqrt, HostT>, true},
       {"tan", Sym<Lib, I::tan, HostT>, true},
-      {"tanh", Sym<Lib, I::tanh, HostT>, true}};
+      {"tanh", Sym<Lib, I::tanh, HostT>, true},
+  };
 
   for (auto sym : pgmathSymbols) {
     hostIntrinsicLibrary.AddProcedure(std::move(sym));
@@ -509,7 +533,8 @@ static void AddLibpgmathComplexHostProcedures(
       {"sinh", ComplexCFuncWrapper<Sym<Lib, I::sinh, CHostT>>, true},
       {"sqrt", ComplexCFuncWrapper<Sym<Lib, I::sqrt, CHostT>>, true},
       {"tan", ComplexCFuncWrapper<Sym<Lib, I::tan, CHostT>>, true},
-      {"tanh", ComplexCFuncWrapper<Sym<Lib, I::tanh, CHostT>>, true}};
+      {"tanh", ComplexCFuncWrapper<Sym<Lib, I::tanh, CHostT>>, true},
+  };
 
   for (auto sym : pgmathSymbols) {
     hostIntrinsicLibrary.AddProcedure(std::move(sym));
