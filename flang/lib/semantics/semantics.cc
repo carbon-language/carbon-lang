@@ -108,6 +108,7 @@ static bool PerformStatementSemantics(
     SemanticsContext &context, parser::Program &program) {
   ResolveNames(context, program);
   RewriteParseTree(context, program);
+  CheckDeclarations(context);
   StatementSemanticsPass1{context}.Walk(program);
   return StatementSemanticsPass2{context}.Walk(program);
 }
