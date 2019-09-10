@@ -13,6 +13,8 @@
 
 #include "ReduceGlobalVars.h"
 
+using namespace llvm;
+
 /// Removes all the Initialized GVs that aren't inside the desired Chunks.
 static void extractGVsFromModule(std::vector<Chunk> ChunksToKeep,
                                  Module *Program) {

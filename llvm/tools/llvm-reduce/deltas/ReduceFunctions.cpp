@@ -13,6 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReduceFunctions.h"
+#include "Delta.h"
+
+using namespace llvm;
 
 /// Removes all the Defined Functions (as well as their calls)
 /// that aren't inside any of the desired Chunks.

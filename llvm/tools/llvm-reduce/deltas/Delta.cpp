@@ -15,6 +15,8 @@
 #include "Delta.h"
 #include "llvm/ADT/STLExtras.h"
 
+using namespace llvm;
+
 /// Writes IR code to the given Filepath
 static bool writeProgramToFile(StringRef Filepath, int FD, const Module &M) {
   ToolOutputFile Out(Filepath, FD);

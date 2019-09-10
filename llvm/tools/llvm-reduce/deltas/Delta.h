@@ -26,7 +26,7 @@
 #include <set>
 #include <vector>
 
-using namespace llvm;
+namespace llvm {
 
 struct Chunk {
   unsigned begin;
@@ -52,8 +52,6 @@ struct Chunk {
     return std::tie(C1.begin, C1.end) < std::tie(C2.begin, C2.end);
   }
 };
-
-namespace llvm {
 
 /// This function implements the Delta Debugging algorithm, it receives a
 /// number of Targets (e.g. Functions, Instructions, Basic Blocks, etc.) and
