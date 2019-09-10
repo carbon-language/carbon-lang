@@ -48,8 +48,8 @@ public:
   void printCustomAliasOperand(const MCInst *MI, unsigned OpIdx,
                                unsigned PrintMethodIdx,
                                const MCSubtargetInfo &STI, raw_ostream &O);
-  static const char *getRegisterName(unsigned RegNo,
-                                     unsigned AltIdx = RISCV::ABIRegAltName);
+  static const char *getRegisterName(unsigned RegNo);
+  static const char *getRegisterName(unsigned RegNo, unsigned AltIdx);
 };
 } // namespace llvm
 
