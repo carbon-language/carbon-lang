@@ -307,7 +307,7 @@ TYPE_PARSER(construct<ProgramUnit>(indirect(Parser<Module>{})) ||
 //         [declaration-construct]...
 TYPE_CONTEXT_PARSER("specification part"_en_US,
     construct<SpecificationPart>(many(openmpDeclarativeConstruct),
-        many(unambiguousStatement(indirect(Parser<UseStmt>{}))),
+        many(statement(indirect(Parser<UseStmt>{}))),
         many(unambiguousStatement(indirect(Parser<ImportStmt>{}))),
         implicitPart, many(declarationConstruct)))
 
@@ -318,7 +318,7 @@ TYPE_CONTEXT_PARSER("specification part"_en_US,
 // statement.
 constexpr auto limitedSpecificationPart{inContext("specification part"_en_US,
     construct<SpecificationPart>(many(openmpDeclarativeConstruct),
-        many(unambiguousStatement(indirect(Parser<UseStmt>{}))),
+        many(statement(indirect(Parser<UseStmt>{}))),
         many(unambiguousStatement(indirect(Parser<ImportStmt>{}))),
         implicitPart, many(limitedDeclarationConstruct)))};
 
@@ -3110,6 +3110,9 @@ constexpr auto moduleNature{
 // R1409 use-stmt ->
 //         USE [[, module-nature] ::] module-name [, rename-list] |
 //         USE [[, module-nature] ::] module-name , ONLY : [only-list]
+// N.B. Lookahead to the end of the statement is necessary to resolve
+// ambiguity with assignments and statement function definitions that
+// begin with the letters "USE".
 TYPE_PARSER(construct<UseStmt>("USE" >> optionalBeforeColons(moduleNature),
                 name, ", ONLY :" >> optionalList(Parser<Only>{})) ||
     construct<UseStmt>("USE" >> optionalBeforeColons(moduleNature), name,

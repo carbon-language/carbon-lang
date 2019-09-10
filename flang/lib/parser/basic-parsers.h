@@ -208,6 +208,7 @@ public:
         state.set_anyTokenMatched();
       }
     } else if (state.anyTokenMatched()) {
+      emitMessage = state.messages().empty();
       messages.Annex(std::move(state.messages()));
       backtrack.set_anyTokenMatched();
       if (state.anyDeferredMessages()) {
