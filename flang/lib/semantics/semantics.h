@@ -140,7 +140,7 @@ public:
   Scope &FindScope(parser::CharBlock);
 
   const ConstructStack &constructStack() const { return constructStack_; }
-  void PushConstruct(const ConstructNode &construct);
+  void PushConstruct(ConstructNode &&construct);
   void PopConstruct();
   bool InsideDoConstruct() const;
 
