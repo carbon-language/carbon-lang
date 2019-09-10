@@ -389,7 +389,9 @@ StringRef riscv::getRISCVABI(const ArgList &Args, const llvm::Triple &Triple) {
   if (const Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
     return A->getValue();
 
-  // FIXME: currently defaults to the soft-float ABIs. Will need to be
-  // expanded to select ilp32f, ilp32d, lp64f, lp64d when appropriate.
-  return Triple.getArch() == llvm::Triple::riscv32 ? "ilp32" : "lp64";
+  // RISC-V Linux defaults to ilp32d/lp64d
+  if (Triple.getOS() == llvm::Triple::Linux)
+    return Triple.getArch() == llvm::Triple::riscv32 ? "ilp32d" : "lp64d";
+  else
+    return Triple.getArch() == llvm::Triple::riscv32 ? "ilp32" : "lp64";
 }
