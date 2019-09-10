@@ -82,67 +82,67 @@ public:
   }
 
   bool Pre(const parser::AssociateConstruct &associateConstruct) {
-    context_.PushConstruct(ConstructNode{&associateConstruct});
+    context_.PushConstruct(associateConstruct);
     Enter(associateConstruct);
     return true;
   }
 
   bool Pre(const parser::BlockConstruct &blockConstruct) {
-    context_.PushConstruct(ConstructNode{&blockConstruct});
+    context_.PushConstruct(blockConstruct);
     Enter(blockConstruct);
     return true;
   }
 
   bool Pre(const parser::CaseConstruct &caseConstruct) {
-    context_.PushConstruct(ConstructNode{&caseConstruct});
+    context_.PushConstruct(caseConstruct);
     Enter(caseConstruct);
     return true;
   }
 
   bool Pre(const parser::CriticalConstruct &criticalConstruct) {
-    context_.PushConstruct(ConstructNode{&criticalConstruct});
+    context_.PushConstruct(criticalConstruct);
     Enter(criticalConstruct);
     return true;
   }
 
   bool Pre(const parser::ChangeTeamConstruct &changeTeamConstruct) {
-    context_.PushConstruct(ConstructNode{&changeTeamConstruct});
+    context_.PushConstruct(changeTeamConstruct);
     Enter(changeTeamConstruct);
     return true;
   }
 
   bool Pre(const parser::DoConstruct &doConstruct) {
-    context_.PushConstruct(ConstructNode{&doConstruct});
+    context_.PushConstruct(doConstruct);
     Enter(doConstruct);
     return true;
   }
 
   bool Pre(const parser::ForAllConstruct &forAllConstruct) {
-    context_.PushConstruct(ConstructNode{&forAllConstruct});
+    context_.PushConstruct(&forAllConstruct);
     Enter(forAllConstruct);
     return true;
   }
 
   bool Pre(const parser::IfConstruct &ifConstruct) {
-    context_.PushConstruct(ConstructNode{&ifConstruct});
+    context_.PushConstruct(ifConstruct);
     Enter(ifConstruct);
     return true;
   }
 
   bool Pre(const parser::SelectRankConstruct &selectRankConstruct) {
-    context_.PushConstruct(ConstructNode{&selectRankConstruct});
+    context_.PushConstruct(selectRankConstruct);
     Enter(selectRankConstruct);
     return true;
   }
 
   bool Pre(const parser::SelectTypeConstruct &selectTypeConstruct) {
-    context_.PushConstruct(ConstructNode{&selectTypeConstruct});
+    context_.PushConstruct(selectTypeConstruct);
     Enter(selectTypeConstruct);
     return true;
   }
 
   bool Pre(const parser::WhereConstruct &whereConstruct) {
-    context_.PushConstruct(ConstructNode{&whereConstruct});
+    context_.PushConstruct(whereConstruct);
     Enter(whereConstruct);
     return true;
   }
@@ -296,10 +296,6 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
   } else {
     common::die("invalid source location");
   }
-}
-
-void SemanticsContext::PushConstruct(ConstructNode &&construct) {
-  constructStack_.emplace_back(construct);
 }
 
 void SemanticsContext::PopConstruct() {
