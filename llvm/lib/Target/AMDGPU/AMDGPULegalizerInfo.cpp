@@ -780,7 +780,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
                                                   {S32, LocalPtr, 8, 8},
                                                   {S32, LocalPtr, 16, 16},
                                                   {S32, PrivatePtr, 8, 8},
-                                                  {S32, PrivatePtr, 16, 16}});
+                                                  {S32, PrivatePtr, 16, 16},
+                                                  {S32, ConstantPtr, 8, 8},
+                                                  {S32, ConstantPtr, 16, 2 * 8}});
   if (ST.hasFlatAddressSpace()) {
     ExtLoads.legalForTypesWithMemDesc(
         {{S32, FlatPtr, 8, 8}, {S32, FlatPtr, 16, 16}});
