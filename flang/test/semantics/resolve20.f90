@@ -48,6 +48,9 @@ module m
   type :: bad3
   end type
 
+  type :: m ! the name of a module can be used as a local identifier
+  end type m
+
   external :: a, b, c, d
   !ERROR: EXTERNAL attribute not allowed on 'm'
   external :: m

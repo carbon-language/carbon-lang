@@ -1653,7 +1653,11 @@ void ScopeHandler::PushScope(Scope &scope) {
   if (kind != Scope::Kind::Block) {
     ImplicitRulesVisitor::BeginScope(scope);
   }
-  if (!currScope_->IsDerivedType()) {
+  // The name of a module or submodule cannot be "used" in its scope,
+  // as we read 19.3.1(2), so we allow the name to be used as a local
+  // identifier in the module or submodule too.  Same with programs.
+  if (!currScope_->IsDerivedType() && kind != Scope::Kind::Module &&
+      kind != Scope::Kind::MainProgram) {
     if (auto *symbol{scope.symbol()}) {
       // Create a dummy symbol so we can't create another one with the same
       // name. It might already be there if we previously pushed the scope.
@@ -2086,13 +2090,16 @@ void ModuleVisitor::BeginModule(const parser::Name &name, bool isSubmodule) {
 // If an error occurs, report it and return nullptr.
 Scope *ModuleVisitor::FindModule(const parser::Name &name, Scope *ancestor) {
   ModFileReader reader{context()};
-  auto *scope{reader.Read(name.source, ancestor)};
+  Scope *scope{reader.Read(name.source, ancestor)};
   if (!scope) {
     return nullptr;
   }
   if (scope->kind() != Scope::Kind::Module) {
     Say(name, "'%s' is not a module"_err_en_US);
     return nullptr;
+  }
+  if (DoesScopeContain(scope, currScope())) {
+    Say(name, "Module '%s' cannot USE itself."_err_en_US);
   }
   Resolve(name, scope->symbol());
   return scope;

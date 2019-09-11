@@ -13,9 +13,24 @@
 ! limitations under the License.
 
 program p
-  !ERROR: 'p' is already declared in this scoping unit
-  integer p
+  integer :: p ! this is ok
 end
+module m
+  integer :: m ! this is ok
+end
+submodule(m) sm
+  integer :: sm ! this is ok
+end
+module m2
+  type :: t
+  end type
+  interface
+    subroutine s
+      !ERROR: Module 'm2' cannot USE itself.
+      use m2, only: t
+    end subroutine
+  end interface
+end module
 subroutine s
   !ERROR: 's' is already declared in this scoping unit
   integer :: s
