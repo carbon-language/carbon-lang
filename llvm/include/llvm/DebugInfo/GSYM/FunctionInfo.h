@@ -33,7 +33,7 @@ namespace gsym {
 struct FunctionInfo {
   AddressRange Range;
   uint32_t Name; ///< String table offset in the string table.
-  llvm::Optional<LineTable> LineTable;
+  llvm::Optional<LineTable> OptLineTable;
   llvm::Optional<InlineInfo> Inline;
 
   FunctionInfo(uint64_t Addr = 0, uint64_t Size = 0, uint32_t N = 0)
@@ -44,7 +44,7 @@ struct FunctionInfo {
     /// converting information from a symbol table and from debug info, we
     /// might end up with multiple FunctionInfo objects for the same range
     /// and we need to be able to tell which one is the better object to use.
-    return LineTable.hasValue() || Inline.hasValue();
+    return OptLineTable.hasValue() || Inline.hasValue();
   }
 
   bool isValid() const {
@@ -66,14 +66,14 @@ struct FunctionInfo {
   void clear() {
     Range = {0, 0};
     Name = 0;
-    LineTable = llvm::None;
-    Inline = llvm::None;
+    OptLineTable = None;
+    Inline = None;
   }
 };
 
 inline bool operator==(const FunctionInfo &LHS, const FunctionInfo &RHS) {
   return LHS.Range == RHS.Range && LHS.Name == RHS.Name &&
-         LHS.LineTable == RHS.LineTable && LHS.Inline == RHS.Inline;
+         LHS.OptLineTable == RHS.OptLineTable && LHS.Inline == RHS.Inline;
 }
 inline bool operator!=(const FunctionInfo &LHS, const FunctionInfo &RHS) {
   return !(LHS == RHS);
@@ -92,7 +92,7 @@ inline bool operator<(const FunctionInfo &LHS, const FunctionInfo &RHS) {
   if (LHS.Inline.hasValue() != RHS.Inline.hasValue())
     return RHS.Inline.hasValue();
 
-  return LHS.LineTable < RHS.LineTable;
+  return LHS.OptLineTable < RHS.OptLineTable;
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const FunctionInfo &R);

@@ -74,8 +74,8 @@ TEST(GSYMTest, TestFunctionInfo) {
   EXPECT_EQ(FI.size(), Size);
   const uint32_t FileIdx = 1;
   const uint32_t Line = 12;
-  FI.LineTable = LineTable();
-  FI.LineTable->push(LineEntry(StartAddr,FileIdx,Line));
+  FI.OptLineTable = LineTable();
+  FI.OptLineTable->push(LineEntry(StartAddr,FileIdx,Line));
   EXPECT_TRUE(FI.hasRichInfo());
   FI.clear();
   EXPECT_FALSE(FI.isValid());
@@ -110,8 +110,8 @@ TEST(GSYMTest, TestFunctionInfo) {
   // best version of a function info.
   FunctionInfo FISymtab(StartAddr, Size, NameOffset);
   FunctionInfo FIWithLines(StartAddr, Size, NameOffset);
-  FIWithLines.LineTable = LineTable();
-  FIWithLines.LineTable->push(LineEntry(StartAddr,FileIdx,Line));
+  FIWithLines.OptLineTable = LineTable();
+  FIWithLines.OptLineTable->push(LineEntry(StartAddr,FileIdx,Line));
   // Test that a FunctionInfo with just a name and size is less than one
   // that has name, size and any number of line table entries
   EXPECT_LT(FISymtab, FIWithLines);
@@ -127,13 +127,13 @@ TEST(GSYMTest, TestFunctionInfo) {
   // Test if we have an entry with lines and one with more lines for the same
   // range, the ones with more lines is greater than the one with less.
   FunctionInfo FIWithMoreLines = FIWithLines;
-  FIWithMoreLines.LineTable->push(LineEntry(StartAddr,FileIdx,Line+5));
+  FIWithMoreLines.OptLineTable->push(LineEntry(StartAddr,FileIdx,Line+5));
   EXPECT_LT(FIWithLines, FIWithMoreLines);
 
   // Test that if we have the same number of lines we compare the line entries
-  // in the FunctionInfo.LineTable.Lines vector.
+  // in the FunctionInfo.OptLineTable.Lines vector.
   FunctionInfo FIWithLinesWithHigherAddress = FIWithLines;
-  FIWithLinesWithHigherAddress.LineTable->get(0).Addr += 0x10;
+  FIWithLinesWithHigherAddress.OptLineTable->get(0).Addr += 0x10;
   EXPECT_LT(FIWithLines, FIWithLinesWithHigherAddress);
 }
 
