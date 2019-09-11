@@ -1655,7 +1655,8 @@ void ScopeHandler::PushScope(Scope &scope) {
   }
   // The name of a module or submodule cannot be "used" in its scope,
   // as we read 19.3.1(2), so we allow the name to be used as a local
-  // identifier in the module or submodule too.  Same with programs.
+  // identifier in the module or submodule too.  Same with programs
+  // (14.1(3)).
   if (!currScope_->IsDerivedType() && kind != Scope::Kind::Module &&
       kind != Scope::Kind::MainProgram) {
     if (auto *symbol{scope.symbol()}) {
@@ -2098,7 +2099,7 @@ Scope *ModuleVisitor::FindModule(const parser::Name &name, Scope *ancestor) {
     Say(name, "'%s' is not a module"_err_en_US);
     return nullptr;
   }
-  if (DoesScopeContain(scope, currScope())) {
+  if (DoesScopeContain(scope, currScope())) {  // 14.2.2(1)
     Say(name, "Module '%s' cannot USE itself."_err_en_US);
   }
   Resolve(name, scope->symbol());
