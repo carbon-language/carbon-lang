@@ -68,7 +68,7 @@ struct __sanitizer_ipc_perm {
 #if !defined(_LP64)
   int pad[4];
 #endif
-  };
+};
 
 struct __sanitizer_shmid_ds {
   __sanitizer_ipc_perm shm_perm;

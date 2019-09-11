@@ -196,7 +196,7 @@ class FuzzedDataProvider {
     // Use different integral types for different floating point types in order
     // to provide better density of the resulting values.
     using IntegralType =
-        typename std::conditional<sizeof(T) <= sizeof(uint32_t), uint32_t,
+        typename std::conditional<(sizeof(T) <= sizeof(uint32_t)), uint32_t,
                                   uint64_t>::type;
 
     T result = static_cast<T>(ConsumeIntegral<IntegralType>());

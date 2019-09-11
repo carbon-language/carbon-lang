@@ -20,7 +20,7 @@ struct C {
 
 struct A {
   char p;
-  explicit A() : p('C') {}
+  A() : p('C') {}
   const operator C() const { return C(&p); }
 };
 

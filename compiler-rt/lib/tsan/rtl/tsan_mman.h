@@ -79,8 +79,8 @@ enum MBlockType {
 void *internal_alloc(MBlockType typ, uptr sz);
 void internal_free(void *p);
 
-template<typename T>
-void DestroyAndFree(T *&p) {
+template <typename T>
+void DestroyAndFree(T *&p) {  // NOLINT
   p->~T();
   internal_free(p);
   p = 0;
