@@ -763,6 +763,25 @@ define <4 x i32> @mload_v4i32(<4 x i32> %trigger, <4 x i32>* %addr, <4 x i32> %d
 }
 declare <4 x i32> @llvm.masked.load.v4i32.p0v4i32(<4 x i32>*, i32, <4 x i1>, <4 x i32>)
 
+define <16 x i32> @trunc_v16i64_v16i32(<16 x i64>* %x) nounwind "min-legal-vector-width"="256" {
+; CHECK-LABEL: trunc_v16i64_v16i32:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vmovdqa (%rdi), %ymm0
+; CHECK-NEXT:    vmovdqa 32(%rdi), %ymm1
+; CHECK-NEXT:    vmovdqa 64(%rdi), %ymm2
+; CHECK-NEXT:    vmovdqa 96(%rdi), %ymm3
+; CHECK-NEXT:    vpmovqd %ymm0, %xmm0
+; CHECK-NEXT:    vpmovqd %ymm1, %xmm1
+; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpmovqd %ymm2, %xmm1
+; CHECK-NEXT:    vpmovqd %ymm3, %xmm2
+; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm1, %ymm1
+; CHECK-NEXT:    retq
+  %a = load <16 x i64>, <16 x i64>* %x
+  %b = trunc <16 x i64> %a to <16 x i32>
+  ret <16 x i32> %b
+}
+
 define <16 x i8> @trunc_v16i64_v16i8(<16 x i64>* %x) nounwind "min-legal-vector-width"="256" {
 ; CHECK-LABEL: trunc_v16i64_v16i8:
 ; CHECK:       # %bb.0:
