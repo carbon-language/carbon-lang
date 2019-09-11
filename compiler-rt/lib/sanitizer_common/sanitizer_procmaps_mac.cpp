@@ -183,7 +183,7 @@ template <u32 kLCSegment, typename SegmentCommand>
 static bool NextSegmentLoad(MemoryMappedSegment *segment,
                             MemoryMappedSegmentData *seg_data,
                             MemoryMappingLayoutData *layout_data) {
-  const char *lc = layout_data.current_load_cmd_addr;
+  const char *lc = layout_data->current_load_cmd_addr;
   layout_data->current_load_cmd_addr += ((const load_command *)lc)->cmdsize;
   if (((const load_command *)lc)->cmd == kLCSegment) {
     const SegmentCommand* sc = (const SegmentCommand *)lc;
@@ -227,11 +227,11 @@ static bool NextSegmentLoad(MemoryMappedSegment *segment,
     if (segment->filename) {
       const char *src = (layout_data->current_image == kDyldImageIdx)
                             ? kDyldPath
-                            : _dyld_get_image_name(layout_data.current_image);
+                            : _dyld_get_image_name(layout_data->current_image);
       internal_strncpy(segment->filename, src, segment->filename_size);
     }
-    segment->arch = layout_data.current_arch;
-    internal_memcpy(segment->uuid, layout_data.current_uuid, kModuleUUIDSize);
+    segment->arch = layout_data->current_arch;
+    internal_memcpy(segment->uuid, layout_data->current_uuid, kModuleUUIDSize);
     return true;
   }
   return false;
