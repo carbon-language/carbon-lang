@@ -38,7 +38,7 @@ dfsan_label dfsan_union(dfsan_label l1, dfsan_label l2);
 }  // extern "C"
 
 template <typename T>
-void dfsan_set_label(dfsan_label label, T &data) {  // NOLINT
+void dfsan_set_label(dfsan_label label, T &data) {
   dfsan_set_label(label, (void *)&data, sizeof(T));
 }
 

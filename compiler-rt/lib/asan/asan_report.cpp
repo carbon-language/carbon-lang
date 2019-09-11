@@ -472,7 +472,7 @@ void ReportGenericError(uptr pc, uptr bp, uptr sp, uptr addr, bool is_write,
 }  // namespace __asan
 
 // --------------------------- Interface --------------------- {{{1
-using namespace __asan;  // NOLINT
+using namespace __asan;
 
 void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
                          uptr access_size, u32 exp) {

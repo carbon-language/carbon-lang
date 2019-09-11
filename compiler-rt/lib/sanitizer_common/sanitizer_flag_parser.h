@@ -144,7 +144,7 @@ class FlagParser {
 template <typename T>
 static void RegisterFlag(FlagParser *parser, const char *name, const char *desc,
                          T *var) {
-  FlagHandler<T> *fh = new (FlagParser::Alloc) FlagHandler<T>(var);  // NOLINT
+  FlagHandler<T> *fh = new (FlagParser::Alloc) FlagHandler<T>(var);
   parser->RegisterHandler(name, fh, desc);
 }
 

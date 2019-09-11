@@ -505,7 +505,7 @@ void EnsureMainThreadIDIsCorrect() {
 } // namespace __lsan
 
 // ---------------------- Interface ---------------- {{{1
-using namespace __asan;  // NOLINT
+using namespace __asan;
 
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE

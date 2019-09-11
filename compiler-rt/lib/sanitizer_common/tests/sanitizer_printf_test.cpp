@@ -20,12 +20,9 @@ namespace __sanitizer {
 
 TEST(Printf, Basic) {
   char buf[1024];
-  uptr len = internal_snprintf(buf, sizeof(buf),
-      "a%db%zdc%ue%zuf%xh%zxq%pe%sr",
-      (int)-1, (uptr)-2, // NOLINT
-      (unsigned)-4, (uptr)5, // NOLINT
-      (unsigned)10, (uptr)11, // NOLINT
-      (void*)0x123, "_string_");
+  uptr len = internal_snprintf(
+      buf, sizeof(buf), "a%db%zdc%ue%zuf%xh%zxq%pe%sr", (int)-1, (uptr)-2,
+      (unsigned)-4, (uptr)5, (unsigned)10, (uptr)11, (void *)0x123, "_string_");
   EXPECT_EQ(len, strlen(buf));
 
   std::string expectedString = "a-1b-2c4294967292e5fahbq0x";
@@ -36,7 +33,7 @@ TEST(Printf, Basic) {
 
 TEST(Printf, OverflowStr) {
   char buf[] = "123456789";
-  uptr len = internal_snprintf(buf, 4, "%s", "abcdef");  // NOLINT
+  uptr len = internal_snprintf(buf, 4, "%s", "abcdef");
   EXPECT_EQ(len, (uptr)6);
   EXPECT_STREQ("abc", buf);
   EXPECT_EQ(buf[3], 0);
@@ -50,7 +47,7 @@ TEST(Printf, OverflowStr) {
 
 TEST(Printf, OverflowInt) {
   char buf[] = "123456789";
-  internal_snprintf(buf, 4, "%d", -123456789);  // NOLINT
+  internal_snprintf(buf, 4, "%d", -123456789);
   EXPECT_STREQ("-12", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -69,7 +66,7 @@ TEST(Printf, OverflowUint) {
   } else {
     val = (uptr)0x123456789ULL;
   }
-  internal_snprintf(buf, 4, "a%zx", val);  // NOLINT
+  internal_snprintf(buf, 4, "a%zx", val);
   EXPECT_STREQ("a12", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -88,7 +85,7 @@ TEST(Printf, OverflowPtr) {
   } else {
     p = (void*)0x123456789ULL;
   }
-  internal_snprintf(buf, 4, "%p", p);  // NOLINT
+  internal_snprintf(buf, 4, "%p", p);
   EXPECT_STREQ("0x0", buf);
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -115,14 +112,14 @@ static void TestAgainstLibc(const char *fmt, T arg1, T arg2) {
 }
 
 TEST(Printf, MinMax) {
-  TestAgainstLibc<int>("%d-%d", INT_MIN, INT_MAX);  // NOLINT
-  TestAgainstLibc<unsigned>("%u-%u", 0, UINT_MAX);  // NOLINT
-  TestAgainstLibc<unsigned>("%x-%x", 0, UINT_MAX);  // NOLINT
+  TestAgainstLibc<int>("%d-%d", INT_MIN, INT_MAX);
+  TestAgainstLibc<unsigned>("%u-%u", 0, UINT_MAX);
+  TestAgainstLibc<unsigned>("%x-%x", 0, UINT_MAX);
 #if !defined(_WIN32)
   // %z* format doesn't seem to be supported by MSVS.
-  TestAgainstLibc<long>("%zd-%zd", LONG_MIN, LONG_MAX);  // NOLINT
-  TestAgainstLibc<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
-  TestAgainstLibc<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
+  TestAgainstLibc<long>("%zd-%zd", LONG_MIN, LONG_MAX);
+  TestAgainstLibc<unsigned long>("%zu-%zu", 0, ULONG_MAX);
+  TestAgainstLibc<unsigned long>("%zx-%zx", 0, ULONG_MAX);
 #endif
 }
 

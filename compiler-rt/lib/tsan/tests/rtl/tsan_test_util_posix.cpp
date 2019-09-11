@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-using namespace __tsan;  // NOLINT
+using namespace __tsan;
 
 static __thread bool expect_report;
 static __thread bool expect_report_reported;

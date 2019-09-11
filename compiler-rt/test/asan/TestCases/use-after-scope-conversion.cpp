@@ -15,7 +15,7 @@ struct B {
 struct C {
   const char *p;
   explicit C(const char *c) : p(c) {}
-  C(const B &b) : p(&b.p) {} // NOLINT
+  explicit C(const B &b) : p(&b.p) {}
 };
 
 struct A {

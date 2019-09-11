@@ -1267,9 +1267,8 @@ INTERCEPTOR(int, puts, char *s) {
 #endif
 
 #if SANITIZER_INTERCEPT_PRCTL
-INTERCEPTOR(int, prctl, int option, unsigned long arg2,
-            unsigned long arg3,                        // NOLINT
-            unsigned long arg4, unsigned long arg5) {  // NOLINT
+INTERCEPTOR(int, prctl, int option, unsigned long arg2, unsigned long arg3,
+            unsigned long arg4, unsigned long arg5) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, prctl, option, arg2, arg3, arg4, arg5);
   static const int PR_SET_NAME = 15;
@@ -1701,13 +1700,13 @@ INTERCEPTOR(int, __fprintf_chk, __sanitizer_FILE *stream, SIZE_T size,
 FORMAT_INTERCEPTOR_IMPL(__fprintf_chk, vfprintf, stream, format)
 #endif
 
-INTERCEPTOR(int, sprintf, char *str, const char *format, ...) // NOLINT
-FORMAT_INTERCEPTOR_IMPL(sprintf, vsprintf, str, format) // NOLINT
+INTERCEPTOR(int, sprintf, char *str, const char *format, ...)
+FORMAT_INTERCEPTOR_IMPL(sprintf, vsprintf, str, format)
 
 #if SANITIZER_INTERCEPT___PRINTF_CHK
 INTERCEPTOR(int, __sprintf_chk, char *str, int flag, SIZE_T size_to,
-            const char *format, ...) // NOLINT
-FORMAT_INTERCEPTOR_IMPL(__sprintf_chk, vsprintf, str, format) // NOLINT
+            const char *format, ...)
+FORMAT_INTERCEPTOR_IMPL(__sprintf_chk, vsprintf, str, format)
 #endif
 
 INTERCEPTOR(int, snprintf, char *str, SIZE_T size, const char *format, ...)
@@ -1715,8 +1714,8 @@ FORMAT_INTERCEPTOR_IMPL(snprintf, vsnprintf, str, size, format)
 
 #if SANITIZER_INTERCEPT___PRINTF_CHK
 INTERCEPTOR(int, __snprintf_chk, char *str, SIZE_T size, int flag,
-            SIZE_T size_to, const char *format, ...) // NOLINT
-FORMAT_INTERCEPTOR_IMPL(__snprintf_chk, vsnprintf, str, size, format) // NOLINT
+            SIZE_T size_to, const char *format, ...)
+FORMAT_INTERCEPTOR_IMPL(__snprintf_chk, vsnprintf, str, size, format)
 #endif
 
 INTERCEPTOR(int, asprintf, char **strp, const char *format, ...)
@@ -6716,7 +6715,7 @@ INTERCEPTOR(wchar_t *, wcscat, wchar_t *dst, const wchar_t *src) {
   COMMON_INTERCEPTOR_READ_RANGE(ctx, dst, (dst_size + 1) * sizeof(wchar_t));
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst + dst_size,
                                  (src_size + 1) * sizeof(wchar_t));
-  return REAL(wcscat)(dst, src);  // NOLINT
+  return REAL(wcscat)(dst, src);
 }
 
 INTERCEPTOR(wchar_t *, wcsncat, wchar_t *dst, const wchar_t *src, SIZE_T n) {
@@ -6729,7 +6728,7 @@ INTERCEPTOR(wchar_t *, wcsncat, wchar_t *dst, const wchar_t *src, SIZE_T n) {
   COMMON_INTERCEPTOR_READ_RANGE(ctx, dst, (dst_size + 1) * sizeof(wchar_t));
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst + dst_size,
                                  (src_size + 1) * sizeof(wchar_t));
-  return REAL(wcsncat)(dst, src, n);  // NOLINT
+  return REAL(wcsncat)(dst, src, n);
 }
 #define INIT_WCSCAT                  \
   COMMON_INTERCEPT_FUNCTION(wcscat); \
@@ -9568,8 +9567,7 @@ INTERCEPTOR(SSIZE_T, getrandom, void *buf, SIZE_T buflen, unsigned int flags) {
 static void InitializeCommonInterceptors() {
 #if SI_POSIX
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
-  interceptor_metadata_map =
-      new ((void *)&metadata_mem) MetadataHashMap();  // NOLINT
+  interceptor_metadata_map = new ((void *)&metadata_mem) MetadataHashMap();
 #endif
 
   INIT_MMAP;

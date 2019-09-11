@@ -54,7 +54,7 @@ size_t WINAPI HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem);
 BOOL WINAPI HeapValidate(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem);
 }
 
-using namespace __asan;  // NOLINT
+using namespace __asan;
 
 // MT: Simply defining functions with the same signature in *.obj
 // files overrides the standard functions in the CRT.

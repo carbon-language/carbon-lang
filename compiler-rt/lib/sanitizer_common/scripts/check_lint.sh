@@ -17,16 +17,16 @@ fi
 # Filters
 # TODO: remove some of these filters
 COMMON_LINT_FILTER=-build/include,-build/header_guard,-legal/copyright,-whitespace/comments,-readability/casting,\
--build/namespaces,-readability/braces,-build/c++11
+-build/namespaces,-readability/braces,-build/c++11,-runtime/int
 
-COMMON_LIT_TEST_LINT_FILTER=-whitespace/indent,-whitespace/line_length
+COMMON_LIT_TEST_LINT_FILTER=-whitespace/indent,-whitespace/line_length,-runtime/arrays
 
-ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
-ASAN_TEST_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/sizeof,-runtime/int,-runtime/printf,-runtime/threadsafe_fn
+ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
+ASAN_TEST_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/sizeof,-runtime/printf,-runtime/threadsafe_fn
 ASAN_LIT_TEST_LINT_FILTER=${ASAN_TEST_LINT_FILTER},${COMMON_LIT_TEST_LINT_FILTER}
 
 TSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
-TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/int
+TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn
 TSAN_LIT_TEST_LINT_FILTER=${TSAN_TEST_LINT_FILTER},${COMMON_LIT_TEST_LINT_FILTER}
 
 MSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
@@ -34,12 +34,12 @@ MSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 LSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 LSAN_LIT_TEST_LINT_FILTER=${LSAN_RTL_LINT_FILTER},${COMMON_LIT_TEST_LINT_FILTER}
 
-DFSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/printf,-runtime/references,-readability/function
+DFSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/printf,-runtime/references,-readability/function
 SCUDO_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 
-COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof,-runtime/printf,-readability/fn_size
+COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/sizeof,-runtime/printf,-readability/fn_size
 
-SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
+SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER}
 
 MKTEMP_DIR=$(mktemp -qd /tmp/check_lint.XXXXXXXXXX)
 MKTEMP="mktemp -q ${MKTEMP_DIR}/tmp.XXXXXXXXXX"
