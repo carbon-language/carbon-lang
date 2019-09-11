@@ -2594,10 +2594,12 @@ struct AANoCaptureImpl : public AANoCapture {
     if (!isAssumedNoCaptureMaybeReturned())
       return;
 
-    if (isAssumedNoCapture())
-      Attrs.emplace_back(Attribute::get(Ctx, Attribute::NoCapture));
-    else if (ManifestInternal)
-      Attrs.emplace_back(Attribute::get(Ctx, "no-capture-maybe-returned"));
+    if (getArgNo() >= 0) {
+      if (isAssumedNoCapture())
+        Attrs.emplace_back(Attribute::get(Ctx, Attribute::NoCapture));
+      else if (ManifestInternal)
+        Attrs.emplace_back(Attribute::get(Ctx, "no-capture-maybe-returned"));
+    }
   }
 
   /// Set the NOT_CAPTURED_IN_MEM and NOT_CAPTURED_IN_RET bits in \p Known
