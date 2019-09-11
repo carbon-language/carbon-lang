@@ -552,6 +552,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"modulo", {{"a", OperandIntOrReal}, {"p", OperandIntOrReal}},
         OperandIntOrReal},
     {"nearest", {{"x", SameReal}, {"s", AnyReal}}, SameReal},
+    {"new_line", {{"x", SameChar, Rank::anyOrAssumedRank}}, SameChar,
+        Rank::scalar},
     {"nint", {{"a", AnyReal}, DefaultingKIND}, KINDInt},
     {"norm2", {{"x", SameReal, Rank::array}, OptionalDIM}, SameReal,
         Rank::dimReduced},
@@ -694,8 +696,6 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
 //   EXTENDS_TYPE_OF, IS_CONTIGUOUS, SAME_TYPE
-// TODO: Type inquiry intrinsic functions - these return constants
-//  DIGITS, NEW_LINE
 // TODO: Non-standard intrinsic functions
 //  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
 //  COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL,
