@@ -44,10 +44,14 @@ int TestRunner::run(StringRef Filename) {
     ProgramArgs.push_back(Arg.c_str());
 
   Optional<StringRef> Redirects[3]; // STDIN, STDOUT, STDERR
-  int Result = sys::ExecuteAndWait(TestName, ProgramArgs, None, Redirects);
+  std::string ErrMsg;
+  int Result =
+      sys::ExecuteAndWait(TestName, ProgramArgs, None, Redirects,
+                          /*SecondsToWait=*/0, /*MemoryLimit=*/0, &ErrMsg);
 
   if (Result < 0) {
-    Error E = make_error<StringError>("Error running interesting-ness test\n",
+    Error E = make_error<StringError>("Error running interesting-ness test: " +
+                                          ErrMsg,
                                       inconvertibleErrorCode());
     errs() << toString(std::move(E));
     exit(1);
