@@ -1,11 +1,11 @@
 RUN: llvm-nm %p/Inputs/tapi-v1.tbd 2>&1\
-RUN:          | FileCheck %s -check-prefix v1
+RUN:          | Filecheck %s -check-prefix v1
 
 RUN: llvm-nm %p/Inputs/tapi-v2.tbd \
-RUN:          | FileCheck %s -check-prefix v2
+RUN:          | Filecheck %s -check-prefix v2
 
 RUN: llvm-nm %p/Inputs/tapi-v3.tbd \
-RUN:          | FileCheck %s -check-prefix v3
+RUN:          | Filecheck %s -check-prefix v3
 
 v1: no symbols
 v1: tapi-v1.tbd (for architecture armv7):
