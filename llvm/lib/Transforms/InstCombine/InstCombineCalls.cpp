@@ -4190,13 +4190,14 @@ static void annotateAnyAllocSite(CallBase &Call, const TargetLibraryInfo *TLI) {
     return;
 
   if (isMallocLikeFn(&Call, TLI) && Op0C) {
-    Call.addAttribute(AttributeList::ReturnIndex,
-                      Attribute::getWithDereferenceableOrNullBytes(
-                          Call.getContext(), Op0C->getZExtValue()));
-  } else if (isOpNewLikeFn(&Call, TLI) && Op0C) {
-    Call.addAttribute(AttributeList::ReturnIndex,
-                      Attribute::getWithDereferenceableBytes(
-                          Call.getContext(), Op0C->getZExtValue()));
+    if (isOpNewLikeFn(&Call, TLI))
+      Call.addAttribute(AttributeList::ReturnIndex,
+                        Attribute::getWithDereferenceableBytes(
+                            Call.getContext(), Op0C->getZExtValue()));
+    else
+      Call.addAttribute(AttributeList::ReturnIndex,
+                        Attribute::getWithDereferenceableOrNullBytes(
+                            Call.getContext(), Op0C->getZExtValue()));
   } else if (isReallocLikeFn(&Call, TLI) && Op1C) {
     Call.addAttribute(AttributeList::ReturnIndex,
                       Attribute::getWithDereferenceableOrNullBytes(
