@@ -1,11 +1,11 @@
 RUN: not llvm-nm %p/Inputs/tapi-invalid-v1.tbd 2>&1\
-RUN:          | Filecheck %s -check-prefix v1
+RUN:          | FileCheck %s -check-prefix v1
 
 RUN: not llvm-nm %p/Inputs/tapi-invalid-v2.tbd 2>&1\
-RUN:          | Filecheck %s -check-prefix v2
+RUN:          | FileCheck %s -check-prefix v2
 
 RUN: not llvm-nm %p/Inputs/tapi-invalid-v3.tbd 2>&1\
-RUN:          | Filecheck %s -check-prefix v3
+RUN:          | FileCheck %s -check-prefix v3
 
 # Typo Check
 v1: tapi-invalid-v1.tbd malformed file
