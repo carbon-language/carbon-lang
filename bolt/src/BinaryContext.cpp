@@ -1734,9 +1734,10 @@ BinaryContext::createInjectedBinaryFunction(const std::string &Name,
 }
 
 std::pair<size_t, size_t>
-BinaryContext::calculateEmittedSize(BinaryFunction &BF) {
+BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
   // Adjust branch instruction to match the current layout.
-  BF.fixBranches();
+  if (FixBranches)
+    BF.fixBranches();
 
   // Create local MC context to isolate the effect of ephemeral code emission.
   auto MCEInstance = createIndependentMCCodeEmitter();

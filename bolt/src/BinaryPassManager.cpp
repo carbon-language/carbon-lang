@@ -22,6 +22,7 @@
 #include "Passes/RegReAssign.h"
 #include "Passes/ReorderFunctions.h"
 #include "Passes/ReorderData.h"
+#include "Passes/SplitFunctions.h"
 #include "Passes/StokeInfo.h"
 #include "Passes/RetpolineInsertion.h"
 #include "Passes/ValidateInternalCalls.h"
@@ -189,6 +190,13 @@ PrintSCTC("print-sctc",
 static cl::opt<bool>
 PrintSimplifyROLoads("print-simplify-rodata-loads",
   cl::desc("print functions after simplification of RO data loads"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintSplit("print-split",
+  cl::desc("print functions after code splitting"),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOptCategory));
@@ -428,6 +436,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
     llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
     opts::EliminateUnreachable);
 
+  Manager.registerPass(llvm::make_unique<SplitFunctions>(PrintSplit));
+
   // This pass syncs local branches with CFG. If any of the following
   // passes breaks the sync - they either need to re-run the pass or
   // fix branches consistency internally.
@@ -496,6 +506,12 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   // after this point.
   Manager.registerPass(
     llvm::make_unique<InstructionLowering>(PrintAfterLowering));
+
+  // In non-relocation mode, mark functions that do not fit into their original
+  // space as non-simple if we have to (e.g. for correct debug info update).
+  // NOTE: this pass depends on finalized code.
+  if (!BC.HasRelocations)
+    Manager.registerPass(llvm::make_unique<CheckLargeFunctions>(NeverPrint));
 
   Manager.registerPass(llvm::make_unique<LowerAnnotations>(NeverPrint));
 

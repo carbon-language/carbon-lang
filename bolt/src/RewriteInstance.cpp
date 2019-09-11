@@ -174,15 +174,6 @@ DumpEHFrame("dump-eh-frame",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
-  cl::init(true),
-  cl::desc("do another pass if we encounter large functions, to correct their "
-           "debug info."),
-  cl::ZeroOrMore,
-  cl::ReallyHidden,
-  cl::cat(BoltCategory));
-
 static cl::list<std::string>
 FunctionNames("funcs",
   cl::CommaSeparated,
@@ -343,21 +334,6 @@ SkipFunctionNamesFile("skip-funcs-file",
   cl::desc("file with list of functions to skip"),
   cl::Hidden,
   cl::cat(BoltCategory));
-
-cl::opt<BinaryFunction::SplittingType>
-SplitFunctions("split-functions",
-  cl::desc("split functions into hot and cold regions"),
-  cl::init(BinaryFunction::ST_NONE),
-  cl::values(clEnumValN(BinaryFunction::ST_NONE, "0",
-                        "do not split any function"),
-             clEnumValN(BinaryFunction::ST_EH, "1",
-                        "split all landing pads"),
-             clEnumValN(BinaryFunction::ST_LARGE, "2",
-                        "also split if function too large to fit"),
-             clEnumValN(BinaryFunction::ST_ALL, "3",
-                        "split all functions")),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
 
 cl::opt<bool>
 SplitEH("split-eh",
@@ -783,26 +759,6 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
 
 RewriteInstance::~RewriteInstance() {}
 
-void RewriteInstance::reset() {
-  FileSymRefs.clear();
-  auto &DR = BC->DR;
-  DR.reset();
-  BC = createBinaryContext(
-      InputFile, DR,
-      DWARFContext::create(*InputFile, nullptr,
-                           DWARFContext::defaultErrorHandler, "", false));
-  BAT = llvm::make_unique<BoltAddressTranslation>(*BC);
-  CFIRdWrt.reset(nullptr);
-  OLT.reset(nullptr);
-  EFMM.reset();
-  Out.reset(nullptr);
-  EHFrame = nullptr;
-  FailedAddresses.clear();
-  if (opts::UpdateDebugSections) {
-    DebugInfoRewriter = llvm::make_unique<DWARFRewriter>(*BC, SectionPatchers);
-  }
-}
-
 bool RewriteInstance::shouldDisassemble(const BinaryFunction &BF) const {
   // If we have to relocate the code we have to disassemble all functions.
   if (!BF.getBinaryContext().HasRelocations && !opts::shouldProcess(BF)) {
@@ -1079,93 +1035,53 @@ void RewriteInstance::run() {
     return;
   }
 
-  auto executeRewritePass = [&](const std::set<uint64_t> &NonSimpleFunctions,
-                                bool ShouldSplit) {
-    discoverStorage();
-    readSpecialSections();
-    adjustCommandLineOptions();
-    discoverFileObjects();
-
-    std::thread PreProcessProfileThread([&]() {
-      if (!DA.started())
-        return;
-
-      outs() << "BOLT-INFO: spawning thread to pre-process profile\n";
-      preprocessProfileData();
-    });
-
-    if (opts::NoThreads)
-      PreProcessProfileThread.join();
-
-    readDebugInfo();
-
-    // Skip disassembling if we have a translation table and we are running an
-    // aggregation job.
-    if (!opts::AggregateOnly || !BAT->enabledFor(InputFile)) {
-      disassembleFunctions();
-    }
-
-    if (PreProcessProfileThread.joinable())
-      PreProcessProfileThread.join();
-
-    processProfileData();
-
-    if (opts::AggregateOnly)
-      return;
-
-    postProcessFunctions();
-    for (uint64_t Address : NonSimpleFunctions) {
-      auto *BF = BC->getBinaryFunctionAtAddress(Address);
-      assert(BF && "bad non-simple function address");
-      if (ShouldSplit)
-        BF->setLarge(true);
-      else
-        BF->setSimple(false);
-    }
-    if (opts::DiffOnly)
-      return;
-    runOptimizationPasses();
-    emitAndLink();
-  };
-
   outs() << "BOLT-INFO: Target architecture: "
          << Triple::getArchTypeName(
                 (llvm::Triple::ArchType)InputFile->getArch())
          << "\n";
 
-  unsigned PassNumber = 1;
-  executeRewritePass({}, false);
-  if (opts::AggregateOnly || opts::DiffOnly)
+  discoverStorage();
+  readSpecialSections();
+  adjustCommandLineOptions();
+  discoverFileObjects();
+
+  std::thread PreProcessProfileThread([&]() {
+    if (!DA.started())
+      return;
+
+    outs() << "BOLT-INFO: spawning thread to pre-process profile\n";
+    preprocessProfileData();
+  });
+
+  if (opts::NoThreads)
+    PreProcessProfileThread.join();
+
+  readDebugInfo();
+
+  // Skip disassembling if we have a translation table and we are running an
+  // aggregation job.
+  if (!opts::AggregateOnly || !BAT->enabledFor(InputFile)) {
+    disassembleFunctions();
+  }
+
+  if (PreProcessProfileThread.joinable())
+    PreProcessProfileThread.join();
+
+  processProfileData();
+
+  if (opts::AggregateOnly)
     return;
 
-  if (opts::SplitFunctions == BinaryFunction::ST_LARGE &&
-      checkLargeFunctions()) {
-    ++PassNumber;
-    // Emit again because now some functions have been split
-    outs() << "BOLT: split-functions: starting pass " << PassNumber << "...\n";
-    reset();
-    executeRewritePass(LargeFunctions, true);
-  }
+  postProcessFunctions();
 
-  // Emit functions again ignoring functions which still didn't fit in their
-  // original space, so that we don't generate incorrect debugging information
-  // for them (information that would reflect the optimized version).
-  if (opts::UpdateDebugSections && opts::FixDebugInfoLargeFunctions &&
-      checkLargeFunctions()) {
-    ++PassNumber;
-    outs() << format("BOLT: starting pass %zu (ignoring %zu large functions) ",
-                     PassNumber, LargeFunctions.size())
-           << "...\n";
-    reset();
-    executeRewritePass(LargeFunctions, false);
-  }
+  if (opts::DiffOnly)
+    return;
 
-  {
-    NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
-                       TimerGroupDesc, opts::TimeRewrite);
-    if (opts::UpdateDebugSections)
-      DebugInfoRewriter->updateDebugInfo();
-  }
+  runOptimizationPasses();
+
+  emitAndLink();
+
+  updateDebugInfo();
 
   if (opts::WriteBoltInfoSection)
     addBoltInfoSection();
@@ -3243,6 +3159,15 @@ void RewriteInstance::linkRuntime() {
   outs() << "BOLT-INFO: output linked against instrumentation runtime "
             "library, lib entry point is 0x"
          << Twine::utohexstr(InstrumentationRuntimeStartAddress) << "\n";
+}
+
+void RewriteInstance::updateDebugInfo() {
+  if (!opts::UpdateDebugSections)
+    return;
+
+  NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
+  DebugInfoRewriter->updateDebugInfo();
 }
 
 void RewriteInstance::emitFunctions(MCStreamer *Streamer) {

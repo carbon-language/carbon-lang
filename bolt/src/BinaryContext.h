@@ -942,11 +942,14 @@ public:
   std::vector<BinaryFunction *> getSortedFunctions();
 
   /// Do the best effort to calculate the size of the function by emitting
-  /// its code, and relaxing branch instructions.
+  /// its code, and relaxing branch instructions. By default, branch
+  /// instructions are updated to match the layout. Pass \p FixBranches set to
+  /// false if the branches are known to be up to date with the code layout.
   ///
   /// Return the pair where the first size is for the main part, and the second
   /// size is for the cold one.
-  std::pair<size_t, size_t> calculateEmittedSize(BinaryFunction &BF);
+  std::pair<size_t, size_t>
+  calculateEmittedSize(BinaryFunction &BF, bool FixBranches = true);
 
   /// Calculate the size of the instruction \p Inst optionally using a
   /// user-supplied emitter for lock-free multi-thread work. MCCodeEmitter is

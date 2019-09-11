@@ -134,15 +134,6 @@ public:
     PF_MEMEVENT = 4,     /// Profile has mem events.
   };
 
-  /// Settings for splitting function bodies into hot/cold partitions.
-  enum SplittingType : char {
-    ST_NONE = 0,      /// Do not split functions
-    ST_EH,            /// Split blocks comprising landing pads
-    ST_LARGE,         /// Split functions that exceed maximum size in addition
-                      /// to landing pads.
-    ST_ALL,           /// Split all functions
-  };
-
   static constexpr uint64_t COUNT_NO_PROFILE =
     BinaryBasicBlock::COUNT_NO_PROFILE;
 
@@ -251,9 +242,6 @@ private:
   /// True if the function had an indirect branch with a fixed internal
   /// destination.
   bool HasFixedIndirectBranch{false};
-
-  /// Is the function known to exceed its input size?
-  bool IsLarge{false};
 
   /// True if the function is a fragment of another function. This means that
   /// this function could only be entered via its parent or one of its sibling
@@ -1263,14 +1251,10 @@ public:
     return HasUnknownControlFlow;
   }
 
-  /// Return true if the function should be split for the output.
-  bool shouldSplit() const {
-    return IsLarge && !getBinaryContext().HasRelocations;
-  }
-
   /// Return true if the function body is non-contiguous.
   bool isSplit() const {
-    return layout_size() &&
+    return isSimple() &&
+           layout_size() &&
            layout_front()->isCold() != layout_back()->isCold();
   }
 
@@ -1651,11 +1635,6 @@ public:
 
   BinaryFunction &setSimple(bool Simple) {
     IsSimple = Simple;
-    return *this;
-  }
-
-  BinaryFunction &setLarge(bool Large) {
-    IsLarge = Large;
     return *this;
   }
 

@@ -51,10 +51,6 @@ public:
                   StringRef ToolPath);
   ~RewriteInstance();
 
-  /// Reset all state except for split hints. Used to run a second pass with
-  /// function splitting information.
-  void reset();
-
   /// Run all the necessary steps to read, optimize and rewrite the binary.
   void run();
 
