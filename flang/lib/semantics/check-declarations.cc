@@ -14,7 +14,10 @@
 
 // Static declaration checking
 
+#include "check-declarations.h"
+#include "scope.h"
 #include "semantics.h"
+#include "symbol.h"
 #include "tools.h"
 
 namespace Fortran::semantics {

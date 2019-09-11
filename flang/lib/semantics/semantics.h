@@ -193,8 +193,5 @@ struct BaseChecker {
   template<typename N> void Enter(const N &) {}
   template<typename N> void Leave(const N &) {}
 };
-
-// Static declaration checks
-void CheckDeclarations(SemanticsContext &);
 }
 #endif

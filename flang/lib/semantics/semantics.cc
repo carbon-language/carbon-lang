@@ -20,6 +20,7 @@
 #include "check-arithmeticif.h"
 #include "check-coarray.h"
 #include "check-deallocate.h"
+#include "check-declarations.h"
 #include "check-do.h"
 #include "check-if-stmt.h"
 #include "check-io.h"
