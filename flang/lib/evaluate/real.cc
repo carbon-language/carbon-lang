@@ -487,9 +487,13 @@ std::ostream &Real<W, P, IM>::AsFortran(
     if (DEREF(p) == '-' || *p == '+') {
       o << *p++;
     }
+    int expo{result.decimalExponent};
+    if (*p != '0') {
+      --expo;
+    }
     o << *p << '.' << (p + 1);
-    if (result.decimalExponent != 1) {
-      o << 'e' << (result.decimalExponent - 1);
+    if (expo != 0) {
+      o << 'e' << expo;
     }
     o << '_' << kind;
     if (parenthesize) {
