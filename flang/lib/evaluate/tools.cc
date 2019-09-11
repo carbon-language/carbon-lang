@@ -497,8 +497,16 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
           // Default case
           [&](auto &&, auto &&) {
             // TODO: defined operator
-            messages.Say(
-                "relational operands do not have comparable types"_err_en_US);
+            auto xtype{x.GetType()};
+            auto ytype{y.GetType()};
+            if (xtype.has_value() && ytype.has_value()) {
+              messages.Say(
+                  "Relational operands do not have comparable types (%s vs. %s)"_err_en_US,
+                  xtype->AsFortran(), ytype->AsFortran());
+            } else {
+              messages.Say(
+                  "Relational operands do not have comparable types"_err_en_US);
+            }
             return std::optional<Expr<LogicalResult>>{};
           },
       },
