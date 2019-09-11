@@ -929,7 +929,7 @@ private:
 
 // Resolve construct entities and statement entities.
 // Check that construct names don't conflict with other names.
-class ConstructVisitor : public DeclarationVisitor {
+class ConstructVisitor : public virtual DeclarationVisitor {
 public:
   bool Pre(const parser::ConcurrentHeader &);
   bool Pre(const parser::LocalitySpec::Local &);
@@ -1037,11 +1037,201 @@ private:
   void PopAssociation();
 };
 
+static const parser::Name *GetDesignatorNameIf(
+    const parser::Designator &designator) {
+  const auto *dataRef{std::get_if<parser::DataRef>(&designator.u)};
+  return dataRef ? std::get_if<parser::Name>(&dataRef->u) : nullptr;
+}
+
+static constexpr Symbol::Flags ompFlagsRequireNewSymbol{
+    Symbol::Flag::OmpPrivate, Symbol::Flag::OmpLinear,
+    Symbol::Flag::OmpFirstPrivate, Symbol::Flag::OmpLastPrivate,
+    Symbol::Flag::OmpReduction};
+
+static constexpr Symbol::Flags ompFlagsRequireMark{
+    Symbol::Flag::OmpThreadprivate};
+
+// Resolve OpenMP construct entities and statement (TODO) entities
+class OmpVisitor : public virtual DeclarationVisitor {
+public:
+  bool Pre(const parser::OpenMPBlockConstruct &) {
+    PushScope(Scope::Kind::Block, nullptr);
+    return true;
+  }
+  void Post(const parser::OpenMPBlockConstruct &) { PopScope(); }
+  bool Pre(const parser::OpenMPLoopConstruct &) {
+    PushScope(Scope::Kind::Block, nullptr);
+    return true;
+  }
+  void Post(const parser::OpenMPLoopConstruct &) { PopScope(); }
+
+  bool Pre(const parser::OpenMPThreadprivate &x) {
+    PushScope(Scope::Kind::Block, nullptr);
+    const auto &list{std::get<parser::OmpObjectList>(x.t)};
+    ResolveOmpObjectList(list, Symbol::Flag::OmpThreadprivate);
+    PopScope();
+    return false;
+  }
+
+  bool Pre(const parser::OmpClause::Shared &x) {
+    ResolveOmpObjectList(x.v, Symbol::Flag::OmpShared);
+    return false;
+  }
+  bool Pre(const parser::OmpClause::Private &x) {
+    ResolveOmpObjectList(x.v, Symbol::Flag::OmpPrivate);
+    return false;
+  }
+  bool Pre(const parser::OmpClause::Firstprivate &x) {
+    ResolveOmpObjectList(x.v, Symbol::Flag::OmpFirstPrivate);
+    return false;
+  }
+  bool Pre(const parser::OmpClause::Lastprivate &x) {
+    ResolveOmpObjectList(x.v, Symbol::Flag::OmpLastPrivate);
+    return false;
+  }
+
+protected:
+  // TODO: resolve variables referenced in the OpenMP region
+  void ResolveOmpObjectList(const parser::OmpObjectList &, Symbol::Flag);
+  void ResolveOmpObject(const parser::OmpObject &, Symbol::Flag);
+  Symbol *ResolveOmp(const parser::Name &, Symbol::Flag);
+  Symbol *ResolveOmp(Symbol &, Symbol::Flag);
+  Symbol *ResolveOmpCommonBlockName(const parser::Name *, Symbol::Flag);
+  Symbol *DeclarePrivateAccessEntity(const parser::Name &, Symbol::Flag);
+  Symbol *DeclarePrivateAccessEntity(Symbol &, Symbol::Flag);
+  Symbol *DeclareOrMarkOtherAccessEntity(const parser::Name &, Symbol::Flag);
+  Symbol *DeclareOrMarkOtherAccessEntity(Symbol &, Symbol::Flag);
+};
+
+Symbol *OmpVisitor::ResolveOmpCommonBlockName(
+    const parser::Name *name, Symbol::Flag ompFlag) {
+  if (auto *prev{name ? currScope().parent().FindCommonBlock(name->source)
+                      : nullptr}) {
+    auto *created{FindInScope(currScope(), name->source)};
+    if (!created) {
+      auto &symbol{MakeSymbol(*name, HostAssocDetails{*prev})};
+      symbol.set(ompFlag);
+      name->symbol = &symbol;
+    } else {
+      name->symbol = created;
+    }
+    return prev;
+  } else {
+    return nullptr;
+  }
+}
+
+void OmpVisitor::ResolveOmpObjectList(
+    const parser::OmpObjectList &ompObjectList, Symbol::Flag ompFlag) {
+  for (const auto &ompObject : ompObjectList.v) {
+    ResolveOmpObject(ompObject, ompFlag);
+  }
+}
+
+void OmpVisitor::ResolveOmpObject(
+    const parser::OmpObject &ompObject, Symbol::Flag ompFlag) {
+  const auto &kind{std::get<parser::OmpObject::Kind>(ompObject.t)};
+  const auto &designator{std::get<parser::Designator>(ompObject.t)};
+  const auto *name{GetDesignatorNameIf(designator)};
+  if (kind == parser::OmpObject::Kind::Object) {
+    if (name) {
+      ResolveOmp(*name, ompFlag);
+    } else if (const auto *designatorName{ResolveDesignator(designator)};
+               designatorName->symbol) {
+      if (const auto *details{
+              designatorName->symbol->detailsIf<ObjectEntityDetails>()}) {
+        if (details->IsArray()) {
+          // TODO: check Array Sections
+        } else if (designatorName->symbol->owner().IsDerivedType()) {
+          // TODO: check Structure Component
+        } else {
+          Say(designatorName->source,
+              "Fortran Substrings are not allowed on OpenMP "
+              "directives or clauses"_err_en_US);
+        }
+      }
+    }
+  } else {  // common block
+    if (auto *symbol{ResolveOmpCommonBlockName(name, ompFlag)}) {
+      // 2.15.3 When a named common block appears in a list, it has the same
+      // meaning as if every explicit member of the common block appeared in
+      // the list
+      for (Symbol *object : symbol->get<CommonBlockDetails>().objects()) {
+        ResolveOmp(*object, ompFlag);
+      }
+    } else {
+      Say(designator.source,  // 2.15.3
+          "COMMON block must be declared in the same scoping unit "
+          "in which the directive or clause appears"_err_en_US);
+    }
+  }
+}
+
+Symbol *OmpVisitor::ResolveOmp(const parser::Name &name, Symbol::Flag ompFlag) {
+  if (ompFlagsRequireNewSymbol.test(ompFlag)) {
+    return DeclarePrivateAccessEntity(name, ompFlag);
+  } else {
+    return DeclareOrMarkOtherAccessEntity(name, ompFlag);
+  }
+}
+
+Symbol *OmpVisitor::ResolveOmp(Symbol &symbol, Symbol::Flag ompFlag) {
+  if (ompFlagsRequireNewSymbol.test(ompFlag)) {
+    return DeclarePrivateAccessEntity(symbol, ompFlag);
+  } else {
+    return DeclareOrMarkOtherAccessEntity(symbol, ompFlag);
+  }
+}
+
+Symbol *OmpVisitor::DeclarePrivateAccessEntity(
+    const parser::Name &name, Symbol::Flag ompFlag) {
+  Symbol &prev{FindOrDeclareEnclosingEntity(name)};
+  if (prev.owner() != currScope()) {
+    auto &symbol{MakeSymbol(name, HostAssocDetails{prev})};
+    symbol.set(ompFlag);
+    name.symbol = &symbol;  // override resolution to parent
+    return &symbol;
+  } else {
+    return &prev;
+  }
+}
+
+Symbol *OmpVisitor::DeclarePrivateAccessEntity(
+    Symbol &object, Symbol::Flag ompFlag) {
+  if (object.owner() != currScope() &&
+      !FindInScope(currScope(), object.name())) {
+    auto &symbol{MakeSymbol(object.name(), Attrs{}, HostAssocDetails{object})};
+    symbol.set(ompFlag);
+    return &symbol;
+  } else {
+    return &object;
+  }
+}
+
+Symbol *OmpVisitor::DeclareOrMarkOtherAccessEntity(
+    const parser::Name &name, Symbol::Flag ompFlag) {
+  Symbol &prev{FindOrDeclareEnclosingEntity(name)};
+  name.symbol = &prev;
+  if (ompFlagsRequireMark.test(ompFlag)) {
+    prev.set(ompFlag);
+  }
+  return &prev;
+}
+
+Symbol *OmpVisitor::DeclareOrMarkOtherAccessEntity(
+    Symbol &object, Symbol::Flag ompFlag) {
+  if (ompFlagsRequireMark.test(ompFlag)) {
+    object.set(ompFlag);
+  }
+  return &object;
+}
+
 // Walk the parse tree and resolve names to symbols.
 class ResolveNamesVisitor : public virtual ScopeHandler,
                             public ModuleVisitor,
                             public SubprogramVisitor,
-                            public ConstructVisitor {
+                            public ConstructVisitor,
+                            public OmpVisitor {
 public:
   using ArraySpecVisitor::Post;
   using ConstructVisitor::Post;
@@ -1054,6 +1244,8 @@ public:
   using InterfaceVisitor::Pre;
   using ModuleVisitor::Post;
   using ModuleVisitor::Pre;
+  using OmpVisitor::Post;
+  using OmpVisitor::Pre;
   using ScopeHandler::Post;
   using ScopeHandler::Pre;
   using SubprogramVisitor::Post;

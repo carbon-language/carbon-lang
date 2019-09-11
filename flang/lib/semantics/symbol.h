@@ -450,8 +450,15 @@ public:
       CrayPointer, CrayPointee,
       LocalityLocal,  // named in LOCAL locality-spec
       LocalityLocalInit,  // named in LOCAL_INIT locality-spec
-      LocalityShared  // named in SHARED locality-spec
-  );
+      LocalityShared,  // named in SHARED locality-spec
+
+      // OpenMP data-sharing attribute
+      OmpShared, OmpPrivate, OmpLinear, OmpFirstPrivate, OmpLastPrivate,
+      // OpenMP data-mapping attribute
+      OmpMapTo, OmpMapFrom, OmpMapAlloc, OmpMapRelease, OmpMapDelete,
+      // OpenMP miscellaneous flags
+      OmpReduction, OmpDeclareSimd, OmpDeclareTarget, OmpThreadprivate,
+      OmpDeclareReduction, OmpFlushed, OmpCriticalLock, OmpIfSpecified);
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
   const Scope &owner() const { return *owner_; }
