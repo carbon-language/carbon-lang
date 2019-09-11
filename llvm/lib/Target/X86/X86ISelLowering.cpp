@@ -31592,10 +31592,14 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     // After X86TargetLowering::ReplaceNodeResults CMPXCHG8B is glued to its
     // four operand definitions that are E[ABCD] registers. We skip them and
     // then insert the LEA.
-    MachineBasicBlock::iterator MBBI(MI);
-    while (MBBI->definesRegister(X86::EAX) || MBBI->definesRegister(X86::EBX) ||
-           MBBI->definesRegister(X86::ECX) || MBBI->definesRegister(X86::EDX))
-      --MBBI;
+    MachineBasicBlock::reverse_iterator RMBBI(MI.getReverseIterator());
+    while (RMBBI != BB->rend() && (RMBBI->definesRegister(X86::EAX) ||
+                                   RMBBI->definesRegister(X86::EBX) ||
+                                   RMBBI->definesRegister(X86::ECX) ||
+                                   RMBBI->definesRegister(X86::EDX))) {
+      ++RMBBI;
+    }
+    MachineBasicBlock::iterator MBBI(RMBBI);
     addFullAddress(
         BuildMI(*BB, *MBBI, DL, TII->get(X86::LEA32r), computedAddrVReg), AM);
 
