@@ -13952,7 +13952,7 @@ The expression:
 is equivalent to the expression a \* b + c, except that rounding will
 not be performed between the multiplication and addition steps if the
 code generator fuses the operations. Fusion is not guaranteed, even if
-the target platform supports it. If a fused multiply-add is required the
+the target platform supports it. If a fused multiply-add is required, the
 corresponding llvm.fma.\* intrinsic function should be used
 instead. This never sets errno, just as '``llvm.fma.*``'.
 
