@@ -831,7 +831,7 @@ void OmpStructureChecker::Enter(const parser::OmpDefaultmapClause &x) {
   using VariableCategory = parser::OmpDefaultmapClause::VariableCategory;
   if (!std::get<std::optional<VariableCategory>>(x.t)) {
     context_.Say(GetContext().clauseSource,
-        "The scalar VARIABLECATEGORY must be specified on the DEFAULTMAP "
+        "The argument TOFROM:SCALAR must be specified on the DEFAULTMAP "
         "clause"_err_en_US);
   }
 }
