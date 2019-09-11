@@ -251,10 +251,8 @@ define i1 @t16(i64 %base, i64 %offset) {
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i64 [[BASE:%.*]], 0
 ; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
 ; CHECK-NEXT:    [[ADJUSTED:%.*]] = add i64 [[BASE]], [[OFFSET:%.*]]
-; CHECK-NEXT:    [[NON_NULL_AFTER_ADJUSTMENT:%.*]] = icmp ne i64 [[ADJUSTED]], 0
 ; CHECK-NEXT:    [[NO_OVERFLOW_DURING_ADJUSTMENT:%.*]] = icmp uge i64 [[ADJUSTED]], [[BASE]]
-; CHECK-NEXT:    [[RES:%.*]] = and i1 [[NON_NULL_AFTER_ADJUSTMENT]], [[NO_OVERFLOW_DURING_ADJUSTMENT]]
-; CHECK-NEXT:    ret i1 [[RES]]
+; CHECK-NEXT:    ret i1 [[NO_OVERFLOW_DURING_ADJUSTMENT]]
 ;
   %cmp = icmp slt i64 %base, 0
   call void @llvm.assume(i1 %cmp)
