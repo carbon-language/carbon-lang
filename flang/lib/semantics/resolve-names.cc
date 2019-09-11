@@ -5256,14 +5256,17 @@ void ResolveNamesVisitor::HandleProcedureName(
 }
 
 // Variant of HandleProcedureName() for use while skimming the executable
-// part of a subprogram to catch calls that might be part of the subprogram's
-// interface, and to mark as procedures any symbols that might otherwise be
-// miscategorized as objects.
+// part of a subprogram to catch calls to dummy procedures that are part
+// of the subprogram's interface, and to mark as procedures any symbols
+// that might otherwise have been miscategorized as objects.
 void ResolveNamesVisitor::NoteExecutablePartCall(
     Symbol::Flag flag, const parser::Call &call) {
   auto &designator{std::get<parser::ProcedureDesignator>(call.t)};
   if (const auto *name{std::get_if<parser::Name>(&designator.u)}) {
-    if (Symbol * symbol{FindSymbol(*name)}) {
+    // Subtlety: The symbol pointers in the parse tree are not set, because
+    // they might end up resolving elsewhere (e.g., construct entities in
+    // SELECT TYPE).
+    if (Symbol * symbol{currScope().FindSymbol(name->source)}) {
       Symbol::Flag other{flag == Symbol::Flag::Subroutine
               ? Symbol::Flag::Function
               : Symbol::Flag::Subroutine};
