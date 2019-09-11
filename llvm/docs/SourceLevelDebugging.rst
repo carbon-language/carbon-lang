@@ -840,12 +840,12 @@ of variable ``!23`` should not flow "down" into the ``%exit`` block.
 C/C++ front-end specific debug information
 ==========================================
 
-The C and C++ front-ends represent information about the program in a format
-that is effectively identical to `DWARF 3.0
-<http://www.eagercon.com/dwarf/dwarf3std.htm>`_ in terms of information
-content.  This allows code generators to trivially support native debuggers by
-generating standard dwarf information, and contains enough information for
-non-dwarf targets to translate it as needed.
+The C and C++ front-ends represent information about the program in a
+format that is effectively identical to `DWARF <http://www.dwarfstd.org/>`_
+in terms of information content.  This allows code generators to
+trivially support native debuggers by generating standard dwarf
+information, and contains enough information for non-dwarf targets to
+translate it as needed.
 
 This section describes the forms used to represent C and C++ programs.  Other
 languages could pattern themselves after this (which itself is tuned to
