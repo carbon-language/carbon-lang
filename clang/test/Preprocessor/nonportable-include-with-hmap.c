@@ -1,4 +1,5 @@
 // REQUIRES: shell
+// REQUIRES: case-insensitive-filesystem
 
 // RUN: rm -f %t.hmap
 // RUN: sed -e "s:INPUTS_DIR:%S/Inputs:g" \
