@@ -1197,15 +1197,14 @@ def post_truncstvi16 : PatFrag<(ops node:$val, node:$base, node:$offset),
   let ScalarMemoryVT = i16;
 }
 
-// TODO: These need renamed to simple_store/simple_load and then split
-// into a volatile/atomic/ordered flavors so that respective transforms
-// can pick the right combination.
-def nonvolatile_load : PatFrag<(ops node:$ptr),
-                               (load node:$ptr), [{
+// TODO: Split these into volatile and unordered flavors to enable
+// selectively legal optimizations for each.  (See D66309)
+def simple_load : PatFrag<(ops node:$ptr),
+                          (load node:$ptr), [{
   return cast<LoadSDNode>(N)->isSimple();
 }]>;
-def nonvolatile_store : PatFrag<(ops node:$val, node:$ptr),
-                                (store node:$val, node:$ptr), [{
+def simple_store : PatFrag<(ops node:$val, node:$ptr),
+                           (store node:$val, node:$ptr), [{
   return cast<StoreSDNode>(N)->isSimple();
 }]>;
 
