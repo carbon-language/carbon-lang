@@ -192,3 +192,24 @@ entry:
   tail call void @llvm.lifetime.end.p0i8(i64 1, i8* %t)
   ret void
 }
+
+; We can tail call when the callee swiftself is the same as the caller one.
+; It would be nice to move this to swiftself.ll, but it's important to verify
+; that we get the COPY that makes this safe in the first place.
+declare i8* @pluto()
+define hidden swiftcc i64 @swiftself_indirect_tail(i64* swiftself %arg) {
+  ; COMMON-LABEL: name: swiftself_indirect_tail
+  ; COMMON: bb.1 (%ir-block.0):
+  ; COMMON:   liveins: $x20
+  ; COMMON:   [[COPY:%[0-9]+]]:_(p0) = COPY $x20
+  ; COMMON:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; COMMON:   BL @pluto, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit-def $x0
+  ; COMMON:   [[COPY1:%[0-9]+]]:tcgpr64(p0) = COPY $x0
+  ; COMMON:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; COMMON:   $x20 = COPY [[COPY]](p0)
+  ; COMMON:   TCRETURNri [[COPY1]](p0), 0, csr_aarch64_aapcs, implicit $sp, implicit $x20
+  %tmp = call i8* @pluto()
+  %tmp1 = bitcast i8* %tmp to i64 (i64*)*
+  %tmp2 = tail call swiftcc i64 %tmp1(i64* swiftself %arg)
+  ret i64 %tmp2
+}
