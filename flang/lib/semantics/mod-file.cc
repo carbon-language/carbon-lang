@@ -68,8 +68,8 @@ public:
 
   SubprogramSymbolCollector(const Symbol &symbol)
     : symbol_{symbol}, scope_{*symbol.scope()} {}
-  SymbolVector symbols() const { return need_; }
-  SymbolSet imports() const { return imports_; }
+  const SymbolVector &symbols() const { return need_; }
+  const std::set<SourceName> &imports() const { return imports_; }
   void Collect();
 
 private:
@@ -79,13 +79,14 @@ private:
   SymbolVector need_;  // symbols that are needed
   SymbolSet needSet_;  // symbols already in need_
   SymbolSet useSet_;  // use-associations that might be needed
-  SymbolSet imports_;  // imports from host that are needed
+  std::set<SourceName> imports_;  // imports from host that are needed
 
   void DoSymbol(const Symbol &);
+  void DoSymbol(const SourceName &, const Symbol &);
   void DoType(const DeclTypeSpec *);
   void DoBound(const Bound &);
   void DoParamValue(const ParamValue &);
-  bool NeedImport(const Symbol &);
+  bool NeedImport(const SourceName &, const Symbol &);
 
   struct SymbolVisitor : public virtual evaluate::VisitorBase<SymbolVector> {
     using Result = SymbolVector;
@@ -253,7 +254,7 @@ void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
   auto &details{typeSymbol.get<DerivedTypeDetails>()};
   PutAttrs(decls_ << "type", typeSymbol.attrs());
   if (const DerivedTypeSpec * extends{typeSymbol.GetParentTypeSpec()}) {
-    decls_ << ",extends(" << extends->typeSymbol().name() << ')';
+    decls_ << ",extends(" << extends->name() << ')';
   }
   decls_ << "::" << typeSymbol.name();
   auto &typeScope{*typeSymbol.scope()};
@@ -329,8 +330,8 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   }
   CHECK(typeBindings.str().empty());
   os << writer.uses_.str();
-  for (const Symbol *import : collector.imports()) {
-    decls_ << "import::" << import->name().ToString() << "\n";
+  for (const SourceName &import : collector.imports()) {
+    decls_ << "import::" << import << "\n";
   }
   os << writer.decls_.str();
   os << "end\n";
@@ -811,15 +812,20 @@ void SubprogramSymbolCollector::Collect() {
   }
 }
 
-// Do symbols this one depends on; then add to need_
 void SubprogramSymbolCollector::DoSymbol(const Symbol &symbol) {
+  DoSymbol(symbol.name(), symbol);
+}
+
+// Do symbols this one depends on; then add to need_
+void SubprogramSymbolCollector::DoSymbol(
+    const SourceName &name, const Symbol &symbol) {
   const auto &scope{symbol.owner()};
   if (scope != scope_ && !scope.IsDerivedType()) {
     if (scope != scope_.parent()) {
       useSet_.insert(&symbol);
     }
-    if (NeedImport(symbol)) {
-      imports_.insert(&symbol);
+    if (NeedImport(name, symbol)) {
+      imports_.insert(name);
     }
     return;
   }
@@ -871,7 +877,7 @@ void SubprogramSymbolCollector::DoType(const DeclTypeSpec *type) {
     if (const DerivedTypeSpec * derived{type->AsDerived()}) {
       const auto &typeSymbol{derived->typeSymbol()};
       if (const DerivedTypeSpec * extends{typeSymbol.GetParentTypeSpec()}) {
-        DoSymbol(extends->typeSymbol());
+        DoSymbol(extends->name(), extends->typeSymbol());
       }
       for (const auto pair : derived->parameters()) {
         DoParamValue(pair.second);
@@ -880,7 +886,7 @@ void SubprogramSymbolCollector::DoType(const DeclTypeSpec *type) {
         const auto &comp{*pair.second};
         DoSymbol(comp);
       }
-      DoSymbol(typeSymbol);
+      DoSymbol(derived->name(), derived->typeSymbol());
     }
   }
 }
@@ -897,12 +903,13 @@ void SubprogramSymbolCollector::DoParamValue(const ParamValue &paramValue) {
 }
 
 // Do we need a IMPORT of this symbol into an interface block?
-bool SubprogramSymbolCollector::NeedImport(const Symbol &symbol) {
+bool SubprogramSymbolCollector::NeedImport(
+    const SourceName &name, const Symbol &symbol) {
   if (!isInterface_) {
     return false;
   } else if (symbol.owner() != scope_.parent()) {
     // detect import from parent of use-associated symbol
-    const auto *found{scope_.FindSymbol(symbol.name())};
+    const auto *found{scope_.FindSymbol(name)};
     return DEREF(found).has<UseDetails>() && found->owner() != scope_;
   } else {
     return true;

@@ -227,12 +227,15 @@ private:
 };
 std::ostream &operator<<(std::ostream &, const ArraySpec &);
 
+// Each DerivedTypeSpec has a typeSymbol that has DerivedTypeSpec.
+// The name may not match the symbol's name in case of a USE rename.
 class DerivedTypeSpec {
 public:
-  explicit DerivedTypeSpec(const Symbol &symbol) : typeSymbol_{symbol} {}
+  explicit DerivedTypeSpec(SourceName, const Symbol &);
   DerivedTypeSpec(const DerivedTypeSpec &);
   DerivedTypeSpec(DerivedTypeSpec &&);
 
+  const SourceName &name() const { return name_; }
   const Symbol &typeSymbol() const { return typeSymbol_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
@@ -258,6 +261,7 @@ public:
   std::string AsFortran() const;
 
 private:
+  SourceName name_;
   const Symbol &typeSymbol_;
   const Scope *scope_{nullptr};  // same as typeSymbol_.scope() unless PDT
   std::map<SourceName, ParamValue> parameters_;

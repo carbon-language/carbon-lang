@@ -601,19 +601,12 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
     return std::nullopt;
   } else {
     const Symbol &ultimate{n.symbol->GetUltimate()};
-    if (ultimate.detailsIf<semantics::TypeParamDetails>()) {
+    if (ultimate.has<semantics::TypeParamDetails>()) {
       // A bare reference to a derived type parameter (within a parameterized
       // derived type definition)
       return AsMaybeExpr(MakeBareTypeParamInquiry(&ultimate));
     } else {
-      const auto *details{ultimate.detailsIf<semantics::ObjectEntityDetails>()};
-      if (details && semantics::IsNamedConstant(ultimate) && details->type() &&
-          details->type()->AsIntrinsic() && !details->IsArray() &&
-          details->init()) {
-        return details->init();
-      } else {
-        return Designate(DataRef{*n.symbol});
-      }
+      return Designate(DataRef{*n.symbol});
     }
   }
 }
@@ -2006,7 +1999,7 @@ static void FixMisparsedFunctionReference(
           CheckFuncRefToArrayElementRefHasSubscripts(context, funcRef);
           u = common::Indirection{funcRef.ConvertToArrayElementRef()};
         } else {
-          common::die("can't fix misparsed function as array reference");
+          DIE("can't fix misparsed function as array reference");
         }
       } else if (const auto *name{std::get_if<parser::Name>(&proc.u)}) {
         // A procedure component reference can't be a structure
@@ -2021,15 +2014,15 @@ static void FixMisparsedFunctionReference(
         if (derivedType != nullptr) {
           if constexpr (common::HasMember<parser::StructureConstructor,
                             uType>) {
-            CHECK(derivedType->has<semantics::DerivedTypeDetails>());
             auto &scope{context.FindScope(name->source)};
             const semantics::DeclTypeSpec &type{
-                semantics::FindOrInstantiateDerivedType(
-                    scope, semantics::DerivedTypeSpec{*derivedType}, context)};
+                semantics::FindOrInstantiateDerivedType(scope,
+                    semantics::DerivedTypeSpec{
+                        origSymbol->name(), *derivedType},
+                    context)};
             u = funcRef.ConvertToStructureConstructor(type.derivedTypeSpec());
           } else {
-            common::die(
-                "can't fix misparsed function as structure constructor");
+            DIE("can't fix misparsed function as structure constructor");
           }
         }
       }

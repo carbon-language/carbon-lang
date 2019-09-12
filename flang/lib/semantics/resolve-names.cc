@@ -859,7 +859,9 @@ private:
   Symbol &DeclareUnknownEntity(const parser::Name &, Attrs);
   Symbol &DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   void SetType(const parser::Name &, const DeclTypeSpec &);
-  const Symbol *ResolveDerivedType(const parser::Name &);
+  std::optional<DerivedTypeSpec> ResolveDerivedType(const parser::Name &);
+  std::optional<DerivedTypeSpec> ResolveExtendsType(
+      const parser::Name &, const parser::Name *);
   Symbol *MakeTypeSymbol(const SourceName &, Details &&);
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
@@ -3146,10 +3148,11 @@ bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
 
 void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   const auto &typeName{std::get<parser::Name>(x.t)};
-  const Symbol *typeSymbol{ResolveDerivedType(typeName)};
-  if (typeSymbol == nullptr) {
+  auto spec{ResolveDerivedType(typeName)};
+  if (!spec) {
     return;
   }
+  const Symbol *typeSymbol{&spec->typeSymbol()};
 
   // This DerivedTypeSpec is created initially as a search key.
   // If it turns out to have the same name and actual parameter
@@ -3157,7 +3160,6 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   // scope, then we'll use that extant spec; otherwise, when this
   // spec is distinct from all derived types previously instantiated
   // in the current scope, this spec will be moved to that collection.
-  DerivedTypeSpec spec{*typeSymbol};
 
   // The expressions in a derived type specifier whose values define
   // non-defaulted type parameters are evaluated in the enclosing scope.
@@ -3204,14 +3206,14 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
           "Too many type parameters given for derived type '%s'"_err_en_US);
       break;
     }
-    if (spec.FindParameter(name)) {
+    if (spec->FindParameter(name)) {
       Say(typeName.source,
           "Multiple values given for type parameter '%s'"_err_en_US, name);
     } else {
       const auto &value{std::get<parser::TypeParamValue>(typeParamSpec.t)};
       ParamValue param{GetParamValue(value, attr)};  // folded
       if (!param.isExplicit() || param.GetExplicit().has_value()) {
-        spec.AddParamValue(name, std::move(param));
+        spec->AddParamValue(name, std::move(param));
       }
     }
   }
@@ -3221,7 +3223,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   const Scope *typeScope{typeSymbol->scope()};
   CHECK(typeScope != nullptr);
   for (const SourceName &name : parameterNames) {
-    if (!spec.FindParameter(name)) {
+    if (!spec->FindParameter(name)) {
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
           [&](const Symbol *symbol) { return symbol->name() == name; })};
       if (it != parameterDecls.end()) {
@@ -3236,14 +3238,14 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   }
 
   auto category{GetDeclTypeSpecCategory()};
-  ProcessParameterExpressions(spec, context().foldingContext());
+  ProcessParameterExpressions(*spec, context().foldingContext());
   if (const DeclTypeSpec *
-      extant{currScope().FindInstantiatedDerivedType(spec, category)}) {
+      extant{currScope().FindInstantiatedDerivedType(*spec, category)}) {
     // This derived type and parameter expressions (if any) are already present
     // in this scope.
     SetDeclTypeSpec(*extant);
   } else {
-    DeclTypeSpec &type{currScope().MakeDerivedType(category, std::move(spec))};
+    DeclTypeSpec &type{currScope().MakeDerivedType(category, std::move(*spec))};
     if (parameterNames.empty() || currScope().IsParameterizedDerivedType()) {
       // The derived type being instantiated is not a parameterized derived
       // type, or the instantiation is within the definition of a parameterized
@@ -3326,33 +3328,28 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   // Resolve the EXTENDS() clause before creating the derived
   // type's symbol to foil attempts to recursively extend a type.
   auto *extendsName{derivedTypeInfo_.extends};
-  const Symbol *extendsType{nullptr};
-  if (extendsName != nullptr) {
-    if (extendsName->source == name.source) {
-      Say(extendsName->source,
-          "Derived type '%s' cannot extend itself"_err_en_US);
-    } else {
-      extendsType = ResolveDerivedType(*extendsName);
-    }
-  }
+  std::optional<DerivedTypeSpec> extendsType{
+      ResolveExtendsType(name, extendsName)};
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
   symbol.ReplaceName(name.source);
   derivedTypeInfo_.type = &symbol;
   PushScope(Scope::Kind::DerivedType, &symbol);
-  if (extendsType != nullptr) {
+  if (extendsType.has_value()) {
     // Declare the "parent component"; private if the type is
     // Any symbol stored in the EXTENDS() clause is temporarily
     // hidden so that a new symbol can be created for the parent
     // component without producing spurious errors about already
     // existing.
+    const Symbol &extendsSymbol{extendsType->typeSymbol()};
     auto restorer{common::ScopedSet(extendsName->symbol, nullptr)};
-    if (OkToAddComponent(*extendsName, extendsType)) {
+    if (OkToAddComponent(*extendsName, &extendsSymbol)) {
       auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
-      comp.attrs().set(Attr::PRIVATE, extendsType->attrs().test(Attr::PRIVATE));
+      comp.attrs().set(
+          Attr::PRIVATE, extendsSymbol.attrs().test(Attr::PRIVATE));
       comp.set(Symbol::Flag::ParentComp);
       DeclTypeSpec &type{currScope().MakeDerivedType(
-          DeclTypeSpec::TypeDerived, DerivedTypeSpec{*extendsType})};
-      type.derivedTypeSpec().set_scope(*extendsType->scope());
+          DeclTypeSpec::TypeDerived, std::move(*extendsType))};
+      type.derivedTypeSpec().set_scope(*extendsSymbol.scope());
       comp.SetType(type);
       DerivedTypeDetails &details{symbol.get<DerivedTypeDetails>()};
       details.add_component(comp);
@@ -4244,15 +4241,15 @@ void DeclarationVisitor::SetType(
   }
 }
 
-// Find the Symbol for this derived type.
-const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
+std::optional<DerivedTypeSpec> DeclarationVisitor::ResolveDerivedType(
+    const parser::Name &name) {
   const Symbol *symbol{FindSymbol(name)};
   if (!symbol) {
     Say(name, "Derived type '%s' not found"_err_en_US);
-    return nullptr;
+    return std::nullopt;
   }
   if (CheckUseError(name)) {
-    return nullptr;
+    return std::nullopt;
   }
   symbol = &symbol->GetUltimate();
   if (auto *details{symbol->detailsIf<GenericDetails>()}) {
@@ -4262,9 +4259,22 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
   }
   if (!symbol->has<DerivedTypeDetails>()) {
     Say(name, "'%s' is not a derived type"_err_en_US);
-    return nullptr;
+    return std::nullopt;
   }
-  return symbol;
+  return DerivedTypeSpec{name.source, *symbol};
+}
+
+std::optional<DerivedTypeSpec> DeclarationVisitor::ResolveExtendsType(
+    const parser::Name &typeName, const parser::Name *extendsName) {
+  if (extendsName == nullptr) {
+    return std::nullopt;
+  } else if (typeName.source == extendsName->source) {
+    Say(extendsName->source,
+        "Derived type '%s' cannot extend itself"_err_en_US);
+    return std::nullopt;
+  } else {
+    return ResolveDerivedType(*extendsName);
+  }
 }
 
 Symbol *DeclarationVisitor::NoteInterfaceName(const parser::Name &name) {

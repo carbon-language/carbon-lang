@@ -97,10 +97,78 @@ end
 ! character(l2,4)::x
 ! interface
 !  subroutine s(x,y)
-!   import::l2
 !   import::f2
+!   import::l2
 !   character(l2,4)::x
 !   character(f2(l2),1)::y
+!  end
+! end interface
+!end
+
+module m6a
+  type t1
+  end type
+end
+!Expect: m6a.mod
+!module m6a
+! type::t1
+! end type
+!end
+
+module m6b
+  use m6a, only: t2 => t1
+contains
+  subroutine s(x)
+    type(t2) :: x
+  end
+end
+!Expect: m6b.mod
+!module m6b
+! use m6a,only:t2=>t1
+!contains
+! subroutine s(x)
+!  type(t2)::x
+! end
+!end
+
+module m6c
+  use m6a, only: t2 => t1
+  type, extends(t2) :: t
+  end type
+end
+!Expect: m6c.mod
+!module m6c
+! use m6a,only:t2=>t1
+! type,extends(t2)::t
+! end type
+!end
+
+module m6d
+  use m6a, only: t2 => t1
+  type(t2), parameter :: p = t2()
+end
+!Expect: m6d.mod
+!module m6d
+! use m6a,only:t2=>t1
+! type(t2),parameter::p=t2()
+!end
+
+module m6e
+  use m6a, only: t2 => t1
+  interface
+    subroutine s(x)
+      import t2
+      type(t2) :: x
+    end subroutine
+  end interface
+end
+!Expect: m6e.mod
+!module m6e
+! use m6a,only:t2=>t1
+! interface
+!  subroutine s(x)
+!   import::t2
+!   type(t2)::x
 !  end
 ! end interface
 !end

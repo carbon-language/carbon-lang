@@ -1184,7 +1184,7 @@ Expr<Type<TypeCategory::Character, KIND>> FoldIntrinsicFunction(
 template<typename T>
 std::optional<Expr<T>> GetNamedConstantValue(
     FoldingContext &context, const Symbol &symbol0) {
-  const Symbol &symbol{ResolveAssociations(symbol0)};
+  const Symbol &symbol{ResolveAssociations(symbol0).GetUltimate()};
   if (IsNamedConstant(symbol)) {
     if (const auto *object{
             symbol.detailsIf<semantics::ObjectEntityDetails>()}) {

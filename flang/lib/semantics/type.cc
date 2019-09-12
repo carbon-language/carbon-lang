@@ -22,14 +22,12 @@
 
 namespace Fortran::semantics {
 
-DerivedTypeSpec::DerivedTypeSpec(const DerivedTypeSpec &that)
-  : typeSymbol_{that.typeSymbol_}, scope_{that.scope_}, parameters_{
-                                                            that.parameters_} {}
-
-DerivedTypeSpec::DerivedTypeSpec(DerivedTypeSpec &&that)
-  : typeSymbol_{that.typeSymbol_}, scope_{that.scope_}, parameters_{std::move(
-                                                            that.parameters_)} {
+DerivedTypeSpec::DerivedTypeSpec(SourceName name, const Symbol &typeSymbol)
+  : name_{name}, typeSymbol_{typeSymbol} {
+  CHECK(typeSymbol.has<DerivedTypeDetails>());
 }
+DerivedTypeSpec::DerivedTypeSpec(const DerivedTypeSpec &that) = default;
+DerivedTypeSpec::DerivedTypeSpec(DerivedTypeSpec &&that) = default;
 
 void DerivedTypeSpec::set_scope(const Scope &scope) {
   CHECK(!scope_);
@@ -54,7 +52,7 @@ ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
 
 std::string DerivedTypeSpec::AsFortran() const {
   std::stringstream ss;
-  ss << typeSymbol_.name().ToString();
+  ss << name_;
   if (!parameters_.empty()) {
     ss << '(';
     bool first = true;

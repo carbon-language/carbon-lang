@@ -441,7 +441,7 @@ std::string SomeDerived::AsFortran() const {
 std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &spec) {
   if (spec.HasActualParameters()) {
     std::stringstream ss;
-    ss << spec.typeSymbol().name().ToString();
+    ss << spec.name().ToString();
     char ch{'('};
     for (const auto &[name, value] : spec.parameters()) {
       ss << ch << name.ToString() << '=';
@@ -457,7 +457,7 @@ std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &spec) {
     ss << ')';
     return ss.str();
   } else {
-    return spec.typeSymbol().name().ToString();
+    return spec.name().ToString();
   }
 }
 
