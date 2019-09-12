@@ -52,3 +52,55 @@ end
 !use m1,only:x1
 !use m2,only:y1
 !end
+
+module m5a
+  integer, parameter :: k1 = 4
+  integer :: l1 = 2
+  type t1
+    real :: a
+  end type
+contains
+  pure integer function f1(i)
+    f1 = i
+  end
+end
+!Expect: m5a.mod
+!module m5a
+! integer(4),parameter::k1=4_4
+! integer(4)::l1
+! type::t1
+!  real(4)::a
+! end type
+!contains
+! pure function f1(i)
+!  integer(4)::i
+!  integer(4)::f1
+! end
+!end
+
+module m5b
+  use m5a, only: k2 => k1, l2 => l1, f2 => f1
+  character(l2, k2) :: x
+  interface
+    subroutine s(x, y)
+      import f2, l2
+      character(l2, k2) :: x
+      character(f2(l2)) :: y
+    end subroutine
+  end interface
+end
+!Expect: m5b.mod
+!module m5b
+! use m5a,only:k2=>k1
+! use m5a,only:l2=>l1
+! use m5a,only:f2=>f1
+! character(l2,4)::x
+! interface
+!  subroutine s(x,y)
+!   import::l2
+!   import::f2
+!   character(l2,4)::x
+!   character(f2(l2),1)::y
+!  end
+! end interface
+!end

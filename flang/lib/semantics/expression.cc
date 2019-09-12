@@ -597,17 +597,25 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
   if (std::optional<int> kind{IsAcImpliedDo(n.source)}) {
     return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
         *kind, AsExpr(ImpliedDoIndex{n.source})));
-  } else if (!context_.HasError(n)) {
+  } else if (context_.HasError(n)) {
+    return std::nullopt;
+  } else {
     const Symbol &ultimate{n.symbol->GetUltimate()};
     if (ultimate.detailsIf<semantics::TypeParamDetails>()) {
       // A bare reference to a derived type parameter (within a parameterized
       // derived type definition)
       return AsMaybeExpr(MakeBareTypeParamInquiry(&ultimate));
     } else {
-      return Designate(DataRef{ultimate});
+      const auto *details{ultimate.detailsIf<semantics::ObjectEntityDetails>()};
+      if (details && semantics::IsNamedConstant(ultimate) && details->type() &&
+          details->type()->AsIntrinsic() && !details->IsArray() &&
+          details->init()) {
+        return details->init();
+      } else {
+        return Designate(DataRef{*n.symbol});
+      }
     }
   }
-  return std::nullopt;
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::NamedConstant &n) {
@@ -1523,7 +1531,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
               // TODO: call with implicit interface
             }
             return CalleeAndArguments{
-                ProcedureDesignator{symbol}, std::move(arguments)};
+                ProcedureDesignator{*n.symbol}, std::move(arguments)};
           },
           [&](const parser::ProcComponentRef &pcr)
               -> std::optional<CalleeAndArguments> {
