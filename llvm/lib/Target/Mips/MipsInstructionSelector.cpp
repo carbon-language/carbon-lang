@@ -436,6 +436,18 @@ bool MipsInstructionSelector::select(MachineInstr &I) {
              .add(I.getOperand(3));
     break;
   }
+  case G_IMPLICIT_DEF: {
+    MI = BuildMI(MBB, I, I.getDebugLoc(), TII.get(Mips::IMPLICIT_DEF))
+             .add(I.getOperand(0));
+
+    // Set class based on register bank, there can be fpr and gpr implicit def.
+    MRI.setRegClass(MI->getOperand(0).getReg(),
+                    getRegClassForTypeOnBank(
+                        MRI.getType(I.getOperand(0).getReg()).getSizeInBits(),
+                        *RBI.getRegBank(I.getOperand(0).getReg(), MRI, TRI),
+                        RBI));
+    break;
+  }
   case G_CONSTANT: {
     MachineIRBuilder B(I);
     if (!materialize32BitImm(I.getOperand(0).getReg(),
