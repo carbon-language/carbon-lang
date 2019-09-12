@@ -535,7 +535,7 @@ static void ReportIfNotSuspended(ThreadContextBase *tctx, void *arg) {
     if (i >= suspended_threads.size() || suspended_threads[i] != tctx->os_id)
       Report("Running thread %d was not suspended. False leaks are possible.\n",
              tctx->os_id);
-  };
+  }
 }
 
 static void ReportUnsuspendedThreads(

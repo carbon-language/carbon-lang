@@ -24,7 +24,7 @@ class FlagHandlerBase {
   virtual bool Parse(const char *value) { return false; }
 
  protected:
-  ~FlagHandlerBase() {};
+  ~FlagHandlerBase() {}
 };
 
 template <typename T>

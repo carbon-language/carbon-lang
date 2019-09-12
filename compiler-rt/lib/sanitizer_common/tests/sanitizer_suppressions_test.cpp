@@ -18,7 +18,7 @@ namespace __sanitizer {
 
 static bool MyMatch(const char *templ, const char *func) {
   char tmp[1024];
-  strcpy(tmp, templ);
+  snprintf(tmp, sizeof(tmp), "%s", templ);
   return TemplateMatch(tmp, func);
 }
 

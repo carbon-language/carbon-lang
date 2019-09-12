@@ -3070,13 +3070,14 @@ INTERCEPTOR(int, sendmmsg, int fd, struct __sanitizer_mmsghdr *msgvec,
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   }
   int res = REAL(sendmmsg)(fd, msgvec, vlen, flags);
-  if (res >= 0 && msgvec)
+  if (res >= 0 && msgvec) {
     for (int i = 0; i < res; ++i) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &msgvec[i].msg_len,
                                      sizeof(msgvec[i].msg_len));
       if (common_flags()->intercept_send)
         read_msghdr(ctx, &msgvec[i].msg_hdr, msgvec[i].msg_len);
     }
+  }
   return res;
 }
 #define INIT_SENDMMSG COMMON_INTERCEPT_FUNCTION(sendmmsg);
@@ -3207,20 +3208,21 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
   __sanitizer_iovec local_iovec;
 
   if (data) {
-    if (request == ptrace_setregs)
+    if (request == ptrace_setregs) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_regs_struct_sz);
-    else if (request == ptrace_setfpregs)
+    } else if (request == ptrace_setfpregs) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_fpregs_struct_sz);
-    else if (request == ptrace_setfpxregs)
+    } else if (request == ptrace_setfpxregs) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_fpxregs_struct_sz);
-    else if (request == ptrace_setvfpregs)
+    } else if (request == ptrace_setvfpregs) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_vfpregs_struct_sz);
-    else if (request == ptrace_setsiginfo)
+    } else if (request == ptrace_setsiginfo) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, siginfo_t_sz);
+
     // Some kernel might zero the iovec::iov_base in case of invalid
     // write access.  In this case copy the invalid address for further
     // inspection.
-    else if (request == ptrace_setregset || request == ptrace_getregset) {
+    } else if (request == ptrace_setregset || request == ptrace_getregset) {
       __sanitizer_iovec *iovec = (__sanitizer_iovec*)data;
       COMMON_INTERCEPTOR_READ_RANGE(ctx, iovec, sizeof(*iovec));
       local_iovec = *iovec;
@@ -3237,19 +3239,19 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
   if (!res && data) {
     // Note that PEEK* requests assign different meaning to the return value.
     // This function does not handle them (nor does it need to).
-    if (request == ptrace_getregs)
+    if (request == ptrace_getregs) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_regs_struct_sz);
-    else if (request == ptrace_getfpregs)
+    } else if (request == ptrace_getfpregs) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_fpregs_struct_sz);
-    else if (request == ptrace_getfpxregs)
+    } else if (request == ptrace_getfpxregs) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_fpxregs_struct_sz);
-    else if (request == ptrace_getvfpregs)
+    } else if (request == ptrace_getvfpregs) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_vfpregs_struct_sz);
-    else if (request == ptrace_getsiginfo)
+    } else if (request == ptrace_getsiginfo) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, siginfo_t_sz);
-    else if (request == ptrace_geteventmsg)
+    } else if (request == ptrace_geteventmsg) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, sizeof(unsigned long));
-    else if (request == ptrace_getregset) {
+    } else if (request == ptrace_getregset) {
       __sanitizer_iovec *iovec = (__sanitizer_iovec*)data;
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iovec, sizeof(*iovec));
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, local_iovec.iov_base,
@@ -7842,10 +7844,11 @@ INTERCEPTOR(int, modctl, int operation, void *argp) {
     if (iov)
       COMMON_INTERCEPTOR_WRITE_RANGE(
           ctx, iov->iov_base, Min(iov_len,  iov->iov_len));
-  } else if (operation == modctl_exists)
+  } else if (operation == modctl_exists) {
     ret = REAL(modctl)(operation, argp);
-  else
+  } else {
     ret = REAL(modctl)(operation, argp);
+  }
 
   return ret;
 }

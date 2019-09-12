@@ -284,9 +284,9 @@ class FuzzedDataProvider {
 
     // Avoid using implementation-defined unsigned to signer conversions.
     // To learn more, see https://stackoverflow.com/questions/13150449.
-    if (value <= std::numeric_limits<TS>::max())
+    if (value <= std::numeric_limits<TS>::max()) {
       return static_cast<TS>(value);
-    else {
+    } else {
       constexpr auto TS_min = std::numeric_limits<TS>::min();
       return TS_min + static_cast<char>(value - TS_min);
     }
