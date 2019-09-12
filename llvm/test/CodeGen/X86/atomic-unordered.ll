@@ -604,16 +604,11 @@ define void @widen_broadcast2_unaligned(i32* %p0, <2 x i32> %vec) {
 
 ; Legal if wider type is also atomic (TODO)
 define void @widen_zero_init(i32* %p0, i32 %v1, i32 %v2) {
-; CHECK-NOX-LABEL: widen_zero_init:
-; CHECK-NOX:       # %bb.0:
-; CHECK-NOX-NEXT:    movl $0, (%rdi)
-; CHECK-NOX-NEXT:    movl $0, 4(%rdi)
-; CHECK-NOX-NEXT:    retq
-;
-; CHECK-EX-LABEL: widen_zero_init:
-; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movq $0, (%rdi)
-; CHECK-EX-NEXT:    retq
+; CHECK-LABEL: widen_zero_init:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movl $0, (%rdi)
+; CHECK-NEXT:    movl $0, 4(%rdi)
+; CHECK-NEXT:    retq
   %p1 = getelementptr i32, i32* %p0, i64 1
   store atomic i32 0, i32* %p0 unordered, align 8
   store atomic i32 0, i32* %p1 unordered, align 4
@@ -622,16 +617,11 @@ define void @widen_zero_init(i32* %p0, i32 %v1, i32 %v2) {
 
 ; Not legal to widen due to alignment restriction
 define void @widen_zero_init_unaligned(i32* %p0, i32 %v1, i32 %v2) {
-; CHECK-NOX-LABEL: widen_zero_init_unaligned:
-; CHECK-NOX:       # %bb.0:
-; CHECK-NOX-NEXT:    movl $0, (%rdi)
-; CHECK-NOX-NEXT:    movl $0, 4(%rdi)
-; CHECK-NOX-NEXT:    retq
-;
-; CHECK-EX-LABEL: widen_zero_init_unaligned:
-; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movq $0, (%rdi)
-; CHECK-EX-NEXT:    retq
+; CHECK-LABEL: widen_zero_init_unaligned:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movl $0, (%rdi)
+; CHECK-NEXT:    movl $0, 4(%rdi)
+; CHECK-NEXT:    retq
   %p1 = getelementptr i32, i32* %p0, i64 1
   store atomic i32 0, i32* %p0 unordered, align 4
   store atomic i32 0, i32* %p1 unordered, align 4
@@ -1449,7 +1439,7 @@ define i64 @load_fold_shl3(i64* %p1, i64* %p2) {
 ;
 ; CHECK-EX-LABEL: load_fold_shl3:
 ; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movb (%rsi), %al
+; CHECK-EX-NEXT:    movq (%rsi), %rax
 ; CHECK-EX-NEXT:    shlxq %rax, (%rdi), %rax
 ; CHECK-EX-NEXT:    retq
   %v = load atomic i64, i64* %p1 unordered, align 8
@@ -1510,7 +1500,7 @@ define i64 @load_fold_lshr3(i64* %p1, i64* %p2) {
 ;
 ; CHECK-EX-LABEL: load_fold_lshr3:
 ; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movb (%rsi), %al
+; CHECK-EX-NEXT:    movq (%rsi), %rax
 ; CHECK-EX-NEXT:    shrxq %rax, (%rdi), %rax
 ; CHECK-EX-NEXT:    retq
   %v = load atomic i64, i64* %p1 unordered, align 8
@@ -1571,7 +1561,7 @@ define i64 @load_fold_ashr3(i64* %p1, i64* %p2) {
 ;
 ; CHECK-EX-LABEL: load_fold_ashr3:
 ; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movb (%rsi), %al
+; CHECK-EX-NEXT:    movq (%rsi), %rax
 ; CHECK-EX-NEXT:    sarxq %rax, (%rdi), %rax
 ; CHECK-EX-NEXT:    retq
   %v = load atomic i64, i64* %p1 unordered, align 8
@@ -2694,16 +2684,11 @@ define void @rmw_fold_xor2(i64* %p, i64 %v) {
 
 ; Legal to reduce the load width (TODO)
 define i32 @fold_trunc(i64* %p) {
-; CHECK-NOX-LABEL: fold_trunc:
-; CHECK-NOX:       # %bb.0:
-; CHECK-NOX-NEXT:    movq (%rdi), %rax
-; CHECK-NOX-NEXT:    # kill: def $eax killed $eax killed $rax
-; CHECK-NOX-NEXT:    retq
-;
-; CHECK-EX-LABEL: fold_trunc:
-; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movl (%rdi), %eax
-; CHECK-EX-NEXT:    retq
+; CHECK-LABEL: fold_trunc:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movq (%rdi), %rax
+; CHECK-NEXT:    # kill: def $eax killed $eax killed $rax
+; CHECK-NEXT:    retq
   %v = load atomic i64, i64* %p unordered, align 8
   %ret = trunc i64 %v to i32
   ret i32 %ret
@@ -2727,8 +2712,9 @@ define i32 @fold_trunc_add(i64* %p, i32 %v2) {
 ;
 ; CHECK-EX-LABEL: fold_trunc_add:
 ; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movl %esi, %eax
-; CHECK-EX-NEXT:    addl (%rdi), %eax
+; CHECK-EX-NEXT:    movq (%rdi), %rax
+; CHECK-EX-NEXT:    addl %esi, %eax
+; CHECK-EX-NEXT:    # kill: def $eax killed $eax killed $rax
 ; CHECK-EX-NEXT:    retq
   %v = load atomic i64, i64* %p unordered, align 8
   %trunc = trunc i64 %v to i32
@@ -2754,8 +2740,9 @@ define i32 @fold_trunc_and(i64* %p, i32 %v2) {
 ;
 ; CHECK-EX-LABEL: fold_trunc_and:
 ; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movl %esi, %eax
-; CHECK-EX-NEXT:    andl (%rdi), %eax
+; CHECK-EX-NEXT:    movq (%rdi), %rax
+; CHECK-EX-NEXT:    andl %esi, %eax
+; CHECK-EX-NEXT:    # kill: def $eax killed $eax killed $rax
 ; CHECK-EX-NEXT:    retq
   %v = load atomic i64, i64* %p unordered, align 8
   %trunc = trunc i64 %v to i32
@@ -2781,8 +2768,9 @@ define i32 @fold_trunc_or(i64* %p, i32 %v2) {
 ;
 ; CHECK-EX-LABEL: fold_trunc_or:
 ; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movl %esi, %eax
-; CHECK-EX-NEXT:    orl (%rdi), %eax
+; CHECK-EX-NEXT:    movq (%rdi), %rax
+; CHECK-EX-NEXT:    orl %esi, %eax
+; CHECK-EX-NEXT:    # kill: def $eax killed $eax killed $rax
 ; CHECK-EX-NEXT:    retq
   %v = load atomic i64, i64* %p unordered, align 8
   %trunc = trunc i64 %v to i32
@@ -2864,17 +2852,11 @@ define i64 @load_forwarding(i64* %p) {
 
 ; Legal to forward (TODO)
 define i64 @store_forward(i64* %p, i64 %v) {
-; CHECK-NOX-LABEL: store_forward:
-; CHECK-NOX:       # %bb.0:
-; CHECK-NOX-NEXT:    movq %rsi, (%rdi)
-; CHECK-NOX-NEXT:    movq (%rdi), %rax
-; CHECK-NOX-NEXT:    retq
-;
-; CHECK-EX-LABEL: store_forward:
-; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movq %rsi, %rax
-; CHECK-EX-NEXT:    movq %rsi, (%rdi)
-; CHECK-EX-NEXT:    retq
+; CHECK-LABEL: store_forward:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movq %rsi, (%rdi)
+; CHECK-NEXT:    movq (%rdi), %rax
+; CHECK-NEXT:    retq
   store atomic i64 %v, i64* %p unordered, align 8
   %ret = load atomic i64, i64* %p unordered, align 8
   ret i64 %ret
@@ -2894,16 +2876,11 @@ define void @dead_writeback(i64* %p) {
 
 ; Legal to kill (TODO)
 define void @dead_store(i64* %p, i64 %v) {
-; CHECK-NOX-LABEL: dead_store:
-; CHECK-NOX:       # %bb.0:
-; CHECK-NOX-NEXT:    movq $0, (%rdi)
-; CHECK-NOX-NEXT:    movq %rsi, (%rdi)
-; CHECK-NOX-NEXT:    retq
-;
-; CHECK-EX-LABEL: dead_store:
-; CHECK-EX:       # %bb.0:
-; CHECK-EX-NEXT:    movq %rsi, (%rdi)
-; CHECK-EX-NEXT:    retq
+; CHECK-LABEL: dead_store:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movq $0, (%rdi)
+; CHECK-NEXT:    movq %rsi, (%rdi)
+; CHECK-NEXT:    retq
   store atomic i64 0, i64* %p unordered, align 8
   store atomic i64 %v, i64* %p unordered, align 8
   ret void
