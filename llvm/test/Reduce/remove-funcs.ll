@@ -12,6 +12,7 @@
 
 ; RUN: llvm-reduce --test %t/test.py %s -o %t/out.ll
 ; RUN: cat %t/out.ll | FileCheck -implicit-check-not=uninteresting %s
+; REQUIRES: shell
 
 define i32 @uninteresting1() {
 entry:
