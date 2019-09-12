@@ -124,10 +124,12 @@ run_lint ${SCUDO_RTL_LINT_FILTER} ${SCUDO_RTL}/*.cpp \
                                   ${SCUDO_RTL}/*.h &
 
 # Misc files
+(
 rsync -a --prune-empty-dirs --exclude='*/profile/*' --exclude='*/builtins/*' --exclude='*/xray/*' --include='*/' --include='*.inc' --exclude='*' "${COMPILER_RT}/" "${MKTEMP_DIR}/"
 find ${MKTEMP_DIR} -type f -name '*.inc' -exec mv {} {}.cpp \;
 ( ERROR_LOG=${ERROR_LOG}.inc run_lint ${COMMON_RTL_INC_LINT_FILTER} $(find ${MKTEMP_DIR} -type f -name '*.inc.cpp') )
 sed "s|${MKTEMP_DIR}|${COMPILER_RT}|g" ${ERROR_LOG}.inc | sed "s|.inc.cpp|.inc|g" >> ${ERROR_LOG}
+) &
 
 wait
 
