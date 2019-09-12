@@ -77,6 +77,9 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
   getActionDefinitionsBuilder(G_BRJT)
       .legalFor({{p0, s32}});
 
+  getActionDefinitionsBuilder(G_BRINDIRECT)
+      .legalFor({p0});
+
   getActionDefinitionsBuilder(G_PHI)
       .legalFor({p0, s32, s64})
       .minScalar(0, s32);
