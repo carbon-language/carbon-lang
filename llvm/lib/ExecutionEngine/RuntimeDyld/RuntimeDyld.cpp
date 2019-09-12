@@ -17,6 +17,7 @@
 #include "RuntimeDyldMachO.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/MSVCErrorWorkarounds.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
@@ -737,7 +738,8 @@ Error RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
       return NameOrErr.takeError();
     if (Align) {
       // This symbol has an alignment requirement.
-      uint64_t AlignOffset = OffsetToAlignment((uint64_t)Addr, Align);
+      uint64_t AlignOffset =
+          offsetToAlignment((uint64_t)Addr, llvm::Align(Align));
       Addr += AlignOffset;
       Offset += AlignOffset;
     }
