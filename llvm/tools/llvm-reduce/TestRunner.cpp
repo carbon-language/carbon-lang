@@ -26,10 +26,8 @@ static SmallString<128> initializeTmpDirectory() {
   return TmpDirectory;
 }
 
-TestRunner::TestRunner(StringRef TestName, std::vector<std::string> TestArgs,
-                       StringRef ReducedFilepath)
-    : TestName(TestName), TestArgs(std::move(TestArgs)),
-      ReducedFilepath(ReducedFilepath) {
+TestRunner::TestRunner(StringRef TestName, std::vector<std::string> TestArgs)
+    : TestName(TestName), TestArgs(std::move(TestArgs)) {
   TmpDirectory = initializeTmpDirectory();
 }
 
