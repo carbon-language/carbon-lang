@@ -171,10 +171,7 @@ public:
   const DeclTypeSpec &MakeLogicalType(KindExpr &&kind);
   const DeclTypeSpec &MakeCharacterType(
       ParamValue &&length, KindExpr &&kind = KindExpr{0});
-  const DeclTypeSpec &MakeDerivedType(
-      DeclTypeSpec::Category, DerivedTypeSpec &&);
-  DeclTypeSpec &MakeDerivedType(const Symbol &);
-  DeclTypeSpec &MakeDerivedType(DerivedTypeSpec &&, DeclTypeSpec::Category);
+  DeclTypeSpec &MakeDerivedType(DeclTypeSpec::Category, DerivedTypeSpec &&);
   const DeclTypeSpec &MakeTypeStarType();
   const DeclTypeSpec &MakeClassStarType();
 

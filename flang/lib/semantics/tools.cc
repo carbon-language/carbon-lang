@@ -708,7 +708,7 @@ const DeclTypeSpec &FindOrInstantiateDerivedType(Scope &scope,
   }
   // Create a new instantiation of this parameterized derived type
   // for this particular distinct set of actual parameter values.
-  DeclTypeSpec &type{scope.MakeDerivedType(std::move(spec), category)};
+  DeclTypeSpec &type{scope.MakeDerivedType(category, std::move(spec))};
   InstantiateDerivedType(type.derivedTypeSpec(), scope, semanticsContext);
   return type;
 }

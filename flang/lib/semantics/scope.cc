@@ -155,22 +155,9 @@ const DeclTypeSpec &Scope::MakeCharacterType(
       CharacterTypeSpec{std::move(length), std::move(kind)});
 }
 
-const DeclTypeSpec &Scope::MakeDerivedType(
-    DeclTypeSpec::Category category, DerivedTypeSpec &&spec) {
-  return MakeDerivedType(std::move(spec), category);
-}
-
-DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
-  CHECK(typeSymbol.has<DerivedTypeDetails>());
-  CHECK(typeSymbol.scope() != nullptr);
-  return MakeDerivedType(
-      DerivedTypeSpec{typeSymbol}, DeclTypeSpec::TypeDerived);
-}
-
 DeclTypeSpec &Scope::MakeDerivedType(
-    DerivedTypeSpec &&spec, DeclTypeSpec::Category category) {
-  return declTypeSpecs_.emplace_back(
-      category, DerivedTypeSpec{std::move(spec)});
+    DeclTypeSpec::Category category, DerivedTypeSpec &&spec) {
+  return declTypeSpecs_.emplace_back(category, std::move(spec));
 }
 
 void Scope::set_chars(parser::CookedSource &cooked) {

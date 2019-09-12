@@ -3243,7 +3243,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     // in this scope.
     SetDeclTypeSpec(*extant);
   } else {
-    DeclTypeSpec &type{currScope().MakeDerivedType(std::move(spec), category)};
+    DeclTypeSpec &type{currScope().MakeDerivedType(category, std::move(spec))};
     if (parameterNames.empty() || currScope().IsParameterizedDerivedType()) {
       // The derived type being instantiated is not a parameterized derived
       // type, or the instantiation is within the definition of a parameterized
@@ -3350,7 +3350,8 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
       auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
       comp.attrs().set(Attr::PRIVATE, extendsType->attrs().test(Attr::PRIVATE));
       comp.set(Symbol::Flag::ParentComp);
-      DeclTypeSpec &type{currScope().MakeDerivedType(*extendsType)};
+      DeclTypeSpec &type{currScope().MakeDerivedType(
+          DeclTypeSpec::TypeDerived, DerivedTypeSpec{*extendsType})};
       type.derivedTypeSpec().set_scope(*extendsType->scope());
       comp.SetType(type);
       DerivedTypeDetails &details{symbol.get<DerivedTypeDetails>()};
@@ -4792,10 +4793,12 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
     } else if (type.IsUnlimitedPolymorphic()) {
       return currScope().MakeClassStarType();
     } else {
-      return currScope().MakeDerivedType(type.IsPolymorphic()
-              ? DeclTypeSpec::ClassDerived
-              : DeclTypeSpec::TypeDerived,
-          DerivedTypeSpec{type.GetDerivedTypeSpec()});
+      return currScope().MakeDerivedType(
+          type.IsPolymorphic() ? DeclTypeSpec::ClassDerived
+                               : DeclTypeSpec::TypeDerived,
+          common::Clone(type.GetDerivedTypeSpec())
+
+      );
     }
   case common::TypeCategory::Character:
   default: CRASH_NO_CASE;
