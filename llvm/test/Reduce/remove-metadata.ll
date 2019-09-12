@@ -12,7 +12,6 @@
 
 ; RUN: llvm-reduce --test %t/test.py %s -o %t/out.ll
 ; RUN: cat %t/out.ll | FileCheck -implicit-check-not=! %s
-; REQUIRES: plugins
 
 @global = global i32 0, !dbg !0
 

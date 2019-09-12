@@ -12,7 +12,6 @@
 
 ; RUN: llvm-reduce --test %t/test.py %s -o %t/out.ll
 ; RUN: cat %t/out.ll | FileCheck -implicit-check-not=uninteresting %s
-; REQUIRES: plugins
 
 ; CHECK: @interesting = global
 @interesting = global i32 0, align 4

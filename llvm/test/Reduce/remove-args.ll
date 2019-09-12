@@ -11,7 +11,6 @@
 
 ; RUN: llvm-reduce --test %t/test.py %s -o %t/out.ll
 ; RUN: cat %t/out.ll | FileCheck -implicit-check-not=uninteresting %s
-; REQUIRES: plugins
 
 ; CHECK: @interesting(i32 %interesting)
 define void @interesting(i32 %uninteresting1, i32 %interesting, i32 %uninteresting2) {
