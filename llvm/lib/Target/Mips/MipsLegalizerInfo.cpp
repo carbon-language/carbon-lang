@@ -116,6 +116,9 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
   getActionDefinitionsBuilder({G_GLOBAL_VALUE, G_JUMP_TABLE})
       .legalFor({p0});
 
+  getActionDefinitionsBuilder(G_DYN_STACKALLOC)
+      .lowerFor({{p0, s32}});
+
   // FP instructions
   getActionDefinitionsBuilder(G_FCONSTANT)
       .legalFor({s32, s64});
