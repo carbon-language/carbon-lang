@@ -919,7 +919,8 @@ void RuntimeDyldImpl::addRelocationForSymbol(const RelocationEntry &RE,
 
 uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr,
                                              unsigned AbiVariant) {
-  if (Arch == Triple::aarch64 || Arch == Triple::aarch64_be) {
+  if (Arch == Triple::aarch64 || Arch == Triple::aarch64_be ||
+      Arch == Triple::aarch64_32) {
     // This stub has to be able to access the full address space,
     // since symbol lookup won't necessarily find a handy, in-range,
     // PLT stub for functions which could be anywhere.
