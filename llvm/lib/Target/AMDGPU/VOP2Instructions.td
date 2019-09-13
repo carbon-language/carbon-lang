@@ -798,17 +798,17 @@ defm : Arithmetic_i16_Pats<umax, V_MAX_U16_e64,   1>;
 
 def : GCNPat <
   (and i16:$src0, i16:$src1),
-  (V_AND_B32_e64 $src0, $src1)
+  (V_AND_B32_e64 VSrc_b32:$src0, VSrc_b32:$src1)
 >;
 
 def : GCNPat <
   (or i16:$src0, i16:$src1),
-  (V_OR_B32_e64 $src0, $src1)
+  (V_OR_B32_e64 VSrc_b32:$src0, VSrc_b32:$src1)
 >;
 
 def : GCNPat <
   (xor i16:$src0, i16:$src1),
-  (V_XOR_B32_e64 $src0, $src1)
+  (V_XOR_B32_e64 VSrc_b32:$src0, VSrc_b32:$src1)
 >;
 
 let Predicates = [Has16BitInsts, isGFX7GFX8GFX9] in {
