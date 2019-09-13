@@ -114,9 +114,7 @@ private:
     this->ES->setDispatchMaterialization(
 
         [this](JITDylib &JD, std::unique_ptr<MaterializationUnit> MU) {
-          // FIXME: Switch to move capture once we have c  14.
-          auto SharedMU = std::shared_ptr<MaterializationUnit>(std::move(MU));
-          auto Work = [SharedMU, &JD]() { SharedMU->doMaterialize(JD); };
+          auto Work = [MU = std::move(MU), &JD] { MU->doMaterialize(JD); };
           CompileThreads.async(std::move(Work));
         });
     ExitOnErr(S.addSpeculationRuntime(this->ES->getMainJITDylib(), Mangle));
