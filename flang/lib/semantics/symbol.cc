@@ -187,8 +187,8 @@ void GenericDetails::CopyFrom(const GenericDetails &from) {
     derivedType_ = from.derivedType_;
   }
   for (const Symbol *symbol : from.specificProcs_) {
-    auto it{std::find(specificProcs_.begin(), specificProcs_.end(), symbol)};
-    if (it == specificProcs_.end()) {
+    if (std::find(specificProcs_.begin(), specificProcs_.end(), symbol) ==
+        specificProcs_.end()) {
       specificProcs_.push_back(symbol);
     }
   }
