@@ -9090,6 +9090,15 @@ private:
                                      SourceRange SrcRange = SourceRange());
 
 public:
+  /// Checks if the variant/multiversion functions are compatible.
+  bool areMultiversionVariantFunctionsCompatible(
+      const FunctionDecl *OldFD, const FunctionDecl *NewFD,
+      const PartialDiagnostic &NoProtoDiagID,
+      const PartialDiagnosticAt &NoteCausedDiagIDAt,
+      const PartialDiagnosticAt &NoSupportDiagIDAt,
+      const PartialDiagnosticAt &DiffDiagIDAt, bool TemplatesSupported,
+      bool ConstexprSupported);
+
   /// Function tries to capture lambda's captured variables in the OpenMP region
   /// before the original lambda is captured.
   void tryCaptureOpenMPLambdas(ValueDecl *V);
@@ -9513,6 +9522,16 @@ public:
       Expr *Simdlen, ArrayRef<Expr *> Uniforms, ArrayRef<Expr *> Aligneds,
       ArrayRef<Expr *> Alignments, ArrayRef<Expr *> Linears,
       ArrayRef<unsigned> LinModifiers, ArrayRef<Expr *> Steps, SourceRange SR);
+
+  /// Called on well-formed '\#pragma omp declare variant' after parsing of
+  /// the associated method/function.
+  /// \param DG Function declaration to which declare variant directive is
+  /// applied to.
+  /// \param VariantRef Expression that references the variant function, which
+  /// must be used instead of the original one, specified in \p DG.
+  DeclGroupPtrTy ActOnOpenMPDeclareVariantDirective(DeclGroupPtrTy DG,
+                                                    Expr *VariantRef,
+                                                    SourceRange SR);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,
