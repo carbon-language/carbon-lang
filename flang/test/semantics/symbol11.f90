@@ -12,7 +12,7 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-!DEF: /s1 Subprogram
+!DEF: /s1 (Subroutine) Subprogram
 subroutine s1
  implicit none
  !DEF: /s1/x ObjectEntity REAL(8)
@@ -37,7 +37,7 @@ subroutine s1
  end associate
 end subroutine
 
-!DEF: /s2 Subprogram
+!DEF: /s2 (Subroutine) Subprogram
 subroutine s2
  !DEF: /s2/x ObjectEntity CHARACTER(4_4,1)
  !DEF: /s2/y ObjectEntity CHARACTER(4_4,1)
@@ -58,7 +58,7 @@ subroutine s2
  end associate
 end subroutine
 
-!DEF: /s3 Subprogram
+!DEF: /s3 (Subroutine) Subprogram
 subroutine s3
  !DEF: /s3/t1 DerivedType
  type :: t1
@@ -94,7 +94,7 @@ subroutine s3
  end select
 end subroutine
 
-!DEF: /s4 Subprogram
+!DEF: /s4 (Subroutine) Subprogram
 subroutine s4
  !DEF: /s4/t1 DerivedType
  type :: t1
@@ -120,7 +120,7 @@ subroutine s4
  end associate
 end subroutine
 
-!DEF: /s5 Subprogram
+!DEF: /s5 (Subroutine) Subprogram
 subroutine s5
  !DEF: /s5/t DerivedType
  type :: t
@@ -130,7 +130,7 @@ subroutine s5
  !DEF: /s5/b ObjectEntity REAL(4)
  real b
  !DEF: /s5/Block1/x AssocEntity TYPE(t)
- !DEF: /s5/f Subprogram TYPE(t)
+ !DEF: /s5/f (Function) Subprogram TYPE(t)
  associate(x => f())
   !REF: /s5/b
   !REF: /s5/Block1/x

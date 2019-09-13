@@ -36,7 +36,7 @@ program main
  !REF: /main/y
  !REF: /main/z1
  y = z1%im
- !DEF: /main/z2 (implicit) ObjectEntity COMPLEX(4)
+ !DEF: /main/z2 (Implicit) ObjectEntity COMPLEX(4)
  !REF: /main/x
  z2%re = x
  !REF: /main/z2

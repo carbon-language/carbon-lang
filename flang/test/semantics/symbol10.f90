@@ -15,7 +15,7 @@
 !DEF: /m1 Module
 module m1
 contains
- !DEF: /m1/foo_complex PUBLIC Subprogram
+ !DEF: /m1/foo_complex PUBLIC (Subroutine) Subprogram
  !DEF: /m1/foo_complex/z ObjectEntity COMPLEX(4)
  subroutine foo_complex (z)
   !REF: /m1/foo_complex/z
@@ -26,13 +26,13 @@ end module
 module m2
  !REF: /m1
  use :: m1
- !DEF: /m2/foo PUBLIC Generic
+ !DEF: /m2/foo PUBLIC (Subroutine) Generic
  interface foo
-  !DEF: /m2/foo_int PUBLIC Subprogram
+  !DEF: /m2/foo_int PUBLIC (Subroutine) Subprogram
   module procedure :: foo_int
-  !DEF: /m2/foo_real EXTERNAL, PUBLIC Subprogram
+  !DEF: /m2/foo_real EXTERNAL, PUBLIC (Subroutine) Subprogram
   procedure :: foo_real
-  !DEF: /m2/foo_complex PUBLIC Use
+  !DEF: /m2/foo_complex PUBLIC (Subroutine) Use
   procedure :: foo_complex
  end interface
  interface

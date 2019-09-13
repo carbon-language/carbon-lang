@@ -14,7 +14,7 @@
 
 ! Verify that SAVE attribute is propagated by EQUIVALENCE
 
-!DEF: /s1 Subprogram
+!DEF: /s1 (Subroutine) Subprogram
 subroutine s1
  !DEF: /s1/a SAVE ObjectEntity REAL(4)
  !DEF: /s1/b SAVE ObjectEntity REAL(4)

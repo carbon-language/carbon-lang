@@ -46,7 +46,7 @@ program main
  i = x3%a1
  !REF: /main/i
  !REF: /main/x3
- !DEF: /main/t3/t2 ObjectEntity TYPE(t2)
+ !DEF: /main/t3/t2 (ParentComp) ObjectEntity TYPE(t2)
  !REF: /main/t2/a2
  i = x3%t2%a2
  !REF: /main/i
@@ -56,7 +56,7 @@ program main
  i = x3%t2%a1
  !REF: /main/i
  !REF: /main/x3
- !DEF: /main/t2/t1 ObjectEntity TYPE(t1)
+ !DEF: /main/t2/t1 (ParentComp) ObjectEntity TYPE(t1)
  !REF: /main/t1/a1
  i = x3%t1%a1
  !REF: /main/i
@@ -76,7 +76,7 @@ module m1
  end type
 end module
 
-!DEF: /s1 Subprogram
+!DEF: /s1 (Subroutine) Subprogram
 subroutine s1
  !REF: /m1
  !DEF: /s1/t2 Use
@@ -97,7 +97,7 @@ subroutine s1
  i = x%t1
  !REF: /s1/i
  !REF: /s1/x
- !DEF: /s1/t3/t2 ObjectEntity TYPE(t1)
+ !DEF: /s1/t3/t2 (ParentComp) ObjectEntity TYPE(t1)
  !REF: /m1/t1/t1
  i = x%t2%t1
 end subroutine

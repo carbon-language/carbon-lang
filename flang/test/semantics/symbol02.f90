@@ -23,7 +23,7 @@ module m
  !DEF: /m/x PUBLIC ObjectEntity TYPE(t)
  type(t) :: x
  interface
-  !DEF: /m/s3 MODULE, PUBLIC Subprogram
+  !DEF: /m/s3 MODULE, PUBLIC (Subroutine) Subprogram
   !DEF: /m/s3/y ObjectEntity TYPE(t)
   module subroutine s3(y)
    !REF: /m/t
@@ -32,7 +32,7 @@ module m
   end subroutine
  end interface
 contains
- !DEF: /m/s PUBLIC Subprogram
+ !DEF: /m/s PUBLIC (Subroutine) Subprogram
  subroutine s
   !REF: /m/t
   !DEF: /m/s/y ObjectEntity TYPE(t)
@@ -40,10 +40,10 @@ contains
   !REF: /m/s/y
   !REF: /m/x
   y = x
-  !DEF: /m/s/s HostAssoc
+  !DEF: /m/s/s (Subroutine) HostAssoc
   call s
  contains
-  !DEF: /m/s/s2 Subprogram
+  !DEF: /m/s/s2 (Subroutine) Subprogram
   subroutine s2
    !REF: /m/x
    !REF: /m/s/y

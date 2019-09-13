@@ -14,7 +14,7 @@
 
 ! Old-style "*length" specifiers (R723)
 
-!DEF: /f1 Subprogram CHARACTER(1_8,1)
+!DEF: /f1 (Function) Subprogram CHARACTER(1_8,1)
 !DEF: /f1/x1 INTENT(IN) ObjectEntity CHARACTER(2_4,1)
 !DEF: /f1/x2 INTENT(IN) ObjectEntity CHARACTER(3_8,1)
 character*1 function f1(x1, x2)
@@ -23,7 +23,7 @@ character*1 function f1(x1, x2)
  !REF: /f1/n
  !REF: /f1/x1
  !REF: /f1/x2
- !DEF: /f1/len INTRINSIC ProcEntity
+ !DEF: /f1/len INTRINSIC (Function) ProcEntity
  character*(n), intent(in) :: x1, x2*(len(x1)+1)
  !DEF: /f1/t DerivedType
  type :: t

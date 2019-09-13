@@ -16,19 +16,19 @@
 
 !DEF: /m Module
 module m
- !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram REAL(4)
+ !DEF: /m/f PRIVATE, PURE, RECURSIVE (Function) Subprogram REAL(4)
  private :: f
 contains
- !DEF: /m/s BIND(C), PUBLIC, PURE Subprogram
- !DEF: /m/s/x INTENT(IN) (implicit) ObjectEntity REAL(4)
- !DEF: /m/s/y INTENT(INOUT) (implicit) ObjectEntity REAL(4)
+ !DEF: /m/s BIND(C), PUBLIC, PURE (Subroutine) Subprogram
+ !DEF: /m/s/x INTENT(IN) (Implicit) ObjectEntity REAL(4)
+ !DEF: /m/s/y INTENT(INOUT) (Implicit) ObjectEntity REAL(4)
  pure subroutine s (x, y) bind(c)
   !REF: /m/s/x
   intent(in) :: x
   !REF: /m/s/y
   intent(inout) :: y
  contains
-  !DEF: /m/s/ss PURE Subprogram
+  !DEF: /m/s/ss PURE (Subroutine) Subprogram
   pure subroutine ss
   end subroutine
  end subroutine

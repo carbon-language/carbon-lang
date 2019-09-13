@@ -18,7 +18,7 @@
 module m
  implicit none
  abstract interface
-  !DEF: /m/iface PUBLIC Subprogram
+  !DEF: /m/iface PUBLIC (Subroutine) Subprogram
   subroutine iface
   end subroutine
  end interface
@@ -33,26 +33,26 @@ module m
  !DEF: /m/y PUBLIC, TARGET ObjectEntity REAL(4)
  real, pointer :: op4 => y(1)
  !REF: /m/iface
- !DEF: /m/pp1 EXTERNAL, POINTER, PUBLIC ProcEntity
+ !DEF: /m/pp1 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
  procedure(iface), pointer :: pp1
  !REF: /m/iface
- !DEF: /m/pp2 EXTERNAL, POINTER, PUBLIC ProcEntity
+ !DEF: /m/pp2 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
  procedure(iface), pointer :: pp2 => null()
  !REF: /m/iface
- !DEF: /m/pp3 EXTERNAL, POINTER, PUBLIC ProcEntity
- !DEF: /m/ext1 EXTERNAL, PUBLIC ProcEntity
+ !DEF: /m/pp3 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
+ !DEF: /m/ext1 EXTERNAL, PUBLIC (Subroutine) ProcEntity
  procedure(iface), pointer :: pp3 => ext1
  !REF: /m/iface
- !DEF: /m/pp4 EXTERNAL, POINTER, PUBLIC ProcEntity
- !DEF: /m/ext2 EXTERNAL, PUBLIC Subprogram
+ !DEF: /m/pp4 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
+ !DEF: /m/ext2 EXTERNAL, PUBLIC (Subroutine) Subprogram
  procedure(iface), pointer :: pp4 => ext2
  !REF: /m/iface
- !DEF: /m/pp5 EXTERNAL, POINTER, PUBLIC ProcEntity
- !DEF: /m/ext3 EXTERNAL, PUBLIC ProcEntity
+ !DEF: /m/pp5 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
+ !DEF: /m/ext3 EXTERNAL, PUBLIC (Subroutine) ProcEntity
  procedure(iface), pointer :: pp5 => ext3
  !REF: /m/iface
- !DEF: /m/pp6 EXTERNAL, POINTER, PUBLIC ProcEntity
- !DEF: /m/modproc1 PUBLIC Subprogram
+ !DEF: /m/pp6 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
+ !DEF: /m/modproc1 PUBLIC (Subroutine) Subprogram
  procedure(iface), pointer :: pp6 => modproc1
  !DEF: /m/t1 PUBLIC DerivedType
  type :: t1
@@ -67,25 +67,25 @@ module m
   !REF: /m/y
   real, pointer :: opc4 => y(1)
   !REF: /m/iface
-  !DEF: /m/t1/ppc1 NOPASS, POINTER ProcEntity
+  !DEF: /m/t1/ppc1 NOPASS, POINTER (Subroutine) ProcEntity
   procedure(iface), nopass, pointer :: ppc1
   !REF: /m/iface
-  !DEF: /m/t1/ppc2 NOPASS, POINTER ProcEntity
+  !DEF: /m/t1/ppc2 NOPASS, POINTER (Subroutine) ProcEntity
   procedure(iface), nopass, pointer :: ppc2 => null()
   !REF: /m/iface
-  !DEF: /m/t1/ppc3 NOPASS, POINTER ProcEntity
+  !DEF: /m/t1/ppc3 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext1
   procedure(iface), nopass, pointer :: ppc3 => ext1
   !REF: /m/iface
-  !DEF: /m/t1/ppc4 NOPASS, POINTER ProcEntity
+  !DEF: /m/t1/ppc4 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext2
   procedure(iface), nopass, pointer :: ppc4 => ext2
   !REF: /m/iface
-  !DEF: /m/t1/ppc5 NOPASS, POINTER ProcEntity
+  !DEF: /m/t1/ppc5 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext3
   procedure(iface), nopass, pointer :: ppc5 => ext3
   !REF: /m/iface
-  !DEF: /m/t1/ppc6 NOPASS, POINTER ProcEntity
+  !DEF: /m/t1/ppc6 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/modproc1
   procedure(iface), nopass, pointer :: ppc6 => modproc1
  contains
@@ -116,25 +116,25 @@ module m
   !REF: /m/pdt1/k
   real, pointer :: opc4 => y(k)
   !REF: /m/iface
-  !DEF: /m/pdt1/ppc1 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt1/ppc1 NOPASS, POINTER (Subroutine) ProcEntity
   procedure(iface), nopass, pointer :: ppc1
   !REF: /m/iface
-  !DEF: /m/pdt1/ppc2 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt1/ppc2 NOPASS, POINTER (Subroutine) ProcEntity
   procedure(iface), nopass, pointer :: ppc2 => null()
   !REF: /m/iface
-  !DEF: /m/pdt1/ppc3 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt1/ppc3 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext1
   procedure(iface), nopass, pointer :: ppc3 => ext1
   !REF: /m/iface
-  !DEF: /m/pdt1/ppc4 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt1/ppc4 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext2
   procedure(iface), nopass, pointer :: ppc4 => ext2
   !REF: /m/iface
-  !DEF: /m/pdt1/ppc5 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt1/ppc5 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext3
   procedure(iface), nopass, pointer :: ppc5 => ext3
   !REF: /m/iface
-  !DEF: /m/pdt1/ppc6 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt1/ppc6 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/modproc1
   procedure(iface), nopass, pointer :: ppc6 => modproc1
  contains
@@ -174,11 +174,11 @@ module m
  !REF: /m/y
  real, pointer :: op11 => y(1)
  !REF: /m/iface
- !DEF: /m/pp10 EXTERNAL, POINTER, PUBLIC ProcEntity
+ !DEF: /m/pp10 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
  !REF: /m/ext1
  procedure(iface), pointer :: pp10 => ext1
  !REF: /m/iface
- !DEF: /m/pp11 EXTERNAL, POINTER, PUBLIC ProcEntity
+ !DEF: /m/pp11 EXTERNAL, POINTER, PUBLIC (Subroutine) ProcEntity
  !REF: /m/ext2
  procedure(iface), pointer :: pp11 => ext2
  !DEF: /m/t2 PUBLIC DerivedType
@@ -190,11 +190,11 @@ module m
   !REF: /m/y
   real, pointer :: opc11 => y(1)
   !REF: /m/iface
-  !DEF: /m/t2/ppc10 NOPASS, POINTER ProcEntity
+  !DEF: /m/t2/ppc10 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext1
   procedure(iface), nopass, pointer :: ppc10 => ext1
   !REF: /m/iface
-  !DEF: /m/t2/ppc11 NOPASS, POINTER ProcEntity
+  !DEF: /m/t2/ppc11 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext2
   procedure(iface), nopass, pointer :: ppc11 => ext2
  contains
@@ -218,11 +218,11 @@ module m
   !REF: /m/pdt2/k
   real, pointer :: opc11 => y(k)
   !REF: /m/iface
-  !DEF: /m/pdt2/ppc10 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt2/ppc10 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext1
   procedure(iface), nopass, pointer :: ppc10 => ext1
   !REF: /m/iface
-  !DEF: /m/pdt2/ppc11 NOPASS, POINTER ProcEntity
+  !DEF: /m/pdt2/ppc11 NOPASS, POINTER (Subroutine) ProcEntity
   !REF: /m/ext2
   procedure(iface), nopass, pointer :: ppc11 => ext2
  contains
@@ -244,13 +244,13 @@ contains
  subroutine modproc1
  end subroutine
 end module
-!DEF: /ext1 Subprogram
+!DEF: /ext1 (Subroutine) Subprogram
 subroutine ext1
 end subroutine
-!DEF: /ext2 Subprogram
+!DEF: /ext2 (Subroutine) Subprogram
 subroutine ext2
 end subroutine
-!DEF: /ext3 Subprogram
+!DEF: /ext3 (Subroutine) Subprogram
 subroutine ext3
 end subroutine
 !DEF: /main MainProgram

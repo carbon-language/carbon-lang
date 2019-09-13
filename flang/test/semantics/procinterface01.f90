@@ -18,7 +18,7 @@
 !DEF: /module1 Module
 module module1
  abstract interface
-  !DEF: /module1/abstract1 ELEMENTAL, PUBLIC Subprogram REAL(4)
+  !DEF: /module1/abstract1 ELEMENTAL, PUBLIC (Function) Subprogram REAL(4)
   !DEF: /module1/abstract1/x INTENT(IN) ObjectEntity REAL(4)
   real elemental function abstract1(x)
    !REF: /module1/abstract1/x
@@ -27,19 +27,19 @@ module module1
  end interface
 
  interface
-  !DEF: /module1/explicit1 ELEMENTAL, EXTERNAL, PUBLIC Subprogram REAL(4)
+  !DEF: /module1/explicit1 ELEMENTAL, EXTERNAL, PUBLIC (Function) Subprogram REAL(4)
   !DEF: /module1/explicit1/x INTENT(IN) ObjectEntity REAL(4)
   real elemental function explicit1(x)
    !REF: /module1/explicit1/x
    real, intent(in) :: x
   end function explicit1
-  !DEF: /module1/logical EXTERNAL, PUBLIC Subprogram INTEGER(4)
+  !DEF: /module1/logical EXTERNAL, PUBLIC (Function) Subprogram INTEGER(4)
   !DEF: /module1/logical/x INTENT(IN) ObjectEntity REAL(4)
   integer function logical(x)
    !REF: /module1/logical/x
    real, intent(in) :: x
   end function logical
-  !DEF: /module1/tan EXTERNAL, PUBLIC Subprogram CHARACTER(1_4,1)
+  !DEF: /module1/tan EXTERNAL, PUBLIC (Function) Subprogram CHARACTER(1_4,1)
   !DEF: /module1/tan/x INTENT(IN) ObjectEntity REAL(4)
   character(len=1) function tan(x)
    !REF: /module1/tan/x
@@ -50,21 +50,21 @@ module module1
  !DEF: /module1/derived1 PUBLIC DerivedType
  type :: derived1
   !REF: /module1/abstract1
-  !DEF: /module1/derived1/p1 NOPASS, POINTER ProcEntity REAL(4)
-  !DEF: /module1/nested1 PUBLIC Subprogram REAL(4)
+  !DEF: /module1/derived1/p1 NOPASS, POINTER (Function) ProcEntity REAL(4)
+  !DEF: /module1/nested1 PUBLIC (Function) Subprogram REAL(4)
   procedure(abstract1), pointer, nopass :: p1 => nested1
   !REF: /module1/explicit1
-  !DEF: /module1/derived1/p2 NOPASS, POINTER ProcEntity REAL(4)
+  !DEF: /module1/derived1/p2 NOPASS, POINTER (Function) ProcEntity REAL(4)
   !REF: /module1/nested1
   procedure(explicit1), pointer, nopass :: p2 => nested1
-  !DEF: /module1/derived1/p3 NOPASS, POINTER ProcEntity LOGICAL(4)
-  !DEF: /module1/nested2 PUBLIC Subprogram LOGICAL(4)
+  !DEF: /module1/derived1/p3 NOPASS, POINTER (Function) ProcEntity LOGICAL(4)
+  !DEF: /module1/nested2 PUBLIC (Function) Subprogram LOGICAL(4)
   procedure(logical), pointer, nopass :: p3 => nested2
-  !DEF: /module1/derived1/p4 NOPASS, POINTER ProcEntity LOGICAL(4)
-  !DEF: /module1/nested3 PUBLIC Subprogram LOGICAL(4)
+  !DEF: /module1/derived1/p4 NOPASS, POINTER (Function) ProcEntity LOGICAL(4)
+  !DEF: /module1/nested3 PUBLIC (Function) Subprogram LOGICAL(4)
   procedure(logical(kind=4)), pointer, nopass :: p4 => nested3
-  !DEF: /module1/derived1/p5 NOPASS, POINTER ProcEntity COMPLEX(4)
-  !DEF: /module1/nested4 PUBLIC Subprogram COMPLEX(4)
+  !DEF: /module1/derived1/p5 NOPASS, POINTER (Function) ProcEntity COMPLEX(4)
+  !DEF: /module1/nested4 PUBLIC (Function) Subprogram COMPLEX(4)
   procedure(complex), pointer, nopass :: p5 => nested4
   !DEF: /module1/sin INTRINSIC, PUBLIC ProcEntity
   !DEF: /module1/derived1/p6 NOPASS, POINTER ProcEntity
@@ -75,8 +75,8 @@ module module1
   !DEF: /module1/cos INTRINSIC, PUBLIC ProcEntity
   procedure(sin), pointer, nopass :: p7 => cos
   !REF: /module1/tan
-  !DEF: /module1/derived1/p8 NOPASS, POINTER ProcEntity CHARACTER(1_4,1)
-  !DEF: /module1/nested5 PUBLIC Subprogram CHARACTER(1_8,1)
+  !DEF: /module1/derived1/p8 NOPASS, POINTER (Function) ProcEntity CHARACTER(1_4,1)
+  !DEF: /module1/nested5 PUBLIC (Function) Subprogram CHARACTER(1_8,1)
   procedure(tan), pointer, nopass :: p8 => nested5
  end type derived1
 
@@ -118,7 +118,7 @@ contains
   !REF: /module1/nested4/x
   real, intent(in) :: x
   !DEF: /module1/nested4/nested4 ObjectEntity COMPLEX(4)
-  !DEF: /module1/nested4/cmplx INTRINSIC ProcEntity
+  !DEF: /module1/nested4/cmplx INTRINSIC (Function) ProcEntity
   !REF: /module1/nested4/x
   nested4 = cmplx(x+4., 6.)
  end function nested4
@@ -133,7 +133,7 @@ contains
  end function nested5
 end module module1
 
-!DEF: /explicit1 ELEMENTAL Subprogram REAL(4)
+!DEF: /explicit1 ELEMENTAL (Function) Subprogram REAL(4)
 !DEF: /explicit1/x INTENT(IN) ObjectEntity REAL(4)
 real elemental function explicit1(x)
  !REF: /explicit1/x
@@ -143,7 +143,7 @@ real elemental function explicit1(x)
  explicit1 = -x
 end function explicit1
 
-!DEF: /logical Subprogram INTEGER(4)
+!DEF: /logical (Function) Subprogram INTEGER(4)
 !DEF: /logical/x INTENT(IN) ObjectEntity REAL(4)
 integer function logical(x)
  !REF: /logical/x
@@ -153,7 +153,7 @@ integer function logical(x)
  logical = x+3.
 end function logical
 
-!DEF: /tan Subprogram REAL(4)
+!DEF: /tan (Function) Subprogram REAL(4)
 !DEF: /tan/x INTENT(IN) ObjectEntity REAL(4)
 real function tan(x)
  !REF: /tan/x

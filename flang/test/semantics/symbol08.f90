@@ -18,11 +18,11 @@ program main
  pointer :: x
  !REF: /main/x
  real x
- !DEF: /main/y EXTERNAL, POINTER ProcEntity REAL(4)
+ !DEF: /main/y EXTERNAL, POINTER (Function) ProcEntity REAL(4)
  pointer :: y
  !REF: /main/y
  procedure (real) :: y
- !DEF: /main/z (implicit) ObjectEntity REAL(4)
+ !DEF: /main/z (Implicit) ObjectEntity REAL(4)
  !REF: /main/y
  z = y()
 end program

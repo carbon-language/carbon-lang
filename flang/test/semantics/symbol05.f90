@@ -14,7 +14,7 @@
 
 ! Explicit and implicit entities in blocks
 
-!DEF: /s1 Subprogram
+!DEF: /s1 (Subroutine) Subprogram
 subroutine s1
  !DEF: /s1/x ObjectEntity INTEGER(4)
  integer x
@@ -34,26 +34,26 @@ subroutine s1
  end block
 end subroutine
 
-!DEF: /s2 Subprogram
+!DEF: /s2 (Subroutine) Subprogram
 subroutine s2
  implicit integer(w-x)
  block
-  !DEF: /s2/x (implicit) ObjectEntity INTEGER(4)
+  !DEF: /s2/x (Implicit) ObjectEntity INTEGER(4)
   x = 1
-  !DEF: /s2/y (implicit) ObjectEntity REAL(4)
+  !DEF: /s2/y (Implicit) ObjectEntity REAL(4)
   y = 2
  end block
 contains
- !DEF: /s2/s Subprogram
+ !DEF: /s2/s (Subroutine) Subprogram
  subroutine s
   !REF: /s2/x
   x = 1
-  !DEF: /s2/s/w (implicit) ObjectEntity INTEGER(4)
+  !DEF: /s2/s/w (Implicit) ObjectEntity INTEGER(4)
   w = 1
  end subroutine
 end subroutine
 
-!DEF: /s3 Subprogram
+!DEF: /s3 (Subroutine) Subprogram
 subroutine s3
  !DEF: /s3/j ObjectEntity INTEGER(8)
  integer(kind=8) j
@@ -61,7 +61,7 @@ subroutine s3
   !DEF: /s3/Block1/t DerivedType
   type :: t
    !DEF: /s3/Block1/t/x ObjectEntity REAL(4)
-   !DEF: /s3/Block1/t/ImpliedDos1/i (implicit) ObjectEntity INTEGER(4)
+   !DEF: /s3/Block1/t/ImpliedDos1/i (Implicit) ObjectEntity INTEGER(4)
    real :: x(10) = [(i, i=1,10)]
    !DEF: /s3/Block1/t/y ObjectEntity REAL(4)
    !DEF: /s3/Block1/t/ImpliedDos2/j ObjectEntity INTEGER(8)
@@ -70,34 +70,34 @@ subroutine s3
  end block
 end subroutine
 
-!DEF: /s4 Subprogram
+!DEF: /s4 (Subroutine) Subprogram
 subroutine s4
  implicit integer(x)
  interface
-  !DEF: /s4/s EXTERNAL Subprogram
-  !DEF: /s4/s/x (implicit) ObjectEntity REAL(4)
-  !DEF: /s4/s/y (implicit) ObjectEntity INTEGER(4)
+  !DEF: /s4/s EXTERNAL (Subroutine) Subprogram
+  !DEF: /s4/s/x (Implicit) ObjectEntity REAL(4)
+  !DEF: /s4/s/y (Implicit) ObjectEntity INTEGER(4)
   subroutine s (x, y)
    implicit integer(y)
   end subroutine
  end interface
 end subroutine
 
-!DEF: /s5 Subprogram
+!DEF: /s5 (Subroutine) Subprogram
 subroutine s5
  block
-  !DEF: /s5/Block1/x (implicit) ObjectEntity REAL(4)
+  !DEF: /s5/Block1/x (Implicit) ObjectEntity REAL(4)
   dimension :: x(2)
   block
-   !DEF: /s5/Block1/Block1/x (implicit) ObjectEntity REAL(4)
+   !DEF: /s5/Block1/Block1/x (Implicit) ObjectEntity REAL(4)
    dimension :: x(3)
   end block
  end block
- !DEF: /s5/x (implicit) ObjectEntity REAL(4)
+ !DEF: /s5/x (Implicit) ObjectEntity REAL(4)
  x = 1.0
 end subroutine
 
-!DEF: /s6 Subprogram
+!DEF: /s6 (Subroutine) Subprogram
 subroutine s6
   !DEF: /s6/i ObjectEntity INTEGER(4)
   !DEF: /s6/j ObjectEntity INTEGER(4)
@@ -110,7 +110,7 @@ subroutine s6
     asynchronous :: j
     !REF: /s6/Block1/i
     asynchronous :: i
-    !DEF: /s6/Block1/k TARGET(implicit) ObjectEntity INTEGER(4)
+    !DEF: /s6/Block1/k TARGET (Implicit) ObjectEntity INTEGER(4)
     target :: k
   end block
 end subroutine
@@ -121,7 +121,7 @@ module m7
   !DEF: /m7/j PUBLIC ObjectEntity INTEGER(4)
   integer i, j
 end module
-!DEF: /s7 Subprogram
+!DEF: /s7 (Subroutine) Subprogram
 subroutine s7
   !REF: /m7
   use :: m7

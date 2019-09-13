@@ -16,7 +16,7 @@
 
 !DEF: /p1 MainProgram
 program p1
- !DEF: /p1/f Subprogram INTEGER(4)
+ !DEF: /p1/f (Function) Subprogram INTEGER(4)
  !DEF: /p1/i ObjectEntity INTEGER(4)
  !DEF: /p1/j ObjectEntity INTEGER(4)
  integer f, i, j

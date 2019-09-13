@@ -12,7 +12,7 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-!DEF: /s1 Subprogram
+!DEF: /s1 (Subroutine) Subprogram
 subroutine s1
  !DEF: /s1/a ObjectEntity REAL(4)
  !DEF: /s1/b ObjectEntity REAL(4)
@@ -32,7 +32,7 @@ subroutine s1
  forall(i=1:10)a(i) = b(i)
 end subroutine
 
-!DEF: /s2 Subprogram
+!DEF: /s2 (Subroutine) Subprogram
 subroutine s2
  !DEF: /s2/a ObjectEntity REAL(4)
  real a(10)
@@ -52,7 +52,7 @@ subroutine s2
  end do
 end subroutine
 
-!DEF: /s3 Subprogram
+!DEF: /s3 (Subroutine) Subprogram
 subroutine s3
  !DEF: /s3/n PARAMETER ObjectEntity INTEGER(4)
  integer, parameter :: n = 4
@@ -63,14 +63,14 @@ subroutine s3
  !DEF: /s3/x ObjectEntity REAL(4)
  real, dimension(n,n) :: x
  !REF: /s3/x
- !DEF: /s3/ImpliedDos1/k (implicit) ObjectEntity INTEGER(4)
+ !DEF: /s3/ImpliedDos1/k (Implicit) ObjectEntity INTEGER(4)
  !DEF: /s3/ImpliedDos1/j ObjectEntity INTEGER(8)
  !REF: /s3/n
  !REF: /s3/n2
  data ((x(k,j),integer(kind=8)::j=1,n),k=1,n)/n2*3.0/
 end subroutine
 
-!DEF: /s4 Subprogram
+!DEF: /s4 (Subroutine) Subprogram
 subroutine s4
  !DEF: /s4/t DerivedType
  !DEF: /s4/t/k TypeParam INTEGER(4)
@@ -91,7 +91,7 @@ subroutine s4
  x = t(1)(2)
 end subroutine
 
-!DEF: /s5 Subprogram
+!DEF: /s5 (Subroutine) Subprogram
 subroutine s5
  !DEF: /s5/t DerivedType
  !DEF: /s5/t/l TypeParam INTEGER(4)
@@ -111,16 +111,16 @@ subroutine s5
  allocate(real::y)
 end subroutine
 
-!DEF: /s6 Subprogram
+!DEF: /s6 (Subroutine) Subprogram
 subroutine s6
  !DEF: /s6/j ObjectEntity INTEGER(8)
  integer(kind=8) j
  !DEF: /s6/a ObjectEntity INTEGER(4)
  integer :: a(5) = 1
  !DEF: /s6/Block1/i ObjectEntity INTEGER(4)
- !DEF: /s6/Block1/j (local) ObjectEntity INTEGER(8)
- !DEF: /s6/Block1/k (implicit) (local_init) ObjectEntity INTEGER(4)
-  !DEF: /s6/Block1/a (shared) HostAssoc INTEGER(4)
+ !DEF: /s6/Block1/j (LocalityLocal) ObjectEntity INTEGER(8)
+ !DEF: /s6/Block1/k (Implicit, LocalityLocalInit) ObjectEntity INTEGER(4)
+  !DEF: /s6/Block1/a (LocalityShared) HostAssoc INTEGER(4)
  do concurrent(integer::i=1:5)local(j)local_init(k)shared(a)
   !REF: /s6/Block1/a
   !REF: /s6/Block1/i
@@ -129,7 +129,7 @@ subroutine s6
  end do
 end subroutine
 
-!DEF: /s7 Subprogram
+!DEF: /s7 (Subroutine) Subprogram
 subroutine s7
  !DEF: /s7/one PARAMETER ObjectEntity REAL(4)
  real, parameter :: one = 1.0
@@ -138,7 +138,7 @@ subroutine s7
  complex :: z = (one, -one)
 end subroutine
 
-!DEF: /s8 Subprogram
+!DEF: /s8 (Subroutine) Subprogram
 subroutine s8
  !DEF: /s8/one PARAMETER ObjectEntity REAL(4)
  real, parameter :: one = 1.0
@@ -146,10 +146,10 @@ subroutine s8
  !DEF: /s8/z ObjectEntity REAL(4)
  real y(10), z(10)
  !REF: /s8/y
- !DEF: /s8/ImpliedDos1/i (implicit) ObjectEntity INTEGER(4)
+ !DEF: /s8/ImpliedDos1/i (Implicit) ObjectEntity INTEGER(4)
  !REF: /s8/z
- !DEF: /s8/ImpliedDos2/i (implicit) ObjectEntity INTEGER(4)
- !DEF: /s8/x (implicit) ObjectEntity REAL(4)
+ !DEF: /s8/ImpliedDos2/i (Implicit) ObjectEntity INTEGER(4)
+ !DEF: /s8/x (Implicit) ObjectEntity REAL(4)
  !REF: /s8/one
  data (y(i),i=1,10),(z(i),i=1,10),x/21*one/
 end subroutine
