@@ -111,4 +111,43 @@ program main
   enddo
   !$omp end teams
 
+  !$omp target map(tofrom:a)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end target
+
+  !ERROR: Only the to, from, tofrom or alloc map types are permitted for MAP clauses on the TARGET directive
+  !$omp target map(delete:a)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end target
+
+  !$omp target data device(0) map(to:a)
+  do i = 1, N
+    a = 3.14
+  enddo
+  !$omp end target data
+
+  !ERROR: At least one MAP clause must appear on the TARGET DATA directive
+  !$omp target data device(0)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end target data
+
+  !ERROR: At most one IF clause can appear on the TARGET ENTER DATA directive
+  !$omp target enter data map(to:a) if(.true.) if(.false.)
+
+  !ERROR: Only the to or alloc map types are permitted for MAP clauses on the TARGET ENTER DATA directive
+  !$omp target enter data map(from:a)
+
+  !$omp target exit data map(delete:a)
+
+  !ERROR: At most one DEVICE clause can appear on the TARGET EXIT DATA directive
+  !$omp target exit data map(from:a) device(0) device(1)
+
+  !ERROR: Only the from, release or delete map types are permitted for MAP clauses on the TARGET EXIT DATA directive
+  !$omp target exit data map(to:a)
 end program main

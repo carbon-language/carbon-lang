@@ -130,6 +130,15 @@ void OmpStructureChecker::CheckAllowed(OmpClause type) {
   SetContextClauseInfo(type);
 }
 
+void OmpStructureChecker::CheckRequired(OmpClause c) {
+  auto *clause{FindClause(c)};
+  if (!clause) {
+    context_.Say(GetContext().directiveSource,
+        "At least one %s clause must appear on the %s directive"_err_en_US,
+        EnumToString(c), ContextDirectiveAsFortran());
+  }
+}
+
 void OmpStructureChecker::RequiresConstantPositiveParameter(
     const OmpClause &clause, const parser::ScalarIntConstantExpr &i) {
   if (const auto v{GetIntValue(i)}) {
@@ -420,6 +429,19 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
         OmpClause::NUM_TEAMS, OmpClause::THREAD_LIMIT, OmpClause::DEFAULT};
     SetContextAllowedOnce(allowedOnce);
   } break;
+      // 2.10.1 target-data-clause -> if-clause |
+      //                              device-clause |
+      //                              map-clause |
+      //                              use-device-ptr-clause
+  case parser::OmpBlockDirective::Directive::TargetData: {
+    PushContext(beginDir.source, OmpDirective::TARGET_DATA);
+    OmpClauseSet allowed{
+        OmpClause::IF, OmpClause::MAP, OmpClause::USE_DEVICE_PTR};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::DEVICE};
+    SetContextAllowedOnce(allowedOnce);
+    SetContextRequired(OmpClauseSet{OmpClause::MAP});
+  } break;
   default:
     // TODO others
     break;
@@ -532,10 +554,20 @@ void OmpStructureChecker::Enter(
   case parser::OmpSimpleStandaloneDirective::Directive::TargetEnterData: {
     // 2.10.2 target-enter-data
     PushContext(dir.source, OmpDirective::TARGET_ENTER_DATA);
+    OmpClauseSet allowed{OmpClause::MAP, OmpClause::DEPEND, OmpClause::NOWAIT};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::DEVICE, OmpClause::IF};
+    SetContextAllowedOnce(allowedOnce);
+    SetContextRequired(OmpClauseSet{OmpClause::MAP});
   } break;
   case parser::OmpSimpleStandaloneDirective::Directive::TargetExitData: {
     // 2.10.3 target-exit-data
     PushContext(dir.source, OmpDirective::TARGET_EXIT_DATA);
+    OmpClauseSet allowed{OmpClause::MAP, OmpClause::DEPEND, OmpClause::NOWAIT};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::DEVICE, OmpClause::IF};
+    SetContextAllowedOnce(allowedOnce);
+    SetContextRequired(OmpClauseSet{OmpClause::MAP});
   } break;
   case parser::OmpSimpleStandaloneDirective::Directive::TargetUpdate: {
     // 2.10.5 target-update
@@ -899,8 +931,41 @@ void OmpStructureChecker::Enter(const parser::OmpLinearClause &x) {
     }
   }
 }
-void OmpStructureChecker::Enter(const parser::OmpMapClause &) {
+void OmpStructureChecker::Enter(const parser::OmpMapClause &x) {
   CheckAllowed(OmpClause::MAP);
+  if (const auto &maptype{std::get<std::optional<parser::OmpMapType>>(x.t)}) {
+    using Type = parser::OmpMapType::Type;
+    const Type &type = std::get<Type>(maptype->t);
+    switch (GetContext().directive) {
+    case OmpDirective::TARGET:
+    case OmpDirective::TARGET_DATA: {
+      if (type != Type::To && type != Type::From && type != Type::Tofrom &&
+          type != Type::Alloc) {
+        context_.Say(GetContext().clauseSource,
+            "Only the to, from, tofrom or alloc map types are permitted "
+            "for MAP clauses on the %s directive"_err_en_US,
+            ContextDirectiveAsFortran());
+      }
+    } break;
+    case OmpDirective::TARGET_ENTER_DATA: {
+      if (type != Type::To && type != Type::Alloc) {
+        context_.Say(GetContext().clauseSource,
+            "Only the to or alloc map types are permitted "
+            "for MAP clauses on the %s directive"_err_en_US,
+            ContextDirectiveAsFortran());
+      }
+    } break;
+    case OmpDirective::TARGET_EXIT_DATA: {
+      if (type != Type::Delete && type != Type::Release && type != Type::From) {
+        context_.Say(GetContext().clauseSource,
+            "Only the from, release or delete map types are permitted "
+            "for MAP clauses on the %s directive"_err_en_US,
+            ContextDirectiveAsFortran());
+      }
+    } break;
+    default: break;
+    }
+  }
 }
 void OmpStructureChecker::Enter(const parser::OmpProcBindClause &) {
   CheckAllowed(OmpClause::PROC_BIND);

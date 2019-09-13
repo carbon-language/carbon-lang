@@ -138,6 +138,7 @@ private:
     OmpClauseSet allowedClauses{};
     OmpClauseSet allowedOnceClauses{};
     OmpClauseSet allowedExclusiveClauses{};
+    OmpClauseSet requiredClauses{};
 
     const parser::OmpClause *clause{nullptr};
     std::multimap<OmpClause, const parser::OmpClause *> clauseInfo;
@@ -151,10 +152,13 @@ private:
   // collected information for END directive
   void ResetPartialContext(const parser::CharBlock &source) {
     CHECK(!ompContext_.empty());
+    GetContext().requiredClauses.IterateOverMembers(
+        [this](OmpClause c) { CheckRequired(c); });
     SetContextDirectiveSource(source);
     GetContext().allowedClauses = {};
     GetContext().allowedOnceClauses = {};
     GetContext().allowedExclusiveClauses = {};
+    GetContext().requiredClauses = {};
     GetContext().clauseInfo = {};
   }
   void SetContextDirectiveSource(const parser::CharBlock &directive) {
@@ -175,6 +179,9 @@ private:
   }
   void SetContextAllowedExclusive(const OmpClauseSet &allowedExclusive) {
     GetContext().allowedExclusiveClauses = allowedExclusive;
+  }
+  void SetContextRequired(const OmpClauseSet &required) {
+    GetContext().requiredClauses = required;
   }
   void SetContextClauseInfo(OmpClause type) {
     GetContext().clauseInfo.emplace(type, GetContext().clause);
@@ -199,6 +206,7 @@ private:
   bool HasInvalidWorksharingNesting(
       const parser::CharBlock &, const OmpDirectiveSet &);
   void CheckAllowed(OmpClause);
+  void CheckRequired(OmpClause);
   std::string ContextDirectiveAsFortran();
   void SayNotMatching(const parser::CharBlock &, const parser::CharBlock &);
   template<typename A, typename B, typename C>
