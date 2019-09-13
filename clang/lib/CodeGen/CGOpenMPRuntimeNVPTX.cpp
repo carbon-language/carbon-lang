@@ -291,10 +291,11 @@ static RecordDecl *buildRecordForGlobalizedVars(
                                      static_cast<CharUnits::QuantityType>(
                                          GlobalMemoryAlignment)));
       Field->addAttr(AlignedAttr::CreateImplicit(
-          C, AlignedAttr::GNU_aligned, /*IsAlignmentExpr=*/true,
+          C, /*IsAlignmentExpr=*/true,
           IntegerLiteral::Create(C, Align,
                                  C.getIntTypeForBitwidth(32, /*Signed=*/0),
-                                 SourceLocation())));
+                                 SourceLocation()),
+          {}, AttributeCommonInfo::AS_GNU, AlignedAttr::GNU_aligned));
     }
     GlobalizedRD->addDecl(Field);
     MappedDeclsFields.try_emplace(VD, Field);
