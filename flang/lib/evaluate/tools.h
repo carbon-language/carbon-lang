@@ -245,9 +245,43 @@ template<typename A> std::optional<NamedEntity> ExtractNamedEntity(const A &x) {
             [](Component &&component) -> std::optional<NamedEntity> {
               return NamedEntity{std::move(component)};
             },
+            [](CoarrayRef &&co) -> std::optional<NamedEntity> {
+              return co.GetBase();
+            },
             [](auto &&) { return std::optional<NamedEntity>{}; },
         },
         std::move(dataRef->u));
+  } else {
+    return std::nullopt;
+  }
+}
+
+struct ExtractCoindexedObjectHelper {
+  template<typename A> std::optional<CoarrayRef> operator()(const A &) const {
+    return std::nullopt;
+  }
+  std::optional<CoarrayRef> operator()(const CoarrayRef &x) const { return x; }
+  std::optional<CoarrayRef> operator()(const DataRef &dataRef) const {
+    return std::visit(*this, dataRef.u);
+  }
+  std::optional<CoarrayRef> operator()(const NamedEntity &named) const {
+    if (const Component * component{named.UnwrapComponent()}) {
+      return (*this)(*component);
+    } else {
+      return std::nullopt;
+    }
+  }
+  std::optional<CoarrayRef> operator()(const Component &component) const {
+    return (*this)(component.base());
+  }
+  std::optional<CoarrayRef> operator()(const ArrayRef &arrayRef) const {
+    return (*this)(arrayRef.base());
+  }
+};
+
+template<typename A> std::optional<CoarrayRef> ExtractCoarrayRef(const A &x) {
+  if (auto dataRef{ExtractDataRef(x)}) {
+    return ExtractCoindexedObjectHelper{}(*dataRef);
   } else {
     return std::nullopt;
   }

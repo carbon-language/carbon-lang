@@ -27,8 +27,8 @@ subroutine s01(elem, subr)
     end subroutine
   end interface
   call subr(cos) ! not an error
-  !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
-  call subr(elem)
+  !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+  call subr(elem) ! C1533
 end subroutine
 
 module m01
@@ -47,14 +47,14 @@ module m01
   end function
   subroutine test
     call callme(cos) ! not an error
-    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
-    call callme(elem01)
-    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
-    call callme(elem02)
-    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
-    call callme(elem03)
-    !ERROR: cannot pass non-intrinsic ELEMENTAL procedure as argument
-    call callme(elem04)
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    call callme(elem01) ! C1533
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    call callme(elem02) ! C1533
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    call callme(elem03) ! C1533
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    call callme(elem04) ! C1533
    contains
     elemental real function elem04(x)
       real, value :: x
@@ -63,22 +63,6 @@ module m01
 end module
 
 module m02
-  interface
-    subroutine altreturn(*)
-    end subroutine
-  end interface
- contains
-  subroutine test
-1   continue
-   contains
-    subroutine internal
-      !ERROR: alternate return label must be in the inclusive scope
-      call altreturn(*1)
-    end subroutine
-  end subroutine
-end module
-
-module m03
   type :: t
     integer, pointer :: ptr
   end type
@@ -88,7 +72,7 @@ module m03
     type(t), intent(in) :: x
   end subroutine
   subroutine test
-    !ERROR: coindexed argument cannot have a POINTER ultimate component
-    call callee(coarray[1])
+    !ERROR: Coindexed object 'coarray' with POINTER ultimate component 'ptr' cannot be passed as argument.
+    call callee(coarray[1]) ! C1537
   end subroutine
 end module

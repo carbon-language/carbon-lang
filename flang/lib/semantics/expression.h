@@ -313,7 +313,6 @@ private:
   std::optional<ProcedureDesignator> AnalyzeProcedureComponentRef(
       const parser::ProcComponentRef &);
   std::optional<ActualArgument> AnalyzeActualArgument(const parser::Expr &);
-  std::optional<ActualArgument> AnalyzeActualArgument(const parser::Variable &);
 
   struct CalleeAndArguments {
     ProcedureDesignator procedureDesignator;
@@ -375,6 +374,8 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
     SemanticsContext &, common::TypeCategory,
     const std::optional<parser::KindSelector> &);
 
+void AnalyzeCallStmt(SemanticsContext &, const parser::CallStmt &);
+
 // Semantic analysis of all expressions in a parse tree, which becomes
 // decorated with typed representations for top-level expressions.
 class ExprChecker {
@@ -391,6 +392,10 @@ public:
   }
   bool Pre(const parser::Variable &x) {
     AnalyzeExpr(context_, x);
+    return false;
+  }
+  bool Pre(const parser::CallStmt &x) {
+    AnalyzeCallStmt(context_, x);
     return false;
   }
 
@@ -418,18 +423,5 @@ public:
 private:
   SemanticsContext &context_;
 };
-
-// Semantic analysis of all CALL statements in a parse tree.
-// (Function references are processed as primary expressions.)
-class CallChecker {
-public:
-  explicit CallChecker(SemanticsContext &);
-  void Enter(const parser::CallStmt &);
-  void Leave(const parser::CallStmt &);
-
-private:
-  evaluate::ExpressionAnalyzer analyzer_;
-};
-
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

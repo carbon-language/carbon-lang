@@ -59,9 +59,14 @@ contains
   end function
   function f5(x)
     real :: x
-    procedure(acos), pointer :: f5
-    f5 => acos
-    ! OK call to f5 pointer (acos)
+    interface
+      real function rfunc(x)
+        real, intent(in) :: x
+      end function
+    end interface
+    procedure(rfunc), pointer :: f5
+    f5 => rfunc
+    ! OK call to f5 pointer
     x = acos(f5(x+1))
     !ERROR: Typeless item not allowed for 'x=' argument
     x = acos(f5)

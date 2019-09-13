@@ -103,20 +103,32 @@ int ProcedureDesignator::Rank() const {
       }
     }
   }
-  common::die("ProcedureDesignator::Rank(): no case");
+  DIE("ProcedureDesignator::Rank(): no case");
   return 0;
 }
 
-bool ProcedureDesignator::IsElemental() const {
+const semantics::Symbol *ProcedureDesignator::GetInterfaceSymbol() const {
   if (const Symbol * symbol{GetSymbol()}) {
-    return symbol->attrs().test(semantics::Attr::ELEMENTAL);
+    if (const auto *details{
+            symbol->detailsIf<semantics::ProcEntityDetails>()}) {
+      return details->interface().symbol();
+    }
   }
-  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+  return nullptr;
+}
+
+bool ProcedureDesignator::IsElemental() const {
+  if (const Symbol * interface{GetInterfaceSymbol()}) {
+    return interface->attrs().test(semantics::Attr::ELEMENTAL);
+  } else if (const Symbol * symbol{GetSymbol()}) {
+    return symbol->attrs().test(semantics::Attr::ELEMENTAL);
+  } else if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
     return intrinsic->characteristics.value().attrs.test(
         characteristics::Procedure::Attr::Elemental);
+  } else {
+    DIE("ProcedureDesignator::IsElemental(): no case");
   }
-  common::die("ProcedureDesignator::IsElemental(): no case");
-  return 0;
+  return false;
 }
 
 const SpecificIntrinsic *ProcedureDesignator::GetSpecificIntrinsic() const {

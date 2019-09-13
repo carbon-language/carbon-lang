@@ -962,6 +962,13 @@ UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
       [](const Symbol *component) { return DEREF(component).Corank() > 0; });
 }
 
+UltimateComponentIterator::const_iterator FindPointerUltimateComponent(
+    const DerivedTypeSpec &derived) {
+  UltimateComponentIterator ultimates{derived};
+  return std::find_if(ultimates.begin(), ultimates.end(),
+      [](const Symbol *component) { return IsPointer(DEREF(component)); });
+}
+
 PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
     const DerivedTypeSpec &derived) {
   PotentialComponentIterator potentials{derived};
