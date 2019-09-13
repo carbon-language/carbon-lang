@@ -2285,6 +2285,13 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
     }
+    case Intrinsic::amdgcn_else: {
+      unsigned WaveSize = getSizeInBits(MI.getOperand(1).getReg(), MRI, *TRI);
+      OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1);
+      OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, WaveSize);
+      OpdsMapping[3] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, WaveSize);
+      break;
+    }
     }
     break;
   }
