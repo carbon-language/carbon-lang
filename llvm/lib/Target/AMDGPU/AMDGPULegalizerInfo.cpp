@@ -416,7 +416,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     .scalarize(0);
 
   getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
-    .legalFor({{S32, S32}, {S64, S32}})
+    .legalFor({{S32, S32}, {S64, S32}, {S16, S32}})
     .lowerFor({{S32, S64}})
     .customFor({{S64, S64}})
     .scalarize(0);
