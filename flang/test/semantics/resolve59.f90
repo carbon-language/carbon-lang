@@ -76,6 +76,17 @@ end module
 module m_with_result
 ! With RESULT, it refers to the function (recursive calls possible)
 contains
+  ! Sanity test C1560
+  !ERROR: 'f00' is already the function name and cannot appear in RESULT
+  function f00() result(f00)
+  end function
+  !ERROR: 'f0' is already the function name and cannot appear in RESULT
+  function f0(i) result(f0)
+    integer :: i
+    complex(4) :: f0
+    f0 = f0(i+1)*2.
+  end function
+
   ! testing with data object results
   function f1() result(r)
     real :: r

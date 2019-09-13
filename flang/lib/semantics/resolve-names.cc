@@ -2502,6 +2502,13 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   funcResultDetails.set_funcResult(true);
   funcInfo_.resultSymbol =
       &MakeSymbol(*funcResultName, std::move(funcResultDetails));
+  if (funcInfo_.resultName && funcInfo_.resultName->source == name.source) {
+    // C1560. TODO also enforce on entry names when entry implemented
+    Say(funcInfo_.resultName->source,
+        "'%s' is already the function name and cannot appear in RESULT"_err_en_US,
+        name.source);
+    context().SetError(*funcInfo_.resultSymbol);
+  }
   details.set_result(*funcInfo_.resultSymbol);
   name.symbol = currScope().symbol();  // must not be function result symbol
 }
