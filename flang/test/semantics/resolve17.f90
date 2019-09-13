@@ -198,8 +198,23 @@ contains
     real :: x
   end
 end module
+module m9c
+  interface g
+    module procedure g
+  end interface
+contains
+  subroutine g(x)
+    real :: x
+  end
+end module
 ! Merge use-associated generics that have the same symbol (s1)
 subroutine s9
   use m9a
   use m9b
+end
+! Merge use-associate generics each with specific of same name
+subroutine s9c
+  use m9a
+  !ERROR: Generic interface 'g' has ambiguous specific procedures from modules 'm9a' and 'm9c'
+  use m9c
 end

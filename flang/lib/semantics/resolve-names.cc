@@ -2023,12 +2023,29 @@ void ModuleVisitor::AddUse(
         useSymbol.has<GenericDetails>()) {
       // use-associating generics with the same names: merge them into a
       // new generic in this scope
-      auto genericDetails{ultimate.get<GenericDetails>()};
-      genericDetails.set_useDetails(*useDetails);
-      genericDetails.CopyFrom(useSymbol.get<GenericDetails>());
+      auto generic1{ultimate.get<GenericDetails>()};
+      generic1.set_useDetails(*useDetails);
+      // useSymbol has specific g and so does generic1
+      auto &generic2{useSymbol.get<GenericDetails>()};
+      if (generic1.specific() && generic2.specific() &&
+          generic1.specific() != generic2.specific()) {
+        Say(location,
+            "Generic interface '%s' has ambiguous specific procedures"
+            " from modules '%s' and '%s'"_err_en_US,
+            localSymbol.name(), useDetails->module().name(),
+            useSymbol.owner().GetName().value());
+      } else if (generic1.derivedType() && generic2.derivedType() &&
+          generic1.derivedType() != generic2.derivedType()) {
+        Say(location,
+            "Generic interface '%s' has ambiguous derived types"
+            " from modules '%s' and '%s'"_err_en_US,
+            localSymbol.name(), useDetails->module().name(),
+            useSymbol.owner().GetName().value());
+      } else {
+        generic1.CopyFrom(generic2);
+      }
       EraseSymbol(localSymbol);
-      MakeSymbol(
-          localSymbol.name(), ultimate.attrs(), std::move(genericDetails));
+      MakeSymbol(localSymbol.name(), ultimate.attrs(), std::move(generic1));
     } else {
       ConvertToUseError(localSymbol, location, *useModuleScope_);
     }
