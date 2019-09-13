@@ -184,16 +184,6 @@ public:
     FEA_On
   };
 
-  enum class LaxVectorConversionKind {
-    /// Permit no implicit vector bitcasts.
-    None,
-    /// Permit vector bitcasts between integer vectors with different numbers
-    /// of elements but the same total bit-width.
-    Integer,
-    /// Permit vector bitcasts between all vectors with the same total
-    /// bit-width.
-    All,
-  };
 
 public:
   /// Set of enabled sanitizers.
