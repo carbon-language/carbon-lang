@@ -1501,7 +1501,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 if (symbol.attrs().test(
                         semantics::Attr::NON_RECURSIVE)) {  // 15.6.2.1(3)
                   if (auto *msg{Say(
-                          "NON_RECURSIVE procedure '%s' cannot call itself."_err_en_US,
+                          "NON_RECURSIVE procedure '%s' cannot call itself"_err_en_US,
                           n.source)}) {
                     msg->Attach(
                         symbol.name(), "definition of '%s'"_en_US, n.source);
@@ -1509,7 +1509,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 } else if (IsAssumedLengthCharacterFunction(
                                symbol)) {  // 15.6.2.1(3)
                   if (auto *msg{Say(
-                          "Assumed-length CHARACTER(*) function '%s' cannot call itself."_err_en_US,
+                          "Assumed-length CHARACTER(*) function '%s' cannot call itself"_err_en_US,
                           n.source)}) {
                     msg->Attach(
                         symbol.name(), "definition of '%s'"_en_US, n.source);
@@ -1569,7 +1569,7 @@ std::optional<ActualArgument> ExpressionAnalyzer::AnalyzeActualArgument(
       if (!std::holds_alternative<SpecificIntrinsic>(proc->u) &&
           proc->IsElemental()) {  // C1533
         Say(expr.source,
-            "Non-intrinsic ELEMENTAL procedure cannot be passed as argument."_err_en_US);
+            "Non-intrinsic ELEMENTAL procedure cannot be passed as argument"_err_en_US);
       }
     }
     if (auto coarrayRef{ExtractCoarrayRef(x)}) {
@@ -1578,7 +1578,7 @@ std::optional<ActualArgument> ExpressionAnalyzer::AnalyzeActualArgument(
         if (const semantics::DerivedTypeSpec * derived{type->AsDerived()}) {
           if (auto ptr{semantics::FindPointerUltimateComponent(*derived)}) {
             if (auto *msg{Say(expr.source,
-                    "Coindexed object '%s' with POINTER ultimate component '%s' cannot be passed as argument."_err_en_US,
+                    "Coindexed object '%s' with POINTER ultimate component '%s' cannot be passed as argument"_err_en_US,
                     coarray.name(), (*ptr)->name())}) {
               msg->Attach((*ptr)->name(),
                   "Declaration of POINTER '%s' component of %s"_en_US,
@@ -1672,7 +1672,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
       if (const semantics::Symbol * result{FindFunctionResult(*symbol)}) {
         if (semantics::IsProcedurePointer(*result)) {
           Say("A function reference that returns a procedure "
-              "pointer may not be parenthesized."_err_en_US);  // C1003
+              "pointer may not be parenthesized"_err_en_US);  // C1003
         }
       }
     }

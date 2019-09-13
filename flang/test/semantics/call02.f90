@@ -27,7 +27,7 @@ subroutine s01(elem, subr)
     end subroutine
   end interface
   call subr(cos) ! not an error
-  !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+  !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
   call subr(elem) ! C1533
 end subroutine
 
@@ -47,13 +47,13 @@ module m01
   end function
   subroutine test
     call callme(cos) ! not an error
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
     call callme(elem01) ! C1533
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
     call callme(elem02) ! C1533
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
     call callme(elem03) ! C1533
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument.
+    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
     call callme(elem04) ! C1533
    contains
     elemental real function elem04(x)
@@ -72,7 +72,7 @@ module m02
     type(t), intent(in) :: x
   end subroutine
   subroutine test
-    !ERROR: Coindexed object 'coarray' with POINTER ultimate component 'ptr' cannot be passed as argument.
+    !ERROR: Coindexed object 'coarray' with POINTER ultimate component 'ptr' cannot be passed as argument
     call callee(coarray[1]) ! C1537
   end subroutine
 end module

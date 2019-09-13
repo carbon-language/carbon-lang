@@ -39,10 +39,10 @@ module m
 
   subroutine test
     real :: a(pure(1)) ! ok
-    !ERROR: A function referenced in a specification expression must be PURE.
+    !ERROR: A function referenced in a specification expression must be PURE
     real :: b(impure(1)) ! 10.1.11(4)
     forall (j=1:1)
-      !ERROR: A procedure referenced in a FORALL body must be PURE.
+      !ERROR: A procedure referenced in a FORALL body must be PURE
       a(j) = impure(j) ! C1037
     end forall
     !ERROR: concurrent-header mask expression cannot reference an impure procedure

@@ -123,7 +123,7 @@ module m
     end block
   end subroutine
   pure subroutine s07(p) ! C1590
-    !ERROR: A dummy procedure of a PURE subprogram must be PURE.
+    !ERROR: A dummy procedure of a PURE subprogram must be PURE
     procedure(impure) :: p
   end subroutine
   ! C1591 is tested in call11.f90.
@@ -131,10 +131,10 @@ module m
    contains
     pure subroutine pure ! ok
     end subroutine
-    !ERROR: An internal subprogram of a PURE subprogram must also be PURE.
+    !ERROR: An internal subprogram of a PURE subprogram must also be PURE
     subroutine impure1
     end subroutine
-    !ERROR: An internal subprogram of a PURE subprogram must also be PURE.
+    !ERROR: An internal subprogram of a PURE subprogram must also be PURE
     impure subroutine impure2
     end subroutine
   end subroutine
@@ -144,23 +144,23 @@ module m
   end function
   pure subroutine s09 ! C1593
     real :: x
-    !ERROR: A VOLATILE variable may not appear in a PURE subprogram.
+    !ERROR: A VOLATILE variable may not appear in a PURE subprogram
     x = volatile
-    !ERROR: A VOLATILE variable may not appear in a PURE subprogram.
+    !ERROR: A VOLATILE variable may not appear in a PURE subprogram
     x = volptr
   end subroutine
   ! C1594 is tested in call12.f90.
   pure subroutine s10 ! C1595
     integer :: n
-    !ERROR: Any procedure referenced in a PURE subprogram must also be PURE.
+    !ERROR: Any procedure referenced in a PURE subprogram must also be PURE
     n = notpure(1)
   end subroutine
   pure subroutine s11(to) ! C1596
     type(polyAlloc) :: auto, to
-    !ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram.
+    !ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram
     to = auto
     ! Implicit deallocation at the end of the subroutine:
-    !ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram.
+    !ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram
   end subroutine
   pure subroutine s12
     character(20) :: buff
@@ -195,7 +195,7 @@ module m
     write(*, *) ! C1598
   end subroutine
   pure subroutine s13
-    !ERROR: An image control statement is not allowed in a PURE subprogram.
+    !ERROR: An image control statement is not allowed in a PURE subprogram
     sync all ! C1599
     ! TODO others from 11.6.1 (many)
   end subroutine

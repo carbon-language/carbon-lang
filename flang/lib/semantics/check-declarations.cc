@@ -30,24 +30,24 @@ static void CheckSymbol(SemanticsContext &context, const Symbol &symbol) {
   if (IsAssumedLengthCharacterFunction(symbol)) {  // C723
     if (symbol.attrs().test(Attr::RECURSIVE)) {
       context.Say(
-          "An assumed-length CHARACTER(*) function cannot be RECURSIVE."_err_en_US);
+          "An assumed-length CHARACTER(*) function cannot be RECURSIVE"_err_en_US);
     }
     if (symbol.Rank() > 0) {
       context.Say(
-          "An assumed-length CHARACTER(*) function cannot return an array."_err_en_US);
+          "An assumed-length CHARACTER(*) function cannot return an array"_err_en_US);
     }
     if (symbol.attrs().test(Attr::PURE)) {
       context.Say(
-          "An assumed-length CHARACTER(*) function cannot be PURE."_err_en_US);
+          "An assumed-length CHARACTER(*) function cannot be PURE"_err_en_US);
     }
     if (symbol.attrs().test(Attr::ELEMENTAL)) {
       context.Say(
-          "An assumed-length CHARACTER(*) function cannot be ELEMENTAL."_err_en_US);
+          "An assumed-length CHARACTER(*) function cannot be ELEMENTAL"_err_en_US);
     }
     if (const Symbol * result{FindFunctionResult(symbol)}) {
       if (result->attrs().test(Attr::POINTER)) {
         context.Say(
-            "An assumed-length CHARACTER(*) function cannot return a POINTER."_err_en_US);
+            "An assumed-length CHARACTER(*) function cannot return a POINTER"_err_en_US);
       }
     }
   }

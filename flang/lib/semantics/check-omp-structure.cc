@@ -84,7 +84,7 @@ bool OmpStructureChecker::HasInvalidWorksharingNesting(
     context_.Say(source,
         "A worksharing region may not be closely nested inside a "
         "worksharing, explicit task, taskloop, critical, ordered, atomic, or "
-        "master region."_err_en_US);
+        "master region"_err_en_US);
     return true;
   }
   return false;

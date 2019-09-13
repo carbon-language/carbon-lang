@@ -26,7 +26,7 @@ module m2
   end type
   interface
     subroutine s
-      !ERROR: Module 'm2' cannot USE itself.
+      !ERROR: Module 'm2' cannot USE itself
       use m2, only: t
     end subroutine
   end interface

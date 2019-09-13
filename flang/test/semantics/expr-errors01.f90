@@ -29,12 +29,12 @@ module m1
     type(dt) :: dtinst
     mypp => boring ! legal
     mypp => (boring) ! legal, not a function reference
-    !ERROR: A function reference that returns a procedure pointer may not be parenthesized.
+    !ERROR: A function reference that returns a procedure pointer may not be parenthesized
     mypp => (frpp()) ! C1003
     mypp => frpp() ! legal, not parenthesized
     dtinst%pp => frpp
     mypp => dtinst%pp() ! legal
-    !ERROR: A function reference that returns a procedure pointer may not be parenthesized.
+    !ERROR: A function reference that returns a procedure pointer may not be parenthesized
     mypp => (dtinst%pp())
   end subroutine tests
 end module m1

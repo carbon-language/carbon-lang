@@ -2100,7 +2100,7 @@ Scope *ModuleVisitor::FindModule(const parser::Name &name, Scope *ancestor) {
     return nullptr;
   }
   if (DoesScopeContain(scope, currScope())) {  // 14.2.2(1)
-    Say(name, "Module '%s' cannot USE itself."_err_en_US);
+    Say(name, "Module '%s' cannot USE itself"_err_en_US);
   }
   Resolve(name, scope->symbol());
   return scope;

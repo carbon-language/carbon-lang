@@ -61,9 +61,9 @@ module m
     call s04(cov[1]) ! ok
     !ERROR: Coindexed ALLOCATABLE effective argument must be associated with INTENT(IN) dummy argument
     call s01(cov[1])
-    !ERROR: Effective argument associated with INTENT(OUT) dummy is not definable.
+    !ERROR: Effective argument associated with INTENT(OUT) dummy is not definable
     call s05(x)
-    !ERROR: Effective argument associated with INTENT(IN OUT) dummy is not definable.
+    !ERROR: Effective argument associated with INTENT(IN OUT) dummy is not definable
     call s06(x)
   end subroutine
 end module
