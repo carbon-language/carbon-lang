@@ -397,6 +397,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       .scalarize(0)
       .clampScalar(0, S32, S64);
 
+  // Whether this is legal depends on the floating point mode for the function.
+  auto &FMad = getActionDefinitionsBuilder(G_FMAD);
+  if (ST.hasMadF16())
+    FMad.customFor({S32, S16});
+  else
+    FMad.customFor({S32});
+  FMad.scalarize(0)
+      .lower();
+
   getActionDefinitionsBuilder({G_SEXT, G_ZEXT, G_ANYEXT})
     .legalFor({{S64, S32}, {S32, S16}, {S64, S16},
                {S32, S1}, {S64, S1}, {S16, S1},
@@ -1050,6 +1059,8 @@ bool AMDGPULegalizerInfo::legalizeCustom(MachineInstr &MI,
     return legalizeGlobalValue(MI, MRI, B);
   case TargetOpcode::G_LOAD:
     return legalizeLoad(MI, MRI, B, Observer);
+  case TargetOpcode::G_FMAD:
+    return legalizeFMad(MI, MRI, B);
   default:
     return false;
   }
@@ -1544,6 +1555,27 @@ bool AMDGPULegalizerInfo::legalizeLoad(
   MI.getOperand(1).setReg(Cast.getReg(0));
   Observer.changedInstr(MI);
   return true;
+}
+
+bool AMDGPULegalizerInfo::legalizeFMad(
+  MachineInstr &MI, MachineRegisterInfo &MRI,
+  MachineIRBuilder &B) const {
+  LLT Ty = MRI.getType(MI.getOperand(0).getReg());
+  assert(Ty.isScalar());
+
+  // TODO: Always legal with future ftz flag.
+  if (Ty == LLT::scalar(32) && !ST.hasFP32Denormals())
+    return true;
+  if (Ty == LLT::scalar(16) && !ST.hasFP16Denormals())
+    return true;
+
+  MachineFunction &MF = B.getMF();
+
+  MachineIRBuilder HelperBuilder(MI);
+  GISelObserverWrapper DummyObserver;
+  LegalizerHelper Helper(MF, DummyObserver, HelperBuilder);
+  HelperBuilder.setMBB(*MI.getParent());
+  return Helper.lowerFMad(MI) == LegalizerHelper::Legalized;
 }
 
 // Return the use branch instruction, otherwise null if the usage is invalid.
