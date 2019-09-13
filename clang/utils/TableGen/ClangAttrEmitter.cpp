@@ -2341,7 +2341,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
       OS << ", SourceRange Range, AttributeCommonInfo::Syntax Syntax";
       if (!ElideSpelling)
         OS << ", " << R.getName()
-           << "Attr::Spelling Spelling = "
+           << "Attr::Spelling S = "
               "static_cast<Spelling>(SpellingNotCalculated)";
       OS << ") {\n";
       OS << "    AttributeCommonInfo I(Range, ";
@@ -2353,7 +2353,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
 
       OS << ", Syntax";
       if (!ElideSpelling)
-        OS << ", Spelling";
+        OS << ", S";
       OS << ");\n";
       OS << "    return Create";
       if (Implicit)
