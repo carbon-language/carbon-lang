@@ -175,3 +175,31 @@ subroutine s8
   !ERROR: Reference to 'g' is ambiguous
   g = 1
 end
+
+module m9a
+  interface g
+    module procedure s1
+    module procedure g
+  end interface
+contains
+  subroutine g()
+  end
+  subroutine s1(x)
+    integer :: x
+  end
+end module
+module m9b
+  use m9a
+  interface g
+    module procedure s2
+  end interface
+contains
+  subroutine s2(x)
+    real :: x
+  end
+end module
+! Merge use-associated generics that have the same symbol (s1)
+subroutine s9
+  use m9a
+  use m9b
+end

@@ -179,15 +179,19 @@ Symbol *GenericDetails::CheckSpecific() {
 
 void GenericDetails::CopyFrom(const GenericDetails &from) {
   if (from.specific_) {
-    CHECK(!specific_);
+    CHECK(!specific_ || specific_ == from.specific_);
     specific_ = from.specific_;
   }
   if (from.derivedType_) {
-    CHECK(!derivedType_);
+    CHECK(!derivedType_ || derivedType_ == from.derivedType_);
     derivedType_ = from.derivedType_;
   }
-  auto &procs{from.specificProcs_};
-  specificProcs_.insert(specificProcs_.end(), procs.begin(), procs.end());
+  for (const Symbol *symbol : from.specificProcs_) {
+    auto it{std::find(specificProcs_.begin(), specificProcs_.end(), symbol)};
+    if (it == specificProcs_.end()) {
+      specificProcs_.push_back(symbol);
+    }
+  }
 }
 
 // The name of the kind of details for this symbol.
