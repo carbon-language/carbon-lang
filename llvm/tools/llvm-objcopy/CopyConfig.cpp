@@ -491,14 +491,12 @@ Expected<DriverConfig> parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
                            .Default(FileFormat::Unspecified);
   if (Config.InputFormat == FileFormat::Binary) {
     auto BinaryArch = InputArgs.getLastArgValue(OBJCOPY_binary_architecture);
-    if (BinaryArch.empty())
-      return createStringError(
-          errc::invalid_argument,
-          "specified binary input without specifiying an architecture");
-    Expected<const MachineInfo &> MI = getMachineInfo(BinaryArch);
-    if (!MI)
-      return MI.takeError();
-    Config.BinaryArch = *MI;
+    if (!BinaryArch.empty()) {
+      Expected<const MachineInfo &> MI = getMachineInfo(BinaryArch);
+      if (!MI)
+        return MI.takeError();
+      Config.BinaryArch = *MI;
+    }
   }
 
   if (opt::Arg *A = InputArgs.getLastArg(OBJCOPY_new_symbol_visibility)) {
@@ -520,12 +518,17 @@ Expected<DriverConfig> parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
                             .Case("binary", FileFormat::Binary)
                             .Case("ihex", FileFormat::IHex)
                             .Default(FileFormat::Unspecified);
-  if (Config.OutputFormat == FileFormat::Unspecified && !OutputFormat.empty()) {
-    Expected<TargetInfo> Target = getOutputTargetInfoByTargetName(OutputFormat);
-    if (!Target)
-      return Target.takeError();
-    Config.OutputFormat = Target->Format;
-    Config.OutputArch = Target->Machine;
+  if (Config.OutputFormat == FileFormat::Unspecified) {
+    if (OutputFormat.empty()) {
+      Config.OutputFormat = Config.InputFormat;
+    } else {
+      Expected<TargetInfo> Target =
+          getOutputTargetInfoByTargetName(OutputFormat);
+      if (!Target)
+        return Target.takeError();
+      Config.OutputFormat = Target->Format;
+      Config.OutputArch = Target->Machine;
+    }
   }
 
   if (auto Arg = InputArgs.getLastArg(OBJCOPY_compress_debug_sections,
