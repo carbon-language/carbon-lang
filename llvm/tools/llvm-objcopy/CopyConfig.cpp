@@ -410,6 +410,16 @@ template <class T> static ErrorOr<T> getAsInteger(StringRef Val) {
   return Result;
 }
 
+static void printHelp(const opt::OptTable &OptTable, raw_ostream &OS,
+                      StringRef ToolName) {
+  OptTable.PrintHelp(OS, (ToolName + " input [output]").str().c_str(),
+                     (ToolName + " tool").str().c_str());
+  // TODO: Replace this with libOption call once it adds extrahelp support.
+  // The CommandLine library has a cl::extrahelp class to support this,
+  // but libOption does not have that yet.
+  OS << "\nPass @FILE as argument to read options from FILE.\n";
+}
+
 // ParseObjcopyOptions returns the config and sets the input arguments. If a
 // help flag is set then ParseObjcopyOptions will print the help messege and
 // exit.
@@ -421,12 +431,12 @@ Expected<DriverConfig> parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
       T.ParseArgs(ArgsArr, MissingArgumentIndex, MissingArgumentCount);
 
   if (InputArgs.size() == 0) {
-    T.PrintHelp(errs(), "llvm-objcopy input [output]", "objcopy tool");
+    printHelp(T, errs(), "llvm-objcopy");
     exit(1);
   }
 
   if (InputArgs.hasArg(OBJCOPY_help)) {
-    T.PrintHelp(outs(), "llvm-objcopy input [output]", "objcopy tool");
+    printHelp(T, outs(), "llvm-objcopy");
     exit(0);
   }
 
@@ -790,12 +800,12 @@ parseStripOptions(ArrayRef<const char *> ArgsArr,
       T.ParseArgs(ArgsArr, MissingArgumentIndex, MissingArgumentCount);
 
   if (InputArgs.size() == 0) {
-    T.PrintHelp(errs(), "llvm-strip [options] file...", "strip tool");
+    printHelp(T, errs(), "llvm-strip");
     exit(1);
   }
 
   if (InputArgs.hasArg(STRIP_help)) {
-    T.PrintHelp(outs(), "llvm-strip [options] file...", "strip tool");
+    printHelp(T, outs(), "llvm-strip");
     exit(0);
   }
 
