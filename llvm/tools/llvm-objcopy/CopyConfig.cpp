@@ -258,29 +258,6 @@ static Expected<NewSymbolInfo> parseNewSymbolInfo(StringRef FlagValue,
   return SI;
 }
 
-static const StringMap<MachineInfo> ArchMap{
-    // Name, {EMachine, 64bit, LittleEndian}
-    {"aarch64", {ELF::EM_AARCH64, true, true}},
-    {"arm", {ELF::EM_ARM, false, true}},
-    {"i386", {ELF::EM_386, false, true}},
-    {"i386:x86-64", {ELF::EM_X86_64, true, true}},
-    {"mips", {ELF::EM_MIPS, false, false}},
-    {"powerpc:common64", {ELF::EM_PPC64, true, true}},
-    {"riscv:rv32", {ELF::EM_RISCV, false, true}},
-    {"riscv:rv64", {ELF::EM_RISCV, true, true}},
-    {"sparc", {ELF::EM_SPARC, false, false}},
-    {"sparcel", {ELF::EM_SPARC, false, true}},
-    {"x86-64", {ELF::EM_X86_64, true, true}},
-};
-
-static Expected<const MachineInfo &> getMachineInfo(StringRef Arch) {
-  auto Iter = ArchMap.find(Arch);
-  if (Iter == std::end(ArchMap))
-    return createStringError(errc::invalid_argument,
-                             "invalid architecture: '%s'", Arch.str().c_str());
-  return Iter->getValue();
-}
-
 struct TargetInfo {
   FileFormat Format;
   MachineInfo Machine;
@@ -489,15 +466,6 @@ Expected<DriverConfig> parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
                            .Case("binary", FileFormat::Binary)
                            .Case("ihex", FileFormat::IHex)
                            .Default(FileFormat::Unspecified);
-  if (Config.InputFormat == FileFormat::Binary) {
-    auto BinaryArch = InputArgs.getLastArgValue(OBJCOPY_binary_architecture);
-    if (!BinaryArch.empty()) {
-      Expected<const MachineInfo &> MI = getMachineInfo(BinaryArch);
-      if (!MI)
-        return MI.takeError();
-      Config.BinaryArch = *MI;
-    }
-  }
 
   if (opt::Arg *A = InputArgs.getLastArg(OBJCOPY_new_symbol_visibility)) {
     const uint8_t Invalid = 0xff;
