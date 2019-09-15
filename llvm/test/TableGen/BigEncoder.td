@@ -45,17 +45,8 @@ def biz : Instruction {
     field bits<16> SoftFail = 0;
     }
 
-def baz : Instruction {
-    let InOperandList = (ins Myi32:$factor);
-    field bits<65> Inst;
-    bits<32> factor;
-    let Inst{7-0} = 0xDD;
-    let Inst{15-8} = factor{11-4}; // offset by 4 + custom decode
-    let AsmString = "baz  $factor";
-    field bits<16> SoftFail = 0;
-    }
-
 }
+
 // CHECK-LABEL: case ::biz: {
 // CHECK: const APInt [[x:M[0-9]+]] = APInt::getBitsSet(65, 3, 7);
 // CHECK-NEXT: Value |= (op & [[x]]) << 9;
@@ -66,4 +57,10 @@ def baz : Instruction {
 // CHECK: const APInt [[x:M[0-9]+]] = APInt::getBitsSet(65, 0, 7);
 // CHECK-NEXT: op &= [[x]];
 // CHECK-NEXT: op <<= 8;
+// CHECK-NEXT: Value |= op;
+
+// CHECK-LABEL: case ::bar: {
+// CHECK: const APInt [[x:M[0-9]+]] = APInt::getBitsSet(65, 3, 11);
+// CHECK-NEXT: op &= [[x]];
+// CHECK-NEXT: op <<= 5;
 // CHECK-NEXT: Value |= op;
