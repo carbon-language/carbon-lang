@@ -728,6 +728,23 @@ define i1 @test37(i32 %x, i32 %y, i32 %z) {
   ret i1 %c
 }
 
+define i1 @test37_extra_uses(i32 %x, i32 %y, i32 %z) {
+; CHECK-LABEL: @test37_extra_uses(
+; CHECK-NEXT:    [[LHS:%.*]] = sub nsw i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    call void @foo(i32 [[LHS]])
+; CHECK-NEXT:    [[RHS:%.*]] = sub nsw i32 [[X]], [[Z:%.*]]
+; CHECK-NEXT:    call void @foo(i32 [[RHS]])
+; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[LHS]], [[RHS]]
+; CHECK-NEXT:    ret i1 [[C]]
+;
+  %lhs = sub nsw i32 %x, %y
+  call void @foo(i32 %lhs)
+  %rhs = sub nsw i32 %x, %z
+  call void @foo(i32 %rhs)
+  %c = icmp sgt i32 %lhs, %rhs
+  ret i1 %c
+}
+
 ; X - Y > X - Z -> Z > Y if there is no overflow.
 define i1 @test38(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @test38(
@@ -736,6 +753,23 @@ define i1 @test38(i32 %x, i32 %y, i32 %z) {
 ;
   %lhs = sub nuw i32 %x, %y
   %rhs = sub nuw i32 %x, %z
+  %c = icmp ugt i32 %lhs, %rhs
+  ret i1 %c
+}
+
+define i1 @test38_extra_uses(i32 %x, i32 %y, i32 %z) {
+; CHECK-LABEL: @test38_extra_uses(
+; CHECK-NEXT:    [[LHS:%.*]] = sub nuw i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    call void @foo(i32 [[LHS]])
+; CHECK-NEXT:    [[RHS:%.*]] = sub nuw i32 [[X]], [[Z:%.*]]
+; CHECK-NEXT:    call void @foo(i32 [[RHS]])
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[LHS]], [[RHS]]
+; CHECK-NEXT:    ret i1 [[C]]
+;
+  %lhs = sub nuw i32 %x, %y
+  call void @foo(i32 %lhs)
+  %rhs = sub nuw i32 %x, %z
+  call void @foo(i32 %rhs)
   %c = icmp ugt i32 %lhs, %rhs
   ret i1 %c
 }
