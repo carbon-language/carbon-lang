@@ -3528,6 +3528,7 @@ void BoUpSLP::setInsertPointAfterBundle(TreeEntry *E) {
         break;
     }
   }
+  assert(LastInst && "Failed to find last instruction in bundle");
 
   // Set the insertion point after the last instruction in the bundle. Set the
   // debug location to Front.
