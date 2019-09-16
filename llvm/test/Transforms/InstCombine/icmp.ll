@@ -521,29 +521,6 @@ define i1 @test24_as1(i64 %i) {
   ret i1 %cmp
 }
 
-define i1 @test25(i32 %x, i32 %y, i32 %z) {
-; CHECK-LABEL: @test25(
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    ret i1 [[C]]
-;
-  %lhs = add nsw i32 %x, %z
-  %rhs = add nsw i32 %y, %z
-  %c = icmp sgt i32 %lhs, %rhs
-  ret i1 %c
-}
-
-; X + Z > Y + Z -> X > Y if there is no overflow.
-define i1 @test26(i32 %x, i32 %y, i32 %z) {
-; CHECK-LABEL: @test26(
-; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    ret i1 [[C]]
-;
-  %lhs = add nuw i32 %x, %z
-  %rhs = add nuw i32 %y, %z
-  %c = icmp ugt i32 %lhs, %rhs
-  ret i1 %c
-}
-
 ; X - Z > Y - Z -> X > Y if there is no overflow.
 define i1 @test27(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @test27(
@@ -602,47 +579,32 @@ define i1 @test28_extra_uses(i32 %x, i32 %y, i32 %z) {
   ret i1 %c
 }
 
-; X + Y > X -> Y > 0 if there is no overflow.
-define i1 @test29(i32 %x, i32 %y) {
-; CHECK-LABEL: @test29(
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[Y:%.*]], 0
-; CHECK-NEXT:    ret i1 [[C]]
+; PR36969 - https://bugs.llvm.org/show_bug.cgi?id=36969
+
+define i1 @ugt_sub(i32 %xsrc, i32 %y) {
+; CHECK-LABEL: @ugt_sub(
+; CHECK-NEXT:    [[X:%.*]] = udiv i32 [[XSRC:%.*]], 42
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i1 [[CMP]]
 ;
-  %lhs = add nsw i32 %x, %y
-  %c = icmp sgt i32 %lhs, %x
-  ret i1 %c
+  %x = udiv i32 %xsrc, 42 ; thwart complexity-based canonicalization
+  %sub = sub i32 %x, %y
+  %cmp = icmp ugt i32 %sub, %x
+  ret i1 %cmp
 }
 
-; X + Y > X -> Y > 0 if there is no overflow.
-define i1 @test30(i32 %x, i32 %y) {
-; CHECK-LABEL: @test30(
-; CHECK-NEXT:    [[C:%.*]] = icmp ne i32 [[Y:%.*]], 0
-; CHECK-NEXT:    ret i1 [[C]]
-;
-  %lhs = add nuw i32 %x, %y
-  %c = icmp ugt i32 %lhs, %x
-  ret i1 %c
-}
+; Swap operands and predicate. Try a vector type to verify that works too.
 
-; X > X + Y -> 0 > Y if there is no overflow.
-define i1 @test31(i32 %x, i32 %y) {
-; CHECK-LABEL: @test31(
-; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[Y:%.*]], 0
-; CHECK-NEXT:    ret i1 [[C]]
+define <2 x i1> @ult_sub(<2 x i8> %xsrc, <2 x i8> %y) {
+; CHECK-LABEL: @ult_sub(
+; CHECK-NEXT:    [[X:%.*]] = udiv <2 x i8> [[XSRC:%.*]], <i8 42, i8 -42>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i8> [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
-  %rhs = add nsw i32 %x, %y
-  %c = icmp sgt i32 %x, %rhs
-  ret i1 %c
-}
-
-; X > X + Y -> 0 > Y if there is no overflow.
-define i1 @test32(i32 %x, i32 %y) {
-; CHECK-LABEL: @test32(
-; CHECK-NEXT:    ret i1 false
-;
-  %rhs = add nuw i32 %x, %y
-  %c = icmp ugt i32 %x, %rhs
-  ret i1 %c
+  %x = udiv <2 x i8> %xsrc, <i8 42, i8 -42> ; thwart complexity-based canonicalization
+  %sub = sub <2 x i8> %x, %y
+  %cmp = icmp ult <2 x i8> %x, %sub
+  ret <2 x i1> %cmp
 }
 
 ; X - Y > X -> 0 > Y if there is no overflow.
@@ -686,34 +648,6 @@ define i1 @test36(i32 %x, i32 %y) {
   %rhs = sub nuw i32 %x, %y
   %c = icmp ugt i32 %x, %rhs
   ret i1 %c
-}
-
-; PR36969 - https://bugs.llvm.org/show_bug.cgi?id=36969
-
-define i1 @ugt_sub(i32 %xsrc, i32 %y) {
-; CHECK-LABEL: @ugt_sub(
-; CHECK-NEXT:    [[X:%.*]] = udiv i32 [[XSRC:%.*]], 42
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[X]], [[Y:%.*]]
-; CHECK-NEXT:    ret i1 [[CMP]]
-;
-  %x = udiv i32 %xsrc, 42 ; thwart complexity-based canonicalization
-  %sub = sub i32 %x, %y
-  %cmp = icmp ugt i32 %sub, %x
-  ret i1 %cmp
-}
-
-; Swap operands and predicate. Try a vector type to verify that works too.
-
-define <2 x i1> @ult_sub(<2 x i8> %xsrc, <2 x i8> %y) {
-; CHECK-LABEL: @ult_sub(
-; CHECK-NEXT:    [[X:%.*]] = udiv <2 x i8> [[XSRC:%.*]], <i8 42, i8 -42>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i8> [[X]], [[Y:%.*]]
-; CHECK-NEXT:    ret <2 x i1> [[CMP]]
-;
-  %x = udiv <2 x i8> %xsrc, <i8 42, i8 -42> ; thwart complexity-based canonicalization
-  %sub = sub <2 x i8> %x, %y
-  %cmp = icmp ult <2 x i8> %x, %sub
-  ret <2 x i1> %cmp
 }
 
 ; X - Y > X - Z -> Z > Y if there is no overflow.
