@@ -71,21 +71,21 @@ contains
     !ERROR: Typeless item not allowed for 'x=' argument
     x = acos(f5)
   end function
+  ! Sanity test: f18 handles C1560 violation by ignoring RESULT
+  function f6() result(f6) !OKI (warning)
+  end function
+  function f7() result(f7) !OKI (warning)
+    real :: x, f7
+    !ERROR: Reference to array 'f7' with empty subscript list
+    x = acos(f7())
+    f7 = x
+    x = acos(f7) !OK
+  end function
 end module
 
 module m_with_result
 ! With RESULT, it refers to the function (recursive calls possible)
 contains
-  ! Sanity test C1560
-  !ERROR: 'f00' is already the function name and cannot appear in RESULT
-  function f00() result(f00)
-  end function
-  !ERROR: 'f0' is already the function name and cannot appear in RESULT
-  function f0(i) result(f0)
-    integer :: i
-    complex(4) :: f0
-    f0 = f0(i+1)*2.
-  end function
 
   ! testing with data object results
   function f1() result(r)

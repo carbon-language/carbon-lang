@@ -2492,6 +2492,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   }
   const parser::Name *funcResultName;
   if (funcInfo_.resultName && funcInfo_.resultName->source != name.source) {
+    // Note that RESULT is ignored if it has the same name as the function.
     funcResultName = funcInfo_.resultName;
   } else {
     EraseSymbol(name);  // was added by PushSubprogramScope
@@ -2502,14 +2503,21 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   funcResultDetails.set_funcResult(true);
   funcInfo_.resultSymbol =
       &MakeSymbol(*funcResultName, std::move(funcResultDetails));
-  if (funcInfo_.resultName && funcInfo_.resultName->source == name.source) {
-    // C1560. TODO also enforce on entry names when entry implemented
-    Say(funcInfo_.resultName->source,
-        "'%s' is already the function name and cannot appear in RESULT"_err_en_US,
-        name.source);
-    context().SetError(*funcInfo_.resultSymbol);
-  }
   details.set_result(*funcInfo_.resultSymbol);
+
+  // C1560. TODO also enforce on entry names when entry implemented
+  if (funcInfo_.resultName && funcInfo_.resultName->source == name.source) {
+    Say(funcInfo_.resultName->source,
+        "The function name should not appear in RESULT, references to '%s' "
+        "inside"
+        " the function will be considered as references to the result only"_en_US,
+        name.source);
+    // RESULT name was ignored above, the only side effect from doing so will be
+    // the inability to make recursive calls. The related parser::Name is still
+    // resolved to the created function result symbol because every parser::Name
+    // should be resolved to avoid internal errors.
+    Resolve(*funcInfo_.resultName, funcInfo_.resultSymbol);
+  }
   name.symbol = currScope().symbol();  // must not be function result symbol
 }
 
