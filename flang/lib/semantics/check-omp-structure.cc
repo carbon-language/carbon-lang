@@ -131,8 +131,7 @@ void OmpStructureChecker::CheckAllowed(OmpClause type) {
 }
 
 void OmpStructureChecker::CheckRequired(OmpClause c) {
-  auto *clause{FindClause(c)};
-  if (!clause) {
+  if (!FindClause(c)) {
     context_.Say(GetContext().directiveSource,
         "At least one %s clause must appear on the %s directive"_err_en_US,
         EnumToString(c), ContextDirectiveAsFortran());
@@ -935,14 +934,14 @@ void OmpStructureChecker::Enter(const parser::OmpMapClause &x) {
   CheckAllowed(OmpClause::MAP);
   if (const auto &maptype{std::get<std::optional<parser::OmpMapType>>(x.t)}) {
     using Type = parser::OmpMapType::Type;
-    const Type &type = std::get<Type>(maptype->t);
+    const Type &type{std::get<Type>(maptype->t)};
     switch (GetContext().directive) {
     case OmpDirective::TARGET:
     case OmpDirective::TARGET_DATA: {
       if (type != Type::To && type != Type::From && type != Type::Tofrom &&
           type != Type::Alloc) {
         context_.Say(GetContext().clauseSource,
-            "Only the to, from, tofrom or alloc map types are permitted "
+            "Only the TO, FROM, TOFROM or ALLOC map types are permitted "
             "for MAP clauses on the %s directive"_err_en_US,
             ContextDirectiveAsFortran());
       }
@@ -950,7 +949,7 @@ void OmpStructureChecker::Enter(const parser::OmpMapClause &x) {
     case OmpDirective::TARGET_ENTER_DATA: {
       if (type != Type::To && type != Type::Alloc) {
         context_.Say(GetContext().clauseSource,
-            "Only the to or alloc map types are permitted "
+            "Only the TO or ALLOC map types are permitted "
             "for MAP clauses on the %s directive"_err_en_US,
             ContextDirectiveAsFortran());
       }
@@ -958,7 +957,7 @@ void OmpStructureChecker::Enter(const parser::OmpMapClause &x) {
     case OmpDirective::TARGET_EXIT_DATA: {
       if (type != Type::Delete && type != Type::Release && type != Type::From) {
         context_.Say(GetContext().clauseSource,
-            "Only the from, release or delete map types are permitted "
+            "Only the FROM, RELEASE or DELETE map types are permitted "
             "for MAP clauses on the %s directive"_err_en_US,
             ContextDirectiveAsFortran());
       }
