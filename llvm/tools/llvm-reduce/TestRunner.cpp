@@ -10,25 +10,8 @@
 
 using namespace llvm;
 
-/// Gets Current Working Directory and tries to create a Tmp Directory
-static SmallString<128> initializeTmpDirectory() {
-  SmallString<128> CWD;
-  if (std::error_code EC = sys::fs::current_path(CWD)) {
-    errs() << "Error getting current directory: " << EC.message() << "!\n";
-    exit(1);
-  }
-
-  SmallString<128> TmpDirectory;
-  sys::path::append(TmpDirectory, CWD, "tmp");
-  if (std::error_code EC = sys::fs::create_directory(TmpDirectory))
-    errs() << "Error creating tmp directory: " << EC.message() << "!\n";
-
-  return TmpDirectory;
-}
-
-TestRunner::TestRunner(StringRef TestName, std::vector<std::string> TestArgs)
-    : TestName(TestName), TestArgs(std::move(TestArgs)) {
-  TmpDirectory = initializeTmpDirectory();
+TestRunner::TestRunner(StringRef TestName, const std::vector<std::string> &TestArgs)
+    : TestName(TestName), TestArgs(TestArgs) {
 }
 
 /// Runs the interestingness test, passes file to be tested as first argument
