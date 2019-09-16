@@ -262,6 +262,7 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     setOperationAction(ISD::MLOAD, VT, Custom);
     setOperationAction(ISD::MSTORE, VT, Legal);
     setOperationAction(ISD::CTLZ, VT, Legal);
+    setOperationAction(ISD::CTTZ, VT, Expand);
 
     // No native support for these.
     setOperationAction(ISD::UDIV, VT, Expand);
@@ -5805,8 +5806,7 @@ static SDValue LowerCTTZ(SDNode *N, SelectionDAG &DAG,
                          const ARMSubtarget *ST) {
   SDLoc dl(N);
   EVT VT = N->getValueType(0);
-  if (VT.isVector()) {
-    assert(ST->hasNEON());
+  if (VT.isVector() && ST->hasNEON()) {
 
     // Compute the least significant set bit: LSB = X & -X
     SDValue X = N->getOperand(0);
