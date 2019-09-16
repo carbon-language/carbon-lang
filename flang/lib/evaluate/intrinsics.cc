@@ -714,10 +714,24 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 // Tables 16.2 and 16.3 in Fortran 2018.  The "unrestricted" functions
 // in Table 16.2 can be used as actual arguments, PROCEDURE() interfaces,
 // and procedure pointer targets.
+// Note that the restricted conversion functions dcmplx, dreal, float, idint,
+// ifix and sngl are extended to accept any argument kind because this a common
+// Fortran compilers behavior.
 struct SpecificIntrinsicInterface : public IntrinsicInterface {
   const char *generic{nullptr};
   bool isRestrictedSpecific{false};
-  bool forceResultType{false};
+  // Exact actual/dummy type matching is required by default for specific
+  // intrinsics. If useGenericAndForceResultType is set, then the probing will
+  // also attempt to use the related generic intrinsic and to convert the result
+  // to the specific intrinsic result type if needed.
+  // This is not enabled on all specific intrinsics because an alternative
+  // is to convert the actual arguments to the required dummy types and this is
+  // not numerically equivalent.
+  //  e.g. IABS(INT(i), INT(j)) not equiv to INT(ABS(i, j)).
+  // This is allowed for restricted min/max specific functions because
+  // the expected behavior is clear from their definitions. A warning is though
+  // always emitted because other compilers behavior is not ubiquitous here.
+  bool useGenericAndForceResultType{false};
 };
 
 static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
@@ -775,13 +789,13 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"datan2", {{"y", DoublePrecision}, {"x", DoublePrecision}},
          DoublePrecision},
         "atan2"},
-    {{"dcmplx", {{"x", DefaultComplex}}, DoublePrecisionComplex}, "cmplx"},
+    {{"dcmplx", {{"x", AnyComplex}}, DoublePrecisionComplex}, "cmplx", true},
     {{"dcmplx",
          {{"x", AnyIntOrReal, Rank::elementalOrBOZ},
              {"y", AnyIntOrReal, Rank::elementalOrBOZ, Optionality::optional}},
          DoublePrecisionComplex},
-        "cmplx"},
-    {{"dreal", {{"a", DoublePrecisionComplex}}, DoublePrecision}, "real"},
+        "cmplx", true},
+    {{"dreal", {{"a", AnyComplex}}, DoublePrecision}, "real", true},
     {{"dconjg", {{"a", DoublePrecisionComplex}}, DoublePrecisionComplex},
         "conjg"},
     {{"dcos", {{"x", DoublePrecision}}, DoublePrecision}, "cos"},
@@ -799,12 +813,12 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
          {{"a1", DoublePrecision}, {"a2", DoublePrecision},
              {"a3", DoublePrecision, Rank::elemental, Optionality::repeats}},
          DoublePrecision},
-        "max", true},
+        "max", true, true},
     {{"dmin1",
          {{"a1", DoublePrecision}, {"a2", DoublePrecision},
              {"a3", DoublePrecision, Rank::elemental, Optionality::repeats}},
          DoublePrecision},
-        "min", true},
+        "min", true, true},
     {{"dmod", {{"a", DoublePrecision}, {"p", DoublePrecision}},
          DoublePrecision},
         "mod"},
@@ -819,12 +833,12 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"dtan", {{"x", DoublePrecision}}, DoublePrecision}, "tan"},
     {{"dtanh", {{"x", DoublePrecision}}, DoublePrecision}, "tanh"},
     {{"exp", {{"x", DefaultReal}}, DefaultReal}},
-    {{"float", {{"i", DefaultInt}}, DefaultReal}, "real", true},
+    {{"float", {{"i", AnyInt}}, DefaultReal}, "real", true},
     {{"iabs", {{"a", DefaultInt}}, DefaultInt}, "abs"},
     {{"idim", {{"x", DefaultInt}, {"y", DefaultInt}}, DefaultInt}, "dim"},
-    {{"idint", {{"a", DoublePrecision}}, DefaultInt}, "int", true},
+    {{"idint", {{"a", AnyReal}}, DefaultInt}, "int", true},
     {{"idnint", {{"a", DoublePrecision}}, DefaultInt}, "nint"},
-    {{"ifix", {{"a", DefaultReal}}, DefaultInt}, "int", true},
+    {{"ifix", {{"a", AnyReal}}, DefaultInt}, "int", true},
     {{"index", {{"string", DefaultChar}, {"substring", DefaultChar}},
         SubscriptInt}},
     {{"isign", {{"a", DefaultInt}, {"b", DefaultInt}}, DefaultInt}, "sign"},
@@ -865,7 +879,7 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"sign", {{"a", DefaultReal}, {"b", DefaultReal}}, DefaultReal}},
     {{"sin", {{"x", DefaultReal}}, DefaultReal}},
     {{"sinh", {{"x", DefaultReal}}, DefaultReal}},
-    {{"sngl", {{"a", DoublePrecision}}, DefaultReal}, "real", true},
+    {{"sngl", {{"a", AnyReal}}, DefaultReal}, "real", true},
     {{"sqrt", {{"x", DefaultReal}}, DefaultReal}},
     {{"tan", {{"x", DefaultReal}}, DefaultReal}},
     {{"tanh", {{"x", DefaultReal}}, DefaultReal}},
@@ -1622,6 +1636,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
        ++specIter) {
     // We only need to check the cases with distinct generic names.
     if (const char *genericName{specIter->second->generic}) {
+      // First try to find an exact match in the specific intrinsics.
       if (auto specificCall{specIter->second->Match(
               call, defaults_, arguments, localContext)}) {
         specificCall->specificIntrinsic.name = genericName;
@@ -1630,19 +1645,6 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
         if (finalBuffer != nullptr) {
           finalBuffer->Annex(std::move(localBuffer));
         }
-        if (specIter->second->forceResultType) {
-          // Force the result type on AMAX0/1, MIN0/1, &c.
-          TypeCategory category{TypeCategory::Integer};
-          switch (specIter->second->result.kindCode) {
-          case KindCode::defaultIntegerKind: break;
-          case KindCode::defaultRealKind: category = TypeCategory::Real; break;
-          default: CRASH_NO_CASE;
-          }
-          DynamicType newType{category, defaults_.GetDefaultKind(category)};
-          specificCall->specificIntrinsic.characteristics.value()
-              .functionResult.value()
-              .SetType(newType);
-        }
         // TODO test feature AdditionalIntrinsics, warn on nonstandard
         // specifics with DoublePrecisionComplex arguments.
         return specificCall;
@@ -1650,6 +1652,51 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
         specificBuffer.Annex(std::move(localBuffer));
       } else {
         specificBuffer.clear();
+      }
+      // If there was no exact match with a specific, try to match the related
+      // generic and convert the result to the specific required type.
+      if (specIter->second->useGenericAndForceResultType) {
+        auto genericRange{genericFuncs_.equal_range(genericName)};
+        for (auto genIter{genericRange.first}; genIter != genericRange.second;
+             ++genIter) {
+          if (auto specificCall{genIter->second->Match(
+                  call, defaults_, arguments, localContext)}) {
+            specificCall->specificIntrinsic.name = genericName;
+            specificCall->specificIntrinsic.isRestrictedSpecific =
+                specIter->second->isRestrictedSpecific;
+            // Force the result type
+            TypeCategory category{TypeCategory::Integer};
+            switch (specIter->second->result.kindCode) {
+            case KindCode::defaultIntegerKind: break;
+            case KindCode::doublePrecision:
+            case KindCode::defaultRealKind:
+              category = TypeCategory::Real;
+              break;
+            default: CRASH_NO_CASE;
+            }
+            int kind{
+                specIter->second->result.kindCode == KindCode::doublePrecision
+                    ? defaults_.doublePrecisionKind()
+                    : defaults_.GetDefaultKind(category)};
+            DynamicType newType{category, kind};
+            specificCall->specificIntrinsic.characteristics.value()
+                .functionResult.value()
+                .SetType(newType);
+            localContext.messages().Say(
+                "Argument type does not match specific intrinsic '%s' "
+                "requirements, using '%s' generic instead and converting the "
+                "result to %s if needed."_en_US,
+                name, genericName, newType.AsFortran());
+            if (finalBuffer != nullptr) {
+              finalBuffer->Annex(std::move(localBuffer));
+            }
+            return specificCall;
+          } else if (specificBuffer.empty()) {
+            specificBuffer.Annex(std::move(localBuffer));
+          } else {
+            specificBuffer.clear();
+          }
+        }
       }
     }
   }

@@ -118,7 +118,7 @@ struct TestCall {
     std::optional<SpecificCall> si{table.Probe(call, args, context)};
     if (resultType.has_value()) {
       TEST(si.has_value());
-      TEST(buffer.empty());
+      TEST(messages.messages() && !messages.messages()->AnyFatalError());
       if (si) {
         const auto &proc{si->specificIntrinsic.characteristics.value()};
         const auto &fr{proc.functionResult};
@@ -136,7 +136,8 @@ struct TestCall {
       }
     } else {
       TEST(!si.has_value());
-      TEST(!buffer.empty() || name == "bad");
+      TEST((messages.messages() && messages.messages()->AnyFatalError()) ||
+          name == "bad");
     }
     strings.Emit(std::cout, buffer);
   }
@@ -203,28 +204,29 @@ void TestIntrinsics() {
   TestCall{table, "abs"}.Push(Const(Scalar<Char>{})).DoCall();
   TestCall{table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
 
+  // "Ext" in names for calls allowed as extensions
   TestCall maxCallR{table, "max"}, maxCallI{table, "min"},
       max0Call{table, "max0"}, max1Call{table, "max1"},
       amin0Call{table, "amin0"}, amin1Call{table, "amin1"},
-      max0WrongCall{table, "max0"}, amin1WrongCall{table, "amin1"};
+      max0ExtCall{table, "max0"}, amin1ExtCall{table, "amin1"};
   for (int j{0}; j < 10; ++j) {
     maxCallR.Push(Const(Scalar<Real4>{}));
     maxCallI.Push(Const(Scalar<Int4>{}));
     max0Call.Push(Const(Scalar<Int4>{}));
-    max0WrongCall.Push(Const(Scalar<Real4>{}));
+    max0ExtCall.Push(Const(Scalar<Real4>{}));
     max1Call.Push(Const(Scalar<Real4>{}));
     amin0Call.Push(Const(Scalar<Int4>{}));
-    amin1WrongCall.Push(Const(Scalar<Int4>{}));
+    amin1ExtCall.Push(Const(Scalar<Int4>{}));
     amin1Call.Push(Const(Scalar<Real4>{}));
   }
   maxCallR.DoCall(Real4::GetType());
   maxCallI.DoCall(Int4::GetType());
   max0Call.DoCall(Int4::GetType());
-  max0WrongCall.DoCall();
+  max0ExtCall.DoCall(Int4::GetType());
   max1Call.DoCall(Int4::GetType());
   amin0Call.DoCall(Real4::GetType());
   amin1Call.DoCall(Real4::GetType());
-  amin1WrongCall.DoCall();
+  amin1ExtCall.DoCall(Real4::GetType());
 
   TestCall{table, "conjg"}
       .Push(Const(Scalar<Complex4>{}))
@@ -236,6 +238,15 @@ void TestIntrinsics() {
   TestCall{table, "dconjg"}
       .Push(Const(Scalar<Complex8>{}))
       .DoCall(Complex8::GetType());
+
+  TestCall{table, "float"}.Push(Const(Scalar<Real4>{})).DoCall();
+  TestCall{table, "float"}.Push(Const(Scalar<Int4>{})).DoCall(Real4::GetType());
+  TestCall{table, "idint"}.Push(Const(Scalar<Int4>{})).DoCall();
+  TestCall{table, "idint"}.Push(Const(Scalar<Real8>{})).DoCall(Int4::GetType());
+
+  // Allowed as extensions
+  TestCall{table, "float"}.Push(Const(Scalar<Int8>{})).DoCall(Real4::GetType());
+  TestCall{table, "idint"}.Push(Const(Scalar<Real4>{})).DoCall(Int4::GetType());
   // TODO: test other intrinsics
 }
 }
