@@ -3772,6 +3772,17 @@ def MVE_VBRSR8  : MVE_VBRSR<"vbrsr", "8", 0b00>;
 def MVE_VBRSR16 : MVE_VBRSR<"vbrsr", "16", 0b01>;
 def MVE_VBRSR32 : MVE_VBRSR<"vbrsr", "32", 0b10>;
 
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 ( bitreverse (v16i8 MQPR:$val1))),
+            (v16i8 ( MVE_VBRSR8 (v16i8 MQPR:$val1), (t2MOVi (i32 8)) ))>;
+
+  def : Pat<(v4i32 ( bitreverse (v4i32 MQPR:$val1))),
+            (v4i32 ( MVE_VBRSR32 (v4i32 MQPR:$val1), (t2MOVi (i32 32)) ))>;
+
+  def : Pat<(v8i16 ( bitreverse (v8i16 MQPR:$val1))),
+            (v8i16 ( MVE_VBRSR16 (v8i16 MQPR:$val1), (t2MOVi (i32 16)) ))>;
+}
+
 class MVE_VMUL_qr_int<string iname, string suffix,
                       bits<2> size, list<dag> pattern=[]>
   : MVE_qDest_rSrc<iname, suffix, "", pattern> {
