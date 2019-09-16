@@ -587,3 +587,38 @@ define i1 @sum_nuw_commute(i32 %x, i32 %y) {
   %c = icmp ugt i32 %x, %rhs
   ret i1 %c
 }
+
+; PR2698 - https://bugs.llvm.org/show_bug.cgi?id=2698
+
+declare void @use1(i1)
+declare void @use8(i8)
+
+define void @bzip1(i8 %a, i8 %b, i8 %x) {
+; CHECK-LABEL: @bzip1(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    call void @use1(i1 [[CMP]])
+; CHECK-NEXT:    ret void
+;
+  %add1 = add i8 %a, %x
+  %add2 = add i8 %b, %x
+  %cmp = icmp eq i8 %add1, %add2
+  call void @use1(i1 %cmp)
+  ret void
+}
+
+define void @bzip2(i8 %a, i8 %b, i8 %x) {
+; CHECK-LABEL: @bzip2(
+; CHECK-NEXT:    [[ADD1:%.*]] = add i8 [[A:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[ADD2:%.*]] = add i8 [[B:%.*]], [[X]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[ADD1]], [[ADD2]]
+; CHECK-NEXT:    call void @use1(i1 [[CMP]])
+; CHECK-NEXT:    call void @use8(i8 [[ADD1]])
+; CHECK-NEXT:    ret void
+;
+  %add1 = add i8 %a, %x
+  %add2 = add i8 %b, %x
+  %cmp = icmp eq i8 %add1, %add2
+  call void @use1(i1 %cmp)
+  call void @use8(i8 %add1)
+  ret void
+}
