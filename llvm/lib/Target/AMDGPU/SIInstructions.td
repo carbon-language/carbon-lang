@@ -753,12 +753,12 @@ def : GCNPat <
 
 def : GCNPat <
   (f16 (sint_to_fp i32:$src)),
-  (V_CVT_F16_F32_e32 (V_CVT_F32_I32_e32 $src))
+  (V_CVT_F16_F32_e32 (V_CVT_F32_I32_e32 VSrc_b32:$src))
 >;
 
 def : GCNPat <
   (f16 (uint_to_fp i32:$src)),
-  (V_CVT_F16_F32_e32 (V_CVT_F32_U32_e32 $src))
+  (V_CVT_F16_F32_e32 (V_CVT_F32_U32_e32 VSrc_b32:$src))
 >;
 
 //===----------------------------------------------------------------------===//
