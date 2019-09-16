@@ -3697,11 +3697,8 @@ Instruction *InstCombiner::foldICmpBinOp(ICmpInst &I) {
                         C == Op0 ? D : C);
 
   // icmp (A+B), (A+D) -> icmp B, D for equalities or if there is no overflow.
-  // TODO: The one-use checks should not be necessary.
   if (A && C && (A == C || A == D || B == C || B == D) && NoOp0WrapProblem &&
-      NoOp1WrapProblem &&
-      // Try not to increase register pressure.
-      BO0->hasOneUse() && BO1->hasOneUse()) {
+      NoOp1WrapProblem) {
     // Determine Y and Z in the form icmp (X+Y), (X+Z).
     Value *Y, *Z;
     if (A == C) {

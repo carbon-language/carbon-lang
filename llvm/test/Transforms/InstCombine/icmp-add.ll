@@ -483,7 +483,7 @@ define i1 @common_op_nsw_extra_uses(i32 %x, i32 %y, i32 %z) {
 ; CHECK-NEXT:    call void @use(i32 [[LHS]])
 ; CHECK-NEXT:    [[RHS:%.*]] = add nsw i32 [[Y:%.*]], [[Z]]
 ; CHECK-NEXT:    call void @use(i32 [[RHS]])
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[LHS]], [[RHS]]
+; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[X]], [[Y]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %lhs = add nsw i32 %x, %z
@@ -512,7 +512,7 @@ define i1 @common_op_nuw_extra_uses(i32 %x, i32 %y, i32 %z) {
 ; CHECK-NEXT:    call void @use(i32 [[LHS]])
 ; CHECK-NEXT:    [[RHS:%.*]] = add nuw i32 [[Z]], [[Y:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[RHS]])
-; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[LHS]], [[RHS]]
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[X]], [[Y]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %lhs = add nuw i32 %x, %z
@@ -609,8 +609,7 @@ define void @bzip1(i8 %a, i8 %b, i8 %x) {
 define void @bzip2(i8 %a, i8 %b, i8 %x) {
 ; CHECK-LABEL: @bzip2(
 ; CHECK-NEXT:    [[ADD1:%.*]] = add i8 [[A:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[ADD2:%.*]] = add i8 [[B:%.*]], [[X]]
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[ADD1]], [[ADD2]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[A]], [[B:%.*]]
 ; CHECK-NEXT:    call void @use1(i1 [[CMP]])
 ; CHECK-NEXT:    call void @use8(i8 [[ADD1]])
 ; CHECK-NEXT:    ret void
