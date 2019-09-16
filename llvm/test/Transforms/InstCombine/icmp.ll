@@ -734,7 +734,7 @@ define i1 @test37_extra_uses(i32 %x, i32 %y, i32 %z) {
 ; CHECK-NEXT:    call void @foo(i32 [[LHS]])
 ; CHECK-NEXT:    [[RHS:%.*]] = sub nsw i32 [[X]], [[Z:%.*]]
 ; CHECK-NEXT:    call void @foo(i32 [[RHS]])
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[LHS]], [[RHS]]
+; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[Z]], [[Y]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %lhs = sub nsw i32 %x, %y
@@ -763,7 +763,7 @@ define i1 @test38_extra_uses(i32 %x, i32 %y, i32 %z) {
 ; CHECK-NEXT:    call void @foo(i32 [[LHS]])
 ; CHECK-NEXT:    [[RHS:%.*]] = sub nuw i32 [[X]], [[Z:%.*]]
 ; CHECK-NEXT:    call void @foo(i32 [[RHS]])
-; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[LHS]], [[RHS]]
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[Z]], [[Y]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %lhs = sub nuw i32 %x, %y
