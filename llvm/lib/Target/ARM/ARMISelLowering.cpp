@@ -264,6 +264,7 @@ void ARMTargetLowering::addMVEVectorTypes(bool HasMVEFP) {
     setOperationAction(ISD::CTLZ, VT, Legal);
     setOperationAction(ISD::CTTZ, VT, Expand);
     setOperationAction(ISD::BITREVERSE, VT, Legal);
+    setOperationAction(ISD::BSWAP, VT, Legal);
 
     // No native support for these.
     setOperationAction(ISD::UDIV, VT, Expand);

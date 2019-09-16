@@ -1058,6 +1058,13 @@ def MVE_VREV32_16 : MVE_VREV<"vrev32", "16", 0b01, 0b01>;
 def MVE_VREV16_8  : MVE_VREV<"vrev16", "8", 0b00, 0b10>;
 
 let Predicates = [HasMVEInt] in {
+  def : Pat<(v8i16 (bswap (v8i16 MQPR:$src))),
+            (v8i16 (MVE_VREV16_8 (v8i16 MQPR:$src)))>;
+  def : Pat<(v4i32 (bswap (v4i32 MQPR:$src))),
+            (v4i32 (MVE_VREV32_8 (v4i32 MQPR:$src)))>;
+}
+
+let Predicates = [HasMVEInt] in {
   def : Pat<(v4i32 (ARMvrev64 (v4i32 MQPR:$src))),
             (v4i32 (MVE_VREV64_32 (v4i32 MQPR:$src)))>;
   def : Pat<(v8i16 (ARMvrev64 (v8i16 MQPR:$src))),
