@@ -2218,8 +2218,7 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
       // previous segment anyway.
       //
       // TODO Enable this technique on all targets.
-      bool enable = config->emachine != EM_HEXAGON &&
-                    config->emachine != EM_X86_64;
+      bool enable = config->emachine != EM_HEXAGON;
 
       if (!enable ||
           (config->zSeparateCode && prev &&
