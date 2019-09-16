@@ -4526,7 +4526,7 @@ class MVE_VPT<string suffix, bits<2> size, dag iops, string asm, list<dag> patte
   let Inst{7} = fc{0};
   let Inst{4} = 0b0;
 
-  let Defs = [VPR, P0];
+  let Defs = [VPR];
 }
 
 class MVE_VPTt1<string suffix, bits<2> size, dag iops>
@@ -4542,7 +4542,7 @@ class MVE_VPTt1<string suffix, bits<2> size, dag iops>
 
 class MVE_VPTt1i<string suffix, bits<2> size>
  : MVE_VPTt1<suffix, size,
-           (ins vpt_mask:$Mk, pred_basic_i:$fc, MQPR:$Qn, MQPR:$Qm)> {
+           (ins vpt_mask:$Mk, MQPR:$Qn, MQPR:$Qm, pred_basic_i:$fc)> {
   let Inst{12} = 0b0;
   let Inst{0} = 0b0;
 }
@@ -4553,7 +4553,7 @@ def MVE_VPTv16i8 : MVE_VPTt1i<"i8", 0b00>;
 
 class MVE_VPTt1u<string suffix, bits<2> size>
  : MVE_VPTt1<suffix, size,
-           (ins vpt_mask:$Mk, pred_basic_u:$fc, MQPR:$Qn, MQPR:$Qm)> {
+           (ins vpt_mask:$Mk, MQPR:$Qn, MQPR:$Qm, pred_basic_u:$fc)> {
   let Inst{12} = 0b0;
   let Inst{0} = 0b1;
 }
@@ -4564,7 +4564,7 @@ def MVE_VPTv16u8 : MVE_VPTt1u<"u8", 0b00>;
 
 class MVE_VPTt1s<string suffix, bits<2> size>
  : MVE_VPTt1<suffix, size,
-           (ins vpt_mask:$Mk, pred_basic_s:$fc, MQPR:$Qn, MQPR:$Qm)> {
+           (ins vpt_mask:$Mk, MQPR:$Qn, MQPR:$Qm, pred_basic_s:$fc)> {
   let Inst{12} = 0b1;
 }
 
@@ -4586,7 +4586,7 @@ class MVE_VPTt2<string suffix, bits<2> size, dag iops>
 
 class MVE_VPTt2i<string suffix, bits<2> size>
   : MVE_VPTt2<suffix, size,
-            (ins vpt_mask:$Mk, pred_basic_i:$fc, MQPR:$Qn, GPRwithZR:$Rm)> {
+            (ins vpt_mask:$Mk, MQPR:$Qn, GPRwithZR:$Rm, pred_basic_i:$fc)> {
   let Inst{12} = 0b0;
   let Inst{5} = 0b0;
 }
@@ -4597,7 +4597,7 @@ def MVE_VPTv16i8r : MVE_VPTt2i<"i8", 0b00>;
 
 class MVE_VPTt2u<string suffix, bits<2> size>
   : MVE_VPTt2<suffix, size,
-            (ins vpt_mask:$Mk, pred_basic_u:$fc, MQPR:$Qn, GPRwithZR:$Rm)> {
+            (ins vpt_mask:$Mk, MQPR:$Qn, GPRwithZR:$Rm, pred_basic_u:$fc)> {
   let Inst{12} = 0b0;
   let Inst{5} = 0b1;
 }
@@ -4608,7 +4608,7 @@ def MVE_VPTv16u8r : MVE_VPTt2u<"u8", 0b00>;
 
 class MVE_VPTt2s<string suffix, bits<2> size>
   : MVE_VPTt2<suffix, size,
-            (ins vpt_mask:$Mk, pred_basic_s:$fc, MQPR:$Qn, GPRwithZR:$Rm)> {
+            (ins vpt_mask:$Mk, MQPR:$Qn, GPRwithZR:$Rm, pred_basic_s:$fc)> {
   let Inst{12} = 0b1;
 }
 
@@ -4637,12 +4637,12 @@ class MVE_VPTf<string suffix, bit size, dag iops, string asm, list<dag> pattern=
   let Inst{7} = fc{0};
   let Inst{4} = 0b0;
 
-  let Defs = [P0];
+  let Defs = [VPR];
   let Predicates = [HasMVEFloat];
 }
 
 class MVE_VPTft1<string suffix, bit size>
-  : MVE_VPTf<suffix, size, (ins vpt_mask:$Mk, pred_basic_fp:$fc, MQPR:$Qn, MQPR:$Qm),
+  : MVE_VPTf<suffix, size, (ins vpt_mask:$Mk, MQPR:$Qn, MQPR:$Qm, pred_basic_fp:$fc),
           "$fc, $Qn, $Qm"> {
   bits<3> fc;
   bits<4> Qm;
@@ -4657,7 +4657,7 @@ def MVE_VPTv4f32         : MVE_VPTft1<"f32", 0b0>;
 def MVE_VPTv8f16         : MVE_VPTft1<"f16", 0b1>;
 
 class MVE_VPTft2<string suffix, bit size>
-  : MVE_VPTf<suffix, size, (ins vpt_mask:$Mk, pred_basic_fp:$fc, MQPR:$Qn, GPRwithZR:$Rm),
+  : MVE_VPTf<suffix, size, (ins vpt_mask:$Mk, MQPR:$Qn, GPRwithZR:$Rm, pred_basic_fp:$fc),
           "$fc, $Qn, $Rm"> {
   bits<3> fc;
   bits<4> Rm;
@@ -4683,7 +4683,7 @@ def MVE_VPST : MVE_MI<(outs ), (ins vpt_mask:$Mk), NoItinerary,
   let Unpredictable{7} = 0b1;
   let Unpredictable{5} = 0b1;
 
-  let Defs = [P0];
+  let Defs = [VPR];
 }
 
 def MVE_VPSEL : MVE_p<(outs MQPR:$Qd), (ins MQPR:$Qn, MQPR:$Qm), NoItinerary,

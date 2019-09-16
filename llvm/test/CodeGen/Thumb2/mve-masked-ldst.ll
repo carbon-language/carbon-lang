@@ -6,8 +6,7 @@ define void @foo_v4i32_v4i32(<4 x i32> *%dest, <4 x i32> *%mask, <4 x i32> *%src
 ; CHECK-LABEL: foo_v4i32_v4i32:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    vldrw.u32 q0, [r1]
-; CHECK-NEXT:    vcmp.s32 gt, q0, zr
-; CHECK-NEXT:    vpstt
+; CHECK-NEXT:    vptt.s32 gt, q0, zr
 ; CHECK-NEXT:    vldrwt.u32 q0, [r2]
 ; CHECK-NEXT:    vstrwt.32 q0, [r0]
 ; CHECK-NEXT:    bx lr
@@ -237,8 +236,7 @@ define void @foo_v8i16_v8i16(<8 x i16> *%dest, <8 x i16> *%mask, <8 x i16> *%src
 ; CHECK-LABEL: foo_v8i16_v8i16:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    vldrh.u16 q0, [r1]
-; CHECK-NEXT:    vcmp.s16 gt, q0, zr
-; CHECK-NEXT:    vpstt
+; CHECK-NEXT:    vptt.s16 gt, q0, zr
 ; CHECK-NEXT:    vldrht.u16 q0, [r2]
 ; CHECK-NEXT:    vstrht.16 q0, [r0]
 ; CHECK-NEXT:    bx lr
@@ -416,8 +414,7 @@ define void @foo_v16i8_v16i8(<16 x i8> *%dest, <16 x i8> *%mask, <16 x i8> *%src
 ; CHECK-LABEL: foo_v16i8_v16i8:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    vldrb.u8 q0, [r1]
-; CHECK-NEXT:    vcmp.s8 gt, q0, zr
-; CHECK-NEXT:    vpstt
+; CHECK-NEXT:    vptt.s8 gt, q0, zr
 ; CHECK-NEXT:    vldrbt.u8 q0, [r2]
 ; CHECK-NEXT:    vstrbt.8 q0, [r0]
 ; CHECK-NEXT:    bx lr
@@ -436,8 +433,7 @@ define void @foo_trunc_v8i8_v8i16(<8 x i8> *%dest, <8 x i16> *%mask, <8 x i16> *
 ; CHECK-NEXT:    sub sp, #8
 ; CHECK-NEXT:    vldrh.u16 q0, [r1]
 ; CHECK-NEXT:    movs r3, #0
-; CHECK-NEXT:    vcmp.s16 gt, q0, zr
-; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vpt.s16 gt, q0, zr
 ; CHECK-NEXT:    vldrht.u16 q0, [r2]
 ; CHECK-NEXT:    vmrs r1, p0
 ; CHECK-NEXT:    and r2, r1, #1
@@ -515,8 +511,7 @@ define void @foo_trunc_v4i8_v4i32(<4 x i8> *%dest, <4 x i32> *%mask, <4 x i32> *
 ; CHECK-NEXT:    sub sp, #4
 ; CHECK-NEXT:    vldrw.u32 q0, [r1]
 ; CHECK-NEXT:    movs r3, #0
-; CHECK-NEXT:    vcmp.s32 gt, q0, zr
-; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vpt.s32 gt, q0, zr
 ; CHECK-NEXT:    vldrwt.u32 q0, [r2]
 ; CHECK-NEXT:    vmrs r1, p0
 ; CHECK-NEXT:    and r2, r1, #1
@@ -566,8 +561,7 @@ define void @foo_trunc_v4i16_v4i32(<4 x i16> *%dest, <4 x i32> *%mask, <4 x i32>
 ; CHECK-NEXT:    sub sp, #4
 ; CHECK-NEXT:    vldrw.u32 q0, [r1]
 ; CHECK-NEXT:    movs r3, #0
-; CHECK-NEXT:    vcmp.s32 gt, q0, zr
-; CHECK-NEXT:    vpst
+; CHECK-NEXT:    vpt.s32 gt, q0, zr
 ; CHECK-NEXT:    vldrwt.u32 q0, [r2]
 ; CHECK-NEXT:    vmrs r1, p0
 ; CHECK-NEXT:    and r2, r1, #1
@@ -614,8 +608,7 @@ define void @foo_v4f32_v4f32(<4 x float> *%dest, <4 x i32> *%mask, <4 x float> *
 ; CHECK-LABEL: foo_v4f32_v4f32:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    vldrw.u32 q0, [r1]
-; CHECK-NEXT:    vcmp.s32 gt, q0, zr
-; CHECK-NEXT:    vpstt
+; CHECK-NEXT:    vptt.s32 gt, q0, zr
 ; CHECK-NEXT:    vldrwt.u32 q0, [r2]
 ; CHECK-NEXT:    vstrwt.32 q0, [r0]
 ; CHECK-NEXT:    bx lr
@@ -631,8 +624,7 @@ define void @foo_v8f16_v8f16(<8 x half> *%dest, <8 x i16> *%mask, <8 x half> *%s
 ; CHECK-LABEL: foo_v8f16_v8f16:
 ; CHECK:       @ %bb.0: @ %entry
 ; CHECK-NEXT:    vldrh.u16 q0, [r1]
-; CHECK-NEXT:    vcmp.s16 gt, q0, zr
-; CHECK-NEXT:    vpstt
+; CHECK-NEXT:    vptt.s16 gt, q0, zr
 ; CHECK-NEXT:    vldrht.u16 q0, [r2]
 ; CHECK-NEXT:    vstrht.16 q0, [r0]
 ; CHECK-NEXT:    bx lr
