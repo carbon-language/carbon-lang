@@ -65,7 +65,6 @@ Getting Started, How-tos, Developer Guides, and Tutorials.
    UserGuides
    ProgrammingDocumentation
    SubsystemDocumentation
-   ReferenceDocumentation
 
 :doc:`UserGuides`
   For those new to the LLVM system.
