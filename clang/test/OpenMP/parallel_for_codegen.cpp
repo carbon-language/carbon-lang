@@ -19,6 +19,7 @@
 #ifndef HEADER
 #define HEADER
 
+#ifndef OMP5
 // CHECK-DAG: [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
 // CHECK-DAG: [[LOOP_LOC:@.+]] = private unnamed_addr global [[IDENT_T_TY]] { i32 0, i32 514, i32 0, i32 0, i8*
 
@@ -383,7 +384,7 @@ void parallel_for(float *a, const int n) {
 // TERM_DEBUG-DAG: [[DBG_LOC_START]] = !DILocation(line: [[@LINE-4]],
 // TERM_DEBUG-DAG: [[DBG_LOC_END]] = !DILocation(line: [[@LINE-18]],
 
-#ifdef OMP5
+#else // OMP5
 // OMP5-DAG: [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
 // OMP5-DAG: [[LOOP_LOC:@.+]] = private unnamed_addr global [[IDENT_T_TY]] { i32 0, i32 514, i32 0, i32 0, i8*
 
@@ -467,7 +468,7 @@ int decrement_nowait () {
   return 0;
 // OMP5: ret i32 0
 }
-#endif
+#endif // OMP5
 
 #endif // HEADER
 
