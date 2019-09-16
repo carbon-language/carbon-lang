@@ -36,16 +36,16 @@ TestRunner::TestRunner(StringRef TestName, std::vector<std::string> TestArgs)
 int TestRunner::run(StringRef Filename) {
   std::vector<StringRef> ProgramArgs;
   ProgramArgs.push_back(TestName);
+
+  for (const auto &Arg : TestArgs)
+    ProgramArgs.push_back(Arg);
+
   ProgramArgs.push_back(Filename);
 
-  for (auto Arg : TestArgs)
-    ProgramArgs.push_back(Arg.c_str());
-
-  Optional<StringRef> Redirects[3]; // STDIN, STDOUT, STDERR
   std::string ErrMsg;
-  int Result =
-      sys::ExecuteAndWait(TestName, ProgramArgs, None, Redirects,
-                          /*SecondsToWait=*/0, /*MemoryLimit=*/0, &ErrMsg);
+  int Result = sys::ExecuteAndWait(
+      TestName, ProgramArgs, /*Env=*/None, /*Redirects=*/None,
+      /*SecondsToWait=*/0, /*MemoryLimit=*/0, &ErrMsg);
 
   if (Result < 0) {
     Error E = make_error<StringError>("Error running interesting-ness test: " +
