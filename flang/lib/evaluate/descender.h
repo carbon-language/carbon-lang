@@ -19,6 +19,7 @@
 
 #include "expression.h"
 #include "../semantics/type.h"
+#include <algorithm>
 
 namespace Fortran::evaluate {
 
@@ -363,5 +364,41 @@ private:
 
   VISITOR &visitor_;
 };
+
+template<typename DERIVED, bool DEFAULT = true, bool ALL = true>
+class ExpressionPredicateHelperBase {
+protected:
+  template<typename A, bool C> bool operator()(const common::Indirection<A,C> &x) {
+    return derived()(x.value());
+  }
+  template<typename A> bool operator()(const A *x) {
+    if (x != nullptr) {
+      return derived()(*x);
+    } else {
+      return DEFAULT;
+    }
+  }
+  template<typename A> bool operator()(const std::optional<A> &x) {
+    if (x.has_value()) {
+      return derived()(*x);
+    } else {
+      return DEFAULT;
+    }
+  }
+  template<typename... A> bool operator()(const std::variant<A...> &u) {
+    return std::visit(derived(), u);
+  }
+  template<typename A> bool operator()(const std::vector<A> &x) {
+    if constexpr (ALL) {
+      return std::all_of(x.begin(), x.end(), derived());
+    } else {
+      return std::any_of(x.begin(), x.end(), derived());
+    }
+  }
+private:
+  DERIVED &derived() { return *static_cast<DERIVED *>(this); }
+  const DERIVED &derived() const { return *static_cast<const DERIVED *>(this); }
+};
+
 }
 #endif  // FORTRAN_EVALUATE_DESCENDER_H_

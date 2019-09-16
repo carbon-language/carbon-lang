@@ -82,6 +82,11 @@ auto GetScalarConstantValue(const EXPR &expr) -> std::optional<Scalar<T>> {
 // constant value.
 bool IsConstantExpr(const Expr<SomeType> &);
 
+// Predicate: true when an expression is a specification expression
+// (10.1.11(2), C1010).  Constant expressions are always valid
+// specification expressions.
+bool IsSpecificationExpr(const Expr<SomeType> &);
+
 // Predicate: true when an expression is an object designator with
 // constant addressing and no vector-valued subscript.
 bool IsInitialDataTarget(const Expr<SomeType> &);

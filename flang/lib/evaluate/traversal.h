@@ -20,7 +20,7 @@
 
 // Implements an expression traversal utility framework.
 // See fold.cc to see an example of how this framework was used to
-// implement then detection of constant expressions.
+// implement detection of constant expressions.
 //
 // The bases of references (component, array, coarray, substring, &
 // procedures) are visited before any subscript, cosubscript, or actual

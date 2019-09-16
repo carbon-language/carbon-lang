@@ -17,6 +17,7 @@
 #include "characteristics.h"
 #include "common.h"
 #include "constant.h"
+#include "descender.h"
 #include "expression.h"
 #include "host.h"
 #include "int-power.h"
@@ -32,6 +33,7 @@
 #include "../semantics/scope.h"
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstdio>
@@ -2537,6 +2539,115 @@ template<typename A> bool IsConstantExpr(const A &x) {
 
 bool IsConstantExpr(const Expr<SomeType> &expr) {
   return Visitor<IsConstantExprVisitor>{0}.Traverse(expr);
+}
+
+// Specification expression validation (10.1.11(2), C1010)
+struct IsSpecificationExprHelper : public ExpressionPredicateHelperBase<IsSpecificationExprHelper, true, true> {
+  using Base = ExpressionPredicateHelperBase<IsSpecificationExprHelper, true, true>;
+  using Base::operator();
+
+  template<typename A> bool operator()(const A &) { return false; }
+
+  template<typename T> bool operator()(const Constant<T> &) { return true; }
+  bool operator()(const StaticDataObject::Pointer &) { return true; }
+
+  bool operator()(const semantics::Symbol &symbol) {
+    if (symbol.IsDummy()) {
+      return !symbol.attrs().test(semantics::Attr::OPTIONAL) &&
+             !symbol.attrs().test(semantics::Attr::INTENT_OUT);
+    } else if (const auto *object{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+      // TODO: what about EQUIVALENCE with data in COMMON?
+      // TODO: does this work for blank COMMON?
+      return object->commonBlock() != nullptr;
+    } else if (symbol.has<semantics::UseDetails>() ||
+               symbol.has<semantics::HostAssocDetails>()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  bool operator()(const Component &x) {
+    return (*this)(x.base());
+  }
+  bool operator()(const NamedEntity &x) {
+    if (const Component *component{x.UnwrapComponent()}) {
+      return (*this)(*component);
+    } else {
+      return (*this)(x.GetFirstSymbol());
+    }
+  }
+  bool operator()(const Triplet &x) {
+    return (*this)(x.lower()) && (*this)(x.upper()) && (*this)(x.stride());
+  }
+  bool operator()(const Subscript &x) {
+    return (*this)(x.u);
+  }
+  bool operator()(const ArrayRef &x) {
+    return (*this)(x.base()) && (*this)(x.subscript());
+  }
+  bool operator()(const DataRef &x) {
+    return (*this)(x.u);
+  }
+  bool operator()(const Substring &x) {
+    return (*this)(x.parent()) && (*this)(x.lower()) && (*this)(x.upper());
+  }
+  bool operator()(const ComplexPart &x) {
+    return (*this)(x.complex());
+  }
+  template<typename T> bool operator()(const Designator<T> &x) {
+    return (*this)(x.u);
+  }
+  template<typename T> bool operator()(const Variable<T> &x) {
+    return (*this)(x.u);
+  }
+
+  template<typename T> bool operator()(const ArrayConstructorValues<T> &x) {
+    return std::all_of(x.begin(), x.end(), *this);
+  }
+  template<typename T> bool operator()(const ArrayConstructorValue<T> &x) {
+    return (*this)(x.u);
+  }
+  template<typename T> bool operator()(const ImpliedDo<T> &x) {
+    return (*this)(x.lower) && (*this)(x.upper) && (*this)(x.stride) && (*this)(x.values());
+  }
+  bool operator()(const ImpliedDoIndex &) { return true; }
+  bool operator()(const StructureConstructor &x) {
+    return std::all_of(x.begin(), x.end(), *this);
+  }
+  bool operator()(const StructureConstructorValues::value_type &x) {
+    return (*this)(x.second);
+  }
+  template<int KIND> bool operator()(const TypeParamInquiry<KIND> &x) {
+    return (*this)(x.base());
+  }
+
+  bool operator()(const ActualArgument &x) {
+    if (const auto *symbol{x.GetAssumedTypeDummy()}) {
+      return (*this)(*symbol);
+    } else {
+      return (*this)(x.UnwrapExpr());
+    }
+  }
+  bool operator()(const ProcedureRef &x) {
+    // TODO: check the designator for intrinsic / PURE
+    return (*this)(x.arguments());
+  }
+
+  template<typename D, typename R, typename O>
+  bool operator()(const Operation<D,R,O> &op) {
+    return (*this)(op.left());
+  }
+  template<typename D, typename R, typename LO, typename RO>
+  bool operator()(const Operation<D,R,LO,RO> &op) {
+    return (*this)(op.left()) && (*this)(op.right());
+  }
+  template<typename T> bool operator()(const Expr<T> &x) {
+    return (*this)(x.u);
+  }
+};
+
+bool IsSpecificationExpr(const Expr<SomeType> &x) {
+  return IsSpecificationExprHelper{}(x);
 }
 
 std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
