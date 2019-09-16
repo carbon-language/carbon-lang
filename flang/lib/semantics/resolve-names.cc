@@ -1162,7 +1162,7 @@ void OmpVisitor::ResolveOmpObject(
     } else {
       Say(designator.source,  // 2.15.3
           "COMMON block must be declared in the same scoping unit "
-          "in which the directive or clause appears"_err_en_US);
+          "in which the OpenMP directive or clause appears"_err_en_US);
     }
   }
 }
