@@ -55,7 +55,7 @@ template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using CInteger = Type<TypeCategory::Integer, 4>;
-using LogicalResult = Type<TypeCategory::Logical, 1>;
+using LogicalResult = Type<TypeCategory::Logical, 4>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 
 // A predicate that is true when a kind value is a kind that could possibly
@@ -161,7 +161,7 @@ public:
     return *derived_;
   }
 
-  // 7.3.2.3 type compatibility.
+  // 7.3.2.3 & 15.5.2.4 type compatibility.
   // x.IsTypeCompatibleWith(y) is true if "x => y" or passing actual y to
   // dummy argument x would be valid.  Be advised, this is not a reflexive
   // relation.
@@ -447,6 +447,9 @@ int SelectedCharKind(const std::string &, int defaultKind);
 int SelectedIntKind(std::int64_t precision = 0);
 int SelectedRealKind(
     std::int64_t precision = 0, std::int64_t range = 0, std::int64_t radix = 2);
+
+// Utilities
+bool IsKindTypeParameter(const semantics::Symbol &);
 
 // For generating "[extern] template class", &c. boilerplate
 #define EXPAND_FOR_EACH_INTEGER_KIND(M, P, S) \

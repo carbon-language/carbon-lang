@@ -440,26 +440,24 @@ std::string SomeDerived::AsFortran() const {
 }
 
 std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &spec) {
-  if (spec.HasActualParameters()) {
-    std::stringstream ss;
-    ss << spec.name().ToString();
-    char ch{'('};
-    for (const auto &[name, value] : spec.parameters()) {
-      ss << ch << name.ToString() << '=';
-      ch = ',';
-      if (value.isAssumed()) {
-        ss << '*';
-      } else if (value.isDeferred()) {
-        ss << ':';
-      } else {
-        value.GetExplicit()->AsFortran(ss);
-      }
+  std::stringstream ss;
+  ss << spec.name().ToString();
+  char ch{'('};
+  for (const auto &[name, value] : spec.parameters()) {
+    ss << ch << name.ToString() << '=';
+    ch = ',';
+    if (value.isAssumed()) {
+      ss << '*';
+    } else if (value.isDeferred()) {
+      ss << ':';
+    } else {
+      value.GetExplicit()->AsFortran(ss);
     }
-    ss << ')';
-    return ss.str();
-  } else {
-    return spec.name().ToString();
   }
+  if (ch != '(') {
+    ss << ')';
+  }
+  return ss.str();
 }
 
 std::ostream &EmitVar(std::ostream &o, const Symbol &symbol) {

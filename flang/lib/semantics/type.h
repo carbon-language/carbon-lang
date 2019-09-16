@@ -227,7 +227,7 @@ private:
 };
 std::ostream &operator<<(std::ostream &, const ArraySpec &);
 
-// Each DerivedTypeSpec has a typeSymbol that has DerivedTypeSpec.
+// Each DerivedTypeSpec has a typeSymbol that has DerivedTypeDetails.
 // The name may not match the symbol's name in case of a USE rename.
 class DerivedTypeSpec {
 public:
@@ -243,7 +243,6 @@ public:
   void ReplaceScope(const Scope &);
   const ParameterMapType &parameters() const { return parameters_; }
 
-  bool HasActualParameters() const { return !parameters_.empty(); }
   ParamValue &AddParamValue(SourceName, ParamValue &&);
   ParamValue *FindParameter(SourceName);
   const ParamValue *FindParameter(SourceName target) const {

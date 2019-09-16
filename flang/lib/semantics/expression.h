@@ -311,24 +311,31 @@ private:
   MaybeExpr TopLevelChecks(DataRef &&);
   std::optional<Expr<SubscriptInteger>> GetSubstringBound(
       const std::optional<parser::ScalarIntExpr> &);
-  std::optional<ProcedureDesignator> AnalyzeProcedureComponentRef(
-      const parser::ProcComponentRef &);
-  std::optional<ActualArgument> AnalyzeActualArgument(const parser::Expr &);
 
   struct CalleeAndArguments {
     ProcedureDesignator procedureDesignator;
     ActualArguments arguments;
   };
 
+  std::optional<CalleeAndArguments> AnalyzeProcedureComponentRef(
+      const parser::ProcComponentRef &, ActualArguments &&);
+  std::optional<ActualArgument> AnalyzeActualArgument(const parser::Expr &);
+
   MaybeExpr AnalyzeCall(const parser::Call &, bool isSubroutine);
   std::optional<ActualArguments> AnalyzeArguments(
       const parser::Call &, bool isSubroutine);
-  std::optional<CalleeAndArguments> Procedure(
-      const parser::ProcedureDesignator &, ActualArguments &);
+  std::optional<characteristics::Procedure> CheckCall(
+      parser::CharBlock, const ProcedureDesignator &, ActualArguments &);
+
+  std::optional<CalleeAndArguments> GetCalleeAndArguments(
+      const parser::ProcedureDesignator &, ActualArguments &&,
+      bool isSubroutine);
+
+  void CheckForBadRecursion(parser::CharBlock, const semantics::Symbol &);
   bool EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,
       bool defaultKind = false);
-  MaybeExpr MakeFunctionRef(ProcedureDesignator &&, ActualArguments &&);
-  MaybeExpr MakeFunctionRef(CalleeAndArguments &&);
+  MaybeExpr MakeFunctionRef(
+      parser::CharBlock, ProcedureDesignator &&, ActualArguments &&);
   MaybeExpr MakeFunctionRef(parser::CharBlock intrinsic, ActualArguments &&);
 
   semantics::SemanticsContext &context_;
@@ -354,11 +361,6 @@ void ConformabilityCheck(
         left.Rank(), right.Rank());
   }
 }
-
-std::optional<characteristics::Procedure> Characterize(
-    const ProcedureDesignator &, const IntrinsicProcTable &);
-std::optional<characteristics::Procedure> Characterize(
-    const ProcedureRef &, const IntrinsicProcTable &);
 }  // namespace Fortran::evaluate
 
 namespace Fortran::semantics {

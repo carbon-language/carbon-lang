@@ -14,6 +14,7 @@
 
 #include "check-expression.h"
 #include "traverse.h"
+#include "type.h"
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
 
@@ -34,8 +35,7 @@ public:
   using Base::operator();
 
   template<int KIND> bool operator()(const TypeParamInquiry<KIND> &inq) const {
-    return inq.parameter().template get<semantics::TypeParamDetails>().attr() ==
-        common::TypeParamAttr::Kind;
+    return IsKindTypeParameter(inq.parameter());
   }
   bool operator()(const semantics::Symbol &symbol) const {
     return IsNamedConstant(symbol);
@@ -70,24 +70,44 @@ template<typename A> bool IsConstantExpr(const A &x) {
   return IsConstantExprHelper{}(x);
 }
 template bool IsConstantExpr(const Expr<SomeType> &);
+template bool IsConstantExpr(const Expr<SomeInteger> &);
 
 // Object pointer initialization checking predicate IsInitialDataTarget().
 // This code determines whether an expression is allowable as the static
 // data address used to initialize a pointer with "=> x".  See C765.
-// The caller is responsible for checking the base object symbol's
-// characteristics (TARGET, SAVE, &c.) since this code can't use GetUltimate().
 struct IsInitialDataTargetHelper
   : public AllTraverse<IsInitialDataTargetHelper> {
   using Base = AllTraverse<IsInitialDataTargetHelper>;
   using Base::operator();
-  IsInitialDataTargetHelper() : Base{*this} {}
+  explicit IsInitialDataTargetHelper(parser::ContextualMessages &m)
+    : Base{*this}, messages_{m} {}
 
   bool operator()(const BOZLiteralConstant &) const { return false; }
   bool operator()(const NullPointer &) const { return true; }
   template<typename T> bool operator()(const Constant<T> &) const {
     return false;
   }
-  bool operator()(const semantics::Symbol &) const { return true; }
+  bool operator()(const semantics::Symbol &symbol) const {
+    const Symbol &ultimate{symbol.GetUltimate()};
+    if (IsAllocatable(ultimate)) {
+      messages_.Say(
+          "An initial data target may not be a reference to an ALLOCATABLE '%s'"_err_en_US,
+          ultimate.name());
+    } else if (ultimate.Corank() > 0) {
+      messages_.Say(
+          "An initial data target may not be a reference to a coarray '%s'"_err_en_US,
+          ultimate.name());
+    } else if (!ultimate.attrs().test(semantics::Attr::TARGET)) {
+      messages_.Say(
+          "An initial data target may not be a reference to an object '%s' that lacks the TARGET attribute"_err_en_US,
+          ultimate.name());
+    } else if (!IsSaved(ultimate)) {
+      messages_.Say(
+          "An initial data target may not be a reference to an object '%s' that lacks the SAVE attribute"_err_en_US,
+          ultimate.name());
+    }
+    return true;
+  }
   bool operator()(const StaticDataObject &) const { return false; }
   template<int KIND> bool operator()(const TypeParamInquiry<KIND> &) const {
     return false;
@@ -125,10 +145,14 @@ struct IsInitialDataTargetHelper
     return (*this)(x.left());
   }
   bool operator()(const Relational<SomeType> &) const { return false; }
+
+private:
+  parser::ContextualMessages &messages_;
 };
 
-bool IsInitialDataTarget(const Expr<SomeType> &x) {
-  return IsInitialDataTargetHelper{}(x);
+bool IsInitialDataTarget(
+    const Expr<SomeType> &x, parser::ContextualMessages &messages) {
+  return IsInitialDataTargetHelper{messages}(x);
 }
 
 // Specification expression validation (10.1.11(2), C1010)
@@ -222,11 +246,7 @@ template<typename A>
 void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages,
     const semantics::Scope &scope) {
   if (auto why{CheckSpecificationExprHelper{scope}(x)}) {
-    std::stringstream ss;
-    ss << x;
-    messages.Say("The expression (%s) cannot be used as a "
-                 "specification expression (%s)"_err_en_US,
-        ss.str(), *why);
+    messages.Say("Invalid specification expression: %s"_err_en_US, *why);
   }
 }
 
@@ -237,4 +257,93 @@ template void CheckSpecificationExpr(const std::optional<Expr<SomeInteger>> &,
 template void CheckSpecificationExpr(
     const std::optional<Expr<SubscriptInteger>> &, parser::ContextualMessages &,
     const semantics::Scope &);
+
+// IsSimplyContiguous() -- 9.5.4
+class IsSimplyContiguousHelper
+  : public AnyTraverse<IsSimplyContiguousHelper, std::optional<bool>> {
+public:
+  using Result = std::optional<bool>;  // tri-state
+  using Base = AnyTraverse<IsSimplyContiguousHelper, Result>;
+  explicit IsSimplyContiguousHelper(const IntrinsicProcTable &t)
+    : Base{*this}, table_{t} {}
+  using Base::operator();
+
+  Result operator()(const semantics::Symbol &symbol) const {
+    if (symbol.attrs().test(semantics::Attr::CONTIGUOUS)) {
+      return true;
+    } else if (semantics::IsPointer(symbol)) {
+      return false;
+    } else if (const auto *details{
+                   symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+      return !details->IsAssumedShape() && !details->IsAssumedRank();
+    } else {
+      return false;
+    }
+  }
+
+  Result operator()(const ArrayRef &x) const {
+    if (x.base().Rank() > 0 || !CheckSubscripts(x.subscript())) {
+      return false;
+    } else {
+      return (*this)(x.base());
+    }
+  }
+  Result operator()(const CoarrayRef &x) const {
+    return CheckSubscripts(x.subscript());
+  }
+  Result operator()(const Component &) const { return false; }
+  Result operator()(const ComplexPart &) const { return false; }
+  Result operator()(const Substring &) const { return false; }
+
+  template<typename T> Result operator()(const FunctionRef<T> &x) const {
+    if (auto chars{
+            characteristics::Procedure::Characterize(x.proc(), table_)}) {
+      if (chars->functionResult.has_value()) {
+        const auto &result{*chars->functionResult};
+        return !result.IsProcedurePointer() &&
+            result.attrs.test(characteristics::FunctionResult::Attr::Pointer) &&
+            result.attrs.test(
+                characteristics::FunctionResult::Attr::Contiguous);
+      }
+    }
+    return false;
+  }
+
+private:
+  static bool CheckSubscripts(const std::vector<Subscript> &subscript) {
+    bool anyTriplet{false};
+    for (auto j{subscript.size()}; j-- > 0;) {
+      if (const auto *triplet{std::get_if<Triplet>(&subscript[j].u)}) {
+        if (!triplet->IsStrideOne()) {
+          return false;
+        } else if (anyTriplet) {
+          if (triplet->lower().has_value() || triplet->upper().has_value()) {
+            return false;  // all triplets before the last one must be just ":"
+          }
+        } else {
+          anyTriplet = true;
+        }
+      } else if (anyTriplet || subscript[j].Rank() > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const IntrinsicProcTable &table_;
+};
+
+template<typename A>
+bool IsSimplyContiguous(const A &x, const IntrinsicProcTable &table) {
+  if (IsVariable(x)) {
+    if (auto known{IsSimplyContiguousHelper{table}(x)}) {
+      return *known;
+    }
+  }
+  return false;
+}
+
+template bool IsSimplyContiguous(
+    const Expr<SomeType> &, const IntrinsicProcTable &);
+
 }

@@ -5047,7 +5047,9 @@ const parser::Name *DeclarationVisitor::FindComponent(
 // C764, C765
 void DeclarationVisitor::CheckInitialDataTarget(
     const Symbol &pointer, const SomeExpr &expr, SourceName source) {
-  if (!evaluate::IsInitialDataTarget(expr)) {
+  auto &messages{GetFoldingContext().messages()};
+  auto save{messages.SetLocation(source)};
+  if (!evaluate::IsInitialDataTarget(expr, messages)) {
     Say(source,
         "Pointer '%s' cannot be initialized with a reference to a designator with non-constant subscripts"_err_en_US,
         pointer.name());
@@ -5058,35 +5060,6 @@ void DeclarationVisitor::CheckInitialDataTarget(
         "Pointer '%s' of rank %d cannot be initialized with a target of different rank (%d)"_err_en_US,
         pointer.name(), pointer.Rank(), expr.Rank());
     return;
-  }
-  if (auto base{evaluate::GetBaseObject(expr)}) {
-    if (const Symbol * baseSym{base->symbol()}) {
-      const Symbol &ultimate{baseSym->GetUltimate()};
-      if (IsAllocatable(ultimate)) {
-        Say(source,
-            "Pointer '%s' cannot be initialized with a reference to an allocatable '%s'"_err_en_US,
-            pointer.name(), ultimate.name());
-        return;
-      }
-      if (ultimate.Corank() > 0) {
-        Say(source,
-            "Pointer '%s' cannot be initialized with a reference to a coarray '%s'"_err_en_US,
-            pointer.name(), ultimate.name());
-        return;
-      }
-      if (!ultimate.attrs().test(Attr::TARGET)) {
-        Say(source,
-            "Pointer '%s' cannot be initialized with a reference to an object '%s' that lacks the TARGET attribute"_err_en_US,
-            pointer.name(), ultimate.name());
-        return;
-      }
-      if (!IsSaved(ultimate)) {
-        Say(source,
-            "Pointer '%s' cannot be initialized with a reference to an object '%s' that lacks the SAVE attribute"_err_en_US,
-            pointer.name(), ultimate.name());
-        return;
-      }
-    }
   }
   // TODO: check type compatibility
   // TODO: check non-deferred type parameter values
@@ -6028,6 +6001,7 @@ void ResolveNamesVisitor::SetPassArg(
     }
   }
   details.set_passIndex(passArgIndex);
+  details.set_passName(passName.value());
 }
 
 // Resolve names in the execution part of this node and its children

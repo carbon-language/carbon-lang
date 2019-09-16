@@ -25,13 +25,14 @@ module ieee_exceptions
     ieee_overflow = ieee_flag_type(2), &
     ieee_divide_by_zero = ieee_flag_type(4), &
     ieee_underflow = ieee_flag_type(8), &
-    ieee_inexact = ieee_flag_type(16)
+    ieee_inexact = ieee_flag_type(16), &
+    ieee_denorm = ieee_flag_type(32) ! PGI extension
 
   type(ieee_flag_type), parameter :: &
     ieee_usual(*) = [ &
       ieee_overflow, ieee_divide_by_zero, ieee_invalid ], &
     ieee_all(*) = [ &
-      ieee_usual, ieee_underflow, ieee_inexact ]
+      ieee_usual, ieee_underflow, ieee_inexact, ieee_denorm ]
 
   type :: ieee_modes_type ! Fortran 2018, 17.7
     private
@@ -40,6 +41,15 @@ module ieee_exceptions
   type :: ieee_status_type ! Fortran 2018, 17.7
     private
   end type ieee_status_type
+
+  private :: ieee_support_flag_2, ieee_support_flag_3, &
+      ieee_support_flag_4, ieee_support_flag_8, ieee_support_flag_10, &
+      ieee_support_flag_16
+  interface ieee_support_flag
+    module procedure :: ieee_support_flag_2, ieee_support_flag_3, &
+      ieee_support_flag_4, ieee_support_flag_8, ieee_support_flag_10, &
+      ieee_support_flag_16
+  end interface
 
  contains
   subroutine ieee_get_flag(flag, flag_value)
@@ -78,10 +88,36 @@ module ieee_exceptions
     type(ieee_status_type), intent(in) :: status
   end subroutine ieee_set_status
 
-  pure logical function ieee_support_flag(flag, x)
+  pure logical function ieee_support_flag_2(flag, x)
     type(ieee_flag_type), intent(in) :: flag
-    real, intent(in), optional :: x
-  end function ieee_support_flag
+    real(kind=2), intent(in) :: x(..)
+    ieee_support_flag_2 = .true.
+  end function
+  pure logical function ieee_support_flag_3(flag, x)
+    type(ieee_flag_type), intent(in) :: flag
+    real(kind=3), intent(in) :: x(..)
+    ieee_support_flag_3 = .true.
+  end function
+  pure logical function ieee_support_flag_4(flag, x)
+    type(ieee_flag_type), intent(in) :: flag
+    real(kind=4), intent(in) :: x(..)
+    ieee_support_flag_4 = .true.
+  end function
+  pure logical function ieee_support_flag_8(flag, x)
+    type(ieee_flag_type), intent(in) :: flag
+    real(kind=8), intent(in) :: x(..)
+    ieee_support_flag_8 = .true.
+  end function
+  pure logical function ieee_support_flag_10(flag, x)
+    type(ieee_flag_type), intent(in) :: flag
+    real(kind=10), intent(in) :: x(..)
+    ieee_support_flag_10 = .true.
+  end function
+  pure logical function ieee_support_flag_16(flag, x)
+    type(ieee_flag_type), intent(in) :: flag
+    real(kind=16), intent(in) :: x(..)
+    ieee_support_flag_16 = .true.
+  end function
 
   pure logical function ieee_support_halting(flag)
     type(ieee_flag_type), intent(in) :: flag

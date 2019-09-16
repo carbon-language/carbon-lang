@@ -13,11 +13,14 @@
 // limitations under the License.
 
 #include "characteristics.h"
+#include "check-expression.h"
+#include "fold.h"
 #include "intrinsics.h"
 #include "tools.h"
 #include "type.h"
 #include "../common/indirection.h"
 #include "../parser/message.h"
+#include "../semantics/scope.h"
 #include "../semantics/symbol.h"
 #include <initializer_list>
 #include <ostream>
@@ -38,8 +41,7 @@ static void CopyAttrs(const semantics::Symbol &src, A &dst,
 }
 
 bool TypeAndShape::operator==(const TypeAndShape &that) const {
-  return type_ == that.type_ && shape_ == that.shape_ &&
-      isAssumedRank_ == that.isAssumedRank_;
+  return type_ == that.type_ && shape_ == that.shape_ && attrs_ == that.attrs_;
 }
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
@@ -98,19 +100,42 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
 
 bool TypeAndShape::IsCompatibleWith(
     parser::ContextualMessages &messages, const TypeAndShape &that) const {
+  const auto &len{that.LEN()};
   if (!type_.IsTypeCompatibleWith(that.type_)) {
+    std::stringstream lenstr;
+    if (len) {
+      len->AsFortran(lenstr);
+    }
     messages.Say("Target type '%s' is not compatible with '%s'"_err_en_US,
-        that.type_.AsFortran(), type_.AsFortran());
+        that.type_.AsFortran(lenstr.str()), type_.AsFortran());
     return false;
+  }
+  if (auto myLEN{ToInt64(LEN())}) {
+    if (auto thatLEN{ToInt64(len)}) {
+      if (*thatLEN < *myLEN) {
+        messages.Say(
+            "Warning: effective length '%jd' is less than expected length '%jd'"_en_US,
+            *thatLEN, *myLEN);
+      }
+    }
   }
   return CheckConformance(messages, shape_, that.shape_);
 }
 
 void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {
-  CHECK(shape_.empty() && !isAssumedRank_);
+  CHECK(shape_.empty() && !attrs_.test(Attr::AssumedRank));
   if (object.IsAssumedRank()) {
-    isAssumedRank_ = true;
+    attrs_.set(Attr::AssumedRank);
     return;
+  }
+  if (object.IsAssumedShape()) {
+    attrs_.set(Attr::AssumedShape);
+  }
+  if (object.IsAssumedSize()) {
+    attrs_.set(Attr::AssumedSize);
+  }
+  if (object.IsCoarray()) {
+    attrs_.set(Attr::Coarray);
   }
   for (const semantics::ShapeSpec &dim : object.shape()) {
     if (dim.ubound().GetExplicit().has_value()) {
@@ -127,8 +152,23 @@ void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {
   }
 }
 
+void TypeAndShape::AcquireLEN() {
+  if (type_.category() == TypeCategory::Character) {
+    if (const auto *param{type_.charLength()}) {
+      if (const auto &intExpr{param->GetExplicit()}) {
+        LEN_ = *intExpr;
+      }
+    }
+  }
+}
+
 std::ostream &TypeAndShape::Dump(std::ostream &o) const {
-  o << type_.AsFortran();
+  std::stringstream LENstr;
+  if (LEN_.has_value()) {
+    LEN_->AsFortran(LENstr);
+  }
+  o << type_.AsFortran(LENstr.str());
+  attrs_.Dump(o, EnumToString);
   if (!shape_.empty()) {
     o << " dimension(";
     char sep{'('};
@@ -142,8 +182,6 @@ std::ostream &TypeAndShape::Dump(std::ostream &o) const {
       }
     }
     o << ')';
-  } else if (isAssumedRank_) {
-    o << " dimension(*)";
   }
   return o;
 }
@@ -181,11 +219,32 @@ std::optional<DummyDataObject> DummyDataObject::Characterize(
         CHECK(result.intent == common::Intent::Default);
         result.intent = common::Intent::InOut;
       }
-      // TODO: acquire coshape when symbol table represents it
       return result;
     }
   }
   return std::nullopt;
+}
+
+bool DummyDataObject::CanBePassedViaImplicitInterface() const {
+  if ((attrs &
+          Attrs{Attr::Allocatable, Attr::Asynchronous, Attr::Optional,
+              Attr::Pointer, Attr::Target, Attr::Value, Attr::Volatile})
+          .any()) {
+    return false;  // 15.4.2.2(3)(a)
+  } else if ((type.attrs() &
+                 TypeAndShape::Attrs{TypeAndShape::Attr::AssumedShape,
+                     TypeAndShape::Attr::AssumedRank,
+                     TypeAndShape::Attr::Coarray})
+                 .any()) {
+    return false;  // 15.4.2.2(3)(b-d)
+  } else if (type.type().IsPolymorphic()) {
+    return false;  // 15.4.2.2(3)(f)
+  } else if (type.type().category() == TypeCategory::Derived) {
+    if (!type.type().GetDerivedTypeSpec().parameters().empty()) {
+      return false;  // 15.4.2.2(3)(e)
+    }
+  }
+  return true;
 }
 
 std::ostream &DummyDataObject::Dump(std::ostream &o) const {
@@ -279,6 +338,14 @@ void DummyArgument::SetOptional(bool value) {
       u);
 }
 
+bool DummyArgument::CanBePassedViaImplicitInterface() const {
+  if (const auto *object{std::get_if<DummyDataObject>(&u)}) {
+    return object->CanBePassedViaImplicitInterface();
+  } else {
+    return true;
+  }
+}
+
 std::ostream &DummyArgument::Dump(std::ostream &o) const {
   if (!name.empty()) {
     o << name << '=';
@@ -328,6 +395,45 @@ bool FunctionResult::IsAssumedLengthCharacter() const {
   }
 }
 
+bool FunctionResult::CanBeReturnedViaImplicitInterface() const {
+  if (attrs.test(Attr::Pointer) || attrs.test(Attr::Allocatable)) {
+    return false;  // 15.4.2.2(4)(b)
+  } else if (const auto *typeAndShape{GetTypeAndShape()}) {
+    if (typeAndShape->Rank() > 0) {
+      return false;  // 15.4.2.2(4)(a)
+    } else {
+      const DynamicType &type{typeAndShape->type()};
+      switch (type.category()) {
+      case TypeCategory::Character:
+        if (!type.IsAssumedLengthCharacter()) {
+          if (const auto *param{type.charLength()}) {
+            if (const auto &expr{param->GetExplicit()}) {
+              return IsConstantExpr(*expr);  // 15.4.2.2(4)(c)
+            }
+          }
+        }
+        return false;
+      case TypeCategory::Derived:
+        if (!type.IsPolymorphic()) {
+          const auto &spec{type.GetDerivedTypeSpec()};
+          for (const auto &pair : spec.parameters()) {
+            if (const auto &expr{pair.second.GetExplicit()}) {
+              if (!IsConstantExpr(*expr)) {
+                return false;  // 15.4.2.2(4)(c)
+              }
+            }
+          }
+          return true;
+        }
+        return false;
+      default: return true;
+      }
+    }
+  } else {
+    return false;  // 15.4.2.2(4)(b) - procedure pointer
+  }
+}
+
 std::ostream &FunctionResult::Dump(std::ostream &o) const {
   attrs.Dump(o, EnumToString);
   std::visit(
@@ -360,6 +466,15 @@ std::optional<Procedure> Procedure::Characterize(
           {semantics::Attr::ELEMENTAL, Procedure::Attr::Elemental},
           {semantics::Attr::BIND_C, Procedure::Attr::BindC},
       });
+  auto SetFunctionResult{[&](const semantics::DeclTypeSpec *type) {
+    if (type != nullptr) {
+      if (auto resultType{DynamicType::From(*type)}) {
+        result.functionResult = FunctionResult{*resultType};
+        return true;
+      }
+    }
+    return false;
+  }};
   return std::visit(
       common::visitors{
           [&](const semantics::SubprogramDetails &subp)
@@ -400,15 +515,9 @@ std::optional<Procedure> Procedure::Characterize(
             } else {
               result.attrs.set(Procedure::Attr::ImplicitInterface);
               if (symbol.test(semantics::Symbol::Flag::Function)) {
-                const semantics::DeclTypeSpec *type{interface.type()};
-                if (!type) {
+                if (!SetFunctionResult(interface.type())) {
                   return std::nullopt;
                 }
-                auto resultType{DynamicType::From(*type)};
-                if (!resultType) {
-                  return std::nullopt;
-                }
-                result.functionResult = FunctionResult{*resultType};
               } else {
                 // subroutine, not function
                 if (interface.type() != nullptr) {
@@ -441,6 +550,40 @@ std::optional<Procedure> Procedure::Characterize(
           [](const auto &) { return std::optional<Procedure>{}; },
       },
       symbol.details());
+}
+
+std::optional<Procedure> Procedure::Characterize(
+    const ProcedureDesignator &proc, const IntrinsicProcTable &intrinsics) {
+  if (const auto *symbol{proc.GetSymbol()}) {
+    if (auto result{characteristics::Procedure::Characterize(
+            symbol->GetUltimate(), intrinsics)}) {
+      return result;
+    }
+  } else if (const auto *intrinsic{proc.GetSpecificIntrinsic()}) {
+    return intrinsic->characteristics.value();
+  }
+  return std::nullopt;
+}
+
+std::optional<Procedure> Procedure::Characterize(
+    const ProcedureRef &ref, const IntrinsicProcTable &intrinsics) {
+  return Characterize(ref.proc(), intrinsics);
+}
+
+bool Procedure::CanBeCalledViaImplicitInterface() const {
+  if (attrs.test(Attr::Elemental) || attrs.test(Attr::BindC)) {
+    return false;  // 15.4.2.2(5,6)
+  } else if (IsFunction() &&
+      !functionResult->CanBeReturnedViaImplicitInterface()) {
+    return false;
+  } else {
+    for (const DummyArgument &arg : dummyArguments) {
+      if (!arg.CanBePassedViaImplicitInterface()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 std::ostream &Procedure::Dump(std::ostream &o) const {
@@ -722,7 +865,9 @@ bool DistinguishUtils::IsTkrCompatible(
 bool DistinguishUtils::IsTkrCompatible(
     const TypeAndShape &x, const TypeAndShape &y) {
   return x.type().IsTkCompatibleWith(y.type()) &&
-      (x.IsAssumedRank() || y.IsAssumedRank() || x.Rank() == y.Rank());
+      (x.attrs().test(TypeAndShape::Attr::AssumedRank) ||
+          y.attrs().test(TypeAndShape::Attr::AssumedRank) ||
+          x.Rank() == y.Rank());
 }
 
 // Return the argument at the given index, ignoring the passed arg

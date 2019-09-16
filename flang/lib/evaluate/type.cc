@@ -109,18 +109,16 @@ bool DynamicType::IsAssumedLengthCharacter() const {
       charLength_->isAssumed();
 }
 
-static const semantics::DerivedTypeSpec *GetParentTypeSpec(
-    const semantics::DerivedTypeSpec &spec) {
-  const semantics::Symbol &typeSymbol{spec.typeSymbol()};
+static const semantics::Symbol *FindParentComponent(
+    const semantics::DerivedTypeSpec &derived) {
+  const semantics::Symbol &typeSymbol{derived.typeSymbol()};
   if (const semantics::Scope * scope{typeSymbol.scope()}) {
     const auto &dtDetails{typeSymbol.get<semantics::DerivedTypeDetails>()};
     if (auto extends{dtDetails.GetParentComponentName()}) {
       if (auto iter{scope->find(*extends)}; iter != scope->cend()) {
         if (const Symbol & symbol{*iter->second};
             symbol.test(Symbol::Flag::ParentComp)) {
-          return &symbol.get<semantics::ObjectEntityDetails>()
-                      .type()
-                      ->derivedTypeSpec();
+          return &symbol;
         }
       }
     }
@@ -128,23 +126,166 @@ static const semantics::DerivedTypeSpec *GetParentTypeSpec(
   return nullptr;
 }
 
-static bool IsAncestorTypeOf(const semantics::DerivedTypeSpec *ancestor,
-    const semantics::DerivedTypeSpec *spec) {
-  if (ancestor == nullptr) {
-    return false;
-  } else if (spec == nullptr) {
-    return false;
-  } else if (spec->typeSymbol() == ancestor->typeSymbol()) {
-    return true;
+static const semantics::DerivedTypeSpec *GetParentTypeSpec(
+    const semantics::DerivedTypeSpec &derived) {
+  if (const semantics::Symbol * parent{FindParentComponent(derived)}) {
+    return &parent->get<semantics::ObjectEntityDetails>()
+                .type()
+                ->derivedTypeSpec();
   } else {
-    return IsAncestorTypeOf(ancestor, GetParentTypeSpec(*spec));
+    return nullptr;
   }
 }
 
+static const semantics::Symbol *FindComponent(
+    const semantics::DerivedTypeSpec &derived, parser::CharBlock name) {
+  if (const auto *scope{derived.scope()}) {
+    auto iter{scope->find(name)};
+    if (iter != scope->end()) {
+      return iter->second;
+    } else if (const auto *parent{GetParentTypeSpec(derived)}) {
+      return FindComponent(*parent, name);
+    }
+  }
+  return nullptr;
+}
+
+// Compares two derived type representations to see whether they both
+// represent the "same type" in the sense of section 7.5.2.4.
+using SetOfDerivedTypePairs =
+    std::set<std::pair<const semantics::DerivedTypeSpec *,
+        const semantics::DerivedTypeSpec *>>;
+
+static bool AreSameComponent(const semantics::Symbol &,
+    const semantics::Symbol &, SetOfDerivedTypePairs &inProgress);
+
+static bool AreSameDerivedType(const semantics::DerivedTypeSpec &x,
+    const semantics::DerivedTypeSpec &y, SetOfDerivedTypePairs &inProgress) {
+  const auto &xSymbol{x.typeSymbol()};
+  const auto &ySymbol{y.typeSymbol()};
+  if (&x == &y || xSymbol == ySymbol) {
+    return true;
+  }
+  auto thisQuery{std::make_pair(&x, &y)};
+  if (inProgress.find(thisQuery) != inProgress.end()) {
+    return true;  // recursive use of types in components
+  }
+  inProgress.insert(thisQuery);
+  const auto &xDetails{xSymbol.get<semantics::DerivedTypeDetails>()};
+  const auto &yDetails{ySymbol.get<semantics::DerivedTypeDetails>()};
+  if (xSymbol.name() != ySymbol.name()) {
+    return false;
+  }
+  if (!(xDetails.sequence() && yDetails.sequence()) &&
+      !(xSymbol.attrs().test(semantics::Attr::BIND_C) &&
+          ySymbol.attrs().test(semantics::Attr::BIND_C))) {
+    // PGI does not enforce this requirement; all other Fortran
+    // processors do with a hard error when violations are caught.
+    return false;
+  }
+  // Compare the component lists in their orders of declaration.
+  auto xEnd{xDetails.componentNames().cend()};
+  auto yComponentName{yDetails.componentNames().cbegin()};
+  auto yEnd{yDetails.componentNames().cend()};
+  for (auto xComponentName{xDetails.componentNames().cbegin()};
+       xComponentName != xEnd; ++xComponentName, ++yComponentName) {
+    if (yComponentName == yEnd || *xComponentName != *yComponentName ||
+        xSymbol.scope() == nullptr || ySymbol.scope() == nullptr) {
+      return false;
+    }
+    const auto xLookup{xSymbol.scope()->find(*xComponentName)};
+    const auto yLookup{ySymbol.scope()->find(*yComponentName)};
+    if (xLookup == xSymbol.scope()->end() ||
+        yLookup == ySymbol.scope()->end() ||
+        !AreSameComponent(
+            DEREF(xLookup->second), DEREF(yLookup->second), inProgress)) {
+      return false;
+    }
+  }
+  return yComponentName == yEnd;
+}
+
+static bool AreSameComponent(const semantics::Symbol &x,
+    const semantics::Symbol &y,
+    SetOfDerivedTypePairs & /* inProgress - not yet used */) {
+  if (x.attrs() != y.attrs()) {
+    return false;
+  }
+  if (x.attrs().test(semantics::Attr::PRIVATE)) {
+    return false;
+  }
+#if 0 // TODO
+  if (const auto *xObject{x.detailsIf<semantics::ObjectEntityDetails>()}) {
+    if (const auto *yObject{y.detailsIf<semantics::ObjectEntityDetails>()}) {
+#else
+  if (x.has<semantics::ObjectEntityDetails>()) {
+    if (y.has<semantics::ObjectEntityDetails>()) {
+#endif
+      // TODO: compare types, type parameters, bounds, &c.
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // TODO: non-object components
+    return true;
+  }
+}
+
+static bool AreCompatibleDerivedTypes(const semantics::DerivedTypeSpec *x,
+    const semantics::DerivedTypeSpec *y, bool isPolymorphic) {
+  if (x == nullptr || y == nullptr) {
+    return false;
+  } else {
+    SetOfDerivedTypePairs inProgress;
+    if (AreSameDerivedType(*x, *y, inProgress)) {
+      return true;
+    } else {
+      return isPolymorphic &&
+          AreCompatibleDerivedTypes(x, GetParentTypeSpec(*y), true);
+    }
+  }
+}
+
+bool IsKindTypeParameter(const semantics::Symbol &symbol) {
+  const auto *param{symbol.detailsIf<semantics::TypeParamDetails>()};
+  return param && param->attr() == common::TypeParamAttr::Kind;
+}
+
+static bool IsKindTypeParameter(
+    const semantics::DerivedTypeSpec &derived, parser::CharBlock name) {
+  const semantics::Symbol *symbol{FindComponent(derived, name)};
+  return symbol && IsKindTypeParameter(*symbol);
+}
+
 bool DynamicType::IsTypeCompatibleWith(const DynamicType &that) const {
-  return *this == that || IsUnlimitedPolymorphic() ||
-      (IsPolymorphic() && derived_ != nullptr &&
-          IsAncestorTypeOf(derived_, that.derived_));
+  if (derived_ != nullptr) {
+    if (!AreCompatibleDerivedTypes(derived_, that.derived_, IsPolymorphic())) {
+      return false;
+    }
+    // The values of derived type KIND parameters must match.
+    for (const auto &[name, param] : derived_->parameters()) {
+      if (IsKindTypeParameter(*derived_, name)) {
+        bool ok{false};
+        if (auto myValue{ToInt64(param.GetExplicit())}) {
+          if (const auto *thatParam{that.derived_->FindParameter(name)}) {
+            if (auto thatValue{ToInt64(thatParam->GetExplicit())}) {
+              ok = *myValue == *thatValue;
+            }
+          }
+        }
+        if (!ok) {
+          return false;
+        }
+      }
+    }
+    return true;
+  } else if (category_ == that.category_ && kind_ == that.kind_) {
+    // CHARACTER length is not checked here
+    return true;
+  } else {
+    return IsUnlimitedPolymorphic();
+  }
 }
 
 // Do the kind type parameters of type1 have the same values as the
@@ -172,10 +313,8 @@ bool DynamicType::IsTkCompatibleWith(const DynamicType &that) const {
   } else if (!derived_ || !that.derived_ ||
       !IsKindCompatible(*derived_, *that.derived_)) {
     return false;  // kind params don't match
-  } else if (!IsPolymorphic()) {
-    return derived_->typeSymbol() == that.derived_->typeSymbol();
   } else {
-    return IsAncestorTypeOf(derived_, that.derived_);
+    return AreCompatibleDerivedTypes(derived_, that.derived_, IsPolymorphic());
   }
 }
 

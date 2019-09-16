@@ -19,6 +19,7 @@
 #include "symbol.h"
 #include "tools.h"
 #include "../common/idioms.h"
+#include "../evaluate/check-call.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
@@ -1437,9 +1438,21 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
 }
 
-std::optional<ProcedureDesignator>
-ExpressionAnalyzer::AnalyzeProcedureComponentRef(
-    const parser::ProcComponentRef &pcr) {
+static const semantics::WithPassArg *GetPassInfo(
+    const semantics::Symbol &symbol) {
+  if (const auto *binding{symbol.detailsIf<semantics::ProcBindingDetails>()}) {
+    return binding;
+  } else if (const auto *proc{
+                 symbol.detailsIf<semantics::ProcEntityDetails>()}) {
+    return proc;
+  } else {
+    return nullptr;
+  }
+}
+
+auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
+    const parser::ProcComponentRef &pcr, ActualArguments &&arguments)
+    -> std::optional<CalleeAndArguments> {
   const parser::StructureComponent &sc{pcr.v.thing};
   const auto &name{sc.component.source};
   if (MaybeExpr base{Analyze(sc.base)}) {
@@ -1456,20 +1469,44 @@ ExpressionAnalyzer::AnalyzeProcedureComponentRef(
                   ExtractDataRef(std::move(*dtExpr))}) {
             if (auto component{CreateComponent(
                     std::move(*dataRef), *sym, *dtSpec->scope())}) {
-              return ProcedureDesignator{std::move(*component)};
+              if (const auto *pass{GetPassInfo(*sym)}) {
+                if (auto passIndex{pass->passIndex()}) {
+                  // There's a PASS argument by which the base of the procedure
+                  // component reference must be passed.  Append or insert it to
+                  // the list of effective arguments.
+                  auto iter{arguments.begin()};
+                  int at{0};
+                  while (iter < arguments.end() && at < *passIndex) {
+                    if (iter->has_value() && (*iter)->keyword.has_value()) {
+                      iter = arguments.end();
+                      break;
+                    }
+                    ++iter;
+                    ++at;
+                  }
+                  ActualArgument passed{AsGenericExpr(std::move(*dtExpr))};
+                  if (iter == arguments.end() && pass->passName().has_value()) {
+                    passed.keyword = *pass->passName();
+                  }
+                  arguments.emplace(iter, std::move(passed));
+                }
+              }
+              return CalleeAndArguments{
+                  ProcedureDesignator{std::move(*component)},
+                  std::move(arguments)};
             } else {
               Say(name,
-                  "procedure component is not in scope of derived TYPE(%s)"_err_en_US,
+                  "Procedure component is not in scope of derived TYPE(%s)"_err_en_US,
                   dtSpec->typeSymbol().name());
             }
           } else {
             Say(name,
-                "base of procedure component reference must be a data reference"_err_en_US);
+                "Base of procedure component reference must be a data reference"_err_en_US);
           }
         }
       } else {
         Say(name,
-            "base of procedure component reference is not a derived type object"_err_en_US);
+            "Base of procedure component reference is not a derived type object"_err_en_US);
       }
     }
   }
@@ -1477,8 +1514,9 @@ ExpressionAnalyzer::AnalyzeProcedureComponentRef(
   return std::nullopt;
 }
 
-auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
-    ActualArguments &arguments) -> std::optional<CalleeAndArguments> {
+auto ExpressionAnalyzer::GetCalleeAndArguments(
+    const parser::ProcedureDesignator &pd, ActualArguments &&arguments,
+    bool isSubroutine) -> std::optional<CalleeAndArguments> {
   return std::visit(
       common::visitors{
           [&](const parser::Name &n) -> std::optional<CalleeAndArguments> {
@@ -1488,7 +1526,8 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
             const Symbol &symbol{n.symbol->GetUltimate()};
             if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
               if (std::optional<SpecificCall> specificCall{
-                      context_.intrinsics().Probe(CallCharacteristics{n.source},
+                      context_.intrinsics().Probe(
+                          CallCharacteristics{n.source, isSubroutine},
                           arguments, GetFoldingContext())}) {
                 return CalleeAndArguments{ProcedureDesignator{std::move(
                                               specificCall->specificIntrinsic)},
@@ -1497,48 +1536,36 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 return std::nullopt;
               }
             }
-            if (const auto *scope{symbol.scope()}) {
-              if (scope->sourceRange().Contains(n.source)) {
-                if (symbol.attrs().test(
-                        semantics::Attr::NON_RECURSIVE)) {  // 15.6.2.1(3)
-                  if (auto *msg{Say(
-                          "NON_RECURSIVE procedure '%s' cannot call itself"_err_en_US,
-                          n.source)}) {
-                    msg->Attach(
-                        symbol.name(), "definition of '%s'"_en_US, n.source);
-                  }
-                } else if (IsAssumedLengthCharacterFunction(
-                               symbol)) {  // 15.6.2.1(3)
-                  if (auto *msg{Say(
-                          "Assumed-length CHARACTER(*) function '%s' cannot call itself"_err_en_US,
-                          n.source)}) {
-                    msg->Attach(
-                        symbol.name(), "definition of '%s'"_en_US, n.source);
-                  }
-                }
-              }
-            }
-            if (symbol.HasExplicitInterface()) {
-              // TODO: check actual arguments vs. interface
-            } else {
-              // TODO: call with implicit interface
-            }
+            CheckForBadRecursion(n.source, symbol);
             return CalleeAndArguments{
                 ProcedureDesignator{*n.symbol}, std::move(arguments)};
           },
           [&](const parser::ProcComponentRef &pcr)
               -> std::optional<CalleeAndArguments> {
-            if (std::optional<ProcedureDesignator> proc{
-                    AnalyzeProcedureComponentRef(pcr)}) {
-              // TODO distinguish PCR from TBP
-              // TODO optional PASS argument for TBP
-              return CalleeAndArguments{std::move(*proc), std::move(arguments)};
-            } else {
-              return std::nullopt;
-            }
+            return AnalyzeProcedureComponentRef(pcr, std::move(arguments));
           },
       },
       pd.u);
+}
+
+void ExpressionAnalyzer::CheckForBadRecursion(
+    parser::CharBlock callSite, const semantics::Symbol &proc) {
+  if (const auto *scope{proc.scope()}) {
+    if (scope->sourceRange().Contains(callSite)) {
+      parser::Message *msg{nullptr};
+      if (proc.attrs().test(semantics::Attr::NON_RECURSIVE)) {  // 15.6.2.1(3)
+        msg = Say("NON_RECURSIVE procedure '%s' cannot call itself"_err_en_US,
+            callSite);
+      } else if (IsAssumedLengthCharacterFunction(proc)) {  // 15.6.2.1(3)
+        msg = Say(
+            "Assumed-length CHARACTER(*) function '%s' cannot call itself"_err_en_US,
+            callSite);
+      }
+      if (msg != nullptr) {
+        msg->Attach(proc.name(), "definition of '%s'"_en_US, callSite);
+      }
+    }
+  }
 }
 
 template<typename A> static const Symbol *AssumedTypeDummy(const A &x) {
@@ -1609,12 +1636,16 @@ MaybeExpr ExpressionAnalyzer::AnalyzeCall(
   auto save{GetContextualMessages().SetLocation(call.source)};
   if (auto arguments{AnalyzeArguments(call, isSubroutine)}) {
     // TODO: map non-intrinsic generic procedure to specific procedure
-    if (std::optional<CalleeAndArguments> callee{Procedure(
-            std::get<parser::ProcedureDesignator>(call.t), *arguments)}) {
+    if (std::optional<CalleeAndArguments> callee{
+            GetCalleeAndArguments(std::get<parser::ProcedureDesignator>(call.t),
+                std::move(*arguments), isSubroutine)}) {
       if (isSubroutine) {
-        // TODO
+        CheckCall(call.source, callee->procedureDesignator, callee->arguments);
+        // TODO: Package the subroutine call as an expr in the parse tree
       } else {
-        return MakeFunctionRef(std::move(*callee));
+        return MakeFunctionRef(call.source,
+            std::move(callee->procedureDesignator),
+            std::move(callee->arguments));
       }
     }
   }
@@ -1663,6 +1694,36 @@ std::optional<ActualArguments> ExpressionAnalyzer::AnalyzeArguments(
     }
   }
   return arguments;
+}
+
+static bool IsExternalCalledImplicitly(
+    parser::CharBlock callSite, const ProcedureDesignator &proc) {
+  if (const auto *symbol{proc.GetSymbol()}) {
+    return !callSite.empty() && symbol->has<semantics::SubprogramDetails>() &&
+        (symbol->owner().IsGlobal() ||
+            (symbol->owner().parent().IsGlobal() &&
+                !symbol->owner().sourceRange().Contains(callSite)));
+  } else {
+    return false;
+  }
+}
+
+std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
+    parser::CharBlock callSite, const ProcedureDesignator &proc,
+    ActualArguments &arguments) {
+  auto chars{
+      characteristics::Procedure::Characterize(proc, context_.intrinsics())};
+  if (chars.has_value()) {
+    bool treatExternalAsImplicit{IsExternalCalledImplicitly(callSite, proc)};
+    if (treatExternalAsImplicit && !chars->CanBeCalledViaImplicitInterface()) {
+      Say(callSite,
+          "References to the procedure '%s' require an explicit interface"_en_US,
+          DEREF(proc.GetSymbol()).name());
+    }
+    CheckArguments(
+        *chars, arguments, GetFoldingContext(), treatExternalAsImplicit);
+  }
+  return chars;
 }
 
 // Unary operations
@@ -2189,14 +2250,14 @@ bool ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
   return true;
 }
 
-MaybeExpr ExpressionAnalyzer::MakeFunctionRef(
+MaybeExpr ExpressionAnalyzer::MakeFunctionRef(parser::CharBlock callSite,
     ProcedureDesignator &&proc, ActualArguments &&arguments) {
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&proc.u)}) {
     if (intrinsic->name == "null" && arguments.empty()) {
       return Expr<SomeType>{NullPointer{}};
     }
   }
-  if (auto chars{Characterize(proc, context_.intrinsics())}) {
+  if (auto chars{CheckCall(callSite, proc, arguments)}) {
     if (chars->functionResult.has_value()) {
       const auto &result{*chars->functionResult};
       if (result.IsProcedurePointer()) {
@@ -2235,39 +2296,17 @@ MaybeExpr ExpressionAnalyzer::MakeFunctionRef(
   return std::nullopt;
 }
 
-MaybeExpr ExpressionAnalyzer::MakeFunctionRef(CalleeAndArguments &&callee) {
-  return MakeFunctionRef(
-      std::move(callee.procedureDesignator), std::move(callee.arguments));
-}
-
 MaybeExpr ExpressionAnalyzer::MakeFunctionRef(
     parser::CharBlock intrinsic, ActualArguments &&arguments) {
   if (std::optional<SpecificCall> specificCall{
           context_.intrinsics().Probe(CallCharacteristics{intrinsic}, arguments,
               context_.foldingContext())}) {
-    return MakeFunctionRef(
+    return MakeFunctionRef(intrinsic,
         ProcedureDesignator{std::move(specificCall->specificIntrinsic)},
         std::move(specificCall->arguments));
   } else {
     return std::nullopt;
   }
-}
-
-std::optional<characteristics::Procedure> Characterize(
-    const ProcedureDesignator &proc, const IntrinsicProcTable &intrinsics) {
-  if (const auto *symbol{proc.GetSymbol()}) {
-    return characteristics::Procedure::Characterize(
-        symbol->GetUltimate(), intrinsics);
-  } else if (const auto *intrinsic{proc.GetSpecificIntrinsic()}) {
-    return intrinsic->characteristics.value();
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<characteristics::Procedure> Characterize(
-    const ProcedureRef &ref, const IntrinsicProcTable &intrinsics) {
-  return Characterize(ref.proc(), intrinsics);
 }
 }
 

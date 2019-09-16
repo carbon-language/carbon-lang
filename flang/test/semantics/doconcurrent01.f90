@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 ! C1137
 ! An image control statement shall not appear within a DO CONCURRENT construct.
 !
-! C1136 
+! C1136
 ! A RETURN statement shall not appear within a DO CONCURRENT construct.
 !
 ! (11.1.7.5), paragraph 4
@@ -45,8 +45,9 @@ subroutine do_concurrent_test2(i,j,n,flag)
   use ieee_exceptions
   use iso_fortran_env, only: team_type
   implicit none
-  integer :: i, n, flag, flag2
-  logical :: halting
+  integer :: i, n
+  type(ieee_flag_type) :: flag
+  logical :: flagValue, halting
   type(team_type) :: j
   do concurrent (i = 1:n)
 !ERROR: image control statement not allowed in DO CONCURRENT
@@ -55,7 +56,7 @@ subroutine do_concurrent_test2(i,j,n,flag)
       critical
 !ERROR: call to impure procedure in DO CONCURRENT not allowed
 !ERROR: IEEE_GET_FLAG not allowed in DO CONCURRENT
-        call ieee_get_flag(flag, flag2)
+        call ieee_get_flag(flag, flagValue)
 !ERROR: call to impure procedure in DO CONCURRENT not allowed
 !ERROR: IEEE_GET_HALTING_MODE not allowed in DO CONCURRENT
         call ieee_get_halting_mode(flag, halting)

@@ -14,6 +14,8 @@ Behavior common to (nearly) all compilers:
 * Fixed form right margin clipping does not apply to directive lines.
 * Macro names are not recognized as such when spaces are inserted
   into their invocations in fixed form.
+  This includes spaces at the ends of lines that have been clipped
+  at column 72 (or whatever).
 * Text is rescanned after expansion of macros and arguments.
 * Macros are not expanded within quoted character literals or
   quoted FORMAT edit descriptors.
@@ -74,6 +76,9 @@ Judgement calls, where precedents are unclear:
 * IBM claims to be ISO C compliant and therefore recognizes trigraph sequences.
 * Fortran comments in macro actual arguments should be respected, on
   the principle that a macro call should work like a function reference.
+* If a `#define` or `#undef` directive appears among continuation
+  lines, it may or may not affect text in the continued statement that
+  appeared before the directive.
 
 Behavior that few compilers properly support (or none), but should:
 -------------------------------------------------------------------
@@ -98,7 +103,7 @@ In short, a Fortran preprocessor should work as if:
 6. Other preprocessing directives are processed and macros expanded.
    Along the way, Fortran `INCLUDE` lines and preprocessor `#include` directives
    are expanded, and all these steps applied recursively to the introduced text.
-7. Any newly-created Fortran comments are removed.
+7. Any Fortran comments created by macro replacement are removed.
 
 Steps 5 and 6 are interleaved with respect to the preprocessing state.
 Conditional compilation preprocessing directives always reflect only the macro
@@ -115,3 +120,100 @@ text.
 
 OpenMP-style directives that look like comments are not addressed by
 this scheme but are obvious extensions.
+
+Appendix
+========
+`N` in the table below means "not supported"; this doesn't
+mean a bug, it just means that a particular behavior was
+not observed.
+`E` signifies "error reported".
+
+The abbreviation `KWM` stands for "keyword macro" and `FLM` means
+"function-like macro".
+
+The first block of tests (`pp0*.F`) are all fixed-form source files;
+the second block (`pp1*.F90`) are free-form source files.
+
+```
+f18
+| pgfortran
+| | ifort
+| | | gfortran
+| | | | xlf
+| | | | | nagfor
+| | | | | |
+. . . . . .   pp001.F  keyword macros
+. . . . . .   pp002.F  #undef
+. . . . . .   pp003.F  function-like macros
+. . . . . .   pp004.F  KWMs case-sensitive
+. N . N N .   pp005.F  KWM split across continuation, implicit padding
+. N . N N .   pp006.F  ditto, but with intervening *comment line
+N N N N N N   pp007.F  KWM split across continuation, clipped after column 72
+. . . . . .   pp008.F  KWM with spaces in name at invocation NOT replaced
+. N . N N .   pp009.F  FLM call split across continuation, implicit padding
+. N . N N .   pp010.F  ditto, but with intervening *comment line
+N N N N N N   pp011.F  FLM call name split across continuation, clipped
+. N . N N .   pp012.F  FLM call name split across continuation
+. E . N N .   pp013.F  FLM call split between name and (
+. N . N N .   pp014.F  FLM call split between name and (, with intervening *comment
+. E . N N .   pp015.F  FLM call split between name and (, clipped
+. E . N N .   pp016.F  FLM call split between name and ( and in argument
+. . . . . .   pp017.F  KLM rescan
+. . . . . .   pp018.F  KLM rescan with #undef (so rescan is after expansion)
+. . . . . .   pp019.F  FLM rescan
+. . . . . .   pp020.F  FLM expansion of argument
+. . . . . .   pp021.F  KWM NOT expanded in 'literal'
+. . . . . .   pp022.F  KWM NOT expanded in "literal"
+. . E E . E   pp023.F  KWM NOT expanded in 9HHOLLERITH literal
+. . . E . .   pp024.F  KWM NOT expanded in Hollerith in FORMAT
+. . . . . .   pp025.F  KWM expansion is before token pasting due to fixed-form space removal
+. . . E . E   pp026.F  ## token pasting works in FLM
+E . . E E .   pp027.F  #DEFINE works in fixed form
+. N . N N .   pp028.F  fixed-form clipping done before KWM expansion on source line
+. . . . . .   pp029.F  \ newline allowed in #define
+. . . . . .   pp030.F  /* C comment */ erased from #define
+E E E E E E   pp031.F   // C++ comment NOT erased from #define
+. . . . . .   pp032.F  /* C comment */ \ newline erased from #define
+. . . . . .   pp033.F  /* C comment \ newline */ erased from #define
+. . . . . N   pp034.F  \ newline allowed in name on KWM definition
+. E . E E .   pp035.F  #if 2 .LT. 3 works
+. . . . . .   pp036.F  #define FALSE TRUE ...  .FALSE. -> .TRUE.
+N N N N N N   pp037.F  fixed-form clipping NOT applied to #define
+. . E . E E   pp038.F  FLM call with closing ')' on next line (not a continuation)
+E . E . E E   pp039.F  FLM call with '(' on next line (not a continuation)
+. . . . . .   pp040.F  #define KWM c, then KWM works as comment line initiator
+E . E . . E   pp041.F  use KWM expansion as continuation indicators
+N N N . . N   pp042.F  #define c 1, then use c as label in fixed-form
+. . . . N .   pp043.F  #define with # in column 6 is a continuation line in fixed-form
+E . . . . .   pp044.F  #define directive amid continuations
+. . . . . .   pp101.F90  keyword macros
+. . . . . .   pp102.F90  #undef
+. . . . . .   pp103.F90  function-like macros
+. . . . . .   pp104.F90  KWMs case-sensitive
+. N N N N N   pp105.F90  KWM call name split across continuation, with leading &
+. N N N N N   pp106.F90  ditto, with & ! comment
+N N E E N .   pp107.F90  KWM call name split across continuation, no leading &, with & ! comment
+N N E E N .   pp108.F90  ditto, but without & ! comment
+. N N N N N   pp109.F90  FLM call name split with leading &
+. N N N N N   pp110.F90  ditto, with & ! comment
+N N E E N .   pp111.F90  FLM call name split across continuation, no leading &, with & ! comment
+N N E E N .   pp112.F90  ditto, but without & ! comment
+. N N N N E   pp113.F90  FLM call split across continuation between name and (, leading &
+. N N N N E   pp114.F90  ditto, with & ! comment, leading &
+N N N N N .   pp115.F90  ditto, with & ! comment, no leading &
+N N N N N .   pp116.F90  FLM call split between name and (, no leading &
+. . . . . .   pp117.F90  KWM rescan
+. . . . . .   pp118.F90  KWM rescan with #undef, proving rescan after expansion
+. . . . . .   pp119.F90  FLM rescan
+. . . . . .   pp120.F90  FLM expansion of argument
+. . . . . .   pp121.F90  KWM NOT expanded in 'literal'
+. . . . . .   pp122.F90  KWM NOT expanded in "literal"
+. . E E . E   pp123.F90  KWM NOT expanded in Hollerith literal
+. . E E . E   pp124.F90  KWM NOT expanded in Hollerith in FORMAT
+E . . E E .   pp125.F90  #DEFINE works in free form
+. . . . . .   pp126.F90  \ newline works in #define
+N . E . E E   pp127.F90  FLM call with closing ')' on next line (not a continuation)
+E . E . E E   pp128.F90  FLM call with '(' on next line (not a continuation)
+. . N . . N   pp129.F90  #define KWM !, then KWM works as comment line initiator
+E . E . . E   pp130.F90  #define KWM &, use for continuation w/o pasting (ifort and nag seem to continue #define)
+```

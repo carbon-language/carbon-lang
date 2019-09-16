@@ -44,6 +44,8 @@ ActualArgument &ActualArgument::operator=(Expr<SomeType> &&expr) {
 std::optional<DynamicType> ActualArgument::GetType() const {
   if (const Expr<SomeType> *expr{UnwrapExpr()}) {
     return expr->GetType();
+  } else if (std::holds_alternative<AssumedType>(u_)) {
+    return DynamicType::AssumedType();
   } else {
     return std::nullopt;
   }
@@ -98,7 +100,8 @@ int ProcedureDesignator::Rank() const {
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
     if (const auto &result{intrinsic->characteristics.value().functionResult}) {
       if (const auto *typeAndShape{result->GetTypeAndShape()}) {
-        CHECK(!typeAndShape->IsAssumedRank());
+        CHECK(!typeAndShape->attrs().test(
+            characteristics::TypeAndShape::Attr::AssumedRank));
         return typeAndShape->Rank();
       }
     }

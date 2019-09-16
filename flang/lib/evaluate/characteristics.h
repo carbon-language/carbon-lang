@@ -54,10 +54,18 @@ bool DistinguishableOpOrAssign(const Procedure &, const Procedure &);
 
 class TypeAndShape {
 public:
-  explicit TypeAndShape(DynamicType t) : type_{t} {}
-  TypeAndShape(DynamicType t, int rank) : type_{t}, shape_(rank) {}
-  TypeAndShape(DynamicType t, Shape &&s) : type_{t}, shape_{std::move(s)} {}
+  ENUM_CLASS(Attr, AssumedRank, AssumedShape, AssumedSize, Coarray)
+  using Attrs = common::EnumSet<Attr, Attr_enumSize>;
+
+  explicit TypeAndShape(DynamicType t) : type_{t} { AcquireLEN(); }
+  TypeAndShape(DynamicType t, int rank) : type_{t}, shape_(rank) {
+    AcquireLEN();
+  }
+  TypeAndShape(DynamicType t, Shape &&s) : type_{t}, shape_{std::move(s)} {
+    AcquireLEN();
+  }
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(TypeAndShape)
+
   bool operator==(const TypeAndShape &) const;
   static std::optional<TypeAndShape> Characterize(const semantics::Symbol &);
   static std::optional<TypeAndShape> Characterize(
@@ -78,9 +86,14 @@ public:
     type_ = t;
     return *this;
   }
+  const std::optional<Expr<SomeInteger>> &LEN() const { return LEN_; }
+  TypeAndShape &set_LEN(Expr<SomeInteger> &&len) {
+    LEN_ = std::move(len);
+    return *this;
+  }
   const Shape &shape() const { return shape_; }
+  const Attrs &attrs() const { return attrs_; }
 
-  bool IsAssumedRank() const { return isAssumedRank_; }
   int Rank() const { return GetRank(shape_); }
   bool IsCompatibleWith(
       parser::ContextualMessages &, const TypeAndShape &) const;
@@ -89,12 +102,33 @@ public:
 
 private:
   void AcquireShape(const semantics::ObjectEntityDetails &);
+  void AcquireLEN();
 
 protected:
   DynamicType type_;
+  std::optional<Expr<SomeInteger>> LEN_;
   Shape shape_;
-  bool isAssumedRank_{false};
+  Attrs attrs_;
 };
+
+template<typename T>
+std::optional<TypeAndShape> GetTypeAndShape(
+    const Expr<T> &expr, FoldingContext &context) {
+  if (auto type{expr.GetType()}) {
+    if (auto shape{GetShape(context, expr)}) {
+      TypeAndShape result{*type, std::move(*shape)};
+      if (type->category() == TypeCategory::Character) {
+        if (const auto *chExpr{UnwrapExpr<Expr<SomeCharacter>>(expr)}) {
+          if (auto length{chExpr->LEN()}) {
+            result.set_LEN(Expr<SomeInteger>{std::move(*length)});
+          }
+        }
+      }
+      return result;
+    }
+  }
+  return std::nullopt;
+}
 
 // 15.3.2.2
 struct DummyDataObject {
@@ -107,6 +141,7 @@ struct DummyDataObject {
   explicit DummyDataObject(DynamicType t) : type{t} {}
   bool operator==(const DummyDataObject &) const;
   static std::optional<DummyDataObject> Characterize(const semantics::Symbol &);
+  bool CanBePassedViaImplicitInterface() const;
   std::ostream &Dump(std::ostream &) const;
   TypeAndShape type;
   std::vector<Expr<SubscriptInteger>> coshape;
@@ -146,6 +181,7 @@ struct DummyArgument {
       const semantics::Symbol &, const IntrinsicProcTable &);
   bool IsOptional() const;
   void SetOptional(bool = true);
+  bool CanBePassedViaImplicitInterface() const;
   std::ostream &Dump(std::ostream &) const;
   // name and pass are not characteristics and so does not participate in
   // operator== but are needed to determine if procedures are distinguishable
@@ -181,6 +217,7 @@ struct FunctionResult {
     return std::get_if<TypeAndShape>(&u);
   }
   void SetType(DynamicType t) { std::get<TypeAndShape>(u).set_type(t); }
+  bool CanBeReturnedViaImplicitInterface() const;
 
   std::ostream &Dump(std::ostream &) const;
 
@@ -201,6 +238,10 @@ struct Procedure {
   // "unrestricted specific intrinsic function".
   static std::optional<Procedure> Characterize(
       const semantics::Symbol &, const IntrinsicProcTable &);
+  static std::optional<Procedure> Characterize(
+      const ProcedureDesignator &, const IntrinsicProcTable &);
+  static std::optional<Procedure> Characterize(
+      const ProcedureRef &, const IntrinsicProcTable &);
 
   bool IsFunction() const { return functionResult.has_value(); }
   bool IsSubroutine() const { return !IsFunction(); }
@@ -210,6 +251,7 @@ struct Procedure {
   bool HasExplicitInterface() const {
     return !attrs.test(Attr::ImplicitInterface);
   }
+  bool CanBeCalledViaImplicitInterface() const;
   std::ostream &Dump(std::ostream &) const;
 
   std::optional<FunctionResult> functionResult;

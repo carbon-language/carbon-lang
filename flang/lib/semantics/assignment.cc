@@ -58,7 +58,8 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
   } else if (const auto *intrinsic{f.proc().GetSpecificIntrinsic()}) {
     funcName = intrinsic->name;
   }
-  if (auto proc{Characterize(f.proc(), intrinsics)}) {
+  if (auto proc{
+          characteristics::Procedure::Characterize(f.proc(), intrinsics)}) {
     std::optional<parser::MessageFixedText> error;
     if (const auto &funcResult{proc->functionResult}) {
       const auto *frProc{funcResult->IsProcedurePointer()};
@@ -189,13 +190,13 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, const Symbol &lhs,
     const ProcedureDesignator &d) {
   CheckPointerAssignment(messages, intrinsics, lhs, d.GetName(), false,
-      Characterize(d, intrinsics));
+      characteristics::Procedure::Characterize(d, intrinsics));
 }
 
 void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, const Symbol &lhs,
     const ProcedureRef &ref) {
-  auto chars{Characterize(ref, intrinsics)};
+  auto chars{characteristics::Procedure::Characterize(ref, intrinsics)};
   if (chars.has_value()) {
     if (chars->functionResult.has_value()) {
       if (const auto *proc{chars->functionResult->IsProcedurePointer()}) {

@@ -258,19 +258,6 @@ void Symbol::ReplaceName(const SourceName &name) {
   name_ = name;
 }
 
-Symbol &Symbol::GetUltimate() {
-  return const_cast<Symbol &>(const_cast<const Symbol *>(this)->GetUltimate());
-}
-const Symbol &Symbol::GetUltimate() const {
-  if (const auto *details{detailsIf<UseDetails>()}) {
-    return details->symbol().GetUltimate();
-  } else if (const auto *details{detailsIf<HostAssocDetails>()}) {
-    return details->symbol().GetUltimate();
-  } else {
-    return *this;
-  }
-}
-
 void Symbol::SetType(const DeclTypeSpec &type) {
   std::visit(
       common::visitors{

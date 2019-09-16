@@ -500,8 +500,19 @@ public:
   bool CanReplaceDetails(const Details &details) const;
 
   // Follow use-associations and host-associations to get the ultimate entity.
-  Symbol &GetUltimate();
-  const Symbol &GetUltimate() const;
+  Symbol &GetUltimate() {
+    return const_cast<Symbol &>(
+        const_cast<const Symbol *>(this)->GetUltimate());
+  }
+  const Symbol &GetUltimate() const {
+    if (const auto *details{detailsIf<UseDetails>()}) {
+      return details->symbol().GetUltimate();
+    } else if (const auto *details{detailsIf<HostAssocDetails>()}) {
+      return details->symbol().GetUltimate();
+    } else {
+      return *this;
+    }
+  }
 
   DeclTypeSpec *GetType() {
     return const_cast<DeclTypeSpec *>(

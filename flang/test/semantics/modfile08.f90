@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ end
 !  type::t
 !    procedure(),nopass,pointer::e
 !    procedure(real(4)),nopass,pointer::f
-!    procedure(s),pointer,private::g
+!    procedure(s),pass(x),pointer,private::g
 !  end type
 !contains
 !  subroutine s(x)

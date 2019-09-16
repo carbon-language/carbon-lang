@@ -54,7 +54,7 @@ module m
     !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
     call s03(x)
     !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
-    call s04c3)
+    call s04(c3)
     !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
     call s04(x)
   end subroutine

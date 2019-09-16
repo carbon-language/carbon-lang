@@ -41,10 +41,10 @@ using namespace parser::literals;
 // that the module file is decoded as UTF-8 even if source files
 // are using another encoding.
 struct ModHeader {
-  static constexpr const char *bom{"\xef\xbb\xbf"};
-  static constexpr const char *magic{"!mod$ v1 sum:"};
+  static constexpr const char bom[3 + 1]{"\xef\xbb\xbf"};
   static constexpr int magicLen{13};
   static constexpr int sumLen{16};
+  static constexpr const char magic[magicLen + 1]{"!mod$ v1 sum:"};
   static constexpr char terminator{'\n'};
   static constexpr int len{magicLen + 1 + sumLen};
 };
@@ -56,7 +56,8 @@ static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
 static void PutPassName(std::ostream &, const std::optional<SourceName> &);
 static void PutTypeParam(std::ostream &, const Symbol &);
-static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
+static void PutEntity(
+    std::ostream &, const Symbol &, std::function<void()>, Attrs);
 static void PutInit(std::ostream &, const Symbol &, const MaybeExpr &);
 static void PutInit(std::ostream &, const MaybeIntExpr &);
 static void PutBound(std::ostream &, const Bound &);
@@ -216,7 +217,11 @@ void ModFileWriter::PutSymbol(
               typeBindings << '(' << x.symbol().name() << ')';
             }
             PutPassName(typeBindings, x.passName());
-            PutAttrs(typeBindings, symbol->attrs());
+            auto attrs{symbol->attrs()};
+            if (x.passName().has_value()) {
+              attrs.reset(Attr::PASS);
+            }
+            PutAttrs(typeBindings, attrs);
             typeBindings << "::" << symbol->name();
             if (!deferred && x.symbol().name() != symbol->name()) {
               typeBindings << "=>" << x.symbol().name();
@@ -496,7 +501,8 @@ void PutShape(std::ostream &os, const ArraySpec &shape, char open, char close) {
 
 void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
   auto &details{symbol.get<ObjectEntityDetails>()};
-  PutEntity(os, symbol, [&]() { PutType(os, DEREF(symbol.GetType())); });
+  PutEntity(os, symbol, [&]() { PutType(os, DEREF(symbol.GetType())); },
+      symbol.attrs());
   PutShape(os, details.shape(), '(', ')');
   PutShape(os, details.coshape(), '[', ']');
   PutInit(os, symbol, details.init());
@@ -509,16 +515,22 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
   }
   const auto &details{symbol.get<ProcEntityDetails>()};
   const ProcInterface &interface{details.interface()};
-  PutEntity(os, symbol, [&]() {
-    os << "procedure(";
-    if (interface.symbol()) {
-      os << interface.symbol()->name();
-    } else if (interface.type()) {
-      PutType(os, *interface.type());
-    }
-    os << ')';
-    PutPassName(os, details.passName());
-  });
+  Attrs attrs{symbol.attrs()};
+  if (details.passName().has_value()) {
+    attrs.reset(Attr::PASS);
+  }
+  PutEntity(os, symbol,
+      [&]() {
+        os << "procedure(";
+        if (interface.symbol()) {
+          os << interface.symbol()->name();
+        } else if (interface.type()) {
+          PutType(os, *interface.type());
+        }
+        os << ')';
+        PutPassName(os, details.passName());
+      },
+      attrs);
   os << '\n';
 }
 
@@ -530,10 +542,12 @@ void PutPassName(std::ostream &os, const std::optional<SourceName> &passName) {
 
 void PutTypeParam(std::ostream &os, const Symbol &symbol) {
   auto &details{symbol.get<TypeParamDetails>()};
-  PutEntity(os, symbol, [&]() {
-    PutType(os, DEREF(symbol.GetType()));
-    PutLower(os << ',', common::EnumToString(details.attr()));
-  });
+  PutEntity(os, symbol,
+      [&]() {
+        PutType(os, DEREF(symbol.GetType()));
+        PutLower(os << ',', common::EnumToString(details.attr()));
+      },
+      symbol.attrs());
   PutInit(os, details.init());
   os << '\n';
 }
@@ -566,8 +580,8 @@ void PutBound(std::ostream &os, const Bound &x) {
 
 // Write an entity (object or procedure) declaration.
 // writeType is called to write out the type.
-void PutEntity(
-    std::ostream &os, const Symbol &symbol, std::function<void()> writeType) {
+void PutEntity(std::ostream &os, const Symbol &symbol,
+    std::function<void()> writeType, Attrs attrs) {
   writeType();
   MaybeExpr bindName;
   std::visit(
@@ -578,7 +592,7 @@ void PutEntity(
           [&](const auto &) {},
       },
       symbol.details());
-  PutAttrs(os, symbol.attrs(), bindName);
+  PutAttrs(os, attrs, bindName);
   os << "::" << symbol.name();
 }
 

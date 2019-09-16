@@ -21,13 +21,13 @@ subroutine test(j)
   real, save :: x3
   real, target :: x4
   real, target, save :: x5(10)
-!ERROR: Pointer 'p1' cannot be initialized with a reference to an allocatable 'x1'
+!ERROR: An initial data target may not be a reference to an ALLOCATABLE 'x1'
   real, pointer :: p1 => x1
-!ERROR: Pointer 'p2' cannot be initialized with a reference to a coarray 'x2'
+!ERROR: An initial data target may not be a reference to a coarray 'x2'
   real, pointer :: p2 => x2
-!ERROR: Pointer 'p3' cannot be initialized with a reference to an object 'x3' that lacks the TARGET attribute
+!ERROR: An initial data target may not be a reference to an object 'x3' that lacks the TARGET attribute
   real, pointer :: p3 => x3
-!ERROR: Pointer 'p4' cannot be initialized with a reference to an object 'x4' that lacks the SAVE attribute
+!ERROR: An initial data target may not be a reference to an object 'x4' that lacks the SAVE attribute
   real, pointer :: p4 => x4
 !ERROR: Pointer 'p5' cannot be initialized with a reference to a designator with non-constant subscripts
   real, pointer :: p5 => x5(j)

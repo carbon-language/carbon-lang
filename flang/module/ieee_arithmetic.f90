@@ -153,12 +153,13 @@ module ieee_arithmetic
     integer, parameter :: exponentBits = TOTALBITS - 1 - significand; \
     integer, parameter :: maxExpo = shiftl(1, exponentBits) - 1; \
     integer :: exponent, sign; \
-    logical :: nzSignificand, quiet; \
+    logical :: negative, nzSignificand, quiet; \
     raw = transfer(x, raw); \
     exponent = ibits(raw, significand, exponentBits); \
+    negative = btest(raw, TOTALBITS - 1); \
     nzSignificand = ibits(raw, 0, significand) /= 0; \
     quiet = btest(raw, significand - 1); \
-    ieee_class_a##RKIND = classify(exponent, maxExpo, nzSignificand, quiet); \
+    ieee_class_a##RKIND = classify(exponent, maxExpo, negative, nzSignificand, quiet); \
   end function ieee_class_a##RKIND
   _CLASSIFY(2,2,16,11,1)
   _CLASSIFY(3,2,16,8,1)

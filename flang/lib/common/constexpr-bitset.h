@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,9 +92,9 @@ public:
   }
   constexpr bool operator==(BitSet &&that) const { return bits_ == that.bits_; }
   constexpr bool operator!=(const BitSet &that) const {
-    return bits_ == that.bits_;
+    return bits_ != that.bits_;
   }
-  constexpr bool operator!=(BitSet &&that) const { return bits_ == that.bits_; }
+  constexpr bool operator!=(BitSet &&that) const { return bits_ != that.bits_; }
 
   static constexpr std::size_t size() { return BITS; }
   constexpr bool test(std::size_t x) const {

@@ -51,7 +51,7 @@ end
 !  contains
 !    procedure,nopass::s2
 !    procedure,nopass::s3
-!    procedure::r
+!    procedure,pass(dtv)::r
 !    generic::foo=>s2
 !    generic::read(formatted)=>r
 !  end type

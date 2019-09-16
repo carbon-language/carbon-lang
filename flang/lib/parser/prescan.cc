@@ -227,14 +227,12 @@ void Prescanner::Statement() {
 
 TokenSequence Prescanner::TokenizePreprocessorDirective() {
   CHECK(nextLine_ < limit_ && !inPreprocessorDirective_);
-  auto saveAt{at_};
   inPreprocessorDirective_ = true;
   BeginSourceLineAndAdvance();
   TokenSequence tokens;
   while (NextToken(tokens)) {
   }
   inPreprocessorDirective_ = false;
-  at_ = saveAt;
   return tokens;
 }
 
@@ -806,8 +804,10 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
       lineClass.kind == LineClassification::Kind::PreprocessorDirective) {
     // Allow conditional compilation directives (e.g., #ifdef) to affect
     // continuation lines.
-    // Allow other preprocessor directives, too, except #include,
-    // #define, & #undef.
+    // Allow other preprocessor directives, too, except #include
+    // (when it does not follow '&'), #define, and #undef (because
+    // they cannot be allowed to affect preceding text on a
+    // continued line).
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return true;
   } else if (afterAmpersand &&

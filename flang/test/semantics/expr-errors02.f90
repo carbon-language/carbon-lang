@@ -36,22 +36,22 @@ module m
     modulefunc1 = n
   end function
   subroutine test(out, optional)
-    !ERROR: The expression (foo()) cannot be used as a specification expression (reference to impure function 'foo')
+    !ERROR: Invalid specification expression: reference to impure function 'foo'
     type(t(foo())) :: x1
     integer :: local
-    !ERROR: The expression (local) cannot be used as a specification expression (reference to local entity 'local')
+    !ERROR: Invalid specification expression: reference to local entity 'local'
     type(t(local)) :: x2
     !ERROR: The internal function 'internal' cannot be referenced in a specification expression
     type(t(internal(0))) :: x3
     integer, intent(out) :: out
-    !ERROR: The expression (out) cannot be used as a specification expression (reference to INTENT(OUT) dummy argument 'out')
+    !ERROR: Invalid specification expression: reference to INTENT(OUT) dummy argument 'out'
     type(t(out)) :: x4
     integer, intent(in), optional :: optional
-    !ERROR: The expression (optional) cannot be used as a specification expression (reference to OPTIONAL dummy argument 'optional')
+    !ERROR: Invalid specification expression: reference to OPTIONAL dummy argument 'optional'
     type(t(optional)) :: x5
-    !ERROR: The expression (hasprocarg(realfunc)) cannot be used as a specification expression (dummy procedure argument)
+    !ERROR: Invalid specification expression: dummy procedure argument
     type(t(hasProcArg(realfunc))) :: x6
-    !ERROR: The expression (coarray[1_8]) cannot be used as a specification expression (coindexed reference)
+    !ERROR: Invalid specification expression: coindexed reference
     type(t(coarray[1])) :: x7
     type(t(kind(foo()))) :: x101 ! ok
     type(t(modulefunc1(0))) :: x102 ! ok

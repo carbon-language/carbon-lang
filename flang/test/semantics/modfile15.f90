@@ -31,7 +31,7 @@ end module
 !Expect: m.mod
 !module m
 !  type::t
-!    procedure(a),pass,pointer::c
+!    procedure(a),pass(x),pointer::c
 !    procedure(a),pass(x),pointer::d
 !  contains
 !    procedure,pass(y)::a

@@ -43,8 +43,6 @@ using Shape = std::vector<MaybeExtentExpr>;
 bool IsImpliedShape(const Symbol &);
 bool IsExplicitShape(const Symbol &);
 
-template<typename A> std::optional<Shape> GetShape(FoldingContext &, const A &);
-
 // Conversions between various representations of shapes.
 Shape AsShape(const Constant<ExtentType> &);
 std::optional<Shape> AsShape(FoldingContext &, ExtentExpr &&);
@@ -87,6 +85,8 @@ MaybeExtentExpr GetSize(Shape &&);
 bool ContainsAnyImpliedDoIndex(const ExtentExpr &);
 
 // GetShape()
+template<typename A> std::optional<Shape> GetShape(FoldingContext &, const A &);
+
 class GetShapeHelper
   : public AnyTraverse<GetShapeHelper, std::optional<Shape>> {
 public:
