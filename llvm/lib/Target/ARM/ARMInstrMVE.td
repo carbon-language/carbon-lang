@@ -1756,6 +1756,15 @@ def MVE_VCLZs8  : MVE_VCLSCLZ<"vclz", "i8",  0b00, 0b1>;
 def MVE_VCLZs16 : MVE_VCLSCLZ<"vclz", "i16", 0b01, 0b1>;
 def MVE_VCLZs32 : MVE_VCLSCLZ<"vclz", "i32", 0b10, 0b1>;
 
+let Predicates = [HasMVEInt] in {
+  def : Pat<(v16i8 ( ctlz (v16i8 MQPR:$val1))),
+            (v16i8 ( MVE_VCLZs8 (v16i8 MQPR:$val1)))>;
+  def : Pat<(v4i32 ( ctlz (v4i32 MQPR:$val1))),
+            (v4i32 ( MVE_VCLZs32 (v4i32 MQPR:$val1)))>;
+  def : Pat<(v8i16 ( ctlz (v8i16 MQPR:$val1))),
+            (v8i16 ( MVE_VCLZs16 (v8i16 MQPR:$val1)))>;
+}
+
 class MVE_VABSNEG_int<string iname, string suffix, bits<2> size, bit negate,
                       list<dag> pattern=[]>
   : MVEIntSingleSrc<iname, suffix, size, pattern> {
