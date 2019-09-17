@@ -55,7 +55,6 @@ For API clients and LLVM developers.
    SpeculativeLoadHardening
    StackSafetyAnalysis
    LoopTerminology
-   DataDependenceGraphs
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -209,6 +208,3 @@ For API clients and LLVM developers.
 
 :doc:`LoopTerminology`
   A document describing Loops and associated terms as used in LLVM.
-
-:doc:`DataDependenceGraphs`
-  A description of the design of the DDG (Data Dependence Graph).
