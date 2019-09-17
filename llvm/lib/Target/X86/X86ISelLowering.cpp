@@ -45107,6 +45107,20 @@ static SDValue combineExtInVec(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue combineKSHIFT(SDNode *N, SelectionDAG &DAG,
+                             TargetLowering::DAGCombinerInfo &DCI) {
+  EVT VT = N->getValueType(0);
+
+  APInt KnownUndef, KnownZero;
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  APInt DemandedElts = APInt::getAllOnesValue(VT.getVectorNumElements());
+  if (TLI.SimplifyDemandedVectorElts(SDValue(N, 0), DemandedElts, KnownUndef,
+                                     KnownZero, DCI))
+    return SDValue(N, 0);
+
+  return SDValue();
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -45247,6 +45261,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PCMPGT:      return combineVectorCompare(N, DAG, Subtarget);
   case X86ISD::PMULDQ:
   case X86ISD::PMULUDQ:     return combinePMULDQ(N, DAG, DCI, Subtarget);
+  case X86ISD::KSHIFTL:
+  case X86ISD::KSHIFTR:     return combineKSHIFT(N, DAG, DCI);
   }
 
   return SDValue();
