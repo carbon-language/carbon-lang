@@ -17,7 +17,7 @@
 # CHECK-NEXT: 0000000000000000  0000000100000000 R_X86_64_NONE          0000000000000000 sym + 1
 # CHECK-NEXT: 0000000000000000  0000000200000000 R_X86_64_NONE          0000000000000123 456
 
-# CHECK:      'RELA' relocation section at offset {{.*}} contains 48 bytes:
+# CHECK:      'RELA' relocation section at offset {{.*}} contains 72 bytes:
 # CHECK-NEXT:     Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
 # CHECK-NEXT: 0000000000000000  0000000000000000 R_X86_64_NONE                           1
 # CHECK-NEXT: 0000000000000000  0000000100000000 R_X86_64_NONE          0000000000000000 sym + 1
