@@ -437,9 +437,8 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
     OmpClauseSet allowed{
         OmpClause::IF, OmpClause::MAP, OmpClause::USE_DEVICE_PTR};
     SetContextAllowed(allowed);
-    OmpClauseSet allowedOnce{OmpClause::DEVICE};
-    SetContextAllowedOnce(allowedOnce);
-    SetContextRequired(OmpClauseSet{OmpClause::MAP});
+    SetContextAllowedOnce({OmpClause::DEVICE});
+    SetContextRequired({OmpClause::MAP});
   } break;
   default:
     // TODO others
@@ -557,7 +556,7 @@ void OmpStructureChecker::Enter(
     SetContextAllowed(allowed);
     OmpClauseSet allowedOnce{OmpClause::DEVICE, OmpClause::IF};
     SetContextAllowedOnce(allowedOnce);
-    SetContextRequired(OmpClauseSet{OmpClause::MAP});
+    SetContextRequired({OmpClause::MAP});
   } break;
   case parser::OmpSimpleStandaloneDirective::Directive::TargetExitData: {
     // 2.10.3 target-exit-data
@@ -566,7 +565,7 @@ void OmpStructureChecker::Enter(
     SetContextAllowed(allowed);
     OmpClauseSet allowedOnce{OmpClause::DEVICE, OmpClause::IF};
     SetContextAllowedOnce(allowedOnce);
-    SetContextRequired(OmpClauseSet{OmpClause::MAP});
+    SetContextRequired({OmpClause::MAP});
   } break;
   case parser::OmpSimpleStandaloneDirective::Directive::TargetUpdate: {
     // 2.10.5 target-update
@@ -731,6 +730,9 @@ void OmpStructureChecker::Leave(const parser::OmpClauseList &) {
       }
     }
   }
+
+  GetContext().requiredClauses.IterateOverMembers(
+      [this](OmpClause c) { CheckRequired(c); });
 }
 
 void OmpStructureChecker::Enter(const parser::OmpClause &x) {
@@ -941,7 +943,7 @@ void OmpStructureChecker::Enter(const parser::OmpMapClause &x) {
       if (type != Type::To && type != Type::From && type != Type::Tofrom &&
           type != Type::Alloc) {
         context_.Say(GetContext().clauseSource,
-            "Only the TO, FROM, TOFROM or ALLOC map types are permitted "
+            "Only the TO, FROM, TOFROM, or ALLOC map types are permitted "
             "for MAP clauses on the %s directive"_err_en_US,
             ContextDirectiveAsFortran());
       }
@@ -957,7 +959,7 @@ void OmpStructureChecker::Enter(const parser::OmpMapClause &x) {
     case OmpDirective::TARGET_EXIT_DATA: {
       if (type != Type::Delete && type != Type::Release && type != Type::From) {
         context_.Say(GetContext().clauseSource,
-            "Only the FROM, RELEASE or DELETE map types are permitted "
+            "Only the FROM, RELEASE, or DELETE map types are permitted "
             "for MAP clauses on the %s directive"_err_en_US,
             ContextDirectiveAsFortran());
       }

@@ -117,7 +117,7 @@ program main
   enddo
   !$omp end target
 
-  !ERROR: Only the TO, FROM, TOFROM or ALLOC map types are permitted for MAP clauses on the TARGET directive
+  !ERROR: Only the TO, FROM, TOFROM, or ALLOC map types are permitted for MAP clauses on the TARGET directive
   !$omp target map(delete:a)
   do i = 1, N
      a = 3.14
@@ -148,6 +148,6 @@ program main
   !ERROR: At most one DEVICE clause can appear on the TARGET EXIT DATA directive
   !$omp target exit data map(from:a) device(0) device(1)
 
-  !ERROR: Only the FROM, RELEASE or DELETE map types are permitted for MAP clauses on the TARGET EXIT DATA directive
+  !ERROR: Only the FROM, RELEASE, or DELETE map types are permitted for MAP clauses on the TARGET EXIT DATA directive
   !$omp target exit data map(to:a)
 end program main

@@ -152,8 +152,6 @@ private:
   // collected information for END directive
   void ResetPartialContext(const parser::CharBlock &source) {
     CHECK(!ompContext_.empty());
-    GetContext().requiredClauses.IterateOverMembers(
-        [this](OmpClause c) { CheckRequired(c); });
     SetContextDirectiveSource(source);
     GetContext().allowedClauses = {};
     GetContext().allowedOnceClauses = {};
