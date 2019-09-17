@@ -9429,6 +9429,10 @@ def err_omp_declare_variant_diff : Error<
 def err_omp_declare_variant_incompat_types : Error<
   "variant in '#pragma omp declare variant' with type %0 is incompatible with type %1"
   >;
+def warn_omp_declare_variant_marked_as_declare_variant : Warning<
+  "variant function in '#pragma omp declare variant' is itself marked as '#pragma omp declare variant'"
+  >, InGroup<SourceUsesOpenMP>;
+def note_omp_marked_declare_variant_here : Note<"marked as 'declare variant' here">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
