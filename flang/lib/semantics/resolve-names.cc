@@ -1096,25 +1096,17 @@ protected:
   void ResolveOmpObject(const parser::OmpObject &, Symbol::Flag);
   Symbol *ResolveOmp(const parser::Name &, Symbol::Flag);
   Symbol *ResolveOmp(Symbol &, Symbol::Flag);
-  Symbol *ResolveOmpCommonBlockName(const parser::Name *, Symbol::Flag);
+  Symbol *ResolveOmpCommonBlockName(const parser::Name *);
   Symbol *DeclarePrivateAccessEntity(const parser::Name &, Symbol::Flag);
   Symbol *DeclarePrivateAccessEntity(Symbol &, Symbol::Flag);
   Symbol *DeclareOrMarkOtherAccessEntity(const parser::Name &, Symbol::Flag);
   Symbol *DeclareOrMarkOtherAccessEntity(Symbol &, Symbol::Flag);
 };
 
-Symbol *OmpVisitor::ResolveOmpCommonBlockName(
-    const parser::Name *name, Symbol::Flag ompFlag) {
+Symbol *OmpVisitor::ResolveOmpCommonBlockName(const parser::Name *name) {
   if (auto *prev{name ? currScope().parent().FindCommonBlock(name->source)
                       : nullptr}) {
-    auto *created{FindInScope(currScope(), name->source)};
-    if (!created) {
-      auto &symbol{MakeSymbol(*name, HostAssocDetails{*prev})};
-      symbol.set(ompFlag);
-      name->symbol = &symbol;
-    } else {
-      name->symbol = created;
-    }
+    name->symbol = prev;
     return prev;
   } else {
     return nullptr;
@@ -1152,7 +1144,7 @@ void OmpVisitor::ResolveOmpObject(
       }
     }
   } else {  // common block
-    if (auto *symbol{ResolveOmpCommonBlockName(name, ompFlag)}) {
+    if (auto *symbol{ResolveOmpCommonBlockName(name)}) {
       // 2.15.3 When a named common block appears in a list, it has the same
       // meaning as if every explicit member of the common block appeared in
       // the list
