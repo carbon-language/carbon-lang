@@ -1584,6 +1584,21 @@ static bool ApplySpecificChecks(
   return ok;
 }
 
+static DynamicType GetReturnType(const SpecificIntrinsicInterface &interface,
+    const common::IntrinsicTypeDefaultKinds &defaults) {
+  TypeCategory category{TypeCategory::Integer};
+  switch (interface.result.kindCode) {
+  case KindCode::defaultIntegerKind: break;
+  case KindCode::doublePrecision:
+  case KindCode::defaultRealKind: category = TypeCategory::Real; break;
+  default: CRASH_NO_CASE;
+  }
+  int kind{interface.result.kindCode == KindCode::doublePrecision
+          ? defaults.doublePrecisionKind()
+          : defaults.GetDefaultKind(category)};
+  return DynamicType{category, kind};
+}
+
 // Probe the configured intrinsic procedure pattern tables in search of a
 // match for a given procedure reference.
 std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
@@ -1592,115 +1607,97 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   if (call.isSubroutineCall) {
     return std::nullopt;  // TODO
   }
-  parser::Messages *finalBuffer{context.messages().messages()};
+  std::string name{call.name.ToString()};
+
   // Special case: NULL()
   // All special cases handled here before the table probes below must
   // also be caught as special names in IsIntrinsic().
-  if (call.name == "null") {
-    parser::Messages nullBuffer;
-    parser::ContextualMessages nullErrors{
-        call.name, finalBuffer ? &nullBuffer : nullptr};
-    FoldingContext nullContext{context, nullErrors};
-    auto result{HandleNull(arguments, nullContext, intrinsics)};
-    if (finalBuffer != nullptr) {
-      finalBuffer->Annex(std::move(nullBuffer));
-    }
-    return result;
+  if (name == "null") {
+    return HandleNull(arguments, context, intrinsics);
   }
-  // Probe the generic intrinsic function table first.
+
+  // Helper to avoid emitting errors before it is sure there is no match
   parser::Messages localBuffer;
+  parser::Messages *finalBuffer{context.messages().messages()};
   parser::ContextualMessages localMessages{
       call.name, finalBuffer ? &localBuffer : nullptr};
   FoldingContext localContext{context, localMessages};
-  std::string name{call.name.ToString()};
+  auto matchOrBufferMessages{
+      [&](const IntrinsicInterface &intrinsic,
+          parser::Messages &buffer) -> std::optional<SpecificCall> {
+        if (auto specificCall{
+                intrinsic.Match(call, defaults_, arguments, localContext)}) {
+          if (finalBuffer != nullptr) {
+            finalBuffer->Annex(std::move(localBuffer));
+          }
+          return specificCall;
+        } else if (buffer.empty()) {
+          buffer.Annex(std::move(localBuffer));
+        } else {
+          localBuffer.clear();
+        }
+        return std::nullopt;
+      }};
+
+  // Probe the generic intrinsic function table first.
   parser::Messages genericBuffer;
   auto genericRange{genericFuncs_.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults_, arguments, localContext)}) {
-      ApplySpecificChecks(*specificCall, localMessages);
-      if (finalBuffer != nullptr) {
-        finalBuffer->Annex(std::move(localBuffer));
-      }
+            matchOrBufferMessages(*iter->second, genericBuffer)}) {
+      ApplySpecificChecks(*specificCall, context.messages());
       return specificCall;
-    } else if (genericBuffer.empty()) {
-      genericBuffer.Annex(std::move(localBuffer));
-    } else {
-      localBuffer.clear();
     }
   }
+
   // Probe the specific intrinsic function table next.
-  // Each specific intrinsic maps to a generic intrinsic.
   parser::Messages specificBuffer;
   auto specificRange{specificFuncs_.equal_range(name)};
   for (auto specIter{specificRange.first}; specIter != specificRange.second;
        ++specIter) {
     // We only need to check the cases with distinct generic names.
     if (const char *genericName{specIter->second->generic}) {
-      // First try to find an exact match in the specific intrinsics.
-      if (auto specificCall{specIter->second->Match(
-              call, defaults_, arguments, localContext)}) {
+      if (auto specificCall{
+              matchOrBufferMessages(*specIter->second, specificBuffer)}) {
         specificCall->specificIntrinsic.name = genericName;
         specificCall->specificIntrinsic.isRestrictedSpecific =
             specIter->second->isRestrictedSpecific;
-        if (finalBuffer != nullptr) {
-          finalBuffer->Annex(std::move(localBuffer));
-        }
         // TODO test feature AdditionalIntrinsics, warn on nonstandard
         // specifics with DoublePrecisionComplex arguments.
         return specificCall;
-      } else if (specificBuffer.empty()) {
-        specificBuffer.Annex(std::move(localBuffer));
-      } else {
-        specificBuffer.clear();
       }
-      // If there was no exact match with a specific, try to match the related
-      // generic and convert the result to the specific required type.
+    }
+  }
+
+  // If there was no exact match with a specific, try to match the related
+  // generic and convert the result to the specific required type.
+  for (auto specIter{specificRange.first}; specIter != specificRange.second;
+       ++specIter) {
+    // We only need to check the cases with distinct generic names.
+    if (const char *genericName{specIter->second->generic}) {
       if (specIter->second->useGenericAndForceResultType) {
         auto genericRange{genericFuncs_.equal_range(genericName)};
         for (auto genIter{genericRange.first}; genIter != genericRange.second;
              ++genIter) {
-          if (auto specificCall{genIter->second->Match(
-                  call, defaults_, arguments, localContext)}) {
-            specificCall->specificIntrinsic.name = genericName;
-            specificCall->specificIntrinsic.isRestrictedSpecific =
-                specIter->second->isRestrictedSpecific;
-            // Force the result type
-            TypeCategory category{TypeCategory::Integer};
-            switch (specIter->second->result.kindCode) {
-            case KindCode::defaultIntegerKind: break;
-            case KindCode::doublePrecision:
-            case KindCode::defaultRealKind:
-              category = TypeCategory::Real;
-              break;
-            default: CRASH_NO_CASE;
-            }
-            int kind{
-                specIter->second->result.kindCode == KindCode::doublePrecision
-                    ? defaults_.doublePrecisionKind()
-                    : defaults_.GetDefaultKind(category)};
-            DynamicType newType{category, kind};
-            specificCall->specificIntrinsic.characteristics.value()
-                .functionResult.value()
-                .SetType(newType);
-            localContext.messages().Say(
+          if (auto specificCall{
+                  matchOrBufferMessages(*genIter->second, specificBuffer)}) {
+            // Force the call result type to the specific intrinsic result type
+            DynamicType newType{GetReturnType(*specIter->second, defaults_)};
+            context.messages().Say(
                 "Argument type does not match specific intrinsic '%s' "
                 "requirements, using '%s' generic instead and converting the "
                 "result to %s if needed"_en_US,
                 name, genericName, newType.AsFortran());
-            if (finalBuffer != nullptr) {
-              finalBuffer->Annex(std::move(localBuffer));
-            }
+            specificCall->specificIntrinsic.characteristics.value()
+                .functionResult.value()
+                .SetType(newType);
             return specificCall;
-          } else if (specificBuffer.empty()) {
-            specificBuffer.Annex(std::move(localBuffer));
-          } else {
-            specificBuffer.clear();
           }
         }
       }
     }
   }
+
   // No match; report the right errors, if any
   if (finalBuffer != nullptr) {
     if (specificBuffer.empty()) {
