@@ -610,10 +610,7 @@ Value *LibCallSimplifier::optimizeStrNCpy(CallInst *CI, IRBuilder<> &B) {
 
   if (SrcLen == 0) {
     // strncpy(x, "", y) -> memset(align 1 x, '\0', y)
-    CallInst *NewCI = B.CreateMemSet(Dst, B.getInt8('\0'), Size, 1);
-    AttrBuilder ArgAttrs(CI->getAttributes().getParamAttributes(0));
-    NewCI->setAttributes(NewCI->getAttributes().addParamAttributes(
-        CI->getContext(), 0, ArgAttrs));
+    B.CreateMemSet(Dst, B.getInt8('\0'), Size, 1);
     return Dst;
   }
 
@@ -624,8 +621,6 @@ Value *LibCallSimplifier::optimizeStrNCpy(CallInst *CI, IRBuilder<> &B) {
   Type *PT = Callee->getFunctionType()->getParamType(0);
   // strncpy(x, s, c) -> memcpy(align 1 x, align 1 s, c) [s and c are constant]
   CallInst *NewCI = B.CreateMemCpy(Dst, 1, Src, 1, ConstantInt::get(DL.getIntPtrType(PT), Len));
- // AttrBuilder ArgAttrs(CI->getAttributes().getParamAttributes(0));
-//  NewCI->getAttributes().addParamAttributes(CI->getContext(), 0, ArgAttrs);
   NewCI->setAttributes(CI->getAttributes());
   return Dst;
 }
