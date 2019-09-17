@@ -2462,6 +2462,11 @@ def X86cmpmSAE_su : PatFrag<(ops node:$src1, node:$src2, node:$cc),
   return N->hasOneUse();
 }]>;
 
+def X86cmpm_imm_commute : SDNodeXForm<imm, [{
+  uint8_t Imm = X86::getSwappedVCMPImm(N->getZExtValue() & 0x1f);
+  return getI8Imm(Imm, SDLoc(N));
+}]>;
+
 multiclass avx512_vcmp_common<X86FoldableSchedWrite sched, X86VectorVTInfo _,
                               string Name> {
   defm  rri  : AVX512_maskable_cmp<0xC2, MRMSrcReg, _,
@@ -2498,29 +2503,29 @@ multiclass avx512_vcmp_common<X86FoldableSchedWrite sched, X86VectorVTInfo _,
 
   // Patterns for selecting with loads in other operand.
   def : Pat<(X86cmpm (_.LdFrag addr:$src2), (_.VT _.RC:$src1),
-                     CommutableCMPCC:$cc),
+                     imm:$cc),
             (!cast<Instruction>(Name#_.ZSuffix#"rmi") _.RC:$src1, addr:$src2,
-                                                      imm:$cc)>;
+                                                      (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(and _.KRCWM:$mask, (X86cmpm_su (_.LdFrag addr:$src2),
                                             (_.VT _.RC:$src1),
-                                            CommutableCMPCC:$cc)),
+                                            imm:$cc)),
             (!cast<Instruction>(Name#_.ZSuffix#"rmik") _.KRCWM:$mask,
                                                        _.RC:$src1, addr:$src2,
-                                                       imm:$cc)>;
+                                                       (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(X86cmpm (X86VBroadcast (_.ScalarLdFrag addr:$src2)),
-                     (_.VT _.RC:$src1), CommutableCMPCC:$cc),
+                     (_.VT _.RC:$src1), imm:$cc),
             (!cast<Instruction>(Name#_.ZSuffix#"rmbi") _.RC:$src1, addr:$src2,
-                                                       imm:$cc)>;
+                                                       (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(and _.KRCWM:$mask, (X86cmpm_su (X86VBroadcast
                                              (_.ScalarLdFrag addr:$src2)),
                                             (_.VT _.RC:$src1),
-                                            CommutableCMPCC:$cc)),
+                                            imm:$cc)),
             (!cast<Instruction>(Name#_.ZSuffix#"rmbik") _.KRCWM:$mask,
                                                         _.RC:$src1, addr:$src2,
-                                                        imm:$cc)>;
+                                                        (X86cmpm_imm_commute imm:$cc))>;
 }
 
 multiclass avx512_vcmp_sae<X86FoldableSchedWrite sched, X86VectorVTInfo _> {
@@ -2556,12 +2561,12 @@ defm VCMPPS : avx512_vcmp<SchedWriteFCmp, avx512vl_f32_info>,
 // Patterns to select fp compares with load as first operand.
 let Predicates = [HasAVX512] in {
   def : Pat<(v1i1 (X86cmpms (loadf64 addr:$src2), FR64X:$src1,
-                            CommutableCMPCC:$cc)),
-            (VCMPSDZrm FR64X:$src1, addr:$src2, imm:$cc)>;
+                            imm:$cc)),
+            (VCMPSDZrm FR64X:$src1, addr:$src2, (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(v1i1 (X86cmpms (loadf32 addr:$src2), FR32X:$src1,
-                            CommutableCMPCC:$cc)),
-            (VCMPSSZrm FR32X:$src1, addr:$src2, imm:$cc)>;
+                            imm:$cc)),
+            (VCMPSSZrm FR32X:$src1, addr:$src2, (X86cmpm_imm_commute imm:$cc))>;
 }
 
 // ----------------------------------------------------------------

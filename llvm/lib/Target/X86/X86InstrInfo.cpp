@@ -2270,7 +2270,7 @@ unsigned X86::getVPCMPImmForCond(ISD::CondCode CC) {
   }
 }
 
-/// Get the VPCMP immediate if the opcodes are swapped.
+/// Get the VPCMP immediate if the operands are swapped.
 unsigned X86::getSwappedVPCMPImm(unsigned Imm) {
   switch (Imm) {
   default: llvm_unreachable("Unreachable!");
@@ -2288,7 +2288,7 @@ unsigned X86::getSwappedVPCMPImm(unsigned Imm) {
   return Imm;
 }
 
-/// Get the VPCOM immediate if the opcodes are swapped.
+/// Get the VPCOM immediate if the operands are swapped.
 unsigned X86::getSwappedVPCOMImm(unsigned Imm) {
   switch (Imm) {
   default: llvm_unreachable("Unreachable!");
@@ -2300,6 +2300,23 @@ unsigned X86::getSwappedVPCOMImm(unsigned Imm) {
   case 0x05: // NE
   case 0x06: // FALSE
   case 0x07: // TRUE
+    break;
+  }
+
+  return Imm;
+}
+
+/// Get the VCMP immediate if the operands are swapped.
+unsigned X86::getSwappedVCMPImm(unsigned Imm) {
+  // Only need the lower 2 bits to distinquish.
+  switch (Imm & 0x3) {
+  default: llvm_unreachable("Unreachable!");
+  case 0x00: case 0x03:
+    // EQ/NE/TRUE/FALSE/ORD/UNORD don't change immediate when commuted.
+    break;
+  case 0x01: case 0x02:
+    // Need to toggle bits 3:0. Bit 4 stays the same.
+    Imm ^= 0xf;
     break;
   }
 

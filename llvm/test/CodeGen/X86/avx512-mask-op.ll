@@ -1968,8 +1968,7 @@ define <64 x i8> @test_build_vec_v64i1(<64 x i8> %x) {
 define void @ktest_1(<8 x double> %in, double * %base) {
 ; KNL-LABEL: ktest_1:
 ; KNL:       ## %bb.0:
-; KNL-NEXT:    vmovupd (%rdi), %zmm1
-; KNL-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; KNL-NEXT:    vcmpgtpd (%rdi), %zmm0, %k1
 ; KNL-NEXT:    vmovupd 8(%rdi), %zmm1 {%k1} {z}
 ; KNL-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
 ; KNL-NEXT:    kmovw %k0, %eax
@@ -1986,8 +1985,7 @@ define void @ktest_1(<8 x double> %in, double * %base) {
 ;
 ; SKX-LABEL: ktest_1:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovupd (%rdi), %zmm1
-; SKX-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; SKX-NEXT:    vcmpgtpd (%rdi), %zmm0, %k1
 ; SKX-NEXT:    vmovupd 8(%rdi), %zmm1 {%k1} {z}
 ; SKX-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
 ; SKX-NEXT:    kortestb %k0, %k0
@@ -2003,8 +2001,7 @@ define void @ktest_1(<8 x double> %in, double * %base) {
 ;
 ; AVX512BW-LABEL: ktest_1:
 ; AVX512BW:       ## %bb.0:
-; AVX512BW-NEXT:    vmovupd (%rdi), %zmm1
-; AVX512BW-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; AVX512BW-NEXT:    vcmpgtpd (%rdi), %zmm0, %k1
 ; AVX512BW-NEXT:    vmovupd 8(%rdi), %zmm1 {%k1} {z}
 ; AVX512BW-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
 ; AVX512BW-NEXT:    kmovd %k0, %eax
@@ -2021,8 +2018,7 @@ define void @ktest_1(<8 x double> %in, double * %base) {
 ;
 ; AVX512DQ-LABEL: ktest_1:
 ; AVX512DQ:       ## %bb.0:
-; AVX512DQ-NEXT:    vmovupd (%rdi), %zmm1
-; AVX512DQ-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; AVX512DQ-NEXT:    vcmpgtpd (%rdi), %zmm0, %k1
 ; AVX512DQ-NEXT:    vmovupd 8(%rdi), %zmm1 {%k1} {z}
 ; AVX512DQ-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
 ; AVX512DQ-NEXT:    kortestb %k0, %k0
@@ -2039,8 +2035,7 @@ define void @ktest_1(<8 x double> %in, double * %base) {
 ; X86-LABEL: ktest_1:
 ; X86:       ## %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    vmovupd (%eax), %zmm1
-; X86-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; X86-NEXT:    vcmpgtpd (%eax), %zmm0, %k1
 ; X86-NEXT:    vmovupd 8(%eax), %zmm1 {%k1} {z}
 ; X86-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
 ; X86-NEXT:    kortestb %k0, %k0
@@ -2084,10 +2079,8 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ;
 ; KNL-LABEL: ktest_2:
 ; KNL:       ## %bb.0:
-; KNL-NEXT:    vmovups (%rdi), %zmm2
-; KNL-NEXT:    vmovups 64(%rdi), %zmm3
-; KNL-NEXT:    vcmpltps %zmm1, %zmm3, %k1
-; KNL-NEXT:    vcmpltps %zmm0, %zmm2, %k2
+; KNL-NEXT:    vcmpgtps 64(%rdi), %zmm1, %k1
+; KNL-NEXT:    vcmpgtps (%rdi), %zmm0, %k2
 ; KNL-NEXT:    vmovups 4(%rdi), %zmm2 {%k2} {z}
 ; KNL-NEXT:    vmovups 68(%rdi), %zmm3 {%k1} {z}
 ; KNL-NEXT:    vcmpltps %zmm3, %zmm1, %k0
@@ -2112,10 +2105,8 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ;
 ; SKX-LABEL: ktest_2:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovups (%rdi), %zmm2
-; SKX-NEXT:    vmovups 64(%rdi), %zmm3
-; SKX-NEXT:    vcmpltps %zmm0, %zmm2, %k1
-; SKX-NEXT:    vcmpltps %zmm1, %zmm3, %k2
+; SKX-NEXT:    vcmpgtps (%rdi), %zmm0, %k1
+; SKX-NEXT:    vcmpgtps 64(%rdi), %zmm1, %k2
 ; SKX-NEXT:    kunpckwd %k1, %k2, %k0
 ; SKX-NEXT:    vmovups 68(%rdi), %zmm2 {%k2} {z}
 ; SKX-NEXT:    vmovups 4(%rdi), %zmm3 {%k1} {z}
@@ -2137,10 +2128,8 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ;
 ; AVX512BW-LABEL: ktest_2:
 ; AVX512BW:       ## %bb.0:
-; AVX512BW-NEXT:    vmovups (%rdi), %zmm2
-; AVX512BW-NEXT:    vmovups 64(%rdi), %zmm3
-; AVX512BW-NEXT:    vcmpltps %zmm0, %zmm2, %k1
-; AVX512BW-NEXT:    vcmpltps %zmm1, %zmm3, %k2
+; AVX512BW-NEXT:    vcmpgtps (%rdi), %zmm0, %k1
+; AVX512BW-NEXT:    vcmpgtps 64(%rdi), %zmm1, %k2
 ; AVX512BW-NEXT:    kunpckwd %k1, %k2, %k0
 ; AVX512BW-NEXT:    vmovups 68(%rdi), %zmm2 {%k2} {z}
 ; AVX512BW-NEXT:    vmovups 4(%rdi), %zmm3 {%k1} {z}
@@ -2162,10 +2151,8 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ;
 ; AVX512DQ-LABEL: ktest_2:
 ; AVX512DQ:       ## %bb.0:
-; AVX512DQ-NEXT:    vmovups (%rdi), %zmm2
-; AVX512DQ-NEXT:    vmovups 64(%rdi), %zmm3
-; AVX512DQ-NEXT:    vcmpltps %zmm1, %zmm3, %k1
-; AVX512DQ-NEXT:    vcmpltps %zmm0, %zmm2, %k2
+; AVX512DQ-NEXT:    vcmpgtps 64(%rdi), %zmm1, %k1
+; AVX512DQ-NEXT:    vcmpgtps (%rdi), %zmm0, %k2
 ; AVX512DQ-NEXT:    vmovups 4(%rdi), %zmm2 {%k2} {z}
 ; AVX512DQ-NEXT:    vmovups 68(%rdi), %zmm3 {%k1} {z}
 ; AVX512DQ-NEXT:    vcmpltps %zmm3, %zmm1, %k0
@@ -2191,10 +2178,8 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ; X86-LABEL: ktest_2:
 ; X86:       ## %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    vmovups (%eax), %zmm2
-; X86-NEXT:    vmovups 64(%eax), %zmm3
-; X86-NEXT:    vcmpltps %zmm0, %zmm2, %k1
-; X86-NEXT:    vcmpltps %zmm1, %zmm3, %k2
+; X86-NEXT:    vcmpgtps (%eax), %zmm0, %k1
+; X86-NEXT:    vcmpgtps 64(%eax), %zmm1, %k2
 ; X86-NEXT:    kunpckwd %k1, %k2, %k0
 ; X86-NEXT:    vmovups 68(%eax), %zmm2 {%k2} {z}
 ; X86-NEXT:    vmovups 4(%eax), %zmm3 {%k1} {z}
