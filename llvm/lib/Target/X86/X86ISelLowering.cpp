@@ -34627,29 +34627,82 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
     // TODO convert SrcUndef to KnownUndef.
     break;
   }
-  case X86ISD::KSHIFTL:
+  case X86ISD::KSHIFTL: {
+    SDValue Src = Op.getOperand(0);
+    auto *Amt = cast<ConstantSDNode>(Op.getOperand(1));
+    assert(Amt->getAPIntValue().ult(NumElts) && "Out of range shift amount");
+    unsigned ShiftAmt = Amt->getZExtValue();
+
+    if (ShiftAmt == 0)
+      return TLO.CombineTo(Op, Src);
+
+    // If this is ((X >>u C1) << ShAmt), see if we can simplify this into a
+    // single shift.  We can do this if the bottom bits (which are shifted
+    // out) are never demanded.
+    if (Src.getOpcode() == X86ISD::KSHIFTR) {
+      if (!DemandedElts.intersects(APInt::getLowBitsSet(NumElts, ShiftAmt))) {
+        unsigned C1 = Src.getConstantOperandVal(1);
+        unsigned Opc = X86ISD::KSHIFTL;
+        int Diff = ShiftAmt - C1;
+        if (Diff < 0) {
+          Diff = -Diff;
+          Opc = X86ISD::KSHIFTR;
+        }
+
+        SDLoc dl(Op);
+        SDValue NewSA = TLO.DAG.getConstant(Diff, dl, MVT::i8);
+        return TLO.CombineTo(
+            Op, TLO.DAG.getNode(Opc, dl, VT, Src.getOperand(0), NewSA));
+      }
+    }
+
+    APInt DemandedSrc = DemandedElts.lshr(ShiftAmt);
+    if (SimplifyDemandedVectorElts(Src, DemandedSrc, KnownUndef, KnownZero, TLO,
+                                   Depth + 1))
+      return true;
+
+    KnownUndef = KnownUndef.shl(ShiftAmt);
+    KnownZero = KnownZero.shl(ShiftAmt);
+    KnownZero.setLowBits(ShiftAmt);
+    break;
+  }
   case X86ISD::KSHIFTR: {
     SDValue Src = Op.getOperand(0);
     auto *Amt = cast<ConstantSDNode>(Op.getOperand(1));
     assert(Amt->getAPIntValue().ult(NumElts) && "Out of range shift amount");
     unsigned ShiftAmt = Amt->getZExtValue();
-    bool ShiftLeft = (X86ISD::KSHIFTL == Opc);
 
-    APInt DemandedSrc =
-        ShiftLeft ? DemandedElts.lshr(ShiftAmt) : DemandedElts.shl(ShiftAmt);
+    if (ShiftAmt == 0)
+      return TLO.CombineTo(Op, Src);
+
+    // If this is ((X << C1) >>u ShAmt), see if we can simplify this into a
+    // single shift.  We can do this if the top bits (which are shifted
+    // out) are never demanded.
+    if (Src.getOpcode() == X86ISD::KSHIFTL) {
+      if (!DemandedElts.intersects(APInt::getHighBitsSet(NumElts, ShiftAmt))) {
+        unsigned C1 = Src.getConstantOperandVal(1);
+        unsigned Opc = X86ISD::KSHIFTR;
+        int Diff = ShiftAmt - C1;
+        if (Diff < 0) {
+          Diff = -Diff;
+          Opc = X86ISD::KSHIFTL;
+        }
+
+        SDLoc dl(Op);
+        SDValue NewSA = TLO.DAG.getConstant(Diff, dl, MVT::i8);
+        return TLO.CombineTo(
+            Op, TLO.DAG.getNode(Opc, dl, VT, Src.getOperand(0), NewSA));
+      }
+    }
+
+    APInt DemandedSrc = DemandedElts.shl(ShiftAmt);
     if (SimplifyDemandedVectorElts(Src, DemandedSrc, KnownUndef, KnownZero, TLO,
                                    Depth + 1))
       return true;
 
-    if (ShiftLeft) {
-      KnownUndef = KnownUndef.shl(ShiftAmt);
-      KnownZero = KnownZero.shl(ShiftAmt);
-      KnownZero.setLowBits(ShiftAmt);
-    } else {
-      KnownUndef = KnownUndef.lshr(ShiftAmt);
-      KnownZero = KnownZero.lshr(ShiftAmt);
-      KnownZero.setHighBits(ShiftAmt);
-    }
+    KnownUndef = KnownUndef.lshr(ShiftAmt);
+    KnownZero = KnownZero.lshr(ShiftAmt);
+    KnownZero.setHighBits(ShiftAmt);
     break;
   }
   case X86ISD::CVTSI2P:

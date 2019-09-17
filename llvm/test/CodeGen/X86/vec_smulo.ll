@@ -2252,8 +2252,7 @@ define <4 x i32> @smulo_v4i1(<4 x i1> %a0, <4 x i1> %a1, <4 x i1>* %p2) nounwind
 ; AVX512-NEXT:    kxorw %k0, %k2, %k2
 ; AVX512-NEXT:    kshiftrw $2, %k2, %k3
 ; AVX512-NEXT:    kxorw %k1, %k3, %k1
-; AVX512-NEXT:    kshiftlw $15, %k1, %k1
-; AVX512-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512-NEXT:    kshiftlw $2, %k1, %k1
 ; AVX512-NEXT:    kxorw %k1, %k2, %k1
 ; AVX512-NEXT:    kshiftlw $13, %k1, %k1
 ; AVX512-NEXT:    kshiftrw $13, %k1, %k1
