@@ -3,9 +3,11 @@ Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 ## In brief:
-* Use *clang-format* on all C++ source and header files before
-  every merge to master.  All code layout should be determined
-  by means of clang-format.
+* Use *clang-format*
+from llvm 7
+on all C++ source and header files before
+every merge to master.  All code layout should be determined
+by means of clang-format.
 * Where a clear precedent exists in the project, follow it.
 * Otherwise, where [LLVM's C++ style guide](https://llvm.org/docs/CodingStandards.html#style-issues)
 is clear on usage, follow it.
@@ -15,7 +17,15 @@ is clear on usage, follow it.
 * Reasonable exceptions to these guidelines can be made.
 * Be aware of some workarounds for known issues in older C++ compilers that should
   still be able to compile f18. They are listed at the end of this document.
+
 ## In particular:
+
+Use serial commas in comments, error messages, and documentation.
+
+### Error messages
+1. Fortran keywords should appear in upper case.
+1. Names from the program appear in single quotes.
+
 ### Files
 1. File names should use dashes, not underscores.  C++ sources have the
 extension ".cc", not ".C" or ".cpp" or ".cxx".  Don't create needless
@@ -38,6 +48,7 @@ Then `#include` other project headers in alphabetic order; then C++ standard
 headers, also alphabetically; then C and system headers.
 1. Don't use `#include <iostream>`.  If you need it for temporary debugging,
 remove the inclusion before committing.
+
 ### Naming
 1. C++ names that correspond to well-known interfaces from the STL, LLVM,
 and Fortran standard
@@ -60,16 +71,18 @@ on imperative verbs, e.g. `HaltAndCatchFire()`.
 especially when you can declare them directly in a `for()`/`while()`/`if()`
 condition.  Otherwise, prefer complete English words to abbreviations
 when creating names.
+
 ### Commentary
 1. Use `//` for all comments except for short `/*notes*/` within expressions.
 1. When `//` follows code on a line, precede it with two spaces.
 1. Comments should matter.  Assume that the reader knows current C++ at least as
 well as you do and avoid distracting her by calling out usage of new
 features in comments.
+
 ### Layout
 Always run `clang-format` before committing code.  Other developers should
 be able to run `git pull`, then `clang-format`, and see only their own
-changes.
+changes. Use `clang-format` from llvm 7.
 
 Here's what you can expect to see `clang-format` do:
 1. Indent with two spaces.
@@ -106,6 +119,7 @@ the idiom of wrapping them with extra parentheses.
 In multi-element initializer lists (especially `common::visitors{...}`),
 including a comma after the last element often causes `clang-format` to do
 a better jobs of formatting.
+
 ### C++ language
 Use *C++17*, unless some compiler to which we must be portable lacks a feature
 you are considering.
@@ -160,6 +174,7 @@ in `if`/`while` predicates.
 When no presence test is obviously protecting a `*x` reference to the
 contents, and it is assumed that the contents are present, validate that
 assumption by using `x.value()` instead.
+
 #### Classes
 1. Define POD structures with `struct`.
 1. Don't use `this->` in (non-static) member functions, unless forced to
@@ -176,6 +191,7 @@ will be implicitly deleted.  When neither copy nor move constructors
 or assignments should exist for a class, explicitly `=delete` all of them.
 1. Make single-argument constructors (other than copy and move constructors)
 'explicit' unless you really want to define an implicit conversion.
+
 #### Pointers
 There are many -- perhaps too many -- means of indirect addressing
 data in this project.
@@ -232,7 +248,6 @@ produce source code when macros and templates suffice; don't write macros
 when templates suffice.  Templates are statically typed, checked by the
 compiler, and are (or should be) visible to debuggers.
 
-
 ### Exceptions to these guidelines
 Reasonable exceptions will be allowed; these guidelines cannot anticipate
 all situations.
@@ -248,6 +263,7 @@ but not an end in itself.
 Below is a list of workarounds for C++ compiler bugs met with f18 that, even
 if the bugs are fixed in latest C++ compiler versions, need to be applied so
 that all desired tool-chains can compile f18.
+
 ### Explicitly move noncopyable local variable into optional results
 
 The following code is legal C++ but fails to compile with the
