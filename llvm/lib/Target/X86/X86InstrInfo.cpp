@@ -1177,40 +1177,62 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   case X86::VMOVUPDZrmk:      case X86::VMOVAPDZrmk:
   case X86::VMOVUPSZ128rmk:   case X86::VMOVAPSZ128rmk:
   case X86::VMOVUPSZ256rmk:   case X86::VMOVAPSZ256rmk:
-  case X86::VMOVUPSZrmk:      case X86::VMOVAPSZrmk: {
+  case X86::VMOVUPSZrmk:      case X86::VMOVAPSZrmk:
+  case X86::VBROADCASTSDZ256mk:
+  case X86::VBROADCASTSDZmk:
+  case X86::VBROADCASTSSZ128mk:
+  case X86::VBROADCASTSSZ256mk:
+  case X86::VBROADCASTSSZmk:
+  case X86::VPBROADCASTDZ128mk:
+  case X86::VPBROADCASTDZ256mk:
+  case X86::VPBROADCASTDZmk:
+  case X86::VPBROADCASTQZ128mk:
+  case X86::VPBROADCASTQZ256mk:
+  case X86::VPBROADCASTQZmk: {
     unsigned Opc;
     switch (MIOpc) {
     default: llvm_unreachable("Unreachable!");
-    case X86::VMOVDQU8Z128rmk:  Opc = X86::VPBLENDMBZ128rmk; break;
-    case X86::VMOVDQU8Z256rmk:  Opc = X86::VPBLENDMBZ256rmk; break;
-    case X86::VMOVDQU8Zrmk:     Opc = X86::VPBLENDMBZrmk;    break;
-    case X86::VMOVDQU16Z128rmk: Opc = X86::VPBLENDMWZ128rmk; break;
-    case X86::VMOVDQU16Z256rmk: Opc = X86::VPBLENDMWZ256rmk; break;
-    case X86::VMOVDQU16Zrmk:    Opc = X86::VPBLENDMWZrmk;    break;
-    case X86::VMOVDQU32Z128rmk: Opc = X86::VPBLENDMDZ128rmk; break;
-    case X86::VMOVDQU32Z256rmk: Opc = X86::VPBLENDMDZ256rmk; break;
-    case X86::VMOVDQU32Zrmk:    Opc = X86::VPBLENDMDZrmk;    break;
-    case X86::VMOVDQU64Z128rmk: Opc = X86::VPBLENDMQZ128rmk; break;
-    case X86::VMOVDQU64Z256rmk: Opc = X86::VPBLENDMQZ256rmk; break;
-    case X86::VMOVDQU64Zrmk:    Opc = X86::VPBLENDMQZrmk;    break;
-    case X86::VMOVUPDZ128rmk:   Opc = X86::VBLENDMPDZ128rmk; break;
-    case X86::VMOVUPDZ256rmk:   Opc = X86::VBLENDMPDZ256rmk; break;
-    case X86::VMOVUPDZrmk:      Opc = X86::VBLENDMPDZrmk;    break;
-    case X86::VMOVUPSZ128rmk:   Opc = X86::VBLENDMPSZ128rmk; break;
-    case X86::VMOVUPSZ256rmk:   Opc = X86::VBLENDMPSZ256rmk; break;
-    case X86::VMOVUPSZrmk:      Opc = X86::VBLENDMPSZrmk;    break;
-    case X86::VMOVDQA32Z128rmk: Opc = X86::VPBLENDMDZ128rmk; break;
-    case X86::VMOVDQA32Z256rmk: Opc = X86::VPBLENDMDZ256rmk; break;
-    case X86::VMOVDQA32Zrmk:    Opc = X86::VPBLENDMDZrmk;    break;
-    case X86::VMOVDQA64Z128rmk: Opc = X86::VPBLENDMQZ128rmk; break;
-    case X86::VMOVDQA64Z256rmk: Opc = X86::VPBLENDMQZ256rmk; break;
-    case X86::VMOVDQA64Zrmk:    Opc = X86::VPBLENDMQZrmk;    break;
-    case X86::VMOVAPDZ128rmk:   Opc = X86::VBLENDMPDZ128rmk; break;
-    case X86::VMOVAPDZ256rmk:   Opc = X86::VBLENDMPDZ256rmk; break;
-    case X86::VMOVAPDZrmk:      Opc = X86::VBLENDMPDZrmk;    break;
-    case X86::VMOVAPSZ128rmk:   Opc = X86::VBLENDMPSZ128rmk; break;
-    case X86::VMOVAPSZ256rmk:   Opc = X86::VBLENDMPSZ256rmk; break;
-    case X86::VMOVAPSZrmk:      Opc = X86::VBLENDMPSZrmk;    break;
+    case X86::VMOVDQU8Z128rmk:    Opc = X86::VPBLENDMBZ128rmk; break;
+    case X86::VMOVDQU8Z256rmk:    Opc = X86::VPBLENDMBZ256rmk; break;
+    case X86::VMOVDQU8Zrmk:       Opc = X86::VPBLENDMBZrmk;    break;
+    case X86::VMOVDQU16Z128rmk:   Opc = X86::VPBLENDMWZ128rmk; break;
+    case X86::VMOVDQU16Z256rmk:   Opc = X86::VPBLENDMWZ256rmk; break;
+    case X86::VMOVDQU16Zrmk:      Opc = X86::VPBLENDMWZrmk;    break;
+    case X86::VMOVDQU32Z128rmk:   Opc = X86::VPBLENDMDZ128rmk; break;
+    case X86::VMOVDQU32Z256rmk:   Opc = X86::VPBLENDMDZ256rmk; break;
+    case X86::VMOVDQU32Zrmk:      Opc = X86::VPBLENDMDZrmk;    break;
+    case X86::VMOVDQU64Z128rmk:   Opc = X86::VPBLENDMQZ128rmk; break;
+    case X86::VMOVDQU64Z256rmk:   Opc = X86::VPBLENDMQZ256rmk; break;
+    case X86::VMOVDQU64Zrmk:      Opc = X86::VPBLENDMQZrmk;    break;
+    case X86::VMOVUPDZ128rmk:     Opc = X86::VBLENDMPDZ128rmk; break;
+    case X86::VMOVUPDZ256rmk:     Opc = X86::VBLENDMPDZ256rmk; break;
+    case X86::VMOVUPDZrmk:        Opc = X86::VBLENDMPDZrmk;    break;
+    case X86::VMOVUPSZ128rmk:     Opc = X86::VBLENDMPSZ128rmk; break;
+    case X86::VMOVUPSZ256rmk:     Opc = X86::VBLENDMPSZ256rmk; break;
+    case X86::VMOVUPSZrmk:        Opc = X86::VBLENDMPSZrmk;    break;
+    case X86::VMOVDQA32Z128rmk:   Opc = X86::VPBLENDMDZ128rmk; break;
+    case X86::VMOVDQA32Z256rmk:   Opc = X86::VPBLENDMDZ256rmk; break;
+    case X86::VMOVDQA32Zrmk:      Opc = X86::VPBLENDMDZrmk;    break;
+    case X86::VMOVDQA64Z128rmk:   Opc = X86::VPBLENDMQZ128rmk; break;
+    case X86::VMOVDQA64Z256rmk:   Opc = X86::VPBLENDMQZ256rmk; break;
+    case X86::VMOVDQA64Zrmk:      Opc = X86::VPBLENDMQZrmk;    break;
+    case X86::VMOVAPDZ128rmk:     Opc = X86::VBLENDMPDZ128rmk; break;
+    case X86::VMOVAPDZ256rmk:     Opc = X86::VBLENDMPDZ256rmk; break;
+    case X86::VMOVAPDZrmk:        Opc = X86::VBLENDMPDZrmk;    break;
+    case X86::VMOVAPSZ128rmk:     Opc = X86::VBLENDMPSZ128rmk; break;
+    case X86::VMOVAPSZ256rmk:     Opc = X86::VBLENDMPSZ256rmk; break;
+    case X86::VMOVAPSZrmk:        Opc = X86::VBLENDMPSZrmk;    break;
+    case X86::VBROADCASTSDZ256mk: Opc = X86::VBLENDMPDZ256rmbk; break;
+    case X86::VBROADCASTSDZmk:    Opc = X86::VBLENDMPDZrmbk;    break;
+    case X86::VBROADCASTSSZ128mk: Opc = X86::VBLENDMPSZ128rmbk; break;
+    case X86::VBROADCASTSSZ256mk: Opc = X86::VBLENDMPSZ256rmbk; break;
+    case X86::VBROADCASTSSZmk:    Opc = X86::VBLENDMPSZrmbk;    break;
+    case X86::VPBROADCASTDZ128mk: Opc = X86::VPBLENDMDZ128rmbk; break;
+    case X86::VPBROADCASTDZ256mk: Opc = X86::VPBLENDMDZ256rmbk; break;
+    case X86::VPBROADCASTDZmk:    Opc = X86::VPBLENDMDZrmbk;    break;
+    case X86::VPBROADCASTQZ128mk: Opc = X86::VPBLENDMQZ128rmbk; break;
+    case X86::VPBROADCASTQZ256mk: Opc = X86::VPBLENDMQZ256rmbk; break;
+    case X86::VPBROADCASTQZmk:    Opc = X86::VPBLENDMQZrmbk;    break;
     }
 
     NewMI = BuildMI(MF, MI.getDebugLoc(), get(Opc))
@@ -1224,6 +1246,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
               .add(MI.getOperand(7));
     break;
   }
+
   case X86::VMOVDQU8Z128rrk:
   case X86::VMOVDQU8Z256rrk:
   case X86::VMOVDQU8Zrrk:
