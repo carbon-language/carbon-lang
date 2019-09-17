@@ -20301,7 +20301,8 @@ X86TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
   SDLoc DL(N);
   SDValue N0 = N->getOperand(0);
   SDValue Zero = DAG.getConstant(0, DL, VT);
-  SDValue Pow2MinusOne = DAG.getConstant((1ULL << Lg2) - 1, DL, VT);
+  APInt Lg2Mask = APInt::getLowBitsSet(VT.getSizeInBits(), Lg2);
+  SDValue Pow2MinusOne = DAG.getConstant(Lg2Mask, DL, VT);
 
   // If N0 is negative, we need to add (Pow2 - 1) to it before shifting right.
   SDValue Cmp = DAG.getSetCC(DL, MVT::i8, N0, Zero, ISD::SETLT);
