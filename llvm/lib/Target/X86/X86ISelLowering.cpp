@@ -749,7 +749,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   // First set operation action for all vector types to either promote
   // (for widening) or expand (for scalarization). Then we will selectively
   // turn on ones that can be effectively codegen'd.
-  for (MVT VT : MVT::vector_valuetypes()) {
+  for (MVT VT : MVT::fixedlen_vector_valuetypes()) {
     setOperationAction(ISD::SDIV, VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
@@ -787,7 +787,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::ZERO_EXTEND, VT, Expand);
     setOperationAction(ISD::ANY_EXTEND, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Expand);
-    for (MVT InnerVT : MVT::vector_valuetypes()) {
+    for (MVT InnerVT : MVT::fixedlen_vector_valuetypes()) {
       setTruncStoreAction(InnerVT, VT, Expand);
 
       setLoadExtAction(ISD::SEXTLOAD, InnerVT, VT, Expand);
@@ -948,7 +948,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // scalars) and extend in-register to a legal 128-bit vector type. For sext
     // loads these must work with a single scalar load.
     if (!ExperimentalVectorWideningLegalization) {
-      for (MVT VT : MVT::integer_vector_valuetypes()) {
+      for (MVT VT : MVT::integer_fixedlen_vector_valuetypes()) {
         setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i8, Custom);
         setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i16, Custom);
         setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i32, Custom);
@@ -1112,7 +1112,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (!ExperimentalVectorWideningLegalization) {
       // Avoid narrow result types when widening. The legal types are listed
       // in the next loop.
-      for (MVT VT : MVT::integer_vector_valuetypes()) {
+      for (MVT VT : MVT::integer_fixedlen_vector_valuetypes()) {
         setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i8, Custom);
         setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i16, Custom);
         setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i32, Custom);
