@@ -612,7 +612,8 @@ Value *LibCallSimplifier::optimizeStrNCpy(CallInst *CI, IRBuilder<> &B) {
     // strncpy(x, "", y) -> memset(align 1 x, '\0', y)
     CallInst *NewCI = B.CreateMemSet(Dst, B.getInt8('\0'), Size, 1);
     AttrBuilder ArgAttrs(CI->getAttributes().getParamAttributes(0));
-    NewCI->getAttributes().addParamAttributes(CI->getContext(), 0, ArgAttrs);
+    NewCI->setAttributes(NewCI->getAttributes().addParamAttributes(
+        CI->getContext(), 0, ArgAttrs));
     return Dst;
   }
 
