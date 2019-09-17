@@ -16,13 +16,34 @@
 module m1
   interface foo
     real function s1(x,y)
-      real x,y
+      real, intent(in) :: x
+      logical, intent(in) :: y
     end function
     complex function s2(x,y)
-      complex x,y
+      complex, intent(in) :: x
+      logical, intent(in) :: y
     end function
   end interface
   generic :: operator ( + ) => s1, s2
+  interface operator ( /= )
+    logical function f1(x, y)
+      real, intent(in) :: x
+      logical, intent(in) :: y
+    end function
+  end interface
+  interface
+    logical function f2(x, y)
+      complex, intent(in) :: x
+      logical, intent(in) :: y
+    end function
+    logical function f3(x, y)
+      integer, intent(in) :: x
+      logical, intent(in) :: y
+    end function
+  end interface
+  generic :: operator(.ne.) => f2
+  generic :: operator(<>) => f3
+  private :: operator( .ne. )
   interface bar
     procedure :: s1
     procedure :: s2
@@ -37,10 +58,10 @@ module m1
   end interface
 contains
   logical function s3(x,y)
-    logical x,y
+    logical, intent(in) :: x,y
   end function
   integer function s4(x,y)
-    integer x,y
+    integer, intent(in) :: x,y
   end function
 end
 !Expect: m1.mod
@@ -51,21 +72,48 @@ end
 ! end interface
 ! interface
 !  function s1(x,y)
-!   real(4)::x
-!   real(4)::y
+!   real(4),intent(in)::x
+!   logical(4),intent(in)::y
 !   real(4)::s1
 !  end
 ! end interface
 ! interface
 !  function s2(x,y)
-!   complex(4)::x
-!   complex(4)::y
+!   complex(4),intent(in)::x
+!   logical(4),intent(in)::y
 !   complex(4)::s2
 !  end
 ! end interface
 ! interface operator(+)
 !  procedure::s1
 !  procedure::s2
+! end interface
+! interface operator(/=)
+!  procedure::f1
+!  procedure::f2
+!  procedure::f3
+! end interface
+! private::operator(/=)
+! interface
+!  function f1(x,y)
+!   real(4),intent(in)::x
+!   logical(4),intent(in)::y
+!   logical(4)::f1
+!  end
+! end interface
+! interface
+!  function f2(x,y)
+!   complex(4),intent(in)::x
+!   logical(4),intent(in)::y
+!   logical(4)::f2
+!  end
+! end interface
+! interface
+!  function f3(x,y)
+!   integer(4),intent(in)::x
+!   logical(4),intent(in)::y
+!   logical(4)::f3
+!  end
 ! end interface
 ! interface bar
 !  procedure::s1
@@ -81,13 +129,13 @@ end
 ! end interface
 !contains
 ! function s3(x,y)
-!  logical(4)::x
-!  logical(4)::y
+!  logical(4),intent(in)::x
+!  logical(4),intent(in)::y
 !  logical(4)::s3
 ! end
 ! function s4(x,y)
-!  integer(4)::x
-!  integer(4)::y
+!  integer(4),intent(in)::x
+!  integer(4),intent(in)::y
 !  integer(4)::s4
 ! end
 !end
@@ -101,6 +149,9 @@ end
 ! use m1,only:s1
 ! use m1,only:s2
 ! use m1,only:operator(+)
+! use m1,only:f1
+! use m1,only:f2
+! use m1,only:f3
 ! use m1,only:bar
 ! use m1,only:operator(.bar.)
 ! use m1,only:s3
@@ -264,4 +315,33 @@ end
 !   integer(4)::f
 !  end
 ! end interface
+!end
+
+module m6a
+  interface operator(<)
+    logical function lt(x, y)
+      logical, intent(in) :: x, y
+    end function
+  end interface
+end
+!Expect: m6a.mod
+!module m6a
+! interface operator(<)
+!  procedure::lt
+! end interface
+! interface
+!  function lt(x,y)
+!   logical(4),intent(in)::x
+!   logical(4),intent(in)::y
+!   logical(4)::lt
+!  end
+! end interface
+!end
+
+module m6b
+  use m6a, only: operator(.lt.)
+end
+!Expect: m6b.mod
+!module m6b
+! use m6a,only:operator(.lt.)
 !end

@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -39,3 +39,26 @@ contains
     integer, intent(in) :: x, y
   end
 end module
+
+module m3
+  type t
+  end type
+  private :: operator(.lt.)
+  interface operator(<)
+    logical function lt(x, y)
+      import t
+      type(t) :: x, y
+    end function
+  end interface
+  !ERROR: The accessibility of 'operator(<)' has already been specified as PRIVATE
+  public :: operator(<)
+  interface operator(.gt.)
+    logical function gt(x, y)
+      import t
+      type(t) :: x, y
+    end function
+  end interface
+  public :: operator(>)
+  !ERROR: The accessibility of 'operator(.gt.)' has already been specified as PUBLIC
+  private :: operator(.gt.)
+end

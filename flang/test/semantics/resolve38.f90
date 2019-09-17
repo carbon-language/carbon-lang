@@ -117,3 +117,25 @@ contains
   subroutine s2(x)
   end
 end
+
+module m6
+  type t
+  contains
+    procedure :: f1
+    procedure :: f2
+    generic :: operator(.eq.) => f1
+    !ERROR: Binding name 'f1' was already specified for generic 'operator(.eq.)'
+    generic :: operator(==) => f2, f1
+  end type
+contains
+  logical function f1(x, y) result(result)
+    class(t), intent(in) :: x
+    real, intent(in) :: y
+    result = .true.
+  end
+  logical function f2(x, y) result(result)
+    class(t), intent(in) :: x
+    integer, intent(in) :: y
+    result = .true.
+  end
+end

@@ -24,6 +24,7 @@
 #include "../parser/char-block.h"
 #include "../parser/features.h"
 #include "../parser/parse-tree.h"
+#include <initializer_list>
 #include <ostream>
 #include <variant>
 
@@ -82,7 +83,37 @@ bool IsLogicalConstant(
           (str == ".t" || str == ".f."));
 }
 
-void GenericSpecInfo::Resolve(Symbol *symbol) {
+// The operators <, <=, >, >=, ==, and /= always have the same interpretations
+// as the operators .LT., .LE., .GT., .GE., .EQ., and .NE., respectively.
+std::forward_list<std::string> GenericSpecInfo::GetAllNames() const {
+  auto getNames{[&](const std::initializer_list<const char *> &names) {
+    std::forward_list<std::string> result;
+    for (const char *name : names) {
+      result.emplace_front("operator("s + name + ')');
+    }
+    return result;
+  }};
+  switch (kind_) {
+  case GenericKind::OpGE: return getNames({".ge.", ">="});
+  case GenericKind::OpGT: return getNames({".gt.", ">"});
+  case GenericKind::OpLE: return getNames({".le.", "<="});
+  case GenericKind::OpLT: return getNames({".lt.", "<"});
+  case GenericKind::OpEQ: return getNames({".eq.", "=="});
+  case GenericKind::OpNE: return getNames({"<>", ".ne.", "/="});
+  default: return {symbolName_.value().ToString()};
+  }
+}
+
+Symbol *GenericSpecInfo::FindInScope(const Scope &scope) const {
+  for (const auto &name : GetAllNames()) {
+    if (auto *symbol{scope.FindSymbol(SourceName{name})}) {
+      return symbol;
+    }
+  }
+  return nullptr;
+}
+
+void GenericSpecInfo::Resolve(Symbol *symbol) const {
   if (symbol) {
     if (auto *details{symbol->detailsIf<GenericDetails>()}) {
       details->set_kind(kind_);

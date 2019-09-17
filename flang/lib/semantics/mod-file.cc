@@ -340,9 +340,22 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   }
 }
 
-static std::ostream &PutGenericName(std::ostream &os, const Symbol &symbol) {
+static bool IsDefinedOp(const Symbol &symbol) {
   const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
-  if (details && details->kind() == GenericKind::DefinedOp) {
+  return details && details->kind() == GenericKind::DefinedOp;
+}
+
+static bool IsIntrinsicOp(const Symbol &symbol) {
+  if (const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()}) {
+    GenericKind kind{details->kind()};
+    return kind >= GenericKind::OpPower && kind <= GenericKind::OpNEQV;
+  } else {
+    return false;
+  }
+}
+
+static std::ostream &PutGenericName(std::ostream &os, const Symbol &symbol) {
+  if (IsDefinedOp(symbol)) {
     return os << "operator(" << symbol.name() << ')';
   } else {
     return os << symbol.name();
@@ -366,7 +379,9 @@ void ModFileWriter::PutUse(const Symbol &symbol) {
   auto &use{details.symbol()};
   uses_ << "use " << details.module().name();
   PutGenericName(uses_ << ",only:", symbol);
-  if (use.name() != symbol.name()) {
+  // Can have intrinsic op with different local-name and use-name
+  // (e.g. `operator(<)` and `operator(.lt.)`) but rename is not allowed
+  if (!IsIntrinsicOp(symbol) && use.name() != symbol.name()) {
     PutGenericName(uses_ << "=>", use);
   }
   uses_ << '\n';

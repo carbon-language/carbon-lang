@@ -578,10 +578,7 @@ private:
   // The scope of the module during a UseStmt
   const Scope *useModuleScope_{nullptr};
 
-  Symbol &SetAccess(const SourceName &, Attr);
-  void AddUse(const parser::Rename::Names &);
-  void AddUse(const parser::Rename::Operators &);
-  Symbol *AddUse(const SourceName &);
+  Symbol &SetAccess(const SourceName &, Attr attr, Symbol * = nullptr);
   // A rename in a USE statement: local => use
   struct SymbolRename {
     Symbol *local{nullptr};
@@ -589,7 +586,9 @@ private:
   };
   // Record a use from useModuleScope_ of use Name/Symbol as local Name/Symbol
   SymbolRename AddUse(const SourceName &localName, const SourceName &useName);
+  SymbolRename AddUse(const SourceName &, const SourceName &, Symbol *);
   void AddUse(const SourceName &, Symbol &localSymbol, const Symbol &useSymbol);
+  void AddUse(const GenericSpecInfo &);
   Scope *FindModule(const parser::Name &, Scope *ancestor = nullptr);
 };
 
@@ -1879,29 +1878,41 @@ bool ModuleVisitor::Pre(const parser::Only &x) {
   std::visit(
       common::visitors{
           [&](const Indirection<parser::GenericSpec> &generic) {
-            auto info{GenericSpecInfo{generic.value()}};
-            info.Resolve(AddUse(info.symbolName()));
+            AddUse(GenericSpecInfo{generic.value()});
           },
-          [&](const parser::Name &name) { Resolve(name, AddUse(name.source)); },
-          [&](const parser::Rename &rename) {
-            std::visit(
-                common::visitors{
-                    [&](const parser::Rename::Names &names) { AddUse(names); },
-                    [&](const parser::Rename::Operators &ops) { AddUse(ops); },
-                },
-                rename.u);
+          [&](const parser::Name &name) {
+            Resolve(name, AddUse(name.source, name.source).use);
           },
+          [&](const parser::Rename &rename) { Walk(rename); },
       },
       x.u);
   return false;
 }
 
 bool ModuleVisitor::Pre(const parser::Rename::Names &x) {
-  AddUse(x);
+  const auto &localName{std::get<0>(x.t)};
+  const auto &useName{std::get<1>(x.t)};
+  SymbolRename rename{AddUse(localName.source, useName.source)};
+  Resolve(useName, rename.use);
+  Resolve(localName, rename.local);
   return false;
 }
 bool ModuleVisitor::Pre(const parser::Rename::Operators &x) {
-  AddUse(x);
+  const parser::DefinedOpName &local{std::get<0>(x.t)};
+  const parser::DefinedOpName &use{std::get<1>(x.t)};
+  GenericSpecInfo localInfo{local};
+  GenericSpecInfo useInfo{use};
+  if (IsIntrinsicOperator(context(), local.v.source)) {
+    Say(local.v,
+        "Intrinsic operator '%s' may not be used as a defined operator"_err_en_US);
+  } else if (IsLogicalConstant(context(), local.v.source)) {
+    Say(local.v,
+        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
+  } else {
+    SymbolRename rename{AddUse(localInfo.symbolName(), useInfo.symbolName())};
+    useInfo.Resolve(rename.use);
+    localInfo.Resolve(rename.local);
+  }
   return false;
 }
 
@@ -1943,42 +1954,16 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
   useModuleScope_ = nullptr;
 }
 
-void ModuleVisitor::AddUse(const parser::Rename::Names &names) {
-  const auto &localName{std::get<0>(names.t)};
-  const auto &useName{std::get<1>(names.t)};
-  SymbolRename rename{AddUse(localName.source, useName.source)};
-  Resolve(useName, rename.use);
-  Resolve(localName, rename.local);
-}
-
-void ModuleVisitor::AddUse(const parser::Rename::Operators &ops) {
-  const parser::DefinedOpName &local{std::get<0>(ops.t)};
-  const parser::DefinedOpName &use{std::get<1>(ops.t)};
-  GenericSpecInfo localInfo{local};
-  GenericSpecInfo useInfo{use};
-  if (IsIntrinsicOperator(context(), local.v.source)) {
-    Say(local.v,
-        "Intrinsic operator '%s' may not be used as a defined operator"_err_en_US);
-  } else if (IsLogicalConstant(context(), local.v.source)) {
-    Say(local.v,
-        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
-  } else {
-    SymbolRename rename{AddUse(localInfo.symbolName(), useInfo.symbolName())};
-    useInfo.Resolve(rename.use);
-    localInfo.Resolve(rename.local);
-  }
-}
-
-Symbol *ModuleVisitor::AddUse(const SourceName &useName) {
-  return AddUse(useName, useName).use;
+ModuleVisitor::SymbolRename ModuleVisitor::AddUse(
+    const SourceName &localName, const SourceName &useName) {
+  return AddUse(localName, useName, FindInScope(*useModuleScope_, useName));
 }
 
 ModuleVisitor::SymbolRename ModuleVisitor::AddUse(
-    const SourceName &localName, const SourceName &useName) {
+    const SourceName &localName, const SourceName &useName, Symbol *useSymbol) {
   if (!useModuleScope_) {
     return {};  // error occurred finding module
   }
-  auto *useSymbol{FindInScope(*useModuleScope_, useName)};
   if (!useSymbol) {
     Say(useName,
         IsDefinedOperator(useName)
@@ -2074,6 +2059,14 @@ void ModuleVisitor::AddUse(
   }
 }
 
+void ModuleVisitor::AddUse(const GenericSpecInfo &info) {
+  if (useModuleScope_) {
+    const auto &name{info.symbolName()};
+    auto rename{AddUse(name, name, info.FindInScope(*useModuleScope_))};
+    info.Resolve(rename.use);
+  }
+}
+
 bool ModuleVisitor::BeginSubmodule(
     const parser::Name &name, const parser::ParentIdentifier &parentId) {
   auto &ancestorName{std::get<parser::Name>(parentId.t)};
@@ -2148,7 +2141,7 @@ void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
 
 // Create a symbol in genericSymbol_ for this GenericSpec.
 bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
-  if (auto *symbol{currScope().FindSymbol(GenericSpecInfo{x}.symbolName())}) {
+  if (auto *symbol{GenericSpecInfo{x}.FindInScope(currScope())}) {
     SetGenericSymbol(*symbol);
   }
   return false;
@@ -3612,18 +3605,24 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
   const auto &genericSpec{std::get<Indirection<parser::GenericSpec>>(x.t)};
   const auto &bindingNames{std::get<std::list<parser::Name>>(x.t)};
   auto info{GenericSpecInfo{genericSpec.value()}};
-  const SourceName &symbolName{info.symbolName()};
+  SourceName symbolName{info.symbolName()};
   bool isPrivate{accessSpec ? accessSpec->v == parser::AccessSpec::Kind::Private
                             : derivedTypeInfo_.privateBindings};
-  auto *genericSymbol{FindInScope(currScope(), symbolName)};
+  auto *genericSymbol{info.FindInScope(currScope())};
   if (genericSymbol) {
     if (!genericSymbol->has<GenericBindingDetails>()) {
       genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
     }
-  } else if (auto *inheritedSymbol{
-                 FindInTypeOrParents(currScope(), symbolName)}) {
+  } else {
     // look in parent types:
-    if (inheritedSymbol->has<GenericBindingDetails>()) {
+    Symbol *inheritedSymbol{nullptr};
+    for (const auto &name : info.GetAllNames()) {
+      inheritedSymbol = FindInTypeOrParents(currScope(), SourceName{name});
+      if (inheritedSymbol) {
+        break;
+      }
+    }
+    if (inheritedSymbol && inheritedSymbol->has<GenericBindingDetails>()) {
       CheckAccessibility(symbolName, isPrivate, *inheritedSymbol);  // C771
     }
   }
@@ -5378,7 +5377,14 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
               },
               [=](const Indirection<parser::GenericSpec> &y) {
                 auto info{GenericSpecInfo{y.value()}};
-                info.Resolve(&SetAccess(info.symbolName(), accessAttr));
+                const auto &symbolName{info.symbolName()};
+                if (auto *symbol{info.FindInScope(currScope())}) {
+                  info.Resolve(&SetAccess(symbolName, accessAttr, symbol));
+                } else if (info.kind() == GenericKind::Name) {
+                  info.Resolve(&SetAccess(symbolName, accessAttr));
+                } else {
+                  Say(symbolName, "Generic spec '%s' not found"_err_en_US);
+                }
               },
           },
           accessId.u);
@@ -5387,10 +5393,13 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
   return false;
 }
 
-// Set the access specification for this name.
-Symbol &ModuleVisitor::SetAccess(const SourceName &name, Attr attr) {
-  Symbol &symbol{MakeSymbol(name)};
-  Attrs &attrs{symbol.attrs()};
+// Set the access specification for this symbol.
+Symbol &ModuleVisitor::SetAccess(
+    const SourceName &name, Attr attr, Symbol *symbol) {
+  if (!symbol) {
+    symbol = &MakeSymbol(name);
+  }
+  Attrs &attrs{symbol->attrs()};
   if (attrs.HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
     // PUBLIC/PRIVATE already set: make it a fatal error if it changed
     Attr prev = attrs.test(Attr::PUBLIC) ? Attr::PUBLIC : Attr::PRIVATE;
@@ -5401,7 +5410,7 @@ Symbol &ModuleVisitor::SetAccess(const SourceName &name, Attr attr) {
   } else {
     attrs.set(attr);
   }
-  return symbol;
+  return *symbol;
 }
 
 static bool NeedsExplicitType(const Symbol &symbol) {
@@ -5468,7 +5477,7 @@ void ResolveNamesVisitor::CreateGeneric(const parser::GenericSpec &x) {
     return;
   }
   GenericDetails genericDetails;
-  if (Symbol * existing{currScope().FindSymbol(symbolName)}) {
+  if (Symbol * existing{info.FindInScope(currScope())}) {
     if (existing->has<GenericDetails>()) {
       info.Resolve(existing);
       return;  // already have generic, add to it

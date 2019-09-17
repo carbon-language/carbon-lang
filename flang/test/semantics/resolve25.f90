@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -52,4 +52,22 @@ module m2
   generic :: operator(+)=> f
   !ERROR: Procedure 'f' is already specified in generic 'operator(+)'
   generic :: operator(+)=> f
+end
+
+module m3
+  interface operator(.ge.)
+    procedure f
+  end interface
+  interface operator(>=)
+    !ERROR: Procedure 'f' is already specified in generic 'operator(.ge.)'
+    procedure f
+  end interface
+  generic :: operator(>) => f
+  !ERROR: Procedure 'f' is already specified in generic 'operator(>)'
+  generic :: operator(.gt.) => f
+contains
+  logical function f(x, y) result(result)
+    logical, intent(in) :: x, y
+    result = .true.
+  end
 end
