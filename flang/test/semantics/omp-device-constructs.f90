@@ -70,4 +70,45 @@ program main
   enddo
   !$omp end target
 
+  !$omp teams num_teams(3) thread_limit(10) default(shared) private(i) shared(a)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end teams
+
+  !ERROR: At most one NUM_TEAMS clause can appear on the TEAMS directive
+  !$omp teams num_teams(2) num_teams(3)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end teams
+
+  !ERROR: The parameter of the NUM_TEAMS clause must be a positive integer expression
+  !$omp teams num_teams(-1)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end teams
+
+  !ERROR: At most one THREAD_LIMIT clause can appear on the TEAMS directive
+  !$omp teams thread_limit(2) thread_limit(3)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end teams
+
+  !ERROR: The parameter of the THREAD_LIMIT clause must be a positive integer expression
+  !$omp teams thread_limit(-1)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end teams
+
+  !ERROR: At most one DEFAULT clause can appear on the TEAMS directive
+  !$omp teams default(shared) default(none)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end teams
+
 end program main
