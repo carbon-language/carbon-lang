@@ -687,6 +687,70 @@ static unsigned getCallOpcode(const Function &CallerF, bool IsIndirect,
   return AArch64::TCRETURNri;
 }
 
+bool AArch64CallLowering::lowerTailCall(
+    MachineIRBuilder &MIRBuilder, CallLoweringInfo &Info,
+    SmallVectorImpl<ArgInfo> &OutArgs) const {
+  MachineFunction &MF = MIRBuilder.getMF();
+  const Function &F = MF.getFunction();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  const AArch64TargetLowering &TLI = *getTLI<AArch64TargetLowering>();
+
+  // TODO: Right now, regbankselect doesn't know how to handle the rtcGPR64
+  // register class. Until we can do that, we should fall back here.
+  if (F.hasFnAttribute("branch-target-enforcement")) {
+    LLVM_DEBUG(
+        dbgs() << "Cannot lower indirect tail calls with BTI enabled yet.\n");
+    return false;
+  }
+
+  // Find out which ABI gets to decide where things go.
+  CCAssignFn *AssignFnFixed =
+      TLI.CCAssignFnForCall(Info.CallConv, /*IsVarArg=*/false);
+  CCAssignFn *AssignFnVarArg =
+      TLI.CCAssignFnForCall(Info.CallConv, /*IsVarArg=*/true);
+
+  unsigned Opc = getCallOpcode(F, Info.Callee.isReg(), true);
+  auto MIB = MIRBuilder.buildInstrNoInsert(Opc);
+  MIB.add(Info.Callee);
+
+  // Add the byte offset for the tail call. We only have sibling calls, so this
+  // is always 0.
+  // TODO: Handle tail calls where we will have a different value here.
+  MIB.addImm(0);
+
+  // Tell the call which registers are clobbered.
+  auto TRI = MF.getSubtarget<AArch64Subtarget>().getRegisterInfo();
+  const uint32_t *Mask = TRI->getCallPreservedMask(MF, F.getCallingConv());
+  if (MF.getSubtarget<AArch64Subtarget>().hasCustomCallingConv())
+    TRI->UpdateCustomCallPreservedMask(MF, &Mask);
+  MIB.addRegMask(Mask);
+
+  if (TRI->isAnyArgRegReserved(MF))
+    TRI->emitReservedArgRegCallError(MF);
+
+  // Do the actual argument marshalling.
+  SmallVector<unsigned, 8> PhysRegs;
+  OutgoingArgHandler Handler(MIRBuilder, MRI, MIB, AssignFnFixed,
+                             AssignFnVarArg, true);
+  if (!handleAssignments(MIRBuilder, OutArgs, Handler))
+    return false;
+
+  // Now we can add the actual call instruction to the correct basic block.
+  MIRBuilder.insertInstr(MIB);
+
+  // If Callee is a reg, since it is used by a target specific instruction,
+  // it must have a register class matching the constraint of that instruction.
+  if (Info.Callee.isReg())
+    MIB->getOperand(0).setReg(constrainOperandRegClass(
+        MF, *TRI, MRI, *MF.getSubtarget().getInstrInfo(),
+        *MF.getSubtarget().getRegBankInfo(), *MIB, MIB->getDesc(), Info.Callee,
+        0));
+
+  MF.getFrameInfo().setHasTailCall();
+  Info.LoweredTailCall = true;
+  return true;
+}
+
 bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                                     CallLoweringInfo &Info) const {
   MachineFunction &MF = MIRBuilder.getMF();
@@ -719,10 +783,10 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   if (!Info.OrigRet.Ty->isVoidTy())
     splitToValueTypes(Info.OrigRet, InArgs, DL, MRI, F.getCallingConv());
 
-  bool IsSibCall = Info.IsTailCall && isEligibleForTailCallOptimization(
-                                          MIRBuilder, Info, InArgs, OutArgs);
-  if (IsSibCall)
-    MF.getFrameInfo().setHasTailCall();
+  // If we can lower as a tail call, do that instead.
+  if (Info.IsTailCall &&
+      isEligibleForTailCallOptimization(MIRBuilder, Info, InArgs, OutArgs))
+    return lowerTailCall(MIRBuilder, Info, OutArgs, InArgs);
 
   // Find out which ABI gets to decide where things go.
   CCAssignFn *AssignFnFixed =
@@ -730,32 +794,15 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   CCAssignFn *AssignFnVarArg =
       TLI.CCAssignFnForCall(Info.CallConv, /*IsVarArg=*/true);
 
-  // If we have a sibling call, then we don't have to adjust the stack.
-  // Otherwise, we need to adjust it.
   MachineInstrBuilder CallSeqStart;
-  if (!IsSibCall)
-    CallSeqStart = MIRBuilder.buildInstr(AArch64::ADJCALLSTACKDOWN);
+  CallSeqStart = MIRBuilder.buildInstr(AArch64::ADJCALLSTACKDOWN);
 
   // Create a temporarily-floating call instruction so we can add the implicit
   // uses of arg registers.
-  unsigned Opc = getCallOpcode(F, Info.Callee.isReg(), IsSibCall);
-
-  // TODO: Right now, regbankselect doesn't know how to handle the rtcGPR64
-  // register class. Until we can do that, we should fall back here.
-  if (Opc == AArch64::TCRETURNriBTI) {
-    LLVM_DEBUG(
-        dbgs() << "Cannot lower indirect tail calls with BTI enabled yet.\n");
-    return false;
-  }
+  unsigned Opc = getCallOpcode(F, Info.Callee.isReg(), false);
 
   auto MIB = MIRBuilder.buildInstrNoInsert(Opc);
   MIB.add(Info.Callee);
-
-  // Add the byte offset for the tail call. We only have sibling calls, so this
-  // is always 0.
-  // TODO: Handle tail calls where we will have a different value here.
-  if (IsSibCall)
-    MIB.addImm(0);
 
   // Tell the call which registers are clobbered.
   auto TRI = MF.getSubtarget<AArch64Subtarget>().getRegisterInfo();
@@ -770,7 +817,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // Do the actual argument marshalling.
   SmallVector<unsigned, 8> PhysRegs;
   OutgoingArgHandler Handler(MIRBuilder, MRI, MIB, AssignFnFixed,
-                             AssignFnVarArg, IsSibCall);
+                             AssignFnVarArg, false);
   if (!handleAssignments(MIRBuilder, OutArgs, Handler))
     return false;
 
@@ -785,13 +832,6 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
         MF, *TRI, MRI, *MF.getSubtarget().getInstrInfo(),
         *MF.getSubtarget().getRegBankInfo(), *MIB, MIB->getDesc(), Info.Callee,
         0));
-
-  // If we're tail calling, then we're the return from the block. So, we don't
-  // want to copy anything.
-  if (IsSibCall) {
-    Info.LoweredTailCall = true;
-    return true;
-  }
 
   // Finally we can copy the returned value back into its virtual-register. In
   // symmetry with the arugments, the physical register must be an
