@@ -1762,11 +1762,18 @@ struct AANoAliasCallSiteArgument final : AANoAliasImpl {
       if (!ArgOp->getType()->isPointerTy())
         continue;
 
-      // TODO: Use AliasAnalysis
-      //       AAResults& AAR = ..;
-      //       if(AAR.isNoAlias(&getAssociatedValue(), ArgOp))
-      //          return indicatePessimitisicFixpoint();
+      if (const Function *F = getAnchorScope()) {
+        if (AAResults *AAR = A.getInfoCache().getAAResultsForFunction(*F)) {
+          LLVM_DEBUG(dbgs()
+                     << "[Attributor][NoAliasCSArg] Check alias between "
+                        "callsite arguments "
+                     << AAR->isNoAlias(&getAssociatedValue(), ArgOp) << " "
+                     << getAssociatedValue() << " " << *ArgOp << "\n");
 
+          if (AAR->isNoAlias(&getAssociatedValue(), ArgOp))
+            continue;
+        }
+      }
       return indicatePessimisticFixpoint();
     }
 
