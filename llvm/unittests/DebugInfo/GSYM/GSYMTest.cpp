@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/DebugInfo/GSYM/Header.h"
 #include "llvm/DebugInfo/GSYM/FileEntry.h"
 #include "llvm/DebugInfo/GSYM/FileWriter.h"
 #include "llvm/DebugInfo/GSYM/FunctionInfo.h"
@@ -943,4 +944,105 @@ TEST(GSYMTest, TestLineTableEncodeErrors) {
   checkError("LineEntry in LineTable not in ascending order",
              LT.encode(FW, BaseAddr));
   LT.clear();
+}
+
+static void TestHeaderEncodeError(const Header &H,
+                                  std::string ExpectedErrorMsg) {
+  const support::endianness ByteOrder = llvm::support::little;
+  SmallString<512> Str;
+  raw_svector_ostream OutStrm(Str);
+  FileWriter FW(OutStrm, ByteOrder);
+  llvm::Error Err = H.encode(FW);
+  checkError(ExpectedErrorMsg, std::move(Err));
+}
+
+static void TestHeaderDecodeError(std::string Bytes,
+                                  std::string ExpectedErrorMsg) {
+  const support::endianness ByteOrder = llvm::support::little;
+  uint8_t AddressSize = 4;
+  DataExtractor Data(Bytes, ByteOrder == llvm::support::little, AddressSize);
+  llvm::Expected<Header> Decoded = Header::decode(Data);
+  // Make sure decoding fails.
+  ASSERT_FALSE((bool)Decoded);
+  // Make sure decoded object is the same as the one we encoded.
+  checkError(ExpectedErrorMsg, Decoded.takeError());
+}
+
+// Populate a GSYM header with valid values.
+static void InitHeader(Header &H) {
+  H.Magic = GSYM_MAGIC;
+  H.Version = GSYM_VERSION;
+  H.AddrOffSize = 4;
+  H.UUIDSize = 16;
+  H.BaseAddress = 0x1000;
+  H.NumAddresses = 1;
+  H.StrtabOffset= 0x2000;
+  H.StrtabSize = 0x1000;
+  for (size_t i=0; i<GSYM_MAX_UUID_SIZE; ++i) {
+    if (i < H.UUIDSize)
+      H.UUID[i] = i;
+    else
+      H.UUID[i] = 0;
+  }
+}
+
+TEST(GSYMTest, TestHeaderEncodeErrors) {
+  Header H;
+  InitHeader(H);
+  H.Magic = 12;
+  TestHeaderEncodeError(H, "invalid GSYM magic 0x0000000c");
+  InitHeader(H);
+  H.Version = 12;
+  TestHeaderEncodeError(H, "unsupported GSYM version 12");
+  InitHeader(H);
+  H.AddrOffSize = 12;
+  TestHeaderEncodeError(H, "invalid address offset size 12");
+  InitHeader(H);
+  H.UUIDSize = 128;
+  TestHeaderEncodeError(H, "invalid UUID size 128");
+}
+
+TEST(GSYMTest, TestHeaderDecodeErrors) {
+  const llvm::support::endianness ByteOrder = llvm::support::little;
+  SmallString<512> Str;
+  raw_svector_ostream OutStrm(Str);
+  FileWriter FW(OutStrm, ByteOrder);
+  Header H;
+  InitHeader(H);
+  llvm::Error Err = H.encode(FW);
+  ASSERT_FALSE(Err);
+  FW.fixup32(12, offsetof(Header, Magic));
+  TestHeaderDecodeError(OutStrm.str(), "invalid GSYM magic 0x0000000c");
+  FW.fixup32(GSYM_MAGIC, offsetof(Header, Magic));
+  FW.fixup32(12, offsetof(Header, Version));
+  TestHeaderDecodeError(OutStrm.str(), "unsupported GSYM version 12");
+  FW.fixup32(GSYM_VERSION, offsetof(Header, Version));
+  FW.fixup32(12, offsetof(Header, AddrOffSize));
+  TestHeaderDecodeError(OutStrm.str(), "invalid address offset size 12");
+  FW.fixup32(4, offsetof(Header, AddrOffSize));
+  FW.fixup32(128, offsetof(Header, UUIDSize));
+  TestHeaderDecodeError(OutStrm.str(), "invalid UUID size 128");
+}
+
+static void TestHeaderEncodeDecode(const Header &H,
+                                   support::endianness ByteOrder) {
+  uint8_t AddressSize = 4;
+  SmallString<512> Str;
+  raw_svector_ostream OutStrm(Str);
+  FileWriter FW(OutStrm, ByteOrder);
+  llvm::Error Err = H.encode(FW);
+  ASSERT_FALSE(Err);
+  std::string Bytes(OutStrm.str());
+  DataExtractor Data(Bytes, ByteOrder == llvm::support::little, AddressSize);
+  llvm::Expected<Header> Decoded = Header::decode(Data);
+  // Make sure decoding succeeded.
+  ASSERT_TRUE((bool)Decoded);
+  EXPECT_EQ(H, Decoded.get());
+
+}
+TEST(GSYMTest, TestHeaderEncodeDecode) {
+  Header H;
+  InitHeader(H);
+  TestHeaderEncodeDecode(H, llvm::support::little);
+  TestHeaderEncodeDecode(H, llvm::support::big);
 }
