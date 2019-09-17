@@ -8538,22 +8538,15 @@ static SDValue LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG,
 
   // insert elements one by one
   SDValue DstVec;
-  SDValue Imm;
-  if (Immediate) {
-    MVT ImmVT = MVT::getIntegerVT(std::max((int)VT.getSizeInBits(), 8));
-    Imm = DAG.getConstant(Immediate, dl, ImmVT);
-  }
-  else if (HasConstElts)
-    Imm = DAG.getConstant(0, dl, VT);
-  else
-    Imm = DAG.getUNDEF(VT);
-  if (Imm.getValueSizeInBits() == VT.getSizeInBits())
-    DstVec = DAG.getBitcast(VT, Imm);
-  else {
-    SDValue ExtVec = DAG.getBitcast(MVT::v8i1, Imm);
-    DstVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, ExtVec,
+  if (HasConstElts) {
+    MVT ImmVT = MVT::getIntegerVT(std::max(VT.getSizeInBits(), 8U));
+    SDValue Imm = DAG.getConstant(Immediate, dl, ImmVT);
+    MVT VecVT = VT.getSizeInBits() >= 8 ? VT : MVT::v8i1;
+    DstVec = DAG.getBitcast(VecVT, Imm);
+    DstVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, DstVec,
                          DAG.getIntPtrConstant(0, dl));
-  }
+  } else
+    DstVec = DAG.getUNDEF(VT);
 
   for (unsigned i = 0, e = NonConstIdx.size(); i != e; ++i) {
     unsigned InsertIdx = NonConstIdx[i];
