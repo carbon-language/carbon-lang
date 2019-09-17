@@ -786,7 +786,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // If we can lower as a tail call, do that instead.
   if (Info.IsTailCall &&
       isEligibleForTailCallOptimization(MIRBuilder, Info, InArgs, OutArgs))
-    return lowerTailCall(MIRBuilder, Info, OutArgs, InArgs);
+    return lowerTailCall(MIRBuilder, Info, OutArgs);
 
   // Find out which ABI gets to decide where things go.
   CCAssignFn *AssignFnFixed =
