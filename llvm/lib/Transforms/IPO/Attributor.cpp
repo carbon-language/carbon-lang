@@ -3845,13 +3845,9 @@ ChangeStatus Attributor::run(Module &M) {
   return ManifestChange;
 }
 
-void Attributor::identifyDefaultAbstractAttributes(
-    Function &F, std::function<TargetLibraryInfo *(Function &)> &TLIGetter) {
+void Attributor::identifyDefaultAbstractAttributes(Function &F) {
   if (!VisitedFunctions.insert(&F).second)
     return;
-
-  if (EnableHeapToStack)
-    InfoCache.FuncTLIMap[&F] = TLIGetter(F);
 
   IRPosition FPos = IRPosition::function(F);
 
@@ -4063,8 +4059,7 @@ void AbstractAttribute::print(raw_ostream &OS) const {
 ///                       Pass (Manager) Boilerplate
 /// ----------------------------------------------------------------------------
 
-static bool runAttributorOnModule(
-    Module &M, std::function<TargetLibraryInfo *(Function &)> &TLIGetter) {
+static bool runAttributorOnModule(Module &M, AnalysisGetter &AG) {
   if (DisableAttributor)
     return false;
 
@@ -4073,7 +4068,7 @@ static bool runAttributorOnModule(
 
   // Create an Attributor and initially empty information cache that is filled
   // while we identify default attribute opportunities.
-  InformationCache InfoCache(M.getDataLayout());
+  InformationCache InfoCache(M.getDataLayout(), AG);
   Attributor A(InfoCache, DepRecInterval);
 
   for (Function &F : M) {
@@ -4099,7 +4094,7 @@ static bool runAttributorOnModule(
 
     // Populate the Attributor with abstract attribute opportunities in the
     // function and the information cache with IR information.
-    A.identifyDefaultAbstractAttributes(F, TLIGetter);
+    A.identifyDefaultAbstractAttributes(F);
   }
 
   return A.run(M) == ChangeStatus::CHANGED;
@@ -4108,12 +4103,8 @@ static bool runAttributorOnModule(
 PreservedAnalyses AttributorPass::run(Module &M, ModuleAnalysisManager &AM) {
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
 
-  std::function<TargetLibraryInfo *(Function &)> TLIGetter =
-      [&](Function &F) -> TargetLibraryInfo * {
-    return &FAM.getResult<TargetLibraryAnalysis>(F);
-  };
-
-  if (runAttributorOnModule(M, TLIGetter)) {
+  AnalysisGetter AG(FAM);
+  if (runAttributorOnModule(M, AG)) {
     // FIXME: Think about passes we will preserve and add them here.
     return PreservedAnalyses::none();
   }
@@ -4132,10 +4123,9 @@ struct AttributorLegacyPass : public ModulePass {
   bool runOnModule(Module &M) override {
     if (skipModule(M))
       return false;
-    std::function<TargetLibraryInfo *(Function &)> TLIGetter =
-        [&](Function &F) -> TargetLibraryInfo * { return nullptr; };
 
-    return runAttributorOnModule(M, TLIGetter);
+    AnalysisGetter AG;
+    return runAttributorOnModule(M, AG);
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
