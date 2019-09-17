@@ -34661,8 +34661,8 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
                                    Depth + 1))
       return true;
 
-    KnownUndef = KnownUndef.shl(ShiftAmt);
-    KnownZero = KnownZero.shl(ShiftAmt);
+    KnownUndef <<= ShiftAmt;
+    KnownZero <<= ShiftAmt;
     KnownZero.setLowBits(ShiftAmt);
     break;
   }
@@ -34700,8 +34700,8 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
                                    Depth + 1))
       return true;
 
-    KnownUndef = KnownUndef.lshr(ShiftAmt);
-    KnownZero = KnownZero.lshr(ShiftAmt);
+    KnownUndef.lshrInPlace(ShiftAmt);
+    KnownZero.lshrInPlace(ShiftAmt);
     KnownZero.setHighBits(ShiftAmt);
     break;
   }
