@@ -5843,7 +5843,7 @@ enum PredicateConstraint {
   Invalid
 };
 
-PredicateConstraint parsePredicateConstraint(StringRef Constraint) {
+static PredicateConstraint parsePredicateConstraint(StringRef Constraint) {
   PredicateConstraint P = PredicateConstraint::Invalid;
   if (Constraint == "Upa")
     P = PredicateConstraint::Upa;

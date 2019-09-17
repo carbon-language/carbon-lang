@@ -161,7 +161,7 @@ ChangeStatus llvm::operator&(ChangeStatus l, ChangeStatus r) {
 /// limit how much effort is invested, we will never visit more values than
 /// specified by \p MaxValues.
 template <typename AAType, typename StateTy>
-bool genericValueTraversal(
+static bool genericValueTraversal(
     Attributor &A, IRPosition IRP, const AAType &QueryingAA, StateTy &State,
     const function_ref<bool(Value &, StateTy &, bool)> &VisitValueCB,
     int MaxValues = 8) {
@@ -486,6 +486,7 @@ void IRPosition::verify() {
   }
 }
 
+namespace {
 /// Helper functions to clamp a state \p S of type \p StateType with the
 /// information in \p R and indicate/return if \p S did change (as-in update is
 /// required to be run again).
@@ -3406,6 +3407,7 @@ struct AAHeapToStackFunction final : public AAHeapToStackImpl {
     BUILD_STAT_NAME(MallocCalls, Function) += MallocCalls.size();
   }
 };
+} // namespace
 
 /// ----------------------------------------------------------------------------
 ///                               Attributor
