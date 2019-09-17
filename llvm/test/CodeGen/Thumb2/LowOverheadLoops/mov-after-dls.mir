@@ -1,6 +1,6 @@
 # RUN: llc -mtriple=thumbv8.1m.main -run-pass=arm-low-overhead-loops %s -verify-machineinstrs -o - | FileCheck %s
-# CHECK-NOT: $lr = tMOVr $r0, 13
-# CHECK: $lr = t2DLS killed $r0
+# CHECK: $lr = t2DLS $r0
+# CHECK-NOT: $lr = tMOVr $r0
 # CHECK: $lr = t2LEUpdate renamable $lr, %bb.1
 
 --- |
@@ -93,8 +93,8 @@ body:             |
     frame-setup CFI_INSTRUCTION def_cfa_offset 8
     frame-setup CFI_INSTRUCTION offset $lr, -4
     frame-setup CFI_INSTRUCTION offset $r7, -8
-    $lr = tMOVr $r0, 14, $noreg
-    t2DoLoopStart killed $r0
+    t2DoLoopStart $r0
+    $lr = tMOVr killed $r0, 14, $noreg
     renamable $r0, dead $cpsr = tSUBi3 killed renamable $r1, 4, 14, $noreg
     renamable $r1, dead $cpsr = tSUBi3 killed renamable $r2, 4, 14, $noreg
   
