@@ -2331,6 +2331,33 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       }
     }
 
+    // Workaround for a member function pointer de-virtualization bug. We check
+    // if a non-pc-relative relocation in the code is pointing to (fptr - 1).
+    if (IsToCode && ContainingBF && !Relocation::isPCRelative(RType) &&
+        (!ReferencedBF || (ReferencedBF->getAddress() != Address))) {
+      if (const auto *RogueBF = BC->getBinaryFunctionAtAddress(Address + 1)) {
+        // Do an extra check that the function was referenced previously.
+        // It's a linear search, but it should rarely happen.
+        bool Found{false};
+        for (const auto &RelKV : ContainingBF->Relocations) {
+          const auto &Rel = RelKV.second;
+          if (Rel.Symbol == RogueBF->getSymbol() &&
+              !Relocation::isPCRelative(Rel.Type)) {
+            Found = true;
+            break;
+          }
+        }
+
+        if (Found) {
+          errs() << "BOLT-WARNING: detected possible compiler "
+                    "de-virtualization bug: -1 addend used with "
+                    "non-pc-relative relocation against function "
+                 << *RogueBF << " in function " << *ContainingBF << '\n';
+          continue;
+        }
+      }
+    }
+
     uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
@@ -2348,19 +2375,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       if (ReferencedBF->containsAddress(Address, /*UseMaxSize = */true)) {
         RefFunctionOffset = Address - ReferencedBF->getAddress();
         if (RefFunctionOffset) {
-          // Workaround for member function pointer de-virtualization bug.
-          // We check if a code non-pc-relative relocation is pointing
-          // to a (fptr - 1).
-          if (ContainingBF && !Relocation::isPCRelative(RType)) {
-            if (const auto *NextBF =
-                BC->getBinaryFunctionAtAddress(Address + 1)) {
-              errs() << "BOLT-WARNING: detected possible compiler "
-                        "de-virtualization bug: -1 addend used with "
-                        "non-pc-relative relocation against function "
-                     << *NextBF << " in function " << *ContainingBF << '\n';
-              continue;
-            }
-          }
           ReferencedSymbol =
             ReferencedBF->getOrCreateLocalLabel(Address,
                                                 /*CreatePastEnd =*/ true);
