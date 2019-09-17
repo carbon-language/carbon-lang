@@ -266,21 +266,21 @@ TEST(GSYMTest, TestFunctionInfoEncoding) {
   TestFunctionInfoEncodeDecode(llvm::support::little, FI);
   TestFunctionInfoEncodeDecode(llvm::support::big, FI);
 
-  auto AddLinesLambda = [](FunctionInfo &FI) {
+  auto AddLinesLambda = [FuncAddr, FileIdx](FunctionInfo &FI) {
     FI.OptLineTable = LineTable();
-    LineEntry Line0(FuncAddr+0x000, FileIdx, 10);
-    LineEntry Line1(FuncAddr+0x010, FileIdx, 11);
-    LineEntry Line2(FuncAddr+0x100, FileIdx, 1000);
+    LineEntry Line0(FuncAddr + 0x000, FileIdx, 10);
+    LineEntry Line1(FuncAddr + 0x010, FileIdx, 11);
+    LineEntry Line2(FuncAddr + 0x100, FileIdx, 1000);
     FI.OptLineTable->push(Line0);
     FI.OptLineTable->push(Line1);
     FI.OptLineTable->push(Line2);
   };
 
-  auto AddInlineLambda = [](FunctionInfo &FI) {
+  auto AddInlineLambda = [FuncAddr, FuncSize](FunctionInfo &FI) {
     FI.Inline = InlineInfo();
-    FI.Inline->Ranges.insert(AddressRange(FuncAddr, FuncAddr+FuncSize));
+    FI.Inline->Ranges.insert(AddressRange(FuncAddr, FuncAddr + FuncSize));
     InlineInfo Inline1;
-    Inline1.Ranges.insert(AddressRange(FuncAddr+0x10, FuncAddr+0x30));
+    Inline1.Ranges.insert(AddressRange(FuncAddr + 0x10, FuncAddr + 0x30));
     Inline1.Name = 1;
     Inline1.CallFile = 1;
     Inline1.CallLine = 11;
