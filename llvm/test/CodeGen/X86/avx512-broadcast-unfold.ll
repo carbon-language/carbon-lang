@@ -4457,8 +4457,7 @@ define void @bcast_unfold_cmp_v8f32_refold(float* nocapture %0) {
 ; CHECK-NEXT:    vbroadcastss {{.*#+}} ymm1 = [3.0E+0,3.0E+0,3.0E+0,3.0E+0,3.0E+0,3.0E+0,3.0E+0,3.0E+0]
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB126_1: # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vmovups 4096(%rdi,%rax), %ymm2
-; CHECK-NEXT:    vcmpltps %ymm0, %ymm2, %k1
+; CHECK-NEXT:    vcmpgtps 4096(%rdi,%rax), %ymm0, %k1
 ; CHECK-NEXT:    vmovaps %ymm1, %ymm2
 ; CHECK-NEXT:    vbroadcastss {{.*}}(%rip), %ymm2 {%k1}
 ; CHECK-NEXT:    vmovups %ymm2, 4096(%rdi,%rax)

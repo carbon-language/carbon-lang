@@ -1720,6 +1720,27 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
+  case X86::VCMPSDZrr:
+  case X86::VCMPSSZrr:
+  case X86::VCMPPDZrri:
+  case X86::VCMPPSZrri:
+  case X86::VCMPPDZ128rri:
+  case X86::VCMPPSZ128rri:
+  case X86::VCMPPDZ256rri:
+  case X86::VCMPPSZ256rri:
+  case X86::VCMPPDZrrik:
+  case X86::VCMPPSZrrik:
+  case X86::VCMPPDZ128rrik:
+  case X86::VCMPPSZ128rrik:
+  case X86::VCMPPDZ256rrik:
+  case X86::VCMPPSZ256rrik: {
+    unsigned Imm = MI.getOperand(MI.getNumOperands() - 1).getImm() & 0x1f;
+    Imm = X86::getSwappedVCMPImm(Imm);
+    auto &WorkingMI = cloneIfNew(MI);
+    WorkingMI.getOperand(MI.getNumOperands() - 1).setImm(Imm);
+    return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
+                                                   OpIdx1, OpIdx2);
+  }
   case X86::VPERM2F128rr:
   case X86::VPERM2I128rr: {
     // Flip permute source immediate.
@@ -1963,17 +1984,23 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
     // Ordered/Unordered/Equal/NotEqual tests
     unsigned Imm = MI.getOperand(3 + OpOffset).getImm() & 0x7;
     switch (Imm) {
+    default:
+      // EVEX versions can be commuted.
+      if ((Desc.TSFlags & X86II::EncodingMask) == X86II::EVEX)
+        break;
+      return false;
     case 0x00: // EQUAL
     case 0x03: // UNORDERED
     case 0x04: // NOT EQUAL
     case 0x07: // ORDERED
-      // The indices of the commutable operands are 1 and 2 (or 2 and 3
-      // when masked).
-      // Assign them to the returned operand indices here.
-      return fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2, 1 + OpOffset,
-                                  2 + OpOffset);
+      break;
     }
-    return false;
+
+    // The indices of the commutable operands are 1 and 2 (or 2 and 3
+    // when masked).
+    // Assign them to the returned operand indices here.
+    return fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2, 1 + OpOffset,
+                                2 + OpOffset);
   }
   case X86::MOVSSrr:
     // X86::MOVSDrr is always commutable. MOVSS is only commutable if we can
