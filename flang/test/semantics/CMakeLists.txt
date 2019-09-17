@@ -151,6 +151,7 @@ set(ERROR_TESTS
   dosemantics10.f90
   dosemantics11.f90
   expr-errors01.f90
+  expr-errors02.f90
   null01.f90
   omp-clause-validity01.f90
   omp-loop-association.f90

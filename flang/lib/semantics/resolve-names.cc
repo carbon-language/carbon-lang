@@ -4383,7 +4383,11 @@ ParamValue DeclarationVisitor::GetParamValue(
   return std::visit(
       common::visitors{
           [=](const parser::ScalarIntExpr &x) {
-            return ParamValue{EvaluateIntExpr(x), attr};
+            auto &messages{GetFoldingContext().messages()};
+            auto save{messages.SetLocation(parser::FindSourceLocation(x))};
+            MaybeIntExpr intExpr{EvaluateIntExpr(x)};
+            evaluate::CheckSpecificationExpr(intExpr, messages);
+            return ParamValue{std::move(intExpr), attr};
           },
           [=](const parser::Star &) { return ParamValue::Assumed(attr); },
           [=](const parser::TypeParamValue::Deferred &) {

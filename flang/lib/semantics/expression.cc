@@ -141,7 +141,13 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
       return Expr<SomeType>{ProcedureDesignator{std::move(*component)}};
     } else {
       CHECK(std::holds_alternative<const Symbol *>(ref.u));
-      return Expr<SomeType>{ProcedureDesignator{symbol}};
+      if (symbol.has<semantics::SubprogramNameDetails>()) {
+        // Call to internal function in specification expression
+        Say("cannot call function '%s' in this context"_err_en_US,
+            symbol.name());
+      } else {
+        return Expr<SomeType>{ProcedureDesignator{symbol}};
+      }
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
     return TypedWrapper<Designator, DataRef>(*dyType, std::move(ref));

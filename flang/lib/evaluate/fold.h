@@ -82,10 +82,15 @@ auto GetScalarConstantValue(const EXPR &expr) -> std::optional<Scalar<T>> {
 // constant value.
 bool IsConstantExpr(const Expr<SomeType> &);
 
-// Predicate: true when an expression is a specification expression
+// Check whether an expression is a specification expression
 // (10.1.11(2), C1010).  Constant expressions are always valid
 // specification expressions.
-bool IsSpecificationExpr(const Expr<SomeType> &);
+template<typename A>
+void CheckSpecificationExpr(const A &, parser::ContextualMessages &);
+extern template void CheckSpecificationExpr(
+    const Expr<SomeType> &x, parser::ContextualMessages &);
+extern template void CheckSpecificationExpr(
+    const std::optional<Expr<SomeInteger>> &x, parser::ContextualMessages &);
 
 // Predicate: true when an expression is an object designator with
 // constant addressing and no vector-valued subscript.

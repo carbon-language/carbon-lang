@@ -19,6 +19,7 @@
 #include "constant.h"
 #include "descender.h"
 #include "expression.h"
+#include "formatting.h"
 #include "host.h"
 #include "int-power.h"
 #include "intrinsics-library-templates.h"
@@ -2516,7 +2517,7 @@ public:
     }
   }
 
-  // Forbid integer divide by zero in constants.
+  // Forbid integer division by zero in constants.
   template<int KIND>
   void Handle(const Divide<Type<TypeCategory::Integer, KIND>> &division) {
     using T = Type<TypeCategory::Integer, KIND>;
@@ -2542,85 +2543,67 @@ bool IsConstantExpr(const Expr<SomeType> &expr) {
 }
 
 // Specification expression validation (10.1.11(2), C1010)
-struct IsSpecificationExprHelper : public ExpressionPredicateHelperBase<IsSpecificationExprHelper, true, true> {
-  using Base = ExpressionPredicateHelperBase<IsSpecificationExprHelper, true, true>;
-  using Base::operator();
+struct CheckSpecificationExprHelper
+  : public ExpressionPredicateHelperBase<CheckSpecificationExprHelper>,
+    public ExpressionPredicateHelperSumTypeMixins<CheckSpecificationExprHelper>,
+    public ExpressionPredicateHelperVariableMixins<
+        CheckSpecificationExprHelper> {
+  static constexpr bool DefaultResult{true};
+  static constexpr bool IsConjunction{true};
+  using ExpressionPredicateHelperBase<CheckSpecificationExprHelper>::operator();
+  using ExpressionPredicateHelperSumTypeMixins<CheckSpecificationExprHelper>::
+  operator();
+  using ExpressionPredicateHelperVariableMixins<CheckSpecificationExprHelper>::
+  operator();
 
-  template<typename A> bool operator()(const A &) { return false; }
+  explicit CheckSpecificationExprHelper(std::string &why) : why_{why} {
+    why_.clear();
+  }
 
+  bool operator()(const BOZLiteralConstant &) { return true; }
+  bool operator()(const NullPointer &) { return true; }
   template<typename T> bool operator()(const Constant<T> &) { return true; }
   bool operator()(const StaticDataObject::Pointer &) { return true; }
+  template<int KIND> bool operator()(const TypeParamInquiry<KIND> &) {
+    return true;
+  }
+  bool operator()(const ImpliedDoIndex &) { return true; }
+
+  bool operator()(const ProcedureDesignator &) {
+    return Say("dummy procedure argument");
+  }
+  bool operator()(const CoarrayRef &) { return Say("coindexed reference"); }
 
   bool operator()(const semantics::Symbol &symbol) {
-    if (symbol.IsDummy()) {
-      return !symbol.attrs().test(semantics::Attr::OPTIONAL) &&
-             !symbol.attrs().test(semantics::Attr::INTENT_OUT);
-    } else if (const auto *object{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    if (semantics::IsNamedConstant(symbol)) {
+      return true;
+    } else if (symbol.IsDummy()) {
+      if (symbol.attrs().test(semantics::Attr::OPTIONAL)) {
+        return Say("reference to OPTIONAL dummy argument '" +
+            symbol.name().ToString() + "'");
+      } else if (symbol.attrs().test(semantics::Attr::INTENT_OUT)) {
+        return Say("reference to INTENT(OUT) dummy argument '" +
+            symbol.name().ToString() + "'");
+      } else {
+        return true;
+      }
+    } else if (const auto *object{
+                   symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       // TODO: what about EQUIVALENCE with data in COMMON?
       // TODO: does this work for blank COMMON?
       return object->commonBlock() != nullptr;
     } else if (symbol.has<semantics::UseDetails>() ||
-               symbol.has<semantics::HostAssocDetails>()) {
+        symbol.has<semantics::HostAssocDetails>()) {
       return true;
     } else {
-      return false;
+      return Say(
+          "reference to local object '" + symbol.name().ToString() + "'");
     }
   }
-  bool operator()(const Component &x) {
-    return (*this)(x.base());
-  }
-  bool operator()(const NamedEntity &x) {
-    if (const Component *component{x.UnwrapComponent()}) {
-      return (*this)(*component);
-    } else {
-      return (*this)(x.GetFirstSymbol());
-    }
-  }
-  bool operator()(const Triplet &x) {
-    return (*this)(x.lower()) && (*this)(x.upper()) && (*this)(x.stride());
-  }
-  bool operator()(const Subscript &x) {
-    return (*this)(x.u);
-  }
+  bool operator()(const Component &x) { return (*this)(x.base()); }
   bool operator()(const ArrayRef &x) {
     return (*this)(x.base()) && (*this)(x.subscript());
   }
-  bool operator()(const DataRef &x) {
-    return (*this)(x.u);
-  }
-  bool operator()(const Substring &x) {
-    return (*this)(x.parent()) && (*this)(x.lower()) && (*this)(x.upper());
-  }
-  bool operator()(const ComplexPart &x) {
-    return (*this)(x.complex());
-  }
-  template<typename T> bool operator()(const Designator<T> &x) {
-    return (*this)(x.u);
-  }
-  template<typename T> bool operator()(const Variable<T> &x) {
-    return (*this)(x.u);
-  }
-
-  template<typename T> bool operator()(const ArrayConstructorValues<T> &x) {
-    return std::all_of(x.begin(), x.end(), *this);
-  }
-  template<typename T> bool operator()(const ArrayConstructorValue<T> &x) {
-    return (*this)(x.u);
-  }
-  template<typename T> bool operator()(const ImpliedDo<T> &x) {
-    return (*this)(x.lower) && (*this)(x.upper) && (*this)(x.stride) && (*this)(x.values());
-  }
-  bool operator()(const ImpliedDoIndex &) { return true; }
-  bool operator()(const StructureConstructor &x) {
-    return std::all_of(x.begin(), x.end(), *this);
-  }
-  bool operator()(const StructureConstructorValues::value_type &x) {
-    return (*this)(x.second);
-  }
-  template<int KIND> bool operator()(const TypeParamInquiry<KIND> &x) {
-    return (*this)(x.base());
-  }
-
   bool operator()(const ActualArgument &x) {
     if (const auto *symbol{x.GetAssumedTypeDummy()}) {
       return (*this)(*symbol);
@@ -2629,26 +2612,58 @@ struct IsSpecificationExprHelper : public ExpressionPredicateHelperBase<IsSpecif
     }
   }
   bool operator()(const ProcedureRef &x) {
-    // TODO: check the designator for intrinsic / PURE
+    if (const auto *symbol{x.proc().GetSymbol()}) {
+      if (!symbol->attrs().test(semantics::Attr::PURE)) {
+        return Say(
+            "reference to impure function '" + symbol->name().ToString() + "'");
+      } else if (symbol->owner().kind() == semantics::Scope::Kind::Subprogram) {
+        return Say("reference to internal function '" +
+            symbol->name().ToString() + "'");
+      }
+      // TODO: other checks for standard module procedures
+    } else {
+      const SpecificIntrinsic &intrin{DEREF(x.proc().GetSpecificIntrinsic())};
+      if (intrin.name == "present") {
+        return true;  // no need to check argument(s)
+      }
+      if (IsConstantExpr(x)) {
+        return true;  // inquiry functions may not need to check argument(s)
+      }
+    }
     return (*this)(x.arguments());
   }
 
-  template<typename D, typename R, typename O>
-  bool operator()(const Operation<D,R,O> &op) {
-    return (*this)(op.left());
+private:
+  bool Say(std::string &&s) {
+    if (!why_.empty()) {
+      why_ += "; ";
+    }
+    why_ += std::move(s);
+    return false;
   }
-  template<typename D, typename R, typename LO, typename RO>
-  bool operator()(const Operation<D,R,LO,RO> &op) {
-    return (*this)(op.left()) && (*this)(op.right());
-  }
-  template<typename T> bool operator()(const Expr<T> &x) {
-    return (*this)(x.u);
-  }
+
+  std::string &why_;
 };
 
-bool IsSpecificationExpr(const Expr<SomeType> &x) {
-  return IsSpecificationExprHelper{}(x);
+template<typename A>
+void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages) {
+  std::string why;
+  if (!CheckSpecificationExprHelper{why}(x)) {
+    std::stringstream ss;
+    ss << x;
+    if (!why.empty()) {
+      why = " ("s + why + ')';
+    }
+    messages.Say(
+        "The expression (%s) cannot be used as a specification expression%s"_err_en_US,
+        ss.str(), why);
+  }
 }
+
+template void CheckSpecificationExpr(
+    const Expr<SomeType> &, parser::ContextualMessages &);
+template void CheckSpecificationExpr(
+    const std::optional<Expr<SomeInteger>> &, parser::ContextualMessages &);
 
 std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
   return std::visit(

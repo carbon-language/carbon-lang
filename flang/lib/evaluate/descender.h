@@ -365,40 +365,132 @@ private:
   VISITOR &visitor_;
 };
 
-template<typename DERIVED, bool DEFAULT = true, bool ALL = true>
-class ExpressionPredicateHelperBase {
-protected:
-  template<typename A, bool C> bool operator()(const common::Indirection<A,C> &x) {
+template<typename Derived> class ExpressionPredicateHelperBase {
+private:
+  Derived &derived() { return *static_cast<Derived *>(this); }
+  const Derived &derived() const { return *static_cast<const Derived *>(this); }
+
+public:
+  template<typename A, bool C>
+  bool operator()(const common::Indirection<A, C> &x) {
     return derived()(x.value());
   }
   template<typename A> bool operator()(const A *x) {
     if (x != nullptr) {
       return derived()(*x);
     } else {
-      return DEFAULT;
+      return Derived::DefaultResult;
     }
   }
   template<typename A> bool operator()(const std::optional<A> &x) {
     if (x.has_value()) {
       return derived()(*x);
     } else {
-      return DEFAULT;
+      return Derived::DefaultResult;
     }
   }
   template<typename... A> bool operator()(const std::variant<A...> &u) {
     return std::visit(derived(), u);
   }
   template<typename A> bool operator()(const std::vector<A> &x) {
-    if constexpr (ALL) {
+    if constexpr (Derived::IsConjunction) {
       return std::all_of(x.begin(), x.end(), derived());
     } else {
       return std::any_of(x.begin(), x.end(), derived());
     }
   }
-private:
-  DERIVED &derived() { return *static_cast<DERIVED *>(this); }
-  const DERIVED &derived() const { return *static_cast<const DERIVED *>(this); }
 };
 
+template<typename Derived> struct ExpressionPredicateHelperSumTypeMixins {
+private:
+  Derived &derived() { return *static_cast<Derived *>(this); }
+  const Derived &derived() const { return *static_cast<const Derived *>(this); }
+
+public:
+  template<typename T> bool operator()(const ArrayConstructorValue<T> &x) {
+    return derived()(x.u);
+  }
+  template<typename T> bool operator()(const ArrayConstructorValues<T> &x) {
+    if constexpr (Derived::IsConjunction) {
+      return std::all_of(x.begin(), x.end(), *this);
+    } else {
+      return std::any_of(x.begin(), x.end(), *this);
+    }
+  }
+  template<typename T> bool operator()(const ImpliedDo<T> &x) {
+    if constexpr (Derived::IsConjunction) {
+      return derived()(x.lower()) && derived()(x.upper()) &&
+          derived()(x.stride()) && derived()(x.values());
+    } else {
+      return derived()(x.lower()) || derived()(x.upper()) ||
+          derived()(x.stride()) || derived()(x.values());
+    }
+  }
+  bool operator()(const StructureConstructor &x) {
+    if constexpr (Derived::IsConjunction) {
+      return std::all_of(x.begin(), x.end(), *this);
+    } else {
+      return std::any_of(x.begin(), x.end(), *this);
+    }
+  }
+  bool operator()(const StructureConstructorValues::value_type &x) {
+    return derived()(x.second);
+  }
+  template<typename D, typename R, typename O>
+  bool operator()(const Operation<D, R, O> &op) {
+    return derived()(op.left());
+  }
+  template<typename D, typename R, typename LO, typename RO>
+  bool operator()(const Operation<D, R, LO, RO> &op) {
+    return derived()(op.left()) && derived()(op.right());
+  }
+  template<typename T> bool operator()(const Expr<T> &x) {
+    return derived()(x.u);
+  }
+  bool operator()(const Relational<SomeType> &x) { return derived()(x.u); }
+};
+
+template<typename Derived> struct ExpressionPredicateHelperVariableMixins {
+private:
+  Derived &derived() { return *static_cast<Derived *>(this); }
+  const Derived &derived() const { return *static_cast<const Derived *>(this); }
+
+public:
+  bool operator()(const NamedEntity &x) {
+    if (const Component * component{x.UnwrapComponent()}) {
+      return derived()(*component);
+    } else {
+      return derived()(x.GetFirstSymbol());
+    }
+  }
+  bool operator()(const Triplet &x) {
+    if constexpr (Derived::IsConjunction) {
+      return derived()(x.lower()) && derived()(x.upper()) &&
+          derived()(x.stride());
+    } else {
+      return derived()(x.lower()) || derived()(x.upper()) ||
+          derived()(x.stride());
+    }
+  }
+  bool operator()(const Substring &x) {
+    if constexpr (Derived::IsConjunction) {
+      return derived()(x.parent()) && derived()(x.lower()) &&
+          derived()(x.upper());
+    } else {
+      return derived()(x.parent()) || derived()(x.lower()) ||
+          derived()(x.upper());
+    }
+  }
+  bool operator()(const Subscript &x) { return derived()(x.u); }
+  bool operator()(const DataRef &x) { return derived()(x.u); }
+  bool operator()(const ComplexPart &x) { return derived()(x.complex()); }
+  template<typename T> bool operator()(const Designator<T> &x) {
+    return derived()(x.u);
+  }
+  template<typename T> bool operator()(const Variable<T> &x) {
+    return derived()(x.u);
+  }
+  bool operator()(const DescriptorInquiry &x) { return derived()(x.base()); }
+};
 }
 #endif  // FORTRAN_EVALUATE_DESCENDER_H_
