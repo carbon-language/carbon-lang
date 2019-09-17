@@ -94,13 +94,13 @@ Extensions, deletions, and legacy features supported by default
   we allow distinct types to be used, promoting
   the arguments as if they were operands to an intrinsic `+` operator,
   and defining the result type accordingly.
-* DOUBLE COMPLEX intrinsics DREAL, DCMPLX, DCONJG and DIMAG.
+* DOUBLE COMPLEX intrinsics DREAL, DCMPLX, DCONJG, and DIMAG.
 * INT_PTR_KIND intrinsic returns the kind of c_intptr_t.
 * Restricted specific conversion intrinsics FLOAT, SNGL, IDINT, IFIX, DREAL,
   and DCMPLX accept arguments of any kind instead of only the default kind or
   double precision kind. Their result kinds remain as specified.
 * Specific intrinsics AMAX0, AMAX1, AMIN0, AMIN1, DMAX1, DMIN1, MAX0, MAX1,
-  MIN0 and MIN1 accept more argument types than specified. They are replaced by
+  MIN0, and MIN1 accept more argument types than specified. They are replaced by
   the related generics followed by conversions to the specified result types.
 
 Extensions supported when enabled by options
@@ -152,7 +152,7 @@ Extensions and legacy features deliberately not supported
   component declarations.
 * Wrong argument types in calls to specific intrinsics that have different names than the
   related generics. Some accepted exceptions are listed above in the allowed extensions.
-  PGI, Intel and XLF support this in ways that are not numerically equivalent.
+  PGI, Intel, and XLF support this in ways that are not numerically equivalent.
   PGI converts the arguments while Intel and XLF replace the specific by the related generic.
 
 Preprocessing behavior

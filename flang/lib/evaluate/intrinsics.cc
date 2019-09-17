@@ -715,8 +715,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 // in Table 16.2 can be used as actual arguments, PROCEDURE() interfaces,
 // and procedure pointer targets.
 // Note that the restricted conversion functions dcmplx, dreal, float, idint,
-// ifix and sngl are extended to accept any argument kind because this a common
-// Fortran compilers behavior.
+// ifix, and sngl are extended to accept any argument kind because this is a
+// common Fortran compilers behavior, and as far as we can tell, is safe and
+// useful.
 struct SpecificIntrinsicInterface : public IntrinsicInterface {
   const char *generic{nullptr};
   bool isRestrictedSpecific{false};
@@ -1685,7 +1686,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
             localContext.messages().Say(
                 "Argument type does not match specific intrinsic '%s' "
                 "requirements, using '%s' generic instead and converting the "
-                "result to %s if needed."_en_US,
+                "result to %s if needed"_en_US,
                 name, genericName, newType.AsFortran());
             if (finalBuffer != nullptr) {
               finalBuffer->Annex(std::move(localBuffer));
