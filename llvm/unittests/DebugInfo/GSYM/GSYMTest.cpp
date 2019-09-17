@@ -255,6 +255,27 @@ static void TestFunctionInfoEncodeDecode(llvm::support::endianness ByteOrder,
   EXPECT_EQ(FI, Decoded.get());
 }
 
+static void AddLines(uint64_t FuncAddr, uint32_t FileIdx, FunctionInfo &FI) {
+    FI.OptLineTable = LineTable();
+    LineEntry Line0(FuncAddr + 0x000, FileIdx, 10);
+    LineEntry Line1(FuncAddr + 0x010, FileIdx, 11);
+    LineEntry Line2(FuncAddr + 0x100, FileIdx, 1000);
+    FI.OptLineTable->push(Line0);
+    FI.OptLineTable->push(Line1);
+    FI.OptLineTable->push(Line2);
+}
+
+
+static void AddInline(uint64_t FuncAddr, uint64_t FuncSize, FunctionInfo &FI) {
+    FI.Inline = InlineInfo();
+    FI.Inline->Ranges.insert(AddressRange(FuncAddr, FuncAddr + FuncSize));
+    InlineInfo Inline1;
+    Inline1.Ranges.insert(AddressRange(FuncAddr + 0x10, FuncAddr + 0x30));
+    Inline1.Name = 1;
+    Inline1.CallFile = 1;
+    Inline1.CallLine = 11;
+    FI.Inline->Children.push_back(Inline1);
+}
 
 TEST(GSYMTest, TestFunctionInfoEncoding) {
   constexpr uint64_t FuncAddr = 0x1000;
@@ -267,46 +288,25 @@ TEST(GSYMTest, TestFunctionInfoEncoding) {
   TestFunctionInfoEncodeDecode(llvm::support::little, FI);
   TestFunctionInfoEncodeDecode(llvm::support::big, FI);
 
-  auto AddLinesLambda = [FuncAddr, FileIdx](FunctionInfo &FI) {
-    FI.OptLineTable = LineTable();
-    LineEntry Line0(FuncAddr + 0x000, FileIdx, 10);
-    LineEntry Line1(FuncAddr + 0x010, FileIdx, 11);
-    LineEntry Line2(FuncAddr + 0x100, FileIdx, 1000);
-    FI.OptLineTable->push(Line0);
-    FI.OptLineTable->push(Line1);
-    FI.OptLineTable->push(Line2);
-  };
-
-  auto AddInlineLambda = [FuncAddr, FuncSize](FunctionInfo &FI) {
-    FI.Inline = InlineInfo();
-    FI.Inline->Ranges.insert(AddressRange(FuncAddr, FuncAddr + FuncSize));
-    InlineInfo Inline1;
-    Inline1.Ranges.insert(AddressRange(FuncAddr + 0x10, FuncAddr + 0x30));
-    Inline1.Name = 1;
-    Inline1.CallFile = 1;
-    Inline1.CallLine = 11;
-    FI.Inline->Children.push_back(Inline1);
-  };
-
   // Make sure that we can encode and decode a FunctionInfo with a line table
   // and no inline info.
   FunctionInfo FILines(FuncAddr, FuncSize, FuncName);
-  AddLinesLambda(FILines);
+  AddLines(FuncAddr, FileIdx, FILines);
   TestFunctionInfoEncodeDecode(llvm::support::little, FILines);
   TestFunctionInfoEncodeDecode(llvm::support::big, FILines);
 
   // Make sure that we can encode and decode a FunctionInfo with no line table
   // and with inline info.
   FunctionInfo FIInline(FuncAddr, FuncSize, FuncName);
-  AddInlineLambda(FIInline);
+  AddInline(FuncAddr, FuncSize, FIInline);
   TestFunctionInfoEncodeDecode(llvm::support::little, FIInline);
   TestFunctionInfoEncodeDecode(llvm::support::big, FIInline);
 
   // Make sure that we can encode and decode a FunctionInfo with no line table
   // and with inline info.
   FunctionInfo FIBoth(FuncAddr, FuncSize, FuncName);
-  AddLinesLambda(FIBoth);
-  AddInlineLambda(FIBoth);
+  AddLines(FuncAddr, FileIdx, FIBoth);
+  AddInline(FuncAddr, FuncSize, FIBoth);
   TestFunctionInfoEncodeDecode(llvm::support::little, FIBoth);
   TestFunctionInfoEncodeDecode(llvm::support::big, FIBoth);
 }
