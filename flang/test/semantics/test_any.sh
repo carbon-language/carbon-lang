@@ -66,9 +66,7 @@ for input in ${srcdir}/$*; do
   CMD=$(cat ${input} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
   CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
   if egrep -q -e '%t' <<< ${CMD} ; then
-    temp=`mktemp`
-    trap "rm -f ${temp}" EXIT
-    CMD=$(echo ${CMD} | sed -e "s:%t:${temp}:g")
+    CMD=$(echo ${CMD} | sed -e "s:%t:$temp/t:g")
   fi
   if $(eval $CMD); then
     echo "PASS  ${input}"
