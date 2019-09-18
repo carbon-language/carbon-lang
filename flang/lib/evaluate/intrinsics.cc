@@ -1685,7 +1685,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
             DynamicType newType{GetReturnType(*specIter->second, defaults_)};
             context.messages().Say(
                 "Argument type does not match specific intrinsic '%s' "
-                "requirements, using '%s' generic instead and converting the "
+                "requirements; using '%s' generic instead and converting the "
                 "result to %s if needed"_en_US,
                 name, genericName, newType.AsFortran());
             specificCall->specificIntrinsic.characteristics.value()
