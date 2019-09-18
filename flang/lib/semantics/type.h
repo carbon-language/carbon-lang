@@ -231,6 +231,7 @@ std::ostream &operator<<(std::ostream &, const ArraySpec &);
 // The name may not match the symbol's name in case of a USE rename.
 class DerivedTypeSpec {
 public:
+  using ParameterMapType = std::map<SourceName, ParamValue>;
   explicit DerivedTypeSpec(SourceName, const Symbol &);
   DerivedTypeSpec(const DerivedTypeSpec &);
   DerivedTypeSpec(DerivedTypeSpec &&);
@@ -240,9 +241,7 @@ public:
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
   void ReplaceScope(const Scope &);
-  const std::map<SourceName, ParamValue> &parameters() const {
-    return parameters_;
-  }
+  const ParameterMapType &parameters() const { return parameters_; }
 
   bool HasActualParameters() const { return !parameters_.empty(); }
   ParamValue &AddParamValue(SourceName, ParamValue &&);
@@ -264,7 +263,7 @@ private:
   SourceName name_;
   const Symbol &typeSymbol_;
   const Scope *scope_{nullptr};  // same as typeSymbol_.scope() unless PDT
-  std::map<SourceName, ParamValue> parameters_;
+  ParameterMapType parameters_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 

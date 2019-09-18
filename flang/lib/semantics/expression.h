@@ -19,6 +19,7 @@
 #include "../common/Fortran.h"
 #include "../common/indirection.h"
 #include "../evaluate/characteristics.h"
+#include "../evaluate/check-expression.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"

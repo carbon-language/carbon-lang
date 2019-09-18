@@ -31,6 +31,10 @@ module m
   end interface
   integer :: coarray[*]
  contains
+  pure integer function modulefunc(n)
+    integer, value :: n
+    modulefunc = n
+  end function
   subroutine test(out, optional)
     !ERROR: The expression (foo()) cannot be used as a specification expression (reference to impure function 'foo')
     type(t(foo())) :: x1
@@ -50,15 +54,11 @@ module m
     !ERROR: The expression (coarray[1_8]) cannot be used as a specification expression (coindexed reference)
     type(t(coarray[1])) :: x7
     type(t(kind(foo()))) :: x101 ! ok
-    type(t(modulefunc(0))) :: x102 ! ok?
+    type(t(modulefunc(0))) :: x102 ! ok
    contains
     pure integer function internal(n)
       integer, value :: n
       internal = n
     end function
   end subroutine
-  pure integer function modulefunc(n)
-    integer, value :: n
-    modulefunc = n
-  end function
 end module
