@@ -194,8 +194,7 @@ define void @sub_v16i8_i_negated(<16 x i8>* %c, <16 x i8>* %a) nounwind {
 ; ALL-LABEL: sub_v16i8_i_negated:
 ; ALL:       # %bb.0:
 ; ALL-NEXT:    ld.b $w0, 0($5)
-; ALL-NEXT:    ldi.b $w1, -1
-; ALL-NEXT:    addv.b $w0, $w0, $w1
+; ALL-NEXT:    subvi.b $w0, $w0, 1
 ; ALL-NEXT:    jr $ra
 ; ALL-NEXT:    st.b $w0, 0($4)
   %1 = load <16 x i8>, <16 x i8>* %a
@@ -222,9 +221,8 @@ define void @sub_v8i16_i(<8 x i16>* %c, <8 x i16>* %a) nounwind {
 define void @sub_v8i16_i_negated(<8 x i16>* %c, <8 x i16>* %a) nounwind {
 ; ALL-LABEL: sub_v8i16_i_negated:
 ; ALL:       # %bb.0:
-; ALL-NEXT:    ldi.b $w0, -1
-; ALL-NEXT:    ld.h $w1, 0($5)
-; ALL-NEXT:    addv.h $w0, $w1, $w0
+; ALL-NEXT:    ld.h $w0, 0($5)
+; ALL-NEXT:    subvi.h $w0, $w0, 1
 ; ALL-NEXT:    jr $ra
 ; ALL-NEXT:    st.h $w0, 0($4)
   %1 = load <8 x i16>, <8 x i16>* %a
@@ -250,9 +248,8 @@ define void @sub_v4i32_i(<4 x i32>* %c, <4 x i32>* %a) nounwind {
 define void @sub_v4i32_i_negated(<4 x i32>* %c, <4 x i32>* %a) nounwind {
 ; ALL-LABEL: sub_v4i32_i_negated:
 ; ALL:       # %bb.0:
-; ALL-NEXT:    ldi.b $w0, -1
-; ALL-NEXT:    ld.w $w1, 0($5)
-; ALL-NEXT:    addv.w $w0, $w1, $w0
+; ALL-NEXT:    ld.w $w0, 0($5)
+; ALL-NEXT:    subvi.w $w0, $w0, 1
 ; ALL-NEXT:    jr $ra
 ; ALL-NEXT:    st.w $w0, 0($4)
   %1 = load <4 x i32>, <4 x i32>* %a
