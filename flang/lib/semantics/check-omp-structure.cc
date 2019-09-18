@@ -550,7 +550,11 @@ void OmpStructureChecker::Enter(
     PushContext(dir.source, OmpDirective::TASKYIELD);
   } break;
   case parser::OmpSimpleStandaloneDirective::Directive::TargetEnterData: {
-    // 2.10.2 target-enter-data
+    // 2.10.2 target-enter-data-clause -> if-clause |
+    //                                    device-clause |
+    //                                    map-clause |
+    //                                    depend-clause |
+    //                                    nowait-clause
     PushContext(dir.source, OmpDirective::TARGET_ENTER_DATA);
     OmpClauseSet allowed{OmpClause::MAP, OmpClause::DEPEND, OmpClause::NOWAIT};
     SetContextAllowed(allowed);
@@ -559,7 +563,11 @@ void OmpStructureChecker::Enter(
     SetContextRequired({OmpClause::MAP});
   } break;
   case parser::OmpSimpleStandaloneDirective::Directive::TargetExitData: {
-    // 2.10.3 target-exit-data
+    // 2.10.3  target-enter-data-clause -> if-clause |
+    //                                     device-clause |
+    //                                     map-clause |
+    //                                     depend-clause |
+    //                                     nowait-clause
     PushContext(dir.source, OmpDirective::TARGET_EXIT_DATA);
     OmpClauseSet allowed{OmpClause::MAP, OmpClause::DEPEND, OmpClause::NOWAIT};
     SetContextAllowed(allowed);
