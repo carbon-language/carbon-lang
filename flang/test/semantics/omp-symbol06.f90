@@ -14,19 +14,17 @@
 
 !OPTIONS: -fopenmp
 
-! Test the effect to name resolution from illegal clause
+! 2.15.3 Data-Sharing Attribute Clauses
+! A list item that specifies a given variable may not appear in more than
+! one clause on the same directive, except that a variable may be specified
+! in both firstprivate and lastprivate clauses.
 
-  !a = 1.0
-  b = 2
-  !$omp parallel private(a) shared(b)
-  a = 3.
-  b = 4
-  !ERROR: LASTPRIVATE clause is not allowed on the PARALLEL directive
-  !ERROR: 'a' appears in more than one data-sharing clause on the same OpenMP directive
-  !$omp parallel private(a) shared(b) lastprivate(a)
-  a = 5.
-  b = 6
-  !$omp end parallel
-  !$omp end parallel
-  print *,a, b
-end
+  !DEF: /MainProgram1/a (Implicit) ObjectEntity REAL(4)
+  a = 1.
+  !$omp parallel do  firstprivate(a) lastprivate(a)
+  !DEF: /MainProgram1/i (Implicit) ObjectEntity INTEGER(4)
+  do i=1,10
+     !DEF: /MainProgram1/Block1/a (OmpFirstPrivate, OmpLastPrivate) HostAssoc REAL(4)
+     a = 2.
+  end do
+end program

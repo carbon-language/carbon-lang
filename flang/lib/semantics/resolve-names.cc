@@ -1043,6 +1043,11 @@ static const parser::Name *GetDesignatorNameIf(
   return dataRef ? std::get_if<parser::Name>(&dataRef->u) : nullptr;
 }
 
+static constexpr Symbol::Flags dataSharingAttributeFlags{
+    Symbol::Flag::OmpShared, Symbol::Flag::OmpPrivate,
+    Symbol::Flag::OmpFirstPrivate, Symbol::Flag::OmpLastPrivate,
+    Symbol::Flag::OmpReduction, Symbol::Flag::OmpLinear};
+
 static constexpr Symbol::Flags ompFlagsRequireNewSymbol{
     Symbol::Flag::OmpPrivate, Symbol::Flag::OmpLinear,
     Symbol::Flag::OmpFirstPrivate, Symbol::Flag::OmpLastPrivate,
@@ -1059,11 +1064,26 @@ public:
     return true;
   }
   void Post(const parser::OpenMPBlockConstruct &) { PopScope(); }
+  bool Pre(const parser::OmpBeginBlockDirective &) {
+    clear_dataSharingAttributeObject();
+    return true;
+  }
+  void Post(const parser::OmpBeginBlockDirective &) {
+    clear_dataSharingAttributeObject();
+  }
+
   bool Pre(const parser::OpenMPLoopConstruct &) {
     PushScope(Scope::Kind::Block, nullptr);
     return true;
   }
   void Post(const parser::OpenMPLoopConstruct &) { PopScope(); }
+  bool Pre(const parser::OmpBeginLoopDirective &) {
+    clear_dataSharingAttributeObject();
+    return true;
+  }
+  void Post(const parser::OmpBeginLoopDirective &) {
+    clear_dataSharingAttributeObject();
+  }
 
   bool Pre(const parser::OpenMPThreadprivate &x) {
     PushScope(Scope::Kind::Block, nullptr);
@@ -1090,6 +1110,14 @@ public:
     return false;
   }
 
+  void add_dataSharingAttributeObject(const Symbol *object) {
+    dataSharingAttributeObjects_.insert(object);
+  }
+  void clear_dataSharingAttributeObject() {
+    dataSharingAttributeObjects_.clear();
+  }
+  bool find_dataSharingAttributeObject(const Symbol *);
+
 protected:
   // TODO: resolve variables referenced in the OpenMP region
   void ResolveOmpObjectList(const parser::OmpObjectList &, Symbol::Flag);
@@ -1101,7 +1129,20 @@ protected:
   Symbol *DeclarePrivateAccessEntity(Symbol &, Symbol::Flag);
   Symbol *DeclareOrMarkOtherAccessEntity(const parser::Name &, Symbol::Flag);
   Symbol *DeclareOrMarkOtherAccessEntity(Symbol &, Symbol::Flag);
+  void CheckMultipleAppearances(
+      const parser::Name &, const Symbol *, Symbol::Flag);
+
+private:
+  std::set<const Symbol *> dataSharingAttributeObjects_;  // on one directive
 };
+
+bool OmpVisitor::find_dataSharingAttributeObject(const Symbol *object) {
+  auto it{dataSharingAttributeObjects_.find(object)};
+  if (it != dataSharingAttributeObjects_.end()) {
+    return true;
+  }
+  return false;
+}
 
 Symbol *OmpVisitor::ResolveOmpCommonBlockName(const parser::Name *name) {
   if (auto *prev{name ? currScope().parent().FindCommonBlock(name->source)
@@ -1127,7 +1168,10 @@ void OmpVisitor::ResolveOmpObject(
   const auto *name{GetDesignatorNameIf(designator)};
   if (kind == parser::OmpObject::Kind::Object) {
     if (name) {
-      ResolveOmp(*name, ompFlag);
+      auto *symbol{ResolveOmp(*name, ompFlag)};
+      if (dataSharingAttributeFlags.test(ompFlag)) {
+        CheckMultipleAppearances(*name, symbol, ompFlag);
+      }
     } else if (const auto *designatorName{ResolveDesignator(designator)};
                designatorName->symbol) {
       if (const auto *details{
@@ -1145,6 +1189,7 @@ void OmpVisitor::ResolveOmpObject(
     }
   } else {  // common block
     if (auto *symbol{ResolveOmpCommonBlockName(name)}) {
+      CheckMultipleAppearances(*name, symbol, Symbol::Flag::OmpCommonBlock);
       // 2.15.3 When a named common block appears in a list, it has the same
       // meaning as if every explicit member of the common block appeared in
       // the list
@@ -1184,6 +1229,7 @@ Symbol *OmpVisitor::DeclarePrivateAccessEntity(
     name.symbol = &symbol;  // override resolution to parent
     return &symbol;
   } else {
+    prev.set(ompFlag);
     return &prev;
   }
 }
@@ -1196,6 +1242,7 @@ Symbol *OmpVisitor::DeclarePrivateAccessEntity(
     symbol.set(ompFlag);
     return &symbol;
   } else {
+    object.set(ompFlag);
     return &object;
   }
 }
@@ -1216,6 +1263,33 @@ Symbol *OmpVisitor::DeclareOrMarkOtherAccessEntity(
     object.set(ompFlag);
   }
   return &object;
+}
+
+static bool WithMultipleAppearancesException(
+    const Symbol *symbol, Symbol::Flag ompFlag) {
+  return (ompFlag == Symbol::Flag::OmpFirstPrivate &&
+             symbol->test(Symbol::Flag::OmpLastPrivate)) ||
+      (ompFlag == Symbol::Flag::OmpLastPrivate &&
+          symbol->test(Symbol::Flag::OmpFirstPrivate));
+}
+
+void OmpVisitor::CheckMultipleAppearances(
+    const parser::Name &name, const Symbol *symbol, Symbol::Flag ompFlag) {
+  const Symbol *target{symbol};
+  if (ompFlagsRequireNewSymbol.test(ompFlag)) {
+    if (const auto *details{symbol->detailsIf<HostAssocDetails>()}) {
+      target = &details->symbol();
+    }
+  }
+  if (find_dataSharingAttributeObject(target) &&
+      !WithMultipleAppearancesException(symbol, ompFlag)) {
+    Say(name.source,
+        "'%s' appears in more than one data-sharing clause "
+        "on the same OpenMP directive"_err_en_US,
+        name.ToString());
+  } else {
+    add_dataSharingAttributeObject(target);
+  }
 }
 
 // Walk the parse tree and resolve names to symbols.

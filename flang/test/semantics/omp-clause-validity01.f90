@@ -241,7 +241,7 @@
   !$omp parallel
   b = 1
   !ERROR: LASTPRIVATE clause is not allowed on the SINGLE directive
-  !$omp single private(a) lastprivate(a)
+  !$omp single private(a) lastprivate(c)
   a = 3.14
   !ERROR: The COPYPRIVATE clause must not be used with the NOWAIT clause
   !ERROR: At most one NOWAIT clause can appear on the END SINGLE directive
