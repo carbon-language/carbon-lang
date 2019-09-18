@@ -169,11 +169,11 @@ declare {i64, i1} @llvm.usub.with.overflow(i64, i64)
 define i64 @sub_from_carry(i64 %x, i64 %y, i64* %valout, i64 %z) {
 ; CHECK-LABEL: sub_from_carry:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    movq %rcx, %rax
+; CHECK-NEXT:    negq %rax
 ; CHECK-NEXT:    addq %rsi, %rdi
-; CHECK-NEXT:    setb %al
 ; CHECK-NEXT:    movq %rdi, (%rdx)
-; CHECK-NEXT:    subq %rcx, %rax
+; CHECK-NEXT:    adcq $0, %rax
 ; CHECK-NEXT:    retq
   %agg = call {i64, i1} @llvm.uadd.with.overflow(i64 %x, i64 %y)
   %val = extractvalue {i64, i1} %agg, 0
