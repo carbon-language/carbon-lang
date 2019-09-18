@@ -326,7 +326,7 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << "landing-pad";
     HasAttributes = true;
   }
-  if (getAlignment() > 1) {
+  if (getAlignment() != llvm::Align::None()) {
     OS << (HasAttributes ? ", " : " (");
     OS << "align " << Log2(getAlignment());
     HasAttributes = true;
