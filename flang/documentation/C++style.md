@@ -20,11 +20,15 @@ is clear on usage, follow it.
 
 ## In particular:
 
-Use serial commas in comments, error messages, and documentation.
+Use serial commas in comments, error messages, and documentation
+unless they introduce ambiguity.
 
 ### Error messages
+1. Messages should be a single sentence with few exceptions.
 1. Fortran keywords should appear in upper case.
 1. Names from the program appear in single quotes.
+1. Messages should start with a capital letter.
+1. Messages should not end with a period.
 
 ### Files
 1. File names should use dashes, not underscores.  C++ sources have the
