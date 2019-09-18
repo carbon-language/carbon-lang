@@ -1,26 +1,27 @@
-// RUN: %clang_cc1 -verify -E -frewrite-includes -I %S/Inputs %s -o - | FileCheck -strict-whitespace %s
-// expected-no-diagnostics
+// RUN: %clang_cc1 -E -frewrite-includes -I %S/Inputs %s -o - | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -E -frewrite-includes -I %S/Inputs %s -o - | %clang_cc1 -Wall -Wextra -Wconversion -x c -fsyntax-only 2>&1 | FileCheck -check-prefix=COMPILE --implicit-check-not warning: %s
 
 #define value1 1
 #if value1
-line1
+int line1;
 #else
-line2
+int line2;
 #endif
 
 #define value2 2
 
 #if value1 == value2
-line3
+int line3;
 #elif value1 > value2
-line4
+int line4;
 #elif value1 < value2
-line5
+int line5;
 #else
-line6
+int line6;
 #endif
 
-#if __has_include(<rewrite-includes1.h>)
+#if __has_include(<rewrite-includes3.h>)
+#include <rewrite-includes3.h>
 #endif
 
 #define HAS_INCLUDE(x) __has_include(x)
@@ -35,12 +36,14 @@ commented out
 
 #if value1 < value2 \
 || value1 != value2
-line7
+int line7;
 #endif
 
 #if value1 /*
 */
 #endif
+
+static int unused;
 
 // ENDCOMPARE
 
@@ -75,7 +78,7 @@ line7
 // CHECK-NEXT: # 18 "{{.*}}rewrite-includes-conditions.c"
 
 // CHECK: #if 0 /* disabled by -frewrite-includes */
-// CHECK-NEXT: #if __has_include(<rewrite-includes1.h>)
+// CHECK-NEXT: #if __has_include(<rewrite-includes3.h>)
 // CHECK-NEXT: #endif
 // CHECK-NEXT: #endif /* disabled by -frewrite-includes */
 // CHECK-NEXT: #if 1 /* evaluated by -frewrite-includes */
@@ -86,7 +89,7 @@ line7
 // CHECK-NEXT: #endif
 // CHECK-NEXT: #endif /* disabled by -frewrite-includes */
 // CHECK-NEXT: #if 1 /* evaluated by -frewrite-includes */
-// CHECK-NEXT: # 29 "{{.*}}rewrite-includes-conditions.c"
+// CHECK-NEXT: # 30 "{{.*}}rewrite-includes-conditions.c"
 
 // CHECK: #if 0 /* disabled by -frewrite-includes */
 // CHECK-NEXT: #if value1 < value2 \
@@ -94,7 +97,7 @@ line7
 // CHECK-NEXT: #endif
 // CHECK-NEXT: #endif /* disabled by -frewrite-includes */
 // CHECK-NEXT: #if 1 /* evaluated by -frewrite-includes */
-// CHECK-NEXT: # 38 "{{.*}}rewrite-includes-conditions.c"
+// CHECK-NEXT: # 39 "{{.*}}rewrite-includes-conditions.c"
 
 // CHECK: #if 0 /* disabled by -frewrite-includes */
 // CHECK-NEXT: #if value1 /*
@@ -102,6 +105,9 @@ line7
 // CHECK-NEXT: #endif
 // CHECK-NEXT: #endif /* disabled by -frewrite-includes */
 // CHECK-NEXT: #if 1 /* evaluated by -frewrite-includes */
-// CHECK-NEXT: # 43 "{{.*}}rewrite-includes-conditions.c"
+// CHECK-NEXT: # 44 "{{.*}}rewrite-includes-conditions.c"
 
 // CHECK: {{^}}// ENDCOMPARE{{$}}
+
+// COMPILE: Inputs/rewrite-includes3.h:1:31: warning: implicit conversion changes signedness:
+// COMPILE: rewrite-includes-conditions.c:46:12: warning: unused variable 'unused'
