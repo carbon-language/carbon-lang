@@ -296,7 +296,7 @@ llvm::Error llvm::writeFileAtomically(StringRef TempPathModel,
 
 llvm::Error llvm::writeFileAtomically(
     StringRef TempPathModel, StringRef FinalPath,
-    std::function<llvm::Error(llvm::raw_ostream &)> Writer) {
+    llvm::function_ref<llvm::Error(llvm::raw_ostream &)> Writer) {
   SmallString<128> GeneratedUniqPath;
   int TempFD;
   if (sys::fs::createUniqueFile(TempPathModel.str(), TempFD,

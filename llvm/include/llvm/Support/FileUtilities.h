@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_FILEUTILITIES_H
 #define LLVM_SUPPORT_FILEUTILITIES_H
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -107,9 +108,9 @@ namespace llvm {
   llvm::Error writeFileAtomically(StringRef TempPathModel, StringRef FinalPath,
                                   StringRef Buffer);
 
-  llvm::Error
-  writeFileAtomically(StringRef TempPathModel, StringRef FinalPath,
-                      std::function<llvm::Error(llvm::raw_ostream &)> Writer);
+  llvm::Error writeFileAtomically(
+      StringRef TempPathModel, StringRef FinalPath,
+      llvm::function_ref<llvm::Error(llvm::raw_ostream &)> Writer);
 } // End llvm namespace
 
 #endif
