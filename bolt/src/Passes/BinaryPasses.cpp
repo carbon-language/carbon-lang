@@ -1454,7 +1454,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     outs() << "BOLT-INFO: the input contains "
            << BC.MissedMacroFusionPairs << " (dynamic count : "
            << BC.MissedMacroFusionExecCount
-           << ") missed opportunities for macro-fusion optimization";
+           << ") opportunities for macro-fusion optimization";
     switch (opts::AlignMacroOpFusion) {
     case MFT_NONE:
       outs() << ". Use -align-macro-fusion to fix.\n";
