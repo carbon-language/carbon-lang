@@ -92,6 +92,7 @@ def main():
 
       commands = [cmd.strip() for cmd in l.split('|', 1)]
       llc_cmd = commands[0]
+      llc_tool = llc_cmd.split(' ')[0]
 
       triple_in_cmd = None
       m = common.TRIPLE_ARG_RE.search(llc_cmd)
@@ -107,7 +108,7 @@ def main():
       if len(commands) > 1:
         filecheck_cmd = commands[1]
       common.verify_filecheck_prefixes(filecheck_cmd)
-      if not llc_cmd.startswith('llc '):
+      if llc_tool != 'llc':
         common.warn('Skipping non-llc RUN line: ' + l)
         continue
 
@@ -115,7 +116,7 @@ def main():
         common.warn('Skipping non-FileChecked RUN line: ' + l)
         continue
 
-      llc_cmd_args = llc_cmd[len('llc'):].strip()
+      llc_cmd_args = llc_cmd[len(llc_tool):].strip()
       llc_cmd_args = llc_cmd_args.replace('< %s', '').replace('%s', '').strip()
 
       check_prefixes = [item for m in common.CHECK_PREFIX_RE.finditer(filecheck_cmd)
@@ -134,7 +135,7 @@ def main():
         func_dict.update({prefix: dict()})
     for prefixes, llc_args, triple_in_cmd, march_in_cmd in run_list:
       if args.verbose:
-        print('Extracted LLC cmd: llc ' + llc_args, file=sys.stderr)
+        print('Extracted LLC cmd: ' + llc_tool + ' ' + llc_args, file=sys.stderr)
         print('Extracted FileCheck prefixes: ' + str(prefixes), file=sys.stderr)
 
       raw_tool_output = common.invoke_tool(args.llc_binary, llc_args, test)
