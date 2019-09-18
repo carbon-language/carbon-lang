@@ -16,9 +16,8 @@
 #include "llvm/ADT/DirectedGraph.h"
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/Analysis/DependenceGraphBuilder.h"
-#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Transforms/Scalar/LoopPassManager.h"
 #include <unordered_map>
 
 namespace llvm {
@@ -27,6 +26,7 @@ class DDGEdge;
 using DDGNodeBase = DGNode<DDGNode, DDGEdge>;
 using DDGEdgeBase = DGEdge<DDGNode, DDGEdge>;
 using DDGBase = DirectedGraph<DDGNode, DDGEdge>;
+class LPMUpdater;
 
 /// Data Dependence Graph Node
 /// The graph can represent the following types of nodes:
