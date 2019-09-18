@@ -109,5 +109,5 @@ static int unused;
 
 // CHECK: {{^}}// ENDCOMPARE{{$}}
 
-// COMPILE: Inputs/rewrite-includes3.h:1:31: warning: implicit conversion changes signedness:
+// COMPILE: Inputs{{[/\\]}}rewrite-includes3.h:1:31: warning: implicit conversion changes signedness:
 // COMPILE: rewrite-includes-conditions.c:46:12: warning: unused variable 'unused'

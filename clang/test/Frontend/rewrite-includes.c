@@ -250,5 +250,5 @@ static int unused;
 // CHECKNL-NEXT: {{^}}static int unused;{{$}}
 // CHECKNL-NEXT: {{^}}// ENDCOMPARE{{$}}
 
-// COMPILE: Inputs/rewrite-includes3.h:1:31: warning: implicit conversion changes signedness:
+// COMPILE: Inputs{{[/\\]}}rewrite-includes3.h:1:31: warning: implicit conversion changes signedness:
 // COMPILE: rewrite-includes.c:25:12: warning: unused variable 'unused'
