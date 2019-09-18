@@ -75,7 +75,6 @@ static void removeUninterestingBBsFromSwitch(SwitchInst &SwInst,
 
 /// Removes out-of-chunk arguments from functions, and modifies their calls
 /// accordingly. It also removes allocations of out-of-chunk arguments.
-/// @returns the Module stripped of out-of-chunk functions
 static void extractBasicBlocksFromModule(std::vector<Chunk> ChunksToKeep,
                                          Module *Program) {
   int I = 0, BBCount = 0;
