@@ -1503,6 +1503,13 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 return std::nullopt;
               }
             }
+            if (symbol.has<semantics::SubprogramNameDetails>()) {
+              // Forward reference to internal function in specification
+              // expression
+              Say("Cannot call function '%s' in this context"_err_en_US,
+                  symbol.name());
+              return std::nullopt;
+            }
             if (const auto *scope{symbol.scope()}) {
               if (scope->sourceRange().Contains(n.source)) {
                 if (symbol.attrs().test(

@@ -16,11 +16,17 @@
 
 module m
   type :: t(n)
-    integer, len :: n
+    integer, len :: n = 1
     character(len=n) :: c
   end type
   interface
     integer function foo()
+    end function
+    pure integer function hasProcArg(p)
+      procedure(cos) :: p
+    end function
+    real function realfunc(x)
+      real, intent(in) :: x
     end function
   end interface
   integer :: coarray[*]
@@ -29,9 +35,9 @@ module m
     !ERROR: The expression (foo()) cannot be used as a specification expression (reference to impure function 'foo')
     type(t(foo())) :: x1
     integer :: local
-    !ERROR: The expression (local) cannot be used as a specification expression (reference to local object 'local')
+    !ERROR: The expression (local) cannot be used as a specification expression (reference to local entity 'local')
     type(t(local)) :: x2
-    !ERROR: The expression (internal()) cannot be used as a specification expression (reference to internal function 'internal')
+    !ERROR: Cannot call function 'internal' in this context
     type(t(internal(0))) :: x3
     integer, intent(out) :: out
     !ERROR: The expression (out) cannot be used as a specification expression (reference to INTENT(OUT) dummy argument 'out')
@@ -39,19 +45,20 @@ module m
     integer, intent(in), optional :: optional
     !ERROR: The expression (optional) cannot be used as a specification expression (reference to OPTIONAL dummy argument 'optional')
     type(t(optional)) :: x5
-    !ERROR: The expression (hasprocarg(sin)) cannot be used as a specification expression (dummy procedure argument)
-    type(t(hasProcArg(sin))) :: x6
+    !ERROR: The expression (hasprocarg(realfunc)) cannot be used as a specification expression (dummy procedure argument)
+    type(t(hasProcArg(realfunc))) :: x6
     !ERROR: The expression (coarray[1_8]) cannot be used as a specification expression (coindexed reference)
     type(t(coarray[1])) :: x7
     type(t(kind(foo()))) :: x101 ! ok
+    type(t(modulefunc(0))) :: x102 ! ok?
    contains
     pure integer function internal(n)
       integer, value :: n
       internal = n
     end function
   end subroutine
-  pure integer function hasProcArg(p)
-    procedure(cos) :: p
-    hasProcArg = 0
+  pure integer function modulefunc(n)
+    integer, value :: n
+    modulefunc = n
   end function
 end module

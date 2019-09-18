@@ -2584,22 +2584,25 @@ struct CheckSpecificationExprHelper
       } else if (symbol.attrs().test(semantics::Attr::INTENT_OUT)) {
         return Say("reference to INTENT(OUT) dummy argument '" +
             symbol.name().ToString() + "'");
-      } else {
+      } else if (symbol.has<semantics::ObjectEntityDetails>()) {
         return true;
+      } else {
+        return Say("dummy procedure argument");
       }
+    } else if (symbol.has<semantics::UseDetails>() ||
+        symbol.has<semantics::HostAssocDetails>()) {
+      return true;
     } else if (const auto *object{
                    symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       // TODO: what about EQUIVALENCE with data in COMMON?
       // TODO: does this work for blank COMMON?
-      return object->commonBlock() != nullptr;
-    } else if (symbol.has<semantics::UseDetails>() ||
-        symbol.has<semantics::HostAssocDetails>()) {
-      return true;
-    } else {
-      return Say(
-          "reference to local object '" + symbol.name().ToString() + "'");
+      if (object->commonBlock() != nullptr) {
+        return true;
+      }
     }
+    return Say("reference to local entity '" + symbol.name().ToString() + "'");
   }
+
   bool operator()(const Component &x) { return (*this)(x.base()); }
   bool operator()(const ArrayRef &x) {
     return (*this)(x.base()) && (*this)(x.subscript());
