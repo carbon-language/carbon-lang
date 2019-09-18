@@ -3290,9 +3290,8 @@ struct OmpDefaultClause {
 //     in slashes). An extended list item is a list item or a procedure Name.
 // variable-name | / common-block / | array-sections
 struct OmpObject {
-  TUPLE_CLASS_BOILERPLATE(OmpObject);
-  ENUM_CLASS(Kind, Object, Common)
-  std::tuple<Kind, Designator> t;
+  UNION_CLASS_BOILERPLATE(OmpObject);
+  std::variant<Designator, /*common block*/ Name> u;
 };
 
 WRAPPER_CLASS(OmpObjectList, std::list<OmpObject>);

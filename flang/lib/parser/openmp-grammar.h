@@ -167,9 +167,8 @@ TYPE_CONTEXT_PARSER("Omp LINEAR clause"_en_US,
 TYPE_PARSER(construct<OmpAlignedClause>(
     nonemptyList(name), maybe(":" >> scalarIntConstantExpr)))
 
-TYPE_PARSER(construct<OmpObject>(pure(OmpObject::Kind::Object), designator) ||
-    construct<OmpObject>(
-        "/" >> pure(OmpObject::Kind::Common), designator / "/"))
+TYPE_PARSER(
+    construct<OmpObject>(designator) || construct<OmpObject>("/" >> name / "/"))
 
 TYPE_PARSER("ALIGNED" >>
         construct<OmpClause>(parenthesized(Parser<OmpAlignedClause>{})) ||

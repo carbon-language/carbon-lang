@@ -495,7 +495,6 @@ public:
   NODE(parser, OmpMemoryClausePostList)
   NODE(parser, OmpNowait)
   NODE(parser, OmpObject)
-  NODE_ENUM(parser::OmpObject, Kind)
   NODE(parser, OmpObjectList)
   NODE(parser, OmpProcBindClause)
   NODE_ENUM(parser::OmpProcBindClause, Type)

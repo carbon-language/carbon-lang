@@ -1757,9 +1757,12 @@ public:
   }
   // OpenMP Clauses & Directives
   void Unparse(const OmpObject &x) {
-    bool isCommon{std::get<OmpObject::Kind>(x.t) == OmpObject::Kind::Common};
-    const char *slash{isCommon ? "/" : ""};
-    Put(slash), Walk(std::get<Designator>(x.t)), Put(slash);
+    std::visit(
+        common::visitors{
+            [&](const Designator &y) { Walk(y); },
+            [&](const Name &y) { Put("/"), Walk(y), Put("/"); },
+        },
+        x.u);
   }
   void Unparse(const OmpMapType::Always &) { Word("ALWAYS,"); }
   void Unparse(const OmpMapClause &x) {
