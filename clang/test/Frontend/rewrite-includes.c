@@ -110,12 +110,27 @@ A(1,2)
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}# 22 "{{.*}}rewrite-includes.c"{{$}}
 // CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h" 1{{$}}
-// CHECK-NEXT: {{^}}#if (0)/*__has_include_next(<rewrite-includes8.h>)*/{{$}}
-// CHECK-NEXT: {{^}}#elif (0)/*__has_include(<rewrite-includes8.hfail>)*/{{$}}
+// CHECK-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if __has_include_next(<rewrite-includes8.h>){{$}}
+// CHECK-NEXT: {{^}}#endif{{$}}
+// CHECK-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if 0 /* evaluated by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}# 2 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
+// CHECK-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if 0{{$}}
+// CHECK-NEXT: {{^}}#elif __has_include(<rewrite-includes8.hfail>){{$}}
+// CHECK-NEXT: {{^}}#endif{{$}}
+// CHECK-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#elif 0 /* evaluated by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}# 3 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}#endif{{$}}
 // CHECK-NEXT: {{^}}# 4 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
-// CHECK-NEXT: {{^}}#if !(1)/*__has_include("rewrite-includes8.h")*/{{$}}
+// CHECK-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if !__has_include("rewrite-includes8.h"){{$}}
+// CHECK-NEXT: {{^}}#endif{{$}}
+// CHECK-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if 0 /* evaluated by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}# 5 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}#endif{{$}}
 // CHECK-NEXT: {{^}}# 6 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes8.h"{{$}}
 // CHECK-NEXT: {{^}}# 23 "{{.*}}rewrite-includes.c" 2{{$}}
@@ -124,7 +139,12 @@ A(1,2)
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}# 23 "{{.*}}rewrite-includes.c"{{$}}
 // CHECK-NEXT: {{^}}# 1 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes9.h" 1{{$}}
-// CHECK-NEXT: {{^}}#if (1)/*__has_include_next(<rewrite-includes9.h>)*/{{$}}
+// CHECK-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if __has_include_next(<rewrite-includes9.h>){{$}}
+// CHECK-NEXT: {{^}}#endif{{$}}
+// CHECK-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}#if 1 /* evaluated by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}# 2 "{{.*[/\\]Inputs(/|\\\\)}}rewrite-includes9.h"{{$}}
 // CHECK-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include_next <rewrite-includes9.h>{{$}}
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
@@ -193,15 +213,32 @@ A(1,2)
 // CHECKNL-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECKNL-NEXT: {{^}}#include "rewrite-includes8.h"{{$}}
 // CHECKNL-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECKNL-NEXT: {{^}}#if (0)/*__has_include_next(<rewrite-includes8.h>)*/{{$}}
-// CHECKNL-NEXT: {{^}}#elif (0)/*__has_include(<rewrite-includes8.hfail>)*/{{$}}
+// CHECKNL-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if __has_include_next(<rewrite-includes8.h>){{$}}
 // CHECKNL-NEXT: {{^}}#endif{{$}}
-// CHECKNL-NEXT: {{^}}#if !(1)/*__has_include("rewrite-includes8.h")*/{{$}}
+// CHECKNL-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if 0 /* evaluated by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if 0{{$}}
+// CHECKNL-NEXT: {{^}}#elif __has_include(<rewrite-includes8.hfail>){{$}}
+// CHECKNL-NEXT: {{^}}#endif{{$}}
+// CHECKNL-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#elif 0 /* evaluated by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#endif{{$}}
+// CHECKNL-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if !__has_include("rewrite-includes8.h"){{$}}
+// CHECKNL-NEXT: {{^}}#endif{{$}}
+// CHECKNL-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if 0 /* evaluated by -frewrite-includes */{{$}}
 // CHECKNL-NEXT: {{^}}#endif{{$}}
 // CHECKNL-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECKNL-NEXT: {{^}}#include "rewrite-includes9.h"{{$}}
 // CHECKNL-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
-// CHECKNL-NEXT: {{^}}#if (1)/*__has_include_next(<rewrite-includes9.h>)*/{{$}}
+// CHECKNL-NEXT: {{^}}#if 0 /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if __has_include_next(<rewrite-includes9.h>){{$}}
+// CHECKNL-NEXT: {{^}}#endif{{$}}
+// CHECKNL-NEXT: {{^}}#endif /* disabled by -frewrite-includes */{{$}}
+// CHECKNL-NEXT: {{^}}#if 1 /* evaluated by -frewrite-includes */{{$}}
 // CHECKNL-NEXT: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECKNL-NEXT: {{^}}#include_next <rewrite-includes9.h>{{$}}
 // CHECKNL-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
