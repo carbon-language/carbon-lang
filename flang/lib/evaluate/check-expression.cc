@@ -79,82 +79,66 @@ bool IsConstantExpr(const Expr<SomeType> &expr) {
 // data address used to initialize a pointer with "=> x".  See C765.
 // The caller is responsible for checking the base object symbol's
 // characteristics (TARGET, SAVE, &c.) since this code can't use GetUltimate().
-template<typename A> bool IsInitialDataTarget(const A &) { return false; }
-template<typename... A> bool IsInitialDataTarget(const std::variant<A...> &);
-bool IsInitialDataTarget(const DataRef &);
-template<typename T> bool IsInitialDataTarget(const Expr<T> &);
-bool IsInitialDataTarget(const semantics::Symbol &) { return true; }
-bool IsInitialDataTarget(const semantics::Symbol *s) {
-  return IsInitialDataTarget(*s);
-}
-bool IsInitialDataTarget(const Component &x) {
-  return IsInitialDataTarget(x.base());
-}
-bool IsInitialDataTarget(const NamedEntity &x) {
-  if (const Component * c{x.UnwrapComponent()}) {
-    return IsInitialDataTarget(*c);
-  } else {
-    return IsInitialDataTarget(x.GetLastSymbol());
+struct IsInitialDataTargetHelper
+  : public PredicateTraverse<IsInitialDataTargetHelper, false, true> {
+  using Base = PredicateTraverse<IsInitialDataTargetHelper, false, true>;
+  using Base::operator();
+  IsInitialDataTargetHelper() : Base{*this} {}
+
+  bool operator()(const BOZLiteralConstant &) const { return false; }
+  bool operator()(const NullPointer &) const { return true; }
+  template<typename T> bool operator()(const Constant<T> &) const {
+    return false;
   }
-}
-bool IsInitialDataTarget(const Triplet &x) {
-  if (auto lower{x.lower()}) {
-    if (!IsConstantExpr(*lower)) {
-      return false;
-    }
+  bool operator()(const semantics::Symbol &) const { return true; }
+  bool operator()(const StaticDataObject &) const { return false; }
+  template<int KIND> bool operator()(const TypeParamInquiry<KIND> &) const {
+    return false;
   }
-  if (auto upper{x.upper()}) {
-    if (!IsConstantExpr(*upper)) {
-      return false;
-    }
+  bool operator()(const Triplet &x) const {
+    return IsConstantExpr(x.lower()) && IsConstantExpr(x.upper()) &&
+        IsConstantExpr(x.stride());
   }
-  return IsConstantExpr(x.stride());
-}
-bool IsInitialDataTarget(const Subscript &x) {
-  return std::visit(
-      common::visitors{
-          [](const Triplet &t) { return IsInitialDataTarget(t); },
-          [&](const auto &y) {
-            return y.value().Rank() == 0 && IsConstantExpr(y.value());
-          },
-      },
-      x.u);
-}
-bool IsInitialDataTarget(const ArrayRef &x) {
-  for (const Subscript &ss : x.subscript()) {
-    if (!IsInitialDataTarget(ss)) {
-      return false;
-    }
+  bool operator()(const Subscript &x) const {
+    return std::visit(
+        common::visitors{
+            [&](const Triplet &t) { return (*this)(t); },
+            [&](const auto &y) {
+              return y.value().Rank() == 0 && IsConstantExpr(y.value());
+            },
+        },
+        x.u);
   }
-  return IsInitialDataTarget(x.base());
-}
-bool IsInitialDataTarget(const DataRef &x) { return IsInitialDataTarget(x.u); }
-bool IsInitialDataTarget(const Substring &x) {
-  return IsConstantExpr(x.lower()) && IsConstantExpr(x.upper());
-}
-bool IsInitialDataTarget(const ComplexPart &x) {
-  return IsInitialDataTarget(x.complex());
-}
-template<typename T> bool IsInitialDataTarget(const Designator<T> &x) {
-  return IsInitialDataTarget(x.u);
-}
-bool IsInitialDataTarget(const NullPointer &) { return true; }
-template<typename T> bool IsInitialDataTarget(const Expr<T> &x) {
-  return IsInitialDataTarget(x.u);
-}
-template<typename... A> bool IsInitialDataTarget(const std::variant<A...> &u) {
-  return std::visit([](const auto &x) { return IsInitialDataTarget(x); }, u);
-}
+  bool operator()(const CoarrayRef &) const { return false; }
+  bool operator()(const Substring &x) const {
+    return IsConstantExpr(x.lower()) && IsConstantExpr(x.upper()) &&
+        (*this)(x.parent());
+  }
+  bool operator()(const DescriptorInquiry &) const { return false; }
+  template<typename T> bool operator()(const ArrayConstructor<T> &) const {
+    return false;
+  }
+  bool operator()(const StructureConstructor &) const { return false; }
+  template<typename T> bool operator()(const FunctionRef<T> &) { return false; }
+  template<typename D, typename R, typename... O>
+  bool operator()(const Operation<D, R, O...> &) const {
+    return false;
+  }
+  template<typename T> bool operator()(const Parentheses<T> &x) const {
+    return (*this)(x.left());
+  }
+  bool operator()(const Relational<SomeType> &) const { return false; }
+};
 
 bool IsInitialDataTarget(const Expr<SomeType> &x) {
-  return IsInitialDataTarget(x.u);
+  return IsInitialDataTargetHelper{}(x);
 }
 
 // Specification expression validation (10.1.11(2), C1010)
 class CheckSpecificationExprHelper
-  : public PredicateTraverse<CheckSpecificationExprHelper> {
+  : public PredicateTraverse<CheckSpecificationExprHelper, true, true> {
 public:
-  using Base = PredicateTraverse<CheckSpecificationExprHelper>;
+  using Base = PredicateTraverse<CheckSpecificationExprHelper, true, true>;
   using Base::operator();
 
   explicit CheckSpecificationExprHelper(std::string &why)
@@ -245,9 +229,9 @@ void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages) {
     if (!why.empty()) {
       why = " ("s + why + ')';
     }
-    messages.Say(
-        "The expression (%s) cannot be used as a "
-        "specification expression%s"_err_en_US, ss.str(), why);
+    messages.Say("The expression (%s) cannot be used as a "
+                 "specification expression%s"_err_en_US,
+        ss.str(), why);
   }
 }
 
@@ -256,5 +240,6 @@ template void CheckSpecificationExpr(
 template void CheckSpecificationExpr(
     const std::optional<Expr<SomeInteger>> &, parser::ContextualMessages &);
 template void CheckSpecificationExpr(
-    const std::optional<Expr<SubscriptInteger>> &, parser::ContextualMessages &);
+    const std::optional<Expr<SubscriptInteger>> &,
+    parser::ContextualMessages &);
 }

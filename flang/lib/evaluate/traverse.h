@@ -15,7 +15,28 @@
 #ifndef FORTRAN_EVALUATE_TRAVERSE_H_
 #define FORTRAN_EVALUATE_TRAVERSE_H_
 
-// TODO pmk documentation
+// A utility for scanning all of the constituent objects in an Expr<>
+// expression representation with a sheaf of mutually-recursive functions.
+//
+// The class template Traverse<> below implements a function object that
+// can handle every type that can appear in or around an Expr<>.
+// Each of its overloads for operator() should be viewed as a *default*
+// handler that can be overridden by the client.  These default handlers
+// simply forward the constituents of the argument to the client's
+// visitor function object.
+//
+// The client (Visitor) of Traverse<Visitor,Result> must define:
+// - a data member "defaultResult"
+// - a member function Combine() that merges two Result values
+// - a default "template<typename A> Result operator()(const A &x) const"
+//   handler that reflects back into Traverse<Visitor,Result>
+// - overrides for "Result operator()"
+//
+// Predicates are made a little easier with the PredicateTraverse<>
+// class template, which encapsulates most of the client
+// boilerplate.
+//
+// See CheckSpecificationExpr() in check-expression.cc for an example client.
 
 #include "expression.h"
 #include "../semantics/symbol.h"
@@ -122,6 +143,9 @@ public:
   }
 
   // Calls
+  Result operator()(const SpecificIntrinsic &) const {
+    return visitor_.defaultResult;
+  }
   Result operator()(const ProcedureDesignator &x) const {
     if (const Component * component{x.GetComponent()}) {
       return visitor_(*component);
@@ -219,13 +243,22 @@ private:
   Visitor &visitor_;
 };
 
-template<typename Visitor> class PredicateTraverse {
+template<typename Visitor, bool DEFAULT = true, bool AND = true>
+class PredicateTraverse {
 public:
   explicit PredicateTraverse(Visitor &v) : traverse_{v} {}
-  static constexpr bool defaultResult{true};
-  static constexpr bool Combine(bool x, bool y) { return x && y; }
+  static constexpr bool defaultResult{DEFAULT};
+  static constexpr bool Combine(bool x, bool y) {
+    if constexpr (AND) {
+      return x && y;
+    } else {
+      return x || y;
+    }
+  }
 
-  template<typename A> bool operator()(const A &x) { return traverse_(x); }
+  template<typename A> bool operator()(const A &x) const {
+    return traverse_(x);
+  }
 
 private:
   Traverse<Visitor> traverse_;
