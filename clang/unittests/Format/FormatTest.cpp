@@ -14074,6 +14074,15 @@ TEST_F(FormatTest, TypenameMacros) {
   verifyFormat("STACK_OF(int*)* a;", Macros);
 }
 
+TEST_F(FormatTest, AmbersandInLamda) {
+  // Test case reported in https://bugs.llvm.org/show_bug.cgi?id=41899
+  FormatStyle AlignStyle = getLLVMStyle();
+  AlignStyle.PointerAlignment = FormatStyle::PAS_Left;
+  verifyFormat("auto lambda = [&a = a]() { a = 2; };", AlignStyle);
+  AlignStyle.PointerAlignment = FormatStyle::PAS_Right;
+  verifyFormat("auto lambda = [&a = a]() { a = 2; };", AlignStyle);
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang
