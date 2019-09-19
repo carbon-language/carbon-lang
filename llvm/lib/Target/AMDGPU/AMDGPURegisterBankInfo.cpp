@@ -1452,6 +1452,12 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       constrainOpWithReadfirstlane(MI, MRI, 2); // M0
       return;
     }
+    case Intrinsic::amdgcn_raw_buffer_load:
+    case Intrinsic::amdgcn_raw_buffer_store: {
+      applyDefaultMapping(OpdMapper);
+      executeInWaterfallLoop(MI, MRI, {2, 4});
+      return;
+    }
     default: {
       if (const AMDGPU::RsrcIntrinsic *RSrcIntrin =
               AMDGPU::lookupRsrcIntrinsic(IntrID)) {
@@ -1656,9 +1662,29 @@ AMDGPURegisterBankInfo::getRegBankID(Register Reg,
   return Bank ? Bank->getID() : Default;
 }
 
+
 static unsigned regBankUnion(unsigned RB0, unsigned RB1) {
   return (RB0 == AMDGPU::SGPRRegBankID && RB1 == AMDGPU::SGPRRegBankID) ?
     AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+}
+
+const RegisterBankInfo::ValueMapping *
+AMDGPURegisterBankInfo::getSGPROpMapping(Register Reg,
+                                         const MachineRegisterInfo &MRI,
+                                         const TargetRegisterInfo &TRI) const {
+  // Lie and claim anything is legal, even though this needs to be an SGPR
+  // applyMapping will have to deal with it as a waterfall loop.
+  unsigned Bank = getRegBankID(Reg, MRI, TRI, AMDGPU::SGPRRegBankID);
+  unsigned Size = getSizeInBits(Reg, MRI, TRI);
+  return AMDGPU::getValueMapping(Bank, Size);
+}
+
+const RegisterBankInfo::ValueMapping *
+AMDGPURegisterBankInfo::getVGPROpMapping(Register Reg,
+                                         const MachineRegisterInfo &MRI,
+                                         const TargetRegisterInfo &TRI) const {
+  unsigned Size = getSizeInBits(Reg, MRI, TRI);
+  return AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
 }
 
 ///
@@ -2362,7 +2388,6 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
     }
-
     case Intrinsic::amdgcn_else: {
       unsigned WaveSize = getSizeInBits(MI.getOperand(1).getReg(), MRI, *TRI);
       OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1);
@@ -2372,6 +2397,22 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     }
     case Intrinsic::amdgcn_kill: {
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1);
+      break;
+    }
+    case Intrinsic::amdgcn_raw_buffer_load: {
+      // FIXME: Should make intrinsic ID the last operand of the instruction,
+      // then this would be the same as store
+      OpdsMapping[0] = getVGPROpMapping(MI.getOperand(0).getReg(), MRI, *TRI);
+      OpdsMapping[2] = getSGPROpMapping(MI.getOperand(2).getReg(), MRI, *TRI);
+      OpdsMapping[3] = getVGPROpMapping(MI.getOperand(3).getReg(), MRI, *TRI);
+      OpdsMapping[4] = getSGPROpMapping(MI.getOperand(4).getReg(), MRI, *TRI);
+      break;
+    }
+    case Intrinsic::amdgcn_raw_buffer_store: {
+      OpdsMapping[1] = getVGPROpMapping(MI.getOperand(1).getReg(), MRI, *TRI);
+      OpdsMapping[2] = getSGPROpMapping(MI.getOperand(2).getReg(), MRI, *TRI);
+      OpdsMapping[3] = getVGPROpMapping(MI.getOperand(3).getReg(), MRI, *TRI);
+      OpdsMapping[4] = getSGPROpMapping(MI.getOperand(4).getReg(), MRI, *TRI);
       break;
     }
     default:

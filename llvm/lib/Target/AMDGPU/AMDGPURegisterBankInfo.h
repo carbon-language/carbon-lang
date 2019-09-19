@@ -62,6 +62,16 @@ class AMDGPURegisterBankInfo : public AMDGPUGenRegisterBankInfo {
                         const TargetRegisterInfo &TRI,
                         unsigned Default = AMDGPU::VGPRRegBankID) const;
 
+  // Return a value mapping for an operand that is required to be an SGPR.
+  const ValueMapping *getSGPROpMapping(Register Reg,
+                                       const MachineRegisterInfo &MRI,
+                                       const TargetRegisterInfo &TRI) const;
+
+  // Return a value mapping for an operand that is required to be a VGPR.
+  const ValueMapping *getVGPROpMapping(Register Reg,
+                                       const MachineRegisterInfo &MRI,
+                                       const TargetRegisterInfo &TRI) const;
+
   /// Split 64-bit value \p Reg into two 32-bit halves and populate them into \p
   /// Regs. This appropriately sets the regbank of the new registers.
   void split64BitValueForMapping(MachineIRBuilder &B,
