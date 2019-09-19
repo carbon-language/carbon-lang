@@ -16,7 +16,7 @@
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
-#include "../evaluate/traversal.h"
+#include "../evaluate/tools.h"
 #include "../parser/parsing.h"
 #include <algorithm>
 #include <cerrno>
@@ -88,15 +88,8 @@ private:
   void DoParamValue(const ParamValue &);
   bool NeedImport(const SourceName &, const Symbol &);
 
-  struct SymbolVisitor : public virtual evaluate::VisitorBase<SymbolVector> {
-    using Result = SymbolVector;
-    explicit SymbolVisitor(int) {}
-    void Handle(const Symbol *symbol) { result().push_back(symbol); }
-  };
-
   template<typename T> void DoExpr(evaluate::Expr<T> expr) {
-    evaluate::Visitor<SymbolVisitor> visitor{0};
-    for (const Symbol *symbol : visitor.Traverse(expr)) {
+    for (const Symbol *symbol : evaluate::CollectSymbols(expr)) {
       DoSymbol(DEREF(symbol));
     }
   }

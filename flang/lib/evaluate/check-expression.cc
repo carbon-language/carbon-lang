@@ -80,8 +80,8 @@ bool IsConstantExpr(const Expr<SomeType> &expr) {
 // The caller is responsible for checking the base object symbol's
 // characteristics (TARGET, SAVE, &c.) since this code can't use GetUltimate().
 struct IsInitialDataTargetHelper
-  : public PredicateTraverse<IsInitialDataTargetHelper, false, true> {
-  using Base = PredicateTraverse<IsInitialDataTargetHelper, false, true>;
+  : public AllTraverse<IsInitialDataTargetHelper> {
+  using Base = AllTraverse<IsInitialDataTargetHelper>;
   using Base::operator();
   IsInitialDataTargetHelper() : Base{*this} {}
 
@@ -136,9 +136,9 @@ bool IsInitialDataTarget(const Expr<SomeType> &x) {
 
 // Specification expression validation (10.1.11(2), C1010)
 class CheckSpecificationExprHelper
-  : public PredicateTraverse<CheckSpecificationExprHelper, true, true> {
+  : public AllTraverse<CheckSpecificationExprHelper> {
 public:
-  using Base = PredicateTraverse<CheckSpecificationExprHelper, true, true>;
+  using Base = AllTraverse<CheckSpecificationExprHelper>;
   using Base::operator();
 
   explicit CheckSpecificationExprHelper(std::string &why)

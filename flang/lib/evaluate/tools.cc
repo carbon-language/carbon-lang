@@ -14,6 +14,7 @@
 
 #include "tools.h"
 #include "traversal.h"
+#include "traverse.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
 #include <algorithm>
@@ -676,5 +677,21 @@ const semantics::Symbol &ResolveAssociations(const semantics::Symbol &symbol) {
   }
   return symbol;
 }
+
+struct CollectSymbolsHelper
+  : public SetTraverse<CollectSymbolsHelper, SetOfSymbols> {
+  using Base = SetTraverse<CollectSymbolsHelper, SetOfSymbols>;
+  CollectSymbolsHelper() : Base{*this} {}
+  using Base::operator();
+  SetOfSymbols operator()(const semantics::Symbol &symbol) const {
+    return {&symbol};
+  }
+};
+template<typename A> SetOfSymbols CollectSymbols(const A &x) {
+  return CollectSymbolsHelper{}(x);
+}
+template SetOfSymbols CollectSymbols(const Expr<SomeType> &);
+template SetOfSymbols CollectSymbols(const Expr<SomeInteger> &);
+template SetOfSymbols CollectSymbols(const Expr<SubscriptInteger> &);
 
 }

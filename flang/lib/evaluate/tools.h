@@ -25,6 +25,7 @@
 #include "../semantics/symbol.h"
 #include <array>
 #include <optional>
+#include <set>
 #include <utility>
 
 namespace Fortran::evaluate {
@@ -778,8 +779,14 @@ template<typename A> const semantics::Symbol *GetLastTarget(const A &x) {
   }
 }
 
-// Resolve any whole ASSOCIATE(B=>A) associations
+// Resolves any whole ASSOCIATE(B=>A) associations
 const semantics::Symbol &ResolveAssociations(const semantics::Symbol &);
 
+// Collects all of the Symbols in an expression
+using SetOfSymbols = std::set<const semantics::Symbol *>;
+template<typename A> SetOfSymbols CollectSymbols(const A &);
+extern template SetOfSymbols CollectSymbols(const Expr<SomeType> &);
+extern template SetOfSymbols CollectSymbols(const Expr<SomeInteger> &);
+extern template SetOfSymbols CollectSymbols(const Expr<SubscriptInteger> &);
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

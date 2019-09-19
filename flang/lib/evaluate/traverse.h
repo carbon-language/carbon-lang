@@ -26,24 +26,22 @@
 // visitor function object.
 //
 // The client (Visitor) of Traverse<Visitor,Result> must define:
-// - a data member "defaultResult"
-// - a member function Combine() that merges two Result values
+// - a member function "Result Default();"
+// - a member function "Result Combine(Result &&, Result &&)"
 // - a default "template<typename A> Result operator()(const A &x) const"
-//   handler that reflects back into Traverse<Visitor,Result>
+//   handler that reflects back into Traverse<Visitor, Result>
 // - overrides for "Result operator()"
 //
-// Predicates are made a little easier with the PredicateTraverse<>
-// class template, which encapsulates most of the client
-// boilerplate.
-//
+// Boilerplate classes follow that ease construction of visitors.
 // See CheckSpecificationExpr() in check-expression.cc for an example client.
 
 #include "expression.h"
 #include "../semantics/symbol.h"
 #include "../semantics/type.h"
+#include <set>
 
 namespace Fortran::evaluate {
-template<typename Visitor, typename Result = bool> class Traverse {
+template<typename Visitor, typename Result> class Traverse {
 public:
   explicit Traverse(Visitor &v) : visitor_{v} {}
 
@@ -62,14 +60,14 @@ public:
     if (x != nullptr) {
       return visitor_(*x);
     } else {
-      return visitor_.defaultResult;
+      return visitor_.Default();
     }
   }
   template<typename A> Result operator()(const std::optional<A> &x) const {
     if (x.has_value()) {
       return visitor_(*x);
     } else {
-      return visitor_.defaultResult;
+      return visitor_.Default();
     }
   }
   template<typename... A> Result operator()(const std::variant<A...> &u) const {
@@ -81,23 +79,19 @@ public:
 
   // Leaves
   Result operator()(const BOZLiteralConstant &) const {
-    return visitor_.defaultResult;
+    return visitor_.Default();
   }
-  Result operator()(const NullPointer &) const {
-    return visitor_.defaultResult;
-  }
+  Result operator()(const NullPointer &) const { return visitor_.Default(); }
   template<typename T> Result operator()(const Constant<T> &) const {
-    return visitor_.defaultResult;
+    return visitor_.Default();
   }
   Result operator()(const semantics::Symbol &) const {
-    return visitor_.defaultResult;
+    return visitor_.Default();
   }
   Result operator()(const StaticDataObject &) const {
-    return visitor_.defaultResult;
+    return visitor_.Default();
   }
-  Result operator()(const ImpliedDoIndex &) const {
-    return visitor_.defaultResult;
-  }
+  Result operator()(const ImpliedDoIndex &) const { return visitor_.Default(); }
 
   // Variables
   Result operator()(const BaseObject &x) const { return visitor_(x.u); }
@@ -144,7 +138,7 @@ public:
 
   // Calls
   Result operator()(const SpecificIntrinsic &) const {
-    return visitor_.defaultResult;
+    return visitor_.Default();
   }
   Result operator()(const ProcedureDesignator &x) const {
     if (const Component * component{x.GetComponent()}) {
@@ -217,7 +211,7 @@ public:
 private:
   template<typename ITER> Result CombineRange(ITER iter, ITER end) const {
     if (iter == end) {
-      return visitor_.defaultResult;
+      return visitor_.Default();
     } else {
       Result result{visitor_(*iter++)};
       for (; iter != end; ++iter) {
@@ -243,25 +237,51 @@ private:
   Visitor &visitor_;
 };
 
-template<typename Visitor, bool DEFAULT = true, bool AND = true>
-class PredicateTraverse {
+template<typename Visitor, typename Result> class TraverseBase {
 public:
-  explicit PredicateTraverse(Visitor &v) : traverse_{v} {}
-  static constexpr bool defaultResult{DEFAULT};
-  static constexpr bool Combine(bool x, bool y) {
-    if constexpr (AND) {
-      return x && y;
-    } else {
-      return x || y;
-    }
-  }
-
-  template<typename A> bool operator()(const A &x) const {
+  explicit TraverseBase(Visitor &v) : traverse_{v} {}
+  static Result Default() { return {}; }
+  template<typename A> Result operator()(const A &x) const {
     return traverse_(x);
   }
 
 private:
-  Traverse<Visitor> traverse_;
+  Traverse<Visitor, Result> traverse_;
+};
+
+template<typename Visitor, typename Base = TraverseBase<Visitor, bool>>
+struct AllTraverse : public Base {
+  using Base::Base;
+  using Base::operator();
+  static constexpr bool Default() { return true; }
+  static constexpr bool Combine(bool x, bool y) { return x && y; }
+};
+
+// For OR-combining default-false Boolean searches, pointers, and
+// std::optional<> search results.
+template<typename Visitor, typename Result = bool,
+    typename Base = TraverseBase<Visitor, Result>>
+struct AnyTraverse : public Base {
+  using Base::Base;
+  using Base::operator();
+  static Result Combine(Result &&x, Result &&y) {
+    if (x) {
+      return std::move(x);
+    } else {
+      return std::move(y);
+    }
+  }
+};
+
+template<typename Visitor, typename Set,
+    typename Base = TraverseBase<Visitor, Set>>
+struct SetTraverse : public Base {
+  using Base::Base;
+  using Base::operator();
+  static Set Combine(Set &&x, Set &&y) {
+    x.merge(y);
+    return std::move(x);
+  }
 };
 }
 #endif

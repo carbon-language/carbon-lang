@@ -5047,6 +5047,8 @@ const parser::Name *DeclarationVisitor::FindComponent(
 // C764, C765
 void DeclarationVisitor::CheckInitialDataTarget(
     const Symbol &pointer, const SomeExpr &expr, SourceName source) {
+  // TODO pmk: Combine into evaluate::CheckInitialDataTarget, call from
+  // check-declarations.cc
   if (!evaluate::IsInitialDataTarget(expr)) {
     Say(source,
         "Pointer '%s' cannot be initialized with a reference to a designator with non-constant subscripts"_err_en_US,

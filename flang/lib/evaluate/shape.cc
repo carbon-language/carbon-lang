@@ -15,7 +15,7 @@
 #include "shape.h"
 #include "fold.h"
 #include "tools.h"
-#include "traversal.h"
+#include "traverse.h"
 #include "type.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
@@ -171,12 +171,13 @@ MaybeExtentExpr GetSize(Shape &&shape) {
 }
 
 bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
-  struct MyVisitor : public virtual VisitorBase<bool> {
-    using Result = bool;
-    explicit MyVisitor(int) { result() = false; }
-    void Handle(const ImpliedDoIndex &) { Return(true); }
+  struct MyVisitor : public AnyTraverse<MyVisitor> {
+    using Base = AnyTraverse<MyVisitor>;
+    MyVisitor() : Base{*this} {}
+    using Base::operator();
+    bool operator()(const ImpliedDoIndex &) { return true; }
   };
-  return Visitor<MyVisitor>{0}.Traverse(expr);
+  return MyVisitor{}(expr);
 }
 
 ExtentExpr GetLowerBound(
