@@ -84,6 +84,8 @@ public:
   bool legalizeIsAddrSpace(MachineInstr &MI, MachineRegisterInfo &MRI,
                            MachineIRBuilder &B, unsigned AddrSpace) const;
 
+  Register handleD16VData(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                          Register Reg) const;
   bool legalizeRawBufferStore(MachineInstr &MI, MachineRegisterInfo &MRI,
                               MachineIRBuilder &B, bool IsFormat) const;
   bool legalizeIntrinsic(MachineInstr &MI, MachineRegisterInfo &MRI,

@@ -787,6 +787,91 @@ getBaseWithConstantOffset(MachineRegisterInfo &MRI, Register Reg) {
   return {Reg, 0, Def};
 }
 
+static unsigned getBufferStoreOpcode(LLT Ty,
+                                     const unsigned MemSize,
+                                     const bool Offen) {
+  const int Size = Ty.getSizeInBits();
+  switch (8 * MemSize) {
+  case 8:
+    return Offen ? AMDGPU::BUFFER_STORE_BYTE_OFFEN_exact :
+                   AMDGPU::BUFFER_STORE_BYTE_OFFSET_exact;
+  case 16:
+    return Offen ? AMDGPU::BUFFER_STORE_SHORT_OFFEN_exact :
+                   AMDGPU::BUFFER_STORE_SHORT_OFFSET_exact;
+  default:
+    unsigned Opc = Offen ? AMDGPU::BUFFER_STORE_DWORD_OFFEN_exact :
+                           AMDGPU::BUFFER_STORE_DWORD_OFFSET_exact;
+    if (Size > 32)
+      Opc = AMDGPU::getMUBUFOpcode(Opc, Size / 32);
+    return Opc;
+  }
+}
+
+static unsigned getBufferStoreFormatOpcode(LLT Ty,
+                                           const unsigned MemSize,
+                                           const bool Offen) {
+  bool IsD16Packed = Ty.getScalarSizeInBits() == 16;
+  bool IsD16Unpacked = 8 * MemSize < Ty.getSizeInBits();
+  int NumElts = Ty.isVector() ? Ty.getNumElements() : 1;
+
+  if (IsD16Packed) {
+    switch (NumElts) {
+    case 1:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_X_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_X_OFFSET_exact;
+    case 2:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_XY_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_XY_OFFSET_exact;
+    case 3:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_XYZ_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_XYZ_OFFSET_exact;
+    case 4:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_XYZW_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_XYZW_OFFSET_exact;
+    default:
+      return -1;
+    }
+  }
+
+  if (IsD16Unpacked) {
+    switch (NumElts) {
+    case 1:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_X_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_X_OFFSET_exact;
+    case 2:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_XY_gfx80_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_XY_gfx80_OFFSET_exact;
+    case 3:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_XYZ_gfx80_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_XYZ_gfx80_OFFSET_exact;
+    case 4:
+      return Offen ? AMDGPU::BUFFER_STORE_FORMAT_D16_XYZW_gfx80_OFFEN_exact :
+                     AMDGPU::BUFFER_STORE_FORMAT_D16_XYZW_gfx80_OFFSET_exact;
+    default:
+      return -1;
+    }
+  }
+
+  switch (NumElts) {
+  case 1:
+    return Offen ? AMDGPU::BUFFER_STORE_FORMAT_X_OFFEN_exact :
+                   AMDGPU::BUFFER_STORE_FORMAT_X_OFFSET_exact;
+  case 2:
+    return Offen ? AMDGPU::BUFFER_STORE_FORMAT_XY_OFFEN_exact :
+                  AMDGPU::BUFFER_STORE_FORMAT_XY_OFFSET_exact;
+  case 3:
+    return Offen ? AMDGPU::BUFFER_STORE_FORMAT_XYZ_OFFEN_exact :
+                   AMDGPU::BUFFER_STORE_FORMAT_XYZ_OFFSET_exact;
+  case 4:
+    return Offen ? AMDGPU::BUFFER_STORE_FORMAT_XYZW_OFFEN_exact :
+                   AMDGPU::BUFFER_STORE_FORMAT_XYZW_OFFSET_exact;
+  default:
+    return -1;
+  }
+
+  llvm_unreachable("unhandled buffer store");
+}
+
 // TODO: Move this to combiner
 // Returns base register, imm offset, total constant offset.
 std::tuple<Register, unsigned, unsigned>
@@ -878,23 +963,10 @@ bool AMDGPUInstructionSelector::selectStoreIntrinsic(MachineInstr &MI,
 
   const bool Offen = !isZero(VOffset, MRI);
 
-  unsigned Opc = AMDGPU::BUFFER_STORE_DWORD_OFFEN_exact;
-  switch (8 * MemSize) {
-  case 8:
-    Opc = Offen ? AMDGPU::BUFFER_STORE_BYTE_OFFEN_exact :
-                  AMDGPU::BUFFER_STORE_BYTE_OFFSET_exact;
-    break;
-  case 16:
-    Opc = Offen ? AMDGPU::BUFFER_STORE_SHORT_OFFEN_exact :
-                  AMDGPU::BUFFER_STORE_SHORT_OFFSET_exact;
-    break;
-  default:
-    Opc = Offen ? AMDGPU::BUFFER_STORE_DWORD_OFFEN_exact :
-                  AMDGPU::BUFFER_STORE_DWORD_OFFSET_exact;
-    if (Size > 32)
-      Opc = AMDGPU::getMUBUFOpcode(Opc, Size / 32);
-    break;
-  }
+  int Opc = IsFormat ? getBufferStoreFormatOpcode(Ty, MemSize, Offen) :
+    getBufferStoreOpcode(Ty, MemSize, Offen);
+  if (Opc == -1)
+    return false;
 
   MachineInstrBuilder MIB = B.buildInstr(Opc)
     .addUse(VData);
@@ -972,6 +1044,8 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC_W_SIDE_EFFECTS(
   }
   case Intrinsic::amdgcn_raw_buffer_store:
     return selectStoreIntrinsic(I, false);
+  case Intrinsic::amdgcn_raw_buffer_store_format:
+    return selectStoreIntrinsic(I, true);
   default:
     return selectImpl(I, *CoverageInfo);
   }
