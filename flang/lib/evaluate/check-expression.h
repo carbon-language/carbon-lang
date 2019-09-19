@@ -30,7 +30,8 @@ namespace Fortran::evaluate {
 // Predicate: true when an expression is a constant expression (in the
 // strict sense of the Fortran standard); it may not (yet) be a hard
 // constant value.
-bool IsConstantExpr(const Expr<SomeType> &);
+template<typename A> bool IsConstantExpr(const A &);
+extern template bool IsConstantExpr(const Expr<SomeType> &);
 
 // Predicate: true when an expression is an object designator with
 // constant addressing and no vector-valued subscript.
@@ -46,6 +47,7 @@ extern template void CheckSpecificationExpr(
 extern template void CheckSpecificationExpr(
     const std::optional<Expr<SomeInteger>> &x, parser::ContextualMessages &);
 extern template void CheckSpecificationExpr(
-    const std::optional<Expr<SubscriptInteger>> &x, parser::ContextualMessages &);
+    const std::optional<Expr<SubscriptInteger>> &x,
+    parser::ContextualMessages &);
 }
 #endif

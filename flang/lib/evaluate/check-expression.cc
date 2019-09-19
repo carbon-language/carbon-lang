@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "check-expression.h"
-#include "traversal.h"  // TODO pmk
 #include "traverse.h"
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
@@ -26,53 +25,49 @@ namespace Fortran::evaluate {
 // able to fold it (yet) into a known constant value; specifically,
 // the expression may reference derived type kind parameters whose values
 // are not yet known.
-class IsConstantExprVisitor : public virtual VisitorBase<bool> {
+class IsConstantExprHelper : public AllTraverse<IsConstantExprHelper> {
 public:
-  using Result = bool;
-  explicit IsConstantExprVisitor(int) { result() = true; }
+  using Base = AllTraverse<IsConstantExprHelper>;
+  IsConstantExprHelper() : Base{*this} {}
+  using Base::operator();
 
-  template<int KIND> void Handle(const TypeParamInquiry<KIND> &inq) {
-    Check(inq.parameter().template get<semantics::TypeParamDetails>().attr() ==
-        common::TypeParamAttr::Kind);
+  template<int KIND> bool operator()(const TypeParamInquiry<KIND> &inq) const {
+    return inq.parameter().template get<semantics::TypeParamDetails>().attr() ==
+        common::TypeParamAttr::Kind;
   }
-  void Handle(const semantics::Symbol &symbol) {
-    Check(IsNamedConstant(symbol));
+  bool operator()(const semantics::Symbol &symbol) const {
+    return IsNamedConstant(symbol);
   }
-  void Handle(const CoarrayRef &) { Return(false); }
-  void Pre(const semantics::ParamValue &param) { Check(param.isExplicit()); }
-  template<typename T> void Pre(const FunctionRef<T> &call) {
+  bool operator()(const CoarrayRef &) const { return false; }
+  bool operator()(const semantics::ParamValue &param) const {
+    return param.isExplicit() && (*this)(param.GetExplicit());
+  }
+  template<typename T> bool operator()(const FunctionRef<T> &call) const {
     if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
-      Check(intrinsic->name == "kind");
+      return intrinsic->name == "kind";
       // TODO: Obviously many other intrinsics can be allowed
     } else {
-      Return(false);
+      return false;
     }
   }
 
   // Forbid integer division by zero in constants.
   template<int KIND>
-  void Handle(const Divide<Type<TypeCategory::Integer, KIND>> &division) {
+  bool operator()(
+      const Divide<Type<TypeCategory::Integer, KIND>> &division) const {
     using T = Type<TypeCategory::Integer, KIND>;
     if (const auto divisor{GetScalarConstantValue<T>(division.right())}) {
-      Check(!divisor->IsZero());
-    }
-  }
-
-private:
-  void Check(bool ok) {
-    if (!ok) {
-      Return(false);
+      return !divisor->IsZero();
+    } else {
+      return false;
     }
   }
 };
 
 template<typename A> bool IsConstantExpr(const A &x) {
-  return Visitor<IsConstantExprVisitor>{0}.Traverse(x);
+  return IsConstantExprHelper{}(x);
 }
-
-bool IsConstantExpr(const Expr<SomeType> &expr) {
-  return Visitor<IsConstantExprVisitor>{0}.Traverse(expr);
-}
+template bool IsConstantExpr(const Expr<SomeType> &);
 
 // Object pointer initialization checking predicate IsInitialDataTarget().
 // This code determines whether an expression is allowable as the static

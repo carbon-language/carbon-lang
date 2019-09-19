@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "tools.h"
-#include "traversal.h"
 #include "traverse.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
@@ -649,21 +648,23 @@ bool IsAssumedRank(const ActualArgument &arg) {
 }
 
 // GetLastTarget()
-GetLastTargetVisitor::GetLastTargetVisitor(std::nullptr_t) {}
-void GetLastTargetVisitor::Handle(const semantics::Symbol &x) {
+auto GetLastTargetHelper::operator()(const semantics::Symbol &x) const
+    -> Result {
   if (x.attrs().HasAny({semantics::Attr::POINTER, semantics::Attr::TARGET})) {
-    Return(&x);
+    return &x;
   } else {
-    Return(nullptr);
+    return nullptr;
   }
 }
-void GetLastTargetVisitor::Pre(const Component &x) {
+auto GetLastTargetHelper::operator()(const Component &x) const -> Result {
   const semantics::Symbol &symbol{x.GetLastSymbol()};
   if (symbol.attrs().HasAny(
           {semantics::Attr::POINTER, semantics::Attr::TARGET})) {
-    Return(&symbol);
+    return &symbol;
   } else if (symbol.attrs().test(semantics::Attr::ALLOCATABLE)) {
-    Return(nullptr);
+    return nullptr;
+  } else {
+    return std::nullopt;
   }
 }
 
