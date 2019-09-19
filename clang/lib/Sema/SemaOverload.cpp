@@ -9422,13 +9422,15 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
     const FunctionDecl *Caller = dyn_cast<FunctionDecl>(S.CurContext);
     bool ContainsSameSideCandidate =
         llvm::any_of(Candidates, [&](OverloadCandidate *Cand) {
-          return Cand->Function &&
+          // Check viable function only.
+          return Cand->Viable && Cand->Function &&
                  S.IdentifyCUDAPreference(Caller, Cand->Function) ==
                      Sema::CFP_SameSide;
         });
     if (ContainsSameSideCandidate) {
       auto IsWrongSideCandidate = [&](OverloadCandidate *Cand) {
-        return Cand->Function &&
+        // Check viable function only to avoid unnecessary data copying/moving.
+        return Cand->Viable && Cand->Function &&
                S.IdentifyCUDAPreference(Caller, Cand->Function) ==
                    Sema::CFP_WrongSide;
       };
