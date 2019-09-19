@@ -1748,7 +1748,6 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
 
     LLVM_FALLTHROUGH;
   }
-
   case AMDGPU::G_GEP:
   case AMDGPU::G_ADD:
   case AMDGPU::G_SUB:
@@ -1764,8 +1763,6 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_SADDE:
   case AMDGPU::G_USUBE:
   case AMDGPU::G_SSUBE:
-  case AMDGPU::G_UMULH:
-  case AMDGPU::G_SMULH:
   case AMDGPU::G_SMIN:
   case AMDGPU::G_SMAX:
   case AMDGPU::G_UMIN:
@@ -1799,6 +1796,13 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_INTRINSIC_TRUNC:
   case AMDGPU::G_INTRINSIC_ROUND:
     return getDefaultMappingVOP(MI);
+  case AMDGPU::G_UMULH:
+  case AMDGPU::G_SMULH: {
+    if (MF.getSubtarget<GCNSubtarget>().hasScalarMulHiInsts() &&
+        isSALUMapping(MI))
+      return getDefaultMappingSOP(MI);
+    return getDefaultMappingVOP(MI);
+  }
   case AMDGPU::G_IMPLICIT_DEF: {
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
     OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
