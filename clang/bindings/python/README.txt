@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-// Clang Python Bindings.
+// Clang Python Bindings
 //===----------------------------------------------------------------------===//
 
 This directory implements Python bindings for Clang.
