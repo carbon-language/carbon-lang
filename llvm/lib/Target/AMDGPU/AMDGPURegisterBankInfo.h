@@ -23,7 +23,9 @@
 namespace llvm {
 
 class LLT;
+class GCNSubtarget;
 class MachineIRBuilder;
+class SIInstrInfo;
 class SIRegisterInfo;
 class TargetRegisterInfo;
 
@@ -36,9 +38,15 @@ protected:
 #include "AMDGPUGenRegisterBank.inc"
 };
 class AMDGPURegisterBankInfo : public AMDGPUGenRegisterBankInfo {
+  const GCNSubtarget &Subtarget;
   const SIRegisterInfo *TRI;
+  const SIInstrInfo *TII;
 
-  void executeInWaterfallLoop(MachineInstr &MI,
+  bool executeInWaterfallLoop(MachineIRBuilder &B,
+                              MachineInstr &MI,
+                              MachineRegisterInfo &MRI,
+                              ArrayRef<unsigned> OpIndices) const;
+  bool executeInWaterfallLoop(MachineInstr &MI,
                               MachineRegisterInfo &MRI,
                               ArrayRef<unsigned> OpIndices) const;
 
@@ -51,6 +59,15 @@ class AMDGPURegisterBankInfo : public AMDGPUGenRegisterBankInfo {
   applyMappingImage(MachineInstr &MI,
                     const AMDGPURegisterBankInfo::OperandsMapper &OpdMapper,
                     MachineRegisterInfo &MRI, int RSrcIdx) const;
+
+  Register handleD16VData(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                          Register Reg) const;
+
+  std::pair<Register, unsigned>
+  splitBufferOffsets(MachineIRBuilder &B, Register Offset) const;
+
+  MachineInstr *selectStoreIntrinsic(MachineIRBuilder &B,
+                                     MachineInstr &MI) const;
 
   /// See RegisterBankInfo::applyMapping.
   void applyMappingImpl(const OperandsMapper &OpdMapper) const override;
@@ -110,7 +127,7 @@ class AMDGPURegisterBankInfo : public AMDGPUGenRegisterBankInfo {
                                             int RsrcIdx) const;
 
 public:
-  AMDGPURegisterBankInfo(const TargetRegisterInfo &TRI);
+  AMDGPURegisterBankInfo(const GCNSubtarget &STI);
 
   unsigned copyCost(const RegisterBank &A, const RegisterBank &B,
                     unsigned Size) const override;

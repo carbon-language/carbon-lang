@@ -1751,6 +1751,38 @@ bool AMDGPULegalizerInfo::legalizeIsAddrSpace(MachineInstr &MI,
   return true;
 }
 
+bool AMDGPULegalizerInfo::legalizeRawBufferStore(MachineInstr &MI,
+                                                 MachineRegisterInfo &MRI,
+                                                 MachineIRBuilder &B,
+                                                 bool IsFormat) const {
+  assert(!IsFormat && "format buffer stores not implemented");
+
+  // TODO: Reject f16 format on targets where unsupported.
+  Register VData = MI.getOperand(1).getReg();
+  LLT Ty = MRI.getType(VData);
+
+  B.setInstr(MI);
+
+  const LLT S32 = LLT::scalar(32);
+  const LLT S16 = LLT::scalar(16);
+
+  // Fixup illegal register types for i8 stores.
+  if (Ty == LLT::scalar(8) || Ty == S16) {
+    Register AnyExt = B.buildAnyExt(LLT::scalar(32), VData).getReg(0);
+    MI.getOperand(1).setReg(AnyExt);
+    return true;
+  }
+
+  if (Ty.isVector()) {
+    if (Ty.getElementType() == S16 && Ty.getNumElements() <= 4)
+      return true;
+
+    return Ty.getElementType() == S32 && Ty.getNumElements() <= 4;
+  }
+
+  return Ty == S32;
+}
+
 bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             MachineIRBuilder &B) const {
@@ -1843,6 +1875,8 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
     MI.eraseFromParent();
     return true;
   }
+  case Intrinsic::amdgcn_raw_buffer_store:
+    return legalizeRawBufferStore(MI, MRI, B, false);
   default:
     return true;
   }
