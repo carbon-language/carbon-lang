@@ -404,6 +404,13 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
         OmpClause::DEVICE, OmpClause::DEFAULTMAP, OmpClause::NOWAIT};
     SetContextAllowedOnce(allowedOnce);
   } break;
+  // 2.10.7 teams-clause -> num-teams-clause |
+  //                        thread-limit-clause |
+  //                        default-clause |
+  //                        private-clause |
+  //                        firstprivate-clause |
+  //                        shared-clause |
+  //                        reduction-clause
   case parser::OmpBlockDirective::Directive::Teams: {
     PushContext(beginDir.source, OmpDirective::TEAMS);
     OmpClauseSet allowed{OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE,
