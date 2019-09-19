@@ -146,6 +146,8 @@ class TextNodeDumper
 
   const comments::CommandTraits *Traits;
 
+  const ASTContext *Context;
+
   const char *getCommandName(unsigned CommandID);
 
 public:
