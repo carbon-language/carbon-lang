@@ -806,7 +806,7 @@ static char isNegatibleForFree(SDValue Op, bool LegalOperations,
     return 0;
 
   // Don't recurse exponentially.
-  if (Depth > 6)
+  if (Depth > SelectionDAG::MaxRecursionDepth)
     return 0;
 
   switch (Op.getOpcode()) {
@@ -913,7 +913,8 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
   if (Op.getOpcode() == ISD::FNEG)
     return Op.getOperand(0);
 
-  assert(Depth <= 6 && "GetNegatedExpression doesn't match isNegatibleForFree");
+  assert(Depth <= SelectionDAG::MaxRecursionDepth &&
+         "GetNegatedExpression doesn't match isNegatibleForFree");
   const TargetOptions &Options = DAG.getTarget().Options;
   const SDNodeFlags Flags = Op->getFlags();
 
