@@ -2492,7 +2492,7 @@ static SDValue lowerMasksToReg(const SDValue &ValArg, const EVT &ValLoc,
 
 /// Breaks v64i1 value into two registers and adds the new node to the DAG
 static void Passv64i1ArgInRegs(
-    const SDLoc &Dl, SelectionDAG &DAG, SDValue Chain, SDValue &Arg,
+    const SDLoc &Dl, SelectionDAG &DAG, SDValue &Arg,
     SmallVector<std::pair<unsigned, SDValue>, 8> &RegsToPass, CCValAssign &VA,
     CCValAssign &NextVA, const X86Subtarget &Subtarget) {
   assert(Subtarget.hasBWI() && "Expected AVX512BW target!");
@@ -2626,7 +2626,7 @@ X86TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
       assert(VA.getValVT() == MVT::v64i1 &&
              "Currently the only custom case is when we split v64i1 to 2 regs");
 
-      Passv64i1ArgInRegs(dl, DAG, Chain, ValToCopy, RegsToPass, VA, RVLocs[++I],
+      Passv64i1ArgInRegs(dl, DAG, ValToCopy, RegsToPass, VA, RVLocs[++I],
                          Subtarget);
 
       assert(2 == RegsToPass.size() &&
@@ -3875,8 +3875,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(VA.getValVT() == MVT::v64i1 &&
              "Currently the only custom case is when we split v64i1 to 2 regs");
       // Split v64i1 value into two registers
-      Passv64i1ArgInRegs(dl, DAG, Chain, Arg, RegsToPass, VA, ArgLocs[++I],
-                         Subtarget);
+      Passv64i1ArgInRegs(dl, DAG, Arg, RegsToPass, VA, ArgLocs[++I], Subtarget);
     } else if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
       const TargetOptions &Options = DAG.getTarget().Options;
