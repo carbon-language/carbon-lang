@@ -245,10 +245,6 @@ AMDGPUInstructionSelector::getSubOperand64(MachineOperand &MO,
   }
 }
 
-static int64_t getConstant(const MachineInstr *MI) {
-  return MI->getOperand(1).getCImm()->getSExtValue();
-}
-
 static unsigned getLogicalBitOpcode(unsigned Opc, bool Is64) {
   switch (Opc) {
   case AMDGPU::G_AND:
@@ -746,10 +742,10 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC_W_SIDE_EFFECTS(
   unsigned IntrinsicID = I.getIntrinsicID();
   switch (IntrinsicID) {
   case Intrinsic::amdgcn_exp: {
-    int64_t Tgt = getConstant(MRI.getVRegDef(I.getOperand(1).getReg()));
-    int64_t Enabled = getConstant(MRI.getVRegDef(I.getOperand(2).getReg()));
-    int64_t Done = getConstant(MRI.getVRegDef(I.getOperand(7).getReg()));
-    int64_t VM = getConstant(MRI.getVRegDef(I.getOperand(8).getReg()));
+    int64_t Tgt = I.getOperand(1).getImm();
+    int64_t Enabled = I.getOperand(2).getImm();
+    int64_t Done = I.getOperand(7).getImm();
+    int64_t VM = I.getOperand(8).getImm();
 
     MachineInstr *Exp = buildEXP(TII, &I, Tgt, I.getOperand(3).getReg(),
                                  I.getOperand(4).getReg(),
@@ -762,13 +758,13 @@ bool AMDGPUInstructionSelector::selectG_INTRINSIC_W_SIDE_EFFECTS(
   }
   case Intrinsic::amdgcn_exp_compr: {
     const DebugLoc &DL = I.getDebugLoc();
-    int64_t Tgt = getConstant(MRI.getVRegDef(I.getOperand(1).getReg()));
-    int64_t Enabled = getConstant(MRI.getVRegDef(I.getOperand(2).getReg()));
+    int64_t Tgt = I.getOperand(1).getImm();
+    int64_t Enabled = I.getOperand(2).getImm();
     Register Reg0 = I.getOperand(3).getReg();
     Register Reg1 = I.getOperand(4).getReg();
     Register Undef = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
-    int64_t Done = getConstant(MRI.getVRegDef(I.getOperand(5).getReg()));
-    int64_t VM = getConstant(MRI.getVRegDef(I.getOperand(6).getReg()));
+    int64_t Done = I.getOperand(5).getImm();
+    int64_t VM = I.getOperand(6).getImm();
 
     BuildMI(*BB, &I, DL, TII.get(AMDGPU::IMPLICIT_DEF), Undef);
     MachineInstr *Exp = buildEXP(TII, &I, Tgt, Reg0, Reg1, Undef, Undef, VM,
