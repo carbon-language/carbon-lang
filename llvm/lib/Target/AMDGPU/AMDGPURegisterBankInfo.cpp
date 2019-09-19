@@ -1031,6 +1031,33 @@ bool AMDGPURegisterBankInfo::applyMappingWideLoad(MachineInstr &MI,
   return true;
 }
 
+bool AMDGPURegisterBankInfo::applyMappingImage(
+    MachineInstr &MI, const AMDGPURegisterBankInfo::OperandsMapper &OpdMapper,
+    MachineRegisterInfo &MRI, int RsrcIdx) const {
+  const int NumDefs = MI.getNumExplicitDefs();
+
+  // The reported argument index is relative to the IR intrinsic call arguments,
+  // so we need to shift by the number of defs and the intrinsic ID.
+  RsrcIdx += NumDefs + 1;
+
+  // Insert copies to VGPR arguments.
+  applyDefaultMapping(OpdMapper);
+
+  // Fixup any SGPR arguments.
+  SmallVector<unsigned, 4> SGPRIndexes;
+  for (int I = NumDefs, NumOps = MI.getNumOperands(); I != NumOps; ++I) {
+    if (!MI.getOperand(I).isReg())
+      continue;
+
+    // If this intrinsic has a sampler, it immediately follows rsrc.
+    if (I == RsrcIdx || I == RsrcIdx + 1)
+      SGPRIndexes.push_back(I);
+  }
+
+  executeInWaterfallLoop(MI, MRI, SGPRIndexes);
+  return true;
+}
+
 // For cases where only a single copy is inserted for matching register banks.
 // Replace the register in the instruction operand
 static void substituteSimpleCopyRegs(
@@ -1405,7 +1432,8 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     break;
   }
   case AMDGPU::G_INTRINSIC_W_SIDE_EFFECTS: {
-    switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+    auto IntrID = MI.getIntrinsicID();
+    switch (IntrID) {
     case Intrinsic::amdgcn_buffer_load: {
       executeInWaterfallLoop(MI, MRI, { 2 });
       return;
@@ -1424,8 +1452,20 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       constrainOpWithReadfirstlane(MI, MRI, 2); // M0
       return;
     }
-    default:
+    default: {
+      if (const AMDGPU::RsrcIntrinsic *RSrcIntrin =
+              AMDGPU::lookupRsrcIntrinsic(IntrID)) {
+        // Non-images can have complications from operands that allow both SGPR
+        // and VGPR. For now it's too complicated to figure out the final opcode
+        // to derive the register bank from the MCInstrDesc.
+        if (RSrcIntrin->IsImage) {
+          applyMappingImage(MI, OpdMapper, MRI, RSrcIntrin->RsrcArg);
+          return;
+        }
+      }
+
       break;
+    }
     }
     break;
   }
@@ -1529,6 +1569,45 @@ AMDGPURegisterBankInfo::getDefaultMappingAllVGPR(const MachineInstr &MI) const {
 
   return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping),
                                MI.getNumOperands());
+}
+
+const RegisterBankInfo::InstructionMapping &
+AMDGPURegisterBankInfo::getImageMapping(const MachineRegisterInfo &MRI,
+                                        const MachineInstr &MI,
+                                        int RsrcIdx) const {
+  // The reported argument index is relative to the IR intrinsic call arguments,
+  // so we need to shift by the number of defs and the intrinsic ID.
+  RsrcIdx += MI.getNumExplicitDefs() + 1;
+
+  const int NumOps = MI.getNumOperands();
+  SmallVector<const ValueMapping *, 8> OpdsMapping(NumOps);
+
+  // TODO: Should packed/unpacked D16 difference be reported here as part of
+  // the value mapping?
+  for (int I = 0; I != NumOps; ++I) {
+    if (!MI.getOperand(I).isReg())
+      continue;
+
+    Register OpReg = MI.getOperand(I).getReg();
+    unsigned Size = getSizeInBits(OpReg, MRI, *TRI);
+
+    // FIXME: Probably need a new intrinsic register bank searchable table to
+    // handle arbitrary intrinsics easily.
+    //
+    // If this has a sampler, it immediately follows rsrc.
+    const bool MustBeSGPR = I == RsrcIdx || I == RsrcIdx + 1;
+
+    if (MustBeSGPR) {
+      // If this must be an SGPR, so we must report whatever it is as legal.
+      unsigned NewBank = getRegBankID(OpReg, MRI, *TRI, AMDGPU::SGPRRegBankID);
+      OpdsMapping[I] = AMDGPU::getValueMapping(NewBank, Size);
+    } else {
+      // Some operands must be VGPR, and these are easy to copy to.
+      OpdsMapping[I] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
+    }
+  }
+
+  return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping), NumOps);
 }
 
 const RegisterBankInfo::InstructionMapping &
@@ -2197,9 +2276,8 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   }
   case AMDGPU::G_INTRINSIC_W_SIDE_EFFECTS: {
-    switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
-    default:
-      return getInvalidInstructionMapping();
+    auto IntrID = MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID();
+    switch (IntrID) {
     case Intrinsic::amdgcn_s_getreg:
     case Intrinsic::amdgcn_s_memtime:
     case Intrinsic::amdgcn_s_memrealtime:
@@ -2284,6 +2362,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
     }
+
     case Intrinsic::amdgcn_else: {
       unsigned WaveSize = getSizeInBits(MI.getOperand(1).getReg(), MRI, *TRI);
       OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1);
@@ -2295,6 +2374,17 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1);
       break;
     }
+    default:
+      if (const AMDGPU::RsrcIntrinsic *RSrcIntrin =
+              AMDGPU::lookupRsrcIntrinsic(IntrID)) {
+        // Non-images can have complications from operands that allow both SGPR
+        // and VGPR. For now it's too complicated to figure out the final opcode
+        // to derive the register bank from the MCInstrDesc.
+        if (RSrcIntrin->IsImage)
+          return getImageMapping(MRI, MI, RSrcIntrin->RsrcArg);
+      }
+
+      return getInvalidInstructionMapping();
     }
     break;
   }

@@ -47,6 +47,10 @@ class AMDGPURegisterBankInfo : public AMDGPUGenRegisterBankInfo {
   bool applyMappingWideLoad(MachineInstr &MI,
                             const AMDGPURegisterBankInfo::OperandsMapper &OpdMapper,
                             MachineRegisterInfo &MRI) const;
+  bool
+  applyMappingImage(MachineInstr &MI,
+                    const AMDGPURegisterBankInfo::OperandsMapper &OpdMapper,
+                    MachineRegisterInfo &MRI, int RSrcIdx) const;
 
   /// See RegisterBankInfo::applyMapping.
   void applyMappingImpl(const OperandsMapper &OpdMapper) const override;
@@ -90,6 +94,11 @@ class AMDGPURegisterBankInfo : public AMDGPUGenRegisterBankInfo {
   const InstructionMapping &getDefaultMappingVOP(const MachineInstr &MI) const;
   const InstructionMapping &getDefaultMappingAllVGPR(
     const MachineInstr &MI) const;
+
+  const InstructionMapping &getImageMapping(const MachineRegisterInfo &MRI,
+                                            const MachineInstr &MI,
+                                            int RsrcIdx) const;
+
 public:
   AMDGPURegisterBankInfo(const TargetRegisterInfo &TRI);
 
