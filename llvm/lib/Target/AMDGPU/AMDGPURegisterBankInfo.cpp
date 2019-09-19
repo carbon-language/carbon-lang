@@ -1458,6 +1458,12 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       executeInWaterfallLoop(MI, MRI, {2, 4});
       return;
     }
+    case Intrinsic::amdgcn_struct_buffer_load:
+    case Intrinsic::amdgcn_struct_buffer_store: {
+      applyDefaultMapping(OpdMapper);
+      executeInWaterfallLoop(MI, MRI, {2, 5});
+      return;
+    }
     default: {
       if (const AMDGPU::RsrcIntrinsic *RSrcIntrin =
               AMDGPU::lookupRsrcIntrinsic(IntrID)) {
@@ -2413,6 +2419,22 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[2] = getSGPROpMapping(MI.getOperand(2).getReg(), MRI, *TRI);
       OpdsMapping[3] = getVGPROpMapping(MI.getOperand(3).getReg(), MRI, *TRI);
       OpdsMapping[4] = getSGPROpMapping(MI.getOperand(4).getReg(), MRI, *TRI);
+      break;
+    }
+    case Intrinsic::amdgcn_struct_buffer_load: {
+      OpdsMapping[0] = getVGPROpMapping(MI.getOperand(0).getReg(), MRI, *TRI);
+      OpdsMapping[2] = getSGPROpMapping(MI.getOperand(2).getReg(), MRI, *TRI);
+      OpdsMapping[3] = getVGPROpMapping(MI.getOperand(3).getReg(), MRI, *TRI);
+      OpdsMapping[4] = getVGPROpMapping(MI.getOperand(4).getReg(), MRI, *TRI);
+      OpdsMapping[5] = getSGPROpMapping(MI.getOperand(5).getReg(), MRI, *TRI);
+      break;
+    }
+    case Intrinsic::amdgcn_struct_buffer_store: {
+      OpdsMapping[1] = getVGPROpMapping(MI.getOperand(1).getReg(), MRI, *TRI);
+      OpdsMapping[2] = getSGPROpMapping(MI.getOperand(2).getReg(), MRI, *TRI);
+      OpdsMapping[3] = getVGPROpMapping(MI.getOperand(3).getReg(), MRI, *TRI);
+      OpdsMapping[4] = getVGPROpMapping(MI.getOperand(4).getReg(), MRI, *TRI);
+      OpdsMapping[5] = getSGPROpMapping(MI.getOperand(5).getReg(), MRI, *TRI);
       break;
     }
     default:
