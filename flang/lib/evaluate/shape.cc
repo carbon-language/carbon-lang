@@ -15,7 +15,6 @@
 #include "shape.h"
 #include "fold.h"
 #include "tools.h"
-#include "traverse.h"
 #include "type.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
@@ -347,65 +346,63 @@ Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
   }
 }
 
-void GetShapeVisitor::Handle(const Symbol &symbol) {
-  std::visit(
+auto GetShapeHelper::operator()(const Symbol &symbol) const -> Result {
+  return std::visit(
       common::visitors{
           [&](const semantics::ObjectEntityDetails &) {
-            Handle(NamedEntity{symbol});
+            return (*this)(NamedEntity{symbol});
           },
           [&](const semantics::AssocEntityDetails &assoc) {
-            Nested(assoc.expr());
+            return (*this)(assoc.expr());
           },
           [&](const semantics::SubprogramDetails &subp) {
             if (subp.isFunction()) {
-              Handle(subp.result());
+              return (*this)(subp.result());
             } else {
-              Return();
+              return Result{};
             }
           },
           [&](const semantics::ProcBindingDetails &binding) {
-            Handle(binding.symbol());
+            return (*this)(binding.symbol());
           },
-          [&](const semantics::UseDetails &use) { Handle(use.symbol()); },
+          [&](const semantics::UseDetails &use) {
+            return (*this)(use.symbol());
+          },
           [&](const semantics::HostAssocDetails &assoc) {
-            Handle(assoc.symbol());
+            return (*this)(assoc.symbol());
           },
-          [&](const auto &) { Return(); },
+          [&](const auto &) { return Result{}; },
       },
       symbol.details());
 }
 
-void GetShapeVisitor::Handle(const Component &component) {
+auto GetShapeHelper::operator()(const Component &component) const -> Result {
   if (component.GetLastSymbol().Rank() > 0) {
-    Handle(NamedEntity{Component{component}});
+    return (*this)(NamedEntity{Component{component}});
   } else {
-    Nested(component.base());
+    return (*this)(component.base());
   }
 }
 
-void GetShapeVisitor::Handle(const NamedEntity &base) {
+auto GetShapeHelper::operator()(const NamedEntity &base) const -> Result {
   const Symbol &symbol{base.GetLastSymbol()};
   if (const auto *object{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (IsImpliedShape(symbol)) {
-      Nested(object->init());
+      return (*this)(object->init());
     } else {
       Shape result;
       int n{object->shape().Rank()};
       for (int dimension{0}; dimension < n; ++dimension) {
         result.emplace_back(GetExtent(context_, base, dimension));
       }
-      Return(std::move(result));
+      return std::move(result);
     }
   } else {
-    Handle(symbol);
+    return (*this)(symbol);
   }
 }
 
-void GetShapeVisitor::Handle(const Substring &substring) {
-  Nested(substring.parent());
-}
-
-void GetShapeVisitor::Handle(const ArrayRef &arrayRef) {
+auto GetShapeHelper::operator()(const ArrayRef &arrayRef) const -> Result {
   Shape shape;
   int dimension{0};
   for (const Subscript &ss : arrayRef.subscript()) {
@@ -415,13 +412,13 @@ void GetShapeVisitor::Handle(const ArrayRef &arrayRef) {
     ++dimension;
   }
   if (shape.empty()) {
-    Nested(arrayRef.base());
+    return (*this)(arrayRef.base());
   } else {
-    Return(std::move(shape));
+    return std::move(shape);
   }
 }
 
-void GetShapeVisitor::Handle(const CoarrayRef &coarrayRef) {
+auto GetShapeHelper::operator()(const CoarrayRef &coarrayRef) const -> Result {
   Shape shape;
   NamedEntity base{coarrayRef.GetBase()};
   int dimension{0};
@@ -432,45 +429,48 @@ void GetShapeVisitor::Handle(const CoarrayRef &coarrayRef) {
     ++dimension;
   }
   if (shape.empty()) {
-    Nested(base);
+    return (*this)(base);
   } else {
-    Return(std::move(shape));
+    return std::move(shape);
   }
 }
 
-void GetShapeVisitor::Handle(const ProcedureRef &call) {
+auto GetShapeHelper::operator()(const Substring &substring) const -> Result {
+  return (*this)(substring.parent());
+}
+
+auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
   if (call.Rank() == 0) {
-    Scalar();
+    return Scalar();
   } else if (call.IsElemental()) {
     for (const auto &arg : call.arguments()) {
       if (arg.has_value() && arg->Rank() > 0) {
-        Nested(*arg);
-        return;
+        return (*this)(*arg);
       }
     }
-    Scalar();
+    return Scalar();
   } else if (const Symbol * symbol{call.proc().GetSymbol()}) {
-    Handle(*symbol);
+    return (*this)(*symbol);
   } else if (const auto *intrinsic{
                  std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
     if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
         intrinsic->name == "ubound") {
       const auto *expr{call.arguments().front().value().UnwrapExpr()};
       CHECK(expr != nullptr);
-      Return(Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}});
+      return Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}};
     } else if (intrinsic->name == "reshape") {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
         // SHAPE(RESHAPE(array,shape)) -> shape
         const auto *shapeExpr{call.arguments().at(1).value().UnwrapExpr()};
         CHECK(shapeExpr != nullptr);
         Expr<SomeInteger> shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
-        Return(AsShape(context_, ConvertToType<ExtentType>(std::move(shape))));
+        return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
       }
     } else {
       // TODO: shapes of other non-elemental intrinsic results
     }
   }
-  Return();
+  return std::nullopt;
 }
 
 bool CheckConformance(parser::ContextualMessages &messages, const Shape &left,
@@ -500,5 +500,4 @@ bool CheckConformance(parser::ContextualMessages &messages, const Shape &left,
   }
   return true;
 }
-
 }

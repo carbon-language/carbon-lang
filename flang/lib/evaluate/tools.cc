@@ -25,12 +25,10 @@ using namespace Fortran::parser::literals;
 namespace Fortran::evaluate {
 
 // IsVariable()
-void IsVariableVisitor::Handle(const ProcedureDesignator &x) {
-  if (const semantics::Symbol * symbol{x.GetSymbol()}) {
-    Return(symbol->attrs().test(semantics::Attr::POINTER));
-  } else {
-    Return(false);
-  }
+auto IsVariableHelper::operator()(const ProcedureDesignator &x) const
+    -> Result {
+  const semantics::Symbol *symbol{x.GetSymbol()};
+  return symbol && symbol->attrs().test(semantics::Attr::POINTER);
 }
 
 // Conversions of complex component expressions to REAL.

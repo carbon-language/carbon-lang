@@ -20,7 +20,7 @@
 
 #include "expression.h"
 #include "tools.h"
-#include "traversal.h"
+#include "traverse.h"
 #include "type.h"
 #include "variable.h"
 #include "../common/indirection.h"
@@ -86,56 +86,57 @@ MaybeExtentExpr GetSize(Shape &&);
 // Utility predicate: does an expression reference any implied DO index?
 bool ContainsAnyImpliedDoIndex(const ExtentExpr &);
 
-// Compilation-time shape conformance checking, when corresponding extents
-// are known.
-bool CheckConformance(parser::ContextualMessages &, const Shape &,
-    const Shape &, const char * = "left operand",
-    const char * = "right operand");
-
-class GetShapeVisitor : public virtual VisitorBase<std::optional<Shape>> {
+// GetShape()
+class GetShapeHelper
+  : public AnyTraverse<GetShapeHelper, std::optional<Shape>> {
 public:
   using Result = std::optional<Shape>;
-  explicit GetShapeVisitor(FoldingContext &c) : context_{c} {}
+  using Base = AnyTraverse<GetShapeHelper, Result>;
+  using Base::operator();
+  GetShapeHelper(FoldingContext &c) : Base{*this}, context_{c} {}
 
-  template<typename T> void Handle(const Constant<T> &c) {
-    Return(AsShape(c.SHAPE()));
+  Result operator()(const ImpliedDoIndex &) const { return Scalar(); }
+  Result operator()(const DescriptorInquiry &) const { return Scalar(); }
+  template<int KIND> Result operator()(const TypeParamInquiry<KIND> &) const {
+    return Scalar();
   }
-  void Handle(const Symbol &);
-  void Handle(const Component &);
-  void Handle(const NamedEntity &);
-  void Handle(const StaticDataObject::Pointer &) { Scalar(); }
-  void Handle(const ArrayRef &);
-  void Handle(const CoarrayRef &);
-  void Handle(const Substring &);
-  void Handle(const ProcedureRef &);
-  void Handle(const StructureConstructor &) { Scalar(); }
-  template<typename T> void Handle(const ArrayConstructor<T> &aconst) {
-    Return(Shape{GetArrayConstructorExtent(aconst)});
+  Result operator()(const BOZLiteralConstant &) const { return Scalar(); }
+  Result operator()(const StaticDataObject::Pointer &) const {
+    return Scalar();
   }
-  void Handle(const ImpliedDoIndex &) { Scalar(); }
-  void Handle(const DescriptorInquiry &) { Scalar(); }
-  template<int KIND> void Handle(const TypeParamInquiry<KIND> &) { Scalar(); }
-  void Handle(const BOZLiteralConstant &) { Scalar(); }
-  void Handle(const NullPointer &) { Return(); }
+  Result operator()(const StructureConstructor &) const { return Scalar(); }
+
+  template<typename T> Result operator()(const Constant<T> &c) const {
+    return AsShape(c.SHAPE());
+  }
+
+  Result operator()(const Symbol &) const;
+  Result operator()(const Component &) const;
+  Result operator()(const NamedEntity &) const;
+  Result operator()(const ArrayRef &) const;
+  Result operator()(const CoarrayRef &) const;
+  Result operator()(const Substring &) const;
+  Result operator()(const ProcedureRef &) const;
+
+  template<typename T>
+  Result operator()(const ArrayConstructor<T> &aconst) const {
+    return Shape{GetArrayConstructorExtent(aconst)};
+  }
   template<typename D, typename R, typename LO, typename RO>
-  void Handle(const Operation<D, R, LO, RO> &operation) {
+  Result operator()(const Operation<D, R, LO, RO> &operation) const {
     if (operation.right().Rank() > 0) {
-      Nested(operation.right());
+      (*this)(operation.right());
     } else {
-      Nested(operation.left());
+      (*this)(operation.left());
     }
   }
 
 private:
-  void Scalar() { Return(Shape{}); }
-
-  template<typename A> void Nested(const A &x) {
-    Return(GetShape(context_, x));
-  }
+  static Result Scalar() { return Shape{}; }
 
   template<typename T>
   MaybeExtentExpr GetArrayConstructorValueExtent(
-      const ArrayConstructorValue<T> &value) {
+      const ArrayConstructorValue<T> &value) const {
     return std::visit(
         common::visitors{
             [&](const Expr<T> &x) -> MaybeExtentExpr {
@@ -165,7 +166,7 @@ private:
 
   template<typename T>
   MaybeExtentExpr GetArrayConstructorExtent(
-      const ArrayConstructorValues<T> &values) {
+      const ArrayConstructorValues<T> &values) const {
     ExtentExpr result{0};
     for (const auto &value : values) {
       if (MaybeExtentExpr n{GetArrayConstructorValueExtent(value)}) {
@@ -182,7 +183,14 @@ private:
 
 template<typename A>
 std::optional<Shape> GetShape(FoldingContext &context, const A &x) {
-  return Visitor<GetShapeVisitor>{context}.Traverse(x);
+  return GetShapeHelper{context}(x);
 }
+
+// Compilation-time shape conformance checking, when corresponding extents
+// are known.
+bool CheckConformance(parser::ContextualMessages &, const Shape &,
+    const Shape &, const char * = "left operand",
+    const char * = "right operand");
+
 }
 #endif  // FORTRAN_EVALUATE_SHAPE_H_

@@ -18,7 +18,9 @@
 #include "constant.h"
 #include "expression.h"
 #include "traversal.h"
+#include "traverse.h"
 #include "../common/idioms.h"
+#include "../common/template.h"
 #include "../common/unwrap.h"
 #include "../parser/message.h"
 #include "../semantics/attr.h"
@@ -26,6 +28,7 @@
 #include <array>
 #include <optional>
 #include <set>
+#include <type_traits>
 #include <utility>
 
 namespace Fortran::evaluate {
@@ -61,36 +64,38 @@ std::optional<Variable<A>> AsVariable(const std::optional<Expr<A>> &expr) {
 // operation.  Be advised: a call to a function that returns an object
 // pointer is a "variable" in Fortran (it can be the left-hand side of
 // an assignment).
-struct IsVariableVisitor : public virtual VisitorBase<std::optional<bool>> {
-  // std::optional<> is used because it is default-constructible.
-  using Result = std::optional<bool>;
-  explicit IsVariableVisitor(std::nullptr_t) {}
-  void Handle(const StaticDataObject &) { Return(false); }
-  void Handle(const Symbol &) { Return(true); }
-  void Pre(const Component &) { Return(true); }
-  void Pre(const ArrayRef &) { Return(true); }
-  void Pre(const CoarrayRef &) { Return(true); }
-  void Pre(const ComplexPart &) { Return(true); }
-  void Handle(const ProcedureDesignator &);
-  template<TypeCategory CAT, int KIND>
-  void Pre(const Expr<Type<CAT, KIND>> &x) {
-    if (!std::holds_alternative<Designator<Type<CAT, KIND>>>(x.u) &&
-        !std::holds_alternative<FunctionRef<Type<CAT, KIND>>>(x.u)) {
-      Return(false);
+struct IsVariableHelper
+  : public AnyTraverse<IsVariableHelper, std::optional<bool>> {
+  using Result = std::optional<bool>;  // effectively tri-state
+  using Base = AnyTraverse<IsVariableHelper, Result>;
+  IsVariableHelper() : Base{*this} {}
+  using Base::operator();
+  Result operator()(const StaticDataObject &) const { return false; }
+  Result operator()(const Symbol &) const { return true; }
+  Result operator()(const Component &) const { return true; }
+  Result operator()(const ArrayRef &) const { return true; }
+  Result operator()(const CoarrayRef &) const { return true; }
+  Result operator()(const ComplexPart &) const { return true; }
+  Result operator()(const ProcedureDesignator &) const;
+  template<typename T> Result operator()(const Expr<T> &x) const {
+    if constexpr (common::HasMember<T, AllIntrinsicTypes> ||
+        std::is_same_v<T, SomeDerived>) {
+      // Expression with a specific type
+      if (std::holds_alternative<Designator<T>>(x.u) ||
+          std::holds_alternative<FunctionRef<T>>(x.u)) {
+        if (auto known{(*this)(x.u)}) {
+          return known;
+        }
+      }
+      return false;
+    } else {
+      return (*this)(x.u);
     }
   }
-  void Pre(const Expr<SomeDerived> &x) {
-    if (!std::holds_alternative<Designator<SomeDerived>>(x.u) &&
-        !std::holds_alternative<FunctionRef<SomeDerived>>(x.u)) {
-      Return(false);
-    }
-  }
-  template<typename A> void Post(const A &) { Return(false); }
 };
 
 template<typename A> bool IsVariable(const A &x) {
-  Visitor<IsVariableVisitor> visitor{nullptr};
-  if (auto optional{visitor.Traverse(x)}) {
+  if (std::optional<bool> optional{IsVariableHelper{}(x)}) {
     return *optional;
   } else {
     return false;

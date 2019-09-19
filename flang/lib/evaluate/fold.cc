@@ -25,6 +25,7 @@
 #include "intrinsics-library-templates.h"
 #include "shape.h"
 #include "tools.h"
+#include "traverse.h"
 #include "type.h"
 #include "../common/indirection.h"
 #include "../common/template.h"
@@ -1930,15 +1931,17 @@ auto ApplyElementwise(
 // Predicate: is a scalar expression suitable for naive scalar expansion
 // in the flattening of an array expression?
 // TODO: capture such scalar expansions in temporaries, flatten everything
-struct UnexpandabilityFindingVisitor : public virtual VisitorBase<bool> {
-  using Result = bool;
-  explicit UnexpandabilityFindingVisitor(int) { result() = false; }
-  template<typename T> void Handle(FunctionRef<T> &) { Return(true); }
-  template<typename T> void Handle(CoarrayRef &) { Return(true); }
+struct UnexpandabilityFindingVisitor
+  : public AnyTraverse<UnexpandabilityFindingVisitor> {
+  using Base = AnyTraverse<UnexpandabilityFindingVisitor>;
+  using Base::operator();
+  UnexpandabilityFindingVisitor() : Base{*this} {}
+  template<typename T> bool operator()(const FunctionRef<T> &) { return true; }
+  bool operator()(const CoarrayRef &) { return true; }
 };
 
 template<typename T> bool IsExpandableScalar(const Expr<T> &expr) {
-  return !Visitor<UnexpandabilityFindingVisitor>{0}.Traverse(expr);
+  return !UnexpandabilityFindingVisitor{}(expr);
 }
 
 template<typename DERIVED, typename RESULT, typename LEFT, typename RIGHT>
