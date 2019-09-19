@@ -8547,12 +8547,20 @@ static SDValue LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG,
   // insert elements one by one
   SDValue DstVec;
   if (HasConstElts) {
-    MVT ImmVT = MVT::getIntegerVT(std::max(VT.getSizeInBits(), 8U));
-    SDValue Imm = DAG.getConstant(Immediate, dl, ImmVT);
-    MVT VecVT = VT.getSizeInBits() >= 8 ? VT : MVT::v8i1;
-    DstVec = DAG.getBitcast(VecVT, Imm);
-    DstVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, DstVec,
-                         DAG.getIntPtrConstant(0, dl));
+    if (VT == MVT::v64i1 && !Subtarget.is64Bit()) {
+      SDValue ImmL = DAG.getConstant(Lo_32(Immediate), dl, MVT::i32);
+      SDValue ImmH = DAG.getConstant(Hi_32(Immediate), dl, MVT::i32);
+      ImmL = DAG.getBitcast(MVT::v32i1, ImmL);
+      ImmH = DAG.getBitcast(MVT::v32i1, ImmH);
+      DstVec = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v64i1, ImmL, ImmH);
+    } else {
+      MVT ImmVT = MVT::getIntegerVT(std::max(VT.getSizeInBits(), 8U));
+      SDValue Imm = DAG.getConstant(Immediate, dl, ImmVT);
+      MVT VecVT = VT.getSizeInBits() >= 8 ? VT : MVT::v8i1;
+      DstVec = DAG.getBitcast(VecVT, Imm);
+      DstVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, DstVec,
+                           DAG.getIntPtrConstant(0, dl));
+    }
   } else
     DstVec = DAG.getUNDEF(VT);
 
