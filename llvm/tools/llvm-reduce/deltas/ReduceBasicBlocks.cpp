@@ -36,6 +36,11 @@ static void replaceBranchTerminator(BasicBlock &BB,
   if (ChunkSucessors.size() == Term->getNumSuccessors())
     return;
 
+  bool IsBranch = isa<BranchInst>(Term);
+  Value *Address = nullptr;
+  if (auto IndBI = dyn_cast<IndirectBrInst>(Term))
+    Address = IndBI->getAddress();
+
   Term->eraseFromParent();
 
   if (ChunkSucessors.empty()) {
@@ -43,12 +48,12 @@ static void replaceBranchTerminator(BasicBlock &BB,
     return;
   }
 
-  if (isa<BranchInst>(Term))
+  if (IsBranch)
     BranchInst::Create(ChunkSucessors[0], &BB);
 
   if (auto IndBI = dyn_cast<IndirectBrInst>(Term)) {
     auto NewIndBI =
-        IndirectBrInst::Create(IndBI->getAddress(), ChunkSucessors.size(), &BB);
+        IndirectBrInst::Create(Address, ChunkSucessors.size(), &BB);
     for (auto Dest : ChunkSucessors)
       NewIndBI->addDestination(Dest);
   }
