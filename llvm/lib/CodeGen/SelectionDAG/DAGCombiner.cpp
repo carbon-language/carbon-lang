@@ -16845,12 +16845,12 @@ SDValue DAGCombiner::scalarizeExtractedVectorLoad(SDNode *EVE, EVT InVecVT,
   SDValue From[] = { SDValue(EVE, 0), SDValue(OriginalLoad, 1) };
   SDValue To[] = { Load, Chain };
   DAG.ReplaceAllUsesOfValuesWith(From, To, 2);
-  // Since we're explicitly calling ReplaceAllUses, add the new node to the
-  // worklist explicitly as well.
-  AddToWorklist(Load.getNode());
-  AddUsersToWorklist(Load.getNode()); // Add users too
   // Make sure to revisit this node to clean it up; it will usually be dead.
   AddToWorklist(EVE);
+  // Since we're explicitly calling ReplaceAllUses, add the new node to the
+  // worklist explicitly as well.
+  AddUsersToWorklist(Load.getNode()); // Add users too
+  AddToWorklist(Load.getNode());
   ++OpsNarrowed;
   return SDValue(EVE, 0);
 }
