@@ -141,13 +141,7 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
       return Expr<SomeType>{ProcedureDesignator{std::move(*component)}};
     } else {
       CHECK(std::holds_alternative<const Symbol *>(ref.u));
-      if (symbol.has<semantics::SubprogramNameDetails>()) {
-        // Call to internal function in specification expression
-        Say("cannot call function '%s' in this context"_err_en_US,
-            symbol.name());
-      } else {
-        return Expr<SomeType>{ProcedureDesignator{symbol}};
-      }
+      return Expr<SomeType>{ProcedureDesignator{symbol}};
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
     return TypedWrapper<Designator, DataRef>(*dyType, std::move(ref));
@@ -1503,13 +1497,6 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 return std::nullopt;
               }
             }
-            if (symbol.has<semantics::SubprogramNameDetails>()) {
-              // Forward reference to internal function in specification
-              // expression
-              Say("Cannot call function '%s' in this context"_err_en_US,
-                  symbol.name());
-              return std::nullopt;
-            }
             if (const auto *scope{symbol.scope()}) {
               if (scope->sourceRange().Contains(n.source)) {
                 if (symbol.attrs().test(
@@ -2221,6 +2208,20 @@ MaybeExpr ExpressionAnalyzer::MakeFunctionRef(
             DEREF(result.GetTypeAndShape()).type(),
             ProcedureRef{std::move(proc), std::move(arguments)});
       }
+    }
+  }
+  if (const Symbol *symbol{proc.GetSymbol()}) {
+    if (const auto *details{symbol->detailsIf<semantics::SubprogramNameDetails>()}) {
+      if (details->kind() == semantics::SubprogramKind::Module) {
+        Say("The module function '%s' must have been previously defined "
+            "when referenced in a specification expression"_err_en_US,
+            symbol->name());
+      } else {
+        Say("The internal function '%s' cannot be referenced in "
+            "a specification expression"_err_en_US,
+            symbol->name());
+      }
+      return std::nullopt;
     }
   }
   return std::nullopt;

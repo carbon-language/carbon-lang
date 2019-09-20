@@ -132,12 +132,14 @@ bool IsInitialDataTarget(const Expr<SomeType> &x) {
 }
 
 // Specification expression validation (10.1.11(2), C1010)
-struct CheckSpecificationExprHelper
+class CheckSpecificationExprHelper
   : public AnyTraverse<CheckSpecificationExprHelper,
         std::optional<std::string>> {
+public:
   using Result = std::optional<std::string>;
   using Base = AnyTraverse<CheckSpecificationExprHelper, Result>;
-  CheckSpecificationExprHelper() : Base{*this} {}
+  explicit CheckSpecificationExprHelper(const semantics::Scope &s)
+    : Base{*this}, scope_{s} {}
   using Base::operator();
 
   Result operator()(const ProcedureDesignator &) const {
@@ -172,6 +174,12 @@ struct CheckSpecificationExprHelper
         return std::nullopt;
       }
     }
+    for (const semantics::Scope *s{&scope_}; !s->IsGlobal();) {
+      s = &s->parent();
+      if (s == &symbol.owner()) {
+        return std::nullopt;
+      }
+    }
     return "reference to local entity '"s + symbol.name().ToString() + "'";
   }
 
@@ -179,14 +187,17 @@ struct CheckSpecificationExprHelper
     // Don't look at the component symbol.
     return (*this)(x.base());
   }
+  Result operator()(const DescriptorInquiry &) const {
+    // Subtle: Uses of SIZE(), LBOUND(), &c. that are valid in specification
+    // expressions will have been converted to expressions over descriptor
+    // inquiries by Fold().
+    return std::nullopt;
+  }
 
   template<typename T> Result operator()(const FunctionRef<T> &x) const {
     if (const auto *symbol{x.proc().GetSymbol()}) {
       if (!symbol->attrs().test(semantics::Attr::PURE)) {
         return "reference to impure function '"s + symbol->name().ToString() +
-            "'";
-      } else if (symbol->owner().kind() == semantics::Scope::Kind::Subprogram) {
-        return "reference to internal function '"s + symbol->name().ToString() +
             "'";
       }
       // TODO: other checks for standard module procedures
@@ -196,17 +207,21 @@ struct CheckSpecificationExprHelper
         return std::nullopt;  // no need to check argument(s)
       }
       if (IsConstantExpr(x)) {
-        return std::nullopt;  // inquiry functions may not need to check
-                              // argument(s)
+        // inquiry functions may not need to check argument(s)
+        return std::nullopt;
       }
     }
     return (*this)(x.arguments());
   }
+
+private:
+  const semantics::Scope &scope_;
 };
 
 template<typename A>
-void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages) {
-  if (auto why{CheckSpecificationExprHelper{}(x)}) {
+void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages,
+    const semantics::Scope &scope) {
+  if (auto why{CheckSpecificationExprHelper{scope}(x)}) {
     std::stringstream ss;
     ss << x;
     messages.Say("The expression (%s) cannot be used as a "
@@ -215,11 +230,11 @@ void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages) {
   }
 }
 
+template void CheckSpecificationExpr(const Expr<SomeType> &,
+    parser::ContextualMessages &, const semantics::Scope &);
+template void CheckSpecificationExpr(const std::optional<Expr<SomeInteger>> &,
+    parser::ContextualMessages &, const semantics::Scope &);
 template void CheckSpecificationExpr(
-    const Expr<SomeType> &, parser::ContextualMessages &);
-template void CheckSpecificationExpr(
-    const std::optional<Expr<SomeInteger>> &, parser::ContextualMessages &);
-template void CheckSpecificationExpr(
-    const std::optional<Expr<SubscriptInteger>> &,
-    parser::ContextualMessages &);
+    const std::optional<Expr<SubscriptInteger>> &, parser::ContextualMessages &,
+    const semantics::Scope &);
 }

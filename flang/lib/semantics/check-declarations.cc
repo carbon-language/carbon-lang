@@ -21,6 +21,7 @@
 #include "tools.h"
 #include "type.h"
 #include "../evaluate/check-expression.h"
+#include "../evaluate/fold.h"
 
 namespace Fortran::semantics {
 
@@ -28,56 +29,61 @@ class CheckHelper {
 public:
   explicit CheckHelper(SemanticsContext &c) : context_{c} {}
 
-  void Check() const { Check(context_.globalScope()); }
-  void Check(const ParamValue &value) const {
-    CheckSpecExpr(value.GetExplicit());
-  }
-  void Check(const Bound &bound) const { CheckSpecExpr(bound.GetExplicit()); }
-  void Check(const ShapeSpec &spec) const {
+  void Check() { Check(context_.globalScope()); }
+  void Check(const ParamValue &value) { CheckSpecExpr(value.GetExplicit()); }
+  void Check(Bound &bound) { CheckSpecExpr(bound.GetExplicit()); }
+  void Check(ShapeSpec &spec) {
     Check(spec.lbound());
     Check(spec.ubound());
   }
-  void Check(const ArraySpec &shape) const {
-    for (const auto &spec : shape) {
+  void Check(ArraySpec &shape) {
+    for (auto &spec : shape) {
       Check(spec);
     }
   }
-  void Check(const DeclTypeSpec &type) const {
+  void Check(DeclTypeSpec &type) {
     if (type.category() == DeclTypeSpec::Character) {
       Check(type.characterTypeSpec().length());
     } else if (const DerivedTypeSpec * spec{type.AsDerived()}) {
-      for (const auto &parm : spec->parameters()) {
+      for (auto &parm : spec->parameters()) {
         Check(parm.second);
       }
     }
   }
-  void Check(const Symbol &) const;
-  void Check(const Scope &scope) const {
-    for (const auto &pair : scope) {
+  void Check(Symbol &);
+  void Check(Scope &scope) {
+    scope_ = &scope;
+    for (auto &pair : scope) {
       Check(*pair.second);
     }
-    for (const Scope &child : scope.children()) {
+    for (Scope &child : scope.children()) {
       Check(child);
     }
   }
 
 private:
-  template<typename A> void CheckSpecExpr(const A &x) const {
-    evaluate::CheckSpecificationExpr(x, messages_);
+  template<typename A> void CheckSpecExpr(A &x) {
+    x = Fold(foldingContext_, std::move(x));
+    evaluate::CheckSpecificationExpr(x, messages_, DEREF(scope_));
+  }
+  template<typename A> void CheckSpecExpr(const A &x) {
+    evaluate::CheckSpecificationExpr(x, messages_, DEREF(scope_));
   }
 
   SemanticsContext &context_;
-  parser::ContextualMessages &messages_{context_.foldingContext().messages()};
+  evaluate::FoldingContext &foldingContext_{context_.foldingContext()};
+  parser::ContextualMessages &messages_{foldingContext_.messages()};
+  const Scope *scope_{nullptr};
 };
 
-void CheckHelper::Check(const Symbol &symbol) const {
+void CheckHelper::Check(Symbol &symbol) {
   if (context_.HasError(symbol) || symbol.has<UseDetails>() ||
       symbol.has<HostAssocDetails>()) {
     return;
   }
   auto save{messages_.SetLocation(symbol.name())};
   context_.set_location(symbol.name());
-  if (const DeclTypeSpec * type{symbol.GetType()}) {
+  if (DeclTypeSpec * type{symbol.GetType()}) {
     Check(*type);
   }
   if (IsAssumedLengthCharacterFunction(symbol)) {  // C723
@@ -104,7 +110,7 @@ void CheckHelper::Check(const Symbol &symbol) const {
       }
     }
   }
-  if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+  if (auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
     Check(object->shape());
     Check(object->coshape());
   }

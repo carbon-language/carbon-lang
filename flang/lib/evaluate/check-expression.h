@@ -24,6 +24,9 @@
 namespace Fortran::parser {
 class ContextualMessages;
 }
+namespace Fortran::semantics {
+class Scope;
+}
 
 namespace Fortran::evaluate {
 
@@ -41,13 +44,15 @@ bool IsInitialDataTarget(const Expr<SomeType> &);
 // (10.1.11(2), C1010).  Constant expressions are always valid
 // specification expressions.
 template<typename A>
-void CheckSpecificationExpr(const A &, parser::ContextualMessages &);
+void CheckSpecificationExpr(
+    const A &, parser::ContextualMessages &, const semantics::Scope &);
+extern template void CheckSpecificationExpr(const Expr<SomeType> &x,
+    parser::ContextualMessages &, const semantics::Scope &);
 extern template void CheckSpecificationExpr(
-    const Expr<SomeType> &x, parser::ContextualMessages &);
-extern template void CheckSpecificationExpr(
-    const std::optional<Expr<SomeInteger>> &x, parser::ContextualMessages &);
+    const std::optional<Expr<SomeInteger>> &x, parser::ContextualMessages &,
+    const semantics::Scope &);
 extern template void CheckSpecificationExpr(
     const std::optional<Expr<SubscriptInteger>> &x,
-    parser::ContextualMessages &);
+    parser::ContextualMessages &, const semantics::Scope &);
 }
 #endif

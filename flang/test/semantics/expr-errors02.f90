@@ -31,9 +31,9 @@ module m
   end interface
   integer :: coarray[*]
  contains
-  pure integer function modulefunc(n)
+  pure integer function modulefunc1(n)
     integer, value :: n
-    modulefunc = n
+    modulefunc1 = n
   end function
   subroutine test(out, optional)
     !ERROR: The expression (foo()) cannot be used as a specification expression (reference to impure function 'foo')
@@ -41,7 +41,7 @@ module m
     integer :: local
     !ERROR: The expression (local) cannot be used as a specification expression (reference to local entity 'local')
     type(t(local)) :: x2
-    !ERROR: Cannot call function 'internal' in this context
+    !ERROR: The internal function 'internal' cannot be referenced in a specification expression
     type(t(internal(0))) :: x3
     integer, intent(out) :: out
     !ERROR: The expression (out) cannot be used as a specification expression (reference to INTENT(OUT) dummy argument 'out')
@@ -54,11 +54,17 @@ module m
     !ERROR: The expression (coarray[1_8]) cannot be used as a specification expression (coindexed reference)
     type(t(coarray[1])) :: x7
     type(t(kind(foo()))) :: x101 ! ok
-    type(t(modulefunc(0))) :: x102 ! ok
+    type(t(modulefunc1(0))) :: x102 ! ok
+    !ERROR: The module function 'modulefunc2' must have been previously defined when referenced in a specification expression
+    type(t(modulefunc2(0))) :: x103 ! ok
    contains
     pure integer function internal(n)
       integer, value :: n
       internal = n
     end function
   end subroutine
+  pure integer function modulefunc2(n)
+    integer, value :: n
+    modulefunc2 = n
+  end function
 end module
