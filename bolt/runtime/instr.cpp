@@ -15,7 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdint>
+
+#include "config.h"
+#ifdef HAVE_ELF_H
 #include <elf.h>
+#endif
 
 //#define ENABLE_DEBUG
 
@@ -380,6 +384,7 @@ char *serializeLoc(const InstrumentationInfo &Info, char *OutBuf,
 
 // Read and map to memory the descriptions written by BOLT into the executable's
 // notes section
+#ifdef HAVE_ELF_H
 InstrumentationInfo readDescriptions() {
   InstrumentationInfo Result;
   uint64_t FD = __open("/proc/self/exe",
@@ -431,6 +436,15 @@ InstrumentationInfo readDescriptions() {
   reportError(ErrMsg, sizeof(ErrMsg));
   return Result;
 }
+#else
+InstrumentationInfo readDescriptions() {
+  InstrumentationInfo Result;
+  const char ErrMsg[] =
+    "BOLT instrumentation runtime error: unsupported binary format.\n";
+  reportError(ErrMsg, sizeof(ErrMsg));
+  return Result;
+}
+#endif
 
 void printStats(const InstrumentationInfo &Info) {
   char StatMsg[BufSize];

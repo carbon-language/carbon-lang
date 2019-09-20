@@ -16,6 +16,7 @@
 #include "DynoStats.h"
 #include "MCPlusBuilder.h"
 #include "llvm/ADT/edit_distance.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -3653,7 +3654,7 @@ void BinaryFunction::updateLayout(BinaryBasicBlock *Start,
 }
 
 bool BinaryFunction::checkForAmbiguousJumpTables() {
-  SmallPtrSet<uint64_t, 4> JumpTables;
+  SmallSet<uint64_t, 4> JumpTables;
   for (auto &BB : BasicBlocks) {
     for (auto &Inst : *BB) {
       if (!BC.MIB->isIndirectBranch(Inst))
@@ -3664,8 +3665,7 @@ bool BinaryFunction::checkForAmbiguousJumpTables() {
       // This address can be inside another jump table, but we only consider
       // it ambiguous when the same start address is used, not the same JT
       // object.
-      auto Iter = JumpTables.find(JTAddress);
-      if (Iter == JumpTables.end()) {
+      if (!JumpTables.count(JTAddress)) {
         JumpTables.insert(JTAddress);
         continue;
       }
