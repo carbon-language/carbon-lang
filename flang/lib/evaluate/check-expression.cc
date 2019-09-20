@@ -76,8 +76,9 @@ template bool IsConstantExpr(const Expr<SomeType> &);
 // data address used to initialize a pointer with "=> x".  See C765.
 // The caller is responsible for checking the base object symbol's
 // characteristics (TARGET, SAVE, &c.) since this code can't use GetUltimate().
-struct IsInitialDataTargetHelper
+class IsInitialDataTargetHelper
   : public AllTraverse<IsInitialDataTargetHelper> {
+public:
   using Base = AllTraverse<IsInitialDataTargetHelper>;
   using Base::operator();
   IsInitialDataTargetHelper() : Base{*this} {}
@@ -125,6 +126,9 @@ struct IsInitialDataTargetHelper
     return (*this)(x.left());
   }
   bool operator()(const Relational<SomeType> &) const { return false; }
+
+private:
+  const semantics::Symbol &(*GetUltimate)(const semantics::Symbol &);
 };
 
 bool IsInitialDataTarget(const Expr<SomeType> &x) {
