@@ -279,7 +279,10 @@ struct SetTraverse : public Base {
   using Base::Base;
   using Base::operator();
   static Set Combine(Set &&x, Set &&y) {
-    x.merge(y);
+    // TODO: use x.merge(y) instead when clang headers support it
+    for (auto &value : y) {
+      x.insert(std::move(value));
+    }
     return std::move(x);
   }
 };

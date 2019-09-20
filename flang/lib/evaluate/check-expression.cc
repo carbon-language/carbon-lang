@@ -17,6 +17,8 @@
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
 
+using namespace std::literals::string_literals;
+
 namespace Fortran::evaluate {
 
 // Constant expression predicate IsConstantExpr().
@@ -45,7 +47,7 @@ public:
   template<typename T> bool operator()(const FunctionRef<T> &call) const {
     if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
       return intrinsic->name == "kind";
-      // TODO: Obviously many other intrinsics can be allowed
+      // TODO: other inquiry intrinsics
     } else {
       return false;
     }
@@ -130,103 +132,86 @@ bool IsInitialDataTarget(const Expr<SomeType> &x) {
 }
 
 // Specification expression validation (10.1.11(2), C1010)
-class CheckSpecificationExprHelper
-  : public AllTraverse<CheckSpecificationExprHelper> {
-public:
-  using Base = AllTraverse<CheckSpecificationExprHelper>;
+struct CheckSpecificationExprHelper
+  : public AnyTraverse<CheckSpecificationExprHelper,
+        std::optional<std::string>> {
+  using Result = std::optional<std::string>;
+  using Base = AnyTraverse<CheckSpecificationExprHelper, Result>;
+  CheckSpecificationExprHelper() : Base{*this} {}
   using Base::operator();
 
-  explicit CheckSpecificationExprHelper(std::string &why)
-    : Base{*this}, why_{why} {
-    why_.clear();
+  Result operator()(const ProcedureDesignator &) const {
+    return "dummy procedure argument";
   }
+  Result operator()(const CoarrayRef &) const { return "coindexed reference"; }
 
-  bool operator()(const ProcedureDesignator &) {
-    return Say("dummy procedure argument");
-  }
-  bool operator()(const CoarrayRef &) { return Say("coindexed reference"); }
-
-  bool operator()(const semantics::Symbol &symbol) {
+  Result operator()(const semantics::Symbol &symbol) const {
     if (semantics::IsNamedConstant(symbol)) {
-      return true;
+      return std::nullopt;
     } else if (symbol.IsDummy()) {
       if (symbol.attrs().test(semantics::Attr::OPTIONAL)) {
-        return Say("reference to OPTIONAL dummy argument '" +
-            symbol.name().ToString() + "'");
+        return "reference to OPTIONAL dummy argument '"s +
+            symbol.name().ToString() + "'";
       } else if (symbol.attrs().test(semantics::Attr::INTENT_OUT)) {
-        return Say("reference to INTENT(OUT) dummy argument '" +
-            symbol.name().ToString() + "'");
+        return "reference to INTENT(OUT) dummy argument '"s +
+            symbol.name().ToString() + "'";
       } else if (symbol.has<semantics::ObjectEntityDetails>()) {
-        return true;
+        return std::nullopt;
       } else {
-        return Say("dummy procedure argument");
+        return "dummy procedure argument";
       }
     } else if (symbol.has<semantics::UseDetails>() ||
         symbol.has<semantics::HostAssocDetails>() ||
         symbol.owner().kind() == semantics::Scope::Kind::Module) {
-      return true;
+      return std::nullopt;
     } else if (const auto *object{
                    symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       // TODO: what about EQUIVALENCE with data in COMMON?
       // TODO: does this work for blank COMMON?
       if (object->commonBlock() != nullptr) {
-        return true;
+        return std::nullopt;
       }
     }
-    return Say("reference to local entity '" + symbol.name().ToString() + "'");
+    return "reference to local entity '"s + symbol.name().ToString() + "'";
   }
 
-  bool operator()(const Component &x) {
+  Result operator()(const Component &x) const {
     // Don't look at the component symbol.
     return (*this)(x.base());
   }
 
-  template<typename T> bool operator()(const FunctionRef<T> &x) {
+  template<typename T> Result operator()(const FunctionRef<T> &x) const {
     if (const auto *symbol{x.proc().GetSymbol()}) {
       if (!symbol->attrs().test(semantics::Attr::PURE)) {
-        return Say(
-            "reference to impure function '" + symbol->name().ToString() + "'");
+        return "reference to impure function '"s + symbol->name().ToString() +
+            "'";
       } else if (symbol->owner().kind() == semantics::Scope::Kind::Subprogram) {
-        return Say("reference to internal function '" +
-            symbol->name().ToString() + "'");
+        return "reference to internal function '"s + symbol->name().ToString() +
+            "'";
       }
       // TODO: other checks for standard module procedures
     } else {
       const SpecificIntrinsic &intrin{DEREF(x.proc().GetSpecificIntrinsic())};
       if (intrin.name == "present") {
-        return true;  // no need to check argument(s)
+        return std::nullopt;  // no need to check argument(s)
       }
       if (IsConstantExpr(x)) {
-        return true;  // inquiry functions may not need to check argument(s)
+        return std::nullopt;  // inquiry functions may not need to check
+                              // argument(s)
       }
     }
     return (*this)(x.arguments());
   }
-
-private:
-  bool Say(std::string &&s) {
-    if (!why_.empty()) {
-      why_ += "; ";
-    }
-    why_ += std::move(s);
-    return false;
-  }
-
-  std::string &why_;
 };
 
 template<typename A>
 void CheckSpecificationExpr(const A &x, parser::ContextualMessages &messages) {
-  std::string why;
-  if (!CheckSpecificationExprHelper{why}(x)) {
+  if (auto why{CheckSpecificationExprHelper{}(x)}) {
     std::stringstream ss;
     ss << x;
-    if (!why.empty()) {
-      why = " ("s + why + ')';
-    }
     messages.Say("The expression (%s) cannot be used as a "
-                 "specification expression%s"_err_en_US,
-        ss.str(), why);
+                 "specification expression (%s)"_err_en_US,
+        ss.str(), *why);
   }
 }
 

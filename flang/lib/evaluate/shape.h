@@ -125,9 +125,9 @@ public:
   template<typename D, typename R, typename LO, typename RO>
   Result operator()(const Operation<D, R, LO, RO> &operation) const {
     if (operation.right().Rank() > 0) {
-      (*this)(operation.right());
+      return (*this)(operation.right());
     } else {
-      (*this)(operation.left());
+      return (*this)(operation.left());
     }
   }
 

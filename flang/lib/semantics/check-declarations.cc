@@ -51,45 +51,7 @@ public:
       }
     }
   }
-  void Check(const Symbol &symbol) const {
-    if (context_.HasError(symbol) || symbol.has<UseDetails>() ||
-        symbol.has<HostAssocDetails>()) {
-      return;
-    }
-    auto save{messages_.SetLocation(symbol.name())};
-    context_.set_location(symbol.name());
-    if (const DeclTypeSpec * type{symbol.GetType()}) {
-      Check(*type);
-    }
-    if (IsAssumedLengthCharacterFunction(symbol)) {  // C723
-      if (symbol.attrs().test(Attr::RECURSIVE)) {
-        context_.Say(
-            "An assumed-length CHARACTER(*) function cannot be RECURSIVE"_err_en_US);
-      }
-      if (symbol.Rank() > 0) {
-        context_.Say(
-            "An assumed-length CHARACTER(*) function cannot return an array"_err_en_US);
-      }
-      if (symbol.attrs().test(Attr::PURE)) {
-        context_.Say(
-            "An assumed-length CHARACTER(*) function cannot be PURE"_err_en_US);
-      }
-      if (symbol.attrs().test(Attr::ELEMENTAL)) {
-        context_.Say(
-            "An assumed-length CHARACTER(*) function cannot be ELEMENTAL"_err_en_US);
-      }
-      if (const Symbol * result{FindFunctionResult(symbol)}) {
-        if (result->attrs().test(Attr::POINTER)) {
-          context_.Say(
-              "An assumed-length CHARACTER(*) function cannot return a POINTER"_err_en_US);
-        }
-      }
-    }
-    if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
-      Check(object->shape());
-      Check(object->coshape());
-    }
-  }
+  void Check(const Symbol &) const;
   void Check(const Scope &scope) const {
     for (const auto &pair : scope) {
       Check(*pair.second);
@@ -107,6 +69,46 @@ private:
   SemanticsContext &context_;
   parser::ContextualMessages &messages_{context_.foldingContext().messages()};
 };
+
+void CheckHelper::Check(const Symbol &symbol) const {
+  if (context_.HasError(symbol) || symbol.has<UseDetails>() ||
+      symbol.has<HostAssocDetails>()) {
+    return;
+  }
+  auto save{messages_.SetLocation(symbol.name())};
+  context_.set_location(symbol.name());
+  if (const DeclTypeSpec * type{symbol.GetType()}) {
+    Check(*type);
+  }
+  if (IsAssumedLengthCharacterFunction(symbol)) {  // C723
+    if (symbol.attrs().test(Attr::RECURSIVE)) {
+      context_.Say(
+          "An assumed-length CHARACTER(*) function cannot be RECURSIVE"_err_en_US);
+    }
+    if (symbol.Rank() > 0) {
+      context_.Say(
+          "An assumed-length CHARACTER(*) function cannot return an array"_err_en_US);
+    }
+    if (symbol.attrs().test(Attr::PURE)) {
+      context_.Say(
+          "An assumed-length CHARACTER(*) function cannot be PURE"_err_en_US);
+    }
+    if (symbol.attrs().test(Attr::ELEMENTAL)) {
+      context_.Say(
+          "An assumed-length CHARACTER(*) function cannot be ELEMENTAL"_err_en_US);
+    }
+    if (const Symbol * result{FindFunctionResult(symbol)}) {
+      if (result->attrs().test(Attr::POINTER)) {
+        context_.Say(
+            "An assumed-length CHARACTER(*) function cannot return a POINTER"_err_en_US);
+      }
+    }
+  }
+  if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+    Check(object->shape());
+    Check(object->coshape());
+  }
+}
 
 void CheckDeclarations(SemanticsContext &context) {
   CheckHelper{context}.Check();

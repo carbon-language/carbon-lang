@@ -23,7 +23,7 @@
 
 namespace Fortran::parser {
 class ContextualMessages;
-};
+}
 
 namespace Fortran::evaluate {
 

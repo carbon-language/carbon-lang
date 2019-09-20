@@ -390,12 +390,12 @@ auto GetShapeHelper::operator()(const NamedEntity &base) const -> Result {
     if (IsImpliedShape(symbol)) {
       return (*this)(object->init());
     } else {
-      Shape result;
+      Shape shape;
       int n{object->shape().Rank()};
       for (int dimension{0}; dimension < n; ++dimension) {
-        result.emplace_back(GetExtent(context_, base, dimension));
+        shape.emplace_back(GetExtent(context_, base, dimension));
       }
-      return std::move(result);
+      return shape;
     }
   } else {
     return (*this)(symbol);
@@ -414,7 +414,7 @@ auto GetShapeHelper::operator()(const ArrayRef &arrayRef) const -> Result {
   if (shape.empty()) {
     return (*this)(arrayRef.base());
   } else {
-    return std::move(shape);
+    return shape;
   }
 }
 
@@ -431,7 +431,7 @@ auto GetShapeHelper::operator()(const CoarrayRef &coarrayRef) const -> Result {
   if (shape.empty()) {
     return (*this)(base);
   } else {
-    return std::move(shape);
+    return shape;
   }
 }
 
