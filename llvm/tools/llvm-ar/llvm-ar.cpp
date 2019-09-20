@@ -927,8 +927,7 @@ static int performOperation(ArchiveOperation Operation,
   if (!EC) {
     Error Err = Error::success();
     object::Archive Archive(Buf.get()->getMemBufferRef(), Err);
-    EC = errorToErrorCode(std::move(Err));
-    failIfError(EC, "error loading '" + ArchiveName + "': " + EC.message());
+    failIfError(std::move(Err), "unable to load '" + ArchiveName + "'");
     if (Archive.isThin())
       CompareFullPath = true;
     performOperation(Operation, &Archive, std::move(Buf.get()), NewMembers);
