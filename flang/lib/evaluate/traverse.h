@@ -16,14 +16,14 @@
 #define FORTRAN_EVALUATE_TRAVERSE_H_
 
 // A utility for scanning all of the constituent objects in an Expr<>
-// expression representation with a sheaf of mutually-recursive functions.
+// expression representation using a collection of mutually recursive
+// functions to compose a function object.
 //
 // The class template Traverse<> below implements a function object that
 // can handle every type that can appear in or around an Expr<>.
 // Each of its overloads for operator() should be viewed as a *default*
-// handler that can be overridden by the client.  These default handlers
-// simply forward the constituents of the argument to the client's
-// visitor function object.
+// handler; some of these must be overridden by the client to accomplish
+// its particular task.
 //
 // The client (Visitor) of Traverse<Visitor,Result> must define:
 // - a member function "Result Default();"
@@ -32,13 +32,23 @@
 //   handler that reflects back into Traverse<Visitor, Result>
 // - overrides for "Result operator()"
 //
-// Boilerplate classes follow that ease construction of visitors.
+// Boilerplate classes also appear below to ease construction of visitors.
 // See CheckSpecificationExpr() in check-expression.cc for an example client.
+//
+// How this works:
+// - The operator() overloads in Traverse<> invoke the visitor's Default() for
+//   expression leaf nodes.  They invoke the visitor's operator() for the
+//   subtrees of interior nodes, and the visitor's Combine() to merge their
+//   results together.
+// - The default operator() inherited into each visitor just reflects right
+//   back into Traverse<> to descend into subtrees.
+// - Overloads of operator() in each visitor handle the cases of interest.
 
 #include "expression.h"
 #include "../semantics/symbol.h"
 #include "../semantics/type.h"
 #include <set>
+#include <type_traits>
 
 namespace Fortran::evaluate {
 template<typename Visitor, typename Result> class Traverse {
@@ -249,29 +259,37 @@ private:
   Traverse<Visitor, Result> traverse_;
 };
 
-template<typename Visitor, typename Base = TraverseBase<Visitor, bool>>
-struct AllTraverse : public Base {
-  using Base::Base;
-  using Base::operator();
-  static constexpr bool Default() { return true; }
-  static constexpr bool Combine(bool x, bool y) { return x && y; }
-};
-
-// For OR-combining default-false Boolean searches, pointers, and
-// std::optional<> search results.
-template<typename Visitor, typename Result = bool,
+template<typename Visitor, typename Result = bool, bool isConjunction = true,
     typename Base = TraverseBase<Visitor, Result>>
-struct AnyTraverse : public Base {
+struct CombiningTraverse : public Base {
   using Base::Base;
   using Base::operator();
-  static Result Combine(Result &&x, Result &&y) {
-    if (x) {
-      return std::move(x);
+  static Result Default() {
+    if constexpr (isConjunction && std::is_same_v<Result, bool>) {
+      return true;
     } else {
+      return {};
+    }
+  }
+  static Result Combine(Result &&x, Result &&y) {
+    if (static_cast<bool>(x) == isConjunction) {
       return std::move(y);
+    } else {
+      return std::move(x);
     }
   }
 };
+
+// For validity checks across an expression: if any operator() is
+// false, the result is false.
+template<typename Visitor, typename Result = bool>
+using AllTraverse = CombiningTraverse<Visitor, Result, true>;
+
+// For searches over an expression: the first operator() result that
+// is truthful is the final result.  Works for Booleans, pointers,
+// and std::optional<>.
+template<typename Visitor, typename Result = bool>
+using AnyTraverse = CombiningTraverse<Visitor, Result, false>;
 
 template<typename Visitor, typename Set,
     typename Base = TraverseBase<Visitor, Set>>
@@ -279,10 +297,13 @@ struct SetTraverse : public Base {
   using Base::Base;
   using Base::operator();
   static Set Combine(Set &&x, Set &&y) {
-    // TODO: use x.merge(y) instead when clang headers support it
+#if CLANG_LIBRARIES  // no std::set::merge()
     for (auto &value : y) {
       x.insert(std::move(value));
     }
+#else
+    x.merge(y);
+#endif
     return std::move(x);
   }
 };

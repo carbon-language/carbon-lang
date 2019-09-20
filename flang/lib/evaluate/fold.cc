@@ -17,7 +17,6 @@
 #include "characteristics.h"
 #include "common.h"
 #include "constant.h"
-#include "descender.h"
 #include "expression.h"
 #include "formatting.h"
 #include "host.h"
