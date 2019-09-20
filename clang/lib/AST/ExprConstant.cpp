@@ -4102,10 +4102,6 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
   // If we're hunting down a 'case' or 'default' label, recurse through
   // substatements until we hit the label.
   if (Case) {
-    // FIXME: We don't start the lifetime of objects whose initialization we
-    // jump over. However, such objects must be of class type with a trivial
-    // default constructor that initialize all subobjects, so must be empty,
-    // so this almost never matters.
     switch (S->getStmtClass()) {
     case Stmt::CompoundStmtClass:
       // FIXME: Precompute which substatement of a compound statement we
