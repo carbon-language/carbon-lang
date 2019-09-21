@@ -86,6 +86,7 @@ int struct_test(S s1, S s2, S *s3, T t) {
   return s3->field == s3->field;  // expected-warning {{self-comparison always evaluates to true}}
   return s3->static_field == S::static_field;  // expected-warning {{self-comparison always evaluates to true}}
   return s1.array[0] == s1.array[0];  // expected-warning {{self-comparison always evaluates to true}}
+  return s1.array[0] == s1.array[0ull];  // expected-warning {{self-comparison always evaluates to true}}
   return s1.array[I1] == s1.array[I1];  // expected-warning {{self-comparison always evaluates to true}}
   return s1.array[s2.array[0]] == s1.array[s2.array[0]];  // expected-warning {{self-comparison always evaluates to true}}
   return s3->array[t.field] == s3->array[t.field];  // expected-warning {{self-comparison always evaluates to true}}

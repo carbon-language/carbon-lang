@@ -3983,7 +3983,8 @@ bool Expr::isSameComparisonOperand(const Expr* E1, const Expr* E2) {
         const auto Integer1 = dyn_cast<IntegerLiteral>(Idx1);
         const auto Integer2 = dyn_cast<IntegerLiteral>(Idx2);
         if (Integer1 && Integer2) {
-          if (Integer1->getValue() != Integer2->getValue())
+          if (!llvm::APInt::isSameValue(Integer1->getValue(),
+                                        Integer2->getValue()))
             return false;
         } else {
           if (!isSameComparisonOperand(Idx1, Idx2))
