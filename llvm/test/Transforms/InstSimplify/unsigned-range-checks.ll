@@ -84,9 +84,7 @@ define i1 @t7(i8 %x, i8 %y) {
 define i1 @t8(i8 %x, i8 %y) {
 ; CHECK-LABEL: @t8(
 ; CHECK-NEXT:    [[NOT_NULL:%.*]] = icmp eq i8 [[Y:%.*]], 0
-; CHECK-NEXT:    [[NO_UNDERFLOW:%.*]] = icmp ule i8 [[Y]], [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = and i1 [[NOT_NULL]], [[NO_UNDERFLOW]]
-; CHECK-NEXT:    ret i1 [[R]]
+; CHECK-NEXT:    ret i1 [[NOT_NULL]]
 ;
   %not_null = icmp eq i8 %y, 0
   %no_underflow = icmp ule i8 %y, %x
