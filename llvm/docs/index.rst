@@ -21,6 +21,9 @@ Several introductory papers and presentations.
 .. toctree::
    :hidden:
 
+   FAQ
+   Lexicon
+
 `Introduction to the LLVM Compiler`__
   Presentation providing a users introduction to LLVM.
 
