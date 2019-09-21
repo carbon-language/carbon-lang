@@ -177,9 +177,9 @@ Status NativeProcessWindows::Detach() {
     else
       LLDB_LOG(log, "Detaching process error: {0}", error);
   } else {
-    error.SetErrorStringWithFormat("error: process {0} in state = {1}, but "
-                                   "cannot detach it in this state.",
-                                   GetID(), state);
+    error.SetErrorStringWithFormatv("error: process {0} in state = {1}, but "
+                                    "cannot detach it in this state.",
+                                    GetID(), state);
     LLDB_LOG(log, "error: {0}", error);
   }
   return error;
