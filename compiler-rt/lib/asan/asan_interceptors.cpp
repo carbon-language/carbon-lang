@@ -164,6 +164,11 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
     ASAN_MEMSET_IMPL(ctx, block, c, size);                  \
   } while (false)
 
+#if CAN_SANITIZE_LEAKS
+#define COMMON_INTERCEPTOR_STRERROR()                       \
+  __lsan::ScopedInterceptorDisabler disabler
+#endif
+
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 #include "sanitizer_common/sanitizer_signal_interceptors.inc"
 
