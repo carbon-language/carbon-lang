@@ -1018,7 +1018,9 @@ bool AArch64InstructionSelector::selectVectorSHL(
     return false;
 
   unsigned Opc = 0;
-  if (Ty == LLT::vector(4, 32)) {
+  if (Ty == LLT::vector(2, 64)) {
+    Opc = AArch64::USHLv2i64;
+  } else if (Ty == LLT::vector(4, 32)) {
     Opc = AArch64::USHLv4i32;
   } else if (Ty == LLT::vector(2, 32)) {
     Opc = AArch64::USHLv2i32;
