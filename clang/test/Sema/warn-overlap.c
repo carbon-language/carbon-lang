@@ -141,3 +141,20 @@ int returns(int x) {
   return x < 1 || x != 0;
   // expected-warning@-1{{overlapping comparisons always evaluate to true}}
 }
+
+int integer_conversion(unsigned x, int y) {
+  return x > 4 || x < 10;
+  // expected-warning@-1{{overlapping comparisons always evaluate to true}}
+  return y > 4u || y < 10u;
+  // expected-warning@-1{{overlapping comparisons always evaluate to true}}
+}
+
+int negative_compare(int x) {
+  return x > -1 || x < 1;
+  // expected-warning@-1{{overlapping comparisons always evaluate to true}}
+}
+
+int no_warning(unsigned x) {
+  return x >= 0 || x == 1;
+  // no warning since "x >= 0" is caught by a different tautological warning.
+}

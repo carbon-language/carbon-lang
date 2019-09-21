@@ -70,11 +70,35 @@ static SourceLocation GetEndLoc(Decl *D) {
   return D->getLocation();
 }
 
+/// Returns true on constant values based around a single IntegerLiteral.
+/// Allow for use of parentheses, integer casts, and negative signs.
+static bool IsIntegerLiteralConstantExpr(const Expr *E) {
+  // Allow parentheses
+  E = E->IgnoreParens();
+
+  // Allow conversions to different integer kind.
+  if (const auto *CE = dyn_cast<CastExpr>(E)) {
+    if (CE->getCastKind() != CK_IntegralCast)
+      return false;
+    E = CE->getSubExpr();
+  }
+
+  // Allow negative numbers.
+  if (const auto *UO = dyn_cast<UnaryOperator>(E)) {
+    if (UO->getOpcode() != UO_Minus)
+      return false;
+    E = UO->getSubExpr();
+  }
+
+  return isa<IntegerLiteral>(E);
+}
+
 /// Helper for tryNormalizeBinaryOperator. Attempts to extract an IntegerLiteral
-/// or EnumConstantDecl from the given Expr. If it fails, returns nullptr.
+/// constant expression or EnumConstantDecl from the given Expr. If it fails,
+/// returns nullptr.
 static const Expr *tryTransformToIntOrEnumConstant(const Expr *E) {
   E = E->IgnoreParens();
-  if (isa<IntegerLiteral>(E))
+  if (IsIntegerLiteralConstantExpr(E))
     return E;
   if (auto *DR = dyn_cast<DeclRefExpr>(E->IgnoreParenImpCasts()))
     return isa<EnumConstantDecl>(DR->getDecl()) ? DR : nullptr;
@@ -121,11 +145,11 @@ tryNormalizeBinaryOperator(const BinaryOperator *B) {
 static bool areExprTypesCompatible(const Expr *E1, const Expr *E2) {
   // User intent isn't clear if they're mixing int literals with enum
   // constants.
-  if (isa<IntegerLiteral>(E1) != isa<IntegerLiteral>(E2))
+  if (isa<DeclRefExpr>(E1) != isa<DeclRefExpr>(E2))
     return false;
 
   // Integer literal comparisons, regardless of literal type, are acceptable.
-  if (isa<IntegerLiteral>(E1))
+  if (!isa<DeclRefExpr>(E1))
     return true;
 
   // IntegerLiterals are handled above and only EnumConstantDecls are expected
@@ -1081,6 +1105,10 @@ private:
     // * Variable x is equal to the largest literal.
     // * Variable x is greater than largest literal.
     bool AlwaysTrue = true, AlwaysFalse = true;
+    // Track value of both subexpressions.  If either side is always
+    // true/false, another warning should have already been emitted.
+    bool LHSAlwaysTrue = true, LHSAlwaysFalse = true;
+    bool RHSAlwaysTrue = true, RHSAlwaysFalse = true;
     for (const llvm::APSInt &Value : Values) {
       TryResult Res1, Res2;
       Res1 = analyzeLogicOperatorCondition(BO1, Value, L1);
@@ -1096,10 +1124,16 @@ private:
         AlwaysTrue &= (Res1.isTrue() || Res2.isTrue());
         AlwaysFalse &= !(Res1.isTrue() || Res2.isTrue());
       }
+
+      LHSAlwaysTrue &= Res1.isTrue();
+      LHSAlwaysFalse &= Res1.isFalse();
+      RHSAlwaysTrue &= Res2.isTrue();
+      RHSAlwaysFalse &= Res2.isFalse();
     }
 
     if (AlwaysTrue || AlwaysFalse) {
-      if (BuildOpts.Observer)
+      if (!LHSAlwaysTrue && !LHSAlwaysFalse && !RHSAlwaysTrue &&
+          !RHSAlwaysFalse && BuildOpts.Observer)
         BuildOpts.Observer->compareAlwaysTrue(B, AlwaysTrue);
       return TryResult(AlwaysTrue);
     }

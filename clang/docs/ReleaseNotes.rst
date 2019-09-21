@@ -51,7 +51,8 @@ Major New Features
 Improvements to Clang's diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ...
+- -Wtautological-overlap-compare will warn on negative numbers and non-int
+  types.
 
 Non-comprehensive list of changes in this release
 -------------------------------------------------
