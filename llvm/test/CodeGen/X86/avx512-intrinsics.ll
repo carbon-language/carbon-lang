@@ -4798,6 +4798,24 @@ define <4 x float>@test_int_x86_avx512_mask_getmant_ss(<4 x float> %x0, <4 x flo
   ret <4 x float> %res13
 }
 
+define <4 x float> @test_int_x86_avx512_mask_getmant_ss_load(<4 x float> %x0, <4 x float>* %x1p) {
+; X64-LABEL: test_int_x86_avx512_mask_getmant_ss_load:
+; X64:       # %bb.0:
+; X64-NEXT:    vmovaps (%rdi), %xmm1
+; X64-NEXT:    vgetmantss $11, %xmm1, %xmm0, %xmm0
+; X64-NEXT:    retq
+;
+; X86-LABEL: test_int_x86_avx512_mask_getmant_ss_load:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    vmovaps (%eax), %xmm1
+; X86-NEXT:    vgetmantss $11, %xmm1, %xmm0, %xmm0
+; X86-NEXT:    retl
+  %x1 = load <4 x float>, <4 x float>* %x1p
+  %res = call <4 x float> @llvm.x86.avx512.mask.getmant.ss(<4 x float> %x0, <4 x float> %x1, i32 11, <4 x float> undef, i8 -1, i32 4)
+  ret <4 x float> %res
+}
+
 declare <8 x double> @llvm.x86.avx512.vpermilvar.pd.512(<8 x double>, <8 x i64>)
 
 define <8 x double>@test_int_x86_avx512_vpermilvar_pd_512(<8 x double> %x0, <8 x i64> %x1) {
