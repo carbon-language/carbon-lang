@@ -158,3 +158,17 @@ int no_warning(unsigned x) {
   return x >= 0 || x == 1;
   // no warning since "x >= 0" is caught by a different tautological warning.
 }
+
+struct A {
+  int x;
+  int y;
+};
+
+int struct_test(struct A a) {
+  return a.x > 5 && a.y < 1;  // no warning, different variables
+
+  return a.x > 5 && a.x < 1;
+  // expected-warning@-1{{overlapping comparisons always evaluate to false}}
+  return a.y == 1 || a.y != 1;
+  // expected-warning@-1{{overlapping comparisons always evaluate to true}}
+}

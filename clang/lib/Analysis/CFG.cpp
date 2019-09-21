@@ -105,12 +105,12 @@ static const Expr *tryTransformToIntOrEnumConstant(const Expr *E) {
   return nullptr;
 }
 
-/// Tries to interpret a binary operator into `Decl Op Expr` form, if Expr is
-/// an integer literal or an enum constant.
+/// Tries to interpret a binary operator into `Expr Op NumExpr` form, if
+/// NumExpr is an integer literal or an enum constant.
 ///
 /// If this fails, at least one of the returned DeclRefExpr or Expr will be
 /// null.
-static std::tuple<const DeclRefExpr *, BinaryOperatorKind, const Expr *>
+static std::tuple<const Expr *, BinaryOperatorKind, const Expr *>
 tryNormalizeBinaryOperator(const BinaryOperator *B) {
   BinaryOperatorKind Op = B->getOpcode();
 
@@ -132,8 +132,7 @@ tryNormalizeBinaryOperator(const BinaryOperator *B) {
     Constant = tryTransformToIntOrEnumConstant(B->getLHS());
   }
 
-  auto *D = dyn_cast<DeclRefExpr>(MaybeDecl->IgnoreParenImpCasts());
-  return std::make_tuple(D, Op, Constant);
+  return std::make_tuple(MaybeDecl, Op, Constant);
 }
 
 /// For an expression `x == Foo && x == Bar`, this determines whether the
@@ -1045,34 +1044,34 @@ private:
     if (!LHS->isComparisonOp() || !RHS->isComparisonOp())
       return {};
 
-    const DeclRefExpr *Decl1;
-    const Expr *Expr1;
+    const Expr *DeclExpr1;
+    const Expr *NumExpr1;
     BinaryOperatorKind BO1;
-    std::tie(Decl1, BO1, Expr1) = tryNormalizeBinaryOperator(LHS);
+    std::tie(DeclExpr1, BO1, NumExpr1) = tryNormalizeBinaryOperator(LHS);
 
-    if (!Decl1 || !Expr1)
+    if (!DeclExpr1 || !NumExpr1)
       return {};
 
-    const DeclRefExpr *Decl2;
-    const Expr *Expr2;
+    const Expr *DeclExpr2;
+    const Expr *NumExpr2;
     BinaryOperatorKind BO2;
-    std::tie(Decl2, BO2, Expr2) = tryNormalizeBinaryOperator(RHS);
+    std::tie(DeclExpr2, BO2, NumExpr2) = tryNormalizeBinaryOperator(RHS);
 
-    if (!Decl2 || !Expr2)
+    if (!DeclExpr2 || !NumExpr2)
       return {};
 
     // Check that it is the same variable on both sides.
-    if (Decl1->getDecl() != Decl2->getDecl())
+    if (!Expr::isSameComparisonOperand(DeclExpr1, DeclExpr2))
       return {};
 
     // Make sure the user's intent is clear (e.g. they're comparing against two
     // int literals, or two things from the same enum)
-    if (!areExprTypesCompatible(Expr1, Expr2))
+    if (!areExprTypesCompatible(NumExpr1, NumExpr2))
       return {};
 
     Expr::EvalResult L1Result, L2Result;
-    if (!Expr1->EvaluateAsInt(L1Result, *Context) ||
-        !Expr2->EvaluateAsInt(L2Result, *Context))
+    if (!NumExpr1->EvaluateAsInt(L1Result, *Context) ||
+        !NumExpr2->EvaluateAsInt(L2Result, *Context))
       return {};
 
     llvm::APSInt L1 = L1Result.Val.getInt();
