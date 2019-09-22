@@ -23,6 +23,7 @@ if (llvm_targets_to_build == "host") {
     "AArch64",
     "AMDGPU",
     "ARM",
+    "AVR",
     "BPF",
     "Hexagon",
     "Lanai",
@@ -51,6 +52,8 @@ foreach(target, llvm_targets_to_build) {
     # Nothing to do.
   } else if (target == "ARM") {
     llvm_build_ARM = true
+  } else if (target == "AVR") {
+    # Nothing to do.
   } else if (target == "BPF") {
     llvm_build_BPF = true
   } else if (target == "Hexagon") {
