@@ -2555,9 +2555,9 @@ class CXXConstructorDecl final
 
   ExplicitSpecifier getExplicitSpecifierInternal() const {
     if (CXXConstructorDeclBits.HasTrailingExplicitSpecifier)
-      return *getCanonicalDecl()->getTrailingObjects<ExplicitSpecifier>();
+      return *getTrailingObjects<ExplicitSpecifier>();
     return ExplicitSpecifier(
-        nullptr, getCanonicalDecl()->CXXConstructorDeclBits.IsSimpleExplicit
+        nullptr, CXXConstructorDeclBits.IsSimpleExplicit
                      ? ExplicitSpecKind::ResolvedTrue
                      : ExplicitSpecKind::ResolvedFalse);
   }
@@ -2598,10 +2598,10 @@ public:
          InheritedConstructor Inherited = InheritedConstructor());
 
   ExplicitSpecifier getExplicitSpecifier() {
-    return getExplicitSpecifierInternal();
+    return getCanonicalDecl()->getExplicitSpecifierInternal();
   }
   const ExplicitSpecifier getExplicitSpecifier() const {
-    return getExplicitSpecifierInternal();
+    return getCanonicalDecl()->getExplicitSpecifierInternal();
   }
 
   /// Return true if the declartion is already resolved to be explicit.
