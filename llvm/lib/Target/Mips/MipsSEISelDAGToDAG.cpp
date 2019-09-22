@@ -970,7 +970,7 @@ bool MipsSEDAGToDAGISel::trySelect(SDNode *Node) {
       break;
     }
 
-    SDNode *Res;
+    SDNode *Res = nullptr;
 
     // If we have a signed 10 bit integer, we can splat it directly.
     //
