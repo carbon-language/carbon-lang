@@ -628,8 +628,7 @@ define <2 x double> @test31_commute(<2 x double> %x, <2 x double> %x1, <2 x doub
 ;
 ; SKX-LABEL: test31_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovupd (%rdi), %xmm2 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0x10,0x17]
-; SKX-NEXT:    vcmpltpd %xmm0, %xmm2, %k1 ## encoding: [0x62,0xf1,0xed,0x08,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtpd (%rdi), %xmm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x08,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmpd %xmm0, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x09,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -675,8 +674,7 @@ define <4 x double> @test32_commute(<4 x double> %x, <4 x double> %x1, <4 x doub
 ;
 ; SKX-LABEL: test32_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovupd (%rdi), %ymm2 ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0x10,0x17]
-; SKX-NEXT:    vcmpltpd %ymm0, %ymm2, %k1 ## encoding: [0x62,0xf1,0xed,0x28,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtpd (%rdi), %ymm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x28,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmpd %ymm0, %ymm1, %ymm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x29,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -701,8 +699,7 @@ define <8 x double> @test33(<8 x double> %x, <8 x double> %x1, <8 x double>* %yp
 define <8 x double> @test33_commute(<8 x double> %x, <8 x double> %x1, <8 x double>* %yp) nounwind {
 ; CHECK-LABEL: test33_commute:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovupd (%rdi), %zmm2 ## encoding: [0x62,0xf1,0xfd,0x48,0x10,0x17]
-; CHECK-NEXT:    vcmpltpd %zmm0, %zmm2, %k1 ## encoding: [0x62,0xf1,0xed,0x48,0xc2,0xc8,0x01]
+; CHECK-NEXT:    vcmpgtpd (%rdi), %zmm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x48,0xc2,0x0f,0x0e]
 ; CHECK-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x49,0x65,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %y = load <8 x double>, <8 x double>* %yp, align 4
@@ -748,8 +745,7 @@ define <4 x float> @test34_commute(<4 x float> %x, <4 x float> %x1, <4 x float>*
 ;
 ; SKX-LABEL: test34_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovups (%rdi), %xmm2 ## EVEX TO VEX Compression encoding: [0xc5,0xf8,0x10,0x17]
-; SKX-NEXT:    vcmpltps %xmm0, %xmm2, %k1 ## encoding: [0x62,0xf1,0x6c,0x08,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtps (%rdi), %xmm0, %k1 ## encoding: [0x62,0xf1,0x7c,0x08,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmps %xmm0, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x09,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
   %y = load <4 x float>, <4 x float>* %yp, align 4
@@ -794,8 +790,7 @@ define <8 x float> @test35_commute(<8 x float> %x, <8 x float> %x1, <8 x float>*
 ;
 ; SKX-LABEL: test35_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovups (%rdi), %ymm2 ## EVEX TO VEX Compression encoding: [0xc5,0xfc,0x10,0x17]
-; SKX-NEXT:    vcmpltps %ymm0, %ymm2, %k1 ## encoding: [0x62,0xf1,0x6c,0x28,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtps (%rdi), %ymm0, %k1 ## encoding: [0x62,0xf1,0x7c,0x28,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmps %ymm0, %ymm1, %ymm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x29,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -820,8 +815,7 @@ define <16 x float> @test36(<16 x float> %x, <16 x float> %x1, <16 x float>* %yp
 define <16 x float> @test36_commute(<16 x float> %x, <16 x float> %x1, <16 x float>* %yp) nounwind {
 ; CHECK-LABEL: test36_commute:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovups (%rdi), %zmm2 ## encoding: [0x62,0xf1,0x7c,0x48,0x10,0x17]
-; CHECK-NEXT:    vcmpltps %zmm0, %zmm2, %k1 ## encoding: [0x62,0xf1,0x6c,0x48,0xc2,0xc8,0x01]
+; CHECK-NEXT:    vcmpgtps (%rdi), %zmm0, %k1 ## encoding: [0x62,0xf1,0x7c,0x48,0xc2,0x0f,0x0e]
 ; CHECK-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x49,0x65,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %y = load <16 x float>, <16 x float>* %yp, align 4
@@ -849,8 +843,7 @@ define <8 x double> @test37(<8 x double> %x, <8 x double> %x1, double* %ptr) nou
 define <8 x double> @test37_commute(<8 x double> %x, <8 x double> %x1, double* %ptr) nounwind {
 ; CHECK-LABEL: test37_commute:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm2 ## encoding: [0x62,0xf2,0xfd,0x48,0x19,0x17]
-; CHECK-NEXT:    vcmpltpd %zmm0, %zmm2, %k1 ## encoding: [0x62,0xf1,0xed,0x48,0xc2,0xc8,0x01]
+; CHECK-NEXT:    vcmpgtpd (%rdi){1to8}, %zmm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x58,0xc2,0x0f,0x0e]
 ; CHECK-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x49,0x65,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
 
@@ -902,8 +895,7 @@ define <4 x double> @test38_commute(<4 x double> %x, <4 x double> %x1, double* %
 ;
 ; SKX-LABEL: test38_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vbroadcastsd (%rdi), %ymm2 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x7d,0x19,0x17]
-; SKX-NEXT:    vcmpltpd %ymm0, %ymm2, %k1 ## encoding: [0x62,0xf1,0xed,0x28,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtpd (%rdi){1to4}, %ymm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x38,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmpd %ymm0, %ymm1, %ymm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x29,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -959,9 +951,7 @@ define <2 x double> @test39_commute(<2 x double> %x, <2 x double> %x1, double* %
 ;
 ; SKX-LABEL: test39_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vmovddup (%rdi), %xmm2 ## EVEX TO VEX Compression encoding: [0xc5,0xfb,0x12,0x17]
-; SKX-NEXT:    ## xmm2 = mem[0,0]
-; SKX-NEXT:    vcmpltpd %xmm0, %xmm2, %k1 ## encoding: [0x62,0xf1,0xed,0x08,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtpd (%rdi){1to2}, %xmm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x18,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmpd %xmm0, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x09,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -994,8 +984,7 @@ define <16  x float> @test40(<16  x float> %x, <16  x float> %x1, float* %ptr) n
 define <16  x float> @test40_commute(<16  x float> %x, <16  x float> %x1, float* %ptr) nounwind {
 ; CHECK-LABEL: test40_commute:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm2 ## encoding: [0x62,0xf2,0x7d,0x48,0x18,0x17]
-; CHECK-NEXT:    vcmpltps %zmm0, %zmm2, %k1 ## encoding: [0x62,0xf1,0x6c,0x48,0xc2,0xc8,0x01]
+; CHECK-NEXT:    vcmpgtps (%rdi){1to16}, %zmm0, %k1 ## encoding: [0x62,0xf1,0x7c,0x58,0xc2,0x0f,0x0e]
 ; CHECK-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x49,0x65,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
 
@@ -1047,8 +1036,7 @@ define <8  x float> @test41_commute(<8  x float> %x, <8  x float> %x1, float* %p
 ;
 ; SKX-LABEL: test41_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vbroadcastss (%rdi), %ymm2 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x7d,0x18,0x17]
-; SKX-NEXT:    vcmpltps %ymm0, %ymm2, %k1 ## encoding: [0x62,0xf1,0x6c,0x28,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtps (%rdi){1to8}, %ymm0, %k1 ## encoding: [0x62,0xf1,0x7c,0x38,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmps %ymm0, %ymm1, %ymm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x29,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -1102,8 +1090,7 @@ define <4  x float> @test42_commute(<4  x float> %x, <4  x float> %x1, float* %p
 ;
 ; SKX-LABEL: test42_commute:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vbroadcastss (%rdi), %xmm2 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x18,0x17]
-; SKX-NEXT:    vcmpltps %xmm0, %xmm2, %k1 ## encoding: [0x62,0xf1,0x6c,0x08,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtps (%rdi){1to4}, %xmm0, %k1 ## encoding: [0x62,0xf1,0x7c,0x18,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmps %xmm0, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x09,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 
@@ -1157,8 +1144,7 @@ define <8 x double> @test43_commute(<8 x double> %x, <8 x double> %x1, double* %
 ; KNL:       ## %bb.0:
 ; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2 ## encoding: [0x62,0xf2,0x7d,0x48,0x24,0xd2]
 ; KNL-NEXT:    vpsllq $63, %zmm2, %zmm2 ## encoding: [0x62,0xf1,0xed,0x48,0x73,0xf2,0x3f]
-; KNL-NEXT:    vbroadcastsd (%rdi), %zmm3 ## encoding: [0x62,0xf2,0xfd,0x48,0x19,0x1f]
-; KNL-NEXT:    vcmpltpd %zmm0, %zmm3, %k1 ## encoding: [0x62,0xf1,0xe5,0x48,0xc2,0xc8,0x01]
+; KNL-NEXT:    vcmpgtpd (%rdi){1to8}, %zmm0, %k1 ## encoding: [0x62,0xf1,0xfd,0x58,0xc2,0x0f,0x0e]
 ; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k1 {%k1} ## encoding: [0x62,0xf2,0xed,0x49,0x27,0xca]
 ; KNL-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x49,0x65,0xc0]
 ; KNL-NEXT:    retq ## encoding: [0xc3]
@@ -1167,8 +1153,7 @@ define <8 x double> @test43_commute(<8 x double> %x, <8 x double> %x1, double* %
 ; AVX512BW:       ## %bb.0:
 ; AVX512BW-NEXT:    vpsllw $15, %xmm2, %xmm2 ## encoding: [0xc5,0xe9,0x71,0xf2,0x0f]
 ; AVX512BW-NEXT:    vpmovw2m %zmm2, %k1 ## encoding: [0x62,0xf2,0xfe,0x48,0x29,0xca]
-; AVX512BW-NEXT:    vbroadcastsd (%rdi), %zmm2 ## encoding: [0x62,0xf2,0xfd,0x48,0x19,0x17]
-; AVX512BW-NEXT:    vcmpltpd %zmm0, %zmm2, %k1 {%k1} ## encoding: [0x62,0xf1,0xed,0x49,0xc2,0xc8,0x01]
+; AVX512BW-NEXT:    vcmpgtpd (%rdi){1to8}, %zmm0, %k1 {%k1} ## encoding: [0x62,0xf1,0xfd,0x59,0xc2,0x0f,0x0e]
 ; AVX512BW-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x49,0x65,0xc0]
 ; AVX512BW-NEXT:    retq ## encoding: [0xc3]
 ;
@@ -1176,8 +1161,7 @@ define <8 x double> @test43_commute(<8 x double> %x, <8 x double> %x1, double* %
 ; SKX:       ## %bb.0:
 ; SKX-NEXT:    vpsllw $15, %xmm2, %xmm2 ## EVEX TO VEX Compression encoding: [0xc5,0xe9,0x71,0xf2,0x0f]
 ; SKX-NEXT:    vpmovw2m %xmm2, %k1 ## encoding: [0x62,0xf2,0xfe,0x08,0x29,0xca]
-; SKX-NEXT:    vbroadcastsd (%rdi), %zmm2 ## encoding: [0x62,0xf2,0xfd,0x48,0x19,0x17]
-; SKX-NEXT:    vcmpltpd %zmm0, %zmm2, %k1 {%k1} ## encoding: [0x62,0xf1,0xed,0x49,0xc2,0xc8,0x01]
+; SKX-NEXT:    vcmpgtpd (%rdi){1to8}, %zmm0, %k1 {%k1} ## encoding: [0x62,0xf1,0xfd,0x59,0xc2,0x0f,0x0e]
 ; SKX-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x49,0x65,0xc0]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
 

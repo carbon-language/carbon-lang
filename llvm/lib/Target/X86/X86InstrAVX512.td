@@ -2560,26 +2560,26 @@ multiclass avx512_vcmp_common<X86FoldableSchedWrite sched, X86VectorVTInfo _,
 
   // Patterns for selecting with loads in other operand.
   def : Pat<(X86cmpm (_.LdFrag addr:$src2), (_.VT _.RC:$src1),
-                     imm:$cc),
+                     timm:$cc),
             (!cast<Instruction>(Name#_.ZSuffix#"rmi") _.RC:$src1, addr:$src2,
                                                       (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(and _.KRCWM:$mask, (X86cmpm_su (_.LdFrag addr:$src2),
                                             (_.VT _.RC:$src1),
-                                            imm:$cc)),
+                                            timm:$cc)),
             (!cast<Instruction>(Name#_.ZSuffix#"rmik") _.KRCWM:$mask,
                                                        _.RC:$src1, addr:$src2,
                                                        (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(X86cmpm (X86VBroadcast (_.ScalarLdFrag addr:$src2)),
-                     (_.VT _.RC:$src1), imm:$cc),
+                     (_.VT _.RC:$src1), timm:$cc),
             (!cast<Instruction>(Name#_.ZSuffix#"rmbi") _.RC:$src1, addr:$src2,
                                                        (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(and _.KRCWM:$mask, (X86cmpm_su (X86VBroadcast
                                              (_.ScalarLdFrag addr:$src2)),
                                             (_.VT _.RC:$src1),
-                                            imm:$cc)),
+                                            timm:$cc)),
             (!cast<Instruction>(Name#_.ZSuffix#"rmbik") _.KRCWM:$mask,
                                                         _.RC:$src1, addr:$src2,
                                                         (X86cmpm_imm_commute imm:$cc))>;
@@ -2618,11 +2618,11 @@ defm VCMPPS : avx512_vcmp<SchedWriteFCmp, avx512vl_f32_info>,
 // Patterns to select fp compares with load as first operand.
 let Predicates = [HasAVX512] in {
   def : Pat<(v1i1 (X86cmpms (loadf64 addr:$src2), FR64X:$src1,
-                            imm:$cc)),
+                            timm:$cc)),
             (VCMPSDZrm FR64X:$src1, addr:$src2, (X86cmpm_imm_commute imm:$cc))>;
 
   def : Pat<(v1i1 (X86cmpms (loadf32 addr:$src2), FR32X:$src1,
-                            imm:$cc)),
+                            timm:$cc)),
             (VCMPSSZrm FR32X:$src1, addr:$src2, (X86cmpm_imm_commute imm:$cc))>;
 }
 
