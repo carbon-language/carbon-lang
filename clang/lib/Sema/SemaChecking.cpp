@@ -11256,6 +11256,44 @@ static bool isSameWidthConstantConversion(Sema &S, Expr *E, QualType T,
   return true;
 }
 
+static void DiagnoseIntInBoolContext(Sema &S, const Expr *E) {
+  E = E->IgnoreParenImpCasts();
+  SourceLocation ExprLoc = E->getExprLoc();
+
+  if (const auto *CO = dyn_cast<ConditionalOperator>(E)) {
+    const auto *LHS = dyn_cast<IntegerLiteral>(CO->getTrueExpr());
+    if (!LHS) {
+      if (auto *UO = dyn_cast<UnaryOperator>(CO->getTrueExpr())) {
+        if (UO->getOpcode() == UO_Minus)
+          LHS = dyn_cast<IntegerLiteral>(UO->getSubExpr());
+        if (!LHS)
+          return;
+      } else {
+        return;
+      }
+    }
+
+    const auto *RHS = dyn_cast<IntegerLiteral>(CO->getFalseExpr());
+    if (!RHS) {
+      if (auto *UO = dyn_cast<UnaryOperator>(CO->getFalseExpr())) {
+        if (UO->getOpcode() == UO_Minus)
+          RHS = dyn_cast<IntegerLiteral>(UO->getSubExpr());
+        if (!RHS)
+          return;
+      } else {
+        return;
+      }
+    }
+
+    if ((LHS->getValue() == 0 || LHS->getValue() == 1) &&
+        (RHS->getValue() == 0 || RHS->getValue() == 1))
+      // Do not diagnose common idioms
+      return;
+    if (LHS->getValue() != 0 && LHS->getValue() != 0)
+      S.Diag(ExprLoc, diag::warn_integer_constants_in_conditional_always_true);
+  }
+}
+
 static void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                                     SourceLocation CC,
                                     bool *ICContext = nullptr,
@@ -11707,6 +11745,9 @@ static void CheckConditionalOperator(Sema &S, ConditionalOperator *E,
   bool Suspicious = false;
   CheckConditionalOperand(S, E->getTrueExpr(), T, CC, Suspicious);
   CheckConditionalOperand(S, E->getFalseExpr(), T, CC, Suspicious);
+
+  if (T->isBooleanType())
+    DiagnoseIntInBoolContext(S, E);
 
   // If -Wconversion would have warned about either of the candidates
   // for a signedness conversion to the context type...

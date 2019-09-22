@@ -6137,6 +6137,10 @@ def warn_out_of_range_compare : Warning<
   InGroup<TautologicalOutOfRangeCompare>;
 def warn_tautological_bool_compare : Warning<warn_out_of_range_compare.Text>,
   InGroup<TautologicalConstantCompare>;
+def warn_integer_constants_in_conditional_always_true : Warning<
+  "converting the result of '?:' with integer constants to a boolean always "
+  "evaluates to 'true'">,
+  InGroup<TautologicalConstantCompare>;
 def warn_comparison_of_mixed_enum_types : Warning<
   "comparison of two values with different enumeration types"
   "%diff{ ($ and $)|}0,1">,
