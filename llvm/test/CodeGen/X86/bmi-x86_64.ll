@@ -86,9 +86,9 @@ define i64 @bextr64d(i64 %a) {
 ;
 ; BMI2-SLOW-LABEL: bextr64d:
 ; BMI2-SLOW:       # %bb.0: # %entry
-; BMI2-SLOW-NEXT:    shrq $2, %rdi
-; BMI2-SLOW-NEXT:    movb $33, %al
+; BMI2-SLOW-NEXT:    movl $35, %eax
 ; BMI2-SLOW-NEXT:    bzhiq %rax, %rdi, %rax
+; BMI2-SLOW-NEXT:    shrq $2, %rax
 ; BMI2-SLOW-NEXT:    retq
 ;
 ; BEXTR-FAST-LABEL: bextr64d:
@@ -113,10 +113,9 @@ define i64 @bextr64d_load(i64* %aptr) {
 ;
 ; BMI2-SLOW-LABEL: bextr64d_load:
 ; BMI2-SLOW:       # %bb.0: # %entry
-; BMI2-SLOW-NEXT:    movq (%rdi), %rax
+; BMI2-SLOW-NEXT:    movl $35, %eax
+; BMI2-SLOW-NEXT:    bzhiq %rax, (%rdi), %rax
 ; BMI2-SLOW-NEXT:    shrq $2, %rax
-; BMI2-SLOW-NEXT:    movb $33, %cl
-; BMI2-SLOW-NEXT:    bzhiq %rcx, %rax, %rax
 ; BMI2-SLOW-NEXT:    retq
 ;
 ; BEXTR-FAST-LABEL: bextr64d_load:
