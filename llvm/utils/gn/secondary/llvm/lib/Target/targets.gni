@@ -30,6 +30,7 @@ if (llvm_targets_to_build == "host") {
     "Mips",
     "NVPTX",
     "PowerPC",
+    "RISCV",
     "Sparc",
     "SystemZ",
     "WebAssembly",
