@@ -8667,17 +8667,17 @@ let Predicates = [HasAVX512] in {
   }
 
   def : Pat<(store (f64 (extractelt
-                         (bc_v2f64 (v8i16 (X86cvtps2ph VR128X:$src1, i32:$src2))),
+                         (bc_v2f64 (v8i16 (X86cvtps2ph VR128X:$src1, timm:$src2))),
                          (iPTR 0))), addr:$dst),
-            (VCVTPS2PHZ128mr addr:$dst, VR128X:$src1, imm:$src2)>;
+            (VCVTPS2PHZ128mr addr:$dst, VR128X:$src1, timm:$src2)>;
   def : Pat<(store (i64 (extractelt
-                         (bc_v2i64 (v8i16 (X86cvtps2ph VR128X:$src1, i32:$src2))),
+                         (bc_v2i64 (v8i16 (X86cvtps2ph VR128X:$src1, timm:$src2))),
                          (iPTR 0))), addr:$dst),
-            (VCVTPS2PHZ128mr addr:$dst, VR128X:$src1, imm:$src2)>;
-  def : Pat<(store (v8i16 (X86cvtps2ph VR256X:$src1, i32:$src2)), addr:$dst),
-            (VCVTPS2PHZ256mr addr:$dst, VR256X:$src1, imm:$src2)>;
-  def : Pat<(store (v16i16 (X86cvtps2ph VR512:$src1, i32:$src2)), addr:$dst),
-            (VCVTPS2PHZmr addr:$dst, VR512:$src1, imm:$src2)>;
+            (VCVTPS2PHZ128mr addr:$dst, VR128X:$src1, timm:$src2)>;
+  def : Pat<(store (v8i16 (X86cvtps2ph VR256X:$src1, timm:$src2)), addr:$dst),
+            (VCVTPS2PHZ256mr addr:$dst, VR256X:$src1, timm:$src2)>;
+  def : Pat<(store (v16i16 (X86cvtps2ph VR512:$src1, timm:$src2)), addr:$dst),
+            (VCVTPS2PHZmr addr:$dst, VR512:$src1, timm:$src2)>;
 }
 
 // Patterns for matching conversions from float to half-float and vice versa.
