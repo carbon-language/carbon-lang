@@ -679,6 +679,42 @@ define i1 @test37_extra_uses(i32 %x, i32 %y, i32 %z) {
   ret i1 %c
 }
 
+; TODO: Min/max pattern should not prevent the fold.
+
+define i32 @neg_max_s32(i32 %x, i32 %y) {
+; CHECK-LABEL: @neg_max_s32(
+; CHECK-NEXT:    [[NX:%.*]] = sub nsw i32 0, [[X:%.*]]
+; CHECK-NEXT:    [[NY:%.*]] = sub nsw i32 0, [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[NX]], [[NY]]
+; CHECK-NEXT:    [[S:%.*]] = select i1 [[C]], i32 [[NY]], i32 [[NX]]
+; CHECK-NEXT:    [[R:%.*]] = sub nsw i32 0, [[S]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %nx = sub nsw i32 0, %x
+  %ny = sub nsw i32 0, %y
+  %c = icmp slt i32 %nx, %ny
+  %s = select i1 %c, i32 %ny, i32 %nx
+  %r = sub nsw i32 0, %s
+  ret i32 %r
+}
+
+define <4 x i32> @neg_max_v4s32(<4 x i32> %x, <4 x i32> %y) {
+; CHECK-LABEL: @neg_max_v4s32(
+; CHECK-NEXT:    [[NX:%.*]] = sub nsw <4 x i32> zeroinitializer, [[X:%.*]]
+; CHECK-NEXT:    [[NY:%.*]] = sub nsw <4 x i32> zeroinitializer, [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = icmp sgt <4 x i32> [[NX]], [[NY]]
+; CHECK-NEXT:    [[S:%.*]] = select <4 x i1> [[C]], <4 x i32> [[NX]], <4 x i32> [[NY]]
+; CHECK-NEXT:    [[R:%.*]] = sub <4 x i32> zeroinitializer, [[S]]
+; CHECK-NEXT:    ret <4 x i32> [[R]]
+;
+  %nx = sub nsw <4 x i32> zeroinitializer, %x
+  %ny = sub nsw <4 x i32> zeroinitializer, %y
+  %c = icmp sgt <4 x i32> %nx, %ny
+  %s = select <4 x i1> %c, <4 x i32> %nx, <4 x i32> %ny
+  %r = sub <4 x i32> zeroinitializer, %s
+  ret <4 x i32> %r
+}
+
 ; X - Y > X - Z -> Z > Y if there is no overflow.
 define i1 @test38(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @test38(
