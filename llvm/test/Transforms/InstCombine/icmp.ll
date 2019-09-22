@@ -683,12 +683,9 @@ define i1 @test37_extra_uses(i32 %x, i32 %y, i32 %z) {
 
 define i32 @neg_max_s32(i32 %x, i32 %y) {
 ; CHECK-LABEL: @neg_max_s32(
-; CHECK-NEXT:    [[NX:%.*]] = sub nsw i32 0, [[X:%.*]]
-; CHECK-NEXT:    [[NY:%.*]] = sub nsw i32 0, [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[NX]], [[NY]]
-; CHECK-NEXT:    [[S:%.*]] = select i1 [[C]], i32 [[NY]], i32 [[NX]]
-; CHECK-NEXT:    [[R:%.*]] = sub nsw i32 0, [[S]]
-; CHECK-NEXT:    ret i32 [[R]]
+; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[S_V:%.*]] = select i1 [[C]], i32 [[Y]], i32 [[X]]
+; CHECK-NEXT:    ret i32 [[S_V]]
 ;
   %nx = sub nsw i32 0, %x
   %ny = sub nsw i32 0, %y
@@ -700,12 +697,9 @@ define i32 @neg_max_s32(i32 %x, i32 %y) {
 
 define <4 x i32> @neg_max_v4s32(<4 x i32> %x, <4 x i32> %y) {
 ; CHECK-LABEL: @neg_max_v4s32(
-; CHECK-NEXT:    [[NX:%.*]] = sub nsw <4 x i32> zeroinitializer, [[X:%.*]]
-; CHECK-NEXT:    [[NY:%.*]] = sub nsw <4 x i32> zeroinitializer, [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt <4 x i32> [[NX]], [[NY]]
-; CHECK-NEXT:    [[S:%.*]] = select <4 x i1> [[C]], <4 x i32> [[NX]], <4 x i32> [[NY]]
-; CHECK-NEXT:    [[R:%.*]] = sub <4 x i32> zeroinitializer, [[S]]
-; CHECK-NEXT:    ret <4 x i32> [[R]]
+; CHECK-NEXT:    [[C:%.*]] = icmp sgt <4 x i32> [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[S_V:%.*]] = select <4 x i1> [[C]], <4 x i32> [[X]], <4 x i32> [[Y]]
+; CHECK-NEXT:    ret <4 x i32> [[S_V]]
 ;
   %nx = sub nsw <4 x i32> zeroinitializer, %x
   %ny = sub nsw <4 x i32> zeroinitializer, %y
