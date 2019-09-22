@@ -25,6 +25,8 @@ struct ExitStmt;
 
 namespace Fortran::semantics {
 
+using NamePtr = parser::Name const *;
+
 class DoChecker : public virtual BaseChecker {
 public:
   explicit DoChecker(SemanticsContext &context) : context_{context} {}
@@ -34,6 +36,12 @@ public:
 
 private:
   SemanticsContext &context_;
+
+  void SayBadLeave(const char *stmtChecked, const char *enclosingStmt,
+      const ConstructNode &) const;
+  void CheckDoConcurrentExit(const char *s, const ConstructNode &) const;
+  void CheckForBadLeave(const char *, const ConstructNode &) const;
+  void CheckNesting(const char *, NamePtr) const;
 };
 }
 #endif  // FORTRAN_SEMANTICS_CHECK_DO_H_

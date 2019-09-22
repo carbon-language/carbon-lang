@@ -206,15 +206,6 @@ void SemanticsContext::PopConstruct() {
   constructStack_.pop_back();
 }
 
-bool SemanticsContext::InsideDoConstruct() const {
-  for (const ConstructNode construct : constructStack_) {
-    if (std::holds_alternative<const parser::DoConstruct *>(construct)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool Semantics::Perform() {
   return ValidateLabels(context_, program_) &&
       parser::CanonicalizeDo(program_) &&  // force line break
