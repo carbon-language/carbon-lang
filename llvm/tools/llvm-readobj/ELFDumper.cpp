@@ -4829,7 +4829,7 @@ void DumpStyle<ELFT>::printNonRelocatableStackSizes(
   StringRef FileStr = Obj->getFileName();
   for (const SectionRef &Sec : Obj->sections()) {
     StringRef SectionName = getSectionName(Sec);
-    if (!SectionName.startswith(".stack_sizes"))
+    if (SectionName != ".stack_sizes")
       continue;
     PrintHeader();
     const Elf_Shdr *ElfSec = Obj->getSection(Sec.getRawDataRefImpl());
@@ -4879,7 +4879,7 @@ void DumpStyle<ELFT>::printRelocatableStackSizes(
 
     // A stack size section that we haven't encountered yet is mapped to the
     // null section until we find its corresponding relocation section.
-    if (SectionName.startswith(".stack_sizes"))
+    if (SectionName == ".stack_sizes")
       if (StackSizeRelocMap.count(Sec) == 0) {
         StackSizeRelocMap[Sec] = NullSection;
         continue;
@@ -4900,7 +4900,7 @@ void DumpStyle<ELFT>::printRelocatableStackSizes(
       consumeError(ContentsSectionNameOrErr.takeError());
       continue;
     }
-    if (!ContentsSectionNameOrErr->startswith(".stack_sizes"))
+    if (*ContentsSectionNameOrErr != ".stack_sizes")
       continue;
     // Insert a mapping from the stack sizes section to its relocation section.
     StackSizeRelocMap[Obj->toSectionRef(ContentsSec)] = Sec;

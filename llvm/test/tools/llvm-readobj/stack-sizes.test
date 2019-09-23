@@ -48,7 +48,7 @@ Sections:
 ## followed by a ULEB for the size.
     Content: "000000000000000010000000000000000020"
     Link:    .text
-  - Name:    .stack_sizes.baz
+  - Name:    '.stack_sizes [1]'
     Type:    SHT_PROGBITS
 ## One stack size entry.
     Content: "200000000000000008"
@@ -66,9 +66,9 @@ Sections:
         Addend: 16
         Symbol: .text
         Type:   R_X86_64_64
-  - Name:   .rela.stack_sizes.baz
+  - Name:   '.rela.stack_sizes [1]'
     Type:   SHT_RELA
-    Info:   .stack_sizes.baz
+    Info:   '.stack_sizes [1]'
     Relocations:
       - Offset: 0
         Symbol: separate_text_section_baz
