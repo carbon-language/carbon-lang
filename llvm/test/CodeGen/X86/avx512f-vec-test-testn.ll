@@ -215,27 +215,16 @@ entry:
 }
 
 define <2 x i64> @setcc_commute(<2 x i64> %a) {
-; X64-LABEL: setcc_commute:
-; X64:       # %bb.0:
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; X64-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; X64-NEXT:    vpsubq %xmm0, %xmm1, %xmm1
-; X64-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; X64-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X64-NEXT:    vmovdqa %xmm1, %xmm0
-; X64-NEXT:    vzeroupper
-; X64-NEXT:    retq
-;
-; X86-LABEL: setcc_commute:
-; X86:       # %bb.0:
-; X86-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; X86-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; X86-NEXT:    vpsubq %xmm0, %xmm2, %xmm1
-; X86-NEXT:    vpcmpeqq %zmm0, %zmm2, %k1
-; X86-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X86-NEXT:    vmovdqa %xmm1, %xmm0
-; X86-NEXT:    vzeroupper
-; X86-NEXT:    retl
+; CHECK-LABEL: setcc_commute:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; CHECK-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; CHECK-NEXT:    vpsubq %xmm0, %xmm1, %xmm1
+; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa %xmm1, %xmm0
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    ret{{[l|q]}}
   %1 = sub <2 x i64> zeroinitializer, %a
   %2 = icmp eq <2 x i64> %a, zeroinitializer
   %3 = select <2 x i1> %2, <2 x i64> %a, <2 x i64> %1
