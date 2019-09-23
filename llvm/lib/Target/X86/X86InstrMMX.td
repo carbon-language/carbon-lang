@@ -30,7 +30,6 @@ def MMX_SET0 : I<0, Pseudo, (outs VR64:$dst), (ins), "", []>;
 
 let Constraints = "$src1 = $dst" in {
   // MMXI_binop_rm_int - Simple MMX binary operator based on intrinsic.
-  // When this is cleaned up, remove the FIXME from X86RecognizableInstr.cpp.
   multiclass MMXI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                                X86FoldableSchedWrite sched, bit Commutable = 0,
                                X86MemOperand OType = i64mem> {
