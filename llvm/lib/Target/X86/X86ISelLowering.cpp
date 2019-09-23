@@ -2149,6 +2149,11 @@ EVT X86TargetLowering::getOptimalMemOpType(
     if (Size >= 16 && (!Subtarget.isUnalignedMem16Slow() ||
                        ((DstAlign == 0 || DstAlign >= 16) &&
                         (SrcAlign == 0 || SrcAlign >= 16)))) {
+      // FIXME: Check if unaligned 64-byte accesses are slow.
+      if (Size >= 64 && Subtarget.hasAVX512() &&
+          (Subtarget.getPreferVectorWidth() >= 512)) {
+        return Subtarget.hasBWI() ? MVT::v64i8 : MVT::v16i32;
+      }
       // FIXME: Check if unaligned 32-byte accesses are slow.
       if (Size >= 32 && Subtarget.hasAVX() &&
           (Subtarget.getPreferVectorWidth() >= 256)) {
