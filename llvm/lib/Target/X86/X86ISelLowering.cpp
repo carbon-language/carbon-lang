@@ -23738,6 +23738,58 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                  MaskVT, Operation);
     return DAG.getMergeValues({Result0, Result1}, DL);
   }
+  case Intrinsic::x86_mmx_pslli_w:
+  case Intrinsic::x86_mmx_pslli_d:
+  case Intrinsic::x86_mmx_pslli_q:
+  case Intrinsic::x86_mmx_psrli_w:
+  case Intrinsic::x86_mmx_psrli_d:
+  case Intrinsic::x86_mmx_psrli_q:
+  case Intrinsic::x86_mmx_psrai_w:
+  case Intrinsic::x86_mmx_psrai_d: {
+    SDValue ShAmt = Op.getOperand(2);
+    // If the argument is a constant, this is fine.
+    if (isa<ConstantSDNode>(ShAmt))
+      return Op;
+
+    unsigned NewIntrinsic;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
+    case Intrinsic::x86_mmx_pslli_w:
+      NewIntrinsic = Intrinsic::x86_mmx_psll_w;
+      break;
+    case Intrinsic::x86_mmx_pslli_d:
+      NewIntrinsic = Intrinsic::x86_mmx_psll_d;
+      break;
+    case Intrinsic::x86_mmx_pslli_q:
+      NewIntrinsic = Intrinsic::x86_mmx_psll_q;
+      break;
+    case Intrinsic::x86_mmx_psrli_w:
+      NewIntrinsic = Intrinsic::x86_mmx_psrl_w;
+      break;
+    case Intrinsic::x86_mmx_psrli_d:
+      NewIntrinsic = Intrinsic::x86_mmx_psrl_d;
+      break;
+    case Intrinsic::x86_mmx_psrli_q:
+      NewIntrinsic = Intrinsic::x86_mmx_psrl_q;
+      break;
+    case Intrinsic::x86_mmx_psrai_w:
+      NewIntrinsic = Intrinsic::x86_mmx_psra_w;
+      break;
+    case Intrinsic::x86_mmx_psrai_d:
+      NewIntrinsic = Intrinsic::x86_mmx_psra_d;
+      break;
+    }
+
+    // The vector shift intrinsics with scalars uses 32b shift amounts but
+    // the sse2/mmx shift instructions reads 64 bits. Copy the 32 bits to an
+    // MMX register.
+    SDLoc DL(Op);
+    ShAmt = DAG.getNode(X86ISD::MMX_MOVW2D, DL, MVT::x86mmx, ShAmt);
+    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, Op.getValueType(),
+                       DAG.getConstant(NewIntrinsic, DL, MVT::i32),
+                       Op.getOperand(1), ShAmt);
+
+  }
   }
 }
 
