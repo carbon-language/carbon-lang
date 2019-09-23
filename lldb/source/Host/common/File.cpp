@@ -91,7 +91,7 @@ int File::GetDescriptor() const {
   return kInvalidDescriptor;
 }
 
-IOObject::WaitableHandle File::GetWaitableHandle() { return m_descriptor; }
+IOObject::WaitableHandle File::GetWaitableHandle() { return GetDescriptor(); }
 
 void File::SetDescriptor(int fd, bool transfer_ownership) {
   if (IsValid())
