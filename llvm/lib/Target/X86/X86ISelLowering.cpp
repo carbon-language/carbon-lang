@@ -23746,10 +23746,14 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::x86_mmx_psrli_q:
   case Intrinsic::x86_mmx_psrai_w:
   case Intrinsic::x86_mmx_psrai_d: {
+    SDLoc DL(Op);
     SDValue ShAmt = Op.getOperand(2);
-    // If the argument is a constant, this is fine.
-    if (isa<ConstantSDNode>(ShAmt))
-      return Op;
+    // If the argument is a constant, convert it to a target constant.
+    if (auto *C = dyn_cast<ConstantSDNode>(ShAmt)) {
+      ShAmt = DAG.getTargetConstant(C->getZExtValue(), DL, MVT::i32);
+      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, Op.getValueType(),
+                         Op.getOperand(0), Op.getOperand(1), ShAmt);
+    }
 
     unsigned NewIntrinsic;
     switch (IntNo) {
@@ -23783,7 +23787,6 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     // The vector shift intrinsics with scalars uses 32b shift amounts but
     // the sse2/mmx shift instructions reads 64 bits. Copy the 32 bits to an
     // MMX register.
-    SDLoc DL(Op);
     ShAmt = DAG.getNode(X86ISD::MMX_MOVW2D, DL, MVT::x86mmx, ShAmt);
     return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, Op.getValueType(),
                        DAG.getConstant(NewIntrinsic, DL, MVT::i32),

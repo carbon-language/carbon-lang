@@ -66,7 +66,7 @@ let Constraints = "$src1 = $dst" in {
     def ri : MMXIi8<opc2, ImmForm, (outs VR64:$dst),
                                    (ins VR64:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           [(set VR64:$dst, (IntId2 VR64:$src1, imm:$src2))]>,
+           [(set VR64:$dst, (IntId2 VR64:$src1, timm:$src2))]>,
            Sched<[schedImm]>;
   }
 }
