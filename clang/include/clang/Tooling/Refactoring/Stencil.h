@@ -153,16 +153,6 @@ inline StencilPart node(llvm::StringRef Id) {
   return selection(tooling::node(Id));
 }
 
-/// Variant of \c node() that identifies the node as a statement, for purposes
-/// of deciding whether to include any trailing semicolon.  Only relevant for
-/// Expr nodes, which, by default, are *not* considered as statements.
-/// \returns the source corresponding to the identified node, considered as a
-/// statement.
-/// FIXME: Deprecated. Write `selection(statement(Id))` instead.
-inline StencilPart sNode(llvm::StringRef Id) {
-  return selection(tooling::statement(Id));
-}
-
 /// For debug use only; semantics are not guaranteed.
 ///
 /// \returns the string resulting from calling the node's print() method.
