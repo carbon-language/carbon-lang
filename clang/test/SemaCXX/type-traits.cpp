@@ -802,6 +802,7 @@ void is_fundamental()
   int t23[T(__is_fundamental(unsigned long))];
   int t24[T(__is_fundamental(void))];
   int t25[T(__is_fundamental(cvoid))];
+  int t26[T(__is_fundamental(decltype(nullptr)))];
 
   int t30[F(__is_fundamental(Union))];
   int t31[F(__is_fundamental(UnionAr))];
