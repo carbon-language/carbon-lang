@@ -90,6 +90,9 @@
 # RUN: ld.lld -m elf32btsmipn32 -e _start %tmipsn32 -o %t2mipsn32
 # RUN: llvm-readobj --file-headers %t2mipsn32 \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSN32 %s
+# RUN: ld.lld -m elf32btsmipn32_fbsd -e _start %tmipsn32 -o %t2mipsn32
+# RUN: llvm-readobj --file-headers %t2mipsn32 \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPSN32 %s
 # RUN: ld.lld %tmipsn32 -e _start -o %t3mipsn32
 # RUN: llvm-readobj --file-headers %t3mipsn32 \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSN32 %s
@@ -127,6 +130,9 @@
 # RUN: ld.lld -m elf32ltsmipn32 -e _start %tmipsn32el -o %t2mipsn32el
 # RUN: llvm-readobj --file-headers %t2mipsn32el \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSN32EL %s
+# RUN: ld.lld -m elf32ltsmipn32_fbsd -e _start %tmipsn32el -o %t2mipsn32el
+# RUN: llvm-readobj --file-headers %t2mipsn32el \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPSN32EL %s
 # RUN: ld.lld -melf32ltsmipn32 -e _start %tmipsn32el -o %t2mipsn32el
 # RUN: llvm-readobj --file-headers %t2mipsn32el \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSN32EL %s
