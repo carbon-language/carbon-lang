@@ -171,8 +171,8 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
       // But for a mask we need to get rid of old masking instruction.
       if (!Masked->hasOneUse())
         return nullptr; // Else we can't perform the fold.
-      // We should produce compute the mask in wider type, and truncate later!
-      // Get type twice as wide element-wise (same number of elements!).
+      // The mask must be computed in a type twice as wide to ensure
+      // that no bits are lost if the sum-of-shifts is wider than the base type.
       Type *ExtendedScalarTy = Type::getIntNTy(Ty->getContext(), 2 * BitWidth);
       Type *ExtendedTy =
           Ty->isVectorTy()
@@ -211,8 +211,8 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
         return nullptr; // Else we can't perform the fold.
       Type *Ty = X->getType();
       unsigned BitWidth = Ty->getScalarSizeInBits();
-      // We should produce compute the mask in wider type, and truncate later!
-      // Get type twice as wide element-wise (same number of elements!).
+      // The mask must be computed in a type twice as wide to ensure
+      // that no bits are lost if the sum-of-shifts is wider than the base type.
       Type *ExtendedScalarTy = Type::getIntNTy(Ty->getContext(), 2 * BitWidth);
       Type *ExtendedTy =
           Ty->isVectorTy()
