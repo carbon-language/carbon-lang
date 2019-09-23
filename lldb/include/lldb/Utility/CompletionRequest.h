@@ -126,8 +126,8 @@ public:
     m_partial_parsed_line.Shift();
   }
 
-  void SetCursorIndex(int i) { m_cursor_index = i; }
-  int GetCursorIndex() const { return m_cursor_index; }
+  void SetCursorIndex(size_t i) { m_cursor_index = i; }
+  size_t GetCursorIndex() const { return m_cursor_index; }
 
   void SetCursorCharPosition(int pos) { m_cursor_char_position = pos; }
   int GetCursorCharPosition() const { return m_cursor_char_position; }
@@ -208,7 +208,7 @@ private:
   /// The command line until the cursor position parsed as arguments.
   Args m_partial_parsed_line;
   /// The index of the argument in which the completion cursor is.
-  int m_cursor_index;
+  size_t m_cursor_index;
   /// The cursor position in the argument indexed by m_cursor_index.
   int m_cursor_char_position;
 
