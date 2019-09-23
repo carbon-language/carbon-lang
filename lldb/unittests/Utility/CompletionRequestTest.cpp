@@ -15,7 +15,7 @@ TEST(CompletionRequest, Constructor) {
   std::string command = "a bad c";
   const unsigned cursor_pos = 3;
   const size_t arg_index = 1;
-  const int arg_cursor_pos = 1;
+  const size_t arg_cursor_pos = 1;
   StringList matches;
   CompletionResult result;
 
@@ -43,7 +43,7 @@ TEST(CompletionRequest, FakeLastArg) {
   EXPECT_STREQ(request.GetRawLine().str().c_str(), command.c_str());
   EXPECT_EQ(request.GetRawCursorPos(), cursor_pos);
   EXPECT_EQ(request.GetCursorIndex(), 3U);
-  EXPECT_EQ(request.GetCursorCharPosition(), 0);
+  EXPECT_EQ(request.GetCursorCharPosition(), 0U);
 
   EXPECT_EQ(request.GetPartialParsedLine().GetArgumentCount(), 4U);
   EXPECT_STREQ(request.GetPartialParsedLine().GetArgumentAtIndex(3), "");
@@ -90,7 +90,7 @@ TEST(CompletionRequest, ShiftArguments) {
   std::string command = "a bad c";
   const unsigned cursor_pos = 3;
   const size_t arg_index = 1;
-  const int arg_cursor_pos = 1;
+  const size_t arg_cursor_pos = 1;
   StringList matches;
   CompletionResult result;
 

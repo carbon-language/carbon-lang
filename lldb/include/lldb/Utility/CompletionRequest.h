@@ -129,8 +129,8 @@ public:
   void SetCursorIndex(size_t i) { m_cursor_index = i; }
   size_t GetCursorIndex() const { return m_cursor_index; }
 
-  void SetCursorCharPosition(int pos) { m_cursor_char_position = pos; }
-  int GetCursorCharPosition() const { return m_cursor_char_position; }
+  void SetCursorCharPosition(size_t pos) { m_cursor_char_position = pos; }
+  size_t GetCursorCharPosition() const { return m_cursor_char_position; }
 
   /// Adds a possible completion string. If the completion was already
   /// suggested before, it will not be added to the list of results. A copy of
@@ -210,7 +210,7 @@ private:
   /// The index of the argument in which the completion cursor is.
   size_t m_cursor_index;
   /// The cursor position in the argument indexed by m_cursor_index.
-  int m_cursor_char_position;
+  size_t m_cursor_char_position;
 
   /// The result this request is supposed to fill out.
   /// We keep this object private to ensure that no backend can in any way
