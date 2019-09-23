@@ -34,3 +34,24 @@ TEST(File, GetWaitableHandleFileno) {
   File file(stream, true);
   EXPECT_EQ(file.GetWaitableHandle(), fd);
 }
+
+TEST(File, GetStreamFromDescriptor) {
+  const auto *Info = testing::UnitTest::GetInstance()->current_test_info();
+  llvm::SmallString<128> name;
+  int fd;
+  llvm::sys::fs::createTemporaryFile(llvm::Twine(Info->test_case_name()) + "-" +
+                                         Info->name(),
+                                     "test", fd, name);
+
+  llvm::FileRemover remover(name);
+  ASSERT_GE(fd, 0);
+
+  File file(fd, File::eOpenOptionWrite, true);
+  ASSERT_TRUE(file.IsValid());
+
+  FILE *stream = file.GetStream();
+  ASSERT_TRUE(stream != NULL);
+
+  EXPECT_EQ(file.GetDescriptor(), fd);
+  EXPECT_EQ(file.GetWaitableHandle(), fd);
+}
