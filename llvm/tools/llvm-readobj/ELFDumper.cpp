@@ -5891,13 +5891,18 @@ void LLVMStyle<ELFT>::printELFLinkerOptions(const ELFFile<ELFT> *Obj) {
 
 template <class ELFT>
 void LLVMStyle<ELFT>::printStackSizes(const ELFObjectFile<ELFT> *Obj) {
-  W.printString(
-      "Dumping of stack sizes in LLVM style is not implemented yet\n");
+  ListScope L(W, "StackSizes");
+  if (Obj->isRelocatableObject())
+    this->printRelocatableStackSizes(Obj, []() {});
+  else
+    this->printNonRelocatableStackSizes(Obj, []() {});
 }
 
 template <class ELFT>
 void LLVMStyle<ELFT>::printStackSizeEntry(uint64_t Size, StringRef FuncName) {
-  // FIXME: Implement this function for LLVM-style dumping.
+  DictScope D(W, "Entry");
+  W.printString("Function", FuncName);
+  W.printHex("Size", Size);
 }
 
 template <class ELFT>
