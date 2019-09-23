@@ -152,6 +152,7 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
       m_Shr(m_Shl(m_AllOnes(), m_Value(MaskShAmt)), m_Deferred(MaskShAmt));
 
   Value *X;
+  Constant *NewMask;
   if (match(Masked, m_c_And(m_CombineOr(MaskA, MaskB), m_Value(X)))) {
     // Can we simplify (MaskShAmt+ShiftShAmt) ?
     auto *SumOfShAmts = dyn_cast_or_null<Constant>(
@@ -166,8 +167,27 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
     // bitwidth, we'll need to also produce a mask to keep SumOfShAmts low bits.
     // So, does *any* channel need a mask?
     if (!match(SumOfShAmts, m_SpecificInt_ICMP(ICmpInst::Predicate::ICMP_UGE,
-                                               APInt(BitWidth, BitWidth))))
-      return nullptr; // FIXME.
+                                               APInt(BitWidth, BitWidth)))) {
+      // But for a mask we need to get rid of old masking instruction.
+      if (!Masked->hasOneUse())
+        return nullptr; // Else we can't perform the fold.
+      // We should produce compute the mask in wider type, and truncate later!
+      // Get type twice as wide element-wise (same number of elements!).
+      Type *ExtendedScalarTy = Type::getIntNTy(Ty->getContext(), 2 * BitWidth);
+      Type *ExtendedTy =
+          Ty->isVectorTy()
+              ? VectorType::get(ExtendedScalarTy, Ty->getVectorNumElements())
+              : ExtendedScalarTy;
+      auto *ExtendedSumOfShAmts =
+          ConstantExpr::getZExt(SumOfShAmts, ExtendedTy);
+      // And compute the mask as usual: ~(-1 << (SumOfShAmts))
+      auto *ExtendedAllOnes = ConstantExpr::getAllOnesValue(ExtendedTy);
+      auto *ExtendedInvertedMask =
+          ConstantExpr::getShl(ExtendedAllOnes, ExtendedSumOfShAmts);
+      auto *ExtendedMask = ConstantExpr::getNot(ExtendedInvertedMask);
+      NewMask = ConstantExpr::getTrunc(ExtendedMask, Ty);
+    } else
+      NewMask = nullptr; // No mask needed.
     // All good, we can do this fold.
   } else if (match(Masked, m_c_And(m_CombineOr(MaskC, MaskD), m_Value(X))) ||
              match(Masked, m_Shr(m_Shl(m_Value(X), m_Value(MaskShAmt)),
@@ -185,12 +205,19 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
     if (!match(ShAmtsDiff, m_NonNegative()))
       return nullptr; // FIXME.
     // All good, we can do this fold.
+    NewMask = nullptr; // No mask needed.
   } else
     return nullptr; // Don't know anything about this pattern.
 
   // No 'NUW'/'NSW'!
   // We no longer know that we won't shift-out non-0 bits.
-  return BinaryOperator::Create(OuterShift->getOpcode(), X, ShiftShAmt);
+  auto *NewShift =
+      BinaryOperator::Create(OuterShift->getOpcode(), X, ShiftShAmt);
+  if (!NewMask)
+    return NewShift;
+
+  Builder.Insert(NewShift);
+  return BinaryOperator::Create(Instruction::And, NewShift, NewMask);
 }
 
 Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
