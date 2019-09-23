@@ -14,8 +14,7 @@
 ; CHECK-END: .LBB0_1:
 ; CHECK-END:   b .LBB0_3
 ; CHECK-END: .LBB0_2:
-; CHECK-END:   sub.w lr, lr, #1
-; CHECK-END:   cmp.w lr, #0
+; CHECK-END:   subs.w lr, lr, #1
 ; CHECK-END:   bne .LBB0_3
 ; CHECK-END:   b .LBB0_4
 ; CHECK-END: .LBB0_3:

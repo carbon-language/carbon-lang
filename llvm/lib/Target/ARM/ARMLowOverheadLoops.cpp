@@ -70,9 +70,9 @@ namespace {
 
     void RevertWhile(MachineInstr *MI) const;
 
-    void RevertLoopDec(MachineInstr *MI) const;
+    bool RevertLoopDec(MachineInstr *MI, bool AllowFlags = false) const;
 
-    void RevertLoopEnd(MachineInstr *MI) const;
+    void RevertLoopEnd(MachineInstr *MI, bool SkipCmp = false) const;
 
     void Expand(MachineLoop *ML, MachineInstr *Start,
                 MachineInstr *InsertPt, MachineInstr *Dec,
@@ -377,10 +377,21 @@ void ARMLowOverheadLoops::RevertWhile(MachineInstr *MI) const {
   MI->eraseFromParent();
 }
 
-// TODO: Check flags so that we can possibly generate a tSubs or tSub.
-void ARMLowOverheadLoops::RevertLoopDec(MachineInstr *MI) const {
+bool ARMLowOverheadLoops::RevertLoopDec(MachineInstr *MI,
+                                        bool AllowFlags) const {
   LLVM_DEBUG(dbgs() << "ARM Loops: Reverting to sub: " << *MI);
   MachineBasicBlock *MBB = MI->getParent();
+
+  // If nothing uses or defines CPSR between LoopDec and LoopEnd, use a t2SUBS.
+  bool SetFlags = false;
+  if (AllowFlags) {
+    if (auto *Def = SearchForDef(MI, MBB->end(), ARM::CPSR)) {
+      if (!SearchForUse(MI, MBB->end(), ARM::CPSR) &&
+          Def->getOpcode() == ARM::t2LoopEnd)
+        SetFlags = true;
+    }
+  }
+
   MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
                                     TII->get(ARM::t2SUBri));
   MIB.addDef(ARM::LR);
@@ -388,29 +399,39 @@ void ARMLowOverheadLoops::RevertLoopDec(MachineInstr *MI) const {
   MIB.add(MI->getOperand(2));
   MIB.addImm(ARMCC::AL);
   MIB.addReg(0);
-  MIB.addReg(0);
+
+  if (SetFlags) {
+    MIB.addReg(ARM::CPSR);
+    MIB->getOperand(5).setIsDef(true);
+  } else
+    MIB.addReg(0);
+
   MI->eraseFromParent();
+  return SetFlags;
 }
 
 // Generate a subs, or sub and cmp, and a branch instead of an LE.
-void ARMLowOverheadLoops::RevertLoopEnd(MachineInstr *MI) const {
+void ARMLowOverheadLoops::RevertLoopEnd(MachineInstr *MI, bool SkipCmp) const {
   LLVM_DEBUG(dbgs() << "ARM Loops: Reverting to cmp, br: " << *MI);
 
-  // Create cmp
   MachineBasicBlock *MBB = MI->getParent();
-  MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
-                                    TII->get(ARM::t2CMPri));
-  MIB.addReg(ARM::LR);
-  MIB.addImm(0);
-  MIB.addImm(ARMCC::AL);
-  MIB.addReg(ARM::NoRegister);
+  // Create cmp
+  if (!SkipCmp) {
+    MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
+                                      TII->get(ARM::t2CMPri));
+    MIB.addReg(ARM::LR);
+    MIB.addImm(0);
+    MIB.addImm(ARMCC::AL);
+    MIB.addReg(ARM::NoRegister);
+  }
 
   MachineBasicBlock *DestBB = MI->getOperand(1).getMBB();
   unsigned BrOpc = BBUtils->isBBInRange(MI, DestBB, 254) ?
     ARM::tBcc : ARM::t2Bcc;
 
   // Create bne
-  MIB = BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(BrOpc));
+  MachineInstrBuilder MIB =
+    BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(BrOpc));
   MIB.add(MI->getOperand(1));   // branch target
   MIB.addImm(ARMCC::NE);        // condition code
   MIB.addReg(ARM::CPSR);
@@ -480,8 +501,8 @@ void ARMLowOverheadLoops::Expand(MachineLoop *ML, MachineInstr *Start,
       RevertWhile(Start);
     else
       Start->eraseFromParent();
-    RevertLoopDec(Dec);
-    RevertLoopEnd(End);
+    bool FlagsAlreadySet = RevertLoopDec(Dec, true);
+    RevertLoopEnd(End, FlagsAlreadySet);
   } else {
     Start = ExpandLoopStart(ML, Start, InsertPt);
     RemoveDeadBranch(Start);
