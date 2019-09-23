@@ -17,13 +17,13 @@
 INCLUDE "getsymbols03-b.f90"
 
 program main
- use m
+ use mm3
  integer :: x
  x = f
 end program
 
 ! RUN: ${F18} -fget-symbols-sources -fparse-only -fdebug-semantics %s 2>&1 | ${FileCheck} %s
-! CHECK:m:.*getsymbols03-b.f90, 15, 8-9
+! CHECK:mm3:.*getsymbols03-b.f90, 15, 8-11
 ! CHECK:f:.*getsymbols03-b.f90, 16, 12-13
 ! CHECK:main:.*getsymbols03-a.f90, 19, 9-13
 ! CHECK:x:.*getsymbols03-a.f90, 21, 13-14

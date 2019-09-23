@@ -14,8 +14,8 @@
 
 ! RUN: ${F18} -fparse-only -fdebug-semantics %s
 
-module m1
-use m2
+module mm2b
+use mm2a
 implicit none
 private
   public :: callget5
@@ -25,4 +25,4 @@ contains
     INTEGER :: ret
     ret = get5()
   end function callget5
-end module m1
+end module mm2b

@@ -14,7 +14,7 @@
 
 ! RUN: ${F18} -fparse-only -fdebug-semantics %s
 
-module m2
+module mm2a
 implicit none
 private
   public :: get5
@@ -23,4 +23,4 @@ contains
     integer :: ret
     ret = 5
     end function get5
-end module m2
+end module mm2a

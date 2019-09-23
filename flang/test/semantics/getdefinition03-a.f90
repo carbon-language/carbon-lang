@@ -17,7 +17,7 @@
 INCLUDE "getdefinition03-b.f90"
 
 program main
- use m
+ use m3
  integer :: x
  x = f
 end program

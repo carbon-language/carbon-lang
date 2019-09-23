@@ -12,6 +12,6 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-module m
+module m3
  public :: f
 end module

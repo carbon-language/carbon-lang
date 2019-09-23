@@ -14,39 +14,27 @@
 
 ! Tests -fget-symbols-sources finding all symbols in file.
 
-!DEF: /m Module
-module m
- !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram REAL(4)
+module mm1
  private :: f
 contains
- !DEF: /m/s BIND(C), PUBLIC, PURE Subprogram
- !DEF: /m/s/x INTENT(IN) (implicit) ObjectEntity REAL(4)
- !DEF: /m/s/y INTENT(INOUT) (implicit) ObjectEntity REAL(4)
  pure subroutine s (x, y) bind(c)
-  !REF: /m/s/x
   intent(in) :: x
-  !REF: /m/s/y
   intent(inout) :: y
  contains
-  !DEF: /m/s/ss PURE Subprogram
   pure subroutine ss
   end subroutine
  end subroutine
- !REF: /m/f
- !DEF: /m/f/x ALLOCATABLE ObjectEntity REAL(4)
  recursive pure function f() result(x)
-  !REF: /m/f/x
   real, allocatable :: x
-  !REF: /m/f/x
   x = 1.0
  end function
 end module
 
 ! RUN: ${F18} -fget-symbols-sources -fparse-only -fdebug-semantics %s 2>&1 | ${FileCheck} %s
-! CHECK-ONCE:m:.*getsymbols01.f90, 18, 8-9
-! CHECK-ONCE:f:.*getsymbols01.f90, 37, 26-27
-! CHECK-ONCE:s:.*getsymbols01.f90, 25, 18-19
-! CHECK-ONCE:ss:.*getsymbols01.f90, 32, 19-21
-! CHECK-ONCE:x:.*getsymbols01.f90, 25, 21-22
-! CHECK-ONCE:y:.*getsymbols01.f90, 25, 24-25
-! CHECK-ONCE:x:.*getsymbols01.f90, 39, 24-25
+! CHECK-ONCE:mm1:.*getsymbols01.f90, 17, 8-11
+! CHECK-ONCE:f:.*getsymbols01.f90, 27, 26-27
+! CHECK-ONCE:s:.*getsymbols01.f90, 20, 18-19
+! CHECK-ONCE:ss:.*getsymbols01.f90, 24, 19-21
+! CHECK-ONCE:x:.*getsymbols01.f90, 20, 21-22
+! CHECK-ONCE:y:.*getsymbols01.f90, 20, 24-25
+! CHECK-ONCE:x:.*getsymbols01.f90, 28, 24-25
