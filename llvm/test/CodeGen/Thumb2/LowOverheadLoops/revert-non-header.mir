@@ -3,7 +3,7 @@
 # CHECK: bb.5.for.inc16:
 # CHECK:   $lr = t2SUBri killed renamable $lr, 1, 14
 # CHECK:   t2CMPri $lr, 0, 14
-# CHECK:   t2Bcc %bb.6, 1
+# CHECK:   tBcc %bb.6, 1
 # CHECK:   tB %bb.2
 # CHECK: bb.6.for.cond4.preheader:
 

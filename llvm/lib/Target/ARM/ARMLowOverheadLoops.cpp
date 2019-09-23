@@ -354,8 +354,7 @@ bool ARMLowOverheadLoops::ProcessLoop(MachineLoop *ML) {
 
 // WhileLoopStart holds the exit block, so produce a cmp lr, 0 and then a
 // beq that branches to the exit branch.
-// FIXME: Need to check that we're not trashing the CPSR when generating the
-// cmp. We could also try to generate a cbz if the value in LR is also in
+// TODO: We could also try to generate a cbz if the value in LR is also in
 // another low register.
 void ARMLowOverheadLoops::RevertWhile(MachineInstr *MI) const {
   LLVM_DEBUG(dbgs() << "ARM Loops: Reverting to cmp: " << *MI);
@@ -366,9 +365,12 @@ void ARMLowOverheadLoops::RevertWhile(MachineInstr *MI) const {
   MIB.addImm(0);
   MIB.addImm(ARMCC::AL);
   MIB.addReg(ARM::NoRegister);
+  
+  MachineBasicBlock *DestBB = MI->getOperand(1).getMBB();
+  unsigned BrOpc = BBUtils->isBBInRange(MI, DestBB, 254) ?
+    ARM::tBcc : ARM::t2Bcc;
 
-  // TODO: Try to use tBcc instead
-  MIB = BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(ARM::t2Bcc));
+  MIB = BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(BrOpc));
   MIB.add(MI->getOperand(1));   // branch target
   MIB.addImm(ARMCC::EQ);        // condition code
   MIB.addReg(ARM::CPSR);
@@ -391,8 +393,6 @@ void ARMLowOverheadLoops::RevertLoopDec(MachineInstr *MI) const {
 }
 
 // Generate a subs, or sub and cmp, and a branch instead of an LE.
-// FIXME: Need to check that we're not trashing the CPSR when generating
-// the cmp.
 void ARMLowOverheadLoops::RevertLoopEnd(MachineInstr *MI) const {
   LLVM_DEBUG(dbgs() << "ARM Loops: Reverting to cmp, br: " << *MI);
 
@@ -405,9 +405,12 @@ void ARMLowOverheadLoops::RevertLoopEnd(MachineInstr *MI) const {
   MIB.addImm(ARMCC::AL);
   MIB.addReg(ARM::NoRegister);
 
-  // TODO Try to use tBcc instead.
+  MachineBasicBlock *DestBB = MI->getOperand(1).getMBB();
+  unsigned BrOpc = BBUtils->isBBInRange(MI, DestBB, 254) ?
+    ARM::tBcc : ARM::t2Bcc;
+
   // Create bne
-  MIB = BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(ARM::t2Bcc));
+  MIB = BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(BrOpc));
   MIB.add(MI->getOperand(1));   // branch target
   MIB.addImm(ARMCC::NE);        // condition code
   MIB.addReg(ARM::CPSR);
