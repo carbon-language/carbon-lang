@@ -3,6 +3,9 @@
 # RUN: ld.lld -m elf32btsmip -e _start %tmips -o %t2mips
 # RUN: llvm-readobj --file-headers %t2mips \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS %s
+# RUN: ld.lld -m elf32btsmip_fbsd -e _start %tmips -o %t2mips
+# RUN: llvm-readobj --file-headers %t2mips \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPS %s
 # RUN: ld.lld %tmips -e _start -o %t3mips
 # RUN: llvm-readobj --file-headers %t3mips \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS %s
@@ -10,6 +13,10 @@
 # RUN: ld.lld %tmips.script -e _start %tmips -o %t4mips
 # RUN: llvm-readobj --file-headers %t4mips \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS %s
+# RUN: echo 'OUTPUT_FORMAT(elf32-tradbigmips-freebsd)' > %tmips.script
+# RUN: ld.lld %tmips.script -e _start %tmips -o %t4mips
+# RUN: llvm-readobj --file-headers %t4mips \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPS %s
 # RUN: echo 'OUTPUT_FORMAT(elf32-bigmips)' > %tmips2.script
 # RUN: ld.lld %tmips2.script -e _start %tmips -o %t5mips
 # RUN: llvm-readobj --file-headers %t5mips \
@@ -40,6 +47,9 @@
 # RUN: ld.lld -m elf32ltsmip -e _start %tmipsel -o %t2mipsel
 # RUN: llvm-readobj --file-headers %t2mipsel \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSEL %s
+# RUN: ld.lld -m elf32ltsmip_fbsd -e _start %tmipsel -o %t2mipsel
+# RUN: llvm-readobj --file-headers %t2mipsel \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPSEL %s
 # RUN: ld.lld -melf32ltsmip -e _start %tmipsel -o %t2mipsel
 # RUN: llvm-readobj --file-headers %t2mipsel \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSEL %s
@@ -50,6 +60,10 @@
 # RUN: ld.lld %tmipsel.script -e _start %tmipsel -o %t4mipsel
 # RUN: llvm-readobj --file-headers %t4mipsel \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSEL %s
+# RUN: echo 'OUTPUT_FORMAT(elf32-tradlittlemips-freebsd)' > %tmipsel.script
+# RUN: ld.lld %tmipsel.script -e _start %tmipsel -o %t4mipsel
+# RUN: llvm-readobj --file-headers %t4mipsel \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPSEL %s
 # MIPSEL:      ElfHeader {
 # MIPSEL-NEXT:   Ident {
 # MIPSEL-NEXT:     Magic: (7F 45 4C 46)
@@ -83,6 +97,10 @@
 # RUN: ld.lld %tmipsn32.script -e _start %tmipsn32 -o %t4mipsn32
 # RUN: llvm-readobj --file-headers %t4mipsn32 \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSN32 %s
+# RUN: echo 'OUTPUT_FORMAT(elf32-ntradbigmips-freebsd)' > %tmipsn32.script
+# RUN: ld.lld %tmipsn32.script -e _start %tmipsn32 -o %t4mipsn32
+# RUN: llvm-readobj --file-headers %t4mipsn32 \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPSN32 %s
 # MIPSN32:      ElfHeader {
 # MIPSN32-NEXT:   Ident {
 # MIPSN32-NEXT:     Magic: (7F 45 4C 46)
@@ -119,6 +137,10 @@
 # RUN: ld.lld %tmipsn32el.script -e _start %tmipsn32el -o %t4mipsn32el
 # RUN: llvm-readobj --file-headers %t4mipsn32el \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPSN32EL %s
+# RUN: echo 'OUTPUT_FORMAT(elf32-ntradlittlemips-freebsd)' > %tmipsn32el.script
+# RUN: ld.lld %tmipsn32el.script -e _start %tmipsn32el -o %t4mipsn32el
+# RUN: llvm-readobj --file-headers %t4mipsn32el \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPSN32EL %s
 # MIPSN32EL:      ElfHeader {
 # MIPSN32EL-NEXT:   Ident {
 # MIPSN32EL-NEXT:     Magic: (7F 45 4C 46)
@@ -146,6 +168,9 @@
 # RUN: ld.lld -m elf64btsmip -e _start %tmips64 -o %t2mips64
 # RUN: llvm-readobj --file-headers %t2mips64 \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS64 %s
+# RUN: ld.lld -m elf64btsmip_fbsd -e _start %tmips64 -o %t2mips64
+# RUN: llvm-readobj --file-headers %t2mips64 \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPS64 %s
 # RUN: ld.lld %tmips64 -e _start -o %t3mips64
 # RUN: llvm-readobj --file-headers %t3mips64 \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS64 %s
@@ -153,6 +178,10 @@
 # RUN: ld.lld %tmips64.script -e _start %tmips64 -o %t4mips64
 # RUN: llvm-readobj --file-headers %t4mips64 \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS64 %s
+# RUN: echo 'OUTPUT_FORMAT(elf64-tradbigmips-freebsd)' > %tmips64.script
+# RUN: ld.lld %tmips64.script -e _start %tmips64 -o %t4mips64
+# RUN: llvm-readobj --file-headers %t4mips64 \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPS64 %s
 # MIPS64:      ElfHeader {
 # MIPS64-NEXT:   Ident {
 # MIPS64-NEXT:     Magic: (7F 45 4C 46)
@@ -180,6 +209,9 @@
 # RUN: ld.lld -m elf64ltsmip -e _start %tmips64el -o %t2mips64el
 # RUN: llvm-readobj --file-headers %t2mips64el \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS64EL %s
+# RUN: ld.lld -m elf64ltsmip_fbsd -e _start %tmips64el -o %t2mips64el
+# RUN: llvm-readobj --file-headers %t2mips64el \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPS64EL %s
 # RUN: ld.lld %tmips64el -e _start -o %t3mips64el
 # RUN: llvm-readobj --file-headers %t3mips64el \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS64EL %s
@@ -187,6 +219,10 @@
 # RUN: ld.lld %tmips64el.script -e _start %tmips64el -o %t4mips64el
 # RUN: llvm-readobj --file-headers %t4mips64el \
 # RUN:   | FileCheck -DOSABI=SystemV --check-prefix=MIPS64EL %s
+# RUN: echo 'OUTPUT_FORMAT(elf64-tradlittlemips-freebsd)' > %tmips64el.script
+# RUN: ld.lld %tmips64el.script -e _start %tmips64el -o %t4mips64el
+# RUN: llvm-readobj --file-headers %t4mips64el \
+# RUN:   | FileCheck -DOSABI=FreeBSD --check-prefix=MIPS64EL %s
 # MIPS64EL:      ElfHeader {
 # MIPS64EL-NEXT:   Ident {
 # MIPS64EL-NEXT:     Magic: (7F 45 4C 46)
