@@ -56,7 +56,6 @@ defm "" : SIMDLoad<vec_t>;
 def : LoadPatNoOffset<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
 def : LoadPatImmOff<vec_t, load, regPlusImm, !cast<NI>("LOAD_"#vec_t)>;
 def : LoadPatImmOff<vec_t, load, or_is_add, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatGlobalAddr<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
 def : LoadPatOffsetOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
 def : LoadPatGlobalAddrOffOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
 }
@@ -78,7 +77,6 @@ defm "" : SIMDStore<vec_t>;
 def : StorePatNoOffset<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
 def : StorePatImmOff<vec_t, store, regPlusImm, !cast<NI>("STORE_"#vec_t)>;
 def : StorePatImmOff<vec_t, store, or_is_add, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatGlobalAddr<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
 def : StorePatOffsetOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
 def : StorePatGlobalAddrOffOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
 }
