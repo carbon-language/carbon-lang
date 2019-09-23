@@ -20487,13 +20487,6 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
 
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
 
-  // If this is a seteq make sure any build vectors of all zeros are on the RHS.
-  // This helps with vptestm matching.
-  // TODO: Should we just canonicalize the setcc during DAG combine?
-  if ((SetCCOpcode == ISD::SETEQ || SetCCOpcode == ISD::SETNE) &&
-      ISD::isBuildVectorAllZeros(Op0.getNode()))
-    std::swap(Op0, Op1);
-
   // Prefer SETGT over SETLT.
   if (SetCCOpcode == ISD::SETLT) {
     SetCCOpcode = ISD::getSetCCSwappedOperands(SetCCOpcode);

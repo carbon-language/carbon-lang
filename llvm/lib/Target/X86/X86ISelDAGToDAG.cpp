@@ -4098,8 +4098,8 @@ bool X86DAGToDAGISel::tryVPTESTM(SDNode *Root, SDValue Setcc,
   if (CC != ISD::SETEQ && CC != ISD::SETNE)
     return false;
 
-  // See if we're comparing against zero. This should have been canonicalized
-  // to RHS during lowering.
+  // See if we're comparing against zero.
+  // FIXME: Handle all zeros on LHS.
   if (!ISD::isBuildVectorAllZeros(Setcc.getOperand(1).getNode()))
     return false;
 
