@@ -173,11 +173,7 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
         return nullptr; // Else we can't perform the fold.
       // The mask must be computed in a type twice as wide to ensure
       // that no bits are lost if the sum-of-shifts is wider than the base type.
-      Type *ExtendedScalarTy = Type::getIntNTy(Ty->getContext(), 2 * BitWidth);
-      Type *ExtendedTy =
-          Ty->isVectorTy()
-              ? VectorType::get(ExtendedScalarTy, Ty->getVectorNumElements())
-              : ExtendedScalarTy;
+      Type *ExtendedTy = Ty->getExtendedType();
       auto *ExtendedSumOfShAmts =
           ConstantExpr::getZExt(SumOfShAmts, ExtendedTy);
       // And compute the mask as usual: ~(-1 << (SumOfShAmts))
@@ -213,11 +209,7 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
       unsigned BitWidth = Ty->getScalarSizeInBits();
       // The mask must be computed in a type twice as wide to ensure
       // that no bits are lost if the sum-of-shifts is wider than the base type.
-      Type *ExtendedScalarTy = Type::getIntNTy(Ty->getContext(), 2 * BitWidth);
-      Type *ExtendedTy =
-          Ty->isVectorTy()
-              ? VectorType::get(ExtendedScalarTy, Ty->getVectorNumElements())
-              : ExtendedScalarTy;
+      Type *ExtendedTy = Ty->getExtendedType();
       auto *ExtendedNumHighBitsToClear = ConstantExpr::getZExt(
           ConstantExpr::getAdd(
               ConstantExpr::getNeg(ShAmtsDiff),
