@@ -60,6 +60,54 @@ def : LoadPatOffsetOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
 def : LoadPatGlobalAddrOffOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
 }
 
+// vNxM.load_splat
+multiclass SIMDLoadSplat<string vec, bits<32> simdop> {
+  let mayLoad = 1, UseNamedOperandTable = 1,
+      Predicates = [HasUnimplementedSIMD128] in
+  defm LOAD_SPLAT_#vec :
+    SIMD_I<(outs V128:$dst), (ins P2Align:$p2align, offset32_op:$off, I32:$addr),
+           (outs), (ins P2Align:$p2align, offset32_op:$off), [],
+           vec#".load_splat\t$dst, ${off}(${addr})$p2align",
+           vec#".load_splat\t$off$p2align", simdop>;
+}
+
+defm "" : SIMDLoadSplat<"v8x16", 194>;
+defm "" : SIMDLoadSplat<"v16x8", 195>;
+defm "" : SIMDLoadSplat<"v32x4", 196>;
+defm "" : SIMDLoadSplat<"v64x2", 197>;
+
+def wasm_load_splat_t : SDTypeProfile<1, 1, []>;
+def wasm_load_splat : SDNode<"WebAssemblyISD::LOAD_SPLAT", wasm_load_splat_t>;
+
+foreach args = [["v16i8", "i32", "extloadi8"], ["v8i16", "i32", "extloadi16"],
+                ["v4i32", "i32", "load"], ["v2i64", "i64", "load"],
+                ["v4f32", "f32", "load"], ["v2f64", "f64", "load"]] in
+def load_splat_#args[0] :
+  PatFrag<(ops node:$addr), (wasm_load_splat
+            (!cast<ValueType>(args[1]) (!cast<PatFrag>(args[2]) node:$addr)))>;
+
+let Predicates = [HasUnimplementedSIMD128] in
+foreach args = [["v16i8", "v8x16"], ["v8i16", "v16x8"], ["v4i32", "v32x4"],
+                ["v2i64", "v64x2"], ["v4f32", "v32x4"], ["v2f64", "v64x2"]] in {
+def : LoadPatNoOffset<!cast<ValueType>(args[0]),
+                      !cast<PatFrag>("load_splat_"#args[0]),
+                      !cast<NI>("LOAD_SPLAT_"#args[1])>;
+def : LoadPatImmOff<!cast<ValueType>(args[0]),
+                    !cast<PatFrag>("load_splat_"#args[0]),
+                    regPlusImm,
+                    !cast<NI>("LOAD_SPLAT_"#args[1])>;
+def : LoadPatImmOff<!cast<ValueType>(args[0]),
+                    !cast<PatFrag>("load_splat_"#args[0]),
+                    or_is_add,
+                    !cast<NI>("LOAD_SPLAT_"#args[1])>;
+def : LoadPatOffsetOnly<!cast<ValueType>(args[0]),
+                        !cast<PatFrag>("load_splat_"#args[0]),
+                        !cast<NI>("LOAD_SPLAT_"#args[1])>;
+def : LoadPatGlobalAddrOffOnly<!cast<ValueType>(args[0]),
+                               !cast<PatFrag>("load_splat_"#args[0]),
+                               !cast<NI>("LOAD_SPLAT_"#args[1])>;
+}
+
 // Store: v128.store
 multiclass SIMDStore<ValueType vec_t> {
   let mayStore = 1, UseNamedOperandTable = 1 in
