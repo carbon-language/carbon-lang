@@ -31,6 +31,43 @@ TEST(CompletionRequest, Constructor) {
   EXPECT_STREQ(request.GetPartialParsedLine().GetArgumentAtIndex(1), "b");
 }
 
+TEST(CompletionRequest, TryCompleteCurrentArgGood) {
+  std::string command = "a bad c";
+  StringList matches, descriptions;
+  CompletionResult result;
+
+  CompletionRequest request(command, 3, result);
+  request.TryCompleteCurrentArg("boo", "car");
+  result.GetMatches(matches);
+  result.GetDescriptions(descriptions);
+
+  EXPECT_EQ(1U, result.GetResults().size());
+  EXPECT_STREQ("boo", matches.GetStringAtIndex(0U));
+  EXPECT_EQ(1U, descriptions.GetSize());
+  EXPECT_STREQ("car", descriptions.GetStringAtIndex(0U));
+}
+
+TEST(CompletionRequest, TryCompleteCurrentArgBad) {
+  std::string command = "a bad c";
+  CompletionResult result;
+
+  CompletionRequest request(command, 3, result);
+  request.TryCompleteCurrentArg("car", "card");
+
+  EXPECT_EQ(0U, result.GetResults().size());
+}
+
+TEST(CompletionRequest, TryCompleteCurrentArgMode) {
+  std::string command = "a bad c";
+  CompletionResult result;
+
+  CompletionRequest request(command, 3, result);
+  request.TryCompleteCurrentArg<CompletionMode::Partial>("bar", "bard");
+
+  EXPECT_EQ(1U, result.GetResults().size());
+  EXPECT_EQ(CompletionMode::Partial, result.GetResults()[0].GetMode());
+}
+
 TEST(CompletionRequest, ShiftArguments) {
   std::string command = "a bad c";
   const unsigned cursor_pos = 3;
