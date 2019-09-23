@@ -266,7 +266,11 @@ public:
     return StackNaturalAlign && (Align > StackNaturalAlign);
   }
 
-  unsigned getStackAlignment() const { return StackNaturalAlign ? StackNaturalAlign->value() : 0; }
+  llvm::Align getStackAlignment() const {
+    assert(StackNaturalAlign && "StackNaturalAlign must be defined");
+    return *StackNaturalAlign;
+  }
+
   unsigned getAllocaAddrSpace() const { return AllocaAddrSpace; }
 
   /// Returns the alignment of function pointers, which may or may not be
