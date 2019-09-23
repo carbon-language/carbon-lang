@@ -138,8 +138,9 @@ public:
   /// afterwards.
   ///
   /// \param match The suggested completion.
-  /// \param match An optional description of the completion string. The
+  /// \param completion An optional description of the completion string. The
   ///     description will be displayed to the user alongside the completion.
+  /// \param mode The CompletionMode for this completion.
   void AddCompletion(llvm::StringRef completion,
                      llvm::StringRef description = "",
                      CompletionMode mode = CompletionMode::Normal) {
