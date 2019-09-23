@@ -31,6 +31,41 @@ TEST(CompletionRequest, Constructor) {
   EXPECT_STREQ(request.GetPartialParsedLine().GetArgumentAtIndex(1), "b");
 }
 
+TEST(CompletionRequest, ShiftArguments) {
+  std::string command = "a bad c";
+  const unsigned cursor_pos = 3;
+  const int arg_index = 1;
+  const int arg_cursor_pos = 1;
+  StringList matches;
+  CompletionResult result;
+
+  CompletionRequest request(command, cursor_pos, result);
+  result.GetMatches(matches);
+
+  EXPECT_STREQ(request.GetRawLine().str().c_str(), command.c_str());
+  EXPECT_EQ(request.GetRawCursorPos(), cursor_pos);
+  EXPECT_EQ(request.GetCursorIndex(), arg_index);
+  EXPECT_EQ(request.GetCursorCharPosition(), arg_cursor_pos);
+
+  EXPECT_EQ(request.GetPartialParsedLine().GetArgumentCount(), 2u);
+  EXPECT_STREQ(request.GetPartialParsedLine().GetArgumentAtIndex(1), "b");
+
+  // Shift away the 'a' argument.
+  request.ShiftArguments();
+
+  // The raw line/cursor stays identical.
+  EXPECT_STREQ(request.GetRawLine().str().c_str(), command.c_str());
+  EXPECT_EQ(request.GetRawCursorPos(), cursor_pos);
+
+  // Relative cursor position in arg is identical.
+  EXPECT_EQ(request.GetCursorCharPosition(), arg_cursor_pos);
+
+  // Partially parsed line and cursor should be updated.
+  EXPECT_EQ(request.GetCursorIndex(), arg_index - 1U);
+  EXPECT_EQ(request.GetPartialParsedLine().GetArgumentCount(), 1u);
+  EXPECT_STREQ(request.GetPartialParsedLine().GetArgumentAtIndex(0), "b");
+}
+
 TEST(CompletionRequest, DuplicateFiltering) {
   std::string command = "a bad c";
   const unsigned cursor_pos = 3;

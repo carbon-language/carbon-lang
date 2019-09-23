@@ -119,6 +119,13 @@ public:
     return GetParsedLine()[GetCursorIndex()];
   }
 
+  /// Drops the first argument from the argument list.
+  void ShiftArguments() {
+    m_cursor_index--;
+    m_parsed_line.Shift();
+    m_partial_parsed_line.Shift();
+  }
+
   void SetCursorIndex(int i) { m_cursor_index = i; }
   int GetCursorIndex() const { return m_cursor_index; }
 
