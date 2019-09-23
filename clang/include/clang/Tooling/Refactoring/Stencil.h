@@ -153,6 +153,28 @@ inline StencilPart node(llvm::StringRef Id) {
   return selection(tooling::node(Id));
 }
 
+/// Constructs a `MemberExpr` that accesses the named member (\p Member) of the
+/// object bound to \p BaseId. The access is constructed idiomatically: if \p
+/// BaseId is bound to `e` and \p Member identifies member `m`, then returns
+/// `e->m`, when e is a pointer, `e2->m` when e = `*e2` and `e.m` otherwise.
+/// Additionally, `e` is wrapped in parentheses, if needed.
+StencilPart access(llvm::StringRef BaseId, StencilPart Member);
+inline StencilPart access(llvm::StringRef BaseId, llvm::StringRef Member) {
+  return access(BaseId, text(Member));
+}
+
+/// Chooses between the two stencil parts, based on whether \p ID is bound in
+/// the match.
+StencilPart ifBound(llvm::StringRef Id, StencilPart TruePart,
+                    StencilPart FalsePart);
+
+/// Chooses between the two strings, based on whether \p ID is bound in the
+/// match.
+inline StencilPart ifBound(llvm::StringRef Id, llvm::StringRef TrueText,
+                           llvm::StringRef FalseText) {
+  return ifBound(Id, text(TrueText), text(FalseText));
+}
+
 /// For debug use only; semantics are not guaranteed.
 ///
 /// \returns the string resulting from calling the node's print() method.
