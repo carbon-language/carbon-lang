@@ -1111,6 +1111,8 @@ static Value *foldUnsignedUnderflowCheck(ICmpInst *ZeroICmp,
 /// Fold (icmp)&(icmp) if possible.
 Value *InstCombiner::foldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS,
                                     Instruction &CxtI) {
+  const SimplifyQuery Q = SQ.getWithInstruction(&CxtI);
+
   // Fold (!iszero(A & K1) & !iszero(A & K2)) ->  (A & (K1 | K2)) == (K1 | K2)
   // if K1 and K2 are a one-bit mask.
   if (Value *V = foldAndOrOfICmpsOfAndWithPow2(LHS, RHS, true, CxtI))
@@ -1154,10 +1156,10 @@ Value *InstCombiner::foldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS,
     return V;
 
   if (Value *X =
-          foldUnsignedUnderflowCheck(LHS, RHS, /*IsAnd=*/true, SQ, Builder))
+          foldUnsignedUnderflowCheck(LHS, RHS, /*IsAnd=*/true, Q, Builder))
     return X;
   if (Value *X =
-          foldUnsignedUnderflowCheck(RHS, LHS, /*IsAnd=*/true, SQ, Builder))
+          foldUnsignedUnderflowCheck(RHS, LHS, /*IsAnd=*/true, Q, Builder))
     return X;
 
   // This only handles icmp of constants: (icmp1 A, C1) & (icmp2 B, C2).
