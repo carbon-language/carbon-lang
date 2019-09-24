@@ -236,6 +236,7 @@ public:
     return *this;
   }
 
+  std::forward_list<Message> &messages() { return messages_; }
   bool empty() const { return messages_.empty(); }
   void clear();
 

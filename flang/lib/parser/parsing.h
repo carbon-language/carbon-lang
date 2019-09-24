@@ -55,7 +55,7 @@ public:
   Messages &messages() { return messages_; }
   std::optional<Program> &parseTree() { return parseTree_; }
 
-  void Prescan(const std::string &path, Options);
+  const SourceFile *Prescan(const std::string &path, Options);
   void DumpCookedChars(std::ostream &) const;
   void DumpProvenance(std::ostream &) const;
   void DumpParsingLog(std::ostream &) const;

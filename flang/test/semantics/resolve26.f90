@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ end
 submodule(m1) s1
 end
 
-!ERROR: Cannot find module file for submodule 's1' of module 'm2'
+!ERROR: Error reading module file for submodule 's1' of module 'm2'
 submodule(m2:s1) s2
 end
 
-!ERROR: Cannot find module file for 'm3'
+!ERROR: Error reading module file for module 'm3'
 submodule(m3:s1) s3
 end

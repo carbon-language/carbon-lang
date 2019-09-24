@@ -16,15 +16,13 @@
 #define FORTRAN_SEMANTICS_MOD_FILE_H_
 
 #include "attr.h"
-#include "resolve-names.h"
-#include "../parser/message.h"
-#include <set>
 #include <sstream>
 #include <string>
-#include <vector>
 
 namespace Fortran::parser {
 class CharBlock;
+class Message;
+class MessageFixedText;
 }
 
 namespace Fortran::semantics {
@@ -71,9 +69,9 @@ public:
 private:
   SemanticsContext &context_;
 
-  std::optional<std::string> FindModFile(
-      const SourceName &, const std::string &);
+  parser::Message &Say(const SourceName &, const std::string &,
+      parser::MessageFixedText &&, const std::string &);
 };
-}
 
+}
 #endif

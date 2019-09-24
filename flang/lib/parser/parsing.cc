@@ -28,34 +28,42 @@ namespace Fortran::parser {
 Parsing::Parsing(AllSources &s) : cooked_{s} {}
 Parsing::~Parsing() {}
 
-void Parsing::Prescan(const std::string &path, Options options) {
+const SourceFile *Parsing::Prescan(const std::string &path, Options options) {
   options_ = options;
+  AllSources &allSources{cooked_.allSources()};
+  if (options.isModuleFile) {
+    for (const auto &path : options.searchDirectories) {
+      allSources.PushSearchPathDirectory(path);
+    }
+  }
 
   std::stringstream fileError;
   const SourceFile *sourceFile;
-  AllSources &allSources{cooked_.allSources()};
   if (path == "-") {
     sourceFile = allSources.ReadStandardInput(&fileError);
   } else {
     sourceFile = allSources.Open(path, &fileError);
   }
-  if (sourceFile == nullptr) {
+  if (!fileError.str().empty()) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
     messages_.Say(range, "%s"_err_en_US, fileError.str());
-    return;
+    return sourceFile;
   }
   if (sourceFile->bytes() == 0) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
     messages_.Say(range, "file is empty"_err_en_US);
-    return;
+    return sourceFile;
   }
 
-  // N.B. Be sure to not push the search directory paths until the primary
-  // source file has been opened.  If foo.f is missing from the current
-  // working directory, we don't want to accidentally read another foo.f
-  // from another directory that's on the search path.
-  for (const auto &path : options.searchDirectories) {
-    allSources.PushSearchPathDirectory(path);
+  if (!options.isModuleFile) {
+    // For .mod files we always want to look in the search directories.
+    // For normal source files we don't push them until after the primary
+    // source file has been opened.  If foo.f is missing from the current
+    // working directory, we don't want to accidentally read another foo.f
+    // from another directory that's on the search path.
+    for (const auto &path : options.searchDirectories) {
+      allSources.PushSearchPathDirectory(path);
+    }
   }
 
   Preprocessor preprocessor{allSources};
@@ -81,6 +89,7 @@ void Parsing::Prescan(const std::string &path, Options options) {
   if (options.needProvenanceRangeToCharBlockMappings) {
     cooked_.CompileProvenanceRangeToOffsetMappings();
   }
+  return sourceFile;
 }
 
 void Parsing::DumpCookedChars(std::ostream &out) const {

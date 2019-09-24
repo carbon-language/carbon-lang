@@ -124,7 +124,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
   errno = 0;
   fileDescriptor_ = open(path.c_str(), O_RDONLY);
   if (fileDescriptor_ < 0) {
-    *error << "could not open " << errorPath << ": " << std::strerror(errno);
+    *error << "Could not open " << errorPath << ": " << std::strerror(errno);
     return false;
   }
   ++openFileDescriptors;
