@@ -115,7 +115,7 @@ std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
 template<typename A>
 const A *GetPtrFromOptional(const std::optional<A> &x) {
   if (x.has_value()) {
-    return &x.value();
+    return &*x;
   } else {
     return nullptr;
   }

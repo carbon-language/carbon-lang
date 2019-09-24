@@ -28,24 +28,23 @@
 namespace Fortran::semantics {
 
 using namespace parser::literals;
-using namespace common;
 
 // Return the (possibly null)  name of the construct
 template<typename A>
 static const parser::Name *MaybeGetConstructName(const A &a) {
-  return GetPtrFromOptional(std::get<0>(std::get<0>(a.t).statement.t));
+  return common::GetPtrFromOptional(std::get<0>(std::get<0>(a.t).statement.t));
 }
 
 static const parser::Name *MaybeGetConstructName(
     const parser::BlockConstruct &blockConstruct) {
-  return GetPtrFromOptional(
+  return common::GetPtrFromOptional(
       std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
           .statement.v);
 }
 
 // Return the (possibly null) name of the statement
 template<typename A> static const parser::Name *MaybeGetStmtName(const A &a) {
-  return GetPtrFromOptional(std::get<0>(a.t));
+  return common::GetPtrFromOptional(std::get<0>(a.t));
 }
 
 // 11.1.7.5 - enforce semantics constraints on a DO CONCURRENT loop body
@@ -668,15 +667,16 @@ void DoChecker::SayBadLeave(StmtType stmtType, const char *enclosingStmtName,
 
 static const parser::DoConstruct *MaybeGetDoConstruct(
     const ConstructNode &construct) {
-  if (auto const *doNode{
+  if (const auto *doNode{
           std::get_if<const parser::DoConstruct *>(&construct)}) {
     return *doNode;
+  } else {
+    return nullptr;
   }
-  return nullptr;
 }
 
 static bool ConstructIsDoConcurrent(const ConstructNode &construct) {
-  parser::DoConstruct const *doConstruct{MaybeGetDoConstruct(construct)};
+  const parser::DoConstruct *doConstruct{MaybeGetDoConstruct(construct)};
   return doConstruct && doConstruct->IsDoConcurrent();
 }
 
@@ -705,8 +705,6 @@ void DoChecker::CheckForBadLeave(
       construct);
 }
 
-static bool isExit(StmtType stmtType) { return stmtType == StmtType::EXIT; }
-
 static bool StmtMatchesConstruct(const parser::Name *stmtName,
     StmtType stmtType, const parser::Name *constructName,
     const ConstructNode &construct) {
@@ -714,7 +712,7 @@ static bool StmtMatchesConstruct(const parser::Name *stmtName,
   if (stmtName == nullptr) {
     return inDoConstruct;  // Unlabeled statements match all DO constructs
   } else if (constructName && constructName->source == stmtName->source) {
-    return isExit(stmtType) || inDoConstruct;
+    return stmtType == StmtType::EXIT || inDoConstruct;
   } else {
     return false;
   }
@@ -723,7 +721,7 @@ static bool StmtMatchesConstruct(const parser::Name *stmtName,
 // C1167 Can't EXIT from a DO CONCURRENT
 void DoChecker::CheckDoConcurrentExit(
     StmtType stmtType, const ConstructNode &construct) const {
-  if (isExit(stmtType) && ConstructIsDoConcurrent(construct)) {
+  if (stmtType == StmtType::EXIT && ConstructIsDoConcurrent(construct)) {
     SayBadLeave(StmtType::EXIT, "DO CONCURRENT", construct);
   }
 }
@@ -735,8 +733,8 @@ void DoChecker::CheckDoConcurrentExit(
 void DoChecker::CheckNesting(
     StmtType stmtType, const parser::Name *stmtName) const {
   const ConstructStack &stack{context_.constructStack()};
-  for (auto rIter{stack.crbegin()}; rIter != stack.crend(); ++rIter) {
-    const ConstructNode &construct{*rIter};
+  for (auto iter{stack.cend()}; iter-- != stack.cbegin();) {
+    const ConstructNode &construct{*iter};
     const parser::Name *constructName{MaybeGetNodeName(construct)};
     if (StmtMatchesConstruct(stmtName, stmtType, constructName, construct)) {
       CheckDoConcurrentExit(stmtType, construct);
@@ -746,7 +744,7 @@ void DoChecker::CheckNesting(
   }
 
   // We haven't found a match in the enclosing constructs
-  if (isExit(stmtType)) {
+  if (stmtType == StmtType::EXIT) {
     context_.Say("No matching construct for EXIT statement"_err_en_US);
   } else {
     context_.Say("No matching DO construct for CYCLE statement"_err_en_US);
@@ -755,12 +753,12 @@ void DoChecker::CheckNesting(
 
 // C1135
 void DoChecker::Enter(const parser::CycleStmt &cycleStmt) {
-  CheckNesting(StmtType::CYCLE, GetPtrFromOptional(cycleStmt.v));
+  CheckNesting(StmtType::CYCLE, common::GetPtrFromOptional(cycleStmt.v));
 }
 
 // C1167 and C1168
 void DoChecker::Enter(const parser::ExitStmt &exitStmt) {
-  CheckNesting(StmtType::EXIT, GetPtrFromOptional(exitStmt.v));
+  CheckNesting(StmtType::EXIT, common::GetPtrFromOptional(exitStmt.v));
 }
 
 }  // namespace Fortran::semantics
