@@ -51,7 +51,6 @@ Clang-Tidy Checks
    bugprone-forwarding-reference-overload
    bugprone-inaccurate-erase
    bugprone-incorrect-roundings
-   bugprone-infinite-loop
    bugprone-integer-division
    bugprone-lambda-function-name
    bugprone-macro-parentheses

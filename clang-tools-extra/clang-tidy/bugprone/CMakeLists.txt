@@ -15,7 +15,6 @@ add_clang_library(clangTidyBugproneModule
   ForwardingReferenceOverloadCheck.cpp
   InaccurateEraseCheck.cpp
   IncorrectRoundingsCheck.cpp
-  InfiniteLoopCheck.cpp
   IntegerDivisionCheck.cpp
   LambdaFunctionNameCheck.cpp
   MacroParenthesesCheck.cpp

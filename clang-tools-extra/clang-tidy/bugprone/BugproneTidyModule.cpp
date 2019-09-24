@@ -23,7 +23,6 @@
 #include "ForwardingReferenceOverloadCheck.h"
 #include "InaccurateEraseCheck.h"
 #include "IncorrectRoundingsCheck.h"
-#include "InfiniteLoopCheck.h"
 #include "IntegerDivisionCheck.h"
 #include "LambdaFunctionNameCheck.h"
 #include "MacroParenthesesCheck.h"
@@ -89,8 +88,6 @@ public:
         "bugprone-inaccurate-erase");
     CheckFactories.registerCheck<IncorrectRoundingsCheck>(
         "bugprone-incorrect-roundings");
-    CheckFactories.registerCheck<InfiniteLoopCheck>(
-        "bugprone-infinite-loop");
     CheckFactories.registerCheck<IntegerDivisionCheck>(
         "bugprone-integer-division");
     CheckFactories.registerCheck<LambdaFunctionNameCheck>(
