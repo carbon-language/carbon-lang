@@ -2400,6 +2400,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetTransformInfo &TTI,
         return false;
       }
   }
+  assert(DomBlock && "Failed to find root DomBlock");
 
   LLVM_DEBUG(dbgs() << "FOUND IF CONDITION!  " << *IfCond
                     << "  T: " << IfTrue->getName()
