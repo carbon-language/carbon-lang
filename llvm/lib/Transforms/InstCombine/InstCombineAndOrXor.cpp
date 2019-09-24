@@ -1061,6 +1061,10 @@ static Value *foldUnsignedUnderflowCheck(ICmpInst *ZeroICmp,
       !ICmpInst::isEquality(EqPred))
     return nullptr;
 
+  auto IsKnownNonZero = [&](Value *V) {
+    return isKnownNonZero(V, Q.DL, /*Depth=*/0, Q.AC, Q.CxtI, Q.DT);
+  };
+
   ICmpInst::Predicate UnsignedPred;
 
   Value *A, *B;
@@ -1071,14 +1075,31 @@ static Value *foldUnsignedUnderflowCheck(ICmpInst *ZeroICmp,
     if (UnsignedICmp->getOperand(0) != ZeroCmpOp)
       UnsignedPred = ICmpInst::getSwappedPredicate(UnsignedPred);
 
+    auto GetKnownNonZeroAndOther = [&](Value *&NonZero, Value *&Other) {
+      if (!IsKnownNonZero(NonZero))
+        std::swap(NonZero, Other);
+      return IsKnownNonZero(NonZero);
+    };
+
     // Given  ZeroCmpOp = (A + B)
     //   ZeroCmpOp <= A && ZeroCmpOp != 0  -->  (0-B) <  A
     //   ZeroCmpOp >  A || ZeroCmpOp == 0  -->  (0-B) >= A
+    //
+    //   ZeroCmpOp <  A && ZeroCmpOp != 0  -->  (0-X) <  Y  iff
+    //   ZeroCmpOp >= A || ZeroCmpOp == 0  -->  (0-X) >= Y  iff
+    //     with X being the value (A/B) that is known to be non-zero,
+    //     and Y being remaining value.
     if (UnsignedPred == ICmpInst::ICMP_ULE && EqPred == ICmpInst::ICMP_NE &&
         IsAnd)
       return Builder.CreateICmpULT(Builder.CreateNeg(B), A);
+    if (UnsignedPred == ICmpInst::ICMP_ULT && EqPred == ICmpInst::ICMP_NE &&
+        IsAnd && GetKnownNonZeroAndOther(B, A))
+      return Builder.CreateICmpULT(Builder.CreateNeg(B), A);
     if (UnsignedPred == ICmpInst::ICMP_UGT && EqPred == ICmpInst::ICMP_EQ &&
         !IsAnd)
+      return Builder.CreateICmpUGE(Builder.CreateNeg(B), A);
+    if (UnsignedPred == ICmpInst::ICMP_UGE && EqPred == ICmpInst::ICMP_EQ &&
+        !IsAnd && GetKnownNonZeroAndOther(B, A))
       return Builder.CreateICmpUGE(Builder.CreateNeg(B), A);
   }
 
@@ -1094,12 +1115,10 @@ static Value *foldUnsignedUnderflowCheck(ICmpInst *ZeroICmp,
       UnsignedPred = ICmpInst::getSwappedPredicate(UnsignedPred);
 
     if (UnsignedPred == ICmpInst::ICMP_ULT && IsAnd &&
-        EqPred == ICmpInst::ICMP_NE &&
-        isKnownNonZero(Offset, Q.DL, /*Depth=*/0, Q.AC, Q.CxtI, Q.DT))
+        EqPred == ICmpInst::ICMP_NE && IsKnownNonZero(Offset))
       return Builder.CreateICmpUGT(Base, Offset);
     if (UnsignedPred == ICmpInst::ICMP_UGE && !IsAnd &&
-        EqPred == ICmpInst::ICMP_EQ &&
-        isKnownNonZero(Offset, Q.DL, /*Depth=*/0, Q.AC, Q.CxtI, Q.DT))
+        EqPred == ICmpInst::ICMP_EQ && IsKnownNonZero(Offset))
       return Builder.CreateICmpULE(Base, Offset);
   }
 
