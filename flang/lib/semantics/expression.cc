@@ -2210,8 +2210,16 @@ MaybeExpr ExpressionAnalyzer::MakeFunctionRef(
       }
     }
   }
-  if (const Symbol *symbol{proc.GetSymbol()}) {
-    if (const auto *details{symbol->detailsIf<semantics::SubprogramNameDetails>()}) {
+  if (const Symbol * symbol{proc.GetSymbol()}) {
+    if (const auto *details{
+            symbol->detailsIf<semantics::SubprogramNameDetails>()}) {
+      // If this symbol is still a SubprogramNameDetails, we must be
+      // checking a specification expression in a sibling module or internal
+      // procedure.  Since recursion is disallowed in specification
+      // expressions, we should handle such references by processing the
+      // sibling procedure's specification part right now (recursively),
+      // but until we can do so, just complain about the forward reference.
+      // TODO: recursively process sibling's specification part.
       if (details->kind() == semantics::SubprogramKind::Module) {
         Say("The module function '%s' must have been previously defined "
             "when referenced in a specification expression"_err_en_US,

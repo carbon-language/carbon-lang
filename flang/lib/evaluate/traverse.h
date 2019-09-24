@@ -28,8 +28,6 @@
 // The client (Visitor) of Traverse<Visitor,Result> must define:
 // - a member function "Result Default();"
 // - a member function "Result Combine(Result &&, Result &&)"
-// - a default "template<typename A> Result operator()(const A &x) const"
-//   handler that reflects back into Traverse<Visitor, Result>
 // - overrides for "Result operator()"
 //
 // Boilerplate classes also appear below to ease construction of visitors.
@@ -247,55 +245,39 @@ private:
   Visitor &visitor_;
 };
 
-template<typename Visitor, typename Result> class TraverseBase {
-public:
-  explicit TraverseBase(Visitor &v) : traverse_{v} {}
-  static Result Default() { return {}; }
-  template<typename A> Result operator()(const A &x) const {
-    return traverse_(x);
-  }
-
-private:
-  Traverse<Visitor, Result> traverse_;
-};
-
-template<typename Visitor, typename Result = bool, bool isConjunction = true,
-    typename Base = TraverseBase<Visitor, Result>>
-struct CombiningTraverse : public Base {
-  using Base::Base;
+// For validity checks across an expression: if any operator() result is
+// false, so is the overall result.
+template<typename Visitor, typename Base = Traverse<Visitor, bool>>
+struct AllTraverse : public Base {
+  AllTraverse(Visitor &v) : Base{v} {}
   using Base::operator();
-  static Result Default() {
-    if constexpr (isConjunction && std::is_same_v<Result, bool>) {
-      return true;
-    } else {
-      return {};
-    }
-  }
-  static Result Combine(Result &&x, Result &&y) {
-    if (static_cast<bool>(x) == isConjunction) {
-      return std::move(y);
-    } else {
-      return std::move(x);
-    }
-  }
+  static bool Default() { return true; }
+  static bool Combine(bool x, bool y) { return x && y; }
 };
-
-// For validity checks across an expression: if any operator() is
-// false, the result is false.
-template<typename Visitor, typename Result = bool>
-using AllTraverse = CombiningTraverse<Visitor, Result, true>;
 
 // For searches over an expression: the first operator() result that
 // is truthful is the final result.  Works for Booleans, pointers,
 // and std::optional<>.
-template<typename Visitor, typename Result = bool>
-using AnyTraverse = CombiningTraverse<Visitor, Result, false>;
-
-template<typename Visitor, typename Set,
-    typename Base = TraverseBase<Visitor, Set>>
-struct SetTraverse : public Base {
-  using Base::Base;
+template<typename Visitor, typename Result = bool,
+    typename Base = Traverse<Visitor, Result>>
+struct AnyTraverse : public Base {
+  AnyTraverse(Visitor &v) : Base{v} {}
   using Base::operator();
+  static Result Default() { return {}; }
+  static Result Combine(Result &&x, Result &&y) {
+    if (x) {
+      return std::move(x);
+    } else {
+      return std::move(y);
+    }
+  }
+};
+
+template<typename Visitor, typename Set, typename Base = Traverse<Visitor, Set>>
+struct SetTraverse : public Base {
+  SetTraverse(Visitor &v) : Base{v} {}
+  using Base::operator();
+  static Set Default() { return {}; }
   static Set Combine(Set &&x, Set &&y) {
 #if CLANG_LIBRARIES  // no std::set::merge()
     for (auto &value : y) {
@@ -307,5 +289,6 @@ struct SetTraverse : public Base {
     return std::move(x);
   }
 };
+
 }
 #endif
