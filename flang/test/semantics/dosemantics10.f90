@@ -36,13 +36,13 @@ subroutine s1()
     cycle
   end do outer
 
-!ERROR: No matching construct for CYCLE statement
+!ERROR: No matching DO construct for CYCLE statement
   cycle
 
 !ERROR: No matching construct for EXIT statement
   exit
 
-!ERROR: No matching construct for CYCLE statement
+!ERROR: No matching DO construct for CYCLE statement
   if(.true.) cycle
 
 !ERROR: No matching construct for EXIT statement

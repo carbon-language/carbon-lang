@@ -22,7 +22,7 @@
 ! construct if it belongs to an outer construct.
 
 subroutine s1()
-!ERROR: No matching construct for CYCLE statement
+!ERROR: No matching DO construct for CYCLE statement
   cycle
 end subroutine s1
 
@@ -33,7 +33,7 @@ end subroutine s2
 
 subroutine s3()
   level0: block
-!ERROR: No matching construct for CYCLE statement
+!ERROR: No matching DO construct for CYCLE statement
     cycle level0
   end block level0
 end subroutine s3

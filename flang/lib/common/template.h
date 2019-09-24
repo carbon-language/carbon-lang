@@ -111,6 +111,16 @@ std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
   return std::nullopt;
 }
 
+// Convert an std::optional to an ordinary pointer
+template<typename A>
+const A *GetPtrFromOptional(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return &x.value();
+  } else {
+    return nullptr;
+  }
+}
+
 // Copy a value from one variant type to another.  The types allowed in the
 // source variant must all be allowed in the destination variant type.
 template<typename TOV, typename FROMV> TOV CopyVariant(const FROMV &u) {

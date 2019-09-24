@@ -137,12 +137,14 @@ set(ERROR_TESTS
   allocate12.f90
   allocate13.f90
   doconcurrent01.f90
-  dosemantics05.f90
-  dosemantics06.f90
+  doconcurrent05.f90
+  doconcurrent06.f90
   dosemantics01.f90
   dosemantics02.f90
   dosemantics03.f90
   dosemantics04.f90
+  dosemantics05.f90
+  dosemantics06.f90
   dosemantics07.f90
   dosemantics08.f90
   dosemantics09.f90
@@ -233,8 +235,6 @@ set(DOCONCURRENT_TESTS
   doconcurrent02.f90
   doconcurrent03.f90
   doconcurrent04.f90
-  doconcurrent05.f90
-  doconcurrent06.f90
   doconcurrent07.f90
   doconcurrent08.f90
 )

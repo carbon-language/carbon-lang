@@ -19,6 +19,7 @@
 #include "symbol.h"
 #include "tools.h"
 #include "type.h"
+#include "../common/template.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/traversal.h"
 #include "../parser/message.h"
@@ -27,27 +28,24 @@
 namespace Fortran::semantics {
 
 using namespace parser::literals;
+using namespace common;
 
-static NamePtr GetNamePtr(const std::optional<parser::Name> &name) {
-  if (name.has_value()) {
-    return &(name.value());
-  } else {
-    return nullptr;
-  }
+// Return the (possibly null)  name of the construct
+template<typename A>
+static const parser::Name *MaybeGetConstructName(const A &a) {
+  return GetPtrFromOptional(std::get<0>(std::get<0>(a.t).statement.t));
 }
 
-template<typename A> static NamePtr GetConstructName(const A &a) {
-  return GetNamePtr(std::get<0>(std::get<0>(a.t).statement.t));
-}
-
-static NamePtr GetConstructName(const parser::BlockConstruct &blockConstruct) {
-  return GetNamePtr(
+static const parser::Name *MaybeGetConstructName(
+    const parser::BlockConstruct &blockConstruct) {
+  return GetPtrFromOptional(
       std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
           .statement.v);
 }
 
-template<typename A> static NamePtr GetStmtName(const A &a) {
-  return GetNamePtr(std::get<0>(a.t));
+// Return the (possibly null) name of the statement
+template<typename A> static const parser::Name *MaybeGetStmtName(const A &a) {
+  return GetPtrFromOptional(std::get<0>(a.t));
 }
 
 // 11.1.7.5 - enforce semantics constraints on a DO CONCURRENT loop body
@@ -68,52 +66,52 @@ public:
 
   // C1167
   bool Pre(const parser::WhereConstruct &s) {
-    addName(GetConstructName(s));
+    AddName(MaybeGetConstructName(s));
     return true;
   }
 
   bool Pre(const parser::ForallConstruct &s) {
-    addName(GetConstructName(s));
+    AddName(MaybeGetConstructName(s));
     return true;
   }
 
   bool Pre(const parser::ChangeTeamConstruct &s) {
-    addName(GetConstructName(s));
+    AddName(MaybeGetConstructName(s));
     return true;
   }
 
   bool Pre(const parser::CriticalConstruct &s) {
-    addName(GetConstructName(s));
+    AddName(MaybeGetConstructName(s));
     return true;
   }
 
   bool Pre(const parser::LabelDoStmt &s) {
-    addName(GetStmtName(s));
+    AddName(MaybeGetStmtName(s));
     return true;
   }
 
   bool Pre(const parser::NonLabelDoStmt &s) {
-    addName(GetStmtName(s));
+    AddName(MaybeGetStmtName(s));
     return true;
   }
 
   bool Pre(const parser::IfThenStmt &s) {
-    addName(GetStmtName(s));
+    AddName(MaybeGetStmtName(s));
     return true;
   }
 
   bool Pre(const parser::SelectCaseStmt &s) {
-    addName(GetStmtName(s));
+    AddName(MaybeGetStmtName(s));
     return true;
   }
 
   bool Pre(const parser::SelectRankStmt &s) {
-    addName(GetStmtName(s));
+    AddName(MaybeGetStmtName(s));
     return true;
   }
 
   bool Pre(const parser::SelectTypeStmt &s) {
-    addName(GetStmtName(s));
+    AddName(MaybeGetStmtName(s));
     return true;
   }
 
@@ -235,7 +233,7 @@ private:
     return false;
   }
 
-  void addName(NamePtr nm) {
+  void AddName(const parser::Name *nm) {
     if (nm) {
       names_.insert(nm->source);
     }
@@ -646,9 +644,9 @@ void DoChecker::Leave(const parser::DoConstruct &x) {
 }
 
 // Return the (possibly null) name of the ConstructNode
-static NamePtr MaybeGetNodeName(const ConstructNode &construct) {
+static const parser::Name *MaybeGetNodeName(const ConstructNode &construct) {
   return std::visit(
-      [&](const auto &x) { return GetConstructName(*x); }, construct);
+      [&](const auto &x) { return MaybeGetConstructName(*x); }, construct);
 }
 
 template<typename A> static parser::CharBlock GetConstructPosition(const A &a) {
@@ -660,44 +658,21 @@ static parser::CharBlock GetNodePosition(const ConstructNode &construct) {
       [&](const auto &x) { return GetConstructPosition(*x); }, construct);
 }
 
-void DoChecker::SayBadLeave(const char *stmtChecked,
-    const char *enclosingStmtType, const ConstructNode &construct) const {
+void DoChecker::SayBadLeave(const char *stmtName, const char *enclosingStmtName,
+    const ConstructNode &construct) const {
   context_
-      .Say(*context_.location(), "%s must not leave a %s statement"_err_en_US,
-          stmtChecked, enclosingStmtType)
+      .Say("%s must not leave a %s statement"_err_en_US, stmtName,
+          enclosingStmtName)
       .Attach(GetNodePosition(construct), "The construct that was left"_en_US);
 }
 
-static parser::DoConstruct const *MaybeGetDoConstruct(
+static const parser::DoConstruct *MaybeGetDoConstruct(
     const ConstructNode &construct) {
-  if (const auto doNode{std::get_if<const parser::DoConstruct *>(&construct)}) {
+  if (auto *const doNode{
+          std::get_if<const parser::DoConstruct *>(&construct)}) {
     return *doNode;
   }
   return nullptr;
-}
-
-// Check that CYCLE and EXIT statements do not cause flow of control to
-// leave DO CONCURRENT, CRITICAL, or CHANGE TEAM constructs.
-void DoChecker::CheckForBadLeave(
-    const char *stmtName, const ConstructNode &construct) const {
-  // C1135 and C1167
-  if (const auto doConstructPtr{MaybeGetDoConstruct(construct)}) {
-    if (doConstructPtr->IsDoConcurrent()) {
-      SayBadLeave(stmtName, "DO CONCURRENT", construct);
-    }
-    return;
-  }
-  // C1135 and C1168
-  if (const auto criticalConstructPtr{
-          std::get_if<const parser::CriticalConstruct *>(&construct)}) {
-    SayBadLeave(stmtName, "CRITICAL", construct);
-    return;
-  }
-  if (const auto changeTeamConstructPtr{
-          std::get_if<const parser::ChangeTeamConstruct *>(&construct)}) {
-    SayBadLeave(stmtName, "CHANGE TEAM", construct);
-    return;
-  }
 }
 
 static bool ConstructIsDoConcurrent(const ConstructNode &construct) {
@@ -705,71 +680,93 @@ static bool ConstructIsDoConcurrent(const ConstructNode &construct) {
   return doConstruct && doConstruct->IsDoConcurrent();
 }
 
-static bool isExitStmt(const char *stmtType) {
-  return std::strncmp("EXIT", stmtType, 4) == 0;
+// Check that CYCLE and EXIT statements do not cause flow of control to
+// leave DO CONCURRENT, CRITICAL, or CHANGE TEAM constructs.
+void DoChecker::CheckForBadLeave(
+    const char *stmtTypeName, const ConstructNode &construct) const {
+  std::visit(
+      common::visitors{
+          [&](const parser::DoConstruct *doConstructPtr) {
+            if (doConstructPtr->IsDoConcurrent()) {
+              // C1135 and C1167
+              SayBadLeave(stmtTypeName, "DO CONCURRENT", construct);
+            }
+          },
+          [&](const parser::CriticalConstruct *) {
+            // C1135 and C1168
+            SayBadLeave(stmtTypeName, "CRITICAL", construct);
+          },
+          [&](const parser::ChangeTeamConstruct *) {
+            // C1135 and C1168
+            SayBadLeave(stmtTypeName, "CHANGE TEAM", construct);
+          },
+          [](const auto *) {},
+      },
+      construct);
 }
 
-static bool StmtMatchesConstruct(NamePtr stmtName, const char *stmtType,
-    NamePtr constructName, const ConstructNode &construct) {
+static const char *GetStmtTypeName(bool isExit) {
+  if (isExit) {
+    return "EXIT";
+  } else {
+    return "CYCLE";
+  }
+}
+
+static bool StmtMatchesConstruct(const parser::Name *stmtName, bool isExit,
+    const parser::Name *constructName, const ConstructNode &construct) {
   bool inDoConstruct{MaybeGetDoConstruct(construct) != nullptr};
   if (stmtName == nullptr) {
-    if (inDoConstruct) {
-      return true;  // Unlabeled statements match all DO constructs
-    } else {
-      return false;  // Unlabeled statements match no non-DO constructs
-    }
-  } else if (!constructName) {
-    return false;  // name on CYCLE/EXIT, but not on the construct
-  } else if (constructName->source == stmtName->source) {
-    if (isExitStmt(stmtType)) {
-      return true;  // EXIT name matches any construct name
-    } else {
-      if (inDoConstruct) {
-        return true;  // CYCLE name matches only DO construct name
-      }
-    }
+    return inDoConstruct;  // Unlabeled statements match all DO constructs
+  } else if (constructName && constructName->source == stmtName->source) {
+    return isExit || inDoConstruct;
+  } else {
+    return false;
   }
-  return false;
 }
 
 // C1167 Can't EXIT from a DO CONCURRENT
 void DoChecker::CheckDoConcurrentExit(
-    const char *stmtType, const ConstructNode &construct) const {
-  if (isExitStmt(stmtType) && ConstructIsDoConcurrent(construct)) {
+    bool isExit, const ConstructNode &construct) const {
+  if (isExit && ConstructIsDoConcurrent(construct)) {
     SayBadLeave("EXIT", "DO CONCURRENT", construct);
   }
 }
 
-// Check nesting violations for a CYCLE or EXIT statement Loop up the nesting
+// Check nesting violations for a CYCLE or EXIT statement.  Loop up the nesting
 // levels looking for a construct that matches the CYCLE or EXIT statment.  At
 // every construct, check for a violation.  If we find a match without finding
 // a violation, the check is complete.
-void DoChecker::CheckNesting(const char *stmtType, NamePtr stmtName) const {
+void DoChecker::CheckNesting(bool isExit, const parser::Name *stmtName) const {
   const ConstructStack &stack{context_.constructStack()};
-  for (ConstructStack::const_reverse_iterator riter = stack.crbegin();
-       riter != stack.crend(); ++riter) {
-    const ConstructNode &construct{*riter};
-    NamePtr constructName{MaybeGetNodeName(construct)};
-    if (StmtMatchesConstruct(stmtName, stmtType, constructName, construct)) {
-      CheckDoConcurrentExit(stmtType, construct);
+  for (auto rIter{stack.crbegin()}; rIter != stack.crend(); ++rIter) {
+    const ConstructNode &construct{*rIter};
+    const parser::Name *constructName{MaybeGetNodeName(construct)};
+    if (StmtMatchesConstruct(stmtName, isExit, constructName, construct)) {
+      CheckDoConcurrentExit(isExit, construct);
       return;  // We got a match, so we're finished checking
     }
-    CheckForBadLeave(stmtType, construct);
+    CheckForBadLeave(GetStmtTypeName(isExit), construct);
   }
 
   // We haven't found a match in the enclosing constructs
-  context_.Say(*context_.location(),
-      "No matching construct for %s statement"_err_en_US, stmtType);
+  if (isExit) {
+    context_.Say(*context_.location(),
+        "No matching construct for EXIT statement"_err_en_US);
+  } else {
+    context_.Say(*context_.location(),
+        "No matching DO construct for CYCLE statement"_err_en_US);
+  }
 }
 
 // C1135
 void DoChecker::Enter(const parser::CycleStmt &cycleStmt) {
-  CheckNesting("CYCLE", GetNamePtr(cycleStmt.v));
+  CheckNesting(/*isExit*/ false, GetPtrFromOptional(cycleStmt.v));
 }
 
 // C1167 and C1168
 void DoChecker::Enter(const parser::ExitStmt &exitStmt) {
-  CheckNesting("EXIT", GetNamePtr(exitStmt.v));
+  CheckNesting(/*isExit*/ true, GetPtrFromOptional(exitStmt.v));
 }
 
 }  // namespace Fortran::semantics
