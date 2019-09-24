@@ -48,6 +48,7 @@ void Log::ForEachCategory(
 
 void Log::ListCategories(llvm::raw_ostream &stream,
                          const ChannelMap::value_type &entry) {
+  stream << llvm::formatv("Logging categories for '{0}':\n", entry.first());
   ForEachCategory(entry,
                   [&stream](llvm::StringRef name, llvm::StringRef description) {
                     stream << llvm::formatv("  {0} - {1}\n", name, description);
