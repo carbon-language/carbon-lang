@@ -43,7 +43,7 @@ static std::string ResourceInc() {
 static FileSpecList makeFiles(llvm::ArrayRef<std::string> paths) {
   FileSpecList result;
   for (const std::string &path : paths)
-    result.Append(FileSpec(path));
+    result.Append(FileSpec(path, FileSpec::Style::posix));
   return result;
 }
 
