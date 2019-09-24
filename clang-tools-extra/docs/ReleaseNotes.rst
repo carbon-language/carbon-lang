@@ -70,6 +70,86 @@ Improvements to clang-tidy
 - New :doc:`bugprone-dynamic-static-initializers
   <clang-tidy/checks/bugprone-dynamic-static-initializers>` check.
 
+- New OpenMP module.
+
+  For checks specific to `OpenMP <https://www.openmp.org/>`_ API.
+
+- New :doc:`abseil-duration-addition
+  <clang-tidy/checks/abseil-duration-addition>` check.
+
+  Checks for cases where addition should be performed in the ``absl::Time``
+  domain.
+
+- New :doc:`abseil-duration-conversion-cast
+  <clang-tidy/checks/abseil-duration-conversion-cast>` check.
+
+  Checks for casts of ``absl::Duration`` conversion functions, and recommends
+  the right conversion function instead.
+
+- New :doc:`abseil-duration-unnecessary-conversion
+  <clang-tidy/checks/abseil-duration-unnecessary-conversion>` check.
+
+  Finds and fixes cases where ``absl::Duration`` values are being converted to
+  numeric types and back again.
+
+- New :doc:`abseil-time-comparison
+  <clang-tidy/checks/abseil-time-comparison>` check.
+
+  Prefer comparisons in the ``absl::Time`` domain instead of the integer
+  domain.
+
+- New :doc:`abseil-time-subtraction
+  <clang-tidy/checks/abseil-time-subtraction>` check.
+
+  Finds and fixes ``absl::Time`` subtraction expressions to do subtraction
+  in the Time domain instead of the numeric domain.
+
+- New :doc:`android-cloexec-pipe
+  <clang-tidy/checks/android-cloexec-pipe>` check.
+
+  This check detects usage of ``pipe()``.
+
+- New :doc:`android-cloexec-pipe2
+  <clang-tidy/checks/android-cloexec-pipe2>` check.
+
+  This checks ensures that ``pipe2()`` is called with the O_CLOEXEC flag.
+
+- New :doc:`bugprone-infinite-loop
+  <clang-tidy/checks/bugprone-infinite-loop>` check.
+
+  Finds obvious infinite loops (loops where the condition variable is not
+  changed at all).
+
+- New :doc:`bugprone-unhandled-self-assignment
+  <clang-tidy/checks/bugprone-unhandled-self-assignment>` check.
+
+  Finds user-defined copy assignment operators which do not protect the code
+  against self-assignment either by checking self-assignment explicitly or
+  using the copy-and-swap or the copy-and-move method.
+
+- New :doc:`bugprone-branch-clone
+  <clang-tidy/checks/bugprone-branch-clone>` check.
+
+  Checks for repeated branches in ``if/else if/else`` chains, consecutive
+  repeated branches in ``switch`` statements and indentical true and false
+  branches in conditional operators.
+
+- New :doc:`bugprone-posix-return
+  <clang-tidy/checks/bugprone-posix-return>` check.
+
+  Checks if any calls to POSIX functions (except ``posix_openpt``) expect negative
+  return values.
+
+- New :doc:`fuchsia-default-arguments-calls
+  <clang-tidy/checks/fuchsia-default-arguments-calls>` check.
+
+  Warns if a function or method is called with default arguments.
+  This was previously done by `fuchsia-default-arguments check`, which has been
+  removed.
+
+- New :doc:`fuchsia-default-arguments-calls
+  <clang-tidy/checks/fuchsia-default-arguments-calls>` check.
+
   Finds instances where variables with static storage are initialized
   dynamically in header files.
 
@@ -102,6 +182,10 @@ Improvements to clang-tidy
 
   Now also checks if any calls to ``pthread_*`` functions expect negative return
   values.
+
+- New :doc:`bugprone-infinite-loop <clang-tidy/checks/bugprone-infinite-loop>`
+  check to detect obvious infinite loops (loops where the condition variable is
+  not changed at all).
 
 Improvements to include-fixer
 -----------------------------
