@@ -898,9 +898,6 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setTargetDAGCombine(ISD::SHL);
     setTargetDAGCombine(ISD::SRL);
     setTargetDAGCombine(ISD::SRA);
-    setTargetDAGCombine(ISD::SIGN_EXTEND);
-    setTargetDAGCombine(ISD::ZERO_EXTEND);
-    setTargetDAGCombine(ISD::ANY_EXTEND);
     setTargetDAGCombine(ISD::FP_TO_SINT);
     setTargetDAGCombine(ISD::FP_TO_UINT);
     setTargetDAGCombine(ISD::FDIV);
@@ -922,6 +919,9 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
     setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
     setTargetDAGCombine(ISD::STORE);
+    setTargetDAGCombine(ISD::SIGN_EXTEND);
+    setTargetDAGCombine(ISD::ZERO_EXTEND);
+    setTargetDAGCombine(ISD::ANY_EXTEND);
   }
 
   if (!Subtarget->hasFP64()) {
@@ -13694,6 +13694,71 @@ static SDValue PerformShiftCombine(SDNode *N,
   return SDValue();
 }
 
+// Look for a sign/zero extend of a larger than legal load. This can be split
+// into two extending loads, which are simpler to deal with than an arbitrary
+// sign extend.
+SDValue PerformSplittingToWideningLoad(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  if (N0.getOpcode() != ISD::LOAD)
+    return SDValue();
+  LoadSDNode *LD = cast<LoadSDNode>(N0.getNode());
+  if (!LD->isSimple() || !N0.hasOneUse() || LD->isIndexed() ||
+      LD->getExtensionType() != ISD::NON_EXTLOAD)
+    return SDValue();
+  EVT FromVT = LD->getValueType(0);
+  EVT ToVT = N->getValueType(0);
+  if (!ToVT.isVector())
+    return SDValue();
+  assert(FromVT.getVectorNumElements() == ToVT.getVectorNumElements());
+  EVT ToEltVT = ToVT.getVectorElementType();
+  EVT FromEltVT = FromVT.getVectorElementType();
+
+  unsigned NumElements = 0;
+  if (ToEltVT == MVT::i32 && (FromEltVT == MVT::i16 || FromEltVT == MVT::i8))
+    NumElements = 4;
+  if (ToEltVT == MVT::i16 && FromEltVT == MVT::i8)
+    NumElements = 8;
+  if (NumElements == 0 ||
+      FromVT.getVectorNumElements() == NumElements ||
+      FromVT.getVectorNumElements() % NumElements != 0 ||
+      !isPowerOf2_32(NumElements))
+    return SDValue();
+
+  SDLoc DL(LD);
+  // Details about the old load
+  SDValue Ch = LD->getChain();
+  SDValue BasePtr = LD->getBasePtr();
+  unsigned Alignment = LD->getOriginalAlignment();
+  MachineMemOperand::Flags MMOFlags = LD->getMemOperand()->getFlags();
+  AAMDNodes AAInfo = LD->getAAInfo();
+
+  ISD::LoadExtType NewExtType =
+      N->getOpcode() == ISD::SIGN_EXTEND ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+  SDValue Offset = DAG.getUNDEF(BasePtr.getValueType());
+  EVT NewFromVT = FromVT.getHalfNumVectorElementsVT(*DAG.getContext());
+  EVT NewToVT = ToVT.getHalfNumVectorElementsVT(*DAG.getContext());
+  unsigned NewOffset = NewFromVT.getSizeInBits() / 8;
+  SDValue NewPtr = DAG.getObjectPtrOffset(DL, BasePtr, NewOffset);
+
+  // Split the load in half, each side of which is extended separately. This
+  // is good enough, as legalisation will take it from there. They are either
+  // already legal or they will be split further into something that is
+  // legal.
+  SDValue NewLoad1 =
+      DAG.getLoad(ISD::UNINDEXED, NewExtType, NewToVT, DL, Ch, BasePtr, Offset,
+                  LD->getPointerInfo(), NewFromVT, Alignment, MMOFlags, AAInfo);
+  SDValue NewLoad2 =
+      DAG.getLoad(ISD::UNINDEXED, NewExtType, NewToVT, DL, Ch, NewPtr, Offset,
+                  LD->getPointerInfo().getWithOffset(NewOffset), NewFromVT,
+                  Alignment, MMOFlags, AAInfo);
+
+  SDValue NewChain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
+                                 SDValue(NewLoad1.getNode(), 1),
+                                 SDValue(NewLoad2.getNode(), 1));
+  DAG.ReplaceAllUsesOfValueWith(SDValue(LD, 1), NewChain);
+  return DAG.getNode(ISD::CONCAT_VECTORS, DL, ToVT, NewLoad1, NewLoad2);
+}
+
 /// PerformExtendCombine - Target-specific DAG combining for ISD::SIGN_EXTEND,
 /// ISD::ZERO_EXTEND, and ISD::ANY_EXTEND.
 static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
@@ -13730,6 +13795,10 @@ static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(Opc, SDLoc(N), VT, Vec, Lane);
     }
   }
+
+  if (ST->hasMVEIntegerOps())
+    if (SDValue NewLoad = PerformSplittingToWideningLoad(N, DAG))
+      return NewLoad;
 
   return SDValue();
 }
