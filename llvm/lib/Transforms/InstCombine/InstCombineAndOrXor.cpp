@@ -1061,11 +1061,30 @@ static Value *foldUnsignedUnderflowCheck(ICmpInst *ZeroICmp,
       !ICmpInst::isEquality(EqPred))
     return nullptr;
 
+  ICmpInst::Predicate UnsignedPred;
+
+  Value *A, *B;
+  if (match(UnsignedICmp,
+            m_c_ICmp(UnsignedPred, m_Specific(ZeroCmpOp), m_Value(A))) &&
+      match(ZeroCmpOp, m_c_Add(m_Specific(A), m_Value(B))) &&
+      (ZeroICmp->hasOneUse() || UnsignedICmp->hasOneUse())) {
+    if (UnsignedICmp->getOperand(0) != ZeroCmpOp)
+      UnsignedPred = ICmpInst::getSwappedPredicate(UnsignedPred);
+
+    // Given  ZeroCmpOp = (A + B)
+    //   ZeroCmpOp <= A && ZeroCmpOp != 0  -->  (0-B) <  A
+    //   ZeroCmpOp >  A || ZeroCmpOp == 0  -->  (0-B) >= A
+    if (UnsignedPred == ICmpInst::ICMP_ULE && EqPred == ICmpInst::ICMP_NE &&
+        IsAnd)
+      return Builder.CreateICmpULT(Builder.CreateNeg(B), A);
+    if (UnsignedPred == ICmpInst::ICMP_UGT && EqPred == ICmpInst::ICMP_EQ &&
+        !IsAnd)
+      return Builder.CreateICmpUGE(Builder.CreateNeg(B), A);
+  }
+
   Value *Base, *Offset;
   if (!match(ZeroCmpOp, m_Sub(m_Value(Base), m_Value(Offset))))
     return nullptr;
-
-  ICmpInst::Predicate UnsignedPred;
 
   // ZeroCmpOp <  Base && ZeroCmpOp != 0  --> Base >  Offset  iff Offset != 0
   // ZeroCmpOp >= Base || ZeroCmpOp == 0  --> Base <= Base    iff Offset != 0
