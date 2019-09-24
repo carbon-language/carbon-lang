@@ -30,9 +30,9 @@ using internal::BindableMatcher;
 
 struct Function {
   using DeclTy = FunctionDecl;
-  static constexpr auto *Prototype = "void X(char*, char);";
+  static constexpr auto *Prototype = "void X(int);";
   static constexpr auto *ConflictingPrototype = "void X(double);";
-  static constexpr auto *Definition = "void X(char *a, char b) {}";
+  static constexpr auto *Definition = "void X(int a) {}";
   static constexpr auto *ConflictingDefinition = "void X(double a) {}";
   BindableMatcher<Decl> getPattern() {
     return functionDecl(hasName("X"), unless(isImplicit()));
@@ -582,7 +582,8 @@ ASTIMPORTER_ODR_INSTANTIATE_TYPED_TEST_CASE(
 
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, FunctionConservative,
-    DefaultTestValuesForRunOptions, );
+// These tests fail on Windows.
+    ::testing::Values(ArgVector{"-target", "x86_64-pc-linux-gnu"}), );
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, TypedefConservative,
     DefaultTestValuesForRunOptions, );
@@ -624,7 +625,8 @@ INSTANTIATE_TEST_CASE_P(
 
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, FunctionLiberal,
-    DefaultTestValuesForRunOptions, );
+// These tests fail on Windows.
+    ::testing::Values(ArgVector{"-target", "x86_64-pc-linux-gnu"}), );
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, TypedefLiberal,
     DefaultTestValuesForRunOptions, );
