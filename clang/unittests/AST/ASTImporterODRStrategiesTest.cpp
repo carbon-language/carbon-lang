@@ -580,10 +580,12 @@ ASTIMPORTER_ODR_INSTANTIATE_TYPED_TEST_CASE(
 // Instantiate the tests.
 // ======================
 
+// FIXME: These fail on Windows.
+#if !defined(_WIN32)
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, FunctionConservative,
-// These tests fail on Windows.
-    ::testing::Values(ArgVector{"-target", "x86_64-pc-linux-gnu"}), );
+    DefaultTestValuesForRunOptions, );
+#endif
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, TypedefConservative,
     DefaultTestValuesForRunOptions, );
@@ -623,10 +625,12 @@ INSTANTIATE_TEST_CASE_P(
     //ODRViolationTests, VarTemplateSpecConservative,
     //DefaultTestValuesForRunOptions, );
 
+// FIXME: These fail on Windows.
+#if !defined(_WIN32)
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, FunctionLiberal,
-// These tests fail on Windows.
-    ::testing::Values(ArgVector{"-target", "x86_64-pc-linux-gnu"}), );
+    DefaultTestValuesForRunOptions, );
+#endif
 INSTANTIATE_TEST_CASE_P(
     ODRViolationTests, TypedefLiberal,
     DefaultTestValuesForRunOptions, );
