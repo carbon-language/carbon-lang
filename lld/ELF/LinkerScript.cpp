@@ -414,7 +414,7 @@ LinkerScript::computeInputSections(const InputSectionDescription *cmd) {
     size_t sizeBefore = ret.size();
 
     for (InputSectionBase *sec : inputSections) {
-      if (!sec->isLive() || sec->assigned)
+      if (!sec->isLive() || sec->parent)
         continue;
 
       // For -emit-relocs we have to ignore entries like
@@ -433,7 +433,6 @@ LinkerScript::computeInputSections(const InputSectionDescription *cmd) {
         continue;
 
       ret.push_back(sec);
-      sec->assigned = true;
     }
 
     sortInputSections(
@@ -455,6 +454,7 @@ void LinkerScript::discard(InputSectionBase *s) {
     mainPart->hashTab = nullptr;
 
   s->markDead();
+  s->parent = nullptr;
   for (InputSection *ds : s->dependentSections)
     discard(ds);
 }
@@ -466,6 +466,8 @@ LinkerScript::createInputSectionList(OutputSection &outCmd) {
   for (BaseCommand *base : outCmd.sectionCommands) {
     if (auto *cmd = dyn_cast<InputSectionDescription>(base)) {
       cmd->sectionBases = computeInputSections(cmd);
+      for (InputSectionBase *s : cmd->sectionBases)
+        s->parent = &outCmd;
       ret.insert(ret.end(), cmd->sectionBases.begin(), cmd->sectionBases.end());
     }
   }
@@ -497,7 +499,7 @@ void LinkerScript::processSectionCommands() {
       // way to "make it as if it wasn't present" is to make it empty.
       if (!matchConstraints(v, sec->constraint)) {
         for (InputSectionBase *s : v)
-          s->assigned = false;
+          s->parent = nullptr;
         sec->sectionCommands.clear();
         continue;
       }
@@ -512,8 +514,6 @@ void LinkerScript::processSectionCommands() {
       }
 
       sec->sectionIndex = i++;
-      for (InputSectionBase *s : v)
-        s->parent = sec;
     }
   }
 }
