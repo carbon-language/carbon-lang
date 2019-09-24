@@ -31,9 +31,9 @@ bool CppModuleConfiguration::SetOncePath::TrySet(llvm::StringRef path) {
 }
 
 bool CppModuleConfiguration::analyzeFile(const FileSpec &f) {
-  llvm::SmallString<256> dir_buffer = f.GetDirectory().GetStringRef();
-  // Convert to posix style so that we can use '/'.
-  llvm::sys::path::native(dir_buffer, llvm::sys::path::Style::posix);
+  using namespace llvm::sys::path;
+  // Convert to slashes to make following operations simpler.
+  std::string dir_buffer = convert_to_slash(f.GetDirectory().GetStringRef());
   llvm::StringRef posix_dir(dir_buffer);
 
   // Check for /c++/vX/ that is used by libc++.
