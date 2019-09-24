@@ -16,6 +16,7 @@
 #define FORTRAN_SEMANTICS_CHECK_DO_H_
 
 #include "semantics.h"
+#include "../common/idioms.h"
 
 namespace Fortran::parser {
 struct DoConstruct;
@@ -24,6 +25,10 @@ struct ExitStmt;
 }
 
 namespace Fortran::semantics {
+
+// To specify CYCLE and EXIT statements in semantic checking that's common to
+// both of them.
+ENUM_CLASS(StmtType, CYCLE, EXIT)
 
 class DoChecker : public virtual BaseChecker {
 public:
@@ -35,11 +40,11 @@ public:
 private:
   SemanticsContext &context_;
 
-  void SayBadLeave(const char *stmtChecked, const char *enclosingStmt,
-      const ConstructNode &) const;
-  void CheckDoConcurrentExit(bool isExit, const ConstructNode &) const;
-  void CheckForBadLeave(const char *, const ConstructNode &) const;
-  void CheckNesting(bool isExit, const parser::Name *) const;
+  void SayBadLeave(
+      StmtType, const char *enclosingStmt, const ConstructNode &) const;
+  void CheckDoConcurrentExit(StmtType, const ConstructNode &) const;
+  void CheckForBadLeave(StmtType, const ConstructNode &) const;
+  void CheckNesting(StmtType, const parser::Name *) const;
 };
 }
 #endif  // FORTRAN_SEMANTICS_CHECK_DO_H_

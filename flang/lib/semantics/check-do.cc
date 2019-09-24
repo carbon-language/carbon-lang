@@ -658,17 +658,17 @@ static parser::CharBlock GetNodePosition(const ConstructNode &construct) {
       [&](const auto &x) { return GetConstructPosition(*x); }, construct);
 }
 
-void DoChecker::SayBadLeave(const char *stmtName, const char *enclosingStmtName,
+void DoChecker::SayBadLeave(StmtType stmtType, const char *enclosingStmtName,
     const ConstructNode &construct) const {
   context_
-      .Say("%s must not leave a %s statement"_err_en_US, stmtName,
+      .Say("%s must not leave a %s statement"_err_en_US, EnumToString(stmtType),
           enclosingStmtName)
       .Attach(GetNodePosition(construct), "The construct that was left"_en_US);
 }
 
 static const parser::DoConstruct *MaybeGetDoConstruct(
     const ConstructNode &construct) {
-  if (auto *const doNode{
+  if (auto const *doNode{
           std::get_if<const parser::DoConstruct *>(&construct)}) {
     return *doNode;
   }
@@ -683,43 +683,38 @@ static bool ConstructIsDoConcurrent(const ConstructNode &construct) {
 // Check that CYCLE and EXIT statements do not cause flow of control to
 // leave DO CONCURRENT, CRITICAL, or CHANGE TEAM constructs.
 void DoChecker::CheckForBadLeave(
-    const char *stmtTypeName, const ConstructNode &construct) const {
+    StmtType stmtType, const ConstructNode &construct) const {
   std::visit(
       common::visitors{
           [&](const parser::DoConstruct *doConstructPtr) {
             if (doConstructPtr->IsDoConcurrent()) {
               // C1135 and C1167
-              SayBadLeave(stmtTypeName, "DO CONCURRENT", construct);
+              SayBadLeave(stmtType, "DO CONCURRENT", construct);
             }
           },
           [&](const parser::CriticalConstruct *) {
             // C1135 and C1168
-            SayBadLeave(stmtTypeName, "CRITICAL", construct);
+            SayBadLeave(stmtType, "CRITICAL", construct);
           },
           [&](const parser::ChangeTeamConstruct *) {
             // C1135 and C1168
-            SayBadLeave(stmtTypeName, "CHANGE TEAM", construct);
+            SayBadLeave(stmtType, "CHANGE TEAM", construct);
           },
           [](const auto *) {},
       },
       construct);
 }
 
-static const char *GetStmtTypeName(bool isExit) {
-  if (isExit) {
-    return "EXIT";
-  } else {
-    return "CYCLE";
-  }
-}
+static bool isExit(StmtType stmtType) { return stmtType == StmtType::EXIT; }
 
-static bool StmtMatchesConstruct(const parser::Name *stmtName, bool isExit,
-    const parser::Name *constructName, const ConstructNode &construct) {
+static bool StmtMatchesConstruct(const parser::Name *stmtName,
+    StmtType stmtType, const parser::Name *constructName,
+    const ConstructNode &construct) {
   bool inDoConstruct{MaybeGetDoConstruct(construct) != nullptr};
   if (stmtName == nullptr) {
     return inDoConstruct;  // Unlabeled statements match all DO constructs
   } else if (constructName && constructName->source == stmtName->source) {
-    return isExit || inDoConstruct;
+    return isExit(stmtType) || inDoConstruct;
   } else {
     return false;
   }
@@ -727,9 +722,9 @@ static bool StmtMatchesConstruct(const parser::Name *stmtName, bool isExit,
 
 // C1167 Can't EXIT from a DO CONCURRENT
 void DoChecker::CheckDoConcurrentExit(
-    bool isExit, const ConstructNode &construct) const {
-  if (isExit && ConstructIsDoConcurrent(construct)) {
-    SayBadLeave("EXIT", "DO CONCURRENT", construct);
+    StmtType stmtType, const ConstructNode &construct) const {
+  if (isExit(stmtType) && ConstructIsDoConcurrent(construct)) {
+    SayBadLeave(StmtType::EXIT, "DO CONCURRENT", construct);
   }
 }
 
@@ -737,36 +732,35 @@ void DoChecker::CheckDoConcurrentExit(
 // levels looking for a construct that matches the CYCLE or EXIT statment.  At
 // every construct, check for a violation.  If we find a match without finding
 // a violation, the check is complete.
-void DoChecker::CheckNesting(bool isExit, const parser::Name *stmtName) const {
+void DoChecker::CheckNesting(
+    StmtType stmtType, const parser::Name *stmtName) const {
   const ConstructStack &stack{context_.constructStack()};
   for (auto rIter{stack.crbegin()}; rIter != stack.crend(); ++rIter) {
     const ConstructNode &construct{*rIter};
     const parser::Name *constructName{MaybeGetNodeName(construct)};
-    if (StmtMatchesConstruct(stmtName, isExit, constructName, construct)) {
-      CheckDoConcurrentExit(isExit, construct);
+    if (StmtMatchesConstruct(stmtName, stmtType, constructName, construct)) {
+      CheckDoConcurrentExit(stmtType, construct);
       return;  // We got a match, so we're finished checking
     }
-    CheckForBadLeave(GetStmtTypeName(isExit), construct);
+    CheckForBadLeave(stmtType, construct);
   }
 
   // We haven't found a match in the enclosing constructs
-  if (isExit) {
-    context_.Say(*context_.location(),
-        "No matching construct for EXIT statement"_err_en_US);
+  if (isExit(stmtType)) {
+    context_.Say("No matching construct for EXIT statement"_err_en_US);
   } else {
-    context_.Say(*context_.location(),
-        "No matching DO construct for CYCLE statement"_err_en_US);
+    context_.Say("No matching DO construct for CYCLE statement"_err_en_US);
   }
 }
 
 // C1135
 void DoChecker::Enter(const parser::CycleStmt &cycleStmt) {
-  CheckNesting(/*isExit*/ false, GetPtrFromOptional(cycleStmt.v));
+  CheckNesting(StmtType::CYCLE, GetPtrFromOptional(cycleStmt.v));
 }
 
 // C1167 and C1168
 void DoChecker::Enter(const parser::ExitStmt &exitStmt) {
-  CheckNesting(/*isExit*/ true, GetPtrFromOptional(exitStmt.v));
+  CheckNesting(StmtType::EXIT, GetPtrFromOptional(exitStmt.v));
 }
 
 }  // namespace Fortran::semantics
