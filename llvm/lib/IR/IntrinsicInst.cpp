@@ -67,13 +67,12 @@ int llvm::Intrinsic::lookupLLVMIntrinsicByName(ArrayRef<const char *> NameTable,
   // size 1. During the search, we can skip the prefix that we already know is
   // identical. By using strncmp we consider names with differing suffixes to
   // be part of the equal range.
-  size_t CmpStart = 0;
   size_t CmpEnd = 4; // Skip the "llvm" component.
   const char *const *Low = NameTable.begin();
   const char *const *High = NameTable.end();
   const char *const *LastLow = Low;
   while (CmpEnd < Name.size() && High - Low > 0) {
-    CmpStart = CmpEnd;
+    size_t CmpStart = CmpEnd;
     CmpEnd = Name.find('.', CmpStart + 1);
     CmpEnd = CmpEnd == StringRef::npos ? Name.size() : CmpEnd;
     auto Cmp = [CmpStart, CmpEnd](const char *LHS, const char *RHS) {
