@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s bugprone-infinite-loop %t
+// RUN: %check_clang_tidy %s bugprone-infinite-loop %t -- -- -fexceptions
 
 void simple_infinite_loop1() {
   int i = 0;
