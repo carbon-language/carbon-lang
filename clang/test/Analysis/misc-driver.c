@@ -1,2 +1,5 @@
-// RUN: %clang -### --analyze %s 2>&1 | FileCheck %s
-// CHECK: -D__clang_analyzer__
+// RUN: %clang --analyze %s
+
+#ifndef __clang_analyzer__
+#error __clang_analyzer__ not defined
+#endif
