@@ -97,7 +97,6 @@ declare x86_mmx @llvm.x86.sse.cvttps2pi(<4 x float>) nounwind readnone
 
 ; TODO stack_fold_movd_load
 
-; TODO stack_fold_movd_store
 ; padd forces execution on mmx
 define i32 @stack_fold_movd_store(x86_mmx %a0) nounwind {
 ; CHECK-LABEL: stack_fold_movd_store:
@@ -109,8 +108,7 @@ define i32 @stack_fold_movd_store(x86_mmx %a0) nounwind {
 ; CHECK-NEXT:    pushq %r12
 ; CHECK-NEXT:    pushq %rbx
 ; CHECK-NEXT:    paddb %mm0, %mm0
-; CHECK-NEXT:    movd %mm0, %eax
-; CHECK-NEXT:    movl %eax, {{[-0-9]+}}(%r{{[sb]}}p) # 4-byte Spill
+; CHECK-NEXT:    movd %mm0, {{[-0-9]+}}(%r{{[sb]}}p) # 4-byte Spill
 ; CHECK-NEXT:    #APP
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    #NO_APP
@@ -131,7 +129,6 @@ define i32 @stack_fold_movd_store(x86_mmx %a0) nounwind {
 
 ; TODO stack_fold_movq_load
 
-; TODO stack_fold_movq_store
 ; padd forces execution on mmx
 define i64 @stack_fold_movq_store(x86_mmx %a0) nounwind {
 ; CHECK-LABEL: stack_fold_movq_store:
@@ -143,8 +140,7 @@ define i64 @stack_fold_movq_store(x86_mmx %a0) nounwind {
 ; CHECK-NEXT:    pushq %r12
 ; CHECK-NEXT:    pushq %rbx
 ; CHECK-NEXT:    paddb %mm0, %mm0
-; CHECK-NEXT:    movq %mm0, %rax
-; CHECK-NEXT:    movq %rax, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-NEXT:    movq %mm0, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Folded Spill
 ; CHECK-NEXT:    #APP
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    #NO_APP
