@@ -1926,6 +1926,20 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       A->getType()->isIntOrIntVectorTy(1))
     return SelectInst::Create(A, Op0, Constant::getNullValue(I.getType()));
 
+  // and(ashr(subNSW(Y, X), ScalarSizeInBits(Y)-1), X) --> X s> Y ? X : 0.
+  {
+    Value *X, *Y;
+    const APInt *ShAmt;
+    Type *Ty = I.getType();
+    if (match(&I, m_c_And(m_OneUse(m_AShr(m_NSWSub(m_Value(Y), m_Value(X)),
+                                          m_APInt(ShAmt))),
+                          m_Deferred(X))) &&
+        *ShAmt == Ty->getScalarSizeInBits() - 1) {
+      Value *NewICmpInst = Builder.CreateICmpSGT(X, Y);
+      return SelectInst::Create(NewICmpInst, X, ConstantInt::getNullValue(Ty));
+    }
+  }
+
   return nullptr;
 }
 
