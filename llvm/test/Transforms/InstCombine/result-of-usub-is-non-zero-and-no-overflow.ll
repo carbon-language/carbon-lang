@@ -65,8 +65,7 @@ define i1 @t1_strict(i8 %base, i8 %offset) {
 ; CHECK-NEXT:    call void @use1(i1 [[NO_UNDERFLOW]])
 ; CHECK-NEXT:    [[NOT_NULL:%.*]] = icmp ne i8 [[ADJUSTED]], 0
 ; CHECK-NEXT:    call void @use1(i1 [[NOT_NULL]])
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i8 [[BASE]], [[OFFSET]]
-; CHECK-NEXT:    ret i1 [[TMP1]]
+; CHECK-NEXT:    ret i1 [[NO_UNDERFLOW]]
 ;
   %adjusted = sub i8 %base, %offset
   call void @use8(i8 %adjusted)
@@ -226,8 +225,7 @@ define i1 @t7_nonstrict(i8 %base, i8 %offset) {
 ; CHECK-NEXT:    call void @use1(i1 [[UNDERFLOW]])
 ; CHECK-NEXT:    [[NULL:%.*]] = icmp eq i8 [[ADJUSTED]], 0
 ; CHECK-NEXT:    call void @use1(i1 [[NULL]])
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ule i8 [[BASE]], [[OFFSET]]
-; CHECK-NEXT:    ret i1 [[TMP1]]
+; CHECK-NEXT:    ret i1 [[UNDERFLOW]]
 ;
   %adjusted = sub i8 %base, %offset
   call void @use8(i8 %adjusted)

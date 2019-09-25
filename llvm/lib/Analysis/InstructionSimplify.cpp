@@ -1401,6 +1401,18 @@ static Value *simplifyUnsignedRangeCheck(ICmpInst *ZeroICmp,
            UnsignedPred == ICmpInst::ICMP_UGT) &&
           EqPred == ICmpInst::ICMP_EQ && IsAnd)
         return ConstantInt::getFalse(UnsignedICmp->getType());
+
+      // A </> B && (A - B) != 0  <-->  A </> B
+      // A </> B || (A - B) != 0  <-->  (A - B) != 0
+      if (EqPred == ICmpInst::ICMP_NE && (UnsignedPred == ICmpInst::ICMP_ULT ||
+                                          UnsignedPred == ICmpInst::ICMP_UGT))
+        return IsAnd ? UnsignedICmp : ZeroICmp;
+
+      // A <=/>= B && (A - B) == 0  <-->  (A - B) == 0
+      // A <=/>= B || (A - B) == 0  <-->  A <=/>= B
+      if (EqPred == ICmpInst::ICMP_EQ && (UnsignedPred == ICmpInst::ICMP_ULE ||
+                                          UnsignedPred == ICmpInst::ICMP_UGE))
+        return IsAnd ? ZeroICmp : UnsignedICmp;
     }
 
     // Given  Y = (A - B)
