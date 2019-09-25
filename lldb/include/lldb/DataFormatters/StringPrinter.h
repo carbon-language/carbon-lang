@@ -24,19 +24,9 @@ public:
 
   enum class GetPrintableElementType { ASCII, UTF8 };
 
-  class ReadStringAndDumpToStreamOptions {
+  class DumpToStreamOptions {
   public:
-    ReadStringAndDumpToStreamOptions() = default;
-
-    ReadStringAndDumpToStreamOptions(ValueObject &valobj);
-
-    void SetLocation(uint64_t l) { m_location = l; }
-
-    uint64_t GetLocation() const { return m_location; }
-
-    void SetProcessSP(lldb::ProcessSP p) { m_process_sp = p; }
-
-    lldb::ProcessSP GetProcessSP() const { return m_process_sp; }
+    DumpToStreamOptions() = default;
 
     void SetStream(Stream *s) { m_stream = s; }
 
@@ -80,27 +70,57 @@ public:
 
     void SetLanguage(lldb::LanguageType l) { m_language_type = l; }
 
-    lldb::LanguageType GetLanguage() const
-    {
-      return m_language_type;
-    }
+    lldb::LanguageType GetLanguage() const { return m_language_type; }
+
+  private:
+    /// The used output stream.
+    Stream *m_stream = nullptr;
+    /// String that should be printed before the heading quote character.
+    std::string m_prefix_token;
+    /// String that should be printed after the trailing quote character.
+    std::string m_suffix_token;
+    /// The quote character that should surround the string.
+    char m_quote = '"';
+    /// The length of the memory region that should be dumped in bytes.
+    uint32_t m_source_size = 0;
+    bool m_needs_zero_termination = true;
+    /// True iff non-printable characters should be escaped when dumping
+    /// them to the stream.
+    bool m_escape_non_printables = true;
+    /// True iff the max-string-summary-length setting of the target should
+    /// be ignored.
+    bool m_ignore_max_length = false;
+    /// True iff a zero bytes ('\0') should terminate the memory region that
+    /// is being dumped.
+    bool m_zero_is_terminator = true;
+    /// The language that the generated string literal is supposed to be valid
+    /// for. This changes for example what and how certain characters are
+    /// escaped.
+    /// For example, printing the a string containing only a quote (") char
+    /// with eLanguageTypeC would escape the quote character.
+    lldb::LanguageType m_language_type = lldb::eLanguageTypeUnknown;
+  };
+
+  class ReadStringAndDumpToStreamOptions : public DumpToStreamOptions {
+  public:
+    ReadStringAndDumpToStreamOptions() = default;
+
+    ReadStringAndDumpToStreamOptions(ValueObject &valobj);
+
+    void SetLocation(uint64_t l) { m_location = l; }
+
+    uint64_t GetLocation() const { return m_location; }
+
+    void SetProcessSP(lldb::ProcessSP p) { m_process_sp = p; }
+
+    lldb::ProcessSP GetProcessSP() const { return m_process_sp; }
 
   private:
     uint64_t m_location = 0;
     lldb::ProcessSP m_process_sp;
-    Stream *m_stream = nullptr;
-    std::string m_prefix_token;
-    std::string m_suffix_token;
-    char m_quote = '"';
-    uint32_t m_source_size = 0;
-    bool m_needs_zero_termination = true;
-    bool m_escape_non_printables = true;
-    bool m_ignore_max_length = false;
-    bool m_zero_is_terminator = true;
-    lldb::LanguageType m_language_type = lldb::eLanguageTypeUnknown;
   };
 
-  class ReadBufferAndDumpToStreamOptions {
+  class ReadBufferAndDumpToStreamOptions : public DumpToStreamOptions {
   public:
     ReadBufferAndDumpToStreamOptions() = default;
 
@@ -113,57 +133,12 @@ public:
 
     lldb_private::DataExtractor GetData() const { return m_data; }
 
-    void SetStream(Stream *s) { m_stream = s; }
-
-    Stream *GetStream() const { return m_stream; }
-
-    void SetPrefixToken(const std::string &p) { m_prefix_token = p; }
-
-    void SetPrefixToken(std::nullptr_t) { m_prefix_token.clear(); }
-
-    const char *GetPrefixToken() const { return m_prefix_token.c_str(); }
-
-    void SetSuffixToken(const std::string &p) { m_suffix_token = p; }
-
-    void SetSuffixToken(std::nullptr_t) { m_suffix_token.clear(); }
-
-    const char *GetSuffixToken() const { return m_suffix_token.c_str(); }
-
-    void SetQuote(char q) { m_quote = q; }
-
-    char GetQuote() const { return m_quote; }
-
-    void SetSourceSize(uint32_t s) { m_source_size = s; }
-
-    uint32_t GetSourceSize() const { return m_source_size; }
-
-    void SetEscapeNonPrintables(bool e) { m_escape_non_printables = e; }
-
-    bool GetEscapeNonPrintables() const { return m_escape_non_printables; }
-
-    void SetBinaryZeroIsTerminator(bool e) { m_zero_is_terminator = e; }
-
-    bool GetBinaryZeroIsTerminator() const { return m_zero_is_terminator; }
-
     void SetIsTruncated(bool t) { m_is_truncated = t; }
 
     bool GetIsTruncated() const { return m_is_truncated; }
-
-    void SetLanguage(lldb::LanguageType l) { m_language_type = l; }
-
-    lldb::LanguageType GetLanguage() const { return m_language_type; }
-
   private:
     DataExtractor m_data;
-    Stream *m_stream = nullptr;
-    std::string m_prefix_token;
-    std::string m_suffix_token;
-    char m_quote = '"';
-    uint32_t m_source_size = 0;
-    bool m_escape_non_printables = true;
-    bool m_zero_is_terminator = true;
     bool m_is_truncated = false;
-    lldb::LanguageType m_language_type = lldb::eLanguageTypeUnknown;
   };
 
   // I can't use a std::unique_ptr for this because the Deleter is a template
