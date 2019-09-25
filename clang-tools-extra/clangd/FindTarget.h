@@ -19,6 +19,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_TOOLS_EXTRA_UNITTESTS_CLANGD_FINDTARGET_H
+#define LLVM_CLANG_TOOLS_EXTRA_UNITTESTS_CLANGD_FINDTARGET_H
+
 #include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Stmt.h"
@@ -176,3 +179,5 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &, DeclRelationSet);
 
 } // namespace clangd
 } // namespace clang
+
+#endif // LLVM_CLANG_TOOLS_EXTRA_UNITTESTS_CLANGD_FINDTARGET_H
