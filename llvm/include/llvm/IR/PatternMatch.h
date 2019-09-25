@@ -88,6 +88,11 @@ inline class_match<UndefValue> m_Undef() { return class_match<UndefValue>(); }
 /// Match an arbitrary Constant and ignore it.
 inline class_match<Constant> m_Constant() { return class_match<Constant>(); }
 
+/// Match an arbitrary basic block value and ignore it.
+inline class_match<BasicBlock> m_BasicBlock() {
+  return class_match<BasicBlock>();
+}
+
 /// Inverting matcher
 template <typename Ty> struct match_unless {
   Ty M;
@@ -563,6 +568,12 @@ inline bind_ty<Constant> m_Constant(Constant *&C) { return C; }
 /// Match a ConstantFP, capturing the value if we match.
 inline bind_ty<ConstantFP> m_ConstantFP(ConstantFP *&C) { return C; }
 
+/// Match a basic block value, capturing it if we match.
+inline bind_ty<BasicBlock> m_BasicBlock(BasicBlock *&V) { return V; }
+inline bind_ty<const BasicBlock> m_BasicBlock(const BasicBlock *&V) {
+  return V;
+}
+
 /// Match a specified Value*.
 struct specificval_ty {
   const Value *Val;
@@ -655,6 +666,32 @@ inline specific_intval m_SpecificInt(uint64_t V) { return specific_intval(V); }
 /// Match a ConstantInt and bind to its value.  This does not match
 /// ConstantInts wider than 64-bits.
 inline bind_const_intval_ty m_ConstantInt(uint64_t &V) { return V; }
+
+/// Match a specified basic block value.
+struct specific_bbval {
+  BasicBlock *Val;
+
+  specific_bbval(BasicBlock *Val) : Val(Val) {}
+
+  template <typename ITy> bool match(ITy *V) {
+    const auto *BB = dyn_cast<BasicBlock>(V);
+    return BB && BB == Val;
+  }
+};
+
+/// Match a specific basic block value.
+inline specific_bbval m_SpecificBB(BasicBlock *BB) {
+  return specific_bbval(BB);
+}
+
+/// A commutative-friendly version of m_Specific().
+inline deferredval_ty<BasicBlock> m_Deferred(BasicBlock *const &BB) {
+  return BB;
+}
+inline deferredval_ty<const BasicBlock>
+m_Deferred(const BasicBlock *const &BB) {
+  return BB;
+}
 
 //===----------------------------------------------------------------------===//
 // Matcher for any binary operator.
@@ -1345,19 +1382,23 @@ struct brc_match {
 
   template <typename OpTy> bool match(OpTy *V) {
     if (auto *BI = dyn_cast<BranchInst>(V))
-      if (BI->isConditional() && Cond.match(BI->getCondition())) {
-        T = BI->getSuccessor(0);
-        F = BI->getSuccessor(1);
-        return true;
-      }
+      if (BI->isConditional() && Cond.match(BI->getCondition()))
+        return T.match(BI->getSuccessor(0)) && F.match(BI->getSuccessor(1));
     return false;
   }
 };
 
 template <typename Cond_t>
-inline brc_match<Cond_t, BasicBlock *&, BasicBlock *&>
+inline brc_match<Cond_t, bind_ty<BasicBlock>, bind_ty<BasicBlock>>
 m_Br(const Cond_t &C, BasicBlock *&T, BasicBlock *&F) {
-  return brc_match<Cond_t, BasicBlock *&, BasicBlock *&>(C, T, F);
+  return brc_match<Cond_t, bind_ty<BasicBlock>, bind_ty<BasicBlock>>(
+      C, m_BasicBlock(T), m_BasicBlock(F));
+}
+
+template <typename Cond_t, typename TrueBlock_t, typename FalseBlock_t>
+inline brc_match<Cond_t, TrueBlock_t, FalseBlock_t>
+m_Br(const Cond_t &C, const TrueBlock_t &T, const FalseBlock_t &F) {
+  return brc_match<Cond_t, TrueBlock_t, FalseBlock_t>(C, T, F);
 }
 
 //===----------------------------------------------------------------------===//
