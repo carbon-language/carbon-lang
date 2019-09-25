@@ -678,9 +678,9 @@ public:
     /// Hash once, and reuse it for the lookup and the insertion if needed.
     LookupKeyHashed Lookup(MapInfo::getHashValue(Key), Key);
 
-    auto I = Map.find_as(Lookup);
-    if (I != Map.end())
-      return *I;
+    auto ItMap = Map.find_as(Lookup);
+    if (ItMap != Map.end())
+      return *ItMap;
 
     // Update to the new value.  Optimize for the case when we have a single
     // operand that we're changing, but handle bulk updates efficiently.
