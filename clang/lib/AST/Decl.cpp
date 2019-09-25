@@ -1558,19 +1558,6 @@ void NamedDecl::printQualifiedName(raw_ostream &OS) const {
 
 void NamedDecl::printQualifiedName(raw_ostream &OS,
                                    const PrintingPolicy &P) const {
-  printNestedNameSpecifier(OS, P);
-  if (getDeclName() || isa<DecompositionDecl>(this))
-    OS << *this;
-  else
-    OS << "(anonymous)";
-}
-
-void NamedDecl::printNestedNameSpecifier(raw_ostream &OS) const {
-  printNestedNameSpecifier(OS, getASTContext().getPrintingPolicy());
-}
-
-void NamedDecl::printNestedNameSpecifier(raw_ostream &OS,
-                                         const PrintingPolicy &P) const {
   const DeclContext *Ctx = getDeclContext();
 
   // For ObjC methods and properties, look through categories and use the
@@ -1584,8 +1571,10 @@ void NamedDecl::printNestedNameSpecifier(raw_ostream &OS,
         Ctx = ID;
   }
 
-  if (Ctx->isFunctionOrMethod())
+  if (Ctx->isFunctionOrMethod()) {
+    printName(OS);
     return;
+  }
 
   using ContextsTy = SmallVector<const DeclContext *, 8>;
   ContextsTy Contexts;
@@ -1655,6 +1644,11 @@ void NamedDecl::printNestedNameSpecifier(raw_ostream &OS,
     }
     OS << "::";
   }
+
+  if (getDeclName() || isa<DecompositionDecl>(this))
+    OS << *this;
+  else
+    OS << "(anonymous)";
 }
 
 void NamedDecl::getNameForDiagnostic(raw_ostream &OS,
