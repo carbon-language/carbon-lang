@@ -10067,7 +10067,7 @@ Syntax:
 
 ::
 
-      <result> = phi <ty> [ <val0>, <label0>], ...
+      <result> = phi [fast-math-flags] <ty> [ <val0>, <label0>], ...
 
 Overview:
 """""""""
@@ -10093,6 +10093,12 @@ For the purposes of the SSA form, the use of each incoming value is
 deemed to occur on the edge from the corresponding predecessor block to
 the current block (but after any definition of an '``invoke``'
 instruction's return value on the same edge).
+
+The optional ``fast-math-flags`` marker indicates that the phi has one
+or more :ref:`fast-math-flags <fastmath>`. These are optimization hints
+to enable otherwise unsafe floating-point optimizations. Fast-math-flags
+are only valid for phis that return a floating-point scalar or vector
+type.
 
 Semantics:
 """"""""""
