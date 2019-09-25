@@ -1128,6 +1128,16 @@ static Value *foldUnsignedUnderflowCheck(ICmpInst *ZeroICmp,
       EqPred == ICmpInst::ICMP_EQ && !IsAnd)
     return Builder.CreateICmpULE(Base, Offset);
 
+  // Base <= Offset && (Base - Offset) != 0  -->  Base < Offset
+  if (UnsignedPred == ICmpInst::ICMP_ULE && EqPred == ICmpInst::ICMP_NE &&
+      IsAnd)
+    return Builder.CreateICmpULT(Base, Offset);
+
+  // Base > Offset || (Base - Offset) == 0  -->  Base >= Offset
+  if (UnsignedPred == ICmpInst::ICMP_UGT && EqPred == ICmpInst::ICMP_EQ &&
+      !IsAnd)
+    return Builder.CreateICmpUGE(Base, Offset);
+
   return nullptr;
 }
 
