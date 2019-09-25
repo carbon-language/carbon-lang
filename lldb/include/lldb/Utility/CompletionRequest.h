@@ -103,9 +103,6 @@ public:
                     CompletionResult &result);
 
   llvm::StringRef GetRawLine() const { return m_command; }
-  llvm::StringRef GetRawLineUntilCursor() const {
-    return m_command.substr(0, m_cursor_index);
-  }
 
   unsigned GetRawCursorPos() const { return m_raw_cursor_pos; }
 
@@ -192,12 +189,8 @@ public:
                     descriptions.GetStringAtIndex(i));
   }
 
-  llvm::StringRef GetCursorArgument() const {
-    return GetParsedLine().GetArgumentAtIndex(GetCursorIndex());
-  }
-
   llvm::StringRef GetCursorArgumentPrefix() const {
-    return GetCursorArgument().substr(0, m_cursor_char_position);
+    return GetParsedLine().GetArgumentAtIndex(GetCursorIndex());
   }
 
 private:
