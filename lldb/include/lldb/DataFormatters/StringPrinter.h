@@ -30,97 +30,55 @@ public:
 
     ReadStringAndDumpToStreamOptions(ValueObject &valobj);
 
-    ReadStringAndDumpToStreamOptions &SetLocation(uint64_t l) {
-      m_location = l;
-      return *this;
-    }
+    void SetLocation(uint64_t l) { m_location = l; }
 
     uint64_t GetLocation() const { return m_location; }
 
-    ReadStringAndDumpToStreamOptions &SetProcessSP(lldb::ProcessSP p) {
-      m_process_sp = p;
-      return *this;
-    }
+    void SetProcessSP(lldb::ProcessSP p) { m_process_sp = p; }
 
     lldb::ProcessSP GetProcessSP() const { return m_process_sp; }
 
-    ReadStringAndDumpToStreamOptions &SetStream(Stream *s) {
-      m_stream = s;
-      return *this;
-    }
+    void SetStream(Stream *s) { m_stream = s; }
 
     Stream *GetStream() const { return m_stream; }
 
-    ReadStringAndDumpToStreamOptions &SetPrefixToken(const std::string &p) {
-      m_prefix_token = p;
-      return *this;
-    }
+    void SetPrefixToken(const std::string &p) { m_prefix_token = p; }
 
-    ReadStringAndDumpToStreamOptions &SetPrefixToken(std::nullptr_t) {
-      m_prefix_token.clear();
-      return *this;
-    }
+    void SetPrefixToken(std::nullptr_t) { m_prefix_token.clear(); }
 
     const char *GetPrefixToken() const { return m_prefix_token.c_str(); }
 
-    ReadStringAndDumpToStreamOptions &SetSuffixToken(const std::string &p) {
-      m_suffix_token = p;
-      return *this;
-    }
+    void SetSuffixToken(const std::string &p) { m_suffix_token = p; }
 
-    ReadStringAndDumpToStreamOptions &SetSuffixToken(std::nullptr_t) {
-      m_suffix_token.clear();
-      return *this;
-    }
+    void SetSuffixToken(std::nullptr_t) { m_suffix_token.clear(); }
 
     const char *GetSuffixToken() const { return m_suffix_token.c_str(); }
 
-    ReadStringAndDumpToStreamOptions &SetQuote(char q) {
-      m_quote = q;
-      return *this;
-    }
+    void SetQuote(char q) { m_quote = q; }
 
     char GetQuote() const { return m_quote; }
 
-    ReadStringAndDumpToStreamOptions &SetSourceSize(uint32_t s) {
-      m_source_size = s;
-      return *this;
-    }
+    void SetSourceSize(uint32_t s) { m_source_size = s; }
 
     uint32_t GetSourceSize() const { return m_source_size; }
 
-    ReadStringAndDumpToStreamOptions &SetNeedsZeroTermination(bool z) {
-      m_needs_zero_termination = z;
-      return *this;
-    }
+    void SetNeedsZeroTermination(bool z) { m_needs_zero_termination = z; }
 
     bool GetNeedsZeroTermination() const { return m_needs_zero_termination; }
 
-    ReadStringAndDumpToStreamOptions &SetBinaryZeroIsTerminator(bool e) {
-      m_zero_is_terminator = e;
-      return *this;
-    }
+    void SetBinaryZeroIsTerminator(bool e) { m_zero_is_terminator = e; }
 
     bool GetBinaryZeroIsTerminator() const { return m_zero_is_terminator; }
 
-    ReadStringAndDumpToStreamOptions &SetEscapeNonPrintables(bool e) {
-      m_escape_non_printables = e;
-      return *this;
-    }
+    void SetEscapeNonPrintables(bool e) { m_escape_non_printables = e; }
 
     bool GetEscapeNonPrintables() const { return m_escape_non_printables; }
 
-    ReadStringAndDumpToStreamOptions &SetIgnoreMaxLength(bool e) {
-      m_ignore_max_length = e;
-      return *this;
-    }
+    void SetIgnoreMaxLength(bool e) { m_ignore_max_length = e; }
 
     bool GetIgnoreMaxLength() const { return m_ignore_max_length; }
 
-    ReadStringAndDumpToStreamOptions &SetLanguage(lldb::LanguageType l) {
-      m_language_type = l;
-      return *this;
-    }
+    void SetLanguage(lldb::LanguageType l) { m_language_type = l; }
 
     lldb::LanguageType GetLanguage() const
     {
@@ -151,89 +109,49 @@ public:
     ReadBufferAndDumpToStreamOptions(
         const ReadStringAndDumpToStreamOptions &options);
 
-    ReadBufferAndDumpToStreamOptions &SetData(DataExtractor d) {
-      m_data = d;
-      return *this;
-    }
+    void SetData(DataExtractor d) { m_data = d; }
 
     lldb_private::DataExtractor GetData() const { return m_data; }
 
-    ReadBufferAndDumpToStreamOptions &SetStream(Stream *s) {
-      m_stream = s;
-      return *this;
-    }
+    void SetStream(Stream *s) { m_stream = s; }
 
     Stream *GetStream() const { return m_stream; }
 
-    ReadBufferAndDumpToStreamOptions &SetPrefixToken(const std::string &p) {
-      m_prefix_token = p;
-      return *this;
-    }
+    void SetPrefixToken(const std::string &p) { m_prefix_token = p; }
 
-    ReadBufferAndDumpToStreamOptions &SetPrefixToken(std::nullptr_t) {
-      m_prefix_token.clear();
-      return *this;
-    }
+    void SetPrefixToken(std::nullptr_t) { m_prefix_token.clear(); }
 
     const char *GetPrefixToken() const { return m_prefix_token.c_str(); }
 
-    ReadBufferAndDumpToStreamOptions &SetSuffixToken(const std::string &p) {
-      m_suffix_token = p;
-      return *this;
-    }
+    void SetSuffixToken(const std::string &p) { m_suffix_token = p; }
 
-    ReadBufferAndDumpToStreamOptions &SetSuffixToken(std::nullptr_t) {
-      m_suffix_token.clear();
-      return *this;
-    }
+    void SetSuffixToken(std::nullptr_t) { m_suffix_token.clear(); }
 
     const char *GetSuffixToken() const { return m_suffix_token.c_str(); }
 
-    ReadBufferAndDumpToStreamOptions &SetQuote(char q) {
-      m_quote = q;
-      return *this;
-    }
+    void SetQuote(char q) { m_quote = q; }
 
     char GetQuote() const { return m_quote; }
 
-    ReadBufferAndDumpToStreamOptions &SetSourceSize(uint32_t s) {
-      m_source_size = s;
-      return *this;
-    }
+    void SetSourceSize(uint32_t s) { m_source_size = s; }
 
     uint32_t GetSourceSize() const { return m_source_size; }
 
-    ReadBufferAndDumpToStreamOptions &SetEscapeNonPrintables(bool e) {
-      m_escape_non_printables = e;
-      return *this;
-    }
+    void SetEscapeNonPrintables(bool e) { m_escape_non_printables = e; }
 
     bool GetEscapeNonPrintables() const { return m_escape_non_printables; }
 
-    ReadBufferAndDumpToStreamOptions &SetBinaryZeroIsTerminator(bool e) {
-      m_zero_is_terminator = e;
-      return *this;
-    }
+    void SetBinaryZeroIsTerminator(bool e) { m_zero_is_terminator = e; }
 
     bool GetBinaryZeroIsTerminator() const { return m_zero_is_terminator; }
 
-    ReadBufferAndDumpToStreamOptions &SetIsTruncated(bool t) {
-      m_is_truncated = t;
-      return *this;
-    }
+    void SetIsTruncated(bool t) { m_is_truncated = t; }
 
     bool GetIsTruncated() const { return m_is_truncated; }
 
-    ReadBufferAndDumpToStreamOptions &SetLanguage(lldb::LanguageType l) {
-      m_language_type = l;
-      return *this;
-    }
+    void SetLanguage(lldb::LanguageType l) { m_language_type = l; }
 
-    lldb::LanguageType GetLanguage() const
-
-    {
-      return m_language_type;
-    }
+    lldb::LanguageType GetLanguage() const { return m_language_type; }
 
   private:
     DataExtractor m_data;
