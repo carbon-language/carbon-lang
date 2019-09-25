@@ -279,12 +279,13 @@ struct SetTraverse : public Base {
   using Base::operator();
   static Set Default() { return {}; }
   static Set Combine(Set &&x, Set &&y) {
-#if CLANG_LIBRARIES  // no std::set::merge()
+#if defined __GNUC__ && !defined __APPLE__ && !(CLANG_LIBRARIES)
+    x.merge(y);
+#else
+    // std::set::merge() not available (yet)
     for (auto &value : y) {
       x.insert(std::move(value));
     }
-#else
-    x.merge(y);
 #endif
     return std::move(x);
   }
