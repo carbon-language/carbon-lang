@@ -1334,11 +1334,13 @@ struct br_match {
 
 inline br_match m_UnconditionalBr(BasicBlock *&Succ) { return br_match(Succ); }
 
-template <typename Cond_t> struct brc_match {
+template <typename Cond_t, typename TrueBlock_t, typename FalseBlock_t>
+struct brc_match {
   Cond_t Cond;
-  BasicBlock *&T, *&F;
+  TrueBlock_t T;
+  FalseBlock_t F;
 
-  brc_match(const Cond_t &C, BasicBlock *&t, BasicBlock *&f)
+  brc_match(const Cond_t &C, const TrueBlock_t &t, const FalseBlock_t &f)
       : Cond(C), T(t), F(f) {}
 
   template <typename OpTy> bool match(OpTy *V) {
@@ -1353,8 +1355,9 @@ template <typename Cond_t> struct brc_match {
 };
 
 template <typename Cond_t>
-inline brc_match<Cond_t> m_Br(const Cond_t &C, BasicBlock *&T, BasicBlock *&F) {
-  return brc_match<Cond_t>(C, T, F);
+inline brc_match<Cond_t, BasicBlock *&, BasicBlock *&>
+m_Br(const Cond_t &C, BasicBlock *&T, BasicBlock *&F) {
+  return brc_match<Cond_t, BasicBlock *&, BasicBlock *&>(C, T, F);
 }
 
 //===----------------------------------------------------------------------===//
