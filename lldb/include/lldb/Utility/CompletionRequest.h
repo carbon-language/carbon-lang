@@ -123,11 +123,15 @@ public:
     m_parsed_line.Shift();
   }
 
-  void SetCursorIndex(size_t i) { m_cursor_index = i; }
-  size_t GetCursorIndex() const { return m_cursor_index; }
+  /// Adds an empty argument at the end of the argument list and moves
+  /// the cursor to this new argument.
+  void AppendEmptyArgument() {
+    m_parsed_line.AppendArgument(llvm::StringRef());
+    m_cursor_index++;
+    m_cursor_char_position = 0;
+  }
 
-  void SetCursorCharPosition(size_t pos) { m_cursor_char_position = pos; }
-  size_t GetCursorCharPosition() const { return m_cursor_char_position; }
+  size_t GetCursorIndex() const { return m_cursor_index; }
 
   /// Adds a possible completion string. If the completion was already
   /// suggested before, it will not be added to the list of results. A copy of
@@ -193,7 +197,7 @@ public:
   }
 
   llvm::StringRef GetCursorArgumentPrefix() const {
-    return GetCursorArgument().substr(0, GetCursorCharPosition());
+    return GetCursorArgument().substr(0, m_cursor_char_position);
   }
 
 private:
