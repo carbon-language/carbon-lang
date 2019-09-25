@@ -3288,18 +3288,51 @@ def OMPDeclareVariant : Attr {
   let HasCustomParsing = 1;
   let Documentation = [OMPDeclareVariantDocs];
   let Args = [
-    ExprArgument<"VariantFuncRef">
+    ExprArgument<"VariantFuncRef">,
+    EnumArgument<"CtxSelectorSet", "CtxSelectorSetType",
+                 [ "", "implementation"
+                 ],
+                 [
+                   "CtxSetUnknown", "CtxSetImplementation"
+                 ]>,
+    EnumArgument<"CtxSelector", "CtxSelectorType",
+                 [ "", "vendor"
+                 ],
+                 [
+                   "CtxUnknown", "CtxVendor"
+                 ]>,
+    StringArgument<"ImplVendor", 1>
   ];
   let AdditionalMembers = [{
     void printPrettyPragma(raw_ostream & OS, const PrintingPolicy &Policy)
         const {
+      assert(getCtxSelectorSet() != CtxSetUnknown &&
+             getCtxSelector() != CtxUnknown && "Unknown context selector.");
       if (const Expr *E = getVariantFuncRef()) {
         OS << "(";
         E->printPretty(OS, nullptr, Policy);
         OS << ")";
       }
       // TODO: add printing of real context selectors.
-      OS << " match(unknown={})";
+      OS << " match(";
+      switch (getCtxSelectorSet()) {
+      case CtxSetImplementation:
+        OS << "implementation={";
+        switch (getCtxSelector()) {
+        case CtxVendor:
+          OS << "vendor(";
+          OS << getImplVendor();
+          OS << ")";
+          break;
+        case CtxUnknown:
+          llvm_unreachable("Unknown context selector.");
+        }
+        OS << "}";
+        break;
+      case CtxSetUnknown:
+        llvm_unreachable("Unknown context selector set.");
+      }
+      OS << ")";
     }
   }];
 }
