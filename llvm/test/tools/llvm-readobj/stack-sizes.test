@@ -192,17 +192,21 @@ Symbols:
 # RUN: llvm-readobj --stack-sizes %t04 2> %t04-llvm.err | FileCheck %s --check-prefix=WRONGSECTION-LLVM
 # RUN: FileCheck %s < %t04-llvm.err --check-prefix=WRONGSECTION-ERR -DFILE=%t04
 
+# RUN: llvm-readelf --stack-sizes --demangle %t04 2>&1 | FileCheck %s --check-prefix=WRONGSECTION-DEMANGLE-ERR -DFILE=%t04
+# RUN: llvm-readobj --stack-sizes --demangle %t04 2>&1 | FileCheck %s --check-prefix=WRONGSECTION-DEMANGLE-ERR -DFILE=%t04
+
 # WRONGSECTION-GNU:      Size Function
-# WRONGSECTION-GNU-NEXT: 8 foo
+# WRONGSECTION-GNU-NEXT: 8 _Z3foof
 
 # WRONGSECTION-LLVM:      StackSizes [
 # WRONGSECTION-LLVM-NEXT:   Entry {
-# WRONGSECTION-LLVM-NEXT:     Function: foo
+# WRONGSECTION-LLVM-NEXT:     Function: _Z3foof
 # WRONGSECTION-LLVM-NEXT:     Size: 0x8
 # WRONGSECTION-LLVM-NEXT:   }
 # WRONGSECTION-LLVM-NEXT: ]
 
-# WRONGSECTION-ERR:  warning: '[[FILE]]': relocation symbol foo is not in the expected section
+# WRONGSECTION-ERR:           warning: '[[FILE]]': relocation symbol '_Z3foof' is not in the expected section
+# WRONGSECTION-DEMANGLE-ERR:  warning: '[[FILE]]': relocation symbol 'foo(float)' is not in the expected section
 
 --- !ELF
 FileHeader:
@@ -228,10 +232,10 @@ Sections:
     Info:    .stack_sizes
     Relocations:
       - Offset: 0
-        Symbol: foo 
+        Symbol: _Z3foof
         Type:   R_X86_64_64
 Symbols:
-  - Name:    foo
+  - Name:    _Z3foof
     Section: .text
     Type:    STT_FUNC
     Binding: STB_GLOBAL
@@ -309,6 +313,9 @@ Symbols:
 # RUN: llvm-readobj --stack-sizes %t07 2> %t07-llvm.err | FileCheck %s --check-prefix=BADSECTION-OUT-LLVM
 # RUN: FileCheck %s < %t07-llvm.err --check-prefix=BADSECTION-ERR -DFILE=%t07
 
+# RUN: llvm-readelf --stack-sizes --demangle %t07 2>&1 | FileCheck %s --check-prefix=BADSECTION-DEMANGLE-ERR -DFILE=%t07
+# RUN: llvm-readobj --stack-sizes --demangle %t07 2>&1 | FileCheck %s --check-prefix=BADSECTION-DEMANGLE-ERR -DFILE=%t07
+
 # BADSECTION-OUT-GNU: Size Function
 # BADSECTION-OUT-GNU:    8 ?
 
@@ -319,7 +326,8 @@ Symbols:
 # BADSECTION-OUT-LLVM-NEXT:   }
 # BADSECTION-OUT-LLVM-NEXT: ]
 
-# BADSECTION-ERR: warning: '[[FILE]]': cannot identify the section for relocation symbol foo
+# BADSECTION-ERR: warning: '[[FILE]]': cannot identify the section for relocation symbol '_Z3foof'
+# BADSECTION-DEMANGLE-ERR: warning: '[[FILE]]': cannot identify the section for relocation symbol 'foo(float)'
 
 --- !ELF
 FileHeader:
@@ -341,10 +349,10 @@ Sections:
     Info:    .stack_sizes
     Relocations:
     - Offset: 0
-      Symbol: foo 
+      Symbol: _Z3foof
       Type:   R_X86_64_64
 Symbols:
-  - Name:    foo
+  - Name:    _Z3foof
 ## An invalid section index.
     Index:   10
     Type:    STT_FUNC
@@ -540,8 +548,8 @@ Symbols:
 #      ARCHIVEWARN-GNU:File: [[FILE]]({{.*04}})
 #      ARCHIVEWARN-GNU:Stack Sizes:
 # ARCHIVEWARN-GNU-NEXT:         Size     Function
-#      ARCHIVEWARN-GNU:{{.*}}: warning: '{{.*04}}': relocation symbol foo is not in the expected section
-#      ARCHIVEWARN-GNU:            8     foo
+#      ARCHIVEWARN-GNU:{{.*}}: warning: '{{.*04}}': relocation symbol '_Z3foof' is not in the expected section
+#      ARCHIVEWARN-GNU:            8     _Z3foof
 #      ARCHIVEWARN-GNU:File: [[FILE]]({{.*01}})
 #      ARCHIVEWARN-GNU:Stack Sizes:
 # ARCHIVEWARN-GNU-NEXT:         Size     Function
@@ -553,9 +561,9 @@ Symbols:
 
 # ARCHIVEWARN-LLVM:      File: [[FILE]]({{.*04}})
 # ARCHIVEWARN-LLVM:      StackSizes [
-# ARCHIVEWARN-LLVM:      warning: '{{.*04}}': relocation symbol foo is not in the expected section
+# ARCHIVEWARN-LLVM:      warning: '{{.*04}}': relocation symbol '_Z3foof' is not in the expected section
 # ARCHIVEWARN-LLVM-NEXT:   Entry {
-# ARCHIVEWARN-LLVM-NEXT:     Function: foo
+# ARCHIVEWARN-LLVM-NEXT:     Function: _Z3foof
 # ARCHIVEWARN-LLVM-NEXT:     Size: 0x8
 # ARCHIVEWARN-LLVM-NEXT:   }
 # ARCHIVEWARN-LLVM-NEXT: ]
