@@ -480,14 +480,16 @@ struct ConstantExprKeyType {
       : Opcode(CE->getOpcode()),
         SubclassOptionalData(CE->getRawSubclassOptionalData()),
         SubclassData(CE->isCompare() ? CE->getPredicate() : 0), Ops(Operands),
-        Indexes(CE->hasIndices() ? CE->getIndices() : ArrayRef<unsigned>()) {}
+        Indexes(CE->hasIndices() ? CE->getIndices() : ArrayRef<unsigned>()),
+        ExplicitTy(nullptr) {}
 
   ConstantExprKeyType(const ConstantExpr *CE,
                       SmallVectorImpl<Constant *> &Storage)
       : Opcode(CE->getOpcode()),
         SubclassOptionalData(CE->getRawSubclassOptionalData()),
         SubclassData(CE->isCompare() ? CE->getPredicate() : 0),
-        Indexes(CE->hasIndices() ? CE->getIndices() : ArrayRef<unsigned>()) {
+        Indexes(CE->hasIndices() ? CE->getIndices() : ArrayRef<unsigned>()),
+        ExplicitTy(nullptr) {
     assert(Storage.empty() && "Expected empty storage");
     for (unsigned I = 0, E = CE->getNumOperands(); I != E; ++I)
       Storage.push_back(CE->getOperand(I));
