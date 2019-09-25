@@ -399,3 +399,36 @@ define i1 @t14_bad(i64 %base, i64 %offset) {
   %r = and i1 %not_null, %no_underflow
   ret i1 %r
 }
+
+define i1 @base_ult_offset(i8 %base, i8 %offset) {
+; CHECK-LABEL: @base_ult_offset(
+; CHECK-NEXT:    [[ADJUSTED:%.*]] = sub i8 [[BASE:%.*]], [[OFFSET:%.*]]
+; CHECK-NEXT:    call void @use8(i8 [[ADJUSTED]])
+; CHECK-NEXT:    [[NOT_NULL:%.*]] = icmp ne i8 [[ADJUSTED]], 0
+; CHECK-NEXT:    [[NO_UNDERFLOW:%.*]] = icmp ule i8 [[BASE]], [[OFFSET]]
+; CHECK-NEXT:    [[R:%.*]] = and i1 [[NO_UNDERFLOW]], [[NOT_NULL]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %adjusted = sub i8 %base, %offset
+  call void @use8(i8 %adjusted)
+  %not_null = icmp ne i8 %adjusted, 0
+  %no_underflow = icmp ule i8 %base, %offset
+  %r = and i1 %no_underflow, %not_null
+  ret i1 %r
+}
+define i1 @base_uge_offset(i8 %base, i8 %offset) {
+; CHECK-LABEL: @base_uge_offset(
+; CHECK-NEXT:    [[ADJUSTED:%.*]] = sub i8 [[BASE:%.*]], [[OFFSET:%.*]]
+; CHECK-NEXT:    call void @use8(i8 [[ADJUSTED]])
+; CHECK-NEXT:    [[NOT_NULL:%.*]] = icmp eq i8 [[ADJUSTED]], 0
+; CHECK-NEXT:    [[NO_UNDERFLOW:%.*]] = icmp ugt i8 [[BASE]], [[OFFSET]]
+; CHECK-NEXT:    [[R:%.*]] = or i1 [[NO_UNDERFLOW]], [[NOT_NULL]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %adjusted = sub i8 %base, %offset
+  call void @use8(i8 %adjusted)
+  %not_null = icmp eq i8 %adjusted, 0
+  %no_underflow = icmp ugt i8 %base, %offset
+  %r = or i1 %no_underflow, %not_null
+  ret i1 %r
+}
