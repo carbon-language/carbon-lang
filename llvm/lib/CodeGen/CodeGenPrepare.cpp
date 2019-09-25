@@ -5951,7 +5951,7 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
   // If branch conversion isn't desirable, exit early.
   if (DisableSelectToBranch || OptSize || !TLI)
     return false;
-TLI->isSelectSupported(<#SelectSupportKind#>)
+
   // Find all consecutive select instructions that share the same condition.
   SmallVector<SelectInst *, 2> ASI;
   ASI.push_back(SI);
