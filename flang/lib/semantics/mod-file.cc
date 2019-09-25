@@ -43,7 +43,7 @@ using namespace parser::literals;
 struct ModHeader {
   static constexpr const char *bom{"\xef\xbb\xbf"};
   static constexpr const char *magic{"!mod$ v1 sum:"};
-  static constexpr int magicLen{std::strlen(magic)};
+  static constexpr int magicLen{13};
   static constexpr int sumLen{16};
   static constexpr char terminator{'\n'};
   static constexpr int len{magicLen + 1 + sumLen};
