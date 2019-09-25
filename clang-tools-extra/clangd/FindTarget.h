@@ -101,9 +101,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, ReferenceLoc R);
 /// qualifiers.
 /// FIXME: currently this does not report references to overloaded operators.
 /// FIXME: extend to report location information about declaration names too.
-void findExplicitReferences(Stmt *S,
+void findExplicitReferences(const Stmt *S,
                             llvm::function_ref<void(ReferenceLoc)> Out);
-void findExplicitReferences(Decl *D,
+void findExplicitReferences(const Decl *D,
                             llvm::function_ref<void(ReferenceLoc)> Out);
 
 /// Similar to targetDecl(), however instead of applying a filter, all possible

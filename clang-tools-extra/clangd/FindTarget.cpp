@@ -616,15 +616,15 @@ private:
 };
 } // namespace
 
-void findExplicitReferences(Stmt *S,
+void findExplicitReferences(const Stmt *S,
                             llvm::function_ref<void(ReferenceLoc)> Out) {
   assert(S);
-  ExplicitReferenceColletor(Out).TraverseStmt(S);
+  ExplicitReferenceColletor(Out).TraverseStmt(const_cast<Stmt *>(S));
 }
-void findExplicitReferences(Decl *D,
+void findExplicitReferences(const Decl *D,
                             llvm::function_ref<void(ReferenceLoc)> Out) {
   assert(D);
-  ExplicitReferenceColletor(Out).TraverseDecl(D);
+  ExplicitReferenceColletor(Out).TraverseDecl(const_cast<Decl *>(D));
 }
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, DeclRelation R) {
