@@ -23,7 +23,6 @@ target_link_libraries(clang-tidy
   clangTidyBugproneModule
   clangTidyCERTModule
   clangTidyCppCoreGuidelinesModule
-  clangTidyDarwinModule
   clangTidyFuchsiaModule
   clangTidyGoogleModule
   clangTidyHICPPModule
