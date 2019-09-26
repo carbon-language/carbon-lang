@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -25,9 +26,8 @@ namespace tidy {
 /// this object.
 class ClangTidyCheckFactories {
 public:
-  typedef std::function<ClangTidyCheck *(StringRef Name,
-                                         ClangTidyContext *Context)>
-      CheckFactory;
+  using CheckFactory = std::function<std::unique_ptr<ClangTidyCheck>(
+      StringRef Name, ClangTidyContext *Context)>;
 
   /// Registers check \p Factory with name \p Name.
   ///
@@ -58,7 +58,7 @@ public:
   template <typename CheckType> void registerCheck(StringRef CheckName) {
     registerCheckFactory(CheckName,
                          [](StringRef Name, ClangTidyContext *Context) {
-                           return new CheckType(Name, Context);
+                           return std::make_unique<CheckType>(Name, Context);
                          });
   }
 
