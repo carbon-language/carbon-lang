@@ -138,7 +138,6 @@ public:
   void Post(const parser::LockStmt &) { NoImageControl(); }
   void Post(const parser::UnlockStmt &) { NoImageControl(); }
   void Post(const parser::StopStmt &) { NoImageControl(); }
-  void Post(const parser::EndProgramStmt &) { NoImageControl(); }
 
   void Post(const parser::AllocateStmt &) {
     if (anyObjectIsCoarray()) {
