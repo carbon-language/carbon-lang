@@ -13,8 +13,7 @@ define float @_Z3fn2v() {
 ; CHECK-NEXT:    callq _Z1av
 ; CHECK-NEXT:    # kill: def $al killed $al def $eax
 ; CHECK-NEXT:    kmovd %eax, %k1
-; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; CHECK-NEXT:    vmovss %xmm0, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vmovss {{.*}}(%rip), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    cmpl $0, {{.*}}(%rip)
 ; CHECK-NEXT:    je .LBB0_2
 ; CHECK-NEXT:  # %bb.1: # %if.then
