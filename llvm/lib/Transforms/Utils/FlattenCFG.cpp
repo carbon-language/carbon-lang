@@ -67,7 +67,7 @@ public:
 /// Before:
 ///   ......
 ///   %cmp10 = fcmp une float %tmp1, %tmp2
-///   br i1 %cmp1, label %if.then, label %lor.rhs
+///   br i1 %cmp10, label %if.then, label %lor.rhs
 ///
 /// lor.rhs:
 ///   ......
@@ -452,6 +452,16 @@ bool FlattenCFGOpt::MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder) {
   Value *NC = Builder.CreateOr(CInst1, CC);
   PBI->replaceUsesOfWith(CC, NC);
   Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
+
+  // Handle PHI node to replace its predecessors to FirstEntryBlock.
+  for (BasicBlock *Succ : successors(PBI)) {
+    for (PHINode &Phi : Succ->phis()) {
+      for (unsigned i = 0, e = Phi.getNumIncomingValues(); i != e; ++i) {
+        if (Phi.getIncomingBlock(i) == SecondEntryBlock)
+          Phi.setIncomingBlock(i, FirstEntryBlock);
+      }
+    }
+  }
 
   // Remove IfTrue1
   if (IfTrue1 != FirstEntryBlock) {
