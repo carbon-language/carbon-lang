@@ -62,12 +62,9 @@ public:
                          });
   }
 
-  /// Create instances of all checks matching \p CheckRegexString and
-  /// store them in \p Checks.
-  ///
-  /// The caller takes ownership of the return \c ClangTidyChecks.
-  void createChecks(ClangTidyContext *Context,
-                    std::vector<std::unique_ptr<ClangTidyCheck>> &Checks);
+  /// Create instances of checks that are enabled.
+  std::vector<std::unique_ptr<ClangTidyCheck>>
+  createChecks(ClangTidyContext *Context);
 
   typedef std::map<std::string, CheckFactory> FactoryMap;
   FactoryMap::const_iterator begin() const { return Factories.begin(); }
