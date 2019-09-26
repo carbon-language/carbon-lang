@@ -4931,11 +4931,15 @@ Sema::checkOpenMPDeclareVariantFunction(Sema::DeclGroupPtrTy DG,
   }
 
   // Allow #pragma omp declare variant only if the function is not used.
-  if (FD->isUsed(false)) {
-    Diag(SR.getBegin(), diag::err_omp_declare_variant_after_used)
+  if (FD->isUsed(false))
+    Diag(SR.getBegin(), diag::warn_omp_declare_variant_after_used)
         << FD->getLocation();
-    return None;
-  }
+
+  // Check if the function was emitted already.
+  if ((LangOpts.EmitAllDecls && FD->isDefined()) ||
+      Context.DeclMustBeEmitted(FD))
+    Diag(SR.getBegin(), diag::warn_omp_declare_variant_after_emitted)
+        << FD->getLocation();
 
   // The VariantRef must point to function.
   if (!VariantRef) {
