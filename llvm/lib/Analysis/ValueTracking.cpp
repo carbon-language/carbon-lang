@@ -2666,8 +2666,6 @@ static unsigned ComputeNumSignBitsImpl(const Value *V, unsigned Depth,
 /// through SExt instructions only if LookThroughSExt is true.
 bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
                            bool LookThroughSExt, unsigned Depth) {
-  const unsigned MaxDepth = 6;
-
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
   assert(V->getType()->isIntegerTy() && "Not integer or pointer type!");
