@@ -92,7 +92,7 @@
                 },
                 "clangd.semanticHighlighting": {
                     "type": "boolean",
-                    "default": "false",
+                    "default": "true",
                     "description": "Enable semantic highlighting in clangd"
                 }
             }
