@@ -94,6 +94,8 @@ struct DebugLineTableRowRef {
   }
 };
 
+using RangesBufferVector = SmallVector<char, 16>;
+
 /// Serializes the .debug_ranges and .debug_aranges DWARF sections.
 class DebugRangesSectionsWriter {
 public:
@@ -131,12 +133,12 @@ public:
     return CUAddressRanges;
   }
 
-  std::unique_ptr<SmallVectorImpl<char>> finalize() {
-    return std::unique_ptr<SmallVectorImpl<char>>(RangesBuffer.release());
+  std::unique_ptr<RangesBufferVector> finalize() {
+    return std::move(RangesBuffer);
   }
 
 private:
-  std::unique_ptr<SmallVector<char, 16>> RangesBuffer;
+  std::unique_ptr<RangesBufferVector> RangesBuffer;
 
   std::unique_ptr<raw_svector_ostream> RangesStream;
 
@@ -159,6 +161,8 @@ private:
   static constexpr uint64_t EmptyRangesOffset{0};
 };
 
+using LocBufferVector = SmallVector<char, 16>;
+
 /// Serializes the .debug_loc DWARF section with LocationLists.
 class DebugLocWriter {
 public:
@@ -168,12 +172,12 @@ public:
 
   uint64_t getEmptyListOffset() const { return EmptyListOffset; }
 
-  std::unique_ptr<SmallVectorImpl<char>> finalize() {
-    return std::unique_ptr<SmallVectorImpl<char>>(LocBuffer.release());
+  std::unique_ptr<LocBufferVector> finalize() {
+    return std::move(LocBuffer);
   }
 
 private:
-  std::unique_ptr<SmallVector<char, 16>> LocBuffer;
+  std::unique_ptr<LocBufferVector> LocBuffer;
 
   std::unique_ptr<raw_svector_ostream> LocStream;
 

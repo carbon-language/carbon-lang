@@ -56,7 +56,7 @@ uint64_t writeAddressRanges(
 } // namespace
 
 DebugRangesSectionsWriter::DebugRangesSectionsWriter(BinaryContext *BC) {
-  RangesBuffer = llvm::make_unique<SmallVector<char, 16>>();
+  RangesBuffer = llvm::make_unique<RangesBufferVector>();
   RangesStream = llvm::make_unique<raw_svector_ostream>(*RangesBuffer);
   Writer =
     std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*RangesStream));
@@ -152,7 +152,7 @@ DebugRangesSectionsWriter::writeArangesSection(MCObjectWriter *Writer) const {
 }
 
 DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
-  LocBuffer = llvm::make_unique<SmallVector<char, 16>>();
+  LocBuffer = llvm::make_unique<LocBufferVector>();
   LocStream = llvm::make_unique<raw_svector_ostream>(*LocBuffer);
   Writer =
     std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*LocStream));
