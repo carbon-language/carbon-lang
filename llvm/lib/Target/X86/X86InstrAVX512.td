@@ -3958,18 +3958,6 @@ multiclass avx512_move_scalar<string asm, SDNode OpNode, PatFrag vzload_frag,
                !strconcat(asm, "\t{$src, $dst {${mask}} {z}|",
                "$dst {${mask}} {z}, $src}"),
                [], _.ExeDomain>, EVEX, EVEX_KZ, Sched<[WriteFLoad]>;
-    let isCodeGenOnly = 1 in {
-    def rmk_alt : AVX512PI<0x10, MRMSrcMem, (outs _.FRC:$dst),
-                  (ins _.FRC:$src0, _.KRCWM:$mask, _.ScalarMemOp:$src),
-                  !strconcat(asm, "\t{$src, $dst {${mask}}|",
-                  "$dst {${mask}}, $src}"),
-                  [], _.ExeDomain>, EVEX, EVEX_K, Sched<[WriteFLoad]>;
-    def rmkz_alt : AVX512PI<0x10, MRMSrcMem, (outs _.FRC:$dst),
-                   (ins _.KRCWM:$mask, _.ScalarMemOp:$src),
-                   !strconcat(asm, "\t{$src, $dst {${mask}} {z}|",
-                   "$dst {${mask}} {z}, $src}"),
-                   [], _.ExeDomain>, EVEX, EVEX_KZ, Sched<[WriteFLoad]>;
-    }
   }
   def mr: AVX512PI<0x11, MRMDestMem, (outs), (ins _.ScalarMemOp:$dst, _.FRC:$src),
              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
@@ -4235,9 +4223,12 @@ def : Pat<(f32 (X86selects VK1WM:$mask, (f32 FR32X:$src1), fp32imm0)),
            (v4f32 (COPY_TO_REGCLASS FR32X:$src1, VR128X)))), FR32X)>;
 
 def : Pat<(f32 (X86selects VK1WM:$mask, (loadf32 addr:$src), (f32 FR32X:$src0))),
-          (VMOVSSZrmk_alt FR32X:$src0, VK1WM:$mask, addr:$src)>;
+          (COPY_TO_REGCLASS
+           (v4f32 (VMOVSSZrmk (v4f32 (COPY_TO_REGCLASS FR32X:$src0, VR128X)),
+                                                       VK1WM:$mask, addr:$src)),
+           FR32X)>;
 def : Pat<(f32 (X86selects VK1WM:$mask, (loadf32 addr:$src), fp32imm0)),
-          (VMOVSSZrmkz_alt VK1WM:$mask, addr:$src)>;
+          (COPY_TO_REGCLASS (v4f32 (VMOVSSZrmkz VK1WM:$mask, addr:$src)), FR32X)>;
 
 def : Pat<(f64 (X86selects VK1WM:$mask, (f64 FR64X:$src1), (f64 FR64X:$src2))),
           (COPY_TO_REGCLASS (v2f64 (VMOVSDZrrk
@@ -4250,9 +4241,12 @@ def : Pat<(f64 (X86selects VK1WM:$mask, (f64 FR64X:$src1), fp64imm0)),
            (v2f64 (COPY_TO_REGCLASS FR64X:$src1, VR128X)))), FR64X)>;
 
 def : Pat<(f64 (X86selects VK1WM:$mask, (loadf64 addr:$src), (f64 FR64X:$src0))),
-          (VMOVSDZrmk_alt FR64X:$src0, VK1WM:$mask, addr:$src)>;
+          (COPY_TO_REGCLASS
+           (v2f64 (VMOVSDZrmk (v2f64 (COPY_TO_REGCLASS FR64X:$src0, VR128X)),
+                                                       VK1WM:$mask, addr:$src)),
+           FR64X)>;
 def : Pat<(f64 (X86selects VK1WM:$mask, (loadf64 addr:$src), fp64imm0)),
-          (VMOVSDZrmkz_alt VK1WM:$mask, addr:$src)>;
+          (COPY_TO_REGCLASS (v2f64 (VMOVSDZrmkz VK1WM:$mask, addr:$src)), FR64X)>;
 
 let hasSideEffects = 0, isCodeGenOnly = 1, ForceDisassemble = 1 in {
   def VMOVSSZrr_REV: AVX512<0x11, MRMDestReg, (outs VR128X:$dst),
