@@ -15,10 +15,10 @@
 #ifndef FIR_FIROPS_H
 #define FIR_FIROPS_H
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/OpImplementation.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 
 using namespace mlir;
 using llvm::ArrayRef;
@@ -30,9 +30,10 @@ class FirEndOp;
 
 /// `fir.global` is a typed symbol with an optional list of initializers.
 class GlobalOp
-  : public mlir::Op<GlobalOp, mlir::OpTrait::ZeroOperands,
-        mlir::OpTrait::ZeroResult, mlir::OpTrait::IsIsolatedFromAbove,
-        mlir::OpTrait::SingleBlockImplicitTerminator<FirEndOp>::Impl> {
+    : public mlir::Op<
+          GlobalOp, mlir::OpTrait::ZeroOperands, mlir::OpTrait::ZeroResult,
+          mlir::OpTrait::IsIsolatedFromAbove,
+          mlir::OpTrait::SingleBlockImplicitTerminator<FirEndOp>::Impl> {
 public:
   using Op::Op;
   using Op::print;
@@ -41,13 +42,13 @@ public:
   static llvm::StringRef getTypeAttrName() { return "type"; }
 
   static void build(mlir::Builder *builder, mlir::OperationState *result,
-      llvm::StringRef name, mlir::Type type,
-      llvm::ArrayRef<mlir::NamedAttribute> attrs);
+                    llvm::StringRef name, mlir::Type type,
+                    llvm::ArrayRef<mlir::NamedAttribute> attrs);
 
   /// Operation hooks.
-  static mlir::ParseResult parse(
-      mlir::OpAsmParser *parser, mlir::OperationState *result);
-  void print(mlir::OpAsmPrinter *p);
+  static mlir::ParseResult parse(mlir::OpAsmParser &parser,
+                                 mlir::OperationState &result);
+  void print(mlir::OpAsmPrinter &p);
   mlir::LogicalResult verify();
 
   mlir::Type getType() {
@@ -63,22 +64,23 @@ private:
 /// `fir.dispatch_table` is an untyped symbol that is a list of associations
 /// between method identifiers and a FuncOp symbol.
 class DispatchTableOp
-  : public mlir::Op<DispatchTableOp, mlir::OpTrait::ZeroOperands,
-        mlir::OpTrait::ZeroResult, mlir::OpTrait::IsIsolatedFromAbove,
-        mlir::OpTrait::SingleBlockImplicitTerminator<FirEndOp>::Impl> {
+    : public mlir::Op<
+          DispatchTableOp, mlir::OpTrait::ZeroOperands,
+          mlir::OpTrait::ZeroResult, mlir::OpTrait::IsIsolatedFromAbove,
+          mlir::OpTrait::SingleBlockImplicitTerminator<FirEndOp>::Impl> {
 public:
   using Op::Op;
 
   static llvm::StringRef getOperationName() { return "fir.dispatch_table"; }
 
   static void build(mlir::Builder *builder, mlir::OperationState *result,
-      llvm::StringRef name, mlir::Type type,
-      llvm::ArrayRef<mlir::NamedAttribute> attrs);
+                    llvm::StringRef name, mlir::Type type,
+                    llvm::ArrayRef<mlir::NamedAttribute> attrs);
 
   /// Operation hooks.
-  static mlir::ParseResult parse(
-      mlir::OpAsmParser *parser, mlir::OperationState *result);
-  void print(mlir::OpAsmPrinter *p);
+  static mlir::ParseResult parse(mlir::OpAsmParser &parser,
+                                 mlir::OperationState &result);
+  void print(mlir::OpAsmPrinter &p);
   mlir::LogicalResult verify();
 
   void appendTableEntry(mlir::Operation *op);
@@ -88,17 +90,18 @@ private:
 };
 
 mlir::ParseResult isValidCaseAttr(mlir::Attribute attr);
-unsigned getCaseArgumentOffset(
-    llvm::ArrayRef<mlir::Attribute> cases, unsigned dest);
+unsigned getCaseArgumentOffset(llvm::ArrayRef<mlir::Attribute> cases,
+                               unsigned dest);
 mlir::ParseResult parseSelector(mlir::OpAsmParser *parser,
-    mlir::OperationState *result, mlir::OpAsmParser::OperandType &selector,
-    mlir::Type &type);
+                                mlir::OperationState *result,
+                                mlir::OpAsmParser::OperandType &selector,
+                                mlir::Type &type);
 
 #define GET_OP_CLASSES
 #include "fir/FIROps.h.inc"
 
 LoopOp getForInductionVarOwner(mlir::Value *val);
 
-}  // namespace fir
+} // namespace fir
 
-#endif  // FIR_FIROPS_H
+#endif // FIR_FIROPS_H

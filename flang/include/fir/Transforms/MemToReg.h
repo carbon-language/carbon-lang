@@ -23,16 +23,17 @@
 #include <memory>
 
 namespace mlir {
-template<typename> class OpPassBase;
+template <typename>
+class OpPassBase;
 class FuncOp;
 using FunctionPassBase = OpPassBase<FuncOp>;
-}
+} // namespace mlir
 
 namespace fir {
 
 /// Creates a pass to convert FIR into a reg SSA form
 std::unique_ptr<mlir::FunctionPassBase> createMemToRegPass();
 
-}  // fir
+} // namespace fir
 
-#endif  // FIR_TRANSFORMS_MEMTOREG_H
+#endif // FIR_TRANSFORMS_MEMTOREG_H

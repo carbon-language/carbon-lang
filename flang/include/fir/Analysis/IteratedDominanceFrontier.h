@@ -1,4 +1,9 @@
 //===- IteratedDominanceFrontier.h - Calculate IDF --------------*- C++ -*-===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// Compute iterated dominance frontiers using a linear time algorithm.
@@ -25,7 +30,7 @@
 namespace mlir {
 class Block;
 class DominanceInfo;
-}
+} // namespace mlir
 
 namespace fir {
 
@@ -42,8 +47,7 @@ namespace fir {
 template <class NodeTy, bool IsPostDom>
 class IDFCalculator {
 public:
-  IDFCalculator(mlir::DominanceInfo &DT)
-      : DT(DT), useLiveIn(false) {}
+  IDFCalculator(mlir::DominanceInfo &DT) : DT(DT), useLiveIn(false) {}
 
   /// Give the IDF calculator the set of blocks in which the value is
   /// defined.  This is equivalent to the set of starting blocks it should be

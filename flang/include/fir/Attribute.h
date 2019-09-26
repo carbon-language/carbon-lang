@@ -27,7 +27,7 @@ struct TypeAttributeStorage;
 
 enum AttributeKind {
   FIR_ATTR = mlir::Attribute::FIRST_FIR_ATTR,
-  FIR_EXACTTYPE,  // instance_of, precise type relation
+  FIR_EXACTTYPE, // instance_of, precise type relation
   FIR_SUBCLASS,  // subsumed_by, is-a (subclass) relation
   FIR_POINT,
   FIR_CLOSEDCLOSED_INTERVAL,
@@ -35,8 +35,9 @@ enum AttributeKind {
   FIR_CLOSEDOPEN_INTERVAL,
 };
 
-class ExactTypeAttr : public mlir::Attribute::AttrBase<ExactTypeAttr,
-                          mlir::Attribute, detail::TypeAttributeStorage> {
+class ExactTypeAttr
+    : public mlir::Attribute::AttrBase<ExactTypeAttr, mlir::Attribute,
+                                       detail::TypeAttributeStorage> {
 public:
   using Base::Base;
   using ValueType = mlir::Type;
@@ -50,8 +51,9 @@ public:
   constexpr static unsigned getId() { return AttributeKind::FIR_EXACTTYPE; }
 };
 
-class SubclassAttr : public mlir::Attribute::AttrBase<SubclassAttr,
-                         mlir::Attribute, detail::TypeAttributeStorage> {
+class SubclassAttr
+    : public mlir::Attribute::AttrBase<SubclassAttr, mlir::Attribute,
+                                       detail::TypeAttributeStorage> {
 public:
   using Base::Base;
   using ValueType = mlir::Type;
@@ -66,7 +68,7 @@ public:
 };
 
 class ClosedIntervalAttr
-  : public mlir::Attribute::AttrBase<ClosedIntervalAttr> {
+    : public mlir::Attribute::AttrBase<ClosedIntervalAttr> {
 public:
   using Base::Base;
 
@@ -113,8 +115,9 @@ public:
 };
 
 mlir::Attribute parseFirAttribute(FIROpsDialect *dialect,
-    llvm::StringRef rawText, mlir::Type type, mlir::Location loc);
+                                  llvm::StringRef rawText, mlir::Type type,
+                                  mlir::Location loc);
 
-}  // fir
+} // namespace fir
 
-#endif  // FIR_ATTRIBUTE_H
+#endif // FIR_ATTRIBUTE_H

@@ -20,14 +20,14 @@
 namespace llvm {
 class raw_ostream;
 class StringRef;
-}
+} // namespace llvm
 
 namespace mlir {
 class Attribute;
 class Location;
 class MLIRContext;
 class Type;
-}
+} // namespace mlir
 
 namespace fir {
 
@@ -39,16 +39,16 @@ public:
 
   static llvm::StringRef getDialectNamespace() { return "fir"; }
 
-  mlir::Type parseType(
-      llvm::StringRef rawData, mlir::Location loc) const override;
+  mlir::Type parseType(llvm::StringRef rawData,
+                       mlir::Location loc) const override;
   void printType(mlir::Type ty, llvm::raw_ostream &os) const override;
 
   mlir::Attribute parseAttribute(llvm::StringRef rawText, mlir::Type type,
-      mlir::Location loc) const override;
-  void printAttribute(
-      mlir::Attribute attr, llvm::raw_ostream &os) const override;
+                                 mlir::Location loc) const override;
+  void printAttribute(mlir::Attribute attr,
+                      llvm::raw_ostream &os) const override;
 };
 
-}  // fir
+} // namespace fir
 
-#endif  // FIR_DIALECT_H
+#endif // FIR_DIALECT_H

@@ -19,9 +19,10 @@
 
 namespace llvm {
 class StringRef;
-template<typename> class ArrayRef;
+template <typename>
+class ArrayRef;
 class hash_code;
-}
+} // namespace llvm
 
 namespace fir {
 
@@ -46,7 +47,7 @@ struct RecordTypeStorage;
 struct ReferenceTypeStorage;
 struct SequenceTypeStorage;
 struct TypeDescTypeStorage;
-}
+} // namespace detail
 
 enum TypeKind {
   // The enum starts at the range reserved for this dialect.
@@ -54,16 +55,16 @@ enum TypeKind {
   FIR_BOX,
   FIR_BOXCHAR,
   FIR_BOXPROC,
-  FIR_CHARACTER,  // intrinsic
-  FIR_COMPLEX,  // intrinsic
-  FIR_DERIVED,  // derived
+  FIR_CHARACTER, // intrinsic
+  FIR_COMPLEX,   // intrinsic
+  FIR_DERIVED,   // derived
   FIR_DIMS,
   FIR_FIELD,
   FIR_HEAP,
-  FIR_INT,  // intrinsic
-  FIR_LOGICAL,  // intrinsic
+  FIR_INT,     // intrinsic
+  FIR_LOGICAL, // intrinsic
   FIR_POINTER,
-  FIR_REAL,  // intrinsic
+  FIR_REAL, // intrinsic
   FIR_REFERENCE,
   FIR_SEQUENCE,
   FIR_TYPEDESC,
@@ -73,15 +74,16 @@ bool isa_fir_type(mlir::Type);
 bool isa_std_type(mlir::Type t);
 bool isa_fir_or_std_type(mlir::Type t);
 
-template<typename A, unsigned Id> struct IntrinsicTypeMixin {
+template <typename A, unsigned Id>
+struct IntrinsicTypeMixin {
   constexpr static bool kindof(unsigned kind) { return kind == getId(); }
   constexpr static unsigned getId() { return Id; }
 };
 
 class CharacterType
-  : public mlir::Type::TypeBase<CharacterType, mlir::Type,
-        detail::CharacterTypeStorage>,
-    public IntrinsicTypeMixin<CharacterType, TypeKind::FIR_CHARACTER> {
+    : public mlir::Type::TypeBase<CharacterType, mlir::Type,
+                                  detail::CharacterTypeStorage>,
+      public IntrinsicTypeMixin<CharacterType, TypeKind::FIR_CHARACTER> {
 public:
   using Base::Base;
   static CharacterType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -90,8 +92,8 @@ public:
 };
 
 class IntType
-  : public mlir::Type::TypeBase<IntType, mlir::Type, detail::IntTypeStorage>,
-    public IntrinsicTypeMixin<IntType, TypeKind::FIR_INT> {
+    : public mlir::Type::TypeBase<IntType, mlir::Type, detail::IntTypeStorage>,
+      public IntrinsicTypeMixin<IntType, TypeKind::FIR_INT> {
 public:
   using Base::Base;
   static IntType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -100,9 +102,9 @@ public:
 };
 
 class LogicalType
-  : public mlir::Type::TypeBase<LogicalType, mlir::Type,
-        detail::LogicalTypeStorage>,
-    public IntrinsicTypeMixin<LogicalType, TypeKind::FIR_LOGICAL> {
+    : public mlir::Type::TypeBase<LogicalType, mlir::Type,
+                                  detail::LogicalTypeStorage>,
+      public IntrinsicTypeMixin<LogicalType, TypeKind::FIR_LOGICAL> {
 public:
   using Base::Base;
   static LogicalType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -110,9 +112,9 @@ public:
   KindTy getFKind() const { return getSizeInBits() / 8; }
 };
 
-class RealType
-  : public mlir::Type::TypeBase<RealType, mlir::Type, detail::RealTypeStorage>,
-    public IntrinsicTypeMixin<RealType, TypeKind::FIR_REAL> {
+class RealType : public mlir::Type::TypeBase<RealType, mlir::Type,
+                                             detail::RealTypeStorage>,
+                 public IntrinsicTypeMixin<RealType, TypeKind::FIR_REAL> {
 public:
   using Base::Base;
   static RealType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -120,9 +122,9 @@ public:
   KindTy getFKind() const { return getSizeInBits() / 8; }
 };
 
-class CplxType
-  : public mlir::Type::TypeBase<CplxType, mlir::Type, detail::CplxTypeStorage>,
-    public IntrinsicTypeMixin<CplxType, TypeKind::FIR_COMPLEX> {
+class CplxType : public mlir::Type::TypeBase<CplxType, mlir::Type,
+                                             detail::CplxTypeStorage>,
+                 public IntrinsicTypeMixin<CplxType, TypeKind::FIR_COMPLEX> {
 public:
   using Base::Base;
   static CplxType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -133,7 +135,7 @@ public:
 // FIR support types
 
 class BoxType
-  : public mlir::Type::TypeBase<BoxType, mlir::Type, detail::BoxTypeStorage> {
+    : public mlir::Type::TypeBase<BoxType, mlir::Type, detail::BoxTypeStorage> {
 public:
   using Base::Base;
   static BoxType get(mlir::Type eleTy);
@@ -142,7 +144,7 @@ public:
 };
 
 class BoxCharType : public mlir::Type::TypeBase<BoxCharType, mlir::Type,
-                        detail::BoxCharTypeStorage> {
+                                                detail::BoxCharTypeStorage> {
 public:
   using Base::Base;
   static BoxCharType get(mlir::MLIRContext *ctxt, KindTy kind);
@@ -151,7 +153,7 @@ public:
 };
 
 class BoxProcType : public mlir::Type::TypeBase<BoxProcType, mlir::Type,
-                        detail::BoxProcTypeStorage> {
+                                                detail::BoxProcTypeStorage> {
 public:
   using Base::Base;
   static BoxProcType get(mlir::Type eleTy);
@@ -159,8 +161,8 @@ public:
   mlir::Type getEleTy() const;
 };
 
-class DimsType
-  : public mlir::Type::TypeBase<DimsType, mlir::Type, detail::DimsTypeStorage> {
+class DimsType : public mlir::Type::TypeBase<DimsType, mlir::Type,
+                                             detail::DimsTypeStorage> {
 public:
   using Base::Base;
   static DimsType get(mlir::MLIRContext *ctx, unsigned rank);
@@ -171,15 +173,15 @@ public:
 };
 
 class FieldType : public mlir::Type::TypeBase<FieldType, mlir::Type,
-                      detail::FieldTypeStorage> {
+                                              detail::FieldTypeStorage> {
 public:
   using Base::Base;
   static FieldType get(mlir::MLIRContext *ctxt, KindTy _ = 0);
   static bool kindof(unsigned kind) { return kind == TypeKind::FIR_FIELD; }
 };
 
-class HeapType
-  : public mlir::Type::TypeBase<HeapType, mlir::Type, detail::HeapTypeStorage> {
+class HeapType : public mlir::Type::TypeBase<HeapType, mlir::Type,
+                                             detail::HeapTypeStorage> {
 public:
   using Base::Base;
   static HeapType get(mlir::Type elementType);
@@ -189,7 +191,7 @@ public:
 };
 
 class PointerType : public mlir::Type::TypeBase<PointerType, mlir::Type,
-                        detail::PointerTypeStorage> {
+                                                detail::PointerTypeStorage> {
 public:
   using Base::Base;
   static PointerType get(mlir::Type elementType);
@@ -198,8 +200,9 @@ public:
   mlir::Type getEleTy() const;
 };
 
-class ReferenceType : public mlir::Type::TypeBase<ReferenceType, mlir::Type,
-                          detail::ReferenceTypeStorage> {
+class ReferenceType
+    : public mlir::Type::TypeBase<ReferenceType, mlir::Type,
+                                  detail::ReferenceTypeStorage> {
 public:
   using Base::Base;
   static ReferenceType get(mlir::Type elementType);
@@ -209,7 +212,7 @@ public:
 };
 
 class SequenceType : public mlir::Type::TypeBase<SequenceType, mlir::Type,
-                         detail::SequenceTypeStorage> {
+                                                 detail::SequenceTypeStorage> {
 public:
   using Base::Base;
   using BoundInfo = int64_t;
@@ -238,7 +241,7 @@ llvm::hash_code hash_value(const SequenceType::Extent &);
 llvm::hash_code hash_value(const SequenceType::Shape &);
 
 class TypeDescType : public mlir::Type::TypeBase<TypeDescType, mlir::Type,
-                         detail::TypeDescTypeStorage> {
+                                                 detail::TypeDescTypeStorage> {
 public:
   using Base::Base;
   static TypeDescType get(mlir::Type ofType);
@@ -249,7 +252,7 @@ public:
 // Derived types
 
 class RecordType : public mlir::Type::TypeBase<RecordType, mlir::Type,
-                       detail::RecordTypeStorage> {
+                                               detail::RecordTypeStorage> {
 public:
   using Base::Base;
   using TypePair = std::pair<std::string, mlir::Type>;
@@ -260,15 +263,15 @@ public:
   TypeList getLenParamList();
 
   static RecordType get(mlir::MLIRContext *ctxt, llvm::StringRef name,
-      llvm::ArrayRef<TypePair> lenPList = {},
-      llvm::ArrayRef<TypePair> typeList = {});
+                        llvm::ArrayRef<TypePair> lenPList = {},
+                        llvm::ArrayRef<TypePair> typeList = {});
   constexpr static bool kindof(unsigned kind) { return kind == getId(); }
   constexpr static unsigned getId() { return TypeKind::FIR_DERIVED; }
 };
 
-mlir::Type parseFirType(
-    FIROpsDialect *dialect, llvm::StringRef rawData, mlir::Location loc);
+mlir::Type parseFirType(FIROpsDialect *dialect, llvm::StringRef rawData,
+                        mlir::Location loc);
 
-}  // fir
+} // namespace fir
 
-#endif  // FIR_TYPE_H
+#endif // FIR_TYPE_H
