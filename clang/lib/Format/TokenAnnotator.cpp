@@ -65,7 +65,7 @@ public:
   AnnotatingParser(const FormatStyle &Style, AnnotatedLine &Line,
                    const AdditionalKeywords &Keywords)
       : Style(Style), Line(Line), CurrentToken(Line.First), AutoFound(false),
-        Keywords(Keywords) {
+        TrailingReturnFound(false), Keywords(Keywords) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
     resetTokenMetadata(CurrentToken);
   }
@@ -1389,7 +1389,10 @@ private:
     } else if (Current.is(tok::arrow) && AutoFound && Line.MustBeDeclaration &&
                Current.NestingLevel == 0) {
       Current.Type = TT_TrailingReturnArrow;
-    } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
+      TrailingReturnFound = true;
+    } else if (Current.is(tok::star) ||
+               (Current.isOneOf(tok::amp, tok::ampamp) &&
+                (!Line.MightBeFunctionDecl || TrailingReturnFound))) {
       Current.Type = determineStarAmpUsage(Current,
                                            Contexts.back().CanBeExpression &&
                                                Contexts.back().IsExpression,
@@ -1412,6 +1415,8 @@ private:
         Current.Type = TT_ConditionalExpr;
       }
     } else if (Current.isBinaryOperator() &&
+               !(Line.MightBeFunctionDecl &&
+                 Current.isOneOf(tok::amp, tok::ampamp)) &&
                (!Current.Previous || Current.Previous->isNot(tok::l_square)) &&
                (!Current.is(tok::greater) &&
                 Style.Language != FormatStyle::LK_TextProto)) {
@@ -1486,10 +1491,12 @@ private:
       // colon after this, this is the only place which annotates the identifier
       // as a selector.)
       Current.Type = TT_SelectorName;
-    } else if (Current.isOneOf(tok::identifier, tok::kw_const) &&
+    } else if (Current.isOneOf(tok::identifier, tok::kw_const, tok::amp,
+                               tok::ampamp) &&
                Current.Previous &&
                !Current.Previous->isOneOf(tok::equal, tok::at) &&
-               Line.MightBeFunctionDecl && Contexts.size() == 1) {
+               Line.MightBeFunctionDecl && !TrailingReturnFound &&
+               Contexts.size() == 1) {
       // Line.MightBeFunctionDecl can only be true after the parentheses of a
       // function declaration have been found.
       Current.Type = TT_TrailingAnnotation;
@@ -1767,6 +1774,7 @@ private:
   AnnotatedLine &Line;
   FormatToken *CurrentToken;
   bool AutoFound;
+  bool TrailingReturnFound;
   const AdditionalKeywords &Keywords;
 
   // Set of "<" tokens that do not open a template parameter list. If parseAngle
