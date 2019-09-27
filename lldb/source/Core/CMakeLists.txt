@@ -66,7 +66,7 @@ add_lldb_library(lldbCore
   ValueObjectVariable.cpp
 
   DEPENDS
-    ClangDriverOptions
+    clang-tablegen-targets
 
   LINK_LIBS
     clangAST
