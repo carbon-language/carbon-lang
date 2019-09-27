@@ -36,23 +36,6 @@ Optional<std::string> lld::demangleItanium(StringRef name) {
   return s;
 }
 
-Optional<std::string> lld::demangleMSVC(StringRef name) {
-  std::string prefix;
-  if (name.consume_front("__imp_"))
-    prefix = "__declspec(dllimport) ";
-
-  // Demangle only C++ names.
-  if (!name.startswith("?"))
-    return None;
-
-  char *buf = microsoftDemangle(name.str().c_str(), nullptr, nullptr, nullptr);
-  if (!buf)
-    return None;
-  std::string s(buf);
-  free(buf);
-  return prefix + s;
-}
-
 StringMatcher::StringMatcher(ArrayRef<StringRef> pat) {
   for (StringRef s : pat) {
     Expected<GlobPattern> pat = GlobPattern::create(s);
