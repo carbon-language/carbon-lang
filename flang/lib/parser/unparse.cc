@@ -706,7 +706,7 @@ public:
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")");
   }
   void Unparse(const CommonStmt::Block &x) {
-    Walk("/", std::get<std::optional<Name>>(x.t), "/");
+    Word("/"), Walk(std::get<std::optional<Name>>(x.t)), Word("/");
     Walk(std::get<std::list<CommonBlockObject>>(x.t));
   }
 
