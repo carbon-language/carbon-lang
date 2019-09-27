@@ -2205,7 +2205,6 @@ define <2 x i64> @test_mask_demanded_bits(<2 x i64> %a0, i8* %a1, <2 x i64> %idx
 ; X86-AVX512VL:       # %bb.0:
 ; X86-AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax # encoding: [0x8b,0x44,0x24,0x04]
 ; X86-AVX512VL-NEXT:    vpsllq $63, %xmm2, %xmm2 # EVEX TO VEX Compression encoding: [0xc5,0xe9,0x73,0xf2,0x3f]
-; X86-AVX512VL-NEXT:    vpsraq $63, %xmm2, %xmm2 # encoding: [0x62,0xf1,0xed,0x08,0x72,0xe2,0x3f]
 ; X86-AVX512VL-NEXT:    vpgatherqq %xmm2, (%eax,%xmm1,2), %xmm0 # encoding: [0xc4,0xe2,0xe9,0x91,0x04,0x48]
 ; X86-AVX512VL-NEXT:    retl # encoding: [0xc3]
 ;
@@ -2218,7 +2217,6 @@ define <2 x i64> @test_mask_demanded_bits(<2 x i64> %a0, i8* %a1, <2 x i64> %idx
 ; X64-AVX512VL-LABEL: test_mask_demanded_bits:
 ; X64-AVX512VL:       # %bb.0:
 ; X64-AVX512VL-NEXT:    vpsllq $63, %xmm2, %xmm2 # EVEX TO VEX Compression encoding: [0xc5,0xe9,0x73,0xf2,0x3f]
-; X64-AVX512VL-NEXT:    vpsraq $63, %xmm2, %xmm2 # encoding: [0x62,0xf1,0xed,0x08,0x72,0xe2,0x3f]
 ; X64-AVX512VL-NEXT:    vpgatherqq %xmm2, (%rdi,%xmm1,2), %xmm0 # encoding: [0xc4,0xe2,0xe9,0x91,0x04,0x4f]
 ; X64-AVX512VL-NEXT:    retq # encoding: [0xc3]
   %mask1 = sext <2 x i1> %mask to <2 x i64>
