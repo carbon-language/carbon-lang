@@ -706,6 +706,26 @@ TEST_F(FindExplicitReferencesTest, All) {
            "0: targets = {x}\n"
            "1: targets = {X::func, X::func}\n"
            "2: targets = {t}\n"},
+          // Type template parameters.
+          {R"cpp(
+            template <class T>
+            void foo() {
+              static_cast<$0^T>(0);
+              $1^T();
+              $2^T t;
+            }
+        )cpp",
+           "0: targets = {T}\n"
+           "1: targets = {T}\n"
+           "2: targets = {T}\n"},
+          // Non-type template parameters.
+          {R"cpp(
+            template <int I>
+            void foo() {
+              int x = $0^I;
+            }
+        )cpp",
+           "0: targets = {I}\n"},
       };
 
   for (const auto &C : Cases) {

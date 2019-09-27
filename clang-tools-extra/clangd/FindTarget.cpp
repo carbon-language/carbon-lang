@@ -489,6 +489,11 @@ Optional<ReferenceLoc> refInTypeLoc(TypeLoc L) {
           ReferenceLoc{NestedNameSpecifierLoc(), L.getNameLoc(), {L.getDecl()}};
     }
 
+    void VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc L) {
+      Ref =
+          ReferenceLoc{NestedNameSpecifierLoc(), L.getNameLoc(), {L.getDecl()}};
+    }
+
     void VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc L) {
       Ref = ReferenceLoc{
           NestedNameSpecifierLoc(), L.getTemplateNameLoc(),
