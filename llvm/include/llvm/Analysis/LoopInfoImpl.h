@@ -23,10 +23,6 @@
 
 namespace llvm {
 
-// Max number of loop iterations to check whether a loop is a dedicated
-// exit loop.
-extern cl::opt<uint64_t> MaxDedicateExitIterations;
-
 //===----------------------------------------------------------------------===//
 // APIs for simple analysis of the loop. See header notes.
 
@@ -91,16 +87,10 @@ bool LoopBase<BlockT, LoopT>::hasDedicatedExits() const {
   // within the loop.
   SmallVector<BlockT *, 4> ExitBlocks;
   getExitBlocks(ExitBlocks);
-  uint64_t Iterations = 0;
-  for (BlockT *EB : ExitBlocks) {
-    for (BlockT *Predecessor : children<Inverse<BlockT *>>(EB)) {
+  for (BlockT *EB : ExitBlocks)
+    for (BlockT *Predecessor : children<Inverse<BlockT *>>(EB))
       if (!contains(Predecessor))
         return false;
-      Iterations++;
-    }
-    if (Iterations > MaxDedicateExitIterations)
-      return false;
-  }
   // All the requirements are met.
   return true;
 }
