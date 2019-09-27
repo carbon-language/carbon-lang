@@ -549,6 +549,11 @@ defm OR : SIMDBitwise<or, "or", 78>;
 defm XOR : SIMDBitwise<xor, "xor", 79>;
 } // isCommutable = 1
 
+// Bitwise logic: v128.andnot
+def andnot : PatFrag<(ops node:$left, node:$right), (and $left, (vnot $right))>;
+let Predicates = [HasUnimplementedSIMD128] in
+defm ANDNOT : SIMDBitwise<andnot, "andnot", 216>;
+
 // Bitwise select: v128.bitselect
 foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in
   defm BITSELECT_#vec_t :

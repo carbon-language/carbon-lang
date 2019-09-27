@@ -529,4 +529,7 @@ main:
     # CHECK: i64x2.load32x2_u 32 # encoding: [0xfd,0xd7,0x01,0x03,0x20]
     i64x2.load32x2_u 32
 
+    # CHECK: v128.andnot # encoding: [0xfd,0xd8,0x01]
+    v128.andnot
+
     end_function
