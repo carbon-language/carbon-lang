@@ -22,18 +22,16 @@ using namespace lld;
 Optional<std::string> lld::demangleItanium(StringRef name) {
   // itaniumDemangle can be used to demangle strings other than symbol
   // names which do not necessarily start with "_Z". Name can be
-  // either a C or C++ symbol. Don't call itaniumDemangle if the name
+  // either a C or C++ symbol. Don't call demangle if the name
   // does not look like a C++ symbol name to avoid getting unexpected
   // result for a C symbol that happens to match a mangled type name.
   if (!name.startswith("_Z"))
     return None;
 
-  char *buf = itaniumDemangle(name.str().c_str(), nullptr, nullptr, nullptr);
-  if (!buf)
+  std::string demangled = demangle(name);
+  if (demangled == name)
     return None;
-  std::string s(buf);
-  free(buf);
-  return s;
+  return demangled;
 }
 
 StringMatcher::StringMatcher(ArrayRef<StringRef> pat) {
