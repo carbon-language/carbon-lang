@@ -14373,41 +14373,6 @@ TEST_F(FormatTest, AmbersandInLamda) {
   verifyFormat("auto lambda = [&a = a]() { a = 2; };", AlignStyle);
 }
 
-TEST_F(FormatTest, RefQualifiedTemplateMember) {
-  FormatStyle AlignStyle = getLLVMStyle();
-  AlignStyle.AlwaysBreakTemplateDeclarations = FormatStyle::BTDS_Yes;
-
-  verifyFormat("struct f {\n"
-               "  template <class T>\n"
-               "  int &foo() & noexcept {}\n"
-               "};",
-               AlignStyle);
-
-  verifyFormat("struct f {\n"
-               "  template <class T>\n"
-               "  int &foo() && noexcept {}\n"
-               "};",
-               AlignStyle);
-
-  verifyFormat("struct f {\n"
-               "  template <class T>\n"
-               "  int &foo() const & noexcept {}\n"
-               "};",
-               AlignStyle);
-
-  verifyFormat("struct f {\n"
-               "  template <class T>\n"
-               "  int &foo() const & noexcept {}\n"
-               "};",
-               AlignStyle);
-
-  verifyFormat("struct f {\n"
-               "  template <class T>\n"
-               "  auto foo() && noexcept -> int & {}\n"
-               "};",
-               AlignStyle);
-}
-
 } // end namespace
 } // end namespace format
 } // end namespace clang
