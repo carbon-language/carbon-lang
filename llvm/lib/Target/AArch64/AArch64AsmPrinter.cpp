@@ -99,7 +99,8 @@ public:
   void LowerPATCHABLE_FUNCTION_EXIT(const MachineInstr &MI);
   void LowerPATCHABLE_TAIL_CALL(const MachineInstr &MI);
 
-  std::map<std::tuple<unsigned, bool, uint32_t>, MCSymbol *> HwasanMemaccessSymbols;
+  typedef std::tuple<unsigned, bool, uint32_t> HwasanMemaccessTuple;
+  std::map<HwasanMemaccessTuple, MCSymbol *> HwasanMemaccessSymbols;
   void LowerHWASAN_CHECK_MEMACCESS(const MachineInstr &MI);
   void EmitHwasanMemaccessSymbols(Module &M);
 
@@ -240,7 +241,8 @@ void AArch64AsmPrinter::LowerHWASAN_CHECK_MEMACCESS(const MachineInstr &MI) {
   bool IsShort =
       MI.getOpcode() == AArch64::HWASAN_CHECK_MEMACCESS_SHORTGRANULES;
   uint32_t AccessInfo = MI.getOperand(1).getImm();
-  MCSymbol *&Sym = HwasanMemaccessSymbols[{Reg, IsShort, AccessInfo}];
+  MCSymbol *&Sym =
+      HwasanMemaccessSymbols[HwasanMemaccessTuple(Reg, IsShort, AccessInfo)];
   if (!Sym) {
     // FIXME: Make this work on non-ELF.
     if (!TM.getTargetTriple().isOSBinFormatELF())
