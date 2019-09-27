@@ -43,11 +43,11 @@ protected:
   void SetUp() {
     TM = State.createTargetMachine();
     Context = std::make_unique<LLVMContext>();
-    Module =
-        std::make_unique<llvm::Module>("X86SnippetRepetitorTest", *Context);
-    Module->setDataLayout(TM->createDataLayout());
+    Mod =
+        std::make_unique<Module>("X86SnippetRepetitorTest", *Context);
+    Mod->setDataLayout(TM->createDataLayout());
     MMI = std::make_unique<MachineModuleInfo>(TM.get());
-    MF = &createVoidVoidPtrMachineFunction("TestFn", Module.get(), MMI.get());
+    MF = &createVoidVoidPtrMachineFunction("TestFn", Mod.get(), MMI.get());
   }
 
   void TestCommon(InstructionBenchmark::RepetitionModeE RepetitionMode) {
@@ -61,9 +61,9 @@ protected:
   static constexpr const unsigned kMinInstructions = 3;
 
   const LLVMState State;
-  std::unique_ptr<llvm::LLVMTargetMachine> TM;
+  std::unique_ptr<LLVMTargetMachine> TM;
   std::unique_ptr<LLVMContext> Context;
-  std::unique_ptr<Module> Module;
+  std::unique_ptr<Module> Mod;
   std::unique_ptr<MachineModuleInfo> MMI;
   MachineFunction *MF = nullptr;
 };
