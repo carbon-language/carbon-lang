@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s darwin-dispatch-once-nonstatic %t -- -- -fblocks
+// RUN: %check_clang_tidy %s darwin-dispatch-once-nonstatic %t
 
 typedef int dispatch_once_t;
 extern void dispatch_once(dispatch_once_t *pred, void(^block)(void));
