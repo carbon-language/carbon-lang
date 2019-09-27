@@ -926,6 +926,24 @@ namespace dynamic_alloc {
   static_assert(erroneous_array_bound(-1)); // expected-error {{constant expression}} expected-note {{in call}}
   static_assert(erroneous_array_bound(1LL << 62)); // expected-error {{constant expression}} expected-note {{in call}}
 
+  constexpr bool erroneous_array_bound_nothrow(long long n) {
+    int *p = new (std::nothrow) int[n];
+    bool result = p != 0;
+    delete[] p;
+    return result;
+  }
+  static_assert(erroneous_array_bound_nothrow(3));
+  static_assert(erroneous_array_bound_nothrow(0));
+  static_assert(!erroneous_array_bound_nothrow(-1));
+  static_assert(!erroneous_array_bound_nothrow(1LL << 62));
+
+  constexpr bool evaluate_nothrow_arg() {
+    bool ok = false;
+    delete new ((ok = true, std::nothrow)) int;
+    return ok;
+  }
+  static_assert(evaluate_nothrow_arg());
+
   constexpr void double_delete() { // expected-error {{never produces a constant expression}}
     int *p = new int;
     delete p;

@@ -8043,6 +8043,9 @@ static bool EvaluateArrayNewInitList(EvalInfo &Info, LValue &This,
                                      QualType AllocType);
 
 bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
+  if (!Info.getLangOpts().CPlusPlus2a)
+    Info.CCEDiag(E, diag::note_constexpr_new);
+
   // We cannot speculatively evaluate a delete expression.
   if (Info.SpeculativeEvaluationDepth)
     return false;
@@ -8054,17 +8057,27 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
     return false;
   }
 
-  // FIXME: There is no restriction on this, but it's not clear that it
-  // makes any sense. We get here for cases such as:
-  //
-  //   new (std::align_val_t{N}) X(int)
-  //
-  // (which should presumably be valid only if N is a multiple of
-  // alignof(int).
-  if (E->getNumPlacementArgs())
-    return Error(E, diag::note_constexpr_new_placement);
-  if (!Info.getLangOpts().CPlusPlus2a)
-    Info.CCEDiag(E, diag::note_constexpr_new);
+  bool IsNothrow = false;
+  if (E->getNumPlacementArgs()) {
+    // The only new-placement list we support is of the form (std::nothrow).
+    //
+    // FIXME: There is no restriction on this, but it's not clear that any
+    // other form makes any sense. We get here for cases such as:
+    //
+    //   new (std::align_val_t{N}) X(int)
+    //
+    // (which should presumably be valid only if N is a multiple of
+    // alignof(int), and in any case can't be deallocated unless N is
+    // alignof(X) and X has new-extended alignment).
+    if (E->getNumPlacementArgs() != 1 ||
+        !E->getPlacementArg(0)->getType()->isNothrowT())
+      return Error(E, diag::note_constexpr_new_placement);
+
+    LValue Nothrow;
+    if (!EvaluateLValue(E->getPlacementArg(0), Nothrow, Info))
+      return false;
+    IsNothrow = true;
+  }
 
   const Expr *Init = E->getInitializer();
   const InitListExpr *ResizedArrayILE = nullptr;
@@ -8087,6 +8100,9 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
     //   -- [...] its value before converting to size_t [or] applying the
     //      second standard conversion sequence is less than zero
     if (ArrayBound.isSigned() && ArrayBound.isNegative()) {
+      if (IsNothrow)
+        return ZeroInitialization(E);
+
       Info.FFDiag(*ArraySize, diag::note_constexpr_new_negative)
           << ArrayBound << (*ArraySize)->getSourceRange();
       return false;
@@ -8097,6 +8113,9 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
     if (ConstantArrayType::getNumAddressingBits(Info.Ctx, AllocType,
                                                 ArrayBound) >
         ConstantArrayType::getMaxSizeBits(Info.Ctx)) {
+      if (IsNothrow)
+        return ZeroInitialization(E);
+
       Info.FFDiag(*ArraySize, diag::note_constexpr_new_too_large)
         << ArrayBound << (*ArraySize)->getSourceRange();
       return false;
@@ -8114,6 +8133,9 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
       llvm::APInt InitBound = CAT->getSize().zextOrSelf(Bits);
       llvm::APInt AllocBound = ArrayBound.zextOrSelf(Bits);
       if (InitBound.ugt(AllocBound)) {
+        if (IsNothrow)
+          return ZeroInitialization(E);
+
         Info.FFDiag(*ArraySize, diag::note_constexpr_new_too_small)
             << AllocBound.toString(10, /*Signed=*/false)
             << InitBound.toString(10, /*Signed=*/false)
