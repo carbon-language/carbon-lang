@@ -494,10 +494,8 @@ public:
   void checkCallability(const PropagationInfo &PInfo,
                         const FunctionDecl *FunDecl,
                         SourceLocation BlameLoc);
-
-  using ArgRange = llvm::iterator_range<CallExpr::const_arg_iterator>;
-  bool handleCall(const Expr *Call, const Expr *ObjArg,
-                  ArgRange args, const FunctionDecl *FunD);
+  bool handleCall(const CallExpr *Call, const Expr *ObjArg,
+                  const FunctionDecl *FunD);
 
   void VisitBinaryOperator(const BinaryOperator *BinOp);
   void VisitCallExpr(const CallExpr *Call);
@@ -610,21 +608,22 @@ void ConsumedStmtVisitor::checkCallability(const PropagationInfo &PInfo,
 // Factors out common behavior for function, method, and operator calls.
 // Check parameters and set parameter state if necessary.
 // Returns true if the state of ObjArg is set, or false otherwise.
-bool ConsumedStmtVisitor::handleCall(const Expr *Call,
-                                     const Expr *ObjArg,
-                                     ArgRange Args,
+bool ConsumedStmtVisitor::handleCall(const CallExpr *Call, const Expr *ObjArg,
                                      const FunctionDecl *FunD) {
+  unsigned Offset = 0;
+  if (isa<CXXOperatorCallExpr>(Call) && isa<CXXMethodDecl>(FunD))
+    Offset = 1;  // first argument is 'this'
+
   // check explicit parameters
-  unsigned Index = 0;
-  for (const Expr *Arg : Args) {
+  for (unsigned Index = Offset; Index < Call->getNumArgs(); ++Index) {
     // Skip variable argument lists.
-    if (Index >= FunD->getNumParams())
+    if (Index - Offset >= FunD->getNumParams())
       break;
 
-    const ParmVarDecl *Param = FunD->getParamDecl(Index++);
+    const ParmVarDecl *Param = FunD->getParamDecl(Index - Offset);
     QualType ParamType = Param->getType();
 
-    InfoEntry Entry = findInfo(Arg);
+    InfoEntry Entry = findInfo(Call->getArg(Index));
 
     if (Entry == PropagationMap.end() || Entry->second.isTest())
       continue;
@@ -637,7 +636,7 @@ bool ConsumedStmtVisitor::handleCall(const Expr *Call,
 
       if (ParamState != ExpectedState)
         Analyzer.WarningsHandler.warnParamTypestateMismatch(
-          Arg->getExprLoc(),
+          Call->getArg(Index)->getExprLoc(),
           stateToString(ExpectedState), stateToString(ParamState));
     }
 
@@ -750,7 +749,7 @@ void ConsumedStmtVisitor::VisitCallExpr(const CallExpr *Call) {
     return;
   }
 
-  handleCall(Call, nullptr, Call->arguments(), FunDecl);
+  handleCall(Call, nullptr, FunDecl);
   propagateReturnType(Call, FunDecl);
 }
 
@@ -806,7 +805,7 @@ void ConsumedStmtVisitor::VisitCXXMemberCallExpr(
   if (!MD)
     return;
 
-  handleCall(Call, Call->getImplicitObjectArgument(), Call->arguments(), MD);
+  handleCall(Call, Call->getImplicitObjectArgument(), MD);
   propagateReturnType(Call, MD);
 }
 
@@ -814,20 +813,18 @@ void ConsumedStmtVisitor::VisitCXXOperatorCallExpr(
     const CXXOperatorCallExpr *Call) {
   const auto *FunDecl = dyn_cast_or_null<FunctionDecl>(Call->getDirectCallee());
   if (!FunDecl) return;
-  ArgRange Args = Call->arguments();
 
   if (Call->getOperator() == OO_Equal) {
-    ConsumedState CS = getInfo(llvm::index(Args, 1));
-    if (!handleCall(Call, llvm::index(Args, 0), llvm::drop_begin(Args, 1),
-                    FunDecl))
-      setInfo(llvm::index(Args, 0), CS);
+    ConsumedState CS = getInfo(Call->getArg(1));
+    if (!handleCall(Call, Call->getArg(0), FunDecl))
+      setInfo(Call->getArg(0), CS);
     return;
   }
 
-  if (isa<CXXMethodDecl>(FunDecl))
-    handleCall(Call, llvm::index(Args, 0), llvm::drop_begin(Args, 1), FunDecl);
+  if (const auto *MCall = dyn_cast<CXXMemberCallExpr>(Call))
+    handleCall(MCall, MCall->getImplicitObjectArgument(), FunDecl);
   else
-    handleCall(Call, nullptr, Args, FunDecl);
+    handleCall(Call, Call->getArg(0), FunDecl);
 
   propagateReturnType(Call, FunDecl);
 }

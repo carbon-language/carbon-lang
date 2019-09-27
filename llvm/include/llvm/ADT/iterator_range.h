@@ -20,16 +20,8 @@
 
 #include <iterator>
 #include <utility>
-#include <cassert>
 
 namespace llvm {
-
-template <typename T>
-constexpr bool is_random_iterator() {
-  return std::is_same<
-    typename std::iterator_traits<T>::iterator_category,
-    std::random_access_iterator_tag>::value;
-}
 
 /// A range adaptor for a pair of iterators.
 ///
@@ -66,31 +58,11 @@ template <typename T> iterator_range<T> make_range(std::pair<T, T> p) {
   return iterator_range<T>(std::move(p.first), std::move(p.second));
 }
 
-/// Non-random-iterator version
 template <typename T>
-auto drop_begin(T &&t, int n) ->
-  typename std::enable_if<!is_random_iterator<decltype(adl_begin(t))>(),
-  iterator_range<decltype(adl_begin(t))>>::type {
-  auto begin = adl_begin(t);
-  auto end = adl_end(t);
-  for (int i = 0; i < n; i++) {
-    assert(begin != end);
-    ++begin;
-  }
-  return make_range(begin, end);
+iterator_range<decltype(adl_begin(std::declval<T>()))> drop_begin(T &&t,
+                                                                  int n) {
+  return make_range(std::next(adl_begin(t), n), adl_end(t));
 }
-
-/// Optimized version for random iterators
-template <typename T>
-auto drop_begin(T &&t, int n) ->
-  typename std::enable_if<is_random_iterator<decltype(adl_begin(t))>(),
-  iterator_range<decltype(adl_begin(t))>>::type {
-  auto begin = adl_begin(t);
-  auto end = adl_end(t);
-  assert(end - begin >= n && "Dropping more elements than exist!");
-  return make_range(std::next(begin, n), end);
-}
-
 }
 
 #endif

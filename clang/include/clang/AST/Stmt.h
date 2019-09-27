@@ -1041,8 +1041,7 @@ protected:
   template<typename T, typename TPtr = T *, typename StmtPtr = Stmt *>
   struct CastIterator
       : llvm::iterator_adaptor_base<CastIterator<T, TPtr, StmtPtr>, StmtPtr *,
-                                    std::random_access_iterator_tag, TPtr,
-                                    int, void, TPtr> {
+                                    std::random_access_iterator_tag, TPtr> {
     using Base = typename CastIterator::iterator_adaptor_base;
 
     CastIterator() : Base(nullptr) {}

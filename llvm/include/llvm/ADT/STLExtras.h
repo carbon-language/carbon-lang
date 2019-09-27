@@ -1573,14 +1573,6 @@ template <class Ptr> auto to_address(const Ptr &P) -> decltype(P.operator->()) {
 }
 template <class T> constexpr T *to_address(T *P) { return P; }
 
-template <typename R>
-auto index(R &&TheRange,
-  typename std::iterator_traits<detail::IterOfRange<R>>::difference_type N)
-  -> decltype(TheRange.begin()[N]) {
-  assert(N < TheRange.end() - TheRange.begin() && "Index out of range!");
-  return TheRange.begin()[N];
-}
-
 } // end namespace llvm
 
 #endif // LLVM_ADT_STLEXTRAS_H
