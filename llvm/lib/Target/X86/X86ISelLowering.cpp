@@ -43364,9 +43364,22 @@ static SDValue combineMOVMSK(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue combineX86GatherScatter(SDNode *N, SelectionDAG &DAG,
+                                       TargetLowering::DAGCombinerInfo &DCI) {
+  // With vector masks we only demand the upper bit of the mask.
+  SDValue Mask = cast<X86MaskedGatherScatterSDNode>(N)->getMask();
+  if (Mask.getScalarValueSizeInBits() != 1) {
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    APInt DemandedMask(APInt::getSignMask(Mask.getScalarValueSizeInBits()));
+    if (TLI.SimplifyDemandedBits(Mask, DemandedMask, DCI))
+      return SDValue(N, 0);
+  }
+
+  return SDValue();
+}
+
 static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
-                                    TargetLowering::DAGCombinerInfo &DCI,
-                                    const X86Subtarget &Subtarget) {
+                                    TargetLowering::DAGCombinerInfo &DCI) {
   SDLoc DL(N);
 
   if (DCI.isBeforeLegalizeOps()) {
@@ -43426,7 +43439,7 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
   }
 
   // With vector masks we only demand the upper bit of the mask.
-  SDValue Mask = N->getOperand(2);
+  SDValue Mask = cast<MaskedGatherScatterSDNode>(N)->getMask();
   if (Mask.getScalarValueSizeInBits() != 1) {
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
     APInt DemandedMask(APInt::getSignMask(Mask.getScalarValueSizeInBits()));
@@ -44465,6 +44478,27 @@ static SDValue combineAdd(SDNode *N, SelectionDAG &DAG,
                             HADDBuilder);
   }
 
+  // If vectors of i1 are legal, turn (add (zext (vXi1 X)), Y) into
+  // (sub Y, (sext (vXi1 X))).
+  // FIXME: We have the (sub Y, (zext (vXi1 X))) -> (add (sext (vXi1 X)), Y) in
+  // generic DAG combine without a legal type check, but adding this there
+  // caused regressions.
+  if (Subtarget.hasAVX512() && VT.isVector()) {
+    if (Op0.getOpcode() == ISD::ZERO_EXTEND &&
+        Op0.getOperand(0).getValueType().getVectorElementType() == MVT::i1) {
+      SDLoc DL(N);
+      SDValue SExt = DAG.getNode(ISD::SIGN_EXTEND, DL, VT, Op0.getOperand(0));
+      return DAG.getNode(ISD::SUB, DL, VT, Op1, SExt);
+    }
+
+    if (Op1.getOpcode() == ISD::ZERO_EXTEND &&
+        Op1.getOperand(0).getValueType().getVectorElementType() == MVT::i1) {
+      SDLoc DL(N);
+      SDValue SExt = DAG.getNode(ISD::SIGN_EXTEND, DL, VT, Op1.getOperand(0));
+      return DAG.getNode(ISD::SUB, DL, VT, Op0, SExt);
+    }
+  }
+
   return combineAddOrSubToADCOrSBB(N, DAG);
 }
 
@@ -45355,9 +45389,9 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FMSUBADD:    return combineFMADDSUB(N, DAG, Subtarget);
   case X86ISD::MOVMSK:      return combineMOVMSK(N, DAG, DCI, Subtarget);
   case X86ISD::MGATHER:
-  case X86ISD::MSCATTER:
+  case X86ISD::MSCATTER:    return combineX86GatherScatter(N, DAG, DCI);
   case ISD::MGATHER:
-  case ISD::MSCATTER:       return combineGatherScatter(N, DAG, DCI, Subtarget);
+  case ISD::MSCATTER:       return combineGatherScatter(N, DAG, DCI);
   case X86ISD::PCMPEQ:
   case X86ISD::PCMPGT:      return combineVectorCompare(N, DAG, Subtarget);
   case X86ISD::PMULDQ:

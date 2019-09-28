@@ -1414,8 +1414,7 @@ define <4 x i32> @zext_bool_logic(<4 x i64> %cond1, <4 x i64> %cond2, <4 x i32> 
 ; AVX512-NEXT:    vptestnmq %zmm1, %zmm1, %k1 ## encoding: [0x62,0xf2,0xf6,0x48,0x27,0xc9]
 ; AVX512-NEXT:    korw %k1, %k0, %k1 ## encoding: [0xc5,0xfc,0x45,0xc9]
 ; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z} ## encoding: [0x62,0xf3,0x7d,0xc9,0x25,0xc0,0xff]
-; AVX512-NEXT:    vpsrld $31, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0x72,0xd0,0x1f]
-; AVX512-NEXT:    vpaddd %xmm2, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xfe,0xc2]
+; AVX512-NEXT:    vpsubd %xmm0, %xmm2, %xmm0 ## encoding: [0xc5,0xe9,0xfa,0xc0]
 ; AVX512-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
 ; AVX512-NEXT:    retq ## encoding: [0xc3]
 ;
@@ -1425,8 +1424,7 @@ define <4 x i32> @zext_bool_logic(<4 x i64> %cond1, <4 x i64> %cond2, <4 x i32> 
 ; SKX-NEXT:    vptestnmq %ymm1, %ymm1, %k1 ## encoding: [0x62,0xf2,0xf6,0x28,0x27,0xc9]
 ; SKX-NEXT:    korw %k1, %k0, %k0 ## encoding: [0xc5,0xfc,0x45,0xc1]
 ; SKX-NEXT:    vpmovm2d %k0, %xmm0 ## encoding: [0x62,0xf2,0x7e,0x08,0x38,0xc0]
-; SKX-NEXT:    vpsrld $31, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0x72,0xd0,0x1f]
-; SKX-NEXT:    vpaddd %xmm2, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xfe,0xc2]
+; SKX-NEXT:    vpsubd %xmm0, %xmm2, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xe9,0xfa,0xc0]
 ; SKX-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
 ; SKX-NEXT:    retq ## encoding: [0xc3]
   %a = icmp eq <4 x i64> %cond1, zeroinitializer
