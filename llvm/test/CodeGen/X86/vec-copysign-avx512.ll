@@ -5,8 +5,7 @@
 define <4 x float> @v4f32(<4 x float> %a, <4 x float> %b) nounwind {
 ; CHECK-LABEL: v4f32:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpbroadcastd {{.*#+}} xmm2 = [NaN,NaN,NaN,NaN]
-; CHECK-NEXT:    vpternlogd $226, %xmm1, %xmm2, %xmm0
+; CHECK-NEXT:    vpternlogd $228, {{.*}}(%rip){1to4}, %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %tmp = tail call <4 x float> @llvm.copysign.v4f32( <4 x float> %a, <4 x float> %b )
   ret <4 x float> %tmp
@@ -15,8 +14,7 @@ define <4 x float> @v4f32(<4 x float> %a, <4 x float> %b) nounwind {
 define <8 x float> @v8f32(<8 x float> %a, <8 x float> %b) nounwind {
 ; CHECK-LABEL: v8f32:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpbroadcastd {{.*#+}} ymm2 = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN]
-; CHECK-NEXT:    vpternlogd $226, %ymm1, %ymm2, %ymm0
+; CHECK-NEXT:    vpternlogd $228, {{.*}}(%rip){1to8}, %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %tmp = tail call <8 x float> @llvm.copysign.v8f32( <8 x float> %a, <8 x float> %b )
   ret <8 x float> %tmp
@@ -25,8 +23,7 @@ define <8 x float> @v8f32(<8 x float> %a, <8 x float> %b) nounwind {
 define <16 x float> @v16f32(<16 x float> %a, <16 x float> %b) nounwind {
 ; CHECK-LABEL: v16f32:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpbroadcastd {{.*#+}} zmm2 = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN]
-; CHECK-NEXT:    vpternlogd $226, %zmm1, %zmm2, %zmm0
+; CHECK-NEXT:    vpternlogd $228, {{.*}}(%rip){1to16}, %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %tmp = tail call <16 x float> @llvm.copysign.v16f32( <16 x float> %a, <16 x float> %b )
   ret <16 x float> %tmp
@@ -44,8 +41,7 @@ define <2 x double> @v2f64(<2 x double> %a, <2 x double> %b) nounwind {
 define <4 x double> @v4f64(<4 x double> %a, <4 x double> %b) nounwind {
 ; CHECK-LABEL: v4f64:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [NaN,NaN,NaN,NaN]
-; CHECK-NEXT:    vpternlogq $226, %ymm1, %ymm2, %ymm0
+; CHECK-NEXT:    vpternlogq $228, {{.*}}(%rip){1to4}, %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %tmp = tail call <4 x double> @llvm.copysign.v4f64( <4 x double> %a, <4 x double> %b )
   ret <4 x double> %tmp
@@ -54,8 +50,7 @@ define <4 x double> @v4f64(<4 x double> %a, <4 x double> %b) nounwind {
 define <8 x double> @v8f64(<8 x double> %a, <8 x double> %b) nounwind {
 ; CHECK-LABEL: v8f64:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpbroadcastq {{.*#+}} zmm2 = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN]
-; CHECK-NEXT:    vpternlogq $226, %zmm1, %zmm2, %zmm0
+; CHECK-NEXT:    vpternlogq $228, {{.*}}(%rip){1to8}, %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %tmp = tail call <8 x double> @llvm.copysign.v8f64( <8 x double> %a, <8 x double> %b )
   ret <8 x double> %tmp

@@ -11436,6 +11436,102 @@ defm VPTERNLOGD : avx512_common_ternlog<"vpternlogd", SchedWriteVecALU,
 defm VPTERNLOGQ : avx512_common_ternlog<"vpternlogq", SchedWriteVecALU,
                                         avx512vl_i64_info>, VEX_W;
 
+// Patterns to fold bitcasted FP broadcasts.
+// FIXME: Need better DAG canonicalization.
+let Predicates = [HasVLX] in {
+  def : Pat<(X86vpternlog VR128X:$src1, VR128X:$src2,
+                          (bc_v4i32 (v4f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          (i8 timm:$src4)),
+            (VPTERNLOGDZ128rmbi VR128X:$src1, VR128X:$src2, addr:$src3,
+                                timm:$src4)>;
+  def : Pat<(X86vpternlog (bc_v4i32 (v4f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          VR128X:$src2, VR128X:$src1, (i8 timm:$src4)),
+            (VPTERNLOGDZ128rmbi VR128X:$src1, VR128X:$src2, addr:$src3,
+                                (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(X86vpternlog VR128X:$src1,
+                          (bc_v4i32 (v4f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          VR128X:$src2, (i8 timm:$src4)),
+            (VPTERNLOGDZ128rmbi VR128X:$src1, VR128X:$src2, addr:$src3,
+                                (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(X86vpternlog VR128X:$src1, VR128X:$src2,
+                          (bc_v2i64 (v2f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          (i8 timm:$src4)),
+            (VPTERNLOGQZ128rmbi VR128X:$src1, VR128X:$src2, addr:$src3,
+                                timm:$src4)>;
+  def : Pat<(X86vpternlog (bc_v2i64 (v2f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          VR128X:$src2, VR128X:$src1, (i8 timm:$src4)),
+            (VPTERNLOGQZ128rmbi VR128X:$src1, VR128X:$src2, addr:$src3,
+                                (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(X86vpternlog VR128X:$src1,
+                          (bc_v2i64 (v2f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          VR128X:$src2, (i8 timm:$src4)),
+            (VPTERNLOGQZ128rmbi VR128X:$src1, VR128X:$src2, addr:$src3,
+                                (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(X86vpternlog VR256X:$src1, VR256X:$src2,
+                          (bc_v8i32 (v8f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          (i8 timm:$src4)),
+            (VPTERNLOGDZ256rmbi VR256X:$src1, VR256X:$src2, addr:$src3,
+                                timm:$src4)>;
+  def : Pat<(X86vpternlog (bc_v8i32 (v8f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          VR256X:$src2, VR256X:$src1, (i8 timm:$src4)),
+            (VPTERNLOGDZ256rmbi VR256X:$src1, VR256X:$src2, addr:$src3,
+                                (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(X86vpternlog VR256X:$src1,
+                          (bc_v8i32 (v8f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          VR256X:$src2, (i8 timm:$src4)),
+            (VPTERNLOGDZ256rmbi VR256X:$src1, VR256X:$src2, addr:$src3,
+                                (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(X86vpternlog VR256X:$src1, VR256X:$src2,
+                          (bc_v4i64 (v4f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          (i8 timm:$src4)),
+            (VPTERNLOGQZ256rmbi VR256X:$src1, VR256X:$src2, addr:$src3,
+                                timm:$src4)>;
+  def : Pat<(X86vpternlog (bc_v4i64 (v4f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          VR256X:$src2, VR256X:$src1, (i8 timm:$src4)),
+            (VPTERNLOGQZ256rmbi VR256X:$src1, VR256X:$src2, addr:$src3,
+                                (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(X86vpternlog VR256X:$src1,
+                          (bc_v4i64 (v4f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          VR256X:$src2, (i8 timm:$src4)),
+            (VPTERNLOGQZ256rmbi VR256X:$src1, VR256X:$src2, addr:$src3,
+                                (VPTERNLOG132_imm8 timm:$src4))>;
+}
+
+let Predicates = [HasAVX512] in {
+  def : Pat<(X86vpternlog VR512:$src1, VR512:$src2,
+                          (bc_v16i32 (v16f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          (i8 timm:$src4)),
+            (VPTERNLOGDZrmbi VR512:$src1, VR512:$src2, addr:$src3,
+                             timm:$src4)>;
+  def : Pat<(X86vpternlog (bc_v16i32 (v16f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          VR512:$src2, VR512:$src1, (i8 timm:$src4)),
+            (VPTERNLOGDZrmbi VR512:$src1, VR512:$src2, addr:$src3,
+                             (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(X86vpternlog VR512:$src1,
+                          (bc_v16i32 (v16f32 (X86VBroadcast (loadf32 addr:$src3)))),
+                          VR512:$src2, (i8 timm:$src4)),
+            (VPTERNLOGDZrmbi VR512:$src1, VR512:$src2, addr:$src3,
+                             (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(X86vpternlog VR512:$src1, VR512:$src2,
+                          (bc_v8i64 (v8f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          (i8 timm:$src4)),
+            (VPTERNLOGQZrmbi VR512:$src1, VR512:$src2, addr:$src3,
+                             timm:$src4)>;
+  def : Pat<(X86vpternlog (bc_v8i64 (v8f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          VR512:$src2, VR512:$src1, (i8 timm:$src4)),
+            (VPTERNLOGQZrmbi VR512:$src1, VR512:$src2, addr:$src3,
+                             (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(X86vpternlog VR512:$src1,
+                          (bc_v8i64 (v8f64 (X86VBroadcast (loadf64 addr:$src3)))),
+                          VR512:$src2, (i8 timm:$src4)),
+            (VPTERNLOGQZrmbi VR512:$src1, VR512:$src2, addr:$src3,
+                             (VPTERNLOG132_imm8 timm:$src4))>;
+}
+
 // Patterns to use VPTERNLOG for vXi16/vXi8 vectors.
 let Predicates = [HasVLX] in {
   def : Pat<(v16i8 (X86vpternlog VR128X:$src1, VR128X:$src2, VR128X:$src3,
