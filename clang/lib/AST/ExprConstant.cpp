@@ -1999,10 +1999,18 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
   } else if (const auto *MTE = dyn_cast_or_null<MaterializeTemporaryExpr>(
                  Base.dyn_cast<const Expr *>())) {
     if (CheckedTemps.insert(MTE).second) {
+      QualType TempType = getType(Base);
+      if (TempType.isDestructedType()) {
+        Info.FFDiag(MTE->getExprLoc(),
+                    diag::note_constexpr_unsupported_tempoarary_nontrivial_dtor)
+            << TempType;
+        return false;
+      }
+
       APValue *V = Info.Ctx.getMaterializedTemporaryValue(MTE, false);
       assert(V && "evasluation result refers to uninitialised temporary");
       if (!CheckEvaluationResult(CheckEvaluationResultKind::ConstantExpression,
-                                 Info, MTE->getExprLoc(), getType(Base), *V,
+                                 Info, MTE->getExprLoc(), TempType, *V,
                                  Usage, SourceLocation(), CheckedTemps))
         return false;
     }
