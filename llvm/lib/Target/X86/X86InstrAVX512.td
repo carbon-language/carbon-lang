@@ -11436,6 +11436,113 @@ defm VPTERNLOGD : avx512_common_ternlog<"vpternlogd", SchedWriteVecALU,
 defm VPTERNLOGQ : avx512_common_ternlog<"vpternlogq", SchedWriteVecALU,
                                         avx512vl_i64_info>, VEX_W;
 
+// Patterns to use VPTERNLOG for vXi16/vXi8 vectors.
+let Predicates = [HasVLX] in {
+  def : Pat<(v16i8 (X86vpternlog VR128X:$src1, VR128X:$src2, VR128X:$src3,
+                                 (i8 timm:$src4))),
+            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3,
+                               timm:$src4)>;
+  def : Pat<(v16i8 (X86vpternlog VR128X:$src1, VR128X:$src2,
+                                 (loadv16i8 addr:$src3), (i8 timm:$src4))),
+            (VPTERNLOGQZ128rmi VR128X:$src1, VR128X:$src2, addr:$src3,
+                               timm:$src4)>;
+  def : Pat<(v16i8 (X86vpternlog (loadv16i8 addr:$src3), VR128X:$src2,
+                                 VR128X:$src1, (i8 timm:$src4))),
+            (VPTERNLOGQZ128rmi VR128X:$src1, VR128X:$src2, addr:$src3,
+                               (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(v16i8 (X86vpternlog VR128X:$src1, (loadv16i8 addr:$src3),
+                                 VR128X:$src2, (i8 timm:$src4))),
+            (VPTERNLOGQZ128rmi VR128X:$src1, VR128X:$src2, addr:$src3,
+                               (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(v8i16 (X86vpternlog VR128X:$src1, VR128X:$src2, VR128X:$src3,
+                                 (i8 timm:$src4))),
+            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3,
+                               timm:$src4)>;
+  def : Pat<(v8i16 (X86vpternlog VR128X:$src1, VR128X:$src2,
+                                 (loadv8i16 addr:$src3), (i8 timm:$src4))),
+            (VPTERNLOGQZ128rmi VR128X:$src1, VR128X:$src2, addr:$src3,
+                               timm:$src4)>;
+  def : Pat<(v8i16 (X86vpternlog (loadv8i16 addr:$src3), VR128X:$src2,
+                                 VR128X:$src1, (i8 timm:$src4))),
+            (VPTERNLOGQZ128rmi VR128X:$src1, VR128X:$src2, addr:$src3,
+                               (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(v8i16 (X86vpternlog VR128X:$src1, (loadv8i16 addr:$src3),
+                                 VR128X:$src2, (i8 timm:$src4))),
+            (VPTERNLOGQZ128rmi VR128X:$src1, VR128X:$src2, addr:$src3,
+                               (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(v32i8 (X86vpternlog VR256X:$src1, VR256X:$src2, VR256X:$src3,
+                                 (i8 timm:$src4))),
+            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3,
+                               timm:$src4)>;
+  def : Pat<(v32i8 (X86vpternlog VR256X:$src1, VR256X:$src2,
+                                 (loadv32i8 addr:$src3), (i8 timm:$src4))),
+            (VPTERNLOGQZ256rmi VR256X:$src1, VR256X:$src2, addr:$src3,
+                               timm:$src4)>;
+  def : Pat<(v32i8 (X86vpternlog (loadv32i8 addr:$src3), VR256X:$src2,
+                                 VR256X:$src1, (i8 timm:$src4))),
+            (VPTERNLOGQZ256rmi VR256X:$src1, VR256X:$src2, addr:$src3,
+                               (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(v32i8 (X86vpternlog VR256X:$src1, (loadv32i8 addr:$src3),
+                                 VR256X:$src2, (i8 timm:$src4))),
+            (VPTERNLOGQZ256rmi VR256X:$src1, VR256X:$src2, addr:$src3,
+                               (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(v16i16 (X86vpternlog VR256X:$src1, VR256X:$src2, VR256X:$src3,
+                                  (i8 timm:$src4))),
+            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3,
+                               timm:$src4)>;
+  def : Pat<(v16i16 (X86vpternlog VR256X:$src1, VR256X:$src2,
+                                  (loadv16i16 addr:$src3), (i8 timm:$src4))),
+            (VPTERNLOGQZ256rmi VR256X:$src1, VR256X:$src2, addr:$src3,
+                               timm:$src4)>;
+  def : Pat<(v16i16 (X86vpternlog (loadv16i16 addr:$src3), VR256X:$src2,
+                                  VR256X:$src1, (i8 timm:$src4))),
+            (VPTERNLOGQZ256rmi VR256X:$src1, VR256X:$src2, addr:$src3,
+                               (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(v16i16 (X86vpternlog VR256X:$src1, (loadv16i16 addr:$src3),
+                                  VR256X:$src2, (i8 timm:$src4))),
+            (VPTERNLOGQZ256rmi VR256X:$src1, VR256X:$src2, addr:$src3,
+                               (VPTERNLOG132_imm8 timm:$src4))>;
+}
+
+let Predicates = [HasAVX512] in {
+  def : Pat<(v64i8 (X86vpternlog VR512:$src1, VR512:$src2, VR512:$src3,
+                                 (i8 timm:$src4))),
+            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3,
+                            timm:$src4)>;
+  def : Pat<(v64i8 (X86vpternlog VR512:$src1, VR512:$src2,
+                                 (loadv64i8 addr:$src3), (i8 timm:$src4))),
+            (VPTERNLOGQZrmi VR512:$src1, VR512:$src2, addr:$src3,
+                            timm:$src4)>;
+  def : Pat<(v64i8 (X86vpternlog (loadv64i8 addr:$src3), VR512:$src2,
+                                  VR512:$src1, (i8 timm:$src4))),
+            (VPTERNLOGQZrmi VR512:$src1, VR512:$src2, addr:$src3,
+                            (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(v64i8 (X86vpternlog VR512:$src1, (loadv64i8 addr:$src3),
+                                 VR512:$src2, (i8 timm:$src4))),
+            (VPTERNLOGQZrmi VR512:$src1, VR512:$src2, addr:$src3,
+                            (VPTERNLOG132_imm8 timm:$src4))>;
+
+  def : Pat<(v32i16 (X86vpternlog VR512:$src1, VR512:$src2, VR512:$src3,
+                                  (i8 timm:$src4))),
+            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3,
+                            timm:$src4)>;
+  def : Pat<(v32i16 (X86vpternlog VR512:$src1, VR512:$src2,
+                                  (loadv32i16 addr:$src3), (i8 timm:$src4))),
+            (VPTERNLOGQZrmi VR512:$src1, VR512:$src2, addr:$src3,
+                            timm:$src4)>;
+  def : Pat<(v32i16 (X86vpternlog (loadv32i16 addr:$src3), VR512:$src2,
+                                  VR512:$src1, (i8 timm:$src4))),
+            (VPTERNLOGQZrmi VR512:$src1, VR512:$src2, addr:$src3,
+                            (VPTERNLOG321_imm8 timm:$src4))>;
+  def : Pat<(v32i16 (X86vpternlog VR512:$src1, (loadv32i16 addr:$src3),
+                                 VR512:$src2, (i8 timm:$src4))),
+            (VPTERNLOGQZrmi VR512:$src1, VR512:$src2, addr:$src3,
+                            (VPTERNLOG132_imm8 timm:$src4))>;
+}
+
 // Patterns to implement vnot using vpternlog instead of creating all ones
 // using pcmpeq or vpternlog and then xoring with that. The value 15 is chosen
 // so that the result is only dependent on src0. But we use the same source
@@ -11531,49 +11638,6 @@ let Predicates = [HasVLX] in {
             (VPTERNLOGQZ256rri VR256X:$src, VR256X:$src, VR256X:$src, (i8 15))>;
   def : Pat<(xor VR256X:$src, (v4i64 immAllOnesV)),
             (VPTERNLOGQZ256rri VR256X:$src, VR256X:$src, VR256X:$src, (i8 15))>;
-}
-
-let Predicates = [HasVLX] in {
-  def : Pat<(v16i8 (or (and VR128X:$src1, VR128X:$src2),
-                       (X86andnp VR128X:$src1, VR128X:$src3))),
-            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
-  def : Pat<(v8i16 (or (and VR128X:$src1, VR128X:$src2),
-                       (X86andnp VR128X:$src1, VR128X:$src3))),
-            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
-  def : Pat<(v4i32 (or (and VR128X:$src1, VR128X:$src2),
-                       (X86andnp VR128X:$src1, VR128X:$src3))),
-            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
-  def : Pat<(v2i64 (or (and VR128X:$src1, VR128X:$src2),
-                       (X86andnp VR128X:$src1, VR128X:$src3))),
-            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
-
-  def : Pat<(v32i8 (or (and VR256X:$src1, VR256X:$src2),
-                       (X86andnp VR256X:$src1, VR256X:$src3))),
-            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
-  def : Pat<(v16i16 (or (and VR256X:$src1, VR256X:$src2),
-                        (X86andnp VR256X:$src1, VR256X:$src3))),
-            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
-  def : Pat<(v8i32 (or (and VR256X:$src1, VR256X:$src2),
-                       (X86andnp VR256X:$src1, VR256X:$src3))),
-            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
-  def : Pat<(v4i64 (or (and VR256X:$src1, VR256X:$src2),
-                       (X86andnp VR256X:$src1, VR256X:$src3))),
-            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
-}
-
-let Predicates = [HasAVX512] in {
-  def : Pat<(v64i8 (or (and VR512:$src1, VR512:$src2),
-                       (X86andnp VR512:$src1, VR512:$src3))),
-            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
-  def : Pat<(v32i16 (or (and VR512:$src1, VR512:$src2),
-                        (X86andnp VR512:$src1, VR512:$src3))),
-            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
-  def : Pat<(v16i32 (or (and VR512:$src1, VR512:$src2),
-                        (X86andnp VR512:$src1, VR512:$src3))),
-            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
-  def : Pat<(v8i64 (or (and VR512:$src1, VR512:$src2),
-                       (X86andnp VR512:$src1, VR512:$src3))),
-            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
 }
 
 //===----------------------------------------------------------------------===//
