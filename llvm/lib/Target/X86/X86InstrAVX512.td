@@ -11533,6 +11533,49 @@ let Predicates = [HasVLX] in {
             (VPTERNLOGQZ256rri VR256X:$src, VR256X:$src, VR256X:$src, (i8 15))>;
 }
 
+let Predicates = [HasVLX] in {
+  def : Pat<(v16i8 (or (and VR128X:$src1, VR128X:$src2),
+                       (X86andnp VR128X:$src1, VR128X:$src3))),
+            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
+  def : Pat<(v8i16 (or (and VR128X:$src1, VR128X:$src2),
+                       (X86andnp VR128X:$src1, VR128X:$src3))),
+            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
+  def : Pat<(v4i32 (or (and VR128X:$src1, VR128X:$src2),
+                       (X86andnp VR128X:$src1, VR128X:$src3))),
+            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
+  def : Pat<(v2i64 (or (and VR128X:$src1, VR128X:$src2),
+                       (X86andnp VR128X:$src1, VR128X:$src3))),
+            (VPTERNLOGQZ128rri VR128X:$src1, VR128X:$src2, VR128X:$src3, (i8 202))>;
+
+  def : Pat<(v32i8 (or (and VR256X:$src1, VR256X:$src2),
+                       (X86andnp VR256X:$src1, VR256X:$src3))),
+            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
+  def : Pat<(v16i16 (or (and VR256X:$src1, VR256X:$src2),
+                        (X86andnp VR256X:$src1, VR256X:$src3))),
+            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
+  def : Pat<(v8i32 (or (and VR256X:$src1, VR256X:$src2),
+                       (X86andnp VR256X:$src1, VR256X:$src3))),
+            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
+  def : Pat<(v4i64 (or (and VR256X:$src1, VR256X:$src2),
+                       (X86andnp VR256X:$src1, VR256X:$src3))),
+            (VPTERNLOGQZ256rri VR256X:$src1, VR256X:$src2, VR256X:$src3, (i8 202))>;
+}
+
+let Predicates = [HasAVX512] in {
+  def : Pat<(v64i8 (or (and VR512:$src1, VR512:$src2),
+                       (X86andnp VR512:$src1, VR512:$src3))),
+            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
+  def : Pat<(v32i16 (or (and VR512:$src1, VR512:$src2),
+                        (X86andnp VR512:$src1, VR512:$src3))),
+            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
+  def : Pat<(v16i32 (or (and VR512:$src1, VR512:$src2),
+                        (X86andnp VR512:$src1, VR512:$src3))),
+            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
+  def : Pat<(v8i64 (or (and VR512:$src1, VR512:$src2),
+                       (X86andnp VR512:$src1, VR512:$src3))),
+            (VPTERNLOGQZrri VR512:$src1, VR512:$src2, VR512:$src3, (i8 202))>;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - FixupImm
 //===----------------------------------------------------------------------===//
