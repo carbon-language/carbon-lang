@@ -1413,11 +1413,15 @@ NamedDecl* getLambdaCallOperatorHelper(const CXXRecordDecl &RD) {
 
 FunctionTemplateDecl* CXXRecordDecl::getDependentLambdaCallOperator() const {
   NamedDecl *CallOp = getLambdaCallOperatorHelper(*this);
-  return  dyn_cast<FunctionTemplateDecl>(CallOp);
+  return  dyn_cast_or_null<FunctionTemplateDecl>(CallOp);
 }
 
 CXXMethodDecl *CXXRecordDecl::getLambdaCallOperator() const {
   NamedDecl *CallOp = getLambdaCallOperatorHelper(*this);
+
+  if (CallOp == nullptr)
+    return nullptr;
+
   if (const auto *CallOpTmpl = dyn_cast<FunctionTemplateDecl>(CallOp))
     return cast<CXXMethodDecl>(CallOpTmpl->getTemplatedDecl());
 
