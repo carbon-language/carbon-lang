@@ -6375,12 +6375,14 @@ SDValue DAGCombiner::MatchRotatePosNeg(SDValue Shifted, SDValue Pos,
 SDValue DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, const SDLoc &DL) {
   // Must be a legal type.  Expanded 'n promoted things won't work with rotates.
   EVT VT = LHS.getValueType();
-  if (!TLI.isTypeLegal(VT)) return SDValue();
+  if (!TLI.isTypeLegal(VT))
+    return SDValue();
 
   // The target must have at least one rotate flavor.
   bool HasROTL = hasOperation(ISD::ROTL, VT);
   bool HasROTR = hasOperation(ISD::ROTR, VT);
-  if (!HasROTL && !HasROTR) return SDValue();
+  if (!HasROTL && !HasROTR)
+    return SDValue();
 
   // Check for truncated rotate.
   if (LHS.getOpcode() == ISD::TRUNCATE && RHS.getOpcode() == ISD::TRUNCATE &&
@@ -6430,10 +6432,10 @@ SDValue DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, const SDLoc &DL) {
   // At this point we've matched or extracted a shift op on each side.
 
   if (LHSShift.getOperand(0) != RHSShift.getOperand(0))
-    return SDValue();   // Not shifting the same value.
+    return SDValue(); // Not shifting the same value.
 
   if (LHSShift.getOpcode() == RHSShift.getOpcode())
-    return SDValue();   // Shifts must disagree.
+    return SDValue(); // Shifts must disagree.
 
   // Canonicalize shl to left side in a shl/srl pair.
   if (RHSShift.getOpcode() == ISD::SHL) {
