@@ -15,6 +15,7 @@
 #include "lib/BenchmarkResult.h"
 #include "lib/BenchmarkRunner.h"
 #include "lib/Clustering.h"
+#include "lib/Error.h"
 #include "lib/LlvmState.h"
 #include "lib/PerfHelper.h"
 #include "lib/SnippetFile.h"
@@ -207,13 +208,11 @@ generateSnippets(const LLVMState &State, unsigned Opcode,
   const llvm::MCInstrDesc &InstrDesc = *Instr.Description;
   // Ignore instructions that we cannot run.
   if (InstrDesc.isPseudo())
-    return llvm::make_error<BenchmarkFailure>("Unsupported opcode: isPseudo");
+    return make_error<Failure>("Unsupported opcode: isPseudo");
   if (InstrDesc.isBranch() || InstrDesc.isIndirectBranch())
-    return llvm::make_error<BenchmarkFailure>(
-        "Unsupported opcode: isBranch/isIndirectBranch");
+    return make_error<Failure>("Unsupported opcode: isBranch/isIndirectBranch");
   if (InstrDesc.isCall() || InstrDesc.isReturn())
-    return llvm::make_error<BenchmarkFailure>(
-        "Unsupported opcode: isCall/isReturn");
+    return make_error<Failure>("Unsupported opcode: isCall/isReturn");
 
   const std::unique_ptr<SnippetGenerator> Generator =
       State.getExegesisTarget().createSnippetGenerator(BenchmarkMode, State);

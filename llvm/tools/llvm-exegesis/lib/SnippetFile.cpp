@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SnippetFile.h"
-#include "BenchmarkRunner.h" // FIXME: Pull BenchmarkFailure out of there.
+#include "Error.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -121,8 +121,8 @@ Expected<std::vector<BenchmarkCode>> readSnippets(const LLVMState &State,
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferPtr =
       MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = BufferPtr.getError()) {
-    return make_error<BenchmarkFailure>("cannot read snippet: " + Filename +
-                                        ": " + EC.message());
+    return make_error<Failure>("cannot read snippet: " + Filename + ": " +
+                               EC.message());
   }
   SourceMgr SM;
   SM.AddNewSourceBuffer(std::move(BufferPtr.get()), SMLoc());
@@ -138,7 +138,7 @@ Expected<std::vector<BenchmarkCode>> readSnippets(const LLVMState &State,
   const std::unique_ptr<MCAsmParser> AsmParser(
       createMCAsmParser(SM, Context, Streamer, *TM.getMCAsmInfo()));
   if (!AsmParser)
-    return make_error<BenchmarkFailure>("cannot create asm parser");
+    return make_error<Failure>("cannot create asm parser");
   AsmParser->getLexer().setCommentConsumer(&Streamer);
 
   const std::unique_ptr<MCTargetAsmParser> TargetAsmParser(
@@ -147,16 +147,15 @@ Expected<std::vector<BenchmarkCode>> readSnippets(const LLVMState &State,
                                        MCTargetOptions()));
 
   if (!TargetAsmParser)
-    return make_error<BenchmarkFailure>("cannot create target asm parser");
+    return make_error<Failure>("cannot create target asm parser");
   AsmParser->setTargetParser(*TargetAsmParser);
 
   if (AsmParser->Run(false))
-    return make_error<BenchmarkFailure>("cannot parse asm file");
+    return make_error<Failure>("cannot parse asm file");
   if (Streamer.numInvalidComments())
-    return make_error<BenchmarkFailure>(
-        Twine("found ")
-            .concat(Twine(Streamer.numInvalidComments()))
-            .concat(" invalid LLVM-EXEGESIS comments"));
+    return make_error<Failure>(Twine("found ")
+                                   .concat(Twine(Streamer.numInvalidComments()))
+                                   .concat(" invalid LLVM-EXEGESIS comments"));
   return std::vector<BenchmarkCode>{std::move(Result)};
 }
 
