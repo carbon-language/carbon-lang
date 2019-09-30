@@ -306,6 +306,9 @@ protected:
 };
 
 //===----------------------------------------------------------------------===//
+/// Deprecated - do not create new passes as BasicBlockPasses. Use FunctionPass
+/// with a loop over the BasicBlocks instead.
+//
 /// BasicBlockPass class - This class is used to implement most local
 /// optimizations.  Optimizations should subclass this class if they
 /// meet the following constraints:
