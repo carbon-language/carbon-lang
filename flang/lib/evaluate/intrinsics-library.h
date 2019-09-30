@@ -35,7 +35,7 @@ class FoldingContext;
 using TypeCode = unsigned char;
 
 template<typename TR, typename... TA> using FuncPointer = TR (*)(TA...);
-using GenericFunctionPointer = FuncPointer<void *>;
+using GenericFunctionPointer = void (*) (void);
 
 enum class PassBy { Ref, Val };
 template<typename TA, PassBy Pass = PassBy::Ref> struct ArgumentInfo {

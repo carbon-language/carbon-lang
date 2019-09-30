@@ -129,23 +129,13 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
 template<typename TR, typename... TA>
 inline GenericFunctionPointer ToGenericFunctionPointer(
     FuncPointer<TR, TA...> f) {
-  union {
-    GenericFunctionPointer gp;
-    FuncPointer<TR, TA...> fp;
-  } u;
-  u.fp = f;
-  return u.gp;
+  return reinterpret_cast<GenericFunctionPointer>(f);
 }
 
 template<typename TR, typename... TA>
 inline FuncPointer<TR, TA...> FromGenericFunctionPointer(
     GenericFunctionPointer g) {
-  union {
-    GenericFunctionPointer gp;
-    FuncPointer<TR, TA...> fp;
-  } u;
-  u.gp = g;
-  return u.fp;
+  return reinterpret_cast<FuncPointer<TR, TA...>>(g);
 }
 
 template<typename TR, typename... ArgInfo>
