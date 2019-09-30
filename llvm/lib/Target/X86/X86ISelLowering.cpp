@@ -1508,10 +1508,14 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::MGATHER,             VT, Custom);
       setOperationAction(ISD::MSCATTER,            VT, Custom);
     }
-    // Need to custom split v32i16/v64i8 bitcasts.
     if (!Subtarget.hasBWI()) {
+      // Need to custom split v32i16/v64i8 bitcasts.
       setOperationAction(ISD::BITCAST, MVT::v32i16, Custom);
       setOperationAction(ISD::BITCAST, MVT::v64i8,  Custom);
+
+      // Better to split these into two 256-bit ops.
+      setOperationAction(ISD::BITREVERSE, MVT::v8i64, Custom);
+      setOperationAction(ISD::BITREVERSE, MVT::v16i32, Custom);
     }
 
     if (Subtarget.hasVBMI2()) {
@@ -26918,6 +26922,13 @@ static SDValue LowerBITREVERSE(SDValue Op, const X86Subtarget &Subtarget,
 
   SDValue In = Op.getOperand(0);
   SDLoc DL(Op);
+
+  // Split v8i64/v16i32 without BWI so that we can still use the PSHUFB
+  // lowering.
+  if (VT == MVT::v8i64 || VT == MVT::v16i32) {
+    assert(!Subtarget.hasBWI() && "BWI should Expand BITREVERSE");
+    return Lower512IntUnary(Op, DAG);
+  }
 
   unsigned NumElts = VT.getVectorNumElements();
   assert(VT.getScalarType() == MVT::i8 &&
