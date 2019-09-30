@@ -338,6 +338,8 @@ public:
   /// do any post processing needed after all passes have run.
   virtual bool doFinalization(Function &);
 
+  void preparePassManager(PMStack &PMS) override;
+
   void assignPassManager(PMStack &PMS, PassManagerType T) override;
 
   ///  Return what kind of Pass Manager can manage this pass.
