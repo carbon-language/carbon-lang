@@ -1056,6 +1056,12 @@ namespace delete_random_things {
   static_assert((delete &(int&)(int&&)0, true)); // expected-error {{}} expected-note {{delete of pointer '&0' that does not point to a heap-allocated object}} expected-note {{temporary created here}}
 }
 
+namespace value_dependent_delete {
+  template<typename T> void f(T *p) {
+    int arr[(delete p, 0)];
+  }
+}
+
 namespace memory_leaks {
   static_assert(*new bool(true)); // expected-error {{}} expected-note {{allocation performed here was not deallocated}}
 
