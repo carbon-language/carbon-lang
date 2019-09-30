@@ -1497,7 +1497,8 @@ void IslNodeBuilder::allocateNewArrays(BBPair StartExitBlocks) {
 
       auto *CreatedArray = new AllocaInst(NewArrayType, DL.getAllocaAddrSpace(),
                                           SAI->getName(), &*InstIt);
-      CreatedArray->setAlignment(PollyTargetFirstLevelCacheLineSize);
+      CreatedArray->setAlignment(
+          MaybeAlign(PollyTargetFirstLevelCacheLineSize));
       SAI->setBasePtr(CreatedArray);
     }
   }
