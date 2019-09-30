@@ -1,3 +1,4 @@
+; REQUIRES: x86-registered-target
 ; RUN: llc %s -o %t0.o -filetype=obj \
 ; RUN:   | %llvm-locstats %t0.o | FileCheck %s --check-prefix=LOCSTATS
 ;
