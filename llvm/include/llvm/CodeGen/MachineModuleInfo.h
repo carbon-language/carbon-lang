@@ -144,11 +144,12 @@ class MachineModuleInfo {
   const Function *LastRequest = nullptr; ///< Used for shortcut/cache.
   MachineFunction *LastResult = nullptr; ///< Used for shortcut/cache.
 
+  MachineModuleInfo &operator=(MachineModuleInfo &&MMII) = delete;
+
 public:
   explicit MachineModuleInfo(const LLVMTargetMachine *TM = nullptr);
 
   MachineModuleInfo(MachineModuleInfo &&MMII);
-  MachineModuleInfo &operator=(MachineModuleInfo &&MMII) = default;
 
   ~MachineModuleInfo();
 
