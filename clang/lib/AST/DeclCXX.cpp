@@ -1399,7 +1399,7 @@ static bool allLookupResultsAreTheSame(const DeclContext::lookup_result &R) {
 }
 #endif
 
-NamedDecl* getLambdaCallOperatorHelper(const CXXRecordDecl &RD) {
+static NamedDecl* getLambdaCallOperatorHelper(const CXXRecordDecl &RD) {
   if (!RD.isLambda()) return nullptr;
   DeclarationName Name =
     RD.getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
