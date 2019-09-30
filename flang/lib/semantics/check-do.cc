@@ -24,6 +24,7 @@
 #include "../evaluate/tools.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree-visitor.h"
+#include "../parser/tools.h"
 
 namespace Fortran::semantics {
 
@@ -126,6 +127,7 @@ public:
         "image control statement not allowed in DO CONCURRENT"_err_en_US);
   }
 
+  // more C1137 checks
   void Post(const parser::SyncAllStmt &) { NoImageControl(); }
   void Post(const parser::SyncImagesStmt &) { NoImageControl(); }
   void Post(const parser::SyncMemoryStmt &) { NoImageControl(); }
@@ -139,18 +141,14 @@ public:
   void Post(const parser::UnlockStmt &) { NoImageControl(); }
   void Post(const parser::StopStmt &) { NoImageControl(); }
 
-  void Post(const parser::AllocateStmt &) {
-    if (anyObjectIsCoarray()) {
-      context_.Say(currentStatementSourcePosition_,
-          "ALLOCATE coarray not allowed in DO CONCURRENT"_err_en_US);
-    }
+  // more C1137 checks
+  void Post(const parser::AllocateStmt &allocateStmt) {
+    CheckDoesntContainCoarray(allocateStmt);
   }
 
-  void Post(const parser::DeallocateStmt &) {
-    if (anyObjectIsCoarray()) {
-      context_.Say(currentStatementSourcePosition_,
-          "DEALLOCATE coarray not allowed in DO CONCURRENT"_err_en_US);
-    }
+  void Post(const parser::DeallocateStmt &deallocateStmt) {
+    CheckDoesntContainCoarray(deallocateStmt);  // C1137
+
     // C1140: deallocation of polymorphic objects
     if (anyObjectIsPolymorphic()) {
       context_.Say(currentStatementSourcePosition_,
@@ -219,6 +217,35 @@ public:
   }
 
 private:
+  // C1137 helper functions
+  void CheckAllocateObjectIsntCoarray(
+      const parser::AllocateObject &allocateObject, StmtType stmtType) {
+    const parser::Name &name{GetLastName(allocateObject)};
+    if (name.symbol && IsCoarray(*name.symbol)) {
+      context_.Say(name.source,
+          "%s coarray not allowed in DO CONCURRENT"_err_en_US,
+          EnumToString(stmtType));
+    }
+  }
+
+  void CheckDoesntContainCoarray(const parser::AllocateStmt &allocateStmt) {
+    const auto &allocationList{
+        std::get<std::list<parser::Allocation>>(allocateStmt.t)};
+    for (const auto &allocation : allocationList) {
+      const auto &allocateObject{
+          std::get<parser::AllocateObject>(allocation.t)};
+      CheckAllocateObjectIsntCoarray(allocateObject, StmtType::ALLOCATE);
+    }
+  }
+
+  void CheckDoesntContainCoarray(const parser::DeallocateStmt &deallocateStmt) {
+    const auto &allocateObjectList{
+        std::get<std::list<parser::AllocateObject>>(deallocateStmt.t)};
+    for (const auto &allocateObject : allocateObjectList) {
+      CheckAllocateObjectIsntCoarray(allocateObject, StmtType::DEALLOCATE);
+    }
+  }
+
   bool anyObjectIsCoarray() { return false; }  // FIXME placeholder
   bool anyObjectIsPolymorphic() { return false; }  // FIXME placeholder
   bool EndTDeallocatesCoarray() { return false; }  // FIXME placeholder
@@ -476,7 +503,7 @@ private:
     SymbolSet result;
     if (const auto *expr{GetExpr(expression)}) {
       for (const Symbol *symbol : evaluate::CollectSymbols(*expr)) {
-        if (const Symbol * root{GetAssociationRoot(*symbol)}) {
+        if (const Symbol * root{GetAssociationRoot(DEREF(symbol))}) {
           result.insert(root);
         }
       }

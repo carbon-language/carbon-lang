@@ -121,3 +121,63 @@ subroutine s5()
     unlock(l)
   end do
 end subroutine s5
+
+subroutine s6()
+  type :: type0
+    integer, allocatable, dimension(:) :: type0_field
+    integer, allocatable, dimension(:), codimension[*] :: coarray_type0_field
+  end type
+
+  type :: type1
+    type(type0) :: type1_field
+  end type
+
+  type(type1), allocatable :: pvar;
+  type(type1), allocatable :: qvar;
+  integer, allocatable, dimension(:) :: array1
+  integer, allocatable, dimension(:) :: array2
+  integer, allocatable, codimension[*] :: ca
+
+  ! All of the following are allowable outside a DO CONCURRENT
+  allocate(pvar)
+  allocate(array1(3), pvar%type1_field%type0_field(3), array2(9))
+  allocate(pvar%type1_field%coarray_type0_field(3)[*])
+  allocate(ca[*])
+  allocate(pvar, ca[*], qvar, pvar%type1_field%coarray_type0_field(3)[*])
+
+  do concurrent (i = 1:10)
+  allocate(pvar%type1_field%type0_field(3))
+  end do
+
+  do concurrent (i = 1:10)
+!ERROR: ALLOCATE coarray not allowed in DO CONCURRENT
+    allocate(ca[*])
+  end do
+
+  do concurrent (i = 1:10)
+!ERROR: DEALLOCATE coarray not allowed in DO CONCURRENT
+    deallocate(ca)
+  end do
+
+  do concurrent (i = 1:10)
+!ERROR: ALLOCATE coarray not allowed in DO CONCURRENT
+  allocate(pvar%type1_field%coarray_type0_field(3)[*])
+  end do
+
+  do concurrent (i = 1:10)
+!ERROR: DEALLOCATE coarray not allowed in DO CONCURRENT
+  deallocate(pvar%type1_field%coarray_type0_field)
+  end do
+
+  do concurrent (i = 1:10)
+!ERROR: ALLOCATE coarray not allowed in DO CONCURRENT
+!ERROR: ALLOCATE coarray not allowed in DO CONCURRENT
+  allocate(pvar, ca[*], qvar, pvar%type1_field%coarray_type0_field(3)[*])
+  end do
+
+  do concurrent (i = 1:10)
+!ERROR: DEALLOCATE coarray not allowed in DO CONCURRENT
+!ERROR: DEALLOCATE coarray not allowed in DO CONCURRENT
+  deallocate(pvar, ca, qvar, pvar%type1_field%coarray_type0_field)
+  end do
+end subroutine s6

@@ -26,9 +26,8 @@ struct ExitStmt;
 
 namespace Fortran::semantics {
 
-// To specify CYCLE and EXIT statements in semantic checking that's common to
-// both of them.
-ENUM_CLASS(StmtType, CYCLE, EXIT)
+// To specify different statement types used in semantic checking.
+ENUM_CLASS(StmtType, CYCLE, EXIT, ALLOCATE, DEALLOCATE)
 
 class DoChecker : public virtual BaseChecker {
 public:
