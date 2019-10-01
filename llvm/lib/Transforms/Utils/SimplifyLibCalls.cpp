@@ -2415,9 +2415,11 @@ Value *LibCallSimplifier::optimizePrintF(CallInst *CI, IRBuilder<> &B) {
 }
 
 Value *LibCallSimplifier::optimizeSPrintFString(CallInst *CI, IRBuilder<> &B) {
+  Value *Dst = CI->getArgOperand(0);
+  Value *FmtStr = CI->getArgOperand(1);
   // Check for a fixed format string.
   StringRef FormatStr;
-  if (!getConstantStringInfo(CI->getArgOperand(1), FormatStr))
+  if (!getConstantStringInfo(FmtStr, FormatStr))
     return nullptr;
 
   // If we just have a format string (nothing else crazy) transform it.
@@ -2428,9 +2430,10 @@ Value *LibCallSimplifier::optimizeSPrintFString(CallInst *CI, IRBuilder<> &B) {
       return nullptr; // we found a format specifier, bail out.
 
     // sprintf(str, fmt) -> llvm.memcpy(align 1 str, align 1 fmt, strlen(fmt)+1)
-    B.CreateMemCpy(CI->getArgOperand(0), 1, CI->getArgOperand(1), 1,
-                   ConstantInt::get(DL.getIntPtrType(CI->getContext()),
-                                    FormatStr.size() + 1)); // Copy the null byte.
+    B.CreateMemCpy(
+        Dst, 1, FmtStr, 1,
+        ConstantInt::get(DL.getIntPtrType(CI->getContext()),
+                         FormatStr.size() + 1)); // Copy the null byte.
     return ConstantInt::get(CI->getType(), FormatStr.size());
   }
 
@@ -2440,13 +2443,14 @@ Value *LibCallSimplifier::optimizeSPrintFString(CallInst *CI, IRBuilder<> &B) {
       CI->getNumArgOperands() < 3)
     return nullptr;
 
+  Value *Str = CI->getArgOperand(2);
   // Decode the second character of the format string.
   if (FormatStr[1] == 'c') {
     // sprintf(dst, "%c", chr) --> *(i8*)dst = chr; *((i8*)dst+1) = 0
-    if (!CI->getArgOperand(2)->getType()->isIntegerTy())
+    if (!Str->getType()->isIntegerTy())
       return nullptr;
-    Value *V = B.CreateTrunc(CI->getArgOperand(2), B.getInt8Ty(), "char");
-    Value *Ptr = castToCStr(CI->getArgOperand(0), B);
+    Value *V = B.CreateTrunc(Str, B.getInt8Ty(), "char");
+    Value *Ptr = castToCStr(Dst, B);
     B.CreateStore(V, Ptr);
     Ptr = B.CreateGEP(B.getInt8Ty(), Ptr, B.getInt32(1), "nul");
     B.CreateStore(B.getInt8(0), Ptr);
@@ -2455,17 +2459,30 @@ Value *LibCallSimplifier::optimizeSPrintFString(CallInst *CI, IRBuilder<> &B) {
   }
 
   if (FormatStr[1] == 's') {
+    if (!Str->getType()->isPointerTy())
+      return nullptr;
+  
+    // sprintf(dest, "%s", str) -> memccpy(dest, str, 0, MAX)
+    if (CI->use_empty()) {
+      Value *S = (Dst->getType() == Str->getType())
+                     ? Str
+                     : B.CreateBitCast(Str, Dst->getType());
+      unsigned SizeTyBitwidth =
+          DL.getIntPtrType(CI->getContext())->getPrimitiveSizeInBits();
+      Value *NewSize = ConstantInt::get(B.getIntNTy(SizeTyBitwidth),
+                                        APInt::getMaxValue(SizeTyBitwidth));
+      emitMemCCpy(Dst, S, B.getInt32('\0'), NewSize, B, TLI);
+      return Dst;
+    }
+
     // sprintf(dest, "%s", str) -> llvm.memcpy(align 1 dest, align 1 str,
     // strlen(str)+1)
-    if (!CI->getArgOperand(2)->getType()->isPointerTy())
-      return nullptr;
-
-    Value *Len = emitStrLen(CI->getArgOperand(2), B, DL, TLI);
+    Value *Len = emitStrLen(Str, B, DL, TLI);
     if (!Len)
       return nullptr;
     Value *IncLen =
         B.CreateAdd(Len, ConstantInt::get(Len->getType(), 1), "leninc");
-    B.CreateMemCpy(CI->getArgOperand(0), 1, CI->getArgOperand(2), 1, IncLen);
+    B.CreateMemCpy(Dst, 1, Str, 1, IncLen);
 
     // The sprintf result is the unincremented number of bytes in the string.
     return B.CreateIntCast(Len, CI->getType(), false);
