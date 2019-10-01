@@ -3,9 +3,8 @@
 
 define i32 @t0(i64 %x) {
 ; CHECK-LABEL: @t0(
-; CHECK-NEXT:    [[T0:%.*]] = lshr i64 [[X:%.*]], 63
-; CHECK-NEXT:    [[T1:%.*]] = trunc i64 [[T0]] to i32
-; CHECK-NEXT:    [[R:%.*]] = sub nsw i32 0, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[X:%.*]], 63
+; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t0 = lshr i64 %x, 63
@@ -15,9 +14,8 @@ define i32 @t0(i64 %x) {
 }
 define i32 @t1_exact(i64 %x) {
 ; CHECK-LABEL: @t1_exact(
-; CHECK-NEXT:    [[T0:%.*]] = lshr exact i64 [[X:%.*]], 63
-; CHECK-NEXT:    [[T1:%.*]] = trunc i64 [[T0]] to i32
-; CHECK-NEXT:    [[R:%.*]] = sub nsw i32 0, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i64 [[X:%.*]], 63
+; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t0 = lshr exact i64 %x, 63
@@ -27,9 +25,8 @@ define i32 @t1_exact(i64 %x) {
 }
 define i32 @t2(i64 %x) {
 ; CHECK-LABEL: @t2(
-; CHECK-NEXT:    [[T0:%.*]] = ashr i64 [[X:%.*]], 63
-; CHECK-NEXT:    [[T1:%.*]] = trunc i64 [[T0]] to i32
-; CHECK-NEXT:    [[R:%.*]] = sub i32 0, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr i64 [[X:%.*]], 63
+; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t0 = ashr i64 %x, 63
@@ -39,9 +36,8 @@ define i32 @t2(i64 %x) {
 }
 define i32 @t3_exact(i64 %x) {
 ; CHECK-LABEL: @t3_exact(
-; CHECK-NEXT:    [[T0:%.*]] = ashr exact i64 [[X:%.*]], 63
-; CHECK-NEXT:    [[T1:%.*]] = trunc i64 [[T0]] to i32
-; CHECK-NEXT:    [[R:%.*]] = sub i32 0, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr exact i64 [[X:%.*]], 63
+; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t0 = ashr exact i64 %x, 63
@@ -52,9 +48,8 @@ define i32 @t3_exact(i64 %x) {
 
 define <2 x i32> @t4(<2 x i64> %x) {
 ; CHECK-LABEL: @t4(
-; CHECK-NEXT:    [[T0:%.*]] = lshr <2 x i64> [[X:%.*]], <i64 63, i64 63>
-; CHECK-NEXT:    [[T1:%.*]] = trunc <2 x i64> [[T0]] to <2 x i32>
-; CHECK-NEXT:    [[R:%.*]] = sub nsw <2 x i32> zeroinitializer, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <2 x i64> [[X:%.*]], <i64 63, i64 63>
+; CHECK-NEXT:    [[R:%.*]] = trunc <2 x i64> [[TMP1]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %t0 = lshr <2 x i64> %x, <i64 63, i64 63>
@@ -83,8 +78,8 @@ define i32 @t6(i64 %x) {
 ; CHECK-LABEL: @t6(
 ; CHECK-NEXT:    [[T0:%.*]] = lshr i64 [[X:%.*]], 63
 ; CHECK-NEXT:    call void @use64(i64 [[T0]])
-; CHECK-NEXT:    [[T1:%.*]] = trunc i64 [[T0]] to i32
-; CHECK-NEXT:    [[R:%.*]] = sub nsw i32 0, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[X]], 63
+; CHECK-NEXT:    [[R:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %t0 = lshr i64 %x, 63
