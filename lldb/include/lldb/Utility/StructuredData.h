@@ -548,7 +548,6 @@ public:
   };
 
   static ObjectSP ParseJSON(std::string json_text);
-
   static ObjectSP ParseJSONFromFile(const FileSpec &file, Status &error);
 };
 
