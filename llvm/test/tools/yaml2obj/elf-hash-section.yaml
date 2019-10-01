@@ -145,3 +145,35 @@ FileHeader:
 Sections:
   - Name:  .hash
     Type:  SHT_HASH
+
+## Check we can set any sh_link value with use of the "Link" tag.
+
+# RUN: yaml2obj --docnum=8 %s -o %t8
+# RUN: llvm-readobj --sections %t8 | FileCheck %s --check-prefix=LINK
+
+# LINK:      Name: .hash1
+# LINK:      Link:
+# LINK-SAME: 123
+
+# LINK:      Name: .hash2
+# LINK:      Link:
+# LINK-SAME: 1
+
+--- !ELF
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_DYN
+  Machine: EM_386
+Sections:
+  - Name: .hash1
+    Type: SHT_HASH
+    Content: ""
+    Link: 123
+  - Name: .hash2
+    Type: SHT_HASH
+    Content: ""
+    Link: .hash1
+## SHT_HASH is linked to dynamic symbol table by default if it exists.
+  - Name: .dynsym
+    Type: SHT_DYNSYM

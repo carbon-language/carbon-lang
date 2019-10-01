@@ -821,7 +821,7 @@ void ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
 
   unsigned Link = 0;
-  if (SN2I.lookup(".dynsym", Link))
+  if (Section.Link.empty() && SN2I.lookup(".dynsym", Link))
     SHeader.sh_link = Link;
 
   if (Section.Content) {
