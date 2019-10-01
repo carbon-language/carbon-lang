@@ -11,7 +11,6 @@
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/JSON.h"
 #include "lldb/Utility/Status.h"
-#include "lldb/Utility/Stream.h"
 #include "lldb/Utility/StreamString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -21,6 +20,7 @@
 #include <limits>
 
 using namespace lldb_private;
+using namespace llvm;
 
 // Functions that use a JSONParser to parse JSON into StructuredData
 static StructuredData::ObjectSP ParseJSONValue(JSONParser &json_parser);
@@ -181,98 +181,48 @@ StructuredData::Object::GetObjectForDotSeparatedPath(llvm::StringRef path) {
 }
 
 void StructuredData::Object::DumpToStdout(bool pretty_print) const {
-  StreamString stream;
-  Dump(stream, pretty_print);
-  llvm::outs() << stream.GetString();
+  json::OStream stream(llvm::outs(), pretty_print ? 2 : 0);
+  Serialize(stream);
 }
 
-void StructuredData::Array::Dump(Stream &s, bool pretty_print) const {
-  bool first = true;
-  s << "[";
-  if (pretty_print) {
-    s << "\n";
-    s.IndentMore();
-  }
+void StructuredData::Array::Serialize(json::OStream &s) const {
+  s.arrayBegin();
   for (const auto &item_sp : m_items) {
-    if (first) {
-      first = false;
-    } else {
-      s << ",";
-      if (pretty_print)
-        s << "\n";
-    }
-
-    if (pretty_print)
-      s.Indent();
-    item_sp->Dump(s, pretty_print);
+    item_sp->Serialize(s);
   }
-  if (pretty_print) {
-    s.IndentLess();
-    s.EOL();
-    s.Indent();
-  }
-  s << "]";
+  s.arrayEnd();
 }
 
-void StructuredData::Integer::Dump(Stream &s, bool pretty_print) const {
-  s.Printf("%" PRIu64, m_value);
+void StructuredData::Integer::Serialize(json::OStream &s) const {
+  s.value(static_cast<int64_t>(m_value));
 }
 
-void StructuredData::Float::Dump(Stream &s, bool pretty_print) const {
-  s.Printf("%lg", m_value);
+void StructuredData::Float::Serialize(json::OStream &s) const {
+  s.value(m_value);
 }
 
-void StructuredData::Boolean::Dump(Stream &s, bool pretty_print) const {
-  if (m_value)
-    s.PutCString("true");
-  else
-    s.PutCString("false");
+void StructuredData::Boolean::Serialize(json::OStream &s) const {
+  s.value(m_value);
 }
 
-void StructuredData::String::Dump(Stream &s, bool pretty_print) const {
-  std::string quoted;
-  const size_t strsize = m_value.size();
-  for (size_t i = 0; i < strsize; ++i) {
-    char ch = m_value[i];
-    if (ch == '"' || ch == '\\')
-      quoted.push_back('\\');
-    quoted.push_back(ch);
-  }
-  s.Printf("\"%s\"", quoted.c_str());
+void StructuredData::String::Serialize(json::OStream &s) const {
+  s.value(m_value);
 }
 
-void StructuredData::Dictionary::Dump(Stream &s, bool pretty_print) const {
-  bool first = true;
-  s << "{";
-  if (pretty_print) {
-    s << "\n";
-    s.IndentMore();
-  }
+void StructuredData::Dictionary::Serialize(json::OStream &s) const {
+  s.objectBegin();
   for (const auto &pair : m_dict) {
-    if (first)
-      first = false;
-    else {
-      s << ",";
-      if (pretty_print)
-        s << "\n";
-    }
-    if (pretty_print)
-      s.Indent();
-    s << "\"" << pair.first.AsCString() << "\" : ";
-    pair.second->Dump(s, pretty_print);
+    s.attributeBegin(pair.first.AsCString());
+    pair.second->Serialize(s);
+    s.attributeEnd();
   }
-  if (pretty_print) {
-    s.IndentLess();
-    s.EOL();
-    s.Indent();
-  }
-  s << "}";
+  s.objectEnd();
 }
 
-void StructuredData::Null::Dump(Stream &s, bool pretty_print) const {
-  s << "null";
+void StructuredData::Null::Serialize(json::OStream &s) const {
+  s.value(nullptr);
 }
 
-void StructuredData::Generic::Dump(Stream &s, bool pretty_print) const {
-  s << "0x" << m_object;
+void StructuredData::Generic::Serialize(json::OStream &s) const {
+  s.value(llvm::formatv("{0:X}", m_object));
 }
