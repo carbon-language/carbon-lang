@@ -561,6 +561,29 @@ namespace Union {
     S3 s;
     s.n = 0;
   }
+
+  union ref_member_1 {
+    int a;
+    int b;
+  };
+  struct ref_member_2 {
+    ref_member_1 &&r;
+  };
+  union ref_member_3 {
+    ref_member_2 a, b;
+  };
+  constexpr int ref_member_test_1() {
+    ref_member_3 r = {.a = {.r = {.a = 1}}};
+    r.a.r.b = 2;
+    return r.a.r.b;
+  }
+  static_assert(ref_member_test_1() == 2);
+  constexpr int ref_member_test_2() { // expected-error {{never produces a constant}}
+    ref_member_3 r = {.a = {.r = {.a = 1}}};
+    // FIXME: This note isn't great. The 'read' here is reading the referent of the reference.
+    r.b.r.b = 2; // expected-note {{read of member 'b' of union with active member 'a'}}
+    return r.b.r.b;
+  }
 }
 
 namespace TwosComplementShifts {

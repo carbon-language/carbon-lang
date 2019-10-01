@@ -5258,7 +5258,9 @@ static bool HandleUnionActiveMemberChange(EvalInfo &Info, const Expr *LHSExpr,
     //   -- If E is of the form A.B, S(E) contains the elements of S(A)...
     if (auto *ME = dyn_cast<MemberExpr>(E)) {
       auto *FD = dyn_cast<FieldDecl>(ME->getMemberDecl());
-      if (!FD)
+      // Note that we can't implicitly start the lifetime of a reference,
+      // so we don't need to proceed any further if we reach one.
+      if (!FD || FD->getType()->isReferenceType())
         break;
 
       //    ... and also contains A.B if B names a union member
