@@ -688,29 +688,12 @@ void ClangASTContext::SetArchitecture(const ArchSpec &arch) {
   SetTargetTriple(arch.GetTriple().str());
 }
 
-bool ClangASTContext::HasExternalSource() {
-  ASTContext *ast = getASTContext();
-  if (ast)
-    return ast->getExternalSource() != nullptr;
-  return false;
-}
-
 void ClangASTContext::SetExternalSource(
     llvm::IntrusiveRefCntPtr<ExternalASTSource> &ast_source_up) {
   ASTContext *ast = getASTContext();
   if (ast) {
     ast->setExternalSource(ast_source_up);
     ast->getTranslationUnitDecl()->setHasExternalLexicalStorage(true);
-  }
-}
-
-void ClangASTContext::RemoveExternalSource() {
-  ASTContext *ast = getASTContext();
-
-  if (ast) {
-    llvm::IntrusiveRefCntPtr<ExternalASTSource> empty_ast_source_up;
-    ast->setExternalSource(empty_ast_source_up);
-    ast->getTranslationUnitDecl()->setHasExternalLexicalStorage(false);
   }
 }
 

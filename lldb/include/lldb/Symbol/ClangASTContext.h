@@ -118,12 +118,8 @@ public:
 
   void SetArchitecture(const ArchSpec &arch);
 
-  bool HasExternalSource();
-
   void SetExternalSource(
       llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> &ast_source_up);
-
-  void RemoveExternalSource();
 
   bool GetCompleteDecl(clang::Decl *decl) {
     return ClangASTContext::GetCompleteDecl(getASTContext(), decl);
