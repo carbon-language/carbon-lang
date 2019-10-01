@@ -15,6 +15,7 @@
 
 #include "CGValue.h"
 #include "clang/AST/DeclOpenMP.h"
+#include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/SourceLocation.h"
@@ -36,7 +37,6 @@ class Value;
 
 namespace clang {
 class Expr;
-class GlobalDecl;
 class OMPDependClause;
 class OMPExecutableDirective;
 class OMPLoopDirective;
