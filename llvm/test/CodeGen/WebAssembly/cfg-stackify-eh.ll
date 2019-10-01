@@ -436,13 +436,17 @@ try.cont:                                         ; preds = %catch.start1, %catc
 ; the right destination (label4), from which we rethrow the exception to the
 ; caller.
 
+; And the return value of 'baz' should NOT be stackified because the BB is split
+; during fixing unwind mismatches.
+
 ; NOSORT-LABEL: test6
 ; NOSORT:   try
 ; NOSORT:     call      foo
 ; --- Nested try/catch/end_try starts
 ; NOSORT:     try
 ; NOSORT:       call      bar
-; NOSORT:       call      bar
+; NOSORT:       i32.call  ${{[0-9]+}}=, baz
+; NOSORT-NOT:   i32.call  $push{{.*}}=, baz
 ; NOSORT:     catch     $[[REG:[0-9]+]]=
 ; NOSORT:       br        1                            # 1: down to label35
 ; NOSORT:     end_try
@@ -460,7 +464,8 @@ bb0:
 
 bb1:                                              ; preds = %bb0
   call void @bar()
-  call void @bar()
+  %call = call i32 @baz()
+  call void @nothrow(i32 %call) #0
   ret void
 
 catch.dispatch0:                                  ; preds = %bb0
@@ -618,6 +623,9 @@ try.cont:                                         ; preds = %catch.start1, %catc
 
 declare void @foo()
 declare void @bar()
+declare i32 @baz()
+; Function Attrs: nounwind
+declare void @nothrow(i32) #0
 declare i32 @__gxx_wasm_personality_v0(...)
 declare i8* @llvm.wasm.get.exception(token)
 declare i32 @llvm.wasm.get.ehselector(token)
@@ -627,3 +635,5 @@ declare i8* @__cxa_begin_catch(i8*)
 declare void @__cxa_end_catch()
 declare void @__clang_call_terminate(i8*)
 declare void @_ZSt9terminatev()
+
+attributes #0 = { nounwind }
