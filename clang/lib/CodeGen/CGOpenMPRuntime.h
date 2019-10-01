@@ -644,6 +644,12 @@ private:
   /// must be emitted.
   llvm::SmallDenseSet<const VarDecl *> DeferredGlobalVariables;
 
+  /// Mapping of the original functions to their variants and original global
+  /// decl.
+  llvm::MapVector<CanonicalDeclPtr<const FunctionDecl>,
+                  std::pair<GlobalDecl, GlobalDecl>>
+      DeferredVariantFunction;
+
   /// Flag for keeping track of weather a requires unified_shared_memory
   /// directive is present.
   bool HasRequiresUnifiedSharedMemory = false;
@@ -1652,6 +1658,9 @@ public:
 
   /// Return whether the unified_shared_memory has been specified.
   bool hasRequiresUnifiedSharedMemory() const;
+
+  /// Emits the definition of the declare variant function.
+  virtual bool emitDeclareVariant(GlobalDecl GD, bool IsForDefinition);
 };
 
 /// Class supports emissionof SIMD-only code.
