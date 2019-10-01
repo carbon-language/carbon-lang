@@ -2605,7 +2605,8 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[2] = AMDGPU::getValueMapping(Bank, 32);
       break;
     }
-    case Intrinsic::amdgcn_end_cf: {
+    case Intrinsic::amdgcn_end_cf:
+    case Intrinsic::amdgcn_init_exec: {
       unsigned Size = getSizeInBits(MI.getOperand(1).getReg(), MRI, *TRI);
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
@@ -2656,6 +2657,12 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[3] = getVGPROpMapping(MI.getOperand(3).getReg(), MRI, *TRI);
       OpdsMapping[4] = getVGPROpMapping(MI.getOperand(4).getReg(), MRI, *TRI);
       OpdsMapping[5] = getSGPROpMapping(MI.getOperand(5).getReg(), MRI, *TRI);
+      break;
+    }
+    case Intrinsic::amdgcn_init_exec_from_input: {
+      unsigned Size = getSizeInBits(MI.getOperand(1).getReg(), MRI, *TRI);
+      OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
+      OpdsMapping[2] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       break;
     }
     default:

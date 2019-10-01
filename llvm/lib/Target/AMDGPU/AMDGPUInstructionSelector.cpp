@@ -2094,3 +2094,12 @@ AMDGPUInstructionSelector::selectDS1Addr1Offset(MachineOperand &Root) const {
       [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }
     }};
 }
+
+void AMDGPUInstructionSelector::renderTruncImm32(MachineInstrBuilder &MIB,
+                                                 const MachineInstr &MI) const {
+  const MachineRegisterInfo &MRI = MI.getParent()->getParent()->getRegInfo();
+  assert(MI.getOpcode() == TargetOpcode::G_CONSTANT && "Expected G_CONSTANT");
+  Optional<int64_t> CstVal = getConstantVRegVal(MI.getOperand(0).getReg(), MRI);
+  assert(CstVal && "Expected constant value");
+  MIB.addImm(CstVal.getValue());
+}

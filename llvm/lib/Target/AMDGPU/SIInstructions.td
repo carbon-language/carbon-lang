@@ -349,7 +349,8 @@ def SI_INIT_M0 : SPseudoInstSI <(outs), (ins SSrc_b32:$src)> {
 }
 
 def SI_INIT_EXEC : SPseudoInstSI <
-  (outs), (ins i64imm:$src), []> {
+  (outs), (ins i64imm:$src),
+  [(int_amdgcn_init_exec (i64 timm:$src))]> {
   let Defs = [EXEC];
   let usesCustomInserter = 1;
   let isAsCheapAsAMove = 1;
@@ -365,10 +366,18 @@ def SI_INIT_EXEC_LO : SPseudoInstSI <
   let WaveSizePredicate = isWave32;
 }
 
+// FIXME: Wave32 version
 def SI_INIT_EXEC_FROM_INPUT : SPseudoInstSI <
-  (outs), (ins SSrc_b32:$input, i32imm:$shift), []> {
+  (outs), (ins SSrc_b32:$input, i32imm:$shift),
+  [(int_amdgcn_init_exec_from_input i32:$input, (i32 timm:$shift))]> {
   let Defs = [EXEC];
   let usesCustomInserter = 1;
+}
+
+def : GCNPat <
+  (int_amdgcn_init_exec timm:$src),
+  (SI_INIT_EXEC_LO (as_i32imm imm:$src))> {
+  let WaveSizePredicate = isWave32;
 }
 
 // Return for returning shaders to a shader variant epilog.
@@ -607,23 +616,6 @@ def SI_PC_ADD_REL_OFFSET : SPseudoInstSI <
 def : GCNPat <
   (SIpc_add_rel_offset tglobaladdr:$ptr_lo, 0),
   (SI_PC_ADD_REL_OFFSET $ptr_lo, (i32 0))
->;
-
-def : GCNPat <
-  (int_amdgcn_init_exec i64:$src),
-  (SI_INIT_EXEC (as_i64imm $src))> {
-  let WaveSizePredicate = isWave64;
-}
-
-def : GCNPat <
-  (int_amdgcn_init_exec i64:$src),
-  (SI_INIT_EXEC_LO (as_i32imm $src))> {
-  let WaveSizePredicate = isWave32;
-}
-
-def : GCNPat <
-  (int_amdgcn_init_exec_from_input i32:$input, i32:$shift),
-  (SI_INIT_EXEC_FROM_INPUT (i32 $input), (as_i32imm $shift))
 >;
 
 def : GCNPat<

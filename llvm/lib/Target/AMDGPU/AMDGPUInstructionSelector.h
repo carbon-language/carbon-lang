@@ -163,6 +163,9 @@ private:
   InstructionSelector::ComplexRendererFns
   selectDS1Addr1Offset(MachineOperand &Root) const;
 
+  void renderTruncImm32(MachineInstrBuilder &MIB,
+                        const MachineInstr &MI) const;
+
   const SIInstrInfo &TII;
   const SIRegisterInfo &TRI;
   const AMDGPURegisterBankInfo &RBI;
