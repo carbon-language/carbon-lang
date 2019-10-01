@@ -1676,12 +1676,16 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       if (match(Op1, m_LShr(m_Value(X), m_APInt(ShAmt))) &&
           *ShAmt == BitWidth - 1) {
         Value *ShAmtOp = cast<Instruction>(Op1)->getOperand(1);
-        return BinaryOperator::CreateAShr(X, ShAmtOp);
+        Instruction *NewShift = BinaryOperator::CreateAShr(X, ShAmtOp);
+        NewShift->copyIRFlags(Op1);
+        return NewShift;
       }
       if (match(Op1, m_AShr(m_Value(X), m_APInt(ShAmt))) &&
           *ShAmt == BitWidth - 1) {
         Value *ShAmtOp = cast<Instruction>(Op1)->getOperand(1);
-        return BinaryOperator::CreateLShr(X, ShAmtOp);
+        Instruction *NewShift = BinaryOperator::CreateLShr(X, ShAmtOp);
+        NewShift->copyIRFlags(Op1);
+        return NewShift;
       }
 
       if (Op1->hasOneUse()) {

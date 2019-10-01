@@ -12,7 +12,7 @@ define i64 @t0(i64 %x) {
 }
 define i64 @t0_exact(i64 %x) {
 ; CHECK-LABEL: @t0_exact(
-; CHECK-NEXT:    [[R:%.*]] = ashr i64 [[X:%.*]], 63
+; CHECK-NEXT:    [[R:%.*]] = ashr exact i64 [[X:%.*]], 63
 ; CHECK-NEXT:    ret i64 [[R]]
 ;
   %t0 = lshr exact i64 %x, 63
@@ -30,7 +30,7 @@ define i64 @t2(i64 %x) {
 }
 define i64 @t3_exact(i64 %x) {
 ; CHECK-LABEL: @t3_exact(
-; CHECK-NEXT:    [[R:%.*]] = lshr i64 [[X:%.*]], 63
+; CHECK-NEXT:    [[R:%.*]] = lshr exact i64 [[X:%.*]], 63
 ; CHECK-NEXT:    ret i64 [[R]]
 ;
   %t0 = ashr exact i64 %x, 63
