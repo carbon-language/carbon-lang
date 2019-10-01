@@ -423,9 +423,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     .customFor({{S64, S64}})
     .scalarize(0);
 
-  getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
-    .legalFor({{S32, S32}, {S32, S64}, {S32, S16}})
-    .scalarize(0);
+  auto &FPToI = getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
+    .legalFor({{S32, S32}, {S32, S64}, {S32, S16}});
+  if (ST.has16BitInsts())
+    FPToI.legalFor({{S16, S16}});
+  else
+    FPToI.minScalar(1, S32);
+
+  FPToI.minScalar(0, S32)
+       .scalarize(0);
 
   getActionDefinitionsBuilder(G_INTRINSIC_ROUND)
     .legalFor({S32, S64})
