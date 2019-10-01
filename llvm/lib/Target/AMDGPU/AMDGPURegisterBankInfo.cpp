@@ -343,7 +343,21 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
   InstructionMappings AltMappings;
   switch (MI.getOpcode()) {
-  case TargetOpcode::G_CONSTANT:
+  case TargetOpcode::G_CONSTANT: {
+    unsigned Size = getSizeInBits(MI.getOperand(0).getReg(), MRI, *TRI);
+    if (Size == 1) {
+      static const OpRegBankEntry<1> Table[4] = {
+        { { AMDGPU::VGPRRegBankID }, 1 },
+        { { AMDGPU::SGPRRegBankID }, 1 },
+        { { AMDGPU::VCCRegBankID }, 1 },
+        { { AMDGPU::SCCRegBankID }, 1 }
+      };
+
+      return addMappingFromTable<1>(MI, MRI, { 0 }, Table);
+    }
+
+    LLVM_FALLTHROUGH;
+  }
   case TargetOpcode::G_FCONSTANT:
   case TargetOpcode::G_FRAME_INDEX:
   case TargetOpcode::G_GLOBAL_VALUE: {
