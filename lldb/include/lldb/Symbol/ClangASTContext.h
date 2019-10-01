@@ -52,7 +52,7 @@ public:
   }
 
   // Constructors and Destructors
-  ClangASTContext(llvm::StringRef triple = "");
+  explicit ClangASTContext(llvm::StringRef triple = "");
 
   /// Constructs a ClangASTContext that uses an existing ASTContext internally.
   /// Useful when having an existing ASTContext created by Clang.
