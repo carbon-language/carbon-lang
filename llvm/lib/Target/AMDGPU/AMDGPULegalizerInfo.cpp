@@ -1717,9 +1717,14 @@ bool AMDGPULegalizerInfo::loadInputValue(Register DstReg, MachineIRBuilder &B,
     const unsigned Mask = Arg->getMask();
     const unsigned Shift = countTrailingZeros<unsigned>(Mask);
 
-    auto ShiftAmt = B.buildConstant(S32, Shift);
-    auto LShr = B.buildLShr(S32, LiveIn, ShiftAmt);
-    B.buildAnd(DstReg, LShr, B.buildConstant(S32, Mask >> Shift));
+    Register AndMaskSrc = LiveIn;
+
+    if (Shift != 0) {
+      auto ShiftAmt = B.buildConstant(S32, Shift);
+      AndMaskSrc = B.buildLShr(S32, LiveIn, ShiftAmt).getReg(0);
+    }
+
+    B.buildAnd(DstReg, AndMaskSrc, B.buildConstant(S32, Mask >> Shift));
   } else
     B.buildCopy(DstReg, LiveIn);
 
