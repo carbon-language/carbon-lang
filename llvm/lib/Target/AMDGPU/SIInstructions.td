@@ -1611,7 +1611,7 @@ def : GCNPat <
   (V_CVT_F16_F32_e32 (
       V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
                         /*src1mod*/(i32 0), /*src1*/(i32 CONST.FP32_NEG_ONE),
-                        $src))
+                        SSrc_i1:$src))
 >;
 
 def : GCNPat <
@@ -1619,35 +1619,35 @@ def : GCNPat <
   (V_CVT_F16_F32_e32 (
       V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
                         /*src1mod*/(i32 0), /*src1*/(i32 CONST.FP32_ONE),
-                        $src))
+                        SSrc_i1:$src))
 >;
 
 def : GCNPat <
   (f32 (sint_to_fp i1:$src)),
   (V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
                         /*src1mod*/(i32 0), /*src1*/(i32 CONST.FP32_NEG_ONE),
-                        $src)
+                        SSrc_i1:$src)
 >;
 
 def : GCNPat <
   (f32 (uint_to_fp i1:$src)),
   (V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
                         /*src1mod*/(i32 0), /*src1*/(i32 CONST.FP32_ONE),
-                        $src)
+                        SSrc_i1:$src)
 >;
 
 def : GCNPat <
   (f64 (sint_to_fp i1:$src)),
   (V_CVT_F64_I32_e32 (V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
                                         /*src1mod*/(i32 0), /*src1*/(i32 -1),
-                                        $src))
+                                        SSrc_i1:$src))
 >;
 
 def : GCNPat <
   (f64 (uint_to_fp i1:$src)),
   (V_CVT_F64_U32_e32 (V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
                                         /*src1mod*/(i32 0), /*src1*/(i32 1),
-                                        $src))
+                                        SSrc_i1:$src))
 >;
 
 //===----------------------------------------------------------------------===//
