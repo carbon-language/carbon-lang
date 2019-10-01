@@ -35,6 +35,7 @@ class FoldingContext;
 using TypeCode = unsigned char;
 
 template<typename TR, typename... TA> using FuncPointer = TR (*)(TA...);
+// This specific type signature prevents GCC complaining about function casts.
 using GenericFunctionPointer = void (*) (void);
 
 enum class PassBy { Ref, Val };
