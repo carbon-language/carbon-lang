@@ -862,7 +862,6 @@ public:
   static bool SetHasExternalStorage(lldb::opaque_compiler_type_t type,
                                     bool has_extern);
 
-  static bool GetHasExternalStorage(const CompilerType &type);
   // Tag Declarations
   static bool StartTagDeclarationDefinition(const CompilerType &type);
 
