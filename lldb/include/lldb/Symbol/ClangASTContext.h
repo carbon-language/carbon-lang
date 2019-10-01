@@ -54,6 +54,12 @@ public:
   // Constructors and Destructors
   ClangASTContext(llvm::StringRef triple = "");
 
+  /// Constructs a ClangASTContext that uses an existing ASTContext internally.
+  /// Useful when having an existing ASTContext created by Clang.
+  ///
+  /// \param existing_ctxt An existing ASTContext.
+  explicit ClangASTContext(clang::ASTContext &existing_ctxt);
+
   ~ClangASTContext() override;
 
   void Finalize() override;
@@ -78,8 +84,6 @@ public:
   static ClangASTContext *GetASTContext(clang::ASTContext *ast_ctx);
 
   clang::ASTContext *getASTContext();
-
-  void setASTContext(clang::ASTContext *ast_ctx);
 
   clang::Builtin::Context *getBuiltinContext();
 

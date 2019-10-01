@@ -528,6 +528,14 @@ ClangASTContext::ClangASTContext(llvm::StringRef target_triple)
     SetTargetTriple(target_triple);
 }
 
+ClangASTContext::ClangASTContext(ASTContext &existing_ctxt)
+  : TypeSystem(TypeSystem::eKindClang) {
+  SetTargetTriple(existing_ctxt.getTargetInfo().getTriple().str());
+
+  m_ast_up.reset(&existing_ctxt);
+  GetASTMap().Insert(&existing_ctxt, this);
+}
+
 // Destructor
 ClangASTContext::~ClangASTContext() { Finalize(); }
 
@@ -704,15 +712,6 @@ void ClangASTContext::RemoveExternalSource() {
     ast->setExternalSource(empty_ast_source_up);
     ast->getTranslationUnitDecl()->setHasExternalLexicalStorage(false);
   }
-}
-
-void ClangASTContext::setASTContext(clang::ASTContext *ast_ctx) {
-  if (!m_ast_owned) {
-    m_ast_up.release();
-  }
-  m_ast_owned = false;
-  m_ast_up.reset(ast_ctx);
-  GetASTMap().Insert(ast_ctx, this);
 }
 
 ASTContext *ClangASTContext::getASTContext() {
