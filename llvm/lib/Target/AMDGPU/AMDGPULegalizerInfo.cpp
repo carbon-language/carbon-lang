@@ -273,7 +273,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
   getActionDefinitionsBuilder({G_UADDO, G_SADDO, G_USUBO, G_SSUBO,
                                G_UADDE, G_SADDE, G_USUBE, G_SSUBE})
     .legalFor({{S32, S1}})
-    .clampScalar(0, S32, S32);
+    .clampScalar(0, S32, S32)
+    .scalarize(0); // TODO: Implement.
 
   getActionDefinitionsBuilder(G_BITCAST)
     .legalForCartesianProduct({S32, V2S16})
