@@ -802,6 +802,11 @@ namespace dtor {
     return true;
   }
   static_assert(run_dtors_on_array_filler());
+
+  // Ensure that we can handle temporary cleanups for array temporaries.
+  struct ArrElem { constexpr ~ArrElem() {} };
+  using Arr = ArrElem[3];
+  static_assert((Arr{}, true));
 }
 
 namespace dynamic_alloc {

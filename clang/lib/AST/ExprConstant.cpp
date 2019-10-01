@@ -6493,6 +6493,12 @@ public:
     return StmtVisitorTy::Visit(E->getSubExpr()) && Scope.destroy();
   }
 
+  // Temporaries are registered when created, so we don't care about
+  // CXXBindTemporaryExpr.
+  bool VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *E) {
+    return StmtVisitorTy::Visit(E->getSubExpr());
+  }
+
   bool VisitCXXReinterpretCastExpr(const CXXReinterpretCastExpr *E) {
     CCEDiag(E, diag::note_constexpr_invalid_cast) << 0;
     return static_cast<Derived*>(this)->VisitCastExpr(E);
@@ -8448,13 +8454,6 @@ namespace {
     bool VisitCXXInheritedCtorInitExpr(const CXXInheritedCtorInitExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E, QualType T);
     bool VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *E);
-
-    // Temporaries are registered when created, so we don't care about
-    // CXXBindTemporaryExpr.
-    bool VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *E) {
-      return Visit(E->getSubExpr());
-    }
-
     bool VisitBinCmp(const BinaryOperator *E);
   };
 }
