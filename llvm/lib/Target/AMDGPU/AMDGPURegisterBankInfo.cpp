@@ -447,8 +447,9 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
     unsigned PtrSize = PtrTy.getSizeInBits();
     unsigned AS = PtrTy.getAddressSpace();
     LLT LoadTy = MRI.getType(MI.getOperand(0).getReg());
-    if (isInstrUniformNonExtLoadAlign4(MI) &&
-        (AS != AMDGPUAS::LOCAL_ADDRESS && AS != AMDGPUAS::REGION_ADDRESS)) {
+    if ((AS != AMDGPUAS::LOCAL_ADDRESS && AS != AMDGPUAS::REGION_ADDRESS &&
+         AS != AMDGPUAS::PRIVATE_ADDRESS) &&
+        isInstrUniformNonExtLoadAlign4(MI)) {
       const InstructionMapping &SSMapping = getInstructionMapping(
           1, 1, getOperandsMapping(
                     {AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size),
@@ -1853,8 +1854,9 @@ AMDGPURegisterBankInfo::getInstrMappingForLoad(const MachineInstr &MI) const {
   const ValueMapping *ValMapping;
   const ValueMapping *PtrMapping;
 
-  if (isInstrUniformNonExtLoadAlign4(MI) &&
-      (AS != AMDGPUAS::LOCAL_ADDRESS && AS != AMDGPUAS::REGION_ADDRESS)) {
+  if ((AS != AMDGPUAS::LOCAL_ADDRESS && AS != AMDGPUAS::REGION_ADDRESS &&
+       AS != AMDGPUAS::PRIVATE_ADDRESS) &&
+      isInstrUniformNonExtLoadAlign4(MI)) {
     // We have a uniform instruction so we want to use an SMRD load
     ValMapping = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
     PtrMapping = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, PtrSize);
