@@ -27,6 +27,8 @@
 
 namespace __sanitizer {
 
+namespace {
+
 //---------------------------- UnwindSlow --------------------------------------
 
 typedef struct {
@@ -118,6 +120,8 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
   if (arg->stack->size == arg->max_depth) return UNWIND_STOP;
   return UNWIND_CONTINUE;
 }
+
+}  // namespace
 
 void BufferedStackTrace::UnwindSlow(uptr pc, u32 max_depth) {
   CHECK_GE(max_depth, 2);
