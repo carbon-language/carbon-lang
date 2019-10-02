@@ -111,8 +111,6 @@ public:
   void setSema(clang::Sema *s);
   clang::Sema *getSema() { return m_sema; }
 
-  void Clear();
-
   const char *GetTargetTriple();
 
   void SetExternalSource(

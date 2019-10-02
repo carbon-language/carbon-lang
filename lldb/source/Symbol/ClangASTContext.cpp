@@ -660,18 +660,6 @@ void ClangASTContext::Finalize() {
   m_scratch_ast_source_up.reset();
 }
 
-void ClangASTContext::Clear() {
-  m_language_options_up.reset();
-  m_source_manager_up.reset();
-  m_diagnostics_engine_up.reset();
-  m_target_options_rp.reset();
-  m_target_info_up.reset();
-  m_identifier_table_up.reset();
-  m_selector_table_up.reset();
-  m_builtins_up.reset();
-  m_pointer_byte_size = 0;
-}
-
 void ClangASTContext::setSema(Sema *s) {
   // Ensure that the new sema actually belongs to our ASTContext.
   assert(s == nullptr || &s->getASTContext() == m_ast_up.get());
@@ -683,7 +671,6 @@ const char *ClangASTContext::GetTargetTriple() {
 }
 
 void ClangASTContext::SetTargetTriple(llvm::StringRef target_triple) {
-  Clear();
   m_target_triple = target_triple.str();
 }
 
