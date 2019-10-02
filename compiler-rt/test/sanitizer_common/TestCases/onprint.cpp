@@ -4,6 +4,8 @@
 // RUN: %clangxx %s -o %t
 // RUN: %run %t %t-onprint.txt 2>%t-stderr.txt || true
 // RUN: diff %t-onprint.txt %t-stderr.txt
+//
+// UNSUPPORTED: android
 
 #include <cassert>
 #include <cstdio>
