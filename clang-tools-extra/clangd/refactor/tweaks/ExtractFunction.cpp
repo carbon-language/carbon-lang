@@ -113,15 +113,12 @@ const Node *getParentOfRootStmts(const Node *CommonAnc) {
     return nullptr;
   switch (CommonAnc->Selected) {
   case SelectionTree::Selection::Unselected:
+    // Typicaly a block, with the { and } unselected, could also be ForStmt etc
     // Ensure all Children are RootStmts.
     return llvm::all_of(CommonAnc->Children, isRootStmt) ? CommonAnc : nullptr;
   case SelectionTree::Selection::Partial:
-    // Treat Partially selected VarDecl as completely selected since
-    // SelectionTree doesn't always select VarDecls correctly.
-    // FIXME: Remove this after D66872 is upstream)
-    if (!CommonAnc->ASTNode.get<VarDecl>())
-      return nullptr;
-    LLVM_FALLTHROUGH;
+    // Only a fully-selected single statement can be selected.
+    return nullptr;
   case SelectionTree::Selection::Complete:
     // If the Common Ancestor is completely selected, then it's a root statement
     // and its parent will be unselected.
