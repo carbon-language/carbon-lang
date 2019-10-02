@@ -176,6 +176,7 @@ void GenericSpecInfo::Analyze(const parser::GenericSpec &x) {
 // parser::DefinedOperator::IntrinsicOperator -> GenericKind
 static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
   switch (op) {
+    SWITCH_COVERS_ALL_CASES
   case IntrinsicOperator::Power: return GenericKind::OpPower;
   case IntrinsicOperator::Multiply: return GenericKind::OpMultiply;
   case IntrinsicOperator::Divide: return GenericKind::OpDivide;
@@ -193,9 +194,7 @@ static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
   case IntrinsicOperator::OR: return GenericKind::OpOR;
   case IntrinsicOperator::XOR: return GenericKind::OpXOR;
   case IntrinsicOperator::EQV: return GenericKind::OpEQV;
-  case IntrinsicOperator::NEQV:
-    return GenericKind::OpNEQV;
-    SWITCH_COVERS_ALL_CASES
+  case IntrinsicOperator::NEQV: return GenericKind::OpNEQV;
   }
 }
 

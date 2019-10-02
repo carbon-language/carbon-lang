@@ -76,7 +76,7 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 
 // For switch statements whose cases have return statements for
 // all possibilities.  Clang emits warnings if the default: is
-// present, gcc emits warings if it is absent.
+// present, gcc emits warnings if it is absent.
 #if __clang__
 #define SWITCH_COVERS_ALL_CASES
 #else

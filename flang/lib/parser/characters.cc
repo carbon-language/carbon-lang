@@ -121,10 +121,9 @@ template<> EncodedCharacter EncodeCharacter<Encoding::UTF_8>(char32_t ucs) {
 
 EncodedCharacter EncodeCharacter(Encoding encoding, char32_t ucs) {
   switch (encoding) {
-  case Encoding::LATIN_1: return EncodeCharacter<Encoding::LATIN_1>(ucs);
-  case Encoding::UTF_8:
-    return EncodeCharacter<Encoding::UTF_8>(ucs);
     SWITCH_COVERS_ALL_CASES
+  case Encoding::LATIN_1: return EncodeCharacter<Encoding::LATIN_1>(ucs);
+  case Encoding::UTF_8: return EncodeCharacter<Encoding::UTF_8>(ucs);
   }
 }
 
@@ -252,11 +251,11 @@ template DecodedCharacter DecodeCharacter<Encoding::UTF_8>(
 DecodedCharacter DecodeCharacter(Encoding encoding, const char *cp,
     std::size_t bytes, bool backslashEscapes) {
   switch (encoding) {
+    SWITCH_COVERS_ALL_CASES
   case Encoding::LATIN_1:
     return DecodeCharacter<Encoding::LATIN_1>(cp, bytes, backslashEscapes);
   case Encoding::UTF_8:
     return DecodeCharacter<Encoding::UTF_8>(cp, bytes, backslashEscapes);
-    SWITCH_COVERS_ALL_CASES
   }
 }
 

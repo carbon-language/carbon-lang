@@ -156,6 +156,7 @@ void ParamValue::SetExplicit(SomeIntExpr &&x) {
 
 std::string ParamValue::AsFortran() const {
   switch (category_) {
+    SWITCH_COVERS_ALL_CASES
   case Category::Assumed: return "*";
   case Category::Deferred: return ":";
   case Category::Explicit:
@@ -166,7 +167,6 @@ std::string ParamValue::AsFortran() const {
     } else {
       return "";
     }
-    SWITCH_COVERS_ALL_CASES
   }
 }
 

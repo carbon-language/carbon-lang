@@ -212,12 +212,11 @@ bool Scope::CanImport(const SourceName &name) const {
     return false;
   }
   switch (GetImportKind()) {
+    SWITCH_COVERS_ALL_CASES
   case ImportKind::None: return false;
   case ImportKind::All:
   case ImportKind::Default: return true;
-  case ImportKind::Only:
-    return importNames_.count(name) > 0;
-    SWITCH_COVERS_ALL_CASES
+  case ImportKind::Only: return importNames_.count(name) > 0;
   }
 }
 

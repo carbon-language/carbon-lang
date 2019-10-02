@@ -4805,6 +4805,7 @@ void ConstructVisitor::PopAssociation() {
 const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
     evaluate::DynamicType &&type) {
   switch (type.category()) {
+    SWITCH_COVERS_ALL_CASES
   case common::TypeCategory::Integer:
   case common::TypeCategory::Real:
   case common::TypeCategory::Complex:
@@ -4824,7 +4825,7 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 
       );
     }
-  case common::TypeCategory::Character: CRASH_NO_CASE; SWITCH_COVERS_ALL_CASES
+  case common::TypeCategory::Character: CRASH_NO_CASE;
   }
 }
 
@@ -5718,6 +5719,7 @@ void ResolveNamesVisitor::AddSubpNames(const ProgramTree &node) {
 // Push a new scope for this node or return false on error.
 bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   switch (node.GetKind()) {
+    SWITCH_COVERS_ALL_CASES
   case ProgramTree::Kind::Program:
     PushScope(Scope::Kind::MainProgram,
         &MakeSymbol(node.name(), MainProgramDetails{}));
@@ -5730,7 +5732,6 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   case ProgramTree::Kind::Module: BeginModule(node.name(), false); return true;
   case ProgramTree::Kind::Submodule:
     return BeginSubmodule(node.name(), node.GetParentId());
-    SWITCH_COVERS_ALL_CASES
   }
 }
 
