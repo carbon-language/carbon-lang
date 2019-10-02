@@ -4693,6 +4693,8 @@ void SIInstrInfo::legalizeOperands(MachineInstr &MI,
           MIB.addImm(TFE->getImm());
         }
 
+        MIB.addImm(getNamedImmOperand(MI, AMDGPU::OpName::swz));
+
         MIB.cloneMemRefs(MI);
         Addr64 = MIB;
       } else {
