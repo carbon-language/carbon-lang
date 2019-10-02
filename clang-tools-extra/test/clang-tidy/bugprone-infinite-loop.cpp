@@ -161,7 +161,6 @@ void escape_after2() {
   }
   int &ii = i;
 }
--
 
 int glob;
 
