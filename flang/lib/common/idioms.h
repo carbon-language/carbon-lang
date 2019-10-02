@@ -74,6 +74,16 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 // For switch statements without default: labels.
 #define CRASH_NO_CASE DIE("no case")
 
+// For switch statements whose cases have return statements for
+// all possibilities.  Clang emits warnings if the default: is
+// present, gcc emits warings if it is absent.
+#if __clang__
+#define SWITCH_COVERS_ALL_CASES
+#else
+#define SWITCH_COVERS_ALL_CASES \
+  default: CRASH_NO_CASE; \
+           #endif
+
 // For cheap assertions that should be applied in production.
 // To disable, compile with '-DCHECK=(void)'
 #ifndef CHECK

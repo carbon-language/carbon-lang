@@ -193,7 +193,9 @@ static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
   case IntrinsicOperator::OR: return GenericKind::OpOR;
   case IntrinsicOperator::XOR: return GenericKind::OpXOR;
   case IntrinsicOperator::EQV: return GenericKind::OpEQV;
-  case IntrinsicOperator::NEQV: return GenericKind::OpNEQV;
+  case IntrinsicOperator::NEQV:
+    return GenericKind::OpNEQV;
+    SWITCH_COVERS_ALL_CASES
   }
 }
 

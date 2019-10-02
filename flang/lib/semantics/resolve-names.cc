@@ -4824,7 +4824,7 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 
       );
     }
-  case common::TypeCategory::Character: CRASH_NO_CASE;
+  case common::TypeCategory::Character: CRASH_NO_CASE; SWITCH_COVERS_ALL_CASES
   }
 }
 
@@ -5730,6 +5730,7 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   case ProgramTree::Kind::Module: BeginModule(node.name(), false); return true;
   case ProgramTree::Kind::Submodule:
     return BeginSubmodule(node.name(), node.GetParentId());
+    SWITCH_COVERS_ALL_CASES
   }
 }
 

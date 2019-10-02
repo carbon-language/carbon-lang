@@ -128,6 +128,7 @@ common::IfNoLvalue<MaybeExpr, WRAPPED> TypedWrapper(
         dyType.kind(), std::move(x));
   case TypeCategory::Derived:
     return AsGenericExpr(Expr<SomeDerived>{WRAPPER<SomeDerived>{std::move(x)}});
+    SWITCH_COVERS_ALL_CASES
   }
 }
 
