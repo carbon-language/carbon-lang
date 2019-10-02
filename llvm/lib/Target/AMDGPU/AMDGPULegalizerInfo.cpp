@@ -1915,7 +1915,7 @@ bool AMDGPULegalizerInfo::legalizeIntrinsic(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             MachineIRBuilder &B) const {
   // Replace the use G_BRCOND with the exec manipulate and branch pseudos.
-  switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+  switch (MI.getIntrinsicID()) {
   case Intrinsic::amdgcn_if: {
     if (MachineInstr *BrCond = verifyCFIntrinsic(MI, MRI)) {
       const SIRegisterInfo *TRI

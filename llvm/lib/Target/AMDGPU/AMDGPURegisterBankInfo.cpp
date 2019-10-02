@@ -214,7 +214,7 @@ AMDGPURegisterBankInfo::addMappingFromTable(
 RegisterBankInfo::InstructionMappings
 AMDGPURegisterBankInfo::getInstrAlternativeMappingsIntrinsic(
     const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
-  switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+  switch (MI.getIntrinsicID()) {
   case Intrinsic::amdgcn_readlane: {
     static const OpRegBankEntry<3> Table[2] = {
       // Perfectly legal.
@@ -255,7 +255,7 @@ RegisterBankInfo::InstructionMappings
 AMDGPURegisterBankInfo::getInstrAlternativeMappingsIntrinsicWSideEffects(
     const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
 
-  switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+  switch (MI.getIntrinsicID()) {
   case Intrinsic::amdgcn_buffer_load: {
     static const OpRegBankEntry<3> Table[4] = {
       // Perfectly legal.
@@ -1609,7 +1609,7 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     executeInWaterfallLoop(MI, MRI, { 2 });
     return;
   case AMDGPU::G_INTRINSIC: {
-    switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+    switch (MI.getIntrinsicID()) {
     case Intrinsic::amdgcn_s_buffer_load: {
       // FIXME: Move to G_INTRINSIC_W_SIDE_EFFECTS
       executeInWaterfallLoop(MI, MRI, { 2, 3 });
@@ -2356,7 +2356,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   }
   case AMDGPU::G_INTRINSIC: {
-    switch (MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID()) {
+    switch (MI.getIntrinsicID()) {
     default:
       return getInvalidInstructionMapping();
     case Intrinsic::amdgcn_div_fmas:
@@ -2532,7 +2532,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   }
   case AMDGPU::G_INTRINSIC_W_SIDE_EFFECTS: {
-    auto IntrID = MI.getOperand(MI.getNumExplicitDefs()).getIntrinsicID();
+    auto IntrID = MI.getIntrinsicID();
     switch (IntrID) {
     case Intrinsic::amdgcn_s_getreg:
     case Intrinsic::amdgcn_s_memtime:
