@@ -632,6 +632,13 @@ void f(const int c) {
 
   // Shouldn't crash.
   EXPECT_EQ(apply("void f([[int a]]);"), "unavailable");
+  // Don't extract if we select the entire function body (CompoundStmt).
+  std::string CompoundFailInput = R"cpp(
+    void f() [[{
+      int a;
+    }]]
+  )cpp";
+  EXPECT_EQ(apply(CompoundFailInput), "unavailable");
 }
 
 TEST_F(ExtractFunctionTest, ControlFlow) {
