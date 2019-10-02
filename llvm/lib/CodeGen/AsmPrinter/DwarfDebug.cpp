@@ -1098,7 +1098,7 @@ void DwarfDebug::finalizeModuleInfo() {
         // 2.17.3).
         U.addUInt(U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 0);
       else
-        U.setBaseAddress(TheCU.getRanges().front().getStart());
+        U.setBaseAddress(TheCU.getRanges().front().Begin);
       U.attachRangesOrLowHighPC(U.getUnitDie(), TheCU.takeRanges());
     }
 
@@ -1807,7 +1807,7 @@ void DwarfDebug::endFunctionImpl(const MachineFunction *MF) {
   collectEntityInfo(TheCU, SP, Processed);
 
   // Add the range of this function to the list of ranges for the CU.
-  TheCU.addRange(RangeSpan(Asm->getFunctionBegin(), Asm->getFunctionEnd()));
+  TheCU.addRange({Asm->getFunctionBegin(), Asm->getFunctionEnd()});
 
   // Under -gmlt, skip building the subprogram if there are no inlined
   // subroutines inside it. But with -fdebug-info-for-profiling, the subprogram
@@ -2570,7 +2570,7 @@ static void emitRangeList(DwarfDebug &DD, AsmPrinter *Asm,
   auto Size = Asm->MAI->getCodePointerSize();
 
   for (const RangeSpan &Range : List.getRanges())
-    SectionRanges[&Range.getStart()->getSection()].push_back(&Range);
+    SectionRanges[&Range.Begin->getSection()].push_back(&Range);
 
   const DwarfCompileUnit &CU = List.getCU();
   const MCSymbol *CUBase = CU.getBaseAddress();
@@ -2586,7 +2586,7 @@ static void emitRangeList(DwarfDebug &DD, AsmPrinter *Asm,
     if (!Base && (P.second.size() > 1 || DwarfVersion < 5) &&
         (CU.getCUNode()->getRangesBaseAddress() || DwarfVersion >= 5)) {
       BaseIsSet = true;
-      Base = DD.getSectionLabel(&P.second.front()->getStart()->getSection());
+      Base = DD.getSectionLabel(&P.second.front()->Begin->getSection());
       if (DwarfVersion >= 5) {
         Asm->OutStreamer->AddComment("DW_RLE_base_addressx");
         Asm->OutStreamer->EmitIntValue(dwarf::DW_RLE_base_addressx, 1);
@@ -2605,8 +2605,8 @@ static void emitRangeList(DwarfDebug &DD, AsmPrinter *Asm,
     }
 
     for (const auto *RS : P.second) {
-      const MCSymbol *Begin = RS->getStart();
-      const MCSymbol *End = RS->getEnd();
+      const MCSymbol *Begin = RS->Begin;
+      const MCSymbol *End = RS->End;
       assert(Begin && "Range without a begin symbol?");
       assert(End && "Range without an end symbol?");
       if (Base) {
