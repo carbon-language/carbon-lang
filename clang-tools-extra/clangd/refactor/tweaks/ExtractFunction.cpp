@@ -104,6 +104,11 @@ bool isRootStmt(const Node *N) {
 }
 
 // Returns the (unselected) parent of all RootStmts given the commonAncestor.
+// Returns null if:
+// 1. any node is partially selected
+// 2. If all completely selected nodes don't have the same common parent
+// 3. Any child of Parent isn't a RootStmt.
+// Returns null if any child is not a RootStmt.
 // We only support extraction of RootStmts since it allows us to extract without
 // having to change the selection range. Also, this means that any scope that
 // begins in selection range, ends in selection range and any scope that begins
@@ -111,25 +116,30 @@ bool isRootStmt(const Node *N) {
 const Node *getParentOfRootStmts(const Node *CommonAnc) {
   if (!CommonAnc)
     return nullptr;
+  const Node *Parent = nullptr;
   switch (CommonAnc->Selected) {
   case SelectionTree::Selection::Unselected:
     // Typicaly a block, with the { and } unselected, could also be ForStmt etc
     // Ensure all Children are RootStmts.
-    return llvm::all_of(CommonAnc->Children, isRootStmt) ? CommonAnc : nullptr;
+    Parent = CommonAnc;
+    break;
   case SelectionTree::Selection::Partial:
     // Only a fully-selected single statement can be selected.
     return nullptr;
   case SelectionTree::Selection::Complete:
     // If the Common Ancestor is completely selected, then it's a root statement
     // and its parent will be unselected.
-    const Node *Parent = CommonAnc->Parent;
+    Parent = CommonAnc->Parent;
     // If parent is a DeclStmt, even though it's unselected, we consider it a
     // root statement and return its parent. This is done because the VarDecls
     // claim the entire selection range of the Declaration and DeclStmt is
     // always unselected.
-    return Parent->ASTNode.get<DeclStmt>() ? Parent->Parent : Parent;
+    if (Parent->ASTNode.get<DeclStmt>())
+      Parent = Parent->Parent;
+    break;
   }
-  llvm_unreachable("Unhandled SelectionTree::Selection enum");
+  // Ensure all Children are RootStmts.
+  return llvm::all_of(Parent->Children, isRootStmt) ? Parent : nullptr;
 }
 
 // The ExtractionZone class forms a view of the code wrt Zone.
