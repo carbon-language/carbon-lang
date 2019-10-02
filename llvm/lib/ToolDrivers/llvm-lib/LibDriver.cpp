@@ -13,6 +13,7 @@
 
 #include "llvm/ToolDrivers/llvm-lib/LibDriver.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/BinaryFormat/COFF.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/Bitcode/BitcodeReader.h"
@@ -315,6 +316,7 @@ int llvm::libDriverMain(ArrayRef<const char *> ArgsArr) {
   }
 
   std::vector<std::unique_ptr<MemoryBuffer>> MBs;
+  StringSet<> Seen;
   std::vector<NewArchiveMember> Members;
 
   // Create a NewArchiveMember for each input file.
@@ -325,6 +327,16 @@ int llvm::libDriverMain(ArrayRef<const char *> ArgsArr) {
       llvm::errs() << Arg->getValue() << ": no such file or directory\n";
       return 1;
     }
+
+    // Input files are uniquified by pathname. If you specify the exact same
+    // path more than once, all but the first one are ignored.
+    //
+    // Note that there's a loophole in the rule; you can prepend `.\` or
+    // something like that to a path to make it look different, and they are
+    // handled as if they were different files. This behavior is compatible with
+    // Microsoft lib.exe.
+    if (!Seen.insert(Path).second)
+      continue;
 
     // Open a file.
     ErrorOr<std::unique_ptr<MemoryBuffer>> MOrErr =
