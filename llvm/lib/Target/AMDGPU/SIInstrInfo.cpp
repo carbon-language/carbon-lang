@@ -5665,7 +5665,16 @@ const TargetRegisterClass *SIInstrInfo::getDestEquivalentVGPRClass(
       if (RI.hasAGPRs(NewDstRC))
         return nullptr;
 
-      NewDstRC = RI.getEquivalentAGPRClass(NewDstRC);
+      switch (Inst.getOpcode()) {
+      case AMDGPU::PHI:
+      case AMDGPU::REG_SEQUENCE:
+      case AMDGPU::INSERT_SUBREG:
+        NewDstRC = RI.getEquivalentAGPRClass(NewDstRC);
+        break;
+      default:
+        NewDstRC = RI.getEquivalentVGPRClass(NewDstRC);
+      }
+
       if (!NewDstRC)
         return nullptr;
     } else {
