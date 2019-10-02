@@ -2325,12 +2325,12 @@ void DwarfDebug::emitDebugLoc() {
           Asm->OutStreamer->AddComment("DW_LLE_offset_pair");
           Asm->OutStreamer->EmitIntValue(dwarf::DW_LLE_offset_pair, 1);
           Asm->OutStreamer->AddComment("  starting offset");
-          Asm->EmitLabelDifferenceAsULEB128(Entry.BeginSym, Base);
+          Asm->EmitLabelDifferenceAsULEB128(Entry.Begin, Base);
           Asm->OutStreamer->AddComment("  ending offset");
-          Asm->EmitLabelDifferenceAsULEB128(Entry.EndSym, Base);
+          Asm->EmitLabelDifferenceAsULEB128(Entry.End, Base);
         } else {
-          Asm->EmitLabelDifference(Entry.BeginSym, Base, Size);
-          Asm->EmitLabelDifference(Entry.EndSym, Base, Size);
+          Asm->EmitLabelDifference(Entry.Begin, Base, Size);
+          Asm->EmitLabelDifference(Entry.End, Base, Size);
         }
 
         emitDebugLocEntryLocation(Entry, CU);
@@ -2346,12 +2346,12 @@ void DwarfDebug::emitDebugLoc() {
         Asm->OutStreamer->AddComment("DW_LLE_startx_length");
         Asm->emitInt8(dwarf::DW_LLE_startx_length);
         Asm->OutStreamer->AddComment("  start idx");
-        Asm->EmitULEB128(AddrPool.getIndex(Entry.BeginSym));
+        Asm->EmitULEB128(AddrPool.getIndex(Entry.Begin));
         Asm->OutStreamer->AddComment("  length");
-        Asm->EmitLabelDifferenceAsULEB128(Entry.EndSym, Entry.BeginSym);
+        Asm->EmitLabelDifferenceAsULEB128(Entry.End, Entry.Begin);
       } else {
-        Asm->OutStreamer->EmitSymbolValue(Entry.BeginSym, Size);
-        Asm->OutStreamer->EmitSymbolValue(Entry.EndSym, Size);
+        Asm->OutStreamer->EmitSymbolValue(Entry.Begin, Size);
+        Asm->OutStreamer->EmitSymbolValue(Entry.End, Size);
       }
 
       emitDebugLocEntryLocation(Entry, CU);
@@ -2386,9 +2386,9 @@ void DwarfDebug::emitDebugLocDWO() {
       // Ideally/in v5, this could use SectionLabels to reuse existing addresses
       // in the address pool to minimize object size/relocations.
       Asm->emitInt8(dwarf::DW_LLE_startx_length);
-      unsigned idx = AddrPool.getIndex(Entry.BeginSym);
+      unsigned idx = AddrPool.getIndex(Entry.Begin);
       Asm->EmitULEB128(idx);
-      Asm->EmitLabelDifference(Entry.EndSym, Entry.BeginSym, 4);
+      Asm->EmitLabelDifference(Entry.End, Entry.Begin, 4);
 
       emitDebugLocEntryLocation(Entry, List.CU);
     }
