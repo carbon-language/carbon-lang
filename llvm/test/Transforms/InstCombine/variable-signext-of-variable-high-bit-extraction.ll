@@ -17,8 +17,8 @@ define i32 @t0(i64 %data, i32 %nbits) {
 ; CHECK-NEXT:    call void @use32(i32 [[EXTRACTED_NARROW]])
 ; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW:%.*]] = sub i32 32, [[NBITS]]
 ; CHECK-NEXT:    call void @use32(i32 [[NUM_HIGH_BITS_TO_SMEAR_NARROW]])
-; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i32 [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i32 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[DATA]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[SIGNEXTENDED]]
 ;
   %skip_high = sub i32 64, %nbits
@@ -51,8 +51,8 @@ define i32 @t0_zext_of_nbits(i64 %data, i8 %nbits_narrow) {
 ; CHECK-NEXT:    call void @use16(i16 [[NUM_HIGH_BITS_TO_SMEAR_NARROW_NARROW]])
 ; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW:%.*]] = zext i16 [[NUM_HIGH_BITS_TO_SMEAR_NARROW_NARROW]] to i32
 ; CHECK-NEXT:    call void @use32(i32 [[NUM_HIGH_BITS_TO_SMEAR_NARROW]])
-; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i32 [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i32 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[DATA]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[SIGNEXTENDED]]
 ;
   %nbits = zext i8 %nbits_narrow to i16
@@ -85,8 +85,8 @@ define i32 @t0_exact(i64 %data, i32 %nbits) {
 ; CHECK-NEXT:    call void @use32(i32 [[EXTRACTED_NARROW]])
 ; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW:%.*]] = sub i32 32, [[NBITS]]
 ; CHECK-NEXT:    call void @use32(i32 [[NUM_HIGH_BITS_TO_SMEAR_NARROW]])
-; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i32 [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i32 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i64 [[DATA]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[SIGNEXTENDED]]
 ;
   %skip_high = sub i32 64, %nbits
@@ -118,8 +118,7 @@ define i32 @t1_redundant_sext(i64 %data, i32 %nbits) {
 ; CHECK-NEXT:    call void @use32(i32 [[NUM_HIGH_BITS_TO_SMEAR_NARROW]])
 ; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i32 [[EXTRACTED_WITH_SIGNEXTENSION_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNBIT_POSITIONED]])
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i32 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
-; CHECK-NEXT:    ret i32 [[SIGNEXTENDED]]
+; CHECK-NEXT:    ret i32 [[EXTRACTED_WITH_SIGNEXTENSION_NARROW]]
 ;
   %skip_high = sub i32 64, %nbits
   call void @use32(i32 %skip_high)
@@ -147,7 +146,7 @@ define i64 @t2_notrunc(i64 %data, i64 %nbits) {
 ; CHECK-NEXT:    call void @use64(i64 [[NUM_HIGH_BITS_TO_SMEAR]])
 ; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i64 [[EXTRACTED]], [[NUM_HIGH_BITS_TO_SMEAR]]
 ; CHECK-NEXT:    call void @use64(i64 [[SIGNBIT_POSITIONED]])
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i64 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i64 [[DATA]], [[SKIP_HIGH]]
 ; CHECK-NEXT:    ret i64 [[SIGNEXTENDED]]
 ;
   %skip_high = sub i64 64, %nbits
@@ -172,8 +171,7 @@ define i64 @t3_notrunc_redundant_sext(i64 %data, i64 %nbits) {
 ; CHECK-NEXT:    call void @use64(i64 [[NUM_HIGH_BITS_TO_SMEAR]])
 ; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i64 [[EXTRACTED]], [[NUM_HIGH_BITS_TO_SMEAR]]
 ; CHECK-NEXT:    call void @use64(i64 [[SIGNBIT_POSITIONED]])
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i64 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR]]
-; CHECK-NEXT:    ret i64 [[SIGNEXTENDED]]
+; CHECK-NEXT:    ret i64 [[EXTRACTED]]
 ;
   %skip_high = sub i64 64, %nbits
   call void @use64(i64 %skip_high)
@@ -191,11 +189,8 @@ define <2 x i32> @t4_vec(<2 x i64> %data, <2 x i32> %nbits) {
 ; CHECK-LABEL: @t4_vec(
 ; CHECK-NEXT:    [[SKIP_HIGH:%.*]] = sub <2 x i32> <i32 64, i32 64>, [[NBITS:%.*]]
 ; CHECK-NEXT:    [[SKIP_HIGH_WIDE:%.*]] = zext <2 x i32> [[SKIP_HIGH]] to <2 x i64>
-; CHECK-NEXT:    [[EXTRACTED:%.*]] = lshr <2 x i64> [[DATA:%.*]], [[SKIP_HIGH_WIDE]]
-; CHECK-NEXT:    [[EXTRACTED_NARROW:%.*]] = trunc <2 x i64> [[EXTRACTED]] to <2 x i32>
-; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW:%.*]] = sub <2 x i32> <i32 32, i32 32>, [[NBITS]]
-; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl <2 x i32> [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr <2 x i32> [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <2 x i64> [[DATA:%.*]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc <2 x i64> [[TMP1]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[SIGNEXTENDED]]
 ;
   %skip_high = sub <2 x i32> <i32 64, i32 64>, %nbits
@@ -212,12 +207,8 @@ define <3 x i32> @t5_vec_undef(<3 x i64> %data, <3 x i32> %nbits) {
 ; CHECK-LABEL: @t5_vec_undef(
 ; CHECK-NEXT:    [[SKIP_HIGH:%.*]] = sub <3 x i32> <i32 64, i32 64, i32 undef>, [[NBITS:%.*]]
 ; CHECK-NEXT:    [[SKIP_HIGH_WIDE:%.*]] = zext <3 x i32> [[SKIP_HIGH]] to <3 x i64>
-; CHECK-NEXT:    [[EXTRACTED:%.*]] = lshr <3 x i64> [[DATA:%.*]], [[SKIP_HIGH_WIDE]]
-; CHECK-NEXT:    [[EXTRACTED_NARROW:%.*]] = trunc <3 x i64> [[EXTRACTED]] to <3 x i32>
-; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW0:%.*]] = sub <3 x i32> <i32 32, i32 32, i32 undef>, [[NBITS]]
-; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW1:%.*]] = sub <3 x i32> <i32 undef, i32 32, i32 32>, [[NBITS]]
-; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl <3 x i32> [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW0]]
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr <3 x i32> [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <3 x i64> [[DATA:%.*]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc <3 x i64> [[TMP1]] to <3 x i32>
 ; CHECK-NEXT:    ret <3 x i32> [[SIGNEXTENDED]]
 ;
   %skip_high = sub <3 x i32> <i32 64, i32 64, i32 undef>, %nbits
@@ -244,8 +235,8 @@ define i32 @t6_extrause_good0(i64 %data, i32 %nbits) {
 ; CHECK-NEXT:    call void @use32(i32 [[EXTRACTED_NARROW]])
 ; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW:%.*]] = sub i32 32, [[NBITS]]
 ; CHECK-NEXT:    call void @use32(i32 [[NUM_HIGH_BITS_TO_SMEAR_NARROW]])
-; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i32 [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i32 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[DATA]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[SIGNEXTENDED]]
 ;
   %skip_high = sub i32 64, %nbits
@@ -274,10 +265,10 @@ define i32 @t7_extrause_good1(i64 %data, i32 %nbits) {
 ; CHECK-NEXT:    call void @use32(i32 [[EXTRACTED_NARROW]])
 ; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW0:%.*]] = sub i32 32, [[NBITS]]
 ; CHECK-NEXT:    call void @use32(i32 [[NUM_HIGH_BITS_TO_SMEAR_NARROW0]])
-; CHECK-NEXT:    [[NUM_HIGH_BITS_TO_SMEAR_NARROW1:%.*]] = sub i32 32, [[NBITS]]
 ; CHECK-NEXT:    [[SIGNBIT_POSITIONED:%.*]] = shl i32 [[EXTRACTED_NARROW]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW0]]
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNBIT_POSITIONED]])
-; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = ashr i32 [[SIGNBIT_POSITIONED]], [[NUM_HIGH_BITS_TO_SMEAR_NARROW1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[DATA]], [[SKIP_HIGH_WIDE]]
+; CHECK-NEXT:    [[SIGNEXTENDED:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[SIGNEXTENDED]]
 ;
   %skip_high = sub i32 64, %nbits
