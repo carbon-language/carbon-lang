@@ -30,6 +30,8 @@ if(BUILD_WITH_CLANG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${GCC}")
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wstring-conversion")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcovered-switch-default")
 endif()
 
 # Set RPATH in every executable, overriding the default setting.

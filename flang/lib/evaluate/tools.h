@@ -498,7 +498,7 @@ std::optional<Expr<SomeComplex>> ConstructComplex(parser::ContextualMessages &,
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   using Ty = TypeOf<A>;
   static_assert(
-      std::is_same_v<Scalar<Ty>, std::decay_t<A>> || !"TypeOf<> is broken");
+      std::is_same_v<Scalar<Ty>, std::decay_t<A>>, "TypeOf<> is broken");
   return Expr<TypeOf<A>>{Constant<Ty>{x}};
 }
 

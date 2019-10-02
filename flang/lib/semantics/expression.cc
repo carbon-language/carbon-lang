@@ -128,7 +128,6 @@ common::IfNoLvalue<MaybeExpr, WRAPPED> TypedWrapper(
         dyType.kind(), std::move(x));
   case TypeCategory::Derived:
     return AsGenericExpr(Expr<SomeDerived>{WRAPPER<SomeDerived>{std::move(x)}});
-  default: CRASH_NO_CASE;
   }
 }
 
@@ -203,7 +202,7 @@ MaybeExpr ExpressionAnalyzer::ApplySubscripts(
                 ArrayRef{std::move(c), std::move(subscripts)});
           },
           [&](auto &&) -> MaybeExpr {
-            CHECK(!"bad base for ArrayRef");
+            DIE("bad base for ArrayRef");
             return std::nullopt;
           },
       },
@@ -902,7 +901,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
       return MakeFunctionRef(
           name, ActualArguments{ActualArgument{std::move(*base)}});
     } else {
-      common::die("unexpected MiscDetails::Kind");
+      DIE("unexpected MiscDetails::Kind");
     }
   } else {
     Say(name, "derived type required before component reference"_err_en_US);

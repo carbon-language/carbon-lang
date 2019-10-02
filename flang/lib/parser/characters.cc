@@ -123,7 +123,6 @@ EncodedCharacter EncodeCharacter(Encoding encoding, char32_t ucs) {
   switch (encoding) {
   case Encoding::LATIN_1: return EncodeCharacter<Encoding::LATIN_1>(ucs);
   case Encoding::UTF_8: return EncodeCharacter<Encoding::UTF_8>(ucs);
-  default: CRASH_NO_CASE;
   }
 }
 
@@ -255,7 +254,6 @@ DecodedCharacter DecodeCharacter(Encoding encoding, const char *cp,
     return DecodeCharacter<Encoding::LATIN_1>(cp, bytes, backslashEscapes);
   case Encoding::UTF_8:
     return DecodeCharacter<Encoding::UTF_8>(cp, bytes, backslashEscapes);
-  default: CRASH_NO_CASE;
   }
 }
 

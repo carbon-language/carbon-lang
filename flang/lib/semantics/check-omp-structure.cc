@@ -442,10 +442,10 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
         OmpClause::NUM_TEAMS, OmpClause::THREAD_LIMIT, OmpClause::DEFAULT};
     SetContextAllowedOnce(allowedOnce);
   } break;
-      // 2.10.1 target-data-clause -> if-clause |
-      //                              device-clause |
-      //                              map-clause |
-      //                              use-device-ptr-clause
+    // 2.10.1 target-data-clause -> if-clause |
+    //                              device-clause |
+    //                              map-clause |
+    //                              use-device-ptr-clause
   case parser::OmpBlockDirective::Directive::TargetData: {
     PushContext(beginDir.source, OmpDirective::TARGET_DATA);
     OmpClauseSet allowed{
@@ -599,9 +599,6 @@ void OmpStructureChecker::Enter(
     OmpClauseSet allowed{OmpClause::DEPEND};
     SetContextAllowed(allowed);
   } break;
-  default:
-    // TODO others
-    break;
   }
 }
 

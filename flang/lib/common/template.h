@@ -112,8 +112,7 @@ std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
 }
 
 // Convert an std::optional to an ordinary pointer
-template<typename A>
-const A *GetPtrFromOptional(const std::optional<A> &x) {
+template<typename A> const A *GetPtrFromOptional(const std::optional<A> &x) {
   if (x.has_value()) {
     return &*x;
   } else {
@@ -192,8 +191,8 @@ constexpr bool AreSameType{AreSameTypeHelper<Ts...>::value()};
 
 template<typename> struct TupleToVariantHelper;
 template<typename... Ts> struct TupleToVariantHelper<std::tuple<Ts...>> {
-  static_assert(AreTypesDistinct<Ts...> ||
-      !"TupleToVariant: types are not pairwise distinct");
+  static_assert(AreTypesDistinct<Ts...>,
+      "TupleToVariant: types are not pairwise distinct");
   using type = std::variant<Ts...>;
 };
 template<typename TUPLE>

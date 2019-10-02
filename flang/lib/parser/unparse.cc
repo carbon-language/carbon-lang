@@ -679,7 +679,6 @@ public:
       break;
     case common::ImportKind::None: Word(", NONE"); break;
     case common::ImportKind::All: Word(", ALL"); break;
-    default: CRASH_NO_CASE;
     }
   }
   void Unparse(const NamelistStmt &x) {  // R868
@@ -1451,7 +1450,6 @@ public:
       FMT(A);
       FMT(D);
 #undef FMT
-    default: CRASH_NO_CASE;
     }
     Walk(x.width), Walk(".", x.digits), Walk("E", x.exponentWidth);
   }
@@ -1511,7 +1509,6 @@ public:
 #undef FMT
     case format::ControlEditDesc::Kind::Dollar: Put('$'); break;
     case format::ControlEditDesc::Kind::Backslash: Put('\\'); break;
-    default: CRASH_NO_CASE;
     }
   }
 
@@ -2049,7 +2046,6 @@ public:
     case OmpLoopDirective::Directive::TeamsDistributeSimd:
       Word("TEAMS DISTRIBUTE SIMD ");
       break;
-    default: CRASH_NO_CASE;
     }
   }
   void Unparse(const OmpObjectList &x) { Walk(x.v, ","); }

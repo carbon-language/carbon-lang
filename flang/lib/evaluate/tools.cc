@@ -592,7 +592,6 @@ std::optional<Expr<SomeType>> ConvertToType(
       }
     }
     break;
-  default: CRASH_NO_CASE;
   }
   return std::nullopt;
 }

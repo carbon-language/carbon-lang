@@ -166,7 +166,6 @@ std::string ParamValue::AsFortran() const {
     } else {
       return "";
     }
-  default: CRASH_NO_CASE;
   }
 }
 
@@ -253,7 +252,6 @@ std::string DeclTypeSpec::AsFortran() const {
   case ClassDerived: return "CLASS(" + derivedTypeSpec().AsFortran() + ')';
   case TypeStar: return "TYPE(*)";
   case ClassStar: return "CLASS(*)";
-  default: CRASH_NO_CASE;
   }
 }
 

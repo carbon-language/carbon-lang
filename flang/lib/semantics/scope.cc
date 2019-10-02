@@ -216,7 +216,6 @@ bool Scope::CanImport(const SourceName &name) const {
   case ImportKind::All:
   case ImportKind::Default: return true;
   case ImportKind::Only: return importNames_.count(name) > 0;
-  default: CRASH_NO_CASE;
   }
 }
 

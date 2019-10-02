@@ -1195,7 +1195,6 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         common::die("INTERNAL: result-only rank code appears on argument '%s' "
                     "for intrinsic '%s'",
             d.keyword, name);
-      default: CRASH_NO_CASE;
       }
       if (!argOk) {
         messages.Say("'%s=' argument has unacceptable rank %d"_err_en_US,
@@ -1354,7 +1353,6 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   case Rank::reduceOperation:
     common::die("INTERNAL: bad Rank code on intrinsic '%s' result", name);
     break;
-  default: CRASH_NO_CASE;
   }
   CHECK(resultRank >= 0);
 
@@ -1764,22 +1762,19 @@ IntrinsicProcTable IntrinsicProcTable::Configure(
 }
 
 bool IntrinsicProcTable::IsIntrinsic(const std::string &name) const {
-  CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
-  return impl_->IsIntrinsic(name);
+  return DEREF(impl_).IsIntrinsic(name);
 }
 
 std::optional<SpecificCall> IntrinsicProcTable::Probe(
     const CallCharacteristics &call, ActualArguments &arguments,
     FoldingContext &context) const {
-  CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
-  return impl_->Probe(call, arguments, context, *this);
+  return DEREF(impl_).Probe(call, arguments, context, *this);
 }
 
 std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
 IntrinsicProcTable::IsUnrestrictedSpecificIntrinsicFunction(
     const std::string &name) const {
-  CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
-  return impl_->IsUnrestrictedSpecificIntrinsicFunction(name);
+  return DEREF(impl_).IsUnrestrictedSpecificIntrinsicFunction(name);
 }
 
 std::ostream &TypePattern::Dump(std::ostream &o) const {

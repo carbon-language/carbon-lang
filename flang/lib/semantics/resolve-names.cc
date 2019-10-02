@@ -910,7 +910,7 @@ private:
             "Declaration of '%s' conflicts with its use as internal procedure"_err_en_US,
             symbol, "Internal procedure definition"_en_US);
       } else {
-        CHECK(!"unexpected kind");
+        DIE("unexpected kind");
       }
     } else if (std::is_same_v<ObjectEntityDetails, T> &&
         symbol.has<ProcEntityDetails>()) {
@@ -4824,8 +4824,7 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 
       );
     }
-  case common::TypeCategory::Character:
-  default: CRASH_NO_CASE;
+  case common::TypeCategory::Character: CRASH_NO_CASE;
   }
 }
 
@@ -5272,7 +5271,7 @@ void ResolveNamesVisitor::HandleProcedureName(
     ConvertToProcEntity(*symbol);
     SetProcFlag(name, *symbol, flag);
   } else if (symbol->has<UnknownDetails>()) {
-    CHECK(!"unexpected UnknownDetails");
+    DIE("unexpected UnknownDetails");
   } else if (CheckUseError(name)) {
     // error was reported
   } else {
@@ -5731,7 +5730,6 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   case ProgramTree::Kind::Module: BeginModule(node.name(), false); return true;
   case ProgramTree::Kind::Submodule:
     return BeginSubmodule(node.name(), node.GetParentId());
-  default: CRASH_NO_CASE;
   }
 }
 

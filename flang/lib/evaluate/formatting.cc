@@ -265,9 +265,10 @@ std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
 template<typename TO, TypeCategory FROMCAT>
 std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
   static_assert(TO::category == TypeCategory::Integer ||
-      TO::category == TypeCategory::Real ||
-      TO::category == TypeCategory::Character ||
-      TO::category == TypeCategory::Logical || !"Convert<> to bad category!");
+          TO::category == TypeCategory::Real ||
+          TO::category == TypeCategory::Character ||
+          TO::category == TypeCategory::Logical,
+      "Convert<> to bad category!");
   if constexpr (TO::category == TypeCategory::Character) {
     this->left().AsFortran(o << "achar(iachar(") << ')';
   } else if constexpr (TO::category == TypeCategory::Integer) {
