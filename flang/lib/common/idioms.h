@@ -80,9 +80,8 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 #if __clang__
 #define SWITCH_COVERS_ALL_CASES
 #else
-#define SWITCH_COVERS_ALL_CASES \
-  default: CRASH_NO_CASE; \
-           #endif
+#define SWITCH_COVERS_ALL_CASES default:;
+#endif
 
 // For cheap assertions that should be applied in production.
 // To disable, compile with '-DCHECK=(void)'
