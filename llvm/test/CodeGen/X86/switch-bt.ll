@@ -157,12 +157,13 @@ sw.epilog:
 }
 
 
-; Omit the range check when the default case is unreachable, see PR43129.
+; TODO: Omit the range check when the default case is unreachable, see PR43129.
 declare void @g(i32)
 define void @test5(i32 %x) {
 
 ; CHECK-LABEL: test5
-; CHECK-NOT: cmp
+; CHECK: cmpl $8, %edi
+; CHECK: ja
 
 ; 73 = 2^0 + 2^3 + 2^6
 ; CHECK:      movl $73
