@@ -2285,10 +2285,14 @@ OptimizeFunctions(Module &M,
     // So, remove unreachable blocks from the function, because a) there's
     // no point in analyzing them and b) GlobalOpt should otherwise grow
     // some more complicated logic to break these cycles.
+    // Removing unreachable blocks might invalidate the dominator so we
+    // recalculate it.
     if (!F->isDeclaration()) {
-      auto &DT = LookupDomTree(*F);
-      DomTreeUpdater DTU(DT, DomTreeUpdater::UpdateStrategy::Lazy);
-      Changed |= removeUnreachableBlocks(*F, nullptr, &DTU);
+      if (removeUnreachableBlocks(*F)) {
+        auto &DT = LookupDomTree(*F);
+        DT.recalculate(*F);
+        Changed = true;
+      }
     }
 
     Changed |= processGlobal(*F, GetTLI, LookupDomTree);
