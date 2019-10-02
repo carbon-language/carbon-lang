@@ -3447,7 +3447,7 @@ struct OmpClause {
   WRAPPER_CLASS(Copyin, OmpObjectList);
   WRAPPER_CLASS(Copyprivate, OmpObjectList);
   WRAPPER_CLASS(Device, ScalarIntExpr);
-  WRAPPER_CLASS(DistSchedule, ScalarIntExpr);
+  WRAPPER_CLASS(DistSchedule, std::optional<ScalarIntExpr>);
   WRAPPER_CLASS(Final, ScalarLogicalExpr);
   WRAPPER_CLASS(Firstprivate, OmpObjectList);
   WRAPPER_CLASS(From, OmpObjectList);
