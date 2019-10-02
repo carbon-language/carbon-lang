@@ -751,6 +751,7 @@ TYPE_PARSER(recovery(
 // R737 data-component-def-stmt ->
 //        declaration-type-spec [[, component-attr-spec-list] ::]
 //        component-decl-list
+// N.B. The standard requires double colons if there's an initializer.
 TYPE_PARSER(construct<DataComponentDefStmt>(declarationTypeSpec,
     optionalListBeforeColons(Parser<ComponentAttrSpec>{}),
     nonemptyList(
@@ -999,11 +1000,14 @@ TYPE_PARSER(construct<AcImpliedDoControl>(
 //        declaration-type-spec [[, attr-spec]... ::] entity-decl-list
 TYPE_PARSER(
     construct<TypeDeclarationStmt>(declarationTypeSpec,
-        optionalListBeforeColons(Parser<AttrSpec>{}),
+        defaulted("," >> nonemptyList(Parser<AttrSpec>{})) / "::",
         nonemptyList("expected entity declarations"_err_en_US, entityDecl)) ||
-    // PGI-only extension: don't require the colons
-    // N.B.: The standard requires the colons if the entity
-    // declarations contain initializers.
+    // C806: no initializers allowed without colons ("REALA=1" is ambiguous)
+    construct<TypeDeclarationStmt>(declarationTypeSpec,
+        construct<std::list<AttrSpec>>(),
+        nonemptyList(
+            "expected entity declarations"_err_en_US, entityDeclWithoutInit)) ||
+    // PGI-only extension: comma in place of doubled colons
     extension<LanguageFeature::MissingColons>(construct<TypeDeclarationStmt>(
         declarationTypeSpec, defaulted("," >> nonemptyList(Parser<AttrSpec>{})),
         withMessage("expected entity declarations"_err_en_US,
