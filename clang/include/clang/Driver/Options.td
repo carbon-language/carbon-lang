@@ -633,6 +633,9 @@ def emit_llvm : Flag<["-"], "emit-llvm">, Flags<[CC1Option]>, Group<Action_Group
   HelpText<"Use the LLVM representation for assembler and object files">;
 def emit_iterface_stubs : Flag<["-"], "emit-interface-stubs">, Flags<[CC1Option]>, Group<Action_Group>,
   HelpText<"Generate Inteface Stub Files.">;
+def emit_merged_ifs : Flag<["-"], "emit-merged-ifs">,
+  Flags<[CC1Option]>, Group<Action_Group>,
+  HelpText<"Generate Interface Stub Files, emit merged text not binary.">;
 def iterface_stub_version_EQ : JoinedOrSeparate<["-"], "interface-stub-version=">, Flags<[CC1Option]>;
 def exported__symbols__list : Separate<["-"], "exported_symbols_list">;
 def e : JoinedOrSeparate<["-"], "e">, Group<Link_Group>;
