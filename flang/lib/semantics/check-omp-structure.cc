@@ -306,6 +306,20 @@ void OmpStructureChecker::Enter(const parser::OpenMPLoopConstruct &x) {
     SetContextAllowedExclusive(allowedExclusive);
   } break;
 
+  // 2.10.8 distribute-clause -> private-clause |
+  //                             firstprivate-clause |
+  //                             lastprivate-clause |
+  //                             collapse-clause |
+  //                             dist-schedule-clause
+  case parser::OmpLoopDirective::Directive::Distribute: {
+    PushContext(beginDir.source, OmpDirective::DISTRIBUTE);
+    OmpClauseSet allowed{
+        OmpClause::PRIVATE, OmpClause::FIRSTPRIVATE, OmpClause::LASTPRIVATE};
+    SetContextAllowed(allowed);
+    OmpClauseSet allowedOnce{OmpClause::COLLAPSE, OmpClause::DIST_SCHEDULE};
+    SetContextAllowedOnce(allowedOnce);
+  } break;
+
   default:
     // TODO others
     break;

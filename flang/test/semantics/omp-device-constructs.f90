@@ -150,4 +150,39 @@ program main
 
   !ERROR: Only the FROM, RELEASE, or DELETE map types are permitted for MAP clauses on the TARGET EXIT DATA directive
   !$omp target exit data map(to:a)
+
+  !$omp target
+  !$omp distribute
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end distribute
+  !$omp end target
+
+  !$omp target
+  !ERROR: At most one COLLAPSE clause can appear on the DISTRIBUTE directive
+  !$omp distribute collapse(2) collapse(3)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end distribute
+  !$omp end target
+
+  !$omp target
+  !$omp distribute dist_schedule(static, 2)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end distribute
+  !$omp end target
+
+  !$omp target
+  !ERROR: At most one DIST_SCHEDULE clause can appear on the DISTRIBUTE directive
+  !$omp distribute dist_schedule(static, 2) dist_schedule(static, 3)
+  do i = 1, N
+     a = 3.14
+  enddo
+  !$omp end distribute
+  !$omp end target
+
 end program main
