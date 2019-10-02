@@ -246,13 +246,14 @@ bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
 
 std::string DeclTypeSpec::AsFortran() const {
   switch (category_) {
+    SWITCH_COVERS_ALL_CASES
   case Numeric: return numericTypeSpec().AsFortran();
   case Logical: return logicalTypeSpec().AsFortran();
   case Character: return characterTypeSpec().AsFortran();
   case TypeDerived: return "TYPE(" + derivedTypeSpec().AsFortran() + ')';
   case ClassDerived: return "CLASS(" + derivedTypeSpec().AsFortran() + ')';
   case TypeStar: return "TYPE(*)";
-  case ClassStar: return "CLASS(*)"; SWITCH_COVERS_ALL_CASES
+  case ClassStar: return "CLASS(*)";
   }
 }
 

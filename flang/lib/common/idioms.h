@@ -71,17 +71,19 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 
 #define DIE(x) Fortran::common::die(x " at " __FILE__ "(%d)", __LINE__)
 
-// For switch statements without default: labels.
+// For switch statement default: labels.
 #define CRASH_NO_CASE DIE("no case")
 
+// clang-format off
 // For switch statements whose cases have return statements for
 // all possibilities.  Clang emits warnings if the default: is
 // present, gcc emits warnings if it is absent.
 #if __clang__
 #define SWITCH_COVERS_ALL_CASES
 #else
-#define SWITCH_COVERS_ALL_CASES default:;
+#define SWITCH_COVERS_ALL_CASES default: CRASH_NO_CASE;
 #endif
+// clang-format on
 
 // For cheap assertions that should be applied in production.
 // To disable, compile with '-DCHECK=(void)'
