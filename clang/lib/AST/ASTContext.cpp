@@ -1575,10 +1575,9 @@ void ASTContext::addedLocalImportDecl(ImportDecl *Import) {
 /// getFloatTypeSemantics - Return the APFloat 'semantics' for the specified
 /// scalar floating point type.
 const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
-  const auto *BT = T->getAs<BuiltinType>();
-  assert(BT && "Not a floating point type!");
-  switch (BT->getKind()) {
-  default: llvm_unreachable("Not a floating point type!");
+  switch (T->castAs<BuiltinType>()->getKind()) {
+  default:
+    llvm_unreachable("Not a floating point type!");
   case BuiltinType::Float16:
   case BuiltinType::Half:
     return Target->getHalfFormat();
@@ -2869,7 +2868,7 @@ QualType ASTContext::getFunctionTypeWithExceptionSpec(
 
   // Anything else must be a function type. Rebuild it with the new exception
   // specification.
-  const auto *Proto = Orig->getAs<FunctionProtoType>();
+  const auto *Proto = Orig->castAs<FunctionProtoType>();
   return getFunctionType(
       Proto->getReturnType(), Proto->getParamTypes(),
       Proto->getExtProtoInfo().withExceptionSpec(ESI));
@@ -5678,7 +5677,6 @@ static FloatingRank getFloatingRank(QualType T) {
   if (const auto *CT = T->getAs<ComplexType>())
     return getFloatingRank(CT->getElementType());
 
-  assert(T->getAs<BuiltinType>() && "getFloatingRank(): not a floating type");
   switch (T->castAs<BuiltinType>()->getKind()) {
   default: llvm_unreachable("getFloatingRank(): not a floating type");
   case BuiltinType::Float16:    return Float16Rank;
@@ -6056,12 +6054,10 @@ QualType ASTContext::getObjCSuperType() const {
 }
 
 void ASTContext::setCFConstantStringType(QualType T) {
-  const auto *TD = T->getAs<TypedefType>();
-  assert(TD && "Invalid CFConstantStringType");
+  const auto *TD = T->castAs<TypedefType>();
   CFConstantStringTypeDecl = cast<TypedefDecl>(TD->getDecl());
   const auto *TagType =
-      CFConstantStringTypeDecl->getUnderlyingType()->getAs<RecordType>();
-  assert(TagType && "Invalid CFConstantStringType");
+      CFConstantStringTypeDecl->getUnderlyingType()->castAs<RecordType>();
   CFConstantStringTagDecl = TagType->getDecl();
 }
 
@@ -9114,34 +9110,30 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     return {};
   case Type::Vector:
     // FIXME: The merged type should be an ExtVector!
-    if (areCompatVectorTypes(LHSCan->getAs<VectorType>(),
-                             RHSCan->getAs<VectorType>()))
+    if (areCompatVectorTypes(LHSCan->castAs<VectorType>(),
+                             RHSCan->castAs<VectorType>()))
       return LHS;
     return {};
   case Type::ObjCObject: {
     // Check if the types are assignment compatible.
     // FIXME: This should be type compatibility, e.g. whether
     // "LHS x; RHS x;" at global scope is legal.
-    const auto *LHSIface = LHS->getAs<ObjCObjectType>();
-    const auto *RHSIface = RHS->getAs<ObjCObjectType>();
-    if (canAssignObjCInterfaces(LHSIface, RHSIface))
+    if (canAssignObjCInterfaces(LHS->castAs<ObjCObjectType>(),
+                                RHS->castAs<ObjCObjectType>()))
       return LHS;
-
     return {};
   }
   case Type::ObjCObjectPointer:
     if (OfBlockPointer) {
       if (canAssignObjCInterfacesInBlockPointer(
-                                          LHS->getAs<ObjCObjectPointerType>(),
-                                          RHS->getAs<ObjCObjectPointerType>(),
-                                          BlockReturnType))
+              LHS->castAs<ObjCObjectPointerType>(),
+              RHS->castAs<ObjCObjectPointerType>(), BlockReturnType))
         return LHS;
       return {};
     }
-    if (canAssignObjCInterfaces(LHS->getAs<ObjCObjectPointerType>(),
-                                RHS->getAs<ObjCObjectPointerType>()))
+    if (canAssignObjCInterfaces(LHS->castAs<ObjCObjectPointerType>(),
+                                RHS->castAs<ObjCObjectPointerType>()))
       return LHS;
-
     return {};
   case Type::Pipe:
     assert(LHS != RHS &&
@@ -9226,7 +9218,7 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
     if (ResReturnType == NewReturnType || ResReturnType == OldReturnType) {
       // id foo(); ... __strong id foo(); or: __strong id foo(); ... id foo();
       // In either case, use OldReturnType to build the new function type.
-      const auto *F = LHS->getAs<FunctionType>();
+      const auto *F = LHS->castAs<FunctionType>();
       if (const auto *FPT = cast<FunctionProtoType>(F)) {
         FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
         EPI.ExtInfo = getFunctionExtInfo(LHS);
@@ -9304,9 +9296,7 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) const {
   if (const auto *ETy = T->getAs<EnumType>())
     T = ETy->getDecl()->getIntegerType();
 
-  const auto *BTy = T->getAs<BuiltinType>();
-  assert(BTy && "Unexpected signed integer or fixed point type");
-  switch (BTy->getKind()) {
+  switch (T->castAs<BuiltinType>()->getKind()) {
   case BuiltinType::Char_S:
   case BuiltinType::SChar:
     return UnsignedCharTy;
@@ -10599,9 +10589,8 @@ clang::LazyGenerationalUpdatePtr<
 unsigned char ASTContext::getFixedPointScale(QualType Ty) const {
   assert(Ty->isFixedPointType());
 
-  const auto *BT = Ty->getAs<BuiltinType>();
   const TargetInfo &Target = getTargetInfo();
-  switch (BT->getKind()) {
+  switch (Ty->castAs<BuiltinType>()->getKind()) {
     default:
       llvm_unreachable("Not a fixed point type!");
     case BuiltinType::ShortAccum:
@@ -10646,9 +10635,8 @@ unsigned char ASTContext::getFixedPointScale(QualType Ty) const {
 unsigned char ASTContext::getFixedPointIBits(QualType Ty) const {
   assert(Ty->isFixedPointType());
 
-  const auto *BT = Ty->getAs<BuiltinType>();
   const TargetInfo &Target = getTargetInfo();
-  switch (BT->getKind()) {
+  switch (Ty->castAs<BuiltinType>()->getKind()) {
     default:
       llvm_unreachable("Not a fixed point type!");
     case BuiltinType::ShortAccum:
@@ -10713,9 +10701,8 @@ APFixedPoint ASTContext::getFixedPointMin(QualType Ty) const {
 QualType ASTContext::getCorrespondingSignedFixedPointType(QualType Ty) const {
   assert(Ty->isUnsignedFixedPointType() &&
          "Expected unsigned fixed point type");
-  const auto *BTy = Ty->getAs<BuiltinType>();
 
-  switch (BTy->getKind()) {
+  switch (Ty->castAs<BuiltinType>()->getKind()) {
   case BuiltinType::UShortAccum:
     return ShortAccumTy;
   case BuiltinType::UAccum:
