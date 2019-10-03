@@ -11175,37 +11175,87 @@ bool checkContext<OMPDeclareVariantAttr::CtxSetImplementation,
   return !A->getImplVendor().compare("llvm");
 }
 
+static bool greaterCtxScore(ASTContext &Ctx, const Expr *LHS, const Expr *RHS) {
+  // If both scores are unknown, choose the very first one.
+  if (!LHS && !RHS)
+    return true;
+  // If only one is known, return this one.
+  if (LHS && !RHS)
+    return true;
+  if (!LHS && RHS)
+    return false;
+  llvm::APSInt LHSVal = LHS->EvaluateKnownConstInt(Ctx);
+  llvm::APSInt RHSVal = RHS->EvaluateKnownConstInt(Ctx);
+  return llvm::APSInt::compareValues(LHSVal, RHSVal) <= 0;
+}
+
+namespace {
+/// Comparator for the priority queue for context selector.
+class OMPDeclareVariantAttrComparer
+    : public std::greater<const OMPDeclareVariantAttr *> {
+private:
+  ASTContext &Ctx;
+
+public:
+  OMPDeclareVariantAttrComparer(ASTContext &Ctx) : Ctx(Ctx) {}
+  bool operator()(const OMPDeclareVariantAttr *LHS,
+                  const OMPDeclareVariantAttr *RHS) const {
+    const Expr *LHSExpr = nullptr;
+    const Expr *RHSExpr = nullptr;
+    if (LHS->getCtxScore() == OMPDeclareVariantAttr::ScoreSpecified)
+      LHSExpr = LHS->getScore();
+    if (RHS->getCtxScore() == OMPDeclareVariantAttr::ScoreSpecified)
+      RHSExpr = RHS->getScore();
+    return greaterCtxScore(Ctx, LHSExpr, RHSExpr);
+  }
+};
+} // anonymous namespace
+
 /// Finds the variant function that matches current context with its context
 /// selector.
-static const FunctionDecl *getDeclareVariantFunction(const FunctionDecl *FD) {
+static const FunctionDecl *getDeclareVariantFunction(ASTContext &Ctx,
+                                                     const FunctionDecl *FD) {
   if (!FD->hasAttrs() || !FD->hasAttr<OMPDeclareVariantAttr>())
     return FD;
   // Iterate through all DeclareVariant attributes and check context selectors.
-  SmallVector<const OMPDeclareVariantAttr *, 4> MatchingAttributes;
-  for (const auto * A : FD->specific_attrs<OMPDeclareVariantAttr>()) {
+  auto &&Comparer = [&Ctx](const OMPDeclareVariantAttr *LHS,
+                           const OMPDeclareVariantAttr *RHS) {
+    const Expr *LHSExpr = nullptr;
+    const Expr *RHSExpr = nullptr;
+    if (LHS->getCtxScore() == OMPDeclareVariantAttr::ScoreSpecified)
+      LHSExpr = LHS->getScore();
+    if (RHS->getCtxScore() == OMPDeclareVariantAttr::ScoreSpecified)
+      RHSExpr = RHS->getScore();
+    return greaterCtxScore(Ctx, LHSExpr, RHSExpr);
+  };
+  const OMPDeclareVariantAttr *TopMostAttr = nullptr;
+  for (const auto *A : FD->specific_attrs<OMPDeclareVariantAttr>()) {
+    const OMPDeclareVariantAttr *SelectedAttr = nullptr;
     switch (A->getCtxSelectorSet()) {
     case OMPDeclareVariantAttr::CtxSetImplementation:
       switch (A->getCtxSelector()) {
       case OMPDeclareVariantAttr::CtxVendor:
         if (checkContext<OMPDeclareVariantAttr::CtxSetImplementation,
                          OMPDeclareVariantAttr::CtxVendor>(A))
-          MatchingAttributes.push_back(A);
+          SelectedAttr = A;
         break;
       case OMPDeclareVariantAttr::CtxUnknown:
         llvm_unreachable(
-            "Unknown context selector in implementation selctor set.");
+            "Unknown context selector in implementation selector set.");
       }
       break;
     case OMPDeclareVariantAttr::CtxSetUnknown:
       llvm_unreachable("Unknown context selector set.");
     }
+    // If the attribute matches the context, find the attribute with the highest
+    // score.
+    if (SelectedAttr && (!TopMostAttr || Comparer(TopMostAttr, SelectedAttr)))
+      TopMostAttr = SelectedAttr;
   }
-  if (MatchingAttributes.empty())
+  if (!TopMostAttr)
     return FD;
-  // TODO: implement score analysis of multiple context selectors.
-  const OMPDeclareVariantAttr *MainAttr = MatchingAttributes.front();
   return cast<FunctionDecl>(
-      cast<DeclRefExpr>(MainAttr->getVariantFuncRef()->IgnoreParenImpCasts())
+      cast<DeclRefExpr>(TopMostAttr->getVariantFuncRef()->IgnoreParenImpCasts())
           ->getDecl());
 }
 
@@ -11216,7 +11266,7 @@ bool CGOpenMPRuntime::emitDeclareVariant(GlobalDecl GD, bool IsForDefinition) {
   llvm::GlobalValue *Orig = CGM.GetGlobalValue(MangledName);
   if (Orig && !Orig->isDeclaration())
     return false;
-  const FunctionDecl *NewFD = getDeclareVariantFunction(D);
+  const FunctionDecl *NewFD = getDeclareVariantFunction(CGM.getContext(), D);
   // Emit original function if it does not have declare variant attribute or the
   // context does not match.
   if (NewFD == D)
