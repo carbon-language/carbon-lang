@@ -1648,6 +1648,7 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     Register SrcReg = MI.getOperand(1).getReg();
     Register IdxReg = MI.getOperand(2).getReg();
     LLT DstTy = MRI.getType(DstReg);
+    (void)DstTy;
 
     assert(DstTy.getSizeInBits() == 64);
 
@@ -1715,6 +1716,7 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
     Register IdxReg = MI.getOperand(3).getReg();
     LLT SrcTy = MRI.getType(SrcReg);
     LLT InsTy = MRI.getType(InsReg);
+    (void)InsTy;
 
     assert(InsTy.getSizeInBits() == 64);
 
@@ -2921,4 +2923,3 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                                getOperandsMapping(OpdsMapping),
                                MI.getNumOperands());
 }
-
