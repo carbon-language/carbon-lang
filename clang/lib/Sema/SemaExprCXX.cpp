@@ -453,6 +453,9 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
   if (T->isVariablyModifiedType())
     return ExprError(Diag(TypeidLoc, diag::err_variably_modified_typeid) << T);
 
+  if (CheckQualifiedFunctionForTypeId(T, TypeidLoc))
+    return ExprError();
+
   return new (Context) CXXTypeidExpr(TypeInfoType.withConst(), Operand,
                                      SourceRange(TypeidLoc, RParenLoc));
 }

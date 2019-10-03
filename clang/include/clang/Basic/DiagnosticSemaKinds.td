@@ -6211,6 +6211,8 @@ def err_invalid_qualified_function_type : Error<
 def err_compound_qualified_function_type : Error<
   "%select{block pointer|pointer|reference}0 to function type %select{%2 |}1"
   "cannot have '%3' qualifier">;
+def err_qualified_function_typeid : Error<
+  "type operand %0 of 'typeid' cannot have '%1' qualifier">;
 
 def err_ref_qualifier_overload : Error<
   "cannot overload a member function %select{without a ref-qualifier|with "
