@@ -272,6 +272,13 @@ def note_constexpr_new_too_large : Note<
 def note_constexpr_new_too_small : Note<
   "cannot allocate array; evaluated array bound %0 is too small to hold "
   "%1 explicitly initialized elements">;
+def note_constexpr_new_untyped : Note<
+  "cannot allocate untyped memory in a constant expression; "
+  "use 'std::allocator<T>::allocate' to allocate memory of type 'T'">;
+def note_constexpr_new_not_complete_object_type : Note<
+  "cannot allocate memory of %select{incomplete|function}0 type %1">;
+def note_constexpr_operator_new_bad_size : Note<
+  "allocated size %0 is not a multiple of size %1 of element type %2">;
 def note_constexpr_delete_not_heap_alloc : Note<
   "delete of pointer '%0' that does not point to a heap-allocated object">;
 def note_constexpr_double_delete : Note<
@@ -279,8 +286,12 @@ def note_constexpr_double_delete : Note<
 def note_constexpr_double_destroy : Note<
   "destruction of object that is already being destroyed">;
 def note_constexpr_new_delete_mismatch : Note<
-  "%select{non-|}0array delete used to delete pointer to "
-  "%select{|non-}0array object of type %1">;
+  "%plural{2:'delete' used to delete pointer to object "
+  "allocated with 'std::allocator<...>::allocate'|"
+  ":%select{non-array delete|array delete|'std::allocator<...>::deallocate'}0 "
+  "used to delete pointer to "
+  "%select{array object of type %2|non-array object of type %2|"
+  "object allocated with 'new'}0}1">;
 def note_constexpr_delete_subobject : Note<
   "delete of pointer%select{ to subobject|}1 '%0' "
   "%select{|that does not point to complete object}1">;
