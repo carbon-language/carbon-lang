@@ -27,7 +27,7 @@ public:
                       int class_option = 'C',
                       int key_option = 'k', 
                       int value_option = 'v',
-                      char *class_long_option = "python-class",
+                      const char *class_long_option = "python-class",
                       const char *key_long_option = "python-class-key",
                       const char *value_long_option = "python-class-value",
                       bool required = false);

@@ -18,7 +18,7 @@ OptionGroupPythonClassWithDict::OptionGroupPythonClassWithDict
      int class_option,
      int key_option, 
      int value_option,
-     char *class_long_option,
+     const char *class_long_option,
      const char *key_long_option,
      const char *value_long_option,
      bool required) {
@@ -77,7 +77,6 @@ Status OptionGroupPythonClassWithDict::SetOptionValue(
     llvm::StringRef option_arg,
     ExecutionContext *execution_context) {
   Status error;
-  const int short_option = m_option_definition[option_idx].short_option;
   switch (option_idx) {
   case 0: {
     m_class_name.assign(option_arg);
