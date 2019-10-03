@@ -7211,7 +7211,7 @@ public:
 
     const ValueDecl *MD = E->getMemberDecl();
     if (const FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl())) {
-      assert(BaseTy->getAs<RecordType>()->getDecl()->getCanonicalDecl() ==
+      assert(BaseTy->castAs<RecordType>()->getDecl()->getCanonicalDecl() ==
              FD->getParent()->getCanonicalDecl() && "record / field mismatch");
       (void)BaseTy;
       if (!HandleLValueMember(this->Info, E, Result, FD))
