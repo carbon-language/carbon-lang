@@ -6845,8 +6845,11 @@ public:
         HasQualifier = ME->hasQualifier();
       } else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(Callee)) {
         // Indirect bound member calls ('.*' or '->*').
-        Member = dyn_cast_or_null<CXXMethodDecl>(
-            HandleMemberPointerAccess(Info, BE, ThisVal, false));
+        const ValueDecl *D =
+            HandleMemberPointerAccess(Info, BE, ThisVal, false);
+        if (!D)
+          return false;
+        Member = dyn_cast<CXXMethodDecl>(D);
         if (!Member)
           return Error(Callee);
         This = &ThisVal;
