@@ -2312,6 +2312,8 @@ class OffloadingActionBuilder final {
     /// compilation.
     bool CompileHostOnly = false;
     bool CompileDeviceOnly = false;
+    bool EmitLLVM = false;
+    bool EmitAsm = false;
 
     /// List of GPU architectures to use in this compilation.
     SmallVector<CudaArch, 4> GpuArchList;
@@ -2478,6 +2480,8 @@ class OffloadingActionBuilder final {
       CompileDeviceOnly = PartialCompilationArg &&
                           PartialCompilationArg->getOption().matches(
                               options::OPT_cuda_device_only);
+      EmitLLVM = Args.getLastArg(options::OPT_emit_llvm);
+      EmitAsm = Args.getLastArg(options::OPT_S);
 
       // Collect all cuda_gpu_arch parameters, removing duplicates.
       std::set<CudaArch> GpuArchs;
@@ -2664,7 +2668,8 @@ class OffloadingActionBuilder final {
       assert(!CompileHostOnly &&
              "Not expecting CUDA actions in host-only compilation.");
 
-      if (!Relocatable && CurPhase == phases::Backend) {
+      if (!Relocatable && CurPhase == phases::Backend && !EmitLLVM &&
+          !EmitAsm) {
         // If we are in backend phase, we attempt to generate the fat binary.
         // We compile each arch to IR and use a link action to generate code
         // object containing ISA. Then we use a special "link" action to create
@@ -2732,7 +2737,8 @@ class OffloadingActionBuilder final {
         A = C.getDriver().ConstructPhaseAction(C, Args, CurPhase, A,
                                                AssociatedOffloadKind);
 
-      return ABRT_Success;
+      return (CompileDeviceOnly && CurPhase == FinalPhase) ? ABRT_Ignore_Host
+                                                           : ABRT_Success;
     }
 
     void appendLinkDependences(OffloadAction::DeviceDependences &DA) override {
