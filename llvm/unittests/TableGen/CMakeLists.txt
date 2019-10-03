@@ -5,7 +5,6 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_unittest(TableGenTests
   CodeExpanderTest.cpp
-  $<TARGET_OBJECTS:obj.LLVMTableGenGlobalISel>
   )
-
 include_directories(${CMAKE_SOURCE_DIR}/utils/TableGen)
+target_link_libraries(TableGenTests PRIVATE LLVMTableGenGlobalISel)
