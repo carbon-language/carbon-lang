@@ -10300,6 +10300,7 @@ static bool isTargetShuffleEquivalent(ArrayRef<int> Mask,
 
 // Merges a general DAG shuffle mask and zeroable bit mask into a target shuffle
 // mask.
+// TODO: Do we need this? It might be better to use Mask+Zeroable directly.
 static SmallVector<int, 64> createTargetShuffleMask(ArrayRef<int> Mask,
                                                     const APInt &Zeroable) {
   int NumElts = Mask.size();
@@ -15452,7 +15453,8 @@ static SDValue lowerShuffleAsRepeatedMaskAndLanePermute(
 
 static bool matchShuffleWithSHUFPD(MVT VT, SDValue &V1, SDValue &V2,
                                    bool &ForceV1Zero, bool &ForceV2Zero,
-                                   unsigned &ShuffleImm, ArrayRef<int> Mask) {
+                                   unsigned &ShuffleImm, ArrayRef<int> Mask,
+                                   const APInt &Zeroable) {
   int NumElts = VT.getVectorNumElements();
   assert(VT.getScalarSizeInBits() == 64 &&
          (NumElts == 2 || NumElts == 4 || NumElts == 8) &&
@@ -15462,7 +15464,7 @@ static bool matchShuffleWithSHUFPD(MVT VT, SDValue &V1, SDValue &V2,
 
   bool ZeroLane[2] = { true, true };
   for (int i = 0; i < NumElts; ++i)
-    ZeroLane[i & 1] &= isUndefOrZero(Mask[i]);
+    ZeroLane[i & 1] &= Zeroable[i];
 
   // Mask for V8F64: 0/1,  8/9,  2/3,  10/11, 4/5, ..
   // Mask for V4F64; 0/1,  4/5,  2/3,  6/7..
@@ -15495,19 +15497,17 @@ static bool matchShuffleWithSHUFPD(MVT VT, SDValue &V1, SDValue &V2,
 }
 
 static SDValue lowerShuffleWithSHUFPD(const SDLoc &DL, MVT VT, SDValue V1,
-                                      SDValue V2, ArrayRef<int> Original,
+                                      SDValue V2, ArrayRef<int> Mask,
                                       const APInt &Zeroable,
                                       const X86Subtarget &Subtarget,
                                       SelectionDAG &DAG) {
   assert((VT == MVT::v2f64 || VT == MVT::v4f64 || VT == MVT::v8f64) &&
          "Unexpected data type for VSHUFPD");
 
-  SmallVector<int, 64> Mask = createTargetShuffleMask(Original, Zeroable);
-
   unsigned Immediate = 0;
   bool ForceV1Zero = false, ForceV2Zero = false;
   if (!matchShuffleWithSHUFPD(VT, V1, V2, ForceV1Zero, ForceV2Zero, Immediate,
-                              Mask))
+                              Mask, Zeroable))
     return SDValue();
 
   // Create a REAL zero vector - ISD::isBuildVectorAllZeros allows UNDEFs.
@@ -32103,7 +32103,7 @@ static bool matchBinaryPermuteShuffle(
        (MaskVT.is512BitVector() && Subtarget.hasAVX512()))) {
     bool ForceV1Zero = false, ForceV2Zero = false;
     if (matchShuffleWithSHUFPD(MaskVT, V1, V2, ForceV1Zero, ForceV2Zero,
-                               PermuteImm, Mask)) {
+                               PermuteImm, Mask, Zeroable)) {
       V1 = ForceV1Zero ? getZeroVector(MaskVT, Subtarget, DAG, DL) : V1;
       V2 = ForceV2Zero ? getZeroVector(MaskVT, Subtarget, DAG, DL) : V2;
       Shuffle = X86ISD::SHUFP;
