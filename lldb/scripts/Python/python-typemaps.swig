@@ -422,7 +422,7 @@ bool SetNumberFromPyObject<double>(double &number, PyObject *obj) {
     }
 %#endif
    using namespace lldb_private;
-   File file($1, false);
+   NativeFile file($1, false);
    PythonFile py_file(file, mode);
    $result = py_file.release();
    if (!$result)
