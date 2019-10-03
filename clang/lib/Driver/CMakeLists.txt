@@ -66,7 +66,6 @@ add_clang_library(clangDriver
   ToolChains/WebAssembly.cpp
   ToolChains/XCore.cpp
   ToolChains/PPCLinux.cpp
-  ToolChains/InterfaceStubs.cpp
   Types.cpp
   XRayArgs.cpp
 

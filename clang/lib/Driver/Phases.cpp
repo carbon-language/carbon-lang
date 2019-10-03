@@ -20,7 +20,6 @@ const char *phases::getPhaseName(ID Id) {
   case Backend: return "backend";
   case Assemble: return "assembler";
   case Link: return "linker";
-  case IfsMerge: return "ifsmerger";
   }
 
   llvm_unreachable("Invalid phase id.");
