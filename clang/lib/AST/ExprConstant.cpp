@@ -594,6 +594,13 @@ namespace {
     Frame *getCaller() const override { return Caller; }
     SourceLocation getCallLocation() const override { return CallLoc; }
     const FunctionDecl *getCallee() const override { return Callee; }
+
+    bool isStdFunction() const {
+      for (const DeclContext *DC = Callee; DC; DC = DC->getParent())
+        if (DC->isStdNamespace())
+          return true;
+      return false;
+    }
   };
 
   /// Temporarily override 'this'.
@@ -1395,6 +1402,7 @@ static bool isModification(AccessKinds AK) {
   case AK_Assign:
   case AK_Increment:
   case AK_Decrement:
+  case AK_Construct:
   case AK_Destroy:
     return true;
   }
@@ -1407,7 +1415,7 @@ static bool isAnyAccess(AccessKinds AK) {
 
 /// Is this an access per the C++ definition?
 static bool isFormalAccess(AccessKinds AK) {
-  return isAnyAccess(AK) && AK != AK_Destroy;
+  return isAnyAccess(AK) && AK != AK_Construct && AK != AK_Destroy;
 }
 
 namespace {
@@ -3170,8 +3178,9 @@ findSubobject(EvalInfo &Info, const Expr *E, const CompleteObject &Obj,
   // Walk the designator's path to find the subobject.
   for (unsigned I = 0, N = Sub.Entries.size(); /**/; ++I) {
     // Reading an indeterminate value is undefined, but assigning over one is OK.
-    if (O->isAbsent() ||
-        (O->isIndeterminate() && handler.AccessKind != AK_Assign &&
+    if ((O->isAbsent() && handler.AccessKind != AK_Construct) ||
+        (O->isIndeterminate() && handler.AccessKind != AK_Construct &&
+         handler.AccessKind != AK_Assign &&
          handler.AccessKind != AK_ReadObjectRepresentation)) {
       if (!Info.checkingPotentialConstantExpression())
         Info.FFDiag(E, diag::note_constexpr_access_uninit)
@@ -3311,13 +3320,18 @@ findSubobject(EvalInfo &Info, const Expr *E, const CompleteObject &Obj,
         const FieldDecl *UnionField = O->getUnionField();
         if (!UnionField ||
             UnionField->getCanonicalDecl() != Field->getCanonicalDecl()) {
-          // FIXME: If O->getUnionValue() is absent, report that there's no
-          // active union member rather than reporting the prior active union
-          // member. We'll need to fix nullptr_t to not use APValue() as its
-          // representation first.
-          Info.FFDiag(E, diag::note_constexpr_access_inactive_union_member)
-            << handler.AccessKind << Field << !UnionField << UnionField;
-          return handler.failed();
+          if (I == N - 1 && handler.AccessKind == AK_Construct) {
+            // Placement new onto an inactive union member makes it active.
+            O->setUnion(Field, APValue());
+          } else {
+            // FIXME: If O->getUnionValue() is absent, report that there's no
+            // active union member rather than reporting the prior active union
+            // member. We'll need to fix nullptr_t to not use APValue() as its
+            // representation first.
+            Info.FFDiag(E, diag::note_constexpr_access_inactive_union_member)
+                << handler.AccessKind << Field << !UnionField << UnionField;
+            return handler.failed();
+          }
         }
         O = &O->getUnionValue();
       } else
@@ -8438,14 +8452,23 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
     return false;
 
   FunctionDecl *OperatorNew = E->getOperatorNew();
-  if (!OperatorNew->isReplaceableGlobalAllocationFunction()) {
+
+  bool IsNothrow = false;
+  bool IsPlacement = false;
+  if (OperatorNew->isReservedGlobalPlacementOperator() &&
+      Info.CurrentCall->isStdFunction() && !E->isArray()) {
+    // FIXME Support array placement new.
+    assert(E->getNumPlacementArgs() == 1);
+    if (!EvaluatePointer(E->getPlacementArg(0), Result, Info))
+      return false;
+    if (Result.Designator.Invalid)
+      return false;
+    IsPlacement = true;
+  } else if (!OperatorNew->isReplaceableGlobalAllocationFunction()) {
     Info.FFDiag(E, diag::note_constexpr_new_non_replaceable)
         << isa<CXXMethodDecl>(OperatorNew) << OperatorNew;
     return false;
-  }
-
-  bool IsNothrow = false;
-  if (E->getNumPlacementArgs()) {
+  } else if (E->getNumPlacementArgs()) {
     // The only new-placement list we support is of the form (std::nothrow).
     //
     // FIXME: There is no restriction on this, but it's not clear that any
@@ -8543,10 +8566,56 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
            "array allocation with non-array new");
   }
 
-  // Perform the allocation and obtain a pointer to the resulting object.
-  APValue *Val = Info.createHeapAlloc(E, AllocType, Result);
-  if (!Val)
-    return false;
+  APValue *Val;
+  if (IsPlacement) {
+    AccessKinds AK = AK_Construct;
+    struct FindObjectHandler {
+      EvalInfo &Info;
+      const Expr *E;
+      QualType AllocType;
+      const AccessKinds AccessKind;
+      APValue *Value;
+
+      typedef bool result_type;
+      bool failed() { return false; }
+      bool found(APValue &Subobj, QualType SubobjType) {
+        // FIXME: Reject the cases where [basic.life]p8 would not permit the
+        // old name of the object to be used to name the new object.
+        if (!Info.Ctx.hasSameUnqualifiedType(SubobjType, AllocType)) {
+          Info.FFDiag(E, diag::note_constexpr_placement_new_wrong_type) <<
+            SubobjType << AllocType;
+          return false;
+        }
+        Value = &Subobj;
+        return true;
+      }
+      bool found(APSInt &Value, QualType SubobjType) {
+        Info.FFDiag(E, diag::note_constexpr_construct_complex_elem);
+        return false;
+      }
+      bool found(APFloat &Value, QualType SubobjType) {
+        Info.FFDiag(E, diag::note_constexpr_construct_complex_elem);
+        return false;
+      }
+    } Handler = {Info, E, AllocType, AK, nullptr};
+
+    CompleteObject Obj = findCompleteObject(Info, E, AK, Result, AllocType);
+    if (!Obj || !findSubobject(Info, E, Obj, Result.Designator, Handler))
+      return false;
+
+    Val = Handler.Value;
+
+    // [basic.life]p1:
+    //   The lifetime of an object o of type T ends when [...] the storage
+    //   which the object occupies is [...] reused by an object that is not
+    //   nested within o (6.6.2).
+    *Val = APValue();
+  } else {
+    // Perform the allocation and obtain a pointer to the resulting object.
+    Val = Info.createHeapAlloc(E, AllocType, Result);
+    if (!Val)
+      return false;
+  }
 
   if (ResizedArrayILE) {
     if (!EvaluateArrayNewInitList(Info, Result, *Val, ResizedArrayILE,
