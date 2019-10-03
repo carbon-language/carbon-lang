@@ -67,7 +67,6 @@ static_library("Driver") {
     "ToolChains/Haiku.cpp",
     "ToolChains/Hexagon.cpp",
     "ToolChains/Hurd.cpp",
-    "ToolChains/InterfaceStubs.cpp",
     "ToolChains/Linux.cpp",
     "ToolChains/MSP430.cpp",
     "ToolChains/MSVC.cpp",
