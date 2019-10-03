@@ -887,6 +887,23 @@ void PythonCallable::Reset(PyRefType type, PyObject *py_obj) {
   PythonObject::Reset(PyRefType::Borrowed, result.get());
 }
 
+PythonCallable::ArgInfo PythonCallable::GetNumInitArguments() const {
+  ArgInfo result = {0, false, false, false};
+  if (!IsValid())
+    return result;
+  PyObject *py_func_obj = m_py_obj;
+  if (!PyClass_Check(m_py_obj))
+    return result;
+
+  PythonObject __init__ = GetAttributeValue("__init__");
+  if (__init__.IsValid() ) {
+    auto __init_callable__ = __init__.AsType<PythonCallable>();
+    if (__init_callable__.IsValid())
+      return __init_callable__.GetNumArguments();
+  }
+  return result;
+}
+
 PythonCallable::ArgInfo PythonCallable::GetNumArguments() const {
   ArgInfo result = {0, false, false, false};
   if (!IsValid())
