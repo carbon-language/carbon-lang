@@ -1696,6 +1696,75 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
                            OpsToWaterfall, MRI);
     return;
   }
+  case AMDGPU::G_INSERT_VECTOR_ELT: {
+    SmallVector<Register, 2> InsRegs(OpdMapper.getVRegs(2));
+
+    assert(empty(OpdMapper.getVRegs(0)));
+    assert(empty(OpdMapper.getVRegs(1)));
+    assert(empty(OpdMapper.getVRegs(3)));
+
+    if (InsRegs.empty()) {
+      applyDefaultMapping(OpdMapper);
+      executeInWaterfallLoop(MI, MRI, { 3 });
+      return;
+    }
+
+    Register DstReg = MI.getOperand(0).getReg();
+    Register SrcReg = MI.getOperand(1).getReg();
+    Register InsReg = MI.getOperand(2).getReg();
+    Register IdxReg = MI.getOperand(3).getReg();
+    LLT SrcTy = MRI.getType(SrcReg);
+    LLT InsTy = MRI.getType(InsReg);
+
+    assert(InsTy.getSizeInBits() == 64);
+
+    const LLT S32 = LLT::scalar(32);
+    LLT Vec32 = LLT::vector(2 * SrcTy.getNumElements(), 32);
+
+    MachineIRBuilder B(MI);
+    auto CastSrc = B.buildBitcast(Vec32, SrcReg);
+    auto One = B.buildConstant(S32, 1);
+
+    // Split the vector index into 32-bit pieces. Prepare to move all of the
+    // new instructions into a waterfall loop if necessary.
+    //
+    // Don't put the bitcast or constant in the loop.
+    MachineInstrSpan Span(MachineBasicBlock::iterator(&MI), &B.getMBB());
+
+    // Compute 32-bit element indices, (2 * OrigIdx, 2 * OrigIdx + 1).
+    auto IdxLo = B.buildShl(S32, IdxReg, One);
+    auto IdxHi = B.buildAdd(S32, IdxLo, One);
+
+    auto InsLo = B.buildInsertVectorElement(Vec32, CastSrc, InsRegs[0], IdxLo);
+    auto InsHi = B.buildInsertVectorElement(Vec32, InsLo, InsRegs[1], IdxHi);
+    B.buildBitcast(DstReg, InsHi);
+
+    const RegisterBank *DstBank = getRegBank(DstReg, MRI, *TRI);
+    const RegisterBank *SrcBank = getRegBank(SrcReg, MRI, *TRI);
+    const RegisterBank *InsSrcBank = getRegBank(InsReg, MRI, *TRI);
+
+    MRI.setRegBank(InsReg, *InsSrcBank);
+    MRI.setRegBank(CastSrc.getReg(0), *SrcBank);
+    MRI.setRegBank(InsLo.getReg(0), *DstBank);
+    MRI.setRegBank(InsHi.getReg(0), *DstBank);
+    MRI.setRegBank(One.getReg(0), AMDGPU::SGPRRegBank);
+    MRI.setRegBank(IdxLo.getReg(0), AMDGPU::SGPRRegBank);
+    MRI.setRegBank(IdxHi.getReg(0), AMDGPU::SGPRRegBank);
+
+
+    SmallSet<Register, 4> OpsToWaterfall;
+    if (!collectWaterfallOperands(OpsToWaterfall, MI, MRI, { 3 })) {
+      MI.eraseFromParent();
+      return;
+    }
+
+    B.setInstr(*Span.begin());
+    MI.eraseFromParent();
+
+    executeInWaterfallLoop(B, make_range(Span.begin(), Span.end()),
+                           OpsToWaterfall, MRI);
+    return;
+  }
   case AMDGPU::G_INTRINSIC: {
     switch (MI.getIntrinsicID()) {
     case Intrinsic::amdgcn_s_buffer_load: {
@@ -2421,15 +2490,18 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     unsigned VecSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
     unsigned InsertSize = MRI.getType(MI.getOperand(2).getReg()).getSizeInBits();
     unsigned IdxSize = MRI.getType(MI.getOperand(3).getReg()).getSizeInBits();
-    unsigned InsertEltBank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI);
-    unsigned IdxBank = getRegBankID(MI.getOperand(3).getReg(), MRI, *TRI);
+    unsigned SrcBankID = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI);
+    unsigned InsertEltBankID = getRegBankID(MI.getOperand(2).getReg(),
+                                            MRI, *TRI);
+    unsigned IdxBankID = getRegBankID(MI.getOperand(3).getReg(), MRI, *TRI);
 
     OpdsMapping[0] = AMDGPU::getValueMapping(OutputBankID, VecSize);
-    OpdsMapping[1] = AMDGPU::getValueMapping(OutputBankID, VecSize);
-    OpdsMapping[2] = AMDGPU::getValueMapping(InsertEltBank, InsertSize);
+    OpdsMapping[1] = AMDGPU::getValueMapping(SrcBankID, VecSize);
+    OpdsMapping[2] = AMDGPU::getValueMappingSGPR64Only(InsertEltBankID,
+                                                       InsertSize);
 
     // The index can be either if the source vector is VGPR.
-    OpdsMapping[3] = AMDGPU::getValueMapping(IdxBank, IdxSize);
+    OpdsMapping[3] = AMDGPU::getValueMapping(IdxBankID, IdxSize);
     break;
   }
   case AMDGPU::G_UNMERGE_VALUES: {
