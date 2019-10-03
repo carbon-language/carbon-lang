@@ -1892,8 +1892,8 @@ public:
     Put(")");
   }
   void Unparse(const OmpClause::DistSchedule &x) {
-    Word("DIST_SCHEDULE(STATIC,");
-    Walk(x.v);
+    Word("DIST_SCHEDULE(STATIC");
+    Walk(", ", x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Final &x) {
