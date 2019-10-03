@@ -268,6 +268,7 @@ struct AddrsigSymbol {
 
 struct AddrsigSection : Section {
   Optional<yaml::BinaryRef> Content;
+  Optional<llvm::yaml::Hex64> Size;
   Optional<std::vector<AddrsigSymbol>> Symbols;
 
   AddrsigSection() : Section(SectionKind::Addrsig) {}

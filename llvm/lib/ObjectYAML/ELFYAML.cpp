@@ -1074,6 +1074,7 @@ static void sectionMapping(IO &IO, ELFYAML::SymtabShndxSection &Section) {
 static void sectionMapping(IO &IO, ELFYAML::AddrsigSection &Section) {
   commonSectionMapping(IO, Section);
   IO.mapOptional("Content", Section.Content);
+  IO.mapOptional("Size", Section.Size);
   IO.mapOptional("Symbols", Section.Symbols);
 }
 
@@ -1245,12 +1246,17 @@ StringRef MappingTraits<std::unique_ptr<ELFYAML::Section>>::validate(
   }
 
   if (const auto *Sec = dyn_cast<ELFYAML::AddrsigSection>(Section.get())) {
-    if (!Sec->Symbols && !Sec->Content)
-      return "one of \"Symbols\" or \"Content\" must be specified";
+    if (!Sec->Symbols && !Sec->Content && !Sec->Size)
+      return "one of \"Content\", \"Size\" or \"Symbols\" must be specified";
 
-    if (Sec->Content) {
+    if (Sec->Content || Sec->Size) {
+      if (Sec->Size && Sec->Content &&
+          (uint64_t)*Sec->Size < Sec->Content->binary_size())
+        return "\"Size\" must be greater than or equal to the content "
+               "size";
+
       if (Sec->Symbols)
-        return "\"Content\" and \"Symbols\" cannot be used together";
+        return "\"Symbols\" cannot be used with \"Content\" or \"Size\"";
       return {};
     }
 
