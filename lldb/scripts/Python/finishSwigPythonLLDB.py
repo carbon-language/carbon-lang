@@ -371,16 +371,11 @@ def make_symlink(
         vstrSrcFile,
         vstrTargetFile):
     dbg = utilsDebug.CDebugFnVerbose("Python script make_symlink()")
-    bOk = True
-    strErrMsg = ""
-    bDbg = "-d" in vDictArgs
     strTarget = os.path.join(vstrFrameworkPythonDir, vstrTargetFile)
     strTarget = os.path.normcase(strTarget)
     strPrefix = vDictArgs['--prefix']
 
     os.chdir(vstrFrameworkPythonDir)
-    bMakeFileCalled = "-m" in vDictArgs
-    eOSType = utilsOsType.determine_os_type()
 
     strSrc = os.path.normcase(os.path.join(strPrefix, vstrSrcFile))
     strRelSrc = os.path.relpath(strSrc, os.path.dirname(strTarget))
