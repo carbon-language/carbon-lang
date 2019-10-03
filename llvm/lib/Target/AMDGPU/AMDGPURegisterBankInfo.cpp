@@ -2309,14 +2309,16 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   }
   case AMDGPU::G_EXTRACT_VECTOR_ELT: {
-    unsigned OutputBankID = isSALUMapping(MI) ?
-                            AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+    // VGPR index can be used for waterfall when indexing a SGPR vector.
+    unsigned SrcBankID = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI);
+    unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
     unsigned SrcSize = MRI.getType(MI.getOperand(1).getReg()).getSizeInBits();
     unsigned IdxSize = MRI.getType(MI.getOperand(2).getReg()).getSizeInBits();
     unsigned IdxBank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI);
+    unsigned OutputBankID = regBankUnion(SrcBankID, IdxBank);
 
-    OpdsMapping[0] = AMDGPU::getValueMapping(OutputBankID, SrcSize);
-    OpdsMapping[1] = AMDGPU::getValueMapping(OutputBankID, SrcSize);
+    OpdsMapping[0] = AMDGPU::getValueMapping(OutputBankID, DstSize);
+    OpdsMapping[1] = AMDGPU::getValueMapping(SrcBankID, SrcSize);
 
     // The index can be either if the source vector is VGPR.
     OpdsMapping[2] = AMDGPU::getValueMapping(IdxBank, IdxSize);
