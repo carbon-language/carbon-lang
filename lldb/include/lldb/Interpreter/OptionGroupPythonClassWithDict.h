@@ -6,9 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_OptionGroupString_h_
-#define liblldb_OptionGroupString_h_
+#ifndef liblldb_OptionGroupPythonClassWithDict_h_
+#define liblldb_OptionGroupPythonClassWithDict_h_
 
+#include "lldb/lldb-types.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Utility/StructuredData.h"
 
@@ -61,4 +62,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif // liblldb_OptionGroupString_h_
+#endif // liblldb_OptionGroupPythonClassWithDict_h_
