@@ -8,7 +8,7 @@
 // CHECK-DAG: @_ZN16SpecSpecialFuncs6MethodEv = {{.*}}alias i32 (%struct.SpecSpecialFuncs*), i32 (%struct.SpecSpecialFuncs*)* @_ZN16SpecSpecialFuncs7method_Ev
 // CHECK-DAG: @_ZN16SpecSpecialFuncs6methodEv = linkonce_odr {{.*}}alias i32 (%struct.SpecSpecialFuncs*), i32 (%struct.SpecSpecialFuncs*)* @_ZN16SpecSpecialFuncs7method_Ev
 // CHECK-DAG: @_ZN12SpecialFuncs6methodEv = linkonce_odr {{.*}}alias i32 (%struct.SpecialFuncs*), i32 (%struct.SpecialFuncs*)* @_ZN12SpecialFuncs7method_Ev
-// CHECK-DAG: @_Z5prio_v = alias i32 (), i32 ()* @_Z4priov
+// CHECK-DAG: @_Z5prio_v = {{.*}}alias i32 (), i32 ()* @_Z4priov
 // CHECK-DAG: @_ZL6prio1_v = internal alias i32 (), i32 ()* @_ZL5prio2v
 // CHECK-DAG: @_Z4callv = {{.*}}alias i32 (), i32 ()* @_Z4testv
 // CHECK-DAG: @_ZL9stat_usedv = internal alias i32 (), i32 ()* @_ZL10stat_used_v
