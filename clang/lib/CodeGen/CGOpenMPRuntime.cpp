@@ -2868,7 +2868,8 @@ llvm::Function *CGOpenMPRuntime::emitThreadPrivateVarDefinition(
 bool CGOpenMPRuntime::emitDeclareTargetVarDefinition(const VarDecl *VD,
                                                      llvm::GlobalVariable *Addr,
                                                      bool PerformInit) {
-  if (CGM.getLangOpts().OMPTargetTriples.empty())
+  if (CGM.getLangOpts().OMPTargetTriples.empty() &&
+      !CGM.getLangOpts().OpenMPIsDevice)
     return false;
   Optional<OMPDeclareTargetDeclAttr::MapTypeTy> Res =
       OMPDeclareTargetDeclAttr::isDeclareTargetDeclaration(VD);
@@ -9806,7 +9807,8 @@ CGOpenMPRuntime::registerTargetFirstprivateCopy(CodeGenFunction &CGF,
 
 void CGOpenMPRuntime::registerTargetGlobalVariable(const VarDecl *VD,
                                                    llvm::Constant *Addr) {
-  if (CGM.getLangOpts().OMPTargetTriples.empty())
+  if (CGM.getLangOpts().OMPTargetTriples.empty() &&
+      !CGM.getLangOpts().OpenMPIsDevice)
     return;
   llvm::Optional<OMPDeclareTargetDeclAttr::MapTypeTy> Res =
       OMPDeclareTargetDeclAttr::isDeclareTargetDeclaration(VD);
