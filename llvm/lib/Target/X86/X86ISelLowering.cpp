@@ -15520,6 +15520,42 @@ static SDValue lowerShuffleWithSHUFPD(const SDLoc &DL, MVT VT, SDValue V1,
                      DAG.getTargetConstant(Immediate, DL, MVT::i8));
 }
 
+// Look for {0, 8, 16, 24, 32, 40, 48, 56 } in the first 8 elements. Followed
+// by zeroable elements in the remaining 24 elements. Turn this into two
+// vmovqb instructions shuffled together.
+static SDValue lowerShuffleAsVTRUNCAndUnpack(const SDLoc &DL, MVT VT,
+                                             SDValue V1, SDValue V2,
+                                             ArrayRef<int> Mask,
+                                             const APInt &Zeroable,
+                                             SelectionDAG &DAG) {
+  assert(VT == MVT::v32i8 && "Unexpected type!");
+
+  // The first 8 indices should be every 8th element.
+  if (!isSequentialOrUndefInRange(Mask, 0, 8, 0, 8))
+    return SDValue();
+
+  // Remaining elements need to be zeroable.
+  if (Zeroable.countLeadingOnes() < (Mask.size() - 8))
+    return SDValue();
+
+  V1 = DAG.getBitcast(MVT::v4i64, V1);
+  V2 = DAG.getBitcast(MVT::v4i64, V2);
+
+  V1 = DAG.getNode(X86ISD::VTRUNC, DL, MVT::v16i8, V1);
+  V2 = DAG.getNode(X86ISD::VTRUNC, DL, MVT::v16i8, V2);
+
+  // The VTRUNCs will put 0s in the upper 12 bytes. Use them to put zeroes in
+  // the upper bits of the result using an unpckldq.
+  SDValue Unpack = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2,
+                                        { 0, 1, 2, 3, 16, 17, 18, 19,
+                                          4, 5, 6, 7, 20, 21, 22, 23 });
+  // Insert the unpckldq into a zero vector to widen to v32i8.
+  return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, MVT::v32i8,
+                     DAG.getConstant(0, DL, MVT::v32i8), Unpack,
+                     DAG.getIntPtrConstant(0, DL));
+}
+
+
 /// Handle lowering of 4-lane 64-bit floating point shuffles.
 ///
 /// Also ends up handling lowering of 4-lane 64-bit integer shuffles when AVX2
@@ -16119,6 +16155,14 @@ static SDValue lowerV32I8Shuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (SDValue V = lowerShuffleAsLanePermuteAndPermute(
           DL, MVT::v32i8, V1, V2, Mask, DAG, Subtarget))
     return V;
+
+  // Look for {0, 8, 16, 24, 32, 40, 48, 56 } in the first 8 elements. Followed
+  // by zeroable elements in the remaining 24 elements. Turn this into two
+  // vmovqb instructions shuffled together.
+  if (Subtarget.hasVLX())
+    if (SDValue V = lowerShuffleAsVTRUNCAndUnpack(DL, MVT::v32i8, V1, V2,
+                                                  Mask, Zeroable, DAG))
+      return V;
 
   // Otherwise fall back on generic lowering.
   return lowerShuffleAsSplitOrBlend(DL, MVT::v32i8, V1, V2, Mask,
