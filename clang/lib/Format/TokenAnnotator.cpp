@@ -2196,7 +2196,8 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     if (Current->is(TT_LineComment)) {
       if (Current->Previous->BlockKind == BK_BracedInit &&
           Current->Previous->opensScope())
-        Current->SpacesRequiredBefore = Style.Cpp11BracedListStyle ? 0 : 1;
+        Current->SpacesRequiredBefore =
+            (Style.Cpp11BracedListStyle && !Style.SpacesInParentheses) ? 0 : 1;
       else
         Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
 
@@ -2520,7 +2521,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Left.is(tok::hash);
   if (Left.isOneOf(tok::hashhash, tok::hash))
     return Right.is(tok::hash);
-  if (Left.is(tok::l_paren) && Right.is(tok::r_paren))
+  if ((Left.is(tok::l_paren) && Right.is(tok::r_paren)) ||
+      (Left.is(tok::l_brace) && Left.BlockKind != BK_Block &&
+       Right.is(tok::r_brace) && Right.BlockKind != BK_Block))
     return Style.SpaceInEmptyParentheses;
   if (Left.is(tok::l_paren) || Right.is(tok::r_paren))
     return (Right.is(TT_CastRParen) ||
@@ -2636,7 +2639,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if ((Left.is(tok::l_brace) && Left.BlockKind != BK_Block) ||
       (Right.is(tok::r_brace) && Right.MatchingParen &&
        Right.MatchingParen->BlockKind != BK_Block))
-    return !Style.Cpp11BracedListStyle;
+    return Style.Cpp11BracedListStyle ? Style.SpacesInParentheses : true;
   if (Left.is(TT_BlockComment))
     // No whitespace in x(/*foo=*/1), except for JavaScript.
     return Style.Language == FormatStyle::LK_JavaScript ||

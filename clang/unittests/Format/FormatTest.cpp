@@ -8214,6 +8214,34 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   SpaceBeforeBrace.SpaceBeforeCpp11BracedList = true;
   verifyFormat("vector<int> x {1, 2, 3, 4};", SpaceBeforeBrace);
   verifyFormat("f({}, {{}, {}}, MyMap[{k, v}]);", SpaceBeforeBrace);
+
+  FormatStyle SpaceBetweenBraces = getLLVMStyle();
+  SpaceBetweenBraces.SpacesInAngles = true;
+  SpaceBetweenBraces.SpacesInParentheses = true;
+  SpaceBetweenBraces.SpacesInSquareBrackets = true;
+  verifyFormat("vector< int > x{ 1, 2, 3, 4 };", SpaceBetweenBraces);
+  verifyFormat("f( {}, { {}, {} }, MyMap[ { k, v } ] );", SpaceBetweenBraces);
+  verifyFormat("vector< int > x{ // comment 1\n"
+               "                 1, 2, 3, 4 };",
+               SpaceBetweenBraces);
+  SpaceBetweenBraces.ColumnLimit = 20;
+  EXPECT_EQ("vector< int > x{\n"
+            "    1, 2, 3, 4 };",
+            format("vector<int>x{1,2,3,4};", SpaceBetweenBraces));
+  SpaceBetweenBraces.ColumnLimit = 24;
+  EXPECT_EQ("vector< int > x{ 1, 2,\n"
+            "                 3, 4 };",
+            format("vector<int>x{1,2,3,4};", SpaceBetweenBraces));
+  EXPECT_EQ("vector< int > x{\n"
+            "    1,\n"
+            "    2,\n"
+            "    3,\n"
+            "    4,\n"
+            "};",
+            format("vector<int>x{1,2,3,4,};", SpaceBetweenBraces));
+  verifyFormat("vector< int > x{};", SpaceBetweenBraces);
+  SpaceBetweenBraces.SpaceInEmptyParentheses = true;
+  verifyFormat("vector< int > x{ };", SpaceBetweenBraces);
 }
 
 TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
