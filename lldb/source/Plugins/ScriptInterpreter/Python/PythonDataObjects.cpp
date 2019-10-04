@@ -891,7 +891,6 @@ PythonCallable::ArgInfo PythonCallable::GetNumInitArguments() const {
   ArgInfo result = {0, false, false, false};
   if (!IsValid())
     return result;
-  PyObject *py_func_obj = m_py_obj;
 
   PythonObject __init__ = GetAttributeValue("__init__");
   if (__init__.IsValid() ) {
