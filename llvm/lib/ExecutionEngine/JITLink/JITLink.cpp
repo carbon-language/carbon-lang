@@ -145,6 +145,12 @@ Section::~Section() {
     Sym->~Symbol();
 }
 
+LinkGraph::~LinkGraph() {
+  // Destroy blocks.
+  for (auto *B : Blocks)
+    B->~Block();
+}
+
 void LinkGraph::dump(raw_ostream &OS,
                      std::function<StringRef(Edge::Kind)> EdgeKindToName) {
   if (!EdgeKindToName)
