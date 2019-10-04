@@ -226,8 +226,14 @@ Status Host::ShellExpandArguments(ProcessLaunchInfo &launch_info) {
     int status;
     std::string output;
     std::string command = expand_command.GetString();
-    RunShellCommand(command.c_str(), launch_info.GetWorkingDirectory(), &status,
-                    nullptr, &output, std::chrono::seconds(10));
+    Status e =
+        RunShellCommand(command.c_str(), launch_info.GetWorkingDirectory(),
+                        &status, nullptr, &output, std::chrono::seconds(10));
+
+    if (e.Fail()) {
+      error.SetErrorString(e.AsCString());
+      return error;
+    }
 
     if (status != 0) {
       error.SetErrorStringWithFormat("lldb-argdumper exited with error %d",

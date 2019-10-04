@@ -1366,9 +1366,14 @@ Status Host::ShellExpandArguments(ProcessLaunchInfo &launch_info) {
     }
     bool run_in_default_shell = true;
     bool hide_stderr = true;
-    RunShellCommand(expand_command, cwd, &status, nullptr, &output,
-                    std::chrono::seconds(10), run_in_default_shell,
-                    hide_stderr);
+    Status e = RunShellCommand(expand_command, cwd, &status, nullptr, &output,
+                               std::chrono::seconds(10), run_in_default_shell,
+                               hide_stderr);
+
+    if (e.Fail()) {
+      error.SetErrorString(e.AsCString());
+      return error;
+    }
 
     if (status != 0) {
       error.SetErrorStringWithFormat("lldb-argdumper exited with error %d",
