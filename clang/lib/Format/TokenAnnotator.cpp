@@ -2900,9 +2900,19 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       return false;
     return true;
   }
-  if (Left.is(TT_UnaryOperator))
+  if (Left.is(TT_UnaryOperator)) {
+    // The alternative operators for ~ and ! are "compl" and "not".
+    // If they are used instead, we do not want to combine them with
+    // the token to the right, unless that is a left paren.
+    if (!Right.is(tok::l_paren)) {
+      if (Left.is(tok::exclaim) && Left.TokenText == "not")
+        return true;
+      if (Left.is(tok::tilde) && Left.TokenText == "compl")
+        return true;
+    }
     return (Style.SpaceAfterLogicalNot && Left.is(tok::exclaim)) ||
            Right.is(TT_BinaryOperator);
+  }
 
   // If the next token is a binary operator or a selector name, we have
   // incorrectly classified the parenthesis as a cast. FIXME: Detect correctly.

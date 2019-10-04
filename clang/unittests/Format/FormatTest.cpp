@@ -14609,6 +14609,48 @@ TEST_F(FormatTest, AmbersandInLamda) {
   verifyFormat("auto lambda = [&a = a]() { a = 2; };", AlignStyle);
 }
 
+TEST_F(FormatTest, AlternativeOperators) {
+  // Test case for ensuring alternate operators are not
+  // combined with their right most neighbour.
+  verifyFormat("int a and b;");
+  verifyFormat("int a and_eq b;");
+  verifyFormat("int a bitand b;");
+  verifyFormat("int a bitor b;");
+  verifyFormat("int a compl b;");
+  verifyFormat("int a not b;");
+  verifyFormat("int a not_eq b;");
+  verifyFormat("int a or b;");
+  verifyFormat("int a xor b;");
+  verifyFormat("int a xor_eq b;");
+  verifyFormat("return this not_eq bitand other;");
+  verifyFormat("bool operator not_eq(const X bitand other)");
+
+  verifyFormat("int a and 5;");
+  verifyFormat("int a and_eq 5;");
+  verifyFormat("int a bitand 5;");
+  verifyFormat("int a bitor 5;");
+  verifyFormat("int a compl 5;");
+  verifyFormat("int a not 5;");
+  verifyFormat("int a not_eq 5;");
+  verifyFormat("int a or 5;");
+  verifyFormat("int a xor 5;");
+  verifyFormat("int a xor_eq 5;");
+
+  verifyFormat("int a compl(5);");
+  verifyFormat("int a not(5);");
+
+  /* FIXME handle alternate tokens
+   * https://en.cppreference.com/w/cpp/language/operator_alternative
+  // alternative tokens
+  verifyFormat("compl foo();");     //  ~foo();
+  verifyFormat("foo() <%%>;");      // foo();
+  verifyFormat("void foo() <%%>;"); // void foo(){}
+  verifyFormat("int a <:1:>;");     // int a[1];[
+  verifyFormat("%:define ABC abc"); // #define ABC abc
+  verifyFormat("%:%:");             // ##
+  */
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang
