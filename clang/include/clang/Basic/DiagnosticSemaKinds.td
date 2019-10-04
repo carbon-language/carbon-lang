@@ -8092,16 +8092,17 @@ def warn_format_conversion_argument_type_mismatch : Warning<
   "%select{type|underlying type}2 %1">,
   InGroup<Format>;
 def warn_format_conversion_argument_type_mismatch_pedantic : Extension<
-  "format specifies type %0 but the argument has "
-  "%select{type|underlying type}2 %1">,
+  warn_format_conversion_argument_type_mismatch.Text>,
   InGroup<FormatPedantic>;
+def warn_format_conversion_argument_type_mismatch_confusion : Warning<
+  warn_format_conversion_argument_type_mismatch.Text>,
+  InGroup<FormatTypeConfusion>, DefaultIgnore;
 def warn_format_argument_needs_cast : Warning<
   "%select{values of type|enum values with underlying type}2 '%0' should not "
   "be used as format arguments; add an explicit cast to %1 instead">,
   InGroup<Format>;
 def warn_format_argument_needs_cast_pedantic : Warning<
-  "%select{values of type|enum values with underlying type}2 '%0' should not "
-  "be used as format arguments; add an explicit cast to %1 instead">,
+  warn_format_argument_needs_cast.Text>,
   InGroup<FormatPedantic>, DefaultIgnore;
 def warn_printf_positional_arg_exceeds_data_args : Warning <
   "data argument position '%0' exceeds the number of data arguments (%1)">,
