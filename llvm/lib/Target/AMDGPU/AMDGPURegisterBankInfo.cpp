@@ -668,6 +668,18 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
   MachineBasicBlock &MBB = B.getMBB();
   MachineFunction *MF = &B.getMF();
 
+  const TargetRegisterClass *WaveRC = TRI->getWaveMaskRegClass();
+  const unsigned WaveAndOpc = Subtarget.isWave32() ?
+    AMDGPU::S_AND_B32 : AMDGPU::S_AND_B64;
+  const unsigned MovTermOpc = Subtarget.isWave32() ?
+    AMDGPU::S_MOV_B32_term : AMDGPU::S_MOV_B64_term;
+  const unsigned XorTermOpc = Subtarget.isWave32() ?
+    AMDGPU::S_XOR_B32_term : AMDGPU::S_XOR_B64_term;
+  const unsigned AndSaveExecOpc =  Subtarget.isWave32() ?
+    AMDGPU::S_AND_SAVEEXEC_B32 : AMDGPU::S_AND_SAVEEXEC_B64;
+  const unsigned ExecReg =  Subtarget.isWave32() ?
+    AMDGPU::EXEC_LO : AMDGPU::EXEC;
+
   for (MachineInstr &MI : Range) {
     for (MachineOperand &Def : MI.defs()) {
       LLT ResTy = MRI.getType(Def.getReg());
@@ -682,15 +694,15 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
     }
   }
 
-  Register SaveExecReg = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
-  Register InitSaveExecReg = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
+  Register SaveExecReg = MRI.createVirtualRegister(WaveRC);
+  Register InitSaveExecReg = MRI.createVirtualRegister(WaveRC);
 
   // Don't bother using generic instructions/registers for the exec mask.
   B.buildInstr(TargetOpcode::IMPLICIT_DEF)
     .addDef(InitSaveExecReg);
 
-  Register PhiExec = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
-  Register NewExec = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
+  Register PhiExec = MRI.createVirtualRegister(WaveRC);
+  Register NewExec = MRI.createVirtualRegister(WaveRC);
 
   // To insert the loop we need to split the block. Move everything before this
   // point to a new block, and insert a new empty block before this instruction.
@@ -769,8 +781,7 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
                   CurrentLaneOpReg)
             .addReg(Op.getReg());
 
-          Register NewCondReg
-            = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
+          Register NewCondReg = MRI.createVirtualRegister(WaveRC);
           bool First = CondReg == AMDGPU::NoRegister;
           if (First)
             CondReg = NewCondReg;
@@ -783,11 +794,10 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
           Op.setReg(CurrentLaneOpReg);
 
           if (!First) {
-            Register AndReg
-              = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
+            Register AndReg = MRI.createVirtualRegister(WaveRC);
 
             // If there are multiple operands to consider, and the conditions.
-            B.buildInstr(AMDGPU::S_AND_B64)
+            B.buildInstr(WaveAndOpc)
               .addDef(AndReg)
               .addReg(NewCondReg)
               .addReg(CondReg);
@@ -866,8 +876,7 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
               ReadlanePieces.push_back(CurrentLaneOpReg);
             }
 
-            Register NewCondReg
-              = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
+            Register NewCondReg = MRI.createVirtualRegister(WaveRC);
             bool First = CondReg == AMDGPU::NoRegister;
             if (First)
               CondReg = NewCondReg;
@@ -878,11 +887,10 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
               .addReg(UnmergePiece);
 
             if (!First) {
-              Register AndReg
-                = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
+              Register AndReg = MRI.createVirtualRegister(WaveRC);
 
               // If there are multiple operands to consider, and the conditions.
-              B.buildInstr(AMDGPU::S_AND_B64)
+              B.buildInstr(WaveAndOpc)
                 .addDef(AndReg)
                 .addReg(NewCondReg)
                 .addReg(CondReg);
@@ -909,16 +917,16 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
   B.setInsertPt(*LoopBB, LoopBB->end());
 
   // Update EXEC, save the original EXEC value to VCC.
-  B.buildInstr(AMDGPU::S_AND_SAVEEXEC_B64)
+  B.buildInstr(AndSaveExecOpc)
     .addDef(NewExec)
     .addReg(CondReg, RegState::Kill);
 
   MRI.setSimpleHint(NewExec, CondReg);
 
   // Update EXEC, switch all done bits to 0 and all todo bits to 1.
-  B.buildInstr(AMDGPU::S_XOR_B64_term)
-    .addDef(AMDGPU::EXEC)
-    .addReg(AMDGPU::EXEC)
+  B.buildInstr(XorTermOpc)
+    .addDef(ExecReg)
+    .addReg(ExecReg)
     .addReg(NewExec);
 
   // XXX - s_xor_b64 sets scc to 1 if the result is nonzero, so can we use
@@ -929,13 +937,13 @@ bool AMDGPURegisterBankInfo::executeInWaterfallLoop(
     .addMBB(LoopBB);
 
   // Save the EXEC mask before the loop.
-  BuildMI(MBB, MBB.end(), DL, TII->get(AMDGPU::S_MOV_B64_term), SaveExecReg)
-    .addReg(AMDGPU::EXEC);
+  BuildMI(MBB, MBB.end(), DL, TII->get(MovTermOpc), SaveExecReg)
+    .addReg(ExecReg);
 
   // Restore the EXEC mask after the loop.
   B.setMBB(*RestoreExecBB);
-  B.buildInstr(AMDGPU::S_MOV_B64_term)
-    .addDef(AMDGPU::EXEC)
+  B.buildInstr(MovTermOpc)
+    .addDef(ExecReg)
     .addReg(SaveExecReg);
 
   // Restore the insert point before the original instruction.
