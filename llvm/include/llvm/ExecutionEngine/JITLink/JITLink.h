@@ -972,7 +972,7 @@ createLookupContinuation(Continuation Cont) {
   };
 
   return std::make_unique<Impl>(std::move(Cont));
-};
+}
 
 /// Holds context for a single jitLink invocation.
 class JITLinkContext {
