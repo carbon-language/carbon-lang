@@ -16,13 +16,7 @@ define i1 @highest_bit_test_via_lshr(i32 %data, i32 %nbits) {
 
 define i1 @highest_bit_test_via_lshr_with_truncation(i64 %data, i32 %nbits) {
 ; CHECK-LABEL: @highest_bit_test_via_lshr_with_truncation(
-; CHECK-NEXT:    [[NUM_LOW_BITS_TO_SKIP:%.*]] = sub i32 64, [[NBITS:%.*]]
-; CHECK-NEXT:    [[NUM_LOW_BITS_TO_SKIP_WIDE:%.*]] = zext i32 [[NUM_LOW_BITS_TO_SKIP]] to i64
-; CHECK-NEXT:    [[HIGH_BITS_EXTRACTED:%.*]] = lshr i64 [[DATA:%.*]], [[NUM_LOW_BITS_TO_SKIP_WIDE]]
-; CHECK-NEXT:    [[HIGH_BITS_EXTRACTED_NARROW:%.*]] = trunc i64 [[HIGH_BITS_EXTRACTED]] to i32
-; CHECK-NEXT:    [[SKIP_ALL_BITS_TILL_SIGNBIT:%.*]] = add i32 [[NBITS]], -1
-; CHECK-NEXT:    [[SIGNBIT:%.*]] = lshr i32 [[HIGH_BITS_EXTRACTED_NARROW]], [[SKIP_ALL_BITS_TILL_SIGNBIT]]
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNBIT]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i64 [[DATA:%.*]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %num_low_bits_to_skip = sub i32 64, %nbits
@@ -50,12 +44,8 @@ define i1 @highest_bit_test_via_ashr(i32 %data, i32 %nbits) {
 
 define i1 @highest_bit_test_via_ashr_with_truncation(i64 %data, i32 %nbits) {
 ; CHECK-LABEL: @highest_bit_test_via_ashr_with_truncation(
-; CHECK-NEXT:    [[NUM_LOW_BITS_TO_SKIP:%.*]] = sub i32 64, [[NBITS:%.*]]
-; CHECK-NEXT:    [[NUM_LOW_BITS_TO_SKIP_WIDE:%.*]] = zext i32 [[NUM_LOW_BITS_TO_SKIP]] to i64
-; CHECK-NEXT:    [[HIGH_BITS_EXTRACTED:%.*]] = ashr i64 [[DATA:%.*]], [[NUM_LOW_BITS_TO_SKIP_WIDE]]
-; CHECK-NEXT:    [[HIGH_BITS_EXTRACTED_NARROW:%.*]] = trunc i64 [[HIGH_BITS_EXTRACTED]] to i32
-; CHECK-NEXT:    [[SKIP_ALL_BITS_TILL_SIGNBIT:%.*]] = add i32 [[NBITS]], -1
-; CHECK-NEXT:    [[SIGNBIT:%.*]] = ashr i32 [[HIGH_BITS_EXTRACTED_NARROW]], [[SKIP_ALL_BITS_TILL_SIGNBIT]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[DATA:%.*]], 63
+; CHECK-NEXT:    [[SIGNBIT:%.*]] = trunc i64 [[TMP1]] to i32
 ; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNBIT]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
