@@ -1173,7 +1173,8 @@ MCOperand AMDGPUDisassembler::decodeSDWAVopcDst(unsigned Val) const {
 
     int TTmpIdx = getTTmpIdx(Val);
     if (TTmpIdx >= 0) {
-      return createSRegOperand(getTtmpClassId(OPW64), TTmpIdx);
+      auto TTmpClsId = getTtmpClassId(IsWave64 ? OPW64 : OPW32);
+      return createSRegOperand(TTmpClsId, TTmpIdx);
     } else if (Val > SGPR_MAX) {
       return IsWave64 ? decodeSpecialReg64(Val)
                       : decodeSpecialReg32(Val);
