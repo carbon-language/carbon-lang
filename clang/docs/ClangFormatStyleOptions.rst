@@ -2310,11 +2310,12 @@ the configuration (without a prefix: ``Auto``).
      std::unique_ptr<int[]> foo() {} // Won't be affected
 
 **Standard** (``LanguageStandard``)
+  Parse and format C++ constructs compatible with this standard.
+
   .. code-block:: c++
 
      c++03:                                 latest:
      vector<set<int> > x;           vs.     vector<set<int>> x;
-  Parse and format C++ constructs compatible with this standard.
 
   Possible values:
 
