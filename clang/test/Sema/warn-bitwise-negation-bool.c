@@ -12,11 +12,11 @@ typedef _Bool boolean;
 #endif
 
 void test(boolean b, int i) {
-  b = ~b; // expected-warning {{bitwise negation of a boolean expression; did you mean a logicial negation?}}
+  b = ~b; // expected-warning {{bitwise negation of a boolean expression; did you mean logical negation?}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:7-[[@LINE-1]]:8}:"!"
-  b = ~(b); // expected-warning {{bitwise negation of a boolean expression; did you mean a logicial negation?}}
+  b = ~(b); // expected-warning {{bitwise negation of a boolean expression; did you mean logical negation?}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:7-[[@LINE-1]]:8}:"!"
   b = ~i;
-  i = ~b; // expected-warning {{bitwise negation of a boolean expression; did you mean a logicial negation?}}
+  i = ~b; // expected-warning {{bitwise negation of a boolean expression; did you mean logical negation?}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:7-[[@LINE-1]]:8}:"!"
 }
