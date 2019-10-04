@@ -35,19 +35,6 @@
 #include <cassert>
 #include <cstring>
 
-#if defined(_MSC_VER)
-#include <Windows.h>
-
-// This must be included after windows.h.
-#include <DbgHelp.h>
-#pragma comment(lib, "dbghelp.lib")
-
-// Windows.h conflicts with our COFF header definitions.
-#ifdef IMAGE_FILE_MACHINE_I386
-#undef IMAGE_FILE_MACHINE_I386
-#endif
-#endif
-
 namespace llvm {
 namespace symbolize {
 
@@ -524,31 +511,11 @@ LLVMSymbolizer::DemangleName(const std::string &Name,
                              const SymbolizableModule *DbiModuleDescriptor) {
   // We can spoil names of symbols with C linkage, so use an heuristic
   // approach to check if the name should be demangled.
-  if (Name.substr(0, 2) == "_Z") {
-    int status = 0;
-    char *DemangledName = itaniumDemangle(Name.c_str(), nullptr, nullptr, &status);
-    if (status != 0)
-      return Name;
-    std::string Result = DemangledName;
-    free(DemangledName);
-    return Result;
-  }
+  // MSVC C++ mangled symbols start with '?', while itanium mangled ones
+  // start with _Z.
+  if (Name.substr(0, 2) == "_Z" || (!Name.empty() && Name.front() == '?'))
+    return demangle(Name);
 
-#if defined(_MSC_VER)
-  if (!Name.empty() && Name.front() == '?') {
-    // Only do MSVC C++ demangling on symbols starting with '?'.
-    char DemangledName[1024] = {0};
-    DWORD result = ::UnDecorateSymbolName(
-        Name.c_str(), DemangledName, 1023,
-        UNDNAME_NO_ACCESS_SPECIFIERS |       // Strip public, private, protected
-            UNDNAME_NO_ALLOCATION_LANGUAGE | // Strip __thiscall, __stdcall, etc
-            UNDNAME_NO_THROW_SIGNATURES |    // Strip throw() specifications
-            UNDNAME_NO_MEMBER_TYPE | // Strip virtual, static, etc specifiers
-            UNDNAME_NO_MS_KEYWORDS | // Strip all MS extension keywords
-            UNDNAME_NO_FUNCTION_RETURNS); // Strip function return types
-    return (result == 0) ? Name : std::string(DemangledName);
-  }
-#endif
   if (DbiModuleDescriptor && DbiModuleDescriptor->isWin32Module())
     return std::string(demanglePE32ExternCFunc(Name));
   return Name;
