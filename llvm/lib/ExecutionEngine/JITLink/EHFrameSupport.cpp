@@ -27,12 +27,11 @@ EHFrameBinaryParser::EHFrameBinaryParser(JITTargetAddress EHFrameAddress,
 Error EHFrameBinaryParser::addToGraph() {
   while (!EHFrameReader.empty()) {
     size_t RecordOffset = EHFrameReader.getOffset();
-    JITTargetAddress RecordAddress = EHFrameAddress + RecordOffset;
 
     LLVM_DEBUG({
       dbgs() << "Processing eh-frame record at "
-             << format("0x%016" PRIx64, RecordAddress) << " (offset "
-             << RecordOffset << ")\n";
+             << format("0x%016" PRIx64, EHFrameAddress + RecordOffset)
+             << " (offset " << RecordOffset << ")\n";
     });
 
     size_t RecordLength = 0;
