@@ -6638,7 +6638,7 @@ def note_member_declared_here : Note<
 def note_member_first_declared_here : Note<
   "member %0 first declared here">;
 def warn_bitwise_negation_bool : Warning<
-  "bitwise negation of a boolean expression always evaluates to 'true'">,
+  "bitwise negation of a boolean expression; did you mean a logicial negation?">,
   InGroup<DiagGroup<"bool-operation">>;
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;
 def warn_increment_bool : Warning<
