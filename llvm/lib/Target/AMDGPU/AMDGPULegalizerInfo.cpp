@@ -1085,6 +1085,8 @@ Register AMDGPULegalizerInfo::getSegmentAperture(
   const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
   const LLT S32 = LLT::scalar(32);
 
+  assert(AS == AMDGPUAS::LOCAL_ADDRESS || AS == AMDGPUAS::PRIVATE_ADDRESS);
+
   if (ST.hasApertureRegs()) {
     // FIXME: Use inline constants (src_{shared, private}_base) instead of
     // getreg.
@@ -1231,7 +1233,7 @@ bool AMDGPULegalizerInfo::legalizeAddrSpaceCast(
   auto FlatNull =
       B.buildConstant(DstTy, TM.getNullPointerValue(DestAS));
 
-  Register ApertureReg = getSegmentAperture(DestAS, MRI, B);
+  Register ApertureReg = getSegmentAperture(SrcAS, MRI, B);
   if (!ApertureReg.isValid())
     return false;
 
