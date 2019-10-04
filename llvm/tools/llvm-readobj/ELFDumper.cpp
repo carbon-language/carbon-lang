@@ -173,11 +173,7 @@ public:
   void printVersionInfo() override;
   void printGroupSections() override;
 
-  void printAttributes() override;
-  void printMipsPLTGOT() override;
-  void printMipsABIFlags() override;
-  void printMipsReginfo() override;
-  void printMipsOptions() override;
+  void printArchSpecificInfo() override;
 
   void printStackMap() const override;
 
@@ -217,6 +213,12 @@ private:
     return checkDRI({ObjF->getELFFile()->base() + S->sh_offset, S->sh_size,
                      S->sh_entsize, ObjF->getFileName()});
   }
+
+  void printAttributes();
+  void printMipsPLTGOT();
+  void printMipsABIFlags();
+  void printMipsReginfo();
+  void printMipsOptions();
 
   std::pair<const Elf_Phdr *, const Elf_Shdr *>
   findDynamic(const ELFFile<ELFT> *Obj);
@@ -2208,6 +2210,23 @@ template <typename ELFT> void ELFDumper<ELFT>::printGnuHashTable() {
 
 template <typename ELFT> void ELFDumper<ELFT>::printLoadName() {
   W.printString("LoadName", SOName);
+}
+
+template <class ELFT> void ELFDumper<ELFT>::printArchSpecificInfo() {
+  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+  switch (Obj->getHeader()->e_machine) {
+  case EM_ARM:
+    printAttributes();
+    break;
+  case EM_MIPS:
+    printMipsABIFlags();
+    printMipsOptions();
+    printMipsReginfo();
+    printMipsPLTGOT();
+    break;
+  default:
+    break;
+  }
 }
 
 template <class ELFT> void ELFDumper<ELFT>::printAttributes() {
