@@ -395,6 +395,12 @@ private:
                          Keywords.kw_internal)) {
       return true;
     }
+
+    // incase its a [XXX] retval func(....
+    if (AttrTok->Next &&
+        AttrTok->Next->startsSequence(tok::identifier, tok::l_paren))
+      return true;
+
     return false;
   }
 
@@ -489,6 +495,8 @@ private:
       } else if (Style.isCpp() && Contexts.back().ContextKind == tok::l_brace &&
                  Parent && Parent->isOneOf(tok::l_brace, tok::comma)) {
         Left->Type = TT_DesignatedInitializerLSquare;
+      } else if (IsCSharp11AttributeSpecifier) {
+        Left->Type = TT_AttributeSquare;
       } else if (CurrentToken->is(tok::r_square) && Parent &&
                  Parent->is(TT_TemplateCloser)) {
         Left->Type = TT_ArraySubscriptLSquare;
@@ -536,8 +544,6 @@ private:
                                  // Should only be relevant to JavaScript:
                                  tok::kw_default)) {
         Left->Type = TT_ArrayInitializerLSquare;
-      } else if (IsCSharp11AttributeSpecifier) {
-        Left->Type = TT_AttributeSquare;
       } else {
         BindingIncrease = 10;
         Left->Type = TT_ArraySubscriptLSquare;
