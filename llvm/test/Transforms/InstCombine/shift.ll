@@ -428,8 +428,8 @@ define i8 @test28a(i8 %x, i8 %y) {
 ; CHECK-LABEL: @test28a(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[TMP1:%.*]] = lshr i8 [[X:%.*]], 7
-; CHECK-NEXT:    [[COND1:%.*]] = icmp eq i8 [[TMP1]], 0
-; CHECK-NEXT:    br i1 [[COND1]], label [[BB2:%.*]], label [[BB1:%.*]]
+; CHECK-NEXT:    [[COND1:%.*]] = icmp slt i8 [[X]], 0
+; CHECK-NEXT:    br i1 [[COND1]], label [[BB1:%.*]], label [[BB2:%.*]]
 ; CHECK:       bb1:
 ; CHECK-NEXT:    ret i8 [[TMP1]]
 ; CHECK:       bb2:

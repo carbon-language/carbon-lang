@@ -44,9 +44,7 @@ define i1 @highest_bit_test_via_ashr(i32 %data, i32 %nbits) {
 
 define i1 @highest_bit_test_via_ashr_with_truncation(i64 %data, i32 %nbits) {
 ; CHECK-LABEL: @highest_bit_test_via_ashr_with_truncation(
-; CHECK-NEXT:    [[TMP1:%.*]] = ashr i64 [[DATA:%.*]], 63
-; CHECK-NEXT:    [[SIGNBIT:%.*]] = trunc i64 [[TMP1]] to i32
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNBIT]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i64 [[DATA:%.*]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %num_low_bits_to_skip = sub i32 64, %nbits
@@ -75,7 +73,7 @@ define i1 @unsigned_sign_bit_extract_extrause(i32 %x) {
 ; CHECK-LABEL: @unsigned_sign_bit_extract_extrause(
 ; CHECK-NEXT:    [[SIGNBIT:%.*]] = lshr i32 [[X:%.*]], 31
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNBIT]])
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNBIT]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i32 [[X]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %signbit = lshr i32 %x, 31
@@ -87,7 +85,7 @@ define i1 @unsigned_sign_bit_extract_extrause__ispositive(i32 %x) {
 ; CHECK-LABEL: @unsigned_sign_bit_extract_extrause__ispositive(
 ; CHECK-NEXT:    [[SIGNBIT:%.*]] = lshr i32 [[X:%.*]], 31
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNBIT]])
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp eq i32 [[SIGNBIT]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp sgt i32 [[X]], -1
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %signbit = lshr i32 %x, 31
@@ -108,7 +106,7 @@ define i1 @signed_sign_bit_extract_extrause(i32 %x) {
 ; CHECK-LABEL: @signed_sign_bit_extract_extrause(
 ; CHECK-NEXT:    [[SIGNSMEAR:%.*]] = ashr i32 [[X:%.*]], 31
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNSMEAR]])
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNSMEAR]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i32 [[X]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %signsmear = ashr i32 %x, 31
@@ -132,7 +130,7 @@ define i1 @unsigned_sign_bit_extract_with_trunc_extrause(i64 %x) {
 ; CHECK-NEXT:    call void @use64(i64 [[SIGNBIT]])
 ; CHECK-NEXT:    [[SIGNBIT_NARROW:%.*]] = trunc i64 [[SIGNBIT]] to i32
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNBIT_NARROW]])
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNBIT_NARROW]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i64 [[X]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %signbit = lshr i64 %x, 63
@@ -144,9 +142,7 @@ define i1 @unsigned_sign_bit_extract_with_trunc_extrause(i64 %x) {
 }
 define i1 @signed_sign_bit_extract_trunc(i64 %x) {
 ; CHECK-LABEL: @signed_sign_bit_extract_trunc(
-; CHECK-NEXT:    [[SIGNSMEAR:%.*]] = ashr i64 [[X:%.*]], 63
-; CHECK-NEXT:    [[SIGNSMEAR_NARROW:%.*]] = trunc i64 [[SIGNSMEAR]] to i32
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNSMEAR_NARROW]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i64 [[X:%.*]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %signsmear = ashr i64 %x, 63
@@ -160,7 +156,7 @@ define i1 @signed_sign_bit_extract_trunc_extrause(i64 %x) {
 ; CHECK-NEXT:    call void @use64(i64 [[SIGNSMEAR]])
 ; CHECK-NEXT:    [[SIGNSMEAR_NARROW:%.*]] = trunc i64 [[SIGNSMEAR]] to i32
 ; CHECK-NEXT:    call void @use32(i32 [[SIGNSMEAR_NARROW]])
-; CHECK-NEXT:    [[ISNEG:%.*]] = icmp ne i32 [[SIGNSMEAR_NARROW]], 0
+; CHECK-NEXT:    [[ISNEG:%.*]] = icmp slt i64 [[X]], 0
 ; CHECK-NEXT:    ret i1 [[ISNEG]]
 ;
   %signsmear = ashr i64 %x, 63
