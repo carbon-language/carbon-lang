@@ -3747,26 +3747,6 @@ void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
   }
 }
 
-bool RewriteInstance::checkLargeFunctions() {
-  if (BC->HasRelocations)
-    return false;
-
-  LargeFunctions.clear();
-  for (auto &BFI : BC->getBinaryFunctions()) {
-    auto &Function = BFI.second;
-
-    // Ignore this function if we failed to map it to the output binary
-    if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
-      continue;
-
-    if (Function.getImageSize() <= Function.getMaxSize())
-      continue;
-
-    LargeFunctions.insert(BFI.first);
-  }
-  return !LargeFunctions.empty();
-}
-
 void RewriteInstance::patchELFPHDRTable() {
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {

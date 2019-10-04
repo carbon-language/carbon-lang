@@ -126,13 +126,6 @@ public:
   /// Update output object's values based on the final \p Layout.
   void updateOutputValues(const MCAsmLayout &Layout);
 
-  /// Check which functions became larger than their original version and
-  /// annotate function splitting information.
-  ///
-  /// Returns true if any function was annotated, requiring us to perform a
-  /// second pass to emit those functions in two parts.
-  bool checkLargeFunctions();
-
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
   /// not fit in the binary, reject it and preserve the original version of the

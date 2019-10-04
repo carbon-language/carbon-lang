@@ -74,6 +74,10 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
   DEBUG(dbgs() << "BOLT-DEBUG: Writing BOLT Address Translation Tables\n");
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
+    // We don't need a translation table if the body of the function hasn't
+    // changed
+    if (!BC.HasRelocations && !Function.isSimple())
+      continue;
 
     DEBUG(dbgs() << "Function name: " << Function.getPrintName() << "\n");
     DEBUG(dbgs() << " Address reference: 0x"
