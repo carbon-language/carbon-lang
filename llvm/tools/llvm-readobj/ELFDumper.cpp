@@ -216,7 +216,6 @@ private:
 
   void printAttributes();
   void printMipsPLTGOT();
-  void printMipsABIFlags();
   void printMipsReginfo();
   void printMipsOptions();
 
@@ -431,6 +430,7 @@ public:
   virtual void printStackSizeEntry(uint64_t Size, StringRef FuncName) = 0;
   virtual void printMipsGOT(const MipsGOTParser<ELFT> &Parser) = 0;
   virtual void printMipsPLT(const MipsGOTParser<ELFT> &Parser) = 0;
+  virtual void printMipsABIFlags(const ELFObjectFile<ELFT> *Obj) = 0;
   const ELFDumper<ELFT> *dumper() const { return Dumper; }
 
 protected:
@@ -482,6 +482,7 @@ public:
   void printStackSizeEntry(uint64_t Size, StringRef FuncName) override;
   void printMipsGOT(const MipsGOTParser<ELFT> &Parser) override;
   void printMipsPLT(const MipsGOTParser<ELFT> &Parser) override;
+  void printMipsABIFlags(const ELFObjectFile<ELFT> *Obj) override;
 
 private:
   struct Field {
@@ -588,6 +589,7 @@ public:
   void printStackSizeEntry(uint64_t Size, StringRef FuncName) override;
   void printMipsGOT(const MipsGOTParser<ELFT> &Parser) override;
   void printMipsPLT(const MipsGOTParser<ELFT> &Parser) override;
+  void printMipsABIFlags(const ELFObjectFile<ELFT> *Obj) override;
 
 private:
   void printRelocation(const ELFO *Obj, Elf_Rela Rel, const Elf_Shdr *SymTab);
@@ -2219,7 +2221,7 @@ template <class ELFT> void ELFDumper<ELFT>::printArchSpecificInfo() {
     printAttributes();
     break;
   case EM_MIPS:
-    printMipsABIFlags();
+    ELFDumperStyle->printMipsABIFlags(ObjF);
     printMipsOptions();
     printMipsReginfo();
     printMipsPLTGOT();
@@ -2621,43 +2623,6 @@ static int getMipsRegisterSize(uint8_t Flag) {
   default:
     return -1;
   }
-}
-
-template <class ELFT> void ELFDumper<ELFT>::printMipsABIFlags() {
-  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
-  const Elf_Shdr *Shdr =
-      findSectionByName(*Obj, ObjF->getFileName(), ".MIPS.abiflags");
-  if (!Shdr) {
-    W.startLine() << "There is no .MIPS.abiflags section in the file.\n";
-    return;
-  }
-  ArrayRef<uint8_t> Sec =
-      unwrapOrError(ObjF->getFileName(), Obj->getSectionContents(Shdr));
-  if (Sec.size() != sizeof(Elf_Mips_ABIFlags<ELFT>)) {
-    W.startLine() << "The .MIPS.abiflags section has a wrong size.\n";
-    return;
-  }
-
-  auto *Flags = reinterpret_cast<const Elf_Mips_ABIFlags<ELFT> *>(Sec.data());
-
-  raw_ostream &OS = W.getOStream();
-  DictScope GS(W, "MIPS ABI Flags");
-
-  W.printNumber("Version", Flags->version);
-  W.startLine() << "ISA: ";
-  if (Flags->isa_rev <= 1)
-    OS << format("MIPS%u", Flags->isa_level);
-  else
-    OS << format("MIPS%ur%u", Flags->isa_level, Flags->isa_rev);
-  OS << "\n";
-  W.printEnum("ISA Extension", Flags->isa_ext, makeArrayRef(ElfMipsISAExtType));
-  W.printFlags("ASEs", Flags->ases, makeArrayRef(ElfMipsASEFlags));
-  W.printEnum("FP ABI", Flags->fp_abi, makeArrayRef(ElfMipsFpABIType));
-  W.printNumber("GPR size", getMipsRegisterSize(Flags->gpr_size));
-  W.printNumber("CPR1 size", getMipsRegisterSize(Flags->cpr1_size));
-  W.printNumber("CPR2 size", getMipsRegisterSize(Flags->cpr2_size));
-  W.printFlags("Flags 1", Flags->flags1, makeArrayRef(ElfMipsFlags1));
-  W.printHex("Flags 2", Flags->flags2);
 }
 
 template <class ELFT>
@@ -5121,6 +5086,45 @@ void GNUStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
   }
 }
 
+template <class ELFT>
+void GNUStyle<ELFT>::printMipsABIFlags(const ELFObjectFile<ELFT> *ObjF) {
+  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+  const Elf_Shdr *Shdr =
+      findSectionByName(*Obj, ObjF->getFileName(), ".MIPS.abiflags");
+  if (!Shdr)
+    return;
+
+  ArrayRef<uint8_t> Sec =
+      unwrapOrError(ObjF->getFileName(), Obj->getSectionContents(Shdr));
+  if (Sec.size() != sizeof(Elf_Mips_ABIFlags<ELFT>))
+    reportError(createError(".MIPS.abiflags section has a wrong size"),
+                ObjF->getFileName());
+
+  auto *Flags = reinterpret_cast<const Elf_Mips_ABIFlags<ELFT> *>(Sec.data());
+
+  OS << "MIPS ABI Flags Version: " << Flags->version << "\n\n";
+  OS << "ISA: MIPS" << int(Flags->isa_level);
+  if (Flags->isa_rev > 1)
+    OS << "r" << int(Flags->isa_rev);
+  OS << "\n";
+  OS << "GPR size: " << getMipsRegisterSize(Flags->gpr_size) << "\n";
+  OS << "CPR1 size: " << getMipsRegisterSize(Flags->cpr1_size) << "\n";
+  OS << "CPR2 size: " << getMipsRegisterSize(Flags->cpr2_size) << "\n";
+  OS << "FP ABI: " << printEnum(Flags->fp_abi, makeArrayRef(ElfMipsFpABIType))
+     << "\n";
+  OS << "ISA Extension: "
+     << printEnum(Flags->isa_ext, makeArrayRef(ElfMipsISAExtType)) << "\n";
+  if (Flags->ases == 0)
+    OS << "ASEs: None\n";
+  else
+    // FIXME: Print each flag on a separate line.
+    OS << "ASEs: " << printFlags(Flags->ases, makeArrayRef(ElfMipsASEFlags))
+       << "\n";
+  OS << "FLAGS 1: " << format_hex_no_prefix(Flags->flags1, 8, false) << "\n";
+  OS << "FLAGS 2: " << format_hex_no_prefix(Flags->flags2, 8, false) << "\n";
+  OS << "\n";
+}
+
 template <class ELFT> void LLVMStyle<ELFT>::printFileHeaders(const ELFO *Obj) {
   const Elf_Ehdr *E = Obj->getHeader();
   {
@@ -6042,4 +6046,42 @@ void LLVMStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
       W.printNumber("Name", SymName, Sym->st_name);
     }
   }
+}
+
+template <class ELFT>
+void LLVMStyle<ELFT>::printMipsABIFlags(const ELFObjectFile<ELFT> *ObjF) {
+  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+  const Elf_Shdr *Shdr =
+      findSectionByName(*Obj, ObjF->getFileName(), ".MIPS.abiflags");
+  if (!Shdr) {
+    W.startLine() << "There is no .MIPS.abiflags section in the file.\n";
+    return;
+  }
+  ArrayRef<uint8_t> Sec =
+      unwrapOrError(ObjF->getFileName(), Obj->getSectionContents(Shdr));
+  if (Sec.size() != sizeof(Elf_Mips_ABIFlags<ELFT>)) {
+    W.startLine() << "The .MIPS.abiflags section has a wrong size.\n";
+    return;
+  }
+
+  auto *Flags = reinterpret_cast<const Elf_Mips_ABIFlags<ELFT> *>(Sec.data());
+
+  raw_ostream &OS = W.getOStream();
+  DictScope GS(W, "MIPS ABI Flags");
+
+  W.printNumber("Version", Flags->version);
+  W.startLine() << "ISA: ";
+  if (Flags->isa_rev <= 1)
+    OS << format("MIPS%u", Flags->isa_level);
+  else
+    OS << format("MIPS%ur%u", Flags->isa_level, Flags->isa_rev);
+  OS << "\n";
+  W.printEnum("ISA Extension", Flags->isa_ext, makeArrayRef(ElfMipsISAExtType));
+  W.printFlags("ASEs", Flags->ases, makeArrayRef(ElfMipsASEFlags));
+  W.printEnum("FP ABI", Flags->fp_abi, makeArrayRef(ElfMipsFpABIType));
+  W.printNumber("GPR size", getMipsRegisterSize(Flags->gpr_size));
+  W.printNumber("CPR1 size", getMipsRegisterSize(Flags->cpr1_size));
+  W.printNumber("CPR2 size", getMipsRegisterSize(Flags->cpr2_size));
+  W.printFlags("Flags 1", Flags->flags1, makeArrayRef(ElfMipsFlags1));
+  W.printHex("Flags 2", Flags->flags2);
 }
