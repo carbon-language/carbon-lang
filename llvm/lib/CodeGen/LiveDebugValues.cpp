@@ -311,6 +311,7 @@ private:
       case InvalidKind:
         llvm_unreachable("Tried to produce DBG_VALUE for invalid VarLoc");
       }
+      llvm_unreachable("Unrecognized LiveDebugValues.VarLoc.Kind enum");
     }
 
     /// Is the Loc field a constant or constant object?
