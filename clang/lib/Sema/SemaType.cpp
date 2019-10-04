@@ -2290,7 +2290,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       }
     }
 
-    T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
+    T = Context.getConstantArrayType(T, ConstVal, ArraySize, ASM, Quals);
   }
 
   // OpenCL v1.2 s6.9.d: variable length arrays are not supported.

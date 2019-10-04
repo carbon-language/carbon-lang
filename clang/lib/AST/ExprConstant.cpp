@@ -6004,8 +6004,8 @@ static bool HandleOperatorNewCall(EvalInfo &Info, const CallExpr *E,
     return false;
   }
 
-  QualType AllocType =
-      Info.Ctx.getConstantArrayType(ElemType, Size, ArrayType::Normal, 0);
+  QualType AllocType = Info.Ctx.getConstantArrayType(ElemType, Size, nullptr,
+                                                     ArrayType::Normal, 0);
   APValue *Val = Info.createHeapAlloc(E, AllocType, Result);
   *Val = APValue(APValue::UninitArray(), 0, Size.getZExtValue());
   Result.addArray(Info, E, cast<ConstantArrayType>(AllocType));
@@ -8561,7 +8561,7 @@ bool PointerExprEvaluator::VisitCXXNewExpr(const CXXNewExpr *E) {
         ResizedArrayILE = cast<InitListExpr>(Init);
     }
 
-    AllocType = Info.Ctx.getConstantArrayType(AllocType, ArrayBound,
+    AllocType = Info.Ctx.getConstantArrayType(AllocType, ArrayBound, nullptr,
                                               ArrayType::Normal, 0);
   } else {
     assert(!AllocType->isArrayType() &&

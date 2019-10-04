@@ -829,7 +829,8 @@ static bool isAddrSpaceMapManglingEnabled(const TargetInfo &TI,
 ASTContext::ASTContext(LangOptions &LOpts, SourceManager &SM,
                        IdentifierTable &idents, SelectorTable &sels,
                        Builtin::Context &builtins)
-    : FunctionProtoTypes(this_()), TemplateSpecializationTypes(this_()),
+    : ConstantArrayTypes(this_()), FunctionProtoTypes(this_()),
+      TemplateSpecializationTypes(this_()),
       DependentTemplateSpecializationTypes(this_()),
       SubstTemplateTemplateParmPacks(this_()), SourceMgr(SM), LangOpts(LOpts),
       SanitizerBL(new SanitizerBlacklist(LangOpts.SanitizerBlacklistFiles, SM)),
@@ -3165,11 +3166,16 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls) const {
 /// array of the specified element type.
 QualType ASTContext::getConstantArrayType(QualType EltTy,
                                           const llvm::APInt &ArySizeIn,
+                                          const Expr *SizeExpr,
                                           ArrayType::ArraySizeModifier ASM,
                                           unsigned IndexTypeQuals) const {
   assert((EltTy->isDependentType() ||
           EltTy->isIncompleteType() || EltTy->isConstantSizeType()) &&
          "Constant array of VLAs is illegal!");
+
+  // We only need the size as part of the type if it's instantiation-dependent.
+  if (SizeExpr && !SizeExpr->isInstantiationDependent())
+    SizeExpr = nullptr;
 
   // Convert the array size into a canonical width matching the pointer size for
   // the target.
@@ -3177,19 +3183,21 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   ArySize = ArySize.zextOrTrunc(Target->getMaxPointerWidth());
 
   llvm::FoldingSetNodeID ID;
-  ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, IndexTypeQuals);
+  ConstantArrayType::Profile(ID, *this, EltTy, ArySize, SizeExpr, ASM,
+                             IndexTypeQuals);
 
   void *InsertPos = nullptr;
   if (ConstantArrayType *ATP =
       ConstantArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(ATP, 0);
 
-  // If the element type isn't canonical or has qualifiers, this won't
-  // be a canonical type either, so fill in the canonical type field.
+  // If the element type isn't canonical or has qualifiers, or the array bound
+  // is instantiation-dependent, this won't be a canonical type either, so fill
+  // in the canonical type field.
   QualType Canon;
-  if (!EltTy.isCanonical() || EltTy.hasLocalQualifiers()) {
+  if (!EltTy.isCanonical() || EltTy.hasLocalQualifiers() || SizeExpr) {
     SplitQualType canonSplit = getCanonicalType(EltTy).split();
-    Canon = getConstantArrayType(QualType(canonSplit.Ty, 0), ArySize,
+    Canon = getConstantArrayType(QualType(canonSplit.Ty, 0), ArySize, nullptr,
                                  ASM, IndexTypeQuals);
     Canon = getQualifiedType(Canon, canonSplit.Quals);
 
@@ -3199,8 +3207,11 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
     assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
 
-  auto *New = new (*this,TypeAlignment)
-    ConstantArrayType(EltTy, Canon, ArySize, ASM, IndexTypeQuals);
+  void *Mem = Allocate(
+      ConstantArrayType::totalSizeToAlloc<const Expr *>(SizeExpr ? 1 : 0),
+      TypeAlignment);
+  auto *New = new (Mem)
+    ConstantArrayType(EltTy, Canon, ArySize, SizeExpr, ASM, IndexTypeQuals);
   ConstantArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -3297,6 +3308,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
     result = getConstantArrayType(
                  getVariableArrayDecayedType(cat->getElementType()),
                                   cat->getSize(),
+                                  cat->getSizeExpr(),
                                   cat->getSizeModifier(),
                                   cat->getIndexTypeCVRQualifiers());
     break;
@@ -5192,7 +5204,7 @@ QualType ASTContext::getUnqualifiedArrayType(QualType type,
 
   if (const auto *CAT = dyn_cast<ConstantArrayType>(AT)) {
     return getConstantArrayType(unqualElementType, CAT->getSize(),
-                                CAT->getSizeModifier(), 0);
+                                CAT->getSizeExpr(), CAT->getSizeModifier(), 0);
   }
 
   if (const auto *IAT = dyn_cast<IncompleteArrayType>(AT)) {
@@ -5565,6 +5577,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
 
   if (const auto *CAT = dyn_cast<ConstantArrayType>(ATy))
     return cast<ArrayType>(getConstantArrayType(NewEltTy, CAT->getSize(),
+                                                CAT->getSizeExpr(),
                                                 CAT->getSizeModifier(),
                                            CAT->getIndexTypeCVRQualifiers()));
   if (const auto *IAT = dyn_cast<IncompleteArrayType>(ATy))
@@ -7471,7 +7484,7 @@ static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
   llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 1);
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
-                                    Size, ArrayType::Normal, 0);
+                                    Size, nullptr, ArrayType::Normal, 0);
   return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
@@ -7524,16 +7537,16 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
 
   // typedef struct __va_list_tag __builtin_va_list[1];
   llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 1);
-  QualType VaListTagArrayType =
-      Context->getConstantArrayType(VaListTagType, Size, ArrayType::Normal, 0);
+  QualType VaListTagArrayType = Context->getConstantArrayType(
+      VaListTagType, Size, nullptr, ArrayType::Normal, 0);
   return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
   // typedef int __builtin_va_list[4];
   llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 4);
-  QualType IntArrayType =
-      Context->getConstantArrayType(Context->IntTy, Size, ArrayType::Normal, 0);
+  QualType IntArrayType = Context->getConstantArrayType(
+      Context->IntTy, Size, nullptr, ArrayType::Normal, 0);
   return Context->buildImplicitTypedef(IntArrayType, "__builtin_va_list");
 }
 
@@ -7627,8 +7640,8 @@ CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
 
   // typedef __va_list_tag __builtin_va_list[1];
   llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 1);
-  QualType VaListTagArrayType =
-      Context->getConstantArrayType(VaListTagType, Size, ArrayType::Normal, 0);
+  QualType VaListTagArrayType = Context->getConstantArrayType(
+      VaListTagType, Size, nullptr, ArrayType::Normal, 0);
 
   return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
@@ -9072,10 +9085,14 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
       return LHS;
     if (RCAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType))
       return RHS;
-    if (LCAT) return getConstantArrayType(ResultType, LCAT->getSize(),
-                                          ArrayType::ArraySizeModifier(), 0);
-    if (RCAT) return getConstantArrayType(ResultType, RCAT->getSize(),
-                                          ArrayType::ArraySizeModifier(), 0);
+    if (LCAT)
+      return getConstantArrayType(ResultType, LCAT->getSize(),
+                                  LCAT->getSizeExpr(),
+                                  ArrayType::ArraySizeModifier(), 0);
+    if (RCAT)
+      return getConstantArrayType(ResultType, RCAT->getSize(),
+                                  RCAT->getSizeExpr(),
+                                  ArrayType::ArraySizeModifier(), 0);
     if (LVAT && getCanonicalType(LHSElem) == getCanonicalType(ResultType))
       return LHS;
     if (RVAT && getCanonicalType(RHSElem) == getCanonicalType(ResultType))
@@ -10317,7 +10334,7 @@ QualType ASTContext::getStringLiteralArrayType(QualType EltTy,
 
   // Get an array type for the string, according to C99 6.4.5. This includes
   // the null terminator character.
-  return getConstantArrayType(EltTy, llvm::APInt(32, Length + 1),
+  return getConstantArrayType(EltTy, llvm::APInt(32, Length + 1), nullptr,
                               ArrayType::Normal, /*IndexTypeQuals*/ 0);
 }
 
