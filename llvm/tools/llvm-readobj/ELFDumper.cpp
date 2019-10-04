@@ -2231,7 +2231,7 @@ template <class ELFT> void ELFDumper<ELFT>::printArchSpecificInfo() {
     if (Parser.hasPlt())
       ELFDumperStyle->printMipsPLT(Parser);
     break;
-  };
+  }
   default:
     break;
   }
