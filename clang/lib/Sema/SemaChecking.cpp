@@ -11384,7 +11384,7 @@ static void DiagnoseIntInBoolContext(Sema &S, Expr *E) {
         (RHS->getValue() == 0 || RHS->getValue() == 1))
       // Do not diagnose common idioms.
       return;
-    if (LHS->getValue() != 0 && LHS->getValue() != 0)
+    if (LHS->getValue() != 0 && RHS->getValue() != 0)
       S.Diag(ExprLoc, diag::warn_integer_constants_in_conditional_always_true);
   }
 }
