@@ -4956,6 +4956,10 @@ TEST_F(FormatTest, DontBreakBeforeQualifiedOperator) {
 
 TEST_F(FormatTest, TrailingReturnType) {
   verifyFormat("auto foo() -> int;\n");
+  // correct trailing return type spacing
+  verifyFormat("auto operator->() -> int;\n");
+  verifyFormat("auto operator++(int) -> int;\n");
+
   verifyFormat("struct S {\n"
                "  auto bar() const -> int;\n"
                "};");

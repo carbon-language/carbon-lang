@@ -1393,7 +1393,9 @@ private:
                Style.Language == FormatStyle::LK_Java) {
       Current.Type = TT_LambdaArrow;
     } else if (Current.is(tok::arrow) && AutoFound && Line.MustBeDeclaration &&
-               Current.NestingLevel == 0) {
+               Current.NestingLevel == 0 &&
+               !Current.Previous->is(tok::kw_operator)) {
+      // not auto operator->() -> xxx;
       Current.Type = TT_TrailingReturnArrow;
       TrailingReturnFound = true;
     } else if (Current.is(tok::star) ||
