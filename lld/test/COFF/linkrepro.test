@@ -12,6 +12,14 @@
 # RUN: diff %p/Inputs/std32.lib repro/%:p/Inputs/std32.lib
 # RUN: FileCheck %s --check-prefix=RSP < repro/response.txt
 
+# RUN: cd %t.dir/build1
+# RUN: lld-link %t.obj %p/Inputs/std32.lib /subsystem:console \
+# RUN:   /entry:main@0 /reproduce:repro2.tar /out:%t.exe
+# RUN: tar xf repro2.tar
+# RUN: diff %t.obj repro2/%:t.obj
+# RUN: diff %p/Inputs/std32.lib repro2/%:p/Inputs/std32.lib
+# RUN: FileCheck %s --check-prefix=RSP < repro2/response.txt
+
 # RUN: cd %t.dir/build2
 # RUN: lld-link %t.obj /libpath:%p/Inputs /defaultlib:std32 /subsystem:console \
 # RUN:   /entry:main@0 /linkrepro:. /out:%t.exe
