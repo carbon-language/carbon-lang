@@ -3402,7 +3402,7 @@ def warn_address_of_reference_bool_conversion : Warning<
   InGroup<UndefinedBoolConversion>;
 
 def warn_xor_used_as_pow : Warning<
-  "result of '%0' is %1; did you mean an exponentiation?">,
+  "result of '%0' is %1; did you mean exponentiation?">,
   InGroup<XorUsedAsPow>;
 def warn_xor_used_as_pow_base_extra : Warning<
   "result of '%0' is %1; did you mean '%2' (%3)?">,
