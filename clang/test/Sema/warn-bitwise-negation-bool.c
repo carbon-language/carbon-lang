@@ -19,4 +19,6 @@ void test(boolean b, int i) {
   b = ~i;
   i = ~b; // expected-warning {{bitwise negation of a boolean expression; did you mean logical negation?}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:7-[[@LINE-1]]:8}:"!"
+  b = ~(i > 4); // expected-warning {{bitwise negation of a boolean expression; did you mean logical negation?}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:7-[[@LINE-1]]:8}:"!"
 }
