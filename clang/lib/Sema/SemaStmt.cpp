@@ -963,7 +963,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     // condition is constant.
     llvm::APSInt ConstantCondValue;
     bool HasConstantCond = false;
-    if (!HasDependentValue && !TheDefaultStmt) {
+    if (!TheDefaultStmt) {
       Expr::EvalResult Result;
       HasConstantCond = CondExpr->EvaluateAsInt(Result, Context,
                                                 Expr::SE_AllowSideEffects);
