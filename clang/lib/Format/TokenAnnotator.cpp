@@ -2616,8 +2616,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_square))
     return (Left.is(TT_ArrayInitializerLSquare) && Right.isNot(tok::r_square) &&
             SpaceRequiredForArrayInitializerLSquare(Left, Style)) ||
-           (Left.isOneOf(TT_ArraySubscriptLSquare,
-                         TT_StructuredBindingLSquare) &&
+           (Left.isOneOf(TT_ArraySubscriptLSquare, TT_StructuredBindingLSquare,
+                         TT_LambdaLSquare) &&
             Style.SpacesInSquareBrackets && Right.isNot(tok::r_square));
   if (Right.is(tok::r_square))
     return Right.MatchingParen &&
@@ -2626,7 +2626,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                                                      Style)) ||
             (Style.SpacesInSquareBrackets &&
              Right.MatchingParen->isOneOf(TT_ArraySubscriptLSquare,
-                                          TT_StructuredBindingLSquare)) ||
+                                          TT_StructuredBindingLSquare,
+                                          TT_LambdaLSquare)) ||
             Right.MatchingParen->is(TT_AttributeParen));
   if (Right.is(tok::l_square) &&
       !Right.isOneOf(TT_ObjCMethodExpr, TT_LambdaLSquare,

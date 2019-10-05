@@ -10515,10 +10515,6 @@ TEST_F(FormatTest, ConfigurableSpacesInSquareBrackets) {
 
   FormatStyle Spaces = getLLVMStyle();
   Spaces.SpacesInSquareBrackets = true;
-  // Lambdas unchanged.
-  verifyFormat("int c = []() -> int { return 2; }();\n", Spaces);
-  verifyFormat("return [i, args...] {};", Spaces);
-
   // Not lambdas.
   verifyFormat("int a[ 5 ];", Spaces);
   verifyFormat("a[ 3 ] += 42;", Spaces);
@@ -10529,6 +10525,9 @@ TEST_F(FormatTest, ConfigurableSpacesInSquareBrackets) {
   verifyFormat("std::unique_ptr<int[]> foo() {}", Spaces);
   verifyFormat("int i = a[ a ][ a ]->f();", Spaces);
   verifyFormat("int i = (*b)[ a ]->f();", Spaces);
+  // Lambdas.
+  verifyFormat("int c = []() -> int { return 2; }();\n", Spaces);
+  verifyFormat("return [ i, args... ] {};", Spaces);
 }
 
 TEST_F(FormatTest, ConfigurableSpaceBeforeAssignmentOperators) {
