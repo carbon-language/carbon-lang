@@ -35121,6 +35121,23 @@ static bool checkBitcastSrcVectorSize(SDValue Src, unsigned Size) {
   return false;
 }
 
+// Helper to push sign extension of vXi1 SETCC result through bitops.
+static SDValue signExtendBitcastSrcVector(SelectionDAG &DAG, EVT SExtVT,
+                                          SDValue Src, const SDLoc &DL) {
+  switch (Src.getOpcode()) {
+  case ISD::SETCC:
+    return DAG.getNode(ISD::SIGN_EXTEND, DL, SExtVT, Src);
+  case ISD::AND:
+  case ISD::XOR:
+  case ISD::OR:
+    return DAG.getNode(
+        Src.getOpcode(), DL, SExtVT,
+        signExtendBitcastSrcVector(DAG, SExtVT, Src.getOperand(0), DL),
+        signExtendBitcastSrcVector(DAG, SExtVT, Src.getOperand(1), DL));
+  }
+  llvm_unreachable("Unexpected node type for vXi1 sign extension");
+}
+
 // Try to match patterns such as
 // (i16 bitcast (v16i1 x))
 // ->
@@ -35159,6 +35176,7 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, EVT VT, SDValue Src,
   // For example, t0 := (v8i16 sext(v8i1 x)) needs to be shuffled as:
   // (v16i8 shuffle <0,2,4,6,8,10,12,14,u,u,...,u> (v16i8 bitcast t0), undef)
   MVT SExtVT;
+  bool PropagateSExt = false;
   switch (SrcVT.getSimpleVT().SimpleTy) {
   default:
     return SDValue();
@@ -35169,8 +35187,10 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, EVT VT, SDValue Src,
     SExtVT = MVT::v4i32;
     // For cases such as (i4 bitcast (v4i1 setcc v4i64 v1, v2))
     // sign-extend to a 256-bit operation to avoid truncation.
-    if (Subtarget.hasAVX() && checkBitcastSrcVectorSize(Src, 256))
+    if (Subtarget.hasAVX() && checkBitcastSrcVectorSize(Src, 256)) {
       SExtVT = MVT::v4i64;
+      PropagateSExt = true;
+    }
     break;
   case MVT::v8i1:
     SExtVT = MVT::v8i16;
@@ -35179,11 +35199,10 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, EVT VT, SDValue Src,
     // If the setcc operand is 128-bit, prefer sign-extending to 128-bit over
     // 256-bit because the shuffle is cheaper than sign extending the result of
     // the compare.
-    // TODO : use checkBitcastSrcVectorSize
-    if (Src.getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
-        (Src.getOperand(0).getValueType().is256BitVector() ||
-         Src.getOperand(0).getValueType().is512BitVector())) {
+    if (Subtarget.hasAVX() && (checkBitcastSrcVectorSize(Src, 256) ||
+                               checkBitcastSrcVectorSize(Src, 512))) {
       SExtVT = MVT::v8i32;
+      PropagateSExt = true;
     }
     break;
   case MVT::v16i1:
@@ -35206,7 +35225,8 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, EVT VT, SDValue Src,
     return SDValue();
   };
 
-  SDValue V = DAG.getNode(ISD::SIGN_EXTEND, DL, SExtVT, Src);
+  SDValue V = PropagateSExt ? signExtendBitcastSrcVector(DAG, SExtVT, Src, DL)
+                            : DAG.getNode(ISD::SIGN_EXTEND, DL, SExtVT, Src);
 
   if (SExtVT == MVT::v16i8 || SExtVT == MVT::v32i8 || SExtVT == MVT::v64i8) {
     V = getPMOVMSKB(DL, V, DAG, Subtarget);
