@@ -13481,6 +13481,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
           << resultType << Input.get()->getSourceRange();
     else if (Input.get()->isKnownToHaveBooleanValue())
       Diag(OpLoc, diag::warn_bitwise_negation_bool)
+          << Input.get()->getSourceRange()
           << FixItHint::CreateReplacement(OpLoc, "!");
     else if (resultType->hasIntegerRepresentation())
       break;
