@@ -797,14 +797,12 @@ define <16 x i8> @trunc_v16i64_v16i8(<16 x i64>* %x) nounwind "min-legal-vector-
 ; CHECK-NEXT:    vmovdqa 32(%rdi), %ymm1
 ; CHECK-NEXT:    vmovdqa 64(%rdi), %ymm2
 ; CHECK-NEXT:    vmovdqa 96(%rdi), %ymm3
-; CHECK-NEXT:    vpmovqd %ymm2, %xmm2
-; CHECK-NEXT:    vpmovqd %ymm3, %xmm3
-; CHECK-NEXT:    vinserti128 $1, %xmm3, %ymm2, %ymm2
-; CHECK-NEXT:    vpmovdb %ymm2, %xmm2
-; CHECK-NEXT:    vpmovqd %ymm0, %xmm0
-; CHECK-NEXT:    vpmovqd %ymm1, %xmm1
-; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
-; CHECK-NEXT:    vpmovdb %ymm0, %xmm0
+; CHECK-NEXT:    vpmovqb %ymm3, %xmm3
+; CHECK-NEXT:    vpmovqb %ymm2, %xmm2
+; CHECK-NEXT:    vpunpckldq {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1]
+; CHECK-NEXT:    vpmovqb %ymm1, %xmm1
+; CHECK-NEXT:    vpmovqb %ymm0, %xmm0
+; CHECK-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; CHECK-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
@@ -829,24 +827,15 @@ define <16 x i8> @trunc_v16i32_v16i8(<16 x i32>* %x) nounwind "min-legal-vector-
 }
 
 define <8 x i8> @trunc_v8i64_v8i8(<8 x i64>* %x) nounwind "min-legal-vector-width"="256" {
-; CHECK-AVX512-LABEL: trunc_v8i64_v8i8:
-; CHECK-AVX512:       # %bb.0:
-; CHECK-AVX512-NEXT:    vmovdqa (%rdi), %ymm0
-; CHECK-AVX512-NEXT:    vmovdqa 32(%rdi), %ymm1
-; CHECK-AVX512-NEXT:    vpmovqb %ymm1, %xmm1
-; CHECK-AVX512-NEXT:    vpmovqb %ymm0, %xmm0
-; CHECK-AVX512-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; CHECK-AVX512-NEXT:    vzeroupper
-; CHECK-AVX512-NEXT:    retq
-;
-; CHECK-VBMI-LABEL: trunc_v8i64_v8i8:
-; CHECK-VBMI:       # %bb.0:
-; CHECK-VBMI-NEXT:    vmovdqa (%rdi), %ymm1
-; CHECK-VBMI-NEXT:    vpbroadcastq {{.*#+}} ymm0 = [4048780183313844224,4048780183313844224,4048780183313844224,4048780183313844224]
-; CHECK-VBMI-NEXT:    vpermi2b 32(%rdi), %ymm1, %ymm0
-; CHECK-VBMI-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; CHECK-VBMI-NEXT:    vzeroupper
-; CHECK-VBMI-NEXT:    retq
+; CHECK-LABEL: trunc_v8i64_v8i8:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vmovdqa (%rdi), %ymm0
+; CHECK-NEXT:    vmovdqa 32(%rdi), %ymm1
+; CHECK-NEXT:    vpmovqb %ymm1, %xmm1
+; CHECK-NEXT:    vpmovqb %ymm0, %xmm0
+; CHECK-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
   %a = load <8 x i64>, <8 x i64>* %x
   %b = trunc <8 x i64> %a to <8 x i8>
   ret <8 x i8> %b

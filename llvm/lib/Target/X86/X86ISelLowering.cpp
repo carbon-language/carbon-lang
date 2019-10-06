@@ -1763,6 +1763,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::TRUNCATE, MVT::v16i32, Custom);
     setOperationAction(ISD::TRUNCATE, MVT::v8i64, Custom);
+    setOperationAction(ISD::TRUNCATE, MVT::v16i64, Custom);
   }
 
   // We want to custom lower some of our intrinsics.
@@ -19329,9 +19330,11 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
 
-  // If called by the legalizer just return.
-  if (!DAG.getTargetLoweringInfo().isTypeLegal(InVT)) {
-    if ((InVT == MVT::v8i64 || InVT == MVT::v16i32) && VT.is128BitVector()) {
+  // If we're called by the type legalizer, handle a few cases.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!TLI.isTypeLegal(InVT)) {
+    if ((InVT == MVT::v8i64 || InVT == MVT::v16i32 || InVT == MVT::v16i64) &&
+        VT.is128BitVector()) {
       assert(Subtarget.hasVLX() && "Unexpected subtarget!");
       // The default behavior is to truncate one step, concatenate, and then
       // truncate the remainder. We'd rather produce two 64-bit results and
@@ -27958,6 +27961,23 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
         return;
       }
     }
+    if (Subtarget.hasVLX() && InVT == MVT::v8i64 && VT == MVT::v8i8 &&
+        getTypeAction(*DAG.getContext(), InVT) == TypeSplitVector &&
+        isTypeLegal(MVT::v4i64)) {
+      // Input needs to be split and output needs to widened. Let's use two
+      // VTRUNCs, and shuffle their results together into the wider type.
+      SDValue Lo, Hi;
+      std::tie(Lo, Hi) = DAG.SplitVector(In, dl);
+
+      Lo = DAG.getNode(X86ISD::VTRUNC, dl, MVT::v16i8, Lo);
+      Hi = DAG.getNode(X86ISD::VTRUNC, dl, MVT::v16i8, Hi);
+      SDValue Res = DAG.getVectorShuffle(MVT::v16i8, dl, Lo, Hi,
+                                         { 0,  1,  2,  3, 16, 17, 18, 19,
+                                          -1, -1, -1, -1, -1, -1, -1, -1 });
+      Results.push_back(Res);
+      return;
+    }
+
     return;
   }
   case ISD::ANY_EXTEND:
