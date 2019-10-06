@@ -13,14 +13,12 @@ For API clients and LLVM developers.
    BitCodeFormat
    BlockFrequencyTerminology
    BranchWeightMetadata
-   Bugpoint
    CodeGenerator
    ExceptionHandling
    AddingConstrainedIntrinsics
    LinkTimeOptimization
    SegmentedStacks
    TableGenFundamentals
-   TableGen/index
    DebuggingJITedCode
    GoldPlugin
    MarkedUpDisassembly
@@ -28,15 +26,11 @@ For API clients and LLVM developers.
    SupportLibrary
    SourceLevelDebugging
    Vectorizers
-   WritingAnLLVMBackend
-   GarbageCollection
-   WritingAnLLVMPass
    HowToUseAttributes
    StackMaps
    InAlloca
    BigEndianNEON
    CoverageMappingFormat
-   Statepoints
    MergeFunctions
    TypeMetadata
    TransformMetadata
@@ -46,27 +40,11 @@ For API clients and LLVM developers.
    XRay
    XRayExample
    XRayFDRFormat
-   PDB/index
    CFIVerify
    SpeculativeLoadHardening
    StackSafetyAnalysis
    LoopTerminology
    DependenceGraphs/index
-
-:doc:`WritingAnLLVMPass`
-   Information on how to write LLVM transformations and analyses.
-
-:doc:`WritingAnLLVMBackend`
-   Information on how to write LLVM backends for machine targets.
-
-:doc:`CodeGenerator`
-   The design and implementation of the LLVM code generator.  Useful if you are
-   working on retargetting LLVM to a new architecture, designing a new codegen
-   pass, or enhancing existing components.
-
-:doc:`TableGen <TableGen/index>`
-   Describes the TableGen tool, which is used heavily by the LLVM code
-   generator.
 
 :doc:`AliasAnalysis`
    Information on how to write a new alias analysis implementation or how to
@@ -89,10 +67,6 @@ For API clients and LLVM developers.
 :doc:`AddingConstrainedIntrinsics`
    Gives the steps necessary when adding a new constrained math intrinsic
    to LLVM.
-
-:doc:`Bugpoint`
-   Automatic bug finder and test-case reducer description and usage
-   information.
 
 :doc:`BitCodeFormat`
    This describes the file format and encoding used for LLVM "bc" files.
@@ -169,9 +143,6 @@ For API clients and LLVM developers.
 :doc:`XRayExample`
   An example of how to debug an application with XRay.
 
-:doc:`The Microsoft PDB File Format <PDB/index>`
-  A detailed description of the Microsoft PDB (Program Database) file format.
-
 :doc:`CFIVerify`
   A description of the verification tool for Control Flow Integrity.
 
@@ -182,21 +153,6 @@ For API clients and LLVM developers.
   This document describes the design of the stack safety analysis of local
   variables.
 
-:doc:`LoopTerminology`
-  A document describing Loops and associated terms as used in LLVM.
-
 :doc:`Dependence Graphs <DependenceGraphs/index>`
   A description of the design of the various dependence graphs such as
   the DDG (Data Dependence Graph).
-
-==================
-Garbage Collection
-==================
-
-:doc:`GarbageCollection`
-   The interfaces source-language compilers should use for compiling GC'd
-   programs.
-
-:doc:`Statepoints`
-  This describes a set of experimental extensions for garbage
-  collection support.

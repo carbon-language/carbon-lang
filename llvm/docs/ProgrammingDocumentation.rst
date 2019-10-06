@@ -8,13 +8,10 @@ For developers of applications which use LLVM as a library.
 
    Atomics
    CommandLine
-   CommandGuide/index
    ExtendingLLVM
    HowToSetUpLLVMStyleRTTI
    ProgrammersManual
    Extensions
-   LibFuzzer
-   FuzzingLLVM
    ScudoHardenedAllocator
    OptBisect
    GwpAsan
@@ -42,26 +39,8 @@ For developers of applications which use LLVM as a library.
 :doc:`GwpAsan`
   A sampled heap memory error detection toolkit designed for production use.
 
-============
-Command Line
-============
-
 :doc:`CommandLine`
   Provides information on using the command line parsing library.
 
 :doc:`OptBisect`
   A command line option for debugging optimization-induced failures.
-
-:doc:`LLVM Command Guide <CommandGuide/index>`
-   A reference manual for the LLVM command line utilities ("man" pages for LLVM
-   tools).
-
-=========
-LibFuzzer
-=========
-
-:doc:`LibFuzzer`
-  A library for writing in-process guided fuzzers.
-
-:doc:`FuzzingLLVM`
-  Information on writing and using Fuzzers to find bugs in LLVM.

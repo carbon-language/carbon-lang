@@ -1,12 +1,13 @@
 User Guides
 ===========
 
-For those new to the LLVM system.
-
 NOTE: If you are a user who is only interested in using an LLVM-based compiler,
 you should look into `Clang <http://clang.llvm.org>`_ instead. The
 documentation here is intended for users who have a need to work with the
 intermediate LLVM representation.
+
+.. contents::
+   :local:
 
 .. toctree::
    :hidden:
@@ -22,9 +23,6 @@ intermediate LLVM representation.
    MarkdownQuickstartTemplate
    Phabricator
    Passes
-   YamlIO
-   GetElementPtr
-   Frontend/PerformanceTips
    MCJITDesignAndImplementation
    ORCv2
    CodeOfConduct
@@ -34,27 +32,14 @@ intermediate LLVM representation.
    Docker
    BuildingADistribution
    Remarks
+   WritingAnLLVMPass
+   WritingAnLLVMBackend
+   TableGen/index
+   NVPTXUsage
+   AMDGPUUsage
 
-Building, Packaging, and Distributing LLVM
-------------------------------------------
-
-How to build, package, and distribute LLVM.
-
-=====
-CMake
-=====
-
-:doc:`BuildingADistribution`
-  A best-practices guide for using LLVM's CMake build system to package and
-  distribute LLVM-based tools.
-
-:doc:`CMake`
-   An addendum to the main Getting Started guide for those using the `CMake
-   build system <http://www.cmake.org>`_.
-
-=====
 Clang
-=====
+-----
 
 :doc:`HowToBuildOnARM`
    Notes on building and testing LLVM/Clang on ARM.
@@ -70,36 +55,58 @@ Clang
 
    .. __: http://clang.llvm.org/get_started.html
 
-======
-Docker
-======
+LLVM Builds and Distributions
+-----------------------------
+
+:doc:`BuildingADistribution`
+  A best-practices guide for using LLVM's CMake build system to package and
+  distribute LLVM-based tools.
+
+:doc:`CMake`
+   An addendum to the main Getting Started guide for those using the `CMake
+   build system <http://www.cmake.org>`_.
 
 :doc:`Docker`
    A reference for using Dockerfiles provided with LLVM.
 
-=================
-Additional Topics
-=================
+Optimizations
+-------------
 
-:doc:`HowToCrossCompileBuiltinsOnArm`
-   Notes on cross-building and testing the compiler-rt builtins for Arm.
+:doc:`WritingAnLLVMPass`
+   Information on how to write LLVM transformations and analyses.
 
 :doc:`Passes`
    A list of optimizations and analyses implemented in LLVM.
 
-:doc:`TestSuiteGuide`
-  Describes how to compile and run the test-suite benchmarks.
-
-:doc:`YamlIO`
-   A reference guide for using LLVM's YAML I/O library.
-
-:doc:`GetElementPtr`
-  Answers to some very frequent questions about LLVM's most frequently
-  misunderstood instruction.
-
-:doc:`Frontend/PerformanceTips`
-   A collection of tips for frontend authors on how to generate IR
-   which LLVM is able to effectively optimize.
+:doc:`LoopTerminology`
+  A document describing Loops and associated terms as used in LLVM.
 
 :doc:`Remarks`
    A reference on the implementation of remarks in LLVM.
+
+Code Generation
+---------------
+
+:doc:`WritingAnLLVMBackend`
+   Information on how to write LLVM backends for machine targets.
+
+:doc:`CodeGenerator`
+   The design and implementation of the LLVM code generator.  Useful if you are
+   working on retargetting LLVM to a new architecture, designing a new codegen
+   pass, or enhancing existing components.
+
+:doc:`TableGen <TableGen/index>`
+   Describes the TableGen tool, which is used heavily by the LLVM code
+   generator.
+
+Additional Topics
+-----------------
+
+:doc:`HowToCrossCompileBuiltinsOnArm`
+   Notes on cross-building and testing the compiler-rt builtins for Arm.
+
+:doc:`NVPTXUsage`
+   This document describes using the NVPTX backend to compile GPU kernels.
+
+:doc:`AMDGPUUsage`
+   This document describes using the AMDGPU backend to compile GPU kernels.
