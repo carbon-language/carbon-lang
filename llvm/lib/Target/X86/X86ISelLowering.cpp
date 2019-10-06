@@ -42354,10 +42354,12 @@ static SDValue combineVectorSizedSetCCEquality(SDNode *SetCC, SelectionDAG &DAG,
   if ((OpSize == 128 && Subtarget.hasSSE2()) ||
       (OpSize == 256 && Subtarget.hasAVX2()) ||
       (OpSize == 512 && Subtarget.useAVX512Regs())) {
-    EVT VecVT = OpSize == 512 ? MVT::v16i32 :
+    auto BW = Subtarget.hasBWI();
+    EVT VecVT = OpSize == 512 ? (BW ? MVT::v64i8 : MVT::v16i32) :
                 OpSize == 256 ? MVT::v32i8 :
                                 MVT::v16i8;
-    EVT CmpVT = OpSize == 512 ? MVT::v16i1 : VecVT;
+    EVT CmpVT = OpSize == 512 ? (BW ? MVT::v64i1 : MVT::v16i1) : VecVT;
+
     SDValue Cmp;
     if (IsOrXorXorCCZero) {
       // This is a bitwise-combined equality comparison of 2 pairs of vectors:
@@ -42377,6 +42379,9 @@ static SDValue combineVectorSizedSetCCEquality(SDNode *SetCC, SelectionDAG &DAG,
       Cmp = DAG.getSetCC(DL, CmpVT, VecX, VecY, ISD::SETEQ);
     }
     // For 512-bits we want to emit a setcc that will lower to kortest.
+    if (OpSize == 512 && BW)
+      return DAG.getSetCC(DL, VT, DAG.getBitcast(MVT::i64, Cmp),
+                          DAG.getConstant(0xFFFFFFFFFFFFFFFF, DL, MVT::i64), CC);
     if (OpSize == 512)
       return DAG.getSetCC(DL, VT, DAG.getBitcast(MVT::i16, Cmp),
                           DAG.getConstant(0xFFFF, DL, MVT::i16), CC);
