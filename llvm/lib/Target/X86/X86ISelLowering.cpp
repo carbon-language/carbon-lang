@@ -6726,14 +6726,12 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
   return true;
 }
 
-/// Check a target shuffle mask's inputs to see if we can set any values to
-/// SM_SentinelZero - this is for elements that are known to be zero
-/// (not just zeroable) from their inputs.
+/// Decode a target shuffle mask and inputs and see if any values are
+/// known to be undef or zero from their inputs.
 /// Returns true if the target shuffle mask was decoded.
-static bool setTargetShuffleZeroElements(SDValue N,
-                                         SmallVectorImpl<int> &Mask,
+static bool getTargetShuffleAndZeroables(SDValue N, SmallVectorImpl<int> &Mask,
                                          SmallVectorImpl<SDValue> &Ops,
-                                         bool ResolveZero = true) {
+                                         APInt &KnownUndef, APInt &KnownZero) {
   bool IsUnary;
   if (!isTargetShuffle(N.getOpcode()))
     return false;
@@ -6742,15 +6740,17 @@ static bool setTargetShuffleZeroElements(SDValue N,
   if (!getTargetShuffleMask(N.getNode(), VT, true, Ops, Mask, IsUnary))
     return false;
 
+  int Size = Mask.size();
   SDValue V1 = Ops[0];
   SDValue V2 = IsUnary ? V1 : Ops[1];
+  KnownUndef = KnownZero = APInt::getNullValue(Size);
 
   V1 = peekThroughBitcasts(V1);
   V2 = peekThroughBitcasts(V2);
 
   assert((VT.getSizeInBits() % Mask.size()) == 0 &&
          "Illegal split of shuffle value type");
-  unsigned EltSizeInBits = VT.getSizeInBits() / Mask.size();
+  unsigned EltSizeInBits = VT.getSizeInBits() / Size;
 
   // Extract known constant input data.
   APInt UndefSrcElts[2];
@@ -6761,12 +6761,18 @@ static bool setTargetShuffleZeroElements(SDValue N,
       getTargetConstantBitsFromNode(V2, EltSizeInBits, UndefSrcElts[1],
                                     SrcEltBits[1], true, false)};
 
-  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+  for (int i = 0; i < Size; ++i) {
     int M = Mask[i];
 
     // Already decoded as SM_SentinelZero / SM_SentinelUndef.
-    if (M < 0)
+    if (M < 0) {
+      assert(isUndefOrZero(M) && "Unknown shuffle sentinel value!");
+      if (SM_SentinelUndef == M)
+        KnownUndef.setBit(i);
+      if (SM_SentinelZero == M)
+        KnownZero.setBit(i);
       continue;
+    }
 
     // Determine shuffle input and normalize the mask.
     unsigned SrcIdx = M / Size;
@@ -6775,7 +6781,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
 
     // We are referencing an UNDEF input.
     if (V.isUndef()) {
-      Mask[i] = SM_SentinelUndef;
+      KnownUndef.setBit(i);
       continue;
     }
 
@@ -6788,22 +6794,22 @@ static bool setTargetShuffleZeroElements(SDValue N,
       int Scale = Size / V.getValueType().getVectorNumElements();
       int Idx = M / Scale;
       if (Idx != 0 && !VT.isFloatingPoint())
-        Mask[i] = SM_SentinelUndef;
-      else if (ResolveZero && Idx == 0 && X86::isZeroNode(V.getOperand(0)))
-        Mask[i] = SM_SentinelZero;
+        KnownUndef.setBit(i);
+      else if (Idx == 0 && X86::isZeroNode(V.getOperand(0)))
+        KnownZero.setBit(i);
       continue;
     }
 
     // Attempt to extract from the source's constant bits.
     if (IsSrcConstant[SrcIdx]) {
       if (UndefSrcElts[SrcIdx][M])
-        Mask[i] = SM_SentinelUndef;
-      else if (ResolveZero && SrcEltBits[SrcIdx][M] == 0)
-        Mask[i] = SM_SentinelZero;
+        KnownUndef.setBit(i);
+      else if (SrcEltBits[SrcIdx][M] == 0)
+        KnownZero.setBit(i);
     }
   }
 
-  assert(VT.getVectorNumElements() == Mask.size() &&
+  assert(VT.getVectorNumElements() == Size &&
          "Different mask size from vector size!");
   return true;
 }
@@ -7246,19 +7252,29 @@ static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Inputs,
   Inputs = UsedInputs;
 }
 
-/// Calls setTargetShuffleZeroElements to resolve a target shuffle mask's inputs
-/// and set the SM_SentinelUndef and SM_SentinelZero values.
+/// Calls getTargetShuffleAndZeroables to resolve a target shuffle mask's inputs
+/// and then sets the SM_SentinelUndef and SM_SentinelZero values.
 /// Returns true if the target shuffle mask was decoded.
 static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
                                    SmallVectorImpl<SDValue> &Inputs,
                                    SmallVectorImpl<int> &Mask,
                                    SelectionDAG &DAG, unsigned Depth,
                                    bool ResolveZero) {
-  if (!setTargetShuffleZeroElements(Op, Mask, Inputs, ResolveZero))
-    if (!getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth,
-                            ResolveZero))
-      return false;
-  return true;
+  APInt KnownUndef, KnownZero;
+  if (getTargetShuffleAndZeroables(Op, Mask, Inputs, KnownUndef, KnownZero)) {
+    for (int i = 0, e = Mask.size(); i != e; ++i) {
+      int &M = Mask[i];
+      if (M < 0)
+        continue;
+      if (KnownUndef[i])
+        M = SM_SentinelUndef;
+      else if (ResolveZero && KnownZero[i])
+        M = SM_SentinelZero;
+    }
+    return true;
+  }
+  return getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth,
+                            ResolveZero);
 }
 
 /// Calls getTargetShuffleInputs to resolve a target shuffle mask's inputs
@@ -33552,15 +33568,17 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
     // Attempt to merge insertps Op1 with an inner target shuffle node.
     SmallVector<int, 8> TargetMask1;
     SmallVector<SDValue, 2> Ops1;
-    if (setTargetShuffleZeroElements(Op1, TargetMask1, Ops1)) {
-      int M = TargetMask1[SrcIdx];
-      if (isUndefOrZero(M)) {
+    APInt KnownUndef1, KnownZero1;
+    if (getTargetShuffleAndZeroables(Op1, TargetMask1, Ops1, KnownUndef1,
+                                     KnownZero1)) {
+      if (KnownUndef1[SrcIdx] || KnownZero1[SrcIdx]) {
         // Zero/UNDEF insertion - zero out element and remove dependency.
         InsertPSMask |= (1u << DstIdx);
         return DAG.getNode(X86ISD::INSERTPS, DL, VT, Op0, DAG.getUNDEF(VT),
                            DAG.getTargetConstant(InsertPSMask, DL, MVT::i8));
       }
       // Update insertps mask srcidx and reference the source input directly.
+      int M = TargetMask1[SrcIdx];
       assert(0 <= M && M < 8 && "Shuffle index out of range");
       InsertPSMask = (InsertPSMask & 0x3f) | ((M & 0x3) << 6);
       Op1 = Ops1[M < 4 ? 0 : 1];
@@ -33571,16 +33589,17 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
     // Attempt to merge insertps Op0 with an inner target shuffle node.
     SmallVector<int, 8> TargetMask0;
     SmallVector<SDValue, 2> Ops0;
-    if (setTargetShuffleZeroElements(Op0, TargetMask0, Ops0)) {
+    APInt KnownUndef0, KnownZero0;
+    if (getTargetShuffleAndZeroables(Op0, TargetMask0, Ops0, KnownUndef0,
+                                     KnownZero0)) {
       bool Updated = false;
       bool UseInput00 = false;
       bool UseInput01 = false;
       for (int i = 0; i != 4; ++i) {
-        int M = TargetMask0[i];
         if ((InsertPSMask & (1u << i)) || (i == (int)DstIdx)) {
           // No change if element is already zero or the inserted element.
           continue;
-        } else if (isUndefOrZero(M)) {
+        } else if (KnownUndef0[i] || KnownZero0[i]) {
           // If the target mask is undef/zero then we must zero the element.
           InsertPSMask |= (1u << i);
           Updated = true;
@@ -33588,6 +33607,7 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
         }
 
         // The input vector element must be inline.
+        int M = TargetMask0[i];
         if (M != i && M != (i + 4))
           return SDValue();
 
