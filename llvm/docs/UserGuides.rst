@@ -12,33 +12,46 @@ intermediate LLVM representation.
 .. toctree::
    :hidden:
 
+   AddingConstrainedIntrinsics
+   AdvancedBuilds
+   AliasAnalysis
+   AMDGPUUsage
+   Benchmarking
+   BigEndianNEON
+   BuildingADistribution
    CMake
    CMakePrimer
-   AdvancedBuilds
+   CodeGenerator
+   CodeOfConduct
+   CommandLine
+   CompileCudaWithLLVM
+   CoverageMappingFormat
+   DebuggingJITedCode
+   Docker
+   ExtendingLLVM
+   GoldPlugin
    HowToBuildOnARM
    HowToBuildWithPGO
    HowToCrossCompileBuiltinsOnArm
    HowToCrossCompileLLVM
-   yaml2obj
+   LinkTimeOptimization
+   LoopTerminology
    MarkdownQuickstartTemplate
+   MergeFunctions
+   MCJITDesignAndImplementation
+   NVPTXUsage
    Phabricator
    Passes
-   MCJITDesignAndImplementation
-   ORCv2
-   CodeOfConduct
-   CompileCudaWithLLVM
    ReportingGuide
-   Benchmarking
-   Docker
-   BuildingADistribution
    Remarks
+   StackSafetyAnalysis
+   SourceLevelDebugging
+   TableGen/index
+   TableGenFundamentals
+   Vectorizers
    WritingAnLLVMPass
    WritingAnLLVMBackend
-   TableGen/index
-   NVPTXUsage
-   AMDGPUUsage
-   ExtendingLLVM
-   CommandLine
+   yaml2obj
 
 Clang
 -----
@@ -56,6 +69,9 @@ Clang
    Instructions for building the clang front-end from source.
 
    .. __: http://clang.llvm.org/get_started.html
+
+:doc:`CoverageMappingFormat`
+  This describes the format and encoding used for LLVM’s code coverage mapping.
 
 LLVM Builds and Distributions
 -----------------------------
@@ -80,11 +96,36 @@ Optimizations
 :doc:`Passes`
    A list of optimizations and analyses implemented in LLVM.
 
+:doc:`StackSafetyAnalysis`
+  This document describes the design of the stack safety analysis of local
+  variables.
+
+:doc:`MergeFunctions`
+  Describes functions merging optimization.
+
+:doc:`AliasAnalysis`
+   Information on how to write a new alias analysis implementation or how to
+   use existing analyses.
+
 :doc:`LoopTerminology`
   A document describing Loops and associated terms as used in LLVM.
 
+:doc:`Vectorizers`
+   This document describes the current status of vectorization in LLVM.
+
+:doc:`LinkTimeOptimization`
+   This document describes the interface between LLVM intermodular optimizer
+   and the linker and its design
+
+:doc:`GoldPlugin`
+   How to build your programs with link-time optimization on Linux.
+
 :doc:`Remarks`
    A reference on the implementation of remarks in LLVM.
+
+:doc:`Source Level Debugging with LLVM <SourceLevelDebugging>`
+   This document describes the design and philosophy behind the LLVM
+   source-level debugger.
 
 Code Generation
 ---------------
@@ -101,6 +142,16 @@ Code Generation
    Describes the TableGen tool, which is used heavily by the LLVM code
    generator.
 
+===
+JIT
+===
+
+:doc:`MCJITDesignAndImplementation`
+   Describes the inner workings of MCJIT execution engine.
+
+:doc:`DebuggingJITedCode`
+   How to debug JITed code with GDB.
+
 Additional Topics
 -----------------
 
@@ -110,8 +161,19 @@ Additional Topics
 :doc:`ExtendingLLVM`
   Look here to see how to add instructions and intrinsics to LLVM.
 
+:doc:`AddingConstrainedIntrinsics`
+   Gives the steps necessary when adding a new constrained math intrinsic
+   to LLVM.
+
 :doc:`HowToCrossCompileBuiltinsOnArm`
    Notes on cross-building and testing the compiler-rt builtins for Arm.
+
+:doc:`BigEndianNEON`
+  LLVM's support for generating NEON instructions on big endian ARM targets is
+  somewhat nonintuitive. This document explains the implementation and rationale.
+
+:doc:`CompileCudaWithLLVM`
+  LLVM support for CUDA.
 
 :doc:`NVPTXUsage`
    This document describes using the NVPTX backend to compile GPU kernels.

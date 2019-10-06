@@ -10,23 +10,47 @@ LLVM and API reference documentation.
    :hidden:
 
    Atomics
+   BitCodeFormat
+   BlockFrequencyTerminology
+   BranchWeightMetadata
    Bugpoint
+   CFIVerify
    CommandGuide/index
    CompilerWriterInfo
+   Coroutines
+   DependenceGraphs/index
+   ExceptionHandling
    Extensions
+   FaultMaps
    FuzzingLLVM
    GarbageCollection
    GetElementPtr
+   GlobalISel
    GwpAsan
    HowToSetUpLLVMStyleRTTI
+   HowToUseAttributes
+   InAlloca
    LangRef
    LibFuzzer
+   MarkedUpDisassembly
+   MemorySSA
    MIRLangRef
    OptBisect
+   ORCv2
    PDB/index
    ScudoHardenedAllocator
+   SegmentedStacks
+   StackMaps
+   SpeculativeLoadHardening
+   SupportLibrary
    Statepoints
+   SystemLibrary
    TestingGuide
+   TransformMetadata
+   TypeMetadata
+   XRay
+   XRayExample
+   XRayFDRFormat
    YamlIO
 
 API Reference
@@ -37,6 +61,10 @@ API Reference
 
 `Documentation for Go bindings <http://godoc.org/llvm.org/llvm/bindings/go/llvm>`_
 
+:doc:`ORCv2`
+   Describes the design and implementation of the ORC APIs, including some
+   usage examples, and a guide for users transitioning from ORCv1 to ORCv2.
+
 LLVM Reference
 --------------
 
@@ -44,15 +72,31 @@ LLVM Reference
   Defines the LLVM intermediate representation and the assembly form of the
   different nodes.
 
+:doc:`FaultMaps`
+  LLVM support for folding control flow into faulting machine instructions.
+
+:doc:`InAlloca`
+  Description of the ``inalloca`` argument attribute.
+
 :doc:`Machine IR (MIR) Format Reference Manual <MIRLangRef>`
    A reference manual for the MIR serialization format, which is used to test
    LLVM's code generation passes.
 
+:doc:`GlobalISel`
+  This describes the prototype instruction selection replacement, GlobalISel.
+
 :doc:`Atomics`
   Information about LLVM's concurrency model.
 
+:doc:`ExceptionHandling`
+   This document describes the design and implementation of exception handling
+   in LLVM.
+
 :doc:`CompilerWriterInfo`
   A list of helpful links for compiler writers.
+
+:doc:`BitCodeFormat`
+   This describes the file format and encoding used for LLVM "bc" files.
 
 :doc:`Extensions`
   LLVM-specific extensions to tools and formats LLVM seeks compatibility with.
@@ -60,6 +104,20 @@ LLVM Reference
 :doc:`HowToSetUpLLVMStyleRTTI`
   How to make ``isa<>``, ``dyn_cast<>``, etc. available for clients of your
   class hierarchy.
+
+:doc:`BlockFrequencyTerminology`
+   Provides information about terminology used in the ``BlockFrequencyInfo``
+   analysis pass.
+
+:doc:`BranchWeightMetadata`
+   Provides information about Branch Prediction Information.
+
+:doc:`MemorySSA`
+   Information about the MemorySSA utility in LLVM, as well as how to use it.
+
+:doc:`Support Library <SupportLibrary>`
+   This document describes the LLVM Support Library (``lib/Support``) and
+   how to keep LLVM source code portable
 
 :doc:`GetElementPtr`
   Answers to some very frequent questions about LLVM's most frequently
@@ -70,6 +128,32 @@ LLVM Reference
 
 :doc:`GwpAsan`
   A sampled heap memory error detection toolkit designed for production use.
+
+:doc:`Dependence Graphs <DependenceGraphs/index>`
+  A description of the design of the various dependence graphs such as
+  the DDG (Data Dependence Graph).
+
+:doc:`CFIVerify`
+  A description of the verification tool for Control Flow Integrity.
+
+:doc:`SpeculativeLoadHardening`
+  A description of the Speculative Load Hardening mitigation for Spectre v1.
+
+:doc:`SegmentedStacks`
+   This document describes segmented stacks and how they are used in LLVM.
+
+:doc:`MarkedUpDisassembly`
+   This document describes the optional rich disassembly output syntax.
+
+:doc:`HowToUseAttributes`
+  Answers some questions about the new Attributes infrastructure.
+
+:doc:`StackMaps`
+  LLVM support for mapping instruction addresses to the location of
+  values and allowing code to be patched.
+
+:doc:`Coroutines`
+  LLVM support for coroutines.
 
 :doc:`YamlIO`
    A reference guide for using LLVM's YAML I/O library.
@@ -123,3 +207,13 @@ Testing
 
 :doc:`TestSuiteGuide`
   Describes how to compile and run the test-suite benchmarks.
+
+====
+XRay
+====
+
+:doc:`XRay`
+  High-level documentation of how to use XRay in LLVM.
+
+:doc:`XRayExample`
+  An example of how to debug an application with XRay.

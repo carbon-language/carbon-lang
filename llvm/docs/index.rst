@@ -55,7 +55,6 @@ Getting Started, How-tos, Developer Guides, and Tutorials.
 
    GettingStartedTutorials
    Reference
-   SubsystemDocumentation
    UserGuides
 
 :doc:`GettingStartedTutorials`
@@ -63,9 +62,6 @@ Getting Started, How-tos, Developer Guides, and Tutorials.
 
 :doc:`UserGuides`
   User guides and How-tos.
-
-:doc:`SubsystemDocumentation`
-  For API clients and LLVM developers.
 
 :doc:`Reference`
   LLVM and API reference documentation.
