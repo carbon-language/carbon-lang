@@ -7260,7 +7260,7 @@ static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
   return true;
 }
 
-/// Calls setTargetShuffleZeroElements to resolve a target shuffle mask's inputs
+/// Calls getTargetShuffleInputs to resolve a target shuffle mask's inputs
 /// and set the SM_SentinelUndef and SM_SentinelZero values. Then check the
 /// remaining input indices in case we now have a unary shuffle and adjust the
 /// inputs accordingly.
@@ -7270,10 +7270,9 @@ static bool resolveTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
                                        SmallVectorImpl<int> &Mask,
                                        SelectionDAG &DAG, unsigned Depth,
                                        bool ResolveZero) {
-  if (!setTargetShuffleZeroElements(Op, Mask, Inputs, ResolveZero))
-    if (!getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth,
-                            ResolveZero))
-      return false;
+  if (!getTargetShuffleInputs(Op, DemandedElts, Inputs, Mask, DAG, Depth,
+                              ResolveZero))
+    return false;
 
   resolveTargetShuffleInputsAndMask(Inputs, Mask);
   return true;
