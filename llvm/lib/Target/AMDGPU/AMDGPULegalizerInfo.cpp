@@ -48,6 +48,12 @@ static LegalityPredicate isMultiple32(unsigned TypeIdx,
   };
 }
 
+static LegalityPredicate sizeIs(unsigned TypeIdx, unsigned Size) {
+  return [=](const LegalityQuery &Query) {
+    return Query.Types[TypeIdx].getSizeInBits() == Size;
+  };
+}
+
 static LegalityPredicate isSmallOddVector(unsigned TypeIdx) {
   return [=](const LegalityQuery &Query) {
     const LLT Ty = Query.Types[TypeIdx];
@@ -903,7 +909,13 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     unsigned LitTyIdx = Op == G_EXTRACT ? 0 : 1;
 
     // FIXME: Doesn't handle extract of illegal sizes.
-    getActionDefinitionsBuilder(Op)
+    auto &Builder = getActionDefinitionsBuilder(Op);
+
+    // FIXME: Cleanup when G_INSERT lowering implemented.
+    if (Op == G_EXTRACT)
+      Builder.lowerIf(all(typeIs(LitTyIdx, S16), sizeIs(BigTyIdx, 32)));
+
+    Builder
       .legalIf([=](const LegalityQuery &Query) {
           const LLT BigTy = Query.Types[BigTyIdx];
           const LLT LitTy = Query.Types[LitTyIdx];
