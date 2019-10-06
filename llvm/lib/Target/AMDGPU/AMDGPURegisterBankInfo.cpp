@@ -1823,6 +1823,21 @@ void AMDGPURegisterBankInfo::applyMappingImpl(
       constrainOpWithReadfirstlane(MI, MRI, 2); // M0
       return;
     }
+    case Intrinsic::amdgcn_ds_gws_init:
+    case Intrinsic::amdgcn_ds_gws_barrier:
+    case Intrinsic::amdgcn_ds_gws_sema_br: {
+      // Only the first lane is executes, so readfirstlane is safe.
+      substituteSimpleCopyRegs(OpdMapper, 1);
+      constrainOpWithReadfirstlane(MI, MRI, 2); // M0
+      return;
+    }
+    case Intrinsic::amdgcn_ds_gws_sema_v:
+    case Intrinsic::amdgcn_ds_gws_sema_p:
+    case Intrinsic::amdgcn_ds_gws_sema_release_all: {
+      // Only the first lane is executes, so readfirstlane is safe.
+      constrainOpWithReadfirstlane(MI, MRI, 1); // M0
+      return;
+    }
     case Intrinsic::amdgcn_s_sendmsg:
     case Intrinsic::amdgcn_s_sendmsghalt: {
       // FIXME: Should this use a waterfall loop?
@@ -2841,6 +2856,26 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       unsigned Size = getSizeInBits(MI.getOperand(1).getReg(), MRI, *TRI);
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
       OpdsMapping[2] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
+      break;
+    }
+    case Intrinsic::amdgcn_ds_gws_init:
+    case Intrinsic::amdgcn_ds_gws_barrier:
+    case Intrinsic::amdgcn_ds_gws_sema_br: {
+      OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, 32);
+
+      // This must be an SGPR, but accept a VGPR.
+      unsigned Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI,
+                                   AMDGPU::SGPRRegBankID);
+      OpdsMapping[2] = AMDGPU::getValueMapping(Bank, 32);
+      break;
+    }
+    case Intrinsic::amdgcn_ds_gws_sema_v:
+    case Intrinsic::amdgcn_ds_gws_sema_p:
+    case Intrinsic::amdgcn_ds_gws_sema_release_all: {
+      // This must be an SGPR, but accept a VGPR.
+      unsigned Bank = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI,
+                                   AMDGPU::SGPRRegBankID);
+      OpdsMapping[1] = AMDGPU::getValueMapping(Bank, 32);
       break;
     }
     default:
