@@ -9,16 +9,22 @@ LLVM and API reference documentation.
 .. toctree::
    :hidden:
 
+   Atomics
    Bugpoint
    CommandGuide/index
    CompilerWriterInfo
+   Extensions
    FuzzingLLVM
    GarbageCollection
    GetElementPtr
+   GwpAsan
+   HowToSetUpLLVMStyleRTTI
    LangRef
    LibFuzzer
    MIRLangRef
+   OptBisect
    PDB/index
+   ScudoHardenedAllocator
    Statepoints
    TestingGuide
    YamlIO
@@ -38,19 +44,35 @@ LLVM Reference
   Defines the LLVM intermediate representation and the assembly form of the
   different nodes.
 
-:doc:`CompilerWriterInfo`
-  A list of helpful links for compiler writers.
-
 :doc:`Machine IR (MIR) Format Reference Manual <MIRLangRef>`
    A reference manual for the MIR serialization format, which is used to test
    LLVM's code generation passes.
 
-:doc:`YamlIO`
-   A reference guide for using LLVM's YAML I/O library.
+:doc:`Atomics`
+  Information about LLVM's concurrency model.
+
+:doc:`CompilerWriterInfo`
+  A list of helpful links for compiler writers.
+
+:doc:`Extensions`
+  LLVM-specific extensions to tools and formats LLVM seeks compatibility with.
+
+:doc:`HowToSetUpLLVMStyleRTTI`
+  How to make ``isa<>``, ``dyn_cast<>``, etc. available for clients of your
+  class hierarchy.
 
 :doc:`GetElementPtr`
   Answers to some very frequent questions about LLVM's most frequently
   misunderstood instruction.
+
+:doc:`ScudoHardenedAllocator`
+  A library that implements a security-hardened `malloc()`.
+
+:doc:`GwpAsan`
+  A sampled heap memory error detection toolkit designed for production use.
+
+:doc:`YamlIO`
+   A reference guide for using LLVM's YAML I/O library.
 
 ======================
 Command Line Utilities
@@ -63,6 +85,9 @@ Command Line Utilities
 :doc:`Bugpoint`
    Automatic bug finder and test-case reducer description and usage
    information.
+
+:doc:`OptBisect`
+  A command line option for debugging optimization-induced failures.
 
 :doc:`The Microsoft PDB File Format <PDB/index>`
   A detailed description of the Microsoft PDB (Program Database) file format.

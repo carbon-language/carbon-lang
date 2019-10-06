@@ -37,6 +37,8 @@ intermediate LLVM representation.
    TableGen/index
    NVPTXUsage
    AMDGPUUsage
+   ExtendingLLVM
+   CommandLine
 
 Clang
 -----
@@ -101,6 +103,12 @@ Code Generation
 
 Additional Topics
 -----------------
+
+:doc:`CommandLine`
+  Provides information on using the command line parsing library.
+
+:doc:`ExtendingLLVM`
+  Look here to see how to add instructions and intrinsics to LLVM.
 
 :doc:`HowToCrossCompileBuiltinsOnArm`
    Notes on cross-building and testing the compiler-rt builtins for Arm.

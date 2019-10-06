@@ -6,9 +6,10 @@ For those new to the LLVM system.
 .. toctree::
    :hidden:
 
+   Frontend/PerformanceTips
    GettingStarted
    GettingStartedVS
-   Frontend/PerformanceTips
+   ProgrammersManual
    tutorial/index
 
 :doc:`GettingStarted`
@@ -20,10 +21,14 @@ For those new to the LLVM system.
    Tutorials about using LLVM. Includes a tutorial about making a custom
    language with LLVM.
 
-:doc:`GettingStartedVS`
-   An addendum to the main Getting Started guide for those using Visual Studio
-   on Windows.
+:doc:`ProgrammersManual`
+  Introduction to the general layout of the LLVM sourcebase, important classes
+  and APIs, and some tips & tricks.
 
 :doc:`Frontend/PerformanceTips`
    A collection of tips for frontend authors on how to generate IR
    which LLVM is able to effectively optimize.
+
+:doc:`GettingStartedVS`
+   An addendum to the main Getting Started guide for those using Visual Studio
+   on Windows.
