@@ -408,7 +408,11 @@ struct IRPosition {
 
   /// Return true if any kind in \p AKs existing in the IR at a position that
   /// will affect this one. See also getAttrs(...).
-  bool hasAttr(ArrayRef<Attribute::AttrKind> AKs) const;
+  /// \param IgnoreSubsumingPositions Flag to determine if subsuming positions,
+  ///                                 e.g., the function position if this is an
+  ///                                 argument position, should be ignored.
+  bool hasAttr(ArrayRef<Attribute::AttrKind> AKs,
+               bool IgnoreSubsumingPositions = false) const;
 
   /// Return the attributes of any kind in \p AKs existing in the IR at a
   /// position that will affect this one. While each position can only have a
@@ -432,6 +436,28 @@ struct IRPosition {
     if (AttrList.hasAttribute(getAttrIdx(), AK))
       return AttrList.getAttribute(getAttrIdx(), AK);
     return Attribute();
+  }
+
+  /// Remove the attribute of kind \p AKs existing in the IR at this position.
+  void removeAttrs(ArrayRef<Attribute::AttrKind> AKs) {
+    if (getPositionKind() == IRP_INVALID || getPositionKind() == IRP_FLOAT)
+      return;
+
+    AttributeList AttrList;
+    CallSite CS = CallSite(&getAnchorValue());
+    if (CS)
+      AttrList = CS.getAttributes();
+    else
+      AttrList = getAssociatedFunction()->getAttributes();
+
+    LLVMContext &Ctx = getAnchorValue().getContext();
+    for (Attribute::AttrKind AK : AKs)
+      AttrList = AttrList.removeAttribute(Ctx, getAttrIdx(), AK);
+
+    if (CS)
+      CS.setAttributes(AttrList);
+    else
+      getAssociatedFunction()->setAttributes(AttrList);
   }
 
   bool isAnyCallSitePosition() const {
@@ -1819,6 +1845,54 @@ struct AAHeapToStack : public StateWrapper<BooleanState, AbstractAttribute>,
 
   /// Create an abstract attribute view for the position \p IRP.
   static AAHeapToStack &createForPosition(const IRPosition &IRP, Attributor &A);
+
+  /// Unique ID (due to the unique address)
+  static const char ID;
+};
+
+/// An abstract interface for all memory related attributes.
+struct AAMemoryBehavior
+    : public IRAttribute<Attribute::ReadNone,
+                         StateWrapper<IntegerState, AbstractAttribute>> {
+  AAMemoryBehavior(const IRPosition &IRP) : IRAttribute(IRP) {}
+
+  /// State encoding bits. A set bit in the state means the property holds.
+  /// BEST_STATE is the best possible state, 0 the worst possible state.
+  enum {
+    NO_READS = 1 << 0,
+    NO_WRITES = 1 << 1,
+    NO_ACCESSES = NO_READS | NO_WRITES,
+
+    BEST_STATE = NO_ACCESSES,
+  };
+
+  /// Return true if we know that the underlying value is not read or accessed
+  /// in its respective scope.
+  bool isKnownReadNone() const { return isKnown(NO_ACCESSES); }
+
+  /// Return true if we assume that the underlying value is not read or accessed
+  /// in its respective scope.
+  bool isAssumedReadNone() const { return isAssumed(NO_ACCESSES); }
+
+  /// Return true if we know that the underlying value is not accessed
+  /// (=written) in its respective scope.
+  bool isKnownReadOnly() const { return isKnown(NO_WRITES); }
+
+  /// Return true if we assume that the underlying value is not accessed
+  /// (=written) in its respective scope.
+  bool isAssumedReadOnly() const { return isAssumed(NO_WRITES); }
+
+  /// Return true if we know that the underlying value is not read in its
+  /// respective scope.
+  bool isKnownWriteOnly() const { return isKnown(NO_READS); }
+
+  /// Return true if we assume that the underlying value is not read in its
+  /// respective scope.
+  bool isAssumedWriteOnly() const { return isAssumed(NO_READS); }
+
+  /// Create an abstract attribute view for the position \p IRP.
+  static AAMemoryBehavior &createForPosition(const IRPosition &IRP,
+                                             Attributor &A);
 
   /// Unique ID (due to the unique address)
   static const char ID;
