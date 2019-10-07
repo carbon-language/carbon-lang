@@ -912,13 +912,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     unsigned LitTyIdx = Op == G_EXTRACT ? 0 : 1;
 
     // FIXME: Doesn't handle extract of illegal sizes.
-    auto &Builder = getActionDefinitionsBuilder(Op);
-
-    // FIXME: Cleanup when G_INSERT lowering implemented.
-    if (Op == G_EXTRACT)
-      Builder.lowerIf(all(typeIs(LitTyIdx, S16), sizeIs(BigTyIdx, 32)));
-
-    Builder
+    getActionDefinitionsBuilder(Op)
+      .lowerIf(all(typeIs(LitTyIdx, S16), sizeIs(BigTyIdx, 32)))
+      // FIXME: Multiples of 16 should not be legal.
       .legalIf([=](const LegalityQuery &Query) {
           const LLT BigTy = Query.Types[BigTyIdx];
           const LLT LitTy = Query.Types[LitTyIdx];
