@@ -216,6 +216,16 @@ struct IRPosition {
                                          ArgNo);
   }
 
+  /// Create a position describing the argument of \p ACS at position \p ArgNo.
+  static const IRPosition callsite_argument(AbstractCallSite ACS,
+                                            unsigned ArgNo) {
+    int CSArgNo = ACS.getCallArgOperandNo(ArgNo);
+    if (CSArgNo >= 0)
+      return IRPosition::callsite_argument(
+          cast<CallBase>(*ACS.getInstruction()), CSArgNo);
+    return IRPosition();
+  }
+
   /// Create a position with function scope matching the "context" of \p IRP.
   /// If \p IRP is a call site (see isAnyCallSitePosition()) then the result
   /// will be a call site position, otherwise the function position of the
@@ -825,7 +835,7 @@ struct Attributor {
   /// This method will evaluate \p Pred on call sites and return
   /// true if \p Pred holds in every call sites. However, this is only possible
   /// all call sites are known, hence the function has internal linkage.
-  bool checkForAllCallSites(const function_ref<bool(CallSite)> &Pred,
+  bool checkForAllCallSites(const function_ref<bool(AbstractCallSite)> &Pred,
                             const AbstractAttribute &QueryingAA,
                             bool RequireAllCallSites);
 
