@@ -530,8 +530,9 @@ std::error_code SampleProfileReaderExtBinaryBase::decompressSection(
   StringRef CompressedStrings(reinterpret_cast<const char *>(Data),
                               *CompressSize);
   char *Buffer = Allocator.Allocate<char>(DecompressBufSize);
+  size_t UCSize = DecompressBufSize;
   llvm::Error E =
-      zlib::uncompress(CompressedStrings, Buffer, DecompressBufSize);
+      zlib::uncompress(CompressedStrings, Buffer, UCSize);
   if (E)
     return sampleprof_error::uncompress_failed;
   DecompressBuf = reinterpret_cast<const uint8_t *>(Buffer);
