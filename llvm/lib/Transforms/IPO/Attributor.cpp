@@ -3930,8 +3930,11 @@ bool Attributor::checkForAllCallSites(
   // hence the function has internal linkage.
   const IRPosition &IRP = QueryingAA.getIRPosition();
   const Function *AssociatedFunction = IRP.getAssociatedFunction();
-  if (!AssociatedFunction)
+  if (!AssociatedFunction) {
+    LLVM_DEBUG(dbgs() << "[Attributor] No function associated with " << IRP
+                      << "\n");
     return false;
+  }
 
   if (RequireAllCallSites && !AssociatedFunction->hasLocalLinkage()) {
     LLVM_DEBUG(
