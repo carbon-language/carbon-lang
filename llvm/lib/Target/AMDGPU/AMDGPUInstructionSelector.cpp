@@ -555,48 +555,6 @@ bool AMDGPUInstructionSelector::selectG_IMPLICIT_DEF(MachineInstr &I) const {
   return false;
 }
 
-// FIXME: TableGen should generate something to make this manageable for all
-// register classes. At a minimum we could use the opposite of
-// composeSubRegIndices and go up from the base 32-bit subreg.
-static unsigned getSubRegForSizeAndOffset(const SIRegisterInfo &TRI,
-                                          unsigned Size, unsigned Offset) {
-  switch (Size) {
-  case 32:
-    return TRI.getSubRegFromChannel(Offset / 32);
-  case 64: {
-    switch (Offset) {
-    case 0:
-      return AMDGPU::sub0_sub1;
-    case 32:
-      return AMDGPU::sub1_sub2;
-    case 64:
-      return AMDGPU::sub2_sub3;
-    case 96:
-      return AMDGPU::sub4_sub5;
-    case 128:
-      return AMDGPU::sub5_sub6;
-    case 160:
-      return AMDGPU::sub7_sub8;
-      // FIXME: Missing cases up to 1024 bits
-    default:
-      return AMDGPU::NoSubRegister;
-    }
-  }
-  case 96: {
-    switch (Offset) {
-    case 0:
-      return AMDGPU::sub0_sub1_sub2;
-    case 32:
-      return AMDGPU::sub1_sub2_sub3;
-    case 64:
-      return AMDGPU::sub2_sub3_sub4;
-    }
-  }
-  default:
-    return AMDGPU::NoSubRegister;
-  }
-}
-
 bool AMDGPUInstructionSelector::selectG_INSERT(MachineInstr &I) const {
   MachineBasicBlock *BB = I.getParent();
 
@@ -612,7 +570,7 @@ bool AMDGPUInstructionSelector::selectG_INSERT(MachineInstr &I) const {
   if (Offset % 32 != 0)
     return false;
 
-  unsigned SubReg = getSubRegForSizeAndOffset(TRI, InsSize, Offset);
+  unsigned SubReg = TRI.getSubRegFromChannel(Offset / 32, InsSize / 32);
   if (SubReg == AMDGPU::NoSubRegister)
     return false;
 
