@@ -424,11 +424,14 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
     .scalarize(0);
 
   // TODO: Split s1->s64 during regbankselect for VALU.
-  getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
+  auto &IToFP = getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
     .legalFor({{S32, S32}, {S64, S32}, {S16, S32}, {S32, S1}, {S16, S1}, {S64, S1}})
     .lowerFor({{S32, S64}})
-    .customFor({{S64, S64}})
-    .scalarize(0);
+    .customFor({{S64, S64}});
+  if (ST.has16BitInsts())
+    IToFP.legalFor({{S16, S16}});
+  IToFP.clampScalar(1, S32, S64)
+       .scalarize(0);
 
   auto &FPToI = getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
     .legalFor({{S32, S32}, {S32, S64}, {S32, S16}});
