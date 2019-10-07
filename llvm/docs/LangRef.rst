@@ -15941,7 +15941,7 @@ mode argument is only intended as information to the compiler.
 
 
 '``llvm.experimental.constrained.lrint``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -15989,7 +15989,7 @@ then the results will be the same as the llvm.lrint intrinsic.
 
 
 '``llvm.experimental.constrained.llrint``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
