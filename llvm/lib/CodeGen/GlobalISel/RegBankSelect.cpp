@@ -687,8 +687,9 @@ bool RegBankSelect::runOnMachineFunction(MachineFunction &MF) {
       // iterator before hand.
       MachineInstr &MI = *MII++;
 
-      // Ignore target-specific instructions: they should use proper regclasses.
-      if (isTargetSpecificOpcode(MI.getOpcode()))
+      // Ignore target-specific post-isel instructions: they should use proper
+      // regclasses.
+      if (isTargetSpecificOpcode(MI.getOpcode()) && !MI.isPreISelOpcode())
         continue;
 
       if (!assignInstr(MI)) {

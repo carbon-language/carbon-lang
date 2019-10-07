@@ -1650,7 +1650,7 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I) {
   if (I.isPHI())
     return selectPHI(I);
 
-  if (!isPreISelGenericOpcode(I.getOpcode())) {
+  if (!I.isPreISelOpcode()) {
     if (I.isCopy())
       return selectCOPY(I);
     return true;
