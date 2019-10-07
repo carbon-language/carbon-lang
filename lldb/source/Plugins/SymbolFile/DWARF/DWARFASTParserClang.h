@@ -63,8 +63,27 @@ public:
   lldb_private::ClangASTImporter &GetClangASTImporter();
 
 protected:
+  /// Protected typedefs and members.
+  /// @{
   class DelayedAddObjCClassProperty;
   typedef std::vector<DelayedAddObjCClassProperty> DelayedPropertyList;
+
+  typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
+  typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *>
+      DIEToDeclContextMap;
+  typedef std::multimap<const clang::DeclContext *, const DWARFDIE>
+      DeclContextToDIEMap;
+  typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::Decl *>
+      DIEToDeclMap;
+  typedef llvm::DenseMap<const clang::Decl *, DIEPointerSet> DeclToDIEMap;
+
+  lldb_private::ClangASTContext &m_ast;
+  DIEToDeclMap m_die_to_decl;
+  DeclToDIEMap m_decl_to_die;
+  DIEToDeclContextMap m_die_to_decl_ctx;
+  DeclContextToDIEMap m_decl_ctx_to_die;
+  std::unique_ptr<lldb_private::ClangASTImporter> m_clang_ast_importer_up;
+  /// @}
 
   clang::DeclContext *GetDeclContextForBlock(const DWARFDIE &die);
 
@@ -128,24 +147,6 @@ protected:
   // Return true if this type is a declaration to a type in an external
   // module.
   lldb::ModuleSP GetModuleForType(const DWARFDIE &die);
-
-  typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
-  typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *>
-      DIEToDeclContextMap;
-  // typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet>
-  // DeclContextToDIEMap;
-  typedef std::multimap<const clang::DeclContext *, const DWARFDIE>
-      DeclContextToDIEMap;
-  typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::Decl *>
-      DIEToDeclMap;
-  typedef llvm::DenseMap<const clang::Decl *, DIEPointerSet> DeclToDIEMap;
-
-  lldb_private::ClangASTContext &m_ast;
-  DIEToDeclMap m_die_to_decl;
-  DeclToDIEMap m_decl_to_die;
-  DIEToDeclContextMap m_die_to_decl_ctx;
-  DeclContextToDIEMap m_decl_ctx_to_die;
-  std::unique_ptr<lldb_private::ClangASTImporter> m_clang_ast_importer_up;
 };
 
 #endif // SymbolFileDWARF_DWARFASTParserClang_h_
