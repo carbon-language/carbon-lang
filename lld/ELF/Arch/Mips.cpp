@@ -213,7 +213,6 @@ template <endianness E> static uint32_t readShuffle(const uint8_t *loc) {
   return v;
 }
 
-template <endianness E>
 static void writeValue(uint8_t *loc, uint64_t v, uint8_t bitsSize,
                        uint8_t shift) {
   uint32_t instr = read32(loc);
@@ -230,7 +229,7 @@ static void writeShuffleValue(uint8_t *loc, uint64_t v, uint8_t bitsSize,
   if (E == support::little)
     std::swap(words[0], words[1]);
 
-  writeValue<E>(loc, v, bitsSize, shift);
+  writeValue(loc, v, bitsSize, shift);
 
   if (E == support::little)
     std::swap(words[0], words[1]);
@@ -246,7 +245,6 @@ static void writeMicroRelocation16(uint8_t *loc, uint64_t v, uint8_t bitsSize,
 }
 
 template <class ELFT> void MIPS<ELFT>::writePltHeader(uint8_t *buf) const {
-  const endianness e = ELFT::TargetEndianness;
   if (isMicroMips()) {
     uint64_t gotPlt = in.gotPlt->getVA();
     uint64_t plt = in.plt->getVA();
@@ -302,16 +300,15 @@ template <class ELFT> void MIPS<ELFT>::writePltHeader(uint8_t *buf) const {
   write32(buf + 28, 0x2718fffe); // subu  $24, $24, 2
 
   uint64_t gotPlt = in.gotPlt->getVA();
-  writeValue<e>(buf, gotPlt + 0x8000, 16, 16);
-  writeValue<e>(buf + 4, gotPlt, 16, 0);
-  writeValue<e>(buf + 8, gotPlt, 16, 0);
+  writeValue(buf, gotPlt + 0x8000, 16, 16);
+  writeValue(buf + 4, gotPlt, 16, 0);
+  writeValue(buf + 8, gotPlt, 16, 0);
 }
 
 template <class ELFT>
 void MIPS<ELFT>::writePlt(uint8_t *buf, uint64_t gotPltEntryAddr,
                           uint64_t pltEntryAddr, int32_t index,
                           unsigned relOff) const {
-  const endianness e = ELFT::TargetEndianness;
   if (isMicroMips()) {
     // Overwrite trap instructions written by Writer::writeTrapInstr.
     memset(buf, 0, pltEntrySize);
@@ -341,9 +338,9 @@ void MIPS<ELFT>::writePlt(uint8_t *buf, uint64_t gotPltEntryAddr,
   write32(buf + 4, loadInst);   // l[wd] $25, %lo(.got.plt entry)($15)
   write32(buf + 8, jrInst);     // jr  $25 / jr.hb $25
   write32(buf + 12, addInst);   // [d]addiu $24, $15, %lo(.got.plt entry)
-  writeValue<e>(buf, gotPltEntryAddr + 0x8000, 16, 16);
-  writeValue<e>(buf + 4, gotPltEntryAddr, 16, 0);
-  writeValue<e>(buf + 12, gotPltEntryAddr, 16, 0);
+  writeValue(buf, gotPltEntryAddr + 0x8000, 16, 16);
+  writeValue(buf + 4, gotPltEntryAddr, 16, 0);
+  writeValue(buf + 12, gotPltEntryAddr, 16, 0);
 }
 
 template <class ELFT>
@@ -494,7 +491,7 @@ static uint64_t fixupCrossModeJump(uint8_t *loc, RelType type, uint64_t val) {
   case R_MIPS_26: {
     uint32_t inst = read32(loc) >> 26;
     if (inst == 0x3 || inst == 0x1d) { // JAL or JALX
-      writeValue<e>(loc, 0x1d << 26, 32, 0);
+      writeValue(loc, 0x1d << 26, 32, 0);
       return val;
     }
     break;
@@ -558,17 +555,17 @@ void MIPS<ELFT>::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
     write64(loc, val);
     break;
   case R_MIPS_26:
-    writeValue<e>(loc, val, 26, 2);
+    writeValue(loc, val, 26, 2);
     break;
   case R_MIPS_GOT16:
     // The R_MIPS_GOT16 relocation's value in "relocatable" linking mode
     // is updated addend (not a GOT index). In that case write high 16 bits
     // to store a correct addend value.
     if (config->relocatable) {
-      writeValue<e>(loc, val + 0x8000, 16, 16);
+      writeValue(loc, val + 0x8000, 16, 16);
     } else {
       checkInt(loc, val, 16, type);
-      writeValue<e>(loc, val, 16, 0);
+      writeValue(loc, val, 16, 0);
     }
     break;
   case R_MICROMIPS_GOT16:
@@ -595,7 +592,7 @@ void MIPS<ELFT>::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
   case R_MIPS_PCLO16:
   case R_MIPS_TLS_DTPREL_LO16:
   case R_MIPS_TLS_TPREL_LO16:
-    writeValue<e>(loc, val, 16, 0);
+    writeValue(loc, val, 16, 0);
     break;
   case R_MICROMIPS_GPREL16:
   case R_MICROMIPS_TLS_GD:
@@ -621,7 +618,7 @@ void MIPS<ELFT>::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
   case R_MIPS_PCHI16:
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_TPREL_HI16:
-    writeValue<e>(loc, val + 0x8000, 16, 16);
+    writeValue(loc, val + 0x8000, 16, 16);
     break;
   case R_MICROMIPS_CALL_HI16:
   case R_MICROMIPS_GOT_HI16:
@@ -631,10 +628,10 @@ void MIPS<ELFT>::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
     writeShuffleValue<e>(loc, val + 0x8000, 16, 16);
     break;
   case R_MIPS_HIGHER:
-    writeValue<e>(loc, val + 0x80008000, 16, 32);
+    writeValue(loc, val + 0x80008000, 16, 32);
     break;
   case R_MIPS_HIGHEST:
-    writeValue<e>(loc, val + 0x800080008000, 16, 48);
+    writeValue(loc, val + 0x800080008000, 16, 48);
     break;
   case R_MIPS_JALR:
     val -= 4;
@@ -657,25 +654,25 @@ void MIPS<ELFT>::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
   case R_MIPS_PC16:
     checkAlignment(loc, val, 4, type);
     checkInt(loc, val, 18, type);
-    writeValue<e>(loc, val, 16, 2);
+    writeValue(loc, val, 16, 2);
     break;
   case R_MIPS_PC19_S2:
     checkAlignment(loc, val, 4, type);
     checkInt(loc, val, 21, type);
-    writeValue<e>(loc, val, 19, 2);
+    writeValue(loc, val, 19, 2);
     break;
   case R_MIPS_PC21_S2:
     checkAlignment(loc, val, 4, type);
     checkInt(loc, val, 23, type);
-    writeValue<e>(loc, val, 21, 2);
+    writeValue(loc, val, 21, 2);
     break;
   case R_MIPS_PC26_S2:
     checkAlignment(loc, val, 4, type);
     checkInt(loc, val, 28, type);
-    writeValue<e>(loc, val, 26, 2);
+    writeValue(loc, val, 26, 2);
     break;
   case R_MIPS_PC32:
-    writeValue<e>(loc, val, 32, 0);
+    writeValue(loc, val, 32, 0);
     break;
   case R_MICROMIPS_26_S1:
   case R_MICROMIPS_PC26_S1:
