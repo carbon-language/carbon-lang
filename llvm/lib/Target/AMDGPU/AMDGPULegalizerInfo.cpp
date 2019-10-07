@@ -988,7 +988,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
       return false;
     };
 
-    getActionDefinitionsBuilder(Op)
+    auto &Builder = getActionDefinitionsBuilder(Op)
       .widenScalarToNextPow2(LitTyIdx, /*Min*/ 16)
       // Clamp the little scalar to s8-s256 and make it a power of 2. It's not
       // worth considering the multiples of 64 since 2*192 and 2*384 are not
@@ -1007,25 +1007,36 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST_,
         [=](const LegalityQuery &Query) { return notValidElt(Query, 1); },
         scalarize(1))
       .clampScalar(BigTyIdx, S32, S1024)
-      .lowerFor({{S16, V2S16}})
-      .widenScalarIf(
+      .lowerFor({{S16, V2S16}});
+
+    if (Op == G_MERGE_VALUES) {
+      Builder.widenScalarIf(
+        // TODO: Use 16-bit shifts if legal for 8-bit values?
         [=](const LegalityQuery &Query) {
-          const LLT &Ty = Query.Types[BigTyIdx];
-          return !isPowerOf2_32(Ty.getSizeInBits()) &&
-                 Ty.getSizeInBits() % 16 != 0;
+          const LLT Ty = Query.Types[LitTyIdx];
+          return Ty.getSizeInBits() < 32;
         },
-        [=](const LegalityQuery &Query) {
-          // Pick the next power of 2, or a multiple of 64 over 128.
-          // Whichever is smaller.
-          const LLT &Ty = Query.Types[BigTyIdx];
-          unsigned NewSizeInBits = 1 << Log2_32_Ceil(Ty.getSizeInBits() + 1);
-          if (NewSizeInBits >= 256) {
-            unsigned RoundedTo = alignTo<64>(Ty.getSizeInBits() + 1);
-            if (RoundedTo < NewSizeInBits)
-              NewSizeInBits = RoundedTo;
-          }
-          return std::make_pair(BigTyIdx, LLT::scalar(NewSizeInBits));
-        })
+        changeTo(LitTyIdx, S32));
+    }
+
+    Builder.widenScalarIf(
+      [=](const LegalityQuery &Query) {
+        const LLT Ty = Query.Types[BigTyIdx];
+        return !isPowerOf2_32(Ty.getSizeInBits()) &&
+          Ty.getSizeInBits() % 16 != 0;
+      },
+      [=](const LegalityQuery &Query) {
+        // Pick the next power of 2, or a multiple of 64 over 128.
+        // Whichever is smaller.
+        const LLT &Ty = Query.Types[BigTyIdx];
+        unsigned NewSizeInBits = 1 << Log2_32_Ceil(Ty.getSizeInBits() + 1);
+        if (NewSizeInBits >= 256) {
+          unsigned RoundedTo = alignTo<64>(Ty.getSizeInBits() + 1);
+          if (RoundedTo < NewSizeInBits)
+            NewSizeInBits = RoundedTo;
+        }
+        return std::make_pair(BigTyIdx, LLT::scalar(NewSizeInBits));
+      })
       .legalIf([=](const LegalityQuery &Query) {
           const LLT &BigTy = Query.Types[BigTyIdx];
           const LLT &LitTy = Query.Types[LitTyIdx];
