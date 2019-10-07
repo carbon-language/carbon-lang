@@ -810,8 +810,8 @@ struct Attributor {
   /// This will trigger the identification and initialization of attributes for
   /// \p F.
   void markLiveInternalFunction(const Function &F) {
-    assert(F.hasInternalLinkage() &&
-           "Only internal linkage is assumed dead initially.");
+    assert(F.hasLocalLinkage() &&
+           "Only local linkage is assumed dead initially.");
 
     identifyDefaultAbstractAttributes(const_cast<Function &>(F));
   }

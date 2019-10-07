@@ -8,9 +8,9 @@ entry:
   ret i32 %add
 }
 
-; CHECK: define internal i32 @noalias_args(i32* nocapture readonly %A, i32* noalias nocapture readonly %B)
+; CHECK: define private i32 @noalias_args(i32* nocapture readonly %A, i32* noalias nocapture readonly %B)
 
-define internal i32 @noalias_args(i32* %A, i32* %B) #0 {
+define private i32 @noalias_args(i32* %A, i32* %B) #0 {
 entry:
   %0 = load i32, i32* %A, align 4
   %1 = load i32, i32* %B, align 4

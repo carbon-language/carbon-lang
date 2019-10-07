@@ -2081,7 +2081,7 @@ struct AAIsDeadImpl : public AAIsDead {
     for (const Instruction &I : BB)
       if (ImmutableCallSite ICS = ImmutableCallSite(&I))
         if (const Function *F = ICS.getCalledFunction())
-          if (F->hasInternalLinkage())
+          if (F->hasLocalLinkage())
             A.markLiveInternalFunction(*F);
   }
 
@@ -3933,7 +3933,7 @@ bool Attributor::checkForAllCallSites(
   if (!AssociatedFunction)
     return false;
 
-  if (RequireAllCallSites && !AssociatedFunction->hasInternalLinkage()) {
+  if (RequireAllCallSites && !AssociatedFunction->hasLocalLinkage()) {
     LLVM_DEBUG(
         dbgs()
         << "[Attributor] Function " << AssociatedFunction->getName()
@@ -4319,7 +4319,7 @@ ChangeStatus Attributor::run(Module &M) {
     // below fixpoint loop will identify and eliminate them.
     SmallVector<Function *, 8> InternalFns;
     for (Function &F : M)
-      if (F.hasInternalLinkage())
+      if (F.hasLocalLinkage())
         InternalFns.push_back(&F);
 
     bool FoundDeadFn = true;
@@ -4634,7 +4634,7 @@ static bool runAttributorOnModule(Module &M, AnalysisGetter &AG) {
 
     // We look at internal functions only on-demand but if any use is not a
     // direct call, we have to do it eagerly.
-    if (F.hasInternalLinkage()) {
+    if (F.hasLocalLinkage()) {
       if (llvm::all_of(F.uses(), [](const Use &U) {
             return ImmutableCallSite(U.getUser()) &&
                    ImmutableCallSite(U.getUser()).isCallee(&U);
