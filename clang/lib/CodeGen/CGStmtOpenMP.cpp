@@ -151,7 +151,7 @@ class OMPLoopScope : public CodeGenFunction::RunCleanupsScope {
         Body = For->getBody();
       } else {
         assert(isa<CXXForRangeStmt>(Body) &&
-               "Expected caonical for loop or range-based for loop.");
+               "Expected canonical for loop or range-based for loop.");
         auto *CXXFor = cast<CXXForRangeStmt>(Body);
         if (const Stmt *Init = CXXFor->getInit())
           CGF.EmitStmt(Init);
@@ -1377,7 +1377,7 @@ void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &D,
       Body = For->getBody();
     } else {
       assert(isa<CXXForRangeStmt>(Body) &&
-             "Expected caonical for loop or range-based for loop.");
+             "Expected canonical for loop or range-based for loop.");
       auto *CXXFor = cast<CXXForRangeStmt>(Body);
       EmitStmt(CXXFor->getLoopVarStmt());
       Body = CXXFor->getBody();
