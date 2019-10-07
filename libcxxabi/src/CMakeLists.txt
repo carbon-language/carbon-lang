@@ -176,7 +176,9 @@ if (LIBCXXABI_ENABLE_SHARED)
                           SOVERSION
                             "1"
                           VERSION
-                            "1.0")
+                            "1.0"
+                          DEFINE_SYMBOL
+                            "")
 
   if(LIBCXXABI_ENABLE_PIC)
     set_target_properties(cxxabi_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
