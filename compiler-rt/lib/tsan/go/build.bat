@@ -31,6 +31,9 @@ type ^
   ..\..\sanitizer_common\sanitizer_flag_parser.cpp ^
   ..\..\sanitizer_common\sanitizer_symbolizer.cpp ^
   ..\..\sanitizer_common\sanitizer_termination.cpp ^
+  ..\..\sanitizer_common\sanitizer_file.cpp ^
+  ..\..\sanitizer_common\sanitizer_symbolizer_report.cpp ^
+  ..\rtl\tsan_external.cpp ^
   > gotsan.cpp
 
 gcc ^
@@ -46,6 +49,9 @@ gcc ^
   -fno-exceptions ^
   -fno-rtti ^
   -DSANITIZER_GO=1 ^
+  -DWINVER=0x0600 ^
+  -D_WIN32_WINNT=0x0600 ^
+  -DGetProcessMemoryInfo=K32GetProcessMemoryInfo ^
   -Wno-error=attributes ^
   -Wno-attributes ^
   -Wno-format ^
