@@ -398,8 +398,6 @@ struct IRPosition {
 
     assert(KindOrArgNo < 0 &&
            "Expected (call site) arguments to never reach this point!");
-    assert(!isa<Argument>(getAnchorValue()) &&
-           "Expected arguments to have an associated argument position!");
     return Kind(KindOrArgNo);
   }
 
