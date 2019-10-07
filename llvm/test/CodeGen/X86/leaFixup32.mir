@@ -104,7 +104,7 @@ frameInfo:
 body:             |
   bb.0 (%ir-block.0):
     liveins: $eax, $ebp
-    ; CHECK: $eax = ADD32rr $eax, killed $ebp
+    ; CHECK: $eax = ADD32rr $eax, $ebp
     ; CHECK: $eax = ADD32ri8 $eax, -5
  
     $eax = LEA32r killed $eax, 1, killed $ebp, -5, $noreg
@@ -139,7 +139,7 @@ frameInfo:
 body:             |
   bb.0 (%ir-block.0):
     liveins: $eax, $ebp
-    ; CHECK: $ebp = ADD32rr $ebp, killed $eax
+    ; CHECK: $ebp = ADD32rr $ebp, $eax
     ; CHECK: $ebp = ADD32ri8 $ebp, -5
  
     $ebp = LEA32r killed $ebp, 1, killed $eax, -5, $noreg
@@ -315,7 +315,7 @@ frameInfo:
 body:             |
   bb.0 (%ir-block.0):
     liveins: $eax, $ebp
-    ; CHECK: $eax = ADD32rr $eax, killed $ebp
+    ; CHECK: $eax = ADD32rr $eax, $ebp
     ; CHECK: $eax = ADD32ri $eax, 129
  
     $eax = LEA32r killed $eax, 1, killed $ebp, 129, $noreg
