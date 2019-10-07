@@ -117,6 +117,24 @@ reassociateShiftAmtsOfTwoSameDirectionShifts(BinaryOperator *Sh0,
   return Ret;
 }
 
+// Try to replace `undef` constants in C with Replacement.
+static Constant *replaceUndefsWith(Constant *C, Constant *Replacement) {
+  if (C && match(C, m_Undef()))
+    return Replacement;
+
+  if (auto *CV = dyn_cast<ConstantVector>(C)) {
+    llvm::SmallVector<Constant *, 32> NewOps(CV->getNumOperands());
+    for (unsigned i = 0, NumElts = NewOps.size(); i != NumElts; ++i) {
+      Constant *EltC = CV->getOperand(i);
+      NewOps[i] = EltC && match(EltC, m_Undef()) ? Replacement : EltC;
+    }
+    return ConstantVector::get(NewOps);
+  }
+
+  // Don't know how to deal with this constant.
+  return C;
+}
+
 // If we have some pattern that leaves only some low bits set, and then performs
 // left-shift of those bits, if none of the bits that are left after the final
 // shift are modified by the mask, we can omit the mask.
@@ -177,6 +195,14 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
       // The mask must be computed in a type twice as wide to ensure
       // that no bits are lost if the sum-of-shifts is wider than the base type.
       Type *ExtendedTy = Ty->getExtendedType();
+      // An extend of an undef value becomes zero because the high bits are
+      // never completely unknown. Replace the the `undef` shift amounts with
+      // final shift bitwidth to ensure that the value remains undef when
+      // creating the subsequent shift op.
+      SumOfShAmts = replaceUndefsWith(
+          SumOfShAmts,
+          ConstantInt::get(SumOfShAmts->getType()->getScalarType(),
+                           ExtendedTy->getScalarType()->getScalarSizeInBits()));
       auto *ExtendedSumOfShAmts =
           ConstantExpr::getZExt(SumOfShAmts, ExtendedTy);
       // And compute the mask as usual: ~(-1 << (SumOfShAmts))
@@ -212,6 +238,13 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
       // The mask must be computed in a type twice as wide to ensure
       // that no bits are lost if the sum-of-shifts is wider than the base type.
       Type *ExtendedTy = Ty->getExtendedType();
+      // An extend of an undef value becomes zero because the high bits are
+      // never completely unknown. Replace the the `undef` shift amounts with
+      // negated shift bitwidth to ensure that the value remains undef when
+      // creating the subsequent shift op.
+      ShAmtsDiff = replaceUndefsWith(
+          ShAmtsDiff,
+          ConstantInt::get(ShAmtsDiff->getType()->getScalarType(), -BitWidth));
       auto *ExtendedNumHighBitsToClear = ConstantExpr::getZExt(
           ConstantExpr::getAdd(
               ConstantExpr::getNeg(ShAmtsDiff),
