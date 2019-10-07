@@ -155,6 +155,7 @@ void FunctionSamples::print(raw_ostream &OS, unsigned Indent) const {
         FS.second.print(OS, Indent + 4);
       }
     }
+    OS.indent(Indent);
     OS << "}\n";
   } else {
     OS << "No inlined callsites in this function\n";
