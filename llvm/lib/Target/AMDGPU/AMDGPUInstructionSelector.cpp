@@ -555,39 +555,97 @@ bool AMDGPUInstructionSelector::selectG_IMPLICIT_DEF(MachineInstr &I) const {
   return false;
 }
 
+// FIXME: TableGen should generate something to make this manageable for all
+// register classes. At a minimum we could use the opposite of
+// composeSubRegIndices and go up from the base 32-bit subreg.
+static unsigned getSubRegForSizeAndOffset(const SIRegisterInfo &TRI,
+                                          unsigned Size, unsigned Offset) {
+  switch (Size) {
+  case 32:
+    return TRI.getSubRegFromChannel(Offset / 32);
+  case 64: {
+    switch (Offset) {
+    case 0:
+      return AMDGPU::sub0_sub1;
+    case 32:
+      return AMDGPU::sub1_sub2;
+    case 64:
+      return AMDGPU::sub2_sub3;
+    case 96:
+      return AMDGPU::sub4_sub5;
+    case 128:
+      return AMDGPU::sub5_sub6;
+    case 160:
+      return AMDGPU::sub7_sub8;
+      // FIXME: Missing cases up to 1024 bits
+    default:
+      return AMDGPU::NoSubRegister;
+    }
+  }
+  case 96: {
+    switch (Offset) {
+    case 0:
+      return AMDGPU::sub0_sub1_sub2;
+    case 32:
+      return AMDGPU::sub1_sub2_sub3;
+    case 64:
+      return AMDGPU::sub2_sub3_sub4;
+    }
+  }
+  default:
+    return AMDGPU::NoSubRegister;
+  }
+}
+
 bool AMDGPUInstructionSelector::selectG_INSERT(MachineInstr &I) const {
   MachineBasicBlock *BB = I.getParent();
+
+  Register DstReg = I.getOperand(0).getReg();
   Register Src0Reg = I.getOperand(1).getReg();
   Register Src1Reg = I.getOperand(2).getReg();
   LLT Src1Ty = MRI->getType(Src1Reg);
-  if (Src1Ty.getSizeInBits() != 32)
-    return false;
+
+  unsigned DstSize = MRI->getType(DstReg).getSizeInBits();
+  unsigned InsSize = Src1Ty.getSizeInBits();
 
   int64_t Offset = I.getOperand(3).getImm();
   if (Offset % 32 != 0)
     return false;
 
-  unsigned SubReg = TRI.getSubRegFromChannel(Offset / 32);
+  unsigned SubReg = getSubRegForSizeAndOffset(TRI, InsSize, Offset);
+  if (SubReg == AMDGPU::NoSubRegister)
+    return false;
+
+  const RegisterBank *DstBank = RBI.getRegBank(DstReg, *MRI, TRI);
+  const TargetRegisterClass *DstRC =
+    TRI.getRegClassForSizeOnBank(DstSize, *DstBank, *MRI);
+  if (!DstRC)
+    return false;
+
+  const RegisterBank *Src0Bank = RBI.getRegBank(Src0Reg, *MRI, TRI);
+  const RegisterBank *Src1Bank = RBI.getRegBank(Src1Reg, *MRI, TRI);
+  const TargetRegisterClass *Src0RC =
+    TRI.getRegClassForSizeOnBank(DstSize, *Src0Bank, *MRI);
+  const TargetRegisterClass *Src1RC =
+    TRI.getRegClassForSizeOnBank(InsSize, *Src1Bank, *MRI);
+
+  // Deal with weird cases where the class only partially supports the subreg
+  // index.
+  Src0RC = TRI.getSubClassWithSubReg(Src0RC, SubReg);
+  if (!Src0RC)
+    return false;
+
+  if (!RBI.constrainGenericRegister(DstReg, *DstRC, *MRI) ||
+      !RBI.constrainGenericRegister(Src0Reg, *Src0RC, *MRI) ||
+      !RBI.constrainGenericRegister(Src1Reg, *Src1RC, *MRI))
+    return false;
+
   const DebugLoc &DL = I.getDebugLoc();
+  BuildMI(*BB, &I, DL, TII.get(TargetOpcode::INSERT_SUBREG), DstReg)
+    .addReg(Src0Reg)
+    .addReg(Src1Reg)
+    .addImm(SubReg);
 
-  MachineInstr *Ins = BuildMI(*BB, &I, DL, TII.get(TargetOpcode::INSERT_SUBREG))
-                               .addDef(I.getOperand(0).getReg())
-                               .addReg(Src0Reg)
-                               .addReg(Src1Reg)
-                               .addImm(SubReg);
-
-  for (const MachineOperand &MO : Ins->operands()) {
-    if (!MO.isReg())
-      continue;
-    if (Register::isPhysicalRegister(MO.getReg()))
-      continue;
-
-    const TargetRegisterClass *RC =
-            TRI.getConstrainedRegClassForOperand(MO, *MRI);
-    if (!RC)
-      continue;
-    RBI.constrainGenericRegister(MO.getReg(), *RC, *MRI);
-  }
   I.eraseFromParent();
   return true;
 }
