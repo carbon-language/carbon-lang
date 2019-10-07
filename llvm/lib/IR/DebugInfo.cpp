@@ -929,6 +929,26 @@ const char *LLVMDIFileGetSource(LLVMMetadataRef File, unsigned *Len) {
   return "";
 }
 
+LLVMMetadataRef LLVMDIBuilderCreateMacro(LLVMDIBuilderRef Builder,
+                                         LLVMMetadataRef ParentMacroFile,
+                                         unsigned Line,
+                                         LLVMDWARFMacinfoRecordType RecordType,
+                                         const char *Name, size_t NameLen,
+                                         const char *Value, size_t ValueLen) {
+  return wrap(
+      unwrap(Builder)->createMacro(unwrapDI<DIMacroFile>(ParentMacroFile), Line,
+                                   static_cast<MacinfoRecordType>(RecordType),
+                                   {Name, NameLen}, {Value, ValueLen}));
+}
+
+LLVMMetadataRef
+LLVMDIBuilderCreateTempMacroFile(LLVMDIBuilderRef Builder,
+                                 LLVMMetadataRef ParentMacroFile, unsigned Line,
+                                 LLVMMetadataRef File) {
+  return wrap(unwrap(Builder)->createTempMacroFile(
+      unwrapDI<DIMacroFile>(ParentMacroFile), Line, unwrapDI<DIFile>(File)));
+}
+
 LLVMMetadataRef LLVMDIBuilderCreateEnumerator(LLVMDIBuilderRef Builder,
                                               const char *Name, size_t NameLen,
                                               int64_t Value,
