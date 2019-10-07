@@ -305,39 +305,20 @@ void ScriptInterpreterPython::ComputePythonDirForApple(
   auto rend = llvm::sys::path::rend(path_ref);
   auto framework = std::find(rbegin, rend, "LLDB.framework");
   if (framework == rend) {
-    ComputePythonDirForPosix(path);
+    ComputePythonDir(path);
     return;
   }
   path.resize(framework - rend);
   llvm::sys::path::append(path, style, "LLDB.framework", "Resources", "Python");
 }
 
-void ScriptInterpreterPython::ComputePythonDirForPosix(
+void ScriptInterpreterPython::ComputePythonDir(
     llvm::SmallVectorImpl<char> &path) {
-  auto style = llvm::sys::path::Style::posix;
-#if defined(LLDB_PYTHON_RELATIVE_LIBDIR)
   // Build the path by backing out of the lib dir, then building with whatever
   // the real python interpreter uses.  (e.g. lib for most, lib64 on RHEL
-  // x86_64).
-  llvm::sys::path::remove_filename(path, style);
-  llvm::sys::path::append(path, style, LLDB_PYTHON_RELATIVE_LIBDIR);
-#else
-  llvm::sys::path::append(path, style,
-                          "python" + llvm::Twine(PY_MAJOR_VERSION) + "." +
-                              llvm::Twine(PY_MINOR_VERSION),
-                          "site-packages");
-#endif
-}
-
-void ScriptInterpreterPython::ComputePythonDirForWindows(
-    llvm::SmallVectorImpl<char> &path) {
-  auto style = llvm::sys::path::Style::windows;
-  llvm::sys::path::remove_filename(path, style);
-  llvm::sys::path::append(path, style, "lib", "site-packages");
-
-  // This will be injected directly through FileSpec.GetDirectory().SetString(),
-  // so we need to normalize manually.
-  std::replace(path.begin(), path.end(), '\\', '/');
+  // x86_64, or bin on Windows).
+  llvm::sys::path::remove_filename(path);
+  llvm::sys::path::append(path, LLDB_PYTHON_RELATIVE_LIBDIR);
 }
 
 FileSpec ScriptInterpreterPython::GetPythonDir() {
@@ -350,11 +331,10 @@ FileSpec ScriptInterpreterPython::GetPythonDir() {
 
 #if defined(__APPLE__)
     ComputePythonDirForApple(path);
-#elif defined(_WIN32)
-    ComputePythonDirForWindows(path);
 #else
-    ComputePythonDirForPosix(path);
+    ComputePythonDir(path);
 #endif
+    llvm::sys::path::native(path);
     spec.GetDirectory().SetString(path);
     return spec;
   }();
