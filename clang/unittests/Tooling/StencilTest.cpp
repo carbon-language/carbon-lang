@@ -389,4 +389,59 @@ TEST(StencilEqualityTest, InEqualityRun) {
   auto S2 = cat(run(F));
   EXPECT_NE(S1, S2);
 }
+
+TEST(StencilToStringTest, RawTextOp) {
+  auto S = cat("foo bar baz");
+  EXPECT_EQ(S.toString(), R"("foo bar baz")");
+}
+
+TEST(StencilToStringTest, RawTextOpEscaping) {
+  auto S = cat("foo \"bar\" baz\\n");
+  EXPECT_EQ(S.toString(), R"("foo \"bar\" baz\\n")");
+}
+
+TEST(StencilToStringTest, DebugPrintNodeOp) {
+  auto S = cat(dPrint("Id"));
+  EXPECT_EQ(S.toString(), R"repr(dPrint("Id"))repr");
+}
+
+TEST(StencilToStringTest, ExpressionOp) {
+  auto S = cat(expression("Id"));
+  EXPECT_EQ(S.toString(), R"repr(expression("Id"))repr");
+}
+
+TEST(StencilToStringTest, DerefOp) {
+  auto S = cat(deref("Id"));
+  EXPECT_EQ(S.toString(), R"repr(deref("Id"))repr");
+}
+
+TEST(StencilToStringTest, AddressOfOp) {
+  auto S = cat(addressOf("Id"));
+  EXPECT_EQ(S.toString(), R"repr(addressOf("Id"))repr");
+}
+
+TEST(StencilToStringTest, AccessOp) {
+  auto S = cat(access("Id", text("memberData")));
+  EXPECT_EQ(S.toString(), R"repr(access("Id", "memberData"))repr");
+}
+
+TEST(StencilToStringTest, AccessOpStencilPart) {
+  auto S = cat(access("Id", access("subId", "memberData")));
+  EXPECT_EQ(S.toString(),
+            R"repr(access("Id", access("subId", "memberData")))repr");
+}
+
+TEST(StencilToStringTest, IfBoundOp) {
+  auto S = cat(ifBound("Id", text("trueText"), access("exprId", "memberData")));
+  EXPECT_EQ(
+      S.toString(),
+      R"repr(ifBound("Id", "trueText", access("exprId", "memberData")))repr");
+}
+
+TEST(StencilToStringTest, MultipleOp) {
+  auto S = cat("foo", access("x", "m()"), "bar",
+               ifBound("x", text("t"), access("e", "f")));
+  EXPECT_EQ(S.toString(), R"repr("foo", access("x", "m()"), "bar", )repr"
+                          R"repr(ifBound("x", "t", access("e", "f")))repr");
+}
 } // namespace
