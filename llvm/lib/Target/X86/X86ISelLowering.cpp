@@ -7259,6 +7259,10 @@ static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
                                    SmallVectorImpl<int> &Mask,
                                    SelectionDAG &DAG, unsigned Depth,
                                    bool ResolveZero) {
+  EVT VT = Op.getValueType();
+  if (!VT.isSimple() || !VT.isVector())
+    return false;
+
   APInt KnownUndef, KnownZero;
   if (getTargetShuffleAndZeroables(Op, Mask, Inputs, KnownUndef, KnownZero)) {
     for (int i = 0, e = Mask.size(); i != e; ++i) {
@@ -7280,6 +7284,10 @@ static bool getTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Inputs,
                                    SmallVectorImpl<int> &Mask,
                                    SelectionDAG &DAG, unsigned Depth = 0,
                                    bool ResolveZero = true) {
+  EVT VT = Op.getValueType();
+  if (!VT.isSimple() || !VT.isVector())
+    return false;
+
   unsigned NumElts = Op.getValueType().getVectorNumElements();
   APInt DemandedElts = APInt::getAllOnesValue(NumElts);
   return getTargetShuffleInputs(Op, DemandedElts, Inputs, Mask, DAG, Depth,
@@ -34574,8 +34582,8 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   // Get target/faux shuffle mask.
   SmallVector<int, 64> OpMask;
   SmallVector<SDValue, 2> OpInputs;
-  if (!VT.isSimple() || !getTargetShuffleInputs(Op, DemandedElts, OpInputs,
-                                                OpMask, TLO.DAG, Depth, false))
+  if (!getTargetShuffleInputs(Op, DemandedElts, OpInputs, OpMask, TLO.DAG,
+                              Depth, false))
     return false;
 
   // Shuffle inputs must be the same size as the result.
@@ -34954,8 +34962,7 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
 
   SmallVector<int, 16> ShuffleMask;
   SmallVector<SDValue, 2> ShuffleOps;
-  if (VT.isSimple() && VT.isVector() &&
-      getTargetShuffleInputs(Op, ShuffleOps, ShuffleMask, DAG, Depth)) {
+  if (getTargetShuffleInputs(Op, ShuffleOps, ShuffleMask, DAG, Depth)) {
     // If all the demanded elts are from one operand and are inline,
     // then we can use the operand directly.
     int NumOps = ShuffleOps.size();
