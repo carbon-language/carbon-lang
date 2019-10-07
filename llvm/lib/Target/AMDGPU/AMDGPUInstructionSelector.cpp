@@ -1472,31 +1472,38 @@ bool AMDGPUInstructionSelector::selectG_CONSTANT(MachineInstr &I) const {
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
 
-  DebugLoc DL = I.getDebugLoc();
-  const TargetRegisterClass *RC = IsSgpr ? &AMDGPU::SReg_32_XM0RegClass :
-                                           &AMDGPU::VGPR_32RegClass;
-  Register LoReg = MRI->createVirtualRegister(RC);
-  Register HiReg = MRI->createVirtualRegister(RC);
-  const APInt &Imm = APInt(Size, I.getOperand(1).getImm());
+  const DebugLoc &DL = I.getDebugLoc();
 
-  BuildMI(*BB, &I, DL, TII.get(Opcode), LoReg)
-          .addImm(Imm.trunc(32).getZExtValue());
+  APInt Imm(Size, I.getOperand(1).getImm());
 
-  BuildMI(*BB, &I, DL, TII.get(Opcode), HiReg)
-          .addImm(Imm.ashr(32).getZExtValue());
+  MachineInstr *ResInst;
+  if (IsSgpr && TII.isInlineConstant(Imm)) {
+    ResInst = BuildMI(*BB, &I, DL, TII.get(AMDGPU::S_MOV_B64), DstReg)
+      .addImm(I.getOperand(1).getImm());
+  } else {
+    const TargetRegisterClass *RC = IsSgpr ?
+      &AMDGPU::SReg_32_XM0RegClass : &AMDGPU::VGPR_32RegClass;
+    Register LoReg = MRI->createVirtualRegister(RC);
+    Register HiReg = MRI->createVirtualRegister(RC);
 
-  const MachineInstr *RS =
-      BuildMI(*BB, &I, DL, TII.get(AMDGPU::REG_SEQUENCE), DstReg)
-              .addReg(LoReg)
-              .addImm(AMDGPU::sub0)
-              .addReg(HiReg)
-              .addImm(AMDGPU::sub1);
+    BuildMI(*BB, &I, DL, TII.get(Opcode), LoReg)
+      .addImm(Imm.trunc(32).getZExtValue());
+
+    BuildMI(*BB, &I, DL, TII.get(Opcode), HiReg)
+      .addImm(Imm.ashr(32).getZExtValue());
+
+    ResInst = BuildMI(*BB, &I, DL, TII.get(AMDGPU::REG_SEQUENCE), DstReg)
+      .addReg(LoReg)
+      .addImm(AMDGPU::sub0)
+      .addReg(HiReg)
+      .addImm(AMDGPU::sub1);
+  }
 
   // We can't call constrainSelectedInstRegOperands here, because it doesn't
   // work for target independent opcodes
   I.eraseFromParent();
   const TargetRegisterClass *DstRC =
-      TRI.getConstrainedRegClassForOperand(RS->getOperand(0), *MRI);
+    TRI.getConstrainedRegClassForOperand(ResInst->getOperand(0), *MRI);
   if (!DstRC)
     return true;
   return RBI.constrainGenericRegister(DstReg, *DstRC, *MRI);
