@@ -137,7 +137,7 @@ namespace {
 
   /// Given an expression, determine the type used to store the result of
   /// evaluating that expression.
-  static QualType getStorageType(ASTContext &Ctx, Expr *E) {
+  static QualType getStorageType(const ASTContext &Ctx, const Expr *E) {
     if (E->isRValue())
       return E->getType();
     return Ctx.getLValueReferenceType(E->getType());
@@ -13569,10 +13569,8 @@ bool Expr::EvaluateAsConstantExpr(EvalResult &Result, ConstExprUsage Usage,
   if (!Info.discardCleanups())
     llvm_unreachable("Unhandled cleanup; missing full expression marker?");
 
-  QualType T = getType();
-  if (!isRValue())
-    T = Ctx.getLValueReferenceType(T);
-  return CheckConstantExpression(Info, getExprLoc(), T, Result.Val, Usage) &&
+  return CheckConstantExpression(Info, getExprLoc(), getStorageType(Ctx, this),
+                                 Result.Val, Usage) &&
          CheckMemoryLeaks(Info);
 }
 
