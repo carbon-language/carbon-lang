@@ -78,21 +78,6 @@ const char *StopInfoMachException::GetDescription() {
       }
       break;
 
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-      switch (m_exc_code) {
-      case 0x101:
-        code_desc = "EXC_PPC_VM_PROT_READ";
-        break;
-      case 0x102:
-        code_desc = "EXC_PPC_BADSPACE";
-        break;
-      case 0x103:
-        code_desc = "EXC_PPC_UNALIGNED";
-        break;
-      }
-      break;
-
     default:
       break;
     }
@@ -105,30 +90,6 @@ const char *StopInfoMachException::GetDescription() {
     case llvm::Triple::x86_64:
       if (m_exc_code == 1)
         code_desc = "EXC_I386_INVOP";
-      break;
-
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-      switch (m_exc_code) {
-      case 1:
-        code_desc = "EXC_PPC_INVALID_SYSCALL";
-        break;
-      case 2:
-        code_desc = "EXC_PPC_UNIPL_INST";
-        break;
-      case 3:
-        code_desc = "EXC_PPC_PRIVINST";
-        break;
-      case 4:
-        code_desc = "EXC_PPC_PRIVREG";
-        break;
-      case 5:
-        code_desc = "EXC_PPC_TRACE";
-        break;
-      case 6:
-        code_desc = "EXC_PPC_PERFMON";
-        break;
-      }
       break;
 
     case llvm::Triple::arm:
@@ -175,33 +136,6 @@ const char *StopInfoMachException::GetDescription() {
       }
       break;
 
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-      switch (m_exc_code) {
-      case 1:
-        code_desc = "EXC_PPC_OVERFLOW";
-        break;
-      case 2:
-        code_desc = "EXC_PPC_ZERO_DIVIDE";
-        break;
-      case 3:
-        code_desc = "EXC_PPC_FLT_INEXACT";
-        break;
-      case 4:
-        code_desc = "EXC_PPC_FLT_ZERO_DIVIDE";
-        break;
-      case 5:
-        code_desc = "EXC_PPC_FLT_UNDERFLOW";
-        break;
-      case 6:
-        code_desc = "EXC_PPC_FLT_OVERFLOW";
-        break;
-      case 7:
-        code_desc = "EXC_PPC_FLT_NOT_A_NUMBER";
-        break;
-      }
-      break;
-
     default:
       break;
     }
@@ -231,15 +165,6 @@ const char *StopInfoMachException::GetDescription() {
         break;
       case 2:
         code_desc = "EXC_I386_BPT";
-        break;
-      }
-      break;
-
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-      switch (m_exc_code) {
-      case 1:
-        code_desc = "EXC_PPC_BREAKPOINT";
         break;
       }
       break;
@@ -384,30 +309,7 @@ StopInfoSP StopInfoMachException::CreateStopReasonWithMachException(
 
   switch (exc_type) {
   case 1: // EXC_BAD_ACCESS
-    break;
-
   case 2: // EXC_BAD_INSTRUCTION
-    switch (cpu) {
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-      switch (exc_code) {
-      case 1: // EXC_PPC_INVALID_SYSCALL
-      case 2: // EXC_PPC_UNIPL_INST
-      case 3: // EXC_PPC_PRIVINST
-      case 4: // EXC_PPC_PRIVREG
-        break;
-      case 5: // EXC_PPC_TRACE
-        return StopInfo::CreateStopReasonToTrace(thread);
-      case 6: // EXC_PPC_PERFMON
-        break;
-      }
-      break;
-
-    default:
-      break;
-    }
-    break;
-
   case 3: // EXC_ARITHMETIC
   case 4: // EXC_EMULATION
     break;
@@ -476,11 +378,6 @@ StopInfoSP StopInfoMachException::CreateStopReasonWithMachException(
         if (!pc_already_adjusted)
           pc_decrement = 1;
       }
-      break;
-
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-      is_actual_breakpoint = exc_code == 1; // EXC_PPC_BREAKPOINT
       break;
 
     case llvm::Triple::arm:
