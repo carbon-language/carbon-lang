@@ -2478,8 +2478,8 @@ size_t ObjectFileMachO::ParseSymtab() {
   std::vector<uint32_t> N_BRAC_indexes;
   std::vector<uint32_t> N_COMM_indexes;
   typedef std::multimap<uint64_t, uint32_t> ValueToSymbolIndexMap;
-  typedef std::map<uint32_t, uint32_t> NListIndexToSymbolIndexMap;
-  typedef std::map<const char *, uint32_t> ConstNameToSymbolIndexMap;
+  typedef llvm::DenseMap<uint32_t, uint32_t> NListIndexToSymbolIndexMap;
+  typedef llvm::DenseMap<const char *, uint32_t> ConstNameToSymbolIndexMap;
   ValueToSymbolIndexMap N_FUN_addr_to_sym_idx;
   ValueToSymbolIndexMap N_STSYM_addr_to_sym_idx;
   ConstNameToSymbolIndexMap N_GSYM_name_to_sym_idx;
@@ -2689,8 +2689,8 @@ size_t ObjectFileMachO::ParseSymtab() {
 
             offset = 0;
 
-            typedef std::map<ConstString, uint16_t> UndefinedNameToDescMap;
-            typedef std::map<uint32_t, ConstString> SymbolIndexToName;
+            typedef llvm::DenseMap<ConstString, uint16_t> UndefinedNameToDescMap;
+            typedef llvm::DenseMap<uint32_t, ConstString> SymbolIndexToName;
             UndefinedNameToDescMap undefined_name_to_desc;
             SymbolIndexToName reexport_shlib_needs_fixup;
 
@@ -3487,15 +3487,11 @@ size_t ObjectFileMachO::ParseSymtab() {
                           // matches, then we can merge the two into just the
                           // function symbol to avoid duplicate entries in
                           // the symbol table
-                          std::pair<ValueToSymbolIndexMap::const_iterator,
-                                    ValueToSymbolIndexMap::const_iterator>
-                              range;
-                          range =
+                          auto range =
                               N_FUN_addr_to_sym_idx.equal_range(nlist.n_value);
                           if (range.first != range.second) {
                             bool found_it = false;
-                            for (ValueToSymbolIndexMap::const_iterator pos =
-                                     range.first;
+                            for (const auto pos = range.first;
                                  pos != range.second; ++pos) {
                               if (sym[sym_idx].GetMangled().GetName(
                                       lldb::eLanguageTypeUnknown,
@@ -3536,15 +3532,11 @@ size_t ObjectFileMachO::ParseSymtab() {
                           // matches, then we can merge the two into just the
                           // Static symbol to avoid duplicate entries in the
                           // symbol table
-                          std::pair<ValueToSymbolIndexMap::const_iterator,
-                                    ValueToSymbolIndexMap::const_iterator>
-                              range;
-                          range = N_STSYM_addr_to_sym_idx.equal_range(
+                          auto range = N_STSYM_addr_to_sym_idx.equal_range(
                               nlist.n_value);
                           if (range.first != range.second) {
                             bool found_it = false;
-                            for (ValueToSymbolIndexMap::const_iterator pos =
-                                     range.first;
+                            for (const auto pos = range.first;
                                  pos != range.second; ++pos) {
                               if (sym[sym_idx].GetMangled().GetName(
                                       lldb::eLanguageTypeUnknown,
@@ -3667,8 +3659,8 @@ size_t ObjectFileMachO::ParseSymtab() {
       nlist_idx = 0;
     }
 
-    typedef std::map<ConstString, uint16_t> UndefinedNameToDescMap;
-    typedef std::map<uint32_t, ConstString> SymbolIndexToName;
+    typedef llvm::DenseMap<ConstString, uint16_t> UndefinedNameToDescMap;
+    typedef llvm::DenseMap<uint32_t, ConstString> SymbolIndexToName;
     UndefinedNameToDescMap undefined_name_to_desc;
     SymbolIndexToName reexport_shlib_needs_fixup;
 
