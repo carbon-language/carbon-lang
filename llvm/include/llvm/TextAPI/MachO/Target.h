@@ -29,8 +29,6 @@ public:
   explicit Target(const llvm::Triple &Triple)
       : Arch(mapToArchitecture(Triple)), Platform(mapToPlatformKind(Triple)) {}
 
-  static llvm::Expected<Target> create(StringRef Target);
-
   operator std::string() const;
 
   Architecture Arch;

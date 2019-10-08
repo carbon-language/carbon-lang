@@ -172,25 +172,14 @@ void ScalarTraits<SwiftVersion>::output(const SwiftVersion &Value, void *,
     break;
   }
 }
-StringRef ScalarTraits<SwiftVersion>::input(StringRef Scalar, void *IO,
+StringRef ScalarTraits<SwiftVersion>::input(StringRef Scalar, void *,
                                             SwiftVersion &Value) {
-  const auto *Ctx = reinterpret_cast<TextAPIContext *>(IO);
-  assert((!Ctx || Ctx->FileKind != FileType::Invalid) &&
-         "File type is not set in context");
-
-  if (Ctx->FileKind == FileType::TBD_V4) {
-    if (Scalar.getAsInteger(10, Value))
-      return "invalid Swift ABI version.";
-    return {};
-  } else {
-    Value = StringSwitch<SwiftVersion>(Scalar)
-                .Case("1.0", 1)
-                .Case("1.1", 2)
-                .Case("2.0", 3)
-                .Case("3.0", 4)
-                .Default(0);
-  }
-
+  Value = StringSwitch<SwiftVersion>(Scalar)
+              .Case("1.0", 1)
+              .Case("1.1", 2)
+              .Case("2.0", 3)
+              .Case("3.0", 4)
+              .Default(0);
   if (Value != SwiftVersion(0))
     return {};
 

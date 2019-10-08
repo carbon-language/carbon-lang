@@ -38,10 +38,7 @@ enum class SymbolFlags : uint8_t {
   /// Undefined
   Undefined        = 1U << 3,
 
-  /// Rexported
-  Rexported        = 1U << 4,
-
-  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Rexported),
+  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Undefined),
 };
 
 // clang-format on
@@ -53,7 +50,7 @@ enum class SymbolKind : uint8_t {
   ObjectiveCInstanceVariable,
 };
 
-using TargetList = SmallVector<Target, 5>;
+using TargetList = SmallVector<Target, 20>;
 class Symbol {
 public:
   Symbol(SymbolKind Kind, StringRef Name, TargetList Targets, SymbolFlags Flags)
@@ -82,10 +79,6 @@ public:
 
   bool isUndefined() const {
     return (Flags & SymbolFlags::Undefined) == SymbolFlags::Undefined;
-  }
-
-  bool isReexported() const {
-    return (Flags & SymbolFlags::Rexported) == SymbolFlags::Rexported;
   }
 
   using const_target_iterator = TargetList::const_iterator;

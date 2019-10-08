@@ -17,44 +17,6 @@
 namespace llvm {
 namespace MachO {
 
-Expected<Target> Target::create(StringRef TargetValue) {
-  auto Result = TargetValue.split('-');
-  auto ArchitectureStr = Result.first;
-  auto Architecture = getArchitectureFromName(ArchitectureStr);
-  if (Architecture == AK_unknown)
-    return make_error<StringError>("invalid architecture",
-                                   inconvertibleErrorCode());
-  auto PlatformStr = Result.second;
-  PlatformKind Platform;
-  Platform = StringSwitch<PlatformKind>(PlatformStr)
-                 .Case("macos", PlatformKind::macOS)
-                 .Case("ios", PlatformKind::iOS)
-                 .Case("tvos", PlatformKind::tvOS)
-                 .Case("watchos", PlatformKind::watchOS)
-                 .Case("bridgeos", PlatformKind::bridgeOS)
-                 .Case("maccatalyst", PlatformKind::macCatalyst)
-                 .Case("ios-simulator", PlatformKind::iOSSimulator)
-                 .Case("tvos-simulator", PlatformKind::tvOSSimulator)
-                 .Case("watchos-simulator", PlatformKind::watchOSSimulator)
-                 .Default(PlatformKind::unknown);
-
-  if (Platform == PlatformKind::unknown) {
-    if (PlatformStr.startswith("<") && PlatformStr.endswith(">")) {
-      PlatformStr = PlatformStr.drop_front().drop_back();
-      unsigned long long RawValue;
-      if (PlatformStr.getAsInteger(10, RawValue))
-        return make_error<StringError>("invalid platform number",
-                                       inconvertibleErrorCode());
-
-      Platform = (PlatformKind)RawValue;
-    }
-    return make_error<StringError>("invalid platform",
-                                   inconvertibleErrorCode());
-  }
-
-  return Target{Architecture, Platform};
-}
-
 Target::operator std::string() const {
   return (getArchitectureName(Arch) + " (" + getPlatformName(Platform) + ")")
       .str();
