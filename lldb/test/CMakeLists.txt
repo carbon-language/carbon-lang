@@ -128,8 +128,6 @@ endif()
 set(LLDB_DOTEST_ARGS ${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS})
 set_property(GLOBAL PROPERTY LLDB_DOTEST_ARGS_PROPERTY ${LLDB_DOTEST_ARGS})
 
-# If tests crash cause LLDB to crash, or things are otherwise unstable, or if machine-parsable
-# output is desired (i.e. in continuous integration contexts) check-lldb-single is a better target.
 add_custom_target(check-lldb)
 add_dependencies(check-lldb lldb-test-deps)
 set_target_properties(check-lldb PROPERTIES FOLDER "lldb misc")
