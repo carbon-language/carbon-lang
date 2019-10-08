@@ -5109,7 +5109,8 @@ Sema::checkOpenMPDeclareVariantFunction(Sema::DeclGroupPtrTy DG,
           PartialDiagnosticAt(VariantRef->getExprLoc(),
                               PDiag(diag::err_omp_declare_variant_diff)
                                   << FD->getLocation()),
-          /*TemplatesSupported=*/true, /*ConstexprSupported=*/false))
+          /*TemplatesSupported=*/true, /*ConstexprSupported=*/false,
+          /*CLinkageMayDiffer=*/true))
     return None;
   return std::make_pair(FD, cast<Expr>(DRE));
 }

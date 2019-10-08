@@ -22,6 +22,8 @@
 // CHECK-DAG: ret i32 7
 // CHECK-DAG: ret i32 82
 // CHECK-DAG: ret i32 83
+// CHECK-DAG: ret i32 85
+// CHECK-DAG: ret i32 86
 // CHECK-NOT: ret i32 {{1|4|81|84}}
 
 #ifndef HEADER
@@ -109,5 +111,15 @@ static int prio4() { return 84; }
 static int prio1_() { return 1; }
 
 int int_fn() { return prio1_(); }
+
+int fn_linkage_variant() { return 85; }
+extern "C" {
+#pragma omp declare variant(fn_linkage_variant) match(implementation = {vendor(llvm)})
+int fn_linkage() { return 1; }
+}
+
+extern "C" int fn_linkage_variant1() { return 86; }
+#pragma omp declare variant(fn_linkage_variant1) match(implementation = {vendor(llvm)})
+int fn_linkage1() { return 1; }
 
 #endif // HEADER

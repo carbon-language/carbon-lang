@@ -201,3 +201,22 @@ void bazzzz() {
   s.foo1();
   static_f();
 }
+
+// CHECK: int fn_linkage_variant();
+// CHECK: extern "C" {
+// CHECK:     #pragma omp declare variant(fn_linkage_variant) match(implementation={vendor(xxx)})
+// CHECK:     int fn_linkage();
+// CHECK: }
+int fn_linkage_variant();
+extern "C" {
+#pragma omp declare variant(fn_linkage_variant) match(implementation = {vendor(xxx)})
+int fn_linkage();
+}
+
+// CHECK: extern "C" int fn_linkage_variant1()
+// CHECK: #pragma omp declare variant(fn_linkage_variant1) match(implementation={vendor(xxx)})
+// CHECK: int fn_linkage1();
+extern "C" int fn_linkage_variant1();
+#pragma omp declare variant(fn_linkage_variant1) match(implementation = {vendor(xxx)})
+int fn_linkage1();
+

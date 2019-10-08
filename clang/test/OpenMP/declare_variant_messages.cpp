@@ -165,18 +165,6 @@ inline int fn_inline_variant1();
 #pragma omp declare variant(fn_inline_variant1) match(xxx = {})
 int fn_inline1();
 
-int fn_linkage_variant();
-extern "C" {
-// expected-error@+1 {{function with '#pragma omp declare variant' has a different linkage}}
-#pragma omp declare variant(fn_linkage_variant) match(xxx = {})
-int fn_linkage();
-}
-
-extern "C" int fn_linkage_variant1();
-// expected-error@+1 {{function with '#pragma omp declare variant' has a different linkage}}
-#pragma omp declare variant(fn_linkage_variant1) match(xxx = {})
-int fn_linkage1();
-
 auto fn_deduced_variant() { return 0; }
 #pragma omp declare variant(fn_deduced_variant) match(xxx = {})
 int fn_deduced();
