@@ -13569,8 +13569,10 @@ bool Expr::EvaluateAsConstantExpr(EvalResult &Result, ConstExprUsage Usage,
   if (!Info.discardCleanups())
     llvm_unreachable("Unhandled cleanup; missing full expression marker?");
 
-  return CheckConstantExpression(Info, getExprLoc(), getType(), Result.Val,
-                                 Usage) &&
+  QualType T = getType();
+  if (!isRValue())
+    T = Ctx.getLValueReferenceType(T);
+  return CheckConstantExpression(Info, getExprLoc(), T, Result.Val, Usage) &&
          CheckMemoryLeaks(Info);
 }
 
