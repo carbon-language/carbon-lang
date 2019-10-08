@@ -27,7 +27,7 @@ T foofoo(); // expected-note 2 {{declared here}}
 #pragma omp declare variant(foofoo <int>) match(xxx = {)     // expected-error {{expected '}'}} expected-note {{to match this '{'}}
 #pragma omp declare variant(foofoo <int>) match(xxx = {})
 #pragma omp declare variant(foofoo <int>) match(xxx = {vvv})
-#pragma omp declare variant(foofoo <int>) match(xxx = {vvv} xxx) // expected-error {{expected ','}} expected-error {{expected '=' after 'xxx' context selector set name on 'omp declare variant' directive}}
+#pragma omp declare variant(foofoo <int>) match(xxx = {vvv} xxx) // expected-error {{expected ','}} expected-error {{expected '=' after 'xxx' context selector set name on 'omp declare variant' directive}} expected-error {{context selector set 'xxx' is used already in the same 'omp declare variant' directive}} expected-note {{previously context selector set 'xxx' used here}}
 #pragma omp declare variant(foofoo <int>) match(xxx = {vvv}) xxx // expected-warning {{extra tokens at the end of '#pragma omp declare variant' are ignored}}
 #pragma omp declare variant(foofoo <int>) match(implementation={xxx}) // expected-warning {{unknown context selector in 'implementation' context selector set of 'omp declare variant' directive, ignored}}
 #pragma omp declare variant(foofoo <int>) match(implementation={vendor}) // expected-error {{expected '(' after 'vendor'}} expected-error {{expected vendor identifier in 'vendor' context selector of 'implementation' selector set of 'omp declare variant' directive}} expected-error {{expected ')' or ',' after 'vendor name'}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -60,7 +60,7 @@ int bar();
 #pragma omp declare variant(foofoo <T>) match(user = {score(<expr>) : condition(<expr>)})
 #pragma omp declare variant(foofoo <T>) match(user = {condition(<expr>)})
 #pragma omp declare variant(foofoo <T>) match(user = {condition(<expr>)})
-#pragma omp declare variant(foofoo <T>) match(xxx = {vvv} xxx) // expected-error {{expected ','}} expected-error {{expected '=' after 'xxx' context selector set name on 'omp declare variant' directive}}
+#pragma omp declare variant(foofoo <T>) match(xxx = {vvv} xxx) // expected-error {{expected ','}} expected-error {{expected '=' after 'xxx' context selector set name on 'omp declare variant' directive}} expected-error {{context selector set 'xxx' is used already in the same 'omp declare variant' directive}} expected-note {{previously context selector set 'xxx' used here}}
 #pragma omp declare variant(foofoo <T>) match(xxx = {vvv}) xxx // expected-warning {{extra tokens at the end of '#pragma omp declare variant' are ignored}}
 #pragma omp declare variant(foofoo <int>) match(implementation={vendor(score ibm)}) // expected-error {{expected '(' after 'score'}} expected-warning {{missing ':' after context selector score clause - ignoring}}
 #pragma omp declare variant(foofoo <int>) match(implementation={vendor(score( ibm)}) // expected-error {{expected ')' or ',' after 'vendor name'}} expected-error {{expected ')'}} expected-error {{use of undeclared identifier 'ibm'}} expected-error {{expected vendor identifier in 'vendor' context selector of 'implementation' selector set of 'omp declare variant' directive}} expected-warning {{missing ':' after context selector score clause - ignoring}} expected-note {{to match this '('}}

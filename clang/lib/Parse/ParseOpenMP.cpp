@@ -892,6 +892,7 @@ bool Parser::parseOpenMPContextSelectors(
     llvm::function_ref<void(SourceRange,
                             const Sema::OpenMPDeclareVariantCtsSelectorData &)>
         Callback) {
+  llvm::StringMap<SourceLocation> UsedCtxSets;
   do {
     // Parse inner context selector set name.
     if (!Tok.is(tok::identifier)) {
@@ -901,6 +902,16 @@ bool Parser::parseOpenMPContextSelectors(
     }
     SmallString<16> Buffer;
     StringRef CtxSelectorSetName = PP.getSpelling(Tok, Buffer);
+    auto Res = UsedCtxSets.try_emplace(CtxSelectorSetName, Tok.getLocation());
+    if (!Res.second) {
+      // OpenMP 5.0, 2.3.2 Context Selectors, Restrictions.
+      // Each trait-set-selector-name can only be specified once.
+      Diag(Tok.getLocation(), diag::err_omp_declare_variant_ctx_set_mutiple_use)
+          << CtxSelectorSetName;
+      Diag(Res.first->getValue(),
+           diag::note_omp_declare_variant_ctx_set_used_here)
+          << CtxSelectorSetName;
+    }
     // Parse '='.
     (void)ConsumeToken();
     if (Tok.isNot(tok::equal)) {
