@@ -4277,8 +4277,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // Update the largest vector width if any arguments have vector types.
   for (unsigned i = 0; i < IRCallArgs.size(); ++i) {
     if (auto *VT = dyn_cast<llvm::VectorType>(IRCallArgs[i]->getType()))
-      LargestVectorWidth = std::max(LargestVectorWidth,
-                                    VT->getPrimitiveSizeInBits());
+      LargestVectorWidth = std::max((uint64_t)LargestVectorWidth,
+                                   VT->getPrimitiveSizeInBits().getFixedSize());
   }
 
   // Compute the calling convention and attributes.
@@ -4361,8 +4361,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   // Update largest vector width from the return type.
   if (auto *VT = dyn_cast<llvm::VectorType>(CI->getType()))
-    LargestVectorWidth = std::max(LargestVectorWidth,
-                                  VT->getPrimitiveSizeInBits());
+    LargestVectorWidth = std::max((uint64_t)LargestVectorWidth,
+                                  VT->getPrimitiveSizeInBits().getFixedSize());
 
   // Insert instrumentation or attach profile metadata at indirect call sites.
   // For more details, see the comment before the definition of
