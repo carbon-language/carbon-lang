@@ -48,7 +48,8 @@ protected:
   std::vector<MCSymbol *> Symbols;
 
   /// Section this data belongs to.
-  BinarySection *Section;
+  BinarySection *Section{nullptr};
+
   /// Start address of this symbol.
   uint64_t Address{0};
   /// Size of this data (can be 0).

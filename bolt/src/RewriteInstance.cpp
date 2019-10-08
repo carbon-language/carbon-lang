@@ -590,13 +590,6 @@ void check_error(Error E, Twine Message) {
 
 namespace {
 
-std::string uniquifyName(BinaryContext &BC, std::string NamePrefix) {
-  unsigned LocalID = 1;
-  while (BC.getBinaryDataByName(NamePrefix + std::to_string(LocalID)))
-    ++LocalID;
-  return NamePrefix + std::to_string(LocalID);
-}
-
 bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
   auto Itr = std::find_if(opts::ReorderData.begin(),
                           opts::ReorderData.end(),
@@ -1188,63 +1181,66 @@ void RewriteInstance::discoverFileObjects() {
 
   // For aarch64, the ABI defines mapping symbols so we identify data in the
   // code section (see IHI0056B). $d identifies data contents.
-  auto MarkersBegin = SortedFileSymbols.end();
+  auto LastSymbol = SortedFileSymbols.end() - 1;
   if (BC->isAArch64()) {
-    MarkersBegin = std::stable_partition(
+    LastSymbol = std::stable_partition(
         SortedFileSymbols.begin(), SortedFileSymbols.end(),
         [](const SymbolRef &Symbol) {
           StringRef Name = cantFail(Symbol.getName());
           return !(cantFail(Symbol.getType()) == SymbolRef::ST_Unknown &&
                    (Name == "$d" || Name == "$x"));
         });
+    --LastSymbol;
   }
 
   auto getNextAddress = [&](std::vector<SymbolRef>::const_iterator Itr) {
-    auto Section = cantFail(Itr->getSection());
-    const auto SymbolEndAddress =
-        (cantFail(Itr->getAddress()) + ELFSymbolRef(*Itr).getSize());
+    const auto SymbolSection = cantFail(Itr->getSection());
+    const auto SymbolAddress = cantFail(Itr->getAddress());
+    const auto SymbolEndAddress = SymbolAddress + ELFSymbolRef(*Itr).getSize();
 
     // absolute sym
-    if (Section == InputFile->section_end())
+    if (SymbolSection == InputFile->section_end())
       return SymbolEndAddress;
 
-    while (Itr != MarkersBegin - 1 &&
-           cantFail(std::next(Itr)->getSection()) == Section &&
-           cantFail(std::next(Itr)->getAddress()) ==
-               cantFail(Itr->getAddress())) {
+    while (Itr != LastSymbol &&
+           cantFail(std::next(Itr)->getSection()) == SymbolSection &&
+           cantFail(std::next(Itr)->getAddress()) == SymbolAddress) {
       ++Itr;
     }
 
-    if (Itr != MarkersBegin - 1 &&
-        cantFail(std::next(Itr)->getSection()) == Section)
+    if (Itr != LastSymbol &&
+        cantFail(std::next(Itr)->getSection()) == SymbolSection)
       return cantFail(std::next(Itr)->getAddress());
 
-    const auto SectionEndAddress = Section->getAddress() + Section->getSize();
-    if ((ELFSectionRef(*Section).getFlags() & ELF::SHF_TLS) ||
-        SymbolEndAddress > SectionEndAddress)
+    const auto SymbolSectionEndAddress =
+      SymbolSection->getAddress() + SymbolSection->getSize();
+    if ((ELFSectionRef(*SymbolSection).getFlags() & ELF::SHF_TLS) ||
+        SymbolEndAddress > SymbolSectionEndAddress)
       return SymbolEndAddress;
 
-    return SectionEndAddress;
+    return SymbolSectionEndAddress;
   };
 
   BinaryFunction *PreviousFunction = nullptr;
   unsigned AnonymousId = 0;
 
+  const auto MarkersBegin = std::next(LastSymbol);
   for (auto ISym = SortedFileSymbols.begin(); ISym != MarkersBegin; ++ISym) {
     const auto &Symbol = *ISym;
     // Keep undefined symbols for pretty printing?
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
 
-    if (cantFail(Symbol.getType()) == SymbolRef::ST_File)
+    const auto SymbolType = cantFail(Symbol.getType());
+
+    if (SymbolType == SymbolRef::ST_File)
       continue;
 
     StringRef SymName = cantFail(Symbol.getName(), "cannot get symbol name");
     uint64_t Address =
         cantFail(Symbol.getAddress(), "cannot get symbol address");
     if (Address == 0) {
-      if (opts::Verbosity >= 1 &&
-          cantFail(Symbol.getType()) == SymbolRef::ST_Function)
+      if (opts::Verbosity >= 1 && SymbolType == SymbolRef::ST_Function)
         errs() << "BOLT-WARNING: function with 0 address seen\n";
       continue;
     }
@@ -1288,21 +1284,21 @@ void RewriteInstance::discoverFileObjects() {
       // The <id> field is used for disambiguation of local symbols since there
       // could be identical function names coming from identical file names
       // (e.g. from different directories).
-      std::string Prefix = Name + "/";
       std::string AltPrefix;
       auto SFI = SymbolToFileName.find(Symbol);
-      if (SFI != SymbolToFileName.end()) {
-        AltPrefix = Prefix + std::string(SFI->second) + "/";
+      if (SymbolType == SymbolRef::ST_Function &&
+          SFI != SymbolToFileName.end()) {
+        AltPrefix = Name + "/" + std::string(SFI->second);
       }
 
-      UniqueName = uniquifyName(*BC, Prefix);
+      UniqueName = BC->uniquifySymbolName(Name);
       if (!AltPrefix.empty())
-        AlternativeName = uniquifyName(*BC, AltPrefix);
+        AlternativeName = BC->uniquifySymbolName(AltPrefix);
     }
 
     uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
-    uint64_t NextAddress = getNextAddress(ISym);
-    uint64_t TentativeSize = !SymbolSize ? NextAddress - Address : SymbolSize;
+    uint64_t TentativeSize = SymbolSize ? SymbolSize
+                                        : getNextAddress(ISym) - Address;
     uint64_t SymbolAlignment = Symbol.getAlignment();
     unsigned SymbolFlags = Symbol.getFlags();
 
@@ -1330,7 +1326,7 @@ void RewriteInstance::discoverFileObjects() {
                  << " for function\n");
 
     if (!Section->isText()) {
-      assert(cantFail(Symbol.getType()) != SymbolRef::ST_Function &&
+      assert(SymbolType != SymbolRef::ST_Function &&
              "unexpected function inside non-code section");
       DEBUG(dbgs() << "BOLT-DEBUG: rejecting as symbol is not in code\n");
       registerName(TentativeSize);
@@ -1344,34 +1340,24 @@ void RewriteInstance::discoverFileObjects() {
     // Sometimes assembly functions are not marked as functions and neither are
     // their local labels. The only way to tell them apart is to look at
     // symbol scope - global vs local.
-    if (cantFail(Symbol.getType()) != SymbolRef::ST_Function) {
-      if (PreviousFunction) {
-        if (PreviousFunction->getSize() == 0) {
-          if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
-            DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
-            registerName(SymbolSize);
-            continue;
-          }
-        } else if (PreviousFunction->containsAddress(Address)) {
-          if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
-            DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
-            registerName(SymbolSize);
-            continue;
-          } else {
-            if (Address == PreviousFunction->getAddress() && SymbolSize == 0) {
-              DEBUG(dbgs() << "BOLT-DEBUG: ignoring symbol as a marker\n");
-              registerName(SymbolSize);
-              continue;
-            }
-            if (opts::Verbosity > 1) {
-              errs() << "BOLT-WARNING: symbol " << UniqueName
-                     << " seen in the middle of function "
-                     << *PreviousFunction << ". Could be a new entry.\n";
-            }
-            registerName(SymbolSize);
-            continue;
-          }
+    if (PreviousFunction && SymbolType != SymbolRef::ST_Function) {
+      if (PreviousFunction->containsAddress(Address)) {
+        if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
+          DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
+        } else if (Address == PreviousFunction->getAddress() && !SymbolSize) {
+          DEBUG(dbgs() << "BOLT-DEBUG: ignoring symbol as a marker\n");
+        } else if (opts::Verbosity > 1) {
+          errs() << "BOLT-WARNING: symbol " << UniqueName
+                 << " seen in the middle of function "
+                 << *PreviousFunction << ". Could be a new entry.\n";
         }
+        registerName(SymbolSize);
+        continue;
+      } else if (PreviousFunction->getSize() == 0 &&
+                 PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
+        DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
+        registerName(SymbolSize);
+        continue;
       }
     }
 
@@ -1441,7 +1427,6 @@ void RewriteInstance::discoverFileObjects() {
                        << Twine::utohexstr(Address) << "\n");
         }
       }
-      TentativeSize = SymbolSize;
     }
 
     BinaryFunction *BF{nullptr};
@@ -1574,6 +1559,8 @@ void RewriteInstance::discoverFileObjects() {
 
   for (const auto &Section : RelocationSections)
     readRelocations(Section);
+
+  BC->freeLocalSymbols();
 }
 
 void RewriteInstance::disassemblePLT() {
@@ -2527,10 +2514,12 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           if (SymbolFlags & SymbolRef::SF_Global) {
             Name = SymbolName;
           } else {
-            Name = uniquifyName(*BC, StringRef(SymbolName).startswith(
-                                         BC->AsmInfo->getPrivateGlobalPrefix())
-                                         ? "PG" + SymbolName + "/"
-                                         : SymbolName + "/");
+            if (StringRef(SymbolName).startswith(
+                  BC->AsmInfo->getPrivateGlobalPrefix())) {
+              Name = BC->uniquifySymbolName("PG" + SymbolName);
+            } else {
+              Name = BC->uniquifySymbolName(SymbolName);
+            }
           }
           ReferencedSymbol = BC->registerNameAtAddress(Name,
                                                        SymbolAddress,
