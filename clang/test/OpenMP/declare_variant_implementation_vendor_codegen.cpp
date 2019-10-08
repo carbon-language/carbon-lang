@@ -13,6 +13,8 @@
 // CHECK-DAG: @_Z4callv = {{.*}}alias i32 (), i32 ()* @_Z4testv
 // CHECK-DAG: @_ZL9stat_usedv = internal alias i32 (), i32 ()* @_ZL10stat_used_v
 // CHECK-DAG: @_ZN12SpecialFuncs6MethodEv =  {{.*}}alias i32 (%struct.SpecialFuncs*), i32 (%struct.SpecialFuncs*)* @_ZN12SpecialFuncs7method_Ev
+// CHECK-DAG: @fn_linkage = {{.*}}alias i32 (), i32 ()* @_Z18fn_linkage_variantv
+// CHECK-DAG: @_Z11fn_linkage1v = {{.*}}alias i32 (), i32 ()* @fn_linkage_variant1
 // CHECK-DAG: declare {{.*}}i32 @_Z5bazzzv()
 // CHECK-DAG: declare {{.*}}i32 @_Z3bazv()
 // CHECK-DAG: ret i32 2
@@ -24,6 +26,7 @@
 // CHECK-DAG: ret i32 83
 // CHECK-DAG: ret i32 85
 // CHECK-DAG: ret i32 86
+// CHECK-DAG: ret i32 87
 // CHECK-NOT: ret i32 {{1|4|81|84}}
 
 #ifndef HEADER
@@ -121,5 +124,9 @@ int fn_linkage() { return 1; }
 extern "C" int fn_linkage_variant1() { return 86; }
 #pragma omp declare variant(fn_linkage_variant1) match(implementation = {vendor(llvm)})
 int fn_linkage1() { return 1; }
+
+int fn_variant2() { return 1; }
+#pragma omp declare variant(fn_variant2) match(implementation = {vendor(llvm, ibm)})
+int fn2() { return 87; }
 
 #endif // HEADER

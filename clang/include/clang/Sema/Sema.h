@@ -9110,15 +9110,15 @@ public:
         OMPDeclareVariantAttr::CtxSetUnknown;
     OMPDeclareVariantAttr::CtxSelectorType Ctx =
         OMPDeclareVariantAttr::CtxUnknown;
-    StringRef ImplVendor;
+    MutableArrayRef<StringRef> ImplVendors;
     ExprResult CtxScore;
     explicit OpenMPDeclareVariantCtsSelectorData() = default;
     explicit OpenMPDeclareVariantCtsSelectorData(
         OMPDeclareVariantAttr::CtxSelectorSetType CtxSet,
-        OMPDeclareVariantAttr::CtxSelectorType Ctx, StringRef ImplVendor,
-        ExprResult CtxScore)
-        : CtxSet(CtxSet), Ctx(Ctx), ImplVendor(ImplVendor), CtxScore(CtxScore) {
-    }
+        OMPDeclareVariantAttr::CtxSelectorType Ctx,
+        MutableArrayRef<StringRef> ImplVendors, ExprResult CtxScore)
+        : CtxSet(CtxSet), Ctx(Ctx), ImplVendors(ImplVendors),
+          CtxScore(CtxScore) {}
   };
 
   /// Checks if the variant/multiversion functions are compatible.

@@ -28,8 +28,7 @@ T foofoo() { return T(); }
 #pragma omp declare variant(foofoo <int>) match(implementation={vendor(score(5): ibm)})
 int bar();
 
-// CHECK:      #pragma omp declare variant(foofoo<T>) match(implementation={vendor(score(C + 5):ibm)})
-// CHECK:      #pragma omp declare variant(foofoo<T>) match(implementation={vendor(score(C + 5):xxx)})
+// CHECK:      #pragma omp declare variant(foofoo<T>) match(implementation={vendor(score(C + 5):ibm, xxx)})
 // CHECK-NEXT: #pragma omp declare variant(foofoo<T>) match(implementation={vendor(unknown)})
 // CHECK-NEXT: #pragma omp declare variant(foofoo<T>) match(implementation={vendor(llvm)})
 // CHECK-NEXT: template <typename T, int C> T barbar();
@@ -45,8 +44,7 @@ int bar();
 template <typename T, int C>
 T barbar();
 
-// CHECK:      #pragma omp declare variant(foofoo<int>) match(implementation={vendor(score(3 + 5):ibm)})
-// CHECK:      #pragma omp declare variant(foofoo<int>) match(implementation={vendor(score(3 + 5):xxx)})
+// CHECK:      #pragma omp declare variant(foofoo<int>) match(implementation={vendor(score(3 + 5):ibm, xxx)})
 // CHECK-NEXT: #pragma omp declare variant(foofoo<int>) match(implementation={vendor(unknown)})
 // CHECK-NEXT: #pragma omp declare variant(foofoo<int>) match(implementation={vendor(llvm)})
 // CHECK-NEXT: template<> int barbar<int, 3>();

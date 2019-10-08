@@ -853,6 +853,7 @@ static void parseImplementationSelector(
     (void)T.expectAndConsume(diag::err_expected_lparen_after,
                              CtxSelectorName.data());
     const ExprResult Score = parseContextScore(P);
+    SmallVector<llvm::SmallString<16>, 4> Vendors;
     do {
       // Parse <vendor>.
       StringRef VendorName;
@@ -860,17 +861,13 @@ static void parseImplementationSelector(
         Buffer.clear();
         VendorName = P.getPreprocessor().getSpelling(P.getCurToken(), Buffer);
         (void)P.ConsumeToken();
+        if (!VendorName.empty())
+          Vendors.push_back(VendorName);
       } else {
         P.Diag(Tok.getLocation(), diag::err_omp_declare_variant_item_expected)
             << "vendor identifier"
             << "vendor"
             << "implementation";
-      }
-      if (!VendorName.empty()) {
-        Sema::OpenMPDeclareVariantCtsSelectorData Data(
-            OMPDeclareVariantAttr::CtxSetImplementation, CSKind, VendorName,
-            Score);
-        Callback(SourceRange(Loc, Tok.getLocation()), Data);
       }
       if (!P.TryConsumeToken(tok::comma) && Tok.isNot(tok::r_paren)) {
         P.Diag(Tok, diag::err_expected_punc)
@@ -879,6 +876,15 @@ static void parseImplementationSelector(
     } while (Tok.is(tok::identifier));
     // Parse ')'.
     (void)T.consumeClose();
+    if (!Vendors.empty()) {
+      SmallVector<StringRef, 4> ImplVendors(Vendors.size());
+      for (int I = 0, E = Vendors.size(); I < E; ++I)
+        ImplVendors[I] = Vendors[I];
+      Sema::OpenMPDeclareVariantCtsSelectorData Data(
+          OMPDeclareVariantAttr::CtxSetImplementation, CSKind, ImplVendors,
+          Score);
+      Callback(SourceRange(Loc, Tok.getLocation()), Data);
+    }
     break;
   }
   case OMPDeclareVariantAttr::CtxUnknown:

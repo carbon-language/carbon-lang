@@ -5136,8 +5136,8 @@ void Sema::ActOnOpenMPDeclareVariantDirective(
     }
   }
   auto *NewAttr = OMPDeclareVariantAttr::CreateImplicit(
-      Context, VariantRef, Score, Data.CtxSet, ST, Data.Ctx, Data.ImplVendor,
-      SR);
+      Context, VariantRef, Score, Data.CtxSet, ST, Data.Ctx,
+      Data.ImplVendors.begin(), Data.ImplVendors.size(), SR);
   FD->addAttr(NewAttr);
 }
 
