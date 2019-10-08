@@ -3,11 +3,15 @@
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-int handled;
+int in_handler;
 
 void handler(int signo, siginfo_t *info, void *uctx) {
-  handled = 1;
+  fprintf(stderr, "in_handler: %d\n", in_handler);
+  fflush(stderr);
+  // CHECK: in_handler: 1
+  _Exit(0);
 }
 
 int main() {
@@ -21,9 +25,10 @@ int main() {
   assert(a.sa_sigaction == handler);
   assert(a.sa_flags & SA_SIGINFO);
 
+  in_handler = 1;
   __builtin_debugtrap();
-  assert(handled);
-  fprintf(stderr, "HANDLED %d\n", handled);
-}
+  in_handler = 0;
 
-// CHECK: HANDLED 1
+  fprintf(stderr, "UNREACHABLE\n");
+  return 1;
+}
