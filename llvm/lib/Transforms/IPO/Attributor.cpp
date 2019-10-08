@@ -560,6 +560,21 @@ static void clampReturnedValueStates(Attributor &A, const AAType &QueryingAA,
     S ^= *T;
 }
 
+/// Helper class to compose two generic deduction
+template <typename AAType, typename Base, typename StateType,
+          template <typename...> class F, template <typename...> class G>
+struct AAComposeTwoGenericDeduction
+    : public F<AAType, G<AAType, Base, StateType>, StateType> {
+  AAComposeTwoGenericDeduction(const IRPosition &IRP)
+      : F<AAType, G<AAType, Base, StateType>, StateType>(IRP) {}
+
+  /// See AbstractAttribute::updateImpl(...).
+  ChangeStatus updateImpl(Attributor &A) override {
+    return F<AAType, G<AAType, Base, StateType>, StateType>::updateImpl(A) |
+           G<AAType, Base, StateType>::updateImpl(A);
+  }
+};
+
 /// Helper class for generic deduction: return value -> returned position.
 template <typename AAType, typename Base,
           typename StateType = typename AAType::StateType>
