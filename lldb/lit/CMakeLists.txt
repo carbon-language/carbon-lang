@@ -89,7 +89,7 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/lit-lldb-init)
 
 if(NOT LLDB_BUILT_STANDALONE)
-  add_dependencies(lldb-test-deps
+  add_lldb_test_dependency(
     FileCheck
     count
     not

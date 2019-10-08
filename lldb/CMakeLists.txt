@@ -135,9 +135,6 @@ if(LLDB_INCLUDE_TESTS)
 
   if(NOT LLDB_BUILT_STANDALONE)
     add_lldb_test_dependency(yaml2obj)
-  endif()
-
-  if(TARGET dsymutil)
     add_lldb_test_dependency(dsymutil)
   endif()
 
