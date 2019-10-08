@@ -2059,9 +2059,9 @@ size_t ObjectFileMachO::ParseSymtab() {
   uint32_t i;
   FileSpecList dylib_files;
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_SYMBOLS));
-  static const llvm::StringRef g_objc_v2_prefix_class("_OBJC_CLASS_$_");
-  static const llvm::StringRef g_objc_v2_prefix_metaclass("_OBJC_METACLASS_$_");
-  static const llvm::StringRef g_objc_v2_prefix_ivar("_OBJC_IVAR_$_");
+  llvm::StringRef g_objc_v2_prefix_class("_OBJC_CLASS_$_");
+  llvm::StringRef g_objc_v2_prefix_metaclass("_OBJC_METACLASS_$_");
+  llvm::StringRef g_objc_v2_prefix_ivar("_OBJC_IVAR_$_");
 
   for (i = 0; i < m_header.ncmds; ++i) {
     const lldb::offset_t cmd_offset = offset;
@@ -3314,13 +3314,13 @@ size_t ObjectFileMachO::ParseSymtab() {
                                 if (symbol_name) {
                                   llvm::StringRef symbol_name_ref(symbol_name);
                                   if (symbol_name_ref.startswith("_OBJC_")) {
-                                    static const llvm::StringRef
+                                    llvm::StringRef
                                         g_objc_v2_prefix_class(
                                             "_OBJC_CLASS_$_");
-                                    static const llvm::StringRef
+                                    llvm::StringRef
                                         g_objc_v2_prefix_metaclass(
                                             "_OBJC_METACLASS_$_");
-                                    static const llvm::StringRef
+                                    llvm::StringRef
                                         g_objc_v2_prefix_ivar("_OBJC_IVAR_$_");
                                     if (symbol_name_ref.startswith(
                                             g_objc_v2_prefix_class)) {
@@ -3370,7 +3370,7 @@ size_t ObjectFileMachO::ParseSymtab() {
                               type = eSymbolTypeRuntime;
                               if (symbol_name && symbol_name[0] == '.') {
                                 llvm::StringRef symbol_name_ref(symbol_name);
-                                static const llvm::StringRef
+                                llvm::StringRef
                                     g_objc_v1_prefix_class(".objc_class_name_");
                                 if (symbol_name_ref.startswith(
                                         g_objc_v1_prefix_class)) {
@@ -4206,11 +4206,11 @@ size_t ObjectFileMachO::ParseSymtab() {
                   if (symbol_name) {
                     llvm::StringRef symbol_name_ref(symbol_name);
                     if (symbol_name_ref.startswith("_OBJC_")) {
-                      static const llvm::StringRef g_objc_v2_prefix_class(
+                      llvm::StringRef g_objc_v2_prefix_class(
                           "_OBJC_CLASS_$_");
-                      static const llvm::StringRef g_objc_v2_prefix_metaclass(
+                      llvm::StringRef g_objc_v2_prefix_metaclass(
                           "_OBJC_METACLASS_$_");
-                      static const llvm::StringRef g_objc_v2_prefix_ivar(
+                      llvm::StringRef g_objc_v2_prefix_ivar(
                           "_OBJC_IVAR_$_");
                       if (symbol_name_ref.startswith(g_objc_v2_prefix_class)) {
                         symbol_name_non_abi_mangled = symbol_name + 1;
@@ -4250,7 +4250,7 @@ size_t ObjectFileMachO::ParseSymtab() {
                 type = eSymbolTypeRuntime;
                 if (symbol_name && symbol_name[0] == '.') {
                   llvm::StringRef symbol_name_ref(symbol_name);
-                  static const llvm::StringRef g_objc_v1_prefix_class(
+                  llvm::StringRef g_objc_v1_prefix_class(
                       ".objc_class_name_");
                   if (symbol_name_ref.startswith(g_objc_v1_prefix_class)) {
                     symbol_name_non_abi_mangled = symbol_name;
