@@ -1,5 +1,8 @@
 // RUN: %clangxx -O0 -g %s -o %t -lcrypt && %run %t
 
+// crypt is missing from Android.
+// UNSUPPORTED: android
+
 #include <assert.h>
 #include <unistd.h>
 #include <cstring>
