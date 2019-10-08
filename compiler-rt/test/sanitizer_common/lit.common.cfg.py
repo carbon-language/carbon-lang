@@ -46,10 +46,13 @@ if default_tool_options_str:
   config.environment[tool_options] = default_tool_options_str
   default_tool_options_str += ':'
 
+extra_link_flags = []
+
 if config.host_os in ['Linux']:
-  extra_link_flags = ["-ldl"]
-else:
-  extra_link_flags = []
+  extra_link_flags += ["-ldl"]
+
+if config.host_os in ['Linux', 'NetBSD', 'FreeBSD']:
+  extra_link_flags += ["-lcrypt"]
 
 clang_cflags = config.debug_info_flags + tool_cflags + [config.target_cflags]
 clang_cflags += extra_link_flags
