@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -verify -fopenmp -x c++ -std=c++14 -fexceptions -fcxx-exceptions %s -ast-print -o - -Wno-source-uses-openmp | FileCheck %s
+// RUN: %clang_cc1 -verify -fopenmp -x c++ -std=c++14 -fexceptions -fcxx-exceptions %s -ast-print -o - -Wno-source-uses-openmp -Wno-openmp-clauses | FileCheck %s
 
-// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -std=c++14 -fexceptions -fcxx-exceptions %s -ast-print -o - -Wno-source-uses-openmp | FileCheck %s
+// RUN: %clang_cc1 -verify -fopenmp-simd -x c++ -std=c++14 -fexceptions -fcxx-exceptions %s -ast-print -o - -Wno-source-uses-openmp -Wno-openmp-clauses | FileCheck %s
 
 // expected-no-diagnostics
 
@@ -23,7 +23,7 @@ T foofoo() { return T(); }
 // CHECK-NEXT: int bar();
 #pragma omp declare variant(foofoo <int>) match(xxx = {})
 #pragma omp declare variant(foofoo <int>) match(xxx = {vvv})
-#pragma omp declare variant(foofoo <int>) match(implementation={vendor(llvm)})
+#pragma omp declare variant(foofoo <int>) match(implementation={vendor(llvm), xxx})
 #pragma omp declare variant(foofoo <int>) match(implementation={vendor(unknown)})
 #pragma omp declare variant(foofoo <int>) match(implementation={vendor(score(5): ibm)})
 int bar();

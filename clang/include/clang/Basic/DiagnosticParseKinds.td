@@ -1215,6 +1215,11 @@ def err_omp_declare_variant_ctx_set_mutiple_use : Error<
   "context selector set '%0' is used already in the same 'omp declare variant' directive">;
 def note_omp_declare_variant_ctx_set_used_here : Note<
   "previously context selector set '%0' used here">;
+def err_omp_expected_comma_brace : Error<"expected '}' or ',' after '%0'">;
+def err_omp_declare_variant_ctx_mutiple_use : Error<
+  "context trait selector '%0' is used already in the same '%1' context selector set of 'omp declare variant' directive">;
+def note_omp_declare_variant_ctx_used_here : Note<
+  "previously context trait selector '%0' used here">;
 def warn_omp_more_one_device_type_clause : Warning<
   "more than one 'device_type' clause is specified">,
   InGroup<OpenMPClauses>;
