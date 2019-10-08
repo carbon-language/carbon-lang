@@ -109,6 +109,10 @@ bool DynamicType::IsAssumedLengthCharacter() const {
       charLength_->isAssumed();
 }
 
+bool DynamicType::IsTypelessIntrinsicArgument() const {
+  return category_ == TypeCategory::Integer && kind_ == TypelessKind;
+}
+
 static const semantics::Symbol *FindParentComponent(
     const semantics::DerivedTypeSpec &derived) {
   const semantics::Symbol &typeSymbol{derived.typeSymbol()};
@@ -214,22 +218,24 @@ static bool AreSameComponent(const semantics::Symbol &x,
   if (x.attrs().test(semantics::Attr::PRIVATE)) {
     return false;
   }
-#if 0 // TODO
+#if 0  // TODO
   if (const auto *xObject{x.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (const auto *yObject{y.detailsIf<semantics::ObjectEntityDetails>()}) {
 #else
   if (x.has<semantics::ObjectEntityDetails>()) {
     if (y.has<semantics::ObjectEntityDetails>()) {
 #endif
-      // TODO: compare types, type parameters, bounds, &c.
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    // TODO: non-object components
-    return true;
-  }
+  // TODO: compare types, type parameters, bounds, &c.
+  return true;
+}
+else {
+  return false;
+}
+}
+else {
+  // TODO: non-object components
+  return true;
+}
 }
 
 static bool AreCompatibleDerivedTypes(const semantics::DerivedTypeSpec *x,

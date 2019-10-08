@@ -18,6 +18,7 @@
 #include "../../lib/evaluate/fold.h"
 #include "../../lib/evaluate/host.h"
 #include "../../lib/evaluate/intrinsics-library-templates.h"
+#include "../../lib/evaluate/intrinsics.h"
 #include "../../lib/evaluate/tools.h"
 #include <tuple>
 
@@ -72,9 +73,11 @@ void TestHostRuntimeSubnormalFlushing() {
     Fortran::parser::CharBlock src;
     Fortran::parser::ContextualMessages messages{src, nullptr};
     Fortran::common::IntrinsicTypeDefaultKinds defaults;
-    FoldingContext flushingContext{messages, defaults, defaultRounding, true};
+    auto intrinsics{Fortran::evaluate::IntrinsicProcTable::Configure(defaults)};
+    FoldingContext flushingContext{
+        messages, defaults, intrinsics, defaultRounding, true};
     FoldingContext noFlushingContext{
-        messages, defaults, defaultRounding, false};
+        messages, defaults, intrinsics, defaultRounding, false};
 
     HostIntrinsicProceduresLibrary lib;
     lib.AddProcedure(HostRuntimeIntrinsicProcedure{

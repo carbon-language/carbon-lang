@@ -415,7 +415,7 @@ std::string DynamicType::AsFortran() const {
     return "CLASS(*)";
   } else if (IsAssumedType()) {
     return "TYPE(*)";
-  } else if (kind_ == 0) {
+  } else if (IsTypelessIntrinsicArgument()) {
     return "(typeless intrinsic function argument)";
   } else {
     return EnumToString(category_) + '(' + std::to_string(kind_) + ')';

@@ -49,11 +49,13 @@ std::optional<Shape> AsShape(FoldingContext &, ExtentExpr &&);
 
 std::optional<ExtentExpr> AsExtentArrayExpr(const Shape &);
 
-std::optional<Constant<ExtentType>> AsConstantShape(const Shape &);
+std::optional<Constant<ExtentType>> AsConstantShape(
+    FoldingContext &, const Shape &);
 Constant<ExtentType> AsConstantShape(const ConstantSubscripts &);
 
 ConstantSubscripts AsConstantExtents(const Constant<ExtentType> &);
-std::optional<ConstantSubscripts> AsConstantExtents(const Shape &);
+std::optional<ConstantSubscripts> AsConstantExtents(
+    FoldingContext &, const Shape &);
 
 inline int GetRank(const Shape &s) { return static_cast<int>(s.size()); }
 
@@ -71,12 +73,12 @@ MaybeExtentExpr GetExtent(
     FoldingContext &, const Subscript &, const NamedEntity &, int dimension);
 
 // Compute an element count for a triplet or trip count for a DO.
-ExtentExpr CountTrips(
-    ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride);
-ExtentExpr CountTrips(
-    const ExtentExpr &lower, const ExtentExpr &upper, const ExtentExpr &stride);
-MaybeExtentExpr CountTrips(
-    MaybeExtentExpr &&lower, MaybeExtentExpr &&upper, MaybeExtentExpr &&stride);
+ExtentExpr CountTrips(FoldingContext &, ExtentExpr &&lower, ExtentExpr &&upper,
+    ExtentExpr &&stride);
+ExtentExpr CountTrips(FoldingContext &, const ExtentExpr &lower,
+    const ExtentExpr &upper, const ExtentExpr &stride);
+MaybeExtentExpr CountTrips(FoldingContext &, MaybeExtentExpr &&lower,
+    MaybeExtentExpr &&upper, MaybeExtentExpr &&stride);
 
 // Computes SIZE() == PRODUCT(shape)
 MaybeExtentExpr GetSize(Shape &&);
@@ -112,7 +114,6 @@ public:
 
   Result operator()(const Symbol &) const;
   Result operator()(const Component &) const;
-  Result operator()(const NamedEntity &) const;
   Result operator()(const ArrayRef &) const;
   Result operator()(const CoarrayRef &) const;
   Result operator()(const Substring &) const;
@@ -155,7 +156,8 @@ private:
                   !ContainsAnyImpliedDoIndex(ido.stride())) {
                 if (auto nValues{GetArrayConstructorExtent(ido.values())}) {
                   return std::move(*nValues) *
-                      CountTrips(ido.lower(), ido.upper(), ido.stride());
+                      CountTrips(
+                          context_, ido.lower(), ido.upper(), ido.stride());
                 }
               }
               return std::nullopt;

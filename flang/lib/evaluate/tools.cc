@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "tools.h"
+#include "characteristics.h"
 #include "traverse.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
@@ -644,6 +645,47 @@ bool IsAssumedRank(const ActualArgument &arg) {
     CHECK(assumedTypeDummy != nullptr);
     return IsAssumedRank(*assumedTypeDummy);
   }
+}
+
+// IsProcedurePointer()
+bool IsProcedurePointer(const Expr<SomeType> &expr) {
+  return std::visit(
+      common::visitors{
+          [](const NullPointer &) { return true; },
+          [](const ProcedureDesignator &) { return true; },
+          [](const ProcedureRef &) { return true; },
+          [](const auto &) { return false; },
+      },
+      expr.u);
+}
+
+// IsNullPointer()
+static bool IsNullPointer(const ProcedureRef &call) {
+  auto *intrinsic{call.proc().GetSpecificIntrinsic()};
+  return intrinsic &&
+      intrinsic->characteristics.value().attrs.test(
+          characteristics::Procedure::Attr::NullPointer);
+}
+template<TypeCategory CAT, int KIND>
+bool IsNullPointer(const Expr<Type<CAT, KIND>> &expr) {
+  const auto *call{std::get_if<FunctionRef<Type<CAT, KIND>>>(&expr.u)};
+  return call && IsNullPointer(*call);
+}
+template<TypeCategory CAT> bool IsNullPointer(const Expr<SomeKind<CAT>> &expr) {
+  return std::visit([](const auto &x) { return IsNullPointer(x); }, expr.u);
+}
+bool IsNullPointer(const Expr<SomeDerived> &expr) {
+  const auto *call{std::get_if<FunctionRef<SomeDerived>>(&expr.u)};
+  return call && IsNullPointer(*call);
+}
+bool IsNullPointer(const Expr<SomeType> &expr) {
+  return std::visit(
+      common::visitors{
+          [](const NullPointer &) { return true; },
+          [](const ProcedureRef &call) { return IsNullPointer(call); },
+          [](const auto &) { return false; },
+      },
+      expr.u);
 }
 
 // GetLastTarget()

@@ -48,6 +48,9 @@ module m01
   subroutine poly(x)
     class(t), intent(in) :: x
   end subroutine
+  subroutine polyassumedsize(x)
+    class(t), intent(in) :: x(*)
+  end subroutine
   subroutine assumedsize(x)
     real :: x(*)
   end subroutine
@@ -87,7 +90,7 @@ module m01
 
   subroutine test01(x) ! 15.5.2.4(2)
     class(t), intent(in) :: x[*]
-    !ERROR: coindexed polymorphic effective argument cannot be associated with a polymorphic dummy argument
+    !ERROR: Coindexed polymorphic object may not be associated with a polymorphic dummy argument
     call poly(x[1])
   end subroutine
 
@@ -96,7 +99,7 @@ module m01
   end subroutine
   subroutine test02(x) ! 15.5.2.4(2)
     class(t), intent(in) :: x(*)
-    !ERROR: assumed-size polymorphic array cannot be associated with a monomorphic dummy argument
+    !ERROR: Assumed-size polymorphic array may not be associated with a monomorphic dummy argument
     call mono(x)
   end subroutine
 
@@ -105,19 +108,19 @@ module m01
   end subroutine
   subroutine test03 ! 15.5.2.4(2)
     type(pdt(0)) :: x
-    !ERROR: effective argument associated with TYPE(*) dummy argument cannot have a parameterized derived type
+    !ERROR: Actual argument associated with TYPE(*) dummy argument may not have a parameterized derived type
     call typestar(x)
   end subroutine
 
   subroutine test04 ! 15.5.2.4(2)
     type(tbp) :: x
-    !ERROR: effective argument associated with TYPE(*) dummy argument cannot have type-bound procedures
+    !ERROR: Actual argument associated with TYPE(*) dummy argument may not have type-bound procedures
     call typestar(x)
   end subroutine
 
   subroutine test05 ! 15.5.2.4(2)
     type(final) :: x
-    !ERROR: effective argument associated with TYPE(*) dummy argument cannot have FINAL procedures
+    !ERROR: Actual argument associated with TYPE(*) dummy argument may not have FINAL procedures
     call typestar(x)
   end subroutine
 
@@ -126,9 +129,9 @@ module m01
   end subroutine
   subroutine test06 ! 15.5.2.4(4)
     character :: ch1
-    !ERROR: Length of effective character argument is less than required by dummy argument
+    !ERROR: Actual length '1' is less than expected length '2'
     call ch2(ch1)
-    !ERROR: Length of effective character argument is less than required by dummy argument
+    !ERROR: Actual length '1' is less than expected length '2'
     call ch2(' ')
   end subroutine
 
@@ -137,14 +140,14 @@ module m01
   end subroutine
   subroutine test07(x) ! 15.5.2.4(6)
     type(alloc) :: x[*]
-    !ERROR: coindexed effective argument with ALLOCATABLE ultimate component must be associated with a dummy argument with VALUE or INTENT(IN) attributes
+    !ERROR: Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument with VALUE or INTENT(IN) attributes
     call out01(x[1])
   end subroutine
 
   subroutine test08(x) ! 15.5.2.4(13)
-    real :: x[*]
-    !ERROR: a coindexed scalar argument must be associated with a scalar dummy argument
-    call assumedsize(x[1])
+    real :: x(1)[*]
+    !ERROR: Coindexed scalar actual argument must be associated with a scalar dummy argument
+    call assumedsize(x(1)[1])
   end subroutine
 
   subroutine charray(x)
@@ -156,14 +159,14 @@ module m01
     real :: ashape(:)
     class(t) :: polyarray(*)
     character(10) :: c(:)
-    !ERROR: whole scalar argument cannot be associated with a dummy argument array
+    !ERROR: Whole scalar actual argument may not be associated with a dummy argument array
     call assumedsize(x)
-    !ERROR: element of pointer array cannot be associated with a dummy argument array
+    !ERROR: Element of pointer array may not be associated with a dummy argument array
     call assumedsize(p(1))
-    !ERROR: element of assumed-shape array cannot be associated with a  dummy argument array
+    !ERROR: Element of assumed-shape array may not be associated with a dummy argument array
     call assumedsize(ashape(1))
-    !ERROR: element of polymorphic array cannot be associated with a dummy argument array
-    call poly(polyarray(1))
+    !ERROR: Element of polymorphic array may not be associated with a dummy argument array
+    call polyassumedsize(polyarray(1))
     call charray(c(1:1))  ! not an error if character
     call assumedsize(arr(1))  ! not an error if element in sequence
     call assumedrank(x)  ! not an error
@@ -171,33 +174,37 @@ module m01
   end subroutine
 
   subroutine test10(a) ! 15.5.2.4(16)
-    real :: scalar, matrix
+    real :: scalar, matrix(2,3)
     real :: a(*)
-    !ERROR: rank of effective argument (0) differs from assumed-shape dummy argument (1)
+    !ERROR: Rank of actual argument (0) differs from assumed-shape dummy argument (1)
     call assumedshape(scalar)
-    !ERROR: rank of effective argument (2) differs from assumed-shape dummy argument (1)
+    !ERROR: Rank of actual argument (2) differs from assumed-shape dummy argument (1)
     call assumedshape(matrix)
-    !ERROR: assumed-size array cannot be associated with assumed-shape dummy argument
+    !ERROR: Assumed-size array cannot be associated with assumed-shape dummy argument
+    call assumedshape(a)
   end subroutine
 
   subroutine test11(in) ! C15.5.2.4(20)
     real, intent(in) :: in
     real :: x
-    !ERROR: effective argument associated with INTENT(OUT) dummy must be definable
-    call intentout(in)
-    !ERROR: effective argument associated with INTENT(OUT) dummy must be definable
-    call intentout(3.14159)
-    !ERROR: effective argument associated with INTENT(OUT) dummy must be definable
-    call intentout(in + 1.)
-    !ERROR: effective argument associated with INTENT(IN OUT) dummy must be definable
-    call intentinout(in)
-    !ERROR: effective argument associated with INTENT(IN OUT) dummy must be definable
-    call intentinout(3.14159)
-    !ERROR: effective argument associated with INTENT(IN OUT) dummy must be definable
-    call intentinout(in + 1.)
     x = 0.
+    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    call intentout(in)
+    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    call intentout(3.14159)
+    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    call intentout(in + 1.)
+    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    call intentout(x) ! ok
+    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    call intentout((x))
+    call intentinout(in)
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    call intentinout(3.14159)
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    call intentinout(in + 1.)
     call intentinout(x) ! ok
-    !ERROR: effective argument associated with INTENT(IN OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
     call intentinout((x))
   end subroutine
 

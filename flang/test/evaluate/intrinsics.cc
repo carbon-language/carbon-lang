@@ -69,7 +69,9 @@ template<typename A> static NamedArg<A> Named(std::string kw, A &&x) {
 }
 
 struct TestCall {
-  TestCall(const IntrinsicProcTable &t, std::string n) : table{t}, name{n} {}
+  TestCall(const common::IntrinsicTypeDefaultKinds &d,
+      const IntrinsicProcTable &t, std::string n)
+    : defaults{d}, table{t}, name{n} {}
   template<typename A> TestCall &Push(A &&x) {
     args.emplace_back(AsGenericExpr(std::move(x)));
     keywords.push_back("");
@@ -113,8 +115,7 @@ struct TestCall {
     std::cout << ')' << std::endl;
     CallCharacteristics call{fName};
     auto messages{strings.Messages(buffer)};
-    common::IntrinsicTypeDefaultKinds defaults;
-    FoldingContext context{messages, defaults};
+    FoldingContext context{messages, defaults, table};
     std::optional<SpecificCall> si{table.Probe(call, args, context)};
     if (resultType.has_value()) {
       TEST(si.has_value());
@@ -142,6 +143,7 @@ struct TestCall {
     strings.Emit(std::cout, buffer);
   }
 
+  const common::IntrinsicTypeDefaultKinds &defaults;
   const IntrinsicProcTable &table;
   CookedStrings strings;
   parser::Messages buffer;
@@ -167,48 +169,61 @@ void TestIntrinsics() {
   using Char = Type<TypeCategory::Character, 1>;
   using Log4 = Type<TypeCategory::Logical, 4>;
 
-  TestCall{table, "bad"}
+  TestCall{defaults, table, "bad"}
       .Push(Const(Scalar<Int4>{}))
       .DoCall();  // bad intrinsic name
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}
       .Push(Named("a", Const(Scalar<Int4>{})))
       .DoCall(Int4::GetType());
-  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::GetType());
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}
+      .Push(Const(Scalar<Int4>{}))
+      .DoCall(Int4::GetType());
+  TestCall{defaults, table, "abs"}
       .Push(Named("bad", Const(Scalar<Int4>{})))
       .DoCall();  // bad keyword
-  TestCall{table, "abs"}.DoCall();  // insufficient args
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}.DoCall();  // insufficient args
+  TestCall{defaults, table, "abs"}
       .Push(Const(Scalar<Int4>{}))
       .Push(Const(Scalar<Int4>{}))
       .DoCall();  // too many args
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}
       .Push(Const(Scalar<Int4>{}))
       .Push(Named("a", Const(Scalar<Int4>{})))
       .DoCall();
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}
       .Push(Named("a", Const(Scalar<Int4>{})))
       .Push(Const(Scalar<Int4>{}))
       .DoCall();
-  TestCall{table, "abs"}.Push(Const(Scalar<Int1>{})).DoCall(Int1::GetType());
-  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::GetType());
-  TestCall{table, "abs"}.Push(Const(Scalar<Int8>{})).DoCall(Int8::GetType());
-  TestCall{table, "abs"}.Push(Const(Scalar<Real4>{})).DoCall(Real4::GetType());
-  TestCall{table, "abs"}.Push(Const(Scalar<Real8>{})).DoCall(Real8::GetType());
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}
+      .Push(Const(Scalar<Int1>{}))
+      .DoCall(Int1::GetType());
+  TestCall{defaults, table, "abs"}
+      .Push(Const(Scalar<Int4>{}))
+      .DoCall(Int4::GetType());
+  TestCall{defaults, table, "abs"}
+      .Push(Const(Scalar<Int8>{}))
+      .DoCall(Int8::GetType());
+  TestCall{defaults, table, "abs"}
+      .Push(Const(Scalar<Real4>{}))
+      .DoCall(Real4::GetType());
+  TestCall{defaults, table, "abs"}
+      .Push(Const(Scalar<Real8>{}))
+      .DoCall(Real8::GetType());
+  TestCall{defaults, table, "abs"}
       .Push(Const(Scalar<Complex4>{}))
       .DoCall(Real4::GetType());
-  TestCall{table, "abs"}
+  TestCall{defaults, table, "abs"}
       .Push(Const(Scalar<Complex8>{}))
       .DoCall(Real8::GetType());
-  TestCall{table, "abs"}.Push(Const(Scalar<Char>{})).DoCall();
-  TestCall{table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
+  TestCall{defaults, table, "abs"}.Push(Const(Scalar<Char>{})).DoCall();
+  TestCall{defaults, table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
 
   // "Ext" in names for calls allowed as extensions
-  TestCall maxCallR{table, "max"}, maxCallI{table, "min"},
-      max0Call{table, "max0"}, max1Call{table, "max1"},
-      amin0Call{table, "amin0"}, amin1Call{table, "amin1"},
-      max0ExtCall{table, "max0"}, amin1ExtCall{table, "amin1"};
+  TestCall maxCallR{defaults, table, "max"}, maxCallI{defaults, table, "min"},
+      max0Call{defaults, table, "max0"}, max1Call{defaults, table, "max1"},
+      amin0Call{defaults, table, "amin0"}, amin1Call{defaults, table, "amin1"},
+      max0ExtCall{defaults, table, "max0"},
+      amin1ExtCall{defaults, table, "amin1"};
   for (int j{0}; j < 10; ++j) {
     maxCallR.Push(Const(Scalar<Real4>{}));
     maxCallI.Push(Const(Scalar<Int4>{}));
@@ -228,25 +243,33 @@ void TestIntrinsics() {
   amin1Call.DoCall(Real4::GetType());
   amin1ExtCall.DoCall(Real4::GetType());
 
-  TestCall{table, "conjg"}
+  TestCall{defaults, table, "conjg"}
       .Push(Const(Scalar<Complex4>{}))
       .DoCall(Complex4::GetType());
-  TestCall{table, "conjg"}
+  TestCall{defaults, table, "conjg"}
       .Push(Const(Scalar<Complex8>{}))
       .DoCall(Complex8::GetType());
-  TestCall{table, "dconjg"}.Push(Const(Scalar<Complex4>{})).DoCall();
-  TestCall{table, "dconjg"}
+  TestCall{defaults, table, "dconjg"}.Push(Const(Scalar<Complex4>{})).DoCall();
+  TestCall{defaults, table, "dconjg"}
       .Push(Const(Scalar<Complex8>{}))
       .DoCall(Complex8::GetType());
 
-  TestCall{table, "float"}.Push(Const(Scalar<Real4>{})).DoCall();
-  TestCall{table, "float"}.Push(Const(Scalar<Int4>{})).DoCall(Real4::GetType());
-  TestCall{table, "idint"}.Push(Const(Scalar<Int4>{})).DoCall();
-  TestCall{table, "idint"}.Push(Const(Scalar<Real8>{})).DoCall(Int4::GetType());
+  TestCall{defaults, table, "float"}.Push(Const(Scalar<Real4>{})).DoCall();
+  TestCall{defaults, table, "float"}
+      .Push(Const(Scalar<Int4>{}))
+      .DoCall(Real4::GetType());
+  TestCall{defaults, table, "idint"}.Push(Const(Scalar<Int4>{})).DoCall();
+  TestCall{defaults, table, "idint"}
+      .Push(Const(Scalar<Real8>{}))
+      .DoCall(Int4::GetType());
 
   // Allowed as extensions
-  TestCall{table, "float"}.Push(Const(Scalar<Int8>{})).DoCall(Real4::GetType());
-  TestCall{table, "idint"}.Push(Const(Scalar<Real4>{})).DoCall(Int4::GetType());
+  TestCall{defaults, table, "float"}
+      .Push(Const(Scalar<Int8>{}))
+      .DoCall(Real4::GetType());
+  TestCall{defaults, table, "idint"}
+      .Push(Const(Scalar<Real4>{}))
+      .DoCall(Int4::GetType());
   // TODO: test other intrinsics
 }
 }

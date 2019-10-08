@@ -32,6 +32,7 @@ class DerivedTypeSpec;
 }
 
 namespace Fortran::evaluate {
+class IntrinsicProcTable;
 
 using common::ConstantSubscript;
 using common::RelationalOperator;
@@ -207,21 +208,23 @@ template<typename A> class Expr;
 
 class FoldingContext {
 public:
-  explicit FoldingContext(const common::IntrinsicTypeDefaultKinds &d)
-    : defaults_{d} {}
+  FoldingContext(
+      const common::IntrinsicTypeDefaultKinds &d, const IntrinsicProcTable &t)
+    : defaults_{d}, intrinsics_{t} {}
   FoldingContext(const parser::ContextualMessages &m,
-      const common::IntrinsicTypeDefaultKinds &d,
+      const common::IntrinsicTypeDefaultKinds &d, const IntrinsicProcTable &t,
       Rounding round = defaultRounding, bool flush = false)
-    : messages_{m}, defaults_{d}, rounding_{round}, flushSubnormalsToZero_{
-                                                        flush} {}
+    : messages_{m}, defaults_{d}, intrinsics_{t}, rounding_{round},
+      flushSubnormalsToZero_{flush} {}
   FoldingContext(const FoldingContext &that)
     : messages_{that.messages_}, defaults_{that.defaults_},
-      rounding_{that.rounding_},
+      intrinsics_{that.intrinsics_}, rounding_{that.rounding_},
       flushSubnormalsToZero_{that.flushSubnormalsToZero_},
       pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
   FoldingContext(
       const FoldingContext &that, const parser::ContextualMessages &m)
-    : messages_{m}, defaults_{that.defaults_}, rounding_{that.rounding_},
+    : messages_{m}, defaults_{that.defaults_},
+      intrinsics_{that.intrinsics_}, rounding_{that.rounding_},
       flushSubnormalsToZero_{that.flushSubnormalsToZero_},
       pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
 
@@ -234,6 +237,7 @@ public:
   HostIntrinsicProceduresLibrary &hostIntrinsicsLibrary() {
     return hostIntrinsicsLibrary_;
   }
+  const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }
 
   ConstantSubscript &StartImpliedDo(parser::CharBlock, ConstantSubscript = 1);
   std::optional<ConstantSubscript> GetImpliedDo(parser::CharBlock) const;
@@ -251,6 +255,7 @@ public:
 private:
   parser::ContextualMessages messages_;
   const common::IntrinsicTypeDefaultKinds &defaults_;
+  const IntrinsicProcTable &intrinsics_;
   Rounding rounding_{defaultRounding};
   bool flushSubnormalsToZero_{false};
   bool bigEndian_{false};

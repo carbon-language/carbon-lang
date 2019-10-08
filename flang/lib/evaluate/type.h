@@ -147,6 +147,7 @@ public:
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   bool IsAssumedLengthCharacter() const;
+  bool IsTypelessIntrinsicArgument() const;
   constexpr bool IsAssumedType() const {  // TYPE(*)
     return kind_ == AssumedTypeKind;
   }
@@ -157,8 +158,7 @@ public:
     return IsPolymorphic() && derived_ == nullptr;
   }
   constexpr const semantics::DerivedTypeSpec &GetDerivedTypeSpec() const {
-    CHECK(derived_ != nullptr);
-    return *derived_;
+    return DEREF(derived_);
   }
 
   // 7.3.2.3 & 15.5.2.4 type compatibility.
@@ -194,8 +194,7 @@ public:
   }
 
 private:
-  // Special kind codes are used when category_ == TypeCategory::Derived
-  // to distinguish the following Fortran types.
+  // Special kind codes are used to distinguish the following Fortran types.
   enum SpecialKind {
     TypelessKind = -1,  // BOZ actual argument to intrinsic function
     ClassKind = -2,  // CLASS(T) or CLASS(*)

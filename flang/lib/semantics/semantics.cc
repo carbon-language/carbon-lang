@@ -134,8 +134,9 @@ SemanticsContext::SemanticsContext(
     parser::AllSources &allSources)
   : defaultKinds_{defaultKinds}, languageFeatures_{languageFeatures},
     allSources_{allSources},
-    intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds)},
-    foldingContext_{parser::ContextualMessages{&messages_}, defaultKinds} {}
+    intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds_)},
+    foldingContext_{
+        parser::ContextualMessages{&messages_}, defaultKinds_, intrinsics_} {}
 
 SemanticsContext::~SemanticsContext() {}
 

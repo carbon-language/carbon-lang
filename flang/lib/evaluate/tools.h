@@ -754,17 +754,9 @@ template<typename A> bool IsAllocatableOrPointer(const A &x) {
       semantics::Attrs{semantics::Attr::POINTER, semantics::Attr::ALLOCATABLE});
 }
 
-// Predicate: IsProcedurePointer()
-template<typename A> bool IsProcedurePointer(const A &) { return false; }
-inline bool IsProcedurePointer(const ProcedureDesignator &) { return true; }
-inline bool IsProcedurePointer(const ProcedureRef &) { return true; }
-inline bool IsProcedurePointer(const Expr<SomeType> &expr) {
-  return std::visit(
-      [](const auto &x) { return IsProcedurePointer(x); }, expr.u);
-}
-template<typename A> bool IsProcedurePointer(const std::optional<A> &x) {
-  return x.has_value() && IsProcedurePointer(*x);
-}
+// Pointer detection predicates
+bool IsProcedurePointer(const Expr<SomeType> &);
+bool IsNullPointer(const Expr<SomeType> &);
 
 // GetLastTarget() returns the rightmost symbol in an object
 // designator (which has perhaps been wrapped in an Expr<>) that has the

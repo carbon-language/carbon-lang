@@ -64,6 +64,12 @@ public:
   TypeAndShape(DynamicType t, Shape &&s) : type_{t}, shape_{std::move(s)} {
     AcquireLEN();
   }
+  TypeAndShape(DynamicType t, std::optional<Shape> &&s) : type_{t} {
+    if (s.has_value()) {
+      shape_ = std::move(*s);
+    }
+    AcquireLEN();
+  }
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(TypeAndShape)
 
   bool operator==(const TypeAndShape &) const;
@@ -76,6 +82,8 @@ public:
       const semantics::ProcInterface &);
   static std::optional<TypeAndShape> Characterize(
       const semantics::DeclTypeSpec &);
+  static std::optional<TypeAndShape> Characterize(
+      const Expr<SomeType> &, FoldingContext &);
   template<typename A>
   static std::optional<TypeAndShape> Characterize(const A *p) {
     return p ? Characterize(*p) : std::nullopt;
@@ -110,25 +118,6 @@ protected:
   Shape shape_;
   Attrs attrs_;
 };
-
-template<typename T>
-std::optional<TypeAndShape> GetTypeAndShape(
-    const Expr<T> &expr, FoldingContext &context) {
-  if (auto type{expr.GetType()}) {
-    if (auto shape{GetShape(context, expr)}) {
-      TypeAndShape result{*type, std::move(*shape)};
-      if (type->category() == TypeCategory::Character) {
-        if (const auto *chExpr{UnwrapExpr<Expr<SomeCharacter>>(expr)}) {
-          if (auto length{chExpr->LEN()}) {
-            result.set_LEN(Expr<SomeInteger>{std::move(*length)});
-          }
-        }
-      }
-      return result;
-    }
-  }
-  return std::nullopt;
-}
 
 // 15.3.2.2
 struct DummyDataObject {
@@ -171,14 +160,16 @@ struct AlternateReturn {
 // 15.3.2.1
 struct DummyArgument {
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(DummyArgument)
-  explicit DummyArgument(std::string &&name, DummyDataObject &&x)
+  DummyArgument(std::string &&name, DummyDataObject &&x)
     : name{std::move(name)}, u{std::move(x)} {}
-  explicit DummyArgument(std::string &&name, DummyProcedure &&x)
+  DummyArgument(std::string &&name, DummyProcedure &&x)
     : name{std::move(name)}, u{std::move(x)} {}
   explicit DummyArgument(AlternateReturn &&x) : u{std::move(x)} {}
   bool operator==(const DummyArgument &) const;
   static std::optional<DummyArgument> Characterize(
       const semantics::Symbol &, const IntrinsicProcTable &);
+  static std::optional<DummyArgument> FromActual(
+      std::string &&, const Expr<SomeType> &, FoldingContext &);
   bool IsOptional() const;
   void SetOptional(bool = true);
   bool CanBePassedViaImplicitInterface() const;

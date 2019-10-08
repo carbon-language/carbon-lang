@@ -15,6 +15,7 @@
 #include "../../lib/evaluate/expression.h"
 #include "testing.h"
 #include "../../lib/evaluate/fold.h"
+#include "../../lib/evaluate/intrinsics.h"
 #include "../../lib/evaluate/tools.h"
 #include "../../lib/parser/message.h"
 #include <cstdio>
@@ -39,8 +40,9 @@ int main() {
       DefaultIntegerExpr{2} + DefaultIntegerExpr{3} * -DefaultIntegerExpr{4}};
   MATCH("2_4+3_4*(-4_4)", AsFortran(ex1));
   Fortran::common::IntrinsicTypeDefaultKinds defaults;
+  auto intrinsics{Fortran::evaluate::IntrinsicProcTable::Configure(defaults)};
   FoldingContext context{
-      Fortran::parser::ContextualMessages{nullptr}, defaults};
+      Fortran::parser::ContextualMessages{nullptr}, defaults, intrinsics};
   ex1 = Fold(context, std::move(ex1));
   MATCH("-10_4", AsFortran(ex1));
   MATCH("1_4/2_4", AsFortran(DefaultIntegerExpr{1} / DefaultIntegerExpr{2}));

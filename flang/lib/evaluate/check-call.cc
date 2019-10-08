@@ -17,6 +17,7 @@
 #include "shape.h"
 #include "tools.h"
 #include "../parser/message.h"
+#include "../semantics/scope.h"
 #include <map>
 #include <string>
 
@@ -72,19 +73,177 @@ static void CheckImplicitInterfaceArg(
   }
 }
 
-static bool CheckExplicitInterfaceArg(const ActualArgument &arg,
+struct TypeConcerns {
+  const semantics::Symbol *typeBoundProcedure{nullptr};
+  const semantics::Symbol *finalProcedure{nullptr};
+  const semantics::Symbol *allocatable{nullptr};
+  const semantics::Symbol *coarray{nullptr};
+};
+
+static void InspectType(
+    const semantics::DerivedTypeSpec &derived, TypeConcerns &concerns) {
+  if (const auto *scope{derived.typeSymbol().scope()}) {
+    for (const auto &pair : *scope) {
+      const semantics::Symbol &component{*pair.second};
+      if (const auto *object{
+              component.detailsIf<semantics::ObjectEntityDetails>()}) {
+        if (component.attrs().test(semantics::Attr::ALLOCATABLE)) {
+          concerns.allocatable = &component;
+        }
+        if (object->IsCoarray()) {
+          concerns.coarray = &component;
+        }
+        if (component.flags().test(semantics::Symbol::Flag::ParentComp)) {
+          if (const auto *type{object->type()}) {
+            if (const auto *parent{type->AsDerived()}) {
+              InspectType(*parent, concerns);
+            }
+          }
+        }
+      } else if (component.has<semantics::ProcBindingDetails>()) {
+        concerns.typeBoundProcedure = &component;
+      } else if (component.has<semantics::FinalProcDetails>()) {
+        concerns.finalProcedure = &component;
+      }
+    }
+  }
+}
+
+static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
+    const Expr<SomeType> &actual,
+    const characteristics::TypeAndShape &actualType,
+    parser::ContextualMessages &messages) {
+  dummy.type.IsCompatibleWith(messages, actualType);
+  bool actualIsPolymorphic{actualType.type().IsPolymorphic()};
+  bool dummyIsPolymorphic{dummy.type.type().IsPolymorphic()};
+  bool actualIsCoindexed{ExtractCoarrayRef(actual).has_value()};
+  bool actualIsAssumedSize{actualType.attrs().test(
+      characteristics::TypeAndShape::Attr::AssumedSize)};
+  bool dummyIsAssumedSize{dummy.type.attrs().test(
+      characteristics::TypeAndShape::Attr::AssumedSize)};
+  if (actualIsPolymorphic && dummyIsPolymorphic &&
+      actualIsCoindexed) {  // 15.5.2.4(2)
+    messages.Say(
+        "Coindexed polymorphic object may not be associated with a polymorphic dummy argument"_err_en_US);
+  }
+  if (actualIsPolymorphic && !dummyIsPolymorphic &&
+      actualIsAssumedSize) {  // 15.5.2.4(2)
+    messages.Say(
+        "Assumed-size polymorphic array may not be associated with a monomorphic dummy argument"_err_en_US);
+  }
+  if (!actualType.type().IsUnlimitedPolymorphic() &&
+      actualType.type().category() == TypeCategory::Derived) {
+    const auto &derived{actualType.type().GetDerivedTypeSpec()};
+    TypeConcerns concerns;
+    InspectType(derived, concerns);
+    if (dummy.type.type().IsAssumedType()) {
+      if (!derived.parameters().empty()) {  // 15.5.2.4(2)
+        messages.Say(
+            "Actual argument associated with TYPE(*) dummy argument may not have a parameterized derived type"_err_en_US);
+      }
+      if (concerns.typeBoundProcedure) {  // 15.5.2.4(2)
+        if (auto *msg{messages.Say(
+                "Actual argument associated with TYPE(*) dummy argument may not have type-bound procedures"_err_en_US)}) {
+          msg->Attach(concerns.typeBoundProcedure->name(),
+              "Declaration of type-bound procedure"_en_US);
+        }
+      }
+      if (concerns.finalProcedure) {  // 15.5.2.4(2)
+        if (auto *msg{messages.Say(
+                "Actual argument associated with TYPE(*) dummy argument may not have FINAL procedures"_err_en_US)}) {
+          msg->Attach(concerns.finalProcedure->name(),
+              "Declaration of FINAL procedure"_en_US);
+        }
+      }
+    }
+    if (actualIsCoindexed && concerns.allocatable &&
+        dummy.intent != common::Intent::In &&
+        !dummy.attrs.test(characteristics::DummyDataObject::Attr::Value)) {
+      // 15.5.2.4(6)
+      if (auto *msg{messages.Say(
+              "Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument with VALUE or INTENT(IN) attributes"_err_en_US)}) {
+        msg->Attach(concerns.allocatable->name(),
+            "Declaration of ALLOCATABLE component"_en_US);
+      }
+    }
+  }
+  const auto *actualLastSymbol{GetLastSymbol(actual)};
+  const semantics::ObjectEntityDetails *actualLastObject{actualLastSymbol
+          ? actualLastSymbol->detailsIf<semantics::ObjectEntityDetails>()
+          : nullptr};
+  int actualRank{GetRank(actualType.shape())};
+  int dummyRank{GetRank(dummy.type.shape())};
+  if (dummy.type.attrs().test(
+          characteristics::TypeAndShape::Attr::AssumedShape)) {
+    // 15.5.2.4(16)
+    if (actualRank != dummyRank) {
+      messages.Say(
+          "Rank of actual argument (%d) differs from assumed-shape dummy argument (%d)"_err_en_US,
+          actualRank, dummyRank);
+    }
+    if (actualIsAssumedSize) {
+      if (auto *msg{messages.Say(
+              "Assumed-size array cannot be associated with assumed-shape dummy argument"_err_en_US)}) {
+        msg->Attach(actualLastSymbol->name(),
+            "Declaration of assumed-size array actual argument"_en_US);
+      }
+    }
+  } else if (actualRank == 0 && dummyRank > 0) {
+    // Actual is scalar, dummy is an array.  15.5.2.4(14), 15.5.2.11
+    if (actualIsCoindexed) {
+      messages.Say(
+          "Coindexed scalar actual argument must be associated with a scalar dummy argument"_err_en_US);
+    }
+    if (actualLastSymbol && actualLastSymbol->Rank() == 0 &&
+        !(dummy.type.type().IsAssumedType() && dummyIsAssumedSize)) {
+      messages.Say(
+          "Whole scalar actual argument may not be associated with a dummy argument array"_err_en_US);
+    }
+    if (actualIsPolymorphic) {
+      messages.Say(
+          "Element of polymorphic array may not be associated with a dummy argument array"_err_en_US);
+    }
+    if (actualLastSymbol &&
+        actualLastSymbol->attrs().test(semantics::Attr::POINTER)) {
+      messages.Say(
+          "Element of pointer array may not be associated with a dummy argument array"_err_en_US);
+    }
+    if (actualLastObject && actualLastObject->IsAssumedShape()) {
+      messages.Say(
+          "Element of assumed-shape array may not be associated with a dummy argument array"_err_en_US);
+    }
+  }
+  // TODO pmk more here
+}
+
+static void CheckExplicitInterfaceArg(const ActualArgument &arg,
     const characteristics::DummyArgument &dummy, FoldingContext &context) {
+  auto &messages{context.messages()};
   std::visit(
       common::visitors{
           [&](const characteristics::DummyDataObject &object) {
             if (const auto *expr{arg.UnwrapExpr()}) {
-              if (auto type{characteristics::GetTypeAndShape(*expr, context)}) {
-                object.type.IsCompatibleWith(context.messages(), *type);
+              if (auto type{characteristics::TypeAndShape::Characterize(
+                      *expr, context)}) {
+                CheckExplicitDataArg(object, *expr, *type, context.messages());
+              } else if (object.type.type().IsTypelessIntrinsicArgument() &&
+                  std::holds_alternative<BOZLiteralConstant>(expr->u)) {
+                // ok
               } else {
-                // TODO
+                messages.Say(
+                    "Actual argument is not a variable or typed expression"_err_en_US);
+              }
+            } else if (const semantics::Symbol *
+                assumed{arg.GetAssumedTypeDummy()}) {
+              // An assumed-type dummy is being forwarded.
+              if (!object.type.type().IsAssumedType()) {
+                messages.Say(
+                    "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) dummy argument"_err_en_US,
+                    assumed->name());
               }
             } else {
-              // TODO
+              messages.Say(
+                  "Actual argument is not an expression or variable"_err_en_US);
             }
           },
           [&](const characteristics::DummyProcedure &) {

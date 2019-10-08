@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "shape.h"
+#include "characteristics.h"
 #include "fold.h"
 #include "tools.h"
 #include "type.h"
@@ -20,6 +21,9 @@
 #include "../common/template.h"
 #include "../parser/message.h"
 #include "../semantics/symbol.h"
+#include <functional>
+
+using namespace std::placeholders;  // _1, _2, &c. for std::bind()
 
 namespace Fortran::evaluate {
 
@@ -89,11 +93,10 @@ std::optional<ExtentExpr> AsExtentArrayExpr(const Shape &shape) {
   return ExtentExpr{ArrayConstructor<ExtentType>{std::move(values)}};
 }
 
-std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
+std::optional<Constant<ExtentType>> AsConstantShape(
+    FoldingContext &context, const Shape &shape) {
   if (auto shapeArray{AsExtentArrayExpr(shape)}) {
-    common::IntrinsicTypeDefaultKinds defaults;
-    FoldingContext noFoldingContext{defaults};
-    auto folded{Fold(noFoldingContext, std::move(*shapeArray))};
+    auto folded{Fold(context, std::move(*shapeArray))};
     if (auto *p{UnwrapConstantValue<ExtentType>(folded)}) {
       return std::move(*p);
     }
@@ -118,43 +121,44 @@ ConstantSubscripts AsConstantExtents(const Constant<ExtentType> &shape) {
   return result;
 }
 
-std::optional<ConstantSubscripts> AsConstantExtents(const Shape &shape) {
-  if (auto shapeConstant{AsConstantShape(shape)}) {
+std::optional<ConstantSubscripts> AsConstantExtents(
+    FoldingContext &context, const Shape &shape) {
+  if (auto shapeConstant{AsConstantShape(context, shape)}) {
     return AsConstantExtents(*shapeConstant);
   } else {
     return std::nullopt;
   }
 }
 
-static ExtentExpr ComputeTripCount(
-    ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride) {
+static ExtentExpr ComputeTripCount(FoldingContext &context, ExtentExpr &&lower,
+    ExtentExpr &&upper, ExtentExpr &&stride) {
   ExtentExpr strideCopy{common::Clone(stride)};
   ExtentExpr span{
       (std::move(upper) - std::move(lower) + std::move(strideCopy)) /
       std::move(stride)};
   ExtentExpr extent{
       Extremum<ExtentType>{std::move(span), ExtentExpr{0}, Ordering::Greater}};
-  common::IntrinsicTypeDefaultKinds defaults;
-  FoldingContext noFoldingContext{defaults};
-  return Fold(noFoldingContext, std::move(extent));
+  return Fold(context, std::move(extent));
 }
 
-ExtentExpr CountTrips(
-    ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride) {
+ExtentExpr CountTrips(FoldingContext &context, ExtentExpr &&lower,
+    ExtentExpr &&upper, ExtentExpr &&stride) {
   return ComputeTripCount(
-      std::move(lower), std::move(upper), std::move(stride));
+      context, std::move(lower), std::move(upper), std::move(stride));
 }
 
-ExtentExpr CountTrips(const ExtentExpr &lower, const ExtentExpr &upper,
-    const ExtentExpr &stride) {
-  return ComputeTripCount(
-      common::Clone(lower), common::Clone(upper), common::Clone(stride));
+ExtentExpr CountTrips(FoldingContext &context, const ExtentExpr &lower,
+    const ExtentExpr &upper, const ExtentExpr &stride) {
+  return ComputeTripCount(context, common::Clone(lower), common::Clone(upper),
+      common::Clone(stride));
 }
 
-MaybeExtentExpr CountTrips(MaybeExtentExpr &&lower, MaybeExtentExpr &&upper,
-    MaybeExtentExpr &&stride) {
+MaybeExtentExpr CountTrips(FoldingContext &context, MaybeExtentExpr &&lower,
+    MaybeExtentExpr &&upper, MaybeExtentExpr &&stride) {
+  std::function<ExtentExpr(ExtentExpr &&, ExtentExpr &&, ExtentExpr &&)> bound{
+      std::bind(ComputeTripCount, context, _1, _2, _3)};
   return common::MapOptional(
-      ComputeTripCount, std::move(lower), std::move(upper), std::move(stride));
+      std::move(bound), std::move(lower), std::move(upper), std::move(stride));
 }
 
 MaybeExtentExpr GetSize(Shape &&shape) {
@@ -275,7 +279,7 @@ MaybeExtentExpr GetExtent(FoldingContext &context, const Subscript &subscript,
             if (!lower.has_value()) {
               lower = GetLowerBound(context, base, dimension);
             }
-            return CountTrips(std::move(lower), std::move(upper),
+            return CountTrips(context, std::move(lower), std::move(upper),
                 MaybeExtentExpr{triplet.stride()});
           },
           [&](const IndirectSubscriptIntegerExpr &subs) -> MaybeExtentExpr {
@@ -349,8 +353,28 @@ Shape GetUpperBounds(FoldingContext &context, const NamedEntity &base) {
 auto GetShapeHelper::operator()(const Symbol &symbol) const -> Result {
   return std::visit(
       common::visitors{
-          [&](const semantics::ObjectEntityDetails &) {
-            return (*this)(NamedEntity{symbol});
+          [&](const semantics::ObjectEntityDetails &object) {
+            if (IsImpliedShape(symbol)) {
+              return (*this)(object.init());
+            } else {
+              Shape shape;
+              int n{object.shape().Rank()};
+              NamedEntity base{symbol};
+              for (int dimension{0}; dimension < n; ++dimension) {
+                shape.emplace_back(GetExtent(context_, base, dimension));
+              }
+              return Result{shape};
+            }
+          },
+          [&](const semantics::EntityDetails &) {
+            return Scalar();  // no dimensions seen
+          },
+          [&](const semantics::ProcEntityDetails &proc) {
+            if (const Symbol * interface{proc.interface().symbol()}) {
+              return (*this)(*interface);
+            } else {
+              return Scalar();
+            }
           },
           [&](const semantics::AssocEntityDetails &assoc) {
             return (*this)(assoc.expr());
@@ -377,26 +401,17 @@ auto GetShapeHelper::operator()(const Symbol &symbol) const -> Result {
 }
 
 auto GetShapeHelper::operator()(const Component &component) const -> Result {
-  if (component.GetLastSymbol().Rank() > 0) {
-    return (*this)(NamedEntity{Component{component}});
-  } else {
+  const Symbol &symbol{component.GetLastSymbol()};
+  int rank{symbol.Rank()};
+  if (rank == 0) {
     return (*this)(component.base());
-  }
-}
-
-auto GetShapeHelper::operator()(const NamedEntity &base) const -> Result {
-  const Symbol &symbol{base.GetLastSymbol()};
-  if (const auto *object{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-    if (IsImpliedShape(symbol)) {
-      return (*this)(object->init());
-    } else {
-      Shape shape;
-      int n{object->shape().Rank()};
-      for (int dimension{0}; dimension < n; ++dimension) {
-        shape.emplace_back(GetExtent(context_, base, dimension));
-      }
-      return shape;
+  } else if (symbol.has<semantics::ObjectEntityDetails>()) {
+    Shape shape;
+    NamedEntity base{Component{component}};
+    for (int dimension{0}; dimension < rank; ++dimension) {
+      shape.emplace_back(GetExtent(context_, base, dimension));
     }
+    return shape;
   } else {
     return (*this)(symbol);
   }
@@ -405,32 +420,34 @@ auto GetShapeHelper::operator()(const NamedEntity &base) const -> Result {
 auto GetShapeHelper::operator()(const ArrayRef &arrayRef) const -> Result {
   Shape shape;
   int dimension{0};
+  const NamedEntity &base{arrayRef.base()};
   for (const Subscript &ss : arrayRef.subscript()) {
-    if (ss.Rank() > 0) {
-      shape.emplace_back(GetExtent(context_, ss, arrayRef.base(), dimension));
-    }
-    ++dimension;
-  }
-  if (shape.empty()) {
-    return (*this)(arrayRef.base());
-  } else {
-    return shape;
-  }
-}
-
-auto GetShapeHelper::operator()(const CoarrayRef &coarrayRef) const -> Result {
-  Shape shape;
-  NamedEntity base{coarrayRef.GetBase()};
-  int dimension{0};
-  for (const Subscript &ss : coarrayRef.subscript()) {
     if (ss.Rank() > 0) {
       shape.emplace_back(GetExtent(context_, ss, base, dimension));
     }
     ++dimension;
   }
   if (shape.empty()) {
+    if (const Component * component{base.UnwrapComponent()}) {
+      return (*this)(component->base());
+    }
+  }
+  return shape;
+}
+
+auto GetShapeHelper::operator()(const CoarrayRef &coarrayRef) const -> Result {
+  NamedEntity base{coarrayRef.GetBase()};
+  if (coarrayRef.subscript().empty()) {
     return (*this)(base);
   } else {
+    Shape shape;
+    int dimension{0};
+    for (const Subscript &ss : coarrayRef.subscript()) {
+      if (ss.Rank() > 0) {
+        shape.emplace_back(GetExtent(context_, ss, base, dimension));
+      }
+      ++dimension;
+    }
     return shape;
   }
 }
@@ -451,8 +468,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
     return Scalar();
   } else if (const Symbol * symbol{call.proc().GetSymbol()}) {
     return (*this)(*symbol);
-  } else if (const auto *intrinsic{
-                 std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
+  } else if (const auto *intrinsic{call.proc().GetSpecificIntrinsic()}) {
     if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
         intrinsic->name == "ubound") {
       const auto *expr{call.arguments().front().value().UnwrapExpr()};
@@ -462,10 +478,12 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
         // SHAPE(RESHAPE(array,shape)) -> shape
         const auto *shapeExpr{call.arguments().at(1).value().UnwrapExpr()};
-        CHECK(shapeExpr != nullptr);
-        Expr<SomeInteger> shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
+        auto shape{std::get<Expr<SomeInteger>>(DEREF(shapeExpr).u)};
         return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
       }
+    } else if (intrinsic->characteristics.value().attrs.test(characteristics::
+                       Procedure::Attr::NullPointer)) {  // NULL(MOLD=)
+      return (*this)(call.arguments());
     } else {
       // TODO: shapes of other non-elemental intrinsic results
     }

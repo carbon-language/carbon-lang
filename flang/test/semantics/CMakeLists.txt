@@ -170,6 +170,7 @@ set(ERROR_TESTS
   blockconstruct03.f90
   call01.f90
   call02.f90
+  call03.f90
   call13.f90
 )
 

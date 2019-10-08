@@ -144,7 +144,7 @@ template<typename A> struct ListItemCount {
 // Check that a pointer is non-null and dereference it
 #define DEREF(p) Fortran::common::Deref(p, __FILE__, __LINE__)
 
-template<typename T> T &Deref(T *p, const char *file, int line) {
+template<typename T> constexpr T &Deref(T *p, const char *file, int line) {
   if (p == nullptr) {
     Fortran::common::die("nullptr dereference at %s(%d)", file, line);
   }
