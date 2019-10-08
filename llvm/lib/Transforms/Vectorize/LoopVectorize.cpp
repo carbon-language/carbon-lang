@@ -5442,17 +5442,19 @@ LoopVectorizationCostModel::calculateRegisterUsage(ArrayRef<unsigned> VFs) {
     LLVM_DEBUG(dbgs() << "LV(REG): VF = " << VFs[i] << '\n');
     LLVM_DEBUG(dbgs() << "LV(REG): Found max usage: "
                       << MaxUsages[i].size() << " item\n");
-    for (const auto& pair : MaxUsages[i]) {
+    for (const auto& Pair : MaxUsages[i]) {
+      (void)Pair;
       LLVM_DEBUG(dbgs() << "LV(REG): RegisterClass: "
-                        << TTI.getRegisterClassName(pair.first)
-                        << ", " << pair.second << " registers \n");
+                        << TTI.getRegisterClassName(Pair.first)
+                        << ", " << Pair.second << " registers \n");
     }
     LLVM_DEBUG(dbgs() << "LV(REG): Found invariant usage: "
                       << Invariant.size() << " item\n");
-    for (const auto& pair : Invariant) {
+    for (const auto& Pair : Invariant) {
+      (void)Pair;
       LLVM_DEBUG(dbgs() << "LV(REG): RegisterClass: "
-                        << TTI.getRegisterClassName(pair.first)
-                        << ", " << pair.second << " registers \n");
+                        << TTI.getRegisterClassName(Pair.first)
+                        << ", " << Pair.second << " registers \n");
     }
 
     RU.LoopInvariantRegs = Invariant;
