@@ -109,40 +109,50 @@ if(LLDB_INCLUDE_TESTS)
     message(FATAL_ERROR "LLDB test compilers not specified. Tests will not run.")
   endif()
 
-  set(LLDB_TEST_DEPS lldb)
+  add_custom_target(lldb-test-deps)
+  set_target_properties(lldb-test-deps PROPERTIES FOLDER "lldb misc")
+  add_lldb_test_dependency(lldb)
+
+  # lldb-test is an hard dependency for the testsuite.
+  add_lldb_test_dependency(lldb-test)
 
   # darwin-debug is an hard dependency for the testsuite.
   if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    list(APPEND LLDB_TEST_DEPS darwin-debug)
+    add_lldb_test_dependency(darwin-debug)
   endif()
 
-  # lldb-test is an hard dependency for the testsuite.
-  list(APPEND LLDB_TEST_DEPS lldb-test)
-
   if(TARGET lldb-server)
-    list(APPEND LLDB_TEST_DEPS lldb-server)
+    add_lldb_test_dependency(lldb-server)
   endif()
 
   if(TARGET lldb-vscode)
-    list(APPEND LLDB_TEST_DEPS lldb-vscode)
+    add_lldb_test_dependency(lldb-vscode)
   endif()
 
   if(TARGET lldb-instr)
-    list(APPEND LLDB_TEST_DEPS lldb-instr)
+    add_lldb_test_dependency(lldb-instr)
   endif()
 
   if(NOT LLDB_BUILT_STANDALONE)
-    list(APPEND LLDB_TEST_DEPS yaml2obj)
+    add_lldb_test_dependency(yaml2obj)
+  endif()
+
+  if(TARGET dsymutil)
+    add_lldb_test_dependency(dsymutil)
   endif()
 
   if(TARGET liblldb)
-    list(APPEND LLDB_TEST_DEPS liblldb)
+    add_lldb_test_dependency(liblldb)
+  endif()
+
+  if(TARGET lldb-framework)
+    add_lldb_test_dependency(lldb-framework)
   endif()
 
   # Add dependencies if we test with the in-tree clang.
   # This works with standalone builds as they import the clang target.
   if(TARGET clang)
-    list(APPEND LLDB_TEST_DEPS clang)
+    add_lldb_test_dependency(clang)
     if(APPLE)
       # If we build clang, we should build libcxx.
       # FIXME: Standalone builds should import the cxx target as well.
@@ -171,22 +181,10 @@ if(LLDB_INCLUDE_TESTS)
               "via `LLDB_INCLUDE_TESTS=OFF`.")
           endif()
         endif()
-        list(APPEND LLDB_TEST_DEPS cxx)
+        add_lldb_test_dependency(cxx)
       endif()
     endif()
   endif()
-
-  if(TARGET dsymutil)
-    list(APPEND LLDB_TEST_DEPS dsymutil)
-  endif()
-
-  if(TARGET lldb-framework)
-    list(APPEND LLDB_TEST_DEPS lldb-framework)
-  endif()
-
-  add_custom_target(lldb-test-deps)
-  add_dependencies(lldb-test-deps ${LLDB_TEST_DEPS})
-  set_target_properties(lldb-test-deps PROPERTIES FOLDER "lldb misc")
 
   add_subdirectory(test)
   add_subdirectory(unittests)
