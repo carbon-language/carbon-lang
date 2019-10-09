@@ -42,21 +42,21 @@ public:
             const std::string &CpuName,
             const std::string &Features = ""); // For tests.
 
-  const llvm::TargetMachine &getTargetMachine() const { return *TargetMachine; }
-  std::unique_ptr<llvm::LLVMTargetMachine> createTargetMachine() const;
+  const TargetMachine &getTargetMachine() const { return *TargetMachine; }
+  std::unique_ptr<LLVMTargetMachine> createTargetMachine() const;
 
   const ExegesisTarget &getExegesisTarget() const { return *TheExegesisTarget; }
 
-  bool canAssemble(const llvm::MCInst &mc_inst) const;
+  bool canAssemble(const MCInst &mc_inst) const;
 
   // For convenience:
-  const llvm::MCInstrInfo &getInstrInfo() const {
+  const MCInstrInfo &getInstrInfo() const {
     return *TargetMachine->getMCInstrInfo();
   }
-  const llvm::MCRegisterInfo &getRegInfo() const {
+  const MCRegisterInfo &getRegInfo() const {
     return *TargetMachine->getMCRegisterInfo();
   }
-  const llvm::MCSubtargetInfo &getSubtargetInfo() const {
+  const MCSubtargetInfo &getSubtargetInfo() const {
     return *TargetMachine->getMCSubtargetInfo();
   }
 
@@ -67,7 +67,7 @@ public:
 
 private:
   const ExegesisTarget *TheExegesisTarget;
-  std::unique_ptr<const llvm::TargetMachine> TargetMachine;
+  std::unique_ptr<const TargetMachine> TargetMachine;
   std::unique_ptr<const RegisterAliasingTrackerCache> RATC;
   std::unique_ptr<const InstructionsCache> IC;
   const PfmCountersInfo *PfmCounters;

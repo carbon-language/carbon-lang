@@ -24,16 +24,15 @@ namespace exegesis {
 LLVMState::LLVMState(const std::string &Triple, const std::string &CpuName,
                      const std::string &Features) {
   std::string Error;
-  const llvm::Target *const TheTarget =
-      llvm::TargetRegistry::lookupTarget(Triple, Error);
+  const Target *const TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   assert(TheTarget && "unknown target for host");
-  const llvm::TargetOptions Options;
+  const TargetOptions Options;
   TargetMachine.reset(
-      static_cast<llvm::LLVMTargetMachine *>(TheTarget->createTargetMachine(
-          Triple, CpuName, Features, Options, llvm::Reloc::Model::Static)));
+      static_cast<LLVMTargetMachine *>(TheTarget->createTargetMachine(
+          Triple, CpuName, Features, Options, Reloc::Model::Static)));
   TheExegesisTarget = ExegesisTarget::lookup(TargetMachine->getTargetTriple());
   if (!TheExegesisTarget) {
-    llvm::errs() << "no exegesis target for " << Triple << ", using default\n";
+    errs() << "no exegesis target for " << Triple << ", using default\n";
     TheExegesisTarget = &ExegesisTarget::getDefault();
   }
   PfmCounters = &TheExegesisTarget->getPfmCounters(CpuName);
@@ -47,32 +46,29 @@ LLVMState::LLVMState(const std::string &Triple, const std::string &CpuName,
 }
 
 LLVMState::LLVMState(const std::string &CpuName)
-    : LLVMState(llvm::sys::getProcessTriple(),
-                CpuName.empty() ? llvm::sys::getHostCPUName().str() : CpuName,
-                "") {}
+    : LLVMState(sys::getProcessTriple(),
+                CpuName.empty() ? sys::getHostCPUName().str() : CpuName, "") {}
 
-std::unique_ptr<llvm::LLVMTargetMachine>
-LLVMState::createTargetMachine() const {
-  return std::unique_ptr<llvm::LLVMTargetMachine>(
-      static_cast<llvm::LLVMTargetMachine *>(
-          TargetMachine->getTarget().createTargetMachine(
-              TargetMachine->getTargetTriple().normalize(),
-              TargetMachine->getTargetCPU(),
-              TargetMachine->getTargetFeatureString(), TargetMachine->Options,
-              llvm::Reloc::Model::Static)));
+std::unique_ptr<LLVMTargetMachine> LLVMState::createTargetMachine() const {
+  return std::unique_ptr<LLVMTargetMachine>(static_cast<LLVMTargetMachine *>(
+      TargetMachine->getTarget().createTargetMachine(
+          TargetMachine->getTargetTriple().normalize(),
+          TargetMachine->getTargetCPU(),
+          TargetMachine->getTargetFeatureString(), TargetMachine->Options,
+          Reloc::Model::Static)));
 }
 
-bool LLVMState::canAssemble(const llvm::MCInst &Inst) const {
-  llvm::MCObjectFileInfo ObjectFileInfo;
-  llvm::MCContext Context(TargetMachine->getMCAsmInfo(),
-                          TargetMachine->getMCRegisterInfo(), &ObjectFileInfo);
-  std::unique_ptr<const llvm::MCCodeEmitter> CodeEmitter(
+bool LLVMState::canAssemble(const MCInst &Inst) const {
+  MCObjectFileInfo ObjectFileInfo;
+  MCContext Context(TargetMachine->getMCAsmInfo(),
+                    TargetMachine->getMCRegisterInfo(), &ObjectFileInfo);
+  std::unique_ptr<const MCCodeEmitter> CodeEmitter(
       TargetMachine->getTarget().createMCCodeEmitter(
           *TargetMachine->getMCInstrInfo(), *TargetMachine->getMCRegisterInfo(),
           Context));
-  llvm::SmallVector<char, 16> Tmp;
-  llvm::raw_svector_ostream OS(Tmp);
-  llvm::SmallVector<llvm::MCFixup, 4> Fixups;
+  SmallVector<char, 16> Tmp;
+  raw_svector_ostream OS(Tmp);
+  SmallVector<MCFixup, 4> Fixups;
   CodeEmitter->encodeInstruction(Inst, OS, Fixups,
                                  *TargetMachine->getMCSubtargetInfo());
   return Tmp.size() > 0;
