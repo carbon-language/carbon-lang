@@ -1,12 +1,16 @@
-// RUN: %clang_cc1 -std=c++98 %s -Wdeprecated -verify -triple x86_64-linux-gnu
-// RUN: %clang_cc1 -std=c++11 %s -Wdeprecated -verify -triple x86_64-linux-gnu
-// RUN: %clang_cc1 -std=c++14 %s -Wdeprecated -verify -triple x86_64-linux-gnu
-// RUN: %clang_cc1 -std=c++17 %s -Wdeprecated -verify -triple x86_64-linux-gnu
-// RUN: %clang_cc1 -std=c++2a %s -Wdeprecated -verify=expected,cxx20 -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++98 %s -Wno-parentheses -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++11 %s -Wno-parentheses -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++14 %s -Wno-parentheses -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++17 %s -Wno-parentheses -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++2a %s -Wno-parentheses -Wdeprecated -verify=expected,cxx20 -triple x86_64-linux-gnu
 
-// RUN: %clang_cc1 -std=c++14 %s -Wdeprecated -verify -triple x86_64-linux-gnu -Wno-deprecated-register -DNO_DEPRECATED_FLAGS
+// RUN: %clang_cc1 -std=c++14 %s -Wno-parentheses -Wdeprecated -verify -triple x86_64-linux-gnu -Wno-deprecated-register -DNO_DEPRECATED_FLAGS
 
 #include "Inputs/register.h"
+
+namespace std {
+  struct type_info {};
+}
 
 void g() throw();
 void h() throw(int);
@@ -133,17 +137,36 @@ namespace DeprecatedVolatile {
     n = 5; // ok
 #if __cplusplus >= 201103L
     decltype(n = 5) m = n; // ok expected-warning {{side effects}}
-    m = sizeof(n = 5); // ok expected-warning {{side effects}}
+    (void)noexcept(n = 5); // ok expected-warning {{side effects}}
 #endif
+    (void)typeid(n = 5); // ok expected-warning {{side effects}}
     (n = 5, 0); // ok
-    use(n = 5); // FIXME: deprecated
-    (n = 5); // FIXME: deprecated
-    int q = n = 5; // FIXME: deprecated
-    q = n = 5; // FIXME: deprecated
+    use(n = 5); // cxx20-warning {{use of result of assignment to object of volatile-qualified type 'volatile int' is deprecated}}
+    int q = n = 5; // cxx20-warning {{deprecated}}
+    q = n = 5; // cxx20-warning {{deprecated}}
 #if __cplusplus >= 201103L
-    decltype(q = n = 5) m2 = q; // FIXME: deprecated expected-warning {{side effects}}
+    decltype(q = n = 5) m2 = q; // cxx20-warning {{deprecated}} expected-warning {{side effects}}
+    (void)noexcept(q = n = 5); // cxx20-warning {{deprecated}} expected-warning {{side effects}}
 #endif
-    q = sizeof(q = n = 5); // FIXME: deprecated expected-warning {{side effects}}
+    (void)sizeof(q = n = 5); // cxx20-warning {{deprecated}} expected-warning {{side effects}}
+    (void)typeid(use(n = 5)); // cxx20-warning {{deprecated}} expected-warning {{side effects}}
+    (void)__alignof(+(n = 5)); // cxx20-warning {{deprecated}} expected-warning {{side effects}}
+
+    // FIXME: These cases are technically deprecated because the parens are
+    // part of the operand, but we choose to not diagnose for now.
+    (void)sizeof(n = 5); // expected-warning {{side effects}}
+    (void)__alignof(n = 5); // expected-warning {{side effects}}
+    // Similarly here.
+    (n = 5);
+
+    volatile bool b = true;
+    if (b = true) {} // cxx20-warning {{deprecated}}
+    for (b = true;
+         b = true; // cxx20-warning {{deprecated}}
+         b = true) {}
+    for (volatile bool x = true;
+         volatile bool y = true; // ok despite volatile load from volatile initialization
+        ) {}
 
     // inc / dec / compound assignments are always deprecated
     ++n; // cxx20-warning {{increment of object of volatile-qualified type 'volatile int' is deprecated}}

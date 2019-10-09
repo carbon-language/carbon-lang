@@ -6654,6 +6654,9 @@ def err_increment_decrement_enum : Error<
 def warn_deprecated_increment_decrement_volatile : Warning<
   "%select{decrement|increment}0 of object of volatile-qualified type %1 "
   "is deprecated">, InGroup<DeprecatedVolatile>;
+def warn_deprecated_simple_assign_volatile : Warning<
+  "use of result of assignment to object of volatile-qualified type %0 "
+  "is deprecated">, InGroup<DeprecatedVolatile>;
 def warn_deprecated_compound_assign_volatile : Warning<
   "compound assignment to object of volatile-qualified type %0 is deprecated">,
   InGroup<DeprecatedVolatile>;

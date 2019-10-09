@@ -3801,6 +3801,16 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *E,
   QualType ExprTy = E->getType();
   assert(!ExprTy->isReferenceType());
 
+  bool IsUnevaluatedOperand =
+      (ExprKind == UETT_SizeOf || ExprKind == UETT_AlignOf ||
+       ExprKind == UETT_PreferredAlignOf);
+  if (IsUnevaluatedOperand) {
+    ExprResult Result = CheckUnevaluatedOperand(E);
+    if (Result.isInvalid())
+      return true;
+    E = Result.get();
+  }
+
   if (ExprKind == UETT_VecStep)
     return CheckVecStepTraitOperandType(*this, ExprTy, E->getExprLoc(),
                                         E->getSourceRange());
@@ -3838,9 +3848,8 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *E,
 
   // The operand for sizeof and alignof is in an unevaluated expression context,
   // so side effects could result in unintended consequences.
-  if ((ExprKind == UETT_SizeOf || ExprKind == UETT_AlignOf ||
-       ExprKind == UETT_PreferredAlignOf) &&
-      !inTemplateInstantiation() && E->HasSideEffects(Context, false))
+  if (IsUnevaluatedOperand && !inTemplateInstantiation() &&
+      E->HasSideEffects(Context, false))
     Diag(E->getExprLoc(), diag::warn_side_effects_unevaluated_context);
 
   if (CheckObjCTraitOperandConstraints(*this, ExprTy, E->getExprLoc(),
@@ -3939,8 +3948,6 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType ExprType,
 }
 
 static bool CheckAlignOfExpr(Sema &S, Expr *E, UnaryExprOrTypeTrait ExprKind) {
-  E = E->IgnoreParens();
-
   // Cannot know anything else if the expression is dependent.
   if (E->isTypeDependent())
     return false;
@@ -3952,9 +3959,10 @@ static bool CheckAlignOfExpr(Sema &S, Expr *E, UnaryExprOrTypeTrait ExprKind) {
   }
 
   ValueDecl *D = nullptr;
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+  Expr *Inner = E->IgnoreParens();
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Inner)) {
     D = DRE->getDecl();
-  } else if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+  } else if (MemberExpr *ME = dyn_cast<MemberExpr>(Inner)) {
     D = ME->getMemberDecl();
   }
 
@@ -11944,7 +11952,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
       //   A simple-assignment whose left operand is of a volatile-qualified
       //   type is deprecated unless the assignment is either a discarded-value
       //   expression or an unevaluated operand
-      // FIXME: Implement checks for this.
+      ExprEvalContexts.back().VolatileAssignmentLHSs.push_back(LHSExpr);
     } else {
       // C++2a [expr.ass]p6:
       //   [Compound-assignment] expressions are deprecated if E1 has
@@ -15082,6 +15090,26 @@ void Sema::WarnOnPendingNoDerefs(ExpressionEvaluationContextRecord &Rec) {
   Rec.PossibleDerefs.clear();
 }
 
+/// Check whether E, which is either a discarded-value expression or an
+/// unevaluated operand, is a simple-assignment to a volatlie-qualified lvalue,
+/// and if so, remove it from the list of volatile-qualified assignments that
+/// we are going to warn are deprecated.
+void Sema::CheckUnusedVolatileAssignment(Expr *E) {
+  if (!E->getType().isVolatileQualified() || !getLangOpts().CPlusPlus2a)
+    return;
+
+  // Note: ignoring parens here is not justified by the standard rules, but
+  // ignoring parentheses seems like a more reasonable approach, and this only
+  // drives a deprecation warning so doesn't affect conformance.
+  if (auto *BO = dyn_cast<BinaryOperator>(E->IgnoreParenImpCasts())) {
+    if (BO->getOpcode() == BO_Assign) {
+      auto &LHSs = ExprEvalContexts.back().VolatileAssignmentLHSs;
+      LHSs.erase(std::remove(LHSs.begin(), LHSs.end(), BO->getLHS()),
+                 LHSs.end());
+    }
+  }
+}
+
 void Sema::PopExpressionEvaluationContext() {
   ExpressionEvaluationContextRecord& Rec = ExprEvalContexts.back();
   unsigned NumTypos = Rec.NumTypos;
@@ -15115,6 +15143,13 @@ void Sema::PopExpressionEvaluationContext() {
   }
 
   WarnOnPendingNoDerefs(Rec);
+
+  // Warn on any volatile-qualified simple-assignments that are not discarded-
+  // value expressions nor unevaluated operands (those cases get removed from
+  // this list by CheckUnusedVolatileAssignment).
+  for (auto *BO : Rec.VolatileAssignmentLHSs)
+    Diag(BO->getBeginLoc(), diag::warn_deprecated_simple_assign_volatile)
+        << BO->getType();
 
   // When are coming out of an unevaluated context, clear out any
   // temporaries that we may have created as part of the evaluation of
