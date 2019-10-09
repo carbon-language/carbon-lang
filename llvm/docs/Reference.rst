@@ -16,7 +16,6 @@ LLVM and API reference documentation.
    Bugpoint
    CFIVerify
    CommandGuide/index
-   CompilerWriterInfo
    Coroutines
    DependenceGraphs/index
    ExceptionHandling
@@ -68,22 +67,8 @@ API Reference
 LLVM Reference
 --------------
 
-:doc:`LLVM Language Reference Manual <LangRef>`
-  Defines the LLVM intermediate representation and the assembly form of the
-  different nodes.
-
 :doc:`FaultMaps`
   LLVM support for folding control flow into faulting machine instructions.
-
-:doc:`InAlloca`
-  Description of the ``inalloca`` argument attribute.
-
-:doc:`Machine IR (MIR) Format Reference Manual <MIRLangRef>`
-   A reference manual for the MIR serialization format, which is used to test
-   LLVM's code generation passes.
-
-:doc:`GlobalISel`
-  This describes the prototype instruction selection replacement, GlobalISel.
 
 :doc:`Atomics`
   Information about LLVM's concurrency model.
@@ -91,12 +76,6 @@ LLVM Reference
 :doc:`ExceptionHandling`
    This document describes the design and implementation of exception handling
    in LLVM.
-
-:doc:`CompilerWriterInfo`
-  A list of helpful links for compiler writers.
-
-:doc:`BitCodeFormat`
-   This describes the file format and encoding used for LLVM "bc" files.
 
 :doc:`Extensions`
   LLVM-specific extensions to tools and formats LLVM seeks compatibility with.
@@ -197,6 +176,27 @@ LibFuzzer
 
 :doc:`FuzzingLLVM`
   Information on writing and using Fuzzers to find bugs in LLVM.
+
+========
+LLVM IR
+========
+
+:doc:`LLVM Language Reference Manual <LangRef>`
+  Defines the LLVM intermediate representation and the assembly form of the
+  different nodes.
+
+:doc:`InAlloca`
+  Description of the ``inalloca`` argument attribute.
+
+:doc:`BitCodeFormat`
+   This describes the file format and encoding used for LLVM "bc" files.
+
+:doc:`Machine IR (MIR) Format Reference Manual <MIRLangRef>`
+   A reference manual for the MIR serialization format, which is used to test
+   LLVM's code generation passes.
+
+:doc:`GlobalISel`
+  This describes the prototype instruction selection replacement, GlobalISel.
 
 =======
 Testing
