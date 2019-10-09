@@ -184,7 +184,7 @@ static void setMemOp(InstructionTemplate &IT, int OpIdx,
   const auto Op = IT.Instr.Operands[OpIdx];
   assert(Op.isExplicit() && "invalid memory pattern");
   IT.getValueFor(Op) = OpVal;
-};
+}
 
 // Common (latency, uops) code for LEA templates. `GetDestReg` takes the
 // addressing base and index registers and returns the LEA destination register.
