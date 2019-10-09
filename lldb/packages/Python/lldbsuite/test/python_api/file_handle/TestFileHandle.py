@@ -309,7 +309,7 @@ class FileHandleTestCase(lldbtest.TestBase):
 
 
     @add_test_categories(['pyapi'])
-    @expectedFailure # FIXME need SBFile interfaces on SBCommandReturnObject
+    @skipIf(py_version=['<', (3,)])
     def test_immediate_string(self):
         f = io.StringIO()
         ret = lldb.SBCommandReturnObject()
@@ -325,7 +325,7 @@ class FileHandleTestCase(lldbtest.TestBase):
 
 
     @add_test_categories(['pyapi'])
-    @expectedFailure # FIXME need SBFile interfaces on SBCommandReturnObject
+    @skipIf(py_version=['<', (3,)])
     def test_immediate_sbfile_string(self):
         f = io.StringIO()
         ret = lldb.SBCommandReturnObject()
