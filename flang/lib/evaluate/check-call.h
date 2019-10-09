@@ -35,5 +35,11 @@ class FoldingContext;
 // defined at the top level in the same source file.
 void CheckArguments(const characteristics::Procedure &, ActualArguments &,
     FoldingContext &, bool treatingExternalAsImplicit = false);
+
+// Check actual arguments against a procedure with an explicit interface.
+// Report an error and return false if not compatible.
+bool CheckExplicitInterface(
+    const characteristics::Procedure &, ActualArguments &, FoldingContext &);
+
 }
 #endif

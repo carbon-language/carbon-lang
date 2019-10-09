@@ -51,8 +51,8 @@ for src in "$@"; do
     fi
     # The first three bytes of the file are a UTF-8 BOM
     sed '/^[^!]*!mod\$/d' $temp/$mod > $actual
-    sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^! *//' > $expect
-    if ! diff -U999999 $expect $actual > $diffs; then
+    sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^!//' > $expect
+    if ! diff -w -U999999 $expect $actual > $diffs; then
       echo "Module file $mod differs from expected:"
       sed '1,2d' $diffs
       die FAIL $path

@@ -326,7 +326,7 @@ private:
       const parser::Call &, bool isSubroutine);
   std::optional<characteristics::Procedure> CheckCall(
       parser::CharBlock, const ProcedureDesignator &, ActualArguments &);
-
+  const Symbol *ResolveGeneric(const Symbol &, ActualArguments &);
   std::optional<CalleeAndArguments> GetCalleeAndArguments(
       const parser::ProcedureDesignator &, ActualArguments &&,
       bool isSubroutine);

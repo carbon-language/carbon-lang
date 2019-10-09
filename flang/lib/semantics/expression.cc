@@ -1514,17 +1514,92 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
   return std::nullopt;
 }
 
+// Can actual be argument associated with dummy?
+static bool CheckCompatibleArgument(bool isElemental,
+    const ActualArgument &actual, const characteristics::DummyArgument &dummy) {
+  return std::visit(
+      common::visitors{
+          [&](const characteristics::DummyDataObject &x) {
+            characteristics::TypeAndShape dummyTypeAndShape{x.type};
+            if (!isElemental && actual.Rank() != dummyTypeAndShape.Rank()) {
+              return false;
+            } else if (auto actualType{actual.GetType()}) {
+              return dummyTypeAndShape.type().IsTkCompatibleWith(*actualType);
+            } else {
+              return false;
+            }
+          },
+          [&](const characteristics::DummyProcedure &) {
+            const auto *expr{actual.UnwrapExpr()};
+            return expr && IsProcedurePointer(*expr);
+          },
+          [&](const characteristics::AlternateReturn &) {
+            return actual.isAlternateReturn;
+          },
+      },
+      dummy.u);
+}
+
+// Are the actual arguments compatible with the dummy arguments of procedure?
+static bool CheckCompatibleArguments(
+    const characteristics::Procedure &procedure,
+    const ActualArguments &actuals) {
+  bool isElemental{procedure.IsElemental()};
+  const auto &dummies{procedure.dummyArguments};
+  CHECK(dummies.size() == actuals.size());
+  for (std::size_t i{0}; i < dummies.size(); ++i) {
+    const characteristics::DummyArgument &dummy{dummies[i]};
+    const std::optional<ActualArgument> &actual{actuals[i]};
+    if (actual && !CheckCompatibleArgument(isElemental, *actual, dummy)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const Symbol *ExpressionAnalyzer::ResolveGeneric(
+    const Symbol &symbol, ActualArguments &actuals) {
+  const Symbol *elemental{nullptr};  // matching elemental specific proc
+  const auto &details{symbol.get<semantics::GenericDetails>()};
+  for (const Symbol *specific : details.specificProcs()) {
+    if (std::optional<characteristics::Procedure> procedure{
+            characteristics::Procedure::Characterize(
+                ProcedureDesignator{*specific}, context_.intrinsics())}) {
+      parser::Messages buffer;
+      parser::ContextualMessages messages{
+          context_.foldingContext().messages().at(), &buffer};
+      FoldingContext localContext{context_.foldingContext(), messages};
+      ActualArguments localActuals{actuals};
+      if (CheckExplicitInterface(*procedure, localActuals, localContext) &&
+          CheckCompatibleArguments(*procedure, localActuals)) {
+        if (!procedure->IsElemental()) {
+          return specific;  // takes priority over elemental match
+        }
+        elemental = specific;
+      }
+    }
+  }
+  if (elemental) {
+    return elemental;
+  } else {
+    Say("No specific procedure of generic '%s' matches the actual arguments"_err_en_US,
+        symbol.name());
+    return nullptr;
+  }
+}
+
 auto ExpressionAnalyzer::GetCalleeAndArguments(
     const parser::ProcedureDesignator &pd, ActualArguments &&arguments,
     bool isSubroutine) -> std::optional<CalleeAndArguments> {
   return std::visit(
       common::visitors{
           [&](const parser::Name &n) -> std::optional<CalleeAndArguments> {
-            if (context_.HasError(n.symbol)) {
+            const Symbol *symbol{n.symbol};
+            if (context_.HasError(symbol)) {
               return std::nullopt;
             }
-            const Symbol &symbol{n.symbol->GetUltimate()};
-            if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
+            const Symbol &ultimate{symbol->GetUltimate()};
+            if (ultimate.attrs().test(semantics::Attr::INTRINSIC)) {
               if (std::optional<SpecificCall> specificCall{
                       context_.intrinsics().Probe(
                           CallCharacteristics{n.source, isSubroutine},
@@ -1536,12 +1611,18 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(
                 return std::nullopt;
               }
             }
-            CheckForBadRecursion(n.source, symbol);
-            return CalleeAndArguments{
-                ProcedureDesignator{*n.symbol}, std::move(arguments)};
+            CheckForBadRecursion(n.source, ultimate);
+            if (ultimate.has<semantics::GenericDetails>()) {
+              symbol = ResolveGeneric(ultimate, arguments);
+            }
+            if (symbol) {
+              return CalleeAndArguments{
+                  ProcedureDesignator{*symbol}, std::move(arguments)};
+            } else {
+              return std::nullopt;
+            }
           },
-          [&](const parser::ProcComponentRef &pcr)
-              -> std::optional<CalleeAndArguments> {
+          [&](const parser::ProcComponentRef &pcr) {
             return AnalyzeProcedureComponentRef(pcr, std::move(arguments));
           },
       },
@@ -1699,10 +1780,9 @@ std::optional<ActualArguments> ExpressionAnalyzer::AnalyzeArguments(
 static bool IsExternalCalledImplicitly(
     parser::CharBlock callSite, const ProcedureDesignator &proc) {
   if (const auto *symbol{proc.GetSymbol()}) {
-    return !callSite.empty() && symbol->has<semantics::SubprogramDetails>() &&
-        (symbol->owner().IsGlobal() ||
-            (symbol->owner().parent().IsGlobal() &&
-                !symbol->owner().sourceRange().Contains(callSite)));
+    return symbol->has<semantics::SubprogramDetails>() &&
+        symbol->owner().IsGlobal() &&
+        !symbol->scope()->sourceRange().Contains(callSite);
   } else {
     return false;
   }

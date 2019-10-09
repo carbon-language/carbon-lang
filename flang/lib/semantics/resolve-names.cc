@@ -609,7 +609,7 @@ protected:
   GenericDetails &GetGenericDetails();
   // Add to generic the symbol for the subprogram with the same name
   void CheckGenericProcedures(Symbol &);
-  void CheckSpecificsAreDistinguishable(const Symbol &, const SymbolVector &);
+  void CheckSpecificsAreDistinguishable(Symbol &, const SymbolVector &);
 
 private:
   // A new GenericInfo is pushed for each interface block and generic stmt
@@ -2330,7 +2330,7 @@ static bool IsOperatorOrAssignment(const Symbol &generic) {
 
 // Check that the specifics of this generic are distinguishable from each other
 void InterfaceVisitor::CheckSpecificsAreDistinguishable(
-    const Symbol &generic, const SymbolVector &specifics) {
+    Symbol &generic, const SymbolVector &specifics) {
   auto count{specifics.size()};
   if (specifics.size() < 2) {
     return;
@@ -2356,6 +2356,7 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
       auto &proc2{procs[i2]};
       if (!distinguishable(proc1, proc2)) {
         SayNotDistinguishable(generic, *specifics[i1], *specifics[i2]);
+        context().SetError(generic);
       }
     }
   }

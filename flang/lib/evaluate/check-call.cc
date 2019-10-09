@@ -72,7 +72,7 @@ static void CheckImplicitInterfaceArg(
   }
 }
 
-static void CheckExplicitInterfaceArg(const ActualArgument &arg,
+static bool CheckExplicitInterfaceArg(const ActualArgument &arg,
     const characteristics::DummyArgument &dummy, FoldingContext &context) {
   std::visit(
       common::visitors{
@@ -95,9 +95,10 @@ static void CheckExplicitInterfaceArg(const ActualArgument &arg,
           },
       },
       dummy.u);
+  return true;  // TODO: return false when error detected
 }
 
-static void RearrangeArguments(const characteristics::Procedure &proc,
+static bool RearrangeArguments(const characteristics::Procedure &proc,
     ActualArguments &actuals, parser::ContextualMessages &messages) {
   CHECK(proc.HasExplicitInterface());
   if (actuals.size() < proc.dummyArguments.size()) {
@@ -106,6 +107,7 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
     messages.Say(
         "Too many actual arguments (%zd) passed to procedure that expects only %zd"_err_en_US,
         actuals.size(), proc.dummyArguments.size());
+    return false;
   }
   std::map<std::string, ActualArgument> kwArgs;
   for (auto &x : actuals) {
@@ -117,6 +119,7 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
           messages.Say(*x->keyword,
               "Argument keyword '%s=' appears on more than one effective argument in this procedure reference"_err_en_US,
               *x->keyword);
+          return false;
         }
         x.reset();
       }
@@ -133,6 +136,7 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
             messages.Say(*x.keyword,
                 "Keyword argument '%s=' has already been specified positionally (#%d) in this procedure reference"_err_en_US,
                 *x.keyword, index + 1);
+            return false;
           } else {
             actuals[index] = std::move(x);
           }
@@ -146,8 +150,40 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
       messages.Say(*x.keyword,
           "Argument keyword '%s=' is not recognized for this procedure reference"_err_en_US,
           *x.keyword);
+      return false;
     }
   }
+  return true;
+}
+
+bool CheckExplicitInterface(const characteristics::Procedure &proc,
+    ActualArguments &actuals, FoldingContext &context) {
+  if (!RearrangeArguments(proc, actuals, context.messages())) {
+    return false;
+  }
+  int index{0};
+  for (auto &actual : actuals) {
+    const auto &dummy{proc.dummyArguments[index++]};
+    if (actual.has_value()) {
+      if (!CheckExplicitInterfaceArg(*actual, dummy, context)) {
+        return false;
+      }
+    } else if (!dummy.IsOptional()) {
+      if (dummy.name.empty()) {
+        context.messages().Say(
+            "Dummy argument #%d is not OPTIONAL and is not associated with an "
+            "effective argument in this procedure reference"_err_en_US,
+            index);
+      } else {
+        context.messages().Say(
+            "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated "
+            "with an effective argument in this procedure reference"_err_en_US,
+            dummy.name, index);
+      }
+      return false;
+    }
+  }
+  return true;
 }
 
 void CheckArguments(const characteristics::Procedure &proc,
@@ -155,33 +191,14 @@ void CheckArguments(const characteristics::Procedure &proc,
     bool treatingExternalAsImplicit) {
   parser::Messages buffer;
   parser::ContextualMessages messages{context.messages().at(), &buffer};
-  FoldingContext localContext{context, messages};
   if (proc.HasExplicitInterface()) {
-    RearrangeArguments(proc, actuals, messages);
-    int index{0};
-    for (auto &x : actuals) {
-      const auto &dummy{proc.dummyArguments[index++]};
-      if (x.has_value()) {
-        CheckExplicitInterfaceArg(*x, dummy, localContext);
-      } else if (!dummy.IsOptional()) {
-        if (dummy.name.empty()) {
-          messages.Say(
-              "Dummy argument #%d is not OPTIONAL and is not associated with an effective argument in this procedure reference"_err_en_US,
-              index);
-        } else {
-          messages.Say(
-              "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated with an effective argument in this procedure reference"_err_en_US,
-              dummy.name, index);
-        }
-      }
-      if (treatingExternalAsImplicit) {
-        CheckImplicitInterfaceArg(*x, context.messages());
-      }
-    }
-  } else {
-    for (auto &x : actuals) {
-      if (x.has_value()) {
-        CheckImplicitInterfaceArg(*x, context.messages());
+    FoldingContext localContext{context, messages};
+    CheckExplicitInterface(proc, actuals, localContext);
+  }
+  if (!proc.HasExplicitInterface() || treatingExternalAsImplicit) {
+    for (auto &actual : actuals) {
+      if (actual.has_value()) {
+        CheckImplicitInterfaceArg(*actual, messages);
       }
     }
   }
