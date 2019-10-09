@@ -42,7 +42,7 @@ public:
             const std::string &CpuName,
             const std::string &Features = ""); // For tests.
 
-  const TargetMachine &getTargetMachine() const { return *TargetMachine; }
+  const TargetMachine &getTargetMachine() const { return *TheTargetMachine; }
   std::unique_ptr<LLVMTargetMachine> createTargetMachine() const;
 
   const ExegesisTarget &getExegesisTarget() const { return *TheExegesisTarget; }
@@ -51,13 +51,13 @@ public:
 
   // For convenience:
   const MCInstrInfo &getInstrInfo() const {
-    return *TargetMachine->getMCInstrInfo();
+    return *TheTargetMachine->getMCInstrInfo();
   }
   const MCRegisterInfo &getRegInfo() const {
-    return *TargetMachine->getMCRegisterInfo();
+    return *TheTargetMachine->getMCRegisterInfo();
   }
   const MCSubtargetInfo &getSubtargetInfo() const {
-    return *TargetMachine->getMCSubtargetInfo();
+    return *TheTargetMachine->getMCSubtargetInfo();
   }
 
   const RegisterAliasingTrackerCache &getRATC() const { return *RATC; }
@@ -67,7 +67,7 @@ public:
 
 private:
   const ExegesisTarget *TheExegesisTarget;
-  std::unique_ptr<const TargetMachine> TargetMachine;
+  std::unique_ptr<const TargetMachine> TheTargetMachine;
   std::unique_ptr<const RegisterAliasingTrackerCache> RATC;
   std::unique_ptr<const InstructionsCache> IC;
   const PfmCountersInfo *PfmCounters;

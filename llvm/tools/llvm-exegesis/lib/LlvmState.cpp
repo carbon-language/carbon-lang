@@ -27,10 +27,10 @@ LLVMState::LLVMState(const std::string &Triple, const std::string &CpuName,
   const Target *const TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   assert(TheTarget && "unknown target for host");
   const TargetOptions Options;
-  TargetMachine.reset(
+  TheTargetMachine.reset(
       static_cast<LLVMTargetMachine *>(TheTarget->createTargetMachine(
           Triple, CpuName, Features, Options, Reloc::Model::Static)));
-  TheExegesisTarget = ExegesisTarget::lookup(TargetMachine->getTargetTriple());
+  TheExegesisTarget = ExegesisTarget::lookup(TheTargetMachine->getTargetTriple());
   if (!TheExegesisTarget) {
     errs() << "no exegesis target for " << Triple << ", using default\n";
     TheExegesisTarget = &ExegesisTarget::getDefault();
@@ -51,26 +51,26 @@ LLVMState::LLVMState(const std::string &CpuName)
 
 std::unique_ptr<LLVMTargetMachine> LLVMState::createTargetMachine() const {
   return std::unique_ptr<LLVMTargetMachine>(static_cast<LLVMTargetMachine *>(
-      TargetMachine->getTarget().createTargetMachine(
-          TargetMachine->getTargetTriple().normalize(),
-          TargetMachine->getTargetCPU(),
-          TargetMachine->getTargetFeatureString(), TargetMachine->Options,
+      TheTargetMachine->getTarget().createTargetMachine(
+          TheTargetMachine->getTargetTriple().normalize(),
+          TheTargetMachine->getTargetCPU(),
+          TheTargetMachine->getTargetFeatureString(), TheTargetMachine->Options,
           Reloc::Model::Static)));
 }
 
 bool LLVMState::canAssemble(const MCInst &Inst) const {
   MCObjectFileInfo ObjectFileInfo;
-  MCContext Context(TargetMachine->getMCAsmInfo(),
-                    TargetMachine->getMCRegisterInfo(), &ObjectFileInfo);
+  MCContext Context(TheTargetMachine->getMCAsmInfo(),
+                    TheTargetMachine->getMCRegisterInfo(), &ObjectFileInfo);
   std::unique_ptr<const MCCodeEmitter> CodeEmitter(
-      TargetMachine->getTarget().createMCCodeEmitter(
-          *TargetMachine->getMCInstrInfo(), *TargetMachine->getMCRegisterInfo(),
+      TheTargetMachine->getTarget().createMCCodeEmitter(
+          *TheTargetMachine->getMCInstrInfo(), *TheTargetMachine->getMCRegisterInfo(),
           Context));
   SmallVector<char, 16> Tmp;
   raw_svector_ostream OS(Tmp);
   SmallVector<MCFixup, 4> Fixups;
   CodeEmitter->encodeInstruction(Inst, OS, Fixups,
-                                 *TargetMachine->getMCSubtargetInfo());
+                                 *TheTargetMachine->getMCSubtargetInfo());
   return Tmp.size() > 0;
 }
 
