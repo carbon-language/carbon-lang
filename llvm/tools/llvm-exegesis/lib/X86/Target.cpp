@@ -235,13 +235,13 @@ static llvm::Expected<std::vector<CodeTemplate>> generateLEATemplatesCommon(
                           .str();
           Result.push_back(std::move(CT));
           if (Result.size() >= Opts.MaxConfigsPerOpcode)
-            return Result;
+            return std::move(Result);
         }
       }
     }
   }
 
-  return Result;
+  return std::move(Result);
 }
 
 namespace {
