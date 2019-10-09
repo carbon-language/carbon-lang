@@ -467,10 +467,8 @@ void SBDebugger::HandleCommand(const char *command) {
 
     sb_interpreter.HandleCommand(command, result, false);
 
-    if (GetErrorFileHandle() != nullptr)
-      result.PutError(GetErrorFile());
-    if (GetOutputFileHandle() != nullptr)
-      result.PutOutput(GetOutputFile());
+    result.PutError(m_opaque_sp->GetErrorStream().GetFileSP());
+    result.PutOutput(m_opaque_sp->GetOutputStream().GetFileSP());
 
     if (!m_opaque_sp->GetAsyncExecution()) {
       SBProcess process(GetCommandInterpreter().GetProcess());
