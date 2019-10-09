@@ -1,6 +1,6 @@
 // RUN: %clangxx -O1 %s -o %t && %env_tool_opts=handle_sigtrap=1 %run %t 2>&1 | FileCheck %s
 
-// __builtin_debugtrap() does not raise SIGTRAP these platforms.
+// __builtin_debugtrap() does not raise SIGTRAP on these platforms.
 // UNSUPPORTED: s390
 
 #include <assert.h>
