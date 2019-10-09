@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -std=c++11 %s -Wdeprecated -verify -triple x86_64-linux-gnu
 // RUN: %clang_cc1 -std=c++14 %s -Wdeprecated -verify -triple x86_64-linux-gnu
 // RUN: %clang_cc1 -std=c++17 %s -Wdeprecated -verify -triple x86_64-linux-gnu
-// RUN: %clang_cc1 -std=c++2a %s -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++2a %s -Wdeprecated -verify=expected,cxx20 -triple x86_64-linux-gnu
 
 // RUN: %clang_cc1 -std=c++14 %s -Wdeprecated -verify -triple x86_64-linux-gnu -Wno-deprecated-register -DNO_DEPRECATED_FLAGS
 
@@ -123,6 +123,73 @@ void array_index_comma() {
   (void)(X(), X())[arr];
   X()[((void)1, 2)];
   X()[(X(), X())];
+}
+
+namespace DeprecatedVolatile {
+  volatile int n = 1;
+  void use(int);
+  void f() {
+    // simple assignments are deprecated only if their value is used
+    n = 5; // ok
+#if __cplusplus >= 201103L
+    decltype(n = 5) m = n; // ok expected-warning {{side effects}}
+    m = sizeof(n = 5); // ok expected-warning {{side effects}}
+#endif
+    (n = 5, 0); // ok
+    use(n = 5); // FIXME: deprecated
+    (n = 5); // FIXME: deprecated
+    int q = n = 5; // FIXME: deprecated
+    q = n = 5; // FIXME: deprecated
+#if __cplusplus >= 201103L
+    decltype(q = n = 5) m2 = q; // FIXME: deprecated expected-warning {{side effects}}
+#endif
+    q = sizeof(q = n = 5); // FIXME: deprecated expected-warning {{side effects}}
+
+    // inc / dec / compound assignments are always deprecated
+    ++n; // cxx20-warning {{increment of object of volatile-qualified type 'volatile int' is deprecated}}
+    --n; // cxx20-warning {{decrement of object of volatile-qualified type 'volatile int' is deprecated}}
+    n++; // cxx20-warning {{increment of object of volatile-qualified type 'volatile int' is deprecated}}
+    n--; // cxx20-warning {{decrement of object of volatile-qualified type 'volatile int' is deprecated}}
+    n += 5; // cxx20-warning {{compound assignment to object of volatile-qualified type 'volatile int' is deprecated}}
+    n *= 3; // cxx20-warning {{compound assignment to object of volatile-qualified type 'volatile int' is deprecated}}
+    n /= 2; // cxx20-warning {{compound assignment to object of volatile-qualified type 'volatile int' is deprecated}}
+    n %= 42; // cxx20-warning {{compound assignment to object of volatile-qualified type 'volatile int' is deprecated}}
+
+#if __cplusplus >= 201703L
+    struct X { int a, b; };
+    volatile auto [x, y] = X{1, 2}; // cxx20-warning {{volatile qualifier in structured binding declaration is deprecated}}
+
+    struct Y { volatile int a, b; };
+    auto [x2, y2] = Y{1, 2}; // ok
+#endif
+  }
+  volatile int g( // cxx20-warning {{volatile-qualified return type 'volatile int' is deprecated}}
+      volatile int n, // cxx20-warning {{volatile-qualified parameter type 'volatile int' is deprecated}}
+      volatile int (*p)( // cxx20-warning {{volatile-qualified return type 'volatile int' is deprecated}}
+        volatile int m) // cxx20-warning {{volatile-qualified parameter type 'volatile int' is deprecated}}
+      );
+#if __cplusplus >= 201103L
+  auto lambda = []( // cxx20-warning{{volatile-qualified return type 'volatile int' is deprecated}}
+      volatile int n) // cxx20-warning{{volatile-qualified parameter type 'volatile int' is deprecated}}
+    -> volatile int { return n; };
+#endif
+
+  template<typename T> T f(T v); // cxx20-warning 2{{deprecated}}
+  int use_f = f<volatile int>(0); // FIXME: Missing "in instantiation of" note.
+
+  // OK, only the built-in operators are deprecated.
+  struct UDT {
+    UDT(volatile const UDT&);
+    UDT &operator=(const UDT&);
+    UDT &operator=(const UDT&) volatile;
+    UDT operator+=(const UDT&) volatile;
+  };
+  void h(UDT a) {
+    volatile UDT b = a;
+    volatile UDT c = b;
+    a = c = a;
+    b += a;
+  }
 }
 
 # 1 "/usr/include/system-header.h" 1 3
