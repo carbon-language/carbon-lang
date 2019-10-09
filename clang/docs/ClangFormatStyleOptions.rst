@@ -2507,5 +2507,3 @@ The result is:
           r();
       }
   }
-
-  
