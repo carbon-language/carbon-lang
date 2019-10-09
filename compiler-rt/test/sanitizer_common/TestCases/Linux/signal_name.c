@@ -1,4 +1,4 @@
-// RUN: %clangxx -O1 %s -o %t 
+// RUN: %clang -O1 %s -o %t
 // RUN: %env_tool_opts=handle_sigfpe=2 not %run %t 0 2>&1 | FileCheck %s -DSIGNAME=FPE
 // RUN: %env_tool_opts=handle_sigill=2 not %run %t 1 2>&1 | FileCheck %s -DSIGNAME=ILL
 // RUN: %env_tool_opts=handle_abort=2 not %run %t 2 2>&1 | FileCheck %s -DSIGNAME=ABRT
@@ -10,7 +10,8 @@
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
-  if (argc != 2) return 0;
+  if (argc != 2)
+    return 0;
   int signals[] = {SIGFPE, SIGILL, SIGABRT, SIGSEGV, SIGBUS, SIGTRAP};
   raise(signals[atoi(argv[1])]);
 }
