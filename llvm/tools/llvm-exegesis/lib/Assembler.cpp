@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 namespace llvm {
@@ -28,6 +29,7 @@ namespace exegesis {
 
 static constexpr const char ModuleID[] = "ExegesisInfoTest";
 static constexpr const char FunctionID[] = "foo";
+static const Align kFunctionAlignment(4096);
 
 // Fills the given basic block with register setup code, and returns true if
 // all registers could be setup correctly.
@@ -169,13 +171,13 @@ void assembleToStream(const ExegesisTarget &ET,
                       ArrayRef<unsigned> LiveIns,
                       ArrayRef<RegisterValue> RegisterInitialValues,
                       const FillFunction &Fill, raw_pwrite_stream &AsmStream) {
-  std::unique_ptr<LLVMContext> Context = std::make_unique<LLVMContext>();
+  auto Context = std::make_unique<LLVMContext>();
   std::unique_ptr<Module> Module =
       createModule(Context, TM->createDataLayout());
-  std::unique_ptr<MachineModuleInfoWrapperPass> MMIWP =
-      std::make_unique<MachineModuleInfoWrapperPass>(TM.get());
+  auto MMIWP = std::make_unique<MachineModuleInfoWrapperPass>(TM.get());
   MachineFunction &MF = createVoidVoidPtrMachineFunction(
       FunctionID, Module.get(), &MMIWP.get()->getMMI());
+  MF.ensureAlignment(kFunctionAlignment);
 
   // We need to instruct the passes that we're done with SSA and virtual
   // registers.
@@ -305,9 +307,11 @@ ExecutableFunction::ExecutableFunction(
   // executable page.
   ExecEngine->addObjectFile(std::move(ObjectFileHolder));
   // Fetching function bytes.
-  FunctionBytes = StringRef(reinterpret_cast<const char *>(
-                                ExecEngine->getFunctionAddress(FunctionID)),
-                            CodeSize);
+  const uint64_t FunctionAddress = ExecEngine->getFunctionAddress(FunctionID);
+  assert(isAligned(kFunctionAlignment, FunctionAddress) &&
+         "function is not properly aligned");
+  FunctionBytes =
+      StringRef(reinterpret_cast<const char *>(FunctionAddress), CodeSize);
 }
 
 } // namespace exegesis
