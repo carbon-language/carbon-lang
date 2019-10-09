@@ -15,7 +15,6 @@
 add_library(FortranEvaluate
   call.cc
   characteristics.cc
-  check-call.cc
   check-expression.cc
   common.cc
   complex.cc

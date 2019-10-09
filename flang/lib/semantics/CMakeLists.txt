@@ -19,6 +19,7 @@ add_library(FortranSemantics
   canonicalize-omp.cc
   check-allocate.cc
   check-arithmeticif.cc
+  check-call.cc
   check-coarray.cc
   check-deallocate.cc
   check-declarations.cc

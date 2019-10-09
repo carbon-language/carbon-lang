@@ -14,12 +14,12 @@
 
 #include "expression.h"
 #include "assignment.h"
+#include "check-call.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
 #include "tools.h"
 #include "../common/idioms.h"
-#include "../evaluate/check-call.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
@@ -1800,7 +1800,7 @@ std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
           "References to the procedure '%s' require an explicit interface"_en_US,
           DEREF(proc.GetSymbol()).name());
     }
-    CheckArguments(
+    semantics::CheckArguments(
         *chars, arguments, GetFoldingContext(), treatExternalAsImplicit);
   }
   return chars;

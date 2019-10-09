@@ -13,20 +13,22 @@
 // limitations under the License.
 
 #include "check-call.h"
-#include "characteristics.h"
-#include "shape.h"
+#include "scope.h"
 #include "tools.h"
+#include "../evaluate/characteristics.h"
+#include "../evaluate/shape.h"
+#include "../evaluate/tools.h"
 #include "../parser/message.h"
-#include "../semantics/scope.h"
 #include <map>
 #include <string>
 
 using namespace Fortran::parser::literals;
+namespace characteristics = Fortran::evaluate::characteristics;
 
-namespace Fortran::evaluate {
+namespace Fortran::semantics {
 
 static void CheckImplicitInterfaceArg(
-    ActualArgument &arg, parser::ContextualMessages &messages) {
+    evaluate::ActualArgument &arg, parser::ContextualMessages &messages) {
   if (const auto &kw{arg.keyword}) {
     messages.Say(*kw,
         "Keyword '%s=' cannot appear in a reference to a procedure with an implicit interface"_err_en_US,
@@ -48,24 +50,23 @@ static void CheckImplicitInterfaceArg(
     }
   }
   if (const auto *expr{arg.UnwrapExpr()}) {
-    if (auto named{ExtractNamedEntity(*expr)}) {
-      const semantics::Symbol &symbol{named->GetLastSymbol()};
+    if (auto named{evaluate::ExtractNamedEntity(*expr)}) {
+      const Symbol &symbol{named->GetLastSymbol()};
       if (symbol.Corank() > 0) {
         messages.Say(
             "Coarray argument requires an explicit interface"_err_en_US);
       }
-      if (const auto *details{
-              symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+      if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
         if (details->IsAssumedRank()) {
           messages.Say(
               "Assumed rank argument requires an explicit interface"_err_en_US);
         }
       }
-      if (symbol.attrs().test(semantics::Attr::ASYNCHRONOUS)) {
+      if (symbol.attrs().test(Attr::ASYNCHRONOUS)) {
         messages.Say(
             "ASYNCHRONOUS argument requires an explicit interface"_err_en_US);
       }
-      if (symbol.attrs().test(semantics::Attr::VOLATILE)) {
+      if (symbol.attrs().test(Attr::VOLATILE)) {
         messages.Say(
             "VOLATILE argument requires an explicit interface"_err_en_US);
       }
@@ -74,35 +75,34 @@ static void CheckImplicitInterfaceArg(
 }
 
 struct TypeConcerns {
-  const semantics::Symbol *typeBoundProcedure{nullptr};
-  const semantics::Symbol *finalProcedure{nullptr};
-  const semantics::Symbol *allocatable{nullptr};
-  const semantics::Symbol *coarray{nullptr};
+  const Symbol *typeBoundProcedure{nullptr};
+  const Symbol *finalProcedure{nullptr};
+  const Symbol *allocatable{nullptr};
+  const Symbol *coarray{nullptr};
 };
 
 static void InspectType(
-    const semantics::DerivedTypeSpec &derived, TypeConcerns &concerns) {
+    const DerivedTypeSpec &derived, TypeConcerns &concerns) {
   if (const auto *scope{derived.typeSymbol().scope()}) {
     for (const auto &pair : *scope) {
-      const semantics::Symbol &component{*pair.second};
-      if (const auto *object{
-              component.detailsIf<semantics::ObjectEntityDetails>()}) {
-        if (component.attrs().test(semantics::Attr::ALLOCATABLE)) {
+      const Symbol &component{*pair.second};
+      if (const auto *object{component.detailsIf<ObjectEntityDetails>()}) {
+        if (component.attrs().test(Attr::ALLOCATABLE)) {
           concerns.allocatable = &component;
         }
         if (object->IsCoarray()) {
           concerns.coarray = &component;
         }
-        if (component.flags().test(semantics::Symbol::Flag::ParentComp)) {
+        if (component.flags().test(Symbol::Flag::ParentComp)) {
           if (const auto *type{object->type()}) {
             if (const auto *parent{type->AsDerived()}) {
               InspectType(*parent, concerns);
             }
           }
         }
-      } else if (component.has<semantics::ProcBindingDetails>()) {
+      } else if (component.has<ProcBindingDetails>()) {
         concerns.typeBoundProcedure = &component;
-      } else if (component.has<semantics::FinalProcDetails>()) {
+      } else if (component.has<FinalProcDetails>()) {
         concerns.finalProcedure = &component;
       }
     }
@@ -110,7 +110,7 @@ static void InspectType(
 }
 
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
-    const Expr<SomeType> &actual,
+    const evaluate::Expr<evaluate::SomeType> &actual,
     const characteristics::TypeAndShape &actualType,
     parser::ContextualMessages &messages) {
   dummy.type.IsCompatibleWith(messages, actualType);
@@ -167,12 +167,12 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       }
     }
   }
-  const auto *actualLastSymbol{GetLastSymbol(actual)};
-  const semantics::ObjectEntityDetails *actualLastObject{actualLastSymbol
-          ? actualLastSymbol->detailsIf<semantics::ObjectEntityDetails>()
+  const auto *actualLastSymbol{evaluate::GetLastSymbol(actual)};
+  const ObjectEntityDetails *actualLastObject{actualLastSymbol
+          ? actualLastSymbol->detailsIf<ObjectEntityDetails>()
           : nullptr};
-  int actualRank{GetRank(actualType.shape())};
-  int dummyRank{GetRank(dummy.type.shape())};
+  int actualRank{evaluate::GetRank(actualType.shape())};
+  int dummyRank{evaluate::GetRank(dummy.type.shape())};
   if (dummy.type.attrs().test(
           characteristics::TypeAndShape::Attr::AssumedShape)) {
     // 15.5.2.4(16)
@@ -203,8 +203,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       messages.Say(
           "Element of polymorphic array may not be associated with a dummy argument array"_err_en_US);
     }
-    if (actualLastSymbol &&
-        actualLastSymbol->attrs().test(semantics::Attr::POINTER)) {
+    if (actualLastSymbol && actualLastSymbol->attrs().test(Attr::POINTER)) {
       messages.Say(
           "Element of pointer array may not be associated with a dummy argument array"_err_en_US);
     }
@@ -216,8 +215,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   // TODO pmk more here
 }
 
-static void CheckExplicitInterfaceArg(const ActualArgument &arg,
-    const characteristics::DummyArgument &dummy, FoldingContext &context) {
+static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
+    const characteristics::DummyArgument &dummy,
+    evaluate::FoldingContext &context) {
   auto &messages{context.messages()};
   std::visit(
       common::visitors{
@@ -227,14 +227,14 @@ static void CheckExplicitInterfaceArg(const ActualArgument &arg,
                       *expr, context)}) {
                 CheckExplicitDataArg(object, *expr, *type, context.messages());
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
-                  std::holds_alternative<BOZLiteralConstant>(expr->u)) {
+                  std::holds_alternative<evaluate::BOZLiteralConstant>(
+                      expr->u)) {
                 // ok
               } else {
                 messages.Say(
                     "Actual argument is not a variable or typed expression"_err_en_US);
               }
-            } else if (const semantics::Symbol *
-                assumed{arg.GetAssumedTypeDummy()}) {
+            } else if (const Symbol * assumed{arg.GetAssumedTypeDummy()}) {
               // An assumed-type dummy is being forwarded.
               if (!object.type.type().IsAssumedType()) {
                 messages.Say(
@@ -257,8 +257,8 @@ static void CheckExplicitInterfaceArg(const ActualArgument &arg,
   return true;  // TODO: return false when error detected
 }
 
-static bool RearrangeArguments(const characteristics::Procedure &proc,
-    ActualArguments &actuals, parser::ContextualMessages &messages) {
+static void RearrangeArguments(const characteristics::Procedure &proc,
+    evaluate::ActualArguments &actuals, parser::ContextualMessages &messages) {
   CHECK(proc.HasExplicitInterface());
   if (actuals.size() < proc.dummyArguments.size()) {
     actuals.resize(proc.dummyArguments.size());
@@ -268,7 +268,7 @@ static bool RearrangeArguments(const characteristics::Procedure &proc,
         actuals.size(), proc.dummyArguments.size());
     return false;
   }
-  std::map<std::string, ActualArgument> kwArgs;
+  std::map<std::string, evaluate::ActualArgument> kwArgs;
   for (auto &x : actuals) {
     if (x.has_value()) {
       if (x->keyword.has_value()) {
@@ -290,7 +290,7 @@ static bool RearrangeArguments(const characteristics::Procedure &proc,
       if (!dummy.name.empty()) {
         auto iter{kwArgs.find(dummy.name)};
         if (iter != kwArgs.end()) {
-          ActualArgument &x{iter->second};
+          evaluate::ActualArgument &x{iter->second};
           if (actuals[index].has_value()) {
             messages.Say(*x.keyword,
                 "Keyword argument '%s=' has already been specified positionally (#%d) in this procedure reference"_err_en_US,
@@ -305,7 +305,7 @@ static bool RearrangeArguments(const characteristics::Procedure &proc,
       ++index;
     }
     for (auto &bad : kwArgs) {
-      ActualArgument &x{bad.second};
+      evaluate::ActualArgument &x{bad.second};
       messages.Say(*x.keyword,
           "Argument keyword '%s=' is not recognized for this procedure reference"_err_en_US,
           *x.keyword);
@@ -346,15 +346,14 @@ bool CheckExplicitInterface(const characteristics::Procedure &proc,
 }
 
 void CheckArguments(const characteristics::Procedure &proc,
-    ActualArguments &actuals, FoldingContext &context,
+    evaluate::ActualArguments &actuals, evaluate::FoldingContext &context,
     bool treatingExternalAsImplicit) {
   parser::Messages buffer;
   parser::ContextualMessages messages{context.messages().at(), &buffer};
-  if (proc.HasExplicitInterface()) {
-    FoldingContext localContext{context, messages};
+  if (proc.HasExplicitInterface() && !treatingExternalAsImplicit) {
+    evaluate::FoldingContext localContext{context, messages};
     CheckExplicitInterface(proc, actuals, localContext);
-  }
-  if (!proc.HasExplicitInterface() || treatingExternalAsImplicit) {
+  } else {
     for (auto &actual : actuals) {
       if (actual.has_value()) {
         CheckImplicitInterfaceArg(*actual, messages);
