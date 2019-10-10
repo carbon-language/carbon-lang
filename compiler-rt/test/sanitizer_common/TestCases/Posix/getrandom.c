@@ -1,5 +1,5 @@
 // RUN: %clang -O2 %s -o %t && %run %t
-// UNSUPPORTED: android netbsd darwin solaris
+// UNSUPPORTED: android, netbsd, darwin, solaris
 //
 
 #include <sys/types.h>
