@@ -676,11 +676,11 @@ class FileHandleTestCase(lldbtest.TestBase):
             error, n = lldb.SBFile(BadIO()).Write(b"FOO")
             self.assertEqual(n, 0)
             self.assertTrue(error.Fail())
-            self.assertEqual(error.GetCString(), "OhNoe('OH NOE')")
+            self.assertIn('OH NOE', error.GetCString())
             error, n = lldb.SBFile(BadIO()).Read(bytearray(100))
             self.assertEqual(n, 0)
             self.assertTrue(error.Fail())
-            self.assertEqual(error.GetCString(), "OhNoe('OH NOE')")
+            self.assertIn('OH NOE', error.GetCString())
 
 
     @add_test_categories(['pyapi'])
