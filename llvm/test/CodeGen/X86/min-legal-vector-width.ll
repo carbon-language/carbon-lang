@@ -1083,12 +1083,10 @@ define void @vselect_split_v16i16_setcc(<16 x i16> %s, <16 x i16> %t, <16 x i32>
 define <16 x i8> @trunc_packus_v16i32_v16i8(<16 x i32>* %p, <16 x i8>* %q) "min-legal-vector-width"="256" {
 ; CHECK-LABEL: trunc_packus_v16i32_v16i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; CHECK-NEXT:    vpmaxsd 32(%rdi), %ymm0, %ymm1
-; CHECK-NEXT:    vpmovusdb %ymm1, %xmm1
-; CHECK-NEXT:    vpmaxsd (%rdi), %ymm0, %ymm0
-; CHECK-NEXT:    vpmovusdb %ymm0, %xmm0
-; CHECK-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:    vmovdqa (%rdi), %ymm0
+; CHECK-NEXT:    vpackusdw 32(%rdi), %ymm0, %ymm0
+; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
+; CHECK-NEXT:    vpmovuswb %ymm0, %xmm0
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %a = load <16 x i32>, <16 x i32>* %p

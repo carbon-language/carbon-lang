@@ -39841,6 +39841,21 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
     if (auto USatVal = detectUSatPattern(In, VT, DAG, DL))
       return DAG.getNode(X86ISD::VTRUNCUS, DL, VT, USatVal);
   }
+
+  // If we're clamping a signed 32-bit vector to 0-255 and the 32-bit vector is
+  // split across two registers. We can use a packusdw+perm to clamp to 0-65535
+  // and concatenate at the same time. Then we can use a final vpmovuswb to
+  // clip to 0-255.
+  if (Subtarget.hasBWI() && !Subtarget.useAVX512Regs() &&
+      InVT == MVT::v16i32 && VT == MVT::v16i8) {
+    if (auto USatVal = detectSSatPattern(In, VT, true)) {
+      // Emit a VPACKUSDW+VPERMQ followed by a VPMOVUSWB.
+      SDValue Mid = truncateVectorWithPACK(X86ISD::PACKUS, MVT::v16i16, USatVal,
+                                           DL, DAG, Subtarget);
+      return DAG.getNode(X86ISD::VTRUNCUS, DL, VT, Mid);
+    }
+  }
+
   if (VT.isVector() && isPowerOf2_32(VT.getVectorNumElements()) &&
       !(Subtarget.hasAVX512() && InSVT == MVT::i32) &&
       !(Subtarget.hasBWI() && InSVT == MVT::i16) &&
