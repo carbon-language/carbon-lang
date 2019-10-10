@@ -41384,6 +41384,10 @@ char X86TargetLowering::isNegatibleForFree(SDValue Op, SelectionDAG &DAG,
                                            bool LegalOperations,
                                            bool ForCodeSize,
                                            unsigned Depth) const {
+  // fneg patterns are removable even if they have multiple uses.
+  if (isFNEG(DAG, Op.getNode()))
+    return 2;
+
   return TargetLowering::isNegatibleForFree(Op, DAG, LegalOperations,
                                             ForCodeSize, Depth);
 }
@@ -41392,6 +41396,10 @@ SDValue X86TargetLowering::getNegatedExpression(SDValue Op, SelectionDAG &DAG,
                                                 bool LegalOperations,
                                                 bool ForCodeSize,
                                                 unsigned Depth) const {
+  // fneg patterns are removable even if they have multiple uses.
+  if (SDValue Arg = isFNEG(DAG, Op.getNode()))
+    return DAG.getBitcast(Op.getValueType(), Arg);
+
   return TargetLowering::getNegatedExpression(Op, DAG, LegalOperations,
                                               ForCodeSize, Depth);
 }
@@ -42257,25 +42265,25 @@ static SDValue combineFMA(SDNode *N, SelectionDAG &DAG,
 // Combine FMADDSUB(A, B, FNEG(C)) -> FMSUBADD(A, B, C)
 // Combine FMSUBADD(A, B, FNEG(C)) -> FMADDSUB(A, B, C)
 static SDValue combineFMADDSUB(SDNode *N, SelectionDAG &DAG,
-                               const X86Subtarget &Subtarget) {
+                               TargetLowering::DAGCombinerInfo &DCI) {
   SDLoc dl(N);
   EVT VT = N->getValueType(0);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  bool CodeSize = DAG.getMachineFunction().getFunction().hasOptSize();
+  bool LegalOperations = !DCI.isBeforeLegalizeOps();
 
-  SDValue NegVal = isFNEG(DAG, N->getOperand(2).getNode());
-  if (!NegVal)
+  SDValue N2 = N->getOperand(2);
+  if (TLI.isNegatibleForFree(N2, DAG, LegalOperations, CodeSize) != 2)
     return SDValue();
 
-  // FIXME: Should we bitcast instead?
-  if (NegVal.getValueType() != VT)
-    return SDValue();
-
+  SDValue NegN2 = TLI.getNegatedExpression(N2, DAG, LegalOperations, CodeSize);
   unsigned NewOpcode = negateFMAOpcode(N->getOpcode(), false, true, false);
 
   if (N->getNumOperands() == 4)
     return DAG.getNode(NewOpcode, dl, VT, N->getOperand(0), N->getOperand(1),
-                       NegVal, N->getOperand(3));
+                       NegN2, N->getOperand(3));
   return DAG.getNode(NewOpcode, dl, VT, N->getOperand(0), N->getOperand(1),
-                     NegVal);
+                     NegN2);
 }
 
 static SDValue combineZext(SDNode *N, SelectionDAG &DAG,
@@ -44645,7 +44653,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FMADDSUB_RND:
   case X86ISD::FMSUBADD_RND:
   case X86ISD::FMADDSUB:
-  case X86ISD::FMSUBADD:    return combineFMADDSUB(N, DAG, Subtarget);
+  case X86ISD::FMSUBADD:    return combineFMADDSUB(N, DAG, DCI);
   case X86ISD::MOVMSK:      return combineMOVMSK(N, DAG, DCI, Subtarget);
   case X86ISD::MGATHER:
   case X86ISD::MSCATTER:    return combineX86GatherScatter(N, DAG, DCI);
