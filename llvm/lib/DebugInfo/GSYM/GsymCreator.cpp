@@ -14,7 +14,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <strings.h>
 
 using namespace llvm;
 using namespace gsym;
