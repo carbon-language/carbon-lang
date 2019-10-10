@@ -376,7 +376,3 @@ class BreakpointSerialization(TestBase):
                 self.assertEqual(copy_value, "second_value")
             else:
                 self.Fail("Unknown key: %s"%(key))
-<<<<<<< HEAD
-=======
-
->>>>>>> Die, TABS, die, die, die, die...
