@@ -587,9 +587,25 @@ private:
 
   /// An empty volatile inline asm that prevents callback merge.
   InlineAsm *EmptyAsm;
-
-  Function *MsanCtorFunction;
 };
+
+void insertModuleCtor(Module &M) {
+  getOrCreateSanitizerCtorAndInitFunctions(
+      M, kMsanModuleCtorName, kMsanInitName,
+      /*InitArgTypes=*/{},
+      /*InitArgs=*/{},
+      // This callback is invoked when the functions are created the first
+      // time. Hook them into the global ctors list in that case:
+      [&](Function *Ctor, FunctionCallee) {
+        if (!ClWithComdat) {
+          appendToGlobalCtors(M, Ctor, 0);
+          return;
+        }
+        Comdat *MsanCtorComdat = M.getOrInsertComdat(kMsanModuleCtorName);
+        Ctor->setComdat(MsanCtorComdat);
+        appendToGlobalCtors(M, Ctor, 0, Ctor);
+      });
+}
 
 /// A legacy function pass for msan instrumentation.
 ///
@@ -633,6 +649,14 @@ PreservedAnalyses MemorySanitizerPass::run(Function &F,
   if (Msan.sanitizeFunction(F, FAM.getResult<TargetLibraryAnalysis>(F)))
     return PreservedAnalyses::none();
   return PreservedAnalyses::all();
+}
+
+PreservedAnalyses MemorySanitizerPass::run(Module &M,
+                                           ModuleAnalysisManager &AM) {
+  if (Options.Kernel)
+    return PreservedAnalyses::all();
+  insertModuleCtor(M);
+  return PreservedAnalyses::none();
 }
 
 char MemorySanitizerLegacyPass::ID = 0;
@@ -920,23 +944,6 @@ void MemorySanitizer::initializeModule(Module &M) {
   OriginStoreWeights = MDBuilder(*C).createBranchWeights(1, 1000);
 
   if (!CompileKernel) {
-    std::tie(MsanCtorFunction, std::ignore) =
-        getOrCreateSanitizerCtorAndInitFunctions(
-            M, kMsanModuleCtorName, kMsanInitName,
-            /*InitArgTypes=*/{},
-            /*InitArgs=*/{},
-            // This callback is invoked when the functions are created the first
-            // time. Hook them into the global ctors list in that case:
-            [&](Function *Ctor, FunctionCallee) {
-              if (!ClWithComdat) {
-                appendToGlobalCtors(M, Ctor, 0);
-                return;
-              }
-              Comdat *MsanCtorComdat = M.getOrInsertComdat(kMsanModuleCtorName);
-              Ctor->setComdat(MsanCtorComdat);
-              appendToGlobalCtors(M, Ctor, 0, Ctor);
-            });
-
     if (TrackOrigins)
       M.getOrInsertGlobal("__msan_track_origins", IRB.getInt32Ty(), [&] {
         return new GlobalVariable(
@@ -954,6 +961,8 @@ void MemorySanitizer::initializeModule(Module &M) {
 }
 
 bool MemorySanitizerLegacyPass::doInitialization(Module &M) {
+  if (!Options.Kernel)
+    insertModuleCtor(M);
   MSan.emplace(M, Options);
   return true;
 }
@@ -4578,8 +4587,9 @@ static VarArgHelper *CreateVarArgHelper(Function &Func, MemorySanitizer &Msan,
 }
 
 bool MemorySanitizer::sanitizeFunction(Function &F, TargetLibraryInfo &TLI) {
-  if (!CompileKernel && (&F == MsanCtorFunction))
+  if (!CompileKernel && F.getName() == kMsanModuleCtorName)
     return false;
+
   MemorySanitizerVisitor Visitor(F, *this, TLI);
 
   // Clear out readonly/readnone attributes.
