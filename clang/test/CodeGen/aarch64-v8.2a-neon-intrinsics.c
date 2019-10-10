@@ -146,14 +146,14 @@ int16x8_t test_vcvtq_s16_f16 (float16x8_t a) {
 // CHECK-LABEL: test_vcvt_u16_f16
 // CHECK:  [[VCVT:%.*]] = fptoui <4 x half> %a to <4 x i16>
 // CHECK:  ret <4 x i16> [[VCVT]]
-int16x4_t test_vcvt_u16_f16 (float16x4_t a) {
+uint16x4_t test_vcvt_u16_f16 (float16x4_t a) {
   return vcvt_u16_f16(a);
 }
 
 // CHECK-LABEL: test_vcvtq_u16_f16
 // CHECK:  [[VCVT:%.*]] = fptoui <8 x half> %a to <8 x i16>
 // CHECK:  ret <8 x i16> [[VCVT]]
-int16x8_t test_vcvtq_u16_f16 (float16x8_t a) {
+uint16x8_t test_vcvtq_u16_f16 (float16x8_t a) {
   return vcvtq_u16_f16(a);
 }
 
@@ -167,7 +167,7 @@ int16x4_t test_vcvta_s16_f16 (float16x4_t a) {
 // CHECK-LABEL: test_vcvta_u16_f16
 // CHECK:  [[VCVT:%.*]] = call <4 x i16> @llvm.aarch64.neon.fcvtau.v4i16.v4f16(<4 x half> %a)
 // CHECK:  ret <4 x i16> [[VCVT]]
-int16x4_t test_vcvta_u16_f16 (float16x4_t a) {
+uint16x4_t test_vcvta_u16_f16 (float16x4_t a) {
   return vcvta_u16_f16(a);
 }
 
