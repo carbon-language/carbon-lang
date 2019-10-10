@@ -1519,14 +1519,14 @@ static void emitAlignedClause(CodeGenFunction &CGF,
   if (!CGF.HaveInsertPoint())
     return;
   for (const auto *Clause : D.getClausesOfKind<OMPAlignedClause>()) {
-    unsigned ClauseAlignment = 0;
+    size_t ClauseAlignment = 0;
     if (const Expr *AlignmentExpr = Clause->getAlignment()) {
       auto *AlignmentCI =
           cast<llvm::ConstantInt>(CGF.EmitScalarExpr(AlignmentExpr));
-      ClauseAlignment = static_cast<unsigned>(AlignmentCI->getZExtValue());
+      ClauseAlignment = AlignmentCI->getZExtValue();
     }
     for (const Expr *E : Clause->varlists()) {
-      unsigned Alignment = ClauseAlignment;
+      size_t Alignment = ClauseAlignment;
       if (Alignment == 0) {
         // OpenMP [2.8.1, Description]
         // If no optional parameter is specified, implementation-defined default
@@ -1542,7 +1542,8 @@ static void emitAlignedClause(CodeGenFunction &CGF,
       if (Alignment != 0) {
         llvm::Value *PtrValue = CGF.EmitScalarExpr(E);
         CGF.EmitAlignmentAssumption(
-            PtrValue, E, /*No second loc needed*/ SourceLocation(), Alignment);
+            PtrValue, E, /*No second loc needed*/ SourceLocation(),
+            llvm::ConstantInt::get(CGF.SizeTy, Alignment));
       }
     }
   }

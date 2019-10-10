@@ -2048,11 +2048,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
     Value *AlignmentValue = EmitScalarExpr(E->getArg(1));
     ConstantInt *AlignmentCI = cast<ConstantInt>(AlignmentValue);
-    unsigned Alignment = (unsigned)AlignmentCI->getZExtValue();
 
     EmitAlignmentAssumption(PtrValue, Ptr,
                             /*The expr loc is sufficient.*/ SourceLocation(),
-                            Alignment, OffsetValue);
+                            AlignmentCI, OffsetValue);
     return RValue::get(PtrValue);
   }
   case Builtin::BI__assume:
