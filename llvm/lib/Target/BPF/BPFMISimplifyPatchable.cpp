@@ -98,7 +98,6 @@ bool BPFMISimplifyPatchable::removeLD() {
 
       Register DstReg = MI.getOperand(0).getReg();
       Register SrcReg = MI.getOperand(1).getReg();
-      int64_t ImmVal = MI.getOperand(2).getImm();
 
       MachineInstr *DefInst = MRI->getUniqueVRegDef(SrcReg);
       if (!DefInst)
@@ -114,7 +113,7 @@ bool BPFMISimplifyPatchable::removeLD() {
             // Global variables representing structure offset or
             // patchable extern globals.
             if (GVar->hasAttribute(BPFCoreSharedInfo::AmaAttr)) {
-              assert(ImmVal == 0);
+              assert(MI.getOperand(2).getImm() == 0);
               IsCandidate = true;
             }
           }
