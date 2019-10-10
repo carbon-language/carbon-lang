@@ -1147,7 +1147,8 @@ def ftrapping_math : Flag<["-"], "ftrapping-math">, Group<f_Group>, Flags<[CC1Op
 def fno_trapping_math : Flag<["-"], "fno-trapping-math">, Group<f_Group>, Flags<[CC1Option]>;
 def ffp_contract : Joined<["-"], "ffp-contract=">, Group<f_Group>,
   Flags<[CC1Option]>, HelpText<"Form fused FP ops (e.g. FMAs): fast (everywhere)"
-  " | on (according to FP_CONTRACT pragma, default) | off (never fuse)">, Values<"fast,on,off">;
+  " | on (according to FP_CONTRACT pragma) | off (never fuse). Default"
+  " is 'fast' for CUDA/HIP and 'on' otherwise.">, Values<"fast,on,off">;
 
 def fstrict_float_cast_overflow : Flag<["-"],
   "fstrict-float-cast-overflow">, Group<f_Group>, Flags<[CC1Option]>,
