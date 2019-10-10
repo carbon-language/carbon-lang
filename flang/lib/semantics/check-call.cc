@@ -31,7 +31,7 @@ static void CheckImplicitInterfaceArg(
     evaluate::ActualArgument &arg, parser::ContextualMessages &messages) {
   if (const auto &kw{arg.keyword}) {
     messages.Say(*kw,
-        "Keyword '%s=' cannot appear in a reference to a procedure with an implicit interface"_err_en_US,
+        "Keyword '%s=' may not appear in a reference to a procedure with an implicit interface"_err_en_US,
         *kw);
   }
   if (auto type{arg.GetType()}) {
@@ -112,8 +112,17 @@ static void InspectType(
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     const evaluate::Expr<evaluate::SomeType> &actual,
     const characteristics::TypeAndShape &actualType,
-    parser::ContextualMessages &messages, const Scope &scope) {
-  dummy.type.IsCompatibleWith(messages, actualType);
+    const characteristics::Procedure &proc, evaluate::FoldingContext &context,
+    const Scope &scope) {
+
+  // Basic type & rank checking
+  parser::ContextualMessages &messages{context.messages()};
+  int dummyRank{evaluate::GetRank(dummy.type.shape())};
+  bool isElemental{dummyRank == 0 &&
+      proc.attrs.test(characteristics::Procedure::Attr::Elemental)};
+  dummy.type.IsCompatibleWith(
+      messages, actualType, "dummy argument", "actual argument", isElemental);
+
   bool actualIsPolymorphic{actualType.type().IsPolymorphic()};
   bool dummyIsPolymorphic{dummy.type.type().IsPolymorphic()};
   bool actualIsCoindexed{ExtractCoarrayRef(actual).has_value()};
@@ -121,6 +130,25 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       characteristics::TypeAndShape::Attr::AssumedSize)};
   bool dummyIsAssumedSize{dummy.type.attrs().test(
       characteristics::TypeAndShape::Attr::AssumedSize)};
+  bool dummyIsAsynchronous{
+      dummy.attrs.test(characteristics::DummyDataObject::Attr::Asynchronous)};
+  bool dummyIsVolatile{
+      dummy.attrs.test(characteristics::DummyDataObject::Attr::Volatile)};
+  bool dummyIsValue{
+      dummy.attrs.test(characteristics::DummyDataObject::Attr::Value)};
+
+  bool actualIsAsynchronous{false};
+  bool actualIsVolatile{false};
+  const Symbol *actualFirstSymbol{evaluate::GetFirstSymbol(actual)};
+  if (actualFirstSymbol != nullptr) {
+    const Symbol &ultimate{actualFirstSymbol->GetUltimate()};
+    actualIsAsynchronous =
+        actualFirstSymbol->attrs().test(Attr::ASYNCHRONOUS) ||
+        ultimate.attrs().test(Attr::ASYNCHRONOUS);
+    actualIsVolatile = actualFirstSymbol->attrs().test(Attr::VOLATILE) ||
+        ultimate.attrs().test(Attr::VOLATILE);
+  }
+
   if (actualIsPolymorphic && dummyIsPolymorphic &&
       actualIsCoindexed) {  // 15.5.2.4(2)
     messages.Say(
@@ -131,6 +159,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     messages.Say(
         "Assumed-size polymorphic array may not be associated with a monomorphic dummy argument"_err_en_US);
   }
+
+  // derived type actual argument checks
   if (!actualType.type().IsUnlimitedPolymorphic() &&
       actualType.type().category() == TypeCategory::Derived) {
     const auto &derived{actualType.type().GetDerivedTypeSpec()};
@@ -157,8 +187,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       }
     }
     if (actualIsCoindexed && concerns.allocatable &&
-        dummy.intent != common::Intent::In &&
-        !dummy.attrs.test(characteristics::DummyDataObject::Attr::Value)) {
+        dummy.intent != common::Intent::In && !dummyIsValue) {
       // 15.5.2.4(6)
       if (auto *msg{messages.Say(
               "Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument with VALUE or INTENT(IN) attributes"_err_en_US)}) {
@@ -166,24 +195,32 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
             "Declaration of ALLOCATABLE component"_en_US);
       }
     }
+    if (concerns.coarray &&
+        actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
+      if (auto *msg{messages.Say(
+              "VOLATILE attributes must match when actual argument has a coarray ultimate component"_err_en_US)}) {
+        msg->Attach(
+            concerns.coarray->name(), "Declaration of coarray component"_en_US);
+      }
+    }
   }
+
+  // rank and shape
   const auto *actualLastSymbol{evaluate::GetLastSymbol(actual)};
   const ObjectEntityDetails *actualLastObject{actualLastSymbol
-          ? actualLastSymbol->detailsIf<ObjectEntityDetails>()
+          ? actualLastSymbol->GetUltimate().detailsIf<ObjectEntityDetails>()
           : nullptr};
   int actualRank{evaluate::GetRank(actualType.shape())};
-  int dummyRank{evaluate::GetRank(dummy.type.shape())};
   if (dummy.type.attrs().test(
           characteristics::TypeAndShape::Attr::AssumedShape)) {
     // 15.5.2.4(16)
-    if (actualRank != dummyRank) {
+    if (actualRank == 0) {
       messages.Say(
-          "Rank of actual argument (%d) differs from assumed-shape dummy argument (%d)"_err_en_US,
-          actualRank, dummyRank);
+          "Scalar actual argument may not be associated with assumed-shape dummy argument"_err_en_US);
     }
     if (actualIsAssumedSize) {
       if (auto *msg{messages.Say(
-              "Assumed-size array cannot be associated with assumed-shape dummy argument"_err_en_US)}) {
+              "Assumed-size array may not be associated with assumed-shape dummy argument"_err_en_US)}) {
         msg->Attach(actualLastSymbol->name(),
             "Declaration of assumed-size array actual argument"_en_US);
       }
@@ -212,21 +249,22 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           "Element of assumed-shape array may not be associated with a dummy argument array"_err_en_US);
     }
   }
+
+  // definability
   const char *reason{nullptr};
   if (dummy.intent == common::Intent::Out) {
     reason = "INTENT(OUT)";
   } else if (dummy.intent == common::Intent::InOut) {
     reason = "INTENT(IN OUT)";
-  } else if (dummy.attrs.test(
-                 characteristics::DummyDataObject::Attr::Asynchronous)) {
+  } else if (dummyIsAsynchronous) {
     reason = "ASYNCHRONOUS";
-  } else if (dummy.attrs.test(
-                 characteristics::DummyDataObject::Attr::Volatile)) {
+  } else if (dummyIsVolatile) {
     reason = "VOLATILE";
   }
   if (reason != nullptr) {
+    bool vectorSubscriptIsOk{isElemental || dummyIsValue};  // 15.5.2.4(21)
     std::unique_ptr<parser::Message> why{
-        WhyNotModifiable(messages.at(), actual, scope)};
+        WhyNotModifiable(messages.at(), actual, scope, vectorSubscriptIsOk)};
     if (why.get() != nullptr) {
       if (auto *msg{messages.Say(
               "Actual argument associated with %s dummy must be definable"_err_en_US,
@@ -235,12 +273,39 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       }
     }
   }
-  // TODO pmk more here
+
+  // Cases when temporaries might be needed but must not be permitted.
+  if ((actualIsAsynchronous || actualIsVolatile) &&
+      (dummyIsAsynchronous || dummyIsVolatile) && !dummyIsValue) {
+    if (actualIsCoindexed) {  // C1538
+      messages.Say(
+          "Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE"_err_en_US);
+    }
+    if (actualRank > 0 && !IsSimplyContiguous(actual, context.intrinsics())) {
+      bool dummyIsContiguous{
+          dummy.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)};
+      bool dummyIsAssumedRank{dummy.type.attrs().test(
+          characteristics::TypeAndShape::Attr::AssumedRank)};
+      bool dummyIsAssumedShape{dummy.type.attrs().test(
+          characteristics::TypeAndShape::Attr::AssumedShape)};
+      bool actualIsPointer{actualLastSymbol &&
+          actualLastSymbol->GetUltimate().attrs().test(Attr::POINTER)};
+      bool dummyIsPointer{
+          dummy.attrs.test(characteristics::DummyDataObject::Attr::Pointer)};
+      if (dummyIsContiguous ||
+          !(dummyIsAssumedShape || dummyIsAssumedRank ||
+              (actualIsPointer && dummyIsPointer))) {  // C1539 & C1540
+        messages.Say(
+            "ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument"_err_en_US);
+      }
+    }
+  }
 }
 
 static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
     const characteristics::DummyArgument &dummy,
-    evaluate::FoldingContext &context, const Scope &scope) {
+    const characteristics::Procedure &proc, evaluate::FoldingContext &context,
+    const Scope &scope) {
   auto &messages{context.messages()};
   std::visit(
       common::visitors{
@@ -249,7 +314,7 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
                 CheckExplicitDataArg(
-                    object, *expr, *type, context.messages(), scope);
+                    object, *expr, *type, proc, context, scope);
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
                   std::holds_alternative<evaluate::BOZLiteralConstant>(
                       expr->u)) {
@@ -341,7 +406,8 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
 
 bool CheckExplicitInterface(const characteristics::Procedure &proc,
     ActualArguments &actuals, FoldingContext &context, const Scope &scope) {
-  if (!RearrangeArguments(proc, actuals, context.messages())) {
+  parser::ContextualMessages &messages{context.messages()};
+  if (!RearrangeArguments(proc, actuals, messages)) {
     return false;
   }
   int index{0};
@@ -353,12 +419,12 @@ bool CheckExplicitInterface(const characteristics::Procedure &proc,
       }
     } else if (!dummy.IsOptional()) {
       if (dummy.name.empty()) {
-        context.messages().Say(
+        messages.Say(
             "Dummy argument #%d is not OPTIONAL and is not associated with an "
             "actual argument in this procedure reference"_err_en_US,
             index);
       } else {
-        context.messages().Say(
+        messages.Say(
             "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated "
             "with an actual argument in this procedure reference"_err_en_US,
             dummy.name, index);

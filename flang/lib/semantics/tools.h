@@ -115,8 +115,8 @@ bool IsAssumedLengthCharacter(const Symbol &);
 bool IsAssumedLengthCharacterFunction(const Symbol &);
 std::optional<parser::MessageFixedText> WhyNotModifiable(
     const Symbol &, const Scope &);
-std::unique_ptr<parser::Message> WhyNotModifiable(
-    SourceName, const SomeExpr &, const Scope &);
+std::unique_ptr<parser::Message> WhyNotModifiable(SourceName, const SomeExpr &,
+    const Scope &, bool vectorSubscriptIsOk = false);
 // Is the symbol modifiable in this scope
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope);
 

@@ -31,7 +31,7 @@ subroutine s(assumedRank, coarray, class, classStar, typeStar)
 
   !ERROR: Invalid specification expression: reference to impure function 'implicit01'
   real :: array(implicit01())  ! 15.4.2.2(2)
-  !ERROR: Keyword 'keyword=' cannot appear in a reference to a procedure with an implicit interface
+  !ERROR: Keyword 'keyword=' may not appear in a reference to a procedure with an implicit interface
   call implicit10(1, 2, keyword=3)  ! 15.4.2.2(1)
   !ERROR: Assumed rank argument requires an explicit interface
   call implicit11(assumedRank)  ! 15.4.2.2(3)(c)

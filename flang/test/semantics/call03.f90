@@ -87,6 +87,12 @@ module m01
   subroutine valueassumedsize(x)
     real, value :: x(*)
   end subroutine
+  subroutine volatileassumedsize(x)
+    real, volatile :: x(*)
+  end subroutine
+  subroutine volatilecontiguous(x)
+    real, volatile :: x(*)
+  end subroutine
 
   subroutine test01(x) ! 15.5.2.4(2)
     class(t), intent(in) :: x[*]
@@ -176,11 +182,11 @@ module m01
   subroutine test10(a) ! 15.5.2.4(16)
     real :: scalar, matrix(2,3)
     real :: a(*)
-    !ERROR: Rank of actual argument (0) differs from assumed-shape dummy argument (1)
+    !ERROR: Scalar actual argument may not be associated with assumed-shape dummy argument
     call assumedshape(scalar)
-    !ERROR: Rank of actual argument (2) differs from assumed-shape dummy argument (1)
+    !ERROR: Rank of dummy argument is 1, but actual argument has rank 2
     call assumedshape(matrix)
-    !ERROR: Assumed-size array cannot be associated with assumed-shape dummy argument
+    !ERROR: Assumed-size array may not be associated with assumed-shape dummy argument
     call assumedshape(a)
   end subroutine
 
@@ -233,9 +239,9 @@ module m01
     type(ultimateCoarray), volatile :: b
     call coarr(a)  ! ok
     call volcoarr(b)  ! ok
-    !ERROR: VOLATILE attributes must match when argument has a coarray ultimate component
+    !ERROR: VOLATILE attributes must match when actual argument has a coarray ultimate component
     call coarr(b)
-    !ERROR: VOLATILE attributes must match when argument has a coarray ultimate component
+    !ERROR: VOLATILE attributes must match when actual argument has a coarray ultimate component
     call volcoarr(a)
   end subroutine
 
@@ -249,14 +255,17 @@ module m01
     call asynchronousValue(b[1])  ! ok
     call asynchronousValue(c[1])  ! ok
     call asynchronousValue(d[1])  ! ok
-    !ERROR: coindexed ASYNCHRONOUS or VOLATILE effective argument must not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call asynchronous(b[1])
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call volatile(b[1])
-    !ERROR: coindexed ASYNCHRONOUS or VOLATILE effective argument must not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call asynchronous(c[1])
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call volatile(c[1])
-    !ERROR: coindexed ASYNCHRONOUS or VOLATILE effective argument must not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call asynchronous(d[1])
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call volatile(d[1])
   end subroutine
 
@@ -271,18 +280,18 @@ module m01
     call valueassumedsize(b(::2)) ! ok
     call valueassumedsize(c(::2)) ! ok
     call valueassumedsize(d(::2)) ! ok
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call assumedsize(b(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call contiguous(b(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call assumedsize(c(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call contiguous(c(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call assumedsize(d(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call contiguous(d(::2))
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatileassumedsize(b(::2))
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatilecontiguous(b(::2))
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatileassumedsize(c(::2))
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatilecontiguous(c(::2))
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatileassumedsize(d(::2))
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatilecontiguous(d(::2))
   end subroutine
 
   subroutine test16() ! C1540
@@ -300,18 +309,18 @@ module m01
     call valueassumedsize(b) ! ok
     call valueassumedsize(c) ! ok
     call valueassumedsize(d) ! ok
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call assumedsize(b)
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call contiguous(b)
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call assumedsize(c)
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call contiguous(c)
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call assumedsize(d)
-    !ERROR: ASYNCHRONOUS or VOLATILE effective argument that is not simply contiguous cannot be associated with a contiguous dummy argument
-    call contiguous(d)
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatileassumedsize(b)
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatilecontiguous(b)
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatileassumedsize(c)
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatilecontiguous(c)
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatileassumedsize(d)
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    call volatilecontiguous(d)
   end subroutine
 
 end module

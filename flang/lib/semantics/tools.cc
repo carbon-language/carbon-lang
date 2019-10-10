@@ -511,11 +511,11 @@ std::optional<parser::MessageFixedText> WhyNotModifiable(
   }
 }
 
-std::unique_ptr<parser::Message> WhyNotModifiable(
-    parser::CharBlock at, const SomeExpr &expr, const Scope &scope) {
+std::unique_ptr<parser::Message> WhyNotModifiable(parser::CharBlock at,
+    const SomeExpr &expr, const Scope &scope, bool vectorSubscriptIsOk) {
   if (evaluate::IsVariable(expr)) {
     if (auto dataRef{evaluate::ExtractDataRef(expr)}) {
-      if (evaluate::HasVectorSubscript(expr)) {
+      if (!vectorSubscriptIsOk && evaluate::HasVectorSubscript(expr)) {
         return std::make_unique<parser::Message>(
             at, "variable has a vector subscript"_en_US);
       } else {

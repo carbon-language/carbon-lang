@@ -122,16 +122,18 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
   return std::nullopt;
 }
 
-bool TypeAndShape::IsCompatibleWith(
-    parser::ContextualMessages &messages, const TypeAndShape &that) const {
+bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
+    const TypeAndShape &that, const char *thisDesc, const char *thatDesc,
+    bool isElemental) const {
   const auto &len{that.LEN()};
   if (!type_.IsTypeCompatibleWith(that.type_)) {
     std::stringstream lenstr;
     if (len) {
       len->AsFortran(lenstr);
     }
-    messages.Say("Target type '%s' is not compatible with '%s'"_err_en_US,
-        that.type_.AsFortran(lenstr.str()), type_.AsFortran());
+    messages.Say("%s type '%s' is not compatible with %s type '%s'"_err_en_US,
+        thatDesc, that.type_.AsFortran(lenstr.str()), thisDesc,
+        type_.AsFortran());
     return false;
   }
   // When associating with a character scalar, length must not be greater.
@@ -146,7 +148,8 @@ bool TypeAndShape::IsCompatibleWith(
       }
     }
   }
-  return CheckConformance(messages, shape_, that.shape_);
+  return isElemental ||
+      CheckConformance(messages, shape_, that.shape_, thisDesc, thatDesc);
 }
 
 void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {
