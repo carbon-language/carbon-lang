@@ -462,16 +462,9 @@ namespace {
 /// the module.
 class MemorySanitizer {
 public:
-  MemorySanitizer(Module &M, MemorySanitizerOptions Options) {
-    this->CompileKernel =
-        ClEnableKmsan.getNumOccurrences() > 0 ? ClEnableKmsan : Options.Kernel;
-    if (ClTrackOrigins.getNumOccurrences() > 0)
-      this->TrackOrigins = ClTrackOrigins;
-    else
-      this->TrackOrigins = this->CompileKernel ? 2 : Options.TrackOrigins;
-    this->Recover = ClKeepGoing.getNumOccurrences() > 0
-                        ? ClKeepGoing
-                        : (this->CompileKernel | Options.Recover);
+  MemorySanitizer(Module &M, MemorySanitizerOptions Options)
+      : CompileKernel(Options.Kernel), TrackOrigins(Options.TrackOrigins),
+        Recover(Options.Recover) {
     initializeModule(M);
   }
 
@@ -623,7 +616,16 @@ struct MemorySanitizerLegacyPass : public FunctionPass {
   MemorySanitizerOptions Options;
 };
 
+template <class T> T getOptOrDefault(const cl::opt<T> &Opt, T Default) {
+  return (Opt.getNumOccurrences() > 0) ? Opt : Default;
+}
+
 } // end anonymous namespace
+
+MemorySanitizerOptions::MemorySanitizerOptions(int TO, bool R, bool K)
+    : Kernel(getOptOrDefault(ClEnableKmsan, K)),
+      TrackOrigins(getOptOrDefault(ClTrackOrigins, Kernel ? 2 : TO)),
+      Recover(getOptOrDefault(ClKeepGoing, Kernel || R)) {}
 
 PreservedAnalyses MemorySanitizerPass::run(Function &F,
                                            FunctionAnalysisManager &FAM) {
