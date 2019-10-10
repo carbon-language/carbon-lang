@@ -7,6 +7,13 @@ RUN: echo > %t/lib/libfoo.dll.a
 RUN: ld.lld -### -m i386pep -lfoo -L%t/lib | FileCheck -check-prefix=LIB2 %s
 LIB2: libfoo.dll.a
 
+RUN: not ld.lld -### -m i386pep -l:barefilename -L%t/lib 2>&1 | FileCheck -check-prefix=LIB-LITERAL-FAIL %s
+LIB-LITERAL-FAIL: unable to find library -l:barefilename
+
+RUN: echo > %t/lib/barefilename
+RUN: ld.lld -### -m i386pep -l:barefilename -L%t/lib 2>&1 | FileCheck -check-prefix=LIB-LITERAL %s
+LIB-LITERAL: barefilename
+
 RUN: not ld.lld -### -m i386pep -Bstatic -lfoo -L%t/lib 2>&1 | FileCheck -check-prefix=LIB3 %s
 LIB3: unable to find library -lfoo
 
