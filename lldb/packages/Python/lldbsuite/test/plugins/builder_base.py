@@ -122,6 +122,16 @@ def getSDKRootSpec():
         return "SDKROOT={}".format(os.environ["SDKROOT"])
     return "";
 
+def getModuleCacheSpec():
+    """
+    Helper function to return the key-value string to specify the clang
+    module cache used for the make system.
+    """
+    if "CLANG_MODULE_CACHE_DIR" in os.environ:
+        return "CLANG_MODULE_CACHE_DIR={}".format(
+            os.environ["CLANG_MODULE_CACHE_DIR"])
+    return "";
+
 def getCmdLine(d):
     """
     Helper function to return a properly formatted command line argument(s)
@@ -168,6 +178,7 @@ def buildDefault(
                      getCCSpec(compiler),
                      getDsymutilSpec(),
                      getSDKRootSpec(),
+                     getModuleCacheSpec(),
                      getCmdLine(dictionary)])
 
     runBuildCommands(commands, sender=sender)
@@ -191,6 +202,7 @@ def buildDwarf(
                      getCCSpec(compiler),
                      getDsymutilSpec(),
                      getSDKRootSpec(),
+                     getModuleCacheSpec(),
                      getCmdLine(dictionary)])
 
     runBuildCommands(commands, sender=sender)
@@ -214,6 +226,7 @@ def buildDwo(
                      getCCSpec(compiler),
                      getDsymutilSpec(),
                      getSDKRootSpec(),
+                     getModuleCacheSpec(),
                      getCmdLine(dictionary)])
 
     runBuildCommands(commands, sender=sender)
@@ -237,6 +250,7 @@ def buildGModules(
                      getCCSpec(compiler),
                      getDsymutilSpec(),
                      getSDKRootSpec(),
+                     getModuleCacheSpec(),
                      getCmdLine(dictionary)])
 
     lldbtest.system(commands, sender=sender)

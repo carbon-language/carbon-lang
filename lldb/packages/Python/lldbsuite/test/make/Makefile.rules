@@ -313,14 +313,6 @@ ifeq "$(MAKE_DWO)" "YES"
 	CFLAGS += -gsplit-dwarf
 endif
 
-# Use a shared module cache when building in the default test build directory.
-CLANG_MODULE_CACHE_DIR := $(shell echo "$(BUILDDIR)" | sed $(QUOTE)s/lldb-test-build.noindex.*/lldb-test-build.noindex\/module-cache-clang/$(QUOTE))
-
-ifeq "$(findstring lldb-test-build.noindex, $(BUILDDIR))" ""
-CLANG_MODULE_CACHE_DIR := $(BUILDDIR)/module-cache
-$(warning failed to set the shared clang module cache dir)
-endif
-
 MODULE_BASE_FLAGS := -fmodules -gmodules -fmodules-cache-path=$(CLANG_MODULE_CACHE_DIR)
 MANDATORY_MODULE_BUILD_CFLAGS := $(MODULE_BASE_FLAGS) -gmodules
 # Build flags for building with C++ modules.
