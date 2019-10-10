@@ -17,6 +17,7 @@
 #include "clang/Parse/RAIIObjectsForParser.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/UniqueVector.h"
 
 using namespace clang;
 
@@ -853,7 +854,7 @@ static void parseImplementationSelector(
     (void)T.expectAndConsume(diag::err_expected_lparen_after,
                              CtxSelectorName.data());
     const ExprResult Score = parseContextScore(P);
-    SmallVector<llvm::SmallString<16>, 4> Vendors;
+    llvm::UniqueVector<llvm::SmallString<16>> Vendors;
     do {
       // Parse <vendor>.
       StringRef VendorName;
@@ -862,7 +863,7 @@ static void parseImplementationSelector(
         VendorName = P.getPreprocessor().getSpelling(P.getCurToken(), Buffer);
         (void)P.ConsumeToken();
         if (!VendorName.empty())
-          Vendors.push_back(VendorName);
+          Vendors.insert(VendorName);
       } else {
         P.Diag(Tok.getLocation(), diag::err_omp_declare_variant_item_expected)
             << "vendor identifier"
@@ -878,10 +879,10 @@ static void parseImplementationSelector(
     (void)T.consumeClose();
     if (!Vendors.empty()) {
       SmallVector<StringRef, 4> ImplVendors(Vendors.size());
-      for (int I = 0, E = Vendors.size(); I < E; ++I)
-        ImplVendors[I] = Vendors[I];
+      llvm::copy(Vendors, ImplVendors.begin());
       Sema::OpenMPDeclareVariantCtsSelectorData Data(
-          OMPDeclareVariantAttr::CtxSetImplementation, CSKind, ImplVendors,
+          OMPDeclareVariantAttr::CtxSetImplementation, CSKind,
+          llvm::makeMutableArrayRef(ImplVendors.begin(), ImplVendors.size()),
           Score);
       Callback(SourceRange(Loc, Tok.getLocation()), Data);
     }
