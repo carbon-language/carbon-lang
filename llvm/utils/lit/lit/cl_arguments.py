@@ -183,8 +183,10 @@ def parse_args():
             action="store_true",
             default=False)
 
-    opts = parser.parse_args(sys.argv[1:] +
-                             shlex.split(os.environ.get("LIT_OPTS", "")))
+    # LIT is special: environment variables override command line arguments.
+    env_args = shlex.split(os.environ.get("LIT_OPTS", ""))
+    args = sys.argv[1:] + env_args
+    opts = parser.parse_args(args)
 
     # Validate command line options
     if opts.echoAllCommands:
