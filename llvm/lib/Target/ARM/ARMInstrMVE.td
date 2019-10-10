@@ -1567,6 +1567,14 @@ let Predicates = [HasMVEInt] in {
     foreach VT = [instr.VT] in
       def : Pat<(VT (saddsat (VT MQPR:$Qm), (VT MQPR:$Qn))),
                 (VT (instr (VT MQPR:$Qm), (VT MQPR:$Qn)))>;
+  foreach instr = [MVE_VQSUBu8, MVE_VQSUBu16, MVE_VQSUBu32] in
+    foreach VT = [instr.VT] in
+      def : Pat<(VT (usubsat (VT MQPR:$Qm), (VT MQPR:$Qn))),
+                (VT (instr (VT MQPR:$Qm), (VT MQPR:$Qn)))>;
+  foreach instr = [MVE_VQSUBs8, MVE_VQSUBs16, MVE_VQSUBs32] in
+    foreach VT = [instr.VT] in
+      def : Pat<(VT (ssubsat (VT MQPR:$Qm), (VT MQPR:$Qn))),
+                (VT (instr (VT MQPR:$Qm), (VT MQPR:$Qn)))>;
 }
 
 
