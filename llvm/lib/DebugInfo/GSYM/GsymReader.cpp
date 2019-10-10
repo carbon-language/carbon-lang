@@ -10,16 +10,9 @@
 #include "llvm/DebugInfo/GSYM/GsymReader.h"
 
 #include <assert.h>
-#include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include <fstream>
-#include <functional>
-#include <vector>
 
 #include "llvm/DebugInfo/GSYM/GsymCreator.h"
 #include "llvm/DebugInfo/GSYM/InlineInfo.h"
