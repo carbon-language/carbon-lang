@@ -1097,3 +1097,22 @@ define <16 x i8> @trunc_packus_v16i32_v16i8(<16 x i32>* %p, <16 x i8>* %q) "min-
   %f = trunc <16 x i32> %e to <16 x i8>
   ret <16 x i8> %f
 }
+
+define <32 x i8> @trunc_packus_v32i32_v32i8(<32 x i32> %a0) {
+; CHECK-LABEL: trunc_packus_v32i32_v32i8:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; CHECK-NEXT:    vpmaxsd %zmm2, %zmm0, %zmm0
+; CHECK-NEXT:    vpmovusdb %zmm0, %xmm0
+; CHECK-NEXT:    vpmaxsd %zmm2, %zmm1, %zmm1
+; CHECK-NEXT:    vpmovusdb %zmm1, %xmm1
+; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+  %1 = icmp slt <32 x i32> %a0, <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
+  %2 = select <32 x i1> %1, <32 x i32> %a0, <32 x i32> <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
+  %3 = icmp sgt <32 x i32> %2, zeroinitializer
+  %4 = select <32 x i1> %3, <32 x i32> %2, <32 x i32> zeroinitializer
+  %5 = trunc <32 x i32> %4 to <32 x i8>
+  ret <32 x i8> %5
+}
+

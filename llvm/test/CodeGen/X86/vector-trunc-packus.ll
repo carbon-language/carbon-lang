@@ -3087,3 +3087,57 @@ define <32 x i8> @trunc_packus_v32i16_v32i8(<32 x i16> %a0) {
   %5 = trunc <32 x i16> %4 to <32 x i8>
   ret <32 x i8> %5
 }
+
+define <32 x i8> @trunc_packus_v32i32_v32i8(<32 x i32> %a0) {
+; SSE-LABEL: trunc_packus_v32i32_v32i8:
+; SSE:       # %bb.0:
+; SSE-NEXT:    packssdw %xmm3, %xmm2
+; SSE-NEXT:    packssdw %xmm1, %xmm0
+; SSE-NEXT:    packuswb %xmm2, %xmm0
+; SSE-NEXT:    packssdw %xmm7, %xmm6
+; SSE-NEXT:    packssdw %xmm5, %xmm4
+; SSE-NEXT:    packuswb %xmm6, %xmm4
+; SSE-NEXT:    movdqa %xmm4, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: trunc_packus_v32i32_v32i8:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vextractf128 $1, %ymm3, %xmm4
+; AVX1-NEXT:    vpackssdw %xmm4, %xmm3, %xmm3
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm4
+; AVX1-NEXT:    vpackssdw %xmm4, %xmm2, %xmm2
+; AVX1-NEXT:    vpackuswb %xmm3, %xmm2, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm3
+; AVX1-NEXT:    vpackssdw %xmm3, %xmm1, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; AVX1-NEXT:    vpackssdw %xmm3, %xmm0, %xmm0
+; AVX1-NEXT:    vpackuswb %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: trunc_packus_v32i32_v32i8:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vpackssdw %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpermq {{.*#+}} ymm2 = ymm2[0,2,1,3]
+; AVX2-NEXT:    vpackssdw %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
+; AVX2-NEXT:    vpackuswb %ymm2, %ymm0, %ymm0
+; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
+; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: trunc_packus_v32i32_v32i8:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; AVX512-NEXT:    vpmaxsd %zmm2, %zmm0, %zmm0
+; AVX512-NEXT:    vpmovusdb %zmm0, %xmm0
+; AVX512-NEXT:    vpmaxsd %zmm2, %zmm1, %zmm1
+; AVX512-NEXT:    vpmovusdb %zmm1, %xmm1
+; AVX512-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512-NEXT:    retq
+  %1 = icmp slt <32 x i32> %a0, <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
+  %2 = select <32 x i1> %1, <32 x i32> %a0, <32 x i32> <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
+  %3 = icmp sgt <32 x i32> %2, zeroinitializer
+  %4 = select <32 x i1> %3, <32 x i32> %2, <32 x i32> zeroinitializer
+  %5 = trunc <32 x i32> %4 to <32 x i8>
+  ret <32 x i8> %5
+}
