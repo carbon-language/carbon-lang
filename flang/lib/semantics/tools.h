@@ -114,7 +114,9 @@ inline bool IsAssumedSizeArray(const Symbol &symbol) {
 bool IsAssumedLengthCharacter(const Symbol &);
 bool IsAssumedLengthCharacterFunction(const Symbol &);
 std::optional<parser::MessageFixedText> WhyNotModifiable(
-    const Symbol &symbol, const Scope &scope);
+    const Symbol &, const Scope &);
+std::unique_ptr<parser::Message> WhyNotModifiable(
+    SourceName, const SomeExpr &, const Scope &);
 // Is the symbol modifiable in this scope
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope);
 

@@ -112,7 +112,7 @@ static void InspectType(
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     const evaluate::Expr<evaluate::SomeType> &actual,
     const characteristics::TypeAndShape &actualType,
-    parser::ContextualMessages &messages) {
+    parser::ContextualMessages &messages, const Scope &scope) {
   dummy.type.IsCompatibleWith(messages, actualType);
   bool actualIsPolymorphic{actualType.type().IsPolymorphic()};
   bool dummyIsPolymorphic{dummy.type.type().IsPolymorphic()};
@@ -212,12 +212,35 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           "Element of assumed-shape array may not be associated with a dummy argument array"_err_en_US);
     }
   }
+  const char *reason{nullptr};
+  if (dummy.intent == common::Intent::Out) {
+    reason = "INTENT(OUT)";
+  } else if (dummy.intent == common::Intent::InOut) {
+    reason = "INTENT(IN OUT)";
+  } else if (dummy.attrs.test(
+                 characteristics::DummyDataObject::Attr::Asynchronous)) {
+    reason = "ASYNCHRONOUS";
+  } else if (dummy.attrs.test(
+                 characteristics::DummyDataObject::Attr::Volatile)) {
+    reason = "VOLATILE";
+  }
+  if (reason != nullptr) {
+    std::unique_ptr<parser::Message> why{
+        WhyNotModifiable(messages.at(), actual, scope)};
+    if (why.get() != nullptr) {
+      if (auto *msg{messages.Say(
+              "Actual argument associated with %s dummy must be definable"_err_en_US,
+              reason)}) {
+        msg->Attach(std::move(why));
+      }
+    }
+  }
   // TODO pmk more here
 }
 
 static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
     const characteristics::DummyArgument &dummy,
-    evaluate::FoldingContext &context) {
+    evaluate::FoldingContext &context, const Scope &scope) {
   auto &messages{context.messages()};
   std::visit(
       common::visitors{
@@ -225,7 +248,8 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
             if (const auto *expr{arg.UnwrapExpr()}) {
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
-                CheckExplicitDataArg(object, *expr, *type, context.messages());
+                CheckExplicitDataArg(
+                    object, *expr, *type, context.messages(), scope);
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
                   std::holds_alternative<evaluate::BOZLiteralConstant>(
                       expr->u)) {
@@ -316,7 +340,7 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
 }
 
 bool CheckExplicitInterface(const characteristics::Procedure &proc,
-    ActualArguments &actuals, FoldingContext &context) {
+    ActualArguments &actuals, FoldingContext &context, const Scope &scope) {
   if (!RearrangeArguments(proc, actuals, context.messages())) {
     return false;
   }
@@ -324,19 +348,19 @@ bool CheckExplicitInterface(const characteristics::Procedure &proc,
   for (auto &actual : actuals) {
     const auto &dummy{proc.dummyArguments[index++]};
     if (actual.has_value()) {
-      if (!CheckExplicitInterfaceArg(*actual, dummy, context)) {
+      if (!CheckExplicitInterfaceArg(*actual, dummy, context, scope)) {
         return false;
       }
     } else if (!dummy.IsOptional()) {
       if (dummy.name.empty()) {
         context.messages().Say(
             "Dummy argument #%d is not OPTIONAL and is not associated with an "
-            "effective argument in this procedure reference"_err_en_US,
+            "actual argument in this procedure reference"_err_en_US,
             index);
       } else {
         context.messages().Say(
             "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated "
-            "with an effective argument in this procedure reference"_err_en_US,
+            "with an actual argument in this procedure reference"_err_en_US,
             dummy.name, index);
       }
       return false;
@@ -347,27 +371,28 @@ bool CheckExplicitInterface(const characteristics::Procedure &proc,
 
 void CheckArguments(const characteristics::Procedure &proc,
     evaluate::ActualArguments &actuals, evaluate::FoldingContext &context,
-    bool treatingExternalAsImplicit) {
-  parser::Messages buffer;
-  parser::ContextualMessages messages{context.messages().at(), &buffer};
-  if (proc.HasExplicitInterface() && !treatingExternalAsImplicit) {
-    evaluate::FoldingContext localContext{context, messages};
-    CheckExplicitInterface(proc, actuals, localContext);
-  } else {
+    const Scope &scope, bool treatingExternalAsImplicit) {
+  bool explicitInterface{proc.HasExplicitInterface()};
+  if (explicitInterface()) {
+    CheckExplicitInterface(proc, actuals, context, scope);
+  }
+  if (!explicitInterface || treatingExternalAsImplicit) {
+    parser::Messages buffer;
+    parser::ContextualMessages messages{context.messages().at(), &buffer};
     for (auto &actual : actuals) {
       if (actual.has_value()) {
         CheckImplicitInterfaceArg(*actual, messages);
       }
     }
-  }
-  if (!buffer.empty()) {
-    if (treatingExternalAsImplicit) {
-      if (auto *msg{context.messages().Say(
-              "Warning: if the procedure's interface were explicit, this reference would be in error:"_en_US)}) {
-        buffer.AttachTo(*msg);
+    if (!buffer.empty()) {
+      if (treatingExternalAsImplicit) {
+        if (auto *msg{context.messages().Say(
+                "Warning: if the procedure's interface were explicit, this reference would be in error:"_en_US)}) {
+          buffer.AttachTo(*msg);
+        }
+      } else if (auto *msgs{context.messages().messages()}) {
+        msgs->Merge(std::move(buffer));
       }
-    } else if (auto *msgs{context.messages().messages()}) {
-      msgs->Merge(std::move(buffer));
     }
   }
 }

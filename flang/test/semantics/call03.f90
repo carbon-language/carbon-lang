@@ -194,10 +194,10 @@ module m01
     call intentout(3.14159)
     !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
     call intentout(in + 1.)
-    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
     call intentout(x) ! ok
     !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
     call intentout((x))
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
     call intentinout(in)
     !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
     call intentinout(3.14159)
@@ -212,13 +212,13 @@ module m01
     real :: a(1)
     integer :: j(1)
     j(1) = 1
-    !ERROR: array section with vector subscript cannot be associated with a dummy argument that must be definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
     call intentout(a(j))
-    !ERROR: array section with vector subscript cannot be associated with a dummy argument that must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
     call intentinout(a(j))
-    !ERROR: array section with vector subscript cannot be associated with a dummy argument that must be definable
+    !ERROR: Actual argument associated with ASYNCHRONOUS dummy must be definable
     call asynchronous(a(j))
-    !ERROR: array section with vector subscript cannot be associated with a dummy argument that must be definable
+    !ERROR: Actual argument associated with VOLATILE dummy must be definable
     call volatile(a(j))
   end subroutine
 

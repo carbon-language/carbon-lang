@@ -734,4 +734,20 @@ template SetOfSymbols CollectSymbols(const Expr<SomeType> &);
 template SetOfSymbols CollectSymbols(const Expr<SomeInteger> &);
 template SetOfSymbols CollectSymbols(const Expr<SubscriptInteger> &);
 
+// HasVectorSubscript()
+struct HasVectorSubscriptHelper : public AnyTraverse<HasVectorSubscriptHelper> {
+  using Base = AnyTraverse<HasVectorSubscriptHelper>;
+  HasVectorSubscriptHelper() : Base{*this} {}
+  using Base::operator();
+  bool operator()(const Subscript &ss) const {
+    return !std::holds_alternative<Triplet>(ss.u) && ss.Rank() > 0;
+  }
+  bool operator()(const ProcedureRef &) const {
+    return false;  // don't descend into function call arguments
+  }
+};
+
+bool HasVectorSubscript(const Expr<SomeType> &expr) {
+  return HasVectorSubscriptHelper{}(expr);
+}
 }

@@ -331,10 +331,14 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
   return nullptr;
 }
 
+// When an construct association maps to a variable, and that variable
+// is not an array with a vector-valued subscript, return the base
+// Symbol of that variable, else nullptr.  Descends into other construct
+// associations when one associations maps to another.
 static const Symbol *GetAssociatedVariable(const AssocEntityDetails &details) {
   if (const MaybeExpr & expr{details.expr()}) {
-    if (evaluate::IsVariable(*expr)) {
-      if (const Symbol * varSymbol{evaluate::GetLastSymbol(*expr)}) {
+    if (evaluate::IsVariable(*expr) && !evaluate::HasVectorSubscript(*expr)) {
+      if (const Symbol * varSymbol{evaluate::GetFirstSymbol(*expr)}) {
         return GetAssociationRoot(*varSymbol);
       }
     }
@@ -485,8 +489,7 @@ bool InProtectedContext(const Symbol &symbol, const Scope &currentScope) {
 }
 
 // C1101 and C1158
-// TODO Need to check for the case of a variable that has a vector subscript
-// that is construct associated, also need to check for a coindexed object
+// TODO Need to check for a coindexed object (why? C1103?)
 std::optional<parser::MessageFixedText> WhyNotModifiable(
     const Symbol &symbol, const Scope &scope) {
   const Symbol *root{GetAssociationRoot(symbol)};
@@ -506,6 +509,31 @@ std::optional<parser::MessageFixedText> WhyNotModifiable(
   } else {
     return std::nullopt;
   }
+}
+
+std::unique_ptr<parser::Message> WhyNotModifiable(
+    parser::CharBlock at, const SomeExpr &expr, const Scope &scope) {
+  if (evaluate::IsVariable(expr)) {
+    if (auto dataRef{evaluate::ExtractDataRef(expr)}) {
+      if (evaluate::HasVectorSubscript(expr)) {
+        return std::make_unique<parser::Message>(
+            at, "variable has a vector subscript"_en_US);
+      } else {
+        const Symbol &symbol{dataRef->GetFirstSymbol()};
+        if (auto maybeWhy{WhyNotModifiable(symbol, scope)}) {
+          return std::make_unique<parser::Message>(symbol.name(),
+              parser::MessageFormattedText{
+                  std::move(*maybeWhy), symbol.name()});
+        }
+      }
+    } else {
+      // reference to function returning POINTER
+    }
+  } else {
+    return std::make_unique<parser::Message>(
+        at, "expression is not a variable"_en_US);
+  }
+  return {};
 }
 
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,

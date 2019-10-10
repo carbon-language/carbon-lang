@@ -87,7 +87,7 @@ public:
   std::string MoveString() { return std::move(string_); }
 
 private:
-  void Format(const MessageFixedText *text, ...);
+  void Format(const MessageFixedText *, ...);
 
   template<typename A> A Convert(const A &x) {
     static_assert(!std::is_class_v<std::decay_t<A>>);
@@ -185,6 +185,7 @@ public:
     attachmentIsContext_ = true;
   }
   Message &Attach(Message *);
+  Message &Attach(std::unique_ptr<Message> &&);
   template<typename... A> Message &Attach(A &&... args) {
     return Attach(new Message{std::forward<A>(args)...});  // reference-counted
   }

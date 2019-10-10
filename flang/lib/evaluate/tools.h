@@ -303,6 +303,14 @@ template<typename A> const Symbol *UnwrapWholeSymbolDataRef(const A &x) {
   return nullptr;
 }
 
+template<typename A> const Symbol *GetFirstSymbol(const A &x) {
+  if (auto dataRef{ExtractDataRef(x)}) {
+    return &dataRef->GetFirstSymbol();
+  } else {
+    return nullptr;
+  }
+}
+
 // Creation of conversion expressions can be done to either a known
 // specific intrinsic type with ConvertToType<T>(x) or by converting
 // one arbitrary expression to the type of another with ConvertTo(to, from).
@@ -788,5 +796,8 @@ template<typename A> SetOfSymbols CollectSymbols(const A &);
 extern template SetOfSymbols CollectSymbols(const Expr<SomeType> &);
 extern template SetOfSymbols CollectSymbols(const Expr<SomeInteger> &);
 extern template SetOfSymbols CollectSymbols(const Expr<SubscriptInteger> &);
+
+// Predicate: does a variable contain a vector-valued subscript (not a triplet)?
+bool HasVectorSubscript(const Expr<SomeType> &);
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

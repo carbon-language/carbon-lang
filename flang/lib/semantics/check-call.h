@@ -30,12 +30,14 @@ class FoldingContext;
 }
 
 namespace Fortran::semantics {
+class Scope;
+
 // The Boolean flag argument should be true when the called procedure
 // does not actually have an explicit interface at the call site, but
 // its characteristics are known because it is a subroutine or function
 // defined at the top level in the same source file.
 void CheckArguments(const evaluate::characteristics::Procedure &,
-    evaluate::ActualArguments &, evaluate::FoldingContext &,
+    evaluate::ActualArguments &, evaluate::FoldingContext &, const Scope &,
     bool treatingExternalAsImplicit = false);
 
 // Check actual arguments against a procedure with an explicit interface.

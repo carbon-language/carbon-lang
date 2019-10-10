@@ -1800,8 +1800,8 @@ std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
           "References to the procedure '%s' require an explicit interface"_en_US,
           DEREF(proc.GetSymbol()).name());
     }
-    semantics::CheckArguments(
-        *chars, arguments, GetFoldingContext(), treatExternalAsImplicit);
+    semantics::CheckArguments(*chars, arguments, GetFoldingContext(),
+        context_.FindScope(callSite), treatExternalAsImplicit);
   }
   return chars;
 }

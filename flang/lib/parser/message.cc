@@ -256,6 +256,10 @@ Message &Message::Attach(Message *m) {
   return *this;
 }
 
+Message &Message::Attach(std::unique_ptr<Message> &&m) {
+  return Attach(m.release());
+}
+
 bool Message::AtSameLocation(const Message &that) const {
   return std::visit(
       common::visitors{
