@@ -104,6 +104,23 @@ def getCCSpec(compiler):
     else:
         return ""
 
+def getDsymutilSpec():
+    """
+    Helper function to return the key-value string to specify the dsymutil
+    used for the make system.
+    """
+    if "DSYMUTIL" in os.environ:
+        return "DSYMUTIL={}".format(os.environ["DSYMUTIL"])
+    return "";
+
+def getSDKRootSpec():
+    """
+    Helper function to return the key-value string to specify the SDK root
+    used for the make system.
+    """
+    if "SDKROOT" in os.environ:
+        return "SDKROOT={}".format(os.environ["SDKROOT"])
+    return "";
 
 def getCmdLine(d):
     """
@@ -145,8 +162,13 @@ def buildDefault(
         testname=None):
     """Build the binaries the default way."""
     commands = []
-    commands.append(getMake(testdir, testname) + ["all", getArchSpec(architecture),
-                     getCCSpec(compiler), getCmdLine(dictionary)])
+    commands.append(getMake(testdir, testname) +
+                    ["all",
+                     getArchSpec(architecture),
+                     getCCSpec(compiler),
+                     getDsymutilSpec(),
+                     getSDKRootSpec(),
+                     getCmdLine(dictionary)])
 
     runBuildCommands(commands, sender=sender)
 
@@ -164,8 +186,12 @@ def buildDwarf(
     """Build the binaries with dwarf debug info."""
     commands = []
     commands.append(getMake(testdir, testname) +
-                    ["MAKE_DSYM=NO", getArchSpec(architecture),
-                     getCCSpec(compiler), getCmdLine(dictionary)])
+                    ["MAKE_DSYM=NO",
+                     getArchSpec(architecture),
+                     getCCSpec(compiler),
+                     getDsymutilSpec(),
+                     getSDKRootSpec(),
+                     getCmdLine(dictionary)])
 
     runBuildCommands(commands, sender=sender)
     # True signifies that we can handle building dwarf.
@@ -182,9 +208,12 @@ def buildDwo(
     """Build the binaries with dwarf debug info."""
     commands = []
     commands.append(getMake(testdir, testname) +
-                    ["MAKE_DSYM=NO", "MAKE_DWO=YES",
+                    ["MAKE_DSYM=NO",
+                     "MAKE_DWO=YES",
                      getArchSpec(architecture),
                      getCCSpec(compiler),
+                     getDsymutilSpec(),
+                     getSDKRootSpec(),
                      getCmdLine(dictionary)])
 
     runBuildCommands(commands, sender=sender)
@@ -206,6 +235,8 @@ def buildGModules(
                      "MAKE_GMODULES=YES",
                      getArchSpec(architecture),
                      getCCSpec(compiler),
+                     getDsymutilSpec(),
+                     getSDKRootSpec(),
                      getCmdLine(dictionary)])
 
     lldbtest.system(commands, sender=sender)
