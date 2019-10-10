@@ -178,7 +178,7 @@ public:
   /// \param   Style The path style for the "Path" parameter.
   /// \returns The unique file index for the inserted file.
   uint32_t insertFile(StringRef Path,
-                      llvm::sys::path::Style = llvm::sys::path::Style::native);
+                      sys::path::Style Style = sys::path::Style::native);
 
   /// Add a function info to this GSYM creator.
   ///
