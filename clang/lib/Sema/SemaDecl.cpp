@@ -4284,9 +4284,11 @@ void Sema::handleTagNumbering(const TagDecl *Tag, Scope *TagScope) {
   }
 
   // If this tag isn't a direct child of a class, number it if it is local.
+  MangleNumberingContext *MCtx;
   Decl *ManglingContextDecl;
-  if (MangleNumberingContext *MCtx = getCurrentMangleNumberContext(
-          Tag->getDeclContext(), ManglingContextDecl)) {
+  std::tie(MCtx, ManglingContextDecl) =
+      getCurrentMangleNumberContext(Tag->getDeclContext());
+  if (MCtx) {
     Context.setManglingNumber(
         Tag, MCtx->getManglingNumber(
                  Tag, getMSManglingNumber(getLangOpts(), TagScope)));
@@ -5022,9 +5024,11 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
   if (VarDecl *NewVD = dyn_cast<VarDecl>(Anon)) {
     if (getLangOpts().CPlusPlus && NewVD->isStaticLocal()) {
+      MangleNumberingContext *MCtx;
       Decl *ManglingContextDecl;
-      if (MangleNumberingContext *MCtx = getCurrentMangleNumberContext(
-              NewVD->getDeclContext(), ManglingContextDecl)) {
+      std::tie(MCtx, ManglingContextDecl) =
+          getCurrentMangleNumberContext(NewVD->getDeclContext());
+      if (MCtx) {
         Context.setManglingNumber(
             NewVD, MCtx->getManglingNumber(
                        NewVD, getMSManglingNumber(getLangOpts(), S)));
@@ -7090,9 +7094,11 @@ NamedDecl *Sema::ActOnVariableDeclarator(
     RegisterLocallyScopedExternCDecl(NewVD, S);
 
   if (getLangOpts().CPlusPlus && NewVD->isStaticLocal()) {
+    MangleNumberingContext *MCtx;
     Decl *ManglingContextDecl;
-    if (MangleNumberingContext *MCtx = getCurrentMangleNumberContext(
-            NewVD->getDeclContext(), ManglingContextDecl)) {
+    std::tie(MCtx, ManglingContextDecl) =
+        getCurrentMangleNumberContext(NewVD->getDeclContext());
+    if (MCtx) {
       Context.setManglingNumber(
           NewVD, MCtx->getManglingNumber(
                      NewVD, getMSManglingNumber(getLangOpts(), S)));

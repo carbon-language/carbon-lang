@@ -57,6 +57,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace llvm {
@@ -1092,15 +1093,12 @@ public:
   void WarnOnPendingNoDerefs(ExpressionEvaluationContextRecord &Rec);
 
   /// Compute the mangling number context for a lambda expression or
-  /// block literal.
+  /// block literal. Also return the extra mangling decl if any.
   ///
   /// \param DC - The DeclContext containing the lambda expression or
   /// block literal.
-  /// \param[out] ManglingContextDecl - Returns the ManglingContextDecl
-  /// associated with the context, if relevant.
-  MangleNumberingContext *getCurrentMangleNumberContext(
-    const DeclContext *DC,
-    Decl *&ManglingContextDecl);
+  std::tuple<MangleNumberingContext *, Decl *>
+  getCurrentMangleNumberContext(const DeclContext *DC);
 
 
   /// SpecialMemberOverloadResult - The overloading result for a special member
