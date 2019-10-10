@@ -6063,16 +6063,6 @@ bool Sema::SemaBuiltinAssumeAligned(CallExpr *TheCall) {
     if (!Result.isPowerOf2())
       return Diag(TheCall->getBeginLoc(), diag::err_alignment_not_power_of_two)
              << Arg->getSourceRange();
-
-    // FIXME: this should probably use llvm::Value::MaximumAlignment, however
-    // doing so results in a linking issue in GCC in a couple of assemblies.
-    // Alignment calculations can wrap around if it's greater than 2**28.
-    unsigned MaximumAlignment =
-        Context.getTargetInfo().getTriple().isOSBinFormatCOFF() ? 8192
-                                                                : 268435456;
-    if (Result > MaximumAlignment)
-      Diag(TheCall->getBeginLoc(), diag::warn_assume_aligned_too_great)
-          << Arg->getSourceRange() << MaximumAlignment;
   }
 
   if (NumArgs > 2) {

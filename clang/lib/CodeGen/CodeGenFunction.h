@@ -2829,8 +2829,13 @@ public:
                                llvm::Value *Alignment,
                                llvm::Value *OffsetValue = nullptr);
 
+  void EmitAlignmentAssumption(llvm::Value *PtrValue, QualType Ty,
+                               SourceLocation Loc, SourceLocation AssumptionLoc,
+                               unsigned Alignment,
+                               llvm::Value *OffsetValue = nullptr);
+
   void EmitAlignmentAssumption(llvm::Value *PtrValue, const Expr *E,
-                               SourceLocation AssumptionLoc, llvm::Value *Alignment,
+                               SourceLocation AssumptionLoc, unsigned Alignment,
                                llvm::Value *OffsetValue = nullptr);
 
   //===--------------------------------------------------------------------===//
