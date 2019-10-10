@@ -72,6 +72,12 @@ struct MemoryInfoListHeader {
   support::ulittle32_t SizeOfHeader;
   support::ulittle32_t SizeOfEntry;
   support::ulittle64_t NumberOfEntries;
+
+  MemoryInfoListHeader() = default;
+  MemoryInfoListHeader(uint32_t SizeOfHeader, uint32_t SizeOfEntry,
+                       uint64_t NumberOfEntries)
+      : SizeOfHeader(SizeOfHeader), SizeOfEntry(SizeOfEntry),
+        NumberOfEntries(NumberOfEntries) {}
 };
 static_assert(sizeof(MemoryInfoListHeader) == 16, "");
 
@@ -84,11 +90,13 @@ enum class MemoryProtection : uint32_t {
 enum class MemoryState : uint32_t {
 #define HANDLE_MDMP_MEMSTATE(CODE, NAME, NATIVENAME) NAME = CODE,
 #include "llvm/BinaryFormat/MinidumpConstants.def"
+  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/0xffffffffu),
 };
 
 enum class MemoryType : uint32_t {
 #define HANDLE_MDMP_MEMTYPE(CODE, NAME, NATIVENAME) NAME = CODE,
 #include "llvm/BinaryFormat/MinidumpConstants.def"
+  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/0xffffffffu),
 };
 
 struct MemoryInfo {
