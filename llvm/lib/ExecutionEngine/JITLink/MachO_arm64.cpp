@@ -263,7 +263,7 @@ private:
           if (!Kind)
             return Kind.takeError();
 
-          if (*Kind != Branch26 & *Kind != Page21 && *Kind != PageOffset12)
+          if (*Kind != Branch26 && *Kind != Page21 && *Kind != PageOffset12)
             return make_error<JITLinkError>(
                 "Invalid relocation pair: Addend + " +
                 getMachOARM64RelocationKindName(*Kind));
