@@ -123,8 +123,9 @@ DependencyScanningFilesystemSharedCache::get(StringRef Key) {
 }
 
 llvm::ErrorOr<const CachedFileSystemEntry *>
-DependencyScanningWorkerFilesystem::getOrCreateFileSystemEntry(const StringRef Filename) {
-  if (const CachedFileSystemEntry* Entry = getCachedEntry(Filename)) {
+DependencyScanningWorkerFilesystem::getOrCreateFileSystemEntry(
+    const StringRef Filename) {
+  if (const CachedFileSystemEntry *Entry = getCachedEntry(Filename)) {
     return Entry;
   }
 
@@ -164,7 +165,8 @@ llvm::ErrorOr<llvm::vfs::Status>
 DependencyScanningWorkerFilesystem::status(const Twine &Path) {
   SmallString<256> OwnedFilename;
   StringRef Filename = Path.toStringRef(OwnedFilename);
-  const llvm::ErrorOr<const CachedFileSystemEntry *> Result = getOrCreateFileSystemEntry(Filename);
+  const llvm::ErrorOr<const CachedFileSystemEntry *> Result =
+      getOrCreateFileSystemEntry(Filename);
   if (!Result)
     return Result.getError();
   return (*Result)->getStatus();
@@ -224,7 +226,8 @@ DependencyScanningWorkerFilesystem::openFileForRead(const Twine &Path) {
   SmallString<256> OwnedFilename;
   StringRef Filename = Path.toStringRef(OwnedFilename);
 
-  const llvm::ErrorOr<const CachedFileSystemEntry *> Result = getOrCreateFileSystemEntry(Filename);
+  const llvm::ErrorOr<const CachedFileSystemEntry *> Result =
+      getOrCreateFileSystemEntry(Filename);
   if (!Result)
     return Result.getError();
   return createFile(Result.get(), PPSkipMappings);
