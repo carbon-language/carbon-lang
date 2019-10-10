@@ -8221,10 +8221,11 @@ SDValue DAGCombiner::foldSelectOfConstants(SDNode *N) {
       return Cond;
     }
 
-    // For any constants that differ by 1, we can transform the select into an
-    // extend and add. Use a target hook because some targets may prefer to
-    // transform in the other direction.
+    // Use a target hook because some targets may prefer to transform in the
+    // other direction.
     if (TLI.convertSelectOfConstantsToMath(VT)) {
+      // For any constants that differ by 1, we can transform the select into an
+      // extend and add.
       const APInt &C1Val = C1->getAPIntValue();
       const APInt &C2Val = C2->getAPIntValue();
       if (C1Val - 1 == C2Val) {
@@ -8238,6 +8239,14 @@ SDValue DAGCombiner::foldSelectOfConstants(SDNode *N) {
         if (VT != MVT::i1)
           Cond = DAG.getNode(ISD::SIGN_EXTEND, DL, VT, Cond);
         return DAG.getNode(ISD::ADD, DL, VT, Cond, N2);
+      }
+
+      // select Cond, Pow2, 0 --> (zext Cond) << log2(Pow2)
+      if (C1Val.isPowerOf2() && C2Val.isNullValue()) {
+        if (VT != MVT::i1)
+          Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, Cond);
+        SDValue ShAmtC = DAG.getConstant(C1Val.exactLogBase2(), DL, VT);
+        return DAG.getNode(ISD::SHL, DL, VT, Cond, ShAmtC);
       }
     }
 

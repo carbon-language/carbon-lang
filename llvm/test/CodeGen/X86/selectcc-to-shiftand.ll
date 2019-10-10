@@ -202,19 +202,15 @@ define i32 @PR31175(i32 %x, i32 %y) {
 define i8 @sel_shift_bool_i8(i1 %t) {
 ; CHECK-NOBMI-LABEL: sel_shift_bool_i8:
 ; CHECK-NOBMI:       # %bb.0:
-; CHECK-NOBMI-NEXT:    # kill: def $edi killed $edi def $rdi
-; CHECK-NOBMI-NEXT:    notb %dil
-; CHECK-NOBMI-NEXT:    shlb $7, %dil
-; CHECK-NOBMI-NEXT:    leal -128(%rdi), %eax
+; CHECK-NOBMI-NEXT:    movl %edi, %eax
+; CHECK-NOBMI-NEXT:    shlb $7, %al
 ; CHECK-NOBMI-NEXT:    # kill: def $al killed $al killed $eax
 ; CHECK-NOBMI-NEXT:    retq
 ;
 ; CHECK-BMI-LABEL: sel_shift_bool_i8:
 ; CHECK-BMI:       # %bb.0:
-; CHECK-BMI-NEXT:    # kill: def $edi killed $edi def $rdi
-; CHECK-BMI-NEXT:    notb %dil
-; CHECK-BMI-NEXT:    shlb $7, %dil
-; CHECK-BMI-NEXT:    leal -128(%rdi), %eax
+; CHECK-BMI-NEXT:    movl %edi, %eax
+; CHECK-BMI-NEXT:    shlb $7, %al
 ; CHECK-BMI-NEXT:    # kill: def $al killed $al killed $eax
 ; CHECK-BMI-NEXT:    retq
   %shl = select i1 %t, i8 128, i8 0
