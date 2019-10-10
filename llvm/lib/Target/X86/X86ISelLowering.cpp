@@ -41380,6 +41380,22 @@ static SDValue combineFneg(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+char X86TargetLowering::isNegatibleForFree(SDValue Op, SelectionDAG &DAG,
+                                           bool LegalOperations,
+                                           bool ForCodeSize,
+                                           unsigned Depth) const {
+  return TargetLowering::isNegatibleForFree(Op, DAG, LegalOperations,
+                                            ForCodeSize, Depth);
+}
+
+SDValue X86TargetLowering::getNegatedExpression(SDValue Op, SelectionDAG &DAG,
+                                                bool LegalOperations,
+                                                bool ForCodeSize,
+                                                unsigned Depth) const {
+  return TargetLowering::getNegatedExpression(Op, DAG, LegalOperations,
+                                              ForCodeSize, Depth);
+}
+
 static SDValue lowerX86FPLogicOp(SDNode *N, SelectionDAG &DAG,
                                  const X86Subtarget &Subtarget) {
   MVT VT = N->getSimpleValueType(0);
