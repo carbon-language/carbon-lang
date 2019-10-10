@@ -1,6 +1,7 @@
 static_library("GSYM") {
   output_name = "LLVMDebugInfoGSYM"
   deps = [
+    "//llvm/lib/MC",
     "//llvm/lib/Support",
   ]
   sources = [
