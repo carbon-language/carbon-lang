@@ -238,9 +238,8 @@ Optional<ValueAndVReg> llvm::getConstantVRegValWithLookThrough(
       assert(Val.getBitWidth() == BitWidth &&
              "Value bitwidth doesn't match definition type");
       return Val;
-    } else {
-      return CstVal.getFPImm()->getValueAPF().bitcastToAPInt();
     }
+    return CstVal.getFPImm()->getValueAPF().bitcastToAPInt();
   };
   while ((MI = MRI.getVRegDef(VReg)) && !IsConstantOpcode(MI->getOpcode()) &&
          LookThroughInstrs) {
