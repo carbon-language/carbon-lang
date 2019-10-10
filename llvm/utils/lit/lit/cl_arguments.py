@@ -16,7 +16,7 @@ def parse_args():
             help="Show version and exit",
             action="store_true",
             default=False)
-    parser.add_argument("-j", "--workers",
+    parser.add_argument("-j", "--threads", "--workers",
             dest="numWorkers",
             metavar="N",
             help="Number of workers used for testing",
