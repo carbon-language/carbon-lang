@@ -198,3 +198,153 @@ define i32 @PR31175(i32 %x, i32 %y) {
   %sel = select i1 %cmp, i32 %sub, i32 0
   ret i32 %sel
 }
+
+define i8 @sel_shift_bool_i8(i1 %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_i8:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    # kill: def $edi killed $edi def $rdi
+; CHECK-NOBMI-NEXT:    notb %dil
+; CHECK-NOBMI-NEXT:    shlb $7, %dil
+; CHECK-NOBMI-NEXT:    leal -128(%rdi), %eax
+; CHECK-NOBMI-NEXT:    # kill: def $al killed $al killed $eax
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_i8:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    # kill: def $edi killed $edi def $rdi
+; CHECK-BMI-NEXT:    notb %dil
+; CHECK-BMI-NEXT:    shlb $7, %dil
+; CHECK-BMI-NEXT:    leal -128(%rdi), %eax
+; CHECK-BMI-NEXT:    # kill: def $al killed $al killed $eax
+; CHECK-BMI-NEXT:    retq
+  %shl = select i1 %t, i8 128, i8 0
+  ret i8 %shl
+}
+
+define i16 @sel_shift_bool_i16(i1 %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_i16:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    movl %edi, %eax
+; CHECK-NOBMI-NEXT:    andl $1, %eax
+; CHECK-NOBMI-NEXT:    shll $7, %eax
+; CHECK-NOBMI-NEXT:    # kill: def $ax killed $ax killed $eax
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_i16:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    movl %edi, %eax
+; CHECK-BMI-NEXT:    andl $1, %eax
+; CHECK-BMI-NEXT:    shll $7, %eax
+; CHECK-BMI-NEXT:    # kill: def $ax killed $ax killed $eax
+; CHECK-BMI-NEXT:    retq
+  %shl = select i1 %t, i16 128, i16 0
+  ret i16 %shl
+}
+
+define i32 @sel_shift_bool_i32(i1 %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_i32:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    movl %edi, %eax
+; CHECK-NOBMI-NEXT:    andl $1, %eax
+; CHECK-NOBMI-NEXT:    shll $6, %eax
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_i32:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    movl %edi, %eax
+; CHECK-BMI-NEXT:    andl $1, %eax
+; CHECK-BMI-NEXT:    shll $6, %eax
+; CHECK-BMI-NEXT:    retq
+  %shl = select i1 %t, i32 64, i32 0
+  ret i32 %shl
+}
+
+define i64 @sel_shift_bool_i64(i1 %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_i64:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    movl %edi, %eax
+; CHECK-NOBMI-NEXT:    andl $1, %eax
+; CHECK-NOBMI-NEXT:    shlq $16, %rax
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_i64:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    movl %edi, %eax
+; CHECK-BMI-NEXT:    andl $1, %eax
+; CHECK-BMI-NEXT:    shlq $16, %rax
+; CHECK-BMI-NEXT:    retq
+  %shl = select i1 %t, i64 65536, i64 0
+  ret i64 %shl
+}
+
+define <16 x i8> @sel_shift_bool_v16i8(<16 x i1> %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_v16i8:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    psllw $7, %xmm0
+; CHECK-NOBMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_v16i8:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    psllw $7, %xmm0
+; CHECK-BMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-BMI-NEXT:    retq
+  %shl = select <16 x i1> %t, <16 x i8> <i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128, i8 128>, <16 x i8> zeroinitializer
+  ret <16 x i8> %shl
+}
+
+define <8 x i16> @sel_shift_bool_v8i16(<8 x i1> %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_v8i16:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    psllw $15, %xmm0
+; CHECK-NOBMI-NEXT:    psraw $15, %xmm0
+; CHECK-NOBMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_v8i16:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    psllw $15, %xmm0
+; CHECK-BMI-NEXT:    psraw $15, %xmm0
+; CHECK-BMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-BMI-NEXT:    retq
+  %shl= select <8 x i1> %t, <8 x i16> <i16 128, i16 128, i16 128, i16 128, i16 128, i16 128, i16 128, i16 128>, <8 x i16> zeroinitializer
+  ret <8 x i16> %shl
+}
+
+define <4 x i32> @sel_shift_bool_v4i32(<4 x i1> %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_v4i32:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    pslld $31, %xmm0
+; CHECK-NOBMI-NEXT:    psrad $31, %xmm0
+; CHECK-NOBMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_v4i32:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    pslld $31, %xmm0
+; CHECK-BMI-NEXT:    psrad $31, %xmm0
+; CHECK-BMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-BMI-NEXT:    retq
+  %shl = select <4 x i1> %t, <4 x i32> <i32 64, i32 64, i32 64, i32 64>, <4 x i32> zeroinitializer
+  ret <4 x i32> %shl
+}
+
+define <2 x i64> @sel_shift_bool_v2i64(<2 x i1> %t) {
+; CHECK-NOBMI-LABEL: sel_shift_bool_v2i64:
+; CHECK-NOBMI:       # %bb.0:
+; CHECK-NOBMI-NEXT:    psllq $63, %xmm0
+; CHECK-NOBMI-NEXT:    psrad $31, %xmm0
+; CHECK-NOBMI-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
+; CHECK-NOBMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-NOBMI-NEXT:    retq
+;
+; CHECK-BMI-LABEL: sel_shift_bool_v2i64:
+; CHECK-BMI:       # %bb.0:
+; CHECK-BMI-NEXT:    psllq $63, %xmm0
+; CHECK-BMI-NEXT:    psrad $31, %xmm0
+; CHECK-BMI-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
+; CHECK-BMI-NEXT:    pand {{.*}}(%rip), %xmm0
+; CHECK-BMI-NEXT:    retq
+  %shl = select <2 x i1> %t, <2 x i64> <i64 65536, i64 65536>, <2 x i64> zeroinitializer
+  ret <2 x i64> %shl
+}
