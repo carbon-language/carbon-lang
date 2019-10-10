@@ -139,8 +139,8 @@ static cl::opt<unsigned> DepRecInterval(
 static cl::opt<bool> EnableHeapToStack("enable-heap-to-stack-conversion",
                                        cl::init(true), cl::Hidden);
 
-static cl::opt<int> MaxHeapToStackSize("max-heap-to-stack-size",
-                                       cl::init(128), cl::Hidden);
+static cl::opt<int> MaxHeapToStackSize("max-heap-to-stack-size", cl::init(128),
+                                       cl::Hidden);
 
 /// Logic operators for the change status enum class.
 ///
