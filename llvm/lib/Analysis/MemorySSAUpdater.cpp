@@ -48,6 +48,10 @@ MemoryAccess *MemorySSAUpdater::getPreviousDefRecursive(
     return Cached->second;
   }
 
+  // If this method is called from an unreachable block, return LoE.
+  if (!MSSA->DT->isReachableFromEntry(BB))
+    return MSSA->getLiveOnEntryDef();
+
   if (BasicBlock *Pred = BB->getSinglePredecessor()) {
     // Single predecessor case, just recurse, we can only have one definition.
     MemoryAccess *Result = getPreviousDefFromEnd(Pred, CachedPreviousDef);
