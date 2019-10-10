@@ -8225,13 +8225,15 @@ SDValue DAGCombiner::foldSelectOfConstants(SDNode *N) {
     // extend and add. Use a target hook because some targets may prefer to
     // transform in the other direction.
     if (TLI.convertSelectOfConstantsToMath(VT)) {
-      if (C1->getAPIntValue() - 1 == C2->getAPIntValue()) {
+      const APInt &C1Val = C1->getAPIntValue();
+      const APInt &C2Val = C2->getAPIntValue();
+      if (C1Val - 1 == C2Val) {
         // select Cond, C1, C1-1 --> add (zext Cond), C1-1
         if (VT != MVT::i1)
           Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, Cond);
         return DAG.getNode(ISD::ADD, DL, VT, Cond, N2);
       }
-      if (C1->getAPIntValue() + 1 == C2->getAPIntValue()) {
+      if (C1Val + 1 == C2Val) {
         // select Cond, C1, C1+1 --> add (sext Cond), C1+1
         if (VT != MVT::i1)
           Cond = DAG.getNode(ISD::SIGN_EXTEND, DL, VT, Cond);
