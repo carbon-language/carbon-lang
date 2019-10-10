@@ -73,7 +73,7 @@ llvm::Error GsymCreator::encode(FileWriter &O) const {
   Hdr.NumAddresses = static_cast<uint32_t>(Funcs.size());
   Hdr.StrtabOffset = 0; // We will fix this up later.
   Hdr.StrtabOffset = 0; // We will fix this up later.
-  bzero(Hdr.UUID, sizeof(Hdr.UUID));
+  memset(Hdr.UUID, 0, sizeof(Hdr.UUID));
   if (UUID.size() > sizeof(Hdr.UUID))
     return createStringError(std::errc::invalid_argument,
                              "invalid UUID size %u", (uint32_t)UUID.size());
