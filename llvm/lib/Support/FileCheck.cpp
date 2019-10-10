@@ -320,7 +320,6 @@ bool FileCheckPattern::parsePattern(StringRef PatternStr, StringRef Prefix,
                                     SourceMgr &SM,
                                     const FileCheckRequest &Req) {
   bool MatchFullLinesHere = Req.MatchFullLines && CheckTy != Check::CheckNot;
-  IgnoreCase = Req.IgnoreCase;
 
   PatternLoc = SMLoc::getFromPointer(PatternStr.data());
 
@@ -620,8 +619,7 @@ Expected<size_t> FileCheckPattern::match(StringRef Buffer, size_t &MatchLen,
   // If this is a fixed string pattern, just match it now.
   if (!FixedStr.empty()) {
     MatchLen = FixedStr.size();
-    size_t Pos = IgnoreCase ? Buffer.find_lower(FixedStr)
-                            : Buffer.find(FixedStr);
+    size_t Pos = Buffer.find(FixedStr);
     if (Pos == StringRef::npos)
       return make_error<FileCheckNotFoundError>();
     return Pos;
@@ -659,10 +657,7 @@ Expected<size_t> FileCheckPattern::match(StringRef Buffer, size_t &MatchLen,
   }
 
   SmallVector<StringRef, 4> MatchInfo;
-  unsigned int Flags = Regex::Newline;
-  if (IgnoreCase)
-    Flags |= Regex::IgnoreCase;
-  if (!Regex(RegExToMatch, Flags).match(Buffer, &MatchInfo))
+  if (!Regex(RegExToMatch, Regex::Newline).match(Buffer, &MatchInfo))
     return make_error<FileCheckNotFoundError>();
 
   // Successful regex match.
