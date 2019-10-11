@@ -40,7 +40,6 @@ struct MemorySanitizerPass : public PassInfoMixin<MemorySanitizerPass> {
   MemorySanitizerPass(MemorySanitizerOptions Options) : Options(Options) {}
 
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM);
-  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 
 private:
   MemorySanitizerOptions Options;

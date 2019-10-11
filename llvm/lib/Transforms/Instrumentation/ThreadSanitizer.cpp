@@ -92,10 +92,11 @@ namespace {
 /// ensures the __tsan_init function is in the list of global constructors for
 /// the module.
 struct ThreadSanitizer {
+  ThreadSanitizer(Module &M);
   bool sanitizeFunction(Function &F, const TargetLibraryInfo &TLI);
 
 private:
-  void initialize(Module &M);
+  void initializeCallbacks(Module &M);
   bool instrumentLoadOrStore(Instruction *I, const DataLayout &DL);
   bool instrumentAtomic(Instruction *I, const DataLayout &DL);
   bool instrumentMemIntrinsic(Instruction *I);
@@ -107,6 +108,8 @@ private:
   void InsertRuntimeIgnores(Function &F);
 
   Type *IntptrTy;
+  IntegerType *OrdTy;
+  // Callbacks to run-time library are computed in doInitialization.
   FunctionCallee TsanFuncEntry;
   FunctionCallee TsanFuncExit;
   FunctionCallee TsanIgnoreBegin;
@@ -127,6 +130,7 @@ private:
   FunctionCallee TsanVptrUpdate;
   FunctionCallee TsanVptrLoad;
   FunctionCallee MemmoveFn, MemcpyFn, MemsetFn;
+  Function *TsanCtorFunction;
 };
 
 struct ThreadSanitizerLegacyPass : FunctionPass {
@@ -139,30 +143,14 @@ struct ThreadSanitizerLegacyPass : FunctionPass {
 private:
   Optional<ThreadSanitizer> TSan;
 };
-
-void insertModuleCtor(Module &M) {
-  getOrCreateSanitizerCtorAndInitFunctions(
-      M, kTsanModuleCtorName, kTsanInitName, /*InitArgTypes=*/{},
-      /*InitArgs=*/{},
-      // This callback is invoked when the functions are created the first
-      // time. Hook them into the global ctors list in that case:
-      [&](Function *Ctor, FunctionCallee) { appendToGlobalCtors(M, Ctor, 0); });
-}
-
 }  // namespace
 
 PreservedAnalyses ThreadSanitizerPass::run(Function &F,
                                            FunctionAnalysisManager &FAM) {
-  ThreadSanitizer TSan;
+  ThreadSanitizer TSan(*F.getParent());
   if (TSan.sanitizeFunction(F, FAM.getResult<TargetLibraryAnalysis>(F)))
     return PreservedAnalyses::none();
   return PreservedAnalyses::all();
-}
-
-PreservedAnalyses ThreadSanitizerPass::run(Module &M,
-                                           ModuleAnalysisManager &MAM) {
-  insertModuleCtor(M);
-  return PreservedAnalyses::none();
 }
 
 char ThreadSanitizerLegacyPass::ID = 0;
@@ -181,8 +169,7 @@ void ThreadSanitizerLegacyPass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool ThreadSanitizerLegacyPass::doInitialization(Module &M) {
-  insertModuleCtor(M);
-  TSan.emplace();
+  TSan.emplace(M);
   return true;
 }
 
@@ -196,10 +183,7 @@ FunctionPass *llvm::createThreadSanitizerLegacyPassPass() {
   return new ThreadSanitizerLegacyPass();
 }
 
-void ThreadSanitizer::initialize(Module &M) {
-  const DataLayout &DL = M.getDataLayout();
-  IntptrTy = DL.getIntPtrType(M.getContext());
-
+void ThreadSanitizer::initializeCallbacks(Module &M) {
   IRBuilder<> IRB(M.getContext());
   AttributeList Attr;
   Attr = Attr.addAttribute(M.getContext(), AttributeList::FunctionIndex,
@@ -213,7 +197,7 @@ void ThreadSanitizer::initialize(Module &M) {
                                           IRB.getVoidTy());
   TsanIgnoreEnd =
       M.getOrInsertFunction("__tsan_ignore_thread_end", Attr, IRB.getVoidTy());
-  IntegerType *OrdTy = IRB.getInt32Ty();
+  OrdTy = IRB.getInt32Ty();
   for (size_t i = 0; i < kNumberOfAccessSizes; ++i) {
     const unsigned ByteSize = 1U << i;
     const unsigned BitSize = ByteSize * 8;
@@ -294,6 +278,20 @@ void ThreadSanitizer::initialize(Module &M) {
   MemsetFn =
       M.getOrInsertFunction("memset", Attr, IRB.getInt8PtrTy(),
                             IRB.getInt8PtrTy(), IRB.getInt32Ty(), IntptrTy);
+}
+
+ThreadSanitizer::ThreadSanitizer(Module &M) {
+  const DataLayout &DL = M.getDataLayout();
+  IntptrTy = DL.getIntPtrType(M.getContext());
+  std::tie(TsanCtorFunction, std::ignore) =
+      getOrCreateSanitizerCtorAndInitFunctions(
+          M, kTsanModuleCtorName, kTsanInitName, /*InitArgTypes=*/{},
+          /*InitArgs=*/{},
+          // This callback is invoked when the functions are created the first
+          // time. Hook them into the global ctors list in that case:
+          [&](Function *Ctor, FunctionCallee) {
+            appendToGlobalCtors(M, Ctor, 0);
+          });
 }
 
 static bool isVtableAccess(Instruction *I) {
@@ -438,9 +436,9 @@ bool ThreadSanitizer::sanitizeFunction(Function &F,
                                        const TargetLibraryInfo &TLI) {
   // This is required to prevent instrumenting call to __tsan_init from within
   // the module constructor.
-  if (F.getName() == kTsanModuleCtorName)
+  if (&F == TsanCtorFunction)
     return false;
-  initialize(*F.getParent());
+  initializeCallbacks(*F.getParent());
   SmallVector<Instruction*, 8> AllLoadsAndStores;
   SmallVector<Instruction*, 8> LocalLoadsAndStores;
   SmallVector<Instruction*, 8> AtomicAccesses;
