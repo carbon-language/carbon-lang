@@ -245,6 +245,8 @@ bool isYAML(const StringRef Filename) {
 
 void mergeLegacyProfiles(const cl::list<std::string> &Filenames) {
   errs() << "Using legacy profile format.\n";
+  bool BoltedCollection{false};
+  bool First{true};
   for (auto &Filename : Filenames) {
     if (isYAML(Filename))
       report_error(Filename, "cannot mix YAML and legacy formats");
@@ -252,7 +254,28 @@ void mergeLegacyProfiles(const cl::list<std::string> &Filenames) {
     if (std::error_code EC = MB.getError())
       report_error(Filename, EC);
     errs() << "Merging data from " << Filename << "...\n";
-    outs() << MB.get()->getBuffer();
+
+    auto Buf = MB.get()->getBuffer();
+    // Check if the string "boltedcollection" is in the first line
+    if (Buf.startswith("boltedcollection\n")) {
+      if (!First && !BoltedCollection) {
+        report_error(
+            Filename,
+            "cannot mix profile collected in BOLT and non-BOLT deployments");
+      }
+      BoltedCollection = true;
+      if (!First)
+        Buf = Buf.drop_front(17);
+    } else {
+      if (BoltedCollection) {
+        report_error(
+            Filename,
+            "cannot mix profile collected in BOLT and non-BOLT deployments");
+      }
+    }
+
+    outs() << Buf;
+    First = false;
   }
   errs() << "Profile from " << Filenames.size() << " files merged.\n";
 }
