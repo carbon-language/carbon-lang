@@ -24,6 +24,7 @@ if (target_os == "mac") {
 }
 
 unwind_sources = [
+  "Unwind_AppleExtras.cpp",
   "libunwind.cpp",
   "Unwind-EHABI.cpp",
   "Unwind-seh.cpp",
