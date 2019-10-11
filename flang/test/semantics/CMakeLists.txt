@@ -242,7 +242,6 @@ set(DOCONCURRENT_TESTS
   doconcurrent03.f90
   doconcurrent04.f90
   doconcurrent07.f90
-  doconcurrent08.f90
 )
 
 set(CANONDO_TESTS

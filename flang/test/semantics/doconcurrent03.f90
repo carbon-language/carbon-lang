@@ -13,7 +13,7 @@
 ! limitations under the License.
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: control flow escapes from DO CONCURRENT
+! CHECK: Control flow escapes from DO CONCURRENT
 ! CHECK: branch into loop body from outside
 ! CHECK: the loop branched into
 

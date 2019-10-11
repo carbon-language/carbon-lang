@@ -21,6 +21,7 @@
 #include "../common/indirection.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree.h"
+#include "../parser/tools.h"
 #include <algorithm>
 #include <set>
 #include <variant>
@@ -541,6 +542,138 @@ std::unique_ptr<parser::Message> WhyNotModifiable(parser::CharBlock at,
   return {};
 }
 
+struct ImageControlStmtHelper {
+  using ImageControlStmts = std::variant<parser::ChangeTeamConstruct,
+      parser::CriticalConstruct, parser::EventPostStmt, parser::EventWaitStmt,
+      parser::FormTeamStmt, parser::LockStmt, parser::StopStmt,
+      parser::SyncAllStmt, parser::SyncImagesStmt, parser::SyncMemoryStmt,
+      parser::SyncTeamStmt, parser::UnlockStmt>;
+  template<typename T> bool operator()(const T &) {
+    return common::HasMember<T, ImageControlStmts>;
+  }
+  template<typename T> bool operator()(const common::Indirection<T> &x) {
+    return (*this)(x.value());
+  }
+  bool IsCoarrayObject(const parser::AllocateObject &allocateObject) {
+    const parser::Name &name{GetLastName(allocateObject)};
+    return name.symbol && IsCoarray(*name.symbol);
+  }
+  bool operator()(const parser::AllocateStmt &stmt) {
+    const auto &allocationList{std::get<std::list<parser::Allocation>>(stmt.t)};
+    for (const auto &allocation : allocationList) {
+      const auto &allocateObject{
+          std::get<parser::AllocateObject>(allocation.t)};
+      if (IsCoarrayObject(allocateObject)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  bool operator()(const parser::DeallocateStmt &stmt) {
+    const auto &allocateObjectList{
+        std::get<std::list<parser::AllocateObject>>(stmt.t)};
+    for (const auto &allocateObject : allocateObjectList) {
+      if (IsCoarrayObject(allocateObject)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  bool operator()(const parser::CallStmt &stmt) {
+    const auto &procedureDesignator{
+        std::get<parser::ProcedureDesignator>(stmt.v.t)};
+    if (auto *name{std::get_if<parser::Name>(&procedureDesignator.u)}) {
+      // TODO: also ensure that the procedure is, in fact, an intrinsic
+      if (name->source == "move_alloc") {
+        const auto &args{std::get<std::list<parser::ActualArgSpec>>(stmt.v.t)};
+        if (!args.empty()) {
+          const parser::ActualArg &actualArg{
+              std::get<parser::ActualArg>(args.front().t)};
+          if (const auto *argExpr{
+                  std::get_if<common::Indirection<parser::Expr>>(
+                      &actualArg.u)}) {
+            return HasCoarray(argExpr->value());
+          }
+        }
+      }
+    }
+    return false;
+  }
+  bool operator()(const parser::Statement<parser::ActionStmt> &stmt) {
+    return std::visit(*this, stmt.statement.u);
+  }
+};
+
+bool IsImageControlStmt(const parser::ExecutableConstruct &construct) {
+  return std::visit(ImageControlStmtHelper{}, construct.u);
+}
+
+std::optional<parser::MessageFixedText> GetImageControlStmtCoarrayMsg(
+    const parser::ExecutableConstruct &construct) {
+  if (const auto *actionStmt{
+          std::get_if<parser::Statement<parser::ActionStmt>>(&construct.u)}) {
+    return std::visit(
+        common::visitors{
+            [](const common::Indirection<parser::AllocateStmt> &)
+                -> std::optional<parser::MessageFixedText> {
+              return "ALLOCATE of a coarray is an image control"
+                     " statement"_en_US;
+            },
+            [](const common::Indirection<parser::DeallocateStmt> &)
+                -> std::optional<parser::MessageFixedText> {
+              return "DEALLOCATE of a coarray is an image control"
+                     " statement"_en_US;
+            },
+            [](const common::Indirection<parser::CallStmt> &)
+                -> std::optional<parser::MessageFixedText> {
+              return "MOVE_ALLOC of a coarray is an image control"
+                     " statement "_en_US;
+            },
+            [](const auto &) -> std::optional<parser::MessageFixedText> {
+              return std::nullopt;
+            },
+        },
+        actionStmt->statement.u);
+  }
+  return std::nullopt;
+}
+
+const parser::CharBlock GetImageControlStmtLocation(
+    const parser::ExecutableConstruct &executableConstruct) {
+  return std::visit(
+      common::visitors{
+          [](const common::Indirection<parser::ChangeTeamConstruct>
+                  &construct) {
+            return std::get<parser::Statement<parser::ChangeTeamStmt>>(
+                construct.value().t)
+                .source;
+          },
+          [](const common::Indirection<parser::CriticalConstruct> &construct) {
+            return std::get<parser::Statement<parser::CriticalStmt>>(
+                construct.value().t)
+                .source;
+          },
+          [](const parser::Statement<parser::ActionStmt> &actionStmt) {
+            return actionStmt.source;
+          },
+          [](const auto &) { return parser::CharBlock{}; },
+      },
+      executableConstruct.u);
+}
+
+bool HasCoarray(const parser::Expr &expression) {
+  if (const auto *expr{GetExpr(expression)}) {
+    for (const Symbol *symbol : evaluate::CollectSymbols(*expr)) {
+      if (const Symbol * root{GetAssociationRoot(DEREF(symbol))}) {
+        if (IsCoarray(*root)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,
     const DeclTypeSpec &spec, SemanticsContext &semanticsContext) {
   const IntrinsicTypeSpec *intrinsic{spec.AsIntrinsic()};
@@ -906,8 +1039,8 @@ enum class ComponentVisitState { Resume, Pre, Post };
 template<ComponentKind componentKind>
 void ComponentIterator<componentKind>::const_iterator::Increment() {
   std::int64_t level{static_cast<std::int64_t>(componentPath_.size()) - 1};
-  // Need to know if this is the first incrementation or if the visit is resumed
-  // after a user increment.
+  // Need to know if this is the first incrementation or if the visit is
+  // resumed after a user increment.
   ComponentVisitState state{
       level >= 0 && GetComponentSymbol(componentPath_[level])
           ? ComponentVisitState::Resume

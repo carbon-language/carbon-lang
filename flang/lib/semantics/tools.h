@@ -120,12 +120,24 @@ inline bool IsAssumedSizeArray(const Symbol &symbol) {
 }
 bool IsAssumedLengthCharacter(const Symbol &);
 bool IsAssumedLengthCharacterFunction(const Symbol &);
+// Is the symbol modifiable in this scope
 std::optional<parser::MessageFixedText> WhyNotModifiable(
     const Symbol &, const Scope &);
 std::unique_ptr<parser::Message> WhyNotModifiable(SourceName, const SomeExpr &,
     const Scope &, bool vectorSubscriptIsOk = false);
-// Is the symbol modifiable in this scope
 bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope);
+bool HasCoarray(const parser::Expr &expression);
+
+// Analysis of image control statements
+bool IsImageControlStmt(const parser::ExecutableConstruct &);
+// Get the location of the image control statement in this ExecutableConstruct
+const parser::CharBlock GetImageControlStmtLocation(
+    const parser::ExecutableConstruct &);
+// Image control statements that reference coarrays need an extra message
+// to clarify why they're image control statements.  This function returns
+// std::nullopt for ExecutableConstructs that do not require an extra message
+std::optional<parser::MessageFixedText> GetImageControlStmtCoarrayMsg(
+    const parser::ExecutableConstruct &);
 
 // Returns the complete list of derived type parameter symbols in
 // the order in which their declarations appear in the derived type

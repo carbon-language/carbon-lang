@@ -18,7 +18,7 @@
 
 subroutine s1()
   do concurrent (i=1:10)
-!ERROR: control flow escapes from DO CONCURRENT
+!ERROR: Control flow escapes from DO CONCURRENT
     goto 99
   end do
 

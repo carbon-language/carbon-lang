@@ -17,7 +17,7 @@
 SUBROUTINE do_concurrent_c1121(i,n)
   IMPLICIT NONE
   INTEGER :: i, n, flag
-!ERROR: concurrent-header mask expression cannot reference an impure procedure
+!ERROR: Concurrent-header mask expression cannot reference an impure procedure
   DO CONCURRENT (i = 1:n, random() < 3)
     flag = 3
   END DO
