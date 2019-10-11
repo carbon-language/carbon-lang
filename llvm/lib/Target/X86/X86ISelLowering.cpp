@@ -36239,10 +36239,15 @@ static SDValue combineReductionToHorizontal(SDNode *ExtElt, SelectionDAG &DAG,
 
   SDLoc DL(ExtElt);
 
-  if (VecVT == MVT::v8i8) {
+  // vXi8 reduction - sub 128-bit vector.
+  if (VecVT == MVT::v4i8 || VecVT == MVT::v8i8) {
+    // Pad with zero.
+    if (VecVT == MVT::v4i8)
+      Rdx = DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v8i8, Rdx,
+                        DAG.getConstant(0, DL, VecVT));
     // Pad with undef.
     Rdx = DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v16i8, Rdx,
-                      DAG.getUNDEF(VecVT));
+                      DAG.getUNDEF(MVT::v8i8));
     Rdx = DAG.getNode(X86ISD::PSADBW, DL, MVT::v2i64, Rdx,
                       DAG.getConstant(0, DL, MVT::v16i8));
     Rdx = DAG.getBitcast(MVT::v16i8, Rdx);
