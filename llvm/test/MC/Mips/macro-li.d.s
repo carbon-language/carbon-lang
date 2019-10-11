@@ -234,7 +234,7 @@ li.d	$f4, 0
 # CHECK-MIPS32r2: addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
 # CHECK-MIPS32r2: mtc1    $zero, $f4         # encoding: [0x00,0x20,0x80,0x44]
 # CHECK-MIPS32r2: mthc1   $1, $f4            # encoding: [0x00,0x20,0xe1,0x44]
-# N32-N64:        daddiu  $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x64]
+# N32-N64:        addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
 # N32-N64:        dmtc1   $1, $f4            # encoding: [0x00,0x20,0xa1,0x44]
 
 li.d	$f4, 0.0
@@ -244,7 +244,7 @@ li.d	$f4, 0.0
 # CHECK-MIPS32r2: addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
 # CHECK-MIPS32r2: mtc1    $zero, $f4         # encoding: [0x00,0x20,0x80,0x44]
 # CHECK-MIPS32r2: mthc1   $1, $f4            # encoding: [0x00,0x20,0xe1,0x44]
-# N32-N64:        daddiu  $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x64]
+# N32-N64:        addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
 # N32-N64:        dmtc1   $1, $f4            # encoding: [0x00,0x20,0xa1,0x44]
 
 li.d	$f4, 1.12345
