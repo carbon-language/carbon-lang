@@ -290,6 +290,10 @@ public:
     return isOff() || isVReg32();
   }
 
+  bool isNull() const {
+    return isRegKind() && getReg() == AMDGPU::SGPR_NULL;
+  }
+
   bool isSDWAOperand(MVT type) const;
   bool isSDWAFP16Operand() const;
   bool isSDWAFP32Operand() const;
@@ -6976,6 +6980,14 @@ unsigned AMDGPUAsmParser::validateTargetOperandClass(MCParsedAsmOperand &Op,
     return Operand.isInterpAttr() ? Match_Success : Match_InvalidOperand;
   case MCK_AttrChan:
     return Operand.isAttrChan() ? Match_Success : Match_InvalidOperand;
+  case MCK_SReg_64:
+  case MCK_SReg_64_XEXEC:
+    // Null is defined as a 32-bit register but
+    // it should also be enabled with 64-bit operands.
+    // The following code enables it for SReg_64 operands
+    // used as source and destination. Remaining source
+    // operands are handled in isInlinableImm.
+    return Operand.isNull() ? Match_Success : Match_InvalidOperand;
   default:
     return Match_InvalidOperand;
   }
