@@ -9,12 +9,8 @@ See lit.pod for more information.
 from __future__ import absolute_import
 import os
 import platform
-import random
 import sys
 import time
-import tempfile
-import shutil
-from xml.sax.saxutils import quoteattr
 
 import lit.cl_arguments
 import lit.discovery
@@ -32,6 +28,7 @@ def main(builtinParameters = {}):
     # the buildbot level.
     lit_tmp = None
     if 'LIT_PRESERVES_TMP' not in os.environ:
+        import tempfile
         lit_tmp = tempfile.mkdtemp(prefix="lit_tmp_")
         os.environ.update({
                 'TMPDIR': lit_tmp,
@@ -48,6 +45,7 @@ def main(builtinParameters = {}):
     finally:
         if lit_tmp:
             try:
+                import shutil
                 shutil.rmtree(lit_tmp)
             except:
                 # FIXME: Re-try after timeout on Windows.
@@ -142,23 +140,7 @@ def main_with_tmp(builtinParameters):
     # Don't create more workers than tests.
     opts.numWorkers = min(len(run.tests), opts.numWorkers)
 
-    increase_process_limit(litConfig, opts)
-
-    display = lit.display.create_display(opts, len(run.tests),
-                                         numTotalTests, opts.numWorkers)
-    def progress_callback(test):
-        display.update(test)
-        if opts.incremental:
-            update_incremental_cache(test)
-
-    startTime = time.time()
-    try:
-        run.execute_tests(progress_callback, opts.numWorkers, opts.maxTime)
-    except KeyboardInterrupt:
-        sys.exit(2)
-    testing_time = time.time() - startTime
-
-    display.finish()
+    testing_time = run_tests(run, litConfig, opts, numTotalTests)
 
     if not opts.quiet:
         print('Testing Time: %.2fs' % (testing_time,))
@@ -231,7 +213,6 @@ def main_with_tmp(builtinParameters):
 
     if hasFailures:
         sys.exit(1)
-    sys.exit(0)
 
 
 def create_user_parameters(builtinParameters, opts):
@@ -273,11 +254,9 @@ def print_suites_or_tests(run, opts):
             for test in ts_tests:
                 print('  %s' % (test.getFullName(),))
 
-    # Exit.
-    sys.exit(0)
-
 def order_tests(run, opts):
     if opts.shuffle:
+        import random
         random.shuffle(run.tests)
     elif opts.incremental:
         run.tests.sort(key = by_mtime, reverse = True)
@@ -319,6 +298,26 @@ def increase_process_limit(litConfig, opts):
                                (max_procs_soft, desired_limit))
     except:
         pass
+
+def run_tests(run, litConfig, opts, numTotalTests):
+    increase_process_limit(litConfig, opts)
+
+    display = lit.display.create_display(opts, len(run.tests),
+                                         numTotalTests, opts.numWorkers)
+    def progress_callback(test):
+        display.update(test)
+        if opts.incremental:
+            update_incremental_cache(test)
+
+    startTime = time.time()
+    try:
+        run.execute_tests(progress_callback, opts.numWorkers, opts.maxTime)
+    except KeyboardInterrupt:
+        sys.exit(2)
+    testing_time = time.time() - startTime
+
+    display.finish()
+    return testing_time
 
 def write_test_results(run, lit_config, testing_time, output_path):
     try:
@@ -379,6 +378,7 @@ def write_test_results(run, lit_config, testing_time, output_path):
         f.close()
 
 def write_test_results_xunit(run, opts):
+    from xml.sax.saxutils import quoteattr
     # Collect the tests, indexed by test suite
     by_suite = {}
     for result_test in run.tests:
