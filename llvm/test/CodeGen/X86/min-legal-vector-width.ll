@@ -1104,8 +1104,7 @@ define void @trunc_packus_v16i32_v16i8_store(<16 x i32>* %p, <16 x i8>* %q) "min
 ; CHECK-NEXT:    vmovdqa (%rdi), %ymm0
 ; CHECK-NEXT:    vpackusdw 32(%rdi), %ymm0, %ymm0
 ; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
-; CHECK-NEXT:    vpmovuswb %ymm0, %xmm0
-; CHECK-NEXT:    vmovdqa %xmm0, (%rsi)
+; CHECK-NEXT:    vpmovuswb %ymm0, (%rsi)
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %a = load <16 x i32>, <16 x i32>* %p

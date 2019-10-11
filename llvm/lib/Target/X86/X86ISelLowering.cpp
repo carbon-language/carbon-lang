@@ -40448,6 +40448,19 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
                              MVT::v16i8, St->getMemOperand());
   }
 
+  // Try to fold a vpmovuswb 256->128 into a truncating store.
+  // FIXME: Generalize this to other types.
+  // FIXME: Do the same for signed saturation.
+  if (!St->isTruncatingStore() && VT == MVT::v16i8 &&
+      St->getValue().getOpcode() == X86ISD::VTRUNCUS &&
+      St->getValue().getOperand(0).getValueType() == MVT::v16i16 &&
+      TLI.isTruncStoreLegal(MVT::v16i16, MVT::v16i8) &&
+      St->getValue().hasOneUse()) {
+    return EmitTruncSStore(false /* Unsigned saturation */, St->getChain(),
+                           dl, St->getValue().getOperand(0), St->getBasePtr(),
+                           MVT::v16i8, St->getMemOperand(), DAG);
+  }
+
   // Optimize trunc store (of multiple scalars) to shuffle and store.
   // First, pack all of the elements in one place. Next, store to memory
   // in fewer chunks.
