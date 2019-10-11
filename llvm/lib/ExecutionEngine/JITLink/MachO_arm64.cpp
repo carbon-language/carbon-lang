@@ -614,12 +614,15 @@ private:
     }
     case GOTPageOffset12: {
       assert(E.getAddend() == 0 && "GOTPAGEOF12 with non-zero addend");
-      uint64_t TargetOffset = E.getTarget().getAddress() & 0xfff;
 
       uint32_t RawInstr = *(ulittle32_t *)FixupPtr;
       assert((RawInstr & 0xfffffc00) == 0xf9400000 &&
              "RawInstr isn't a 64-bit LDR immediate");
-      uint32_t FixedInstr = RawInstr | (TargetOffset << 10);
+
+      uint32_t TargetOffset = E.getTarget().getAddress() & 0xfff;
+      assert((TargetOffset & 0x7) == 0 && "GOT entry is not 8-byte aligned");
+      uint32_t EncodedImm = (TargetOffset >> 3) << 10;
+      uint32_t FixedInstr = RawInstr | EncodedImm;
       *(ulittle32_t *)FixupPtr = FixedInstr;
       break;
     }
