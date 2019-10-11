@@ -25,6 +25,8 @@
 namespace llvm {
 namespace minidump {
 
+LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+
 /// The minidump header is the first part of a minidump file. It identifies the
 /// file as a minidump file, and gives the location of the stream directory.
 struct Header {
