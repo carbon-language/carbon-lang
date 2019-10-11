@@ -177,6 +177,10 @@ class InterfaceStubFunctionsConsumer : public ASTConsumer {
       HandleTemplateSpecializations(*cast<FunctionTemplateDecl>(ND), Symbols,
                                     RDO);
       return true;
+    case Decl::Kind::Record:
+    case Decl::Kind::Typedef:
+    case Decl::Kind::Enum:
+    case Decl::Kind::EnumConstant:
     case Decl::Kind::TemplateTypeParm:
       return true;
     case Decl::Kind::Var:
