@@ -189,7 +189,7 @@ void GlobalDCEPass::ScanVTables(Module &M) {
     // unit, we know that we can see all virtual functions which might use it,
     // so VFE is safe.
     if (auto GO = dyn_cast<GlobalObject>(&GV)) {
-      GlobalObject::VCallVisibility TypeVis = GV.getVCallVisibility();
+      GlobalObject::VCallVisibility TypeVis = GO->getVCallVisibility();
       if (TypeVis == GlobalObject::VCallVisibilityTranslationUnit ||
           (LTOPostLink &&
            TypeVis == GlobalObject::VCallVisibilityLinkageUnit)) {

@@ -1509,7 +1509,7 @@ GlobalObject::VCallVisibility GlobalObject::getVCallVisibility() const {
     uint64_t Val = cast<ConstantInt>(
                        cast<ConstantAsMetadata>(MD->getOperand(0))->getValue())
                        ->getZExtValue();
-    assert((Val >= 0 && Val <= 2) && "unknown vcall visibility!");
+    assert(Val <= 2 && "unknown vcall visibility!");
     return (VCallVisibility)Val;
   }
   return VCallVisibility::VCallVisibilityPublic;
