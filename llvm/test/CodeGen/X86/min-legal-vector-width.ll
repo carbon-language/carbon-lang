@@ -1098,21 +1098,28 @@ define <16 x i8> @trunc_packus_v16i32_v16i8(<16 x i32>* %p, <16 x i8>* %q) "min-
   ret <16 x i8> %f
 }
 
-define <32 x i8> @trunc_packus_v32i32_v32i8(<32 x i32> %a0) {
+define <32 x i8> @trunc_packus_v32i32_v32i8(<32 x i32>* %p) "min-legal-vector-width"="256" {
 ; CHECK-LABEL: trunc_packus_v32i32_v32i8:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; CHECK-NEXT:    vpmaxsd %zmm2, %zmm0, %zmm0
-; CHECK-NEXT:    vpmovusdb %zmm0, %xmm0
-; CHECK-NEXT:    vpmaxsd %zmm2, %zmm1, %zmm1
-; CHECK-NEXT:    vpmovusdb %zmm1, %xmm1
+; CHECK-NEXT:    vpxor %xmm0, %xmm0, %xmm0
+; CHECK-NEXT:    vpmaxsd 96(%rdi), %ymm0, %ymm1
+; CHECK-NEXT:    vpmovusdb %ymm1, %xmm1
+; CHECK-NEXT:    vpmaxsd 64(%rdi), %ymm0, %ymm2
+; CHECK-NEXT:    vpmovusdb %ymm2, %xmm2
+; CHECK-NEXT:    vpunpcklqdq {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; CHECK-NEXT:    vpmaxsd 32(%rdi), %ymm0, %ymm2
+; CHECK-NEXT:    vpmovusdb %ymm2, %xmm2
+; CHECK-NEXT:    vpmaxsd (%rdi), %ymm0, %ymm0
+; CHECK-NEXT:    vpmovusdb %ymm0, %xmm0
+; CHECK-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
 ; CHECK-NEXT:    retq
-  %1 = icmp slt <32 x i32> %a0, <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
-  %2 = select <32 x i1> %1, <32 x i32> %a0, <32 x i32> <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
-  %3 = icmp sgt <32 x i32> %2, zeroinitializer
-  %4 = select <32 x i1> %3, <32 x i32> %2, <32 x i32> zeroinitializer
-  %5 = trunc <32 x i32> %4 to <32 x i8>
-  ret <32 x i8> %5
+  %a = load <32 x i32>, <32 x i32>* %p
+  %b = icmp slt <32 x i32> %a, <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
+  %c = select <32 x i1> %b, <32 x i32> %a, <32 x i32> <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>
+  %d = icmp sgt <32 x i32> %c, zeroinitializer
+  %e = select <32 x i1> %d, <32 x i32> %c, <32 x i32> zeroinitializer
+  %f = trunc <32 x i32> %e to <32 x i8>
+  ret <32 x i8> %f
 }
 
