@@ -10,7 +10,6 @@ from __future__ import absolute_import
 import os
 import platform
 import random
-import re
 import sys
 import time
 import tempfile
@@ -115,7 +114,7 @@ def main_with_tmp(builtinParameters):
     numTotalTests = len(run.tests)
 
     if opts.filter:
-        filter_tests(run, opts)
+        run.tests = [t for t in run.tests if opts.filter.search(t.getFullName())]
 
     order_tests(run, opts)
 
@@ -276,15 +275,6 @@ def print_suites_or_tests(run, opts):
 
     # Exit.
     sys.exit(0)
-
-def filter_tests(run, opts):
-    try:
-        rex = re.compile(opts.filter)
-    except:
-        parser.error("invalid regular expression for --filter: %r" % (
-                opts.filter))
-    run.tests = [result_test for result_test in run.tests
-                    if rex.search(result_test.getFullName())]
 
 def order_tests(run, opts):
     if opts.shuffle:
