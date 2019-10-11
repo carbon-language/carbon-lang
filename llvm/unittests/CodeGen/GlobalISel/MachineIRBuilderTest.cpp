@@ -74,6 +74,7 @@ TEST_F(GISelMITest, TestBuildConstantFConstantDeath) {
 #endif
 
 TEST_F(GISelMITest, DstOpSrcOp) {
+  setUp();
   if (!TM)
     return;
 
@@ -99,6 +100,7 @@ TEST_F(GISelMITest, DstOpSrcOp) {
 }
 
 TEST_F(GISelMITest, BuildUnmerge) {
+  setUp();
   if (!TM)
     return;
 
@@ -119,6 +121,7 @@ TEST_F(GISelMITest, BuildUnmerge) {
 }
 
 TEST_F(GISelMITest, TestBuildFPInsts) {
+  setUp();
   if (!TM)
     return;
 
@@ -154,6 +157,7 @@ TEST_F(GISelMITest, TestBuildFPInsts) {
 }
 
 TEST_F(GISelMITest, BuildIntrinsic) {
+  setUp();
   if (!TM)
     return;
 
@@ -182,6 +186,7 @@ TEST_F(GISelMITest, BuildIntrinsic) {
 }
 
 TEST_F(GISelMITest, BuildXor) {
+  setUp();
   if (!TM)
     return;
 
@@ -210,6 +215,7 @@ TEST_F(GISelMITest, BuildXor) {
 }
 
 TEST_F(GISelMITest, BuildBitCounts) {
+  setUp();
   if (!TM)
     return;
 
@@ -237,6 +243,7 @@ TEST_F(GISelMITest, BuildBitCounts) {
 }
 
 TEST_F(GISelMITest, BuildCasts) {
+  setUp();
   if (!TM)
     return;
 
@@ -261,6 +268,7 @@ TEST_F(GISelMITest, BuildCasts) {
 }
 
 TEST_F(GISelMITest, BuildMinMax) {
+  setUp();
   if (!TM)
     return;
 
@@ -286,6 +294,7 @@ TEST_F(GISelMITest, BuildMinMax) {
 }
 
 TEST_F(GISelMITest, BuildAtomicRMW) {
+  setUp();
   if (!TM)
     return;
 
