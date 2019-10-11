@@ -1078,12 +1078,8 @@ define <8 x i16> @trunc_ssat_v8i32_v8i16(<8 x i32> %a0) {
 ;
 ; AVX512F-LABEL: trunc_ssat_v8i32_v8i16:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [32767,32767,32767,32767,32767,32767,32767,32767]
-; AVX512F-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [4294934528,4294934528,4294934528,4294934528,4294934528,4294934528,4294934528,4294934528]
-; AVX512F-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpmovdw %zmm0, %ymm0
-; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512F-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
 ; AVX512F-NEXT:    vzeroupper
 ; AVX512F-NEXT:    retq
 ;
@@ -1095,12 +1091,8 @@ define <8 x i16> @trunc_ssat_v8i32_v8i16(<8 x i32> %a0) {
 ;
 ; AVX512BW-LABEL: trunc_ssat_v8i32_v8i16:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [32767,32767,32767,32767,32767,32767,32767,32767]
-; AVX512BW-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [4294934528,4294934528,4294934528,4294934528,4294934528,4294934528,4294934528,4294934528]
-; AVX512BW-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpmovdw %zmm0, %ymm0
-; AVX512BW-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512BW-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
@@ -2795,11 +2787,9 @@ define <8 x i8> @trunc_ssat_v8i32_v8i8(<8 x i32> %a0) {
 ;
 ; AVX512F-LABEL: trunc_ssat_v8i32_v8i8:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [127,127,127,127,127,127,127,127]
-; AVX512F-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168]
-; AVX512F-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512F-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
+; AVX512F-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX512F-NEXT:    vzeroupper
 ; AVX512F-NEXT:    retq
 ;
@@ -2811,11 +2801,9 @@ define <8 x i8> @trunc_ssat_v8i32_v8i8(<8 x i32> %a0) {
 ;
 ; AVX512BW-LABEL: trunc_ssat_v8i32_v8i8:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [127,127,127,127,127,127,127,127]
-; AVX512BW-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168]
-; AVX512BW-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512BW-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
+; AVX512BW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
@@ -2860,11 +2848,9 @@ define void @trunc_ssat_v8i32_v8i8_store(<8 x i32> %a0, <8 x i8> *%p1) {
 ;
 ; AVX512F-LABEL: trunc_ssat_v8i32_v8i8_store:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [127,127,127,127,127,127,127,127]
-; AVX512F-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168]
-; AVX512F-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512F-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
+; AVX512F-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX512F-NEXT:    vmovq %xmm0, (%rdi)
 ; AVX512F-NEXT:    vzeroupper
 ; AVX512F-NEXT:    retq
@@ -2877,11 +2863,9 @@ define void @trunc_ssat_v8i32_v8i8_store(<8 x i32> %a0, <8 x i8> *%p1) {
 ;
 ; AVX512BW-LABEL: trunc_ssat_v8i32_v8i8_store:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [127,127,127,127,127,127,127,127]
-; AVX512BW-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168,4294967168]
-; AVX512BW-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
-; AVX512BW-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512BW-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
+; AVX512BW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vmovq %xmm0, (%rdi)
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
@@ -2976,10 +2960,8 @@ define <16 x i8> @trunc_ssat_v16i16_v16i8(<16 x i16> %a0) {
 ;
 ; AVX512BW-LABEL: trunc_ssat_v16i16_v16i8:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpminsw {{.*}}(%rip), %ymm0, %ymm0
-; AVX512BW-NEXT:    vpmaxsw {{.*}}(%rip), %ymm0, %ymm0
-; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
-; AVX512BW-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512BW-NEXT:    vpacksswb %xmm1, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;

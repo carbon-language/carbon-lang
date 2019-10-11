@@ -39860,9 +39860,16 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
     }
   }
 
+  // vXi32 truncate instructions are available with AVX512F.
+  // vXi16 truncate instructions are only available with AVX512BW.
+  // For 256-bit or smaller vectors, we require VLX.
+  // FIXME: We could widen truncates to 512 to remove the VLX restriction.
+  bool PreferAVX512 = ((Subtarget.hasAVX512() && InSVT == MVT::i32) ||
+                       (Subtarget.hasBWI() && InSVT == MVT::i16)) &&
+                      (Subtarget.hasVLX() || InVT.getSizeInBits() > 256);
+
   if (VT.isVector() && isPowerOf2_32(VT.getVectorNumElements()) &&
-      !(Subtarget.hasAVX512() && InSVT == MVT::i32) &&
-      !(Subtarget.hasBWI() && InSVT == MVT::i16) &&
+      !PreferAVX512 &&
       (SVT == MVT::i8 || SVT == MVT::i16) &&
       (InSVT == MVT::i16 || InSVT == MVT::i32)) {
     if (auto USatVal = detectSSatPattern(In, VT, true)) {
