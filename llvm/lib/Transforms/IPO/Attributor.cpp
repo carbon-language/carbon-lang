@@ -997,7 +997,7 @@ ChangeStatus AAReturnedValuesImpl::manifest(Attributor &A) {
 
   // Callback to replace the uses of CB with the constant C.
   auto ReplaceCallSiteUsersWith = [](CallBase &CB, Constant &C) {
-    if (CB.getNumUses() == 0)
+    if (CB.getNumUses() == 0 || CB.isMustTailCall())
       return ChangeStatus::UNCHANGED;
     CB.replaceAllUsesWith(&C);
     return ChangeStatus::CHANGED;
