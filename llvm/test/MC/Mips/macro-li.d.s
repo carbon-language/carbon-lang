@@ -228,24 +228,18 @@ li.d	$4, 12345678910123456789.12345678910
 # N32-N64:         ld      $4, 0($1)                  # encoding: [0x00,0x00,0x24,0xdc]
 
 li.d	$f4, 0
-# O32:            addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
-# O32:            mtc1    $1, $f5            # encoding: [0x00,0x28,0x81,0x44]
+# O32:            mtc1    $zero, $f5         # encoding: [0x00,0x28,0x80,0x44]
 # O32:            mtc1    $zero, $f4         # encoding: [0x00,0x20,0x80,0x44]
-# CHECK-MIPS32r2: addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
 # CHECK-MIPS32r2: mtc1    $zero, $f4         # encoding: [0x00,0x20,0x80,0x44]
-# CHECK-MIPS32r2: mthc1   $1, $f4            # encoding: [0x00,0x20,0xe1,0x44]
-# N32-N64:        addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
-# N32-N64:        dmtc1   $1, $f4            # encoding: [0x00,0x20,0xa1,0x44]
+# CHECK-MIPS32r2: mthc1   $zero, $f4         # encoding: [0x00,0x20,0xe0,0x44]
+# N32-N64:        dmtc1   $zero, $f4         # encoding: [0x00,0x20,0xa0,0x44]
 
 li.d	$f4, 0.0
-# O32:            addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
-# O32:            mtc1    $1, $f5            # encoding: [0x00,0x28,0x81,0x44]
+# O32:            mtc1    $zero, $f5         # encoding: [0x00,0x28,0x80,0x44]
 # O32:            mtc1    $zero, $f4         # encoding: [0x00,0x20,0x80,0x44]
-# CHECK-MIPS32r2: addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
 # CHECK-MIPS32r2: mtc1    $zero, $f4         # encoding: [0x00,0x20,0x80,0x44]
-# CHECK-MIPS32r2: mthc1   $1, $f4            # encoding: [0x00,0x20,0xe1,0x44]
-# N32-N64:        addiu   $1, $zero, 0       # encoding: [0x00,0x00,0x01,0x24]
-# N32-N64:        dmtc1   $1, $f4            # encoding: [0x00,0x20,0xa1,0x44]
+# CHECK-MIPS32r2: mthc1   $zero, $f4         # encoding: [0x00,0x20,0xe0,0x44]
+# N32-N64:        dmtc1   $zero, $f4         # encoding: [0x00,0x20,0xa0,0x44]
 
 li.d	$f4, 1.12345
 # ALL:	.section	.rodata,"a",@progbits

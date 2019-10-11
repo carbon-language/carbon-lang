@@ -3345,13 +3345,16 @@ bool MipsAsmParser::expandLoadSingleImmToFPR(MCInst &Inst, SMLoc IDLoc,
 
   uint32_t ImmOp32 = covertDoubleImmToSingleImm(ImmOp64);
 
-  unsigned TmpReg = getATReg(IDLoc);
-  if (!TmpReg)
-    return true;
+  unsigned TmpReg = Mips::ZERO;
+  if (ImmOp32 != 0) {
+    TmpReg = getATReg(IDLoc);
+    if (!TmpReg)
+      return true;
+  }
 
   if (Lo_32(ImmOp64) == 0) {
-    if (loadImmediate(ImmOp32, TmpReg, Mips::NoRegister, true, true, IDLoc, Out,
-                      STI))
+    if (TmpReg != Mips::ZERO && loadImmediate(ImmOp32, TmpReg, Mips::NoRegister,
+                                              true, false, IDLoc, Out, STI))
       return true;
     TOut.emitRR(Mips::MTC1, FirstReg, TmpReg, IDLoc, STI);
     return false;
@@ -3469,24 +3472,26 @@ bool MipsAsmParser::expandLoadDoubleImmToFPR(MCInst &Inst, bool Is64FPU,
   uint32_t LoImmOp64 = Lo_32(ImmOp64);
   uint32_t HiImmOp64 = Hi_32(ImmOp64);
 
-  unsigned TmpReg = getATReg(IDLoc);
-  if (!TmpReg)
-    return true;
+  unsigned TmpReg = Mips::ZERO;
+  if (ImmOp64 != 0) {
+    TmpReg = getATReg(IDLoc);
+    if (!TmpReg)
+      return true;
+  }
 
   if ((LoImmOp64 == 0) &&
       !((HiImmOp64 & 0xffff0000) && (HiImmOp64 & 0x0000ffff))) {
-    // FIXME: In the case where the constant is zero, we can load the
-    // register directly from the zero register.
-
     if (isABI_N32() || isABI_N64()) {
-      if (loadImmediate(ImmOp64, TmpReg, Mips::NoRegister, false, false, IDLoc,
+      if (TmpReg != Mips::ZERO &&
+          loadImmediate(ImmOp64, TmpReg, Mips::NoRegister, false, false, IDLoc,
                         Out, STI))
         return true;
       TOut.emitRR(Mips::DMTC1, FirstReg, TmpReg, IDLoc, STI);
       return false;
     }
 
-    if (loadImmediate(HiImmOp64, TmpReg, Mips::NoRegister, true, false, IDLoc,
+    if (TmpReg != Mips::ZERO &&
+        loadImmediate(HiImmOp64, TmpReg, Mips::NoRegister, true, false, IDLoc,
                       Out, STI))
       return true;
 
