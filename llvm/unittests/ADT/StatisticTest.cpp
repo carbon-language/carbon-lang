@@ -68,6 +68,8 @@ TEST(StatisticTest, Assign) {
 
 TEST(StatisticTest, API) {
   EnableStatistics();
+  // Reset beforehand to make sure previous tests don't effect this one.
+  ResetStatistics();
 
   Counter = 0;
   EXPECT_EQ(Counter, 0u);
