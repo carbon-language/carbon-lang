@@ -15,6 +15,8 @@
 ! See Fortran 2018, clause 16.10.2
 ! TODO: These are placeholder values so that some tests can be run.
 
+include '../runtime/magic-numbers.h' ! for IOSTAT= error/end code values
+
 module iso_fortran_env
 
   integer, parameter :: atomic_int_kind = 8
@@ -42,12 +44,12 @@ module iso_fortran_env
   integer, parameter :: file_storage_size = 8
   integer, parameter :: numeric_storage_size = 32
 
-  integer, parameter :: stat_failed_image = -1
-  integer, parameter :: stat_locked = 2
-  integer, parameter :: stat_locked_other_image = 3
-  integer, parameter :: stat_stopped_image = 4
-  integer, parameter :: stat_unlocked = 5
-  integer, parameter :: stat_unlocked_failed_image = 6
+  integer, parameter :: stat_failed_image = FORTRAN_RUNTIME_STAT_FAILED_IMAGE
+  integer, parameter :: stat_locked = FORTRAN_RUNTIME_STAT_LOCKED
+  integer, parameter :: stat_locked_other_image = FORTRAN_RUNTIME_STAT_LOCKED_OTHER_IMAGE
+  integer, parameter :: stat_stopped_image = FORTRAN_RUNTIME_STAT_STOPPED_IMAGE
+  integer, parameter :: stat_unlocked = FORTRAN_RUNTIME_STAT_UNLOCKED
+  integer, parameter :: stat_unlocked_failed_image = FORTRAN_RUNTIME_STAT_UNLOCKED_FAILED_IMAGE
 
   type :: event_type
     private
