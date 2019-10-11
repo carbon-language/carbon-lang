@@ -102,6 +102,7 @@ public:
       kind_ = ClassKind;
     }
   }
+  CONSTEXPR_CONSTRUCTORS_AND_ASSIGNMENTS(DynamicType)
 
   // A rare use case used for representing the characteristics of an
   // intrinsic function like REAL() that accepts a typeless BOZ literal

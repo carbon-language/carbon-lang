@@ -176,7 +176,7 @@ template<template<typename> typename ConstantContainer, typename TR,
     typename... TA>
 std::optional<HostProcedureWrapper<ConstantContainer, TR, TA...>>
 HostIntrinsicProceduresLibrary::GetHostProcedureWrapper(
-    const std::string &name) {
+    const std::string &name) const {
   if constexpr (host::HostTypeExists<TR, TA...>()) {
     auto rteProcRange{procedures_.equal_range(name)};
     const TypeCode resTypeCode{typeCodeOf<TR>};

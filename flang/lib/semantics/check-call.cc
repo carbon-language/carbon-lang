@@ -307,43 +307,34 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
     const Scope &scope) {
   auto &messages{context.messages()};
-  std::visit(
-      common::visitors{
-          [&](const characteristics::DummyDataObject &object) {
-            if (const auto *expr{arg.UnwrapExpr()}) {
-              if (auto type{characteristics::TypeAndShape::Characterize(
-                      *expr, context)}) {
-                CheckExplicitDataArg(
-                    object, *expr, *type, proc, context, scope);
-              } else if (object.type.type().IsTypelessIntrinsicArgument() &&
-                  std::holds_alternative<evaluate::BOZLiteralConstant>(
-                      expr->u)) {
-                // ok
-              } else {
-                messages.Say(
-                    "Actual argument is not a variable or typed expression"_err_en_US);
-              }
-            } else if (const Symbol * assumed{arg.GetAssumedTypeDummy()}) {
-              // An assumed-type dummy is being forwarded.
-              if (!object.type.type().IsAssumedType()) {
-                messages.Say(
-                    "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) dummy argument"_err_en_US,
-                    assumed->name());
-              }
-            } else {
-              messages.Say(
-                  "Actual argument is not an expression or variable"_err_en_US);
-            }
-          },
-          [&](const characteristics::DummyProcedure &) {
-            // TODO check effective procedure compatibility
-          },
-          [&](const characteristics::AlternateReturn &) {
-            // TODO check alternate return
-          },
-      },
-      dummy.u);
-  return true;  // TODO: return false when error detected
+  if (const auto *object{
+          std::get_if<characteristics::DummyDataObject>(&dummy.u)}) {
+    if (const auto *expr{arg.UnwrapExpr()}) {
+      if (auto type{
+              characteristics::TypeAndShape::Characterize(*expr, context)}) {
+        CheckExplicitDataArg(*object, *expr, *type, proc, context, scope);
+      } else if (object->type.type().IsTypelessIntrinsicArgument() &&
+          std::holds_alternative<evaluate::BOZLiteralConstant>(expr->u)) {
+        // ok
+      } else {
+        messages.Say(
+            "Actual argument is not a variable or typed expression"_err_en_US);
+      }
+    } else if (const Symbol * assumed{arg.GetAssumedTypeDummy()}) {
+      // An assumed-type dummy is being forwarded.
+      if (!object->type.type().IsAssumedType()) {
+        messages.Say(
+            "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) dummy argument"_err_en_US,
+            assumed->name());
+      }
+    } else {
+      messages.Say(
+          "Actual argument is not an expression or variable"_err_en_US);
+    }
+  } else {
+    // TODO check actual procedure compatibility
+    // TODO check alternate return
+  }
 }
 
 static void RearrangeArguments(const characteristics::Procedure &proc,
@@ -355,7 +346,6 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
     messages.Say(
         "Too many actual arguments (%zd) passed to procedure that expects only %zd"_err_en_US,
         actuals.size(), proc.dummyArguments.size());
-    return false;
   }
   std::map<std::string, evaluate::ActualArgument> kwArgs;
   for (auto &x : actuals) {
@@ -367,7 +357,6 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
           messages.Say(*x->keyword,
               "Argument keyword '%s=' appears on more than one effective argument in this procedure reference"_err_en_US,
               *x->keyword);
-          return false;
         }
         x.reset();
       }
@@ -384,7 +373,6 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
             messages.Say(*x.keyword,
                 "Keyword argument '%s=' has already been specified positionally (#%d) in this procedure reference"_err_en_US,
                 *x.keyword, index + 1);
-            return false;
           } else {
             actuals[index] = std::move(x);
           }
@@ -398,49 +386,50 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
       messages.Say(*x.keyword,
           "Argument keyword '%s=' is not recognized for this procedure reference"_err_en_US,
           *x.keyword);
-      return false;
     }
   }
-  return true;
 }
 
-bool CheckExplicitInterface(const characteristics::Procedure &proc,
-    ActualArguments &actuals, FoldingContext &context, const Scope &scope) {
-  parser::ContextualMessages &messages{context.messages()};
-  if (!RearrangeArguments(proc, actuals, messages)) {
-    return false;
-  }
-  int index{0};
-  for (auto &actual : actuals) {
-    const auto &dummy{proc.dummyArguments[index++]};
-    if (actual.has_value()) {
-      if (!CheckExplicitInterfaceArg(*actual, dummy, context, scope)) {
-        return false;
+parser::Messages CheckExplicitInterface(const characteristics::Procedure &proc,
+    evaluate::ActualArguments &actuals, const evaluate::FoldingContext &context,
+    const Scope &scope) {
+  parser::Messages buffer;
+  parser::ContextualMessages messages{context.messages().at(), &buffer};
+  evaluate::FoldingContext localContext{context, messages};
+  RearrangeArguments(proc, actuals, messages);
+  if (buffer.empty()) {
+    int index{0};
+    for (auto &actual : actuals) {
+      const auto &dummy{proc.dummyArguments.at(index++)};
+      if (actual.has_value()) {
+        CheckExplicitInterfaceArg(*actual, dummy, proc, localContext, scope);
+      } else if (!dummy.IsOptional()) {
+        if (dummy.name.empty()) {
+          messages.Say(
+              "Dummy argument #%d is not OPTIONAL and is not associated with "
+              "an actual argument in this procedure reference"_err_en_US,
+              index);
+        } else {
+          messages.Say(
+              "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated "
+              "with an actual argument in this procedure reference"_err_en_US,
+              dummy.name, index);
+        }
       }
-    } else if (!dummy.IsOptional()) {
-      if (dummy.name.empty()) {
-        messages.Say(
-            "Dummy argument #%d is not OPTIONAL and is not associated with an "
-            "actual argument in this procedure reference"_err_en_US,
-            index);
-      } else {
-        messages.Say(
-            "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated "
-            "with an actual argument in this procedure reference"_err_en_US,
-            dummy.name, index);
-      }
-      return false;
     }
   }
-  return true;
+  return buffer;
 }
 
 void CheckArguments(const characteristics::Procedure &proc,
     evaluate::ActualArguments &actuals, evaluate::FoldingContext &context,
     const Scope &scope, bool treatingExternalAsImplicit) {
   bool explicitInterface{proc.HasExplicitInterface()};
-  if (explicitInterface()) {
-    CheckExplicitInterface(proc, actuals, context, scope);
+  if (explicitInterface) {
+    auto buffer{CheckExplicitInterface(proc, actuals, context, scope)};
+    if (auto *msgs{context.messages().messages()}) {
+      msgs->Merge(std::move(buffer));
+    }
   }
   if (!explicitInterface || treatingExternalAsImplicit) {
     parser::Messages buffer;

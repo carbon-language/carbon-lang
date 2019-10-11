@@ -1559,20 +1559,18 @@ static bool CheckCompatibleArguments(
   return true;
 }
 
-const Symbol *ExpressionAnalyzer::ResolveGeneric(
-    const Symbol &symbol, ActualArguments &actuals) {
+const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
+    ActualArguments &actuals, const semantics::Scope &scope) {
   const Symbol *elemental{nullptr};  // matching elemental specific proc
   const auto &details{symbol.get<semantics::GenericDetails>()};
   for (const Symbol *specific : details.specificProcs()) {
     if (std::optional<characteristics::Procedure> procedure{
             characteristics::Procedure::Characterize(
                 ProcedureDesignator{*specific}, context_.intrinsics())}) {
-      parser::Messages buffer;
-      parser::ContextualMessages messages{
-          context_.foldingContext().messages().at(), &buffer};
-      FoldingContext localContext{context_.foldingContext(), messages};
       ActualArguments localActuals{actuals};
-      if (CheckExplicitInterface(*procedure, localActuals, localContext) &&
+      auto messages{CheckExplicitInterface(
+          *procedure, localActuals, GetFoldingContext(), scope)};
+      if (messages.empty() &&
           CheckCompatibleArguments(*procedure, localActuals)) {
         if (!procedure->IsElemental()) {
           return specific;  // takes priority over elemental match
@@ -1592,7 +1590,8 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(
 
 auto ExpressionAnalyzer::GetCalleeAndArguments(
     const parser::ProcedureDesignator &pd, ActualArguments &&arguments,
-    bool isSubroutine) -> std::optional<CalleeAndArguments> {
+    bool isSubroutine, const semantics::Scope &scope)
+    -> std::optional<CalleeAndArguments> {
   return std::visit(
       common::visitors{
           [&](const parser::Name &n) -> std::optional<CalleeAndArguments> {
@@ -1615,7 +1614,7 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(
             }
             CheckForBadRecursion(n.source, ultimate);
             if (ultimate.has<semantics::GenericDetails>()) {
-              symbol = ResolveGeneric(ultimate, arguments);
+              symbol = ResolveGeneric(ultimate, arguments, scope);
             }
             if (symbol) {
               return CalleeAndArguments{
@@ -1721,7 +1720,8 @@ MaybeExpr ExpressionAnalyzer::AnalyzeCall(
     // TODO: map non-intrinsic generic procedure to specific procedure
     if (std::optional<CalleeAndArguments> callee{
             GetCalleeAndArguments(std::get<parser::ProcedureDesignator>(call.t),
-                std::move(*arguments), isSubroutine)}) {
+                std::move(*arguments), isSubroutine,
+                context_.FindScope(call.source))}) {
       if (isSubroutine) {
         CheckCall(call.source, callee->procedureDesignator, callee->arguments);
         // TODO: Package the subroutine call as an expr in the parse tree

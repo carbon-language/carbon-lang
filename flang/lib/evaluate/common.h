@@ -229,12 +229,15 @@ public:
       pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
 
   parser::ContextualMessages &messages() { return messages_; }
-  const common::IntrinsicTypeDefaultKinds &defaults() { return defaults_; }
+  const parser::ContextualMessages &messages() const { return messages_; }
+  const common::IntrinsicTypeDefaultKinds &defaults() const {
+    return defaults_;
+  }
   Rounding rounding() const { return rounding_; }
   bool flushSubnormalsToZero() const { return flushSubnormalsToZero_; }
   bool bigEndian() const { return bigEndian_; }
   const semantics::DerivedTypeSpec *pdtInstance() const { return pdtInstance_; }
-  HostIntrinsicProceduresLibrary &hostIntrinsicsLibrary() {
+  const HostIntrinsicProceduresLibrary &hostIntrinsicsLibrary() const {
     return hostIntrinsicsLibrary_;
   }
   const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }

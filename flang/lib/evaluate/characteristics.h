@@ -224,6 +224,7 @@ struct Procedure {
   Procedure(FunctionResult &&, DummyArguments &&, Attrs);
   Procedure(DummyArguments &&, Attrs);  // for subroutines and NULL()
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(Procedure)
+  ~Procedure();
   bool operator==(const Procedure &) const;
 
   // Characterizes the procedure represented by a symbol, which may be an

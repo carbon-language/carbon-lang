@@ -20,6 +20,7 @@
 #include "../evaluate/call.h"
 
 namespace Fortran::parser {
+class Messages;
 class ContextualMessages;
 }
 namespace Fortran::evaluate::characteristics {
@@ -41,8 +42,9 @@ void CheckArguments(const evaluate::characteristics::Procedure &,
     bool treatingExternalAsImplicit = false);
 
 // Check actual arguments against a procedure with an explicit interface.
-// Report an error and return false if not compatible.
-bool CheckExplicitInterface(
-    const characteristics::Procedure &, ActualArguments &, FoldingContext &);
+// Reports a buffer of errors when not compatible.
+parser::Messages CheckExplicitInterface(
+    const evaluate::characteristics::Procedure &, evaluate::ActualArguments &,
+    const evaluate::FoldingContext &, const Scope &);
 }
 #endif

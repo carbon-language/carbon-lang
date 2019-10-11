@@ -526,6 +526,7 @@ Procedure::Procedure(FunctionResult &&fr, DummyArguments &&args, Attrs a)
   : functionResult{std::move(fr)}, dummyArguments{std::move(args)}, attrs{a} {}
 Procedure::Procedure(DummyArguments &&args, Attrs a)
   : dummyArguments{std::move(args)}, attrs{a} {}
+Procedure::~Procedure() = default;
 
 bool Procedure::operator==(const Procedure &that) const {
   return attrs == that.attrs && dummyArguments == that.dummyArguments &&

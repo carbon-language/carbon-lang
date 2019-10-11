@@ -104,7 +104,7 @@ public:
   template<template<typename> typename ConstantContainer, typename TR,
       typename... TA>
   std::optional<HostProcedureWrapper<ConstantContainer, TR, TA...>>
-  GetHostProcedureWrapper(const std::string &name);
+  GetHostProcedureWrapper(const std::string &name) const;
 
 private:
   std::multimap<std::string, const HostRuntimeIntrinsicProcedure> procedures_;
