@@ -41254,9 +41254,13 @@ static SDValue combineVTRUNC(SDNode *N, SelectionDAG &DAG) {
 /// In this case we go though all bitcasts.
 /// This also recognizes splat of a negated value and returns the splat of that
 /// value.
-static SDValue isFNEG(SelectionDAG &DAG, SDNode *N) {
+static SDValue isFNEG(SelectionDAG &DAG, SDNode *N, unsigned Depth = 0) {
   if (N->getOpcode() == ISD::FNEG)
     return N->getOperand(0);
+
+  // Don't recurse exponentially.
+  if (Depth > SelectionDAG::MaxRecursionDepth)
+    return SDValue();
 
   unsigned ScalarSize = N->getValueType(0).getScalarSizeInBits();
 
@@ -41271,7 +41275,7 @@ static SDValue isFNEG(SelectionDAG &DAG, SDNode *N) {
     // of this is VECTOR_SHUFFLE(-VEC1, UNDEF).  The mask can be anything here.
     if (!SVOp->getOperand(1).isUndef())
       return SDValue();
-    if (SDValue NegOp0 = isFNEG(DAG, SVOp->getOperand(0).getNode()))
+    if (SDValue NegOp0 = isFNEG(DAG, SVOp->getOperand(0).getNode(), Depth + 1))
       if (NegOp0.getValueType() == VT) // FIXME: Can we do better?
         return DAG.getVectorShuffle(VT, SDLoc(SVOp), NegOp0, DAG.getUNDEF(VT),
                                     SVOp->getMask());
@@ -41285,7 +41289,7 @@ static SDValue isFNEG(SelectionDAG &DAG, SDNode *N) {
     SDValue InsVal = Op.getOperand(1);
     if (!InsVector.isUndef())
       return SDValue();
-    if (SDValue NegInsVal = isFNEG(DAG, InsVal.getNode()))
+    if (SDValue NegInsVal = isFNEG(DAG, InsVal.getNode(), Depth + 1))
       if (NegInsVal.getValueType() == VT.getVectorElementType()) // FIXME
         return DAG.getNode(ISD::INSERT_VECTOR_ELT, SDLoc(Op), VT, InsVector,
                            NegInsVal, Op.getOperand(2));
@@ -41429,7 +41433,7 @@ char X86TargetLowering::isNegatibleForFree(SDValue Op, SelectionDAG &DAG,
                                            bool ForCodeSize,
                                            unsigned Depth) const {
   // fneg patterns are removable even if they have multiple uses.
-  if (isFNEG(DAG, Op.getNode()))
+  if (isFNEG(DAG, Op.getNode(), Depth))
     return 2;
 
   // Don't recurse exponentially.
@@ -41472,7 +41476,7 @@ SDValue X86TargetLowering::getNegatedExpression(SDValue Op, SelectionDAG &DAG,
                                                 bool ForCodeSize,
                                                 unsigned Depth) const {
   // fneg patterns are removable even if they have multiple uses.
-  if (SDValue Arg = isFNEG(DAG, Op.getNode()))
+  if (SDValue Arg = isFNEG(DAG, Op.getNode(), Depth))
     return DAG.getBitcast(Op.getValueType(), Arg);
 
   EVT VT = Op.getValueType();
