@@ -1,7 +1,6 @@
 import difflib
 import functools
 import getopt
-import locale
 import os
 import sys
 
@@ -25,26 +24,37 @@ def getDirTree(path, basedir=""):
         return path, sorted(child_trees)
 
 def compareTwoFiles(flags, filepaths):
+    compare_bytes = False
+    encoding = None
     filelines = []
     for file in filepaths:
-        with open(file, 'rb') as file_bin:
-            filelines.append(file_bin.readlines())
-
-    try:
-        return compareTwoTextFiles(flags, filepaths, filelines,
-                                   locale.getpreferredencoding(False))
-    except UnicodeDecodeError:
         try:
-            return compareTwoTextFiles(flags, filepaths, filelines, "utf-8")
-        except:
-            return compareTwoBinaryFiles(flags, filepaths, filelines)
+            with open(file, 'r') as f:
+                filelines.append(f.readlines())
+        except UnicodeDecodeError:
+            try:
+                with io.open(file, 'r', encoding="utf-8") as f:
+                    filelines.append(f.readlines())
+                encoding = "utf-8"
+            except:
+                compare_bytes = True
 
-def compareTwoBinaryFiles(flags, filepaths, filelines):
+    if compare_bytes:
+        return compareTwoBinaryFiles(flags, filepaths)
+    else:
+        return compareTwoTextFiles(flags, filepaths, encoding)
+
+def compareTwoBinaryFiles(flags, filepaths):
+    filelines = []
+    for file in filepaths:
+        with open(file, 'rb') as f:
+            filelines.append(f.readlines())
+
     exitCode = 0
     if hasattr(difflib, 'diff_bytes'):
         # python 3.5 or newer
         diffs = difflib.diff_bytes(difflib.unified_diff, filelines[0], filelines[1], filepaths[0].encode(), filepaths[1].encode())
-        diffs = [diff.decode(errors="backslashreplace") for diff in diffs]
+        diffs = [diff.decode() for diff in diffs]
     else:
         # python 2.7
         if flags.unified_diff:
@@ -58,14 +68,15 @@ def compareTwoBinaryFiles(flags, filepaths, filelines):
         exitCode = 1
     return exitCode
 
-def compareTwoTextFiles(flags, filepaths, filelines_bin, encoding):
+def compareTwoTextFiles(flags, filepaths, encoding):
     filelines = []
-    for lines_bin in filelines_bin:
-        lines = []
-        for line_bin in lines_bin:
-            line = line_bin.decode(encoding=encoding)
-            lines.append(line)
-        filelines.append(lines)
+    for file in filepaths:
+        if encoding is None:
+            with open(file, 'r') as f:
+                filelines.append(f.readlines())
+        else:
+            with io.open(file, 'r', encoding=encoding) as f:
+                filelines.append(f.readlines())
 
     exitCode = 0
     def compose2(f, g):

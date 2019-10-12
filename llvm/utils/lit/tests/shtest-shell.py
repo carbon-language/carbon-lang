@@ -34,58 +34,6 @@
 # CHECK: error: command failed with exit status: 127
 # CHECK: ***
 
-
-# CHECK: FAIL: shtest-shell :: diff-encodings.txt
-# CHECK: *** TEST 'shtest-shell :: diff-encodings.txt' FAILED ***
-
-# CHECK: $ "diff" "-u" "diff-in.bin" "diff-in.bin"
-# CHECK-NOT: error
-
-# CHECK: $ "diff" "-u" "diff-in.utf16" "diff-in.bin"
-# CHECK: # command output:
-# CHECK-NEXT: ---
-# CHECK-NEXT: +++
-# CHECK-NEXT: @@
-# CHECK-NEXT: {{^ .f.o.o.$}}
-# CHECK-NEXT: {{^-.b.a.r.$}}
-# CHECK-NEXT: {{^\+.b.a.r..}}
-# CHECK-NEXT: {{^ .b.a.z.$}}
-# CHECK: error: command failed with exit status: 1
-# CHECK: $ "true"
-
-# CHECK: $ "diff" "-u" "diff-in.utf8" "diff-in.bin"
-# CHECK: # command output:
-# CHECK-NEXT: ---
-# CHECK-NEXT: +++
-# CHECK-NEXT: @@
-# CHECK-NEXT: -foo
-# CHECK-NEXT: -bar
-# CHECK-NEXT: -baz
-# CHECK-NEXT: {{^\+.f.o.o.$}}
-# CHECK-NEXT: {{^\+.b.a.r..}}
-# CHECK-NEXT: {{^\+.b.a.z.$}}
-# CHECK: error: command failed with exit status: 1
-# CHECK: $ "true"
-
-# CHECK: $ "diff" "-u" "diff-in.bin" "diff-in.utf8"
-# CHECK: # command output:
-# CHECK-NEXT: ---
-# CHECK-NEXT: +++
-# CHECK-NEXT: @@
-# CHECK-NEXT: {{^\-.f.o.o.$}}
-# CHECK-NEXT: {{^\-.b.a.r..}}
-# CHECK-NEXT: {{^\-.b.a.z.$}}
-# CHECK-NEXT: +foo
-# CHECK-NEXT: +bar
-# CHECK-NEXT: +baz
-# CHECK: error: command failed with exit status: 1
-# CHECK: $ "true"
-
-# CHECK: $ "false"
-
-# CHECK: ***
-
-
 # CHECK: FAIL: shtest-shell :: diff-error-1.txt
 # CHECK: *** TEST 'shtest-shell :: diff-error-1.txt' FAILED ***
 # CHECK: $ "diff" "-B" "temp1.txt" "temp2.txt"
@@ -297,4 +245,4 @@
 # CHECK: PASS: shtest-shell :: sequencing-0.txt
 # CHECK: XFAIL: shtest-shell :: sequencing-1.txt
 # CHECK: PASS: shtest-shell :: valid-shell.txt
-# CHECK: Failing Tests (28)
+# CHECK: Failing Tests (27)
