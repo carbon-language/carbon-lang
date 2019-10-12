@@ -4,7 +4,7 @@
 # FIXME: Temporarily dump test output so we can debug failing tests on
 # buildbots.
 # RUN: cat %t.out
-# RUN: FileCheck --input-file %t.out %s
+# RUN: FileCheck --dump-input=fail --color -vv --input-file %t.out %s
 #
 # END.
 
