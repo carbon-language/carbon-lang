@@ -46,10 +46,10 @@
 # CHECK-NEXT: ---
 # CHECK-NEXT: +++
 # CHECK-NEXT: @@
-# CHECK-NEXT: {{^ .+f.+o.+o.+$}}
-# CHECK-NEXT: {{^-.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^\+.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^ .+b.+a.+z.+$}}
+# CHECK-NEXT: {{^ .f.o.o.$}}
+# CHECK-NEXT: {{^-.b.a.r.$}}
+# CHECK-NEXT: {{^\+.b.a.r..}}
+# CHECK-NEXT: {{^ .b.a.z.$}}
 # CHECK: error: command failed with exit status: 1
 # CHECK: $ "true"
 
@@ -61,9 +61,9 @@
 # CHECK-NEXT: -foo
 # CHECK-NEXT: -bar
 # CHECK-NEXT: -baz
-# CHECK-NEXT: {{^\+.+f.+o.+o.+$}}
-# CHECK-NEXT: {{^\+.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^\+.+b.+a.+z.+$}}
+# CHECK-NEXT: {{^\+.f.o.o.$}}
+# CHECK-NEXT: {{^\+.b.a.r..}}
+# CHECK-NEXT: {{^\+.b.a.z.$}}
 # CHECK: error: command failed with exit status: 1
 # CHECK: $ "true"
 
@@ -72,9 +72,9 @@
 # CHECK-NEXT: ---
 # CHECK-NEXT: +++
 # CHECK-NEXT: @@
-# CHECK-NEXT: {{^\-.+f.+o.+o.+$}}
-# CHECK-NEXT: {{^\-.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^\-.+b.+a.+z.+$}}
+# CHECK-NEXT: {{^\-.f.o.o.$}}
+# CHECK-NEXT: {{^\-.b.a.r..}}
+# CHECK-NEXT: {{^\-.b.a.z.$}}
 # CHECK-NEXT: +foo
 # CHECK-NEXT: +bar
 # CHECK-NEXT: +baz
@@ -98,10 +98,10 @@
 # CHECK-NEXT: ---
 # CHECK-NEXT: +++
 # CHECK-NEXT: @@
-# CHECK-NEXT: {{^ .+f.+o.+o.+$}}
-# CHECK-NEXT: {{^-.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^\+.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^ .+b.+a.+z.+$}}
+# CHECK-NEXT: {{^ .f.o.o.$}}
+# CHECK-NEXT: {{^-.b.a.r.$}}
+# CHECK-NEXT: {{^\+.b.a.r..}}
+# CHECK-NEXT: {{^ .b.a.z.$}}
 # CHECK: error: command failed with exit status: 1
 # CHECK: $ "true"
 
@@ -115,9 +115,9 @@
 # CHECK-NEXT: -foo
 # CHECK-NEXT: -bar
 # CHECK-NEXT: -baz
-# CHECK-NEXT: {{^\+.+f.+o.+o.+$}}
-# CHECK-NEXT: {{^\+.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^\+.+b.+a.+z.+$}}
+# CHECK-NEXT: {{^\+.f.o.o.$}}
+# CHECK-NEXT: {{^\+.b.a.r..}}
+# CHECK-NEXT: {{^\+.b.a.z.$}}
 # CHECK: error: command failed with exit status: 1
 # CHECK: $ "true"
 
@@ -126,9 +126,9 @@
 # CHECK-NEXT: ---
 # CHECK-NEXT: +++
 # CHECK-NEXT: @@
-# CHECK-NEXT: {{^\-.+f.+o.+o.+$}}
-# CHECK-NEXT: {{^\-.+b.+a.+r.+$}}
-# CHECK-NEXT: {{^\-.+b.+a.+z.+$}}
+# CHECK-NEXT: {{^\-.f.o.o.$}}
+# CHECK-NEXT: {{^\-.b.a.r..}}
+# CHECK-NEXT: {{^\-.b.a.z.$}}
 # CHECK-NEXT: +foo
 # CHECK-NEXT: +bar
 # CHECK-NEXT: +baz
