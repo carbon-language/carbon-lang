@@ -6936,10 +6936,8 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
       else
         return false;
     }
-    for (SDValue &Op : SrcInputs0)
-      Ops.push_back(Op);
-    for (SDValue &Op : SrcInputs1)
-      Ops.push_back(Op);
+    Ops.append(SrcInputs0.begin(), SrcInputs0.end());
+    Ops.append(SrcInputs1.begin(), SrcInputs1.end());
     return true;
   }
   case ISD::INSERT_SUBVECTOR: {
