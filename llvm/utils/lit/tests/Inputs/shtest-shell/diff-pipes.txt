@@ -5,6 +5,16 @@
 # RUN: diff %t.foo %t.foo | FileCheck -allow-empty -check-prefix=EMPTY %s
 # RUN: diff -u %t.foo %t.bar | FileCheck %s && false || true
 
+# Check input pipe.
+# RUN: echo foo | diff -u - %t.foo
+# RUN: echo foo | diff -u %t.foo -
+# RUN: echo bar | diff -u %t.foo - && false || true
+# RUN: echo bar | diff -u - %t.foo && false || true
+
+# Check output and input pipes at the same time.
+# RUN: echo foo | diff - %t.foo | FileCheck -allow-empty -check-prefix=EMPTY %s
+# RUN: echo bar | diff -u %t.foo - | FileCheck %s && false || true
+
 # Fail so lit will print output.
 # RUN: false
 
