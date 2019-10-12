@@ -40332,11 +40332,11 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
                             TargetLowering::DAGCombinerInfo &DCI,
                             const X86Subtarget &Subtarget) {
   StoreSDNode *St = cast<StoreSDNode>(N);
-  EVT VT = St->getValue().getValueType();
   EVT StVT = St->getMemoryVT();
   SDLoc dl(St);
   unsigned Alignment = St->getAlignment();
-  SDValue StoredVal = St->getOperand(1);
+  SDValue StoredVal = St->getValue();
+  EVT VT = StoredVal.getValueType();
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Convert a store of vXi1 into a store of iX and a bitcast.
@@ -40453,17 +40453,15 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
                              MVT::v16i8, St->getMemOperand());
   }
 
-  // Try to fold a vpmovuswb 256->128 into a truncating store.
-  // FIXME: Generalize this to other types.
-  // FIXME: Do the same for signed saturation.
-  if (!St->isTruncatingStore() && VT == MVT::v16i8 &&
-      St->getValue().getOpcode() == X86ISD::VTRUNCUS &&
-      St->getValue().getOperand(0).getValueType() == MVT::v16i16 &&
-      TLI.isTruncStoreLegal(MVT::v16i16, MVT::v16i8) &&
-      St->getValue().hasOneUse()) {
-    return EmitTruncSStore(false /* Unsigned saturation */, St->getChain(),
-                           dl, St->getValue().getOperand(0), St->getBasePtr(),
-                           MVT::v16i8, St->getMemOperand(), DAG);
+  // Try to fold a VTRUNCUS or VTRUNCS into a truncating store.
+  if (!St->isTruncatingStore() && StoredVal.hasOneUse() &&
+      (StoredVal.getOpcode() == X86ISD::VTRUNCUS ||
+       StoredVal.getOpcode() == X86ISD::VTRUNCS) &&
+      TLI.isTruncStoreLegal(StoredVal.getOperand(0).getValueType(), VT)) {
+    bool IsSigned = StoredVal.getOpcode() == X86ISD::VTRUNCS;
+    return EmitTruncSStore(IsSigned, St->getChain(),
+                           dl, StoredVal.getOperand(0), St->getBasePtr(),
+                           VT, St->getMemOperand(), DAG);
   }
 
   // Optimize trunc store (of multiple scalars) to shuffle and store.
