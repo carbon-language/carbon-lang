@@ -97,7 +97,7 @@ def compareTwoTextFiles(flags, filepaths, filelines_bin, encoding):
                      n = flags.num_context_lines):
         if hasattr(diff, 'decode'):
             # python 2.7
-            diff = diff.decode(errors="backslashreplace")
+            diff = diff.decode(errors="ignore")
         sys.stdout.write(diff)
         exitCode = 1
     return exitCode
