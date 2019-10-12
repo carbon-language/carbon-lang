@@ -62,6 +62,7 @@ def compareTwoBinaryFiles(flags, filepaths, filelines):
             func = difflib.context_diff
         diffs = func(filelines[0], filelines[1], filepaths[0], filepaths[1],
                      n = flags.num_context_lines)
+        diffs = [diff.decode(errors="ignore") for diff in diffs]
 
     for diff in diffs:
         sys.stdout.write(diff)
