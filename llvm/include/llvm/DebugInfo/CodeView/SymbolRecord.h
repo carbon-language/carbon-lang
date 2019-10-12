@@ -333,7 +333,7 @@ private:
 class InlineSiteSym : public SymbolRecord {
 public:
   explicit InlineSiteSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  InlineSiteSym(uint32_t RecordOffset)
+  explicit InlineSiteSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::InlineSiteSym),
         RecordOffset(RecordOffset) {}
 
@@ -371,7 +371,7 @@ public:
 class RegisterSym : public SymbolRecord {
 public:
   explicit RegisterSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  RegisterSym(uint32_t RecordOffset)
+  explicit RegisterSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::RegisterSym),
         RecordOffset(RecordOffset) {}
 
@@ -453,7 +453,7 @@ class DefRangeSubfieldSym : public SymbolRecord {
 
 public:
   explicit DefRangeSubfieldSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  DefRangeSubfieldSym(uint32_t RecordOffset)
+  explicit DefRangeSubfieldSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::DefRangeSubfieldSym),
         RecordOffset(RecordOffset) {}
 
@@ -478,7 +478,7 @@ public:
   };
 
   explicit DefRangeRegisterSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  DefRangeRegisterSym(uint32_t RecordOffset)
+  explicit DefRangeRegisterSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::DefRangeRegisterSym),
         RecordOffset(RecordOffset) {}
 
@@ -502,7 +502,7 @@ public:
 
   explicit DefRangeSubfieldRegisterSym(SymbolRecordKind Kind)
       : SymbolRecord(Kind) {}
-  DefRangeSubfieldRegisterSym(uint32_t RecordOffset)
+  explicit DefRangeSubfieldRegisterSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::DefRangeSubfieldRegisterSym),
         RecordOffset(RecordOffset) {}
 
@@ -526,7 +526,7 @@ public:
 
   explicit DefRangeFramePointerRelSym(SymbolRecordKind Kind)
       : SymbolRecord(Kind) {}
-  DefRangeFramePointerRelSym(uint32_t RecordOffset)
+  explicit DefRangeFramePointerRelSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::DefRangeFramePointerRelSym),
         RecordOffset(RecordOffset) {}
 
@@ -639,7 +639,7 @@ class ObjNameSym : public SymbolRecord {
 public:
   explicit ObjNameSym() : SymbolRecord(SymbolRecordKind::ObjNameSym) {}
   explicit ObjNameSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  ObjNameSym(uint32_t RecordOffset)
+  explicit ObjNameSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::ObjNameSym), RecordOffset(RecordOffset) {
   }
 
@@ -653,7 +653,7 @@ public:
 class EnvBlockSym : public SymbolRecord {
 public:
   explicit EnvBlockSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  EnvBlockSym(uint32_t RecordOffset)
+  explicit EnvBlockSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::EnvBlockSym),
         RecordOffset(RecordOffset) {}
 
@@ -666,7 +666,7 @@ public:
 class ExportSym : public SymbolRecord {
 public:
   explicit ExportSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  ExportSym(uint32_t RecordOffset)
+  explicit ExportSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::ExportSym), RecordOffset(RecordOffset) {}
 
   uint16_t Ordinal = 0;
@@ -680,7 +680,7 @@ public:
 class FileStaticSym : public SymbolRecord {
 public:
   explicit FileStaticSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  FileStaticSym(uint32_t RecordOffset)
+  explicit FileStaticSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::FileStaticSym),
         RecordOffset(RecordOffset) {}
 
@@ -696,7 +696,7 @@ public:
 class Compile2Sym : public SymbolRecord {
 public:
   explicit Compile2Sym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  Compile2Sym(uint32_t RecordOffset)
+  explicit Compile2Sym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::Compile2Sym),
         RecordOffset(RecordOffset) {}
 
@@ -722,7 +722,7 @@ class Compile3Sym : public SymbolRecord {
 public:
   Compile3Sym() : SymbolRecord(SymbolRecordKind::Compile3Sym) {}
   explicit Compile3Sym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  Compile3Sym(uint32_t RecordOffset)
+  explicit Compile3Sym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::Compile3Sym),
         RecordOffset(RecordOffset) {}
 
@@ -870,7 +870,7 @@ public:
 class BuildInfoSym : public SymbolRecord {
 public:
   explicit BuildInfoSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  BuildInfoSym(uint32_t RecordOffset)
+  explicit BuildInfoSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::BuildInfoSym),
         RecordOffset(RecordOffset) {}
 
@@ -914,7 +914,7 @@ public:
 class ConstantSym : public SymbolRecord {
 public:
   explicit ConstantSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  ConstantSym(uint32_t RecordOffset)
+  explicit ConstantSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::ConstantSym),
         RecordOffset(RecordOffset) {}
 
@@ -931,7 +931,7 @@ class DataSym : public SymbolRecord {
 
 public:
   explicit DataSym(SymbolRecordKind Kind) : SymbolRecord(Kind) {}
-  DataSym(uint32_t RecordOffset)
+  explicit DataSym(uint32_t RecordOffset)
       : SymbolRecord(SymbolRecordKind::DataSym), RecordOffset(RecordOffset) {}
 
   uint32_t getRelocationOffset() const {
