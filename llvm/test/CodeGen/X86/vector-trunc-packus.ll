@@ -2095,13 +2095,8 @@ define <16 x i16> @trunc_packus_v16i32_v16i16(<16 x i32>* %p0) "min-legal-vector
 ;
 ; SKX-LABEL: trunc_packus_v16i32_v16i16:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpbroadcastd {{.*#+}} ymm0 = [65535,65535,65535,65535,65535,65535,65535,65535]
-; SKX-NEXT:    vpminsd (%rdi), %ymm0, %ymm1
-; SKX-NEXT:    vpminsd 32(%rdi), %ymm0, %ymm0
-; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; SKX-NEXT:    vpmaxsd %ymm2, %ymm0, %ymm0
-; SKX-NEXT:    vpmaxsd %ymm2, %ymm1, %ymm1
-; SKX-NEXT:    vpackusdw %ymm0, %ymm1, %ymm0
+; SKX-NEXT:    vmovdqa (%rdi), %ymm0
+; SKX-NEXT:    vpackusdw 32(%rdi), %ymm0, %ymm0
 ; SKX-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; SKX-NEXT:    retq
   %a0 = load <16 x i32>, <16 x i32>* %p0
@@ -4943,13 +4938,8 @@ define <32 x i8> @trunc_packus_v32i16_v32i8(<32 x i16>* %p0) "min-legal-vector-w
 ;
 ; SKX-LABEL: trunc_packus_v32i16_v32i8:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vmovdqa {{.*#+}} ymm0 = [255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255]
-; SKX-NEXT:    vpminsw (%rdi), %ymm0, %ymm1
-; SKX-NEXT:    vpminsw 32(%rdi), %ymm0, %ymm0
-; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; SKX-NEXT:    vpmaxsw %ymm2, %ymm0, %ymm0
-; SKX-NEXT:    vpmaxsw %ymm2, %ymm1, %ymm1
-; SKX-NEXT:    vpackuswb %ymm0, %ymm1, %ymm0
+; SKX-NEXT:    vmovdqa (%rdi), %ymm0
+; SKX-NEXT:    vpackuswb 32(%rdi), %ymm0, %ymm0
 ; SKX-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; SKX-NEXT:    retq
   %a0 = load <32 x i16>, <32 x i16>* %p0
@@ -5015,18 +5005,14 @@ define <32 x i8> @trunc_packus_v32i32_v32i8(<32 x i32>* %p0) "min-legal-vector-w
 ;
 ; SKX-LABEL: trunc_packus_v32i32_v32i8:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; SKX-NEXT:    vpmaxsd 96(%rdi), %ymm0, %ymm1
-; SKX-NEXT:    vpmovusdb %ymm1, %xmm1
-; SKX-NEXT:    vpmaxsd 64(%rdi), %ymm0, %ymm2
-; SKX-NEXT:    vpmovusdb %ymm2, %xmm2
-; SKX-NEXT:    vpunpcklqdq {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; SKX-NEXT:    vpmaxsd 32(%rdi), %ymm0, %ymm2
-; SKX-NEXT:    vpmovusdb %ymm2, %xmm2
-; SKX-NEXT:    vpmaxsd (%rdi), %ymm0, %ymm0
-; SKX-NEXT:    vpmovusdb %ymm0, %xmm0
-; SKX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
-; SKX-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; SKX-NEXT:    vmovdqa (%rdi), %ymm0
+; SKX-NEXT:    vmovdqa 64(%rdi), %ymm1
+; SKX-NEXT:    vpackssdw 96(%rdi), %ymm1, %ymm1
+; SKX-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,2,1,3]
+; SKX-NEXT:    vpackssdw 32(%rdi), %ymm0, %ymm0
+; SKX-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
+; SKX-NEXT:    vpackuswb %ymm1, %ymm0, %ymm0
+; SKX-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; SKX-NEXT:    retq
   %a0 = load <32 x i32>, <32 x i32>* %p0
   %1 = icmp slt <32 x i32> %a0, <i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255, i32 255>

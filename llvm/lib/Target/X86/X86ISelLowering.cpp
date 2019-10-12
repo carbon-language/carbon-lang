@@ -39869,9 +39869,12 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
   // vXi16 truncate instructions are only available with AVX512BW.
   // For 256-bit or smaller vectors, we require VLX.
   // FIXME: We could widen truncates to 512 to remove the VLX restriction.
+  // If the result type is 256-bits or larger and we have disable 512-bit
+  // registers, we should go ahead and use the pack instructions if possible.
   bool PreferAVX512 = ((Subtarget.hasAVX512() && InSVT == MVT::i32) ||
                        (Subtarget.hasBWI() && InSVT == MVT::i16)) &&
-                      (Subtarget.hasVLX() || InVT.getSizeInBits() > 256);
+                      (Subtarget.hasVLX() || InVT.getSizeInBits() > 256) &&
+                      !(!Subtarget.useAVX512Regs() && VT.getSizeInBits() >= 256);
 
   if (VT.isVector() && isPowerOf2_32(VT.getVectorNumElements()) &&
       !PreferAVX512 &&
