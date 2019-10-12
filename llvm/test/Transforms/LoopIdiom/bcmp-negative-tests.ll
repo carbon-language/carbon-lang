@@ -59,29 +59,6 @@ cleanup:
   ret i1 %res
 }
 
-define i1 @exit_block_is_not_dedicated(i8* %ptr0, i8* %ptr1) {
-entry:
-  br i1 true, label %for.body, label %cleanup
-
-for.body:
-  %i.08 = phi i64 [ 0, %entry ], [ %inc, %for.cond ]
-  %arrayidx = getelementptr inbounds i8, i8* %ptr0, i64 %i.08
-  %v0 = load i8, i8* %arrayidx
-  %arrayidx1 = getelementptr inbounds i8, i8* %ptr1, i64 %i.08
-  %v1 = load i8, i8* %arrayidx1
-  %cmp3 = icmp eq i8 %v0, %v1
-  %inc = add nuw nsw i64 %i.08, 1
-  br i1 %cmp3, label %for.cond, label %cleanup
-
-for.cond:
-  %cmp = icmp ult i64 %inc, 8
-  br i1 %cmp, label %for.body, label %cleanup
-
-cleanup:
-  %res = phi i1 [ false, %for.body ], [ true, %for.cond ], [ false, %entry ]
-  ret i1 %res
-}
-
 define i1 @body_cmp_is_not_equality(i8* %ptr0, i8* %ptr1) {
 entry:
   br label %for.body

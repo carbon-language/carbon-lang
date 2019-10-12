@@ -1894,3 +1894,50 @@ cleanup4:                                         ; preds = %for.body, %for.inc,
   %res = phi i1 [ true, %entry ], [ true, %for.inc ], [ false, %for.body ]
   ret i1 %res
 }
+
+define i1 @exit_block_is_not_dedicated(i8* %ptr0, i8* %ptr1) {
+; CHECK-LABEL: @exit_block_is_not_dedicated(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br i1 true, label [[FOR_BODY_PREHEADER:%.*]], label [[CLEANUP:%.*]]
+; CHECK:       for.body.preheader:
+; CHECK-NEXT:    br label [[FOR_BODY:%.*]]
+; CHECK:       for.body:
+; CHECK-NEXT:    [[I_08:%.*]] = phi i64 [ [[INC:%.*]], [[FOR_COND:%.*]] ], [ 0, [[FOR_BODY_PREHEADER]] ]
+; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i8, i8* [[PTR0:%.*]], i64 [[I_08]]
+; CHECK-NEXT:    [[V0:%.*]] = load i8, i8* [[ARRAYIDX]]
+; CHECK-NEXT:    [[ARRAYIDX1:%.*]] = getelementptr inbounds i8, i8* [[PTR1:%.*]], i64 [[I_08]]
+; CHECK-NEXT:    [[V1:%.*]] = load i8, i8* [[ARRAYIDX1]]
+; CHECK-NEXT:    [[CMP3:%.*]] = icmp eq i8 [[V0]], [[V1]]
+; CHECK-NEXT:    [[INC]] = add nuw nsw i64 [[I_08]], 1
+; CHECK-NEXT:    br i1 [[CMP3]], label [[FOR_COND]], label [[CLEANUP_LOOPEXIT:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i64 [[INC]], 8
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[CLEANUP_LOOPEXIT]]
+; CHECK:       cleanup.loopexit:
+; CHECK-NEXT:    [[RES_PH:%.*]] = phi i1 [ true, [[FOR_COND]] ], [ false, [[FOR_BODY]] ]
+; CHECK-NEXT:    br label [[CLEANUP]]
+; CHECK:       cleanup:
+; CHECK-NEXT:    [[RES:%.*]] = phi i1 [ false, [[ENTRY:%.*]] ], [ [[RES_PH]], [[CLEANUP_LOOPEXIT]] ]
+; CHECK-NEXT:    ret i1 [[RES]]
+;
+entry:
+  br i1 true, label %for.body, label %cleanup
+
+for.body:
+  %i.08 = phi i64 [ 0, %entry ], [ %inc, %for.cond ]
+  %arrayidx = getelementptr inbounds i8, i8* %ptr0, i64 %i.08
+  %v0 = load i8, i8* %arrayidx
+  %arrayidx1 = getelementptr inbounds i8, i8* %ptr1, i64 %i.08
+  %v1 = load i8, i8* %arrayidx1
+  %cmp3 = icmp eq i8 %v0, %v1
+  %inc = add nuw nsw i64 %i.08, 1
+  br i1 %cmp3, label %for.cond, label %cleanup
+
+for.cond:
+  %cmp = icmp ult i64 %inc, 8
+  br i1 %cmp, label %for.body, label %cleanup
+
+cleanup:
+  %res = phi i1 [ false, %for.body ], [ true, %for.cond ], [ false, %entry ]
+  ret i1 %res
+}
