@@ -90,6 +90,7 @@ DWARFDebugLoc::parseOneLocationList(const DWARFDataExtractor &Data,
                                     uint64_t *Offset) {
   LocationList LL;
   LL.Offset = *Offset;
+  AddressSize = Data.getAddressSize();
   DataExtractor::Cursor C(*Offset);
 
   // 2.6.2 Location Lists
