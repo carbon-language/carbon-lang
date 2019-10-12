@@ -3396,7 +3396,7 @@ bool MipsAsmParser::expandLoadDoubleImmToGPR(MCInst &Inst, SMLoc IDLoc,
   ImmOp64 = convertIntToDoubleImm(ImmOp64);
 
   if (Lo_32(ImmOp64) == 0) {
-    if (isABI_N32() || isABI_N64()) {
+    if (isGP64bit()) {
       if (loadImmediate(ImmOp64, FirstReg, Mips::NoRegister, false, false,
                         IDLoc, Out, STI))
         return true;
@@ -3435,14 +3435,10 @@ bool MipsAsmParser::expandLoadDoubleImmToGPR(MCInst &Inst, SMLoc IDLoc,
   if (emitPartialAddress(TOut, IDLoc, Sym))
     return true;
 
-  if (isABI_N64())
-    TOut.emitRRX(Mips::DADDiu, TmpReg, TmpReg, MCOperand::createExpr(LoExpr),
-                 IDLoc, STI);
-  else
-    TOut.emitRRX(Mips::ADDiu, TmpReg, TmpReg, MCOperand::createExpr(LoExpr),
-                 IDLoc, STI);
+  TOut.emitRRX(isABI_N64() ? Mips::DADDiu : Mips::ADDiu, TmpReg, TmpReg,
+               MCOperand::createExpr(LoExpr), IDLoc, STI);
 
-  if (isABI_N32() || isABI_N64())
+  if (isGP64bit())
     TOut.emitRRI(Mips::LD, FirstReg, TmpReg, 0, IDLoc, STI);
   else {
     TOut.emitRRI(Mips::LW, FirstReg, TmpReg, 0, IDLoc, STI);
@@ -3473,7 +3469,7 @@ bool MipsAsmParser::expandLoadDoubleImmToFPR(MCInst &Inst, bool Is64FPU,
 
   if ((Lo_32(ImmOp64) == 0) &&
       !((Hi_32(ImmOp64) & 0xffff0000) && (Hi_32(ImmOp64) & 0x0000ffff))) {
-    if (isABI_N32() || isABI_N64()) {
+    if (isGP64bit()) {
       if (TmpReg != Mips::ZERO &&
           loadImmediate(ImmOp64, TmpReg, Mips::NoRegister, false, false, IDLoc,
                         Out, STI))
