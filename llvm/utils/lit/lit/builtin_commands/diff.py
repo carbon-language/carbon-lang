@@ -83,7 +83,7 @@ def compareTwoTextFiles(flags, filepaths, filelines_bin, encoding):
 
     f = lambda x: x
     if flags.strip_trailing_cr:
-        f = compose2(lambda line: line.replace('\r\n', '\n'), f)
+        f = compose2(lambda line: line.rstrip('\r'), f)
     if flags.ignore_all_space or flags.ignore_space_change:
         ignoreSpace = lambda line, separator: separator.join(line.split())
         ignoreAllSpaceOrSpaceChange = functools.partial(ignoreSpace, separator='' if flags.ignore_all_space else ' ')
