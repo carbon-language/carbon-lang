@@ -3667,7 +3667,6 @@ struct AAHeapToStackFunction final : public AAHeapToStackImpl {
     BUILD_STAT_NAME(MallocCalls, Function) += MallocCalls.size();
   }
 };
-} // namespace
 
 /// -------------------- Memory Behavior Attributes ----------------------------
 /// Includes read-none, read-only, and write-only.
@@ -3940,6 +3939,7 @@ struct AAMemoryBehaviorCallSite final : AAMemoryBehaviorImpl {
       STATS_DECLTRACK_CS_ATTR(writeonly)
   }
 };
+} // namespace
 
 ChangeStatus AAMemoryBehaviorFunction::updateImpl(Attributor &A) {
 
