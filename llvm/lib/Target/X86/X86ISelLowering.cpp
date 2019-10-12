@@ -5189,10 +5189,8 @@ static bool isUndefOrZero(int Val) {
 /// Return true if every element in Mask, beginning from position Pos and ending
 /// in Pos+Size is the undef sentinel value.
 static bool isUndefInRange(ArrayRef<int> Mask, unsigned Pos, unsigned Size) {
-  for (unsigned i = Pos, e = Pos + Size; i != e; ++i)
-    if (Mask[i] != SM_SentinelUndef)
-      return false;
-  return true;
+  return llvm::all_of(Mask.slice(Pos, Size),
+                      [](int M) { return M == SM_SentinelUndef; });
 }
 
 /// Return true if the mask creates a vector whose lower half is undefined.
@@ -5215,10 +5213,7 @@ static bool isInRange(int Val, int Low, int Hi) {
 /// Return true if the value of any element in Mask falls within the specified
 /// range (L, H].
 static bool isAnyInRange(ArrayRef<int> Mask, int Low, int Hi) {
-  for (int M : Mask)
-    if (isInRange(M, Low, Hi))
-      return true;
-  return false;
+  return llvm::any_of(Mask, [Low, Hi](int M) { return isInRange(M, Low, Hi); });
 }
 
 /// Return true if Val is undef or if its value falls within the
@@ -5229,12 +5224,9 @@ static bool isUndefOrInRange(int Val, int Low, int Hi) {
 
 /// Return true if every element in Mask is undef or if its value
 /// falls within the specified range (L, H].
-static bool isUndefOrInRange(ArrayRef<int> Mask,
-                             int Low, int Hi) {
-  for (int M : Mask)
-    if (!isUndefOrInRange(M, Low, Hi))
-      return false;
-  return true;
+static bool isUndefOrInRange(ArrayRef<int> Mask, int Low, int Hi) {
+  return llvm::all_of(
+      Mask, [Low, Hi](int M) { return isUndefOrInRange(M, Low, Hi); });
 }
 
 /// Return true if Val is undef, zero or if its value falls within the
@@ -5246,10 +5238,8 @@ static bool isUndefOrZeroOrInRange(int Val, int Low, int Hi) {
 /// Return true if every element in Mask is undef, zero or if its value
 /// falls within the specified range (L, H].
 static bool isUndefOrZeroOrInRange(ArrayRef<int> Mask, int Low, int Hi) {
-  for (int M : Mask)
-    if (!isUndefOrZeroOrInRange(M, Low, Hi))
-      return false;
-  return true;
+  return llvm::all_of(
+      Mask, [Low, Hi](int M) { return isUndefOrZeroOrInRange(M, Low, Hi); });
 }
 
 /// Return true if every element in Mask, beginning
@@ -5267,8 +5257,9 @@ static bool isSequentialOrUndefInRange(ArrayRef<int> Mask, unsigned Pos,
 /// from position Pos and ending in Pos+Size, falls within the specified
 /// sequential range (Low, Low+Size], or is undef or is zero.
 static bool isSequentialOrUndefOrZeroInRange(ArrayRef<int> Mask, unsigned Pos,
-                                             unsigned Size, int Low) {
-  for (unsigned i = Pos, e = Pos + Size; i != e; ++i, ++Low)
+                                             unsigned Size, int Low,
+                                             int Step = 1) {
+  for (unsigned i = Pos, e = Pos + Size; i != e; ++i, Low += Step)
     if (!isUndefOrZero(Mask[i]) && Mask[i] != Low)
       return false;
   return true;
@@ -5278,10 +5269,8 @@ static bool isSequentialOrUndefOrZeroInRange(ArrayRef<int> Mask, unsigned Pos,
 /// from position Pos and ending in Pos+Size is undef or is zero.
 static bool isUndefOrZeroInRange(ArrayRef<int> Mask, unsigned Pos,
                                  unsigned Size) {
-  for (unsigned i = Pos, e = Pos + Size; i != e; ++i)
-    if (!isUndefOrZero(Mask[i]))
-      return false;
-  return true;
+  return llvm::all_of(Mask.slice(Pos, Size),
+                      [](int M) { return isUndefOrZero(M); });
 }
 
 /// Helper function to test whether a shuffle mask could be
