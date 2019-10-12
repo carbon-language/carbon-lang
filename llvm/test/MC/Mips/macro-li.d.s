@@ -9,12 +9,12 @@
 li.d	$4, 0
 # O32:     addiu   $4, $zero, 0                # encoding: [0x00,0x00,0x04,0x24]
 # O32:     addiu   $5, $zero, 0                # encoding: [0x00,0x00,0x05,0x24]
-# N32-N64: daddiu  $4, $zero, 0                # encoding: [0x00,0x00,0x04,0x64]
+# N32-N64: addiu   $4, $zero, 0                # encoding: [0x00,0x00,0x04,0x24]
 
 li.d	$4, 0.0
 # O32:     addiu   $4, $zero, 0                # encoding: [0x00,0x00,0x04,0x24]
 # O32:     addiu   $5, $zero, 0                # encoding: [0x00,0x00,0x05,0x24]
-# N32-N64: daddiu  $4, $zero, 0                # encoding: [0x00,0x00,0x04,0x64]
+# N32-N64: addiu   $4, $zero, 0                # encoding: [0x00,0x00,0x04,0x24]
 
 li.d	$4, 1.12345
 # ALL:      .section  .rodata,"a",@progbits

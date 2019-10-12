@@ -3324,7 +3324,7 @@ bool MipsAsmParser::expandLoadSingleImmToGPR(MCInst &Inst, SMLoc IDLoc,
 
   uint32_t ImmOp32 = covertDoubleImmToSingleImm(convertIntToDoubleImm(ImmOp64));
 
-  return loadImmediate(ImmOp32, FirstReg, Mips::NoRegister, true, true, IDLoc,
+  return loadImmediate(ImmOp32, FirstReg, Mips::NoRegister, true, false, IDLoc,
                        Out, STI);
 }
 
@@ -3397,15 +3397,15 @@ bool MipsAsmParser::expandLoadDoubleImmToGPR(MCInst &Inst, SMLoc IDLoc,
 
   if (Lo_32(ImmOp64) == 0) {
     if (isABI_N32() || isABI_N64()) {
-      if (loadImmediate(ImmOp64, FirstReg, Mips::NoRegister, false, true, IDLoc,
-                        Out, STI))
+      if (loadImmediate(ImmOp64, FirstReg, Mips::NoRegister, false, false,
+                        IDLoc, Out, STI))
         return true;
     } else {
-      if (loadImmediate(Hi_32(ImmOp64), FirstReg, Mips::NoRegister, true, true,
+      if (loadImmediate(Hi_32(ImmOp64), FirstReg, Mips::NoRegister, true, false,
                         IDLoc, Out, STI))
         return true;
 
-      if (loadImmediate(0, nextReg(FirstReg), Mips::NoRegister, true, true,
+      if (loadImmediate(0, nextReg(FirstReg), Mips::NoRegister, true, false,
                         IDLoc, Out, STI))
         return true;
     }
