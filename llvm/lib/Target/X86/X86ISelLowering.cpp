@@ -6920,11 +6920,11 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
         !getTargetShuffleInputs(N1, SrcInputs1, SrcMask1, DAG, Depth + 1,
                                 ResolveZero))
       return false;
-    int MaskSize = std::max(SrcMask0.size(), SrcMask1.size());
+    size_t MaskSize = std::max(SrcMask0.size(), SrcMask1.size());
     SmallVector<int, 64> Mask0, Mask1;
     scaleShuffleMask<int>(MaskSize / SrcMask0.size(), SrcMask0, Mask0);
     scaleShuffleMask<int>(MaskSize / SrcMask1.size(), SrcMask1, Mask1);
-    for (int i = 0; i != MaskSize; ++i) {
+    for (size_t i = 0; i != MaskSize; ++i) {
       if (Mask0[i] == SM_SentinelUndef && Mask1[i] == SM_SentinelUndef)
         Mask.push_back(SM_SentinelUndef);
       else if (Mask0[i] == SM_SentinelZero && Mask1[i] == SM_SentinelZero)
@@ -6932,7 +6932,7 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
       else if (Mask1[i] == SM_SentinelZero)
         Mask.push_back(Mask0[i]);
       else if (Mask0[i] == SM_SentinelZero)
-        Mask.push_back(Mask1[i] + (MaskSize * SrcInputs0.size()));
+        Mask.push_back(Mask1[i] + (int)(MaskSize * SrcInputs0.size()));
       else
         return false;
     }
