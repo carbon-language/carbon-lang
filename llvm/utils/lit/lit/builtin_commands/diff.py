@@ -10,7 +10,6 @@ class DiffFlags():
         self.ignore_all_space = False
         self.ignore_space_change = False
         self.unified_diff = False
-        self.num_context_lines = 3
         self.recursive_diff = False
         self.strip_trailing_cr = False
 
@@ -49,10 +48,7 @@ def compareTwoBinaryFiles(flags, filepaths, filelines):
     exitCode = 0
     if hasattr(difflib, 'diff_bytes'):
         # python 3.5 or newer
-        diffs = difflib.diff_bytes(difflib.unified_diff, filelines[0],
-                                   filelines[1], filepaths[0].encode(),
-                                   filepaths[1].encode(),
-                                   n = flags.num_context_lines)
+        diffs = difflib.diff_bytes(difflib.unified_diff, filelines[0], filelines[1], filepaths[0].encode(), filepaths[1].encode())
         diffs = [diff.decode(errors="backslashreplace") for diff in diffs]
     else:
         # python 2.7
@@ -60,8 +56,7 @@ def compareTwoBinaryFiles(flags, filepaths, filelines):
             func = difflib.unified_diff
         else:
             func = difflib.context_diff
-        diffs = func(filelines[0], filelines[1], filepaths[0], filepaths[1],
-                     n = flags.num_context_lines)
+        diffs = func(filelines[0], filelines[1], filepaths[0], filepaths[1])
 
     for diff in diffs:
         sys.stdout.write(diff)
@@ -93,8 +88,7 @@ def compareTwoTextFiles(flags, filepaths, filelines_bin, encoding):
         filelines[idx]= [f(line) for line in lines]
 
     func = difflib.unified_diff if flags.unified_diff else difflib.context_diff
-    for diff in func(filelines[0], filelines[1], filepaths[0], filepaths[1],
-                     n = flags.num_context_lines):
+    for diff in func(filelines[0], filelines[1], filepaths[0], filepaths[1]):
         sys.stdout.write(diff)
         exitCode = 1
     return exitCode
@@ -177,7 +171,7 @@ def compareDirTrees(flags, dir_trees, base_paths=["", ""]):
 def main(argv):
     args = argv[1:]
     try:
-        opts, args = getopt.gnu_getopt(args, "wbuU:r", ["strip-trailing-cr"])
+        opts, args = getopt.gnu_getopt(args, "wbur", ["strip-trailing-cr"])
     except getopt.GetoptError as err:
         sys.stderr.write("Unsupported: 'diff': %s\n" % str(err))
         sys.exit(1)
@@ -191,16 +185,6 @@ def main(argv):
             flags.ignore_space_change = True
         elif o == "-u":
             flags.unified_diff = True
-        elif o.startswith("-U"):
-            flags.unified_diff = True
-            try:
-                flags.num_context_lines = int(a)
-                if flags.num_context_lines < 0:
-                    raise ValueException
-            except:
-                sys.stderr.write("Error: invalid '-U' argument: {}\n"
-                                 .format(a))
-                sys.exit(1)
         elif o == "-r":
             flags.recursive_diff = True
         elif o == "--strip-trailing-cr":
