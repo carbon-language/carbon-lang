@@ -271,7 +271,7 @@ public:
           switch (Symbol.Type) {
           default:
             llvm_unreachable(
-                "clang -emit-iterface-stubs: Unexpected symbol type.");
+                "clang -emit-interface-stubs: Unexpected symbol type.");
           case llvm::ELF::STT_NOTYPE:
             OS << "NoType";
             break;

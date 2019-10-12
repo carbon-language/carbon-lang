@@ -1736,10 +1736,10 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::GenerateHeaderModule; break;
     case OPT_emit_pch:
       Opts.ProgramAction = frontend::GeneratePCH; break;
-    case OPT_emit_iterface_stubs: {
+    case OPT_emit_interface_stubs: {
       StringRef ArgStr =
-          Args.hasArg(OPT_iterface_stub_version_EQ)
-              ? Args.getLastArgValue(OPT_iterface_stub_version_EQ)
+          Args.hasArg(OPT_interface_stub_version_EQ)
+              ? Args.getLastArgValue(OPT_interface_stub_version_EQ)
               : "experimental-ifs-v1";
       if (ArgStr == "experimental-yaml-elf-v1" ||
           ArgStr == "experimental-tapi-elf-v1") {

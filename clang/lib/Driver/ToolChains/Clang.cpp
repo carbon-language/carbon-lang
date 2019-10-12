@@ -3686,8 +3686,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     } else if (JA.getType() == types::TY_IFS ||
                JA.getType() == types::TY_IFS_CPP) {
       StringRef ArgStr =
-          Args.hasArg(options::OPT_iterface_stub_version_EQ)
-              ? Args.getLastArgValue(options::OPT_iterface_stub_version_EQ)
+          Args.hasArg(options::OPT_interface_stub_version_EQ)
+              ? Args.getLastArgValue(options::OPT_interface_stub_version_EQ)
               : "experimental-ifs-v1";
       CmdArgs.push_back("-emit-interface-stubs");
       CmdArgs.push_back(
