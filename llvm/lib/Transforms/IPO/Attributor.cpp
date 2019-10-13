@@ -3569,8 +3569,16 @@ ChangeStatus AAHeapToStackImpl::updateImpl(Attributor &A) {
 
       auto *UserI = U->getUser();
 
-      if (isa<LoadInst>(UserI) || isa<StoreInst>(UserI))
+      if (isa<LoadInst>(UserI))
         continue;
+      if (auto *SI = dyn_cast<StoreInst>(UserI)) {
+        if (SI->getValueOperand() == U->get()) {
+          LLVM_DEBUG(dbgs() << "[H2S] escaping store to memory: " << *UserI << "\n");
+          return false;
+        }
+        // A store into the malloc'ed memory is fine.
+        continue;
+      }
 
       // NOTE: Right now, if a function that has malloc pointer as an argument
       // frees memory, we assume that the malloc pointer is freed.
