@@ -39713,26 +39713,6 @@ static SDValue foldVectorXorShiftIntoCmp(SDNode *N, SelectionDAG &DAG,
   return DAG.getNode(X86ISD::PCMPGT, SDLoc(N), VT, Shift.getOperand(0), Ones);
 }
 
-/// Check if truncation with saturation form type \p SrcVT to \p DstVT
-/// is valid for the given \p Subtarget.
-static bool isSATValidOnAVX512Subtarget(EVT SrcVT, EVT DstVT,
-                                        const X86Subtarget &Subtarget) {
-  if (!Subtarget.hasAVX512())
-    return false;
-
-  // FIXME: Scalar type may be supported if we move it to vector register.
-  if (!SrcVT.isVector())
-    return false;
-
-  EVT SrcElVT = SrcVT.getScalarType();
-  EVT DstElVT = DstVT.getScalarType();
-  if (DstElVT != MVT::i8 && DstElVT != MVT::i16 && DstElVT != MVT::i32)
-    return false;
-  if (SrcVT.is512BitVector() || Subtarget.hasVLX())
-    return SrcElVT.getSizeInBits() >= 32 || Subtarget.hasBWI();
-  return false;
-}
-
 /// Detect patterns of truncation with unsigned saturation:
 ///
 /// 1. (truncate (umin (x, unsigned_max_of_dest_type)) to dest_type).
@@ -39833,20 +39813,12 @@ static SDValue detectSSatPattern(SDValue In, EVT VT, bool MatchPackUS = false) {
 static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
                                       SelectionDAG &DAG,
                                       const X86Subtarget &Subtarget) {
-  if (!Subtarget.hasSSE2())
+  if (!Subtarget.hasSSE2() || !VT.isVector())
     return SDValue();
 
-  EVT SVT = VT.getScalarType();
+  EVT SVT = VT.getVectorElementType();
   EVT InVT = In.getValueType();
-  EVT InSVT = InVT.getScalarType();
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (TLI.isTypeLegal(InVT) && TLI.isTypeLegal(VT) &&
-      isSATValidOnAVX512Subtarget(InVT, VT, Subtarget)) {
-    if (auto SSatVal = detectSSatPattern(In, VT))
-      return DAG.getNode(X86ISD::VTRUNCS, DL, VT, SSatVal);
-    if (auto USatVal = detectUSatPattern(In, VT, DAG, DL))
-      return DAG.getNode(X86ISD::VTRUNCUS, DL, VT, USatVal);
-  }
+  EVT InSVT = InVT.getVectorElementType();
 
   // If we're clamping a signed 32-bit vector to 0-255 and the 32-bit vector is
   // split across two registers. We can use a packusdw+perm to clamp to 0-65535
@@ -39875,16 +39847,15 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
                       (Subtarget.hasVLX() || InVT.getSizeInBits() > 256) &&
                       !(!Subtarget.useAVX512Regs() && VT.getSizeInBits() >= 256);
 
-  if (VT.isVector() && isPowerOf2_32(VT.getVectorNumElements()) &&
-      !PreferAVX512 &&
+  if (isPowerOf2_32(VT.getVectorNumElements()) && !PreferAVX512 &&
+      VT.getSizeInBits() >= 64 &&
       (SVT == MVT::i8 || SVT == MVT::i16) &&
       (InSVT == MVT::i16 || InSVT == MVT::i32)) {
     if (auto USatVal = detectSSatPattern(In, VT, true)) {
       // vXi32 -> vXi8 must be performed as PACKUSWB(PACKSSDW,PACKSSDW).
       // Only do this when the result is at least 64 bits or we'll leaving
       // dangling PACKSSDW nodes.
-      if (SVT == MVT::i8 && InSVT == MVT::i32 &&
-          VT.getVectorNumElements() >= 8) {
+      if (SVT == MVT::i8 && InSVT == MVT::i32) {
         EVT MidVT = EVT::getVectorVT(*DAG.getContext(), MVT::i16,
                                      VT.getVectorNumElements());
         SDValue Mid = truncateVectorWithPACK(X86ISD::PACKSS, MidVT, USatVal, DL,
@@ -39902,6 +39873,42 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
       return truncateVectorWithPACK(X86ISD::PACKSS, VT, SSatVal, DL, DAG,
                                     Subtarget);
   }
+
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (TLI.isTypeLegal(InVT) && InVT.isVector() && SVT != MVT::i1 &&
+      Subtarget.hasAVX512() && (InSVT != MVT::i16 || Subtarget.hasBWI())) {
+    unsigned TruncOpc;
+    SDValue SatVal;
+    if (auto SSatVal = detectSSatPattern(In, VT)) {
+      SatVal = SSatVal;
+      TruncOpc = X86ISD::VTRUNCS;
+    } else if (auto USatVal = detectUSatPattern(In, VT, DAG, DL)) {
+      SatVal = USatVal;
+      TruncOpc = X86ISD::VTRUNCUS;
+    }
+    if (SatVal) {
+      unsigned ResElts = VT.getVectorNumElements();
+      // If the input type is less than 512 bits and we don't have VLX, we need
+      // to widen to 512 bits.
+      if (!Subtarget.hasVLX() && !InVT.is512BitVector()) {
+        unsigned NumConcats = 512 / InVT.getSizeInBits();
+        ResElts *= NumConcats;
+        SmallVector<SDValue, 4> ConcatOps(NumConcats, DAG.getUNDEF(InVT));
+        ConcatOps[0] = SatVal;
+        InVT = EVT::getVectorVT(*DAG.getContext(), InSVT,
+                                NumConcats * InVT.getVectorNumElements());
+        SatVal = DAG.getNode(ISD::CONCAT_VECTORS, DL, InVT, ConcatOps);
+      }
+      // Widen the result if its narrower than 128 bits.
+      if (ResElts * SVT.getSizeInBits() < 128)
+        ResElts = 128 / SVT.getSizeInBits();
+      EVT TruncVT = EVT::getVectorVT(*DAG.getContext(), SVT, ResElts);
+      SDValue Res = DAG.getNode(TruncOpc, DL, TruncVT, SatVal);
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, Res,
+                         DAG.getIntPtrConstant(0, DL));
+    }
+  }
+
   return SDValue();
 }
 
