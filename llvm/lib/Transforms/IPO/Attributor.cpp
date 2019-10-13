@@ -1588,11 +1588,16 @@ static int64_t getKnownNonNullAndDerefBytesForUse(
 }
 
 struct AANonNullImpl : AANonNull {
-  AANonNullImpl(const IRPosition &IRP) : AANonNull(IRP) {}
+  AANonNullImpl(const IRPosition &IRP)
+      : AANonNull(IRP),
+        NullIsDefined(NullPointerIsDefined(
+            getAnchorScope(),
+            getAssociatedValue().getType()->getPointerAddressSpace())) {}
 
   /// See AbstractAttribute::initialize(...).
   void initialize(Attributor &A) override {
-    if (hasAttr({Attribute::NonNull, Attribute::Dereferenceable}))
+    if (!NullIsDefined &&
+        hasAttr({Attribute::NonNull, Attribute::Dereferenceable}))
       indicateOptimisticFixpoint();
     else
       AANonNull::initialize(A);
@@ -1612,6 +1617,10 @@ struct AANonNullImpl : AANonNull {
   const std::string getAsStr() const override {
     return getAssumed() ? "nonnull" : "may-null";
   }
+
+  /// Flag to determine if the underlying value can be null and still allow
+  /// valid accesses.
+  const bool NullIsDefined;
 };
 
 /// NonNull attribute for a floating value.
@@ -1644,6 +1653,12 @@ struct AANonNullFloating
     if (isKnownNonNull())
       return Change;
 
+    if (!NullIsDefined) {
+      const auto &DerefAA = A.getAAFor<AADereferenceable>(*this, getIRPosition());
+      if (DerefAA.getAssumedDereferenceableBytes())
+        return Change;
+    }
+
     const DataLayout &DL = A.getDataLayout();
 
     auto VisitValueCB = [&](Value &V, AAAlign::StateType &T,
@@ -1651,7 +1666,7 @@ struct AANonNullFloating
       const auto &AA = A.getAAFor<AANonNull>(*this, IRPosition::value(V));
       if (!Stripped && this == &AA) {
         if (!isKnownNonZero(&V, DL, 0, /* TODO: AC */ nullptr,
-                            /* TODO: CtxI */ nullptr,
+                            /* CtxI */ getCtxI(),
                             /* TODO: DT */ nullptr))
           T.indicatePessimisticFixpoint();
       } else {

@@ -523,6 +523,13 @@ define i32 addrspace(3)* @gep2(i32 addrspace(3)* %p) {
   ret i32 addrspace(3)* %q
 }
 
+; FNATTR:     define i32 addrspace(3)* @as(i32 addrspace(3)* readnone returned dereferenceable(4) %p)
+; FIXME: We should propagate dereferenceable here but *not* nonnull
+; ATTRIBUTOR: define dereferenceable_or_null(4) i32 addrspace(3)* @as(i32 addrspace(3)* readnone returned dereferenceable(4) dereferenceable_or_null(4) %p)
+define i32 addrspace(3)* @as(i32 addrspace(3)* dereferenceable(4) %p) {
+  ret i32 addrspace(3)* %p
+}
+
 ; BOTH: define internal nonnull i32* @g2()
 define internal i32* @g2() {
   ret i32* inttoptr (i64 4 to i32*)
