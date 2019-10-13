@@ -899,6 +899,15 @@ struct Attributor {
   const DataLayout &getDataLayout() const { return InfoCache.DL; }
 
 private:
+  /// Check \p Pred on all call sites of \p Fn.
+  ///
+  /// This method will evaluate \p Pred on call sites and return
+  /// true if \p Pred holds in every call sites. However, this is only possible
+  /// all call sites are known, hence the function has internal linkage.
+  bool checkForAllCallSites(const function_ref<bool(AbstractCallSite)> &Pred,
+                            const Function &Fn, bool RequireAllCallSites,
+                            const AbstractAttribute *QueryingAA);
+
   /// The private version of getAAFor that allows to omit a querying abstract
   /// attribute. See also the public getAAFor method.
   template <typename AAType>

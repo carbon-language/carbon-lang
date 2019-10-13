@@ -4167,19 +4167,26 @@ bool Attributor::checkForAllCallSites(
     return false;
   }
 
-  if (RequireAllCallSites && !AssociatedFunction->hasLocalLinkage()) {
+  return checkForAllCallSites(Pred, *AssociatedFunction, RequireAllCallSites,
+                              &QueryingAA);
+}
+
+bool Attributor::checkForAllCallSites(
+    const function_ref<bool(AbstractCallSite)> &Pred, const Function &Fn,
+    bool RequireAllCallSites, const AbstractAttribute *QueryingAA) {
+  if (RequireAllCallSites && !Fn.hasLocalLinkage()) {
     LLVM_DEBUG(
         dbgs()
-        << "[Attributor] Function " << AssociatedFunction->getName()
+        << "[Attributor] Function " << Fn.getName()
         << " has no internal linkage, hence not all call sites are known\n");
     return false;
   }
 
-  for (const Use &U : AssociatedFunction->uses()) {
+  for (const Use &U : Fn.uses()) {
     AbstractCallSite ACS(&U);
     if (!ACS) {
       LLVM_DEBUG(dbgs() << "[Attributor] Function "
-                        << AssociatedFunction->getName()
+                        << Fn.getName()
                         << " has non call site use " << *U.get() << " in "
                         << *U.getUser() << "\n");
       return false;
@@ -4188,15 +4195,16 @@ bool Attributor::checkForAllCallSites(
     Instruction *I = ACS.getInstruction();
     Function *Caller = I->getFunction();
 
-    const auto &LivenessAA =
-        getAAFor<AAIsDead>(QueryingAA, IRPosition::function(*Caller),
+    const auto *LivenessAA =
+        lookupAAFor<AAIsDead>(IRPosition::function(*Caller), QueryingAA,
                            /* TrackDependence */ false);
 
     // Skip dead calls.
-    if (LivenessAA.isAssumedDead(I)) {
+    if (LivenessAA && LivenessAA->isAssumedDead(I)) {
       // We actually used liveness information so we have to record a
       // dependence.
-      recordDependence(LivenessAA, QueryingAA);
+      if (QueryingAA)
+        recordDependence(*LivenessAA, *QueryingAA);
       continue;
     }
 
@@ -4207,7 +4215,7 @@ bool Attributor::checkForAllCallSites(
         continue;
       LLVM_DEBUG(dbgs() << "[Attributor] User " << EffectiveUse->getUser()
                         << " is an invalid use of "
-                        << AssociatedFunction->getName() << "\n");
+                        << Fn.getName() << "\n");
       return false;
     }
 
