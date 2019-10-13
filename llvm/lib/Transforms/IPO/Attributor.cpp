@@ -2139,8 +2139,6 @@ struct AAIsDeadImpl : public AAIsDead {
       BasicBlock *BB = I->getParent();
       Instruction *SplitPos = I->getNextNode();
       // TODO: mark stuff before unreachable instructions as dead.
-      if (isa_and_nonnull<UnreachableInst>(SplitPos))
-        continue;
 
       if (auto *II = dyn_cast<InvokeInst>(I)) {
         // If we keep the invoke the split position is at the beginning of the
@@ -2183,14 +2181,22 @@ struct AAIsDeadImpl : public AAIsDead {
           //       also manifest.
           assert(!NormalDestBB->isLandingPad() &&
                  "Expected the normal destination not to be a landingpad!");
-          BasicBlock *SplitBB =
-              SplitBlockPredecessors(NormalDestBB, {BB}, ".dead");
-          // The split block is live even if it contains only an unreachable
-          // instruction at the end.
-          assumeLive(A, *SplitBB);
-          SplitPos = SplitBB->getTerminator();
+          if (NormalDestBB->getUniquePredecessor() == BB) {
+            assumeLive(A, *NormalDestBB);
+          } else {
+            BasicBlock *SplitBB =
+                SplitBlockPredecessors(NormalDestBB, {BB}, ".dead");
+            // The split block is live even if it contains only an unreachable
+            // instruction at the end.
+            assumeLive(A, *SplitBB);
+            SplitPos = SplitBB->getTerminator();
+            HasChanged = ChangeStatus::CHANGED;
+          }
         }
       }
+
+      if (isa_and_nonnull<UnreachableInst>(SplitPos))
+        continue;
 
       BB = SplitPos->getParent();
       SplitBlock(BB, SplitPos);
