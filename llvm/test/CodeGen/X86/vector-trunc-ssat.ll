@@ -2380,34 +2380,13 @@ define <4 x i16> @trunc_ssat_v4i32_v4i16(<4 x i32> %a0) {
 ; AVX-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512F-LABEL: trunc_ssat_v4i32_v4i16:
-; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
-; AVX512F-NEXT:    retq
-;
-; AVX512VL-LABEL: trunc_ssat_v4i32_v4i16:
-; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vpminsd {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpmaxsd {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
-; AVX512VL-NEXT:    retq
-;
-; AVX512BW-LABEL: trunc_ssat_v4i32_v4i16:
-; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    retq
-;
-; AVX512BWVL-LABEL: trunc_ssat_v4i32_v4i16:
-; AVX512BWVL:       # %bb.0:
-; AVX512BWVL-NEXT:    vpminsd {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; AVX512BWVL-NEXT:    vpmaxsd {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; AVX512BWVL-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
-; AVX512BWVL-NEXT:    retq
+; AVX512-LABEL: trunc_ssat_v4i32_v4i16:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    retq
 ;
 ; SKX-LABEL: trunc_ssat_v4i32_v4i16:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpminsd {{.*}}(%rip){1to4}, %xmm0, %xmm0
-; SKX-NEXT:    vpmaxsd {{.*}}(%rip){1to4}, %xmm0, %xmm0
 ; SKX-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; SKX-NEXT:    retq
   %1 = icmp slt <4 x i32> %a0, <i32 32767, i32 32767, i32 32767, i32 32767>
@@ -5620,32 +5599,13 @@ define <8 x i8> @trunc_ssat_v8i16_v8i8(<8 x i16> %a0) {
 ; AVX-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512F-LABEL: trunc_ssat_v8i16_v8i8:
-; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
-; AVX512F-NEXT:    retq
-;
-; AVX512VL-LABEL: trunc_ssat_v8i16_v8i8:
-; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
-; AVX512VL-NEXT:    retq
-;
-; AVX512BW-LABEL: trunc_ssat_v8i16_v8i8:
-; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
-; AVX512BW-NEXT:    retq
-;
-; AVX512BWVL-LABEL: trunc_ssat_v8i16_v8i8:
-; AVX512BWVL:       # %bb.0:
-; AVX512BWVL-NEXT:    vpminsw {{.*}}(%rip), %xmm0, %xmm0
-; AVX512BWVL-NEXT:    vpmaxsw {{.*}}(%rip), %xmm0, %xmm0
-; AVX512BWVL-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
-; AVX512BWVL-NEXT:    retq
+; AVX512-LABEL: trunc_ssat_v8i16_v8i8:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    retq
 ;
 ; SKX-LABEL: trunc_ssat_v8i16_v8i8:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpminsw {{.*}}(%rip), %xmm0, %xmm0
-; SKX-NEXT:    vpmaxsw {{.*}}(%rip), %xmm0, %xmm0
 ; SKX-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; SKX-NEXT:    retq
   %1 = icmp slt <8 x i16> %a0, <i16 127, i16 127, i16 127, i16 127, i16 127, i16 127, i16 127, i16 127>

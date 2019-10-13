@@ -39871,6 +39871,7 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
   // registers, we should go ahead and use the pack instructions if possible.
   bool PreferAVX512 = ((Subtarget.hasAVX512() && InSVT == MVT::i32) ||
                        (Subtarget.hasBWI() && InSVT == MVT::i16)) &&
+                      (InVT.getSizeInBits() > 128) &&
                       (Subtarget.hasVLX() || InVT.getSizeInBits() > 256) &&
                       !(!Subtarget.useAVX512Regs() && VT.getSizeInBits() >= 256);
 
