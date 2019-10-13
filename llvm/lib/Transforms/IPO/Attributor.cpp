@@ -3838,16 +3838,22 @@ struct AAMemoryBehaviorArgument : AAMemoryBehaviorFloating {
   void initialize(Attributor &A) override {
     AAMemoryBehaviorFloating::initialize(A);
 
-    // TODO: From readattrs.ll: "inalloca parameters are always
-    //                           considered written"
-    if (hasAttr({Attribute::InAlloca}))
-      removeAssumedBits(NO_WRITES);
-
     // Initialize the use vector with all direct uses of the associated value.
     Argument *Arg = getAssociatedArgument();
     if (!Arg || !Arg->getParent()->hasExactDefinition())
       indicatePessimisticFixpoint();
   }
+
+  ChangeStatus manifest(Attributor &A) override {
+    // TODO: From readattrs.ll: "inalloca parameters are always
+    //                           considered written"
+    if (hasAttr({Attribute::InAlloca})) {
+      removeKnownBits(NO_WRITES);
+      removeAssumedBits(NO_WRITES);
+    }
+    return AAMemoryBehaviorFloating::manifest(A);
+  }
+
 
   /// See AbstractAttribute::trackStatistics()
   void trackStatistics() const override {
@@ -4017,10 +4023,13 @@ ChangeStatus AAMemoryBehaviorFloating::updateImpl(Attributor &A) {
 
   // Make sure the value is not captured (except through "return"), if
   // it is, any information derived would be irrelevant anyway as we cannot
-  // check the potential aliases introduced by the capture.
+  // check the potential aliases introduced by the capture. However, no need
+  // to fall back to anythign less optimistic than the function state.
   const auto &ArgNoCaptureAA = A.getAAFor<AANoCapture>(*this, IRP);
-  if (!ArgNoCaptureAA.isAssumedNoCaptureMaybeReturned())
-    return indicatePessimisticFixpoint();
+  if (!ArgNoCaptureAA.isAssumedNoCaptureMaybeReturned()) {
+    S.intersectAssumedBits(FnMemAA.getAssumed());
+    return ChangeStatus::CHANGED;
+  }
 
   // The current assumed state used to determine a change.
   auto AssumedState = S.getAssumed();
