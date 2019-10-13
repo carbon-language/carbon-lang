@@ -3620,30 +3620,36 @@ ChangeStatus AAHeapToStackImpl::updateImpl(Attributor &A) {
   };
 
   auto MallocCallocCheck = [&](Instruction &I) {
-    if (isMallocLikeFn(&I, TLI)) {
-      if (auto *Size = dyn_cast<ConstantInt>(I.getOperand(0)))
-        if (!Size->getValue().sle(MaxHeapToStackSize))
-          return true;
-    } else if (isCallocLikeFn(&I, TLI)) {
-      bool Overflow = false;
-      if (auto *Num = dyn_cast<ConstantInt>(I.getOperand(0)))
-        if (auto *Size = dyn_cast<ConstantInt>(I.getOperand(1)))
-          if (!(Size->getValue().umul_ov(Num->getValue(), Overflow))
-                   .sle(MaxHeapToStackSize))
-            if (!Overflow)
-              return true;
-    } else {
+    if (BadMallocCalls.count(&I))
+      return true;
+
+    bool IsMalloc = isMallocLikeFn(&I, TLI);
+    bool IsCalloc = !IsMalloc && isCallocLikeFn(&I, TLI);
+    if (!IsMalloc && !IsCalloc) {
       BadMallocCalls.insert(&I);
       return true;
     }
 
-    if (BadMallocCalls.count(&I))
-      return true;
+    if (IsMalloc) {
+      if (auto *Size = dyn_cast<ConstantInt>(I.getOperand(0)))
+        if (Size->getValue().sle(MaxHeapToStackSize))
+          if (UsesCheck(I)) {
+            MallocCalls.insert(&I);
+            return true;
+          }
+    } else if (IsCalloc) {
+      bool Overflow = false;
+      if (auto *Num = dyn_cast<ConstantInt>(I.getOperand(0)))
+        if (auto *Size = dyn_cast<ConstantInt>(I.getOperand(1)))
+          if ((Size->getValue().umul_ov(Num->getValue(), Overflow))
+                   .sle(MaxHeapToStackSize))
+            if (!Overflow && UsesCheck(I)) {
+              MallocCalls.insert(&I);
+              return true;
+            }
+    }
 
-    if (UsesCheck(I))
-      MallocCalls.insert(&I);
-    else
-      BadMallocCalls.insert(&I);
+    BadMallocCalls.insert(&I);
     return true;
   };
 

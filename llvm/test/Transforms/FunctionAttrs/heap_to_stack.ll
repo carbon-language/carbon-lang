@@ -316,3 +316,8 @@ define void @test14() {
   ; CHECK: tail call void @free(i8* noalias %1)
   ret void
 }
+
+define void @test15(i64 %S) {
+  %1 = tail call noalias i8* @malloc(i64 %S)
+  ret void
+}
