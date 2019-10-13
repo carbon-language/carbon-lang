@@ -2859,6 +2859,14 @@ struct AAAlignCallSiteReturned final : AAAlignImpl {
 struct AANoReturnImpl : public AANoReturn {
   AANoReturnImpl(const IRPosition &IRP) : AANoReturn(IRP) {}
 
+  /// See AbstractAttribute::initialize(...).
+  void initialize(Attributor &A) override {
+    AANoReturn::initialize(A);
+    Function *F = getAssociatedFunction();
+    if (!F || F->hasFnAttribute(Attribute::WillReturn))
+      indicatePessimisticFixpoint();
+  }
+
   /// See AbstractAttribute::getAsStr().
   const std::string getAsStr() const override {
     return getAssumed() ? "noreturn" : "may-return";
@@ -2866,6 +2874,9 @@ struct AANoReturnImpl : public AANoReturn {
 
   /// See AbstractAttribute::updateImpl(Attributor &A).
   virtual ChangeStatus updateImpl(Attributor &A) override {
+    const auto &WillReturnAA = A.getAAFor<AAWillReturn>(*this, getIRPosition());
+    if (WillReturnAA.isKnownWillReturn())
+      return indicatePessimisticFixpoint();
     auto CheckForNoReturn = [](Instruction &) { return false; };
     if (!A.checkForAllInstructions(CheckForNoReturn, *this,
                                    {(unsigned)Instruction::Ret}))
@@ -2884,14 +2895,6 @@ struct AANoReturnFunction final : AANoReturnImpl {
 /// NoReturn attribute deduction for a call sites.
 struct AANoReturnCallSite final : AANoReturnImpl {
   AANoReturnCallSite(const IRPosition &IRP) : AANoReturnImpl(IRP) {}
-
-  /// See AbstractAttribute::initialize(...).
-  void initialize(Attributor &A) override {
-    AANoReturnImpl::initialize(A);
-    Function *F = getAssociatedFunction();
-    if (!F)
-      indicatePessimisticFixpoint();
-  }
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A) override {
