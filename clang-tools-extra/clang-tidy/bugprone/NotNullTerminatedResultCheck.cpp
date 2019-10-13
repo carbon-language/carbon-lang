@@ -71,10 +71,10 @@ static int getLength(const Expr *E, const MatchFinder::MatchResult &Result) {
       if (!isa<ParmVarDecl>(LengthVD))
         if (const Expr *LengthInit = LengthVD->getInit())
           if (LengthInit->EvaluateAsInt(Length, *Result.Context))
-            return Length.Val.getInt().getZExtValue();
+            return Length.Val.getInt().getSExtValue();
 
   if (const auto *LengthIL = dyn_cast<IntegerLiteral>(E))
-    return LengthIL->getValue().getZExtValue();
+    return LengthIL->getValue().getSExtValue();
 
   if (const auto *StrDRE = dyn_cast<DeclRefExpr>(E))
     if (const auto *StrVD = dyn_cast<VarDecl>(StrDRE->getDecl()))
@@ -306,7 +306,7 @@ static void lengthExprHandle(const Expr *LengthExpr,
   // Try to obtain an 'IntegerLiteral' and adjust it.
   if (!IsMacroDefinition) {
     if (const auto *LengthIL = dyn_cast<IntegerLiteral>(LengthExpr)) {
-      size_t NewLength = LengthIL->getValue().getZExtValue() +
+      size_t NewLength = LengthIL->getValue().getSExtValue() +
                          (LengthHandle == LengthHandleKind::Increase
                               ? (isInjectUL(Result) ? 1UL : 1)
                               : -1);
@@ -327,7 +327,7 @@ static void lengthExprHandle(const Expr *LengthExpr,
     const Expr *RhsExpr = BO->getRHS()->IgnoreImpCasts();
 
     if (const auto *LhsIL = dyn_cast<IntegerLiteral>(LhsExpr)) {
-      if (LhsIL->getValue().getZExtValue() == 1) {
+      if (LhsIL->getValue().getSExtValue() == 1) {
         Diag << FixItHint::CreateRemoval(
             {LhsIL->getBeginLoc(),
              RhsExpr->getBeginLoc().getLocWithOffset(-1)});
@@ -336,7 +336,7 @@ static void lengthExprHandle(const Expr *LengthExpr,
     }
 
     if (const auto *RhsIL = dyn_cast<IntegerLiteral>(RhsExpr)) {
-      if (RhsIL->getValue().getZExtValue() == 1) {
+      if (RhsIL->getValue().getSExtValue() == 1) {
         Diag << FixItHint::CreateRemoval(
             {LhsExpr->getEndLoc().getLocWithOffset(1), RhsIL->getEndLoc()});
         return;
@@ -803,7 +803,7 @@ void NotNullTerminatedResultCheck::check(
         StringRef ValueStr = StringRef(T.getLiteralData(), T.getLength());
         llvm::APInt IntValue;
         ValueStr.getAsInteger(10, IntValue);
-        AreSafeFunctionsWanted = IntValue.getZExtValue();
+        AreSafeFunctionsWanted = IntValue.getSExtValue();
       }
 
       ++It;
