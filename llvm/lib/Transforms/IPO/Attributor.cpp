@@ -593,8 +593,9 @@ struct AAComposeTwoGenericDeduction
 
   /// See AbstractAttribute::updateImpl(...).
   ChangeStatus updateImpl(Attributor &A) override {
-    return F<AAType, G<AAType, Base, StateType>, StateType>::updateImpl(A) |
-           G<AAType, Base, StateType>::updateImpl(A);
+    ChangeStatus ChangedF = F<AAType, G<AAType, Base, StateType>, StateType>::updateImpl(A);
+    ChangeStatus ChangedG = G<AAType, Base, StateType>::updateImpl(A);
+    return ChangedF | ChangedG;
   }
 };
 
@@ -1535,11 +1536,16 @@ struct AANoFreeCallSite final : AANoFreeImpl {
 static int64_t getKnownNonNullAndDerefBytesForUse(
     Attributor &A, AbstractAttribute &QueryingAA, Value &AssociatedValue,
     const Use *U, const Instruction *I, bool &IsNonNull, bool &TrackUse) {
-  // TODO: Add GEP support
   TrackUse = false;
 
+  const Value *UseV = U->get();
+  if (!UseV->getType()->isPointerTy())
+    return 0;
+
+  Type *PtrTy = UseV->getType();
   const Function *F = I->getFunction();
-  bool NullPointerIsDefined = F ? F->nullPointerIsDefined() : true;
+  bool NullPointerIsDefined =
+      F ? llvm::NullPointerIsDefined(F, PtrTy->getPointerAddressSpace()) : true;
   const DataLayout &DL = A.getInfoCache().getDL();
   if (ImmutableCallSite ICS = ImmutableCallSite(I)) {
     if (ICS.isBundleOperand(U))
@@ -1559,19 +1565,28 @@ static int64_t getKnownNonNullAndDerefBytesForUse(
 
   int64_t Offset;
   if (const Value *Base = getBasePointerOfAccessPointerOperand(I, Offset, DL)) {
-    if (Base == &AssociatedValue) {
+    if (Base == &AssociatedValue && getPointerOperand(I) == UseV) {
       int64_t DerefBytes =
-          Offset +
-          (int64_t)DL.getTypeStoreSize(
-              getPointerOperand(I)->getType()->getPointerElementType());
+          Offset + (int64_t)DL.getTypeStoreSize(PtrTy->getPointerElementType());
 
       IsNonNull |= !NullPointerIsDefined;
       return DerefBytes;
     }
   }
+  if (const Value *Base =
+          GetPointerBaseWithConstantOffset(UseV, Offset, DL,
+                                           /*AllowNonInbounds*/ false)) {
+    auto &DerefAA =
+        A.getAAFor<AADereferenceable>(QueryingAA, IRPosition::value(*Base));
+    IsNonNull |= (!NullPointerIsDefined && DerefAA.isKnownNonNull());
+    IsNonNull |= (!NullPointerIsDefined && (Offset != 0));
+    int64_t DerefBytes = DerefAA.getKnownDereferenceableBytes();
+    return std::max(int64_t(0), DerefBytes - Offset);
+  }
 
   return 0;
 }
+
 struct AANonNullImpl : AANonNull {
   AANonNullImpl(const IRPosition &IRP) : AANonNull(IRP) {}
 
@@ -2539,7 +2554,7 @@ struct AADereferenceableFloating
       // for overflows of the dereferenceable bytes.
       int64_t OffsetSExt = Offset.getSExtValue();
       if (OffsetSExt < 0)
-        Offset = 0;
+        OffsetSExt = 0;
 
       T.takeAssumedDerefBytesMinimum(
           std::max(int64_t(0), DerefBytes - OffsetSExt));
