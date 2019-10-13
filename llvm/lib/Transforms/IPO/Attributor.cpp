@@ -4847,11 +4847,6 @@ static bool runAttributorOnModule(Module &M, AnalysisGetter &AG) {
     else
       NumFnWithoutExactDefinition++;
 
-    // For now we ignore naked and optnone functions.
-    if (F.hasFnAttribute(Attribute::Naked) ||
-        F.hasFnAttribute(Attribute::OptimizeNone))
-      continue;
-
     // We look at internal functions only on-demand but if any use is not a
     // direct call, we have to do it eagerly.
     if (F.hasLocalLinkage()) {

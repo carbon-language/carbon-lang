@@ -913,15 +913,23 @@ private:
     // Use the static create method.
     auto &AA = AAType::createForPosition(IRP, *this);
     registerAA(AA);
-    AA.initialize(*this);
+
+    // For now we ignore naked and optnone functions.
+    bool Invalidate = Whitelist && !Whitelist->count(&AAType::ID);
+    if (const Function *Fn = IRP.getAnchorScope())
+      Invalidate |= Fn->hasFnAttribute(Attribute::Naked) ||
+                    Fn->hasFnAttribute(Attribute::OptimizeNone);
 
     // Bootstrap the new attribute with an initial update to propagate
     // information, e.g., function -> call site. If it is not on a given
     // whitelist we will not perform updates at all.
-    if (Whitelist && !Whitelist->count(&AAType::ID))
+    if (Invalidate) {
       AA.getState().indicatePessimisticFixpoint();
-    else
-      AA.update(*this);
+      return AA;
+    }
+
+    AA.initialize(*this);
+    AA.update(*this);
 
     if (TrackDependence && AA.getState().isValidState())
       QueryMap[&AA].insert(const_cast<AbstractAttribute *>(QueryingAA));
