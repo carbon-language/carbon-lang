@@ -125,12 +125,6 @@ static cl::opt<bool> ManifestInternal(
     cl::desc("Manifest Attributor internal string attributes."),
     cl::init(false));
 
-static cl::opt<bool> VerifyAttributor(
-    "attributor-verify", cl::Hidden,
-    cl::desc("Verify the Attributor deduction and "
-             "manifestation of attributes -- may issue false-positive errors"),
-    cl::init(false));
-
 static cl::opt<unsigned> DepRecInterval(
     "attributor-dependence-recompute-interval", cl::Hidden,
     cl::desc("Number of iterations until dependences are recomputed."),
@@ -4500,24 +4494,6 @@ ChangeStatus Attributor::run(Module &M) {
   LLVM_DEBUG(dbgs() << "\n[Attributor] Manifested " << NumManifested
                     << " arguments while " << NumAtFixpoint
                     << " were in a valid fixpoint state\n");
-
-  // If verification is requested, we finished this run at a fixpoint, and the
-  // IR was changed, we re-run the whole fixpoint analysis, starting at
-  // re-initialization of the arguments. This re-run should not result in an IR
-  // change. Though, the (virtual) state of attributes at the end of the re-run
-  // might be more optimistic than the known state or the IR state if the better
-  // state cannot be manifested.
-  if (VerifyAttributor && FinishedAtFixpoint &&
-      ManifestChange == ChangeStatus::CHANGED) {
-    VerifyAttributor = false;
-    ChangeStatus VerifyStatus = run(M);
-    if (VerifyStatus != ChangeStatus::UNCHANGED)
-      llvm_unreachable(
-          "Attributor verification failed, re-run did result in an IR change "
-          "even after a fixpoint was reached in the original run. (False "
-          "positives possible!)");
-    VerifyAttributor = true;
-  }
 
   NumAttributesManifested += NumManifested;
   NumAttributesValidFixpoint += NumAtFixpoint;
