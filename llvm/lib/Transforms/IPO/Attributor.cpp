@@ -4428,8 +4428,6 @@ ChangeStatus Attributor::run(Module &M) {
 
   size_t NumFinalAAs = AllAbstractAttributes.size();
 
-  bool FinishedAtFixpoint = Worklist.empty();
-
   // Reset abstract arguments not settled in a sound fixpoint by now. This
   // happens when we stopped the fixpoint iteration early. Note that only the
   // ones marked as "changed" *and* the ones transitively depending on them
