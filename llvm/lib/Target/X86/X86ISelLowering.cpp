@@ -6812,7 +6812,7 @@ static bool getTargetShuffleAndZeroables(SDValue N, SmallVectorImpl<int> &Mask,
 static bool getTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Inputs,
                                    SmallVectorImpl<int> &Mask,
                                    SelectionDAG &DAG, unsigned Depth,
-                                   bool ResolveZero);
+                                   bool ResolveKnownElts);
 
 // Attempt to decode ops that could be represented as a shuffle mask.
 // The decoded shuffle mask may contain a different number of elements to the
@@ -6821,7 +6821,7 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
                                SmallVectorImpl<int> &Mask,
                                SmallVectorImpl<SDValue> &Ops,
                                SelectionDAG &DAG, unsigned Depth,
-                               bool ResolveZero) {
+                               bool ResolveKnownElts) {
   Mask.clear();
   Ops.clear();
 
@@ -6916,9 +6916,9 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
     SmallVector<int, 64> SrcMask0, SrcMask1;
     SmallVector<SDValue, 2> SrcInputs0, SrcInputs1;
     if (!getTargetShuffleInputs(N0, SrcInputs0, SrcMask0, DAG, Depth + 1,
-                                ResolveZero) ||
+                                ResolveKnownElts) ||
         !getTargetShuffleInputs(N1, SrcInputs1, SrcMask1, DAG, Depth + 1,
-                                ResolveZero))
+                                ResolveKnownElts))
       return false;
     size_t MaskSize = std::max(SrcMask0.size(), SrcMask1.size());
     SmallVector<int, 64> Mask0, Mask1;
@@ -6966,7 +6966,7 @@ static bool getFauxShuffleMask(SDValue N, const APInt &DemandedElts,
     SmallVector<int, 64> SubMask;
     SmallVector<SDValue, 2> SubInputs;
     if (!getTargetShuffleInputs(peekThroughOneUseBitcasts(Sub), SubInputs,
-                                SubMask, DAG, Depth + 1, ResolveZero))
+                                SubMask, DAG, Depth + 1, ResolveKnownElts))
       return false;
     if (SubMask.size() != NumSubElts) {
       assert(((SubMask.size() % NumSubElts) == 0 ||
@@ -7250,7 +7250,7 @@ static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
                                    SmallVectorImpl<int> &Mask,
                                    APInt &KnownUndef, APInt &KnownZero,
                                    SelectionDAG &DAG, unsigned Depth,
-                                   bool ResolveZero) {
+                                   bool ResolveKnownElts) {
   EVT VT = Op.getValueType();
   if (!VT.isSimple() || !VT.isVector())
     return false;
@@ -7258,17 +7258,17 @@ static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
   if (getTargetShuffleAndZeroables(Op, Mask, Inputs, KnownUndef, KnownZero)) {
     for (int i = 0, e = Mask.size(); i != e; ++i) {
       int &M = Mask[i];
-      if (M < 0)
+      if (M < 0 || !ResolveKnownElts)
         continue;
       if (KnownUndef[i])
         M = SM_SentinelUndef;
-      else if (ResolveZero && KnownZero[i])
+      else if (KnownZero[i])
         M = SM_SentinelZero;
     }
     return true;
   }
   if (getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth,
-                         ResolveZero)) {
+                         ResolveKnownElts)) {
     KnownUndef = KnownZero = APInt::getNullValue(Mask.size());
     for (int i = 0, e = Mask.size(); i != e; ++i) {
       int M = Mask[i];
@@ -7285,7 +7285,7 @@ static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
 static bool getTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Inputs,
                                    SmallVectorImpl<int> &Mask,
                                    SelectionDAG &DAG, unsigned Depth = 0,
-                                   bool ResolveZero = true) {
+                                   bool ResolveKnownElts = true) {
   EVT VT = Op.getValueType();
   if (!VT.isSimple() || !VT.isVector())
     return false;
@@ -7294,7 +7294,7 @@ static bool getTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Inputs,
   unsigned NumElts = Op.getValueType().getVectorNumElements();
   APInt DemandedElts = APInt::getAllOnesValue(NumElts);
   return getTargetShuffleInputs(Op, DemandedElts, Inputs, Mask, KnownUndef,
-                                KnownZero, DAG, Depth, ResolveZero);
+                                KnownZero, DAG, Depth, ResolveKnownElts);
 }
 
 /// Returns the scalar element that will make up the ith
