@@ -34952,9 +34952,11 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
   }
   }
 
+  APInt ShuffleUndef, ShuffleZero;
   SmallVector<int, 16> ShuffleMask;
   SmallVector<SDValue, 2> ShuffleOps;
-  if (getTargetShuffleInputs(Op, ShuffleOps, ShuffleMask, DAG, Depth)) {
+  if (getTargetShuffleInputs(Op, DemandedElts, ShuffleOps, ShuffleMask,
+                             ShuffleUndef, ShuffleZero, DAG, Depth, false)) {
     // If all the demanded elts are from one operand and are inline,
     // then we can use the operand directly.
     int NumOps = ShuffleOps.size();
@@ -34963,15 +34965,17 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
           return VT.getSizeInBits() == V.getValueSizeInBits();
         })) {
 
+      if (DemandedElts.isSubsetOf(ShuffleUndef))
+        return DAG.getUNDEF(VT);
+      if (DemandedElts.isSubsetOf(ShuffleUndef | ShuffleZero))
+        return getZeroVector(VT.getSimpleVT(), Subtarget, DAG, SDLoc(Op));
+
       // Bitmask that indicates which ops have only been accessed 'inline'.
       APInt IdentityOp = APInt::getAllOnesValue(NumOps);
-      bool AllUndef = true;
-
       for (int i = 0; i != NumElts; ++i) {
         int M = ShuffleMask[i];
-        if (SM_SentinelUndef == M || !DemandedElts[i])
+        if (!DemandedElts[i] || ShuffleUndef[i])
           continue;
-        AllUndef = false;
         int Op = M / NumElts;
         int Index = M % NumElts;
         if (M < 0 || Index != i) {
@@ -34982,16 +34986,11 @@ SDValue X86TargetLowering::SimplifyMultipleUseDemandedBitsForTargetNode(
         if (IdentityOp == 0)
           break;
       }
-
-      if (AllUndef)
-        return DAG.getUNDEF(VT);
-
       assert((IdentityOp == 0 || IdentityOp.countPopulation() == 1) &&
              "Multiple identity shuffles detected");
 
-      for (int i = 0; i != NumOps; ++i)
-        if (IdentityOp[i])
-          return DAG.getBitcast(VT, ShuffleOps[i]);
+      if (IdentityOp != 0)
+        return DAG.getBitcast(VT, ShuffleOps[IdentityOp.countTrailingZeros()]);
     }
   }
 
