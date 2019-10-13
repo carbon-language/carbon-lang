@@ -91,32 +91,36 @@ respectively (where only ``strerror_s`` does not have ``wchar_t`` based alias).
 Memory handler functions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``memcpy`` Please visit the
-  :ref:`Transformation rules of 'memcpy()'<MemcpyTransformation>` section.
+``memcpy``
+Please visit the
+:ref:`Transformation rules of 'memcpy()'<MemcpyTransformation>` section.
 
-- ``memchr``
-  Usually there is a C-style cast and it is needed to be removed, because the
-  new function ``strchr``'s return type is correct.
-  The given length is going to be removed.
+``memchr``
+Usually there is a C-style cast and it is needed to be removed, because the
+new function ``strchr``'s return type is correct. The given length is going
+to be removed.
 
-- ``memmove``
-  If safe functions are available the new function is ``memmove_s``, which has
-  a new second argument which is the length of the destination array, it is
-  adjusted, and the length of the source string is incremented by one.
-  If safe functions are not available the given length is incremented by one.
+``memmove``
+If safe functions are available the new function is ``memmove_s``, which has
+a new second argument which is the length of the destination array, it is
+adjusted, and the length of the source string is incremented by one.
+If safe functions are not available the given length is incremented by one.
 
-- ``memmove_s``
-  The given length is incremented by one.
+``memmove_s``
+The given length is incremented by one.
 
 String handler functions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``strerror_s``: given length is incremented by one.
+``strerror_s``
+The given length is incremented by one.
 
-- ``strncmp``: If the third argument is the first or the second argument's
-    ``length + 1`` it has to be truncated without the ``+ 1`` operation.
+``strncmp``
+If the third argument is the first or the second argument's ``length + 1``
+it has to be truncated without the ``+ 1`` operation.
 
-- ``strxfrm``: given length is incremented by one.
+``strxfrm``
+The given length is incremented by one.
 
 Options
 -------
