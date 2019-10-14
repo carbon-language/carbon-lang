@@ -4595,12 +4595,16 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
         if (isOpenMPParallelDirective(DSAStack->getCurrentDirective()))
           break;
         continue;
+      case OMPC_num_tasks:
+        // Do not analyze if no parent parallel directive.
+        if (isOpenMPParallelDirective(DSAStack->getCurrentDirective()))
+          break;
+        continue;
       case OMPC_ordered:
       case OMPC_device:
       case OMPC_num_teams:
       case OMPC_thread_limit:
       case OMPC_priority:
-      case OMPC_num_tasks:
       case OMPC_hint:
       case OMPC_collapse:
       case OMPC_safelen:
@@ -10778,6 +10782,7 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
     }
     break;
   case OMPC_grainsize:
+  case OMPC_num_tasks:
     switch (DKind) {
     case OMPD_task:
     case OMPD_taskloop:
@@ -10881,7 +10886,6 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
   case OMPC_map:
   case OMPC_priority:
   case OMPC_nogroup:
-  case OMPC_num_tasks:
   case OMPC_hint:
   case OMPC_defaultmap:
   case OMPC_unknown:
@@ -15952,15 +15956,20 @@ OMPClause *Sema::ActOnOpenMPNumTasksClause(Expr *NumTasks,
                                            SourceLocation LParenLoc,
                                            SourceLocation EndLoc) {
   Expr *ValExpr = NumTasks;
+  Stmt *HelperValStmt = nullptr;
+  OpenMPDirectiveKind CaptureRegion = OMPD_unknown;
 
   // OpenMP [2.9.2, taskloop Constrcut]
   // The parameter of the num_tasks clause must be a positive integer
   // expression.
-  if (!isNonNegativeIntegerValue(ValExpr, *this, OMPC_num_tasks,
-                                 /*StrictlyPositive=*/true))
+  if (!isNonNegativeIntegerValue(
+          ValExpr, *this, OMPC_num_tasks,
+          /*StrictlyPositive=*/true, /*BuildCapture=*/true,
+          DSAStack->getCurrentDirective(), &CaptureRegion, &HelperValStmt))
     return nullptr;
 
-  return new (Context) OMPNumTasksClause(ValExpr, StartLoc, LParenLoc, EndLoc);
+  return new (Context) OMPNumTasksClause(ValExpr, HelperValStmt, CaptureRegion,
+                                         StartLoc, LParenLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPHintClause(Expr *Hint, SourceLocation StartLoc,

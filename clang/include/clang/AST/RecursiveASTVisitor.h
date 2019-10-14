@@ -3283,6 +3283,7 @@ bool RecursiveASTVisitor<Derived>::VisitOMPGrainsizeClause(
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPNumTasksClause(
     OMPNumTasksClause *C) {
+  TRY_TO(VisitOMPClauseWithPreInit(C));
   TRY_TO(TraverseStmt(C->getNumTasks()));
   return true;
 }
