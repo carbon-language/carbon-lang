@@ -24,7 +24,6 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <string>
@@ -107,9 +106,11 @@ static bool HadError = false;
 
 static std::string ToolName;
 
-static void error(const Twine &Message, StringRef File) {
+static bool error(Twine Message) {
   HadError = true;
-  WithColor::error(errs(), ToolName) << "'" << File << "': " << Message << "\n";
+  errs() << ToolName << ": " << Message << ".\n";
+  errs().flush();
+  return true;
 }
 
 // This version of error() prints the archive name and member name, for example:
@@ -118,7 +119,7 @@ static void error(const Twine &Message, StringRef File) {
 static void error(llvm::Error E, StringRef FileName, const Archive::Child &C,
                   StringRef ArchitectureName = StringRef()) {
   HadError = true;
-  WithColor::error(errs(), ToolName) << "'" << FileName << "'";
+  errs() << ToolName << ": " << FileName;
 
   Expected<StringRef> NameOrErr = C.getName();
   // TODO: if we have a error getting the name then it would be nice to print
@@ -137,7 +138,7 @@ static void error(llvm::Error E, StringRef FileName, const Archive::Child &C,
   raw_string_ostream OS(Buf);
   logAllUnhandledErrors(std::move(E), OS);
   OS.flush();
-  errs() << ": " << Buf << "\n";
+  errs() << " " << Buf << "\n";
 }
 
 // This version of error() prints the file name and which architecture slice it // is from, for example: "foo.o (for architecture i386)" after the ToolName
@@ -146,7 +147,7 @@ static void error(llvm::Error E, StringRef FileName, const Archive::Child &C,
 static void error(llvm::Error E, StringRef FileName,
                   StringRef ArchitectureName = StringRef()) {
   HadError = true;
-  WithColor::error(errs(), ToolName) << "'" << FileName << "'";
+  errs() << ToolName << ": " << FileName;
 
   if (!ArchitectureName.empty())
     errs() << " (for architecture " << ArchitectureName << ") ";
@@ -155,7 +156,7 @@ static void error(llvm::Error E, StringRef FileName,
   raw_string_ostream OS(Buf);
   logAllUnhandledErrors(std::move(E), OS);
   OS.flush();
-  errs() << ": " << Buf << "\n";
+  errs() << " " << Buf << "\n";
 }
 
 /// Get the length of the string that represents @p num in Radix including the
@@ -528,7 +529,7 @@ static bool checkMachOAndArchFlags(ObjectFile *O, StringRef Filename) {
   if (none_of(ArchFlags, [&](const std::string &Name) {
         return Name == T.getArchName();
       })) {
-    error("no architecture specified", Filename);
+    error(Filename + ": No architecture specified");
     return false;
   }
   return true;
@@ -657,15 +658,15 @@ static void printFileSectionSizes(StringRef file) {
                 error(std::move(Err), UA->getFileName());
             } else {
               consumeError(AOrErr.takeError());
-              error("mach-o universal file for architecture " +
-                        StringRef(I->getArchFlagName()) +
-                        " is not a mach-o file or an archive file",
-                    file);
+              error("Mach-O universal file: " + file + " for architecture " +
+                    StringRef(I->getArchFlagName()) +
+                    " is not a Mach-O file or an archive file");
             }
           }
         }
         if (!ArchFound) {
-          error("file does not contain architecture " + ArchFlags[i], file);
+          errs() << ToolName << ": file: " << file
+                 << " does not contain architecture" << ArchFlags[i] << ".\n";
           return;
         }
       }
@@ -739,10 +740,9 @@ static void printFileSectionSizes(StringRef file) {
               error(std::move(Err), UA->getFileName());
           } else {
             consumeError(AOrErr.takeError());
-            error("mach-o universal file for architecture " +
-                      StringRef(I->getArchFlagName()) +
-                      " is not a mach-o file or an archive file",
-                  file);
+            error("Mach-O universal file: " + file + " for architecture " +
+                   StringRef(I->getArchFlagName()) +
+                   " is not a Mach-O file or an archive file");
           }
           return;
         }
@@ -816,10 +816,9 @@ static void printFileSectionSizes(StringRef file) {
           error(std::move(Err), UA->getFileName());
       } else {
         consumeError(AOrErr.takeError());
-        error("mach-o universal file for architecture " +
-                  StringRef(I->getArchFlagName()) +
-                  " is not a mach-o file or an archive file",
-              file);
+        error("Mach-O universal file: " + file + " for architecture " +
+               StringRef(I->getArchFlagName()) +
+               " is not a Mach-O file or an archive file");
       }
     }
   } else if (ObjectFile *o = dyn_cast<ObjectFile>(&Bin)) {
@@ -837,7 +836,8 @@ static void printFileSectionSizes(StringRef file) {
       outs() << "\n";
     }
   } else {
-    error("unsupported file type", file);
+    errs() << ToolName << ": " << file << ": "
+           << "Unrecognized file type.\n";
   }
   // System V adds an extra newline at the end of each file.
   if (OutputFormat == sysv)
