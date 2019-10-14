@@ -1128,6 +1128,7 @@ TEST(InstructionsTest, UnaryOperator) {
   EXPECT_FALSE(isa<BinaryOperator>(F));
 
   F->deleteValue();
+  I->deleteValue();
 }
 
 } // end anonymous namespace
