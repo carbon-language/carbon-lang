@@ -147,9 +147,6 @@ void LLVMAddEarlyCSEMemSSAPass(LLVMPassManagerRef PM);
 /** See llvm::createLowerExpectIntrinsicPass function */
 void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM);
 
-/** See llvm::createLowerConstantIntrinsicsPass function */
-void LLVMAddLowerConstantIntrinsicsPass(LLVMPassManagerRef PM);
-
 /** See llvm::createTypeBasedAliasAnalysisPass function */
 void LLVMAddTypeBasedAliasAnalysisPass(LLVMPassManagerRef PM);
 
