@@ -94,7 +94,7 @@ public:
 
   /// Allow constructions of constexpr Align.
   template <size_t kValue> constexpr static LogValue Constant() {
-    return LogValue{CTLog2<kValue>()};
+    return LogValue{static_cast<uint8_t>(CTLog2<kValue>())};
   }
 
   /// Allow constructions of constexpr Align from types.
