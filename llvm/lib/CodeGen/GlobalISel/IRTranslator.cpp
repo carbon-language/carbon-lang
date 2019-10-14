@@ -1437,18 +1437,12 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID,
     MIRBuilder.buildConstant(Reg, TypeID);
     return true;
   }
-  case Intrinsic::objectsize: {
-    // If we don't know by now, we're never going to know.
-    const ConstantInt *Min = cast<ConstantInt>(CI.getArgOperand(1));
+  case Intrinsic::objectsize:
+    llvm_unreachable("llvm.objectsize.* should have been lowered already");
 
-    MIRBuilder.buildConstant(getOrCreateVReg(CI), Min->isZero() ? -1ULL : 0);
-    return true;
-  }
   case Intrinsic::is_constant:
-    // If this wasn't constant-folded away by now, then it's not a
-    // constant.
-    MIRBuilder.buildConstant(getOrCreateVReg(CI), 0);
-    return true;
+    llvm_unreachable("llvm.is.constant.* should have been lowered already");
+
   case Intrinsic::stackguard:
     getStackGuard(getOrCreateVReg(CI), MIRBuilder);
     return true;
