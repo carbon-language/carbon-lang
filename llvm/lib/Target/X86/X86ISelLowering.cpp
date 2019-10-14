@@ -20079,6 +20079,13 @@ static SDValue EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
   case X86ISD::XOR:
   case X86ISD::AND:
     return SDValue(Op.getNode(), 1);
+  case ISD::SSUBO:
+  case ISD::USUBO: {
+    // /USUBO/SSUBO will become a X86ISD::SUB and we can use its Z flag.
+    SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+    return DAG.getNode(X86ISD::SUB, dl, VTs, Op->getOperand(0),
+                       Op->getOperand(1)).getValue(1);
+  }
   default:
   default_case:
     break;
