@@ -5,6 +5,9 @@
 // RUN: not %clang %s -c -o %t.o -integrated-as -Wa,--fatal-warnings 2>&1 | FileCheck --check-prefix=CHECK-AS-FATAL %s
 // RUN: not %clang %s -c -o %t.o -fno-integrated-as -Wa,--fatal-warnings 2>&1 | FileCheck --check-prefix=CHECK-AS-FATAL %s
 
+// REQUIRES: clang-driver
+// REQUIRES: linux
+
 // CHECK-IAS: "-cc1" {{.*}} "-massembler-no-warn"
 // CHECK-NOIAS: "-W"
 // CHECK-AS-NOWARN-NOT: warning:
