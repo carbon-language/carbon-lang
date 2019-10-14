@@ -9474,6 +9474,11 @@ public:
   StmtResult ActOnOpenMPMasterTaskLoopDirective(
       ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
       SourceLocation EndLoc, VarsWithInheritedDSAType &VarsWithImplicitDSA);
+  /// Called on well-formed '\#pragma omp parallel master taskloop' after
+  /// parsing of the associated statement.
+  StmtResult ActOnOpenMPParallelMasterTaskLoopDirective(
+      ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
+      SourceLocation EndLoc, VarsWithInheritedDSAType &VarsWithImplicitDSA);
   /// Called on well-formed '\#pragma omp distribute' after parsing
   /// of the associated statement.
   StmtResult
