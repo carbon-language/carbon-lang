@@ -4590,12 +4590,16 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
         continue;
       case OMPC_schedule:
         break;
+      case OMPC_grainsize:
+        // Do not analyze if no parent parallel directive.
+        if (isOpenMPParallelDirective(DSAStack->getCurrentDirective()))
+          break;
+        continue;
       case OMPC_ordered:
       case OMPC_device:
       case OMPC_num_teams:
       case OMPC_thread_limit:
       case OMPC_priority:
-      case OMPC_grainsize:
       case OMPC_num_tasks:
       case OMPC_hint:
       case OMPC_collapse:
@@ -10773,6 +10777,74 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
       llvm_unreachable("Unknown OpenMP directive");
     }
     break;
+  case OMPC_grainsize:
+    switch (DKind) {
+    case OMPD_task:
+    case OMPD_taskloop:
+    case OMPD_taskloop_simd:
+    case OMPD_master_taskloop:
+      break;
+    case OMPD_parallel_master_taskloop:
+      CaptureRegion = OMPD_parallel;
+      break;
+    case OMPD_target_update:
+    case OMPD_target_enter_data:
+    case OMPD_target_exit_data:
+    case OMPD_target:
+    case OMPD_target_simd:
+    case OMPD_target_teams:
+    case OMPD_target_parallel:
+    case OMPD_target_teams_distribute:
+    case OMPD_target_teams_distribute_simd:
+    case OMPD_target_parallel_for:
+    case OMPD_target_parallel_for_simd:
+    case OMPD_target_teams_distribute_parallel_for:
+    case OMPD_target_teams_distribute_parallel_for_simd:
+    case OMPD_target_data:
+    case OMPD_teams_distribute_parallel_for:
+    case OMPD_teams_distribute_parallel_for_simd:
+    case OMPD_teams:
+    case OMPD_teams_distribute:
+    case OMPD_teams_distribute_simd:
+    case OMPD_distribute_parallel_for:
+    case OMPD_distribute_parallel_for_simd:
+    case OMPD_cancel:
+    case OMPD_parallel:
+    case OMPD_parallel_sections:
+    case OMPD_parallel_for:
+    case OMPD_parallel_for_simd:
+    case OMPD_threadprivate:
+    case OMPD_allocate:
+    case OMPD_taskyield:
+    case OMPD_barrier:
+    case OMPD_taskwait:
+    case OMPD_cancellation_point:
+    case OMPD_flush:
+    case OMPD_declare_reduction:
+    case OMPD_declare_mapper:
+    case OMPD_declare_simd:
+    case OMPD_declare_variant:
+    case OMPD_declare_target:
+    case OMPD_end_declare_target:
+    case OMPD_simd:
+    case OMPD_for:
+    case OMPD_for_simd:
+    case OMPD_sections:
+    case OMPD_section:
+    case OMPD_single:
+    case OMPD_master:
+    case OMPD_critical:
+    case OMPD_taskgroup:
+    case OMPD_distribute:
+    case OMPD_ordered:
+    case OMPD_atomic:
+    case OMPD_distribute_simd:
+    case OMPD_requires:
+      llvm_unreachable("Unexpected OpenMP directive with grainsize-clause");
+    case OMPD_unknown:
+      llvm_unreachable("Unknown OpenMP directive");
+    }
+    break;
   case OMPC_firstprivate:
   case OMPC_lastprivate:
   case OMPC_reduction:
@@ -10808,7 +10880,6 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
   case OMPC_simd:
   case OMPC_map:
   case OMPC_priority:
-  case OMPC_grainsize:
   case OMPC_nogroup:
   case OMPC_num_tasks:
   case OMPC_hint:
@@ -10926,9 +10997,12 @@ ExprResult Sema::PerformOpenMPImplicitIntegerConversion(SourceLocation Loc,
   return PerformContextualImplicitConversion(Loc, Op, ConvertDiagnoser);
 }
 
-static bool isNonNegativeIntegerValue(Expr *&ValExpr, Sema &SemaRef,
-                                      OpenMPClauseKind CKind,
-                                      bool StrictlyPositive) {
+static bool
+isNonNegativeIntegerValue(Expr *&ValExpr, Sema &SemaRef, OpenMPClauseKind CKind,
+                          bool StrictlyPositive, bool BuildCapture = false,
+                          OpenMPDirectiveKind DKind = OMPD_unknown,
+                          OpenMPDirectiveKind *CaptureRegion = nullptr,
+                          Stmt **HelperValStmt = nullptr) {
   if (!ValExpr->isTypeDependent() && !ValExpr->isValueDependent() &&
       !ValExpr->isInstantiationDependent()) {
     SourceLocation Loc = ValExpr->getExprLoc();
@@ -10948,6 +11022,16 @@ static bool isNonNegativeIntegerValue(Expr *&ValExpr, Sema &SemaRef,
           << getOpenMPClauseName(CKind) << (StrictlyPositive ? 1 : 0)
           << ValExpr->getSourceRange();
       return false;
+    }
+    if (!BuildCapture)
+      return true;
+    *CaptureRegion = getOpenMPCaptureRegionForClause(DKind, CKind);
+    if (*CaptureRegion != OMPD_unknown &&
+        !SemaRef.CurContext->isDependentContext()) {
+      ValExpr = SemaRef.MakeFullExpr(ValExpr).get();
+      llvm::MapVector<const Expr *, DeclRefExpr *> Captures;
+      ValExpr = tryBuildCapture(SemaRef, ValExpr, Captures).get();
+      *HelperValStmt = buildPreInits(SemaRef.Context, Captures);
     }
   }
   return true;
@@ -15847,15 +15931,20 @@ OMPClause *Sema::ActOnOpenMPGrainsizeClause(Expr *Grainsize,
                                             SourceLocation LParenLoc,
                                             SourceLocation EndLoc) {
   Expr *ValExpr = Grainsize;
+  Stmt *HelperValStmt = nullptr;
+  OpenMPDirectiveKind CaptureRegion = OMPD_unknown;
 
   // OpenMP [2.9.2, taskloop Constrcut]
   // The parameter of the grainsize clause must be a positive integer
   // expression.
-  if (!isNonNegativeIntegerValue(ValExpr, *this, OMPC_grainsize,
-                                 /*StrictlyPositive=*/true))
+  if (!isNonNegativeIntegerValue(
+          ValExpr, *this, OMPC_grainsize,
+          /*StrictlyPositive=*/true, /*BuildCapture=*/true,
+          DSAStack->getCurrentDirective(), &CaptureRegion, &HelperValStmt))
     return nullptr;
 
-  return new (Context) OMPGrainsizeClause(ValExpr, StartLoc, LParenLoc, EndLoc);
+  return new (Context) OMPGrainsizeClause(ValExpr, HelperValStmt, CaptureRegion,
+                                          StartLoc, LParenLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPNumTasksClause(Expr *NumTasks,

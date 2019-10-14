@@ -3275,6 +3275,7 @@ bool RecursiveASTVisitor<Derived>::VisitOMPPriorityClause(
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPGrainsizeClause(
     OMPGrainsizeClause *C) {
+  TRY_TO(VisitOMPClauseWithPreInit(C));
   TRY_TO(TraverseStmt(C->getGrainsize()));
   return true;
 }

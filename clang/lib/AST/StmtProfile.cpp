@@ -740,6 +740,7 @@ void OMPClauseProfiler::VisitOMPPriorityClause(const OMPPriorityClause *C) {
     Profiler->VisitStmt(C->getPriority());
 }
 void OMPClauseProfiler::VisitOMPGrainsizeClause(const OMPGrainsizeClause *C) {
+  VistOMPClauseWithPreInit(C);
   if (C->getGrainsize())
     Profiler->VisitStmt(C->getGrainsize());
 }

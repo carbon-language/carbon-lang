@@ -5268,7 +5268,7 @@ public:
 /// \endcode
 /// In this example directive '#pragma omp taskloop' has clause 'grainsize'
 /// with single expression '4'.
-class OMPGrainsizeClause : public OMPClause {
+class OMPGrainsizeClause : public OMPClause, public OMPClauseWithPreInit {
   friend class OMPClauseReader;
 
   /// Location of '('.
@@ -5284,16 +5284,23 @@ public:
   /// Build 'grainsize' clause.
   ///
   /// \param Size Expression associated with this clause.
+  /// \param HelperSize Helper grainsize for the construct.
+  /// \param CaptureRegion Innermost OpenMP region where expressions in this
+  /// clause must be captured.
   /// \param StartLoc Starting location of the clause.
   /// \param EndLoc Ending location of the clause.
-  OMPGrainsizeClause(Expr *Size, SourceLocation StartLoc,
+  OMPGrainsizeClause(Expr *Size, Stmt *HelperSize,
+                     OpenMPDirectiveKind CaptureRegion, SourceLocation StartLoc,
                      SourceLocation LParenLoc, SourceLocation EndLoc)
-      : OMPClause(OMPC_grainsize, StartLoc, EndLoc), LParenLoc(LParenLoc),
-        Grainsize(Size) {}
+      : OMPClause(OMPC_grainsize, StartLoc, EndLoc), OMPClauseWithPreInit(this),
+        LParenLoc(LParenLoc), Grainsize(Size) {
+    setPreInitStmt(HelperSize, CaptureRegion);
+  }
 
   /// Build an empty clause.
   explicit OMPGrainsizeClause()
-      : OMPClause(OMPC_grainsize, SourceLocation(), SourceLocation()) {}
+      : OMPClause(OMPC_grainsize, SourceLocation(), SourceLocation()),
+        OMPClauseWithPreInit(this) {}
 
   /// Sets the location of '('.
   void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
@@ -5310,11 +5317,10 @@ public:
     return const_child_range(&Grainsize, &Grainsize + 1);
   }
 
-  child_range used_children() {
-    return child_range(child_iterator(), child_iterator());
-  }
+  child_range used_children();
   const_child_range used_children() const {
-    return const_child_range(const_child_iterator(), const_child_iterator());
+    auto Children = const_cast<OMPGrainsizeClause *>(this)->used_children();
+    return const_child_range(Children.begin(), Children.end());
   }
 
   static bool classof(const OMPClause *T) {
