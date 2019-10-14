@@ -15,6 +15,9 @@ set(BOLT_TEST_PARAMS
 list(APPEND BOLT_TEST_DEPS
   llvm-config
   FileCheck count not
+  llvm-bolt
+  perf2bolt
+  merge-fdata
   llvm-nm
   llvm-objdump
   llvm-readobj
