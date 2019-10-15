@@ -2770,7 +2770,8 @@ struct AAAlignFloating : AAAlignImpl {
       const auto &AA = A.getAAFor<AAAlign>(*this, IRPosition::value(V));
       if (!Stripped && this == &AA) {
         // Use only IR information if we did not strip anything.
-        T.takeKnownMaximum(V.getPointerAlignment(DL));
+        const MaybeAlign PA = V.getPointerAlignment(DL);
+        T.takeKnownMaximum(PA ? PA->value() : 0);
         T.indicatePessimisticFixpoint();
       } else {
         // Use abstract attribute information.
