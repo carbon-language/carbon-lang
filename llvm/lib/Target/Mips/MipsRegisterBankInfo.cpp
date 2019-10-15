@@ -12,6 +12,7 @@
 
 #include "MipsRegisterBankInfo.h"
 #include "MipsInstrInfo.h"
+#include "MipsTargetMachine.h"
 #include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 #include "llvm/CodeGen/GlobalISel/LegalizationArtifactCombiner.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
@@ -27,20 +28,23 @@ enum PartialMappingIdx {
   PMI_GPR,
   PMI_SPR,
   PMI_DPR,
+  PMI_MSA,
   PMI_Min = PMI_GPR,
 };
 
 RegisterBankInfo::PartialMapping PartMappings[]{
     {0, 32, GPRBRegBank},
     {0, 32, FPRBRegBank},
-    {0, 64, FPRBRegBank}
+    {0, 64, FPRBRegBank},
+    {0, 128, FPRBRegBank}
 };
 
 enum ValueMappingIdx {
     InvalidIdx = 0,
     GPRIdx = 1,
     SPRIdx = 4,
-    DPRIdx = 7
+    DPRIdx = 7,
+    MSAIdx = 10
 };
 
 RegisterBankInfo::ValueMapping ValueMappings[] = {
@@ -57,7 +61,11 @@ RegisterBankInfo::ValueMapping ValueMappings[] = {
     // up to 3 operands in FPRs - double precission
     {&PartMappings[PMI_DPR - PMI_Min], 1},
     {&PartMappings[PMI_DPR - PMI_Min], 1},
-    {&PartMappings[PMI_DPR - PMI_Min], 1}
+    {&PartMappings[PMI_DPR - PMI_Min], 1},
+    // up to 3 operands in FPRs - MSA
+    {&PartMappings[PMI_MSA - PMI_Min], 1},
+    {&PartMappings[PMI_MSA - PMI_Min], 1},
+    {&PartMappings[PMI_MSA - PMI_Min], 1}
 };
 
 } // end namespace Mips
@@ -86,6 +94,10 @@ const RegisterBank &MipsRegisterBankInfo::getRegBankFromRegClass(
   case Mips::FGR32RegClassID:
   case Mips::FGR64RegClassID:
   case Mips::AFGR64RegClassID:
+  case Mips::MSA128BRegClassID:
+  case Mips::MSA128HRegClassID:
+  case Mips::MSA128WRegClassID:
+  case Mips::MSA128DRegClassID:
     return getRegBank(Mips::FPRBRegBankID);
   default:
     llvm_unreachable("Register class not supported");
@@ -355,6 +367,13 @@ void MipsRegisterBankInfo::TypeInfoForMF::cleanupIfNewFunction(
   }
 }
 
+static const MipsRegisterBankInfo::ValueMapping *
+getMSAMapping(const MachineFunction &MF) {
+  assert(static_cast<const MipsSubtarget &>(MF.getSubtarget()).hasMSA() &&
+         "MSA mapping not available on target without MSA.");
+  return &Mips::ValueMappings[Mips::MSAIdx];
+}
+
 static const MipsRegisterBankInfo::ValueMapping *getFprbMapping(unsigned Size) {
   return Size == 32 ? &Mips::ValueMappings[Mips::SPRIdx]
                     : &Mips::ValueMappings[Mips::DPRIdx];
@@ -406,6 +425,9 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       if (RegTy.isScalar() &&
           (RegTy.getSizeInBits() != 32 && RegTy.getSizeInBits() != 64))
         return getInvalidInstructionMapping();
+
+      if (RegTy.isVector() && RegTy.getSizeInBits() != 128)
+        return getInvalidInstructionMapping();
     }
   }
 
@@ -440,6 +462,12 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   case G_STORE:
   case G_LOAD:
+    if (Op0Size == 128) {
+      OperandsMapping = getOperandsMapping(
+          {getMSAMapping(MF), &Mips::ValueMappings[Mips::GPRIdx]});
+      break;
+    }
+
     if (!Op0Ty.isPointer())
       InstTy = TI.determineInstType(&MI);
 
