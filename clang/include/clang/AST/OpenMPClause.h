@@ -534,20 +534,19 @@ class OMPFinalClause : public OMPClause, public OMPClauseWithPreInit {
 public:
   /// Build 'final' clause with condition \a Cond.
   ///
-  /// \param Cond final condition.
+  /// \param Cond Condition of the clause.
   /// \param HelperCond Helper condition for the construct.
   /// \param CaptureRegion Innermost OpenMP region where expressions in this
   /// clause must be captured.
   /// \param StartLoc Starting location of the clause.
   /// \param LParenLoc Location of '('.
-  /// \param Cond Condition of the clause.
   /// \param EndLoc Ending location of the clause.
-  OMPFinalClause(Expr *Cond, Stmt *HelperSize,
+  OMPFinalClause(Expr *Cond, Stmt *HelperCond,
                  OpenMPDirectiveKind CaptureRegion, SourceLocation StartLoc,
                  SourceLocation LParenLoc, SourceLocation EndLoc)
       : OMPClause(OMPC_final, StartLoc, EndLoc), OMPClauseWithPreInit(this),
         LParenLoc(LParenLoc), Condition(Cond) {
-    setPreInitStmt(HelperSize, CaptureRegion);
+    setPreInitStmt(HelperCond, CaptureRegion);
   }
 
   /// Build an empty clause.
