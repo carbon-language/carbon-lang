@@ -170,32 +170,58 @@ static const char *const DbgTimerDescription = "DWARF Debug Writer";
 static constexpr unsigned ULEB128PadSize = 4;
 
 void DebugLocDwarfExpression::emitOp(uint8_t Op, const char *Comment) {
-  BS.EmitInt8(
+  getActiveStreamer().EmitInt8(
       Op, Comment ? Twine(Comment) + " " + dwarf::OperationEncodingString(Op)
                   : dwarf::OperationEncodingString(Op));
 }
 
 void DebugLocDwarfExpression::emitSigned(int64_t Value) {
-  BS.EmitSLEB128(Value, Twine(Value));
+  getActiveStreamer().EmitSLEB128(Value, Twine(Value));
 }
 
 void DebugLocDwarfExpression::emitUnsigned(uint64_t Value) {
-  BS.EmitULEB128(Value, Twine(Value));
+  getActiveStreamer().EmitULEB128(Value, Twine(Value));
 }
 
 void DebugLocDwarfExpression::emitData1(uint8_t Value) {
-  BS.EmitInt8(Value, Twine(Value));
+  getActiveStreamer().EmitInt8(Value, Twine(Value));
 }
 
 void DebugLocDwarfExpression::emitBaseTypeRef(uint64_t Idx) {
   assert(Idx < (1ULL << (ULEB128PadSize * 7)) && "Idx wont fit");
-  BS.EmitULEB128(Idx, Twine(Idx), ULEB128PadSize);
+  getActiveStreamer().EmitULEB128(Idx, Twine(Idx), ULEB128PadSize);
 }
 
 bool DebugLocDwarfExpression::isFrameRegister(const TargetRegisterInfo &TRI,
                                               unsigned MachineReg) {
   // This information is not available while emitting .debug_loc entries.
   return false;
+}
+
+void DebugLocDwarfExpression::enableTemporaryBuffer() {
+  assert(!IsBuffering && "Already buffering?");
+  if (!TmpBuf)
+    TmpBuf = std::make_unique<TempBuffer>(OutBS.GenerateComments);
+  IsBuffering = true;
+}
+
+void DebugLocDwarfExpression::disableTemporaryBuffer() { IsBuffering = false; }
+
+unsigned DebugLocDwarfExpression::getTemporaryBufferSize() {
+  return TmpBuf ? TmpBuf->Bytes.size() : 0;
+}
+
+void DebugLocDwarfExpression::commitTemporaryBuffer() {
+  if (!TmpBuf)
+    return;
+  for (auto Byte : enumerate(TmpBuf->Bytes)) {
+    const char *Comment = (Byte.index() < TmpBuf->Comments.size())
+                              ? TmpBuf->Comments[Byte.index()].c_str()
+                              : "";
+    OutBS.EmitInt8(Byte.value(), Comment);
+  }
+  TmpBuf->Bytes.clear();
+  TmpBuf->Comments.clear();
 }
 
 const DIType *DbgVariable::getType() const {
