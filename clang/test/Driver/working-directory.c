@@ -1,7 +1,6 @@
 // RUN: %clang -### -coverage -working-directory /no/such/dir/ input 2>&1 | FileCheck %s
 // RUN: %clang -### -coverage -working-directory %p/Inputs no_such_file.cpp -c 2>&1 | FileCheck %s --check-prefix=CHECK_NO_FILE
 // RUN: %clang -### -coverage -working-directory %p/Inputs pchfile.cpp -c 2>&1 | FileCheck %s --check-prefix=CHECK_WORKS
-// RUN: fail please
 
 // CHECK: unable to set working directory: /no/such/dir/
 
