@@ -319,6 +319,7 @@ bool DwarfExpression::addMachineRegExpression(const TargetRegisterInfo &TRI,
 void DwarfExpression::beginEntryValueExpression(
     DIExpressionCursor &ExprCursor) {
   auto Op = ExprCursor.take();
+  (void)Op;
   assert(Op && Op->getOp() == dwarf::DW_OP_LLVM_entry_value);
   assert(!isMemoryLocation() &&
          "We don't support entry values of memory locations yet");
