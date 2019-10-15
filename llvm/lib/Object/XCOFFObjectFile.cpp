@@ -17,7 +17,7 @@
 namespace llvm {
 namespace object {
 
-enum { 
+enum {
   FUNCTION_SYM = 0x20,
   SYM_TYPE_MASK = 0x07
 };
