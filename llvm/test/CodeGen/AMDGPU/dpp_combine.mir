@@ -718,3 +718,43 @@ body: |
     %6:vgpr_32 = V_ADD_I32_e32 %5.sub0, %8, implicit-def $vcc, implicit $exec
     %7:vgpr_32 = V_ADDC_U32_e32 %5.sub1, %8, implicit-def $vcc, implicit $vcc, implicit $exec
 ...
+
+# GCN-LABEL: name: dpp64_add64_impdef
+# GCN: %3:vgpr_32 = V_ADD_I32_dpp %1.sub0, %0.sub0, undef %4:vgpr_32, 1, 15, 15, 1, implicit-def $vcc, implicit $exec
+# GCN: %5:vgpr_32 = V_ADDC_U32_dpp %1.sub1, %0.sub1, undef %4:vgpr_32, 1, 15, 15, 1, implicit-def $vcc, implicit $vcc, implicit $exec
+name: dpp64_add64_impdef
+tracksRegLiveness: true
+body: |
+  bb.0:
+    %0:vreg_64 = IMPLICIT_DEF
+    %1:vreg_64 = IMPLICIT_DEF
+    %2:vreg_64 = V_MOV_B64_DPP_PSEUDO %1:vreg_64, %0:vreg_64, 1, 15, 15, 1, implicit $exec
+    %5:vgpr_32 = V_ADD_I32_e32 %2.sub0, undef %4:vgpr_32, implicit-def $vcc, implicit $exec
+    %6:vgpr_32 = V_ADDC_U32_e32 %2.sub1, undef %4, implicit-def $vcc, implicit $vcc, implicit $exec
+...
+
+# GCN-LABEL: name:  dpp64_add64_undef
+# GCN: %3:vgpr_32 = V_ADD_I32_dpp undef %1.sub0:vreg_64, undef %2.sub0:vreg_64, undef %4:vgpr_32, 1, 15, 15, 1, implicit-def $vcc, implicit $exec
+# GCN: %5:vgpr_32 = V_ADDC_U32_dpp undef %1.sub1:vreg_64, undef %2.sub1:vreg_64, undef %4:vgpr_32, 1, 15, 15, 1, implicit-def $vcc, implicit $vcc, implicit $exec
+name: dpp64_add64_undef
+tracksRegLiveness: true
+body: |
+  bb.0:
+    %2:vreg_64 = V_MOV_B64_DPP_PSEUDO undef %1:vreg_64, undef %0:vreg_64, 1, 15, 15, 1, implicit $exec
+    %5:vgpr_32 = V_ADD_I32_e32 %2.sub0, undef %4:vgpr_32, implicit-def $vcc, implicit $exec
+    %6:vgpr_32 = V_ADDC_U32_e32 %2.sub1, undef %4, implicit-def $vcc, implicit $vcc, implicit $exec
+...
+
+# GCN-LABEL: name: dpp64_add64_first_combined
+# GCN: %8:vgpr_32 = V_MOV_B32_dpp undef %1.sub1:vreg_64, undef %2.sub1:vreg_64, 1, 15, 15, 1, implicit $exec
+# GCN: %0:vreg_64 = REG_SEQUENCE undef %7:vgpr_32, %subreg.sub0, %8, %subreg.sub1
+# GCN: %3:vgpr_32 = V_ADD_I32_dpp undef %1.sub0:vreg_64, undef %2.sub0:vreg_64, undef %4:vgpr_32, 1, 15, 15, 1, implicit-def $vcc, implicit $exec
+# GCN: %5:vgpr_32, dead %6:sreg_64_xexec = V_ADDC_U32_e64 1, %0.sub1, undef $vcc, 0, implicit $exec
+name: dpp64_add64_first_combined
+tracksRegLiveness: true
+body: |
+  bb.0:
+    %2:vreg_64 = V_MOV_B64_DPP_PSEUDO undef %1:vreg_64, undef %0:vreg_64, 1, 15, 15, 1, implicit $exec
+    %4:vgpr_32 = V_ADD_I32_e32 %2.sub0, undef %3:vgpr_32, implicit-def $vcc, implicit $exec
+    %5:vgpr_32, dead %6:sreg_64_xexec = V_ADDC_U32_e64 1, %2.sub1, undef $vcc, 0, implicit $exec
+...

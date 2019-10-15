@@ -557,6 +557,13 @@ bool GCNDPPCombine::runOnMachineFunction(MachineFunction &MF) {
       if (MI.getOpcode() == AMDGPU::V_MOV_B32_dpp && combineDPPMov(MI)) {
         Changed = true;
         ++NumDPPMovsCombined;
+      } else if (MI.getOpcode() == AMDGPU::V_MOV_B64_DPP_PSEUDO) {
+        auto Split = TII->expandMovDPP64(MI);
+        for (auto M : { Split.first, Split.second }) {
+          if (combineDPPMov(*M))
+            ++NumDPPMovsCombined;
+        }
+        Changed = true;
       }
     }
   }
