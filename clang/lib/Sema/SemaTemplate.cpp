@@ -4271,47 +4271,14 @@ void Sema::diagnoseMissingTemplateArguments(TemplateName Name,
 
 ExprResult
 Sema::CheckConceptTemplateId(const CXXScopeSpec &SS,
-                             SourceLocation TemplateKWLoc,
-                             SourceLocation ConceptNameLoc,
-                             NamedDecl *FoundDecl,
-                             ConceptDecl *NamedConcept,
+                             const DeclarationNameInfo &NameInfo,
+                             ConceptDecl *Template,
+                             SourceLocation TemplateLoc,
                              const TemplateArgumentListInfo *TemplateArgs) {
-  assert(NamedConcept && "A concept template id without a template?");
-
-  llvm::SmallVector<TemplateArgument, 4> Converted;
-  if (CheckTemplateArgumentList(NamedConcept, ConceptNameLoc,
-                           const_cast<TemplateArgumentListInfo&>(*TemplateArgs),
-                                /*PartialTemplateArgs=*/false, Converted,
-                                /*UpdateArgsWithConversion=*/false))
-    return ExprError();
-
-  Optional<bool> IsSatisfied;
-  bool AreArgsDependent = false;
-  for (TemplateArgument &Arg : Converted) {
-    if (Arg.isDependent()) {
-      AreArgsDependent = true;
-      break;
-    }
-  }
-  if (!AreArgsDependent) {
-    InstantiatingTemplate Inst(*this, ConceptNameLoc,
-        InstantiatingTemplate::ConstraintsCheck{}, NamedConcept, Converted,
-        SourceRange(SS.isSet() ? SS.getBeginLoc() : ConceptNameLoc,
-                    TemplateArgs->getRAngleLoc()));
-    MultiLevelTemplateArgumentList MLTAL;
-    MLTAL.addOuterTemplateArguments(Converted);
-    bool Satisfied;
-    if (CalculateConstraintSatisfaction(NamedConcept, MLTAL,
-                                        NamedConcept->getConstraintExpr(),
-                                        Satisfied))
-      return ExprError();
-    IsSatisfied = Satisfied;
-  }
-  return ConceptSpecializationExpr::Create(Context,
-      SS.isSet() ? SS.getWithLocInContext(Context) : NestedNameSpecifierLoc{},
-      TemplateKWLoc, ConceptNameLoc, FoundDecl, NamedConcept,
-      ASTTemplateArgumentListInfo::Create(Context, *TemplateArgs), Converted,
-      IsSatisfied);
+  // TODO: Do concept specialization here.
+  Diag(NameInfo.getBeginLoc(), diag::err_concept_not_implemented) <<
+    "concept specialization";
+  return ExprError();
 }
 
 ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
@@ -4355,10 +4322,9 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   }
 
   if (R.getAsSingle<ConceptDecl>() && !AnyDependentArguments()) {
-    return CheckConceptTemplateId(SS, TemplateKWLoc,
-                                  R.getLookupNameInfo().getBeginLoc(),
-                                  R.getFoundDecl(),
-                                  R.getAsSingle<ConceptDecl>(), TemplateArgs);
+    return CheckConceptTemplateId(SS, R.getLookupNameInfo(),
+                                  R.getAsSingle<ConceptDecl>(),
+                                  TemplateKWLoc, TemplateArgs);
   }
 
   // We don't want lookup warnings at this point.
@@ -8088,7 +8054,20 @@ Decl *Sema::ActOnConceptDefinition(Scope *S,
   ConceptDecl *NewDecl = ConceptDecl::Create(Context, DC, NameLoc, Name,
                                              TemplateParameterLists.front(),
                                              ConstraintExpr);
-                                             
+
+  if (!ConstraintExpr->isTypeDependent() &&
+      ConstraintExpr->getType() != Context.BoolTy) {
+    // C++2a [temp.constr.atomic]p3:
+    // E shall be a constant expression of type bool.
+    // TODO: Do this check for individual atomic constraints
+    // and not the constraint expression. Probably should do it in
+    // ParseConstraintExpression.
+    Diag(ConstraintExpr->getSourceRange().getBegin(),
+        diag::err_concept_initialized_with_non_bool_type)
+      << ConstraintExpr->getType();
+    NewDecl->setInvalidDecl();
+  }
+
   if (NewDecl->getAssociatedConstraints()) {
     // C++2a [temp.concept]p4:
     // A concept shall not have associated constraints.

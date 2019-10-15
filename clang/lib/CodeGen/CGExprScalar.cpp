@@ -673,10 +673,6 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
 
-  Value *VisitConceptSpecializationExpr(const ConceptSpecializationExpr *E) {
-    return Builder.getInt1(E->isSatisfied());
-  }
-
   Value *VisitArrayTypeTraitExpr(const ArrayTypeTraitExpr *E) {
     return llvm::ConstantInt::get(Builder.getInt32Ty(), E->getValue());
   }
