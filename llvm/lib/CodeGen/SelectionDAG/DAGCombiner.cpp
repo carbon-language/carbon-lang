@@ -4344,7 +4344,9 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   if ((HandOpcode == ISD::BITCAST || HandOpcode == ISD::SCALAR_TO_VECTOR) &&
        Level <= AfterLegalizeTypes) {
     // Input types must be integer and the same.
-    if (XVT.isInteger() && XVT == Y.getValueType()) {
+    if (XVT.isInteger() && XVT == Y.getValueType() &&
+        !(VT.isVector() && TLI.isTypeLegal(VT) &&
+          !XVT.isVector() && !TLI.isTypeLegal(XVT))) {
       SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
       return DAG.getNode(HandOpcode, DL, VT, Logic);
     }
