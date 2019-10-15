@@ -129,8 +129,6 @@ class FileHandleTestCase(lldbtest.TestBase):
 
 
     @add_test_categories(['pyapi'])
-    @skipIfWindows # FIXME pre-existing bug, should be fixed
-                   # when we delete the FILE* typemaps.
     def test_legacy_file_out_script(self):
         with open(self.out_filename, 'w') as f:
             self.debugger.SetOutputFileHandle(f, False)
@@ -155,8 +153,6 @@ class FileHandleTestCase(lldbtest.TestBase):
             self.assertIn('deadbeef', f.read())
 
     @add_test_categories(['pyapi'])
-    @skipIfWindows # FIXME pre-existing bug, should be fixed
-                   # when we delete the FILE* typemaps.
     def test_legacy_file_err_with_get(self):
         with open(self.out_filename, 'w') as f:
             self.debugger.SetErrorFileHandle(f, False)
@@ -194,11 +190,11 @@ class FileHandleTestCase(lldbtest.TestBase):
     @add_test_categories(['pyapi'])
     def test_sbfile_type_errors(self):
         sbf = lldb.SBFile()
-        self.assertRaises(TypeError, sbf.Write, None)
-        self.assertRaises(TypeError, sbf.Read, None)
-        self.assertRaises(TypeError, sbf.Read, b'this bytes is not mutable')
-        self.assertRaises(TypeError, sbf.Write, u"ham sandwich")
-        self.assertRaises(TypeError, sbf.Read, u"ham sandwich")
+        self.assertRaises(Exception, sbf.Write, None)
+        self.assertRaises(Exception, sbf.Read, None)
+        self.assertRaises(Exception, sbf.Read, b'this bytes is not mutable')
+        self.assertRaises(Exception, sbf.Write, u"ham sandwich")
+        self.assertRaises(Exception, sbf.Read, u"ham sandwich")
 
 
     @add_test_categories(['pyapi'])
@@ -859,3 +855,40 @@ class FileHandleTestCase(lldbtest.TestBase):
         with open(self.out_filename, 'r') as f:
             self.assertEqual(list(range(10)), list(map(int, f.read().strip().split())))
 
+
+    @add_test_categories(['pyapi'])
+    def test_set_filehandle_none(self):
+        self.assertRaises(Exception, self.debugger.SetOutputFile, None)
+        self.assertRaises(Exception, self.debugger.SetOutputFile, "ham sandwich")
+        self.assertRaises(Exception, self.debugger.SetOutputFileHandle, "ham sandwich")
+        self.assertRaises(Exception, self.debugger.SetInputFile, None)
+        self.assertRaises(Exception, self.debugger.SetInputFile, "ham sandwich")
+        self.assertRaises(Exception, self.debugger.SetInputFileHandle, "ham sandwich")
+        self.assertRaises(Exception, self.debugger.SetErrorFile, None)
+        self.assertRaises(Exception, self.debugger.SetErrorFile, "ham sandwich")
+        self.assertRaises(Exception, self.debugger.SetErrorFileHandle, "ham sandwich")
+
+        with open(self.out_filename, 'w') as f:
+            status = self.debugger.SetOutputFile(f)
+            self.assertTrue(status.Success())
+            status = self.debugger.SetErrorFile(f)
+            self.assertTrue(status.Success())
+            self.debugger.SetOutputFileHandle(None, False)
+            self.debugger.SetErrorFileHandle(None, False)
+            sbf = self.debugger.GetOutputFile()
+            if sys.version_info.major >= 3:
+                # python 2 lacks PyFile_FromFd, so GetFile() will
+                # have to duplicate the file descriptor and make a FILE*
+                # in order to convert a NativeFile it back to a python
+                # file.
+                self.assertEqual(sbf.GetFile().fileno(), 1)
+            sbf = self.debugger.GetErrorFile()
+            if sys.version_info.major >= 3:
+                self.assertEqual(sbf.GetFile().fileno(), 2)
+        with open(self.out_filename, 'r') as f:
+            status = self.debugger.SetInputFile(f)
+            self.assertTrue(status.Success())
+            self.debugger.SetInputFileHandle(None, False)
+            sbf = self.debugger.GetInputFile()
+            if sys.version_info.major >= 3:
+                self.assertEqual(sbf.GetFile().fileno(), 0)
