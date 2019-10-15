@@ -2745,7 +2745,8 @@ struct AAAlignImpl : AAAlign {
   getDeducedAttributes(LLVMContext &Ctx,
                        SmallVectorImpl<Attribute> &Attrs) const override {
     if (getAssumedAlign() > 1)
-      Attrs.emplace_back(Attribute::getWithAlignment(Ctx, getAssumedAlign()));
+      Attrs.emplace_back(
+          Attribute::getWithAlignment(Ctx, Align(getAssumedAlign())));
   }
 
   /// See AbstractAttribute::getAsStr().

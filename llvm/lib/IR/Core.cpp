@@ -2489,7 +2489,7 @@ LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
   Argument *A = unwrap<Argument>(Arg);
-  A->addAttr(Attribute::getWithAlignment(A->getContext(), align));
+  A->addAttr(Attribute::getWithAlignment(A->getContext(), Align(align)));
 }
 
 /*--.. Operations on ifuncs ................................................--*/
@@ -2788,7 +2788,8 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
                                 unsigned align) {
   auto *Call = unwrap<CallBase>(Instr);
-  Attribute AlignAttr = Attribute::getWithAlignment(Call->getContext(), align);
+  Attribute AlignAttr =
+      Attribute::getWithAlignment(Call->getContext(), Align(align));
   Call->addAttribute(index, AlignAttr);
 }
 

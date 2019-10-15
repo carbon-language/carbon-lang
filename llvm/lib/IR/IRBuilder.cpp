@@ -289,8 +289,10 @@ CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemMove(
   CallInst *CI = createCallHelper(TheFn, Ops, this);
 
   // Set the alignment of the pointer args.
-  CI->addParamAttr(0, Attribute::getWithAlignment(CI->getContext(), DstAlign));
-  CI->addParamAttr(1, Attribute::getWithAlignment(CI->getContext(), SrcAlign));
+  CI->addParamAttr(
+      0, Attribute::getWithAlignment(CI->getContext(), Align(DstAlign)));
+  CI->addParamAttr(
+      1, Attribute::getWithAlignment(CI->getContext(), Align(SrcAlign)));
 
   // Set the TBAA info if present.
   if (TBAATag)
