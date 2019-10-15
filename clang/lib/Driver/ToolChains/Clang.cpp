@@ -6418,30 +6418,6 @@ void OffloadWrapper::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-target");
   CmdArgs.push_back(Args.MakeArgString(Triple.getTriple()));
 
-  assert(JA.getInputs().size() == Inputs.size() &&
-         "Not have inputs for all dependence actions??");
-
-  // Add offload targets. It is a comma-separated list of offload target
-  // triples.
-  SmallString<128> Targets;
-  Targets += "-offload-targets=";
-  for (unsigned I = 0; I < Inputs.size(); ++I) {
-    if (I)
-      Targets += ',';
-
-    // Get input's Offload Kind and ToolChain.
-    const auto *OA = cast<OffloadAction>(JA.getInputs()[I]);
-    assert(OA->hasSingleDeviceDependence(/*DoNotConsiderHostActions=*/true) &&
-           "Expected one device dependence!");
-    const ToolChain *DeviceTC = nullptr;
-    OA->doOnEachDependence([&DeviceTC](Action *, const ToolChain *TC,
-                                       const char *) { DeviceTC = TC; });
-
-    // And add it to the offload targets.
-    Targets += DeviceTC->getTriple().normalize();
-  }
-  CmdArgs.push_back(Args.MakeArgString(Targets));
-
   // Add the output file name.
   assert(Output.isFilename() && "Invalid output.");
   CmdArgs.push_back("-o");
@@ -6454,7 +6430,7 @@ void OffloadWrapper::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   C.addCommand(std::make_unique<Command>(
-    JA, *this,
-    Args.MakeArgString(getToolChain().GetProgramPath(getShortName())),
-    CmdArgs, Inputs));
+      JA, *this,
+      Args.MakeArgString(getToolChain().GetProgramPath(getShortName())),
+      CmdArgs, Inputs));
 }
