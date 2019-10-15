@@ -2543,8 +2543,8 @@ def err_non_constant_constraint_expression : Error<
 def err_non_bool_atomic_constraint : Error<
   "atomic constraint must be of type 'bool' (found %0)">;
 
-def err_template_different_associated_constraints : Error<
-  "associated constraints differ in template redeclaration">;
+def err_template_different_requires_clause : Error<
+  "requires clause differs in template redeclaration">;
 
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<

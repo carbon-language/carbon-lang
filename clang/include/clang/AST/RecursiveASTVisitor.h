@@ -1633,9 +1633,11 @@ template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseTemplateParameterListHelper(
     TemplateParameterList *TPL) {
   if (TPL) {
-    for (TemplateParameterList::iterator I = TPL->begin(), E = TPL->end();
-         I != E; ++I) {
-      TRY_TO(TraverseDecl(*I));
+    for (NamedDecl *D : *TPL) {
+      TRY_TO(TraverseDecl(D));
+    }
+    if (Expr *RequiresClause = TPL->getRequiresClause()) {
+      TRY_TO(TraverseStmt(RequiresClause));
     }
   }
   return true;
