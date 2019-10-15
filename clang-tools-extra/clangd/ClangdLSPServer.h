@@ -132,9 +132,10 @@ private:
   void publishDiagnostics(const URIForFile &File,
                           std::vector<clangd::Diagnostic> Diagnostics);
 
-  // Since initialization of CDBs and ClangdServer is done lazily, the following
-  // context captures the one used while creating ClangdLSPServer and passes it
-  // to above mentioned object instances to make sure they share the same state.
+  /// Since initialization of CDBs and ClangdServer is done lazily, the
+  /// following context captures the one used while creating ClangdLSPServer and
+  /// passes it to above mentioned object instances to make sure they share the
+  /// same state.
   Context BackgroundContext;
 
   /// Used to indicate that the 'shutdown' request was received from the
