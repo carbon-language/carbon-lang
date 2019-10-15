@@ -669,10 +669,9 @@ static void collectCallSiteParameters(const MachineInstr *CallMI,
 
   // Emit the call site parameter's value as an entry value.
   if (ShouldTryEmitEntryVals) {
-    // Create an entry value expression where the expression following
-    // the 'DW_OP_entry_value' will be the size of 1 (a register operation).
-    DIExpression *EntryExpr = DIExpression::get(MF->getFunction().getContext(),
-                                                {dwarf::DW_OP_entry_value, 1});
+    // Create an expression where the register's entry value is used.
+    DIExpression *EntryExpr = DIExpression::get(
+        MF->getFunction().getContext(), {dwarf::DW_OP_LLVM_entry_value, 1});
     for (auto RegEntry : ForwardedRegWorklist) {
       unsigned FwdReg = RegEntry;
       auto EntryValReg = RegsForEntryValues.find(RegEntry);
@@ -2200,7 +2199,7 @@ void DwarfDebug::emitDebugLocValue(const AsmPrinter &AP, const DIBasicType *BT,
 
     if (DIExpr->isEntryValue()) {
       DwarfExpr.setEntryValueFlag();
-      DwarfExpr.addEntryValueExpression(Cursor);
+      DwarfExpr.beginEntryValueExpression(Cursor);
     }
 
     const TargetRegisterInfo &TRI = *AP.MF->getSubtarget().getRegisterInfo();

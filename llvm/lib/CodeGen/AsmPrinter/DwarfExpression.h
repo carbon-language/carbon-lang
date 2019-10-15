@@ -111,6 +111,9 @@ protected:
     const char *Comment;
   };
 
+  /// Whether we are currently emitting an entry value operation.
+  bool IsEmittingEntryValue = false;
+
   DwarfCompileUnit &CU;
 
   /// The register location, if any.
@@ -260,6 +263,10 @@ protected:
   /// expression.  See PR21176 for more details.
   void addStackValue();
 
+  /// Finalize an entry value by emitting its size operand, and committing the
+  /// DWARF block which has been emitted to the temporary buffer.
+  void finalizeEntryValue();
+
   ~DwarfExpression() = default;
 
 public:
@@ -310,8 +317,11 @@ public:
                                DIExpressionCursor &Expr, unsigned MachineReg,
                                unsigned FragmentOffsetInBits = 0);
 
-  /// Emit entry value dwarf operation.
-  void addEntryValueExpression(DIExpressionCursor &ExprCursor);
+  /// Begin emission of an entry value dwarf operation. The entry value's
+  /// first operand is the size of the DWARF block (its second operand),
+  /// which needs to be calculated at time of emission, so we don't emit
+  /// any operands here.
+  void beginEntryValueExpression(DIExpressionCursor &ExprCursor);
 
   /// Emit all remaining operations in the DIExpressionCursor.
   ///
