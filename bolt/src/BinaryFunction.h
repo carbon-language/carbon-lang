@@ -37,11 +37,11 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <algorithm>
 
 using namespace llvm::object;
 
@@ -2172,22 +2172,29 @@ public:
     static std::mutex CriticalSectionMutex;
     std::lock_guard<std::mutex> Lock(CriticalSectionMutex);
     SubprogramDIEs.emplace_back(DIE);
-    if (!UnitLineTable.first) {
-      if (const auto *LineTable =
-              BC.DwCtx->getLineTableForUnit(DIE.getDwarfUnit())) {
-        UnitLineTable = std::make_pair(DIE.getDwarfUnit(), LineTable);
-      }
-    }
+  }
+
+  void setDWARFUnitLineTable(DWARFUnit *Unit,
+                             const DWARFDebugLine::LineTable *Table) {
+    UnitLineTable = std::make_pair(Unit, Table);
   }
 
   /// Return all compilation units with entry for this function.
   /// Because of identical code folding there could be multiple of these.
+  decltype(SubprogramDIEs) &getSubprogramDIEs() {
+    return SubprogramDIEs;
+  }
+
   const decltype(SubprogramDIEs) &getSubprogramDIEs() const {
     return SubprogramDIEs;
   }
 
   /// Return DWARF compile unit with line info for this function.
-  DWARFUnitLineTable getDWARFUnitLineTable() const {
+  DWARFUnitLineTable &getDWARFUnitLineTable() {
+    return UnitLineTable;
+  }
+
+  const DWARFUnitLineTable &getDWARFUnitLineTable() const {
     return UnitLineTable;
   }
 

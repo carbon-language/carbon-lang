@@ -1185,8 +1185,7 @@ void BinaryContext::assignMemData() {
 namespace {
 
 /// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
-/// BinaryFunctions. Record DIEs for unknown subprograms (mostly functions that
-/// are never called and removed from the binary) in Unknown.
+/// BinaryFunctions.
 void findSubprograms(const DWARFDie DIE,
                      std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
   if (DIE.isSubprogramDIE()) {
@@ -1326,41 +1325,62 @@ void BinaryContext::preprocessDebugInfo() {
     ThreadPool.wait();
   }
 
-  // Some functions may not have a corresponding subprogram DIE
-  // yet they will be included in some CU and will have line number information.
-  // Hence we need to associate them with the CU and include in CU ranges.
-  for (auto &AddrFunctionPair : BinaryFunctions) {
-    auto FunctionAddress = AddrFunctionPair.first;
-    auto &Function = AddrFunctionPair.second;
-    if (!Function.getSubprogramDIEs().empty())
-      continue;
-    if (auto DebugAranges = DwCtx->getDebugAranges()) {
-      auto CUOffset = DebugAranges->findAddress(FunctionAddress);
-      if (CUOffset != -1U) {
-        Function.addSubprogramDIE(
-            DWARFDie(DwCtx->getCompileUnitForOffset(CUOffset), nullptr));
-        continue;
+  for (auto &KV : BinaryFunctions) {
+    const auto FunctionAddress = KV.first;
+    auto &Function = KV.second;
+
+    // Sort associated CUs for deterministic update.
+    std::sort(Function.getSubprogramDIEs().begin(),
+              Function.getSubprogramDIEs().end(),
+              [](const DWARFDie &A, const DWARFDie &B) {
+                return A.getDwarfUnit()->getOffset() <
+                       B.getDwarfUnit()->getOffset();
+              });
+
+    // Some functions may not have a corresponding subprogram DIE
+    // yet they will be included in some CU and will have line number
+    // information. Hence we need to associate them with the CU and include
+    // in CU ranges.
+    if (Function.getSubprogramDIEs().empty()) {
+      if (auto DebugAranges = DwCtx->getDebugAranges()) {
+        auto CUOffset = DebugAranges->findAddress(FunctionAddress);
+        if (CUOffset != -1U) {
+          Function.addSubprogramDIE(
+              DWARFDie(DwCtx->getCompileUnitForOffset(CUOffset), nullptr));
+        }
       }
     }
 
 #ifdef DWARF_LOOKUP_ALL_RANGES
-    // Last resort - iterate over all compile units. This should not happen
-    // very often. If it does, we need to create a separate lookup table
-    // similar to .debug_aranges internally. This slows down processing
-    // considerably.
-    for (const auto &CU : DwCtx->compile_units()) {
-      const auto *CUDie = CU->getUnitDIE();
-      for (const auto &Range : CUDie->getAddressRanges(CU.get())) {
-        if (FunctionAddress >= Range.first &&
-            FunctionAddress < Range.second) {
-          Function.addSubprogramDIE(DWARFDie(CU.get(), nullptr));
-          break;
+    if (Function.getSubprogramDIEs().empty()) {
+      // Last resort - iterate over all compile units. This should not happen
+      // very often. If it does, we need to create a separate lookup table
+      // similar to .debug_aranges internally. This slows down processing
+      // considerably.
+      for (const auto &CU : DwCtx->compile_units()) {
+        const auto *CUDie = CU->getUnitDIE();
+        for (const auto &Range : CUDie->getAddressRanges(CU.get())) {
+          if (FunctionAddress >= Range.first &&
+              FunctionAddress < Range.second) {
+            Function.addSubprogramDIE(DWARFDie(CU.get(), nullptr));
+            break;
+          }
         }
       }
     }
 #endif
+
+    // Set line table for function to the first CU with such table.
+    for (const auto &DIE : Function.getSubprogramDIEs()) {
+      if (const auto *LineTable =
+              DwCtx->getLineTableForUnit(DIE.getDwarfUnit())) {
+        Function.setDWARFUnitLineTable(DIE.getDwarfUnit(), LineTable);
+        break;
+      }
+    }
+
   }
- }
+}
 
 void BinaryContext::printCFI(raw_ostream &OS, const MCCFIInstruction &Inst) {
   uint32_t Operation = Inst.getOperation();
