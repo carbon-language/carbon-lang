@@ -6807,6 +6807,22 @@ static bool getTargetShuffleAndZeroables(SDValue N, SmallVectorImpl<int> &Mask,
   return true;
 }
 
+// Replace target shuffle mask elements with known undef/zero sentinels.
+static void resolveTargetShuffleAndZeroables(SmallVectorImpl<int> &Mask,
+                                             const APInt &KnownUndef,
+                                             const APInt &KnownZero) {
+  unsigned NumElts = Mask.size();
+  assert(KnownUndef.getBitWidth() == NumElts &&
+         KnownZero.getBitWidth() == NumElts && "Shuffle mask size mismatch");
+
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (KnownUndef[i])
+      Mask[i] = SM_SentinelUndef;
+    else if (KnownZero[i])
+      Mask[i] = SM_SentinelZero;
+  }
+}
+
 // Forward declaration (for getFauxShuffleMask recursive check).
 // TODO: Use DemandedElts variant.
 static bool getTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Inputs,
@@ -7256,15 +7272,8 @@ static bool getTargetShuffleInputs(SDValue Op, const APInt &DemandedElts,
     return false;
 
   if (getTargetShuffleAndZeroables(Op, Mask, Inputs, KnownUndef, KnownZero)) {
-    for (int i = 0, e = Mask.size(); i != e; ++i) {
-      int &M = Mask[i];
-      if (M < 0 || !ResolveKnownElts)
-        continue;
-      if (KnownUndef[i])
-        M = SM_SentinelUndef;
-      else if (KnownZero[i])
-        M = SM_SentinelZero;
-    }
+    if (ResolveKnownElts)
+      resolveTargetShuffleAndZeroables(Mask, KnownUndef, KnownZero);
     return true;
   }
   if (getFauxShuffleMask(Op, DemandedElts, Mask, Inputs, DAG, Depth,
