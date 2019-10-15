@@ -151,7 +151,7 @@ TEST(FunctionTest, GetPointerAlignment) {
   EXPECT_EQ(4U, Func->getPointerAlignment(DataLayout("Fi32")));
   EXPECT_EQ(4U, Func->getPointerAlignment(DataLayout("Fn32")));
 
-  Func->setAlignment(4U);
+  Func->setAlignment(Align(4));
 
   EXPECT_EQ(0U, Func->getPointerAlignment(DataLayout("")));
   EXPECT_EQ(1U, Func->getPointerAlignment(DataLayout("Fi8")));
