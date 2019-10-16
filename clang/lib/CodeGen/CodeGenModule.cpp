@@ -1699,11 +1699,8 @@ bool CodeGenModule::GetCPUAndFeaturesAttributes(GlobalDecl GD,
   return AddedAttr;
 }
 
-void CodeGenModule::setNonAliasAttributes(GlobalDecl GD,
-                                          llvm::GlobalObject *GO) {
-  const Decl *D = GD.getDecl();
-  SetCommonAttributes(GD, GO);
-
+void CodeGenModule::setPragmaSectionAttributes(const Decl *D,
+					       llvm::GlobalObject *GO) {
   if (D) {
     if (auto *GV = dyn_cast<llvm::GlobalVariable>(GO)) {
       if (auto *SA = D->getAttr<PragmaClangBSSSectionAttr>())
@@ -1721,6 +1718,26 @@ void CodeGenModule::setNonAliasAttributes(GlobalDecl GD,
         if (!D->getAttr<SectionAttr>())
           F->addFnAttr("implicit-section-name", SA->getName());
 
+      if (auto *SA = D->getAttr<PragmaClangBSSSectionAttr>())
+        F->addFnAttr("bss-section", SA->getName());
+      if (auto *SA = D->getAttr<PragmaClangDataSectionAttr>())
+        F->addFnAttr("data-section", SA->getName());
+      if (auto *SA = D->getAttr<PragmaClangRodataSectionAttr>())
+        F->addFnAttr("rodata-section", SA->getName());
+      if (auto *SA = D->getAttr<PragmaClangRelroSectionAttr>())
+        F->addFnAttr("relro-section", SA->getName());
+    }
+  }
+}
+
+void CodeGenModule::setNonAliasAttributes(GlobalDecl GD,
+                                          llvm::GlobalObject *GO) {
+  const Decl *D = GD.getDecl();
+  SetCommonAttributes(GD, GO);
+  setPragmaSectionAttributes(D, GO);
+
+  if (D) {
+    if (auto *F = dyn_cast<llvm::Function>(GO)) {
       llvm::AttrBuilder Attrs;
       if (GetCPUAndFeaturesAttributes(GD, Attrs)) {
         // We know that GetCPUAndFeaturesAttributes will always have the
