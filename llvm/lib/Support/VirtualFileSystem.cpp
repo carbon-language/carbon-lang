@@ -176,9 +176,9 @@ class RealFile : public File {
   Status S;
   std::string RealName;
 
-  RealFile(file_t FD, StringRef NewName, StringRef NewRealPathName)
-      : FD(FD), S(NewName, {}, {}, {}, {}, {},
-                  llvm::sys::fs::file_type::status_error, {}),
+  RealFile(file_t RawFD, StringRef NewName, StringRef NewRealPathName)
+      : FD(RawFD), S(NewName, {}, {}, {}, {}, {},
+                     llvm::sys::fs::file_type::status_error, {}),
         RealName(NewRealPathName.str()) {
     assert(FD != kInvalidFile && "Invalid or inactive file descriptor");
   }
