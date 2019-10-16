@@ -4302,7 +4302,7 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
                               TemplateKWLoc, TemplateArgs);
   }
 
-  if (R.getAsSingle<ConceptDecl>()) {
+  if (R.getAsSingle<ConceptDecl>() && !AnyDependentArguments()) {
     return CheckConceptTemplateId(SS, TemplateKWLoc,
                                   R.getLookupNameInfo().getBeginLoc(),
                                   R.getFoundDecl(),
