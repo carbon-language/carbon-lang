@@ -46,7 +46,8 @@ module ieee_exceptions
       ieee_support_flag_4, ieee_support_flag_8, ieee_support_flag_10, &
       ieee_support_flag_16
   interface ieee_support_flag
-    module procedure :: ieee_support_flag_2, ieee_support_flag_3, &
+    module procedure :: ieee_support_flag, &
+      ieee_support_flag_2, ieee_support_flag_3, &
       ieee_support_flag_4, ieee_support_flag_8, ieee_support_flag_10, &
       ieee_support_flag_16
   end interface
@@ -88,6 +89,10 @@ module ieee_exceptions
     type(ieee_status_type), intent(in) :: status
   end subroutine ieee_set_status
 
+  pure logical function ieee_support_flag(flag)
+    type(ieee_flag_type), intent(in) :: flag
+    ieee_support_flag = .true.
+  end function
   pure logical function ieee_support_flag_2(flag, x)
     type(ieee_flag_type), intent(in) :: flag
     real(kind=2), intent(in) :: x(..)

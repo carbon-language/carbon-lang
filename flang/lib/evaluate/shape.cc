@@ -471,6 +471,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
   } else if (const auto *intrinsic{call.proc().GetSpecificIntrinsic()}) {
     if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
         intrinsic->name == "ubound") {
+      // These are the array-valued cases for LBOUND and UBOUND (no DIM=).
       const auto *expr{call.arguments().front().value().UnwrapExpr()};
       CHECK(expr != nullptr);
       return Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}};
@@ -489,6 +490,30 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
           if (shape->size() == 2) {
             std::swap((*shape)[0], (*shape)[1]);
             return shape;
+          }
+        }
+      }
+    } else if (intrinsic->name == "cshift" || intrinsic->name == "eoshift") {
+      if (!call.arguments().empty()) {
+        return (*this)(call.arguments()[0]);
+      }
+    } else if (intrinsic->name == "spread") {
+      // SHAPE(SPREAD(ARRAY,DIM,NCOPIES)) = SHAPE(ARRAY) with NCOPIES inserted
+      // at position DIM.
+      if (call.arguments().size() == 3) {
+        auto arrayShape{
+            (*this)(UnwrapExpr<Expr<SomeType>>(call.arguments().at(0)))};
+        const auto *dimArg{UnwrapExpr<Expr<SomeType>>(call.arguments().at(1))};
+        const auto *nCopies{
+            UnwrapExpr<Expr<SomeInteger>>(call.arguments().at(2))};
+        if (arrayShape.has_value() && dimArg != nullptr && nCopies != nullptr) {
+          if (auto dim{ToInt64(*dimArg)}) {
+            if (*dim >= 1 &&
+                static_cast<std::size_t>(*dim) <= arrayShape->size() + 1) {
+              arrayShape->emplace(arrayShape->begin() + *dim - 1,
+                  ConvertToType<ExtentType>(common::Clone(*nCopies)));
+              return std::move(*arrayShape);
+            }
           }
         }
       }
