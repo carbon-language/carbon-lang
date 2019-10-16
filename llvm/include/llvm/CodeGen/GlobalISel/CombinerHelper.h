@@ -85,8 +85,9 @@ public:
   /// legal and the surrounding code makes it useful.
   bool tryCombineIndexedLoadStore(MachineInstr &MI);
 
-  bool matchCombineBr(MachineInstr &MI);
-  bool tryCombineBr(MachineInstr &MI);
+  bool matchElideBrByInvertingCond(MachineInstr &MI);
+  void applyElideBrByInvertingCond(MachineInstr &MI);
+  bool tryElideBrByInvertingCond(MachineInstr &MI);
 
   /// Optimize memcpy intrinsics et al, e.g. constant len calls.
   /// /p MaxLen if non-zero specifies the max length of a mem libcall to inline.

@@ -561,8 +561,10 @@ bool CombinerHelper::tryCombineIndexedLoadStore(MachineInstr &MI) {
   return true;
 }
 
-bool CombinerHelper::matchCombineBr(MachineInstr &MI) {
-  assert(MI.getOpcode() == TargetOpcode::G_BR && "Expected a G_BR");
+bool CombinerHelper::matchElideBrByInvertingCond(MachineInstr &MI) {
+  if (MI.getOpcode() != TargetOpcode::G_BR)
+    return false;
+
   // Try to match the following:
   // bb1:
   //   %c(s32) = G_ICMP pred, %a, %b
@@ -599,9 +601,14 @@ bool CombinerHelper::matchCombineBr(MachineInstr &MI) {
   return true;
 }
 
-bool CombinerHelper::tryCombineBr(MachineInstr &MI) {
-  if (!matchCombineBr(MI))
+bool CombinerHelper::tryElideBrByInvertingCond(MachineInstr &MI) {
+  if (!matchElideBrByInvertingCond(MI))
     return false;
+  applyElideBrByInvertingCond(MI);
+  return true;
+}
+
+void CombinerHelper::applyElideBrByInvertingCond(MachineInstr &MI) {
   MachineBasicBlock *BrTarget = MI.getOperand(0).getMBB();
   MachineBasicBlock::iterator BrIt(MI);
   MachineInstr *BrCond = &*std::prev(BrIt);
@@ -620,7 +627,6 @@ bool CombinerHelper::tryCombineBr(MachineInstr &MI) {
   BrCond->getOperand(1).setMBB(BrTarget);
   Observer.changedInstr(*BrCond);
   MI.eraseFromParent();
-  return true;
 }
 
 static bool shouldLowerMemFuncForSize(const MachineFunction &MF) {
