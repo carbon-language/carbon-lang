@@ -6,7 +6,6 @@ lit - LLVM Integrated Tester.
 See lit.pod for more information.
 """
 
-from __future__ import absolute_import
 import os
 import platform
 import sys
@@ -59,14 +58,6 @@ def main_with_tmp(builtinParameters):
         return
 
     userParams = create_user_parameters(builtinParameters, opts)
-
-    # Decide what the requested maximum indvidual test time should be
-    if opts.maxIndividualTestTime is not None:
-        maxIndividualTestTime = opts.maxIndividualTestTime
-    else:
-        # Default is zero
-        maxIndividualTestTime = 0
-
     isWindows = platform.system() == 'Windows'
 
     # Create the global config object.
@@ -82,18 +73,14 @@ def main_with_tmp(builtinParameters):
         isWindows = isWindows,
         params = userParams,
         config_prefix = opts.configPrefix,
-        maxIndividualTestTime = maxIndividualTestTime,
         maxFailures = opts.maxFailures,
-        parallelism_groups = {},
         echo_all_commands = opts.echoAllCommands)
 
     # Perform test discovery.
     tests = lit.discovery.find_tests_for_inputs(litConfig, opts.test_paths)
 
-    # After test discovery the configuration might have changed
-    # the maxIndividualTestTime. If we explicitly set this on the
-    # command line then override what was set in the test configuration
-    if opts.maxIndividualTestTime is not None:
+    # Command line overrides configuration for maxIndividualTestTime.
+    if opts.maxIndividualTestTime is not None:  # `not None` is important (default: 0)
         if opts.maxIndividualTestTime != litConfig.maxIndividualTestTime:
             litConfig.note(('The test suite configuration requested an individual'
                 ' test timeout of {0} seconds but a timeout of {1} seconds was'
@@ -148,55 +135,7 @@ def main_with_tmp(builtinParameters):
     if opts.output_path is not None:
         write_test_results(tests, litConfig, testing_time, opts.output_path)
 
-    # List test results organized by kind.
-    hasFailures = False
-    byCode = {}
-    for test in tests:
-        if test.result.code not in byCode:
-            byCode[test.result.code] = []
-        byCode[test.result.code].append(test)
-        if test.result.code.isFailure:
-            hasFailures = True
-
-    # Print each test in any of the failing groups.
-    for title,code in (('Unexpected Passing Tests', lit.Test.XPASS),
-                       ('Failing Tests', lit.Test.FAIL),
-                       ('Unresolved Tests', lit.Test.UNRESOLVED),
-                       ('Unsupported Tests', lit.Test.UNSUPPORTED),
-                       ('Expected Failing Tests', lit.Test.XFAIL),
-                       ('Timed Out Tests', lit.Test.TIMEOUT)):
-        if (lit.Test.XFAIL == code and not opts.show_xfail) or \
-           (lit.Test.UNSUPPORTED == code and not opts.show_unsupported) or \
-           (lit.Test.UNRESOLVED == code and (opts.maxFailures is not None)):
-            continue
-        elts = byCode.get(code)
-        if not elts:
-            continue
-        print('*'*20)
-        print('%s (%d):' % (title, len(elts)))
-        for test in elts:
-            print('    %s' % test.getFullName())
-        sys.stdout.write('\n')
-
-    if opts.timeTests and tests:
-        # Order by time.
-        test_times = [(test.getFullName(), test.result.elapsed)
-                      for test in tests]
-        lit.util.printHistogram(test_times, title='Tests')
-
-    for name,code in (('Expected Passes    ', lit.Test.PASS),
-                      ('Passes With Retry  ', lit.Test.FLAKYPASS),
-                      ('Expected Failures  ', lit.Test.XFAIL),
-                      ('Unsupported Tests  ', lit.Test.UNSUPPORTED),
-                      ('Unresolved Tests   ', lit.Test.UNRESOLVED),
-                      ('Unexpected Passes  ', lit.Test.XPASS),
-                      ('Unexpected Failures', lit.Test.FAIL),
-                      ('Individual Timeouts', lit.Test.TIMEOUT)):
-        if opts.quiet and not code.isFailure:
-            continue
-        N = len(byCode.get(code,[]))
-        if N:
-            print('  %s: %d' % (name,N))
+    hasFailures = print_summary(tests, opts)
 
     if opts.xunit_output_file:
         write_test_results_xunit(tests, opts)
@@ -320,12 +259,58 @@ def run_tests(tests, litConfig, opts, numTotalTests):
     display.finish()
     return testing_time
 
-def write_test_results(tests, lit_config, testing_time, output_path):
-    try:
-        import json
-    except ImportError:
-        lit_config.fatal('test output unsupported with Python 2.5')
+def print_summary(tests, opts):
+    hasFailures = False
+    byCode = {}
+    for test in tests:
+        if test.result.code not in byCode:
+            byCode[test.result.code] = []
+        byCode[test.result.code].append(test)
+        if test.result.code.isFailure:
+            hasFailures = True
 
+    # Print each test in any of the failing groups.
+    for title,code in (('Unexpected Passing Tests', lit.Test.XPASS),
+                       ('Failing Tests', lit.Test.FAIL),
+                       ('Unresolved Tests', lit.Test.UNRESOLVED),
+                       ('Unsupported Tests', lit.Test.UNSUPPORTED),
+                       ('Expected Failing Tests', lit.Test.XFAIL),
+                       ('Timed Out Tests', lit.Test.TIMEOUT)):
+        if (lit.Test.XFAIL == code and not opts.show_xfail) or \
+           (lit.Test.UNSUPPORTED == code and not opts.show_unsupported) or \
+           (lit.Test.UNRESOLVED == code and (opts.maxFailures is not None)):
+            continue
+        elts = byCode.get(code)
+        if not elts:
+            continue
+        print('*'*20)
+        print('%s (%d):' % (title, len(elts)))
+        for test in elts:
+            print('    %s' % test.getFullName())
+        sys.stdout.write('\n')
+
+    if opts.timeTests and tests:
+        # Order by time.
+        test_times = [(test.getFullName(), test.result.elapsed)
+                      for test in tests]
+        lit.util.printHistogram(test_times, title='Tests')
+
+    for name,code in (('Expected Passes    ', lit.Test.PASS),
+                      ('Passes With Retry  ', lit.Test.FLAKYPASS),
+                      ('Expected Failures  ', lit.Test.XFAIL),
+                      ('Unsupported Tests  ', lit.Test.UNSUPPORTED),
+                      ('Unresolved Tests   ', lit.Test.UNRESOLVED),
+                      ('Unexpected Passes  ', lit.Test.XPASS),
+                      ('Unexpected Failures', lit.Test.FAIL),
+                      ('Individual Timeouts', lit.Test.TIMEOUT)):
+        if opts.quiet and not code.isFailure:
+            continue
+        N = len(byCode.get(code,[]))
+        if N:
+            print('  %s: %d' % (name,N))
+    return hasFailures
+
+def write_test_results(tests, lit_config, testing_time, output_path):
     # Construct the data we will write.
     data = {}
     # Encode the current lit version as a schema version.
@@ -373,6 +358,7 @@ def write_test_results(tests, lit_config, testing_time, output_path):
     # Write the output.
     f = open(output_path, 'w')
     try:
+        import json
         json.dump(data, f, indent=2, sort_keys=True)
         f.write('\n')
     finally:
