@@ -20,37 +20,6 @@ import lit.Test
 import lit.util
 
 def main(builtinParameters = {}):
-    # Create a temp directory inside the normal temp directory so that we can
-    # try to avoid temporary test file leaks. The user can avoid this behavior
-    # by setting LIT_PRESERVES_TMP in the environment, so they can easily use
-    # their own temp directory to monitor temporary file leaks or handle them at
-    # the buildbot level.
-    lit_tmp = None
-    if 'LIT_PRESERVES_TMP' not in os.environ:
-        import tempfile
-        lit_tmp = tempfile.mkdtemp(prefix="lit_tmp_")
-        os.environ.update({
-                'TMPDIR': lit_tmp,
-                'TMP': lit_tmp,
-                'TEMP': lit_tmp,
-                'TEMPDIR': lit_tmp,
-                })
-    # FIXME: If Python does not exit cleanly, this directory will not be cleaned
-    # up. We should consider writing the lit pid into the temp directory,
-    # scanning for stale temp directories, and deleting temp directories whose
-    # lit process has died.
-    try:
-        main_with_tmp(builtinParameters)
-    finally:
-        if lit_tmp:
-            try:
-                import shutil
-                shutil.rmtree(lit_tmp)
-            except:
-                # FIXME: Re-try after timeout on Windows.
-                pass
-
-def main_with_tmp(builtinParameters):
     opts = lit.cl_arguments.parse_args()
 
     if opts.show_version:
@@ -249,15 +218,49 @@ def run_tests(tests, litConfig, opts, numTotalTests):
         if opts.incremental:
             update_incremental_cache(test)
 
+    run_callback = lambda: run.execute_tests(progress_callback, opts.numWorkers,
+                                             opts.maxTime)
+
     startTime = time.time()
     try:
-        run.execute_tests(progress_callback, opts.numWorkers, opts.maxTime)
+        run_tests_in_tmp_dir(run_callback)
     except KeyboardInterrupt:
         sys.exit(2)
     testing_time = time.time() - startTime
 
     display.finish()
     return testing_time
+
+def run_tests_in_tmp_dir(run_callback):
+    # Create a temp directory inside the normal temp directory so that we can
+    # try to avoid temporary test file leaks. The user can avoid this behavior
+    # by setting LIT_PRESERVES_TMP in the environment, so they can easily use
+    # their own temp directory to monitor temporary file leaks or handle them at
+    # the buildbot level.
+    tmp_dir = None
+    if 'LIT_PRESERVES_TMP' not in os.environ:
+        import tempfile
+        tmp_dir = tempfile.mkdtemp(prefix="lit_tmp_")
+        os.environ.update({
+                'TMPDIR': tmp_dir,
+                'TMP': tmp_dir,
+                'TEMP': tmp_dir,
+                'TEMPDIR': tmp_dir,
+                })
+    # FIXME: If Python does not exit cleanly, this directory will not be cleaned
+    # up. We should consider writing the lit pid into the temp directory,
+    # scanning for stale temp directories, and deleting temp directories whose
+    # lit process has died.
+    try:
+        run_callback()
+    finally:
+        if tmp_dir:
+            try:
+                import shutil
+                shutil.rmtree(tmp_dir)
+            except:
+                # FIXME: Re-try after timeout on Windows.
+                pass
 
 def print_summary(tests, opts):
     byCode = {}
