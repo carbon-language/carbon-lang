@@ -784,7 +784,6 @@ exit:
 ; If we have a dominating exit (exit1) which can't be itself rewritten, we
 ; can't rewrite a later exit (exit2).  Doing so would cause the loop to exit
 ; from the exit2 when it should have exited from exit1.
-; FIXME: This currently demonstrates a miscompile.
 define i32 @neg_dominating_exit(i32* %array, i32 %length, i32 %n) {
 ; CHECK-LABEL: @neg_dominating_exit(
 ; CHECK-NEXT:  loop.preheader:
