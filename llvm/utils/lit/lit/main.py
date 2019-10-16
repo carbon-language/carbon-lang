@@ -131,12 +131,11 @@ def main_with_tmp(builtinParameters):
     if not opts.quiet:
         print('Testing Time: %.2fs' % (testing_time,))
 
+    print_summary(tests, opts)
+
     # Write out the test data, if requested.
-    if opts.output_path is not None:
+    if opts.output_path:
         write_test_results(tests, litConfig, testing_time, opts.output_path)
-
-    hasFailures = print_summary(tests, opts)
-
     if opts.xunit_output_file:
         write_test_results_xunit(tests, opts)
 
@@ -149,7 +148,8 @@ def main_with_tmp(builtinParameters):
     if litConfig.numWarnings:
         sys.stderr.write('\n%d warning(s) in tests.\n' % litConfig.numWarnings)
 
-    if hasFailures:
+    has_failure = any(t.result.code.isFailure for t in tests)
+    if has_failure:
         sys.exit(1)
 
 
@@ -260,14 +260,11 @@ def run_tests(tests, litConfig, opts, numTotalTests):
     return testing_time
 
 def print_summary(tests, opts):
-    hasFailures = False
     byCode = {}
     for test in tests:
         if test.result.code not in byCode:
             byCode[test.result.code] = []
         byCode[test.result.code].append(test)
-        if test.result.code.isFailure:
-            hasFailures = True
 
     # Print each test in any of the failing groups.
     for title,code in (('Unexpected Passing Tests', lit.Test.XPASS),
@@ -308,7 +305,6 @@ def print_summary(tests, opts):
         N = len(byCode.get(code,[]))
         if N:
             print('  %s: %d' % (name,N))
-    return hasFailures
 
 def write_test_results(tests, lit_config, testing_time, output_path):
     # Construct the data we will write.
