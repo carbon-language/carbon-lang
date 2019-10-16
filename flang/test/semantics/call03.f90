@@ -131,14 +131,13 @@ module m01
   end subroutine
 
   subroutine ch2(x)
-    character(2), intent(in) :: x
+    character(2), intent(in out) :: x
   end subroutine
   subroutine test06 ! 15.5.2.4(4)
     character :: ch1
-    !ERROR: Actual length '1' is less than expected length '2'
+    ! The actual argument is converted to a padded expression.
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call ch2(ch1)
-    !ERROR: Actual length '1' is less than expected length '2'
-    call ch2(' ')
   end subroutine
 
   subroutine out01(x)
@@ -194,23 +193,23 @@ module m01
     real, intent(in) :: in
     real :: x
     x = 0.
-    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
     call intentout(in)
-    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
     call intentout(3.14159)
-    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
     call intentout(in + 1.)
     call intentout(x) ! ok
-    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
     call intentout((x))
-    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call intentinout(in)
-    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call intentinout(3.14159)
-    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call intentinout(in + 1.)
     call intentinout(x) ! ok
-    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call intentinout((x))
   end subroutine
 
@@ -218,13 +217,13 @@ module m01
     real :: a(1)
     integer :: j(1)
     j(1) = 1
-    !ERROR: Actual argument associated with INTENT(OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
     call intentout(a(j))
-    !ERROR: Actual argument associated with INTENT(IN OUT) dummy must be definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call intentinout(a(j))
-    !ERROR: Actual argument associated with ASYNCHRONOUS dummy must be definable
+    !ERROR: Actual argument associated with ASYNCHRONOUS dummy argument 'x=' must be definable
     call asynchronous(a(j))
-    !ERROR: Actual argument associated with VOLATILE dummy must be definable
+    !ERROR: Actual argument associated with VOLATILE dummy argument 'x=' must be definable
     call volatile(a(j))
   end subroutine
 

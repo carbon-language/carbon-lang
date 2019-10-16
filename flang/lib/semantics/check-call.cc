@@ -110,9 +110,33 @@ static void InspectType(
   }
 }
 
+// When scalar CHARACTER actual arguments are known to be short,
+// we extend them on the right with spaces and a warning.
+static void PadShortCharacterActual(evaluate::Expr<evaluate::SomeType> &actual,
+    const characteristics::TypeAndShape &dummyType,
+    const characteristics::TypeAndShape &actualType,
+    parser::ContextualMessages &messages) {
+  if (dummyType.type().category() == TypeCategory::Character &&
+      actualType.type().category() == TypeCategory::Character &&
+      dummyType.type().kind() == actualType.type().kind() &&
+      GetRank(actualType.shape()) == 0) {
+    if (auto dummyLEN{ToInt64(dummyType.LEN())}) {
+      if (auto actualLEN{ToInt64(actualType.LEN())}) {
+        if (*actualLEN < *dummyLEN) {
+          messages.Say(
+              "Actual length '%jd' is less than expected length '%jd'"_en_US,
+              *actualLEN, *dummyLEN);
+          auto converted{ConvertToType(dummyType.type(), std::move(actual))};
+          CHECK(converted.has_value());
+          actual = std::move(*converted);
+        }
+      }
+    }
+  }
+}
+
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
-    const std::string &dummyName,
-    const evaluate::Expr<evaluate::SomeType> &actual,
+    const std::string &dummyName, evaluate::Expr<evaluate::SomeType> &actual,
     const characteristics::TypeAndShape &actualType,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
     const Scope &scope) {
@@ -122,6 +146,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   int dummyRank{evaluate::GetRank(dummy.type.shape())};
   bool isElemental{dummyRank == 0 &&
       proc.attrs.test(characteristics::Procedure::Attr::Elemental)};
+  PadShortCharacterActual(actual, dummy.type, actualType, messages);
   dummy.type.IsCompatibleWith(
       messages, actualType, "dummy argument", "actual argument", isElemental);
 
@@ -283,8 +308,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
         WhyNotModifiable(messages.at(), actual, scope, vectorSubscriptIsOk)};
     if (why.get() != nullptr) {
       if (auto *msg{messages.Say(
-              "Actual argument associated with %s dummy must be definable"_err_en_US,
-              reason)}) {
+              "Actual argument associated with %s %s must be definable"_err_en_US,
+              reason, dummyName)}) {
         msg->Attach(std::move(why));
       }
     }
@@ -320,7 +345,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   }
 }
 
-static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
+static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
     const characteristics::DummyArgument &dummy,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
     const Scope &scope) {
@@ -332,7 +357,7 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
   std::visit(
       common::visitors{
           [&](const characteristics::DummyDataObject &object) {
-            if (const auto *expr{arg.UnwrapExpr()}) {
+            if (auto *expr{arg.UnwrapExpr()}) {
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
                 CheckExplicitDataArg(

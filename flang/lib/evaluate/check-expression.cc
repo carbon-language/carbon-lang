@@ -275,6 +275,8 @@ public:
       return false;
     } else if (const auto *details{
                    symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+      // N.B. ALLOCATABLEs are deferred shape, not assumed, and
+      // are obviously contiguous.
       return !details->IsAssumedShape() && !details->IsAssumedRank();
     } else {
       return false;

@@ -103,6 +103,9 @@ Extensions, deletions, and legacy features supported by default
 * Specific intrinsics AMAX0, AMAX1, AMIN0, AMIN1, DMAX1, DMIN1, MAX0, MAX1,
   MIN0, and MIN1 accept more argument types than specified. They are replaced by
   the related generics followed by conversions to the specified result types.
+* When a scalar CHARACTER actual argument of the same kind is known to
+  have a length shorter than the associated dummy argument, it is extended
+  on the right with blanks, similar to assignment.
 
 Extensions supported when enabled by options
 --------------------------------------------

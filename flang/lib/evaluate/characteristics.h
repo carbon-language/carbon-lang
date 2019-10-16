@@ -54,7 +54,8 @@ bool DistinguishableOpOrAssign(const Procedure &, const Procedure &);
 
 class TypeAndShape {
 public:
-  ENUM_CLASS(Attr, AssumedRank, AssumedShape, AssumedSize, Coarray)
+  ENUM_CLASS(
+      Attr, AssumedRank, AssumedShape, AssumedSize, DeferredShape, Coarray)
   using Attrs = common::EnumSet<Attr, Attr_enumSize>;
 
   explicit TypeAndShape(DynamicType t) : type_{t} { AcquireLEN(); }

@@ -136,18 +136,6 @@ bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
         type_.AsFortran());
     return false;
   }
-  // When associating with a character scalar, length must not be greater.
-  if (GetRank(that.shape_) == 0) {
-    if (auto myLEN{ToInt64(LEN())}) {
-      if (auto thatLEN{ToInt64(len)}) {
-        if (*thatLEN < *myLEN) {
-          messages.Say(
-              "Actual length '%jd' is less than expected length '%jd'"_err_en_US,
-              *thatLEN, *myLEN);
-        }
-      }
-    }
-  }
   return isElemental ||
       CheckConformance(messages, shape_, that.shape_, thisDesc, thatDesc);
 }
@@ -163,6 +151,9 @@ void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {
   }
   if (object.IsAssumedSize()) {
     attrs_.set(Attr::AssumedSize);
+  }
+  if (object.IsDeferredShape()) {
+    attrs_.set(Attr::DeferredShape);
   }
   if (object.IsCoarray()) {
     attrs_.set(Attr::Coarray);

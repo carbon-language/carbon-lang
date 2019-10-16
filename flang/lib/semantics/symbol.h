@@ -585,6 +585,7 @@ public:
             [](const GenericDetails &) {
               return 0; /*TODO*/
             },
+            [](const ProcBindingDetails &x) { return x.symbol().Rank(); },
             [](const UseDetails &x) { return x.symbol().Rank(); },
             [](const HostAssocDetails &x) { return x.symbol().Rank(); },
             [](const ObjectEntityDetails &oed) { return oed.shape().Rank(); },
