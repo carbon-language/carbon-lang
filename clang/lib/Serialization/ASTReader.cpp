@@ -12996,6 +12996,7 @@ void OMPClauseReader::VisitOMPThreadLimitClause(OMPThreadLimitClause *C) {
 }
 
 void OMPClauseReader::VisitOMPPriorityClause(OMPPriorityClause *C) {
+  VisitOMPClauseWithPreInit(C);
   C->setPriority(Record.readSubExpr());
   C->setLParenLoc(Record.readSourceLocation());
 }
