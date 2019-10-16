@@ -1185,6 +1185,15 @@ void GDBRemoteCommunicationServerCommon::CreateProcessInfoResponse(
       proc_info.GetEffectiveUserID(), proc_info.GetEffectiveGroupID());
   response.PutCString("name:");
   response.PutStringAsRawHex8(proc_info.GetExecutableFile().GetCString());
+
+  response.PutChar(';');
+  response.PutCString("args:");
+  response.PutStringAsRawHex8(proc_info.GetArg0());
+  for (auto &arg : proc_info.GetArguments()) {
+    response.PutChar('-');
+    response.PutStringAsRawHex8(arg.ref());
+  }
+
   response.PutChar(';');
   const ArchSpec &proc_arch = proc_info.GetArchitecture();
   if (proc_arch.IsValid()) {

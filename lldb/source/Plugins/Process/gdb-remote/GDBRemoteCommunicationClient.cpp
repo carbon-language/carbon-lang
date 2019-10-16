@@ -1927,6 +1927,26 @@ bool GDBRemoteCommunicationClient::DecodeProcessInfoResponse(
         std::string name;
         extractor.GetHexByteString(name);
         process_info.GetExecutableFile().SetFile(name, FileSpec::Style::native);
+      } else if (name.equals("args")) {
+        llvm::StringRef encoded_args(value), hex_arg;
+
+        bool is_arg0 = true;
+        while (!encoded_args.empty()) {
+          std::tie(hex_arg, encoded_args) = encoded_args.split('-');
+          std::string arg;
+          StringExtractor extractor(hex_arg);
+          if (extractor.GetHexByteString(arg) * 2 != hex_arg.size()) {
+            // In case of wrong encoding, we discard all the arguments
+            process_info.GetArguments().Clear();
+            process_info.SetArg0("");
+            break;
+          }
+          if (is_arg0)
+            process_info.SetArg0(arg);
+          else
+            process_info.GetArguments().AppendArgument(arg);
+          is_arg0 = false;
+        }
       } else if (name.equals("cputype")) {
         value.getAsInteger(0, cpu);
       } else if (name.equals("cpusubtype")) {
