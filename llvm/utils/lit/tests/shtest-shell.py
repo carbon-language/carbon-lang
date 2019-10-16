@@ -201,6 +201,60 @@
 
 # CHECK: PASS: shtest-shell :: diff-r.txt
 
+
+# CHECK: FAIL: shtest-shell :: diff-strip-trailing-cr.txt
+
+# CHECK: *** TEST 'shtest-shell :: diff-strip-trailing-cr.txt' FAILED ***
+
+# CHECK: $ "diff" "-u" "diff-in.dos" "diff-in.unix"
+# CHECK: # command output:
+# CHECK: @@
+# CHECK-NEXT: -In this file, the
+# CHECK-NEXT: -sequence "\r\n"
+# CHECK-NEXT: -terminates lines.
+# CHECK-NEXT: +In this file, the
+# CHECK-NEXT: +sequence "\n"
+# CHECK-NEXT: +terminates lines.
+# CHECK: error: command failed with exit status: 1
+# CHECK: $ "true"
+
+# CHECK: $ "diff" "-u" "diff-in.unix" "diff-in.dos"
+# CHECK: # command output:
+# CHECK: @@
+# CHECK-NEXT: -In this file, the
+# CHECK-NEXT: -sequence "\n"
+# CHECK-NEXT: -terminates lines.
+# CHECK-NEXT: +In this file, the
+# CHECK-NEXT: +sequence "\r\n"
+# CHECK-NEXT: +terminates lines.
+# CHECK: error: command failed with exit status: 1
+# CHECK: $ "true"
+
+# CHECK: $ "diff" "-u" "--strip-trailing-cr" "diff-in.dos" "diff-in.unix"
+# CHECK: # command output:
+# CHECK: @@
+# CHECK-NEXT:  In this file, the
+# CHECK-NEXT: -sequence "\r\n"
+# CHECK-NEXT: +sequence "\n"
+# CHECK-NEXT:  terminates lines.
+# CHECK: error: command failed with exit status: 1
+# CHECK: $ "true"
+
+# CHECK: $ "diff" "-u" "--strip-trailing-cr" "diff-in.unix" "diff-in.dos"
+# CHECK: # command output:
+# CHECK: @@
+# CHECK-NEXT:  In this file, the
+# CHECK-NEXT: -sequence "\n"
+# CHECK-NEXT: +sequence "\r\n"
+# CHECK-NEXT:  terminates lines.
+# CHECK: error: command failed with exit status: 1
+# CHECK: $ "true"
+
+# CHECK: $ "false"
+
+# CHECK: ***
+
+
 # CHECK: FAIL: shtest-shell :: diff-unified-error-0.txt
 # CHECK: *** TEST 'shtest-shell :: diff-unified-error-0.txt' FAILED ***
 # CHECK: $ "diff" "-U" "30.1" "{{[^"]*}}" "{{[^"]*}}"
@@ -360,4 +414,4 @@
 # CHECK: PASS: shtest-shell :: sequencing-0.txt
 # CHECK: XFAIL: shtest-shell :: sequencing-1.txt
 # CHECK: PASS: shtest-shell :: valid-shell.txt
-# CHECK: Failing Tests (31)
+# CHECK: Failing Tests (32)

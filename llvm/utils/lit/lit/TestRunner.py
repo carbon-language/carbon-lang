@@ -465,7 +465,7 @@ def executeBuiltinDiff(cmd, cmd_shenv):
 
         f = lambda x: x
         if strip_trailing_cr:
-            f = compose2(lambda line: line.rstrip('\r'), f)
+            f = compose2(lambda line: line.replace('\r\n', '\n'), f)
         if ignore_all_space or ignore_space_change:
             ignoreSpace = lambda line, separator: separator.join(line.split())
             ignoreAllSpaceOrSpaceChange = functools.partial(ignoreSpace, separator='' if ignore_all_space else ' ')
