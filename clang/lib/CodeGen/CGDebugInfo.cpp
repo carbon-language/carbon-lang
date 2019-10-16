@@ -1791,6 +1791,7 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
               CGM.getContext().toCharUnitsFromBits((int64_t)fieldOffset);
           V = CGM.getCXXABI().EmitMemberDataPointer(MPT, chars);
         }
+        assert(V && "Failed to find template parameter pointer");
         V = V->stripPointerCasts();
       }
       TemplateParams.push_back(DBuilder.createTemplateValueParameter(
@@ -3327,13 +3328,13 @@ llvm::DISubprogram *CGDebugInfo::getFunctionFwdDeclOrStub(GlobalDecl GD,
   unsigned Line = getLineNumber(Loc);
   collectFunctionDeclProps(GD, Unit, Name, LinkageName, DContext, TParamsArray,
                            Flags);
-  auto *FD = dyn_cast<FunctionDecl>(GD.getDecl());
+  auto *FD = cast<FunctionDecl>(GD.getDecl());
 
   // Build function type.
   SmallVector<QualType, 16> ArgTypes;
-  if (FD)
-    for (const ParmVarDecl *Parm : FD->parameters())
-      ArgTypes.push_back(Parm->getType());
+  for (const ParmVarDecl *Parm : FD->parameters())
+    ArgTypes.push_back(Parm->getType());
+
   CallingConv CC = FD->getType()->castAs<FunctionType>()->getCallConv();
   QualType FnType = CGM.getContext().getFunctionType(
       FD->getReturnType(), ArgTypes, FunctionProtoType::ExtProtoInfo(CC));
