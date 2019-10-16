@@ -19,11 +19,6 @@ class Run(object):
     def __init__(self, lit_config, tests):
         self.lit_config = lit_config
         self.tests = tests
-        # Set up semaphores to limit parallelism of certain classes of tests.
-        self.parallelism_semaphores = {
-                k : NopSemaphore() if v is None else
-                    multiprocessing.BoundedSemaphore(v)
-                for k, v in lit_config.parallelism_groups.items()}
 
     def execute_tests(self, progress_callback, workers, max_time):
         """
@@ -76,14 +71,18 @@ class Run(object):
         if max_time:
             deadline = time.time() + max_time
 
+        semaphores = {
+            k: NopSemaphore() if v is None else
+            multiprocessing.BoundedSemaphore(v) for k, v in
+            self.lit_config.parallelism_groups.items()}
+
         # Start a process pool. Copy over the data shared between all test runs.
         # FIXME: Find a way to capture the worker process stderr. If the user
         # interrupts the workers before we make it into our task callback, they
         # will each raise a KeyboardInterrupt exception and print to stderr at
         # the same time.
         pool = multiprocessing.Pool(workers, lit.worker.initializer,
-                                    (self.lit_config,
-                                     self.parallelism_semaphores))
+                                    (self.lit_config, semaphores))
 
         # Install a console-control signal handler on Windows.
         if lit.util.win32api is not None:
