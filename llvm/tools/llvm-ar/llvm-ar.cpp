@@ -43,6 +43,11 @@
 #include <io.h>
 #endif
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 using namespace llvm;
 
 // The name this program was invoked as.
@@ -488,6 +493,23 @@ static std::string normalizePath(StringRef Path) {
                          : std::string(sys::path::filename(Path));
 }
 
+static bool comparePaths(StringRef Path1, StringRef Path2) {
+// When on Windows this function calls CompareStringOrdinal
+// as Windows file paths are case-insensitive. 
+// CompareStringOrdinal compares two Unicode strings for
+// binary equivalence and allows for case insensitivity.
+#ifdef _WIN32
+  SmallVector<wchar_t, 128> WPath1, WPath2;
+  failIfError(sys::path::widenPath(normalizePath(Path1), WPath1));
+  failIfError(sys::path::widenPath(normalizePath(Path2), WPath2));
+
+  return CompareStringOrdinal(WPath1.data(), WPath1.size(), WPath2.data(),
+                              WPath2.size(), true) == CSTR_EQUAL;
+#else
+  return normalizePath(Path1) == normalizePath(Path2);
+#endif
+}
+
 // Implement the 'x' operation. This function extracts files back to the file
 // system.
 static void doExtract(StringRef Name, const object::Archive::Child &C) {
@@ -561,7 +583,7 @@ static void performReadOperation(ArchiveOperation Operation,
 
       if (Filter) {
         auto I = find_if(Members, [Name](StringRef Path) {
-          return Name == normalizePath(Path);
+          return comparePaths(Name, Path);
         });
         if (I == Members.end())
           continue;
@@ -691,7 +713,7 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
   if (Operation == QuickAppend || Members.empty())
     return IA_AddOldMember;
   auto MI = find_if(
-      Members, [Name](StringRef Path) { return Name == normalizePath(Path); });
+      Members, [Name](StringRef Path) { return comparePaths(Name, Path); });
 
   if (MI == Members.end())
     return IA_AddOldMember;
@@ -742,15 +764,14 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   std::vector<NewArchiveMember> Moved;
   int InsertPos = -1;
   if (OldArchive) {
-    std::string PosName = normalizePath(RelPos);
     Error Err = Error::success();
     StringMap<int> MemberCount;
     for (auto &Child : OldArchive->children(Err)) {
       int Pos = Ret.size();
       Expected<StringRef> NameOrErr = Child.getName();
       failIfError(NameOrErr.takeError());
-      StringRef Name = NameOrErr.get();
-      if (Name == PosName) {
+      std::string Name = NameOrErr.get();
+      if (comparePaths(Name, RelPos)) {
         assert(AddAfter || AddBefore);
         if (AddBefore)
           InsertPos = Pos;
@@ -1018,9 +1039,9 @@ static void runMRIScript() {
       ArchiveName = Rest;
       break;
     case MRICommand::Delete: {
-      std::string Name = normalizePath(Rest);
-      llvm::erase_if(NewMembers,
-                     [=](NewArchiveMember &M) { return M.MemberName == Name; });
+      llvm::erase_if(NewMembers, [=](NewArchiveMember &M) {
+        return comparePaths(M.MemberName, Rest);
+      });
       break;
     }
     case MRICommand::Save:
