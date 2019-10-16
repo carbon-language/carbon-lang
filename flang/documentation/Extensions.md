@@ -20,8 +20,9 @@ Intentional violations of the standard
   rule imposes an artificially small constraint in some cases
   where Fortran mandates that something have the default `INTEGER`
   type: specifically, the results of references to the intrinsic functions
-  `LEN`, `SIZE`, `LBOUND`, `UBOUND`, and `SHAPE`.  We return
-  `INTEGER(KIND=8)` in these cases.
+  `SIZE`, `LBOUND`, `UBOUND`, `SHAPE`, and the location reductions
+  `FINDLOC`, `MAXLOC`, and `MINLOC`.  We return `INTEGER(KIND=8)` by
+  default in these cases.
 
 Extensions, deletions, and legacy features supported by default
 ===============================================================

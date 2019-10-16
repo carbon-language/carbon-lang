@@ -96,7 +96,7 @@ module m01
 
   subroutine test01(x) ! 15.5.2.4(2)
     class(t), intent(in) :: x[*]
-    !ERROR: Coindexed polymorphic object may not be associated with a polymorphic dummy argument
+    !ERROR: Coindexed polymorphic object may not be associated with a polymorphic dummy argument 'x='
     call poly(x[1])
   end subroutine
 
@@ -105,7 +105,7 @@ module m01
   end subroutine
   subroutine test02(x) ! 15.5.2.4(2)
     class(t), intent(in) :: x(*)
-    !ERROR: Assumed-size polymorphic array may not be associated with a monomorphic dummy argument
+    !ERROR: Assumed-size polymorphic array may not be associated with a monomorphic dummy argument 'x='
     call mono(x)
   end subroutine
 
@@ -114,19 +114,19 @@ module m01
   end subroutine
   subroutine test03 ! 15.5.2.4(2)
     type(pdt(0)) :: x
-    !ERROR: Actual argument associated with TYPE(*) dummy argument may not have a parameterized derived type
+    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have a parameterized derived type
     call typestar(x)
   end subroutine
 
   subroutine test04 ! 15.5.2.4(2)
     type(tbp) :: x
-    !ERROR: Actual argument associated with TYPE(*) dummy argument may not have type-bound procedures
+    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have type-bound procedures
     call typestar(x)
   end subroutine
 
   subroutine test05 ! 15.5.2.4(2)
     type(final) :: x
-    !ERROR: Actual argument associated with TYPE(*) dummy argument may not have FINAL procedures
+    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have FINAL procedures
     call typestar(x)
   end subroutine
 
@@ -146,13 +146,13 @@ module m01
   end subroutine
   subroutine test07(x) ! 15.5.2.4(6)
     type(alloc) :: x[*]
-    !ERROR: Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument with VALUE or INTENT(IN) attributes
+    !ERROR: Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument 'x=' with VALUE or INTENT(IN) attributes
     call out01(x[1])
   end subroutine
 
   subroutine test08(x) ! 15.5.2.4(13)
     real :: x(1)[*]
-    !ERROR: Coindexed scalar actual argument must be associated with a scalar dummy argument
+    !ERROR: Coindexed scalar actual argument must be associated with a scalar dummy argument 'x='
     call assumedsize(x(1)[1])
   end subroutine
 
@@ -165,13 +165,13 @@ module m01
     real :: ashape(:)
     class(t) :: polyarray(*)
     character(10) :: c(:)
-    !ERROR: Whole scalar actual argument may not be associated with a dummy argument array
+    !ERROR: Whole scalar actual argument may not be associated with a dummy argument 'x=' array
     call assumedsize(x)
-    !ERROR: Element of pointer array may not be associated with a dummy argument array
+    !ERROR: Element of pointer array may not be associated with a dummy argument 'x=' array
     call assumedsize(p(1))
-    !ERROR: Element of assumed-shape array may not be associated with a dummy argument array
+    !ERROR: Element of assumed-shape array may not be associated with a dummy argument 'x=' array
     call assumedsize(ashape(1))
-    !ERROR: Element of polymorphic array may not be associated with a dummy argument array
+    !ERROR: Element of polymorphic array may not be associated with a dummy argument 'x=' array
     call polyassumedsize(polyarray(1))
     call charray(c(1:1))  ! not an error if character
     call assumedsize(arr(1))  ! not an error if element in sequence
@@ -182,11 +182,11 @@ module m01
   subroutine test10(a) ! 15.5.2.4(16)
     real :: scalar, matrix(2,3)
     real :: a(*)
-    !ERROR: Scalar actual argument may not be associated with assumed-shape dummy argument
+    !ERROR: Scalar actual argument may not be associated with assumed-shape dummy argument 'x='
     call assumedshape(scalar)
     !ERROR: Rank of dummy argument is 1, but actual argument has rank 2
     call assumedshape(matrix)
-    !ERROR: Assumed-size array may not be associated with assumed-shape dummy argument
+    !ERROR: Assumed-size array may not be associated with assumed-shape dummy argument 'x='
     call assumedshape(a)
   end subroutine
 
@@ -239,9 +239,9 @@ module m01
     type(ultimateCoarray), volatile :: b
     call coarr(a)  ! ok
     call volcoarr(b)  ! ok
-    !ERROR: VOLATILE attributes must match when actual argument has a coarray ultimate component
+    !ERROR: VOLATILE attribute must match for dummy argument 'x=' when actual argument has a coarray ultimate component
     call coarr(b)
-    !ERROR: VOLATILE attributes must match when actual argument has a coarray ultimate component
+    !ERROR: VOLATILE attribute must match for dummy argument 'x=' when actual argument has a coarray ultimate component
     call volcoarr(a)
   end subroutine
 
@@ -255,17 +255,17 @@ module m01
     call asynchronousValue(b[1])  ! ok
     call asynchronousValue(c[1])  ! ok
     call asynchronousValue(d[1])  ! ok
-    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument 'x=' with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call asynchronous(b[1])
-    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument 'x=' with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call volatile(b[1])
-    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument 'x=' with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call asynchronous(c[1])
-    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument 'x=' with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call volatile(c[1])
-    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument 'x=' with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call asynchronous(d[1])
-    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE
+    !ERROR: Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument 'x=' with ASYNCHRONOUS or VOLATILE attributes unless VALUE
     call volatile(d[1])
   end subroutine
 
@@ -280,17 +280,17 @@ module m01
     call valueassumedsize(b(::2)) ! ok
     call valueassumedsize(c(::2)) ! ok
     call valueassumedsize(d(::2)) ! ok
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatileassumedsize(b(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatilecontiguous(b(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatileassumedsize(c(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatilecontiguous(c(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatileassumedsize(d(::2))
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatilecontiguous(d(::2))
   end subroutine
 
@@ -309,17 +309,17 @@ module m01
     call valueassumedsize(b) ! ok
     call valueassumedsize(c) ! ok
     call valueassumedsize(d) ! ok
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatileassumedsize(b)
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatilecontiguous(b)
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatileassumedsize(c)
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatilecontiguous(c)
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatileassumedsize(d)
-    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument
+    !ERROR: ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument 'x='
     call volatilecontiguous(d)
   end subroutine
 

@@ -16,7 +16,7 @@
 
 !DEF: /f1 (Function) Subprogram CHARACTER(1_8,1)
 !DEF: /f1/x1 INTENT(IN) ObjectEntity CHARACTER(2_4,1)
-!DEF: /f1/x2 INTENT(IN) ObjectEntity CHARACTER(3_8,1)
+!DEF: /f1/x2 INTENT(IN) ObjectEntity CHARACTER(3_4,1)
 character*1 function f1(x1, x2)
  !DEF: /f1/n PARAMETER ObjectEntity INTEGER(4)
  integer, parameter :: n = 2
@@ -29,7 +29,7 @@ character*1 function f1(x1, x2)
  type :: t
   !REF: /f1/len
   !REF: /f1/x2
-  !DEF: /f1/t/c1 ObjectEntity CHARACTER(4_8,1)
+  !DEF: /f1/t/c1 ObjectEntity CHARACTER(4_4,1)
   !DEF: /f1/t/c2 ObjectEntity CHARACTER(6_8,1)
   character*(len(x2)+1) :: c1, c2*6
  end type t

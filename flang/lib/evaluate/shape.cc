@@ -475,6 +475,32 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
       const auto *expr{call.arguments().front().value().UnwrapExpr()};
       CHECK(expr != nullptr);
       return Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}};
+    } else if (intrinsic->name == "all" || intrinsic->name == "any" ||
+        intrinsic->name == "count" || intrinsic->name == "iall" ||
+        intrinsic->name == "iany" || intrinsic->name == "iparity" ||
+        intrinsic->name == "maxloc" || intrinsic->name == "maxval" ||
+        intrinsic->name == "minloc" || intrinsic->name == "minval" ||
+        intrinsic->name == "norm2" || intrinsic->name == "parity" ||
+        intrinsic->name == "product" || intrinsic->name == "sum") {
+      // Reduction with DIM=
+      if (call.arguments().size() >= 2) {
+        auto arrayShape{
+            (*this)(UnwrapExpr<Expr<SomeType>>(call.arguments().at(0)))};
+        const auto *dimArg{UnwrapExpr<Expr<SomeType>>(call.arguments().at(1))};
+        if (arrayShape.has_value() && dimArg != nullptr) {
+          if (auto dim{ToInt64(*dimArg)}) {
+            if (*dim >= 1 &&
+                static_cast<std::size_t>(*dim) <= arrayShape->size()) {
+              arrayShape->erase(arrayShape->begin() + (*dim - 1));
+              return std::move(*arrayShape);
+            }
+          }
+        }
+      }
+    } else if (intrinsic->name == "cshift" || intrinsic->name == "eoshift") {
+      if (!call.arguments().empty()) {
+        return (*this)(call.arguments()[0]);
+      }
     } else if (intrinsic->name == "reshape") {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
         // SHAPE(RESHAPE(array,shape)) -> shape
@@ -483,19 +509,6 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
           auto shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
           return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
         }
-      }
-    } else if (intrinsic->name == "transpose") {
-      if (call.arguments().size() >= 1) {
-        if (auto shape{(*this)(call.arguments().at(0))}) {
-          if (shape->size() == 2) {
-            std::swap((*shape)[0], (*shape)[1]);
-            return shape;
-          }
-        }
-      }
-    } else if (intrinsic->name == "cshift" || intrinsic->name == "eoshift") {
-      if (!call.arguments().empty()) {
-        return (*this)(call.arguments()[0]);
       }
     } else if (intrinsic->name == "spread") {
       // SHAPE(SPREAD(ARRAY,DIM,NCOPIES)) = SHAPE(ARRAY) with NCOPIES inserted
@@ -514,6 +527,15 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
                   ConvertToType<ExtentType>(common::Clone(*nCopies)));
               return std::move(*arrayShape);
             }
+          }
+        }
+      }
+    } else if (intrinsic->name == "transpose") {
+      if (call.arguments().size() >= 1) {
+        if (auto shape{(*this)(call.arguments().at(0))}) {
+          if (shape->size() == 2) {
+            std::swap((*shape)[0], (*shape)[1]);
+            return shape;
           }
         }
       }

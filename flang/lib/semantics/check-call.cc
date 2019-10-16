@@ -18,6 +18,7 @@
 #include "../evaluate/characteristics.h"
 #include "../evaluate/shape.h"
 #include "../evaluate/tools.h"
+#include "../parser/characters.h"
 #include "../parser/message.h"
 #include <map>
 #include <string>
@@ -110,6 +111,7 @@ static void InspectType(
 }
 
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
+    const std::string &dummyName,
     const evaluate::Expr<evaluate::SomeType> &actual,
     const characteristics::TypeAndShape &actualType,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
@@ -152,12 +154,14 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   if (actualIsPolymorphic && dummyIsPolymorphic &&
       actualIsCoindexed) {  // 15.5.2.4(2)
     messages.Say(
-        "Coindexed polymorphic object may not be associated with a polymorphic dummy argument"_err_en_US);
+        "Coindexed polymorphic object may not be associated with a polymorphic %s"_err_en_US,
+        dummyName);
   }
   if (actualIsPolymorphic && !dummyIsPolymorphic &&
       actualIsAssumedSize) {  // 15.5.2.4(2)
     messages.Say(
-        "Assumed-size polymorphic array may not be associated with a monomorphic dummy argument"_err_en_US);
+        "Assumed-size polymorphic array may not be associated with a monomorphic %s"_err_en_US,
+        dummyName);
   }
 
   // derived type actual argument checks
@@ -169,18 +173,21 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     if (dummy.type.type().IsAssumedType()) {
       if (!derived.parameters().empty()) {  // 15.5.2.4(2)
         messages.Say(
-            "Actual argument associated with TYPE(*) dummy argument may not have a parameterized derived type"_err_en_US);
+            "Actual argument associated with TYPE(*) %s may not have a parameterized derived type"_err_en_US,
+            dummyName);
       }
       if (concerns.typeBoundProcedure) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
-                "Actual argument associated with TYPE(*) dummy argument may not have type-bound procedures"_err_en_US)}) {
+                "Actual argument associated with TYPE(*) %s may not have type-bound procedures"_err_en_US,
+                dummyName)}) {
           msg->Attach(concerns.typeBoundProcedure->name(),
               "Declaration of type-bound procedure"_en_US);
         }
       }
       if (concerns.finalProcedure) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
-                "Actual argument associated with TYPE(*) dummy argument may not have FINAL procedures"_err_en_US)}) {
+                "Actual argument associated with TYPE(*) %s may not have FINAL procedures"_err_en_US,
+                dummyName)}) {
           msg->Attach(concerns.finalProcedure->name(),
               "Declaration of FINAL procedure"_en_US);
         }
@@ -190,7 +197,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
         dummy.intent != common::Intent::In && !dummyIsValue) {
       // 15.5.2.4(6)
       if (auto *msg{messages.Say(
-              "Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument with VALUE or INTENT(IN) attributes"_err_en_US)}) {
+              "Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
+              dummyName)}) {
         msg->Attach(concerns.allocatable->name(),
             "Declaration of ALLOCATABLE component"_en_US);
       }
@@ -198,7 +206,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     if (concerns.coarray &&
         actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
       if (auto *msg{messages.Say(
-              "VOLATILE attributes must match when actual argument has a coarray ultimate component"_err_en_US)}) {
+              "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component"_err_en_US,
+              dummyName)}) {
         msg->Attach(
             concerns.coarray->name(), "Declaration of coarray component"_en_US);
       }
@@ -216,11 +225,13 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     // 15.5.2.4(16)
     if (actualRank == 0) {
       messages.Say(
-          "Scalar actual argument may not be associated with assumed-shape dummy argument"_err_en_US);
+          "Scalar actual argument may not be associated with assumed-shape %s"_err_en_US,
+          dummyName);
     }
     if (actualIsAssumedSize) {
       if (auto *msg{messages.Say(
-              "Assumed-size array may not be associated with assumed-shape dummy argument"_err_en_US)}) {
+              "Assumed-size array may not be associated with assumed-shape %s"_err_en_US,
+              dummyName)}) {
         msg->Attach(actualLastSymbol->name(),
             "Declaration of assumed-size array actual argument"_en_US);
       }
@@ -229,24 +240,29 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     // Actual is scalar, dummy is an array.  15.5.2.4(14), 15.5.2.11
     if (actualIsCoindexed) {
       messages.Say(
-          "Coindexed scalar actual argument must be associated with a scalar dummy argument"_err_en_US);
+          "Coindexed scalar actual argument must be associated with a scalar %s"_err_en_US,
+          dummyName);
     }
     if (actualLastSymbol && actualLastSymbol->Rank() == 0 &&
         !(dummy.type.type().IsAssumedType() && dummyIsAssumedSize)) {
       messages.Say(
-          "Whole scalar actual argument may not be associated with a dummy argument array"_err_en_US);
+          "Whole scalar actual argument may not be associated with a %s array"_err_en_US,
+          dummyName);
     }
     if (actualIsPolymorphic) {
       messages.Say(
-          "Element of polymorphic array may not be associated with a dummy argument array"_err_en_US);
+          "Element of polymorphic array may not be associated with a %s array"_err_en_US,
+          dummyName);
     }
     if (actualLastSymbol && actualLastSymbol->attrs().test(Attr::POINTER)) {
       messages.Say(
-          "Element of pointer array may not be associated with a dummy argument array"_err_en_US);
+          "Element of pointer array may not be associated with a %s array"_err_en_US,
+          dummyName);
     }
     if (actualLastObject && actualLastObject->IsAssumedShape()) {
       messages.Say(
-          "Element of assumed-shape array may not be associated with a dummy argument array"_err_en_US);
+          "Element of assumed-shape array may not be associated with a %s array"_err_en_US,
+          dummyName);
     }
   }
 
@@ -279,7 +295,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       (dummyIsAsynchronous || dummyIsVolatile) && !dummyIsValue) {
     if (actualIsCoindexed) {  // C1538
       messages.Say(
-          "Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with dummy argument with ASYNCHRONOUS or VOLATILE attributes unless VALUE"_err_en_US);
+          "Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with %s with ASYNCHRONOUS or VOLATILE attributes unless VALUE"_err_en_US,
+          dummyName);
     }
     if (actualRank > 0 && !IsSimplyContiguous(actual, context.intrinsics())) {
       bool dummyIsContiguous{
@@ -296,7 +313,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           !(dummyIsAssumedShape || dummyIsAssumedRank ||
               (actualIsPointer && dummyIsPointer))) {  // C1539 & C1540
         messages.Say(
-            "ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous dummy argument"_err_en_US);
+            "ASYNCHRONOUS or VOLATILE actual argument that is not simply contiguous may not be associated with a contiguous %s"_err_en_US,
+            dummyName);
       }
     }
   }
@@ -307,6 +325,10 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
     const Scope &scope) {
   auto &messages{context.messages()};
+  std::string dummyName{"dummy argument"};
+  if (!dummy.name.empty()) {
+    dummyName += " '"s + parser::ToLowerCaseLetters(dummy.name) + "='";
+  }
   std::visit(
       common::visitors{
           [&](const characteristics::DummyDataObject &object) {
@@ -314,7 +336,7 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
                 CheckExplicitDataArg(
-                    object, *expr, *type, proc, context, scope);
+                    object, dummyName, *expr, *type, proc, context, scope);
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
                   std::holds_alternative<evaluate::BOZLiteralConstant>(
                       expr->u)) {
@@ -327,8 +349,8 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
               // An assumed-type dummy is being forwarded.
               if (!object.type.type().IsAssumedType()) {
                 messages.Say(
-                    "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) dummy argument"_err_en_US,
-                    assumed->name());
+                    "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) %s"_err_en_US,
+                    assumed->name(), dummyName);
               }
             } else {
               messages.Say(
@@ -416,9 +438,9 @@ parser::Messages CheckExplicitInterface(const characteristics::Procedure &proc,
               "an actual argument in this procedure reference"_err_en_US,
               index);
         } else {
-          messages.Say(
-              "Dummy argument '%s' (#%d) is not OPTIONAL and is not associated "
-              "with an actual argument in this procedure reference"_err_en_US,
+          messages.Say("Dummy argument '%s=' (#%d) is not OPTIONAL and is not "
+                       "associated with an actual argument in this procedure "
+                       "reference"_err_en_US,
               dummy.name, index);
         }
       }
