@@ -100,6 +100,7 @@ MODIFIERS:
   [b] - put [files] before [relpos] (same as [i])
   [c] - do not warn if archive had to be created
   [D] - use zero for timestamps and uids/gids (default)
+  [h] - display this help and exit
   [i] - put [files] before [relpos] (same as [b])
   [l] - ignored for compatibility
   [L] - add archive's contents
@@ -112,6 +113,7 @@ MODIFIERS:
   [u] - update only [files] newer than archive contents
   [U] - use actual timestamps and uids/gids
   [v] - be verbose about actions taken
+  [V] - display the version and exit
 )";
 
 void printHelpMessage() {
@@ -381,6 +383,12 @@ static ArchiveOperation parseCommandLine() {
     case 'L':
       AddLibrary = true;
       break;
+    case 'V':
+      cl::PrintVersionMessage();
+      exit(0);
+    case 'h':
+      printHelpMessage();
+      exit(0);
     default:
       fail(std::string("unknown option ") + Options[i]);
     }
@@ -1063,7 +1071,7 @@ static void runMRIScript() {
 }
 
 static bool handleGenericOption(StringRef arg) {
-  if (arg == "h" || arg.startswith("-h") || arg == "--help") {
+  if (arg == "-help" || arg == "--help") {
     printHelpMessage();
     return true;
   }
