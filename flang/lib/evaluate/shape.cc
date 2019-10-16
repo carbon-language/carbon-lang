@@ -477,9 +477,20 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
     } else if (intrinsic->name == "reshape") {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
         // SHAPE(RESHAPE(array,shape)) -> shape
-        const auto *shapeExpr{call.arguments().at(1).value().UnwrapExpr()};
-        auto shape{std::get<Expr<SomeInteger>>(DEREF(shapeExpr).u)};
-        return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
+        if (const auto *shapeExpr{
+                call.arguments().at(1).value().UnwrapExpr()}) {
+          auto shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
+          return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
+        }
+      }
+    } else if (intrinsic->name == "transpose") {
+      if (call.arguments().size() >= 1) {
+        if (auto shape{(*this)(call.arguments().at(0))}) {
+          if (shape->size() == 2) {
+            std::swap((*shape)[0], (*shape)[1]);
+            return shape;
+          }
+        }
       }
     } else if (intrinsic->characteristics.value().attrs.test(characteristics::
                        Procedure::Attr::NullPointer)) {  // NULL(MOLD=)

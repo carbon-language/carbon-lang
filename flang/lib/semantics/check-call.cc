@@ -307,34 +307,40 @@ static void CheckExplicitInterfaceArg(const evaluate::ActualArgument &arg,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
     const Scope &scope) {
   auto &messages{context.messages()};
-  if (const auto *object{
-          std::get_if<characteristics::DummyDataObject>(&dummy.u)}) {
-    if (const auto *expr{arg.UnwrapExpr()}) {
-      if (auto type{
-              characteristics::TypeAndShape::Characterize(*expr, context)}) {
-        CheckExplicitDataArg(*object, *expr, *type, proc, context, scope);
-      } else if (object->type.type().IsTypelessIntrinsicArgument() &&
-          std::holds_alternative<evaluate::BOZLiteralConstant>(expr->u)) {
-        // ok
-      } else {
-        messages.Say(
-            "Actual argument is not a variable or typed expression"_err_en_US);
-      }
-    } else if (const Symbol * assumed{arg.GetAssumedTypeDummy()}) {
-      // An assumed-type dummy is being forwarded.
-      if (!object->type.type().IsAssumedType()) {
-        messages.Say(
-            "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) dummy argument"_err_en_US,
-            assumed->name());
-      }
-    } else {
-      messages.Say(
-          "Actual argument is not an expression or variable"_err_en_US);
-    }
-  } else {
-    // TODO check actual procedure compatibility
-    // TODO check alternate return
-  }
+  std::visit(
+      common::visitors{
+          [&](const characteristics::DummyDataObject &object) {
+            if (const auto *expr{arg.UnwrapExpr()}) {
+              if (auto type{characteristics::TypeAndShape::Characterize(
+                      *expr, context)}) {
+                CheckExplicitDataArg(
+                    object, *expr, *type, proc, context, scope);
+              } else if (object.type.type().IsTypelessIntrinsicArgument() &&
+                  std::holds_alternative<evaluate::BOZLiteralConstant>(
+                      expr->u)) {
+                // ok
+              } else {
+                messages.Say(
+                    "Actual argument is not a variable or typed expression"_err_en_US);
+              }
+            } else if (const Symbol * assumed{arg.GetAssumedTypeDummy()}) {
+              // An assumed-type dummy is being forwarded.
+              if (!object.type.type().IsAssumedType()) {
+                messages.Say(
+                    "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) dummy argument"_err_en_US,
+                    assumed->name());
+              }
+            } else {
+              messages.Say(
+                  "Actual argument is not an expression or variable"_err_en_US);
+            }
+          },
+          [](const auto &) {
+            // TODO check actual procedure compatibility
+            // TODO check alternate return
+          },
+      },
+      dummy.u);
 }
 
 static void RearrangeArguments(const characteristics::Procedure &proc,
@@ -427,26 +433,20 @@ void CheckArguments(const characteristics::Procedure &proc,
   bool explicitInterface{proc.HasExplicitInterface()};
   if (explicitInterface) {
     auto buffer{CheckExplicitInterface(proc, actuals, context, scope)};
+    if (treatingExternalAsImplicit && !buffer.empty()) {
+      if (auto *msg{context.messages().Say(
+              "Warning: if the procedure's interface were explicit, this reference would be in error:"_en_US)}) {
+        buffer.AttachTo(*msg);
+      }
+    }
     if (auto *msgs{context.messages().messages()}) {
       msgs->Merge(std::move(buffer));
     }
   }
   if (!explicitInterface || treatingExternalAsImplicit) {
-    parser::Messages buffer;
-    parser::ContextualMessages messages{context.messages().at(), &buffer};
     for (auto &actual : actuals) {
       if (actual.has_value()) {
-        CheckImplicitInterfaceArg(*actual, messages);
-      }
-    }
-    if (!buffer.empty()) {
-      if (treatingExternalAsImplicit) {
-        if (auto *msg{context.messages().Say(
-                "Warning: if the procedure's interface were explicit, this reference would be in error:"_en_US)}) {
-          buffer.AttachTo(*msg);
-        }
-      } else if (auto *msgs{context.messages().messages()}) {
-        msgs->Merge(std::move(buffer));
+        CheckImplicitInterfaceArg(*actual, context.messages());
       }
     }
   }

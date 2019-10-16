@@ -412,7 +412,7 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
   if (const auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
     if (int rank{array->Rank()}; rank > 0) {
       std::optional<int> dim;
-      if (args[1].has_value()) {
+      if (funcRef.Rank() == 0) {
         // Optional DIM= argument is present: result is scalar.
         if (auto dim64{GetInt64Arg(args[1])}) {
           if (*dim64 < 1 || *dim64 > rank) {
@@ -467,7 +467,7 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
   if (auto *array{UnwrapExpr<Expr<SomeType>>(args[0])}) {
     if (int rank{array->Rank()}; rank > 0) {
       std::optional<int> dim;
-      if (args[1].has_value()) {
+      if (funcRef.Rank() == 0) {
         // Optional DIM= argument is present: result is scalar.
         if (auto dim64{GetInt64Arg(args[1])}) {
           if (*dim64 < 1 || *dim64 > rank) {
