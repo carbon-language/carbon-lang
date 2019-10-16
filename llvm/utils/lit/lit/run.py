@@ -25,7 +25,51 @@ class Run(object):
                     multiprocessing.BoundedSemaphore(v)
                 for k, v in lit_config.parallelism_groups.items()}
 
-    def _execute_tests_in_pool(self, workers, max_time):
+    def execute_tests(self, progress_callback, workers, max_time):
+        """
+        execute_tests(progress_callback, workers, max_time)
+
+        Execute the tests in the run using up to the specified number of
+        parallel tasks, and inform the caller of each individual result. The
+        provided tests should be a subset of the tests available in this run
+        object.
+
+        The progress_callback will be invoked for each completed test.
+
+        If max_time is non-None, it should be a time in seconds after which to
+        stop executing tests.
+
+        Upon completion, each test in the run will have its result
+        computed. Tests which were not actually executed (for any reason) will
+        be given an UNRESOLVED result.
+        """
+        # Don't do anything if we aren't going to run any tests.
+        if not self.tests:
+            return
+
+        self.progress_callback = progress_callback
+
+        self.failure_count = 0
+        self.hit_max_failures = False
+        if workers == 1:
+            self._execute_in_serial(max_time)
+        else:
+            self._execute_in_parallel(workers, max_time)
+
+        # Mark any tests that weren't run as UNRESOLVED.
+        for test in self.tests:
+            if test.result is None:
+                test.setResult(lit.Test.Result(lit.Test.UNRESOLVED, '', 0.0))
+
+    def _execute_in_serial(self, max_time):
+        for test_index, test in enumerate(self.tests):
+            lit.worker._execute_test(test, self.lit_config)
+            self._consume_test_result((test_index, test))
+            if self.hit_max_failures:
+                break
+
+    def _execute_in_parallel(self, workers, max_time):
+        assert workers > 1
         # We need to issue many wait calls, so compute the final deadline and
         # subtract time.time() from that as we go along.
         deadline = None
@@ -54,7 +98,7 @@ class Run(object):
         try:
             async_results = [pool.apply_async(lit.worker.run_one_test,
                                               args=(test_index, test),
-                                              callback=self.consume_test_result)
+                                              callback=self._consume_test_result)
                              for test_index, test in enumerate(self.tests)]
             pool.close()
 
@@ -81,47 +125,7 @@ class Run(object):
         finally:
             pool.join()
 
-    def execute_tests(self, progress_callback, workers, max_time):
-        """
-        execute_tests(progress_callback, workers, max_time)
-
-        Execute the tests in the run using up to the specified number of
-        parallel tasks, and inform the caller of each individual result. The
-        provided tests should be a subset of the tests available in this run
-        object.
-
-        The progress_callback will be invoked for each completed test.
-
-        If max_time is non-None, it should be a time in seconds after which to
-        stop executing tests.
-
-        Upon completion, each test in the run will have its result
-        computed. Tests which were not actually executed (for any reason) will
-        be given an UNRESOLVED result.
-        """
-        # Don't do anything if we aren't going to run any tests.
-        if not self.tests:
-            return
-
-        self.progress_callback = progress_callback
-
-        self.failure_count = 0
-        self.hit_max_failures = False
-        if workers == 1:
-            for test_index, test in enumerate(self.tests):
-                lit.worker._execute_test(test, self.lit_config)
-                self.consume_test_result((test_index, test))
-                if self.hit_max_failures:
-                    break
-        else:
-            self._execute_tests_in_pool(workers, max_time)
-
-        # Mark any tests that weren't run as UNRESOLVED.
-        for test in self.tests:
-            if test.result is None:
-                test.setResult(lit.Test.Result(lit.Test.UNRESOLVED, '', 0.0))
-
-    def consume_test_result(self, pool_result):
+    def _consume_test_result(self, pool_result):
         """Test completion callback for lit.worker.run_one_test
 
         Updates the test result status in the parent process. Each task in the
