@@ -223,7 +223,7 @@ def run_tests(tests, litConfig, opts, numTotalTests):
 
     startTime = time.time()
     try:
-        run_tests_in_tmp_dir(run_callback)
+        run_tests_in_tmp_dir(run_callback, litConfig)
     except KeyboardInterrupt:
         sys.exit(2)
     testing_time = time.time() - startTime
@@ -231,7 +231,7 @@ def run_tests(tests, litConfig, opts, numTotalTests):
     display.finish()
     return testing_time
 
-def run_tests_in_tmp_dir(run_callback):
+def run_tests_in_tmp_dir(run_callback, litConfig):
     # Create a temp directory inside the normal temp directory so that we can
     # try to avoid temporary test file leaks. The user can avoid this behavior
     # by setting LIT_PRESERVES_TMP in the environment, so they can easily use
@@ -260,7 +260,7 @@ def run_tests_in_tmp_dir(run_callback):
                 shutil.rmtree(tmp_dir)
             except:
                 # FIXME: Re-try after timeout on Windows.
-                pass
+                litConfig.warning("Failed to delete temp directory '%s'" % tmp_dir)
 
 def print_summary(tests, opts):
     byCode = {}
