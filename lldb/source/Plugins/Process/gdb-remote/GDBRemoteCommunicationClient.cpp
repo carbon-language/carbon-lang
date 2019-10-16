@@ -1271,6 +1271,7 @@ bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
                 host_triple.getOS() == llvm::Triple::Darwin) {
               switch (m_host_arch.GetMachine()) {
               case llvm::Triple::aarch64:
+              case llvm::Triple::aarch64_32:
               case llvm::Triple::arm:
               case llvm::Triple::thumb:
                 host_triple.setOS(llvm::Triple::IOS);
@@ -3182,7 +3183,8 @@ bool GDBRemoteCommunicationClient::AvoidGPackets(ProcessGDBRemote *process) {
       if (arch.IsValid() &&
           arch.GetTriple().getVendor() == llvm::Triple::Apple &&
           arch.GetTriple().getOS() == llvm::Triple::IOS &&
-          arch.GetTriple().getArch() == llvm::Triple::aarch64) {
+          (arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
+           arch.GetTriple().getArch() == llvm::Triple::aarch64_32)) {
         m_avoid_g_packets = eLazyBoolYes;
         uint32_t gdb_server_version = GetGDBServerProgramVersion();
         if (gdb_server_version != 0) {
