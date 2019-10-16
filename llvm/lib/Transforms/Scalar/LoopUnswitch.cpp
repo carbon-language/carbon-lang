@@ -1616,6 +1616,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         // If BI's parent is the only pred of the successor, fold the two blocks
         // together.
         BasicBlock *Pred = BI->getParent();
+        (void)Pred;
         BasicBlock *Succ = BI->getSuccessor(0);
         BasicBlock *SinglePred = Succ->getSinglePredecessor();
         if (!SinglePred) continue;  // Nothing to do.
