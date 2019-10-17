@@ -145,7 +145,7 @@ section (above) to determine which modifiers are applicable to which operations.
  When extracting files, this option will cause **llvm-ar** to preserve the
  original modification times of the files it writes.
 
-[O]
+.. option:: O
 
  Display member offsets inside the archive.
 
