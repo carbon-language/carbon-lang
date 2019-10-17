@@ -11,20 +11,19 @@ class NopSemaphore(object):
     def acquire(self): pass
     def release(self): pass
 
-def create_run(tests, lit_config, workers, progress_callback, timeout=None):
-    # TODO(yln) assert workers > 0
+def create_run(tests, lit_config, workers, progress_callback, max_time):
     if workers == 1:
-        return SerialRun(tests, lit_config, progress_callback, timeout)
-    return ParallelRun(tests, lit_config, progress_callback, timeout, workers)
+        return SerialRun(tests, lit_config, progress_callback, max_time)
+    return ParallelRun(tests, lit_config, progress_callback, max_time, workers)
 
 class Run(object):
     """A concrete, configured testing run."""
 
-    def __init__(self, tests, lit_config, progress_callback, timeout):
+    def __init__(self, tests, lit_config, progress_callback, max_time):
         self.tests = tests
         self.lit_config = lit_config
         self.progress_callback = progress_callback
-        self.timeout = timeout
+        self.max_time = max_time
 
     def execute(self):
         """
@@ -35,7 +34,7 @@ class Run(object):
 
         The progress_callback will be invoked for each completed test.
 
-        If timeout is non-None, it should be a time in seconds after which to
+        If max_time is non-None, it should be a time in seconds after which to
         stop executing tests.
 
         Returns the elapsed testing time.
@@ -51,8 +50,7 @@ class Run(object):
         self.hit_max_failures = False
 
         start = time.time()
-        deadline = (start + self.timeout) if self.timeout else float('inf')
-        self._execute(deadline)
+        self._execute()
         end = time.time()
 
         # Mark any tests that weren't run as UNRESOLVED.
@@ -92,11 +90,11 @@ class Run(object):
             self.hit_max_failures = True
 
 class SerialRun(Run):
-    def __init__(self, tests, lit_config, progress_callback, timeout):
-        super(SerialRun, self).__init__(tests, lit_config, progress_callback, timeout)
+    def __init__(self, tests, lit_config, progress_callback, max_time):
+        super(SerialRun, self).__init__(tests, lit_config, progress_callback, max_time)
 
-    def _execute(self, deadline):
-        # TODO(yln): ignores deadline
+    def _execute(self):
+        # TODO(yln): ignores max_time
         for test_index, test in enumerate(self.tests):
             lit.worker._execute_test(test, self.lit_config)
             self._consume_test_result((test_index, test))
@@ -104,11 +102,17 @@ class SerialRun(Run):
                 break
 
 class ParallelRun(Run):
-    def __init__(self, tests, lit_config, progress_callback, timeout, workers):
-        super(ParallelRun, self).__init__(tests, lit_config, progress_callback, timeout)
+    def __init__(self, tests, lit_config, progress_callback, max_time, workers):
+        super(ParallelRun, self).__init__(tests, lit_config, progress_callback, max_time)
         self.workers = workers
 
-    def _execute(self, deadline):
+    def _execute(self):
+        # We need to issue many wait calls, so compute the final deadline and
+        # subtract time.time() from that as we go along.
+        deadline = None
+        if self.max_time:
+            deadline = time.time() + self.max_time
+
         semaphores = {
             k: NopSemaphore() if v is None else
             multiprocessing.BoundedSemaphore(v) for k, v in
@@ -142,10 +146,15 @@ class ParallelRun(Run):
             # Wait for all results to come in. The callback that runs in the
             # parent process will update the display.
             for a in async_results:
-                timeout = deadline - time.time()
-                a.wait(timeout)
+                if deadline:
+                    a.wait(deadline - time.time())
+                else:
+                    # Python condition variables cannot be interrupted unless
+                    # they have a timeout. This can make lit unresponsive to
+                    # KeyboardInterrupt, so do a busy wait with a timeout.
+                    while not a.ready():
+                        a.wait(1)
                 if not a.successful():
-                    # TODO(yln): this also raises on a --max-time time
                     a.get() # Exceptions raised here come from the worker.
                 if self.hit_max_failures:
                     break
