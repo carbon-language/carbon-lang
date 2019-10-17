@@ -33,7 +33,14 @@ void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
   DEBUG(dbgs() << "BB " << BB.getName() <<"\n");
   DEBUG(dbgs() << "  Key: " << Twine::utohexstr(Key)
                << " Val: " << Twine::utohexstr(Val) << "\n");
-  Map.insert(std::pair<uint32_t, uint32_t>(Key, Val));
+  // In case of conflicts (same Key mapping to different Vals), the last
+  // update takes precedence. Of course it is not ideal to have conflicts and
+  // those happen when we have an empty BB that either contained only
+  // NOPs or a jump to the next block (successor). Either way, the successor
+  // and this deleted block will both share the same output address (the same key),
+  // and we need to map back. We choose here to privilege the successor by
+  // allowing it to overwrite the previously inserted key in the map.
+  Map[Key] = Val;
 
   // Look for special instructions we are interested in mapping offsets. These
   // are key instructions for the profile identified by

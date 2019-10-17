@@ -53,7 +53,7 @@ class BoltAddressTranslation;
 class DataAggregator : public DataReader {
 
   struct PerfBranchSample {
-    SmallVector<LBREntry, 16> LBR;
+    SmallVector<LBREntry, 32> LBR;
     uint64_t PC;
   };
 

@@ -1204,6 +1204,7 @@ std::error_code DataAggregator::parseBranchEvents() {
   uint64_t NumSamples{0};
   uint64_t NumSamplesNoLBR{0};
   uint64_t NumTraces{0};
+  bool NeedsSkylakeFix{false};
 
   while (hasData()) {
     ++NumTotalSamples;
@@ -1226,11 +1227,25 @@ std::error_code DataAggregator::parseBranchEvents() {
     }
 
     NumEntries += Sample.LBR.size();
+    if (BAT && NumEntries == 32 && !NeedsSkylakeFix) {
+      outs() << "BOLT-WARNING: Using Intel Skylake bug workaround\n";
+      NeedsSkylakeFix = true;
+    }
 
     // LBRs are stored in reverse execution order. NextPC refers to the next
     // recorded executed PC.
     uint64_t NextPC = opts::UseEventPC ? Sample.PC : 0;
+    uint32_t NumEntry{0};
     for (const auto &LBR : Sample.LBR) {
+      ++NumEntry;
+      // Hardware bug workaround: Intel Skylake (which has 32 LBR entries)
+      // sometimes record entry 32 as an exact copy of entry 31. This will cause
+      // us to likely record an invalid trace and generate a stale function for
+      // BAT mode (non BAT disassembles the function and is able to ignore this
+      // trace at aggregation time). Drop first 2 entries (last two, in
+      // chronological order)
+      if (NeedsSkylakeFix && NumEntry <= 2)
+        continue;
       if (NextPC) {
         // Record fall-through trace.
         const auto TraceFrom = LBR.To;
