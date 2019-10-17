@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "check-call.h"
+#include "check-declarations.h"
 #include "scope.h"
 #include "tools.h"
 #include "../evaluate/characteristics.h"
@@ -70,41 +71,6 @@ static void CheckImplicitInterfaceArg(
       if (symbol.attrs().test(Attr::VOLATILE)) {
         messages.Say(
             "VOLATILE argument requires an explicit interface"_err_en_US);
-      }
-    }
-  }
-}
-
-struct TypeConcerns {
-  const Symbol *typeBoundProcedure{nullptr};
-  const Symbol *finalProcedure{nullptr};
-  const Symbol *allocatable{nullptr};
-  const Symbol *coarray{nullptr};
-};
-
-static void InspectType(
-    const DerivedTypeSpec &derived, TypeConcerns &concerns) {
-  if (const auto *scope{derived.typeSymbol().scope()}) {
-    for (const auto &pair : *scope) {
-      const Symbol &component{*pair.second};
-      if (const auto *object{component.detailsIf<ObjectEntityDetails>()}) {
-        if (component.attrs().test(Attr::ALLOCATABLE)) {
-          concerns.allocatable = &component;
-        }
-        if (object->IsCoarray()) {
-          concerns.coarray = &component;
-        }
-        if (component.flags().test(Symbol::Flag::ParentComp)) {
-          if (const auto *type{object->type()}) {
-            if (const auto *parent{type->AsDerived()}) {
-              InspectType(*parent, concerns);
-            }
-          }
-        }
-      } else if (component.has<ProcBindingDetails>()) {
-        concerns.typeBoundProcedure = &component;
-      } else if (component.has<FinalProcDetails>()) {
-        concerns.finalProcedure = &component;
       }
     }
   }
@@ -186,48 +152,48 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   if (!actualType.type().IsUnlimitedPolymorphic() &&
       actualType.type().category() == TypeCategory::Derived) {
     const auto &derived{actualType.type().GetDerivedTypeSpec()};
-    TypeConcerns concerns;
-    InspectType(derived, concerns);
+    TypeInspector inspector;
+    inspector.Inspect(derived);
     if (dummy.type.type().IsAssumedType()) {
       if (!derived.parameters().empty()) {  // 15.5.2.4(2)
         messages.Say(
             "Actual argument associated with TYPE(*) %s may not have a parameterized derived type"_err_en_US,
             dummyName);
       }
-      if (concerns.typeBoundProcedure) {  // 15.5.2.4(2)
+      if (inspector.typeBoundProcedure()) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
                 "Actual argument associated with TYPE(*) %s may not have type-bound procedures"_err_en_US,
                 dummyName)}) {
-          msg->Attach(concerns.typeBoundProcedure->name(),
+          msg->Attach(inspector.typeBoundProcedure()->name(),
               "Declaration of type-bound procedure"_en_US);
         }
       }
-      if (concerns.finalProcedure) {  // 15.5.2.4(2)
+      if (inspector.finalProcedure()) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
                 "Actual argument associated with TYPE(*) %s may not have FINAL procedures"_err_en_US,
                 dummyName)}) {
-          msg->Attach(concerns.finalProcedure->name(),
+          msg->Attach(inspector.finalProcedure()->name(),
               "Declaration of FINAL procedure"_en_US);
         }
       }
     }
-    if (actualIsCoindexed && concerns.allocatable &&
+    if (actualIsCoindexed && inspector.allocatable() &&
         dummy.intent != common::Intent::In && !dummyIsValue) {
       // 15.5.2.4(6)
       if (auto *msg{messages.Say(
               "Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
               dummyName)}) {
-        msg->Attach(concerns.allocatable->name(),
+        msg->Attach(inspector.allocatable()->name(),
             "Declaration of ALLOCATABLE component"_en_US);
       }
     }
-    if (concerns.coarray &&
+    if (inspector.coarray() &&
         actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
       if (auto *msg{messages.Say(
               "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component"_err_en_US,
               dummyName)}) {
-        msg->Attach(
-            concerns.coarray->name(), "Declaration of coarray component"_en_US);
+        msg->Attach(inspector.coarray()->name(),
+            "Declaration of coarray component"_en_US);
       }
     }
   }
