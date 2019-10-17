@@ -164,18 +164,6 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   bool dummyIsValue{
       dummy.attrs.test(characteristics::DummyDataObject::Attr::Value)};
 
-  bool actualIsAsynchronous{false};
-  bool actualIsVolatile{false};
-  const Symbol *actualFirstSymbol{evaluate::GetFirstSymbol(actual)};
-  if (actualFirstSymbol != nullptr) {
-    const Symbol &ultimate{actualFirstSymbol->GetUltimate()};
-    actualIsAsynchronous =
-        actualFirstSymbol->attrs().test(Attr::ASYNCHRONOUS) ||
-        ultimate.attrs().test(Attr::ASYNCHRONOUS);
-    actualIsVolatile = actualFirstSymbol->attrs().test(Attr::VOLATILE) ||
-        ultimate.attrs().test(Attr::VOLATILE);
-  }
-
   if (actualIsPolymorphic && dummyIsPolymorphic &&
       actualIsCoindexed) {  // 15.5.2.4(2)
     messages.Say(
@@ -190,6 +178,11 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   }
 
   // derived type actual argument checks
+  const Symbol *actualFirstSymbol{evaluate::GetFirstSymbol(actual)};
+  bool actualIsAsynchronous{
+      actualFirstSymbol && actualFirstSymbol->attrs().test(Attr::ASYNCHRONOUS)};
+  bool actualIsVolatile{
+      actualFirstSymbol && actualFirstSymbol->attrs().test(Attr::VOLATILE)};
   if (!actualType.type().IsUnlimitedPolymorphic() &&
       actualType.type().category() == TypeCategory::Derived) {
     const auto &derived{actualType.type().GetDerivedTypeSpec()};
@@ -276,12 +269,12 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     }
     if (actualIsPolymorphic) {
       messages.Say(
-          "Element of polymorphic array may not be associated with a %s array"_err_en_US,
+          "Polymorphic scalar may not be associated with a %s array"_err_en_US,
           dummyName);
     }
     if (actualLastSymbol && actualLastSymbol->attrs().test(Attr::POINTER)) {
       messages.Say(
-          "Element of pointer array may not be associated with a %s array"_err_en_US,
+          "Scalar POINTER target may not be associated with a %s array"_err_en_US,
           dummyName);
     }
     if (actualLastObject && actualLastObject->IsAssumedShape()) {

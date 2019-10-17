@@ -104,8 +104,8 @@ public:
   const Attrs &attrs() const { return attrs_; }
 
   int Rank() const { return GetRank(shape_); }
-  bool IsCompatibleWith(parser::ContextualMessages &, const TypeAndShape &,
-      const char * = "POINTER", const char * = "TARGET",
+  bool IsCompatibleWith(parser::ContextualMessages &, const TypeAndShape &that,
+      const char *thisIs = "POINTER", const char *thatIs = "TARGET",
       bool isElemental = false) const;
 
   std::ostream &Dump(std::ostream &) const;

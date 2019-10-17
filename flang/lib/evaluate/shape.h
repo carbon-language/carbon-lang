@@ -190,9 +190,9 @@ std::optional<Shape> GetShape(FoldingContext &context, const A &x) {
 
 // Compilation-time shape conformance checking, when corresponding extents
 // are known.
-bool CheckConformance(parser::ContextualMessages &, const Shape &,
-    const Shape &, const char * = "left operand",
-    const char * = "right operand");
+bool CheckConformance(parser::ContextualMessages &, const Shape &left,
+    const Shape &right, const char *leftIs = "left operand",
+    const char *rightIs = "right operand");
 
 }
 #endif  // FORTRAN_EVALUATE_SHAPE_H_

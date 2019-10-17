@@ -1568,7 +1568,7 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
             characteristics::Procedure::Characterize(
                 ProcedureDesignator{*specific}, context_.intrinsics())}) {
       ActualArguments localActuals{actuals};
-      auto messages{CheckExplicitInterface(
+      auto messages{semantics::CheckExplicitInterface(
           *procedure, localActuals, GetFoldingContext(), scope)};
       if (messages.empty() &&
           CheckCompatibleArguments(*procedure, localActuals)) {

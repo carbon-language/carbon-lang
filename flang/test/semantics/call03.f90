@@ -166,11 +166,11 @@ module m01
     character(10) :: c(:)
     !ERROR: Whole scalar actual argument may not be associated with a dummy argument 'x=' array
     call assumedsize(x)
-    !ERROR: Element of pointer array may not be associated with a dummy argument 'x=' array
+    !ERROR: Scalar POINTER target may not be associated with a dummy argument 'x=' array
     call assumedsize(p(1))
     !ERROR: Element of assumed-shape array may not be associated with a dummy argument 'x=' array
     call assumedsize(ashape(1))
-    !ERROR: Element of polymorphic array may not be associated with a dummy argument 'x=' array
+    !ERROR: Polymorphic scalar may not be associated with a dummy argument 'x=' array
     call polyassumedsize(polyarray(1))
     call charray(c(1:1))  ! not an error if character
     call assumedsize(arr(1))  ! not an error if element in sequence

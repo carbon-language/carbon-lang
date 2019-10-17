@@ -123,7 +123,7 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
 }
 
 bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
-    const TypeAndShape &that, const char *thisDesc, const char *thatDesc,
+    const TypeAndShape &that, const char *thisIs, const char *thatIs,
     bool isElemental) const {
   const auto &len{that.LEN()};
   if (!type_.IsTypeCompatibleWith(that.type_)) {
@@ -131,13 +131,13 @@ bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
     if (len) {
       len->AsFortran(lenstr);
     }
-    messages.Say("%s type '%s' is not compatible with %s type '%s'"_err_en_US,
-        thatDesc, that.type_.AsFortran(lenstr.str()), thisDesc,
-        type_.AsFortran());
+    messages.Say(
+        "%1$s type '%2$s' is not compatible with %3$s type '%4$s'"_err_en_US,
+        thatIs, that.type_.AsFortran(lenstr.str()), thisIs, type_.AsFortran());
     return false;
   }
   return isElemental ||
-      CheckConformance(messages, shape_, that.shape_, thisDesc, thatDesc);
+      CheckConformance(messages, shape_, that.shape_, thisIs, thatIs);
 }
 
 void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {

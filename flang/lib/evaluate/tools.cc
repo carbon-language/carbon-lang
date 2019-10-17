@@ -682,8 +682,9 @@ bool IsNullPointer(const Expr<SomeType> &expr) {
   return std::visit(
       common::visitors{
           [](const NullPointer &) { return true; },
-          [](const ProcedureRef &call) { return IsNullPointer(call); },
-          [](const auto &) { return false; },
+          [](const BOZLiteralConstant &) { return false; },
+          [](const ProcedureDesignator &) { return false; },
+          [](const auto &x) { return IsNullPointer(x); },
       },
       expr.u);
 }

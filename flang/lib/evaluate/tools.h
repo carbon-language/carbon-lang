@@ -303,6 +303,7 @@ template<typename A> const Symbol *UnwrapWholeSymbolDataRef(const A &x) {
   return nullptr;
 }
 
+// GetFirstSymbol(A%B%C[I]%D) -> A
 template<typename A> const Symbol *GetFirstSymbol(const A &x) {
   if (auto dataRef{ExtractDataRef(x)}) {
     return &dataRef->GetFirstSymbol();

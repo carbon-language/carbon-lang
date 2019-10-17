@@ -550,23 +550,23 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
 }
 
 bool CheckConformance(parser::ContextualMessages &messages, const Shape &left,
-    const Shape &right, const char *leftDesc, const char *rightDesc) {
+    const Shape &right, const char *leftIs, const char *rightIs) {
   if (!left.empty() && !right.empty()) {
     int n{GetRank(left)};
     int rn{GetRank(right)};
     if (n != rn) {
-      messages.Say("Rank of %s is %d, but %s has rank %d"_err_en_US, leftDesc,
-          n, rightDesc, rn);
+      messages.Say("Rank of %1$s is %2$d, but %3$s has rank %4$d"_err_en_US,
+          leftIs, n, rightIs, rn);
       return false;
     } else {
       for (int j{0}; j < n; ++j) {
         if (auto leftDim{ToInt64(left[j])}) {
           if (auto rightDim{ToInt64(right[j])}) {
             if (*leftDim != *rightDim) {
-              messages.Say("Dimension %d of %s has extent %jd, "
-                           "but %s has extent %jd"_err_en_US,
-                  j + 1, leftDesc, static_cast<std::intmax_t>(*leftDim),
-                  rightDesc, static_cast<std::intmax_t>(*rightDim));
+              messages.Say("Dimension %1$d of %2$s has extent %3$jd, "
+                           "but %4$s has extent %5$jd"_err_en_US,
+                  j + 1, leftIs, static_cast<std::intmax_t>(*leftDim), rightIs,
+                  static_cast<std::intmax_t>(*rightDim));
               return false;
             }
           }
