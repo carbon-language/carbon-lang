@@ -36,8 +36,6 @@ public:
       llvm::sys::path::remove_dots(CanonPath, /*remove_dot_dot=*/true);
       C.handleFileDependency(*Opts, CanonPath);
     }
-    for (const auto& ExtraDep : Opts->ExtraDeps)
-      C.handleFileDependency(*Opts, ExtraDep);
   }
 
 private:

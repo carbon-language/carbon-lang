@@ -1,7 +1,0 @@
-[
-    {
-      "directory": "DIR",
-      "command": "clang -E DIR/non-header-dependency_input.cpp -fsanitize=bounds -fsanitize-blacklist=DIR/Inputs/sanitize-blacklist.txt",
-      "file": "DIR/non-header-dependency_input.cpp"
-    }
-]
