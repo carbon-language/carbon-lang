@@ -31,13 +31,8 @@ def getDirTree(path, basedir=""):
 def compareTwoFiles(flags, filepaths):
     filelines = []
     for file in filepaths:
-        if file == "-":
-            stdin_fileno = sys.stdin.fileno()
-            with os.fdopen(os.dup(stdin_fileno), 'rb') as stdin_bin:
-                filelines.append(stdin_bin.readlines())
-        else:
-            with open(file, 'rb') as file_bin:
-                filelines.append(file_bin.readlines())
+        with open(file, 'rb') as file_bin:
+            filelines.append(file_bin.readlines())
 
     try:
         return compareTwoTextFiles(flags, filepaths, filelines,
@@ -218,13 +213,10 @@ def main(argv):
     exitCode = 0
     try:
         for file in args:
-            if file != "-" and not os.path.isabs(file):
+            if not os.path.isabs(file):
                 file = os.path.realpath(os.path.join(os.getcwd(), file))
 
             if flags.recursive_diff:
-                if file == "-":
-                    sys.stderr.write("Error: cannot recursively compare '-'\n")
-                    sys.exit(1)
                 dir_trees.append(getDirTree(file))
             else:
                 filepaths.append(file)
