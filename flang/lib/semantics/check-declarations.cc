@@ -114,18 +114,16 @@ void CheckHelper::Check(Symbol &symbol) {
     Check(object->shape());
     Check(object->coshape());
     if (object->isDummy() && symbol.attrs().test(Attr::INTENT_OUT)) {
-      if (const auto *type{object->type()}) {
-        if (const auto *derived{type->AsDerived()}) {
-          TypeInspector inspector;
-          inspector.Inspect(*derived);
-          if (const Symbol * bad{inspector.allocatableCoarray()}) {  // C846
-            if (auto *msg{messages_.Say(
-                    "An INTENT(OUT) dummy argument may not contain an ALLOCATABLE coarray"_err_en_US)}) {
-              msg->Attach(
-                  bad->name(), "Declaration of ALLOCATABLE coarray"_en_US);
-            }
-          }
-        }
+      if (FindUltimateComponent(symbol,
+              std::function<bool(const Symbol &)>{[](const Symbol &symbol) {
+                return IsCoarray(symbol) && IsAllocatable(symbol);
+              }})) {  // C846
+        messages_.Say(
+            "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
+      }
+      if (IsOrContainsEventOrLockComponent(symbol)) {  // C847
+        messages_.Say(
+            "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
       }
     }
   }

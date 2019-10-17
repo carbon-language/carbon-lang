@@ -81,8 +81,10 @@ bool IsSaved(const Symbol &);
 bool CanBeTypeBoundProc(const Symbol *);
 
 // Return an ultimate component of type that matches predicate, or nullptr.
+const Symbol *FindUltimateComponent(const DerivedTypeSpec &type,
+    const std::function<bool(const Symbol &)> &predicate);
 const Symbol *FindUltimateComponent(
-    const DerivedTypeSpec &type, std::function<bool(const Symbol &)> predicate);
+    const Symbol &symbol, const std::function<bool(const Symbol &)> &predicate);
 
 // Returns an immediate component of type that matches predicate, or nullptr.
 const Symbol *FindImmediateComponent(

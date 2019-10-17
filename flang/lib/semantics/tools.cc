@@ -1011,13 +1011,27 @@ PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
 }
 
 const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,
-    std::function<bool(const Symbol &)> predicate) {
+    const std::function<bool(const Symbol &)> &predicate) {
   UltimateComponentIterator ultimates{derived};
   if (auto it{std::find_if(ultimates.begin(), ultimates.end(),
           [&predicate](const Symbol *component) -> bool {
             return predicate(DEREF(component));
           })}) {
     return *it;
+  }
+  return nullptr;
+}
+
+const Symbol *FindUltimateComponent(const Symbol &symbol,
+    const std::function<bool(const Symbol &)> &predicate) {
+  if (predicate(symbol)) {
+    return &symbol;
+  } else if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+    if (const auto *type{object->type()}) {
+      if (const auto *derived{type->AsDerived()}) {
+        return FindUltimateComponent(*derived, predicate);
+      }
+    }
   }
   return nullptr;
 }
@@ -1064,5 +1078,4 @@ bool IsFunctionResultWithSameNameAsFunction(const Symbol &symbol) {
   }
   return false;
 }
-
 }

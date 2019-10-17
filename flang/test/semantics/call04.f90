@@ -40,22 +40,22 @@ module m
   end subroutine
 
   subroutine s02(x) ! C846
-    !ERROR: An INTENT(OUT) dummy argument may not contain an ALLOCATABLE coarray
+    !ERROR: An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray
     type(hasCoarray), intent(out) :: x
   end subroutine
 
   subroutine s03(x) ! C846
-    !ERROR: An INTENT(OUT) dummy argument may not contain an ALLOCATABLE coarray
+    !ERROR: An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray
     type(extendsHasCoarray), intent(out) :: x
   end subroutine
 
   subroutine s04(x) ! C846
-    !ERROR: An INTENT(OUT) dummy argument may not contain an ALLOCATABLE coarray
+    !ERROR: An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray
     type(hasCoarray2), intent(out) :: x
   end subroutine
 
   subroutine s05(x) ! C846
-    !ERROR: An INTENT(OUT) dummy argument may not contain an ALLOCATABLE coarray
+    !ERROR: An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray
     type(extendsHasCoarray2), intent(out) :: x
   end subroutine
 
@@ -63,12 +63,12 @@ end module
 
 subroutine s06(x) ! C847
   use ISO_FORTRAN_ENV, only: lock_type
-  !ERROR: A dummy argument of TYPE(LOCK_TYPE) may not be INTENT(OUT)
+  !ERROR: An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE
   type(lock_type), intent(out) :: x
 end subroutine
 
 subroutine s07(x) ! C847
   use ISO_FORTRAN_ENV, only: event_type
-  !ERROR: A dummy argument of TYPE(EVENT_TYPE) may not be INTENT(OUT)
+  !ERROR: An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE
   type(event_type), intent(out) :: x
 end subroutine
