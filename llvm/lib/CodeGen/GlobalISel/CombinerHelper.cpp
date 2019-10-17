@@ -135,8 +135,8 @@ bool CombinerHelper::matchCombineConcatVectors(MachineInstr &MI, bool &IsUndef,
         Builder.setInsertPt(*MI.getParent(), MI);
         Undef = Builder.buildUndef(OpType.getScalarType());
       }
-      LLT UndefType = MRI.getType(Undef->getOperand(0).getReg());
-      assert(UndefType == OpType.getScalarType() &&
+      assert(MRI.getType(Undef->getOperand(0).getReg()) ==
+                 OpType.getScalarType() &&
              "All undefs should have the same type");
       // Break the undef vector in as many scalar elements as needed
       // for the flattening.
