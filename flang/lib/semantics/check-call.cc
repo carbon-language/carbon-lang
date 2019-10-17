@@ -264,6 +264,13 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           dummyName);
     }
   }
+  if (actualLastObject && actualLastObject->IsCoarray() &&
+      IsAllocatable(*actualLastSymbol) &&
+      dummy.intent == common::Intent::Out) {  // C846
+    messages.Say(
+        "ALLOCATABLE coarray '%s' may not be associated with INTENT(OUT) %s"_err_en_US,
+        actualLastSymbol->name(), dummyName);
+  }
 
   // definability
   const char *reason{nullptr};

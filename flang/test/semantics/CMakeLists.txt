@@ -171,6 +171,7 @@ set(ERROR_TESTS
   call01.f90
   call02.f90
   call03.f90
+  call04.f90
   call13.f90
 )
 
