@@ -38,7 +38,7 @@ int main()
   obj_c = obj;    /* Ok */
   obj_c = obj_p;  // expected-error {{assigning to 'MyClass *' from incompatible type 'id<MyProtocol>'}}
   obj_c = obj_cp; // expected-error {{assigning to 'MyClass *' from incompatible type 'MyOtherClass *'}}
-  obj_c = obj_C;  // FIXME -- should error {{assigning to 'MyClass *' from incompatible type 'Class'}}
+  obj_c = obj_C;  // expected-error {{assigning to 'MyClass *' from incompatible type 'Class'}}
   obj_c = obj_CP; // expected-error {{assigning to 'MyClass *' from incompatible type 'Class<MyProtocol>'}}
 
   /* Assigning to an 'id<MyProtocol>' variable should generate a
@@ -48,8 +48,8 @@ int main()
   obj_p = obj;    /* Ok */
   obj_p = obj_c;  // expected-error {{assigning to 'id<MyProtocol>' from incompatible type 'MyClass *'}}
   obj_p = obj_cp; /* Ok  */
-  obj_p = obj_C;  // FIXME -- should error {{assigning to 'id<MyProtocol>' from incompatible type 'Class'}}
-  obj_p = obj_CP; // FIXME -- should error {{assigning to 'id<MyProtocol>' from incompatible type 'Class<MyProtocol>'}}
+  obj_p = obj_C;  // expected-error {{assigning to 'id<MyProtocol>' from incompatible type 'Class'}}
+  obj_p = obj_CP; // expected-error {{assigning to 'id<MyProtocol>' from incompatible type 'Class<MyProtocol>'}}
 
   /* Assigning to a 'MyOtherClass *' variable should always generate
      a warning, unless done from an 'id' or an 'id<MyProtocol>' (since
@@ -57,17 +57,17 @@ int main()
   obj_cp = obj;    /* Ok */
   obj_cp = obj_c;  // expected-error {{assigning to 'MyOtherClass *' from incompatible type 'MyClass *'}}
   obj_cp = obj_p;  /* Ok */
-  obj_cp = obj_C;  // FIXME -- should error {{assigning to 'MyOtherClass *' from incompatible type 'Class'}}
+  obj_cp = obj_C;  // expected-error {{assigning to 'MyOtherClass *' from incompatible type 'Class'}}
   obj_cp = obj_CP; // expected-error {{assigning to 'MyOtherClass *' from incompatible type 'Class<MyProtocol>'}}
 
   obj_C = obj;     // Ok
-  obj_C = obj_p;   // FIXME -- should error {{assigning to 'Class' from incompatible type 'id<MyProtocol>'}}
-  obj_C = obj_c;   // FIXME -- should error {{assigning to 'Class' from incompatible type 'MyClass *'}}
-  obj_C = obj_cp;  // FIXME -- should error {{assigning to 'Class' from incompatible type 'MyOtherClass *'}}
+  obj_C = obj_p;   // expected-error {{assigning to 'Class' from incompatible type 'id<MyProtocol>'}}
+  obj_C = obj_c;   // expected-error {{assigning to 'Class' from incompatible type 'MyClass *'}}
+  obj_C = obj_cp;  // expected-error {{assigning to 'Class' from incompatible type 'MyOtherClass *'}}
   obj_C = obj_CP;  // Ok
 
   obj_CP = obj;     // Ok
-  obj_CP = obj_p;   // expected-warning {{incompatible pointer types assigning to 'Class<MyProtocol>' from 'id<MyProtocol>'}} FIXME -- should error {{assigning to 'Class<MyProtocol>' from incompatible type 'id<MyProtocol>'}}
+  obj_CP = obj_p;   // expected-error {{assigning to 'Class<MyProtocol>' from incompatible type 'id<MyProtocol>'}}
   obj_CP = obj_c;   // expected-error {{assigning to 'Class<MyProtocol>' from incompatible type 'MyClass *}}
   obj_CP = obj_cp;  // expected-error {{assigning to 'Class<MyProtocol>' from incompatible type 'MyOtherClass *'}}
   obj_CP = obj_C;   // Ok
@@ -92,8 +92,8 @@ int main()
   if (obj_c == obj_cp) foo(); // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'MyOtherClass *')}}
   if (obj_cp == obj_c) foo(); // expected-warning {{comparison of distinct pointer types ('MyOtherClass *' and 'MyClass *')}}
 
-  if (obj_c == obj_C) foo();  // FIXME -- should warn {{comparison of distinct pointer types ('MyClass *' and 'Class')}}
-  if (obj_C == obj_c) foo();  // FIXME -- should warn {{comparison of distinct pointer types ('Class' and 'MyClass *')}}
+  if (obj_c == obj_C) foo();  // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'Class')}}
+  if (obj_C == obj_c) foo();  // expected-warning {{comparison of distinct pointer types ('Class' and 'MyClass *')}}
 
   if (obj_c == obj_CP) foo(); // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'Class<MyProtocol>')}}
   if (obj_CP == obj_c) foo(); // expected-warning {{comparison of distinct pointer types ('Class<MyProtocol>' and 'MyClass *')}}
@@ -103,15 +103,15 @@ int main()
   if (obj_p == obj_cp) foo();  /* Ok */
   if (obj_cp == obj_p) foo();  /* Ok */
 
-  if (obj_p == obj_C) foo();   // FIXME -- should warn {{comparison of distinct pointer types ('id<MyProtocol>' and 'Class')}}
-  if (obj_C == obj_p) foo();   // FIXME -- should warn {{comparison of distinct pointer types ('Class' and 'id<MyProtocol>')}}
+  if (obj_p == obj_C) foo();   // expected-warning {{comparison of distinct pointer types ('id<MyProtocol>' and 'Class')}}
+  if (obj_C == obj_p) foo();   // expected-warning {{comparison of distinct pointer types ('Class' and 'id<MyProtocol>')}}
 
-  if (obj_p == obj_CP) foo();  // FIXME -- should warn {{comparison of distinct pointer types ('id<MyProtocol>' and 'Class<MyProtocol>')}}
-  if (obj_CP == obj_p) foo();  // FIXME -- should warn {{comparison of distinct pointer types ('Class<MyProtocol>' and 'id<MyProtocol>')}}
+  if (obj_p == obj_CP) foo();  // expected-warning {{comparison of distinct pointer types ('id<MyProtocol>' and 'Class<MyProtocol>')}}
+  if (obj_CP == obj_p) foo();  // expected-warning {{comparison of distinct pointer types ('Class<MyProtocol>' and 'id<MyProtocol>')}}
 
   /* Comparisons between MyOtherClass * and Class types is a warning */
-  if (obj_cp == obj_C) foo();  // FIXME -- should warn {{comparison of distinct pointer types ('MyOtherClass *' and 'Class')}}
-  if (obj_C == obj_cp) foo();  // FIXME -- should warn {{comparison of distinct pointer types ('Class' and 'MyOtherClass *')}}
+  if (obj_cp == obj_C) foo();  // expected-warning {{comparison of distinct pointer types ('MyOtherClass *' and 'Class')}}
+  if (obj_C == obj_cp) foo();  // expected-warning {{comparison of distinct pointer types ('Class' and 'MyOtherClass *')}}
 
   if (obj_cp == obj_CP) foo(); // expected-warning {{comparison of distinct pointer types ('MyOtherClass *' and 'Class<MyProtocol>')}}
   if (obj_CP == obj_cp) foo(); // expected-warning {{comparison of distinct pointer types ('Class<MyProtocol>' and 'MyOtherClass *')}}

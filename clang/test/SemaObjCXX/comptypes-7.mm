@@ -47,23 +47,23 @@ int main()
 
   if (obj == i) foo() ; // expected-error {{comparison between pointer and integer ('id' and 'int')}}
   if (i == obj) foo() ; // expected-error {{comparison between pointer and integer ('int' and 'id')}}
-  if (obj == j) foo() ; // expected-error {{invalid operands to binary expression ('id' and 'int *')}}
-  if (j == obj) foo() ; // expected-error {{invalid operands to binary expression ('int *' and 'id')}}
+  if (obj == j) foo() ; // expected-error {{comparison of distinct pointer types ('id' and 'int *')}}
+  if (j == obj) foo() ; // expected-error {{comparison of distinct pointer types ('int *' and 'id')}}
 
   if (obj_c == i) foo() ; // expected-error {{comparison between pointer and integer ('MyClass *' and 'int')}}
   if (i == obj_c) foo() ; // expected-error {{comparison between pointer and integer ('int' and 'MyClass *')}}
-  if (obj_c == j) foo() ; // expected-error {{invalid operands to binary expression ('MyClass *' and 'int *')}}
-  if (j == obj_c) foo() ; // expected-error {{invalid operands to binary expression ('int *' and 'MyClass *')}}
+  if (obj_c == j) foo() ; // expected-error {{comparison of distinct pointer types ('MyClass *' and 'int *')}}
+  if (j == obj_c) foo() ; // expected-error {{comparison of distinct pointer types ('int *' and 'MyClass *')}}
 
   if (obj_p == i) foo() ; // expected-error {{comparison between pointer and integer ('id<MyProtocol>' and 'int')}}
   if (i == obj_p) foo() ; // expected-error {{comparison between pointer and integer ('int' and 'id<MyProtocol>')}}
-  if (obj_p == j) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'int *')}}
-  if (j == obj_p) foo() ; // expected-error {{invalid operands to binary expression ('int *' and 'id<MyProtocol>')}}
+  if (obj_p == j) foo() ; // expected-error {{comparison of distinct pointer types ('id<MyProtocol>' and 'int *')}}
+  if (j == obj_p) foo() ; // expected-error {{comparison of distinct pointer types ('int *' and 'id<MyProtocol>')}}
 
   if (obj_C == i) foo() ; // expected-error {{comparison between pointer and integer ('Class' and 'int')}}
   if (i == obj_C) foo() ; // expected-error {{comparison between pointer and integer ('int' and 'Class')}}
-  if (obj_C == j) foo() ; // expected-error {{invalid operands to binary expression ('Class' and 'int *')}}
-  if (j == obj_C) foo() ; // expected-error {{invalid operands to binary expression ('int *' and 'Class')}}
+  if (obj_C == j) foo() ; // expected-error {{comparison of distinct pointer types ('Class' and 'int *')}}
+  if (j == obj_C) foo() ; // expected-error {{comparison of distinct pointer types ('int *' and 'Class')}}
 
   Class bar1 = nil;
   Class <MyProtocol> bar = nil;
