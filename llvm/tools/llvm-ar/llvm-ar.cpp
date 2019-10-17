@@ -214,6 +214,9 @@ static int CountParam = 0;
 // command line.
 static std::string ArchiveName;
 
+static std::vector<std::unique_ptr<MemoryBuffer>> ArchiveBuffers;
+static std::vector<std::unique_ptr<object::Archive>> Archives;
+
 // This variable holds the list of member files to proecess, as given
 // on the command line.
 static std::vector<StringRef> Members;
@@ -250,15 +253,6 @@ static void getArchive() {
   ArchiveName = PositionalArgs[0];
   PositionalArgs.erase(PositionalArgs.begin());
 }
-
-// Copy over remaining items in PositionalArgs to our Members vector
-static void getMembers() {
-  for (auto &Arg : PositionalArgs)
-    Members.push_back(Arg);
-}
-
-std::vector<std::unique_ptr<MemoryBuffer>> ArchiveBuffers;
-std::vector<std::unique_ptr<object::Archive>> Archives;
 
 static object::Archive &readLibrary(const Twine &Library) {
   auto BufOrErr = MemoryBuffer::getFile(Library, -1, false);
@@ -399,7 +393,7 @@ static ArchiveOperation parseCommandLine() {
   getArchive();
 
   // Everything on the command line at this point is a member.
-  getMembers();
+  Members.assign(PositionalArgs.begin(), PositionalArgs.end());
 
   if (NumOperations == 0 && MaybeJustCreateSymTab) {
     NumOperations = 1;
