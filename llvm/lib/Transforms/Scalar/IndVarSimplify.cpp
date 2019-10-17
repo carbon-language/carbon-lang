@@ -149,7 +149,11 @@ class IndVarSimplify {
   bool rewriteNonIntegerIVs(Loop *L);
 
   bool simplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LoopInfo *LI);
+  /// Try to eliminate loop exits based on analyzeable exit counts
   bool optimizeLoopExits(Loop *L, SCEVExpander &Rewriter);
+  /// Try to form loop invariant tests for loop exits by changing how many
+  /// iterations of the loop run when that is unobservable.
+  bool predicateLoopExits(Loop *L, SCEVExpander &Rewriter);
 
   bool canLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
   bool rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
@@ -2680,6 +2684,34 @@ bool IndVarSimplify::optimizeLoopExits(Loop *L, SCEVExpander &Rewriter) {
   SmallVector<BasicBlock*, 16> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
+  // Remove all exits which aren't both rewriteable and analyzeable.
+  auto NewEnd = llvm::remove_if(ExitingBlocks,
+                                [&](BasicBlock *ExitingBB) {
+    // If our exitting block exits multiple loops, we can only rewrite the
+    // innermost one.  Otherwise, we're changing how many times the innermost
+    // loop runs before it exits. 
+    if (LI->getLoopFor(ExitingBB) != L)
+      return true;
+
+    // Can't rewrite non-branch yet.
+    BranchInst *BI = dyn_cast<BranchInst>(ExitingBB->getTerminator());
+    if (!BI)
+      return true;
+
+    // If already constant, nothing to do.
+    if (isa<Constant>(BI->getCondition()))
+      return true;
+    
+    const SCEV *ExitCount = SE->getExitCount(L, ExitingBB);
+    if (isa<SCEVCouldNotCompute>(ExitCount))
+      return true;
+    return false;
+   });
+  ExitingBlocks.erase(NewEnd, ExitingBlocks.end());
+
+  if (ExitingBlocks.empty())
+    return false;
+  
   // Get a symbolic upper bound on the loop backedge taken count.  
   const SCEV *MaxExitCount = getMaxBackedgeTakenCount(*SE, *DT, L);
   if (isa<SCEVCouldNotCompute>(MaxExitCount))
@@ -2687,25 +2719,11 @@ bool IndVarSimplify::optimizeLoopExits(Loop *L, SCEVExpander &Rewriter) {
 
   bool Changed = false;
   for (BasicBlock *ExitingBB : ExitingBlocks) {
-    // If our exitting block exits multiple loops, we can only rewrite the
-    // innermost one.  Otherwise, we're changing how many times the innermost
-    // loop runs before it exits. 
-    if (LI->getLoopFor(ExitingBB) != L)
-      continue;
+    BranchInst *BI = cast<BranchInst>(ExitingBB->getTerminator());
 
-    // Can't rewrite non-branch yet.
-    BranchInst *BI = dyn_cast<BranchInst>(ExitingBB->getTerminator());
-    if (!BI)
-      continue;
-
-    // If already constant, nothing to do.
-    if (isa<Constant>(BI->getCondition()))
-      continue;
-    
     const SCEV *ExitCount = SE->getExitCount(L, ExitingBB);
-    if (isa<SCEVCouldNotCompute>(ExitCount))
-      continue;
-
+    assert(!isa<SCEVCouldNotCompute>(ExitCount) && "checked above");
+    
     // If we know we'd exit on the first iteration, rewrite the exit to
     // reflect this.  This does not imply the loop must exit through this
     // exit; there may be an earlier one taken on the first iteration.
@@ -2756,6 +2774,14 @@ bool IndVarSimplify::optimizeLoopExits(Loop *L, SCEVExpander &Rewriter) {
     // the loop, then we can discharge all other exits.  (May fall out of
     // previous TODO.)
   }
+  return Changed;
+}
+
+bool IndVarSimplify::predicateLoopExits(Loop *L, SCEVExpander &Rewriter) {
+  SmallVector<BasicBlock*, 16> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
+
+  bool Changed = false;
 
   // Finally, see if we can rewrite our exit conditions into a loop invariant
   // form.  If we have a read-only loop, and we can tell that we must exit down
@@ -2971,7 +2997,12 @@ bool IndVarSimplify::run(Loop *L) {
   // Eliminate redundant IV cycles.
   NumElimIV += Rewriter.replaceCongruentIVs(L, DT, DeadInsts);
 
+  // Try to eliminate loop exits based on analyzeable exit counts
   Changed |= optimizeLoopExits(L, Rewriter);
+  
+  // Try to form loop invariant tests for loop exits by changing how many
+  // iterations of the loop run when that is unobservable.
+  Changed |= predicateLoopExits(L, Rewriter);
 
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  
