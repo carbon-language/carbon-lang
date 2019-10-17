@@ -228,19 +228,19 @@ void GICombinerEmitter::emitNameMatcher(raw_ostream &OS) const {
     Cases.push_back(std::make_pair(EnumeratedRule.getName(), SS.str()));
   }
 
-  OS << "#ifndef NDEBUG\n"
-     << "static Optional<uint64_t> getRuleIdxForIdentifier(StringRef "
+  OS << "static Optional<uint64_t> getRuleIdxForIdentifier(StringRef "
         "RuleIdentifier) {\n"
      << "  uint64_t I;\n"
      << "  // getAtInteger(...) returns false on success\n"
      << "  bool Parsed = !RuleIdentifier.getAsInteger(0, I);\n"
      << "  if (Parsed)\n"
-     << "    return I;\n\n";
+     << "    return I;\n\n"
+     << "#ifndef NDEBUG\n";
   StringMatcher Matcher("RuleIdentifier", Cases, OS);
   Matcher.Emit();
-  OS << "  return None;\n"
-     << "}\n"
-     << "#endif // ifndef NDEBUG\n\n";
+  OS << "#endif // ifndef NDEBUG\n\n"
+     << "  return None;\n"
+     << "}\n";
 }
 
 std::unique_ptr<CombineRule>
@@ -379,19 +379,14 @@ void GICombinerEmitter::run(raw_ostream &OS) {
      << "    for (auto I = First.getValue(); I < Last.getValue(); ++I)\n"
      << "      DisabledRules.set(I);\n"
      << "    return true;\n"
-     << "  }\n"
-     << "#ifndef NDEBUG\n"
-     << "  else {\n"
+     << "  } else {\n"
      << "    const auto I = getRuleIdxForIdentifier(RangePair.first);\n"
      << "    if (!I.hasValue())\n"
      << "      return false;\n"
      << "    DisabledRules.set(I.getValue());\n"
      << "    return true;\n"
      << "  }\n"
-     << "#else // ifndef NDEBUG\n"
-     << "  llvm_unreachable(\"Cannot disable rules in non-asserts builds\");\n"
      << "  return false;\n"
-     << "#endif // ifndef NDEBUG\n\n"
      << "}\n";
 
   OS << "bool " << getClassName()
