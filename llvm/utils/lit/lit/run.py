@@ -12,6 +12,7 @@ class NopSemaphore(object):
     def release(self): pass
 
 def create_run(tests, lit_config, workers, progress_callback, max_time):
+    # TODO(yln) assert workers > 0
     if workers == 1:
         return SerialRun(tests, lit_config, progress_callback, max_time)
     return ParallelRun(tests, lit_config, progress_callback, max_time, workers)
@@ -107,11 +108,7 @@ class ParallelRun(Run):
         self.workers = workers
 
     def _execute(self):
-        # We need to issue many wait calls, so compute the final deadline and
-        # subtract time.time() from that as we go along.
-        deadline = None
-        if self.max_time:
-            deadline = time.time() + self.max_time
+        deadline = (time.time() + self.max_time) if self.max_time else float('inf')
 
         semaphores = {
             k: NopSemaphore() if v is None else
@@ -146,15 +143,10 @@ class ParallelRun(Run):
             # Wait for all results to come in. The callback that runs in the
             # parent process will update the display.
             for a in async_results:
-                if deadline:
-                    a.wait(deadline - time.time())
-                else:
-                    # Python condition variables cannot be interrupted unless
-                    # they have a timeout. This can make lit unresponsive to
-                    # KeyboardInterrupt, so do a busy wait with a timeout.
-                    while not a.ready():
-                        a.wait(1)
+                timeout = deadline - time.time()
+                a.wait(timeout)
                 if not a.successful():
+                    # TODO(yln): this also raises on a --max-time time
                     a.get() # Exceptions raised here come from the worker.
                 if self.hit_max_failures:
                     break
