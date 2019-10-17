@@ -2646,31 +2646,44 @@ bool IndVarSimplify::sinkUnusedInvariants(Loop *L) {
   return MadeAnyChanges;
 }
 
-bool IndVarSimplify::optimizeLoopExits(Loop *L, SCEVExpander &Rewriter) {
+/// Return a symbolic upper bound for the backedge taken count of the loop.
+/// This is more general than getConstantMaxBackedgeTakenCount as it returns
+/// an arbitrary expression as opposed to only constants.
+/// TODO: Move into the ScalarEvolution class.
+static const SCEV* getMaxBackedgeTakenCount(ScalarEvolution &SE,
+                                            DominatorTree &DT, Loop *L) {
   SmallVector<BasicBlock*, 16> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
   // Form an expression for the maximum exit count possible for this loop. We
   // merge the max and exact information to approximate a version of
   // getConstantMaxBackedgeTakenCount which isn't restricted to just constants.
-  // TODO: factor this out as a version of getConstantMaxBackedgeTakenCount which
-  // isn't guaranteed to return a constant.
   SmallVector<const SCEV*, 4> ExitCounts;
-  const SCEV *MaxConstEC = SE->getConstantMaxBackedgeTakenCount(L);
+  const SCEV *MaxConstEC = SE.getConstantMaxBackedgeTakenCount(L);
   if (!isa<SCEVCouldNotCompute>(MaxConstEC))
     ExitCounts.push_back(MaxConstEC);
   for (BasicBlock *ExitingBB : ExitingBlocks) {
-    const SCEV *ExitCount = SE->getExitCount(L, ExitingBB);
+    const SCEV *ExitCount = SE.getExitCount(L, ExitingBB);
     if (!isa<SCEVCouldNotCompute>(ExitCount)) {
-      assert(DT->dominates(ExitingBB, L->getLoopLatch()) &&
+      assert(DT.dominates(ExitingBB, L->getLoopLatch()) &&
              "We should only have known counts for exiting blocks that "
              "dominate latch!");
       ExitCounts.push_back(ExitCount);
     }
   }
   if (ExitCounts.empty())
+    return SE.getCouldNotCompute();
+  return SE.getUMinFromMismatchedTypes(ExitCounts);
+}
+
+bool IndVarSimplify::optimizeLoopExits(Loop *L, SCEVExpander &Rewriter) {
+  SmallVector<BasicBlock*, 16> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
+
+  // Get a symbolic upper bound on the loop backedge taken count.  
+  const SCEV *MaxExitCount = getMaxBackedgeTakenCount(*SE, *DT, L);
+  if (isa<SCEVCouldNotCompute>(MaxExitCount))
     return false;
-  const SCEV *MaxExitCount = SE->getUMinFromMismatchedTypes(ExitCounts);
 
   bool Changed = false;
   for (BasicBlock *ExitingBB : ExitingBlocks) {
