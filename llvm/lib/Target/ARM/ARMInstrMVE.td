@@ -4791,7 +4791,7 @@ def MVE_VPST : MVE_MI<(outs ), (ins vpt_mask:$Mk), NoItinerary,
   let Unpredictable{7} = 0b1;
   let Unpredictable{5} = 0b1;
 
-  let Defs = [VPR];
+  let Uses = [VPR];
   let validForTailPredication = 1;
 }
 
