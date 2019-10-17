@@ -120,13 +120,13 @@ module m01
 
   subroutine test04 ! 15.5.2.4(2)
     type(tbp) :: x
-    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have type-bound procedures
+    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have type-bound procedure 'binding'
     call typestar(x)
   end subroutine
 
   subroutine test05 ! 15.5.2.4(2)
     type(final) :: x
-    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have FINAL procedures
+    !ERROR: Actual argument associated with TYPE(*) dummy argument 'x=' may not have FINAL subroutine 'subr02'
     call typestar(x)
   end subroutine
 
@@ -145,7 +145,7 @@ module m01
   end subroutine
   subroutine test07(x) ! 15.5.2.4(6)
     type(alloc) :: x[*]
-    !ERROR: Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a dummy argument 'x=' with VALUE or INTENT(IN) attributes
+    !ERROR: Coindexed actual argument with ALLOCATABLE ultimate component '%a' must be associated with a dummy argument 'x=' with VALUE or INTENT(IN) attributes
     call out01(x[1])
   end subroutine
 
@@ -238,9 +238,9 @@ module m01
     type(ultimateCoarray), volatile :: b
     call coarr(a)  ! ok
     call volcoarr(b)  ! ok
-    !ERROR: VOLATILE attribute must match for dummy argument 'x=' when actual argument has a coarray ultimate component
+    !ERROR: VOLATILE attribute must match for dummy argument 'x=' when actual argument has a coarray ultimate component '%a'
     call coarr(b)
-    !ERROR: VOLATILE attribute must match for dummy argument 'x=' when actual argument has a coarray ultimate component
+    !ERROR: VOLATILE attribute must match for dummy argument 'x=' when actual argument has a coarray ultimate component '%a'
     call volcoarr(a)
   end subroutine
 

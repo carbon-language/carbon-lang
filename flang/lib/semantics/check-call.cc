@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "check-call.h"
-#include "check-declarations.h"
 #include "scope.h"
 #include "tools.h"
 #include "../evaluate/characteristics.h"
@@ -152,48 +151,64 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   if (!actualType.type().IsUnlimitedPolymorphic() &&
       actualType.type().category() == TypeCategory::Derived) {
     const auto &derived{actualType.type().GetDerivedTypeSpec()};
-    TypeInspector inspector;
-    inspector.Inspect(derived);
     if (dummy.type.type().IsAssumedType()) {
       if (!derived.parameters().empty()) {  // 15.5.2.4(2)
         messages.Say(
             "Actual argument associated with TYPE(*) %s may not have a parameterized derived type"_err_en_US,
             dummyName);
       }
-      if (inspector.typeBoundProcedure()) {  // 15.5.2.4(2)
+      if (const Symbol *
+          tbp{FindImmediateComponent(derived,
+              std::function<bool(const Symbol &)>{[](const Symbol &symbol) {
+                return symbol.has<ProcBindingDetails>();
+              }})}) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
-                "Actual argument associated with TYPE(*) %s may not have type-bound procedures"_err_en_US,
-                dummyName)}) {
-          msg->Attach(inspector.typeBoundProcedure()->name(),
-              "Declaration of type-bound procedure"_en_US);
+                "Actual argument associated with TYPE(*) %s may not have type-bound procedure '%s'"_err_en_US,
+                dummyName, tbp->name())}) {
+          msg->Attach(tbp->name(), "Declaration of type-bound procedure"_en_US);
         }
       }
-      if (inspector.finalProcedure()) {  // 15.5.2.4(2)
+      if (const Symbol *
+          finalizer{FindImmediateComponent(derived,
+              std::function<bool(const Symbol &)>{[](const Symbol &symbol) {
+                return symbol.has<FinalProcDetails>();
+              }})}) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
-                "Actual argument associated with TYPE(*) %s may not have FINAL procedures"_err_en_US,
-                dummyName)}) {
-          msg->Attach(inspector.finalProcedure()->name(),
-              "Declaration of FINAL procedure"_en_US);
+                "Actual argument associated with TYPE(*) %s may not have FINAL subroutine '%s'"_err_en_US,
+                dummyName, finalizer->name())}) {
+          msg->Attach(
+              finalizer->name(), "Declaration of FINAL subroutine"_en_US);
         }
       }
     }
-    if (actualIsCoindexed && inspector.allocatable() &&
-        dummy.intent != common::Intent::In && !dummyIsValue) {
-      // 15.5.2.4(6)
-      if (auto *msg{messages.Say(
-              "Coindexed actual argument with ALLOCATABLE ultimate component must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
-              dummyName)}) {
-        msg->Attach(inspector.allocatable()->name(),
-            "Declaration of ALLOCATABLE component"_en_US);
+    UltimateComponentIterator ultimates{derived};
+    if (actualIsCoindexed && dummy.intent != common::Intent::In &&
+        !dummyIsValue) {
+      if (auto iter{std::find_if(
+              ultimates.begin(), ultimates.end(), [](const Symbol *component) {
+                return DEREF(component).attrs().test(Attr::ALLOCATABLE);
+              })}) {  // 15.5.2.4(6)
+        if (auto *msg{messages.Say(
+                "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
+                iter.BuildResultDesignatorName(), dummyName)}) {
+          msg->Attach(
+              (*iter)->name(), "Declaration of ALLOCATABLE component"_en_US);
+        }
       }
     }
-    if (inspector.coarray() &&
-        actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
-      if (auto *msg{messages.Say(
-              "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component"_err_en_US,
-              dummyName)}) {
-        msg->Attach(inspector.coarray()->name(),
-            "Declaration of coarray component"_en_US);
+    if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
+      if (auto iter{std::find_if(
+              ultimates.begin(), ultimates.end(), [](const Symbol *component) {
+                const auto *object{
+                    DEREF(component).detailsIf<ObjectEntityDetails>()};
+                return object && object->IsCoarray();
+              })}) {
+        if (auto *msg{messages.Say(
+                "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
+                dummyName, iter.BuildResultDesignatorName())}) {
+          msg->Attach(
+              (*iter)->name(), "Declaration of coarray component"_en_US);
+        }
       }
     }
   }

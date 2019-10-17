@@ -831,7 +831,6 @@ ComponentIterator<componentKind>::const_iterator::Create(
 template<ComponentKind componentKind>
 bool ComponentIterator<componentKind>::const_iterator::PlanComponentTraversal(
     const Symbol &component) {
-  // only data component can be traversed
   if (const auto *details{component.detailsIf<ObjectEntityDetails>()}) {
     const DeclTypeSpec *type{details->type()};
     if (!type) {
@@ -1019,6 +1018,33 @@ const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,
             return predicate(DEREF(component));
           })}) {
     return *it;
+  }
+  return nullptr;
+}
+
+const Symbol *FindImmediateComponent(const DerivedTypeSpec &type,
+    const std::function<bool(const Symbol &)> &predicate) {
+  if (const Scope * scope{type.scope()}) {
+    const Symbol *parent{nullptr};
+    for (const auto &pair : *scope) {
+      if (const Symbol * symbol{pair.second}) {
+        if (predicate(*symbol)) {
+          return symbol;
+        }
+        if (symbol->test(Symbol::Flag::ParentComp)) {
+          parent = symbol;
+        }
+      }
+    }
+    if (parent != nullptr) {
+      if (const auto *object{parent->detailsIf<ObjectEntityDetails>()}) {
+        if (const auto *type{object->type()}) {
+          if (const auto *derived{type->AsDerived()}) {
+            return FindImmediateComponent(*derived, predicate);
+          }
+        }
+      }
+    }
   }
   return nullptr;
 }

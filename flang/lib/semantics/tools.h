@@ -84,6 +84,10 @@ bool CanBeTypeBoundProc(const Symbol *);
 const Symbol *FindUltimateComponent(
     const DerivedTypeSpec &type, std::function<bool(const Symbol &)> predicate);
 
+// Returns an immediate component of type that matches predicate, or nullptr.
+const Symbol *FindImmediateComponent(
+    const DerivedTypeSpec &, const std::function<bool(const Symbol &)> &);
+
 inline bool IsPointer(const Symbol &symbol) {
   return symbol.attrs().test(Attr::POINTER);
 }
@@ -213,7 +217,7 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
 // Derived type component iterator that provides a C++ LegacyForwardIterator
 // iterator over the Ordered, Direct, Ultimate or Potential components of a
 // DerivedTypeSpec. These iterators can be used with STL algorithms
-// accepting LegacyForwadIterator.
+// accepting LegacyForwardIterator.
 // The kind of component is a template argument of the iterator factory
 // ComponentIterator.
 //
@@ -229,6 +233,18 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
 //  - then, the components in declaration order (without visiting subcomponents)
 //
 // - Ultimate, Direct and Potential components are as defined in 7.5.1.
+//   - Ultimate components of a derived type are the closure of its components
+//     of intrinsic type, its ALLOCATABLE or POINTER components, and the
+//     ultimate components of its non-ALLOCATABLE non-POINTER derived type
+//     components.  (No ultimate component has a derived type unless it is
+//     ALLOCATABLE or POINTER.)
+//   - Direct components of a derived type are all of its components, and all
+//     of the direct components of its non-ALLOCATABLE non-POINTER derived type
+//     components.  (Direct components are always present.)
+//   - Potential subobject components of a derived type are the closure of
+//     its non-POINTER components and the potential subobject components of
+//     its non-POINTER derived type components.  (The lifetime of each
+//     potential subobject component is that of the entire instance.)
 // Parent and procedure components are considered against these definitions.
 // For this kind of iterator, the component tree is recursively visited in the
 // following order:
@@ -302,11 +318,11 @@ public:
           GetComponentSymbol(componentPath_.back());
     }
 
-    // Build a designator name of the referenced component for messages.
+    // Builds a designator name of the referenced component for messages.
     // The designator helps when the component referred to by the iterator
     // may be "buried" into other components. This gives the full
     // path inside the iterated derived type: e.g "%a%b%c%ultimate"
-    // when (*it)->names() only gives "ultimate". Parent component are
+    // when (*it)->name() only gives "ultimate". Parent components are
     // part of the path for clarity, even though they could be
     // skipped.
     std::string BuildResultDesignatorName() const;
@@ -358,8 +374,8 @@ using PotentialComponentIterator = ComponentIterator<ComponentKind::Potential>;
 // Common component searches, the iterator returned is referring to the first
 // component, according to the order defined for the related ComponentIterator,
 // that verifies the property from the name.
-// If no components verifies the property, an end iterator (casting to false)
-// is returned. Otherwise, the returned iterator cast to true and can be
+// If no component verifies the property, an end iterator (casting to false)
+// is returned. Otherwise, the returned iterator casts to true and can be
 // dereferenced.
 PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
     const DerivedTypeSpec &);
@@ -367,5 +383,6 @@ UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
     const DerivedTypeSpec &);
 UltimateComponentIterator::const_iterator FindPointerUltimateComponent(
     const DerivedTypeSpec &);
+
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_
