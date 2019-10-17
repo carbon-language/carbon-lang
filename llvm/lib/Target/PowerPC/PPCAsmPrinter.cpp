@@ -536,7 +536,6 @@ static MCSymbol *getMCSymbolForTOCPseudoMO(const MachineOperand &MO,
 void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInst TmpInst;
   const bool IsDarwin = TM.getTargetTriple().isOSDarwin();
-  const bool IsPPC64 = Subtarget->isPPC64();
   const bool IsAIX = Subtarget->isAIXABI();
   const Module *M = MF->getFunction().getParent();
   PICLevel::Level PL = M->getPICLevel();
@@ -760,7 +759,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   case PPC::ADDIStocHA: {
-    assert((IsAIX && !IsPPC64 && TM.getCodeModel() == CodeModel::Large) &&
+    assert((IsAIX && !Subtarget->isPPC64() &&
+            TM.getCodeModel() == CodeModel::Large) &&
            "This pseudo should only be selected for 32-bit large code model on"
            " AIX.");
 
@@ -790,7 +790,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   case PPC::LWZtocL: {
-    assert(IsAIX && !IsPPC64 && TM.getCodeModel() == CodeModel::Large &&
+    assert(IsAIX && !Subtarget->isPPC64() &&
+           TM.getCodeModel() == CodeModel::Large &&
            "This pseudo should only be selected for 32-bit large code model on"
            " AIX.");
 
