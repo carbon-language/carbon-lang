@@ -12,18 +12,17 @@ class NopSemaphore(object):
     def release(self): pass
 
 class Run(object):
-    """
-    This class represents a concrete, configured testing run.
-    """
+    """A concrete, configured testing run."""
 
-    def __init__(self, lit_config, tests):
-        self.lit_config = lit_config
+    def __init__(self, tests, lit_config, progress_callback, max_time, workers):
         self.tests = tests
+        self.lit_config = lit_config
+        self.progress_callback = progress_callback
+        self.max_time = max_time
+        self.workers = workers
 
-    def execute_tests(self, progress_callback, workers, max_time):
+    def execute_tests(self):
         """
-        execute_tests(progress_callback, workers, max_time)
-
         Execute the tests in the run using up to the specified number of
         parallel tasks, and inform the caller of each individual result. The
         provided tests should be a subset of the tests available in this run
@@ -34,42 +33,48 @@ class Run(object):
         If max_time is non-None, it should be a time in seconds after which to
         stop executing tests.
 
+        Returns the elapsed testing time.
+
         Upon completion, each test in the run will have its result
         computed. Tests which were not actually executed (for any reason) will
         be given an UNRESOLVED result.
         """
-        # Don't do anything if we aren't going to run any tests.
         if not self.tests:
-            return
-
-        self.progress_callback = progress_callback
+            return 0.0
 
         self.failure_count = 0
         self.hit_max_failures = False
-        if workers == 1:
-            self._execute_in_serial(max_time)
+
+        start = time.time()
+
+        if self.workers == 1:
+            self._execute_in_serial()
         else:
-            self._execute_in_parallel(workers, max_time)
+            self._execute_in_parallel()
+
+        end = time.time()
 
         # Mark any tests that weren't run as UNRESOLVED.
         for test in self.tests:
             if test.result is None:
                 test.setResult(lit.Test.Result(lit.Test.UNRESOLVED, '', 0.0))
 
-    def _execute_in_serial(self, max_time):
+        return end - start
+
+    def _execute_in_serial(self):
+        # TODO(yln): ignores max_time
         for test_index, test in enumerate(self.tests):
             lit.worker._execute_test(test, self.lit_config)
             self._consume_test_result((test_index, test))
             if self.hit_max_failures:
                 break
 
-    def _execute_in_parallel(self, workers, max_time):
-        assert workers > 1
+    def _execute_in_parallel(self):
         # We need to issue many wait calls, so compute the final deadline and
         # subtract time.time() from that as we go along.
         deadline = None
-        if max_time:
-            deadline = time.time() + max_time
+        if self.max_time:
+            deadline = time.time() + self.max_time
 
         semaphores = {
             k: NopSemaphore() if v is None else
@@ -81,7 +86,7 @@ class Run(object):
         # interrupts the workers before we make it into our task callback, they
         # will each raise a KeyboardInterrupt exception and print to stderr at
         # the same time.
-        pool = multiprocessing.Pool(workers, lit.worker.initializer,
+        pool = multiprocessing.Pool(self.workers, lit.worker.initializer,
                                     (self.lit_config, semaphores))
 
         # Install a console-control signal handler on Windows.
