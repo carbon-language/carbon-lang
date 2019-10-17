@@ -11,17 +11,21 @@ class NopSemaphore(object):
     def acquire(self): pass
     def release(self): pass
 
+def create_run(tests, lit_config, workers, progress_callback, max_time):
+    if workers == 1:
+        return SerialRun(tests, lit_config, progress_callback, max_time)
+    return ParallelRun(tests, lit_config, progress_callback, max_time, workers)
+
 class Run(object):
     """A concrete, configured testing run."""
 
-    def __init__(self, tests, lit_config, progress_callback, max_time, workers):
+    def __init__(self, tests, lit_config, progress_callback, max_time):
         self.tests = tests
         self.lit_config = lit_config
         self.progress_callback = progress_callback
         self.max_time = max_time
-        self.workers = workers
 
-    def execute_tests(self):
+    def execute(self):
         """
         Execute the tests in the run using up to the specified number of
         parallel tasks, and inform the caller of each individual result. The
@@ -46,12 +50,7 @@ class Run(object):
         self.hit_max_failures = False
 
         start = time.time()
-
-        if self.workers == 1:
-            self._execute_in_serial()
-        else:
-            self._execute_in_parallel()
-
+        self._execute()
         end = time.time()
 
         # Mark any tests that weren't run as UNRESOLVED.
@@ -61,7 +60,40 @@ class Run(object):
 
         return end - start
 
-    def _execute_in_serial(self):
+    def _consume_test_result(self, pool_result):
+        """Test completion callback for lit.worker.run_one_test
+
+        Updates the test result status in the parent process. Each task in the
+        pool returns the test index and the result, and we use the index to look
+        up the original test object. Also updates the progress bar as tasks
+        complete.
+        """
+        # Don't add any more test results after we've hit the maximum failure
+        # count.  Otherwise we're racing with the main thread, which is going
+        # to terminate the process pool soon.
+        if self.hit_max_failures:
+            return
+
+        (test_index, test_with_result) = pool_result
+        # Update the parent process copy of the test. This includes the result,
+        # XFAILS, REQUIRES, and UNSUPPORTED statuses.
+        assert self.tests[test_index].file_path == test_with_result.file_path, \
+                "parent and child disagree on test path"
+        self.tests[test_index] = test_with_result
+        self.progress_callback(test_with_result)
+
+        # If we've finished all the tests or too many tests have failed, notify
+        # the main thread that we've stopped testing.
+        self.failure_count += (test_with_result.result.code == lit.Test.FAIL)
+        if self.lit_config.maxFailures and \
+                self.failure_count == self.lit_config.maxFailures:
+            self.hit_max_failures = True
+
+class SerialRun(Run):
+    def __init__(self, tests, lit_config, progress_callback, max_time):
+        super(SerialRun, self).__init__(tests, lit_config, progress_callback, max_time)
+
+    def _execute(self):
         # TODO(yln): ignores max_time
         for test_index, test in enumerate(self.tests):
             lit.worker._execute_test(test, self.lit_config)
@@ -69,7 +101,12 @@ class Run(object):
             if self.hit_max_failures:
                 break
 
-    def _execute_in_parallel(self):
+class ParallelRun(Run):
+    def __init__(self, tests, lit_config, progress_callback, max_time, workers):
+        super(ParallelRun, self).__init__(tests, lit_config, progress_callback, max_time)
+        self.workers = workers
+
+    def _execute(self):
         # We need to issue many wait calls, so compute the final deadline and
         # subtract time.time() from that as we go along.
         deadline = None
@@ -128,32 +165,3 @@ class Run(object):
             raise
         finally:
             pool.join()
-
-    def _consume_test_result(self, pool_result):
-        """Test completion callback for lit.worker.run_one_test
-
-        Updates the test result status in the parent process. Each task in the
-        pool returns the test index and the result, and we use the index to look
-        up the original test object. Also updates the progress bar as tasks
-        complete.
-        """
-        # Don't add any more test results after we've hit the maximum failure
-        # count.  Otherwise we're racing with the main thread, which is going
-        # to terminate the process pool soon.
-        if self.hit_max_failures:
-            return
-
-        (test_index, test_with_result) = pool_result
-        # Update the parent process copy of the test. This includes the result,
-        # XFAILS, REQUIRES, and UNSUPPORTED statuses.
-        assert self.tests[test_index].file_path == test_with_result.file_path, \
-                "parent and child disagree on test path"
-        self.tests[test_index] = test_with_result
-        self.progress_callback(test_with_result)
-
-        # If we've finished all the tests or too many tests have failed, notify
-        # the main thread that we've stopped testing.
-        self.failure_count += (test_with_result.result.code == lit.Test.FAIL)
-        if self.lit_config.maxFailures and \
-                self.failure_count == self.lit_config.maxFailures:
-            self.hit_max_failures = True
