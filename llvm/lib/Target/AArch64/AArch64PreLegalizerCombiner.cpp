@@ -47,7 +47,11 @@ public:
                                   GISelKnownBits *KB, MachineDominatorTree *MDT)
       : CombinerInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
                      /*LegalizerInfo*/ nullptr, EnableOpt, OptSize, MinSize),
-        KB(KB), MDT(MDT) {}
+        KB(KB), MDT(MDT) {
+    if (!Generated.parseCommandLineOption())
+      report_fatal_error("Invalid rule identifier");
+  }
+
   virtual bool combine(GISelChangeObserver &Observer, MachineInstr &MI,
                        MachineIRBuilder &B) const override;
 };

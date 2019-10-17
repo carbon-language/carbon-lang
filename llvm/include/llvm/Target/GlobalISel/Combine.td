@@ -32,6 +32,9 @@ class GICombinerHelper<string classname, list<GICombine> rules>
     : GICombineGroup<rules> {
   // The class name to use in the generated output.
   string Classname = classname;
+  // The name of a run-time compiler option that will be generated to disable
+  // specific rules within this combiner.
+  string DisableRuleOption = ?;
 }
 class GICombineRule<dag defs, dag match, dag apply> : GICombine {
   /// Defines the external interface of the match rule. This includes:

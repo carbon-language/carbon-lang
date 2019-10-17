@@ -15,6 +15,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/StringMatcher.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include "CodeGenTarget.h"
 #include "GlobalISel/CodeExpander.h"
@@ -75,6 +76,8 @@ public:
   bool parseDefs();
   bool parseMatcher(const CodeGenTarget &Target);
 
+  RuleID getID() const { return ID; }
+  StringRef getName() const { return TheDef.getName(); }
   const Record &getDef() const { return TheDef; }
   const CodeInit *getMatchingFixupCode() const { return MatchingFixupCode; }
   size_t getNumRoots() const { return Roots.size(); }
@@ -202,6 +205,9 @@ public:
   }
   void run(raw_ostream &OS);
 
+  /// Emit the name matcher (guarded by #ifndef NDEBUG) used to disable rules in
+  /// response to the generated cl::opt.
+  void emitNameMatcher(raw_ostream &OS) const;
   void generateCodeForRule(raw_ostream &OS, const CombineRule *Rule,
                            StringRef Indent) const;
 };
@@ -210,6 +216,32 @@ GICombinerEmitter::GICombinerEmitter(RecordKeeper &RK,
                                      const CodeGenTarget &Target,
                                      StringRef Name, Record *Combiner)
     : Name(Name), Target(Target), Combiner(Combiner) {}
+
+void GICombinerEmitter::emitNameMatcher(raw_ostream &OS) const {
+  std::vector<std::pair<std::string, std::string>> Cases;
+  Cases.reserve(Rules.size());
+
+  for (const CombineRule &EnumeratedRule : make_pointee_range(Rules)) {
+    std::string Code;
+    raw_string_ostream SS(Code);
+    SS << "return " << EnumeratedRule.getID() << ";\n";
+    Cases.push_back(std::make_pair(EnumeratedRule.getName(), SS.str()));
+  }
+
+  OS << "#ifndef NDEBUG\n"
+     << "static Optional<uint64_t> getRuleIdxForIdentifier(StringRef "
+        "RuleIdentifier) {\n"
+     << "  uint64_t I;\n"
+     << "  // getAtInteger(...) returns false on success\n"
+     << "  bool Parsed = !RuleIdentifier.getAsInteger(0, I);\n"
+     << "  if (Parsed)\n"
+     << "    return I;\n\n";
+  StringMatcher Matcher("RuleIdentifier", Cases, OS);
+  Matcher.Emit();
+  OS << "  return None;\n"
+     << "}\n"
+     << "#endif // ifndef NDEBUG\n\n";
+}
 
 std::unique_ptr<CombineRule>
 GICombinerEmitter::makeCombineRule(const Record &TheDef) {
@@ -254,7 +286,7 @@ void GICombinerEmitter::generateCodeForRule(raw_ostream &OS,
     const Record &RuleDef = Rule->getDef();
 
     OS << Indent << "// Rule: " << RuleDef.getName() << "\n"
-       << Indent << "{\n";
+       << Indent << "if (!isRuleDisabled(" << Rule->getID() << ")) {\n";
 
     CodeExpansions Expansions;
     for (const RootInfo &Root : Rule->roots()) {
@@ -309,21 +341,83 @@ void GICombinerEmitter::run(raw_ostream &OS) {
                      "Code Generation", "Time spent generating code",
                      TimeRegions);
   OS << "#ifdef " << Name.upper() << "_GENCOMBINERHELPER_DEPS\n"
+     << "#include \"llvm/ADT/SparseBitVector.h\"\n"
+     << "namespace llvm {\n"
+     << "extern cl::OptionCategory GICombinerOptionCategory;\n"
+     << "} // end namespace llvm\n"
      << "#endif // ifdef " << Name.upper() << "_GENCOMBINERHELPER_DEPS\n\n";
 
   OS << "#ifdef " << Name.upper() << "_GENCOMBINERHELPER_H\n"
      << "class " << getClassName() << " {\n"
+     << "  SparseBitVector<> DisabledRules;\n"
+     << "\n"
      << "public:\n"
+     << "  bool parseCommandLineOption();\n"
+     << "  bool isRuleDisabled(unsigned ID) const;\n"
+     << "  bool setRuleDisabled(StringRef RuleIdentifier);\n"
+     << "\n"
      << "  bool tryCombineAll(\n"
      << "    GISelChangeObserver &Observer,\n"
      << "    MachineInstr &MI,\n"
      << "    MachineIRBuilder &B) const;\n"
-     << "};\n";
+     << "};\n\n";
+
+  emitNameMatcher(OS);
+
+  OS << "bool " << getClassName()
+     << "::setRuleDisabled(StringRef RuleIdentifier) {\n"
+     << "  std::pair<StringRef, StringRef> RangePair = "
+        "RuleIdentifier.split('-');\n"
+     << "  if (!RangePair.second.empty()) {\n"
+     << "    const auto First = getRuleIdxForIdentifier(RangePair.first);\n"
+     << "    const auto Last = getRuleIdxForIdentifier(RangePair.second);\n"
+     << "    if (!First.hasValue() || !Last.hasValue())\n"
+     << "      return false;\n"
+     << "    if (First >= Last)\n"
+     << "      report_fatal_error(\"Beginning of range should be before end of "
+        "range\");\n"
+     << "    for (auto I = First.getValue(); I < Last.getValue(); ++I)\n"
+     << "      DisabledRules.set(I);\n"
+     << "    return true;\n"
+     << "  }\n"
+     << "#ifndef NDEBUG\n"
+     << "  else {\n"
+     << "    const auto I = getRuleIdxForIdentifier(RangePair.first);\n"
+     << "    if (!I.hasValue())\n"
+     << "      return false;\n"
+     << "    DisabledRules.set(I.getValue());\n"
+     << "    return true;\n"
+     << "  }\n"
+     << "#else // ifndef NDEBUG\n"
+     << "  llvm_unreachable(\"Cannot disable rules in non-asserts builds\");\n"
+     << "  return false;\n"
+     << "#endif // ifndef NDEBUG\n\n"
+     << "}\n";
+
+  OS << "bool " << getClassName()
+     << "::isRuleDisabled(unsigned RuleID) const {\n"
+     << "  return DisabledRules.test(RuleID);\n"
+     << "}\n";
   OS << "#endif // ifdef " << Name.upper() << "_GENCOMBINERHELPER_H\n\n";
 
   OS << "#ifdef " << Name.upper() << "_GENCOMBINERHELPER_CPP\n"
      << "\n"
-     << "bool " << getClassName() << "::tryCombineAll(\n"
+     << "cl::list<std::string> " << Name << "Option(\n"
+     << "    \"" << Name.lower() << "-disable-rule\",\n"
+     << "    cl::desc(\"Disable one or more combiner rules temporarily in "
+     << "the " << Name << " pass\"),\n"
+     << "    cl::CommaSeparated,\n"
+     << "    cl::Hidden,\n"
+     << "    cl::cat(GICombinerOptionCategory));\n"
+     << "\n"
+     << "bool " << getClassName() << "::parseCommandLineOption() {\n"
+     << "  for (const auto &Identifier : " << Name << "Option)\n"
+     << "    if (!setRuleDisabled(Identifier))\n"
+     << "      return false;\n"
+     << "  return true;\n"
+     << "}\n\n";
+
+  OS << "bool " << getClassName() << "::tryCombineAll(\n"
      << "    GISelChangeObserver &Observer,\n"
      << "    MachineInstr &MI,\n"
      << "    MachineIRBuilder &B) const {\n"
