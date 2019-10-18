@@ -18,21 +18,13 @@
 // Access and manipulate the fields of an IEEE-754 binary
 // floating-point value via a generalized template.
 
+#include "../common/uint128.h"
 #include <cinttypes>
 #include <climits>
 #include <cstring>
 #include <type_traits>
 
 namespace Fortran::decimal {
-
-template<int BITS> struct HostUnsignedIntTypeHelper {
-  using type = std::conditional_t<(BITS <= 8), std::uint8_t,
-      std::conditional_t<(BITS <= 16), std::uint16_t,
-          std::conditional_t<(BITS <= 32), std::uint32_t,
-              std::conditional_t<(BITS <= 64), std::uint64_t, __uint128_t>>>>;
-};
-template<int BITS>
-using HostUnsignedIntType = typename HostUnsignedIntTypeHelper<BITS>::type;
 
 static constexpr int BitsForPrecision(int prec) {
   switch (prec) {
@@ -52,7 +44,7 @@ static constexpr std::int64_t ScaledLogBaseTenOfTwo{301029995664};
 template<int PRECISION> struct BinaryFloatingPointNumber {
   static constexpr int precision{PRECISION};
   static constexpr int bits{BitsForPrecision(precision)};
-  using RawType = HostUnsignedIntType<bits>;
+  using RawType = common::HostUnsignedIntType<bits>;
   static_assert(CHAR_BIT * sizeof(RawType) >= bits);
   static constexpr bool implicitMSB{precision != 64 /*x87*/};
   static constexpr int significandBits{precision - implicitMSB};
@@ -107,7 +99,7 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
     return BiasedExponent() == maxExponent - 1 &&
         Significand() == significandMask;
   }
-  constexpr bool IsNegative() const { return (raw >> (bits - 1)) & 1; }
+  constexpr bool IsNegative() const { return ((raw >> (bits - 1)) & 1) != 0; }
 
   constexpr void Negate() { raw ^= RawType{1} << (bits - 1); }
 

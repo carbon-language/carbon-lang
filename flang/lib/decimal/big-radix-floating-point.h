@@ -31,6 +31,7 @@
 #include "decimal.h"
 #include "../common/bit-population-count.h"
 #include "../common/leading-zero-bit-count.h"
+#include "../common/uint128.h"
 #include "../common/unsigned-const-division.h"
 #include <cinttypes>
 #include <limits>
@@ -54,7 +55,7 @@ private:
   static constexpr std::uint64_t uint64Radix{TenToThe(log10Radix)};
   static constexpr int minDigitBits{
       64 - common::LeadingZeroBitCount(uint64Radix)};
-  using Digit = HostUnsignedIntType<minDigitBits>;
+  using Digit = common::HostUnsignedIntType<minDigitBits>;
   static constexpr Digit radix{uint64Radix};
   static_assert(radix < std::numeric_limits<Digit>::max() / 1000,
       "radix is somehow too big");
@@ -146,11 +147,11 @@ private:
   // Returns any remainder.
   template<typename UINT> UINT SetTo(UINT n) {
     static_assert(
-        std::is_same_v<UINT, __uint128_t> || std::is_unsigned_v<UINT>);
+        std::is_same_v<UINT, common::uint128_t> || std::is_unsigned_v<UINT>);
     SetToZero();
     while (n != 0) {
       auto q{common::DivideUnsignedBy<UINT, 10>(n)};
-      if (n != 10 * q) {
+      if (n != q * 10) {
         break;
       }
       ++exponent_;
@@ -164,7 +165,7 @@ private:
     } else {
       while (n != 0 && digits_ < digitLimit_) {
         auto q{common::DivideUnsignedBy<UINT, radix>(n)};
-        digit_[digits_++] = n - radix * q;
+        digit_[digits_++] = static_cast<Digit>(n - q * radix);
         n = q;
       }
       return n;

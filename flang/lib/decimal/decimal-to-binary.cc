@@ -151,7 +151,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
 template<int PREC> class IntermediateFloat {
 public:
   static constexpr int precision{PREC};
-  using IntType = HostUnsignedIntType<precision>;
+  using IntType = common::HostUnsignedIntType<precision>;
   static constexpr IntType topBit{IntType{1} << (precision - 1)};
   static constexpr IntType mask{topBit + (topBit - 1)};
 
@@ -227,7 +227,7 @@ ConversionToBinaryResult<PREC> IntermediateFloat<PREC>::ToBinary(
   // The value is nonzero; normalize it.
   while (fraction < topBit && expo > 1) {
     --expo;
-    fraction = 2 * fraction + (guard >> (guardBits - 2));
+    fraction = fraction * 2 + (guard >> (guardBits - 2));
     guard = (((guard >> (guardBits - 2)) & 1) << (guardBits - 1)) | (guard & 1);
   }
   // Apply rounding

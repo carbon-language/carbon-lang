@@ -22,6 +22,7 @@
 
 #include "bit-population-count.h"
 #include "leading-zero-bit-count.h"
+#include "uint128.h"
 #include <cinttypes>
 #include <type_traits>
 
@@ -35,7 +36,7 @@ private:
   static_assert(std::is_unsigned_v<type>);
   static const int bits{static_cast<int>(8 * sizeof(type))};
   static_assert(bits <= 64);
-  using Big = std::conditional_t<(bits <= 32), std::uint64_t, __uint128_t>;
+  using Big = std::conditional_t<(bits <= 32), std::uint64_t, uint128_t>;
 
 public:
   static constexpr FixedPointReciprocal For(type n) {
@@ -50,7 +51,7 @@ public:
   }
 
   constexpr type Divide(type n) const {
-    return (static_cast<Big>(reciprocal_) * n) >> shift_;
+    return static_cast<type>((static_cast<Big>(reciprocal_) * n) >> shift_);
   }
 
 private:
@@ -65,12 +66,12 @@ static_assert(FixedPointReciprocal<std::uint32_t>::For(5).Divide(2000000000u) ==
 static_assert(FixedPointReciprocal<std::uint64_t>::For(10).Divide(
                   10000000000000000u) == 1000000000000000u);
 
-template<typename UINT, UINT DENOM>
+template<typename UINT, std::uint64_t DENOM>
 inline constexpr UINT DivideUnsignedBy(UINT n) {
-  if constexpr (!std::is_same_v<UINT, __uint128_t>) {
+  if constexpr (!std::is_same_v<UINT, uint128_t>) {
     return FixedPointReciprocal<UINT>::For(DENOM).Divide(n);
   } else {
-    return n / DENOM;
+    return n / static_cast<UINT>(DENOM);
   }
 }
 }
