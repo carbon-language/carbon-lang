@@ -1465,6 +1465,9 @@ void BinaryFunction::postProcessJumpTables() {
   if (opts::StrictMode && hasInternalReference()) {
     for (auto Offset : UnknownIndirectBranchOffsets) {
       for (auto PossibleDestination : ExternallyReferencedOffsets) {
+        // Ignore __builtin_unreachable().
+        if (PossibleDestination == getSize())
+          continue;
         TakenBranches.emplace_back(Offset, PossibleDestination);
       }
     }
@@ -1825,8 +1828,11 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     if (!FromBB || !ToBB) {
       if (!FromBB)
         errs() << "BOLT-ERROR: cannot find BB containing the branch.\n";
-      if (!ToBB)
+      if (!ToBB) {
+        dbgs() << "registering branch [0x" << Twine::utohexstr(Branch.first)
+               << "] -> [0x" << Twine::utohexstr(Branch.second) << "]\n";
         errs() << "BOLT-ERROR: cannot find BB containing branch destination.\n";
+      }
       BC.exitWithBugReport("disassembly failed - inconsistent branch found.",
                            *this);
     }
