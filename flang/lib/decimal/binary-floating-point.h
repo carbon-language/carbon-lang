@@ -55,12 +55,14 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   static constexpr int RANGE{static_cast<int>(
       (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
 
-  BinaryFloatingPointNumber() {}  // zero
-  BinaryFloatingPointNumber(const BinaryFloatingPointNumber &that) = default;
-  BinaryFloatingPointNumber(BinaryFloatingPointNumber &&that) = default;
-  BinaryFloatingPointNumber &operator=(
+  constexpr BinaryFloatingPointNumber() {}  // zero
+  constexpr BinaryFloatingPointNumber(
       const BinaryFloatingPointNumber &that) = default;
-  BinaryFloatingPointNumber &operator=(
+  constexpr BinaryFloatingPointNumber(
+      BinaryFloatingPointNumber &&that) = default;
+  constexpr BinaryFloatingPointNumber &operator=(
+      const BinaryFloatingPointNumber &that) = default;
+  constexpr BinaryFloatingPointNumber &operator=(
       BinaryFloatingPointNumber &&that) = default;
 
   template<typename A> explicit constexpr BinaryFloatingPointNumber(A x) {

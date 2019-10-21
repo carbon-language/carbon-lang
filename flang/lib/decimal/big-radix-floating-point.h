@@ -143,7 +143,7 @@ private:
     return digits_ == digitLimit_ && digit_[digits_ - 1] >= radix / 10;
   }
 
-  // Set to an unsigned integer value.
+  // Sets *this to an unsigned integer value.
   // Returns any remainder.
   template<typename UINT> UINT SetTo(UINT n) {
     static_assert(

@@ -23,8 +23,6 @@ add_executable(leading-zero-bit-count-test
 
 target_link_libraries(leading-zero-bit-count-test
   FortranEvaluateTesting
-  FortranEvaluate
-  FortranSemantics
 )
 
 add_executable(bit-population-count-test
@@ -33,9 +31,20 @@ add_executable(bit-population-count-test
 
 target_link_libraries(bit-population-count-test
   FortranEvaluateTesting
-  FortranEvaluate
-  FortranSemantics
 )
+
+add_executable(uint128-test
+  uint128.cc
+)
+
+target_link_libraries(uint128-test
+  FortranEvaluateTesting
+)
+
+# These routines live in lib/common but we test them here.
+add_test(UINT128 uint128-test)
+add_test(Leadz leading-zero-bit-count-test)
+add_test(PopPar bit-population-count-test)
 
 add_executable(expression-test
   expression.cc
@@ -55,7 +64,6 @@ add_executable(integer-test
 target_link_libraries(integer-test
   FortranEvaluateTesting
   FortranEvaluate
-  FortranSemantics
 )
 
 add_executable(intrinsics-test
@@ -77,8 +85,6 @@ add_executable(logical-test
 
 target_link_libraries(logical-test
   FortranEvaluateTesting
-  FortranEvaluate
-  FortranSemantics
 )
 
 # GCC -fno-exceptions breaks the fenv.h interfaces needed to capture
@@ -141,10 +147,7 @@ set(FOLDING_TESTS
   folding08.f90
 )
 
-
 add_test(Expression expression-test)
-add_test(Leadz leading-zero-bit-count-test)
-add_test(PopPar bit-population-count-test)
 add_test(Integer integer-test)
 add_test(Intrinsics intrinsics-test)
 add_test(Logical logical-test)

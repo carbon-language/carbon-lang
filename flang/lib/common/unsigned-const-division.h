@@ -68,10 +68,10 @@ static_assert(FixedPointReciprocal<std::uint64_t>::For(10).Divide(
 
 template<typename UINT, std::uint64_t DENOM>
 inline constexpr UINT DivideUnsignedBy(UINT n) {
-  if constexpr (!std::is_same_v<UINT, uint128_t>) {
-    return FixedPointReciprocal<UINT>::For(DENOM).Divide(n);
-  } else {
+  if constexpr (std::is_same_v<UINT, uint128_t>) {
     return n / static_cast<UINT>(DENOM);
+  } else {
+    return FixedPointReciprocal<UINT>::For(DENOM).Divide(n);
   }
 }
 }

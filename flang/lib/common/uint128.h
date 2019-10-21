@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Portable 128-bit unsigned integer arithmetic
+// Portable 128-bit unsigned integer arithmetic for use in impoverished
+// C++ implementations lacking __uint128_t.
 
 #ifndef FORTRAN_COMMON_UINT128_H_
 #define FORTRAN_COMMON_UINT128_H_
 
-#define AVOID_NATIVE_UINT128 1  // for testing purposes
+#ifndef AVOID_NATIVE_UINT128_T
+#define AVOID_NATIVE_UINT128_T 1  // for testing purposes (pmk!)
+#endif
 
 #include "leading-zero-bit-count.h"
 #include <cstdint>
@@ -29,8 +32,12 @@ class UnsignedInt128 {
 public:
   constexpr UnsignedInt128() {}
   constexpr UnsignedInt128(std::uint64_t n) : low_{n} {}
-  constexpr UnsignedInt128(std::int64_t n) : low_{static_cast<std::uint64_t>(n)}, high_{-static_cast<std::uint64_t>(n<0)} {}
-  constexpr UnsignedInt128(int n) : low_{static_cast<std::uint64_t>(n)}, high_{-static_cast<std::uint64_t>(n<0)} {}
+  constexpr UnsignedInt128(std::int64_t n)
+    : low_{static_cast<std::uint64_t>(n)}, high_{-static_cast<std::uint64_t>(
+                                               n < 0)} {}
+  constexpr UnsignedInt128(int n)
+    : low_{static_cast<std::uint64_t>(n)}, high_{-static_cast<std::uint64_t>(
+                                               n < 0)} {}
   constexpr UnsignedInt128(const UnsignedInt128 &) = default;
   constexpr UnsignedInt128(UnsignedInt128 &&) = default;
   constexpr UnsignedInt128 &operator=(const UnsignedInt128 &) = default;
@@ -79,6 +86,8 @@ public:
   constexpr UnsignedInt128 operator<<(UnsignedInt128 that) const {
     if (that >= 128) {
       return {};
+    } else if (that == 0) {
+      return *this;
     } else {
       std::uint64_t n{that.low_};
       if (n >= 64) {
@@ -91,6 +100,8 @@ public:
   constexpr UnsignedInt128 operator>>(UnsignedInt128 that) const {
     if (that >= 128) {
       return {};
+    } else if (that == 0) {
+      return *this;
     } else {
       std::uint64_t n{that.low_};
       if (n >= 64) {
@@ -119,18 +130,21 @@ public:
       UnsignedInt128 x1y0{x1 * y0}, x1y1{x1 * y1};
       return x0y0 + ((x0y1 + x1y0) << 32) + (x1y1 << 64);
     } else {
-      std::uint64_t x0{low_ & mask32}, x1{low_ >> 32}, x2{high_ & mask32}, x3{high_ >> 32};
-      std::uint64_t y0{that.low_ & mask32}, y1{that.low_ >> 32}, y2{that.high_ & mask32}, y3{that.high_ >> 32};
+      std::uint64_t x0{low_ & mask32}, x1{low_ >> 32}, x2{high_ & mask32},
+          x3{high_ >> 32};
+      std::uint64_t y0{that.low_ & mask32}, y1{that.low_ >> 32},
+          y2{that.high_ & mask32}, y3{that.high_ >> 32};
       UnsignedInt128 x0y0{x0 * y0}, x0y1{x0 * y1}, x0y2{x0 * y2}, x0y3{x0 * y3};
       UnsignedInt128 x1y0{x1 * y0}, x1y1{x1 * y1}, x1y2{x1 * y2};
       UnsignedInt128 x2y0{x2 * y0}, x2y1{x2 * y1};
       UnsignedInt128 x3y0{x3 * y0};
-      return x0y0 + ((x0y1 + x1y0) << 32) + ((x0y2 + x1y1 + x2y0) << 64) + ((x0y3 + x1y2 + x2y1 + x3y0) << 96);
+      return x0y0 + ((x0y1 + x1y0) << 32) + ((x0y2 + x1y1 + x2y0) << 64) +
+          ((x0y3 + x1y2 + x2y1 + x3y0) << 96);
     }
   }
 
   constexpr UnsignedInt128 operator/(UnsignedInt128 that) const {
-    int j{high_ == 0 ? 64 + LeadingZeroBitCount(low_) : LeadingZeroBitCount(high_)};
+    int j{LeadingZeroes()};
     UnsignedInt128 bits{*this};
     bits <<= j;
     UnsignedInt128 numerator{};
@@ -151,7 +165,7 @@ public:
   }
 
   constexpr UnsignedInt128 operator%(UnsignedInt128 that) const {
-    int j{high_ == 0 ? 64 + LeadingZeroBitCount(low_) : LeadingZeroBitCount(high_)};
+    int j{LeadingZeroes()};
     UnsignedInt128 bits{*this};
     bits <<= j;
     UnsignedInt128 remainder{};
@@ -180,12 +194,8 @@ public:
   constexpr bool operator!=(UnsignedInt128 that) const {
     return !(*this == that);
   }
-  constexpr bool operator>=(UnsignedInt128 that) const {
-    return that <= *this;
-  }
-  constexpr bool operator>(UnsignedInt128 that) const {
-    return that < *this;
-  }
+  constexpr bool operator>=(UnsignedInt128 that) const { return that <= *this; }
+  constexpr bool operator>(UnsignedInt128 that) const { return that < *this; }
 
   constexpr UnsignedInt128 &operator&=(const UnsignedInt128 &that) {
     *this = *this & that;
@@ -229,12 +239,22 @@ public:
   }
 
 private:
-  constexpr UnsignedInt128(std::uint64_t hi, std::uint64_t lo) : low_{lo}, high_{hi} {}
+  constexpr UnsignedInt128(std::uint64_t hi, std::uint64_t lo)
+    : low_{lo}, high_{hi} {}
+  constexpr int LeadingZeroes() const {
+    if (high_ == 0) {
+      return 64 + LeadingZeroBitCount(low_);
+    } else {
+      return LeadingZeroBitCount(high_);
+    }
+  }
   static constexpr std::uint64_t topBit{std::uint64_t{1} << 63};
   std::uint64_t low_{0}, high_{0};
 };
 
-#if (defined __GNUC__ || defined __clang__) && defined __SIZEOF_INT128__ && !AVOID_NATIVE_UINT128
+#if AVOID_NATIVE_UINT128_T
+using uint128_t = UnsignedInt128;
+#elif (defined __GNUC__ || defined __clang__) && defined __SIZEOF_INT128__
 using uint128_t = __uint128_t;
 #else
 using uint128_t = UnsignedInt128;
