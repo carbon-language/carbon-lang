@@ -36,7 +36,7 @@ private:
   static_assert(std::is_unsigned_v<type>);
   static const int bits{static_cast<int>(8 * sizeof(type))};
   static_assert(bits <= 64);
-  using Big = std::conditional_t<(bits <= 32), std::uint64_t, uint128_t>;
+  using Big = HostUnsignedIntType<bits * 2>;
 
 public:
   static constexpr FixedPointReciprocal For(type n) {
@@ -71,7 +71,12 @@ inline constexpr UINT DivideUnsignedBy(UINT n) {
   if constexpr (std::is_same_v<UINT, uint128_t>) {
     return n / static_cast<UINT>(DENOM);
   } else {
-    return FixedPointReciprocal<UINT>::For(DENOM).Divide(n);
+    // G++ can recognize that the reciprocal is a compile-time
+    // constant when For() is called inline, but clang requires
+    // a constexpr variable definition to force compile-time
+    // evaluation of the reciprocal.
+    constexpr auto recip{FixedPointReciprocal<UINT>::For(DENOM)};
+    return recip.Divide(n);
   }
 }
 }

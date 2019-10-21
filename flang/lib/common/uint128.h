@@ -19,7 +19,7 @@
 #define FORTRAN_COMMON_UINT128_H_
 
 #ifndef AVOID_NATIVE_UINT128_T
-#define AVOID_NATIVE_UINT128_T 1  // for testing purposes (pmk!)
+#define AVOID_NATIVE_UINT128_T 1  // always use this code for now for testing
 #endif
 
 #include "leading-zero-bit-count.h"
