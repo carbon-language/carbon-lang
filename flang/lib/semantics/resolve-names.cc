@@ -1163,31 +1163,35 @@ void OmpVisitor::ResolveOmpObjectList(
 
 void OmpVisitor::ResolveOmpObject(
     const parser::OmpObject &ompObject, Symbol::Flag ompFlag) {
-  const auto &kind{std::get<parser::OmpObject::Kind>(ompObject.t)};
-  const auto &designator{std::get<parser::Designator>(ompObject.t)};
-  const auto *name{GetDesignatorNameIf(designator)};
-  if (kind == parser::OmpObject::Kind::Object) {
-    if (name) {
+  if (const auto *designator{std::get_if<parser::Designator>(&ompObject.u)}) {
+    if (const auto *name{GetDesignatorNameIf(*designator)}) {
       auto *symbol{ResolveOmp(*name, ompFlag)};
       if (dataSharingAttributeFlags.test(ompFlag)) {
         CheckMultipleAppearances(*name, symbol, ompFlag);
       }
-    } else if (const auto *designatorName{ResolveDesignator(designator)};
+    } else if (const auto *designatorName{ResolveDesignator(*designator)};
                designatorName->symbol) {
+      // Array sections to be changed to substrings as needed
+      if (AnalyzeExpr(context(), *designator)) {
+        if (const auto *substring{
+                std::get_if<parser::Substring>(&designator->u)}) {
+          Say(designator->source,
+              "Fortran Substrings are not allowed on OpenMP "
+              "directives or clauses"_err_en_US);
+        }
+      }
+      // other checks, more TBD
       if (const auto *details{
               designatorName->symbol->detailsIf<ObjectEntityDetails>()}) {
         if (details->IsArray()) {
           // TODO: check Array Sections
         } else if (designatorName->symbol->owner().IsDerivedType()) {
           // TODO: check Structure Component
-        } else {
-          Say(designatorName->source,
-              "Fortran Substrings are not allowed on OpenMP "
-              "directives or clauses"_err_en_US);
         }
       }
     }
-  } else {  // common block
+  } else if (const auto *name{std::get_if<parser::Name>(&ompObject.u)}) {
+    // common block
     if (auto *symbol{ResolveOmpCommonBlockName(name)}) {
       CheckMultipleAppearances(*name, symbol, Symbol::Flag::OmpCommonBlock);
       // 2.15.3 When a named common block appears in a list, it has the same
@@ -1197,7 +1201,7 @@ void OmpVisitor::ResolveOmpObject(
         ResolveOmp(*object, ompFlag);
       }
     } else {
-      Say(designator.source,  // 2.15.3
+      Say(name->source,  // 2.15.3
           "COMMON block must be declared in the same scoping unit "
           "in which the OpenMP directive or clause appears"_err_en_US);
     }
