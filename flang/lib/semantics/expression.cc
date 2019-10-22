@@ -163,7 +163,7 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
     if (auto *component{std::get_if<Component>(&ref.u)}) {
       return Expr<SomeType>{ProcedureDesignator{std::move(*component)}};
     } else {
-      CHECK(std::holds_alternative<const Symbol *>(ref.u));
+      CHECK(std::holds_alternative<SymbolRef>(ref.u));
       return Expr<SomeType>{ProcedureDesignator{symbol}};
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
@@ -218,8 +218,8 @@ MaybeExpr ExpressionAnalyzer::ApplySubscripts(
     DataRef &&dataRef, std::vector<Subscript> &&subscripts) {
   return std::visit(
       common::visitors{
-          [&](const Symbol *symbol) {
-            return CompleteSubscripts(ArrayRef{*symbol, std::move(subscripts)});
+          [&](SymbolRef &&symbol) {
+            return CompleteSubscripts(ArrayRef{symbol, std::move(subscripts)});
           },
           [&](Component &&c) {
             return CompleteSubscripts(
@@ -823,7 +823,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayElement &ae) {
 static NamedEntity IgnoreAnySubscripts(Designator<SomeDerived> &&designator) {
   return std::visit(
       common::visitors{
-          [](const Symbol *symbol) { return NamedEntity{*symbol}; },
+          [](SymbolRef &&symbol) { return NamedEntity{symbol}; },
           [](Component &&component) {
             return NamedEntity{std::move(component)};
           },
@@ -938,10 +938,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &x) {
   if (auto dataRef{ExtractDataRef(Analyze(x.base))}) {
     std::vector<Subscript> subscripts;
-    std::vector<const Symbol *> reversed;
+    SymbolVector reversed;
     if (auto *aRef{std::get_if<ArrayRef>(&dataRef->u)}) {
       subscripts = std::move(aRef->subscript());
-      reversed.push_back(&aRef->GetLastSymbol());
+      reversed.push_back(aRef->GetLastSymbol());
       if (Component * component{aRef->base().UnwrapComponent()}) {
         *dataRef = std::move(component->base());
       } else {
@@ -950,10 +950,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &x) {
     }
     if (dataRef.has_value()) {
       while (auto *component{std::get_if<Component>(&dataRef->u)}) {
-        reversed.push_back(&component->GetLastSymbol());
+        reversed.push_back(component->GetLastSymbol());
         *dataRef = std::move(component->base());
       }
-      if (auto *baseSym{std::get_if<const Symbol *>(&dataRef->u)}) {
+      if (auto *baseSym{std::get_if<SymbolRef>(&dataRef->u)}) {
         reversed.push_back(*baseSym);
       } else {
         Say("Base of coindexed named object has subscripts or cosubscripts"_err_en_US);
@@ -973,7 +973,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &x) {
     }
     if (cosubsOk && !reversed.empty()) {
       int numCosubscripts{static_cast<int>(cosubscripts.size())};
-      const Symbol &symbol{*reversed.front()};
+      const Symbol &symbol{reversed.front()};
       if (numCosubscripts != symbol.Corank()) {
         Say("'%s' has corank %d, but coindexed reference has %d cosubscripts"_err_en_US,
             symbol.name(), symbol.Corank(), numCosubscripts);
@@ -982,9 +982,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &x) {
     // TODO: stat=/team=/team_number=
     // Reverse the chain of symbols so that the base is first and coarray
     // ultimate component is last.
-    return Designate(DataRef{CoarrayRef{
-        std::vector<const Symbol *>{reversed.crbegin(), reversed.crend()},
-        std::move(subscripts), std::move(cosubscripts)}});
+    return Designate(
+        DataRef{CoarrayRef{SymbolVector{reversed.crbegin(), reversed.crend()},
+            std::move(subscripts), std::move(cosubscripts)}});
   }
   return std::nullopt;
 }
@@ -1298,9 +1298,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       symbol = kw->v.symbol;
       if (symbol == nullptr) {
         auto componentIter{std::find_if(components.begin(), components.end(),
-            [=](const Symbol *symbol) { return symbol->name() == source; })};
+            [=](const Symbol &symbol) { return symbol.name() == source; })};
         if (componentIter != components.end()) {
-          symbol = *componentIter;
+          symbol = &*componentIter;
         }
       }
       if (symbol == nullptr) {  // C7101
@@ -1321,7 +1321,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           valueType == DynamicType::From(*parentComponent) &&
           context().IsEnabled(parser::LanguageFeature::AnonymousParents)) {
         auto iter{
-            std::find(components.begin(), components.end(), parentComponent)};
+            std::find(components.begin(), components.end(), *parentComponent)};
         if (iter != components.end()) {
           symbol = parentComponent;
           nextAnonymous = ++iter;
@@ -1334,9 +1334,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         }
       }
       while (symbol == nullptr && nextAnonymous != components.end()) {
-        const Symbol *nextSymbol{*nextAnonymous++};
-        if (!nextSymbol->test(Symbol::Flag::ParentComp)) {
-          symbol = nextSymbol;
+        const Symbol &next{*nextAnonymous};
+        ++nextAnonymous;
+        if (!next.test(Symbol::Flag::ParentComp)) {
+          symbol = &next;
         }
       }
       if (symbol == nullptr) {
@@ -1346,7 +1347,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     if (symbol != nullptr) {
       if (checkConflicts) {
         auto componentIter{
-            std::find(components.begin(), components.end(), symbol)};
+            std::find(components.begin(), components.end(), *symbol)};
         if (unavailable.find(symbol->name()) != unavailable.cend()) {
           // C797, C798
           Say(source,
@@ -1356,14 +1357,14 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         } else if (symbol->test(Symbol::Flag::ParentComp)) {
           // Make earlier components unavailable once a whole parent appears.
           for (auto it{components.begin()}; it != componentIter; ++it) {
-            unavailable.insert((*it)->name());
+            unavailable.insert(it->name());
           }
         } else {
           // Make whole parent components unavailable after any of their
           // constituents appear.
           for (auto it{componentIter}; it != components.end(); ++it) {
-            if ((*it)->test(Symbol::Flag::ParentComp)) {
-              unavailable.insert((*it)->name());
+            if (it->test(Symbol::Flag::ParentComp)) {
+              unavailable.insert(it->name());
             }
           }
         }
@@ -1439,20 +1440,20 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   }
 
   // Ensure that unmentioned component objects have default initializers.
-  for (const Symbol *symbol : components) {
-    if (!symbol->test(Symbol::Flag::ParentComp) &&
-        unavailable.find(symbol->name()) == unavailable.cend() &&
-        !IsAllocatable(*symbol)) {
+  for (const Symbol &symbol : components) {
+    if (!symbol.test(Symbol::Flag::ParentComp) &&
+        unavailable.find(symbol.name()) == unavailable.cend() &&
+        !IsAllocatable(symbol)) {
       if (const auto *details{
-              symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
+              symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
         if (details->init().has_value()) {
-          result.Add(*symbol, common::Clone(*details->init()));
+          result.Add(symbol, common::Clone(*details->init()));
         } else {  // C799
           if (auto *msg{Say(typeName,
                   "Structure constructor lacks a value for "
                   "component '%s'"_err_en_US,
-                  symbol->name())}) {
-            msg->Attach(symbol->name(), "Absent component"_en_US);
+                  symbol.name())}) {
+            msg->Attach(symbol.name(), "Absent component"_en_US);
           }
         }
       }
@@ -1585,18 +1586,18 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(
     const Symbol &symbol, ActualArguments &actuals) {
   const Symbol *elemental{nullptr};  // matching elemental specific proc
   const auto &details{symbol.GetUltimate().get<semantics::GenericDetails>()};
-  for (const Symbol *specific : details.specificProcs()) {
+  for (const Symbol &specific : details.specificProcs()) {
     if (std::optional<characteristics::Procedure> procedure{
             characteristics::Procedure::Characterize(
-                ProcedureDesignator{*specific}, context_.intrinsics())}) {
+                ProcedureDesignator{specific}, context_.intrinsics())}) {
       ActualArguments localActuals{actuals};
       if (semantics::CheckInterfaceForGeneric(
               *procedure, localActuals, GetFoldingContext())) {
         if (CheckCompatibleArguments(*procedure, localActuals)) {
           if (!procedure->IsElemental()) {
-            return specific;  // takes priority over elemental match
+            return &specific;  // takes priority over elemental match
           }
-          elemental = specific;
+          elemental = &specific;
         }
       }
     }
@@ -2423,10 +2424,10 @@ std::optional<ActualArgument> ArgumentAnalyzer::Analyze(
           if (auto ptr{semantics::FindPointerUltimateComponent(*derived)}) {
             if (auto *msg{context_.Say(expr.source,
                     "Coindexed object '%s' with POINTER ultimate component '%s' cannot be passed as argument"_err_en_US,
-                    coarray.name(), (*ptr)->name())}) {
-              msg->Attach((*ptr)->name(),
+                    coarray.name(), ptr->name())}) {
+              msg->Attach(ptr->name(),
                   "Declaration of POINTER '%s' component of %s"_en_US,
-                  (*ptr)->name(), type->AsFortran());
+                  ptr->name(), type->AsFortran());
             }
           }
         }

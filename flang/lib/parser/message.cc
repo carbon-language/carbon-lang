@@ -73,22 +73,14 @@ const char *MessageFormattedText::Convert(std::string &&s) {
   return conversions_.front().c_str();
 }
 
-const char *MessageFormattedText::Convert(const CharBlock &x) {
-  return Convert(x.ToString());
-}
-
-const char *MessageFormattedText::Convert(CharBlock &x) {
-  return Convert(x.ToString());
-}
-
-const char *MessageFormattedText::Convert(CharBlock &&x) {
+const char *MessageFormattedText::Convert(CharBlock x) {
   return Convert(x.ToString());
 }
 
 std::string MessageExpectedText::ToString() const {
   return std::visit(
       common::visitors{
-          [](const CharBlock &cb) {
+          [](CharBlock cb) {
             return MessageFormattedText("expected '%s'"_err_en_US, cb)
                 .MoveString();
           },
@@ -145,14 +137,14 @@ bool Message::SortBefore(const Message &that) const {
   // before others for sorting.
   return std::visit(
       common::visitors{
-          [](const CharBlock &cb1, const CharBlock &cb2) {
+          [](CharBlock cb1, CharBlock cb2) {
             return cb1.begin() < cb2.begin();
           },
-          [](const CharBlock &, const ProvenanceRange &) { return false; },
+          [](CharBlock, const ProvenanceRange &) { return false; },
           [](const ProvenanceRange &pr1, const ProvenanceRange &pr2) {
             return pr1.start() < pr2.start();
           },
-          [](const ProvenanceRange &, const CharBlock &) { return true; },
+          [](const ProvenanceRange &, CharBlock) { return true; },
       },
       location_, that.location_);
 }
@@ -195,7 +187,7 @@ std::optional<ProvenanceRange> Message::GetProvenanceRange(
     const CookedSource &cooked) const {
   return std::visit(
       common::visitors{
-          [&](const CharBlock &cb) { return cooked.GetProvenanceRange(cb); },
+          [&](CharBlock cb) { return cooked.GetProvenanceRange(cb); },
           [](const ProvenanceRange &pr) { return std::make_optional(pr); },
       },
       location_);
@@ -263,7 +255,7 @@ Message &Message::Attach(std::unique_ptr<Message> &&m) {
 bool Message::AtSameLocation(const Message &that) const {
   return std::visit(
       common::visitors{
-          [](const CharBlock &cb1, const CharBlock &cb2) {
+          [](CharBlock cb1, CharBlock cb2) {
             return cb1.begin() == cb2.begin();
           },
           [](const ProvenanceRange &pr1, const ProvenanceRange &pr2) {

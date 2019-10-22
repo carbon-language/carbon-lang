@@ -17,6 +17,7 @@
 
 #include "indirection.h"
 #include "reference-counted.h"
+#include "reference.h"
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -124,6 +125,11 @@ struct UnwrapperHelper {
   static auto Unwrap(const std::variant<Bs...> &u) -> std::add_const_t<A> * {
     return std::visit(
         [](const auto &x) -> std::add_const_t<A> * { return Unwrap<A>(x); }, u);
+  }
+
+  template<typename A, typename B>
+  static auto Unwrap(const Reference<B> &ref) -> Constify<A, B> * {
+    return Unwrap<A>(*ref);
   }
 
   template<typename A, typename B, bool COPY>

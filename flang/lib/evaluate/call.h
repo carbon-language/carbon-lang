@@ -20,6 +20,7 @@
 #include "formatting.h"
 #include "type.h"
 #include "../common/indirection.h"
+#include "../common/reference.h"
 #include "../parser/char-block.h"
 #include "../semantics/attr.h"
 #include <optional>
@@ -48,6 +49,9 @@ extern template class Fortran::common::Indirection<
 
 namespace Fortran::evaluate {
 
+using semantics::Symbol;
+using SymbolRef = common::Reference<const Symbol>;
+
 class ActualArgument {
 public:
   // Dummy arguments that are TYPE(*) can be forwarded as actual arguments.
@@ -55,17 +59,17 @@ public:
   // represented in expressions as a special case of an actual argument.
   class AssumedType {
   public:
-    explicit AssumedType(const semantics::Symbol &);
+    explicit AssumedType(const Symbol &);
     DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(AssumedType)
-    const semantics::Symbol &symbol() const { return *symbol_; }
+    const Symbol &symbol() const { return symbol_; }
     int Rank() const;
     bool operator==(const AssumedType &that) const {
-      return symbol_ == that.symbol_;
+      return &*symbol_ == &*that.symbol_;
     }
     std::ostream &AsFortran(std::ostream &) const;
 
   private:
-    const semantics::Symbol *symbol_;
+    SymbolRef symbol_;
   };
 
   explicit ActualArgument(Expr<SomeType> &&);
@@ -91,7 +95,7 @@ public:
     }
   }
 
-  const semantics::Symbol *GetAssumedTypeDummy() const {
+  const Symbol *GetAssumedTypeDummy() const {
     if (const AssumedType * aType{std::get_if<AssumedType>(&u_)}) {
       return &aType->symbol();
     } else {
@@ -141,17 +145,17 @@ struct SpecificIntrinsic {
 struct ProcedureDesignator {
   EVALUATE_UNION_CLASS_BOILERPLATE(ProcedureDesignator)
   explicit ProcedureDesignator(SpecificIntrinsic &&i) : u{std::move(i)} {}
-  explicit ProcedureDesignator(const semantics::Symbol &n) : u{&n} {}
+  explicit ProcedureDesignator(const Symbol &n) : u{n} {}
   explicit ProcedureDesignator(Component &&);
 
   // Exactly one of these will return a non-null pointer.
   const SpecificIntrinsic *GetSpecificIntrinsic() const;
-  const semantics::Symbol *GetSymbol() const;  // symbol or component symbol
+  const Symbol *GetSymbol() const;  // symbol or component symbol
 
   // Always null if the procedure is intrinsic.
   const Component *GetComponent() const;
 
-  const semantics::Symbol *GetInterfaceSymbol() const;
+  const Symbol *GetInterfaceSymbol() const;
 
   std::string GetName() const;
   std::optional<DynamicType> GetType() const;
@@ -161,7 +165,7 @@ struct ProcedureDesignator {
   std::ostream &AsFortran(std::ostream &) const;
 
   // TODO: When calling X%F, pass X as PASS argument unless NOPASS
-  std::variant<SpecificIntrinsic, const semantics::Symbol *,
+  std::variant<SpecificIntrinsic, SymbolRef,
       common::CopyableIndirection<Component>>
       u;
 };

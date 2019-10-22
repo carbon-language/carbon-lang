@@ -27,6 +27,7 @@
 #include "static-data.h"
 #include "type.h"
 #include "../common/idioms.h"
+#include "../common/reference.h"
 #include "../common/template.h"
 #include "../parser/char-block.h"
 #include <optional>
@@ -41,6 +42,8 @@ class Symbol;
 namespace Fortran::evaluate {
 
 using semantics::Symbol;
+using SymbolRef = common::Reference<const Symbol>;
+using SymbolVector = std::vector<SymbolRef>;
 
 // Forward declarations
 struct DataRef;
@@ -50,20 +53,20 @@ template<typename A> struct Variable;
 // static data (e.g., CHARACTER literal), or compiler-created temporary.
 struct BaseObject {
   CLASS_BOILERPLATE(BaseObject)
-  explicit BaseObject(const Symbol &symbol) : u{&symbol} {}
+  explicit BaseObject(const Symbol &symbol) : u{symbol} {}
   explicit BaseObject(StaticDataObject::Pointer &&p) : u{std::move(p)} {}
   int Rank() const;
   std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const BaseObject &) const;
   std::ostream &AsFortran(std::ostream &) const;
   const Symbol *symbol() const {
-    if (const auto *result{std::get_if<const Symbol *>(&u)}) {
-      return *result;
+    if (const auto *result{std::get_if<SymbolRef>(&u)}) {
+      return &result->get();
     } else {
       return nullptr;
     }
   }
-  std::variant<const Symbol *, StaticDataObject::Pointer> u;
+  std::variant<SymbolRef, StaticDataObject::Pointer> u;
 };
 
 // R913 structure-component & C920: Defined to be a multi-part
@@ -76,23 +79,23 @@ struct BaseObject {
 class Component {
 public:
   CLASS_BOILERPLATE(Component)
-  Component(const DataRef &b, const Symbol &c) : base_{b}, symbol_{&c} {}
-  Component(DataRef &&b, const Symbol &c) : base_{std::move(b)}, symbol_{&c} {}
+  Component(const DataRef &b, const Symbol &c) : base_{b}, symbol_{c} {}
+  Component(DataRef &&b, const Symbol &c) : base_{std::move(b)}, symbol_{c} {}
   Component(common::CopyableIndirection<DataRef> &&b, const Symbol &c)
-    : base_{std::move(b)}, symbol_{&c} {}
+    : base_{std::move(b)}, symbol_{c} {}
 
   const DataRef &base() const { return base_.value(); }
   DataRef &base() { return base_.value(); }
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
-  const Symbol &GetLastSymbol() const { return *symbol_; }
+  const Symbol &GetLastSymbol() const { return symbol_; }
   std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const Component &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
   common::CopyableIndirection<DataRef> base_;
-  const Symbol *symbol_;
+  SymbolRef symbol_;
 };
 
 // A NamedEntity is either a whole Symbol or a component in an instance
@@ -102,10 +105,10 @@ private:
 class NamedEntity {
 public:
   CLASS_BOILERPLATE(NamedEntity)
-  explicit NamedEntity(const Symbol &symbol) : u_{&symbol} {}
+  explicit NamedEntity(const Symbol &symbol) : u_{symbol} {}
   explicit NamedEntity(Component &&c) : u_{std::move(c)} {}
 
-  bool IsSymbol() const { return std::holds_alternative<const Symbol *>(u_); }
+  bool IsSymbol() const { return std::holds_alternative<SymbolRef>(u_); }
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
   const Component &GetComponent() const { return std::get<Component>(u_); }
@@ -119,7 +122,7 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  std::variant<const Symbol *, Component> u_;
+  std::variant<SymbolRef, Component> u_;
 };
 
 // R916 type-param-inquiry
@@ -134,13 +137,13 @@ public:
   using Result = Type<TypeCategory::Integer, KIND>;
   CLASS_BOILERPLATE(TypeParamInquiry)
   TypeParamInquiry(NamedEntity &&x, const Symbol &param)
-    : base_{std::move(x)}, parameter_{&param} {}
+    : base_{std::move(x)}, parameter_{param} {}
   TypeParamInquiry(std::optional<NamedEntity> &&x, const Symbol &param)
-    : base_{std::move(x)}, parameter_{&param} {}
+    : base_{std::move(x)}, parameter_{param} {}
 
   const std::optional<NamedEntity> &base() const { return base_; }
   std::optional<NamedEntity> &base() { return base_; }
-  const Symbol &parameter() const { return *parameter_; }
+  const Symbol &parameter() const { return parameter_; }
 
   static constexpr int Rank() { return 0; }  // always scalar
   bool operator==(const TypeParamInquiry &) const;
@@ -148,7 +151,7 @@ public:
 
 private:
   std::optional<NamedEntity> base_;
-  const Symbol *parameter_;
+  SymbolRef parameter_;
 };
 
 EXPAND_FOR_EACH_INTEGER_KIND(
@@ -243,11 +246,11 @@ private:
 class CoarrayRef {
 public:
   CLASS_BOILERPLATE(CoarrayRef)
-  CoarrayRef(std::vector<const Symbol *> &&, std::vector<Subscript> &&,
+  CoarrayRef(SymbolVector &&, std::vector<Subscript> &&,
       std::vector<Expr<SubscriptInteger>> &&);
 
-  const std::vector<const Symbol *> &base() const { return base_; }
-  std::vector<const Symbol *> &base() { return base_; }
+  const SymbolVector &base() const { return base_; }
+  SymbolVector &base() { return base_; }
   const std::vector<Subscript> &subscript() const { return subscript_; }
   std::vector<Subscript> &subscript() { return subscript_; }
   const std::vector<Expr<SubscriptInteger>> &cosubscript() const {
@@ -272,7 +275,7 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  std::vector<const Symbol *> base_;
+  SymbolVector base_;
   std::vector<Subscript> subscript_;
   std::vector<Expr<SubscriptInteger>> cosubscript_;
   std::optional<common::CopyableIndirection<Expr<SomeInteger>>> stat_, team_;
@@ -286,7 +289,7 @@ private:
 // R901 designator for that.
 struct DataRef {
   EVALUATE_UNION_CLASS_BOILERPLATE(DataRef)
-  explicit DataRef(const Symbol &n) : u{&n} {}
+  explicit DataRef(const Symbol &n) : u{n} {}
 
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
@@ -294,7 +297,7 @@ struct DataRef {
   std::optional<Expr<SubscriptInteger>> LEN() const;
   std::ostream &AsFortran(std::ostream &) const;
 
-  std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u;
+  std::variant<SymbolRef, Component, ArrayRef, CoarrayRef> u;
 };
 
 // R908 substring, R909 parent-string, R910 substring-range.

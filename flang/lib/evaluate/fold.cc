@@ -168,7 +168,7 @@ CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
 DataRef FoldOperation(FoldingContext &context, DataRef &&dataRef) {
   return std::visit(
       common::visitors{
-          [&](const Symbol *symbol) { return DataRef{*symbol}; },
+          [&](SymbolRef symbol) { return DataRef{*symbol}; },
           [&](auto &&x) {
             return DataRef{FoldOperation(context, std::move(x))};
           },
@@ -1396,7 +1396,7 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
     Constant<SomeDerived> &&structures, const Symbol &component,
     const std::vector<Constant<SubscriptInteger>> *subscripts = nullptr) {
   if (auto scalar{structures.GetScalarValue()}) {
-    if (auto *expr{scalar->Find(&component)}) {
+    if (auto *expr{scalar->Find(component)}) {
       if (const Constant<T> *value{UnwrapConstantValue<T>(*expr)}) {
         if (subscripts == nullptr) {
           return std::move(*value);
@@ -1414,7 +1414,7 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
     ConstantSubscripts at{structures.lbounds()};
     do {
       StructureConstructor scalar{structures.At(at)};
-      if (auto *expr{scalar.Find(&component)}) {
+      if (auto *expr{scalar.Find(component)}) {
         if (const Constant<T> *value{UnwrapConstantValue<T>(*expr)}) {
           if (array.get() == nullptr) {
             // This technique ensures that character length or derived type
@@ -1478,9 +1478,9 @@ std::optional<Constant<T>> GetConstantComponent(FoldingContext &context,
     const std::vector<Constant<SubscriptInteger>> *subscripts) {
   if (std::optional<Constant<SomeDerived>> structures{std::visit(
           common::visitors{
-              [&](const Symbol *symbol) {
+              [&](const Symbol &symbol) {
                 return GetFoldedNamedConstantValue<SomeDerived>(
-                    context, *symbol);
+                    context, symbol);
               },
               [&](ArrayRef &aRef) {
                 return FoldArrayRef<SomeDerived>(context, aRef);
@@ -1518,12 +1518,10 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
   }
   return std::visit(
       common::visitors{
-          [&](const Symbol *symbol) {
-            if (symbol != nullptr) {
-              if (auto constant{
-                      GetFoldedNamedConstantValue<T>(context, *symbol)}) {
-                return Expr<T>{std::move(*constant)};
-              }
+          [&](SymbolRef &&symbol) {
+            if (auto constant{
+                    GetFoldedNamedConstantValue<T>(context, *symbol)}) {
+              return Expr<T>{std::move(*constant)};
             }
             return Expr<T>{std::move(designator)};
           },
@@ -1663,9 +1661,9 @@ Expr<SomeDerived> FoldOperation(
     FoldingContext &context, StructureConstructor &&structure) {
   StructureConstructor result{structure.derivedTypeSpec()};
   for (auto &&[symbol, value] : std::move(structure)) {
-    result.Add(*symbol, Fold(context, std::move(value.value())));
+    result.Add(symbol, Fold(context, std::move(value.value())));
   }
-  return Expr<SomeDerived>{Constant<SomeDerived>{result}};
+  return Expr<SomeDerived>{Constant<SomeDerived>{std::move(result)}};
 }
 
 // Substitute a bare type parameter reference with its value if it has one now

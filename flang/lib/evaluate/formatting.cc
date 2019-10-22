@@ -481,6 +481,11 @@ template<typename A> std::ostream &EmitVar(std::ostream &o, const A &x) {
 }
 
 template<typename A>
+std::ostream &EmitVar(std::ostream &o, common::Reference<A> x) {
+  return EmitVar(o, *x);
+}
+
+template<typename A>
 std::ostream &EmitVar(std::ostream &o, const A *p, const char *kw = nullptr) {
   if (p != nullptr) {
     if (kw != nullptr) {
@@ -534,18 +539,18 @@ std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
   if (base_.has_value()) {
     return base_->AsFortran(o) << '%';
   }
-  return EmitVar(o, *parameter_);
+  return EmitVar(o, parameter_);
 }
 
 std::ostream &Component::AsFortran(std::ostream &o) const {
   base_.value().AsFortran(o);
-  return EmitVar(o << '%', *symbol_);
+  return EmitVar(o << '%', symbol_);
 }
 
 std::ostream &NamedEntity::AsFortran(std::ostream &o) const {
   std::visit(
       common::visitors{
-          [&](const Symbol *s) { EmitVar(o, *s); },
+          [&](SymbolRef s) { EmitVar(o, s); },
           [&](const Component &c) { c.AsFortran(o); },
       },
       u_);
@@ -575,13 +580,13 @@ std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
 
 std::ostream &CoarrayRef::AsFortran(std::ostream &o) const {
   bool first{true};
-  for (const Symbol *part : base_) {
+  for (const Symbol &part : base_) {
     if (first) {
       first = false;
     } else {
       o << '%';
     }
-    EmitVar(o, *part);
+    EmitVar(o, part);
   }
   char separator{'('};
   for (const auto &sscript : subscript_) {
@@ -629,7 +634,7 @@ template<typename T>
 std::ostream &Designator<T>::AsFortran(std::ostream &o) const {
   std::visit(
       common::visitors{
-          [&](const Symbol *sym) { EmitVar(o, *sym); },
+          [&](SymbolRef symbol) { EmitVar(o, symbol); },
           [&](const auto &x) { x.AsFortran(o); },
       },
       u);

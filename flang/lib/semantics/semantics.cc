@@ -40,17 +40,17 @@
 
 namespace Fortran::semantics {
 
-using NameToSymbolMap = std::map<const char *, const Symbol *>;
+using NameToSymbolMap = std::map<const char *, SymbolRef>;
 static void DoDumpSymbols(std::ostream &, const Scope &, int indent = 0);
 static void PutIndent(std::ostream &, int indent);
 
 static void GetSymbolNames(const Scope &scope, NameToSymbolMap &symbols) {
   // Finds all symbol names in the scope without collecting duplicates.
   for (const auto &pair : scope) {
-    symbols.emplace(pair.second->name().begin(), pair.second);
+    symbols.emplace(pair.second->name().begin(), *pair.second);
   }
   for (const auto &pair : scope.commonBlocks()) {
-    symbols.emplace(pair.second->name().begin(), pair.second);
+    symbols.emplace(pair.second->name().begin(), *pair.second);
   }
   for (const auto &child : scope.children()) {
     GetSymbolNames(child, symbols);
@@ -227,7 +227,7 @@ void Semantics::DumpSymbolsSources(std::ostream &os) const {
   NameToSymbolMap symbols;
   GetSymbolNames(context_.globalScope(), symbols);
   for (const auto pair : symbols) {
-    const Symbol &symbol{*pair.second};
+    const Symbol &symbol{pair.second};
     if (auto sourceInfo{cooked_.GetSourcePositionRange(symbol.name())}) {
       os << symbol.name().ToString() << ": " << sourceInfo->first.file.path()
          << ", " << sourceInfo->first.line << ", " << sourceInfo->first.column

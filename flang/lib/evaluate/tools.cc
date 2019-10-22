@@ -27,7 +27,7 @@ namespace Fortran::evaluate {
 // IsVariable()
 auto IsVariableHelper::operator()(const ProcedureDesignator &x) const
     -> Result {
-  const semantics::Symbol *symbol{x.GetSymbol()};
+  const Symbol *symbol{x.GetSymbol()};
   return symbol && symbol->attrs().test(semantics::Attr::POINTER);
 }
 
@@ -607,7 +607,7 @@ std::optional<Expr<SomeType>> ConvertToType(
 }
 
 std::optional<Expr<SomeType>> ConvertToType(
-    const semantics::Symbol &symbol, Expr<SomeType> &&x) {
+    const Symbol &symbol, Expr<SomeType> &&x) {
   if (int xRank{x.Rank()}; xRank > 0) {
     if (symbol.Rank() != xRank) {
       return std::nullopt;
@@ -620,7 +620,7 @@ std::optional<Expr<SomeType>> ConvertToType(
 }
 
 std::optional<Expr<SomeType>> ConvertToType(
-    const semantics::Symbol &to, std::optional<Expr<SomeType>> &&x) {
+    const Symbol &to, std::optional<Expr<SomeType>> &&x) {
   if (x.has_value()) {
     return ConvertToType(to, std::move(*x));
   } else {
@@ -628,8 +628,8 @@ std::optional<Expr<SomeType>> ConvertToType(
   }
 }
 
-bool IsAssumedRank(const semantics::Symbol &symbol0) {
-  const semantics::Symbol &symbol{ResolveAssociations(symbol0)};
+bool IsAssumedRank(const Symbol &symbol0) {
+  const Symbol &symbol{ResolveAssociations(symbol0)};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     return details->IsAssumedRank();
   } else {
@@ -641,7 +641,7 @@ bool IsAssumedRank(const ActualArgument &arg) {
   if (const auto *expr{arg.UnwrapExpr()}) {
     return IsAssumedRank(*expr);
   } else {
-    const semantics::Symbol *assumedTypeDummy{arg.GetAssumedTypeDummy()};
+    const Symbol *assumedTypeDummy{arg.GetAssumedTypeDummy()};
     CHECK(assumedTypeDummy != nullptr);
     return IsAssumedRank(*assumedTypeDummy);
   }
@@ -677,8 +677,7 @@ bool IsNullPointer(const Expr<SomeType> &expr) {
 }
 
 // GetLastTarget()
-auto GetLastTargetHelper::operator()(const semantics::Symbol &x) const
-    -> Result {
+auto GetLastTargetHelper::operator()(const Symbol &x) const -> Result {
   if (x.attrs().HasAny({semantics::Attr::POINTER, semantics::Attr::TARGET})) {
     return &x;
   } else {
@@ -686,7 +685,7 @@ auto GetLastTargetHelper::operator()(const semantics::Symbol &x) const
   }
 }
 auto GetLastTargetHelper::operator()(const Component &x) const -> Result {
-  const semantics::Symbol &symbol{x.GetLastSymbol()};
+  const Symbol &symbol{x.GetLastSymbol()};
   if (symbol.attrs().HasAny(
           {semantics::Attr::POINTER, semantics::Attr::TARGET})) {
     return &symbol;
@@ -697,7 +696,7 @@ auto GetLastTargetHelper::operator()(const Component &x) const -> Result {
   }
 }
 
-const semantics::Symbol &ResolveAssociations(const semantics::Symbol &symbol) {
+const Symbol &ResolveAssociations(const Symbol &symbol) {
   if (const auto *details{symbol.detailsIf<semantics::AssocEntityDetails>()}) {
     if (const Symbol * nested{UnwrapWholeSymbolDataRef(details->expr())}) {
       return ResolveAssociations(*nested);
@@ -707,20 +706,20 @@ const semantics::Symbol &ResolveAssociations(const semantics::Symbol &symbol) {
 }
 
 struct CollectSymbolsHelper
-  : public SetTraverse<CollectSymbolsHelper, SetOfSymbols> {
-  using Base = SetTraverse<CollectSymbolsHelper, SetOfSymbols>;
+  : public SetTraverse<CollectSymbolsHelper, semantics::SymbolSet> {
+  using Base = SetTraverse<CollectSymbolsHelper, semantics::SymbolSet>;
   CollectSymbolsHelper() : Base{*this} {}
   using Base::operator();
-  SetOfSymbols operator()(const semantics::Symbol &symbol) const {
-    return {&symbol};
+  semantics::SymbolSet operator()(const Symbol &symbol) const {
+    return {symbol};
   }
 };
-template<typename A> SetOfSymbols CollectSymbols(const A &x) {
+template<typename A> semantics::SymbolSet CollectSymbols(const A &x) {
   return CollectSymbolsHelper{}(x);
 }
-template SetOfSymbols CollectSymbols(const Expr<SomeType> &);
-template SetOfSymbols CollectSymbols(const Expr<SomeInteger> &);
-template SetOfSymbols CollectSymbols(const Expr<SubscriptInteger> &);
+template semantics::SymbolSet CollectSymbols(const Expr<SomeType> &);
+template semantics::SymbolSet CollectSymbols(const Expr<SomeInteger> &);
+template semantics::SymbolSet CollectSymbols(const Expr<SubscriptInteger> &);
 
 // HasVectorSubscript()
 struct HasVectorSubscriptHelper : public AnyTraverse<HasVectorSubscriptHelper> {

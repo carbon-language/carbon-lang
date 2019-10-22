@@ -131,10 +131,9 @@ void CheckHelper::Check(Symbol &symbol) {
     Check(object->shape());
     Check(object->coshape());
     if (object->isDummy() && symbol.attrs().test(Attr::INTENT_OUT)) {
-      if (FindUltimateComponent(symbol,
-              [](const Symbol &symbol) {
-                return IsCoarray(symbol) && IsAllocatable(symbol);
-              })) {  // C846
+      if (FindUltimateComponent(symbol, [](const Symbol &symbol) {
+            return IsCoarray(symbol) && IsAllocatable(symbol);
+          })) {  // C846
         messages_.Say(
             "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
       }

@@ -35,8 +35,8 @@ static void DumpBool(std::ostream &os, const char *label, bool x) {
 
 static void DumpSymbolVector(std::ostream &os, const SymbolVector &list) {
   char sep{' '};
-  for (const auto *elem : list) {
-    os << sep << elem->name();
+  for (const Symbol &elem : list) {
+    os << sep << elem.name();
     sep = ',';
   }
 }
@@ -166,8 +166,8 @@ const Symbol *GenericDetails::CheckSpecific() const {
 }
 Symbol *GenericDetails::CheckSpecific() {
   if (specific_) {
-    for (const auto *proc : specificProcs_) {
-      if (proc == specific_) {
+    for (const Symbol &proc : specificProcs_) {
+      if (&proc == specific_) {
         return nullptr;
       }
     }
@@ -186,8 +186,9 @@ void GenericDetails::CopyFrom(const GenericDetails &from) {
     CHECK(!derivedType_ || derivedType_ == from.derivedType_);
     derivedType_ = from.derivedType_;
   }
-  for (const Symbol *symbol : from.specificProcs_) {
-    if (std::find(specificProcs_.begin(), specificProcs_.end(), symbol) ==
+  for (const Symbol &symbol : from.specificProcs_) {
+    if (std::find_if(specificProcs_.begin(), specificProcs_.end(),
+            [&](const Symbol &mySymbol) { return &mySymbol == &symbol; }) ==
         specificProcs_.end()) {
       specificProcs_.push_back(symbol);
     }

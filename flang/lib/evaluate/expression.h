@@ -756,7 +756,7 @@ public:
     return values_.end();
   }
 
-  const Expr<SomeType> *Find(const Symbol *) const;  // can return null
+  const Expr<SomeType> *Find(const Symbol &) const;  // can return null
 
   StructureConstructor &Add(const semantics::Symbol &, Expr<SomeType> &&);
   int Rank() const { return 0; }

@@ -58,6 +58,9 @@ public:
   Result operator()(const common::Indirection<A, C> &x) const {
     return visitor_(x.value());
   }
+  template<typename A> Result operator()(SymbolRef x) const {
+    return visitor_(*x);
+  }
   template<typename A> Result operator()(const std::unique_ptr<A> &x) const {
     return visitor_(x.get());
   }
@@ -93,9 +96,7 @@ public:
   template<typename T> Result operator()(const Constant<T> &) const {
     return visitor_.Default();
   }
-  Result operator()(const semantics::Symbol &) const {
-    return visitor_.Default();
-  }
+  Result operator()(const Symbol &) const { return visitor_.Default(); }
   Result operator()(const StaticDataObject &) const {
     return visitor_.Default();
   }
@@ -151,7 +152,7 @@ public:
   Result operator()(const ProcedureDesignator &x) const {
     if (const Component * component{x.GetComponent()}) {
       return visitor_(*component);
-    } else if (const semantics::Symbol * symbol{x.GetSymbol()}) {
+    } else if (const Symbol * symbol{x.GetSymbol()}) {
       return visitor_(*symbol);
     } else {
       return visitor_(DEREF(x.GetSpecificIntrinsic()));

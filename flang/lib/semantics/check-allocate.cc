@@ -123,7 +123,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
         context
             .Say("Type-spec in ALLOCATE must not specify a type with a coarray"
                  " ultimate component"_err_en_US)
-            .Attach((*it)->name(),
+            .Attach(it->name(),
                 "Type '%s' has coarray ultimate component '%s' declared here"_en_US,
                 info.typeSpec->AsFortran(), it.BuildResultDesignatorName());
       }
@@ -210,7 +210,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
           context
               .Say(parserSourceExpr->source,
                   "SOURCE or MOLD expression must not have a type with a coarray ultimate component"_err_en_US)
-              .Attach((*it)->name(),
+              .Attach(it->name(),
                   "Type '%s' has coarray ultimate component '%s' declared here"_en_US,
                   info.sourceExprType.value().AsFortran(),
                   it.BuildResultDesignatorName());
@@ -226,7 +226,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
                     "SOURCE expression type must not have potential subobject "
                     "component"
                     " of type EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US)
-                .Attach((*it)->name(),
+                .Attach(it->name(),
                     "Type '%s' has potential ultimate component '%s' declared here"_en_US,
                     info.sourceExprType.value().AsFortran(),
                     it.BuildResultDesignatorName());
@@ -357,13 +357,13 @@ static std::optional<std::int64_t> GetTypeParameterInt64Value(
 // type2 (except for kind type parameters)
 static bool HaveCompatibleKindParameters(
     const DerivedTypeSpec &derivedType1, const DerivedTypeSpec &derivedType2) {
-  for (const Symbol *symbol :
+  for (const Symbol &symbol :
       OrderParameterDeclarations(derivedType1.typeSymbol())) {
-    if (symbol->get<TypeParamDetails>().attr() == common::TypeParamAttr::Kind) {
+    if (symbol.get<TypeParamDetails>().attr() == common::TypeParamAttr::Kind) {
       // At this point, it should have been ensured that these contain integer
       // constants, so die if this is not the case.
-      if (GetTypeParameterInt64Value(*symbol, derivedType1).value() !=
-          GetTypeParameterInt64Value(*symbol, derivedType2).value()) {
+      if (GetTypeParameterInt64Value(symbol, derivedType1).value() !=
+          GetTypeParameterInt64Value(symbol, derivedType2).value()) {
         return false;
       }
     }

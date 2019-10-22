@@ -47,8 +47,8 @@ static bool IsDescriptor(const ObjectEntityDetails &details) {
       if (const Scope * scope{typeSpec->scope()}) {
         if (const Symbol * symbol{scope->symbol()}) {
           if (const auto *details{symbol->detailsIf<DerivedTypeDetails>()}) {
-            for (const Symbol *param : details->paramDecls()) {
-              if (const auto *details{param->detailsIf<TypeParamDetails>()}) {
+            for (const Symbol &param : details->paramDecls()) {
+              if (const auto *details{param.detailsIf<TypeParamDetails>()}) {
                 if (details->attr() == common::TypeParamAttr::Len) {
                   return true;
                 }
@@ -146,7 +146,7 @@ static const semantics::Symbol *FindComponent(
   if (const auto *scope{derived.scope()}) {
     auto iter{scope->find(name)};
     if (iter != scope->end()) {
-      return iter->second;
+      return &*iter->second;
     } else if (const auto *parent{GetParentTypeSpec(derived)}) {
       return FindComponent(*parent, name);
     }
@@ -201,8 +201,7 @@ static bool AreSameDerivedType(const semantics::DerivedTypeSpec &x,
     const auto yLookup{ySymbol.scope()->find(*yComponentName)};
     if (xLookup == xSymbol.scope()->end() ||
         yLookup == ySymbol.scope()->end() ||
-        !AreSameComponent(
-            DEREF(xLookup->second), DEREF(yLookup->second), inProgress)) {
+        !AreSameComponent(*xLookup->second, *yLookup->second, inProgress)) {
       return false;
     }
   }

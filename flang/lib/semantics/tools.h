@@ -238,7 +238,6 @@ template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
 // The kind of component is a template argument of the iterator factory
 // ComponentIterator.
 //
-//
 // - Ordered components are the components from the component order defined
 // in 7.5.4.7, except that the parent component IS added between the parent
 // component order and the components in order of declaration.
@@ -300,10 +299,10 @@ public:
   class const_iterator {
   public:
     using iterator_category = std::forward_iterator_tag;
-    using value_type = const Symbol *;
+    using value_type = SymbolRef;
     using difference_type = void;
-    using pointer = const value_type *;
-    using reference = const value_type &;
+    using pointer = const Symbol *;
+    using reference = const Symbol &;
 
     static const_iterator Create(const DerivedTypeSpec &);
 
@@ -318,8 +317,9 @@ public:
     }
     reference operator*() const {
       CHECK(!componentPath_.empty());
-      return std::get<0>(componentPath_.back());
+      return DEREF(componentPath_.back().component());
     }
+    pointer operator->() const { return &**this; }
 
     bool operator==(const const_iterator &other) const {
       return componentPath_ == other.componentPath_;
@@ -330,44 +330,61 @@ public:
 
     // bool() operator indicates if the iterator can be dereferenced without
     // having to check against an end() iterator.
-    explicit operator bool() const {
-      return !componentPath_.empty() &&
-          GetComponentSymbol(componentPath_.back());
-    }
+    explicit operator bool() const { return !componentPath_.empty(); }
 
     // Builds a designator name of the referenced component for messages.
     // The designator helps when the component referred to by the iterator
     // may be "buried" into other components. This gives the full
     // path inside the iterated derived type: e.g "%a%b%c%ultimate"
-    // when (*it)->name() only gives "ultimate". Parent components are
+    // when it->name() only gives "ultimate". Parent components are
     // part of the path for clarity, even though they could be
     // skipped.
     std::string BuildResultDesignatorName() const;
 
   private:
     using name_iterator = typename std::list<SourceName>::const_iterator;
-    using ComponentPathNode =
-        std::tuple<const Symbol *, const DerivedTypeSpec *, name_iterator>;
-    using ComponentPath = std::vector<ComponentPathNode>;
 
-    static const Symbol *GetComponentSymbol(const ComponentPathNode &node) {
-      return std::get<0>(node);
-    }
-    static void SetComponentSymbol(ComponentPathNode &node, const Symbol *sym) {
-      std::get<0>(node) = sym;
-    }
-    static const Symbol &GetTypeSymbol(const ComponentPathNode &node) {
-      return std::get<1>(node)->typeSymbol();
-    }
-    static const Scope *GetScope(const ComponentPathNode &node) {
-      return std::get<1>(node)->scope();
-    }
-    static name_iterator &GetIterator(ComponentPathNode &node) {
-      return std::get<2>(node);
-    }
-    bool PlanComponentTraversal(const Symbol &component);
+    class ComponentPathNode {
+    public:
+      explicit ComponentPathNode(const DerivedTypeSpec &derived)
+        : derived_{derived} {
+        const std::list<SourceName> &nameList{
+            derived.typeSymbol().get<DerivedTypeDetails>().componentNames()};
+        nameIterator_ = nameList.cbegin();
+        nameEnd_ = nameList.cend();
+      }
+      const Symbol *component() const { return component_; }
+      void set_component(const Symbol &component) { component_ = &component; }
+      bool visited() const { return visited_; }
+      void set_visited(bool yes) { visited_ = yes; }
+      bool descended() const { return descended_; }
+      void set_descended(bool yes) { descended_ = yes; }
+      name_iterator &nameIterator() { return nameIterator_; }
+      name_iterator nameEnd() { return nameEnd_; }
+      const Symbol &GetTypeSymbol() const { return derived_->typeSymbol(); }
+      const Scope &GetScope() const { return DEREF(derived_->scope()); }
+      bool operator==(const ComponentPathNode &that) const {
+        return &*derived_ == &*that.derived_ &&
+            nameIterator_ == that.nameIterator_ &&
+            component_ == that.component_;
+      }
+
+    private:
+      common::Reference<const DerivedTypeSpec> derived_;
+      name_iterator nameEnd_;
+      name_iterator nameIterator_;
+      const Symbol *component_{nullptr};  // until Increment()
+      bool visited_{false};
+      bool descended_{false};
+    };
+
+    const DerivedTypeSpec *PlanComponentTraversal(
+        const Symbol &component) const;
+    // Advances to the next relevant symbol, if any.  Afterwards, the
+    // iterator will either be at its end or contain no null component().
     void Increment();
-    ComponentPath componentPath_;
+
+    std::vector<ComponentPathNode> componentPath_;
   };
 
   const_iterator begin() { return cbegin(); }

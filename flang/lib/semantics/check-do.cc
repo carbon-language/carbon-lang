@@ -459,8 +459,8 @@ private:
   static SymbolSet GatherSymbolsFromExpression(const parser::Expr &expression) {
     SymbolSet result;
     if (const auto *expr{GetExpr(expression)}) {
-      for (const Symbol *symbol : evaluate::CollectSymbols(*expr)) {
-        if (const Symbol * root{GetAssociationRoot(DEREF(symbol))}) {
+      for (const Symbol &symbol : evaluate::CollectSymbols(*expr)) {
+        if (const Symbol * root{GetAssociationRoot(symbol)}) {
           result.insert(root);
         }
       }

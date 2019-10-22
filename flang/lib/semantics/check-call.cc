@@ -165,10 +165,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
             dummyName);
       }
       if (const Symbol *
-          tbp{FindImmediateComponent(derived,
-              [](const Symbol &symbol) {
-                return symbol.has<ProcBindingDetails>();
-              })}) {  // 15.5.2.4(2)
+          tbp{FindImmediateComponent(derived, [](const Symbol &symbol) {
+            return symbol.has<ProcBindingDetails>();
+          })}) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
                 "Actual argument associated with TYPE(*) %s may not have type-bound procedure '%s'"_err_en_US,
                 dummyName, tbp->name())}) {
@@ -176,10 +175,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
         }
       }
       if (const Symbol *
-          finalizer{FindImmediateComponent(derived,
-              [](const Symbol &symbol) {
-                return symbol.has<FinalProcDetails>();
-              })}) {  // 15.5.2.4(2)
+          finalizer{FindImmediateComponent(derived, [](const Symbol &symbol) {
+            return symbol.has<FinalProcDetails>();
+          })}) {  // 15.5.2.4(2)
         if (auto *msg{messages.Say(
                 "Actual argument associated with TYPE(*) %s may not have FINAL subroutine '%s'"_err_en_US,
                 dummyName, finalizer->name())}) {
@@ -192,29 +190,27 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     if (actualIsCoindexed && dummy.intent != common::Intent::In &&
         !dummyIsValue) {
       if (auto iter{std::find_if(
-              ultimates.begin(), ultimates.end(), [](const Symbol *component) {
-                return IsAllocatable(DEREF(component));
+              ultimates.begin(), ultimates.end(), [](const Symbol &component) {
+                return IsAllocatable(component);
               })}) {  // 15.5.2.4(6)
         if (auto *msg{messages.Say(
                 "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
                 iter.BuildResultDesignatorName(), dummyName)}) {
           msg->Attach(
-              (*iter)->name(), "Declaration of ALLOCATABLE component"_en_US);
+              iter->name(), "Declaration of ALLOCATABLE component"_en_US);
         }
       }
     }
     if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
       if (auto iter{std::find_if(
-              ultimates.begin(), ultimates.end(), [](const Symbol *component) {
-                const auto *object{
-                    DEREF(component).detailsIf<ObjectEntityDetails>()};
+              ultimates.begin(), ultimates.end(), [](const Symbol &component) {
+                const auto *object{component.detailsIf<ObjectEntityDetails>()};
                 return object && object->IsCoarray();
               })}) {
         if (auto *msg{messages.Say(
                 "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
                 dummyName, iter.BuildResultDesignatorName())}) {
-          msg->Attach(
-              (*iter)->name(), "Declaration of coarray component"_en_US);
+          msg->Attach(iter->name(), "Declaration of coarray component"_en_US);
         }
       }
     }

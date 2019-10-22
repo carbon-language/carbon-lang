@@ -1002,7 +1002,7 @@ private:
   // expr is set in either case unless there were errors
   struct Selector {
     Selector() {}
-    Selector(const parser::CharBlock &source, MaybeExpr &&expr)
+    Selector(const SourceName &source, MaybeExpr &&expr)
       : source{source}, expr{std::move(expr)} {}
     operator bool() const { return expr.has_value(); }
     parser::CharBlock source;
@@ -1969,15 +1969,14 @@ Symbol *ScopeHandler::FindSymbol(const Scope &scope, const parser::Name &name) {
 
 Symbol &ScopeHandler::MakeSymbol(
     Scope &scope, const SourceName &name, Attrs attrs) {
-  auto *symbol{FindInScope(scope, name)};
-  if (symbol) {
+  if (Symbol * symbol{FindInScope(scope, name)}) {
     symbol->attrs() |= attrs;
+    return *symbol;
   } else {
     const auto pair{scope.try_emplace(name, attrs, UnknownDetails{})};
     CHECK(pair.second);  // name was not found, so must be able to add
-    symbol = pair.first->second;
+    return *pair.first->second;
   }
-  return *symbol;
 }
 Symbol &ScopeHandler::MakeSymbol(const SourceName &name, Attrs attrs) {
   return MakeSymbol(currScope(), name, attrs);
@@ -1997,7 +1996,7 @@ Symbol *ScopeHandler::FindInScope(
 }
 Symbol *ScopeHandler::FindInScope(const Scope &scope, const SourceName &name) {
   if (auto it{scope.find(name)}; it != scope.end()) {
-    return it->second;
+    return &*it->second;
   } else {
     return nullptr;
   }
@@ -2061,9 +2060,7 @@ void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   }
 }
 const DeclTypeSpec *ScopeHandler::GetImplicitType(Symbol &symbol) {
-  auto &name{symbol.name()};
-  const auto *type{implicitRules().GetType(name.begin()[0])};
-  return type;
+  return implicitRules().GetType(symbol.name().begin()[0]);
 }
 
 // Convert symbol to be a ObjectEntity or return false if it can't be.
@@ -2455,8 +2452,8 @@ void InterfaceVisitor::AddSpecificProcs(
 void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
   auto &details{generic.get<GenericDetails>()};
   std::set<SourceName> namesSeen;  // to check for duplicate names
-  for (const auto *symbol : details.specificProcs()) {
-    namesSeen.insert(symbol->name());
+  for (const Symbol &symbol : details.specificProcs()) {
+    namesSeen.insert(symbol.name());
   }
   auto range{specificProcs_.equal_range(&generic)};
   for (auto it{range.first}; it != range.second; ++it) {
@@ -2529,18 +2526,18 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
     }
     return;
   }
-  auto &firstSpecific{*specifics.front()};
+  const Symbol &firstSpecific{specifics.front()};
   bool isFunction{firstSpecific.test(Symbol::Flag::Function)};
-  for (const auto *specific : specifics) {
-    if (isFunction != specific->test(Symbol::Flag::Function)) {  // C1514
+  for (const Symbol &specific : specifics) {
+    if (isFunction != specific.test(Symbol::Flag::Function)) {  // C1514
       auto &msg{Say(generic.name(),
           "Generic interface '%s' has both a function and a subroutine"_err_en_US)};
       if (isFunction) {
         msg.Attach(firstSpecific.name(), "Function declaration"_en_US);
-        msg.Attach(specific->name(), "Subroutine declaration"_en_US);
+        msg.Attach(specific.name(), "Subroutine declaration"_en_US);
       } else {
         msg.Attach(firstSpecific.name(), "Subroutine declaration"_en_US);
-        msg.Attach(specific->name(), "Function declaration"_en_US);
+        msg.Attach(specific.name(), "Function declaration"_en_US);
       }
     }
   }
@@ -2598,11 +2595,11 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
           : evaluate::characteristics::Distinguishable};
   using evaluate::characteristics::Procedure;
   std::vector<Procedure> procs;
-  for (const Symbol *symbol : specifics) {
-    if (context().HasError(*symbol)) {
+  for (const Symbol &symbol : specifics) {
+    if (context().HasError(symbol)) {
       return;
     }
-    auto proc{Procedure::Characterize(*symbol, context().intrinsics())};
+    auto proc{Procedure::Characterize(symbol, context().intrinsics())};
     if (!proc) {
       return;
     }
@@ -2613,7 +2610,7 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
     for (std::size_t i2{i1 + 1}; i2 < count; ++i2) {
       auto &proc2{procs[i2]};
       if (!distinguishable(proc1, proc2)) {
-        SayNotDistinguishable(generic, *specifics[i1], *specifics[i2]);
+        SayNotDistinguishable(generic, specifics[i1], specifics[i2]);
         context().SetError(generic);
       }
     }
@@ -3450,13 +3447,13 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       seenAnyName = true;
       name = optKeyword->v.source;
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](const Symbol *symbol) { return symbol->name() == name; })};
+          [&](const Symbol &symbol) { return symbol.name() == name; })};
       if (it == parameterDecls.end()) {
         Say(name,
             "'%s' is not the name of a parameter for this type"_err_en_US);
       } else {
-        attr = (*it)->get<TypeParamDetails>().attr();
-        Resolve(optKeyword->v, const_cast<Symbol *>(*it));
+        attr = it->get().get<TypeParamDetails>().attr();
+        Resolve(optKeyword->v, const_cast<Symbol *>(&it->get()));
       }
     } else if (seenAnyName) {
       Say(typeName.source, "Type parameter value must have a name"_err_en_US);
@@ -3464,9 +3461,9 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     } else if (nextNameIter != parameterNames.end()) {
       name = *nextNameIter++;
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](const Symbol *symbol) { return symbol->name() == name; })};
+          [&](const Symbol &symbol) { return symbol.name() == name; })};
       if (it != parameterDecls.end()) {
-        attr = (*it)->get<TypeParamDetails>().attr();
+        attr = it->get().get<TypeParamDetails>().attr();
       }
     } else {
       Say(typeName.source,
@@ -3492,9 +3489,9 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   for (const SourceName &name : parameterNames) {
     if (!spec->FindParameter(name)) {
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](const Symbol *symbol) { return symbol->name() == name; })};
+          [&](const Symbol &symbol) { return symbol.name() == name; })};
       if (it != parameterDecls.end()) {
-        const auto *details{(*it)->detailsIf<TypeParamDetails>()};
+        const auto *details{it->get().detailsIf<TypeParamDetails>()};
         if (details == nullptr || !details->init().has_value()) {
           Say(typeName.source,
               "Type parameter '%s' lacks a value and has no default"_err_en_US,

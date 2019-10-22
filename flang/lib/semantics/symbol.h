@@ -18,9 +18,10 @@
 #include "type.h"
 #include "../common/Fortran.h"
 #include "../common/enum-set.h"
-#include <functional>
+#include "../common/reference.h"
 #include <list>
 #include <optional>
+#include <set>
 #include <vector>
 
 namespace Fortran::semantics {
@@ -32,7 +33,8 @@ namespace Fortran::semantics {
 class Scope;
 class Symbol;
 
-using SymbolVector = std::vector<const Symbol *>;
+using SymbolRef = common::Reference<const Symbol>;
+using SymbolVector = std::vector<SymbolRef>;
 
 // A module or submodule.
 class ModuleDetails {
@@ -227,7 +229,7 @@ public:
   const SymbolVector &paramDecls() const { return paramDecls_; }
   bool sequence() const { return sequence_; }
   void add_paramName(const SourceName &name) { paramNames_.push_back(name); }
-  void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(&symbol); }
+  void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(symbol); }
   void add_component(const Symbol &);
   void set_sequence(bool x = true) { sequence_ = x; }
   const std::list<SourceName> &componentNames() const {
@@ -281,7 +283,7 @@ public:
   GenericKind kind() const { return kind_; }
   void set_kind(GenericKind kind) { kind_ = kind; }
   const SymbolVector &specificProcs() const { return specificProcs_; }
-  void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
+  void add_specificProc(const Symbol &proc) { specificProcs_.push_back(proc); }
 
 private:
   GenericKind kind_{GenericKind::Name};
@@ -291,7 +293,7 @@ private:
 class NamelistDetails {
 public:
   const SymbolVector &objects() const { return objects_; }
-  void add_object(const Symbol &object) { objects_.push_back(&object); }
+  void add_object(const Symbol &object) { objects_.push_back(object); }
   void add_objects(const SymbolVector &objects) {
     objects_.insert(objects_.end(), objects.begin(), objects.end());
   }
@@ -392,7 +394,7 @@ public:
   void set_kind(GenericKind kind) { kind_ = kind; }
 
   const SymbolVector &specificProcs() const { return specificProcs_; }
-  void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
+  void add_specificProc(const Symbol &proc) { specificProcs_.push_back(proc); }
 
   // specific and derivedType indicate a specific procedure or derived type
   // with the same name as this generic. Only one of them may be set.
@@ -583,6 +585,10 @@ public:
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }
+  bool operator<(const Symbol &that) const {
+    // For sets of symbols: collate them by source location
+    return name_.begin() < that.name_.begin();
+  }
 
   int Rank() const {
     return std::visit(
@@ -699,5 +705,9 @@ inline bool ProcEntityDetails::HasExplicitInterface() const {
   }
   return false;
 }
+
+inline bool operator<(SymbolRef x, SymbolRef y) { return *x < *y; }
+using SymbolSet = std::set<SymbolRef>;
+
 }
 #endif  // FORTRAN_SEMANTICS_SYMBOL_H_

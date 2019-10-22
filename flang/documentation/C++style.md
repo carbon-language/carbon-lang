@@ -159,10 +159,14 @@ class.
 clear.  Consider reworking any code that uses `malloc()` or a (non-placement)
 `operator new`.
 See the section on Pointers below for some suggested options.
-1. Use references for `const` arguments; prefer `const` references to values for
-all but small types that are trivially copyable (e.g., use `const std::string &`
-and `int`).  Use non-`const` pointers for output arguments.  Put output arguments
-last (_pace_ the standard C library conventions for `memcpy()` & al.).
+1. When defining argument types, use values when object semantics are
+not required and the value is small and copyable without allocation
+(e.g., `int`);
+use `const` or rvalue references for larger values (e.g., `std::string`);
+use `const` references to rather than pointers to immutable objects;
+and use non-`const` references for mutable objects, including "output" arguments
+when they can't be function results.
+Put such output arguments last (_pace_ the standard C library conventions for `memcpy()` & al.).
 1. Prefer `typename` to `class` in template argument declarations.
 1. Prefer `enum class` to plain `enum` wherever `enum class` will work.
 We have an `ENUM_CLASS` macro that helps capture the names of constants.
@@ -206,18 +210,29 @@ data in this project.
 Some of these are standard C++ language and library features,
 while others are local inventions in `lib/common`:
 * Bare pointers (`Foo *p`): these are obviously nullable, non-owning,
-undefined when uninitialized, shallowly copyable, reassignable, and almost
-never the right abstraction to use in this project.
+undefined when uninitialized, shallowly copyable, reassignable, and often
+not the right abstraction to use in this project.
+But they can be the right choice to represent an optional
+non-owning reference, as in a function result.
+Use the `DEREF()` macro to convert a pointer to a reference that isn't
+already protected by an explicit test for null.
 * References (`Foo &r`, `const Foo &r`): non-nullable, not owning,
 shallowly copyable, and not reassignable.
 References are great for invisible indirection to objects whose lifetimes are
 broader than that of the reference.
-(Sometimes when a class data member should be a reference, but we also need
-reassignability, it will be declared as a pointer, and its accessor
-will be defined to return a reference.)
+Take care when initializing a reference with another reference to ensure
+that a copy is not made because only one of the references is `const`;
+this is a pernicious C++ language pitfall!
 * Rvalue references (`Foo &&r`): These are non-nullable references
 *with* ownership, and they are ubiquitously used for formal arguments
 wherever appropriate.
+* `std::reference_wrapper<>`: non-nullable, not owning, shallowly
+copyable, and (unlike bare references) reassignable, so suitable for
+use in STL containers and for data members in classes that need to be
+copyable or assignable.
+* `common::Reference<>`: like `std::reference_wrapper<>`, but also supports
+move semantics, member access, and comparison for equality; suitable for use in
+`std::variant<>`.
 * `std::unique_ptr<>`: A nullable pointer with ownership, null by default,
 not copyable, reassignable.
 F18 has a helpful `Deleter<>` class template that makes `unique_ptr<>`
@@ -240,14 +255,17 @@ of that standard feature is prohibitive.
 
 A feature matrix:
 
-| pointer              | nullable | default null | owning | reassignable | copyable          | undefined type ok? |
-| -------              | -------- | ------------ | ------ | ------------ | --------          | ------------------ |
-| `*p`                 | yes      | no           | no     | yes          | shallowly         | yes                |
-| `&r`                 | no       | n/a          | no     | no           | shallowly         | yes                |
-| `unique_ptr<>`       | yes      | yes          | yes    | yes          | no                | yes, with work     |
-| `shared_ptr<>`       | yes      | yes          | yes    | yes          | shallowly         | no                 |
-| `Indirection<>`      | no       | n/a          | yes    | yes          | optionally deeply | yes, with work     |
-| `CountedReference<>` | yes      | yes          | yes    | yes          | shallowly         | no                 |
+| indirection           | nullable | default null | owning | reassignable | copyable          | undefined type ok? |
+| -----------           | -------- | ------------ | ------ | ------------ | --------          | ------------------ |
+| `*p`                  | yes      | no           | no     | yes          | shallowly         | yes                |
+| `&r`                  | no       | n/a          | no     | no           | shallowly         | yes                |
+| `&&r`                 | no       | n/a          | yes    | no           | shallowly         | yes                |
+| `reference_wrapper<>` | no       | n/a          | no     | yes          | shallowly         | yes                |
+| `Reference<>`         | no       | n/a          | no     | yes          | shallowly         | yes                |
+| `unique_ptr<>`        | yes      | yes          | yes    | yes          | no                | yes, with work     |
+| `shared_ptr<>`        | yes      | yes          | yes    | yes          | shallowly         | no                 |
+| `Indirection<>`       | no       | n/a          | yes    | yes          | optionally deeply | yes, with work     |
+| `CountedReference<>`  | yes      | yes          | yes    | yes          | shallowly         | no                 |
 
 ### Overall design preferences
 Don't use dynamic solutions to solve problems that can be solved at

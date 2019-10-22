@@ -18,11 +18,19 @@
 #include "formatting.h"
 #include "type.h"
 #include "../common/default-kinds.h"
+#include "../common/reference.h"
 #include <map>
 #include <ostream>
 #include <vector>
 
+namespace Fortran::semantics {
+class Symbol;
+}
+
 namespace Fortran::evaluate {
+
+using semantics::Symbol;
+using SymbolRef = common::Reference<const Symbol>;
 
 // Wraps a constant value in a class templated by its resolved type.
 // This Constant<> template class should be instantiated only for
@@ -191,8 +199,8 @@ private:
 };
 
 class StructureConstructor;
-using StructureConstructorValues = std::map<const semantics::Symbol *,
-    common::CopyableIndirection<Expr<SomeType>>>;
+using StructureConstructorValues =
+    std::map<SymbolRef, common::CopyableIndirection<Expr<SomeType>>>;
 
 template<>
 class Constant<SomeDerived>

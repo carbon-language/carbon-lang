@@ -51,7 +51,7 @@ struct ModHeader {
 };
 
 static std::optional<SourceName> GetSubmoduleParent(const parser::Program &);
-static std::vector<const Symbol *> CollectSymbols(const Scope &);
+static SymbolVector CollectSymbols(const Scope &);
 static void PutEntity(std::ostream &, const Symbol &);
 static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
@@ -77,10 +77,8 @@ static std::string CheckSum(const std::string_view &);
 // Collect symbols needed for a subprogram interface
 class SubprogramSymbolCollector {
 public:
-  using SymbolSet = std::set<const Symbol *>;
-
   SubprogramSymbolCollector(const Symbol &symbol)
-    : symbol_{symbol}, scope_{*symbol.scope()} {}
+    : symbol_{symbol}, scope_{DEREF(symbol.scope())} {}
   const SymbolVector &symbols() const { return need_; }
   const std::set<SourceName> &imports() const { return imports_; }
   void Collect();
@@ -102,8 +100,8 @@ private:
   bool NeedImport(const SourceName &, const Symbol &);
 
   template<typename T> void DoExpr(evaluate::Expr<T> expr) {
-    for (const Symbol *symbol : evaluate::CollectSymbols(expr)) {
-      DoSymbol(DEREF(symbol));
+    for (const Symbol &symbol : evaluate::CollectSymbols(expr)) {
+      DoSymbol(symbol);
     }
   }
 };
@@ -142,7 +140,7 @@ void ModFileWriter::Write(const Symbol &symbol) {
   auto ancestorName{ancestor ? ancestor->GetName().value().ToString() : ""s};
   auto path{context_.moduleDirectory() + '/' +
       ModFileName(symbol.name(), ancestorName, context_.moduleFileSuffix())};
-  PutSymbols(*symbol.scope());
+  PutSymbols(DEREF(symbol.scope()));
   if (int error{WriteFile(path, GetAsString(symbol))}) {
     context_.Say(symbol.name(), "Error writing %s: %s"_err_en_US, path,
         std::strerror(error));
@@ -183,7 +181,7 @@ std::string ModFileWriter::GetAsString(const Symbol &symbol) {
 // Put out the visible symbols from scope.
 void ModFileWriter::PutSymbols(const Scope &scope) {
   std::stringstream typeBindings;  // stuff after CONTAINS in derived type
-  for (const auto *symbol : CollectSymbols(scope)) {
+  for (const Symbol &symbol : CollectSymbols(scope)) {
     PutSymbol(typeBindings, symbol);
   }
   if (auto str{typeBindings.str()}; !str.empty()) {
@@ -195,76 +193,77 @@ void ModFileWriter::PutSymbols(const Scope &scope) {
 // Emit a symbol to decls_, except for bindings in a derived type (type-bound
 // procedures, type-bound generics, final procedures) which go to typeBindings.
 void ModFileWriter::PutSymbol(
-    std::stringstream &typeBindings, const Symbol *symbol) {
-  if (symbol == nullptr) {
-    return;
-  }
+    std::stringstream &typeBindings, const Symbol &symbol) {
   std::visit(
       common::visitors{
           [&](const ModuleDetails &) { /* should be current module */ },
-          [&](const DerivedTypeDetails &) { PutDerivedType(*symbol); },
-          [&](const SubprogramDetails &) { PutSubprogram(*symbol); },
+          [&](const DerivedTypeDetails &) { PutDerivedType(symbol); },
+          [&](const SubprogramDetails &) { PutSubprogram(symbol); },
           [&](const GenericDetails &x) {
-            PutGeneric(*symbol);
-            PutSymbol(typeBindings, x.specific());
-            PutSymbol(typeBindings, x.derivedType());
+            PutGeneric(symbol);
+            if (x.specific()) {
+              PutSymbol(typeBindings, *x.specific());
+            }
+            if (x.derivedType()) {
+              PutSymbol(typeBindings, *x.derivedType());
+            }
           },
-          [&](const UseDetails &) { PutUse(*symbol); },
+          [&](const UseDetails &) { PutUse(symbol); },
           [](const UseErrorDetails &) {},
           [&](const ProcBindingDetails &x) {
-            bool deferred{symbol->attrs().test(Attr::DEFERRED)};
+            bool deferred{symbol.attrs().test(Attr::DEFERRED)};
             typeBindings << "procedure";
             if (deferred) {
               typeBindings << '(' << x.symbol().name() << ')';
             }
             PutPassName(typeBindings, x.passName());
-            auto attrs{symbol->attrs()};
+            auto attrs{symbol.attrs()};
             if (x.passName().has_value()) {
               attrs.reset(Attr::PASS);
             }
             PutAttrs(typeBindings, attrs);
-            typeBindings << "::" << symbol->name();
-            if (!deferred && x.symbol().name() != symbol->name()) {
+            typeBindings << "::" << symbol.name();
+            if (!deferred && x.symbol().name() != symbol.name()) {
               typeBindings << "=>" << x.symbol().name();
             }
             typeBindings << '\n';
           },
           [&](const GenericBindingDetails &x) {
-            for (const auto *proc : x.specificProcs()) {
-              typeBindings << "generic::" << symbol->name() << "=>"
-                           << proc->name() << '\n';
+            for (const Symbol &proc : x.specificProcs()) {
+              typeBindings << "generic::" << symbol.name() << "=>"
+                           << proc.name() << '\n';
             }
           },
           [&](const NamelistDetails &x) {
-            decls_ << "namelist/" << symbol->name();
+            decls_ << "namelist/" << symbol.name();
             char sep{'/'};
-            for (const auto *object : x.objects()) {
-              decls_ << sep << object->name();
+            for (const Symbol &object : x.objects()) {
+              decls_ << sep << object.name();
               sep = ',';
             }
             decls_ << '\n';
           },
           [&](const CommonBlockDetails &x) {
-            decls_ << "common/" << symbol->name();
+            decls_ << "common/" << symbol.name();
             char sep = '/';
             for (const auto *object : x.objects()) {
-              decls_ << sep << object->name();
+              decls_ << sep << DEREF(object).name();
               sep = ',';
             }
             decls_ << '\n';
-            if (symbol->attrs().test(Attr::BIND_C)) {
-              PutAttrs(decls_, symbol->attrs(), x.bindName(), ""s);
-              decls_ << "::/" << symbol->name() << "/\n";
+            if (symbol.attrs().test(Attr::BIND_C)) {
+              PutAttrs(decls_, symbol.attrs(), x.bindName(), ""s);
+              decls_ << "::/" << symbol.name() << "/\n";
             }
           },
           [&](const FinalProcDetails &) {
-            typeBindings << "final::" << symbol->name() << '\n';
+            typeBindings << "final::" << symbol.name() << '\n';
           },
           [](const HostAssocDetails &) {},
           [](const MiscDetails &) {},
-          [&](const auto &) { PutEntity(decls_, *symbol); },
+          [&](const auto &) { PutEntity(decls_, symbol); },
       },
-      symbol->details());
+      symbol.details());
 }
 
 void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
@@ -342,7 +341,7 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   std::stringstream typeBindings;
   SubprogramSymbolCollector collector{symbol};
   collector.Collect();
-  for (const Symbol *need : collector.symbols()) {
+  for (const Symbol &need : collector.symbols()) {
     writer.PutSymbol(typeBindings, need);
   }
   CHECK(typeBindings.str().empty());
@@ -377,8 +376,8 @@ static std::ostream &PutGenericName(std::ostream &os, const Symbol &symbol) {
 void ModFileWriter::PutGeneric(const Symbol &symbol) {
   auto &details{symbol.get<GenericDetails>()};
   PutGenericName(decls_ << "interface ", symbol) << '\n';
-  for (auto *specific : details.specificProcs()) {
-    decls_ << "procedure::" << specific->name() << '\n';
+  for (const Symbol &specific : details.specificProcs()) {
+    decls_ << "procedure::" << specific.name() << '\n';
   }
   decls_ << "end interface\n";
   if (symbol.attrs().test(Attr::PRIVATE)) {
@@ -413,18 +412,18 @@ void ModFileWriter::PutUseExtraAttr(
 
 // Collect the symbols of this scope sorted by their original order, not name.
 // Namelists are an exception: they are sorted after other symbols.
-std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
-  std::set<const Symbol *> symbols;  // to prevent duplicates
-  std::vector<const Symbol *> sorted;
-  std::vector<const Symbol *> namelist;
-  std::vector<const Symbol *> common;
+SymbolVector CollectSymbols(const Scope &scope) {
+  SymbolSet symbols;  // to prevent duplicates
+  SymbolVector sorted;
+  SymbolVector namelist;
+  SymbolVector common;
   sorted.reserve(scope.size() + scope.commonBlocks().size());
   for (const auto &pair : scope) {
-    auto *symbol{pair.second};
-    if (!symbol->test(Symbol::Flag::ParentComp) &&
-        !symbol->attrs().test(Attr::INTRINSIC)) {
+    const Symbol &symbol{*pair.second};
+    if (!symbol.test(Symbol::Flag::ParentComp) &&
+        !symbol.attrs().test(Attr::INTRINSIC)) {
       if (symbols.insert(symbol).second) {
-        if (symbol->has<NamelistDetails>()) {
+        if (symbol.has<NamelistDetails>()) {
           namelist.push_back(symbol);
         } else {
           sorted.push_back(symbol);
@@ -433,21 +432,18 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
     }
   }
   for (const auto &pair : scope.commonBlocks()) {
-    const Symbol *symbol{pair.second};
+    const Symbol &symbol{*pair.second};
     if (symbols.insert(symbol).second) {
       common.push_back(symbol);
     }
   }
   // sort normal symbols, then namelists, then common blocks:
-  auto compareByOrder = [](const Symbol *x, const Symbol *y) {
-    return DEREF(x).name().begin() < DEREF(y).name().begin();
-  };
   auto cursor{sorted.begin()};
-  std::sort(cursor, sorted.end(), compareByOrder);
+  std::sort(cursor, sorted.end());
   cursor = sorted.insert(sorted.end(), namelist.begin(), namelist.end());
-  std::sort(cursor, sorted.end(), compareByOrder);
+  std::sort(cursor, sorted.end());
   cursor = sorted.insert(sorted.end(), common.begin(), common.end());
-  std::sort(cursor, sorted.end(), compareByOrder);
+  std::sort(cursor, sorted.end());
   return sorted;
 }
 
@@ -848,9 +844,9 @@ void SubprogramSymbolCollector::Collect() {
     DoSymbol(details.result());
   }
   for (const auto &pair : scope_) {
-    const Symbol *symbol{pair.second};
-    if (const auto *useDetails{symbol->detailsIf<UseDetails>()}) {
-      if (useSet_.count(&useDetails->symbol()) > 0) {
+    const Symbol &symbol{*pair.second};
+    if (const auto *useDetails{symbol.detailsIf<UseDetails>()}) {
+      if (useSet_.count(useDetails->symbol()) > 0) {
         need_.push_back(symbol);
       }
     }
@@ -867,14 +863,14 @@ void SubprogramSymbolCollector::DoSymbol(
   const auto &scope{symbol.owner()};
   if (scope != scope_ && !scope.IsDerivedType()) {
     if (scope != scope_.parent()) {
-      useSet_.insert(&symbol);
+      useSet_.insert(symbol);
     }
     if (NeedImport(name, symbol)) {
       imports_.insert(name);
     }
     return;
   }
-  if (!needSet_.insert(&symbol).second) {
+  if (!needSet_.insert(symbol).second) {
     return;  // already done
   }
   std::visit(
@@ -904,7 +900,7 @@ void SubprogramSymbolCollector::DoSymbol(
     DoType(symbol.GetType());
   }
   if (!scope.IsDerivedType()) {
-    need_.push_back(&symbol);
+    need_.push_back(symbol);
   }
 }
 
@@ -928,7 +924,7 @@ void SubprogramSymbolCollector::DoType(const DeclTypeSpec *type) {
         DoParamValue(pair.second);
       }
       for (const auto pair : *typeSymbol.scope()) {
-        const auto &comp{*pair.second};
+        const Symbol &comp{*pair.second};
         DoSymbol(comp);
       }
       DoSymbol(derived->name(), derived->typeSymbol());

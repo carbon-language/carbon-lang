@@ -47,7 +47,7 @@ public:
   constexpr MessageFixedText &operator=(const MessageFixedText &) = default;
   constexpr MessageFixedText &operator=(MessageFixedText &&) = default;
 
-  const CharBlock &text() const { return text_; }
+  CharBlock text() const { return text_; }
   bool isFatal() const { return isFatal_; }
 
 private:
@@ -106,9 +106,7 @@ private:
   const char *Convert(const std::string &);
   const char *Convert(std::string &);
   const char *Convert(std::string &&);
-  const char *Convert(const CharBlock &);
-  const char *Convert(CharBlock &);
-  const char *Convert(CharBlock &&);
+  const char *Convert(CharBlock);
 
   bool isFatal_{false};
   std::string string_;

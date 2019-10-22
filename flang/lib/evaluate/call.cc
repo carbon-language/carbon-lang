@@ -27,8 +27,8 @@ ActualArgument::ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
 ActualArgument::ActualArgument(AssumedType x) : u_{x} {}
 ActualArgument::~ActualArgument() {}
 
-ActualArgument::AssumedType::AssumedType(const semantics::Symbol &symbol)
-  : symbol_{&symbol} {
+ActualArgument::AssumedType::AssumedType(const Symbol &symbol)
+  : symbol_{symbol} {
   const semantics::DeclTypeSpec *type{symbol.GetType()};
   CHECK(
       type != nullptr && type->category() == semantics::DeclTypeSpec::TypeStar);
@@ -110,7 +110,7 @@ int ProcedureDesignator::Rank() const {
   return 0;
 }
 
-const semantics::Symbol *ProcedureDesignator::GetInterfaceSymbol() const {
+const Symbol *ProcedureDesignator::GetInterfaceSymbol() const {
   if (const Symbol * symbol{GetSymbol()}) {
     if (const auto *details{
             symbol->detailsIf<semantics::ProcEntityDetails>()}) {
@@ -149,7 +149,7 @@ const Component *ProcedureDesignator::GetComponent() const {
 const Symbol *ProcedureDesignator::GetSymbol() const {
   return std::visit(
       common::visitors{
-          [](const Symbol *sym) { return sym; },
+          [](SymbolRef symbol) { return &*symbol; },
           [](const common::CopyableIndirection<Component> &c) {
             return &c.value().GetLastSymbol();
           },
@@ -162,7 +162,7 @@ std::string ProcedureDesignator::GetName() const {
   return std::visit(
       common::visitors{
           [](const SpecificIntrinsic &i) { return i.name; },
-          [](const Symbol *sym) { return sym->name().ToString(); },
+          [](const Symbol &symbol) { return symbol.name().ToString(); },
           [](const common::CopyableIndirection<Component> &c) {
             return c.value().GetLastSymbol().name().ToString();
           },

@@ -19,6 +19,7 @@
 #include "symbol.h"
 #include "../common/Fortran.h"
 #include "../common/idioms.h"
+#include "../common/reference.h"
 #include "../parser/message.h"
 #include "../parser/provenance.h"
 #include <list>
@@ -50,7 +51,7 @@ struct EquivalenceObject {
 using EquivalenceSet = std::vector<EquivalenceObject>;
 
 class Scope {
-  using mapType = std::map<SourceName, Symbol *>;
+  using mapType = std::map<SourceName, common::Reference<Symbol>>;
 
 public:
   ENUM_CLASS(Kind, Global, Module, MainProgram, Subprogram, DerivedType, Block,
@@ -138,7 +139,7 @@ public:
   common::IfNoLvalue<std::pair<iterator, bool>, D> try_emplace(
       const SourceName &name, Attrs attrs, D &&details) {
     Symbol &symbol{MakeSymbol(name, attrs, std::move(details))};
-    return symbols_.emplace(name, &symbol);
+    return symbols_.emplace(name, symbol);
   }
 
   const std::list<EquivalenceSet> &equivalenceSets() const;
@@ -220,7 +221,7 @@ private:
   mapType commonBlocks_;
   std::list<EquivalenceSet> equivalenceSets_;
   mapType crayPointers_;
-  std::map<SourceName, Scope *> submodules_;
+  std::map<SourceName, common::Reference<Scope>> submodules_;
   std::list<DeclTypeSpec> declTypeSpecs_;
   std::string chars_;
   std::optional<ImportKind> importKind_;
