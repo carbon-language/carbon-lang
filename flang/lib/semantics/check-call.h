@@ -46,5 +46,8 @@ void CheckArguments(const evaluate::characteristics::Procedure &,
 parser::Messages CheckExplicitInterface(
     const evaluate::characteristics::Procedure &, evaluate::ActualArguments &,
     const evaluate::FoldingContext &, const Scope &);
+// Check actual arguments for the purpose of resolving a generic interface.
+bool CheckInterfaceForGeneric(const evaluate::characteristics::Procedure &,
+    evaluate::ActualArguments &, const evaluate::FoldingContext &);
 }
 #endif

@@ -102,19 +102,12 @@ static void PadShortCharacterActual(evaluate::Expr<evaluate::SomeType> &actual,
 
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     const std::string &dummyName, evaluate::Expr<evaluate::SomeType> &actual,
-    const characteristics::TypeAndShape &actualType,
-    const characteristics::Procedure &proc, evaluate::FoldingContext &context,
-    const Scope &scope) {
+    const characteristics::TypeAndShape &actualType, bool isElemental,
+    evaluate::FoldingContext &context, const Scope &scope) {
 
   // Basic type & rank checking
   parser::ContextualMessages &messages{context.messages()};
-  int dummyRank{evaluate::GetRank(dummy.type.shape())};
-  bool isElemental{dummyRank == 0 &&
-      proc.attrs.test(characteristics::Procedure::Attr::Elemental)};
   PadShortCharacterActual(actual, dummy.type, actualType, messages);
-  dummy.type.IsCompatibleWith(
-      messages, actualType, "dummy argument", "actual argument", isElemental);
-
   bool actualIsPolymorphic{actualType.type().IsPolymorphic()};
   bool dummyIsPolymorphic{dummy.type.type().IsPolymorphic()};
   bool actualIsCoindexed{ExtractCoarrayRef(actual).has_value()};
@@ -235,7 +228,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
             "Declaration of assumed-size array actual argument"_en_US);
       }
     }
-  } else if (actualRank == 0 && dummyRank > 0) {
+  } else if (actualRank == 0 && dummy.type.Rank() > 0) {
     // Actual is scalar, dummy is an array.  15.5.2.4(14), 15.5.2.11
     if (actualIsCoindexed) {
       messages.Say(
@@ -329,7 +322,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
 static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
     const characteristics::DummyArgument &dummy,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
-    const Scope &scope) {
+    const Scope *scope) {
   auto &messages{context.messages()};
   std::string dummyName{"dummy argument"};
   if (!dummy.name.empty()) {
@@ -341,8 +334,13 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
             if (auto *expr{arg.UnwrapExpr()}) {
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
-                CheckExplicitDataArg(
-                    object, dummyName, *expr, *type, proc, context, scope);
+                bool isElemental{object.type.Rank() == 0 && proc.IsElemental()};
+                object.type.IsCompatibleWith(context.messages(), *type,
+                    "dummy argument", "actual argument", isElemental);
+                if (scope) {
+                  CheckExplicitDataArg(object, dummyName, *expr, *type,
+                      isElemental, context, *scope);
+                }
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
                   std::holds_alternative<evaluate::BOZLiteralConstant>(
                       expr->u)) {
@@ -424,9 +422,9 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
   }
 }
 
-parser::Messages CheckExplicitInterface(const characteristics::Procedure &proc,
-    evaluate::ActualArguments &actuals, const evaluate::FoldingContext &context,
-    const Scope &scope) {
+static parser::Messages CheckExplicitInterface(
+    const characteristics::Procedure &proc, evaluate::ActualArguments &actuals,
+    const evaluate::FoldingContext &context, const Scope *scope) {
   parser::Messages buffer;
   parser::ContextualMessages messages{context.messages().at(), &buffer};
   evaluate::FoldingContext localContext{context, messages};
@@ -453,6 +451,18 @@ parser::Messages CheckExplicitInterface(const characteristics::Procedure &proc,
     }
   }
   return buffer;
+}
+
+parser::Messages CheckExplicitInterface(const characteristics::Procedure &proc,
+    evaluate::ActualArguments &actuals, const evaluate::FoldingContext &context,
+    const Scope &scope) {
+  return CheckExplicitInterface(proc, actuals, context, &scope);
+}
+
+bool CheckInterfaceForGeneric(const characteristics::Procedure &proc,
+    evaluate::ActualArguments &actuals,
+    const evaluate::FoldingContext &context) {
+  return CheckExplicitInterface(proc, actuals, context, nullptr).empty();
 }
 
 void CheckArguments(const characteristics::Procedure &proc,

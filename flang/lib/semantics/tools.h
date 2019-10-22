@@ -50,6 +50,7 @@ const Symbol *FindFunctionResult(const Symbol &);
 // Return the Symbol of the variable of a construct association, if it exists
 const Symbol *GetAssociationRoot(const Symbol &);
 
+bool IsGenericDefinedOp(const Symbol &);
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);
 bool DoesScopeContain(const Scope *, const Symbol &);

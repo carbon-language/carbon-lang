@@ -233,3 +233,105 @@ end
 !  real(4) :: y(1_8:ubound(f_elem(x), 1_4))
 ! end
 !end
+
+! Resolve defined unary operator based on type
+module m4
+  interface operator(.foo.)
+    pure integer(8) function f_real(x)
+      real, intent(in) :: x
+    end
+    pure integer(8) function f_integer(x)
+      integer, intent(in) :: x
+    end
+  end interface
+contains
+  subroutine s1(x, y)
+    real :: x
+    real :: y(.foo. x)  ! resolves to f_real
+  end
+  subroutine s2(x, y)
+    integer :: x
+    real :: y(.foo. x)  ! resolves to f_integer
+  end
+end
+!Expect: m4.mod
+!module m4
+! interface operator(.foo.)
+!  procedure :: f_real
+!  procedure :: f_integer
+! end interface
+! interface
+!  pure function f_real(x)
+!   real(4), intent(in) :: x
+!   integer(8) :: f_real
+!  end
+! end interface
+! interface
+!  pure function f_integer(x)
+!   integer(4), intent(in) :: x
+!   integer(8) :: f_integer
+!  end
+! end interface
+!contains
+! subroutine s1(x, y)
+!  real(4) :: x
+!  real(4) :: y(1_8:f_real(x))
+! end
+! subroutine s2(x, y)
+!  integer(4) :: x
+!  real(4) :: y(1_8:f_integer(x))
+! end
+!end
+
+! Resolve defined binary operator based on type
+module m5
+  interface operator(.foo.)
+    pure integer(8) function f1(x, y)
+      real, intent(in) :: x
+      real, intent(in) :: y
+    end
+    pure integer(8) function f2(x, y)
+      real, intent(in) :: x
+      complex, intent(in) :: y
+    end
+  end interface
+contains
+  subroutine s1(x, y)
+    complex :: x
+    real :: y(1.0 .foo. x)  ! resolves to f2
+  end
+  subroutine s2(x, y)
+    real :: x
+    real :: y(1.0 .foo. x)  ! resolves to f1
+  end
+end
+!Expect: m5.mod
+!module m5
+! interface operator(.foo.)
+!  procedure :: f1
+!  procedure :: f2
+! end interface
+! interface
+!  pure function f1(x, y)
+!   real(4), intent(in) :: x
+!   real(4), intent(in) :: y
+!   integer(8) :: f1
+!  end
+! end interface
+! interface
+!  pure function f2(x, y)
+!   real(4), intent(in) :: x
+!   complex(4), intent(in) :: y
+!   integer(8) :: f2
+!  end
+! end interface
+!contains
+! subroutine s1(x, y)
+!  complex(4) :: x
+!  real(4) :: y(1_8:f2(1._4, x))
+! end
+! subroutine s2(x, y)
+!  real(4) :: x
+!  real(4) :: y(1_8:f1(1._4, x))
+! end
+!end

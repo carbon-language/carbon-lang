@@ -326,11 +326,12 @@ private:
       const parser::Call &, bool isSubroutine);
   std::optional<characteristics::Procedure> CheckCall(
       parser::CharBlock, const ProcedureDesignator &, ActualArguments &);
-  const Symbol *ResolveGeneric(
-      const Symbol &, ActualArguments &, const semantics::Scope &);
+  const Symbol *ResolveGeneric(const Symbol &, ActualArguments &);
+  std::optional<CalleeAndArguments> GetCalleeAndArguments(
+      const parser::Name &, ActualArguments &&, bool isSubroutine = false);
   std::optional<CalleeAndArguments> GetCalleeAndArguments(
       const parser::ProcedureDesignator &, ActualArguments &&,
-      bool isSubroutine, const semantics::Scope &);
+      bool isSubroutine);
 
   void CheckForBadRecursion(parser::CharBlock, const semantics::Symbol &);
   bool EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,

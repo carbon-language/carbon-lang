@@ -80,6 +80,11 @@ const Scope *FindPureProcedureContaining(const Scope *scope) {
   return nullptr;
 }
 
+bool IsGenericDefinedOp(const Symbol &symbol) {
+  const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
+  return details && details->kind() == GenericKind::DefinedOp;
+}
+
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object) {
   const auto &objects{block.get<CommonBlockDetails>().objects()};
   auto found{std::find(objects.begin(), objects.end(), &object)};

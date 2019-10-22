@@ -17,6 +17,7 @@
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
+#include "tools.h"
 #include "../evaluate/tools.h"
 #include "../parser/message.h"
 #include "../parser/parsing.h"
@@ -356,11 +357,6 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   }
 }
 
-static bool IsDefinedOp(const Symbol &symbol) {
-  const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
-  return details && details->kind() == GenericKind::DefinedOp;
-}
-
 static bool IsIntrinsicOp(const Symbol &symbol) {
   if (const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()}) {
     GenericKind kind{details->kind()};
@@ -371,7 +367,7 @@ static bool IsIntrinsicOp(const Symbol &symbol) {
 }
 
 static std::ostream &PutGenericName(std::ostream &os, const Symbol &symbol) {
-  if (IsDefinedOp(symbol)) {
+  if (IsGenericDefinedOp(symbol)) {
     return os << "operator(" << symbol.name() << ')';
   } else {
     return os << symbol.name();

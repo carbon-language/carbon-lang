@@ -42,3 +42,50 @@ subroutine s2
   a = f(1.0)
   a = f(y)  !TODO: this should resolve to f2 -- should get error here
 end
+
+! Resolve named operator
+subroutine s3
+  interface operator(.foo.)
+    pure integer(8) function f_real(x, y)
+      real, intent(in) :: x, y
+    end
+    pure integer(8) function f_integer(x, y)
+      integer, intent(in) :: x, y
+    end
+  end interface
+  logical :: a, b, c
+  x = y .foo. z  ! OK: f_real
+  i = j .foo. k  ! OK: f_integer
+  !ERROR: No specific procedure of generic operator '.foo.' matches the actual arguments
+  a = b .foo. c
+end
+
+! Generic resolves successfully but error analyzing call
+module m4
+  real, protected :: x
+  real :: y
+  interface s
+    subroutine s1(x)
+      real, intent(out) :: x
+    end
+    subroutine s2(x, y)
+      real :: x, y
+    end
+  end interface
+end
+subroutine s4a
+  use m4
+  real :: z
+  !OK
+  call s(z)
+end
+subroutine s4b
+  use m4
+  !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
+  call s(x)
+end
+pure subroutine s4c
+  use m4
+  !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
+  call s(y)
+end
