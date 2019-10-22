@@ -19,11 +19,10 @@
 #include <iostream>
 
 #if (defined __GNUC__ || defined __clang__) && defined __SIZEOF_INT128__
-# define HAS_NATIVE_UINT128_T 1
+#define HAS_NATIVE_UINT128_T 1
 #else
-# undef HAS_NATIVE_UINT128_T
+#undef HAS_NATIVE_UINT128_T
 #endif
-
 
 using U128 = Fortran::common::UnsignedInt128;
 
@@ -66,11 +65,13 @@ static void Test(std::uint64_t x, std::uint64_t y) {
 
 #if HAS_NATIVE_UINT128_T
 static __uint128_t ToNative(U128 n) {
-  return static_cast<__uint128_t>(static_cast<std::uint64_t>(n >> 64)) << 64 | static_cast<std::uint64_t>(n);
+  return static_cast<__uint128_t>(static_cast<std::uint64_t>(n >> 64)) << 64 |
+      static_cast<std::uint64_t>(n);
 }
 
 static U128 FromNative(__uint128_t n) {
-  return U128{static_cast<std::uint64_t>(n >> 64)} << 64 | U128{static_cast<std::uint64_t>(n)};
+  return U128{static_cast<std::uint64_t>(n >> 64)} << 64 |
+      U128{static_cast<std::uint64_t>(n)};
 }
 
 static void TestVsNative(__uint128_t x, __uint128_t y) {
@@ -80,12 +81,12 @@ static void TestVsNative(__uint128_t x, __uint128_t y) {
   TEST(ToNative(~m) == ~x);
   TEST(ToNative(-m) == -x);
   TEST(ToNative(!m) == !x);
-  TEST(ToNative(m <  n) == (x <  y));
+  TEST(ToNative(m < n) == (x < y));
   TEST(ToNative(m <= n) == (x <= y));
   TEST(ToNative(m == n) == (x == y));
   TEST(ToNative(m != n) == (x != y));
   TEST(ToNative(m >= n) == (x >= y));
-  TEST(ToNative(m >  n) == (x >  y));
+  TEST(ToNative(m > n) == (x > y));
   TEST(ToNative(m & n) == (x & y));
   TEST(ToNative(m | n) == (x | y));
   TEST(ToNative(m ^ n) == (x ^ y));
@@ -99,7 +100,7 @@ static void TestVsNative(__uint128_t x, __uint128_t y) {
   if (y > 0) {
     TEST(ToNative(m / n) == (x / y));
     TEST(ToNative(m % n) == (x % y));
-    TEST(ToNative(m - n * (m / n)) == (x / y));
+    TEST(ToNative(m - n * (m / n)) == (x % y));
   }
 }
 
@@ -141,5 +142,5 @@ int main() {
 #else
   std::cout << "Environment lacks native __uint128_t\n";
 #endif
-  testing::Complete();
+  return testing::Complete();
 }
