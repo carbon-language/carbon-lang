@@ -660,33 +660,20 @@ bool IsProcedurePointer(const Expr<SomeType> &expr) {
 }
 
 // IsNullPointer()
-static bool IsNullPointer(const ProcedureRef &call) {
-  auto *intrinsic{call.proc().GetSpecificIntrinsic()};
-  return intrinsic &&
-      intrinsic->characteristics.value().attrs.test(
-          characteristics::Procedure::Attr::NullPointer);
-}
-template<TypeCategory CAT, int KIND>
-bool IsNullPointer(const Expr<Type<CAT, KIND>> &expr) {
-  const auto *call{std::get_if<FunctionRef<Type<CAT, KIND>>>(&expr.u)};
-  return call && IsNullPointer(*call);
-}
-template<TypeCategory CAT> bool IsNullPointer(const Expr<SomeKind<CAT>> &expr) {
-  return std::visit([](const auto &x) { return IsNullPointer(x); }, expr.u);
-}
-bool IsNullPointer(const Expr<SomeDerived> &expr) {
-  const auto *call{std::get_if<FunctionRef<SomeDerived>>(&expr.u)};
-  return call && IsNullPointer(*call);
-}
+struct IsNullPointerHelper : public AllTraverse<IsNullPointerHelper, false> {
+  using Base = AllTraverse<IsNullPointerHelper, false>;
+  IsNullPointerHelper() : Base(*this) {}
+  using Base::operator();
+  bool operator()(const ProcedureRef &call) const {
+    auto *intrinsic{call.proc().GetSpecificIntrinsic()};
+    return intrinsic &&
+        intrinsic->characteristics.value().attrs.test(
+            characteristics::Procedure::Attr::NullPointer);
+  }
+  bool operator()(const NullPointer &) const { return true; }
+};
 bool IsNullPointer(const Expr<SomeType> &expr) {
-  return std::visit(
-      common::visitors{
-          [](const NullPointer &) { return true; },
-          [](const BOZLiteralConstant &) { return false; },
-          [](const ProcedureDesignator &) { return false; },
-          [](const auto &x) { return IsNullPointer(x); },
-      },
-      expr.u);
+  return IsNullPointerHelper{}(expr);
 }
 
 // GetLastTarget()

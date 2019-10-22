@@ -28,9 +28,9 @@ namespace Fortran::evaluate {
 // able to fold it (yet) into a known constant value; specifically,
 // the expression may reference derived type kind parameters whose values
 // are not yet known.
-class IsConstantExprHelper : public AllTraverse<IsConstantExprHelper> {
+class IsConstantExprHelper : public AllTraverse<IsConstantExprHelper, true> {
 public:
-  using Base = AllTraverse<IsConstantExprHelper>;
+  using Base = AllTraverse<IsConstantExprHelper, true>;
   IsConstantExprHelper() : Base{*this} {}
   using Base::operator();
 
@@ -76,8 +76,8 @@ template bool IsConstantExpr(const Expr<SomeInteger> &);
 // This code determines whether an expression is allowable as the static
 // data address used to initialize a pointer with "=> x".  See C765.
 struct IsInitialDataTargetHelper
-  : public AllTraverse<IsInitialDataTargetHelper> {
-  using Base = AllTraverse<IsInitialDataTargetHelper>;
+  : public AllTraverse<IsInitialDataTargetHelper, true> {
+  using Base = AllTraverse<IsInitialDataTargetHelper, true>;
   using Base::operator();
   explicit IsInitialDataTargetHelper(parser::ContextualMessages &m)
     : Base{*this}, messages_{m} {}

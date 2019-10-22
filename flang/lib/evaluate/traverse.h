@@ -247,11 +247,12 @@ private:
 
 // For validity checks across an expression: if any operator() result is
 // false, so is the overall result.
-template<typename Visitor, typename Base = Traverse<Visitor, bool>>
+template<typename Visitor, bool DefaultValue,
+    typename Base = Traverse<Visitor, bool>>
 struct AllTraverse : public Base {
   AllTraverse(Visitor &v) : Base{v} {}
   using Base::operator();
-  static bool Default() { return true; }
+  static bool Default() { return DefaultValue; }
   static bool Combine(bool x, bool y) { return x && y; }
 };
 
