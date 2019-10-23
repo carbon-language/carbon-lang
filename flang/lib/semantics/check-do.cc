@@ -167,7 +167,7 @@ public:
         }
       }
     } else {
-      // C1139: check for an impure procedure component
+      // C1139: this a procedure component
       auto &component{std::get<parser::ProcComponentRef>(procedureDesignator.u)
                           .v.thing.component};
       if (component.symbol && !IsPureProcedure(*component.symbol)) {

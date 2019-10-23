@@ -167,6 +167,12 @@ bool IsFunction(const Symbol &symbol) {
 }
 
 bool IsPureProcedure(const Symbol &symbol) {
+  if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
+    if (const Symbol *procInterface{procDetails->interface().symbol()}) {
+      // procedure component with a PURE interface
+      return IsPureProcedure(*procInterface);
+    }
+  }
   return symbol.attrs().test(Attr::PURE) && IsProcedure(symbol);
 }
 

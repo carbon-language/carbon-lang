@@ -204,3 +204,53 @@ call move_alloc(ca, cb)
     call move_alloc(pvar%type1_field%coarray_type0_field, qvar%type1_field%coarray_type0_field)
   end do
 end subroutine s6
+
+subroutine s7()
+  interface
+    pure integer function pf()
+    end function pf
+  end interface
+
+  type :: procTypeNotPure
+    procedure(notPureFunc), pointer, nopass :: notPureProcComponent
+  end type procTypeNotPure
+
+  type :: procTypePure
+    procedure(pf), pointer, nopass :: pureProcComponent
+  end type procTypePure
+
+  type(procTypeNotPure) :: procVarNotPure
+  type(procTypePure) :: procVarPure
+  integer :: ivar
+
+  procVarPure%pureProcComponent => pureFunc
+
+  do concurrent (i = 1:10)
+    print *, "hello"
+  end do
+
+  do concurrent (i = 1:10)
+    ivar = pureFunc()
+  end do
+
+  ! This should not generate errors
+  do concurrent (i = 1:10)
+    ivar = procVarPure%pureProcComponent()
+  end do
+
+  ! This should generate an error
+  do concurrent (i = 1:10)
+!ERROR: Call to an impure procedure component is not allowed in DO CONCURRENT
+    ivar = procVarNotPure%notPureProcComponent()
+  end do
+
+  contains
+    integer function notPureFunc()
+      notPureFunc = 2
+    end function notPureFunc
+
+    pure integer function pureFunc()
+      pureFunc = 3
+    end function pureFunc
+
+end subroutine s7
