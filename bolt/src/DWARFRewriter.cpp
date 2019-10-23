@@ -613,15 +613,28 @@ void DWARFRewriter::updateGdbIndexSection() {
 
 void
 DWARFRewriter::convertToRanges(const DWARFAbbreviationDeclaration *Abbrev) {
+  dwarf::Form HighPCForm = Abbrev->findAttribute(dwarf::DW_AT_high_pc)->Form;
   std::lock_guard<std::mutex> Lock(AbbrevPatcherMutex);
   AbbrevPatcher->addAttributePatch(Abbrev,
                                    dwarf::DW_AT_low_pc,
                                    dwarf::DW_AT_ranges,
                                    dwarf::DW_FORM_sec_offset);
-  AbbrevPatcher->addAttributePatch(Abbrev,
-                                   dwarf::DW_AT_high_pc,
-                                   dwarf::DW_AT_low_pc,
-                                   dwarf::DW_FORM_udata);
+  if (HighPCForm == dwarf::DW_FORM_addr ||
+      HighPCForm == dwarf::DW_FORM_data8) {
+    // LowPC must have 12 bytes, use indirect
+    AbbrevPatcher->addAttributePatch(Abbrev,
+                                     dwarf::DW_AT_high_pc,
+                                     dwarf::DW_AT_low_pc,
+                                     dwarf::DW_FORM_indirect);
+  } else if (HighPCForm == dwarf::DW_FORM_data4) {
+    // LowPC must have 8 bytes, use addr
+    AbbrevPatcher->addAttributePatch(Abbrev,
+                                     dwarf::DW_AT_high_pc,
+                                     dwarf::DW_AT_low_pc,
+                                     dwarf::DW_FORM_addr);
+  } else {
+    llvm_unreachable("unexpected form");
+  }
 }
 
 void DWARFRewriter::convertToRanges(DWARFDie DIE,
@@ -712,6 +725,7 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
       DIE, LowPCOffset, HighPCOffset, LowPCFormValue, HighPCFormValue);
 
   unsigned LowPCSize = 0;
+  assert(DIE.getDwarfUnit()->getAddressByteSize() == 8);
   if (HighPCFormValue.getForm() == dwarf::DW_FORM_addr ||
       HighPCFormValue.getForm() == dwarf::DW_FORM_data8) {
     LowPCSize = 12;
@@ -723,6 +737,13 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
 
   std::lock_guard<std::mutex> Lock(DebugInfoPatcherMutex);
   DebugInfoPatcher->addLE32Patch(LowPCOffset, RangesSectionOffset);
-  DebugInfoPatcher->addUDataPatch(LowPCOffset + 4, 0, LowPCSize);
+  if (LowPCSize == 12) {
+    // Write an indirect 0 value for DW_AT_low_pc so that we can fill
+    // 12 bytes of space (see T56239836 for more details)
+    DebugInfoPatcher->addUDataPatch(LowPCOffset + 4, dwarf::DW_FORM_addr, 4);
+    DebugInfoPatcher->addLE64Patch(LowPCOffset + 8, 0);
+  } else {
+    DebugInfoPatcher->addLE64Patch(LowPCOffset + 4, 0);
+  }
 }
 
