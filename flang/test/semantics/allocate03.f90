@@ -14,7 +14,7 @@
 
 ! Check for semantic errors in ALLOCATE statements
 
-subroutine C933_a(ca3, ca4, cp3, cp3mold, cp4, cp7, cp8, bsrc)
+subroutine C933_a(b1, ca3, ca4, cp3, cp3mold, cp4, cp7, cp8, bsrc)
 ! If any allocate-object has a deferred type parameter, is unlimited polymorphic,
 ! or is of abstract type, either type-spec or source-expr shall appear.
 

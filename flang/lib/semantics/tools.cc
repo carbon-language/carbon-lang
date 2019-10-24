@@ -883,8 +883,7 @@ const DeclTypeSpec &FindOrInstantiateDerivedType(Scope &scope,
 static Symbol &InstantiateSymbol(
     const Symbol &symbol, Scope &scope, SemanticsContext &semanticsContext) {
   evaluate::FoldingContext foldingContext{semanticsContext.foldingContext()};
-  CHECK(foldingContext.pdtInstance() != nullptr);
-  const DerivedTypeSpec &instanceSpec{*foldingContext.pdtInstance()};
+  const DerivedTypeSpec &instanceSpec{DEREF(foldingContext.pdtInstance())};
   auto pair{scope.try_emplace(symbol.name(), symbol.attrs())};
   Symbol &result{*pair.first->second};
   if (!pair.second) {

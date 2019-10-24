@@ -340,7 +340,7 @@ std::optional<DummyArgument> DummyArgument::FromActual(
                 DummyDataObject{
                     TypeAndShape{DynamicType::TypelessIntrinsicArgument()}});
           },
-          [&](const NullPointer &) { return std::optional<DummyArgument>{}; },
+          [](const NullPointer &) { return std::optional<DummyArgument>{}; },
           [&](const ProcedureDesignator &designator) {
             if (auto proc{Procedure::Characterize(
                     designator, context.intrinsics())}) {

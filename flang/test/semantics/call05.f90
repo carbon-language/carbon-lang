@@ -33,8 +33,12 @@ module m
   class(t2), allocatable :: pa2(:)
   class(*), pointer :: up(:)
   class(*), allocatable :: ua(:)
-  type(pdt(*)), pointer :: dmp(:)
-  type(pdt(*)), allocatable :: dma(:)
+  !ERROR: An assumed (*) type parameter may be used only for a dummy argument, associate name, or named constant
+  type(pdt(*)), pointer :: amp(:)
+  !ERROR: An assumed (*) type parameter may be used only for a dummy argument, associate name, or named constant
+  type(pdt(*)), allocatable :: ama(:)
+  type(pdt(:)), pointer :: dmp(:)
+  type(pdt(:)), allocatable :: dma(:)
   type(pdt(1)), pointer :: nmp(:)
   type(pdt(1)), allocatable :: nma(:)
 
@@ -58,17 +62,23 @@ module m
   subroutine sua(x)
     class(*), allocatable :: x(:)
   end subroutine
-  subroutine sdmp(x)
+  subroutine samp(x)
     type(pdt(*)), pointer :: x(:)
   end subroutine
+  subroutine sama(x)
+    type(pdt(*)), allocatable :: x(:)
+  end subroutine
+  subroutine sdmp(x)
+    type(pdt(:)), pointer :: x(:)
+  end subroutine
   subroutine sdma(x)
-    type(pdt(*)), pointer :: x(:)
+    type(pdt(:)), allocatable :: x(:)
   end subroutine
   subroutine snmp(x)
     type(pdt(1)), pointer :: x(:)
   end subroutine
   subroutine snma(x)
-    type(pdt(1)), pointer :: x(:)
+    type(pdt(1)), allocatable :: x(:)
   end subroutine
 
   subroutine test
@@ -76,42 +86,48 @@ module m
     call sma(ma) ! ok
     call spp(pp) ! ok
     call spa(pa) ! ok
-    !ERROR: If a dummy or effective argument is polymorphic, both must be so
+    !ERROR: If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both must be so
     call smp(pp)
-    !ERROR: If a dummy or effective argument is polymorphic, both must be so
-    call sma(pp)
-    !ERROR: If a dummy or effective argument is polymorphic, both must be so
+    !ERROR: If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both must be so
+    call sma(pa)
+    !ERROR: If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both must be so
     call spp(mp)
-    !ERROR: If a dummy or effective argument is polymorphic, both must be so
-    call spa(mp)
-    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so
+    !ERROR: If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both must be so
+    call spa(ma)
+    !ERROR: If a POINTER or ALLOCATABLE dummy or actual argument is unlimited polymorphic, both must be so
     call sup(pp)
-    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so
+    !ERROR: If a POINTER or ALLOCATABLE dummy or actual argument is unlimited polymorphic, both must be so
     call sua(pa)
-    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so
+    !ERROR: actual argument type 'CLASS(*)' is not compatible with dummy argument type 't'
     call spp(up)
-    !ERROR: If a dummy or effective argument is unlimited polymorphic, both must be so
+    !ERROR: actual argument type 'CLASS(*)' is not compatible with dummy argument type 't'
     call spa(ua)
-    !ERROR: Dummy and effective arguments must have the same declared type
+    !ERROR: POINTER or ALLOCATABLE dummy and actual arguments must have the same declared type
     call spp(pp2)
-    !ERROR: Dummy and effective arguments must have the same declared type
+    !ERROR: POINTER or ALLOCATABLE dummy and actual arguments must have the same declared type
     call spa(pa2)
-    !ERROR: Dummy argument has rank 1, but effective argument has rank 2
+    !ERROR: Rank of dummy argument is 1, but actual argument has rank 2
     call smp(mpmat)
-    !ERROR: Dummy argument has rank 1, but effective argument has rank 2
+    !ERROR: Rank of dummy argument is 1, but actual argument has rank 2
     call sma(mamat)
     call sdmp(dmp) ! ok
     call sdma(dma) ! ok
     call snmp(nmp) ! ok
     call snma(nma) ! ok
-    !ERROR: Dummy and effective arguments must defer the same type parameters
+    call samp(nmp) ! ok
+    call sama(nma) ! ok
+    !ERROR: Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE
     call sdmp(nmp)
-    !ERROR: Dummy and effective arguments must defer the same type parameters
+    !ERROR: Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE
     call sdma(nma)
-    !ERROR: Dummy and effective arguments must defer the same type parameters
+    !ERROR: Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE
     call snmp(dmp)
-    !ERROR: Dummy and effective arguments must defer the same type parameters
+    !ERROR: Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE
     call snma(dma)
+    !ERROR: Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE
+    call samp(dmp)
+    !ERROR: Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE
+    call sama(dma)
   end subroutine
 
 end module

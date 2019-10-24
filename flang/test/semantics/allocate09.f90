@@ -40,12 +40,12 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   real(kind=8) srcx8, srcx8_array(10)
   class(WithParam(4, 2)) src_a_4_2
   type(WithParam(8, 2)) src_a_8_2
-  class(WithParam(4, *)) src_a_4_star
-  class(WithParam(8, *)) src_a_8_star
+  class(WithParam(4, :)) src_a_4_def
+  class(WithParam(8, :)) src_a_8_def
   type(WithParamExtent(4, 2, 8, 3)) src_b_4_2_8_3
-  class(WithParamExtent(4, *, 8, 3)) src_b_4_star_8_3
+  class(WithParamExtent(4, :, 8, 3)) src_b_4_def_8_3
   type(WithParamExtent(8, 2, 8, 3)) src_b_8_2_8_3
-  class(WithParamExtent(8, *, 8, 3)) src_b_8_star_8_3
+  class(WithParamExtent(8, :, 8, 3)) src_b_8_def_8_3
   type(WithParamExtent2(k1=4, l1=5, k2=5, l2=6, l3=8 )) src_c_4_5_5_6_8_8
   class(WithParamExtent2(k1=4, l1=2, k2=5, l2=6, k3=5, l3=8)) src_c_4_2_5_6_5_8
   class(WithParamExtent2(k2=5, l2=6, k3=5, l3=8)) src_c_1_2_5_6_5_8
@@ -73,14 +73,14 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   allocate(x2(10), source=srcx_array)
   allocate(param_ta_4_2, param_ca_4_2, mold=src_a_4_2)
   allocate(param_ca_4_2, source=src_b_4_2_8_3)
-  allocate(param_ta_4_2, param_ca_4_2, mold=src_a_4_star) ! no C935 equivalent for source-expr
-  allocate(param_ca_4_2, source=src_b_4_star_8_3) ! no C935 equivalent for source-expr
-  allocate(param_ta_4_assumed, param_ca_4_assumed, source=src_a_4_star)
-  allocate(param_ca_4_assumed, mold=src_b_4_star_8_3)
+  allocate(param_ta_4_2, param_ca_4_2, mold=src_a_4_def) ! no C935 equivalent for source-expr
+  allocate(param_ca_4_2, source=src_b_4_def_8_3) ! no C935 equivalent for source-expr
+  allocate(param_ta_4_assumed, param_ca_4_assumed, source=src_a_4_def)
+  allocate(param_ca_4_assumed, mold=src_b_4_def_8_3)
   allocate(param_ta_4_assumed, param_ca_4_assumed, source=src_a_4_2) ! no C935 equivalent for source-expr
   allocate(param_ca_4_assumed, mold=src_b_4_2_8_3) ! no C935 equivalent for source-expr
   allocate(param_ta_4_deferred, param_ca_4_deferred, source =src_a_4_2)
-  allocate(param_ca_4_deferred, mold=src_b_4_star_8_3)
+  allocate(param_ca_4_deferred, mold=src_b_4_def_8_3)
 
   allocate(extended2, source=src_c_4_5_5_6_8_8)
   allocate(param_ca_4_2, mold= src_c_4_2_5_6_5_8)
@@ -103,23 +103,23 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_ca_4_2, mold=src_a_8_2)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
-  allocate(param_ta_4_2, source=src_a_8_star)
+  allocate(param_ta_4_2, source=src_a_8_def)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_ca_4_2, source=src_b_8_2_8_3)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
-  allocate(param_ca_4_2, mold=src_b_8_star_8_3)
+  allocate(param_ca_4_2, mold=src_b_8_def_8_3)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
-  allocate(param_ta_4_assumed, source=src_a_8_star)
+  allocate(param_ta_4_assumed, source=src_a_8_def)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_ta_4_assumed, mold=src_a_8_2)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
-  allocate(param_ca_4_assumed, mold=src_a_8_star)
+  allocate(param_ca_4_assumed, mold=src_a_8_def)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_ca_4_assumed, source=src_b_8_2_8_3)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_ta_4_deferred, mold=src_a_8_2)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
-  allocate(param_ca_4_deferred, source=src_a_8_star)
+  allocate(param_ca_4_deferred, source=src_a_8_def)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression
   allocate(param_ca_4_deferred, mold=src_b_8_2_8_3)
   !ERROR: Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression

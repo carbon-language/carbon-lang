@@ -15,7 +15,7 @@
 ! Check for semantic errors in ALLOCATE statements
 
 
-subroutine C935(l, ac1, ac2, ac3, dc1, dc2, ec1, ec2, aa, ab, ea, eb, da, db, whatever, something)
+subroutine C935(l, ac1, ac2, ac3, dc1, dc2, ec1, ec2, aa, ab, ab2, ea, eb, da, db, whatever, something, something_else)
 ! A type-param-value in a type-spec shall be an asterisk if and only if each
 ! allocate-object is a dummy argument for which the corresponding type parameter
 ! is assumed.

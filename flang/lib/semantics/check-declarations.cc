@@ -30,36 +30,16 @@ public:
   explicit CheckHelper(SemanticsContext &c) : context_{c} {}
 
   void Check() { Check(context_.globalScope()); }
-  void Check(const ParamValue &value) { CheckSpecExpr(value.GetExplicit()); }
+  void Check(const ParamValue &, bool canBeAssumed);
   void Check(Bound &bound) { CheckSpecExpr(bound.GetExplicit()); }
   void Check(ShapeSpec &spec) {
     Check(spec.lbound());
     Check(spec.ubound());
   }
-  void Check(ArraySpec &shape) {
-    for (auto &spec : shape) {
-      Check(spec);
-    }
-  }
-  void Check(DeclTypeSpec &type) {
-    if (type.category() == DeclTypeSpec::Character) {
-      Check(type.characterTypeSpec().length());
-    } else if (const DerivedTypeSpec * spec{type.AsDerived()}) {
-      for (auto &parm : spec->parameters()) {
-        Check(parm.second);
-      }
-    }
-  }
+  void Check(ArraySpec &);
+  void Check(DeclTypeSpec &, bool canHaveAssumedTypeParameters);
   void Check(Symbol &);
-  void Check(Scope &scope) {
-    scope_ = &scope;
-    for (auto &pair : scope) {
-      Check(*pair.second);
-    }
-    for (Scope &child : scope.children()) {
-      Check(child);
-    }
-  }
+  void Check(Scope &);
 
 private:
   template<typename A> void CheckSpecExpr(A &x) {
@@ -76,6 +56,33 @@ private:
   const Scope *scope_{nullptr};
 };
 
+void CheckHelper::Check(const ParamValue &value, bool canBeAssumed) {
+  if (value.isAssumed()) {
+    if (!canBeAssumed) {  // C795
+      messages_.Say(
+          "An assumed (*) type parameter may be used only for a dummy argument, associate name, or named constant"_err_en_US);
+    }
+  } else {
+    CheckSpecExpr(value.GetExplicit());
+  }
+}
+
+void CheckHelper::Check(ArraySpec &shape) {
+  for (auto &spec : shape) {
+    Check(spec);
+  }
+}
+
+void CheckHelper::Check(DeclTypeSpec &type, bool canHaveAssumedTypeParameters) {
+  if (type.category() == DeclTypeSpec::Character) {
+    Check(type.characterTypeSpec().length(), canHaveAssumedTypeParameters);
+  } else if (const DerivedTypeSpec * spec{type.AsDerived()}) {
+    for (auto &parm : spec->parameters()) {
+      Check(parm.second, canHaveAssumedTypeParameters);
+    }
+  }
+}
+
 void CheckHelper::Check(Symbol &symbol) {
   if (context_.HasError(symbol) || symbol.has<UseDetails>() ||
       symbol.has<HostAssocDetails>()) {
@@ -84,7 +91,18 @@ void CheckHelper::Check(Symbol &symbol) {
   auto save{messages_.SetLocation(symbol.name())};
   context_.set_location(symbol.name());
   if (DeclTypeSpec * type{symbol.GetType()}) {
-    Check(*type);
+    bool canHaveAssumedParameter{IsNamedConstant(symbol) ||
+        IsAssumedLengthCharacterFunction(symbol) ||
+        symbol.test(Symbol::Flag::ParentComp)};
+    if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+      canHaveAssumedParameter |= object->isDummy() ||
+          (object->isFuncResult() &&
+              type->category() == DeclTypeSpec::Character);
+    } else {
+      canHaveAssumedParameter |=
+          symbol.has<AssocEntityDetails>() || symbol.has<DerivedTypeDetails>();
+    }
+    Check(*type, canHaveAssumedParameter);
   }
   if (IsAssumedLengthCharacterFunction(symbol)) {  // C723
     if (symbol.attrs().test(Attr::RECURSIVE)) {
@@ -115,9 +133,9 @@ void CheckHelper::Check(Symbol &symbol) {
     Check(object->coshape());
     if (object->isDummy() && symbol.attrs().test(Attr::INTENT_OUT)) {
       if (FindUltimateComponent(symbol,
-              std::function<bool(const Symbol &)>{[](const Symbol &symbol) {
+              [](const Symbol &symbol) {
                 return IsCoarray(symbol) && IsAllocatable(symbol);
-              }})) {  // C846
+              })) {  // C846
         messages_.Say(
             "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
       }
@@ -126,6 +144,16 @@ void CheckHelper::Check(Symbol &symbol) {
             "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
       }
     }
+  }
+}
+
+void CheckHelper::Check(Scope &scope) {
+  scope_ = &scope;
+  for (auto &pair : scope) {
+    Check(*pair.second);
+  }
+  for (Scope &child : scope.children()) {
+    Check(child);
   }
 }
 

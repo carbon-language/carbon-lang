@@ -88,6 +88,8 @@ const Symbol *FindUltimateComponent(
     const Symbol &symbol, const std::function<bool(const Symbol &)> &predicate);
 
 // Returns an immediate component of type that matches predicate, or nullptr.
+// An immediate component of a type is one declared for that type or is an
+// immediate component of the type that it extends.
 const Symbol *FindImmediateComponent(
     const DerivedTypeSpec &, const std::function<bool(const Symbol &)> &);
 

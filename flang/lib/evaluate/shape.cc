@@ -366,7 +366,7 @@ auto GetShapeHelper::operator()(const Symbol &symbol) const -> Result {
               return Result{shape};
             }
           },
-          [&](const semantics::EntityDetails &) {
+          [](const semantics::EntityDetails &) {
             return Scalar();  // no dimensions seen
           },
           [&](const semantics::ProcEntityDetails &proc) {
@@ -395,7 +395,7 @@ auto GetShapeHelper::operator()(const Symbol &symbol) const -> Result {
           [&](const semantics::HostAssocDetails &assoc) {
             return (*this)(assoc.symbol());
           },
-          [&](const auto &) { return Result{}; },
+          [](const auto &) { return Result{}; },
       },
       symbol.details());
 }
