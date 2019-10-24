@@ -115,7 +115,7 @@ static bool DefersSameTypeParameters(
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     const std::string &dummyName, evaluate::Expr<evaluate::SomeType> &actual,
     const characteristics::TypeAndShape &actualType, bool isElemental,
-    evaluate::FoldingContext &context, const Scope &scope) {
+    evaluate::FoldingContext &context, const Scope *scope) {
 
   // Basic type & rank checking
   parser::ContextualMessages &messages{context.messages()};
@@ -294,10 +294,10 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   } else if (dummyIsVolatile) {
     reason = "VOLATILE";
   }
-  if (reason != nullptr) {
+  if (reason != nullptr && scope != nullptr) {
     bool vectorSubscriptIsOk{isElemental || dummyIsValue};  // 15.5.2.4(21)
     std::unique_ptr<parser::Message> why{
-        WhyNotModifiable(messages.at(), actual, scope, vectorSubscriptIsOk)};
+        WhyNotModifiable(messages.at(), actual, *scope, vectorSubscriptIsOk)};
     if (why.get() != nullptr) {
       if (auto *msg{messages.Say(
               "Actual argument associated with %s %s must be definable"_err_en_US,
@@ -383,12 +383,8 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
                 bool isElemental{object.type.Rank() == 0 && proc.IsElemental()};
-                object.type.IsCompatibleWith(context.messages(), *type,
-                    "dummy argument", "actual argument", isElemental);
-                if (scope) {
-                  CheckExplicitDataArg(object, dummyName, *expr, *type,
-                      isElemental, context, *scope);
-                }
+                CheckExplicitDataArg(object, dummyName, *expr, *type,
+                    isElemental, context, scope);
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
                   std::holds_alternative<evaluate::BOZLiteralConstant>(
                       expr->u)) {
