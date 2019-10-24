@@ -285,6 +285,7 @@ public:
 
   CharBlock at() const { return at_; }
   Messages *messages() const { return messages_; }
+  bool empty() const { return !messages_ || messages_->empty(); }
 
   // Set CharBlock for messages; restore when the returned value is deleted
   common::Restorer<CharBlock> SetLocation(CharBlock at) {
@@ -292,6 +293,12 @@ public:
       at = at_;
     }
     return common::ScopedSet(at_, std::move(at));
+  }
+
+  // Diverts messages to another buffer; restored when the returned
+  // value is deleted.
+  common::Restorer<Messages *> SetMessages(Messages &buffer) {
+    return common::ScopedSet(messages_, &buffer);
   }
 
   template<typename... A> Message *Say(CharBlock at, A &&... args) {

@@ -121,16 +121,16 @@ public:
   using MaybeExpr = std::optional<Expr<SomeType>>;
 
   explicit ExpressionAnalyzer(semantics::SemanticsContext &sc) : context_{sc} {}
+  ExpressionAnalyzer(semantics::SemanticsContext &sc, FoldingContext &fc)
+    : context_{sc}, foldingContext_{fc} {}
   ExpressionAnalyzer(ExpressionAnalyzer &) = default;
 
   semantics::SemanticsContext &context() const { return context_; }
 
-  FoldingContext &GetFoldingContext() const {
-    return context_.foldingContext();
-  }
+  FoldingContext &GetFoldingContext() const { return foldingContext_; }
 
   parser::ContextualMessages &GetContextualMessages() {
-    return GetFoldingContext().messages();
+    return foldingContext_.messages();
   }
 
   template<typename... A> parser::Message *Say(A &&... args) {
@@ -341,6 +341,7 @@ private:
   MaybeExpr MakeFunctionRef(parser::CharBlock intrinsic, ActualArguments &&);
 
   semantics::SemanticsContext &context_;
+  FoldingContext &foldingContext_{context_.foldingContext()};
   std::map<parser::CharBlock, int> acImpliedDos_;  // values are INTEGER kinds
   bool fatalErrors_{false};
 };

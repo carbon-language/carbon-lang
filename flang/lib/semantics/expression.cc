@@ -885,7 +885,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
             "a designator"_err_en_US);
       }
     } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
-      CHECK(context_.AnyFatalError());
+      CHECK(context_.AnyFatalError() || !foldingContext_.messages().empty());
       return std::nullopt;
     } else if (std::optional<DataRef> dataRef{
                    ExtractDataRef(std::move(*dtExpr))}) {
@@ -1534,7 +1534,7 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
       }
     }
   }
-  CHECK(context_.messages().AnyFatalError());
+  CHECK(!GetContextualMessages().empty());
   return std::nullopt;
 }
 
