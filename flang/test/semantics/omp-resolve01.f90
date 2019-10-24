@@ -22,7 +22,7 @@
 
   b = "HIFROMPGI"
   c = b(2:7)
-  !ERROR: Fortran Substrings are not allowed on OpenMP directives or clauses
+  !ERROR: Substrings are not allowed on OpenMP directives or clauses
   !$omp parallel private(c(1:3))
   a = c(1:1)
   !$omp end parallel
