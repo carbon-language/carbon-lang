@@ -16,6 +16,7 @@
 #include "RewriteInstance.h"
 #include <map>
 #include <mutex>
+#include <vector>
 
 namespace llvm {
 
@@ -48,12 +49,26 @@ class DWARFRewriter {
   /// .debug_aranges DWARF section.
   std::unique_ptr<DebugARangesSectionWriter> ARangesSectionWriter;
 
-  std::unique_ptr<DebugLocWriter> LocationListWriter;
+  /// Use a separate location list writer for each compilation unit
+  std::vector<std::unique_ptr<DebugLocWriter>> LocListWritersByCU;
+
+  struct LocListDebugInfoPatchType {
+    uint32_t DebugInfoOffset;
+    size_t CUIndex;
+    uint64_t CUWriterOffset;
+  };
+
+  /// The list of debug info patches to be made once individual
+  /// location list writers have been filled
+  std::vector<LocListDebugInfoPatchType> LocListDebugInfoPatches;
+
+  std::mutex LocListDebugInfoPatchesMutex;
 
   /// Recursively update debug info for all DIEs in \p Unit.
   /// If \p Function is not empty, it points to a function corresponding
   /// to a parent DW_TAG_subprogram node of the current \p DIE.
   void updateUnitDebugInfo(
+      size_t CUIndex,
       const DWARFDie DIE, std::vector<const BinaryFunction *> FunctionStack,
       const BinaryFunction *&CachedFunction,
       std::map<DebugAddressRangesVector, uint64_t> &CachedRanges);
@@ -67,6 +82,8 @@ class DWARFRewriter {
   /// \p DIE is the object's DIE in the input binary.
   void updateDWARFObjectAddressRanges(const DWARFDie DIE,
                                       uint64_t DebugRangesOffset);
+
+  std::unique_ptr<LocBufferVector> makeFinalLocListsSection();
 
   /// Generate new contents for .debug_ranges and .debug_aranges section.
   void finalizeDebugSections();
