@@ -99,8 +99,7 @@ void CheckHelper::Check(Symbol &symbol) {
           (object->isFuncResult() &&
               type->category() == DeclTypeSpec::Character);
     } else {
-      canHaveAssumedParameter |=
-          symbol.has<AssocEntityDetails>() || symbol.has<DerivedTypeDetails>();
+      canHaveAssumedParameter |= symbol.has<AssocEntityDetails>();
     }
     Check(*type, canHaveAssumedParameter);
   }
