@@ -158,12 +158,6 @@ set(ERROR_TESTS
   omp-resolve02.f90
   omp-resolve03.f90
   omp-resolve04.f90
-  omp-symbol01.f90
-  omp-symbol02.f90
-  omp-symbol03.f90
-  omp-symbol04.f90
-  omp-symbol05.f90
-  omp-symbol06.f90
   omp-clause-validity01.f90
   omp-loop-association.f90
 #  omp-nested01.f90
@@ -203,6 +197,12 @@ set(SYMBOL_TESTS
   symbol14.f90
   symbol15.f90
   symbol16.f90
+  omp-symbol01.f90
+  omp-symbol02.f90
+  omp-symbol03.f90
+  omp-symbol04.f90
+  omp-symbol05.f90
+  omp-symbol06.f90
   kinds01.f90
   kinds03.f90
   procinterface01.f90

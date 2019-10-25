@@ -25,14 +25,9 @@ log=$temp/log
 actual=$temp/actual
 expect=$temp/expect
 diffs=$temp/diffs
-options=$temp/options
-
-# See if there are additional options
-sed -n 's/^ *! *OPTIONS: *//p' $src > $options
-cat $options
 
 include=$(dirname $(dirname $F18))/include
-cmd="$F18 $F18_OPTIONS -I$include `cat $options` $src"
+cmd="$F18 $F18_OPTIONS $USER_OPTIONS -I$include $src"
 ( cd $temp; $cmd ) > $log 2>&1
 if [[ $? -ge 128 ]]; then
   cat $log
