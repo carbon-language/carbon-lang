@@ -300,11 +300,6 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
     return;
   }
 
-  if (opts::Verbosity >= 2 && DebugRangesOffset == -1U) {
-    errs() << "BOLT-WARNING: using invalid DW_AT_ranges for DIE at offset 0x"
-           << Twine::utohexstr(DIE.getOffset()) << '\n';
-  }
-
   const auto *AbbreviationDecl = DIE.getAbbreviationDeclarationPtr();
   if (!AbbreviationDecl) {
     if (opts::Verbosity >= 1) {
