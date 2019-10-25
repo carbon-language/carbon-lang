@@ -75,7 +75,8 @@ void DWARFRewriter::updateDebugInfo() {
       static_cast<DebugAbbrevPatcher *>(SectionPatchers[".debug_abbrev"].get());
   assert(DebugInfoPatcher && AbbrevPatcher && "Patchers not initialized.");
 
-  RangesSectionsWriter = llvm::make_unique<DebugRangesSectionsWriter>(&BC);
+  ARangesSectionWriter = llvm::make_unique<DebugARangesSectionWriter>();
+  RangesSectionWriter = llvm::make_unique<DebugRangesSectionWriter>(&BC);
   LocationListWriter = llvm::make_unique<DebugLocWriter>(&BC);
 
   auto processUnitDIE = [&](const DWARFDie DIE) {
@@ -115,7 +116,8 @@ void DWARFRewriter::updateUnitDebugInfo(
       const auto ModuleRanges = DIE.getAddressRanges();
       auto OutputRanges = BC.translateModuleAddressRanges(ModuleRanges);
       const auto RangesSectionOffset =
-      RangesSectionsWriter->addCURanges(DIE.getDwarfUnit()->getOffset(),
+      RangesSectionWriter->addRanges(OutputRanges);
+      ARangesSectionWriter->addCURanges(DIE.getDwarfUnit()->getOffset(),
                                         std::move(OutputRanges));
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
     }
@@ -150,7 +152,7 @@ void DWARFRewriter::updateUnitDebugInfo(
       // Update ranges.
       if (UsesRanges) {
         updateDWARFObjectAddressRanges(DIE,
-            RangesSectionsWriter->addRanges(FunctionRanges));
+            RangesSectionWriter->addRanges(FunctionRanges));
       } else {
         // Delay conversion of [LowPC, HighPC) into DW_AT_ranges if possible.
         const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
@@ -186,7 +188,7 @@ void DWARFRewriter::updateUnitDebugInfo(
   case dwarf::DW_TAG_catch_block:
     {
       auto RangesSectionOffset =
-        RangesSectionsWriter->getEmptyRangesOffset();
+        RangesSectionWriter->getEmptyRangesOffset();
       const BinaryFunction *Function =
         FunctionStack.empty() ? nullptr : FunctionStack.back();
       if (Function) {
@@ -199,7 +201,7 @@ void DWARFRewriter::updateUnitDebugInfo(
                    << Twine::utohexstr(DIE.getDwarfUnit()->getOffset()) << '\n';
           }
         );
-        RangesSectionOffset = RangesSectionsWriter->addRanges(
+        RangesSectionOffset = RangesSectionWriter->addRanges(
             Function, std::move(OutputRanges), CachedFunction, CachedRanges);
       }
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
@@ -484,7 +486,7 @@ void DWARFRewriter::finalizeDebugSections() {
         *BC.STI, *BC.MRI, MCTargetOptions()));
     auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
-    RangesSectionsWriter->writeArangesSection(Writer.get());
+    ARangesSectionWriter->writeARangesSection(Writer.get());
     const auto &ARangesContents = OS.str();
 
     BC.registerOrUpdateNoteSection(".debug_aranges",
@@ -492,7 +494,7 @@ void DWARFRewriter::finalizeDebugSections() {
                                     ARangesContents.size());
   }
 
-  auto RangesSectionContents = RangesSectionsWriter->finalize();
+  auto RangesSectionContents = RangesSectionWriter->finalize();
   BC.registerOrUpdateNoteSection(".debug_ranges",
                                   copyByteArray(*RangesSectionContents),
                                   RangesSectionContents->size());
@@ -557,7 +559,7 @@ void DWARFRewriter::updateGdbIndexSection() {
 
   // Calculate the size of the new address table.
   uint32_t NewAddressTableSize = 0;
-  for (const auto &CURangesPair : RangesSectionsWriter->getCUAddressRanges()) {
+  for (const auto &CURangesPair : ARangesSectionWriter->getCUAddressRanges()) {
     const auto &Ranges = CURangesPair.second;
     NewAddressTableSize += Ranges.size() * 20;
   }
@@ -586,7 +588,7 @@ void DWARFRewriter::updateGdbIndexSection() {
   Buffer += AddressTableOffset - CUListOffset;
 
   // Generate new address table.
-  for (const auto &CURangesPair : RangesSectionsWriter->getCUAddressRanges()) {
+  for (const auto &CURangesPair : ARangesSectionWriter->getCUAddressRanges()) {
     const auto CUIndex = OffsetToIndexMap[CURangesPair.first];
     const auto &Ranges = CURangesPair.second;
     for (const auto &Range : Ranges) {
@@ -641,9 +643,9 @@ void DWARFRewriter::convertToRanges(DWARFDie DIE,
                                     const DebugAddressRangesVector &Ranges) {
   uint64_t RangesSectionOffset;
   if (Ranges.empty()) {
-    RangesSectionOffset = RangesSectionsWriter->getEmptyRangesOffset();
+    RangesSectionOffset = RangesSectionWriter->getEmptyRangesOffset();
   } else {
-    RangesSectionOffset = RangesSectionsWriter->addRanges(Ranges);
+    RangesSectionOffset = RangesSectionWriter->addRanges(Ranges);
   }
 
   convertToRanges(DIE, RangesSectionOffset);

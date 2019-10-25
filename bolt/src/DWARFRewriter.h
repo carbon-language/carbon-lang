@@ -40,9 +40,13 @@ class DWARFRewriter {
 
   std::mutex AbbrevPatcherMutex;
 
-  /// Stores and serializes information that will be put into the .debug_ranges
-  /// and .debug_aranges DWARF sections.
-  std::unique_ptr<DebugRangesSectionsWriter> RangesSectionsWriter;
+  /// Stores and serializes information that will be put into the
+  /// .debug_ranges DWARF section.
+  std::unique_ptr<DebugRangesSectionWriter> RangesSectionWriter;
+
+  /// Stores and serializes information that will be put into the
+  /// .debug_aranges DWARF section.
+  std::unique_ptr<DebugARangesSectionWriter> ARangesSectionWriter;
 
   std::unique_ptr<DebugLocWriter> LocationListWriter;
 

@@ -96,13 +96,10 @@ struct DebugLineTableRowRef {
 
 using RangesBufferVector = SmallVector<char, 16>;
 
-/// Serializes the .debug_ranges and .debug_aranges DWARF sections.
-class DebugRangesSectionsWriter {
+/// Serializes the .debug_ranges DWARF section.
+class DebugRangesSectionWriter {
 public:
-  DebugRangesSectionsWriter(BinaryContext *BC);
-
-  /// Add ranges for CU matching \p CUOffset and return offset into section.
-  uint64_t addCURanges(uint64_t CUOffset, DebugAddressRangesVector &&Ranges);
+  DebugRangesSectionWriter(BinaryContext *BC);
 
   /// Add ranges with caching for \p Function.
   uint64_t
@@ -113,25 +110,9 @@ public:
   /// Add ranges and return offset into section.
   uint64_t addRanges(const DebugAddressRangesVector &Ranges);
 
-  /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
-  void writeArangesSection(MCObjectWriter *Writer) const;
-
-  /// Resets the writer to a clear state.
-  void reset() {
-    CUAddressRanges.clear();
-  }
-
   /// Returns an offset of an empty address ranges list that is always written
   /// to .debug_ranges
   uint64_t getEmptyRangesOffset() const { return EmptyRangesOffset; }
-
-  /// Map DWARFCompileUnit index to ranges.
-  using CUAddressRangesType = std::map<uint64_t, DebugAddressRangesVector>;
-
-  /// Return ranges for a given CU.
-  const CUAddressRangesType &getCUAddressRanges() const {
-    return CUAddressRanges;
-  }
 
   std::unique_ptr<RangesBufferVector> finalize() {
     return std::move(RangesBuffer);
@@ -150,15 +131,39 @@ private:
   /// Starts with 16 since the first 16 bytes are reserved for an empty range.
   uint32_t SectionOffset{0};
 
+  /// Offset of an empty address ranges list.
+  static constexpr uint64_t EmptyRangesOffset{0};
+};
+
+/// Serializes the .debug_aranges DWARF section.
+class DebugARangesSectionWriter {
+public:
+  /// Add ranges for CU matching \p CUOffset.
+  void addCURanges(uint64_t CUOffset, DebugAddressRangesVector &&Ranges);
+
+  /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
+  void writeARangesSection(MCObjectWriter *Writer) const;
+
+  /// Resets the writer to a clear state.
+  void reset() {
+    CUAddressRanges.clear();
+  }
+
+  /// Map DWARFCompileUnit index to ranges.
+  using CUAddressRangesType = std::map<uint64_t, DebugAddressRangesVector>;
+
+  /// Return ranges for a given CU.
+  const CUAddressRangesType &getCUAddressRanges() const {
+    return CUAddressRanges;
+  }
+
+private:
   /// Map from compile unit offset to the list of address intervals that belong
   /// to that compile unit. Each interval is a pair
   /// (first address, interval size).
   CUAddressRangesType CUAddressRanges;
 
   std::mutex CUAddressRangesMutex;
-
-  /// Offset of an empty address ranges list.
-  static constexpr uint64_t EmptyRangesOffset{0};
 };
 
 using LocBufferVector = SmallVector<char, 16>;

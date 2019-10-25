@@ -55,7 +55,7 @@ uint64_t writeAddressRanges(
 
 } // namespace
 
-DebugRangesSectionsWriter::DebugRangesSectionsWriter(BinaryContext *BC) {
+DebugRangesSectionWriter::DebugRangesSectionWriter(BinaryContext *BC) {
   RangesBuffer = llvm::make_unique<RangesBufferVector>();
   RangesStream = llvm::make_unique<raw_svector_ostream>(*RangesBuffer);
   Writer =
@@ -65,17 +65,7 @@ DebugRangesSectionsWriter::DebugRangesSectionsWriter(BinaryContext *BC) {
   SectionOffset += writeAddressRanges(Writer.get(), DebugAddressRangesVector{});
 }
 
-uint64_t
-DebugRangesSectionsWriter::addCURanges(uint64_t CUOffset,
-                                       DebugAddressRangesVector &&Ranges) {
-  const auto RangesOffset = addRanges(Ranges);
-
-  std::lock_guard<std::mutex> Lock(CUAddressRangesMutex);
-  CUAddressRanges.emplace(CUOffset, std::move(Ranges));
-  return RangesOffset;
-}
-
-uint64_t DebugRangesSectionsWriter::addRanges(
+uint64_t DebugRangesSectionWriter::addRanges(
     const BinaryFunction *Function, DebugAddressRangesVector &&Ranges,
     const BinaryFunction *&CachedFunction,
     std::map<DebugAddressRangesVector, uint64_t> &CachedRanges) {
@@ -98,7 +88,7 @@ uint64_t DebugRangesSectionsWriter::addRanges(
 }
 
 uint64_t
-DebugRangesSectionsWriter::addRanges(const DebugAddressRangesVector &Ranges) {
+DebugRangesSectionWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   if (Ranges.empty())
     return getEmptyRangesOffset();
 
@@ -112,7 +102,14 @@ DebugRangesSectionsWriter::addRanges(const DebugAddressRangesVector &Ranges) {
 }
 
 void
-DebugRangesSectionsWriter::writeArangesSection(MCObjectWriter *Writer) const {
+DebugARangesSectionWriter::addCURanges(uint64_t CUOffset,
+                                        DebugAddressRangesVector &&Ranges) {
+  std::lock_guard<std::mutex> Lock(CUAddressRangesMutex);
+  CUAddressRanges.emplace(CUOffset, std::move(Ranges));
+}
+
+void
+DebugARangesSectionWriter::writeARangesSection(MCObjectWriter *Writer) const {
   // For reference on the format of the .debug_aranges section, see the DWARF4
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf
