@@ -168,18 +168,24 @@ private:
 
 using LocBufferVector = SmallVector<char, 16>;
 
-/// Serializes the .debug_loc DWARF section with LocationLists.
+/// Serializes part of a .debug_loc DWARF section with LocationLists.
 class DebugLocWriter {
 public:
   DebugLocWriter(BinaryContext *BC);
 
   uint64_t addList(const DWARFDebugLoc::LocationList &LocList);
 
-  uint64_t getEmptyListOffset() const { return EmptyListOffset; }
-
   std::unique_ptr<LocBufferVector> finalize() {
     return std::move(LocBuffer);
   }
+
+  /// Offset of an empty location list.
+  static constexpr uint32_t EmptyListOffset = 0;
+
+  /// Value returned by addList if list is empty
+  /// Use 64 bits here so that a max 32 bit value can still
+  /// be stored while we use max 64 bit value as empty tag
+  static constexpr uint64_t EmptyListTag = -1;
 
 private:
   std::unique_ptr<LocBufferVector> LocBuffer;
@@ -188,13 +194,10 @@ private:
 
   std::unique_ptr<MCObjectWriter> Writer;
 
-  std::mutex WriterMutex;
-
-  /// Offset of an empty location list.
-  static uint64_t const EmptyListOffset = 0;
-
   /// Current offset in the section (updated as new entries are written).
-  /// Starts with 16 since the first 16 bytes are reserved for an empty range.
+  /// Starts with 0 here since this only writes part of a full location lists
+  /// section. In the final section, the first 16 bytes are reserved for an
+  /// empty list.
   uint32_t SectionOffset{0};
 };
 
