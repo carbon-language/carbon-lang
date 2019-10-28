@@ -480,6 +480,22 @@ public:
       //   BR     x2
       return false;
     }
+    if (DefAdd->getOpcode() == AArch64::ADDXrs) {
+      // Covers the less common pattern where JT entries are relative to
+      // the JT itself (like x86). Seems less efficient since we can't
+      // assume the JT is aligned at 4B boundary and thus drop 2 bits from
+      // JT values.
+      // cde264:
+      //    adrp    x12, #21544960  ; 216a000
+      //    add     x12, x12, #1696 ; 216a6a0  (JT object in .rodata)
+      //    ldrsw   x8, [x12, x8, lsl #2]   --> loads e.g. 0xfeb73bd8
+      //  * add     x8, x8, x12   --> = cde278, next block
+      //    br      x8
+      // cde278:
+      //
+      // Parsed as ADDXrs reg:x8 reg:x8 reg:x12 imm:0
+      return false;
+    }
     assert(DefAdd->getOpcode() == AArch64::ADDXrx &&
            "Failed to match indirect branch!");
 
