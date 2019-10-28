@@ -63,6 +63,7 @@ function internal_check() {
 
 gr=0
 for input in ${srcdir}/$*; do
+  [[ ! -f $input ]] && die "File not found: $input"
   CMD=$(cat ${input} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
   CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
   if egrep -q -e '%t' <<< ${CMD} ; then
