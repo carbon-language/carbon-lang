@@ -3869,15 +3869,15 @@ void RewriteInstance::rewriteNoteSections() {
     if (Section.sh_flags & ELF::SHF_ALLOC)
       continue;
 
-    if (Section.sh_type == ELF::SHT_RELA)
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
+
+    if (shouldStrip(Section, SectionName))
       continue;
 
     // Insert padding as needed.
     NextAvailableOffset =
       appendPadding(OS, NextAvailableOffset, Section.sh_addralign);
-
-    StringRef SectionName =
-        cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
     // New section size.
     uint64_t Size = 0;
@@ -4058,6 +4058,20 @@ std::string RewriteInstance::getOutputSectionName(const ELFObjType *Obj,
   return SectionName;
 }
 
+template <typename ELFShdrTy>
+bool RewriteInstance::shouldStrip(const ELFShdrTy &Section,
+                                  StringRef SectionName) {
+  // Strip non-allocatable relocation sections.
+  if (!(Section.sh_flags & ELF::SHF_ALLOC) && Section.sh_type == ELF::SHT_RELA)
+    return true;
+
+  // Strip debug sections if not updating them.
+  if (isDebugSection(SectionName) && !opts::UpdateDebugSections)
+    return true;
+
+  return false;
+}
+
 template <typename ELFT, typename ELFShdrTy>
 std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
     ELFObjectFile<ELFT> *File, std::vector<uint32_t> &NewSectionIndex) {
@@ -4149,15 +4163,11 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
       continue;
     if (Section.sh_flags & ELF::SHF_ALLOC)
       continue;
-    // Strip non-allocatable relocation sections.
-    if (Section.sh_type == ELF::SHT_RELA)
-      continue;
 
     StringRef SectionName =
         cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
-    // Strip debug sections if not updating them.
-    if (isDebugSection(SectionName) && !opts::UpdateDebugSections)
+    if (shouldStrip(Section, SectionName))
       continue;
 
     auto BSec = BC->getUniqueSectionByName(SectionName);

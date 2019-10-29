@@ -227,6 +227,10 @@ private:
   std::vector<ELFShdrTy> getOutputSections(
       ELFObjectFile<ELFT> *File, std::vector<uint32_t> &NewSectionIndex);
 
+  /// Return true if \p Section should be stripped from the output binary.
+  template <typename ELFShdrTy>
+  bool shouldStrip(const ELFShdrTy &Section, StringRef SectionName);
+
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
 
