@@ -33,7 +33,7 @@ module m01
     real, allocatable :: a(:)
   end type
   type :: ultimateCoarray
-    real, allocatable :: a[*]
+    real, allocatable :: a[:]
   end type
 
  contains
@@ -85,7 +85,7 @@ module m01
     real, pointer :: x(:)
   end subroutine
   subroutine valueassumedsize(x)
-    real, value :: x(*)
+    real, intent(in) :: x(*)
   end subroutine
   subroutine volatileassumedsize(x)
     real, volatile :: x(*)

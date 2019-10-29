@@ -17,7 +17,7 @@
 subroutine test(j)
   integer, intent(in) :: j
   real, allocatable, target, save :: x1
-  real, codimension[:], target, save :: x2
+  real, codimension[*], target, save :: x2
   real, save :: x3
   real, target :: x4
   real, target, save :: x5(10)

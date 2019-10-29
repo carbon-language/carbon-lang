@@ -330,34 +330,66 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     }
   }
 
-  // 15.5.2.5 -- actual & dummy are both POINTER or both ALLOCATABLE
-  bool actualIsAllocatable{
-      actualLastSymbol && IsAllocatable(*actualLastSymbol)};
+  // 15.5.2.6 -- dummy is ALLOCATABLE
   bool dummyIsAllocatable{
       dummy.attrs.test(characteristics::DummyDataObject::Attr::Allocatable)};
+  bool actualIsAllocatable{
+      actualLastSymbol && IsAllocatable(*actualLastSymbol)};
+  if (dummyIsAllocatable) {
+    if (!actualIsAllocatable) {
+      messages.Say(
+          "ALLOCATABLE %s must be associated with an ALLOCATABLE actual argument"_err_en_US,
+          dummyName);
+    }
+    if (actualIsAllocatable && actualIsCoindexed &&
+        dummy.intent != common::Intent::In) {
+      messages.Say(
+          "ALLOCATABLE %s must have INTENT(IN) to be associated with a coindexed actual argument"_err_en_US,
+          dummyName);
+    }
+    if (!actualIsCoindexed && actualLastSymbol &&
+        actualLastSymbol->Corank() != dummy.type.corank()) {
+      messages.Say(
+          "ALLOCATABLE %s has corank %d but actual argument has corank %d"_err_en_US,
+          dummyName, dummy.type.corank(), actualLastSymbol->Corank());
+    }
+  }
+
+  // 15.5.2.5 -- actual & dummy are both POINTER or both ALLOCATABLE
   if ((actualIsPointer && dummyIsPointer) ||
       (actualIsAllocatable && dummyIsAllocatable)) {
-    if (dummyIsPolymorphic != actualIsPolymorphic) {
-      messages.Say(
-          "If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both must be so"_err_en_US);
-    }
     bool actualIsUnlimited{actualType.type().IsUnlimitedPolymorphic()};
     bool dummyIsUnlimited{dummy.type.type().IsUnlimitedPolymorphic()};
-    if (!actualIsUnlimited) {
-      if (dummyIsUnlimited) {
+    if (actualIsUnlimited != dummyIsUnlimited) {
+      if (typesCompatible) {
         messages.Say(
             "If a POINTER or ALLOCATABLE dummy or actual argument is unlimited polymorphic, both must be so"_err_en_US);
-      } else if (typesCompatible) {
-        if (!actualType.type().IsTypeCompatibleWith(dummy.type.type())) {
+      }
+    } else if (dummyIsPolymorphic != actualIsPolymorphic) {
+      if (dummy.intent == common::Intent::In && typesCompatible) {
+        // extension: allow with warning, rule is only relevant for definables
+        messages.Say(
+            "If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both should be so"_en_US);
+      } else {
+        messages.Say(
+            "If a POINTER or ALLOCATABLE dummy or actual argument is polymorphic, both must be so"_err_en_US);
+      }
+    } else if (!actualIsUnlimited && typesCompatible) {
+      if (!actualType.type().IsTypeCompatibleWith(dummy.type.type())) {
+        if (dummy.intent == common::Intent::In) {
+          // extension: allow with warning, rule is only relevant for definables
+          messages.Say(
+              "POINTER or ALLOCATABLE dummy and actual arguments should have the same declared type"_en_US);
+        } else {
           messages.Say(
               "POINTER or ALLOCATABLE dummy and actual arguments must have the same declared type"_err_en_US);
         }
-        if (actualType.type().category() == TypeCategory::Derived &&
-            !DefersSameTypeParameters(actualType.type().GetDerivedTypeSpec(),
-                dummy.type.type().GetDerivedTypeSpec())) {
-          messages.Say(
-              "Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE"_err_en_US);
-        }
+      }
+      if (actualType.type().category() == TypeCategory::Derived &&
+          !DefersSameTypeParameters(actualType.type().GetDerivedTypeSpec(),
+              dummy.type.type().GetDerivedTypeSpec())) {
+        messages.Say(
+            "Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE"_err_en_US);
       }
     }
   }

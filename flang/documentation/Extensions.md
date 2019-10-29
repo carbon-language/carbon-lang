@@ -106,6 +106,9 @@ Extensions, deletions, and legacy features supported by default
 * When a scalar CHARACTER actual argument of the same kind is known to
   have a length shorter than the associated dummy argument, it is extended
   on the right with blanks, similar to assignment.
+* When a dummy argument is `POINTER` or `ALLOCATABLE` and is `INTENT(IN)`, we
+  relax enforcement of some requirements on actual arguments that must otherwise
+  hold true for definable arguments.
 
 Extensions supported when enabled by options
 --------------------------------------------

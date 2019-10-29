@@ -184,6 +184,24 @@ bool IsPureProcedure(const Scope &scope) {
   }
 }
 
+bool IsBindCProcedure(const Symbol &symbol) {
+  if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
+    if (const Symbol * procInterface{procDetails->interface().symbol()}) {
+      // procedure component with a BIND(C) interface
+      return IsBindCProcedure(*procInterface);
+    }
+  }
+  return symbol.attrs().test(Attr::BIND_C) && IsProcedure(symbol);
+}
+
+bool IsBindCProcedure(const Scope &scope) {
+  if (const Symbol * symbol{scope.GetSymbol()}) {
+    return IsBindCProcedure(*symbol);
+  } else {
+    return false;
+  }
+}
+
 bool IsProcedure(const Symbol &symbol) {
   return std::visit(
       common::visitors{

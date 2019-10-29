@@ -177,7 +177,10 @@ set(ERROR_TESTS
   call03.f90
   call04.f90
   call05.f90
+  call06.f90
   call13.f90
+  call14.f90
+  misc-declarations.f90
 )
 
 # These test files have expected symbols in the source

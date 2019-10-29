@@ -123,7 +123,7 @@ end subroutine s5
 subroutine s6()
   type :: type0
     integer, allocatable, dimension(:) :: type0_field
-    integer, allocatable, dimension(:), codimension[*] :: coarray_type0_field
+    integer, allocatable, dimension(:), codimension[:] :: coarray_type0_field
   end type
 
   type :: type1
@@ -134,7 +134,7 @@ subroutine s6()
   type(type1) :: qvar;
   integer, allocatable, dimension(:) :: array1
   integer, allocatable, dimension(:) :: array2
-  integer, allocatable, codimension[*] :: ca, cb
+  integer, allocatable, codimension[:] :: ca, cb
   integer, allocatable :: aa, ab
 
   ! All of the following are allowable outside a DO CONCURRENT

@@ -102,6 +102,7 @@ public:
   }
   const Shape &shape() const { return shape_; }
   const Attrs &attrs() const { return attrs_; }
+  int corank() const { return corank_; }
 
   int Rank() const { return GetRank(shape_); }
   bool IsCompatibleWith(parser::ContextualMessages &, const TypeAndShape &that,
@@ -119,6 +120,7 @@ protected:
   std::optional<Expr<SomeInteger>> LEN_;
   Shape shape_;
   Attrs attrs_;
+  int corank_{0};
 };
 
 // 15.3.2.2

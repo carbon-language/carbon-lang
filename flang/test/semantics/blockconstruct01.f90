@@ -50,7 +50,7 @@ subroutine s4_c1107
   end block
 end
 
-subroutine s5_c1107
+subroutine s5_c1107(x,y)
   integer x, y
   value x
   block

@@ -54,13 +54,15 @@ bool IsGenericDefinedOp(const Symbol &);
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);
 bool DoesScopeContain(const Scope *, const Symbol &);
-bool IsUseAssociated(const Symbol *, const Scope &);
+bool IsUseAssociated(const Symbol &, const Scope &);
 bool IsHostAssociated(const Symbol &, const Scope &);
 bool IsDummy(const Symbol &);
 bool IsPointerDummy(const Symbol &);
 bool IsFunction(const Symbol &);
 bool IsPureProcedure(const Symbol &);
 bool IsPureProcedure(const Scope &);
+bool IsBindCProcedure(const Symbol &);
+bool IsBindCProcedure(const Scope &);
 bool IsProcedure(const Symbol &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
@@ -110,6 +112,12 @@ inline bool IsOptional(const Symbol &symbol) {
 }
 inline bool IsIntentIn(const Symbol &symbol) {
   return symbol.attrs().test(Attr::INTENT_IN);
+}
+inline bool IsIntentInOut(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::INTENT_INOUT);
+}
+inline bool IsIntentOut(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::INTENT_OUT);
 }
 inline bool IsProtected(const Symbol &symbol) {
   return symbol.attrs().test(Attr::PROTECTED);

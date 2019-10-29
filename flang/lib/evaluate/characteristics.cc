@@ -41,7 +41,8 @@ static void CopyAttrs(const semantics::Symbol &src, A &dst,
 }
 
 bool TypeAndShape::operator==(const TypeAndShape &that) const {
-  return type_ == that.type_ && shape_ == that.shape_ && attrs_ == that.attrs_;
+  return type_ == that.type_ && shape_ == that.shape_ &&
+      attrs_ == that.attrs_ && corank_ == that.corank_;
 }
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
@@ -142,6 +143,7 @@ bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
 
 void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {
   CHECK(shape_.empty() && !attrs_.test(Attr::AssumedRank));
+  corank_ = object.coshape().Rank();
   if (object.IsAssumedRank()) {
     attrs_.set(Attr::AssumedRank);
     return;

@@ -46,24 +46,24 @@ module m
   subroutine test(x)
     real :: scalar
     real, allocatable, intent(in) :: x
-    !ERROR: ALLOCATABLE dummy argument must be associated with an ALLOCATABLE effective argument
+    !ERROR: ALLOCATABLE dummy argument 'x=' must be associated with an ALLOCATABLE actual argument
     call s01(scalar)
-    !ERROR: ALLOCATABLE dummy argument must be associated with an ALLOCATABLE effective argument
+    !ERROR: ALLOCATABLE dummy argument 'x=' must be associated with an ALLOCATABLE actual argument
     call s01(1.)
-    !ERROR: ALLOCATABLE dummy argument must be associated with an ALLOCATABLE effective argument
+    !ERROR: ALLOCATABLE dummy argument 'x=' must be associated with an ALLOCATABLE actual argument
     call s01(allofunc()) ! subtle: ALLOCATABLE function result isn't
     call s02(cov) ! ok
     call s03(com) ! ok
-    !ERROR: Dummy argument has corank 1, but effective argument has corank 2
+    !ERROR: ALLOCATABLE dummy argument 'x=' has corank 1 but actual argument has corank 2
     call s02(com)
-    !ERROR: Dummy argument has corank 2, but effective argument has corank 1
+    !ERROR: ALLOCATABLE dummy argument 'x=' has corank 2 but actual argument has corank 1
     call s03(cov)
     call s04(cov[1]) ! ok
-    !ERROR: Coindexed ALLOCATABLE effective argument must be associated with INTENT(IN) dummy argument
+    !ERROR: ALLOCATABLE dummy argument 'x=' must have INTENT(IN) to be associated with a coindexed actual argument
     call s01(cov[1])
-    !ERROR: Effective argument associated with INTENT(OUT) dummy is not definable
+    !ERROR: Actual argument associated with INTENT(OUT) dummy argument 'x=' must be definable
     call s05(x)
-    !ERROR: Effective argument associated with INTENT(IN OUT) dummy is not definable
+    !ERROR: Actual argument associated with INTENT(IN OUT) dummy argument 'x=' must be definable
     call s06(x)
   end subroutine
 end module

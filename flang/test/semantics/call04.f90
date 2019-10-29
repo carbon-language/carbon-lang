@@ -17,7 +17,7 @@
 module m
 
   type :: hasCoarray
-    real, allocatable :: a(:)[*]
+    real, allocatable :: a(:)[:]
   end type
   type, extends(hasCoarray) :: extendsHasCoarray
   end type
@@ -36,6 +36,7 @@ module m
   end subroutine
   subroutine s01b ! C846 - can only be caught at a call via explicit interface
     !ERROR: ALLOCATABLE coarray 'coarray' may not be associated with INTENT(OUT) dummy argument 'x='
+    !ERROR: ALLOCATABLE dummy argument 'x=' has corank 0 but actual argument has corank 1
     call s01a(coarray)
   end subroutine
 

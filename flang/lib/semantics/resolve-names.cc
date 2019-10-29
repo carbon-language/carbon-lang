@@ -3137,8 +3137,10 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
   }
   auto *symbol{FindInScope(currScope(), name)};
   if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
-    // these can be set on a symbol that is host-assoc into block or use-assoc
-    if (!symbol && currScope().kind() == Scope::Kind::Block) {
+    // these can be set on a symbol that is host-assoc or use-assoc
+    if (!symbol &&
+        (currScope().kind() == Scope::Kind::Subprogram ||
+            currScope().kind() == Scope::Kind::Block)) {
       if (auto *hostSymbol{FindSymbol(name)}) {
         name.symbol = nullptr;
         symbol = &MakeSymbol(name, HostAssocDetails{*hostSymbol});
