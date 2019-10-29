@@ -800,9 +800,18 @@ index 38c365538e3..dec295707e9 100644
  /// This fragment is always inserted before an instruction, and holds that
  /// instruction as context information (as well as a mask of kinds) for
 diff --git a/include/llvm/MC/MCInst.h b/include/llvm/MC/MCInst.h
-index db28fd0fd6d..e136a10b264 100644
+index db28fd0fd6d..fbe315b4bd0 100644
 --- a/include/llvm/MC/MCInst.h
 +++ b/include/llvm/MC/MCInst.h
+@@ -159,7 +159,7 @@ template <> struct isPodLike<MCOperand> { static const bool value = true; };
+ class MCInst {
+   unsigned Opcode = 0;
+   SMLoc Loc;
+-  SmallVector<MCOperand, 8> Operands;
++  SmallVector<MCOperand, 2> Operands;
+   // These flags could be used to pass some info from one target subcomponent
+   // to another, for example, from disassembler to asm printer. The values of
+   // the flags have any sense on target level only (e.g. prefixes on x86).
 @@ -187,7 +187,7 @@ public:
    using const_iterator = SmallVectorImpl<MCOperand>::const_iterator;
  
@@ -998,10 +1007,11 @@ index 46504e74bc2..836fd8ddc45 100644
    Expected<Elf_Shdr_Range> sections() const;
  
    Expected<Elf_Sym_Range> symbols(const Elf_Shdr *Sec) const {
-@@ -397,6 +409,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
+@@ -396,6 +408,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
+   }
  }
  
- template <class ELFT>
++template <class ELFT>
 +Expected<const typename ELFFile<ELFT>::Elf_Dyn *>
 +ELFFile<ELFT>::dynamic_table_begin(const Elf_Phdr *Phdr) const {
 +  if (!Phdr)
@@ -1029,10 +1039,9 @@ index 46504e74bc2..836fd8ddc45 100644
 +  return reinterpret_cast<const Elf_Dyn *>(base() + End);
 +}
 +
-+template <class ELFT>
+ template <class ELFT>
  Expected<const typename ELFT::Sym *>
  ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
-                                    const Elf_Shdr *SymTab) const {
 diff --git a/include/llvm/Object/ELFObjectFile.h b/include/llvm/Object/ELFObjectFile.h
 index 4d001039238..62837bbcaa0 100644
 --- a/include/llvm/Object/ELFObjectFile.h
@@ -1045,10 +1054,11 @@ index 4d001039238..62837bbcaa0 100644
    relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
    relocation_iterator section_rel_end(DataRefImpl Sec) const override;
    section_iterator getRelocatedSection(DataRefImpl Sec) const override;
-@@ -717,6 +718,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
+@@ -716,6 +717,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
+   return getSection(Sec)->sh_type == ELF::SHT_NOBITS;
  }
  
- template <class ELFT>
++template <class ELFT>
 +bool ELFObjectFile<ELFT>::isSectionReadOnly(DataRefImpl Sec) const {
 +  const Elf_Shdr *EShdr = getSection(Sec);
 +  return EShdr->sh_flags & ELF::SHF_ALLOC &&
@@ -1056,10 +1066,9 @@ index 4d001039238..62837bbcaa0 100644
 +         EShdr->sh_type == ELF::SHT_PROGBITS;
 +}
 +
-+template <class ELFT>
+ template <class ELFT>
  relocation_iterator
  ELFObjectFile<ELFT>::section_rel_begin(DataRefImpl Sec) const {
-   DataRefImpl RelData;
 @@ -751,9 +760,6 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
  template <class ELFT>
  section_iterator
