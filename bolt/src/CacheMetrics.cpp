@@ -17,54 +17,13 @@ namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
 
-cl::opt<double>
-FallthroughWeight("fallthrough-weight",
-  cl::desc("The weight of forward jumps for ExtTSP metric"),
-  cl::init(1),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<double>
-ForwardWeight("forward-weight",
-  cl::desc("The weight of forward jumps for ExtTSP metric"),
-  cl::init(0.1),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<double>
-BackwardWeight("backward-weight",
-  cl::desc("The weight of backward jumps for ExtTSP metric"),
-  cl::init(0.1),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<unsigned>
-ForwardDistance("forward-distance",
-  cl::desc("The maximum distance (in bytes) of forward jumps for ExtTSP metric"),
-  cl::init(1024),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<unsigned>
-BackwardDistance("backward-distance",
-  cl::desc("The maximum distance (in bytes) of backward jumps for ExtTSP metric"),
-  cl::init(640),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<unsigned>
-ITLBPageSize("itlb-page-size",
-  cl::desc("The size of i-tlb cache page"),
-  cl::init(4096),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<unsigned>
-ITLBEntries("itlb-entries",
-  cl::desc("The number of entries in i-tlb cache"),
-  cl::init(16),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+extern cl::opt<double> FallthroughWeight;
+extern cl::opt<double> ForwardWeight;
+extern cl::opt<double> BackwardWeight;
+extern cl::opt<unsigned> ForwardDistance;
+extern cl::opt<unsigned> BackwardDistance;
+extern cl::opt<unsigned> ITLBPageSize;
+extern cl::opt<unsigned> ITLBEntries;
 
 }
 
@@ -325,7 +284,7 @@ void CacheMetrics::printAll(const std::vector<BinaryFunction *> &BFs) {
          << format(" %zu (%.2lf%%) are in the hot section\n",
                   NumHotBlocks, 100.0 * NumHotBlocks / NumBlocks);
 
-  assert(TotalCodeMinAddr < TotalCodeMaxAddr && "incorrect output addresses");
+  assert(TotalCodeMinAddr <= TotalCodeMaxAddr && "incorrect output addresses");
   size_t HotCodeSize = HotCodeMaxAddr - HotCodeMinAddr;
   size_t TotalCodeSize = TotalCodeMaxAddr - TotalCodeMinAddr;
 

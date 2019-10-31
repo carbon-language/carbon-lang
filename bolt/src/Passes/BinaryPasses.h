@@ -135,7 +135,7 @@ public:
     /// that suggests putting frequently executed chains first in the layout.
     LT_OPTIMIZE_CACHE,
     /// Block reordering guided by the extended TSP metric.
-    LT_OPTIMIZE_CACHE_PLUS,
+    LT_OPTIMIZE_EXT_TSP,
     /// Create clusters and use random order for them.
     LT_OPTIMIZE_SHUFFLE,
   };
@@ -149,7 +149,7 @@ public:
     : BinaryFunctionPass(PrintPass) { }
 
   const char *getName() const override {
-    return "reordering";
+    return "reorder-blocks";
   }
   bool shouldPrint(const BinaryFunction &BF) const override;
   void runOnFunctions(BinaryContext &BC) override;

@@ -172,8 +172,11 @@ ReorderBlocks("reorder-blocks",
       "cache",
       "perform optimal layout prioritizing I-cache "
       "behavior"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_CACHE_PLUS,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_EXT_TSP,
       "cache+",
+      "perform layout optimizing I-cache behavior"),
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_EXT_TSP,
+      "ext-tsp",
       "perform layout optimizing I-cache behavior"),
     clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_SHUFFLE,
       "cluster-shuffle",
@@ -384,7 +387,7 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
   } else if (BF.size() <= opts::TSPThreshold && Type != LT_OPTIMIZE_SHUFFLE) {
     // Work on optimal solution if problem is small enough
     DEBUG(dbgs() << "finding optimal block layout for " << BF << "\n");
-    Algo.reset(new OptimalReorderAlgorithm());
+    Algo.reset(new TSPReorderAlgorithm());
   } else {
     DEBUG(dbgs() << "running block layout heuristics on " << BF << "\n");
 
@@ -407,8 +410,8 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
       Algo.reset(new OptimizeCacheReorderAlgorithm(std::move(CAlgo)));
       break;
 
-    case LT_OPTIMIZE_CACHE_PLUS:
-      Algo.reset(new CachePlusReorderAlgorithm());
+    case LT_OPTIMIZE_EXT_TSP:
+      Algo.reset(new ExtTSPReorderAlgorithm());
       break;
 
     case LT_OPTIMIZE_SHUFFLE:

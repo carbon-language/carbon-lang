@@ -402,7 +402,7 @@ void MinBranchGreedyClusterAlgorithm::reset() {
   Weight.clear();
 }
 
-void OptimalReorderAlgorithm::reorderBasicBlocks(
+void TSPReorderAlgorithm::reorderBasicBlocks(
     const BinaryFunction &BF, BasicBlockOrder &Order) const {
   std::vector<std::vector<uint64_t>> Weight;
   std::vector<BinaryBasicBlock *> IndexToBB;
@@ -681,7 +681,6 @@ void ReverseReorderAlgorithm::reorderBasicBlocks(
   for (auto RLI = BF.layout_rbegin(); *RLI != FirstBB; ++RLI)
     Order.push_back(*RLI);
 }
-
 
 void RandomClusterReorderAlgorithm::reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const {

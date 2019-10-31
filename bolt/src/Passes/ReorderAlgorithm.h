@@ -197,7 +197,7 @@ public:
 ///
 /// Uses exponential amount of memory on the number of basic blocks and should
 /// only be used for small functions.
-class OptimalReorderAlgorithm : public ReorderAlgorithm {
+class TSPReorderAlgorithm : public ReorderAlgorithm {
 public:
   void reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const override;
@@ -243,8 +243,8 @@ public:
       const BinaryFunction &BF, BasicBlockOrder &Order) const override;
 };
 
-/// A new reordering algorithm for basic blocks, cache+
-class CachePlusReorderAlgorithm : public ReorderAlgorithm {
+/// A new reordering algorithm for basic blocks, ext-tsp
+class ExtTSPReorderAlgorithm : public ReorderAlgorithm {
 public:
   void reorderBasicBlocks(
       const BinaryFunction &BF, BasicBlockOrder &Order) const override;

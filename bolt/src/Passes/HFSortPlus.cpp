@@ -29,8 +29,19 @@ namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
 
-extern cl::opt<unsigned> ITLBPageSize;
-extern cl::opt<unsigned> ITLBEntries;
+cl::opt<unsigned>
+ITLBPageSize("itlb-page-size",
+  cl::desc("The size of i-tlb cache page"),
+  cl::init(4096),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+ITLBEntries("itlb-entries",
+  cl::desc("The number of entries in i-tlb cache"),
+  cl::init(16),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 cl::opt<double>
 MergeProbability("merge-probability",
