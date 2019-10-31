@@ -976,7 +976,6 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
        dummy[dummyArgPatterns].keyword != nullptr;
        ++dummyArgPatterns) {
   }
-  std::vector<ActualArgument *> actualForDummy(dummyArgPatterns, nullptr);
   // MAX and MIN (and others that map to them) allow their last argument to
   // be repeated indefinitely.  The actualForDummy vector is sized
   // and null-initialized to the non-repeated dummy argument count,
@@ -984,6 +983,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   // when this flag is set.
   bool repeatLastDummy{dummyArgPatterns > 0 &&
       dummy[dummyArgPatterns - 1].optionality == Optionality::repeats};
+  std::size_t nonRepeatedDummies{
+      repeatLastDummy ? dummyArgPatterns - 1 : dummyArgPatterns};
+  std::vector<ActualArgument *> actualForDummy(nonRepeatedDummies, nullptr);
   int missingActualArguments{0};
   for (std::optional<ActualArgument> &arg : arguments) {
     if (!arg.has_value()) {
@@ -997,7 +999,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       }
       bool found{false};
       int slot{missingActualArguments};
-      for (std::size_t j{0}; j < dummyArgPatterns && !found; ++j) {
+      for (std::size_t j{0}; j < nonRepeatedDummies && !found; ++j) {
         if (arg->keyword.has_value()) {
           found = *arg->keyword == dummy[j].keyword;
           if (found) {

@@ -53,7 +53,7 @@ Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
             if (auto llen{c.left().LEN()}) {
               if (auto rlen{c.right().LEN()}) {
                 return Expr<SubscriptInteger>{Extremum<SubscriptInteger>{
-                    *std::move(llen), *std::move(rlen)}};
+                    Ordering::Greater, *std::move(llen), *std::move(rlen)}};
               }
             }
             return std::nullopt;

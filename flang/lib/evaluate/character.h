@@ -70,6 +70,17 @@ public:
     return str;
   }
 
+  // Resize adds spaces on the right if the new size is bigger than the
+  // original, or by trimming the rightmost characters otherwise.
+  static Character Resize(const Character &str, std::size_t newLength) {
+    auto oldLength{str.length()};
+    if (newLength > oldLength) {
+      return str + Character(newLength - oldLength, Space());
+    } else {
+      return str.substr(0, newLength);
+    }
+  }
+
 private:
   // Following helpers assume that character encodings contain ASCII
   static constexpr CharT Space() { return 0x20; }

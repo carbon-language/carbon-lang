@@ -310,9 +310,9 @@ std::optional<Expr<SubscriptInteger>> DataRef::LEN() const {
 
 std::optional<Expr<SubscriptInteger>> Substring::LEN() const {
   if (auto top{upper()}) {
-    return AsExpr(
-        Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
-            *std::move(top) - lower() + AsExpr(Constant<SubscriptInteger>{1})});
+    return AsExpr(Extremum<SubscriptInteger>{Ordering::Greater,
+        AsExpr(Constant<SubscriptInteger>{0}),
+        *std::move(top) - lower() + AsExpr(Constant<SubscriptInteger>{1})});
   } else {
     return std::nullopt;
   }

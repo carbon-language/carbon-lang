@@ -100,4 +100,38 @@ module m
   logical, parameter :: test_pow3 = (2**4).EQ.(16)
   logical, parameter :: test_pow4 = (7**5).EQ.(16807)
 
+  ! test MIN and MAX
+  real, parameter :: x1 = -35., x2= -35.05, x3=0., x4=35.05, x5=35.
+  real, parameter :: res_max_r = max(x1, x2, x3, x4, x5)
+  real, parameter :: res_min_r = min(x1, x2, x3, x4, x5)
+  logical, parameter :: test_max_r = res_max_r.EQ.x4
+  logical, parameter :: test_min_r = res_min_r.EQ.x2
+
+  logical, parameter :: test_min_i = min(-3, 3).EQ.-3
+  logical, parameter :: test_max_i = max(-3, 3).EQ.3
+  integer, parameter :: i1 = 35, i2= 36, i3=0, i4=-35, i5=-36
+  integer, parameter :: res_max_i = max(i1, i2, i3, i4, i5)
+  integer, parameter :: res_min_i = min(i1, i2, i3, i4, i5)
+  logical, parameter :: test_max_i2 = res_max_i.EQ.i2
+  logical, parameter :: test_min_i2 = res_min_i.EQ.i5
+
+  character(*), parameter :: c1 = "elephant", c2="elevator"
+  character(*), parameter :: c3 = "excalibur", c4="z", c5="epsilon"
+  character(*), parameter :: res_max_c = max(c1, c2, c3, c4, c5)
+  character(*), parameter :: res_min_c = min(c1, c2, c3, c4, c5)
+  ! length of result is length of longest arguments!
+  character(len(c3)), parameter :: exp_min = c1
+  character(len(c3)), parameter :: exp_max = c4
+  logical, parameter :: test_max_c_1 = res_max_c.EQ.exp_max
+  logical, parameter :: test_max_c_2 = res_max_c.NE.c4
+  logical, parameter :: test_max_c_3 = len(res_max_c).EQ.len(c3)
+  logical, parameter :: test_min_c_1 = res_min_c.NE.c1
+  logical, parameter :: test_min_c_2 = res_min_c.EQ.exp_min
+  logical, parameter :: test_min_c_3 = len(res_min_c).EQ.len(c3)
+
+  integer, parameter :: x1a(*) = [1, 12, 3, 14]
+  integer, parameter :: x2a(*) = [11, 2, 13, 4]
+  logical, parameter :: test_max_a1 = all(max(x1a, x2a).EQ.[11, 12, 13, 14])
+  logical, parameter :: test_min_a1 = all(min(x1a, x2a).EQ.[1, 2, 3, 4])
+
 end module

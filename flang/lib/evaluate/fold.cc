@@ -527,6 +527,26 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
 }
 
 template<typename T>
+Expr<T> FoldMINorMAX(
+    FoldingContext &context, FunctionRef<T> &&funcRef, Ordering order) {
+  std::vector<Constant<T> *> constantArgs;
+  for (auto &arg : funcRef.arguments()) {
+    if (auto *cst{FoldConvertedArg<T>(context, arg)}) {
+      constantArgs.push_back(cst);
+    } else {
+      return Expr<T>(std::move(funcRef));
+    }
+  }
+  CHECK(constantArgs.size() > 0);
+  Expr<T> result{std::move(*constantArgs[0])};
+  for (std::size_t i{1}; i < constantArgs.size(); ++i) {
+    Extremum<T> extremum{order, result, Expr<T>{std::move(*constantArgs[i])}};
+    result = FoldOperation(context, std::move(extremum));
+  }
+  return result;
+}
+
+template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   ActualArguments &args{funcRef.arguments()};
   for (std::optional<ActualArgument> &arg : args) {
@@ -751,6 +771,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
         ScalarFunc<T, Int4>([&fptr](const Scalar<Int4> &places) -> Scalar<T> {
           return fptr(static_cast<int>(places.ToInt64()));
         }));
+  } else if (name == "max") {
+    return FoldMINorMAX(context, std::move(funcRef), Ordering::Greater);
   } else if (name == "maxexponent") {
     if (auto *sx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
       return std::visit(
@@ -772,6 +794,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
           },
           sx->u);
     }
+  } else if (name == "min") {
+    return FoldMINorMAX(context, std::move(funcRef), Ordering::Less);
   } else if (name == "precision") {
     if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
       return Expr<T>{std::visit(
@@ -1013,6 +1037,10 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
     return Expr<T>{Scalar<T>::EPSILON()};
   } else if (name == "huge") {
     return Expr<T>{Scalar<T>::HUGE()};
+  } else if (name == "max") {
+    return FoldMINorMAX(context, std::move(funcRef), Ordering::Greater);
+  } else if (name == "min") {
+    return FoldMINorMAX(context, std::move(funcRef), Ordering::Less);
   } else if (name == "real") {
     if (auto *expr{args[0].value().UnwrapExpr()}) {
       return ToReal<KIND>(context, std::move(*expr));
@@ -1174,6 +1202,10 @@ Expr<Type<TypeCategory::Character, KIND>> FoldIntrinsicFunction(
   } else if (name == "adjustr") {
     return FoldElementalIntrinsic<T, T>(
         context, std::move(funcRef), CharacterUtils<KIND>::ADJUSTR);
+  } else if (name == "max") {
+    return FoldMINorMAX(context, std::move(funcRef), Ordering::Greater);
+  } else if (name == "min") {
+    return FoldMINorMAX(context, std::move(funcRef), Ordering::Less);
   } else if (name == "new_line") {
     return Expr<T>{Constant<T>{CharacterUtils<KIND>::NEW_LINE()}};
   }
@@ -2330,7 +2362,11 @@ Expr<T> FoldOperation(FoldingContext &context, RealToIntPower<T> &&x) {
 
 template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Extremum<T> &&x) {
-  if (auto array{ApplyElementwise(context, x)}) {
+  if (auto array{ApplyElementwise(context, x,
+          std::function<Expr<T>(Expr<T> &&, Expr<T> &&)>{[=](Expr<T> &&l,
+                                                             Expr<T> &&r) {
+            return Expr<T>{Extremum<T>{x.ordering, std::move(l), std::move(r)}};
+          }})}) {
     return *array;
   }
   if (auto folded{OperandsAreConstants(x)}) {
@@ -2345,9 +2381,16 @@ Expr<T> FoldOperation(FoldingContext &context, Extremum<T> &&x) {
         return Expr<T>{Constant<T>{folded->first}};
       }
     } else {
-      if (x.ordering == Compare(folded->first, folded->second)) {
-        return Expr<T>{Constant<T>{folded->first}};
-      }
+      static_assert(T::category == TypeCategory::Character);
+      // Result of MIN and MAX on character has the length of
+      // the longest argument.
+      auto maxLen{std::max(folded->first.length(), folded->second.length())};
+      bool isFirst{x.ordering == Compare(folded->first, folded->second)};
+      auto res{isFirst ? std::move(folded->first) : std::move(folded->second)};
+      res = res.length() == maxLen
+          ? std::move(res)
+          : CharacterUtils<T::kind>::Resize(res, maxLen);
+      return Expr<T>{Constant<T>{std::move(res)}};
     }
     return Expr<T>{Constant<T>{folded->second}};
   }

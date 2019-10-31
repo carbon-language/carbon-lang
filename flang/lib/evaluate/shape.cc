@@ -137,7 +137,7 @@ static ExtentExpr ComputeTripCount(FoldingContext &context, ExtentExpr &&lower,
       (std::move(upper) - std::move(lower) + std::move(strideCopy)) /
       std::move(stride)};
   ExtentExpr extent{
-      Extremum<ExtentType>{std::move(span), ExtentExpr{0}, Ordering::Greater}};
+      Extremum<ExtentType>{Ordering::Greater, std::move(span), ExtentExpr{0}}};
   return Fold(context, std::move(extent));
 }
 
