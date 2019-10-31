@@ -1081,7 +1081,7 @@ const char *Prescanner::IsCompilerDirectiveSentinel(
     return nullptr;
   }
   const auto iter{compilerDirectiveSentinels_.find(std::string(sentinel, n))};
-  return iter == compilerDirectiveSentinels_.end() ? nullptr : iter->data();
+  return iter == compilerDirectiveSentinels_.end() ? nullptr : iter->c_str();
 }
 
 Prescanner::LineClassification Prescanner::ClassifyLine(

@@ -18,8 +18,6 @@
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
 
-using namespace std::literals::string_literals;
-
 namespace Fortran::evaluate {
 
 // Constant expression predicate IsConstantExpr().

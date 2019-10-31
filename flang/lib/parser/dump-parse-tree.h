@@ -25,8 +25,6 @@
 
 namespace Fortran::parser {
 
-using namespace std::string_literals;
-
 // When SHOW_ALL_SOURCE_MEMBERS is defined, HasSource<T>::value is true if T has
 // a member named source
 template<typename T, typename = int> struct HasSource : std::false_type {};

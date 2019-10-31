@@ -186,6 +186,8 @@ in `if`/`while` predicates.
 When no presence test is obviously protecting a `*x` reference to the
 contents, and it is assumed that the contents are present, validate that
 assumption by using `x.value()` instead.
+1. We use `c_str()` rather than `data()` when converting a `std::string`
+to a `const char *` when the result is expected to be NUL-terminated.
 
 #### Classes
 1. Define POD structures with `struct`.

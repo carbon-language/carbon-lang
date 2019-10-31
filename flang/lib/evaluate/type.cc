@@ -27,8 +27,6 @@
 #include <sstream>
 #include <string>
 
-using namespace std::literals::string_literals;
-
 // IsDescriptor() predicate
 // TODO there's probably a better place for this predicate than here
 namespace Fortran::semantics {
