@@ -176,21 +176,35 @@ public:
   using reverse_iterator       = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-  bool         empty()            const { return Instructions.empty(); }
-  size_t       size()             const { return Instructions.size(); }
-  MCInst       &front()                 { return Instructions.front();  }
-  MCInst       &back()                  { return Instructions.back();   }
-  const MCInst &front()           const { return Instructions.front();  }
-  const MCInst &back()            const { return Instructions.back();   }
+  bool         empty()            const { assert(hasInstructions());
+                                          return Instructions.empty(); }
+  size_t       size()             const { assert(hasInstructions());
+                                          return Instructions.size(); }
+  MCInst       &front()                 { assert(hasInstructions());
+                                          return Instructions.front();  }
+  MCInst       &back()                  { assert(hasInstructions());
+                                          return Instructions.back();   }
+  const MCInst &front()           const { assert(hasInstructions());
+                                          return Instructions.front();  }
+  const MCInst &back()            const { assert(hasInstructions());
+                                          return Instructions.back();   }
 
-  iterator                begin()       { return Instructions.begin();  }
-  const_iterator          begin() const { return Instructions.begin();  }
-  iterator                end  ()       { return Instructions.end();    }
-  const_iterator          end  () const { return Instructions.end();    }
-  reverse_iterator       rbegin()       { return Instructions.rbegin(); }
-  const_reverse_iterator rbegin() const { return Instructions.rbegin(); }
-  reverse_iterator       rend  ()       { return Instructions.rend();   }
-  const_reverse_iterator rend  () const { return Instructions.rend();   }
+  iterator                begin()       { assert(hasInstructions());
+                                          return Instructions.begin();  }
+  const_iterator          begin() const { assert(hasInstructions());
+                                          return Instructions.begin();  }
+  iterator                end  ()       { assert(hasInstructions());
+                                          return Instructions.end();    }
+  const_iterator          end  () const { assert(hasInstructions());
+                                          return Instructions.end();    }
+  reverse_iterator       rbegin()       { assert(hasInstructions());
+                                          return Instructions.rbegin(); }
+  const_reverse_iterator rbegin() const { assert(hasInstructions());
+                                          return Instructions.rbegin(); }
+  reverse_iterator       rend  ()       { assert(hasInstructions());
+                                          return Instructions.rend();   }
+  const_reverse_iterator rend  () const { assert(hasInstructions());
+                                          return Instructions.rend();   }
 
   // CFG iterators.
   using pred_iterator        = std::vector<BinaryBasicBlock *>::iterator;
@@ -263,33 +277,43 @@ public:
   bool               lp_empty() const { return LandingPads.empty();   }
 
   inline iterator_range<iterator> instructions() {
+    assert(hasInstructions());
     return iterator_range<iterator>(begin(), end());
   }
   inline iterator_range<const_iterator> instructions() const {
+    assert(hasInstructions());
     return iterator_range<const_iterator>(begin(), end());
   }
   inline iterator_range<pred_iterator> predecessors() {
+    assert(hasCFG());
     return iterator_range<pred_iterator>(pred_begin(), pred_end());
   }
   inline iterator_range<const_pred_iterator> predecessors() const {
+    assert(hasCFG());
     return iterator_range<const_pred_iterator>(pred_begin(), pred_end());
   }
   inline iterator_range<succ_iterator> successors() {
+    assert(hasCFG());
     return iterator_range<succ_iterator>(succ_begin(), succ_end());
   }
   inline iterator_range<const_succ_iterator> successors() const {
+    assert(hasCFG());
     return iterator_range<const_succ_iterator>(succ_begin(), succ_end());
   }
   inline iterator_range<throw_iterator> throwers() {
+    assert(hasCFG());
     return iterator_range<throw_iterator>(throw_begin(), throw_end());
   }
   inline iterator_range<const_throw_iterator> throwers() const {
+    assert(hasCFG());
     return iterator_range<const_throw_iterator>(throw_begin(), throw_end());
   }
   inline iterator_range<lp_iterator> landing_pads() {
+    assert(hasCFG());
     return iterator_range<lp_iterator>(lp_begin(), lp_end());
   }
   inline iterator_range<const_lp_iterator> landing_pads() const {
+    assert(hasCFG());
     return iterator_range<const_lp_iterator>(lp_begin(), lp_end());
   }
 
@@ -936,6 +960,12 @@ public:
     return getFunction();
   }
 
+  /// Return true if the containing function is in CFG state.
+  bool hasCFG() const;
+
+  /// Return true if the containing function is in a state with instructions.
+  bool hasInstructions() const;
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
@@ -975,6 +1005,21 @@ private:
   /// Set the index of this basic block.
   void setIndex(unsigned I) {
     Index = I;
+  }
+
+  template<typename T> void clearList(T& List) {
+    T TempList;
+    TempList.swap(List);
+  }
+
+  /// Release memory taken by CFG edges and instructions.
+  void releaseCFG() {
+    clearList(Predecessors);
+    clearList(Successors);
+    clearList(Throwers);
+    clearList(LandingPads);
+    clearList(BranchInfo);
+    clearList(Instructions);
   }
 };
 

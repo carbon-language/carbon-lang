@@ -2823,14 +2823,14 @@ void RewriteInstance::runOptimizationPasses() {
 }
 
 // Helper function to emit the contents of a function via a MCStreamer object.
-void RewriteInstance::emitFunction(MCStreamer &Streamer,
+bool RewriteInstance::emitFunction(MCStreamer &Streamer,
                                    BinaryFunction &Function,
                                    bool EmitColdPart) {
   if (Function.size() == 0)
-    return;
+    return false;
 
   if (Function.getState() == BinaryFunction::State::Empty)
-    return;
+    return false;
 
   auto *Section =
       BC->getCodeSection(EmitColdPart ? Function.getColdCodeSectionName()
@@ -2928,7 +2928,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer,
   if (!EmitColdPart && opts::JumpTables > JTS_NONE)
     Function.emitJumpTables(&Streamer);
 
-  Function.setEmitted();
+  return true;
 }
 
 namespace {
@@ -3206,10 +3206,14 @@ void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
                    << *Function << "\" : "
                    << Function->getFunctionNumber() << '\n');
 
-      emitFunction(*Streamer, *Function, /*EmitColdPart=*/false);
+      bool Emitted{false};
+      Emitted |= emitFunction(*Streamer, *Function, /*EmitColdPart=*/false);
 
       if (Function->isSplit())
-        emitFunction(*Streamer, *Function, /*EmitColdPart=*/true);
+        Emitted |= emitFunction(*Streamer, *Function, /*EmitColdPart=*/true);
+
+      if (Emitted)
+        Function->setEmitted(/*KeepCFG=*/opts::PrintCacheMetrics);
     }
   };
 

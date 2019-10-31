@@ -256,7 +256,7 @@ std::string BinaryFunction::getDemangledName() const {
   char *const Name =
       abi::__cxa_demangle(MangledName.str().c_str(), 0, 0, &Status);
   const std::string NameStr(Status == 0 ? Name : MangledName);
-  free(Name);
+  ::free(Name);
   return NameStr;
 }
 
@@ -4219,7 +4219,8 @@ DebugAddressRangesVector BinaryFunction::translateInputToOutputRanges(
       continue;
     }
     auto InputOffset = Range.LowPC - getAddress();
-    const auto InputEndOffset = std::min(Range.HighPC - getAddress(), getSize());
+    const auto InputEndOffset = std::min(Range.HighPC - getAddress(),
+                                         getSize());
 
     auto BBI = std::upper_bound(BasicBlockOffsets.begin(),
                                 BasicBlockOffsets.end(),

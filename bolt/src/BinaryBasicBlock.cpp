@@ -33,6 +33,14 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Index < RHS.Index;
 }
 
+bool BinaryBasicBlock::hasCFG() const {
+  return getParent()->hasCFG();
+}
+
+bool BinaryBasicBlock::hasInstructions() const {
+  return getParent()->hasInstructions();
+}
+
 void BinaryBasicBlock::adjustNumPseudos(const MCInst &Inst, int Sign) {
   auto &BC = Function->getBinaryContext();
   if (BC.MII->get(Inst.getOpcode()).isPseudo())

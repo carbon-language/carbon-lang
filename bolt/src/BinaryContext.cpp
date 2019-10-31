@@ -1750,6 +1750,7 @@ BinaryContext::createInjectedBinaryFunction(const std::string &Name,
   InjectedBinaryFunctions.push_back(new BinaryFunction(Name, *this, IsSimple));
   auto *BF = InjectedBinaryFunctions.back();
   setSymbolToFunctionMap(BF->getSymbol(), BF);
+  BF->CurrentState = BinaryFunction::State::CFG;
   return BF;
 }
 

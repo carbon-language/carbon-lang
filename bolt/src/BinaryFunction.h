@@ -123,7 +123,8 @@ public:
     Disassembled,     /// Function have been disassembled.
     CFG,              /// Control flow graph has been built.
     CFG_Finalized,    /// CFG is finalized. No optimizations allowed.
-    Emitted,          /// Instructions have been emitted to output.
+    EmittedCFG,       /// Instructions have been emitted to output.
+    Emitted,          /// Same as above plus CFG is destroyed.
   };
 
   /// Types of profile the function can use. Could be a combination.
@@ -964,11 +965,18 @@ public:
   bool hasCFG() const {
     return getState() == State::CFG ||
            getState() == State::CFG_Finalized ||
-           getState() == State::Emitted;
+           getState() == State::EmittedCFG;
+  }
+
+  /// Return true if the function state implies that it includes instructions.
+  bool hasInstructions() const {
+    return getState() == State::Disassembled ||
+           hasCFG();
   }
 
   bool isEmitted() const {
-    return getState() == State::Emitted;
+    return getState() == State::EmittedCFG ||
+           getState() == State::Emitted;
   }
 
   BinarySection &getSection() const {
@@ -2124,8 +2132,12 @@ public:
     CurrentState = State::CFG_Finalized;
   }
 
-  void setEmitted() {
-    CurrentState = State::Emitted;
+  void setEmitted(bool KeepCFG = false) {
+    CurrentState = State::EmittedCFG;
+    if (!KeepCFG) {
+      releaseCFG();
+      CurrentState = State::Emitted;
+    }
   }
 
   /// Process LSDA information for the function.
@@ -2338,6 +2350,17 @@ public:
   FragmentInfo &cold() { return ColdFragment; }
 
   const FragmentInfo &cold() const { return ColdFragment; }
+
+  /// Release memory allocated for CFG and instructions.
+  /// We still keep basic blocks for address translation/mapping purposes.
+  void releaseCFG() {
+    for (auto *BB : BasicBlocks) {
+      BB->releaseCFG();
+    }
+    for (auto BB : DeletedBasicBlocks) {
+      BB->releaseCFG();
+    }
+  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,
@@ -2353,6 +2376,7 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   case BinaryFunction::State::Disassembled: OS << "disassembled";  break;
   case BinaryFunction::State::CFG:          OS << "CFG constructed";  break;
   case BinaryFunction::State::CFG_Finalized:OS << "CFG finalized";  break;
+  case BinaryFunction::State::EmittedCFG:   OS << "emitted with CFG";  break;
   case BinaryFunction::State::Emitted:      OS << "emitted";  break;
   }
 
