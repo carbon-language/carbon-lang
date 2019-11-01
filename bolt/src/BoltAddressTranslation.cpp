@@ -23,50 +23,31 @@ const char* BoltAddressTranslation::SECTION_NAME = ".note.bolt_bat";
 void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
                                                const BinaryBasicBlock &BB,
                                                uint64_t FuncAddress) {
-  const uint64_t Key = BB.getOutputAddressRange().first - FuncAddress;
-  const uint64_t Val = BB.getInputOffset();
+  const auto BBOutputOffset = BB.getOutputAddressRange().first - FuncAddress;
+  const auto BBInputOffset = BB.getInputOffset();
 
-  assert(Val != BinaryBasicBlock::INVALID_OFFSET &&
+  assert(BBInputOffset != BinaryBasicBlock::INVALID_OFFSET &&
          "Every output BB must track back to an input BB for profile "
          "collection in bolted binaries");
 
   DEBUG(dbgs() << "BB " << BB.getName() <<"\n");
-  DEBUG(dbgs() << "  Key: " << Twine::utohexstr(Key)
-               << " Val: " << Twine::utohexstr(Val) << "\n");
+  DEBUG(dbgs() << "  Key: " << Twine::utohexstr(BBOutputOffset)
+               << " Val: " << Twine::utohexstr(BBInputOffset) << "\n");
   // In case of conflicts (same Key mapping to different Vals), the last
   // update takes precedence. Of course it is not ideal to have conflicts and
   // those happen when we have an empty BB that either contained only
   // NOPs or a jump to the next block (successor). Either way, the successor
-  // and this deleted block will both share the same output address (the same key),
-  // and we need to map back. We choose here to privilege the successor by
+  // and this deleted block will both share the same output address (the same
+  // key), and we need to map back. We choose here to privilege the successor by
   // allowing it to overwrite the previously inserted key in the map.
-  Map[Key] = Val;
+  Map[BBOutputOffset] = BBInputOffset;
 
-  // Look for special instructions we are interested in mapping offsets. These
-  // are key instructions for the profile identified by
-  // BC.keepOffsetForInstruction(Inst) and are instructions that cause control
-  // flow change. We also record offsets for the last instruction in the BB in
-  // some cases. These are harmless for BAT writing purposes, besides increasing
-  // the size of the table unnecessarily.
-  for (const auto &Inst : BB) {
-    if (!BC.MIB->hasAnnotation(Inst, "LocSym"))
-      continue;
-    const auto OutputOffset =
-        BC.MIB->getAnnotationAs<uint32_t>(Inst, "LocSym") - FuncAddress;
+  for (const auto &IOPair : BB.getOffsetTranslationTable()) {
+    const auto InputOffset = IOPair.first + BBInputOffset;
+    const auto OutputOffset = IOPair.second + BBOutputOffset;
 
-    auto InputOffsetOrErr = BC.MIB->tryGetAnnotationAs<uint32_t>(Inst, "Offset");
-    DEBUG(if (!InputOffsetOrErr) {
-      auto *Function = BB.getFunction();
-      dbgs() << "Function: " << Function->getPrintName()
-             << " BB: " << BB.getName() << " lacking annotation for: ";
-      BC.printInstruction(dbgs(), Inst);
-      dbgs() << "\n";
-    });
-    assert(InputOffsetOrErr && "Expected annotation with input offset");
-    const auto InputOffset = *InputOffsetOrErr;
-
-    // Is this the first instruction in the BB? No need to duplicate the entry
-    if (Key == OutputOffset)
+    // Is this the first instruction in the BB? No need to duplicate the entry.
+    if (OutputOffset == BBOutputOffset)
       continue;
 
     DEBUG(dbgs() << "  Key: " << Twine::utohexstr(OutputOffset)

@@ -2743,12 +2743,10 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
       // the location of calls/returns for BOLT address translation maps
       if (!EmitCodeOnly && LabelsForOffsets &&
           BC.MIB->hasAnnotation(Instr, "Offset")) {
-
+        const auto Offset = BC.MIB->getAnnotationAs<uint32_t>(Instr, "Offset");
         MCSymbol *LocSym = BC.Ctx->createTempSymbol(/*CanBeUnnamed=*/true);
         Streamer.EmitLabel(LocSym);
-        BC.MIB->addAnnotation(Instr, "LocSym",
-                              static_cast<uint32_t>(LocSyms.size()));
-        LocSyms.push_back(LocSym);
+        BB->getLocSyms().emplace_back(std::make_pair(Offset, LocSym));
       }
 
       // Emit SDT labels

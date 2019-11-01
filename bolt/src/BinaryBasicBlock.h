@@ -81,10 +81,22 @@ private:
   MCSymbol *Label{nullptr};
 
   /// [Begin, End) address range for this block in the output binary.
-  std::pair<uint64_t, uint64_t> OutputAddressRange{0, 0};
+  std::pair<uint32_t, uint32_t> OutputAddressRange{0, 0};
 
   /// Original offset range of the basic block in the function.
   std::pair<uint32_t, uint32_t> InputRange{INVALID_OFFSET, INVALID_OFFSET};
+
+  /// Map input offset of an instruction to an output symbol. Enables writing
+  /// bolt address translation tables, used for mapping control transfer in the
+  /// output binary back to the original binary.
+  using LocSymsTy = std::vector<std::pair<uint32_t, const MCSymbol *>>;
+  std::unique_ptr<LocSymsTy> LocSyms;
+
+  /// Map input offsets in the basic block to output offsets.
+  ///
+  /// NOTE: map only instruction of interest, such as calls.
+  using OffsetTranslationTableTy = std::vector<std::pair<uint16_t, uint16_t>>;
+  std::unique_ptr<OffsetTranslationTableTy> OffsetTranslationTable;
 
   /// Alignment requirements for the block.
   uint32_t Alignment{1};
@@ -816,6 +828,28 @@ public:
     return OutputAddressRange;
   }
 
+  /// Return mapping of input offsets to symbols in the output.
+  LocSymsTy &getLocSyms() {
+    return LocSyms ? *LocSyms : *(LocSyms = std::make_unique<LocSymsTy>());
+  }
+
+  /// Return mapping of input offsets to symbols in the output.
+  const LocSymsTy &getLocSyms() const {
+    return const_cast<BinaryBasicBlock *>(this)->getLocSyms();
+  }
+
+  /// Return offset translation table for the basic block.
+  OffsetTranslationTableTy &getOffsetTranslationTable() {
+    return OffsetTranslationTable ?
+      *OffsetTranslationTable :
+      *(OffsetTranslationTable = std::make_unique<OffsetTranslationTableTy>());
+  }
+
+  /// Return offset translation table for the basic block.
+  const OffsetTranslationTableTy &getOffsetTranslationTable() const {
+    return const_cast<BinaryBasicBlock *>(this)->getOffsetTranslationTable();
+  }
+
   /// Return size of the basic block in the output binary.
   uint64_t getOutputSize() const {
     return OutputAddressRange.second - OutputAddressRange.first;
@@ -936,6 +970,9 @@ private:
     Index = I;
   }
 };
+
+/// Keep the size of the BinaryBasicBlock within a reasonable size class.
+static_assert(sizeof(BinaryBasicBlock) <= 256, "");
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 

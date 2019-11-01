@@ -3608,7 +3608,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
     }
 
     // Update basic block output ranges for the debug info, if we have
-    // secondary entry points in the symbol table to update or if writing BAT
+    // secondary entry points in the symbol table to update or if writing BAT.
     if (!opts::UpdateDebugSections && !Function.isMultiEntry() &&
         !opts::EnableBAT)
       return;
@@ -3634,7 +3634,8 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
           assert(BBBaseAddress == Function.getOutputAddress());
         }
       }
-      auto BBAddress = BBBaseAddress + Layout.getSymbolOffset(*BB->getLabel());
+      const auto BBOffset = Layout.getSymbolOffset(*BB->getLabel());
+      const auto BBAddress = BBBaseAddress + BBOffset;
       BB->setOutputStartAddress(BBAddress);
 
       if (PrevBB) {
@@ -3647,19 +3648,13 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       }
       PrevBB = BB;
 
-      if (!opts::EnableBAT)
-        continue;
-
-      // Record location of special instrs that require an offset for profile
-      // assignment when writing BOLT address translation table
-      for (auto &Inst : *BB) {
-        if (!BC->MIB->hasAnnotation(Inst, "LocSym"))
-          continue;
-        uint32_t &SymIdx = BC->MIB->getAnnotationAs<uint32_t>(Inst, "LocSym");
-        const MCSymbol *LocSym = Function.getLocSym(SymIdx);
-        const auto CallOffset =
-            BBBaseAddress + Layout.getSymbolOffset(*LocSym);
-        SymIdx = CallOffset;
+      for (const auto &LocSymKV : BB->getLocSyms()) {
+        const uint16_t InputOffset =
+            static_cast<uint16_t>(LocSymKV.first - BB->getInputOffset());
+        const uint16_t OutputOffset = static_cast<uint16_t>(
+            Layout.getSymbolOffset(*LocSymKV.second) - BBOffset);
+        BB->getOffsetTranslationTable().emplace_back(
+            std::make_pair(InputOffset, OutputOffset));
       }
     }
     PrevBB->setOutputEndAddress(PrevBB->isCold() ?

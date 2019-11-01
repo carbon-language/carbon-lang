@@ -542,12 +542,6 @@ private:
   /// Count the number of functions created.
   static uint64_t Count;
 
-  /// LocSym annotation records an index to this vector. This holds a label
-  /// for each instruction whose input/output offsets need to be known after
-  /// emission. Enables writing bolt address translation tables, used for
-  /// mapping control transfer in the output binary back to the original binary.
-  std::vector<const MCSymbol *> LocSyms;
-
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
     Names.emplace_back(NewName);
@@ -770,13 +764,6 @@ public:
   BinaryFunction &updateState(BinaryFunction::State State) {
     CurrentState = State;
     return *this;
-  }
-
-  /// Return a symbol for an instruction location. \p Idx is recorded as an
-  /// annotation in the instruction.
-  const MCSymbol *getLocSym(size_t Idx) const {
-    assert(Idx < LocSyms.size() && "Invalid index");
-    return LocSyms[Idx];
   }
 
   /// Update layout of basic blocks used for output.
