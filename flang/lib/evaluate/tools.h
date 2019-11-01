@@ -765,26 +765,33 @@ template<typename A> bool IsAllocatableOrPointer(const A &x) {
 bool IsProcedurePointer(const Expr<SomeType> &);
 bool IsNullPointer(const Expr<SomeType> &);
 
-// GetLastTarget() returns the rightmost symbol in an object
-// designator (which has perhaps been wrapped in an Expr<>) that has the
-// POINTER or TARGET attribute, or a null pointer when none is found.
-struct GetLastTargetHelper
-  : public AnyTraverse<GetLastTargetHelper, std::optional<const Symbol *>> {
-  using Result = std::optional<const Symbol *>;
-  using Base = AnyTraverse<GetLastTargetHelper, Result>;
-  GetLastTargetHelper() : Base{*this} {}
+// Extracts the chain of symbols from a designator, which has perhaps been
+// wrapped in an Expr<>, removing all of the (co)subscripts.  The
+// base object will be the first symbol in the result vector.
+struct GetSymbolVectorHelper
+  : public Traverse<GetSymbolVectorHelper, SymbolVector> {
+  using Result = SymbolVector;
+  using Base = Traverse<GetSymbolVectorHelper, Result>;
   using Base::operator();
+  GetSymbolVectorHelper() : Base{*this} {}
+  Result Default() { return {}; }
+  Result Combine(Result &&a, Result &&b) {
+    a.insert(a.end(), b.begin(), b.end());
+    return std::move(a);
+  }
   Result operator()(const Symbol &) const;
   Result operator()(const Component &) const;
+  Result operator()(const ArrayRef &) const;
+  Result operator()(const CoarrayRef &) const;
 };
-
-template<typename A> const Symbol *GetLastTarget(const A &x) {
-  if (auto known{GetLastTargetHelper{}(x)}) {
-    return *known;
-  } else {
-    return nullptr;
-  }
+template<typename A> SymbolVector GetSymbolVector(const A &x) {
+  return GetSymbolVectorHelper{}(x);
 }
+
+// GetLastTarget() returns the rightmost symbol in an object designator's
+// SymbolVector that has the POINTER or TARGET attribute, or a null pointer
+// when none is found.
+const Symbol *GetLastTarget(const SymbolVector &);
 
 // Resolves any whole ASSOCIATE(B=>A) associations
 const Symbol &ResolveAssociations(const Symbol &);
@@ -798,5 +805,15 @@ extern template semantics::SymbolSet CollectSymbols(
 
 // Predicate: does a variable contain a vector-valued subscript (not a triplet)?
 bool HasVectorSubscript(const Expr<SomeType> &);
+
+// Utilities for attaching the location of the declaration of a symbol
+// of interest to a message, if both pointers are non-null.  Handles
+// the case of USE association gracefully.
+parser::Message *AttachDeclaration(parser::Message *, const Symbol *);
+template<typename... A>
+parser::Message *SayWithDeclaration(
+    parser::ContextualMessages &messages, const Symbol *symbol, A &&... x) {
+  return AttachDeclaration(messages.Say(std::forward<A>(x)...), symbol);
+}
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

@@ -18,6 +18,7 @@
 #include "semantics.h"
 #include "../common/indirection.h"
 #include "../evaluate/expression.h"
+#include <string>
 
 namespace Fortran::parser {
 template<typename> struct Statement;
@@ -32,11 +33,18 @@ struct ForallStmt;
 struct ForallConstruct;
 }
 
+namespace Fortran::evaluate::characteristics {
+struct DummyDataObject;
+}
+
 namespace Fortran::evaluate {
 class IntrinsicProcTable;
 void CheckPointerAssignment(parser::ContextualMessages &,
-    const IntrinsicProcTable &, const Symbol &lhs,
-    const evaluate::Expr<evaluate::SomeType> &rhs);
+    const IntrinsicProcTable &, const Symbol &lhs, const Expr<SomeType> &rhs);
+void CheckPointerAssignment(parser::ContextualMessages &,
+    const IntrinsicProcTable &, parser::CharBlock source,
+    const std::string &description, const characteristics::DummyDataObject &,
+    const Expr<SomeType> &rhs);
 }
 
 namespace Fortran::semantics {

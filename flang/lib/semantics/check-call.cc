@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include "check-call.h"
+#include "assignment.h"
 #include "scope.h"
 #include "tools.h"
 #include "../evaluate/characteristics.h"
+#include "../evaluate/check-expression.h"
 #include "../evaluate/shape.h"
 #include "../evaluate/tools.h"
 #include "../parser/characters.h"
@@ -168,22 +170,17 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           tbp{FindImmediateComponent(derived, [](const Symbol &symbol) {
             return symbol.has<ProcBindingDetails>();
           })}) {  // 15.5.2.4(2)
-        if (auto *msg{messages.Say(
-                "Actual argument associated with TYPE(*) %s may not have type-bound procedure '%s'"_err_en_US,
-                dummyName, tbp->name())}) {
-          msg->Attach(tbp->name(), "Declaration of type-bound procedure"_en_US);
-        }
+        evaluate::SayWithDeclaration(messages, tbp,
+            "Actual argument associated with TYPE(*) %s may not have type-bound procedure '%s'"_err_en_US,
+            dummyName, tbp->name());
       }
       if (const Symbol *
           finalizer{FindImmediateComponent(derived, [](const Symbol &symbol) {
             return symbol.has<FinalProcDetails>();
           })}) {  // 15.5.2.4(2)
-        if (auto *msg{messages.Say(
-                "Actual argument associated with TYPE(*) %s may not have FINAL subroutine '%s'"_err_en_US,
-                dummyName, finalizer->name())}) {
-          msg->Attach(
-              finalizer->name(), "Declaration of FINAL subroutine"_en_US);
-        }
+        evaluate::SayWithDeclaration(messages, finalizer,
+            "Actual argument associated with TYPE(*) %s may not have FINAL subroutine '%s'"_err_en_US,
+            dummyName, finalizer->name());
       }
     }
     UltimateComponentIterator ultimates{derived};
@@ -193,12 +190,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
               ultimates.begin(), ultimates.end(), [](const Symbol &component) {
                 return IsAllocatable(component);
               })}) {  // 15.5.2.4(6)
-        if (auto *msg{messages.Say(
-                "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
-                iter.BuildResultDesignatorName(), dummyName)}) {
-          msg->Attach(
-              iter->name(), "Declaration of ALLOCATABLE component"_en_US);
-        }
+        evaluate::SayWithDeclaration(messages, &*iter,
+            "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
+            iter.BuildResultDesignatorName(), dummyName);
       }
     }
     if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
@@ -207,11 +201,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
                 const auto *object{component.detailsIf<ObjectEntityDetails>()};
                 return object && object->IsCoarray();
               })}) {
-        if (auto *msg{messages.Say(
-                "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
-                dummyName, iter.BuildResultDesignatorName())}) {
-          msg->Attach(iter->name(), "Declaration of coarray component"_en_US);
-        }
+        evaluate::SayWithDeclaration(messages, &*iter,
+            "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
+            dummyName, iter.BuildResultDesignatorName());
       }
     }
   }
@@ -235,12 +227,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           dummyName);
     }
     if (actualIsAssumedSize) {
-      if (auto *msg{messages.Say(
-              "Assumed-size array may not be associated with assumed-shape %s"_err_en_US,
-              dummyName)}) {
-        msg->Attach(actualLastSymbol->name(),
-            "Declaration of assumed-size array actual argument"_en_US);
-      }
+      evaluate::SayWithDeclaration(messages, actualLastSymbol,
+          "Assumed-size array may not be associated with assumed-shape %s"_err_en_US,
+          dummyName);
     }
   } else if (actualRank == 0 && dummy.type.Rank() > 0) {
     // Actual is scalar, dummy is an array.  15.5.2.4(14), 15.5.2.11
@@ -306,6 +295,9 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   // Cases when temporaries might be needed but must not be permitted.
   bool dummyIsPointer{
       dummy.attrs.test(characteristics::DummyDataObject::Attr::Pointer)};
+  bool dummyIsContiguous{
+      dummy.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)};
+  bool actualIsContiguous{IsSimplyContiguous(actual, context.intrinsics())};
   if ((actualIsAsynchronous || actualIsVolatile) &&
       (dummyIsAsynchronous || dummyIsVolatile) && !dummyIsValue) {
     if (actualIsCoindexed) {  // C1538
@@ -313,9 +305,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           "Coindexed ASYNCHRONOUS or VOLATILE actual argument may not be associated with %s with ASYNCHRONOUS or VOLATILE attributes unless VALUE"_err_en_US,
           dummyName);
     }
-    if (actualRank > 0 && !IsSimplyContiguous(actual, context.intrinsics())) {
-      bool dummyIsContiguous{
-          dummy.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)};
+    if (actualRank > 0 && !actualIsContiguous) {
       bool dummyIsAssumedRank{dummy.type.attrs().test(
           characteristics::TypeAndShape::Attr::AssumedRank)};
       bool dummyIsAssumedShape{dummy.type.attrs().test(
@@ -352,6 +342,25 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       messages.Say(
           "ALLOCATABLE %s has corank %d but actual argument has corank %d"_err_en_US,
           dummyName, dummy.type.corank(), actualLastSymbol->Corank());
+    }
+  }
+
+  // 15.5.2.7 -- dummy is POINTER
+  if (dummyIsPointer) {
+    if (dummyIsContiguous && !actualIsContiguous) {
+      messages.Say(
+          "Actual argument associated with CONTIGUOUS POINTER %s must be simply contiguous"_err_en_US,
+          dummyName);
+    }
+    if (!actualIsPointer) {
+      if (dummy.intent == common::Intent::In) {
+        CheckPointerAssignment(messages, context.intrinsics(),
+            parser::CharBlock{}, dummyName, dummy, actual);
+      } else {
+        messages.Say(
+            "Actual argument associated with POINTER %s must also be POINTER unless INTENT(IN)"_err_en_US,
+            dummyName);
+      }
     }
   }
 

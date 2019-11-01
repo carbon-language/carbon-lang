@@ -1257,13 +1257,11 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   const Symbol *parentComponent{typeDetails.GetParentComponent(*spec.scope())};
 
   if (typeSymbol.attrs().test(semantics::Attr::ABSTRACT)) {  // C796
-    if (auto *msg{Say(typeName,
-            "ABSTRACT derived type '%s' may not be used in a "
-            "structure constructor"_err_en_US,
-            typeName)}) {
-      msg->Attach(
-          typeSymbol.name(), "Declaration of ABSTRACT derived type"_en_US);
-    }
+    AttachDeclaration(Say(typeName,
+                          "ABSTRACT derived type '%s' may not be used in a "
+                          "structure constructor"_err_en_US,
+                          typeName),
+        &typeSymbol);
   }
 
   // This iterator traverses all of the components in the derived type and its
@@ -1419,20 +1417,20 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           // NULL() with no arguments allowed by 7.5.10 para 6 for ALLOCATABLE
         } else if (auto symType{DynamicType::From(symbol)}) {
           if (valueType.has_value()) {
-            if (auto *msg{Say(expr.source,
+            AttachDeclaration(
+                Say(expr.source,
                     "Value in structure constructor of type %s is "
                     "incompatible with component '%s' of type %s"_err_en_US,
                     valueType->AsFortran(), symbol->name(),
-                    symType->AsFortran())}) {
-              msg->Attach(symbol->name(), "Component declaration"_en_US);
-            }
+                    symType->AsFortran()),
+                symbol);
           } else {
-            if (auto *msg{Say(expr.source,
+            AttachDeclaration(
+                Say(expr.source,
                     "Value in structure constructor is incompatible with "
                     " component '%s' of type %s"_err_en_US,
-                    symbol->name(), symType->AsFortran())}) {
-              msg->Attach(symbol->name(), "Component declaration"_en_US);
-            }
+                    symbol->name(), symType->AsFortran()),
+                symbol);
           }
         }
       }
@@ -1449,12 +1447,11 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         if (details->init().has_value()) {
           result.Add(symbol, common::Clone(*details->init()));
         } else {  // C799
-          if (auto *msg{Say(typeName,
-                  "Structure constructor lacks a value for "
-                  "component '%s'"_err_en_US,
-                  symbol.name())}) {
-            msg->Attach(symbol.name(), "Absent component"_en_US);
-          }
+          AttachDeclaration(Say(typeName,
+                                "Structure constructor lacks a value for "
+                                "component '%s'"_err_en_US,
+                                symbol.name()),
+              &symbol);
         }
       }
     }
@@ -1676,9 +1673,7 @@ void ExpressionAnalyzer::CheckForBadRecursion(
             "Assumed-length CHARACTER(*) function '%s' cannot call itself"_err_en_US,
             callSite);
       }
-      if (msg != nullptr) {
-        msg->Attach(proc.name(), "definition of '%s'"_en_US, callSite);
-      }
+      AttachDeclaration(msg, &proc);
     }
   }
 }
@@ -2076,8 +2071,7 @@ static void CheckFuncRefToArrayElementRefHasSubscripts(
             "A result variable must be declared with RESULT to allow recursive "
             "function calls"_en_US);
       } else {
-        msg.Attach(
-            name->symbol->name(), "'%s' was declared here"_en_US, name->source);
+        AttachDeclaration(&msg, name->symbol);
       }
     }
   }
@@ -2422,13 +2416,11 @@ std::optional<ActualArgument> ArgumentAnalyzer::Analyze(
       if (const semantics::DeclTypeSpec * type{coarray.GetType()}) {
         if (const semantics::DerivedTypeSpec * derived{type->AsDerived()}) {
           if (auto ptr{semantics::FindPointerUltimateComponent(*derived)}) {
-            if (auto *msg{context_.Say(expr.source,
+            AttachDeclaration(
+                context_.Say(expr.source,
                     "Coindexed object '%s' with POINTER ultimate component '%s' cannot be passed as argument"_err_en_US,
-                    coarray.name(), ptr->name())}) {
-              msg->Attach(ptr->name(),
-                  "Declaration of POINTER '%s' component of %s"_en_US,
-                  ptr->name(), type->AsFortran());
-            }
+                    coarray.name(), ptr->name()),
+                &*ptr);
           }
         }
       }

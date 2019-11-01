@@ -42,5 +42,11 @@ common::IfNoLvalue<Restorer<A>, B> ScopedSet(A &to, B &&from) {
   to = std::move(from);
   return result;
 }
+template<typename A, typename B>
+common::IfNoLvalue<Restorer<A>, B> ScopedSet(A &to, const B &from) {
+  Restorer<A> result{to};
+  to = from;
+  return result;
+}
 }
 #endif  // FORTRAN_COMMON_RESTORER_H_

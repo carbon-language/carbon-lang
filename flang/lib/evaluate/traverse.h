@@ -38,8 +38,6 @@
 //   expression leaf nodes.  They invoke the visitor's operator() for the
 //   subtrees of interior nodes, and the visitor's Combine() to merge their
 //   results together.
-// - The default operator() inherited into each visitor just reflects right
-//   back into Traverse<> to descend into subtrees.
 // - Overloads of operator() in each visitor handle the cases of interest.
 
 #include "expression.h"

@@ -138,7 +138,7 @@ void CheckHelper::Check(const Symbol &symbol) {
           "An assumed-length CHARACTER(*) function cannot be ELEMENTAL"_err_en_US);
     }
     if (const Symbol * result{FindFunctionResult(symbol)}) {
-      if (result->attrs().test(Attr::POINTER)) {
+      if (IsPointer(*result)) {
         messages_.Say(
             "An assumed-length CHARACTER(*) function cannot return a POINTER"_err_en_US);
       }
@@ -175,6 +175,10 @@ void CheckHelper::Check(const Symbol &symbol) {
   }
   if (symbol.attrs().test(Attr::VALUE)) {
     CheckValue(symbol, derived);
+  }
+  if (symbol.attrs().test(Attr::CONTIGUOUS) && IsPointer(symbol) &&
+      symbol.Rank() == 0) {  // C830
+    messages_.Say("CONTIGUOUS POINTER must be an array"_err_en_US);
   }
 }
 

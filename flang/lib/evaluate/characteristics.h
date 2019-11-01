@@ -169,6 +169,7 @@ struct DummyArgument {
   DummyArgument(std::string &&name, DummyProcedure &&x)
     : name{std::move(name)}, u{std::move(x)} {}
   explicit DummyArgument(AlternateReturn &&x) : u{std::move(x)} {}
+  ~DummyArgument();
   bool operator==(const DummyArgument &) const;
   static std::optional<DummyArgument> Characterize(
       const semantics::Symbol &, const IntrinsicProcTable &);

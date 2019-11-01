@@ -218,9 +218,9 @@ std::optional<DummyDataObject> DummyDataObject::Characterize(
     const semantics::Symbol &symbol) {
   if (const auto *obj{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (auto type{TypeAndShape::Characterize(*obj)}) {
-      DummyDataObject result{*type};
+      std::optional<DummyDataObject> result{std::move(*type)};
       using semantics::Attr;
-      CopyAttrs<DummyDataObject, DummyDataObject::Attr>(symbol, result,
+      CopyAttrs<DummyDataObject, DummyDataObject::Attr>(symbol, *result,
           {
               {Attr::OPTIONAL, DummyDataObject::Attr::Optional},
               {Attr::ALLOCATABLE, DummyDataObject::Attr::Allocatable},
@@ -232,15 +232,15 @@ std::optional<DummyDataObject> DummyDataObject::Characterize(
               {Attr::TARGET, DummyDataObject::Attr::Target},
           });
       if (symbol.attrs().test(semantics::Attr::INTENT_IN)) {
-        result.intent = common::Intent::In;
+        result->intent = common::Intent::In;
       }
       if (symbol.attrs().test(semantics::Attr::INTENT_OUT)) {
-        CHECK(result.intent == common::Intent::Default);
-        result.intent = common::Intent::Out;
+        CHECK(result->intent == common::Intent::Default);
+        result->intent = common::Intent::Out;
       }
       if (symbol.attrs().test(semantics::Attr::INTENT_INOUT)) {
-        CHECK(result.intent == common::Intent::Default);
-        result.intent = common::Intent::InOut;
+        CHECK(result->intent == common::Intent::Default);
+        result->intent = common::Intent::InOut;
       }
       return result;
     }
@@ -315,6 +315,8 @@ std::ostream &DummyProcedure::Dump(std::ostream &o) const {
 }
 
 std::ostream &AlternateReturn::Dump(std::ostream &o) const { return o << '*'; }
+
+DummyArgument::~DummyArgument() {}
 
 bool DummyArgument::operator==(const DummyArgument &that) const {
   return u == that.u;
@@ -428,7 +430,7 @@ std::ostream &DummyArgument::Dump(std::ostream &o) const {
 FunctionResult::FunctionResult(DynamicType t) : u{TypeAndShape{t}} {}
 FunctionResult::FunctionResult(TypeAndShape &&t) : u{std::move(t)} {}
 FunctionResult::FunctionResult(Procedure &&p) : u{std::move(p)} {}
-FunctionResult::~FunctionResult() = default;
+FunctionResult::~FunctionResult() {}
 
 bool FunctionResult::operator==(const FunctionResult &that) const {
   return attrs == that.attrs && u == that.u;
@@ -519,7 +521,7 @@ Procedure::Procedure(FunctionResult &&fr, DummyArguments &&args, Attrs a)
   : functionResult{std::move(fr)}, dummyArguments{std::move(args)}, attrs{a} {}
 Procedure::Procedure(DummyArguments &&args, Attrs a)
   : dummyArguments{std::move(args)}, attrs{a} {}
-Procedure::~Procedure() = default;
+Procedure::~Procedure() {}
 
 bool Procedure::operator==(const Procedure &that) const {
   return attrs == that.attrs && dummyArguments == that.dummyArguments &&

@@ -33,7 +33,7 @@
 
 namespace Fortran::common {
 
-// The default case does not support (deep) copy construction and assignment.
+// The default case does not support (deep) copy construction or assignment.
 template<typename A, bool COPY = false> class Indirection {
 public:
   using element_type = A;
