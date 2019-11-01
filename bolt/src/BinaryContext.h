@@ -173,24 +173,10 @@ class BinaryContext {
   /// with size won't overflow
   uint32_t DuplicatedJumpTables{0x10000000};
 
-  /// Map used for disambiguation of local symbols.
-  StringMap<uint64_t> LocalSymbols;
-
 public:
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = StringMap<BinaryData *>;
   SymbolMapType GlobalSymbols;
-
-  /// Return unique version of a symbol name in the form "<name>/<number>".
-  std::string uniquifySymbolName(const std::string &Name) {
-    const auto ID = ++LocalSymbols[Name];
-    return Name + '/' + std::to_string(ID);
-  }
-
-  /// Release memory used for disambiguation of local symbols.
-  void freeLocalSymbols() {
-    clearList(LocalSymbols);
-  }
 
   /// [address] -> [BinaryData], ...
   /// Addresses never change.

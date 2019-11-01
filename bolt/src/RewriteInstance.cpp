@@ -1093,10 +1093,12 @@ void RewriteInstance::run() {
 void RewriteInstance::discoverFileObjects() {
   NamedRegionTimer T("discoverFileObjects", "discover file objects",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
+  NameResolver NR;
 
   FileSymRefs.clear();
   BC->getBinaryFunctions().clear();
   BC->clearBinaryData();
+
 
   // For local symbols we want to keep track of associated FILE symbol name for
   // disambiguation by combined name.
@@ -1291,9 +1293,9 @@ void RewriteInstance::discoverFileObjects() {
         AltPrefix = Name + "/" + std::string(SFI->second);
       }
 
-      UniqueName = BC->uniquifySymbolName(Name);
+      UniqueName = NR.uniquifySymbolName(Name);
       if (!AltPrefix.empty())
-        AlternativeName = BC->uniquifySymbolName(AltPrefix);
+        AlternativeName = NR.uniquifySymbolName(AltPrefix);
     }
 
     uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
@@ -1558,9 +1560,7 @@ void RewriteInstance::discoverFileObjects() {
                    });
 
   for (const auto &Section : RelocationSections)
-    readRelocations(Section);
-
-  BC->freeLocalSymbols();
+    readRelocations(Section, NR);
 }
 
 void RewriteInstance::disassemblePLT() {
@@ -2120,7 +2120,8 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   return true;
 }
 
-void RewriteInstance::readRelocations(const SectionRef &Section) {
+void RewriteInstance::readRelocations(const SectionRef &Section,
+                                      NameResolver &NR) {
   StringRef SectionName;
   Section.getName(SectionName);
   DEBUG(dbgs() << "BOLT-DEBUG: reading relocations for section "
@@ -2519,9 +2520,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           } else {
             if (StringRef(SymbolName).startswith(
                   BC->AsmInfo->getPrivateGlobalPrefix())) {
-              Name = BC->uniquifySymbolName("PG" + SymbolName);
+              Name = NR.uniquifySymbolName("PG" + SymbolName);
             } else {
-              Name = BC->uniquifySymbolName(SymbolName);
+              Name = NR.uniquifySymbolName(SymbolName);
             }
           }
           ReferencedSymbol = BC->registerNameAtAddress(Name,

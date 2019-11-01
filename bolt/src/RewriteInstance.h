@@ -45,6 +45,21 @@ class RewriteInstanceDiff;
 /// optimizations) and rewriting. It also has the logic to coordinate such
 /// events.
 class RewriteInstance {
+private:
+  /// Class used for assigning unique names to local symbols.
+  class NameResolver {
+  private:
+    /// Track the number of duplicate names.
+    StringMap<uint64_t> LocalSymbols;
+
+  public:
+    /// Return unique version of a symbol name in the form "<name>/<number>".
+    std::string uniquifySymbolName(const std::string &Name) {
+      const auto ID = ++LocalSymbols[Name];
+      return Name + '/' + std::to_string(ID);
+    }
+  };
+
 public:
   RewriteInstance(llvm::object::ELFObjectFileBase *File, DataReader &DR,
                   DataAggregator &DA, const int Argc, const char *const *Argv,
@@ -70,7 +85,7 @@ public:
   void adjustCommandLineOptions();
 
   /// Read relocations from a given section.
-  void readRelocations(const object::SectionRef &Section);
+  void readRelocations(const object::SectionRef &Section, NameResolver &NR);
 
   /// Read information from debug sections.
   void readDebugInfo();
