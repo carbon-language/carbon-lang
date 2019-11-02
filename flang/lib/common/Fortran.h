@@ -20,6 +20,7 @@
 
 #include "idioms.h"
 #include <cinttypes>
+#include <initializer_list>
 
 namespace Fortran::common {
 
@@ -37,7 +38,16 @@ ENUM_CLASS(ImportKind, Default, Only, None, All)
 // The attribute on a type parameter can be KIND or LEN.
 ENUM_CLASS(TypeParamAttr, Kind, Len)
 
+ENUM_CLASS(NumericOperator, Power, Multiply, Divide, Add, Subtract)
+const char *AsFortran(NumericOperator);
+
+ENUM_CLASS(LogicalOperator, And, Or, Eqv, Neqv)
+const char *AsFortran(LogicalOperator);
+
 ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
+const char *AsFortran(RelationalOperator);
+// Map EQ to {"==", ".eq."}, for example.
+std::initializer_list<const char *> AllFortranNames(RelationalOperator);
 
 ENUM_CLASS(Intent, Default, In, Out, InOut)
 

@@ -287,21 +287,21 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(PromoteAndCombine<OPR, TypeCategory::Complex>(
                 std::move(zx), std::move(zy)));
           },
-          [&](Expr<SomeComplex> &&zx, Expr<SomeInteger> &&zy) {
+          [&](Expr<SomeComplex> &&zx, Expr<SomeInteger> &&iy) {
             return MixedComplexLeft<OPR>(
-                messages, std::move(zx), std::move(zy), defaultRealKind);
+                messages, std::move(zx), std::move(iy), defaultRealKind);
           },
-          [&](Expr<SomeComplex> &&zx, Expr<SomeReal> &&zy) {
+          [&](Expr<SomeComplex> &&zx, Expr<SomeReal> &&ry) {
             return MixedComplexLeft<OPR>(
-                messages, std::move(zx), std::move(zy), defaultRealKind);
+                messages, std::move(zx), std::move(ry), defaultRealKind);
           },
-          [&](Expr<SomeInteger> &&zx, Expr<SomeComplex> &&zy) {
+          [&](Expr<SomeInteger> &&ix, Expr<SomeComplex> &&zy) {
             return MixedComplexRight<OPR>(
-                messages, std::move(zx), std::move(zy), defaultRealKind);
+                messages, std::move(ix), std::move(zy), defaultRealKind);
           },
-          [&](Expr<SomeReal> &&zx, Expr<SomeComplex> &&zy) {
+          [&](Expr<SomeReal> &&rx, Expr<SomeComplex> &&zy) {
             return MixedComplexRight<OPR>(
-                messages, std::move(zx), std::move(zy), defaultRealKind);
+                messages, std::move(rx), std::move(zy), defaultRealKind);
           },
           // Operations with one typeless operand
           [&](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
@@ -495,17 +495,7 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
           },
           // Default case
           [&](auto &&, auto &&) {
-            // TODO: defined operator
-            auto xtype{x.GetType()};
-            auto ytype{y.GetType()};
-            if (xtype.has_value() && ytype.has_value()) {
-              messages.Say(
-                  "Relational operands do not have comparable types (%s vs. %s)"_err_en_US,
-                  xtype->AsFortran(), ytype->AsFortran());
-            } else {
-              messages.Say(
-                  "Relational operands do not have comparable types"_err_en_US);
-            }
+            DIE("invalid types for relational operator");
             return std::optional<Expr<LogicalResult>>{};
           },
       },

@@ -41,6 +41,7 @@
 
 namespace Fortran::evaluate {
 
+using common::LogicalOperator;
 using common::RelationalOperator;
 
 // Expressions are represented by specializations of the class template Expr.
@@ -387,8 +388,6 @@ struct Concat
   using Base::Base;
   static const char *Infix() { return "//"; }
 };
-
-ENUM_CLASS(LogicalOperator, And, Or, Eqv, Neqv)
 
 template<int KIND>
 struct LogicalOperation

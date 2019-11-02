@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_library(FortranCommon
+  Fortran.cc
   default-kinds.cc
   idioms.cc
 )

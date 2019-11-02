@@ -204,12 +204,11 @@ static constexpr Precedence GetPrecedence(const Expr<T> &expr) {
         if constexpr (prec == Precedence::Or) {
           // Distinguish the four logical binary operations.
           switch (x.logicalOperator) {
+            SWITCH_COVERS_ALL_CASES
           case LogicalOperator::And: return Precedence::And;
           case LogicalOperator::Or: return Precedence::Or;
           case LogicalOperator::Eqv:
-          case LogicalOperator::Neqv:
-            return Precedence::Equivalence;
-            CRASH_NO_CASE;
+          case LogicalOperator::Neqv: return Precedence::Equivalence;
           }
         }
         return prec;
@@ -282,15 +281,7 @@ std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
 }
 
 template<typename A> const char *Relational<A>::Infix() const {
-  switch (opr) {
-  case RelationalOperator::LT: return "<";
-  case RelationalOperator::LE: return "<=";
-  case RelationalOperator::EQ: return "==";
-  case RelationalOperator::NE: return "/=";
-  case RelationalOperator::GE: return ">=";
-  case RelationalOperator::GT: return ">";
-  }
-  return nullptr;
+  return common::AsFortran(opr);
 }
 
 std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
@@ -299,13 +290,7 @@ std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
 }
 
 template<int KIND> const char *LogicalOperation<KIND>::Infix() const {
-  switch (logicalOperator) {
-  case LogicalOperator::And: return ".and.";
-  case LogicalOperator::Or: return ".or.";
-  case LogicalOperator::Eqv: return ".eqv.";
-  case LogicalOperator::Neqv: return ".neqv.";
-  }
-  return nullptr;
+  return AsFortran(logicalOperator);
 }
 
 template<typename T>
