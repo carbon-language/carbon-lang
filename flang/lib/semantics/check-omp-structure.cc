@@ -454,6 +454,10 @@ void OmpStructureChecker::Enter(const parser::OpenMPBlockConstruct &x) {
     SetContextAllowedOnce({OmpClause::DEVICE});
     SetContextRequired({OmpClause::MAP});
   } break;
+    // 2.13.1 master (no clauses are allowed)
+  case parser::OmpBlockDirective::Directive::Master:
+    PushContext(beginDir.source, OmpDirective::MASTER);
+    break;
   default:
     // TODO others
     break;
