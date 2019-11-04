@@ -1105,7 +1105,7 @@ private:
   static constexpr Symbol::Flags ompFlagsRequireMark{
       Symbol::Flag::OmpThreadprivate};
 
-  void AddDataSharingAttributeObject(const Symbol *object) {
+  void AddDataSharingAttributeObject(SymbolRef object) {
     dataSharingAttributeObjects_.insert(object);
   }
   void ClearDataSharingAttributeObjects() {
@@ -1126,11 +1126,11 @@ private:
   void CheckMultipleAppearances(
       const parser::Name &, const Symbol &, Symbol::Flag);
 
-  std::set<const Symbol *> dataSharingAttributeObjects_;  // on one directive
+  SymbolSet dataSharingAttributeObjects_;  // on one directive
 };
 
 bool OmpVisitor::HasDataSharingAttributeObject(const Symbol &object) {
-  auto it{dataSharingAttributeObjects_.find(&object)};
+  auto it{dataSharingAttributeObjects_.find(object)};
   return it != dataSharingAttributeObjects_.end();
 }
 
@@ -1190,9 +1190,10 @@ void OmpVisitor::ResolveOmpObject(
               // 2.15.3 When a named common block appears in a list, it has the
               // same meaning as if every explicit member of the common block
               // appeared in the list
-              for (Symbol *object :
+              for (const Symbol &object :
                   symbol->get<CommonBlockDetails>().objects()) {
-                ResolveOmp(*object, ompFlag);
+                Symbol &mutableObject{const_cast<Symbol &>(object)};
+                ResolveOmp(mutableObject, ompFlag);
               }
             } else {
               Say(name.source,  // 2.15.3
@@ -1288,7 +1289,7 @@ void OmpVisitor::CheckMultipleAppearances(
         "on the same OpenMP directive"_err_en_US,
         name.ToString());
   } else {
-    AddDataSharingAttributeObject(target);
+    AddDataSharingAttributeObject(*target);
   }
 }
 
@@ -1867,10 +1868,10 @@ void ScopeHandler::SayLocalMustBeVariable(
 
 void ScopeHandler::SayDerivedType(
     const SourceName &name, MessageFixedText &&msg, const Scope &type) {
-  const Symbol *typeSymbol{type.GetSymbol()};
-  Say(name, std::move(msg), name, DEREF(typeSymbol).name())
-      .Attach(typeSymbol->name(), "Declaration of derived type '%s'"_en_US,
-          typeSymbol->name());
+  const Symbol &typeSymbol{DEREF(type.GetSymbol())};
+  Say(name, std::move(msg), name, typeSymbol.name())
+      .Attach(typeSymbol.name(), "Declaration of derived type '%s'"_en_US,
+          typeSymbol.name());
 }
 void ScopeHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
     const SourceName &name2, MessageFixedText &&msg2) {
@@ -4184,8 +4185,9 @@ void DeclarationVisitor::CheckSaveStmts() {
               " common block name '%s'"_err_en_US);
         }
       } else {
-        for (Symbol *object : symbol->get<CommonBlockDetails>().objects()) {
-          SetSaveAttr(*object);
+        for (const Symbol &object :
+            symbol->get<CommonBlockDetails>().objects()) {
+          SetSaveAttr(*const_cast<Symbol *>(&object));
         }
       }
     }

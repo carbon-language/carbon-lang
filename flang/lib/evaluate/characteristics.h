@@ -85,10 +85,6 @@ public:
       const semantics::DeclTypeSpec &);
   static std::optional<TypeAndShape> Characterize(
       const Expr<SomeType> &, FoldingContext &);
-  template<typename A>
-  static std::optional<TypeAndShape> Characterize(const A *p) {
-    return p ? Characterize(*p) : std::nullopt;
-  }
 
   DynamicType type() const { return type_; }
   TypeAndShape &set_type(DynamicType t) {

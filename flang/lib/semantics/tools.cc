@@ -88,7 +88,7 @@ bool IsGenericDefinedOp(const Symbol &symbol) {
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object) {
   const auto &objects{block.get<CommonBlockDetails>().objects()};
-  auto found{std::find(objects.begin(), objects.end(), &object)};
+  auto found{std::find(objects.begin(), objects.end(), object)};
   return found != objects.end();
 }
 

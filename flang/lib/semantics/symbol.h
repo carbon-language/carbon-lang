@@ -263,11 +263,11 @@ private:
 
 class ProcBindingDetails : public WithPassArg {
 public:
-  explicit ProcBindingDetails(const Symbol &symbol) : symbol_{&symbol} {}
-  const Symbol &symbol() const { return *symbol_; }
+  explicit ProcBindingDetails(const Symbol &symbol) : symbol_{symbol} {}
+  const Symbol &symbol() const { return symbol_; }
 
 private:
-  const Symbol *symbol_;  // procedure bound to; may be forward
+  SymbolRef symbol_;  // procedure bound to; may be forward
 };
 
 ENUM_CLASS(GenericKind,  // Kinds of generic-spec
@@ -304,14 +304,13 @@ private:
 
 class CommonBlockDetails {
 public:
-  std::list<Symbol *> &objects() { return objects_; }
-  const std::list<Symbol *> &objects() const { return objects_; }
-  void add_object(Symbol &object) { objects_.push_back(&object); }
+  const SymbolVector &objects() const { return objects_; }
+  void add_object(const Symbol &object) { objects_.emplace_back(object); }
   MaybeExpr bindName() const { return bindName_; }
   void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
 
 private:
-  std::list<Symbol *> objects_;
+  SymbolVector objects_;
   MaybeExpr bindName_;
 };
 
@@ -352,14 +351,14 @@ private:
 class UseDetails {
 public:
   UseDetails(const SourceName &location, const Symbol &symbol)
-    : location_{location}, symbol_{&symbol} {}
+    : location_{location}, symbol_{symbol} {}
   const SourceName &location() const { return location_; }
-  const Symbol &symbol() const { return *symbol_; }
+  const Symbol &symbol() const { return symbol_; }
   const Symbol &module() const;
 
 private:
   SourceName location_;
-  const Symbol *symbol_;
+  SymbolRef symbol_;
 };
 
 // A symbol with ambiguous use-associations. Record where they were so
@@ -378,11 +377,11 @@ private:
 // A symbol host-associated from an enclosing scope.
 class HostAssocDetails {
 public:
-  HostAssocDetails(const Symbol &symbol) : symbol_{&symbol} {}
-  const Symbol &symbol() const { return *symbol_; }
+  HostAssocDetails(const Symbol &symbol) : symbol_{symbol} {}
+  const Symbol &symbol() const { return symbol_; }
 
 private:
-  const Symbol *symbol_;
+  SymbolRef symbol_;
 };
 
 class GenericDetails {

@@ -447,8 +447,8 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [&](const CommonBlockDetails &x) {
             os << ':';
-            for (const auto *object : x.objects()) {
-              os << ' ' << object->name();
+            for (const Symbol &object : x.objects()) {
+              os << ' ' << object.name();
             }
           },
           [&](const FinalProcDetails &) {},
