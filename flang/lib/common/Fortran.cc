@@ -41,7 +41,7 @@ const char *AsFortran(RelationalOperator opr) {
   return *AllFortranNames(opr).begin();
 }
 
-std::initializer_list<const char *> AllFortranNames(RelationalOperator opr) {
+std::vector<const char *> AllFortranNames(RelationalOperator opr) {
   switch (opr) {
     SWITCH_COVERS_ALL_CASES
   case RelationalOperator::LT: return {"<", ".lt."};

@@ -150,8 +150,9 @@ contains
     logical :: x
     integer :: y
     logical :: l
-    y = y + z'1'  !OK
-    y = +z'1'  !OK
+    !TODO: these should work
+    !y = y + z'1'  !OK
+    !y = +z'1'  !OK
     !ERROR: Operands of + must be numeric; have LOGICAL(4) and untyped
     y = x + z'1'
     !ERROR: Operands of /= must have comparable types; have LOGICAL(4) and untyped

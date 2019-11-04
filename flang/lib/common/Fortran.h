@@ -20,7 +20,7 @@
 
 #include "idioms.h"
 #include <cinttypes>
-#include <initializer_list>
+#include <vector>
 
 namespace Fortran::common {
 
@@ -47,7 +47,7 @@ const char *AsFortran(LogicalOperator);
 ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
 const char *AsFortran(RelationalOperator);
 // Map EQ to {"==", ".eq."}, for example.
-std::initializer_list<const char *> AllFortranNames(RelationalOperator);
+std::vector<const char *> AllFortranNames(RelationalOperator);
 
 ENUM_CLASS(Intent, Default, In, Out, InOut)
 
