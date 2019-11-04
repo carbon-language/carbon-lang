@@ -298,6 +298,10 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   bool dummyIsContiguous{
       dummy.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)};
   bool actualIsContiguous{IsSimplyContiguous(actual, context.intrinsics())};
+  bool dummyIsAssumedRank{dummy.type.attrs().test(
+      characteristics::TypeAndShape::Attr::AssumedRank)};
+  bool dummyIsAssumedShape{dummy.type.attrs().test(
+      characteristics::TypeAndShape::Attr::AssumedShape)};
   if ((actualIsAsynchronous || actualIsVolatile) &&
       (dummyIsAsynchronous || dummyIsVolatile) && !dummyIsValue) {
     if (actualIsCoindexed) {  // C1538
@@ -306,10 +310,6 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           dummyName);
     }
     if (actualRank > 0 && !actualIsContiguous) {
-      bool dummyIsAssumedRank{dummy.type.attrs().test(
-          characteristics::TypeAndShape::Attr::AssumedRank)};
-      bool dummyIsAssumedShape{dummy.type.attrs().test(
-          characteristics::TypeAndShape::Attr::AssumedShape)};
       if (dummyIsContiguous ||
           !(dummyIsAssumedShape || dummyIsAssumedRank ||
               (actualIsPointer && dummyIsPointer))) {  // C1539 & C1540
@@ -399,6 +399,39 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
               dummy.type.type().GetDerivedTypeSpec())) {
         messages.Say(
             "Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE"_err_en_US);
+      }
+    }
+  }
+
+  // 15.5.2.8 -- coarray dummy arguments
+  if (dummy.type.corank() > 0) {
+    if (actualType.corank() == 0) {
+      messages.Say(
+          "Actual argument associated with coarray %s must be a coarray"_err_en_US,
+          dummyName);
+    }
+    if (dummyIsVolatile) {
+      if (!actualIsVolatile) {
+        messages.Say(
+            "non-VOLATILE coarray may not be associated with VOLATILE coarray %s"_err_en_US,
+            dummyName);
+      }
+    } else {
+      if (actualIsVolatile) {
+        messages.Say(
+            "VOLATILE coarray may not be associated with non-VOLATILE coarray %s"_err_en_US,
+            dummyName);
+      }
+    }
+    if (actualRank == dummy.type.Rank() && !actualIsContiguous) {
+      if (dummyIsContiguous) {
+        messages.Say(
+            "Actual argument associated with a CONTIGUOUS coarray %s must be simply contiguous"_err_en_US,
+            dummyName);
+      } else if (!dummyIsAssumedShape && !dummyIsAssumedRank) {
+        messages.Say(
+            "Actual argument associated with coarray %s (not assumed shape or rank) must be simply contiguous"_err_en_US,
+            dummyName);
       }
     }
   }

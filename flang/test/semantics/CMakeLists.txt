@@ -180,6 +180,7 @@ set(ERROR_TESTS
   call05.f90
   call06.f90
   call07.f90
+  call08.f90
   call13.f90
   call14.f90
   misc-declarations.f90

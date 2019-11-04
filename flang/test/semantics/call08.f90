@@ -43,19 +43,19 @@ module m
     call s02(c2) ! ok
     call s03(c4) ! ok
     call s04(c4) ! ok
-    !ERROR: Effective argument associated with a coarray dummy argument must be a coarray
+    !ERROR: Actual argument associated with coarray dummy argument 'x=' must be a coarray
     call s01(scalar)
-    !ERROR: VOLATILE coarray cannot be associated with non-VOLATILE dummy argument
+    !ERROR: VOLATILE coarray may not be associated with non-VOLATILE coarray dummy argument 'x='
     call s01(c2)
-    !ERROR: non-VOLATILE coarray cannot be associated with VOLATILE dummy argument
+    !ERROR: non-VOLATILE coarray may not be associated with VOLATILE coarray dummy argument 'x='
     call s02(c1)
-    !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
+    !ERROR: Actual argument associated with a CONTIGUOUS coarray dummy argument 'x=' must be simply contiguous
     call s03(c3)
-    !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
+    !ERROR: Actual argument associated with a CONTIGUOUS coarray dummy argument 'x=' must be simply contiguous
     call s03(x)
-    !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
+    !ERROR: Actual argument associated with coarray dummy argument 'x=' (not assumed shape or rank) must be simply contiguous
     call s04(c3)
-    !ERROR: Effective argument associated with a CONTIGUOUS coarray dummy argument must be simply contiguous
+    !ERROR: Actual argument associated with coarray dummy argument 'x=' (not assumed shape or rank) must be simply contiguous
     call s04(x)
   end subroutine
 end module
