@@ -1074,7 +1074,7 @@ void RewriteInstance::run() {
 
   emitAndLink();
 
-  updateDebugInfo();
+  updateMetadata();
 
   if (opts::WriteBoltInfoSection)
     addBoltInfoSection();
@@ -2756,7 +2756,6 @@ void RewriteInstance::disassembleFunctions() {
     // Create annotation indices to allow lock-free execution
     BC->MIB->getOrCreateAnnotationIndex("Offset");
     BC->MIB->getOrCreateAnnotationIndex("JTIndexReg");
-    BC->MIB->getOrCreateAnnotationIndex("SDTMarker");
 
     ParallelUtilities::WorkFuncWithAllocTy WorkFun =
         [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
@@ -2903,8 +2902,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer,
   }
 
   // Emit code.
-  Function.emitBody(Streamer, EmitColdPart, false,
-                    /*LabelsForOffsets=*/opts::EnableBAT);
+  Function.emitBody(Streamer, EmitColdPart, /*EmitCodeOnly=*/false);
 
   // Emit padding if requested.
   if (auto Padding = opts::padFunction(Function)) {
@@ -3168,13 +3166,33 @@ void RewriteInstance::linkRuntime() {
          << Twine::utohexstr(InstrumentationRuntimeStartAddress) << "\n";
 }
 
-void RewriteInstance::updateDebugInfo() {
+void RewriteInstance::updateMetadata() {
+  updateSDTMarkers();
+
   if (!opts::UpdateDebugSections)
     return;
 
   NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
   DebugInfoRewriter->updateDebugInfo();
+}
+
+void RewriteInstance::updateSDTMarkers() {
+  NamedRegionTimer T("updateSDTMarkers", "update SDT markers", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
+
+  SectionPatchers[".note.stapsdt"] = llvm::make_unique<SimpleBinaryPatcher>();
+  auto *SDTNotePatcher = static_cast<SimpleBinaryPatcher *>(
+      SectionPatchers[".note.stapsdt"].get());
+  for (auto &SDTInfoKV : BC->SDTMarkers) {
+    const auto OriginalAddress = SDTInfoKV.first;
+    auto &SDTInfo = SDTInfoKV.second;
+    const auto *F = BC->getBinaryFunctionContainingAddress(OriginalAddress);
+    if (!F)
+      continue;
+    const auto NewAddress = F->translateInputToOutputAddress(OriginalAddress);
+    SDTNotePatcher->addLE64Patch(SDTInfo.PCOffset, NewAddress);
+  }
 }
 
 void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
@@ -3530,145 +3548,13 @@ void RewriteInstance::mapExtraSections(orc::VModuleKey Key) {
 }
 
 void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
-  SectionPatchers[".note.stapsdt"] = llvm::make_unique<SimpleBinaryPatcher>();
-  auto *SDTNotePatcher = static_cast<SimpleBinaryPatcher *>(
-      SectionPatchers[".note.stapsdt"].get());
-
-  auto updateOutputValue = [&](BinaryFunction &Function) {
-    if (!Function.isEmitted()) {
-      assert(!Function.isInjected() && "injected function should be emitted");
-      Function.setOutputAddress(Function.getAddress());
-      Function.setOutputSize(Function.getSize());
-      return;
-    }
-
-    const auto BaseAddress = Function.getCodeSection()->getOutputAddress();
-    auto ColdSection = Function.getColdCodeSection();
-    const auto ColdBaseAddress =
-      Function.isSplit() ? ColdSection->getOutputAddress() : 0;
-    if (BC->HasRelocations || Function.isInjected()) {
-      const auto StartOffset = Layout.getSymbolOffset(*Function.getSymbol());
-      const auto EndOffset =
-        Layout.getSymbolOffset(*Function.getFunctionEndLabel());
-      Function.setOutputAddress(BaseAddress + StartOffset);
-      Function.setOutputSize(EndOffset - StartOffset);
-      if (Function.hasConstantIsland()) {
-        const auto DataOffset =
-            Layout.getSymbolOffset(*Function.getFunctionConstantIslandLabel());
-        Function.setOutputDataAddress(BaseAddress + DataOffset);
-      }
-      if (Function.isSplit()) {
-        const auto *ColdStartSymbol = Function.getColdSymbol();
-        assert(ColdStartSymbol && ColdStartSymbol->isDefined() &&
-               "split function should have defined cold symbol");
-        const auto *ColdEndSymbol = Function.getFunctionColdEndLabel();
-        assert(ColdEndSymbol && ColdEndSymbol->isDefined() &&
-               "split function should have defined cold end symbol");
-        const auto ColdStartOffset = Layout.getSymbolOffset(*ColdStartSymbol);
-        const auto ColdEndOffset = Layout.getSymbolOffset(*ColdEndSymbol);
-        Function.cold().setAddress(ColdBaseAddress + ColdStartOffset);
-        Function.cold().setImageSize(ColdEndOffset - ColdStartOffset);
-        if (Function.hasConstantIsland()) {
-          const auto DataOffset = Layout.getSymbolOffset(
-              *Function.getFunctionColdConstantIslandLabel());
-          Function.setOutputColdDataAddress(ColdBaseAddress + DataOffset);
-        }
-      }
-    } else {
-      Function.setOutputAddress(Function.getAddress());
-      Function.setOutputSize(
-          Layout.getSymbolOffset(*Function.getFunctionEndLabel()));
-    }
-
-    // Create patches that update .note.stapsdt section to reflect the new
-    // locations of the SDT markers
-    if (Function.hasSDTMarker()) {
-      for (auto BBI = Function.layout_begin(), BBE = Function.layout_end();
-           BBI != BBE; ++BBI) {
-        auto *BB = *BBI;
-        const auto BBBaseAddress = BB->isCold() ? ColdBaseAddress : BaseAddress;
-
-        for (auto &Instr : *BB) {
-          if (BC->MIB->hasAnnotation(Instr, "SDTMarker")) {
-            const auto OriginalSDTAddress =
-                BC->MIB->getAnnotationAs<uint64_t>(Instr, "SDTMarker");
-            const auto NewSDTAddress =
-                Layout.getSymbolOffset(
-                    *BC->SDTMarkers[OriginalSDTAddress].Label) +
-                BBBaseAddress;
-            DEBUG(dbgs() << "SDTMarker at :" << utohexstr(OriginalSDTAddress)
-                         << "moved to :" << utohexstr(NewSDTAddress) << "\n");
-
-            SDTNotePatcher->addLE64Patch(
-                BC->SDTMarkers[OriginalSDTAddress].PCOffset, NewSDTAddress);
-            BC->MIB->removeAnnotation(Instr, "SDTMarker");
-          }
-        }
-      }
-    }
-
-    // Update basic block output ranges for the debug info, if we have
-    // secondary entry points in the symbol table to update or if writing BAT.
-    if (!opts::UpdateDebugSections && !Function.isMultiEntry() &&
-        !opts::EnableBAT)
-      return;
-
-    // Output ranges should match the input if the body hasn't changed.
-    if (!Function.isSimple() && !BC->HasRelocations)
-      return;
-
-    // AArch64 may have functions that only contains a constant island (no code)
-    if (Function.layout_begin() == Function.layout_end())
-      return;
-
-    BinaryBasicBlock *PrevBB = nullptr;
-    for (auto BBI = Function.layout_begin(), BBE = Function.layout_end();
-         BBI != BBE; ++BBI) {
-      auto *BB = *BBI;
-      assert(BB->getLabel()->isDefined() && "symbol should be defined");
-      const auto  BBBaseAddress = BB->isCold() ? ColdBaseAddress : BaseAddress;
-      if (!BC->HasRelocations) {
-        if (BB->isCold()) {
-          assert(BBBaseAddress == Function.cold().getAddress());
-        } else {
-          assert(BBBaseAddress == Function.getOutputAddress());
-        }
-      }
-      const auto BBOffset = Layout.getSymbolOffset(*BB->getLabel());
-      const auto BBAddress = BBBaseAddress + BBOffset;
-      BB->setOutputStartAddress(BBAddress);
-
-      if (PrevBB) {
-        auto PrevBBEndAddress = BBAddress;
-        if (BB->isCold() != PrevBB->isCold()) {
-          PrevBBEndAddress =
-              Function.getOutputAddress() + Function.getOutputSize();
-        }
-        PrevBB->setOutputEndAddress(PrevBBEndAddress);
-      }
-      PrevBB = BB;
-
-      for (const auto &LocSymKV : BB->getLocSyms()) {
-        const uint16_t InputOffset =
-            static_cast<uint16_t>(LocSymKV.first - BB->getInputOffset());
-        const uint16_t OutputOffset = static_cast<uint16_t>(
-            Layout.getSymbolOffset(*LocSymKV.second) - BBOffset);
-        BB->getOffsetTranslationTable().emplace_back(
-            std::make_pair(InputOffset, OutputOffset));
-      }
-    }
-    PrevBB->setOutputEndAddress(PrevBB->isCold() ?
-        Function.cold().getAddress() + Function.cold().getImageSize() :
-        Function.getOutputAddress() + Function.getOutputSize());
-  };
-
   for (auto &BFI : BC->getBinaryFunctions()) {
     auto &Function = BFI.second;
-    updateOutputValue(Function);
+    Function.updateOutputValues(Layout);
   }
 
   for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()) {
-    updateOutputValue(*InjectedFunction);
+    InjectedFunction->updateOutputValues(Layout);
   }
 }
 

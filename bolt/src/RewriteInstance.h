@@ -126,8 +126,11 @@ public:
   /// Emit data sections that have code references in them.
   void emitDataSections(MCStreamer *Streamer);
 
-  /// Update debug information in the file for re-written code.
-  void updateDebugInfo();
+  /// Update debug and other auxiliary information in the file.
+  void updateMetadata();
+
+  /// Update SDTMarkers' locations for the output binary.
+  void updateSDTMarkers();
 
   /// Return the list of code sections in the output order.
   std::vector<BinarySection *> getCodeSections();

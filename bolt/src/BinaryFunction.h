@@ -249,6 +249,9 @@ private:
   /// the control to any basic block of its parent or its sibling.
   bool IsFragment{false};
 
+  /// Indicate that the function body has SDT marker
+  bool HasSDTMarker{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -313,9 +316,6 @@ private:
 
   /// Function order for streaming into the destination binary.
   uint32_t Index{-1U};
-
-  /// Indicate that the function body has SDT marker
-  bool HasSDTMarker{false};
 
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
@@ -542,6 +542,11 @@ private:
   /// Count the number of functions created.
   static uint64_t Count;
 
+  /// Map offsets of special instructions to addresses in the output.
+  using InputOffsetToAddressMapTy = std::unordered_map<uint64_t, uint64_t>;
+  InputOffsetToAddressMapTy InputOffsetToAddressMap;
+
+private:
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
     Names.emplace_back(NewName);
@@ -1115,6 +1120,16 @@ public:
   void setPLTSymbol(const MCSymbol *Symbol) {
     assert(Size == 0 && "function size should be 0 for PLT functions");
     PLTSymbol = Symbol;
+  }
+
+  /// Update output values of the function based on the final \p Layout.
+  void updateOutputValues(const MCAsmLayout &Layout);
+
+  /// Return mapping of input to output addresses. Most users should call
+  /// translateInputToOutputAddress() for address translation.
+  InputOffsetToAddressMapTy &getInputOffsetToAddressMap() {
+    assert(isEmitted() && "cannot use address mapping before code emission");
+    return InputOffsetToAddressMap;
   }
 
   /// Register relocation type \p RelType at a given \p Address in the function
@@ -2083,6 +2098,10 @@ public:
   /// is corrupted. If it is unable to fix it, it returns false.
   bool finalizeCFIState();
 
+  /// Return true if this function needs an address-transaltion table after
+  /// its code emission.
+  bool requiresAddressTranslation() const;
+
   /// Adjust branch instructions to match the CFG.
   ///
   /// As it comes to internal branches, the CFG represents "the ultimate source
@@ -2124,7 +2143,7 @@ public:
   /// Emit function code. The caller is responsible for emitting function
   /// symbol(s) and setting the section to emit the code to.
   void emitBody(MCStreamer &Streamer, bool EmitColdPart,
-                bool EmitCodeOnly = false, bool LabelsForOffsets = false);
+                bool EmitCodeOnly = false);
 
   /// Emit function as a blob with relocations and labels for relocations.
   void emitBodyRaw(MCStreamer *Streamer);

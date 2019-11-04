@@ -86,16 +86,20 @@ private:
   /// Original offset range of the basic block in the function.
   std::pair<uint32_t, uint32_t> InputRange{INVALID_OFFSET, INVALID_OFFSET};
 
-  /// Map input offset of an instruction to an output symbol. Enables writing
-  /// bolt address translation tables, used for mapping control transfer in the
-  /// output binary back to the original binary.
+  /// Map input offset (from function start) of an instruction to an output
+  /// symbol. Enables writing BOLT address translation tables used for mapping
+  /// control transfer in the output binary back to the original binary.
   using LocSymsTy = std::vector<std::pair<uint32_t, const MCSymbol *>>;
   std::unique_ptr<LocSymsTy> LocSyms;
 
-  /// Map input offsets in the basic block to output offsets.
+  /// After output/codegen, map output offsets of instructions in this basic
+  /// block to instruction offsets in the original function. Note that the
+  /// output basic block could be different from the input basic block.
+  /// We only map instruction of interest, such as calls, and sdt markers.
   ///
-  /// NOTE: map only instruction of interest, such as calls.
-  using OffsetTranslationTableTy = std::vector<std::pair<uint16_t, uint16_t>>;
+  /// We store the offset array in a basic block to facilitate BAT tables
+  /// generation. Otherwise, the mapping could be done at function level.
+  using OffsetTranslationTableTy = std::vector<std::pair<uint32_t, uint32_t>>;
   std::unique_ptr<OffsetTranslationTableTy> OffsetTranslationTable;
 
   /// Alignment requirements for the block.
@@ -827,6 +831,9 @@ public:
   std::pair<uint64_t, uint64_t> getOutputAddressRange() const {
     return OutputAddressRange;
   }
+
+  /// Update addresses of special instructions inside this basic block.
+  void updateOutputValues(const MCAsmLayout &Layout);
 
   /// Return mapping of input offsets to symbols in the output.
   LocSymsTy &getLocSyms() {

@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -1730,22 +1731,13 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     const auto InstrInputAddr = I->first + Address;
     bool IsSDTMarker =
         MIB->isNoop(Instr) && BC.SDTMarkers.count(InstrInputAddr);
-
     if (IsSDTMarker) {
       HasSDTMarker = true;
       DEBUG(dbgs() << "SDTMarker detected in the input at : "
                    << utohexstr(InstrInputAddr) << "\n");
-
-      MIB->addAnnotation<uint64_t>(Instr, "SDTMarker", InstrInputAddr,
-                                   AllocatorId);
-
-      // This mutex is used to lock concurrent writes to GlobalSymbols and
-      // BinaryDataMap that happens in registerNameAtAddress
-      {
-        static std::shared_timed_mutex GlobalSymbolCreationMtx;
-        std::unique_lock<std::shared_timed_mutex> Lock(GlobalSymbolCreationMtx);
-        BC.SDTMarkers[InstrInputAddr].Label =
-            getOrCreateLocalLabel(InstrInputAddr);
+      if (!MIB->hasAnnotation(Instr, "Offset")) {
+        MIB->addAnnotation(Instr, "Offset", static_cast<uint32_t>(Offset),
+                           AllocatorId);
       }
     }
 
@@ -1947,11 +1939,10 @@ void BinaryFunction::postProcessCFG() {
   clearList(IgnoredBranches);
   clearList(EntryOffsets);
 
-  // Remove "Offset" annotations, unless we need to write a BOLT address
-  // translation table later. This has no cost, since annotations are allocated
-  // by a bumpptr allocator and won't be released anyway until late in the
-  // pipeline.
-  if (!opts::EnableBAT && !opts::Instrument)
+  // Remove "Offset" annotations, unless we need an address-translation table
+  // later. This has no cost, since annotations are allocated by a bumpptr
+  // allocator and won't be released anyway until late in the pipeline.
+  if (!requiresAddressTranslation() && !opts::Instrument)
     for (auto *BB : layout())
       for (auto &Inst : *BB)
         BC.MIB->removeAnnotation(Inst, "Offset");
@@ -2655,6 +2646,10 @@ bool BinaryFunction::finalizeCFIState() {
   return true;
 }
 
+bool BinaryFunction::requiresAddressTranslation() const {
+  return opts::EnableBAT || hasSDTMarker();
+}
+
 uint64_t BinaryFunction::getInstructionCount() const {
   uint64_t Count = 0;
   for (auto &Block : BasicBlocksLayout) {
@@ -2673,7 +2668,7 @@ uint64_t BinaryFunction::getEditDistance() const {
 }
 
 void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
-                              bool EmitCodeOnly, bool LabelsForOffsets) {
+                              bool EmitCodeOnly) {
   if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
 
@@ -2741,23 +2736,12 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
 
       // Prepare to tag this location with a label if we need to keep track of
       // the location of calls/returns for BOLT address translation maps
-      if (!EmitCodeOnly && LabelsForOffsets &&
+      if (!EmitCodeOnly && requiresAddressTranslation() &&
           BC.MIB->hasAnnotation(Instr, "Offset")) {
         const auto Offset = BC.MIB->getAnnotationAs<uint32_t>(Instr, "Offset");
         MCSymbol *LocSym = BC.Ctx->createTempSymbol(/*CanBeUnnamed=*/true);
         Streamer.EmitLabel(LocSym);
         BB->getLocSyms().emplace_back(std::make_pair(Offset, LocSym));
-      }
-
-      // Emit SDT labels
-      if (!EmitCodeOnly && BC.MIB->hasAnnotation(Instr, "SDTMarker")) {
-        auto OriginalAddress =
-            BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "SDTMarker").get();
-        auto *SDTLabel = BC.SDTMarkers[OriginalAddress].Label;
-
-        //  A given symbol should only be emitted as a label once
-        if (SDTLabel->isUndefined())
-          Streamer.EmitLabel(SDTLabel);
       }
 
       Streamer.EmitInstruction(Instr, *BC.STI);
@@ -4058,6 +4042,98 @@ void BinaryFunction::calculateLoopInfo() {
   }
 }
 
+void BinaryFunction::updateOutputValues(const MCAsmLayout &Layout) {
+  if (!isEmitted()) {
+    assert(!isInjected() && "injected function should be emitted");
+    setOutputAddress(getAddress());
+    setOutputSize(getSize());
+    return;
+  }
+
+  const auto BaseAddress = getCodeSection()->getOutputAddress();
+  auto ColdSection = getColdCodeSection();
+  const auto ColdBaseAddress =
+    isSplit() ? ColdSection->getOutputAddress() : 0;
+  if (BC.HasRelocations || isInjected()) {
+    const auto StartOffset = Layout.getSymbolOffset(*getSymbol());
+    const auto EndOffset = Layout.getSymbolOffset(*getFunctionEndLabel());
+    setOutputAddress(BaseAddress + StartOffset);
+    setOutputSize(EndOffset - StartOffset);
+    if (hasConstantIsland()) {
+      const auto DataOffset =
+          Layout.getSymbolOffset(*getFunctionConstantIslandLabel());
+      setOutputDataAddress(BaseAddress + DataOffset);
+    }
+    if (isSplit()) {
+      const auto *ColdStartSymbol = getColdSymbol();
+      assert(ColdStartSymbol && ColdStartSymbol->isDefined() &&
+             "split function should have defined cold symbol");
+      const auto *ColdEndSymbol = getFunctionColdEndLabel();
+      assert(ColdEndSymbol && ColdEndSymbol->isDefined() &&
+             "split function should have defined cold end symbol");
+      const auto ColdStartOffset = Layout.getSymbolOffset(*ColdStartSymbol);
+      const auto ColdEndOffset = Layout.getSymbolOffset(*ColdEndSymbol);
+      cold().setAddress(ColdBaseAddress + ColdStartOffset);
+      cold().setImageSize(ColdEndOffset - ColdStartOffset);
+      if (hasConstantIsland()) {
+        const auto DataOffset = Layout.getSymbolOffset(
+            *getFunctionColdConstantIslandLabel());
+        setOutputColdDataAddress(ColdBaseAddress + DataOffset);
+      }
+    }
+  } else {
+    setOutputAddress(getAddress());
+    setOutputSize(
+        Layout.getSymbolOffset(*getFunctionEndLabel()));
+  }
+
+  // Update basic block output ranges for the debug info, if we have
+  // secondary entry points in the symbol table to update or if writing BAT.
+  if (!opts::UpdateDebugSections && !isMultiEntry() &&
+      !requiresAddressTranslation())
+    return;
+
+  // Output ranges should match the input if the body hasn't changed.
+  if (!isSimple() && !BC.HasRelocations)
+    return;
+
+  // AArch64 may have functions that only contains a constant island (no code).
+  if (layout_begin() == layout_end())
+    return;
+
+  BinaryBasicBlock *PrevBB = nullptr;
+  for (auto BBI = layout_begin(), BBE = layout_end(); BBI != BBE; ++BBI) {
+    auto *BB = *BBI;
+    assert(BB->getLabel()->isDefined() && "symbol should be defined");
+    const auto  BBBaseAddress = BB->isCold() ? ColdBaseAddress : BaseAddress;
+    if (!BC.HasRelocations) {
+      if (BB->isCold()) {
+        assert(BBBaseAddress == cold().getAddress());
+      } else {
+        assert(BBBaseAddress == getOutputAddress());
+      }
+    }
+    const auto BBOffset = Layout.getSymbolOffset(*BB->getLabel());
+    const auto BBAddress = BBBaseAddress + BBOffset;
+    BB->setOutputStartAddress(BBAddress);
+
+    if (PrevBB) {
+      auto PrevBBEndAddress = BBAddress;
+      if (BB->isCold() != PrevBB->isCold()) {
+        PrevBBEndAddress =
+            getOutputAddress() + getOutputSize();
+      }
+      PrevBB->setOutputEndAddress(PrevBBEndAddress);
+    }
+    PrevBB = BB;
+
+    BB->updateOutputValues(Layout);
+  }
+  PrevBB->setOutputEndAddress(PrevBB->isCold() ?
+      cold().getAddress() + cold().getImageSize() :
+      getOutputAddress() + getOutputSize());
+}
+
 DebugAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
   DebugAddressRangesVector OutputRanges;
 
@@ -4092,6 +4168,13 @@ uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
 
   if (Address < getAddress())
     return 0;
+
+  // Check if the address is associated with an instruction that is tracked
+  // by address translation.
+  auto KV = InputOffsetToAddressMap.find(Address - getAddress());
+  if (KV != InputOffsetToAddressMap.end()) {
+    return KV->second;
+  }
 
   // FIXME: #18950828 - we rely on relative offsets inside basic blocks to stay
   //        intact. Instead we can use pseudo instructions and/or annotations.

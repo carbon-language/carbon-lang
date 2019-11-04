@@ -495,7 +495,6 @@ bool CheckLargeFunctions::shouldOptimize(const BinaryFunction &BF) const {
 }
 
 void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
-  std::vector<std::pair<MCInst *, uint64_t>> PreservedSDTAnnotations;
   std::vector<std::pair<MCInst *, uint32_t>> PreservedOffsetAnnotations;
 
   for (auto &It : BC.getBinaryFunctions()) {
@@ -528,18 +527,13 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
         }
       }
 
-      // Now record preserved annotations separately and then strip annotations
+      // Now record preserved annotations separately and then strip annotations.
       for (auto II = BB->begin(); II != BB->end(); ++II) {
-        if (BC.MIB->hasAnnotation(*II, "SDTMarker")) {
-          PreservedSDTAnnotations.push_back(std::make_pair(
-              &(*II), BC.MIB->getAnnotationAs<uint64_t>(*II, "SDTMarker")));
-        }
-
-        if (opts::EnableBAT && BC.MIB->hasAnnotation(*II, "Offset")) {
+        if (BF.requiresAddressTranslation() &&
+            BC.MIB->hasAnnotation(*II, "Offset")) {
           PreservedOffsetAnnotations.push_back(std::make_pair(
               &(*II), BC.MIB->getAnnotationAs<uint32_t>(*II, "Offset")));
         }
-
         BC.MIB->stripAnnotations(*II);
       }
     }
@@ -549,8 +543,6 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
   BC.MIB->freeAnnotations();
 
   // Reinsert preserved annotations we need during code emission.
-  for (const auto &Item : PreservedSDTAnnotations)
-    BC.MIB->addAnnotation<uint64_t>(*Item.first, "SDTMarker", Item.second);
   for (const auto &Item : PreservedOffsetAnnotations)
     BC.MIB->addAnnotation<uint32_t>(*Item.first, "Offset", Item.second);
 }

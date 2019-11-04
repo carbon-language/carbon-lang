@@ -43,8 +43,8 @@ void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
   Map[BBOutputOffset] = BBInputOffset;
 
   for (const auto &IOPair : BB.getOffsetTranslationTable()) {
-    const auto InputOffset = IOPair.first + BBInputOffset;
-    const auto OutputOffset = IOPair.second + BBOutputOffset;
+    const auto OutputOffset = IOPair.first + BBOutputOffset;
+    const auto InputOffset = IOPair.second;
 
     // Is this the first instruction in the BB? No need to duplicate the entry.
     if (OutputOffset == BBOutputOffset)

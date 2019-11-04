@@ -461,9 +461,6 @@ struct SDTMarkerInfo {
 
   /// The offset of PC within the note section
   unsigned PCOffset;
-
-  /// A label that marks the location of the SDT nop instruction
-  MCSymbol *Label;
 };
 
 } // namespace bolt
