@@ -62,22 +62,22 @@ subroutine s1()
   
   associate (avar => ivar)
     do concurrent (i = 1:2:0) default(none) shared(jvar) local(kvar)
-!ERROR: Variable 'ivar' from an enclosing scope referenced in a DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
+!ERROR: Variable 'ivar' from an enclosing scope referenced in DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
       ivar =  &
-!ERROR: Variable 'ivar' from an enclosing scope referenced in a DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
+!ERROR: Variable 'ivar' from an enclosing scope referenced in DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
         ivar + i
       block
         real :: bvar
-!ERROR: Variable 'avar' from an enclosing scope referenced in a DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
+!ERROR: Variable 'avar' from an enclosing scope referenced in DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
         avar = 4
-!ERROR: Variable 'x' from an enclosing scope referenced in a DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
+!ERROR: Variable 'x' from an enclosing scope referenced in DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
         x = 3.5
         bvar = 3.5 + i ! OK, bvar's scope is within the DO CONCURRENT
       end block
       jvar = 5 ! OK, jvar appears in a locality spec
       kvar = 5 ! OK, kvar appears in a locality spec
 
-!ERROR: Variable 'mvar' from an enclosing scope referenced in a DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
+!ERROR: Variable 'mvar' from an enclosing scope referenced in DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
       mvar = 3.5
     end do
   end associate
@@ -93,7 +93,7 @@ subroutine s1()
   select type ( a => p_or_c )
   type is ( point )
     do concurrent (i=1:5) default (none)
-!ERROR: Variable 'a' from an enclosing scope referenced in a DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
+!ERROR: Variable 'a' from an enclosing scope referenced in DO CONCURRENT with DEFAULT(NONE) must appear in a locality-spec
       a%x = 3.5
     end do
   end select

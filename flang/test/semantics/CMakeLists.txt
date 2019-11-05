@@ -142,6 +142,7 @@ set(ERROR_TESTS
   doconcurrent01.f90
   doconcurrent05.f90
   doconcurrent06.f90
+  doconcurrent08.f90
   dosemantics01.f90
   dosemantics02.f90
   dosemantics03.f90

@@ -582,6 +582,35 @@ const Symbol *IsExternalInPureContext(
   return nullptr;
 }
 
+PotentialComponentIterator::const_iterator FindPolymorphicPotentialComponent(
+    const DerivedTypeSpec &derived) {
+  PotentialComponentIterator potentials{derived};
+  return std::find_if(
+      potentials.begin(), potentials.end(), [](const Symbol &component) {
+        if (const auto *details{component.detailsIf<ObjectEntityDetails>()}) {
+          const DeclTypeSpec *type{details->type()};
+          return type && type->IsPolymorphic();
+        }
+        return false;
+      });
+}
+
+bool IsOrContainsPolymorphicComponent(const Symbol &symbol) {
+  if (const Symbol * root{GetAssociationRoot(symbol)}) {
+    if (const auto *details{root->detailsIf<ObjectEntityDetails>()}) {
+      if (const DeclTypeSpec * type{details->type()}) {
+        if (type->IsPolymorphic()) {
+          return true;
+        }
+        if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+          return (bool)FindPolymorphicPotentialComponent(*derived);
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool InProtectedContext(const Symbol &symbol, const Scope &currentScope) {
   return IsProtected(symbol) && !IsHostAssociated(symbol, currentScope);
 }
@@ -770,15 +799,15 @@ bool HasCoarray(const parser::Expr &expression) {
   return false;
 }
 
-bool IsPolymorphicAllocatable(const Symbol &symbol) {
-  if (IsAllocatable(symbol)) {
-    if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-      if (const DeclTypeSpec * type{details->type()}) {
-        return type->IsPolymorphic();
-      }
-    }
+bool IsPolymorphic(const Symbol &symbol) {
+  if (const DeclTypeSpec * type{symbol.GetType()}) {
+    return type->IsPolymorphic();
   }
   return false;
+}
+
+bool IsPolymorphicAllocatable(const Symbol &symbol) {
+  return IsAllocatable(symbol) && IsPolymorphic(symbol);
 }
 
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,

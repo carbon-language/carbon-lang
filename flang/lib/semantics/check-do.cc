@@ -64,6 +64,125 @@ public:
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
 
+  template<typename T> bool Pre(const parser::Statement<T> &statement) {
+    currentStatementSourcePosition_ = statement.source;
+    if (statement.label.has_value()) {
+      labels_.insert(*statement.label);
+    }
+    return true;
+  }
+
+  // C1140 -- Can't deallocate a polymorphic entity in a DO CONCURRENT.
+  // Deallocation can be caused by exiting a block that declares an allocatable
+  // entity, assignment to an allocatable variable, or an actual DEALLOCATE
+  // statement
+  //
+  // Note also that the deallocation of a derived type entity might cause the
+  // invocation of an IMPURE final subroutine.
+  //
+
+  // Predicate for deallocations caused by block exit and direct deallocation
+  static bool DeallocateAll(const Symbol &) { return true; }
+
+  // Predicate for deallocations caused by intrinsic assignment
+  static bool DeallocateNonCoarray(const Symbol &component) {
+    return !IsCoarray(component);
+  }
+
+  static bool WillDeallocatePolymorphic(const Symbol &entity,
+      const std::function<bool(const Symbol &)> &WillDeallocate) {
+    return WillDeallocate(entity) && IsPolymorphicAllocatable(entity);
+  }
+
+  // Is it possible that we will we deallocate a polymorphic entity or one
+  // of its components?
+  static bool MightDeallocatePolymorphic(const Symbol &entity,
+      const std::function<bool(const Symbol &)> &WillDeallocate) {
+    if (const Symbol * root{GetAssociationRoot(entity)}) {
+      // Check the entity itself, no coarray exception here
+      if (IsPolymorphicAllocatable(*root)) {
+        return true;
+      }
+      // Check the components
+      if (const auto *details{root->detailsIf<ObjectEntityDetails>()}) {
+        if (const DeclTypeSpec * entityType{details->type()}) {
+          if (const DerivedTypeSpec * derivedType{entityType->AsDerived()}) {
+            UltimateComponentIterator ultimates{*derivedType};
+            for (const auto &ultimate : ultimates) {
+              if (WillDeallocatePolymorphic(ultimate, WillDeallocate)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // Deallocation caused by block exit
+  // Allocatable entities and all of their allocatable subcomponents will be
+  // deallocated.  This test is different from the other two because it does
+  // not deallocate in cases where the entity itself is not allocatable but
+  // has allocatable polymorphic components
+  void Post(const parser::BlockConstruct &blockConstruct) {
+    const auto &endBlockStmt{
+        std::get<parser::Statement<parser::EndBlockStmt>>(blockConstruct.t)};
+    const Scope &blockScope{context_.FindScope(endBlockStmt.source)};
+    const Scope &doScope{context_.FindScope(doConcurrentSourcePosition_)};
+    if (DoesScopeContain(&doScope, blockScope)) {
+      for (auto &pair : blockScope) {
+        Symbol &entity{*pair.second};
+        if (IsAllocatable(entity) && !entity.attrs().test(Attr::SAVE) &&
+            MightDeallocatePolymorphic(entity, DeallocateAll)) {
+          context_.SayWithDecl(entity, endBlockStmt.source,
+              "Deallocation of a polymorphic entity caused by block"
+              " exit not allowed in DO CONCURRENT"_err_en_US);
+        }
+        // TODO: Check for deallocation of a variable with an IMPURE FINAL
+        // subroutine
+      }
+    }
+  }
+
+  // Deallocation caused by assignment
+  // Note that this case does not cause deallocation of coarray components
+  void Post(const parser::AssignmentStmt &stmt) {
+    const auto &variable{std::get<parser::Variable>(stmt.t)};
+    if (const Symbol * entity{GetLastName(variable).symbol}) {
+      if (MightDeallocatePolymorphic(*entity, DeallocateNonCoarray)) {
+        context_.SayWithDecl(*entity, variable.GetSource(),
+            "Deallocation of a polymorphic entity caused by "
+            "assignment not allowed in DO CONCURRENT"_err_en_US);
+        // TODO: Check for deallocation of a variable with an IMPURE FINAL
+        // subroutine
+      }
+    }
+  }
+
+  // Deallocation from a DEALLOCATE statement
+  // This case is different because DEALLOCATE statements deallocate both
+  // ALLOCATABLE and POINTER entities
+  void Post(const parser::DeallocateStmt &stmt) {
+    const auto &allocateObjectList{
+        std::get<std::list<parser::AllocateObject>>(stmt.t)};
+    for (const auto &allocateObject : allocateObjectList) {
+      const parser::Name &name{GetLastName(allocateObject)};
+      if (name.symbol) {
+        const Symbol &entity{*name.symbol};
+        const DeclTypeSpec *entityType{entity.GetType()};
+        if ((entityType && entityType->IsPolymorphic()) ||  // POINTER case
+            MightDeallocatePolymorphic(entity, DeallocateAll)) {
+          context_.SayWithDecl(entity, currentStatementSourcePosition_,
+              "Deallocation of a polymorphic entity not allowed in DO"
+              " CONCURRENT"_err_en_US);
+        }
+        // TODO: Check for deallocation of a variable with an IMPURE FINAL
+        // subroutine
+      }
+    }
+  }
+
   // C1137 -- No image control statements in a DO CONCURRENT
   void Post(const parser::ExecutableConstruct &construct) {
     if (IsImageControlStmt(construct)) {
@@ -77,14 +196,6 @@ public:
       }
       msg.Attach(doConcurrentSourcePosition_, GetEnclosingDoMsg());
     }
-  }
-
-  template<typename T> bool Pre(const parser::Statement<T> &statement) {
-    currentStatementSourcePosition_ = statement.source;
-    if (statement.label) {
-      labels_.insert(*statement.label);
-    }
-    return true;
   }
 
   // C1167 -- EXIT statements can't exit a DO CONCURRENT
@@ -199,7 +310,6 @@ private:
     return common::GetPtrFromOptional(std::get<0>(a.t));
   }
 
-  bool anyObjectIsPolymorphic() { return false; }  // FIXME placeholder
   bool fromScope(const Symbol &symbol, const std::string &moduleName) {
     if (symbol.GetUltimate().owner().IsModule() &&
         symbol.GetUltimate().owner().GetName().value().ToString() ==
@@ -303,14 +413,11 @@ public:
       if (IsVariableName(*symbol)) {
         const Scope &variableScope{symbol->owner()};
         if (DoesScopeContain(&variableScope, blockScope_)) {
-          context_
-              .Say(name.source,
-                  "Variable '%s' from an enclosing scope referenced in a DO "
-                  "CONCURRENT with DEFAULT(NONE) must appear in a "
-                  "locality-spec"_err_en_US,
-                  name.source)
-              .Attach(symbol->name(), "Declaration of variable '%s'"_en_US,
-                  symbol->name());
+          context_.SayWithDecl(*symbol, name.source,
+              "Variable '%s' from an enclosing scope referenced in DO "
+              "CONCURRENT with DEFAULT(NONE) must appear in a "
+              "locality-spec"_err_en_US,
+              symbol->name());
         }
       }
     }
@@ -473,25 +580,21 @@ private:
     SymbolSet references{GatherSymbolsFromExpression(mask.thing.thing.value())};
     for (const Symbol *ref : references) {
       if (IsProcedure(*ref) && !IsPureProcedure(*ref)) {
-        const parser::CharBlock &name{ref->name()};
-        context_
-            .Say(currentStatementSourcePosition_,
-                "Concurrent-header mask expression cannot reference an impure"
-                " procedure"_err_en_US)
-            .Attach(name, "Declaration of impure procedure '%s'"_en_US, name);
+        context_.SayWithDecl(*ref, currentStatementSourcePosition_,
+            "Concurrent-header mask expression cannot reference an impure"
+            " procedure"_err_en_US);
         return;
       }
     }
   }
 
   void CheckNoCollisions(const SymbolSet &refs, const SymbolSet &uses,
-      const parser::MessageFixedText &errorMessage,
+      parser::MessageFixedText &&errorMessage,
       const parser::CharBlock &refPosition) const {
     for (const Symbol *ref : refs) {
       if (uses.find(ref) != uses.end()) {
-        const parser::CharBlock &name{ref->name()};
-        context_.Say(refPosition, errorMessage, name)
-            .Attach(name, "Declaration of '%s'"_en_US, name);
+        context_.SayWithDecl(
+            *ref, refPosition, std::move(errorMessage), ref->name());
         return;
       }
     }

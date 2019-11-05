@@ -17,6 +17,7 @@
 
 #include "scope.h"
 #include "../common/Fortran-features.h"
+#include "symbol.h"
 #include "../evaluate/common.h"
 #include "../evaluate/intrinsics.h"
 #include "../parser/message.h"
@@ -137,6 +138,12 @@ public:
   }
   parser::Message &Say(parser::Message &&msg) {
     return messages_.Say(std::move(msg));
+  }
+  template<typename... A>
+  void SayWithDecl(const Symbol &symbol, const parser::CharBlock &at,
+      parser::MessageFixedText &&msg, A &&... args) {
+    auto &message{Say(at, std::move(msg), args...)};
+    evaluate::AttachDeclaration(&message, &symbol);
   }
 
   const Scope &FindScope(parser::CharBlock) const;
