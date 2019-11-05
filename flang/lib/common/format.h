@@ -16,6 +16,7 @@
 #define FORTRAN_COMMON_FORMAT_H_
 
 #include "Fortran.h"
+#include "enum-set.h"
 #include <cstring>
 
 // Define a FormatValidator class template to validate a format expression
@@ -41,6 +42,16 @@ struct FormatMessage {
   bool isError;  // vs. warning
 };
 
+// This declaration is logically private to class FormatValidator.
+// It is placed here to work around a clang compilation problem.
+ENUM_CLASS(TokenKind, None, A, B, BN, BZ, D, DC, DP, DT, E, EN, ES, EX, F, G, I,
+    L, O, P, RC, RD, RN, RP, RU, RZ, S, SP, SS, T, TL, TR, X, Z, Colon, Slash,
+    Backslash,  // nonstandard: inhibit newline on output
+    Dollar,  // nonstandard: inhibit newline on output on terminals
+    Star, LParen, RParen, Comma, Point, Sign,
+    UnsignedInteger,  // value in integerValue_
+    String)  // char-literal-constant or Hollerith constant
+
 template<typename CHAR = char> class FormatValidator {
 public:
   using Reporter = std::function<bool(const FormatMessage &)>;
@@ -54,53 +65,11 @@ public:
   bool Check();
 
 private:
-  enum class TokenKind {
-    None,
-    A,
-    B,
-    BN,
-    BZ,
-    D,
-    DC,
-    DP,
-    DT,
-    E,
-    EN,
-    ES,
-    EX,
-    F,
-    G,
-    I,
-    L,
-    O,
-    P,
-    RC,
-    RD,
-    RN,
-    RP,
-    RU,
-    RZ,
-    S,
-    SP,
-    SS,
-    T,
-    TL,
-    TR,
-    X,
-    Z,
-    Colon,
-    Slash,
-    Backslash,  // nonstandard: inhibit newline on output
-    Dollar,  // nonstandard: inhibit newline on output on terminals
-    Star,
-    LParen,
-    RParen,
-    Comma,
-    Point,
-    Sign,
-    UnsignedInteger,  // value in integerValue_
-    String,  // char-literal-constant or Hollerith constant
-  };
+  common::EnumSet<TokenKind, TokenKind_enumSize> itemsWithLeadingInts_{
+      TokenKind::A, TokenKind::B, TokenKind::D, TokenKind::DT, TokenKind::E,
+      TokenKind::EN, TokenKind::ES, TokenKind::EX, TokenKind::F, TokenKind::G,
+      TokenKind::I, TokenKind::L, TokenKind::O, TokenKind::P, TokenKind::X,
+      TokenKind::Z, TokenKind::Slash, TokenKind::LParen};
 
   struct Token {
     Token &set_kind(TokenKind kind) {
@@ -176,6 +145,7 @@ private:
   Token knrToken_{};  // k, n, or r UnsignedInteger token
   int64_t knrValue_{-1};  // -1 ==> not present
   int64_t wValue_{-1};
+  bool previousTokenWasInt_{false};
   char argString_[3]{};  // 1-2 character msg arg; usually edit descriptor name
   bool formatHasErrors_{false};
   bool unterminatedFormatError_{false};
@@ -213,6 +183,7 @@ template<typename CHAR> void FormatValidator<CHAR>::NextToken() {
   // At entry, cursor_ points before the start of the next token.
   // At exit, cursor_ points to last CHAR of token_.
 
+  previousTokenWasInt_ = token_.kind() == TokenKind::UnsignedInteger;
   CHAR c{NextChar()};
   token_.set_kind(TokenKind::None);
   token_.set_offset(cursor_ - format_);
@@ -472,7 +443,7 @@ template<typename CHAR> bool FormatValidator<CHAR>::Check() {
   Token starToken{};  // unlimited format token
   bool hasDataEditDesc{false};
 
-  // Subject to error recovery exceptions, a loop iteration processes an
+  // Subject to error recovery exceptions, a loop iteration processes one
   // edit descriptor or does list management.  The loop terminates when
   //  - a level-0 right paren is processed (format may be valid)
   //  - the end of an incomplete format is reached
@@ -773,7 +744,12 @@ template<typename CHAR> bool FormatValidator<CHAR>::Check() {
     default:
       // Possible first token of the next format item; token not yet processed.
       if (commaRequired) {
-        ReportError("Expected ',' or ')' in format expression");  // C1302
+        const char *s{"Expected ',' or ')' in format expression"};  // C1302
+        if (previousTokenWasInt_ && itemsWithLeadingInts_.test(token_.kind())) {
+          ReportError(s);
+        } else {
+          ReportWarning(s);
+        }
       }
     }
   }

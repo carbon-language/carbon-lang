@@ -35,4 +35,18 @@
 
   !WARNING: Legacy 'H' edit descriptor
   write(*, '(3Habc)')
+
+  !WARNING: 'X' edit descriptor must have a positive position value
+  !WARNING: Expected ',' or ')' in format expression
+  !WARNING: 'X' edit descriptor must have a positive position value
+  write(*,'(XX)')
+
+  !WARNING: Expected ',' or ')' in format expression
+  write(*,'(RZEN8.2)')
+
+  !WARNING: Expected ',' or ')' in format expression
+  write(*,'(3P7I2)')
+
+  !WARNING: Expected ',' or ')' in format expression
+  write(*,'(5X i3)')
 end

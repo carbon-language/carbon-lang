@@ -30,6 +30,12 @@
 2011 format(:2L2)
 2012 format(2L2 : 2L2)
 
+     ! C1302 warnings; no errors
+2051 format(1X3/)
+2052 format(1X003/)
+2053 format(3P7I2)
+2054 format(3PI2)
+
      !ERROR: Expected ',' or ')' in format expression
 2101 format(3I83Z8, 'abc')
 
@@ -41,18 +47,6 @@
 
      !ERROR: Expected ',' or ')' in format expression
 2104 format(3I8 Z8)
-
-     !ERROR: Expected ',' or ')' in format expression
-2105 format(1X3/)
-
-     !ERROR: Expected ',' or ')' in format expression
-2106 format(1X003/)
-
-     !ERROR: Expected ',' or ')' in format expression
-2107 format(3P7I2)
-
-     !ERROR: Expected ',' or ')' in format expression
-2108 format(3PI2)
 
 3001 format(*(I3))
 3002 format(5X,*(2(A)))

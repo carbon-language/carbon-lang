@@ -51,6 +51,11 @@
   write(*,'(\)')
   write(*,'(RZ,RU,RP,RN,RD,RC,SS,SP,S,3G15.3e2)')
 
+  ! C1302 warnings; no errors
+  write(*,'(3P7I2)')
+  write(*,'(5X i3)')
+  write(*,'(XEN)')
+
   !ERROR: Empty format expression
   write(*,"")
 
@@ -71,12 +76,6 @@
 
   !ERROR: 'P' edit descriptor must have a scale factor
   write(*,'(P7F' // '5.2)')
-
-  !ERROR: Expected ',' or ')' in format expression
-  write(*,'(3P7I2)')
-
-  !ERROR: Expected ',' or ')' in format expression
-  write(*,'(5X i3)')
 
   !ERROR: Unexpected integer constant
   write(*,'(X,3,3L4)')
@@ -186,9 +185,6 @@
   !ERROR: Unexpected 'M' in format expression
   write(*,'(MXY)')
 
-  !ERROR: Expected ',' or ')' in format expression
-  write(*,'(XEN)')
-
   !ERROR: Unexpected 'R' in format expression
   !ERROR: Unexpected 'R' in format expression
   write(*,"(RR, RV)")
@@ -265,9 +261,8 @@
   !ERROR: Unterminated format expression
   write(*,'(X')
 
-  !ERROR: Expected ',' or ')' in format expression
   !ERROR: Unterminated format expression
-  write(*,'(XX')
+  write(*,'(XX') ! C1302 warning is not an error
 
   !ERROR: Unexpected '@' in format expression
   !ERROR: Unexpected '#' in format expression
