@@ -22,10 +22,10 @@
 // and recovery during parsing!
 
 #include "characters.h"
-#include "features.h"
 #include "message.h"
 #include "provenance.h"
 #include "user-state.h"
+#include "../common/features.h"
 #include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
@@ -35,6 +35,8 @@
 #include <utility>
 
 namespace Fortran::parser {
+
+using common::LanguageFeature;
 
 class ParseState {
 public:

@@ -93,7 +93,7 @@ const SourceFile *Parsing::Prescan(const std::string &path, Options options) {
 }
 
 void Parsing::DumpCookedChars(std::ostream &out) const {
-  UserState userState{cooked_, LanguageFeatureControl{}};
+  UserState userState{cooked_, common::LanguageFeatureControl{}};
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm).set_userState(&userState);
   while (std::optional<const char *> p{parseState.GetNextChar()}) {

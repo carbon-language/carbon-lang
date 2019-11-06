@@ -900,7 +900,7 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
             ParentScope(scopes, doTarget.proxyForScope) == scope)) {
       if (context.warnOnNonstandardUsage() ||
           context.ShouldWarn(
-              parser::LanguageFeature::OldLabelDoEndStatements)) {
+              common::LanguageFeature::OldLabelDoEndStatements)) {
         context
             .Say(position,
                 parser::MessageFormattedText{

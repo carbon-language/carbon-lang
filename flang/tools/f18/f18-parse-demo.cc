@@ -28,9 +28,9 @@
 // F18 compiler under development.
 
 #include "../../lib/common/default-kinds.h"
+#include "../../lib/common/features.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/dump-parse-tree.h"
-#include "../../lib/parser/features.h"
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree-visitor.h"
 #include "../../lib/parser/parse-tree.h"
@@ -226,7 +226,7 @@ std::string CompileFortran(
   if (driver.dumpUnparse) {
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
-            Fortran::parser::LanguageFeature::BackslashEscapes));
+            Fortran::common::LanguageFeature::BackslashEscapes));
     return {};
   }
   if (driver.parseOnly) {
@@ -243,7 +243,7 @@ std::string CompileFortran(
     tmpSource.open(tmpSourcePath);
     Unparse(tmpSource, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
-            Fortran::parser::LanguageFeature::BackslashEscapes));
+            Fortran::common::LanguageFeature::BackslashEscapes));
   }
 
   if (ParentProcess()) {
@@ -308,7 +308,7 @@ int main(int argc, char *const argv[]) {
   options.predefinitions.emplace_back("__F18_PATCHLEVEL__", "1");
 
   options.features.Enable(
-      Fortran::parser::LanguageFeature::BackslashEscapes, true);
+      Fortran::common::LanguageFeature::BackslashEscapes, true);
 
   Fortran::common::IntrinsicTypeDefaultKinds defaultKinds;
 
@@ -356,27 +356,27 @@ int main(int argc, char *const argv[]) {
       options.fixedFormColumns = 132;
     } else if (arg == "-Mbackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes, false);
+          Fortran::common::LanguageFeature::BackslashEscapes, false);
     } else if (arg == "-Mnobackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes);
+          Fortran::common::LanguageFeature::BackslashEscapes);
     } else if (arg == "-Mstandard") {
       driver.warnOnNonstandardUsage = true;
     } else if (arg == "-fopenmp") {
-      options.features.Enable(Fortran::parser::LanguageFeature::OpenMP);
+      options.features.Enable(Fortran::common::LanguageFeature::OpenMP);
       options.predefinitions.emplace_back("_OPENMP", "201511");
     } else if (arg == "-Werror") {
       driver.warningsAreErrors = true;
     } else if (arg == "-ed") {
-      options.features.Enable(Fortran::parser::LanguageFeature::OldDebugLines);
+      options.features.Enable(Fortran::common::LanguageFeature::OldDebugLines);
     } else if (arg == "-E" || arg == "-fpreprocess-only") {
       driver.dumpCookedChars = true;
     } else if (arg == "-fbackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes);
+          Fortran::common::LanguageFeature::BackslashEscapes);
     } else if (arg == "-fno-backslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes, false);
+          Fortran::common::LanguageFeature::BackslashEscapes, false);
     } else if (arg == "-fdump-provenance") {
       driver.dumpProvenance = true;
     } else if (arg == "-fdump-parse-tree") {
@@ -451,7 +451,7 @@ int main(int argc, char *const argv[]) {
     options.features.WarnOnAllNonstandard();
   }
   if (!options.features.IsEnabled(
-          Fortran::parser::LanguageFeature::BackslashEscapes)) {
+          Fortran::common::LanguageFeature::BackslashEscapes)) {
     driver.fcArgs.push_back("-fno-backslash");  // PGI "-Mbackslash"
   }
 

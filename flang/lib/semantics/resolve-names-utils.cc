@@ -16,13 +16,13 @@
 #include "expression.h"
 #include "semantics.h"
 #include "tools.h"
+#include "../common/features.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
 #include "../evaluate/type.h"
 #include "../parser/char-block.h"
-#include "../parser/features.h"
 #include "../parser/parse-tree.h"
 #include <initializer_list>
 #include <ostream>
@@ -30,6 +30,7 @@
 
 namespace Fortran::semantics {
 
+using common::LanguageFeature;
 using IntrinsicOperator = parser::DefinedOperator::IntrinsicOperator;
 
 static GenericKind MapIntrinsicOperator(IntrinsicOperator);
@@ -64,11 +65,10 @@ bool IsIntrinsicOperator(
   if (intrinsics.count(str) > 0) {
     return true;
   }
-  if (context.IsEnabled(parser::LanguageFeature::XOROperator) &&
-      str == ".xor.") {
+  if (context.IsEnabled(LanguageFeature::XOROperator) && str == ".xor.") {
     return true;
   }
-  if (context.IsEnabled(parser::LanguageFeature::LogicalAbbreviations) &&
+  if (context.IsEnabled(LanguageFeature::LogicalAbbreviations) &&
       (str == ".n." || str == ".a" || str == ".o." || str == ".x.")) {
     return true;
   }
@@ -79,7 +79,7 @@ bool IsLogicalConstant(
     const SemanticsContext &context, const SourceName &name) {
   std::string str{name.ToString()};
   return str == ".true." || str == ".false." ||
-      (context.IsEnabled(parser::LanguageFeature::LogicalAbbreviations) &&
+      (context.IsEnabled(LanguageFeature::LogicalAbbreviations) &&
           (str == ".t" || str == ".f."));
 }
 
@@ -400,7 +400,7 @@ bool EquivalenceSets::CheckCanEquivalence(
   } else if (isNum1) {
     if (isChar2) {
       if (context_.ShouldWarn(
-              parser::LanguageFeature::EquivalenceNumericWithCharacter)) {
+              LanguageFeature::EquivalenceNumericWithCharacter)) {
         msg = "Equivalence set contains '%s' that is numeric sequence "
               "type and '%s' that is character"_en_US;
       }
@@ -411,7 +411,7 @@ bool EquivalenceSets::CheckCanEquivalence(
   } else if (isChar1) {
     if (isNum2) {
       if (context_.ShouldWarn(
-              parser::LanguageFeature::EquivalenceNumericWithCharacter)) {
+              LanguageFeature::EquivalenceNumericWithCharacter)) {
         msg = "Equivalence set contains '%s' that is character sequence "
               "type and '%s' that is numeric"_en_US;
       }

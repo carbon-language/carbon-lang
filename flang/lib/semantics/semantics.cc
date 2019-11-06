@@ -130,7 +130,7 @@ static bool PerformStatementSemantics(
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds,
-    const parser::LanguageFeatureControl &languageFeatures,
+    const common::LanguageFeatureControl &languageFeatures,
     parser::AllSources &allSources)
   : defaultKinds_{defaultKinds}, languageFeatures_{languageFeatures},
     allSources_{allSources},
@@ -144,11 +144,11 @@ int SemanticsContext::GetDefaultKind(TypeCategory category) const {
   return defaultKinds_.GetDefaultKind(category);
 }
 
-bool SemanticsContext::IsEnabled(parser::LanguageFeature feature) const {
+bool SemanticsContext::IsEnabled(common::LanguageFeature feature) const {
   return languageFeatures_.IsEnabled(feature);
 }
 
-bool SemanticsContext::ShouldWarn(parser::LanguageFeature feature) const {
+bool SemanticsContext::ShouldWarn(common::LanguageFeature feature) const {
   return languageFeatures_.ShouldWarn(feature);
 }
 

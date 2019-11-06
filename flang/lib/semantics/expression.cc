@@ -383,10 +383,10 @@ struct IntTypeVisitor {
         if (T::kind > kind) {
           if (!isDefaultKind ||
               !analyzer.context().IsEnabled(
-                  parser::LanguageFeature::BigIntLiterals)) {
+                  common::LanguageFeature::BigIntLiterals)) {
             return std::nullopt;
           } else if (analyzer.context().ShouldWarn(
-                         parser::LanguageFeature::BigIntLiterals)) {
+                         common::LanguageFeature::BigIntLiterals)) {
             analyzer.Say(digits,
                 "Integer literal is too large for default INTEGER(KIND=%d); "
                 "assuming INTEGER(KIND=%d)"_en_US,
@@ -1345,13 +1345,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       // T(1) or T(PT=PT(1)).
       if (nextAnonymous == components.begin() && parentComponent != nullptr &&
           valueType == DynamicType::From(*parentComponent) &&
-          context().IsEnabled(parser::LanguageFeature::AnonymousParents)) {
+          context().IsEnabled(common::LanguageFeature::AnonymousParents)) {
         auto iter{
             std::find(components.begin(), components.end(), *parentComponent)};
         if (iter != components.end()) {
           symbol = parentComponent;
           nextAnonymous = ++iter;
-          if (context().ShouldWarn(parser::LanguageFeature::AnonymousParents)) {
+          if (context().ShouldWarn(common::LanguageFeature::AnonymousParents)) {
             Say(source,
                 "Whole parent component '%s' in structure "
                 "constructor should not be anonymous"_en_US,

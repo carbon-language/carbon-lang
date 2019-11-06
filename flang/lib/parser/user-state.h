@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 // state in static data.
 
 #include "char-block.h"
-#include "features.h"
 #include "parse-tree.h"
+#include "../common/features.h"
 #include "../common/idioms.h"
 #include <cinttypes>
 #include <optional>
@@ -40,11 +40,11 @@ class Success {};  // for when one must return something that's present
 
 class UserState {
 public:
-  UserState(const CookedSource &cooked, LanguageFeatureControl features)
+  UserState(const CookedSource &cooked, common::LanguageFeatureControl features)
     : cooked_{cooked}, features_{features} {}
 
   const CookedSource &cooked() const { return cooked_; }
-  const LanguageFeatureControl &features() const { return features_; }
+  const common::LanguageFeatureControl &features() const { return features_; }
 
   std::ostream *debugOutput() const { return debugOutput_; }
   UserState &set_debugOutput(std::ostream *out) {
@@ -107,7 +107,7 @@ private:
 
   std::set<CharBlock> oldStructureComponents_;
 
-  LanguageFeatureControl features_;
+  common::LanguageFeatureControl features_;
 };
 
 // Definitions of parser classes that manipulate the UserState.

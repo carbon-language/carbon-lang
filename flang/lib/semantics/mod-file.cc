@@ -759,7 +759,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   parser::Parsing parsing{context_.allSources()};
   parser::Options options;
   options.isModuleFile = true;
-  options.features.Enable(parser::LanguageFeature::BackslashEscapes);
+  options.features.Enable(common::LanguageFeature::BackslashEscapes);
   options.searchDirectories = context_.searchDirectories();
   auto path{ModFileName(name, ancestorName, context_.moduleFileSuffix())};
   const auto *sourceFile{parsing.Prescan(path, options)};

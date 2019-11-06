@@ -29,11 +29,11 @@
 // template functions.  See parser-combinators.txt for documentation.
 
 #include "char-block.h"
-#include "features.h"
 #include "message.h"
 #include "parse-state.h"
 #include "provenance.h"
 #include "user-state.h"
+#include "../common/features.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include <cstring>

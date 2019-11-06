@@ -27,10 +27,12 @@
 
 namespace Fortran::parser {
 
+using common::LanguageFeature;
+
 static constexpr int maxPrescannerNesting{100};
 
 Prescanner::Prescanner(Messages &messages, CookedSource &cooked,
-    Preprocessor &preprocessor, LanguageFeatureControl lfc)
+    Preprocessor &preprocessor, common::LanguageFeatureControl lfc)
   : messages_{messages}, cooked_{cooked}, preprocessor_{preprocessor},
     features_{lfc}, encoding_{cooked.allSources().encoding()} {}
 

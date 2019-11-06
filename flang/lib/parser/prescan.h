@@ -23,10 +23,10 @@
 // inclusion, and driving the Fortran source preprocessor.
 
 #include "characters.h"
-#include "features.h"
 #include "message.h"
 #include "provenance.h"
 #include "token-sequence.h"
+#include "../common/features.h"
 #include <bitset>
 #include <optional>
 #include <string>
@@ -39,8 +39,8 @@ class Preprocessor;
 
 class Prescanner {
 public:
-  Prescanner(
-      Messages &, CookedSource &, Preprocessor &, LanguageFeatureControl);
+  Prescanner(Messages &, CookedSource &, Preprocessor &,
+      common::LanguageFeatureControl);
   Prescanner(const Prescanner &);
 
   Messages &messages() const { return messages_; }
@@ -145,7 +145,8 @@ private:
     return p[0] == '/' && p[1] == '*' &&
         (inPreprocessorDirective_ ||
             (!inCharLiteral_ &&
-                features_.IsEnabled(LanguageFeature::ClassicCComments)));
+                features_.IsEnabled(
+                    common::LanguageFeature::ClassicCComments)));
   }
 
   void LabelField(TokenSequence &, int outCol = 1);
@@ -184,7 +185,7 @@ private:
   Messages &messages_;
   CookedSource &cooked_;
   Preprocessor &preprocessor_;
-  LanguageFeatureControl features_;
+  common::LanguageFeatureControl features_;
   bool inFixedForm_{false};
   int fixedFormColumnLimit_{72};
   Encoding encoding_{Encoding::UTF_8};

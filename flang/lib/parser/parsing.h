@@ -16,11 +16,11 @@
 #define FORTRAN_PARSER_PARSING_H_
 
 #include "characters.h"
-#include "features.h"
 #include "instrumented-parser.h"
 #include "message.h"
 #include "parse-tree.h"
 #include "provenance.h"
+#include "../common/features.h"
 #include <optional>
 #include <ostream>
 #include <string>
@@ -36,7 +36,7 @@ struct Options {
 
   bool isFixedForm{false};
   int fixedFormColumns{72};
-  LanguageFeatureControl features;
+  common::LanguageFeatureControl features;
   std::vector<std::string> searchDirectories;
   std::vector<Predefinition> predefinitions;
   bool instrumentedParse{false};

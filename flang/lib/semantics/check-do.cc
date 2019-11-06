@@ -353,7 +353,7 @@ private:
 
   void CheckDoControl(const parser::CharBlock &sourceLocation, bool isReal) {
     const bool warn{context_.warnOnNonstandardUsage() ||
-        context_.ShouldWarn(parser::LanguageFeature::RealDoControls)};
+        context_.ShouldWarn(common::LanguageFeature::RealDoControls)};
     if (isReal && !warn) {
       // No messages for the default case
     } else if (isReal && warn) {
