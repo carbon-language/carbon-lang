@@ -377,6 +377,15 @@
     a = 3.14
   enddo
 
+! 2.13.1 master
+
+  !$omp parallel
+  !ERROR: NUM_THREADS clause is not allowed on the MASTER directive
+  !$omp master num_threads(4)
+  a=3.14
+  !$omp end master
+  !$omp end parallel
+
 ! Standalone Directives (basic)
 
   !$omp taskyield
