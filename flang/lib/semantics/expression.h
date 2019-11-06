@@ -283,7 +283,6 @@ private:
   MaybeExpr Analyze(const parser::Expr::OR &);
   MaybeExpr Analyze(const parser::Expr::EQV &);
   MaybeExpr Analyze(const parser::Expr::NEQV &);
-  MaybeExpr Analyze(const parser::Expr::XOR &);
   MaybeExpr Analyze(const parser::Expr::DefinedBinary &);
   template<typename A> MaybeExpr Analyze(const A &x) {
     return Analyze(x.u);  // default case

@@ -459,6 +459,11 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-fxor-operator" || arg == "-fno-xor-operator") {
       options.features.Enable(Fortran::common::LanguageFeature::XOROperator,
           arg == "-fxor-operator");
+    } else if (arg == "-flogical-abbreviations" ||
+        arg == "-fno-logical-abbreviations") {
+      options.features.Enable(
+          Fortran::parser::LanguageFeature::LogicalAbbreviations,
+          arg == "-flogical-abbreviations");
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
       options.needProvenanceRangeToCharBlockMappings = true;
@@ -546,6 +551,8 @@ int main(int argc, char *const argv[]) {
           << "  -f[no-]backslash     enable[disable] \\escapes in literals\n"
           << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
           << "  -Mstandard           enable conformance warnings\n"
+          << "  -fenable=<feature>   enable a language feature\n"
+          << "  -fdisable=<feature>  disable a language feature\n"
           << "  -r8 | -fdefault-real-8 | -i8 | -fdefault-integer-8  "
              "change default kinds of intrinsic types\n"
           << "  -Werror              treat warnings as errors\n"

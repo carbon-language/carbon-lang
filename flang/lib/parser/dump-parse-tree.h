@@ -269,7 +269,6 @@ public:
   NODE(parser::Expr, OR)
   NODE(parser::Expr, EQV)
   NODE(parser::Expr, NEQV)
-  NODE(parser::Expr, XOR)
   NODE(parser::Expr, DefinedBinary)
   NODE(parser::Expr, ComplexConstructor)
   NODE(parser, External)

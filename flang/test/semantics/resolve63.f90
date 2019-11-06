@@ -104,7 +104,7 @@ module m2
   logical :: l
 contains
   subroutine test_relational()
-    !ERROR: Operands of == must have comparable types; have TYPE(t) and REAL(4)
+    !ERROR: Operands of .EQ. must have comparable types; have TYPE(t) and REAL(4)
     l = x == r
   end
   subroutine test_numeric()
@@ -150,12 +150,60 @@ contains
     logical :: x
     integer :: y
     logical :: l
-    !TODO: these should work
-    !y = y + z'1'  !OK
-    !y = +z'1'  !OK
+    complex :: z
+    y = y + z'1'  !OK
+    !ERROR: Operands of + must be numeric; have untyped and COMPLEX(4)
+    z = z'1' + z
+    y = +z'1'  !OK
+    !ERROR: Operand of unary - must be numeric; have untyped
+    y = -z'1'
     !ERROR: Operands of + must be numeric; have LOGICAL(4) and untyped
     y = x + z'1'
-    !ERROR: Operands of /= must have comparable types; have LOGICAL(4) and untyped
+    !ERROR: Operands of .NE. must have comparable types; have LOGICAL(4) and untyped
     l = x /= null()
+  end
+end
+
+! Test alternate operators. They aren't enabled by default so should be
+! treated as defined operators, not intrinsic ones.
+module m4
+contains
+  subroutine s1(x, y, z)
+    logical :: x
+    real :: y, z
+    !ERROR: Defined operator '.a.' not found
+    x = y .a. z
+    !ERROR: Defined operator '.o.' not found
+    x = y .o. z
+    !ERROR: Defined operator '.n.' not found
+    x = .n. y
+    !ERROR: Defined operator '.xor.' not found
+    x = y .xor. z
+    !ERROR: Defined operator '.x.' not found
+    x = .x. y
+  end
+end
+
+! Like m4 in resolve63 but compiled with different options.
+! .A. is a defined operator.
+module m5
+  interface operator(.A.)
+    logical function f1(x, y)
+      integer, intent(in) :: x, y
+    end
+  end interface
+  interface operator(.and.)
+    logical function f2(x, y)
+      real, intent(in) :: x, y
+    end
+  end interface
+contains
+  subroutine s1(x, y, z)
+    logical :: x
+    complex :: y, z
+    !ERROR: No user-defined or intrinsic .AND. operator matches operand types COMPLEX(4) and COMPLEX(4)
+    x = y .and. z
+    !ERROR: No specific procedure of generic operator '.a.' matches the actual arguments
+    x = y .a. z
   end
 end

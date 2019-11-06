@@ -178,12 +178,13 @@ constexpr auto namedIntrinsicOperator{
     ".EQV." >> pure(DefinedOperator::IntrinsicOperator::EQV) ||
     ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV) ||
     extension<LanguageFeature::XOROperator>(
-        ".XOR." >> pure(DefinedOperator::IntrinsicOperator::XOR)) ||
+        ".XOR." >> pure(DefinedOperator::IntrinsicOperator::NEQV)) ||
     extension<LanguageFeature::LogicalAbbreviations>(
         ".N." >> pure(DefinedOperator::IntrinsicOperator::NOT) ||
         ".A." >> pure(DefinedOperator::IntrinsicOperator::AND) ||
         ".O." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
-        ".X." >> pure(DefinedOperator::IntrinsicOperator::XOR))};
+        extension<LanguageFeature::XOROperator>(
+            ".X." >> pure(DefinedOperator::IntrinsicOperator::NEQV)))};
 
 constexpr auto intrinsicOperator{
     "**" >> pure(DefinedOperator::IntrinsicOperator::Power) ||
@@ -1796,8 +1797,15 @@ constexpr struct AndOperand {
   static inline std::optional<Expr> Parse(ParseState &);
 } andOperand;
 
+// Match a logical operator or, optionally, its abbreviation.
+inline constexpr auto logicalOp(const char *op, const char *abbrev) {
+  return TokenStringMatch{op} ||
+      extension<LanguageFeature::LogicalAbbreviations>(
+          TokenStringMatch{abbrev});
+}
+
 inline std::optional<Expr> AndOperand::Parse(ParseState &state) {
-  static constexpr auto notOp{attempt(".NOT."_tok >> andOperand)};
+  static constexpr auto notOp{attempt(logicalOp(".NOT.", ".N.") >> andOperand)};
   if (std::optional<Expr> negation{notOp.Parse(state)}) {
     return Expr{Expr::NOT{std::move(*negation)}};
   } else {
@@ -1819,8 +1827,8 @@ constexpr struct OrOperand {
       std::function<Expr(Expr &&)> logicalAnd{[&result](Expr &&right) {
         return Expr{Expr::AND(std::move(result).value(), std::move(right))};
       }};
-      auto more{
-          attempt(sourced(".AND." >> applyLambda(logicalAnd, andOperand)))};
+      auto more{attempt(sourced(
+          logicalOp(".AND.", ".A.") >> applyLambda(logicalAnd, andOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
         result->source.ExtendToCover(source);
@@ -1843,7 +1851,8 @@ constexpr struct EquivOperand {
       std::function<Expr(Expr &&)> logicalOr{[&result](Expr &&right) {
         return Expr{Expr::OR(std::move(result).value(), std::move(right))};
       }};
-      auto more{attempt(sourced(".OR." >> applyLambda(logicalOr, orOperand)))};
+      auto more{attempt(sourced(
+          logicalOp(".OR.", ".O.") >> applyLambda(logicalOr, orOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
         result->source.ExtendToCover(source);
@@ -1870,13 +1879,11 @@ constexpr struct Level5Expr {
       std::function<Expr(Expr &&)> neqv{[&result](Expr &&right) {
         return Expr{Expr::NEQV(std::move(result).value(), std::move(right))};
       }};
-      std::function<Expr(Expr &&)> logicalXor{[&result](Expr &&right) {
-        return Expr{Expr::XOR(std::move(result).value(), std::move(right))};
-      }};
       auto more{attempt(sourced(".EQV." >> applyLambda(eqv, equivOperand) ||
-          ".NEQV." >> applyLambda(neqv, equivOperand) ||
-          extension<LanguageFeature::XOROperator>(
-              ".XOR." >> applyLambda(logicalXor, equivOperand))))};
+          (".NEQV."_tok ||
+              extension<LanguageFeature::XOROperator>(
+                  logicalOp(".XOR.", ".X."))) >>
+              applyLambda(neqv, equivOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
         result->source.ExtendToCover(source);

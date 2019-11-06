@@ -16,6 +16,8 @@
 ! Test by using generic function in a specification expression that needs
 ! to be written to a .mod file.
 
+!OPTIONS: -flogical-abbreviations -fxor-operator
+
 ! Numeric operators
 module m1
   type :: t
@@ -158,9 +160,23 @@ module m2
       logical, intent(in) :: x
       integer, intent(in) :: y
     end
+  end interface
+  ! Alternative spelling of .AND.
+  interface operator(.a.)
     pure integer(8) function and_tt(x, y)
       import :: t
       type(t), intent(in) :: x, y
+    end
+  end interface
+  interface operator(.x.)
+    pure integer(8) function neqv_tt(x, y)
+      import :: t
+      type(t), intent(in) :: x, y
+    end
+  end interface
+  interface operator(.neqv.)
+    pure integer(8) function neqv_rr(x, y)
+      real, intent(in) :: x, y
     end
   end interface
 contains
@@ -172,11 +188,19 @@ contains
   subroutine s2(x, y, z)
     logical :: x
     integer :: y
-    real :: z(x .and. y)  ! resolves to and_li
+    real :: z(x .a. y)  ! resolves to and_li
   end
   subroutine s3(x, y, z)
     type(t) :: x, y
     real :: z(x .and. y)  ! resolves to and_tt
+  end
+  subroutine s4(x, y, z)
+    type(t) :: x, y
+    real :: z(x .neqv. y)  ! resolves to neqv_tt
+  end
+  subroutine s5(x, y, z)
+    real :: x, y
+    real :: z(x .xor. y)  ! resolves to neqv_rr
   end
 end
 
@@ -213,6 +237,25 @@ end
 !   integer(8) :: and_tt
 !  end
 ! end interface
+! interface operator(.x.)
+!  procedure :: neqv_tt
+!  procedure :: neqv_rr
+! end interface
+! interface
+!  pure function neqv_tt(x, y)
+!   import :: t
+!   type(t), intent(in) :: x
+!   type(t), intent(in) :: y
+!   integer(8) :: neqv_tt
+!  end
+! end interface
+! interface
+!  pure function neqv_rr(x, y)
+!   real(4), intent(in) :: x
+!   real(4), intent(in) :: y
+!   integer(8) :: neqv_rr
+!  end
+! end interface
 !contains
 ! subroutine s1(x, y, z)
 !  type(t) :: x
@@ -228,6 +271,16 @@ end
 !  type(t) :: x
 !  type(t) :: y
 !  real(4) :: z(1_8:and_tt(x, y))
+! end
+! subroutine s4(x, y, z)
+!  type(t) :: x
+!  type(t) :: y
+!  real(4) :: z(1_8:neqv_tt(x, y))
+! end
+! subroutine s5(x, y, z)
+!  real(4) :: x
+!  real(4) :: y
+!  real(4) :: z(1_8:neqv_rr(x, y))
 ! end
 !end
 

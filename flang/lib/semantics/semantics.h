@@ -66,6 +66,9 @@ public:
   const common::IntrinsicTypeDefaultKinds &defaultKinds() const {
     return defaultKinds_;
   }
+  const common::LanguageFeatureControl &languageFeatures() const {
+    return languageFeatures_;
+  };
   int GetDefaultKind(TypeCategory) const;
   int doublePrecisionKind() const {
     return defaultKinds_.doublePrecisionKind();

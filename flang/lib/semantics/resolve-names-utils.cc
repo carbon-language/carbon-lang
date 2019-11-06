@@ -31,6 +31,8 @@
 namespace Fortran::semantics {
 
 using common::LanguageFeature;
+using common::LogicalOperator;
+using common::RelationalOperator;
 using IntrinsicOperator = parser::DefinedOperator::IntrinsicOperator;
 
 static GenericKind MapIntrinsicOperator(IntrinsicOperator);
@@ -60,17 +62,17 @@ bool IsDefinedOperator(const SourceName &name) {
 bool IsIntrinsicOperator(
     const SemanticsContext &context, const SourceName &name) {
   std::string str{name.ToString()};
-  std::set<std::string> intrinsics{".and.", ".eq.", ".eqv.", ".ge.", ".gt.",
-      ".le.", ".lt.", ".ne.", ".neqv.", ".not.", ".or."};
-  if (intrinsics.count(str) > 0) {
-    return true;
+  for (int i{0}; i != common::LogicalOperator_enumSize; ++i) {
+    auto names{context.languageFeatures().GetNames(LogicalOperator{i})};
+    if (std::find(names.begin(), names.end(), str) != names.end()) {
+      return true;
+    }
   }
-  if (context.IsEnabled(LanguageFeature::XOROperator) && str == ".xor.") {
-    return true;
-  }
-  if (context.IsEnabled(LanguageFeature::LogicalAbbreviations) &&
-      (str == ".n." || str == ".a" || str == ".o." || str == ".x.")) {
-    return true;
+  for (int i{0}; i != common::RelationalOperator_enumSize; ++i) {
+    auto names{context.languageFeatures().GetNames(RelationalOperator{i})};
+    if (std::find(names.begin(), names.end(), str) != names.end()) {
+      return true;
+    }
   }
   return false;
 }
@@ -85,27 +87,34 @@ bool IsLogicalConstant(
 
 // The operators <, <=, >, >=, ==, and /= always have the same interpretations
 // as the operators .LT., .LE., .GT., .GE., .EQ., and .NE., respectively.
-std::forward_list<std::string> GenericSpecInfo::GetAllNames() const {
-  auto getNames{[&](const std::initializer_list<const char *> &names) {
+std::forward_list<std::string> GenericSpecInfo::GetAllNames(
+    SemanticsContext &context) const {
+  auto getNames{[&](auto opr) {
     std::forward_list<std::string> result;
-    for (const char *name : names) {
+    for (const char *name : context.languageFeatures().GetNames(opr)) {
       result.emplace_front("operator("s + name + ')');
     }
     return result;
   }};
   switch (kind_) {
-  case GenericKind::OpGE: return getNames({".ge.", ">="});
-  case GenericKind::OpGT: return getNames({".gt.", ">"});
-  case GenericKind::OpLE: return getNames({".le.", "<="});
-  case GenericKind::OpLT: return getNames({".lt.", "<"});
-  case GenericKind::OpEQ: return getNames({".eq.", "=="});
-  case GenericKind::OpNE: return getNames({"<>", ".ne.", "/="});
+  case GenericKind::OpGE: return getNames(RelationalOperator::GE);
+  case GenericKind::OpGT: return getNames(RelationalOperator::GT);
+  case GenericKind::OpLE: return getNames(RelationalOperator::LE);
+  case GenericKind::OpLT: return getNames(RelationalOperator::LT);
+  case GenericKind::OpEQ: return getNames(RelationalOperator::EQ);
+  case GenericKind::OpNE: return getNames(RelationalOperator::NE);
+  case GenericKind::OpAND: return getNames(LogicalOperator::And);
+  case GenericKind::OpOR: return getNames(LogicalOperator::Or);
+  case GenericKind::OpEQV: return getNames(LogicalOperator::Eqv);
+  case GenericKind::OpNEQV: return getNames(LogicalOperator::Neqv);
+  case GenericKind::OpNOT: return getNames(LogicalOperator::Not);
   default: return {symbolName_.value().ToString()};
   }
 }
 
-Symbol *GenericSpecInfo::FindInScope(const Scope &scope) const {
-  for (const auto &name : GetAllNames()) {
+Symbol *GenericSpecInfo::FindInScope(
+    SemanticsContext &context, const Scope &scope) const {
+  for (const auto &name : GetAllNames(context)) {
     if (auto *symbol{scope.FindSymbol(SourceName{name})}) {
       return symbol;
     }
@@ -192,7 +201,6 @@ static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
   case IntrinsicOperator::NOT: return GenericKind::OpNOT;
   case IntrinsicOperator::AND: return GenericKind::OpAND;
   case IntrinsicOperator::OR: return GenericKind::OpOR;
-  case IntrinsicOperator::XOR: return GenericKind::OpXOR;
   case IntrinsicOperator::EQV: return GenericKind::OpEQV;
   case IntrinsicOperator::NEQV: return GenericKind::OpNEQV;
   }

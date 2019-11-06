@@ -504,6 +504,7 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
 
 Expr<SomeLogical> BinaryLogicalOperation(
     LogicalOperator opr, Expr<SomeLogical> &&x, Expr<SomeLogical> &&y) {
+  CHECK(opr != LogicalOperator::Not);
   return std::visit(
       [=](auto &&xy) {
         using Ty = ResultType<decltype(xy[0])>;

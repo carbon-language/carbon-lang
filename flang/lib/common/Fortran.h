@@ -41,13 +41,11 @@ ENUM_CLASS(TypeParamAttr, Kind, Len)
 ENUM_CLASS(NumericOperator, Power, Multiply, Divide, Add, Subtract)
 const char *AsFortran(NumericOperator);
 
-ENUM_CLASS(LogicalOperator, And, Or, Eqv, Neqv)
+ENUM_CLASS(LogicalOperator, And, Or, Eqv, Neqv, Not)
 const char *AsFortran(LogicalOperator);
 
 ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
 const char *AsFortran(RelationalOperator);
-// Map EQ to {"==", ".eq."}, for example.
-std::vector<const char *> AllFortranNames(RelationalOperator);
 
 ENUM_CLASS(Intent, Default, In, Out, InOut)
 

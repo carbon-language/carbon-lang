@@ -47,6 +47,7 @@ using MaybeExpr =
 // and appears here in namespace Fortran::evaluate for convenience.
 namespace Fortran::evaluate {
 
+using common::LanguageFeature;
 using common::NumericOperator;
 using common::TypeCategory;
 
@@ -160,19 +161,28 @@ public:
 
   bool IsIntrinsicRelational(RelationalOperator) const;
   bool IsIntrinsicLogical() const;
-  bool IsIntrinsicNumeric() const;
+  bool IsIntrinsicNumeric(NumericOperator) const;
   bool IsIntrinsicConcat() const;
 
-  // Find and return a user-defined operator for opr or report an error.
+  // Find and return a user-defined operator or report an error.
   // The provided message is used if there is no such operator.
   MaybeExpr TryDefinedOp(const char *, parser::MessageFixedText &&);
-  MaybeExpr TryDefinedOp(RelationalOperator, parser::MessageFixedText &&);
+  template<typename E>
+  MaybeExpr TryDefinedOp(E opr, parser::MessageFixedText &&msg) {
+    return TryDefinedOp(
+        context_.context().languageFeatures().GetNames(opr), std::move(msg));
+  }
 
 private:
+  MaybeExpr TryDefinedOp(
+      std::vector<const char *>, parser::MessageFixedText &&);
   std::optional<ActualArgument> AnalyzeExpr(const parser::Expr &);
   bool AreConformable() const;
   const Symbol *FindDefinedOp(const char *) const;
   std::optional<DynamicType> GetType(std::size_t) const;
+  bool IsBOZLiteral(std::size_t i) const {
+    return std::holds_alternative<BOZLiteralConstant>(GetAsExpr(i).u);
+  }
   void SayNoMatch(const char *);
   std::string TypeAsFortran(std::size_t);
   bool AnyUntypedOperand();
@@ -382,11 +392,10 @@ struct IntTypeVisitor {
       if (!value.overflow) {
         if (T::kind > kind) {
           if (!isDefaultKind ||
-              !analyzer.context().IsEnabled(
-                  common::LanguageFeature::BigIntLiterals)) {
+              !analyzer.context().IsEnabled(LanguageFeature::BigIntLiterals)) {
             return std::nullopt;
           } else if (analyzer.context().ShouldWarn(
-                         common::LanguageFeature::BigIntLiterals)) {
+                         LanguageFeature::BigIntLiterals)) {
             analyzer.Say(digits,
                 "Integer literal is too large for default INTEGER(KIND=%d); "
                 "assuming INTEGER(KIND=%d)"_en_US,
@@ -1345,13 +1354,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       // T(1) or T(PT=PT(1)).
       if (nextAnonymous == components.begin() && parentComponent != nullptr &&
           valueType == DynamicType::From(*parentComponent) &&
-          context().IsEnabled(common::LanguageFeature::AnonymousParents)) {
+          context().IsEnabled(LanguageFeature::AnonymousParents)) {
         auto iter{
             std::find(components.begin(), components.end(), *parentComponent)};
         if (iter != components.end()) {
           symbol = parentComponent;
           nextAnonymous = ++iter;
-          if (context().ShouldWarn(common::LanguageFeature::AnonymousParents)) {
+          if (context().ShouldWarn(LanguageFeature::AnonymousParents)) {
             Say(source,
                 "Whole parent component '%s' in structure "
                 "constructor should not be anonymous"_en_US,
@@ -1827,7 +1836,7 @@ static MaybeExpr NumericUnaryHelper(ExpressionAnalyzer &context,
   analyzer.Analyze(x.v);
   if (analyzer.fatalErrors()) {
     return std::nullopt;
-  } else if (analyzer.IsIntrinsicNumeric()) {
+  } else if (analyzer.IsIntrinsicNumeric(opr)) {
     if (opr == NumericOperator::Add) {
       return analyzer.GetAsExpr(0);
     } else {
@@ -1856,8 +1865,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::NOT &x) {
     return AsGenericExpr(
         LogicalNegation(std::get<Expr<SomeLogical>>(analyzer.GetAsExpr(0).u)));
   } else {
-    return analyzer.TryDefinedOp(
-        ".not.", "Operand of %s must be LOGICAL; have %s"_err_en_US);
+    return analyzer.TryDefinedOp(LogicalOperator::Not,
+        "Operand of %s must be LOGICAL; have %s"_err_en_US);
   }
 }
 
@@ -1902,7 +1911,7 @@ MaybeExpr NumericBinaryHelper(ExpressionAnalyzer &context, NumericOperator opr,
   analyzer.Analyze(std::get<1>(x.t));
   if (analyzer.fatalErrors()) {
     return std::nullopt;
-  } else if (analyzer.IsIntrinsicNumeric()) {
+  } else if (analyzer.IsIntrinsicNumeric(opr)) {
     return NumericOperation<OPR>(context.GetContextualMessages(),
         analyzer.GetAsExpr(0), analyzer.GetAsExpr(1),
         context.GetDefaultKind(TypeCategory::Real));
@@ -2033,8 +2042,8 @@ MaybeExpr LogicalBinaryHelper(ExpressionAnalyzer &context, LogicalOperator opr,
         std::get<Expr<SomeLogical>>(analyzer.GetAsExpr(0).u),
         std::get<Expr<SomeLogical>>(analyzer.GetAsExpr(1).u)));
   } else {
-    return analyzer.TryDefinedOp(AsFortran(opr),
-        "Operands of %s must be LOGICAL; have %s and %s"_err_en_US);
+    return analyzer.TryDefinedOp(
+        opr, "Operands of %s must be LOGICAL; have %s and %s"_err_en_US);
   }
 }
 
@@ -2051,10 +2060,6 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::EQV &x) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::NEQV &x) {
-  return LogicalBinaryHelper(*this, LogicalOperator::Neqv, x);
-}
-
-MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::XOR &x) {
   return LogicalBinaryHelper(*this, LogicalOperator::Neqv, x);
 }
 
@@ -2436,10 +2441,28 @@ bool ArgumentAnalyzer::IsIntrinsicRelational(RelationalOperator opr) const {
   }
 }
 
-bool ArgumentAnalyzer::IsIntrinsicNumeric() const {
-  return IsNumericTypeCategory(GetType(0)->category()) &&
-      (actuals_.size() == 1 ||
-          (AreConformable() && IsNumericTypeCategory(GetType(1)->category())));
+bool ArgumentAnalyzer::IsIntrinsicNumeric(NumericOperator opr) const {
+  std::optional<DynamicType> type0{GetType(0)};
+  if (actuals_.size() == 1) {
+    if (IsBOZLiteral(0)) {
+      return opr == NumericOperator::Add;
+    } else {
+      return type0 && IsNumericTypeCategory(type0->category());
+    }
+  } else {
+    std::optional<DynamicType> type1{GetType(1)};
+    if (IsBOZLiteral(0) && type1) {
+      auto cat1{type1->category()};
+      return cat1 == TypeCategory::Integer || cat1 == TypeCategory::Real;
+    } else if (IsBOZLiteral(1) && type0) {  // Integer/Real opr BOZ
+      auto cat0{type0->category()};
+      return cat0 == TypeCategory::Integer || cat0 == TypeCategory::Real;
+    } else {
+      return AreConformable() && type0 && type1 &&
+          IsNumericTypeCategory(type0->category()) &&
+          IsNumericTypeCategory(type1->category());
+    }
+  }
 }
 
 bool ArgumentAnalyzer::IsIntrinsicLogical() const {
@@ -2481,13 +2504,13 @@ MaybeExpr ArgumentAnalyzer::TryDefinedOp(
 }
 
 MaybeExpr ArgumentAnalyzer::TryDefinedOp(
-    RelationalOperator opr, parser::MessageFixedText &&error) {
-  for (const char *name : AllFortranNames(opr)) {
-    if (FindDefinedOp(name)) {
-      return TryDefinedOp(name, std::move(error));
+    std::vector<const char *> oprs, parser::MessageFixedText &&error) {
+  for (std::size_t i{1}; i < oprs.size(); ++i) {
+    if (FindDefinedOp(oprs[i])) {
+      return TryDefinedOp(oprs[i], std::move(error));
     }
   }
-  return TryDefinedOp(AsFortran(opr), std::move(error));
+  return TryDefinedOp(oprs[0], std::move(error));
 }
 
 std::optional<ActualArgument> ArgumentAnalyzer::AnalyzeExpr(

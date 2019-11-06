@@ -274,7 +274,7 @@ ENUM_CLASS(GenericKind,  // Kinds of generic-spec
     Name, DefinedOp,  // these have a Name associated with them
     Assignment,  // user-defined assignment
     OpPower, OpMultiply, OpDivide, OpAdd, OpSubtract, OpConcat, OpLT, OpLE,
-    OpEQ, OpNE, OpGE, OpGT, OpNOT, OpAND, OpOR, OpXOR, OpEQV, OpNEQV,
+    OpEQ, OpNE, OpGE, OpGT, OpNOT, OpAND, OpOR, OpEQV, OpNEQV,  //
     ReadFormatted, ReadUnformatted, WriteFormatted, WriteUnformatted)
 
 class GenericBindingDetails {

@@ -34,22 +34,19 @@ const char *AsFortran(LogicalOperator opr) {
   case LogicalOperator::Or: return ".or.";
   case LogicalOperator::Eqv: return ".eqv.";
   case LogicalOperator::Neqv: return ".neqv.";
+  case LogicalOperator::Not: return ".not.";
   }
 }
 
 const char *AsFortran(RelationalOperator opr) {
-  return *AllFortranNames(opr).begin();
-}
-
-std::vector<const char *> AllFortranNames(RelationalOperator opr) {
   switch (opr) {
     SWITCH_COVERS_ALL_CASES
-  case RelationalOperator::LT: return {"<", ".lt."};
-  case RelationalOperator::LE: return {"<=", ".le."};
-  case RelationalOperator::EQ: return {"==", ".eq."};
-  case RelationalOperator::NE: return {"/=", ".ne.", "<>"};
-  case RelationalOperator::GE: return {">=", ".ge."};
-  case RelationalOperator::GT: return {">", ".gt."};
+  case RelationalOperator::LT: return "<";
+  case RelationalOperator::LE: return "<=";
+  case RelationalOperator::EQ: return "==";
+  case RelationalOperator::NE: return "/=";
+  case RelationalOperator::GE: return ">=";
+  case RelationalOperator::GT: return ">";
   }
 }
 

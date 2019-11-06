@@ -207,6 +207,7 @@ static constexpr Precedence GetPrecedence(const Expr<T> &expr) {
             SWITCH_COVERS_ALL_CASES
           case LogicalOperator::And: return Precedence::And;
           case LogicalOperator::Or: return Precedence::Or;
+          case LogicalOperator::Not: return Precedence::Not;
           case LogicalOperator::Eqv:
           case LogicalOperator::Neqv: return Precedence::Equivalence;
           }

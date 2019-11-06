@@ -834,7 +834,6 @@ public:
   void Unparse(const Expr::OR &x) { Walk(x.t, ".OR."); }
   void Unparse(const Expr::EQV &x) { Walk(x.t, ".EQV."); }
   void Unparse(const Expr::NEQV &x) { Walk(x.t, ".NEQV."); }
-  void Unparse(const Expr::XOR &x) { Walk(x.t, ".XOR."); }
   void Unparse(const Expr::ComplexConstructor &x) {
     Put('('), Walk(x.t, ","), Put(')');
   }

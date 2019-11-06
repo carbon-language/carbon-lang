@@ -577,7 +577,7 @@ WRAPPER_CLASS(DefinedOpName, Name);
 struct DefinedOperator {
   UNION_CLASS_BOILERPLATE(DefinedOperator);
   ENUM_CLASS(IntrinsicOperator, Power, Multiply, Divide, Add, Subtract, Concat,
-      LT, LE, EQ, NE, GE, GT, NOT, AND, OR, XOR, EQV, NEQV)
+      LT, LE, EQ, NE, GE, GT, NOT, AND, OR, EQV, NEQV)
   std::variant<DefinedOpName, IntrinsicOperator> u;
 };
 
@@ -1690,9 +1690,6 @@ struct Expr {
   struct NEQV : public IntrinsicBinary {
     using IntrinsicBinary::IntrinsicBinary;
   };
-  struct XOR : public IntrinsicBinary {
-    using IntrinsicBinary::IntrinsicBinary;
-  };
 
   // PGI/XLF extension: (x,y), not both constant
   struct ComplexConstructor : public IntrinsicBinary {
@@ -1720,7 +1717,7 @@ struct Expr {
       LiteralConstant, common::Indirection<Designator>, ArrayConstructor,
       StructureConstructor, common::Indirection<FunctionReference>, Parentheses,
       UnaryPlus, Negate, NOT, PercentLoc, DefinedUnary, Power, Multiply, Divide,
-      Add, Subtract, Concat, LT, LE, EQ, NE, GE, GT, AND, OR, EQV, NEQV, XOR,
+      Add, Subtract, Concat, LT, LE, EQ, NE, GE, GT, AND, OR, EQV, NEQV,
       DefinedBinary, ComplexConstructor>
       u;
 };
