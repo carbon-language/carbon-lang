@@ -186,6 +186,7 @@ set(ERROR_TESTS
   call13.f90
   call14.f90
   misc-declarations.f90
+  separate_module_procs_2.f90
 )
 
 # These test files have expected symbols in the source
@@ -214,6 +215,7 @@ set(SYMBOL_TESTS
   kinds01.f90
   kinds03.f90
   procinterface01.f90
+  separate_module_procs_1.f90
 )
 
 # These test files have expected .mod file contents in the source
