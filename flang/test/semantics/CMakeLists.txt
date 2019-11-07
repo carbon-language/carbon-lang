@@ -186,7 +186,7 @@ set(ERROR_TESTS
   call13.f90
   call14.f90
   misc-declarations.f90
-  separate_module_procs_2.f90
+  separate-module-procs.f90
 )
 
 # These test files have expected symbols in the source

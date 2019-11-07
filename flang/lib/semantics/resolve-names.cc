@@ -2802,23 +2802,11 @@ bool SubprogramVisitor::BeginMpSubprogram(const parser::Name &name) {
 }
 
 // A subprogram declared with SUBROUTINE or function
-// If the subprogram is not in interface block, check if its declared as separate 
-// module procedures
 bool SubprogramVisitor::BeginSubprogram(
     const parser::Name &name, Symbol::Flag subpFlag, bool hasModulePrefix) {
-  bool isSeparateModuleProc = false;
-  // Check if Subprogram has Module Prefix and Subprogram is not inside Interface Block 
   if (hasModulePrefix && !inInterfaceBlock()) {
-    // Check if the Subprogram is declared as separate module procedures
-    auto *symbol{FindSymbol(name)};
-    if (symbol && symbol->has<SubprogramNameDetails>()) {
-      symbol = FindSymbol(currScope().parent(), name);
-    }
-    if (symbol)
-      isSeparateModuleProc = symbol->IsSeparateModuleProc();
-
-    // Issue error: Subprogram is not declared as separate module procedure
-    if (!isSeparateModuleProc) {
+    auto *symbol{FindSymbol(currScope().parent(), name)};
+    if (!symbol || !symbol->IsSeparateModuleProc()) {
       Say(name, "'%s' was not declared a separate module procedure"_err_en_US);
       return false;
     }
