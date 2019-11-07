@@ -215,7 +215,6 @@ set(SYMBOL_TESTS
   kinds01.f90
   kinds03.f90
   procinterface01.f90
-  separate_module_procs_1.f90
 )
 
 # These test files have expected .mod file contents in the source
