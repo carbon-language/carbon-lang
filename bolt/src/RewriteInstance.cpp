@@ -2249,9 +2249,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
       // Just register the fact that we have PC-relative relocation at a given
       // address. The actual referenced label/address cannot be determined
       // from linker data alone.
-      if (IsFromCode) {
-        ContainingBF->addPCRelativeRelocationAddress(Rel.getOffset());
-      } else {
+      if (!IsFromCode) {
         BC->addPCRelativeDataRelocation(Rel.getOffset(), Rel.getType(),
                                         ExtractedValue);
       }

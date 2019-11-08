@@ -661,11 +661,6 @@ void BinaryFunction::printRelocations(raw_ostream &OS,
     Sep = ", ";
     ++RI;
   }
-
-  auto PI = PCRelativeRelocationOffsets.lower_bound(Offset);
-  if (PI != PCRelativeRelocationOffsets.end() && *PI < Offset + Size) {
-    OS << Sep << "(pcrel)";
-  }
 }
 
 IndirectBranchType
@@ -1232,10 +1227,6 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                 addRelocation(getAddress() + RelOffset, TargetSymbol, RelType,
                               -RelSize, 0);
               }
-              auto OI = PCRelativeRelocationOffsets.find(RelOffset);
-              if (OI != PCRelativeRelocationOffsets.end()) {
-                PCRelativeRelocationOffsets.erase(OI);
-              }
             }
           }
         }
@@ -1352,6 +1343,8 @@ add_instruction:
 
     addInstruction(Offset, std::move(Instruction));
   }
+
+  clearList(Relocations);
 
   updateState(State::Disassembled);
 

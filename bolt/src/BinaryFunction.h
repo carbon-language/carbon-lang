@@ -482,9 +482,6 @@ private:
   /// Map of relocations used for moving the function body as it is.
   std::map<uint64_t, Relocation> MoveRelocations;
 
-  /// Offsets in function that should have PC-relative relocation.
-  std::set<uint64_t> PCRelativeRelocationOffsets;
-
   /// Offsets in function that are data values in a constant island identified
   /// after disassembling
   std::map<uint64_t, MCSymbol *> IslandOffsets;
@@ -1191,17 +1188,11 @@ public:
     default:
       llvm_unreachable("unexpected relocation type in code");
     }
-    MoveRelocations[Offset] =
-      Relocation{Offset, Symbol, RelType, Addend, Value};
-  }
 
-  /// Register a fact that we should have a PC-relative relocation at a given
-  /// address in a function. During disassembly we have to make sure we create
-  /// relocation at that location.
-  void addPCRelativeRelocationAddress(uint64_t Address) {
-    assert(containsAddress(Address, /*UseMaxSize=*/ true) &&
-           "address is outside of the function");
-    PCRelativeRelocationOffsets.emplace(Address - getAddress());
+    // FIXME: if we ever find a use for MoveRelocations, this is the place to
+    // initialize those:
+    //    MoveRelocations[Offset] =
+    //      Relocation{Offset, Symbol, RelType, Addend, Value};
   }
 
   /// Get data used by this function.
@@ -2360,6 +2351,18 @@ public:
     for (auto BB : DeletedBasicBlocks) {
       BB->releaseCFG();
     }
+
+    clearList(CallSites);
+    clearList(ColdCallSites);
+    clearList(LSDATypeTable);
+
+    clearList(MoveRelocations);
+
+    clearList(LabelToBB);
+    clearList(Labels);
+
+    clearList(FrameInstructions);
+    clearList(FrameRestoreEquivalents);
   }
 };
 
