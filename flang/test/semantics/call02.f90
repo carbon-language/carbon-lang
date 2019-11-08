@@ -16,18 +16,20 @@
 
 subroutine s01(elem, subr)
   interface
-    ! Merely declaring an elemental dummy procedure is not an error;
-    ! if the actual argument were an elemental unrestricted specific
-    ! intrinsic function, that's okay.
     elemental real function elem(x)
-      real, value :: x
+      real, intent(in), value :: x
     end function
-    subroutine subr(elem)
-      procedure(sin) :: elem
+    subroutine subr(dummy)
+      procedure(sin) :: dummy
+    end subroutine
+    !ERROR: A dummy procedure may not be ELEMENTAL
+    subroutine badsubr(dummy)
+      import :: elem
+      procedure(elem) :: dummy
     end subroutine
   end interface
   call subr(cos) ! not an error
-  !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
+  !ERROR: Non-intrinsic ELEMENTAL procedure 'elem' may not be passed as an actual argument
   call subr(elem) ! C1533
 end subroutine
 
@@ -47,13 +49,13 @@ module m01
   end function
   subroutine test
     call callme(cos) ! not an error
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
+    !ERROR: Non-intrinsic ELEMENTAL procedure 'elem01' may not be passed as an actual argument
     call callme(elem01) ! C1533
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
+    !ERROR: Non-intrinsic ELEMENTAL procedure 'elem02' may not be passed as an actual argument
     call callme(elem02) ! C1533
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
+    !ERROR: Non-intrinsic ELEMENTAL procedure 'elem03' may not be passed as an actual argument
     call callme(elem03) ! C1533
-    !ERROR: Non-intrinsic ELEMENTAL procedure cannot be passed as argument
+    !ERROR: Non-intrinsic ELEMENTAL procedure 'elem04' may not be passed as an actual argument
     call callme(elem04) ! C1533
    contains
     elemental real function elem04(x)
@@ -72,7 +74,7 @@ module m02
     type(t), intent(in) :: x
   end subroutine
   subroutine test
-    !ERROR: Coindexed object 'coarray' with POINTER ultimate component 'ptr' cannot be passed as argument
+    !ERROR: Coindexed object 'coarray' with POINTER ultimate component 'ptr' cannot be associated with dummy argument 'x='
     call callee(coarray[1]) ! C1537
   end subroutine
 end module

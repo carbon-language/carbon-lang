@@ -1340,6 +1340,7 @@ public:
     ResolveName(*parser::Unwrap<parser::Name>(x.name));
   }
   void Post(const parser::ProcComponentRef &);
+  bool Pre(const parser::ActualArg &);
   bool Pre(const parser::FunctionReference &);
   bool Pre(const parser::CallStmt &);
   bool Pre(const parser::ImportStmt &);
@@ -4301,12 +4302,7 @@ Symbol &DeclarationVisitor::MakeCommonBlockSymbol(const parser::Name &name) {
 }
 
 bool DeclarationVisitor::NameIsKnownOrIntrinsic(const parser::Name &name) {
-  if (Symbol * symbol{FindSymbol(name)}) {
-    Resolve(name, *symbol);
-    return true;
-  } else {
-    return HandleUnrestrictedSpecificIntrinsicFunction(name);
-  }
+  return FindSymbol(name) || HandleUnrestrictedSpecificIntrinsicFunction(name);
 }
 
 // Check if this derived type can be in a COMMON block.
@@ -4342,10 +4338,8 @@ void DeclarationVisitor::CheckCommonBlockDerivedType(
 
 bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
     const parser::Name &name) {
-  if (context()
-          .intrinsics()
-          .IsUnrestrictedSpecificIntrinsicFunction(name.source.ToString())
-          .has_value()) {
+  if (context().intrinsics().IsUnrestrictedSpecificIntrinsicFunction(
+          name.source.ToString())) {
     // Unrestricted specific intrinsic function names (e.g., "cos")
     // are acceptable as procedure interfaces.
     Symbol &symbol{MakeSymbol(InclusiveScope(), name.source,
@@ -4794,9 +4788,7 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
 bool ConstructVisitor::Pre(const parser::DataStmtObject &x) {
   std::visit(
       common::visitors{
-          [&](const common::Indirection<parser::Variable> &y) {
-            Walk(y.value());
-          },
+          [&](const Indirection<parser::Variable> &y) { Walk(y.value()); },
           [&](const parser::DataImpliedDo &y) {
             PushScope(Scope::Kind::ImpliedDos, nullptr);
             Walk(y);
@@ -5106,6 +5098,23 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 
 // ResolveNamesVisitor implementation
 
+// Ensures that bare undeclared intrinsic procedure names passed as actual
+// arguments get recognized as being intrinsics.
+bool ResolveNamesVisitor::Pre(const parser::ActualArg &arg) {
+  if (const auto *expr{std::get_if<Indirection<parser::Expr>>(&arg.u)}) {
+    if (const auto *designator{
+            std::get_if<Indirection<parser::Designator>>(&expr->value().u)}) {
+      if (const auto *dataRef{
+              std::get_if<parser::DataRef>(&designator->value().u)}) {
+        if (const auto *name{std::get_if<parser::Name>(&dataRef->u)}) {
+          NameIsKnownOrIntrinsic(*name);
+        }
+      }
+    }
+  }
+  return true;
+}
+
 bool ResolveNamesVisitor::Pre(const parser::FunctionReference &x) {
   HandleCall(Symbol::Flag::Function, x.v);
   return false;
@@ -5178,11 +5187,11 @@ const parser::Name *DeclarationVisitor::ResolveDataRef(
           [=](const Indirection<parser::StructureComponent> &y) {
             return ResolveStructureComponent(y.value());
           },
-          [&](const common::Indirection<parser::ArrayElement> &y) {
+          [&](const Indirection<parser::ArrayElement> &y) {
             Walk(y.value().subscripts);
             return ResolveDataRef(y.value().base);
           },
-          [&](const common::Indirection<parser::CoindexedNamedObject> &y) {
+          [&](const Indirection<parser::CoindexedNamedObject> &y) {
             Walk(y.value().imageSelector);
             return ResolveDataRef(y.value().base);
           },
@@ -5194,10 +5203,10 @@ const parser::Name *DeclarationVisitor::ResolveVariable(
     const parser::Variable &x) {
   return std::visit(
       common::visitors{
-          [&](const common::Indirection<parser::Designator> &y) {
+          [&](const Indirection<parser::Designator> &y) {
             return ResolveDesignator(y.value());
           },
-          [&](const common::Indirection<parser::FunctionReference> &y) {
+          [&](const Indirection<parser::FunctionReference> &y) {
             const auto &proc{
                 std::get<parser::ProcedureDesignator>(y.value().v.t)};
             return std::visit(
@@ -5398,7 +5407,7 @@ void DeclarationVisitor::Initialization(const parser::Name &name,
                 details->set_init(std::move(*expr));
               }
             },
-            [&](const std::list<common::Indirection<parser::DataStmtValue>> &) {
+            [&](const std::list<Indirection<parser::DataStmtValue>> &) {
               if (inComponentDecl) {
                 Say(name,
                     "Component '%s' initialized with DATA statement values"_err_en_US);

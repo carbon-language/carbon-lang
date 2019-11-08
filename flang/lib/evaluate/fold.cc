@@ -924,7 +924,7 @@ Expr<Type<TypeCategory::Real, KIND>> ToReal(
           CHECK(constant != nullptr);
           Scalar<Result> real{constant->GetScalarValue().value()};
           From converted{From::ConvertUnsigned(real.RawBits()).value};
-          if (!(original == converted)) {  // C1601
+          if (original != converted) {  // C1601
             context.messages().Say(
                 "Nonzero bits truncated from BOZ literal constant in REAL intrinsic"_en_US);
           }

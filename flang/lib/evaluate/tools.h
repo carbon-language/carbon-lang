@@ -761,7 +761,8 @@ template<typename A> bool IsAllocatableOrPointer(const A &x) {
       semantics::Attrs{semantics::Attr::POINTER, semantics::Attr::ALLOCATABLE});
 }
 
-// Pointer detection predicates
+// Procedure and pointer detection predicates
+bool IsProcedure(const Expr<SomeType> &);
 bool IsProcedurePointer(const Expr<SomeType> &);
 bool IsNullPointer(const Expr<SomeType> &);
 

@@ -184,15 +184,28 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       }
     }
     UltimateComponentIterator ultimates{derived};
-    if (actualIsCoindexed && dummy.intent != common::Intent::In &&
-        !dummyIsValue) {
-      if (auto iter{std::find_if(
-              ultimates.begin(), ultimates.end(), [](const Symbol &component) {
-                return IsAllocatable(component);
-              })}) {  // 15.5.2.4(6)
-        evaluate::SayWithDeclaration(messages, &*iter,
-            "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
-            iter.BuildResultDesignatorName(), dummyName);
+    if (actualIsCoindexed) {
+      if (dummy.intent != common::Intent::In && !dummyIsValue) {
+        if (auto iter{std::find_if(ultimates.begin(), ultimates.end(),
+                [](const Symbol &component) {
+                  return IsAllocatable(component);
+                })}) {  // 15.5.2.4(6)
+          evaluate::SayWithDeclaration(messages, &*iter,
+              "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
+              iter.BuildResultDesignatorName(), dummyName);
+        }
+      }
+      if (auto coarrayRef{evaluate::ExtractCoarrayRef(actual)}) {  // C1537
+        const Symbol &coarray{coarrayRef->GetLastSymbol()};
+        if (const DeclTypeSpec * type{coarray.GetType()}) {
+          if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+            if (auto ptr{semantics::FindPointerUltimateComponent(*derived)}) {
+              evaluate::SayWithDeclaration(messages, &coarray,
+                  "Coindexed object '%s' with POINTER ultimate component '%s' cannot be associated with %s"_err_en_US,
+                  coarray.name(), ptr->name(), dummyName);
+            }
+          }
+        }
       }
     }
     if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
@@ -210,7 +223,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
 
   // Rank and shape checks
   const auto *actualLastSymbol{evaluate::GetLastSymbol(actual)};
-  if (actualLastSymbol != nullptr) {
+  if (actualLastSymbol) {
     actualLastSymbol = GetAssociationRoot(*actualLastSymbol);
   }
   const ObjectEntityDetails *actualLastObject{actualLastSymbol
@@ -279,11 +292,11 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   } else if (dummyIsVolatile) {
     reason = "VOLATILE";
   }
-  if (reason != nullptr && scope != nullptr) {
+  if (reason && scope) {
     bool vectorSubscriptIsOk{isElemental || dummyIsValue};  // 15.5.2.4(21)
     std::unique_ptr<parser::Message> why{
         WhyNotModifiable(messages.at(), actual, *scope, vectorSubscriptIsOk)};
-    if (why.get() != nullptr) {
+    if (why.get()) {
       if (auto *msg{messages.Say(
               "Actual argument associated with %s %s must be definable"_err_en_US,
               reason, dummyName)}) {
@@ -437,6 +450,102 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
   }
 }
 
+static void CheckProcedureArg(evaluate::ActualArgument &arg,
+    const characteristics::DummyProcedure &proc, const std::string &dummyName,
+    evaluate::FoldingContext &context) {
+  parser::ContextualMessages &messages{context.messages()};
+  const characteristics::Procedure &interface{proc.procedure.value()};
+  if (const auto *expr{arg.UnwrapExpr()}) {
+    bool dummyIsPointer{
+        proc.attrs.test(characteristics::DummyProcedure::Attr::Pointer)};
+    const auto *argProcDesignator{
+        std::get_if<evaluate::ProcedureDesignator>(&expr->u)};
+    const auto *argProcSymbol{
+        argProcDesignator ? argProcDesignator->GetSymbol() : nullptr};
+    if (auto argChars{characteristics::DummyArgument::FromActual(
+            "actual argument", *expr, context)}) {
+      if (auto *argProc{
+              std::get_if<characteristics::DummyProcedure>(&argChars->u)}) {
+        characteristics::Procedure &argInterface{argProc->procedure.value()};
+        argInterface.attrs.reset(characteristics::Procedure::Attr::NullPointer);
+        if (!argProcSymbol || argProcSymbol->attrs().test(Attr::INTRINSIC)) {
+          // It's ok to pass ELEMENTAL unrestricted intrinsic functions.
+          argInterface.attrs.reset(characteristics::Procedure::Attr::Elemental);
+        } else if (argInterface.attrs.test(
+                       characteristics::Procedure::Attr::Elemental)) {
+          if (argProcSymbol) {  // C1533
+            evaluate::SayWithDeclaration(messages, argProcSymbol,
+                "Non-intrinsic ELEMENTAL procedure '%s' may not be passed as an actual argument"_err_en_US,
+                argProcSymbol->name());
+            return;  // avoid piling on with checks below
+          } else {
+            argInterface.attrs.reset(
+                characteristics::Procedure::Attr::NullPointer);
+          }
+        }
+        if (!interface.IsPure()) {
+          // 15.5.2.9(1): if dummy is not PURE, actual need not be.
+          argInterface.attrs.reset(characteristics::Procedure::Attr::Pure);
+        }
+        if (interface.HasExplicitInterface()) {
+          if (interface != argInterface) {
+            messages.Say(
+                "Actual argument procedure has interface incompatible with %s"_err_en_US,
+                dummyName);
+          }
+        } else {  // 15.5.2.9(2,3)
+          if (interface.IsSubroutine() && argInterface.IsFunction()) {
+            messages.Say(
+                "Actual argument associated with procedure %s is a function but must be a subroutine"_err_en_US,
+                dummyName);
+          } else if (interface.IsFunction()) {
+            if (argInterface.IsFunction()) {
+              if (interface.functionResult != argInterface.functionResult) {
+                messages.Say(
+                    "Actual argument function associated with procedure %s has incompatible result type"_err_en_US,
+                    dummyName);
+              }
+            } else if (argInterface.IsSubroutine()) {
+              messages.Say(
+                  "Actual argument associated with procedure %s is a subroutine but must be a function"_err_en_US,
+                  dummyName);
+            }
+          }
+        }
+      } else {
+        messages.Say(
+            "Actual argument associated with procedure %s is not a procedure"_err_en_US,
+            dummyName);
+      }
+    } else if (!(dummyIsPointer && IsNullPointer(*expr))) {
+      messages.Say(
+          "Actual argument associated with procedure %s is not a procedure"_err_en_US,
+          dummyName);
+    }
+    if (interface.HasExplicitInterface()) {
+      if (dummyIsPointer) {
+        // 15.5.2.9(5) -- dummy procedure POINTER
+        // Interface compatibility has already been checked above by comparison.
+        if (proc.intent != common::Intent::In && !IsVariable(*expr)) {
+          messages.Say(
+              "Actual argument associated with procedure pointer %s must be a POINTER unless INTENT(IN)"_err_en_US,
+              dummyName);
+        }
+      } else {  // 15.5.2.9(4) -- dummy procedure is not POINTER
+        if (!argProcDesignator) {
+          messages.Say(
+              "Actual argument associated with non-POINTER procedure %s must be a procedure (and not a procedure pointer)"_err_en_US,
+              dummyName);
+        }
+      }
+    }
+  } else {
+    messages.Say(
+        "Assumed-type argument may not be forwarded as procedure %s"_err_en_US,
+        dummyName);
+  }
+}
+
 static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
     const characteristics::DummyArgument &dummy,
     const characteristics::Procedure &proc, evaluate::FoldingContext &context,
@@ -475,8 +584,10 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
                   "Actual argument is not an expression or variable"_err_en_US);
             }
           },
-          [](const auto &) {
-            // TODO check actual procedure compatibility
+          [&](const characteristics::DummyProcedure &proc) {
+            CheckProcedureArg(arg, proc, dummyName, context);
+          },
+          [&](const characteristics::AlternateReturn &) {
             // TODO check alternate return
           },
       },

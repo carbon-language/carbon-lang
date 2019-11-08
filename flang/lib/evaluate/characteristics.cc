@@ -40,8 +40,33 @@ static void CopyAttrs(const semantics::Symbol &src, A &dst,
   }
 }
 
+// Shapes of function results and dummy arguments have to have
+// the same rank, the same deferred dimensions, and the same
+// values for explicit dimensions when constant.
+static bool ShapesAreCompatible(const Shape &x, const Shape &y) {
+  if (x.size() != y.size()) {
+    return false;
+  }
+  auto yIter{y.begin()};
+  for (const auto &xDim : x) {
+    const auto &yDim{*yIter++};
+    if (xDim.has_value() != yDim.has_value()) {
+      return false;
+    }
+    if (xDim) {
+      auto xConst{ToInt64(*xDim)};
+      auto yConst{ToInt64(*yDim)};
+      if (xConst.has_value() != yConst.has_value() ||
+          (xConst && *xConst != *yConst)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool TypeAndShape::operator==(const TypeAndShape &that) const {
-  return type_ == that.type_ && shape_ == that.shape_ &&
+  return type_ == that.type_ && ShapesAreCompatible(shape_, that.shape_) &&
       attrs_ == that.attrs_ && corank_ == that.corank_;
 }
 
@@ -214,6 +239,18 @@ bool DummyDataObject::operator==(const DummyDataObject &that) const {
       coshape == that.coshape;
 }
 
+static common::Intent GetIntent(const semantics::Attrs &attrs) {
+  if (attrs.test(semantics::Attr::INTENT_IN)) {
+    return common::Intent::In;
+  } else if (attrs.test(semantics::Attr::INTENT_OUT)) {
+    return common::Intent::Out;
+  } else if (attrs.test(semantics::Attr::INTENT_INOUT)) {
+    return common::Intent::InOut;
+  } else {
+    return common::Intent::Default;
+  }
+}
+
 std::optional<DummyDataObject> DummyDataObject::Characterize(
     const semantics::Symbol &symbol) {
   if (const auto *obj{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
@@ -231,17 +268,7 @@ std::optional<DummyDataObject> DummyDataObject::Characterize(
               {Attr::POINTER, DummyDataObject::Attr::Pointer},
               {Attr::TARGET, DummyDataObject::Attr::Target},
           });
-      if (symbol.attrs().test(semantics::Attr::INTENT_IN)) {
-        result->intent = common::Intent::In;
-      }
-      if (symbol.attrs().test(semantics::Attr::INTENT_OUT)) {
-        CHECK(result->intent == common::Intent::Default);
-        result->intent = common::Intent::Out;
-      }
-      if (symbol.attrs().test(semantics::Attr::INTENT_INOUT)) {
-        CHECK(result->intent == common::Intent::Default);
-        result->intent = common::Intent::InOut;
-      }
+      result->intent = GetIntent(symbol.attrs());
       return result;
     }
   }
@@ -290,18 +317,25 @@ DummyProcedure::DummyProcedure(Procedure &&p)
   : procedure{new Procedure{std::move(p)}} {}
 
 bool DummyProcedure::operator==(const DummyProcedure &that) const {
-  return attrs == that.attrs && procedure.value() == that.procedure.value();
+  return attrs == that.attrs && intent == that.intent &&
+      procedure.value() == that.procedure.value();
 }
 
 std::optional<DummyProcedure> DummyProcedure::Characterize(
     const semantics::Symbol &symbol, const IntrinsicProcTable &intrinsics) {
   if (auto procedure{Procedure::Characterize(symbol, intrinsics)}) {
+    // Dummy procedures may not be elemental.  Elemental dummy procedure
+    // interfaces are errors when the interface is not intrinsic, and that
+    // error is caught elsewhere.  Elemental intrinsic interfaces are
+    // made non-elemental.
+    procedure->attrs.reset(Procedure::Attr::Elemental);
     DummyProcedure result{std::move(procedure.value())};
     CopyAttrs<DummyProcedure, DummyProcedure::Attr>(symbol, result,
         {
             {semantics::Attr::OPTIONAL, DummyProcedure::Attr::Optional},
             {semantics::Attr::POINTER, DummyProcedure::Attr::Pointer},
         });
+    result.intent = GetIntent(symbol.attrs());
     return result;
   } else {
     return std::nullopt;
@@ -310,6 +344,9 @@ std::optional<DummyProcedure> DummyProcedure::Characterize(
 
 std::ostream &DummyProcedure::Dump(std::ostream &o) const {
   attrs.Dump(o, EnumToString);
+  if (intent != common::Intent::Default) {
+    o << "INTENT(" << common::EnumToString(intent) << ')';
+  }
   procedure.value().Dump(o);
   return o;
 }
@@ -542,14 +579,17 @@ std::optional<Procedure> Procedure::Characterize(
           [&](const semantics::SubprogramDetails &subp)
               -> std::optional<Procedure> {
             if (subp.isFunction()) {
-              auto fr{FunctionResult::Characterize(subp.result(), intrinsics)};
-              if (!fr) {
+              if (auto fr{FunctionResult::Characterize(
+                      subp.result(), intrinsics)}) {
+                result.functionResult = std::move(fr);
+              } else {
                 return std::nullopt;
               }
-              result.functionResult = std::move(fr);
+            } else {
+              result.attrs.set(Attr::Subroutine);
             }
             for (const semantics::Symbol *arg : subp.dummyArgs()) {
-              if (arg == nullptr) {
+              if (!arg) {
                 result.dummyArguments.emplace_back(AlternateReturn{});
               } else if (auto argCharacteristics{
                              DummyArgument::Characterize(*arg, intrinsics)}) {
@@ -571,20 +611,19 @@ std::optional<Procedure> Procedure::Characterize(
             if (const semantics::Symbol * interfaceSymbol{interface.symbol()}) {
               return Characterize(*interfaceSymbol, intrinsics);
             } else {
-              result.attrs.set(Procedure::Attr::ImplicitInterface);
+              result.attrs.set(Attr::ImplicitInterface);
               const semantics::DeclTypeSpec *type{interface.type()};
-              if (symbol.test(semantics::Symbol::Flag::Function)) {
-                if (type != nullptr) {
-                  if (auto resultType{DynamicType::From(*type)}) {
-                    result.functionResult = FunctionResult{*resultType};
-                  }
+              if (symbol.test(semantics::Symbol::Flag::Subroutine)) {
+                // ignore any implicit typing
+                result.attrs.set(Attr::Subroutine);
+              } else if (type) {
+                if (auto resultType{DynamicType::From(*type)}) {
+                  result.functionResult = FunctionResult{*resultType};
                 } else {
                   return std::nullopt;
                 }
-              } else {  // subroutine, not function
-                if (type != nullptr) {
-                  return std::nullopt;
-                }
+              } else if (symbol.test(semantics::Symbol::Flag::Function)) {
+                return std::nullopt;
               }
               // The PASS name, if any, is not a characteristic.
               return result;
@@ -630,7 +669,15 @@ std::optional<Procedure> Procedure::Characterize(
 
 std::optional<Procedure> Procedure::Characterize(
     const ProcedureRef &ref, const IntrinsicProcTable &intrinsics) {
-  return Characterize(ref.proc(), intrinsics);
+  if (auto callee{Characterize(ref.proc(), intrinsics)}) {
+    if (callee->functionResult) {
+      if (const Procedure *
+          proc{callee->functionResult->IsProcedurePointer()}) {
+        return {*proc};
+      }
+    }
+  }
+  return std::nullopt;
 }
 
 bool Procedure::CanBeCalledViaImplicitInterface() const {

@@ -999,6 +999,9 @@ TYPE_PARSER(construct<AcImpliedDoControl>(
 
 // R801 type-declaration-stmt ->
 //        declaration-type-spec [[, attr-spec]... ::] entity-decl-list
+constexpr auto entityDeclWithoutEqInit{construct<EntityDecl>(name,
+    maybe(arraySpec), maybe(coarraySpec), maybe("*" >> charLength),
+    !"="_tok >> maybe(initialization))};  // old-style REAL A/0/ still works
 TYPE_PARSER(
     construct<TypeDeclarationStmt>(declarationTypeSpec,
         defaulted("," >> nonemptyList(Parser<AttrSpec>{})) / "::",
@@ -1006,8 +1009,8 @@ TYPE_PARSER(
     // C806: no initializers allowed without colons ("REALA=1" is ambiguous)
     construct<TypeDeclarationStmt>(declarationTypeSpec,
         construct<std::list<AttrSpec>>(),
-        nonemptyList(
-            "expected entity declarations"_err_en_US, entityDeclWithoutInit)) ||
+        nonemptyList("expected entity declarations"_err_en_US,
+            entityDeclWithoutEqInit)) ||
     // PGI-only extension: comma in place of doubled colons
     extension<LanguageFeature::MissingColons>(construct<TypeDeclarationStmt>(
         declarationTypeSpec, defaulted("," >> nonemptyList(Parser<AttrSpec>{})),

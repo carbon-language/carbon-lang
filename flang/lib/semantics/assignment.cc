@@ -40,8 +40,7 @@ public:
       const std::string &description, const characteristics::TypeAndShape *type,
       parser::ContextualMessages &messages,
       const IntrinsicProcTable &intrinsics,
-      const std::optional<characteristics::Procedure> &procedure,
-      bool isContiguous)
+      const characteristics::Procedure *procedure, bool isContiguous)
     : pointer_{pointer}, source_{source}, description_{description},
       type_{type}, messages_{messages}, intrinsics_{intrinsics},
       procedure_{procedure}, isContiguous_{isContiguous} {}
@@ -71,12 +70,12 @@ public:
       std::optional<parser::MessageFixedText> error;
       if (const auto &funcResult{proc->functionResult}) {  // C1025
         const auto *frProc{funcResult->IsProcedurePointer()};
-        if (procedure_.has_value()) {
+        if (procedure_) {
           // Shouldn't be here in this function unless lhs
           // is an object pointer.
           error =
               "Procedure %s is associated with the result of a reference to function '%s' that does not return a procedure pointer"_err_en_US;
-        } else if (frProc != nullptr) {
+        } else if (frProc) {
           error =
               "Object %s is associated with the result of a reference to function '%s' that is a procedure pointer"_err_en_US;
         } else if (!funcResult->attrs.test(
@@ -90,7 +89,7 @@ public:
               "CONTIGUOUS %s is associated with the result of reference to function '%s' that is not contiguous"_err_en_US;
         } else if (type_) {
           const auto *frTypeAndShape{funcResult->GetTypeAndShape()};
-          CHECK(frTypeAndShape != nullptr);
+          CHECK(frTypeAndShape);
           if (!type_->IsCompatibleWith(messages_, *frTypeAndShape)) {
             error =
                 "%s is associated with the result of a reference to function '%s' whose pointer result has an incompatible type or shape"_err_en_US;
@@ -110,14 +109,14 @@ public:
   template<typename T> void Check(const Designator<T> &d) {
     const Symbol *last{d.GetLastSymbol()};
     const Symbol *base{d.GetBaseObject().symbol()};
-    if (last != nullptr && base != nullptr) {
+    if (last && base) {
       std::optional<parser::MessageFixedText> error;
-      if (procedure_.has_value()) {
+      if (procedure_) {
         // Shouldn't be here in this function unless lhs is an
         // object pointer.
         error =
             "In assignment to procedure %s, the target is not a procedure or procedure pointer"_err_en_US;
-      } else if (GetLastTarget(GetSymbolVector(d)) == nullptr) {  // C1025
+      } else if (!GetLastTarget(GetSymbolVector(d))) {  // C1025
         error =
             "In assignment to object %s, the target '%s' is not an object with POINTER or TARGET attributes"_err_en_US;
       } else if (auto rhsTypeAndShape{
@@ -161,7 +160,7 @@ private:
   const characteristics::TypeAndShape *type_{nullptr};
   parser::ContextualMessages &messages_;
   const IntrinsicProcTable &intrinsics_;
-  const std::optional<characteristics::Procedure> &procedure_;
+  const characteristics::Procedure *procedure_{nullptr};
   bool isContiguous_{false};
 };
 
@@ -178,9 +177,9 @@ void PointerAssignmentChecker::Check(const Expr<SomeType> &rhs) {
 // Common handling for procedure pointer right-hand sides
 void PointerAssignmentChecker::Check(parser::CharBlock rhsName, bool isCall,
     const characteristics::Procedure *targetChars) {
-  if (procedure_.has_value()) {
-    if (targetChars != nullptr) {
-      if (!(*procedure_ == *targetChars)) {
+  if (procedure_) {
+    if (targetChars) {
+      if (*procedure_ != *targetChars) {
         if (isCall) {
           Say("Procedure %s associated with result of reference to function '%s' that is an incompatible procedure pointer"_err_en_US,
               description_, rhsName);
@@ -234,7 +233,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
     auto proc{characteristics::Procedure::Characterize(lhs, intrinsics)};
     std::string description{"pointer '"s + lhs.name().ToString() + '\''};
     PointerAssignmentChecker{&lhs, lhs.name(), description,
-        type ? &*type : nullptr, messages, intrinsics, proc,
+        type ? &*type : nullptr, messages, intrinsics, proc ? &*proc : nullptr,
         lhs.attrs().test(semantics::Attr::CONTIGUOUS)}
         .Check(rhs);
   }
@@ -244,9 +243,8 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, parser::CharBlock source,
     const std::string &description, const characteristics::DummyDataObject &lhs,
     const evaluate::Expr<evaluate::SomeType> &rhs) {
-  std::optional<characteristics::Procedure> proc;
   PointerAssignmentChecker{nullptr, source, description, &lhs.type, messages,
-      intrinsics, proc,
+      intrinsics, nullptr /* proc */,
       lhs.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)}
       .Check(rhs);
 }
@@ -275,7 +273,7 @@ struct ForallContext {
     const auto iter{activeNames.find(name)};
     if (iter != activeNames.cend()) {
       return {integerKind};
-    } else if (outer != nullptr) {
+    } else if (outer) {
       return outer->GetActiveIntKind(name);
     } else {
       return std::nullopt;
@@ -354,7 +352,7 @@ private:
 };
 
 void AssignmentContext::Analyze(const parser::AssignmentStmt &) {
-  if (forall_ != nullptr) {
+  if (forall_) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
@@ -364,7 +362,7 @@ void AssignmentContext::Analyze(const parser::AssignmentStmt &) {
 
 void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &) {
   CHECK(!where_);
-  if (forall_ != nullptr) {
+  if (forall_) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
@@ -435,7 +433,7 @@ void AssignmentContext::Analyze(const parser::ForallConstruct &construct) {
 
 void AssignmentContext::Analyze(
     const parser::WhereConstruct::MaskedElsewhere &elsewhere) {
-  CHECK(where_ != nullptr);
+  CHECK(where_);
   const auto &elsewhereStmt{
       std::get<parser::Statement<parser::MaskedElsewhereStmt>>(elsewhere.t)};
   context_.set_location(elsewhereStmt.source);
@@ -454,7 +452,7 @@ void AssignmentContext::Analyze(
           std::move(where_->cumulativeMaskExpr), std::move(copyMask));
   where_->thisMaskExpr = evaluate::BinaryLogicalOperation(
       evaluate::LogicalOperator::And, std::move(notOldMask), std::move(mask));
-  if (where_->outer != nullptr &&
+  if (where_->outer &&
       !evaluate::AreConformable(
           where_->outer->thisMaskExpr, where_->thisMaskExpr)) {
     Say(elsewhereStmt.source,
@@ -507,7 +505,7 @@ MaskExpr AssignmentContext::GetMask(
   if (auto maybeExpr{AnalyzeExpr(context_, expr)}) {
     auto *logical{
         std::get_if<evaluate::Expr<evaluate::SomeLogical>>(&maybeExpr->u)};
-    CHECK(logical != nullptr);
+    CHECK(logical);
     mask = evaluate::ConvertTo(mask, std::move(*logical));
   }
   return mask;

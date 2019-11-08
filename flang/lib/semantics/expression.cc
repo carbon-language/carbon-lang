@@ -202,7 +202,16 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
       return Expr<SomeType>{ProcedureDesignator{std::move(*component)}};
     } else {
       CHECK(std::holds_alternative<SymbolRef>(ref.u));
-      return Expr<SomeType>{ProcedureDesignator{symbol}};
+      if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
+        if (auto interface{
+                context_.intrinsics().IsUnrestrictedSpecificIntrinsicFunction(
+                    symbol.name().ToString())}) {
+          return Expr<SomeType>{ProcedureDesignator{SpecificIntrinsic{
+              symbol.name().ToString(), std::move(*interface)}}};
+        }
+      } else {
+        return Expr<SomeType>{ProcedureDesignator{symbol}};
+      }
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
     return TypedWrapper<Designator, DataRef>(*dyType, std::move(ref));
@@ -2520,27 +2529,6 @@ std::optional<ActualArgument> ArgumentAnalyzer::AnalyzeExpr(
     return ActualArgument{ActualArgument::AssumedType{*assumedTypeDummy}};
   } else if (MaybeExpr argExpr{context_.Analyze(expr)}) {
     Expr<SomeType> x{Fold(context_.GetFoldingContext(), std::move(*argExpr))};
-    if (const auto *proc{std::get_if<ProcedureDesignator>(&x.u)}) {
-      if (!std::holds_alternative<SpecificIntrinsic>(proc->u) &&
-          proc->IsElemental()) {  // C1533
-        context_.Say(expr.source,
-            "Non-intrinsic ELEMENTAL procedure cannot be passed as argument"_err_en_US);
-      }
-    }
-    if (auto coarrayRef{ExtractCoarrayRef(x)}) {
-      const Symbol &coarray{coarrayRef->GetLastSymbol()};
-      if (const semantics::DeclTypeSpec * type{coarray.GetType()}) {
-        if (const semantics::DerivedTypeSpec * derived{type->AsDerived()}) {
-          if (auto ptr{semantics::FindPointerUltimateComponent(*derived)}) {
-            AttachDeclaration(
-                context_.Say(expr.source,
-                    "Coindexed object '%s' with POINTER ultimate component '%s' cannot be passed as argument"_err_en_US,
-                    coarray.name(), ptr->name()),
-                &*ptr);
-          }
-        }
-      }
-    }
     return ActualArgument{std::move(x)};
   } else {
     return std::nullopt;

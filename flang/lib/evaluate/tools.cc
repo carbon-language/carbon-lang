@@ -638,7 +638,10 @@ bool IsAssumedRank(const ActualArgument &arg) {
   }
 }
 
-// IsProcedurePointer()
+bool IsProcedure(const Expr<SomeType> &expr) {
+  return std::holds_alternative<ProcedureDesignator>(expr.u);
+}
+
 bool IsProcedurePointer(const Expr<SomeType> &expr) {
   return std::visit(
       common::visitors{

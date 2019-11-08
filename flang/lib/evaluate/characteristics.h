@@ -74,6 +74,7 @@ public:
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(TypeAndShape)
 
   bool operator==(const TypeAndShape &) const;
+  bool operator!=(const TypeAndShape &that) const { return !(*this == that); }
   static std::optional<TypeAndShape> Characterize(const semantics::Symbol &);
   static std::optional<TypeAndShape> Characterize(
       const semantics::ObjectEntityDetails &);
@@ -129,6 +130,9 @@ struct DummyDataObject {
   explicit DummyDataObject(TypeAndShape &&t) : type{std::move(t)} {}
   explicit DummyDataObject(DynamicType t) : type{t} {}
   bool operator==(const DummyDataObject &) const;
+  bool operator!=(const DummyDataObject &that) const {
+    return !(*this == that);
+  }
   static std::optional<DummyDataObject> Characterize(const semantics::Symbol &);
   bool CanBePassedViaImplicitInterface() const;
   std::ostream &Dump(std::ostream &) const;
@@ -141,19 +145,23 @@ struct DummyDataObject {
 // 15.3.2.3
 struct DummyProcedure {
   ENUM_CLASS(Attr, Pointer, Optional)
+  using Attrs = common::EnumSet<Attr, Attr_enumSize>;
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(DummyProcedure)
   explicit DummyProcedure(Procedure &&);
   bool operator==(const DummyProcedure &) const;
+  bool operator!=(const DummyProcedure &that) const { return !(*this == that); }
   static std::optional<DummyProcedure> Characterize(
       const semantics::Symbol &, const IntrinsicProcTable &);
   std::ostream &Dump(std::ostream &) const;
   CopyableIndirection<Procedure> procedure;
-  common::EnumSet<Attr, Attr_enumSize> attrs;
+  common::Intent intent{common::Intent::Default};
+  Attrs attrs;
 };
 
 // 15.3.2.4
 struct AlternateReturn {
   bool operator==(const AlternateReturn &) const { return true; }
+  bool operator!=(const AlternateReturn &) const { return false; }
   std::ostream &Dump(std::ostream &) const;
 };
 
@@ -167,6 +175,7 @@ struct DummyArgument {
   explicit DummyArgument(AlternateReturn &&x) : u{std::move(x)} {}
   ~DummyArgument();
   bool operator==(const DummyArgument &) const;
+  bool operator!=(const DummyArgument &that) const { return !(*this == that); }
   static std::optional<DummyArgument> Characterize(
       const semantics::Symbol &, const IntrinsicProcTable &);
   static std::optional<DummyArgument> FromActual(
@@ -187,12 +196,14 @@ using DummyArguments = std::vector<DummyArgument>;
 // 15.3.3
 struct FunctionResult {
   ENUM_CLASS(Attr, Allocatable, Pointer, Contiguous)
+  using Attrs = common::EnumSet<Attr, Attr_enumSize>;
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(FunctionResult)
   explicit FunctionResult(DynamicType);
   explicit FunctionResult(TypeAndShape &&);
   explicit FunctionResult(Procedure &&);
   ~FunctionResult();
   bool operator==(const FunctionResult &) const;
+  bool operator!=(const FunctionResult &that) const { return !(*this == that); }
   static std::optional<FunctionResult> Characterize(
       const Symbol &, const IntrinsicProcTable &);
 
@@ -213,19 +224,21 @@ struct FunctionResult {
 
   std::ostream &Dump(std::ostream &) const;
 
-  common::EnumSet<Attr, Attr_enumSize> attrs;
+  Attrs attrs;
   std::variant<TypeAndShape, CopyableIndirection<Procedure>> u;
 };
 
 // 15.3.1
 struct Procedure {
-  ENUM_CLASS(Attr, Pure, Elemental, BindC, ImplicitInterface, NullPointer)
+  ENUM_CLASS(
+      Attr, Pure, Elemental, BindC, ImplicitInterface, NullPointer, Subroutine)
   using Attrs = common::EnumSet<Attr, Attr_enumSize>;
   Procedure(FunctionResult &&, DummyArguments &&, Attrs);
   Procedure(DummyArguments &&, Attrs);  // for subroutines and NULL()
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(Procedure)
   ~Procedure();
   bool operator==(const Procedure &) const;
+  bool operator!=(const Procedure &that) const { return !(*this == that); }
 
   // Characterizes the procedure represented by a symbol, which may be an
   // "unrestricted specific intrinsic function".
@@ -236,8 +249,11 @@ struct Procedure {
   static std::optional<Procedure> Characterize(
       const ProcedureRef &, const IntrinsicProcTable &);
 
+  // At most one of these will return true.
+  // For "EXTERNAL P" with no calls to P, both will be false.
   bool IsFunction() const { return functionResult.has_value(); }
-  bool IsSubroutine() const { return !IsFunction(); }
+  bool IsSubroutine() const { return attrs.test(Attr::Subroutine); }
+
   bool IsPure() const { return attrs.test(Attr::Pure); }
   bool IsElemental() const { return attrs.test(Attr::Elemental); }
   bool IsBindC() const { return attrs.test(Attr::BindC); }

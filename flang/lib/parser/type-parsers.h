@@ -87,7 +87,7 @@ constexpr Parser<TypeDeclarationStmt> typeDeclarationStmt;  // R801
 constexpr Parser<NullInit> nullInit;  // R806
 constexpr Parser<AccessSpec> accessSpec;  // R807
 constexpr Parser<LanguageBindingSpec> languageBindingSpec;  // R808, R1528
-constexpr Parser<EntityDecl> entityDecl, entityDeclWithoutInit;  // R803
+constexpr Parser<EntityDecl> entityDecl;  // R803
 constexpr Parser<CoarraySpec> coarraySpec;  // R809
 constexpr Parser<ArraySpec> arraySpec;  // R815
 constexpr Parser<ExplicitShapeSpec> explicitShapeSpec;  // R816

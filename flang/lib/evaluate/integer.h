@@ -184,6 +184,9 @@ public:
   constexpr bool operator==(const Integer &that) const {
     return CompareUnsigned(that) == Ordering::Equal;
   }
+  constexpr bool operator!=(const Integer &that) const {
+    return !(*this == that);
+  }
 
   // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
   static constexpr Integer MASKL(int places) {

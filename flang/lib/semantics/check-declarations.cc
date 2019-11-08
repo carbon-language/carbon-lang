@@ -172,6 +172,22 @@ void CheckHelper::Check(const Symbol &symbol) {
             "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
       }
     }
+  } else if (auto *proc{symbol.detailsIf<ProcEntityDetails>()}) {
+    if (proc->isDummy()) {
+      const Symbol *interface{proc->interface().symbol()};
+      if (!symbol.attrs().test(Attr::INTRINSIC) &&
+          (symbol.attrs().test(Attr::ELEMENTAL) ||
+              (interface && !interface->attrs().test(Attr::INTRINSIC) &&
+                  interface->attrs().test(Attr::ELEMENTAL)))) {
+        // There's no explicit constraint or "shall" that we can find in the
+        // standard for this check, but it seems to be implied in multiple
+        // sites, and ELEMENTAL non-intrinsic actual arguments *are*
+        // explicitly forbidden.  But we allow "PROCEDURE(SIN)::dummy"
+        // because it is explicitly legal to *pass* the specific intrinsic
+        // function SIN as an actual argument.
+        messages_.Say("A dummy procedure may not be ELEMENTAL"_err_en_US);
+      }
+    }
   }
   if (symbol.attrs().test(Attr::VALUE)) {
     CheckValue(symbol, derived);
