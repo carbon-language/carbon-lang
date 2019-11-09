@@ -222,7 +222,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
   if ((!parsing.messages().empty() &&
           (driver.warningsAreErrors || parsing.messages().AnyFatalError())) ||
-      !parsing.parseTree().has_value()) {
+      !parsing.parseTree()) {
     std::cerr << driver.prefix << "could not parse " << path << '\n';
     exitStatus = EXIT_FAILURE;
     return {};
@@ -291,7 +291,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
 
   Fortran::parser::TypedExprAsFortran unparseExpression{
       [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
-        if (x.v.has_value()) {
+        if (x.v) {
           o << *x.v;
         } else {
           o << "(bad expression)";

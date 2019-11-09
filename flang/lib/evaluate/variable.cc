@@ -34,11 +34,11 @@ Triplet::Triplet() : stride_{Expr<SubscriptInteger>{1}} {}
 Triplet::Triplet(std::optional<Expr<SubscriptInteger>> &&l,
     std::optional<Expr<SubscriptInteger>> &&u,
     std::optional<Expr<SubscriptInteger>> &&s)
-  : stride_{s.has_value() ? std::move(*s) : Expr<SubscriptInteger>{1}} {
-  if (l.has_value()) {
+  : stride_{s ? std::move(*s) : Expr<SubscriptInteger>{1}} {
+  if (l) {
     lower_.emplace(std::move(*l));
   }
-  if (u.has_value()) {
+  if (u) {
     upper_.emplace(std::move(*u));
   }
 }
@@ -91,16 +91,16 @@ CoarrayRef::CoarrayRef(SymbolVector &&base, std::vector<Subscript> &&ss,
 }
 
 std::optional<Expr<SomeInteger>> CoarrayRef::stat() const {
-  if (stat_.has_value()) {
-    return {stat_.value().value()};
+  if (stat_) {
+    return stat_.value().value();
   } else {
     return std::nullopt;
   }
 }
 
 std::optional<Expr<SomeInteger>> CoarrayRef::team() const {
-  if (team_.has_value()) {
-    return {team_.value().value()};
+  if (team_) {
+    return team_.value().value();
   } else {
     return std::nullopt;
   }
@@ -125,16 +125,16 @@ const Symbol &CoarrayRef::GetLastSymbol() const { return base_.back(); }
 
 void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &lower,
     std::optional<Expr<SubscriptInteger>> &upper) {
-  if (lower.has_value()) {
+  if (lower) {
     set_lower(std::move(lower.value()));
   }
-  if (upper.has_value()) {
+  if (upper) {
     set_upper(std::move(upper.value()));
   }
 }
 
 Expr<SubscriptInteger> Substring::lower() const {
-  if (lower_.has_value()) {
+  if (lower_) {
     return lower_.value().value();
   } else {
     return AsExpr(Constant<SubscriptInteger>{1});
@@ -147,7 +147,7 @@ Substring &Substring::set_lower(Expr<SubscriptInteger> &&expr) {
 }
 
 std::optional<Expr<SubscriptInteger>> Substring::upper() const {
-  if (upper_.has_value()) {
+  if (upper_) {
     return upper_.value().value();
   } else {
     return std::visit(
@@ -168,21 +168,21 @@ Substring &Substring::set_upper(Expr<SubscriptInteger> &&expr) {
 }
 
 std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
-  if (!lower_.has_value()) {
+  if (!lower_) {
     lower_ = AsExpr(Constant<SubscriptInteger>{1});
   }
   lower_.value() = evaluate::Fold(context, std::move(lower_.value().value()));
   std::optional<ConstantSubscript> lbi{ToInt64(lower_.value().value())};
-  if (lbi.has_value() && *lbi < 1) {
+  if (lbi && *lbi < 1) {
     context.messages().Say(
         "Lower bound (%jd) on substring is less than one"_en_US,
         static_cast<std::intmax_t>(*lbi));
     *lbi = 1;
     lower_ = AsExpr(Constant<SubscriptInteger>{1});
   }
-  if (!upper_.has_value()) {
+  if (!upper_) {
     upper_ = upper();
-    if (!upper_.has_value()) {
+    if (!upper_) {
       return std::nullopt;
     }
   }
@@ -190,7 +190,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   if (std::optional<ConstantSubscript> ubi{ToInt64(upper_.value().value())}) {
     auto *literal{std::get_if<StaticDataObject::Pointer>(&parent_)};
     std::optional<ConstantSubscript> length;
-    if (literal != nullptr) {
+    if (literal) {
       length = (*literal)->data().size();
     } else if (const Symbol * symbol{GetLastSymbol()}) {
       if (const semantics::DeclTypeSpec * type{symbol->GetType()}) {
@@ -199,19 +199,19 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
         }
       }
     }
-    if (*ubi < 1 || (lbi.has_value() && *ubi < *lbi)) {
+    if (*ubi < 1 || (lbi && *ubi < *lbi)) {
       // Zero-length string: canonicalize
       *lbi = 1, *ubi = 0;
       lower_ = AsExpr(Constant<SubscriptInteger>{*lbi});
       upper_ = AsExpr(Constant<SubscriptInteger>{*ubi});
-    } else if (length.has_value() && *ubi > *length) {
+    } else if (length && *ubi > *length) {
       context.messages().Say("Upper bound (%jd) on substring is greater "
                              "than character length (%jd)"_en_US,
           static_cast<std::intmax_t>(*ubi),
           static_cast<std::intmax_t>(*length));
       *ubi = *length;
     }
-    if (lbi.has_value() && literal != nullptr) {
+    if (lbi && literal) {
       CHECK(*ubi >= *lbi);
       auto newStaticData{StaticDataObject::Create()};
       auto items{*ubi - *lbi + 1};

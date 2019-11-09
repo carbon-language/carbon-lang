@@ -68,7 +68,7 @@ void Prescanner::Prescan(ProvenanceRange range) {
   startProvenance_ = range.start();
   std::size_t offset{0};
   const SourceFile *source{allSources.GetSourceFile(startProvenance_, &offset)};
-  CHECK(source != nullptr);
+  CHECK(source);
   start_ = source->content() + offset;
   limit_ = start_ + range.size();
   nextLine_ = start_;
@@ -241,7 +241,7 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
 void Prescanner::NextLine() {
   void *vstart{static_cast<void *>(const_cast<char *>(nextLine_))};
   void *v{std::memchr(vstart, '\n', limit_ - nextLine_)};
-  if (v == nullptr) {
+  if (!v) {
     nextLine_ = limit_;
   } else {
     const char *nl{const_cast<const char *>(static_cast<char *>(v))};
@@ -746,14 +746,14 @@ void Prescanner::FortranInclude(const char *firstQuote) {
   Provenance provenance{GetProvenance(nextLine_)};
   AllSources &allSources{cooked_.allSources()};
   const SourceFile *currentFile{allSources.GetSourceFile(provenance)};
-  if (currentFile != nullptr) {
+  if (currentFile) {
     allSources.PushSearchPathDirectory(DirectoryName(currentFile->path()));
   }
   const SourceFile *included{allSources.Open(path, &error)};
-  if (currentFile != nullptr) {
+  if (currentFile) {
     allSources.PopSearchPathDirectory();
   }
-  if (included == nullptr) {
+  if (!included) {
     Say(provenance, "INCLUDE: %s"_err_en_US, error.str());
   } else if (included->bytes() > 0) {
     ProvenanceRange includeLineRange{

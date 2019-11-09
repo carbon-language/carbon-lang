@@ -156,7 +156,7 @@ public:
     return kind_ == ClassKind || IsAssumedType();
   }
   constexpr bool IsUnlimitedPolymorphic() const {  // TYPE(*) or CLASS(*)
-    return IsPolymorphic() && derived_ == nullptr;
+    return IsPolymorphic() && !derived_;
   }
   constexpr const semantics::DerivedTypeSpec &GetDerivedTypeSpec() const {
     return DEREF(derived_);
@@ -179,7 +179,7 @@ public:
     return x.GetType();
   }
   template<typename A> static std::optional<DynamicType> From(const A *p) {
-    if (p == nullptr) {
+    if (!p) {
       return std::nullopt;
     } else {
       return From(*p);
@@ -187,7 +187,7 @@ public:
   }
   template<typename A>
   static std::optional<DynamicType> From(const std::optional<A> &x) {
-    if (x.has_value()) {
+    if (x) {
       return From(*x);
     } else {
       return std::nullopt;
@@ -392,16 +392,16 @@ public:
     : SomeKind(dt.GetDerivedTypeSpec()) {}
   CONSTEXPR_CONSTRUCTORS_AND_ASSIGNMENTS(SomeKind)
 
-  bool IsUnlimitedPolymorphic() const { return derivedTypeSpec_ == nullptr; }
+  bool IsUnlimitedPolymorphic() const { return !derivedTypeSpec_; }
   constexpr DynamicType GetType() const {
-    if (derivedTypeSpec_ == nullptr) {
+    if (!derivedTypeSpec_) {
       return DynamicType::UnlimitedPolymorphic();
     } else {
       return DynamicType{*derivedTypeSpec_};
     }
   }
   const semantics::DerivedTypeSpec &derivedTypeSpec() const {
-    CHECK(derivedTypeSpec_ != nullptr);
+    CHECK(derivedTypeSpec_);
     return *derivedTypeSpec_;
   }
   bool operator==(const SomeKind &) const;

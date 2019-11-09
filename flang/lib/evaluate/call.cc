@@ -30,8 +30,7 @@ ActualArgument::~ActualArgument() {}
 ActualArgument::AssumedType::AssumedType(const Symbol &symbol)
   : symbol_{symbol} {
   const semantics::DeclTypeSpec *type{symbol.GetType()};
-  CHECK(
-      type != nullptr && type->category() == semantics::DeclTypeSpec::TypeStar);
+  CHECK(type && type->category() == semantics::DeclTypeSpec::TypeStar);
 }
 
 int ActualArgument::AssumedType::Rank() const { return symbol_->Rank(); }
@@ -179,7 +178,7 @@ std::optional<Expr<SubscriptInteger>> ProcedureRef::LEN() const {
           UnwrapExpr<Expr<SomeCharacter>>(arguments_[0].value())};
       const auto *nCopiesArg{
           UnwrapExpr<Expr<SomeInteger>>(arguments_[1].value())};
-      CHECK(stringArg != nullptr && nCopiesArg != nullptr);
+      CHECK(stringArg && nCopiesArg);
       if (auto stringLen{stringArg->LEN()}) {
         auto converted{ConvertTo(*stringLen, common::Clone(*nCopiesArg))};
         return *std::move(stringLen) * std::move(converted);

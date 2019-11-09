@@ -62,7 +62,7 @@ struct DynamicTypeWithLength : public DynamicType {
 };
 
 std::optional<Expr<SubscriptInteger>> DynamicTypeWithLength::LEN() const {
-  if (length.has_value()) {
+  if (length) {
     return length;
   }
   if (auto *lengthParam{charLength()}) {
@@ -75,7 +75,7 @@ std::optional<Expr<SubscriptInteger>> DynamicTypeWithLength::LEN() const {
 
 static std::optional<DynamicTypeWithLength> AnalyzeTypeSpec(
     const std::optional<parser::TypeSpec> &spec) {
-  if (spec.has_value()) {
+  if (spec) {
     if (const semantics::DeclTypeSpec * typeSpec{spec->declTypeSpec}) {
       // Name resolution sets TypeSpec::declTypeSpec only when it's valid
       // (viz., an intrinsic type with valid known kind or a non-polymorphic
@@ -155,7 +155,7 @@ public:
   }
   void Analyze(const parser::Expr &x) {
     actuals_.emplace_back(AnalyzeExpr(x));
-    fatalErrors_ |= !actuals_.back().has_value();
+    fatalErrors_ |= !actuals_.back();
   }
   void Analyze(const parser::ActualArgSpec &, bool isSubroutine);
 
@@ -246,10 +246,10 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
         return std::nullopt;
       }
     }
-  } else if (object != nullptr) {
+  } else if (object) {
     // C928 & C1002
     if (Triplet * last{std::get_if<Triplet>(&ref.subscript().back().u)}) {
-      if (!last->upper().has_value() && object->IsAssumedSize()) {
+      if (!last->upper() && object->IsAssumedSize()) {
         Say("Assumed-size array '%s' must have explicit final "
             "subscript upper bound value"_err_en_US,
             symbol.name());
@@ -309,7 +309,7 @@ static void FixMisparsedSubstring(const parser::Designator &d) {
       if (!arrElement.subscripts.empty()) {
         auto iter{arrElement.subscripts.begin()};
         if (auto *triplet{std::get_if<parser::SubscriptTriplet>(&iter->u)}) {
-          if (!std::get<2>(triplet->t).has_value() /* no stride */ &&
+          if (!std::get<2>(triplet->t) /* no stride */ &&
               ++iter == arrElement.subscripts.end() /* one subscript */) {
             if (Symbol *
                 symbol{std::visit(
@@ -359,7 +359,7 @@ template<typename A> common::IfNoLvalue<MaybeExpr, A> AsMaybeExpr(A &&x) {
   return std::make_optional(AsGenericExpr(std::move(x)));
 }
 template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
-  if (x.has_value()) {
+  if (x) {
     return AsMaybeExpr(std::move(*x));
   }
   return std::nullopt;
@@ -368,7 +368,7 @@ template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
 // Type kind parameter values for literal constants.
 int ExpressionAnalyzer::AnalyzeKindParam(
     const std::optional<parser::KindParam> &kindParam, int defaultKind) {
-  if (!kindParam.has_value()) {
+  if (!kindParam) {
     return defaultKind;
   }
   return std::visit(
@@ -426,7 +426,7 @@ struct IntTypeVisitor {
 template<typename PARSED>
 MaybeExpr ExpressionAnalyzer::IntLiteralConstant(const PARSED &x) {
   const auto &kindParam{std::get<std::optional<parser::KindParam>>(x.t)};
-  bool isDefaultKind{!kindParam.has_value()};
+  bool isDefaultKind{!kindParam};
   int kind{AnalyzeKindParam(kindParam, GetDefaultKind(TypeCategory::Integer))};
   if (CheckIntrinsicKind(TypeCategory::Integer, kind)) {
     auto digits{std::get<parser::CharBlock>(x.t)};
@@ -513,18 +513,18 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
       break;
     }
   }
-  if (letterKind.has_value()) {
+  if (letterKind) {
     defaultKind = *letterKind;
   }
   auto kind{AnalyzeKindParam(x.kind, defaultKind)};
-  if (letterKind.has_value() && kind != *letterKind && expoLetter != 'e') {
+  if (letterKind && kind != *letterKind && expoLetter != 'e') {
     Say("Explicit kind parameter on real constant disagrees with "
         "exponent letter '%c'"_en_US,
         expoLetter);
   }
   auto result{common::SearchTypes(
       RealTypeVisitor{kind, x.real.source, GetFoldingContext()})};
-  if (!result.has_value()) {
+  if (!result) {
     Say("Unsupported REAL(KIND=%d)"_err_en_US, kind);
   }
   return AsMaybeExpr(std::move(result));
@@ -598,7 +598,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
   auto result{common::SearchTypes(
       TypeKindVisitor<TypeCategory::Logical, Constant, bool>{
           kind, std::move(value)})};
-  if (!result.has_value()) {
+  if (!result) {
     Say("unsupported LOGICAL(KIND=%d)"_err_en_US, kind);
   }
   return result;
@@ -694,7 +694,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::NamedConstant &n) {
 // Substring references
 std::optional<Expr<SubscriptInteger>> ExpressionAnalyzer::GetSubstringBound(
     const std::optional<parser::ScalarIntExpr> &bound) {
-  if (bound.has_value()) {
+  if (bound) {
     if (MaybeExpr expr{Analyze(*bound)}) {
       if (expr->Rank() > 1) {
         Say("substring bound expression has rank %d"_err_en_US, expr->Rank());
@@ -757,10 +757,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       Expr<SubscriptInteger> length{
           std::visit([](const auto &ckExpr) { return ckExpr.LEN().value(); },
               charExpr->u)};
-      if (!lower.has_value()) {
+      if (!lower) {
         lower = Expr<SubscriptInteger>{1};
       }
-      if (!upper.has_value()) {
+      if (!upper) {
         upper = Expr<SubscriptInteger>{
             static_cast<std::int64_t>(ToInt64(length).value())};
       }
@@ -787,7 +787,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
 // Subscripted array references
 std::optional<Expr<SubscriptInteger>> ExpressionAnalyzer::AsSubscript(
     MaybeExpr &&expr) {
-  if (expr.has_value()) {
+  if (expr) {
     if (expr->Rank() > 1) {
       Say("Subscript expression has rank %d greater than 1"_err_en_US,
           expr->Rank());
@@ -809,7 +809,7 @@ std::optional<Expr<SubscriptInteger>> ExpressionAnalyzer::AsSubscript(
 
 std::optional<Expr<SubscriptInteger>> ExpressionAnalyzer::TripletPart(
     const std::optional<parser::Subscript> &s) {
-  if (s.has_value()) {
+  if (s) {
     return AsSubscript(Analyze(*s));
   } else {
     return std::nullopt;
@@ -930,7 +930,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
             "A type parameter inquiry must be applied to "
             "a designator"_err_en_US);
       }
-    } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
+    } else if (!dtSpec || !dtSpec->scope()) {
       CHECK(context_.AnyFatalError() || !foldingContext_.messages().empty());
       return std::nullopt;
     } else if (std::optional<DataRef> dataRef{
@@ -994,7 +994,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::CoindexedNamedObject &x) {
         dataRef.reset();
       }
     }
-    if (dataRef.has_value()) {
+    if (dataRef) {
       while (auto *component{std::get_if<Component>(&dataRef->u)}) {
         reversed.push_back(component->GetLastSymbol());
         *dataRef = std::move(component->base());
@@ -1065,7 +1065,7 @@ private:
       const A &x) {
     if (MaybeExpr y{Analyze(x)}) {
       Expr<SomeInteger> *intExpr{UnwrapExpr<Expr<SomeInteger>>(*y)};
-      CHECK(intExpr != nullptr);
+      CHECK(intExpr);
       return ConvertToType<Type<TypeCategory::Integer, KIND>>(
           std::move(*intExpr));
     }
@@ -1079,7 +1079,7 @@ private:
 };
 
 void ArrayConstructorContext::Push(MaybeExpr &&x) {
-  if (!x.has_value()) {
+  if (!x) {
     return;
   }
   if (auto dyType{x->GetType()}) {
@@ -1089,7 +1089,7 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
       xType.length =
           std::visit([](const auto &kc) { return kc.LEN(); }, charExpr->u);
     }
-    if (!type_.has_value()) {
+    if (!type_) {
       // If there is no explicit type-spec in an array constructor, the type
       // of the array is the declared type of all of the elements, which must
       // be well-defined and all match.
@@ -1106,7 +1106,7 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
           static_cast<const DynamicType &>(xType)) {
         values_.Push(std::move(*x));
         if (auto thisLen{ToInt64(xType.LEN())}) {
-          if (constantLength_.has_value()) {
+          if (constantLength_) {
             if (context().warnOnNonstandardUsage() &&
                 *thisLen != *constantLength_) {
               Say("Character literal in array constructor without explicit "
@@ -1151,11 +1151,11 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
                 GetSpecificIntExpr<IntType::kind>(std::get<1>(triplet.t))};
             std::optional<Expr<IntType>> stride{
                 GetSpecificIntExpr<IntType::kind>(std::get<2>(triplet.t))};
-            if (lower.has_value() && upper.has_value()) {
-              if (!stride.has_value()) {
+            if (lower && upper) {
+              if (!stride) {
                 stride = Expr<IntType>{1};
               }
-              if (!type_.has_value()) {
+              if (!type_) {
                 type_ = DynamicTypeWithLength{IntType::GetType()};
               }
               ArrayConstructorContext nested{*this};
@@ -1203,8 +1203,8 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
                 std::get<std::list<parser::AcValue>>(impliedDo.value().t)) {
               nested.Add(value);
             }
-            if (lower.has_value() && upper.has_value()) {
-              if (!stride.has_value()) {
+            if (lower && upper) {
+              if (!stride) {
                 stride = Expr<IntType>{1};
               }
               values_.Push(ImpliedDo<SomeType>{name, std::move(*lower),
@@ -1230,7 +1230,7 @@ ArrayConstructorValues<T> MakeSpecific(
         common::visitors{
             [&](common::CopyableIndirection<Expr<SomeType>> &&expr) {
               auto *typed{UnwrapExpr<Expr<T>>(expr.value())};
-              CHECK(typed != nullptr);
+              CHECK(typed);
               to.Push(std::move(*typed));
             },
             [&](ImpliedDo<SomeType> &&impliedDo) {
@@ -1278,7 +1278,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayConstructor &array) {
   for (const parser::AcValue &value : acSpec.values) {
     context.Add(value);
   }
-  if (type.has_value()) {
+  if (type) {
     ArrayConstructorTypeVisitor visitor{
         std::move(*type), std::move(context.values())};
     return common::SearchTypes(std::move(visitor));
@@ -1290,13 +1290,12 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     const parser::StructureConstructor &structure) {
   auto &parsedType{std::get<parser::DerivedTypeSpec>(structure.t)};
   parser::CharBlock typeName{std::get<parser::Name>(parsedType.t).source};
-  if (parsedType.derivedTypeSpec == nullptr) {
+  if (!parsedType.derivedTypeSpec) {
     return std::nullopt;
   }
   const auto &spec{*parsedType.derivedTypeSpec};
   const Symbol &typeSymbol{spec.typeSymbol()};
-  if (spec.scope() == nullptr ||
-      !typeSymbol.has<semantics::DerivedTypeDetails>()) {
+  if (!spec.scope() || !typeSymbol.has<semantics::DerivedTypeDetails>()) {
     return std::nullopt;  // error recovery
   }
   const auto &typeDetails{typeSymbol.get<semantics::DerivedTypeDetails>()};
@@ -1340,14 +1339,14 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       anyKeyword = true;
       source = kw->v.source;
       symbol = kw->v.symbol;
-      if (symbol == nullptr) {
+      if (!symbol) {
         auto componentIter{std::find_if(components.begin(), components.end(),
             [=](const Symbol &symbol) { return symbol.name() == source; })};
         if (componentIter != components.end()) {
           symbol = &*componentIter;
         }
       }
-      if (symbol == nullptr) {  // C7101
+      if (!symbol) {  // C7101
         Say(source,
             "Keyword '%s=' does not name a component of derived type '%s'"_err_en_US,
             source, typeName);
@@ -1361,7 +1360,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       // Here's a regrettably common extension of the standard: anonymous
       // initialization of parent components, e.g., T(PT(1)) rather than
       // T(1) or T(PT=PT(1)).
-      if (nextAnonymous == components.begin() && parentComponent != nullptr &&
+      if (nextAnonymous == components.begin() && parentComponent &&
           valueType == DynamicType::From(*parentComponent) &&
           context().IsEnabled(LanguageFeature::AnonymousParents)) {
         auto iter{
@@ -1377,18 +1376,18 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           }
         }
       }
-      while (symbol == nullptr && nextAnonymous != components.end()) {
+      while (!symbol && nextAnonymous != components.end()) {
         const Symbol &next{*nextAnonymous};
         ++nextAnonymous;
         if (!next.test(Symbol::Flag::ParentComp)) {
           symbol = &next;
         }
       }
-      if (symbol == nullptr) {
+      if (!symbol) {
         Say(source, "Unexpected value in structure constructor"_err_en_US);
       }
     }
-    if (symbol != nullptr) {
+    if (symbol) {
       if (checkConflicts) {
         auto componentIter{
             std::find(components.begin(), components.end(), *symbol)};
@@ -1414,7 +1413,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         }
       }
       unavailable.insert(symbol->name());
-      if (value.has_value()) {
+      if (value) {
         if (symbol->has<semantics::ProcEntityDetails>()) {
           CHECK(IsPointer(*symbol));
         } else if (symbol->has<semantics::ObjectEntityDetails>()) {
@@ -1462,7 +1461,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
             std::holds_alternative<NullPointer>(value->u)) {
           // NULL() with no arguments allowed by 7.5.10 para 6 for ALLOCATABLE
         } else if (auto symType{DynamicType::From(symbol)}) {
-          if (valueType.has_value()) {
+          if (valueType) {
             AttachDeclaration(
                 Say(expr.source,
                     "Value in structure constructor of type %s is "
@@ -1490,7 +1489,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         !IsAllocatable(symbol)) {
       if (const auto *details{
               symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-        if (details->init().has_value()) {
+        if (details->init()) {
           result.Add(symbol, common::Clone(*details->init()));
         } else {  // C799
           AttachDeclaration(Say(typeName,
@@ -1532,7 +1531,7 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
             dtSpec = &dtDyTy->GetDerivedTypeSpec();
           }
         }
-        if (dtSpec != nullptr && dtSpec->scope() != nullptr) {
+        if (dtSpec && dtSpec->scope()) {
           if (std::optional<DataRef> dataRef{
                   ExtractDataRef(std::move(*dtExpr))}) {
             if (auto component{CreateComponent(
@@ -1545,7 +1544,7 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
                   auto iter{arguments.begin()};
                   int at{0};
                   while (iter < arguments.end() && at < *passIndex) {
-                    if (iter->has_value() && (*iter)->keyword.has_value()) {
+                    if (*iter && (*iter)->keyword) {
                       iter = arguments.end();
                       break;
                     }
@@ -1553,7 +1552,7 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
                     ++at;
                   }
                   ActualArgument passed{AsGenericExpr(std::move(*dtExpr))};
-                  if (iter == arguments.end() && pass->passName().has_value()) {
+                  if (iter == arguments.end() && pass->passName()) {
                     passed.keyword = *pass->passName();
                   }
                   arguments.emplace(iter, std::move(passed));
@@ -1793,7 +1792,7 @@ std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
     ActualArguments &arguments) {
   auto chars{
       characteristics::Procedure::Characterize(proc, context_.intrinsics())};
-  if (chars.has_value()) {
+  if (chars) {
     bool treatExternalAsImplicit{IsExternalCalledImplicitly(callSite, proc)};
     if (treatExternalAsImplicit && !chars->CanBeCalledViaImplicitInterface()) {
       Say(callSite,
@@ -1954,7 +1953,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     const parser::Expr::ComplexConstructor &x) {
   auto re{Analyze(std::get<0>(x.t).value())};
   auto im{Analyze(std::get<1>(x.t).value())};
-  if (re.has_value() && im.has_value()) {
+  if (re && im) {
     ConformabilityCheck(GetContextualMessages(), *re, *im);
   }
   return AsMaybeExpr(ConstructComplex(GetContextualMessages(), std::move(re),
@@ -2096,7 +2095,7 @@ static void CheckFuncRefToArrayElementRefHasSubscripts(
   if (std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t).empty()) {
     auto &proc{std::get<parser::ProcedureDesignator>(funcRef.v.t)};
     const auto *name{std::get_if<parser::Name>(&proc.u)};
-    if (name == nullptr) {
+    if (!name) {
       name = &std::get<parser::ProcComponentRef>(proc.u).v.thing.component;
     }
     auto &msg{context.Say(funcRef.v.source,
@@ -2158,7 +2157,7 @@ static void FixMisparsedFunctionReference(
                        symbol.detailsIf<semantics::GenericDetails>()}) {
           derivedType = generic->derivedType();
         }
-        if (derivedType != nullptr) {
+        if (derivedType) {
           if constexpr (common::HasMember<parser::StructureConstructor,
                             uType>) {
             auto &scope{context.FindScope(name->source)};
@@ -2193,7 +2192,7 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
       result = Analyze(x.u);
     }
     x.typedExpr.reset(new GenericExprWrapper{std::move(result)});
-    if (!x.typedExpr->v.has_value()) {
+    if (!x.typedExpr->v) {
       if (!context_.AnyFatalError()) {
 #if DUMP_ON_FAILURE
         parser::DumpTree(std::cout << "Expression analysis failed on: ", x);
@@ -2219,7 +2218,7 @@ Expr<SubscriptInteger> ExpressionAnalyzer::AnalyzeKindSelector(
     TypeCategory category,
     const std::optional<parser::KindSelector> &selector) {
   int defaultKind{GetDefaultKind(category)};
-  if (!selector.has_value()) {
+  if (!selector) {
     return Expr<SubscriptInteger>{defaultKind};
   }
   return std::visit(
@@ -2311,7 +2310,7 @@ std::optional<int> ExpressionAnalyzer::IsAcImpliedDo(
 
 bool ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
     const MaybeExpr &result, TypeCategory category, bool defaultKind) {
-  if (result.has_value()) {
+  if (result) {
     if (auto type{result->GetType()}) {
       if (type->category() != category) {
         Say(at, "Must have %s type, but is %s"_err_en_US,
@@ -2344,7 +2343,7 @@ MaybeExpr ExpressionAnalyzer::MakeFunctionRef(parser::CharBlock callSite,
     }
   }
   if (auto chars{CheckCall(callSite, proc, arguments)}) {
-    if (chars->functionResult.has_value()) {
+    if (chars->functionResult) {
       const auto &result{*chars->functionResult};
       if (result.IsProcedurePointer()) {
         return Expr<SomeType>{
@@ -2425,7 +2424,7 @@ void ArgumentAnalyzer::Analyze(
           },
       },
       std::get<parser::ActualArg>(arg.t).u);
-  if (actual.has_value()) {
+  if (actual) {
     if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
       actual->keyword = argKW->v.source;
     }
@@ -2590,7 +2589,7 @@ std::string ArgumentAnalyzer::TypeAsFortran(std::size_t i) {
 
 bool ArgumentAnalyzer::AnyUntypedOperand() {
   for (const auto &actual : actuals_) {
-    if (!actual.value().GetType().has_value()) {
+    if (!actual.value().GetType()) {
       return true;
     }
   }

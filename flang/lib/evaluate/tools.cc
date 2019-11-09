@@ -106,7 +106,7 @@ std::optional<Expr<SomeType>> Package(Expr<SomeKind<CAT>> &&catExpr) {
 template<TypeCategory CAT>
 std::optional<Expr<SomeType>> Package(
     std::optional<Expr<SomeKind<CAT>>> &&catExpr) {
-  if (catExpr.has_value()) {
+  if (catExpr) {
     return {AsGenericExpr(std::move(*catExpr))};
   }
   return NoExpr();
@@ -553,7 +553,7 @@ std::optional<Expr<SomeType>> ConvertToType(
     if (auto *cx{UnwrapExpr<Expr<SomeCharacter>>(x)}) {
       auto converted{
           ConvertToKind<TypeCategory::Character>(type.kind(), std::move(*cx))};
-      if (type.charLength() != nullptr) {
+      if (type.charLength()) {
         if (const auto &len{type.charLength()->GetExplicit()}) {
           Expr<SomeInteger> lenParam{*len};
           Expr<SubscriptInteger> length{Convert<SubscriptInteger>{lenParam}};
@@ -590,7 +590,7 @@ std::optional<Expr<SomeType>> ConvertToType(
 
 std::optional<Expr<SomeType>> ConvertToType(
     const DynamicType &to, std::optional<Expr<SomeType>> &&x) {
-  if (x.has_value()) {
+  if (x) {
     return ConvertToType(to, std::move(*x));
   } else {
     return std::nullopt;
@@ -612,7 +612,7 @@ std::optional<Expr<SomeType>> ConvertToType(
 
 std::optional<Expr<SomeType>> ConvertToType(
     const Symbol &to, std::optional<Expr<SomeType>> &&x) {
-  if (x.has_value()) {
+  if (x) {
     return ConvertToType(to, std::move(*x));
   } else {
     return std::nullopt;
@@ -633,7 +633,7 @@ bool IsAssumedRank(const ActualArgument &arg) {
     return IsAssumedRank(*expr);
   } else {
     const Symbol *assumedTypeDummy{arg.GetAssumedTypeDummy()};
-    CHECK(assumedTypeDummy != nullptr);
+    CHECK(assumedTypeDummy);
     return IsAssumedRank(*assumedTypeDummy);
   }
 }

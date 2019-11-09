@@ -94,7 +94,7 @@ static void PadShortCharacterActual(evaluate::Expr<evaluate::SomeType> &actual,
               "Actual length '%jd' is less than expected length '%jd'"_en_US,
               *actualLEN, *dummyLEN);
           auto converted{ConvertToType(dummyType.type(), std::move(actual))};
-          CHECK(converted.has_value());
+          CHECK(converted);
           actual = std::move(*converted);
         }
       }
@@ -606,8 +606,8 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
   }
   std::map<std::string, evaluate::ActualArgument> kwArgs;
   for (auto &x : actuals) {
-    if (x.has_value()) {
-      if (x->keyword.has_value()) {
+    if (x) {
+      if (x->keyword) {
         auto emplaced{
             kwArgs.try_emplace(x->keyword->ToString(), std::move(*x))};
         if (!emplaced.second) {
@@ -626,7 +626,7 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
         auto iter{kwArgs.find(dummy.name)};
         if (iter != kwArgs.end()) {
           evaluate::ActualArgument &x{iter->second};
-          if (actuals[index].has_value()) {
+          if (actuals[index]) {
             messages.Say(*x.keyword,
                 "Keyword argument '%s=' has already been specified positionally (#%d) in this procedure reference"_err_en_US,
                 *x.keyword, index + 1);
@@ -658,7 +658,7 @@ static parser::Messages CheckExplicitInterface(
     int index{0};
     for (auto &actual : actuals) {
       const auto &dummy{proc.dummyArguments.at(index++)};
-      if (actual.has_value()) {
+      if (actual) {
         CheckExplicitInterfaceArg(*actual, dummy, proc, localContext, scope);
       } else if (!dummy.IsOptional()) {
         if (dummy.name.empty()) {
@@ -708,7 +708,7 @@ void CheckArguments(const characteristics::Procedure &proc,
   }
   if (!explicitInterface || treatingExternalAsImplicit) {
     for (auto &actual : actuals) {
-      if (actual.has_value()) {
+      if (actual) {
         CheckImplicitInterfaceArg(*actual, context.messages());
       }
     }

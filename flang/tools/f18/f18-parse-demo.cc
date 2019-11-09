@@ -213,7 +213,7 @@ std::string CompileFortran(
   }
   if ((!parsing.messages().empty() &&
           (driver.warningsAreErrors || parsing.messages().AnyFatalError())) ||
-      !parsing.parseTree().has_value()) {
+      !parsing.parseTree()) {
     std::cerr << driver.prefix << "could not parse " << path << '\n';
     exitStatus = EXIT_FAILURE;
     return {};

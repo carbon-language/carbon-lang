@@ -272,7 +272,7 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, int exponent,
     const Fraction &fraction, Rounding rounding, RoundingBits *roundingBits) {
   int lshift{fraction.LEADZ()};
   if (lshift == fraction.bits /* fraction is zero */ &&
-      (roundingBits == nullptr || roundingBits->empty())) {
+      (!roundingBits || roundingBits->empty())) {
     // No fraction, no rounding bits -> +/-0.0
     exponent = lshift = 0;
   } else if (lshift < exponent) {
@@ -309,7 +309,7 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, int exponent,
   word_ = Word::ConvertUnsigned(fraction).value;
   if (lshift > 0) {
     word_ = word_.SHIFTL(lshift);
-    if (roundingBits != nullptr) {
+    if (roundingBits) {
       for (; lshift > 0; --lshift) {
         if (roundingBits->ShiftLeft()) {
           word_ = word_.IBSET(lshift - 1);

@@ -47,7 +47,7 @@ void MessageFormattedText::Format(const MessageFixedText *text, ...) {
   CHECK(need >= 0);
   char *buffer{
       static_cast<char *>(std::malloc(static_cast<std::size_t>(need) + 1))};
-  CHECK(buffer != nullptr);
+  CHECK(buffer);
   va_end(ap);
   va_start(ap, text);
   int need2{vsnprintf(buffer, need + 1, p, ap)};
@@ -204,7 +204,7 @@ void Message::Emit(
   const AllSources &sources{cooked.allSources()};
   sources.EmitMessage(o, provenanceRange, text, echoSourceLine);
   if (attachmentIsContext_) {
-    for (const Message *context{attachment_.get()}; context != nullptr;
+    for (const Message *context{attachment_.get()}; context;
          context = context->attachment_.get()) {
       std::optional<ProvenanceRange> contextProvenance{
           context->GetProvenanceRange(cooked)};
@@ -217,7 +217,7 @@ void Message::Emit(
       provenanceRange = contextProvenance;
     }
   } else {
-    for (const Message *attachment{attachment_.get()}; attachment != nullptr;
+    for (const Message *attachment{attachment_.get()}; attachment;
          attachment = attachment->attachment_.get()) {
       sources.EmitMessage(o, attachment->GetProvenanceRange(cooked),
           attachment->ToString(), echoSourceLine);

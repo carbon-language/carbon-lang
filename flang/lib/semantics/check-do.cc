@@ -81,7 +81,7 @@ public:
 
   template<typename T> bool Pre(const parser::Statement<T> &statement) {
     currentStatementSourcePosition_ = statement.source;
-    if (statement.label.has_value()) {
+    if (statement.label) {
       labels_.insert(*statement.label);
     }
     return true;
@@ -402,7 +402,7 @@ private:
     CheckDoVariable(bounds.name);
     CheckDoExpression(bounds.lower);
     CheckDoExpression(bounds.upper);
-    if (bounds.step.has_value()) {
+    if (bounds.step) {
       CheckDoExpression(bounds.step.value());
     }
   }
@@ -605,7 +605,7 @@ private:
     const auto &header{std::get<parser::ConcurrentHeader>(concurrent.t)};
     const auto &mask{
         std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)};
-    if (mask.has_value()) {
+    if (mask) {
       CheckMaskIsPure(*mask);
     }
     CheckConcurrentHeader(header);
@@ -689,8 +689,8 @@ void DoChecker::CheckForBadLeave(
 static bool StmtMatchesConstruct(const parser::Name *stmtName,
     StmtType stmtType, const parser::Name *constructName,
     const ConstructNode &construct) {
-  bool inDoConstruct{MaybeGetDoConstruct(construct) != nullptr};
-  if (stmtName == nullptr) {
+  bool inDoConstruct{MaybeGetDoConstruct(construct)};
+  if (!stmtName) {
     return inDoConstruct;  // Unlabeled statements match all DO constructs
   } else if (constructName && constructName->source == stmtName->source) {
     return stmtType == StmtType::EXIT || inDoConstruct;

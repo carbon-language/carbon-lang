@@ -66,14 +66,14 @@ public:
     return visitor_(x.get());
   }
   template<typename A> Result operator()(const A *x) const {
-    if (x != nullptr) {
+    if (x) {
       return visitor_(*x);
     } else {
       return visitor_.Default();
     }
   }
   template<typename A> Result operator()(const std::optional<A> &x) const {
-    if (x.has_value()) {
+    if (x) {
       return visitor_(*x);
     } else {
       return visitor_.Default();

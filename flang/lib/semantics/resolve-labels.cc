@@ -195,7 +195,7 @@ const parser::CharBlock *GetStmtName(const parser::Statement<A> &stmt) {
   } else {
     name = &std::get<std::optional<parser::Name>>(stmt.statement.t);
   }
-  if (name && name->has_value()) {
+  if (name && *name) {
     return &(*name)->source;
   }
   return nullptr;
@@ -219,7 +219,7 @@ public:
 
   template<typename A> bool Pre(const parser::Statement<A> &statement) {
     currentPosition_ = statement.source;
-    if (statement.label.has_value()) {
+    if (statement.label) {
       auto label{statement.label.value()};
       auto targetFlags{ConstructBranchTargetFlags(statement)};
       if constexpr (std::is_same_v<A, parser::AssociateStmt> ||
@@ -378,14 +378,14 @@ public:
     if (const auto *optionalGenericSpecPointer{
             std::get_if<std::optional<parser::GenericSpec>>(
                 &interfaceStmt.statement.u)}) {
-      if (optionalGenericSpecPointer->has_value()) {
+      if (*optionalGenericSpecPointer) {
         if (const auto *namePointer{
                 std::get_if<parser::Name>(&(*optionalGenericSpecPointer)->u)}) {
           auto &optionalGenericSpec{
               std::get<parser::Statement<parser::EndInterfaceStmt>>(
                   interfaceBlock.t)
                   .statement.v};
-          if (optionalGenericSpec.has_value()) {
+          if (optionalGenericSpec) {
             if (const auto *otherPointer{
                     std::get_if<parser::Name>(&optionalGenericSpec->u)}) {
               if (namePointer->source != otherPointer->source) {
@@ -489,12 +489,12 @@ public:
     }
   }
   void Post(const parser::CycleStmt &cycleStmt) {
-    if (cycleStmt.v.has_value()) {
+    if (cycleStmt.v) {
       CheckLabelContext("CYCLE", cycleStmt.v->source);
     }
   }
   void Post(const parser::ExitStmt &exitStmt) {
-    if (exitStmt.v.has_value()) {
+    if (exitStmt.v) {
       CheckLabelContext("EXIT", exitStmt.v->source);
     }
   }
@@ -528,7 +528,7 @@ private:
 
   template<typename A> bool PushConstructName(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
-    if (optionalName.has_value()) {
+    if (optionalName) {
       constructNames_.emplace_back(optionalName->ToString());
     }
     return PushSubscope();
@@ -537,14 +537,14 @@ private:
     const auto &optionalName{
         std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
             .statement.v};
-    if (optionalName.has_value()) {
+    if (optionalName) {
       constructNames_.emplace_back(optionalName->ToString());
     }
     return PushSubscope();
   }
   template<typename A> bool PushConstructNameWithoutBlock(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
-    if (optionalName.has_value()) {
+    if (optionalName) {
       constructNames_.emplace_back(optionalName->ToString());
     }
     return true;
@@ -556,7 +556,7 @@ private:
   }
   template<typename A> void PopConstructNameIfPresent(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
-    if (optionalName.has_value()) {
+    if (optionalName) {
       constructNames_.pop_back();
     }
   }
@@ -564,7 +564,7 @@ private:
     const auto &optionalName{
         std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
             .statement.v};
-    if (optionalName.has_value()) {
+    if (optionalName) {
       constructNames_.pop_back();
     }
   }

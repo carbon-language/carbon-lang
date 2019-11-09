@@ -145,7 +145,7 @@ template<typename A> struct ListItemCount {
 #define DEREF(p) Fortran::common::Deref(p, __FILE__, __LINE__)
 
 template<typename T> constexpr T &Deref(T *p, const char *file, int line) {
-  if (p == nullptr) {
+  if (!p) {
     Fortran::common::die("nullptr dereference at %s(%d)", file, line);
   }
   return *p;

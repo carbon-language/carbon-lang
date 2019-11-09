@@ -183,7 +183,7 @@ Scope::ImportKind Scope::GetImportKind() const {
 }
 
 std::optional<parser::MessageFixedText> Scope::SetImportKind(ImportKind kind) {
-  if (!importKind_.has_value()) {
+  if (!importKind_) {
     importKind_ = kind;
     return std::nullopt;
   }
@@ -298,10 +298,10 @@ const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
 }
 
 const Symbol *Scope::GetSymbol() const {
-  if (symbol_ != nullptr) {
+  if (symbol_) {
     return symbol_;
   }
-  if (derivedTypeSpec_ != nullptr) {
+  if (derivedTypeSpec_) {
     return &derivedTypeSpec_->typeSymbol();
   }
   return nullptr;

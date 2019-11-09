@@ -95,7 +95,7 @@ void CheckHelper::Check(const Symbol &symbol) {
   }
   const DeclTypeSpec *type{symbol.GetUltimate().GetType()};
   const DerivedTypeSpec *derived{nullptr};
-  if (type != nullptr) {
+  if (type) {
     derived = type->AsDerived();
   }
   auto save{messages_.SetLocation(symbol.name())};
@@ -107,7 +107,7 @@ void CheckHelper::Check(const Symbol &symbol) {
   if (isAssociated) {
     return;  // only care about checking VOLATILE on associated symbols
   }
-  if (type != nullptr) {
+  if (type) {
     bool canHaveAssumedParameter{IsNamedConstant(symbol) ||
         IsAssumedLengthCharacterFunction(symbol) ||
         symbol.test(Symbol::Flag::ParentComp)};
@@ -234,7 +234,7 @@ void CheckHelper::CheckValue(
     messages_.Say(
         "VALUE attribute may not apply to an OPTIONAL in a BIND(C) procedure"_err_en_US);
   }
-  if (derived != nullptr) {
+  if (derived) {
     if (FindCoarrayUltimateComponent(*derived)) {
       messages_.Say(
           "VALUE attribute may not apply to a type with a coarray ultimate component"_err_en_US);
@@ -257,7 +257,7 @@ void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
       messages_.Say(
           "VOLATILE attribute may not apply to a coarray accessed by USE or host association"_err_en_US);
     }
-    if (derived != nullptr) {
+    if (derived) {
       if (FindCoarrayUltimateComponent(*derived)) {
         messages_.Say(
             "VOLATILE attribute may not apply to a type with a coarray ultimate component accessed by USE or host association"_err_en_US);

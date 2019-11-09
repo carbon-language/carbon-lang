@@ -43,6 +43,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace Fortran::parser {
@@ -76,7 +77,7 @@ public:
   using resultType = A;
   constexpr PureParser(const PureParser &) = default;
   constexpr explicit PureParser(A &&x) : value_(std::move(x)) {}
-  std::optional<A> Parse(ParseState &) const { return {value_}; }
+  std::optional<A> Parse(ParseState &) const { return value_; }
 
 private:
   const A value_;
@@ -97,7 +98,7 @@ public:
     Messages messages{std::move(state.messages())};
     ParseState backtrack{state};
     std::optional<resultType> result{parser_.Parse(state)};
-    if (result.has_value()) {
+    if (result) {
       state.messages().Restore(std::move(messages));
     } else {
       state = std::move(backtrack);
@@ -127,14 +128,15 @@ public:
     if (parser_.Parse(forked)) {
       return std::nullopt;
     }
-    return {Success{}};
+    return Success{};
   }
 
 private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto operator!(PA p) {
+template<typename PA, typename = typename PA::resultType>
+constexpr auto operator!(PA p) {
   return NegatedParser<PA>(p);
 }
 
@@ -149,7 +151,7 @@ public:
     ParseState forked{state};
     forked.set_deferMessages(true);
     if (parser_.Parse(forked)) {
-      return {Success{}};
+      return Success{};
     }
     return std::nullopt;
   }
@@ -202,7 +204,7 @@ public:
     state.set_anyTokenMatched(false);
     std::optional<resultType> result{parser_.Parse(state)};
     bool emitMessage{false};
-    if (result.has_value()) {
+    if (result) {
       messages.Annex(std::move(state.messages()));
       if (backtrack.anyTokenMatched()) {
         state.set_anyTokenMatched();
@@ -296,7 +298,7 @@ public:
     ParseState backtrack{state};
     std::optional<resultType> result{std::get<0>(ps_).Parse(state)};
     if constexpr (sizeof...(Ps) > 0) {
-      if (!result.has_value()) {
+      if (!result) {
         ParseRest<1>(result, state, backtrack);
       }
     }
@@ -311,7 +313,7 @@ private:
     ParseState prevState{std::move(state)};
     state = backtrack;
     result = std::get<J>(ps_).Parse(state);
-    if (!result.has_value()) {
+    if (!result) {
       state.CombineFailedParses(std::move(prevState));
       if constexpr (J < sizeof...(Ps)) {
         ParseRest<J + 1>(result, state, backtrack);
@@ -377,7 +379,7 @@ public:
     if (hadDeferredMessages) {
       state.set_anyDeferredMessages();
     }
-    if (bx.has_value()) {
+    if (bx) {
       // Error recovery situations must also produce messages.
       CHECK(state.anyDeferredMessages() || state.messages().AnyFatalError());
       state.set_anyErrorRecovery();
@@ -469,7 +471,7 @@ public:
          parser_.Parse(state) && state.GetLocation() > at;
          at = state.GetLocation()) {
     }
-    return {Success{}};
+    return Success{};
   }
 
 private:
@@ -491,7 +493,7 @@ public:
   std::optional<Success> Parse(ParseState &state) const {
     while (parser_.Parse(state)) {
     }
-    return {Success{}};
+    return Success{};
   }
 
 private:
@@ -513,9 +515,10 @@ public:
   constexpr MaybeParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     if (resultType result{parser_.Parse(state)}) {
+      // permit optional<optional<...>>
       return {std::move(result)};
     }
-    return {resultType{}};
+    return resultType{};
   }
 
 private:
@@ -536,10 +539,10 @@ public:
   constexpr DefaultedParser(PA p) : parser_{p} {}
   std::optional<resultType> Parse(ParseState &state) const {
     std::optional<std::optional<resultType>> ax{maybe(parser_).Parse(state)};
-    if (ax.value().has_value()) {  // maybe() always succeeds
+    if (ax.value()) {  // maybe() always succeeds
       return std::move(*ax);
     }
-    return {resultType{}};
+    return resultType{};
   }
 
 private:
@@ -610,8 +613,8 @@ public:
     ApplyArgs<PARSER...> results;
     using Sequence = std::index_sequence_for<PARSER...>;
     if (ApplyHelperArgs(parsers_, results, state, Sequence{})) {
-      return {ApplyHelperFunction<FUNCTION, RESULT, PARSER...>(
-          function_, std::move(results), Sequence{})};
+      return ApplyHelperFunction<FUNCTION, RESULT, PARSER...>(
+          function_, std::move(results), Sequence{});
     } else {
       return std::nullopt;
     }
@@ -669,8 +672,8 @@ public:
     using Sequence1 = std::index_sequence_for<OBJPARSER, PARSER...>;
     using Sequence2 = std::index_sequence_for<PARSER...>;
     if (ApplyHelperArgs(parsers_, results, state, Sequence1{})) {
-      return {ApplyHelperMember<OBJPARSER, PARSER...>(
-          function_, std::move(results), Sequence2{})};
+      return ApplyHelperMember<OBJPARSER, PARSER...>(
+          function_, std::move(results), Sequence2{});
     } else {
       return std::nullopt;
     }
@@ -799,7 +802,7 @@ template<bool pass> struct FixedParser {
   constexpr FixedParser() {}
   static constexpr std::optional<Success> Parse(ParseState &) {
     if constexpr (pass) {
-      return {Success{}};
+      return Success{};
     } else {
       return std::nullopt;
     }
@@ -848,7 +851,7 @@ public:
     }
     auto at{state.GetLocation()};
     auto result{parser_.Parse(state)};
-    if (result.has_value()) {
+    if (result) {
       state.Nonstandard(
           CharBlock{at, state.GetLocation()}, LF, "nonstandard usage"_en_US);
     }
@@ -880,7 +883,7 @@ public:
     }
     auto at{state.GetLocation()};
     auto result{parser_.Parse(state)};
-    if (result.has_value()) {
+    if (result) {
       state.Nonstandard(
           CharBlock{at, state.GetLocation()}, LF, "deprecated usage"_en_US);
     }
@@ -905,7 +908,7 @@ public:
   std::optional<resultType> Parse(ParseState &state) const {
     const char *start{state.GetLocation()};
     auto result{parser_.Parse(state)};
-    if (result.has_value()) {
+    if (result) {
       const char *end{state.GetLocation()};
       for (; start < end && start[0] == ' '; ++start) {
       }

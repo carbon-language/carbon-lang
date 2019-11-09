@@ -52,7 +52,7 @@ std::optional<Variable<A>> AsVariable(const Expr<A> &expr) {
 
 template<typename A>
 std::optional<Variable<A>> AsVariable(const std::optional<Expr<A>> &expr) {
-  if (expr.has_value()) {
+  if (expr) {
     return AsVariable(*expr);
   } else {
     return std::nullopt;
@@ -116,7 +116,7 @@ template<typename T> bool IsAssumedRank(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
 }
 template<typename A> bool IsAssumedRank(const std::optional<A> &x) {
-  return x.has_value() && IsAssumedRank(*x);
+  return x && IsAssumedRank(*x);
 }
 
 // Generalizing packagers: these take operations and expressions of more
@@ -195,7 +195,7 @@ auto UnwrapExpr(B &x) -> common::Constify<A, B> * {
 
 template<typename A, typename B>
 const A *UnwrapExpr(const std::optional<B> &x) {
-  if (x.has_value()) {
+  if (x) {
     return UnwrapExpr<A>(*x);
   } else {
     return nullptr;
@@ -203,7 +203,7 @@ const A *UnwrapExpr(const std::optional<B> &x) {
 }
 
 template<typename A, typename B> A *UnwrapExpr(std::optional<B> &x) {
-  if (x.has_value()) {
+  if (x) {
     return UnwrapExpr<A>(*x);
   } else {
     return nullptr;
@@ -232,7 +232,7 @@ std::optional<DataRef> ExtractDataRef(const Expr<T> &expr) {
 }
 template<typename A>
 std::optional<DataRef> ExtractDataRef(const std::optional<A> &x) {
-  if (x.has_value()) {
+  if (x) {
     return ExtractDataRef(*x);
   } else {
     return std::nullopt;
@@ -748,7 +748,7 @@ template<typename T> std::optional<BaseObject> GetBaseObject(const Expr<T> &x) {
 }
 template<typename A>
 std::optional<BaseObject> GetBaseObject(const std::optional<A> &x) {
-  if (x.has_value()) {
+  if (x) {
     return GetBaseObject(*x);
   } else {
     return std::nullopt;

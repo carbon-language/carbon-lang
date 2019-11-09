@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ std::unique_ptr<Descriptor> RESHAPE(const Descriptor &source,
   // Extract and check the optional ORDER= argument, which must be a
   // permutation of [1..resultRank].
   int dimOrder[maxRank];
-  if (order != nullptr) {
+  if (order) {
     CHECK(order->rank() == 1);
     CHECK(order->type().IsInteger());
     CHECK(order->GetDimension(0).Extent() == resultRank);
@@ -97,7 +97,7 @@ std::unique_ptr<Descriptor> RESHAPE(const Descriptor &source,
   const DerivedType *sourceDerivedType{
       sourceAddendum ? sourceAddendum->derivedType() : nullptr};
   std::unique_ptr<Descriptor> result;
-  if (sourceDerivedType != nullptr) {
+  if (sourceDerivedType) {
     result = Descriptor::Create(*sourceDerivedType, nullptr, resultRank,
         resultExtent, CFI_attribute_allocatable);
   } else {
@@ -106,9 +106,9 @@ std::unique_ptr<Descriptor> RESHAPE(const Descriptor &source,
         CFI_attribute_allocatable);  // TODO rearrange these arguments
   }
   DescriptorAddendum *resultAddendum{result->Addendum()};
-  CHECK(resultAddendum != nullptr);
+  CHECK(resultAddendum);
   resultAddendum->flags() |= DescriptorAddendum::DoNotFinalize;
-  if (sourceDerivedType != nullptr) {
+  if (sourceDerivedType) {
     std::size_t lenParameters{sourceDerivedType->lenParameters()};
     for (std::size_t j{0}; j < lenParameters; ++j) {
       resultAddendum->SetLenParameterValue(

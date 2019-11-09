@@ -192,7 +192,7 @@ public:
                    symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       // TODO: what about EQUIVALENCE with data in COMMON?
       // TODO: does this work for blank COMMON?
-      if (object->commonBlock() != nullptr) {
+      if (object->commonBlock()) {
         return std::nullopt;
       }
     }
@@ -298,7 +298,7 @@ public:
   template<typename T> Result operator()(const FunctionRef<T> &x) const {
     if (auto chars{
             characteristics::Procedure::Characterize(x.proc(), table_)}) {
-      if (chars->functionResult.has_value()) {
+      if (chars->functionResult) {
         const auto &result{*chars->functionResult};
         return !result.IsProcedurePointer() &&
             result.attrs.test(characteristics::FunctionResult::Attr::Pointer) &&
@@ -317,7 +317,7 @@ private:
         if (!triplet->IsStrideOne()) {
           return false;
         } else if (anyTriplet) {
-          if (triplet->lower().has_value() || triplet->upper().has_value()) {
+          if (triplet->lower() || triplet->upper()) {
             return false;  // all triplets before the last one must be just ":"
           }
         } else {

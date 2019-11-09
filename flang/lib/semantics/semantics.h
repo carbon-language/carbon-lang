@@ -128,7 +128,7 @@ public:
   void SetError(Symbol &, bool = true);
 
   template<typename... A> parser::Message &Say(A &&... args) {
-    CHECK(location_.has_value());
+    CHECK(location_);
     return messages_.Say(*location_, std::forward<A>(args)...);
   }
   template<typename... A>

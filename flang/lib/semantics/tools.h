@@ -214,7 +214,7 @@ struct GetExprHelper {
     return Get(x.value());
   }
   template<typename T> const SomeExpr *Get(const std::optional<T> &x) {
-    return x.has_value() ? Get(x.value()) : nullptr;
+    return x ? Get(*x) : nullptr;
   }
   template<typename T> const SomeExpr *Get(const T &x) {
     if constexpr (ConstraintTrait<T>) {

@@ -55,7 +55,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
   // the first character afterward.
   p = q;
   // Strip off trailing zeroes
-  if (point != nullptr) {
+  if (point) {
     while (q[-1] == '0') {
       --q;
     }
@@ -64,7 +64,7 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
       --q;
     }
   }
-  if (point == nullptr) {
+  if (!point) {
     while (q > first && q[-1] == '0') {
       --q;
       ++exponent_;
@@ -78,12 +78,12 @@ bool BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ParseNumber(
       q = point;
       point = nullptr;
     }
-    if (point == nullptr) {
+    if (!point) {
       exponent_ += q - limit;
     }
     q = limit;
   }
-  if (point != nullptr) {
+  if (point) {
     exponent_ -= static_cast<int>(q - point - 1);
   }
   if (q == first) {

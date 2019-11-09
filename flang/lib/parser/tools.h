@@ -41,7 +41,7 @@ const Name &GetLastName(const AllocateObject &);
 struct UnwrapperHelper {
 
   template<typename A, typename B> static const A *Unwrap(B *p) {
-    if (p != nullptr) {
+    if (p) {
       return Unwrap<A>(*p);
     } else {
       return nullptr;
@@ -60,7 +60,7 @@ struct UnwrapperHelper {
 
   template<typename A, typename B>
   static const A *Unwrap(const std::optional<B> &o) {
-    if (o.has_value()) {
+    if (o) {
       return Unwrap<A>(*o);
     } else {
       return nullptr;

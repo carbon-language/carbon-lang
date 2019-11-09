@@ -207,7 +207,7 @@ public:
       DeclTypeSpec::Category = DeclTypeSpec::TypeDerived) const;
 
   bool IsModuleFile() const {
-    return kind_ == Kind::Module && symbol_ != nullptr &&
+    return kind_ == Kind::Module && symbol_ &&
         symbol_->test(Symbol::Flag::ModFile);
   }
 

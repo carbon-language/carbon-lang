@@ -65,7 +65,7 @@ void SourceFile::RecordLineStarts() {
 void SourceFile::IdentifyPayload() {
   content_ = address_;
   bytes_ = size_;
-  if (content_ != nullptr) {
+  if (content_) {
     static constexpr int BOMBytes{3};
     static const char UTF8_BOM[]{"\xef\xbb\xbf"};
     if (bytes_ >= BOMBytes && std::memcmp(content_, UTF8_BOM, BOMBytes) == 0) {
@@ -103,7 +103,7 @@ static std::size_t RemoveCarriageReturns(char *buffer, std::size_t bytes) {
     void *vp{static_cast<void *>(p)};
     void *crvp{std::memchr(vp, '\r', bytes)};
     char *crcp{static_cast<char *>(crvp)};
-    if (crcp == nullptr) {
+    if (!crcp) {
       std::memmove(buffer + wrote, p, bytes);
       wrote += bytes;
       break;
@@ -243,7 +243,7 @@ void SourceFile::Close() {
     isMemoryMapped_ = false;
   } else if (!normalized_.empty()) {
     normalized_.clear();
-  } else if (address_ != nullptr) {
+  } else if (address_) {
     delete[] address_;
   }
   address_ = content_ = nullptr;

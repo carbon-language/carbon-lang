@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ void *CFI_address(
 
 int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
     const CFI_index_t upper_bounds[], std::size_t elem_len) {
-  if (descriptor == nullptr) {
+  if (!descriptor) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if (descriptor->version != CFI_VERSION) {
@@ -53,7 +53,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
     return CFI_INVALID_ATTRIBUTE;
   }
   if (descriptor->attribute == CFI_attribute_allocatable &&
-      descriptor->base_addr != nullptr) {
+      descriptor->base_addr) {
     return CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
   if (descriptor->rank > CFI_MAX_RANK) {
@@ -82,7 +82,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
     byteSize *= extent;
   }
   void *p{new char[byteSize]};
-  if (p == nullptr) {
+  if (!p) {
     return CFI_ERROR_MEM_ALLOCATION;
   }
   descriptor->base_addr = p;
@@ -91,7 +91,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
 }
 
 int CFI_deallocate(CFI_cdesc_t *descriptor) {
-  if (descriptor == nullptr) {
+  if (!descriptor) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if (descriptor->version != CFI_VERSION) {
@@ -102,7 +102,7 @@ int CFI_deallocate(CFI_cdesc_t *descriptor) {
     // Non-interoperable object
     return CFI_INVALID_DESCRIPTOR;
   }
-  if (descriptor->base_addr == nullptr) {
+  if (!descriptor->base_addr) {
     return CFI_ERROR_BASE_ADDR_NULL;
   }
   delete[] static_cast<char *>(descriptor->base_addr);
@@ -162,16 +162,16 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   if (rank > CFI_MAX_RANK) {
     return CFI_INVALID_RANK;
   }
-  if (base_addr != nullptr && attribute == CFI_attribute_allocatable) {
+  if (base_addr && attribute == CFI_attribute_allocatable) {
     return CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
-  if (rank > 0 && base_addr != nullptr && extents == nullptr) {
+  if (rank > 0 && base_addr && !extents) {
     return CFI_INVALID_EXTENT;
   }
   if (type < CFI_type_signed_char || type > CFI_type_struct) {
     return CFI_INVALID_TYPE;
   }
-  if (descriptor == nullptr) {
+  if (!descriptor) {
     return CFI_INVALID_DESCRIPTOR;
   }
   std::size_t minElemLen{MinElemLen(type)};
@@ -189,7 +189,7 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   descriptor->f18Addendum = 0;
   std::size_t byteSize{elem_len};
   constexpr std::size_t lower_bound{0};
-  if (base_addr != nullptr) {
+  if (base_addr) {
     for (std::size_t j{0}; j < rank; ++j) {
       descriptor->dim[j].lower_bound = lower_bound;
       descriptor->dim[j].extent = extents[j];
@@ -218,13 +218,13 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   CFI_index_t actualStride[CFI_MAX_RANK];
   CFI_rank_t resRank{0};
 
-  if (result == nullptr || source == nullptr) {
+  if (!result || !source) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if (source->rank == 0) {
     return CFI_INVALID_RANK;
   }
-  if (IsAssumedSize(source) && upper_bounds == nullptr) {
+  if (IsAssumedSize(source) && !upper_bounds) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if ((result->type != source->type) ||
@@ -234,7 +234,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   if (result->attribute == CFI_attribute_allocatable) {
     return CFI_INVALID_ATTRIBUTE;
   }
-  if (source->base_addr == nullptr) {
+  if (!source->base_addr) {
     return CFI_ERROR_BASE_ADDR_NULL;
   }
 
@@ -244,9 +244,9 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     const CFI_dim_t &dim{source->dim[j]};
     const CFI_index_t srcLB{dim.lower_bound};
     const CFI_index_t srcUB{srcLB + dim.extent - 1};
-    const CFI_index_t lb{lower_bounds != nullptr ? lower_bounds[j] : srcLB};
-    const CFI_index_t ub{upper_bounds != nullptr ? upper_bounds[j] : srcUB};
-    const CFI_index_t stride{strides != nullptr ? strides[j] : 1};
+    const CFI_index_t lb{lower_bounds ? lower_bounds[j] : srcLB};
+    const CFI_index_t ub{upper_bounds ? upper_bounds[j] : srcUB};
+    const CFI_index_t stride{strides ? strides[j] : 1};
 
     if (stride == 0 && lb != ub) {
       return CFI_ERROR_OUT_OF_BOUNDS;
@@ -285,7 +285,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
 
 int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     std::size_t displacement, std::size_t elem_len) {
-  if (result == nullptr || source == nullptr) {
+  if (!result || !source) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if (result->rank != source->rank) {
@@ -294,7 +294,7 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   if (result->attribute == CFI_attribute_allocatable) {
     return CFI_INVALID_ATTRIBUTE;
   }
-  if (source->base_addr == nullptr) {
+  if (!source->base_addr) {
     return CFI_ERROR_BASE_ADDR_NULL;
   }
   if (IsAssumedSize(source)) {
@@ -320,13 +320,13 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
 
 int CFI_setpointer(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     const CFI_index_t lower_bounds[]) {
-  if (result == nullptr) {
+  if (!result) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if (result->attribute != CFI_attribute_pointer) {
     return CFI_INVALID_ATTRIBUTE;
   }
-  if (source == nullptr) {
+  if (!source) {
     result->base_addr = nullptr;
     return CFI_SUCCESS;
   }
@@ -339,17 +339,16 @@ int CFI_setpointer(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   if (source->elem_len != result->elem_len) {
     return CFI_INVALID_ELEM_LEN;
   }
-  if (source->base_addr == nullptr &&
-      source->attribute != CFI_attribute_pointer) {
+  if (!source->base_addr && source->attribute != CFI_attribute_pointer) {
     return CFI_ERROR_BASE_ADDR_NULL;
   }
   if (IsAssumedSize(source)) {
     return CFI_INVALID_DESCRIPTOR;
   }
 
-  const bool copySrcLB{lower_bounds == nullptr};
+  const bool copySrcLB{!lower_bounds};
   result->base_addr = source->base_addr;
-  if (source->base_addr != nullptr) {
+  if (source->base_addr) {
     for (int j{0}; j < result->rank; ++j) {
       result->dim[j].extent = source->dim[j].extent;
       result->dim[j].sm = source->dim[j].sm;

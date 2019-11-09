@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ void Descriptor::Establish(const DerivedType &dt, void *p, int rank,
             dt.SizeInBytes(), rank, extent) == CFI_SUCCESS);
   raw_.f18Addendum = true;
   DescriptorAddendum *a{Addendum()};
-  CHECK(a != nullptr);
+  CHECK(a);
   new (a) DescriptorAddendum{&dt};
 }
 
@@ -70,7 +70,7 @@ std::unique_ptr<Descriptor> Descriptor::Create(TypeCode t,
     ISO::CFI_attribute_t attribute) {
   std::size_t bytes{SizeInBytes(rank, true)};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  CHECK(result != nullptr);
+  CHECK(result);
   result->Establish(t, elementBytes, p, rank, extent, attribute, true);
   return std::unique_ptr<Descriptor>{result};
 }
@@ -80,7 +80,7 @@ std::unique_ptr<Descriptor> Descriptor::Create(TypeCategory c, int kind,
     ISO::CFI_attribute_t attribute) {
   std::size_t bytes{SizeInBytes(rank, true)};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  CHECK(result != nullptr);
+  CHECK(result);
   result->Establish(c, kind, p, rank, extent, attribute, true);
   return std::unique_ptr<Descriptor>{result};
 }
@@ -89,7 +89,7 @@ std::unique_ptr<Descriptor> Descriptor::Create(const DerivedType &dt, void *p,
     int rank, const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
   std::size_t bytes{SizeInBytes(rank, true, dt.lenParameters())};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  CHECK(result != nullptr);
+  CHECK(result);
   result->Establish(dt, p, rank, extent, attribute);
   return std::unique_ptr<Descriptor>{result};
 }
@@ -119,14 +119,14 @@ int Descriptor::Allocate(
 }
 
 int Descriptor::Deallocate(bool finalize) {
-  if (raw_.base_addr != nullptr) {
+  if (raw_.base_addr) {
     Destroy(static_cast<char *>(raw_.base_addr), finalize);
   }
   return ISO::CFI_deallocate(&raw_);
 }
 
 void Descriptor::Destroy(char *data, bool finalize) const {
-  if (data != nullptr) {
+  if (data) {
     if (const DescriptorAddendum * addendum{Addendum()}) {
       if (addendum->flags() & DescriptorAddendum::DoNotFinalize) {
         finalize = false;

@@ -210,7 +210,7 @@ template<typename T>
 static inline Constant<T> *FoldConvertedArg(
     FoldingContext &context, std::optional<ActualArgument> &arg) {
   if (auto *expr{UnwrapExpr<Expr<SomeType>>(arg)}) {
-    if (UnwrapExpr<Expr<T>>(*expr) == nullptr) {
+    if (!UnwrapExpr<Expr<T>>(*expr)) {
       if (auto converted{ConvertToType(T::GetType(), std::move(*expr))}) {
         *expr = Fold(context, std::move(*converted));
       }
@@ -230,7 +230,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
   static_assert(sizeof...(TA) > 0);
   std::tuple<const Constant<TA> *...> args{
       FoldConvertedArg<TA>(context, funcRef.arguments()[I])...};
-  if ((... && (std::get<I>(args) != nullptr))) {
+  if ((... && (std::get<I>(args)))) {
     // Compute the shape of the result based on shapes of arguments
     ConstantSubscripts shape;
     int rank{0};
@@ -312,7 +312,7 @@ static std::optional<std::int64_t> GetInt64Arg(
 
 static std::optional<std::int64_t> GetInt64ArgOr(
     const std::optional<ActualArgument> &arg, std::int64_t defaultValue) {
-  if (!arg.has_value()) {
+  if (!arg) {
     return defaultValue;
   } else if (const auto *intExpr{UnwrapExpr<Expr<SomeInteger>>(arg)}) {
     return ToInt64(*intExpr);
@@ -365,8 +365,7 @@ Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
       GetIntegerVector<ConstantSubscript>(args[1])};
   std::optional<std::vector<int>> order{GetIntegerVector<int>(args[3])};
 
-  if (!source || !shape || (args[2].has_value() && !pad) ||
-      (args[3].has_value() && !order)) {
+  if (!source || !shape || (args[2] && !pad) || (args[3] && !order)) {
     return Expr<T>{std::move(funcRef)};  // Non-constant arguments
   } else if (!IsValidShape(shape.value())) {
     context.messages().Say("Invalid SHAPE in RESHAPE"_en_US);
@@ -374,12 +373,11 @@ Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
     int rank{GetRank(shape.value())};
     std::size_t resultElements{TotalElementCount(shape.value())};
     std::optional<std::vector<int>> dimOrder;
-    if (order.has_value()) {
+    if (order) {
       dimOrder = ValidateDimensionOrder(rank, *order);
     }
-    std::vector<int> *dimOrderPtr{
-        dimOrder.has_value() ? &dimOrder.value() : nullptr};
-    if (order.has_value() && !dimOrder.has_value()) {
+    std::vector<int> *dimOrderPtr{dimOrder ? &dimOrder.value() : nullptr};
+    if (order && !dimOrder) {
       context.messages().Say("Invalid ORDER in RESHAPE"_en_US);
     } else if (resultElements > source->size() && (!pad || pad->empty())) {
       context.messages().Say("Too few SOURCE elements in RESHAPE and PAD"
@@ -433,7 +431,7 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
         const Symbol &symbol{named->GetLastSymbol()};
         if (symbol.Rank() == rank) {
           lowerBoundsAreOne = false;
-          if (dim.has_value()) {
+          if (dim) {
             return Fold(context,
                 ConvertToType<T>(GetLowerBound(context, *named, *dim)));
           } else if (auto extents{
@@ -446,7 +444,7 @@ Expr<Type<TypeCategory::Integer, KIND>> LBOUND(FoldingContext &context,
         }
       }
       if (lowerBoundsAreOne) {
-        if (dim.has_value()) {
+        if (dim) {
           return Expr<T>{1};
         } else {
           std::vector<Scalar<T>> ones(rank, Scalar<T>{1});
@@ -488,7 +486,7 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
         const Symbol &symbol{named->GetLastSymbol()};
         if (symbol.Rank() == rank) {
           takeBoundsFromShape = false;
-          if (dim.has_value()) {
+          if (dim) {
             if (semantics::IsAssumedSizeArray(symbol) && *dim == rank) {
               return Expr<T>{-1};
             } else if (auto ub{GetUpperBound(context, *named, *dim)}) {
@@ -497,7 +495,7 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
           } else {
             Shape ubounds{GetUpperBounds(context, *named)};
             if (semantics::IsAssumedSizeArray(symbol)) {
-              CHECK(!ubounds.back().has_value());
+              CHECK(!ubounds.back());
               ubounds.back() = ExtentExpr{-1};
             }
             if (auto extents{AsExtentArrayExpr(ubounds)}) {
@@ -511,7 +509,7 @@ Expr<Type<TypeCategory::Integer, KIND>> UBOUND(FoldingContext &context,
       }
       if (takeBoundsFromShape) {
         if (auto shape{GetShape(context, *array)}) {
-          if (dim.has_value()) {
+          if (dim) {
             if (auto &dimSize{shape->at(*dim)}) {
               return Fold(context,
                   ConvertToType<T>(Expr<ExtentType>{std::move(*dimSize)}));
@@ -639,7 +637,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
     return Expr<T>{Scalar<T>::HUGE()};
   } else if (name == "iachar" || name == "ichar") {
     auto *someChar{UnwrapExpr<Expr<SomeCharacter>>(args[0])};
-    CHECK(someChar != nullptr);
+    CHECK(someChar);
     if (auto len{ToInt64(someChar->LEN())}) {
       if (len.value() != 1) {
         // Do not die, this was not checked before
@@ -921,7 +919,7 @@ Expr<Type<TypeCategory::Real, KIND>> ToReal(
           From original{x};
           result = ConvertToType<Result>(std::move(x));
           const auto *constant{UnwrapExpr<Constant<Result>>(*result)};
-          CHECK(constant != nullptr);
+          CHECK(constant);
           Scalar<Result> real{constant->GetScalarValue().value()};
           From converted{From::ConvertUnsigned(real.RawBits()).value};
           if (original != converted) {  // C1601
@@ -1097,9 +1095,8 @@ Expr<Type<TypeCategory::Complex, KIND>> FoldIntrinsicFunction(
     }
     CHECK(args.size() == 2 || args.size() == 3);
     Expr<SomeType> re{std::move(*args[0].value().UnwrapExpr())};
-    Expr<SomeType> im{args[1].has_value()
-            ? std::move(*args[1].value().UnwrapExpr())
-            : AsGenericExpr(Constant<Part>{Scalar<Part>{}})};
+    Expr<SomeType> im{args[1] ? std::move(*args[1].value().UnwrapExpr())
+                              : AsGenericExpr(Constant<Part>{Scalar<Part>{}})};
     return Fold(context,
         Expr<T>{ComplexConstructor<KIND>{ToReal<KIND>(context, std::move(re)),
             ToReal<KIND>(context, std::move(im))}});
@@ -1119,7 +1116,7 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldIntrinsicFunction(
   CHECK(intrinsic);
   std::string name{intrinsic->name};
   if (name == "all") {
-    if (!args[1].has_value()) {  // TODO: ALL(x,DIM=d)
+    if (!args[1]) {  // TODO: ALL(x,DIM=d)
       if (const auto *constant{UnwrapConstantValue<T>(args[0])}) {
         bool result{true};
         for (const auto &element : constant->values()) {
@@ -1132,7 +1129,7 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldIntrinsicFunction(
       }
     }
   } else if (name == "any") {
-    if (!args[1].has_value()) {  // TODO: ANY(x,DIM=d)
+    if (!args[1]) {  // TODO: ANY(x,DIM=d)
       if (const auto *constant{UnwrapConstantValue<T>(args[0])}) {
         bool result{false};
         for (const auto &element : constant->values()) {
@@ -1224,7 +1221,7 @@ std::optional<Expr<T>> GetNamedConstantValue(
             symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
       if (object->initWasValidated()) {
         const auto *constant{UnwrapConstantValue<T>(object->init())};
-        CHECK(constant != nullptr);
+        CHECK(constant);
         return Expr<T>{*constant};
       }
       if (const auto &init{object->init()}) {
@@ -1236,10 +1233,10 @@ std::optional<Expr<T>> GetNamedConstantValue(
           // Reset expression now to prevent infinite loops if the init
           // expression depends on symbol itself.
           mutableObject->set_init(std::nullopt);
-          if (converted.has_value()) {
+          if (converted) {
             *converted = Fold(context, std::move(*converted));
             auto *unwrapped{UnwrapExpr<Expr<T>>(*converted)};
-            CHECK(unwrapped != nullptr);
+            CHECK(unwrapped);
             if (auto *constant{UnwrapConstantValue<T>(*unwrapped)}) {
               if (symbol.Rank() > 0) {
                 if (constant->Rank() == 0) {
@@ -1329,17 +1326,16 @@ static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
           [&](Triplet &triplet) -> std::optional<Constant<SubscriptInteger>> {
             auto lower{triplet.lower()}, upper{triplet.upper()};
             std::optional<ConstantSubscript> stride{ToInt64(triplet.stride())};
-            if (!lower.has_value()) {
+            if (!lower) {
               lower = GetLowerBound(context, base, dim);
             }
-            if (!upper.has_value()) {
+            if (!upper) {
               upper =
                   ComputeUpperBound(context, GetLowerBound(context, base, dim),
                       GetExtent(context, base, dim));
             }
             auto lbi{ToInt64(lower)}, ubi{ToInt64(upper)};
-            if (lbi.has_value() && ubi.has_value() && stride.has_value() &&
-                *stride != 0) {
+            if (lbi && ubi && stride && *stride != 0) {
               std::vector<SubscriptInteger::Scalar> values;
               while ((*stride > 0 && *lbi <= *ubi) ||
                   (*stride < 0 && *lbi >= *ubi)) {
@@ -1430,7 +1426,7 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
   if (auto scalar{structures.GetScalarValue()}) {
     if (auto *expr{scalar->Find(component)}) {
       if (const Constant<T> *value{UnwrapConstantValue<T>(*expr)}) {
-        if (subscripts == nullptr) {
+        if (!subscripts) {
           return std::move(*value);
         } else {
           return ApplySubscripts<T>(context.messages(), *value, *subscripts);
@@ -1448,14 +1444,14 @@ std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
       StructureConstructor scalar{structures.At(at)};
       if (auto *expr{scalar.Find(component)}) {
         if (const Constant<T> *value{UnwrapConstantValue<T>(*expr)}) {
-          if (array.get() == nullptr) {
+          if (!array.get()) {
             // This technique ensures that character length or derived type
             // information is propagated to the array constructor.
             auto *typedExpr{UnwrapExpr<Expr<T>>(*expr)};
-            CHECK(typedExpr != nullptr);
+            CHECK(typedExpr);
             array = std::make_unique<ArrayConstructor<T>>(*typedExpr);
           }
-          if (subscripts != nullptr) {
+          if (subscripts) {
             if (auto element{ApplySubscripts<T>(
                     context.messages(), *value, *subscripts)}) {
               CHECK(element->Rank() == 0);
@@ -1647,7 +1643,7 @@ private:
         Fold(context_, Expr<SubscriptInteger>{iDo.stride()})};
     std::optional<ConstantSubscript> start{ToInt64(lower)}, end{ToInt64(upper)},
         step{ToInt64(stride)};
-    if (start.has_value() && end.has_value() && step.has_value()) {
+    if (start && end && step) {
       if (*step == 0) {
         return false;
       }
@@ -1703,7 +1699,7 @@ template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     FoldingContext &context, TypeParamInquiry<KIND> &&inquiry) {
   using IntKIND = Type<TypeCategory::Integer, KIND>;
-  if (!inquiry.base().has_value()) {
+  if (!inquiry.base()) {
     // A "bare" type parameter: replace with its value, if that's now known.
     if (const auto *pdt{context.pdtInstance()}) {
       if (const semantics::Scope * scope{context.pdtInstance()->scope()}) {
@@ -1711,7 +1707,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
         if (iter != scope->end()) {
           const Symbol &symbol{*iter->second};
           const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
-          if (details && details->init().has_value()) {
+          if (details && details->init()) {
             Expr<SomeInteger> expr{*details->init()};
             return Fold(context,
                 Expr<IntKIND>{
@@ -1793,7 +1789,7 @@ template<typename T>
 Expr<T> FromArrayConstructor(FoldingContext &context,
     ArrayConstructor<T> &&values, std::optional<ConstantSubscripts> &&shape) {
   Expr<T> result{Fold(context, Expr<T>{std::move(values)})};
-  if (shape.has_value()) {
+  if (shape) {
     if (auto *constant{UnwrapConstantValue<T>(result)}) {
       return Expr<T>{constant->Reshape(std::move(*shape))};
     }

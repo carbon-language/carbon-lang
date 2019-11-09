@@ -41,8 +41,8 @@ template<typename T> Expr<T> Fold(FoldingContext &context, Expr<T> &&expr) {
 template<typename T>
 std::optional<Expr<T>> Fold(
     FoldingContext &context, std::optional<Expr<T>> &&expr) {
-  if (expr.has_value()) {
-    return {Fold(context, std::move(*expr))};
+  if (expr) {
+    return Fold(context, std::move(*expr));
   } else {
     return std::nullopt;
   }
@@ -96,7 +96,7 @@ std::optional<std::int64_t> ToInt64(const Expr<SomeType> &);
 
 template<typename A>
 std::optional<std::int64_t> ToInt64(const std::optional<A> &x) {
-  if (x.has_value()) {
+  if (x) {
     return ToInt64(*x);
   } else {
     return std::nullopt;

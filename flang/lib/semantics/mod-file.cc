@@ -218,7 +218,7 @@ void ModFileWriter::PutSymbol(
             }
             PutPassName(typeBindings, x.passName());
             auto attrs{symbol.attrs()};
-            if (x.passName().has_value()) {
+            if (x.passName()) {
               attrs.reset(Attr::PASS);
             }
             PutAttrs(typeBindings, attrs);
@@ -508,7 +508,7 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
   const auto &details{symbol.get<ProcEntityDetails>()};
   const ProcInterface &interface{details.interface()};
   Attrs attrs{symbol.attrs()};
-  if (details.passName().has_value()) {
+  if (details.passName()) {
     attrs.reset(Attr::PASS);
   }
   PutEntity(os, symbol,
@@ -763,7 +763,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   options.searchDirectories = context_.searchDirectories();
   auto path{ModFileName(name, ancestorName, context_.moduleFileSuffix())};
   const auto *sourceFile{parsing.Prescan(path, options)};
-  if (sourceFile == nullptr) {
+  if (!sourceFile) {
     return nullptr;
   } else if (parsing.messages().AnyFatalError()) {
     for (auto &msg : parsing.messages().messages()) {
@@ -781,7 +781,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   parsing.Parse(nullptr);
   auto &parseTree{parsing.parseTree()};
   if (!parsing.messages().empty() || !parsing.consumedWholeFile() ||
-      !parseTree.has_value()) {
+      !parseTree) {
     Say(name, ancestorName, "Module file is corrupt: %s"_err_en_US,
         sourceFile->path());
     return nullptr;

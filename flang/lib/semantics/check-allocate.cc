@@ -194,7 +194,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
   if (info.gotSrc || info.gotMold) {
     if (const auto *expr{GetExpr(DEREF(parserSourceExpr))}) {
       info.sourceExprType = expr->GetType();
-      if (!info.sourceExprType.has_value()) {
+      if (!info.sourceExprType) {
         context.Say(parserSourceExpr->source,
             "Typeless item not allowed as SOURCE or MOLD in ALLOCATE"_err_en_US);
         return std::nullopt;
@@ -252,7 +252,7 @@ static bool IsTypeCompatible(
     if (type1.category() == DeclTypeSpec::Category::TypeDerived) {
       return &derivedType1->typeSymbol() == &derivedType2.typeSymbol();
     } else if (type1.category() == DeclTypeSpec::Category::ClassDerived) {
-      for (const DerivedTypeSpec *parent{&derivedType2}; parent != nullptr;
+      for (const DerivedTypeSpec *parent{&derivedType2}; parent;
            parent = parent->typeSymbol().GetParentTypeSpec()) {
         if (&derivedType1->typeSymbol() == &parent->typeSymbol()) {
           return true;
@@ -404,7 +404,7 @@ static bool HaveCompatibleKindParameters(
 }
 
 bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
-  if (symbol_ == nullptr) {
+  if (!symbol_) {
     CHECK(context.AnyFatalError());
     return false;
   }
@@ -413,7 +413,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
         "Name in ALLOCATE statement must be a variable name"_err_en_US);
     return false;
   }
-  if (type_ == nullptr) {
+  if (!type_) {
     // This is done after variable check because a user could have put
     // a subroutine name in allocate for instance which is a symbol with
     // no type.
@@ -535,7 +535,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
 
 bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
     SemanticsContext &context) const {
-  if (symbol_ == nullptr) {
+  if (!symbol_) {
     CHECK(context.AnyFatalError());
     return false;
   }

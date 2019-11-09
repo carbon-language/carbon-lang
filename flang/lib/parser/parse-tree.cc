@@ -67,7 +67,7 @@ DataRef::DataRef(std::list<PartRef> &&prl) : u{std::move(prl.front().name)} {
       u = common::Indirection<ArrayElement>::Make(
           std::move(*this), std::move(pr.subscripts));
     }
-    if (pr.imageSelector.has_value()) {
+    if (pr.imageSelector) {
       u = common::Indirection<CoindexedNamedObject>::Make(
           std::move(*this), std::move(*pr.imageSelector));
     }
@@ -193,7 +193,7 @@ Substring ArrayElement::ConvertToSubstring() {
   auto iter{subscripts.begin()};
   CHECK(iter != subscripts.end());
   auto &triplet{std::get<SubscriptTriplet>(iter->u)};
-  CHECK(!std::get<2>(triplet.t).has_value());
+  CHECK(!std::get<2>(triplet.t));
   CHECK(++iter == subscripts.end());
   return Substring{std::move(base),
       SubstringRange{std::get<0>(std::move(triplet.t)),

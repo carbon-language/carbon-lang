@@ -75,7 +75,7 @@ private:
 
 // Check that name has been resolved to a symbol
 void RewriteMutator::Post(parser::Name &name) {
-  if (name.symbol == nullptr && errorOnUnresolvedName_) {
+  if (!name.symbol && errorOnUnresolvedName_) {
     messages_.Say(name.source, "Internal: no symbol found for '%s'"_err_en_US,
         name.source);
   }
@@ -116,7 +116,7 @@ void RewriteMutator::Post(parser::IoUnit &x) {
   if (auto *var{std::get_if<parser::Variable>(&x.u)}) {
     const parser::Name &last{parser::GetLastName(*var)};
     DeclTypeSpec *type{last.symbol ? last.symbol->GetType() : nullptr};
-    if (type == nullptr || type->category() != DeclTypeSpec::Character) {
+    if (!type || type->category() != DeclTypeSpec::Character) {
       // If the Variable is not known to be character (any kind), transform
       // the I/O unit in situ to a FileUnitNumber so that automatic expression
       // constraint checking will be applied.
@@ -137,10 +137,10 @@ void RewriteMutator::Post(parser::IoUnit &x) {
 // name had appeared with NML=.
 template<typename READ_OR_WRITE>
 void FixMisparsedUntaggedNamelistName(READ_OR_WRITE &x) {
-  if (x.iounit.has_value() && x.format.has_value() &&
+  if (x.iounit && x.format &&
       std::holds_alternative<parser::DefaultCharExpr>(x.format->u)) {
     if (const parser::Name * name{parser::Unwrap<parser::Name>(x.format)}) {
-      if (name->symbol != nullptr && name->symbol->has<NamelistDetails>()) {
+      if (name->symbol && name->symbol->has<NamelistDetails>()) {
         x.controls.emplace_front(parser::IoControlSpec{std::move(*name)});
         x.format.reset();
       }

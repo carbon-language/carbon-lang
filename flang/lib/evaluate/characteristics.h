@@ -66,7 +66,7 @@ public:
     AcquireLEN();
   }
   TypeAndShape(DynamicType t, std::optional<Shape> &&s) : type_{t} {
-    if (s.has_value()) {
+    if (s) {
       shape_ = std::move(*s);
     }
     AcquireLEN();

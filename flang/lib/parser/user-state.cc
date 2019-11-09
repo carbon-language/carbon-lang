@@ -27,7 +27,7 @@ std::optional<Success> StartNewSubprogram::Parse(ParseState &state) {
   if (auto *ustate{state.userState()}) {
     ustate->NewSubprogram();
   }
-  return {Success{}};
+  return Success{};
 }
 
 std::optional<CapturedLabelDoStmt::resultType> CapturedLabelDoStmt::Parse(
@@ -47,7 +47,7 @@ EndDoStmtForCapturedLabelDoStmt::Parse(ParseState &state) {
   static constexpr auto parser{
       statement(indirect(construct<EndDoStmt>("END DO" >> maybe(name))))};
   if (auto enddo{parser.Parse(state)}) {
-    if (enddo->label.has_value()) {
+    if (enddo->label) {
       if (const auto *ustate{state.userState()}) {
         if (ustate->IsDoLabel(enddo->label.value())) {
           return enddo;
@@ -87,7 +87,7 @@ std::optional<DataComponentDefStmt> StructureComponents::Parse(
     ParseState &state) {
   static constexpr auto stmt{Parser<DataComponentDefStmt>{}};
   std::optional<DataComponentDefStmt> defs{stmt.Parse(state)};
-  if (defs.has_value()) {
+  if (defs) {
     if (auto *ustate{state.userState()}) {
       for (const auto &decl : std::get<std::list<ComponentDecl>>(defs->t)) {
         ustate->NoteOldStructureComponent(std::get<Name>(decl.t).source);

@@ -64,7 +64,7 @@ struct UnwrapperHelper {
   // Implementations of specializations
   template<typename A, typename B>
   static auto Unwrap(B *p) -> Constify<A, B> * {
-    if (p != nullptr) {
+    if (p) {
       return Unwrap<A>(*p);
     } else {
       return nullptr;
@@ -73,7 +73,7 @@ struct UnwrapperHelper {
 
   template<typename A, typename B>
   static auto Unwrap(const std::unique_ptr<B> &p) -> Constify<A, B> * {
-    if (p.get() != nullptr) {
+    if (p.get()) {
       return Unwrap<A>(*p);
     } else {
       return nullptr;
@@ -82,7 +82,7 @@ struct UnwrapperHelper {
 
   template<typename A, typename B>
   static auto Unwrap(const std::shared_ptr<B> &p) -> Constify<A, B> * {
-    if (p.get() != nullptr) {
+    if (p.get()) {
       return Unwrap<A>(*p);
     } else {
       return nullptr;
@@ -91,7 +91,7 @@ struct UnwrapperHelper {
 
   template<typename A, typename B>
   static auto Unwrap(std::optional<B> &x) -> Constify<A, B> * {
-    if (x.has_value()) {
+    if (x) {
       return Unwrap<A>(*x);
     } else {
       return nullptr;
@@ -100,7 +100,7 @@ struct UnwrapperHelper {
 
   template<typename A, typename B>
   static auto Unwrap(const std::optional<B> &x) -> Constify<A, B> * {
-    if (x.has_value()) {
+    if (x) {
       return Unwrap<A>(*x);
     } else {
       return nullptr;
@@ -139,7 +139,7 @@ struct UnwrapperHelper {
 
   template<typename A, typename B>
   static auto Unwrap(const CountedReference<B> &p) -> Constify<A, B> * {
-    if (p.get() != nullptr) {
+    if (p.get()) {
       return Unwrap<A>(*p);
     } else {
       return nullptr;

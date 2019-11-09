@@ -105,7 +105,7 @@ constexpr bool HasMember{
 // std::optional<std::optional<A>> -> std::optional<A>
 template<typename A>
 std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
-  if (x.has_value()) {
+  if (x) {
     return std::move(*x);
   }
   return std::nullopt;
@@ -113,7 +113,7 @@ std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
 
 // Convert an std::optional to an ordinary pointer
 template<typename A> const A *GetPtrFromOptional(const std::optional<A> &x) {
-  if (x.has_value()) {
+  if (x) {
     return &*x;
   } else {
     return nullptr;
@@ -258,7 +258,7 @@ template<typename A>
 std::optional<std::vector<A>> AllElementsPresent(
     std::vector<std::optional<A>> &&v) {
   for (const auto &maybeA : v) {
-    if (!maybeA.has_value()) {
+    if (!maybeA) {
       return std::nullopt;
     }
   }

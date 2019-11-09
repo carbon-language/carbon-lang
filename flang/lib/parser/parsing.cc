@@ -68,7 +68,7 @@ const SourceFile *Parsing::Prescan(const std::string &path, Options options) {
 
   Preprocessor preprocessor{allSources};
   for (const auto &predef : options.predefinitions) {
-    if (predef.second.has_value()) {
+    if (predef.second) {
       preprocessor.Define(predef.first, *predef.second);
     } else {
       preprocessor.Undefine(predef.first);

@@ -30,8 +30,7 @@ namespace Fortran::evaluate {
 bool IsImpliedShape(const Symbol &symbol0) {
   const Symbol &symbol{ResolveAssociations(symbol0)};
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-    if (symbol.attrs().test(semantics::Attr::PARAMETER) &&
-        details->init().has_value()) {
+    if (symbol.attrs().test(semantics::Attr::PARAMETER) && details->init()) {
       return details->shape().IsImpliedShape();
     }
   }
@@ -84,7 +83,7 @@ std::optional<Shape> AsShape(FoldingContext &context, ExtentExpr &&arrayExpr) {
 std::optional<ExtentExpr> AsExtentArrayExpr(const Shape &shape) {
   ArrayConstructorValues<ExtentType> values;
   for (const auto &dim : shape) {
-    if (dim.has_value()) {
+    if (dim) {
       values.Push(common::Clone(*dim));
     } else {
       return std::nullopt;
@@ -164,7 +163,7 @@ MaybeExtentExpr CountTrips(FoldingContext &context, MaybeExtentExpr &&lower,
 MaybeExtentExpr GetSize(Shape &&shape) {
   ExtentExpr extent{1};
   for (auto &&dim : std::move(shape)) {
-    if (dim.has_value()) {
+    if (dim) {
       extent = std::move(extent) * std::move(*dim);
     } else {
       return std::nullopt;
@@ -272,11 +271,11 @@ MaybeExtentExpr GetExtent(FoldingContext &context, const Subscript &subscript,
       common::visitors{
           [&](const Triplet &triplet) -> MaybeExtentExpr {
             MaybeExtentExpr upper{triplet.upper()};
-            if (!upper.has_value()) {
+            if (!upper) {
               upper = GetUpperBound(context, base, dimension);
             }
             MaybeExtentExpr lower{triplet.lower()};
-            if (!lower.has_value()) {
+            if (!lower) {
               lower = GetLowerBound(context, base, dimension);
             }
             return CountTrips(context, std::move(lower), std::move(upper),
@@ -297,7 +296,7 @@ MaybeExtentExpr GetExtent(FoldingContext &context, const Subscript &subscript,
 
 MaybeExtentExpr ComputeUpperBound(
     FoldingContext &context, ExtentExpr &&lower, MaybeExtentExpr &&extent) {
-  if (extent.has_value()) {
+  if (extent) {
     return Fold(context, std::move(*extent) - std::move(lower) + ExtentExpr{1});
   } else {
     return std::nullopt;
@@ -461,7 +460,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
     return Scalar();
   } else if (call.IsElemental()) {
     for (const auto &arg : call.arguments()) {
-      if (arg.has_value() && arg->Rank() > 0) {
+      if (arg && arg->Rank() > 0) {
         return (*this)(*arg);
       }
     }
@@ -473,7 +472,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
         intrinsic->name == "ubound") {
       // These are the array-valued cases for LBOUND and UBOUND (no DIM=).
       const auto *expr{call.arguments().front().value().UnwrapExpr()};
-      CHECK(expr != nullptr);
+      CHECK(expr);
       return Shape{MaybeExtentExpr{ExtentExpr{expr->Rank()}}};
     } else if (intrinsic->name == "all" || intrinsic->name == "any" ||
         intrinsic->name == "count" || intrinsic->name == "iall" ||
@@ -487,7 +486,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
         auto arrayShape{
             (*this)(UnwrapExpr<Expr<SomeType>>(call.arguments().at(0)))};
         const auto *dimArg{UnwrapExpr<Expr<SomeType>>(call.arguments().at(1))};
-        if (arrayShape.has_value() && dimArg != nullptr) {
+        if (arrayShape && dimArg) {
           if (auto dim{ToInt64(*dimArg)}) {
             if (*dim >= 1 &&
                 static_cast<std::size_t>(*dim) <= arrayShape->size()) {
@@ -502,7 +501,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
         return (*this)(call.arguments()[0]);
       }
     } else if (intrinsic->name == "reshape") {
-      if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
+      if (call.arguments().size() >= 2 && call.arguments().at(1)) {
         // SHAPE(RESHAPE(array,shape)) -> shape
         if (const auto *shapeExpr{
                 call.arguments().at(1).value().UnwrapExpr()}) {
@@ -519,7 +518,7 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
         const auto *dimArg{UnwrapExpr<Expr<SomeType>>(call.arguments().at(1))};
         const auto *nCopies{
             UnwrapExpr<Expr<SomeInteger>>(call.arguments().at(2))};
-        if (arrayShape.has_value() && dimArg != nullptr && nCopies != nullptr) {
+        if (arrayShape && dimArg && nCopies) {
           if (auto dim{ToInt64(*dimArg)}) {
             if (*dim >= 1 &&
                 static_cast<std::size_t>(*dim) <= arrayShape->size() + 1) {

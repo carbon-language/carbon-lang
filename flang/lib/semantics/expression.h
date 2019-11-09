@@ -165,7 +165,7 @@ public:
     return Analyze(x.value());
   }
   template<typename A> MaybeExpr Analyze(const std::optional<A> &x) {
-    if (x.has_value()) {
+    if (x) {
       return Analyze(*x);
     } else {
       return std::nullopt;
@@ -175,7 +175,7 @@ public:
   // Implement constraint-checking wrappers from the Fortran grammar.
   template<typename A> MaybeExpr Analyze(const parser::Scalar<A> &x) {
     auto result{Analyze(x.thing)};
-    if (result.has_value()) {
+    if (result) {
       if (int rank{result->Rank()}; rank != 0) {
         SayAt(x, "Must be a scalar value, but is a rank-%d array"_err_en_US,
             rank);
@@ -189,7 +189,7 @@ public:
     auto save{
         GetFoldingContext().messages().SetLocation(FindSourceLocation(x))};
     auto result{Analyze(x.thing)};
-    if (result.has_value()) {
+    if (result) {
       *result = Fold(GetFoldingContext(), std::move(*result));
       if (!IsConstantExpr(*result)) {
         SayAt(x, "Must be a constant value"_err_en_US);

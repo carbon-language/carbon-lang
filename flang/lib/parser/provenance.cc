@@ -46,7 +46,7 @@ std::optional<std::size_t> ProvenanceRangeToOffsetMappings::Map(
     ProvenanceRange that{iter->first};
     if (that.Contains(range)) {
       std::size_t offset{iter->second + that.MemberOffset(range.start())};
-      if (!result.has_value() || offset < *result) {
+      if (!result || offset < *result) {
         result = offset;
       }
     }
@@ -215,7 +215,7 @@ ProvenanceRange AllSources::AddCompilerInsertion(std::string text) {
 void AllSources::EmitMessage(std::ostream &o,
     const std::optional<ProvenanceRange> &range, const std::string &message,
     bool echoSourceLine) const {
-  if (!range.has_value()) {
+  if (!range) {
     o << message << '\n';
     return;
   }
@@ -286,7 +286,7 @@ const SourceFile *AllSources::GetSourceFile(
   return std::visit(
       common::visitors{
           [&](const Inclusion &inc) {
-            if (offset != nullptr) {
+            if (offset) {
               *offset = origin.covers.MemberOffset(at);
             }
             return &inc.source;
@@ -295,7 +295,7 @@ const SourceFile *AllSources::GetSourceFile(
             return GetSourceFile(origin.replaces.start(), offset);
           },
           [offset](const CompilerInsertion &) {
-            if (offset != nullptr) {
+            if (offset) {
               *offset = 0;
             }
             return static_cast<const SourceFile *>(nullptr);

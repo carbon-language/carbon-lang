@@ -238,7 +238,7 @@ struct IntrinsicInterface {
 
 int IntrinsicInterface::CountArguments() const {
   int n{0};
-  while (n < maxArguments && dummy[n].keyword != nullptr) {
+  while (n < maxArguments && dummy[n].keyword) {
     ++n;
   }
   return n;
@@ -972,8 +972,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   // a particular intrinsic procedure's generic interface and the actual
   // arguments in a procedure reference.
   std::size_t dummyArgPatterns{0};
-  for (; dummyArgPatterns < maxArguments &&
-       dummy[dummyArgPatterns].keyword != nullptr;
+  for (; dummyArgPatterns < maxArguments && dummy[dummyArgPatterns].keyword;
        ++dummyArgPatterns) {
   }
   // MAX and MIN (and others that map to them) allow their last argument to
@@ -988,7 +987,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   std::vector<ActualArgument *> actualForDummy(nonRepeatedDummies, nullptr);
   int missingActualArguments{0};
   for (std::optional<ActualArgument> &arg : arguments) {
-    if (!arg.has_value()) {
+    if (!arg) {
       ++missingActualArguments;
     } else {
       if (arg->isAlternateReturn) {
@@ -1000,11 +999,11 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       bool found{false};
       int slot{missingActualArguments};
       for (std::size_t j{0}; j < nonRepeatedDummies && !found; ++j) {
-        if (arg->keyword.has_value()) {
+        if (arg->keyword) {
           found = *arg->keyword == dummy[j].keyword;
           if (found) {
             if (const auto *previous{actualForDummy[j]}) {
-              if (previous->keyword.has_value()) {
+              if (previous->keyword) {
                 messages.Say(*arg->keyword,
                     "repeated keyword argument to intrinsic '%s'"_err_en_US,
                     name);
@@ -1018,18 +1017,18 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
             }
           }
         } else {
-          found = actualForDummy[j] == nullptr && slot-- == 0;
+          found = !actualForDummy[j] && slot-- == 0;
         }
         if (found) {
           actualForDummy[j] = &*arg;
         }
       }
       if (!found) {
-        if (repeatLastDummy && !arg->keyword.has_value()) {
+        if (repeatLastDummy && !arg->keyword) {
           // MAX/MIN argument after the 2nd
           actualForDummy.push_back(&*arg);
         } else {
-          if (arg->keyword.has_value()) {
+          if (arg->keyword) {
             messages.Say(*arg->keyword,
                 "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
           } else {
@@ -1056,7 +1055,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (d.typePattern.kindCode == KindCode::kindArg) {
-      CHECK(kindDummyArg == nullptr);
+      CHECK(!kindDummyArg);
       kindDummyArg = &d;
     }
     const ActualArgument *arg{actualForDummy[j]};
@@ -1083,10 +1082,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       }
     }
     std::optional<DynamicType> type{arg->GetType()};
-    if (!type.has_value()) {
+    if (!type) {
       CHECK(arg->Rank() == 0);
       const Expr<SomeType> *expr{arg->UnwrapExpr()};
-      CHECK(expr != nullptr);
+      CHECK(expr);
       if (std::holds_alternative<BOZLiteralConstant>(expr->u)) {
         if (d.typePattern.kindCode == KindCode::typeless ||
             d.rank == Rank::elementalOrBOZ) {
@@ -1136,7 +1135,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     case KindCode::any: argOk = true; break;
     case KindCode::kindArg:
       CHECK(type->category() == TypeCategory::Integer);
-      CHECK(kindArg == nullptr);
+      CHECK(!kindArg);
       kindArg = arg;
       argOk = true;
       break;
@@ -1146,13 +1145,13 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       argOk = true;
       break;
     case KindCode::same:
-      if (sameArg == nullptr) {
+      if (!sameArg) {
         sameArg = arg;
       }
       argOk = type->IsTkCompatibleWith(sameArg->GetType().value());
       break;
     case KindCode::operand:
-      if (operandArg == nullptr) {
+      if (!operandArg) {
         operandArg = arg;
       } else if (auto prev{operandArg->GetType()}) {
         if (type->category() == prev->category()) {
@@ -1208,7 +1207,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       case Rank::scalar: argOk = rank == 0; break;
       case Rank::vector: argOk = rank == 1; break;
       case Rank::shape:
-        CHECK(!shapeArgSize.has_value());
+        CHECK(!shapeArgSize);
         if (rank == 1) {
           if (auto shape{GetShape(context, *arg)}) {
             if (auto constShape{AsConstantShape(context, *shape)}) {
@@ -1234,18 +1233,18 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         }
         break;
       case Rank::known:
-        if (knownArg == nullptr) {
+        if (!knownArg) {
           knownArg = arg;
         }
         argOk = rank == knownArg->Rank();
         break;
       case Rank::anyOrAssumedRank: argOk = true; break;
       case Rank::conformable:
-        CHECK(arrayArg != nullptr);
+        CHECK(arrayArg);
         argOk = rank == 0 || rank == arrayArg->Rank();
         break;
       case Rank::dimRemoved:
-        CHECK(arrayArg != nullptr);
+        CHECK(arrayArg);
         if (hasDimArg) {
           argOk = rank == 0 || rank + 1 == arrayArg->Rank();
         } else {
@@ -1255,7 +1254,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       case Rank::reduceOperation:
         // TODO: Confirm that the argument is a pure function
         // of two arguments with several constraints
-        CHECK(arrayArg != nullptr);
+        CHECK(arrayArg);
         argOk = rank == 0;
         break;
       case Rank::dimReduced:
@@ -1311,7 +1310,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
           defaults.GetDefaultKind(TypeCategory::Logical)};
       break;
     case KindCode::same:
-      CHECK(sameArg != nullptr);
+      CHECK(sameArg);
       if (std::optional<DynamicType> aType{sameArg->GetType()}) {
         if (result.categorySet.test(aType->category())) {
           resultType = *aType;
@@ -1321,14 +1320,14 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       }
       break;
     case KindCode::operand:
-      CHECK(operandArg != nullptr);
+      CHECK(operandArg);
       resultType = operandArg->GetType();
       CHECK(!resultType || result.categorySet.test(resultType->category()));
       break;
     case KindCode::effectiveKind:
-      CHECK(kindDummyArg != nullptr);
+      CHECK(kindDummyArg);
       CHECK(result.categorySet == CategorySet{*category});
-      if (kindArg != nullptr) {
+      if (kindArg) {
         if (auto *expr{kindArg->UnwrapExpr()}) {
           CHECK(expr->Rank() == 0);
           if (auto code{ToInt64(*expr)}) {
@@ -1343,7 +1342,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
                      "intrinsic result type"_err_en_US);
         return std::nullopt;
       } else if (kindDummyArg->optionality == Optionality::defaultsToSameKind) {
-        CHECK(sameArg != nullptr);
+        CHECK(sameArg);
         resultType = *sameArg->GetType();
       } else if (kindDummyArg->optionality ==
           Optionality::defaultsToSubscriptKind) {
@@ -1358,8 +1357,8 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       break;
     case KindCode::likeMultiply:
       CHECK(dummies >= 2);
-      CHECK(actualForDummy[0] != nullptr);
-      CHECK(actualForDummy[1] != nullptr);
+      CHECK(actualForDummy[0]);
+      CHECK(actualForDummy[1]);
       resultType = actualForDummy[0]->GetType()->ResultTypeForMultiply(
           *actualForDummy[1]->GetType());
       break;
@@ -1395,23 +1394,23 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   case Rank::vector: resultRank = 1; break;
   case Rank::matrix: resultRank = 2; break;
   case Rank::conformable:
-    CHECK(arrayArg != nullptr);
+    CHECK(arrayArg);
     resultRank = arrayArg->Rank();
     break;
   case Rank::dimReduced:
-    CHECK(arrayArg != nullptr);
+    CHECK(arrayArg);
     resultRank = hasDimArg ? arrayArg->Rank() - 1 : 0;
     break;
   case Rank::dimRemoved:
-    CHECK(arrayArg != nullptr);
+    CHECK(arrayArg);
     resultRank = arrayArg->Rank() - 1;
     break;
   case Rank::rankPlus1:
-    CHECK(knownArg != nullptr);
+    CHECK(knownArg);
     resultRank = knownArg->Rank() + 1;
     break;
   case Rank::shaped:
-    CHECK(shapeArgSize.has_value());
+    CHECK(shapeArgSize);
     resultRank = *shapeArgSize;
     break;
   case Rank::elementalOrBOZ:
@@ -1442,14 +1441,13 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       if (const Expr<SomeType> *expr{arg->UnwrapExpr()}) {
         auto dc{characteristics::DummyArgument::FromActual(
             std::string{d.keyword}, *expr, context)};
-        CHECK(dc.has_value());
+        CHECK(dc);
         dummyArgs.emplace_back(std::move(*dc));
-        if (d.typePattern.kindCode == KindCode::same &&
-            !sameDummyArg.has_value()) {
+        if (d.typePattern.kindCode == KindCode::same && !sameDummyArg) {
           sameDummyArg = j;
         }
       } else {
-        CHECK(arg->GetAssumedTypeDummy() != nullptr);
+        CHECK(arg->GetAssumedTypeDummy());
         dummyArgs.emplace_back(std::string{d.keyword},
             characteristics::DummyDataObject{DynamicType::AssumedType()});
       }
@@ -1548,7 +1546,7 @@ SpecificCall IntrinsicProcTable::Implementation::HandleNull(
   if (!arguments.empty()) {
     if (arguments.size() > 1) {
       context.messages().Say("Too many arguments to NULL()"_err_en_US);
-    } else if (arguments[0].has_value() && arguments[0]->keyword.has_value() &&
+    } else if (arguments[0] && arguments[0]->keyword &&
         arguments[0]->keyword->ToString() != "mold") {
       context.messages().Say("Unknown argument '%s' to NULL()"_err_en_US,
           arguments[0]->keyword->ToString());
@@ -1560,10 +1558,10 @@ SpecificCall IntrinsicProcTable::Implementation::HandleNull(
           if (IsProcedurePointer(*mold)) {
             // MOLD= procedure pointer
             const Symbol *last{GetLastSymbol(*mold)};
-            CHECK(last != nullptr);
+            CHECK(last);
             auto procPointer{
                 characteristics::Procedure::Characterize(*last, intrinsics)};
-            CHECK(procPointer.has_value());
+            CHECK(procPointer);
             args.emplace_back("mold"s,
                 characteristics::DummyProcedure{common::Clone(*procPointer)});
             fResult.emplace(std::move(*procPointer));
@@ -1632,8 +1630,7 @@ static bool ApplySpecificChecks(
     }
   } else if (name == "loc") {
     if (const auto &arg{call.arguments[0]}) {
-      ok = arg->GetAssumedTypeDummy() != nullptr ||
-          GetLastSymbol(arg->UnwrapExpr()) != nullptr;
+      ok = arg->GetAssumedTypeDummy() || GetLastSymbol(arg->UnwrapExpr());
     }
     if (!ok) {
       messages.Say(
@@ -1706,7 +1703,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
           parser::Messages &buffer) -> std::optional<SpecificCall> {
         if (auto specificCall{
                 intrinsic.Match(call, defaults_, arguments, localContext)}) {
-          if (finalBuffer != nullptr) {
+          if (finalBuffer) {
             finalBuffer->Annex(std::move(localBuffer));
           }
           return specificCall;
@@ -1778,7 +1775,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   }
 
   // No match; report the right errors, if any
-  if (finalBuffer != nullptr) {
+  if (finalBuffer) {
     if (specificBuffer.empty()) {
       finalBuffer->Annex(std::move(genericBuffer));
     } else {
@@ -1796,7 +1793,7 @@ IntrinsicProcTable::Implementation::IsUnrestrictedSpecificIntrinsicFunction(
     const SpecificIntrinsicInterface &specific{*iter->second};
     if (!specific.isRestrictedSpecific) {
       std::string genericName{name};
-      if (specific.generic != nullptr) {
+      if (specific.generic) {
         genericName = std::string(specific.generic);
       }
       characteristics::FunctionResult fResult{GetSpecificType(specific.result)};

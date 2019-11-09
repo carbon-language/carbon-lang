@@ -21,8 +21,7 @@ namespace Fortran::semantics {
 
 bool IsNumericExpr(const SomeExpr &expr) {
   auto dynamicType{expr.GetType()};
-  return dynamicType.has_value() &&
-      common::IsNumericTypeCategory(dynamicType->category());
+  return dynamicType && common::IsNumericTypeCategory(dynamicType->category());
 }
 
 void ArithmeticIfStmtChecker::Leave(

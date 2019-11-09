@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public:
   const std::uint64_t &flags() const { return flags_; }
 
   std::size_t LenParameters() const {
-    if (derivedType_ != nullptr) {
+    if (derivedType_) {
       return derivedType_->lenParameters();
     }
     return 0;

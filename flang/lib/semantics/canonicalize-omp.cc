@@ -85,7 +85,7 @@ private:
     nextIt = it;
     if (++nextIt != block.end()) {
       if (auto *doCons{GetConstructIf<parser::DoConstruct>(*nextIt)}) {
-        if (doCons->GetLoopControl().has_value()) {
+        if (doCons->GetLoopControl()) {
           // move DoConstruct
           std::get<std::optional<parser::DoConstruct>>(x.t) =
               std::move(*doCons);

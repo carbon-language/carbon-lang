@@ -93,7 +93,7 @@ bool IsDescriptor(const Symbol &symbol0) {
 namespace Fortran::evaluate {
 
 template<typename A> inline bool PointeeComparison(const A *x, const A *y) {
-  return x == y || (x != nullptr && y != nullptr && *x == *y);
+  return x == y || (x && y && *x == *y);
 }
 
 bool DynamicType::operator==(const DynamicType &that) const {
@@ -103,7 +103,7 @@ bool DynamicType::operator==(const DynamicType &that) const {
 }
 
 bool DynamicType::IsAssumedLengthCharacter() const {
-  return category_ == TypeCategory::Character && charLength_ != nullptr &&
+  return category_ == TypeCategory::Character && charLength_ &&
       charLength_->isAssumed();
 }
 
@@ -192,7 +192,7 @@ static bool AreSameDerivedType(const semantics::DerivedTypeSpec &x,
   for (auto xComponentName{xDetails.componentNames().cbegin()};
        xComponentName != xEnd; ++xComponentName, ++yComponentName) {
     if (yComponentName == yEnd || *xComponentName != *yComponentName ||
-        xSymbol.scope() == nullptr || ySymbol.scope() == nullptr) {
+        !xSymbol.scope() || !ySymbol.scope()) {
       return false;
     }
     const auto xLookup{xSymbol.scope()->find(*xComponentName)};
@@ -237,7 +237,7 @@ else {
 
 static bool AreCompatibleDerivedTypes(const semantics::DerivedTypeSpec *x,
     const semantics::DerivedTypeSpec *y, bool isPolymorphic) {
-  if (x == nullptr || y == nullptr) {
+  if (!x || !y) {
     return false;
   } else {
     SetOfDerivedTypePairs inProgress;
@@ -262,7 +262,7 @@ static bool IsKindTypeParameter(
 }
 
 bool DynamicType::IsTypeCompatibleWith(const DynamicType &that) const {
-  if (derived_ != nullptr) {
+  if (derived_) {
     if (!AreCompatibleDerivedTypes(derived_, that.derived_, IsPolymorphic())) {
       return false;
     }

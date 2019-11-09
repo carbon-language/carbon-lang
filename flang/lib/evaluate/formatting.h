@@ -54,7 +54,7 @@ auto operator<<(
 template<typename A>
 auto operator<<(std::ostream &o, const std::optional<A> &x)
     -> decltype(o << *x) {
-  if (x.has_value()) {
+  if (x) {
     o << *x;
   } else {
     o << "(nullopt)";

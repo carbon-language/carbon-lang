@@ -109,7 +109,7 @@ std::ostream &ActualArgument::AssumedType::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
-  if (keyword.has_value()) {
+  if (keyword) {
     o << keyword->ToString() << '=';
   }
   if (isAlternateReturn) {
@@ -130,7 +130,7 @@ std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
   proc_.AsFortran(o);
   char separator{'('};
   for (const auto &arg : arguments_) {
-    if (arg.has_value()) {
+    if (arg) {
       arg->AsFortran(o << separator);
       separator = ',';
     }
@@ -382,10 +382,10 @@ std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
 }
 
 std::string DynamicType::AsFortran() const {
-  if (derived_ != nullptr) {
+  if (derived_) {
     CHECK(category_ == TypeCategory::Derived);
     return DerivedTypeSpecAsFortran(*derived_);
-  } else if (charLength_ != nullptr) {
+  } else if (charLength_) {
     std::string result{"CHARACTER(KIND="s + std::to_string(kind_) + ",LEN="};
     if (charLength_->isAssumed()) {
       result += '*';
@@ -473,8 +473,8 @@ std::ostream &EmitVar(std::ostream &o, common::Reference<A> x) {
 
 template<typename A>
 std::ostream &EmitVar(std::ostream &o, const A *p, const char *kw = nullptr) {
-  if (p != nullptr) {
-    if (kw != nullptr) {
+  if (p) {
+    if (kw) {
       o << kw;
     }
     EmitVar(o, *p);
@@ -485,8 +485,8 @@ std::ostream &EmitVar(std::ostream &o, const A *p, const char *kw = nullptr) {
 template<typename A>
 std::ostream &EmitVar(
     std::ostream &o, const std::optional<A> &x, const char *kw = nullptr) {
-  if (x.has_value()) {
-    if (kw != nullptr) {
+  if (x) {
+    if (kw) {
       o << kw;
     }
     EmitVar(o, *x);
@@ -497,7 +497,7 @@ std::ostream &EmitVar(
 template<typename A, bool COPY>
 std::ostream &EmitVar(std::ostream &o, const common::Indirection<A, COPY> &p,
     const char *kw = nullptr) {
-  if (kw != nullptr) {
+  if (kw) {
     o << kw;
   }
   EmitVar(o, p.value());
@@ -506,7 +506,7 @@ std::ostream &EmitVar(std::ostream &o, const common::Indirection<A, COPY> &p,
 
 template<typename A>
 std::ostream &EmitVar(std::ostream &o, const std::shared_ptr<A> &p) {
-  CHECK(p != nullptr);
+  CHECK(p);
   return EmitVar(o, *p);
 }
 
@@ -522,7 +522,7 @@ std::ostream &BaseObject::AsFortran(std::ostream &o) const {
 
 template<int KIND>
 std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
-  if (base_.has_value()) {
+  if (base_) {
     return base_->AsFortran(o) << '%';
   }
   return EmitVar(o, parameter_);
@@ -587,11 +587,11 @@ std::ostream &CoarrayRef::AsFortran(std::ostream &o) const {
     EmitVar(o << separator, css);
     separator = ',';
   }
-  if (stat_.has_value()) {
+  if (stat_) {
     EmitVar(o << separator, stat_, "STAT=");
     separator = ',';
   }
-  if (team_.has_value()) {
+  if (team_) {
     EmitVar(
         o << separator, team_, teamIsTeamNumber_ ? "TEAM_NUMBER=" : "TEAM=");
   }

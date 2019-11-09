@@ -245,7 +245,7 @@ public:
                 decls.begin(), decls.end(), [](const ComponentDecl &d) {
                   const auto &init{
                       std::get<std::optional<Initialization>>(d.t)};
-                  return init.has_value() &&
+                  return init &&
                       std::holds_alternative<
                           std::list<common::Indirection<DataStmtValue>>>(
                           init->u);
@@ -408,12 +408,12 @@ public:
     static const auto hasAssignmentInitializer{[](const EntityDecl &d) {
       // Does a declaration have a new-style =x initializer?
       const auto &init{std::get<std::optional<Initialization>>(d.t)};
-      return init.has_value() && !isInitializerOldStyle(*init);
+      return init && !isInitializerOldStyle(*init);
     }};
     static const auto hasSlashDelimitedInitializer{[](const EntityDecl &d) {
       // Does a declaration have an old-style /x/ initializer?
       const auto &init{std::get<std::optional<Initialization>>(d.t)};
-      return init.has_value() && isInitializerOldStyle(*init);
+      return init && isInitializerOldStyle(*init);
     }};
     const auto useDoubledColons{[&]() {
       bool isRecord{std::holds_alternative<DeclarationTypeSpec::Record>(dts.u)};
@@ -665,7 +665,7 @@ public:
   void Unparse(const LetterSpec &x) {  // R865
     Put(*std::get<const char *>(x.t));
     auto second{std::get<std::optional<const char *>>(x.t)};
-    if (second.has_value()) {
+    if (second) {
       Put('-'), Put(**second);
     }
   }
@@ -803,7 +803,7 @@ public:
 
   // R1001 - R1022
   bool Pre(const Expr &x) {
-    if (typedExprAsFortran_ != nullptr && x.typedExpr.get() != nullptr) {
+    if (typedExprAsFortran_ && x.typedExpr.get()) {
       // Format the expression representation from semantics
       (*typedExprAsFortran_)(out_, *x.typedExpr);
       return false;
@@ -1417,7 +1417,7 @@ public:
     Walk("*(", x.unlimitedItems, ",", ")"), Put(')');
   }
   void Unparse(const format::FormatItem &x) {  // R1304, R1306, R1321
-    if (x.repeatCount.has_value()) {
+    if (x.repeatCount) {
       Walk(*x.repeatCount);
     }
     std::visit(
@@ -2449,7 +2449,7 @@ private:
   template<typename A>
   void Walk(
       const char *prefix, const std::optional<A> &x, const char *suffix = "") {
-    if (x.has_value()) {
+    if (x) {
       Word(prefix), Walk(*x), Word(suffix);
     }
   }

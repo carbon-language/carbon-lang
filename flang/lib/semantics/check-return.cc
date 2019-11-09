@@ -40,13 +40,12 @@ void ReturnStmtChecker::Leave(const parser::ReturnStmt &returnStmt) {
   // subroutine subprogram.
   const auto &scope{context_.FindScope(context_.location().value())};
   const auto *subprogramScope{FindContainingSubprogram(scope)};
-  if (subprogramScope == nullptr) {
+  if (!subprogramScope) {
     context_.Say(
         "RETURN must in the inclusive scope of a SUBPROGRAM"_err_en_US);
     return;
   }
-  if (returnStmt.v.has_value() &&
-      subprogramScope->kind() == Scope::Kind::Subprogram) {
+  if (returnStmt.v && subprogramScope->kind() == Scope::Kind::Subprogram) {
     if (IsFunction(*subprogramScope->GetSymbol())) {
       context_.Say(
           "RETURN with expression is only allowed in SUBROUTINE subprogram"_err_en_US);

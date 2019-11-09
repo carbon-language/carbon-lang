@@ -72,7 +72,7 @@ public:
     return *result_;
   }
   void set_result(Symbol &result) {
-    CHECK(result_ == nullptr);
+    CHECK(!result_);
     result_ = &result;
   }
   const std::vector<Symbol *> &dummyArgs() const { return dummyArgs_; }
@@ -495,7 +495,7 @@ public:
   }
   template<typename D> const D &get() const {
     const auto *p{detailsIf<D>()};
-    CHECK(p != nullptr);
+    CHECK(p);
     return *p;
   }
 

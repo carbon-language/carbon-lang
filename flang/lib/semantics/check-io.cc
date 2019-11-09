@@ -61,7 +61,7 @@ bool FormatErrorReporter::Say(const common::FormatMessage &msg) {
 
 void IoChecker::Enter(
     const parser::Statement<common::Indirection<parser::FormatStmt>> &stmt) {
-  if (!stmt.label.has_value()) {
+  if (!stmt.label) {
     context_.Say("Format statement must be labeled"_err_en_US);  // C1301
   }
   const char *formatStart{static_cast<const char *>(
@@ -222,7 +222,7 @@ void IoChecker::Enter(const parser::IdExpr &) { SetSpecifier(IoSpecKind::Id); }
 void IoChecker::Enter(const parser::IdVariable &spec) {
   SetSpecifier(IoSpecKind::Id);
   auto expr{GetExpr(spec)};
-  if (expr == nullptr || !expr->GetType()) {
+  if (!expr || !expr->GetType()) {
     return;
   }
   int kind{expr->GetType()->kind()};

@@ -625,7 +625,7 @@ bool EquivalenceSets::CheckArrayBound(const parser::Expr &bound) {
     return false;
   }
   auto subscript{evaluate::ToInt64(*expr)};
-  if (!subscript.has_value()) {
+  if (!subscript) {
     context_.Say(bound.source,  // C8109
         "Array with nonconstant subscript '%s' is not allowed in an equivalence set"_err_en_US,
         bound.source);
@@ -643,7 +643,7 @@ bool EquivalenceSets::CheckSubstringBound(
     return false;
   }
   auto subscript{evaluate::ToInt64(*expr)};
-  if (!subscript.has_value()) {
+  if (!subscript) {
     context_.Say(bound.source,  // C8109
         "Substring with nonconstant bound '%s' is not allowed in an equivalence set"_err_en_US,
         bound.source);
@@ -665,7 +665,7 @@ bool EquivalenceSets::CheckSubstringBound(
 bool EquivalenceSets::IsCharacterSequenceType(const DeclTypeSpec *type) {
   return IsSequenceType(type, [&](const IntrinsicTypeSpec &type) {
     auto kind{evaluate::ToInt64(type.kind())};
-    return type.category() == TypeCategory::Character && kind.has_value() &&
+    return type.category() == TypeCategory::Character && kind &&
         kind.value() == context_.GetDefaultKind(TypeCategory::Character);
   });
 }

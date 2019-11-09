@@ -103,7 +103,7 @@ private:
   template<typename T>
   void CanonicalizeIfMatch(Block &originalBlock, std::vector<LabelInfo> &stack,
       Block::iterator &i, Statement<T> &statement) {
-    if (!stack.empty() && statement.label.has_value() &&
+    if (!stack.empty() && statement.label &&
         stack.back().label == *statement.label) {
       auto currentLabel{stack.back().label};
       if constexpr (std::is_same_v<T, common::Indirection<EndDoStmt>>) {

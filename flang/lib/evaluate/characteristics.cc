@@ -186,9 +186,9 @@ void TypeAndShape::AcquireShape(const semantics::ObjectEntityDetails &object) {
     attrs_.set(Attr::Coarray);
   }
   for (const semantics::ShapeSpec &dim : object.shape()) {
-    if (dim.ubound().GetExplicit().has_value()) {
+    if (dim.ubound().GetExplicit()) {
       Expr<SubscriptInteger> extent{*dim.ubound().GetExplicit()};
-      if (dim.lbound().GetExplicit().has_value()) {
+      if (dim.lbound().GetExplicit()) {
         extent = std::move(extent) +
             common::Clone(*dim.lbound().GetExplicit()) -
             Expr<SubscriptInteger>{1};
@@ -212,7 +212,7 @@ void TypeAndShape::AcquireLEN() {
 
 std::ostream &TypeAndShape::Dump(std::ostream &o) const {
   std::stringstream LENstr;
-  if (LEN_.has_value()) {
+  if (LEN_) {
     LEN_->AsFortran(LENstr);
   }
   o << type_.AsFortran(LENstr.str());
@@ -223,7 +223,7 @@ std::ostream &TypeAndShape::Dump(std::ostream &o) const {
     for (const auto &expr : shape_) {
       o << sep;
       sep = ',';
-      if (expr.has_value()) {
+      if (expr) {
         expr->AsFortran(o);
       } else {
         o << ':';
@@ -698,7 +698,7 @@ bool Procedure::CanBeCalledViaImplicitInterface() const {
 
 std::ostream &Procedure::Dump(std::ostream &o) const {
   attrs.Dump(o, EnumToString);
-  if (functionResult.has_value()) {
+  if (functionResult) {
     functionResult->Dump(o << "TYPE(") << ") FUNCTION";
   } else {
     o << "SUBROUTINE";

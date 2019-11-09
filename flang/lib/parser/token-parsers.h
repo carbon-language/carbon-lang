@@ -140,16 +140,16 @@ public:
           continue;  // redundant; ignore
         }
       }
-      if (!at.has_value()) {
+      if (!at) {
         at = nextCh.Parse(state);
-        if (!at.has_value()) {
+        if (!at) {
           return std::nullopt;
         }
       }
       if (spaceSkipping) {
         if (**at == ' ') {
           at = nextCh.Parse(state);
-          if (!at.has_value()) {
+          if (!at) {
             return std::nullopt;
           }
         } else if constexpr (MandatoryFreeFormSpace) {
@@ -259,7 +259,7 @@ template<char quote> struct CharLiteral {
         str += '\\';
       } else if (ch->first == quote) {
         static constexpr auto doubled{attempt(AnyOfChars{SetOfChars{quote}})};
-        if (!doubled.Parse(state).has_value()) {
+        if (!doubled.Parse(state)) {
           return str;
         }
       }
@@ -289,7 +289,7 @@ struct BOZLiteral {
     space.Parse(state);
     const char *start{state.GetLocation()};
     std::optional<const char *> at{nextCh.Parse(state)};
-    if (!at.has_value()) {
+    if (!at) {
       return std::nullopt;
     }
     if (**at == 'x' &&
@@ -299,7 +299,7 @@ struct BOZLiteral {
     }
     if (baseChar(**at)) {
       at = nextCh.Parse(state);
-      if (!at.has_value()) {
+      if (!at) {
         return std::nullopt;
       }
     }
@@ -312,7 +312,7 @@ struct BOZLiteral {
     std::string content;
     while (true) {
       at = nextCh.Parse(state);
-      if (!at.has_value()) {
+      if (!at) {
         return std::nullopt;
       }
       if (**at == quote) {
@@ -329,7 +329,7 @@ struct BOZLiteral {
 
     if (!base) {
       // extension: base allowed to appear as suffix, too
-      if (!(at = nextCh.Parse(state)).has_value() || !baseChar(**at) ||
+      if (!(at = nextCh.Parse(state)) || !baseChar(**at) ||
           !state.IsNonstandardOk(LanguageFeature::BOZExtensions,
               "nonstandard BOZ literal"_en_US)) {
         return std::nullopt;
@@ -371,7 +371,7 @@ struct SignedIntLiteralConstantWithoutKind {
   static std::optional<resultType> Parse(ParseState &state) {
     resultType result{state.GetLocation()};
     static constexpr auto sign{maybe("+-"_ch / space)};
-    if (sign.Parse(state).has_value()) {
+    if (sign.Parse(state)) {
       if (auto digits{digitString.Parse(state)}) {
         result.ExtendToCover(*digits);
         return result;
@@ -385,7 +385,7 @@ constexpr struct DigitString64 {
   using resultType = std::uint64_t;
   static std::optional<std::uint64_t> Parse(ParseState &state) {
     std::optional<const char *> firstDigit{digit.Parse(state)};
-    if (!firstDigit.has_value()) {
+    if (!firstDigit) {
       return std::nullopt;
     }
     std::uint64_t value = **firstDigit - '0';
@@ -416,7 +416,7 @@ constexpr struct DigitString64 {
 static std::optional<std::int64_t> SignedInteger(
     const std::optional<std::uint64_t> &x, Location at, bool negate,
     ParseState &state) {
-  if (!x.has_value()) {
+  if (!x) {
     return std::nullopt;
   }
   std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
@@ -437,7 +437,7 @@ struct SignedDigitString {
   using resultType = std::int64_t;
   static std::optional<std::int64_t> Parse(ParseState &state) {
     std::optional<const char *> sign{state.PeekAtNextChar()};
-    if (!sign.has_value()) {
+    if (!sign) {
       return std::nullopt;
     }
     bool negate{**sign == '-'};
@@ -455,7 +455,7 @@ struct DigitStringIgnoreSpaces {
   static std::optional<std::uint64_t> Parse(ParseState &state) {
     static constexpr auto getFirstDigit{space >> digit};
     std::optional<const char *> firstDigit{getFirstDigit.Parse(state)};
-    if (!firstDigit.has_value()) {
+    if (!firstDigit) {
       return std::nullopt;
     }
     std::uint64_t value = **firstDigit - '0';
@@ -510,12 +510,12 @@ struct HollerithLiteral {
     const char *start{state.GetLocation()};
     std::optional<std::uint64_t> charCount{
         DigitStringIgnoreSpaces{}.Parse(state)};
-    if (!charCount.has_value() || *charCount < 1) {
+    if (!charCount || *charCount < 1) {
       return std::nullopt;
     }
     static constexpr auto letterH{"h"_ch};
     std::optional<const char *> h{letterH.Parse(state)};
-    if (!h.has_value()) {
+    if (!h) {
       return std::nullopt;
     }
     std::string content;

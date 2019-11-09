@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public:
   }
 
   const Descriptor *GetDescriptor(const char *dtInstance) const {
-    if (staticDescriptor_ != nullptr) {
+    if (staticDescriptor_) {
       return staticDescriptor_;
     } else if (IsDescriptor()) {
       return Locate<const Descriptor>(dtInstance);

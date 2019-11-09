@@ -691,7 +691,7 @@ void OmpStructureChecker::Leave(const parser::OmpClauseList &) {
       const auto &orderedClause{
           std::get<parser::OmpClause::Ordered>(clause->u)};
 
-      if (orderedClause.v.has_value()) {
+      if (orderedClause.v) {
         if (FindClause(OmpClause::LINEAR)) {
           context_.Say(clause->source,
               "A loop directive may not have both a LINEAR clause and "
@@ -1003,14 +1003,13 @@ bool OmpStructureChecker::ScheduleModifierHasType(
     const parser::OmpScheduleModifierType::ModType &type) {
   const auto &modifier{
       std::get<std::optional<parser::OmpScheduleModifier>>(x.t)};
-  if (modifier.has_value()) {
+  if (modifier) {
     const auto &modType1{
         std::get<parser::OmpScheduleModifier::Modifier1>(modifier->t)};
     const auto &modType2{
         std::get<std::optional<parser::OmpScheduleModifier::Modifier2>>(
             modifier->t)};
-    if (modType1.v.v == type ||
-        (modType2.has_value() && modType2->v.v == type)) {
+    if (modType1.v.v == type || (modType2 && modType2->v.v == type)) {
       return true;
     }
   }
@@ -1023,7 +1022,7 @@ void OmpStructureChecker::Enter(const parser::OmpScheduleClause &x) {
   if (doSet.test(GetContext().directive)) {
     const auto &kind{std::get<1>(x.t)};
     const auto &chunk{std::get<2>(x.t)};
-    if (chunk.has_value()) {
+    if (chunk) {
       if (kind == parser::OmpScheduleClause::ScheduleType::Runtime ||
           kind == parser::OmpScheduleClause::ScheduleType::Auto) {
         context_.Say(GetContext().clauseSource,

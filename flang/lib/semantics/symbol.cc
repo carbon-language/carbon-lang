@@ -552,8 +552,8 @@ const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
 
 const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
   if (const auto *dtDetails{detailsIf<DerivedTypeDetails>()}) {
-    if (scope == nullptr) {
-      CHECK(scope_ != nullptr);
+    if (!scope) {
+      CHECK(scope_);
       scope = scope_;
     }
     return dtDetails->GetParentComponent(*scope);
@@ -582,7 +582,7 @@ const Symbol *DerivedTypeDetails::GetParentComponent(const Scope &scope) const {
 }
 
 void TypeParamDetails::set_type(const DeclTypeSpec &type) {
-  CHECK(type_ == nullptr);
+  CHECK(!type_);
   type_ = &type;
 }
 

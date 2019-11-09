@@ -51,7 +51,7 @@ const Symbol *FindCommonBlockContaining(const Symbol &object) {
 
 const Scope *FindProgramUnitContaining(const Scope &start) {
   const Scope *scope{&start};
-  while (scope != nullptr) {
+  while (scope) {
     switch (scope->kind()) {
     case Scope::Kind::Module:
     case Scope::Kind::MainProgram:
@@ -72,7 +72,7 @@ const Scope *FindProgramUnitContaining(const Symbol &symbol) {
 
 const Scope *FindPureProcedureContaining(const Scope *scope) {
   scope = FindProgramUnitContaining(*scope);
-  while (scope != nullptr) {
+  while (scope) {
     if (IsPureProcedure(*scope)) {
       return scope;
     }
@@ -94,13 +94,13 @@ bool IsCommonBlockContaining(const Symbol &block, const Symbol &object) {
 
 bool IsUseAssociated(const Symbol &symbol, const Scope &scope) {
   const Scope *owner{FindProgramUnitContaining(symbol.GetUltimate().owner())};
-  return owner != nullptr && owner->kind() == Scope::Kind::Module &&
+  return owner && owner->kind() == Scope::Kind::Module &&
       owner != FindProgramUnitContaining(scope);
 }
 
 bool DoesScopeContain(
     const Scope *maybeAncestor, const Scope &maybeDescendent) {
-  if (maybeAncestor != nullptr) {
+  if (maybeAncestor) {
     const Scope *scope{&maybeDescendent};
     while (!scope->IsGlobal()) {
       scope = &scope->parent();
@@ -302,13 +302,13 @@ const Symbol *FindExternallyVisibleObject(
 bool ExprHasTypeCategory(
     const SomeExpr &expr, const common::TypeCategory &type) {
   auto dynamicType{expr.GetType()};
-  return dynamicType.has_value() && dynamicType->category() == type;
+  return dynamicType && dynamicType->category() == type;
 }
 
 bool ExprTypeKindIsDefault(
     const SomeExpr &expr, const SemanticsContext &context) {
   auto dynamicType{expr.GetType()};
-  return dynamicType.has_value() &&
+  return dynamicType &&
       dynamicType->category() != common::TypeCategory::Derived &&
       dynamicType->kind() == context.GetDefaultKind(dynamicType->category());
 }
@@ -454,7 +454,7 @@ bool IsSaved(const Symbol &symbol) {
 
 // Check this symbol suitable as a type-bound procedure - C769
 bool CanBeTypeBoundProc(const Symbol *symbol) {
-  if (symbol == nullptr || IsDummy(*symbol) || IsProcedurePointer(*symbol)) {
+  if (!symbol || IsDummy(*symbol) || IsProcedurePointer(*symbol)) {
     return false;
   } else if (symbol->has<SubprogramNameDetails>()) {
     return symbol->owner().kind() == Scope::Kind::Module;
@@ -701,8 +701,8 @@ bool HasCoarray(const parser::Expr &expression) {
 static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,
     const DeclTypeSpec &spec, SemanticsContext &semanticsContext) {
   const IntrinsicTypeSpec *intrinsic{spec.AsIntrinsic()};
-  CHECK(intrinsic != nullptr);
-  if (evaluate::ToInt64(intrinsic->kind()).has_value()) {
+  CHECK(intrinsic);
+  if (evaluate::ToInt64(intrinsic->kind())) {
     return spec;  // KIND is already a known constant
   }
   // The expression was not originally constant, but now it must be so
@@ -776,7 +776,7 @@ void InstantiateDerivedType(DerivedTypeSpec &spec, Scope &containingScope,
   spec.ReplaceScope(newScope);
   const Symbol &typeSymbol{spec.typeSymbol()};
   const Scope *typeScope{typeSymbol.scope()};
-  CHECK(typeScope != nullptr);
+  CHECK(typeScope);
   for (const Symbol &symbol : OrderParameterDeclarations(typeSymbol)) {
     const SourceName &name{symbol.name()};
     if (typeScope->find(symbol.name()) != typeScope->end()) {
@@ -795,7 +795,7 @@ void InstantiateDerivedType(DerivedTypeSpec &spec, Scope &containingScope,
             if (auto maybeDynamicType{expr->GetType()}) {
               if (expr->Rank() == 0 &&
                   maybeDynamicType->category() == TypeCategory::Integer) {
-                if (!evaluate::ToInt64(*expr).has_value()) {
+                if (!evaluate::ToInt64(*expr)) {
                   std::stringstream fortran;
                   fortran << *expr;
                   if (auto *msg{
@@ -869,13 +869,13 @@ void ProcessParameterExpressions(
     const TypeParamDetails &details{symbol.get<TypeParamDetails>()};
     MaybeIntExpr expr;
     ParamValue *paramValue{spec.FindParameter(name)};
-    if (paramValue == nullptr) {
+    if (!paramValue) {
       expr = evaluate::Fold(foldingContext, common::Clone(details.init()));
     } else if (paramValue->isExplicit()) {
       expr = paramValue->GetExplicit();
     }
-    if (expr.has_value()) {
-      if (paramValue != nullptr) {
+    if (expr) {
+      if (paramValue) {
         paramValue->SetExplicit(std::move(*expr));
       } else {
         spec.AddParamValue(
@@ -933,7 +933,7 @@ static Symbol &InstantiateSymbol(
         }
         details->ReplaceType(FindOrInstantiateDerivedType(
             scope, std::move(newSpec), semanticsContext, origType->category()));
-      } else if (origType->AsIntrinsic() != nullptr) {
+      } else if (origType->AsIntrinsic()) {
         details->ReplaceType(
             InstantiateIntrinsicType(scope, *origType, semanticsContext));
       } else if (origType->category() != DeclTypeSpec::ClassStar) {
@@ -1160,7 +1160,7 @@ const Symbol *FindImmediateComponent(const DerivedTypeSpec &type,
         parent = symbol;
       }
     }
-    if (parent != nullptr) {
+    if (parent) {
       if (const auto *object{parent->detailsIf<ObjectEntityDetails>()}) {
         if (const auto *type{object->type()}) {
           if (const auto *derived{type->AsDerived()}) {

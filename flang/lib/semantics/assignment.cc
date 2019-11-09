@@ -99,7 +99,7 @@ public:
         error =
             "%s is associated with the non-existent result of reference to procedure"_err_en_US;
       }
-      if (error.has_value()) {
+      if (error) {
         auto save{common::ScopedSet(pointer_, symbol)};
         Say(*error, description_, funcName);
       }
@@ -126,7 +126,7 @@ public:
               "%s associated with object '%s' with incompatible type or shape"_err_en_US;
         }
       }
-      if (error.has_value()) {
+      if (error) {
         auto save{common::ScopedSet(pointer_, last)};
         Say(*error, description_, last->name());
       }
@@ -209,9 +209,9 @@ void PointerAssignmentChecker::Check(const ProcedureDesignator &d) {
 void PointerAssignmentChecker::Check(const ProcedureRef &ref) {
   const characteristics::Procedure *procedure{nullptr};
   auto chars{characteristics::Procedure::Characterize(ref, intrinsics_)};
-  if (chars.has_value()) {
+  if (chars) {
     procedure = &*chars;
-    if (chars->functionResult.has_value()) {
+    if (chars->functionResult) {
       if (const auto *proc{chars->functionResult->IsProcedurePointer()}) {
         procedure = proc;
       }

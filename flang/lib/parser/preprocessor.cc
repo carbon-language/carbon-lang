@@ -582,7 +582,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
     std::stringstream error;
     const SourceFile *included{allSources_.Open(include, &error)};
-    if (included == nullptr) {
+    if (!included) {
       prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
           "#include: %s"_err_en_US, error.str());
     } else if (included->bytes() > 0) {
@@ -808,7 +808,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   ++*atToken;
   if (op != CONST) {
     left = ExpressionValue(token, operandPrecedence[op], atToken, error);
-    if (error->has_value()) {
+    if (*error) {
       return 0;
     }
     switch (op) {
@@ -856,7 +856,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
 
     std::int64_t right{
         ExpressionValue(token, operandPrecedence[op], atToken, error)};
-    if (error->has_value()) {
+    if (*error) {
       return 0;
     }
 
@@ -1007,7 +1007,7 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
   std::size_t atToken{0};
   std::optional<Message> error;
   bool result{ExpressionValue(expr3, 0, &atToken, &error) != 0};
-  if (error.has_value()) {
+  if (error) {
     prescanner->Say(std::move(*error));
   } else if (atToken < expr3.SizeInTokens() &&
       expr3.TokenAt(atToken).ToString() != "!") {
