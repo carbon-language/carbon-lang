@@ -178,7 +178,7 @@ void JumpTable::print(raw_ostream &OS) const {
      << Twine::utohexstr(getAddress()) << " with a total count of " << Count
      << ":\n";
   for (const auto EntryOffset : OffsetEntries) {
-    OS << "  " << Twine::utohexstr(EntryOffset) << '\n';
+    OS << "  0x" << Twine::utohexstr(EntryOffset) << '\n';
   }
   for (const auto *Entry : Entries) {
     auto LI = Labels.find(Offset);

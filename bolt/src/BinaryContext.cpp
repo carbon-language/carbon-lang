@@ -422,6 +422,9 @@ void BinaryContext::populateJumpTables() {
     auto *JT = JTI->second;
     auto &BF = *JT->Parent;
 
+    if (!BF.isSimple())
+      continue;
+
     uint64_t NextJTAddress{0};
     auto NextJTI = std::next(JTI);
     if (NextJTI != JTE) {
