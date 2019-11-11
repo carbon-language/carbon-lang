@@ -2138,7 +2138,7 @@ index 7ae38e6e053..f1fd34af238 100644
  }
  
 diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
-index 3d274b63a4f..978df0bd095 100644
+index 3d274b63a4f..b264dd0393a 100644
 --- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
 +++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
 @@ -175,6 +175,12 @@ static Error getOffset(const SymbolRef &Sym, SectionRef Sec,
@@ -2165,7 +2165,42 @@ index 3d274b63a4f..978df0bd095 100644
    unsigned StubSize = getMaxStubSize();
    if (StubSize == 0) {
      return 0;
-@@ -1064,7 +1074,7 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
+@@ -1027,16 +1037,12 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
+     }
+   }
+ 
+-  while (!ExternalSymbolRelocations.empty()) {
+-
+-    StringMap<RelocationList>::iterator i = ExternalSymbolRelocations.begin();
+-
+-    StringRef Name = i->first();
++  for (auto &KV : ExternalSymbolRelocations) {
++    StringRef Name = KV.first();
++    RelocationList &Relocs = KV.second;
+     if (Name.size() == 0) {
+       // This is an absolute symbol, use an address of zero.
+-      DEBUG(dbgs() << "Resolving absolute relocations."
+-                   << "\n");
+-      RelocationList &Relocs = i->second;
++      DEBUG(dbgs() << "Resolving absolute relocations." << "\n");
+       resolveRelocationList(Relocs, 0);
+     } else {
+       uint64_t Addr = 0;
+@@ -1047,13 +1053,6 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
+         assert(RRI != ExternalSymbolMap.end() && "No result for symbol");
+         Addr = RRI->second.getAddress();
+         Flags = RRI->second.getFlags();
+-        // The call to getSymbolAddress may have caused additional modules to
+-        // be loaded, which may have added new entries to the
+-        // ExternalSymbolRelocations map.  Consquently, we need to update our
+-        // iterator.  This is also why retrieval of the relocation list
+-        // associated with this symbol is deferred until below this point.
+-        // New entries may have been added to the relocation list.
+-        i = ExternalSymbolRelocations.find(Name);
+       } else {
+         // We found the symbol in our global table.  It was probably in a
+         // Module that we loaded previously.
+@@ -1064,31 +1063,27 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
        }
  
        // FIXME: Implement error handling that doesn't kill the host program!
@@ -2174,7 +2209,35 @@ index 3d274b63a4f..978df0bd095 100644
          report_fatal_error("Program used external function '" + Name +
                             "' which could not be resolved!");
  
-@@ -1215,6 +1225,11 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
+       // If Resolver returned UINT64_MAX, the client wants to handle this symbol
+       // manually and we shouldn't resolve its relocations.
+       if (Addr != UINT64_MAX) {
+-
+         // Tweak the address based on the symbol flags if necessary.
+-        // For example, this is used by RuntimeDyldMachOARM to toggle the low bit
+-        // if the target symbol is Thumb.
++        // For example, this is used by RuntimeDyldMachOARM to toggle the low
++        // bit if the target symbol is Thumb.
+         Addr = modifyAddressBasedOnFlags(Addr, Flags);
+ 
+         DEBUG(dbgs() << "Resolving relocations Name: " << Name << "\t"
+                      << format("0x%lx", Addr) << "\n");
+-        // This list may have been updated when we called getSymbolAddress, so
+-        // don't change this code to get the list earlier.
+-        RelocationList &Relocs = i->second;
+         resolveRelocationList(Relocs, Addr);
+       }
+     }
+-
+-    ExternalSymbolRelocations.erase(i);
+   }
+ 
++  ExternalSymbolRelocations.clear();
++
+   return Error::success();
+ }
+ 
+@@ -1215,6 +1210,11 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
    Dyld->mapSectionAddress(LocalAddress, TargetAddress);
  }
  
