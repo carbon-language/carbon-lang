@@ -2804,7 +2804,7 @@ bool RewriteInstance::emitFunction(MCStreamer &Streamer,
   }
 
   // Emit CFI start
-  if (Function.hasCFI() && (BC->HasRelocations || Function.isSimple())) {
+  if (Function.hasCFI()) {
     Streamer.EmitCFIStartProc(/*IsSimple=*/false);
     if (Function.getPersonalityFunction() != nullptr) {
       Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
@@ -2856,7 +2856,7 @@ bool RewriteInstance::emitFunction(MCStreamer &Streamer,
   }
 
   // Emit CFI end
-  if (Function.hasCFI() && (BC->HasRelocations || Function.isSimple()))
+  if (Function.hasCFI())
     Streamer.EmitCFIEndProc();
 
   Streamer.EmitLabel(EmitColdPart ? Function.getFunctionColdEndLabel()

@@ -1998,60 +1998,24 @@ void BinaryFunction::updateReferences(const MCSymbol *From, const MCSymbol *To) 
 
 void BinaryFunction::addEntryPoint(uint64_t Address) {
   assert(containsAddress(Address) && "address does not belong to the function");
+  assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
 
-  auto Offset = Address - getAddress();
-
+  const auto Offset = Address - getAddress();
   DEBUG(dbgs() << "BOLT-INFO: adding external entry point to function " << *this
-               << " at offset 0x" << Twine::utohexstr(Address - getAddress())
-               << '\n');
+               << " at offset 0x" << Twine::utohexstr(Offset) << '\n');
 
   auto *EntryBD = BC.getBinaryDataAtAddress(Address);
   auto *EntrySymbol = EntryBD ? EntryBD->getSymbol() : nullptr;
-
-  // If we haven't built CFG for the function, we can add a new entry point
-  // even if it doesn't have an associated entry in the symbol table.
-  if (CurrentState == State::Empty || CurrentState == State::Disassembled) {
-    auto Iter = Labels.find(Offset);
-    const MCSymbol *OldSym = Iter != Labels.end() ? Iter->second : nullptr;
-    if (!EntrySymbol) {
-      DEBUG(dbgs() << "creating local label\n");
-      EntrySymbol = getOrCreateLocalLabel(Address);
-    } else {
-      DEBUG(dbgs() << "using global symbol " << EntrySymbol->getName() << '\n');
-    }
-    addEntryPointAtOffset(Address - getAddress());
-    Labels.emplace(Offset, EntrySymbol);
-    if (OldSym != nullptr && EntrySymbol != OldSym) {
-      updateReferences(OldSym, EntrySymbol);
-    }
-    return;
+  auto Iter = Labels.find(Offset);
+  const MCSymbol *OldSym = Iter != Labels.end() ? Iter->second : nullptr;
+  if (!EntrySymbol) {
+    EntrySymbol = getOrCreateLocalLabel(Address);
   }
+  addEntryPointAtOffset(Offset);
+  Labels.emplace(Offset, EntrySymbol);
 
-  assert(EntrySymbol && "expected symbol at address");
-
-  if (isSimple()) {
-    // Find basic block corresponding to the address and substitute label.
-    auto *BB = getBasicBlockAtOffset(Offset);
-    if (!BB) {
-      // TODO #14762450: split basic block and process function.
-      if (opts::Verbosity || BC.HasRelocations) {
-        errs() << "BOLT-WARNING: no basic block at offset 0x"
-               << Twine::utohexstr(Offset) << " in function " << *this
-               << ". Marking non-simple.\n";
-      }
-      setSimple(false);
-    } else {
-      BB->setLabel(EntrySymbol);
-      BB->setEntryPoint(true);
-    }
-  }
-
-  // Fix/append labels list.
-  auto LI = Labels.find(Offset);
-  if (LI != Labels.end()) {
-    LI->second = EntrySymbol;
-  } else {
-    Labels.emplace(Offset, EntrySymbol);
+  if (OldSym != nullptr && EntrySymbol != OldSym) {
+    updateReferences(OldSym, EntrySymbol);
   }
 }
 
