@@ -56,6 +56,7 @@ contains
       !ERROR: No explicit type declared for 'z2'
       z2 = 2.
     contains
+      !ERROR: An internal subprogram may not contain an internal subprogram
       subroutine sss1
         implicit none
         !ERROR: No explicit type declared for 'a3'

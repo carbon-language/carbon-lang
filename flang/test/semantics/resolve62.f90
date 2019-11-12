@@ -65,7 +65,7 @@ module m4
   real, protected :: x
   real :: y
   interface s
-    subroutine s1(x)
+    pure subroutine s1(x)
       real, intent(out) :: x
     end
     subroutine s2(x, y)

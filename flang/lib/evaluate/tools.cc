@@ -739,21 +739,29 @@ bool HasVectorSubscript(const Expr<SomeType> &expr) {
 }
 
 parser::Message *AttachDeclaration(
-    parser::Message *message, const Symbol *symbol) {
-  if (message && symbol) {
+    parser::Message &message, const Symbol *symbol) {
+  if (symbol) {
     const Symbol *unhosted{symbol};
     while (
         const auto *assoc{unhosted->detailsIf<semantics::HostAssocDetails>()}) {
       unhosted = &assoc->symbol();
     }
     if (const auto *use{symbol->detailsIf<semantics::UseDetails>()}) {
-      message->Attach(use->location(),
+      message.Attach(use->location(),
           "'%s' is USE-associated with '%s' in module '%s'"_en_US,
           symbol->name(), unhosted->name(), use->module().name());
     } else {
-      message->Attach(
+      message.Attach(
           unhosted->name(), "Declaration of '%s'"_en_US, symbol->name());
     }
+  }
+  return &message;
+}
+
+parser::Message *AttachDeclaration(
+    parser::Message *message, const Symbol *symbol) {
+  if (message) {
+    AttachDeclaration(*message, symbol);
   }
   return message;
 }

@@ -26,6 +26,7 @@
 #include "check-io.h"
 #include "check-nullify.h"
 #include "check-omp-structure.h"
+#include "check-purity.h"
 #include "check-return.h"
 #include "check-stop.h"
 #include "expression.h"
@@ -117,7 +118,7 @@ using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
     ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
     DeallocateChecker, DoChecker, IfStmtChecker, IoChecker, NullifyChecker,
-    OmpStructureChecker, ReturnStmtChecker, StopChecker>;
+    OmpStructureChecker, PurityChecker, ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(
     SemanticsContext &context, parser::Program &program) {

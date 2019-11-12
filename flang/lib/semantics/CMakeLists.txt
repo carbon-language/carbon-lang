@@ -28,6 +28,7 @@ add_library(FortranSemantics
   check-io.cc
   check-nullify.cc
   check-omp-structure.cc
+  check-purity.cc
   check-return.cc
   check-stop.cc
   expression.cc

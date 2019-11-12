@@ -22,6 +22,7 @@
 #include "type.h"
 #include "../evaluate/check-expression.h"
 #include "../evaluate/fold.h"
+#include "../evaluate/tools.h"
 
 namespace Fortran::semantics {
 
@@ -57,8 +58,9 @@ private:
   evaluate::FoldingContext &foldingContext_{context_.foldingContext()};
   parser::ContextualMessages &messages_{foldingContext_.messages()};
   const Scope *scope_{nullptr};
-  bool inBindC_{false};  // scope is BIND(C)
-  bool inPure_{false};  // scope is PURE
+  // This symbol is the one attached to the innermost enclosing scope
+  // that has a symbol.
+  const Symbol *innermostSymbol_{nullptr};
 };
 
 void CheckHelper::Check(const ParamValue &value, bool canBeAssumed) {
@@ -94,10 +96,7 @@ void CheckHelper::Check(const Symbol &symbol) {
     return;
   }
   const DeclTypeSpec *type{symbol.GetUltimate().GetType()};
-  const DerivedTypeSpec *derived{nullptr};
-  if (type) {
-    derived = type->AsDerived();
-  }
+  const DerivedTypeSpec *derived{type ? type->AsDerived() : nullptr};
   auto save{messages_.SetLocation(symbol.name())};
   context_.set_location(symbol.name());
   bool isAssociated{symbol.has<UseDetails>() || symbol.has<HostAssocDetails>()};
@@ -107,6 +106,35 @@ void CheckHelper::Check(const Symbol &symbol) {
   if (isAssociated) {
     return;  // only care about checking VOLATILE on associated symbols
   }
+  bool inPure{innermostSymbol_ && IsPureProcedure(*innermostSymbol_)};
+  if (inPure) {
+    if (IsSaved(symbol)) {
+      messages_.Say(
+          "A PURE subprogram may not have a variable with the SAVE attribute"_err_en_US);
+    }
+    if (symbol.attrs().test(Attr::VOLATILE)) {
+      messages_.Say(
+          "A PURE subprogram may not have a variable with the VOLATILE attribute"_err_en_US);
+    }
+    if (IsProcedure(symbol) && !IsPureProcedure(symbol) && IsDummy(symbol)) {
+      messages_.Say(
+          "A dummy procedure of a PURE subprogram must be PURE"_err_en_US);
+    }
+    if (!IsDummy(symbol) && !IsFunctionResult(symbol)) {
+      if (IsPolymorphicAllocatable(symbol)) {
+        evaluate::SayWithDeclaration(messages_, &symbol,
+            "Deallocation of polymorphic object '%s' is not permitted in a PURE subprogram"_err_en_US,
+            symbol.name());
+      } else if (derived) {
+        if (auto bad{FindPolymorphicAllocatableUltimateComponent(*derived)}) {
+          evaluate::SayWithDeclaration(messages_, &*bad,
+              "Deallocation of polymorphic object '%s%s' is not permitted in a PURE subprogram"_err_en_US,
+              symbol.name(), bad.BuildResultDesignatorName());
+        }
+      }
+    }
+  }
+  bool inFunction{innermostSymbol_ && IsFunction(*innermostSymbol_)};
   if (type) {
     bool canHaveAssumedParameter{IsNamedConstant(symbol) ||
         IsAssumedLengthCharacterFunction(symbol) ||
@@ -119,6 +147,23 @@ void CheckHelper::Check(const Symbol &symbol) {
       canHaveAssumedParameter |= symbol.has<AssocEntityDetails>();
     }
     Check(*type, canHaveAssumedParameter);
+    if (inPure && inFunction && IsFunctionResult(symbol)) {
+      if (derived && HasImpureFinal(*derived)) {  // C1584
+        messages_.Say(
+            "Result of PURE function may not have an impure FINAL subroutine"_err_en_US);
+      }
+      if (type->IsPolymorphic() && IsAllocatable(symbol)) {  // C1585
+        messages_.Say(
+            "Result of PURE function may not be both polymorphic and ALLOCATABLE"_err_en_US);
+      }
+      if (derived) {
+        if (auto bad{FindPolymorphicAllocatableUltimateComponent(*derived)}) {
+          evaluate::SayWithDeclaration(messages_, &*bad,
+              "Result of PURE function may not have polymorphic ALLOCATABLE ultimate component '%s'"_err_en_US,
+              bad.BuildResultDesignatorName());
+        }
+      }
+    }
   }
   if (IsAssumedLengthCharacterFunction(symbol)) {  // C723
     if (symbol.attrs().test(Attr::RECURSIVE)) {
@@ -160,16 +205,45 @@ void CheckHelper::Check(const Symbol &symbol) {
         }
       }
     }
-    if (object->isDummy() && symbol.attrs().test(Attr::INTENT_OUT)) {
-      if (FindUltimateComponent(symbol, [](const Symbol &symbol) {
-            return IsCoarray(symbol) && IsAllocatable(symbol);
-          })) {  // C846
-        messages_.Say(
-            "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
+    if (object->isDummy()) {
+      if (symbol.attrs().test(Attr::INTENT_OUT)) {
+        if (FindUltimateComponent(symbol, [](const Symbol &x) {
+              return IsCoarray(x) && IsAllocatable(x);
+            })) {  // C846
+          messages_.Say(
+              "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
+        }
+        if (IsOrContainsEventOrLockComponent(symbol)) {  // C847
+          messages_.Say(
+              "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
+        }
       }
-      if (IsOrContainsEventOrLockComponent(symbol)) {  // C847
-        messages_.Say(
-            "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
+      if (inPure && !IsPointer(symbol) && !IsIntentIn(symbol) &&
+          !symbol.attrs().test(Attr::VALUE)) {
+        if (inFunction) {  // C1583
+          messages_.Say(
+              "non-POINTER dummy argument of PURE function must be INTENT(IN) or VALUE"_err_en_US);
+        } else if (IsIntentOut(symbol)) {
+          if (type && type->IsPolymorphic()) {  // C1588
+            messages_.Say(
+                "An INTENT(OUT) dummy argument of a PURE subroutine may not be polymorphic"_err_en_US);
+          } else if (derived) {
+            if (FindUltimateComponent(*derived, [](const Symbol &x) {
+                  const DeclTypeSpec *type{x.GetType()};
+                  return type && type->IsPolymorphic();
+                })) {  // C1588
+              messages_.Say(
+                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have a polymorphic ultimate component"_err_en_US);
+            }
+            if (HasImpureFinal(*derived)) {  // C1587
+              messages_.Say(
+                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have an impure FINAL subroutine"_err_en_US);
+            }
+          }
+        } else if (!IsIntentInOut(symbol)) {  // C1586
+          messages_.Say(
+              "non-POINTER dummy argument of PURE subroutine must have INTENT() or VALUE attribute"_err_en_US);
+        }
       }
     }
   } else if (auto *proc{symbol.detailsIf<ProcEntityDetails>()}) {
@@ -230,7 +304,8 @@ void CheckHelper::CheckValue(
   if (symbol.attrs().test(Attr::VOLATILE)) {
     messages_.Say("VALUE attribute may not apply to a VOLATILE"_err_en_US);
   }
-  if (inBindC_ && IsOptional(symbol)) {
+  if (innermostSymbol_ && IsBindCProcedure(*innermostSymbol_) &&
+      IsOptional(symbol)) {
     messages_.Say(
         "VALUE attribute may not apply to an OPTIONAL in a BIND(C) procedure"_err_en_US);
   }
@@ -268,8 +343,9 @@ void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
 
 void CheckHelper::Check(const Scope &scope) {
   scope_ = &scope;
-  inBindC_ = IsBindCProcedure(scope);
-  inPure_ = IsPureProcedure(scope);
+  if (const Symbol * scopeSymbol{scope.symbol()}) {
+    innermostSymbol_ = scopeSymbol;
+  }
   for (const auto &pair : scope) {
     Check(*pair.second);
   }

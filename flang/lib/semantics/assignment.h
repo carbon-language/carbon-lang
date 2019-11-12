@@ -59,6 +59,9 @@ class AssignmentChecker : public virtual BaseChecker {
 public:
   explicit AssignmentChecker(SemanticsContext &);
   ~AssignmentChecker();
+  template<typename A> void Enter(const parser::Statement<A> &stmt) {
+    at_ = stmt.source;
+  }
   void Enter(const parser::AssignmentStmt &);
   void Enter(const parser::PointerAssignmentStmt &);
   void Enter(const parser::WhereStmt &);
@@ -68,6 +71,7 @@ public:
 
 private:
   common::Indirection<AssignmentContext> context_;
+  parser::CharBlock at_;
 };
 
 // Semantic analysis of an assignment statement or WHERE/FORALL construct.

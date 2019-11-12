@@ -74,7 +74,7 @@ module m02
     type(t), intent(in) :: x
   end subroutine
   subroutine test
-    !ERROR: Coindexed object 'coarray' with POINTER ultimate component 'ptr' cannot be associated with dummy argument 'x='
+    !ERROR: Coindexed object 'coarray' with POINTER ultimate component '%ptr' cannot be associated with dummy argument 'x='
     call callee(coarray[1]) ! C1537
   end subroutine
 end module

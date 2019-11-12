@@ -61,18 +61,18 @@ module m
     real, pointer, intent(out) :: a ! ok if pointer
   end function
   pure real function f05(a) ! C1583
-    real, intent(out), value :: a ! weird, but ok
+    real, value :: a ! weird, but ok (VALUE without INTENT)
   end function
   pure function f06() ! C1584
-    !ERROR: Result of PURE function cannot have an impure FINAL procedure
+    !ERROR: Result of PURE function may not have an impure FINAL subroutine
     type(impureFinal) :: f06
   end function
   pure function f07() ! C1585
-    !ERROR: Result of PURE function cannot be both polymorphic and ALLOCATABLE
+    !ERROR: Result of PURE function may not be both polymorphic and ALLOCATABLE
     class(t), allocatable :: f07
   end function
   pure function f08() ! C1585
-    !ERROR: Result of PURE function cannot have a polymorphic ALLOCATABLE ultimate component
+    !ERROR: Result of PURE function may not have polymorphic ALLOCATABLE ultimate component '%a'
     type(polyAlloc) :: f08
   end function
 
@@ -84,46 +84,46 @@ module m
     real, pointer :: a
   end subroutine
   pure subroutine s02(a) ! C1587
-    !ERROR: An INTENT(OUT) dummy argument of a PURE procedure cannot have an impure FINAL procedure
+    !ERROR: An INTENT(OUT) dummy argument of a PURE subroutine may not have an impure FINAL subroutine
     type(impureFinal), intent(out) :: a
   end subroutine
   pure subroutine s03(a) ! C1588
-    !ERROR: An INTENT(OUT) dummy argument of a PURE procedure cannot be polymorphic
+    !ERROR: An INTENT(OUT) dummy argument of a PURE subroutine may not be polymorphic
     class(t), intent(out) :: a
   end subroutine
   pure subroutine s04(a) ! C1588
-    !ERROR: An INTENT(OUT) dummy argument of a PURE procedure cannot have a polymorphic ultimate component
-    class(polyAlloc), intent(out) :: a
+    !ERROR: An INTENT(OUT) dummy argument of a PURE subroutine may not have a polymorphic ultimate component
+    type(polyAlloc), intent(out) :: a
   end subroutine
   pure subroutine s05 ! C1589
-    !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
+    !ERROR: A PURE subprogram may not have a variable with the SAVE attribute
     real, save :: v1
-    !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
+    !ERROR: A PURE subprogram may not have a variable with the SAVE attribute
     real :: v2 = 0.
-    !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
+    !TODO: once we have DATA: !ERROR: A PURE subprogram may not have a variable with the SAVE attribute
     real :: v3
     data v3/0./
-    !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
+    !ERROR: A PURE subprogram may not have a variable with the SAVE attribute
     real :: v4
     common /blk/ v4
+    save /blk/
     block
-      !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
+    !ERROR: A PURE subprogram may not have a variable with the SAVE attribute
       real, save :: v5
-      !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
+    !ERROR: A PURE subprogram may not have a variable with the SAVE attribute
       real :: v6 = 0.
-      !ERROR: A PURE subprogram cannot have local variables with the SAVE attribute
     end block
   end subroutine
   pure subroutine s06 ! C1589
-    !ERROR: A PURE subprogram cannot have local variables with the VOLATILE attribute
+    !ERROR: A PURE subprogram may not have a variable with the VOLATILE attribute
     real, volatile :: v1
     block
-      !ERROR: A PURE subprogram cannot have local variables with the VOLATILE attribute
+    !ERROR: A PURE subprogram may not have a variable with the VOLATILE attribute
       real, volatile :: v2
     end block
   end subroutine
+  !ERROR: A dummy procedure of a PURE subprogram must be PURE
   pure subroutine s07(p) ! C1590
-    !ERROR: A dummy procedure of a PURE subprogram must be PURE
     procedure(impure) :: p
   end subroutine
   ! C1591 is tested in call11.f90.
@@ -138,29 +138,24 @@ module m
     impure subroutine impure2
     end subroutine
   end subroutine
-  function volptr
-    real, pointer, volatile :: volptr
-    volptr => volatile
-  end function
   pure subroutine s09 ! C1593
     real :: x
-    !ERROR: A VOLATILE variable may not appear in a PURE subprogram
+    !ERROR: VOLATILE variable 'volatile' may not be referenced in PURE subprogram 's09'
     x = volatile
-    !ERROR: A VOLATILE variable may not appear in a PURE subprogram
-    x = volptr
   end subroutine
   ! C1594 is tested in call12.f90.
   pure subroutine s10 ! C1595
     integer :: n
-    !ERROR: Any procedure referenced in a PURE subprogram must also be PURE
+    !ERROR: Procedure referenced in PURE subprogram 's10' must be PURE too
     n = notpure(1)
   end subroutine
   pure subroutine s11(to) ! C1596
-    type(polyAlloc) :: auto, to
-    !ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram
+    ! Implicit deallocation at the end of the subroutine
+    !ERROR: Deallocation of polymorphic object 'auto%a' is not permitted in a PURE subprogram
+    type(polyAlloc) :: auto
+    type(polyAlloc), intent(in out) :: to
+    !ERROR: Deallocation of polymorphic component '%a' is not permitted in a PURE subprogram
     to = auto
-    ! Implicit deallocation at the end of the subroutine:
-    !ERROR: Deallocation of a polymorphic object is not permitted in a PURE subprogram
   end subroutine
   pure subroutine s12
     character(20) :: buff
@@ -195,7 +190,7 @@ module m
     write(*, *) ! C1598
   end subroutine
   pure subroutine s13
-    !ERROR: An image control statement is not allowed in a PURE subprogram
+    !ERROR: An image control statement may not appear in a PURE subprogram
     sync all ! C1599
     ! TODO others from 11.6.1 (many)
   end subroutine

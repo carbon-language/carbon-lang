@@ -1476,6 +1476,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
             name, characteristics::Procedure{std::move(dummyArgs), attrs}},
         std::move(rearranged)};
   } else {
+    attrs.set(characteristics::Procedure::Attr::Pure);
     characteristics::TypeAndShape typeAndShape{resultType.value(), resultRank};
     characteristics::FunctionResult funcResult{std::move(typeAndShape)};
     characteristics::Procedure chars{

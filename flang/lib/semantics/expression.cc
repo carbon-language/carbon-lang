@@ -675,6 +675,16 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
       // derived type definition)
       return AsMaybeExpr(MakeBareTypeParamInquiry(&ultimate));
     } else {
+      if (n.symbol->attrs().test(semantics::Attr::VOLATILE)) {
+        if (const semantics::Scope *
+            pure{semantics::FindPureProcedureContaining(
+                &context_.FindScope(n.source))}) {
+          SayAt(n,
+              "VOLATILE variable '%s' may not be referenced in PURE subprogram '%s'"_err_en_US,
+              n.source, DEREF(pure->symbol()).name());
+          n.symbol->attrs().reset(semantics::Attr::VOLATILE);
+        }
+      }
       return Designate(DataRef{*n.symbol});
     }
   }
@@ -1801,6 +1811,15 @@ std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
     }
     semantics::CheckArguments(*chars, arguments, GetFoldingContext(),
         context_.FindScope(callSite), treatExternalAsImplicit);
+    if (!chars->attrs.test(characteristics::Procedure::Attr::Pure)) {
+      if (const semantics::Scope *
+          pure{semantics::FindPureProcedureContaining(
+              &context_.FindScope(callSite))}) {
+        Say(callSite,
+            "Procedure referenced in PURE subprogram '%s' must be PURE too"_err_en_US,
+            DEREF(pure->symbol()).name());
+      }
+    }
   }
   return chars;
 }

@@ -134,6 +134,8 @@ private:
     flags_.reset();
   }
 
+  void CheckForPureSubprogram() const;
+
   SemanticsContext &context_;
   IoStmtKind stmt_ = IoStmtKind::None;
   common::EnumSet<IoSpecKind, common::IoSpecKind_enumSize> specifierSet_;

@@ -300,15 +300,15 @@ struct WhereContext {
 
 class AssignmentContext {
 public:
-  explicit AssignmentContext(
-      SemanticsContext &c, parser::CharBlock at = parser::CharBlock{})
-    : context_{c}, messages_{at, &c.messages()} {}
+  explicit AssignmentContext(SemanticsContext &c) : context_{c} {}
   AssignmentContext(const AssignmentContext &c, WhereContext &w)
-    : context_{c.context_}, messages_{c.messages_}, where_{&w} {}
+    : context_{c.context_}, at_{c.at_}, where_{&w} {}
   AssignmentContext(const AssignmentContext &c, ForallContext &f)
-    : context_{c.context_}, messages_{c.messages_}, forall_{&f} {}
+    : context_{c.context_}, at_{c.at_}, forall_{&f} {}
 
   bool operator==(const AssignmentContext &x) const { return this == &x; }
+
+  void set_at(parser::CharBlock at) { at_ = at; }
 
   void Analyze(const parser::AssignmentStmt &);
   void Analyze(const parser::PointerAssignmentStmt &);
@@ -337,27 +337,57 @@ private:
   void Analyze(const parser::WhereConstruct::Elsewhere &);
   void Analyze(const parser::ForallAssignmentStmt &stmt) { Analyze(stmt.u); }
 
+  const Symbol *FindPureProcedureContaining(parser::CharBlock) const;
   int GetIntegerKind(const std::optional<parser::IntegerTypeSpec> &);
 
   MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true) const;
 
-  template<typename... A> parser::Message *Say(A &&... args) {
-    return messages_.Say(std::forward<A>(args)...);
+  template<typename... A>
+  parser::Message *Say(parser::CharBlock at, A &&... args) {
+    return &context_.messages().Say(at, std::forward<A>(args)...);
   }
 
   SemanticsContext &context_;
-  parser::ContextualMessages messages_;
+  parser::CharBlock at_;
   WhereContext *where_{nullptr};
   ForallContext *forall_{nullptr};
 };
 
-void AssignmentContext::Analyze(const parser::AssignmentStmt &) {
+void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
   if (forall_) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
   // TODO: Fortran 2003 ALLOCATABLE assignment semantics (automatic
   // (re)allocation of LHS array when unallocated or nonconformable)
+
+  // C1596 checks for polymorphic deallocation in a PURE subprogram
+  // due to automatic reallocation on assignment
+  const auto &lhs{std::get<parser::Variable>(stmt.t)};
+  const auto &rhs{std::get<parser::Expr>(stmt.t)};
+  if (auto lhsExpr{AnalyzeExpr(context_, lhs)}) {
+    if (auto type{evaluate::DynamicType::From(*lhsExpr)}) {
+      if (type->IsPolymorphic() && lhsExpr->Rank() > 0) {
+        if (const Symbol * last{evaluate::GetLastSymbol(*lhsExpr)}) {
+          if (IsAllocatable(*last) && FindPureProcedureContaining(rhs.source)) {
+            evaluate::SayWithDeclaration(context_.messages(), last, at_,
+                "Deallocation of polymorphic object '%s' is not permitted in a PURE subprogram"_err_en_US,
+                last->name());
+          }
+        }
+      }
+      if (type->category() == TypeCategory::Derived &&
+          !type->IsUnlimitedPolymorphic() /* TODO */ &&
+          FindPureProcedureContaining(rhs.source)) {
+        if (auto bad{FindPolymorphicAllocatableUltimateComponent(
+                type->GetDerivedTypeSpec())}) {
+          evaluate::SayWithDeclaration(context_.messages(), &*bad, at_,
+              "Deallocation of polymorphic component '%s' is not permitted in a PURE subprogram"_err_en_US,
+              bad.BuildResultDesignatorName());
+        }
+      }
+    }
+  }
 }
 
 void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &) {
@@ -410,7 +440,7 @@ void AssignmentContext::Analyze(const parser::ForallStmt &stmt) {
   const auto &assign{
       std::get<parser::UnlabeledStatement<parser::ForallAssignmentStmt>>(
           stmt.t)};
-  auto restorer{nested.messages_.SetLocation(assign.source)};
+  nested.set_at(assign.source);
   nested.Analyze(assign.statement);
 }
 
@@ -494,7 +524,7 @@ int AssignmentContext::GetIntegerKind(
   if (auto value{evaluate::ToInt64(kind)}) {
     return static_cast<int>(*value);
   } else {
-    Say("Kind of INTEGER type must be a constant value"_err_en_US);
+    Say(at_, "Kind of INTEGER type must be a constant value"_err_en_US);
     return context_.GetDefaultKind(TypeCategory::Integer);
   }
 }
@@ -511,70 +541,50 @@ MaskExpr AssignmentContext::GetMask(
   return mask;
 }
 
+const Symbol *AssignmentContext::FindPureProcedureContaining(
+    parser::CharBlock source) const {
+
+  if (const semantics::Scope *
+      pure{semantics::FindPureProcedureContaining(
+          &context_.FindScope(source))}) {
+    return pure->symbol();
+  } else {
+    return nullptr;
+  }
+}
+
 void AnalyzeConcurrentHeader(
     SemanticsContext &context, const parser::ConcurrentHeader &header) {
   AssignmentContext{context}.Analyze(header);
 }
 
-AssignmentChecker::~AssignmentChecker() = default;
+AssignmentChecker::~AssignmentChecker() {}
 
 AssignmentChecker::AssignmentChecker(SemanticsContext &context)
   : context_{new AssignmentContext{context}} {}
 void AssignmentChecker::Enter(const parser::AssignmentStmt &x) {
+  context_.value().set_at(at_);
   context_.value().Analyze(x);
 }
 void AssignmentChecker::Enter(const parser::PointerAssignmentStmt &x) {
+  context_.value().set_at(at_);
   context_.value().Analyze(x);
 }
 void AssignmentChecker::Enter(const parser::WhereStmt &x) {
+  context_.value().set_at(at_);
   context_.value().Analyze(x);
 }
 void AssignmentChecker::Enter(const parser::WhereConstruct &x) {
+  context_.value().set_at(at_);
   context_.value().Analyze(x);
 }
 void AssignmentChecker::Enter(const parser::ForallStmt &x) {
+  context_.value().set_at(at_);
   context_.value().Analyze(x);
 }
 void AssignmentChecker::Enter(const parser::ForallConstruct &x) {
+  context_.value().set_at(at_);
   context_.value().Analyze(x);
-}
-
-namespace {
-class Visitor {
-public:
-  Visitor(SemanticsContext &context) : context_{context} {}
-
-  template<typename A> bool Pre(const A &) { return true /* visit children */; }
-  template<typename A> void Post(const A &) {}
-
-  bool Pre(const parser::Statement<parser::AssignmentStmt> &stmt) {
-    AssignmentContext{context_, stmt.source}.Analyze(stmt.statement);
-    return false;
-  }
-  bool Pre(const parser::Statement<parser::PointerAssignmentStmt> &stmt) {
-    AssignmentContext{context_, stmt.source}.Analyze(stmt.statement);
-    return false;
-  }
-  bool Pre(const parser::Statement<parser::WhereStmt> &stmt) {
-    AssignmentContext{context_, stmt.source}.Analyze(stmt.statement);
-    return false;
-  }
-  bool Pre(const parser::WhereConstruct &construct) {
-    AssignmentContext{context_}.Analyze(construct);
-    return false;
-  }
-  bool Pre(const parser::Statement<parser::ForallStmt> &stmt) {
-    AssignmentContext{context_, stmt.source}.Analyze(stmt.statement);
-    return false;
-  }
-  bool Pre(const parser::ForallConstruct &construct) {
-    AssignmentContext{context_}.Analyze(construct);
-    return false;
-  }
-
-private:
-  SemanticsContext &context_;
-};
 }
 }
 template class Fortran::common::Indirection<

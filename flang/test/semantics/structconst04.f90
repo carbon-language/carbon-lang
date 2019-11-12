@@ -57,7 +57,7 @@ module module1
 
  contains
 
-  pure real function pf1(dummy1, dummy2, dummy3, dummy4)
+  pure subroutine ps1(dummy1, dummy2, dummy3, dummy4)
     real, target :: local1
     type(t1) :: x1
     type(t2) :: x2
@@ -69,7 +69,6 @@ module module1
     real, intent(inout), target :: dummy4[*]
     real, target :: commonvar1
     common /cblock/ commonvar1
-    pf1 = 0.
     x1 = t1(local1)
     !ERROR: Externally visible object 'usedfrom1' must not be associated with pointer component 'pt1' in a PURE procedure
     x1 = t1(usedfrom1)
@@ -93,7 +92,7 @@ module module1
     !ERROR: Externally visible object 'modulevar4' must not be associated with pointer component 'ptop' in a PURE procedure
     x4 = t4(modulevar4)
    contains
-    subroutine subr(dummy1a, dummy2a, dummy3a, dummy4a)
+    pure subroutine subr(dummy1a, dummy2a, dummy3a, dummy4a)
       real, target :: local1a
       type(t1) :: x1a
       type(t2) :: x2a
@@ -108,7 +107,7 @@ module module1
       x1a = t1(usedfrom1)
       !ERROR: Externally visible object 'modulevar1' must not be associated with pointer component 'pt1' in a PURE procedure
       x1a = t1(modulevar1)
-      !ERROR: Externally visible object 'cblock' must not be associated with pointer component 'pt1' in a PURE procedure
+      !ERROR: Externally visible object 'commonvar1' must not be associated with pointer component 'pt1' in a PURE procedure
       x1a = t1(commonvar1)
       !ERROR: Externally visible object 'dummy1' must not be associated with pointer component 'pt1' in a PURE procedure
       x1a = t1(dummy1)
@@ -130,7 +129,7 @@ module module1
       !ERROR: Externally visible object 'modulevar4' must not be associated with pointer component 'ptop' in a PURE procedure
       x4a = t4(modulevar4)
     end subroutine subr
-  end function pf1
+  end subroutine
 
   impure real function ipf1(dummy1, dummy2, dummy3, dummy4)
     real, target :: local1

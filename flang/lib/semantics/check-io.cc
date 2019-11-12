@@ -429,24 +429,28 @@ void IoChecker::Enter(const parser::StatVariable &) {
 }
 
 void IoChecker::Leave(const parser::BackspaceStmt &) {
+  CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
   stmt_ = IoStmtKind::None;
 }
 
 void IoChecker::Leave(const parser::CloseStmt &) {
+  CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1208
   stmt_ = IoStmtKind::None;
 }
 
 void IoChecker::Leave(const parser::EndfileStmt &) {
+  CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
   stmt_ = IoStmtKind::None;
 }
 
 void IoChecker::Leave(const parser::FlushStmt &) {
+  CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1243
   stmt_ = IoStmtKind::None;
@@ -454,6 +458,7 @@ void IoChecker::Leave(const parser::FlushStmt &) {
 
 void IoChecker::Leave(const parser::InquireStmt &stmt) {
   if (std::get_if<std::list<parser::InquireSpec>>(&stmt.u)) {
+    CheckForPureSubprogram();
     // Inquire by unit or by file (vs. by output list).
     CheckForRequiredSpecifier(
         flags_.test(Flag::NumberUnit) || specifierSet_.test(IoSpecKind::File),
@@ -465,6 +470,7 @@ void IoChecker::Leave(const parser::InquireStmt &stmt) {
 }
 
 void IoChecker::Leave(const parser::OpenStmt &) {
+  CheckForPureSubprogram();
   CheckForRequiredSpecifier(specifierSet_.test(IoSpecKind::Unit) ||
           specifierSet_.test(IoSpecKind::Newunit),
       "UNIT or NEWUNIT");  // C1204, C1205
@@ -496,9 +502,15 @@ void IoChecker::Leave(const parser::OpenStmt &) {
   stmt_ = IoStmtKind::None;
 }
 
-void IoChecker::Leave(const parser::PrintStmt &) { stmt_ = IoStmtKind::None; }
+void IoChecker::Leave(const parser::PrintStmt &) {
+  CheckForPureSubprogram();
+  stmt_ = IoStmtKind::None;
+}
 
 void IoChecker::Leave(const parser::ReadStmt &) {
+  if (!flags_.test(Flag::InternalUnit)) {
+    CheckForPureSubprogram();
+  }
   if (!flags_.test(Flag::IoControlList)) {
     return;
   }
@@ -519,16 +531,21 @@ void IoChecker::Leave(const parser::ReadStmt &) {
 void IoChecker::Leave(const parser::RewindStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
+  CheckForPureSubprogram();
   stmt_ = IoStmtKind::None;
 }
 
 void IoChecker::Leave(const parser::WaitStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1237
+  CheckForPureSubprogram();
   stmt_ = IoStmtKind::None;
 }
 
 void IoChecker::Leave(const parser::WriteStmt &) {
+  if (!flags_.test(Flag::InternalUnit)) {
+    CheckForPureSubprogram();
+  }
   LeaveReadWrite();
   CheckForProhibitedSpecifier(IoSpecKind::Blank);  // C1213
   CheckForProhibitedSpecifier(IoSpecKind::End);  // C1213
@@ -703,6 +720,13 @@ void IoChecker::CheckForProhibitedSpecifier(
   if (condition && specifierSet_.test(specKind)) {
     context_.Say("If %s appears, %s must not appear"_err_en_US, s,
         parser::ToUpperCaseLetters(common::EnumToString(specKind)));
+  }
+}
+
+void IoChecker::CheckForPureSubprogram() const {  // C1597
+  CHECK(context_.location());
+  if (FindPureProcedureContaining(&context_.FindScope(*context_.location()))) {
+    context_.Say("External I/O is not allowed in a PURE subprogram"_err_en_US);
   }
 }
 

@@ -314,7 +314,7 @@ private:
   MaybeExpr bindName_;
 };
 
-class FinalProcDetails {};
+class FinalProcDetails {};  // TODO
 
 class MiscDetails {
 public:

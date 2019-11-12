@@ -183,40 +183,33 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
             dummyName, finalizer->name());
       }
     }
-    UltimateComponentIterator ultimates{derived};
     if (actualIsCoindexed) {
       if (dummy.intent != common::Intent::In && !dummyIsValue) {
-        if (auto iter{std::find_if(ultimates.begin(), ultimates.end(),
-                [](const Symbol &component) {
-                  return IsAllocatable(component);
-                })}) {  // 15.5.2.4(6)
-          evaluate::SayWithDeclaration(messages, &*iter,
+        if (auto bad{
+                FindAllocatableUltimateComponent(derived)}) {  // 15.5.2.4(6)
+          evaluate::SayWithDeclaration(messages, &*bad,
               "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
-              iter.BuildResultDesignatorName(), dummyName);
+              bad.BuildResultDesignatorName(), dummyName);
         }
       }
       if (auto coarrayRef{evaluate::ExtractCoarrayRef(actual)}) {  // C1537
         const Symbol &coarray{coarrayRef->GetLastSymbol()};
         if (const DeclTypeSpec * type{coarray.GetType()}) {
           if (const DerivedTypeSpec * derived{type->AsDerived()}) {
-            if (auto ptr{semantics::FindPointerUltimateComponent(*derived)}) {
+            if (auto bad{semantics::FindPointerUltimateComponent(*derived)}) {
               evaluate::SayWithDeclaration(messages, &coarray,
                   "Coindexed object '%s' with POINTER ultimate component '%s' cannot be associated with %s"_err_en_US,
-                  coarray.name(), ptr->name(), dummyName);
+                  coarray.name(), bad.BuildResultDesignatorName(), dummyName);
             }
           }
         }
       }
     }
     if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
-      if (auto iter{std::find_if(
-              ultimates.begin(), ultimates.end(), [](const Symbol &component) {
-                const auto *object{component.detailsIf<ObjectEntityDetails>()};
-                return object && object->IsCoarray();
-              })}) {
-        evaluate::SayWithDeclaration(messages, &*iter,
+      if (auto bad{semantics::FindCoarrayUltimateComponent(derived)}) {
+        evaluate::SayWithDeclaration(messages, &*bad,
             "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
-            dummyName, iter.BuildResultDesignatorName());
+            dummyName, bad.BuildResultDesignatorName());
       }
     }
   }

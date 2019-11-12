@@ -22,7 +22,7 @@ module m
   interface
     integer function foo()
     end function
-    real function realfunc(x)
+    pure real function realfunc(x)
       real, intent(in) :: x
     end function
     pure integer function hasProcArg(p)

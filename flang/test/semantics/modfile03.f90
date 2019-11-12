@@ -61,6 +61,7 @@ module m5a
   end type
 contains
   pure integer function f1(i)
+    value :: i
     f1 = i
   end
 end
@@ -73,7 +74,7 @@ end
 ! end type
 !contains
 ! pure function f1(i)
-!  integer(4)::i
+!  integer(4),value::i
 !  integer(4)::f1
 ! end
 !end

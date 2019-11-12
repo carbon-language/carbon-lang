@@ -370,7 +370,7 @@ void ConformabilityCheck(
 
 namespace Fortran::semantics {
 
-// Semantic analysis of one expression.
+// Semantic analysis of one expression, variable, or designator.
 template<typename A>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
     SemanticsContext &context, const A &expr) {

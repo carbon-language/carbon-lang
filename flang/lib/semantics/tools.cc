@@ -211,6 +211,7 @@ bool IsProcedure(const Symbol &symbol) {
           [](const GenericDetails &) { return true; },
           [](const ProcBindingDetails &) { return true; },
           [](const UseDetails &x) { return IsProcedure(x.symbol()); },
+          // TODO: FinalProcDetails?
           [](const auto &) { return false; },
       },
       symbol.details());
@@ -443,11 +444,21 @@ bool IsSaved(const Symbol &symbol) {
     return false;  // this is a component
   } else if (symbol.attrs().test(Attr::SAVE)) {
     return true;
-  } else if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
-    return object->init().has_value();
-  } else if (IsProcedurePointer(symbol)) {
-    return symbol.get<ProcEntityDetails>().init().has_value();
   } else {
+    if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+      if (object->init()) {
+        return true;
+      }
+    } else if (IsProcedurePointer(symbol)) {
+      if (symbol.get<ProcEntityDetails>().init()) {
+        return true;
+      }
+    }
+    if (const Symbol * block{FindCommonBlockContaining(symbol)}) {
+      if (block->attrs().test(Attr::SAVE)) {
+        return true;
+      }
+    }
     return false;
   }
 }
@@ -472,17 +483,25 @@ bool CanBeTypeBoundProc(const Symbol *symbol) {
 bool IsFinalizable(const Symbol &symbol) {
   if (const DeclTypeSpec * type{symbol.GetType()}) {
     if (const DerivedTypeSpec * derived{type->AsDerived()}) {
-      if (const Scope * scope{derived->scope()}) {
-        for (auto &pair : *scope) {
-          Symbol &symbol{*pair.second};
-          if (symbol.has<FinalProcDetails>()) {
-            return true;
-          }
-        }
-      }
+      return IsFinalizable(*derived);
     }
   }
   return false;
+}
+
+bool IsFinalizable(const DerivedTypeSpec &derived) {
+  ScopeComponentIterator components{derived};
+  return std::find_if(components.begin(), components.end(),
+             [](const Symbol &x) { return x.has<FinalProcDetails>(); }) !=
+      components.end();
+}
+
+bool HasImpureFinal(const DerivedTypeSpec &derived) {
+  ScopeComponentIterator components{derived};
+  return std::find_if(
+             components.begin(), components.end(), [](const Symbol &x) {
+               return x.has<FinalProcDetails>() && !x.attrs().test(Attr::PURE);
+             }) != components.end();
 }
 
 bool IsCoarray(const Symbol &symbol) { return symbol.Corank() > 0; }
@@ -503,15 +522,17 @@ bool IsAssumedLengthCharacterFunction(const Symbol &symbol) {
   return symbol.has<SubprogramDetails>() && IsAssumedLengthCharacter(symbol);
 }
 
-bool IsExternalInPureContext(const Symbol &symbol, const Scope &scope) {
+const Symbol *IsExternalInPureContext(
+    const Symbol &symbol, const Scope &scope) {
   if (const auto *pureProc{semantics::FindPureProcedureContaining(&scope)}) {
     if (const Symbol * root{GetAssociationRoot(symbol)}) {
-      if (FindExternallyVisibleObject(*root, *pureProc)) {
-        return true;
+      if (const Symbol *
+          visible{FindExternallyVisibleObject(*root, *pureProc)}) {
+        return visible;
       }
     }
   }
-  return false;
+  return nullptr;
 }
 
 bool InProtectedContext(const Symbol &symbol, const Scope &currentScope) {
@@ -566,21 +587,19 @@ std::unique_ptr<parser::Message> WhyNotModifiable(parser::CharBlock at,
   return {};
 }
 
-struct ImageControlStmtHelper {
+class ImageControlStmtHelper {
   using ImageControlStmts = std::variant<parser::ChangeTeamConstruct,
       parser::CriticalConstruct, parser::EventPostStmt, parser::EventWaitStmt,
       parser::FormTeamStmt, parser::LockStmt, parser::StopStmt,
       parser::SyncAllStmt, parser::SyncImagesStmt, parser::SyncMemoryStmt,
       parser::SyncTeamStmt, parser::UnlockStmt>;
+
+public:
   template<typename T> bool operator()(const T &) {
     return common::HasMember<T, ImageControlStmts>;
   }
   template<typename T> bool operator()(const common::Indirection<T> &x) {
     return (*this)(x.value());
-  }
-  bool IsCoarrayObject(const parser::AllocateObject &allocateObject) {
-    const parser::Name &name{GetLastName(allocateObject)};
-    return name.symbol && IsCoarray(*name.symbol);
   }
   bool operator()(const parser::AllocateStmt &stmt) {
     const auto &allocationList{std::get<std::list<parser::Allocation>>(stmt.t)};
@@ -626,6 +645,12 @@ struct ImageControlStmtHelper {
   bool operator()(const parser::Statement<parser::ActionStmt> &stmt) {
     return std::visit(*this, stmt.statement.u);
   }
+
+private:
+  bool IsCoarrayObject(const parser::AllocateObject &allocateObject) {
+    const parser::Name &name{GetLastName(allocateObject)};
+    return name.symbol && IsCoarray(*name.symbol);
+  }
 };
 
 bool IsImageControlStmt(const parser::ExecutableConstruct &construct) {
@@ -662,7 +687,7 @@ std::optional<parser::MessageFixedText> GetImageControlStmtCoarrayMsg(
   return std::nullopt;
 }
 
-const parser::CharBlock GetImageControlStmtLocation(
+parser::CharBlock GetImageControlStmtLocation(
     const parser::ExecutableConstruct &executableConstruct) {
   return std::visit(
       common::visitors{
@@ -692,6 +717,17 @@ bool HasCoarray(const parser::Expr &expression) {
         if (IsCoarray(*root)) {
           return true;
         }
+      }
+    }
+  }
+  return false;
+}
+
+bool IsPolymorphicAllocatable(const Symbol &symbol) {
+  if (IsAllocatable(symbol)) {
+    if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
+      if (const DeclTypeSpec * type{details->type()}) {
+        return type->IsPolymorphic();
       }
     }
   }
@@ -996,6 +1032,8 @@ ComponentIterator<componentKind>::const_iterator::PlanComponentTraversal(
           traverse = !IsAllocatableOrPointer(component);
         } else if constexpr (componentKind == ComponentKind::Potential) {
           traverse = !IsPointer(component);
+        } else if constexpr (componentKind == ComponentKind::Scope) {
+          traverse = !IsAllocatableOrPointer(component);
         }
         if (traverse) {
           const Symbol &newTypeSymbol{derived->typeSymbol()};
@@ -1060,6 +1098,11 @@ void ComponentIterator<componentKind>::const_iterator::Increment() {
     auto &nameIterator{deepest.nameIterator()};
     if (nameIterator == deepest.nameEnd()) {
       componentPath_.pop_back();
+    } else if constexpr (componentKind == ComponentKind::Scope) {
+      deepest.set_component(*nameIterator++->second);
+      deepest.set_descended(false);
+      deepest.set_visited(true);
+      return;  // this is the next component to visit, before descending
     } else {
       const Scope &scope{deepest.GetScope()};
       auto scopeIter{scope.find(*nameIterator++)};
@@ -1093,19 +1136,18 @@ template class ComponentIterator<ComponentKind::Ordered>;
 template class ComponentIterator<ComponentKind::Direct>;
 template class ComponentIterator<ComponentKind::Ultimate>;
 template class ComponentIterator<ComponentKind::Potential>;
+template class ComponentIterator<ComponentKind::Scope>;
 
 UltimateComponentIterator::const_iterator FindCoarrayUltimateComponent(
     const DerivedTypeSpec &derived) {
   UltimateComponentIterator ultimates{derived};
-  return std::find_if(ultimates.begin(), ultimates.end(),
-      [](const Symbol &component) { return component.Corank() > 0; });
+  return std::find_if(ultimates.begin(), ultimates.end(), IsCoarray);
 }
 
 UltimateComponentIterator::const_iterator FindPointerUltimateComponent(
     const DerivedTypeSpec &derived) {
   UltimateComponentIterator ultimates{derived};
-  return std::find_if(ultimates.begin(), ultimates.end(),
-      [](const Symbol &component) { return IsPointer(component); });
+  return std::find_if(ultimates.begin(), ultimates.end(), IsPointer);
 }
 
 PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
@@ -1119,6 +1161,19 @@ PotentialComponentIterator::const_iterator FindEventOrLockPotentialComponent(
         }
         return false;
       });
+}
+
+UltimateComponentIterator::const_iterator FindAllocatableUltimateComponent(
+    const DerivedTypeSpec &derived) {
+  UltimateComponentIterator ultimates{derived};
+  return std::find_if(ultimates.begin(), ultimates.end(), IsAllocatable);
+}
+
+UltimateComponentIterator::const_iterator
+FindPolymorphicAllocatableUltimateComponent(const DerivedTypeSpec &derived) {
+  UltimateComponentIterator ultimates{derived};
+  return std::find_if(
+      ultimates.begin(), ultimates.end(), IsPolymorphicAllocatable);
 }
 
 const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,
