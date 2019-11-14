@@ -22,7 +22,7 @@
 
 #include "char-block.h"
 #include "parse-tree.h"
-#include "../common/features.h"
+#include "../common/flang-features.h"
 #include "../common/idioms.h"
 #include <cinttypes>
 #include <optional>

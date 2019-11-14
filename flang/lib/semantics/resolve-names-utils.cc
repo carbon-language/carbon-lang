@@ -16,7 +16,7 @@
 #include "expression.h"
 #include "semantics.h"
 #include "tools.h"
-#include "../common/features.h"
+#include "../common/flang-features.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include "../evaluate/fold.h"

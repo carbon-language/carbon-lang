@@ -28,7 +28,7 @@
 // F18 compiler under development.
 
 #include "../../lib/common/default-kinds.h"
-#include "../../lib/common/features.h"
+#include "../../lib/common/flang-features.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/dump-parse-tree.h"
 #include "../../lib/parser/message.h"

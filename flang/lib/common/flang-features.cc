@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "features.h"
+#include "flang-features.h"
 #include "Fortran.h"
 #include "idioms.h"
 

@@ -25,7 +25,7 @@
 #include "message.h"
 #include "provenance.h"
 #include "user-state.h"
-#include "../common/features.h"
+#include "../common/flang-features.h"
 #include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>

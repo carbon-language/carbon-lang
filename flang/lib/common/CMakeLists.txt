@@ -15,7 +15,7 @@
 add_library(FortranCommon
   Fortran.cc
   default-kinds.cc
-  features.cc
+  flang-features.cc
   idioms.cc
 )
 
