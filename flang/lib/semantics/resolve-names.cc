@@ -1161,23 +1161,23 @@ void OmpVisitor::ResolveOmpObject(
               if (dataSharingAttributeFlags.test(ompFlag)) {
                 CheckMultipleAppearances(*name, symbol, ompFlag);
               }
-            } else if (const auto *designatorName{
-                           ResolveDesignator(designator)};
-                       designatorName->symbol) {
+            } else if (const auto *name{ResolveDesignator(designator)};
+                       name && name->symbol) {
               // Array sections to be changed to substrings as needed
               if (AnalyzeExpr(context(), designator)) {
                 if (std::holds_alternative<parser::Substring>(designator.u)) {
                   Say(designator.source,
                       "Substrings are not allowed on OpenMP "
                       "directives or clauses"_err_en_US);
+                  return;
                 }
               }
               // other checks, more TBD
-              if (const auto *details{designatorName->symbol
-                                          ->detailsIf<ObjectEntityDetails>()}) {
+              if (const auto *details{
+                      name->symbol->detailsIf<ObjectEntityDetails>()}) {
                 if (details->IsArray()) {
                   // TODO: check Array Sections
-                } else if (designatorName->symbol->owner().IsDerivedType()) {
+                } else if (name->symbol->owner().IsDerivedType()) {
                   // TODO: check Structure Component
                 }
               }
