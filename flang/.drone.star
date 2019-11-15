@@ -43,6 +43,6 @@ def main(ctx):
         clang("amd64"),
         clang("arm64"),
         gcc("amd64"),
-        gcc("arm64"),
+        #gcc("arm64"),
     ]
 
