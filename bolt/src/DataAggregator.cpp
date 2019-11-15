@@ -1795,6 +1795,14 @@ DataAggregator::parseMMapEvent() {
     return make_error_code(llvm::errc::io_error);
   }
 
+  const auto OffsetStr =
+      Line.split('@').second.ltrim().split(FieldSeparator).first;
+  if (OffsetStr.getAsInteger(0, ParsedInfo.Offset)) {
+    reportError("expected mmaped page-aligned offset");
+    Diag << "Found: " << OffsetStr << "in '" << Line << "'\n";
+    return make_error_code(llvm::errc::io_error);
+  }
+
   consumeRestOfLine();
 
   return std::make_pair(FileName, ParsedInfo);
@@ -1835,7 +1843,8 @@ std::error_code DataAggregator::parseMMapEvents() {
     for (const auto &Pair : GlobalMMapInfo) {
       dbgs() << "  " << Pair.first << " : " << Pair.second.PID << " [0x"
              << Twine::utohexstr(Pair.second.BaseAddress) << ", "
-             << Twine::utohexstr(Pair.second.Size) << "]\n";
+             << Twine::utohexstr(Pair.second.Size) << " @ "
+             << Twine::utohexstr(Pair.second.Offset) << "]\n";
     }
   );
 

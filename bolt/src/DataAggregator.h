@@ -161,6 +161,7 @@ class DataAggregator : public DataReader {
     pid_t PID{-1LL};
     uint64_t BaseAddress;
     uint64_t Size;
+    uint64_t Offset;
     bool Forked{false};
     uint64_t Time{0ULL}; // time in micro seconds
   };
@@ -380,7 +381,11 @@ class DataAggregator : public DataReader {
   /// conflicts.
   void adjustAddress(uint64_t &Address, const MMapInfo &MMI) const {
     if (Address >= MMI.BaseAddress && Address < MMI.BaseAddress + MMI.Size) {
-      Address -= MMI.BaseAddress;
+      // NOTE: Assumptions about the binary segment load table (PH for ELF)
+      //  Segment file offset equals virtual address (which is true for .so)
+      //  There aren't multiple executable segments loaded because MMapInfo
+      //  doesn't support them.
+      Address -= MMI.BaseAddress - MMI.Offset;
     } else if (Address < MMI.Size) {
       // Make sure the address is not treated as belonging to the binary.
       Address = (-1ULL);

@@ -1943,7 +1943,7 @@ void RewriteInstance::adjustCommandLineOptions() {
 
   if (BC->HasRelocations && opts::AggregateOnly &&
       !opts::StrictMode.getNumOccurrences()) {
-    outs() << "BOLT-INFO: enabling strict relocation mode for aggregtion "
+    outs() << "BOLT-INFO: enabling strict relocation mode for aggregation "
               "purposes\n";
     opts::StrictMode = true;
   }
@@ -2056,6 +2056,15 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
     // Section symbols are marked as ST_Debug.
     IsSectionRelocation = (cantFail(Symbol.getType()) == SymbolRef::ST_Debug);
   }
+  // For PIE or dynamic libs, the linker may choose not to put the relocation
+  // result at the address if it is a X86_64_64 one because it will emit a
+  // dynamic relocation (X86_RELATIVE) for the dynamic linker and loader to
+  // resolve it at run time. The static relocation result goes as the addend
+  // of the dynamic relocation in this case. We can't verify these cases.
+  // FIXME: perhaps we can try to find if it really emitted a corresponding
+  // RELATIVE relocation at this offset with the correct value as the addend.
+  if (!BC->HasFixedLoadAddress && RelSize == 8)
+    SkipVerification = true;
 
   if (IsSectionRelocation && !IsAArch64) {
     auto Section = BC->getSectionForAddress(SymbolAddress);
