@@ -5921,7 +5921,13 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
   Scope &scope{currScope()};
   node.set_scope(scope);
   AddSubpNames(node);
-  std::visit([&](const auto *x) { Walk(*x); }, node.stmt());
+  std::visit(
+      [&](const auto *x) {
+        if (x) {
+          Walk(*x);
+        }
+      },
+      node.stmt());
   Walk(node.spec());
   // If this is a function, convert result to an object. This is to prevent the
   // result to be converted later to a function symbol if it is called inside

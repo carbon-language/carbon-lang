@@ -62,8 +62,9 @@ ProgramTree ProgramTree::Build(const parser::MainProgram &x) {
       std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(x.t)};
   const auto &end{std::get<parser::Statement<parser::EndProgramStmt>>(x.t)};
   static parser::Name emptyName;
-  const auto &name{stmt ? stmt->statement.v : emptyName};
-  return BuildSubprogramTree(name, x).set_stmt(*stmt).set_endStmt(end);
+  auto result{stmt ? BuildSubprogramTree(stmt->statement.v, x).set_stmt(*stmt)
+                   : BuildSubprogramTree(emptyName, x)};
+  return result.set_endStmt(end);
 }
 
 ProgramTree ProgramTree::Build(const parser::FunctionSubprogram &x) {
