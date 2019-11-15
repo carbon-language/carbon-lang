@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_COMMON_FEATURES_H_
-#define FORTRAN_COMMON_FEATURES_H_
+#ifndef FORTRAN_COMMON_FORTRAN_FEATURES_H_
+#define FORTRAN_COMMON_FORTRAN_FEATURES_H_
 
 #include "Fortran.h"
 #include "enum-set.h"
@@ -67,4 +67,4 @@ private:
   bool warnAll_{false};
 };
 }
-#endif  // FORTRAN_COMMON_FEATURES_H_
+#endif  // FORTRAN_COMMON_FORTRAN_FEATURES_H_

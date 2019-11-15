@@ -20,7 +20,7 @@
 #include "message.h"
 #include "parse-tree.h"
 #include "provenance.h"
-#include "../common/flang-features.h"
+#include "../common/Fortran-features.h"
 #include <optional>
 #include <ostream>
 #include <string>

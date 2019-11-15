@@ -14,8 +14,8 @@
 
 // Temporary Fortran front end driver main program for development scaffolding.
 
+#include "../../lib/common/Fortran-features.h"
 #include "../../lib/common/default-kinds.h"
-#include "../../lib/common/flang-features.h"
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/dump-parse-tree.h"

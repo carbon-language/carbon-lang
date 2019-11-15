@@ -26,7 +26,7 @@
 #include "message.h"
 #include "provenance.h"
 #include "token-sequence.h"
-#include "../common/flang-features.h"
+#include "../common/Fortran-features.h"
 #include <bitset>
 #include <optional>
 #include <string>
