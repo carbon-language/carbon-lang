@@ -154,7 +154,7 @@ module m
     !ERROR: Deallocation of polymorphic object 'auto%a' is not permitted in a PURE subprogram
     type(polyAlloc) :: auto
     type(polyAlloc), intent(in out) :: to
-    !ERROR: Deallocation of polymorphic component '%a' is not permitted in a PURE subprogram
+    !ERROR: Deallocation of polymorphic non-coarray component '%a' is not permitted in a PURE subprogram
     to = auto
   end subroutine
   pure subroutine s12

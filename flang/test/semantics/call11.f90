@@ -39,15 +39,15 @@ module m
 
   subroutine test
     real :: a(pure(1)) ! ok
-    !ERROR: A function referenced in a specification expression must be PURE
+    !ERROR: Invalid specification expression: reference to impure function 'impure'
     real :: b(impure(1)) ! 10.1.11(4)
     forall (j=1:1)
-      !ERROR: A procedure referenced in a FORALL body must be PURE
+      !ERROR: Impure procedure 'impure' may not be referenced in a FORALL
       a(j) = impure(j) ! C1037
     end forall
-    !ERROR: concurrent-header mask expression cannot reference an impure procedure
+    !ERROR: Concurrent-header mask expression cannot reference an impure procedure
     do concurrent (j=1:1, impure(j) /= 0) ! C1121
-      !ERROR: call to impure procedure in DO CONCURRENT not allowed
+      !ERROR: Call to an impure procedure is not allowed in DO CONCURRENT
       a(j) = impure(j) ! C1139
     end do
   end subroutine

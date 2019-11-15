@@ -123,7 +123,7 @@ end
 module m7
   type :: t
     sequence  ! t is not extensible
-    !ERROR: Passed-object dummy argument 'x' of procedure 'a' must not be polymorphic because 't' is not extensible
+    !ERROR: Passed-object dummy argument 'x' of procedure 'a' may not be polymorphic because 't' is not extensible
     procedure(s), pointer :: a
   end type
 contains
@@ -135,7 +135,7 @@ end
 module m8
   type :: t
   contains
-    !ERROR: Passed-object dummy argument 'x' of procedure 's' must polymorphic because 't' is extensible
+    !ERROR: Passed-object dummy argument 'x' of procedure 's' must be polymorphic because 't' is extensible
     procedure :: s
   end type
 contains

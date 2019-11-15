@@ -53,6 +53,7 @@ private:
   void CheckValue(const Symbol &, const DerivedTypeSpec *);
   void CheckVolatile(
       const Symbol &, bool isAssociated, const DerivedTypeSpec *);
+  void CheckBinding(const Symbol &);
 
   SemanticsContext &context_;
   evaluate::FoldingContext &foldingContext_{context_.foldingContext()};
@@ -84,8 +85,8 @@ void CheckHelper::Check(
     const DeclTypeSpec &type, bool canHaveAssumedTypeParameters) {
   if (type.category() == DeclTypeSpec::Character) {
     Check(type.characterTypeSpec().length(), canHaveAssumedTypeParameters);
-  } else if (const DerivedTypeSpec * spec{type.AsDerived()}) {
-    for (auto &parm : spec->parameters()) {
+  } else if (const DerivedTypeSpec * derived{type.AsDerived()}) {
+    for (auto &parm : derived->parameters()) {
       Check(parm.second, canHaveAssumedTypeParameters);
     }
   }
@@ -105,6 +106,40 @@ void CheckHelper::Check(const Symbol &symbol) {
   }
   if (isAssociated) {
     return;  // only care about checking VOLATILE on associated symbols
+  }
+  if (symbol.has<ProcBindingDetails>()) {
+    CheckBinding(symbol);
+    return;
+  }
+  if (const auto *details{symbol.detailsIf<DerivedTypeDetails>()}) {
+    CHECK(symbol.scope());
+    CHECK(symbol.scope()->symbol() == &symbol);
+    CHECK(symbol.scope()->IsDerivedType());
+    if (symbol.attrs().test(Attr::ABSTRACT) &&
+        (symbol.attrs().test(Attr::BIND_C) ||
+            (details && details->sequence()))) {
+      messages_.Say("An ABSTRACT derived type must be extensible"_err_en_US);
+    }
+    if (const DeclTypeSpec * parent{FindParentTypeSpec(symbol)}) {
+      const DerivedTypeSpec *parentDerived{parent->AsDerived()};
+      if (!IsExtensibleType(parentDerived)) {
+        messages_.Say("The parent type is not extensible"_err_en_US);
+      }
+      if (!symbol.attrs().test(Attr::ABSTRACT) && parentDerived &&
+          parentDerived->typeSymbol().attrs().test(Attr::ABSTRACT)) {
+        ScopeComponentIterator components{*parentDerived};
+        for (const Symbol &component : components) {
+          if (component.attrs().test(Attr::DEFERRED)) {
+            if (symbol.scope()->FindComponent(component.name()) == &component) {
+              evaluate::SayWithDeclaration(messages_, &component,
+                  "Non-ABSTRACT extension of ABSTRACT derived type '%s' lacks a binding for DEFERRED procedure '%s'"_err_en_US,
+                  parentDerived->typeSymbol().name(), component.name());
+            }
+          }
+        }
+      }
+    }
+    return;
   }
   bool inPure{innermostSymbol_ && IsPureProcedure(*innermostSymbol_)};
   if (inPure) {
@@ -341,10 +376,93 @@ void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
   }
 }
 
+void CheckHelper::CheckBinding(const Symbol &symbol) {
+  const Scope &dtScope{symbol.owner()};
+  const auto &binding{symbol.get<ProcBindingDetails>()};
+  CHECK(dtScope.kind() == Scope::Kind::DerivedType);
+  if (const Symbol * dtSymbol{dtScope.symbol()}) {
+    if (symbol.attrs().test(Attr::DEFERRED)) {
+      if (!dtSymbol->attrs().test(Attr::ABSTRACT)) {
+        evaluate::SayWithDeclaration(messages_, dtSymbol,
+            "Procedure bound to non-ABSTRACT derived type '%s' may not be DEFERRED"_err_en_US,
+            dtSymbol->name());
+      }
+      if (symbol.attrs().test(Attr::NON_OVERRIDABLE)) {
+        messages_.Say(
+            "Type-bound procedure '%s' may not be both DEFERRED and NON_OVERRIDABLE"_err_en_US,
+            symbol.name());
+      }
+    }
+  }
+  if (const Symbol * overridden{FindOverriddenBinding(symbol)}) {
+    if (overridden->attrs().test(Attr::NON_OVERRIDABLE)) {
+      evaluate::SayWithDeclaration(messages_, overridden,
+          "Override of NON_OVERRIDABLE '%s' is not permitted"_err_en_US,
+          symbol.name());
+    }
+    if (const auto *overriddenBinding{
+            overridden->detailsIf<ProcBindingDetails>()}) {
+      if (!binding.symbol().attrs().test(Attr::PURE) &&
+          overriddenBinding->symbol().attrs().test(Attr::PURE)) {
+        evaluate::SayWithDeclaration(messages_, overridden,
+            "An overridden PURE type-bound procedure binding must also be PURE"_err_en_US);
+        return;
+      }
+      if (!binding.symbol().attrs().test(Attr::ELEMENTAL) &&
+          overriddenBinding->symbol().attrs().test(Attr::ELEMENTAL)) {
+        evaluate::SayWithDeclaration(messages_, overridden,
+            "A type-bound procedure and its override must both, or neither, be ELEMENTAL"_err_en_US);
+        return;
+      }
+      auto bindingChars{evaluate::characteristics::Procedure::Characterize(
+          binding.symbol(), context_.intrinsics())};
+      auto overriddenChars{evaluate::characteristics::Procedure::Characterize(
+          overriddenBinding->symbol(), context_.intrinsics())};
+      if (binding.passIndex()) {
+        if (overriddenBinding->passIndex()) {
+          int passIndex{*binding.passIndex()};
+          if (passIndex == *overriddenBinding->passIndex()) {
+            if (!(bindingChars && overriddenChars &&
+                    bindingChars->CanOverride(*overriddenChars, passIndex))) {
+              evaluate::SayWithDeclaration(messages_, overridden,
+                  "A type-bound procedure and its override must have compatible interfaces apart from their passed argument"_err_en_US);
+            }
+          } else {
+            evaluate::SayWithDeclaration(messages_, overridden,
+                "A type-bound procedure and its override must use the same PASS argument"_err_en_US);
+          }
+        } else {
+          evaluate::SayWithDeclaration(messages_, overridden,
+              "A passed-argument type-bound procedure may not override a NOPASS procedure"_err_en_US);
+        }
+      } else if (overriddenBinding->passIndex()) {
+        evaluate::SayWithDeclaration(messages_, overridden,
+            "A NOPASS type-bound procedure may not override a passed-argument procedure"_err_en_US);
+      } else if (!(bindingChars && overriddenChars &&
+                     bindingChars->CanOverride(
+                         *overriddenChars, std::nullopt))) {
+        evaluate::SayWithDeclaration(messages_, overridden,
+            "A type-bound procedure and its override must have compatible interfaces"_err_en_US);
+      }
+      if (symbol.attrs().test(Attr::PRIVATE) &&
+          overridden->attrs().test(Attr::PUBLIC)) {
+        evaluate::SayWithDeclaration(messages_, overridden,
+            "A PRIVATE procedure may not override a PUBLIC procedure"_err_en_US);
+      }
+    } else {
+      evaluate::SayWithDeclaration(messages_, overridden,
+          "A type-bound procedure binding may not have the same name as a parent component"_err_en_US);
+    }
+  }
+}
+
 void CheckHelper::Check(const Scope &scope) {
   scope_ = &scope;
-  if (const Symbol * scopeSymbol{scope.symbol()}) {
-    innermostSymbol_ = scopeSymbol;
+  common::Restorer<const Symbol *> restorer{innermostSymbol_};
+  if (const Symbol * symbol{scope.symbol()}) {
+    innermostSymbol_ = symbol;
+  } else if (scope.IsDerivedType()) {
+    return;  // PDT instantiations have null symbol()
   }
   for (const auto &pair : scope) {
     Check(*pair.second);

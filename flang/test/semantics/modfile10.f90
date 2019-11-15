@@ -32,6 +32,9 @@ module m
     private
     final :: c
     procedure, non_overridable :: d
+  end type
+  type, abstract :: t2a
+  contains
     procedure(a), deferred, public, nopass :: e
   end type
   type t3
@@ -76,6 +79,9 @@ end module
 !  contains
 !    final::c
 !    procedure,pass(x),non_overridable,private::d
+!  end type
+!  type,abstract::t2a
+!  contains
 !    procedure(a),deferred,nopass::e
 !  end type
 !  type::t3

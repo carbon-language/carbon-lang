@@ -606,10 +606,10 @@ bool Component::operator==(const Component &that) const {
   return base_ == that.base_ && &*symbol_ == &*that.symbol_;
 }
 bool NamedEntity::operator==(const NamedEntity &that) const {
-  if (&GetLastSymbol() != &that.GetLastSymbol()) {
-    return false;
+  if (IsSymbol()) {
+    return that.IsSymbol() && GetLastSymbol() == that.GetLastSymbol();
   } else {
-    return UnwrapComponent() == that.UnwrapComponent();
+    return !that.IsSymbol() && GetComponent() == that.GetComponent();
   }
 }
 template<int KIND>

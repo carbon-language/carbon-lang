@@ -123,6 +123,10 @@ public:
   // Look for symbol by name in this scope and host (depending on imports).
   Symbol *FindSymbol(const SourceName &) const;
 
+  // Look for component symbol by name in a derived type's scope and
+  // parents'.
+  Symbol *FindComponent(SourceName) const;
+
   /// Make a Symbol with unknown details.
   std::pair<iterator, bool> try_emplace(
       const SourceName &name, Attrs attrs = Attrs()) {

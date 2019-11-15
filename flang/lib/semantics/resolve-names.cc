@@ -469,7 +469,6 @@ public:
   Symbol *FindInScope(const Scope &, const parser::Name &);
   Symbol *FindInScope(const Scope &, const SourceName &);
   // Search for name in a derived type scope and its parents.
-  Symbol *FindInTypeOrParents(const Scope &, SourceName);
   Symbol *FindInTypeOrParents(const Scope &, const parser::Name &);
   Symbol *FindInTypeOrParents(const parser::Name &);
   void EraseSymbol(const parser::Name &);
@@ -1957,7 +1956,7 @@ Symbol *ScopeHandler::FindSymbol(const parser::Name &name) {
 }
 Symbol *ScopeHandler::FindSymbol(const Scope &scope, const parser::Name &name) {
   if (scope.IsDerivedType()) {
-    if (Symbol * symbol{FindInTypeOrParents(scope, name.source)}) {
+    if (Symbol * symbol{scope.FindComponent(name.source)}) {
       if (!symbol->has<ProcBindingDetails>() &&
           !symbol->test(Symbol::Flag::ParentComp)) {
         return Resolve(name, symbol);
@@ -2005,20 +2004,9 @@ Symbol *ScopeHandler::FindInScope(const Scope &scope, const SourceName &name) {
 }
 
 // Find a component or type parameter by name in a derived type or its parents.
-Symbol *ScopeHandler::FindInTypeOrParents(const Scope &scope, SourceName name) {
-  if (scope.IsDerivedType()) {
-    if (Symbol * symbol{FindInScope(scope, name)}) {
-      return symbol;
-    }
-    if (const Scope * parent{scope.GetDerivedTypeParent()}) {
-      return FindInTypeOrParents(*parent, name);
-    }
-  }
-  return nullptr;
-}
 Symbol *ScopeHandler::FindInTypeOrParents(
     const Scope &scope, const parser::Name &name) {
-  return Resolve(name, FindInTypeOrParents(scope, name.source));
+  return Resolve(name, scope.FindComponent(name.source));
 }
 Symbol *ScopeHandler::FindInTypeOrParents(const parser::Name &name) {
   return FindInTypeOrParents(currScope(), name);
@@ -3608,7 +3596,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   derivedTypeInfo_.type = &symbol;
   PushScope(Scope::Kind::DerivedType, &symbol);
   if (extendsType) {
-    // Declare the "parent component"; private if the type is
+    // Declare the "parent component"; private if the type is.
     // Any symbol stored in the EXTENDS() clause is temporarily
     // hidden so that a new symbol can be created for the parent
     // component without producing spurious errors about already
@@ -3812,6 +3800,9 @@ void DeclarationVisitor::Post(
     }
     if (auto *s{MakeTypeSymbol(bindingName, ProcBindingDetails{*procedure})}) {
       SetPassNameOn(*s);
+      if (GetAttrs().test(Attr::DEFERRED)) {
+        context().SetError(*s);
+      }
     }
   }
 }
@@ -3854,6 +3845,9 @@ void DeclarationVisitor::Post(
       if (auto *s{
               MakeTypeSymbol(bindingName, ProcBindingDetails{*interface})}) {
         SetPassNameOn(*s);
+        if (!GetAttrs().test(Attr::DEFERRED)) {
+          context().SetError(*s);
+        }
       }
     }
   }
@@ -3882,7 +3876,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
     // look in parent types:
     Symbol *inheritedSymbol{nullptr};
     for (const auto &name : info.GetAllNames(context())) {
-      inheritedSymbol = FindInTypeOrParents(currScope(), SourceName{name});
+      inheritedSymbol = currScope().FindComponent(SourceName{name});
       if (inheritedSymbol) {
         break;
       }
@@ -5297,7 +5291,7 @@ const parser::Name *DeclarationVisitor::FindComponent(
     }
   } else if (const DerivedTypeSpec * derived{type->AsDerived()}) {
     if (const Scope * scope{derived->scope()}) {
-      if (Resolve(component, FindInTypeOrParents(*scope, component.source))) {
+      if (Resolve(component, scope->FindComponent(component.source))) {
         if (CheckAccessibleComponent(component.source, *component.symbol)) {
           return &component;
         }
@@ -6265,9 +6259,9 @@ void ResolveNamesVisitor::SetPassArg(
     Say(name,
         type->IsPolymorphic()
             ? "Passed-object dummy argument '%s' of procedure '%s'"
-              " must not be polymorphic because '%s' is not extensible"_err_en_US
+              " may not be polymorphic because '%s' is not extensible"_err_en_US
             : "Passed-object dummy argument '%s' of procedure '%s'"
-              " must polymorphic because '%s' is extensible"_err_en_US,
+              " must be polymorphic because '%s' is extensible"_err_en_US,
         passName.value(), name, typeSymbol.name());
     return;
   }

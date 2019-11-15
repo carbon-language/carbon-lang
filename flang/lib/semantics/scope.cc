@@ -85,6 +85,18 @@ Symbol *Scope::FindSymbol(const SourceName &name) const {
   }
 }
 
+Symbol *Scope::FindComponent(SourceName name) const {
+  CHECK(IsDerivedType());
+  auto found{find(name)};
+  if (found != end()) {
+    return &*found->second;
+  } else if (const Scope * parent{GetDerivedTypeParent()}) {
+    return parent->FindComponent(name);
+  } else {
+    return nullptr;
+  }
+}
+
 const std::list<EquivalenceSet> &Scope::equivalenceSets() const {
   return equivalenceSets_;
 }

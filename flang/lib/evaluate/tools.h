@@ -817,5 +817,10 @@ parser::Message *SayWithDeclaration(
     MESSAGES &messages, const Symbol *symbol, A &&... x) {
   return AttachDeclaration(messages.Say(std::forward<A>(x)...), symbol);
 }
+
+// Check for references to impure procedures; returns the name
+// of one to complain about, if any exist.
+std::optional<std::string> FindImpureCall(
+    const IntrinsicProcTable &, const Expr<SomeType> &);
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

@@ -261,6 +261,7 @@ struct Procedure {
     return !attrs.test(Attr::ImplicitInterface);
   }
   bool CanBeCalledViaImplicitInterface() const;
+  bool CanOverride(const Procedure &, std::optional<int> passIndex) const;
   std::ostream &Dump(std::ostream &) const;
 
   std::optional<FunctionResult> functionResult;

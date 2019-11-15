@@ -46,6 +46,12 @@ const Symbol *FindPointerComponent(const Symbol &);
 const Symbol *FindInterface(const Symbol &);
 const Symbol *FindSubprogram(const Symbol &);
 const Symbol *FindFunctionResult(const Symbol &);
+const Symbol *FindOverriddenBinding(const Symbol &);
+
+const DeclTypeSpec *FindParentTypeSpec(const DerivedTypeSpec &);
+const DeclTypeSpec *FindParentTypeSpec(const DeclTypeSpec &);
+const DeclTypeSpec *FindParentTypeSpec(const Scope &);
+const DeclTypeSpec *FindParentTypeSpec(const Symbol &);
 
 // Return the Symbol of the variable of a construct association, if it exists
 const Symbol *GetAssociationRoot(const Symbol &);
@@ -443,6 +449,8 @@ UltimateComponentIterator::const_iterator FindAllocatableUltimateComponent(
     const DerivedTypeSpec &);
 UltimateComponentIterator::const_iterator
 FindPolymorphicAllocatableUltimateComponent(const DerivedTypeSpec &);
+UltimateComponentIterator::const_iterator
+FindPolymorphicAllocatableNonCoarrayUltimateComponent(const DerivedTypeSpec &);
 
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

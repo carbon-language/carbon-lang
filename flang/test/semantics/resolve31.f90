@@ -55,8 +55,10 @@ module m4
     sequence
     private  ! not a fatal error
   end type
+  type :: t1a
+  end type
   !ERROR: A sequence type may not have the EXTENDS attribute
-  type, extends(t1) :: t2
+  type, extends(t1a) :: t2
     sequence
     integer i
   end type

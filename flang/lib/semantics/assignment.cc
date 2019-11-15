@@ -259,7 +259,7 @@ using MaskExpr = evaluate::Expr<evaluate::LogicalResult>;
 // and some number of active WHERE statements/constructs.  WHERE can nest
 // in FORALL but not vice versa.  Pointer assignments are allowed in
 // FORALL but not in WHERE.  These constraints are manifest in the grammar
-// and don't need to be rechecked here, since they cannot appear in the
+// and don't need to be rechecked here, since errors cannot appear in the
 // parse tree.
 struct Control {
   Symbol *name;
@@ -289,8 +289,8 @@ struct ForallContext {
 };
 
 struct WhereContext {
-  explicit WhereContext(MaskExpr &&x) : thisMaskExpr{std::move(x)} {}
-
+  WhereContext(MaskExpr &&x, const WhereContext *o, const ForallContext *f)
+    : outer{o}, forall{f}, thisMaskExpr{std::move(x)} {}
   const WhereContext *outer{nullptr};
   const ForallContext *forall{nullptr};  // innermost enclosing FORALL
   std::optional<parser::CharBlock> constructName;
@@ -308,7 +308,10 @@ public:
 
   bool operator==(const AssignmentContext &x) const { return this == &x; }
 
-  void set_at(parser::CharBlock at) { at_ = at; }
+  void set_at(parser::CharBlock at) {
+    at_ = at;
+    context_.set_location(at_);
+  }
 
   void Analyze(const parser::AssignmentStmt &);
   void Analyze(const parser::PointerAssignmentStmt &);
@@ -319,10 +322,8 @@ public:
   void Analyze(const parser::ConcurrentHeader &);
 
   template<typename A> void Analyze(const parser::Statement<A> &stmt) {
-    std::optional<parser::CharBlock> saveLocation{context_.location()};
-    context_.set_location(stmt.source);
+    set_at(stmt.source);
     Analyze(stmt.statement);
-    context_.set_location(saveLocation);
   }
   template<typename A> void Analyze(const common::Indirection<A> &x) {
     Analyze(x.value());
@@ -339,12 +340,15 @@ private:
 
   const Symbol *FindPureProcedureContaining(parser::CharBlock) const;
   int GetIntegerKind(const std::optional<parser::IntegerTypeSpec> &);
+  void CheckForImpureCall(const evaluate::Expr<evaluate::SomeType> &);
+  void CheckForImpureCall(
+      const std::optional<evaluate::Expr<evaluate::SomeType>> &);
 
-  MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true) const;
+  MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true);
 
   template<typename... A>
   parser::Message *Say(parser::CharBlock at, A &&... args) {
-    return &context_.messages().Say(at, std::forward<A>(args)...);
+    return &context_.Say(at, std::forward<A>(args)...);
   }
 
   SemanticsContext &context_;
@@ -354,6 +358,13 @@ private:
 };
 
 void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
+  const auto &lhs{std::get<parser::Variable>(stmt.t)};
+  const auto &rhs{std::get<parser::Expr>(stmt.t)};
+  auto lhsExpr{AnalyzeExpr(context_, lhs)};
+  auto rhsExpr{AnalyzeExpr(context_, rhs)};
+  CheckForImpureCall(lhsExpr);
+  CheckForImpureCall(rhsExpr);
+  // TODO: preserve analyzed typed expressions
   if (forall_) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
@@ -363,26 +374,19 @@ void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
 
   // C1596 checks for polymorphic deallocation in a PURE subprogram
   // due to automatic reallocation on assignment
-  const auto &lhs{std::get<parser::Variable>(stmt.t)};
-  const auto &rhs{std::get<parser::Expr>(stmt.t)};
-  if (auto lhsExpr{AnalyzeExpr(context_, lhs)}) {
+  if (lhsExpr) {
     if (auto type{evaluate::DynamicType::From(*lhsExpr)}) {
-      if (type->IsPolymorphic() && lhsExpr->Rank() > 0) {
-        if (const Symbol * last{evaluate::GetLastSymbol(*lhsExpr)}) {
-          if (IsAllocatable(*last) && FindPureProcedureContaining(rhs.source)) {
-            evaluate::SayWithDeclaration(context_.messages(), last, at_,
-                "Deallocation of polymorphic object '%s' is not permitted in a PURE subprogram"_err_en_US,
-                last->name());
-          }
-        }
+      if (type->IsPolymorphic() && FindPureProcedureContaining(rhs.source)) {
+        Say(at_,
+            "Deallocation of polymorphic object is not permitted in a PURE subprogram"_err_en_US);
       }
       if (type->category() == TypeCategory::Derived &&
-          !type->IsUnlimitedPolymorphic() /* TODO */ &&
+          !type->IsUnlimitedPolymorphic() &&
           FindPureProcedureContaining(rhs.source)) {
-        if (auto bad{FindPolymorphicAllocatableUltimateComponent(
+        if (auto bad{FindPolymorphicAllocatableNonCoarrayUltimateComponent(
                 type->GetDerivedTypeSpec())}) {
           evaluate::SayWithDeclaration(context_.messages(), &*bad, at_,
-              "Deallocation of polymorphic component '%s' is not permitted in a PURE subprogram"_err_en_US,
+              "Deallocation of polymorphic non-coarray component '%s' is not permitted in a PURE subprogram"_err_en_US,
               bad.BuildResultDesignatorName());
         }
       }
@@ -400,7 +404,8 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &) {
 }
 
 void AssignmentContext::Analyze(const parser::WhereStmt &stmt) {
-  WhereContext where{GetMask(std::get<parser::LogicalExpr>(stmt.t))};
+  WhereContext where{
+      GetMask(std::get<parser::LogicalExpr>(stmt.t)), where_, forall_};
   AssignmentContext nested{*this, where};
   nested.Analyze(std::get<parser::AssignmentStmt>(stmt.t));
 }
@@ -410,7 +415,8 @@ void AssignmentContext::Analyze(const parser::WhereConstruct &construct) {
   const auto &whereStmt{
       std::get<parser::Statement<parser::WhereConstructStmt>>(construct.t)};
   WhereContext where{
-      GetMask(std::get<parser::LogicalExpr>(whereStmt.statement.t))};
+      GetMask(std::get<parser::LogicalExpr>(whereStmt.statement.t)), where_,
+      forall_};
   if (const auto &name{
           std::get<std::optional<parser::Name>>(whereStmt.statement.t)}) {
     where.constructName = name->source;
@@ -452,7 +458,7 @@ void AssignmentContext::Analyze(const parser::ForallConstruct &construct) {
   AssignmentContext nested{*this, forall};
   const auto &forallStmt{
       std::get<parser::Statement<parser::ForallConstructStmt>>(construct.t)};
-  context_.set_location(forallStmt.source);
+  nested.set_at(forallStmt.source);
   nested.Analyze(std::get<common::Indirection<parser::ConcurrentHeader>>(
       forallStmt.statement.t));
   for (const auto &body :
@@ -466,7 +472,7 @@ void AssignmentContext::Analyze(
   CHECK(where_);
   const auto &elsewhereStmt{
       std::get<parser::Statement<parser::MaskedElsewhereStmt>>(elsewhere.t)};
-  context_.set_location(elsewhereStmt.source);
+  set_at(elsewhereStmt.source);
   MaskExpr mask{
       GetMask(std::get<parser::LogicalExpr>(elsewhereStmt.statement.t))};
   MaskExpr copyCumulative{where_->cumulativeMaskExpr};
@@ -513,6 +519,15 @@ void AssignmentContext::Analyze(const parser::ConcurrentHeader &header) {
     const parser::Name &name{std::get<parser::Name>(control.t)};
     bool inserted{forall_->activeNames.insert(name.source).second};
     CHECK(inserted || context_.HasError(name));
+    CheckForImpureCall(AnalyzeExpr(context_, std::get<1>(control.t)));
+    CheckForImpureCall(AnalyzeExpr(context_, std::get<2>(control.t)));
+    if (const auto &stride{std::get<3>(control.t)}) {
+      CheckForImpureCall(AnalyzeExpr(context_, *stride));
+    }
+  }
+  if (const auto &mask{
+          std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)}) {
+    CheckForImpureCall(AnalyzeExpr(context_, *mask));
   }
 }
 
@@ -529,10 +544,30 @@ int AssignmentContext::GetIntegerKind(
   }
 }
 
+void AssignmentContext::CheckForImpureCall(
+    const evaluate::Expr<evaluate::SomeType> &expr) {
+  if (forall_) {
+    const auto &intrinsics{context_.foldingContext().intrinsics()};
+    if (auto bad{FindImpureCall(intrinsics, expr)}) {
+      Say(at_,
+          "Impure procedure '%s' may not be referenced in a FORALL"_err_en_US,
+          *bad);
+    }
+  }
+}
+
+void AssignmentContext::CheckForImpureCall(
+    const std::optional<evaluate::Expr<evaluate::SomeType>> &maybeExpr) {
+  if (maybeExpr) {
+    CheckForImpureCall(*maybeExpr);
+  }
+}
+
 MaskExpr AssignmentContext::GetMask(
-    const parser::LogicalExpr &expr, bool defaultValue) const {
+    const parser::LogicalExpr &expr, bool defaultValue) {
   MaskExpr mask{defaultValue};
   if (auto maybeExpr{AnalyzeExpr(context_, expr)}) {
+    CheckForImpureCall(*maybeExpr);
     auto *logical{
         std::get_if<evaluate::Expr<evaluate::SomeLogical>>(&maybeExpr->u)};
     CHECK(logical);

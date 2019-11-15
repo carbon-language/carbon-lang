@@ -50,16 +50,12 @@ static bool ShapesAreCompatible(const Shape &x, const Shape &y) {
   auto yIter{y.begin()};
   for (const auto &xDim : x) {
     const auto &yDim{*yIter++};
-    if (xDim.has_value() != yDim.has_value()) {
-      return false;
-    }
     if (xDim) {
-      auto xConst{ToInt64(*xDim)};
-      auto yConst{ToInt64(*yDim)};
-      if (xConst.has_value() != yConst.has_value() ||
-          (xConst && *xConst != *yConst)) {
+      if (!yDim || ToInt64(*xDim) != ToInt64(*yDim)) {
         return false;
       }
+    } else if (yDim) {
+      return false;
     }
   }
   return true;
@@ -561,8 +557,33 @@ Procedure::Procedure(DummyArguments &&args, Attrs a)
 Procedure::~Procedure() {}
 
 bool Procedure::operator==(const Procedure &that) const {
-  return attrs == that.attrs && dummyArguments == that.dummyArguments &&
-      functionResult == that.functionResult;
+  return attrs == that.attrs && functionResult == that.functionResult &&
+      dummyArguments == that.dummyArguments;
+}
+
+bool Procedure::CanOverride(
+    const Procedure &that, std::optional<int> passIndex) const {
+  // A PURE procedure may override an impure one (7.5.7.3(2))
+  if ((that.attrs.test(Attr::Pure) && !attrs.test(Attr::Pure)) ||
+      that.attrs.test(Attr::Elemental) != attrs.test(Attr::Elemental) ||
+      functionResult != that.functionResult) {
+    return false;
+  }
+  if (passIndex) {
+    int argCount{static_cast<int>(dummyArguments.size())};
+    if (argCount != static_cast<int>(that.dummyArguments.size())) {
+      return false;
+    }
+    CHECK(*passIndex >= 0 && *passIndex <= argCount);
+    for (int j{0}; j < argCount; ++j) {
+      if (j != *passIndex && dummyArguments[j] != that.dummyArguments[j]) {
+        return false;
+      }
+    }
+    return true;
+  } else {
+    return dummyArguments == that.dummyArguments;
+  }
 }
 
 std::optional<Procedure> Procedure::Characterize(

@@ -765,4 +765,33 @@ parser::Message *AttachDeclaration(
   }
   return message;
 }
+
+class FindImpureCallHelper
+  : public AnyTraverse<FindImpureCallHelper, std::optional<std::string>> {
+  using Result = std::optional<std::string>;
+  using Base = AnyTraverse<FindImpureCallHelper, Result>;
+
+public:
+  explicit FindImpureCallHelper(const IntrinsicProcTable &intrinsics)
+    : Base{*this}, intrinsics_{intrinsics} {}
+  using Base::operator();
+  Result operator()(const ProcedureRef &call) const {
+    if (auto chars{characteristics::Procedure::Characterize(
+            call.proc(), intrinsics_)}) {
+      if (chars->attrs.test(characteristics::Procedure::Attr::Pure)) {
+        return std::nullopt;
+      }
+    }
+    return call.proc().GetName();
+  }
+
+private:
+  const IntrinsicProcTable &intrinsics_;
+};
+
+std::optional<std::string> FindImpureCall(
+    const IntrinsicProcTable &intrinsics, const Expr<SomeType> &expr) {
+  return FindImpureCallHelper{intrinsics}(expr);
+}
+
 }

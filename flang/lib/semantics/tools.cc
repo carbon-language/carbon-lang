@@ -362,6 +362,51 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
   return nullptr;
 }
 
+const Symbol *FindOverriddenBinding(const Symbol &symbol) {
+  if (symbol.has<ProcBindingDetails>()) {
+    if (const DeclTypeSpec * parentType{FindParentTypeSpec(symbol.owner())}) {
+      if (const DerivedTypeSpec * parentDerived{parentType->AsDerived()}) {
+        if (const Scope * parentScope{parentDerived->typeSymbol().scope()}) {
+          return parentScope->FindComponent(symbol.name());
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
+const DeclTypeSpec *FindParentTypeSpec(const DerivedTypeSpec &derived) {
+  return FindParentTypeSpec(derived.typeSymbol());
+}
+
+const DeclTypeSpec *FindParentTypeSpec(const DeclTypeSpec &decl) {
+  if (const DerivedTypeSpec * derived{decl.AsDerived()}) {
+    return FindParentTypeSpec(*derived);
+  } else {
+    return nullptr;
+  }
+}
+
+const DeclTypeSpec *FindParentTypeSpec(const Scope &scope) {
+  if (scope.kind() == Scope::Kind::DerivedType) {
+    if (const auto *symbol{scope.symbol()}) {
+      return FindParentTypeSpec(*symbol);
+    }
+  }
+  return nullptr;
+}
+
+const DeclTypeSpec *FindParentTypeSpec(const Symbol &symbol) {
+  if (const Scope * scope{symbol.scope()}) {
+    if (const auto *details{symbol.detailsIf<DerivedTypeDetails>()}) {
+      if (const Symbol * parent{details->GetParentComponent(*scope)}) {
+        return parent->GetType();
+      }
+    }
+  }
+  return nullptr;
+}
+
 // When an construct association maps to a variable, and that variable
 // is not an array with a vector-valued subscript, return the base
 // Symbol of that variable, else nullptr.  Descends into other construct
@@ -442,6 +487,8 @@ bool IsSaved(const Symbol &symbol) {
     return true;
   } else if (scopeKind == Scope::Kind::DerivedType) {
     return false;  // this is a component
+  } else if (IsNamedConstant(symbol)) {
+    return false;
   } else if (symbol.attrs().test(Attr::SAVE)) {
     return true;
   } else {
@@ -1174,6 +1221,15 @@ FindPolymorphicAllocatableUltimateComponent(const DerivedTypeSpec &derived) {
   UltimateComponentIterator ultimates{derived};
   return std::find_if(
       ultimates.begin(), ultimates.end(), IsPolymorphicAllocatable);
+}
+
+UltimateComponentIterator::const_iterator
+FindPolymorphicAllocatableNonCoarrayUltimateComponent(
+    const DerivedTypeSpec &derived) {
+  UltimateComponentIterator ultimates{derived};
+  return std::find_if(ultimates.begin(), ultimates.end(), [](const Symbol &x) {
+    return IsPolymorphicAllocatable(x) && !IsCoarray(x);
+  });
 }
 
 const Symbol *FindUltimateComponent(const DerivedTypeSpec &derived,

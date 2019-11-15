@@ -53,12 +53,15 @@ module m
     procedure, nopass :: i
     !ERROR: Type parameter, component, or procedure binding 'b' already defined in this type
     procedure, nopass :: b => s4
+    !ERROR: DEFERRED is required when an interface-name is provided
+    procedure(foo), nopass :: g
+  end type
+  type, abstract :: t1a ! DEFERRED valid only in ABSTRACT derived type
+  contains
     procedure(foo), nopass, deferred :: e
     procedure(s), nopass, deferred :: f
     !ERROR: Type parameter, component, or procedure binding 'f' already defined in this type
     procedure(foo), nopass, deferred :: f
-    !ERROR: DEFERRED is required when an interface-name is provided
-    procedure(foo), nopass :: g
     !ERROR: 'bar' must be an abstract interface or a procedure with an explicit interface
     procedure(bar), nopass, deferred :: h
   end type

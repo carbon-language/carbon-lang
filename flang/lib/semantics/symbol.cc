@@ -556,7 +556,7 @@ const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
       CHECK(scope_);
       scope = scope_;
     }
-    return dtDetails->GetParentComponent(*scope);
+    return dtDetails->GetParentComponent(DEREF(scope));
   } else {
     return nullptr;
   }
