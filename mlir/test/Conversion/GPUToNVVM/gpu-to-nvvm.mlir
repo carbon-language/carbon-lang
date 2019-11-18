@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -lower-gpu-ops-to-nvvm-ops -split-input-file | FileCheck %s
+// RUN: mlir-opt %s -convert-gpu-to-nvvm -split-input-file | FileCheck %s
 
 module attributes {gpu.kernel_module} {
   // CHECK-LABEL: func @gpu_index_ops()
