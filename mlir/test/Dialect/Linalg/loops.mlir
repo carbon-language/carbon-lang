@@ -273,3 +273,82 @@ func @generic_region(%arg0: memref<?x?xf32, offset: ?, strides: [?, 1]>, %arg1: 
 //       CHECK:       %[[e:.*]] = addf %[[c]], %[[d]] : f32
 //       CHECK:       store %[[d]], %{{.*}}[%[[i]], %[[j]], %[[k]]] : memref<?x?x?xf32, #[[strided3D]]>
 //       CHECK:       store %[[e]], %{{.*}}[%[[i]], %[[k]], %[[j]]] : memref<?x?x?xf32, #[[strided3D]]>
+
+func @indexed_foo(%i: index, %j: index, %k: index, %0: f32, %1: f32, %2: f32) -> (f32, f32) {
+  %i_int = index_cast %i: index to i32
+  %i_float = sitofp %i_int : i32 to f32
+  return %i_float, %i_float : f32, f32
+}
+#trait3 = {
+  n_views = [1, 2],
+  n_loop_types = [3, 0, 0],
+  indexing_maps = #accesses,
+  fun = @indexed_foo,
+  library_call = "some_external_function_name_1",
+  doc = "b(i,j,k), c(i,k,j) = foo(a(i, j), b(i,j,k), c(i,k,j))"
+}
+func @indexed_generic_function(
+         %arg0: memref<?x?xf32, offset: ?, strides: [?, 1]>,
+         %arg1: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>,
+         %arg2: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
+  linalg.indexed_generic #trait3 %arg0, %arg1, %arg2:
+    memref<?x?xf32, offset: ?, strides: [?, 1]>,
+    memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>,
+    memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>
+  return
+}
+// CHECK-LABEL: @indexed_foo
+// CHECK-LABEL: @indexed_generic_function
+// CHECK: loop.for %[[i:.*]] = {{.*}}
+// CHECK:   loop.for %[[j:.*]] = {{.*}}
+// CHECK:     loop.for %[[k:.*]] = {{.*}}
+// CHECK:       %[[a:.*]] = load %{{.*}}[%[[i]], %[[j]]] : memref<?x?xf32, #[[strided2D]]>
+// CHECK:       %[[b:.*]] = load %{{.*}}[%[[i]], %[[j]], %[[k]]] : memref<?x?x?xf32, #[[strided3D]]>
+// CHECK:       %[[c:.*]] = load %{{.*}}[%[[i]], %[[k]], %[[j]]] : memref<?x?x?xf32, #[[strided3D]]>
+// CHECK:       %[[res:.*]]:2 = call @indexed_foo(%[[i]], %[[j]], %[[k]], %[[a]], %[[b]], %[[c]]) : (index, index, index, f32, f32, f32) -> (f32, f32)
+// CHECK:       store %[[res]]#0, %{{.*}}[%[[i]], %[[j]], %[[k]]] : memref<?x?x?xf32, #[[strided3D]]>
+// CHECK:       store %[[res]]#1, %{{.*}}[%[[i]], %[[k]], %[[j]]] : memref<?x?x?xf32, #[[strided3D]]>
+
+#trait4 = {
+  n_views = [1, 2],
+  n_loop_types = [3, 0, 0],
+  indexing_maps = #accesses,
+  library_call = "some_external_function_name_2",
+  doc = "B(i,j,k), C(i,k,j) = foo(A(i, j) * B(i,j,k), i * j * k + C(i,k,j))"
+}
+func @indexed_generic_region(
+        %arg0: memref<?x?xf32, offset: ?, strides: [?, 1]>,
+        %arg1: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>,
+        %arg2: memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>) {
+  linalg.indexed_generic #trait4 %arg0, %arg1, %arg2 {
+    ^bb0(%i: index, %j: index, %k: index, %a: f32, %b: f32, %c: f32):
+      %result_1 = mulf %a, %b : f32
+
+      %ij = addi %i, %j : index
+      %ijk = addi %ij, %k : index
+      %ijk_int = index_cast %ijk : index to i32
+      %ijk_float = sitofp %ijk_int : i32 to f32
+
+      %result_2 = addf %c, %ijk_float : f32
+      linalg.yield %result_1, %result_2 : f32, f32
+  }: memref<?x?xf32, offset: ?, strides: [?, 1]>,
+     memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>,
+     memref<?x?x?xf32, offset: ?, strides: [?, ?, 1]>
+  return
+}
+
+// CHECK-LABEL: @indexed_generic_region
+// CHECK: loop.for %[[i:.*]] = {{.*}}
+// CHECK:   loop.for %[[j:.*]] = {{.*}}
+// CHECK:     loop.for %[[k:.*]] = {{.*}}
+// CHECK:       %[[a:.*]] = load %{{.*}}[%[[i]], %[[j]]]
+// CHECK:       %[[b:.*]] = load %{{.*}}[%[[i]], %[[j]], %[[k]]]
+// CHECK:       %[[c:.*]] = load %{{.*}}[%[[i]], %[[k]], %[[j]]]
+// CHECK:       %[[result_1:.*]] = mulf %[[a]], %[[b]] : f32
+// CHECK:       %[[ij:.*]] = addi %[[i]], %[[j]] : index
+// CHECK:       %[[ijk:.*]] = addi %[[ij]], %[[k]] : index
+// CHECK:       %[[ijk_int:.*]] = index_cast %[[ijk]] : index to i32
+// CHECK:       %[[ijk_float:.*]] = sitofp %[[ijk_int]] : i32 to f32
+// CHECK:       %[[result_2:.*]] = addf %[[c]], %[[ijk_float]] : f32
+// CHECK:       store %[[result_1]], %{{.*}}[%[[i]], %[[j]], %[[k]]]
+// CHECK:       store %[[result_2]], %{{.*}}[%[[i]], %[[k]], %[[j]]]
