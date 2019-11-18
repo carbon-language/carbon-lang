@@ -685,8 +685,9 @@ func @view(%arg0 : index) {
 // -----
 
 // CHECK-DAG: #[[BASE_MAP0:map[0-9]+]] = (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)
-// CHECK-DAG: #[[SUBVIEW_MAP0:map[0-9]+]] = (d0, d1, d2) -> (d0 * 165 + d1 * 15 + d2)
+// CHECK-DAG: #[[SUBVIEW_MAP0:map[0-9]+]] = (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2 + 79)
 // CHECK-DAG: #[[SUBVIEW_MAP1:map[0-9]+]] = (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)
+// CHECK-DAG: #[[SUBVIEW_MAP2:map[0-9]+]] = (d0, d1, d2) -> (d0 * 128 + d1 * 28 + d2 * 11)
 
 // CHECK-LABEL: func @subview
 func @subview(%arg0 : index) -> (index, index) {
@@ -694,6 +695,7 @@ func @subview(%arg0 : index) -> (index, index) {
   %c0 = constant 0 : index
   // CHECK: %[[C1:.*]] = constant 1 : index
   %c1 = constant 1 : index
+  %c2 = constant 2 : index   
   // CHECK: %[[C7:.*]] = constant 7 : index
   %c7 = constant 7 : index
   // CHECK: %[[C11:.*]] = constant 11 : index
@@ -705,8 +707,10 @@ func @subview(%arg0 : index) -> (index, index) {
   %0 = alloc() : memref<8x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)>
 
   // Test: subview with constant base memref and constant operands is folded.
-  // CHECK: std.subview %[[ALLOC0]][][][] : memref<8x16x4xf32, #[[BASE_MAP0]]> to memref<7x11x15xf32, #[[SUBVIEW_MAP0]]>
-  %1 = subview %0[%c0, %c0, %c0][%c7, %c11, %c15][%c1, %c1, %c1]
+  // Note that the subview uses the base memrefs layout map because it used
+  // zero offset and unit stride arguments.
+  // CHECK: std.subview %[[ALLOC0]][][][] : memref<8x16x4xf32, #[[BASE_MAP0]]> to memref<7x11x2xf32, #[[BASE_MAP0]]>
+  %1 = subview %0[%c0, %c0, %c0][%c7, %c11, %c2][%c1, %c1, %c1]
     : memref<8x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)> to
       memref<?x?x?xf32,
        (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
@@ -733,12 +737,30 @@ func @subview(%arg0 : index) -> (index, index) {
   load %4[%c0, %c0, %c0] : memref<?x?x?xf32,
        (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
 
-  // Test: dim on subview is rewritten to size operand.
-  %5 = dim %4, 0 : memref<?x?x?xf32,
+  // Test: subview offset operands are folded correctly w.r.t. base strides. 
+  // CHECK: std.subview %[[ALLOC0]][][][] : memref<8x16x4xf32, #[[BASE_MAP0]]> to memref<7x11x2xf32, #[[SUBVIEW_MAP0]]>
+  %5 = subview %0[%c1, %c2, %c7][%c7, %c11, %c2][%c1, %c1, %c1]
+    : memref<8x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)> to
+      memref<?x?x?xf32,
        (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
-  %6 = dim %4, 1 : memref<?x?x?xf32,
+  load %5[%c0, %c0, %c0] : memref<?x?x?xf32,
+       (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
+
+  // Test: subview stride operands are folded correctly w.r.t. base strides.
+  // CHECK: std.subview %[[ALLOC0]][][][] : memref<8x16x4xf32, #[[BASE_MAP0]]> to memref<7x11x2xf32, #[[SUBVIEW_MAP2]]>
+  %6 = subview %0[%c0, %c0, %c0][%c7, %c11, %c2][%c2, %c7, %c11]
+    : memref<8x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)> to
+      memref<?x?x?xf32,
+       (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
+  load %6[%c0, %c0, %c0] : memref<?x?x?xf32,
+       (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
+
+  // Test: dim on subview is rewritten to size operand.
+  %7 = dim %4, 0 : memref<?x?x?xf32,
+       (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
+  %8 = dim %4, 1 : memref<?x?x?xf32,
        (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
 
   // CHECK: return %[[C7]], %[[C11]]
-  return %5, %6 : index, index
+  return %7, %8 : index, index
 }
