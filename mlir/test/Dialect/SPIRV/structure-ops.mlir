@@ -121,7 +121,7 @@ spv.module "Logical" "GLSL450" {
    func @do_nothing() -> () {
      spv.Return
    }
-   // expected-error @+1 {{invalid kind of constant specified}}
+   // expected-error @+1 {{invalid kind of attribute specified}}
    spv.EntryPoint "GLCompute" "do_nothing"
 }
 
