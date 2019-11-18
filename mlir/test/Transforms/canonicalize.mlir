@@ -689,11 +689,16 @@ func @view(%arg0 : index) {
 // CHECK-DAG: #[[SUBVIEW_MAP1:map[0-9]+]] = (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)
 
 // CHECK-LABEL: func @subview
-func @subview(%arg0 : index) {
+func @subview(%arg0 : index) -> (index, index) {
+  // CHECK: %[[C0:.*]] = constant 0 : index
   %c0 = constant 0 : index
+  // CHECK: %[[C1:.*]] = constant 1 : index
   %c1 = constant 1 : index
+  // CHECK: %[[C7:.*]] = constant 7 : index
   %c7 = constant 7 : index
+  // CHECK: %[[C11:.*]] = constant 11 : index
   %c11 = constant 11 : index
+  // CHECK: %[[C15:.*]] = constant 15 : index
   %c15 = constant 15 : index
 
   // CHECK: %[[ALLOC0:.*]] = alloc()
@@ -709,7 +714,7 @@ func @subview(%arg0 : index) {
        (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
 
   // Test: subview with one dynamic operand should not be folded.
-  // CHECK: std.subview %[[ALLOC0]][%c0, %arg0, %c0][%c7, %c11, %c15][%c1, %c1, %c1] : memref<8x16x4xf32, #[[BASE_MAP0]]> to memref<?x?x?xf32, #[[SUBVIEW_MAP1]]>
+  // CHECK: std.subview %[[ALLOC0]][%[[C0]], %arg0, %[[C0]]][%[[C7]], %[[C11]], %[[C15]]][%[[C1]], %[[C1]], %[[C1]]] : memref<8x16x4xf32, #[[BASE_MAP0]]> to memref<?x?x?xf32, #[[SUBVIEW_MAP1]]>
   %2 = subview %0[%c0, %arg0, %c0][%c7, %c11, %c15][%c1, %c1, %c1]
     : memref<8x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)> to
       memref<?x?x?xf32,
@@ -720,7 +725,7 @@ func @subview(%arg0 : index) {
   // CHECK: %[[ALLOC1:.*]] = alloc(%arg0)
   %3 = alloc(%arg0) : memref<?x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)>
   // Test: subview with constant operands but dynamic base memref is not folded.
-  // CHECK: std.subview %[[ALLOC1]][%c0, %c0, %c0][%c7, %c11, %c15][%c1, %c1, %c1] : memref<?x16x4xf32, #[[BASE_MAP0]]> to memref<?x?x?xf32, #[[SUBVIEW_MAP1]]>
+  // CHECK: std.subview %[[ALLOC1]][%[[C0]], %[[C0]], %[[C0]]][%[[C7]], %[[C11]], %[[C15]]][%[[C1]], %[[C1]], %[[C1]]] : memref<?x16x4xf32, #[[BASE_MAP0]]> to memref<?x?x?xf32, #[[SUBVIEW_MAP1]]>
   %4 = subview %3[%c0, %c0, %c0][%c7, %c11, %c15][%c1, %c1, %c1]
     : memref<?x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)> to
       memref<?x?x?xf32,
@@ -728,5 +733,12 @@ func @subview(%arg0 : index) {
   load %4[%c0, %c0, %c0] : memref<?x?x?xf32,
        (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
 
-  return
+  // Test: dim on subview is rewritten to size operand.
+  %5 = dim %4, 0 : memref<?x?x?xf32,
+       (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
+  %6 = dim %4, 1 : memref<?x?x?xf32,
+       (d0, d1, d2)[s0, s1, s2, s3] -> (d0 * s1 + d1 * s2 + d2 * s3 + s0)>
+
+  // CHECK: return %[[C7]], %[[C11]]
+  return %5, %6 : index, index
 }
