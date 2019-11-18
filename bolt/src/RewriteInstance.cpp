@@ -2346,7 +2346,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
       }
     }
 
-    uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
       auto Name = Relocation::isGOT(RType) ? "Zero" : SymbolName;
@@ -2358,6 +2357,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
                    << SymbolName << " with addend " << Addend << '\n');
     } else if (ReferencedBF) {
       ReferencedSymbol = ReferencedBF->getSymbol();
+      uint64_t RefFunctionOffset = 0;
 
       // Adjust the point of reference to a code location inside a function.
       if (ReferencedBF->containsAddress(Address, /*UseMaxSize = */true)) {
@@ -2400,60 +2400,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
         Addend = 0;
       }
 
-      // This function makes sure that symbols referenced by ambiguous
-      // relocations are marked as unmoveable.  For now, if a section
-      // relocation points at the boundary between two symbols then
-      // those symbols are marked as unmoveable.
-      auto markAmbiguousRelocations = [&](BinaryData *BD) {
-        if (Address == BD->getAddress()) {
-          BD = BD->getAtomicRoot();
-          DEBUG(if (BD->isMoveable()) {
-            dbgs() << "BOLT-DEBUG: setting " << *BD << " as unmoveable "
-                   << "due to ambiguous relocation (0x"
-                   << Twine::utohexstr(Address) << ") @ 0x"
-                   << Twine::utohexstr(Rel.getOffset()) << "\n";
-          });
-          BD->setIsMoveable(false);
-
-          // set previous symbol as unmoveable
-          auto *Prev = BC->getBinaryDataContainingAddress(Address-1);
-          if (Prev && Prev->getEndAddress() == BD->getAddress()) {
-            Prev = Prev->getAtomicRoot();
-            DEBUG(if (Prev->isMoveable()) {
-              dbgs() << "BOLT-DEBUG: setting " << *Prev << " as unmoveable "
-                     << "due to ambiguous relocation (0x"
-                     << Twine::utohexstr(Address) << ") @ 0x"
-                     << Twine::utohexstr(Rel.getOffset()) << "\n";
-            });
-            Prev->setIsMoveable(false);
-          }
-        }
-
-        if (Address == BD->getEndAddress()) {
-          BD = BD->getAtomicRoot();
-          DEBUG(if (BD->isMoveable()) {
-            dbgs() << "BOLT-DEBUG: setting " << *BD << " as unmoveable "
-                   << "due to ambiguous relocation (0x"
-                   << Twine::utohexstr(Address) << ") @ 0x"
-                   << Twine::utohexstr(Rel.getOffset()) << "\n";
-          });
-          BD->setIsMoveable(false);
-
-          // set next symbol as unmoveable
-          auto *Next = BC->getBinaryDataContainingAddress(BD->getEndAddress());
-          if (Next && Next->getAddress() == BD->getEndAddress()) {
-            Next = Next->getAtomicRoot();
-            DEBUG(if (Next->isMoveable()) {
-              dbgs() << "BOLT-DEBUG: setting " << *Next << " as unmoveable "
-                     << "due to ambiguous relocation (0x"
-                     << Twine::utohexstr(Address) << ") @ 0x"
-                     << Twine::utohexstr(Rel.getOffset()) << "\n";
-            });
-            Next->setIsMoveable(false);
-          }
-        }
-      };
-
       // If we are allowing section relocations, we assign relocations
       // that are pointing to the end of a symbol to that symbol rather
       // than the following symbol.
@@ -2486,7 +2432,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
                "up with symbol names referenced in the relocation");
 
         if (!opts::AllowSectionRelocations && IsSectionRelocation) {
-          markAmbiguousRelocations(BD);
+          BC->markAmbiguousRelocations(*BD, Address);
         }
 
         ReferencedSymbol = BD->getSymbol();
@@ -2531,7 +2477,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
 
         if (!opts::AllowSectionRelocations && IsSectionRelocation) {
           auto *BD = BC->getBinaryDataByName(ReferencedSymbol->getName());
-          markAmbiguousRelocations(BD);
+          BC->markAmbiguousRelocations(*BD, Address);
         }
       }
     }
@@ -2552,9 +2498,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
       return (!opts::MaxDataRelocations ||
               NumDataRelocations < opts::MaxDataRelocations);
     };
-
-    if (IsFromCode && IsAArch64)
-      ForceRelocation = true;
 
     if ((RefSection && refersToReorderedSection(RefSection)) ||
         (opts::ForceToDataRelocations && checkMaxDataRelocations()))

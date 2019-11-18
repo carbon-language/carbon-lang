@@ -1730,6 +1730,37 @@ const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {
   return Section->getRelocationAt(Address - Section->getAddress());
 }
 
+void BinaryContext::markAmbiguousRelocations(BinaryData &BD,
+                                             const uint64_t Address) {
+  auto setImmovable = [&](BinaryData &BD) {
+    auto *Root = BD.getAtomicRoot();
+    DEBUG(if (Root->isMoveable()) {
+      dbgs() << "BOLT-DEBUG: setting " << *Root << " as immovable "
+             << "due to ambiguous relocation referencing 0x"
+             << Twine::utohexstr(Address) << '\n';
+    });
+    Root->setIsMoveable(false);
+  };
+
+  if (Address == BD.getAddress()) {
+    setImmovable(BD);
+
+    // Set previous symbol as immovable
+    auto *Prev = getBinaryDataContainingAddress(Address-1);
+    if (Prev && Prev->getEndAddress() == BD.getAddress())
+      setImmovable(*Prev);
+  }
+
+  if (Address == BD.getEndAddress()) {
+    setImmovable(BD);
+
+    // Set next symbol as immovable
+    auto *Next = getBinaryDataContainingAddress(BD.getEndAddress());
+    if (Next && Next->getAddress() == BD.getEndAddress())
+      setImmovable(*Next);
+  }
+}
+
 void BinaryContext::exitWithBugReport(StringRef Message,
                                       const BinaryFunction &Function) const {
   errs() << "=======================================\n";

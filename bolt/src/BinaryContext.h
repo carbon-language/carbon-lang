@@ -912,6 +912,11 @@ public:
   /// is no relocation at such address.
   const Relocation *getRelocationAt(uint64_t Address);
 
+  /// This function makes sure that symbols referenced by ambiguous relocations
+  /// are marked as immovable. For now, if a section relocation points at the
+  /// boundary between two symbols then those symbols are marked as immovable.
+  void markAmbiguousRelocations(BinaryData &BD, const uint64_t Address);
+
   /// This function is thread safe.
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
     std::shared_lock<std::shared_timed_mutex> Lock(SymbolToFunctionMapMutex);
