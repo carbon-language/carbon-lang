@@ -5,11 +5,11 @@ def clang(arch):
         "steps": [
             {
                 "name": "test",
-                "image": "fedora",
+                "image": "ubuntu",
                 "commands": [
-                    "dnf -y install clang cmake ninja-build lld llvm-devel libcxx-devel diffutils",
+                    "apt-get update && apt-get install -y clang-8 cmake ninja-build lld-8 llvm-dev libc++-8-dev libc++abi-8-dev",
                     "mkdir build && cd build",
-                    'env CC=clang CXX=clang++ CXXFLAGS="-UNDEBUG -stdlib=libc++" LDFLAGS="-fuse-ld=lld" cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..',
+                    'env CC=clang-8 CXX=clang++-8 CXXFLAGS="-UNDEBUG -stdlib=libc++" LDFLAGS="-fuse-ld=lld" cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..',
                     "ninja -j12",
                     "ctest --output-on-failure -j24",
                 ],
@@ -25,9 +25,9 @@ def gcc(arch):
             "steps": [
                 {
                     "name": "test",
-                    "image": "fedora",
+                    "image": "gcc",
                     "commands": [
-                        "dnf -y install cmake ninja-build g++ llvm-devel diffutils",
+			"apt-get update && apt-get install -y cmake ninja-build llvm-dev",
                         "mkdir build && cd build",
                         'env CC=gcc CXX=g++ CXXFLAGS="-UNDEBUG" LDFLAGS="-fuse-ld=gold" cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..',
                         "ninja -j12",
@@ -43,6 +43,6 @@ def main(ctx):
         clang("amd64"),
         clang("arm64"),
         gcc("amd64"),
-        #gcc("arm64"),
+        gcc("arm64"),
     ]
 
