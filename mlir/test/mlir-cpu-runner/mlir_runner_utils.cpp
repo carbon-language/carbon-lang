@@ -86,14 +86,6 @@ template <typename T> struct MemRefDataPrinter<T, 0> {
                     int64_t *sizes = nullptr, int64_t *strides = nullptr);
 };
 
-template <typename T>
-static void printNewLineIfVector(std::ostream &os, T &t) {}
-
-template <typename T, int Dim, int... Dims>
-static void printNewLineIfVector(std::ostream &os, Vector<T, Dim, Dims...> &t) {
-  os << "\n";
-}
-
 template <typename T, int N>
 void MemRefDataPrinter<T, N>::printFirst(std::ostream &os, T *base,
                                          int64_t rank, int64_t offset,
@@ -101,10 +93,12 @@ void MemRefDataPrinter<T, N>::printFirst(std::ostream &os, T *base,
   os << "[";
   MemRefDataPrinter<T, N - 1>::print(os, base, rank, offset, sizes + 1,
                                      strides + 1);
-  if (sizes[0] > 0) {
-    os << ", ";
-    printNewLineIfVector(os, *base);
+  // If single element, close square bracket and return early.
+  if (sizes[0] <= 1) {
+    os << "]";
+    return;
   }
+  os << ", ";
   if (N > 1)
     os << "\n";
 }
@@ -116,13 +110,14 @@ void MemRefDataPrinter<T, N>::print(std::ostream &os, T *base, int64_t rank,
   printFirst(os, base, rank, offset, sizes, strides);
   for (unsigned i = 1; i + 1 < sizes[0]; ++i) {
     printSpace(os, rank - N + 1);
-    MemRefDataPrinter<T, N - 1>::print(os, base, rank, offset + i * (*strides),
+    MemRefDataPrinter<T, N - 1>::print(os, base, rank, offset + i * strides[0],
                                        sizes + 1, strides + 1);
     os << ", ";
-    printNewLineIfVector(os, *base);
     if (N > 1)
       os << "\n";
   }
+  if (sizes[0] <= 1)
+    return;
   printLast(os, base, rank, offset, sizes, strides);
 }
 
