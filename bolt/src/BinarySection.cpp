@@ -14,13 +14,14 @@
 #include "llvm/Support/CommandLine.h"
 
 #undef  DEBUG_TYPE
-#define DEBUG_TYPE "binary-section"
+#define DEBUG_TYPE "bolt"
 
 using namespace llvm;
 using namespace bolt;
 
 namespace opts {
 extern cl::opt<bool> PrintRelocations;
+extern cl::opt<bool> HotData;
 }
 
 uint64_t
@@ -59,6 +60,53 @@ BinarySection::hash(const BinaryData &BD,
   Cache[&BD] = Hash;
 
   return Hash;
+}
+
+void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
+  StringRef SectionName = !NewName.empty() ? NewName : getName();
+  StringRef SectionContents = getContents();
+  auto *ELFSection = BC.Ctx->getELFSection(SectionName,
+                                           getELFType(),
+                                           getELFFlags());
+
+  Streamer.SwitchSection(ELFSection);
+  Streamer.EmitValueToAlignment(getAlignment());
+
+  if (BC.HasRelocations && opts::HotData && isReordered())
+    Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_start"));
+
+  DEBUG(dbgs() << "BOLT-DEBUG: emitting "
+               << (isAllocatable() ? "" : "non-")
+               << "allocatable data section " << SectionName << '\n');
+
+  if (!hasRelocations()) {
+    Streamer.EmitBytes(SectionContents);
+  } else {
+    uint64_t SectionOffset = 0;
+    for (auto &Relocation : relocations()) {
+      assert(Relocation.Offset < SectionContents.size() && "overflow detected");
+      if (SectionOffset < Relocation.Offset) {
+        Streamer.EmitBytes(
+            SectionContents.substr(SectionOffset,
+                                   Relocation.Offset - SectionOffset));
+        SectionOffset = Relocation.Offset;
+      }
+      DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
+            << Relocation.Symbol->getName() << " at offset 0x"
+            << Twine::utohexstr(Relocation.Offset)
+            << " with size "
+            << Relocation::getSizeForType(Relocation.Type) << '\n');
+      auto RelocationSize = Relocation.emit(&Streamer);
+      SectionOffset += RelocationSize;
+    }
+    assert(SectionOffset <= SectionContents.size() && "overflow error");
+    if (SectionOffset < SectionContents.size()) {
+      Streamer.EmitBytes(SectionContents.substr(SectionOffset));
+    }
+  }
+
+  if (BC.HasRelocations && opts::HotData && isReordered())
+    Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_end"));
 }
 
 BinarySection::~BinarySection() {

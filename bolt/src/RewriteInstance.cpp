@@ -220,7 +220,7 @@ HotTextMoveSections("hot-text-move-sections",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 HotData("hot-data",
   cl::desc("hot data symbols support (relocation mode)"),
   cl::ZeroOrMore,
@@ -2985,7 +2985,7 @@ void RewriteInstance::emitAndLink() {
   // Relocate .eh_frame to .eh_frame_old.
   if (EHFrameSection) {
     relocateEHFrameSection();
-    emitDataSection(Streamer.get(), *EHFrameSection, ".eh_frame_old");
+    EHFrameSection->emitAsData(*Streamer, ".eh_frame_old");
   }
 
   // Update _end if needed.
@@ -3560,55 +3560,6 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
   }
 }
 
-void RewriteInstance::emitDataSection(MCStreamer *Streamer,
-                                      const BinarySection &Section,
-                                      StringRef NewName) {
-  StringRef SectionName = !NewName.empty() ? NewName : Section.getName();
-  StringRef SectionContents = Section.getContents();
-  auto *ELFSection = BC->Ctx->getELFSection(SectionName,
-                                            Section.getELFType(),
-                                            Section.getELFFlags());
-
-  Streamer->SwitchSection(ELFSection);
-  Streamer->EmitValueToAlignment(Section.getAlignment());
-
-  if (BC->HasRelocations && opts::HotData && Section.isReordered())
-    Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_data_start"));
-
-  DEBUG(dbgs() << "BOLT-DEBUG: emitting "
-               << (Section.isAllocatable() ? "" : "non-")
-               << "allocatable data section " << SectionName << '\n');
-
-  if (!Section.hasRelocations()) {
-    Streamer->EmitBytes(SectionContents);
-  } else {
-    uint64_t SectionOffset = 0;
-    for (auto &Relocation : Section.relocations()) {
-      assert(Relocation.Offset < SectionContents.size() && "overflow detected");
-      if (SectionOffset < Relocation.Offset) {
-        Streamer->EmitBytes(
-            SectionContents.substr(SectionOffset,
-                                   Relocation.Offset - SectionOffset));
-        SectionOffset = Relocation.Offset;
-      }
-      DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
-            << Relocation.Symbol->getName() << " at offset 0x"
-            << Twine::utohexstr(Relocation.Offset)
-            << " with size "
-            << Relocation::getSizeForType(Relocation.Type) << '\n');
-      auto RelocationSize = Relocation.emit(Streamer);
-      SectionOffset += RelocationSize;
-    }
-    assert(SectionOffset <= SectionContents.size() && "overflow error");
-    if (SectionOffset < SectionContents.size()) {
-      Streamer->EmitBytes(SectionContents.substr(SectionOffset));
-    }
-  }
-
-  if (BC->HasRelocations && opts::HotData && Section.isReordered())
-    Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_data_end"));
-}
-
 void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
   for (const auto &Section : BC->sections()) {
     if (!Section.hasRelocations() || !Section.hasSectionRef())
@@ -3619,7 +3570,7 @@ void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
     std::string EmitName = Section.isReordered()
       ? std::string(Section.getOutputName())
       : OrgSecPrefix + std::string(SectionName);
-    emitDataSection(Streamer, Section, EmitName);
+    Section.emitAsData(*Streamer, EmitName);
   }
 }
 

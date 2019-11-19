@@ -410,6 +410,10 @@ public:
     IsAnonymous = Flag;
   }
 
+  /// Emit the section as data, possibly with relocations. Use name \p NewName
+  //  for the section during emission if non-empty.
+  void emitAsData(MCStreamer &Streamer, StringRef NewName = StringRef()) const;
+
   /// Reorder the contents of this section according to /p Order.  If
   /// /p Inplace is true, the entire contents of the section is reordered,
   /// otherwise the new contents contain only the reordered data.

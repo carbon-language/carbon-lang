@@ -117,12 +117,6 @@ public:
   /// Emit function code.
   void emitFunctions(MCStreamer *Streamer);
 
-  /// Emit data \p Section, possibly with relocations. Use name \p Name if
-  /// non-empty.
-  void emitDataSection(MCStreamer *Streamer,
-                       const BinarySection &Section,
-                       StringRef Name = StringRef());
-
   /// Emit data sections that have code references in them.
   void emitDataSections(MCStreamer *Streamer);
 
