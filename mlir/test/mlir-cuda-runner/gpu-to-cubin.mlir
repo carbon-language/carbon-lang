@@ -15,10 +15,9 @@ func @other_func(%arg0 : f32, %arg1 : memref<?xf32>) {
 // CHECK: [1.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00, 1.000000e+00]
 func @main() {
   %arg0 = alloc() : memref<5xf32>
-  %20 = constant 0 : i32
   %21 = constant 5 : i32
   %22 = memref_cast %arg0 : memref<5xf32> to memref<?xf32>
-  call @mcuMemHostRegister(%22, %20) : (memref<?xf32>, i32) -> ()
+  call @mcuMemHostRegisterMemRef1dFloat(%22) : (memref<?xf32>) -> ()
   call @mcuPrintFloat(%22) : (memref<?xf32>) -> ()
   %24 = constant 1.0 : f32
   call @other_func(%24, %22) : (f32, memref<?xf32>) -> ()
@@ -26,5 +25,5 @@ func @main() {
   return
 }
 
-func @mcuMemHostRegister(%ptr : memref<?xf32>, %flags : i32)
+func @mcuMemHostRegisterMemRef1dFloat(%ptr : memref<?xf32>)
 func @mcuPrintFloat(%ptr : memref<?xf32>)

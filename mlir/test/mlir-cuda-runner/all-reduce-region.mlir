@@ -4,10 +4,9 @@
 func @main() {
   %arg = alloc() : memref<35xf32>
   %dst = memref_cast %arg : memref<35xf32> to memref<?xf32>
-  %zero = constant 0 : i32
   %one = constant 1 : index
   %sx = dim %dst, 0 : memref<?xf32>
-  call @mcuMemHostRegister(%dst, %zero) : (memref<?xf32>, i32) -> ()
+  call @mcuMemHostRegisterMemRef1dFloat(%dst) : (memref<?xf32>) -> ()
   gpu.launch blocks(%bx, %by, %bz) in (%grid_x = %one, %grid_y = %one, %grid_z = %one)
              threads(%tx, %ty, %tz) in (%block_x = %sx, %block_y = %one, %block_z = %one)
              args(%kernel_dst = %dst) : memref<?xf32> {
@@ -25,5 +24,5 @@ func @main() {
   return
 }
 
-func @mcuMemHostRegister(%ptr : memref<?xf32>, %flags : i32)
+func @mcuMemHostRegisterMemRef1dFloat(%ptr : memref<?xf32>)
 func @mcuPrintFloat(%ptr : memref<?xf32>)

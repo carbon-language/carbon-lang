@@ -4,12 +4,11 @@
 func @main() {
   %arg = alloc() : memref<13x4x2xf32>
   %dst = memref_cast %arg : memref<13x4x2xf32> to memref<?x?x?xf32>
-  %zero = constant 0 : i32
   %one = constant 1 : index
   %sx = dim %dst, 0 : memref<?x?x?xf32>
   %sy = dim %dst, 1 : memref<?x?x?xf32>
   %sz = dim %dst, 2 : memref<?x?x?xf32>
-  call @mcuMemHostRegister(%dst, %zero) : (memref<?x?x?xf32>, i32) -> ()
+  call @mcuMemHostRegisterMemRef3dFloat(%dst) : (memref<?x?x?xf32>) -> ()
   gpu.launch blocks(%bx, %by, %bz) in (%grid_x = %one, %grid_y = %one, %grid_z = %one)
              threads(%tx, %ty, %tz) in (%block_x = %sx, %block_y = %sy, %block_z = %sz)
              args(%kernel_dst = %dst) : memref<?x?x?xf32> {
@@ -27,5 +26,5 @@ func @main() {
   return
 }
 
-func @mcuMemHostRegister(%ptr : memref<?x?x?xf32>, %flags : i32)
+func @mcuMemHostRegisterMemRef3dFloat(%ptr : memref<?x?x?xf32>)
 func @mcuPrintFloat(%ptr : memref<?x?x?xf32>)
