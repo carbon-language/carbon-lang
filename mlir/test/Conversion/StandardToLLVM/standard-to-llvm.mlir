@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -lower-to-llvm -split-input-file -verify-diagnostics | FileCheck %s
+// RUN: mlir-opt %s -convert-std-to-llvm -split-input-file -verify-diagnostics | FileCheck %s
 
 // CHECK-LABEL: func @address_space(
 //       CHECK:   %{{.*}}: !llvm<"{ float addrspace(7)*, float addrspace(7)*, i64, [1 x i64], [1 x i64] }*">)

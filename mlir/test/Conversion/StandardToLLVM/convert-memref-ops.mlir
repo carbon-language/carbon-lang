@@ -1,4 +1,4 @@
-// RUN: mlir-opt -lower-to-llvm %s | FileCheck %s
+// RUN: mlir-opt -convert-std-to-llvm %s | FileCheck %s
 
 // CHECK-LABEL: func @check_arguments(%arg0: !llvm<"{ float*, float*, i64, [2 x i64], [2 x i64] }*">, %arg1: !llvm<"{ float*, float*, i64, [2 x i64], [2 x i64] }*">, %arg2: !llvm<"{ float*, float*, i64, [2 x i64], [2 x i64] }*">)
 func @check_arguments(%static: memref<10x20xf32>, %dynamic : memref<?x?xf32>, %mixed : memref<10x?xf32>) {

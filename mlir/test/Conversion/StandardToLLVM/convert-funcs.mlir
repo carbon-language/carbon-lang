@@ -1,4 +1,4 @@
-// RUN: mlir-opt -lower-to-llvm %s | FileCheck %s
+// RUN: mlir-opt -convert-std-to-llvm %s | FileCheck %s
 
 //CHECK: llvm.func @second_order_arg(!llvm<"void ()*">)
 func @second_order_arg(%arg0 : () -> ())
