@@ -41,3 +41,10 @@ func @outerproduct(%arg0: vector<4xf32>, %arg1: vector<8xf32>, %arg2: vector<4x8
   %1 = vector.outerproduct %arg0, %arg1, %arg2 : vector<4xf32>, vector<8xf32>
   return %1 : vector<4x8xf32>
 }
+
+// CHECK-LABEL: strided_slice
+func @strided_slice(%arg0: vector<4x8x16xf32>) -> vector<2x2x16xf32> {
+  //      CHECK: vector.strided_slice %{{.*}} {offsets = [2, 2], sizes = [2, 2], strides = [1, 1]} : vector<4x8x16xf32>
+  %1 = vector.strided_slice %arg0 {offsets = [2, 2], sizes = [2, 2], strides = [1, 1]} : vector<4x8x16xf32> to vector<2x2x16xf32>
+  return %1: vector<2x2x16xf32>
+}
