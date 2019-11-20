@@ -168,6 +168,9 @@ class BinaryContext {
   /// Jump tables for all functions mapped by address.
   std::map<uint64_t, JumpTable *> JumpTables;
 
+  /// Locations of PC-relative relocations in data objects.
+  std::unordered_set<uint64_t> DataPCRelocations;
+
   /// Used in duplicateJumpTable() to uniquely identify a JT clone
   /// Start our IDs with a high number so getJumpTableContainingAddress checks
   /// with size won't overflow
@@ -897,12 +900,9 @@ public:
   void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
                      uint64_t Addend = 0, uint64_t Value = 0);
 
-  /// All PC-relative relocations in data objects.
-  std::map<uint64_t, std::pair<uint64_t, uint64_t>> PCRelocation;
-
-  void addPCRelativeDataRelocation(uint64_t Address, uint64_t Type,
-                                   uint64_t Value) {
-    PCRelocation[Address] = std::make_pair(Type, Value);
+  /// Register a presence of PC-relative relocation at the given \p Address.
+  void addPCRelativeDataRelocation(uint64_t Address) {
+    DataPCRelocations.emplace(Address);
   }
 
   /// Remove registered relocation at a given \p Address.

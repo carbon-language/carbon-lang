@@ -2250,8 +2250,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
       // address. The actual referenced label/address cannot be determined
       // from linker data alone.
       if (!IsFromCode) {
-        BC->addPCRelativeDataRelocation(Rel.getOffset(), Rel.getType(),
-                                        ExtractedValue);
+        BC->addPCRelativeDataRelocation(Rel.getOffset());
       }
       DEBUG(dbgs() << "BOLT-DEBUG: not creating PC-relative relocation at 0x"
                    << Twine::utohexstr(Rel.getOffset()) << " for " << SymbolName

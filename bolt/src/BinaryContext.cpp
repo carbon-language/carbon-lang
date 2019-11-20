@@ -381,10 +381,12 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
   for (auto EntryAddress = Address; EntryAddress <= UpperBound - EntrySize;
        EntryAddress += EntrySize) {
     // Check if there's a proper relocation against the jump table entry.
-    if (HasRelocations &&
-        ((Type == JumpTable::JTT_PIC && !PCRelocation.count(EntryAddress)) ||
-         (Type == JumpTable::JTT_NORMAL && !getRelocationAt(EntryAddress))))
-      break;
+    if (HasRelocations) {
+      if (Type == JumpTable::JTT_PIC && !DataPCRelocations.count(EntryAddress))
+        break;
+      if (Type == JumpTable::JTT_NORMAL && !getRelocationAt(EntryAddress))
+        break;
+    }
 
     const uint64_t Value = (Type == JumpTable::JTT_PIC)
       ? Address + *getSignedValueAtAddress(EntryAddress, EntrySize)
@@ -461,14 +463,14 @@ void BinaryContext::populateJumpTables() {
       for (auto Address = JT->getAddress();
            Address < JT->getAddress() + JT->getSize();
            Address += JT->EntrySize) {
-        PCRelocation.erase(PCRelocation.find(Address));
+        DataPCRelocations.erase(DataPCRelocations.find(Address));
       }
     }
   }
 
-  assert((!opts::StrictMode || !PCRelocation.size()) &&
+  assert((!opts::StrictMode || !DataPCRelocations.size()) &&
          "unclaimed PC-relative relocations left in data\n");
-  clearList(PCRelocation);
+  clearList(DataPCRelocations);
 }
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
