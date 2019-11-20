@@ -766,7 +766,7 @@ func @should_fuse_at_src_depth1_and_dst_depth1() {
       "op2"(%v2) : (f32) -> ()
     }
   }
-  // We can slice iterations of the '%i0' and '%i1' loops in the the source
+  // We can slice iterations of the '%i0' and '%i1' loops in the source
   // loop nest, but slicing at depth 2 and inserting the slice in the
   // destination loop nest at depth2 causes extra computation. Instead,
   // the fusion algorithm should detect that the source loop should be sliced
