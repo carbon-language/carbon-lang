@@ -92,7 +92,7 @@ func @extra_constants(%arg0 : memref<?xf32>) {
   // CHECK: %[[CST:.*]] = constant 8 : index
   %cst = constant 8 : index
   %cst2 = constant 2 : index
-  %cst3 = constant 3 : index
+  %cst3 = dim %arg0, 0 : memref<?xf32>
   // CHECK: "gpu.launch_func"(%[[CST]], %[[CST]], %[[CST]], %[[CST]], %[[CST]], %[[CST]], %{{.*}}) {kernel = "extra_constants_kernel", kernel_module = @extra_constants_kernel} : (index, index, index, index, index, index, memref<?xf32>) -> ()
   gpu.launch blocks(%bx, %by, %bz) in (%grid_x = %cst, %grid_y = %cst,
                                        %grid_z = %cst)
