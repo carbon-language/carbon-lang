@@ -3748,23 +3748,8 @@ void RewriteInstance::rewriteNoteSections() {
         Size += BSec->getOutputSize();
       }
 
-      if (BSec->hasPendingRelocations()) {
-        DEBUG(dbgs() << "BOLT-DEBUG: processing relocs for section "
-                     << SectionName << '\n');
-        for (auto &Reloc : BSec->pendingRelocations()) {
-          DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
-                       << Twine::utohexstr(Reloc.Addend)
-                       << " of size " << Relocation::getSizeForType(Reloc.Type)
-                       << " at offset 0x"
-                       << Twine::utohexstr(Reloc.Offset) << '\n');
-          assert(Reloc.Type == ELF::R_X86_64_32 &&
-                 "only R_X86_64_32 relocations are supported at the moment");
-          uint32_t Value = Reloc.Addend;
-          OS.pwrite(reinterpret_cast<const char*>(&Value),
-                    Relocation::getSizeForType(Reloc.Type),
-                    NextAvailableOffset + Reloc.Offset);
-        }
-      }
+      BSec->setFileOffset(NextAvailableOffset);
+      BSec->flushPendingRelocations(OS);
     }
 
     // Set/modify section info.

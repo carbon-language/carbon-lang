@@ -414,6 +414,9 @@ public:
   //  for the section during emission if non-empty.
   void emitAsData(MCStreamer &Streamer, StringRef NewName = StringRef()) const;
 
+  /// Flush all pending relocations to the emitted section.
+  void flushPendingRelocations(raw_pwrite_stream &OS);
+
   /// Reorder the contents of this section according to /p Order.  If
   /// /p Inplace is true, the entire contents of the section is reordered,
   /// otherwise the new contents contain only the reordered data.

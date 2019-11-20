@@ -109,6 +109,26 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
     Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_end"));
 }
 
+void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS) {
+  DEBUG(dbgs() << "BOLT-DEBUG: flushing pending relocs for section "
+               << getName() << '\n');
+  for (auto &Reloc : PendingRelocations) {
+    DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
+                 << Twine::utohexstr(Reloc.Addend)
+                 << " of size " << Relocation::getSizeForType(Reloc.Type)
+                 << " at offset 0x"
+                 << Twine::utohexstr(Reloc.Offset) << '\n');
+    assert(Reloc.Type == ELF::R_X86_64_32 &&
+           "only R_X86_64_32 relocations are supported at the moment");
+    const uint32_t Value = Reloc.Addend;
+    OS.pwrite(reinterpret_cast<const char*>(&Value),
+              Relocation::getSizeForType(Reloc.Type),
+              FileOffset + Reloc.Offset);
+  }
+
+  clearList(PendingRelocations);
+}
+
 BinarySection::~BinarySection() {
   if (isReordered()) {
     delete[] getData();
