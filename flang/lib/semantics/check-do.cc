@@ -464,7 +464,6 @@ private:
     if (isReal && !warn) {
       // No messages for the default case
     } else if (isReal && warn) {
-      // TODO: Mark the following message as a warning when we have warnings
       context_.Say(sourceLocation, "DO controls should be INTEGER"_en_US);
     } else {
       SayBadDoControl(sourceLocation);
@@ -510,7 +509,11 @@ private:
     CheckDoExpression(bounds.lower);
     CheckDoExpression(bounds.upper);
     if (bounds.step) {
-      CheckDoExpression(bounds.step.value());
+      CheckDoExpression(*bounds.step);
+      if (IsZero(*bounds.step)) {
+        context_.Say(bounds.step->thing.value().source,
+            "DO step expression should not be zero"_en_US);
+      }
     }
   }
 
@@ -670,6 +673,10 @@ private:
         if (const auto &expr{
                 std::get<std::optional<parser::ScalarIntExpr>>(c.t)}) {
           HasNoReferences(indexNames, *expr);
+          if (IsZero(*expr)) {
+            context_.Say(expr->thing.thing.value().source,
+                "DO CONCURRENT step expression should not be zero"_err_en_US);
+          }
         }
       }
     }
