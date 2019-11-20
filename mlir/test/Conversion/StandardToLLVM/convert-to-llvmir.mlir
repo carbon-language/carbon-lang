@@ -731,6 +731,6 @@ func @subview(%0 : memref<64x4xf32, (d0, d1) -> (d0 * 4 + d1)>, %arg0 : index, %
   // CHECK: %[[DESCSTRIDE0:.*]] = llvm.mul %[[ARG0]], %[[STRIDE0]] : !llvm.i64
   // CHECK: llvm.insertvalue %[[DESCSTRIDE0]], %[[DESC5]][4, 0] : !llvm<"{ float*, float*, i64, [2 x i64], [2 x i64] }">
   %1 = subview %0[%arg0, %arg1][%arg0, %arg1][%arg0, %arg1] :
-    memref<64x4xf32, (d0, d1) -> (d0 * 4 + d1)> to memref<?x?xf32, (d0, d1)[s0, s1] -> (d0 * s0 + d1 + s1)>
+    memref<64x4xf32, (d0, d1) -> (d0 * 4 + d1)> to memref<?x?xf32, (d0, d1)[s0, s1, s2] -> (d0 * s1 + d1 * s2 + s0)>
   return
 }

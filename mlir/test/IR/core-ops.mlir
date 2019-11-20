@@ -21,6 +21,8 @@
 // CHECK-DAG: #[[BASE_MAP2:map[0-9]+]] = (d0, d1) -> (d0 * 22 + d1)
 // CHECK-DAG: #[[SUBVIEW_MAP2:map[0-9]+]] = (d0, d1)[s0, s1, s2] -> (d0 * s1 + d1 * s2 + s0)
 // CHECK-DAG: #[[SUBVIEW_MAP3:map[0-9]+]] = (d0, d1, d2) -> (d0 * 16 + d1 * 4 + d2 + 8)
+// CHECK-DAG: #[[SUBVIEW_MAP4:map[0-9]+]] = (d0, d1)[s0, s1, s2] -> (d0 * s1 + s0 + d1 * s2)
+// CHECK-DAG: #[[SUBVIEW_MAP5:map[0-9]+]] = (d0, d1)[s0] -> (d0 * 8 + s0 + d1 * 2)
 
 // CHECK-LABEL: func @func_with_ops(%arg0: f32) {
 func @func_with_ops(f32) {
@@ -542,6 +544,18 @@ func @memref_subview(%arg0 : index, %arg1 : index, %arg2 : index) {
     : memref<8x16x4xf32, (d0, d1, d2) -> (d0 * 64 + d1 * 4 + d2)> to
       memref<4x4x4xf32, (d0, d1, d2) -> (d0 * 16 + d1 * 4 + d2 + 8)>
 
+  %7 = alloc(%arg1, %arg2) : memref<?x?xf32>
+  // CHECK: std.subview {{%.*}}[][][] : memref<?x?xf32> to memref<4x4xf32, #[[SUBVIEW_MAP4]]>
+  %8 = subview %7[][][]
+    : memref<?x?xf32> to memref<4x4xf32, offset: ?, strides:[?, ?]>
+
+  %9 = alloc() : memref<16x4xf32>
+  // CHECK: std.subview {{%.*}}[{{%.*}}, {{%.*}}][][{{%.*}}, {{%.*}}] : memref<16x4xf32> to memref<4x4xf32, #[[SUBVIEW_MAP4]]
+  %10 = subview %9[%arg1, %arg1][][%arg2, %arg2]
+    : memref<16x4xf32> to memref<4x4xf32, offset: ?, strides:[?, ?]>
+  // CHECK: std.subview {{%.*}}[{{%.*}}, {{%.*}}][][] : memref<16x4xf32> to memref<4x4xf32, #[[SUBVIEW_MAP5]]
+  %11 = subview %9[%arg1, %arg2][][]
+    : memref<16x4xf32> to memref<4x4xf32, offset: ?, strides:[8, 2]>
   return
 }
 
