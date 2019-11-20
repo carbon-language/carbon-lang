@@ -70,13 +70,14 @@ const Scope *FindProgramUnitContaining(const Symbol &symbol) {
   return FindProgramUnitContaining(symbol.owner());
 }
 
-const Scope *FindPureProcedureContaining(const Scope *scope) {
-  scope = FindProgramUnitContaining(*scope);
-  while (scope) {
+const Scope *FindPureProcedureContaining(const Scope &start) {
+  // N.B. We only need to examine the innermost containing program unit
+  // because an internal subprogram of a PURE subprogram must also
+  // be PURE (C1592).
+  if (const Scope *scope{FindProgramUnitContaining(start)}) {
     if (IsPureProcedure(*scope)) {
       return scope;
     }
-    scope = FindProgramUnitContaining(scope->parent());
   }
   return nullptr;
 }
@@ -571,7 +572,7 @@ bool IsAssumedLengthCharacterFunction(const Symbol &symbol) {
 
 const Symbol *IsExternalInPureContext(
     const Symbol &symbol, const Scope &scope) {
-  if (const auto *pureProc{semantics::FindPureProcedureContaining(&scope)}) {
+  if (const auto *pureProc{semantics::FindPureProcedureContaining(scope)}) {
     if (const Symbol * root{GetAssociationRoot(symbol)}) {
       if (const Symbol *
           visible{FindExternallyVisibleObject(*root, *pureProc)}) {

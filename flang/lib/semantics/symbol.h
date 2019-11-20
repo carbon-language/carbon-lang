@@ -582,23 +582,8 @@ public:
         details_);
   }
 
-  // For the purposes of comparing type parameter expressions while
-  // testing the compatibility of procedure characteristics, two
-  // object dummy arguments with the same name are considered equal.
-  bool operator==(const Symbol &that) const {
-    if (this == &that) {
-      return true;
-    } else if (name() != that.name()) {
-      return false;
-    } else if (const auto *object{detailsIf<ObjectEntityDetails>()}) {
-      if (const auto *thatObject{that.detailsIf<ObjectEntityDetails>()}) {
-        return object->isDummy() && thatObject->isDummy();
-      }
-    }
-    return false;
-  }
+  bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return !(*this == that); }
-
   bool operator<(const Symbol &that) const {
     // For sets of symbols: collate them by source location
     return name_.begin() < that.name_.begin();

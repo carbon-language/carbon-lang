@@ -678,7 +678,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
       if (n.symbol->attrs().test(semantics::Attr::VOLATILE)) {
         if (const semantics::Scope *
             pure{semantics::FindPureProcedureContaining(
-                &context_.FindScope(n.source))}) {
+                context_.FindScope(n.source))}) {
           SayAt(n,
               "VOLATILE variable '%s' may not be referenced in PURE subprogram '%s'"_err_en_US,
               n.source, DEREF(pure->symbol()).name());
@@ -1430,14 +1430,14 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           // C1594(4)
           const auto &innermost{context_.FindScope(expr.source)};
           if (const auto *pureProc{
-                  semantics::FindPureProcedureContaining(&innermost)}) {
+                  semantics::FindPureProcedureContaining(innermost)}) {
             if (const Symbol *
                 pointer{semantics::FindPointerComponent(*symbol)}) {
               if (const Symbol *
                   object{semantics::FindExternallyVisibleObject(
                       *value, *pureProc)}) {
                 if (auto *msg{Say(expr.source,
-                        "Externally visible object '%s' must not be "
+                        "Externally visible object '%s' may not be "
                         "associated with pointer component '%s' in a "
                         "PURE procedure"_err_en_US,
                         object->name(), pointer->name())}) {
@@ -1814,7 +1814,7 @@ std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
     if (!chars->attrs.test(characteristics::Procedure::Attr::Pure)) {
       if (const semantics::Scope *
           pure{semantics::FindPureProcedureContaining(
-              &context_.FindScope(callSite))}) {
+              context_.FindScope(callSite))}) {
         Say(callSite,
             "Procedure referenced in PURE subprogram '%s' must be PURE too"_err_en_US,
             DEREF(pure->symbol()).name());

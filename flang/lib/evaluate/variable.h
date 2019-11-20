@@ -47,14 +47,26 @@ using SymbolVector = std::vector<SymbolRef>;
 
 // Forward declarations
 struct DataRef;
-template<typename A> struct Variable;
+template<typename T> struct Variable;
+
+bool AreSameSymbol(const Symbol &, const Symbol &);
+
+// Implements operator=() for a union type, using special case handling
+// for Symbol references.
+template<typename A> bool TestVariableEquality(const A &x, const A &y) {
+  const SymbolRef *xSymbol{std::get_if<SymbolRef>(&x.u)};
+  if (const SymbolRef * ySymbol{std::get_if<SymbolRef>(&y.u)}) {
+    return xSymbol && AreSameSymbol(*xSymbol, *ySymbol);
+  } else {
+    return x.u == y.u;
+  }
+}
 
 // Reference a base object in memory.  This can be a Fortran symbol,
 // static data (e.g., CHARACTER literal), or compiler-created temporary.
 struct BaseObject {
   CLASS_BOILERPLATE(BaseObject)
-  explicit BaseObject(const Symbol &symbol) : u{symbol} {}
-  explicit BaseObject(StaticDataObject::Pointer &&p) : u{std::move(p)} {}
+  UNION_CONSTRUCTORS(BaseObject)
   int Rank() const;
   std::optional<Expr<SubscriptInteger>> LEN() const;
   bool operator==(const BaseObject &) const;
@@ -288,9 +300,10 @@ private:
 // a terminal substring range or complex component designator; use
 // R901 designator for that.
 struct DataRef {
-  EVALUATE_UNION_CLASS_BOILERPLATE(DataRef)
-  explicit DataRef(const Symbol &n) : u{n} {}
+  CLASS_BOILERPLATE(DataRef)
+  UNION_CONSTRUCTORS(DataRef)
 
+  bool operator==(const DataRef &) const;
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
@@ -386,12 +399,15 @@ public:
   using Result = T;
   static_assert(
       IsSpecificIntrinsicType<Result> || std::is_same_v<Result, SomeDerived>);
-  EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
-
+  CLASS_BOILERPLATE(Designator)
+  UNION_CONSTRUCTORS(Designator)
   Designator(const DataRef &that) : u{common::CopyVariant<Variant>(that.u)} {}
   Designator(DataRef &&that)
     : u{common::MoveVariant<Variant>(std::move(that.u))} {}
 
+  bool operator==(const Designator &that) const {
+    return TestVariableEquality(*this, that);
+  }
   std::optional<DynamicType> GetType() const;
   int Rank() const;
   BaseObject GetBaseObject() const;

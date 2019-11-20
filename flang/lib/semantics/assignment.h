@@ -55,6 +55,13 @@ extern template class Fortran::common::Indirection<
     Fortran::semantics::AssignmentContext>;
 
 namespace Fortran::semantics {
+// Applies checks from C1594(1-2) on definitions in PURE subprograms
+void CheckDefinabilityInPureScope(
+    parser::ContextualMessages &, const Symbol &, const Scope &);
+// Applies checks from C1594(5-6) on copying pointers in PURE subprograms
+void CheckCopyabilityInPureScope(parser::ContextualMessages &,
+    const evaluate::Expr<evaluate::SomeType> &, const Scope &);
+
 class AssignmentChecker : public virtual BaseChecker {
 public:
   explicit AssignmentChecker(SemanticsContext &);

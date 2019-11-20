@@ -599,15 +599,34 @@ NamedEntity CoarrayRef::GetBase() const { return AsNamedEntity(base_); }
 
 // Equality testing
 
+// For the purposes of comparing type parameter expressions while
+// testing the compatibility of procedure characteristics, two
+// object dummy arguments with the same name are considered equal.
+bool AreSameSymbol(const Symbol &x, const Symbol &y) {
+  if (&x == &y) {
+    return true;
+  }
+  if (x.name() == y.name()) {
+    if (const auto *xObject{
+                 x.detailsIf<semantics::ObjectEntityDetails>()}) {
+      if (const auto *yObject{y.detailsIf<semantics::ObjectEntityDetails>()}) {
+        return xObject->isDummy() && yObject->isDummy();
+      }
+    }
+  }
+  return false;
+}
+
 bool BaseObject::operator==(const BaseObject &that) const {
-  return u == that.u;
+  return TestVariableEquality(*this, that);
 }
 bool Component::operator==(const Component &that) const {
   return base_ == that.base_ && &*symbol_ == &*that.symbol_;
 }
 bool NamedEntity::operator==(const NamedEntity &that) const {
   if (IsSymbol()) {
-    return that.IsSymbol() && GetLastSymbol() == that.GetLastSymbol();
+    return that.IsSymbol() &&
+        AreSameSymbol(GetFirstSymbol(), that.GetFirstSymbol());
   } else {
     return !that.IsSymbol() && GetComponent() == that.GetComponent();
   }
@@ -628,6 +647,9 @@ bool CoarrayRef::operator==(const CoarrayRef &that) const {
   return base_ == that.base_ && subscript_ == that.subscript_ &&
       cosubscript_ == that.cosubscript_ && stat_ == that.stat_ &&
       team_ == that.team_ && teamIsTeamNumber_ == that.teamIsTeamNumber_;
+}
+bool DataRef::operator==(const DataRef &that) const {
+  return TestVariableEquality(*this, that);
 }
 bool Substring::operator==(const Substring &that) const {
   return parent_ == that.parent_ && lower_ == that.lower_ &&

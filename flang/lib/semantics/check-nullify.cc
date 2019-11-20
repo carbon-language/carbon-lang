@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "check-nullify.h"
+#include "assignment.h"
 #include "expression.h"
 #include "tools.h"
 #include "../evaluate/expression.h"
@@ -22,27 +23,36 @@
 namespace Fortran::semantics {
 
 void NullifyChecker::Leave(const parser::NullifyStmt &nullifyStmt) {
+  CHECK(context_.location());
+  const Scope &scope{context_.FindScope(*context_.location())};
+  bool isPure{FindPureProcedureContaining(scope)};
+  parser::ContextualMessages messages{
+      *context_.location(), &context_.messages()};
   for (const parser::PointerObject &pointerObject : nullifyStmt.v) {
     std::visit(
         common::visitors{
             [&](const parser::Name &name) {
-              auto const *symbol{name.symbol};
-              if (context_.HasError(symbol)) {
+              const Symbol &symbol{DEREF(name.symbol)};
+              if (context_.HasError(&symbol)) {
                 // already reported an error
-              } else if (!IsVariableName(*symbol) && !IsProcName(*symbol)) {
-                context_.Say(name.source,
+              } else if (!IsVariableName(symbol) && !IsProcName(symbol)) {
+                messages.Say(name.source,
                     "name in NULLIFY statement must be a variable or procedure pointer name"_err_en_US);
-              } else if (!IsPointer(*symbol)) {  // C951
-                context_.Say(name.source,
+              } else if (!IsPointer(symbol)) {  // C951
+                messages.Say(name.source,
                     "name in NULLIFY statement must have the POINTER attribute"_err_en_US);
+              } else if (isPure) {
+                CheckDefinabilityInPureScope(messages, symbol, scope);
               }
             },
             [&](const parser::StructureComponent &structureComponent) {
               evaluate::ExpressionAnalyzer analyzer{context_};
               if (MaybeExpr checked{analyzer.Analyze(structureComponent)}) {
                 if (!IsPointer(*structureComponent.component.symbol)) {  // C951
-                  context_.Say(structureComponent.component.source,
+                  messages.Say(structureComponent.component.source,
                       "component in NULLIFY statement must have the POINTER attribute"_err_en_US);
+                } else if (const Symbol * symbol{GetFirstSymbol(checked)}) {
+                  CheckDefinabilityInPureScope(messages, *symbol, scope);
                 }
               }
             },

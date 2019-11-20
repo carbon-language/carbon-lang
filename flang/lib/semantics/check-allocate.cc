@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "check-allocate.h"
+#include "assignment.h"
 #include "attr.h"
 #include "expression.h"
 #include "tools.h"
@@ -29,11 +30,11 @@ struct AllocateCheckerInfo {
   std::optional<evaluate::DynamicType> sourceExprType;
   std::optional<parser::CharBlock> sourceExprLoc;
   std::optional<parser::CharBlock> typeSpecLoc;
-  int sourceExprRank{0};  // only valid if gotMold || gotSrc
+  int sourceExprRank{0};  // only valid if gotMold || gotSource
   bool gotStat{false};
   bool gotMsg{false};
   bool gotTypeSpec{false};
-  bool gotSrc{false};
+  bool gotSource{false};
   bool gotMold{false};
 };
 
@@ -156,7 +157,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
                   statOrErr.u);
             },
             [&](const parser::AllocOpt::Source &source) {
-              if (info.gotSrc) {  // C943
+              if (info.gotSource) {  // C943
                 context.Say(
                     "SOURCE may not be duplicated in a ALLOCATE statement"_err_en_US);
                 stopCheckingAllocate = true;
@@ -167,7 +168,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
                 stopCheckingAllocate = true;
               }
               parserSourceExpr = &source.v.value();
-              info.gotSrc = true;
+              info.gotSource = true;
             },
             [&](const parser::AllocOpt::Mold &mold) {
               if (info.gotMold) {  // C943
@@ -175,7 +176,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
                     "MOLD may not be duplicated in a ALLOCATE statement"_err_en_US);
                 stopCheckingAllocate = true;
               }
-              if (info.gotSrc || info.gotTypeSpec) {  // C944
+              if (info.gotSource || info.gotTypeSpec) {  // C944
                 context.Say(
                     "At most one of source-expr and type-spec may appear in a ALLOCATE statement"_err_en_US);
                 stopCheckingAllocate = true;
@@ -191,11 +192,12 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     return std::nullopt;
   }
 
-  if (info.gotSrc || info.gotMold) {
+  if (info.gotSource || info.gotMold) {
     if (const auto *expr{GetExpr(DEREF(parserSourceExpr))}) {
+      parser::CharBlock at{parserSourceExpr->source};
       info.sourceExprType = expr->GetType();
       if (!info.sourceExprType) {
-        context.Say(parserSourceExpr->source,
+        context.Say(at,
             "Typeless item not allowed as SOURCE or MOLD in ALLOCATE"_err_en_US);
         return std::nullopt;
       }
@@ -208,21 +210,21 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
         // C949
         if (auto it{FindCoarrayUltimateComponent(derived)}) {
           context
-              .Say(parserSourceExpr->source,
+              .Say(at,
                   "SOURCE or MOLD expression must not have a type with a coarray ultimate component"_err_en_US)
               .Attach(it->name(),
                   "Type '%s' has coarray ultimate component '%s' declared here"_en_US,
                   info.sourceExprType.value().AsFortran(),
                   it.BuildResultDesignatorName());
         }
-        if (info.gotSrc) {
+        if (info.gotSource) {
           // C948
           if (IsEventTypeOrLockType(&derived)) {
-            context.Say(parserSourceExpr->source,
+            context.Say(at,
                 "SOURCE expression type must not be EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US);
           } else if (auto it{FindEventOrLockPotentialComponent(derived)}) {
             context
-                .Say(parserSourceExpr->source,
+                .Say(at,
                     "SOURCE expression type must not have potential subobject "
                     "component"
                     " of type EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US)
@@ -231,6 +233,13 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
                     info.sourceExprType.value().AsFortran(),
                     it.BuildResultDesignatorName());
           }
+        }
+      }
+      if (info.gotSource) {  // C1594(6) - SOURCE= restrictions when PURE
+        const Scope &scope{context.FindScope(at)};
+        if (FindPureProcedureContaining(scope)) {
+          parser::ContextualMessages messages{at, &context.messages()};
+          CheckCopyabilityInPureScope(messages, *expr, scope);
         }
       }
     } else {
@@ -427,7 +436,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
     return false;
   }
   bool gotSourceExprOrTypeSpec{allocateInfo_.gotMold ||
-      allocateInfo_.gotTypeSpec || allocateInfo_.gotSrc};
+      allocateInfo_.gotTypeSpec || allocateInfo_.gotSource};
   if (hasDeferredTypeParameter_ && !gotSourceExprOrTypeSpec) {
     // C933
     context.Say(name_.source,
@@ -465,7 +474,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
           "Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE"_err_en_US);
       return false;
     }
-  } else if (allocateInfo_.gotSrc || allocateInfo_.gotMold) {
+  } else if (allocateInfo_.gotSource || allocateInfo_.gotMold) {
     if (!IsTypeCompatible(*type_, allocateInfo_.sourceExprType.value())) {
       // first part of C945
       context.Say(name_.source,
@@ -484,7 +493,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
   if (rank_ > 0) {
     if (!hasAllocateShapeSpecList()) {
       // C939
-      if (!(allocateInfo_.gotSrc || allocateInfo_.gotMold)) {
+      if (!(allocateInfo_.gotSource || allocateInfo_.gotMold)) {
         context.Say(name_.source,
             "Arrays in ALLOCATE must have a shape specification or an expression of the same rank must appear in SOURCE or MOLD"_err_en_US);
         return false;
@@ -495,7 +504,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
                   "Arrays in ALLOCATE must have a shape specification or an expression of the same rank must appear in SOURCE or MOLD"_err_en_US)
               .Attach(allocateInfo_.sourceExprLoc.value(),
                   "Expression in %s has rank %d but allocatable object has rank %d"_en_US,
-                  allocateInfo_.gotSrc ? "SOURCE" : "MOLD",
+                  allocateInfo_.gotSource ? "SOURCE" : "MOLD",
                   allocateInfo_.sourceExprRank, rank_);
           return false;
         }
@@ -519,7 +528,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
     }
   }
   // second and last part of C945
-  if (allocateInfo_.gotSrc && allocateInfo_.sourceExprRank &&
+  if (allocateInfo_.gotSource && allocateInfo_.sourceExprRank &&
       allocateInfo_.sourceExprRank != rank_) {
     context
         .Say(name_.source,
@@ -558,7 +567,7 @@ bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
           return false;
         }
       }
-    } else if (allocateInfo_.gotSrc || allocateInfo_.gotMold) {
+    } else if (allocateInfo_.gotSource || allocateInfo_.gotMold) {
       // C948
       const evaluate::DynamicType &sourceType{
           allocateInfo_.sourceExprType.value()};

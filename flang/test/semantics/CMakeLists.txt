@@ -186,6 +186,7 @@ set(ERROR_TESTS
   call09.f90
   call10.f90
   call11.f90
+  call12.f90
   call13.f90
   call14.f90
   misc-declarations.f90

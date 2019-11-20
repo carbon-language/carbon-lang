@@ -338,11 +338,13 @@ private:
   void Analyze(const parser::WhereConstruct::Elsewhere &);
   void Analyze(const parser::ForallAssignmentStmt &stmt) { Analyze(stmt.u); }
 
-  const Symbol *FindPureProcedureContaining(parser::CharBlock) const;
   int GetIntegerKind(const std::optional<parser::IntegerTypeSpec> &);
   void CheckForImpureCall(const evaluate::Expr<evaluate::SomeType> &);
   void CheckForImpureCall(
       const std::optional<evaluate::Expr<evaluate::SomeType>> &);
+  void CheckForPureContext(const evaluate::Expr<evaluate::SomeType> &lhs,
+      const evaluate::Expr<evaluate::SomeType> &rhs,
+      parser::CharBlock rhsSource, bool isPointerAssignment);
 
   MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true);
 
@@ -369,38 +371,31 @@ void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
+  if (lhsExpr && rhsExpr) {
+    CheckForPureContext(*lhsExpr, *rhsExpr, rhs.source, false /* not => */);
+  }
   // TODO: Fortran 2003 ALLOCATABLE assignment semantics (automatic
   // (re)allocation of LHS array when unallocated or nonconformable)
-
-  // C1596 checks for polymorphic deallocation in a PURE subprogram
-  // due to automatic reallocation on assignment
-  if (lhsExpr) {
-    if (auto type{evaluate::DynamicType::From(*lhsExpr)}) {
-      if (type->IsPolymorphic() && FindPureProcedureContaining(rhs.source)) {
-        Say(at_,
-            "Deallocation of polymorphic object is not permitted in a PURE subprogram"_err_en_US);
-      }
-      if (type->category() == TypeCategory::Derived &&
-          !type->IsUnlimitedPolymorphic() &&
-          FindPureProcedureContaining(rhs.source)) {
-        if (auto bad{FindPolymorphicAllocatableNonCoarrayUltimateComponent(
-                type->GetDerivedTypeSpec())}) {
-          evaluate::SayWithDeclaration(context_.messages(), &*bad, at_,
-              "Deallocation of polymorphic non-coarray component '%s' is not permitted in a PURE subprogram"_err_en_US,
-              bad.BuildResultDesignatorName());
-        }
-      }
-    }
-  }
 }
 
-void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &) {
+void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
   CHECK(!where_);
+  const auto &lhs{std::get<parser::DataRef>(stmt.t)};
+  const auto &rhs{std::get<parser::Expr>(stmt.t)};
+  auto lhsExpr{AnalyzeExpr(context_, lhs)};
+  auto rhsExpr{AnalyzeExpr(context_, rhs)};
+  CheckForImpureCall(lhsExpr);
+  CheckForImpureCall(rhsExpr);
+  // TODO: CheckForImpureCall() in the bounds / bounds remappings
   if (forall_) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
+  if (lhsExpr && rhsExpr) {
+    CheckForPureContext(*lhsExpr, *rhsExpr, rhs.source, true /* => */);
+  }
   // TODO continue here, using CheckPointerAssignment()
+  // TODO: analyze the bounds / bounds remappings
 }
 
 void AssignmentContext::Analyze(const parser::WhereStmt &stmt) {
@@ -563,6 +558,117 @@ void AssignmentContext::CheckForImpureCall(
   }
 }
 
+// C1594 checks
+static bool IsPointerDummyOfPureFunction(const Symbol &x) {
+  return IsPointerDummy(x) && FindPureProcedureContaining(x.owner()) &&
+      x.owner().symbol() && IsFunction(*x.owner().symbol());
+}
+
+static const char *WhyBaseObjectIsSuspicious(
+    const Symbol &x, const Scope &scope) {
+  // See C1594, first paragraph.  These conditions enable checks on both
+  // left-hand and right-hand sides in various circumstances.
+  if (IsHostAssociated(x, scope)) {
+    return "host-associated";
+  } else if (IsUseAssociated(x, scope)) {
+    return "USE-associated";
+  } else if (IsPointerDummyOfPureFunction(x)) {
+    return "a POINTER dummy argument of a PURE function";
+  } else if (IsIntentIn(x)) {
+    return "an INTENT(IN) dummy argument";
+  } else if (FindCommonBlockContaining(x)) {
+    return "in a COMMON block";
+  } else {
+    return nullptr;
+  }
+}
+
+// Checks C1594(1,2)
+void CheckDefinabilityInPureScope(parser::ContextualMessages &messages,
+    const Symbol &lhs, const Scope &scope) {
+  if (const char *why{WhyBaseObjectIsSuspicious(lhs, scope)}) {
+    evaluate::SayWithDeclaration(messages, &lhs,
+        "A PURE subprogram may not define '%s' because it is %s"_err_en_US,
+        lhs.name(), why);
+  }
+}
+
+static std::optional<std::string> GetPointerComponentDesignatorName(
+    const evaluate::Expr<evaluate::SomeType> &expr) {
+  if (auto type{evaluate::DynamicType::From(expr)}) {
+    if (type->category() == TypeCategory::Derived &&
+        !type->IsUnlimitedPolymorphic()) {
+      UltimateComponentIterator ultimates{type->GetDerivedTypeSpec()};
+      if (auto pointer{
+              std::find_if(ultimates.begin(), ultimates.end(), IsPointer)}) {
+        return pointer.BuildResultDesignatorName();
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+// Checks C1594(5,6)
+void CheckCopyabilityInPureScope(parser::ContextualMessages &messages,
+    const evaluate::Expr<evaluate::SomeType> &expr, const Scope &scope) {
+  if (const Symbol * base{GetFirstSymbol(expr)}) {
+    if (const char *why{WhyBaseObjectIsSuspicious(*base, scope)}) {
+      if (auto pointer{GetPointerComponentDesignatorName(expr)}) {
+        evaluate::SayWithDeclaration(messages, base,
+            "A PURE subprogram may not copy the value of '%s' because it is %s and has the POINTER component '%s'"_err_en_US,
+            base->name(), why, *pointer);
+      }
+    }
+  }
+}
+
+void AssignmentContext::CheckForPureContext(
+    const evaluate::Expr<evaluate::SomeType> &lhs,
+    const evaluate::Expr<evaluate::SomeType> &rhs, parser::CharBlock source,
+    bool isPointerAssignment) {
+  const Scope &scope{context_.FindScope(source)};
+  if (FindPureProcedureContaining(scope)) {
+    parser::ContextualMessages messages{at_, &context_.messages()};
+    if (evaluate::ExtractCoarrayRef(lhs)) {
+      messages.Say(
+          "A PURE subprogram may not define a coindexed object"_err_en_US);
+    } else if (const Symbol * base{GetFirstSymbol(lhs)}) {
+      CheckDefinabilityInPureScope(messages, *base, scope);
+    }
+    if (isPointerAssignment) {
+      if (const Symbol * base{GetFirstSymbol(rhs)}) {
+        if (const char *why{
+                WhyBaseObjectIsSuspicious(*base, scope)}) {  // C1594(3)
+          evaluate::SayWithDeclaration(messages, base,
+              "A PURE subprogram may not use '%s' as the target of pointer assignment because it is %s"_err_en_US,
+              base->name(), why);
+        }
+      }
+    } else {
+      if (auto type{evaluate::DynamicType::From(lhs)}) {
+        // C1596 checks for polymorphic deallocation in a PURE subprogram
+        // due to automatic reallocation on assignment
+        if (type->IsPolymorphic()) {
+          Say(at_,
+              "Deallocation of polymorphic object is not permitted in a PURE subprogram"_err_en_US);
+        }
+        if (type->category() == TypeCategory::Derived &&
+            !type->IsUnlimitedPolymorphic()) {
+          const DerivedTypeSpec &derived{type->GetDerivedTypeSpec()};
+          if (auto bad{FindPolymorphicAllocatableNonCoarrayUltimateComponent(
+                  derived)}) {
+            evaluate::SayWithDeclaration(messages, &*bad,
+                "Deallocation of polymorphic non-coarray component '%s' is not permitted in a PURE subprogram"_err_en_US,
+                bad.BuildResultDesignatorName());
+          } else {
+            CheckCopyabilityInPureScope(messages, rhs, scope);
+          }
+        }
+      }
+    }
+  }
+}
+
 MaskExpr AssignmentContext::GetMask(
     const parser::LogicalExpr &expr, bool defaultValue) {
   MaskExpr mask{defaultValue};
@@ -574,18 +680,6 @@ MaskExpr AssignmentContext::GetMask(
     mask = evaluate::ConvertTo(mask, std::move(*logical));
   }
   return mask;
-}
-
-const Symbol *AssignmentContext::FindPureProcedureContaining(
-    parser::CharBlock source) const {
-
-  if (const semantics::Scope *
-      pure{semantics::FindPureProcedureContaining(
-          &context_.FindScope(source))}) {
-    return pure->symbol();
-  } else {
-    return nullptr;
-  }
 }
 
 void AnalyzeConcurrentHeader(

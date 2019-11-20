@@ -195,11 +195,14 @@ using HostUnsignedInt =
   t() = delete; \
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(t)
 
-#define EVALUATE_UNION_CLASS_BOILERPLATE(t) \
-  CLASS_BOILERPLATE(t) \
+#define UNION_CONSTRUCTORS(t) \
   template<typename _A> explicit t(const _A &x) : u{x} {} \
   template<typename _A, typename = common::NoLvalue<_A>> \
-  explicit t(_A &&x) : u(std::move(x)) {} \
+  explicit t(_A &&x) : u(std::move(x)) {}
+
+#define EVALUATE_UNION_CLASS_BOILERPLATE(t) \
+  CLASS_BOILERPLATE(t) \
+  UNION_CONSTRUCTORS(t) \
   bool operator==(const t &that) const { return u == that.u; }
 
 // Forward definition of Expr<> so that it can be indirectly used in its own
