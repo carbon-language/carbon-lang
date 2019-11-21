@@ -1058,31 +1058,83 @@ int ExpressionAnalyzer::IntegerTypeSpecKind(
 
 // Array constructors
 
-class ArrayConstructorContext : private ExpressionAnalyzer {
+// Inverts a collection of generic ArrayConstructorValues<SomeType> that
+// all happen to have the same actual type T into one ArrayConstructor<T>.
+template<typename T>
+ArrayConstructorValues<T> MakeSpecific(
+    ArrayConstructorValues<SomeType> &&from) {
+  ArrayConstructorValues<T> to;
+  for (ArrayConstructorValue<SomeType> &x : from) {
+    std::visit(
+        common::visitors{
+            [&](common::CopyableIndirection<Expr<SomeType>> &&expr) {
+              auto *typed{UnwrapExpr<Expr<T>>(expr.value())};
+              to.Push(std::move(DEREF(typed)));
+            },
+            [&](ImpliedDo<SomeType> &&impliedDo) {
+              to.Push(ImpliedDo<T>{impliedDo.name(),
+                  std::move(impliedDo.lower()), std::move(impliedDo.upper()),
+                  std::move(impliedDo.stride()),
+                  MakeSpecific<T>(std::move(impliedDo.values()))});
+            },
+        },
+        std::move(x.u));
+  }
+  return to;
+}
+
+class ArrayConstructorContext {
 public:
   ArrayConstructorContext(
-      ExpressionAnalyzer &c, std::optional<DynamicTypeWithLength> &t)
-    : ExpressionAnalyzer{c}, type_{t} {}
-  ArrayConstructorContext(ArrayConstructorContext &) = default;
-  void Push(MaybeExpr &&);
-  void Add(const parser::AcValue &);
-  std::optional<DynamicTypeWithLength> &type() const { return type_; }
-  const ArrayConstructorValues<SomeType> &values() { return values_; }
+      ExpressionAnalyzer &c, std::optional<DynamicTypeWithLength> &&t)
+    : exprAnalyzer_{c}, type_{std::move(t)} {}
 
-private:
-  template<int KIND, typename A>
-  std::optional<Expr<Type<TypeCategory::Integer, KIND>>> GetSpecificIntExpr(
-      const A &x) {
-    if (MaybeExpr y{Analyze(x)}) {
-      Expr<SomeInteger> *intExpr{UnwrapExpr<Expr<SomeInteger>>(*y)};
-      CHECK(intExpr);
-      return ConvertToType<Type<TypeCategory::Integer, KIND>>(
-          std::move(*intExpr));
+  void Add(const parser::AcValue &);
+  MaybeExpr ToExpr();
+
+  // These interfaces allow *this to be used as a type visitor argument to
+  // common::SearchTypes() to convert the array constructor to a typed
+  // expression in ToExpr().
+  using Result = MaybeExpr;
+  using Types = AllTypes;
+  template<typename T> Result Test() {
+    if (type_ && type_->category() == T::category) {
+      if constexpr (T::category == TypeCategory::Derived) {
+        return AsMaybeExpr(ArrayConstructor<T>{
+            type_->GetDerivedTypeSpec(), MakeSpecific<T>(std::move(values_))});
+      } else if (type_->kind() == T::kind) {
+        if constexpr (T::category == TypeCategory::Character) {
+          if (auto len{type_->LEN()}) {
+            return AsMaybeExpr(ArrayConstructor<T>{
+                *std::move(len), MakeSpecific<T>(std::move(values_))});
+          }
+        } else {
+          return AsMaybeExpr(
+              ArrayConstructor<T>{MakeSpecific<T>(std::move(values_))});
+        }
+      }
     }
     return std::nullopt;
   }
 
-  std::optional<DynamicTypeWithLength> &type_;
+private:
+  void Push(MaybeExpr &&);
+
+  template<int KIND, typename A>
+  std::optional<Expr<Type<TypeCategory::Integer, KIND>>> GetSpecificIntExpr(
+      const A &x) {
+    if (MaybeExpr y{exprAnalyzer_.Analyze(x)}) {
+      Expr<SomeInteger> *intExpr{UnwrapExpr<Expr<SomeInteger>>(*y)};
+      return ConvertToType<Type<TypeCategory::Integer, KIND>>(
+          std::move(DEREF(intExpr)));
+    }
+    return std::nullopt;
+  }
+
+  // Nested array constructors all reference the same ExpressionAnalyzer,
+  // which represents the nest of active implied DO loop indices.
+  ExpressionAnalyzer &exprAnalyzer_;
+  std::optional<DynamicTypeWithLength> type_;
   bool explicitType_{type_.has_value()};
   std::optional<std::int64_t> constantLength_;
   ArrayConstructorValues<SomeType> values_;
@@ -1117,9 +1169,10 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
         values_.Push(std::move(*x));
         if (auto thisLen{ToInt64(xType.LEN())}) {
           if (constantLength_) {
-            if (context().warnOnNonstandardUsage() &&
+            if (exprAnalyzer_.context().warnOnNonstandardUsage() &&
                 *thisLen != *constantLength_) {
-              Say("Character literal in array constructor without explicit "
+              exprAnalyzer_.Say(
+                  "Character literal in array constructor without explicit "
                   "type has different length than earlier element"_en_US);
             }
             if (*thisLen > *constantLength_) {
@@ -1135,14 +1188,16 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
           }
         }
       } else {
-        Say("Values in array constructor must have the same declared type "
+        exprAnalyzer_.Say(
+            "Values in array constructor must have the same declared type "
             "when no explicit type appears"_err_en_US);
       }
     } else {
       if (auto cast{ConvertToType(*type_, std::move(*x))}) {
         values_.Push(std::move(*cast));
       } else {
-        Say("Value in array constructor could not be converted to the type "
+        exprAnalyzer_.Say(
+            "Value in array constructor could not be converted to the type "
             "of the array"_err_en_US);
       }
     }
@@ -1168,19 +1223,19 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
               if (!type_) {
                 type_ = DynamicTypeWithLength{IntType::GetType()};
               }
-              ArrayConstructorContext nested{*this};
-              parser::CharBlock name;
-              nested.Push(Expr<SomeType>{
-                  Expr<SomeInteger>{Expr<IntType>{ImpliedDoIndex{name}}}});
-              values_.Push(ImpliedDo<SomeType>{name, std::move(*lower),
-                  std::move(*upper), std::move(*stride),
-                  std::move(nested.values_)});
+              auto v{std::move(values_)};
+              parser::CharBlock anonymous;
+              Push(Expr<SomeType>{
+                  Expr<SomeInteger>{Expr<IntType>{ImpliedDoIndex{anonymous}}}});
+              std::swap(v, values_);
+              values_.Push(ImpliedDo<SomeType>{anonymous, std::move(*lower),
+                  std::move(*upper), std::move(*stride), std::move(v)});
             }
           },
           [&](const common::Indirection<parser::Expr> &expr) {
-            auto restorer{
-                GetContextualMessages().SetLocation(expr.value().source)};
-            if (MaybeExpr v{Analyze(expr.value())}) {
+            auto restorer{exprAnalyzer_.GetContextualMessages().SetLocation(
+                expr.value().source)};
+            if (MaybeExpr v{exprAnalyzer_.Analyze(expr.value())}) {
               Push(std::move(*v));
             }
           },
@@ -1189,111 +1244,55 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
                 std::get<parser::AcImpliedDoControl>(impliedDo.value().t)};
             const auto &bounds{
                 std::get<parser::AcImpliedDoControl::Bounds>(control.t)};
-            Analyze(bounds.name);
+            exprAnalyzer_.Analyze(bounds.name);
             parser::CharBlock name{bounds.name.thing.thing.source};
             const Symbol *symbol{bounds.name.thing.thing.symbol};
             int kind{IntType::kind};
             if (const auto dynamicType{DynamicType::From(symbol)}) {
               kind = dynamicType->kind();
             }
-            bool inserted{AddAcImpliedDo(name, kind)};
-            if (!inserted) {
-              SayAt(name,
+            if (exprAnalyzer_.AddAcImpliedDo(name, kind)) {
+              std::optional<Expr<IntType>> lower{
+                  GetSpecificIntExpr<IntType::kind>(bounds.lower)};
+              std::optional<Expr<IntType>> upper{
+                  GetSpecificIntExpr<IntType::kind>(bounds.upper)};
+              if (lower && upper) {
+                std::optional<Expr<IntType>> stride{
+                    GetSpecificIntExpr<IntType::kind>(bounds.step)};
+                auto v{std::move(values_)};
+                for (const auto &value :
+                    std::get<std::list<parser::AcValue>>(impliedDo.value().t)) {
+                  Add(value);
+                }
+                if (!stride) {
+                  stride = Expr<IntType>{1};
+                }
+                std::swap(v, values_);
+                values_.Push(ImpliedDo<SomeType>{name, std::move(*lower),
+                    std::move(*upper), std::move(*stride), std::move(v)});
+              }
+              exprAnalyzer_.RemoveAcImpliedDo(name);
+            } else {
+              exprAnalyzer_.SayAt(name,
                   "Implied DO index is active in surrounding implied DO loop "
                   "and may not have the same name"_err_en_US);
-            }
-            std::optional<Expr<IntType>> lower{
-                GetSpecificIntExpr<IntType::kind>(bounds.lower)};
-            std::optional<Expr<IntType>> upper{
-                GetSpecificIntExpr<IntType::kind>(bounds.upper)};
-            std::optional<Expr<IntType>> stride{
-                GetSpecificIntExpr<IntType::kind>(bounds.step)};
-            ArrayConstructorContext nested{*this};
-            for (const auto &value :
-                std::get<std::list<parser::AcValue>>(impliedDo.value().t)) {
-              nested.Add(value);
-            }
-            if (lower && upper) {
-              if (!stride) {
-                stride = Expr<IntType>{1};
-              }
-              values_.Push(ImpliedDo<SomeType>{name, std::move(*lower),
-                  std::move(*upper), std::move(*stride),
-                  std::move(nested.values_)});
-            }
-            if (inserted) {
-              RemoveAcImpliedDo(name);
             }
           },
       },
       x.u);
 }
 
-// Inverts a collection of generic ArrayConstructorValues<SomeType> that
-// all happen to have the same actual type T into one ArrayConstructor<T>.
-template<typename T>
-ArrayConstructorValues<T> MakeSpecific(
-    ArrayConstructorValues<SomeType> &&from) {
-  ArrayConstructorValues<T> to;
-  for (ArrayConstructorValue<SomeType> &x : from) {
-    std::visit(
-        common::visitors{
-            [&](common::CopyableIndirection<Expr<SomeType>> &&expr) {
-              auto *typed{UnwrapExpr<Expr<T>>(expr.value())};
-              CHECK(typed);
-              to.Push(std::move(*typed));
-            },
-            [&](ImpliedDo<SomeType> &&impliedDo) {
-              to.Push(ImpliedDo<T>{impliedDo.name(),
-                  std::move(impliedDo.lower()), std::move(impliedDo.upper()),
-                  std::move(impliedDo.stride()),
-                  MakeSpecific<T>(std::move(impliedDo.values()))});
-            },
-        },
-        std::move(x.u));
-  }
-  return to;
+MaybeExpr ArrayConstructorContext::ToExpr() {
+  return common::SearchTypes(std::move(*this));
 }
-
-struct ArrayConstructorTypeVisitor {
-  using Result = MaybeExpr;
-  using Types = AllTypes;
-  template<typename T> Result Test() {
-    if (type.category() == T::category) {
-      if constexpr (T::category == TypeCategory::Derived) {
-        return AsMaybeExpr(ArrayConstructor<T>{
-            type.GetDerivedTypeSpec(), MakeSpecific<T>(std::move(values))});
-      } else if (type.kind() == T::kind) {
-        if constexpr (T::category == TypeCategory::Character) {
-          if (auto len{type.LEN()}) {
-            return AsMaybeExpr(ArrayConstructor<T>{
-                *std::move(len), MakeSpecific<T>(std::move(values))});
-          }
-        } else {
-          return AsMaybeExpr(
-              ArrayConstructor<T>{MakeSpecific<T>(std::move(values))});
-        }
-      }
-    }
-    return std::nullopt;
-  }
-  DynamicTypeWithLength type;
-  ArrayConstructorValues<SomeType> values;
-};
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayConstructor &array) {
   const parser::AcSpec &acSpec{array.v};
-  std::optional<DynamicTypeWithLength> type{AnalyzeTypeSpec(acSpec.type)};
-  ArrayConstructorContext context{*this, type};
+  ArrayConstructorContext acContext{*this, AnalyzeTypeSpec(acSpec.type)};
   for (const parser::AcValue &value : acSpec.values) {
-    context.Add(value);
+    acContext.Add(value);
   }
-  if (type) {
-    ArrayConstructorTypeVisitor visitor{
-        std::move(*type), std::move(context.values())};
-    return common::SearchTypes(std::move(visitor));
-  }
-  return std::nullopt;
+  return acContext.ToExpr();
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(
