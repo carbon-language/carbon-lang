@@ -607,8 +607,7 @@ bool AreSameSymbol(const Symbol &x, const Symbol &y) {
     return true;
   }
   if (x.name() == y.name()) {
-    if (const auto *xObject{
-                 x.detailsIf<semantics::ObjectEntityDetails>()}) {
+    if (const auto *xObject{x.detailsIf<semantics::ObjectEntityDetails>()}) {
       if (const auto *yObject{y.detailsIf<semantics::ObjectEntityDetails>()}) {
         return xObject->isDummy() && yObject->isDummy();
       }

@@ -16,8 +16,8 @@
 #define FORTRAN_SEMANTICS_SEMANTICS_H_
 
 #include "scope.h"
-#include "../common/Fortran-features.h"
 #include "symbol.h"
+#include "../common/Fortran-features.h"
 #include "../evaluate/common.h"
 #include "../evaluate/intrinsics.h"
 #include "../parser/message.h"
