@@ -834,7 +834,7 @@ func @unregistered_term(%arg0 : i1) -> i1 {
 
 // CHECK-LABEL: func @dialect_attrs
 func @dialect_attrs()
-    // CHECK-NEXT: attributes  {dialect.attr = 10
+    // CHECK: attributes  {dialect.attr = 10
     attributes {dialect.attr = 10} {
   return
 }
@@ -1114,7 +1114,7 @@ func @"\"_string_symbol_reference\""() {
 }
 
 // CHECK-LABEL: func @nested_reference
-// CHECK-NEXT: ref = @some_symbol::@some_nested_symbol
+// CHECK: ref = @some_symbol::@some_nested_symbol
 func @nested_reference() attributes {test.ref = @some_symbol::@some_nested_symbol }
 
 // CHECK-LABEL: func @custom_asm_names

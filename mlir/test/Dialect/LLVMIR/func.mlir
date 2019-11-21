@@ -32,7 +32,7 @@ module {
   }) {sym_name = "baz", type = !llvm<"i64 (i64)">} : () -> ()
 
   // CHECK: llvm.func @qux(!llvm<"i64*"> {llvm.noalias = true}, !llvm.i64)
-  // CHECK-NEXT: attributes  {xxx = {yyy = 42 : i64}}
+  // CHECK: attributes {xxx = {yyy = 42 : i64}}
   "llvm.func"() ({
   }) {sym_name = "qux", type = !llvm<"void (i64*, i64)">,
       arg0 = {llvm.noalias = true}, xxx = {yyy = 42}} : () -> ()
@@ -52,11 +52,11 @@ module {
   }
 
   // CHECK: llvm.func @roundtrip5()
-  // CHECK-NEXT: attributes  {baz = 42 : i64, foo = "bar"}
+  // CHECK: attributes {baz = 42 : i64, foo = "bar"}
   llvm.func @roundtrip5() attributes {foo = "bar", baz = 42}
 
   // CHECK: llvm.func @roundtrip6()
-  // CHECK-NEXT: attributes  {baz = 42 : i64, foo = "bar"}
+  // CHECK: attributes {baz = 42 : i64, foo = "bar"}
   llvm.func @roundtrip6() attributes {foo = "bar", baz = 42} {
     llvm.return
   }
@@ -81,7 +81,7 @@ module {
   }
 
   // CHECK: llvm.func @roundtrip12(%{{.*}}: !llvm<"i32*"> {llvm.noalias = true})
-  // CHECK-NEXT: attributes  {foo = 42 : i32}
+  // CHECK: attributes {foo = 42 : i32}
   llvm.func @roundtrip12(%arg0: !llvm<"i32*"> {llvm.noalias = true})
   attributes {foo = 42 : i32} {
     llvm.return

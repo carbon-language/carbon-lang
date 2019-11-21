@@ -9,7 +9,7 @@ module attributes {sym.outside_use = @symbol_foo } {
   func @symbol_foo() attributes {sym.new_name = "replaced_foo" }
 
   // CHECK: func @symbol_bar
-  // CHECK-NEXT: @replaced_foo
+  // CHECK: @replaced_foo
   func @symbol_bar() attributes {sym.use = @symbol_foo} {
     // CHECK: foo.op
     // CHECK-SAME: non_symbol_attr,
