@@ -44,9 +44,6 @@
 #hello_world = (i, j) [i, s0] -> (j) // expected-error {{redefinition of identifier 'i'}}
 
 // -----
-#hello_world = (i, j) [s0, s1] -> () // expected-error {{expected list element}}
-
-// -----
 #hello_world = (i, j) [s0, s1] -> (+i, j) // expected-error {{missing left operand of binary op}}
 
 // -----

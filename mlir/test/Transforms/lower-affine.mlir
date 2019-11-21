@@ -551,6 +551,15 @@ func @affine_store(%arg0 : index) {
   return
 }
 
+// CHECK-LABEL: func @affine_load_store_zero_dim
+func @affine_load_store_zero_dim(%arg0 : memref<i32>, %arg1 : memref<i32>) {
+  %0 = affine.load %arg0[] : memref<i32>
+  affine.store %0, %arg1[] : memref<i32>
+// CHECK: %[[x:.*]] = load %arg0[] : memref<i32>
+// CHECK: store %[[x]], %arg1[] : memref<i32>
+  return
+}
+
 // CHECK-LABEL: func @affine_dma_start
 func @affine_dma_start(%arg0 : index) {
   %0 = alloc() : memref<100xf32>
