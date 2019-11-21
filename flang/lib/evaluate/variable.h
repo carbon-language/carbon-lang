@@ -51,7 +51,7 @@ template<typename T> struct Variable;
 
 bool AreSameSymbol(const Symbol &, const Symbol &);
 
-// Implements operator=() for a union type, using special case handling
+// Implements operator==() for a union type, using special case handling
 // for Symbol references.
 template<typename A> bool TestVariableEquality(const A &x, const A &y) {
   const SymbolRef *xSymbol{std::get_if<SymbolRef>(&x.u)};

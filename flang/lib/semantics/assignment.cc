@@ -222,7 +222,7 @@ void PointerAssignmentChecker::Check(const ProcedureRef &ref) {
 
 void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, const Symbol &lhs,
-    const evaluate::Expr<evaluate::SomeType> &rhs) {
+    const Expr<SomeType> &rhs) {
   // TODO: Acquire values of deferred type parameters &/or array bounds
   // from the RHS.
   if (!IsPointer(lhs)) {
@@ -242,7 +242,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
 void CheckPointerAssignment(parser::ContextualMessages &messages,
     const IntrinsicProcTable &intrinsics, parser::CharBlock source,
     const std::string &description, const characteristics::DummyDataObject &lhs,
-    const evaluate::Expr<evaluate::SomeType> &rhs) {
+    const Expr<SomeType> &rhs) {
   PointerAssignmentChecker{nullptr, source, description, &lhs.type, messages,
       intrinsics, nullptr /* proc */,
       lhs.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)}
@@ -339,11 +339,9 @@ private:
   void Analyze(const parser::ForallAssignmentStmt &stmt) { Analyze(stmt.u); }
 
   int GetIntegerKind(const std::optional<parser::IntegerTypeSpec> &);
-  void CheckForImpureCall(const evaluate::Expr<evaluate::SomeType> &);
-  void CheckForImpureCall(
-      const std::optional<evaluate::Expr<evaluate::SomeType>> &);
-  void CheckForPureContext(const evaluate::Expr<evaluate::SomeType> &lhs,
-      const evaluate::Expr<evaluate::SomeType> &rhs,
+  void CheckForImpureCall(const SomeExpr &);
+  void CheckForImpureCall(const std::optional<SomeExpr> &);
+  void CheckForPureContext(const SomeExpr &lhs, const SomeExpr &rhs,
       parser::CharBlock rhsSource, bool isPointerAssignment);
 
   MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true);
@@ -539,8 +537,7 @@ int AssignmentContext::GetIntegerKind(
   }
 }
 
-void AssignmentContext::CheckForImpureCall(
-    const evaluate::Expr<evaluate::SomeType> &expr) {
+void AssignmentContext::CheckForImpureCall(const SomeExpr &expr) {
   if (forall_) {
     const auto &intrinsics{context_.foldingContext().intrinsics()};
     if (auto bad{FindImpureCall(intrinsics, expr)}) {
@@ -552,7 +549,7 @@ void AssignmentContext::CheckForImpureCall(
 }
 
 void AssignmentContext::CheckForImpureCall(
-    const std::optional<evaluate::Expr<evaluate::SomeType>> &maybeExpr) {
+    const std::optional<SomeExpr> &maybeExpr) {
   if (maybeExpr) {
     CheckForImpureCall(*maybeExpr);
   }
@@ -594,7 +591,7 @@ void CheckDefinabilityInPureScope(parser::ContextualMessages &messages,
 }
 
 static std::optional<std::string> GetPointerComponentDesignatorName(
-    const evaluate::Expr<evaluate::SomeType> &expr) {
+    const SomeExpr &expr) {
   if (auto type{evaluate::DynamicType::From(expr)}) {
     if (type->category() == TypeCategory::Derived &&
         !type->IsUnlimitedPolymorphic()) {
@@ -610,7 +607,7 @@ static std::optional<std::string> GetPointerComponentDesignatorName(
 
 // Checks C1594(5,6)
 void CheckCopyabilityInPureScope(parser::ContextualMessages &messages,
-    const evaluate::Expr<evaluate::SomeType> &expr, const Scope &scope) {
+    const SomeExpr &expr, const Scope &scope) {
   if (const Symbol * base{GetFirstSymbol(expr)}) {
     if (const char *why{WhyBaseObjectIsSuspicious(*base, scope)}) {
       if (auto pointer{GetPointerComponentDesignatorName(expr)}) {
@@ -622,10 +619,8 @@ void CheckCopyabilityInPureScope(parser::ContextualMessages &messages,
   }
 }
 
-void AssignmentContext::CheckForPureContext(
-    const evaluate::Expr<evaluate::SomeType> &lhs,
-    const evaluate::Expr<evaluate::SomeType> &rhs, parser::CharBlock source,
-    bool isPointerAssignment) {
+void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
+    const SomeExpr &rhs, parser::CharBlock source, bool isPointerAssignment) {
   const Scope &scope{context_.FindScope(source)};
   if (FindPureProcedureContaining(scope)) {
     parser::ContextualMessages messages{at_, &context_.messages()};
