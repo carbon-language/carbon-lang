@@ -26,6 +26,10 @@
 
 namespace Fortran::semantics {
 
+using evaluate::characteristics::DummyArgument;
+using evaluate::characteristics::DummyDataObject;
+using evaluate::characteristics::Procedure;
+
 class CheckHelper {
 public:
   explicit CheckHelper(SemanticsContext &c) : context_{c} {}
@@ -58,7 +62,11 @@ private:
   void CheckProcEntity(const Symbol &, const ProcEntityDetails &);
   void CheckDerivedType(const Symbol &, const DerivedTypeDetails &);
   void CheckGeneric(const Symbol &, const GenericDetails &);
-  void CheckSpecificsAreDistinguishable(const Symbol &, const GenericDetails &);
+  std::optional<std::vector<Procedure>> Characterize(const SymbolVector &);
+  bool CheckDefinedAssignment(const Symbol &, const Procedure &);
+  bool CheckDefinedAssignmentArg(const Symbol &, const DummyArgument &, int);
+  void CheckSpecificsAreDistinguishable(
+      const Symbol &, const GenericDetails &, const std::vector<Procedure> &);
   void SayNotDistinguishable(
       const SourceName &, GenericKind, const Symbol &, const Symbol &);
   bool InPure() const {
@@ -119,7 +127,7 @@ void CheckHelper::Check(const Symbol &symbol) {
   }
   const DeclTypeSpec *type{symbol.GetType()};
   const DerivedTypeSpec *derived{type ? type->AsDerived() : nullptr};
-  auto save{messages_.SetLocation(symbol.name())};
+  auto restorer{messages_.SetLocation(symbol.name())};
   context_.set_location(symbol.name());
   bool isAssociated{symbol.has<UseDetails>() || symbol.has<HostAssocDetails>()};
   if (symbol.attrs().test(Attr::VOLATILE)) {
@@ -386,12 +394,28 @@ void CheckHelper::CheckDerivedType(
 
 void CheckHelper::CheckGeneric(
     const Symbol &symbol, const GenericDetails &details) {
-  CheckSpecificsAreDistinguishable(symbol, details);
+  const SymbolVector &specifics{details.specificProcs()};
+  const auto &bindingNames{details.bindingNames()};
+  std::optional<std::vector<Procedure>> procs{Characterize(specifics)};
+  if (!procs) {
+    return;
+  }
+  bool ok{true};
+  if (details.kind().IsAssignment()) {
+    for (std::size_t i{0}; i < specifics.size(); ++i) {
+      auto restorer{messages_.SetLocation(bindingNames[i])};
+      ok &= CheckDefinedAssignment(specifics[i], (*procs)[i]);
+    }
+  }
+  // TODO: check defined operators too
+  if (ok) {
+    CheckSpecificsAreDistinguishable(symbol, details, *procs);
+  }
 }
 
 // Check that the specifics of this generic are distinguishable from each other
-void CheckHelper::CheckSpecificsAreDistinguishable(
-    const Symbol &generic, const GenericDetails &details) {
+void CheckHelper::CheckSpecificsAreDistinguishable(const Symbol &generic,
+    const GenericDetails &details, const std::vector<Procedure> &procs) {
   const SymbolVector &specifics{details.specificProcs()};
   std::size_t count{specifics.size()};
   if (count < 2) {
@@ -401,18 +425,6 @@ void CheckHelper::CheckSpecificsAreDistinguishable(
   auto distinguishable{kind.IsAssignment() || kind.IsOperator()
           ? evaluate::characteristics::DistinguishableOpOrAssign
           : evaluate::characteristics::Distinguishable};
-  using evaluate::characteristics::Procedure;
-  std::vector<Procedure> procs;
-  for (const Symbol &symbol : specifics) {
-    if (context_.HasError(symbol)) {
-      return;
-    }
-    auto proc{Procedure::Characterize(symbol, context_.intrinsics())};
-    if (!proc) {
-      return;
-    }
-    procs.emplace_back(*proc);
-  }
   for (std::size_t i1{0}; i1 < count - 1; ++i1) {
     auto &proc1{procs[i1]};
     for (std::size_t i2{i1 + 1}; i2 < count; ++i2) {
@@ -436,6 +448,91 @@ void CheckHelper::SayNotDistinguishable(const SourceName &name,
       context_.Say(name, std::move(text), name, proc1.name(), proc2.name())};
   evaluate::AttachDeclaration(msg, proc1);
   evaluate::AttachDeclaration(msg, proc2);
+}
+
+static bool ConflictsWithIntrinsicAssignment(
+    const DummyDataObject &arg0, const DummyDataObject &arg1) {
+  auto cat0{arg0.type.type().category()};
+  auto cat1{arg1.type.type().category()};
+  int rank0{arg0.type.Rank()};
+  int rank1{arg1.type.Rank()};
+  if (cat0 == TypeCategory::Derived || (rank1 > 0 && rank0 != rank1)) {
+    return false;
+  } else {
+    return cat0 == cat1 ||
+        (IsNumericTypeCategory(cat0) && IsNumericTypeCategory(cat1));
+  }
+}
+
+// Check if this procedure can be used for defined assignment (see 15.4.3.4.3).
+bool CheckHelper::CheckDefinedAssignment(
+    const Symbol &specific, const Procedure &proc) {
+  std::optional<parser::MessageFixedText> msg;
+  if (!proc.IsSubroutine()) {
+    msg = "Defined assignment procedure '%s' must be a subroutine"_err_en_US;
+  } else if (proc.dummyArguments.size() != 2) {
+    msg = "Defined assignment subroutine '%s' must have"
+          " two dummy arguments"_err_en_US;
+  } else if (!CheckDefinedAssignmentArg(specific, proc.dummyArguments[0], 0) |
+      !CheckDefinedAssignmentArg(specific, proc.dummyArguments[1], 1)) {
+    return false;  // error was reported
+  } else if (ConflictsWithIntrinsicAssignment(
+                 std::get<DummyDataObject>(proc.dummyArguments[0].u),
+                 std::get<DummyDataObject>(proc.dummyArguments[1].u))) {
+    msg = "Defined assignment subroutine '%s' conflicts with"
+          " intrinsic assignment"_err_en_US;
+  } else {
+    return true;  // OK
+  }
+  SayWithDeclaration(specific, std::move(msg.value()), specific.name());
+  return false;
+}
+
+bool CheckHelper::CheckDefinedAssignmentArg(
+    const Symbol &symbol, const DummyArgument &arg, int pos) {
+  std::optional<parser::MessageFixedText> msg;
+  if (arg.IsOptional()) {
+    msg = "In defined assignment subroutine '%s', dummy argument '%s'"
+          " may not be OPTIONAL"_err_en_US;
+  } else if (const auto *dataObject{std::get_if<DummyDataObject>(&arg.u)}) {
+    if (pos == 0) {
+      if (dataObject->intent != common::Intent::Out &&
+          dataObject->intent != common::Intent::InOut) {
+        msg = "In defined assignment subroutine '%s', first dummy argument '%s'"
+              " must have INTENT(OUT) or INTENT(INOUT)"_err_en_US;
+      }
+    } else if (pos == 1) {
+      if (dataObject->intent != common::Intent::In &&
+          !dataObject->attrs.test(DummyDataObject::Attr::Value)) {
+        msg =
+            "In defined assignment subroutine '%s', second dummy"
+            " argument '%s' must have INTENT(IN) or VALUE attribute"_err_en_US;
+      }
+    } else {
+      DIE("pos must be 0 or 1");
+    }
+  } else {
+    msg = "In defined assignment subroutine '%s', dummy argument '%s'"
+          " must be a data object"_err_en_US;
+  }
+  if (msg) {
+    SayWithDeclaration(symbol, std::move(*msg), symbol.name(), arg.name);
+    return false;
+  }
+  return true;
+}
+
+std::optional<std::vector<Procedure>> CheckHelper::Characterize(
+    const SymbolVector &specifics) {
+  std::vector<Procedure> result;
+  for (const Symbol &specific : specifics) {
+    auto proc{Procedure::Characterize(specific, context_.intrinsics())};
+    if (!proc || context_.HasError(specific)) {
+      return std::nullopt;
+    }
+    result.emplace_back(*proc);
+  }
+  return result;
 }
 
 void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,

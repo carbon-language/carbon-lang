@@ -445,32 +445,8 @@ contains
   end
 end
 
-! C1512 - rules for assignment
-! s1 and s2 are not distinguishable for a generic name but they are
-! for assignment
-module m19
-  interface assignment(=)
-    module procedure s1
-    module procedure s2
-  end interface
-  !ERROR: Generic 'g' may not have specific procedures 's1' and 's2' as their interfaces are not distinguishable
-  interface g
-    module procedure s1
-    module procedure s2
-  end interface
-contains
-  subroutine s1(d, p)
-    real, intent(out) :: d
-    integer, intent(in) :: p
-  end subroutine
-  subroutine s2(p, d)
-    integer, intent(out) :: p
-    real, intent(in) :: d
-  end subroutine
-end module
-
 ! C1511 - rules for operators
-module m20
+module m19
   interface operator(.foo.)
     module procedure f1
     module procedure f2
