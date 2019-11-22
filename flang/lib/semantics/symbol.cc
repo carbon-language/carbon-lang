@@ -150,6 +150,11 @@ UseErrorDetails &UseErrorDetails::add_occurrence(
 GenericDetails::GenericDetails(const SymbolVector &specificProcs)
   : specificProcs_{specificProcs} {}
 
+void GenericDetails::AddSpecificProc(
+    const Symbol &proc, SourceName bindingName) {
+  specificProcs_.push_back(proc);
+  bindingNames_.push_back(bindingName);
+}
 void GenericDetails::set_specific(Symbol &specific) {
   CHECK(!specific_);
   CHECK(!derivedType_);
@@ -214,7 +219,6 @@ std::string DetailsToString(const Details &details) {
           [](const HostAssocDetails &) { return "HostAssoc"; },
           [](const GenericDetails &) { return "Generic"; },
           [](const ProcBindingDetails &) { return "ProcBinding"; },
-          [](const GenericBindingDetails &) { return "GenericBinding"; },
           [](const NamelistDetails &) { return "Namelist"; },
           [](const CommonBlockDetails &) { return "CommonBlockDetails"; },
           [](const FinalProcDetails &) { return "FinalProc"; },
@@ -436,10 +440,6 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const ProcBindingDetails &x) {
             os << " => " << x.symbol().name();
             DumpOptional(os, "passName", x.passName());
-          },
-          [&](const GenericBindingDetails &x) {
-            os << " =>";
-            DumpSymbolVector(os, x.specificProcs());
           },
           [&](const NamelistDetails &x) {
             os << ':';

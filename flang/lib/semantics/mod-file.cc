@@ -200,12 +200,20 @@ void ModFileWriter::PutSymbol(
           [&](const DerivedTypeDetails &) { PutDerivedType(symbol); },
           [&](const SubprogramDetails &) { PutSubprogram(symbol); },
           [&](const GenericDetails &x) {
-            PutGeneric(symbol);
-            if (x.specific()) {
-              PutSymbol(typeBindings, *x.specific());
-            }
-            if (x.derivedType()) {
-              PutSymbol(typeBindings, *x.derivedType());
+            if (symbol.owner().IsDerivedType()) {
+              // generic binding
+              for (const Symbol &proc : x.specificProcs()) {
+                typeBindings << "generic::" << symbol.name() << "=>"
+                             << proc.name() << '\n';
+              }
+            } else {
+              PutGeneric(symbol);
+              if (x.specific()) {
+                PutSymbol(typeBindings, *x.specific());
+              }
+              if (x.derivedType()) {
+                PutSymbol(typeBindings, *x.derivedType());
+              }
             }
           },
           [&](const UseDetails &) { PutUse(symbol); },
@@ -227,12 +235,6 @@ void ModFileWriter::PutSymbol(
               typeBindings << "=>" << x.symbol().name();
             }
             typeBindings << '\n';
-          },
-          [&](const GenericBindingDetails &x) {
-            for (const Symbol &proc : x.specificProcs()) {
-              typeBindings << "generic::" << symbol.name() << "=>"
-                           << proc.name() << '\n';
-            }
           },
           [&](const NamelistDetails &x) {
             decls_ << "namelist/" << symbol.name();

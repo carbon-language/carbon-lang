@@ -2488,7 +2488,7 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
           name->source, generic.name());
       continue;
     }
-    details.add_specificProc(*symbol);
+    details.AddSpecificProc(*symbol, name->source);
   }
   specificProcs_.erase(range.first, range.second);
 }
@@ -2557,16 +2557,6 @@ void InterfaceVisitor::SayNotDistinguishable(
   }
 }
 
-static GenericKind GetGenericKind(const Symbol &generic) {
-  return std::visit(
-      common::visitors{
-          [&](const GenericDetails &x) { return x.kind(); },
-          [&](const GenericBindingDetails &x) { return x.kind(); },
-          [](auto &) -> GenericKind { DIE("not a generic"); },
-      },
-      generic.details());
-}
-
 // Check that the specifics of this generic are distinguishable from each other
 void InterfaceVisitor::CheckSpecificsAreDistinguishable(
     Symbol &generic, const SymbolVector &specifics) {
@@ -2574,7 +2564,7 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
   if (specifics.size() < 2) {
     return;
   }
-  auto kind{GetGenericKind(generic)};
+  auto kind{generic.get<GenericDetails>().kind()};
   auto distinguishable{kind.IsAssignment() || kind.IsOperator()
           ? evaluate::characteristics::DistinguishableOpOrAssign
           : evaluate::characteristics::Distinguishable};
@@ -2829,7 +2819,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
       MakeExternal(*symbol);
     }
     if (isGeneric()) {
-      GetGenericDetails().add_specificProc(*symbol);
+      GetGenericDetails().AddSpecificProc(*symbol, name.source);
     }
     implicitRules().set_inheritFromParent(false);
   }
@@ -3767,8 +3757,8 @@ void DeclarationVisitor::Post(const parser::TypeBoundProcedurePart &) {
       SayWithDecl(*bindingName, *symbol,  // C772
           "'%s' is not the name of a specific binding of this type"_err_en_US);
     } else {
-      auto &details{generic->get<GenericBindingDetails>()};
-      details.add_specificProc(*symbol);
+      generic->get<GenericDetails>().AddSpecificProc(
+          *symbol, bindingName->source);
     }
   }
   genericBindings_.clear();
@@ -3864,7 +3854,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
                             : derivedTypeInfo_.privateBindings};
   auto *genericSymbol{info.FindInScope(context(), currScope())};
   if (genericSymbol) {
-    if (!genericSymbol->has<GenericBindingDetails>()) {
+    if (!genericSymbol->has<GenericDetails>()) {
       genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
     }
   } else {
@@ -3876,14 +3866,14 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
         break;
       }
     }
-    if (inheritedSymbol && inheritedSymbol->has<GenericBindingDetails>()) {
+    if (inheritedSymbol && inheritedSymbol->has<GenericDetails>()) {
       CheckAccessibility(symbolName, isPrivate, *inheritedSymbol);  // C771
     }
   }
   if (genericSymbol) {
     CheckAccessibility(symbolName, isPrivate, *genericSymbol);  // C771
   } else {
-    genericSymbol = MakeTypeSymbol(symbolName, GenericBindingDetails{});
+    genericSymbol = MakeTypeSymbol(symbolName, GenericDetails{});
     if (!genericSymbol) {
       return false;
     }
@@ -6118,7 +6108,7 @@ void ResolveNamesVisitor::FinishDerivedTypeDefinition(Scope &scope) {
   }
   for (auto &pair : scope) {
     Symbol &comp{*pair.second};
-    if (const auto *details{comp.detailsIf<GenericBindingDetails>()}) {
+    if (const auto *details{comp.detailsIf<GenericDetails>()}) {
       CheckSpecificsAreDistinguishable(comp, details->specificProcs());
     }
   }

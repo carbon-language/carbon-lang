@@ -120,8 +120,6 @@ void GenericSpecInfo::Resolve(Symbol *symbol) const {
   if (symbol) {
     if (auto *details{symbol->detailsIf<GenericDetails>()}) {
       details->set_kind(kind_);
-    } else if (auto *details{symbol->detailsIf<GenericBindingDetails>()}) {
-      details->set_kind(kind_);
     }
     if (parseName_) {
       semantics::Resolve(*parseName_, symbol);
