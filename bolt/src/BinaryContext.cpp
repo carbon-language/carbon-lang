@@ -1863,6 +1863,24 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
   return std::make_pair(HotSize, ColdSize);
 }
 
+bool BinaryContext::validateEncoding(const MCInst &Inst,
+                                     ArrayRef<uint8_t> InputEncoding) const {
+  SmallString<256> Code;
+  SmallVector<MCFixup, 4> Fixups;
+  raw_svector_ostream VecOS(Code);
+
+  MCE->encodeInstruction(Inst, VecOS, Fixups, *STI);
+  auto EncodedData = ArrayRef<uint8_t>((uint8_t *)Code.data(), Code.size());
+  if (InputEncoding != EncodedData) {
+    errs() << "BOLT-ERROR: mismatched encoding detected\n"
+           << "      input: " << InputEncoding << '\n'
+           << "     output: " << EncodedData << '\n';
+    return false;
+  }
+
+  return true;
+}
+
 BinaryFunction *
 BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
                                                   bool CheckPastEnd,

@@ -1434,13 +1434,15 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
 
   if (!BC.TrappedFunctions.empty()) {
     errs() << "BOLT-WARNING: " << BC.TrappedFunctions.size()
-           << " functions will trap on entry";
-    if (opts::Verbosity >= 1) {
-      errs() << ".\n";
+           << " function" << (BC.TrappedFunctions.size() > 1 ? "s" : "")
+           << " will trap on entry. Use -trap-avx512=0 to disable"
+              " traps.";
+    if (opts::Verbosity >= 1 || BC.TrappedFunctions.size() <= 5) {
+      errs() << '\n';
       for (const auto *Function : BC.TrappedFunctions)
         errs() << "  " << *Function << '\n';
     } else {
-      errs() << " (use -v=1 to see the list).\n";
+      errs() << " Use -v=1 to see the list.\n";
     }
   }
 

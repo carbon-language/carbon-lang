@@ -1027,36 +1027,35 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     // Check integrity of LLVM assembler/disassembler.
     if (opts::CheckEncoding && !BC.MIB->isBranch(Instruction) &&
         !BC.MIB->isCall(Instruction) && !BC.MIB->isNoop(Instruction)) {
-      SmallString<256> Code;
-      SmallVector<MCFixup, 4> Fixups;
-      raw_svector_ostream VecOS(Code);
-      BC.MCE->encodeInstruction(Instruction, VecOS, Fixups, *BC.STI);
-      auto EncodedData = ArrayRef<uint8_t>((uint8_t *)Code.data(), Code.size());
-      if (FunctionData.slice(Offset, Size) != EncodedData) {
+      if (!BC.validateEncoding(Instruction, FunctionData.slice(Offset, Size))) {
         errs() << "BOLT-WARNING: mismatching LLVM encoding detected in "
-               << "function " << *this << ":\n";
+               << "function " << *this << " for instruction :\n";
         BC.printInstruction(errs(), Instruction, AbsoluteInstrAddr);
-        errs() << "       input: " << FunctionData.slice(Offset, Size)
-               << "\n      output: " << EncodedData << "\n\n";
+        errs() << '\n';
       }
     }
 
-    // Cannot process functions with AVX-512 instructions.
+    // Special handling for AVX-512 instructions.
     if (MIB->hasEVEXEncoding(Instruction)) {
-      if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: function " << *this << " uses instruction"
-               " encoded with EVEX (AVX-512) at offset 0x"
-               << Twine::utohexstr(Offset) << ". Disassembly could be wrong."
-               " Skipping further processing.\n";
-      }
-
       if (BC.HasRelocations && opts::TrapOnAVX512) {
         setTrapOnEntry();
         BC.TrappedFunctions.push_back(this);
-      } else {
-        IsSimple = false;
+        break;
       }
-      break;
+
+      // Check if our disassembly is correct and matches the assembler output.
+      if (!BC.validateEncoding(Instruction, FunctionData.slice(Offset, Size))) {
+        if (BC.HasRelocations) {
+          errs() << "BOLT-ERROR: internal assembler/disassembler error "
+                    "detected for AVX512 instruction:\n";
+          BC.printInstruction(errs(), Instruction, AbsoluteInstrAddr);
+          errs() << " in function " << *this << '\n';
+          exit(1);
+        } else {
+          setSimple(false);
+          break;
+        }
+      }
     }
 
     // Check if there's a relocation associated with this instruction.
