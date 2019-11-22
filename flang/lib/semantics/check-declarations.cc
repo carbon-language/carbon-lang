@@ -54,6 +54,14 @@ private:
   void CheckVolatile(
       const Symbol &, bool isAssociated, const DerivedTypeSpec *);
   void CheckBinding(const Symbol &);
+  template<typename... A>
+  void SayWithDeclaration(const Symbol &symbol, A &&... x) {
+    if (parser::Message * msg{messages_.Say(std::forward<A>(x)...)}) {
+      if (messages_.at() != symbol.name()) {
+        evaluate::AttachDeclaration(*msg, symbol);
+      }
+    }
+  }
 
   SemanticsContext &context_;
   evaluate::FoldingContext &foldingContext_{context_.foldingContext()};
@@ -131,7 +139,7 @@ void CheckHelper::Check(const Symbol &symbol) {
         for (const Symbol &component : components) {
           if (component.attrs().test(Attr::DEFERRED)) {
             if (symbol.scope()->FindComponent(component.name()) == &component) {
-              evaluate::SayWithDeclaration(messages_, &component,
+              SayWithDeclaration(component,
                   "Non-ABSTRACT extension of ABSTRACT derived type '%s' lacks a binding for DEFERRED procedure '%s'"_err_en_US,
                   parentDerived->typeSymbol().name(), component.name());
             }
@@ -157,12 +165,12 @@ void CheckHelper::Check(const Symbol &symbol) {
     }
     if (!IsDummy(symbol) && !IsFunctionResult(symbol)) {
       if (IsPolymorphicAllocatable(symbol)) {
-        evaluate::SayWithDeclaration(messages_, &symbol,
+        SayWithDeclaration(symbol,
             "Deallocation of polymorphic object '%s' is not permitted in a PURE subprogram"_err_en_US,
             symbol.name());
       } else if (derived) {
         if (auto bad{FindPolymorphicAllocatableUltimateComponent(*derived)}) {
-          evaluate::SayWithDeclaration(messages_, &*bad,
+          SayWithDeclaration(*bad,
               "Deallocation of polymorphic object '%s%s' is not permitted in a PURE subprogram"_err_en_US,
               symbol.name(), bad.BuildResultDesignatorName());
         }
@@ -193,7 +201,7 @@ void CheckHelper::Check(const Symbol &symbol) {
       }
       if (derived) {
         if (auto bad{FindPolymorphicAllocatableUltimateComponent(*derived)}) {
-          evaluate::SayWithDeclaration(messages_, &*bad,
+          SayWithDeclaration(*bad,
               "Result of PURE function may not have polymorphic ALLOCATABLE ultimate component '%s'"_err_en_US,
               bad.BuildResultDesignatorName());
         }
@@ -383,7 +391,7 @@ void CheckHelper::CheckBinding(const Symbol &symbol) {
   if (const Symbol * dtSymbol{dtScope.symbol()}) {
     if (symbol.attrs().test(Attr::DEFERRED)) {
       if (!dtSymbol->attrs().test(Attr::ABSTRACT)) {
-        evaluate::SayWithDeclaration(messages_, dtSymbol,
+        SayWithDeclaration(*dtSymbol,
             "Procedure bound to non-ABSTRACT derived type '%s' may not be DEFERRED"_err_en_US,
             dtSymbol->name());
       }
@@ -396,7 +404,7 @@ void CheckHelper::CheckBinding(const Symbol &symbol) {
   }
   if (const Symbol * overridden{FindOverriddenBinding(symbol)}) {
     if (overridden->attrs().test(Attr::NON_OVERRIDABLE)) {
-      evaluate::SayWithDeclaration(messages_, overridden,
+      SayWithDeclaration(*overridden,
           "Override of NON_OVERRIDABLE '%s' is not permitted"_err_en_US,
           symbol.name());
     }
@@ -404,13 +412,13 @@ void CheckHelper::CheckBinding(const Symbol &symbol) {
             overridden->detailsIf<ProcBindingDetails>()}) {
       if (!binding.symbol().attrs().test(Attr::PURE) &&
           overriddenBinding->symbol().attrs().test(Attr::PURE)) {
-        evaluate::SayWithDeclaration(messages_, overridden,
+        SayWithDeclaration(*overridden,
             "An overridden PURE type-bound procedure binding must also be PURE"_err_en_US);
         return;
       }
       if (!binding.symbol().attrs().test(Attr::ELEMENTAL) &&
           overriddenBinding->symbol().attrs().test(Attr::ELEMENTAL)) {
-        evaluate::SayWithDeclaration(messages_, overridden,
+        SayWithDeclaration(*overridden,
             "A type-bound procedure and its override must both, or neither, be ELEMENTAL"_err_en_US);
         return;
       }
@@ -424,33 +432,33 @@ void CheckHelper::CheckBinding(const Symbol &symbol) {
           if (passIndex == *overriddenBinding->passIndex()) {
             if (!(bindingChars && overriddenChars &&
                     bindingChars->CanOverride(*overriddenChars, passIndex))) {
-              evaluate::SayWithDeclaration(messages_, overridden,
+              SayWithDeclaration(*overridden,
                   "A type-bound procedure and its override must have compatible interfaces apart from their passed argument"_err_en_US);
             }
           } else {
-            evaluate::SayWithDeclaration(messages_, overridden,
+            SayWithDeclaration(*overridden,
                 "A type-bound procedure and its override must use the same PASS argument"_err_en_US);
           }
         } else {
-          evaluate::SayWithDeclaration(messages_, overridden,
+          SayWithDeclaration(*overridden,
               "A passed-argument type-bound procedure may not override a NOPASS procedure"_err_en_US);
         }
       } else if (overriddenBinding->passIndex()) {
-        evaluate::SayWithDeclaration(messages_, overridden,
+        SayWithDeclaration(*overridden,
             "A NOPASS type-bound procedure may not override a passed-argument procedure"_err_en_US);
       } else if (!(bindingChars && overriddenChars &&
                      bindingChars->CanOverride(
                          *overriddenChars, std::nullopt))) {
-        evaluate::SayWithDeclaration(messages_, overridden,
+        SayWithDeclaration(*overridden,
             "A type-bound procedure and its override must have compatible interfaces"_err_en_US);
       }
       if (symbol.attrs().test(Attr::PRIVATE) &&
           overridden->attrs().test(Attr::PUBLIC)) {
-        evaluate::SayWithDeclaration(messages_, overridden,
+        SayWithDeclaration(*overridden,
             "A PRIVATE procedure may not override a PUBLIC procedure"_err_en_US);
       }
     } else {
-      evaluate::SayWithDeclaration(messages_, overridden,
+      SayWithDeclaration(*overridden,
           "A type-bound procedure binding may not have the same name as a parent component"_err_en_US);
     }
   }

@@ -170,7 +170,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           tbp{FindImmediateComponent(derived, [](const Symbol &symbol) {
             return symbol.has<ProcBindingDetails>();
           })}) {  // 15.5.2.4(2)
-        evaluate::SayWithDeclaration(messages, tbp,
+        evaluate::SayWithDeclaration(messages, *tbp,
             "Actual argument associated with TYPE(*) %s may not have type-bound procedure '%s'"_err_en_US,
             dummyName, tbp->name());
       }
@@ -178,7 +178,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           finalizer{FindImmediateComponent(derived, [](const Symbol &symbol) {
             return symbol.has<FinalProcDetails>();
           })}) {  // 15.5.2.4(2)
-        evaluate::SayWithDeclaration(messages, finalizer,
+        evaluate::SayWithDeclaration(messages, *finalizer,
             "Actual argument associated with TYPE(*) %s may not have FINAL subroutine '%s'"_err_en_US,
             dummyName, finalizer->name());
       }
@@ -187,7 +187,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       if (dummy.intent != common::Intent::In && !dummyIsValue) {
         if (auto bad{
                 FindAllocatableUltimateComponent(derived)}) {  // 15.5.2.4(6)
-          evaluate::SayWithDeclaration(messages, &*bad,
+          evaluate::SayWithDeclaration(messages, *bad,
               "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
               bad.BuildResultDesignatorName(), dummyName);
         }
@@ -197,7 +197,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
         if (const DeclTypeSpec * type{coarray.GetType()}) {
           if (const DerivedTypeSpec * derived{type->AsDerived()}) {
             if (auto bad{semantics::FindPointerUltimateComponent(*derived)}) {
-              evaluate::SayWithDeclaration(messages, &coarray,
+              evaluate::SayWithDeclaration(messages, coarray,
                   "Coindexed object '%s' with POINTER ultimate component '%s' cannot be associated with %s"_err_en_US,
                   coarray.name(), bad.BuildResultDesignatorName(), dummyName);
             }
@@ -207,7 +207,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     }
     if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
       if (auto bad{semantics::FindCoarrayUltimateComponent(derived)}) {
-        evaluate::SayWithDeclaration(messages, &*bad,
+        evaluate::SayWithDeclaration(messages, *bad,
             "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
             dummyName, bad.BuildResultDesignatorName());
       }
@@ -232,8 +232,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           "Scalar actual argument may not be associated with assumed-shape %s"_err_en_US,
           dummyName);
     }
-    if (actualIsAssumedSize) {
-      evaluate::SayWithDeclaration(messages, actualLastSymbol,
+    if (actualIsAssumedSize && actualLastSymbol) {
+      evaluate::SayWithDeclaration(messages, *actualLastSymbol,
           "Assumed-size array may not be associated with assumed-shape %s"_err_en_US,
           dummyName);
     }
@@ -467,7 +467,7 @@ static void CheckProcedureArg(evaluate::ActualArgument &arg,
         } else if (argInterface.attrs.test(
                        characteristics::Procedure::Attr::Elemental)) {
           if (argProcSymbol) {  // C1533
-            evaluate::SayWithDeclaration(messages, argProcSymbol,
+            evaluate::SayWithDeclaration(messages, *argProcSymbol,
                 "Non-intrinsic ELEMENTAL procedure '%s' may not be passed as an actual argument"_err_en_US,
                 argProcSymbol->name());
             return;  // avoid piling on with checks below

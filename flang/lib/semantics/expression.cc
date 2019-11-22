@@ -1315,7 +1315,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                           "ABSTRACT derived type '%s' may not be used in a "
                           "structure constructor"_err_en_US,
                           typeName),
-        &typeSymbol);
+        typeSymbol);
   }
 
   // This iterator traverses all of the components in the derived type and its
@@ -1477,14 +1477,14 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                     "incompatible with component '%s' of type %s"_err_en_US,
                     valueType->AsFortran(), symbol->name(),
                     symType->AsFortran()),
-                symbol);
+                *symbol);
           } else {
             AttachDeclaration(
                 Say(expr.source,
                     "Value in structure constructor is incompatible with "
                     " component '%s' of type %s"_err_en_US,
                     symbol->name(), symType->AsFortran()),
-                symbol);
+                *symbol);
           }
         }
       }
@@ -1505,7 +1505,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                                 "Structure constructor lacks a value for "
                                 "component '%s'"_err_en_US,
                                 symbol.name()),
-              &symbol);
+              symbol);
         }
       }
     }
@@ -1727,7 +1727,7 @@ void ExpressionAnalyzer::CheckForBadRecursion(
             "Assumed-length CHARACTER(*) function '%s' cannot call itself"_err_en_US,
             callSite);
       }
-      AttachDeclaration(msg, &proc);
+      AttachDeclaration(msg, proc);
     }
   }
 }
@@ -2125,7 +2125,7 @@ static void CheckFuncRefToArrayElementRefHasSubscripts(
             "A result variable must be declared with RESULT to allow recursive "
             "function calls"_en_US);
       } else {
-        AttachDeclaration(&msg, name->symbol);
+        AttachDeclaration(&msg, *name->symbol);
       }
     }
   }

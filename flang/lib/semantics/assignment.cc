@@ -147,7 +147,7 @@ private:
   template<typename... A> parser::Message *Say(A &&... x) {
     auto *msg{messages_.Say(std::forward<A>(x)...)};
     if (pointer_) {
-      return AttachDeclaration(msg, pointer_);
+      return AttachDeclaration(msg, *pointer_);
     } else if (!source_.empty()) {
       msg->Attach(source_, "Declaration of %s"_en_US, description_);
     }
@@ -227,7 +227,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
   // from the RHS.
   if (!IsPointer(lhs)) {
     SayWithDeclaration(
-        messages, &lhs, "'%s' is not a pointer"_err_en_US, lhs.name());
+        messages, lhs, "'%s' is not a pointer"_err_en_US, lhs.name());
   } else {
     auto type{characteristics::TypeAndShape::Characterize(lhs)};
     auto proc{characteristics::Procedure::Characterize(lhs, intrinsics)};
@@ -584,7 +584,7 @@ static const char *WhyBaseObjectIsSuspicious(
 void CheckDefinabilityInPureScope(parser::ContextualMessages &messages,
     const Symbol &lhs, const Scope &scope) {
   if (const char *why{WhyBaseObjectIsSuspicious(lhs, scope)}) {
-    evaluate::SayWithDeclaration(messages, &lhs,
+    evaluate::SayWithDeclaration(messages, lhs,
         "A PURE subprogram may not define '%s' because it is %s"_err_en_US,
         lhs.name(), why);
   }
@@ -611,7 +611,7 @@ void CheckCopyabilityInPureScope(parser::ContextualMessages &messages,
   if (const Symbol * base{GetFirstSymbol(expr)}) {
     if (const char *why{WhyBaseObjectIsSuspicious(*base, scope)}) {
       if (auto pointer{GetPointerComponentDesignatorName(expr)}) {
-        evaluate::SayWithDeclaration(messages, base,
+        evaluate::SayWithDeclaration(messages, *base,
             "A PURE subprogram may not copy the value of '%s' because it is %s and has the POINTER component '%s'"_err_en_US,
             base->name(), why, *pointer);
       }
@@ -634,7 +634,7 @@ void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
       if (const Symbol * base{GetFirstSymbol(rhs)}) {
         if (const char *why{
                 WhyBaseObjectIsSuspicious(*base, scope)}) {  // C1594(3)
-          evaluate::SayWithDeclaration(messages, base,
+          evaluate::SayWithDeclaration(messages, *base,
               "A PURE subprogram may not use '%s' as the target of pointer assignment because it is %s"_err_en_US,
               base->name(), why);
         }
@@ -652,7 +652,7 @@ void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
           const DerivedTypeSpec &derived{type->GetDerivedTypeSpec()};
           if (auto bad{FindPolymorphicAllocatableNonCoarrayUltimateComponent(
                   derived)}) {
-            evaluate::SayWithDeclaration(messages, &*bad,
+            evaluate::SayWithDeclaration(messages, *bad,
                 "Deallocation of polymorphic non-coarray component '%s' is not permitted in a PURE subprogram"_err_en_US,
                 bad.BuildResultDesignatorName());
           } else {
