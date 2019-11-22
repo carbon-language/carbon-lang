@@ -19,6 +19,7 @@
 // the half-open interval [x .. x+n).
 
 #include "idioms.h"
+#include <algorithm>
 #include <cstddef>
 #include <utility>
 
