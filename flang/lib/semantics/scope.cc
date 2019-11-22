@@ -327,4 +327,13 @@ const Scope *Scope::GetDerivedTypeParent() const {
   }
   return nullptr;
 }
+
+void Scope::InstantiateDerivedTypes(SemanticsContext &context) {
+  for (DeclTypeSpec &type : declTypeSpecs_) {
+    if (type.category() == DeclTypeSpec::TypeDerived ||
+        type.category() == DeclTypeSpec::ClassDerived) {
+      type.derivedTypeSpec().Instantiate(*this, context);
+    }
+  }
+}
 }

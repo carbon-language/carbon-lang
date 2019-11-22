@@ -15,6 +15,7 @@
 #include "type.h"
 #include "scope.h"
 #include "symbol.h"
+#include "tools.h"
 #include "../evaluate/fold.h"
 #include "../parser/characters.h"
 #include <ostream>
@@ -38,11 +39,142 @@ void DerivedTypeSpec::ReplaceScope(const Scope &scope) {
   scope_ = &scope;
 }
 
-ParamValue &DerivedTypeSpec::AddParamValue(
-    SourceName name, ParamValue &&value) {
+void DerivedTypeSpec::AddRawParamValue(
+    const std::optional<parser::Keyword> &keyword, ParamValue &&value) {
+  CHECK(parameters_.empty());
+  rawParameters_.emplace_back(keyword ? &*keyword : nullptr, std::move(value));
+}
+
+void DerivedTypeSpec::CookParameters(evaluate::FoldingContext &foldingContext) {
+  if (cooked_) {
+    return;
+  }
+  cooked_ = true;
+  auto &messages{foldingContext.messages()};
+  if (IsForwardReferenced()) {
+    messages.Say(typeSymbol_.name(),
+        "Derived type '%s' was used but never defined"_err_en_US,
+        typeSymbol_.name());
+    return;
+  }
+
+  // Parameters of the most deeply nested "base class" come first when the
+  // derived type is an extension.
+  auto parameterNames{OrderParameterNames(typeSymbol_)};
+  auto parameterDecls{OrderParameterDeclarations(typeSymbol_)};
+  auto nextNameIter{parameterNames.begin()};
+  RawParameters raw{std::move(rawParameters_)};
+  for (auto &[maybeKeyword, value] : raw) {
+    SourceName name;
+    common::TypeParamAttr attr{common::TypeParamAttr::Kind};
+    if (maybeKeyword) {
+      name = maybeKeyword->v.source;
+      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
+          [&](const Symbol &symbol) { return symbol.name() == name; })};
+      if (it == parameterDecls.end()) {
+        messages.Say(name,
+            "'%s' is not the name of a parameter for derived type '%s'"_err_en_US,
+            name, typeSymbol_.name());
+      } else {
+        // Resolve the keyword's symbol
+        maybeKeyword->v.symbol = const_cast<Symbol *>(&it->get());
+        attr = it->get().get<TypeParamDetails>().attr();
+      }
+    } else if (nextNameIter != parameterNames.end()) {
+      name = *nextNameIter++;
+      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
+          [&](const Symbol &symbol) { return symbol.name() == name; })};
+      CHECK(it != parameterDecls.end());
+      attr = it->get().get<TypeParamDetails>().attr();
+    } else {
+      messages.Say(name_,
+          "Too many type parameters given for derived type '%s'"_err_en_US,
+          typeSymbol_.name());
+      break;
+    }
+    if (FindParameter(name)) {
+      messages.Say(name_,
+          "Multiple values given for type parameter '%s'"_err_en_US, name);
+    } else {
+      value.set_attr(attr);
+      AddParamValue(name, std::move(value));
+    }
+  }
+}
+
+void DerivedTypeSpec::EvaluateParameters(
+    evaluate::FoldingContext &foldingContext) {
+  CookParameters(foldingContext);
+  if (evaluated_) {
+    return;
+  }
+  evaluated_ = true;
+  auto &messages{foldingContext.messages()};
+
+  // Fold the explicit type parameter value expressions first.  Do not
+  // fold them within the scope of the derived type being instantiated;
+  // these expressions cannot use its type parameters.  Convert the values
+  // of the expressions to the declared types of the type parameters.
+  auto parameterDecls{OrderParameterDeclarations(typeSymbol_)};
+  for (const Symbol &symbol : parameterDecls) {
+    const SourceName &name{symbol.name()};
+    if (ParamValue * paramValue{FindParameter(name)}) {
+      if (const MaybeIntExpr & expr{paramValue->GetExplicit()}) {
+        if (auto converted{evaluate::ConvertToType(symbol, SomeExpr{*expr})}) {
+          SomeExpr folded{
+              evaluate::Fold(foldingContext, std::move(*converted))};
+          if (auto *intExpr{std::get_if<SomeIntExpr>(&folded.u)}) {
+            paramValue->SetExplicit(std::move(*intExpr));
+            continue;
+          }
+        }
+        std::stringstream fortran;
+        expr->AsFortran(fortran);
+        evaluate::SayWithDeclaration(messages, symbol,
+            "Value of type parameter '%s' (%s) is not convertible to its type"_err_en_US,
+            name, fortran.str());
+      }
+    }
+  }
+
+  // Default initialization expressions for the derived type's parameters
+  // may reference other parameters so long as the declaration precedes the
+  // use in the expression (10.1.12).  This is not necessarily the same
+  // order as "type parameter order" (7.5.3.2).
+  // Type parameter default value expressions are folded in declaration order
+  // within the scope of the derived type so that the values of earlier type
+  // parameters are available for use in the default initialization
+  // expressions of later parameters.
+  auto restorer{foldingContext.WithPDTInstance(*this)};
+  for (const Symbol &symbol : parameterDecls) {
+    const SourceName &name{symbol.name()};
+    if (!FindParameter(name)) {
+      const TypeParamDetails &details{symbol.get<TypeParamDetails>()};
+      if (details.init()) {
+        auto expr{
+            evaluate::Fold(foldingContext, common::Clone(details.init()))};
+        AddParamValue(name, ParamValue{std::move(*expr), details.attr()});
+      } else {
+        messages.Say(name_,
+            "Type parameter '%s' lacks a value and has no default"_err_en_US,
+            name);
+      }
+    }
+  }
+}
+
+void DerivedTypeSpec::AddParamValue(SourceName name, ParamValue &&value) {
+  CHECK(cooked_);
   auto pair{parameters_.insert(std::make_pair(name, std::move(value)))};
   CHECK(pair.second);  // name was not already present
-  return pair.first->second;
+}
+
+bool DerivedTypeSpec::MightBeParameterized() const {
+  return !cooked_ || !parameters_.empty();
+}
+
+bool DerivedTypeSpec::IsForwardReferenced() const {
+  return typeSymbol_.get<DerivedTypeDetails>().isForwardReferenced();
 }
 
 ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
@@ -50,10 +182,109 @@ ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
       const_cast<const DerivedTypeSpec *>(this)->FindParameter(target));
 }
 
+void DerivedTypeSpec::Instantiate(
+    Scope &containingScope, SemanticsContext &context) {
+  if (instantiated_) {
+    return;
+  }
+  instantiated_ = true;
+  auto &foldingContext{context.foldingContext()};
+  if (IsForwardReferenced()) {
+    foldingContext.messages().Say(typeSymbol_.name(),
+        "The derived type '%s' was forward-referenced but not defined"_err_en_US,
+        typeSymbol_.name());
+    return;
+  }
+  CookParameters(foldingContext);
+  EvaluateParameters(foldingContext);
+  const Scope &typeScope{DEREF(typeSymbol_.scope())};
+  if (!MightBeParameterized()) {
+    scope_ = &typeScope;
+    for (const auto &pair : typeScope) {
+      const Symbol &symbol{*pair.second};
+      if (const DeclTypeSpec * type{symbol.GetType()}) {
+        if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+          auto &instantiatable{*const_cast<DerivedTypeSpec *>(derived)};
+          instantiatable.Instantiate(containingScope, context);
+        }
+      }
+    }
+    return;
+  }
+  Scope &newScope{containingScope.MakeScope(Scope::Kind::DerivedType)};
+  newScope.set_derivedTypeSpec(*this);
+  ReplaceScope(newScope);
+  for (const Symbol &symbol : OrderParameterDeclarations(typeSymbol_)) {
+    const SourceName &name{symbol.name()};
+    if (typeScope.find(symbol.name()) != typeScope.end()) {
+      // This type parameter belongs to the derived type itself, not to
+      // one of its ancestors.  Put the type parameter expression value
+      // into the new scope as the initialization value for the parameter.
+      if (ParamValue * paramValue{FindParameter(name)}) {
+        const TypeParamDetails &details{symbol.get<TypeParamDetails>()};
+        paramValue->set_attr(details.attr());
+        if (MaybeIntExpr expr{paramValue->GetExplicit()}) {
+          // Ensure that any kind type parameters with values are
+          // constant by now.
+          if (details.attr() == common::TypeParamAttr::Kind) {
+            // Any errors in rank and type will have already elicited
+            // messages, so don't pile on by complaining further here.
+            if (auto maybeDynamicType{expr->GetType()}) {
+              if (expr->Rank() == 0 &&
+                  maybeDynamicType->category() == TypeCategory::Integer) {
+                if (!evaluate::ToInt64(*expr)) {
+                  std::stringstream fortran;
+                  fortran << *expr;
+                  if (auto *msg{foldingContext.messages().Say(
+                          "Value of kind type parameter '%s' (%s) is not "
+                          "a scalar INTEGER constant"_err_en_US,
+                          name, fortran.str())}) {
+                    msg->Attach(name, "declared here"_en_US);
+                  }
+                }
+              }
+            }
+          }
+          TypeParamDetails instanceDetails{details.attr()};
+          if (const DeclTypeSpec * type{details.type()}) {
+            instanceDetails.set_type(*type);
+          }
+          instanceDetails.set_init(std::move(*expr));
+          newScope.try_emplace(name, std::move(instanceDetails));
+        }
+      }
+    }
+  }
+  // Instantiate every non-parameter symbol from the original derived
+  // type's scope into the new instance.
+  auto restorer{foldingContext.WithPDTInstance(*this)};
+  newScope.AddSourceRange(typeScope.sourceRange());
+  for (const auto &pair : typeScope) {
+    const Symbol &symbol{*pair.second};
+    symbol.InstantiateComponent(newScope, context);
+  }
+}
+
 std::string DerivedTypeSpec::AsFortran() const {
   std::stringstream ss;
   ss << name_;
-  if (!parameters_.empty()) {
+  if (!rawParameters_.empty()) {
+    CHECK(parameters_.empty());
+    ss << '(';
+    bool first = true;
+    for (const auto &[maybeKeyword, value] : rawParameters_) {
+      if (first) {
+        first = false;
+      } else {
+        ss << ',';
+      }
+      if (maybeKeyword) {
+        ss << maybeKeyword->v.source.ToString() << '=';
+      }
+      ss << value.AsFortran();
+    }
+    ss << ')';
+  } else if (!parameters_.empty()) {
     ss << '(';
     bool first = true;
     for (const auto &[name, value] : parameters_) {

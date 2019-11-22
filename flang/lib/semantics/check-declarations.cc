@@ -370,7 +370,10 @@ void CheckHelper::CheckProcEntity(
 
 void CheckHelper::CheckDerivedType(
     const Symbol &symbol, const DerivedTypeDetails &details) {
-  CHECK(symbol.scope());
+  if (!symbol.scope()) {
+    CHECK(details.isForwardReferenced());
+    return;
+  }
   CHECK(symbol.scope()->symbol() == &symbol);
   CHECK(symbol.scope()->IsDerivedType());
   if (symbol.attrs().test(Attr::ABSTRACT) &&

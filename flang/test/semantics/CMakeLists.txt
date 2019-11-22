@@ -195,6 +195,7 @@ set(ERROR_TESTS
   misc-declarations.f90
   separate-module-procs.f90
   bindings01.f90
+  bad-forward-type.f90
 )
 
 # These test files have expected symbols in the source
@@ -214,6 +215,7 @@ set(SYMBOL_TESTS
   symbol14.f90
   symbol15.f90
   symbol16.f90
+  symbol17.f90
   omp-symbol01.f90
   omp-symbol02.f90
   omp-symbol03.f90

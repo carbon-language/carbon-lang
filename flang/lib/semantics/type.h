@@ -27,9 +27,14 @@
 #include <variant>
 #include <vector>
 
+namespace Fortran::parser {
+struct Keyword;
+}
+
 namespace Fortran::semantics {
 
 class Scope;
+class SemanticsContext;
 class Symbol;
 
 /// A SourceName is a name in the cooked character stream,
@@ -231,6 +236,8 @@ std::ostream &operator<<(std::ostream &, const ArraySpec &);
 // The name may not match the symbol's name in case of a USE rename.
 class DerivedTypeSpec {
 public:
+  using RawParameter = std::pair<const parser::Keyword *, ParamValue>;
+  using RawParameters = std::vector<RawParameter>;
   using ParameterMapType = std::map<SourceName, ParamValue>;
   explicit DerivedTypeSpec(SourceName, const Symbol &);
   DerivedTypeSpec(const DerivedTypeSpec &);
@@ -241,9 +248,27 @@ public:
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
   void ReplaceScope(const Scope &);
+  RawParameters &rawParameters() { return rawParameters_; }
   const ParameterMapType &parameters() const { return parameters_; }
 
-  ParamValue &AddParamValue(SourceName, ParamValue &&);
+  bool MightBeParameterized() const;
+  bool IsForwardReferenced() const;
+
+  // The "raw" type parameter list is a simple transcription from the
+  // parameter list in the parse tree, built by calling AddRawParamValue().
+  // It can be used with forward-referenced derived types.
+  void AddRawParamValue(const std::optional<parser::Keyword> &, ParamValue &&);
+  // Checks the raw parameter list against the definition of a derived type.
+  // Converts the raw parameter list to a map, naming each actual parameter.
+  void CookParameters(evaluate::FoldingContext &);
+  // Evaluates type parameter expressions.
+  void EvaluateParameters(evaluate::FoldingContext &);
+  void AddParamValue(SourceName, ParamValue &&);
+  // Creates a Scope for the type and populates it with component
+  // instantiations that have been specialized with actual type parameter
+  // values, which are cooked &/or evaluated if necessary.
+  void Instantiate(Scope &, SemanticsContext &);
+
   ParamValue *FindParameter(SourceName);
   const ParamValue *FindParameter(SourceName target) const {
     auto iter{parameters_.find(target)};
@@ -254,7 +279,9 @@ public:
     }
   }
   bool operator==(const DerivedTypeSpec &that) const {
-    return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
+    return &typeSymbol_ == &that.typeSymbol_ && cooked_ == that.cooked_ &&
+        parameters_ == that.parameters_ &&
+        rawParameters_ == that.rawParameters_;
   }
   std::string AsFortran() const;
 
@@ -262,6 +289,10 @@ private:
   SourceName name_;
   const Symbol &typeSymbol_;
   const Scope *scope_{nullptr};  // same as typeSymbol_.scope() unless PDT
+  bool cooked_{false};
+  bool evaluated_{false};
+  bool instantiated_{false};
+  RawParameters rawParameters_;
   ParameterMapType parameters_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };

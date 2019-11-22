@@ -89,7 +89,7 @@ private:
   // map_ contains the mapping between letters and types that were defined
   // by the IMPLICIT statements of the related scope. It does not contain
   // the default Fortran mappings nor the mapping defined in parents.
-  std::map<char, const DeclTypeSpec *> map_;
+  std::map<char, common::Reference<const DeclTypeSpec>> map_;
 
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
   friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
@@ -173,11 +173,18 @@ public:
     if (!maybeExpr) {
       return std::nullopt;
     }
+    auto exprType{maybeExpr->GetType()};
     auto converted{evaluate::ConvertToType(symbol, std::move(*maybeExpr))};
     if (!converted) {
-      Say(source,
-          "Initialization expression could not be converted to declared type of '%s'"_err_en_US,
-          symbol.name());
+      if (exprType) {
+        Say(source,
+            "Initialization expression could not be converted to declared type of '%s' from %s"_err_en_US,
+            symbol.name(), exprType->AsFortran());
+      } else {
+        Say(source,
+            "Initialization expression could not be converted to declared type of '%s'"_err_en_US,
+            symbol.name());
+      }
       return std::nullopt;
     }
     return FoldExpr(std::move(*converted));
@@ -308,11 +315,21 @@ protected:
       DerivedTypeSpec *type{nullptr};
       DeclTypeSpec::Category category{DeclTypeSpec::TypeDerived};
     } derived;
+    bool allowForwardReferenceToDerivedType{false};
   };
 
+  bool allowForwardReferenceToDerivedType() const {
+    return state_.allowForwardReferenceToDerivedType;
+  }
+  void set_allowForwardReferenceToDerivedType(bool yes) {
+    state_.allowForwardReferenceToDerivedType = yes;
+  }
+
   // Walk the parse tree of a type spec and return the DeclTypeSpec for it.
-  template<typename T> const DeclTypeSpec *ProcessTypeSpec(const T &x) {
+  template<typename T>
+  const DeclTypeSpec *ProcessTypeSpec(const T &x, bool allowForward = false) {
     auto save{common::ScopedSet(state_, State{})};
+    set_allowForwardReferenceToDerivedType(allowForward);
     BeginDeclTypeSpec();
     Walk(x);
     const auto *type{GetDeclTypeSpec()};
@@ -418,7 +435,7 @@ public:
   using ImplicitRulesVisitor::Post;
   using ImplicitRulesVisitor::Pre;
 
-  Scope &currScope() { return *currScope_; }
+  Scope &currScope() { return DEREF(currScope_); }
   // The enclosing scope, skipping blocks and derived types.
   Scope &InclusiveScope();
   // The global scope, containing program units.
@@ -739,6 +756,7 @@ public:
   void Post(const parser::ComponentDecl &);
   bool Pre(const parser::ProcedureDeclarationStmt &);
   void Post(const parser::ProcedureDeclarationStmt &);
+  bool Pre(const parser::DataComponentDefStmt &);  // returns false
   bool Pre(const parser::ProcComponentDefStmt &);
   void Post(const parser::ProcComponentDefStmt &);
   bool Pre(const parser::ProcPointerInit &);
@@ -1406,7 +1424,7 @@ const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   if (isImplicitNoneType_) {
     return nullptr;
   } else if (auto it{map_.find(ch)}; it != map_.end()) {
-    return it->second;
+    return &*it->second;
   } else if (inheritFromParent_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
@@ -1421,7 +1439,7 @@ const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
 void ImplicitRules::SetTypeMapping(const DeclTypeSpec &type,
     parser::Location fromLetter, parser::Location toLetter) {
   for (char ch = *fromLetter; ch; ch = ImplicitRules::Incr(ch)) {
-    auto res{map_.emplace(ch, &type)};
+    auto res{map_.emplace(ch, type)};
     if (!res.second) {
       context_.Say(parser::CharBlock{fromLetter},
           "More than one implicit type specified for '%c'"_err_en_US, ch);
@@ -1696,6 +1714,7 @@ bool ImplicitRulesVisitor::Pre(const parser::LetterSpec &x) {
 
 bool ImplicitRulesVisitor::Pre(const parser::ImplicitSpec &) {
   BeginDeclTypeSpec();
+  set_allowForwardReferenceToDerivedType(true);
   return true;
 }
 
@@ -1939,8 +1958,7 @@ void ScopeHandler::PopScope() {
   // assumed to be objects.
   // TODO: Statement functions
   for (auto &pair : currScope()) {
-    Symbol &symbol{*pair.second};
-    ConvertToObjectEntity(symbol);
+    ConvertToObjectEntity(*pair.second);
   }
   SetScope(currScope_->parent());
 }
@@ -2047,7 +2065,15 @@ void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   }
 }
 const DeclTypeSpec *ScopeHandler::GetImplicitType(Symbol &symbol) {
-  return implicitRules().GetType(symbol.name().begin()[0]);
+  const DeclTypeSpec *type{implicitRules().GetType(symbol.name().begin()[0])};
+  if (type) {
+    if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+      // Resolve any forward-referenced derived type; a quick no-op else.
+      auto &instantiatable{*const_cast<DerivedTypeSpec *>(derived)};
+      instantiatable.Instantiate(currScope(), context());
+    }
+  }
+  return type;
 }
 
 // Convert symbol to be a ObjectEntity or return false if it can't be.
@@ -2609,7 +2635,7 @@ void SubprogramVisitor::Post(const parser::ImplicitPart &) {
   // If the function has a type in the prefix, process it now
   if (funcInfo_.parsedType) {
     messageHandler().set_currStmtSource(funcInfo_.source);
-    if (const auto *type{ProcessTypeSpec(*funcInfo_.parsedType)}) {
+    if (const auto *type{ProcessTypeSpec(*funcInfo_.parsedType, true)}) {
       funcInfo_.resultSymbol->SetType(*type);
     }
   }
@@ -3344,93 +3370,48 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   if (!spec) {
     return;
   }
-  const Symbol *typeSymbol{&spec->typeSymbol()};
-
-  // This DerivedTypeSpec is created initially as a search key.
-  // If it turns out to have the same name and actual parameter
-  // value expressions as some other DerivedTypeSpec in the current
-  // scope, then we'll use that extant spec; otherwise, when this
-  // spec is distinct from all derived types previously instantiated
-  // in the current scope, this spec will be moved to that collection.
-
-  // The expressions in a derived type specifier whose values define
-  // non-defaulted type parameters are evaluated in the enclosing scope.
-  // Default initialization expressions for the derived type's parameters
-  // may reference other parameters so long as the declaration precedes the
-  // use in the expression (10.1.12).  This is not necessarily the same
-  // order as "type parameter order" (7.5.3.2).
-  // Parameters of the most deeply nested "base class" come first when the
-  // derived type is an extension.
-  auto parameterNames{OrderParameterNames(*typeSymbol)};
-  auto parameterDecls{OrderParameterDeclarations(*typeSymbol)};
-  auto nextNameIter{parameterNames.begin()};
   bool seenAnyName{false};
   for (const auto &typeParamSpec :
       std::get<std::list<parser::TypeParamSpec>>(x.t)) {
     const auto &optKeyword{
         std::get<std::optional<parser::Keyword>>(typeParamSpec.t)};
-    SourceName name;
-    common::TypeParamAttr attr{common::TypeParamAttr::Kind};
+    std::optional<SourceName> name;
     if (optKeyword) {
       seenAnyName = true;
       name = optKeyword->v.source;
-      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](const Symbol &symbol) { return symbol.name() == name; })};
-      if (it == parameterDecls.end()) {
-        Say(name,
-            "'%s' is not the name of a parameter for this type"_err_en_US);
-      } else {
-        attr = it->get().get<TypeParamDetails>().attr();
-        Resolve(optKeyword->v, const_cast<Symbol *>(&it->get()));
-      }
     } else if (seenAnyName) {
       Say(typeName.source, "Type parameter value must have a name"_err_en_US);
       continue;
-    } else if (nextNameIter != parameterNames.end()) {
-      name = *nextNameIter++;
-      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](const Symbol &symbol) { return symbol.name() == name; })};
-      if (it != parameterDecls.end()) {
-        attr = it->get().get<TypeParamDetails>().attr();
-      }
-    } else {
-      Say(typeName.source,
-          "Too many type parameters given for derived type '%s'"_err_en_US);
-      break;
     }
-    if (spec->FindParameter(name)) {
-      Say(typeName.source,
-          "Multiple values given for type parameter '%s'"_err_en_US, name);
-    } else {
-      const auto &value{std::get<parser::TypeParamValue>(typeParamSpec.t)};
-      ParamValue param{GetParamValue(value, attr)};  // folded
-      if (!param.isExplicit() || param.GetExplicit()) {
-        spec->AddParamValue(name, std::move(param));
-      }
+    const auto &value{std::get<parser::TypeParamValue>(typeParamSpec.t)};
+    // The expressions in a derived type specifier whose values define
+    // non-defaulted type parameters are evaluated (folded) in the enclosing
+    // scope.  The KIND/LEN distinction is resolved later in
+    // DerivedTypeSpec::CookParameters().
+    ParamValue param{GetParamValue(value, common::TypeParamAttr::Kind)};
+    if (!param.isExplicit() || param.GetExplicit()) {
+      spec->AddRawParamValue(optKeyword, std::move(param));
     }
   }
 
-  // Ensure that any type parameter without an explicit value has a
-  // default initialization in the derived type's definition.
-  const Scope *typeScope{typeSymbol->scope()};
-  CHECK(typeScope);
-  for (const SourceName &name : parameterNames) {
-    if (!spec->FindParameter(name)) {
-      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](const Symbol &symbol) { return symbol.name() == name; })};
-      if (it != parameterDecls.end()) {
-        const auto *details{it->get().detailsIf<TypeParamDetails>()};
-        if (!details || !details->init()) {
-          Say(typeName.source,
-              "Type parameter '%s' lacks a value and has no default"_err_en_US,
-              name);
-        }
-      }
-    }
-  }
-
+  // The DerivedTypeSpec *spec is used initially as a search key.
+  // If it turns out to have the same name and actual parameter
+  // value expressions as another DerivedTypeSpec in the current
+  // scope does, then we'll use that extant spec; otherwise, when this
+  // spec is distinct from all derived types previously instantiated
+  // in the current scope, this spec will be moved into that collection.
+  const auto &dtDetails{spec->typeSymbol().get<DerivedTypeDetails>()};
   auto category{GetDeclTypeSpecCategory()};
-  ProcessParameterExpressions(*spec, context().foldingContext());
+  if (dtDetails.isForwardReferenced()) {
+    DeclTypeSpec &type{currScope().MakeDerivedType(category, std::move(*spec))};
+    SetDeclTypeSpec(type);
+    return;
+  }
+  // Normalize parameters to produce a better search key.
+  spec->CookParameters(GetFoldingContext());
+  if (!spec->MightBeParameterized()) {
+    spec->EvaluateParameters(GetFoldingContext());
+  }
   if (const DeclTypeSpec *
       extant{currScope().FindInstantiatedDerivedType(*spec, category)}) {
     // This derived type and parameter expressions (if any) are already present
@@ -3438,19 +3419,15 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     SetDeclTypeSpec(*extant);
   } else {
     DeclTypeSpec &type{currScope().MakeDerivedType(category, std::move(*spec))};
-    if (parameterNames.empty() || currScope().IsParameterizedDerivedType()) {
-      // The derived type being instantiated is not a parameterized derived
-      // type, or the instantiation is within the definition of a parameterized
-      // derived type; don't instantiate a new scope.
-      type.derivedTypeSpec().set_scope(*typeScope);
+    DerivedTypeSpec &derived{type.derivedTypeSpec()};
+    if (derived.MightBeParameterized() &&
+        currScope().IsParameterizedDerivedType()) {
+      // Defer instantiation; use the derived type's definition's scope.
+      derived.set_scope(DEREF(spec->typeSymbol().scope()));
     } else {
-      // This is a parameterized derived type and this spec is not in the
-      // context of a parameterized derived type definition, so we need to
-      // clone its contents, specialize them with the actual type parameter
-      // values, and check constraints.
-      auto save{
+      auto restorer{
           GetFoldingContext().messages().SetLocation(currStmtSource().value())};
-      InstantiateDerivedType(type.derivedTypeSpec(), currScope(), context());
+      derived.Instantiate(currScope(), context());
     }
     SetDeclTypeSpec(type);
   }
@@ -3629,6 +3606,17 @@ bool DeclarationVisitor::Pre(const parser::ProcedureDeclarationStmt &) {
 void DeclarationVisitor::Post(const parser::ProcedureDeclarationStmt &) {
   interfaceName_ = nullptr;
   EndDecl();
+}
+bool DeclarationVisitor::Pre(const parser::DataComponentDefStmt &x) {
+  // Overrides parse tree traversal so as to handle attributes first,
+  // so POINTER & ALLOCATABLE enable forward references to derived types.
+  Walk(std::get<std::list<parser::ComponentAttrSpec>>(x.t));
+  set_allowForwardReferenceToDerivedType(
+      GetAttrs().test(Attr::POINTER) || GetAttrs().test(Attr::ALLOCATABLE));
+  Walk(std::get<parser::DeclarationTypeSpec>(x.t));
+  set_allowForwardReferenceToDerivedType(false);
+  Walk(std::get<std::list<parser::ComponentDecl>>(x.t));
+  return false;
 }
 bool DeclarationVisitor::Pre(const parser::ProcComponentDefStmt &) {
   CHECK(!interfaceName_);
@@ -4443,8 +4431,17 @@ std::optional<DerivedTypeSpec> DeclarationVisitor::ResolveDerivedType(
     const parser::Name &name) {
   const Symbol *symbol{FindSymbol(name)};
   if (!symbol) {
-    Say(name, "Derived type '%s' not found"_err_en_US);
-    return std::nullopt;
+    if (allowForwardReferenceToDerivedType()) {
+      Symbol &forward{MakeSymbol(InclusiveScope(), name.source, Attrs{})};
+      DerivedTypeDetails details;
+      details.set_isForwardReferenced();
+      forward.set_details(std::move(details));
+      Resolve(name, forward);
+      symbol = &forward;
+    } else {
+      Say(name, "Derived type '%s' not found"_err_en_US);
+      return std::nullopt;
+    }
   }
   if (CheckUseError(name)) {
     return std::nullopt;
@@ -4455,11 +4452,12 @@ std::optional<DerivedTypeSpec> DeclarationVisitor::ResolveDerivedType(
       symbol = details->derivedType();
     }
   }
-  if (!symbol->has<DerivedTypeDetails>()) {
+  if (symbol->has<DerivedTypeDetails>()) {
+    return DerivedTypeSpec{name.source, *symbol};
+  } else {
     Say(name, "'%s' is not a derived type"_err_en_US);
     return std::nullopt;
   }
-  return DerivedTypeSpec{name.source, *symbol};
 }
 
 std::optional<DerivedTypeSpec> DeclarationVisitor::ResolveExtendsType(
@@ -5687,6 +5685,8 @@ void ResolveNamesVisitor::FinishSpecificationPart() {
       symbol.set(Symbol::Flag::Subroutine);
     }
   }
+  currScope().InstantiateDerivedTypes(context());
+  // TODO: what about instantiations in BLOCK?
   CheckSaveStmts();
   CheckCommonBlocks();
   CheckEquivalenceSets();

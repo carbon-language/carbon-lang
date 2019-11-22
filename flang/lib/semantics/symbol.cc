@@ -14,6 +14,8 @@
 
 #include "symbol.h"
 #include "scope.h"
+#include "semantics.h"
+#include "tools.h"
 #include "../common/idioms.h"
 #include <ostream>
 #include <string>
@@ -245,10 +247,14 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
     return std::visit(
         common::visitors{
             [](const UseErrorDetails &) { return true; },
-            [=](const ObjectEntityDetails &) { return has<EntityDetails>(); },
-            [=](const ProcEntityDetails &) { return has<EntityDetails>(); },
-            [=](const SubprogramDetails &) {
+            [&](const ObjectEntityDetails &) { return has<EntityDetails>(); },
+            [&](const ProcEntityDetails &) { return has<EntityDetails>(); },
+            [&](const SubprogramDetails &) {
               return has<SubprogramNameDetails>() || has<EntityDetails>();
+            },
+            [&](const DerivedTypeDetails &) {
+              auto *derived{detailsIf<DerivedTypeDetails>()};
+              return derived && derived->isForwardReferenced();
             },
             [](const auto &) { return false; },
         },
@@ -553,13 +559,118 @@ const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
 const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
   if (const auto *dtDetails{detailsIf<DerivedTypeDetails>()}) {
     if (!scope) {
-      CHECK(scope_);
       scope = scope_;
     }
     return dtDetails->GetParentComponent(DEREF(scope));
   } else {
     return nullptr;
   }
+}
+
+// Utility routine for InstantiateComponent(): applies type
+// parameter values to an intrinsic type spec.
+static const DeclTypeSpec &InstantiateIntrinsicType(Scope &scope,
+    const DeclTypeSpec &spec, SemanticsContext &semanticsContext) {
+  const IntrinsicTypeSpec &intrinsic{DEREF(spec.AsIntrinsic())};
+  if (evaluate::ToInt64(intrinsic.kind())) {
+    return spec;  // KIND is already a known constant
+  }
+  // The expression was not originally constant, but now it must be so
+  // in the context of a parameterized derived type instantiation.
+  KindExpr copy{intrinsic.kind()};
+  evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
+  copy = evaluate::Fold(foldingContext, std::move(copy));
+  int kind{semanticsContext.GetDefaultKind(intrinsic.category())};
+  if (auto value{evaluate::ToInt64(copy)}) {
+    if (evaluate::IsValidKindOfIntrinsicType(intrinsic.category(), *value)) {
+      kind = *value;
+    } else {
+      foldingContext.messages().Say(
+          "KIND parameter value (%jd) of intrinsic type %s "
+          "did not resolve to a supported value"_err_en_US,
+          static_cast<std::intmax_t>(*value),
+          parser::ToUpperCaseLetters(
+              common::EnumToString(intrinsic.category())));
+    }
+  }
+  switch (spec.category()) {
+  case DeclTypeSpec::Numeric:
+    return scope.MakeNumericType(intrinsic.category(), KindExpr{kind});
+  case DeclTypeSpec::Logical:  //
+    return scope.MakeLogicalType(KindExpr{kind});
+  case DeclTypeSpec::Character:
+    return scope.MakeCharacterType(
+        ParamValue{spec.characterTypeSpec().length()}, KindExpr{kind});
+  default: CRASH_NO_CASE;
+  }
+}
+
+Symbol &Symbol::InstantiateComponent(
+    Scope &scope, SemanticsContext &context) const {
+  auto &foldingContext{context.foldingContext()};
+  auto pair{scope.try_emplace(name(), attrs())};
+  Symbol &result{*pair.first->second};
+  if (!pair.second) {
+    // Symbol was already present in the scope, which can only happen
+    // in the case of type parameters.
+    CHECK(has<TypeParamDetails>());
+    return result;
+  }
+  result.attrs() = attrs();
+  result.flags() = flags();
+  result.set_details(common::Clone(details()));
+  if (auto *details{result.detailsIf<ObjectEntityDetails>()}) {
+    if (DeclTypeSpec * origType{result.GetType()}) {
+      if (const DerivedTypeSpec * derived{origType->AsDerived()}) {
+        DerivedTypeSpec newSpec{*derived};
+        newSpec.CookParameters(foldingContext);  // enables AddParamValue()
+        if (test(Symbol::Flag::ParentComp)) {
+          // Forward any explicit type parameter values from the
+          // derived type spec under instantiation that define type parameters
+          // of the parent component to the derived type spec of the
+          // parent component.
+          const DerivedTypeSpec &instanceSpec{
+              DEREF(foldingContext.pdtInstance())};
+          for (const auto &[name, value] : instanceSpec.parameters()) {
+            if (scope.find(name) == scope.end()) {
+              newSpec.AddParamValue(name, ParamValue{value});
+            }
+          }
+        }
+        details->ReplaceType(FindOrInstantiateDerivedType(
+            scope, std::move(newSpec), context, origType->category()));
+      } else if (origType->AsIntrinsic()) {
+        details->ReplaceType(
+            InstantiateIntrinsicType(scope, *origType, context));
+      } else if (origType->category() != DeclTypeSpec::ClassStar) {
+        DIE("instantiated component has type that is "
+            "neither intrinsic, derived, nor CLASS(*)");
+      }
+    }
+    details->set_init(
+        evaluate::Fold(foldingContext, std::move(details->init())));
+    for (ShapeSpec &dim : details->shape()) {
+      if (dim.lbound().isExplicit()) {
+        dim.lbound().SetExplicit(
+            Fold(foldingContext, std::move(dim.lbound().GetExplicit())));
+      }
+      if (dim.ubound().isExplicit()) {
+        dim.ubound().SetExplicit(
+            Fold(foldingContext, std::move(dim.ubound().GetExplicit())));
+      }
+    }
+    for (ShapeSpec &dim : details->coshape()) {
+      if (dim.lbound().isExplicit()) {
+        dim.lbound().SetExplicit(
+            Fold(foldingContext, std::move(dim.lbound().GetExplicit())));
+      }
+      if (dim.ubound().isExplicit()) {
+        dim.ubound().SetExplicit(
+            Fold(foldingContext, std::move(dim.ubound().GetExplicit())));
+      }
+    }
+  }
+  return result;
 }
 
 void DerivedTypeDetails::add_component(const Symbol &symbol) {

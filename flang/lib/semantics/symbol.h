@@ -228,10 +228,12 @@ public:
   const std::list<SourceName> &paramNames() const { return paramNames_; }
   const SymbolVector &paramDecls() const { return paramDecls_; }
   bool sequence() const { return sequence_; }
+  bool isForwardReferenced() const { return isForwardReferenced_; }
   void add_paramName(const SourceName &name) { paramNames_.push_back(name); }
   void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(symbol); }
   void add_component(const Symbol &);
   void set_sequence(bool x = true) { sequence_ = x; }
+  void set_isForwardReferenced() { isForwardReferenced_ = true; }
   const std::list<SourceName> &componentNames() const {
     return componentNames_;
   }
@@ -258,6 +260,7 @@ private:
   // order.  A parent component, if any, appears first in this list.
   std::list<SourceName> componentNames_;
   bool sequence_{false};
+  bool isForwardReferenced_{false};
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeDetails &);
 };
 
@@ -641,6 +644,9 @@ public:
   // The Scope * argument defaults to this->scope_ but should be overridden
   // for a parameterized derived type instantiation with the instance's scope.
   const DerivedTypeSpec *GetParentTypeSpec(const Scope * = nullptr) const;
+
+  // Clones the Symbol into a parameterized derived type instance.
+  Symbol &InstantiateComponent(Scope &, SemanticsContext &) const;
 
 private:
   const Scope *owner_;

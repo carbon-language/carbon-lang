@@ -34,6 +34,8 @@ using namespace parser::literals;
 
 using common::ConstantSubscript;
 
+class SemanticsContext;
+
 // An equivalence object is represented by a symbol for the variable name,
 // the indices for an array element, and the lower bound for a substring.
 struct EquivalenceObject {
@@ -214,6 +216,8 @@ public:
     return kind_ == Kind::Module && symbol_ &&
         symbol_->test(Symbol::Flag::ModFile);
   }
+
+  void InstantiateDerivedTypes(SemanticsContext &);
 
 private:
   Scope &parent_;  // this is enclosing scope, not extended derived type base
