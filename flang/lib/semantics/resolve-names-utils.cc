@@ -32,6 +32,7 @@ namespace Fortran::semantics {
 
 using common::LanguageFeature;
 using common::LogicalOperator;
+using common::NumericOperator;
 using common::RelationalOperator;
 using IntrinsicOperator = parser::DefinedOperator::IntrinsicOperator;
 
@@ -96,20 +97,13 @@ std::forward_list<std::string> GenericSpecInfo::GetAllNames(
     }
     return result;
   }};
-  switch (kind_) {
-  case GenericKind::OpGE: return getNames(RelationalOperator::GE);
-  case GenericKind::OpGT: return getNames(RelationalOperator::GT);
-  case GenericKind::OpLE: return getNames(RelationalOperator::LE);
-  case GenericKind::OpLT: return getNames(RelationalOperator::LT);
-  case GenericKind::OpEQ: return getNames(RelationalOperator::EQ);
-  case GenericKind::OpNE: return getNames(RelationalOperator::NE);
-  case GenericKind::OpAND: return getNames(LogicalOperator::And);
-  case GenericKind::OpOR: return getNames(LogicalOperator::Or);
-  case GenericKind::OpEQV: return getNames(LogicalOperator::Eqv);
-  case GenericKind::OpNEQV: return getNames(LogicalOperator::Neqv);
-  case GenericKind::OpNOT: return getNames(LogicalOperator::Not);
-  default: return {symbolName_.value().ToString()};
-  }
+  return std::visit(
+      common::visitors{[&](const LogicalOperator &x) { return getNames(x); },
+          [&](const RelationalOperator &x) { return getNames(x); },
+          [&](const auto &) -> std::forward_list<std::string> {
+            return {symbolName_.value().ToString()};
+          }},
+      kind_.u);
 }
 
 Symbol *GenericSpecInfo::FindInScope(
@@ -136,7 +130,7 @@ void GenericSpecInfo::Resolve(Symbol *symbol) const {
 }
 
 void GenericSpecInfo::Analyze(const parser::DefinedOpName &name) {
-  kind_ = GenericKind::DefinedOp;
+  kind_ = GenericKind::OtherKind::DefinedOp;
   parseName_ = &name.v;
   symbolName_ = name.v.source;
 }
@@ -145,17 +139,17 @@ void GenericSpecInfo::Analyze(const parser::GenericSpec &x) {
   symbolName_ = x.source;
   kind_ = std::visit(
       common::visitors{
-          [&](const parser::Name &y) {
+          [&](const parser::Name &y) -> GenericKind {
             parseName_ = &y;
             symbolName_ = y.source;
-            return GenericKind::Name;
+            return GenericKind::OtherKind::Name;
           },
           [&](const parser::DefinedOperator &y) {
             return std::visit(
                 common::visitors{
-                    [&](const parser::DefinedOpName &z) {
+                    [&](const parser::DefinedOpName &z) -> GenericKind {
                       Analyze(z);
-                      return GenericKind::DefinedOp;
+                      return GenericKind::OtherKind::DefinedOp;
                     },
                     [&](const IntrinsicOperator &z) {
                       return MapIntrinsicOperator(z);
@@ -163,20 +157,20 @@ void GenericSpecInfo::Analyze(const parser::GenericSpec &x) {
                 },
                 y.u);
           },
-          [&](const parser::GenericSpec::Assignment &) {
-            return GenericKind::Assignment;
+          [&](const parser::GenericSpec::Assignment &) -> GenericKind {
+            return GenericKind::OtherKind::Assignment;
           },
-          [&](const parser::GenericSpec::ReadFormatted &) {
-            return GenericKind::ReadFormatted;
+          [&](const parser::GenericSpec::ReadFormatted &) -> GenericKind {
+            return GenericKind::DefinedIo::ReadFormatted;
           },
-          [&](const parser::GenericSpec::ReadUnformatted &) {
-            return GenericKind::ReadUnformatted;
+          [&](const parser::GenericSpec::ReadUnformatted &) -> GenericKind {
+            return GenericKind::DefinedIo::ReadUnformatted;
           },
-          [&](const parser::GenericSpec::WriteFormatted &) {
-            return GenericKind::WriteFormatted;
+          [&](const parser::GenericSpec::WriteFormatted &) -> GenericKind {
+            return GenericKind::DefinedIo::WriteFormatted;
           },
-          [&](const parser::GenericSpec::WriteUnformatted &) {
-            return GenericKind::WriteUnformatted;
+          [&](const parser::GenericSpec::WriteUnformatted &) -> GenericKind {
+            return GenericKind::DefinedIo::WriteUnformatted;
           },
       },
       x.u);
@@ -186,23 +180,23 @@ void GenericSpecInfo::Analyze(const parser::GenericSpec &x) {
 static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
   switch (op) {
     SWITCH_COVERS_ALL_CASES
-  case IntrinsicOperator::Power: return GenericKind::OpPower;
-  case IntrinsicOperator::Multiply: return GenericKind::OpMultiply;
-  case IntrinsicOperator::Divide: return GenericKind::OpDivide;
-  case IntrinsicOperator::Add: return GenericKind::OpAdd;
-  case IntrinsicOperator::Subtract: return GenericKind::OpSubtract;
-  case IntrinsicOperator::Concat: return GenericKind::OpConcat;
-  case IntrinsicOperator::LT: return GenericKind::OpLT;
-  case IntrinsicOperator::LE: return GenericKind::OpLE;
-  case IntrinsicOperator::EQ: return GenericKind::OpEQ;
-  case IntrinsicOperator::NE: return GenericKind::OpNE;
-  case IntrinsicOperator::GE: return GenericKind::OpGE;
-  case IntrinsicOperator::GT: return GenericKind::OpGT;
-  case IntrinsicOperator::NOT: return GenericKind::OpNOT;
-  case IntrinsicOperator::AND: return GenericKind::OpAND;
-  case IntrinsicOperator::OR: return GenericKind::OpOR;
-  case IntrinsicOperator::EQV: return GenericKind::OpEQV;
-  case IntrinsicOperator::NEQV: return GenericKind::OpNEQV;
+  case IntrinsicOperator::Concat: return GenericKind::OtherKind::Concat;
+  case IntrinsicOperator::Power: return NumericOperator::Power;
+  case IntrinsicOperator::Multiply: return NumericOperator::Multiply;
+  case IntrinsicOperator::Divide: return NumericOperator::Divide;
+  case IntrinsicOperator::Add: return NumericOperator::Add;
+  case IntrinsicOperator::Subtract: return NumericOperator::Subtract;
+  case IntrinsicOperator::AND: return LogicalOperator::And;
+  case IntrinsicOperator::OR: return LogicalOperator::Or;
+  case IntrinsicOperator::EQV: return LogicalOperator::Eqv;
+  case IntrinsicOperator::NEQV: return LogicalOperator::Neqv;
+  case IntrinsicOperator::NOT: return LogicalOperator::Not;
+  case IntrinsicOperator::LT: return RelationalOperator::LT;
+  case IntrinsicOperator::LE: return RelationalOperator::LE;
+  case IntrinsicOperator::EQ: return RelationalOperator::EQ;
+  case IntrinsicOperator::NE: return RelationalOperator::NE;
+  case IntrinsicOperator::GE: return RelationalOperator::GE;
+  case IntrinsicOperator::GT: return RelationalOperator::GT;
   }
 }
 

@@ -358,8 +358,7 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
 
 static bool IsIntrinsicOp(const Symbol &symbol) {
   if (const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()}) {
-    GenericKind kind{details->kind()};
-    return kind >= GenericKind::OpPower && kind <= GenericKind::OpNEQV;
+    return details->kind().IsIntrinsicOperator();
   } else {
     return false;
   }

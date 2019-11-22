@@ -427,7 +427,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [](const HostAssocDetails &) {},
           [&](const GenericDetails &x) {
-            os << ' ' << EnumToString(x.kind());
+            os << ' ' << x.kind().ToString();
             DumpBool(os, "(specific)", x.specific() != nullptr);
             DumpBool(os, "(derivedType)", x.derivedType() != nullptr);
             os << " procs:";
@@ -584,6 +584,30 @@ const Symbol *DerivedTypeDetails::GetParentComponent(const Scope &scope) const {
 void TypeParamDetails::set_type(const DeclTypeSpec &type) {
   CHECK(!type_);
   type_ = &type;
+}
+
+bool GenericKind::IsIntrinsicOperator() const {
+  return Is(OtherKind::Concat) || Has<common::LogicalOperator>() ||
+      Has<common::NumericOperator>() || Has<common::RelationalOperator>();
+}
+
+bool GenericKind::IsOperator() const {
+  return IsDefinedOperator() || IsIntrinsicOperator();
+}
+
+std::string GenericKind::ToString() const {
+  return std::visit(
+      common::visitors{
+          [](const OtherKind &x) { return EnumToString(x); },
+          [](const DefinedIo &x) { return EnumToString(x); },
+          [](const auto &x) { return common::EnumToString(x); },
+      },
+      u);
+}
+
+bool GenericKind::Is(GenericKind::OtherKind x) const {
+  const OtherKind *y{std::get_if<OtherKind>(&u)};
+  return y && *y == x;
 }
 
 }

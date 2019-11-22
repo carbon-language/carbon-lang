@@ -84,7 +84,7 @@ const Scope *FindPureProcedureContaining(const Scope &start) {
 
 bool IsGenericDefinedOp(const Symbol &symbol) {
   const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
-  return details && details->kind() == GenericKind::DefinedOp;
+  return details && details->kind().IsDefinedOperator();
 }
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object) {

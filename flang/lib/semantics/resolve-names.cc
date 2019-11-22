@@ -2482,7 +2482,7 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
     }
     if (!namesSeen.insert(name->source).second) {
       Say(*name,
-          IsDefinedOperator(generic.name())
+          details.kind().IsDefinedOperator()
               ? "Procedure '%s' is already specified in generic operator '%s'"_err_en_US
               : "Procedure '%s' is already specified in generic '%s'"_err_en_US,
           name->source, generic.name());
@@ -2567,12 +2567,6 @@ static GenericKind GetGenericKind(const Symbol &generic) {
       generic.details());
 }
 
-static bool IsOperatorOrAssignment(const Symbol &generic) {
-  auto kind{GetGenericKind(generic)};
-  return kind == GenericKind::DefinedOp || kind == GenericKind::Assignment ||
-      (kind >= GenericKind::OpPower && kind <= GenericKind::OpNEQV);
-}
-
 // Check that the specifics of this generic are distinguishable from each other
 void InterfaceVisitor::CheckSpecificsAreDistinguishable(
     Symbol &generic, const SymbolVector &specifics) {
@@ -2580,7 +2574,8 @@ void InterfaceVisitor::CheckSpecificsAreDistinguishable(
   if (specifics.size() < 2) {
     return;
   }
-  auto distinguishable{IsOperatorOrAssignment(generic)
+  auto kind{GetGenericKind(generic)};
+  auto distinguishable{kind.IsAssignment() || kind.IsOperator()
           ? evaluate::characteristics::DistinguishableOpOrAssign
           : evaluate::characteristics::Distinguishable};
   using evaluate::characteristics::Procedure;
@@ -5621,7 +5616,7 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
                 const auto &symbolName{info.symbolName()};
                 if (auto *symbol{info.FindInScope(context(), currScope())}) {
                   info.Resolve(&SetAccess(symbolName, accessAttr, symbol));
-                } else if (info.kind() == GenericKind::Name) {
+                } else if (info.kind().IsName()) {
                   info.Resolve(&SetAccess(symbolName, accessAttr));
                 } else {
                   Say(symbolName, "Generic spec '%s' not found"_err_en_US);
