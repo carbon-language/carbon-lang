@@ -53,7 +53,20 @@ private:
   void CheckValue(const Symbol &, const DerivedTypeSpec *);
   void CheckVolatile(
       const Symbol &, bool isAssociated, const DerivedTypeSpec *);
-  void CheckBinding(const Symbol &);
+  void CheckProcBinding(const Symbol &, const ProcBindingDetails &);
+  void CheckObjectEntity(const Symbol &, const ObjectEntityDetails &);
+  void CheckProcEntity(const Symbol &, const ProcEntityDetails &);
+  void CheckDerivedType(const Symbol &, const DerivedTypeDetails &);
+  void CheckGeneric(const Symbol &, const GenericDetails &);
+  void CheckSpecificsAreDistinguishable(const Symbol &, const GenericDetails &);
+  void SayNotDistinguishable(
+      const SourceName &, GenericKind, const Symbol &, const Symbol &);
+  bool InPure() const {
+    return innermostSymbol_ && IsPureProcedure(*innermostSymbol_);
+  }
+  bool InFunction() const {
+    return innermostSymbol_ && IsFunction(*innermostSymbol_);
+  }
   template<typename... A>
   void SayWithDeclaration(const Symbol &symbol, A &&... x) {
     if (parser::Message * msg{messages_.Say(std::forward<A>(x)...)}) {
@@ -104,7 +117,7 @@ void CheckHelper::Check(const Symbol &symbol) {
   if (context_.HasError(symbol)) {
     return;
   }
-  const DeclTypeSpec *type{symbol.GetUltimate().GetType()};
+  const DeclTypeSpec *type{symbol.GetType()};
   const DerivedTypeSpec *derived{type ? type->AsDerived() : nullptr};
   auto save{messages_.SetLocation(symbol.name())};
   context_.set_location(symbol.name());
@@ -115,42 +128,17 @@ void CheckHelper::Check(const Symbol &symbol) {
   if (isAssociated) {
     return;  // only care about checking VOLATILE on associated symbols
   }
-  if (symbol.has<ProcBindingDetails>()) {
-    CheckBinding(symbol);
-    return;
-  }
-  if (const auto *details{symbol.detailsIf<DerivedTypeDetails>()}) {
-    CHECK(symbol.scope());
-    CHECK(symbol.scope()->symbol() == &symbol);
-    CHECK(symbol.scope()->IsDerivedType());
-    if (symbol.attrs().test(Attr::ABSTRACT) &&
-        (symbol.attrs().test(Attr::BIND_C) ||
-            (details && details->sequence()))) {
-      messages_.Say("An ABSTRACT derived type must be extensible"_err_en_US);
-    }
-    if (const DeclTypeSpec * parent{FindParentTypeSpec(symbol)}) {
-      const DerivedTypeSpec *parentDerived{parent->AsDerived()};
-      if (!IsExtensibleType(parentDerived)) {
-        messages_.Say("The parent type is not extensible"_err_en_US);
-      }
-      if (!symbol.attrs().test(Attr::ABSTRACT) && parentDerived &&
-          parentDerived->typeSymbol().attrs().test(Attr::ABSTRACT)) {
-        ScopeComponentIterator components{*parentDerived};
-        for (const Symbol &component : components) {
-          if (component.attrs().test(Attr::DEFERRED)) {
-            if (symbol.scope()->FindComponent(component.name()) == &component) {
-              SayWithDeclaration(component,
-                  "Non-ABSTRACT extension of ABSTRACT derived type '%s' lacks a binding for DEFERRED procedure '%s'"_err_en_US,
-                  parentDerived->typeSymbol().name(), component.name());
-            }
-          }
-        }
-      }
-    }
-    return;
-  }
-  bool inPure{innermostSymbol_ && IsPureProcedure(*innermostSymbol_)};
-  if (inPure) {
+  std::visit(
+      common::visitors{
+          [&](const ProcBindingDetails &x) { CheckProcBinding(symbol, x); },
+          [&](const ObjectEntityDetails &x) { CheckObjectEntity(symbol, x); },
+          [&](const ProcEntityDetails &x) { CheckProcEntity(symbol, x); },
+          [&](const DerivedTypeDetails &x) { CheckDerivedType(symbol, x); },
+          [&](const GenericDetails &x) { CheckGeneric(symbol, x); },
+          [](const auto &) {},
+      },
+      symbol.details());
+  if (InPure()) {
     if (IsSaved(symbol)) {
       messages_.Say(
           "A PURE subprogram may not have a variable with the SAVE attribute"_err_en_US);
@@ -177,7 +165,6 @@ void CheckHelper::Check(const Symbol &symbol) {
       }
     }
   }
-  bool inFunction{innermostSymbol_ && IsFunction(*innermostSymbol_)};
   if (type) {
     bool canHaveAssumedParameter{IsNamedConstant(symbol) ||
         IsAssumedLengthCharacterFunction(symbol) ||
@@ -190,7 +177,7 @@ void CheckHelper::Check(const Symbol &symbol) {
       canHaveAssumedParameter |= symbol.has<AssocEntityDetails>();
     }
     Check(*type, canHaveAssumedParameter);
-    if (inPure && inFunction && IsFunctionResult(symbol)) {
+    if (InPure() && InFunction() && IsFunctionResult(symbol)) {
       if (derived && HasImpureFinal(*derived)) {  // C1584
         messages_.Say(
             "Result of PURE function may not have an impure FINAL subroutine"_err_en_US);
@@ -229,80 +216,6 @@ void CheckHelper::Check(const Symbol &symbol) {
       if (IsPointer(*result)) {
         messages_.Say(
             "An assumed-length CHARACTER(*) function cannot return a POINTER"_err_en_US);
-      }
-    }
-  }
-  if (auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
-    Check(object->shape());
-    Check(object->coshape());
-    if (!object->coshape().empty()) {
-      if (IsAllocatable(symbol)) {
-        if (!object->coshape().IsDeferredShape()) {  // C827
-          messages_.Say(
-              "ALLOCATABLE coarray must have a deferred coshape"_err_en_US);
-        }
-      } else {
-        if (!object->coshape().IsAssumedSize()) {  // C828
-          messages_.Say(
-              "Non-ALLOCATABLE coarray must have an explicit coshape"_err_en_US);
-        }
-      }
-    }
-    if (object->isDummy()) {
-      if (symbol.attrs().test(Attr::INTENT_OUT)) {
-        if (FindUltimateComponent(symbol, [](const Symbol &x) {
-              return IsCoarray(x) && IsAllocatable(x);
-            })) {  // C846
-          messages_.Say(
-              "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
-        }
-        if (IsOrContainsEventOrLockComponent(symbol)) {  // C847
-          messages_.Say(
-              "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
-        }
-      }
-      if (inPure && !IsPointer(symbol) && !IsIntentIn(symbol) &&
-          !symbol.attrs().test(Attr::VALUE)) {
-        if (inFunction) {  // C1583
-          messages_.Say(
-              "non-POINTER dummy argument of PURE function must be INTENT(IN) or VALUE"_err_en_US);
-        } else if (IsIntentOut(symbol)) {
-          if (type && type->IsPolymorphic()) {  // C1588
-            messages_.Say(
-                "An INTENT(OUT) dummy argument of a PURE subroutine may not be polymorphic"_err_en_US);
-          } else if (derived) {
-            if (FindUltimateComponent(*derived, [](const Symbol &x) {
-                  const DeclTypeSpec *type{x.GetType()};
-                  return type && type->IsPolymorphic();
-                })) {  // C1588
-              messages_.Say(
-                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have a polymorphic ultimate component"_err_en_US);
-            }
-            if (HasImpureFinal(*derived)) {  // C1587
-              messages_.Say(
-                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have an impure FINAL subroutine"_err_en_US);
-            }
-          }
-        } else if (!IsIntentInOut(symbol)) {  // C1586
-          messages_.Say(
-              "non-POINTER dummy argument of PURE subroutine must have INTENT() or VALUE attribute"_err_en_US);
-        }
-      }
-    }
-  } else if (auto *proc{symbol.detailsIf<ProcEntityDetails>()}) {
-    if (proc->isDummy()) {
-      const Symbol *interface{proc->interface().symbol()};
-      if (!symbol.attrs().test(Attr::INTRINSIC) &&
-          (symbol.attrs().test(Attr::ELEMENTAL) ||
-              (interface && !interface->attrs().test(Attr::INTRINSIC) &&
-                  interface->attrs().test(Attr::ELEMENTAL)))) {
-        // There's no explicit constraint or "shall" that we can find in the
-        // standard for this check, but it seems to be implied in multiple
-        // sites, and ELEMENTAL non-intrinsic actual arguments *are*
-        // explicitly forbidden.  But we allow "PROCEDURE(SIN)::dummy"
-        // because it is explicitly legal to *pass* the specific intrinsic
-        // function SIN as an actual argument.
-        messages_.Say("A dummy procedure may not be ELEMENTAL"_err_en_US);
       }
     }
   }
@@ -360,6 +273,171 @@ void CheckHelper::CheckValue(
   }
 }
 
+void CheckHelper::CheckObjectEntity(
+    const Symbol &symbol, const ObjectEntityDetails &details) {
+  Check(details.shape());
+  Check(details.coshape());
+  if (!details.coshape().empty()) {
+    if (IsAllocatable(symbol)) {
+      if (!details.coshape().IsDeferredShape()) {  // C827
+        messages_.Say(
+            "ALLOCATABLE coarray must have a deferred coshape"_err_en_US);
+      }
+    } else {
+      if (!details.coshape().IsAssumedSize()) {  // C828
+        messages_.Say(
+            "Non-ALLOCATABLE coarray must have an explicit coshape"_err_en_US);
+      }
+    }
+  }
+  if (details.isDummy()) {
+    if (symbol.attrs().test(Attr::INTENT_OUT)) {
+      if (FindUltimateComponent(symbol, [](const Symbol &x) {
+            return IsCoarray(x) && IsAllocatable(x);
+          })) {  // C846
+        messages_.Say(
+            "An INTENT(OUT) dummy argument may not be, or contain, an ALLOCATABLE coarray"_err_en_US);
+      }
+      if (IsOrContainsEventOrLockComponent(symbol)) {  // C847
+        messages_.Say(
+            "An INTENT(OUT) dummy argument may not be, or contain, EVENT_TYPE or LOCK_TYPE"_err_en_US);
+      }
+    }
+    if (InPure() && !IsPointer(symbol) && !IsIntentIn(symbol) &&
+        !symbol.attrs().test(Attr::VALUE)) {
+      if (InFunction()) {  // C1583
+        messages_.Say(
+            "non-POINTER dummy argument of PURE function must be INTENT(IN) or VALUE"_err_en_US);
+      } else if (IsIntentOut(symbol)) {
+        if (const DeclTypeSpec * type{details.type()}) {
+          if (type && type->IsPolymorphic()) {  // C1588
+            messages_.Say(
+                "An INTENT(OUT) dummy argument of a PURE subroutine may not be polymorphic"_err_en_US);
+          } else if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+            if (FindUltimateComponent(*derived, [](const Symbol &x) {
+                  const DeclTypeSpec *type{x.GetType()};
+                  return type && type->IsPolymorphic();
+                })) {  // C1588
+              messages_.Say(
+                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have a polymorphic ultimate component"_err_en_US);
+            }
+            if (HasImpureFinal(*derived)) {  // C1587
+              messages_.Say(
+                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have an impure FINAL subroutine"_err_en_US);
+            }
+          }
+        }
+      } else if (!IsIntentInOut(symbol)) {  // C1586
+        messages_.Say(
+            "non-POINTER dummy argument of PURE subroutine must have INTENT() or VALUE attribute"_err_en_US);
+      }
+    }
+  }
+}
+
+void CheckHelper::CheckProcEntity(
+    const Symbol &symbol, const ProcEntityDetails &details) {
+  if (details.isDummy()) {
+    const Symbol *interface{details.interface().symbol()};
+    if (!symbol.attrs().test(Attr::INTRINSIC) &&
+        (symbol.attrs().test(Attr::ELEMENTAL) ||
+            (interface && !interface->attrs().test(Attr::INTRINSIC) &&
+                interface->attrs().test(Attr::ELEMENTAL)))) {
+      // There's no explicit constraint or "shall" that we can find in the
+      // standard for this check, but it seems to be implied in multiple
+      // sites, and ELEMENTAL non-intrinsic actual arguments *are*
+      // explicitly forbidden.  But we allow "PROCEDURE(SIN)::dummy"
+      // because it is explicitly legal to *pass* the specific intrinsic
+      // function SIN as an actual argument.
+      messages_.Say("A dummy procedure may not be ELEMENTAL"_err_en_US);
+    }
+  }
+}
+
+void CheckHelper::CheckDerivedType(
+    const Symbol &symbol, const DerivedTypeDetails &details) {
+  CHECK(symbol.scope());
+  CHECK(symbol.scope()->symbol() == &symbol);
+  CHECK(symbol.scope()->IsDerivedType());
+  if (symbol.attrs().test(Attr::ABSTRACT) &&
+      (symbol.attrs().test(Attr::BIND_C) || details.sequence())) {
+    messages_.Say("An ABSTRACT derived type must be extensible"_err_en_US);
+  }
+  if (const DeclTypeSpec * parent{FindParentTypeSpec(symbol)}) {
+    const DerivedTypeSpec *parentDerived{parent->AsDerived()};
+    if (!IsExtensibleType(parentDerived)) {
+      messages_.Say("The parent type is not extensible"_err_en_US);
+    }
+    if (!symbol.attrs().test(Attr::ABSTRACT) && parentDerived &&
+        parentDerived->typeSymbol().attrs().test(Attr::ABSTRACT)) {
+      ScopeComponentIterator components{*parentDerived};
+      for (const Symbol &component : components) {
+        if (component.attrs().test(Attr::DEFERRED)) {
+          if (symbol.scope()->FindComponent(component.name()) == &component) {
+            SayWithDeclaration(component,
+                "Non-ABSTRACT extension of ABSTRACT derived type '%s' lacks a binding for DEFERRED procedure '%s'"_err_en_US,
+                parentDerived->typeSymbol().name(), component.name());
+          }
+        }
+      }
+    }
+  }
+}
+
+void CheckHelper::CheckGeneric(
+    const Symbol &symbol, const GenericDetails &details) {
+  CheckSpecificsAreDistinguishable(symbol, details);
+}
+
+// Check that the specifics of this generic are distinguishable from each other
+void CheckHelper::CheckSpecificsAreDistinguishable(
+    const Symbol &generic, const GenericDetails &details) {
+  const SymbolVector &specifics{details.specificProcs()};
+  std::size_t count{specifics.size()};
+  if (count < 2) {
+    return;
+  }
+  GenericKind kind{details.kind()};
+  auto distinguishable{kind.IsAssignment() || kind.IsOperator()
+          ? evaluate::characteristics::DistinguishableOpOrAssign
+          : evaluate::characteristics::Distinguishable};
+  using evaluate::characteristics::Procedure;
+  std::vector<Procedure> procs;
+  for (const Symbol &symbol : specifics) {
+    if (context_.HasError(symbol)) {
+      return;
+    }
+    auto proc{Procedure::Characterize(symbol, context_.intrinsics())};
+    if (!proc) {
+      return;
+    }
+    procs.emplace_back(*proc);
+  }
+  for (std::size_t i1{0}; i1 < count - 1; ++i1) {
+    auto &proc1{procs[i1]};
+    for (std::size_t i2{i1 + 1}; i2 < count; ++i2) {
+      auto &proc2{procs[i2]};
+      if (!distinguishable(proc1, proc2)) {
+        SayNotDistinguishable(
+            generic.name(), kind, specifics[i1], specifics[i2]);
+      }
+    }
+  }
+}
+
+void CheckHelper::SayNotDistinguishable(const SourceName &name,
+    GenericKind kind, const Symbol &proc1, const Symbol &proc2) {
+  auto &&text{kind.IsDefinedOperator()
+          ? "Generic operator '%s' may not have specific procedures '%s'"
+            " and '%s' as their interfaces are not distinguishable"_err_en_US
+          : "Generic '%s' may not have specific procedures '%s'"
+            " and '%s' as their interfaces are not distinguishable"_err_en_US};
+  auto &msg{
+      context_.Say(name, std::move(text), name, proc1.name(), proc2.name())};
+  evaluate::AttachDeclaration(msg, proc1);
+  evaluate::AttachDeclaration(msg, proc2);
+}
+
 void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
     const DerivedTypeSpec *derived) {  // C866 - C868
   if (IsIntentIn(symbol)) {
@@ -384,9 +462,9 @@ void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
   }
 }
 
-void CheckHelper::CheckBinding(const Symbol &symbol) {
+void CheckHelper::CheckProcBinding(
+    const Symbol &symbol, const ProcBindingDetails &binding) {
   const Scope &dtScope{symbol.owner()};
-  const auto &binding{symbol.get<ProcBindingDetails>()};
   CHECK(dtScope.kind() == Scope::Kind::DerivedType);
   if (const Symbol * dtSymbol{dtScope.symbol()}) {
     if (symbol.attrs().test(Attr::DEFERRED)) {
@@ -483,4 +561,5 @@ void CheckHelper::Check(const Scope &scope) {
 void CheckDeclarations(SemanticsContext &context) {
   CheckHelper{context}.Check();
 }
+
 }

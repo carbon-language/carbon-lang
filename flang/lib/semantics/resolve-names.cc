@@ -608,7 +608,6 @@ protected:
   GenericDetails &GetGenericDetails();
   // Add to generic the symbol for the subprogram with the same name
   void CheckGenericProcedures(Symbol &);
-  void CheckSpecificsAreDistinguishable(Symbol &, const SymbolVector &);
 
 private:
   // A new GenericInfo is pushed for each interface block and generic stmt
@@ -630,7 +629,6 @@ private:
 
   void AddSpecificProcs(const std::list<parser::Name> &, ProcedureKind);
   void ResolveSpecificsInGeneric(Symbol &generic);
-  void SayNotDistinguishable(const Symbol &, const Symbol &, const Symbol &);
 };
 
 class SubprogramVisitor : public virtual ScopeHandler, public InterfaceVisitor {
@@ -2538,58 +2536,6 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
         *details.derivedType()->scope());
   }
   generic.set(isFunction ? Symbol::Flag::Function : Symbol::Flag::Subroutine);
-}
-
-void InterfaceVisitor::SayNotDistinguishable(
-    const Symbol &generic, const Symbol &proc1, const Symbol &proc2) {
-  auto &&text{IsDefinedOperator(generic.name())
-          ? "Generic operator '%s' may not have specific procedures '%s'"
-            " and '%s' as their interfaces are not distinguishable"_err_en_US
-          : "Generic '%s' may not have specific procedures '%s'"
-            " and '%s' as their interfaces are not distinguishable"_err_en_US};
-  auto &msg{context().Say(generic.name(), std::move(text), generic.name(),
-      proc1.name(), proc2.name())};
-  if (!proc1.IsFromModFile()) {
-    msg.Attach(proc1.name(), "Declaration of '%s'"_en_US, proc1.name());
-  }
-  if (!proc2.IsFromModFile()) {
-    msg.Attach(proc2.name(), "Declaration of '%s'"_en_US, proc2.name());
-  }
-}
-
-// Check that the specifics of this generic are distinguishable from each other
-void InterfaceVisitor::CheckSpecificsAreDistinguishable(
-    Symbol &generic, const SymbolVector &specifics) {
-  auto count{specifics.size()};
-  if (specifics.size() < 2) {
-    return;
-  }
-  auto kind{generic.get<GenericDetails>().kind()};
-  auto distinguishable{kind.IsAssignment() || kind.IsOperator()
-          ? evaluate::characteristics::DistinguishableOpOrAssign
-          : evaluate::characteristics::Distinguishable};
-  using evaluate::characteristics::Procedure;
-  std::vector<Procedure> procs;
-  for (const Symbol &symbol : specifics) {
-    if (context().HasError(symbol)) {
-      return;
-    }
-    auto proc{Procedure::Characterize(symbol, context().intrinsics())};
-    if (!proc) {
-      return;
-    }
-    procs.emplace_back(*proc);
-  }
-  for (std::size_t i1{0}; i1 < count - 1; ++i1) {
-    auto &proc1{procs[i1]};
-    for (std::size_t i2{i1 + 1}; i2 < count; ++i2) {
-      auto &proc2{procs[i2]};
-      if (!distinguishable(proc1, proc2)) {
-        SayNotDistinguishable(generic, specifics[i1], specifics[i2]);
-        context().SetError(generic);
-      }
-    }
-  }
 }
 
 // SubprogramVisitor implementation
@@ -6057,12 +6003,6 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
   // in those initializers will resolve to the right symbols.
   DeferredCheckVisitor{*this}.Walk(node.spec());
   DeferredCheckVisitor{*this}.Walk(node.exec());  // for BLOCK
-  for (auto &pair : currScope()) {
-    Symbol &symbol{*pair.second};
-    if (const auto *details{symbol.detailsIf<GenericDetails>()}) {
-      CheckSpecificsAreDistinguishable(symbol, details->specificProcs());
-    }
-  }
   // Finish the definitions of derived types and parameterized derived
   // type instantiations.  The original derived type definitions need to
   // be finished before the instantiations can be.
@@ -6105,12 +6045,6 @@ void ResolveNamesVisitor::FinishDerivedTypeDefinition(Scope &scope) {
             [](auto &) {},
         },
         comp.details());
-  }
-  for (auto &pair : scope) {
-    Symbol &comp{*pair.second};
-    if (const auto *details{comp.detailsIf<GenericDetails>()}) {
-      CheckSpecificsAreDistinguishable(comp, details->specificProcs());
-    }
   }
 }
 
