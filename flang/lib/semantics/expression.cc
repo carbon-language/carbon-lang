@@ -1835,23 +1835,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
         }
       }
     }
-    return std::visit(
-        [&](auto &&x) -> MaybeExpr {
-          using xTy = std::decay_t<decltype(x)>;
-          if constexpr (common::HasMember<xTy, TypelessExpression>) {
-            return operand;  // ignore parentheses around typeless
-          } else if constexpr (std::is_same_v<xTy, Expr<SomeDerived>>) {
-            return operand;  // ignore parentheses around derived type
-          } else {
-            return std::visit(
-                [](auto &&y) -> MaybeExpr {
-                  using Ty = ResultType<decltype(y)>;
-                  return {AsGenericExpr(Parentheses<Ty>{std::move(y)})};
-                },
-                std::move(x.u));
-          }
-        },
-        std::move(operand->u));
+    return Parenthesize(std::move(*operand));
   }
   return std::nullopt;
 }

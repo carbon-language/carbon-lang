@@ -113,6 +113,9 @@ public:
 
   bool Matches(const characteristics::DummyArgument &) const;
 
+  // Wrap this argument in parentheses
+  void Parenthesize();
+
   // TODO: Mark legacy %VAL and %REF arguments
 
 private:

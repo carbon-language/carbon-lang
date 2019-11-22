@@ -24,6 +24,25 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
+Expr<SomeType> Parenthesize(Expr<SomeType> &&expr) {
+  return std::visit(
+      [&](auto &&x) {
+        using T = std::decay_t<decltype(x)>;
+        if constexpr (common::HasMember<T, TypelessExpression> ||
+            std::is_same_v<T, Expr<SomeDerived>>) {
+          return expr;  // no parentheses around typeless or derived type
+        } else {
+          return std::visit(
+              [](auto &&y) {
+                using T = ResultType<decltype(y)>;
+                return AsGenericExpr(Parentheses<T>{std::move(y)});
+              },
+              std::move(x.u));
+        }
+      },
+      std::move(expr.u));
+}
+
 // IsVariable()
 auto IsVariableHelper::operator()(const ProcedureDesignator &x) const
     -> Result {

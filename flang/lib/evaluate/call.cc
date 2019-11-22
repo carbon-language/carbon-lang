@@ -63,6 +63,11 @@ bool ActualArgument::operator==(const ActualArgument &that) const {
       isAlternateReturn == that.isAlternateReturn && u_ == that.u_;
 }
 
+void ActualArgument::Parenthesize() {
+  CHECK(!isAlternateReturn);
+  u_ = evaluate::Parenthesize(std::move(DEREF(UnwrapExpr())));
+}
+
 SpecificIntrinsic::SpecificIntrinsic(
     IntrinsicProcedure n, characteristics::Procedure &&chars)
   : name{n}, characteristics{new characteristics::Procedure{std::move(chars)}} {
