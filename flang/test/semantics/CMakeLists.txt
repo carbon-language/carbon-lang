@@ -102,6 +102,7 @@ set(ERROR_TESTS
   resolve63.f90
   resolve64.f90
   resolve65.f90
+  resolve66.f90
   stop01.f90
   structconst01.f90
   structconst02.f90

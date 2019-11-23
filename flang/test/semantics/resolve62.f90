@@ -40,7 +40,8 @@ subroutine s2
   real :: x, y(10), z
   logical :: a
   a = f(1.0)
-  a = f(y)  !TODO: this should resolve to f2 -- should get error here
+  !ERROR: No intrinsic or user-defined ASSIGNMENT(=) matches operand types LOGICAL(4) and REAL(4)
+  a = f(y)
 end
 
 ! Resolve named operator

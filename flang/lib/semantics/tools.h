@@ -23,6 +23,7 @@
 #include "semantics.h"
 #include "../common/Fortran.h"
 #include "../evaluate/expression.h"
+#include "../evaluate/type.h"
 #include "../evaluate/variable.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree.h"
@@ -57,6 +58,14 @@ const DeclTypeSpec *FindParentTypeSpec(const Symbol &);
 // Return the Symbol of the variable of a construct association, if it exists
 const Symbol *GetAssociationRoot(const Symbol &);
 
+enum class Tristate { No, Yes, Maybe };
+inline Tristate ToTristate(bool x) { return x ? Tristate::Yes : Tristate::No; }
+
+// Is this a user-defined assignment? If both sides are the same derived type
+// (and the ranks are okay) the answer is Maybe.
+Tristate IsDefinedAssignment(
+    const std::optional<evaluate::DynamicType> &lhsType, int lhsRank,
+    const std::optional<evaluate::DynamicType> &rhsType, int rhsRank);
 bool IsGenericDefinedOp(const Symbol &);
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);

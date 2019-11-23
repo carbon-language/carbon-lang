@@ -82,6 +82,27 @@ const Scope *FindPureProcedureContaining(const Scope &start) {
   return nullptr;
 }
 
+Tristate IsDefinedAssignment(
+    const std::optional<evaluate::DynamicType> &lhsType, int lhsRank,
+    const std::optional<evaluate::DynamicType> &rhsType, int rhsRank) {
+  if (!lhsType || !rhsType) {
+    return Tristate::No;  // error or rhs is untyped
+  }
+  TypeCategory lhsCat{lhsType->category()};
+  TypeCategory rhsCat{rhsType->category()};
+  if (rhsRank > 0 && lhsRank != rhsRank) {
+    return Tristate::Yes;
+  } else if (lhsCat != TypeCategory::Derived) {
+    return ToTristate(lhsCat != rhsCat &&
+        (!IsNumericTypeCategory(lhsCat) || !IsNumericTypeCategory(rhsCat)));
+  } else if (rhsCat == TypeCategory::Derived &&
+      lhsType->GetDerivedTypeSpec() == rhsType->GetDerivedTypeSpec()) {
+    return Tristate::Maybe;  // TYPE(t) = TYPE(t) can be defined or intrinsic
+  } else {
+    return Tristate::Yes;
+  }
+}
+
 bool IsGenericDefinedOp(const Symbol &symbol) {
   const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
   return details && details->kind().IsDefinedOperator();

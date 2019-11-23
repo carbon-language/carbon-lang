@@ -450,18 +450,11 @@ void CheckHelper::SayNotDistinguishable(const SourceName &name,
   evaluate::AttachDeclaration(msg, proc2);
 }
 
-static bool ConflictsWithIntrinsicAssignment(
-    const DummyDataObject &arg0, const DummyDataObject &arg1) {
-  auto cat0{arg0.type.type().category()};
-  auto cat1{arg1.type.type().category()};
-  int rank0{arg0.type.Rank()};
-  int rank1{arg1.type.Rank()};
-  if (cat0 == TypeCategory::Derived || (rank1 > 0 && rank0 != rank1)) {
-    return false;
-  } else {
-    return cat0 == cat1 ||
-        (IsNumericTypeCategory(cat0) && IsNumericTypeCategory(cat1));
-  }
+static bool ConflictsWithIntrinsicAssignment(const Procedure &proc) {
+  auto lhs{std::get<DummyDataObject>(proc.dummyArguments[0].u).type};
+  auto rhs{std::get<DummyDataObject>(proc.dummyArguments[1].u).type};
+  return Tristate::No ==
+      IsDefinedAssignment(lhs.type(), lhs.Rank(), rhs.type(), rhs.Rank());
 }
 
 // Check if this procedure can be used for defined assignment (see 15.4.3.4.3).
@@ -476,9 +469,7 @@ bool CheckHelper::CheckDefinedAssignment(
   } else if (!CheckDefinedAssignmentArg(specific, proc.dummyArguments[0], 0) |
       !CheckDefinedAssignmentArg(specific, proc.dummyArguments[1], 1)) {
     return false;  // error was reported
-  } else if (ConflictsWithIntrinsicAssignment(
-                 std::get<DummyDataObject>(proc.dummyArguments[0].u),
-                 std::get<DummyDataObject>(proc.dummyArguments[1].u))) {
+  } else if (ConflictsWithIntrinsicAssignment(proc)) {
     msg = "Defined assignment subroutine '%s' conflicts with"
           " intrinsic assignment"_err_en_US;
   } else {

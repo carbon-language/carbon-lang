@@ -146,7 +146,7 @@ module m
   ! C1594 is tested in call12.f90.
   pure subroutine s10 ! C1595
     integer :: n
-    !ERROR: Procedure referenced in PURE subprogram 's10' must be PURE too
+    !ERROR: Procedure 'notpure' referenced in PURE subprogram 's10' must be PURE too
     n = notpure(1)
   end subroutine
   pure subroutine s11(to) ! C1596

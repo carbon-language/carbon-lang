@@ -61,36 +61,36 @@ contains
   subroutine test_relational()
     l = x == y  !OK
     l = x .eq. y  !OK
-    !ERROR: No user-defined or intrinsic == operator matches operand types TYPE(t) and REAL(4)
+    !ERROR: No intrinsic or user-defined OPERATOR(==) matches operand types TYPE(t) and REAL(4)
     l = x == r
   end
   subroutine test_numeric()
     l = x + r  !OK
-    !ERROR: No user-defined or intrinsic + operator matches operand types REAL(4) and TYPE(t)
+    !ERROR: No intrinsic or user-defined OPERATOR(+) matches operand types REAL(4) and TYPE(t)
     l = r + x
   end
   subroutine test_logical()
     l = x .and. r  !OK
-    !ERROR: No user-defined or intrinsic .AND. operator matches operand types REAL(4) and TYPE(t)
+    !ERROR: No intrinsic or user-defined OPERATOR(.AND.) matches operand types REAL(4) and TYPE(t)
     l = r .and. x
   end
   subroutine test_unary()
     l = +x  !OK
-    !ERROR: No user-defined or intrinsic + operator matches operand type LOGICAL(4)
+    !ERROR: No intrinsic or user-defined OPERATOR(+) matches operand type LOGICAL(4)
     l = +l
     l = .not. r  !OK
-    !ERROR: No user-defined or intrinsic .NOT. operator matches operand type TYPE(t)
+    !ERROR: No intrinsic or user-defined OPERATOR(.NOT.) matches operand type TYPE(t)
     l = .not. x
   end
   subroutine test_concat()
     l = x // y  !OK
-    !ERROR: No user-defined or intrinsic // operator matches operand types TYPE(t) and REAL(4)
+    !ERROR: No intrinsic or user-defined OPERATOR(//) matches operand types TYPE(t) and REAL(4)
     l = x // r
   end
   subroutine test_conformability(x, y)
     real :: x(10), y(10,10)
     l = x + y  !OK
-    !ERROR: No user-defined or intrinsic + operator matches rank 2 array of REAL(4) and rank 1 array of REAL(4)
+    !ERROR: No intrinsic or user-defined OPERATOR(+) matches rank 2 array of REAL(4) and rank 1 array of REAL(4)
     l = y + x
   end
 end
@@ -201,7 +201,7 @@ contains
   subroutine s1(x, y, z)
     logical :: x
     complex :: y, z
-    !ERROR: No user-defined or intrinsic .AND. operator matches operand types COMPLEX(4) and COMPLEX(4)
+    !ERROR: No intrinsic or user-defined OPERATOR(.AND.) matches operand types COMPLEX(4) and COMPLEX(4)
     x = y .and. z
     !ERROR: No specific procedure of generic operator '.a.' matches the actual arguments
     x = y .a. z
