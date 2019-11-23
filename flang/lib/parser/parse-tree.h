@@ -70,6 +70,7 @@ class DerivedTypeSpec;
 // type-checked generic expression representations by semantic analysis.
 namespace Fortran::evaluate {
 struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
+struct GenericAssignmentWrapper;  // forward definition, represent assignment
 }
 
 // Most non-template classes in this file use these default definitions
@@ -1918,6 +1919,9 @@ struct DeallocateStmt {
 // R1032 assignment-stmt -> variable = expr
 struct AssignmentStmt {
   TUPLE_CLASS_BOILERPLATE(AssignmentStmt);
+  using TypedAssignment = std::unique_ptr<evaluate::GenericAssignmentWrapper,
+      common::Deleter<evaluate::GenericAssignmentWrapper>>;
+  mutable TypedAssignment typedAssignment;
   std::tuple<Variable, Expr> t;
 };
 

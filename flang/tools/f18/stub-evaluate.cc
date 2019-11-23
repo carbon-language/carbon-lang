@@ -24,6 +24,11 @@ struct GenericExprWrapper {
   ~GenericExprWrapper();
 };
 GenericExprWrapper::~GenericExprWrapper() = default;
+struct GenericAssignmentWrapper {
+  ~GenericAssignmentWrapper();
+};
+GenericAssignmentWrapper::~GenericAssignmentWrapper() = default;
 }
 
 DEFINE_DELETER(Fortran::evaluate::GenericExprWrapper)
+DEFINE_DELETER(Fortran::evaluate::GenericAssignmentWrapper)

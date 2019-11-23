@@ -854,6 +854,21 @@ public:
   common::CombineVariants<TypelessExpression, CategoryExpression> u;
 };
 
+// An assignment is either intrinsic (with lhs and rhs) or user-defined,
+// represented as a ProcedureRef.
+class Assignment {
+public:
+  explicit Assignment(ProcedureRef &&x) : u{std::move(x)} {}
+  Assignment(Expr<SomeType> &&lhs, Expr<SomeType> &&rhs)
+    : u{IntrinsicAssignment{std::move(lhs), std::move(rhs)}} {}
+  struct IntrinsicAssignment {
+    Expr<SomeType> lhs;
+    Expr<SomeType> rhs;
+  };
+
+  std::variant<IntrinsicAssignment, ProcedureRef> u;
+};
+
 // This wrapper class is used, by means of a forward reference with
 // an owning pointer, to cache analyzed expressions in parse tree nodes.
 // v is nullopt if an error occurred during expression analysis.
@@ -862,6 +877,13 @@ struct GenericExprWrapper {
   ~GenericExprWrapper();
   bool operator==(const GenericExprWrapper &) const;
   std::optional<Expr<SomeType>> v;
+};
+
+// Like GenericExprWrapper but for analyzed assignments
+struct GenericAssignmentWrapper {
+  GenericAssignmentWrapper(std::optional<Assignment> &&x) : v{std::move(x)} {}
+  ~GenericAssignmentWrapper();
+  std::optional<Assignment> v;
 };
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr, )

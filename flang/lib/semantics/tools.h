@@ -241,6 +241,8 @@ template<typename T> const SomeExpr *GetExpr(const T &x) {
   return GetExprHelper{}.Get(x);
 }
 
+const evaluate::Assignment *GetAssignment(const parser::AssignmentStmt &);
+
 template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
   if (const auto *expr{GetExpr(x)}) {
     return evaluate::ToInt64(*expr);

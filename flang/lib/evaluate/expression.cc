@@ -175,6 +175,8 @@ bool GenericExprWrapper::operator==(const GenericExprWrapper &that) const {
   return v == that.v;
 }
 
+GenericAssignmentWrapper::~GenericAssignmentWrapper() = default;
+
 template<TypeCategory CAT> int Expr<SomeKind<CAT>>::GetKind() const {
   return std::visit(
       [](const auto &kx) { return std::decay_t<decltype(kx)>::Result::kind; },
@@ -194,3 +196,4 @@ std::optional<Expr<SubscriptInteger>> Expr<SomeCharacter>::LEN() const {
 INSTANTIATE_EXPRESSION_TEMPLATES
 }
 DEFINE_DELETER(Fortran::evaluate::GenericExprWrapper)
+DEFINE_DELETER(Fortran::evaluate::GenericAssignmentWrapper)

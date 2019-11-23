@@ -23,6 +23,9 @@ namespace Fortran::evaluate {
 struct GenericExprWrapper {
   ~GenericExprWrapper();
 };
+struct GenericAssignmentWrapper {
+  ~GenericAssignmentWrapper();
+};
 }
 
 namespace Fortran::parser {
@@ -248,3 +251,4 @@ std::ostream &operator<<(std::ostream &os, const Name &x) {
 }
 
 template class std::unique_ptr<Fortran::evaluate::GenericExprWrapper>;
+template class std::unique_ptr<Fortran::evaluate::GenericAssignmentWrapper>;
