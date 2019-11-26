@@ -1001,6 +1001,20 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     });
     IsCritEdge.push_back(HasCritEdges);
   }
+  // Restores cannot be placed in empty BBs because we have a dataflow
+  // analysis that depends on insertions happening before real instructions
+  // (PredictiveStackPointerTracking). Detect now for empty BBs and add a
+  // dummy nop that is scheduled to be removed later.
+  bool InvalidateRequired = false;
+  for (auto &BB : BF.layout()) {
+    if (BB->size() != 0)
+      continue;
+    MCInst NewInst;
+    BC.MIB->createNoop(NewInst);
+    auto II = BB->addInstruction(std::move(NewInst));
+    scheduleChange(&*II, WorklistItem(WorklistItem::Erase, 0));
+    InvalidateRequired = true;
+  }
   if (std::accumulate(IsCritEdge.begin(), IsCritEdge.end(), 0)) {
     DEBUG({
       dbgs() << "Now detected critical edges in the following frontier:\n";
@@ -1015,6 +1029,9 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     });
     splitFrontierCritEdges(&BF, Frontier, IsCritEdge, CritEdgesFrom,
                            CritEdgesTo);
+    InvalidateRequired = true;
+  }
+  if (InvalidateRequired) {
     // BitVectors that represent all insns of the function are invalid now
     // since we changed BBs/Insts. Re-run steps that depend on pointers being
     // valid

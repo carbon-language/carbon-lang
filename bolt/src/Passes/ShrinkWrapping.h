@@ -395,21 +395,13 @@ private:
       WList.emplace_back(std::forward<T>(Item)...);
       return;
     }
+    BinaryBasicBlock *BB = PP.getBB();
     // Avoid inserting on BBs with no instructions because we have a dataflow
     // analysis that depends on insertions happening before real instructions
     // (PredictiveStackPointerTracking)
-    BinaryBasicBlock *BB = PP.getBB();
-    if (BB->size() != 0) {
-      Todo[BB].emplace_back(std::forward<T>(Item)...);
-      return;
-    }
-    while (BB->size() == 0) {
-      assert (BB->succ_size() == 1);
-      BB = *BB->succ_begin();
-    }
-    auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-        *BB->begin(), getAnnotationIndex(), AllocatorId);
-    WList.emplace_back(std::forward<T>(Item)...);
+    assert(BB->size() != 0 &&
+           "doRestorePlacement() should have handled empty BBs");
+    Todo[BB].emplace_back(std::forward<T>(Item)...);
   }
 
   /// Determine the POP ordering according to which CSR save is the dominator.
