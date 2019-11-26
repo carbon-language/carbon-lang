@@ -386,8 +386,8 @@ Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
               ? source->Reshape(std::move(shape.value()))
               : pad->Reshape(std::move(shape.value()))};
       ConstantSubscripts subscripts{result.lbounds()};
-      auto copied{
-          result.CopyFrom(*source, source->size(), subscripts, dimOrderPtr)};
+      auto copied{result.CopyFrom(*source,
+          std::min(source->size(), resultElements), subscripts, dimOrderPtr)};
       if (copied < resultElements) {
         CHECK(pad);
         copied += result.CopyFrom(

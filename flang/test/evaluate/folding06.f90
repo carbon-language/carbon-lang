@@ -31,8 +31,10 @@ module m
   integer(4), parameter :: int_pad(2) = [7, 8]
   integer(4), parameter :: int_expected_result(*, *) = reshape([1, 5, 2, 6, 3, 7, 4, 8], new_shape)
   integer(4), parameter :: int_result(*, *) = reshape(int_source, new_shape, int_pad, order)
+  integer(4), parameter :: int_result_long_source(*, *) = reshape([1, 5, 2, 6, 3, 7, 4, 8, 9], new_shape)
   logical, parameter :: test_reshape_integer_1 = all(int_expected_result == int_result)
   logical, parameter :: test_reshape_integer_2 = all(shape(int_result, 8).EQ.new_shape)
+  logical, parameter :: test_reshape_integer_3 = all(int_expected_result == int_result_long_source)
 
 
   ! Testing characters
