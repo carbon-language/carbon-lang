@@ -708,10 +708,22 @@ bool GenericKind::IsOperator() const {
 
 std::string GenericKind::ToString() const {
   return std::visit(
-      common::visitors{
-          [](const OtherKind &x) { return EnumToString(x); },
-          [](const DefinedIo &x) { return EnumToString(x); },
-          [](const auto &x) { return common::EnumToString(x); },
+      common::visitors {
+        [](const OtherKind &x) { return EnumToString(x); },
+            [](const DefinedIo &x) { return EnumToString(x); },
+#if !__clang__ && __GNUC__ == 7 && __GNUC_MINOR__ == 2
+            [](const common::NumericOperator &x) {
+              return common::EnumToString(x);
+            },
+            [](const common::LogicalOperator &x) {
+              return common::EnumToString(x);
+            },
+            [](const common::RelationalOperator &x) {
+              return common::EnumToString(x);
+            },
+#else
+            [](const auto &x) { return common::EnumToString(x); },
+#endif
       },
       u);
 }
