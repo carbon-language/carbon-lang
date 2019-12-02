@@ -66,6 +66,18 @@ inline Tristate ToTristate(bool x) { return x ? Tristate::Yes : Tristate::No; }
 Tristate IsDefinedAssignment(
     const std::optional<evaluate::DynamicType> &lhsType, int lhsRank,
     const std::optional<evaluate::DynamicType> &rhsType, int rhsRank);
+// Test for intrinsic unary and binary operators based on types and ranks
+bool IsIntrinsicRelational(common::RelationalOperator,
+    const evaluate::DynamicType &, int, const evaluate::DynamicType &, int);
+bool IsIntrinsicNumeric(const evaluate::DynamicType &);
+bool IsIntrinsicNumeric(
+    const evaluate::DynamicType &, int, const evaluate::DynamicType &, int);
+bool IsIntrinsicLogical(const evaluate::DynamicType &);
+bool IsIntrinsicLogical(
+    const evaluate::DynamicType &, int, const evaluate::DynamicType &, int);
+bool IsIntrinsicConcat(
+    const evaluate::DynamicType &, int, const evaluate::DynamicType &, int);
+
 bool IsGenericDefinedOp(const Symbol &);
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);

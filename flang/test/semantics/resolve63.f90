@@ -141,8 +141,8 @@ end
 module m3
   interface operator(+)
     logical function add(x, y)
-      logical :: x
-      integer :: y
+      logical, intent(in) :: x
+      integer, value :: y
     end
   end interface
 contains

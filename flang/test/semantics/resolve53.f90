@@ -239,13 +239,16 @@ module m14
   end interface
 contains
   real function f1(x, y)
-    real :: x, y
+    real, intent(in) :: x
+    logical, intent(in) :: y
   end
   integer function f2(x, y)
-    integer :: x, y
+    integer, intent(in) :: x
+    logical, intent(in) :: y
   end
   real function f3(x, y)
-    real :: x, y
+    real, value :: x
+    logical, value :: y
   end
 end module
 

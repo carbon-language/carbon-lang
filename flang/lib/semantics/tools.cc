@@ -103,6 +103,54 @@ Tristate IsDefinedAssignment(
   }
 }
 
+bool IsIntrinsicRelational(common::RelationalOperator opr,
+    const evaluate::DynamicType &type0, int rank0,
+    const evaluate::DynamicType &type1, int rank1) {
+  if (!evaluate::AreConformable(rank0, rank1)) {
+    return false;
+  } else {
+    auto cat0{type0.category()};
+    auto cat1{type1.category()};
+    if (IsNumericTypeCategory(cat0) && IsNumericTypeCategory(cat1)) {
+      // numeric types: EQ/NE always ok, others ok for non-complex
+      return opr == common::RelationalOperator::EQ ||
+          opr == common::RelationalOperator::NE ||
+          (cat0 != TypeCategory::Complex && cat1 != TypeCategory::Complex);
+    } else {
+      // not both numeric: only Character is ok
+      return cat0 == TypeCategory::Character && cat1 == TypeCategory::Character;
+    }
+  }
+}
+
+bool IsIntrinsicNumeric(const evaluate::DynamicType &type0) {
+  return IsNumericTypeCategory(type0.category());
+}
+bool IsIntrinsicNumeric(const evaluate::DynamicType &type0, int rank0,
+    const evaluate::DynamicType &type1, int rank1) {
+  return evaluate::AreConformable(rank0, rank1) &&
+      IsNumericTypeCategory(type0.category()) &&
+      IsNumericTypeCategory(type1.category());
+}
+
+bool IsIntrinsicLogical(const evaluate::DynamicType &type0) {
+  return type0.category() == TypeCategory::Logical;
+}
+bool IsIntrinsicLogical(const evaluate::DynamicType &type0, int rank0,
+    const evaluate::DynamicType &type1, int rank1) {
+  return evaluate::AreConformable(rank0, rank1) &&
+      type0.category() == TypeCategory::Logical &&
+      type1.category() == TypeCategory::Logical;
+}
+
+bool IsIntrinsicConcat(const evaluate::DynamicType &type0, int rank0,
+    const evaluate::DynamicType &type1, int rank1) {
+  return evaluate::AreConformable(rank0, rank1) &&
+      type0.category() == TypeCategory::Character &&
+      type1.category() == TypeCategory::Character &&
+      type0.kind() == type1.kind();
+}
+
 bool IsGenericDefinedOp(const Symbol &symbol) {
   const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
   return details && details->kind().IsDefinedOperator();

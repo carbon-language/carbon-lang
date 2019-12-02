@@ -349,14 +349,13 @@ private:
   friend class ArgumentAnalyzer;
 };
 
+inline bool AreConformable(int leftRank, int rightRank) {
+  return leftRank == 0 || rightRank == 0 || leftRank == rightRank;
+}
+
 template<typename L, typename R>
 bool AreConformable(const L &left, const R &right) {
-  int leftRank{left.Rank()};
-  if (leftRank == 0) {
-    return true;
-  }
-  int rightRank{right.Rank()};
-  return rightRank == 0 || leftRank == rightRank;
+  return AreConformable(left.Rank(), right.Rank());
 }
 
 template<typename L, typename R>

@@ -187,6 +187,7 @@ private:
   bool AreConformable() const;
   Symbol *FindDefinedOp(const char *) const;
   std::optional<DynamicType> GetType(std::size_t) const;
+  int GetRank(std::size_t) const;
   bool IsBOZLiteral(std::size_t i) const {
     return std::holds_alternative<BOZLiteralConstant>(GetExpr(i).u);
   }
@@ -2465,18 +2466,9 @@ void ArgumentAnalyzer::Analyze(
 }
 
 bool ArgumentAnalyzer::IsIntrinsicRelational(RelationalOperator opr) const {
-  auto cat0{GetType(0)->category()};
-  auto cat1{GetType(1)->category()};
-  if (!AreConformable()) {
-    return false;
-  } else if (IsNumericTypeCategory(cat0) && IsNumericTypeCategory(cat1)) {
-    // numeric types: EQ/NE always ok, others ok for non-complex
-    return opr == RelationalOperator::EQ || opr == RelationalOperator::NE ||
-        (cat0 != TypeCategory::Complex && cat1 != TypeCategory::Complex);
-  } else {
-    // not both numeric: only Character is ok
-    return cat0 == TypeCategory::Character && cat1 == TypeCategory::Character;
-  }
+  CHECK(actuals_.size() == 2);
+  return semantics::IsIntrinsicRelational(
+      opr, *GetType(0), GetRank(0), *GetType(1), GetRank(1));
 }
 
 bool ArgumentAnalyzer::IsIntrinsicNumeric(NumericOperator opr) const {
@@ -2485,7 +2477,7 @@ bool ArgumentAnalyzer::IsIntrinsicNumeric(NumericOperator opr) const {
     if (IsBOZLiteral(0)) {
       return opr == NumericOperator::Add;
     } else {
-      return type0 && IsNumericTypeCategory(type0->category());
+      return type0 && semantics::IsIntrinsicNumeric(*type0);
     }
   } else {
     std::optional<DynamicType> type1{GetType(1)};
@@ -2496,25 +2488,25 @@ bool ArgumentAnalyzer::IsIntrinsicNumeric(NumericOperator opr) const {
       auto cat0{type0->category()};
       return cat0 == TypeCategory::Integer || cat0 == TypeCategory::Real;
     } else {
-      return AreConformable() && type0 && type1 &&
-          IsNumericTypeCategory(type0->category()) &&
-          IsNumericTypeCategory(type1->category());
+      return type0 && type1 &&
+          semantics::IsIntrinsicNumeric(*type0, GetRank(0), *type1, GetRank(1));
     }
   }
 }
 
 bool ArgumentAnalyzer::IsIntrinsicLogical() const {
-  return GetType(0)->category() == TypeCategory::Logical &&
-      (actuals_.size() == 1 ||
-          (AreConformable() &&
-              GetType(1)->category() == TypeCategory::Logical));
+  if (actuals_.size() == 1) {
+    return semantics::IsIntrinsicLogical(*GetType(0));
+    return GetType(0)->category() == TypeCategory::Logical;
+  } else {
+    return semantics::IsIntrinsicLogical(
+        *GetType(0), GetRank(0), *GetType(1), GetRank(1));
+  }
 }
 
 bool ArgumentAnalyzer::IsIntrinsicConcat() const {
-  return AreConformable() &&
-      GetType(0)->category() == TypeCategory::Character &&
-      GetType(1)->category() == TypeCategory::Character &&
-      GetType(0)->kind() == GetType(1)->kind();
+  return semantics::IsIntrinsicConcat(
+      *GetType(0), GetRank(0), *GetType(1), GetRank(1));
 }
 
 MaybeExpr ArgumentAnalyzer::TryDefinedOp(
@@ -2613,6 +2605,9 @@ Symbol *ArgumentAnalyzer::FindDefinedOp(const char *opr) const {
 
 std::optional<DynamicType> ArgumentAnalyzer::GetType(std::size_t i) const {
   return i < actuals_.size() ? actuals_[i].value().GetType() : std::nullopt;
+}
+int ArgumentAnalyzer::GetRank(std::size_t i) const {
+  return i < actuals_.size() ? actuals_[i].value().Rank() : 0;
 }
 
 // Report error resolving opr when there is a user-defined one available

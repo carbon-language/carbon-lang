@@ -36,7 +36,7 @@ module m2
   private :: operator(+) , ifoo
 contains
   integer function ifoo(x, y)
-    integer, intent(in) :: x, y
+    logical, intent(in) :: x, y
   end
 end module
 
@@ -47,7 +47,7 @@ module m3
   interface operator(<)
     logical function lt(x, y)
       import t
-      type(t) :: x, y
+      type(t), intent(in) :: x, y
     end function
   end interface
   !ERROR: The accessibility of 'operator(<)' has already been specified as PRIVATE
@@ -55,7 +55,7 @@ module m3
   interface operator(.gt.)
     logical function gt(x, y)
       import t
-      type(t) :: x, y
+      type(t), intent(in) :: x, y
     end function
   end interface
   public :: operator(>)

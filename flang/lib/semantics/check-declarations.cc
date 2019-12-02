@@ -63,6 +63,12 @@ private:
   void CheckDerivedType(const Symbol &, const DerivedTypeDetails &);
   void CheckGeneric(const Symbol &, const GenericDetails &);
   std::optional<std::vector<Procedure>> Characterize(const SymbolVector &);
+  bool CheckDefinedOperator(const SourceName &, const GenericKind &,
+      const Symbol &, const Procedure &);
+  std::optional<parser::MessageFixedText> CheckNumberOfArgs(
+      const GenericKind &, std::size_t);
+  bool CheckDefinedOperatorArg(
+      const SourceName &, const Symbol &, const Procedure &, std::size_t);
   bool CheckDefinedAssignment(const Symbol &, const Procedure &);
   bool CheckDefinedAssignmentArg(const Symbol &, const DummyArgument &, int);
   void CheckSpecificsAreDistinguishable(
@@ -401,13 +407,19 @@ void CheckHelper::CheckGeneric(
     return;
   }
   bool ok{true};
+  if (details.kind().IsIntrinsicOperator()) {
+    for (std::size_t i{0}; i < specifics.size(); ++i) {
+      auto restorer{messages_.SetLocation(bindingNames[i])};
+      ok &= CheckDefinedOperator(
+          symbol.name(), details.kind(), specifics[i], (*procs)[i]);
+    }
+  }
   if (details.kind().IsAssignment()) {
     for (std::size_t i{0}; i < specifics.size(); ++i) {
       auto restorer{messages_.SetLocation(bindingNames[i])};
       ok &= CheckDefinedAssignment(specifics[i], (*procs)[i]);
     }
   }
-  // TODO: check defined operators too
   if (ok) {
     CheckSpecificsAreDistinguishable(symbol, details, *procs);
   }
@@ -455,6 +467,134 @@ static bool ConflictsWithIntrinsicAssignment(const Procedure &proc) {
   auto rhs{std::get<DummyDataObject>(proc.dummyArguments[1].u).type};
   return Tristate::No ==
       IsDefinedAssignment(lhs.type(), lhs.Rank(), rhs.type(), rhs.Rank());
+}
+
+static bool ConflictsWithIntrinsicOperator(
+    const GenericKind &kind, const Procedure &proc) {
+  auto arg0{std::get<DummyDataObject>(proc.dummyArguments[0].u).type};
+  auto type0{arg0.type()};
+  if (proc.dummyArguments.size() == 1) {  // unary
+    return std::visit(
+        common::visitors{
+            [&](common::NumericOperator) { return IsIntrinsicNumeric(type0); },
+            [&](common::LogicalOperator) { return IsIntrinsicLogical(type0); },
+            [](const auto &) -> bool { DIE("bad generic kind"); },
+        },
+        kind.u);
+  } else {  // binary
+    int rank0{arg0.Rank()};
+    auto arg1{std::get<DummyDataObject>(proc.dummyArguments[1].u).type};
+    auto type1{arg1.type()};
+    int rank1{arg1.Rank()};
+    return std::visit(
+        common::visitors{
+            [&](common::NumericOperator) {
+              return IsIntrinsicNumeric(type0, rank0, type1, rank1);
+            },
+            [&](common::LogicalOperator) {
+              return IsIntrinsicLogical(type0, rank0, type1, rank1);
+            },
+            [&](common::RelationalOperator opr) {
+              return IsIntrinsicRelational(opr, type0, rank0, type1, rank1);
+            },
+            [&](GenericKind::OtherKind x) {
+              CHECK(x == GenericKind::OtherKind::Concat);
+              return IsIntrinsicConcat(type0, rank0, type1, rank1);
+            },
+            [](const auto &) -> bool { DIE("bad generic kind"); },
+        },
+        kind.u);
+  }
+}
+
+// Check if this procedure can be used for defined operators (see 15.4.3.4.2).
+bool CheckHelper::CheckDefinedOperator(const SourceName &opName,
+    const GenericKind &kind, const Symbol &specific, const Procedure &proc) {
+  std::optional<parser::MessageFixedText> msg;
+  if (!proc.functionResult.has_value()) {
+    msg = "%s procedure '%s' must be a function"_err_en_US;
+  } else if (proc.functionResult->IsAssumedLengthCharacter()) {
+    msg = "%s function '%s' may not have assumed-length CHARACTER(*)"
+          " result"_err_en_US;
+  } else if (auto m{CheckNumberOfArgs(kind, proc.dummyArguments.size())}) {
+    msg = std::move(m);
+  } else if (!CheckDefinedOperatorArg(opName, specific, proc, 0) |
+      !CheckDefinedOperatorArg(opName, specific, proc, 1)) {
+    return false;  // error was reported
+  } else if (ConflictsWithIntrinsicOperator(kind, proc)) {
+    msg = "%s function '%s' conflicts with intrinsic operator"_err_en_US;
+  } else {
+    return true;  // OK
+  }
+  SayWithDeclaration(specific, std::move(msg.value()),
+      parser::ToUpperCaseLetters(opName.ToString()), specific.name());
+  return false;
+}
+
+// If the number of arguments is wrong for this intrinsic operator, return
+// false and return the error message in msg.
+std::optional<parser::MessageFixedText> CheckHelper::CheckNumberOfArgs(
+    const GenericKind &kind, std::size_t nargs) {
+  std::size_t min{2}, max{2};  // allowed number of args; default is binary
+  std::visit(
+      common::visitors{
+          [&](const common::NumericOperator &x) {
+            if (x == common::NumericOperator::Add ||
+                x == common::NumericOperator::Subtract) {
+              min = 1;  // + and - are unary or binary
+            }
+          },
+          [&](const common::LogicalOperator &x) {
+            if (x == common::LogicalOperator::Not) {
+              min = 1;  // .NOT. is unary
+              max = 1;
+            }
+          },
+          [](const common::RelationalOperator &) {
+            // all are binary
+          },
+          [](const GenericKind::OtherKind &x) {
+            CHECK(x == GenericKind::OtherKind::Concat);
+          },
+          [](const auto &) { DIE("expected intrinsic operator"); },
+      },
+      kind.u);
+  if (nargs >= min && nargs <= max) {
+    return std::nullopt;
+  } else if (max == 1) {
+    return "%s function '%s' must have one dummy argument"_err_en_US;
+  } else if (min == 2) {
+    return "%s function '%s' must have two dummy arguments"_err_en_US;
+  } else {
+    return "%s function '%s' must have one or two dummy arguments"_err_en_US;
+  }
+}
+
+bool CheckHelper::CheckDefinedOperatorArg(const SourceName &opName,
+    const Symbol &symbol, const Procedure &proc, std::size_t pos) {
+  if (pos >= proc.dummyArguments.size()) {
+    return true;
+  }
+  auto &arg{proc.dummyArguments.at(pos)};
+  std::optional<parser::MessageFixedText> msg;
+  if (arg.IsOptional()) {
+    msg = "In %s function '%s', dummy argument '%s' may not be"
+          " OPTIONAL"_err_en_US;
+  } else if (const auto *dataObject{std::get_if<DummyDataObject>(&arg.u)};
+             dataObject == nullptr) {
+    msg = "In %s function '%s', dummy argument '%s' must be a"
+          " data object"_err_en_US;
+  } else if (dataObject->intent != common::Intent::In &&
+      !dataObject->attrs.test(DummyDataObject::Attr::Value)) {
+    msg = "In %s function '%s', dummy argument '%s' must have INTENT(IN)"
+          " or VALUE attribute"_err_en_US;
+  }
+  if (msg) {
+    SayWithDeclaration(symbol, std::move(*msg),
+        parser::ToUpperCaseLetters(opName.ToString()), symbol.name(), arg.name);
+    return false;
+  }
+  return true;
 }
 
 // Check if this procedure can be used for defined assignment (see 15.4.3.4.3).

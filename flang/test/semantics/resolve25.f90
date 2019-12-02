@@ -46,7 +46,7 @@ end module
 module m2
   interface
     integer function f(x, y)
-      integer, intent(in) :: x, y
+      logical, intent(in) :: x, y
     end function
   end interface
   generic :: operator(+)=> f
