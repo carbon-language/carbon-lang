@@ -120,3 +120,34 @@ subroutine s2 (q1)
  !DEF: /s2/DerivedType2/n ObjectEntity INTEGER(4)
  q1%n = 1
 end subroutine
+!DEF: /m1 Module
+module m1
+ !DEF: /m1/forward PRIVATE DerivedType
+  private :: forward
+ !DEF: /m1/base PUBLIC DerivedType
+  type :: base
+  !REF: /m1/forward
+  !DEF: /m1/base/p POINTER ObjectEntity CLASS(forward)
+    class(forward), pointer :: p
+  end type
+ !REF: /m1/base
+ !REF: /m1/forward
+  type, extends(base) :: forward
+  !DEF: /m1/forward/n ObjectEntity INTEGER(4)
+    integer :: n
+  end type
+ contains
+ !DEF: /m1/test PUBLIC (Subroutine) Subprogram
+  subroutine test
+  !REF: /m1/forward
+  !DEF: /m1/test/object TARGET ObjectEntity TYPE(forward)
+    type(forward), target :: object
+  !REF: /m1/test/object
+  !REF: /m1/base/p
+    object%p => object
+  !REF: /m1/test/object
+  !REF: /m1/base/p
+  !REF: /m1/forward/n
+    object%p%n = 666
+  end subroutine
+end module

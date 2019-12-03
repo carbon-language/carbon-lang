@@ -708,8 +708,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 // TODO: Non-standard intrinsic functions
 //  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
 //  COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL,
-//  DCMPLX, EQV, NEQV, INT8, JINT, JNINT, KNINT,
-//  QCMPLX, DREAL, DFLOAT, QEXT, QFLOAT, QREAL, DNUM,
+//  EQV, NEQV, INT8, JINT, JNINT, KNINT,
+//  QCMPLX, DFLOAT, QEXT, QFLOAT, QREAL, DNUM,
 //  INUM, JNUM, KNUM, QNUM, RNUM, RAN, RANF, ILEN, SIZEOF,
 //  MCLOCK, SECNDS, COTAN, IBCHNG, ISHA, ISHC, ISHL, IXOR
 //  IARG, IARGC, NARGS, NUMARG, BADDRESS, IADDR, CACHESIZE,
@@ -740,7 +740,7 @@ struct SpecificIntrinsicInterface : public IntrinsicInterface {
   //  e.g. IABS(INT(i), INT(j)) not equiv to INT(ABS(i, j)).
   // This is allowed for restricted min/max specific functions because
   // the expected behavior is clear from their definitions. A warning is though
-  // always emitted because other compilers behavior is not ubiquitous here.
+  // always emitted because other compilers' behavior is not ubiquitous here.
   bool useGenericAndForceResultType{false};
 };
 

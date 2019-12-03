@@ -4429,15 +4429,16 @@ void DeclarationVisitor::SetType(
 
 std::optional<DerivedTypeSpec> DeclarationVisitor::ResolveDerivedType(
     const parser::Name &name) {
-  const Symbol *symbol{FindSymbol(name)};
-  if (!symbol) {
+  Symbol *symbol{FindSymbol(name)};
+  if (!symbol || symbol->has<UnknownDetails>()) {
     if (allowForwardReferenceToDerivedType()) {
-      Symbol &forward{MakeSymbol(InclusiveScope(), name.source, Attrs{})};
+      if (!symbol) {
+        symbol = &MakeSymbol(InclusiveScope(), name.source, Attrs{});
+        Resolve(name, *symbol);
+      };
       DerivedTypeDetails details;
       details.set_isForwardReferenced();
-      forward.set_details(std::move(details));
-      Resolve(name, forward);
-      symbol = &forward;
+      symbol->set_details(std::move(details));
     } else {
       Say(name, "Derived type '%s' not found"_err_en_US);
       return std::nullopt;
@@ -6221,5 +6222,4 @@ bool ResolveNames(SemanticsContext &context, const parser::Program &program) {
   ResolveNamesVisitor{context}.Walk(program);
   return !context.AnyFatalError();
 }
-
 }
