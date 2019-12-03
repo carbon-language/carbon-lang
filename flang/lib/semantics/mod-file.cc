@@ -764,16 +764,16 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   options.searchDirectories = context_.searchDirectories();
   auto path{ModFileName(name, ancestorName, context_.moduleFileSuffix())};
   const auto *sourceFile{parsing.Prescan(path, options)};
-  if (!sourceFile) {
-    return nullptr;
-  } else if (parsing.messages().AnyFatalError()) {
+  if (parsing.messages().AnyFatalError()) {
     for (auto &msg : parsing.messages().messages()) {
       std::string str{msg.ToString()};
       Say(name, ancestorName, parser::MessageFixedText{str.c_str(), str.size()},
-          sourceFile->path());
+          path);
     }
     return nullptr;
-  } else if (!VerifyHeader(sourceFile->content(), sourceFile->bytes())) {
+  }
+  CHECK(sourceFile);
+  if (!VerifyHeader(sourceFile->content(), sourceFile->bytes())) {
     Say(name, ancestorName, "File has invalid checksum: %s"_en_US,
         sourceFile->path());
     return nullptr;

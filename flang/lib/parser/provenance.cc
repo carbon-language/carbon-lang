@@ -174,8 +174,11 @@ std::string AllSources::PopSearchPathDirectory() {
 
 const SourceFile *AllSources::Open(std::string path, std::stringstream *error) {
   std::unique_ptr<SourceFile> source{std::make_unique<SourceFile>(encoding_)};
-  source->Open(LocateSourceFile(path, searchPath_), error);
-  return ownedSourceFiles_.emplace_back(std::move(source)).get();
+  if (source->Open(LocateSourceFile(path, searchPath_), error)) {
+    return ownedSourceFiles_.emplace_back(std::move(source)).get();
+  } else {
+    return nullptr;
+  }
 }
 
 const SourceFile *AllSources::ReadStandardInput(std::stringstream *error) {

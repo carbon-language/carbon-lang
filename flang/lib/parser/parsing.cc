@@ -49,6 +49,7 @@ const SourceFile *Parsing::Prescan(const std::string &path, Options options) {
     messages_.Say(range, "%s"_err_en_US, fileError.str());
     return sourceFile;
   }
+  CHECK(sourceFile);
   if (sourceFile->bytes() == 0) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
     messages_.Say(range, "file is empty"_err_en_US);
