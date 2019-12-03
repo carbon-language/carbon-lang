@@ -408,8 +408,6 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
 
   Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP));
 
-  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes));
-
   Manager.registerPass(
       llvm::make_unique<JTFootprintReduction>(PrintJTFootprintReduction),
       opts::JTFootprintReductionFlag);
@@ -429,8 +427,6 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   Manager.registerPass(llvm::make_unique<PLTCall>(PrintPLT));
 
   Manager.registerPass(llvm::make_unique<ReorderBasicBlocks>(PrintReordered));
-
-  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes));
 
   Manager.registerPass(
     llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
@@ -471,6 +467,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   Manager.registerPass(
       llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
       opts::SimplifyConditionalTailCalls);
+
+  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes));
 
   Manager.registerPass(llvm::make_unique<AlignerPass>());
 
