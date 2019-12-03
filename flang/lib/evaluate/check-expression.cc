@@ -218,7 +218,7 @@ public:
 
   template<typename T> Result operator()(const FunctionRef<T> &x) const {
     if (const auto *symbol{x.proc().GetSymbol()}) {
-      if (!symbol->attrs().test(semantics::Attr::PURE)) {
+      if (!semantics::IsPureProcedure(*symbol)) {
         return "reference to impure function '"s + symbol->name().ToString() +
             "'";
       }

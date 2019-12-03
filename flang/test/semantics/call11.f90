@@ -18,12 +18,13 @@ module m
 
   type :: t
    contains
-    procedure, nopass :: tbp => pure
+    procedure, nopass :: tbp_pure => pure
+    procedure, nopass :: tbp_impure => impure
   end type
   type, extends(t) :: t2
    contains
     !ERROR: An overridden PURE type-bound procedure binding must also be PURE
-    procedure, nopass :: tbp => impure ! 7.5.7.3
+    procedure, nopass :: tbp_pure => impure ! 7.5.7.3
   end type
 
  contains
@@ -49,6 +50,27 @@ module m
     do concurrent (j=1:1, impure(j) /= 0) ! C1121
       !ERROR: Call to an impure procedure is not allowed in DO CONCURRENT
       a(j) = impure(j) ! C1139
+    end do
+  end subroutine
+  subroutine test2
+    type(t) :: x
+    real :: a(x%tbp_pure(1)) ! ok
+    !ERROR: Invalid specification expression: reference to impure function 'tbp_impure'
+    real :: b(x%tbp_impure(1))
+    forall (j=1:1)
+      a(j) = x%tbp_pure(j) ! ok
+    end forall
+    forall (j=1:1)
+      !ERROR: Impure procedure 'tbp_impure' may not be referenced in a FORALL
+      a(j) = x%tbp_impure(j) ! C1037
+    end forall
+    do concurrent (j=1:1, x%tbp_pure(j) /= 0) ! ok
+      a(j) = x%tbp_pure(j) ! ok
+    end do
+    !ERROR: Concurrent-header mask expression cannot reference an impure procedure
+    do concurrent (j=1:1, x%tbp_impure(j) /= 0) ! C1121
+      !ERROR: Call to an impure procedure component is not allowed in DO CONCURRENT
+      a(j) = x%tbp_impure(j) ! C1139
     end do
   end subroutine
 end module

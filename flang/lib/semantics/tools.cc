@@ -242,8 +242,12 @@ bool IsPureProcedure(const Symbol &symbol) {
       // procedure component with a PURE interface
       return IsPureProcedure(*procInterface);
     }
+  } else if (const auto *details{symbol.detailsIf<ProcBindingDetails>()}) {
+    return IsPureProcedure(details->symbol());
+  } else if (!IsProcedure(symbol)) {
+    return false;
   }
-  return symbol.attrs().test(Attr::PURE) && IsProcedure(symbol);
+  return symbol.attrs().test(Attr::PURE);
 }
 
 bool IsPureProcedure(const Scope &scope) {
