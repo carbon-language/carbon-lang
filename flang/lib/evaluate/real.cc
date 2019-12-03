@@ -470,10 +470,6 @@ std::ostream &Real<W, P, IM>::AsFortran(
       o << "(1._" << kind << "/0.)";
     }
   } else {
-    bool parenthesize{IsNegative()};
-    if (parenthesize) {
-      o << "(";
-    }
     using B = decimal::BinaryFloatingPointNumber<P>;
     const auto *value{reinterpret_cast<const B *>(this)};
     char buffer[24000];  // accommodate real*16
@@ -496,9 +492,6 @@ std::ostream &Real<W, P, IM>::AsFortran(
       o << 'e' << expo;
     }
     o << '_' << kind;
-    if (parenthesize) {
-      o << ')';
-    }
   }
   return o;
 }

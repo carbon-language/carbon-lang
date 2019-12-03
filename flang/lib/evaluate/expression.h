@@ -257,7 +257,8 @@ struct ComplexComponent
   ComplexComponent(bool isImaginary, Expr<Operand> &&x)
     : Base{std::move(x)}, isImaginaryPart{isImaginary} {}
 
-  const char *Suffix() const { return isImaginaryPart ? "%IM" : "%RE"; }
+  const char *Prefix() const { return isImaginaryPart ? "IMAG(" : "REAL("; }
+  const char *Suffix() const { return ")"; }
 
   bool isImaginaryPart{true};
 };
