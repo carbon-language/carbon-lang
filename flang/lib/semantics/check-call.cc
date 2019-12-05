@@ -32,7 +32,7 @@ namespace Fortran::semantics {
 
 static void CheckImplicitInterfaceArg(
     evaluate::ActualArgument &arg, parser::ContextualMessages &messages) {
-  if (const auto &kw{arg.keyword}) {
+  if (auto kw{arg.keyword()}) {
     messages.Say(*kw,
         "Keyword '%s=' may not appear in a reference to a procedure with an implicit interface"_err_en_US,
         *kw);
@@ -600,13 +600,13 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
   std::map<std::string, evaluate::ActualArgument> kwArgs;
   for (auto &x : actuals) {
     if (x) {
-      if (x->keyword) {
+      if (x->keyword()) {
         auto emplaced{
-            kwArgs.try_emplace(x->keyword->ToString(), std::move(*x))};
+            kwArgs.try_emplace(x->keyword()->ToString(), std::move(*x))};
         if (!emplaced.second) {
-          messages.Say(*x->keyword,
+          messages.Say(*x->keyword(),
               "Argument keyword '%s=' appears on more than one effective argument in this procedure reference"_err_en_US,
-              *x->keyword);
+              *x->keyword());
         }
         x.reset();
       }
@@ -620,9 +620,9 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
         if (iter != kwArgs.end()) {
           evaluate::ActualArgument &x{iter->second};
           if (actuals[index]) {
-            messages.Say(*x.keyword,
+            messages.Say(*x.keyword(),
                 "Keyword argument '%s=' has already been specified positionally (#%d) in this procedure reference"_err_en_US,
-                *x.keyword, index + 1);
+                *x.keyword(), index + 1);
           } else {
             actuals[index] = std::move(x);
           }
@@ -633,9 +633,9 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
     }
     for (auto &bad : kwArgs) {
       evaluate::ActualArgument &x{bad.second};
-      messages.Say(*x.keyword,
+      messages.Say(*x.keyword(),
           "Argument keyword '%s=' is not recognized for this procedure reference"_err_en_US,
-          *x.keyword);
+          *x.keyword());
     }
   }
 }
@@ -645,10 +645,10 @@ static parser::Messages CheckExplicitInterface(
     const evaluate::FoldingContext &context, const Scope *scope) {
   parser::Messages buffer;
   parser::ContextualMessages messages{context.messages().at(), &buffer};
-  evaluate::FoldingContext localContext{context, messages};
   RearrangeArguments(proc, actuals, messages);
   if (buffer.empty()) {
     int index{0};
+    evaluate::FoldingContext localContext{context, messages};
     for (auto &actual : actuals) {
       const auto &dummy{proc.dummyArguments.at(index++)};
       if (actual) {

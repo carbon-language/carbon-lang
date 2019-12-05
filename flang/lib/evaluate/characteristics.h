@@ -27,6 +27,7 @@
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
+#include "../parser/char-block.h"
 #include "../semantics/symbol.h"
 #include <optional>
 #include <ostream>
@@ -260,6 +261,7 @@ struct Procedure {
   bool HasExplicitInterface() const {
     return !attrs.test(Attr::ImplicitInterface);
   }
+  int FindPassIndex(std::optional<parser::CharBlock>) const;
   bool CanBeCalledViaImplicitInterface() const;
   bool CanOverride(const Procedure &, std::optional<int> passIndex) const;
   std::ostream &Dump(std::ostream &) const;

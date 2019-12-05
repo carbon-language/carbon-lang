@@ -109,10 +109,11 @@ std::ostream &ActualArgument::AssumedType::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
-  if (keyword) {
-    o << keyword->ToString() << '=';
+  CHECK(!IsPassedObject());
+  if (keyword_) {
+    o << keyword_->ToString() << '=';
   }
-  if (isAlternateReturn) {
+  if (isAlternateReturn_) {
     o << '*';
   }
   if (const auto *expr{UnwrapExpr()}) {
@@ -130,7 +131,7 @@ std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
   proc_.AsFortran(o);
   char separator{'('};
   for (const auto &arg : arguments_) {
-    if (arg) {
+    if (arg && !arg->IsPassedObject()) {
       arg->AsFortran(o << separator);
       separator = ',';
     }

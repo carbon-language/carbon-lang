@@ -59,12 +59,11 @@ int ActualArgument::Rank() const {
 }
 
 bool ActualArgument::operator==(const ActualArgument &that) const {
-  return keyword == that.keyword &&
-      isAlternateReturn == that.isAlternateReturn && u_ == that.u_;
+  return keyword_ == that.keyword_ &&
+      isAlternateReturn_ == that.isAlternateReturn_ && u_ == that.u_;
 }
 
 void ActualArgument::Parenthesize() {
-  CHECK(!isAlternateReturn);
   u_ = evaluate::Parenthesize(std::move(DEREF(UnwrapExpr())));
 }
 

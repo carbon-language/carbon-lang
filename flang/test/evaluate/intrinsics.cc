@@ -93,7 +93,7 @@ struct TestCall {
     std::size_t j{0};
     for (auto &kw : keywords) {
       if (!kw.empty()) {
-        args[j]->keyword = strings(kw);
+        args[j]->set_keyword(strings(kw));
       }
       ++j;
     }

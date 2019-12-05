@@ -31,8 +31,8 @@
 #include <optional>
 #include <set>
 
+#define CRASH_ON_FAILURE 1
 // #define DUMP_ON_FAILURE 1
-// #define CRASH_ON_FAILURE 1
 #if DUMP_ON_FAILURE
 #include "../parser/dump-parse-tree.h"
 #include <iostream>
@@ -1522,16 +1522,35 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
 }
 
-static const semantics::WithPassArg *GetPassInfo(
-    const semantics::Symbol &symbol) {
-  if (const auto *binding{symbol.detailsIf<semantics::ProcBindingDetails>()}) {
-    return binding;
-  } else if (const auto *proc{
-                 symbol.detailsIf<semantics::ProcEntityDetails>()}) {
-    return proc;
-  } else {
-    return nullptr;
+static std::optional<parser::CharBlock> GetPassName(
+    const semantics::Symbol &proc) {
+  return std::visit(
+      [](const auto &details) {
+        if constexpr (std::is_base_of_v<semantics::WithPassArg,
+                          std::decay_t<decltype(details)>>) {
+          return details.passName();
+        } else {
+          return std::optional<parser::CharBlock>{};
+        }
+      },
+      proc.details());
+}
+
+static int GetPassIndex(const semantics::Symbol &proc, parser::CharBlock name) {
+  if (const auto *interface{semantics::FindInterface(proc)}) {
+    if (const auto *subp{
+            interface->detailsIf<semantics::SubprogramDetails>()}) {
+      int index{0};
+      for (const auto *arg : subp->dummyArgs()) {
+        if (arg && arg->name() == name) {
+          return index;
+        }
+        ++index;
+      }
+      DIE("PASS argument name not in dummy argument list");
+    }
   }
+  return 0;  // first argument is passed-object
 }
 
 auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
@@ -1543,9 +1562,17 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
     if (Symbol * sym{sc.component.symbol}) {
       if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
         const semantics::DerivedTypeSpec *dtSpec{nullptr};
+        const auto *binding{sym->detailsIf<semantics::ProcBindingDetails>()};
+        const Symbol *resolution{nullptr};
+        if (binding && sym->attrs().test(semantics::Attr::NON_OVERRIDABLE)) {
+          resolution = &binding->symbol();
+        }
         if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
           if (!dtDyTy->IsUnlimitedPolymorphic()) {
             dtSpec = &dtDyTy->GetDerivedTypeSpec();
+          }
+          if (binding && !dtDyTy->IsPolymorphic()) {
+            resolution = &binding->symbol();
           }
         }
         if (dtSpec && dtSpec->scope()) {
@@ -1553,30 +1580,34 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
                   ExtractDataRef(std::move(*dtExpr))}) {
             if (auto component{CreateComponent(
                     std::move(*dataRef), *sym, *dtSpec->scope())}) {
-              if (const auto *pass{GetPassInfo(*sym)}) {
-                if (auto passIndex{pass->passIndex()}) {
-                  // There's a PASS argument by which the base of the procedure
-                  // component reference must be passed.  Append or insert it to
-                  // the list of effective arguments.
-                  auto iter{arguments.begin()};
-                  int at{0};
-                  while (iter < arguments.end() && at < *passIndex) {
-                    if (*iter && (*iter)->keyword) {
-                      iter = arguments.end();
-                      break;
-                    }
-                    ++iter;
-                    ++at;
+              if (!sym->attrs().test(semantics::Attr::NOPASS)) {
+                // There's a PASS argument by which the base of the procedure
+                // component reference must be passed.  Append or insert it to
+                // the list of actual arguments.
+                auto passName{GetPassName(*sym)};
+                int passIndex{passName ? GetPassIndex(*sym, *passName) : 0};
+                auto iter{arguments.begin()};
+                int at{0};
+                while (iter < arguments.end() && at < passIndex) {
+                  if (*iter && (*iter)->keyword()) {
+                    iter = arguments.end();
+                    break;
                   }
-                  ActualArgument passed{AsGenericExpr(std::move(*dtExpr))};
-                  if (iter == arguments.end() && pass->passName()) {
-                    passed.keyword = *pass->passName();
-                  }
-                  arguments.emplace(iter, std::move(passed));
+                  ++iter;
+                  ++at;
                 }
+                ActualArgument passed{ActualArgument::PassedObject{}};
+                if (resolution) {
+                  passed = ActualArgument{AsGenericExpr(std::move(*dtExpr))};
+                }
+                if (iter == arguments.end() && passName) {
+                  passed.set_keyword(*passName);
+                }
+                arguments.emplace(iter, std::move(passed));
               }
-              return CalleeAndArguments{
-                  ProcedureDesignator{std::move(*component)},
+              return CalleeAndArguments{resolution
+                      ? ProcedureDesignator{*resolution}
+                      : ProcedureDesignator{std::move(*component)},
                   std::move(arguments)};
             } else {
               Say(name,
@@ -1618,7 +1649,7 @@ static bool CheckCompatibleArgument(bool isElemental,
             return expr && IsProcedurePointer(*expr);
           },
           [&](const characteristics::AlternateReturn &) {
-            return actual.isAlternateReturn;
+            return actual.isAlternateReturn();
           },
       },
       dummy.u);
@@ -2457,7 +2488,7 @@ void ArgumentAnalyzer::Analyze(
       std::get<parser::ActualArg>(arg.t).u);
   if (actual) {
     if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
-      actual->keyword = argKW->v.source;
+      actual->set_keyword(argKW->v.source);
     }
     actuals_.emplace_back(std::move(*actual));
   } else {

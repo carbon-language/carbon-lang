@@ -669,6 +669,17 @@ Symbol &Symbol::InstantiateComponent(
             Fold(foldingContext, std::move(dim.ubound().GetExplicit())));
       }
     }
+  } else if (!attrs_.test(Attr::NOPASS)) {
+    std::visit(
+        [&result](const auto &x) {
+          using Ty = std::decay_t<decltype(x)>;
+          if constexpr (std::is_base_of_v<WithPassArg, Ty>) {
+            if (auto passName{x.passName()}) {
+              result.get<Ty>().set_passName(*passName);
+            }
+          }
+        },
+        details_);
   }
   return result;
 }

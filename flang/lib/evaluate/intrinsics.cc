@@ -990,7 +990,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     if (!arg) {
       ++missingActualArguments;
     } else {
-      if (arg->isAlternateReturn) {
+      if (arg->isAlternateReturn()) {
         messages.Say(
             "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
             name);
@@ -999,16 +999,16 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       bool found{false};
       int slot{missingActualArguments};
       for (std::size_t j{0}; j < nonRepeatedDummies && !found; ++j) {
-        if (arg->keyword) {
-          found = *arg->keyword == dummy[j].keyword;
+        if (arg->keyword()) {
+          found = *arg->keyword() == dummy[j].keyword;
           if (found) {
             if (const auto *previous{actualForDummy[j]}) {
-              if (previous->keyword) {
-                messages.Say(*arg->keyword,
+              if (previous->keyword()) {
+                messages.Say(*arg->keyword(),
                     "repeated keyword argument to intrinsic '%s'"_err_en_US,
                     name);
               } else {
-                messages.Say(*arg->keyword,
+                messages.Say(*arg->keyword(),
                     "keyword argument to intrinsic '%s' was supplied "
                     "positionally by an earlier actual argument"_err_en_US,
                     name);
@@ -1024,12 +1024,12 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         }
       }
       if (!found) {
-        if (repeatLastDummy && !arg->keyword) {
+        if (repeatLastDummy && !arg->keyword()) {
           // MAX/MIN argument after the 2nd
           actualForDummy.push_back(&*arg);
         } else {
-          if (arg->keyword) {
-            messages.Say(*arg->keyword,
+          if (arg->keyword()) {
+            messages.Say(*arg->keyword(),
                 "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
           } else {
             messages.Say(
@@ -1547,10 +1547,10 @@ SpecificCall IntrinsicProcTable::Implementation::HandleNull(
   if (!arguments.empty()) {
     if (arguments.size() > 1) {
       context.messages().Say("Too many arguments to NULL()"_err_en_US);
-    } else if (arguments[0] && arguments[0]->keyword &&
-        arguments[0]->keyword->ToString() != "mold") {
+    } else if (arguments[0] && arguments[0]->keyword() &&
+        arguments[0]->keyword()->ToString() != "mold") {
       context.messages().Say("Unknown argument '%s' to NULL()"_err_en_US,
-          arguments[0]->keyword->ToString());
+          arguments[0]->keyword()->ToString());
     } else {
       if (Expr<SomeType> * mold{arguments[0]->UnwrapExpr()}) {
         if (IsAllocatableOrPointer(*mold)) {

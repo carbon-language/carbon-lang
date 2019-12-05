@@ -1392,9 +1392,7 @@ private:
   void AddSubpNames(const ProgramTree &);
   bool BeginScope(const ProgramTree &);
   void FinishSpecificationParts(const ProgramTree &);
-  void FinishDerivedTypeDefinition(Scope &);
   void FinishDerivedTypeInstantiation(Scope &);
-  void SetPassArg(const Symbol &, const Symbol *, WithPassArg &);
   void ResolveExecutionParts(const ProgramTree &);
 };
 
@@ -6004,14 +6002,6 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
   // in those initializers will resolve to the right symbols.
   DeferredCheckVisitor{*this}.Walk(node.spec());
   DeferredCheckVisitor{*this}.Walk(node.exec());  // for BLOCK
-  // Finish the definitions of derived types and parameterized derived
-  // type instantiations.  The original derived type definitions need to
-  // be finished before the instantiations can be.
-  for (Scope &childScope : currScope().children()) {
-    if (childScope.IsDerivedType() && childScope.symbol()) {
-      FinishDerivedTypeDefinition(childScope);
-    }
-  }
   for (Scope &childScope : currScope().children()) {
     if (childScope.IsDerivedType() && !childScope.symbol()) {
       FinishDerivedTypeInstantiation(childScope);
@@ -6019,33 +6009,6 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
   }
   for (const auto &child : node.children()) {
     FinishSpecificationParts(child);
-  }
-}
-
-static int FindIndexOfName(
-    const SourceName &name, std::vector<Symbol *> symbols) {
-  for (std::size_t i{0}; i < symbols.size(); ++i) {
-    if (symbols[i] && symbols[i]->name() == name) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-// Perform final checks on a derived type and set the pass arguments.
-void ResolveNamesVisitor::FinishDerivedTypeDefinition(Scope &scope) {
-  CHECK(scope.IsDerivedType() && scope.symbol());
-  for (auto &pair : scope) {
-    Symbol &comp{*pair.second};
-    std::visit(
-        common::visitors{
-            [&](ProcEntityDetails &x) {
-              SetPassArg(comp, x.interface().symbol(), x);
-            },
-            [&](ProcBindingDetails &x) { SetPassArg(comp, &x.symbol(), x); },
-            [](auto &) {},
-        },
-        comp.details());
   }
 }
 
@@ -6063,138 +6026,20 @@ void ResolveNamesVisitor::FinishDerivedTypeInstantiation(Scope &scope) {
       for (auto &pair : scope) {
         Symbol &comp{*pair.second};
         const Symbol &origComp{DEREF(FindInScope(*origTypeScope, comp.name()))};
-        std::visit(
-            common::visitors{
-                [&](ObjectEntityDetails &x) {
-                  if (IsPointer(comp)) {
-                    auto origDetails{origComp.get<ObjectEntityDetails>()};
-                    if (const MaybeExpr & init{origDetails.init()}) {
-                      SomeExpr newInit{*init};
-                      MaybeExpr folded{
-                          evaluate::Fold(foldingContext, std::move(newInit))};
-                      x.set_init(std::move(folded));
-                    }
-                  }
-                },
-                [&](ProcEntityDetails &x) {
-                  auto origDetails{origComp.get<ProcEntityDetails>()};
-                  if (auto pi{origDetails.passIndex()}) {
-                    x.set_passIndex(*pi);
-                  }
-                },
-                [&](ProcBindingDetails &x) {
-                  auto origDetails{origComp.get<ProcBindingDetails>()};
-                  if (auto pi{origDetails.passIndex()}) {
-                    x.set_passIndex(*pi);
-                  }
-                },
-                [](auto &) {},
-            },
-            comp.details());
+        if (IsPointer(comp)) {
+          if (auto *details{comp.detailsIf<ObjectEntityDetails>()}) {
+            auto origDetails{origComp.get<ObjectEntityDetails>()};
+            if (const MaybeExpr & init{origDetails.init()}) {
+              SomeExpr newInit{*init};
+              MaybeExpr folded{
+                  evaluate::Fold(foldingContext, std::move(newInit))};
+              details->set_init(std::move(folded));
+            }
+          }
+        }
       }
     }
   }
-}
-
-// Check C760, constraints on the passed-object dummy argument
-// If they all pass, set the passIndex in details.
-void ResolveNamesVisitor::SetPassArg(
-    const Symbol &proc, const Symbol *interface, WithPassArg &details) {
-  if (proc.attrs().test(Attr::NOPASS)) {
-    return;
-  }
-  const auto &name{proc.name()};
-  if (!interface) {
-    Say(name,
-        "Procedure component '%s' must have NOPASS attribute or explicit interface"_err_en_US,
-        name);
-    return;
-  }
-  const auto *subprogram{interface->detailsIf<SubprogramDetails>()};
-  if (!subprogram) {
-    Say(name, "Procedure component '%s' has invalid interface '%s'"_err_en_US,
-        name, interface->name());
-    return;
-  }
-  std::optional<SourceName> passName{details.passName()};
-  const auto &dummyArgs{subprogram->dummyArgs()};
-  if (!passName && dummyArgs.empty()) {
-    Say(name,
-        proc.has<ProcEntityDetails>()
-            ? "Procedure component '%s' with no dummy arguments"
-              " must have NOPASS attribute"_err_en_US
-            : "Procedure binding '%s' with no dummy arguments"
-              " must have NOPASS attribute"_err_en_US,
-        name);
-    return;
-  }
-  int passArgIndex{0};
-  if (!passName) {
-    passName = dummyArgs[0]->name();
-  } else {
-    passArgIndex = FindIndexOfName(*passName, dummyArgs);
-    if (passArgIndex < 0) {
-      Say(*passName,
-          "'%s' is not a dummy argument of procedure interface '%s'"_err_en_US,
-          *passName, interface->name());
-      return;
-    }
-  }
-  const Symbol &passArg{*dummyArgs[passArgIndex]};
-  std::optional<MessageFixedText> msg;
-  if (!passArg.has<ObjectEntityDetails>()) {
-    msg = "Passed-object dummy argument '%s' of procedure '%s'"
-          " must be a data object"_err_en_US;
-  } else if (passArg.attrs().test(Attr::POINTER)) {
-    msg = "Passed-object dummy argument '%s' of procedure '%s'"
-          " may not have the POINTER attribute"_err_en_US;
-  } else if (passArg.attrs().test(Attr::ALLOCATABLE)) {
-    msg = "Passed-object dummy argument '%s' of procedure '%s'"
-          " may not have the ALLOCATABLE attribute"_err_en_US;
-  } else if (passArg.attrs().test(Attr::VALUE)) {
-    msg = "Passed-object dummy argument '%s' of procedure '%s'"
-          " may not have the VALUE attribute"_err_en_US;
-  } else if (passArg.Rank() > 0) {
-    msg = "Passed-object dummy argument '%s' of procedure '%s'"
-          " must be scalar"_err_en_US;
-  }
-  if (msg) {
-    Say(name, std::move(*msg), passName.value(), name);
-    return;
-  }
-  const DeclTypeSpec *type{passArg.GetType()};
-  if (!type) {
-    return;  // an error already occurred
-  }
-  const Symbol &typeSymbol{*proc.owner().GetSymbol()};
-  const DerivedTypeSpec *derived{type->AsDerived()};
-  if (!derived || derived->typeSymbol() != typeSymbol) {
-    Say(name,
-        "Passed-object dummy argument '%s' of procedure '%s'"
-        " must be of type '%s' but is '%s'"_err_en_US,
-        passName.value(), name, typeSymbol.name(), type->AsFortran());
-    return;
-  }
-  if (IsExtensibleType(derived) != type->IsPolymorphic()) {
-    Say(name,
-        type->IsPolymorphic()
-            ? "Passed-object dummy argument '%s' of procedure '%s'"
-              " may not be polymorphic because '%s' is not extensible"_err_en_US
-            : "Passed-object dummy argument '%s' of procedure '%s'"
-              " must be polymorphic because '%s' is extensible"_err_en_US,
-        passName.value(), name, typeSymbol.name());
-    return;
-  }
-  for (const auto &[paramName, paramValue] : derived->parameters()) {
-    if (paramValue.isLen() && !paramValue.isAssumed()) {
-      Say(name,
-          "Passed-object dummy argument '%s' of procedure '%s'"
-          " has non-assumed length parameter '%s'"_err_en_US,
-          passName.value(), name, paramName);
-    }
-  }
-  details.set_passIndex(passArgIndex);
-  details.set_passName(passName.value());
 }
 
 // Resolve names in the execution part of this node and its children

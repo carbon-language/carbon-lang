@@ -182,17 +182,17 @@ private:
 };
 
 // Mixin for details with passed-object dummy argument.
-// passIndex is set based on passName or the PASS attr.
+// If a procedure pointer component or type-bound procedure does not have
+// the NOPASS attribute on its symbol, then PASS is assumed; the name
+// is optional; if it is missing, the first dummy argument of the procedure's
+// interface is the passed-object dummy argument.
 class WithPassArg {
 public:
-  const std::optional<SourceName> &passName() const { return passName_; }
+  std::optional<SourceName> passName() const { return passName_; }
   void set_passName(const SourceName &passName) { passName_ = passName; }
-  std::optional<int> passIndex() const { return passIndex_; }
-  void set_passIndex(int index) { passIndex_ = index; }
 
 private:
   std::optional<SourceName> passName_;
-  std::optional<int> passIndex_;
 };
 
 // A procedure pointer, dummy procedure, or external procedure

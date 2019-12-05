@@ -78,7 +78,7 @@ end module
 !    integer(4)::x
 !  contains
 !    final::c
-!    procedure,pass(x),non_overridable,private::d
+!    procedure,non_overridable,private::d
 !  end type
 !  type,abstract::t2a
 !  contains

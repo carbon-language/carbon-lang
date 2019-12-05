@@ -72,9 +72,17 @@ public:
     SymbolRef symbol_;
   };
 
+  // A placeholder for the passed-object argument, which will be replaced
+  // with the base object of the Component that constitutes the call's
+  // ProcedureDesignator.
+  struct PassedObject {
+    bool operator==(const PassedObject &) const { return true; }
+  };
+
   explicit ActualArgument(Expr<SomeType> &&);
   explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&);
   explicit ActualArgument(AssumedType);
+  explicit ActualArgument(PassedObject &&) : u_{PassedObject{}} {}
   ~ActualArgument();
   ActualArgument &operator=(Expr<SomeType> &&);
 
@@ -108,9 +116,14 @@ public:
   bool operator==(const ActualArgument &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
-  std::optional<parser::CharBlock> keyword;
-  bool isAlternateReturn{false};  // when true, "value" is a label number
+  std::optional<parser::CharBlock> keyword() const { return keyword_; }
+  void set_keyword(parser::CharBlock x) { keyword_ = x; }
+  bool isAlternateReturn() const { return isAlternateReturn_; }
+  void set_isAlternateReturn() { isAlternateReturn_ = true; }
 
+  bool IsPassedObject() const {
+    return std::holds_alternative<PassedObject>(u_);
+  }
   bool Matches(const characteristics::DummyArgument &) const;
 
   // Wrap this argument in parentheses
@@ -124,7 +137,11 @@ private:
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
-  std::variant<common::CopyableIndirection<Expr<SomeType>>, AssumedType> u_;
+  std::variant<common::CopyableIndirection<Expr<SomeType>>, AssumedType,
+      PassedObject>
+      u_;
+  std::optional<parser::CharBlock> keyword_;
+  bool isAlternateReturn_{false};  // whether expr is a "*label" number
 };
 
 using ActualArguments = std::vector<std::optional<ActualArgument>>;
@@ -167,7 +184,6 @@ struct ProcedureDesignator {
   std::optional<Expr<SubscriptInteger>> LEN() const;
   std::ostream &AsFortran(std::ostream &) const;
 
-  // TODO: When calling X%F, pass X as PASS argument unless NOPASS
   std::variant<SpecificIntrinsic, SymbolRef,
       common::CopyableIndirection<Component>>
       u;

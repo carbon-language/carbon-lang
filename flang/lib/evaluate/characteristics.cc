@@ -352,7 +352,7 @@ std::ostream &AlternateReturn::Dump(std::ostream &o) const { return o << '*'; }
 DummyArgument::~DummyArgument() {}
 
 bool DummyArgument::operator==(const DummyArgument &that) const {
-  return u == that.u;
+  return u == that.u;  // name and passed-object usage are not characteristics
 }
 
 std::optional<DummyArgument> DummyArgument::Characterize(
@@ -561,6 +561,18 @@ bool Procedure::operator==(const Procedure &that) const {
       dummyArguments == that.dummyArguments;
 }
 
+int Procedure::FindPassIndex(std::optional<parser::CharBlock> name) const {
+  int argCount{static_cast<int>(dummyArguments.size())};
+  int index{0};
+  if (name) {
+    while (index < argCount && *name != dummyArguments[index].name.c_str()) {
+      ++index;
+    }
+  }
+  CHECK(index < argCount);
+  return index;
+}
+
 bool Procedure::CanOverride(
     const Procedure &that, std::optional<int> passIndex) const {
   // A PURE procedure may override an impure one (7.5.7.3(2))
@@ -569,21 +581,17 @@ bool Procedure::CanOverride(
       functionResult != that.functionResult) {
     return false;
   }
-  if (passIndex) {
-    int argCount{static_cast<int>(dummyArguments.size())};
-    if (argCount != static_cast<int>(that.dummyArguments.size())) {
+  int argCount{static_cast<int>(dummyArguments.size())};
+  if (argCount != static_cast<int>(that.dummyArguments.size())) {
+    return false;
+  }
+  for (int j{0}; j < argCount; ++j) {
+    if ((!passIndex || j != *passIndex) &&
+        dummyArguments[j] != that.dummyArguments[j]) {
       return false;
     }
-    CHECK(*passIndex >= 0 && *passIndex <= argCount);
-    for (int j{0}; j < argCount; ++j) {
-      if (j != *passIndex && dummyArguments[j] != that.dummyArguments[j]) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return dummyArguments == that.dummyArguments;
   }
+  return true;
 }
 
 std::optional<Procedure> Procedure::Characterize(
@@ -652,12 +660,15 @@ std::optional<Procedure> Procedure::Characterize(
           },
           [&](const semantics::ProcBindingDetails &binding) {
             if (auto result{Characterize(binding.symbol(), intrinsics)}) {
-              if (const auto passIndex{binding.passIndex()}) {
-                auto &passArg{result->dummyArguments.at(*passIndex)};
-                passArg.pass = true;
-                if (const auto passName{binding.passName()}) {
-                  CHECK(passArg.name == passName->ToString());
+              if (!symbol.attrs().test(semantics::Attr::NOPASS)) {
+                auto passName{binding.passName()};
+                for (auto &dummy : result->dummyArguments) {
+                  if (!passName || dummy.name.c_str() == *passName) {
+                    dummy.pass = true;
+                    return result;
+                  }
                 }
+                DIE("PASS argument missing");
               }
               return result;
             } else {

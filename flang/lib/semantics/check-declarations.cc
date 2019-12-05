@@ -57,6 +57,8 @@ private:
   void CheckValue(const Symbol &, const DerivedTypeSpec *);
   void CheckVolatile(
       const Symbol &, bool isAssociated, const DerivedTypeSpec *);
+  void CheckPassArg(
+      const Symbol &proc, const Symbol *interface, const WithPassArg &);
   void CheckProcBinding(const Symbol &, const ProcBindingDetails &);
   void CheckObjectEntity(const Symbol &, const ObjectEntityDetails &);
   void CheckProcEntity(const Symbol &, const ProcEntityDetails &);
@@ -365,6 +367,8 @@ void CheckHelper::CheckProcEntity(
       // function SIN as an actual argument.
       messages_.Say("A dummy procedure may not be ELEMENTAL"_err_en_US);
     }
+  } else if (symbol.owner().IsDerivedType()) {
+    CheckPassArg(symbol, details.interface().symbol(), details);
   }
 }
 
@@ -693,6 +697,109 @@ void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
   }
 }
 
+// C760 constraints on the passed-object dummy argument
+void CheckHelper::CheckPassArg(
+    const Symbol &proc, const Symbol *interface, const WithPassArg &details) {
+  if (proc.attrs().test(Attr::NOPASS)) {
+    return;
+  }
+  const auto &name{proc.name()};
+  if (!interface) {
+    messages_.Say(name,
+        "Procedure component '%s' must have NOPASS attribute or explicit interface"_err_en_US,
+        name);
+    return;
+  }
+  const auto *subprogram{interface->detailsIf<SubprogramDetails>()};
+  if (!subprogram) {
+    messages_.Say(name,
+        "Procedure component '%s' has invalid interface '%s'"_err_en_US, name,
+        interface->name());
+    return;
+  }
+  std::optional<SourceName> passName{details.passName()};
+  const auto &dummyArgs{subprogram->dummyArgs()};
+  if (!passName) {
+    if (dummyArgs.empty()) {
+      messages_.Say(name,
+          proc.has<ProcEntityDetails>()
+              ? "Procedure component '%s' with no dummy arguments"
+                " must have NOPASS attribute"_err_en_US
+              : "Procedure binding '%s' with no dummy arguments"
+                " must have NOPASS attribute"_err_en_US,
+          name);
+      return;
+    }
+    passName = dummyArgs[0]->name();
+  }
+  std::optional<int> passArgIndex{};
+  for (std::size_t i{0}; i < dummyArgs.size(); ++i) {
+    if (dummyArgs[i] && dummyArgs[i]->name() == *passName) {
+      passArgIndex = i;
+      break;
+    }
+  }
+  if (!passArgIndex) {
+    messages_.Say(*passName,
+        "'%s' is not a dummy argument of procedure interface '%s'"_err_en_US,
+        *passName, interface->name());
+    return;
+  }
+  const Symbol &passArg{*dummyArgs[*passArgIndex]};
+  std::optional<parser::MessageFixedText> msg;
+  if (!passArg.has<ObjectEntityDetails>()) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " must be a data object"_err_en_US;
+  } else if (passArg.attrs().test(Attr::POINTER)) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " may not have the POINTER attribute"_err_en_US;
+  } else if (passArg.attrs().test(Attr::ALLOCATABLE)) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " may not have the ALLOCATABLE attribute"_err_en_US;
+  } else if (passArg.attrs().test(Attr::VALUE)) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " may not have the VALUE attribute"_err_en_US;
+  } else if (passArg.Rank() > 0) {
+    msg = "Passed-object dummy argument '%s' of procedure '%s'"
+          " must be scalar"_err_en_US;
+  }
+  if (msg) {
+    messages_.Say(name, std::move(*msg), passName.value(), name);
+    return;
+  }
+  const DeclTypeSpec *type{passArg.GetType()};
+  if (!type) {
+    return;  // an error already occurred
+  }
+  const Symbol &typeSymbol{*proc.owner().GetSymbol()};
+  const DerivedTypeSpec *derived{type->AsDerived()};
+  if (!derived || derived->typeSymbol() != typeSymbol) {
+    messages_.Say(name,
+        "Passed-object dummy argument '%s' of procedure '%s'"
+        " must be of type '%s' but is '%s'"_err_en_US,
+        passName.value(), name, typeSymbol.name(), type->AsFortran());
+    return;
+  }
+  if (IsExtensibleType(derived) != type->IsPolymorphic()) {
+    messages_.Say(name,
+        type->IsPolymorphic()
+            ? "Passed-object dummy argument '%s' of procedure '%s'"
+              " may not be polymorphic because '%s' is not extensible"_err_en_US
+            : "Passed-object dummy argument '%s' of procedure '%s'"
+              " must be polymorphic because '%s' is extensible"_err_en_US,
+        passName.value(), name, typeSymbol.name());
+    return;
+  }
+  for (const auto &[paramName, paramValue] : derived->parameters()) {
+    if (paramValue.isLen() && !paramValue.isAssumed()) {
+      messages_.Say(name,
+          "Passed-object dummy argument '%s' of procedure '%s'"
+          " has non-assumed length parameter '%s'"_err_en_US,
+          passName.value(), name, paramName);
+    }
+  }
+}
+
 void CheckHelper::CheckProcBinding(
     const Symbol &symbol, const ProcBindingDetails &binding) {
   const Scope &dtScope{symbol.owner()};
@@ -731,35 +838,37 @@ void CheckHelper::CheckProcBinding(
             "A type-bound procedure and its override must both, or neither, be ELEMENTAL"_err_en_US);
         return;
       }
-      auto bindingChars{evaluate::characteristics::Procedure::Characterize(
-          binding.symbol(), context_.intrinsics())};
-      auto overriddenChars{evaluate::characteristics::Procedure::Characterize(
-          overriddenBinding->symbol(), context_.intrinsics())};
-      if (binding.passIndex()) {
-        if (overriddenBinding->passIndex()) {
-          int passIndex{*binding.passIndex()};
-          if (passIndex == *overriddenBinding->passIndex()) {
-            if (!(bindingChars && overriddenChars &&
-                    bindingChars->CanOverride(*overriddenChars, passIndex))) {
+      bool isNopass{symbol.attrs().test(Attr::NOPASS)};
+      if (isNopass != overridden->attrs().test(Attr::NOPASS)) {
+        SayWithDeclaration(*overridden,
+            isNopass
+                ? "A NOPASS type-bound procedure may not override a passed-argument procedure"_err_en_US
+                : "A passed-argument type-bound procedure may not override a NOPASS procedure"_err_en_US);
+      } else {
+        auto bindingChars{evaluate::characteristics::Procedure::Characterize(
+            binding.symbol(), context_.intrinsics())};
+        auto overriddenChars{evaluate::characteristics::Procedure::Characterize(
+            overriddenBinding->symbol(), context_.intrinsics())};
+        if (bindingChars && overriddenChars) {
+          if (isNopass) {
+            if (!bindingChars->CanOverride(*overriddenChars, std::nullopt)) {
+              SayWithDeclaration(*overridden,
+                  "A type-bound procedure and its override must have compatible interfaces"_err_en_US);
+            }
+          } else {
+            int passIndex{bindingChars->FindPassIndex(binding.passName())};
+            int overriddenPassIndex{
+                overriddenChars->FindPassIndex(overriddenBinding->passName())};
+            if (passIndex != overriddenPassIndex) {
+              SayWithDeclaration(*overridden,
+                  "A type-bound procedure and its override must use the same PASS argument"_err_en_US);
+            } else if (!bindingChars->CanOverride(
+                           *overriddenChars, passIndex)) {
               SayWithDeclaration(*overridden,
                   "A type-bound procedure and its override must have compatible interfaces apart from their passed argument"_err_en_US);
             }
-          } else {
-            SayWithDeclaration(*overridden,
-                "A type-bound procedure and its override must use the same PASS argument"_err_en_US);
           }
-        } else {
-          SayWithDeclaration(*overridden,
-              "A passed-argument type-bound procedure may not override a NOPASS procedure"_err_en_US);
         }
-      } else if (overriddenBinding->passIndex()) {
-        SayWithDeclaration(*overridden,
-            "A NOPASS type-bound procedure may not override a passed-argument procedure"_err_en_US);
-      } else if (!(bindingChars && overriddenChars &&
-                     bindingChars->CanOverride(
-                         *overriddenChars, std::nullopt))) {
-        SayWithDeclaration(*overridden,
-            "A type-bound procedure and its override must have compatible interfaces"_err_en_US);
       }
       if (symbol.attrs().test(Attr::PRIVATE) &&
           overridden->attrs().test(Attr::PUBLIC)) {
@@ -771,6 +880,7 @@ void CheckHelper::CheckProcBinding(
           "A type-bound procedure binding may not have the same name as a parent component"_err_en_US);
     }
   }
+  CheckPassArg(symbol, &binding.symbol(), binding);
 }
 
 void CheckHelper::Check(const Scope &scope) {
@@ -792,5 +902,4 @@ void CheckHelper::Check(const Scope &scope) {
 void CheckDeclarations(SemanticsContext &context) {
   CheckHelper{context}.Check();
 }
-
 }

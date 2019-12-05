@@ -45,7 +45,7 @@ end
 !  type::t
 !    procedure(),nopass,pointer::e
 !    procedure(real(4)),nopass,pointer::f
-!    procedure(s),pass(x),pointer,private::g
+!    procedure(s),pointer,private::g
 !  end type
 !contains
 !  subroutine s(x)

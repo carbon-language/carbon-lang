@@ -55,13 +55,13 @@ module m
   subroutine test2
     type(t) :: x
     real :: a(x%tbp_pure(1)) ! ok
-    !ERROR: Invalid specification expression: reference to impure function 'tbp_impure'
+    !ERROR: Invalid specification expression: reference to impure function 'impure'
     real :: b(x%tbp_impure(1))
     forall (j=1:1)
       a(j) = x%tbp_pure(j) ! ok
     end forall
     forall (j=1:1)
-      !ERROR: Impure procedure 'tbp_impure' may not be referenced in a FORALL
+      !ERROR: Impure procedure 'impure' may not be referenced in a FORALL
       a(j) = x%tbp_impure(j) ! C1037
     end forall
     do concurrent (j=1:1, x%tbp_pure(j) /= 0) ! ok
