@@ -1857,6 +1857,13 @@ std::error_code DataAggregator::parseMMapEvents() {
 
   auto Range = GlobalMMapInfo.equal_range(NameToUse);
   for (auto I = Range.first; I != Range.second; ++I) {
+    if (BC->HasFixedLoadAddress && I->second.BaseAddress &&
+        I->second.BaseAddress != BC->FirstAllocAddress) {
+      errs() << "PERF2BOLT-WARNING: ignoring mapping of " << NameToUse
+             << " at 0x" << Twine::utohexstr(I->second.BaseAddress) << '\n';
+      continue;
+    }
+
     BinaryMMapInfo.insert(std::make_pair(I->second.PID, I->second));
   }
 
