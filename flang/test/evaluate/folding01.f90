@@ -99,6 +99,8 @@ module m
   logical, parameter :: test_pow2 = (1**100).EQ.(1)
   logical, parameter :: test_pow3 = (2**4).EQ.(16)
   logical, parameter :: test_pow4 = (7**5).EQ.(16807)
+  logical, parameter :: test_pow5 = kind(real(1., kind=8)**cmplx(1., kind=4)).EQ.(8)
+  logical, parameter :: test_pow6 = kind(cmplx(1., kind=4)**real(1., kind=8)).EQ.(8)
 
   ! test MIN and MAX
   real, parameter :: x1 = -35., x2= -35.05, x3=0., x4=35.05, x5=35.

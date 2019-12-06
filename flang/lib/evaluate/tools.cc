@@ -184,6 +184,20 @@ Expr<SomeReal> GetComplexPart(const Expr<SomeComplex> &z, bool isImaginary) {
       z.u);
 }
 
+// Convert REAL to COMPLEX of the same kind. Preserving the real operand kind
+// and then applying complex operand promotion rules allows the result to have
+// the highest precision of REAL and COMPLEX operands as required by Fortran
+// 2018 10.9.1.3.
+Expr<SomeComplex> PromoteRealToComplex(Expr<SomeReal> &&someX) {
+  return std::visit(
+      [](auto &&x) {
+        using RT = ResultType<decltype(x)>;
+        return AsCategoryExpr(ComplexConstructor<RT::kind>{
+            std::move(x), AsExpr(Constant<RT>{Scalar<RT>{}})});
+      },
+      std::move(someX.u));
+}
+
 // Handle mixed COMPLEX+REAL (or INTEGER) operations in a better way
 // than just converting the second operand to COMPLEX and performing the
 // corresponding COMPLEX+COMPLEX operation.
@@ -230,8 +244,13 @@ std::optional<Expr<SomeType>> MixedComplexLeft(
         std::move(zx.u)));
   } else if (defaultRealKind != 666) {  // dodge unused parameter warning
     // (a,b) ** x -> (a,b) ** (x,0)
-    Expr<SomeComplex> zy{ConvertTo(zx, std::move(iry))};
-    return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+    if constexpr (RCAT == TypeCategory::Integer) {
+      Expr<SomeComplex> zy{ConvertTo(zx, std::move(iry))};
+      return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+    } else {
+      Expr<SomeComplex> zy{PromoteRealToComplex(std::move(iry))};
+      return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+    }
   }
   return NoExpr();
 }
@@ -264,8 +283,13 @@ std::optional<Expr<SomeType>> MixedComplexRight(
     }
   } else if (defaultRealKind != 666) {  // dodge unused parameter warning
     // x / (a,b) -> (x,0) / (a,b)
-    Expr<SomeComplex> zx{ConvertTo(zy, std::move(irx))};
-    return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+    if constexpr (LCAT == TypeCategory::Integer) {
+      Expr<SomeComplex> zx{ConvertTo(zx, std::move(irx))};
+      return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+    } else {
+      Expr<SomeComplex> zx{PromoteRealToComplex(std::move(irx))};
+      return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+    }
   }
   return NoExpr();
 }
