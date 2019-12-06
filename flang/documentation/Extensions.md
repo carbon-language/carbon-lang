@@ -109,6 +109,8 @@ Extensions, deletions, and legacy features supported by default
 * When a dummy argument is `POINTER` or `ALLOCATABLE` and is `INTENT(IN)`, we
   relax enforcement of some requirements on actual arguments that must otherwise
   hold true for definable arguments.
+* Assignment of `LOGICAL` to `INTEGER` and vice versa (but not other types).
+  The values are normalized.
 
 Extensions supported when enabled by options
 --------------------------------------------
@@ -140,7 +142,7 @@ Extensions and legacy features deliberately not supported
 * Defining an explicit interface for a subprogram within itself (PGI only)
 * USE association of a procedure interface within that same procedure's definition
 * NULL() as a structure constructor expression for an ALLOCATABLE component (PGI).
-* Conversion of LOGICAL to INTEGER.
+* Conversion of LOGICAL to INTEGER in expressions.
 * IF (integer expression) THEN ... END IF  (PGI/Intel)
 * Comparsion of LOGICAL with ==/.EQ. rather than .EQV. (also .NEQV.) (PGI/Intel)
 * Procedure pointers in COMMON blocks (PGI/Intel)

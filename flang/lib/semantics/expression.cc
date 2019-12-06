@@ -2578,8 +2578,12 @@ std::optional<ProcedureRef> ArgumentAnalyzer::TryDefinedAssignment() {
   using semantics::Tristate;
   const Expr<SomeType> &lhs{GetExpr(0)};
   const Expr<SomeType> &rhs{GetExpr(1)};
-  Tristate isDefined{semantics::IsDefinedAssignment(
-      lhs.GetType(), lhs.Rank(), rhs.GetType(), rhs.Rank())};
+  std::optional<DynamicType> lhsType{lhs.GetType()};
+  std::optional<DynamicType> rhsType{rhs.GetType()};
+  int lhsRank{lhs.Rank()};
+  int rhsRank{rhs.Rank()};
+  Tristate isDefined{
+      semantics::IsDefinedAssignment(lhsType, lhsRank, rhsType, rhsRank)};
   if (isDefined == Tristate::No) {
     return std::nullopt;  // user-defined assignment not allowed for these args
   }
@@ -2587,7 +2591,31 @@ std::optional<ProcedureRef> ArgumentAnalyzer::TryDefinedAssignment() {
   auto procRef{GetDefinedAssignmentProc()};
   if (!procRef) {
     if (isDefined == Tristate::Yes) {
-      SayNoMatch("ASSIGNMENT(=)", true);
+      if (context_.context().languageFeatures().IsEnabled(
+              common::LanguageFeature::LogicalIntegerAssignment) &&
+          lhsType && rhsType && (lhsRank == rhsRank || rhsRank == 0)) {
+        if (lhsType->category() == TypeCategory::Integer &&
+            rhsType->category() == TypeCategory::Logical) {
+          // allow assignment to LOGICAL from INTEGER as a legacy extension
+          if (context_.context().languageFeatures().ShouldWarn(
+                  common::LanguageFeature::LogicalIntegerAssignment)) {
+            context_.Say(
+                "nonstandard usage: assignment of LOGICAL to INTEGER"_en_US);
+          }
+        } else if (lhsType->category() == TypeCategory::Logical &&
+            rhsType->category() == TypeCategory::Integer) {
+          // ... and assignment to LOGICAL from INTEGER
+          if (context_.context().languageFeatures().ShouldWarn(
+                  common::LanguageFeature::LogicalIntegerAssignment)) {
+            context_.Say(
+                "nonstandard usage: assignment of INTEGER to LOGICAL"_en_US);
+          }
+        } else {
+          SayNoMatch("ASSIGNMENT(=)", true);
+        }
+      } else {
+        SayNoMatch("ASSIGNMENT(=)", true);
+      }
     }
     return std::nullopt;
   }
