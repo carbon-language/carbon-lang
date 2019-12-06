@@ -262,6 +262,7 @@ public:
     provenanceMap_.Put(pm);
   }
 
+  std::size_t BufferedBytes() const;
   void Marshal();  // marshals text into one contiguous block
   void CompileProvenanceRangeToOffsetMappings();
   std::string AcquireData() { return std::move(data_); }

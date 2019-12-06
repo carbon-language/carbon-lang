@@ -276,10 +276,12 @@ constexpr auto scalarIntConstantExpr{scalar(intConstantExpr)};
 // Consequently, a program unit END statement should be the last statement
 // on its line.  We parse those END statements via unterminatedStatement()
 // and then skip over the end of the line here.
-TYPE_PARSER(construct<Program>(some(StartNewSubprogram{} >>
-                Parser<ProgramUnit>{} / skipMany(";"_tok) / space /
-                    recovery(endOfLine, SkipPast<'\n'>{}))) /
-    skipStuffBeforeStatement)
+TYPE_PARSER(construct<Program>(
+    extension<LanguageFeature::EmptySourceFile>(skipStuffBeforeStatement >>
+        !nextCh >> defaulted(cut >> some(Parser<ProgramUnit>{}))) ||
+    some(StartNewSubprogram{} >> Parser<ProgramUnit>{} / skipMany(";"_tok) /
+            space / recovery(endOfLine, SkipPast<'\n'>{})) /
+        skipStuffBeforeStatement))
 
 // R502 program-unit ->
 //        main-program | external-subprogram | module | submodule | block-data

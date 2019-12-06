@@ -109,8 +109,10 @@ Extensions, deletions, and legacy features supported by default
 * When a dummy argument is `POINTER` or `ALLOCATABLE` and is `INTENT(IN)`, we
   relax enforcement of some requirements on actual arguments that must otherwise
   hold true for definable arguments.
-* Assignment of `LOGICAL` to `INTEGER` and vice versa (but not other types).
-  The values are normalized.
+* Assignment of `LOGICAL` to `INTEGER` and vice versa (but not other types) is
+  allowed.  The values are normalized.
+* An effectively empty source file (no program unit) is accepted and
+  produces an empty relocatable output file.
 
 Extensions supported when enabled by options
 --------------------------------------------

@@ -223,17 +223,11 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
     --openFileDescriptors;
   }
   fileDescriptor_ = -1;
-  if (buffer.bytes() == 0) {
-    // empty file
-    address_ = content_ = nullptr;
-    size_ = bytes_ = 0;
-  } else {
-    normalized_ = buffer.MarshalNormalized();
-    address_ = normalized_.data();
-    size_ = normalized_.size();
-    IdentifyPayload();
-    RecordLineStarts();
-  }
+  normalized_ = buffer.MarshalNormalized();
+  address_ = normalized_.c_str();
+  size_ = normalized_.size();
+  IdentifyPayload();
+  RecordLineStarts();
   return true;
 }
 

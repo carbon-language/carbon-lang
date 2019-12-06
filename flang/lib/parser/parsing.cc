@@ -50,11 +50,6 @@ const SourceFile *Parsing::Prescan(const std::string &path, Options options) {
     return sourceFile;
   }
   CHECK(sourceFile);
-  if (sourceFile->bytes() == 0) {
-    ProvenanceRange range{allSources.AddCompilerInsertion(path)};
-    messages_.Say(range, "file is empty"_err_en_US);
-    return sourceFile;
-  }
 
   if (!options.isModuleFile) {
     // For .mod files we always want to look in the search directories.
@@ -86,6 +81,11 @@ const SourceFile *Parsing::Prescan(const std::string &path, Options options) {
   ProvenanceRange range{allSources.AddIncludedFile(
       *sourceFile, ProvenanceRange{}, options.isModuleFile)};
   prescanner.Prescan(range);
+  if (cooked_.BufferedBytes() == 0 && !options.isModuleFile) {
+    // Input is empty.  Append a newline so that any warning
+    // message about nonstandard usage will have provenance.
+    cooked_.Put('\n', range.start());
+  }
   cooked_.Marshal();
   if (options.needProvenanceRangeToCharBlockMappings) {
     cooked_.CompileProvenanceRangeToOffsetMappings();

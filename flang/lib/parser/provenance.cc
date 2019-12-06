@@ -461,6 +461,8 @@ std::optional<CharBlock> CookedSource::GetCharBlock(
   }
 }
 
+std::size_t CookedSource::BufferedBytes() const { return buffer_.bytes(); }
+
 void CookedSource::Marshal() {
   CHECK(provenanceMap_.SizeInBytes() == buffer_.bytes());
   provenanceMap_.Put(allSources_.AddCompilerInsertion("(after end of source)"));
