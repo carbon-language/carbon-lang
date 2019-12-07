@@ -13,9 +13,15 @@
 #include "../common/idioms.h"
 
 namespace Fortran::parser {
-struct DoConstruct;
+struct AssignmentStmt;
+struct ConnectSpec;
 struct CycleStmt;
+struct DoConstruct;
 struct ExitStmt;
+struct InquireSpec;
+struct IoControlSpec;
+struct OutputImpliedDo;
+struct StatVariable;
 }
 
 namespace Fortran::semantics {
@@ -26,9 +32,16 @@ ENUM_CLASS(StmtType, CYCLE, EXIT)
 class DoChecker : public virtual BaseChecker {
 public:
   explicit DoChecker(SemanticsContext &context) : context_{context} {}
-  void Leave(const parser::DoConstruct &);
+  void Leave(const parser::AssignmentStmt &);
+  void Leave(const parser::ConnectSpec &);
   void Enter(const parser::CycleStmt &);
+  void Enter(const parser::DoConstruct &);
+  void Leave(const parser::DoConstruct &);
   void Enter(const parser::ExitStmt &);
+  void Leave(const parser::InquireSpec &);
+  void Leave(const parser::IoControlSpec &);
+  void Leave(const parser::OutputImpliedDo &);
+  void Leave(const parser::StatVariable &);
 
 private:
   SemanticsContext &context_;

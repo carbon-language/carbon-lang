@@ -37,6 +37,7 @@ struct ForallConstruct;
 struct IfConstruct;
 struct SelectRankConstruct;
 struct SelectTypeConstruct;
+struct Variable;
 struct WhereConstruct;
 }
 
@@ -149,7 +150,18 @@ public:
   }
   void PopConstruct();
 
+  // Check to see if a variable being redefined is a DO variable.  If so, emit
+  // a message
+  void CheckDoVarRedefine(const Symbol &, const parser::CharBlock &);
+  void CheckDoVarRedefine(const parser::Variable &);
+  void CheckDoVarRedefine(const parser::Name &);
+  void ActivateDoVariable(const parser::Name &);
+  void DeactivateDoVariable(const parser::Name &);
+  bool IsActiveDoVariable(const Symbol &);
+
 private:
+  parser::CharBlock GetDoVariableLocation(const Symbol &);
+  void SayDoVarRedefine(const parser::CharBlock &, const Symbol &);
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   const common::LanguageFeatureControl languageFeatures_;
   parser::AllSources &allSources_;
@@ -166,6 +178,7 @@ private:
 
   bool CheckError(bool);
   ConstructStack constructStack_;
+  std::map<SymbolRef, const parser::CharBlock> activeDoVariables_;
 };
 
 class Semantics {

@@ -32,6 +32,7 @@
 #include "symbol.h"
 #include "../common/default-kinds.h"
 #include "../parser/parse-tree-visitor.h"
+#include "../parser/tools.h"
 
 namespace Fortran::semantics {
 
@@ -200,6 +201,71 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
 void SemanticsContext::PopConstruct() {
   CHECK(!constructStack_.empty());
   constructStack_.pop_back();
+}
+
+void SemanticsContext::SayDoVarRedefine(
+    const parser::CharBlock &location, const Symbol &variable) {
+  const parser::CharBlock doLoc{GetDoVariableLocation(variable)};
+  CHECK(doLoc != parser::CharBlock{});
+  Say(location, "Cannot redefine DO variable '%s'"_err_en_US, variable.name())
+      .Attach(doLoc, "Enclosing DO construct"_en_US);
+}
+
+void SemanticsContext::CheckDoVarRedefine(
+    const Symbol &variable, const parser::CharBlock &location) {
+  if (const Symbol * root{GetAssociationRoot(variable)}) {
+    if (IsActiveDoVariable(*root)) {
+      SayDoVarRedefine(location, *root);
+    }
+  }
+}
+
+void SemanticsContext::CheckDoVarRedefine(const parser::Variable &variable) {
+  if (const Symbol * entity{GetLastName(variable).symbol}) {
+    const parser::CharBlock &sourceLocation{variable.GetSource()};
+    CheckDoVarRedefine(*entity, sourceLocation);
+  }
+}
+
+void SemanticsContext::CheckDoVarRedefine(const parser::Name &name) {
+  const parser::CharBlock &sourceLocation{name.source};
+  if (const Symbol * entity{name.symbol}) {
+    CheckDoVarRedefine(*entity, sourceLocation);
+  }
+}
+
+void SemanticsContext::ActivateDoVariable(const parser::Name &name) {
+  CheckDoVarRedefine(name);
+  if (const Symbol * doVariable{name.symbol}) {
+    if (const Symbol * root{GetAssociationRoot(*doVariable)}) {
+      if (!IsActiveDoVariable(*root)) {
+        activeDoVariables_.emplace(*root, name.source);
+      }
+    }
+  }
+}
+
+void SemanticsContext::DeactivateDoVariable(const parser::Name &name) {
+  if (Symbol * doVariable{name.symbol}) {
+    if (const Symbol * root{GetAssociationRoot(*doVariable)}) {
+      if (name.source == GetDoVariableLocation(*root)) {
+        activeDoVariables_.erase(*root);
+      }
+    }
+  }
+}
+
+bool SemanticsContext::IsActiveDoVariable(const Symbol &variable) {
+  return activeDoVariables_.find(variable) != activeDoVariables_.end();
+}
+
+parser::CharBlock SemanticsContext::GetDoVariableLocation(
+    const Symbol &variable) {
+  if (IsActiveDoVariable(variable)) {
+    return activeDoVariables_[variable];
+  } else {
+    return parser::CharBlock{};
+  }
 }
 
 bool Semantics::Perform() {

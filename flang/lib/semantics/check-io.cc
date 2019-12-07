@@ -505,10 +505,43 @@ void IoChecker::Leave(const parser::PrintStmt &) {
   Done();
 }
 
-void IoChecker::Leave(const parser::ReadStmt &) {
+static void CheckForDoVariableInNamelist(const Symbol &namelist,
+    SemanticsContext &context, parser::CharBlock namelistLocation) {
+  const auto &details{namelist.GetUltimate().get<NamelistDetails>()};
+  for (const Symbol &object : details.objects()) {
+    context.CheckDoVarRedefine(object, namelistLocation);
+  }
+}
+
+static void CheckForDoVariableInNamelistSpec(
+    const parser::ReadStmt &readStmt, SemanticsContext &context) {
+  const std::list<parser::IoControlSpec> &controls{readStmt.controls};
+  for (const auto &control : controls) {
+    if (const auto *namelist{std::get_if<parser::Name>(&control.u)}) {
+      if (const Symbol * symbol{namelist->symbol}) {
+        CheckForDoVariableInNamelist(*symbol, context, namelist->source);
+      }
+    }
+  }
+}
+
+static void CheckForDoVariable(
+    const parser::ReadStmt &readStmt, SemanticsContext &context) {
+  CheckForDoVariableInNamelistSpec(readStmt, context);
+  const std::list<parser::InputItem> &items{readStmt.items};
+  for (const auto &item : items) {
+    if (const parser::Variable *
+        variable{std::get_if<parser::Variable>(&item.u)}) {
+      context.CheckDoVarRedefine(*variable);
+    }
+  }
+}
+
+void IoChecker::Leave(const parser::ReadStmt &readStmt) {
   if (!flags_.test(Flag::InternalUnit)) {
     CheckForPureSubprogram();
   }
+  CheckForDoVariable(readStmt, context_);
   if (!flags_.test(Flag::IoControlList)) {
     Done();
     return;
