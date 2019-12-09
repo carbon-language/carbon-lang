@@ -109,7 +109,6 @@ std::ostream &ActualArgument::AssumedType::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
-  CHECK(!IsPassedObject());
   if (keyword_) {
     o << keyword_->ToString() << '=';
   }
@@ -128,10 +127,16 @@ std::ostream &SpecificIntrinsic::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
+  for (const auto &arg : arguments_) {
+    if (arg && arg->isPassedObject()) {
+      arg->AsFortran(o) << '%';
+      break;
+    }
+  }
   proc_.AsFortran(o);
   char separator{'('};
   for (const auto &arg : arguments_) {
-    if (arg && !arg->IsPassedObject()) {
+    if (arg && !arg->isPassedObject()) {
       arg->AsFortran(o << separator);
       separator = ',';
     }

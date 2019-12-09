@@ -565,16 +565,11 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
                 messages.Say(
                     "Actual argument is not a variable or typed expression"_err_en_US);
               }
-            } else if (const Symbol * assumed{arg.GetAssumedTypeDummy()}) {
-              // An assumed-type dummy is being forwarded.
-              if (!object.type.type().IsAssumedType()) {
-                messages.Say(
-                    "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) %s"_err_en_US,
-                    assumed->name(), dummyName);
-              }
-            } else if (!arg.IsPassedObject()) {
+            } else if (!object.type.type().IsAssumedType()) {
+              const Symbol &assumed{DEREF(arg.GetAssumedTypeDummy())};
               messages.Say(
-                  "Actual argument is not an expression or variable"_err_en_US);
+                  "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) %s"_err_en_US,
+                  assumed.name(), dummyName);
             }
           },
           [&](const characteristics::DummyProcedure &proc) {

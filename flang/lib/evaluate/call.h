@@ -72,17 +72,9 @@ public:
     SymbolRef symbol_;
   };
 
-  // A placeholder for the passed-object argument, which will be replaced
-  // with the base object of the Component that constitutes the call's
-  // ProcedureDesignator.
-  struct PassedObject {
-    bool operator==(const PassedObject &) const { return true; }
-  };
-
   explicit ActualArgument(Expr<SomeType> &&);
   explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&);
   explicit ActualArgument(AssumedType);
-  explicit ActualArgument(PassedObject &&) : u_{PassedObject{}} {}
   ~ActualArgument();
   ActualArgument &operator=(Expr<SomeType> &&);
 
@@ -120,10 +112,9 @@ public:
   void set_keyword(parser::CharBlock x) { keyword_ = x; }
   bool isAlternateReturn() const { return isAlternateReturn_; }
   void set_isAlternateReturn() { isAlternateReturn_ = true; }
+  bool isPassedObject() const { return isPassedObject_; }
+  void set_isPassedObject(bool yes = true) { isPassedObject_ = yes; }
 
-  bool IsPassedObject() const {
-    return std::holds_alternative<PassedObject>(u_);
-  }
   bool Matches(const characteristics::DummyArgument &) const;
 
   // Wrap this argument in parentheses
@@ -137,11 +128,10 @@ private:
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
-  std::variant<common::CopyableIndirection<Expr<SomeType>>, AssumedType,
-      PassedObject>
-      u_;
+  std::variant<common::CopyableIndirection<Expr<SomeType>>, AssumedType> u_;
   std::optional<parser::CharBlock> keyword_;
   bool isAlternateReturn_{false};  // whether expr is a "*label" number
+  bool isPassedObject_{false};
 };
 
 using ActualArguments = std::vector<std::optional<ActualArgument>>;
@@ -172,7 +162,11 @@ struct ProcedureDesignator {
   const SpecificIntrinsic *GetSpecificIntrinsic() const;
   const Symbol *GetSymbol() const;  // symbol or component symbol
 
-  // Always null if the procedure is intrinsic.
+  // For references to NOPASS components and bindings only.
+  // References to PASS components and bindings are represented
+  // with the symbol below and the base object DataRef in the
+  // passed-object ActualArgument.
+  // Always null when the procedure is intrinsic.
   const Component *GetComponent() const;
 
   const Symbol *GetInterfaceSymbol() const;

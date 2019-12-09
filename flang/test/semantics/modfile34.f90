@@ -34,16 +34,33 @@ contains
     type(t) :: x, y
     real :: z(x%add1(y))
   end
+  subroutine test1p(x, y, z)
+    class(t) :: x, y
+    real :: z(x%add1(y))
+  end
   subroutine test2(x, y, z)
     type(t) :: x, y
+    real :: z(x%g(y))
+  end
+  subroutine test2p(x, y, z)
+    class(t) :: x, y
     real :: z(x%g(y))
   end
   subroutine test3(x, y, z)
     type(t) :: x, y
     real :: z(x%g(y, x))
   end
+  subroutine test3p(x, y, z)
+    class(t) :: x, y
+    real :: z(x%g(y, x))
+  end
   subroutine test4(x, y, z)
     type(t) :: x
+    real :: y
+    real :: z(x%g(y))
+  end
+  subroutine test4p(x, y, z)
+    class(t) :: x
     real :: y
     real :: z(x%g(y))
   end
@@ -76,19 +93,39 @@ end
 !  type(t) :: y
 !  real(4) :: z(1_8:add(x, y))
 ! end
+! subroutine test1p(x,y,z)
+!   class(t)::x
+!   class(t)::y
+!   real(4)::z(1_8:x%add1(y))
+! end
 ! subroutine test2(x, y, z)
 !  type(t) :: x
 !  type(t) :: y
+!  real(4)::z(1_8:add(x,y))
+! end
+! subroutine test2p(x,y,z)
+!  class(t)::x
+!  class(t)::y
 !  real(4) :: z(1_8:x%add1(y))
 ! end
 ! subroutine test3(x, y, z)
 !  type(t) :: x
 !  type(t) :: y
+!  real(4)::z(1_8:add(y,x))
+! end
+! subroutine test3p(x,y,z)
+!  class(t)::x
+!  class(t)::y
 !  real(4) :: z(1_8:x%add2(y, x))
 ! end
 ! subroutine test4(x, y, z)
 !  type(t) :: x
 !  real(4) :: y
+!  real(4)::z(1_8:add_real(x,y))
+! end
+! subroutine test4p(x,y,z)
+!  class(t)::x
+!  real(4)::y
 !  real(4) :: z(1_8:x%add_real(y))
 ! end
 !end

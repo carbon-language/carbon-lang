@@ -60,7 +60,8 @@ int ActualArgument::Rank() const {
 
 bool ActualArgument::operator==(const ActualArgument &that) const {
   return keyword_ == that.keyword_ &&
-      isAlternateReturn_ == that.isAlternateReturn_ && u_ == that.u_;
+      isAlternateReturn_ == that.isAlternateReturn_ &&
+      isPassedObject_ == that.isPassedObject_ && u_ == that.u_;
 }
 
 void ActualArgument::Parenthesize() {

@@ -31,7 +31,7 @@
 #include <optional>
 #include <set>
 
-#define CRASH_ON_FAILURE 1
+// #define CRASH_ON_FAILURE 1
 // #define DUMP_ON_FAILURE 1
 #if DUMP_ON_FAILURE
 #include "../parser/dump-parse-tree.h"
@@ -1553,15 +1553,17 @@ static int GetPassIndex(const semantics::Symbol &proc, parser::CharBlock name) {
   return 0;  // first argument is passed-object
 }
 
-// Given a call `base%component(actuals)`, create a copy of actuals that
-// includes a place-holder for the passed-object argument, if any.
-// Return the index of that argument, or nullopt if there isn't one.
-static std::optional<int> AddPassArg(
-    const Symbol &component, ActualArguments &actuals) {
+// Injects an expression into an actual argument list as the "passed object"
+// for a type-bound procedure reference that is not NOPASS.  Adds an
+// argument keyword if possible, but not when the passed object goes
+// before a positional argument.
+// e.g., obj%tbp(x) -> tbp(obj,x).
+static void AddPassArg(ActualArguments &actuals, Expr<SomeDerived> &&expr,
+    const Symbol &component, bool isPassedObject = true) {
   if (component.attrs().test(semantics::Attr::NOPASS)) {
-    return std::nullopt;
+    return;
   }
-  std::optional<parser::CharBlock> passName{GetPassName(component)};
+  auto passName{GetPassName(component)};
   int passIndex{passName ? GetPassIndex(component, *passName) : 0};
   auto iter{actuals.begin()};
   int at{0};
@@ -1573,12 +1575,12 @@ static std::optional<int> AddPassArg(
     ++iter;
     ++at;
   }
-  ActualArgument passed{ActualArgument::PassedObject{}};
+  ActualArgument passed{AsGenericExpr(std::move(expr))};
+  passed.set_isPassedObject(isPassedObject);
   if (iter == actuals.end() && passName) {
     passed.set_keyword(*passName);
   }
   actuals.emplace(iter, std::move(passed));
-  return passIndex;
 }
 
 auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
@@ -1589,54 +1591,44 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
   if (MaybeExpr base{Analyze(sc.base)}) {
     if (const Symbol * sym{sc.component.symbol}) {
       if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
-        const semantics::DerivedTypeSpec *dtSpec{nullptr};
-        const auto *binding{sym->detailsIf<semantics::ProcBindingDetails>()};
+        if (sym->has<semantics::GenericDetails>()) {
+          sym = ResolveGeneric(*sym, arguments, *dtExpr);
+          if (!sym) {
+            return std::nullopt;
+          }
+        }
         const Symbol *resolution{nullptr};
-        if (binding && sym->attrs().test(semantics::Attr::NON_OVERRIDABLE)) {
-          resolution = &binding->symbol();
-        }
-        if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
-          if (!dtDyTy->IsUnlimitedPolymorphic()) {
-            dtSpec = &dtDyTy->GetDerivedTypeSpec();
-          }
-          if (binding && !dtDyTy->IsPolymorphic()) {
+        if (const auto *binding{
+                sym->detailsIf<semantics::ProcBindingDetails>()}) {
+          if (sym->attrs().test(semantics::Attr::NON_OVERRIDABLE)) {
             resolution = &binding->symbol();
+          } else if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
+            if (!dtDyTy->IsPolymorphic()) {
+              resolution = &binding->symbol();
+            }
           }
         }
-        if (dtSpec && dtSpec->scope()) {
-          if (sym->has<semantics::GenericDetails>()) {
-            sym = ResolveGeneric(*sym, arguments, *dtExpr);
-            if (!sym) {
-              return std::nullopt;
-            }
-          }
-          if (std::optional<DataRef> dataRef{
-                  ExtractDataRef(std::move(*dtExpr))}) {
-            if (std::optional<Component> component{CreateComponent(
-                    std::move(*dataRef), *sym, *dtSpec->scope())}) {
-              if (std::optional<int> passIndex{AddPassArg(*sym, arguments)}) {
-                if (resolution) {
-                  arguments[*passIndex] = AsGenericExpr(std::move(*dtExpr));
-                }
-              }
-              return CalleeAndArguments{resolution
-                      ? ProcedureDesignator{*resolution}
-                      : ProcedureDesignator{std::move(*component)},
-                  std::move(arguments)};
-            } else {
-              Say(name,
-                  "Procedure component is not in scope of derived TYPE(%s)"_err_en_US,
-                  dtSpec->typeSymbol().name());
-            }
+        if (resolution) {
+          AddPassArg(arguments, std::move(*dtExpr), *sym, false);
+          return CalleeAndArguments{
+              ProcedureDesignator{*resolution}, std::move(arguments)};
+        } else if (std::optional<DataRef> dataRef{
+                       ExtractDataRef(std::move(*dtExpr))}) {
+          if (sym->attrs().test(semantics::Attr::NOPASS)) {
+            return CalleeAndArguments{
+                ProcedureDesignator{Component{std::move(*dataRef), *sym}},
+                std::move(arguments)};
           } else {
-            Say(name,
-                "Base of procedure component reference must be a data reference"_err_en_US);
+            AddPassArg(arguments,
+                Expr<SomeDerived>{Designator<SomeDerived>{std::move(*dataRef)}},
+                *sym);
+            return CalleeAndArguments{
+                ProcedureDesignator{*sym}, std::move(arguments)};
           }
         }
-      } else {
-        Say(name,
-            "Base of procedure component reference is not a derived type object"_err_en_US);
       }
+      Say(name,
+          "Base of procedure component reference is not a derived-type object"_err_en_US);
     }
   }
   CHECK(!GetContextualMessages().empty());
@@ -1699,9 +1691,7 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
                 ProcedureDesignator{specific}, context_.intrinsics())}) {
       ActualArguments localActuals{actuals};
       if (specific.has<semantics::ProcBindingDetails>()) {
-        if (std::optional<int> passIndex{AddPassArg(specific, localActuals)}) {
-          localActuals[*passIndex] = AsGenericExpr(common::Clone(base.value()));
-        }
+        AddPassArg(localActuals, common::Clone(base.value()), specific);
       }
       if (semantics::CheckInterfaceForGeneric(
               *procedure, localActuals, GetFoldingContext())) {
@@ -1716,6 +1706,14 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
   }
   if (elemental) {
     return elemental;
+  }
+  // Check parent derived type
+  if (const auto *parentScope{symbol.owner().GetDerivedTypeParent()}) {
+    if (const Symbol * extended{parentScope->FindComponent(symbol.name())}) {
+      if (extended->GetUltimate().has<semantics::GenericDetails>()) {
+        return ResolveGeneric(*extended, actuals, base);
+      }
+    }
   }
   if (semantics::IsGenericDefinedOp(symbol)) {
     Say("No specific procedure of generic operator '%s' matches the actual arguments"_err_en_US,
