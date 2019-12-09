@@ -104,6 +104,7 @@ set(ERROR_TESTS
   resolve65.f90
   resolve66.f90
   resolve67.f90
+  resolve68.f90
   stop01.f90
   structconst01.f90
   structconst02.f90
@@ -262,6 +263,7 @@ set(MODFILE_TESTS
   modfile31.f90
   modfile32.f90
   modfile33.f90
+  modfile34.f90
 )
 
 set(LABEL_TESTS

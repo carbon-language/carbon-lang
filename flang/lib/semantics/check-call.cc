@@ -572,7 +572,7 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
                     "Assumed-type TYPE(*) '%s' may be associated only with an assumed-TYPE(*) %s"_err_en_US,
                     assumed->name(), dummyName);
               }
-            } else {
+            } else if (!arg.IsPassedObject()) {
               messages.Say(
                   "Actual argument is not an expression or variable"_err_en_US);
             }

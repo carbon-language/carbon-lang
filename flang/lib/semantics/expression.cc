@@ -1553,13 +1553,41 @@ static int GetPassIndex(const semantics::Symbol &proc, parser::CharBlock name) {
   return 0;  // first argument is passed-object
 }
 
+// Given a call `base%component(actuals)`, create a copy of actuals that
+// includes a place-holder for the passed-object argument, if any.
+// Return the index of that argument, or nullopt if there isn't one.
+static std::optional<int> AddPassArg(
+    const Symbol &component, ActualArguments &actuals) {
+  if (component.attrs().test(semantics::Attr::NOPASS)) {
+    return std::nullopt;
+  }
+  std::optional<parser::CharBlock> passName{GetPassName(component)};
+  int passIndex{passName ? GetPassIndex(component, *passName) : 0};
+  auto iter{actuals.begin()};
+  int at{0};
+  while (iter < actuals.end() && at < passIndex) {
+    if (*iter && (*iter)->keyword()) {
+      iter = actuals.end();
+      break;
+    }
+    ++iter;
+    ++at;
+  }
+  ActualArgument passed{ActualArgument::PassedObject{}};
+  if (iter == actuals.end() && passName) {
+    passed.set_keyword(*passName);
+  }
+  actuals.emplace(iter, std::move(passed));
+  return passIndex;
+}
+
 auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
     const parser::ProcComponentRef &pcr, ActualArguments &&arguments)
     -> std::optional<CalleeAndArguments> {
   const parser::StructureComponent &sc{pcr.v.thing};
   const auto &name{sc.component.source};
   if (MaybeExpr base{Analyze(sc.base)}) {
-    if (Symbol * sym{sc.component.symbol}) {
+    if (const Symbol * sym{sc.component.symbol}) {
       if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
         const semantics::DerivedTypeSpec *dtSpec{nullptr};
         const auto *binding{sym->detailsIf<semantics::ProcBindingDetails>()};
@@ -1576,34 +1604,20 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
           }
         }
         if (dtSpec && dtSpec->scope()) {
+          if (sym->has<semantics::GenericDetails>()) {
+            sym = ResolveGeneric(*sym, arguments, *dtExpr);
+            if (!sym) {
+              return std::nullopt;
+            }
+          }
           if (std::optional<DataRef> dataRef{
                   ExtractDataRef(std::move(*dtExpr))}) {
-            if (auto component{CreateComponent(
+            if (std::optional<Component> component{CreateComponent(
                     std::move(*dataRef), *sym, *dtSpec->scope())}) {
-              if (!sym->attrs().test(semantics::Attr::NOPASS)) {
-                // There's a PASS argument by which the base of the procedure
-                // component reference must be passed.  Append or insert it to
-                // the list of actual arguments.
-                auto passName{GetPassName(*sym)};
-                int passIndex{passName ? GetPassIndex(*sym, *passName) : 0};
-                auto iter{arguments.begin()};
-                int at{0};
-                while (iter < arguments.end() && at < passIndex) {
-                  if (*iter && (*iter)->keyword()) {
-                    iter = arguments.end();
-                    break;
-                  }
-                  ++iter;
-                  ++at;
-                }
-                ActualArgument passed{ActualArgument::PassedObject{}};
+              if (std::optional<int> passIndex{AddPassArg(*sym, arguments)}) {
                 if (resolution) {
-                  passed = ActualArgument{AsGenericExpr(std::move(*dtExpr))};
+                  arguments[*passIndex] = AsGenericExpr(std::move(*dtExpr));
                 }
-                if (iter == arguments.end() && passName) {
-                  passed.set_keyword(*passName);
-                }
-                arguments.emplace(iter, std::move(passed));
               }
               return CalleeAndArguments{resolution
                       ? ProcedureDesignator{*resolution}
@@ -1672,8 +1686,11 @@ static bool CheckCompatibleArguments(
   return true;
 }
 
-const Symbol *ExpressionAnalyzer::ResolveGeneric(
-    const Symbol &symbol, ActualArguments &actuals) {
+// Resolve a call to a generic procedure with given actual arguments.
+// If it's a procedure component, base is the data-ref to the left of the '%'.
+const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
+    const ActualArguments &actuals,
+    const std::optional<Expr<SomeDerived>> &base) {
   const Symbol *elemental{nullptr};  // matching elemental specific proc
   const auto &details{symbol.GetUltimate().get<semantics::GenericDetails>()};
   for (const Symbol &specific : details.specificProcs()) {
@@ -1681,6 +1698,11 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(
             characteristics::Procedure::Characterize(
                 ProcedureDesignator{specific}, context_.intrinsics())}) {
       ActualArguments localActuals{actuals};
+      if (specific.has<semantics::ProcBindingDetails>()) {
+        if (std::optional<int> passIndex{AddPassArg(specific, localActuals)}) {
+          localActuals[*passIndex] = AsGenericExpr(common::Clone(base.value()));
+        }
+      }
       if (semantics::CheckInterfaceForGeneric(
               *procedure, localActuals, GetFoldingContext())) {
         if (CheckCompatibleArguments(*procedure, localActuals)) {
@@ -1807,7 +1829,6 @@ MaybeExpr ExpressionAnalyzer::AnalyzeCall(
     analyzer.Analyze(arg, isSubroutine);
   }
   if (!analyzer.fatalErrors()) {
-    // TODO: map non-intrinsic generic procedure to specific procedure
     if (std::optional<CalleeAndArguments> callee{
             GetCalleeAndArguments(std::get<parser::ProcedureDesignator>(call.t),
                 analyzer.GetActuals(), isSubroutine)}) {
