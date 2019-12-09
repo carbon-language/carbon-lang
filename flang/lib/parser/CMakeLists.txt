@@ -13,16 +13,22 @@
 # limitations under the License.
 
 add_library(FortranParser
+  Fortran-parsers.cc
   char-buffer.cc
   char-set.cc
   characters.cc
   debug-parser.cc
+  executable-parsers.cc
+  expr-parsers.cc
   instrumented-parser.cc
+  io-parsers.cc
   message.cc
+  openmp-parsers.cc
   parse-tree.cc
   parsing.cc
   preprocessor.cc
   prescan.cc
+  program-parsers.cc
   provenance.cc
   source.cc
   token-sequence.cc

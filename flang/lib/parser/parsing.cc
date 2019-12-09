@@ -13,14 +13,12 @@
 // limitations under the License.
 
 #include "parsing.h"
-#include "grammar.h"
-#include "instrumented-parser.h"
 #include "message.h"
-#include "openmp-grammar.h"
 #include "preprocessor.h"
 #include "prescan.h"
 #include "provenance.h"
 #include "source.h"
+#include "type-parsers.h"
 #include <sstream>
 
 namespace Fortran::parser {

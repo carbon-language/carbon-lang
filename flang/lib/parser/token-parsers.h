@@ -15,7 +15,7 @@
 #ifndef FORTRAN_PARSER_TOKEN_PARSERS_H_
 #define FORTRAN_PARSER_TOKEN_PARSERS_H_
 
-// These parsers are driven by the Fortran grammar (grammar.h) to consume
+// These parsers are driven by the parsers of the Fortran grammar to consume
 // the prescanned character stream and recognize context-sensitive tokens.
 
 #include "basic-parsers.h"
@@ -641,20 +641,14 @@ constexpr struct SkipStuffBeforeStatement {
 // R602 underscore -> _
 constexpr auto underscore{"_"_ch};
 
-// R516 keyword -> name
-// R601 alphanumeric-character -> letter | digit | underscore
-// R603 name -> letter [alphanumeric-character]...
+// Characters besides letters and digits that may appear in names.
 // N.B. Don't accept an underscore if it is immediately followed by a
-// quotation mark, so that kindParameter_"character literal" is parsed properly.
+// quotation mark, so that kindParam_"character literal" is parsed properly.
 // PGI and ifort accept '$' in identifiers, even as the initial character.
 // Cray and gfortran accept '$', but not as the first character.
 // Cray accepts '@' as well.
 constexpr auto otherIdChar{underscore / !"'\""_ch ||
     extension<LanguageFeature::PunctuationInNames>("$@"_ch)};
-constexpr auto nonDigitIdChar{letter || otherIdChar};
-constexpr auto rawName{nonDigitIdChar >> many(nonDigitIdChar || digit)};
-TYPE_PARSER(space >> sourced(rawName >> construct<Name>()))
-constexpr auto keyword{construct<Keyword>(name)};
 
 constexpr auto logicalTRUE{
     (".TRUE."_tok ||
@@ -665,18 +659,9 @@ constexpr auto logicalFALSE{
         extension<LanguageFeature::LogicalAbbreviations>(".F."_tok)) >>
     pure(false)};
 
-// R1003 defined-unary-op -> . letter [letter]... .
-// R1023 defined-binary-op -> . letter [letter]... .
-// R1414 local-defined-operator -> defined-unary-op | defined-binary-op
-// R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-// C1003 A defined operator must be distinct from logical literal constants
-// and intrinsic operator names; this is handled by attempting their parses
-// first, and by name resolution on their definitions, for best errors.
-// N.B. The name of the operator is captured with the dots around it.
-constexpr auto definedOpNameChar{
-    letter || extension<LanguageFeature::PunctuationInNames>("$@"_ch)};
-TYPE_PARSER(
-    space >> construct<DefinedOpName>(sourced("."_ch >>
-                 some(definedOpNameChar) >> construct<Name>() / "."_ch)))
+// deprecated: Hollerith literals
+constexpr auto rawHollerithLiteral{
+    deprecated<LanguageFeature::Hollerith>(HollerithLiteral{})};
+
 }
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_

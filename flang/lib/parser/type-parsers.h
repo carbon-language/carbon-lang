@@ -15,7 +15,6 @@
 #ifndef FORTRAN_PARSER_TYPE_PARSERS_H_
 #define FORTRAN_PARSER_TYPE_PARSERS_H_
 
-#include "basic-parsers.h"
 #include "instrumented-parser.h"
 #include "parse-tree.h"
 #include <optional>
@@ -31,27 +30,16 @@ template<typename A> struct Parser {
   using resultType = A;
   constexpr Parser() {}
   constexpr Parser(const Parser &) = default;
-  static inline std::optional<resultType> Parse(ParseState &);
+  static std::optional<resultType> Parse(ParseState &);
 };
-
-// The result type of a parser combinator expression is determined
-// here via "decltype(attempt(pexpr))" to work around a g++ bug that
-// causes it to crash on "decltype(pexpr)" when pexpr's top-level
-// operator is an overridden || of parsing alternatives.
-#define TYPE_PARSER(pexpr) \
-  template<> \
-  inline auto Parser<typename decltype(attempt(pexpr))::resultType>::Parse( \
-      ParseState &state) \
-      ->std::optional<resultType> { \
-    static constexpr auto parser{(pexpr)}; \
-    return parser.Parse(state); \
-  }
 
 #define CONTEXT_PARSER(contextText, pexpr) \
   instrumented((contextText), inContext((contextText), (pexpr)))
 
-#define TYPE_CONTEXT_PARSER(contextText, pexpr) \
-  TYPE_PARSER(CONTEXT_PARSER((contextText), (pexpr)))
+// To allow use of the Fortran grammar (or parts of it) outside the
+// context of constructing the actual parser.
+#define TYPE_PARSER(pexpr)
+#define TYPE_CONTEXT_PARSER(context, pexpr)
 
 // Some specializations of Parser<> are used multiple times, or are
 // of some special importance, so we instantiate them once here and

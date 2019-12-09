@@ -12,29 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_PARSER_OPENMP_GRAMMAR_H_
-#define FORTRAN_PARSER_OPENMP_GRAMMAR_H_
-
 // Top-level grammar specification for OpenMP.
 // See OpenMP-4.5-grammar.txt for documentation.
 
 #include "basic-parsers.h"
-#include "characters.h"
-#include "debug-parser.h"
-#include "grammar.h"
+#include "expr-parsers.h"
+#include "misc-parsers.h"
 #include "parse-tree.h"
 #include "stmt-parser.h"
 #include "token-parsers.h"
-#include "type-parsers.h"
-#include "user-state.h"
-#include <cinttypes>
-#include <cstdio>
-#include <functional>
-#include <list>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <utility>
+#include "type-parser-implementation.h"
 
 // OpenMP Directives and Clauses
 namespace Fortran::parser {
@@ -544,4 +531,3 @@ TYPE_PARSER(
 TYPE_PARSER(construct<OpenMPLoopConstruct>(
     Parser<OmpBeginLoopDirective>{} / endOmpLine))
 }
-#endif  // FORTRAN_PARSER_OPENMP_GRAMMAR_H_
