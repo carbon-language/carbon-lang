@@ -284,7 +284,7 @@ std::optional<Expr<SomeType>> MixedComplexRight(
   } else if (defaultRealKind != 666) {  // dodge unused parameter warning
     // x / (a,b) -> (x,0) / (a,b)
     if constexpr (LCAT == TypeCategory::Integer) {
-      Expr<SomeComplex> zx{ConvertTo(zx, std::move(irx))};
+      Expr<SomeComplex> zx{ConvertTo(zy, std::move(irx))};
       return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
     } else {
       Expr<SomeComplex> zx{PromoteRealToComplex(std::move(irx))};
