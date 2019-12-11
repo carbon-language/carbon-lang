@@ -192,7 +192,36 @@ module m
   pure subroutine s13
     !ERROR: An image control statement may not appear in a PURE subprogram
     sync all ! C1599
+  end subroutine
+  pure subroutine s14
+    integer :: img, nimgs, i[*], tmp
+                                   ! implicit sync all
+    !ERROR: Procedure 'this_image' referenced in PURE subprogram 's14' must be PURE too
+    img = this_image()
+    !ERROR: Procedure 'num_images' referenced in PURE subprogram 's14' must be PURE too
+    nimgs = num_images()
+    i = img                       ! i is ready to use
+
+    if ( img .eq. 1 ) then
+      !ERROR: An image control statement may not appear in a PURE subprogram
+      sync images( nimgs )          ! explicit sync 1 with last img
+      tmp = i[ nimgs ]
+      !ERROR: An image control statement may not appear in a PURE subprogram
+      sync images( nimgs )          ! explicit sync 2 with last img
+      i = tmp
+    end if
+
+    if ( img .eq. nimgs ) then
+      !ERROR: An image control statement may not appear in a PURE subprogram
+      sync images( 1 )              ! explicit sync 1 with img 1
+      tmp = i[ 1 ]
+      !ERROR: An image control statement may not appear in a PURE subprogram
+      sync images( 1 )              ! explicit sync 2 with img 1
+      i = tmp
+    end if
+    !ERROR: External I/O is not allowed in a PURE subprogram
+    write (*,*) img, i
+                                   ! all other images wait here
     ! TODO others from 11.6.1 (many)
   end subroutine
-
 end module
