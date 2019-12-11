@@ -162,6 +162,8 @@ public:
     return DEREF(derived_);
   }
 
+  bool RequiresDescriptor() const;
+
   // 7.3.2.3 & 15.5.2.4 type compatibility.
   // x.IsTypeCompatibleWith(y) is true if "x => y" or passing actual y to
   // dummy argument x would be valid.  Be advised, this is not a reflexive

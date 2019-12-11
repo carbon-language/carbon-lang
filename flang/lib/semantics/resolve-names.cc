@@ -98,8 +98,9 @@ private:
 // Track statement source locations and save messages.
 class MessageHandler {
 public:
+  MessageHandler() { DIE("MessageHandler: default-constructed"); }
+  explicit MessageHandler(SemanticsContext &c) : context_{&c} {}
   Messages &messages() { return context_->messages(); };
-  void set_context(SemanticsContext &context) { context_ = &context; }
   const std::optional<SourceName> &currStmtSource() {
     return context_->location();
   }
@@ -119,7 +120,7 @@ public:
   }
 
 private:
-  SemanticsContext *context_{nullptr};
+  SemanticsContext *context_;
 };
 
 // Inheritance graph for the parse tree visitation classes that follow:
@@ -138,17 +139,18 @@ private:
 
 class BaseVisitor {
 public:
+  BaseVisitor() { DIE("BaseVisitor: default-constructed"); }
+  BaseVisitor(SemanticsContext &c, ResolveNamesVisitor &v)
+    : this_{&v}, context_{&c}, messageHandler_{c} {}
   template<typename T> void Walk(const T &);
-  void set_this(ResolveNamesVisitor *x) { this_ = x; }
 
   MessageHandler &messageHandler() { return messageHandler_; }
   const std::optional<SourceName> &currStmtSource() {
     return context_->location();
   }
   SemanticsContext &context() const { return *context_; }
-  void set_context(SemanticsContext &);
   evaluate::FoldingContext &GetFoldingContext() const {
-    return DEREF(context_).foldingContext();
+    return context_->foldingContext();
   }
 
   // Make a placeholder symbol for a Name that otherwise wouldn't have one.
@@ -219,8 +221,8 @@ public:
   }
 
 private:
-  ResolveNamesVisitor *this_{nullptr};
-  SemanticsContext *context_{nullptr};
+  ResolveNamesVisitor *this_;
+  SemanticsContext *context_;
   MessageHandler messageHandler_;
 };
 
@@ -296,7 +298,6 @@ private:
 // Find and create types from declaration-type-spec nodes.
 class DeclTypeSpecVisitor : public AttrsVisitor {
 public:
-  explicit DeclTypeSpecVisitor() {}
   using AttrsVisitor::Post;
   using AttrsVisitor::Pre;
   void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
@@ -328,7 +329,7 @@ protected:
   // Walk the parse tree of a type spec and return the DeclTypeSpec for it.
   template<typename T>
   const DeclTypeSpec *ProcessTypeSpec(const T &x, bool allowForward = false) {
-    auto save{common::ScopedSet(state_, State{})};
+    auto restorer{common::ScopedSet(state_, State{})};
     set_allowForwardReferenceToDerivedType(allowForward);
     BeginDeclTypeSpec();
     Walk(x);
@@ -651,7 +652,6 @@ private:
 class SubprogramVisitor : public virtual ScopeHandler, public InterfaceVisitor {
 public:
   bool HandleStmtFunction(const parser::StmtFunctionStmt &);
-  void Post(const parser::StmtFunctionStmt &);
   bool Pre(const parser::SubroutineStmt &);
   void Post(const parser::SubroutineStmt &);
   bool Pre(const parser::FunctionStmt &);
@@ -1333,9 +1333,7 @@ public:
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
 
-  ResolveNamesVisitor(SemanticsContext &context) {
-    set_context(context);
-    set_this(this);
+  ResolveNamesVisitor(SemanticsContext &context) : BaseVisitor{context, *this} {
     PushScope(context.globalScope());
   }
 
@@ -1479,11 +1477,6 @@ void ShowImplicitRule(
 
 template<typename T> void BaseVisitor::Walk(const T &x) {
   parser::Walk(x, *this_);
-}
-
-void BaseVisitor::set_context(SemanticsContext &context) {
-  context_ = &context;
-  messageHandler_.set_context(context);
 }
 
 void BaseVisitor::MakePlaceholder(
@@ -2057,8 +2050,9 @@ void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
         context().intrinsics().IsIntrinsic(symbol.name().ToString())) {
       // type will be determined in expression semantics
       symbol.attrs().set(Attr::INTRINSIC);
-    } else {
+    } else if (!context().HasError(symbol)) {
       Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
+      context().SetError(symbol);
     }
   }
 }
@@ -2564,12 +2558,6 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
 
 // SubprogramVisitor implementation
 
-void SubprogramVisitor::Post(const parser::StmtFunctionStmt &) {
-  if (badStmtFuncFound_) {
-    return;  // This wasn't really a stmt function so no scope was created
-  }
-  PopScope();
-}
 // Return false if it is actually an assignment statement.
 bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
   const auto &name{std::get<parser::Name>(x.t)};
@@ -2590,9 +2578,10 @@ bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
     return true;
   }
   auto &symbol{PushSubprogramScope(name, Symbol::Flag::Function)};
+  EraseSymbol(symbol);  // removes symbol added by PushSubprogramScope
   auto &details{symbol.get<SubprogramDetails>()};
   for (const auto &dummyName : std::get<std::list<parser::Name>>(x.t)) {
-    EntityDetails dummyDetails{true};
+    ObjectEntityDetails dummyDetails{true};
     if (auto *dummySymbol{FindInScope(currScope().parent(), dummyName)}) {
       if (auto *d{dummySymbol->detailsIf<EntityDetails>()}) {
         if (d->type()) {
@@ -2600,14 +2589,25 @@ bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
         }
       }
     }
-    details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
+    Symbol &dummy{MakeSymbol(dummyName, std::move(dummyDetails))};
+    ApplyImplicitRules(dummy);
+    details.add_dummyArg(dummy);
   }
-  EraseSymbol(symbol);  // added by PushSubprogramScope
-  EntityDetails resultDetails;
+  ObjectEntityDetails resultDetails;
   if (resultType) {
     resultDetails.set_type(*resultType);
   }
-  details.set_result(MakeSymbol(name, std::move(resultDetails)));
+  Symbol &result{MakeSymbol(name, std::move(resultDetails))};
+  ApplyImplicitRules(result);
+  details.set_result(result);
+  const auto &parsedExpr{std::get<parser::Scalar<parser::Expr>>(x.t)};
+  Walk(parsedExpr);
+  if (auto expr{AnalyzeExpr(context(), parsedExpr)}) {
+    details.set_stmtFunction(std::move(*expr));
+  } else {
+    context().SetError(symbol);
+  }
+  PopScope();
   return true;
 }
 
@@ -2793,7 +2793,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
     }
     implicitRules().set_inheritFromParent(false);
   }
-  FindSymbol(name)->set(subpFlag);
+  FindSymbol(name)->set(subpFlag);  // PushScope() created symbol
   return *symbol;
 }
 
@@ -4382,7 +4382,8 @@ Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name,
   if (declTypeSpec) {
     // Subtlety: Don't let a "*length" specifier (if any is pending) affect the
     // declaration of this implied DO loop control variable.
-    auto save{common::ScopedSet(charInfo_.length, std::optional<ParamValue>{})};
+    auto restorer{
+        common::ScopedSet(charInfo_.length, std::optional<ParamValue>{})};
     SetType(name, *declTypeSpec);
   } else {
     ApplyImplicitRules(symbol);
@@ -5155,7 +5156,8 @@ const parser::Name *DeclarationVisitor::ResolveName(const parser::Name &name) {
     if (CheckUseError(name)) {
       return nullptr;  // reported an error
     }
-    if (symbol->IsDummy()) {
+    if (symbol->IsDummy() ||
+        (!symbol->GetType() && FindCommonBlockContaining(*symbol))) {
       ConvertToObjectEntity(*symbol);
       ApplyImplicitRules(*symbol);
     }
@@ -5244,7 +5246,7 @@ const parser::Name *DeclarationVisitor::FindComponent(
 void DeclarationVisitor::CheckInitialDataTarget(
     const Symbol &pointer, const SomeExpr &expr, SourceName source) {
   auto &messages{GetFoldingContext().messages()};
-  auto save{messages.SetLocation(source)};
+  auto restorer{messages.SetLocation(source)};
   if (!evaluate::IsInitialDataTarget(expr, messages)) {
     Say(source,
         "Pointer '%s' cannot be initialized with a reference to a designator with non-constant subscripts"_err_en_US,
@@ -5778,14 +5780,16 @@ void ResolveNamesVisitor::Post(const parser::TypeGuardStmt &x) {
 }
 bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
   CheckNotInBlock("STATEMENT FUNCTION");  // C1107
-  if (!HandleStmtFunction(x)) {
+  if (HandleStmtFunction(x)) {
+    return false;
+  } else {
     // This is an array element assignment: resolve names of indices
     const auto &names{std::get<std::list<parser::Name>>(x.t)};
     for (auto &name : names) {
       ResolveName(name);
     }
+    return true;
   }
-  return true;
 }
 
 bool ResolveNamesVisitor::Pre(const parser::DefinedOpName &x) {

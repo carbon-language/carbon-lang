@@ -258,6 +258,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"abs", {{"a", SameComplex}}, SameReal},
     {"achar", {{"i", AnyInt, Rank::elementalOrBOZ}, DefaultingKIND}, KINDChar},
     {"acos", {{"x", SameFloating}}, SameFloating},
+    {"acosd", {{"x", SameFloating}}, SameFloating},
     {"acosh", {{"x", SameFloating}}, SameFloating},
     {"adjustl", {{"string", SameChar}}, SameChar},
     {"adjustr", {{"string", SameChar}}, SameChar},
@@ -271,14 +272,18 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"any", {{"mask", SameLogical, Rank::array}, OptionalDIM}, SameLogical,
         Rank::dimReduced},
     {"asin", {{"x", SameFloating}}, SameFloating},
+    {"asind", {{"x", SameFloating}}, SameFloating},
     {"asinh", {{"x", SameFloating}}, SameFloating},
     {"associated",
         {{"pointer", Addressable, Rank::known},
             {"target", Addressable, Rank::known, Optionality::optional}},
         DefaultLogical},
     {"atan", {{"x", SameFloating}}, SameFloating},
+    {"atand", {{"x", SameFloating}}, SameFloating},
     {"atan", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
+    {"atand", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
     {"atan2", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
+    {"atan2d", {{"y", OperandReal}, {"x", OperandReal}}, OperandReal},
     {"atanh", {{"x", SameFloating}}, SameFloating},
     {"bessel_j0", {{"x", SameReal}}, SameReal},
     {"bessel_j1", {{"x", SameReal}}, SameReal},
@@ -325,6 +330,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"command_argument_count", {}, DefaultInt, Rank::scalar},
     {"conjg", {{"z", SameComplex}}, SameComplex},
     {"cos", {{"x", SameFloating}}, SameFloating},
+    {"cosd", {{"x", SameFloating}}, SameFloating},
     {"cosh", {{"x", SameFloating}}, SameFloating},
     {"count", {{"mask", AnyLogical, Rank::array}, OptionalDIM, DefaultingKIND},
         KINDInt, Rank::dimReduced},
@@ -648,6 +654,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"shiftr", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
     {"sign", {{"a", SameIntOrReal}, {"b", SameIntOrReal}}, SameIntOrReal},
     {"sin", {{"x", SameFloating}}, SameFloating},
+    {"sind", {{"x", SameFloating}}, SameFloating},
     {"sinh", {{"x", SameFloating}}, SameFloating},
     {"size",
         {{"array", AnyData, Rank::anyOrAssumedRank}, OptionalDIM,
@@ -665,6 +672,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"sum", {{"array", SameNumeric, Rank::array}, OptionalDIM, OptionalMASK},
         SameNumeric, Rank::dimReduced},
     {"tan", {{"x", SameFloating}}, SameFloating},
+    {"tand", {{"x", SameFloating}}, SameFloating},
     {"tanh", {{"x", SameFloating}}, SameFloating},
     {"tiny", {{"x", SameReal, Rank::anyOrAssumedRank}}, SameReal, Rank::scalar},
     {"trailz", {{"i", AnyInt}}, DefaultInt},
@@ -707,8 +715,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   IS_CONTIGUOUS
 // TODO: Non-standard intrinsic functions
 //  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
-//  COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL,
-//  EQV, NEQV, INT8, JINT, JNINT, KNINT,
+//  COMPL, EQV, NEQV, INT8, JINT, JNINT, KNINT,
 //  QCMPLX, DFLOAT, QEXT, QFLOAT, QREAL, DNUM,
 //  INUM, JNUM, KNUM, QNUM, RNUM, RAN, RANF, ILEN, SIZEOF,
 //  MCLOCK, SECNDS, COTAN, IBCHNG, ISHA, ISHC, ISHL, IXOR
@@ -789,6 +796,7 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"clog", {{"a", DefaultComplex}}, DefaultComplex}, "log"},
     {{"conjg", {{"a", DefaultComplex}}, DefaultComplex}},
     {{"cos", {{"x", DefaultReal}}, DefaultReal}},
+    {{"cosh", {{"x", DefaultReal}}, DefaultReal}},
     {{"csin", {{"a", DefaultComplex}}, DefaultComplex}, "sin"},
     {{"csqrt", {{"a", DefaultComplex}}, DefaultComplex}, "sqrt"},
     {{"ctan", {{"a", DefaultComplex}}, DefaultComplex}, "tan"},
@@ -1673,10 +1681,9 @@ static DynamicType GetReturnType(const SpecificIntrinsicInterface &interface,
 std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     const CallCharacteristics &call, ActualArguments &arguments,
     FoldingContext &context, const IntrinsicProcTable &intrinsics) const {
-  std::string name{call.name.ToString()};
   if (call.isSubroutineCall) {
     parser::Messages buffer;
-    auto subrRange{subroutines_.equal_range(name)};
+    auto subrRange{subroutines_.equal_range(call.name)};
     for (auto iter{subrRange.first}; iter != subrRange.second; ++iter) {
       if (auto specificCall{
               iter->second->Match(call, defaults_, arguments, context)}) {
@@ -1689,7 +1696,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   // Special case: NULL()
   // All special cases handled here before the table probes below must
   // also be caught as special names in IsIntrinsic().
-  if (name == "null") {
+  if (call.name == "null") {
     return HandleNull(arguments, context, intrinsics);
   }
 
@@ -1697,7 +1704,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   parser::Messages localBuffer;
   parser::Messages *finalBuffer{context.messages().messages()};
   parser::ContextualMessages localMessages{
-      call.name, finalBuffer ? &localBuffer : nullptr};
+      context.messages().at(), finalBuffer ? &localBuffer : nullptr};
   FoldingContext localContext{context, localMessages};
   auto matchOrBufferMessages{
       [&](const IntrinsicInterface &intrinsic,
@@ -1718,7 +1725,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
 
   // Probe the generic intrinsic function table first.
   parser::Messages genericBuffer;
-  auto genericRange{genericFuncs_.equal_range(name)};
+  auto genericRange{genericFuncs_.equal_range(call.name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
     if (auto specificCall{
             matchOrBufferMessages(*iter->second, genericBuffer)}) {
@@ -1729,7 +1736,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
 
   // Probe the specific intrinsic function table next.
   parser::Messages specificBuffer;
-  auto specificRange{specificFuncs_.equal_range(name)};
+  auto specificRange{specificFuncs_.equal_range(call.name)};
   for (auto specIter{specificRange.first}; specIter != specificRange.second;
        ++specIter) {
     // We only need to check the cases with distinct generic names.
@@ -1764,7 +1771,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
                 "Argument type does not match specific intrinsic '%s' "
                 "requirements; using '%s' generic instead and converting the "
                 "result to %s if needed"_en_US,
-                name, genericName, newType.AsFortran());
+                call.name, genericName, newType.AsFortran());
             specificCall->specificIntrinsic.characteristics.value()
                 .functionResult.value()
                 .SetType(newType);

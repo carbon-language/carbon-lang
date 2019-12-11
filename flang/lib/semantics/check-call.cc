@@ -360,8 +360,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     }
     if (!actualIsPointer) {
       if (dummy.intent == common::Intent::In) {
-        CheckPointerAssignment(messages, context.intrinsics(),
-            parser::CharBlock{}, dummyName, dummy, actual);
+        CheckPointerAssignment(
+            context, parser::CharBlock{}, dummyName, dummy, actual);
       } else {
         messages.Say(
             "Actual argument associated with POINTER %s must also be POINTER unless INTENT(IN)"_err_en_US,

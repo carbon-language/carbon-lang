@@ -186,7 +186,7 @@ public:
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::Constant<A> &x) {
-    auto save{
+    auto restorer{
         GetFoldingContext().messages().SetLocation(FindSourceLocation(x))};
     auto result{Analyze(x.thing)};
     if (result) {

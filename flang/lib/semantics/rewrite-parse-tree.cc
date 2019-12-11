@@ -140,7 +140,7 @@ void FixMisparsedUntaggedNamelistName(READ_OR_WRITE &x) {
   if (x.iounit && x.format &&
       std::holds_alternative<parser::DefaultCharExpr>(x.format->u)) {
     if (const parser::Name * name{parser::Unwrap<parser::Name>(x.format)}) {
-      if (name->symbol && name->symbol->has<NamelistDetails>()) {
+      if (name->symbol && name->symbol->GetUltimate().has<NamelistDetails>()) {
         x.controls.emplace_front(parser::IoControlSpec{std::move(*name)});
         x.format.reset();
       }

@@ -24,19 +24,14 @@
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
 #include "../parser/characters.h"
+#include "../parser/dump-parse-tree.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <algorithm>
 #include <functional>
 #include <optional>
 #include <set>
-
-// #define CRASH_ON_FAILURE 1
-// #define DUMP_ON_FAILURE 1
-#if DUMP_ON_FAILURE
-#include "../parser/dump-parse-tree.h"
-#include <iostream>
-#endif
+#include <sstream>
 
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
@@ -70,7 +65,7 @@ std::optional<Expr<SubscriptInteger>> DynamicTypeWithLength::LEN() const {
       return ConvertToType<SubscriptInteger>(common::Clone(*len));
     }
   }
-  return std::nullopt;
+  return std::nullopt;  // assumed or deferred length
 }
 
 static std::optional<DynamicTypeWithLength> AnalyzeTypeSpec(
@@ -347,7 +342,7 @@ static void FixMisparsedSubstring(const parser::Designator &d) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Designator &d) {
-  auto save{GetContextualMessages().SetLocation(d.source)};
+  auto restorer{GetContextualMessages().SetLocation(d.source)};
   FixMisparsedSubstring(d);
   // These checks have to be deferred to these "top level" data-refs where
   // we can be sure that there are no following subscripts (yet).
@@ -499,7 +494,7 @@ struct RealTypeVisitor {
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal for better
   // provenance on any messages.
-  auto save{GetContextualMessages().SetLocation(x.real.source)};
+  auto restorer{GetContextualMessages().SetLocation(x.real.source)};
   // If a kind parameter appears, it defines the kind of the literal and any
   // letter used in an exponent part (e.g., the 'E' in "6.02214E+23")
   // should agree.  In the absence of an explicit kind parameter, any exponent
@@ -674,7 +669,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
   if (std::optional<int> kind{IsAcImpliedDo(n.source)}) {
     return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
         *kind, AsExpr(ImpliedDoIndex{n.source})));
-  } else if (context_.HasError(n)) {
+  } else if (context_.HasError(n) || !n.symbol) {
     return std::nullopt;
   } else {
     const Symbol &ultimate{n.symbol->GetUltimate()};
@@ -1468,8 +1463,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           continue;
         }
         if (IsPointer(*symbol)) {
-          CheckPointerAssignment(messages, context_.intrinsics(), *symbol,
-              *value);  // C7104, C7105
+          CheckPointerAssignment(
+              GetFoldingContext(), *symbol, *value);  // C7104, C7105
           result.Add(*symbol, Fold(GetFoldingContext(), std::move(*value)));
         } else if (MaybeExpr converted{
                        ConvertToType(*symbol, std::move(*value))}) {
@@ -1748,11 +1743,11 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(
   if (context_.HasError(symbol)) {
     return std::nullopt;
   }
-  const Symbol &ultimate{symbol->GetUltimate()};
+  const Symbol &ultimate{DEREF(symbol).GetUltimate()};
   if (ultimate.attrs().test(semantics::Attr::INTRINSIC)) {
     if (std::optional<SpecificCall> specificCall{context_.intrinsics().Probe(
-            CallCharacteristics{name.source, isSubroutine}, arguments,
-            GetFoldingContext())}) {
+            CallCharacteristics{ultimate.name().ToString(), isSubroutine},
+            arguments, GetFoldingContext())}) {
       return CalleeAndArguments{
           ProcedureDesignator{std::move(specificCall->specificIntrinsic)},
           std::move(specificCall->arguments)};
@@ -1821,7 +1816,7 @@ void ExpressionAnalyzer::Analyze(const parser::CallStmt &call) {
 
 MaybeExpr ExpressionAnalyzer::AnalyzeCall(
     const parser::Call &call, bool isSubroutine) {
-  auto save{GetContextualMessages().SetLocation(call.source)};
+  auto restorer{GetContextualMessages().SetLocation(call.source)};
   ArgumentAnalyzer analyzer{*this};
   for (const auto &arg : std::get<std::list<parser::ActualArgSpec>>(call.t)) {
     analyzer.Analyze(arg, isSubroutine);
@@ -2257,7 +2252,7 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
     if constexpr (std::is_same_v<PARSED, parser::Expr>) {
       // Analyze the expression in a specified source position context for
       // better error reporting.
-      auto save{GetContextualMessages().SetLocation(x.source)};
+      auto restorer{GetContextualMessages().SetLocation(x.source)};
       result = Analyze(x.u);
       result = Fold(GetFoldingContext(), std::move(result));
     } else {
@@ -2266,11 +2261,10 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
     x.typedExpr.reset(new GenericExprWrapper{std::move(result)});
     if (!x.typedExpr->v) {
       if (!context_.AnyFatalError()) {
-#if DUMP_ON_FAILURE
-        parser::DumpTree(std::cout << "Expression analysis failed on: ", x);
-#elif CRASH_ON_FAILURE
-        common::die("Expression analysis failed without emitting an error");
-#endif
+        std::stringstream dump;
+        parser::DumpTree(dump, x);
+        Say("Internal error: Expression analysis failed on: %s"_err_en_US,
+            dump.str());
       }
       fatalErrors_ = true;
     }
@@ -2279,10 +2273,12 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
+  auto restorer{GetContextualMessages().SetLocation(expr.source)};
   return ExprOrVariable(expr);
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Variable &variable) {
+  auto restorer{GetContextualMessages().SetLocation(variable.GetSource())};
   return ExprOrVariable(variable);
 }
 
@@ -2456,8 +2452,8 @@ MaybeExpr ExpressionAnalyzer::MakeFunctionRef(parser::CharBlock callSite,
 MaybeExpr ExpressionAnalyzer::MakeFunctionRef(
     parser::CharBlock intrinsic, ActualArguments &&arguments) {
   if (std::optional<SpecificCall> specificCall{
-          context_.intrinsics().Probe(CallCharacteristics{intrinsic}, arguments,
-              context_.foldingContext())}) {
+          context_.intrinsics().Probe(CallCharacteristics{intrinsic.ToString()},
+              arguments, context_.foldingContext())}) {
     return MakeFunctionRef(intrinsic,
         ProcedureDesignator{std::move(specificCall->specificIntrinsic)},
         std::move(specificCall->arguments));
@@ -2755,7 +2751,7 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
     SemanticsContext &context, common::TypeCategory category,
     const std::optional<parser::KindSelector> &selector) {
   evaluate::ExpressionAnalyzer analyzer{context};
-  auto save{
+  auto restorer{
       analyzer.GetContextualMessages().SetLocation(context.location().value())};
   return analyzer.AnalyzeKindSelector(category, selector);
 }

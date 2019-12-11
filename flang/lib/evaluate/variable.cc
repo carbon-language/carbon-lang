@@ -249,14 +249,16 @@ DescriptorInquiry::DescriptorInquiry(
   : base_{base}, field_{field}, dimension_{dim} {
   const Symbol &last{base_.GetLastSymbol()};
   CHECK(IsDescriptor(last));
-  CHECK(dim >= 0 && dim < last.Rank());
+  CHECK((field == Field::Len && dim == 0) ||
+      (field != Field::Len && dim >= 0 && dim < last.Rank()));
 }
 
 DescriptorInquiry::DescriptorInquiry(NamedEntity &&base, Field field, int dim)
   : base_{std::move(base)}, field_{field}, dimension_{dim} {
   const Symbol &last{base_.GetLastSymbol()};
   CHECK(IsDescriptor(last));
-  CHECK(dim >= 0 && dim < last.Rank());
+  CHECK((field == Field::Len && dim == 0) ||
+      (field != Field::Len && dim >= 0 && dim < last.Rank()));
 }
 
 // LEN()
@@ -265,6 +267,9 @@ static std::optional<Expr<SubscriptInteger>> SymbolLEN(const Symbol &sym) {
     if (const semantics::ParamValue * len{dyType->charLength()}) {
       if (auto intExpr{len->GetExplicit()}) {
         return ConvertToType<SubscriptInteger>(*std::move(intExpr));
+      } else {
+        return Expr<SubscriptInteger>{
+            DescriptorInquiry{NamedEntity{sym}, DescriptorInquiry::Field::Len}};
       }
     }
   }

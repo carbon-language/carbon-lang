@@ -78,12 +78,15 @@ public:
   const std::vector<Symbol *> &dummyArgs() const { return dummyArgs_; }
   void add_dummyArg(Symbol &symbol) { dummyArgs_.push_back(&symbol); }
   void add_alternateReturn() { dummyArgs_.push_back(nullptr); }
+  const MaybeExpr &stmtFunction() const { return stmtFunction_; }
+  void set_stmtFunction(SomeExpr &&expr) { stmtFunction_ = std::move(expr); }
 
 private:
   bool isInterface_{false};  // true if this represents an interface-body
   MaybeExpr bindName_;
   std::vector<Symbol *> dummyArgs_;  // nullptr -> alternate return indicator
   Symbol *result_{nullptr};
+  MaybeExpr stmtFunction_;
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
 };
 

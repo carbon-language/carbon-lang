@@ -139,7 +139,9 @@ private:
 
 // R916 type-param-inquiry
 // N.B. x%LEN for CHARACTER is rewritten in semantics to LEN(x), which is
-// then handled via LEN() member functions in the various classes.
+// then handled via LEN() member functions in the various classes;
+// it becomes a DescriptorInquiry with Field::Len for assumed-length
+// CHARACTER objects.
 // x%KIND for intrinsic types is similarly rewritten in semantics to
 // KIND(x), which is then folded to a constant value.
 // "Bare" type parameter references within a derived type definition do
@@ -441,11 +443,11 @@ template<typename T> struct Variable {
 class DescriptorInquiry {
 public:
   using Result = SubscriptInteger;
-  ENUM_CLASS(Field, LowerBound, Extent, Stride, Rank)
+  ENUM_CLASS(Field, LowerBound, Extent, Stride, Rank, Len)
 
   CLASS_BOILERPLATE(DescriptorInquiry)
-  DescriptorInquiry(const NamedEntity &, Field, int);
-  DescriptorInquiry(NamedEntity &&, Field, int);
+  DescriptorInquiry(const NamedEntity &, Field, int = 0);
+  DescriptorInquiry(NamedEntity &&, Field, int = 0);
 
   NamedEntity &base() { return base_; }
   const NamedEntity &base() const { return base_; }

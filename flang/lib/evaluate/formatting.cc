@@ -639,12 +639,17 @@ std::ostream &DescriptorInquiry::AsFortran(std::ostream &o) const {
   case Field::Extent: o << "size("; break;
   case Field::Stride: o << "%STRIDE("; break;
   case Field::Rank: o << "rank("; break;
+  case Field::Len: break;
   }
   base_.AsFortran(o);
-  if (dimension_ >= 0) {
-    o << ",dim=" << (dimension_ + 1);
+  if (field_ == Field::Len) {
+    return o << "%len";
+  } else {
+    if (dimension_ >= 0) {
+      o << ",dim=" << (dimension_ + 1);
+    }
+    return o << ')';
   }
-  return o << ')';
 }
 
 INSTANTIATE_CONSTANT_TEMPLATES

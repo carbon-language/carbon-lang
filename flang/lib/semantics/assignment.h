@@ -38,11 +38,10 @@ struct DummyDataObject;
 }
 
 namespace Fortran::evaluate {
-class IntrinsicProcTable;
-void CheckPointerAssignment(parser::ContextualMessages &,
-    const IntrinsicProcTable &, const Symbol &lhs, const Expr<SomeType> &rhs);
-void CheckPointerAssignment(parser::ContextualMessages &,
-    const IntrinsicProcTable &, parser::CharBlock source,
+class FoldingContext;
+void CheckPointerAssignment(
+    FoldingContext &, const Symbol &lhs, const Expr<SomeType> &rhs);
+void CheckPointerAssignment(FoldingContext &, parser::CharBlock source,
     const std::string &description, const characteristics::DummyDataObject &,
     const Expr<SomeType> &rhs);
 }

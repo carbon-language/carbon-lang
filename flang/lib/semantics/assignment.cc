@@ -38,11 +38,10 @@ class PointerAssignmentChecker {
 public:
   PointerAssignmentChecker(const Symbol *pointer, parser::CharBlock source,
       const std::string &description, const characteristics::TypeAndShape *type,
-      parser::ContextualMessages &messages,
-      const IntrinsicProcTable &intrinsics,
-      const characteristics::Procedure *procedure, bool isContiguous)
-    : pointer_{pointer}, source_{source}, description_{description},
-      type_{type}, messages_{messages}, intrinsics_{intrinsics},
+      FoldingContext &context, const characteristics::Procedure *procedure,
+      bool isContiguous)
+    : pointer_{pointer}, source_{source},
+      description_{description}, type_{type}, context_{context},
       procedure_{procedure}, isContiguous_{isContiguous} {}
 
   template<typename A> void Check(const A &) {
@@ -65,8 +64,8 @@ public:
     } else if (const auto *intrinsic{f.proc().GetSpecificIntrinsic()}) {
       funcName = intrinsic->name;
     }
-    if (auto proc{
-            characteristics::Procedure::Characterize(f.proc(), intrinsics_)}) {
+    if (auto proc{characteristics::Procedure::Characterize(
+            f.proc(), context_.intrinsics())}) {
       std::optional<parser::MessageFixedText> error;
       if (const auto &funcResult{proc->functionResult}) {  // C1025
         const auto *frProc{funcResult->IsProcedurePointer()};
@@ -90,7 +89,7 @@ public:
         } else if (type_) {
           const auto *frTypeAndShape{funcResult->GetTypeAndShape()};
           CHECK(frTypeAndShape);
-          if (!type_->IsCompatibleWith(messages_, *frTypeAndShape)) {
+          if (!type_->IsCompatibleWith(context_.messages(), *frTypeAndShape)) {
             error =
                 "%s is associated with the result of a reference to function '%s' whose pointer result has an incompatible type or shape"_err_en_US;
           }
@@ -100,7 +99,7 @@ public:
             "%s is associated with the non-existent result of reference to procedure"_err_en_US;
       }
       if (error) {
-        auto save{common::ScopedSet(pointer_, symbol)};
+        auto restorer{common::ScopedSet(pointer_, symbol)};
         Say(*error, description_, funcName);
       }
     }
@@ -120,19 +119,21 @@ public:
         error =
             "In assignment to object %s, the target '%s' is not an object with POINTER or TARGET attributes"_err_en_US;
       } else if (auto rhsTypeAndShape{
-                     characteristics::TypeAndShape::Characterize(*last)}) {
-        if (!type_ || !type_->IsCompatibleWith(messages_, *rhsTypeAndShape)) {
+                     characteristics::TypeAndShape::Characterize(
+                         *last, context_)}) {
+        if (!type_ ||
+            !type_->IsCompatibleWith(context_.messages(), *rhsTypeAndShape)) {
           error =
               "%s associated with object '%s' with incompatible type or shape"_err_en_US;
         }
       }
       if (error) {
-        auto save{common::ScopedSet(pointer_, last)};
+        auto restorer{common::ScopedSet(pointer_, last)};
         Say(*error, description_, last->name());
       }
     } else {
       // P => "character literal"(1:3)
-      messages_.Say("Pointer target is not a named entity"_err_en_US);
+      context_.messages().Say("Pointer target is not a named entity"_err_en_US);
     }
   }
 
@@ -145,7 +146,7 @@ private:
       const characteristics::Procedure * = nullptr);
 
   template<typename... A> parser::Message *Say(A &&... x) {
-    auto *msg{messages_.Say(std::forward<A>(x)...)};
+    auto *msg{context_.messages().Say(std::forward<A>(x)...)};
     if (pointer_) {
       return AttachDeclaration(msg, *pointer_);
     } else if (!source_.empty()) {
@@ -158,8 +159,7 @@ private:
   const parser::CharBlock source_;
   const std::string &description_;
   const characteristics::TypeAndShape *type_{nullptr};
-  parser::ContextualMessages &messages_;
-  const IntrinsicProcTable &intrinsics_;
+  FoldingContext &context_;
   const characteristics::Procedure *procedure_{nullptr};
   bool isContiguous_{false};
 };
@@ -199,7 +199,8 @@ void PointerAssignmentChecker::Check(parser::CharBlock rhsName, bool isCall,
 }
 
 void PointerAssignmentChecker::Check(const ProcedureDesignator &d) {
-  if (auto chars{characteristics::Procedure::Characterize(d, intrinsics_)}) {
+  if (auto chars{
+          characteristics::Procedure::Characterize(d, context_.intrinsics())}) {
     Check(d.GetName(), false, &*chars);
   } else {
     Check(d.GetName(), false);
@@ -208,7 +209,8 @@ void PointerAssignmentChecker::Check(const ProcedureDesignator &d) {
 
 void PointerAssignmentChecker::Check(const ProcedureRef &ref) {
   const characteristics::Procedure *procedure{nullptr};
-  auto chars{characteristics::Procedure::Characterize(ref, intrinsics_)};
+  auto chars{
+      characteristics::Procedure::Characterize(ref, context_.intrinsics())};
   if (chars) {
     procedure = &*chars;
     if (chars->functionResult) {
@@ -220,31 +222,30 @@ void PointerAssignmentChecker::Check(const ProcedureRef &ref) {
   Check(ref.proc().GetName(), true, procedure);
 }
 
-void CheckPointerAssignment(parser::ContextualMessages &messages,
-    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
-    const Expr<SomeType> &rhs) {
+void CheckPointerAssignment(
+    FoldingContext &context, const Symbol &lhs, const Expr<SomeType> &rhs) {
   // TODO: Acquire values of deferred type parameters &/or array bounds
   // from the RHS.
   if (!IsPointer(lhs)) {
     SayWithDeclaration(
-        messages, lhs, "'%s' is not a pointer"_err_en_US, lhs.name());
+        context.messages(), lhs, "'%s' is not a pointer"_err_en_US, lhs.name());
   } else {
-    auto type{characteristics::TypeAndShape::Characterize(lhs)};
-    auto proc{characteristics::Procedure::Characterize(lhs, intrinsics)};
+    auto type{characteristics::TypeAndShape::Characterize(lhs, context)};
+    auto proc{
+        characteristics::Procedure::Characterize(lhs, context.intrinsics())};
     std::string description{"pointer '"s + lhs.name().ToString() + '\''};
     PointerAssignmentChecker{&lhs, lhs.name(), description,
-        type ? &*type : nullptr, messages, intrinsics, proc ? &*proc : nullptr,
+        type ? &*type : nullptr, context, proc ? &*proc : nullptr,
         lhs.attrs().test(semantics::Attr::CONTIGUOUS)}
         .Check(rhs);
   }
 }
 
-void CheckPointerAssignment(parser::ContextualMessages &messages,
-    const IntrinsicProcTable &intrinsics, parser::CharBlock source,
+void CheckPointerAssignment(FoldingContext &context, parser::CharBlock source,
     const std::string &description, const characteristics::DummyDataObject &lhs,
     const Expr<SomeType> &rhs) {
-  PointerAssignmentChecker{nullptr, source, description, &lhs.type, messages,
-      intrinsics, nullptr /* proc */,
+  PointerAssignmentChecker{nullptr, source, description, &lhs.type, context,
+      nullptr /* proc */,
       lhs.attrs.test(characteristics::DummyDataObject::Attr::Contiguous)}
       .Check(rhs);
 }

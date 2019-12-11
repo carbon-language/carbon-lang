@@ -113,7 +113,7 @@ struct TestCall {
       std::cout << '(';
     }
     std::cout << ')' << std::endl;
-    CallCharacteristics call{fName};
+    CallCharacteristics call{fName.ToString()};
     auto messages{strings.Messages(buffer)};
     FoldingContext context{messages, defaults, table};
     std::optional<SpecificCall> si{table.Probe(call, args, context)};

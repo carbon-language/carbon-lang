@@ -67,7 +67,7 @@ bool TypeAndShape::operator==(const TypeAndShape &that) const {
 }
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
-    const semantics::Symbol &symbol) {
+    const semantics::Symbol &symbol, FoldingContext &context) {
   return std::visit(
       common::visitors{
           [&](const semantics::ObjectEntityDetails &object) {
@@ -78,22 +78,17 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
             if (interface.type()) {
               return Characterize(*interface.type());
             } else {
-              return Characterize(*interface.symbol());
+              return Characterize(*interface.symbol(), context);
             }
           },
           [&](const semantics::UseDetails &use) {
-            return Characterize(use.symbol());
+            return Characterize(use.symbol(), context);
           },
           [&](const semantics::HostAssocDetails &assoc) {
-            return Characterize(assoc.symbol());
+            return Characterize(assoc.symbol(), context);
           },
-          [](const semantics::AssocEntityDetails &assoc) {
-            if (const semantics::Symbol *
-                nested{UnwrapWholeSymbolDataRef(assoc.expr())}) {
-              return Characterize(*nested);
-            } else {
-              return std::optional<TypeAndShape>{};
-            }
+          [&](const semantics::AssocEntityDetails &assoc) {
+            return Characterize(assoc, context);
           },
           [](const auto &) { return std::optional<TypeAndShape>{}; },
       },
@@ -112,6 +107,16 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
 }
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
+    const semantics::AssocEntityDetails &assoc, FoldingContext &context) {
+  if (auto type{DynamicType::From(assoc.type())}) {
+    if (auto shape{GetShape(context, assoc.expr())}) {
+      return TypeAndShape{std::move(*type), std::move(*shape)};
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<TypeAndShape> TypeAndShape::Characterize(
     const semantics::DeclTypeSpec &spec) {
   if (auto type{DynamicType::From(spec)}) {
     return TypeAndShape{std::move(*type)};
@@ -126,6 +131,9 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
     if (const auto *object{
             symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
       return Characterize(*object);
+    } else if (const auto *assoc{
+                   symbol->detailsIf<semantics::AssocEntityDetails>()}) {
+      return Characterize(*assoc, context);
     }
   }
   if (auto type{expr.GetType()}) {

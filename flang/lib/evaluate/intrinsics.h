@@ -23,13 +23,14 @@
 #include "../parser/message.h"
 #include <optional>
 #include <ostream>
+#include <string>
 
 namespace Fortran::evaluate {
 
 class FoldingContext;
 
 struct CallCharacteristics {
-  parser::CharBlock name;
+  std::string name;
   bool isSubroutineCall{false};
 };
 

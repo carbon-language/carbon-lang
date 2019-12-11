@@ -76,9 +76,12 @@ public:
 
   bool operator==(const TypeAndShape &) const;
   bool operator!=(const TypeAndShape &that) const { return !(*this == that); }
-  static std::optional<TypeAndShape> Characterize(const semantics::Symbol &);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::Symbol &, FoldingContext &);
   static std::optional<TypeAndShape> Characterize(
       const semantics::ObjectEntityDetails &);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::AssocEntityDetails &, FoldingContext &);
   static std::optional<TypeAndShape> Characterize(
       const semantics::ProcEntityDetails &);
   static std::optional<TypeAndShape> Characterize(
