@@ -1229,6 +1229,11 @@ public:
     return false;
   }
 
+  /// Morph an indirect call into a load where \p Reg holds the call target.
+  virtual void convertIndirectCallToLoad(MCInst &Inst, MCPhysReg Reg) const {
+    llvm_unreachable("not implemented");
+  }
+
   /// Replace instruction with a shorter version that could be relaxed later
   /// if needed.
   virtual bool shortenInstruction(MCInst &Inst) const {
@@ -1360,6 +1365,12 @@ public:
     return false;
   }
 
+  virtual bool createIndirectCall(MCInst &Inst, const MCSymbol *TargetLocation,
+                                  MCContext *Ctx, bool IsTailCall) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// Creates a new tail call instruction in Inst and sets its operand to
   /// Target.
   ///
@@ -1408,6 +1419,11 @@ public:
                           const MCPhysReg &DstReg, int Size) const {
     llvm_unreachable("not implemented");
     return false;
+  }
+
+  virtual void createLoadImmediate(MCInst &Inst, const MCPhysReg Dest,
+                                   uint32_t Imm) const {
+    llvm_unreachable("not implemented");
   }
 
   /// Create instruction to increment contents of target by 1
@@ -1692,6 +1708,24 @@ public:
 
   /// Remove meta-data, but don't destroy it.
   void stripAnnotations(MCInst &Inst);
+
+  virtual std::vector<MCInst>
+  createInstrumentedIndirectCall(const MCInst &CallInst, bool TailCall,
+                                 MCSymbol *HandlerFuncAddr, int CallSiteID,
+                                 MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return std::vector<MCInst>();
+  }
+
+  virtual std::vector<MCInst> createInstrumentedNoopIndCallHandler() const {
+    llvm_unreachable("not implemented");
+    return std::vector<MCInst>();
+  }
+
+  virtual std::vector<MCInst> createInstrumentedNoopIndTailCallHandler() const {
+    llvm_unreachable("not implemented");
+    return std::vector<MCInst>();
+  }
 
   /// This method takes an indirect call instruction and splits it up into an
   /// equivalent set of instructions that use direct calls for target

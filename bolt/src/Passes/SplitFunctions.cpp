@@ -98,9 +98,16 @@ void SplitFunctions::runOnFunctions(BinaryContext &BC) {
   ParallelUtilities::runOnEachFunction(
       BC, ParallelUtilities::SchedulingPolicy::SP_BB_LINEAR, WorkFun, SkipFunc,
       "SplitFunctions");
+
+  if (SplitBytesHot + SplitBytesCold > 0) {
+    outs() << "BOLT-INFO: splitting separates " << SplitBytesHot
+           << " hot bytes from " << SplitBytesCold << " cold bytes "
+           << format("(%.2lf%% of split functions is hot).\n",
+                     100.0 * SplitBytesHot / (SplitBytesHot + SplitBytesCold));
+  }
 }
 
-void SplitFunctions::splitFunction(BinaryFunction &BF) const {
+void SplitFunctions::splitFunction(BinaryFunction &BF) {
   if (!BF.size())
     return;
 
@@ -222,6 +229,9 @@ void SplitFunctions::splitFunction(BinaryFunction &BF) const {
       for (auto &BB : BF) {
         BB.setIsCold(false);
       }
+    } else {
+      SplitBytesHot += HotSize;
+      SplitBytesCold += ColdSize;
     }
   }
 }

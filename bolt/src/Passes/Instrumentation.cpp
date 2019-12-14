@@ -30,6 +30,27 @@ cl::opt<std::string> InstrumentationFilename(
     cl::Optional,
     cl::cat(BoltCategory));
 
+cl::opt<bool> InstrumentationFileAppendPID(
+    "instrumentation-file-append-pid",
+    cl::desc("append PID to saved profile file name (default: false)"),
+    cl::init(false),
+    cl::Optional,
+    cl::cat(BoltCategory));
+
+cl::opt<bool> ConservativeInstrumentation(
+    "conservative-instrumentation",
+    cl::desc(
+        "don't trust our CFG and disable spanning trees and any counter "
+        "inference, put a counter everywhere (for debugging, default: false)"),
+    cl::init(false), cl::Optional, cl::cat(BoltCategory));
+
+cl::opt<uint32_t>
+    InstrumentationSleepTime("instrumentation-sleep-time",
+                             cl::desc("interval between profile writes, "
+                                      "default: 0 = write only at program end"),
+                             cl::init(0), cl::Optional,
+                             cl::cat(BoltCategory));
+
 cl::opt<bool> InstrumentHotOnly(
     "instrument-hot-only",
     cl::desc("only insert instrumentation on hot functions (need profile)"),
@@ -40,7 +61,7 @@ cl::opt<bool> InstrumentHotOnly(
 cl::opt<bool> InstrumentCalls(
     "instrument-calls",
     cl::desc("record profile for inter-function control flow activity"),
-    cl::init(false),
+    cl::init(true),
     cl::Optional,
     cl::cat(BoltCategory));
 }
@@ -59,16 +80,45 @@ uint32_t Instrumentation::getFunctionNameIndex(const BinaryFunction &Function) {
   return Idx;
 }
 
-void Instrumentation::createCallDescription(
-    const BinaryFunction &FromFunction, uint32_t From,
-    const BinaryFunction &ToFunction, uint32_t To) {
+bool Instrumentation::createCallDescription(FunctionDescription &FuncDesc,
+                                            const BinaryFunction &FromFunction,
+                                            uint32_t From, uint32_t FromNodeID,
+                                            const BinaryFunction &ToFunction,
+                                            uint32_t To, bool IsInvoke) {
   CallDescription CD;
+  // Ordinarily, we don't augment direct calls with an explicit counter, except
+  // when forced to do so or when we know this callee could be throwing
+  // exceptions, in which case there is no other way to accurately record its
+  // frequency.
+  bool ForceInstrumentation = opts::ConservativeInstrumentation || IsInvoke;
   CD.FromLoc.FuncString = getFunctionNameIndex(FromFunction);
   CD.FromLoc.Offset = From;
+  CD.FromNode = FromNodeID;
+  CD.Target = &ToFunction;
   CD.ToLoc.FuncString = getFunctionNameIndex(ToFunction);
   CD.ToLoc.Offset = To;
-  CD.Counter = Counters.size();
-  CallDescriptions.emplace_back(CD);
+  CD.Counter = ForceInstrumentation ? Counters.size() : 0xffffffff;
+  if (ForceInstrumentation)
+    ++DirectCallCounters;
+  FuncDesc.Calls.emplace_back(CD);
+  return ForceInstrumentation;
+}
+
+void Instrumentation::createIndCallDescription(
+    const BinaryFunction &FromFunction, uint32_t From) {
+  IndCallDescription ICD;
+  ICD.FromLoc.FuncString = getFunctionNameIndex(FromFunction);
+  ICD.FromLoc.Offset = From;
+  IndCallDescriptions.emplace_back(ICD);
+}
+
+void Instrumentation::createIndCallTargetDescription(
+    const BinaryFunction &ToFunction, uint32_t To) {
+  IndCallTargetDescription ICD;
+  ICD.ToLoc.FuncString = getFunctionNameIndex(ToFunction);
+  ICD.ToLoc.Offset = To;
+  ICD.Target = &ToFunction;
+  IndCallTargetDescriptions.emplace_back(ICD);
 }
 
 bool Instrumentation::createEdgeDescription(
@@ -90,16 +140,19 @@ bool Instrumentation::createEdgeDescription(
   ED.ToLoc.Offset = To;
   ED.ToNode = ToNodeID;
   ED.Counter = Instrumented ? Counters.size() : 0xffffffff;
+  if (Instrumented)
+    ++BranchCounters;
   FuncDesc.Edges.emplace_back(ED);
-  return true;
+  return Instrumented;
 }
 
-void Instrumentation::createExitNodeDescription(FunctionDescription &FuncDesc,
+void Instrumentation::createLeafNodeDescription(FunctionDescription &FuncDesc,
                                                 uint32_t Node) {
   InstrumentedNode IN;
   IN.Node = Node;
   IN.Counter = Counters.size();
-  FuncDesc.ExitNodes.emplace_back(IN);
+  ++LeafNodeCounters;
+  FuncDesc.LeafNodes.emplace_back(IN);
 }
 
 std::vector<MCInst>
@@ -122,13 +175,13 @@ Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   return CounterInstrs;
 }
 
-void Instrumentation::instrumentExitNode(BinaryContext &BC,
+void Instrumentation::instrumentLeafNode(BinaryContext &BC,
                                          BinaryBasicBlock &BB,
                                          BinaryBasicBlock::iterator Iter,
                                          bool IsLeaf,
                                          FunctionDescription &FuncDesc,
                                          uint32_t Node) {
-  createExitNodeDescription(FuncDesc, Node);
+  createLeafNodeDescription(FuncDesc, Node);
   std::vector<MCInst> CounterInstrs = createInstrumentationSnippet(BC, IsLeaf);
 
   for (auto &NewInst : CounterInstrs) {
@@ -137,17 +190,41 @@ void Instrumentation::instrumentExitNode(BinaryContext &BC,
   }
 }
 
+void Instrumentation::instrumentIndirectTarget(BinaryBasicBlock &BB,
+                                               BinaryBasicBlock::iterator &Iter,
+                                               BinaryFunction &FromFunction,
+                                               uint32_t From) {
+  auto L = FromFunction.getBinaryContext().scopeLock();
+  const auto IndCallSiteID = IndCallDescriptions.size();
+  createIndCallDescription(FromFunction, From);
+
+  BinaryContext &BC = FromFunction.getBinaryContext();
+  bool IsTailCall = BC.MIB->isTailCall(*Iter);
+  std::vector<MCInst> CounterInstrs = BC.MIB->createInstrumentedIndirectCall(
+      *Iter, IsTailCall,
+      IsTailCall ? IndTailCallHandlerFunc : IndCallHandlerFunc, IndCallSiteID,
+      &*BC.Ctx);
+
+  Iter = BB.eraseInstruction(Iter);
+  for (auto &NewInst : CounterInstrs) {
+    Iter = BB.insertInstruction(Iter, NewInst);
+    ++Iter;
+  }
+  --Iter;
+}
+
 bool Instrumentation::instrumentOneTarget(
     SplitWorklistTy &SplitWorklist, SplitInstrsTy &SplitInstrs,
     BinaryBasicBlock::iterator &Iter, BinaryFunction &FromFunction,
     BinaryBasicBlock &FromBB, uint32_t From, BinaryFunction &ToFunc,
-    BinaryBasicBlock *TargetBB, uint32_t ToOffset, bool IsLeaf,
+    BinaryBasicBlock *TargetBB, uint32_t ToOffset, bool IsLeaf, bool IsInvoke,
     FunctionDescription *FuncDesc, uint32_t FromNodeID, uint32_t ToNodeID) {
   {
     auto L = FromFunction.getBinaryContext().scopeLock();
     bool Created{true};
     if (!TargetBB)
-      createCallDescription(FromFunction, From, ToFunc, ToOffset);
+      Created = createCallDescription(*FuncDesc, FromFunction, From, FromNodeID,
+                                      ToFunc, ToOffset, IsInvoke);
     else
       Created = createEdgeDescription(*FuncDesc, FromFunction, From, FromNodeID,
                                       ToFunc, ToOffset, ToNodeID,
@@ -209,7 +286,9 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
     FuncDesc = &FunctionDescriptions.back();
   }
 
+  FuncDesc->Function = &Function;
   Function.disambiguateJumpTables(AllocId);
+  Function.deleteConservativeEdges();
 
   std::unordered_map<const BinaryBasicBlock *, uint32_t> BBToID;
   uint32_t Id = 0;
@@ -228,48 +307,57 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
       STOutSet;
   for (auto BBI = Function.layout_rbegin(); BBI != Function.layout_rend();
        ++BBI) {
-    if ((*BBI)->isEntryPoint())
+    if ((*BBI)->isEntryPoint() || (*BBI)->isLandingPad()) {
       Stack.push(std::make_pair(nullptr, *BBI));
+      if (opts::InstrumentCalls && (*BBI)->isEntryPoint()) {
+        EntryNode E;
+        E.Node = BBToID[&**BBI];
+        E.Address = (*BBI)->getInputOffset();
+        FuncDesc->EntryNodes.emplace_back(E);
+        createIndCallTargetDescription(Function, (*BBI)->getInputOffset());
+      }
+    }
   }
 
   // Modified version of BinaryFunction::dfs() to build a spanning tree
-  while (!Stack.empty()) {
-    BinaryBasicBlock *BB;
-    const BinaryBasicBlock *Pred;
-    std::tie(Pred, BB) = Stack.top();
-    Stack.pop();
-    if (VisitedSet.find(BB) != VisitedSet.end())
-      continue;
+  if (!opts::ConservativeInstrumentation) {
+    while (!Stack.empty()) {
+      BinaryBasicBlock *BB;
+      const BinaryBasicBlock *Pred;
+      std::tie(Pred, BB) = Stack.top();
+      Stack.pop();
+      if (VisitedSet.find(BB) != VisitedSet.end())
+        continue;
 
-    VisitedSet.insert(BB);
-    if (Pred)
-      STOutSet[Pred].insert(BB);
+      VisitedSet.insert(BB);
+      if (Pred)
+        STOutSet[Pred].insert(BB);
 
-    for (auto *SuccBB : BB->landing_pads())
-      Stack.push(std::make_pair(BB, SuccBB));
-
-    for (auto *SuccBB : BB->successors())
-      Stack.push(std::make_pair(BB, SuccBB));
+      for (auto *SuccBB : BB->successors())
+        Stack.push(std::make_pair(BB, SuccBB));
+    }
   }
 
   // Determine whether this is a leaf function, which needs special
   // instructions to protect the red zone
   bool IsLeafFunction{true};
+  DenseSet<const BinaryBasicBlock *> InvokeBlocks;
   for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
     for (auto I = BBI->begin(), E = BBI->end(); I != E; ++I) {
       if (BC.MIB->isCall(*I)) {
+        if (BC.MIB->isInvoke(*I)) {
+          InvokeBlocks.insert(&*BBI);
+        }
         IsLeafFunction = false;
-        break;
       }
     }
-    if (!IsLeafFunction)
-      break;
   }
 
   for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
     auto &BB{*BBI};
     bool HasUnconditionalBranch{false};
     bool HasJumpTable{false};
+    bool IsInvokeBlock = InvokeBlocks.count(&BB) > 0;
 
     for (auto I = BB.begin(); I != BB.end(); ++I) {
       const auto &Inst = *I;
@@ -293,10 +381,15 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
           TargetBB ? &Function : BC.getFunctionForSymbol(Target);
       // Should be null for indirect branches/calls
       if (TargetFunc && !TargetBB) {
-        if (opts::InstrumentCalls)
+        if (opts::InstrumentCalls) {
+          const auto *ForeignBB = TargetFunc->getBasicBlockForLabel(Target);
+          if (ForeignBB)
+            ToOffset = ForeignBB->getInputOffset();
           instrumentOneTarget(SplitWorklist, SplitInstrs, I, Function, BB,
                               FromOffset, *TargetFunc, TargetBB, ToOffset,
-                              IsLeafFunction);
+                              IsLeafFunction, IsInvokeBlock, FuncDesc,
+                              BBToID[&BB]);
+        }
         continue;
       }
       if (TargetFunc) {
@@ -310,8 +403,8 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
         }
         instrumentOneTarget(SplitWorklist, SplitInstrs, I, Function, BB,
                             FromOffset, *TargetFunc, TargetBB, ToOffset,
-                            IsLeafFunction, FuncDesc, BBToID[&BB],
-                            BBToID[TargetBB]);
+                            IsLeafFunction, IsInvokeBlock, FuncDesc,
+                            BBToID[&BB], BBToID[TargetBB]);
         continue;
       }
 
@@ -325,14 +418,20 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
                                   BBToID[&*Succ], /*Instrumented=*/false);
             continue;
           }
-          instrumentOneTarget(SplitWorklist, SplitInstrs, I, Function, BB,
-                              FromOffset, Function, &*Succ,
-                              Succ->getInputOffset(), IsLeafFunction, FuncDesc,
-                              BBToID[&BB], BBToID[&*Succ]);
+          instrumentOneTarget(
+              SplitWorklist, SplitInstrs, I, Function, BB, FromOffset, Function,
+              &*Succ, Succ->getInputOffset(), IsLeafFunction, IsInvokeBlock,
+              FuncDesc, BBToID[&BB], BBToID[&*Succ]);
         }
         continue;
       }
-      // FIXME: handle indirect calls
+
+      // Handle indirect calls -- could be direct calls with unknown targets
+      // or secondary entry points of known functions, so check it is indirect
+      // to be sure.
+      if (opts::InstrumentCalls && BC.MIB->isIndirectCall(*I))
+        instrumentIndirectTarget(BB, I, Function, FromOffset);
+
     } // End of instructions loop
 
     // Instrument fallthroughs (when the direct jump instruction is missing)
@@ -364,16 +463,19 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
       }
       instrumentOneTarget(SplitWorklist, SplitInstrs, I, Function, BB,
                           FromOffset, Function, FTBB, FTBB->getInputOffset(),
-                          IsLeafFunction, FuncDesc, BBToID[&BB], BBToID[FTBB]);
+                          IsLeafFunction, IsInvokeBlock, FuncDesc, BBToID[&BB],
+                          BBToID[FTBB]);
     }
   } // End of BBs loop
 
   // Instrument spanning tree leaves
-  for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
-    auto &BB{*BBI};
-    if (STOutSet[&BB].size() == 0 && BB.size() > 0)
-      instrumentExitNode(BC, BB, BB.begin(), IsLeafFunction, *FuncDesc,
-                         BBToID[&BB]);
+  if (!opts::ConservativeInstrumentation) {
+    for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
+      auto &BB{*BBI};
+      if (STOutSet[&BB].size() == 0)
+        instrumentLeafNode(BC, BB, BB.begin(), IsLeafFunction, *FuncDesc,
+                           BBToID[&BB]);
+    }
   }
 
   // Consume list of critical edges: split them and add instrumentation to the
@@ -405,6 +507,10 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
                                   /*Alignment=*/1,
                                   /*IsReadOnly=*/true, ELF::SHT_NOTE);
 
+  IndCallHandlerFunc = BC.Ctx->getOrCreateSymbol("__bolt_trampoline_ind_call");
+  IndTailCallHandlerFunc =
+      BC.Ctx->getOrCreateSymbol("__bolt_trampoline_ind_tailcall");
+
   ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
     return (!BF.isSimple() || !opts::shouldProcess(BF) ||
             (opts::InstrumentHotOnly && !BF.getKnownExecutionCount()));
@@ -418,13 +524,43 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
   ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
       BC, ParallelUtilities::SchedulingPolicy::SP_INST_QUADRATIC, WorkFun,
       SkipPredicate, "instrumentation", /* ForceSequential=*/true);
+
+  createAuxiliaryFunctions(BC);
+}
+
+void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
+  auto createSimpleFunction =
+      [&](StringRef Title, std::vector<MCInst> Instrs) -> BinaryFunction * {
+    BinaryFunction *Func = BC.createInjectedBinaryFunction(Title);
+
+    std::vector<std::unique_ptr<BinaryBasicBlock>> BBs;
+    BBs.emplace_back(
+        Func->createBasicBlock(BinaryBasicBlock::INVALID_OFFSET, nullptr));
+    BBs.back()->addInstructions(Instrs.begin(), Instrs.end());
+    BBs.back()->setCFIState(0);
+    Func->insertBasicBlocks(nullptr, std::move(BBs),
+                            /*UpdateLayout=*/true,
+                            /*UpdateCFIState=*/false);
+    Func->updateState(BinaryFunction::State::CFG_Finalized);
+    return Func;
+  };
+
+  InitialIndCallHandlerFunction =
+      createSimpleFunction("__bolt_instr_default_ind_call_handler",
+                           BC.MIB->createInstrumentedNoopIndCallHandler());
+
+  InitialIndTailCallHandlerFunction =
+      createSimpleFunction("__bolt_instr_default_ind_tailcall_handler",
+                           BC.MIB->createInstrumentedNoopIndTailCallHandler());
 }
 
 uint32_t Instrumentation::getFDSize() const {
   uint32_t FuncDescSize = 0;
   for (const auto &Func : FunctionDescriptions) {
-    FuncDescSize += 8 + Func.Edges.size() * sizeof(EdgeDescription) +
-                    Func.ExitNodes.size() * sizeof(InstrumentedNode);
+    FuncDescSize += 16 + Func.Edges.size() * sizeof(EdgeDescription) +
+                    Func.LeafNodes.size() * sizeof(InstrumentedNode) +
+                    Func.Calls.size() * sizeof(CallDescription) +
+                    Func.EntryNodes.size() * sizeof(EntryNode);
   }
   return FuncDescSize;
 }
@@ -432,26 +568,49 @@ uint32_t Instrumentation::getFDSize() const {
 void Instrumentation::emitTablesAsELFNote(BinaryContext &BC) {
   std::string TablesStr;
   raw_string_ostream OS(TablesStr);
+  // This is sync'ed with runtime/instr.cpp:readDescriptions()
+
+  auto getOutputAddress = [](const BinaryFunction &Func,
+                             uint64_t Offset) -> uint64_t {
+    return Offset == 0
+               ? Func.getOutputAddress()
+               : Func.translateInputToOutputAddress(Func.getAddress() + Offset);
+  };
+
+  // Indirect targets need to be sorted for fast lookup during runtime
+  std::sort(IndCallTargetDescriptions.begin(), IndCallTargetDescriptions.end(),
+            [&](const IndCallTargetDescription &A,
+                const IndCallTargetDescription &B) {
+              return getOutputAddress(*A.Target, A.ToLoc.Offset) <
+                     getOutputAddress(*B.Target, B.ToLoc.Offset);
+            });
 
   // Start of the vector with descriptions (one CounterDescription for each
   // counter), vector size is Counters.size() CounterDescription-sized elmts
-  const auto CDSize = CallDescriptions.size() * sizeof(CallDescription);
-  OS.write(reinterpret_cast<const char *>(&CDSize), 4);
-  for (const auto &Desc : CallDescriptions) {
+  const auto IDSize = IndCallDescriptions.size() * sizeof(IndCallDescription);
+  OS.write(reinterpret_cast<const char *>(&IDSize), 4);
+  for (const auto &Desc : IndCallDescriptions) {
     OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.FuncString), 4);
     OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.Offset), 4);
+  }
+  const auto ITDSize =
+      IndCallTargetDescriptions.size() * sizeof(IndCallTargetDescription);
+  OS.write(reinterpret_cast<const char *>(&ITDSize), 4);
+  for (const auto &Desc : IndCallTargetDescriptions) {
     OS.write(reinterpret_cast<const char *>(&Desc.ToLoc.FuncString), 4);
     OS.write(reinterpret_cast<const char *>(&Desc.ToLoc.Offset), 4);
-    OS.write(reinterpret_cast<const char *>(&Desc.Counter), 4);
+    uint64_t TargetFuncAddress =
+        getOutputAddress(*Desc.Target, Desc.ToLoc.Offset);
+    OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
   }
   const auto FDSize = getFDSize();
   OS.write(reinterpret_cast<const char *>(&FDSize), 4);
   for (const auto &Desc : FunctionDescriptions) {
-    const auto ExitsNum = Desc.ExitNodes.size();
-    OS.write(reinterpret_cast<const char *>(&ExitsNum), 4);
-    for (const auto &ExitNode : Desc.ExitNodes) {
-      OS.write(reinterpret_cast<const char *>(&ExitNode.Node), 4);
-      OS.write(reinterpret_cast<const char *>(&ExitNode.Counter), 4);
+    const auto LeafNum = Desc.LeafNodes.size();
+    OS.write(reinterpret_cast<const char *>(&LeafNum), 4);
+    for (const auto &LeafNode : Desc.LeafNodes) {
+      OS.write(reinterpret_cast<const char *>(&LeafNode.Node), 4);
+      OS.write(reinterpret_cast<const char *>(&LeafNode.Counter), 4);
     }
     const auto EdgesNum = Desc.Edges.size();
     OS.write(reinterpret_cast<const char *>(&EdgesNum), 4);
@@ -463,6 +622,27 @@ void Instrumentation::emitTablesAsELFNote(BinaryContext &BC) {
       OS.write(reinterpret_cast<const char *>(&Edge.ToLoc.Offset), 4);
       OS.write(reinterpret_cast<const char *>(&Edge.ToNode), 4);
       OS.write(reinterpret_cast<const char *>(&Edge.Counter), 4);
+    }
+    const auto CallsNum = Desc.Calls.size();
+    OS.write(reinterpret_cast<const char *>(&CallsNum), 4);
+    for (const auto &Call : Desc.Calls) {
+      OS.write(reinterpret_cast<const char *>(&Call.FromLoc.FuncString), 4);
+      OS.write(reinterpret_cast<const char *>(&Call.FromLoc.Offset), 4);
+      OS.write(reinterpret_cast<const char *>(&Call.FromNode), 4);
+      OS.write(reinterpret_cast<const char *>(&Call.ToLoc.FuncString), 4);
+      OS.write(reinterpret_cast<const char *>(&Call.ToLoc.Offset), 4);
+      OS.write(reinterpret_cast<const char *>(&Call.Counter), 4);
+      uint64_t TargetFuncAddress =
+        getOutputAddress(*Call.Target, Call.ToLoc.Offset);
+      OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
+    }
+    const auto EntryNum = Desc.EntryNodes.size();
+    OS.write(reinterpret_cast<const char *>(&EntryNum), 4);
+    for (const auto &EntryNode : Desc.EntryNodes) {
+      OS.write(reinterpret_cast<const char *>(&EntryNode.Node), 8);
+      uint64_t TargetFuncAddress =
+          getOutputAddress(*Desc.Function, EntryNode.Address);
+      OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
     }
   }
   // Our string table lives immediately after descriptions vector
@@ -476,9 +656,9 @@ void Instrumentation::emitTablesAsELFNote(BinaryContext &BC) {
                                  /*IsReadOnly=*/true, ELF::SHT_NOTE);
 }
 
-void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
-  emitTablesAsELFNote(BC);
-
+void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer,
+                           const BinaryFunction &InitFunction,
+                           const BinaryFunction &FiniFunction) {
   const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
                                              /*IsText=*/false,
                                              /*IsAllocatable=*/true);
@@ -491,12 +671,21 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
   // Label marking start of the memory region containing instrumentation
   // counters, total vector size is Counters.size() 8-byte counters
   MCSymbol *Locs = BC.Ctx->getOrCreateSymbol("__bolt_instr_locations");
-  MCSymbol *NumCalls = BC.Ctx->getOrCreateSymbol("__bolt_instr_num_calls");
+  MCSymbol *NumLocs = BC.Ctx->getOrCreateSymbol("__bolt_num_counters");
+  MCSymbol *NumIndCalls =
+      BC.Ctx->getOrCreateSymbol("__bolt_instr_num_ind_calls");
+  MCSymbol *NumIndCallTargets =
+      BC.Ctx->getOrCreateSymbol("__bolt_instr_num_ind_targets");
   MCSymbol *NumFuncs = BC.Ctx->getOrCreateSymbol("__bolt_instr_num_funcs");
   /// File name where profile is going to written to after target binary
   /// finishes a run
   MCSymbol *FilenameSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_filename");
+  MCSymbol *UsePIDSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_use_pid");
+  MCSymbol *InitPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr");
+  MCSymbol *FiniPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr");
+  MCSymbol *SleepSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_sleep_time");
 
+  Section->setAlignment(BC.RegularPageSize);
   Streamer.SwitchSection(Section);
   Streamer.EmitLabel(Locs);
   Streamer.EmitSymbolAttribute(Locs,
@@ -505,10 +694,39 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
     Streamer.EmitLabel(Label);
     Streamer.emitFill(8, 0);
   }
-  Streamer.EmitLabel(NumCalls);
-  Streamer.EmitSymbolAttribute(NumCalls,
+  const uint64_t Padding =
+      alignTo(8 * Counters.size(), BC.RegularPageSize) - 8 * Counters.size();
+  if (Padding)
+    Streamer.emitFill(Padding, 0);
+  Streamer.EmitLabel(SleepSym);
+  Streamer.EmitSymbolAttribute(SleepSym,
                                MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(CallDescriptions.size(), /*Size=*/4);
+  Streamer.EmitIntValue(opts::InstrumentationSleepTime, /*Size=*/4);
+  Streamer.EmitLabel(NumLocs);
+  Streamer.EmitSymbolAttribute(NumLocs,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitIntValue(Counters.size(), /*Size=*/4);
+  Streamer.EmitLabel(IndCallHandlerFunc);
+  Streamer.EmitSymbolAttribute(IndCallHandlerFunc,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitValue(MCSymbolRefExpr::create(
+                         InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx),
+                     /*Size=*/8);
+  Streamer.EmitLabel(IndTailCallHandlerFunc);
+  Streamer.EmitSymbolAttribute(IndTailCallHandlerFunc,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitValue(
+      MCSymbolRefExpr::create(InitialIndTailCallHandlerFunction->getSymbol(),
+                              *BC.Ctx),
+      /*Size=*/8);
+  Streamer.EmitLabel(NumIndCalls);
+  Streamer.EmitSymbolAttribute(NumIndCalls,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitIntValue(IndCallDescriptions.size(), /*Size=*/4);
+  Streamer.EmitLabel(NumIndCallTargets);
+  Streamer.EmitSymbolAttribute(NumIndCallTargets,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitIntValue(IndCallTargetDescriptions.size(), /*Size=*/4);
   Streamer.EmitLabel(NumFuncs);
   Streamer.EmitSymbolAttribute(NumFuncs,
                                MCSymbolAttr::MCSA_Global);
@@ -516,20 +734,43 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
   Streamer.EmitLabel(FilenameSym);
   Streamer.EmitBytes(opts::InstrumentationFilename);
   Streamer.emitFill(1, 0);
+  Streamer.EmitLabel(UsePIDSym);
+  Streamer.EmitIntValue(opts::InstrumentationFileAppendPID ? 1 : 0, /*Size=*/1);
+
+  Streamer.EmitLabel(InitPtr);
+  Streamer.EmitSymbolAttribute(InitPtr,
+                               MCSymbolAttr::MCSA_Global);
+  Streamer.EmitValue(MCSymbolRefExpr::create(InitFunction.getSymbol(), *BC.Ctx),
+                     /*Size=*/8);
+  Streamer.EmitLabel(FiniPtr);
+  Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
+  Streamer.EmitValue(MCSymbolRefExpr::create(FiniFunction.getSymbol(), *BC.Ctx),
+                     /*Size=*/8);
 
   uint32_t FuncDescSize = getFDSize();
-  outs() << "BOLT-INSTRUMENTER: Number of call descriptors: "
-         << CallDescriptions.size() << "\n";
+  outs() << "BOLT-INSTRUMENTER: Number of indirect call site descriptors: "
+         << IndCallDescriptions.size() << "\n";
+  outs() << "BOLT-INSTRUMENTER: Number of indirect call target descriptors: "
+         << IndCallTargetDescriptions.size() << "\n";
   outs() << "BOLT-INSTRUMENTER: Number of function descriptors: "
          << FunctionDescriptions.size() << "\n";
-  outs() << "BOLT-INSTRUMENTER: Number of counters: " << Counters.size()
+  outs() << "BOLT-INSTRUMENTER: Number of branch counters: " << BranchCounters
+         << "\n";
+  outs() << "BOLT-INSTRUMENTER: Number of ST leaf node counters: "
+         << LeafNodeCounters << "\n";
+  outs() << "BOLT-INSTRUMENTER: Number of direct call counters: "
+         << DirectCallCounters << "\n";
+  outs() << "BOLT-INSTRUMENTER: Total number of counters: " << Counters.size()
          << "\n";
   outs() << "BOLT-INSTRUMENTER: Total size of counters: "
          << (Counters.size() * 8) << " bytes (static alloc memory)\n";
   outs() << "BOLT-INSTRUMENTER: Total size of string table emitted: "
          << StringTable.size() << " bytes in file\n";
   outs() << "BOLT-INSTRUMENTER: Total size of descriptors: "
-         << (FuncDescSize + CallDescriptions.size() * sizeof(CallDescription))
+         << (FuncDescSize +
+             IndCallDescriptions.size() * sizeof(IndCallDescription) +
+             IndCallTargetDescriptions.size() *
+                 sizeof(IndCallTargetDescription))
          << " bytes in file\n";
   outs() << "BOLT-INSTRUMENTER: Profile will be saved to file "
          << opts::InstrumentationFilename << "\n";

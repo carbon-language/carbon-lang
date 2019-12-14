@@ -16,6 +16,7 @@
 #include "BinaryFunction.h"
 #include "Passes/BinaryPasses.h"
 #include "llvm/Support/CommandLine.h"
+#include <atomic>
 
 namespace llvm {
 namespace bolt {
@@ -33,7 +34,10 @@ public:
 
 private:
   /// Split function body into fragments.
-  void splitFunction(BinaryFunction &Function) const;
+  void splitFunction(BinaryFunction &Function);
+
+  std::atomic<uint64_t> SplitBytesHot{0ull};
+  std::atomic<uint64_t> SplitBytesCold{0ull};
 
 public:
   explicit SplitFunctions(const cl::opt<bool> &PrintPass)

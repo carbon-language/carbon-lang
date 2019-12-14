@@ -44,6 +44,14 @@ PrintUnmapped("print-unmapped",
   cl::cat(BoltDiffCategory));
 
 static cl::opt<bool>
+PrintProfiledUnmapped("print-profiled-unmapped",
+  cl::desc("print functions that have profile in binary 1 but do not "
+           "in binary 2"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltDiffCategory));
+
+static cl::opt<bool>
 PrintDiffCFG("print-diff-cfg",
   cl::desc("print the CFG of important functions that changed in "
            "binary 2"),
@@ -244,6 +252,8 @@ class RewriteInstanceDiff {
   /// Match functions in binary 2 with functions in binary 1
   void matchFunctions() {
     outs() << "BOLT-DIFF: Mapping functions in Binary2 to Binary1\n";
+    uint64_t BothHaveProfile = 0ull;
+    std::set<const BinaryFunction *> Bin1ProfiledMapped;
 
     for (const auto &BFI2 : RI2.BC->getBinaryFunctions()) {
       const auto &Function2 = BFI2.second;
@@ -258,6 +268,10 @@ class RewriteInstanceDiff {
         FuncMap.insert(std::make_pair<>(&Function2, Iter->second));
         Bin1MappedFuncs.insert(Iter->second);
         Bin2MappedFuncs.insert(&Function2);
+        if (Function2.hasValidProfile() && Iter->second->hasValidProfile()) {
+          ++BothHaveProfile;
+          Bin1ProfiledMapped.insert(Iter->second);
+        }
         Match = true;
         break;
       }
@@ -268,6 +282,10 @@ class RewriteInstanceDiff {
         FuncMap.insert(std::make_pair<>(&Function2, Iter->second));
         Bin1MappedFuncs.insert(Iter->second);
         Bin2MappedFuncs.insert(&Function2);
+        if (Function2.hasValidProfile() && Iter->second->hasValidProfile()) {
+          ++BothHaveProfile;
+          Bin1ProfiledMapped.insert(Iter->second);
+        }
         continue;
       }
       if (LTOName.empty())
@@ -277,7 +295,38 @@ class RewriteInstanceDiff {
         FuncMap.insert(std::make_pair<>(&Function2, LTOIter->second));
         Bin1MappedFuncs.insert(LTOIter->second);
         Bin2MappedFuncs.insert(&Function2);
+        if (Function2.hasValidProfile() && LTOIter->second->hasValidProfile()) {
+          ++BothHaveProfile;
+          Bin1ProfiledMapped.insert(LTOIter->second);
+        }
       }
+    }
+    PrintProgramStats PPS(opts::NeverPrint);
+    outs() << "* BOLT-DIFF: Starting print program stats pass for binary 1\n";
+    PPS.runOnFunctions(*RI1.BC);
+    outs() << "* BOLT-DIFF: Starting print program stats pass for binary 2\n";
+    PPS.runOnFunctions(*RI2.BC);
+    outs() << "=====\n";
+    outs() << "Inputs share " << BothHaveProfile
+           << " functions with valid profile.\n";
+    if (opts::PrintProfiledUnmapped) {
+      outs() << "\nFunctions in profile 1 that are missing in the profile 2:\n";
+      std::vector<const BinaryFunction *> Unmapped;
+      for (const auto &BFI : RI1.BC->getBinaryFunctions()) {
+        const auto &Function = BFI.second;
+        if (!Function.hasValidProfile() || Bin1ProfiledMapped.count(&Function))
+          continue;
+        Unmapped.emplace_back(&Function);
+      }
+      std::sort(Unmapped.begin(), Unmapped.end(),
+                [&](const BinaryFunction *A, const BinaryFunction *B) {
+                  return A->getFunctionScore() > B->getFunctionScore();
+                });
+      for (auto Function : Unmapped) {
+        outs() << Function->getPrintName() << " : ";
+        outs() << Function->getFunctionScore() << "\n";
+      }
+      outs() << "=====\n";
     }
   }
 

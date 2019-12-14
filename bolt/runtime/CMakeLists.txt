@@ -18,7 +18,7 @@ add_library(bolt_rt STATIC
   )
 
 # Don't let the compiler think it can create calls to standard libs
-target_compile_options(bolt_rt PRIVATE -ffreestanding)
+target_compile_options(bolt_rt PRIVATE -ffreestanding -fno-exceptions -fno-rtti)
 target_include_directories(bolt_rt PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 install(TARGETS bolt_rt DESTINATION lib)

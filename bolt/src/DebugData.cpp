@@ -153,15 +153,21 @@ DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
   LocStream = llvm::make_unique<raw_svector_ostream>(*LocBuffer);
   Writer =
     std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*LocStream));
+
+  // Add an empty list as the first entry;
+  Writer->writeLE64(0);
+  Writer->writeLE64(0);
+  SectionOffset += 2 * 8;
 }
 
 // DWARF 4: 2.6.2
 uint64_t DebugLocWriter::addList(const DWARFDebugLoc::LocationList &LocList) {
   if (LocList.Entries.empty())
-    return EmptyListTag;
+    return getEmptyListOffset();
 
-  // Since there is a separate DebugLocWriter for each thread,
-  // we don't need a lock to read the SectionOffset and update it.
+  // Reading the SectionOffset and updating it should be atomic to guarantee
+  // unique and correct offsets in patches.
+  std::lock_guard<std::mutex> Lock(WriterMutex);
   const auto EntryOffset = SectionOffset;
 
   for (const auto &Entry : LocList.Entries) {

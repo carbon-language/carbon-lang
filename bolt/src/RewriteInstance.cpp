@@ -98,8 +98,8 @@ extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
 extern cl::opt<bool> TimeBuild;
 
 cl::opt<bool>
-Instrument("instrument-experimental",
-  cl::desc("instrument code to generate accurate profile data (experimental)"),
+Instrument("instrument",
+  cl::desc("instrument code to generate accurate profile data"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -2925,8 +2925,12 @@ void RewriteInstance::emitAndLink() {
   BC->getTextSection()->setAlignment(BC->PageAlign);
 
   emitFunctions(Streamer.get());
-  if (opts::Instrument)
-    Instrumenter->emit(*BC, *Streamer.get());
+  if (opts::Instrument) {
+    readELFDynamic();
+    assert(StartFunction && FiniFunction &&
+           "_start and DT_FINI functions must be set");
+    Instrumenter->emit(*BC, *Streamer.get(), *StartFunction, *FiniFunction);
+  }
 
   if (!BC->HasRelocations && opts::UpdateDebugSections)
     DebugInfoRewriter->updateDebugLineInfoForNonSimpleFunctions();
@@ -3035,8 +3039,10 @@ void RewriteInstance::emitAndLink() {
   cantFail(OLT->emitAndFinalize(K));
 
   // Link instrumentation runtime library
-  if (opts::Instrument)
+  if (opts::Instrument) {
     linkRuntime();
+    Instrumenter->emitTablesAsELFNote(*BC);
+  }
 
   // Once the code is emitted, we can rename function sections to actual
   // output sections and de-register sections used for emission.
@@ -3102,17 +3108,30 @@ void RewriteInstance::linkRuntime() {
            << LibPath << "\n";
     exit(1);
   }
+  InstrumentationRuntimeFiniAddress =
+      cantFail(OLT->findSymbol("__bolt_instr_fini", false).getAddress());
+  if (!InstrumentationRuntimeFiniAddress) {
+    errs() << "BOLT-ERROR: instrumentation library does not define "
+              "__bolt_instr_fini: "
+           << LibPath << "\n";
+    exit(1);
+  }
   InstrumentationRuntimeStartAddress =
-      cantFail(OLT->findSymbol("__bolt_instr_data_dump", false).getAddress());
+      cantFail(OLT->findSymbol("__bolt_instr_start", false).getAddress());
   if (!InstrumentationRuntimeStartAddress) {
     errs() << "BOLT-ERROR: instrumentation library does not define "
-              "__bolt_instr_data_dump: "
+              "__bolt_instr_start: "
            << LibPath << "\n";
     exit(1);
   }
   outs() << "BOLT-INFO: output linked against instrumentation runtime "
             "library, lib entry point is 0x"
-         << Twine::utohexstr(InstrumentationRuntimeStartAddress) << "\n";
+         << Twine::utohexstr(InstrumentationRuntimeFiniAddress) << "\n";
+  outs() << "BOLT-INFO: clear procedure is 0x"
+         << Twine::utohexstr(
+                cantFail(OLT->findSymbol("__bolt_instr_clear_counters", false)
+                             .getAddress()))
+         << "\n";
 }
 
 void RewriteInstance::updateMetadata() {
@@ -4056,7 +4075,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   auto NewEhdr = *Obj->getHeader();
 
   if (BC->HasRelocations) {
-    NewEhdr.e_entry = getNewFunctionAddress(NewEhdr.e_entry);
+    NewEhdr.e_entry = opts::Instrument ? InstrumentationRuntimeStartAddress
+                                       : getNewFunctionAddress(NewEhdr.e_entry);
     assert(NewEhdr.e_entry && "cannot find new address for entry point");
   }
   NewEhdr.e_phoff = PHDRTableOffset;
@@ -4515,7 +4535,6 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
                                 "error accessing dynamic table");
   const Elf_Dyn *DTE = cantFail(Obj->dynamic_table_end(DynamicPhdr),
                                 "error accessing dynamic table");
-  bool FiniFound = false;
   for (auto *DE = DTB; DE != DTE; ++DE) {
     auto NewDE = *DE;
     bool ShouldPatch = true;
@@ -4532,12 +4551,8 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
           NewDE.d_un.d_ptr = NewAddress;
         }
       }
-      // FIXME: Put the old FINI pointer as a tail call in the generated
-      // dumper function
-      if (opts::Instrument && DE->getTag() == ELF::DT_FINI) {
-        NewDE.d_un.d_ptr = InstrumentationRuntimeStartAddress;
-        FiniFound = true;
-      }
+      if (opts::Instrument && DE->getTag() == ELF::DT_FINI)
+        NewDE.d_un.d_ptr = InstrumentationRuntimeFiniAddress;
       break;
     case ELF::DT_FLAGS:
       if (BC->RequiresZNow) {
@@ -4558,13 +4573,6 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
     }
   }
 
-  if (opts::Instrument && !FiniFound) {
-    errs() << "BOLT-ERROR: input binary lacks DT_FINI entry in the dynamic "
-              "section but instrumentation currently relies on patching "
-              "DT_FINI to write the profile.\n";
-    exit(1);
-  }
-
   if (BC->RequiresZNow && !ZNowSet) {
     errs() << "BOLT-ERROR: output binary requires immediate relocation "
               "processing which depends on DT_FLAGS or DT_FLAGS_1 presence in "
@@ -4572,6 +4580,65 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
     exit(1);
   }
 }
+
+template <typename ELFT>
+void RewriteInstance::readELFDynamic(ELFObjectFile<ELFT> *File) {
+  auto *Obj = File->getELFFile();
+
+  using Elf_Phdr = typename ELFFile<ELFT>::Elf_Phdr;
+  using Elf_Dyn  = typename ELFFile<ELFT>::Elf_Dyn;
+
+  if (!opts::Instrument || !BC->HasRelocations)
+    return;
+
+  // Locate DYNAMIC by looking through program headers.
+  const Elf_Phdr *DynamicPhdr = 0;
+  for (auto &Phdr : cantFail(Obj->program_headers())) {
+    if (Phdr.p_type == ELF::PT_DYNAMIC) {
+      DynamicPhdr = &Phdr;
+      assert(Phdr.p_memsz == Phdr.p_filesz && "dynamic sizes should match");
+      break;
+    }
+  }
+  assert(DynamicPhdr && "missing dynamic in ELF binary");
+
+  // Go through all dynamic entries and patch functions addresses with
+  // new ones.
+  const Elf_Dyn *DTB = cantFail(Obj->dynamic_table_begin(DynamicPhdr),
+                                "error accessing dynamic table");
+  const Elf_Dyn *DTE = cantFail(Obj->dynamic_table_end(DynamicPhdr),
+                                "error accessing dynamic table");
+  bool FiniFound = false;
+  for (auto *DE = DTB; DE != DTE; ++DE) {
+    if (DE->getTag() != ELF::DT_FINI)
+      continue;
+    const auto *Function = BC->getBinaryFunctionAtAddress(DE->getPtr());
+    if (!Function) {
+      errs() << "BOLT-ERROR: failed to locate fini function.\n";
+      exit(1);
+    }
+    FiniFunction = Function;
+    FiniFound = true;
+  }
+
+  if (!FiniFound) {
+    errs()
+        << "BOLT-ERROR: input binary lacks DT_INIT/FINI entry in the dynamic "
+           "section but instrumentation currently relies on patching "
+           "DT_FINI to write the profile.\n";
+    exit(1);
+  }
+
+  // Read start function
+  auto Ehdr = *Obj->getHeader();
+  const auto *Function = BC->getBinaryFunctionAtAddress(Ehdr.e_entry);
+  if (!Function) {
+    errs() << "BOLT-ERROR: failed to locate _start function.\n";
+    exit(1);
+  }
+  StartFunction = Function;
+}
+
 
 uint64_t RewriteInstance::getNewFunctionAddress(uint64_t OldAddress) {
   const auto *Function = BC->getBinaryFunctionAtAddress(OldAddress,

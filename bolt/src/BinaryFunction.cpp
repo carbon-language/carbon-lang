@@ -2013,6 +2013,7 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
   addEntryPointAtOffset(Offset);
   Labels.emplace(Offset, EntrySymbol);
 
+  BC.setSymbolToFunctionMap(EntrySymbol, this);
   if (OldSym != nullptr && EntrySymbol != OldSym) {
     updateReferences(OldSym, EntrySymbol);
   }
@@ -3751,6 +3752,46 @@ BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
   insertBasicBlocks(From, std::move(NewBBs), true, true,
                     /*RecomputeLandingPads=*/false);
   return NewBBPtr;
+}
+
+void BinaryFunction::deleteConservativeEdges() {
+  // Our goal is to aggressively remove edges from the CFG that we believe are
+  // wrong. This is used for instrumentation, where it is safe to remove
+  // fallthrough edges because we won't reorder blocks.
+  for (auto I = BasicBlocks.begin(), E = BasicBlocks.end(); I != E; ++I) {
+    auto BB = *I;
+    if (BB->succ_size() != 1 || BB->size() == 0)
+      continue;
+
+    auto NextBB = std::next(I);
+    MCInst* Last = BB->getLastNonPseudoInstr();
+    // Fallthrough is a landing pad? Delete this edge (as long as we don't
+    // have a direct jump to it)
+    if ((*BB->succ_begin())->isLandingPad() && NextBB != E &&
+        *BB->succ_begin() == *NextBB && Last && !BC.MIB->isBranch(*Last)) {
+      BB->removeAllSuccessors();
+      continue;
+    }
+
+    // Look for suspicious calls at the end of BB where gcc may optimize it and
+    // remove the jump to the epilogue when it knows the call won't return.
+    if (!Last || !BC.MIB->isCall(*Last))
+      continue;
+
+    auto *CalleeSymbol = BC.MIB->getTargetSymbol(*Last);
+    if (!CalleeSymbol)
+      continue;
+
+    StringRef CalleeName = CalleeSymbol->getName();
+    if (CalleeName != "__cxa_throw@PLT" &&
+        CalleeName != "_Unwind_Resume@PLT" &&
+        CalleeName != "__cxa_rethrow@PLT" &&
+        CalleeName != "exit@PLT" &&
+        CalleeName != "abort@PLT" )
+      continue;
+
+    BB->removeAllSuccessors();
+  }
 }
 
 bool BinaryFunction::isDataMarker(const SymbolRef &Symbol,

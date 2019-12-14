@@ -215,6 +215,10 @@ private:
   /// Create the regular symbol table and patch dyn symbol tables.
   ELF_FUNCTION(patchELFSymTabs);
 
+  /// Read dynamic section/segment of ELF to allow us to link a runtime lib
+  /// later.
+  ELF_FUNCTION(readELFDynamic);
+
   /// Patch dynamic section/segment of ELF.
   ELF_FUNCTION(patchELFDynamic);
 
@@ -367,7 +371,10 @@ private:
   uint64_t NewTextSegmentSize{0};
 
   /// Extra linking
+  uint64_t InstrumentationRuntimeFiniAddress{0};
   uint64_t InstrumentationRuntimeStartAddress{0};
+  const BinaryFunction *StartFunction{nullptr};
+  const BinaryFunction *FiniFunction{nullptr};
 
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};

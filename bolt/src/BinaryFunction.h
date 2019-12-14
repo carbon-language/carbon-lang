@@ -571,7 +571,9 @@ private:
   MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
     EntryOffsets.emplace(Offset);
     IsMultiEntry = (Offset == 0 ? IsMultiEntry : true);
-    return getOrCreateLocalLabel(getAddress() + Offset);
+    MCSymbol *Sym = getOrCreateLocalLabel(getAddress() + Offset);
+    BC.setSymbolToFunctionMap(Sym, this);
+    return Sym;
   }
 
   /// Register an internal offset in a function referenced from outside.
@@ -1488,6 +1490,11 @@ public:
   /// User needs to manually call fixBranches(). This function only creates the
   /// correct CFG edges.
   BinaryBasicBlock *splitEdge(BinaryBasicBlock *From, BinaryBasicBlock *To);
+
+  /// We may have built an overly conservative CFG for functions with calls
+  /// to functions that the compiler knows will never return. In this case,
+  /// clear all successors from these blocks.
+  void deleteConservativeEdges();
 
   /// Determine direction of the branch based on the current layout.
   /// Callee is responsible of updating basic block indices prior to using

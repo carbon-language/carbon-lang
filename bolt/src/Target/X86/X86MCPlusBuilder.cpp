@@ -2138,6 +2138,23 @@ public:
     return true;
   }
 
+  void convertIndirectCallToLoad(MCInst &Inst, MCPhysReg Reg) const override {
+    if (Inst.getOpcode() == X86::CALL64m ||
+        Inst.getOpcode() == X86::TAILJMPm) {
+      Inst.setOpcode(X86::MOV64rm);
+      Inst.insert(Inst.begin(), MCOperand::createReg(Reg));
+      return;
+    }
+    if (Inst.getOpcode() == X86::CALL64r ||
+        Inst.getOpcode() == X86::TAILJMPr) {
+      Inst.setOpcode(X86::MOV64rr);
+      Inst.insert(Inst.begin(), MCOperand::createReg(Reg));
+      return;
+    }
+    Inst.dump();
+    llvm_unreachable("not implemented");
+  }
+
   bool shortenInstruction(MCInst &Inst) const override {
     unsigned OldOpcode = Inst.getOpcode();
     unsigned NewOpcode = OldOpcode;
@@ -2741,6 +2758,14 @@ public:
     return true;
   }
 
+  void createLoadImmediate(MCInst &Inst, const MCPhysReg Dest,
+                           uint32_t Imm) const {
+    Inst.setOpcode(X86::MOV64ri32);
+    Inst.clear();
+    Inst.addOperand(MCOperand::createReg(Dest));
+    Inst.addOperand(MCOperand::createImm(Imm));
+  }
+
   bool createIncMemory(MCInst &Inst, const MCSymbol *Target,
                        MCContext *Ctx) const override {
 
@@ -2896,6 +2921,19 @@ public:
     Inst.setOpcode(X86::CALL64pcrel32);
     Inst.addOperand(MCOperand::createExpr(
         MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
+    return true;
+  }
+
+  bool createIndirectCall(MCInst &Inst, const MCSymbol *TargetLocation,
+                          MCContext *Ctx, bool IsTailCall) const override {
+    Inst.setOpcode(IsTailCall ? X86::TAILJMPm : X86::CALL64m);
+    Inst.addOperand(MCOperand::createReg(X86::RIP));        // BaseReg
+    Inst.addOperand(MCOperand::createImm(1));               // ScaleAmt
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // IndexReg
+    Inst.addOperand(MCOperand::createExpr(                  // Displacement
+        MCSymbolRefExpr::create(TargetLocation, MCSymbolRefExpr::VK_None,
+                                *Ctx)));
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
     return true;
   }
 
@@ -3120,6 +3158,90 @@ public:
 
   void createPopFlags(MCInst &Inst, unsigned Size) const override {
     return createPopRegister(Inst, X86::EFLAGS, Size);
+  }
+
+  void createSwap(MCInst &Inst, MCPhysReg Source, MCPhysReg MemBaseReg,
+                  int64_t Disp) const {
+    Inst.setOpcode(X86::XCHG64rm);
+    Inst.addOperand(MCOperand::createReg(Source));
+    Inst.addOperand(MCOperand::createReg(Source));
+    Inst.addOperand(MCOperand::createReg(MemBaseReg));      // BaseReg
+    Inst.addOperand(MCOperand::createImm(1));               // ScaleAmt
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // IndexReg
+    Inst.addOperand(MCOperand::createImm(Disp));            // Displacement
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister));//AddrSegmentReg
+  }
+
+  void createIndirectBranch(MCInst &Inst, MCPhysReg MemBaseReg,
+                            int64_t Disp) const {
+    Inst.setOpcode(X86::JMP64m);
+    Inst.addOperand(MCOperand::createReg(MemBaseReg));      // BaseReg
+    Inst.addOperand(MCOperand::createImm(1));               // ScaleAmt
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // IndexReg
+    Inst.addOperand(MCOperand::createImm(Disp));            // Displacement
+    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
+  }
+
+  std::vector<MCInst>
+  createInstrumentedIndirectCall(const MCInst &CallInst, bool TailCall,
+                                 MCSymbol *HandlerFuncAddr, int CallSiteID,
+                                 MCContext *Ctx) const override {
+    std::vector<MCInst> Insts(6);
+    MCPhysReg TempReg = getIntArgRegister(0);
+    // Code sequence used to enter indirect call instrumentation helper:
+    //   push %rdi
+    //   movq target, %rdi  ;; via convertIndirectCallTargetToLoad
+    //   push %rdi
+    //   movq $CallSiteID, %rdi
+    //   push %rdi
+    //   callq/jmp *HandlerFuncAddr
+    createPushRegister(Insts[0], TempReg, 8);
+    Insts[1] = CallInst;
+    convertIndirectCallToLoad(Insts[1], TempReg);
+    createPushRegister(Insts[2], TempReg, 8);
+    createLoadImmediate(Insts[3], TempReg, CallSiteID);
+    createPushRegister(Insts[4], TempReg, 8);
+    createIndirectCall(Insts[5], HandlerFuncAddr, Ctx,
+                       /*TailCall=*/TailCall);
+    // Carry over metadata
+    for (int I = MCPlus::getNumPrimeOperands(CallInst),
+             E = CallInst.getNumOperands();
+         I != E; ++I) {
+      Insts[5].addOperand(CallInst.getOperand(I));
+    }
+    return Insts;
+  }
+
+  std::vector<MCInst>
+  createInstrumentedNoopIndCallHandler() const override {
+    const MCPhysReg TempReg = getIntArgRegister(0);
+    // For the default indirect call handler that is supposed to be a no-op,
+    // we just need to undo the sequence created for every ind call in
+    // instrumentIndirectTarget(), which can be accomplished minimally with:
+    //   pop %rdi
+    //   add $16, %rsp
+    //   xchg (%rsp), %rdi
+    //   jmp *-8(%rsp)
+    std::vector<MCInst> Insts(4);
+    createPopRegister(Insts[0], TempReg, 8);
+    createStackPointerDecrement(Insts[1], 16, /*NoFlagsClobber=*/false);
+    createSwap(Insts[2], TempReg, X86::RSP, 0);
+    createIndirectBranch(Insts[3], X86::RSP, -8);
+    return Insts;
+  }
+
+  std::vector<MCInst>
+  createInstrumentedNoopIndTailCallHandler() const override {
+    const MCPhysReg TempReg = getIntArgRegister(0);
+    // Same thing as above, but for tail calls
+    //   add $16, %rsp
+    //   pop %rdi
+    //   jmp *-16(%rsp)
+    std::vector<MCInst> Insts(3);
+    createStackPointerDecrement(Insts[0], 16, /*NoFlagsClobber=*/false);
+    createPopRegister(Insts[1], TempReg, 8);
+    createIndirectBranch(Insts[2], X86::RSP, -16);
+    return Insts;
   }
 
   BlocksVectorTy indirectCallPromotion(
