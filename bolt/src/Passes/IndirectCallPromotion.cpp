@@ -137,8 +137,8 @@ EliminateLoads(
 static cl::opt<unsigned>
 ICPTopCallsites(
     "icp-top-callsites",
-    cl::desc("only optimize calls that contribute to this percentage of all "
-             "indirect calls. 0 = all callsites"),
+    cl::desc("optimize hottest calls until at least this percentage of all "
+             "indirect calls frequency is covered. 0 = all callsites"),
     cl::init(99),
     cl::Hidden,
     cl::ZeroOrMore,
@@ -1318,11 +1318,17 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
     // number of calls.
     const float TopPerc = opts::ICPTopCallsites / 100.0f;
     int64_t MaxCalls = TotalIndirectCalls * TopPerc;
+    uint64_t LastFreq = std::numeric_limits<uint64_t>::max();
     size_t Num = 0;
     for (const auto &IC : IndirectCalls) {
-      if (MaxCalls <= 0)
+      const uint64_t CurFreq = std::get<0>(IC);
+      // Once we decide to stop, include at least all branches that share the
+      // same frequency of the last one to avoid non-deterministic behavior
+      // (e.g. turning on/off ICP depending on the order of functions)
+      if (MaxCalls <= 0 && CurFreq != LastFreq)
         break;
-      MaxCalls -= std::get<0>(IC);
+      MaxCalls -= CurFreq;
+      LastFreq = CurFreq;
       BC.MIB->addAnnotation(*std::get<1>(IC), "DoICP", true);
       Functions.insert(std::get<2>(IC));
       ++Num;
