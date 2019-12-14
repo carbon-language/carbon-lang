@@ -30,6 +30,12 @@ module m1
     generic :: assignment(=) => assign_t, assign_t2, assign_t3, assign_t4
     procedure :: assign_t4
   end type
+  type :: t2
+  contains
+    procedure, nopass :: assign_t
+    !ERROR: Defined assignment procedure 'assign_t' may not have NOPASS attribute
+    generic :: assignment(=) => assign_t
+  end type
 contains
   subroutine assign_t(x, y)
     class(t), intent(out) :: x

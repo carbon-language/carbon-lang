@@ -518,7 +518,9 @@ static bool ConflictsWithIntrinsicOperator(
 bool CheckHelper::CheckDefinedOperator(const SourceName &opName,
     const GenericKind &kind, const Symbol &specific, const Procedure &proc) {
   std::optional<parser::MessageFixedText> msg;
-  if (!proc.functionResult.has_value()) {
+  if (specific.attrs().test(Attr::NOPASS)) {  // C774
+    msg = "%s procedure '%s' may not have NOPASS attribute"_err_en_US;
+  } else if (!proc.functionResult.has_value()) {
     msg = "%s procedure '%s' must be a function"_err_en_US;
   } else if (proc.functionResult->IsAssumedLengthCharacter()) {
     msg = "%s function '%s' may not have assumed-length CHARACTER(*)"
@@ -608,7 +610,10 @@ bool CheckHelper::CheckDefinedOperatorArg(const SourceName &opName,
 bool CheckHelper::CheckDefinedAssignment(
     const Symbol &specific, const Procedure &proc) {
   std::optional<parser::MessageFixedText> msg;
-  if (!proc.IsSubroutine()) {
+  if (specific.attrs().test(Attr::NOPASS)) {  // C774
+    msg = "Defined assignment procedure '%s' may not have"
+          " NOPASS attribute"_err_en_US;
+  } else if (!proc.IsSubroutine()) {
     msg = "Defined assignment procedure '%s' must be a subroutine"_err_en_US;
   } else if (proc.dummyArguments.size() != 2) {
     msg = "Defined assignment subroutine '%s' must have"

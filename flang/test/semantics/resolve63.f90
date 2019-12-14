@@ -220,6 +220,12 @@ module m6
     procedure, pass(y) :: p2 => f2
     generic :: operator(+) => p2
   end type
+  type :: t3
+  contains
+    procedure, nopass :: p1 => f1
+    !ERROR: OPERATOR(+) procedure 'p1' may not have NOPASS attribute
+    generic :: operator(+) => p1
+  end type
 contains
   integer function f1(x, y)
     class(t1), intent(in) :: x
