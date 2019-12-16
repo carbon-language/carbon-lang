@@ -203,12 +203,10 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
       }
       info.sourceExprRank = expr->Rank();
       info.sourceExprLoc = parserSourceExpr->source;
-      if (info.sourceExprType.value().category() == TypeCategory::Derived &&
-          !info.sourceExprType.value().IsUnlimitedPolymorphic()) {
-        const DerivedTypeSpec &derived{
-            info.sourceExprType.value().GetDerivedTypeSpec()};
+      if (const DerivedTypeSpec *
+          derived{evaluate::GetDerivedTypeSpec(info.sourceExprType)}) {
         // C949
-        if (auto it{FindCoarrayUltimateComponent(derived)}) {
+        if (auto it{FindCoarrayUltimateComponent(*derived)}) {
           context
               .Say(at,
                   "SOURCE or MOLD expression must not have a type with a coarray ultimate component"_err_en_US)
@@ -219,10 +217,10 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
         }
         if (info.gotSource) {
           // C948
-          if (IsEventTypeOrLockType(&derived)) {
+          if (IsEventTypeOrLockType(derived)) {
             context.Say(at,
                 "SOURCE expression type must not be EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US);
-          } else if (auto it{FindEventOrLockPotentialComponent(derived)}) {
+          } else if (auto it{FindEventOrLockPotentialComponent(*derived)}) {
             context
                 .Say(at,
                     "SOURCE expression type must not have potential subobject "
@@ -571,16 +569,14 @@ bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
       // C948
       const evaluate::DynamicType &sourceType{
           allocateInfo_.sourceExprType.value()};
-      if (sourceType.category() == TypeCategory::Derived &&
-          !sourceType.IsUnlimitedPolymorphic()) {
-        const DerivedTypeSpec derived{sourceType.GetDerivedTypeSpec()};
-        if (IsTeamType(&derived)) {
+      if (const auto *derived{evaluate::GetDerivedTypeSpec(sourceType)}) {
+        if (IsTeamType(derived)) {
           context
               .Say(allocateInfo_.sourceExprLoc.value(),
                   "SOURCE or MOLD expression type must not be TEAM_TYPE from ISO_FORTRAN_ENV when an allocatable object is a coarray"_err_en_US)
               .Attach(name_.source, "'%s' is a coarray"_en_US, name_.source);
           return false;
-        } else if (IsIsoCType(&derived)) {
+        } else if (IsIsoCType(derived)) {
           context
               .Say(allocateInfo_.sourceExprLoc.value(),
                   "SOURCE or MOLD expression type must not be C_PTR or C_FUNPTR from ISO_C_BINDING when an allocatable object is a coarray"_err_en_US)

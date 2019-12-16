@@ -44,9 +44,8 @@ static void CheckImplicitInterfaceArg(
     } else if (type->IsPolymorphic()) {
       messages.Say(
           "Polymorphic argument requires an explicit interface"_err_en_US);
-    } else if (type->category() == TypeCategory::Derived) {
-      auto &derived{type->GetDerivedTypeSpec()};
-      if (!derived.parameters().empty()) {
+    } else if (const DerivedTypeSpec * derived{GetDerivedTypeSpec(type)}) {
+      if (!derived->parameters().empty()) {
         messages.Say(
             "Parameterized derived type argument requires an explicit interface"_err_en_US);
       }
@@ -157,17 +156,15 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       actualFirstSymbol && actualFirstSymbol->attrs().test(Attr::ASYNCHRONOUS)};
   bool actualIsVolatile{
       actualFirstSymbol && actualFirstSymbol->attrs().test(Attr::VOLATILE)};
-  if (!actualType.type().IsUnlimitedPolymorphic() &&
-      actualType.type().category() == TypeCategory::Derived) {
-    const auto &derived{actualType.type().GetDerivedTypeSpec()};
+  if (const auto *derived{evaluate::GetDerivedTypeSpec(actualType.type())}) {
     if (dummy.type.type().IsAssumedType()) {
-      if (!derived.parameters().empty()) {  // 15.5.2.4(2)
+      if (!derived->parameters().empty()) {  // 15.5.2.4(2)
         messages.Say(
             "Actual argument associated with TYPE(*) %s may not have a parameterized derived type"_err_en_US,
             dummyName);
       }
       if (const Symbol *
-          tbp{FindImmediateComponent(derived, [](const Symbol &symbol) {
+          tbp{FindImmediateComponent(*derived, [](const Symbol &symbol) {
             return symbol.has<ProcBindingDetails>();
           })}) {  // 15.5.2.4(2)
         evaluate::SayWithDeclaration(messages, *tbp,
@@ -175,7 +172,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
             dummyName, tbp->name());
       }
       if (const Symbol *
-          finalizer{FindImmediateComponent(derived, [](const Symbol &symbol) {
+          finalizer{FindImmediateComponent(*derived, [](const Symbol &symbol) {
             return symbol.has<FinalProcDetails>();
           })}) {  // 15.5.2.4(2)
         evaluate::SayWithDeclaration(messages, *finalizer,
@@ -186,7 +183,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     if (actualIsCoindexed) {
       if (dummy.intent != common::Intent::In && !dummyIsValue) {
         if (auto bad{
-                FindAllocatableUltimateComponent(derived)}) {  // 15.5.2.4(6)
+                FindAllocatableUltimateComponent(*derived)}) {  // 15.5.2.4(6)
           evaluate::SayWithDeclaration(messages, *bad,
               "Coindexed actual argument with ALLOCATABLE ultimate component '%s' must be associated with a %s with VALUE or INTENT(IN) attributes"_err_en_US,
               bad.BuildResultDesignatorName(), dummyName);
@@ -206,7 +203,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
       }
     }
     if (actualIsVolatile != dummyIsVolatile) {  // 15.5.2.4(22)
-      if (auto bad{semantics::FindCoarrayUltimateComponent(derived)}) {
+      if (auto bad{semantics::FindCoarrayUltimateComponent(*derived)}) {
         evaluate::SayWithDeclaration(messages, *bad,
             "VOLATILE attribute must match for %s when actual argument has a coarray ultimate component '%s'"_err_en_US,
             dummyName, bad.BuildResultDesignatorName());
@@ -400,11 +397,13 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
               "POINTER or ALLOCATABLE dummy and actual arguments must have the same declared type"_err_en_US);
         }
       }
-      if (actualType.type().category() == TypeCategory::Derived &&
-          !DefersSameTypeParameters(actualType.type().GetDerivedTypeSpec(),
-              dummy.type.type().GetDerivedTypeSpec())) {
-        messages.Say(
-            "Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE"_err_en_US);
+      if (const auto *derived{
+              evaluate::GetDerivedTypeSpec(actualType.type())}) {
+        if (!DefersSameTypeParameters(
+                *derived, *evaluate::GetDerivedTypeSpec(dummy.type.type()))) {
+          messages.Say(
+              "Dummy and actual arguments must defer the same type parameters when POINTER or ALLOCATABLE"_err_en_US);
+        }
       }
     }
   }

@@ -100,6 +100,20 @@ bool DynamicType::IsTypelessIntrinsicArgument() const {
   return category_ == TypeCategory::Integer && kind_ == TypelessKind;
 }
 
+const semantics::DerivedTypeSpec *GetDerivedTypeSpec(
+    const std::optional<DynamicType> &type) {
+  return type ? GetDerivedTypeSpec(*type) : nullptr;
+}
+
+const semantics::DerivedTypeSpec *GetDerivedTypeSpec(const DynamicType &type) {
+  if (type.category() == TypeCategory::Derived &&
+      !type.IsUnlimitedPolymorphic()) {
+    return &type.GetDerivedTypeSpec();
+  } else {
+    return nullptr;
+  }
+}
+
 static const semantics::Symbol *FindParentComponent(
     const semantics::DerivedTypeSpec &derived) {
   const semantics::Symbol &typeSymbol{derived.typeSymbol()};

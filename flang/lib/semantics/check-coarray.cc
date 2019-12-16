@@ -26,13 +26,9 @@ namespace Fortran::semantics {
 template<typename T>
 static void CheckTeamType(SemanticsContext &context, const T &x) {
   if (const auto *expr{GetExpr(x)}) {
-    if (auto type{expr->GetType()}) {
-      if (type->category() != TypeCategory::Derived ||
-          type->IsUnlimitedPolymorphic() ||
-          !IsTeamType(&type->GetDerivedTypeSpec())) {
-        context.Say(parser::FindSourceLocation(x),  // C1114
-            "Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV"_err_en_US);
-      }
+    if (!IsTeamType(evaluate::GetDerivedTypeSpec(expr->GetType()))) {
+      context.Say(parser::FindSourceLocation(x),  // C1114
+          "Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV"_err_en_US);
     }
   }
 }

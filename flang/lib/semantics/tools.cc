@@ -95,11 +95,14 @@ Tristate IsDefinedAssignment(
   } else if (lhsCat != TypeCategory::Derived) {
     return ToTristate(lhsCat != rhsCat &&
         (!IsNumericTypeCategory(lhsCat) || !IsNumericTypeCategory(rhsCat)));
-  } else if (rhsCat == TypeCategory::Derived &&
-      lhsType->GetDerivedTypeSpec() == rhsType->GetDerivedTypeSpec()) {
-    return Tristate::Maybe;  // TYPE(t) = TYPE(t) can be defined or intrinsic
   } else {
-    return Tristate::Yes;
+    const auto *lhsDerived{evaluate::GetDerivedTypeSpec(lhsType)};
+    const auto *rhsDerived{evaluate::GetDerivedTypeSpec(rhsType)};
+    if (lhsDerived && rhsDerived && *lhsDerived == *rhsDerived) {
+      return Tristate::Maybe;  // TYPE(t) = TYPE(t) can be defined or intrinsic
+    } else {
+      return Tristate::Yes;
+    }
   }
 }
 

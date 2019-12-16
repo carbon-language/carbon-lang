@@ -212,6 +212,11 @@ private:
   const semantics::DerivedTypeSpec *derived_{nullptr};  // TYPE(T), CLASS(T)
 };
 
+// Return the DerivedTypeSpec of a DynamicType if it has one.
+const semantics::DerivedTypeSpec *GetDerivedTypeSpec(const DynamicType &);
+const semantics::DerivedTypeSpec *GetDerivedTypeSpec(
+    const std::optional<DynamicType> &);
+
 std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &);
 
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {

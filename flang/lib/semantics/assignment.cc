@@ -593,14 +593,12 @@ void CheckDefinabilityInPureScope(parser::ContextualMessages &messages,
 
 static std::optional<std::string> GetPointerComponentDesignatorName(
     const SomeExpr &expr) {
-  if (auto type{evaluate::DynamicType::From(expr)}) {
-    if (type->category() == TypeCategory::Derived &&
-        !type->IsUnlimitedPolymorphic()) {
-      UltimateComponentIterator ultimates{type->GetDerivedTypeSpec()};
-      if (auto pointer{
-              std::find_if(ultimates.begin(), ultimates.end(), IsPointer)}) {
-        return pointer.BuildResultDesignatorName();
-      }
+  if (const auto *derived{
+          evaluate::GetDerivedTypeSpec(evaluate::DynamicType::From(expr))}) {
+    UltimateComponentIterator ultimates{*derived};
+    if (auto pointer{
+            std::find_if(ultimates.begin(), ultimates.end(), IsPointer)}) {
+      return pointer.BuildResultDesignatorName();
     }
   }
   return std::nullopt;
@@ -648,11 +646,9 @@ void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
           Say(at_,
               "Deallocation of polymorphic object is not permitted in a PURE subprogram"_err_en_US);
         }
-        if (type->category() == TypeCategory::Derived &&
-            !type->IsUnlimitedPolymorphic()) {
-          const DerivedTypeSpec &derived{type->GetDerivedTypeSpec()};
+        if (const DerivedTypeSpec * derived{GetDerivedTypeSpec(type)}) {
           if (auto bad{FindPolymorphicAllocatableNonCoarrayUltimateComponent(
-                  derived)}) {
+                  *derived)}) {
             evaluate::SayWithDeclaration(messages, *bad,
                 "Deallocation of polymorphic non-coarray component '%s' is not permitted in a PURE subprogram"_err_en_US,
                 bad.BuildResultDesignatorName());

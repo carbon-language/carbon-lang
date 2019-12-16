@@ -913,16 +913,6 @@ static std::optional<Component> CreateComponent(
   return std::nullopt;
 }
 
-static const semantics::DerivedTypeSpec *GetDerivedTypeSpec(
-    const std::optional<DynamicType> &type) {
-  if (type && type->category() == TypeCategory::Derived) {
-    if (!type->IsUnlimitedPolymorphic()) {
-      return &type->GetDerivedTypeSpec();
-    }
-  }
-  return nullptr;
-}
-
 // Derived type component references and type parameter inquiries
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
   MaybeExpr base{Analyze(sc.base)};

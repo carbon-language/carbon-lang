@@ -293,12 +293,11 @@ bool DummyDataObject::CanBePassedViaImplicitInterface() const {
     return false;  // 15.4.2.2(3)(b-d)
   } else if (type.type().IsPolymorphic()) {
     return false;  // 15.4.2.2(3)(f)
-  } else if (type.type().category() == TypeCategory::Derived) {
-    if (!type.type().GetDerivedTypeSpec().parameters().empty()) {
-      return false;  // 15.4.2.2(3)(e)
-    }
+  } else if (const auto *derived{GetDerivedTypeSpec(type.type())}) {
+    return derived->parameters().empty();  // 15.4.2.2(3)(e)
+  } else {
+    return true;
   }
-  return true;
 }
 
 std::ostream &DummyDataObject::Dump(std::ostream &o) const {
