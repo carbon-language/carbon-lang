@@ -178,9 +178,11 @@ public:
 private:
   MaybeExpr TryDefinedOp(
       std::vector<const char *>, parser::MessageFixedText &&);
+  MaybeExpr TryBoundOp(const Symbol &, int passIndex);
   std::optional<ActualArgument> AnalyzeExpr(const parser::Expr &);
   bool AreConformable() const;
-  Symbol *FindDefinedOp(const char *) const;
+  const Symbol *FindBoundOp(parser::CharBlock, int passIndex);
+  bool OkLogicalIntegerAssignment(TypeCategory lhs, TypeCategory rhs);
   std::optional<DynamicType> GetType(std::size_t) const;
   int GetRank(std::size_t) const;
   bool IsBOZLiteral(std::size_t i) const {
@@ -194,6 +196,7 @@ private:
   ActualArguments actuals_;
   parser::CharBlock source_;
   bool fatalErrors_{false};
+  const Symbol *sawDefinedOp_{nullptr};
 };
 
 // Wraps a data reference in a typed Designator<>, and a procedure
@@ -910,6 +913,16 @@ static std::optional<Component> CreateComponent(
   return std::nullopt;
 }
 
+static const semantics::DerivedTypeSpec *GetDerivedTypeSpec(
+    const std::optional<DynamicType> &type) {
+  if (type && type->category() == TypeCategory::Derived) {
+    if (!type->IsUnlimitedPolymorphic()) {
+      return &type->GetDerivedTypeSpec();
+    }
+  }
+  return nullptr;
+}
+
 // Derived type component references and type parameter inquiries
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
   MaybeExpr base{Analyze(sc.base)};
@@ -922,12 +935,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
   }
   const auto &name{sc.component.source};
   if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
-    const semantics::DerivedTypeSpec *dtSpec{nullptr};
-    if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
-      if (!dtDyTy->IsUnlimitedPolymorphic()) {
-        dtSpec = &dtDyTy->GetDerivedTypeSpec();
-      }
-    }
+    const auto *dtSpec{GetDerivedTypeSpec(dtExpr->GetType())};
     if (sym->detailsIf<semantics::TypeParamDetails>()) {
       if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
         if (std::optional<DynamicType> dyType{DynamicType::From(*sym)}) {
@@ -1531,21 +1539,22 @@ static std::optional<parser::CharBlock> GetPassName(
       proc.details());
 }
 
-static int GetPassIndex(const semantics::Symbol &proc, parser::CharBlock name) {
-  if (const auto *interface{semantics::FindInterface(proc)}) {
-    if (const auto *subp{
-            interface->detailsIf<semantics::SubprogramDetails>()}) {
-      int index{0};
-      for (const auto *arg : subp->dummyArgs()) {
-        if (arg && arg->name() == name) {
-          return index;
-        }
-        ++index;
-      }
-      DIE("PASS argument name not in dummy argument list");
-    }
+static int GetPassIndex(const Symbol &proc) {
+  CHECK(!proc.attrs().test(semantics::Attr::NOPASS));
+  std::optional<parser::CharBlock> passName{GetPassName(proc)};
+  const auto *interface{semantics::FindInterface(proc)};
+  if (!passName || !interface) {
+    return 0;  // first argument is passed-object
   }
-  return 0;  // first argument is passed-object
+  const auto &subp{interface->get<semantics::SubprogramDetails>()};
+  int index{0};
+  for (const auto *arg : subp.dummyArgs()) {
+    if (arg && arg->name() == passName) {
+      return index;
+    }
+    ++index;
+  }
+  DIE("PASS argument name not in dummy argument list");
 }
 
 // Injects an expression into an actual argument list as the "passed object"
@@ -1558,8 +1567,7 @@ static void AddPassArg(ActualArguments &actuals, Expr<SomeDerived> &&expr,
   if (component.attrs().test(semantics::Attr::NOPASS)) {
     return;
   }
-  auto passName{GetPassName(component)};
-  int passIndex{passName ? GetPassIndex(component, *passName) : 0};
+  int passIndex{GetPassIndex(component)};
   auto iter{actuals.begin()};
   int at{0};
   while (iter < actuals.end() && at < passIndex) {
@@ -1572,10 +1580,26 @@ static void AddPassArg(ActualArguments &actuals, Expr<SomeDerived> &&expr,
   }
   ActualArgument passed{AsGenericExpr(std::move(expr))};
   passed.set_isPassedObject(isPassedObject);
-  if (iter == actuals.end() && passName) {
-    passed.set_keyword(*passName);
+  if (iter == actuals.end()) {
+    if (auto passName{GetPassName(component)}) {
+      passed.set_keyword(*passName);
+    }
   }
   actuals.emplace(iter, std::move(passed));
+}
+
+// Return the compile-time resolution of a procedure binding, if possible.
+static const Symbol *GetBindingResolution(
+    const std::optional<DynamicType> &baseType, const Symbol &component) {
+  const auto *binding{component.detailsIf<semantics::ProcBindingDetails>()};
+  if (!binding) {
+    return nullptr;
+  }
+  if (!component.attrs().test(semantics::Attr::NON_OVERRIDABLE) &&
+      (!baseType || baseType->IsPolymorphic())) {
+    return nullptr;
+  }
+  return &binding->symbol();
 }
 
 auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
@@ -1587,23 +1611,19 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
     if (const Symbol * sym{sc.component.symbol}) {
       if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
         if (sym->has<semantics::GenericDetails>()) {
-          sym = ResolveGeneric(*sym, arguments, *dtExpr);
+          sym = ResolveGeneric(*sym, arguments,
+              [&](const Symbol &proc, ActualArguments &actuals) {
+                if (!proc.attrs().test(semantics::Attr::NOPASS)) {
+                  AddPassArg(actuals, std::move(*dtExpr), proc);
+                }
+                return true;
+              });
           if (!sym) {
             return std::nullopt;
           }
         }
-        const Symbol *resolution{nullptr};
-        if (const auto *binding{
-                sym->detailsIf<semantics::ProcBindingDetails>()}) {
-          if (sym->attrs().test(semantics::Attr::NON_OVERRIDABLE)) {
-            resolution = &binding->symbol();
-          } else if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
-            if (!dtDyTy->IsPolymorphic()) {
-              resolution = &binding->symbol();
-            }
-          }
-        }
-        if (resolution) {
+        if (const Symbol *
+            resolution{GetBindingResolution(dtExpr->GetType(), *sym)}) {
           AddPassArg(arguments, std::move(*dtExpr), *sym, false);
           return CalleeAndArguments{
               ProcedureDesignator{*resolution}, std::move(arguments)};
@@ -1675,9 +1695,9 @@ static bool CheckCompatibleArguments(
 
 // Resolve a call to a generic procedure with given actual arguments.
 // If it's a procedure component, base is the data-ref to the left of the '%'.
+// adjustActuals is called on procedure bindings to handle pass arg.
 const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
-    const ActualArguments &actuals,
-    const std::optional<Expr<SomeDerived>> &base) {
+    const ActualArguments &actuals, AdjustActuals adjustActuals) {
   const Symbol *elemental{nullptr};  // matching elemental specific proc
   const auto &details{symbol.GetUltimate().get<semantics::GenericDetails>()};
   for (const Symbol &specific : details.specificProcs()) {
@@ -1686,7 +1706,9 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
                 ProcedureDesignator{specific}, context_.intrinsics())}) {
       ActualArguments localActuals{actuals};
       if (specific.has<semantics::ProcBindingDetails>()) {
-        AddPassArg(localActuals, common::Clone(base.value()), specific);
+        if (!adjustActuals.value()(specific, localActuals)) {
+          continue;
+        }
       }
       if (semantics::CheckInterfaceForGeneric(
               *procedure, localActuals, GetFoldingContext())) {
@@ -1706,7 +1728,7 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
   if (const auto *parentScope{symbol.owner().GetDerivedTypeParent()}) {
     if (const Symbol * extended{parentScope->FindComponent(symbol.name())}) {
       if (extended->GetUltimate().has<semantics::GenericDetails>()) {
-        return ResolveGeneric(*extended, actuals, base);
+        return ResolveGeneric(*extended, actuals, adjustActuals);
       }
     }
   }
@@ -2054,9 +2076,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::Concat &x) {
 // The Name represents a user-defined intrinsic operator.
 // If the actuals match one of the specific procedures, return a function ref.
 // Otherwise report the error in messages.
-MaybeExpr ExpressionAnalyzer::AnalyzeDefinedOp(parser::Messages &messages,
+MaybeExpr ExpressionAnalyzer::AnalyzeDefinedOp(
     const parser::Name &name, ActualArguments &&actuals) {
-  auto restorer{GetContextualMessages().SetMessages(messages)};
   if (auto callee{GetCalleeAndArguments(name, std::move(actuals))}) {
     return MakeFunctionRef(name.source, std::move(callee->procedureDesignator),
         std::move(callee->arguments));
@@ -2557,36 +2578,64 @@ bool ArgumentAnalyzer::IsIntrinsicConcat() const {
 
 MaybeExpr ArgumentAnalyzer::TryDefinedOp(
     const char *opr, parser::MessageFixedText &&error) {
-  Symbol *symbol{AnyUntypedOperand() ? nullptr : FindDefinedOp(opr)};
-  if (!symbol) {
-    if (actuals_.size() == 1 || AreConformable()) {
-      context_.Say(std::move(error), ToUpperCase(opr), TypeAsFortran(0),
-          TypeAsFortran(1));
-    } else {
-      context_.Say(
-          "Operands of %s are not conformable; have rank %d and rank %d"_err_en_US,
-          ToUpperCase(opr), actuals_[0]->Rank(), actuals_[1]->Rank());
+  if (AnyUntypedOperand()) {
+    context_.Say(
+        std::move(error), ToUpperCase(opr), TypeAsFortran(0), TypeAsFortran(1));
+    return std::nullopt;
+  }
+  {
+    auto restorer{context_.GetContextualMessages().DiscardMessages()};
+    std::string oprNameString{"operator("s + opr + ')'};
+    parser::CharBlock oprName{oprNameString};
+    const auto &scope{context_.context().FindScope(source_)};
+    if (Symbol * symbol{scope.FindSymbol(oprName)}) {
+      parser::Name name{source_, symbol};
+      if (auto result{context_.AnalyzeDefinedOp(name, GetActuals())}) {
+        return result;
+      }
+      sawDefinedOp_ = symbol;
     }
-    return std::nullopt;
+    for (std::size_t passIndex{0}; passIndex < actuals_.size(); ++passIndex) {
+      if (const Symbol * symbol{FindBoundOp(oprName, passIndex)}) {
+        if (MaybeExpr result{TryBoundOp(*symbol, passIndex)}) {
+          return result;
+        }
+      }
+    }
   }
-  parser::Messages messages;
-  parser::Name name{source_, symbol};
-  if (auto result{context_.AnalyzeDefinedOp(messages, name, GetActuals())}) {
-    return result;
+  if (sawDefinedOp_) {
+    SayNoMatch(ToUpperCase(sawDefinedOp_->name().ToString()));
+  } else if (actuals_.size() == 1 || AreConformable()) {
+    context_.Say(
+        std::move(error), ToUpperCase(opr), TypeAsFortran(0), TypeAsFortran(1));
   } else {
-    SayNoMatch("OPERATOR(" + ToUpperCase(opr) + ')');
-    return std::nullopt;
+    context_.Say(
+        "Operands of %s are not conformable; have rank %d and rank %d"_err_en_US,
+        ToUpperCase(opr), actuals_[0]->Rank(), actuals_[1]->Rank());
   }
+  return std::nullopt;
 }
 
 MaybeExpr ArgumentAnalyzer::TryDefinedOp(
     std::vector<const char *> oprs, parser::MessageFixedText &&error) {
   for (std::size_t i{1}; i < oprs.size(); ++i) {
-    if (FindDefinedOp(oprs[i])) {
-      return TryDefinedOp(oprs[i], std::move(error));
+    auto restorer{context_.GetContextualMessages().DiscardMessages()};
+    if (auto result{TryDefinedOp(oprs[i], std::move(error))}) {
+      return result;
     }
   }
   return TryDefinedOp(oprs[0], std::move(error));
+}
+
+MaybeExpr ArgumentAnalyzer::TryBoundOp(const Symbol &symbol, int passIndex) {
+  ActualArguments localActuals{actuals_};
+  const auto *proc{GetBindingResolution(GetType(passIndex), symbol)};
+  if (!proc) {
+    proc = &symbol;
+    localActuals[passIndex]->set_isPassedObject();
+  }
+  return context_.MakeFunctionRef(
+      source_, ProcedureDesignator{*proc}, std::move(localActuals));
 }
 
 std::optional<ProcedureRef> ArgumentAnalyzer::TryDefinedAssignment() {
@@ -2603,55 +2652,64 @@ std::optional<ProcedureRef> ArgumentAnalyzer::TryDefinedAssignment() {
     return std::nullopt;  // user-defined assignment not allowed for these args
   }
   auto restorer{context_.GetContextualMessages().SetLocation(source_)};
-  auto procRef{GetDefinedAssignmentProc()};
-  if (!procRef) {
-    if (isDefined == Tristate::Yes) {
-      if (context_.context().languageFeatures().IsEnabled(
-              common::LanguageFeature::LogicalIntegerAssignment) &&
-          lhsType && rhsType && (lhsRank == rhsRank || rhsRank == 0)) {
-        if (lhsType->category() == TypeCategory::Integer &&
-            rhsType->category() == TypeCategory::Logical) {
-          // allow assignment to LOGICAL from INTEGER as a legacy extension
-          if (context_.context().languageFeatures().ShouldWarn(
-                  common::LanguageFeature::LogicalIntegerAssignment)) {
-            context_.Say(
-                "nonstandard usage: assignment of LOGICAL to INTEGER"_en_US);
-          }
-        } else if (lhsType->category() == TypeCategory::Logical &&
-            rhsType->category() == TypeCategory::Integer) {
-          // ... and assignment to LOGICAL from INTEGER
-          if (context_.context().languageFeatures().ShouldWarn(
-                  common::LanguageFeature::LogicalIntegerAssignment)) {
-            context_.Say(
-                "nonstandard usage: assignment of INTEGER to LOGICAL"_en_US);
-          }
-        } else {
-          SayNoMatch("ASSIGNMENT(=)", true);
-        }
-      } else {
-        SayNoMatch("ASSIGNMENT(=)", true);
-      }
-    }
-    return std::nullopt;
+  if (std::optional<ProcedureRef> procRef{GetDefinedAssignmentProc()}) {
+    context_.CheckCall(source_, procRef->proc(), procRef->arguments());
+    return std::move(*procRef);
   }
-  context_.CheckCall(source_, procRef->proc(), procRef->arguments());
-  return std::move(*procRef);
-}
-
-std::optional<ProcedureRef> ArgumentAnalyzer::GetDefinedAssignmentProc() {
-  parser::Messages tmpMessages;
-  auto restorer{context_.GetContextualMessages().SetMessages(tmpMessages)};
-  const auto &scope{context_.context().FindScope(source_)};
-  if (const Symbol *
-      symbol{scope.FindSymbol(parser::CharBlock{"assignment(=)"s})}) {
-    const Symbol *specific{context_.ResolveGeneric(*symbol, actuals_)};
-    if (specific) {
-      ProcedureDesignator designator{*specific};
-      actuals_[1]->Parenthesize();
-      return ProcedureRef{std::move(designator), std::move(actuals_)};
+  if (isDefined == Tristate::Yes) {
+    if (!lhsType || !rhsType || (lhsRank != rhsRank && rhsRank != 0) ||
+        !OkLogicalIntegerAssignment(lhsType->category(), rhsType->category())) {
+      SayNoMatch("ASSIGNMENT(=)", true);
     }
   }
   return std::nullopt;
+}
+
+bool ArgumentAnalyzer::OkLogicalIntegerAssignment(
+    TypeCategory lhs, TypeCategory rhs) {
+  if (!context_.context().languageFeatures().IsEnabled(
+          common::LanguageFeature::LogicalIntegerAssignment)) {
+    return false;
+  }
+  std::optional<parser::MessageFixedText> msg;
+  if (lhs == TypeCategory::Integer && rhs == TypeCategory::Logical) {
+    // allow assignment to LOGICAL from INTEGER as a legacy extension
+    msg = "nonstandard usage: assignment of LOGICAL to INTEGER"_en_US;
+  } else if (lhs == TypeCategory::Logical && rhs == TypeCategory::Integer) {
+    // ... and assignment to LOGICAL from INTEGER
+    msg = "nonstandard usage: assignment of INTEGER to LOGICAL"_en_US;
+  } else {
+    return false;
+  }
+  if (context_.context().languageFeatures().ShouldWarn(
+          common::LanguageFeature::LogicalIntegerAssignment)) {
+    context_.Say(std::move(*msg));
+  }
+  return true;
+}
+
+std::optional<ProcedureRef> ArgumentAnalyzer::GetDefinedAssignmentProc() {
+  auto restorer{context_.GetContextualMessages().DiscardMessages()};
+  std::string oprNameString{"assignment(=)"};
+  parser::CharBlock oprName{oprNameString};
+  const Symbol *proc{nullptr};
+  const auto &scope{context_.context().FindScope(source_)};
+  if (const Symbol * symbol{scope.FindSymbol(oprName)}) {
+    if (const Symbol * specific{context_.ResolveGeneric(*symbol, actuals_)}) {
+      proc = specific;
+    }
+  }
+  for (std::size_t passIndex{0}; passIndex < actuals_.size(); ++passIndex) {
+    if (const Symbol * specific{FindBoundOp(oprName, passIndex)}) {
+      proc = specific;
+    }
+  }
+  if (proc) {
+    actuals_[1]->Parenthesize();
+    return ProcedureRef{ProcedureDesignator{*proc}, std::move(actuals_)};
+  } else {
+    return std::nullopt;
+  }
 }
 
 std::optional<ActualArgument> ArgumentAnalyzer::AnalyzeExpr(
@@ -2672,9 +2730,22 @@ bool ArgumentAnalyzer::AreConformable() const {
   return evaluate::AreConformable(*actuals_[0], *actuals_[1]);
 }
 
-Symbol *ArgumentAnalyzer::FindDefinedOp(const char *opr) const {
-  const auto &scope{context_.context().FindScope(source_)};
-  return scope.FindSymbol(parser::CharBlock{"operator("s + opr + ')'});
+// Look for a type-bound operator in the type of arg number passIndex.
+const Symbol *ArgumentAnalyzer::FindBoundOp(
+    parser::CharBlock oprName, int passIndex) {
+  const auto *type{GetDerivedTypeSpec(GetType(passIndex))};
+  if (!type || !type->scope()) {
+    return nullptr;
+  }
+  const Symbol *symbol{type->scope()->FindSymbol(oprName)};
+  if (!symbol) {
+    return nullptr;
+  }
+  sawDefinedOp_ = symbol;
+  return context_.ResolveGeneric(
+      *symbol, actuals_, [&](const Symbol &proc, ActualArguments &) {
+        return passIndex == GetPassIndex(proc);
+      });
 }
 
 std::optional<DynamicType> ArgumentAnalyzer::GetType(std::size_t i) const {

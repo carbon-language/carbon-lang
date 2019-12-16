@@ -207,3 +207,38 @@ contains
     x = y .a. z
   end
 end
+
+! Type-bound operators
+module m6
+  type :: t1
+  contains
+    procedure, pass(x) :: p1 => f1
+    generic :: operator(+) => p1
+  end type
+  type, extends(t1) :: t2
+  contains
+    procedure, pass(y) :: p2 => f2
+    generic :: operator(+) => p2
+  end type
+contains
+  integer function f1(x, y)
+    class(t1), intent(in) :: x
+    integer, intent(in) :: y
+  end
+  integer function f2(x, y)
+    class(t1), intent(in) :: x
+    class(t2), intent(in) :: y
+  end
+  subroutine test(x, y, z)
+    class(t1) :: x
+    class(t2) :: y
+    integer :: i
+    i = x + y
+    i = x + i
+    i = y + i
+    !ERROR: No intrinsic or user-defined OPERATOR(+) matches operand types TYPE(t2) and TYPE(t1)
+    i = y + x
+    !ERROR: No intrinsic or user-defined OPERATOR(+) matches operand types INTEGER(4) and TYPE(t1)
+    i = i + x
+  end
+end

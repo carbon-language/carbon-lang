@@ -264,6 +264,7 @@ set(MODFILE_TESTS
   modfile32.f90
   modfile33.f90
   modfile34.f90
+  modfile35.f90
 )
 
 set(LABEL_TESTS

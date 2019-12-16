@@ -298,6 +298,10 @@ public:
   common::Restorer<Messages *> SetMessages(Messages &buffer) {
     return common::ScopedSet(messages_, &buffer);
   }
+  // Discard messages; destination restored when the returned value is deleted.
+  common::Restorer<Messages *> DiscardMessages() {
+    return common::ScopedSet(messages_, nullptr);
+  }
 
   template<typename... A> Message *Say(CharBlock at, A &&... args) {
     if (messages_ != nullptr) {
