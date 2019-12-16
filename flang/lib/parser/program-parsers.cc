@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Per-type parsers for program units
+
 #include "basic-parsers.h"
 #include "characters.h"
 #include "debug-parser.h"

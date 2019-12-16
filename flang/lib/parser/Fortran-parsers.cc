@@ -28,7 +28,13 @@
 // but that turned out to require more memory to compile with current
 // C++ compilers than some people were willing to accept, so now the
 // various per-type parsers are partitioned into several C++ source
-// files.
+// files.  This file contains parsers for constants, types, declarations,
+// and misfits (mostly clauses 7, 8, & 9 of Fortran 2018).  The others:
+//  executable-parsers.cc  Executable statements
+//  expr-parsers.cc        Expressions
+//  io-parsers.cc          I/O statements and FORMAT
+//  openmp-parsers.cc      OpenMP directives
+//  program-parsers.cc     Program units
 
 #include "basic-parsers.h"
 #include "expr-parsers.h"
