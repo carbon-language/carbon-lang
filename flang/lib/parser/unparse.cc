@@ -847,7 +847,9 @@ public:
   }
   void Unparse(const AssignmentStmt &x) {  // R1032
     if (asFortran_ && x.typedAssignment.get()) {
+      Put(' ');
       asFortran_->assignment(out_, *x.typedAssignment);
+      Put('\n');
     } else {
       Walk(x.t, " = ");
     }

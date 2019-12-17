@@ -350,8 +350,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Designator &d) {
   // These checks have to be deferred to these "top level" data-refs where
   // we can be sure that there are no following subscripts (yet).
   if (MaybeExpr result{Analyze(d.u)}) {
-    if (std::optional<evaluate::DataRef> dataRef{
-            evaluate::ExtractDataRef(std::move(result))}) {
+    if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(result))}) {
       return TopLevelChecks(std::move(*dataRef));
     }
     return result;
@@ -1853,16 +1852,20 @@ MaybeExpr ExpressionAnalyzer::AnalyzeCall(
   return std::nullopt;
 }
 
-void ExpressionAnalyzer::Analyze(const parser::AssignmentStmt &x) {
-  ArgumentAnalyzer analyzer{*this};
-  analyzer.Analyze(std::get<parser::Variable>(x.t));
-  analyzer.Analyze(std::get<parser::Expr>(x.t));
-  if (!analyzer.fatalErrors()) {
-    std::optional<ProcedureRef> procRef{analyzer.TryDefinedAssignment()};
-    x.typedAssignment.reset(new GenericAssignmentWrapper{procRef
-            ? Assignment{std::move(*procRef)}
-            : Assignment{analyzer.MoveExpr(0), analyzer.MoveExpr(1)}});
+const Assignment *ExpressionAnalyzer::Analyze(const parser::AssignmentStmt &x) {
+  if (!x.typedAssignment) {
+    ArgumentAnalyzer analyzer{*this};
+    analyzer.Analyze(std::get<parser::Variable>(x.t));
+    analyzer.Analyze(std::get<parser::Expr>(x.t));
+    if (!analyzer.fatalErrors()) {
+      std::optional<ProcedureRef> procRef{analyzer.TryDefinedAssignment()};
+      x.typedAssignment.reset(new GenericAssignmentWrapper{procRef
+              ? Assignment{std::move(*procRef)}
+              : Assignment{Fold(foldingContext_, analyzer.MoveExpr(0)),
+                    Fold(foldingContext_, analyzer.MoveExpr(1))}});
+    }
   }
+  return x.typedAssignment ? &x.typedAssignment->v : nullptr;
 }
 
 static bool IsExternalCalledImplicitly(
@@ -2824,9 +2827,9 @@ void AnalyzeCallStmt(SemanticsContext &context, const parser::CallStmt &call) {
   evaluate::ExpressionAnalyzer{context}.Analyze(call);
 }
 
-void AnalyzeAssignmentStmt(
+const evaluate::Assignment *AnalyzeAssignmentStmt(
     SemanticsContext &context, const parser::AssignmentStmt &stmt) {
-  evaluate::ExpressionAnalyzer{context}.Analyze(stmt);
+  return evaluate::ExpressionAnalyzer{context}.Analyze(stmt);
 }
 
 ExprChecker::ExprChecker(SemanticsContext &context) : context_{context} {}

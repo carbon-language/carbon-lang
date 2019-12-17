@@ -192,12 +192,6 @@ public:
 
   std::ostream &AsFortran(std::ostream &) const;
 
-protected:
-  // Overridable functions for AsFortran()
-  static const char *Prefix() { return ""; }
-  static const char *Infix() { return ""; }
-  static const char *Suffix() { return ""; }
-
 private:
   Container operand_;
 };
@@ -232,8 +226,6 @@ struct Parentheses : public Operation<Parentheses<A>, A, A> {
   using Operand = A;
   using Base = Operation<Parentheses, A, A>;
   using Base::Base;
-  static const char *Prefix() { return "("; }
-  static const char *Suffix() { return ")"; }
 };
 
 template<typename A> struct Negate : public Operation<Negate<A>, A, A> {
@@ -241,7 +233,6 @@ template<typename A> struct Negate : public Operation<Negate<A>, A, A> {
   using Operand = A;
   using Base = Operation<Negate, A, A>;
   using Base::Base;
-  static const char *Prefix() { return "-"; }
 };
 
 template<int KIND>
@@ -257,9 +248,6 @@ struct ComplexComponent
   ComplexComponent(bool isImaginary, Expr<Operand> &&x)
     : Base{std::move(x)}, isImaginaryPart{isImaginary} {}
 
-  const char *Prefix() const { return isImaginaryPart ? "IMAG(" : "REAL("; }
-  const char *Suffix() const { return ")"; }
-
   bool isImaginaryPart{true};
 };
 
@@ -270,7 +258,6 @@ struct Not : public Operation<Not<KIND>, Type<TypeCategory::Logical, KIND>,
   using Operand = Result;
   using Base = Operation<Not, Result, Operand>;
   using Base::Base;
-  static const char *Prefix() { return ".NOT."; }
 };
 
 // Character lengths are determined by context in Fortran and do not
@@ -286,9 +273,6 @@ struct SetLength
   using LengthOperand = SubscriptInteger;
   using Base = Operation<SetLength, Result, CharacterOperand, LengthOperand>;
   using Base::Base;
-  static const char *Prefix() { return "%SET_LENGTH("; }
-  static const char *Infix() { return ","; }
-  static const char *Suffix() { return ")"; }
 };
 
 // Binary operations
@@ -298,7 +282,6 @@ template<typename A> struct Add : public Operation<Add<A>, A, A, A> {
   using Operand = A;
   using Base = Operation<Add, A, A, A>;
   using Base::Base;
-  static const char *Infix() { return "+"; }
 };
 
 template<typename A> struct Subtract : public Operation<Subtract<A>, A, A, A> {
@@ -306,7 +289,6 @@ template<typename A> struct Subtract : public Operation<Subtract<A>, A, A, A> {
   using Operand = A;
   using Base = Operation<Subtract, A, A, A>;
   using Base::Base;
-  static const char *Infix() { return "-"; }
 };
 
 template<typename A> struct Multiply : public Operation<Multiply<A>, A, A, A> {
@@ -314,7 +296,6 @@ template<typename A> struct Multiply : public Operation<Multiply<A>, A, A, A> {
   using Operand = A;
   using Base = Operation<Multiply, A, A, A>;
   using Base::Base;
-  static const char *Infix() { return "*"; }
 };
 
 template<typename A> struct Divide : public Operation<Divide<A>, A, A, A> {
@@ -322,7 +303,6 @@ template<typename A> struct Divide : public Operation<Divide<A>, A, A, A> {
   using Operand = A;
   using Base = Operation<Divide, A, A, A>;
   using Base::Base;
-  static const char *Infix() { return "/"; }
 };
 
 template<typename A> struct Power : public Operation<Power<A>, A, A, A> {
@@ -330,7 +310,6 @@ template<typename A> struct Power : public Operation<Power<A>, A, A, A> {
   using Operand = A;
   using Base = Operation<Power, A, A, A>;
   using Base::Base;
-  static const char *Infix() { return "**"; }
 };
 
 template<typename A>
@@ -340,7 +319,6 @@ struct RealToIntPower : public Operation<RealToIntPower<A>, A, A, SomeInteger> {
   using BaseOperand = A;
   using ExponentOperand = SomeInteger;
   using Base::Base;
-  static const char *Infix() { return "**"; }
 };
 
 template<typename A> struct Extremum : public Operation<Extremum<A>, A, A, A> {
@@ -352,13 +330,6 @@ template<typename A> struct Extremum : public Operation<Extremum<A>, A, A, A> {
     : Base{x, y}, ordering{ord} {}
   Extremum(Ordering ord, Expr<Operand> &&x, Expr<Operand> &&y)
     : Base{std::move(x), std::move(y)}, ordering{ord} {}
-
-  const char *Prefix() const {
-    return ordering == Ordering::Less ? "MIN(" : "MAX(";
-  }
-  static const char *Infix() { return ","; }
-  static const char *Suffix() { return ")"; }
-
   Ordering ordering{Ordering::Greater};
 };
 
@@ -371,9 +342,6 @@ struct ComplexConstructor
   using Operand = Type<TypeCategory::Real, KIND>;
   using Base = Operation<ComplexConstructor, Result, Operand, Operand>;
   using Base::Base;
-  static const char *Prefix() { return "("; }
-  static const char *Infix() { return ","; }
-  static const char *Suffix() { return ")"; }
 };
 
 template<int KIND>
@@ -385,7 +353,6 @@ struct Concat
   using Operand = Result;
   using Base = Operation<Concat, Result, Operand, Operand>;
   using Base::Base;
-  static const char *Infix() { return "//"; }
 };
 
 template<int KIND>
@@ -401,9 +368,6 @@ struct LogicalOperation
     : Base{x, y}, logicalOperator{opr} {}
   LogicalOperation(LogicalOperator opr, Expr<Operand> &&x, Expr<Operand> &&y)
     : Base{std::move(x), std::move(y)}, logicalOperator{opr} {}
-
-  const char *Infix() const;
-
   LogicalOperator logicalOperator;
 };
 
@@ -655,9 +619,6 @@ struct Relational : public Operation<Relational<T>, LogicalResult, T, T> {
     : Base{a, b}, opr{r} {}
   Relational(RelationalOperator r, Expr<Operand> &&a, Expr<Operand> &&b)
     : Base{std::move(a), std::move(b)}, opr{r} {}
-
-  const char *Infix() const;
-
   RelationalOperator opr;
 };
 

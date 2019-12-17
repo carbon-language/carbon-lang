@@ -359,19 +359,21 @@ private:
 };
 
 void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
-  const auto &lhs{std::get<parser::Variable>(stmt.t)};
-  const auto &rhs{std::get<parser::Expr>(stmt.t)};
-  auto lhsExpr{AnalyzeExpr(context_, lhs)};
-  auto rhsExpr{AnalyzeExpr(context_, rhs)};
-  CheckForImpureCall(lhsExpr);
-  CheckForImpureCall(rhsExpr);
-  // TODO: preserve analyzed typed expressions
-  if (forall_) {
-    // TODO: Warn if some name in forall_->activeNames or its outer
-    // contexts does not appear on LHS
-  }
-  if (lhsExpr && rhsExpr) {
-    CheckForPureContext(*lhsExpr, *rhsExpr, rhs.source, false /* not => */);
+  // Assignment statement analysis is in expression.cc where user-defined
+  // assignments can be recognized and replaced.
+  if (const evaluate::Assignment *
+      asst{AnalyzeAssignmentStmt(context_, stmt)}) {
+    if (const auto *intrinsicAsst{
+            std::get_if<evaluate::Assignment::IntrinsicAssignment>(&asst->u)}) {
+      CheckForImpureCall(intrinsicAsst->lhs);
+      CheckForImpureCall(intrinsicAsst->rhs);
+      if (forall_) {
+        // TODO: Warn if some name in forall_->activeNames or its outer
+        // contexts does not appear on LHS
+      }
+      CheckForPureContext(intrinsicAsst->lhs, intrinsicAsst->rhs,
+          std::get<parser::Expr>(stmt.t).source, false /* not => */);
+    }
   }
   // TODO: Fortran 2003 ALLOCATABLE assignment semantics (automatic
   // (re)allocation of LHS array when unallocated or nonconformable)
@@ -381,8 +383,9 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
   CHECK(!where_);
   const auto &lhs{std::get<parser::DataRef>(stmt.t)};
   const auto &rhs{std::get<parser::Expr>(stmt.t)};
-  auto lhsExpr{AnalyzeExpr(context_, lhs)};
-  auto rhsExpr{AnalyzeExpr(context_, rhs)};
+  auto &foldingContext{context_.foldingContext()};
+  auto lhsExpr{evaluate::Fold(foldingContext, AnalyzeExpr(context_, lhs))};
+  auto rhsExpr{evaluate::Fold(foldingContext, AnalyzeExpr(context_, rhs))};
   CheckForImpureCall(lhsExpr);
   CheckForImpureCall(rhsExpr);
   // TODO: CheckForImpureCall() in the bounds / bounds remappings

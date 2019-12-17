@@ -163,68 +163,72 @@ enum class Precedence {  // in increasing order for sane comparisons
   Power,  // **, which is right-associative unlike the other dyadic operators
   DefinedUnary,
   Parenthesize,  // (x), (real, imaginary)
-  Constant,  // parenthesize if negative integer/real operand
-  Primary,  // don't parenthesize
+  Literal,
+  Top,
 };
 
-template<typename A> constexpr Precedence ToPrecedence{Precedence::Primary};
-
-template<int KIND>
-constexpr Precedence ToPrecedence<LogicalOperation<KIND>>{Precedence::Or};
-template<int KIND>
-constexpr Precedence ToPrecedence<Not<KIND>>{Precedence::Not};
-template<typename T>
-constexpr Precedence ToPrecedence<Relational<T>>{Precedence::Relational};
-template<typename T>
-constexpr Precedence ToPrecedence<Add<T>>{Precedence::Additive};
-template<typename T>
-constexpr Precedence ToPrecedence<Subtract<T>>{Precedence::Additive};
-template<int KIND>
-constexpr Precedence ToPrecedence<Concat<KIND>>{Precedence::Additive};
-template<typename T>
-constexpr Precedence ToPrecedence<Negate<T>>{Precedence::Negate};
-template<typename T>
-constexpr Precedence ToPrecedence<Multiply<T>>{Precedence::Multiplicative};
-template<typename T>
-constexpr Precedence ToPrecedence<Divide<T>>{Precedence::Multiplicative};
-template<typename T>
-constexpr Precedence ToPrecedence<Power<T>>{Precedence::Power};
-template<typename T>
-constexpr Precedence ToPrecedence<RealToIntPower<T>>{Precedence::Power};
-template<typename T>
-constexpr Precedence ToPrecedence<Constant<T>>{Precedence::Constant};
-template<int KIND>
-constexpr Precedence ToPrecedence<SetLength<KIND>>{Precedence::Constant};
-template<typename T>
-constexpr Precedence ToPrecedence<Parentheses<T>>{Precedence::Parenthesize};
-template<int KIND>
-constexpr Precedence ToPrecedence<ComplexConstructor<KIND>>{
-    Precedence::Parenthesize};
-
-template<typename T>
-static constexpr Precedence GetPrecedence(const Expr<T> &expr) {
-  return std::visit(
-      [](const auto &x) {
-        static constexpr Precedence prec{
-            ToPrecedence<std::decay_t<decltype(x)>>};
-        if constexpr (prec == Precedence::Or) {
-          // Distinguish the four logical binary operations.
-          switch (x.logicalOperator) {
-            SWITCH_COVERS_ALL_CASES
-          case LogicalOperator::And: return Precedence::And;
-          case LogicalOperator::Or: return Precedence::Or;
-          case LogicalOperator::Not: return Precedence::Not;
-          case LogicalOperator::Eqv:
-          case LogicalOperator::Neqv: return Precedence::Equivalence;
-          }
-        }
-        return prec;
-      },
-      expr.u);
+template<typename A> constexpr Precedence ToPrecedence(const A &) {
+  return Precedence::Top;
 }
-template<TypeCategory CAT>
-static constexpr Precedence GetPrecedence(const Expr<SomeKind<CAT>> &expr) {
-  return std::visit([](const auto &x) { return GetPrecedence(x); }, expr.u);
+template<int KIND>
+static Precedence ToPrecedence(const LogicalOperation<KIND> &x) {
+  switch (x.logicalOperator) {
+    SWITCH_COVERS_ALL_CASES
+  case LogicalOperator::And: return Precedence::And;
+  case LogicalOperator::Or: return Precedence::Or;
+  case LogicalOperator::Not: return Precedence::Not;
+  case LogicalOperator::Eqv:
+  case LogicalOperator::Neqv: return Precedence::Equivalence;
+  }
+}
+template<int KIND> constexpr Precedence ToPrecedence(const Not<KIND> &) {
+  return Precedence::Not;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Relational<T> &) {
+  return Precedence::Relational;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Add<T> &) {
+  return Precedence::Additive;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Subtract<T> &) {
+  return Precedence::Additive;
+}
+template<int KIND> constexpr Precedence ToPrecedence(const Concat<KIND> &) {
+  return Precedence::Additive;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Negate<T> &) {
+  return Precedence::Negate;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Multiply<T> &) {
+  return Precedence::Multiplicative;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Divide<T> &) {
+  return Precedence::Multiplicative;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Power<T> &) {
+  return Precedence::Power;
+}
+template<typename T>
+constexpr Precedence ToPrecedence(const RealToIntPower<T> &) {
+  return Precedence::Power;
+}
+template<typename T> static Precedence ToPrecedence(const Constant<T> &x) {
+  static constexpr TypeCategory cat{T::category};
+  if constexpr (cat == TypeCategory::Integer || cat == TypeCategory::Real) {
+    if (auto n{GetScalarConstantValue<T>(x)}) {
+      if (n->IsNegative()) {
+        return Precedence::Negate;
+      }
+    }
+  }
+  return Precedence::Literal;
+}
+template<typename T> constexpr Precedence ToPrecedence(const Parentheses<T> &) {
+  return Precedence::Parenthesize;
+}
+
+template<typename T> static Precedence ToPrecedence(const Expr<T> &expr) {
+  return std::visit([](const auto &x) { return ToPrecedence(x); }, expr.u);
 }
 
 template<typename T> static bool IsNegatedScalarConstant(const Expr<T> &expr) {
@@ -243,29 +247,105 @@ static bool IsNegatedScalarConstant(const Expr<SomeKind<CAT>> &expr) {
       [](const auto &x) { return IsNegatedScalarConstant(x); }, expr.u);
 }
 
+struct OperatorSpelling {
+  const char *prefix{""}, *infix{","}, *suffix{""};
+};
+
+template<typename A> constexpr OperatorSpelling SpellOperator(const A &) {
+  return OperatorSpelling{};
+}
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const Negate<A> &) {
+  return OperatorSpelling{"-", "", ""};
+}
+template<int KIND>
+static OperatorSpelling SpellOperator(const ComplexComponent<KIND> &x) {
+  return OperatorSpelling{x.isImaginaryPart ? "AIMAG(" : "REAL(", "", ")"};
+}
+template<int KIND> constexpr OperatorSpelling SpellOperator(const Not<KIND> &) {
+  return OperatorSpelling{".NOT.", "", ""};
+}
+template<int KIND>
+constexpr OperatorSpelling SpellOperator(const SetLength<KIND> &) {
+  return OperatorSpelling{"%SET_LENGTH(", ",", ")"};
+}
+template<int KIND>
+constexpr OperatorSpelling SpellOperator(const ComplexConstructor<KIND> &) {
+  return OperatorSpelling{"(", ",", ")"};
+}
+template<typename A> constexpr OperatorSpelling SpellOperator(const Add<A> &) {
+  return OperatorSpelling{"", "+", ""};
+}
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const Subtract<A> &) {
+  return OperatorSpelling{"", "-", ""};
+}
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const Multiply<A> &) {
+  return OperatorSpelling{"", "*", ""};
+}
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const Divide<A> &) {
+  return OperatorSpelling{"", "/", ""};
+}
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const Power<A> &) {
+  return OperatorSpelling{"", "**", ""};
+}
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const RealToIntPower<A> &) {
+  return OperatorSpelling{"", "**", ""};
+}
+template<typename A>
+static OperatorSpelling SpellOperator(const Extremum<A> &x) {
+  return OperatorSpelling{
+      x.ordering == Ordering::Less ? "MIN(" : "MAX(", ",", ")"};
+}
+template<int KIND>
+constexpr OperatorSpelling SpellOperator(const Concat<KIND> &) {
+  return OperatorSpelling{"", "//", ""};
+}
+template<int KIND>
+static OperatorSpelling SpellOperator(const LogicalOperation<KIND> &x) {
+  return OperatorSpelling{"", AsFortran(x.logicalOperator), ""};
+}
+template<typename T>
+static OperatorSpelling SpellOperator(const Relational<T> &x) {
+  return OperatorSpelling{"", AsFortran(x.opr), ""};
+}
+
 template<typename D, typename R, typename... O>
 std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
-  Precedence lhsPrec{GetPrecedence(left())};
-  o << derived().Prefix();
-  static constexpr Precedence thisPrec{ToPrecedence<D>};
+  Precedence lhsPrec{ToPrecedence(left())};
+  OperatorSpelling spelling{SpellOperator(derived())};
+  o << spelling.prefix;
+  Precedence thisPrec{ToPrecedence(derived())};
   if constexpr (operands == 1) {
-    bool parens{lhsPrec < Precedence::Constant &&
-        !(thisPrec == Precedence::Not && lhsPrec == Precedence::Relational)};
-    o << (parens ? "(" : "") << left() << (parens ? ")" : "");
+    if (lhsPrec <= thisPrec) {
+      o << '(' << left() << ')';
+    } else {
+      o << left();
+    }
   } else {
-    bool lhsParens{lhsPrec == Precedence::Parenthesize || lhsPrec < thisPrec ||
-        (lhsPrec == thisPrec && lhsPrec == Precedence::Power) ||
-        (thisPrec != Precedence::Additive && lhsPrec == Precedence::Constant &&
-            IsNegatedScalarConstant(left()))};
-    o << (lhsParens ? "(" : "") << left() << (lhsParens ? ")" : "");
-    o << derived().Infix();
-    Precedence rhsPrec{GetPrecedence(right())};
-    bool rhsParens{rhsPrec == Precedence::Parenthesize ||
-        rhsPrec == Precedence::Negate || rhsPrec < thisPrec ||
-        (rhsPrec == Precedence::Constant && IsNegatedScalarConstant(right()))};
-    o << (rhsParens ? "(" : "") << right() << (rhsParens ? ")" : "");
+    if (lhsPrec == Precedence::Parenthesize) {
+      o << left();
+    } else if (lhsPrec < thisPrec ||
+        (lhsPrec == Precedence::Power && thisPrec == Precedence::Power)) {
+      o << '(' << left() << ')';
+    } else {
+      o << left();
+    }
+    o << spelling.infix;
+    Precedence rhsPrec{ToPrecedence(right())};
+    if (rhsPrec == Precedence::Parenthesize) {
+      o << right();
+    } else if (rhsPrec < thisPrec) {
+      o << '(' << right() << ')';
+    } else {
+      o << right();
+    }
   }
-  return o << derived().Suffix();
+  return o << spelling.suffix;
 }
 
 template<typename TO, TypeCategory FROMCAT>
@@ -287,17 +367,9 @@ std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
   return o << ",kind=" << TO::kind << ')';
 }
 
-template<typename A> const char *Relational<A>::Infix() const {
-  return common::AsFortran(opr);
-}
-
 std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
   std::visit([&](const auto &rel) { rel.AsFortran(o); }, u);
   return o;
-}
-
-template<int KIND> const char *LogicalOperation<KIND>::Infix() const {
-  return AsFortran(logicalOperator);
 }
 
 template<typename T>

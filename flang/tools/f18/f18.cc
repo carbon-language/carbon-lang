@@ -451,6 +451,9 @@ int main(int argc, char *const argv[]) {
       options.isFixedForm = false;
     } else if (arg == "-Mextend") {
       options.fixedFormColumns = 132;
+    } else if (arg == "-Munlimited") {
+      // For reparsing f18's -E output of fixed-form cooked character stream
+      options.fixedFormColumns = 1000000;
     } else if (arg == "-Mbackslash") {
       options.features.Enable(
           Fortran::common::LanguageFeature::BackslashEscapes, false);

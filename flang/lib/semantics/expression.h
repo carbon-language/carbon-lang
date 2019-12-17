@@ -238,7 +238,7 @@ public:
   MaybeExpr Analyze(const parser::StructureComponent &);
 
   void Analyze(const parser::CallStmt &);
-  void Analyze(const parser::AssignmentStmt &);
+  const Assignment *Analyze(const parser::AssignmentStmt &);
 
 protected:
   int IntegerTypeSpecKind(const parser::IntegerTypeSpec &);
@@ -386,7 +386,8 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
     const std::optional<parser::KindSelector> &);
 
 void AnalyzeCallStmt(SemanticsContext &, const parser::CallStmt &);
-void AnalyzeAssignmentStmt(SemanticsContext &, const parser::AssignmentStmt &);
+const evaluate::Assignment *AnalyzeAssignmentStmt(
+    SemanticsContext &, const parser::AssignmentStmt &);
 
 // Semantic analysis of all expressions in a parse tree, which becomes
 // decorated with typed representations for top-level expressions.
