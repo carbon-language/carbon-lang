@@ -196,5 +196,8 @@ std::optional<Expr<SubscriptInteger>> ProcedureRef::LEN() const {
   return proc_.LEN();
 }
 
+ProcedureRef::~ProcedureRef() {}
+
 FOR_EACH_SPECIFIC_TYPE(template class FunctionRef, )
 }
+DEFINE_DELETER(Fortran::evaluate::ProcedureRef)

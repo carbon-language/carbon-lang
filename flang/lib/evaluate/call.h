@@ -188,6 +188,7 @@ public:
   CLASS_BOILERPLATE(ProcedureRef)
   ProcedureRef(ProcedureDesignator &&p, ActualArguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
+  ~ProcedureRef();
 
   ProcedureDesignator &proc() { return proc_; }
   const ProcedureDesignator &proc() const { return proc_; }

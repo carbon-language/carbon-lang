@@ -71,6 +71,7 @@ class DerivedTypeSpec;
 namespace Fortran::evaluate {
 struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
 struct GenericAssignmentWrapper;  // forward definition, represent assignment
+class ProcedureRef;  // forward definition, represents a CALL statement
 }
 
 // Most non-template classes in this file use these default definitions
@@ -3136,7 +3137,12 @@ struct FunctionReference {
 };
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
-WRAPPER_CLASS(CallStmt, Call);
+struct CallStmt {
+  WRAPPER_CLASS_BOILERPLATE(CallStmt, Call);
+  mutable std::unique_ptr<evaluate::ProcedureRef,
+      common::Deleter<evaluate::ProcedureRef>>
+      typedCall;  // filled by semantics
+};
 
 // R1529 function-subprogram ->
 //         function-stmt [specification-part] [execution-part]

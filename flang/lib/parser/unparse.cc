@@ -33,10 +33,10 @@ class UnparseVisitor {
 public:
   UnparseVisitor(std::ostream &out, int indentationAmount, Encoding encoding,
       bool capitalize, bool backslashEscapes, preStatementType *preStatement,
-      TypedExprAsFortran *expr)
+      AnalyzedObjectsAsFortran *asFortran)
     : out_{out}, indentationAmount_{indentationAmount}, encoding_{encoding},
       capitalizeKeywords_{capitalize}, backslashEscapes_{backslashEscapes},
-      preStatement_{preStatement}, typedExprAsFortran_{expr} {}
+      preStatement_{preStatement}, asFortran_{asFortran} {}
 
   // In nearly all cases, this code avoids defining Boolean-valued Pre()
   // callbacks for the parse tree walking framework in favor of two void
@@ -803,9 +803,9 @@ public:
 
   // R1001 - R1022
   bool Pre(const Expr &x) {
-    if (typedExprAsFortran_ && x.typedExpr.get()) {
+    if (asFortran_ && x.typedExpr.get()) {
       // Format the expression representation from semantics
-      (*typedExprAsFortran_)(out_, *x.typedExpr);
+      asFortran_->expr(out_, *x.typedExpr);
       return false;
     } else {
       return true;
@@ -846,7 +846,11 @@ public:
     Walk(x.v);
   }
   void Unparse(const AssignmentStmt &x) {  // R1032
-    Walk(x.t, " = ");
+    if (asFortran_ && x.typedAssignment.get()) {
+      asFortran_->assignment(out_, *x.typedAssignment);
+    } else {
+      Walk(x.t, " = ");
+    }
   }
   void Unparse(const PointerAssignmentStmt &x) {  // R1033, R1034, R1038
     Walk(std::get<DataRef>(x.t));
@@ -1639,15 +1643,19 @@ public:
     Put('('), Walk(std::get<std::list<ActualArgSpec>>(x.v.t), ", "), Put(')');
   }
   void Unparse(const CallStmt &x) {  // R1521
-    const auto &pd{std::get<ProcedureDesignator>(x.v.t)};
-    const auto &args{std::get<std::list<ActualArgSpec>>(x.v.t)};
-    Word("CALL "), Walk(pd);
-    if (args.empty()) {
-      if (std::holds_alternative<ProcComponentRef>(pd.u)) {
-        Put("()");  // pgf90 crashes on CALL to tbp without parentheses
-      }
+    if (asFortran_ && x.typedCall.get()) {
+      asFortran_->call(out_, *x.typedCall);
     } else {
-      Walk("(", args, ", ", ")");
+      const auto &pd{std::get<ProcedureDesignator>(x.v.t)};
+      const auto &args{std::get<std::list<ActualArgSpec>>(x.v.t)};
+      Word("CALL "), Walk(pd);
+      if (args.empty()) {
+        if (std::holds_alternative<ProcComponentRef>(pd.u)) {
+          Put("()");  // pgf90 crashes on CALL to tbp without parentheses
+        }
+      } else {
+        Walk("(", args, ", ", ")");
+      }
     }
   }
   void Unparse(const ActualArgSpec &x) {  // R1523
@@ -2510,7 +2518,7 @@ private:
   bool openmpDirective_{false};
   bool backslashEscapes_{false};
   preStatementType *preStatement_{nullptr};
-  TypedExprAsFortran *typedExprAsFortran_{nullptr};
+  AnalyzedObjectsAsFortran *asFortran_{nullptr};
 };
 
 void UnparseVisitor::Put(char ch) {
@@ -2583,9 +2591,9 @@ void UnparseVisitor::Word(const std::string &str) { Word(str.c_str()); }
 
 void Unparse(std::ostream &out, const Program &program, Encoding encoding,
     bool capitalizeKeywords, bool backslashEscapes,
-    preStatementType *preStatement, TypedExprAsFortran *expr) {
+    preStatementType *preStatement, AnalyzedObjectsAsFortran *asFortran) {
   UnparseVisitor visitor{out, 1, encoding, capitalizeKeywords, backslashEscapes,
-      preStatement, expr};
+      preStatement, asFortran};
   Walk(program, visitor);
   visitor.Done();
 }

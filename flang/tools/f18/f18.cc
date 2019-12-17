@@ -289,20 +289,40 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     Fortran::parser::DumpTree(std::cout, parseTree);
   }
 
-  Fortran::parser::TypedExprAsFortran unparseExpression{
+  Fortran::parser::AnalyzedObjectsAsFortran asFortran{
       [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
         if (x.v) {
           o << *x.v;
         } else {
           o << "(bad expression)";
         }
-      }};
+      },
+      [](std::ostream &o,
+          const Fortran::evaluate::GenericAssignmentWrapper &x) {
+        if (x.v) {
+          std::visit(
+              Fortran::common::visitors{
+                  [&](const Fortran::evaluate::Assignment::IntrinsicAssignment
+                          &y) { y.rhs.AsFortran(y.lhs.AsFortran(o) << '='); },
+                  [&](const Fortran::evaluate::ProcedureRef &y) {
+                    y.AsFortran(o << "CALL ");
+                  },
+              },
+              x.v->u);
+        } else {
+          o << "(bad assignment)";
+        }
+      },
+      [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
+        x.AsFortran(o << "CALL ");
+      },
+  };
 
   if (driver.dumpUnparse) {
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes),
-        nullptr /* action before each statement */, &unparseExpression);
+        nullptr /* action before each statement */, &asFortran);
     return {};
   }
   if (driver.parseOnly) {
@@ -322,7 +342,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes),
         nullptr /* action before each statement */,
-        driver.unparseTypedExprsToPGF90 ? &unparseExpression : nullptr);
+        driver.unparseTypedExprsToPGF90 ? &asFortran : nullptr);
     Fortran::evaluate::formatForPGF90 = false;
   }
 
