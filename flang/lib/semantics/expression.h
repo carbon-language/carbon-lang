@@ -89,8 +89,10 @@ namespace Fortran::evaluate {
 class IntrinsicProcTable;
 
 struct SetExprHelper {
-  SetExprHelper(GenericExprWrapper &&expr) : expr_{std::move(expr)} {}
-  void Set(parser::Expr::TypedExpr &x) { x->v = std::move(expr_.v); }
+  explicit SetExprHelper(GenericExprWrapper &&expr) : expr_{std::move(expr)} {}
+  void Set(parser::Expr::TypedExpr &x) {
+    x.reset(new GenericExprWrapper{std::move(expr_)});
+  }
   void Set(const parser::Expr &x) { Set(x.typedExpr); }
   void Set(const parser::Variable &x) { Set(x.typedExpr); }
   template<typename T> void Set(const common::Indirection<T> &x) {
@@ -107,13 +109,12 @@ struct SetExprHelper {
   GenericExprWrapper expr_;
 };
 
-// Set the typedExpr data member to std::nullopt to indicate an error
 template<typename T> void ResetExpr(const T &x) {
-  SetExprHelper{GenericExprWrapper{std::nullopt}}.Set(x);
+  SetExprHelper{GenericExprWrapper{/* error indicator */}}.Set(x);
 }
 
-template<typename T> void SetExpr(const T &x, GenericExprWrapper &&expr) {
-  SetExprHelper{std::move(expr)}.Set(x);
+template<typename T> void SetExpr(const T &x, Expr<SomeType> &&expr) {
+  SetExprHelper{GenericExprWrapper{std::move(expr)}}.Set(x);
 }
 
 class ExpressionAnalyzer {
@@ -197,7 +198,7 @@ public:
         return std::nullopt;
       } else {
         // Save folded expression for later use
-        SetExpr(x, common::Clone(result));
+        SetExpr(x, common::Clone(*result));
       }
     }
     return result;

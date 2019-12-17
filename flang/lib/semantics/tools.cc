@@ -393,7 +393,7 @@ bool ExprTypeKindIsDefault(
 
 const evaluate::Assignment *GetAssignment(const parser::AssignmentStmt &x) {
   const auto &typed{x.typedAssignment};
-  return typed && typed->v ? &*typed->v : nullptr;
+  return typed ? &typed->v : nullptr;
 }
 
 const Symbol *FindInterface(const Symbol &symbol) {

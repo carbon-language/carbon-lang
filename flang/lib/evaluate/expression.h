@@ -872,19 +872,19 @@ public:
 
 // This wrapper class is used, by means of a forward reference with
 // an owning pointer, to cache analyzed expressions in parse tree nodes.
-// v is nullopt if an error occurred during expression analysis.
 struct GenericExprWrapper {
-  GenericExprWrapper(std::optional<Expr<SomeType>> &&x) : v{std::move(x)} {}
+  GenericExprWrapper() {}
+  explicit GenericExprWrapper(std::optional<Expr<SomeType>> &&x)
+    : v{std::move(x)} {}
   ~GenericExprWrapper();
-  bool operator==(const GenericExprWrapper &) const;
-  std::optional<Expr<SomeType>> v;
+  std::optional<Expr<SomeType>> v;  // vacant if error
 };
 
 // Like GenericExprWrapper but for analyzed assignments
 struct GenericAssignmentWrapper {
-  GenericAssignmentWrapper(std::optional<Assignment> &&x) : v{std::move(x)} {}
+  explicit GenericAssignmentWrapper(Assignment &&x) : v{std::move(x)} {}
   ~GenericAssignmentWrapper();
-  std::optional<Assignment> v;
+  Assignment v;
 };
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr, )

@@ -171,10 +171,6 @@ StructureConstructor &StructureConstructor::Add(
 
 GenericExprWrapper::~GenericExprWrapper() {}
 
-bool GenericExprWrapper::operator==(const GenericExprWrapper &that) const {
-  return v == that.v;
-}
-
 GenericAssignmentWrapper::~GenericAssignmentWrapper() {}
 
 template<TypeCategory CAT> int Expr<SomeKind<CAT>>::GetKind() const {

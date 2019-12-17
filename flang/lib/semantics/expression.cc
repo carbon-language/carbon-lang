@@ -2260,7 +2260,7 @@ static void FixMisparsedFunctionReference(
 // Common handling of parser::Expr and parser::Variable
 template<typename PARSED>
 MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
-  if (!x.typedExpr) {  // not yet analyzed
+  if (!x.typedExpr) {
     FixMisparsedFunctionReference(context_, x.u);
     MaybeExpr result;
     if constexpr (std::is_same_v<PARSED, parser::Expr>) {

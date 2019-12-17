@@ -803,7 +803,7 @@ public:
 
   // R1001 - R1022
   bool Pre(const Expr &x) {
-    if (asFortran_ && x.typedExpr.get()) {
+    if (asFortran_ && x.typedExpr) {
       // Format the expression representation from semantics
       asFortran_->expr(out_, *x.typedExpr);
       return false;

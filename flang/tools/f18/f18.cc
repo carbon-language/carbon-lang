@@ -292,26 +292,22 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   Fortran::parser::AnalyzedObjectsAsFortran asFortran{
       [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
         if (x.v) {
-          o << *x.v;
+          x.v->AsFortran(o);
         } else {
           o << "(bad expression)";
         }
       },
       [](std::ostream &o,
           const Fortran::evaluate::GenericAssignmentWrapper &x) {
-        if (x.v) {
-          std::visit(
-              Fortran::common::visitors{
-                  [&](const Fortran::evaluate::Assignment::IntrinsicAssignment
-                          &y) { y.rhs.AsFortran(y.lhs.AsFortran(o) << '='); },
-                  [&](const Fortran::evaluate::ProcedureRef &y) {
-                    y.AsFortran(o << "CALL ");
-                  },
-              },
-              x.v->u);
-        } else {
-          o << "(bad assignment)";
-        }
+        std::visit(
+            Fortran::common::visitors{
+                [&](const Fortran::evaluate::Assignment::IntrinsicAssignment
+                        &y) { y.rhs.AsFortran(y.lhs.AsFortran(o) << '='); },
+                [&](const Fortran::evaluate::ProcedureRef &y) {
+                  y.AsFortran(o << "CALL ");
+                },
+            },
+            x.v.u);
       },
       [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
         x.AsFortran(o << "CALL ");
