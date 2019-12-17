@@ -780,7 +780,7 @@ void RewriteInstance::discoverStorage() {
   // sections accounting for stubs when we need those sections to match the
   // same size seen in the input binary, in case this section is a copy
   // of the original one seen in the binary.
-  EFMM.reset(new ExecutableFileMemoryManager(*BC, /*AllowStubs*/ false));
+  BC->EFMM.reset(new ExecutableFileMemoryManager(*BC, /*AllowStubs*/ false));
 
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
@@ -808,10 +808,11 @@ void RewriteInstance::discoverStorage() {
       NextAvailableOffset = std::max(NextAvailableOffset,
                                      Phdr.p_offset + Phdr.p_filesz);
 
-      EFMM->SegmentMapInfo[Phdr.p_vaddr] = SegmentInfo{Phdr.p_vaddr,
-                                                       Phdr.p_memsz,
-                                                       Phdr.p_offset,
-                                                       Phdr.p_filesz};
+      BC->EFMM->SegmentMapInfo[Phdr.p_vaddr] = SegmentInfo{Phdr.p_vaddr,
+                                                           Phdr.p_memsz,
+                                                           Phdr.p_offset,
+                                                           Phdr.p_filesz,
+                                                           Phdr.p_align};
     }
   }
 
@@ -2969,7 +2970,7 @@ void RewriteInstance::emitAndLink() {
   auto Resolver = orc::createLegacyLookupResolver(
       [&](const std::string &Name) -> JITSymbol {
         DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
-        if (EFMM->ObjectsLoaded) {
+        if (BC->EFMM->ObjectsLoaded) {
           auto Result = OLT->findSymbol(Name, false);
           if (cantFail(Result.getAddress()) == 0) {
             // Resolve to a PLT entry if possible
@@ -3008,7 +3009,7 @@ void RewriteInstance::emitAndLink() {
       *ES,
       [this, &Resolver](orc::VModuleKey Key) {
         orc::RTDyldObjectLinkingLayer::Resources R;
-        R.MemMgr = EFMM;
+        R.MemMgr = BC->EFMM;
         R.Resolver = Resolver;
         // Get memory manager
         return R;
@@ -4934,8 +4935,8 @@ uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
   }
 
   // Find an existing segment that matches the address.
-  const auto SegmentInfoI = EFMM->SegmentMapInfo.upper_bound(Address);
-  if (SegmentInfoI == EFMM->SegmentMapInfo.begin())
+  const auto SegmentInfoI = BC->EFMM->SegmentMapInfo.upper_bound(Address);
+  if (SegmentInfoI == BC->EFMM->SegmentMapInfo.begin())
     return 0;
 
   const auto &SegmentInfo = std::prev(SegmentInfoI)->second;

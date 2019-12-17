@@ -343,10 +343,6 @@ private:
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;
 
-  /// Memory manager for sections and segments. Used to communicate with ORC
-  /// among other things.
-  std::shared_ptr<ExecutableFileMemoryManager> EFMM;
-
   std::unique_ptr<orc::SymbolStringPool> SSP;
   std::unique_ptr<orc::ExecutionSession> ES;
 

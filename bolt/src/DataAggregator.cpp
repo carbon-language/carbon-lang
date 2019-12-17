@@ -16,6 +16,7 @@
 #include "BinaryFunction.h"
 #include "BoltAddressTranslation.h"
 #include "DataAggregator.h"
+#include "ExecutableFileMemoryManager.h"
 #include "Heatmap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
@@ -1857,11 +1858,22 @@ std::error_code DataAggregator::parseMMapEvents() {
 
   auto Range = GlobalMMapInfo.equal_range(NameToUse);
   for (auto I = Range.first; I != Range.second; ++I) {
-    if (BC->HasFixedLoadAddress && I->second.BaseAddress &&
-        I->second.BaseAddress != BC->FirstAllocAddress) {
-      errs() << "PERF2BOLT-WARNING: ignoring mapping of " << NameToUse
-             << " at 0x" << Twine::utohexstr(I->second.BaseAddress) << '\n';
-      continue;
+    if (BC->HasFixedLoadAddress && I->second.BaseAddress) {
+      // Check that the binary mapping matches one of the segments.
+      bool MatchFound{false};
+      for (auto &KV : BC->EFMM->SegmentMapInfo) {
+        auto &SegInfo = KV.second;
+        const auto MapAddress = alignDown(SegInfo.Address, SegInfo.Alignment);
+        if (I->second.BaseAddress == MapAddress) {
+          MatchFound = true;
+          break;
+        }
+      }
+      if (!MatchFound) {
+        errs() << "PERF2BOLT-WARNING: ignoring mapping of " << NameToUse
+               << " at 0x" << Twine::utohexstr(I->second.BaseAddress) << '\n';
+        continue;
+      }
     }
 
     BinaryMMapInfo.insert(std::make_pair(I->second.PID, I->second));

@@ -63,6 +63,7 @@ namespace bolt {
 class BinaryFunction;
 class BinaryBasicBlock;
 class DataReader;
+class ExecutableFileMemoryManager;
 
 enum class MemoryContentsType : char {
   UNKNOWN = 0,              /// Unknown contents.
@@ -195,6 +196,10 @@ public:
   using FilteredBinaryDataConstIterator =
     FilterIterator<binary_data_const_iterator>;
   using FilteredBinaryDataIterator = FilterIterator<binary_data_iterator>;
+
+  /// Memory manager for sections and segments. Used to communicate with ORC
+  /// among other things.
+  std::shared_ptr<ExecutableFileMemoryManager> EFMM;
 
   /// Return BinaryFunction containing a given \p Address or nullptr if
   /// no registered function has it.
