@@ -1061,8 +1061,18 @@ public:
   /// functions.
   const MCSymbol *getSymbolForEntry(uint64_t EntryNum) const;
 
-  /// Return an entry ID corresponding to a symbol.
+  /// Return an entry ID corresponding to a symbol. Return
+  /// numeric_limits<T>::max() if entry does not exist.
   uint64_t getEntryForSymbol(const MCSymbol *EntrySymbol) const;
+
+  /// Return true if \p is a valid secondary entry point in this function, false
+  /// otherwise.
+  bool isSecondaryEntryPoint(const MCSymbol *Label) const {
+    uint64_t EntryNo = getEntryForSymbol(Label);
+    if (EntryNo == std::numeric_limits<uint64_t>::max())
+      return false;
+    return EntryNo != 0;
+  }
 
   MCSymbol *getColdSymbol() {
     if (ColdSymbol)

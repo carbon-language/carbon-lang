@@ -461,6 +461,10 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
         continue;
       }
 
+      // Don't inline calls to a secondary entry point in a target function
+      if (TargetFunction->isSecondaryEntryPoint(TargetSymbol))
+        continue;
+
       // Don't do recursive inlining.
       if (TargetFunction == &Function) {
         ++InstIt;

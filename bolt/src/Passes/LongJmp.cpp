@@ -424,7 +424,8 @@ uint64_t LongJmpPass::getSymbolAddress(const BinaryContext &BC,
   }
   auto *TargetFunc = BC.getFunctionForSymbol(Target);
   auto Iter = HotAddresses.find(TargetFunc);
-  if (Iter == HotAddresses.end()) {
+  if (Iter == HotAddresses.end() ||
+      (TargetFunc && TargetFunc->isSecondaryEntryPoint(Target))) {
     // Look at BinaryContext's resolution for this symbol - this is a symbol not
     // mapped to a BinaryFunction
     auto ValueOrError = BC.getSymbolValue(*Target);

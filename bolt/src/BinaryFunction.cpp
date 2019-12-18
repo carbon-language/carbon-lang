@@ -3391,7 +3391,7 @@ uint64_t BinaryFunction::getEntryForSymbol(const MCSymbol *EntrySymbol) const {
     ++NumEntries;
   }
 
-  llvm_unreachable("no entry for symbol");
+  return std::numeric_limits<uint64_t>::max();
 }
 
 BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {

@@ -1910,7 +1910,8 @@ BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
 BinaryFunction *
 BinaryContext::getBinaryFunctionAtAddress(uint64_t Address, bool Shallow) {
   if (const auto *BD = getBinaryDataAtAddress(Address)) {
-    if (auto *BF = getFunctionForSymbol(BD->getSymbol())) {
+    auto *BF = getFunctionForSymbol(BD->getSymbol());
+    if (BF && BF->getAddress() == Address) {
       while (BF->getParentFunction() && !Shallow) {
         BF = BF->getParentFunction();
       }
