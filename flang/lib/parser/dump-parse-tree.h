@@ -17,9 +17,11 @@
 #include "format-specification.h"
 #include "parse-tree-visitor.h"
 #include "parse-tree.h"
+#include "unparse.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -39,7 +41,9 @@ struct HasSource<T, decltype((void)T::source, 0)> : std::true_type {};
 
 class ParseTreeDumper {
 public:
-  explicit ParseTreeDumper(std::ostream &out) : out_(out) {}
+  explicit ParseTreeDumper(
+      std::ostream &out, const AnalyzedObjectsAsFortran *asFortran = nullptr)
+    : out_(out), asFortran_{asFortran} {}
 
   constexpr const char *GetNodeName(const char *) { return "char *"; }
 #define NODE_NAME(T, N) \
@@ -51,6 +55,9 @@ public:
 #define NODE(T1, T2) NODE_NAME(T1::T2, #T2)
   NODE_NAME(bool, "bool")
   NODE_NAME(int, "int")
+  NODE(std, string)
+  NODE(std, int64_t)
+  NODE(std, uint64_t)
   NODE(format, ControlEditDesc)
   NODE(format::ControlEditDesc, Kind)
   NODE(format, DerivedTypeDataEditDesc)
@@ -367,6 +374,7 @@ public:
   NODE(parser, LengthSelector)
   NODE(parser, LetterSpec)
   NODE(parser, LiteralConstant)
+  NODE(parser, IntLiteralConstant)
   NODE(parser, LocalitySpec)
   NODE(parser::LocalitySpec, DefaultNone)
   NODE(parser::LocalitySpec, Local)
@@ -391,6 +399,7 @@ public:
   NODE(parser, ModuleSubprogramPart)
   NODE(parser, MpSubprogramStmt)
   NODE(parser, MsgVariable)
+  NODE(parser, Name)
   NODE(parser, NamedConstant)
   NODE(parser, NamedConstantDef)
   NODE(parser, NamelistStmt)
@@ -601,6 +610,7 @@ public:
   NODE(parser, SequenceStmt)
   NODE(parser, Sign)
   NODE(parser, SignedComplexLiteralConstant)
+  NODE(parser, SignedIntLiteralConstant)
   NODE(parser, SignedRealLiteralConstant)
   NODE(parser, SpecificationConstruct)
   NODE(parser, SpecificationExpr)
@@ -679,13 +689,14 @@ public:
 #undef NODE_NAME
 
   template<typename T> bool Pre(const T &x) {
-    if constexpr (!HasSource<T>::value && (UnionTrait<T> || WrapperTrait<T>)) {
+    std::string fortran{AsFortran<T>(x)};
+    if (fortran.empty() && (UnionTrait<T> || WrapperTrait<T>)) {
       Prefix(GetNodeName(x));
     } else {
       IndentEmptyLine();
       out_ << GetNodeName(x);
-      if constexpr (HasSource<T>::value) {
-        out_ << " = '" << x.source.ToString() << '\'';
+      if (!fortran.empty()) {
+        out_ << " = '" << fortran << '\'';
       }
       EndLine();
       ++indent_;
@@ -693,71 +704,12 @@ public:
     return true;
   }
 
-  template<typename T> void Post(const T &) {
-    if constexpr (!HasSource<T>::value && (UnionTrait<T> || WrapperTrait<T>)) {
+  template<typename T> void Post(const T &x) {
+    if (AsFortran<T>(x).empty() && (UnionTrait<T> || WrapperTrait<T>)) {
       EndLineIfNonempty();
     } else {
       --indent_;
     }
-  }
-
-  bool Pre(const parser::Name &x) {
-    IndentEmptyLine();
-    out_ << "Name = '" << x.ToString() << '\'';
-    EndLine();
-    return false;
-  }
-  bool Pre(const std::string &x) {
-    IndentEmptyLine();
-    out_ << "string = '" << x << '\'';
-    EndLine();
-    return false;
-  }
-
-  bool Pre(const std::int64_t &x) {
-    IndentEmptyLine();
-    out_ << "int = '" << x << '\'';
-    ++indent_;
-    EndLine();
-    return true;
-  }
-  void Post(const std::int64_t &) { --indent_; }
-
-  bool Pre(const std::uint64_t &x) {
-    IndentEmptyLine();
-    out_ << "int = '" << x << '\'';
-    EndLine();
-    return false;
-  }
-
-  bool Pre(const parser::IntLiteralConstant &x) {
-    IndentEmptyLine();
-    out_ << "int = '" << std::get<parser::CharBlock>(x.t).ToString() << '\'';
-    EndLine();
-    ++indent_;
-    Walk(std::get<std::optional<KindParam>>(x.t), *this);
-    --indent_;
-    return false;
-  }
-
-  bool Pre(const parser::SignedIntLiteralConstant &x) {
-    IndentEmptyLine();
-    out_ << "int = '" << std::get<parser::CharBlock>(x.t).ToString() << '\'';
-    EndLine();
-    ++indent_;
-    Walk(std::get<std::optional<KindParam>>(x.t), *this);
-    --indent_;
-    return false;
-  }
-
-  bool Pre(const parser::RealLiteralConstant &x) {
-    Prefix(GetNodeName(x));
-    out_ << "Real = '" << x.real.source.ToString() << '\'';
-    EndLine();
-    ++indent_;
-    Walk(x.kind, *this);
-    --indent_;
-    return false;
   }
 
   // A few types we want to ignore
@@ -822,6 +774,42 @@ public:
   template<typename... A> void Post(const std::variant<A...> &) {}
 
 protected:
+  // Return a Fortran representation of this node to include in the dump
+  template<typename T> std::string AsFortran(const T &x) {
+    std::ostringstream ss;
+    if constexpr (std::is_same_v<T, Expr>) {
+      if (asFortran_ && x.typedExpr) {
+        asFortran_->expr(ss, *x.typedExpr);
+      }
+    } else if constexpr (std::is_same_v<T, AssignmentStmt>) {
+      if (asFortran_ && x.typedAssignment) {
+        asFortran_->assignment(ss, *x.typedAssignment);
+      }
+    } else if constexpr (std::is_same_v<T, CallStmt>) {
+      if (asFortran_ && x.typedCall) {
+        asFortran_->call(ss, *x.typedCall);
+      }
+    } else if constexpr (std::is_same_v<T, IntLiteralConstant> ||
+        std::is_same_v<T, SignedIntLiteralConstant>) {
+      ss << std::get<CharBlock>(x.t);
+    } else if constexpr (std::is_same_v<T, RealLiteralConstant::Real>) {
+      ss << x.source;
+    } else if constexpr (std::is_same_v<T, std::string> ||
+        std::is_same_v<T, std::int64_t> || std::is_same_v<T, std::uint64_t>) {
+      ss << x;
+    }
+    if (ss.tellp() != 0) {
+      return ss.str();
+    }
+    if constexpr (std::is_same_v<T, Name> || HasSource<T>::value) {
+      return x.source.ToString();
+    } else if constexpr (std::is_same_v<T, std::string>) {
+      return x;
+    } else {
+      return "";
+    }
+  }
+
   void IndentEmptyLine() {
     if (emptyline_ && indent_ > 0) {
       for (int i{0}; i < indent_; ++i) {
@@ -857,12 +845,16 @@ protected:
 private:
   int indent_{0};
   std::ostream &out_;
+  const AnalyzedObjectsAsFortran *const asFortran_;
   bool emptyline_{false};
 };
 
-template<typename T> void DumpTree(std::ostream &out, const T &x) {
-  ParseTreeDumper dumper{out};
+template<typename T>
+void DumpTree(std::ostream &out, const T &x,
+    const AnalyzedObjectsAsFortran *asFortran = nullptr) {
+  ParseTreeDumper dumper{out, asFortran};
   parser::Walk(x, dumper);
 }
+
 }
 #endif  // FORTRAN_PARSER_DUMP_PARSE_TREE_H_

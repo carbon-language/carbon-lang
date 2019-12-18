@@ -169,6 +169,31 @@ std::string RelocatableName(const DriverOptions &driver, std::string path) {
 
 int exitStatus{EXIT_SUCCESS};
 
+static Fortran::parser::AnalyzedObjectsAsFortran asFortran{
+    [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
+      if (x.v) {
+        x.v->AsFortran(o);
+      } else {
+        o << "(bad expression)";
+      }
+    },
+    [](std::ostream &o, const Fortran::evaluate::GenericAssignmentWrapper &x) {
+      std::visit(
+          Fortran::common::visitors{
+              [&](const Fortran::evaluate::Assignment::IntrinsicAssignment &y) {
+                y.rhs.AsFortran(y.lhs.AsFortran(o) << '=');
+              },
+              [&](const Fortran::evaluate::ProcedureRef &y) {
+                y.AsFortran(o << "CALL ");
+              },
+          },
+          x.v.u);
+    },
+    [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
+      x.AsFortran(o << "CALL ");
+    },
+};
+
 std::string CompileFortran(std::string path, Fortran::parser::Options options,
     DriverOptions &driver,
     const Fortran::common::IntrinsicTypeDefaultKinds &defaultKinds) {
@@ -246,7 +271,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       std::cerr << driver.prefix << "semantic errors in " << path << '\n';
       exitStatus = EXIT_FAILURE;
       if (driver.dumpParseTree) {
-        Fortran::parser::DumpTree(std::cout, parseTree);
+        Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
       }
       return {};
     }
@@ -286,34 +311,8 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     }
   }
   if (driver.dumpParseTree) {
-    Fortran::parser::DumpTree(std::cout, parseTree);
+    Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
   }
-
-  Fortran::parser::AnalyzedObjectsAsFortran asFortran{
-      [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
-        if (x.v) {
-          x.v->AsFortran(o);
-        } else {
-          o << "(bad expression)";
-        }
-      },
-      [](std::ostream &o,
-          const Fortran::evaluate::GenericAssignmentWrapper &x) {
-        std::visit(
-            Fortran::common::visitors{
-                [&](const Fortran::evaluate::Assignment::IntrinsicAssignment
-                        &y) { y.rhs.AsFortran(y.lhs.AsFortran(o) << '='); },
-                [&](const Fortran::evaluate::ProcedureRef &y) {
-                  y.AsFortran(o << "CALL ");
-                },
-            },
-            x.v.u);
-      },
-      [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
-        x.AsFortran(o << "CALL ");
-      },
-  };
-
   if (driver.dumpUnparse) {
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
