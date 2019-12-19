@@ -586,11 +586,13 @@ static const char *WhyBaseObjectIsSuspicious(
 
 // Checks C1594(1,2)
 void CheckDefinabilityInPureScope(parser::ContextualMessages &messages,
-    const Symbol &lhs, const Scope &scope) {
-  if (const char *why{WhyBaseObjectIsSuspicious(lhs, scope)}) {
-    evaluate::SayWithDeclaration(messages, lhs,
-        "A PURE subprogram may not define '%s' because it is %s"_err_en_US,
-        lhs.name(), why);
+    const Symbol &lhs, const Scope &context, const Scope &pure) {
+  if (pure.symbol()) {
+    if (const char *why{WhyBaseObjectIsSuspicious(lhs, context)}) {
+      evaluate::SayWithDeclaration(messages, lhs,
+          "PURE subprogram '%s' may not define '%s' because it is %s"_err_en_US,
+          pure.symbol()->name(), lhs.name(), why);
+    }
   }
 }
 
@@ -624,13 +626,13 @@ void CheckCopyabilityInPureScope(parser::ContextualMessages &messages,
 void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
     const SomeExpr &rhs, parser::CharBlock source, bool isPointerAssignment) {
   const Scope &scope{context_.FindScope(source)};
-  if (FindPureProcedureContaining(scope)) {
+  if (const Scope * pure{FindPureProcedureContaining(scope)}) {
     parser::ContextualMessages messages{at_, &context_.messages()};
     if (evaluate::ExtractCoarrayRef(lhs)) {
       messages.Say(
           "A PURE subprogram may not define a coindexed object"_err_en_US);
     } else if (const Symbol * base{GetFirstSymbol(lhs)}) {
-      CheckDefinabilityInPureScope(messages, *base, scope);
+      CheckDefinabilityInPureScope(messages, *base, scope, *pure);
     }
     if (isPointerAssignment) {
       if (const Symbol * base{GetFirstSymbol(rhs)}) {

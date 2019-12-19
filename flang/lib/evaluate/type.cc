@@ -54,28 +54,38 @@ static bool IsDescriptor(const ProcEntityDetails &details) {
   return details.HasExplicitInterface();
 }
 
-bool IsDescriptor(const Symbol &symbol0) {
-  const Symbol &symbol{evaluate::ResolveAssociations(symbol0)};
-  if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
-    return IsAllocatableOrPointer(symbol) || IsDescriptor(*objectDetails);
-  } else if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
-    if (symbol.attrs().test(Attr::POINTER) ||
-        symbol.attrs().test(Attr::EXTERNAL)) {
-      return IsDescriptor(*procDetails);
-    }
-  } else if (const auto *assocDetails{symbol.detailsIf<AssocEntityDetails>()}) {
-    if (const auto &expr{assocDetails->expr()}) {
-      if (expr->Rank() > 0) {
-        return true;
-      }
-      if (const auto dynamicType{expr->GetType()}) {
-        if (dynamicType->RequiresDescriptor()) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
+bool IsDescriptor(const Symbol &symbol) {
+  return std::visit(
+      common::visitors{
+          [&](const ObjectEntityDetails &d) {
+            return IsAllocatableOrPointer(symbol) || IsDescriptor(d);
+          },
+          [&](const ProcEntityDetails &d) {
+            return (symbol.attrs().test(Attr::POINTER) ||
+                       symbol.attrs().test(Attr::EXTERNAL)) &&
+                IsDescriptor(d);
+          },
+          [](const AssocEntityDetails &d) {
+            if (const auto &expr{d.expr()}) {
+              if (expr->Rank() > 0) {
+                return true;
+              }
+              if (const auto dynamicType{expr->GetType()}) {
+                if (dynamicType->RequiresDescriptor()) {
+                  return true;
+                }
+              }
+            }
+            return false;
+          },
+          [](const SubprogramDetails &d) {
+            return d.isFunction() && IsDescriptor(d.result());
+          },
+          [](const UseDetails &d) { return IsDescriptor(d.symbol()); },
+          [](const HostAssocDetails &d) { return IsDescriptor(d.symbol()); },
+          [](const auto &) { return false; },
+      },
+      symbol.details());
 }
 }
 

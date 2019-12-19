@@ -101,8 +101,8 @@ struct SetExprHelper {
   template<typename T> void Set(const T &x) {
     if constexpr (ConstraintTrait<T>) {
       Set(x.thing);
-    } else {
-      static_assert("bad type");
+    } else if constexpr (WrapperTrait<T>) {
+      Set(x.v);
     }
   }
 

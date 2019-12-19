@@ -204,8 +204,11 @@ void DerivedTypeSpec::Instantiate(
       const Symbol &symbol{*pair.second};
       if (const DeclTypeSpec * type{symbol.GetType()}) {
         if (const DerivedTypeSpec * derived{type->AsDerived()}) {
-          auto &instantiatable{*const_cast<DerivedTypeSpec *>(derived)};
-          instantiatable.Instantiate(containingScope, context);
+          if (!(derived->IsForwardReferenced() &&
+                  IsAllocatableOrPointer(symbol))) {
+            auto &instantiatable{*const_cast<DerivedTypeSpec *>(derived)};
+            instantiatable.Instantiate(containingScope, context);
+          }
         }
       }
     }

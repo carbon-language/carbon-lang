@@ -134,10 +134,12 @@ private:
     flags_.reset();
   }
 
+  void Done() { stmt_ = IoStmtKind::None; }
+
   void CheckForPureSubprogram() const;
 
   SemanticsContext &context_;
-  IoStmtKind stmt_ = IoStmtKind::None;
+  IoStmtKind stmt_{IoStmtKind::None};
   common::EnumSet<IoSpecKind, common::IoSpecKind_enumSize> specifierSet_;
   common::EnumSet<Flag, Flag_enumSize> flags_;
 };

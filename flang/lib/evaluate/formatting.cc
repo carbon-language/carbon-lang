@@ -226,6 +226,10 @@ template<typename T> static Precedence ToPrecedence(const Constant<T> &x) {
 template<typename T> constexpr Precedence ToPrecedence(const Parentheses<T> &) {
   return Precedence::Parenthesize;
 }
+template<int KIND>
+constexpr Precedence ToPrecedence(const ComplexConstructor<KIND> &) {
+  return Precedence::Parenthesize;
+}
 
 template<typename T> static Precedence ToPrecedence(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return ToPrecedence(x); }, expr.u);
@@ -260,7 +264,25 @@ constexpr OperatorSpelling SpellOperator(const Negate<A> &) {
 }
 template<int KIND>
 static OperatorSpelling SpellOperator(const ComplexComponent<KIND> &x) {
-  return OperatorSpelling{x.isImaginaryPart ? "AIMAG(" : "REAL(", "", ")"};
+  if (x.isImaginaryPart) {
+    return {"aimag(", "", ")"};
+  } else if constexpr (KIND == 2) {
+    return {"real(", "", ",kind=2)"};
+  } else if constexpr (KIND == 3) {
+    return {"real(", "", ",kind=3)"};
+  } else if constexpr (KIND == 4) {
+    return {"real(", "", ",kind=4)"};
+  } else if constexpr (KIND == 8) {
+    return {"real(", "", ",kind=8)"};
+  } else if constexpr (KIND == 10) {
+    return {"real(", "", ",kind=10)"};
+  } else if constexpr (KIND == 16) {
+    return {"real(", "", ",kind=16)"};
+  } else {
+    static_assert(KIND == 2 || KIND == 3 || KIND == 4 || KIND == 8 ||
+            KIND == 10 || KIND == 16,
+        "bad KIND");
+  }
 }
 template<int KIND> constexpr OperatorSpelling SpellOperator(const Not<KIND> &) {
   return OperatorSpelling{".NOT.", "", ""};
@@ -299,7 +321,7 @@ constexpr OperatorSpelling SpellOperator(const RealToIntPower<A> &) {
 template<typename A>
 static OperatorSpelling SpellOperator(const Extremum<A> &x) {
   return OperatorSpelling{
-      x.ordering == Ordering::Less ? "MIN(" : "MAX(", ",", ")"};
+      x.ordering == Ordering::Less ? "min(" : "max(", ",", ")"};
 }
 template<int KIND>
 constexpr OperatorSpelling SpellOperator(const Concat<KIND> &) {

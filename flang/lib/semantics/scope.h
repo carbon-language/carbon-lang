@@ -197,9 +197,8 @@ public:
   void add_importName(const SourceName &);
 
   const DerivedTypeSpec *derivedTypeSpec() const { return derivedTypeSpec_; }
-  void set_derivedTypeSpec(const DerivedTypeSpec &spec) {
-    derivedTypeSpec_ = &spec;
-  }
+  DerivedTypeSpec *derivedTypeSpec() { return derivedTypeSpec_; }
+  void set_derivedTypeSpec(DerivedTypeSpec &spec) { derivedTypeSpec_ = &spec; }
 
   // The range of the source of this and nested scopes.
   const parser::CharBlock &sourceRange() const { return sourceRange_; }
@@ -234,7 +233,7 @@ private:
   std::string chars_;
   std::optional<ImportKind> importKind_;
   std::set<SourceName> importNames_;
-  const DerivedTypeSpec *derivedTypeSpec_{nullptr};  // dTS->scope() == this
+  DerivedTypeSpec *derivedTypeSpec_{nullptr};  // dTS->scope() == this
   // When additional data members are added to Scope, remember to
   // copy them, if appropriate, in InstantiateDerivedType().
 

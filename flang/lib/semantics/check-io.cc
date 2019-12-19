@@ -425,35 +425,39 @@ void IoChecker::Enter(const parser::StatusExpr &spec) {
 }
 
 void IoChecker::Enter(const parser::StatVariable &) {
-  SetSpecifier(IoSpecKind::Iostat);
+  if (stmt_ == IoStmtKind::None) {
+    // ALLOCATE & DEALLOCATE
+  } else {
+    SetSpecifier(IoSpecKind::Iostat);
+  }
 }
 
 void IoChecker::Leave(const parser::BackspaceStmt &) {
   CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::CloseStmt &) {
   CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1208
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::EndfileStmt &) {
   CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::FlushStmt &) {
   CheckForPureSubprogram();
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1243
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::InquireStmt &stmt) {
@@ -466,7 +470,7 @@ void IoChecker::Leave(const parser::InquireStmt &stmt) {
     CheckForProhibitedSpecifier(IoSpecKind::File, IoSpecKind::Unit);  // C1246
     CheckForRequiredSpecifier(IoSpecKind::Id, IoSpecKind::Pending);  // C1248
   }
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::OpenStmt &) {
@@ -499,12 +503,12 @@ void IoChecker::Leave(const parser::OpenStmt &) {
     CheckForProhibitedSpecifier(flags_.test(Flag::AccessStream),
         "STATUS='STREAM'", IoSpecKind::Recl);  // 12.5.6.15
   }
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::PrintStmt &) {
   CheckForPureSubprogram();
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::ReadStmt &) {
@@ -512,6 +516,7 @@ void IoChecker::Leave(const parser::ReadStmt &) {
     CheckForPureSubprogram();
   }
   if (!flags_.test(Flag::IoControlList)) {
+    Done();
     return;
   }
   LeaveReadWrite();
@@ -525,21 +530,21 @@ void IoChecker::Leave(const parser::ReadStmt &) {
       "FMT or NML");  // C1227
   CheckForRequiredSpecifier(
       IoSpecKind::Pad, flags_.test(Flag::FmtOrNml), "FMT or NML");  // C1227
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::RewindStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1240
   CheckForPureSubprogram();
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::WaitStmt &) {
   CheckForRequiredSpecifier(
       flags_.test(Flag::NumberUnit), "UNIT number");  // C1237
   CheckForPureSubprogram();
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::Leave(const parser::WriteStmt &) {
@@ -557,7 +562,7 @@ void IoChecker::Leave(const parser::WriteStmt &) {
   CheckForRequiredSpecifier(IoSpecKind::Delim,
       flags_.test(Flag::StarFmt) || specifierSet_.test(IoSpecKind::Nml),
       "FMT=* or NML");  // C1228
-  stmt_ = IoStmtKind::None;
+  Done();
 }
 
 void IoChecker::LeaveReadWrite() const {

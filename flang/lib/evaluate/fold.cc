@@ -2130,6 +2130,9 @@ Expr<TO> FoldOperation(
               Operand::category == TypeCategory::Logical) {
             return Expr<TO>{value->IsTrue()};
           }
+        } else if constexpr (std::is_same_v<Operand, TO> &&
+            FROMCAT != TypeCategory::Character) {
+          return std::move(kindExpr);  // remove needless conversion
         }
         return Expr<TO>{std::move(convert)};
       },
@@ -2143,8 +2146,12 @@ Expr<T> FoldOperation(FoldingContext &context, Parentheses<T> &&x) {
   if (auto value{GetScalarConstantValue<T>(operand)}) {
     // Preserve parentheses, even around constants.
     return Expr<T>{Parentheses<T>{Expr<T>{Constant<T>{*value}}}};
+  } else if (std::holds_alternative<Parentheses<T>>(operand.u)) {
+    // ((x)) -> (x)
+    return std::move(operand);
+  } else {
+    return Expr<T>{Parentheses<T>{std::move(operand)}};
   }
-  return Expr<T>{Parentheses<T>{std::move(operand)}};
 }
 
 template<typename T>

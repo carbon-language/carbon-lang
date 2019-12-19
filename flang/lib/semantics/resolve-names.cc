@@ -5916,7 +5916,7 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
 }
 
 // Some analyses and checks, such as the processing of initializers of
-// pointers, is deferred until all of the pertinent specification parts
+// pointers, are deferred until all of the pertinent specification parts
 // have been visited.  This deferred processing enables the use of forward
 // references in these circumstances.
 class DeferredCheckVisitor {
@@ -6020,7 +6020,8 @@ void ResolveNamesVisitor::FinishSpecificationParts(const ProgramTree &node) {
 // type parameter values of a particular instantiation.
 void ResolveNamesVisitor::FinishDerivedTypeInstantiation(Scope &scope) {
   CHECK(scope.IsDerivedType() && !scope.symbol());
-  if (const DerivedTypeSpec * spec{scope.derivedTypeSpec()}) {
+  if (DerivedTypeSpec * spec{scope.derivedTypeSpec()}) {
+    spec->Instantiate(currScope(), context());
     const Symbol &origTypeSymbol{spec->typeSymbol()};
     if (const Scope * origTypeScope{origTypeSymbol.scope()}) {
       CHECK(origTypeScope->IsDerivedType() &&

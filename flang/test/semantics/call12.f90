@@ -42,21 +42,21 @@ module m
     type(hasCoarray), pointer :: hcp
     integer :: n
     common /block/ y
-    !ERROR: A PURE subprogram may not define 'x' because it is host-associated
+    !ERROR: PURE subprogram 'test' may not define 'x' because it is host-associated
     x%a = 0.
-    !ERROR: A PURE subprogram may not define 'y' because it is in a COMMON block
+    !ERROR: PURE subprogram 'test' may not define 'y' because it is in a COMMON block
     y%a = 0. ! C1594(1)
-    !ERROR: A PURE subprogram may not define 'useassociated' because it is USE-associated
+    !ERROR: PURE subprogram 'test' may not define 'useassociated' because it is USE-associated
     useassociated = 0.  ! C1594(1)
-    !ERROR: A PURE subprogram may not define 'ptr' because it is a POINTER dummy argument of a PURE function
+    !ERROR: PURE subprogram 'test' may not define 'ptr' because it is a POINTER dummy argument of a PURE function
     ptr%a = 0. ! C1594(1)
-    !ERROR: A PURE subprogram may not define 'in' because it is an INTENT(IN) dummy argument
+    !ERROR: PURE subprogram 'test' may not define 'in' because it is an INTENT(IN) dummy argument
     in%a = 0. ! C1594(1)
     !ERROR: A PURE subprogram may not define a coindexed object
     hcp%co[1] = 0. ! C1594(1)
-    !ERROR: A PURE subprogram may not define 'ptr' because it is a POINTER dummy argument of a PURE function
+    !ERROR: PURE subprogram 'test' may not define 'ptr' because it is a POINTER dummy argument of a PURE function
     ptr => z ! C1594(2)
-    !ERROR: A PURE subprogram may not define 'ptr' because it is a POINTER dummy argument of a PURE function
+    !ERROR: PURE subprogram 'test' may not define 'ptr' because it is a POINTER dummy argument of a PURE function
     nullify(ptr) ! C1594(2), 19.6.8
     !ERROR: A PURE subprogram may not use 'ptr' as the target of pointer assignment because it is a POINTER dummy argument of a PURE function
     ptr2 => ptr ! C1594(3)
@@ -79,7 +79,7 @@ module m
    contains
     pure subroutine internal
       type(hasPtr) :: localhp
-      !ERROR: A PURE subprogram may not define 'z' because it is host-associated
+      !ERROR: PURE subprogram 'internal' may not define 'z' because it is host-associated
       z%a = 0.
       !ERROR: Externally visible object 'z' may not be associated with pointer component 'p' in a PURE procedure
       localhp = hasPtr(z%a)
