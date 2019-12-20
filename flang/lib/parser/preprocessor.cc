@@ -980,7 +980,7 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
         j += 3;
       } else if (j + 1 < expr1.SizeInTokens() &&
           IsLegalIdentifierStart(expr1.TokenAt(j + 1))) {
-        name = expr1.TokenAt(j++);
+        name = expr1.TokenAt(++j);
       }
       if (!name.empty()) {
         char truth{IsNameDefined(name) ? '1' : '0'};

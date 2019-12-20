@@ -233,7 +233,7 @@ public:
   using RawParameter = std::pair<const parser::Keyword *, ParamValue>;
   using RawParameters = std::vector<RawParameter>;
   using ParameterMapType = std::map<SourceName, ParamValue>;
-  explicit DerivedTypeSpec(SourceName, const Symbol &);
+  DerivedTypeSpec(SourceName, const Symbol &);
   DerivedTypeSpec(const DerivedTypeSpec &);
   DerivedTypeSpec(DerivedTypeSpec &&);
 

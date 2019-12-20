@@ -9,6 +9,7 @@
 #include "shape.h"
 #include "characteristics.h"
 #include "fold.h"
+#include "intrinsics.h"
 #include "tools.h"
 #include "type.h"
 #include "../common/idioms.h"
@@ -501,6 +502,41 @@ auto GetShapeHelper::operator()(const ProcedureRef &call) const -> Result {
                 call.arguments().at(1).value().UnwrapExpr()}) {
           auto shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
           return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
+        }
+      }
+    } else if (intrinsic->name == "pack") {
+      if (call.arguments().size() >= 3 && call.arguments().at(2)) {
+        // SHAPE(PACK(,,VECTOR=v)) -> SHAPE(v)
+        return (*this)(call.arguments().at(2));
+      } else if (call.arguments().size() >= 2) {
+        if (auto maskShape{(*this)(call.arguments().at(1))}) {
+          if (maskShape->size() == 0) {
+            // Scalar MASK= -> [MERGE(SIZE(ARRAY=), 0, mask)]
+            if (auto arrayShape{(*this)(call.arguments().at(0))}) {
+              auto arraySize{GetSize(std::move(*arrayShape))};
+              CHECK(arraySize);
+              ActualArguments toMerge{
+                  ActualArgument{AsGenericExpr(std::move(*arraySize))},
+                  ActualArgument{AsGenericExpr(ExtentExpr{0})},
+                  common::Clone(call.arguments().at(1))};
+              auto specific{context_.intrinsics().Probe(
+                  CallCharacteristics{"merge"}, toMerge, context_)};
+              CHECK(specific);
+              return Shape{ExtentExpr{FunctionRef<ExtentType>{
+                  ProcedureDesignator{std::move(specific->specificIntrinsic)},
+                  std::move(specific->arguments)}}};
+            }
+          } else {
+            // Non-scalar MASK= -> [COUNT(mask)]
+            ActualArguments toCount{ActualArgument{common::Clone(
+                DEREF(call.arguments().at(1).value().UnwrapExpr()))}};
+            auto specific{context_.intrinsics().Probe(
+                CallCharacteristics{"count"}, toCount, context_)};
+            CHECK(specific);
+            return Shape{ExtentExpr{FunctionRef<ExtentType>{
+                ProcedureDesignator{std::move(specific->specificIntrinsic)},
+                std::move(specific->arguments)}}};
+          }
         }
       }
     } else if (intrinsic->name == "spread") {

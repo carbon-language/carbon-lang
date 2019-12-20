@@ -137,14 +137,39 @@ static bool DefersSameTypeParameters(
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     const std::string &dummyName, evaluate::Expr<evaluate::SomeType> &actual,
     characteristics::TypeAndShape &actualType, bool isElemental,
-    evaluate::FoldingContext &context, const Scope *scope) {
+    bool actualIsArrayElement, evaluate::FoldingContext &context,
+    const Scope *scope) {
 
   // Basic type & rank checking
   parser::ContextualMessages &messages{context.messages()};
   PadShortCharacterActual(actual, dummy.type, actualType, messages);
   ConvertIntegerActual(actual, dummy.type, actualType, messages);
-  bool typesCompatible{dummy.type.IsCompatibleWith(
-      messages, actualType, "dummy argument", "actual argument", isElemental)};
+  bool typesCompatible{
+      dummy.type.type().IsTypeCompatibleWith(actualType.type())};
+  if (typesCompatible) {
+    if (isElemental) {
+    } else if (dummy.type.attrs().test(
+                   characteristics::TypeAndShape::Attr::AssumedRank)) {
+    } else if (!dummy.type.attrs().test(
+                   characteristics::TypeAndShape::Attr::AssumedShape) &&
+        (actualType.Rank() > 0 || actualIsArrayElement)) {
+      // Sequence association (15.5.2.11) applies -- rank need not match
+      // if the actual argument is an array or array element designator.
+    } else {
+      CheckConformance(messages, dummy.type.shape(), actualType.shape(),
+          "dummy argument", "actual argument");
+    }
+  } else {
+    std::stringstream lenStr;
+    if (const auto &len{actualType.LEN()}) {
+      len->AsFortran(lenStr);
+    }
+    messages.Say(
+        "Actual argument type '%s' is not compatible with dummy argument type '%s'"_err_en_US,
+        actualType.type().AsFortran(lenStr.str()),
+        dummy.type.type().AsFortran());
+  }
+
   bool actualIsPolymorphic{actualType.type().IsPolymorphic()};
   bool dummyIsPolymorphic{dummy.type.type().IsPolymorphic()};
   bool actualIsCoindexed{ExtractCoarrayRef(actual).has_value()};
@@ -577,7 +602,7 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
                       *expr, context)}) {
                 bool isElemental{object.type.Rank() == 0 && proc.IsElemental()};
                 CheckExplicitDataArg(object, dummyName, *expr, *type,
-                    isElemental, context, scope);
+                    isElemental, IsArrayElement(*expr), context, scope);
               } else if (object.type.type().IsTypelessIntrinsicArgument() &&
                   std::holds_alternative<evaluate::BOZLiteralConstant>(
                       expr->u)) {

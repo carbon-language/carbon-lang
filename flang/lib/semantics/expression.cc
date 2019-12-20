@@ -625,7 +625,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
     Say("BOZ literal '%s' too large"_err_en_US, x.v);
     return std::nullopt;
   }
-  return {AsGenericExpr(std::move(value.value))};
+  return AsGenericExpr(std::move(value.value));
 }
 
 // For use with SearchTypes to create a TypeParamInquiry with the
@@ -1677,10 +1677,10 @@ static bool CheckCompatibleArguments(
 }
 
 // Resolve a call to a generic procedure with given actual arguments.
-// If it's a procedure component, base is the data-ref to the left of the '%'.
 // adjustActuals is called on procedure bindings to handle pass arg.
 const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
-    const ActualArguments &actuals, AdjustActuals adjustActuals) {
+    const ActualArguments &actuals, AdjustActuals adjustActuals,
+    bool mightBeStructureConstructor, bool inParentType) {
   const Symbol *elemental{nullptr};  // matching elemental specific proc
   const auto &details{symbol.GetUltimate().get<semantics::GenericDetails>()};
   for (const Symbol &specific : details.specificProcs()) {
@@ -1711,9 +1711,19 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
   if (const auto *parentScope{symbol.owner().GetDerivedTypeParent()}) {
     if (const Symbol * extended{parentScope->FindComponent(symbol.name())}) {
       if (extended->GetUltimate().has<semantics::GenericDetails>()) {
-        return ResolveGeneric(*extended, actuals, adjustActuals);
+        if (const Symbol *
+            result{ResolveGeneric(
+                *extended, actuals, adjustActuals, false, true)}) {
+          return result;
+        }
       }
     }
+  }
+  if (inParentType) {
+    return nullptr;  // emit error only at top level
+  }
+  if (mightBeStructureConstructor && details.derivedType()) {
+    return details.derivedType();
   }
   if (semantics::IsGenericDefinedOp(symbol)) {
     Say("No specific procedure of generic operator '%s' matches the actual arguments"_err_en_US,
@@ -1727,12 +1737,13 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
 
 auto ExpressionAnalyzer::GetCalleeAndArguments(
     const parser::ProcedureDesignator &pd, ActualArguments &&arguments,
-    bool isSubroutine) -> std::optional<CalleeAndArguments> {
+    bool isSubroutine, bool mightBeStructureConstructor)
+    -> std::optional<CalleeAndArguments> {
   return std::visit(
       common::visitors{
           [&](const parser::Name &name) {
-            return GetCalleeAndArguments(
-                name, std::move(arguments), isSubroutine);
+            return GetCalleeAndArguments(name, std::move(arguments),
+                isSubroutine, mightBeStructureConstructor);
           },
           [&](const parser::ProcComponentRef &pcr) {
             return AnalyzeProcedureComponentRef(pcr, std::move(arguments));
@@ -1741,12 +1752,12 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(
       pd.u);
 }
 
-auto ExpressionAnalyzer::GetCalleeAndArguments(
-    const parser::Name &name, ActualArguments &&arguments, bool isSubroutine)
-    -> std::optional<CalleeAndArguments> {
+auto ExpressionAnalyzer::GetCalleeAndArguments(const parser::Name &name,
+    ActualArguments &&arguments, bool isSubroutine,
+    bool mightBeStructureConstructor) -> std::optional<CalleeAndArguments> {
   const Symbol *symbol{name.symbol};
   if (context_.HasError(symbol)) {
-    return std::nullopt;
+    return std::nullopt;  // also handles null symbol
   }
   const Symbol &ultimate{DEREF(symbol).GetUltimate()};
   if (ultimate.attrs().test(semantics::Attr::INTRINSIC)) {
@@ -1756,21 +1767,26 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(
       return CalleeAndArguments{
           ProcedureDesignator{std::move(specificCall->specificIntrinsic)},
           std::move(specificCall->arguments)};
-    } else {
-      return std::nullopt;
     }
   } else {
     CheckForBadRecursion(name.source, ultimate);
     if (ultimate.has<semantics::GenericDetails>()) {
-      symbol = ResolveGeneric(*symbol, arguments);
+      symbol = ResolveGeneric(
+          *symbol, arguments, std::nullopt, mightBeStructureConstructor);
     }
     if (symbol) {
-      return CalleeAndArguments{
-          ProcedureDesignator{*symbol}, std::move(arguments)};
-    } else {
-      return std::nullopt;
+      if (symbol->GetUltimate().has<semantics::DerivedTypeDetails>()) {
+        if (mightBeStructureConstructor) {
+          return CalleeAndArguments{
+              semantics::SymbolRef{*symbol}, std::move(arguments)};
+        }
+      } else {
+        return CalleeAndArguments{
+            ProcedureDesignator{*symbol}, std::move(arguments)};
+      }
     }
   }
+  return std::nullopt;
 }
 
 void ExpressionAnalyzer::CheckForBadRecursion(
@@ -1810,44 +1826,65 @@ template<typename A> static const Symbol *AssumedTypeDummy(const A &x) {
   return nullptr;
 }
 
-MaybeExpr ExpressionAnalyzer::Analyze(
-    const parser::FunctionReference &funcRef) {
-  return AnalyzeCall(funcRef.v, false);
-}
-
-void ExpressionAnalyzer::Analyze(const parser::CallStmt &callStmt) {
-  MaybeExpr expr{AnalyzeCall(callStmt.v, true)};
-  if (const auto *proc{UnwrapExpr<ProcedureRef>(expr)}) {
-    callStmt.typedCall.reset(new ProcedureRef{*proc});
-  }
-}
-
-MaybeExpr ExpressionAnalyzer::AnalyzeCall(
-    const parser::Call &call, bool isSubroutine) {
+MaybeExpr ExpressionAnalyzer::Analyze(const parser::FunctionReference &funcRef,
+    std::optional<parser::StructureConstructor> *structureConstructor) {
+  const parser::Call &call{funcRef.v};
   auto restorer{GetContextualMessages().SetLocation(call.source)};
   ArgumentAnalyzer analyzer{*this};
   for (const auto &arg : std::get<std::list<parser::ActualArgSpec>>(call.t)) {
-    analyzer.Analyze(arg, isSubroutine);
+    analyzer.Analyze(arg, false /* not subroutine call */);
   }
-  if (!analyzer.fatalErrors()) {
-    if (std::optional<CalleeAndArguments> callee{
-            GetCalleeAndArguments(std::get<parser::ProcedureDesignator>(call.t),
-                analyzer.GetActuals(), isSubroutine)}) {
-      if (isSubroutine) {
-        if (CheckCall(
-                call.source, callee->procedureDesignator, callee->arguments)) {
-          return Expr<SomeType>{
-              ProcedureRef{std::move(callee->procedureDesignator),
-                  std::move(callee->arguments)}};
-        }
-      } else {
-        return MakeFunctionRef(call.source,
-            std::move(callee->procedureDesignator),
-            std::move(callee->arguments));
+  if (analyzer.fatalErrors()) {
+    return std::nullopt;
+  }
+  if (std::optional<CalleeAndArguments> callee{
+          GetCalleeAndArguments(std::get<parser::ProcedureDesignator>(call.t),
+              analyzer.GetActuals(), false /* not subroutine */,
+              true /* might be structure constructor */)}) {
+    if (auto *proc{std::get_if<ProcedureDesignator>(&callee->u)}) {
+      return MakeFunctionRef(
+          call.source, std::move(*proc), std::move(callee->arguments));
+    } else if (structureConstructor) {
+      // Structure constructor misparsed as function reference?
+      CHECK(std::holds_alternative<semantics::SymbolRef>(callee->u));
+      const Symbol &derivedType{*std::get<semantics::SymbolRef>(callee->u)};
+      const auto &designator{std::get<parser::ProcedureDesignator>(call.t)};
+      if (const auto *name{std::get_if<parser::Name>(&designator.u)}) {
+        semantics::Scope &scope{context_.FindScope(name->source)};
+        const semantics::DeclTypeSpec &type{
+            semantics::FindOrInstantiateDerivedType(scope,
+                semantics::DerivedTypeSpec{
+                    name->source, derivedType.GetUltimate()},
+                context_)};
+        auto &mutableRef{const_cast<parser::FunctionReference &>(funcRef)};
+        *structureConstructor =
+            mutableRef.ConvertToStructureConstructor(type.derivedTypeSpec());
+        return Analyze(structureConstructor->value());
       }
     }
   }
   return std::nullopt;
+}
+
+void ExpressionAnalyzer::Analyze(const parser::CallStmt &callStmt) {
+  const parser::Call &call{callStmt.v};
+  auto restorer{GetContextualMessages().SetLocation(call.source)};
+  ArgumentAnalyzer analyzer{*this};
+  for (const auto &arg : std::get<std::list<parser::ActualArgSpec>>(call.t)) {
+    analyzer.Analyze(arg, true /* is subroutine call */);
+  }
+  if (!analyzer.fatalErrors()) {
+    if (std::optional<CalleeAndArguments> callee{
+            GetCalleeAndArguments(std::get<parser::ProcedureDesignator>(call.t),
+                analyzer.GetActuals(), true /* subroutine */)}) {
+      ProcedureDesignator *proc{std::get_if<ProcedureDesignator>(&callee->u)};
+      CHECK(proc);
+      if (CheckCall(call.source, *proc, callee->arguments)) {
+        callStmt.typedCall.reset(
+            new ProcedureRef{std::move(*proc), std::move(callee->arguments)});
+      }
+    }
+  }
 }
 
 const Assignment *ExpressionAnalyzer::Analyze(const parser::AssignmentStmt &x) {
@@ -1986,8 +2023,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedUnary &x) {
   analyzer.Analyze(std::get<1>(x.t));
   if (!analyzer.fatalErrors()) {
     if (auto callee{GetCalleeAndArguments(name, analyzer.GetActuals())}) {
+      CHECK(std::holds_alternative<ProcedureDesignator>(callee->u));
       return MakeFunctionRef(name.source,
-          std::move(callee->procedureDesignator), std::move(callee->arguments));
+          std::move(std::get<ProcedureDesignator>(callee->u)),
+          std::move(callee->arguments));
     }
   }
   return std::nullopt;
@@ -2073,7 +2112,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::Concat &x) {
 MaybeExpr ExpressionAnalyzer::AnalyzeDefinedOp(
     const parser::Name &name, ActualArguments &&actuals) {
   if (auto callee{GetCalleeAndArguments(name, std::move(actuals))}) {
-    return MakeFunctionRef(name.source, std::move(callee->procedureDesignator),
+    CHECK(std::holds_alternative<ProcedureDesignator>(callee->u));
+    return MakeFunctionRef(name.source,
+        std::move(std::get<ProcedureDesignator>(callee->u)),
         std::move(callee->arguments));
   } else {
     return std::nullopt;
@@ -2160,8 +2201,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &x) {
   analyzer.Analyze(std::get<2>(x.t));
   if (!analyzer.fatalErrors()) {
     if (auto callee{GetCalleeAndArguments(name, analyzer.GetActuals())}) {
+      CHECK(std::holds_alternative<ProcedureDesignator>(callee->u));
       return MakeFunctionRef(name.source,
-          std::move(callee->procedureDesignator), std::move(callee->arguments));
+          std::move(std::get<ProcedureDesignator>(callee->u)),
+          std::move(callee->arguments));
     }
   }
   return std::nullopt;
@@ -2170,7 +2213,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &x) {
 static void CheckFuncRefToArrayElementRefHasSubscripts(
     semantics::SemanticsContext &context,
     const parser::FunctionReference &funcRef) {
-  // Emit message if the function reference fix will end-up an array element
+  // Emit message if the function reference fix will end up an array element
   // reference with no subscripts because it will not be possible to later tell
   // the difference in expressions between empty subscript list due to bad
   // subscripts error recovery or because the user did not put any.
@@ -2196,8 +2239,9 @@ static void CheckFuncRefToArrayElementRefHasSubscripts(
 }
 
 // Converts, if appropriate, an original misparse of ambiguous syntax like
-// A(1) as a function reference into an array reference or a structure
-// constructor.
+// A(1) as a function reference into an array reference.
+// Misparse structure constructors are detected elsewhere after generic
+// function call resolution fails.
 template<typename... A>
 static void FixMisparsedFunctionReference(
     semantics::SemanticsContext &context, const std::variant<A...> &constU) {
@@ -2228,30 +2272,6 @@ static void FixMisparsedFunctionReference(
           u = common::Indirection{funcRef.ConvertToArrayElementRef()};
         } else {
           DIE("can't fix misparsed function as array reference");
-        }
-      } else if (const auto *name{std::get_if<parser::Name>(&proc.u)}) {
-        // A procedure component reference can't be a structure
-        // constructor; only check calls to bare names.
-        const Symbol *derivedType{nullptr};
-        if (symbol.has<semantics::DerivedTypeDetails>()) {
-          derivedType = &symbol;
-        } else if (const auto *generic{
-                       symbol.detailsIf<semantics::GenericDetails>()}) {
-          derivedType = generic->derivedType();
-        }
-        if (derivedType) {
-          if constexpr (common::HasMember<parser::StructureConstructor,
-                            uType>) {
-            auto &scope{context.FindScope(name->source)};
-            const semantics::DeclTypeSpec &type{
-                semantics::FindOrInstantiateDerivedType(scope,
-                    semantics::DerivedTypeSpec{
-                        origSymbol->name(), *derivedType},
-                    context)};
-            u = funcRef.ConvertToStructureConstructor(type.derivedTypeSpec());
-          } else {
-            DIE("can't fix misparsed function as structure constructor");
-          }
         }
       }
     }

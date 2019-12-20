@@ -235,6 +235,19 @@ std::optional<DataRef> ExtractDataRef(const std::optional<A> &x) {
   }
 }
 
+// Predicate: is an expression is an array element reference?
+template<typename T> bool IsArrayElement(const Expr<T> &expr) {
+  if (auto dataRef{ExtractDataRef(expr)}) {
+    const DataRef *ref{&*dataRef};
+    while (const Component * component{std::get_if<Component>(&ref->u)}) {
+      ref = &component->base();
+    }
+    return std::holds_alternative<ArrayRef>(ref->u);
+  } else {
+    return false;
+  }
+}
+
 template<typename A> std::optional<NamedEntity> ExtractNamedEntity(const A &x) {
   if (auto dataRef{ExtractDataRef(x)}) {
     return std::visit(

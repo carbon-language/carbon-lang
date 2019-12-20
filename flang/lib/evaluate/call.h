@@ -204,7 +204,7 @@ template<typename A> class FunctionRef : public ProcedureRef {
 public:
   using Result = A;
   CLASS_BOILERPLATE(FunctionRef)
-  FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
+  explicit FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
   FunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
     : ProcedureRef{std::move(p), std::move(a)} {}
 

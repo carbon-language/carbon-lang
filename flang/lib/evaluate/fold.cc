@@ -981,8 +981,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
       context.messages().Say(
           "%s(real(kind=%d)) cannot be folded on host"_en_US, name, KIND);
     }
-  }
-  if (name == "atan" || name == "atan2" || name == "hypot" || name == "mod") {
+  } else if (name == "atan" || name == "atan2" || name == "hypot" ||
+      name == "mod") {
     std::string localName{name == "atan2" ? "atan" : name};
     CHECK(args.size() == 2);
     if (auto callable{
