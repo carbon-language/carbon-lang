@@ -162,8 +162,6 @@ enum class Precedence {  // in increasing order for sane comparisons
   Multiplicative,  // *, /
   Power,  // **, which is right-associative unlike the other dyadic operators
   DefinedUnary,
-  Parenthesize,  // (x), (real, imaginary)
-  Literal,
   Top,
 };
 
@@ -221,16 +219,8 @@ template<typename T> static Precedence ToPrecedence(const Constant<T> &x) {
       }
     }
   }
-  return Precedence::Literal;
+  return Precedence::Top;
 }
-template<typename T> constexpr Precedence ToPrecedence(const Parentheses<T> &) {
-  return Precedence::Parenthesize;
-}
-template<int KIND>
-constexpr Precedence ToPrecedence(const ComplexConstructor<KIND> &) {
-  return Precedence::Parenthesize;
-}
-
 template<typename T> static Precedence ToPrecedence(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return ToPrecedence(x); }, expr.u);
 }
@@ -262,27 +252,13 @@ template<typename A>
 constexpr OperatorSpelling SpellOperator(const Negate<A> &) {
   return OperatorSpelling{"-", "", ""};
 }
+template<typename A>
+constexpr OperatorSpelling SpellOperator(const Parentheses<A> &) {
+  return OperatorSpelling{"(", "", ")"};
+}
 template<int KIND>
 static OperatorSpelling SpellOperator(const ComplexComponent<KIND> &x) {
-  if (x.isImaginaryPart) {
-    return {"aimag(", "", ")"};
-  } else if constexpr (KIND == 2) {
-    return {"real(", "", ",kind=2)"};
-  } else if constexpr (KIND == 3) {
-    return {"real(", "", ",kind=3)"};
-  } else if constexpr (KIND == 4) {
-    return {"real(", "", ",kind=4)"};
-  } else if constexpr (KIND == 8) {
-    return {"real(", "", ",kind=8)"};
-  } else if constexpr (KIND == 10) {
-    return {"real(", "", ",kind=10)"};
-  } else if constexpr (KIND == 16) {
-    return {"real(", "", ",kind=16)"};
-  } else {
-    static_assert(KIND == 2 || KIND == 3 || KIND == 4 || KIND == 8 ||
-            KIND == 10 || KIND == 16,
-        "bad KIND");
-  }
+  return {x.isImaginaryPart ? "aimag(" : "real(", "", ")"};
 }
 template<int KIND> constexpr OperatorSpelling SpellOperator(const Not<KIND> &) {
   return OperatorSpelling{".NOT.", "", ""};
@@ -343,25 +319,22 @@ std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
   o << spelling.prefix;
   Precedence thisPrec{ToPrecedence(derived())};
   if constexpr (operands == 1) {
-    if (lhsPrec <= thisPrec) {
+    if (thisPrec != Precedence::Top && lhsPrec < thisPrec) {
       o << '(' << left() << ')';
     } else {
       o << left();
     }
   } else {
-    if (lhsPrec == Precedence::Parenthesize) {
-      o << left();
-    } else if (lhsPrec < thisPrec ||
-        (lhsPrec == Precedence::Power && thisPrec == Precedence::Power)) {
+    if (thisPrec != Precedence::Top &&
+        (lhsPrec < thisPrec ||
+            (lhsPrec == Precedence::Power && thisPrec == Precedence::Power))) {
       o << '(' << left() << ')';
     } else {
       o << left();
     }
     o << spelling.infix;
     Precedence rhsPrec{ToPrecedence(right())};
-    if (rhsPrec == Precedence::Parenthesize) {
-      o << right();
-    } else if (rhsPrec < thisPrec) {
+    if (thisPrec != Precedence::Top && rhsPrec < thisPrec) {
       o << '(' << right() << ')';
     } else {
       o << right();

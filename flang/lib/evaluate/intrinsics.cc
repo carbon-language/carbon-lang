@@ -600,6 +600,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         Rank::scalar},
     {"rank", {{"a", AnyData, Rank::anyOrAssumedRank}}, DefaultInt,
         Rank::scalar},
+    {"real", {{"a", SameComplex, Rank::elemental}}, SameReal},  // 16.9.160(4)(ii)
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
     {"reduce",
