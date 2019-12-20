@@ -1646,7 +1646,9 @@ public:
   }
   void Unparse(const CallStmt &x) {  // R1521
     if (asFortran_ && x.typedCall.get()) {
+      Put(' ');
       asFortran_->call(out_, *x.typedCall);
+      Put('\n');
     } else {
       const auto &pd{std::get<ProcedureDesignator>(x.v.t)};
       const auto &args{std::get<std::list<ActualArgSpec>>(x.v.t)};

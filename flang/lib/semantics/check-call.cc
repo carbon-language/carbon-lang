@@ -101,6 +101,33 @@ static void PadShortCharacterActual(evaluate::Expr<evaluate::SomeType> &actual,
   }
 }
 
+// Automatic conversion of different-kind INTEGER scalar actual
+// argument expressions (not variables) to INTEGER scalar dummies.
+// We return nonstandard INTEGER(8) results from intrinsic functions
+// like SIZE() by default in order to facilitate the use of large
+// arrays.  Emit a warning when downconverting.
+static void ConvertIntegerActual(evaluate::Expr<evaluate::SomeType> &actual,
+    const characteristics::TypeAndShape &dummyType,
+    characteristics::TypeAndShape &actualType,
+    parser::ContextualMessages &messages) {
+  if (dummyType.type().category() == TypeCategory::Integer &&
+      actualType.type().category() == TypeCategory::Integer &&
+      dummyType.type().kind() != actualType.type().kind() &&
+      GetRank(dummyType.shape()) == 0 && GetRank(actualType.shape()) == 0 &&
+      !evaluate::IsVariable(actual)) {
+    auto converted{
+        evaluate::ConvertToType(dummyType.type(), std::move(actual))};
+    CHECK(converted);
+    actual = std::move(*converted);
+    if (dummyType.type().kind() < actualType.type().kind()) {
+      messages.Say(
+          "Actual argument scalar expression of type INTEGER(%d) was converted to smaller dummy argument type INTEGER(%d)"_en_US,
+          actualType.type().kind(), dummyType.type().kind());
+    }
+    actualType = dummyType;
+  }
+}
+
 static bool DefersSameTypeParameters(
     const DerivedTypeSpec &actual, const DerivedTypeSpec &dummy) {
   for (const auto &pair : actual.parameters()) {
@@ -115,12 +142,13 @@ static bool DefersSameTypeParameters(
 
 static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     const std::string &dummyName, evaluate::Expr<evaluate::SomeType> &actual,
-    const characteristics::TypeAndShape &actualType, bool isElemental,
+    characteristics::TypeAndShape &actualType, bool isElemental,
     evaluate::FoldingContext &context, const Scope *scope) {
 
   // Basic type & rank checking
   parser::ContextualMessages &messages{context.messages()};
   PadShortCharacterActual(actual, dummy.type, actualType, messages);
+  ConvertIntegerActual(actual, dummy.type, actualType, messages);
   bool typesCompatible{dummy.type.IsCompatibleWith(
       messages, actualType, "dummy argument", "actual argument", isElemental)};
   bool actualIsPolymorphic{actualType.type().IsPolymorphic()};

@@ -23,6 +23,13 @@ Intentional violations of the standard
   `SIZE`, `LBOUND`, `UBOUND`, `SHAPE`, and the location reductions
   `FINDLOC`, `MAXLOC`, and `MINLOC`.  We return `INTEGER(KIND=8)` by
   default in these cases.
+* Scalar `INTEGER` actual argument expressions (not variables!)
+  are converted to the kinds of scalar `INTEGER` dummy arguments
+  when the interface is explicit and the kinds differ.
+  This conversion allows the results of the intrinsics like
+  `SIZE` that (as mentioned above) no longer return default
+  `INTEGER` results by default to be passed.  A warning is
+  emitted when truncation is possible.
 
 Extensions, deletions, and legacy features supported by default
 ===============================================================
