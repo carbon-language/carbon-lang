@@ -1,17 +1,3 @@
-! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
-!
-! Licensed under the Apache License, Version 2.0 (the "License");
-! you may not use this file except in compliance with the License.
-! You may obtain a copy of the License at
-!
-!     http://www.apache.org/licenses/LICENSE-2.0
-!
-! Unless required by applicable law or agreed to in writing, software
-! distributed under the License is distributed on an "AS IS" BASIS,
-! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-! See the License for the specific language governing permissions and
-! limitations under the License.
-
 ! Tests -fget-symbols with INCLUDE
 
 INCLUDE "getsymbols03-b.f90"
@@ -23,7 +9,7 @@ program main
 end program
 
 ! RUN: ${F18} -fget-symbols-sources -fparse-only -fdebug-semantics %s 2>&1 | ${FileCheck} %s
-! CHECK:mm3:.*getsymbols03-b.f90, 15, 8-11
-! CHECK:f:.*getsymbols03-b.f90, 16, 12-13
-! CHECK:main:.*getsymbols03-a.f90, 19, 9-13
-! CHECK:x:.*getsymbols03-a.f90, 21, 13-14
+! CHECK:mm3:.*getsymbols03-b.f90, 1, 8-11
+! CHECK:f:.*getsymbols03-b.f90, 2, 12-13
+! CHECK:main:.*getsymbols03-a.f90, 5, 9-13
+! CHECK:x:.*getsymbols03-a.f90, 7, 13-14
