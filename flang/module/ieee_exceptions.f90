@@ -53,12 +53,12 @@ module ieee_exceptions
   end interface
 
  contains
-  subroutine ieee_get_flag(flag, flag_value)
+  elemental subroutine ieee_get_flag(flag, flag_value)
     type(ieee_flag_type), intent(in) :: flag
     logical, intent(out) :: flag_value
   end subroutine ieee_get_flag
 
-  subroutine ieee_get_halting_mode(flag, halting)
+  elemental subroutine ieee_get_halting_mode(flag, halting)
     type(ieee_flag_type), intent(in) :: flag
     logical, intent(out) :: halting
   end subroutine ieee_get_halting_mode
