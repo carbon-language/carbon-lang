@@ -69,6 +69,16 @@ contains
   end
 end
 
+subroutine s6b
+  integer, parameter :: k = 4
+  integer :: l = 4
+  forall(integer(k) :: i = 1:10)
+  end forall
+  !ERROR: Must be a constant value
+  forall(integer(l) :: i = 1:10)
+  end forall
+end
+
 subroutine s7
   !ERROR: 'i' is already declared in this scoping unit
   do concurrent(integer::i=1:5) local(j, i) &

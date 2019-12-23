@@ -1039,7 +1039,6 @@ private:
   void SetTypeFromAssociation(Symbol &);
   void SetAttrsFromAssociation(Symbol &);
   Selector ResolveSelector(const parser::Selector &);
-  void ResolveControlExpressions(const parser::ConcurrentControl &control);
   void ResolveIndexName(const parser::ConcurrentControl &control);
   Association &GetCurrentAssociation();
   void PushAssociation();
@@ -4605,41 +4604,19 @@ void ConstructVisitor::ResolveIndexName(
   EvaluateExpr(parser::Scalar{parser::Integer{common::Clone(name)}});
 }
 
-void ConstructVisitor::ResolveControlExpressions(
-    const parser::ConcurrentControl &control) {
-  Walk(std::get<1>(control.t));  // Initial expression
-  Walk(std::get<2>(control.t));  // Final expression
-  Walk(std::get<3>(control.t));  // Step expression
-}
-
 // We need to make sure that all of the index-names get declared before the
 // expressions in the loop control are evaluated so that references to the
 // index-names in the expressions are correctly detected.
 bool ConstructVisitor::Pre(const parser::ConcurrentHeader &header) {
   BeginDeclTypeSpec();
-
-  // Process the type spec, if present
-  const auto &typeSpec{
-      std::get<std::optional<parser::IntegerTypeSpec>>(header.t)};
-  if (typeSpec) {
-    SetDeclTypeSpec(MakeNumericType(TypeCategory::Integer, typeSpec->v));
-  }
-
-  // Process the index-name nodes in the ConcurrentControl nodes
+  Walk(std::get<std::optional<parser::IntegerTypeSpec>>(header.t));
   const auto &controls{
       std::get<std::list<parser::ConcurrentControl>>(header.t)};
   for (const auto &control : controls) {
     ResolveIndexName(control);
   }
-
-  // Process the expressions in ConcurrentControls
-  for (const auto &control : controls) {
-    ResolveControlExpressions(control);
-  }
-
-  // Resolve the names in the scalar-mask-expr
+  Walk(controls);
   Walk(std::get<std::optional<parser::ScalarLogicalExpr>>(header.t));
-
   EndDeclTypeSpec();
   return false;
 }
