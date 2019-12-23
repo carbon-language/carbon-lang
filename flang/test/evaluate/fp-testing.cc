@@ -11,7 +11,7 @@ ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
 #else
     bool, bool
 #endif
-    ) {
+) {
   errno = 0;
   if (feholdexcept(&originalFenv_) != 0) {
     std::fprintf(stderr, "feholdexcept() failed: %s\n", std::strerror(errno));
