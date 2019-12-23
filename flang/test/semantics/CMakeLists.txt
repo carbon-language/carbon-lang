@@ -188,6 +188,7 @@ set(ERROR_TESTS
   call12.f90
   call13.f90
   call14.f90
+  forall01.f90
   misc-declarations.f90
   separate-module-procs.f90
   bindings01.f90
@@ -278,10 +279,6 @@ set(CANONDO_TESTS
   canondo*.[Ff]90
 )
 
-set(FORALL_TESTS
-  forall*.[Ff]90
-)
-
 set(GETSYMBOLS_TESTS
   getsymbols01.f90
   getsymbols02-*.f90
@@ -316,7 +313,7 @@ foreach(test ${MODFILE_TESTS})
 endforeach()
 
 foreach(test ${LABEL_TESTS} ${CANONDO_TESTS} ${DOCONCURRENT_TESTS}
-             ${FORALL_TESTS} ${GETSYMBOLS_TESTS} ${GETDEFINITION_TESTS})
+             ${GETSYMBOLS_TESTS} ${GETDEFINITION_TESTS})
   add_test(NAME ${test}
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test} ${F18})
 endforeach()
