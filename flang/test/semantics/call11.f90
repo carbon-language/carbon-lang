@@ -1,4 +1,4 @@
-! Test 15.7 C1591 & others: contexts requiring PURE subprograms
+! Test 15.7 C1591 & others: contexts requiring pure subprograms
 
 module m
 
@@ -9,7 +9,7 @@ module m
   end type
   type, extends(t) :: t2
    contains
-    !ERROR: An overridden PURE type-bound procedure binding must also be PURE
+    !ERROR: An overridden pure type-bound procedure binding must also be pure
     procedure, nopass :: tbp_pure => impure ! 7.5.7.3
   end type
 

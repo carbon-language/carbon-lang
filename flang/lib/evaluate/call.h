@@ -66,6 +66,7 @@ public:
     SymbolRef symbol_;
   };
 
+  DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(ActualArgument)
   explicit ActualArgument(Expr<SomeType> &&);
   explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&);
   explicit ActualArgument(AssumedType);

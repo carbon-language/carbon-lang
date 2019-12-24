@@ -103,8 +103,9 @@ std::forward_list<std::string> GenericSpecInfo::GetAllNames(
 Symbol *GenericSpecInfo::FindInScope(
     SemanticsContext &context, const Scope &scope) const {
   for (const auto &name : GetAllNames(context)) {
-    if (auto *symbol{scope.FindSymbol(SourceName{name})}) {
-      return symbol;
+    auto iter{scope.find(SourceName{name})};
+    if (iter != scope.end()) {
+      return &*iter->second;
     }
   }
   return nullptr;

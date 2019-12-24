@@ -14,7 +14,7 @@ namespace Fortran::semantics {
 void PurityChecker::Enter(const parser::ExecutableConstruct &exec) {
   if (InPureSubprogram() && IsImageControlStmt(exec)) {
     context_.Say(GetImageControlStmtLocation(exec),
-        "An image control statement may not appear in a PURE subprogram"_err_en_US);
+        "An image control statement may not appear in a pure subprogram"_err_en_US);
   }
 }
 void PurityChecker::Enter(const parser::SubroutineSubprogram &subr) {
@@ -59,7 +59,7 @@ void PurityChecker::Entered(
     }
   } else if (InPureSubprogram()) {
     context_.messages().Say(source,
-        "An internal subprogram of a PURE subprogram must also be PURE"_err_en_US);
+        "An internal subprogram of a pure subprogram must also be pure"_err_en_US);
   }
   ++depth_;
 }

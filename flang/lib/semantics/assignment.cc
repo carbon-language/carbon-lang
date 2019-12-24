@@ -568,7 +568,7 @@ static const char *WhyBaseObjectIsSuspicious(
   } else if (IsUseAssociated(x, scope)) {
     return "USE-associated";
   } else if (IsPointerDummyOfPureFunction(x)) {
-    return "a POINTER dummy argument of a PURE function";
+    return "a POINTER dummy argument of a pure function";
   } else if (IsIntentIn(x)) {
     return "an INTENT(IN) dummy argument";
   } else if (FindCommonBlockContaining(x)) {
@@ -584,7 +584,7 @@ void CheckDefinabilityInPureScope(parser::ContextualMessages &messages,
   if (pure.symbol()) {
     if (const char *why{WhyBaseObjectIsSuspicious(lhs, context)}) {
       evaluate::SayWithDeclaration(messages, lhs,
-          "PURE subprogram '%s' may not define '%s' because it is %s"_err_en_US,
+          "Pure subprogram '%s' may not define '%s' because it is %s"_err_en_US,
           pure.symbol()->name(), lhs.name(), why);
     }
   }
@@ -610,7 +610,7 @@ void CheckCopyabilityInPureScope(parser::ContextualMessages &messages,
     if (const char *why{WhyBaseObjectIsSuspicious(*base, scope)}) {
       if (auto pointer{GetPointerComponentDesignatorName(expr)}) {
         evaluate::SayWithDeclaration(messages, *base,
-            "A PURE subprogram may not copy the value of '%s' because it is %s and has the POINTER component '%s'"_err_en_US,
+            "A pure subprogram may not copy the value of '%s' because it is %s and has the POINTER component '%s'"_err_en_US,
             base->name(), why, *pointer);
       }
     }
@@ -624,32 +624,40 @@ void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
     parser::ContextualMessages messages{at_, &context_.messages()};
     if (evaluate::ExtractCoarrayRef(lhs)) {
       messages.Say(
-          "A PURE subprogram may not define a coindexed object"_err_en_US);
+          "A pure subprogram may not define a coindexed object"_err_en_US);
     } else if (const Symbol * base{GetFirstSymbol(lhs)}) {
-      CheckDefinabilityInPureScope(messages, *base, scope, *pure);
+      if (const auto *assoc{base->detailsIf<AssocEntityDetails>()}) {
+        if (auto dataRef{ExtractDataRef(assoc->expr())}) {
+          // ASSOCIATE(a=>x) -- check x, not a, for "a=..."
+          CheckDefinabilityInPureScope(
+              messages, dataRef->GetFirstSymbol(), scope, *pure);
+        }
+      } else {
+        CheckDefinabilityInPureScope(messages, *base, scope, *pure);
+      }
     }
     if (isPointerAssignment) {
       if (const Symbol * base{GetFirstSymbol(rhs)}) {
         if (const char *why{
                 WhyBaseObjectIsSuspicious(*base, scope)}) {  // C1594(3)
           evaluate::SayWithDeclaration(messages, *base,
-              "A PURE subprogram may not use '%s' as the target of pointer assignment because it is %s"_err_en_US,
+              "A pure subprogram may not use '%s' as the target of pointer assignment because it is %s"_err_en_US,
               base->name(), why);
         }
       }
     } else {
       if (auto type{evaluate::DynamicType::From(lhs)}) {
-        // C1596 checks for polymorphic deallocation in a PURE subprogram
+        // C1596 checks for polymorphic deallocation in a pure subprogram
         // due to automatic reallocation on assignment
         if (type->IsPolymorphic()) {
           Say(at_,
-              "Deallocation of polymorphic object is not permitted in a PURE subprogram"_err_en_US);
+              "Deallocation of polymorphic object is not permitted in a pure subprogram"_err_en_US);
         }
         if (const DerivedTypeSpec * derived{GetDerivedTypeSpec(type)}) {
           if (auto bad{FindPolymorphicAllocatableNonCoarrayUltimateComponent(
                   *derived)}) {
             evaluate::SayWithDeclaration(messages, *bad,
-                "Deallocation of polymorphic non-coarray component '%s' is not permitted in a PURE subprogram"_err_en_US,
+                "Deallocation of polymorphic non-coarray component '%s' is not permitted in a pure subprogram"_err_en_US,
                 bad.BuildResultDesignatorName());
           } else {
             CheckCopyabilityInPureScope(messages, rhs, scope);

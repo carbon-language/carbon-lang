@@ -267,7 +267,8 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           ? actualLastSymbol->GetUltimate().detailsIf<ObjectEntityDetails>()
           : nullptr};
   int actualRank{evaluate::GetRank(actualType.shape())};
-  bool actualIsPointer{actualLastSymbol && IsPointer(*actualLastSymbol)};
+  bool actualIsPointer{(actualLastSymbol && IsPointer(*actualLastSymbol)) ||
+      evaluate::IsNullPointer(actual)};
   if (dummy.type.attrs().test(
           characteristics::TypeAndShape::Attr::AssumedShape)) {
     // 15.5.2.4(16)
@@ -523,7 +524,7 @@ static void CheckProcedureArg(evaluate::ActualArgument &arg,
           }
         }
         if (!interface.IsPure()) {
-          // 15.5.2.9(1): if dummy is not PURE, actual need not be.
+          // 15.5.2.9(1): if dummy is not pure, actual need not be.
           argInterface.attrs.reset(characteristics::Procedure::Attr::Pure);
         }
         if (interface.HasExplicitInterface()) {

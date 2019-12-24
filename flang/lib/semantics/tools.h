@@ -187,7 +187,7 @@ const DeclTypeSpec &FindOrInstantiateDerivedType(Scope &, DerivedTypeSpec &&,
     SemanticsContext &, DeclTypeSpec::Category = DeclTypeSpec::TypeDerived);
 
 // Determines whether an object might be visible outside a
-// PURE function (C1594); returns a non-null Symbol pointer for
+// pure function (C1594); returns a non-null Symbol pointer for
 // diagnostic purposes if so.
 const Symbol *FindExternallyVisibleObject(const Symbol &, const Scope &);
 

@@ -15,6 +15,7 @@
 
 namespace Fortran::evaluate {
 
+DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ActualArgument)
 ActualArgument::ActualArgument(Expr<SomeType> &&x) : u_{std::move(x)} {}
 ActualArgument::ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
   : u_{std::move(v)} {}

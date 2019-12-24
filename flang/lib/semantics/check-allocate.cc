@@ -227,7 +227,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
           }
         }
       }
-      if (info.gotSource) {  // C1594(6) - SOURCE= restrictions when PURE
+      if (info.gotSource) {  // C1594(6) - SOURCE= restrictions when pure
         const Scope &scope{context.FindScope(at)};
         if (FindPureProcedureContaining(scope)) {
           parser::ContextualMessages messages{at, &context.messages()};

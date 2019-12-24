@@ -66,8 +66,8 @@ const Scope *FindProgramUnitContaining(const Symbol &symbol) {
 
 const Scope *FindPureProcedureContaining(const Scope &start) {
   // N.B. We only need to examine the innermost containing program unit
-  // because an internal subprogram of a PURE subprogram must also
-  // be PURE (C1592).
+  // because an internal subprogram of a pure subprogram must also
+  // be pure (C1592).
   if (const Scope * scope{FindProgramUnitContaining(start)}) {
     if (IsPureProcedure(*scope)) {
       return scope;
@@ -184,7 +184,9 @@ bool DoesScopeContain(const Scope *maybeAncestor, const Symbol &symbol) {
 }
 
 bool IsHostAssociated(const Symbol &symbol, const Scope &scope) {
-  return DoesScopeContain(FindProgramUnitContaining(symbol), scope);
+  const Scope *subprogram{FindProgramUnitContaining(scope)};
+  return subprogram &&
+      DoesScopeContain(FindProgramUnitContaining(symbol), *subprogram);
 }
 
 bool IsDummy(const Symbol &symbol) {
@@ -236,7 +238,7 @@ bool IsFunction(const Symbol &symbol) {
 bool IsPureProcedure(const Symbol &symbol) {
   if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
     if (const Symbol * procInterface{procDetails->interface().symbol()}) {
-      // procedure component with a PURE interface
+      // procedure component with a pure interface
       return IsPureProcedure(*procInterface);
     }
   } else if (const auto *details{symbol.detailsIf<ProcBindingDetails>()}) {
@@ -244,7 +246,9 @@ bool IsPureProcedure(const Symbol &symbol) {
   } else if (!IsProcedure(symbol)) {
     return false;
   }
-  return symbol.attrs().test(Attr::PURE);
+  return symbol.attrs().test(Attr::PURE) ||
+      (symbol.attrs().test(Attr::ELEMENTAL) &&
+          !symbol.attrs().test(Attr::IMPURE));
 }
 
 bool IsPureProcedure(const Scope &scope) {
@@ -701,7 +705,7 @@ std::optional<parser::MessageFixedText> WhyNotModifiable(
   } else if (InProtectedContext(*root, scope)) {
     return "'%s' is protected in this scope"_en_US;
   } else if (IsExternalInPureContext(*root, scope)) {
-    return "'%s' is externally visible and referenced in a PURE"
+    return "'%s' is externally visible and referenced in a pure"
            " procedure"_en_US;
   } else if (IsOrContainsEventOrLockComponent(*root)) {
     return "'%s' is an entity with either an EVENT_TYPE or LOCK_TYPE"_en_US;

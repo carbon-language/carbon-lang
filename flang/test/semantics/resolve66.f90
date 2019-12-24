@@ -74,17 +74,17 @@ contains
     logical :: l
     complex :: z
     real :: r, r5(5)
-    !ERROR: Procedure 'assign_tt' referenced in PURE subprogram 'test3' must be PURE too
+    !ERROR: Procedure 'assign_tt' referenced in pure subprogram 'test3' must be pure too
     a = b
-    !ERROR: Procedure 'assign_il' referenced in PURE subprogram 'test3' must be PURE too
+    !ERROR: Procedure 'assign_il' referenced in pure subprogram 'test3' must be pure too
     i = l
-    !ERROR: Procedure 'assign_li' referenced in PURE subprogram 'test3' must be PURE too
+    !ERROR: Procedure 'assign_li' referenced in pure subprogram 'test3' must be pure too
     l = i
-    !ERROR: Procedure 'assign_il' referenced in PURE subprogram 'test3' must be PURE too
+    !ERROR: Procedure 'assign_il' referenced in pure subprogram 'test3' must be pure too
     i = .true.
-    !ERROR: Procedure 'assign_tz' referenced in PURE subprogram 'test3' must be PURE too
+    !ERROR: Procedure 'assign_tz' referenced in pure subprogram 'test3' must be pure too
     a = z
-    !ERROR: Procedure 'assign_01' referenced in PURE subprogram 'test3' must be PURE too
+    !ERROR: Procedure 'assign_01' referenced in pure subprogram 'test3' must be pure too
     r = r5
   end
 

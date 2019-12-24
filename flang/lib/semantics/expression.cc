@@ -679,7 +679,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
             pure{semantics::FindPureProcedureContaining(
                 context_.FindScope(n.source))}) {
           SayAt(n,
-              "VOLATILE variable '%s' may not be referenced in PURE subprogram '%s'"_err_en_US,
+              "VOLATILE variable '%s' may not be referenced in pure subprogram '%s'"_err_en_US,
               n.source, DEREF(pure->symbol()).name());
           n.symbol->attrs().reset(semantics::Attr::VOLATILE);
         }
@@ -1432,7 +1432,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                 if (auto *msg{Say(expr.source,
                         "Externally visible object '%s' may not be "
                         "associated with pointer component '%s' in a "
-                        "PURE procedure"_err_en_US,
+                        "pure procedure"_err_en_US,
                         object->name(), pointer->name())}) {
                   msg->Attach(object->name(), "Object declaration"_en_US)
                       .Attach(pointer->name(), "Pointer declaration"_en_US);
@@ -1545,7 +1545,7 @@ static int GetPassIndex(const Symbol &proc) {
 // argument keyword if possible, but not when the passed object goes
 // before a positional argument.
 // e.g., obj%tbp(x) -> tbp(obj,x).
-static void AddPassArg(ActualArguments &actuals, Expr<SomeDerived> &&expr,
+static void AddPassArg(ActualArguments &actuals, const Expr<SomeDerived> &expr,
     const Symbol &component, bool isPassedObject = true) {
   if (component.attrs().test(semantics::Attr::NOPASS)) {
     return;
@@ -1561,7 +1561,7 @@ static void AddPassArg(ActualArguments &actuals, Expr<SomeDerived> &&expr,
     ++iter;
     ++at;
   }
-  ActualArgument passed{AsGenericExpr(std::move(expr))};
+  ActualArgument passed{AsGenericExpr(common::Clone(expr))};
   passed.set_isPassedObject(isPassedObject);
   if (iter == actuals.end()) {
     if (auto passName{GetPassName(component)}) {
@@ -1594,14 +1594,16 @@ auto ExpressionAnalyzer::AnalyzeProcedureComponentRef(
     if (const Symbol * sym{sc.component.symbol}) {
       if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
         if (sym->has<semantics::GenericDetails>()) {
-          sym = ResolveGeneric(*sym, arguments,
+          AdjustActuals adjustment{
               [&](const Symbol &proc, ActualArguments &actuals) {
                 if (!proc.attrs().test(semantics::Attr::NOPASS)) {
                   AddPassArg(actuals, std::move(*dtExpr), proc);
                 }
                 return true;
-              });
+              }};
+          sym = ResolveGeneric(*sym, arguments, adjustment);
           if (!sym) {
+            EmitGenericResolutionError(*sc.component.symbol);
             return std::nullopt;
           }
         }
@@ -1679,8 +1681,8 @@ static bool CheckCompatibleArguments(
 // Resolve a call to a generic procedure with given actual arguments.
 // adjustActuals is called on procedure bindings to handle pass arg.
 const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
-    const ActualArguments &actuals, AdjustActuals adjustActuals,
-    bool mightBeStructureConstructor, bool inParentType) {
+    const ActualArguments &actuals, const AdjustActuals &adjustActuals,
+    bool mightBeStructureConstructor) {
   const Symbol *elemental{nullptr};  // matching elemental specific proc
   const auto &details{symbol.GetUltimate().get<semantics::GenericDetails>()};
   for (const Symbol &specific : details.specificProcs()) {
@@ -1712,19 +1714,19 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
     if (const Symbol * extended{parentScope->FindComponent(symbol.name())}) {
       if (extended->GetUltimate().has<semantics::GenericDetails>()) {
         if (const Symbol *
-            result{ResolveGeneric(
-                *extended, actuals, adjustActuals, false, true)}) {
+            result{ResolveGeneric(*extended, actuals, adjustActuals, false)}) {
           return result;
         }
       }
     }
   }
-  if (inParentType) {
-    return nullptr;  // emit error only at top level
-  }
   if (mightBeStructureConstructor && details.derivedType()) {
     return details.derivedType();
   }
+  return nullptr;
+}
+
+void ExpressionAnalyzer::EmitGenericResolutionError(const Symbol &symbol) {
   if (semantics::IsGenericDefinedOp(symbol)) {
     Say("No specific procedure of generic operator '%s' matches the actual arguments"_err_en_US,
         symbol.name());
@@ -1732,7 +1734,6 @@ const Symbol *ExpressionAnalyzer::ResolveGeneric(const Symbol &symbol,
     Say("No specific procedure of generic '%s' matches the actual arguments"_err_en_US,
         symbol.name());
   }
-  return nullptr;
 }
 
 auto ExpressionAnalyzer::GetCalleeAndArguments(
@@ -1771,8 +1772,9 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(const parser::Name &name,
   } else {
     CheckForBadRecursion(name.source, ultimate);
     if (ultimate.has<semantics::GenericDetails>()) {
+      ExpressionAnalyzer::AdjustActuals noAdjustment;
       symbol = ResolveGeneric(
-          *symbol, arguments, std::nullopt, mightBeStructureConstructor);
+          *symbol, arguments, noAdjustment, mightBeStructureConstructor);
     }
     if (symbol) {
       if (symbol->GetUltimate().has<semantics::DerivedTypeDetails>()) {
@@ -1784,6 +1786,17 @@ auto ExpressionAnalyzer::GetCalleeAndArguments(const parser::Name &name,
         return CalleeAndArguments{
             ProcedureDesignator{*symbol}, std::move(arguments)};
       }
+    } else if (std::optional<SpecificCall> specificCall{
+                   context_.intrinsics().Probe(
+                       CallCharacteristics{
+                           ultimate.name().ToString(), isSubroutine},
+                       arguments, GetFoldingContext())}) {
+      // Generics can extend intrinsics
+      return CalleeAndArguments{
+          ProcedureDesignator{std::move(specificCall->specificIntrinsic)},
+          std::move(specificCall->arguments)};
+    } else {
+      EmitGenericResolutionError(*name.symbol);
     }
   }
   return std::nullopt;
@@ -1933,7 +1946,7 @@ std::optional<characteristics::Procedure> ExpressionAnalyzer::CheckCall(
           pure{semantics::FindPureProcedureContaining(
               context_.FindScope(callSite))}) {
         Say(callSite,
-            "Procedure '%s' referenced in PURE subprogram '%s' must be PURE too"_err_en_US,
+            "Procedure '%s' referenced in pure subprogram '%s' must be pure too"_err_en_US,
             DEREF(proc.GetSymbol()).name(), DEREF(pure->symbol()).name());
       }
     }
@@ -2709,8 +2722,12 @@ std::optional<ProcedureRef> ArgumentAnalyzer::GetDefinedAssignmentProc() {
   const Symbol *proc{nullptr};
   const auto &scope{context_.context().FindScope(source_)};
   if (const Symbol * symbol{scope.FindSymbol(oprName)}) {
-    if (const Symbol * specific{context_.ResolveGeneric(*symbol, actuals_)}) {
+    ExpressionAnalyzer::AdjustActuals noAdjustment;
+    if (const Symbol *
+        specific{context_.ResolveGeneric(*symbol, actuals_, noAdjustment)}) {
       proc = specific;
+    } else {
+      context_.EmitGenericResolutionError(*symbol);
     }
   }
   for (std::size_t passIndex{0}; passIndex < actuals_.size(); ++passIndex) {
@@ -2756,10 +2773,15 @@ const Symbol *ArgumentAnalyzer::FindBoundOp(
     return nullptr;
   }
   sawDefinedOp_ = symbol;
-  return context_.ResolveGeneric(
-      *symbol, actuals_, [&](const Symbol &proc, ActualArguments &) {
+  ExpressionAnalyzer::AdjustActuals adjustment{
+      [&](const Symbol &proc, ActualArguments &) {
         return passIndex == GetPassIndex(proc);
-      });
+      }};
+  const Symbol *result{context_.ResolveGeneric(*symbol, actuals_, adjustment)};
+  if (!result) {
+    context_.EmitGenericResolutionError(*symbol);
+  }
+  return result;
 }
 
 std::optional<DynamicType> ArgumentAnalyzer::GetType(std::size_t i) const {

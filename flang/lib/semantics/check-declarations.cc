@@ -151,25 +151,25 @@ void CheckHelper::Check(const Symbol &symbol) {
   if (InPure()) {
     if (IsSaved(symbol)) {
       messages_.Say(
-          "A PURE subprogram may not have a variable with the SAVE attribute"_err_en_US);
+          "A pure subprogram may not have a variable with the SAVE attribute"_err_en_US);
     }
     if (symbol.attrs().test(Attr::VOLATILE)) {
       messages_.Say(
-          "A PURE subprogram may not have a variable with the VOLATILE attribute"_err_en_US);
+          "A pure subprogram may not have a variable with the VOLATILE attribute"_err_en_US);
     }
     if (IsProcedure(symbol) && !IsPureProcedure(symbol) && IsDummy(symbol)) {
       messages_.Say(
-          "A dummy procedure of a PURE subprogram must be PURE"_err_en_US);
+          "A dummy procedure of a pure subprogram must be pure"_err_en_US);
     }
     if (!IsDummy(symbol) && !IsFunctionResult(symbol)) {
       if (IsPolymorphicAllocatable(symbol)) {
         SayWithDeclaration(symbol,
-            "Deallocation of polymorphic object '%s' is not permitted in a PURE subprogram"_err_en_US,
+            "Deallocation of polymorphic object '%s' is not permitted in a pure subprogram"_err_en_US,
             symbol.name());
       } else if (derived) {
         if (auto bad{FindPolymorphicAllocatableUltimateComponent(*derived)}) {
           SayWithDeclaration(*bad,
-              "Deallocation of polymorphic object '%s%s' is not permitted in a PURE subprogram"_err_en_US,
+              "Deallocation of polymorphic object '%s%s' is not permitted in a pure subprogram"_err_en_US,
               symbol.name(), bad.BuildResultDesignatorName());
         }
       }
@@ -190,16 +190,16 @@ void CheckHelper::Check(const Symbol &symbol) {
     if (InPure() && InFunction() && IsFunctionResult(symbol)) {
       if (derived && HasImpureFinal(*derived)) {  // C1584
         messages_.Say(
-            "Result of PURE function may not have an impure FINAL subroutine"_err_en_US);
+            "Result of pure function may not have an impure FINAL subroutine"_err_en_US);
       }
       if (type->IsPolymorphic() && IsAllocatable(symbol)) {  // C1585
         messages_.Say(
-            "Result of PURE function may not be both polymorphic and ALLOCATABLE"_err_en_US);
+            "Result of pure function may not be both polymorphic and ALLOCATABLE"_err_en_US);
       }
       if (derived) {
         if (auto bad{FindPolymorphicAllocatableUltimateComponent(*derived)}) {
           SayWithDeclaration(*bad,
-              "Result of PURE function may not have polymorphic ALLOCATABLE ultimate component '%s'"_err_en_US,
+              "Result of pure function may not have polymorphic ALLOCATABLE ultimate component '%s'"_err_en_US,
               bad.BuildResultDesignatorName());
         }
       }
@@ -317,29 +317,29 @@ void CheckHelper::CheckObjectEntity(
         !symbol.attrs().test(Attr::VALUE)) {
       if (InFunction()) {  // C1583
         messages_.Say(
-            "non-POINTER dummy argument of PURE function must be INTENT(IN) or VALUE"_err_en_US);
+            "non-POINTER dummy argument of pure function must be INTENT(IN) or VALUE"_err_en_US);
       } else if (IsIntentOut(symbol)) {
         if (const DeclTypeSpec * type{details.type()}) {
           if (type && type->IsPolymorphic()) {  // C1588
             messages_.Say(
-                "An INTENT(OUT) dummy argument of a PURE subroutine may not be polymorphic"_err_en_US);
+                "An INTENT(OUT) dummy argument of a pure subroutine may not be polymorphic"_err_en_US);
           } else if (const DerivedTypeSpec * derived{type->AsDerived()}) {
             if (FindUltimateComponent(*derived, [](const Symbol &x) {
                   const DeclTypeSpec *type{x.GetType()};
                   return type && type->IsPolymorphic();
                 })) {  // C1588
               messages_.Say(
-                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have a polymorphic ultimate component"_err_en_US);
+                  "An INTENT(OUT) dummy argument of a pure subroutine may not have a polymorphic ultimate component"_err_en_US);
             }
             if (HasImpureFinal(*derived)) {  // C1587
               messages_.Say(
-                  "An INTENT(OUT) dummy argument of a PURE subroutine may not have an impure FINAL subroutine"_err_en_US);
+                  "An INTENT(OUT) dummy argument of a pure subroutine may not have an impure FINAL subroutine"_err_en_US);
             }
           }
         }
       } else if (!IsIntentInOut(symbol)) {  // C1586
         messages_.Say(
-            "non-POINTER dummy argument of PURE subroutine must have INTENT() or VALUE attribute"_err_en_US);
+            "non-POINTER dummy argument of pure subroutine must have INTENT() or VALUE attribute"_err_en_US);
       }
     }
   }
@@ -825,10 +825,9 @@ void CheckHelper::CheckProcBinding(
     }
     if (const auto *overriddenBinding{
             overridden->detailsIf<ProcBindingDetails>()}) {
-      if (!binding.symbol().attrs().test(Attr::PURE) &&
-          overriddenBinding->symbol().attrs().test(Attr::PURE)) {
+      if (!IsPureProcedure(symbol) && IsPureProcedure(*overridden)) {
         SayWithDeclaration(*overridden,
-            "An overridden PURE type-bound procedure binding must also be PURE"_err_en_US);
+            "An overridden pure type-bound procedure binding must also be pure"_err_en_US);
         return;
       }
       if (!binding.symbol().attrs().test(Attr::ELEMENTAL) &&

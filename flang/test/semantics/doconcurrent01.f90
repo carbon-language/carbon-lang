@@ -34,6 +34,7 @@ subroutine do_concurrent_test2(i,j,n,flag)
   type(ieee_flag_type) :: flag
   logical :: flagValue, halting
   type(team_type) :: j
+  type(ieee_status_type) :: status
   do concurrent (i = 1:n)
 !ERROR: An image control statement is not allowed in DO CONCURRENT
     sync team (j)
@@ -42,9 +43,7 @@ subroutine do_concurrent_test2(i,j,n,flag)
 !ERROR: An image control statement is not allowed in DO CONCURRENT
       critical
 !ERROR: Call to an impure procedure is not allowed in DO CONCURRENT
-        call ieee_get_flag(flag, flagValue)
-!ERROR: Call to an impure procedure is not allowed in DO CONCURRENT
-        call ieee_get_halting_mode(flag, halting)
+        call ieee_get_status(status)
 !ERROR: IEEE_SET_HALTING_MODE is not allowed in DO CONCURRENT
         call ieee_set_halting_mode(flag, halting)
       end critical

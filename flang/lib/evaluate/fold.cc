@@ -812,6 +812,30 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
     }
   } else if (name == "min") {
     return FoldMINorMAX(context, std::move(funcRef), Ordering::Less);
+  } else if (name == "mod") {
+    return FoldElementalIntrinsic<T, T, T>(context, std::move(funcRef),
+        ScalarFuncWithContext<T, T, T>(
+            [](FoldingContext &context, const Scalar<T> &x,
+                const Scalar<T> &y) -> Scalar<T> {
+              auto quotRem{x.DivideSigned(y)};
+              if (quotRem.divisionByZero) {
+                context.messages().Say("mod() by zero"_en_US);
+              } else if (quotRem.overflow) {
+                context.messages().Say("mod() folding overflowed"_en_US);
+              }
+              return quotRem.remainder;
+            }));
+  } else if (name == "modulo") {
+    return FoldElementalIntrinsic<T, T, T>(context, std::move(funcRef),
+        ScalarFuncWithContext<T, T, T>(
+            [](FoldingContext &context, const Scalar<T> &x,
+                const Scalar<T> &y) -> Scalar<T> {
+              auto result{x.MODULO(y)};
+              if (result.overflow) {
+                context.messages().Say("modulo() folding overflowed"_en_US);
+              }
+              return result.value;
+            }));
   } else if (name == "precision") {
     if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
       return Expr<T>{std::visit(
@@ -919,7 +943,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
   // ceiling, cshift, dot_product, eoshift,
   // findloc, floor, iall, iany, iparity, ibits, image_status, index, ishftc,
   // len_trim, matmul, maxloc, maxval,
-  // minloc, minval, mod, modulo, nint, not, pack, product, reduce,
+  // minloc, minval, nint, not, pack, product, reduce,
   // scan, sign, spread, sum, transfer, transpose, unpack, verify
   return Expr<T>{std::move(funcRef)};
 }

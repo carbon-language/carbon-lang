@@ -509,11 +509,9 @@ bool FunctionResult::CanBeReturnedViaImplicitInterface() const {
       const DynamicType &type{typeAndShape->type()};
       switch (type.category()) {
       case TypeCategory::Character:
-        if (!type.IsAssumedLengthCharacter()) {
-          if (const auto *param{type.charLength()}) {
-            if (const auto &expr{param->GetExplicit()}) {
-              return IsConstantExpr(*expr);  // 15.4.2.2(4)(c)
-            }
+        if (const auto *param{type.charLength()}) {
+          if (const auto &expr{param->GetExplicit()}) {
+            return IsConstantExpr(*expr);  // 15.4.2.2(4)(c)
           }
         }
         return false;
@@ -576,7 +574,7 @@ int Procedure::FindPassIndex(std::optional<parser::CharBlock> name) const {
 
 bool Procedure::CanOverride(
     const Procedure &that, std::optional<int> passIndex) const {
-  // A PURE procedure may override an impure one (7.5.7.3(2))
+  // A pure procedure may override an impure one (7.5.7.3(2))
   if ((that.attrs.test(Attr::Pure) && !attrs.test(Attr::Pure)) ||
       that.attrs.test(Attr::Elemental) != attrs.test(Attr::Elemental) ||
       functionResult != that.functionResult) {
@@ -604,6 +602,10 @@ std::optional<Procedure> Procedure::Characterize(
           {semantics::Attr::ELEMENTAL, Procedure::Attr::Elemental},
           {semantics::Attr::BIND_C, Procedure::Attr::BindC},
       });
+  if (result.attrs.test(Attr::Elemental) &&
+      !symbol.attrs().test(semantics::Attr::IMPURE)) {
+    result.attrs.set(Attr::Pure);  // explicitly flag pure procedures
+  }
   return std::visit(
       common::visitors{
           [&](const semantics::SubprogramDetails &subp)

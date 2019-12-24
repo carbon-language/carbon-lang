@@ -758,7 +758,7 @@ void IoChecker::CheckForProhibitedSpecifier(
 void IoChecker::CheckForPureSubprogram() const {  // C1597
   CHECK(context_.location());
   if (FindPureProcedureContaining(context_.FindScope(*context_.location()))) {
-    context_.Say("External I/O is not allowed in a PURE subprogram"_err_en_US);
+    context_.Say("External I/O is not allowed in a pure subprogram"_err_en_US);
   }
 }
 

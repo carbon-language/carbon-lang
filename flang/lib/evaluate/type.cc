@@ -95,9 +95,31 @@ bool DynamicType::operator==(const DynamicType &that) const {
       PointeeComparison(derived_, that.derived_);
 }
 
+std::optional<common::ConstantSubscript> DynamicType::GetCharLength() const {
+  if (category_ == TypeCategory::Character && charLength_ &&
+      charLength_->isExplicit()) {
+    if (const auto &len{charLength_->GetExplicit()}) {
+      return ToInt64(len);
+    }
+  }
+  return std::nullopt;
+}
+
 bool DynamicType::IsAssumedLengthCharacter() const {
   return category_ == TypeCategory::Character && charLength_ &&
       charLength_->isAssumed();
+}
+
+bool DynamicType::IsUnknownLengthCharacter() const {
+  if (category_ != TypeCategory::Character) {
+    return false;
+  } else if (!charLength_) {
+    return true;
+  } else if (const auto &expr{charLength_->GetExplicit()}) {
+    return !IsConstantExpr(*expr);
+  } else {
+    return true;
+  }
 }
 
 bool DynamicType::IsTypelessIntrinsicArgument() const {
@@ -402,7 +424,7 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 }
 
 bool DynamicType::RequiresDescriptor() const {
-  if (IsPolymorphic() || IsAssumedLengthCharacter()) {
+  if (IsPolymorphic() || IsUnknownLengthCharacter()) {
     return true;
   }
   if (derived_) {

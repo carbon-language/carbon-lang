@@ -356,8 +356,8 @@ private:
   using AdjustActuals =
       std::optional<std::function<bool(const Symbol &, ActualArguments &)>>;
   const Symbol *ResolveGeneric(const Symbol &, const ActualArguments &,
-      AdjustActuals = std::nullopt, bool mightBeStructureConstructor = false,
-      bool inParentType = false);
+      const AdjustActuals &, bool mightBeStructureConstructor = false);
+  void EmitGenericResolutionError(const Symbol &);
   std::optional<CalleeAndArguments> GetCalleeAndArguments(const parser::Name &,
       ActualArguments &&, bool isSubroutine = false,
       bool mightBeStructureConstructor = false);
