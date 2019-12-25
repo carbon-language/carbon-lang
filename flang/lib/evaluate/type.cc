@@ -448,6 +448,17 @@ bool DynamicType::RequiresDescriptor() const {
   return false;
 }
 
+bool DynamicType::HasDeferredTypeParameter() const {
+  if (derived_) {
+    for (const auto &pair : derived_->parameters()) {
+      if (pair.second.isDeferred()) {
+        return true;
+      }
+    }
+  }
+  return charLength_ && charLength_->isDeferred();
+}
+
 bool SomeKind<TypeCategory::Derived>::operator==(
     const SomeKind<TypeCategory::Derived> &that) const {
   return PointeeComparison(derivedTypeSpec_, that.derivedTypeSpec_);

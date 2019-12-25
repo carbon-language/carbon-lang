@@ -23,6 +23,12 @@ namespace Fortran::evaluate {
 
 class FoldingContext;
 
+// Utility for checking for missing, excess, and duplicated arguments,
+// and rearranging the actual arguments into dummy argument order.
+bool CheckAndRearrangeArguments(ActualArguments &, parser::ContextualMessages &,
+    const char *const dummyKeywords[] /* null terminated */,
+    std::size_t trailingOptionals = 0);
+
 struct CallCharacteristics {
   std::string name;
   bool isSubroutineCall{false};

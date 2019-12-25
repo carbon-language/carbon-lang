@@ -92,9 +92,7 @@ bool IsProcedurePointer(const Symbol &);
 bool IsFunctionResult(const Symbol &);
 bool IsFunctionResultWithSameNameAsFunction(const Symbol &);
 bool IsExtensibleType(const DerivedTypeSpec *);
-// Is this a derived type from module with this name?
-bool IsDerivedTypeFromModule(
-    const DerivedTypeSpec *derived, const char *module, const char *name);
+bool IsBuiltinDerivedType(const DerivedTypeSpec *derived, const char *name);
 // Is this derived type TEAM_TYPE from module ISO_FORTRAN_ENV
 bool IsTeamType(const DerivedTypeSpec *);
 // Is this derived type either C_PTR or C_FUNPTR from module ISO_C_BINDING

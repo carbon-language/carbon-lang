@@ -192,6 +192,7 @@ set(ERROR_TESTS
   separate-module-procs.f90
   bindings01.f90
   bad-forward-type.f90
+  c_f_pointer.f90
 )
 
 # These test files have expected symbols in the source

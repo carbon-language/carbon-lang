@@ -415,8 +415,7 @@ SymbolVector CollectSymbols(const Scope &scope) {
   sorted.reserve(scope.size() + scope.commonBlocks().size());
   for (const auto &pair : scope) {
     const Symbol &symbol{*pair.second};
-    if (!symbol.test(Symbol::Flag::ParentComp) &&
-        !symbol.attrs().test(Attr::INTRINSIC)) {
+    if (!symbol.test(Symbol::Flag::ParentComp)) {
       if (symbols.insert(symbol).second) {
         if (symbol.has<NamelistDetails>()) {
           namelist.push_back(symbol);
@@ -498,6 +497,7 @@ void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
 
 void PutProcEntity(std::ostream &os, const Symbol &symbol) {
   if (symbol.attrs().test(Attr::INTRINSIC)) {
+    os << "intrinsic::" << symbol.name() << '\n';
     return;
   }
   const auto &details{symbol.get<ProcEntityDetails>()};

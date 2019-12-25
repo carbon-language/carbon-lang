@@ -53,11 +53,13 @@ end
 !Expect: m3a.mod
 !module m3a
 ! integer(4),parameter::i4=4_4
+! intrinsic::selected_int_kind
 !end
 
 !Expect: m3b.mod
 !module m3b
 ! use m3a,only:i4
+! use m3a,only:selected_int_kind
 ! integer(4)::j
 !end
 
@@ -73,11 +75,13 @@ end
 !Expect: m4a.mod
 !module m4a
 ! character(1_4,1),parameter::a=1_"\001"
+! intrinsic::achar
 !end
 
 !Expect: m4b.mod
 !module m4b
 ! use m4a,only:a
+! use m4a,only:achar
 ! character(1_4,1),parameter::b=1_"\001"
 !end
 

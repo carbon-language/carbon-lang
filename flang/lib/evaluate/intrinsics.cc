@@ -1519,6 +1519,8 @@ private:
   DynamicType GetSpecificType(const TypePattern &) const;
   SpecificCall HandleNull(
       ActualArguments &, FoldingContext &, const IntrinsicProcTable &) const;
+  std::optional<SpecificCall> HandleC_F_Pointer(
+      ActualArguments &, FoldingContext &) const;
 
   common::IntrinsicTypeDefaultKinds defaults_;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs_;
@@ -1541,66 +1543,189 @@ bool IntrinsicProcTable::Implementation::IsIntrinsic(
     return true;
   }
   // special cases
-  return name == "null";  // TODO more
+  return name == "null" || name == "__builtin_c_f_pointer";
+}
+
+bool CheckAndRearrangeArguments(ActualArguments &arguments,
+    parser::ContextualMessages &messages, const char *const dummyKeywords[],
+    std::size_t trailingOptionals) {
+  std::size_t numDummies{0};
+  while (dummyKeywords[numDummies]) {
+    ++numDummies;
+  }
+  CHECK(trailingOptionals <= numDummies);
+  if (arguments.size() > numDummies) {
+    messages.Say("Too many actual arguments (%zd > %zd)"_err_en_US,
+        arguments.size(), numDummies);
+    return false;
+  }
+  ActualArguments rearranged(numDummies);
+  bool anyKeywords{false};
+  std::size_t position{0};
+  for (std::optional<ActualArgument> &arg : arguments) {
+    std::size_t dummyIndex{0};
+    if (arg && arg->keyword()) {
+      anyKeywords = true;
+      for (; dummyIndex < numDummies; ++dummyIndex) {
+        if (*arg->keyword() == dummyKeywords[dummyIndex]) {
+          break;
+        }
+      }
+      if (dummyIndex >= numDummies) {
+        messages.Say(*arg->keyword(),
+            "Unknown argument keyword '%s='"_err_en_US, *arg->keyword());
+        return false;
+      }
+    } else if (anyKeywords) {
+      messages.Say(
+          "A positional actual argument may not appear after any keyword arguments"_err_en_US);
+      return false;
+    } else {
+      dummyIndex = position++;
+    }
+    if (rearranged[dummyIndex]) {
+      messages.Say("Dummy argument '%s=' appears more than once"_err_en_US,
+          dummyKeywords[dummyIndex]);
+      return false;
+    }
+    rearranged[dummyIndex] = std::move(arg);
+    arg.reset();
+  }
+  bool anyMissing{false};
+  for (std::size_t j{0}; j < numDummies - trailingOptionals; ++j) {
+    if (!rearranged[j]) {
+      messages.Say("Dummy argument '%s=' is absent and not OPTIONAL"_err_en_US,
+          dummyKeywords[j]);
+      anyMissing = true;
+    }
+  }
+  arguments = std::move(rearranged);
+  return !anyMissing;
 }
 
 // The NULL() intrinsic is a special case.
 SpecificCall IntrinsicProcTable::Implementation::HandleNull(
     ActualArguments &arguments, FoldingContext &context,
     const IntrinsicProcTable &intrinsics) const {
-  if (!arguments.empty()) {
-    if (arguments.size() > 1) {
-      context.messages().Say("Too many arguments to NULL()"_err_en_US);
-    } else if (arguments[0] && arguments[0]->keyword() &&
-        arguments[0]->keyword()->ToString() != "mold") {
-      context.messages().Say("Unknown argument '%s' to NULL()"_err_en_US,
-          arguments[0]->keyword()->ToString());
-    } else {
-      if (Expr<SomeType> * mold{arguments[0]->UnwrapExpr()}) {
-        if (IsAllocatableOrPointer(*mold)) {
-          characteristics::DummyArguments args;
-          std::optional<characteristics::FunctionResult> fResult;
-          if (IsProcedurePointer(*mold)) {
-            // MOLD= procedure pointer
-            const Symbol *last{GetLastSymbol(*mold)};
-            CHECK(last);
-            auto procPointer{
-                characteristics::Procedure::Characterize(*last, intrinsics)};
-            CHECK(procPointer);
-            args.emplace_back("mold"s,
-                characteristics::DummyProcedure{common::Clone(*procPointer)});
-            fResult.emplace(std::move(*procPointer));
-          } else if (auto type{mold->GetType()}) {
-            // MOLD= object pointer
-            characteristics::TypeAndShape typeAndShape{
-                *type, GetShape(context, *mold)};
-            args.emplace_back(
-                "mold"s, characteristics::DummyDataObject{typeAndShape});
-            fResult.emplace(std::move(typeAndShape));
-          } else {
-            context.messages().Say(
-                "MOLD= argument to NULL() lacks type"_err_en_US);
-          }
-          fResult->attrs.set(characteristics::FunctionResult::Attr::Pointer);
-          characteristics::Procedure::Attrs attrs;
-          attrs.set(characteristics::Procedure::Attr::NullPointer);
-          characteristics::Procedure chars{
-              std::move(*fResult), std::move(args), attrs};
-          return SpecificCall{SpecificIntrinsic{"null"s, std::move(chars)},
-              std::move(arguments)};
+  static const char *const keywords[]{"mold", nullptr};
+  if (CheckAndRearrangeArguments(arguments, context.messages(), keywords, 1) &&
+      arguments[0]) {
+    if (Expr<SomeType> * mold{arguments[0]->UnwrapExpr()}) {
+      if (IsAllocatableOrPointer(*mold)) {
+        characteristics::DummyArguments args;
+        std::optional<characteristics::FunctionResult> fResult;
+        if (IsProcedurePointer(*mold)) {
+          // MOLD= procedure pointer
+          const Symbol *last{GetLastSymbol(*mold)};
+          CHECK(last);
+          auto procPointer{
+              characteristics::Procedure::Characterize(*last, intrinsics)};
+          CHECK(procPointer);
+          args.emplace_back("mold"s,
+              characteristics::DummyProcedure{common::Clone(*procPointer)});
+          fResult.emplace(std::move(*procPointer));
+        } else if (auto type{mold->GetType()}) {
+          // MOLD= object pointer
+          characteristics::TypeAndShape typeAndShape{
+              *type, GetShape(context, *mold)};
+          args.emplace_back(
+              "mold"s, characteristics::DummyDataObject{typeAndShape});
+          fResult.emplace(std::move(typeAndShape));
+        } else {
+          context.messages().Say(
+              "MOLD= argument to NULL() lacks type"_err_en_US);
         }
+        fResult->attrs.set(characteristics::FunctionResult::Attr::Pointer);
+        characteristics::Procedure::Attrs attrs;
+        attrs.set(characteristics::Procedure::Attr::NullPointer);
+        characteristics::Procedure chars{
+            std::move(*fResult), std::move(args), attrs};
+        return SpecificCall{
+            SpecificIntrinsic{"null"s, std::move(chars)}, std::move(arguments)};
       }
-      context.messages().Say(
-          "MOLD= argument to NULL() must be a pointer or allocatable"_err_en_US);
     }
+    context.messages().Say(
+        "MOLD= argument to NULL() must be a pointer or allocatable"_err_en_US);
   }
   characteristics::Procedure::Attrs attrs;
   attrs.set(characteristics::Procedure::Attr::NullPointer);
+  attrs.set(characteristics::Procedure::Attr::Pure);
   arguments.clear();
   return SpecificCall{
       SpecificIntrinsic{"null"s,
           characteristics::Procedure{characteristics::DummyArguments{}, attrs}},
       std::move(arguments)};
+}
+
+// Subroutine C_F_POINTER(CPTR=,FPTR=[,SHAPE=]) from
+// intrinsic module ISO_C_BINDING (18.2.3.3)
+std::optional<SpecificCall>
+IntrinsicProcTable::Implementation::HandleC_F_Pointer(
+    ActualArguments &arguments, FoldingContext &context) const {
+  characteristics::Procedure::Attrs attrs;
+  attrs.set(characteristics::Procedure::Attr::Subroutine);
+  static const char *const keywords[]{"cptr", "fptr", "shape", nullptr};
+  characteristics::DummyArguments dummies;
+  if (CheckAndRearrangeArguments(arguments, context.messages(), keywords, 1)) {
+    CHECK(arguments.size() == 3);
+    if (const auto *expr{arguments[0].value().UnwrapExpr()}) {
+      if (expr->Rank() > 0) {
+        context.messages().Say(
+            "CPTR= argument to C_F_POINTER() must be scalar"_err_en_US);
+      }
+      if (auto type{expr->GetType()}) {
+        if (type->category() != TypeCategory::Derived ||
+            type->IsPolymorphic() ||
+            type->GetDerivedTypeSpec().typeSymbol().name() !=
+                "__builtin_c_ptr") {
+          context.messages().Say(
+              "CPTR= argument to C_F_POINTER() must be a C_PTR"_err_en_US);
+        }
+        characteristics::DummyDataObject cptr{
+            characteristics::TypeAndShape{*type}};
+        cptr.intent = common::Intent::In;
+        dummies.emplace_back("cptr"s, std::move(cptr));
+      }
+    }
+    if (const auto *expr{arguments[1].value().UnwrapExpr()}) {
+      int fptrRank{expr->Rank()};
+      if (auto type{expr->GetType()}) {
+        if (type->HasDeferredTypeParameter()) {
+          context.messages().Say(
+              "FPTR= argument to C_F_POINTER() may not have a deferred type parameter"_err_en_US);
+        }
+        if (ExtractCoarrayRef(*expr)) {
+          context.messages().Say(
+              "FPTR= argument to C_F_POINTER() may not be a coindexed object"_err_en_US);
+        }
+        characteristics::DummyDataObject fptr{
+            characteristics::TypeAndShape{*type, fptrRank}};
+        fptr.intent = common::Intent::Out;
+        fptr.attrs.set(characteristics::DummyDataObject::Attr::Pointer);
+        dummies.emplace_back("fptr"s, std::move(fptr));
+      }
+      if (arguments[2] && fptrRank == 0) {
+        context.messages().Say(
+            "SHAPE= argument to C_F_POINTER() may not appear when FPTR= is scalar"_err_en_US);
+      } else if (!arguments[2] && fptrRank > 0) {
+        context.messages().Say(
+            "SHAPE= argument to C_F_POINTER() must appear when FPTR= is an array"_err_en_US);
+      }
+      characteristics::DummyDataObject shape{
+          characteristics::TypeAndShape{SubscriptInteger{}.GetType(), 1}};
+      shape.intent = common::Intent::In;
+      shape.attrs.set(characteristics::DummyDataObject::Attr::Optional);
+      dummies.emplace_back("shape"s, std::move(shape));
+    }
+  }
+  if (dummies.size() == 3) {
+    return SpecificCall{
+        SpecificIntrinsic{"__builtin_c_f_pointer"s,
+            characteristics::Procedure{std::move(dummies), attrs}},
+        std::move(arguments)};
+  } else {
+    return std::nullopt;
+  }
 }
 
 // Applies any semantic checks peculiar to an intrinsic.
@@ -1677,6 +1802,19 @@ static DynamicType GetReturnType(const SpecificIntrinsicInterface &interface,
 std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     const CallCharacteristics &call, ActualArguments &arguments,
     FoldingContext &context, const IntrinsicProcTable &intrinsics) const {
+
+  // All special cases handled here before the table probes below must
+  // also be recognized as special names in IsIntrinsic().
+  if (call.isSubroutineCall) {
+    if (call.name == "__builtin_c_f_pointer") {
+      return HandleC_F_Pointer(arguments, context);
+    }
+  } else {
+    if (call.name == "null") {
+      return HandleNull(arguments, context, intrinsics);
+    }
+  }
+
   if (call.isSubroutineCall) {
     parser::Messages buffer;
     auto subrRange{subroutines_.equal_range(call.name)};
@@ -1687,13 +1825,6 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       }
     }
     return std::nullopt;  // TODO
-  }
-
-  // Special case: NULL()
-  // All special cases handled here before the table probes below must
-  // also be caught as special names in IsIntrinsic().
-  if (call.name == "null") {
-    return HandleNull(arguments, context, intrinsics);
   }
 
   // Helper to avoid emitting errors before it is sure there is no match

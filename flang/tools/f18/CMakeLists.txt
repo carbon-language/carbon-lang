@@ -35,6 +35,7 @@ set_target_properties(f18 f18-parse-demo
 )
 
 set(MODULES
+  "__fortran_builtins" # must be first
   "ieee_arithmetic"
   "ieee_exceptions"
   "ieee_features"
@@ -46,12 +47,12 @@ set(MODULES
 # Create module files directly from the top-level module source directory
 foreach(filename ${MODULES})
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.mod
-    COMMAND f18 -fparse-only -fdebug-semantics ${PROJECT_SOURCE_DIR}/module/${filename}.f90
+    COMMAND f18 -fparse-only -fdebug-semantics -I{${CMAKE_CURRENT_BINARY_DIR}/include} ${PROJECT_SOURCE_DIR}/module/${filename}.f90
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include"
     DEPENDS f18 ${PROJECT_SOURCE_DIR}/module/${filename}.f90
   )
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/${filename}.f18.mod
-    COMMAND f18 -fparse-only -fdebug-semantics -module-suffix .f18.mod ${PROJECT_SOURCE_DIR}/module/${filename}.f90
+    COMMAND f18 -fparse-only -fdebug-semantics -module-suffix .f18.mod -I{${CMAKE_CURRENT_BINARY_DIR}/include} ${PROJECT_SOURCE_DIR}/module/${filename}.f90
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include"
     DEPENDS f18 ${PROJECT_SOURCE_DIR}/module/${filename}.f90
   )

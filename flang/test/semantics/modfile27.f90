@@ -31,6 +31,7 @@ end module m1
 !type(t1),parameter::t1x1(1_8:*)=[t1::t1(ia1=[Integer(4)::1_4,2_4]),t1(ia1=[Integer(4)::3_4,4_4])]
 !logical(4),parameter::t1check1=.true._4
 !logical(4),parameter::t1check2=.true._4
+!intrinsic::all
 !logical(4),parameter::t1check3=.true._4
 !type::t2
 !type(t1)::dta1(1_8:2_8)

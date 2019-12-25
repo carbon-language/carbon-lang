@@ -34,4 +34,5 @@ end
 !  end type
 !  type(t),parameter::x=t(a=456_4,b=NULL())
 !  type(t),parameter::y=t(a=789_4,b=NULL())
+!  intrinsic::null
 !end

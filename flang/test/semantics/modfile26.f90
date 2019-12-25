@@ -65,6 +65,7 @@ end module m1
 !module m1
 !integer(4),parameter::iranges(1_8:*)=[Integer(4)::2_4,4_4,9_4,18_4,38_4]
 !logical(4),parameter::ircheck=.true._4
+!intrinsic::all
 !integer(4),parameter::intpvals(1_8:*)=[Integer(4)::0_4,2_4,3_4,4_4,5_4,9_4,10_4,18_4,19_4,38_4,39_4]
 !integer(4),parameter::intpkinds(1_8:*)=[Integer(4)::1_4,1_4,2_4,2_4,4_4,4_4,8_4,8_4,16_4,16_4,-1_4]
 !logical(4),parameter::ipcheck=.true._4

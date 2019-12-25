@@ -13,6 +13,11 @@ include '../runtime/magic-numbers.h' ! for IOSTAT= error/end code values
 
 module iso_fortran_env
 
+  use __Fortran_builtins, only: &
+    event_type => __builtin_event_type, &
+    lock_type => __builtin_lock_type, &
+    team_type => __builtin_team_type
+
   implicit none
 
   integer, parameter :: atomic_int_kind = selected_int_kind(18)
@@ -137,21 +142,6 @@ module iso_fortran_env
   integer, parameter :: stat_stopped_image = FORTRAN_RUNTIME_STAT_STOPPED_IMAGE
   integer, parameter :: stat_unlocked = FORTRAN_RUNTIME_STAT_UNLOCKED
   integer, parameter :: stat_unlocked_failed_image = FORTRAN_RUNTIME_STAT_UNLOCKED_FAILED_IMAGE
-
-  type :: event_type
-    private
-    integer(kind=atomic_int_kind) :: count = 0
-  end type event_type
-
-  type :: lock_type
-    private
-    integer(kind=atomic_int_kind) :: count = 0
-  end type lock_type
-
-  type :: team_type
-    private
-    integer(kind=int64) :: id = 0
-  end type team_type
 
  contains
 

@@ -15,13 +15,11 @@
 
 ! CHECK: A DO loop should terminate with an END DO or CONTINUE
 
-module iso_fortran_env
-  type :: team_type
-  end type
-end
+include '../../module/__fortran_builtins.f90'
+include '../../module/iso_c_binding.f90'
 
 subroutine foo8()
-  use  :: iso_fortran_env, only : team_type
+  use :: __fortran_builtins, only : team_type => __builtin_team_type
   type(team_type) :: odd_even
   do 01 k=1,10
     change team (odd_even)

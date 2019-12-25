@@ -520,30 +520,29 @@ bool IsExtensibleType(const DerivedTypeSpec *derived) {
       !derived->typeSymbol().get<DerivedTypeDetails>().sequence();
 }
 
-bool IsDerivedTypeFromModule(
-    const DerivedTypeSpec *derived, const char *module, const char *name) {
+bool IsBuiltinDerivedType(const DerivedTypeSpec *derived, const char *name) {
   if (!derived) {
     return false;
   } else {
     const auto &symbol{derived->typeSymbol()};
-    return symbol.name() == name && symbol.owner().IsModule() &&
-        symbol.owner().GetName().value() == module;
+    return symbol.owner().IsModule() &&
+        symbol.owner().GetName().value() == "__fortran_builtins" &&
+        symbol.name() == "__builtin_"s + name;
   }
 }
 
 bool IsIsoCType(const DerivedTypeSpec *derived) {
-  return IsDerivedTypeFromModule(derived, "iso_c_binding", "c_ptr") ||
-      IsDerivedTypeFromModule(derived, "iso_c_binding", "c_funptr");
+  return IsBuiltinDerivedType(derived, "c_ptr") ||
+      IsBuiltinDerivedType(derived, "c_funptr");
 }
 
 bool IsTeamType(const DerivedTypeSpec *derived) {
-  return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
+  return IsBuiltinDerivedType(derived, "team_type");
 }
 
 bool IsEventTypeOrLockType(const DerivedTypeSpec *derivedTypeSpec) {
-  return IsDerivedTypeFromModule(
-             derivedTypeSpec, "iso_fortran_env", "event_type") ||
-      IsDerivedTypeFromModule(derivedTypeSpec, "iso_fortran_env", "lock_type");
+  return IsBuiltinDerivedType(derivedTypeSpec, "event_type") ||
+      IsBuiltinDerivedType(derivedTypeSpec, "lock_type");
 }
 
 bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {

@@ -641,17 +641,15 @@ static void RearrangeArguments(const characteristics::Procedure &proc,
   }
   std::map<std::string, evaluate::ActualArgument> kwArgs;
   for (auto &x : actuals) {
-    if (x) {
-      if (x->keyword()) {
-        auto emplaced{
-            kwArgs.try_emplace(x->keyword()->ToString(), std::move(*x))};
-        if (!emplaced.second) {
-          messages.Say(*x->keyword(),
-              "Argument keyword '%s=' appears on more than one effective argument in this procedure reference"_err_en_US,
-              *x->keyword());
-        }
-        x.reset();
+    if (x && x->keyword()) {
+      auto emplaced{
+          kwArgs.try_emplace(x->keyword()->ToString(), std::move(*x))};
+      if (!emplaced.second) {
+        messages.Say(*x->keyword(),
+            "Argument keyword '%s=' appears on more than one effective argument in this procedure reference"_err_en_US,
+            *x->keyword());
       }
+      x.reset();
     }
   }
   if (!kwArgs.empty()) {

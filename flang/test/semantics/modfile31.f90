@@ -27,6 +27,7 @@ end
 !integer(4),parameter::brown=3_4
 !integer(4),parameter::oak=0_4
 !integer(4),parameter::beech=-4_4
+!intrinsic::rank
 !integer(4),parameter::pine=-3_4
 !integer(4),parameter::poplar=3_4
 !end
