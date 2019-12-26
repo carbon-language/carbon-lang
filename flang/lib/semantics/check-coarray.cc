@@ -17,6 +17,51 @@
 
 namespace Fortran::semantics {
 
+class CriticalBodyEnforce {
+public:
+  CriticalBodyEnforce(
+      SemanticsContext &context, parser::CharBlock criticalSourcePosition)
+    : context_{context}, criticalSourcePosition_{criticalSourcePosition} {}
+  std::set<parser::Label> labels() { return labels_; }
+  template<typename T> bool Pre(const T &) { return true; }
+  template<typename T> void Post(const T &) {}
+
+  template<typename T> bool Pre(const parser::Statement<T> &statement) {
+    currentStatementSourcePosition_ = statement.source;
+    if (statement.label.has_value()) {
+      labels_.insert(*statement.label);
+    }
+    return true;
+  }
+
+  // C1118
+  void Post(const parser::ReturnStmt &) {
+    context_
+        .Say(currentStatementSourcePosition_,
+            "RETURN statement is not allowed in a CRITICAL construct"_err_en_US)
+        .Attach(criticalSourcePosition_, GetEnclosingMsg());
+  }
+  void Post(const parser::ExecutableConstruct &construct) {
+    if (IsImageControlStmt(construct)) {
+      context_
+          .Say(currentStatementSourcePosition_,
+              "An image control statement is not allowed in a CRITICAL"
+              " construct"_err_en_US)
+          .Attach(criticalSourcePosition_, GetEnclosingMsg());
+    }
+  }
+
+private:
+  parser::MessageFixedText GetEnclosingMsg() {
+    return "Enclosing CRITICAL statement"_en_US;
+  }
+
+  SemanticsContext &context_;
+  std::set<parser::Label> labels_;
+  parser::CharBlock currentStatementSourcePosition_;
+  parser::CharBlock criticalSourcePosition_;
+};
+
 template<typename T>
 static void CheckTeamType(SemanticsContext &context, const T &x) {
   if (const auto *expr{GetExpr(x)}) {
@@ -44,6 +89,19 @@ void CoarrayChecker::Leave(const parser::ImageSelectorSpec &x) {
 
 void CoarrayChecker::Leave(const parser::FormTeamStmt &x) {
   CheckTeamType(context_, std::get<parser::TeamVariable>(x.t));
+}
+
+void CoarrayChecker::Enter(const parser::CriticalConstruct &x) {
+  auto &criticalStmt{std::get<parser::Statement<parser::CriticalStmt>>(x.t)};
+
+  const parser::Block &block{std::get<parser::Block>(x.t)};
+  CriticalBodyEnforce criticalBodyEnforce{context_, criticalStmt.source};
+  parser::Walk(block, criticalBodyEnforce);
+
+  // C1119
+  LabelEnforce criticalLabelEnforce{
+      context_, criticalBodyEnforce.labels(), criticalStmt.source, "CRITICAL"};
+  parser::Walk(block, criticalLabelEnforce);
 }
 
 // Check that coarray names and selector names are all distinct.
@@ -85,5 +143,4 @@ void CoarrayChecker::Say2(const parser::CharBlock &name1,
   context_.Say(name1, std::move(msg1), name1)
       .Attach(name2, std::move(msg2), name2);
 }
-
 }

@@ -75,7 +75,6 @@ public:
     : context_{context}, doConcurrentSourcePosition_{
                              doConcurrentSourcePosition} {}
   std::set<parser::Label> labels() { return labels_; }
-  std::set<SourceName> names() { return names_; }
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
 
@@ -213,57 +212,6 @@ public:
     }
   }
 
-  // C1167 -- EXIT statements can't exit a DO CONCURRENT
-  bool Pre(const parser::WhereConstruct &s) {
-    AddName(MaybeGetConstructName(s));
-    return true;
-  }
-
-  bool Pre(const parser::ForallConstruct &s) {
-    AddName(MaybeGetConstructName(s));
-    return true;
-  }
-
-  bool Pre(const parser::ChangeTeamConstruct &s) {
-    AddName(MaybeGetConstructName(s));
-    return true;
-  }
-
-  bool Pre(const parser::CriticalConstruct &s) {
-    AddName(MaybeGetConstructName(s));
-    return true;
-  }
-
-  bool Pre(const parser::LabelDoStmt &s) {
-    AddName(MaybeGetStmtName(s));
-    return true;
-  }
-
-  bool Pre(const parser::NonLabelDoStmt &s) {
-    AddName(MaybeGetStmtName(s));
-    return true;
-  }
-
-  bool Pre(const parser::IfThenStmt &s) {
-    AddName(MaybeGetStmtName(s));
-    return true;
-  }
-
-  bool Pre(const parser::SelectCaseStmt &s) {
-    AddName(MaybeGetStmtName(s));
-    return true;
-  }
-
-  bool Pre(const parser::SelectRankStmt &s) {
-    AddName(MaybeGetStmtName(s));
-    return true;
-  }
-
-  bool Pre(const parser::SelectTypeStmt &s) {
-    AddName(MaybeGetStmtName(s));
-    return true;
-  }
-
   // C1136 -- No RETURN statements in a DO CONCURRENT
   void Post(const parser::ReturnStmt &) {
     context_
@@ -334,80 +282,11 @@ private:
     return false;
   }
 
-  void AddName(const parser::Name *nm) {
-    if (nm) {
-      names_.insert(nm->source);
-    }
-  }
-
-  std::set<parser::CharBlock> names_;
   std::set<parser::Label> labels_;
   parser::CharBlock currentStatementSourcePosition_;
   SemanticsContext &context_;
   parser::CharBlock doConcurrentSourcePosition_;
 };  // class DoConcurrentBodyEnforce
-
-class DoConcurrentLabelEnforce {
-public:
-  DoConcurrentLabelEnforce(SemanticsContext &context,
-      std::set<parser::Label> &&labels, std::set<parser::CharBlock> &&names,
-      parser::CharBlock doConcurrentSourcePosition)
-    : context_{context}, labels_{labels}, names_{names},
-      doConcurrentSourcePosition_{doConcurrentSourcePosition} {}
-  template<typename T> bool Pre(const T &) { return true; }
-  template<typename T> bool Pre(const parser::Statement<T> &statement) {
-    currentStatementSourcePosition_ = statement.source;
-    return true;
-  }
-
-  template<typename T> void Post(const T &) {}
-
-  void Post(const parser::GotoStmt &gotoStmt) { checkLabelUse(gotoStmt.v); }
-  void Post(const parser::ComputedGotoStmt &computedGotoStmt) {
-    for (auto &i : std::get<std::list<parser::Label>>(computedGotoStmt.t)) {
-      checkLabelUse(i);
-    }
-  }
-
-  void Post(const parser::ArithmeticIfStmt &arithmeticIfStmt) {
-    checkLabelUse(std::get<1>(arithmeticIfStmt.t));
-    checkLabelUse(std::get<2>(arithmeticIfStmt.t));
-    checkLabelUse(std::get<3>(arithmeticIfStmt.t));
-  }
-
-  void Post(const parser::AssignStmt &assignStmt) {
-    checkLabelUse(std::get<parser::Label>(assignStmt.t));
-  }
-
-  void Post(const parser::AssignedGotoStmt &assignedGotoStmt) {
-    for (auto &i : std::get<std::list<parser::Label>>(assignedGotoStmt.t)) {
-      checkLabelUse(i);
-    }
-  }
-
-  void Post(const parser::AltReturnSpec &altReturnSpec) {
-    checkLabelUse(altReturnSpec.v);
-  }
-
-  void Post(const parser::ErrLabel &errLabel) { checkLabelUse(errLabel.v); }
-  void Post(const parser::EndLabel &endLabel) { checkLabelUse(endLabel.v); }
-  void Post(const parser::EorLabel &eorLabel) { checkLabelUse(eorLabel.v); }
-
-  void checkLabelUse(const parser::Label &labelUsed) {
-    if (labels_.find(labelUsed) == labels_.end()) {
-      SayWithDo(context_, currentStatementSourcePosition_,
-          "Control flow escapes from DO CONCURRENT"_err_en_US,
-          doConcurrentSourcePosition_);
-    }
-  }
-
-private:
-  SemanticsContext &context_;
-  std::set<parser::Label> labels_;
-  std::set<parser::CharBlock> names_;
-  parser::CharBlock currentStatementSourcePosition_{nullptr};
-  parser::CharBlock doConcurrentSourcePosition_{nullptr};
-};  // class DoConcurrentLabelEnforce
 
 // Class for enforcing C1130 -- in a DO CONCURRENT with DEFAULT(NONE),
 // variables from enclosing scopes must have their locality specified
@@ -566,9 +445,9 @@ private:
     DoConcurrentBodyEnforce doConcurrentBodyEnforce{context_, doStmt.source};
     parser::Walk(block, doConcurrentBodyEnforce);
 
-    DoConcurrentLabelEnforce doConcurrentLabelEnforce{context_,
-        doConcurrentBodyEnforce.labels(), doConcurrentBodyEnforce.names(),
-        currentStatementSourcePosition_};
+    LabelEnforce doConcurrentLabelEnforce{context_,
+        doConcurrentBodyEnforce.labels(), currentStatementSourcePosition_,
+        "DO CONCURRENT"};
     parser::Walk(block, doConcurrentLabelEnforce);
 
     const auto &loopControl{

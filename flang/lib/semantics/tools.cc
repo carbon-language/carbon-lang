@@ -1185,4 +1185,64 @@ bool IsFunctionResultWithSameNameAsFunction(const Symbol &symbol) {
   }
   return false;
 }
+
+void LabelEnforce::Post(const parser::GotoStmt &gotoStmt) {
+  checkLabelUse(gotoStmt.v);
+}
+void LabelEnforce::Post(const parser::ComputedGotoStmt &computedGotoStmt) {
+  for (auto &i : std::get<std::list<parser::Label>>(computedGotoStmt.t)) {
+    checkLabelUse(i);
+  }
+}
+
+void LabelEnforce::Post(const parser::ArithmeticIfStmt &arithmeticIfStmt) {
+  checkLabelUse(std::get<1>(arithmeticIfStmt.t));
+  checkLabelUse(std::get<2>(arithmeticIfStmt.t));
+  checkLabelUse(std::get<3>(arithmeticIfStmt.t));
+}
+
+void LabelEnforce::Post(const parser::AssignStmt &assignStmt) {
+  checkLabelUse(std::get<parser::Label>(assignStmt.t));
+}
+
+void LabelEnforce::Post(const parser::AssignedGotoStmt &assignedGotoStmt) {
+  for (auto &i : std::get<std::list<parser::Label>>(assignedGotoStmt.t)) {
+    checkLabelUse(i);
+  }
+}
+
+void LabelEnforce::Post(const parser::AltReturnSpec &altReturnSpec) {
+  checkLabelUse(altReturnSpec.v);
+}
+
+void LabelEnforce::Post(const parser::ErrLabel &errLabel) {
+  checkLabelUse(errLabel.v);
+}
+void LabelEnforce::Post(const parser::EndLabel &endLabel) {
+  checkLabelUse(endLabel.v);
+}
+void LabelEnforce::Post(const parser::EorLabel &eorLabel) {
+  checkLabelUse(eorLabel.v);
+}
+
+void LabelEnforce::checkLabelUse(const parser::Label &labelUsed) {
+  if (labels_.find(labelUsed) == labels_.end()) {
+    SayWithConstruct(context_, currentStatementSourcePosition_,
+        parser::MessageFormattedText{
+            "Control flow escapes from %s"_err_en_US, construct_},
+        constructSourcePosition_);
+  }
+}
+
+parser::MessageFormattedText LabelEnforce::GetEnclosingConstructMsg() {
+  return {"Enclosing %s statement"_en_US, construct_};
+}
+
+void LabelEnforce::SayWithConstruct(SemanticsContext &context,
+    parser::CharBlock stmtLocation, parser::MessageFormattedText &&message,
+    parser::CharBlock constructLocation) {
+  context.Say(stmtLocation, message)
+      .Attach(constructLocation, GetEnclosingConstructMsg());
+}
+
 }

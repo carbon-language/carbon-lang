@@ -194,6 +194,9 @@ set(ERROR_TESTS
   bindings01.f90
   bad-forward-type.f90
   c_f_pointer.f90
+  critical01.f90
+  critical02.f90
+  critical03.f90
 )
 
 # These test files have expected symbols in the source
@@ -279,6 +282,10 @@ set(CANONDO_TESTS
   canondo*.[Ff]90
 )
 
+set(CRITICAL_TESTS
+  critical04.f90
+)
+
 set(GETSYMBOLS_TESTS
   getsymbols01.f90
   getsymbols02-*.f90
@@ -313,7 +320,7 @@ foreach(test ${MODFILE_TESTS})
 endforeach()
 
 foreach(test ${LABEL_TESTS} ${CANONDO_TESTS} ${DOCONCURRENT_TESTS}
-             ${GETSYMBOLS_TESTS} ${GETDEFINITION_TESTS})
+             ${CRITICAL_TESTS} ${GETSYMBOLS_TESTS} ${GETDEFINITION_TESTS})
   add_test(NAME ${test}
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test} ${F18})
 endforeach()
