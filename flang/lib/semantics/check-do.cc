@@ -578,8 +578,6 @@ private:
     CheckConcurrentLoopControl(concurrent, block);
   }
 
-  using SymbolSet = std::set<const Symbol *>;
-
   // Return a set of symbols whose names are in a Local locality-spec.  Look
   // the names up in the scope that encloses the DO construct to avoid getting
   // the local versions of them.  Then follow the host-, use-, and
@@ -597,7 +595,7 @@ private:
         for (const parser::Name &name : names->v) {
           if (const Symbol * symbol{parentScope.FindSymbol(name.source)}) {
             if (const Symbol * root{GetAssociationRoot(*symbol)}) {
-              symbols.insert(root);
+              symbols.insert(*root);
             }
           }
         }
@@ -611,7 +609,7 @@ private:
     if (const auto *expr{GetExpr(expression)}) {
       for (const Symbol &symbol : evaluate::CollectSymbols(*expr)) {
         if (const Symbol * root{GetAssociationRoot(symbol)}) {
-          result.insert(root);
+          result.insert(*root);
         }
       }
     }
@@ -621,9 +619,9 @@ private:
   // C1121 - procedures in mask must be pure
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
     SymbolSet references{GatherSymbolsFromExpression(mask.thing.thing.value())};
-    for (const Symbol *ref : references) {
-      if (IsProcedure(*ref) && !IsPureProcedure(*ref)) {
-        context_.SayWithDecl(*ref, currentStatementSourcePosition_,
+    for (const Symbol &ref : references) {
+      if (IsProcedure(ref) && !IsPureProcedure(ref)) {
+        context_.SayWithDecl(ref, currentStatementSourcePosition_,
             "Concurrent-header mask expression cannot reference an impure"
             " procedure"_err_en_US);
         return;
@@ -634,10 +632,10 @@ private:
   void CheckNoCollisions(const SymbolSet &refs, const SymbolSet &uses,
       parser::MessageFixedText &&errorMessage,
       const parser::CharBlock &refPosition) const {
-    for (const Symbol *ref : refs) {
+    for (const Symbol &ref : refs) {
       if (uses.find(ref) != uses.end()) {
         context_.SayWithDecl(
-            *ref, refPosition, std::move(errorMessage), ref->name());
+            ref, refPosition, std::move(errorMessage), ref.name());
         return;
       }
     }
@@ -703,7 +701,7 @@ private:
     for (const auto &c : controls) {
       const auto &indexName{std::get<parser::Name>(c.t)};
       if (indexName.symbol) {
-        indexNames.insert(indexName.symbol);
+        indexNames.insert(*indexName.symbol);
       }
     }
     if (!indexNames.empty()) {
