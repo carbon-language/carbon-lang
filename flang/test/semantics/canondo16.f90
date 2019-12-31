@@ -15,7 +15,6 @@
 
 ! CHECK: A DO loop should terminate with an END DO or CONTINUE
 
-include '../../module/__fortran_builtins.f90'
 include '../../module/iso_c_binding.f90'
 
 subroutine foo8()
