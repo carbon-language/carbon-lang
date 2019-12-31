@@ -1711,8 +1711,9 @@ IntrinsicProcTable::Implementation::HandleC_F_Pointer(
         context.messages().Say(
             "SHAPE= argument to C_F_POINTER() must appear when FPTR= is an array"_err_en_US);
       }
-      characteristics::DummyDataObject shape{
-          characteristics::TypeAndShape{SubscriptInteger{}.GetType(), 1}};
+      characteristics::DummyDataObject shape{characteristics::TypeAndShape{
+          DynamicType{TypeCategory::Integer, defaults_.subscriptIntegerKind()},
+          1}};
       shape.intent = common::Intent::In;
       shape.attrs.set(characteristics::DummyDataObject::Attr::Optional);
       dummies.emplace_back("shape"s, std::move(shape));
