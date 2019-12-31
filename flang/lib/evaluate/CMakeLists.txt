@@ -15,6 +15,11 @@ add_library(FortranEvaluate
   constant.cc
   expression.cc
   fold.cc
+  fold-character.cc
+  fold-complex.cc
+  fold-integer.cc
+  fold-logical.cc
+  fold-real.cc
   formatting.cc
   host.cc
   integer.cc
