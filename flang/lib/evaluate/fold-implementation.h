@@ -60,6 +60,8 @@ public:
       Component &, const std::vector<Constant<SubscriptInteger>> * = nullptr);
   std::optional<Constant<T>> Folding(ArrayRef &);
   Expr<T> Folding(Designator<T> &&);
+  Constant<T> *Folding(std::optional<ActualArgument> &);
+  Expr<T> Reshape(FunctionRef<T> &&);
 
 private:
   FoldingContext &context_;
@@ -470,6 +472,21 @@ template<typename T> Expr<T> Folder<T>::Folding(Designator<T> &&designator) {
       std::move(designator.u));
 }
 
+// Apply type conversion and re-folding if necessary.
+// This is where BOZ arguments are converted.
+template<typename T>
+Constant<T> *Folder<T>::Folding(std::optional<ActualArgument> &arg) {
+  if (auto *expr{UnwrapExpr<Expr<SomeType>>(arg)}) {
+    if (!UnwrapExpr<Expr<T>>(*expr)) {
+      if (auto converted{ConvertToType(T::GetType(), std::move(*expr))}) {
+        *expr = Fold(context_, std::move(*converted));
+      }
+    }
+    return UnwrapConstantValue<T>(*expr);
+  }
+  return nullptr;
+}
+
 // helpers to fold intrinsic function references
 // Define callable types used in a common utility that
 // takes care of array and cast/conversion aspects for elemental intrinsics
@@ -480,32 +497,16 @@ template<typename TR, typename... TArgs>
 using ScalarFuncWithContext =
     std::function<Scalar<TR>(FoldingContext &, const Scalar<TArgs> &...)>;
 
-// Apply type conversion and re-folding if necessary.
-// This is where BOZ arguments are converted.
-template<typename T>
-Constant<T> *FoldConvertedArg(
-    FoldingContext &context, std::optional<ActualArgument> &arg) {
-  if (auto *expr{UnwrapExpr<Expr<SomeType>>(arg)}) {
-    if (!UnwrapExpr<Expr<T>>(*expr)) {
-      if (auto converted{ConvertToType(T::GetType(), std::move(*expr))}) {
-        *expr = Fold(context, std::move(*converted));
-      }
-    }
-    return UnwrapConstantValue<T>(*expr);
-  }
-  return nullptr;
-}
-
 template<template<typename, typename...> typename WrapperType, typename TR,
     typename... TA, std::size_t... I>
-static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
+Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
     FunctionRef<TR> &&funcRef, WrapperType<TR, TA...> func,
     std::index_sequence<I...>) {
   static_assert(
       (... && IsSpecificIntrinsicType<TA>));  // TODO derived types for MERGE?
   static_assert(sizeof...(TA) > 0);
   std::tuple<const Constant<TA> *...> args{
-      FoldConvertedArg<TA>(context, funcRef.arguments()[I])...};
+      Folder<TA>{context}.Folding(funcRef.arguments()[I])...};
   if ((... && (std::get<I>(args)))) {
     // Compute the shape of the result based on shapes of arguments
     ConstantSubscripts shape;
@@ -615,8 +616,7 @@ template<typename T> Expr<T> MakeInvalidIntrinsic(FunctionRef<T> &&funcRef) {
       ActualArguments{ActualArgument{AsGenericExpr(std::move(funcRef))}}}};
 }
 
-template<typename T>
-Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
+template<typename T> Expr<T> Folder<T>::Reshape(FunctionRef<T> &&funcRef) {
   auto args{funcRef.arguments()};
   CHECK(args.size() == 4);
   const auto *source{UnwrapConstantValue<T>(args[0])};
@@ -627,7 +627,7 @@ Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
   if (!source || !shape || (args[2] && !pad) || (args[3] && !order)) {
     return Expr<T>{std::move(funcRef)};  // Non-constant arguments
   } else if (!IsValidShape(shape.value())) {
-    context.messages().Say("Invalid SHAPE in RESHAPE"_en_US);
+    context_.messages().Say("Invalid SHAPE in RESHAPE"_en_US);
   } else {
     int rank{GetRank(shape.value())};
     std::size_t resultElements{TotalElementCount(shape.value())};
@@ -637,10 +637,10 @@ Expr<T> Reshape(FoldingContext &context, FunctionRef<T> &&funcRef) {
     }
     std::vector<int> *dimOrderPtr{dimOrder ? &dimOrder.value() : nullptr};
     if (order && !dimOrder) {
-      context.messages().Say("Invalid ORDER in RESHAPE"_en_US);
+      context_.messages().Say("Invalid ORDER in RESHAPE"_en_US);
     } else if (resultElements > source->size() && (!pad || pad->empty())) {
-      context.messages().Say("Too few SOURCE elements in RESHAPE and PAD"
-                             "is not present or has null size"_en_US);
+      context_.messages().Say("Too few SOURCE elements in RESHAPE and PAD"
+                              "is not present or has null size"_en_US);
     } else {
       Constant<T> result{!source->empty()
               ? source->Reshape(std::move(shape.value()))
@@ -666,7 +666,7 @@ Expr<T> FoldMINorMAX(
     FoldingContext &context, FunctionRef<T> &&funcRef, Ordering order) {
   std::vector<Constant<T> *> constantArgs;
   for (auto &arg : funcRef.arguments()) {
-    if (auto *cst{FoldConvertedArg<T>(context, arg)}) {
+    if (auto *cst{Folder<T>{context}.Folding(arg)}) {
       constantArgs.push_back(cst);
     } else {
       return Expr<T>(std::move(funcRef));
@@ -692,7 +692,7 @@ Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     const std::string name{intrinsic->name};
     if (name == "reshape") {
-      return Reshape(context, std::move(funcRef));
+      return Folder<T>{context}.Reshape(std::move(funcRef));
     }
     // TODO: other type independent transformational
     if constexpr (!std::is_same_v<T, SomeDerived>) {
