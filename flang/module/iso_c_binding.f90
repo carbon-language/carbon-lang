@@ -8,8 +8,6 @@
 
 ! See Fortran 2018, clause 18.2
 
-include '__fortran_builtins.f90' ! avoid inter-module dependence
-
 module iso_c_binding
 
   use __Fortran_builtins, only: &

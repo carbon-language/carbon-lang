@@ -10,7 +10,6 @@
 ! TODO: These are placeholder values so that some tests can be run.
 
 include '../runtime/magic-numbers.h' ! for IOSTAT= error/end code values
-include '__fortran_builtins.f90' ! avoid inter-module dependence
 
 module iso_fortran_env
 

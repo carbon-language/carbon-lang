@@ -4,7 +4,7 @@
 ! By default, this is not an error and label do are rewritten to non-label do.
 ! A warning is generated with -Mstandard
 
-! RUN: ${F18} -funparse-with-symbols -Mstandard %s 2>&1 | ${FileCheck} %s
+! RUN: ${F18} -funparse-with-symbols -Mstandard -I../../tools/f18/include %s 2>&1 | ${FileCheck} %s
 
 ! CHECK: end do
 
@@ -15,10 +15,8 @@
 
 ! CHECK: A DO loop should terminate with an END DO or CONTINUE
 
-include '../../module/iso_c_binding.f90'
-
 subroutine foo8()
-  use :: __fortran_builtins, only : team_type => __builtin_team_type
+  use iso_fortran_env, only : team_type
   type(team_type) :: odd_even
   do 01 k=1,10
     change team (odd_even)
