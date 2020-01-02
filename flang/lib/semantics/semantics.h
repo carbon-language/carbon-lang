@@ -152,7 +152,8 @@ public:
 
   // Check to see if a variable being redefined is a DO variable.  If so, emit
   // a message
-  void CheckDoVarRedefine(const Symbol &, const parser::CharBlock &);
+  void WarnDoVarRedefine(const parser::CharBlock &, const Symbol &);
+  void CheckDoVarRedefine(const parser::CharBlock &, const Symbol &);
   void CheckDoVarRedefine(const parser::Variable &);
   void CheckDoVarRedefine(const parser::Name &);
   void ActivateDoVariable(const parser::Name &);
@@ -161,7 +162,8 @@ public:
 
 private:
   parser::CharBlock GetDoVariableLocation(const Symbol &);
-  void SayDoVarRedefine(const parser::CharBlock &, const Symbol &);
+  void CheckDoVarRedefine(
+      const parser::CharBlock &, const Symbol &, parser::MessageFixedText &&);
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   const common::LanguageFeatureControl languageFeatures_;
   parser::AllSources &allSources_;

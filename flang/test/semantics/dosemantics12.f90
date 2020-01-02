@@ -373,3 +373,41 @@ subroutine s11()
   end do
 
 end subroutine s11
+
+subroutine s12()
+
+  Integer :: ivar, jvar
+
+  call intentInSub(jvar, ivar)
+  do ivar = 1,10
+    call intentInSub(jvar, ivar)
+  end do
+
+  call intentOutSub(jvar, ivar)
+  do ivar = 1,10
+!ERROR: Cannot redefine DO variable 'ivar'
+    call intentOutSub(jvar, ivar)
+  end do
+
+  call intentInOutSub(jvar, ivar)
+  do ivar = 1,10
+    call intentInOutSub(jvar, ivar)
+  end do
+
+contains
+  subroutine intentInSub(arg1, arg2)
+    integer, intent(in) :: arg1
+    integer, intent(in) :: arg2
+  end subroutine intentInSub
+
+  subroutine intentOutSub(arg1, arg2)
+    integer, intent(in) :: arg1
+    integer, intent(out) :: arg2
+  end subroutine intentOutSub
+
+  subroutine intentInOutSub(arg1, arg2)
+    integer, intent(in) :: arg1
+    integer, intent(inout) :: arg2
+  end subroutine intentInOutSub
+
+end subroutine s12

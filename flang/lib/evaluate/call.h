@@ -111,6 +111,11 @@ public:
   void set_isPassedObject(bool yes = true) { isPassedObject_ = yes; }
 
   bool Matches(const characteristics::DummyArgument &) const;
+  common::Intent dummyIntent() const { return dummyIntent_; }
+  ActualArgument &set_dummyIntent(common::Intent intent) {
+    dummyIntent_ = intent;
+    return *this;
+  }
 
   // Wrap this argument in parentheses
   void Parenthesize();
@@ -127,6 +132,7 @@ private:
   std::optional<parser::CharBlock> keyword_;
   bool isAlternateReturn_{false};  // whether expr is a "*label" number
   bool isPassedObject_{false};
+  common::Intent dummyIntent_{common::Intent::Default};
 };
 
 using ActualArguments = std::vector<std::optional<ActualArgument>>;

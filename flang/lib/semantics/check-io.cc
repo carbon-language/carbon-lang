@@ -509,7 +509,7 @@ static void CheckForDoVariableInNamelist(const Symbol &namelist,
     SemanticsContext &context, parser::CharBlock namelistLocation) {
   const auto &details{namelist.GetUltimate().get<NamelistDetails>()};
   for (const Symbol &object : details.objects()) {
-    context.CheckDoVarRedefine(object, namelistLocation);
+    context.CheckDoVarRedefine(namelistLocation, object);
   }
 }
 

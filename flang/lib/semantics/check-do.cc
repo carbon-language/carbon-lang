@@ -902,6 +902,52 @@ void DoChecker::Leave(const parser::AssignmentStmt &stmt) {
   context_.CheckDoVarRedefine(variable);
 }
 
+// Check to see if a DO variable is being passed as an actual argument to a
+// dummy argument whose intent is OUT or INOUT.  To do this, we need to find
+// the expressions for actual arguments which contain DO variables.  We get the
+// intents of the dummy arguments from the ProcedureRef in the "typedCall"
+// field of the CallStmt which was filled in during expression checking.  At
+// the same time, we need to iterate over the parser::Expr versions of the
+// actual arguments to get their source locations of the arguments for the
+// messages.
+void DoChecker::Leave(const parser::CallStmt &callStmt) {
+  if (const auto &typedCall{callStmt.typedCall}) {
+    const auto &parsedArgs{
+        std::get<std::list<parser::ActualArgSpec>>(callStmt.v.t)};
+    auto parsedArgIter{parsedArgs.begin()};
+    const evaluate::ActualArguments &checkedArgs{typedCall->arguments()};
+    for (const auto &checkedOptionalArg : checkedArgs) {
+      if (parsedArgIter == parsedArgs.end()) {
+        break;  // No more parsed arguments, we're done.
+      }
+      const auto &parsedArg{std::get<parser::ActualArg>(parsedArgIter->t)};
+      ++parsedArgIter;
+      if (checkedOptionalArg) {
+        const evaluate::ActualArgument &checkedArg{*checkedOptionalArg};
+        if (const SomeExpr * checkedExpr{checkedArg.UnwrapExpr()}) {
+          if (const Symbol *
+              variable{evaluate::UnwrapWholeSymbolDataRef(*checkedExpr)}) {
+            if (const auto *parsedExpr{
+                    std::get_if<common::Indirection<parser::Expr>>(
+                        &parsedArg.u)}) {
+              const parser::CharBlock location{parsedExpr->value().source};
+              switch (checkedArg.dummyIntent()) {
+              case common::Intent::Out:
+                context_.CheckDoVarRedefine(location, *variable);
+                break;
+              case common::Intent::InOut:
+                context_.WarnDoVarRedefine(location, *variable);
+                break;
+              default:;  // INTENT(IN) or default intent
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 void DoChecker::Leave(const parser::ConnectSpec &connectSpec) {
   const auto *newunit{
       std::get_if<parser::ConnectSpec::Newunit>(&connectSpec.u)};
@@ -928,7 +974,7 @@ void DoChecker::Leave(const parser::IoControlSpec &ioControlSpec) {
 void DoChecker::Leave(const parser::OutputImpliedDo &outputImpliedDo) {
   const auto &control{std::get<parser::IoImpliedDoControl>(outputImpliedDo.t)};
   const parser::Name &name{control.name.thing.thing};
-  context_.CheckDoVarRedefine(*name.symbol, name.source);
+  context_.CheckDoVarRedefine(name.source, *name.symbol);
 }
 
 void DoChecker::Leave(const parser::StatVariable &statVariable) {

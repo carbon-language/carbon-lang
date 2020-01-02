@@ -601,6 +601,7 @@ static void CheckExplicitInterfaceArg(evaluate::ActualArgument &arg,
             if (auto *expr{arg.UnwrapExpr()}) {
               if (auto type{characteristics::TypeAndShape::Characterize(
                       *expr, context)}) {
+                arg.set_dummyIntent(object.intent);
                 bool isElemental{object.type.Rank() == 0 && proc.IsElemental()};
                 CheckExplicitDataArg(object, dummyName, *expr, *type,
                     isElemental, IsArrayElement(*expr), context, scope);

@@ -14,6 +14,7 @@
 
 namespace Fortran::parser {
 struct AssignmentStmt;
+struct CallStmt;
 struct ConnectSpec;
 struct CycleStmt;
 struct DoConstruct;
@@ -33,6 +34,7 @@ class DoChecker : public virtual BaseChecker {
 public:
   explicit DoChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::AssignmentStmt &);
+  void Leave(const parser::CallStmt &);
   void Leave(const parser::ConnectSpec &);
   void Enter(const parser::CycleStmt &);
   void Enter(const parser::DoConstruct &);

@@ -203,34 +203,41 @@ void SemanticsContext::PopConstruct() {
   constructStack_.pop_back();
 }
 
-void SemanticsContext::SayDoVarRedefine(
+void SemanticsContext::CheckDoVarRedefine(const parser::CharBlock &location,
+    const Symbol &variable, parser::MessageFixedText &&message) {
+  if (const Symbol * root{GetAssociationRoot(variable)}) {
+    if (IsActiveDoVariable(*root)) {
+      parser::CharBlock doLoc{GetDoVariableLocation(*root)};
+      CHECK(doLoc != parser::CharBlock{});
+      Say(location, message, root->name())
+          .Attach(doLoc, "Enclosing DO construct"_en_US);
+    }
+  }
+}
+
+void SemanticsContext::WarnDoVarRedefine(
     const parser::CharBlock &location, const Symbol &variable) {
-  const parser::CharBlock doLoc{GetDoVariableLocation(variable)};
-  CHECK(doLoc != parser::CharBlock{});
-  Say(location, "Cannot redefine DO variable '%s'"_err_en_US, variable.name())
-      .Attach(doLoc, "Enclosing DO construct"_en_US);
+  CheckDoVarRedefine(location, variable,
+      std::move("Possible redefinition of DO variable '%s'"_en_US));
 }
 
 void SemanticsContext::CheckDoVarRedefine(
-    const Symbol &variable, const parser::CharBlock &location) {
-  if (const Symbol * root{GetAssociationRoot(variable)}) {
-    if (IsActiveDoVariable(*root)) {
-      SayDoVarRedefine(location, *root);
-    }
-  }
+    const parser::CharBlock &location, const Symbol &variable) {
+  CheckDoVarRedefine(location, variable,
+      std::move("Cannot redefine DO variable '%s'"_err_en_US));
 }
 
 void SemanticsContext::CheckDoVarRedefine(const parser::Variable &variable) {
   if (const Symbol * entity{GetLastName(variable).symbol}) {
     const parser::CharBlock &sourceLocation{variable.GetSource()};
-    CheckDoVarRedefine(*entity, sourceLocation);
+    CheckDoVarRedefine(sourceLocation, *entity);
   }
 }
 
 void SemanticsContext::CheckDoVarRedefine(const parser::Name &name) {
   const parser::CharBlock &sourceLocation{name.source};
   if (const Symbol * entity{name.symbol}) {
-    CheckDoVarRedefine(*entity, sourceLocation);
+    CheckDoVarRedefine(sourceLocation, *entity);
   }
 }
 
