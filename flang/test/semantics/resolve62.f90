@@ -43,7 +43,7 @@ subroutine s3
   logical :: a, b, c
   x = y .foo. z  ! OK: f_real
   i = j .foo. k  ! OK: f_integer
-  !ERROR: No specific procedure of generic operator '.foo.' matches the actual arguments
+  !ERROR: No intrinsic or user-defined .FOO. matches operand types LOGICAL(4) and LOGICAL(4)
   a = b .foo. c
 end
 

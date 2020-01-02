@@ -149,3 +149,102 @@ end
 !  real(4) :: a(1_8:y%p2(x))
 ! end
 !end
+
+module m3
+  type :: t1
+  contains
+    procedure, pass(x) :: p1 => f1
+    procedure :: p3 => f3
+    generic :: operator(.binary.) => p1
+    generic :: operator(.unary.) => p3
+  end type
+  type, extends(t1) :: t2
+  contains
+    procedure, pass(y) :: p2 => f2
+    generic :: operator(.binary.) => p2
+  end type
+contains
+  integer(8) pure function f1(x, y)
+    class(t1), intent(in) :: x
+    integer, intent(in) :: y
+  end
+  integer(8) pure function f2(x, y)
+    class(t1), intent(in) :: x
+    class(t2), intent(in) :: y
+  end
+  integer(8) pure function f3(x)
+    class(t1), intent(in) :: x
+  end
+  subroutine test1(x, y, a)
+    class(t1) :: x
+    integer :: y
+    real :: a(x .binary. y)
+  end
+  ! Resolve to operator in parent class
+  subroutine test2(x, y, a)
+    class(t2) :: x
+    integer :: y
+    real :: a(x .binary. y)
+  end
+  ! 2nd arg is passed object
+  subroutine test3(x, y, a)
+    class(t1) :: x
+    class(t2) :: y
+    real :: a(x .binary. y)
+  end
+  subroutine test4(x, y, a)
+    class(t1) :: x
+    class(t2) :: y
+    real :: a(.unary. x + .unary. y)
+  end
+end
+!Expect: m3.mod
+!module m3
+!  type::t1
+!  contains
+!    procedure,pass(x)::p1=>f1
+!    procedure::p3=>f3
+!    generic::.binary.=>p1
+!    generic::.unary.=>p3
+!  end type
+!  type,extends(t1)::t2
+!  contains
+!    procedure,pass(y)::p2=>f2
+!    generic::.binary.=>p2
+!  end type
+!contains
+!  pure function f1(x,y)
+!    class(t1),intent(in)::x
+!    integer(4),intent(in)::y
+!    integer(8)::f1
+!  end
+!  pure function f2(x,y)
+!    class(t1),intent(in)::x
+!    class(t2),intent(in)::y
+!    integer(8)::f2
+!  end
+!  pure function f3(x)
+!    class(t1),intent(in)::x
+!    integer(8)::f3
+!  end
+!  subroutine test1(x,y,a)
+!    class(t1)::x
+!    integer(4)::y
+!    real(4)::a(1_8:x%p1(y))
+!  end
+!  subroutine test2(x,y,a)
+!    class(t2)::x
+!    integer(4)::y
+!    real(4)::a(1_8:x%p1(y))
+!  end
+!  subroutine test3(x,y,a)
+!    class(t1)::x
+!    class(t2)::y
+!    real(4)::a(1_8:y%p2(x))
+!  end
+!  subroutine test4(x,y,a)
+!    class(t1)::x
+!    class(t2)::y
+!    real(4)::a(1_8:x%p3()+y%p3())
+!  end
+!end

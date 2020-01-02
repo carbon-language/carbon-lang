@@ -126,7 +126,7 @@ bool Message::SortBefore(const Message &that) const {
   // Messages from prescanning have ProvenanceRange values for their locations,
   // while messages from later phases have CharBlock values, since the
   // conversion of cooked source stream locations to provenances is not
-  // free and needs to be deferred, since many messages created during parsing
+  // free and needs to be deferred, and many messages created during parsing
   // are speculative.  Messages with ProvenanceRange locations are ordered
   // before others for sorting.
   return std::visit(

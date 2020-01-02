@@ -5794,7 +5794,8 @@ bool ResolveNamesVisitor::Pre(const parser::DefinedOpName &x) {
     Say(name,
         "Logical constant '%s' may not be used as a defined operator"_err_en_US);
   } else {
-    Say(name, "Defined operator '%s' not found"_err_en_US);
+    // Resolved later in expression semantics
+    MakePlaceholder(name, MiscDetails::Kind::TypeBoundDefinedOp);
   }
   return false;
 }

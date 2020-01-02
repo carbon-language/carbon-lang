@@ -299,8 +299,8 @@ class FinalProcDetails {};  // TODO
 class MiscDetails {
 public:
   ENUM_CLASS(Kind, None, ConstructName, ScopeName, PassName, ComplexPartRe,
-      ComplexPartIm, KindParamInquiry, LenParamInquiry,
-      SelectTypeAssociateName);
+      ComplexPartIm, KindParamInquiry, LenParamInquiry, SelectTypeAssociateName,
+      TypeBoundDefinedOp);
   MiscDetails(Kind kind) : kind_{kind} {}
   Kind kind() const { return kind_; }
 

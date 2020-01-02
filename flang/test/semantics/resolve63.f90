@@ -157,15 +157,15 @@ contains
   subroutine s1(x, y, z)
     logical :: x
     real :: y, z
-    !ERROR: Defined operator '.a.' not found
+    !ERROR: No operator .A. defined for REAL(4) and REAL(4)
     x = y .a. z
-    !ERROR: Defined operator '.o.' not found
+    !ERROR: No operator .O. defined for REAL(4) and REAL(4)
     x = y .o. z
-    !ERROR: Defined operator '.n.' not found
+    !ERROR: No operator .N. defined for REAL(4)
     x = .n. y
-    !ERROR: Defined operator '.xor.' not found
+    !ERROR: No operator .XOR. defined for REAL(4) and REAL(4)
     x = y .xor. z
-    !ERROR: Defined operator '.x.' not found
+    !ERROR: No operator .X. defined for REAL(4)
     x = .x. y
   end
 end
@@ -189,7 +189,7 @@ contains
     complex :: y, z
     !ERROR: No intrinsic or user-defined OPERATOR(.AND.) matches operand types COMPLEX(4) and COMPLEX(4)
     x = y .and. z
-    !ERROR: No specific procedure of generic operator '.a.' matches the actual arguments
+    !ERROR: No intrinsic or user-defined .A. matches operand types COMPLEX(4) and COMPLEX(4)
     x = y .a. z
   end
 end

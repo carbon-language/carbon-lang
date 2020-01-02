@@ -149,8 +149,14 @@ bool IsIntrinsicConcat(const evaluate::DynamicType &type0, int rank0,
 }
 
 bool IsGenericDefinedOp(const Symbol &symbol) {
-  const auto *details{symbol.GetUltimate().detailsIf<GenericDetails>()};
-  return details && details->kind().IsDefinedOperator();
+  const Symbol &ultimate{symbol.GetUltimate()};
+  if (const auto *generic{ultimate.detailsIf<GenericDetails>()}) {
+    return generic->kind().IsDefinedOperator();
+  } else if (const auto *misc{ultimate.detailsIf<MiscDetails>()}) {
+    return misc->kind() == MiscDetails::Kind::TypeBoundDefinedOp;
+  } else {
+    return false;
+  }
 }
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object) {
