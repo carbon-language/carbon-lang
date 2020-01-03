@@ -335,7 +335,7 @@ private:
 
   int GetIntegerKind(const std::optional<parser::IntegerTypeSpec> &);
   void CheckForImpureCall(const SomeExpr &);
-  void CheckForImpureCall(const std::optional<SomeExpr> &);
+  void CheckForImpureCall(const SomeExpr *);
   void CheckForPureContext(const SomeExpr &lhs, const SomeExpr &rhs,
       parser::CharBlock rhsSource, bool isPointerAssignment);
 
@@ -355,8 +355,7 @@ private:
 void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
   // Assignment statement analysis is in expression.cc where user-defined
   // assignments can be recognized and replaced.
-  if (const evaluate::Assignment *
-      asst{AnalyzeAssignmentStmt(context_, stmt)}) {
+  if (const evaluate::Assignment * asst{GetAssignment(stmt)}) {
     if (const auto *intrinsicAsst{
             std::get_if<evaluate::Assignment::IntrinsicAssignment>(&asst->u)}) {
       CheckForImpureCall(intrinsicAsst->lhs);
@@ -375,23 +374,50 @@ void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
 
 void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
   CHECK(!where_);
-  const auto &lhs{std::get<parser::DataRef>(stmt.t)};
-  const auto &rhs{std::get<parser::Expr>(stmt.t)};
-  auto &foldingContext{context_.foldingContext()};
-  auto lhsExpr{evaluate::Fold(foldingContext, AnalyzeExpr(context_, lhs))};
-  auto rhsExpr{evaluate::Fold(foldingContext, AnalyzeExpr(context_, rhs))};
-  CheckForImpureCall(lhsExpr);
-  CheckForImpureCall(rhsExpr);
-  // TODO: CheckForImpureCall() in the bounds / bounds remappings
-  if (forall_) {
-    // TODO: Warn if some name in forall_->activeNames or its outer
-    // contexts does not appear on LHS
+  if (const evaluate::Assignment * asst{GetAssignment(stmt)}) {
+    auto [lhs, rhs]{std::visit(
+        common::visitors{
+            [&](const evaluate::Assignment::IntrinsicAssignment &x) {
+              return std::make_pair(&x.lhs, &x.rhs);
+            },
+            [&](const evaluate::ProcedureRef &x) {
+              return std::make_pair(x.arguments()[0]->UnwrapExpr(),
+                  x.arguments()[1]->UnwrapExpr());
+            },
+            [&](const evaluate::Assignment::PointerAssignment &x) {
+              std::visit(
+                  common::visitors{
+                      [&](const evaluate::Assignment::PointerAssignment::
+                              BoundsSpec &bounds) {
+                        for (const auto &bound : bounds) {
+                          CheckForImpureCall(SomeExpr{bound});
+                        }
+                      },
+                      [&](const evaluate::Assignment::PointerAssignment::
+                              BoundsRemapping &bounds) {
+                        for (const auto &bound : bounds) {
+                          CheckForImpureCall(SomeExpr{bound.first});
+                          CheckForImpureCall(SomeExpr{bound.second});
+                        }
+                      },
+                  },
+                  x.bounds);
+              return std::make_pair(&x.lhs, &x.rhs);
+            },
+        },
+        asst->u)};
+    CheckForImpureCall(lhs);
+    CheckForImpureCall(rhs);
+    if (forall_) {
+      // TODO: Warn if some name in forall_->activeNames or its outer
+      // contexts does not appear on LHS
+    }
+    if (lhs && rhs) {
+      CheckForPureContext(
+          *lhs, *rhs, std::get<parser::Expr>(stmt.t).source, true /* => */);
+    }
+    // TODO continue here, using CheckPointerAssignment()
   }
-  if (lhsExpr && rhsExpr) {
-    CheckForPureContext(*lhsExpr, *rhsExpr, rhs.source, true /* => */);
-  }
-  // TODO continue here, using CheckPointerAssignment()
-  // TODO: analyze the bounds / bounds remappings
 }
 
 void AssignmentContext::Analyze(const parser::WhereStmt &stmt) {
@@ -510,15 +536,15 @@ void AssignmentContext::Analyze(const parser::ConcurrentHeader &header) {
     const parser::Name &name{std::get<parser::Name>(control.t)};
     bool inserted{forall_->activeNames.insert(name.source).second};
     CHECK(inserted || context_.HasError(name));
-    CheckForImpureCall(AnalyzeExpr(context_, std::get<1>(control.t)));
-    CheckForImpureCall(AnalyzeExpr(context_, std::get<2>(control.t)));
+    CheckForImpureCall(GetExpr(std::get<1>(control.t)));
+    CheckForImpureCall(GetExpr(std::get<2>(control.t)));
     if (const auto &stride{std::get<3>(control.t)}) {
-      CheckForImpureCall(AnalyzeExpr(context_, *stride));
+      CheckForImpureCall(GetExpr(*stride));
     }
   }
   if (const auto &mask{
           std::get<std::optional<parser::ScalarLogicalExpr>>(header.t)}) {
-    CheckForImpureCall(AnalyzeExpr(context_, *mask));
+    CheckForImpureCall(GetExpr(*mask));
   }
 }
 
@@ -546,10 +572,9 @@ void AssignmentContext::CheckForImpureCall(const SomeExpr &expr) {
   }
 }
 
-void AssignmentContext::CheckForImpureCall(
-    const std::optional<SomeExpr> &maybeExpr) {
-  if (maybeExpr) {
-    CheckForImpureCall(*maybeExpr);
+void AssignmentContext::CheckForImpureCall(const SomeExpr *expr) {
+  if (expr) {
+    CheckForImpureCall(*expr);
   }
 }
 
@@ -669,14 +694,12 @@ void AssignmentContext::CheckForPureContext(const SomeExpr &lhs,
 }
 
 MaskExpr AssignmentContext::GetMask(
-    const parser::LogicalExpr &expr, bool defaultValue) {
+    const parser::LogicalExpr &logicalExpr, bool defaultValue) {
   MaskExpr mask{defaultValue};
-  if (auto maybeExpr{AnalyzeExpr(context_, expr)}) {
-    CheckForImpureCall(*maybeExpr);
-    auto *logical{
-        std::get_if<evaluate::Expr<evaluate::SomeLogical>>(&maybeExpr->u)};
-    CHECK(logical);
-    mask = evaluate::ConvertTo(mask, std::move(*logical));
+  if (const SomeExpr * expr{GetExpr(logicalExpr)}) {
+    CheckForImpureCall(*expr);
+    auto *logical{std::get_if<evaluate::Expr<evaluate::SomeLogical>>(&expr->u)};
+    mask = evaluate::ConvertTo(mask, common::Clone(DEREF(logical)));
   }
   return mask;
 }

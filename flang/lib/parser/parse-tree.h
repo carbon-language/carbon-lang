@@ -1942,6 +1942,7 @@ struct PointerAssignmentStmt {
     std::variant<std::list<BoundsRemapping>, std::list<BoundsSpec>> u;
   };
   TUPLE_CLASS_BOILERPLATE(PointerAssignmentStmt);
+  mutable AssignmentStmt::TypedAssignment typedAssignment;
   std::tuple<DataRef, Bounds, Expr> t;
 };
 

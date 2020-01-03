@@ -251,6 +251,8 @@ template<typename T> const SomeExpr *GetExpr(const T &x) {
 }
 
 const evaluate::Assignment *GetAssignment(const parser::AssignmentStmt &);
+const evaluate::Assignment *GetAssignment(
+    const parser::PointerAssignmentStmt &);
 
 template<typename T> std::optional<std::int64_t> GetIntValue(const T &x) {
   if (const auto *expr{GetExpr(x)}) {

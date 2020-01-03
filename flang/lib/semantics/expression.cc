@@ -694,7 +694,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::NamedConstant &n) {
   if (MaybeExpr value{Analyze(n.v)}) {
-    Expr<SomeType> folded{Fold(GetFoldingContext(), std::move(*value))};
+    Expr<SomeType> folded{Fold(std::move(*value))};
     if (IsConstantExpr(folded)) {
       return {folded};
     }
@@ -1459,7 +1459,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         if (IsPointer(*symbol)) {
           CheckPointerAssignment(
               GetFoldingContext(), *symbol, *value);  // C7104, C7105
-          result.Add(*symbol, Fold(GetFoldingContext(), std::move(*value)));
+          result.Add(*symbol, Fold(std::move(*value)));
         } else if (MaybeExpr converted{
                        ConvertToType(*symbol, std::move(*value))}) {
           result.Add(*symbol, std::move(*converted));
@@ -1912,11 +1912,54 @@ const Assignment *ExpressionAnalyzer::Analyze(const parser::AssignmentStmt &x) {
       std::optional<ProcedureRef> procRef{analyzer.TryDefinedAssignment()};
       x.typedAssignment.reset(new GenericAssignmentWrapper{procRef
               ? Assignment{std::move(*procRef)}
-              : Assignment{Fold(foldingContext_, analyzer.MoveExpr(0)),
-                    Fold(foldingContext_, analyzer.MoveExpr(1))}});
+              : Assignment{Assignment::IntrinsicAssignment{
+                    Fold(analyzer.MoveExpr(0)), Fold(analyzer.MoveExpr(1))}}});
     }
   }
   return x.typedAssignment ? &x.typedAssignment->v : nullptr;
+}
+
+const Assignment *ExpressionAnalyzer::Analyze(
+    const parser::PointerAssignmentStmt &x) {
+  MaybeExpr lhs{Analyze(std::get<parser::DataRef>(x.t))};
+  MaybeExpr rhs{Analyze(std::get<parser::Expr>(x.t))};
+  if (!lhs || !rhs) {
+    return nullptr;
+  }
+  Assignment::PointerAssignment assignment{
+      Fold(std::move(*lhs)), Fold(std::move(*rhs))};
+  std::visit(
+      common::visitors{
+          [&](const std::list<parser::BoundsRemapping> &list) {
+            if (!list.empty()) {
+              Assignment::PointerAssignment::BoundsRemapping bounds;
+              for (const auto &elem : list) {
+                auto lower{AsSubscript(Analyze(std::get<0>(elem.t)))};
+                auto upper{AsSubscript(Analyze(std::get<0>(elem.t)))};
+                if (lower && upper) {
+                  bounds.emplace_back(
+                      Fold(std::move(*lower)), Fold(std::move(*upper)));
+                }
+              }
+              assignment.bounds = bounds;
+            }
+          },
+          [&](const std::list<parser::BoundsSpec> &list) {
+            if (!list.empty()) {
+              Assignment::PointerAssignment::BoundsSpec bounds;
+              for (const auto &bound : list) {
+                if (auto lower{AsSubscript(Analyze(bound.v))}) {
+                  bounds.emplace_back(Fold(std::move(*lower)));
+                }
+              }
+              assignment.bounds = bounds;
+            }
+          },
+      },
+      std::get<parser::PointerAssignmentStmt::Bounds>(x.t).u);
+  x.typedAssignment.reset(
+      new GenericAssignmentWrapper{Assignment{std::move(assignment)}});
+  return &x.typedAssignment->v;
 }
 
 static bool IsExternalCalledImplicitly(
@@ -2291,8 +2334,7 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
       // Analyze the expression in a specified source position context for
       // better error reporting.
       auto restorer{GetContextualMessages().SetLocation(x.source)};
-      result = Analyze(x.u);
-      result = Fold(GetFoldingContext(), std::move(result));
+      result = evaluate::Fold(foldingContext_, Analyze(x.u));
     } else {
       result = Analyze(x.u);
     }
@@ -2329,11 +2371,9 @@ Expr<SubscriptInteger> ExpressionAnalyzer::AnalyzeKindSelector(
   }
   return std::visit(
       common::visitors{
-          [&](const parser::ScalarIntConstantExpr &x)
-              -> Expr<SubscriptInteger> {
+          [&](const parser::ScalarIntConstantExpr &x) {
             if (MaybeExpr kind{Analyze(x)}) {
-              Expr<SomeType> folded{
-                  Fold(GetFoldingContext(), std::move(*kind))};
+              Expr<SomeType> folded{Fold(std::move(*kind))};
               if (std::optional<std::int64_t> code{ToInt64(folded)}) {
                 if (CheckIntrinsicKind(category, *code)) {
                   return Expr<SubscriptInteger>{*code};
@@ -2344,8 +2384,7 @@ Expr<SubscriptInteger> ExpressionAnalyzer::AnalyzeKindSelector(
             }
             return Expr<SubscriptInteger>{defaultKind};
           },
-          [&](const parser::KindSelector::StarSize &x)
-              -> Expr<SubscriptInteger> {
+          [&](const parser::KindSelector::StarSize &x) {
             std::intmax_t size = x.v;
             if (!CheckIntrinsicSize(category, size)) {
               size = defaultKind;
@@ -2740,8 +2779,7 @@ std::optional<ActualArgument> ArgumentAnalyzer::AnalyzeExpr(
   if (const Symbol * assumedTypeDummy{AssumedTypeDummy(expr)}) {
     return ActualArgument{ActualArgument::AssumedType{*assumedTypeDummy}};
   } else if (MaybeExpr argExpr{context_.Analyze(expr)}) {
-    Expr<SomeType> x{Fold(context_.GetFoldingContext(), std::move(*argExpr))};
-    return ActualArgument{std::move(x)};
+    return ActualArgument{context_.Fold(std::move(*argExpr))};
   } else {
     return std::nullopt;
   }
@@ -2860,6 +2898,10 @@ void AnalyzeCallStmt(SemanticsContext &context, const parser::CallStmt &call) {
 
 const evaluate::Assignment *AnalyzeAssignmentStmt(
     SemanticsContext &context, const parser::AssignmentStmt &stmt) {
+  return evaluate::ExpressionAnalyzer{context}.Analyze(stmt);
+}
+const evaluate::Assignment *AnalyzePointerAssignmentStmt(
+    SemanticsContext &context, const parser::PointerAssignmentStmt &stmt) {
   return evaluate::ExpressionAnalyzer{context}.Analyze(stmt);
 }
 

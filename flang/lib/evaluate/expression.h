@@ -811,18 +811,27 @@ public:
 };
 
 // An assignment is either intrinsic (with lhs and rhs) or user-defined,
-// represented as a ProcedureRef.
+// represented as a ProcedureRef. A pointer assignment optionally also has
+// a bounds-spec or bounds-remapping.
 class Assignment {
 public:
-  explicit Assignment(ProcedureRef &&x) : u{std::move(x)} {}
-  Assignment(Expr<SomeType> &&lhs, Expr<SomeType> &&rhs)
-    : u{IntrinsicAssignment{std::move(lhs), std::move(rhs)}} {}
+  UNION_CONSTRUCTORS(Assignment)
   struct IntrinsicAssignment {
     Expr<SomeType> lhs;
     Expr<SomeType> rhs;
   };
-
-  std::variant<IntrinsicAssignment, ProcedureRef> u;
+  struct PointerAssignment {
+    using BoundsSpec = std::vector<Expr<SubscriptInteger>>;
+    using BoundsRemapping =
+        std::vector<std::pair<Expr<SubscriptInteger>, Expr<SubscriptInteger>>>;
+    PointerAssignment(Expr<SomeType> &&lhs, Expr<SomeType> &&rhs)
+      : lhs{std::move(lhs)}, rhs{std::move(rhs)} {}
+    Expr<SomeType> lhs;
+    Expr<SomeType> rhs;
+    std::variant<BoundsSpec, BoundsRemapping> bounds;
+  };
+  std::ostream &AsFortran(std::ostream &) const;
+  std::variant<IntrinsicAssignment, ProcedureRef, PointerAssignment> u;
 };
 
 // This wrapper class is used, by means of a forward reference with

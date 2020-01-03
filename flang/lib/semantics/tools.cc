@@ -399,6 +399,11 @@ const evaluate::Assignment *GetAssignment(const parser::AssignmentStmt &x) {
   const auto &typed{x.typedAssignment};
   return typed ? &typed->v : nullptr;
 }
+const evaluate::Assignment *GetAssignment(
+    const parser::PointerAssignmentStmt &x) {
+  const auto &typed{x.typedAssignment};
+  return typed ? &typed->v : nullptr;
+}
 
 const Symbol *FindInterface(const Symbol &symbol) {
   return std::visit(

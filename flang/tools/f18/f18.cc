@@ -172,16 +172,7 @@ static Fortran::parser::AnalyzedObjectsAsFortran asFortran{
       }
     },
     [](std::ostream &o, const Fortran::evaluate::GenericAssignmentWrapper &x) {
-      std::visit(
-          Fortran::common::visitors{
-              [&](const Fortran::evaluate::Assignment::IntrinsicAssignment &y) {
-                y.rhs.AsFortran(y.lhs.AsFortran(o) << '=');
-              },
-              [&](const Fortran::evaluate::ProcedureRef &y) {
-                y.AsFortran(o << "CALL ");
-              },
-          },
-          x.v.u);
+      x.v.AsFortran(o);
     },
     [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
       x.AsFortran(o << "CALL ");

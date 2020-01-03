@@ -766,7 +766,8 @@ protected:
       if (asFortran_ && x.typedExpr) {
         asFortran_->expr(ss, *x.typedExpr);
       }
-    } else if constexpr (std::is_same_v<T, AssignmentStmt>) {
+    } else if constexpr (std::is_same_v<T, AssignmentStmt> ||
+        std::is_same_v<T, PointerAssignmentStmt>) {
       if (asFortran_ && x.typedAssignment) {
         asFortran_->assignment(ss, *x.typedAssignment);
       }
