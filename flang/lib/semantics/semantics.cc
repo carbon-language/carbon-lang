@@ -209,7 +209,7 @@ void SemanticsContext::CheckDoVarRedefine(const parser::CharBlock &location,
     if (IsActiveDoVariable(*root)) {
       parser::CharBlock doLoc{GetDoVariableLocation(*root)};
       CHECK(doLoc != parser::CharBlock{});
-      Say(location, message, root->name())
+      Say(location, std::move(message), root->name())
           .Attach(doLoc, "Enclosing DO construct"_en_US);
     }
   }
@@ -217,14 +217,14 @@ void SemanticsContext::CheckDoVarRedefine(const parser::CharBlock &location,
 
 void SemanticsContext::WarnDoVarRedefine(
     const parser::CharBlock &location, const Symbol &variable) {
-  CheckDoVarRedefine(location, variable,
-      std::move("Possible redefinition of DO variable '%s'"_en_US));
+  CheckDoVarRedefine(
+      location, variable, "Possible redefinition of DO variable '%s'"_en_US);
 }
 
 void SemanticsContext::CheckDoVarRedefine(
     const parser::CharBlock &location, const Symbol &variable) {
-  CheckDoVarRedefine(location, variable,
-      std::move("Cannot redefine DO variable '%s'"_err_en_US));
+  CheckDoVarRedefine(
+      location, variable, "Cannot redefine DO variable '%s'"_err_en_US);
 }
 
 void SemanticsContext::CheckDoVarRedefine(const parser::Variable &variable) {
