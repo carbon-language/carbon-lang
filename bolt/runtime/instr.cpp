@@ -1742,7 +1742,7 @@ extern "C" __attribute((naked)) void __bolt_instr_start()
   __asm__ __volatile__(SAVE_ALL
                        "call __bolt_instr_setup\n"
                        RESTORE_ALL
-                       "jmp *__bolt_instr_init_ptr\n"
+                       "jmp *__bolt_instr_init_ptr(%%rip)\n"
                        :::);
 }
 
