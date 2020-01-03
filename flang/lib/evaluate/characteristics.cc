@@ -693,7 +693,7 @@ std::optional<Procedure> Procedure::Characterize(
     const ProcedureDesignator &proc, const IntrinsicProcTable &intrinsics) {
   if (const auto *symbol{proc.GetSymbol()}) {
     if (auto result{characteristics::Procedure::Characterize(
-            symbol->GetUltimate(), intrinsics)}) {
+            ResolveAssociations(*symbol), intrinsics)}) {
       return result;
     }
   } else if (const auto *intrinsic{proc.GetSpecificIntrinsic()}) {

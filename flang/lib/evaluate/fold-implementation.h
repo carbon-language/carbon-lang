@@ -67,6 +67,9 @@ private:
   FoldingContext &context_;
 };
 
+std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
+    FoldingContext &, Subscript &, const NamedEntity &, int dim);
+
 // FoldOperation() rewrites expression tree nodes.
 // If there is any possibility that the rewritten node will
 // not have the same representation type, the result of
@@ -123,7 +126,7 @@ Expr<SomeDerived> FoldOperation(FoldingContext &, StructureConstructor &&);
 
 template<typename T>
 std::optional<Expr<T>> Folder<T>::GetNamedConstantValue(const Symbol &symbol0) {
-  const Symbol &symbol{ResolveAssociations(symbol0).GetUltimate()};
+  const Symbol &symbol{ResolveAssociations(symbol0)};
   if (IsNamedConstant(symbol)) {
     if (const auto *object{
             symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
@@ -214,50 +217,6 @@ std::optional<Constant<T>> Folder<T>::GetFoldedNamedConstantValue(
   return std::nullopt;
 }
 
-static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
-    FoldingContext &context, Subscript &ss, const NamedEntity &base, int dim) {
-  ss = FoldOperation(context, std::move(ss));
-  return std::visit(
-      common::visitors{
-          [](IndirectSubscriptIntegerExpr &expr)
-              -> std::optional<Constant<SubscriptInteger>> {
-            if (auto constant{
-                    GetScalarConstantValue<SubscriptInteger>(expr.value())}) {
-              return Constant<SubscriptInteger>{*constant};
-            } else {
-              return std::nullopt;
-            }
-          },
-          [&](Triplet &triplet) -> std::optional<Constant<SubscriptInteger>> {
-            auto lower{triplet.lower()}, upper{triplet.upper()};
-            std::optional<ConstantSubscript> stride{ToInt64(triplet.stride())};
-            if (!lower) {
-              lower = GetLowerBound(context, base, dim);
-            }
-            if (!upper) {
-              upper =
-                  ComputeUpperBound(context, GetLowerBound(context, base, dim),
-                      GetExtent(context, base, dim));
-            }
-            auto lbi{ToInt64(lower)}, ubi{ToInt64(upper)};
-            if (lbi && ubi && stride && *stride != 0) {
-              std::vector<SubscriptInteger::Scalar> values;
-              while ((*stride > 0 && *lbi <= *ubi) ||
-                  (*stride < 0 && *lbi >= *ubi)) {
-                values.emplace_back(*lbi);
-                *lbi += *stride;
-              }
-              return Constant<SubscriptInteger>{std::move(values),
-                  ConstantSubscripts{
-                      static_cast<ConstantSubscript>(values.size())}};
-            } else {
-              return std::nullopt;
-            }
-          },
-      },
-      ss.u);
-}
-
 template<typename T>
 std::optional<Constant<T>> Folder<T>::Folding(ArrayRef &aRef) {
   std::vector<Constant<SubscriptInteger>> subscripts;
@@ -307,11 +266,11 @@ std::optional<Constant<T>> Folder<T>::ApplySubscripts(const Constant<T> &array,
         at[j] = subscripts[j].GetScalarValue().value().ToInt64();
       } else {
         CHECK(k < GetRank(resultShape));
-        tmp[0] = ssLB[j] + ssAt[j];
+        tmp[0] = ssLB.at(k) + ssAt.at(k);
         at[j] = subscripts[j].At(tmp).ToInt64();
         if (increment) {
-          if (++ssAt[j] == resultShape[k]) {
-            ssAt[j] = 0;
+          if (++ssAt[k] == resultShape[k]) {
+            ssAt[k] = 0;
           } else {
             increment = false;
           }

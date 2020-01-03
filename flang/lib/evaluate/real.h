@@ -61,7 +61,7 @@ public:
     return word_ == that.word_;
   }
 
-  // TODO: ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION,
+  // TODO: DIM, MAX, MIN, DPROD, FRACTION,
   // INT/NINT, NEAREST, OUT_OF_RANGE,
   // RRSPACING/SPACING, SCALE, SET_EXPONENT
 
@@ -205,85 +205,39 @@ public:
     return result;
   }
 
-  // Truncation to integer in same real format.
-  constexpr ValueWithRealFlags<Real> AINT() const {
-    ValueWithRealFlags<Real> result{*this};
-    if (IsNotANumber()) {
-      result.flags.set(RealFlag::InvalidArgument);
-      result.value = NotANumber();
-    } else if (IsInfinite()) {
-      result.flags.set(RealFlag::Overflow);
-    } else {
-      int exponent{Exponent()};
-      if (exponent < exponentBias) {  // |x| < 1.0
-        result.value.Normalize(IsNegative(), 0, Fraction{});  // +/-0.0
-      } else {
-        constexpr int noClipExponent{exponentBias + precision - 1};
-        if (int clip = noClipExponent - exponent; clip > 0) {
-          result.value.word_ = result.value.word_.IAND(Word::MASKR(clip).NOT());
-        }
-      }
-    }
-    return result;
-  }
+  // Conversion to integer in the same real format (AINT(), ANINT())
+  ValueWithRealFlags<Real> ToWholeNumber(
+      RoundingMode = RoundingMode::ToZero) const;
 
-  template<typename INT> constexpr ValueWithRealFlags<INT> ToInteger() const {
+  // Conversion to an integer (INT(), NINT(), FLOOR(), CEILING())
+  template<typename INT>
+  constexpr ValueWithRealFlags<INT> ToInteger(
+      RoundingMode mode = RoundingMode::ToZero) const {
     ValueWithRealFlags<INT> result;
     if (IsNotANumber()) {
       result.flags.set(RealFlag::InvalidArgument);
       result.value = result.value.HUGE();
       return result;
     }
-    bool isNegative{IsNegative()};
-    int exponent{Exponent()};
-    Fraction fraction{GetFraction()};
-    if (exponent >= maxExponent ||  // +/-Inf
-        exponent >= exponentBias + result.value.bits) {  // too big
-      if (isNegative) {
-        result.value = result.value.MASKL(1);  // most negative integer value
-      } else {
-        result.value = result.value.HUGE();  // most positive integer value
+    ValueWithRealFlags<Real> intPart{ToWholeNumber(mode)};
+    int exponent{intPart.value.Exponent()};
+    result.flags.set(
+        RealFlag::Overflow, exponent >= exponentBias + result.value.bits);
+    result.flags |= intPart.flags;
+    int shift{exponent - exponentBias - precision + 1};  // positive -> left
+    result.value =
+        result.value.ConvertUnsigned(intPart.value.GetFraction().SHIFTR(-shift))
+            .value.SHIFTL(shift);
+    if (IsSignBitSet()) {
+      auto negated{result.value.Negate()};
+      result.value = negated.value;
+      if (negated.overflow) {
+        result.flags.set(RealFlag::Overflow);
       }
-      result.flags.set(RealFlag::Overflow);
-    } else if (exponent < exponentBias) {  // |x| < 1.0 -> 0
-      if (!fraction.IsZero()) {
-        result.flags.set(RealFlag::Underflow);
-        result.flags.set(RealFlag::Inexact);
-      }
-    } else {
-      // finite number |x| >= 1.0
-      constexpr int noShiftExponent{exponentBias + precision - 1};
-      if (exponent < noShiftExponent) {
-        int rshift = noShiftExponent - exponent;
-        if (!fraction.IBITS(0, rshift).IsZero()) {
-          result.flags.set(RealFlag::Inexact);
-        }
-        auto truncated{result.value.ConvertUnsigned(fraction.SHIFTR(rshift))};
-        if (truncated.overflow) {
-          result.flags.set(RealFlag::Overflow);
-        } else {
-          result.value = truncated.value;
-        }
-      } else {
-        int lshift = exponent - noShiftExponent;
-        if (lshift + precision >= result.value.bits) {
-          result.flags.set(RealFlag::Overflow);
-        } else {
-          result.value =
-              result.value.ConvertUnsigned(fraction).value.SHIFTL(lshift);
-        }
-      }
-      if (result.flags.test(RealFlag::Overflow)) {
-        result.value = result.value.HUGE();
-      } else if (isNegative) {
-        auto negated{result.value.Negate()};
-        if (negated.overflow) {
-          result.flags.set(RealFlag::Overflow);
-          result.value = result.value.HUGE();
-        } else {
-          result.value = negated.value;
-        }
-      }
+    }
+    if (result.flags.test(RealFlag::Overflow)) {
+      result.value =
+          IsSignBitSet() ? result.value.MASKL(1) : result.value.HUGE();
     }
     return result;
   }

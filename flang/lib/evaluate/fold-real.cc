@@ -87,10 +87,14 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
   } else if (name == "aimag") {
     return FoldElementalIntrinsic<T, ComplexT>(
         context, std::move(funcRef), &Scalar<ComplexT>::AIMAG);
-  } else if (name == "aint") {
+  } else if (name == "aint" || name == "anint") {
+    // ANINT rounds ties away from zero, not to even
+    RoundingMode mode{
+        name == "aint" ? RoundingMode::ToZero : RoundingMode::TiesAwayFromZero};
     return FoldElementalIntrinsic<T, T>(context, std::move(funcRef),
-        ScalarFunc<T, T>([&name, &context](const Scalar<T> &x) -> Scalar<T> {
-          ValueWithRealFlags<Scalar<T>> y{x.AINT()};
+        ScalarFunc<T, T>([&name, &context, mode](
+                             const Scalar<T> &x) -> Scalar<T> {
+          ValueWithRealFlags<Scalar<T>> y{x.ToWholeNumber(mode)};
           if (y.flags.test(RealFlag::Overflow)) {
             context.messages().Say("%s intrinsic folding overflow"_en_US, name);
           }
@@ -125,7 +129,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
   } else if (name == "tiny") {
     return Expr<T>{Scalar<T>::TINY()};
   }
-  // TODO: anint, cshift, dim, dot_product, eoshift, fraction, matmul,
+  // TODO: cshift, dim, dot_product, eoshift, fraction, matmul,
   // maxval, minval, modulo, nearest, norm2, pack, product,
   // reduce, rrspacing, scale, set_exponent, spacing, spread,
   // sum, transfer, transpose, unpack, bessel_jn (transformational) and

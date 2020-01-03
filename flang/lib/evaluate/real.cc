@@ -262,6 +262,32 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Divide(
 }
 
 template<typename W, int P, bool IM>
+ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::ToWholeNumber(
+    RoundingMode mode) const {
+  ValueWithRealFlags<Real> result{*this};
+  if (IsNotANumber()) {
+    result.flags.set(RealFlag::InvalidArgument);
+    result.value = NotANumber();
+  } else if (IsInfinite()) {
+    result.flags.set(RealFlag::Overflow);
+  } else {
+    constexpr int noClipExponent{exponentBias + precision - 1};
+    if (Exponent() < noClipExponent) {
+      Real adjust;  // ABS(EPSILON(adjust)) == 0.5
+      adjust.Normalize(IsSignBitSet(), noClipExponent, Fraction::MASKL(1));
+      // Compute ival=(*this + adjust), losing any fractional bits; keep flags
+      result = Add(adjust, Rounding{mode});
+      result.flags.reset(RealFlag::Inexact);  // result *is* exact
+      // Return (ival-adjust) with original sign in case we've generated a zero.
+      result.value =
+          result.value.Subtract(adjust, Rounding{RoundingMode::ToZero})
+              .value.SIGN(*this);
+    }
+  }
+  return result;
+}
+
+template<typename W, int P, bool IM>
 RealFlags Real<W, P, IM>::Normalize(bool negative, int exponent,
     const Fraction &fraction, Rounding rounding, RoundingBits *roundingBits) {
   int lshift{fraction.LEADZ()};

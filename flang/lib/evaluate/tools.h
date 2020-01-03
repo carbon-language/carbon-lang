@@ -803,7 +803,7 @@ template<typename A> SymbolVector GetSymbolVector(const A &x) {
 // when none is found.
 const Symbol *GetLastTarget(const SymbolVector &);
 
-// Resolves any whole ASSOCIATE(B=>A) associations
+// Resolves any whole ASSOCIATE(B=>A) associations, then returns GetUltimate()
 const Symbol &ResolveAssociations(const Symbol &);
 
 // Collects all of the Symbols in an expression

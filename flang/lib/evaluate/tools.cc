@@ -739,7 +739,7 @@ const Symbol &ResolveAssociations(const Symbol &symbol) {
       return ResolveAssociations(*nested);
     }
   }
-  return symbol;
+  return symbol.GetUltimate();
 }
 
 struct CollectSymbolsHelper

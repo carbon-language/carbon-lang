@@ -154,6 +154,28 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
         }));
   } else if (name == "bit_size") {
     return Expr<T>{Scalar<T>::bits};
+  } else if (name == "ceiling" || name == "floor" || name == "nint") {
+    if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+      // NINT rounds ties away from zero, not to even
+      RoundingMode mode{name == "ceiling"
+              ? RoundingMode::Up
+              : name == "floor" ? RoundingMode::Down
+                                : RoundingMode::TiesAwayFromZero};
+      return std::visit(
+          [&](const auto &kx) {
+            using TR = ResultType<decltype(kx)>;
+            return FoldElementalIntrinsic<T, TR>(context, std::move(funcRef),
+                ScalarFunc<T, TR>([&](const Scalar<TR> &x) {
+                  auto y{x.template ToInteger<Scalar<T>>(mode)};
+                  if (y.flags.test(RealFlag::Overflow)) {
+                    context.messages().Say(
+                        "%s intrinsic folding overflow"_en_US, name);
+                  }
+                  return y.value;
+                }));
+          },
+          cx->u);
+    }
   } else if (name == "count") {
     if (!args[1]) {  // TODO: COUNT(x,DIM=d)
       if (const auto *constant{UnwrapConstantValue<LogicalResult>(args[0])}) {
@@ -503,10 +525,10 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldIntrinsicFunction(
     return UBOUND(context, std::move(funcRef));
   }
   // TODO:
-  // ceiling, cshift, dot_product, eoshift,
-  // findloc, floor, iall, iany, iparity, ibits, image_status, index, ishftc,
+  // cshift, dot_product, eoshift,
+  // findloc, iall, iany, iparity, ibits, image_status, index, ishftc,
   // len_trim, matmul, maxloc, maxval,
-  // minloc, minval, nint, not, pack, product, reduce,
+  // minloc, minval, not, pack, product, reduce,
   // scan, sign, spread, sum, transfer, transpose, unpack, verify
   return Expr<T>{std::move(funcRef)};
 }

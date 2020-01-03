@@ -161,7 +161,8 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
         TEST(vr.value.Compare(check.value) == Relation::Equal)(ldesc);
       }
     }
-    TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
+    TEST(vr.value.ToWholeNumber().value.Compare(vr.value) == Relation::Equal)
+    (ldesc);
     ix = ix.Negate().value;
     TEST(ix.IsNegative())(ldesc);
     x = -x;
@@ -185,7 +186,8 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       MATCH(x, ivf.value.ToUInt64())(ldesc);
       MATCH(nx, ivf.value.ToInt64())(ldesc);
     }
-    TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
+    TEST(vr.value.ToWholeNumber().value.Compare(vr.value) == Relation::Equal)
+    (ldesc);
   }
 }
 
@@ -368,7 +370,7 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
 
     // unary operations
     {
-      ValueWithRealFlags<REAL> aint{x.AINT()};
+      ValueWithRealFlags<REAL> aint{x.ToWholeNumber()};
 #ifndef __clang__  // broken and also slow
       fpenv.ClearFlags();
 #endif
