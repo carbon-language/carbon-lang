@@ -615,8 +615,13 @@ int main(int argc, char *const argv[]) {
       driver.pgf90Args.push_back(
           "-Mbackslash");  // yes, this *disables* them in pgf90
     }
+    Fortran::parser::useHexadecimalEscapeSequences = false;
   } else {
-    // TODO: equivalents for other Fortran compilers
+    if (options.features.IsEnabled(
+            Fortran::common::LanguageFeature::BackslashEscapes)) {
+      driver.pgf90Args.push_back("-fbackslash");
+    }
+    Fortran::parser::useHexadecimalEscapeSequences = true;
   }
 
   if (!anyFiles) {

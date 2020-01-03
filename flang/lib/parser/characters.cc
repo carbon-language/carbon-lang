@@ -15,6 +15,8 @@
 
 namespace Fortran::parser {
 
+bool useHexadecimalEscapeSequences{false};
+
 int UTF_8CharacterBytes(const char *p) {
   if ((*p & 0x80) == 0) {
     return 1;

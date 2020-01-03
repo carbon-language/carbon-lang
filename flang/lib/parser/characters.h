@@ -19,6 +19,8 @@
 
 namespace Fortran::parser {
 
+extern bool useHexadecimalEscapeSequences;
+
 // We can easily support Fortran program source in any character
 // set whose first 128 code points correspond to ASCII codes 0-127 (ISO/IEC646).
 // The specific encodings that we can handle include:
@@ -155,27 +157,37 @@ extern template std::string EncodeString<Encoding::UTF_8, std::u32string>(
 template<typename NORMAL, typename INSERTED>
 void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
     bool backslashEscapes = true, Encoding encoding = Encoding::UTF_8) {
-  auto emitOneChar{[&](std::uint8_t ch) {
-    if (ch < ' ' || (backslashEscapes && (ch == '\\' || ch >= 0x7f))) {
-      insert('\\');
+  auto emitOneByte{[&](std::uint8_t ch) {
+    if (backslashEscapes && (ch < ' ' || ch >= 0x7f || ch == '\\')) {
       if (std::optional<char> escape{BackslashEscapeChar(ch)}) {
+        insert('\\');
         emit(*escape);
+      } else if (useHexadecimalEscapeSequences) {
+        insert('\\');
+        insert('x');
+        int top{ch >> 4}, bottom{ch & 0xf};
+        insert(top > 9 ? 'a' + top - 10 : '0' + top);
+        insert(bottom > 9 ? 'a' + bottom - 10 : '0' + bottom);
       } else {
         // octal escape sequence; always emit 3 digits to avoid ambiguity
+        insert('\\');
         insert('0' + (ch >> 6));
         insert('0' + ((ch >> 3) & 7));
         insert('0' + (ch & 7));
       }
+    } else if (ch == '\n') {  // always escape newlines
+      insert('\\');
+      insert('n');
     } else {
       emit(ch);
     }
   }};
   if (ch <= 0x7f) {
-    emitOneChar(ch);
+    emitOneByte(ch);
   } else {
     EncodedCharacter encoded{EncodeCharacter(encoding, ch)};
     for (int j{0}; j < encoded.bytes; ++j) {
-      emitOneChar(encoded.buffer[j]);
+      emitOneByte(encoded.buffer[j]);
     }
   }
 }
