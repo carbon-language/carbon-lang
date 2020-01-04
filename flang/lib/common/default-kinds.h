@@ -27,11 +27,13 @@ class IntrinsicTypeDefaultKinds {
 public:
   IntrinsicTypeDefaultKinds();
   int subscriptIntegerKind() const { return subscriptIntegerKind_; }
+  int sizeIntegerKind() const { return sizeIntegerKind_; }
   int doublePrecisionKind() const { return doublePrecisionKind_; }
   int quadPrecisionKind() const { return quadPrecisionKind_; }
 
   IntrinsicTypeDefaultKinds &set_defaultIntegerKind(int);
   IntrinsicTypeDefaultKinds &set_subscriptIntegerKind(int);
+  IntrinsicTypeDefaultKinds &set_sizeIntegerKind(int);
   IntrinsicTypeDefaultKinds &set_defaultRealKind(int);
   IntrinsicTypeDefaultKinds &set_doublePrecisionKind(int);
   IntrinsicTypeDefaultKinds &set_quadPrecisionKind(int);
@@ -48,6 +50,7 @@ private:
   // comprise two default REAL components.
   int defaultIntegerKind_{4};
   int subscriptIntegerKind_{8};
+  int sizeIntegerKind_{4};  // SIZE(), UBOUND(), &c. default KIND=
   int defaultRealKind_{defaultIntegerKind_};
   int doublePrecisionKind_{2 * defaultRealKind_};
   int quadPrecisionKind_{2 * doublePrecisionKind_};

@@ -16,7 +16,7 @@ contains
  end function
 end module
 
-! RUN: ${F18} -fget-symbols-sources -fparse-only -fdebug-semantics %s 2>&1 | ${FileCheck} %s
+! RUN: ${F18} -fget-symbols-sources -fparse-only %s 2>&1 | ${FileCheck} %s
 ! CHECK-ONCE:mm1:.*getsymbols01.f90, 3, 8-11
 ! CHECK-ONCE:f:.*getsymbols01.f90, 13, 26-27
 ! CHECK-ONCE:s:.*getsymbols01.f90, 6, 18-19

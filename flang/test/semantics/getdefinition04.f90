@@ -7,5 +7,5 @@ program main
   x = y
 end program
 
-! RUN: ${F18} -fget-definition 7 3 4 -fparse-only -fdebug-semantics %s | ${FileCheck} %s
+! RUN: ${F18} -fget-definition 7 3 4 -fparse-only %s | ${FileCheck} %s
 ! CHECK:x:.*getdefinition04.f90, 4, 14-15

@@ -79,6 +79,7 @@ ENUM_CLASS(KindCode, none, defaultIntegerKind,
     dimArg,  // this argument is DIM=
     likeMultiply,  // for DOT_PRODUCT and MATMUL
     subscript,  // address-sized integer
+    size,  // default KIND= for SIZE(), UBOUND, &c.
     addressable,  // for PRESENT(), &c.; anything (incl. procedure) but BOZ
 )
 
@@ -181,7 +182,7 @@ ENUM_CLASS(Rank,
 ENUM_CLASS(Optionality, required, optional,
     defaultsToSameKind,  // for MatchingDefaultKIND
     defaultsToDefaultForResult,  // for DefaultingKIND
-    defaultsToSubscriptKind,  // for SubscriptDefaultKIND
+    defaultsToSizeKind,  // for SizeDefaultKIND
     repeats,  // for MAX/MIN and their several variants
 )
 
@@ -205,11 +206,13 @@ static constexpr IntrinsicDummyArgument DefaultingKIND{"kind",
 static constexpr IntrinsicDummyArgument MatchingDefaultKIND{"kind",
     {IntType, KindCode::kindArg}, Rank::scalar,
     Optionality::defaultsToSameKind};
-// SubscriptDefaultKind is a KIND= argument whose default value is
-// the kind of INTEGER used for address calculations.
-static constexpr IntrinsicDummyArgument SubscriptDefaultKIND{"kind",
+// SizeDefaultKind is a KIND= argument whose default value should be
+// the kind of INTEGER used for address calculations, and can be
+// set so with a compiler flag; but the standard mandates the
+// kind of default INTEGER.
+static constexpr IntrinsicDummyArgument SizeDefaultKIND{"kind",
     {IntType, KindCode::kindArg}, Rank::scalar,
-    Optionality::defaultsToSubscriptKind};
+    Optionality::defaultsToSizeKind};
 static constexpr IntrinsicDummyArgument RequiredDIM{
     "dim", {IntType, KindCode::dimArg}, Rank::scalar, Optionality::required};
 static constexpr IntrinsicDummyArgument OptionalDIM{
@@ -386,35 +389,33 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"findloc",
         {{"array", AnyNumeric, Rank::array},
             {"value", AnyNumeric, Rank::scalar}, RequiredDIM, OptionalMASK,
-            SubscriptDefaultKIND,
+            SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::dimRemoved},
     {"findloc",
         {{"array", AnyNumeric, Rank::array},
-            {"value", AnyNumeric, Rank::scalar}, OptionalMASK,
-            SubscriptDefaultKIND,
+            {"value", AnyNumeric, Rank::scalar}, OptionalMASK, SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::vector},
     {"findloc",
         {{"array", SameChar, Rank::array}, {"value", SameChar, Rank::scalar},
-            RequiredDIM, OptionalMASK, SubscriptDefaultKIND,
+            RequiredDIM, OptionalMASK, SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::dimRemoved},
     {"findloc",
         {{"array", SameChar, Rank::array}, {"value", SameChar, Rank::scalar},
-            OptionalMASK, SubscriptDefaultKIND,
+            OptionalMASK, SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::vector},
     {"findloc",
         {{"array", AnyLogical, Rank::array},
             {"value", AnyLogical, Rank::scalar}, RequiredDIM, OptionalMASK,
-            SubscriptDefaultKIND,
+            SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::dimRemoved},
     {"findloc",
         {{"array", AnyLogical, Rank::array},
-            {"value", AnyLogical, Rank::scalar}, OptionalMASK,
-            SubscriptDefaultKIND,
+            {"value", AnyLogical, Rank::scalar}, OptionalMASK, SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::vector},
     {"floor", {{"a", AnyReal}, DefaultingKIND}, KINDInt},
@@ -461,10 +462,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"kind", {{"x", AnyIntrinsic}}, DefaultInt},
     {"lbound",
         {{"array", AnyData, Rank::anyOrAssumedRank}, RequiredDIM,
-            SubscriptDefaultKIND},
+            SizeDefaultKIND},
         KINDInt, Rank::scalar},
-    {"lbound",
-        {{"array", AnyData, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
+    {"lbound", {{"array", AnyData, Rank::anyOrAssumedRank}, SizeDefaultKIND},
         KINDInt, Rank::vector},
     {"leadz", {{"i", AnyInt}}, DefaultInt},
     {"len", {{"string", AnyChar, Rank::anyOrAssumedRank}, DefaultingKIND},
@@ -518,7 +518,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         Rank::scalar},
     {"maxloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
-            SubscriptDefaultKIND,
+            SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::dimReduced},
     {"maxval",
@@ -546,7 +546,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         Rank::scalar},
     {"minloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
-            SubscriptDefaultKIND,
+            SizeDefaultKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::dimReduced},
     {"minval",
@@ -642,8 +642,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"radix", AnyInt, Rank::scalar}},
         DefaultInt, Rank::scalar},
     {"set_exponent", {{"x", SameReal}, {"i", AnyInt}}, SameReal},
-    {"shape",
-        {{"source", AnyData, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
+    {"shape", {{"source", AnyData, Rank::anyOrAssumedRank}, SizeDefaultKIND},
         KINDInt, Rank::vector},
     {"shifta", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
     {"shiftl", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
@@ -654,7 +653,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"sinh", {{"x", SameFloating}}, SameFloating},
     {"size",
         {{"array", AnyData, Rank::anyOrAssumedRank}, OptionalDIM,
-            SubscriptDefaultKIND},
+            SizeDefaultKIND},
         KINDInt, Rank::scalar},
     {"spacing", {{"x", SameReal}}, SameReal},
     {"spread",
@@ -662,9 +661,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"ncopies", AnyInt, Rank::scalar}},
         SameType, Rank::rankPlus1},
     {"sqrt", {{"x", SameFloating}}, SameFloating},
-    {"storage_size",
-        {{"a", AnyData, Rank::anyOrAssumedRank}, SubscriptDefaultKIND}, KINDInt,
-        Rank::scalar},
+    {"storage_size", {{"a", AnyData, Rank::anyOrAssumedRank}, SizeDefaultKIND},
+        KINDInt, Rank::scalar},
     {"sum", {{"array", SameNumeric, Rank::array}, OptionalDIM, OptionalMASK},
         SameNumeric, Rank::dimReduced},
     {"tan", {{"x", SameFloating}}, SameFloating},
@@ -687,10 +685,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"trim", {{"string", SameChar, Rank::scalar}}, SameChar, Rank::scalar},
     {"ubound",
         {{"array", AnyData, Rank::anyOrAssumedRank}, RequiredDIM,
-            SubscriptDefaultKIND},
+            SizeDefaultKIND},
         KINDInt, Rank::scalar},
-    {"ubound",
-        {{"array", AnyData, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
+    {"ubound", {{"array", AnyData, Rank::anyOrAssumedRank}, SizeDefaultKIND},
         KINDInt, Rank::vector},
     {"unpack",
         {{"vector", SameType, Rank::vector}, {"mask", AnyLogical, Rank::array},
@@ -854,9 +851,9 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"idnint", {{"a", DoublePrecision}}, DefaultInt}, "nint"},
     {{"ifix", {{"a", AnyReal}}, DefaultInt}, "int", true},
     {{"index", {{"string", DefaultChar}, {"substring", DefaultChar}},
-        SubscriptInt}},
+        DefaultInt}},
     {{"isign", {{"a", DefaultInt}, {"b", DefaultInt}}, DefaultInt}, "sign"},
-    {{"len", {{"string", DefaultChar, Rank::anyOrAssumedRank}}, SubscriptInt,
+    {{"len", {{"string", DefaultChar, Rank::anyOrAssumedRank}}, DefaultInt,
         Rank::scalar}},
     {{"lge", {{"string_a", DefaultChar}, {"string_b", DefaultChar}},
         DefaultLogical}},
@@ -1348,11 +1345,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       } else if (kindDummyArg->optionality == Optionality::defaultsToSameKind) {
         CHECK(sameArg);
         resultType = *sameArg->GetType();
-      } else if (kindDummyArg->optionality ==
-          Optionality::defaultsToSubscriptKind) {
+      } else if (kindDummyArg->optionality == Optionality::defaultsToSizeKind) {
         CHECK(*category == TypeCategory::Integer);
         resultType =
-            DynamicType{TypeCategory::Integer, defaults.subscriptIntegerKind()};
+            DynamicType{TypeCategory::Integer, defaults.sizeIntegerKind()};
       } else {
         CHECK(kindDummyArg->optionality ==
             Optionality::defaultsToDefaultForResult);
@@ -1371,6 +1367,12 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       CHECK(*category == TypeCategory::Integer);
       resultType =
           DynamicType{TypeCategory::Integer, defaults.subscriptIntegerKind()};
+      break;
+    case KindCode::size:
+      CHECK(result.categorySet == IntType);
+      CHECK(*category == TypeCategory::Integer);
+      resultType =
+          DynamicType{TypeCategory::Integer, defaults.sizeIntegerKind()};
       break;
     case KindCode::typeless:
     case KindCode::teamType:
@@ -1711,12 +1713,20 @@ IntrinsicProcTable::Implementation::HandleC_F_Pointer(
         context.messages().Say(
             "SHAPE= argument to C_F_POINTER() must appear when FPTR= is an array"_err_en_US);
       }
-      characteristics::DummyDataObject shape{characteristics::TypeAndShape{
-          DynamicType{TypeCategory::Integer, defaults_.subscriptIntegerKind()},
-          1}};
-      shape.intent = common::Intent::In;
-      shape.attrs.set(characteristics::DummyDataObject::Attr::Optional);
-      dummies.emplace_back("shape"s, std::move(shape));
+      if (arguments[2]) {
+        DynamicType shapeType{
+            TypeCategory::Integer, defaults_.sizeIntegerKind()};
+        if (auto type{arguments[2]->GetType()}) {
+          if (type->category() == TypeCategory::Integer) {
+            shapeType = *type;
+          }
+        }
+        characteristics::DummyDataObject shape{
+            characteristics::TypeAndShape{shapeType, 1}};
+        shape.intent = common::Intent::In;
+        shape.attrs.set(characteristics::DummyDataObject::Attr::Optional);
+        dummies.emplace_back("shape"s, std::move(shape));
+      }
     }
   }
   if (dummies.size() == 3) {

@@ -94,7 +94,7 @@ struct DriverOptions {
   bool dumpParseTree{false};
   bool dumpSymbols{false};
   bool debugResolveNames{false};
-  bool debugSemantics{false};
+  bool debugNoSemantics{false};
   bool measureTree{false};
   bool unparseTypedExprsToPGF90{false};
   std::vector<std::string> pgf90Args;
@@ -241,10 +241,9 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (driver.measureTree) {
     MeasureParseTree(parseTree);
   }
-  // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
-  if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
-      driver.dumpUnparseWithSymbols || driver.getDefinition ||
-      driver.getSymbolsSources) {
+  if (!driver.debugNoSemantics || driver.debugResolveNames ||
+      driver.dumpSymbols || driver.dumpUnparseWithSymbols ||
+      driver.getDefinition || driver.getSymbolsSources) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
@@ -481,8 +480,8 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-fdebug-instrumented-parse") {
       options.instrumentedParse = true;
     } else if (arg == "-fdebug-semantics") {
-      // TODO: Enable by default once basic tests pass
-      driver.debugSemantics = true;
+    } else if (arg == "-fdebug-no-semantics") {
+      driver.debugNoSemantics = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
     } else if (arg == "-funparse-with-symbols") {
@@ -512,10 +511,13 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-i8" || arg == "-fdefault-integer-8") {
       defaultKinds.set_defaultIntegerKind(8);
       defaultKinds.set_subscriptIntegerKind(8);
+      defaultKinds.set_sizeIntegerKind(8);
     } else if (arg == "-Mlargearray") {
-      defaultKinds.set_subscriptIntegerKind(8);
     } else if (arg == "-Mnolargearray") {
-      defaultKinds.set_subscriptIntegerKind(4);
+    } else if (arg == "-flarge-sizes") {
+      defaultKinds.set_sizeIntegerKind(8);
+    } else if (arg == "-fno-large-sizes") {
+      defaultKinds.set_sizeIntegerKind(4);
     } else if (arg == "-module") {
       driver.moduleDirectory = args.front();
       args.pop_front();
@@ -579,7 +581,7 @@ int main(int argc, char *const argv[]) {
           << "  -fdebug-dump-symbols\n"
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
-          << "  -fdebug-semantics    perform semantic checks\n"
+          << "  -fdebug-no-semantics  disable semantic checks\n"
           << "  -fget-definition\n"
           << "  -fget-symbols-sources\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"

@@ -17,9 +17,9 @@
        end function
       end module
 
-! RUN: ${F18} -fget-definition 8 9 10 -fparse-only -fdebug-semantics %s > %t;
-! RUN: ${F18} -fget-definition 9 26 29 -fparse-only -fdebug-semantics %s >> %t;
-! RUN: ${F18} -fget-definition 16 9 10 -fparse-only -fdebug-semantics %s >> %t;
+! RUN: ${F18} -fget-definition 8 9 10 -fparse-only %s > %t;
+! RUN: ${F18} -fget-definition 9 26 29 -fparse-only %s >> %t;
+! RUN: ${F18} -fget-definition 16 9 10 -fparse-only %s >> %t;
 ! RUN: cat %t | ${FileCheck} %s
 ! CHECK:x:.*getdefinition02.f, 6, 27-28
 ! CHECK:yyy:.*getdefinition02.f, 6, 30-33

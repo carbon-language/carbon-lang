@@ -54,7 +54,7 @@ foreach(filename ${MODULES})
     set(depends ${include}/__fortran_builtins.mod)
   endif()
   add_custom_command(OUTPUT ${include}/${filename}.mod
-    COMMAND f18 -fparse-only -fdebug-semantics -I${include}
+    COMMAND f18 -fparse-only -I${include}
       ${PROJECT_SOURCE_DIR}/module/${filename}.f90
     WORKING_DIRECTORY ${include}
     DEPENDS f18 ${PROJECT_SOURCE_DIR}/module/${filename}.f90 ${depends}

@@ -1,4 +1,4 @@
-! RUN: ${F18} -fparse-only -fdebug-semantics %s
+! RUN: ${F18} -fparse-only %s
 
 module mm2a
 implicit none

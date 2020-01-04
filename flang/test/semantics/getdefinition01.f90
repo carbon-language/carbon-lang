@@ -17,10 +17,10 @@ contains
 end module
 
 ! RUN: echo %t 1>&2;
-! RUN: ${F18} -fget-definition 7 17 18 -fparse-only -fdebug-semantics %s > %t;
-! RUN: ${F18} -fget-definition 8 20 23 -fparse-only -fdebug-semantics %s >> %t;
-! RUN: ${F18} -fget-definition 15 3 4 -fparse-only -fdebug-semantics %s >> %t;
-! RUN: ${F18} -fget-definition -fparse-only -fdebug-semantics %s >> %t 2>&1;
+! RUN: ${F18} -fget-definition 7 17 18 -fparse-only %s > %t;
+! RUN: ${F18} -fget-definition 8 20 23 -fparse-only %s >> %t;
+! RUN: ${F18} -fget-definition 15 3 4 -fparse-only %s >> %t;
+! RUN: ${F18} -fget-definition -fparse-only %s >> %t 2>&1;
 ! RUN: cat %t | ${FileCheck} %s
 ! CHECK:x:.*getdefinition01.f90, 6, 21-22
 ! CHECK:yyy:.*getdefinition01.f90, 6, 24-27

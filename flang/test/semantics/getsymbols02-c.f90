@@ -7,6 +7,6 @@ PROGRAM helloworld
     i = callget5()
 ENDPROGRAM
 
-! RUN: ${F18} -fget-symbols-sources -fparse-only -fdebug-semantics %s 2>&1 | ${FileCheck} %s
+! RUN: ${F18} -fget-symbols-sources -fparse-only %s 2>&1 | ${FileCheck} %s
 ! CHECK:callget5: mm2b
 ! CHECK:get5: mm2a
