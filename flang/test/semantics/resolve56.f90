@@ -29,7 +29,7 @@
   end select
   select type(a)
     type is (integer)
-     !ERROR: Actual argument for 'x=' has bad type 'Integer(4)'
+     !ERROR: Actual argument for 'x=' has bad type 'INTEGER(4)'
      res = acos(a)
   end select
 
@@ -41,12 +41,12 @@
           type is (real)
             res = acos(a)
             res = acos(y)
-            !ERROR: Actual argument for 'x=' has bad type 'Integer(4)'
+            !ERROR: Actual argument for 'x=' has bad type 'INTEGER(4)'
             res = acos(b)
           type is (integer)
             ires = selected_int_kind(b)
             zres = acos(z)
-           !ERROR: Actual argument for 'x=' has bad type 'Integer(4)'
+           !ERROR: Actual argument for 'x=' has bad type 'INTEGER(4)'
            res = acos(a)
         end select
       end associate

@@ -18,7 +18,7 @@ end
 
 !Expect: m1.mod
 !module m1
-!integer(4),parameter::x(1_8:1_8)=[Integer(4)::4_4]
+!integer(4),parameter::x(1_8:1_8)=[INTEGER(4)::4_4]
 !integer(4),parameter::red=0_4
 !integer(4),parameter::green=1_4
 !integer(4),parameter::blue=2_4

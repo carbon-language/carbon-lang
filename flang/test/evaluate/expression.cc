@@ -19,7 +19,7 @@ template<typename A> std::string AsFortran(const A &x) {
 
 int main() {
   using DefaultIntegerExpr = Expr<Type<TypeCategory::Integer, 4>>;
-  TEST(DefaultIntegerExpr::Result::AsFortran() == "Integer(4)");
+  TEST(DefaultIntegerExpr::Result::AsFortran() == "INTEGER(4)");
   MATCH("666_4", AsFortran(DefaultIntegerExpr{666}));
   MATCH("-1_4", AsFortran(-DefaultIntegerExpr{1}));
   auto ex1{

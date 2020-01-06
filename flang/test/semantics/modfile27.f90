@@ -28,7 +28,7 @@ end module m1
 !type::t1
 !integer(4)::ia1(1_8:2_8)
 !end type
-!type(t1),parameter::t1x1(1_8:*)=[t1::t1(ia1=[Integer(4)::1_4,2_4]),t1(ia1=[Integer(4)::3_4,4_4])]
+!type(t1),parameter::t1x1(1_8:*)=[t1::t1(ia1=[INTEGER(4)::1_4,2_4]),t1(ia1=[INTEGER(4)::3_4,4_4])]
 !logical(4),parameter::t1check1=.true._4
 !logical(4),parameter::t1check2=.true._4
 !intrinsic::all
@@ -36,7 +36,7 @@ end module m1
 !type::t2
 !type(t1)::dta1(1_8:2_8)
 !end type
-!type(t2),parameter::t2x1(1_8:*)=[t2::t2(dta1=[t1::t1(ia1=[Integer(4)::1_4,2_4]),t1(ia1=[Integer(4)::3_4,4_4])]),t2(dta1=[t1::t1(ia1=[Integer(4)::5_4,6_4]),t1(ia1=[Integer(4)::7_4,8_4])])]
+!type(t2),parameter::t2x1(1_8:*)=[t2::t2(dta1=[t1::t1(ia1=[INTEGER(4)::1_4,2_4]),t1(ia1=[INTEGER(4)::3_4,4_4])]),t2(dta1=[t1::t1(ia1=[INTEGER(4)::5_4,6_4]),t1(ia1=[INTEGER(4)::7_4,8_4])])]
 !logical(4),parameter::t2check1=.true._4
 !logical(4),parameter::t2check2=.true._4
 !logical(4),parameter::t2check3=.true._4

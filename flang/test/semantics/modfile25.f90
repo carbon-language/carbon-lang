@@ -27,22 +27,22 @@ module m1
 end module m1
 !Expect: m1.mod
 ! module m1
-! integer(8),parameter::a0s(1_8:*)=[Integer(8)::]
+! integer(8),parameter::a0s(1_8:*)=[INTEGER(8)::]
 ! intrinsic::shape
 ! real(4)::a1(1_8:5_8,1_8:5_8,1_8:5_8)
-! integer(8),parameter::a1s(1_8:*)=[Integer(8)::5_8,5_8,5_8]
-! integer(8),parameter::a1ss(1_8:*)=[Integer(8)::3_8]
-! integer(8),parameter::a1sss(1_8:*)=[Integer(8)::1_8]
-! integer(8),parameter::a1rs(1_8:*)=[Integer(8)::3_8,1_8,1_8,1_8]
-! integer(8),parameter::a1n(1_8:*)=[Integer(8)::125_8,5_8,5_8]
-! integer(8),parameter::a1sn(1_8:*)=[Integer(8)::3_8,1_8,1_8]
-! integer(8),parameter::ac1s(1_8:*)=[Integer(8)::1_8]
-! integer(8),parameter::ac2s(1_8:*)=[Integer(8)::3_8]
-! integer(8),parameter::ac3s(1_8:*)=[Integer(8)::4_8]
-! integer(8),parameter::ac3bs(1_8:*)=[Integer(8)::4_8]
-! integer(8),parameter::ac4s(1_8:*)=[Integer(8)::36_8]
-! integer(8),parameter::ac5s(1_8:*)=[Integer(8)::9_8]
-! integer(8),parameter::rss(1_8:*)=[Integer(8)::10_8,9_8]
+! integer(8),parameter::a1s(1_8:*)=[INTEGER(8)::5_8,5_8,5_8]
+! integer(8),parameter::a1ss(1_8:*)=[INTEGER(8)::3_8]
+! integer(8),parameter::a1sss(1_8:*)=[INTEGER(8)::1_8]
+! integer(8),parameter::a1rs(1_8:*)=[INTEGER(8)::3_8,1_8,1_8,1_8]
+! integer(8),parameter::a1n(1_8:*)=[INTEGER(8)::125_8,5_8,5_8]
+! integer(8),parameter::a1sn(1_8:*)=[INTEGER(8)::3_8,1_8,1_8]
+! integer(8),parameter::ac1s(1_8:*)=[INTEGER(8)::1_8]
+! integer(8),parameter::ac2s(1_8:*)=[INTEGER(8)::3_8]
+! integer(8),parameter::ac3s(1_8:*)=[INTEGER(8)::4_8]
+! integer(8),parameter::ac3bs(1_8:*)=[INTEGER(8)::4_8]
+! integer(8),parameter::ac4s(1_8:*)=[INTEGER(8)::36_8]
+! integer(8),parameter::ac5s(1_8:*)=[INTEGER(8)::9_8]
+! integer(8),parameter::rss(1_8:*)=[INTEGER(8)::10_8,9_8]
 ! intrinsic::reshape
 ! contains
 ! subroutine subr(x,n1,n2)
