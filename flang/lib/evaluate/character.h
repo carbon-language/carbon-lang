@@ -64,6 +64,24 @@ public:
     return str;
   }
 
+  static std::int64_t INDEX(
+      const Character &str, const Character &substr, bool back = false) {
+    auto pos{back ? str.rfind(substr) : str.find(substr)};
+    return static_cast<std::int64_t>(pos == str.npos ? 0 : pos + 1);
+  }
+
+  static std::int64_t SCAN(
+      const Character &str, const Character &set, bool back = false) {
+    auto pos{back ? str.find_last_of(set) : str.find_first_of(set)};
+    return static_cast<std::int64_t>(pos == str.npos ? 0 : pos + 1);
+  }
+
+  static std::int64_t VERIFY(
+      const Character &str, const Character &set, bool back = false) {
+    auto pos{back ? str.find_last_not_of(set) : str.find_first_not_of(set)};
+    return static_cast<std::int64_t>(pos == str.npos ? 0 : pos + 1);
+  }
+
   // Resize adds spaces on the right if the new size is bigger than the
   // original, or by trimming the rightmost characters otherwise.
   static Character Resize(const Character &str, std::size_t newLength) {
@@ -73,6 +91,18 @@ public:
     } else {
       return str.substr(0, newLength);
     }
+  }
+
+  static std::int64_t LEN_TRIM(const Character &str) {
+    return VERIFY(str, Character{' '}, true);
+  }
+
+  static Character REPEAT(const Character &str, std::int64_t ncopies) {
+    Character result;
+    while (ncopies-- > 0) {
+      result += str;
+    }
+    return result;
   }
 
 private:

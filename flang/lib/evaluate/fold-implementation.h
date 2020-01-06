@@ -446,6 +446,47 @@ Constant<T> *Folder<T>::Folding(std::optional<ActualArgument> &arg) {
   return nullptr;
 }
 
+template<typename... A, std::size_t... I>
+std::optional<std::tuple<const Constant<A> *...>> GetConstantArgumentsHelper(
+    FoldingContext &context, ActualArguments &arguments,
+    std::index_sequence<I...>) {
+  static_assert(
+      (... && IsSpecificIntrinsicType<A>));  // TODO derived types for MERGE?
+  static_assert(sizeof...(A) > 0);
+  std::tuple<const Constant<A> *...> args{
+      Folder<A>{context}.Folding(arguments.at(I))...};
+  if ((... && (std::get<I>(args)))) {
+    return args;
+  } else {
+    return std::nullopt;
+  }
+}
+
+template<typename... A>
+std::optional<std::tuple<const Constant<A> *...>> GetConstantArguments(
+    FoldingContext &context, ActualArguments &args) {
+  return GetConstantArgumentsHelper<A...>(
+      context, args, std::index_sequence_for<A...>{});
+}
+
+template<typename... A, std::size_t... I>
+std::optional<std::tuple<Scalar<A>...>> GetScalarConstantArgumentsHelper(
+    FoldingContext &context, ActualArguments &args, std::index_sequence<I...>) {
+  if (auto constArgs{GetConstantArguments<A...>(context, args)}) {
+    return std::tuple<Scalar<A>...>{
+        std::get<I>(*constArgs)->GetScalarValue().value()...};
+  } else {
+    return std::nullopt;
+  }
+}
+
+template<typename... A>
+std::optional<std::tuple<Scalar<A>...>> GetScalarConstantArguments(
+    FoldingContext &context, ActualArguments &args) {
+  return GetScalarConstantArgumentsHelper<A...>(
+      context, args, std::index_sequence_for<A...>{});
+}
+
 // helpers to fold intrinsic function references
 // Define callable types used in a common utility that
 // takes care of array and cast/conversion aspects for elemental intrinsics
@@ -461,18 +502,14 @@ template<template<typename, typename...> typename WrapperType, typename TR,
 Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
     FunctionRef<TR> &&funcRef, WrapperType<TR, TA...> func,
     std::index_sequence<I...>) {
-  static_assert(
-      (... && IsSpecificIntrinsicType<TA>));  // TODO derived types for MERGE?
-  static_assert(sizeof...(TA) > 0);
-  std::tuple<const Constant<TA> *...> args{
-      Folder<TA>{context}.Folding(funcRef.arguments()[I])...};
-  if ((... && (std::get<I>(args)))) {
+  if (std::optional<std::tuple<const Constant<TA> *...>> args{
+          GetConstantArguments<TA...>(context, funcRef.arguments())}) {
     // Compute the shape of the result based on shapes of arguments
     ConstantSubscripts shape;
     int rank{0};
     const ConstantSubscripts *shapes[sizeof...(TA)]{
-        &std::get<I>(args)->shape()...};
-    const int ranks[sizeof...(TA)]{std::get<I>(args)->Rank()...};
+        &std::get<I>(*args)->shape()...};
+    const int ranks[sizeof...(TA)]{std::get<I>(*args)->Rank()...};
     for (unsigned int i{0}; i < sizeof...(TA); ++i) {
       if (ranks[i] > 0) {
         if (rank == 0) {
@@ -502,13 +539,13 @@ Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
         if constexpr (std::is_same_v<WrapperType<TR, TA...>,
                           ScalarFuncWithContext<TR, TA...>>) {
           results.emplace_back(func(context,
-              (ranks[I] ? std::get<I>(args)->At(index)
-                        : std::get<I>(args)->GetScalarValue().value())...));
+              (ranks[I] ? std::get<I>(*args)->At(index)
+                        : std::get<I>(*args)->GetScalarValue().value())...));
         } else if constexpr (std::is_same_v<WrapperType<TR, TA...>,
                                  ScalarFunc<TR, TA...>>) {
           results.emplace_back(func(
-              (ranks[I] ? std::get<I>(args)->At(index)
-                        : std::get<I>(args)->GetScalarValue().value())...));
+              (ranks[I] ? std::get<I>(*args)->At(index)
+                        : std::get<I>(*args)->GetScalarValue().value())...));
         }
       } while (bounds.IncrementSubscripts(index));
     }
@@ -653,7 +690,7 @@ Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
     if (name == "reshape") {
       return Folder<T>{context}.Reshape(std::move(funcRef));
     }
-    // TODO: other type independent transformational
+    // TODO: other type independent transformationals
     if constexpr (!std::is_same_v<T, SomeDerived>) {
       return FoldIntrinsicFunction(context, std::move(funcRef));
     }

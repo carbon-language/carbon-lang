@@ -38,9 +38,16 @@ Expr<Type<TypeCategory::Character, KIND>> FoldIntrinsicFunction(
     return FoldMINorMAX(context, std::move(funcRef), Ordering::Less);
   } else if (name == "new_line") {
     return Expr<T>{Constant<T>{CharacterUtils<KIND>::NEW_LINE()}};
+  } else if (name == "repeat") {  // not elemental
+    if (auto scalars{GetScalarConstantArguments<T, SubscriptInteger>(
+            context, funcRef.arguments())}) {
+      return Expr<T>{Constant<T>{
+          CharacterUtils<KIND>::REPEAT(std::get<Scalar<T>>(*scalars),
+              std::get<Scalar<SubscriptInteger>>(*scalars).ToInt64())}};
+    }
   }
   // TODO: cshift, eoshift, maxval, minval, pack, reduce,
-  // repeat, spread, transfer, transpose, trim, unpack
+  // spread, transfer, transpose, trim, unpack
   return Expr<T>{std::move(funcRef)};
 }
 

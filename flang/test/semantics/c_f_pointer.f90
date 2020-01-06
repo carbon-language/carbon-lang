@@ -3,7 +3,11 @@
 program test
   use iso_c_binding, only: c_ptr, c_f_pointer
   type(c_ptr) :: scalarC, arrayC(1)
-  integer, pointer :: scalarIntF, arrayIntF(:), coindexed[*]
+  type :: with_pointer
+    integer, pointer :: p
+  end type
+  type(with_pointer) :: coindexed[*]
+  integer, pointer :: scalarIntF, arrayIntF(:)
   character(len=:), pointer :: charDeferredF
   integer :: j
   call c_f_pointer(scalarC, scalarIntF) ! ok
@@ -23,5 +27,5 @@ program test
   !ERROR: FPTR= argument to C_F_POINTER() may not have a deferred type parameter
   call c_f_pointer(scalarC, charDeferredF)
   !ERROR: FPTR= argument to C_F_POINTER() may not be a coindexed object
-  call c_f_pointer(scalarC, coindexed[0])
+  call c_f_pointer(scalarC, coindexed[0]%p)
 end program

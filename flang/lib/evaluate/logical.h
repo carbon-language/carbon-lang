@@ -14,7 +14,7 @@
 
 namespace Fortran::evaluate::value {
 
-template<int BITS, bool IS_LIKE_C = false> class Logical {
+template<int BITS, bool IS_LIKE_C = true> class Logical {
 public:
   static constexpr int bits{BITS};
 
@@ -23,16 +23,19 @@ public:
   static constexpr bool IsLikeC{BITS <= 8 || IS_LIKE_C};
 
   constexpr Logical() {}  // .FALSE.
-  constexpr Logical(const Logical &that) = default;
-  constexpr Logical(bool truth)
-    : word_{truth ? canonicalTrue : canonicalFalse} {}
-  constexpr Logical &operator=(const Logical &) = default;
+  template<int B, bool C>
+  constexpr Logical(Logical<B, C> x) : word_{Represent(x.IsTrue())} {}
+  constexpr Logical(bool truth) : word_{Represent(truth)} {}
 
-  template<int B> constexpr bool operator==(const Logical<B> &that) const {
+  template<int B, bool C> constexpr Logical &operator=(Logical<B, C> x) {
+    word_ = Represent(x.IsTrue());
+  }
+
+  template<int B, bool C>
+  constexpr bool operator==(const Logical<B, C> &that) const {
     return IsTrue() == that.IsTrue();
   }
 
-  // For static expression evaluation, all the bits will have the same value.
   constexpr bool IsTrue() const {
     if constexpr (IsLikeC) {
       return !word_.IsZero();
@@ -61,6 +64,9 @@ private:
   using Word = Integer<bits>;
   static constexpr Word canonicalTrue{IsLikeC ? -std::uint64_t{1} : 1};
   static constexpr Word canonicalFalse{0};
+  static constexpr Word Represent(bool x) {
+    return x ? canonicalTrue : canonicalFalse;
+  }
   constexpr Logical(const Word &w) : word_{w} {}
   Word word_;
 };

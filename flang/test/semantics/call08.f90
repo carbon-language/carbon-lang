@@ -4,8 +4,6 @@ module m
 
   real :: c1[*]
   real, volatile :: c2[*]
-  real, pointer :: c3(:)[*]
-  real, pointer, contiguous :: c4(:)[*]
 
  contains
 
@@ -22,9 +20,11 @@ module m
     real :: x(*)[*]
   end subroutine
 
-  subroutine test(x)
+  subroutine test(x,c3,c4)
     real :: scalar
     real :: x(:)[*]
+    real, intent(in) :: c3(:)[*]
+    real, contiguous, intent(in) :: c4(:)[*]
     call s01(c1) ! ok
     call s02(c2) ! ok
     call s03(c4) ! ok

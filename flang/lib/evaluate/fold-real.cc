@@ -101,14 +101,11 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
           return y.value;
         }));
   } else if (name == "dprod") {
-    if (auto *x{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
-      if (auto *y{UnwrapExpr<Expr<SomeReal>>(args[1])}) {
-        return Fold(context,
-            Expr<T>{Multiply<T>{ConvertToType<T>(std::move(*x)),
-                ConvertToType<T>(std::move(*y))}});
-      }
+    if (auto scalars{GetScalarConstantArguments<T, T>(context, args)}) {
+      return Fold(context,
+          Expr<T>{Multiply<T>{
+              Expr<T>{std::get<0>(*scalars)}, Expr<T>{std::get<1>(*scalars)}}});
     }
-    common::die("Wrong argument type in dprod()");
   } else if (name == "epsilon") {
     return Expr<T>{Scalar<T>::EPSILON()};
   } else if (name == "huge") {
