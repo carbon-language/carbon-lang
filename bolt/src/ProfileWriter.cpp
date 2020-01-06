@@ -96,11 +96,12 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
           YamlBB.CallSites.push_back(CSI);
         }
       } else { // direct call or a tail call
+        uint64_t EntryID{0};
         const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Instr);
-        const auto Callee = BC.getFunctionForSymbol(CalleeSymbol);
+        const auto Callee = BC.getFunctionForSymbol(CalleeSymbol, &EntryID);
         if (Callee) {
           CSI.DestId = Callee->getFunctionNumber();;
-          CSI.EntryDiscriminator = Callee->getEntryForSymbol(CalleeSymbol);
+          CSI.EntryDiscriminator = EntryID;
         }
 
         if (BC.MIB->getConditionalTailCall(Instr)) {

@@ -983,7 +983,7 @@ void BinaryContext::postProcessSymbolTable() {
 }
 
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
-                                           BinaryFunction &ParentBF) {
+                                 BinaryFunction &ParentBF) {
   std::shared_lock<std::shared_timed_mutex> ReadCtxLock(CtxMutex,
                                                         std::defer_lock);
   std::unique_lock<std::shared_timed_mutex> WriteCtxLock(CtxMutex,
@@ -1759,6 +1759,20 @@ void BinaryContext::markAmbiguousRelocations(BinaryData &BD,
     if (Next && Next->getAddress() == BD.getEndAddress())
       setImmovable(*Next);
   }
+}
+
+BinaryFunction *BinaryContext::getFunctionForSymbol(const MCSymbol *Symbol,
+                                                    uint64_t *EntryDesc) {
+  std::shared_lock<std::shared_timed_mutex> Lock(SymbolToFunctionMapMutex);
+  auto BFI = SymbolToFunctionMap.find(Symbol);
+  if (BFI == SymbolToFunctionMap.end())
+    return nullptr;
+
+  auto *BF = BFI->second;
+  if (EntryDesc)
+    *EntryDesc = BF->getEntryForSymbol(Symbol);
+
+  return BF;
 }
 
 void BinaryContext::exitWithBugReport(StringRef Message,

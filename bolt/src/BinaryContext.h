@@ -922,17 +922,16 @@ public:
   /// boundary between two symbols then those symbols are marked as immovable.
   void markAmbiguousRelocations(BinaryData &BD, const uint64_t Address);
 
-  /// This function is thread safe.
-  const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
-    std::shared_lock<std::shared_timed_mutex> Lock(SymbolToFunctionMapMutex);
-    auto BFI = SymbolToFunctionMap.find(Symbol);
-    return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
-  }
+  /// Return BinaryFunction corresponding to \p Symbol. If \p EntryDesc is not
+  /// nullptr, set it to entry descriminator corresponding to \p Symbol
+  /// (0 for single-entry functions). This function is thread safe.
+  BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol,
+                                       uint64_t *EntryDesc = nullptr);
 
-  BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) {
-    std::shared_lock<std::shared_timed_mutex> Lock(SymbolToFunctionMapMutex);
-    auto BFI = SymbolToFunctionMap.find(Symbol);
-    return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
+  const BinaryFunction *getFunctionForSymbol(
+      const MCSymbol *Symbol, uint64_t *EntryDesc = nullptr) const {
+    return const_cast<BinaryContext *>(this)->
+        getFunctionForSymbol(Symbol, EntryDesc);
   }
 
   /// Associate the symbol \p Sym with the function \p BF for lookups with

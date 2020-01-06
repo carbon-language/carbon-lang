@@ -421,6 +421,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  LSDA        : 0x" << Twine::utohexstr(getLSDAAddress())
      << "\n  IsSimple    : "   << IsSimple
+     << "\n  IsMultiEntry: "   << IsMultiEntry
      << "\n  IsSplit     : "   << isSplit()
      << "\n  BB Count    : "   << size();
 
@@ -3367,31 +3368,53 @@ const MCSymbol *BinaryFunction::getSymbolForEntry(uint64_t EntryNum) const {
     return nullptr;
 
   uint64_t NumEntries = 0;
-  for (auto *BB : BasicBlocks) {
-    if (!BB->isEntryPoint())
-      continue;
-    if (NumEntries == EntryNum)
-      return BB->getLabel();
-    ++NumEntries;
+  if (hasCFG()) {
+    for (auto *BB : BasicBlocks) {
+      if (!BB->isEntryPoint())
+        continue;
+      if (NumEntries == EntryNum)
+        return BB->getLabel();
+      ++NumEntries;
+    }
+  } else {
+    for (auto &KV : Labels) {
+      if (NumEntries == EntryNum)
+        return KV.second;
+      ++NumEntries;
+    }
   }
 
   return nullptr;
 }
 
 uint64_t BinaryFunction::getEntryForSymbol(const MCSymbol *EntrySymbol) const {
+  if (!isMultiEntry())
+    return 0;
+
   if (getSymbol() == EntrySymbol)
     return 0;
 
+  // The function might have multiple symbols associated with its main entry
+  // point. Check EntrySymbol against all secondary entry points and return 0
+  // corresponding to the main entry point if no match is found.
   uint64_t NumEntries = 0;
-  for (const auto *BB : BasicBlocks) {
-    if (!BB->isEntryPoint())
-      continue;
-    if (BB->getLabel() == EntrySymbol)
-      return NumEntries;
-    ++NumEntries;
+  if (hasCFG()) {
+    for (const auto *BB : BasicBlocks) {
+      if (!BB->isEntryPoint())
+        continue;
+      if (BB->getLabel() == EntrySymbol)
+        return NumEntries;
+      ++NumEntries;
+    }
+  } else {
+    for (auto &KV : Labels) {
+      if (KV.second == EntrySymbol)
+        return NumEntries;
+      ++NumEntries;
+    }
   }
 
-  return std::numeric_limits<uint64_t>::max();
+  return 0;
 }
 
 BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {

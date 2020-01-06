@@ -422,10 +422,10 @@ uint64_t LongJmpPass::getSymbolAddress(const BinaryContext &BC,
     assert (Iter != BBAddresses.end() && "Unrecognized BB");
     return Iter->second;
   }
-  auto *TargetFunc = BC.getFunctionForSymbol(Target);
+  uint64_t EntryID{0};
+  auto *TargetFunc = BC.getFunctionForSymbol(Target, &EntryID);
   auto Iter = HotAddresses.find(TargetFunc);
-  if (Iter == HotAddresses.end() ||
-      (TargetFunc && TargetFunc->isSecondaryEntryPoint(Target))) {
+  if (Iter == HotAddresses.end() || (TargetFunc && EntryID)) {
     // Look at BinaryContext's resolution for this symbol - this is a symbol not
     // mapped to a BinaryFunction
     auto ValueOrError = BC.getSymbolValue(*Target);

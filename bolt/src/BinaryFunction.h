@@ -594,6 +594,13 @@ private:
   /// This is called in disassembled state.
   void addEntryPoint(uint64_t Address);
 
+  /// Return an entry ID corresponding to a symbol known to belong to
+  /// the function.
+  ///
+  /// Prefer to use BinaryContext::getFunctionForSymbol(EntrySymbol, &ID)
+  /// instead of calling this function directly.
+  uint64_t getEntryForSymbol(const MCSymbol *EntrySymbol) const;
+
   void setParentFunction(BinaryFunction *BF) {
     assert((!ParentFunction || ParentFunction == BF) &&
            "cannot have more than one parent function");
@@ -1060,19 +1067,6 @@ public:
   /// Return MC symbol corresponding to an enumerated entry for multiple-entry
   /// functions.
   const MCSymbol *getSymbolForEntry(uint64_t EntryNum) const;
-
-  /// Return an entry ID corresponding to a symbol. Return
-  /// numeric_limits<T>::max() if entry does not exist.
-  uint64_t getEntryForSymbol(const MCSymbol *EntrySymbol) const;
-
-  /// Return true if \p is a valid secondary entry point in this function, false
-  /// otherwise.
-  bool isSecondaryEntryPoint(const MCSymbol *Label) const {
-    uint64_t EntryNo = getEntryForSymbol(Label);
-    if (EntryNo == std::numeric_limits<uint64_t>::max())
-      return false;
-    return EntryNo != 0;
-  }
 
   MCSymbol *getColdSymbol() {
     if (ColdSymbol)

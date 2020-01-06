@@ -223,11 +223,13 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
             return true;
 
           // Compare symbols as functions.
-          const auto *FunctionA = BC.getFunctionForSymbol(SymbolA);
-          const auto *FunctionB = BC.getFunctionForSymbol(SymbolB);
-          if (FunctionA && FunctionA->isSecondaryEntryPoint(SymbolA))
+          uint64_t EntryIDA{0};
+          uint64_t EntryIDB{0};
+          const auto *FunctionA = BC.getFunctionForSymbol(SymbolA, &EntryIDA);
+          const auto *FunctionB = BC.getFunctionForSymbol(SymbolB, &EntryIDB);
+          if (FunctionA && EntryIDA)
             FunctionA = nullptr;
-          if (FunctionB && FunctionB->isSecondaryEntryPoint(SymbolB))
+          if (FunctionB && EntryIDB)
             FunctionB = nullptr;
           if (FunctionA && FunctionB) {
             // Self-referencing functions and recursive calls.
