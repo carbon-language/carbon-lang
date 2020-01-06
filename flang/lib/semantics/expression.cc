@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "expression.h"
-#include "assignment.h"
 #include "check-call.h"
+#include "pointer-assignment.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
@@ -1462,7 +1462,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           continue;
         }
         if (IsPointer(*symbol)) {
-          CheckPointerAssignment(
+          semantics::CheckPointerAssignment(
               GetFoldingContext(), *symbol, *value);  // C7104, C7105
           result.Add(*symbol, Fold(std::move(*value)));
         } else if (MaybeExpr converted{

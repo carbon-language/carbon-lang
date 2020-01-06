@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-call.h"
-#include "assignment.h"
+#include "pointer-assignment.h"
 #include "scope.h"
 #include "tools.h"
 #include "../evaluate/characteristics.h"
@@ -405,7 +405,7 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
     }
     if (!actualIsPointer) {
       if (dummy.intent == common::Intent::In) {
-        CheckPointerAssignment(
+        semantics::CheckPointerAssignment(
             context, parser::CharBlock{}, dummyName, dummy, actual);
       } else {
         messages.Say(

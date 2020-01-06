@@ -27,6 +27,7 @@ add_library(FortranSemantics
   check-stop.cc
   expression.cc
   mod-file.cc
+  pointer-assignment.cc
   program-tree.cc
   resolve-labels.cc
   resolve-names.cc
