@@ -41,12 +41,13 @@ struct SpecificCall {
   ActualArguments arguments;
 };
 
-struct UnrestrictedSpecificIntrinsicFunctionInterface
-  : public characteristics::Procedure {
-  UnrestrictedSpecificIntrinsicFunctionInterface(
-      characteristics::Procedure &&p, std::string n)
-    : characteristics::Procedure{std::move(p)}, genericName{n} {}
+struct SpecificIntrinsicFunctionInterface : public characteristics::Procedure {
+  SpecificIntrinsicFunctionInterface(
+      characteristics::Procedure &&p, std::string n, bool isRestrictedSpecific)
+    : characteristics::Procedure{std::move(p)}, genericName{n},
+      isRestrictedSpecific{isRestrictedSpecific} {}
   std::string genericName;
+  bool isRestrictedSpecific;
   // N.B. If there are multiple arguments, they all have the same type.
   // All argument and result types are intrinsic types with default kinds.
 };
@@ -71,10 +72,9 @@ public:
   std::optional<SpecificCall> Probe(
       const CallCharacteristics &, ActualArguments &, FoldingContext &) const;
 
-  // Probe the intrinsics with the name of a potential unrestricted specific
-  // intrinsic.
-  std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
-  IsUnrestrictedSpecificIntrinsicFunction(const std::string &) const;
+  // Probe the intrinsics with the name of a potential specific intrinsic.
+  std::optional<SpecificIntrinsicFunctionInterface> IsSpecificIntrinsicFunction(
+      const std::string &) const;
 
   std::ostream &Dump(std::ostream &) const;
 

@@ -4152,12 +4152,15 @@ void DeclarationVisitor::CheckCommonBlockDerivedType(
 
 bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
     const parser::Name &name) {
-  if (context().intrinsics().IsUnrestrictedSpecificIntrinsicFunction(
-          name.source.ToString())) {
+  if (auto interface{context().intrinsics().IsSpecificIntrinsicFunction(
+          name.source.ToString())}) {
     // Unrestricted specific intrinsic function names (e.g., "cos")
     // are acceptable as procedure interfaces.
-    Symbol &symbol{MakeSymbol(InclusiveScope(), name.source,
-        Attrs{Attr::INTRINSIC, Attr::ELEMENTAL})};
+    Symbol &symbol{
+        MakeSymbol(InclusiveScope(), name.source, Attrs{Attr::INTRINSIC})};
+    if (interface->IsElemental()) {
+      symbol.attrs().set(Attr::ELEMENTAL);
+    }
     symbol.set_details(ProcEntityDetails{});
     Resolve(name, symbol);
     return true;

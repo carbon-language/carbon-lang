@@ -636,7 +636,7 @@ std::optional<Procedure> Procedure::Characterize(
           [&](const semantics::ProcEntityDetails &proc)
               -> std::optional<Procedure> {
             if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
-              return intrinsics.IsUnrestrictedSpecificIntrinsicFunction(
+              return intrinsics.IsSpecificIntrinsicFunction(
                   symbol.name().ToString());
             }
             const semantics::ProcInterface &interface{proc.interface()};

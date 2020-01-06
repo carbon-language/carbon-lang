@@ -1508,8 +1508,8 @@ public:
   std::optional<SpecificCall> Probe(const CallCharacteristics &,
       ActualArguments &, FoldingContext &, const IntrinsicProcTable &) const;
 
-  std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
-  IsUnrestrictedSpecificIntrinsicFunction(const std::string &) const;
+  std::optional<SpecificIntrinsicFunctionInterface> IsSpecificIntrinsicFunction(
+      const std::string &) const;
 
   std::ostream &Dump(std::ostream &) const;
 
@@ -1927,35 +1927,33 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   return std::nullopt;
 }
 
-std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
-IntrinsicProcTable::Implementation::IsUnrestrictedSpecificIntrinsicFunction(
+std::optional<SpecificIntrinsicFunctionInterface>
+IntrinsicProcTable::Implementation::IsSpecificIntrinsicFunction(
     const std::string &name) const {
   auto specificRange{specificFuncs_.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
     const SpecificIntrinsicInterface &specific{*iter->second};
-    if (!specific.isRestrictedSpecific) {
-      std::string genericName{name};
-      if (specific.generic) {
-        genericName = std::string(specific.generic);
-      }
-      characteristics::FunctionResult fResult{GetSpecificType(specific.result)};
-      characteristics::DummyArguments args;
-      int dummies{specific.CountArguments()};
-      for (int j{0}; j < dummies; ++j) {
-        characteristics::DummyDataObject dummy{
-            GetSpecificType(specific.dummy[j].typePattern)};
-        dummy.intent = common::Intent::In;
-        args.emplace_back(
-            std::string{specific.dummy[j].keyword}, std::move(dummy));
-      }
-      characteristics::Procedure::Attrs attrs;
-      attrs.set(characteristics::Procedure::Attr::Pure)
-          .set(characteristics::Procedure::Attr::Elemental);
-      characteristics::Procedure chars{
-          std::move(fResult), std::move(args), attrs};
-      return UnrestrictedSpecificIntrinsicFunctionInterface{
-          std::move(chars), genericName};
+    std::string genericName{name};
+    if (specific.generic) {
+      genericName = std::string(specific.generic);
     }
+    characteristics::FunctionResult fResult{GetSpecificType(specific.result)};
+    characteristics::DummyArguments args;
+    int dummies{specific.CountArguments()};
+    for (int j{0}; j < dummies; ++j) {
+      characteristics::DummyDataObject dummy{
+          GetSpecificType(specific.dummy[j].typePattern)};
+      dummy.intent = common::Intent::In;
+      args.emplace_back(
+          std::string{specific.dummy[j].keyword}, std::move(dummy));
+    }
+    characteristics::Procedure::Attrs attrs;
+    attrs.set(characteristics::Procedure::Attr::Pure)
+        .set(characteristics::Procedure::Attr::Elemental);
+    characteristics::Procedure chars{
+        std::move(fResult), std::move(args), attrs};
+    return SpecificIntrinsicFunctionInterface{
+        std::move(chars), genericName, specific.isRestrictedSpecific};
   }
   return std::nullopt;
 }
@@ -1991,10 +1989,9 @@ std::optional<SpecificCall> IntrinsicProcTable::Probe(
   return DEREF(impl_).Probe(call, arguments, context, *this);
 }
 
-std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
-IntrinsicProcTable::IsUnrestrictedSpecificIntrinsicFunction(
-    const std::string &name) const {
-  return DEREF(impl_).IsUnrestrictedSpecificIntrinsicFunction(name);
+std::optional<SpecificIntrinsicFunctionInterface>
+IntrinsicProcTable::IsSpecificIntrinsicFunction(const std::string &name) const {
+  return DEREF(impl_).IsSpecificIntrinsicFunction(name);
 }
 
 std::ostream &TypePattern::Dump(std::ostream &o) const {

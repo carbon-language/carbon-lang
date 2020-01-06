@@ -210,11 +210,12 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
     } else {
       CHECK(std::holds_alternative<SymbolRef>(ref.u));
       if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
-        if (auto interface{
-                context_.intrinsics().IsUnrestrictedSpecificIntrinsicFunction(
-                    symbol.name().ToString())}) {
-          return Expr<SomeType>{ProcedureDesignator{SpecificIntrinsic{
-              symbol.name().ToString(), std::move(*interface)}}};
+        if (auto interface{context_.intrinsics().IsSpecificIntrinsicFunction(
+                symbol.name().ToString())}) {
+          SpecificIntrinsic intrinsic{
+              symbol.name().ToString(), std::move(*interface)};
+          intrinsic.isRestrictedSpecific = interface->isRestrictedSpecific;
+          return Expr<SomeType>{ProcedureDesignator{std::move(intrinsic)}};
         }
       } else {
         return Expr<SomeType>{ProcedureDesignator{symbol}};
