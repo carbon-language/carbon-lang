@@ -216,7 +216,7 @@ end
 ! end
 ! subroutine s3(x, y)
 !  real(4) :: x(1_8:10_8, 1_8:10_8)
-!  real(4) :: y(1_8:int(ubound(f_elem(x),1_4),kind=8))
+!  real(4) :: y(1_8:10_8)
 ! end
 !end
 

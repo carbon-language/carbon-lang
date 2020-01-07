@@ -197,7 +197,7 @@ public:
   const ActualArguments &arguments() const { return arguments_; }
 
   std::optional<Expr<SubscriptInteger>> LEN() const;
-  int Rank() const { return proc_.Rank(); }
+  int Rank() const;
   bool IsElemental() const { return proc_.IsElemental(); }
   bool operator==(const ProcedureRef &) const;
   std::ostream &AsFortran(std::ostream &) const;

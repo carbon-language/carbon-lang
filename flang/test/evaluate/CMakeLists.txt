@@ -142,6 +142,7 @@ set(FOLDING_TESTS
   folding06.f90
   folding07.f90
   folding08.f90
+  folding09.f90
 )
 
 add_test(Expression expression-test)

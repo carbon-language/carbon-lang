@@ -191,6 +191,21 @@ std::optional<Expr<SubscriptInteger>> ProcedureRef::LEN() const {
   return proc_.LEN();
 }
 
+int ProcedureRef::Rank() const {
+  if (IsElemental()) {
+    for (const auto &arg : arguments_) {
+      if (arg) {
+        if (int rank{arg->Rank()}; rank > 0) {
+          return rank;
+        }
+      }
+    }
+    return 0;
+  } else {
+    return proc_.Rank();
+  }
+}
+
 ProcedureRef::~ProcedureRef() {}
 
 FOR_EACH_SPECIFIC_TYPE(template class FunctionRef, )

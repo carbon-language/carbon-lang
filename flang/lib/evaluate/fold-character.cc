@@ -45,9 +45,15 @@ Expr<Type<TypeCategory::Character, KIND>> FoldIntrinsicFunction(
           CharacterUtils<KIND>::REPEAT(std::get<Scalar<T>>(*scalars),
               std::get<Scalar<SubscriptInteger>>(*scalars).ToInt64())}};
     }
+  } else if (name == "trim") {  // not elemental
+    if (auto scalar{
+            GetScalarConstantArguments<T>(context, funcRef.arguments())}) {
+      return Expr<T>{Constant<T>{
+          CharacterUtils<KIND>::TRIM(std::get<Scalar<T>>(*scalar))}};
+    }
   }
   // TODO: cshift, eoshift, maxval, minval, pack, reduce,
-  // spread, transfer, transpose, trim, unpack
+  // spread, transfer, transpose, unpack
   return Expr<T>{std::move(funcRef)};
 }
 

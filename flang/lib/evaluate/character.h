@@ -64,22 +64,22 @@ public:
     return str;
   }
 
-  static std::int64_t INDEX(
+  static ConstantSubscript INDEX(
       const Character &str, const Character &substr, bool back = false) {
     auto pos{back ? str.rfind(substr) : str.find(substr)};
-    return static_cast<std::int64_t>(pos == str.npos ? 0 : pos + 1);
+    return static_cast<ConstantSubscript>(pos == str.npos ? 0 : pos + 1);
   }
 
-  static std::int64_t SCAN(
+  static ConstantSubscript SCAN(
       const Character &str, const Character &set, bool back = false) {
     auto pos{back ? str.find_last_of(set) : str.find_first_of(set)};
-    return static_cast<std::int64_t>(pos == str.npos ? 0 : pos + 1);
+    return static_cast<ConstantSubscript>(pos == str.npos ? 0 : pos + 1);
   }
 
-  static std::int64_t VERIFY(
+  static ConstantSubscript VERIFY(
       const Character &str, const Character &set, bool back = false) {
     auto pos{back ? str.find_last_not_of(set) : str.find_first_not_of(set)};
-    return static_cast<std::int64_t>(pos == str.npos ? 0 : pos + 1);
+    return static_cast<ConstantSubscript>(pos == str.npos ? 0 : pos + 1);
   }
 
   // Resize adds spaces on the right if the new size is bigger than the
@@ -93,16 +93,22 @@ public:
     }
   }
 
-  static std::int64_t LEN_TRIM(const Character &str) {
+  static ConstantSubscript LEN_TRIM(const Character &str) {
     return VERIFY(str, Character{' '}, true);
   }
 
-  static Character REPEAT(const Character &str, std::int64_t ncopies) {
+  static Character REPEAT(const Character &str, ConstantSubscript ncopies) {
     Character result;
-    while (ncopies-- > 0) {
-      result += str;
+    if (!str.empty()) {
+      while (ncopies-- > 0) {
+        result += str;
+      }
     }
     return result;
+  }
+
+  static Character TRIM(const Character &str) {
+    return str.substr(0, LEN_TRIM(str));
   }
 
 private:

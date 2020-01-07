@@ -457,6 +457,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"i", SameInt}, {"shift", AnyInt},
             {"size", AnyInt, Rank::elemental, Optionality::optional}},
         SameInt},
+    {"is_contiguous", {{"array", Addressable, Rank::anyOrAssumedRank}},
+        DefaultLogical},
     {"is_iostat_end", {{"i", AnyInt}}, DefaultLogical},
     {"is_iostat_eor", {{"i", AnyInt}}, DefaultLogical},
     {"kind", {{"x", AnyIntrinsic}}, DefaultInt},
@@ -704,8 +706,6 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   LCOBOUND, UCOBOUND, FAILED_IMAGES, GET_TEAM, IMAGE_INDEX,
 //   NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE,
 //   COSHAPE
-// TODO: Object characteristic inquiry functions
-//   IS_CONTIGUOUS
 // TODO: Non-standard intrinsic functions
 //  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
 //  COMPL, EQV, NEQV, INT8, JINT, JNINT, KNINT,

@@ -261,7 +261,8 @@ public:
   using Base::operator();
 
   Result operator()(const semantics::Symbol &symbol) const {
-    if (symbol.attrs().test(semantics::Attr::CONTIGUOUS)) {
+    if (symbol.attrs().test(semantics::Attr::CONTIGUOUS) ||
+        symbol.Rank() == 0) {
       return true;
     } else if (semantics::IsPointer(symbol)) {
       return false;
@@ -276,11 +277,8 @@ public:
   }
 
   Result operator()(const ArrayRef &x) const {
-    if (x.base().Rank() > 0 || !CheckSubscripts(x.subscript())) {
-      return false;
-    } else {
-      return (*this)(x.base());
-    }
+    return (x.base().IsSymbol() || x.base().Rank() == 0) &&
+        CheckSubscripts(x.subscript()) && (*this)(x.base());
   }
   Result operator()(const CoarrayRef &x) const {
     return CheckSubscripts(x.subscript());
@@ -330,11 +328,11 @@ private:
 template<typename A>
 bool IsSimplyContiguous(const A &x, const IntrinsicProcTable &table) {
   if (IsVariable(x)) {
-    if (auto known{IsSimplyContiguousHelper{table}(x)}) {
-      return *known;
-    }
+    auto known{IsSimplyContiguousHelper{table}(x)};
+    return known && *known;
+  } else {
+    return true;  // not a variable
   }
-  return false;
 }
 
 template bool IsSimplyContiguous(
