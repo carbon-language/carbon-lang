@@ -14,7 +14,7 @@
 #include <cstring>
 
 // Define a FormatValidator class template to validate a format expression
-// of a given CHAR kind.  To enable use in runtime library code as well as
+// of a given CHAR type.  To enable use in runtime library code as well as
 // compiler code, the implementation does its own parsing without recourse
 // to compiler parser machinery, and avoids features that require C++ runtime
 // library support.  A format expression is a pointer to a fixed size
@@ -57,6 +57,7 @@ public:
   }
 
   bool Check();
+  int maxNesting() const { return maxNesting_; }
 
 private:
   common::EnumSet<TokenKind, TokenKind_enumSize> itemsWithLeadingInts_{
@@ -145,6 +146,7 @@ private:
   bool unterminatedFormatError_{false};
   bool suppressMessageCascade_{false};
   bool reporterExit_{false};
+  int maxNesting_{0};  // max level of nested parentheses
 };
 
 template<typename CHAR> CHAR FormatValidator<CHAR>::NextChar() {
@@ -682,7 +684,9 @@ template<typename CHAR> bool FormatValidator<CHAR>::Check() {
       if (knrValue_ == 0) {
         ReportError("List repeat specifier must be positive", knrToken_);
       }
-      ++nestLevel;
+      if (++nestLevel > maxNesting_) {
+        maxNesting_ = nestLevel;
+      }
       break;
     case TokenKind::RParen:
       if (knrValue_ >= 0) {
