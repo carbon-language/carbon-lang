@@ -14,11 +14,20 @@
 #include "tools.h"
 #include "type.h"
 #include "../common/template.h"
+#include "../evaluate/call.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/tools.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/tools.h"
+
+namespace Fortran::evaluate {
+using ActualArgumentRef = common::Reference<const ActualArgument>;
+
+inline bool operator<(ActualArgumentRef x, ActualArgumentRef y) {
+  return &*x < &*y;
+}
+}
 
 namespace Fortran::semantics {
 
@@ -779,6 +788,22 @@ void DoChecker::Leave(const parser::AssignmentStmt &stmt) {
   context_.CheckDoVarRedefine(variable);
 }
 
+static void CheckIfArgIsDoVar(const evaluate::ActualArgument &arg,
+    const parser::CharBlock location, SemanticsContext &context) {
+  common::Intent intent{arg.dummyIntent()};
+  if (intent == common::Intent::Out || intent == common::Intent::InOut) {
+    if (const SomeExpr * argExpr{arg.UnwrapExpr()}) {
+      if (const Symbol * var{evaluate::UnwrapWholeSymbolDataRef(*argExpr)}) {
+        if (intent == common::Intent::Out) {
+          context.CheckDoVarRedefine(location, *var);
+        } else {
+          context.WarnDoVarRedefine(location, *var);  // INTENT(INOUT)
+        }
+      }
+    }
+  }
+}
+
 // Check to see if a DO variable is being passed as an actual argument to a
 // dummy argument whose intent is OUT or INOUT.  To do this, we need to find
 // the expressions for actual arguments which contain DO variables.  We get the
@@ -801,24 +826,9 @@ void DoChecker::Leave(const parser::CallStmt &callStmt) {
       ++parsedArgIter;
       if (checkedOptionalArg) {
         const evaluate::ActualArgument &checkedArg{*checkedOptionalArg};
-        if (const SomeExpr * checkedExpr{checkedArg.UnwrapExpr()}) {
-          if (const Symbol *
-              variable{evaluate::UnwrapWholeSymbolDataRef(*checkedExpr)}) {
-            if (const auto *parsedExpr{
-                    std::get_if<common::Indirection<parser::Expr>>(
-                        &parsedArg.u)}) {
-              const parser::CharBlock location{parsedExpr->value().source};
-              switch (checkedArg.dummyIntent()) {
-              case common::Intent::Out:
-                context_.CheckDoVarRedefine(location, *variable);
-                break;
-              case common::Intent::InOut:
-                context_.WarnDoVarRedefine(location, *variable);
-                break;
-              default:;  // INTENT(IN) or default intent
-              }
-            }
-          }
+        if (const auto *parsedExpr{
+                std::get_if<common::Indirection<parser::Expr>>(&parsedArg.u)}) {
+          CheckIfArgIsDoVar(checkedArg, parsedExpr->value().source, context_);
         }
       }
     }
@@ -830,6 +840,36 @@ void DoChecker::Leave(const parser::ConnectSpec &connectSpec) {
       std::get_if<parser::ConnectSpec::Newunit>(&connectSpec.u)};
   if (newunit) {
     context_.CheckDoVarRedefine(newunit->v.thing.thing);
+  }
+}
+
+using ActualArgumentSet = std::set<evaluate::ActualArgumentRef>;
+
+struct CollectActualArgumentsHelper
+  : public evaluate::SetTraverse<CollectActualArgumentsHelper,
+        ActualArgumentSet> {
+  using Base = SetTraverse<CollectActualArgumentsHelper, ActualArgumentSet>;
+  CollectActualArgumentsHelper() : Base{*this} {}
+  using Base::operator();
+  ActualArgumentSet operator()(const evaluate::ActualArgument &arg) const {
+    return ActualArgumentSet{arg};
+  }
+};
+
+template<typename A> ActualArgumentSet CollectActualArguments(const A &x) {
+  return CollectActualArgumentsHelper{}(x);
+}
+
+template ActualArgumentSet CollectActualArguments(const SomeExpr &);
+
+void DoChecker::Leave(const parser::Expr &parsedExpr) {
+  if (parsedExpr.typedExpr) {
+    if (const SomeExpr * expr{GetExpr(parsedExpr)}) {
+      ActualArgumentSet argSet{CollectActualArguments(*expr)};
+      for (const evaluate::ActualArgumentRef &argRef : argSet) {
+        CheckIfArgIsDoVar(*argRef, parsedExpr.source, context_);
+      }
+    }
   }
 }
 

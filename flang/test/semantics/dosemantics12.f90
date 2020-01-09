@@ -411,3 +411,56 @@ contains
   end subroutine intentInOutSub
 
 end subroutine s12
+
+subroutine s13()
+
+  Integer :: ivar, jvar
+
+  ! This one is OK
+  do ivar = 1, 10
+    jvar = intentInFunc(ivar)
+  end do
+
+  ! Error for passing a DO variable to an INTENT(OUT) dummy
+  do ivar = 1, 10
+!ERROR: Cannot redefine DO variable 'ivar'
+    jvar = intentOutFunc(ivar)
+  end do
+
+  ! Error for passing a DO variable to an INTENT(OUT) dummy, more complex 
+  ! expression
+  do ivar = 1, 10
+!ERROR: Cannot redefine DO variable 'ivar'
+    jvar = 83 + intentInFunc(intentOutFunc(ivar))
+  end do
+
+  ! Warning for passing a DO variable to an INTENT(INOUT) dummy
+  do ivar = 1, 10
+    jvar = intentInOutFunc(ivar)
+  end do
+
+contains
+  function intentInFunc(dummyArg)
+    integer, intent(in) :: dummyArg
+    integer  :: intentInFunc
+
+    intentInFunc = 343
+  end function intentInFunc
+
+  function intentOutFunc(dummyArg)
+    integer, intent(out) :: dummyArg
+    integer  :: intentOutFunc
+
+    dummyArg = 216
+    intentOutFunc = 343
+  end function intentOutFunc
+
+  function intentInOutFunc(dummyArg)
+    integer, intent(inout) :: dummyArg
+    integer  :: intentInOutFunc
+
+    dummyArg = 216
+    intentInOutFunc = 343
+  end function intentInOutFunc
+
+end subroutine s13

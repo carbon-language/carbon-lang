@@ -19,6 +19,7 @@ struct ConnectSpec;
 struct CycleStmt;
 struct DoConstruct;
 struct ExitStmt;
+struct Expr;
 struct InquireSpec;
 struct IoControlSpec;
 struct OutputImpliedDo;
@@ -40,6 +41,7 @@ public:
   void Enter(const parser::DoConstruct &);
   void Leave(const parser::DoConstruct &);
   void Enter(const parser::ExitStmt &);
+  void Leave(const parser::Expr &);
   void Leave(const parser::InquireSpec &);
   void Leave(const parser::IoControlSpec &);
   void Leave(const parser::OutputImpliedDo &);
