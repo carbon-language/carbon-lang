@@ -115,15 +115,6 @@ Extensions, deletions, and legacy features supported by default
   allowed.  The values are normalized.
 * An effectively empty source file (no program unit) is accepted and
   produces an empty relocatable output file.
-* The default `INTEGER` type is required by the standard to occupy
-  the same amount of storage as the default `REAL` type.  Default
-  `REAL` is of course 32-bit IEEE-754 floating-point today.  This legacy
-  rule imposes an artificially small constraint in some cases
-  where Fortran mandates that something have the default `INTEGER`
-  type: specifically, the results of references to the intrinsic functions
-  `SIZE`, `LBOUND`, `UBOUND`, `SHAPE`, and the location reductions
-  `FINDLOC`, `MAXLOC`, and `MINLOC`.  We return `INTEGER(KIND=8)` by
-  default in these cases when the `-flarge-sizes` option is enabled.
 
 Extensions supported when enabled by options
 --------------------------------------------
@@ -132,6 +123,16 @@ Extensions supported when enabled by options
 * Logical abbreviations `.T.`, `.F.`, `.N.`, `.A.`, `.O.`, and `.X.`
   [-flogical-abbreviations]
 * `.XOR.` as a synonym for `.NEQV.` [-fxor-operator]
+* The default `INTEGER` type is required by the standard to occupy
+  the same amount of storage as the default `REAL` type.  Default
+  `REAL` is of course 32-bit IEEE-754 floating-point today.  This legacy
+  rule imposes an artificially small constraint in some cases
+  where Fortran mandates that something have the default `INTEGER`
+  type: specifically, the results of references to the intrinsic functions
+  `SIZE`, `LBOUND`, `UBOUND`, `SHAPE`, and the location reductions
+  `FINDLOC`, `MAXLOC`, and `MINLOC` in the absence of an explicit
+  `KIND=` actual argument.  We return `INTEGER(KIND=8)` by default in
+  these cases when the `-flarge-sizes` option is enabled.
 
 Extensions and legacy features deliberately not supported
 ---------------------------------------------------------
