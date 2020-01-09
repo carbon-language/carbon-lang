@@ -15,7 +15,12 @@
 extern "C" {
 
 static void DescribeIEEESignaledExceptions() {
-  if (auto excepts{std::fetestexcept(FE_ALL_EXCEPT)}) {
+#ifdef fetestexcept  // a macro in some environments; omit std::
+  auto excepts{fetestexcept(FE_ALL_EXCEPT)};
+#else
+  auto excepts{std::fetestexcept(FE_ALL_EXCEPT)};
+#endif
+  if (excepts) {
     std::fputs("IEEE arithmetic exceptions signaled:", stderr);
     if (excepts & FE_DIVBYZERO) {
       std::fputs(" DIVBYZERO", stderr);
