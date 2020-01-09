@@ -78,13 +78,13 @@ public:
       Rounding rounding, bool isNegative, bool isOdd) const {
     bool round{false};  // to dodge bogus g++ warning about missing return
     switch (rounding.mode) {
-    case RoundingMode::TiesToEven:
+    case common::RoundingMode::TiesToEven:
       round = guard_ && (round_ | sticky_ | isOdd);
       break;
-    case RoundingMode::ToZero: break;
-    case RoundingMode::Down: round = isNegative && !empty(); break;
-    case RoundingMode::Up: round = !isNegative && !empty(); break;
-    case RoundingMode::TiesAwayFromZero: round = guard_; break;
+    case common::RoundingMode::ToZero: break;
+    case common::RoundingMode::Down: round = isNegative && !empty(); break;
+    case common::RoundingMode::Up: round = !isNegative && !empty(); break;
+    case common::RoundingMode::TiesAwayFromZero: round = guard_; break;
     }
     return round;
   }

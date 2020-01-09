@@ -56,6 +56,16 @@ ENUM_CLASS(IoSpecKind, Access, Action, Advance, Asynchronous, Blank, Decimal,
     Dispose,  // nonstandard
 )
 
+// Floating-point rounding modes; these are packed into a byte to save
+// room in the runtime's format processing context structure.
+enum class RoundingMode : std::uint8_t {
+  TiesToEven,  // ROUND=NEAREST, RN - default IEEE rounding
+  ToZero,  // ROUND=ZERO, RZ - truncation
+  Down,  // ROUND=DOWN, RD
+  Up,  // ROUND=UP, RU
+  TiesAwayFromZero,  // ROUND=COMPATIBLE, RC - ties round away from zero
+};
+
 // Fortran arrays may have up to 15 dimensions (See Fortran 2018 section 5.4.6).
 static constexpr int maxRank{15};
 }

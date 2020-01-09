@@ -114,10 +114,8 @@ template<typename A> struct ValueWithRealFlags {
   RealFlags flags{};
 };
 
-ENUM_CLASS(RoundingMode, TiesToEven, ToZero, Down, Up, TiesAwayFromZero)
-
 struct Rounding {
-  RoundingMode mode{RoundingMode::TiesToEven};
+  common::RoundingMode mode{common::RoundingMode::TiesToEven};
   // When set, emulate status flag behavior peculiar to x86
   // (viz., fail to set the Underflow flag when an inexact product of a
   // multiplication is rounded up to a normal number from a subnormal

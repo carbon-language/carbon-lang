@@ -55,8 +55,8 @@ static void DescribeIEEESignaledExceptions() {
 [[noreturn]] void RTNAME(StopStatementText)(
     const char *code, bool isErrorStop, bool quiet) {
   if (!quiet) {
-    std::fprintf(stderr, "Fortran %s: %s\n",
-        isErrorStop ? "ERROR STOP" : "STOP", code);
+    std::fprintf(
+        stderr, "Fortran %s: %s\n", isErrorStop ? "ERROR STOP" : "STOP", code);
     DescribeIEEESignaledExceptions();
   }
   std::exit(EXIT_FAILURE);

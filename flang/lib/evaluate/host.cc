@@ -76,11 +76,11 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
     return;
   }
   switch (context.rounding().mode) {
-  case RoundingMode::TiesToEven: fesetround(FE_TONEAREST); break;
-  case RoundingMode::ToZero: fesetround(FE_TOWARDZERO); break;
-  case RoundingMode::Up: fesetround(FE_UPWARD); break;
-  case RoundingMode::Down: fesetround(FE_DOWNWARD); break;
-  case RoundingMode::TiesAwayFromZero:
+  case common::RoundingMode::TiesToEven: fesetround(FE_TONEAREST); break;
+  case common::RoundingMode::ToZero: fesetround(FE_TOWARDZERO); break;
+  case common::RoundingMode::Up: fesetround(FE_UPWARD); break;
+  case common::RoundingMode::Down: fesetround(FE_DOWNWARD); break;
+  case common::RoundingMode::TiesAwayFromZero:
     fesetround(FE_TONEAREST);
     context.messages().Say(
         "TiesAwayFromZero rounding mode is not available when folding constants"

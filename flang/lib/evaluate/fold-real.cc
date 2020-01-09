@@ -89,8 +89,9 @@ Expr<Type<TypeCategory::Real, KIND>> FoldIntrinsicFunction(
         context, std::move(funcRef), &Scalar<ComplexT>::AIMAG);
   } else if (name == "aint" || name == "anint") {
     // ANINT rounds ties away from zero, not to even
-    RoundingMode mode{
-        name == "aint" ? RoundingMode::ToZero : RoundingMode::TiesAwayFromZero};
+    common::RoundingMode mode{name == "aint"
+            ? common::RoundingMode::ToZero
+            : common::RoundingMode::TiesAwayFromZero};
     return FoldElementalIntrinsic<T, T>(context, std::move(funcRef),
         ScalarFunc<T, T>([&name, &context, mode](
                              const Scalar<T> &x) -> Scalar<T> {

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 
+using Fortran::common::RoundingMode;
 using Fortran::evaluate::RealFlag;
 
 ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(

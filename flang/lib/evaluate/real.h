@@ -207,12 +207,12 @@ public:
 
   // Conversion to integer in the same real format (AINT(), ANINT())
   ValueWithRealFlags<Real> ToWholeNumber(
-      RoundingMode = RoundingMode::ToZero) const;
+      common::RoundingMode = common::RoundingMode::ToZero) const;
 
   // Conversion to an integer (INT(), NINT(), FLOOR(), CEILING())
   template<typename INT>
   constexpr ValueWithRealFlags<INT> ToInteger(
-      RoundingMode mode = RoundingMode::ToZero) const {
+      common::RoundingMode mode = common::RoundingMode::ToZero) const {
     ValueWithRealFlags<INT> result;
     if (IsNotANumber()) {
       result.flags.set(RealFlag::InvalidArgument);

@@ -4,9 +4,9 @@
 #include "../../lib/evaluate/common.h"
 #include <fenv.h>
 
+using Fortran::common::RoundingMode;
 using Fortran::evaluate::RealFlags;
 using Fortran::evaluate::Rounding;
-using Fortran::evaluate::RoundingMode;
 
 class ScopedHostFloatingPointEnvironment {
 public:
