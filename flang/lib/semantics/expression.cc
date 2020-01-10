@@ -130,9 +130,11 @@ common::IfNoLvalue<MaybeExpr, WRAPPED> TypedWrapper(
 
 class ArgumentAnalyzer {
 public:
-  explicit ArgumentAnalyzer(ExpressionAnalyzer &context) : context_{context} {}
-  ArgumentAnalyzer(ExpressionAnalyzer &context, parser::CharBlock source)
-    : context_{context}, source_{source} {}
+  explicit ArgumentAnalyzer(ExpressionAnalyzer &context)
+    : context_{context}, allowAssumedType_{false} {}
+  ArgumentAnalyzer(ExpressionAnalyzer &context, parser::CharBlock source,
+      bool allowAssumedType = false)
+    : context_{context}, source_{source}, allowAssumedType_{allowAssumedType} {}
   bool fatalErrors() const { return fatalErrors_; }
   ActualArguments &&GetActuals() {
     CHECK(!fatalErrors_);
@@ -171,6 +173,7 @@ public:
   // Find and return a user-defined assignment
   std::optional<ProcedureRef> TryDefinedAssignment();
   std::optional<ProcedureRef> GetDefinedAssignmentProc();
+  void Dump(std::ostream &);
 
 private:
   MaybeExpr TryDefinedOp(
@@ -193,6 +196,7 @@ private:
   ActualArguments actuals_;
   parser::CharBlock source_;
   bool fatalErrors_{false};
+  const bool allowAssumedType_;
   const Symbol *sawDefinedOp_{nullptr};
 };
 
@@ -851,15 +855,16 @@ std::optional<Subscript> ExpressionAnalyzer::AnalyzeSectionSubscript(
 // Empty result means an error occurred
 std::vector<Subscript> ExpressionAnalyzer::AnalyzeSectionSubscripts(
     const std::list<parser::SectionSubscript> &sss) {
+  bool error{false};
   std::vector<Subscript> subscripts;
   for (const auto &s : sss) {
     if (auto subscript{AnalyzeSectionSubscript(s)}) {
       subscripts.emplace_back(std::move(*subscript));
     } else {
-      return {};
+      error = true;
     }
   }
-  return subscripts;
+  return !error ? subscripts : std::vector<Subscript>{};
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayElement &ae) {
@@ -1846,7 +1851,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::FunctionReference &funcRef,
     std::optional<parser::StructureConstructor> *structureConstructor) {
   const parser::Call &call{funcRef.v};
   auto restorer{GetContextualMessages().SetLocation(call.source)};
-  ArgumentAnalyzer analyzer{*this, call.source};
+  ArgumentAnalyzer analyzer{*this, call.source, true /* allowAssumedType */};
   for (const auto &arg : std::get<std::list<parser::ActualArgSpec>>(call.t)) {
     analyzer.Analyze(arg, false /* not subroutine call */);
   }
@@ -1885,7 +1890,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::FunctionReference &funcRef,
 void ExpressionAnalyzer::Analyze(const parser::CallStmt &callStmt) {
   const parser::Call &call{callStmt.v};
   auto restorer{GetContextualMessages().SetLocation(call.source)};
-  ArgumentAnalyzer analyzer{*this, call.source};
+  ArgumentAnalyzer analyzer{*this, call.source, true /* allowAssumedType */};
   for (const auto &arg : std::get<std::list<parser::ActualArgSpec>>(call.t)) {
     analyzer.Analyze(arg, true /* is subroutine call */);
   }
@@ -1935,7 +1940,7 @@ const Assignment *ExpressionAnalyzer::Analyze(
               Assignment::PointerAssignment::BoundsRemapping bounds;
               for (const auto &elem : list) {
                 auto lower{AsSubscript(Analyze(std::get<0>(elem.t)))};
-                auto upper{AsSubscript(Analyze(std::get<0>(elem.t)))};
+                auto upper{AsSubscript(Analyze(std::get<1>(elem.t)))};
                 if (lower && upper) {
                   bounds.emplace_back(
                       Fold(std::move(*lower)), Fold(std::move(*upper)));
@@ -2330,13 +2335,17 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
   if (!x.typedExpr) {
     FixMisparsedFunctionReference(context_, x.u);
     MaybeExpr result;
-    if constexpr (std::is_same_v<PARSED, parser::Expr>) {
-      // Analyze the expression in a specified source position context for
-      // better error reporting.
-      auto restorer{GetContextualMessages().SetLocation(x.source)};
-      result = evaluate::Fold(foldingContext_, Analyze(x.u));
+    if (AssumedTypeDummy(x)) {
+      Say("TYPE(*) dummy argument may only be used as an actual argument"_err_en_US);
     } else {
-      result = Analyze(x.u);
+      if constexpr (std::is_same_v<PARSED, parser::Expr>) {
+        // Analyze the expression in a specified source position context for
+        // better error reporting.
+        auto restorer{GetContextualMessages().SetLocation(x.source)};
+        result = evaluate::Fold(foldingContext_, Analyze(x.u));
+      } else {
+        result = Analyze(x.u);
+      }
     }
     x.typedExpr.reset(new GenericExprWrapper{std::move(result)});
     if (!x.typedExpr->v) {
@@ -2773,11 +2782,33 @@ std::optional<ProcedureRef> ArgumentAnalyzer::GetDefinedAssignmentProc() {
   }
 }
 
+void ArgumentAnalyzer::Dump(std::ostream &os) {
+  os << "source_: " << source_.ToString() << " fatalErrors_ = " << fatalErrors_
+     << '\n';
+  for (const auto &actual : actuals_) {
+    if (!actual.has_value()) {
+      os << "- error\n";
+    } else if (const Symbol * symbol{actual->GetAssumedTypeDummy()}) {
+      os << "- assumed type: " << symbol->name().ToString() << '\n';
+    } else if (const Expr<SomeType> *expr{actual->UnwrapExpr()}) {
+      expr->AsFortran(os << "- expr: ") << '\n';
+    } else {
+      DIE("bad ActualArgument");
+    }
+  }
+}
 std::optional<ActualArgument> ArgumentAnalyzer::AnalyzeExpr(
     const parser::Expr &expr) {
   source_.ExtendToCover(expr.source);
   if (const Symbol * assumedTypeDummy{AssumedTypeDummy(expr)}) {
-    return ActualArgument{ActualArgument::AssumedType{*assumedTypeDummy}};
+    expr.typedExpr.reset(new GenericExprWrapper{});
+    if (allowAssumedType_) {
+      return ActualArgument{ActualArgument::AssumedType{*assumedTypeDummy}};
+    } else {
+      context_.SayAt(expr.source,
+          "TYPE(*) dummy argument may only be used as an actual argument"_err_en_US);
+      return std::nullopt;
+    }
   } else if (MaybeExpr argExpr{context_.Analyze(expr)}) {
     return ActualArgument{context_.Fold(std::move(*argExpr))};
   } else {

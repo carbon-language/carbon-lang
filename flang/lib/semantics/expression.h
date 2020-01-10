@@ -348,10 +348,6 @@ private:
 
   std::optional<CalleeAndArguments> AnalyzeProcedureComponentRef(
       const parser::ProcComponentRef &, ActualArguments &&);
-  std::optional<ActualArgument> AnalyzeActualArgument(const parser::Expr &);
-
-  std::optional<ActualArguments> AnalyzeArguments(
-      const parser::Call &, bool isSubroutine);
   std::optional<characteristics::Procedure> CheckCall(
       parser::CharBlock, const ProcedureDesignator &, ActualArguments &);
   using AdjustActuals =

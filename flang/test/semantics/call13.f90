@@ -31,5 +31,12 @@ subroutine s(assumedRank, coarray, class, classStar, typeStar)
   call implicit15(classStar)  ! 15.4.2.2(3)(f)
   !ERROR: Assumed type argument requires an explicit interface
   call implicit16(typeStar)  ! 15.4.2.2(3)(f)
+  !ERROR: TYPE(*) dummy argument may only be used as an actual argument
+  if (typeStar) then
+  endif
+  !ERROR: TYPE(*) dummy argument may only be used as an actual argument
+  classStar = typeStar  ! C710
+  !ERROR: TYPE(*) dummy argument may only be used as an actual argument
+  typeStar = classStar  ! C710
 end subroutine
 
