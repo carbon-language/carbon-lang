@@ -247,6 +247,7 @@ public:
 
   bool MightBeParameterized() const;
   bool IsForwardReferenced() const;
+  bool HasDefaultInitialization() const;
 
   // The "raw" type parameter list is a simple transcription from the
   // parameter list in the parse tree, built by calling AddRawParamValue().

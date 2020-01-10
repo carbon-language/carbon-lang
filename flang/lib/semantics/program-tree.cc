@@ -31,6 +31,12 @@ static ProgramTree BuildSubprogramTree(const parser::Name &name, const T &x) {
   return node;
 }
 
+static ProgramTree BuildSubprogramTree(
+    const parser::Name &name, const parser::BlockData &x) {
+  const auto &spec{std::get<parser::SpecificationPart>(x.t)};
+  return ProgramTree{name, spec, nullptr};
+}
+
 template<typename T>
 static ProgramTree BuildModuleTree(const parser::Name &name, const T &x) {
   const auto &spec{std::get<parser::SpecificationPart>(x.t)};
@@ -97,8 +103,13 @@ ProgramTree ProgramTree::Build(const parser::Submodule &x) {
   return BuildModuleTree(name, x).set_stmt(stmt).set_endStmt(end);
 }
 
-ProgramTree ProgramTree::Build(const parser::BlockData &) {
-  DIE("BlockData not yet implemented");
+ProgramTree ProgramTree::Build(const parser::BlockData &x) {
+  const auto &stmt{std::get<parser::Statement<parser::BlockDataStmt>>(x.t)};
+  const auto &end{std::get<parser::Statement<parser::EndBlockDataStmt>>(x.t)};
+  static parser::Name emptyName;
+  auto result{stmt.statement.v ? BuildSubprogramTree(*stmt.statement.v, x)
+                               : BuildSubprogramTree(emptyName, x)};
+  return result.set_stmt(stmt).set_endStmt(end);
 }
 
 const parser::ParentIdentifier &ProgramTree::GetParentId() const {
@@ -160,6 +171,9 @@ ProgramTree::Kind ProgramTree::GetKind() const {
           },
           [](const parser::Statement<parser::SubmoduleStmt> *) {
             return Kind::Submodule;
+          },
+          [](const parser::Statement<parser::BlockDataStmt> *) {
+            return Kind::BlockData;
           },
       },
       stmt_);

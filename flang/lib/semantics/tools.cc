@@ -49,7 +49,8 @@ const Scope *FindProgramUnitContaining(const Scope &start) {
     switch (scope->kind()) {
     case Scope::Kind::Module:
     case Scope::Kind::MainProgram:
-    case Scope::Kind::Subprogram: return scope;
+    case Scope::Kind::Subprogram:
+    case Scope::Kind::BlockData: return scope;
     case Scope::Kind::Global: return nullptr;
     case Scope::Kind::DerivedType:
     case Scope::Kind::Block:
@@ -615,6 +616,28 @@ bool CanBeTypeBoundProc(const Symbol *symbol) {
   } else {
     return false;
   }
+}
+
+bool IsInitialized(const Symbol &symbol) {
+  if (symbol.test(Symbol::Flag::InDataStmt)) {
+    return true;
+  } else if (IsNamedConstant(symbol)) {
+    return false;
+  } else if (const auto *object{symbol.detailsIf<ObjectEntityDetails>()}) {
+    if (IsAllocatable(symbol) || object->init()) {
+      return true;
+    }
+    if (!IsPointer(symbol) && object->type()) {
+      if (const auto *derived{object->type()->AsDerived()}) {
+        if (derived->HasDefaultInitialization()) {
+          return true;
+        }
+      }
+    }
+  } else if (const auto *proc{symbol.detailsIf<ProcEntityDetails>()}) {
+    return proc->init().has_value();
+  }
+  return false;
 }
 
 bool IsFinalizable(const Symbol &symbol) {

@@ -50,8 +50,8 @@ class Scope {
   using mapType = std::map<SourceName, common::Reference<Symbol>>;
 
 public:
-  ENUM_CLASS(Kind, Global, Module, MainProgram, Subprogram, DerivedType, Block,
-      Forall, ImpliedDos)
+  ENUM_CLASS(Kind, Global, Module, MainProgram, Subprogram, BlockData,
+      DerivedType, Block, Forall, ImpliedDos)
   using ImportKind = common::ImportKind;
 
   // Create the Global scope -- the root of the scope tree

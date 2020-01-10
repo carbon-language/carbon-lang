@@ -17,6 +17,7 @@
 #include "../evaluate/check-expression.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
+#include <algorithm>
 
 namespace Fortran::semantics {
 
@@ -71,6 +72,9 @@ private:
   bool CheckDefinedAssignmentArg(const Symbol &, const DummyArgument &, int);
   void CheckSpecificsAreDistinguishable(
       const Symbol &, const GenericDetails &, const std::vector<Procedure> &);
+  void CheckEquivalenceSet(const EquivalenceSet &);
+  void CheckBlockData(const Scope &);
+
   void SayNotDistinguishable(
       const SourceName &, GenericKind, const Symbol &, const Symbol &);
   bool CheckConflicting(const Symbol &, Attr, Attr);
@@ -348,6 +352,18 @@ void CheckHelper::CheckObjectEntity(
         messages_.Say(
             "non-POINTER dummy argument of pure subroutine must have INTENT() or VALUE attribute"_err_en_US);
       }
+    }
+  }
+  if (symbol.owner().kind() != Scope::Kind::DerivedType &&
+      IsInitialized(symbol)) {
+    if (details.commonBlock()) {
+      if (details.commonBlock()->name().empty()) {
+        messages_.Say(
+            "A variable in blank COMMON should not be initialized"_en_US);
+      }
+    } else if (symbol.owner().kind() == Scope::Kind::BlockData) {
+      messages_.Say(
+          "An initialized variable in BLOCK DATA must be in a COMMON block"_err_en_US);
     }
   }
 }
@@ -1005,11 +1021,38 @@ void CheckHelper::Check(const Scope &scope) {
   } else if (scope.IsDerivedType()) {
     return;  // PDT instantiations have null symbol()
   }
+  for (const auto &set : scope.equivalenceSets()) {
+    CheckEquivalenceSet(set);
+  }
   for (const auto &pair : scope) {
     Check(*pair.second);
   }
   for (const Scope &child : scope.children()) {
     Check(child);
+  }
+  if (scope.kind() == Scope::Kind::BlockData) {
+    CheckBlockData(scope);
+  }
+}
+
+void CheckHelper::CheckEquivalenceSet(const EquivalenceSet &) {
+  // TODO: Move C8106 (&al.) checks here from resolve-names-utils.cc
+}
+
+void CheckHelper::CheckBlockData(const Scope &scope) {
+  // BLOCK DATA subprograms should contain only named common blocks.
+  for (const auto &pair : scope) {
+    const Symbol &symbol{*pair.second};
+    if (!(symbol.has<CommonBlockDetails>() || symbol.has<UseDetails>() ||
+            symbol.has<UseErrorDetails>() || symbol.has<DerivedTypeDetails>() ||
+            symbol.has<SubprogramDetails>() ||
+            symbol.has<ObjectEntityDetails>() ||
+            (symbol.has<ProcEntityDetails>() &&
+                !symbol.attrs().test(Attr::POINTER)))) {
+      messages_.Say(symbol.name(),
+          "'%s' may not appear in a BLOCK DATA subprogram"_err_en_US,
+          symbol.name());
+    }
   }
 }
 

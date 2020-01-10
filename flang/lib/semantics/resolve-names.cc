@@ -661,6 +661,7 @@ public:
   bool BeginSubprogram(
       const parser::Name &, Symbol::Flag, bool hasModulePrefix = false);
   bool BeginMpSubprogram(const parser::Name &);
+  Symbol &PushBlockDataScope(const parser::Name &);
   void EndSubprogram();
 
 protected:
@@ -1916,9 +1917,9 @@ void ScopeHandler::PushScope(Scope &scope) {
   // The name of a module or submodule cannot be "used" in its scope,
   // as we read 19.3.1(2), so we allow the name to be used as a local
   // identifier in the module or submodule too.  Same with programs
-  // (14.1(3)).
+  // (14.1(3)) and BLOCK DATA.
   if (!currScope_->IsDerivedType() && kind != Scope::Kind::Module &&
-      kind != Scope::Kind::MainProgram) {
+      kind != Scope::Kind::MainProgram && kind != Scope::Kind::BlockData) {
     if (auto *symbol{scope.symbol()}) {
       // Create a dummy symbol so we can't create another one with the same
       // name. It might already be there if we previously pushed the scope.
@@ -2736,7 +2737,7 @@ bool SubprogramVisitor::BeginMpSubprogram(const parser::Name &name) {
   return true;
 }
 
-// A subprogram declared with SUBROUTINE or function
+// A subprogram declared with SUBROUTINE or FUNCTION
 bool SubprogramVisitor::BeginSubprogram(
     const parser::Name &name, Symbol::Flag subpFlag, bool hasModulePrefix) {
   if (hasModulePrefix && !inInterfaceBlock()) {
@@ -2787,6 +2788,22 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
   }
   FindSymbol(name)->set(subpFlag);  // PushScope() created symbol
   return *symbol;
+}
+
+Symbol &SubprogramVisitor::PushBlockDataScope(const parser::Name &name) {
+  if (auto *prev{FindSymbol(name)}) {
+    if (prev->attrs().test(Attr::EXTERNAL) && prev->has<ProcEntityDetails>()) {
+      if (prev->test(Symbol::Flag::Subroutine) ||
+          prev->test(Symbol::Flag::Function)) {
+        Say2(name, "BLOCK DATA '%s' has been called"_err_en_US, *prev,
+            "Previous call of '%s'"_en_US);
+      }
+      EraseSymbol(name);
+    }
+  }
+  Symbol &symbol{MakeSymbol(name, SubprogramDetails{})};
+  PushScope(Scope::Kind::BlockData, &symbol);
+  return symbol;
 }
 
 // If name is a generic, return specific subprogram with the same name.
@@ -4595,7 +4612,16 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
 bool ConstructVisitor::Pre(const parser::DataStmtObject &x) {
   std::visit(
       common::visitors{
-          [&](const Indirection<parser::Variable> &y) { Walk(y.value()); },
+          [&](const Indirection<parser::Variable> &y) {
+            Walk(y.value());
+            if (const auto *expr{y.value().typedExpr.get()}) {
+              if (Symbol *
+                  symbol{
+                      const_cast<Symbol *>(evaluate::GetFirstSymbol(*expr))}) {
+                symbol->set(Symbol::Flag::InDataStmt);
+              }
+            }
+          },
           [&](const parser::DataImpliedDo &y) {
             PushScope(Scope::Kind::ImpliedDos, nullptr);
             Walk(y);
@@ -4953,6 +4979,9 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
       return false;
     }
     break;
+  case Scope::Kind::BlockData:
+    Say("IMPORT is not allowed in a BLOCK DATA subprogram"_err_en_US);
+    return false;
   default:;
   }
   if (auto error{scope.SetImportKind(x.kind)}) {
@@ -5793,6 +5822,9 @@ bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
   case ProgramTree::Kind::Module: BeginModule(node.name(), false); return true;
   case ProgramTree::Kind::Submodule:
     return BeginSubmodule(node.name(), node.GetParentId());
+  case ProgramTree::Kind::BlockData:
+    PushBlockDataScope(node.name());
+    return true;
   }
 }
 

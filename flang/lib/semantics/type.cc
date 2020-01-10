@@ -171,6 +171,19 @@ bool DerivedTypeSpec::IsForwardReferenced() const {
   return typeSymbol_.get<DerivedTypeDetails>().isForwardReferenced();
 }
 
+bool DerivedTypeSpec::HasDefaultInitialization() const {
+  for (const Scope *scope{scope_}; scope;
+       scope = scope->GetDerivedTypeParent()) {
+    for (const auto &pair : *scope) {
+      const Symbol &symbol{*pair.second};
+      if (IsAllocatable(symbol) || IsInitialized(symbol)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
   return const_cast<ParamValue *>(
       const_cast<const DerivedTypeSpec *>(this)->FindParameter(target));
