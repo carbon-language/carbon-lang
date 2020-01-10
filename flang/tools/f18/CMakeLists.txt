@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-#------------------------------------------------------------------------------#
+#===------------------------------------------------------------------------===#
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")

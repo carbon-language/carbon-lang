@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//----------------------------------------------------------------------------//
+//===----------------------------------------------------------------------===//
 
 #ifndef FORTRAN_DECIMAL_BIG_RADIX_FLOATING_POINT_H_
 #define FORTRAN_DECIMAL_BIG_RADIX_FLOATING_POINT_H_

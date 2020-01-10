@@ -4,7 +4,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!------------------------------------------------------------------------------!
+!===------------------------------------------------------------------------===!
 
 ! See Fortran 2018, clause 16.10.2
 ! TODO: These are placeholder values so that some tests can be run.

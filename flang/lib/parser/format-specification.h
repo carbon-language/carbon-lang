@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//----------------------------------------------------------------------------//
+//===----------------------------------------------------------------------===//
 
 #ifndef FORTRAN_PARSER_FORMAT_SPECIFICATION_H_
 #define FORTRAN_PARSER_FORMAT_SPECIFICATION_H_

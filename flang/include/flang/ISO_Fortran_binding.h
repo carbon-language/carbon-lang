@@ -4,7 +4,7 @@
  * See https://llvm.org/LICENSE.txt for license information.
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  *
- * -----------------------------------------------------------------------------
+ * ===-----------------------------------------------------------------------===
  */
 
 #ifndef CFI_ISO_FORTRAN_BINDING_H_

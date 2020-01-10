@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-#------------------------------------------------------------------------------#
+#===------------------------------------------------------------------------===#
 
 cmake_minimum_required(VERSION 3.9.0)
 
