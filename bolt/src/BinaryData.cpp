@@ -48,7 +48,6 @@ void BinaryData::merge(const BinaryData *Other) {
   assert(*Section == *Other->Section);
   assert(OutputOffset == Other->OutputOffset);
   assert(OutputSection == Other->OutputSection);
-  Names.insert(Names.end(), Other->Names.begin(), Other->Names.end());
   Symbols.insert(Symbols.end(), Other->Symbols.begin(), Other->Symbols.end());
   MemData.insert(MemData.end(), Other->MemData.begin(), Other->MemData.end());
   Flags |= Other->Flags;
@@ -56,11 +55,28 @@ void BinaryData::merge(const BinaryData *Other) {
     Size = Other->Size;
 }
 
+bool BinaryData::hasName(StringRef Name) const {
+  for (const auto *Symbol : Symbols) {
+    if (Name == Symbol->getName())
+      return true;
+  }
+  return false;
+}
+
 bool BinaryData::hasNameRegex(StringRef NameRegex) const {
   Regex MatchName(NameRegex);
-  for (auto &Name : Names)
-    if (MatchName.match(Name))
+  for (const auto *Symbol : Symbols) {
+    if (MatchName.match(Symbol->getName()))
       return true;
+  }
+  return false;
+}
+
+bool BinaryData::nameStartsWith(StringRef Prefix) const {
+  for (const auto *Symbol : Symbols) {
+    if (Symbol->getName().startswith(Prefix))
+      return true;
+  }
   return false;
 }
 
@@ -105,10 +121,10 @@ void BinaryData::printBrief(raw_ostream &OS) const {
 
   OS << getName();
 
-  if ((opts::PrintSymbolAliases || opts::Verbosity > 1) && Names.size() > 1) {
+  if ((opts::PrintSymbolAliases || opts::Verbosity > 1) && Symbols.size() > 1) {
     OS << ", aliases:";
-    for (unsigned I = 1u; I < Names.size(); ++I) {
-      OS << (I == 1 ? " (" : ", ") << Names[I];
+    for (unsigned I = 1u; I < Symbols.size(); ++I) {
+      OS << (I == 1 ? " (" : ", ") << Symbols[I]->getName();
     }
     OS << ")";
   }
@@ -133,18 +149,19 @@ void BinaryData::printBrief(raw_ostream &OS) const {
   OS << ")";
 }
 
-BinaryData::BinaryData(StringRef Name,
+BinaryData::BinaryData(MCSymbol &Symbol,
                        uint64_t Address,
                        uint64_t Size,
                        uint16_t Alignment,
                        BinarySection &Section,
                        unsigned Flags)
-: Names({Name}),
-  Section(&Section),
+: Section(&Section),
   Address(Address),
   Size(Size),
   Alignment(Alignment),
   Flags(Flags),
   OutputSection(&Section),
   OutputOffset(getOffset())
-{ }
+{
+  Symbols.push_back(&Symbol);
+}

@@ -774,7 +774,7 @@ bool BinaryFunction::fetchProfileForOtherEntryPoints() {
       uint64_t EntryAddress = BB->getOffset() + getAddress();
       // Look for branch data associated with this entry point
       if (auto *BD = BC.getBinaryDataAtAddress(EntryAddress)) {
-        if (FuncBranchData *Data = BC.DR.getFuncBranchData(BD->getNames())) {
+        if (FuncBranchData *Data = BC.DR.getFuncBranchData(BD->getSymbols())) {
           BranchData->appendFrom(*Data, BB->getOffset());
           Data->Used = true;
           Updated = true;

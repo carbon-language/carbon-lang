@@ -592,13 +592,9 @@ public:
                                     uint16_t Alignment = 0,
                                     unsigned Flags = 0);
 
-  /// Register a symbol with \p Name at a given \p Address and \p Size.
-  MCSymbol *registerNameAtAddress(StringRef Name,
-                                  uint64_t Address,
-                                  BinaryData* BD);
-
-  /// Register a symbol with \p Name at a given \p Address, \p Size and
-  /// /p Flags.  See llvm::SymbolRef::Flags for definition of /p Flags.
+  /// Register a symbol with \p Name at a given \p Address using \p Size,
+  /// \p Alignment, and \p Flags. See llvm::SymbolRef::Flags for the definition
+  /// of \p Flags.
   MCSymbol *registerNameAtAddress(StringRef Name,
                                   uint64_t Address,
                                   uint64_t Size,

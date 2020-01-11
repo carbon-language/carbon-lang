@@ -20,6 +20,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
@@ -360,6 +361,9 @@ public:
   /// Return branch data matching one of the names in \p FuncNames.
   FuncBranchData *
   getFuncBranchData(const std::vector<std::string> &FuncNames);
+
+  /// Return branch data matching one of the \p Symbols.
+  FuncBranchData *getFuncBranchData(const std::vector<MCSymbol *> &Symbols);
 
   /// Return mem data matching one of the names in \p FuncNames.
   FuncMemData *getFuncMemData(const std::vector<std::string> &FuncNames);

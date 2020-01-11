@@ -41,10 +41,7 @@ class BinaryData {
   BinaryData &operator=(const BinaryData &) = delete;
 
 protected:
-  /// All names associated with this data.  The first name is the primary one.
-  std::vector<std::string> Names;
-  /// All symbols associated with this data.  This vector should have one entry
-  /// corresponding to every entry in \p Names.
+  /// All symbols associated with this data.
   std::vector<MCSymbol *> Symbols;
 
   /// Section this data belongs to.
@@ -85,7 +82,7 @@ protected:
 
 public:
   BinaryData(BinaryData &&) = default;
-  BinaryData(StringRef Name,
+  BinaryData(MCSymbol &Symbol,
              uint64_t Address,
              uint64_t Size,
              uint16_t Alignment,
@@ -108,10 +105,6 @@ public:
     return isTopLevelJumpTable() || !Parent;
   }
 
-  iterator_range<std::vector<std::string>::const_iterator> names() const {
-    return make_range(Names.begin(), Names.end());
-  }
-
   iterator_range<std::vector<MCSymbol *>::const_iterator> symbols() const {
     return make_range(Symbols.begin(), Symbols.end());
   }
@@ -120,22 +113,17 @@ public:
     return make_range(MemData.begin(), MemData.end());
   }
 
-  StringRef getName() const { return Names.front(); }
-  const std::vector<std::string> &getNames() const { return Names; }
+  StringRef getName() const { return getSymbol()->getName(); }
+
   MCSymbol *getSymbol() { return Symbols.front(); }
   const MCSymbol *getSymbol() const { return Symbols.front(); }
 
-  bool hasName(StringRef Name) const {
-    return std::find(Names.begin(), Names.end(), Name) != Names.end();
-  }
+  const std::vector<MCSymbol *> &getSymbols() const { return Symbols; }
+  std::vector<MCSymbol *> &getSymbols() { return Symbols; }
+
+  bool hasName(StringRef Name) const;
   bool hasNameRegex(StringRef Name) const;
-  bool nameStartsWith(StringRef Prefix) const {
-    for (const auto &Name : Names) {
-      if (StringRef(Name).startswith(Prefix))
-        return true;
-    }
-    return false;
-  }
+  bool nameStartsWith(StringRef Prefix) const;
 
   bool hasSymbol(const MCSymbol *Symbol) const {
     return std::find(Symbols.begin(), Symbols.end(), Symbol) != Symbols.end();

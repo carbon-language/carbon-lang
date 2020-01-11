@@ -89,7 +89,7 @@ public:
 
 private:
   /// Constructor should only be called by a BinaryContext.
-  JumpTable(StringRef Name,
+  JumpTable(MCSymbol &Symbol,
             uint64_t Address,
             std::size_t EntrySize,
             JumpTableType Type,

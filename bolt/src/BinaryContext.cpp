@@ -524,15 +524,14 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
   const auto EntrySize = getJumpTableEntrySize(Type);
   if (!JTLabel) {
     const auto JumpTableName = generateJumpTableName(Function, Address);
-    JTLabel = Ctx->getOrCreateSymbol(JumpTableName);
-    registerNameAtAddress(JTLabel->getName(), Address, 0, EntrySize);
+    JTLabel = registerNameAtAddress(JumpTableName, Address, 0, EntrySize);
   }
 
   DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
                << JTLabel->getName()
                << " in function " << Function << 'n');
 
-  auto *JT = new JumpTable(JTLabel->getName(),
+  auto *JT = new JumpTable(*JTLabel,
                            Address,
                            EntrySize,
                            Type,
@@ -562,7 +561,7 @@ BinaryContext::duplicateJumpTable(BinaryFunction &Function, JumpTable *JT,
   }
   assert(Found && "Label not found");
   auto *NewLabel = Ctx->createTempSymbol("duplicatedJT", true);
-  auto *NewJT = new JumpTable(NewLabel->getName(),
+  auto *NewJT = new JumpTable(*NewLabel,
                               JT->getAddress(),
                               JT->EntrySize,
                               JT->Type,
@@ -706,59 +705,31 @@ MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
                                                uint64_t Size,
                                                uint16_t Alignment,
                                                unsigned Flags) {
-  auto SectionOrErr = getSectionForAddress(Address);
-  auto &Section = SectionOrErr ? SectionOrErr.get() : absoluteSection();
+  // Register the name with MCContext.
+  auto *Symbol = Ctx->getOrCreateSymbol(Name);
+
   auto GAI = BinaryDataMap.find(Address);
   BinaryData *BD;
   if (GAI == BinaryDataMap.end()) {
-    BD = new BinaryData(Name,
+    auto SectionOrErr = getSectionForAddress(Address);
+    auto &Section = SectionOrErr ? SectionOrErr.get() : absoluteSection();
+    BD = new BinaryData(*Symbol,
                         Address,
                         Size,
                         Alignment ? Alignment : 1,
                         Section,
                         Flags);
-  } else {
-    BD = GAI->second;
-  }
-  return registerNameAtAddress(Name, Address, BD);
-}
-
-MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
-                                               uint64_t Address,
-                                               BinaryData *BD) {
-  auto GAI = BinaryDataMap.find(Address);
-  if (GAI != BinaryDataMap.end()) {
-    if (BD != GAI->second) {
-      // Note: this could be a source of bugs if client code holds
-      // on to BinaryData*'s in data structures for any length of time.
-      auto *OldBD = GAI->second;
-      BD->merge(GAI->second);
-      delete OldBD;
-      GAI->second = BD;
-      for (auto &Name : BD->names()) {
-        GlobalSymbols[Name] = BD;
-      }
-      updateObjectNesting(GAI);
-      BD = nullptr;
-    } else if (!GAI->second->hasName(Name)) {
-      GAI->second->Names.push_back(Name);
-      GlobalSymbols[Name] = GAI->second;
-    } else {
-      BD = nullptr;
-    }
-  } else {
     GAI = BinaryDataMap.emplace(Address, BD).first;
     GlobalSymbols[Name] = BD;
     updateObjectNesting(GAI);
+  } else {
+    BD = GAI->second;
+    if (!BD->hasName(Name)) {
+      GlobalSymbols[Name] = BD;
+      BD->Symbols.push_back(Symbol);
+    }
   }
 
-  // Register the name with MCContext.
-  auto *Symbol = Ctx->getOrCreateSymbol(Name);
-  if (BD) {
-    BD->Symbols.push_back(Symbol);
-    assert(BD->Symbols.size() == BD->Names.size() &&
-           "there should be a 1:1 mapping between names and symbols");
-  }
   return Symbol;
 }
 
@@ -832,18 +803,15 @@ void BinaryContext::generateSymbolHashes() {
       continue;
 
     // First check if a non-anonymous alias exists and move it to the front.
-    if (BD.getNames().size() > 1) {
-      auto Itr = std::find_if(BD.Names.begin(),
-                              BD.Names.end(),
-                              [&](const StringRef Name) {
-                                return !isInternalSymbolName(Name);
+    if (BD.getSymbols().size() > 1) {
+      auto Itr = std::find_if(BD.getSymbols().begin(),
+                              BD.getSymbols().end(),
+                              [&](const MCSymbol *Symbol) {
+                                return !isInternalSymbolName(Symbol->getName());
                               });
-      if (Itr != BD.Names.end()) {
-        assert(BD.Names.size() == BD.Symbols.size() &&
-               "there should be a 1:1 mapping between names and symbols");
-        auto Idx = std::distance(BD.Names.begin(), Itr);
-        std::swap(BD.Names[0], *Itr);
-        std::swap(BD.Symbols[0], BD.Symbols[Idx]);
+      if (Itr != BD.getSymbols().end()) {
+        auto Idx = std::distance(BD.getSymbols().begin(), Itr);
+        std::swap(BD.getSymbols()[0], BD.getSymbols()[Idx]);
         continue;
       }
     }
@@ -869,11 +837,8 @@ void BinaryContext::generateSymbolHashes() {
       }
       continue;
     }
-    BD.Names.insert(BD.Names.begin(), NewName);
     BD.Symbols.insert(BD.Symbols.begin(),
                        Ctx->getOrCreateSymbol(NewName));
-    assert(BD.Names.size() == BD.Symbols.size() &&
-           "there should be a 1:1 mapping between names and symbols");
     GlobalSymbols[NewName] = &BD;
   }
   if (NumCollisions) {

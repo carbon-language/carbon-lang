@@ -28,14 +28,14 @@ extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<unsigned> Verbosity;
 }
 
-JumpTable::JumpTable(StringRef Name,
+JumpTable::JumpTable(MCSymbol &Symbol,
                      uint64_t Address,
                      std::size_t EntrySize,
                      JumpTableType Type,
                      LabelMapType &&Labels,
                      BinaryFunction &BF,
                      BinarySection &Section)
-  : BinaryData(Name, Address, 0, EntrySize, Section),
+  : BinaryData(Symbol, Address, 0, EntrySize, Section),
     EntrySize(EntrySize),
     OutputEntrySize(EntrySize),
     Type(Type),

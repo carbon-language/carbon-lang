@@ -738,6 +738,19 @@ void DataReader::buildLTONameMaps() {
 namespace {
 template <typename MapTy>
 decltype(MapTy::MapEntryTy::second) *
+fetchMapEntry(MapTy &Map, const std::vector<MCSymbol *> &Symbols) {
+  // Do a reverse order iteration since the name in profile has a higher chance
+  // of matching a name at the end of the list.
+  for (auto SI = Symbols.rbegin(), SE = Symbols.rend(); SI != SE; ++SI) {
+    auto I = Map.find(normalizeName((*SI)->getName()));
+    if (I != Map.end())
+      return &I->getValue();
+  }
+  return nullptr;
+}
+
+template <typename MapTy>
+decltype(MapTy::MapEntryTy::second) *
 fetchMapEntry(MapTy &Map, const std::vector<std::string> &FuncNames) {
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
@@ -783,6 +796,11 @@ fetchMapEntriesRegex(
 FuncBranchData *
 DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) {
   return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, FuncNames);
+}
+
+FuncBranchData *
+DataReader::getFuncBranchData(const std::vector<MCSymbol *> &Symbols) {
+  return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, Symbols);
 }
 
 FuncMemData *
