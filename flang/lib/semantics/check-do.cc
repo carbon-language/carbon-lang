@@ -863,12 +863,10 @@ template<typename A> ActualArgumentSet CollectActualArguments(const A &x) {
 template ActualArgumentSet CollectActualArguments(const SomeExpr &);
 
 void DoChecker::Leave(const parser::Expr &parsedExpr) {
-  if (parsedExpr.typedExpr) {
-    if (const SomeExpr * expr{GetExpr(parsedExpr)}) {
-      ActualArgumentSet argSet{CollectActualArguments(*expr)};
-      for (const evaluate::ActualArgumentRef &argRef : argSet) {
-        CheckIfArgIsDoVar(*argRef, parsedExpr.source, context_);
-      }
+  if (const SomeExpr * expr{GetExpr(parsedExpr)}) {
+    ActualArgumentSet argSet{CollectActualArguments(*expr)};
+    for (const evaluate::ActualArgumentRef &argRef : argSet) {
+      CheckIfArgIsDoVar(*argRef, parsedExpr.source, context_);
     }
   }
 }
