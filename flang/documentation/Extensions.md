@@ -25,6 +25,9 @@ Intentional violations of the standard
   `SIZE` that (as mentioned below) may return non-default
   `INTEGER` results by default to be passed.  A warning is
   emitted when truncation is possible.
+* We are not strict on the contents of `BLOCK DATA` subprograms
+  so long as they contain no executable code, no internal subprograms,
+  and allocate no storage outside a named `COMMON` block.  (C1415)
 
 Extensions, deletions, and legacy features supported by default
 ===============================================================

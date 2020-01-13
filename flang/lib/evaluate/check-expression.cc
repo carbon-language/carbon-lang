@@ -30,7 +30,7 @@ public:
     return IsKindTypeParameter(inq.parameter());
   }
   bool operator()(const semantics::Symbol &symbol) const {
-    return IsNamedConstant(symbol);
+    return IsNamedConstant(symbol) || IsImpliedDoIndex(symbol);
   }
   bool operator()(const CoarrayRef &) const { return false; }
   bool operator()(const semantics::ParamValue &param) const {

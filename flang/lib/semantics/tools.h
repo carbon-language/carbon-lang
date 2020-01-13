@@ -143,6 +143,9 @@ inline bool IsIntentOut(const Symbol &symbol) {
 inline bool IsProtected(const Symbol &symbol) {
   return symbol.attrs().test(Attr::PROTECTED);
 }
+inline bool IsImpliedDoIndex(const Symbol &symbol) {
+  return symbol.owner().kind() == Scope::Kind::ImpliedDos;
+}
 bool IsFinalizable(const Symbol &);
 bool IsFinalizable(const DerivedTypeSpec &);
 bool HasImpureFinal(const DerivedTypeSpec &);

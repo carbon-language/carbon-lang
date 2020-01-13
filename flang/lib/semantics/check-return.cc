@@ -37,9 +37,6 @@ void ReturnStmtChecker::Leave(const parser::ReturnStmt &returnStmt) {
             "RETURN with expression is only allowed in SUBROUTINE subprogram"_err_en_US);
       }
     }
-  } else {
-    context_.Say(
-        "RETURN must be in the inclusive scope of a subprogram"_err_en_US);
   }
 }
 

@@ -17,7 +17,6 @@
 #include "../evaluate/check-expression.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
-#include <algorithm>
 
 namespace Fortran::semantics {
 
@@ -1041,6 +1040,10 @@ void CheckHelper::CheckEquivalenceSet(const EquivalenceSet &) {
 
 void CheckHelper::CheckBlockData(const Scope &scope) {
   // BLOCK DATA subprograms should contain only named common blocks.
+  // C1415 presents a list of statements that shouldn't appear in
+  // BLOCK DATA, but so long as the subprogram contains no executable
+  // code and allocates no storage outside named COMMON, we're happy
+  // (e.g., an ENUM is strictly not allowed).
   for (const auto &pair : scope) {
     const Symbol &symbol{*pair.second};
     if (!(symbol.has<CommonBlockDetails>() || symbol.has<UseDetails>() ||

@@ -661,7 +661,7 @@ public:
   bool BeginSubprogram(
       const parser::Name &, Symbol::Flag, bool hasModulePrefix = false);
   bool BeginMpSubprogram(const parser::Name &);
-  Symbol &PushBlockDataScope(const parser::Name &);
+  void PushBlockDataScope(const parser::Name &);
   void EndSubprogram();
 
 protected:
@@ -2790,7 +2790,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
   return *symbol;
 }
 
-Symbol &SubprogramVisitor::PushBlockDataScope(const parser::Name &name) {
+void SubprogramVisitor::PushBlockDataScope(const parser::Name &name) {
   if (auto *prev{FindSymbol(name)}) {
     if (prev->attrs().test(Attr::EXTERNAL) && prev->has<ProcEntityDetails>()) {
       if (prev->test(Symbol::Flag::Subroutine) ||
@@ -2801,9 +2801,7 @@ Symbol &SubprogramVisitor::PushBlockDataScope(const parser::Name &name) {
       EraseSymbol(name);
     }
   }
-  Symbol &symbol{MakeSymbol(name, SubprogramDetails{})};
-  PushScope(Scope::Kind::BlockData, &symbol);
-  return symbol;
+  PushScope(Scope::Kind::BlockData, &MakeSymbol(name, SubprogramDetails{}));
 }
 
 // If name is a generic, return specific subprogram with the same name.
@@ -4979,7 +4977,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
       return false;
     }
     break;
-  case Scope::Kind::BlockData:
+  case Scope::Kind::BlockData:  // C1415 (in part)
     Say("IMPORT is not allowed in a BLOCK DATA subprogram"_err_en_US);
     return false;
   default:;
