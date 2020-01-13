@@ -274,12 +274,24 @@ struct ExtractCoindexedObjectHelper {
     return std::nullopt;
   }
   std::optional<CoarrayRef> operator()(const CoarrayRef &x) const { return x; }
+  template<typename A>
+  std::optional<CoarrayRef> operator()(const Expr<A> &expr) const {
+    return std::visit(*this, expr.u);
+  }
   std::optional<CoarrayRef> operator()(const DataRef &dataRef) const {
     return std::visit(*this, dataRef.u);
   }
   std::optional<CoarrayRef> operator()(const NamedEntity &named) const {
     if (const Component * component{named.UnwrapComponent()}) {
       return (*this)(*component);
+    } else {
+      return std::nullopt;
+    }
+  }
+  std::optional<CoarrayRef> operator()(const ProcedureDesignator &des) const {
+    if (const auto *component{
+            std::get_if<common::CopyableIndirection<Component>>(&des.u)}) {
+      return (*this)(component->value());
     } else {
       return std::nullopt;
     }
@@ -296,7 +308,7 @@ template<typename A> std::optional<CoarrayRef> ExtractCoarrayRef(const A &x) {
   if (auto dataRef{ExtractDataRef(x)}) {
     return ExtractCoindexedObjectHelper{}(*dataRef);
   } else {
-    return std::nullopt;
+    return ExtractCoindexedObjectHelper{}(x);
   }
 }
 

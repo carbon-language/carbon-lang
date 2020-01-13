@@ -200,6 +200,12 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
     if (lhs && rhs) {
       CheckForPureContext(
           *lhs, *rhs, std::get<parser::Expr>(stmt.t).source, true /* => */);
+      const Symbol *pointer{GetLastSymbol(lhs)};
+      if (pointer && pointer->has<ProcEntityDetails>() &&
+          evaluate::ExtractCoarrayRef(*lhs)) {
+        context_.Say(  // C1027
+            "Procedure pointer may not be a coindexed object"_err_en_US);
+      }
     }
     // TODO continue here, using CheckPointerAssignment()
   }

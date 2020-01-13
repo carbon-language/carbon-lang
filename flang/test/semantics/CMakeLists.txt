@@ -105,6 +105,7 @@ set(ERROR_TESTS
   structconst03.f90
   structconst04.f90
   assign01.f90
+  assign03.f90
   if_arith02.f90
   if_arith03.f90
   if_arith04.f90
