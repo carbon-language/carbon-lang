@@ -223,10 +223,10 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
         TotalSize += Cg.size(FuncId);
 
         if (PrintDetailed) {
-          outs() << format("BOLT-INFO: start = %6u : avgCallDist = %lu : %s\n",
+          outs() << format("BOLT-INFO: start = %6u : avgCallDist = %lu : ",
                            TotalSize,
-                           Calls ? Dist / Calls : 0,
-                           Cg.nodeIdToFunc(FuncId)->getPrintName().c_str());
+                           Calls ? Dist / Calls : 0)
+                 << Cg.nodeIdToFunc(FuncId)->getPrintName() << '\n';
           const auto NewPage = TotalSize / HugePageSize;
           if (NewPage != CurPage) {
             CurPage = NewPage;
@@ -457,11 +457,13 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
         continue;
 
       if (FuncsFile)
-        *FuncsFile << Func->getSymbol()->getName().data() << "\n";
+        *FuncsFile << Func->getOneName().data() << "\n";
 
       if (LinkSectionsFile) {
         const char *Indent = "";
-        for (auto Name : Func->getNames()) {
+        auto AllNames = Func->getNames();
+        std::sort(AllNames.begin(), AllNames.end());
+        for (auto Name : AllNames) {
           const auto SlashPos = Name.find('/');
           if (SlashPos != std::string::npos) {
             // Avoid duplicates for local functions.
@@ -469,7 +471,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
               continue;
             Name = Name.substr(0, SlashPos);
           }
-          *LinkSectionsFile << Indent << ".text." << Name << "\n";
+          *LinkSectionsFile << Indent << ".text." << Name.data() << "\n";
           Indent = " ";
         }
       }

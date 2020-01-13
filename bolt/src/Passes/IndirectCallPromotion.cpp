@@ -495,7 +495,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
 
     if (MI.Addr.IsSymbol) {
       // Deal with bad/stale data
-      if (!MI.Addr.Name.startswith("JUMP_TABLE/" + Function.getNames().front()))
+      if (!MI.Addr.Name.startswith("JUMP_TABLE/" + Function.getOneName().str()))
         return JumpTableInfoType();
       Index = (MI.Addr.Offset - (ArrayStart - JT->getAddress())) / JT->EntrySize;
     } else {

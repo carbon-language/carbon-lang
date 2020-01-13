@@ -75,7 +75,7 @@ uint32_t Instrumentation::getFunctionNameIndex(const BinaryFunction &Function) {
     return Iter->second;
   auto Idx = StringTable.size();
   FuncToStringIdx.emplace(std::make_pair(&Function, Idx));
-  StringTable.append(Function.getNames()[0]);
+  StringTable.append(Function.getOneName());
   StringTable.append(1, '\0');
   return Idx;
 }

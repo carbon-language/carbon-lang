@@ -360,28 +360,28 @@ public:
 
   /// Return branch data matching one of the names in \p FuncNames.
   FuncBranchData *
-  getFuncBranchData(const std::vector<std::string> &FuncNames);
+  getFuncBranchData(const std::vector<StringRef> &FuncNames);
 
   /// Return branch data matching one of the \p Symbols.
   FuncBranchData *getFuncBranchData(const std::vector<MCSymbol *> &Symbols);
 
   /// Return mem data matching one of the names in \p FuncNames.
-  FuncMemData *getFuncMemData(const std::vector<std::string> &FuncNames);
+  FuncMemData *getFuncMemData(const std::vector<StringRef> &FuncNames);
 
   FuncSampleData *
-  getFuncSampleData(const std::vector<std::string> &FuncNames);
+  getFuncSampleData(const std::vector<StringRef> &FuncNames);
 
   /// Return a vector of all FuncBranchData matching the list of names.
   /// Internally use fuzzy matching to match special names like LTO-generated
   /// function names.
   std::vector<FuncBranchData *>
-  getFuncBranchDataRegex(const std::vector<std::string> &FuncNames);
+  getFuncBranchDataRegex(const std::vector<StringRef> &FuncNames);
 
   /// Return a vector of all FuncMemData matching the list of names.
   /// Internally use fuzzy matching to match special names like LTO-generated
   /// function names.
   std::vector<FuncMemData *>
-  getFuncMemDataRegex(const std::vector<std::string> &FuncNames);
+  getFuncMemDataRegex(const std::vector<StringRef> &FuncNames);
 
   using FuncsToBranchesMapTy = StringMap<FuncBranchData>;
   using FuncsToSamplesMapTy = StringMap<FuncSampleData>;

@@ -942,7 +942,6 @@ void RewriteInstance::discoverFileObjects() {
   BC->getBinaryFunctions().clear();
   BC->clearBinaryData();
 
-
   // For local symbols we want to keep track of associated FILE symbol name for
   // disambiguation by combined name.
   StringRef  FileSymbolName;
@@ -1507,7 +1506,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
       NextFunction = &std::next(BFI)->second;
 
     // Check if it's a fragment of a function.
-    const auto *FragName = Function.hasNameRegex(".*\\.cold\\..*");
+    auto FragName = Function.hasNameRegex(".*\\.cold\\..*");
     if (!FragName)
       FragName = Function.hasNameRegex(".*\\.cold");
     if (FragName) {
@@ -2646,14 +2645,16 @@ bool RewriteInstance::emitFunction(MCStreamer &Streamer,
   MCContext &Context = Streamer.getContext();
   const MCAsmInfo *MAI = Context.getAsmInfo();
 
-  // Emit all names the function is known under.
-  for (const auto &Name : Function.getNames()) {
-    Twine EmitName = EmitColdPart ? Twine(Name).concat(".cold") : Name;
-    auto *EmitSymbol = BC->Ctx->getOrCreateSymbol(EmitName);
-    Streamer.EmitSymbolAttribute(EmitSymbol, MCSA_ELF_TypeFunction);
-    DEBUG(dbgs() << "emitting symbol " << EmitSymbol->getName()
-                 << " for function " << Function << '\n');
-    Streamer.EmitLabel(EmitSymbol);
+  // Emit all symbols associated with the main function entry.
+  if (!EmitColdPart) {
+    for (auto *Symbol : Function.getSymbols()) {
+      Streamer.EmitSymbolAttribute(Symbol, MCSA_ELF_TypeFunction);
+      Streamer.EmitLabel(Symbol);
+    }
+  } else {
+    auto *Symbol = Function.getColdSymbol();
+    Streamer.EmitSymbolAttribute(Symbol, MCSA_ELF_TypeFunction);
+    Streamer.EmitLabel(Symbol);
   }
 
   // Emit CFI start
@@ -3973,7 +3974,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       Elf_Sym NewSymbol;
       NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
       NewSymbol.st_value = Function->getOutputAddress();
-      NewSymbol.st_name = AddToStrTab(Function->getPrintName());
+      NewSymbol.st_name = AddToStrTab(Function->getOneName());
       NewSymbol.st_size = Function->getOutputSize();
       NewSymbol.st_other = 0;
       NewSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);

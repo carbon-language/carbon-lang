@@ -239,18 +239,19 @@ SMLoc findDebugLineInformationForInstructionAt(
 
 uint64_t BinaryFunction::Count = 0;
 
-const std::string *
+Optional<StringRef>
 BinaryFunction::hasNameRegex(const StringRef Name) const {
   const auto RegexName = (Twine("^") + StringRef(Name) + "$").str();
   Regex MatchName(RegexName);
-  for (auto &Name : Names)
-    if (MatchName.match(Name))
-      return &Name;
-  return nullptr;
+  auto Match = forEachName([&MatchName](StringRef Name) {
+      return MatchName.match(Name);
+  });
+
+  return Match;
 }
 
 std::string BinaryFunction::getDemangledName() const {
-  StringRef MangledName = Names.back();
+  StringRef MangledName = getOneName();
   MangledName = MangledName.substr(0, MangledName.find_first_of('/'));
   int Status = 0;
   char *const Name =
@@ -403,11 +404,12 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   StringRef SectionName =
       IsInjected ? "<no input section>" : InputSection->getName();
   OS << "Binary Function \"" << *this << "\" " << Annotation << " {";
-  if (Names.size() > 1) {
-    OS << "\n  Other names : ";
+  auto AllNames = getNames();
+  if (AllNames.size() > 1) {
+    OS << "\n  All names   : ";
     auto Sep = "";
-    for (unsigned i = 0; i < Names.size() - 1; ++i) {
-      OS << Sep << Names[i];
+    for (const auto Name : AllNames) {
+      OS << Sep << Name;
       Sep = "\n                ";
     }
   }
@@ -3388,30 +3390,27 @@ uint64_t BinaryFunction::getEntryForSymbol(const MCSymbol *EntrySymbol) const {
   if (!isMultiEntry())
     return 0;
 
-  if (getSymbol() == EntrySymbol)
-    return 0;
+  for (const auto *Symbol : getSymbols())
+    if (Symbol == EntrySymbol)
+      return 0;
 
-  // The function might have multiple symbols associated with its main entry
-  // point. Check EntrySymbol against all secondary entry points and return 0
-  // corresponding to the main entry point if no match is found.
+  // Check all secondary entries available as either basic blocks or lables.
   uint64_t NumEntries = 0;
-  if (hasCFG()) {
-    for (const auto *BB : BasicBlocks) {
-      if (!BB->isEntryPoint())
-        continue;
-      if (BB->getLabel() == EntrySymbol)
-        return NumEntries;
-      ++NumEntries;
-    }
-  } else {
-    for (auto &KV : Labels) {
-      if (KV.second == EntrySymbol)
-        return NumEntries;
-      ++NumEntries;
-    }
+  for (const auto *BB : BasicBlocks) {
+    if (!BB->isEntryPoint())
+      continue;
+    if (BB->getLabel() == EntrySymbol)
+      return NumEntries;
+    ++NumEntries;
+  }
+  NumEntries = 0;
+  for (auto &KV : Labels) {
+    if (KV.second == EntrySymbol)
+      return NumEntries;
+    ++NumEntries;
   }
 
-  return 0;
+  llvm_unreachable("symbol not found");
 }
 
 BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {

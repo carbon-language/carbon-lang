@@ -751,7 +751,7 @@ fetchMapEntry(MapTy &Map, const std::vector<MCSymbol *> &Symbols) {
 
 template <typename MapTy>
 decltype(MapTy::MapEntryTy::second) *
-fetchMapEntry(MapTy &Map, const std::vector<std::string> &FuncNames) {
+fetchMapEntry(MapTy &Map, const std::vector<StringRef> &FuncNames) {
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
   for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
@@ -767,7 +767,7 @@ std::vector<decltype(MapTy::MapEntryTy::second) *>
 fetchMapEntriesRegex(
   MapTy &Map,
   const StringMap<std::vector<decltype(MapTy::MapEntryTy::second) *>> &LTOCommonNameMap,
-  const std::vector<std::string> &FuncNames) {
+  const std::vector<StringRef> &FuncNames) {
   std::vector<decltype(MapTy::MapEntryTy::second) *> AllData;
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
@@ -794,7 +794,7 @@ fetchMapEntriesRegex(
 }
 
 FuncBranchData *
-DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) {
+DataReader::getFuncBranchData(const std::vector<StringRef> &FuncNames) {
   return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, FuncNames);
 }
 
@@ -804,22 +804,22 @@ DataReader::getFuncBranchData(const std::vector<MCSymbol *> &Symbols) {
 }
 
 FuncMemData *
-DataReader::getFuncMemData(const std::vector<std::string> &FuncNames) {
+DataReader::getFuncMemData(const std::vector<StringRef> &FuncNames) {
   return fetchMapEntry<FuncsToMemEventsMapTy>(FuncsToMemEvents, FuncNames);
 }
 
 FuncSampleData *
-DataReader::getFuncSampleData(const std::vector<std::string> &FuncNames) {
+DataReader::getFuncSampleData(const std::vector<StringRef> &FuncNames) {
   return fetchMapEntry<FuncsToSamplesMapTy>(FuncsToSamples, FuncNames);
 }
 
 std::vector<FuncBranchData *>
-DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
+DataReader::getFuncBranchDataRegex(const std::vector<StringRef> &FuncNames) {
   return fetchMapEntriesRegex(FuncsToBranches, LTOCommonNameMap, FuncNames);
 }
 
 std::vector<FuncMemData *>
-DataReader::getFuncMemDataRegex(const std::vector<std::string> &FuncNames) {
+DataReader::getFuncMemDataRegex(const std::vector<StringRef> &FuncNames) {
   return fetchMapEntriesRegex(FuncsToMemEvents, LTOCommonNameMemMap, FuncNames);
 }
 

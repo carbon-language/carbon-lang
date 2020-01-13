@@ -650,7 +650,7 @@ DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) const {
 StringRef DataAggregator::getLocationName(BinaryFunction &Func,
                                           uint64_t Count) {
   if (!BAT)
-    return Func.getNames()[0];
+    return Func.getOneName();
 
   const auto *OrigFunc = &Func;
   if (const auto HotAddr = BAT->fetchParentAddress(Func.getAddress())) {
@@ -659,11 +659,9 @@ StringRef DataAggregator::getLocationName(BinaryFunction &Func,
     if (HotFunc)
       OrigFunc = HotFunc;
   }
-  const auto &Names = OrigFunc->getNames();
   // If it is a local function, prefer the name containing the file name where
   // the local function was declared
-  for (const auto &Name : Names) {
-    StringRef AlternativeName = Name;
+  for (auto AlternativeName : OrigFunc->getNames()) {
     size_t FileNameIdx = AlternativeName.find('/');
     // Confirm the alternative name has the pattern Symbol/FileName/1 before
     // using it
@@ -672,17 +670,17 @@ StringRef DataAggregator::getLocationName(BinaryFunction &Func,
       continue;
     return AlternativeName;
   }
-  return Names[0];
+  return Func.getOneName();
 }
 
 bool DataAggregator::doSample(BinaryFunction &Func, uint64_t Address,
                               uint64_t Count) {
-  auto I = FuncsToSamples.find(Func.getNames()[0]);
+  auto I = FuncsToSamples.find(Func.getOneName());
   if (I == FuncsToSamples.end()) {
     bool Success;
     StringRef LocName = getLocationName(Func, Count);
     std::tie(I, Success) = FuncsToSamples.insert(std::make_pair(
-        Func.getNames()[0],
+        Func.getOneName(),
         FuncSampleData(LocName, FuncSampleData::ContainerTy())));
   }
 
@@ -699,7 +697,7 @@ bool DataAggregator::doIntraBranch(BinaryFunction &Func, uint64_t From,
                                    uint64_t Mispreds) {
   FuncBranchData *AggrData = Func.getBranchData();
   if (!AggrData) {
-    AggrData = &FuncsToBranches[Func.getNames()[0]];
+    AggrData = &FuncsToBranches[Func.getOneName()];
     AggrData->Name = getLocationName(Func, Count);
     Func.setBranchData(AggrData);
   }
@@ -735,7 +733,7 @@ bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
     SrcFunc = getLocationName(*FromFunc, Count);
     FromAggrData = FromFunc->getBranchData();
     if (!FromAggrData) {
-      FromAggrData = &FuncsToBranches[FromFunc->getNames()[0]];
+      FromAggrData = &FuncsToBranches[FromFunc->getOneName()];
       FromAggrData->Name = SrcFunc;
       FromFunc->setBranchData(FromAggrData);
     }
@@ -749,7 +747,7 @@ bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
     DstFunc = getLocationName(*ToFunc, 0);
     ToAggrData = ToFunc->getBranchData();
     if (!ToAggrData) {
-      ToAggrData = &FuncsToBranches[ToFunc->getNames()[0]];
+      ToAggrData = &FuncsToBranches[ToFunc->getOneName()];
       ToAggrData->Name = DstFunc;
       ToFunc->setBranchData(ToAggrData);
     }
@@ -1519,14 +1517,14 @@ void DataAggregator::processMemEvents() {
     // Try to resolve symbol for PC
     auto *Func = getBinaryFunctionContainingAddress(PC);
     if (Func) {
-      FuncName = Func->getNames()[0];
+      FuncName = Func->getOneName();
       PC -= Func->getAddress();
     }
 
     // Try to resolve symbol for memory load
     auto *MemFunc = getBinaryFunctionContainingAddress(Addr);
     if (MemFunc) {
-      MemName = MemFunc->getNames()[0];
+      MemName = MemFunc->getOneName();
       Addr -= MemFunc->getAddress();
     } else if (Addr) {
       if (auto *BD = BC->getBinaryDataContainingAddress(Addr)) {

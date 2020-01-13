@@ -153,8 +153,16 @@ private:
   /// Current state of the function.
   State CurrentState{State::Empty};
 
-  /// A list of function names.
-  std::vector<std::string> Names;
+  /// A list of symbols associated with the function entry point.
+  ///
+  /// Multiple symbols would typically result from identical code-folding
+  /// optimization.
+  typedef SmallVector<MCSymbol *, 1> SymbolListTy;
+  SymbolListTy Symbols;
+
+  /// The list of names this function is known under. Used for fuzzy-matching
+  /// the function to its name in a profile, command line, etc.
+  std::vector<std::string> Aliases;
 
   /// Containing section
   BinarySection *InputSection = nullptr;
@@ -517,12 +525,6 @@ private:
   };
   std::vector<BasicBlockOffset> BasicBlockOffsets;
 
-  /// Symbol in the output.
-  ///
-  /// NB: function can have multiple symbols associated with it. We will emit
-  ///     all symbols for the function
-  MCSymbol *OutputSymbol;
-
   MCSymbol *ColdSymbol{nullptr};
 
   /// Symbol at the end of the function.
@@ -547,7 +549,7 @@ private:
 private:
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
-    Names.emplace_back(NewName);
+    Aliases.emplace_back(NewName);
   }
 
   /// Return label at a given \p Address in the function. If the label does
@@ -653,21 +655,21 @@ private:
   BinaryFunction(const std::string &Name, BinarySection &Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC,
                  bool IsSimple) :
-      Names({Name}), InputSection(&Section), Address(Address),
+      InputSection(&Section), Address(Address),
       Size(Size), BC(BC), IsSimple(IsSimple),
       CodeSectionName(".local.text." + Name),
       ColdCodeSectionName(".local.cold.text." + Name),
       FunctionNumber(++Count) {
-    OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
+    Symbols.push_back(BC.Ctx->getOrCreateSymbol(Name));
   }
 
   /// This constructor is used to create an injected function
   BinaryFunction(const std::string &Name, BinaryContext &BC, bool IsSimple)
-      : Names({Name}), Address(0), Size(0), BC(BC), IsSimple(IsSimple),
+      : Address(0), Size(0), BC(BC), IsSimple(IsSimple),
         CodeSectionName(".local.text." + Name),
         ColdCodeSectionName(".local.cold.text." + Name),
         FunctionNumber(++Count) {
-    OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
+    Symbols.push_back(BC.Ctx->getOrCreateSymbol(Name));
     IsInjected = true;
   }
 
@@ -925,40 +927,74 @@ public:
       getJumpTableContainingAddress(Address);
   }
 
-  /// Return the name of the function as extracted from the binary file.
-  /// If the function has multiple names - return the last one
-  /// followed by "(*#<numnames>)".
-  /// We should preferably only use getName() for diagnostics and use
+  /// Return the name of the function if the function has just one name.
+  /// If the function has multiple names - return one followed
+  /// by "(*#<numnames>)".
+  ///
+  /// We should use getPrintName() for diagnostics and use
   /// hasName() to match function name against a given string.
   ///
-  /// We pick the last name from the list to match the name of the function
-  /// in profile data for easier manual analysis.
+  /// NOTE: for disambiguating names of local symbols we use the following
+  ///       naming schemes:
+  ///           primary:     <function>/<id>
+  ///           alternative: <function>/<file>/<id2>
   std::string getPrintName() const {
-    return Names.size() == 1 ?
-              Names.back() :
-              (Names.back() + "(*" + std::to_string(Names.size()) + ")");
+    const auto NumNames = Symbols.size() + Aliases.size();
+    return NumNames == 1
+        ? getOneName().str()
+        : (getOneName().str() + "(*" + std::to_string(NumNames) + ")");
+  }
+
+  /// The function may have many names. For that reason, we avoid having
+  /// getName() method as most of the time the user needs a different
+  /// interface, such as forEachName(), hasName(), hasNameRegex(), etc.
+  /// In some cases though, we need just a name uniquely identifying
+  /// the function, and that's what this method is for.
+  StringRef getOneName() const {
+    return Symbols[0]->getName();
   }
 
   /// Return the name of the function as getPrintName(), but also trying
   /// to demangle it.
   std::string getDemangledName() const;
 
-  /// Check if (possibly one out of many) function name matches the given
-  /// string. Use this member function instead of direct name comparison.
-  bool hasName(const std::string &FunctionName) const {
-    for (auto &Name : Names)
-      if (Name == FunctionName)
-        return true;
-    return false;
+  /// Call \p Callback for every name of this function as long as the Callback
+  /// returns false. Stop if Callback returns true or all names have been used.
+  /// Return the name for which the Callback returned true if any.
+  template <typename FType>
+  Optional<StringRef> forEachName(FType Callback) const {
+    for (auto *Symbol : Symbols)
+      if (Callback(Symbol->getName()))
+        return Symbol->getName();
+
+    for (auto &Name : Aliases)
+      if (Callback(StringRef(Name)))
+        return StringRef(Name);
+
+    return NoneType();
   }
 
   /// Check if (possibly one out of many) function name matches the given
-  /// regex.
-  const std::string *hasNameRegex(const StringRef NameRegex) const;
+  /// string. Use this member function instead of direct name comparison.
+  bool hasName(const std::string &FunctionName) const {
+    auto Res = forEachName([&](StringRef Name) {
+      return Name == FunctionName;
+    });
+    return Res.hasValue();
+  }
+
+  /// Check if of function names matches the given regex.
+  Optional<StringRef> hasNameRegex(const StringRef NameRegex) const;
 
   /// Return a vector of all possible names for the function.
-  const std::vector<std::string> &getNames() const {
-    return Names;
+  const std::vector<StringRef> getNames() const {
+    std::vector<StringRef> AllNames;
+    forEachName([&AllNames] (StringRef Name) {
+        AllNames.push_back(Name);
+        return false;
+    });
+
+    return AllNames;
   }
 
   /// Return a state the function is in (see BinaryFunction::State definition
@@ -1055,14 +1091,18 @@ public:
   /// Return MC symbol associated with the function.
   /// All references to the function should use this symbol.
   MCSymbol *getSymbol() {
-    return OutputSymbol;
+    return Symbols[0];
   }
 
   /// Return MC symbol associated with the function (const version).
   /// All references to the function should use this symbol.
   const MCSymbol *getSymbol() const {
-    return OutputSymbol;
+    return Symbols[0];
   }
+
+  /// Return a list of symbols associated with the main entry of the function.
+  SymbolListTy &getSymbols() { return Symbols; }
+  const SymbolListTy &getSymbols() const { return Symbols; }
 
   /// Return MC symbol corresponding to an enumerated entry for multiple-entry
   /// functions.
@@ -1331,13 +1371,6 @@ public:
     if (UseMaxSize)
       return Address <= PC && PC < Address + MaxSize;
     return Address <= PC && PC < Address + Size;
-  }
-
-  /// Add new names this function is known under.
-  template <class ContainterTy>
-  void addNewNames(const ContainterTy &NewNames) {
-    Names.insert(Names.begin(), NewNames.begin(), NewNames.end());
-    std::sort(Names.begin(), Names.end());
   }
 
   /// Create a basic block at a given \p Offset in the

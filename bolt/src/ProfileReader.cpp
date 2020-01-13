@@ -50,7 +50,7 @@ ProfileReader::buildNameMaps(std::map<uint64_t, BinaryFunction> &Functions) {
   }
   for (auto &BFI : Functions) {
     const auto &Function = BFI.second;
-    for (auto &Name : Function.getNames()) {
+    for (auto Name : Function.getNames()) {
       if (const auto CommonName = getLTOCommonName(Name)) {
         LTOCommonNameFunctionMap[*CommonName].insert(&Function);
       }
@@ -284,7 +284,7 @@ ProfileReader::readProfile(const std::string &FileName,
     if (!opts::IgnoreHash)
       Function.hash(/*Recompute = */true, true);
 
-    for (auto &FunctionName : Function.getNames()) {
+    for (auto FunctionName : Function.getNames()) {
       auto PI = ProfileNameToProfile.find(FunctionName);
       if (PI == ProfileNameToProfile.end()) {
         continue;
@@ -301,7 +301,7 @@ ProfileReader::readProfile(const std::string &FileName,
     if (ProfiledFunctions.count(&Function))
       continue;
 
-    for (auto &FunctionName : Function.getNames()) {
+    for (auto FunctionName : Function.getNames()) {
       const auto CommonName = getLTOCommonName(FunctionName);
       if (CommonName) {
         auto I = LTOCommonNameMap.find(*CommonName);

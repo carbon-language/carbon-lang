@@ -52,7 +52,7 @@ void VeneerElimination::runOnFunctions(BinaryContext &BC) {
           BC.MIB->getTargetSymbol(FirstInstruction, 1);
 
       // Functions can have multiple symbols
-      for (auto &Name : VeneerFunction.getNames()) {
+      for (auto Name : VeneerFunction.getNames()) {
         auto *Symbol = BC.Ctx->lookupSymbol(Name);
         VeneerDestinations[Symbol] = VeneerTargetSymbol;
         BC.SymbolToFunctionMap.erase(Symbol);

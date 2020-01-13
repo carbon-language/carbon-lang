@@ -740,7 +740,7 @@ std::string BinaryContext::generateJumpTableName(const BinaryFunction &BF,
   } else {
     Id = JumpTableIds[Address] = BF.JumpTables.size();
   }
-  return ("JUMP_TABLE/" + BF.Names[0] + "." + std::to_string(Id) +
+  return ("JUMP_TABLE/" + BF.getOneName().str() + "." + std::to_string(Id) +
           (Offset ? ("." + std::to_string(Offset)) : ""));
 }
 
@@ -1096,31 +1096,30 @@ void BinaryContext::postProcessSymbolTable() {
 
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
                                  BinaryFunction &ParentBF) {
-  std::shared_lock<std::shared_timed_mutex> ReadCtxLock(CtxMutex,
-                                                        std::defer_lock);
+  assert(!ChildBF.isMultiEntry() && !ParentBF.isMultiEntry() &&
+         "cannot merge functions with multiple entry points");
+
   std::unique_lock<std::shared_timed_mutex> WriteCtxLock(CtxMutex,
                                                          std::defer_lock);
   std::unique_lock<std::shared_timed_mutex> WriteSymbolMapLock(
       SymbolToFunctionMapMutex, std::defer_lock);
 
-  // Copy name list.
-  ParentBF.addNewNames(ChildBF.getNames());
+  const auto ChildName = ChildBF.getOneName();
 
-  // Update internal bookkeeping info.
-  for (auto &Name : ChildBF.getNames()) {
-    ReadCtxLock.lock();
-    // Calls to functions are handled via symbols, and we keep the lookup table
-    // that we need to update.
-    auto *Symbol = Ctx->lookupSymbol(Name);
-    ReadCtxLock.unlock();
-
-    assert(Symbol && "symbol cannot be NULL at this point");
-
+  // Move symbols over and update bookkeeping info.
+  for (auto *Symbol : ChildBF.getSymbols()) {
+    ParentBF.getSymbols().push_back(Symbol);
     WriteSymbolMapLock.lock();
     SymbolToFunctionMap[Symbol] = &ParentBF;
     WriteSymbolMapLock.unlock();
     // NB: there's no need to update BinaryDataMap and GlobalSymbols.
   }
+  ChildBF.getSymbols().clear();
+
+  // Move other names the child function is known under.
+  std::move(ChildBF.Aliases.begin(), ChildBF.Aliases.end(),
+            std::back_inserter(ParentBF.Aliases));
+  ChildBF.Aliases.clear();
 
   // Merge execution counts of ChildBF into those of ParentBF.
   ChildBF.mergeProfileDataInto(ParentBF);
@@ -1144,12 +1143,10 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
 
   } else {
     // In non-relocation mode we keep the function, but rename it.
-    std::string NewName = "__ICF_" + ChildBF.getSymbol()->getName().str();
-    ChildBF.Names.clear();
-    ChildBF.Names.push_back(NewName);
+    std::string NewName = "__ICF_" + ChildName.str();
 
     WriteCtxLock.lock();
-    ChildBF.OutputSymbol = Ctx->getOrCreateSymbol(NewName);
+    ChildBF.getSymbols().push_back(Ctx->getOrCreateSymbol(NewName));
     WriteCtxLock.unlock();
 
     ChildBF.setFolded();
