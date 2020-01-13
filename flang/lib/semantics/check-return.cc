@@ -31,11 +31,13 @@ void ReturnStmtChecker::Leave(const parser::ReturnStmt &returnStmt) {
   // subroutine subprogram.
   const auto &scope{context_.FindScope(context_.location().value())};
   if (const auto *subprogramScope{FindContainingSubprogram(scope)}) {
-    if (returnStmt.v && subprogramScope->kind() == Scope::Kind::Subprogram) {
-      if (IsFunction(*subprogramScope->GetSymbol())) {
-        context_.Say(
-            "RETURN with expression is only allowed in SUBROUTINE subprogram"_err_en_US);
-      }
+    if (returnStmt.v &&
+        (subprogramScope->kind() == Scope::Kind::MainProgram ||
+            IsFunction(*subprogramScope->GetSymbol()))) {
+      context_.Say(
+          "RETURN with expression is only allowed in SUBROUTINE subprogram"_err_en_US);
+    } else if (context_.ShouldWarn(common::LanguageFeature::ProgramReturn)) {
+      context_.Say("RETURN should not appear in a main program"_en_US);
     }
   }
 }

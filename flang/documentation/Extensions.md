@@ -118,6 +118,7 @@ Extensions, deletions, and legacy features supported by default
   allowed.  The values are normalized.
 * An effectively empty source file (no program unit) is accepted and
   produces an empty relocatable output file.
+* A `RETURN` statement may appear in a main program.
 
 Extensions supported when enabled by options
 --------------------------------------------

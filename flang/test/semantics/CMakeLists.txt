@@ -126,6 +126,7 @@ set(ERROR_TESTS
 #  altreturn02.f90
 #  altreturn03.f90
   altreturn04.f90
+  altreturn05.f90
   allocate01.f90
   allocate02.f90
   allocate03.f90
