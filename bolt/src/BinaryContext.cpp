@@ -1851,9 +1851,11 @@ bool BinaryContext::validateEncoding(const MCInst &Inst,
   MCE->encodeInstruction(Inst, VecOS, Fixups, *STI);
   auto EncodedData = ArrayRef<uint8_t>((uint8_t *)Code.data(), Code.size());
   if (InputEncoding != EncodedData) {
-    errs() << "BOLT-ERROR: mismatched encoding detected\n"
-           << "      input: " << InputEncoding << '\n'
-           << "     output: " << EncodedData << '\n';
+    if (opts::Verbosity > 1) {
+      errs() << "BOLT-WARNING: mismatched encoding detected\n"
+             << "      input: " << InputEncoding << '\n'
+             << "     output: " << EncodedData << '\n';
+    }
     return false;
   }
 
