@@ -2801,7 +2801,12 @@ void SubprogramVisitor::PushBlockDataScope(const parser::Name &name) {
       EraseSymbol(name);
     }
   }
-  PushScope(Scope::Kind::BlockData, &MakeSymbol(name, SubprogramDetails{}));
+  if (name.source.empty()) {
+    // Don't let unnamed BLOCK DATA conflict with unnamed PROGRAM
+    PushScope(Scope::Kind::BlockData, nullptr);
+  } else {
+    PushScope(Scope::Kind::BlockData, &MakeSymbol(name, SubprogramDetails{}));
+  }
 }
 
 // If name is a generic, return specific subprogram with the same name.
