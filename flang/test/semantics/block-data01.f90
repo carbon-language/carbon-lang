@@ -15,5 +15,13 @@ block data foo
   common inBlankCommon
   !ERROR: An initialized variable in BLOCK DATA must be in a COMMON block
   integer :: inDataButNotCommon
-  data inDataButNotCommon / 1 / 
+  data inDataButNotCommon /1/
+  !ERROR: Two objects in the same EQUIVALENCE set may not be members of distinct COMMON blocks
+  integer :: inCommonA, inCommonB
+  common /a/ inCommonA, /b/ inCommonB
+  equivalence(inCommonA, inCommonB)
+  integer :: inCommonD, initialized ! ok
+  common /d/ inCommonD
+  equivalence(inCommonD, initialized)
+  data initialized /2/
 end block data

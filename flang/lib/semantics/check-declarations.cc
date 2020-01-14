@@ -17,6 +17,7 @@
 #include "../evaluate/check-expression.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
+#include <algorithm>
 
 namespace Fortran::semantics {
 
@@ -1039,7 +1040,39 @@ void CheckHelper::Check(const Scope &scope) {
   }
 }
 
-void CheckHelper::CheckEquivalenceSet(const EquivalenceSet &) {
+void CheckHelper::CheckEquivalenceSet(const EquivalenceSet &set) {
+  auto iter{
+      std::find_if(set.begin(), set.end(), [](const EquivalenceObject &object) {
+        return FindCommonBlockContaining(object.symbol) != nullptr;
+      })};
+  if (iter != set.end()) {
+    const Symbol &commonBlock{DEREF(FindCommonBlockContaining(iter->symbol))};
+    for (auto &object : set) {
+      if (&object != &*iter) {
+        if (auto *details{object.symbol.detailsIf<ObjectEntityDetails>()}) {
+          if (details->commonBlock()) {
+            if (details->commonBlock() != &commonBlock) {
+              if (auto *msg{messages_.Say(object.symbol.name(),
+                      "Two objects in the same EQUIVALENCE set may not be members of distinct COMMON blocks"_err_en_US)}) {
+                msg->Attach(iter->symbol.name(),
+                       "Other object in EQUIVALENCE set"_en_US)
+                    .Attach(details->commonBlock()->name(),
+                        "COMMON block containing '%s'"_en_US,
+                        object.symbol.name())
+                    .Attach(commonBlock.name(),
+                        "COMMON block containing '%s'"_en_US,
+                        iter->symbol.name());
+              }
+            }
+          } else {
+            // Mark all symbols in the equivalence set with the same COMMON
+            // block
+            details->set_commonBlock(commonBlock);
+          }
+        }
+      }
+    }
+  }
   // TODO: Move C8106 (&al.) checks here from resolve-names-utils.cc
 }
 
