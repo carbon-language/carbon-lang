@@ -9,6 +9,7 @@
 add_library(FortranParser
   Fortran-parsers.cc
   char-buffer.cc
+  char-block.cc
   char-set.cc
   characters.cc
   debug-parser.cc

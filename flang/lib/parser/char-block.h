@@ -134,9 +134,7 @@ inline bool operator>(const char *left, const CharBlock &right) {
   return right < left;
 }
 
-inline std::ostream &operator<<(std::ostream &os, const CharBlock &x) {
-  return os << x.ToString();
-}
+std::ostream &operator<<(std::ostream &os, const CharBlock &x);
 
 }
 
