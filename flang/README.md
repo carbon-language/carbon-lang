@@ -83,6 +83,16 @@ where `LLVM_INSTALLATION_DIR` is
 the top-level directory
 where llvm is installed.
 
+### LLVM dependency for lit Regression tests
+
+F18 has tests that use the lit framework, these tests rely on the
+presence of llvm tools as llvm-lit, FileCheck, and others.
+These tools are installed when LLVM build set:
+```
+LLVM_INSTALL_UTILS=On
+```
+to run the regression tests on f18.
+
 ### Building f18 with GCC
 
 By default,
@@ -168,4 +178,23 @@ Release builds execute quickly.
 cd ~/f18/build
 cmake -DLLVM_DIR=$LLVM ~/f18/src
 make
+```
+
+### How to Run the Regression Tests
+
+To run all tests:
+```
+cd ~/f18/build
+cmake -DLLVM_DIR=$LLVM ~/f18/src
+make check-all
+```
+
+To run individual regression tests llvm-lit needs to know the lit
+configuration for f18. The parameters in charge of this are:
+flang_site_config and flang_config. And they can be set as shown bellow:
+```
+<path-to-llvm-lit>/llvm-lit \
+ --param flang_site_config=<path-to-f18-build>/test-lit/lit.site.cfg.py \
+ --param flang_config=<path-to-f18-build>/test-lit/lit.cfg.py \
+  <path-to-fortran-test>
 ```
