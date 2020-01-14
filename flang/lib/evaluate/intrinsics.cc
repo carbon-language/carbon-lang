@@ -1246,11 +1246,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         break;
       case Rank::dimRemoved:
         CHECK(arrayArg);
-        if (hasDimArg) {
-          argOk = rank == 0 || rank + 1 == arrayArg->Rank();
-        } else {
-          argOk = rank == 0;
-        }
+        argOk = rank == 0 || rank + 1 == arrayArg->Rank();
         break;
       case Rank::reduceOperation:
         // TODO: Confirm that the argument is a pure function
