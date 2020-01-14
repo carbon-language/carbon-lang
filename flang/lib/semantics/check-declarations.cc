@@ -361,8 +361,13 @@ void CheckHelper::CheckObjectEntity(
             "A variable in blank COMMON should not be initialized"_en_US);
       }
     } else if (symbol.owner().kind() == Scope::Kind::BlockData) {
-      messages_.Say(
-          "An initialized variable in BLOCK DATA must be in a COMMON block"_err_en_US);
+      if (IsAllocatable(symbol)) {
+        messages_.Say(
+            "An ALLOCATABLE variable may not appear in a BLOCK DATA subprogram"_err_en_US);
+      } else {
+        messages_.Say(
+            "An initialized variable in BLOCK DATA must be in a COMMON block"_err_en_US);
+      }
     }
   }
 }
