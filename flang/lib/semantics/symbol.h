@@ -458,7 +458,7 @@ public:
       LocalityLocal,  // named in LOCAL locality-spec
       LocalityLocalInit,  // named in LOCAL_INIT locality-spec
       LocalityShared,  // named in SHARED locality-spec
-      InDataStmt,  // appears in a DATA statement
+      InDataStmt,  // initialized in a DATA statement
 
       // OpenMP data-sharing attribute
       OmpShared, OmpPrivate, OmpLinear, OmpFirstPrivate, OmpLastPrivate,

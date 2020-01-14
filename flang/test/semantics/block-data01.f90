@@ -13,4 +13,7 @@ block data foo
   real :: inBlankCommon
   data inBlankCommon / 1.0 /
   common inBlankCommon
+  !ERROR: An initialized variable in BLOCK DATA must be in a COMMON block
+  integer :: inDataButNotCommon
+  data inDataButNotCommon / 1 / 
 end block data

@@ -6,6 +6,10 @@
 #
 #===------------------------------------------------------------------------===#
 
+# Allow an unresolved external reference to the entry point of the
+# Fortran main PROGRAM from main.cc.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -u __FortranProgram")
+
 add_library(FortranRuntime
   ISO_Fortran_binding.cc
   derived-type.cc
