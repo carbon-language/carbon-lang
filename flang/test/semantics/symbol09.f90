@@ -67,7 +67,7 @@ subroutine s4
   integer :: a
  end type t
  !REF: /s4/t
- !DEF: /s4/x ObjectEntity TYPE(t(k=1_4))
+ !DEF: /s4/x (InDataStmt) ObjectEntity TYPE(t(k=1_4))
  type(t(1)) :: x
  !REF: /s4/x
  !REF: /s4/t
