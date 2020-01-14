@@ -51,6 +51,7 @@ private:
   void CheckValue(const Symbol &, const DerivedTypeSpec *);
   void CheckVolatile(
       const Symbol &, bool isAssociated, const DerivedTypeSpec *);
+  void CheckPointer(const Symbol &);
   void CheckPassArg(
       const Symbol &proc, const Symbol *interface, const WithPassArg &);
   void CheckProcBinding(const Symbol &, const ProcBindingDetails &);
@@ -72,6 +73,7 @@ private:
       const Symbol &, const GenericDetails &, const std::vector<Procedure> &);
   void SayNotDistinguishable(
       const SourceName &, GenericKind, const Symbol &, const Symbol &);
+  bool CheckConflicting(const Symbol &, Attr, Attr);
   bool InPure() const {
     return innermostSymbol_ && IsPureProcedure(*innermostSymbol_);
   }
@@ -138,6 +140,9 @@ void CheckHelper::Check(const Symbol &symbol) {
   }
   if (isAssociated) {
     return;  // only care about checking VOLATILE on associated symbols
+  }
+  if (IsPointer(symbol)) {
+    CheckPointer(symbol);
   }
   std::visit(
       common::visitors{
@@ -444,6 +449,15 @@ void CheckHelper::CheckProcEntity(
   } else if (symbol.owner().IsDerivedType()) {
     CheckPassArg(symbol, details.interface().symbol(), details);
   }
+  if (symbol.attrs().test(Attr::POINTER)) {
+    if (const Symbol * interface{details.interface().symbol()}) {
+      if (interface->attrs().test(Attr::ELEMENTAL) &&
+          !interface->attrs().test(Attr::INTRINSIC)) {
+        messages_.Say("Procedure pointer '%s' may not be ELEMENTAL"_err_en_US,
+            symbol.name());  // C1517
+      }
+    }
+  }
 }
 
 void CheckHelper::CheckDerivedType(
@@ -739,6 +753,17 @@ bool CheckHelper::CheckDefinedAssignmentArg(
   return true;
 }
 
+// Report a conflicting attribute error if symbol has both of these attributes
+bool CheckHelper::CheckConflicting(const Symbol &symbol, Attr a1, Attr a2) {
+  if (symbol.attrs().test(a1) && symbol.attrs().test(a2)) {
+    messages_.Say("'%s' may not have both the %s and %s attributes"_err_en_US,
+        symbol.name(), EnumToString(a1), EnumToString(a2));
+    return true;
+  } else {
+    return false;
+  }
+}
+
 std::optional<std::vector<Procedure>> CheckHelper::Characterize(
     const SymbolVector &specifics) {
   std::vector<Procedure> result;
@@ -773,6 +798,17 @@ void CheckHelper::CheckVolatile(const Symbol &symbol, bool isAssociated,
             "VOLATILE attribute may not apply to a type with a coarray ultimate component accessed by USE or host association"_err_en_US);
       }
     }
+  }
+}
+
+void CheckHelper::CheckPointer(const Symbol &symbol) {  // C852
+  CheckConflicting(symbol, Attr::POINTER, Attr::TARGET);
+  CheckConflicting(symbol, Attr::POINTER, Attr::ALLOCATABLE);
+  CheckConflicting(symbol, Attr::POINTER, Attr::INTRINSIC);
+  if (symbol.Corank() > 0) {
+    messages_.Say(
+        "'%s' may not have the POINTER attribute because it is a coarray"_err_en_US,
+        symbol.name());
   }
 }
 

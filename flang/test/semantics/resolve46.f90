@@ -1,3 +1,4 @@
+! C1030 - pointers to intrinsic procedures
 program main
   intrinsic :: cos ! a specific & generic intrinsic name
   intrinsic :: alog10 ! a specific intrinsic name, not generic
@@ -11,9 +12,10 @@ program main
   p => alog10 ! ditto, but already declared intrinsic
   p => cos ! ditto, but also generic
   p => tan ! a generic & an unrestricted specific, not already declared
-  !TODO ERROR: a restricted specific, to be caught in ass't semantics
+  !ERROR: Procedure pointer 'p' associated with incompatible procedure designator 'amin0'
   p => amin0
+  !ERROR: Procedure pointer 'p' associated with incompatible procedure designator 'amin1'
   p => amin1
-  !TODO ERROR: a generic, to be caught in ass't semantics
+  !ERROR: 'bessel_j0' is not a specific intrinsic procedure
   p => bessel_j0
 end program main

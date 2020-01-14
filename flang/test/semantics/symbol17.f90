@@ -21,8 +21,8 @@ program main
   type(t2), pointer :: t2p
  end type
  !REF: /main/t1
- !DEF: /main/t1x ObjectEntity TYPE(t1)
- type(t1) :: t1x
+ !DEF: /main/t1x TARGET ObjectEntity TYPE(t1)
+ type(t1), target :: t1x
  !REF: /main/t1x
  !REF: /main/t1/t1a
  allocate(t1x%t1a)

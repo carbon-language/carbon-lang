@@ -160,6 +160,7 @@ void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
 void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
   CHECK(!where_);
   if (const evaluate::Assignment * asst{GetAssignment(stmt)}) {
+    bool hasBounds{false};
     auto [lhs, rhs]{std::visit(
         common::visitors{
             [&](const evaluate::Assignment::IntrinsicAssignment &x) {
@@ -174,12 +175,14 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
                   common::visitors{
                       [&](const evaluate::Assignment::PointerAssignment::
                               BoundsSpec &bounds) {
+                        hasBounds = !bounds.empty();
                         for (const auto &bound : bounds) {
                           CheckForImpureCall(SomeExpr{bound});
                         }
                       },
                       [&](const evaluate::Assignment::PointerAssignment::
                               BoundsRemapping &bounds) {
+                        hasBounds = !bounds.empty();
                         for (const auto &bound : bounds) {
                           CheckForImpureCall(SomeExpr{bound.first});
                           CheckForImpureCall(SomeExpr{bound.second});
@@ -206,8 +209,15 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
         context_.Say(  // C1027
             "Procedure pointer may not be a coindexed object"_err_en_US);
       }
+      if (hasBounds) {
+        // TODO cases with bounds-spec and bounds-remapping
+      } else {
+        auto &foldingContext{context_.foldingContext()};
+        auto restorer{
+            foldingContext.messages().SetLocation(context_.location().value())};
+        CheckPointerAssignment(foldingContext, *pointer, *rhs);
+      }
     }
-    // TODO continue here, using CheckPointerAssignment()
   }
 }
 

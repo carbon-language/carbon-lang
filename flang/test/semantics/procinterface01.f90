@@ -4,18 +4,18 @@
 !DEF: /module1 Module
 module module1
  abstract interface
-  !DEF: /module1/abstract1 ELEMENTAL, PUBLIC (Function) Subprogram REAL(4)
+  !DEF: /module1/abstract1 PUBLIC (Function) Subprogram REAL(4)
   !DEF: /module1/abstract1/x INTENT(IN) ObjectEntity REAL(4)
-  real elemental function abstract1(x)
+  real function abstract1(x)
    !REF: /module1/abstract1/x
    real, intent(in) :: x
   end function abstract1
  end interface
 
  interface
-  !DEF: /module1/explicit1 ELEMENTAL, EXTERNAL, PUBLIC (Function) Subprogram REAL(4)
+  !DEF: /module1/explicit1 EXTERNAL, PUBLIC (Function) Subprogram REAL(4)
   !DEF: /module1/explicit1/x INTENT(IN) ObjectEntity REAL(4)
-  real elemental function explicit1(x)
+  real function explicit1(x)
    !REF: /module1/explicit1/x
    real, intent(in) :: x
   end function explicit1

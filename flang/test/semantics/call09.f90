@@ -38,7 +38,7 @@ module m
   end function
   function intprocptr()
     procedure(intfunc), pointer :: intprocptr
-    procptr => intfunc
+    intprocptr => intfunc
   end function
 
   subroutine test1 ! 15.5.2.9(5)

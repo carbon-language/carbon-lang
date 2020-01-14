@@ -207,19 +207,20 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
   if (semantics::IsProcedure(symbol)) {
     if (auto *component{std::get_if<Component>(&ref.u)}) {
       return Expr<SomeType>{ProcedureDesignator{std::move(*component)}};
+    } else if (!std::holds_alternative<SymbolRef>(ref.u)) {
+      DIE("unexpected alternative in DataRef");
+    } else if (!symbol.attrs().test(semantics::Attr::INTRINSIC)) {
+      return Expr<SomeType>{ProcedureDesignator{symbol}};
+    } else if (auto interface{context_.intrinsics().IsSpecificIntrinsicFunction(
+                   symbol.name().ToString())}) {
+      SpecificIntrinsic intrinsic{
+          symbol.name().ToString(), std::move(*interface)};
+      intrinsic.isRestrictedSpecific = interface->isRestrictedSpecific;
+      return Expr<SomeType>{ProcedureDesignator{std::move(intrinsic)}};
     } else {
-      CHECK(std::holds_alternative<SymbolRef>(ref.u));
-      if (symbol.attrs().test(semantics::Attr::INTRINSIC)) {
-        if (auto interface{context_.intrinsics().IsSpecificIntrinsicFunction(
-                symbol.name().ToString())}) {
-          SpecificIntrinsic intrinsic{
-              symbol.name().ToString(), std::move(*interface)};
-          intrinsic.isRestrictedSpecific = interface->isRestrictedSpecific;
-          return Expr<SomeType>{ProcedureDesignator{std::move(intrinsic)}};
-        }
-      } else {
-        return Expr<SomeType>{ProcedureDesignator{symbol}};
-      }
+      Say("'%s' is not a specific intrinsic procedure"_err_en_US,
+          symbol.name());
+      return std::nullopt;
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
     return TypedWrapper<Designator, DataRef>(*dyType, std::move(ref));

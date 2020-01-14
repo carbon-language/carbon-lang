@@ -43,6 +43,7 @@ public:
   PointerAssignmentChecker &set_lhsType(std::optional<TypeAndShape> &&);
   PointerAssignmentChecker &set_procedure(std::optional<Procedure> &&);
   PointerAssignmentChecker &set_isContiguous(bool);
+  PointerAssignmentChecker &set_isVolatile(bool);
   void Check(const SomeExpr &);
 
 private:
@@ -56,7 +57,7 @@ private:
   // Target is a procedure
   void Check(
       parser::CharBlock rhsName, bool isCall, const Procedure * = nullptr);
-
+  bool LhsOkForUnlimitedPoly() const;
   template<typename... A> parser::Message *Say(A &&...);
 
   const parser::CharBlock source_;
@@ -66,6 +67,7 @@ private:
   std::optional<TypeAndShape> lhsType_;
   std::optional<Procedure> procedure_;
   bool isContiguous_{false};
+  bool isVolatile_{false};
 };
 
 PointerAssignmentChecker &PointerAssignmentChecker::set_lhs(const Symbol &lhs) {
@@ -88,6 +90,12 @@ PointerAssignmentChecker &PointerAssignmentChecker::set_procedure(
 PointerAssignmentChecker &PointerAssignmentChecker::set_isContiguous(
     bool isContiguous) {
   isContiguous_ = isContiguous;
+  return *this;
+}
+
+PointerAssignmentChecker &PointerAssignmentChecker::set_isVolatile(
+    bool isVolatile) {
+  isVolatile_ = isVolatile;
   return *this;
 }
 
@@ -180,12 +188,26 @@ void PointerAssignmentChecker::Check(const evaluate::Designator<T> &d) {
   } else if (!evaluate::GetLastTarget(GetSymbolVector(d))) {  // C1025
     msg = "In assignment to object %s, the target '%s' is not an object with"
           " POINTER or TARGET attributes"_err_en_US;
-  } else if (auto rhsTypeAndShape{
-                 TypeAndShape::Characterize(*last, context_)}) {
-    if (!lhsType_ ||
-        !lhsType_->IsCompatibleWith(context_.messages(), *rhsTypeAndShape)) {
+  } else if (auto rhsType{TypeAndShape::Characterize(*last, context_)}) {
+    if (!lhsType_) {
       msg = "%s associated with object '%s' with incompatible type or"
             " shape"_err_en_US;
+    } else if (rhsType->corank() > 0 &&
+        (isVolatile_ != last->attrs().test(Attr::VOLATILE))) {  // C1020
+      if (isVolatile_) {
+        msg = "Pointer may not be VOLATILE when target is a"
+              " non-VOLATILE coarray"_err_en_US;
+      } else {
+        msg = "Pointer must be VOLATILE when target is a"
+              " VOLATILE coarray"_err_en_US;
+      }
+    } else if (rhsType->type().IsUnlimitedPolymorphic()) {
+      if (!LhsOkForUnlimitedPoly()) {
+        msg = "Pointer type must be unlimited polymorphic or non-extensible"
+              " derived type when target is unlimited polymorphic"_err_en_US;
+      }
+    } else {
+      lhsType_->IsCompatibleWith(context_.messages(), *rhsType);
     }
   }
   if (msg) {
@@ -194,25 +216,60 @@ void PointerAssignmentChecker::Check(const evaluate::Designator<T> &d) {
   }
 }
 
+// Compare procedure characteristics for equality except that lhs may be
+// Pure or Elemental when rhs is not.
+static bool CharacteristicsMatch(const Procedure &lhs, const Procedure &rhs) {
+  using Attr = Procedure::Attr;
+  auto lhsAttrs{rhs.attrs};
+  lhsAttrs.set(
+      Attr::Pure, lhs.attrs.test(Attr::Pure) | rhs.attrs.test(Attr::Pure));
+  lhsAttrs.set(Attr::Elemental,
+      lhs.attrs.test(Attr::Elemental) | rhs.attrs.test(Attr::Elemental));
+  return lhsAttrs == rhs.attrs && lhs.functionResult == rhs.functionResult &&
+      lhs.dummyArguments == rhs.dummyArguments;
+}
+
 // Common handling for procedure pointer right-hand sides
 void PointerAssignmentChecker::Check(
-    parser::CharBlock rhsName, bool isCall, const Procedure *targetChars) {
+    parser::CharBlock rhsName, bool isCall, const Procedure *rhsProcedure) {
+  std::optional<parser::MessageFixedText> msg;
   if (!procedure_) {
-    Say("In assignment to object %s, the target '%s' is a procedure designator"_err_en_US,
-        description_, rhsName);
-  } else if (!targetChars) {
-    Say("In assignment to procedure %s, the characteristics of the target"
-        " procedure '%s' could not be determined"_err_en_US,
-        description_, rhsName);
-  } else if (*procedure_ == *targetChars) {
+    msg = "In assignment to object %s, the target '%s' is a procedure"
+          " designator"_err_en_US;
+  } else if (!rhsProcedure) {
+    msg = "In assignment to procedure %s, the characteristics of the target"
+          " procedure '%s' could not be determined"_err_en_US;
+  } else if (CharacteristicsMatch(*procedure_, *rhsProcedure)) {
     // OK
   } else if (isCall) {
-    Say("Procedure %s associated with result of reference to function '%s' that"
-        " is an incompatible procedure pointer"_err_en_US,
-        description_, rhsName);
+    msg = "Procedure %s associated with result of reference to function '%s'"
+          " that is an incompatible procedure pointer"_err_en_US;
+  } else if (procedure_->IsPure() && !rhsProcedure->IsPure()) {
+    msg = "PURE procedure %s may not be associated with non-PURE"
+          " procedure designator '%s'"_err_en_US;
+  } else if (procedure_->IsElemental() && !rhsProcedure->IsElemental()) {
+    msg = "ELEMENTAL procedure %s may not be associated with non-ELEMENTAL"
+          " procedure designator '%s'"_err_en_US;
+  } else if (procedure_->IsFunction() && !rhsProcedure->IsFunction()) {
+    msg = "Function %s may not be associated with subroutine"
+          " designator '%s'"_err_en_US;
+  } else if (!procedure_->IsFunction() && rhsProcedure->IsFunction()) {
+    msg = "Subroutine %s may not be associated with function"
+          " designator '%s'"_err_en_US;
+  } else if (procedure_->HasExplicitInterface() &&
+      !rhsProcedure->HasExplicitInterface()) {
+    msg = "Procedure %s with explicit interface may not be associated with"
+          " procedure designator '%s' with implicit interface"_err_en_US;
+  } else if (!procedure_->HasExplicitInterface() &&
+      rhsProcedure->HasExplicitInterface()) {
+    msg = "Procedure %s with implicit interface may not be associated with"
+          " procedure designator '%s' with explicit interface"_err_en_US;
   } else {
-    Say("Procedure %s associated with incompatible procedure designator '%s'"_err_en_US,
-        description_, rhsName);
+    msg = "Procedure %s associated with incompatible procedure"
+          " designator '%s'"_err_en_US;
+  }
+  if (msg) {
+    Say(std::move(*msg), description_, rhsName);
   }
 }
 
@@ -236,6 +293,19 @@ void PointerAssignmentChecker::Check(const evaluate::ProcedureRef &ref) {
     }
   }
   Check(ref.proc().GetName(), true, procedure);
+}
+
+// The target can be unlimited polymorphic if the pointer is, or if it is
+// a non-extensible derived type.
+bool PointerAssignmentChecker::LhsOkForUnlimitedPoly() const {
+  const auto &type{lhsType_->type()};
+  if (type.category() != TypeCategory::Derived || type.IsAssumedType()) {
+    return false;
+  } else if (type.IsUnlimitedPolymorphic()) {
+    return true;
+  } else {
+    return !IsExtensibleType(&type.GetDerivedTypeSpec());
+  }
 }
 
 template<typename... A>
@@ -263,6 +333,7 @@ void CheckPointerAssignment(
         .set_procedure(Procedure::Characterize(lhs, context.intrinsics()))
         .set_lhs(lhs)
         .set_isContiguous(lhs.attrs().test(Attr::CONTIGUOUS))
+        .set_isVolatile(lhs.attrs().test(Attr::VOLATILE))
         .Check(rhs);
   }
 }
@@ -273,6 +344,7 @@ void CheckPointerAssignment(evaluate::FoldingContext &context,
   PointerAssignmentChecker{source, description, context}
       .set_lhsType(common::Clone(lhs.type))
       .set_isContiguous(lhs.attrs.test(DummyDataObject::Attr::Contiguous))
+      .set_isVolatile(lhs.attrs.test(DummyDataObject::Attr::Volatile))
       .Check(rhs);
 }
 
