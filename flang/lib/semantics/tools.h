@@ -73,7 +73,6 @@ bool IsIntrinsicConcat(
     const evaluate::DynamicType &, int, const evaluate::DynamicType &, int);
 
 bool IsGenericDefinedOp(const Symbol &);
-bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);
 bool DoesScopeContain(const Scope *, const Symbol &);
 bool IsUseAssociated(const Symbol &, const Scope &);

@@ -4617,14 +4617,18 @@ bool ConstructVisitor::Pre(const parser::DataStmtObject &x) {
       common::visitors{
           [&](const Indirection<parser::Variable> &y) {
             Walk(y.value());
-            if (auto expr{AnalyzeExpr(context(), y)}) {
-              if (auto dataRef{evaluate::ExtractDataRef(*expr)}) {
-                const_cast<Symbol &>(dataRef->GetFirstSymbol())
-                    .set(Symbol::Flag::InDataStmt);
-                // TODO check C875-C881 here?
-              } else {
-                // TODO C875 error: variable is not a designator
+            if (const auto *designator{
+                    std::get_if<Indirection<parser::Designator>>(
+                        &y.value().u)}) {
+              if (const parser::Name *
+                  name{ResolveDesignator(designator->value())}) {
+                if (name->symbol) {
+                  name->symbol->set(Symbol::Flag::InDataStmt);
+                }
               }
+              // TODO check C874 - C881
+            } else {
+              // TODO report C875 error: variable is not a designator here?
             }
           },
           [&](const parser::DataImpliedDo &y) {

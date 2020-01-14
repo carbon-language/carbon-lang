@@ -22,25 +22,12 @@
 
 namespace Fortran::semantics {
 
-static const Symbol *FindCommonBlockInScope(
-    const Scope &scope, const Symbol &object) {
-  for (const auto &pair : scope.commonBlocks()) {
-    const Symbol &block{*pair.second};
-    if (IsCommonBlockContaining(block, object)) {
-      return &block;
-    }
-  }
-  return nullptr;
-}
-
 const Symbol *FindCommonBlockContaining(const Symbol &object) {
-  for (const Scope *scope{&object.owner()}; !scope->IsGlobal();
-       scope = &scope->parent()) {
-    if (const Symbol * block{FindCommonBlockInScope(*scope, object)}) {
-      return block;
-    }
+  if (const auto *details{object.detailsIf<ObjectEntityDetails>()}) {
+    return details->commonBlock();
+  } else {
+    return nullptr;
   }
-  return nullptr;
 }
 
 const Scope *FindProgramUnitContaining(const Scope &start) {
