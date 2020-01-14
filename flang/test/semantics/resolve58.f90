@@ -48,3 +48,10 @@ function f()
   !ERROR: Array 'f' without ALLOCATABLE or POINTER attribute must have explicit shape
   real, dimension(:) :: f  ! C832
 end
+
+subroutine s5()
+  !ERROR: Allocatable array 'a' must have deferred shape or assumed rank
+  integer :: a(10), b(:)
+  allocatable :: a
+  allocatable :: b
+end subroutine

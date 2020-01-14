@@ -44,8 +44,8 @@ program p7
 contains
   subroutine s(x, y)
     real :: x(*)  ! assumed size
-    real :: y(:)  ! assumed shape
     !ERROR: Cray pointee 'y' must have must have explicit shape or assumed size
+    real :: y(:)  ! assumed shape
     pointer(w, y)
   end
 end

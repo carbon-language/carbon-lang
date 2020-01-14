@@ -55,6 +55,7 @@ private:
       const Symbol &proc, const Symbol *interface, const WithPassArg &);
   void CheckProcBinding(const Symbol &, const ProcBindingDetails &);
   void CheckObjectEntity(const Symbol &, const ObjectEntityDetails &);
+  void CheckArraySpec(const Symbol &, const ArraySpec &);
   void CheckProcEntity(const Symbol &, const ProcEntityDetails &);
   void CheckDerivedType(const Symbol &, const DerivedTypeDetails &);
   void CheckGeneric(const Symbol &, const GenericDetails &);
@@ -285,6 +286,7 @@ void CheckHelper::CheckValue(
 
 void CheckHelper::CheckObjectEntity(
     const Symbol &symbol, const ObjectEntityDetails &details) {
+  CheckArraySpec(symbol, details.shape());
   Check(details.shape());
   Check(details.coshape());
   if (!details.coshape().empty()) {
@@ -342,6 +344,84 @@ void CheckHelper::CheckObjectEntity(
             "non-POINTER dummy argument of pure subroutine must have INTENT() or VALUE attribute"_err_en_US);
       }
     }
+  }
+}
+
+// The six different kinds of array-specs:
+//   array-spec     -> explicit-shape-list | deferred-shape-list
+//                     | assumed-shape-list | implied-shape-list
+//                     | assumed-size | assumed-rank
+//   explicit-shape -> [ lb : ] ub
+//   deferred-shape -> :
+//   assumed-shape  -> [ lb ] :
+//   implied-shape  -> [ lb : ] *
+//   assumed-size   -> [ explicit-shape-list , ] [ lb : ] *
+//   assumed-rank   -> ..
+// Note:
+// - deferred-shape is also an assumed-shape
+// - A single "*" or "lb:*" might be assumed-size or implied-shape-list
+void CheckHelper::CheckArraySpec(
+    const Symbol &symbol, const ArraySpec &arraySpec) {
+  if (arraySpec.Rank() == 0) {
+    return;
+  }
+  bool isExplicit{arraySpec.IsExplicitShape()};
+  bool isDeferred{arraySpec.IsDeferredShape()};
+  bool isImplied{arraySpec.IsImpliedShape()};
+  bool isAssumedShape{arraySpec.IsAssumedShape()};
+  bool isAssumedSize{arraySpec.IsAssumedSize()};
+  bool isAssumedRank{arraySpec.IsAssumedRank()};
+  std::optional<parser::MessageFixedText> msg;
+  if (symbol.test(Symbol::Flag::CrayPointee) && !isExplicit && !isAssumedSize) {
+    msg = "Cray pointee '%s' must have must have explicit shape or"
+          " assumed size"_err_en_US;
+  } else if (IsAllocatableOrPointer(symbol) && !isDeferred && !isAssumedRank) {
+    if (symbol.owner().IsDerivedType()) {  // C745
+      if (IsAllocatable(symbol)) {
+        msg = "Allocatable array component '%s' must have"
+              " deferred shape"_err_en_US;
+      } else {
+        msg = "Array pointer component '%s' must have deferred shape"_err_en_US;
+      }
+    } else {
+      if (IsAllocatable(symbol)) {  // C832
+        msg = "Allocatable array '%s' must have deferred shape or"
+              " assumed rank"_err_en_US;
+      } else {
+        msg = "Array pointer '%s' must have deferred shape or"
+              " assumed rank"_err_en_US;
+      }
+    }
+  } else if (symbol.IsDummy()) {
+    if (isImplied && !isAssumedSize) {  // C836
+      msg = "Dummy array argument '%s' may not have implied shape"_err_en_US;
+    }
+  } else if (isAssumedShape && !isDeferred) {
+    msg = "Assumed-shape array '%s' must be a dummy argument"_err_en_US;
+  } else if (isAssumedSize && !isImplied) {  // C833
+    msg = "Assumed-size array '%s' must be a dummy argument"_err_en_US;
+  } else if (isAssumedRank) {  // C837
+    msg = "Assumed-rank array '%s' must be a dummy argument"_err_en_US;
+  } else if (isImplied) {
+    if (!IsNamedConstant(symbol)) {  // C836
+      msg = "Implied-shape array '%s' must be a named constant"_err_en_US;
+    }
+  } else if (IsNamedConstant(symbol)) {
+    if (!isExplicit && !isImplied) {
+      msg = "Named constant '%s' array must have explicit or"
+            " implied shape"_err_en_US;
+    }
+  } else if (!IsAllocatableOrPointer(symbol) && !isExplicit) {
+    if (symbol.owner().IsDerivedType()) {  // C749
+      msg = "Component array '%s' without ALLOCATABLE or POINTER attribute must"
+            " have explicit shape"_err_en_US;
+    } else {  // C816
+      msg = "Array '%s' without ALLOCATABLE or POINTER attribute must have"
+            " explicit shape"_err_en_US;
+    }
+  }
+  if (msg) {
+    context_.Say(std::move(*msg), symbol.name());
   }
 }
 

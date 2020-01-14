@@ -888,7 +888,6 @@ private:
   void Initialization(const parser::Name &, const parser::Initialization &,
       bool inComponentDecl);
   bool PassesLocalityChecks(const parser::Name &name, Symbol &symbol);
-  bool CheckArraySpec(const parser::Name &, const Symbol &, const ArraySpec &);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -3170,10 +3169,8 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
         Say(name,
             "The dimensions of '%s' have already been declared"_err_en_US);
         context().SetError(symbol);
-      } else if (CheckArraySpec(name, symbol, arraySpec())) {
-        details->set_shape(arraySpec());
       } else {
-        context().SetError(symbol);
+        details->set_shape(arraySpec());
       }
     }
     if (!coarraySpec().empty()) {
@@ -3191,96 +3188,6 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
   ClearCoarraySpec();
   charInfo_.length.reset();
   return symbol;
-}
-
-// The six different kinds of array-specs:
-//   array-spec     -> explicit-shape-list | deferred-shape-list
-//                     | assumed-shape-list | implied-shape-list
-//                     | assumed-size | assumed-rank
-//   explicit-shape -> [ lb : ] ub
-//   deferred-shape -> :
-//   assumed-shape  -> [ lb ] :
-//   implied-shape  -> [ lb : ] *
-//   assumed-size   -> [ explicit-shape-list , ] [ lb : ] *
-//   assumed-rank   -> ..
-// Note:
-// - deferred-shape is also an assumed-shape
-// - A single "*" or "lb:*" might be assumed-size or implied-shape-list
-bool DeclarationVisitor::CheckArraySpec(const parser::Name &name,
-    const Symbol &symbol, const ArraySpec &arraySpec) {
-  if (arraySpec.Rank() == 0) {
-    return true;
-  }
-  bool isExplicit{arraySpec.IsExplicitShape()};
-  bool isDeferred{arraySpec.IsDeferredShape()};
-  bool isImplied{arraySpec.IsImpliedShape()};
-  bool isAssumedShape{arraySpec.IsAssumedShape()};
-  bool isAssumedSize{arraySpec.IsAssumedSize()};
-  bool isAssumedRank{arraySpec.IsAssumedRank()};
-  if (symbol.test(Symbol::Flag::CrayPointee) && !isExplicit && !isAssumedSize) {
-    Say(name,
-        "Cray pointee '%s' must have must have explicit shape or assumed size"_err_en_US);
-    return false;
-  }
-  if (IsAllocatableOrPointer(symbol) && !isDeferred && !isAssumedRank) {
-    if (symbol.owner().IsDerivedType()) {  // C745
-      if (IsAllocatable(symbol)) {
-        Say(name,
-            "Allocatable array component '%s' must have deferred shape"_err_en_US);
-      } else {
-        Say(name,
-            "Array pointer component '%s' must have deferred shape"_err_en_US);
-      }
-    } else {
-      if (IsAllocatable(symbol)) {  // C832
-        Say(name,
-            "Allocatable array '%s' must have deferred shape or assumed rank"_err_en_US);
-      } else {
-        Say(name,
-            "Array pointer '%s' must have deferred shape or assumed rank"_err_en_US);
-      }
-    }
-    return false;
-  }
-  if (symbol.IsDummy()) {
-    if (isImplied && !isAssumedSize) {  // C836
-      Say(name,
-          "Dummy array argument '%s' may not have implied shape"_err_en_US);
-      return false;
-    }
-  } else if (isAssumedShape && !isDeferred) {
-    Say(name, "Assumed-shape array '%s' must be a dummy argument"_err_en_US);
-    return false;
-  } else if (isAssumedSize && !isImplied) {  // C833
-    Say(name, "Assumed-size array '%s' must be a dummy argument"_err_en_US);
-    return false;
-  } else if (isAssumedRank) {  // C837
-    Say(name, "Assumed-rank array '%s' must be a dummy argument"_err_en_US);
-    return false;
-  } else if (isImplied) {
-    if (!IsNamedConstant(symbol)) {  // C836
-      Say(name, "Implied-shape array '%s' must be a named constant"_err_en_US);
-      return false;
-    }
-  } else if (IsNamedConstant(symbol)) {
-    if (!isExplicit && !isImplied) {
-      Say(name,
-          "Named constant '%s' array must have explicit or implied shape"_err_en_US);
-      return false;
-    }
-  } else if (!IsAllocatableOrPointer(symbol) && !isExplicit) {
-    if (symbol.owner().IsDerivedType()) {  // C749
-      Say(name,
-          "Component array '%s' without ALLOCATABLE or POINTER attribute must"
-          " have explicit shape"_err_en_US);
-    } else {  // C816
-      Say(name,
-          "Array '%s' without ALLOCATABLE or POINTER attribute must have"
-          " explicit shape"_err_en_US);
-    }
-    return false;
-  }
-  return true;
 }
 
 void DeclarationVisitor::Post(const parser::IntegerTypeSpec &x) {
@@ -3911,15 +3818,14 @@ bool DeclarationVisitor::Pre(const parser::BasedPointerStmt &x) {
       BeginArraySpec();
       Walk(std::get<std::optional<parser::ArraySpec>>(bp.t));
       const auto &spec{arraySpec()};
-      if (spec.empty()) {
-        // No array spec
-        CheckArraySpec(
-            pointeeName, pointee, pointee.get<ObjectEntityDetails>().shape());
-      } else if (pointee.Rank() > 0) {
-        SayWithDecl(pointeeName, pointee,
-            "Array spec was already declared for '%s'"_err_en_US);
-      } else if (CheckArraySpec(pointeeName, pointee, spec)) {
-        pointee.get<ObjectEntityDetails>().set_shape(spec);
+      if (!spec.empty()) {
+        auto &details{pointee.get<ObjectEntityDetails>()};
+        if (details.shape().empty()) {
+          details.set_shape(spec);
+        } else {
+          SayWithDecl(pointeeName, pointee,
+              "Array spec was already declared for '%s'"_err_en_US);
+        }
       }
       ClearArraySpec();
       currScope().add_crayPointer(pointeeName.source, *pointer);
