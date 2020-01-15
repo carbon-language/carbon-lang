@@ -847,9 +847,10 @@ struct GenericExprWrapper {
 
 // Like GenericExprWrapper but for analyzed assignments
 struct GenericAssignmentWrapper {
+  GenericAssignmentWrapper() {}
   explicit GenericAssignmentWrapper(Assignment &&x) : v{std::move(x)} {}
   ~GenericAssignmentWrapper();
-  Assignment v;
+  std::optional<Assignment> v;  // vacant if error
 };
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr, )

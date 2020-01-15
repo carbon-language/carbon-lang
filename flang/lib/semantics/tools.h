@@ -226,12 +226,8 @@ bool ExprTypeKindIsDefault(
     const SomeExpr &expr, const SemanticsContext &context);
 
 struct GetExprHelper {
-  const SomeExpr *Get(const parser::Expr::TypedExpr &x) {
-    CHECK(x);
-    return x && x->v ? &*x->v : nullptr;
-  }
-  const SomeExpr *Get(const parser::Expr &x) { return Get(x.typedExpr); }
-  const SomeExpr *Get(const parser::Variable &x) { return Get(x.typedExpr); }
+  const SomeExpr *Get(const parser::Expr &);
+  const SomeExpr *Get(const parser::Variable &);
   template<typename T> const SomeExpr *Get(const common::Indirection<T> &x) {
     return Get(x.value());
   }

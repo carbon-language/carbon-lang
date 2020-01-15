@@ -13,11 +13,13 @@
 #include "type.h"
 #include "../common/Fortran.h"
 #include "../common/indirection.h"
+#include "../parser/dump-parse-tree.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree.h"
 #include "../parser/tools.h"
 #include <algorithm>
 #include <set>
+#include <sstream>
 #include <variant>
 
 namespace Fortran::semantics {
@@ -383,14 +385,33 @@ bool ExprTypeKindIsDefault(
       dynamicType->kind() == context.GetDefaultKind(dynamicType->category());
 }
 
+// If an analyzed expr or assignment is missing, dump the node and die.
+template<typename T> static void CheckMissingAnalysis(bool absent, const T &x) {
+  if (absent) {
+    std::ostringstream ss;
+    ss << "node has not been analyzed:\n";
+    parser::DumpTree(ss, x);
+    common::die(ss.str().c_str());
+  }
+}
+
+const SomeExpr *GetExprHelper::Get(const parser::Expr &x) {
+  CheckMissingAnalysis(!x.typedExpr, x);
+  return common::GetPtrFromOptional(x.typedExpr->v);
+}
+const SomeExpr *GetExprHelper::Get(const parser::Variable &x) {
+  CheckMissingAnalysis(!x.typedExpr, x);
+  return common::GetPtrFromOptional(x.typedExpr->v);
+}
+
 const evaluate::Assignment *GetAssignment(const parser::AssignmentStmt &x) {
-  const auto &typed{x.typedAssignment};
-  return typed ? &typed->v : nullptr;
+  CheckMissingAnalysis(!x.typedAssignment, x);
+  return common::GetPtrFromOptional(x.typedAssignment->v);
 }
 const evaluate::Assignment *GetAssignment(
     const parser::PointerAssignmentStmt &x) {
-  const auto &typed{x.typedAssignment};
-  return typed ? &typed->v : nullptr;
+  CheckMissingAnalysis(!x.typedAssignment, x);
+  return common::GetPtrFromOptional(x.typedAssignment->v);
 }
 
 const Symbol *FindInterface(const Symbol &symbol) {

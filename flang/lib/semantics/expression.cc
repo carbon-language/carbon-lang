@@ -1915,7 +1915,9 @@ const Assignment *ExpressionAnalyzer::Analyze(const parser::AssignmentStmt &x) {
     ArgumentAnalyzer analyzer{*this};
     analyzer.Analyze(std::get<parser::Variable>(x.t));
     analyzer.Analyze(std::get<parser::Expr>(x.t));
-    if (!analyzer.fatalErrors()) {
+    if (analyzer.fatalErrors()) {
+      x.typedAssignment.reset(new GenericAssignmentWrapper{});
+    } else {
       std::optional<ProcedureRef> procRef{analyzer.TryDefinedAssignment()};
       x.typedAssignment.reset(new GenericAssignmentWrapper{procRef
               ? Assignment{std::move(*procRef)}
@@ -1923,50 +1925,55 @@ const Assignment *ExpressionAnalyzer::Analyze(const parser::AssignmentStmt &x) {
                     Fold(analyzer.MoveExpr(0)), Fold(analyzer.MoveExpr(1))}}});
     }
   }
-  return x.typedAssignment ? &x.typedAssignment->v : nullptr;
+  return common::GetPtrFromOptional(x.typedAssignment->v);
 }
 
 const Assignment *ExpressionAnalyzer::Analyze(
     const parser::PointerAssignmentStmt &x) {
-  MaybeExpr lhs{Analyze(std::get<parser::DataRef>(x.t))};
-  MaybeExpr rhs{Analyze(std::get<parser::Expr>(x.t))};
-  if (!lhs || !rhs) {
-    return nullptr;
+  if (!x.typedAssignment) {
+    MaybeExpr lhs{Analyze(std::get<parser::DataRef>(x.t))};
+    MaybeExpr rhs{Analyze(std::get<parser::Expr>(x.t))};
+    decltype(Assignment::PointerAssignment::bounds) pointerBounds;
+    std::visit(
+        common::visitors{
+            [&](const std::list<parser::BoundsRemapping> &list) {
+              if (!list.empty()) {
+                Assignment::PointerAssignment::BoundsRemapping bounds;
+                for (const auto &elem : list) {
+                  auto lower{AsSubscript(Analyze(std::get<0>(elem.t)))};
+                  auto upper{AsSubscript(Analyze(std::get<1>(elem.t)))};
+                  if (lower && upper) {
+                    bounds.emplace_back(
+                        Fold(std::move(*lower)), Fold(std::move(*upper)));
+                  }
+                }
+                pointerBounds = bounds;
+              }
+            },
+            [&](const std::list<parser::BoundsSpec> &list) {
+              if (!list.empty()) {
+                Assignment::PointerAssignment::BoundsSpec bounds;
+                for (const auto &bound : list) {
+                  if (auto lower{AsSubscript(Analyze(bound.v))}) {
+                    bounds.emplace_back(Fold(std::move(*lower)));
+                  }
+                }
+                pointerBounds = bounds;
+              }
+            },
+        },
+        std::get<parser::PointerAssignmentStmt::Bounds>(x.t).u);
+    if (!lhs || !rhs) {
+      x.typedAssignment.reset(new GenericAssignmentWrapper{});
+    } else {
+      Assignment::PointerAssignment assignment{
+          Fold(std::move(*lhs)), Fold(std::move(*rhs))};
+      assignment.bounds = pointerBounds;
+      x.typedAssignment.reset(
+          new GenericAssignmentWrapper{Assignment{std::move(assignment)}});
+    }
   }
-  Assignment::PointerAssignment assignment{
-      Fold(std::move(*lhs)), Fold(std::move(*rhs))};
-  std::visit(
-      common::visitors{
-          [&](const std::list<parser::BoundsRemapping> &list) {
-            if (!list.empty()) {
-              Assignment::PointerAssignment::BoundsRemapping bounds;
-              for (const auto &elem : list) {
-                auto lower{AsSubscript(Analyze(std::get<0>(elem.t)))};
-                auto upper{AsSubscript(Analyze(std::get<1>(elem.t)))};
-                if (lower && upper) {
-                  bounds.emplace_back(
-                      Fold(std::move(*lower)), Fold(std::move(*upper)));
-                }
-              }
-              assignment.bounds = bounds;
-            }
-          },
-          [&](const std::list<parser::BoundsSpec> &list) {
-            if (!list.empty()) {
-              Assignment::PointerAssignment::BoundsSpec bounds;
-              for (const auto &bound : list) {
-                if (auto lower{AsSubscript(Analyze(bound.v))}) {
-                  bounds.emplace_back(Fold(std::move(*lower)));
-                }
-              }
-              assignment.bounds = bounds;
-            }
-          },
-      },
-      std::get<parser::PointerAssignmentStmt::Bounds>(x.t).u);
-  x.typedAssignment.reset(
-      new GenericAssignmentWrapper{Assignment{std::move(assignment)}});
-  return &x.typedAssignment->v;
+  return common::GetPtrFromOptional(x.typedAssignment->v);
 }
 
 static bool IsExternalCalledImplicitly(

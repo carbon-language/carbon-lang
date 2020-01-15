@@ -172,7 +172,11 @@ static Fortran::parser::AnalyzedObjectsAsFortran asFortran{
       }
     },
     [](std::ostream &o, const Fortran::evaluate::GenericAssignmentWrapper &x) {
-      x.v.AsFortran(o);
+      if (x.v) {
+        x.v->AsFortran(o);
+      } else {
+        o << "(bad assignment)";
+      }
     },
     [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
       x.AsFortran(o << "CALL ");
