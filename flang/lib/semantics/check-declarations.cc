@@ -1051,7 +1051,7 @@ void CheckHelper::CheckEquivalenceSet(const EquivalenceSet &set) {
       if (&object != &*iter) {
         if (auto *details{object.symbol.detailsIf<ObjectEntityDetails>()}) {
           if (details->commonBlock()) {
-            if (details->commonBlock() != &commonBlock) {
+            if (details->commonBlock() != &commonBlock) {  // 8.10.3 paragraph 1
               if (auto *msg{messages_.Say(object.symbol.name(),
                       "Two objects in the same EQUIVALENCE set may not be members of distinct COMMON blocks"_err_en_US)}) {
                 msg->Attach(iter->symbol.name(),
@@ -1066,7 +1066,8 @@ void CheckHelper::CheckEquivalenceSet(const EquivalenceSet &set) {
             }
           } else {
             // Mark all symbols in the equivalence set with the same COMMON
-            // block
+            // block to prevent spurious error messages about initialization
+            // in BLOCK DATA outside COMMON
             details->set_commonBlock(commonBlock);
           }
         }
