@@ -122,6 +122,153 @@ BinaryContext::~BinaryContext() {
   clearBinaryData();
 }
 
+extern MCPlusBuilder *createX86MCPlusBuilder(const MCInstrAnalysis *,
+                                             const MCInstrInfo *,
+                                             const MCRegisterInfo *);
+extern MCPlusBuilder *createAArch64MCPlusBuilder(const MCInstrAnalysis *,
+                                                 const MCInstrInfo *,
+                                                 const MCRegisterInfo *);
+
+namespace {
+
+MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
+                                   const MCInstrAnalysis *Analysis,
+                                   const MCInstrInfo *Info,
+                                   const MCRegisterInfo *RegInfo) {
+#ifdef X86_AVAILABLE
+  if (Arch == Triple::x86_64)
+    return createX86MCPlusBuilder(Analysis, Info, RegInfo);
+#endif
+
+#ifdef AARCH64_AVAILABLE
+  if (Arch == Triple::aarch64)
+    return createAArch64MCPlusBuilder(Analysis, Info, RegInfo);
+#endif
+
+  llvm_unreachable("architecture unsupport by MCPlusBuilder");
+}
+
+} // anonymous namespace
+
+/// Create BinaryContext for a given architecture \p ArchName and
+/// triple \p TripleName.
+std::unique_ptr<BinaryContext>
+BinaryContext::createBinaryContext(ObjectFile *File, DataReader &DR,
+                                   std::unique_ptr<DWARFContext> DwCtx) {
+  StringRef ArchName = "";
+  StringRef FeaturesStr = "";
+  switch (File->getArch()) {
+  case llvm::Triple::x86_64:
+    ArchName = "x86-64";
+    break;
+  case llvm::Triple::aarch64:
+    ArchName = "aarch64";
+    FeaturesStr = "+fp-armv8,+neon,+crypto,+dotprod,+crc,+lse,+ras,+rdm,"
+                  "+fullfp16,+spe,+fuse-aes,+rcpc";
+    break;
+  default:
+    errs() << "BOLT-ERROR: Unrecognized machine in ELF file.\n";
+    return nullptr;
+  }
+
+  auto TheTriple = llvm::make_unique<Triple>(File->makeTriple());
+  const llvm::StringRef TripleName = TheTriple->str();
+
+  std::string Error;
+  const Target *TheTarget =
+      TargetRegistry::lookupTarget(ArchName, *TheTriple, Error);
+  if (!TheTarget) {
+    errs() << "BOLT-ERROR: " << Error;
+    return nullptr;
+  }
+
+  std::unique_ptr<const MCRegisterInfo> MRI(
+      TheTarget->createMCRegInfo(TripleName));
+  if (!MRI) {
+    errs() << "BOLT-ERROR: no register info for target " << TripleName << "\n";
+    return nullptr;
+  }
+
+  // Set up disassembler.
+  std::unique_ptr<const MCAsmInfo> AsmInfo(
+      TheTarget->createMCAsmInfo(*MRI, TripleName));
+  if (!AsmInfo) {
+    errs() << "BOLT-ERROR: no assembly info for target " << TripleName << "\n";
+    return nullptr;
+  }
+
+  std::unique_ptr<const MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
+  if (!STI) {
+    errs() << "BOLT-ERROR: no subtarget info for target " << TripleName << "\n";
+    return nullptr;
+  }
+
+  std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
+  if (!MII) {
+    errs() << "BOLT-ERROR: no instruction info for target " << TripleName
+           << "\n";
+    return nullptr;
+  }
+
+  std::unique_ptr<MCObjectFileInfo> MOFI =
+      llvm::make_unique<MCObjectFileInfo>();
+  std::unique_ptr<MCContext> Ctx =
+      llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), MOFI.get());
+  MOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false, *Ctx);
+
+  std::unique_ptr<MCDisassembler> DisAsm(
+      TheTarget->createMCDisassembler(*STI, *Ctx));
+
+  if (!DisAsm) {
+    errs() << "BOLT-ERROR: no disassembler for target " << TripleName << "\n";
+    return nullptr;
+  }
+
+  std::unique_ptr<const MCInstrAnalysis> MIA(
+      TheTarget->createMCInstrAnalysis(MII.get()));
+  if (!MIA) {
+    errs() << "BOLT-ERROR: failed to create instruction analysis for target"
+           << TripleName << "\n";
+    return nullptr;
+  }
+
+  std::unique_ptr<MCPlusBuilder> MIB(createMCPlusBuilder(
+      TheTriple->getArch(), MIA.get(), MII.get(), MRI.get()));
+  if (!MIB) {
+    errs() << "BOLT-ERROR: failed to create instruction builder for target"
+           << TripleName << "\n";
+    return nullptr;
+  }
+
+  int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
+  std::unique_ptr<MCInstPrinter> InstructionPrinter(
+      TheTarget->createMCInstPrinter(*TheTriple, AsmPrinterVariant, *AsmInfo,
+                                     *MII, *MRI));
+  if (!InstructionPrinter) {
+    errs() << "BOLT-ERROR: no instruction printer for target " << TripleName
+           << '\n';
+    return nullptr;
+  }
+  InstructionPrinter->setPrintImmHex(true);
+
+  std::unique_ptr<MCCodeEmitter> MCE(
+      TheTarget->createMCCodeEmitter(*MII, *MRI, *Ctx));
+
+  // Make sure we don't miss any output on core dumps.
+  outs().SetUnbuffered();
+  errs().SetUnbuffered();
+  dbgs().SetUnbuffered();
+
+  auto BC = llvm::make_unique<BinaryContext>(
+      std::move(Ctx), std::move(DwCtx), std::move(TheTriple), TheTarget,
+      TripleName, std::move(MCE), std::move(MOFI), std::move(AsmInfo),
+      std::move(MII), std::move(STI), std::move(InstructionPrinter),
+      std::move(MIA), std::move(MIB), std::move(MRI), std::move(DisAsm), DR);
+
+  return BC;
+}
+
 std::unique_ptr<MCObjectWriter>
 BinaryContext::createObjectWriter(raw_pwrite_stream &OS) {
   if (!MAB) {

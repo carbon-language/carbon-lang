@@ -717,7 +717,7 @@ std::unique_ptr<LocBufferVector> DWARFRewriter::makeFinalLocListsSection() {
     );
   }
 
-  return std::move(LocBuffer);
+  return LocBuffer;
 }
 
 void DWARFRewriter::flushPendingRanges() {

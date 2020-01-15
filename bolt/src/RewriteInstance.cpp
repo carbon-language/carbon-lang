@@ -518,31 +518,6 @@ size_t padFunction(const BinaryFunction &Function) {
 
 } // namespace opts
 
-extern MCPlusBuilder * createX86MCPlusBuilder(const MCInstrAnalysis *,
-                                              const MCInstrInfo *,
-                                              const MCRegisterInfo *);
-extern MCPlusBuilder * createAArch64MCPlusBuilder(const MCInstrAnalysis *,
-                                                  const MCInstrInfo *,
-                                                  const MCRegisterInfo *);
-namespace {
-
-MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
-    const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
-    const MCRegisterInfo *RegInfo) {
-#ifdef X86_AVAILABLE
-  if (Arch == Triple::x86_64)
-    return createX86MCPlusBuilder(Analysis, Info, RegInfo);
-#endif
-
-#ifdef AARCH64_AVAILABLE
-  if (Arch == Triple::aarch64)
-    return createAArch64MCPlusBuilder(Analysis, Info, RegInfo);
-#endif
-
-    llvm_unreachable("architecture unsupport by MCPlusBuilder");
-}
-}
-
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
 constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
 
@@ -600,146 +575,13 @@ bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
   return Itr != opts::ReorderData.end();
 }
 
-/// Create BinaryContext for a given architecture \p ArchName and
-/// triple \p TripleName.
-std::unique_ptr<BinaryContext>
-createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
-                    std::unique_ptr<DWARFContext> DwCtx) {
-  std::string ArchName;
-  std::string TripleName;
-  llvm::Triple::ArchType Arch = (llvm::Triple::ArchType)File->getArch();
-  std::string FeaturesStr;
-  if (Arch == llvm::Triple::x86_64) {
-    ArchName = "x86-64";
-    TripleName = "x86_64-unknown-linux";
-    FeaturesStr = "";
-  } else if (Arch == llvm::Triple::aarch64) {
-    ArchName = "aarch64";
-    TripleName = "aarch64-unknown-linux";
-    FeaturesStr = "+fp-armv8,+neon,+crypto,+dotprod,+crc,+lse,+ras,+rdm,"
-      "+fullfp16,+spe,+fuse-aes,+rcpc";
-  } else {
-    errs() << "BOLT-ERROR: Unrecognized machine in ELF file.\n";
-    return nullptr;
-  }
-
-  std::string Error;
-  std::unique_ptr<Triple> TheTriple = llvm::make_unique<Triple>(TripleName);
-  const Target *TheTarget = TargetRegistry::lookupTarget(ArchName,
-                                                         *TheTriple,
-                                                         Error);
-  if (!TheTarget) {
-    errs() << "BOLT-ERROR: " << Error;
-    return nullptr;
-  }
-
-  std::unique_ptr<const MCRegisterInfo> MRI(
-      TheTarget->createMCRegInfo(TripleName));
-  if (!MRI) {
-    errs() << "BOLT-ERROR: no register info for target " << TripleName << "\n";
-    return nullptr;
-  }
-
-  // Set up disassembler.
-  std::unique_ptr<const MCAsmInfo> AsmInfo(
-      TheTarget->createMCAsmInfo(*MRI, TripleName));
-  if (!AsmInfo) {
-    errs() << "BOLT-ERROR: no assembly info for target " << TripleName << "\n";
-    return nullptr;
-  }
-
-  std::unique_ptr<const MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
-  if (!STI) {
-    errs() << "BOLT-ERROR: no subtarget info for target " << TripleName << "\n";
-    return nullptr;
-  }
-
-  std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
-  if (!MII) {
-    errs() << "BOLT-ERROR: no instruction info for target " << TripleName
-           << "\n";
-    return nullptr;
-  }
-
-  std::unique_ptr<MCObjectFileInfo> MOFI =
-    llvm::make_unique<MCObjectFileInfo>();
-  std::unique_ptr<MCContext> Ctx =
-    llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), MOFI.get());
-  MOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false, *Ctx);
-
-  std::unique_ptr<MCDisassembler> DisAsm(
-    TheTarget->createMCDisassembler(*STI, *Ctx));
-
-  if (!DisAsm) {
-    errs() << "BOLT-ERROR: no disassembler for target " << TripleName << "\n";
-    return nullptr;
-  }
-
-  std::unique_ptr<const MCInstrAnalysis> MIA(
-     TheTarget->createMCInstrAnalysis(MII.get()));
-  if (!MIA) {
-    errs() << "BOLT-ERROR: failed to create instruction analysis for target"
-           << TripleName << "\n";
-    return nullptr;
-  }
-
-
-  std::unique_ptr<MCPlusBuilder> MIB(
-    createMCPlusBuilder(Arch, MIA.get(), MII.get(), MRI.get()));
-  if (!MIB) {
-    errs() << "BOLT-ERROR: failed to create instruction builder for target"
-           << TripleName << "\n";
-    return nullptr;
-  }
-
-  int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  std::unique_ptr<MCInstPrinter> InstructionPrinter(
-      TheTarget->createMCInstPrinter(Triple(TripleName), AsmPrinterVariant,
-                                     *AsmInfo, *MII, *MRI));
-  if (!InstructionPrinter) {
-    errs() << "BOLT-ERROR: no instruction printer for target " << TripleName
-           << '\n';
-    return nullptr;
-  }
-  InstructionPrinter->setPrintImmHex(true);
-
-  std::unique_ptr<MCCodeEmitter> MCE(
-      TheTarget->createMCCodeEmitter(*MII, *MRI, *Ctx));
-
-  // Make sure we don't miss any output on core dumps.
-  outs().SetUnbuffered();
-  errs().SetUnbuffered();
-  dbgs().SetUnbuffered();
-
-  auto BC =
-      llvm::make_unique<BinaryContext>(std::move(Ctx),
-                                       std::move(DwCtx),
-                                       std::move(TheTriple),
-                                       TheTarget,
-                                       TripleName,
-                                       std::move(MCE),
-                                       std::move(MOFI),
-                                       std::move(AsmInfo),
-                                       std::move(MII),
-                                       std::move(STI),
-                                       std::move(InstructionPrinter),
-                                       std::move(MIA),
-                                       std::move(MIB),
-                                       std::move(MRI),
-                                       std::move(DisAsm),
-                                       DR);
-
-  return BC;
-}
-
 } // namespace
 
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
                                  DataAggregator &DA, const int Argc,
                                  const char *const *Argv, StringRef ToolPath)
     : InputFile(File), Argc(Argc), Argv(Argv), ToolPath(ToolPath), DA(DA),
-      BC(createBinaryContext(
+      BC(BinaryContext::createBinaryContext(
           File, DR,
           DWARFContext::create(*File, nullptr,
                                DWARFContext::defaultErrorHandler, "", false))),

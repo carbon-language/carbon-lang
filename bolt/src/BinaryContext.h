@@ -178,6 +178,10 @@ class BinaryContext {
   uint32_t DuplicatedJumpTables{0x10000000};
 
 public:
+  static std::unique_ptr<BinaryContext>
+  createBinaryContext(ObjectFile *File, DataReader &DR,
+                      std::unique_ptr<DWARFContext> DwCtx);
+
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = StringMap<BinaryData *>;
   SymbolMapType GlobalSymbols;
