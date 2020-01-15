@@ -1946,7 +1946,8 @@ public:
   /// Returns false if disassembly failed.
   void disassemble(ArrayRef<uint8_t> FunctionData);
 
-  /// Validate entry points.
+  /// Check that entry points have an associated instruction at their
+  /// offsets after disassembly.
   void postProcessEntryPoints();
 
   /// Post-processing for jump tables after disassembly. Since their

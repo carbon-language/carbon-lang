@@ -2660,6 +2660,7 @@ void RewriteInstance::disassembleFunctions() {
     if (!shouldDisassemble(Function))
       continue;
 
+    Function.postProcessEntryPoints();
     Function.postProcessJumpTables();
   }
 

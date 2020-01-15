@@ -1347,8 +1347,6 @@ add_instruction:
   clearList(Relocations);
 
   updateState(State::Disassembled);
-
-  postProcessEntryPoints();
 }
 
 void BinaryFunction::postProcessEntryPoints() {
@@ -1356,28 +1354,27 @@ void BinaryFunction::postProcessEntryPoints() {
     return;
 
   for (auto Offset : EntryOffsets) {
-    if (!getInstructionAtOffset(Offset)) {
-      // On AArch64 there are legitimate reasons to have references past the
-      // end of the function, e.g. jump tables.
-      if (BC.isAArch64() && Offset == getSize()) {
-        continue;
-      }
-
-      // If we are at Offset 0 and there is no instruction associated with it,
-      // this means this is an empty function. Just ignore.
-      if (Offset == 0) {
-        continue;
-      }
-
-      errs() << "BOLT-WARNING: reference in the middle of instruction "
-                "detected in function " << *this
-             << " at offset 0x" << Twine::utohexstr(Offset) << '\n';
-      if (BC.HasRelocations) {
-        errs() << "BOLT-ERROR: unable to keep processing in relocation mode\n";
-        exit(1);
-      }
-      setSimple(false);
+    // If we are at Offset 0 and there is no instruction associated with it,
+    // this means this is an empty function. Just ignore. If we find an
+    // instruction at this offset, this entry point is valid.
+    if (getInstructionAtOffset(Offset) || !Offset) {
+      continue;
     }
+
+    // On AArch64 there are legitimate reasons to have references past the
+    // end of the function, e.g. jump tables.
+    if (BC.isAArch64() && Offset == getSize()) {
+      continue;
+    }
+
+    errs() << "BOLT-WARNING: reference in the middle of instruction "
+              "detected in function " << *this
+           << " at offset 0x" << Twine::utohexstr(Offset) << '\n';
+    if (BC.HasRelocations) {
+      errs() << "BOLT-ERROR: unable to keep processing in relocation mode\n";
+      exit(1);
+    }
+    setSimple(false);
   }
 }
 
