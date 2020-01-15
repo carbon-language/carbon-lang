@@ -121,6 +121,7 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
   }
 }
 
+#if 0  // pmk
 std::optional<TypeAndShape> TypeAndShape::Characterize(
     const Expr<SomeType> &expr, FoldingContext &context) {
   if (const auto *symbol{UnwrapWholeSymbolDataRef(expr)}) {
@@ -147,6 +148,7 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
   }
   return std::nullopt;
 }
+#endif  // pmk
 
 bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
     const TypeAndShape &that, const char *thisIs, const char *thatIs,

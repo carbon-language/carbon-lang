@@ -188,12 +188,13 @@ void PointerAssignmentChecker::Check(const evaluate::Designator<T> &d) {
   } else if (!evaluate::GetLastTarget(GetSymbolVector(d))) {  // C1025
     msg = "In assignment to object %s, the target '%s' is not an object with"
           " POINTER or TARGET attributes"_err_en_US;
-  } else if (auto rhsType{TypeAndShape::Characterize(*last, context_)}) {
+  } else if (auto rhsType{TypeAndShape::Characterize(d, context_)}) {
     if (!lhsType_) {
       msg = "%s associated with object '%s' with incompatible type or"
             " shape"_err_en_US;
     } else if (rhsType->corank() > 0 &&
         (isVolatile_ != last->attrs().test(Attr::VOLATILE))) {  // C1020
+      // TODO: what if A is VOLATILE in A%B%C?  need a better test here
       if (isVolatile_) {
         msg = "Pointer may not be VOLATILE when target is a"
               " non-VOLATILE coarray"_err_en_US;

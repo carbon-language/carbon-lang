@@ -82,8 +82,30 @@ public:
       const semantics::ProcInterface &);
   static std::optional<TypeAndShape> Characterize(
       const semantics::DeclTypeSpec &);
+
+  template<typename A>
   static std::optional<TypeAndShape> Characterize(
-      const Expr<SomeType> &, FoldingContext &);
+      const A &x, FoldingContext &context) {
+    if (const auto *symbol{UnwrapWholeSymbolDataRef(x)}) {
+      if (auto result{Characterize(*symbol, context)}) {
+        return result;
+      }
+    }
+    if (auto type{x.GetType()}) {
+      if (auto shape{GetShape(context, x)}) {
+        TypeAndShape result{*type, std::move(*shape)};
+        if (type->category() == TypeCategory::Character) {
+          if (const auto *chExpr{UnwrapExpr<Expr<SomeCharacter>>(x)}) {
+            if (auto length{chExpr->LEN()}) {
+              result.set_LEN(Expr<SomeInteger>{std::move(*length)});
+            }
+          }
+        }
+        return result;
+      }
+    }
+    return std::nullopt;
+  }
 
   DynamicType type() const { return type_; }
   TypeAndShape &set_type(DynamicType t) {
