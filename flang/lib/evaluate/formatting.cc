@@ -14,6 +14,7 @@
 #include "tools.h"
 #include "../parser/characters.h"
 #include "../semantics/symbol.h"
+#include <sstream>
 
 namespace Fortran::evaluate {
 
@@ -314,24 +315,24 @@ std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
   Precedence thisPrec{ToPrecedence(derived())};
   if constexpr (operands == 1) {
     if (thisPrec != Precedence::Top && lhsPrec < thisPrec) {
-      o << '(' << left() << ')';
+      left().AsFortran(o << '(') << ')';
     } else {
-      o << left();
+      left().AsFortran(o);
     }
   } else {
     if (thisPrec != Precedence::Top &&
         (lhsPrec < thisPrec ||
             (lhsPrec == Precedence::Power && thisPrec == Precedence::Power))) {
-      o << '(' << left() << ')';
+      left().AsFortran(o << '(') << ')';
     } else {
-      o << left();
+      left().AsFortran(o);
     }
     o << spelling.infix;
     Precedence rhsPrec{ToPrecedence(right())};
     if (thisPrec != Precedence::Top && rhsPrec < thisPrec) {
-      o << '(' << right() << ')';
+      right().AsFortran(o << '(') << ')';
     } else {
-      o << right();
+      right().AsFortran(o);
     }
   }
   return o << spelling.suffix;
@@ -403,9 +404,7 @@ std::ostream &ArrayConstructor<T>::AsFortran(std::ostream &o) const {
 template<int KIND>
 std::ostream &ArrayConstructor<Type<TypeCategory::Character, KIND>>::AsFortran(
     std::ostream &o) const {
-  std::stringstream len;
-  LEN().AsFortran(len);
-  o << '[' << GetType().AsFortran(len.str()) << "::";
+  o << '[' << GetType().AsFortran(LEN().AsFortran()) << "::";
   EmitArray(o, *this);
   return o << ']';
 }
@@ -414,6 +413,13 @@ std::ostream &ArrayConstructor<SomeDerived>::AsFortran(std::ostream &o) const {
   o << '[' << GetType().AsFortran() << "::";
   EmitArray(o, *this);
   return o << ']';
+}
+
+template<typename RESULT>
+std::string ExpressionBase<RESULT>::AsFortran() const {
+  std::ostringstream ss;
+  AsFortran(ss);
+  return ss.str();
 }
 
 template<typename RESULT>
@@ -459,9 +465,7 @@ std::string DynamicType::AsFortran() const {
     } else if (charLength_->isDeferred()) {
       result += ':';
     } else if (const auto &length{charLength_->GetExplicit()}) {
-      std::stringstream ss;
-      length->AsFortran(ss);
-      result += ss.str();
+      result += length->AsFortran();
     }
     return result + ')';
   } else if (IsUnlimitedPolymorphic()) {

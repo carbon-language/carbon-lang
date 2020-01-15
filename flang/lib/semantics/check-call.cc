@@ -160,13 +160,10 @@ static void CheckExplicitDataArg(const characteristics::DummyDataObject &dummy,
           "dummy argument", "actual argument");
     }
   } else {
-    std::stringstream lenStr;
-    if (const auto &len{actualType.LEN()}) {
-      len->AsFortran(lenStr);
-    }
+    const auto &len{actualType.LEN()};
     messages.Say(
         "Actual argument type '%s' is not compatible with dummy argument type '%s'"_err_en_US,
-        actualType.type().AsFortran(lenStr.str()),
+        actualType.type().AsFortran(len ? len->AsFortran() : ""),
         dummy.type.type().AsFortran());
   }
 

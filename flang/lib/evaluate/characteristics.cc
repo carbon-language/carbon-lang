@@ -155,13 +155,10 @@ bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
     bool isElemental) const {
   const auto &len{that.LEN()};
   if (!type_.IsTypeCompatibleWith(that.type_)) {
-    std::stringstream lenstr;
-    if (len) {
-      len->AsFortran(lenstr);
-    }
     messages.Say(
         "%1$s type '%2$s' is not compatible with %3$s type '%4$s'"_err_en_US,
-        thatIs, that.type_.AsFortran(lenstr.str()), thisIs, type_.AsFortran());
+        thatIs, that.type_.AsFortran(len ? len->AsFortran() : ""), thisIs,
+        type_.AsFortran());
     return false;
   }
   return isElemental ||
@@ -213,11 +210,7 @@ void TypeAndShape::AcquireLEN() {
 }
 
 std::ostream &TypeAndShape::Dump(std::ostream &o) const {
-  std::stringstream LENstr;
-  if (LEN_) {
-    LEN_->AsFortran(LENstr);
-  }
-  o << type_.AsFortran(LENstr.str());
+  o << type_.AsFortran(LEN_ ? LEN_->AsFortran() : "");
   attrs_.Dump(o, EnumToString);
   if (!shape_.empty()) {
     o << " dimension(";

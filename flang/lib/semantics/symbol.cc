@@ -11,6 +11,7 @@
 #include "semantics.h"
 #include "tools.h"
 #include "../common/idioms.h"
+#include "../evaluate/expression.h"
 #include <ostream>
 #include <string>
 
@@ -20,6 +21,13 @@ template<typename T>
 static void DumpOptional(std::ostream &os, const char *label, const T &x) {
   if (x) {
     os << ' ' << label << ':' << *x;
+  }
+}
+template<typename T>
+static void DumpExpr(std::ostream &os, const char *label,
+    const std::optional<evaluate::Expr<T>> &x) {
+  if (x) {
+    x->AsFortran(os << ' ' << label << ':');
   }
 }
 
@@ -84,7 +92,7 @@ void ModuleDetails::set_scope(const Scope *scope) {
 
 std::ostream &operator<<(std::ostream &os, const SubprogramDetails &x) {
   DumpBool(os, "isInterface", x.isInterface_);
-  DumpOptional(os, "bindName", x.bindName_);
+  DumpExpr(os, "bindName", x.bindName_);
   if (x.result_) {
     os << " result:" << x.result_->name();
     if (!x.result_->attrs().empty()) {
@@ -336,7 +344,7 @@ std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   if (x.type()) {
     os << " type: " << *x.type();
   }
-  DumpOptional(os, "bindName", x.bindName_);
+  DumpExpr(os, "bindName", x.bindName_);
   return os;
 }
 
@@ -344,13 +352,13 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
   os << *static_cast<const EntityDetails *>(&x);
   DumpList(os, "shape", x.shape());
   DumpList(os, "coshape", x.coshape());
-  DumpOptional(os, "init", x.init_);
+  DumpExpr(os, "init", x.init_);
   return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const AssocEntityDetails &x) {
   os << *static_cast<const EntityDetails *>(&x);
-  DumpOptional(os, "expr", x.expr());
+  DumpExpr(os, "expr", x.expr());
   return os;
 }
 
@@ -360,7 +368,7 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
   } else {
     DumpType(os, x.interface_.type());
   }
-  DumpOptional(os, "bindName", x.bindName());
+  DumpExpr(os, "bindName", x.bindName());
   DumpOptional(os, "passName", x.passName());
   if (x.init()) {
     if (const Symbol * target{*x.init()}) {
@@ -409,7 +417,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << dummy->name();
             }
             os << ')';
-            DumpOptional(os, "bindName", x.bindName());
+            DumpExpr(os, "bindName", x.bindName());
             if (x.isFunction()) {
               os << " result(";
               DumpType(os, x.result());
@@ -455,7 +463,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const TypeParamDetails &x) {
             DumpOptional(os, "type", x.type());
             os << ' ' << common::EnumToString(x.attr());
-            DumpOptional(os, "init", x.init());
+            DumpExpr(os, "init", x.init());
           },
           [&](const MiscDetails &x) {
             os << ' ' << MiscDetails::EnumToString(x.kind());

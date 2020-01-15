@@ -122,11 +122,9 @@ void DerivedTypeSpec::EvaluateParameters(
             continue;
           }
         }
-        std::stringstream fortran;
-        expr->AsFortran(fortran);
         evaluate::SayWithDeclaration(messages, symbol,
             "Value of type parameter '%s' (%s) is not convertible to its type"_err_en_US,
-            name, fortran.str());
+            name, expr->AsFortran());
       }
     }
   }
@@ -243,12 +241,10 @@ void DerivedTypeSpec::Instantiate(
               if (expr->Rank() == 0 &&
                   maybeDynamicType->category() == TypeCategory::Integer) {
                 if (!evaluate::ToInt64(*expr)) {
-                  std::stringstream fortran;
-                  fortran << *expr;
                   if (auto *msg{foldingContext.messages().Say(
                           "Value of kind type parameter '%s' (%s) is not "
                           "a scalar INTEGER constant"_err_en_US,
-                          name, fortran.str())}) {
+                          name, expr->AsFortran())}) {
                     msg->Attach(name, "declared here"_en_US);
                   }
                 }
@@ -322,7 +318,7 @@ std::ostream &operator<<(std::ostream &o, const Bound &x) {
   } else if (x.isDeferred()) {
     o << ':';
   } else if (x.expr_) {
-    o << x.expr_;
+    x.expr_->AsFortran(o);
   } else {
     o << "<no-expr>";
   }

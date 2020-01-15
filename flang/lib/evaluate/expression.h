@@ -89,6 +89,7 @@ public:
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
+  std::string AsFortran() const;
   std::ostream &AsFortran(std::ostream &) const;
   static Derived Rewrite(FoldingContext &, Derived &&);
 };
