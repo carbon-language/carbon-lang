@@ -709,7 +709,11 @@ bool IsNullPointer(const Expr<SomeType> &expr) {
 
 // GetSymbolVector()
 auto GetSymbolVectorHelper::operator()(const Symbol &x) const -> Result {
-  return {x};
+  if (const auto *details{x.detailsIf<semantics::AssocEntityDetails>()}) {
+    return (*this)(details->expr());
+  } else {
+    return {x.GetUltimate()};
+  }
 }
 auto GetSymbolVectorHelper::operator()(const Component &x) const -> Result {
   Result result{(*this)(x.base())};

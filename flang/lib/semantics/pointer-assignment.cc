@@ -211,8 +211,10 @@ void PointerAssignmentChecker::Check(const evaluate::Designator<T> &d) {
     }
   }
   if (msg) {
+    std::ostringstream ss;
+    d.AsFortran(ss);
     auto restorer{common::ScopedSet(lhs_, last)};
-    Say(*msg, description_, last->name());
+    Say(*msg, description_, ss.str());
   }
 }
 

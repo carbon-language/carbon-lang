@@ -151,3 +151,43 @@ contains
   end
 
 end
+
+module m2
+  type :: t1
+    real :: a
+  end type
+  type :: t2
+    type(t1) :: b
+    type(t1), pointer :: c
+    real :: d
+  end type
+end
+
+subroutine s2
+  use m2
+  real, pointer :: p
+  type(t2), target :: x
+  type(t2) :: y
+  !OK: x has TARGET attribute
+  p => x%b%a
+  !OK: c has POINTER attribute
+  p => y%c%a
+  !ERROR: In assignment to object pointer 'p', the target 'y%b%a' is not an object with POINTER or TARGET attributes
+  p => y%b%a
+  associate(z => x%b)
+    !OK: x has TARGET attribute
+    p => z%a
+  end associate
+  associate(z => y%c)
+    !OK: c has POINTER attribute
+    p => z%a
+  end associate
+  associate(z => y%b)
+    !ERROR: In assignment to object pointer 'p', the target 'z%a' is not an object with POINTER or TARGET attributes
+    p => z%a
+  end associate
+  associate(z => y%b%a)
+    !ERROR: In assignment to object pointer 'p', the target 'z' is not an object with POINTER or TARGET attributes
+    p => z
+  end associate
+end
