@@ -326,19 +326,15 @@ void CheckPointerAssignment(
     evaluate::FoldingContext &context, const Symbol &lhs, const SomeExpr &rhs) {
   // TODO: Acquire values of deferred type parameters &/or array bounds
   // from the RHS.
-  if (!IsPointer(lhs)) {
-    evaluate::SayWithDeclaration(
-        context.messages(), lhs, "'%s' is not a pointer"_err_en_US, lhs.name());
-  } else {
-    std::string description{"pointer '"s + lhs.name().ToString() + '\''};
-    PointerAssignmentChecker{lhs.name(), description, context}
-        .set_lhsType(TypeAndShape::Characterize(lhs, context))
-        .set_procedure(Procedure::Characterize(lhs, context.intrinsics()))
-        .set_lhs(lhs)
-        .set_isContiguous(lhs.attrs().test(Attr::CONTIGUOUS))
-        .set_isVolatile(lhs.attrs().test(Attr::VOLATILE))
-        .Check(rhs);
-  }
+  CHECK(IsPointer(lhs));
+  std::string description{"pointer '"s + lhs.name().ToString() + '\''};
+  PointerAssignmentChecker{lhs.name(), description, context}
+      .set_lhsType(TypeAndShape::Characterize(lhs, context))
+      .set_procedure(Procedure::Characterize(lhs, context.intrinsics()))
+      .set_lhs(lhs)
+      .set_isContiguous(lhs.attrs().test(Attr::CONTIGUOUS))
+      .set_isVolatile(lhs.attrs().test(Attr::VOLATILE))
+      .Check(rhs);
 }
 
 void CheckPointerAssignment(evaluate::FoldingContext &context,
