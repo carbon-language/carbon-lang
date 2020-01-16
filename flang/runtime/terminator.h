@@ -29,11 +29,19 @@ public:
   }
   [[noreturn]] void Crash(const char *message, ...);
   [[noreturn]] void CrashArgs(const char *message, va_list &);
+  [[noreturn]] void CheckFailed(
+      const char *predicate, const char *file, int line);
 
 private:
   const char *sourceFileName_{nullptr};
   int sourceLine_{0};
 };
+
+#define RUNTIME_CHECK(terminator, pred) \
+  if (pred) \
+    ; \
+  else \
+    (terminator).CheckFailed(#pred, __FILE__, __LINE__)
 
 void NotifyOtherImagesOfNormalEnd();
 void NotifyOtherImagesOfFailImageStatement();

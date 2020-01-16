@@ -17,6 +17,8 @@ These include:
    to an IOSTAT= or STAT= specifier on a Fortran I/O statement
    or coindexed data reference (see Fortran 2018 12.11.5,
    16.10.2, and 16.10.2.33)
+Codes from <errno.h>, e.g. ENOENT, are assumed to be positive
+and are used "raw" as IOSTAT values.
 #endif
 #ifndef FORTRAN_RUNTIME_MAGIC_NUMBERS_H_
 #define FORTRAN_RUNTIME_MAGIC_NUMBERS_H_
@@ -24,7 +26,7 @@ These include:
 #define FORTRAN_RUNTIME_IOSTAT_END (-1)
 #define FORTRAN_RUNTIME_IOSTAT_EOR (-2)
 #define FORTRAN_RUNTIME_IOSTAT_FLUSH (-3)
-#define FORTRAN_RUNTIME_IOSTAT_INQUIRE_INTERNAL_UNIT 1
+#define FORTRAN_RUNTIME_IOSTAT_INQUIRE_INTERNAL_UNIT 255
 
 #define FORTRAN_RUNTIME_STAT_FAILED_IMAGE 10
 #define FORTRAN_RUNTIME_STAT_LOCKED 11

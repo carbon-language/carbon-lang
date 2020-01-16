@@ -19,3 +19,13 @@ target_link_libraries(format-test
 )
 
 add_test(Format format-test)
+
+add_executable(hello-world
+  hello.cc
+)
+
+target_link_libraries(hello-world
+  FortranRuntime
+)
+
+add_test(HelloWorld hello-world)

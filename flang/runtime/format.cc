@@ -7,23 +7,43 @@
 //===----------------------------------------------------------------------===//
 
 #include "format.h"
+#include "io-stmt.h"
 #include "../lib/common/format.h"
 #include "../lib/decimal/decimal.h"
 #include <limits>
 
-namespace Fortran::runtime {
+namespace Fortran::runtime::io {
+
+// Default FormatContext virtual member functions
+void FormatContext::Emit(const char *, std::size_t) {
+  Crash("Cannot emit data from this FORMAT string");
+}
+void FormatContext::Emit(const char16_t *, std::size_t) {
+  Crash("Cannot emit data from this FORMAT string");
+}
+void FormatContext::Emit(const char32_t *, std::size_t) {
+  Crash("Cannot emit data from this FORMAT string");
+}
+void FormatContext::HandleSlash(int) {
+  Crash("A / control edit descriptor may not appear in this FORMAT string");
+}
+void FormatContext::HandleAbsolutePosition(int) {
+  Crash("A Tn control edit descriptor may not appear in this FORMAT string");
+}
+void FormatContext::HandleRelativePosition(int) {
+  Crash("An nX, TLn, or TRn control edit descriptor may not appear in this "
+        "FORMAT string");
+}
 
 template<typename CHAR>
-FormatControl<CHAR>::FormatControl(FormatContext &context, const CHAR *format,
-    std::size_t formatLength, const MutableModes &modes, int maxHeight)
-  : context_{context}, modes_{modes}, maxHeight_{static_cast<std::uint8_t>(
-                                          maxHeight)},
-    format_{format}, formatLength_{static_cast<int>(formatLength)} {
+FormatControl<CHAR>::FormatControl(Terminator &terminator, const CHAR *format,
+    std::size_t formatLength, int maxHeight)
+  : maxHeight_{static_cast<std::uint8_t>(maxHeight)}, format_{format},
+    formatLength_{static_cast<int>(formatLength)} {
   // The additional two items are for the whole string and a
   // repeated non-parenthesized edit descriptor.
   if (maxHeight > std::numeric_limits<std::int8_t>::max()) {
-    context_.terminator.Crash(
-        "internal Fortran runtime error: maxHeight %d", maxHeight);
+    terminator.Crash("internal Fortran runtime error: maxHeight %d", maxHeight);
   }
   stack_[0].start = offset_;
   stack_[0].remaining = Iteration::unlimited;  // 13.4(8)
@@ -43,38 +63,23 @@ int FormatControl<CHAR>::GetMaxParenthesisNesting(
   return validator.maxNesting();
 }
 
-static void HandleCharacterLiteral(
-    FormatContext &context, const char *str, std::size_t chars) {
-  if (context.handleCharacterLiteral1) {
-    context.handleCharacterLiteral1(str, chars);
-  }
-}
-
-static void HandleCharacterLiteral(
-    FormatContext &context, const char16_t *str, std::size_t chars) {
-  if (context.handleCharacterLiteral2) {
-    context.handleCharacterLiteral2(str, chars);
-  }
-}
-
-static void HandleCharacterLiteral(
-    FormatContext &context, const char32_t *str, std::size_t chars) {
-  if (context.handleCharacterLiteral4) {
-    context.handleCharacterLiteral4(str, chars);
-  }
-}
-
-template<typename CHAR> int FormatControl<CHAR>::GetIntField(CHAR firstCh) {
+template<typename CHAR>
+int FormatControl<CHAR>::GetIntField(Terminator &terminator, CHAR firstCh) {
   CHAR ch{firstCh ? firstCh : PeekNext()};
-  if (ch < '0' || ch > '9') {
-    context_.terminator.Crash(
+  if (ch != '-' && ch != '+' && (ch < '0' || ch > '9')) {
+    terminator.Crash(
         "Invalid FORMAT: integer expected at '%c'", static_cast<char>(ch));
   }
   int result{0};
+  bool negate{ch == '-'};
+  if (negate) {
+    firstCh = '\0';
+    ch = PeekNext();
+  }
   while (ch >= '0' && ch <= '9') {
     if (result >
         std::numeric_limits<int>::max() / 10 - (static_cast<int>(ch) - '0')) {
-      context_.terminator.Crash("FORMAT integer field out of range");
+      terminator.Crash("FORMAT integer field out of range");
     }
     result = 10 * result + ch - '0';
     if (firstCh) {
@@ -84,11 +89,15 @@ template<typename CHAR> int FormatControl<CHAR>::GetIntField(CHAR firstCh) {
     }
     ch = PeekNext();
   }
+  if (negate && (result *= -1) > 0) {
+    terminator.Crash("FORMAT integer field out of range");
+  }
   return result;
 }
 
-static void HandleControl(MutableModes &modes, std::uint16_t &scale,
-    FormatContext &context, char ch, char next, int n) {
+static void HandleControl(
+    FormatContext &context, std::uint16_t &scale, char ch, char next, int n) {
+  MutableModes &modes{context.mutableModes()};
   switch (ch) {
   case 'B':
     if (next == 'Z') {
@@ -130,9 +139,7 @@ static void HandleControl(MutableModes &modes, std::uint16_t &scale,
     break;
   case 'X':
     if (!next) {
-      if (context.handleRelativePosition) {
-        context.handleRelativePosition(n);
-      }
+      context.HandleRelativePosition(n);
       return;
     }
     break;
@@ -148,25 +155,20 @@ static void HandleControl(MutableModes &modes, std::uint16_t &scale,
     break;
   case 'T': {
     if (!next) {  // Tn
-      if (context.handleAbsolutePosition) {
-        context.handleAbsolutePosition(n);
-      }
+      context.HandleAbsolutePosition(n);
       return;
     }
     if (next == 'L' || next == 'R') {  // TLn & TRn
-      if (context.handleRelativePosition) {
-        context.handleRelativePosition(next == 'L' ? -n : n);
-      }
+      context.HandleRelativePosition(next == 'L' ? -n : n);
       return;
     }
   } break;
   default: break;
   }
   if (next) {
-    context.terminator.Crash(
-        "Unknown '%c%c' edit descriptor in FORMAT", ch, next);
+    context.Crash("Unknown '%c%c' edit descriptor in FORMAT", ch, next);
   } else {
-    context.terminator.Crash("Unknown '%c' edit descriptor in FORMAT", ch);
+    context.Crash("Unknown '%c' edit descriptor in FORMAT", ch);
   }
 }
 
@@ -174,35 +176,34 @@ static void HandleControl(MutableModes &modes, std::uint16_t &scale,
 // Handles all repetition counts and control edit descriptors.
 // Generally assumes that the format string has survived the common
 // format validator gauntlet.
-template<typename CHAR> int FormatControl<CHAR>::CueUpNextDataEdit(bool stop) {
+template<typename CHAR>
+int FormatControl<CHAR>::CueUpNextDataEdit(FormatContext &context, bool stop) {
   int unlimitedLoopCheck{-1};
   while (true) {
     std::optional<int> repeat;
     bool unlimited{false};
-    CHAR ch{Capitalize(GetNextChar())};
+    CHAR ch{Capitalize(GetNextChar(context))};
     while (ch == ',' || ch == ':') {
       // Skip commas, and don't complain if they're missing; the format
       // validator does that.
       if (stop && ch == ':') {
         return 0;
       }
-      ch = Capitalize(GetNextChar());
+      ch = Capitalize(GetNextChar(context));
     }
-    if (ch >= '0' && ch <= '9') {  // repeat count
-      repeat = GetIntField(ch);
-      ch = GetNextChar();
+    if (ch == '-' || ch == '+' || (ch >= '0' && ch <= '9')) {
+      repeat = GetIntField(context, ch);
+      ch = GetNextChar(context);
     } else if (ch == '*') {
       unlimited = true;
-      ch = GetNextChar();
+      ch = GetNextChar(context);
       if (ch != '(') {
-        context_.terminator.Crash(
-            "Invalid FORMAT: '*' may appear only before '('");
+        context.Crash("Invalid FORMAT: '*' may appear only before '('");
       }
     }
     if (ch == '(') {
       if (height_ >= maxHeight_) {
-        context_.terminator.Crash(
-            "FORMAT stack overflow: too many nested parentheses");
+        context.Crash("FORMAT stack overflow: too many nested parentheses");
       }
       stack_[height_].start = offset_ - 1;  // the '('
       if (unlimited || height_ == 0) {
@@ -218,15 +219,18 @@ template<typename CHAR> int FormatControl<CHAR>::CueUpNextDataEdit(bool stop) {
       }
       ++height_;
     } else if (height_ == 0) {
-      context_.terminator.Crash("FORMAT lacks initial '('");
+      context.Crash("FORMAT lacks initial '('");
     } else if (ch == ')') {
-      if (height_ == 1 && stop) {
-        return 0;  // end of FORMAT and no data items remain
+      if (height_ == 1) {
+        if (stop) {
+          return 0;  // end of FORMAT and no data items remain
+        }
+        context.HandleSlash();  // implied / before rightmost )
       }
       if (stack_[height_ - 1].remaining == Iteration::unlimited) {
         offset_ = stack_[height_ - 1].start + 1;
         if (offset_ == unlimitedLoopCheck) {
-          context_.terminator.Crash(
+          context.Crash(
               "Unlimited repetition in FORMAT lacks data edit descriptors");
         }
       } else if (stack_[height_ - 1].remaining-- > 0) {
@@ -242,8 +246,7 @@ template<typename CHAR> int FormatControl<CHAR>::CueUpNextDataEdit(bool stop) {
         ++offset_;
       }
       if (offset_ >= formatLength_) {
-        context_.terminator.Crash(
-            "FORMAT missing closing quote on character literal");
+        context.Crash("FORMAT missing closing quote on character literal");
       }
       ++offset_;
       std::size_t chars{
@@ -255,14 +258,13 @@ template<typename CHAR> int FormatControl<CHAR>::CueUpNextDataEdit(bool stop) {
       } else {
         --chars;
       }
-      HandleCharacterLiteral(context_, format_ + start, chars);
+      context.Emit(format_ + start, chars);
     } else if (ch == 'H') {
       // 9HHOLLERITH
       if (!repeat || *repeat < 1 || offset_ + *repeat > formatLength_) {
-        context_.terminator.Crash("Invalid width on Hollerith in FORMAT");
+        context.Crash("Invalid width on Hollerith in FORMAT");
       }
-      HandleCharacterLiteral(
-          context_, format_ + offset_, static_cast<std::size_t>(*repeat));
+      context.Emit(format_ + offset_, static_cast<std::size_t>(*repeat));
       offset_ += *repeat;
     } else if (ch >= 'A' && ch <= 'Z') {
       int start{offset_ - 1};
@@ -276,35 +278,33 @@ template<typename CHAR> int FormatControl<CHAR>::CueUpNextDataEdit(bool stop) {
                   ch == 'F' || ch == 'D' || ch == 'G'))) {
         // Data edit descriptor found
         offset_ = start;
-        return repeat ? *repeat : 1;
+        return repeat && *repeat > 0 ? *repeat : 1;
       } else {
         // Control edit descriptor
         if (ch == 'T') {  // Tn, TLn, TRn
-          repeat = GetIntField();
+          repeat = GetIntField(context);
         }
-        HandleControl(modes_, scale_, context_, static_cast<char>(ch),
-            static_cast<char>(next), repeat ? *repeat : 1);
+        HandleControl(context, scale_, static_cast<char>(ch),
+            static_cast<char>(next), repeat && *repeat > 0 ? *repeat : 1);
       }
     } else if (ch == '/') {
-      if (context_.handleSlash) {
-        context_.handleSlash();
-      }
+      context.HandleSlash(repeat && *repeat > 0 ? *repeat : 1);
     } else {
-      context_.terminator.Crash(
-          "Invalid character '%c' in FORMAT", static_cast<char>(ch));
+      context.Crash("Invalid character '%c' in FORMAT", static_cast<char>(ch));
     }
   }
 }
 
 template<typename CHAR>
-void FormatControl<CHAR>::GetNext(DataEdit &edit, int maxRepeat) {
+void FormatControl<CHAR>::GetNext(
+    FormatContext &context, DataEdit &edit, int maxRepeat) {
 
   // TODO: DT editing
 
   // Return the next data edit descriptor
-  int repeat{CueUpNextDataEdit()};
+  int repeat{CueUpNextDataEdit(context)};
   auto start{offset_};
-  edit.descriptor = static_cast<char>(Capitalize(GetNextChar()));
+  edit.descriptor = static_cast<char>(Capitalize(GetNextChar(context)));
   if (edit.descriptor == 'E') {
     edit.variation = static_cast<char>(Capitalize(PeekNext()));
     if (edit.variation >= 'A' && edit.variation <= 'Z') {
@@ -316,15 +316,15 @@ void FormatControl<CHAR>::GetNext(DataEdit &edit, int maxRepeat) {
     edit.variation = '\0';
   }
 
-  edit.width = GetIntField();
-  edit.modes = modes_;
+  edit.width = GetIntField(context);
+  edit.modes = context.mutableModes();
   if (PeekNext() == '.') {
     ++offset_;
-    edit.digits = GetIntField();
+    edit.digits = GetIntField(context);
     CHAR ch{PeekNext()};
     if (ch == 'e' || ch == 'E' || ch == 'd' || ch == 'D') {
       ++offset_;
-      edit.expoDigits = GetIntField();
+      edit.expoDigits = GetIntField(context);
     } else {
       edit.expoDigits.reset();
     }
@@ -355,8 +355,9 @@ void FormatControl<CHAR>::GetNext(DataEdit &edit, int maxRepeat) {
   }
 }
 
-template<typename CHAR> void FormatControl<CHAR>::FinishOutput() {
-  CueUpNextDataEdit(true /* stop at colon or end of FORMAT */);
+template<typename CHAR>
+void FormatControl<CHAR>::FinishOutput(FormatContext &context) {
+  CueUpNextDataEdit(context, true /* stop at colon or end of FORMAT */);
 }
 
 template class FormatControl<char>;

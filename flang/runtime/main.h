@@ -1,4 +1,4 @@
-//===-- runtime/main.cc -----------------------------------------*- C++ -*-===//
+//===-- runtime/main.h ------------------------------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -12,9 +12,15 @@
 #include "entry-names.h"
 
 namespace Fortran::runtime {
-extern int argc;
-extern const char **argv;
-extern const char **envp;
+struct ExecutionEnvironment {
+  void Configure(int argc, const char *argv[], const char *envp[]);
+
+  int argc;
+  const char **argv;
+  const char **envp;
+  int listDirectedOutputLineLengthLimit;
+};
+extern ExecutionEnvironment executionEnvironment;
 }
 
 extern "C" {

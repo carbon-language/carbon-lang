@@ -8,7 +8,6 @@
 
 #include "transformational.h"
 #include "../lib/common/idioms.h"
-#include "../lib/evaluate/integer.h"
 #include <algorithm>
 #include <bitset>
 #include <cinttypes>
@@ -16,18 +15,12 @@
 
 namespace Fortran::runtime {
 
-template<int BITS> inline std::int64_t LoadInt64(const char *p) {
-  using Int = const evaluate::value::Integer<BITS>;
-  Int *ip{reinterpret_cast<Int *>(p)};
-  return ip->ToInt64();
-}
-
 static inline std::int64_t GetInt64(const char *p, std::size_t bytes) {
   switch (bytes) {
-  case 1: return LoadInt64<8>(p);
-  case 2: return LoadInt64<16>(p);
-  case 4: return LoadInt64<32>(p);
-  case 8: return LoadInt64<64>(p);
+  case 1: return *reinterpret_cast<const std::int8_t *>(p);
+  case 2: return *reinterpret_cast<const std::int16_t *>(p);
+  case 4: return *reinterpret_cast<const std::int32_t *>(p);
+  case 8: return *reinterpret_cast<const std::int64_t *>(p);
   default: CRASH_NO_CASE;
   }
 }

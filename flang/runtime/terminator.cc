@@ -35,6 +35,12 @@ namespace Fortran::runtime {
   std::abort();
 }
 
+[[noreturn]] void Terminator::CheckFailed(
+    const char *predicate, const char *file, int line) {
+  Crash("Internal error: RUNTIME_CHECK(%s) failed at %s(%d)", predicate, file,
+      line);
+}
+
 void NotifyOtherImagesOfNormalEnd() {
   // TODO
 }

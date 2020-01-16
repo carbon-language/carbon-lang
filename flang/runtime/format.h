@@ -16,7 +16,7 @@
 #include <cinttypes>
 #include <optional>
 
-namespace Fortran::runtime {
+namespace Fortran::runtime::io {
 
 enum EditingFlags {
   blankZero = 1,  // BLANK=ZERO or BZ edit
@@ -27,6 +27,8 @@ enum EditingFlags {
 struct MutableModes {
   std::uint8_t editingFlags{0};  // BN, DP, SS
   common::RoundingMode roundingMode{common::RoundingMode::TiesToEven};  // RN
+  bool pad{false};  // PAD= mode on READ
+  char delim{'\0'};  // DELIM=
 };
 
 // A single edit descriptor extracted from a FORMAT
@@ -40,14 +42,20 @@ struct DataEdit {
   int repeat{1};
 };
 
-struct FormatContext {
-  Terminator &terminator;
-  void (*handleCharacterLiteral1)(const char *, std::size_t){nullptr};
-  void (*handleCharacterLiteral2)(const char16_t *, std::size_t){nullptr};
-  void (*handleCharacterLiteral4)(const char32_t *, std::size_t){nullptr};
-  void (*handleSlash)(){nullptr};
-  void (*handleAbsolutePosition)(int){nullptr};  // Tn
-  void (*handleRelativePosition)(int){nullptr};  // nX, TRn, TLn (negated)
+class FormatContext : virtual public Terminator {
+public:
+  FormatContext() {}
+  explicit FormatContext(const MutableModes &modes) : mutableModes_{modes} {}
+  virtual void Emit(const char *, std::size_t);
+  virtual void Emit(const char16_t *, std::size_t);
+  virtual void Emit(const char32_t *, std::size_t);
+  virtual void HandleSlash(int = 1);
+  virtual void HandleRelativePosition(int);
+  virtual void HandleAbsolutePosition(int);
+  MutableModes &mutableModes() { return mutableModes_; }
+
+private:
+  MutableModes mutableModes_;
 };
 
 // Generates a sequence of DataEdits from a FORMAT statement or
@@ -55,8 +63,8 @@ struct FormatContext {
 // Errors are fatal.  See clause 13.4 in Fortran 2018 for background.
 template<typename CHAR = char> class FormatControl {
 public:
-  FormatControl(FormatContext &, const CHAR *format, std::size_t formatLength,
-      const MutableModes &initialModes, int maxHeight = maxMaxHeight);
+  FormatControl(Terminator &, const CHAR *format, std::size_t formatLength,
+      int maxHeight = maxMaxHeight);
 
   // Determines the max parenthesis nesting level by scanning and validating
   // the FORMAT string.
@@ -71,10 +79,10 @@ public:
 
   // Extracts the next data edit descriptor, handling control edit descriptors
   // along the way.
-  void GetNext(DataEdit &, int maxRepeat = 1);
+  void GetNext(FormatContext &, DataEdit &, int maxRepeat = 1);
 
   // Emit any remaining character literals after the last data item.
-  void FinishOutput();
+  void FinishOutput(FormatContext &);
 
 private:
   static constexpr std::uint8_t maxMaxHeight{100};
@@ -94,21 +102,21 @@ private:
     SkipBlanks();
     return offset_ < formatLength_ ? format_[offset_] : '\0';
   }
-  CHAR GetNextChar() {
+  CHAR GetNextChar(Terminator &terminator) {
     SkipBlanks();
     if (offset_ >= formatLength_) {
-      context_.terminator.Crash("FORMAT missing at least one ')'");
+      terminator.Crash("FORMAT missing at least one ')'");
     }
     return format_[offset_++];
   }
-  int GetIntField(CHAR firstCh = '\0');
+  int GetIntField(Terminator &, CHAR firstCh = '\0');
 
   // Advances through the FORMAT until the next data edit
   // descriptor has been found; handles control edit descriptors
   // along the way.  Returns the repeat count that appeared
   // before the descriptor (defaulting to 1) and leaves offset_
   // pointing to the data edit.
-  int CueUpNextDataEdit(bool stop = false);
+  int CueUpNextDataEdit(FormatContext &, bool stop = false);
 
   static constexpr CHAR Capitalize(CHAR ch) {
     return ch >= 'a' && ch <= 'z' ? ch + 'A' - 'a' : ch;
@@ -117,8 +125,6 @@ private:
   // Data members are arranged and typed so as to reduce size.
   // This structure may be allocated in stack space loaned by the
   // user program for internal I/O.
-  FormatContext &context_;
-  MutableModes modes_;
   std::uint16_t scale_{0};  // kP
   const std::uint8_t maxHeight_{maxMaxHeight};
   std::uint8_t height_{0};

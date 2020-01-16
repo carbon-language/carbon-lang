@@ -11,7 +11,11 @@ add_library(FortranRuntime
   derived-type.cc
   descriptor.cc
   format.cc
+  io-api.cc
+  io-error.cc
+  io-stmt.cc
   main.cc
+  memory.cc
   stop.cc
   terminator.cc
   transformational.cc
@@ -19,5 +23,6 @@ add_library(FortranRuntime
 )
 
 target_link_libraries(FortranRuntime
-  FortranEvaluate
+  FortranCommon
+  FortranDecimal
 )

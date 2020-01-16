@@ -7,24 +7,37 @@
 //===----------------------------------------------------------------------===//
 
 #include "main.h"
+#include "io-stmt.h"
 #include "terminator.h"
 #include <cfenv>
+#include <cstdio>
 #include <cstdlib>
+#include <limits>
 
 namespace Fortran::runtime {
-int argc;
-const char **argv;
-const char **envp;
+ExecutionEnvironment executionEnvironment;
+
+void ExecutionEnvironment::Configure(
+    int ac, const char *av[], const char *env[]) {
+  argc = ac;
+  argv = av;
+  envp = env;
+  listDirectedOutputLineLengthLimit = 79;  // PGI default
+
+  if (auto *x{std::getenv("FORT_FMT_RECL")}) {
+    char *end;
+    auto n{std::strtol(x, &end, 10)};
+    if (n > 0 && n < std::numeric_limits<int>::max() && *end == '\0') {
+      listDirectedOutputLineLengthLimit = n;
+    } else {
+      std::fprintf(
+          stderr, "Fortran runtime: FORT_FMT_RECL=%s is invalid; ignored\n", x);
+    }
+  }
+}
 }
 
-extern "C" {
-
-void RTNAME(ProgramStart)(int argc, const char *argv[], const char *envp[]) {
-
-  Fortran::runtime::argc = argc;
-  Fortran::runtime::argv = argv;
-  Fortran::runtime::envp = envp;
-
+static void ConfigureFloatingPoint() {
 #ifdef feclearexcept  // a macro in some environments; omit std::
   feclearexcept(FE_ALL_EXCEPT);
 #else
@@ -35,8 +48,13 @@ void RTNAME(ProgramStart)(int argc, const char *argv[], const char *envp[]) {
 #else
   std::fesetround(FE_TONEAREST);
 #endif
+}
 
+extern "C" {
+
+void RTNAME(ProgramStart)(int argc, const char *argv[], const char *envp[]) {
   std::atexit(Fortran::runtime::NotifyOtherImagesOfNormalEnd);
-  // TODO: Runtime configuration settings from environment
+  Fortran::runtime::executionEnvironment.Configure(argc, argv, envp);
+  ConfigureFloatingPoint();
 }
 }
