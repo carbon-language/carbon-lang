@@ -108,4 +108,30 @@ contains
     p_f => s_external
   end
 
+  ! C1017: bounds-spec
+  subroutine s8
+    real, target :: x(10, 10)
+    real, pointer :: p(:, :)
+    p(2:,3:) => x
+    !ERROR: Pointer 'p' has rank 2 but the number of bounds specified is 1
+    p(2:) => x
+  end
+
+  ! bounds-remapping
+  subroutine s9
+    real, target :: x(10, 10), y(100)
+    real, pointer :: p(:, :)
+    ! C1018
+    !ERROR: Pointer 'p' has rank 2 but the number of bounds specified is 1
+    p(1:100) => x
+    ! 10.2.2.3(9)
+    !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
+    p(1:5,1:5) => x(1:10,::2)
+    ! 10.2.2.3(9)
+    !ERROR: Pointer bounds require 25 elements but target has only 20
+    p(1:5,1:5) => x(:,1:2)
+    !OK - rhs has rank 1 and enough elements
+    p(1:5,1:5) => y(1:100:2)
+  end
+
 end

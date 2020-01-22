@@ -30,18 +30,18 @@ contains
     logical, target :: l
     real, pointer :: p
     p => r
-    !ERROR: TARGET type 'REAL(8)' is not compatible with POINTER type 'REAL(4)'
+    !ERROR: Target type REAL(8) is not compatible with pointer type REAL(4)
     p => r8
-    !ERROR: TARGET type 'LOGICAL(4)' is not compatible with POINTER type 'REAL(4)'
+    !ERROR: Target type LOGICAL(4) is not compatible with pointer type REAL(4)
     p => l
   end
 
-  ! C1015
+  ! C1019
   subroutine s2
     real, target :: r1(4), r2(4,4)
     real, pointer :: p(:)
     p => r1
-    !ERROR: Rank of POINTER is 1, but TARGET has rank 2
+    !ERROR: Pointer has rank 1 but target has rank 2
     p => r2
   end
 
@@ -51,7 +51,7 @@ contains
     type(t(2)), target :: x2
     type(t(1)), pointer :: p
     p => x1
-    !ERROR: TARGET type 't(k=2_4)' is not compatible with POINTER type 't(k=1_4)'
+    !ERROR: Target type t(k=2_4) is not compatible with pointer type t(k=1_4)
     p => x2
   end
 

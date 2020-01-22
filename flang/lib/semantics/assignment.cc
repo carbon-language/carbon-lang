@@ -167,52 +167,32 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
   const auto &ptrAssign{std::get<PointerAssignment>(assign->u)};
   const SomeExpr &lhs{ptrAssign.lhs};
   const SomeExpr &rhs{ptrAssign.rhs};
-  std::size_t numBounds{std::visit(
+  CheckForImpureCall(lhs);
+  CheckForImpureCall(rhs);
+  std::visit(
       common::visitors{
           [&](const PointerAssignment::BoundsSpec &bounds) {
             for (const auto &bound : bounds) {
               CheckForImpureCall(SomeExpr{bound});
             }
-            return bounds.size();
           },
           [&](const PointerAssignment::BoundsRemapping &bounds) {
             for (const auto &bound : bounds) {
               CheckForImpureCall(SomeExpr{bound.first});
               CheckForImpureCall(SomeExpr{bound.second});
             }
-            return bounds.size();
           },
       },
-      ptrAssign.bounds)};
-  const Symbol *pointer{GetLastSymbol(lhs)};
-  if (!pointer) {
-    return;  // error was reported
-  }
-  auto &foldingContext{context_.foldingContext()};
-  auto restorer{
-      foldingContext.messages().SetLocation(context_.location().value())};
-  if (!IsPointer(*pointer)) {
-    evaluate::SayWithDeclaration(foldingContext.messages(), *pointer,
-        "'%s' is not a pointer"_err_en_US, pointer->name());
-    return;
-  }
-  CheckForImpureCall(lhs);
-  CheckForImpureCall(rhs);
+      ptrAssign.bounds);
   if (forall_) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
   CheckForPureContext(lhs, rhs, std::get<parser::Expr>(stmt.t).source,
       true /* isPointerAssignment */);
-  if (pointer->has<ProcEntityDetails>() && evaluate::ExtractCoarrayRef(lhs)) {
-    context_.Say(  // C1027
-        "Procedure pointer may not be a coindexed object"_err_en_US);
-  }
-  if (numBounds > 0) {
-    // TODO cases with bounds-spec and bounds-remapping
-  } else {
-    CheckPointerAssignment(foldingContext, *pointer, rhs);
-  }
+  auto restorer{context_.foldingContext().messages().SetLocation(
+      context_.location().value())};
+  CheckPointerAssignment(context_.foldingContext(), ptrAssign);
 }
 
 void AssignmentContext::Analyze(const parser::WhereStmt &stmt) {
