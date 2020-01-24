@@ -127,6 +127,7 @@ AsynchronousId IONAME(BeginAsynchronousOutput)(ExternalUnit, std::int64_t REC,
 AsynchronousId IONAME(BeginAsynchronousInput)(ExternalUnit, std::int64_t REC,
     char *, std::size_t, const char *sourceFile = nullptr, int sourceLine = 0);
 Cookie IONAME(BeginWait)(ExternalUnit, AsynchronousId);
+Cookie IONAME(BeginWaitAll)(ExternalUnit);
 
 // Other I/O statements
 Cookie IONAME(BeginClose)(

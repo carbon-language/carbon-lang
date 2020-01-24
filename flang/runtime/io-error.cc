@@ -17,16 +17,18 @@ namespace Fortran::runtime::io {
 void IoErrorHandler::Begin(const char *sourceFileName, int sourceLine) {
   flags_ = 0;
   ioStat_ = 0;
-  hitEnd_ = false;
-  hitEor_ = false;
   SetLocation(sourceFileName, sourceLine);
 }
 
 void IoErrorHandler::SignalError(int iostatOrErrno) {
-  if (iostatOrErrno != 0) {
+  if (iostatOrErrno == FORTRAN_RUNTIME_IOSTAT_END) {
+    SignalEnd();
+  } else if (iostatOrErrno == FORTRAN_RUNTIME_IOSTAT_EOR) {
+    SignalEor();
+  } else if (iostatOrErrno != 0) {
     if (flags_ & hasIoStat) {
-      if (!ioStat_) {
-        ioStat_ = iostatOrErrno;
+      if (ioStat_ <= 0) {
+        ioStat_ = iostatOrErrno;  // priority over END=/EOR=
       }
     } else if (iostatOrErrno == FORTRAN_RUNTIME_IOSTAT_INQUIRE_INTERNAL_UNIT) {
       Crash("INQUIRE on internal unit");
@@ -36,9 +38,13 @@ void IoErrorHandler::SignalError(int iostatOrErrno) {
   }
 }
 
+void IoErrorHandler::SignalErrno() { SignalError(errno); }
+
 void IoErrorHandler::SignalEnd() {
   if (flags_ & hasEnd) {
-    hitEnd_ = true;
+    if (!ioStat_ || ioStat_ < FORTRAN_RUNTIME_IOSTAT_END) {
+      ioStat_ = FORTRAN_RUNTIME_IOSTAT_END;
+    }
   } else {
     Crash("End of file");
   }
@@ -46,22 +52,11 @@ void IoErrorHandler::SignalEnd() {
 
 void IoErrorHandler::SignalEor() {
   if (flags_ & hasEor) {
-    hitEor_ = true;
+    if (!ioStat_ || ioStat_ < FORTRAN_RUNTIME_IOSTAT_EOR) {
+      ioStat_ = FORTRAN_RUNTIME_IOSTAT_EOR;  // least priority
+    }
   } else {
     Crash("End of record");
   }
 }
-
-int IoErrorHandler::GetIoStat() const {
-  if (ioStat_) {
-    return ioStat_;
-  } else if (hitEnd_) {
-    return FORTRAN_RUNTIME_IOSTAT_END;
-  } else if (hitEor_) {
-    return FORTRAN_RUNTIME_IOSTAT_EOR;
-  } else {
-    return 0;
-  }
-}
-
 }

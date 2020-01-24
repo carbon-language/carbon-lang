@@ -26,16 +26,15 @@ void FreeMemory(void *);
 void FreeMemoryAndNullify(void *&);
 
 template<typename A> struct New {
-  template<typename... X> A &operator()(Terminator &terminator, X&&... x) {
-    return *new (AllocateMemoryOrCrash(terminator, sizeof(A))) A{std::forward<X>(x)...};
+  template<typename... X> A &operator()(Terminator &terminator, X &&... x) {
+    return *new (AllocateMemoryOrCrash(terminator, sizeof(A)))
+        A{std::forward<X>(x)...};
   }
 };
 
-namespace {
-template<typename A> class OwningPtrDeleter {
+template<typename A> struct OwningPtrDeleter {
   void operator()(A *p) { FreeMemory(p); }
 };
-}
 
 template<typename A> using OwningPtr = std::unique_ptr<A, OwningPtrDeleter<A>>;
 }

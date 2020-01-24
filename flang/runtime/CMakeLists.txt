@@ -10,6 +10,7 @@ add_library(FortranRuntime
   ISO_Fortran_binding.cc
   derived-type.cc
   descriptor.cc
+  file.cc
   format.cc
   io-api.cc
   io-error.cc
@@ -18,6 +19,7 @@ add_library(FortranRuntime
   memory.cc
   stop.cc
   terminator.cc
+  tools.cc
   transformational.cc
   type-code.cc
 )
