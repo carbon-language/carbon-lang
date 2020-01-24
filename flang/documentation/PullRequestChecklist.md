@@ -16,7 +16,9 @@ can also be used when reviewing pull requests.
    sure that you also added a test that causes that error message to appear
    and verifies its correctness.
 *  Annotate the code and tests with appropriate references to constraint and
-   requirement numbers from the Fortran standard.
+   requirement numbers from the Fortran standard.  Do not include the text of
+   the constraint or requirement, just its number.
+*  Alphabetize arbitrary lists of names.
 *  Check dereferences of pointers and optionals where necessary.
 *  Ensure that the scopes of all functions and variables are as local as
    possible.
@@ -34,8 +36,9 @@ even though I've read the style guide, they regularly trip me up.
    clang-format will do this for most code.  But you may need to break up long
    strings.
 *  Review declarations for proper use of `constexpr` and `const`.
-*  Follow the C++ naming guidelines.  Ensure that the names evoke their
-   purpose and are consistent with existing code.
+*  Follow the C++ [naming guidelines](C++style.md#naming).
+*  Ensure that the names evoke their purpose and are consistent with existing code.
+*  Used braced initializers.
 *  Review pointer and reference types to make sure that you're using them
    appropriately.  Note that the [C++ style guide](C++style.md) contains a
    section that describes all of the pointer types along with their
