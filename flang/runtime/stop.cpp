@@ -7,7 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "stop.h"
+#include "io-error.h"
 #include "terminator.h"
+#include "unit.h"
 #include <cfenv>
 #include <cstdio>
 #include <cstdlib>
@@ -65,5 +67,11 @@ static void DescribeIEEESignaledExceptions() {
 [[noreturn]] void RTNAME(FailImageStatement)() {
   Fortran::runtime::NotifyOtherImagesOfFailImageStatement();
   std::exit(EXIT_FAILURE);
+}
+
+[[noreturn]] void RTNAME(ProgramEndStatement)() {
+  Fortran::runtime::io::IoErrorHandler handler{"END statement"};
+  Fortran::runtime::io::ExternalFile::CloseAll(handler);
+  std::exit(EXIT_SUCCESS);
 }
 }

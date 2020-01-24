@@ -21,6 +21,7 @@ NORETURN void RTNAME(StopStatement)(int code DEFAULT_VALUE(EXIT_SUCCESS),
 NORETURN void RTNAME(StopStatementText)(const char *,
     bool isErrorStop DEFAULT_VALUE(false), bool quiet DEFAULT_VALUE(false));
 NORETURN void RTNAME(FailImageStatement)(NO_ARGUMENTS);
+NORETURN void RTNAME(ProgramEndStatement)(NO_ARGUMENTS);
 
 EXTERN_C_END
 

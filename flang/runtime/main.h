@@ -9,22 +9,11 @@
 #ifndef FORTRAN_RUNTIME_MAIN_H_
 #define FORTRAN_RUNTIME_MAIN_H_
 
+#include "c-or-cpp.h"
 #include "entry-names.h"
 
-namespace Fortran::runtime {
-struct ExecutionEnvironment {
-  void Configure(int argc, const char *argv[], const char *envp[]);
-
-  int argc;
-  const char **argv;
-  const char **envp;
-  int listDirectedOutputLineLengthLimit;
-};
-extern ExecutionEnvironment executionEnvironment;
-}
-
-extern "C" {
+EXTERN_C_BEGIN
 void RTNAME(ProgramStart)(int, const char *[], const char *[]);
-}
+EXTERN_C_END
 
 #endif  // FORTRAN_RUNTIME_MAIN_H_

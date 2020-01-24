@@ -11,6 +11,7 @@
 #ifndef FORTRAN_RUNTIME_FORMAT_H_
 #define FORTRAN_RUNTIME_FORMAT_H_
 
+#include "environment.h"
 #include "terminator.h"
 #include "flang/common/Fortran.h"
 #include <cinttypes>
@@ -26,16 +27,19 @@ enum EditingFlags {
 
 struct MutableModes {
   std::uint8_t editingFlags{0};  // BN, DP, SS
-  common::RoundingMode roundingMode{common::RoundingMode::TiesToEven};  // RN
+  common::RoundingMode roundingMode{
+      executionEnvironment
+          .defaultOutputRoundingMode};  // RP/ROUND='PROCESSOR_DEFAULT'
   bool pad{false};  // PAD= mode on READ
   char delim{'\0'};  // DELIM=
+  short scale{0};  // kP
 };
 
 // A single edit descriptor extracted from a FORMAT
 struct DataEdit {
   char descriptor;  // capitalized: one of A, I, B, O, Z, F, E(N/S/X), D, G
   char variation{'\0'};  // N, S, or X for EN, ES, EX
-  int width;  // the 'w' field
+  std::optional<int> width;  // the 'w' field; optional for A
   std::optional<int> digits;  // the 'm' or 'd' field
   std::optional<int> expoDigits;  // 'Ee' field
   MutableModes modes;
@@ -45,13 +49,14 @@ struct DataEdit {
 class FormatContext : virtual public Terminator {
 public:
   FormatContext() {}
+  virtual ~FormatContext() {}
   explicit FormatContext(const MutableModes &modes) : mutableModes_{modes} {}
-  virtual void Emit(const char *, std::size_t);
-  virtual void Emit(const char16_t *, std::size_t);
-  virtual void Emit(const char32_t *, std::size_t);
-  virtual void HandleSlash(int = 1);
-  virtual void HandleRelativePosition(int);
-  virtual void HandleAbsolutePosition(int);
+  virtual bool Emit(const char *, std::size_t) = 0;
+  virtual bool Emit(const char16_t *, std::size_t) = 0;
+  virtual bool Emit(const char32_t *, std::size_t) = 0;
+  virtual bool HandleSlash(int = 1) = 0;
+  virtual bool HandleRelativePosition(std::int64_t) = 0;
+  virtual bool HandleAbsolutePosition(std::int64_t) = 0;
   MutableModes &mutableModes() { return mutableModes_; }
 
 private:
@@ -63,6 +68,8 @@ private:
 // Errors are fatal.  See clause 13.4 in Fortran 2018 for background.
 template<typename CHAR = char> class FormatControl {
 public:
+  FormatControl() {}
+  // TODO: make 'format' a reference here and below
   FormatControl(Terminator &, const CHAR *format, std::size_t formatLength,
       int maxHeight = maxMaxHeight);
 
@@ -125,11 +132,10 @@ private:
   // Data members are arranged and typed so as to reduce size.
   // This structure may be allocated in stack space loaned by the
   // user program for internal I/O.
-  std::uint16_t scale_{0};  // kP
   const std::uint8_t maxHeight_{maxMaxHeight};
   std::uint8_t height_{0};
-  const CHAR *format_;
-  int formatLength_;
+  const CHAR *format_{nullptr};
+  int formatLength_{0};
   int offset_{0};  // next item is at format_[offset_]
 
   // must be last, may be incomplete

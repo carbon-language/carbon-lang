@@ -22,13 +22,25 @@ void OpenFile::Open(const char *path, std::size_t pathLength,
     const char *status, std::size_t statusLength, const char *action,
     std::size_t actionLength, IoErrorHandler &handler) {
   CriticalSection criticalSection{lock_};
-  RUNTIME_CHECK(handler, fd_ < 0);
+  RUNTIME_CHECK(handler, fd_ < 0);  // TODO handle re-openings
   int flags{0};
   static const char *actions[]{"READ", "WRITE", "READWRITE", nullptr};
   switch (IdentifyValue(action, actionLength, actions)) {
-  case 0: flags = O_RDONLY; break;
-  case 1: flags = O_WRONLY; break;
-  case 2: flags = O_RDWR; break;
+  case 0:
+    flags = O_RDONLY;
+    mayRead_ = true;
+    mayWrite_ = false;
+    break;
+  case 1:
+    flags = O_WRONLY;
+    mayRead_ = false;
+    mayWrite_ = true;
+    break;
+  case 2:
+    mayRead_ = true;
+    mayWrite_ = true;
+    flags = O_RDWR;
+    break;
   default:
     handler.Crash(
         "Invalid ACTION='%.*s'", action, static_cast<int>(actionLength));
@@ -82,6 +94,7 @@ void OpenFile::Open(const char *path, std::size_t pathLength,
     }
   }
   path_ = SaveDefaultCharacter(path, pathLength, handler);
+  pathLength_ = pathLength;
   if (!path_.get()) {
     handler.Crash(
         "FILE= is required unless STATUS='OLD' and unit is connected");
@@ -92,6 +105,17 @@ void OpenFile::Open(const char *path, std::size_t pathLength,
   }
   pending_.reset();
   knownSize_.reset();
+}
+
+void OpenFile::Predefine(int fd) {
+  CriticalSection criticalSection{lock_};
+  fd_ = fd;
+  path_.reset();
+  pathLength_ = 0;
+  position_ = 0;
+  knownSize_.reset();
+  nextId_ = 0;
+  pending_.reset();
 }
 
 void OpenFile::Close(
@@ -123,7 +147,7 @@ void OpenFile::Close(
   }
 }
 
-std::size_t OpenFile::Read(Offset at, char *buffer, std::size_t minBytes,
+std::size_t OpenFile::Read(FileOffset at, char *buffer, std::size_t minBytes,
     std::size_t maxBytes, IoErrorHandler &handler) {
   if (maxBytes == 0) {
     return 0;
@@ -157,8 +181,8 @@ std::size_t OpenFile::Read(Offset at, char *buffer, std::size_t minBytes,
   return got;
 }
 
-std::size_t OpenFile::Write(
-    Offset at, const char *buffer, std::size_t bytes, IoErrorHandler &handler) {
+std::size_t OpenFile::Write(FileOffset at, const char *buffer,
+    std::size_t bytes, IoErrorHandler &handler) {
   if (bytes == 0) {
     return 0;
   }
@@ -187,7 +211,7 @@ std::size_t OpenFile::Write(
   return put;
 }
 
-void OpenFile::Truncate(Offset at, IoErrorHandler &handler) {
+void OpenFile::Truncate(FileOffset at, IoErrorHandler &handler) {
   CriticalSection criticalSection{lock_};
   CheckOpen(handler);
   if (!knownSize_ || *knownSize_ != at) {
@@ -202,7 +226,7 @@ void OpenFile::Truncate(Offset at, IoErrorHandler &handler) {
 // to be claimed by a later WAIT statement.
 // TODO: True asynchronicity
 int OpenFile::ReadAsynchronously(
-    Offset at, char *buffer, std::size_t bytes, IoErrorHandler &handler) {
+    FileOffset at, char *buffer, std::size_t bytes, IoErrorHandler &handler) {
   CriticalSection criticalSection{lock_};
   CheckOpen(handler);
   int iostat{0};
@@ -210,7 +234,7 @@ int OpenFile::ReadAsynchronously(
 #if _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809L
     auto chunk{::pread(fd_, buffer + got, bytes - got, at)};
 #else
-    auto chunk{RawSeek(at) ? ::read(fd_, buffer + got, bytes - got) : -1};
+    auto chunk{Seek(at, handler) ? ::read(fd_, buffer + got, bytes - got) : -1};
 #endif
     if (chunk == 0) {
       iostat = FORTRAN_RUNTIME_IOSTAT_END;
@@ -231,8 +255,8 @@ int OpenFile::ReadAsynchronously(
 }
 
 // TODO: True asynchronicity
-int OpenFile::WriteAsynchronously(
-    Offset at, const char *buffer, std::size_t bytes, IoErrorHandler &handler) {
+int OpenFile::WriteAsynchronously(FileOffset at, const char *buffer,
+    std::size_t bytes, IoErrorHandler &handler) {
   CriticalSection criticalSection{lock_};
   CheckOpen(handler);
   int iostat{0};
@@ -240,7 +264,8 @@ int OpenFile::WriteAsynchronously(
 #if _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809L
     auto chunk{::pwrite(fd_, buffer + put, bytes - put, at)};
 #else
-    auto chunk{RawSeek(at) ? ::write(fd_, buffer + put, bytes - put) : -1};
+    auto chunk{
+        Seek(at, handler) ? ::write(fd_, buffer + put, bytes - put) : -1};
 #endif
     if (chunk >= 0) {
       at += chunk;
@@ -298,7 +323,7 @@ void OpenFile::CheckOpen(Terminator &terminator) {
   RUNTIME_CHECK(terminator, fd_ >= 0);
 }
 
-bool OpenFile::Seek(Offset at, IoErrorHandler &handler) {
+bool OpenFile::Seek(FileOffset at, IoErrorHandler &handler) {
   if (at == position_) {
     return true;
   } else if (RawSeek(at)) {
@@ -310,7 +335,7 @@ bool OpenFile::Seek(Offset at, IoErrorHandler &handler) {
   }
 }
 
-bool OpenFile::RawSeek(Offset at) {
+bool OpenFile::RawSeek(FileOffset at) {
 #ifdef _LARGEFILE64_SOURCE
   return ::lseek64(fd_, at, SEEK_SET) == 0;
 #else

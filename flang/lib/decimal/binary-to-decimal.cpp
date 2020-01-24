@@ -108,7 +108,7 @@ template<int PREC, int LOG10RADIX>
 ConversionToDecimalResult
 BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(char *buffer,
     std::size_t n, enum DecimalConversionFlags flags, int maxDigits) const {
-  if (n < static_cast<std::size_t>(3 + digits_ * LOG10RADIX) || maxDigits < 1) {
+  if (n < static_cast<std::size_t>(3 + digits_ * LOG10RADIX)) {
     return {nullptr, 0, 0, Overflow};
   }
   char *start{buffer};
@@ -160,18 +160,21 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(char *buffer,
   while (p[-1] == '0') {
     --p;
   }
-  if (p <= start + maxDigits) {
+  char *end{start + maxDigits};
+  if (maxDigits == 0) {
+    p = end;
+  }
+  if (p <= end) {
     *p = '\0';
     return {buffer, static_cast<std::size_t>(p - buffer), expo, Exact};
   } else {
     // Apply a digit limit, possibly with rounding.
-    char *end{start + maxDigits};
     bool incr{false};
     switch (rounding_) {
     case RoundNearest:
     case RoundDefault:
-      incr =
-          *end > '5' || (*end == '5' && (p > end || ((p[-1] - '0') & 1) != 0));
+      incr = *end > '5' ||
+          (*end == '5' && (p > end + 1 || ((end[-1] - '0') & 1) != 0));
       break;
     case RoundUp: incr = !isNegative_; break;
     case RoundDown: incr = isNegative_; break;
@@ -190,6 +193,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::ConvertToDecimal(char *buffer,
         ++p[-1];
       }
     }
+
     *p = '\0';
     return {buffer, static_cast<std::size_t>(p - buffer), expo, Inexact};
   }

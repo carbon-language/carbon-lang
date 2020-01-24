@@ -8,42 +8,24 @@
 
 #include "format.h"
 #include "io-stmt.h"
+#include "main.h"
 #include "flang/common/format.h"
 #include "flang/decimal/decimal.h"
 #include <limits>
 
 namespace Fortran::runtime::io {
 
-// Default FormatContext virtual member functions
-void FormatContext::Emit(const char *, std::size_t) {
-  Crash("Cannot emit data from this FORMAT string");
-}
-void FormatContext::Emit(const char16_t *, std::size_t) {
-  Crash("Cannot emit data from this FORMAT string");
-}
-void FormatContext::Emit(const char32_t *, std::size_t) {
-  Crash("Cannot emit data from this FORMAT string");
-}
-void FormatContext::HandleSlash(int) {
-  Crash("A / control edit descriptor may not appear in this FORMAT string");
-}
-void FormatContext::HandleAbsolutePosition(int) {
-  Crash("A Tn control edit descriptor may not appear in this FORMAT string");
-}
-void FormatContext::HandleRelativePosition(int) {
-  Crash("An nX, TLn, or TRn control edit descriptor may not appear in this "
-        "FORMAT string");
-}
-
 template<typename CHAR>
 FormatControl<CHAR>::FormatControl(Terminator &terminator, const CHAR *format,
     std::size_t formatLength, int maxHeight)
   : maxHeight_{static_cast<std::uint8_t>(maxHeight)}, format_{format},
     formatLength_{static_cast<int>(formatLength)} {
-  // The additional two items are for the whole string and a
-  // repeated non-parenthesized edit descriptor.
-  if (maxHeight > std::numeric_limits<std::int8_t>::max()) {
+  if (maxHeight != maxHeight_) {
     terminator.Crash("internal Fortran runtime error: maxHeight %d", maxHeight);
+  }
+  if (formatLength != static_cast<std::size_t>(formatLength_)) {
+    terminator.Crash(
+        "internal Fortran runtime error: formatLength %zd", formatLength);
   }
   stack_[0].start = offset_;
   stack_[0].remaining = Iteration::unlimited;  // 13.4(8)
@@ -95,8 +77,7 @@ int FormatControl<CHAR>::GetIntField(Terminator &terminator, CHAR firstCh) {
   return result;
 }
 
-static void HandleControl(
-    FormatContext &context, std::uint16_t &scale, char ch, char next, int n) {
+static void HandleControl(FormatContext &context, char ch, char next, int n) {
   MutableModes &modes{context.mutableModes()};
   switch (ch) {
   case 'B':
@@ -121,7 +102,7 @@ static void HandleControl(
     break;
   case 'P':
     if (!next) {
-      scale = n;  // kP - decimal scaling by 10**k (TODO)
+      modes.scale = n;  // kP - decimal scaling by 10**k
       return;
     }
     break;
@@ -133,6 +114,9 @@ static void HandleControl(
     case 'D': modes.roundingMode = common::RoundingMode::Down; return;
     case 'C':
       modes.roundingMode = common::RoundingMode::TiesAwayFromZero;
+      return;
+    case 'P':
+      modes.roundingMode = executionEnvironment.defaultOutputRoundingMode;
       return;
     default: break;
     }
@@ -269,13 +253,15 @@ int FormatControl<CHAR>::CueUpNextDataEdit(FormatContext &context, bool stop) {
     } else if (ch >= 'A' && ch <= 'Z') {
       int start{offset_ - 1};
       CHAR next{Capitalize(PeekNext())};
-      if (next < 'A' || next > 'Z') {
+      if (next >= 'A' && next <= 'Z') {
+        ++offset_;
+      } else {
         next = '\0';
       }
       if (ch == 'E' ||
           (!next &&
               (ch == 'A' || ch == 'I' || ch == 'B' || ch == 'O' || ch == 'Z' ||
-                  ch == 'F' || ch == 'D' || ch == 'G'))) {
+                  ch == 'F' || ch == 'D' || ch == 'G' || ch == 'L'))) {
         // Data edit descriptor found
         offset_ = start;
         return repeat && *repeat > 0 ? *repeat : 1;
@@ -284,8 +270,8 @@ int FormatControl<CHAR>::CueUpNextDataEdit(FormatContext &context, bool stop) {
         if (ch == 'T') {  // Tn, TLn, TRn
           repeat = GetIntField(context);
         }
-        HandleControl(context, scale_, static_cast<char>(ch),
-            static_cast<char>(next), repeat && *repeat > 0 ? *repeat : 1);
+        HandleControl(context, static_cast<char>(ch), static_cast<char>(next),
+            repeat ? *repeat : 1);
       }
     } else if (ch == '/') {
       context.HandleSlash(repeat && *repeat > 0 ? *repeat : 1);
@@ -316,7 +302,16 @@ void FormatControl<CHAR>::GetNext(
     edit.variation = '\0';
   }
 
-  edit.width = GetIntField(context);
+  if (edit.descriptor == 'A') {  // width is optional for A[w]
+    auto ch{PeekNext()};
+    if (ch >= '0' && ch <= '9') {
+      edit.width = GetIntField(context);
+    } else {
+      edit.width.reset();
+    }
+  } else {
+    edit.width = GetIntField(context);
+  }
   edit.modes = context.mutableModes();
   if (PeekNext() == '.') {
     ++offset_;
