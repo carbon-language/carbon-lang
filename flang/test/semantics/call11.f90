@@ -32,12 +32,17 @@ module m
       !ERROR: Impure procedure 'impure' may not be referenced in a FORALL
       a(j) = impure(j) ! C1037
     end forall
+    forall (j=1:1)
+      !ERROR: Impure procedure 'impure' may not be referenced in a FORALL
+      a(j) = pure(impure(j)) ! C1037
+    end forall
     !ERROR: Concurrent-header mask expression cannot reference an impure procedure
     do concurrent (j=1:1, impure(j) /= 0) ! C1121
       !ERROR: Call to an impure procedure is not allowed in DO CONCURRENT
       a(j) = impure(j) ! C1139
     end do
   end subroutine
+
   subroutine test2
     type(t) :: x
     real :: a(x%tbp_pure(1)) ! ok
@@ -59,4 +64,19 @@ module m
       a(j) = x%tbp_impure(j) ! C1139
     end do
   end subroutine
+
+  subroutine test3
+    type :: t
+      integer :: i
+    end type
+    type(t) :: a(10), b
+    forall (i=1:10)
+      a(i) = t(pure(i))  ! OK
+    end forall
+    forall (i=1:10)
+      !ERROR: Impure procedure 'impure' may not be referenced in a FORALL
+      a(i) = t(impure(i))  ! C1037
+    end forall
+  end subroutine
+
 end module

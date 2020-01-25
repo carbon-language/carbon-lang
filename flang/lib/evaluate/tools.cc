@@ -828,7 +828,7 @@ public:
     if (auto chars{characteristics::Procedure::Characterize(
             call.proc(), intrinsics_)}) {
       if (chars->attrs.test(characteristics::Procedure::Attr::Pure)) {
-        return std::nullopt;
+        return (*this)(call.arguments());
       }
     }
     return call.proc().GetName();

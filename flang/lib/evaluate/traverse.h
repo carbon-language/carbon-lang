@@ -85,8 +85,21 @@ public:
     return visitor_.Default();
   }
   Result operator()(const NullPointer &) const { return visitor_.Default(); }
-  template<typename T> Result operator()(const Constant<T> &) const {
-    return visitor_.Default();
+  template<typename T> Result operator()(const Constant<T> &x) const {
+    if constexpr (T::category == TypeCategory::Derived) {
+      std::optional<Result> result;
+      for (const StructureConstructorValues &map : x.values()) {
+        for (const auto &pair : map) {
+          auto value{visitor_(pair.second.value())};
+          result = result
+              ? visitor_.Combine(std::move(*result), std::move(value))
+              : std::move(value);
+        }
+      }
+      return result ? *result : visitor_.Default();
+    } else {
+      return visitor_.Default();
+    }
   }
   Result operator()(const Symbol &) const { return visitor_.Default(); }
   Result operator()(const StaticDataObject &) const {
