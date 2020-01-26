@@ -134,4 +134,29 @@ contains
     p(1:5,1:5) => y(1:100:2)
   end
 
+  subroutine s10
+    integer, pointer :: p(:)
+    type :: t
+      integer :: a(4, 4)
+      integer :: b
+    end type
+    type(t), target :: x
+    type(t), target :: y(10,10)
+    p(1:16) => x%a
+    p(1:1) => x%b  ! We treat scalars as simply contiguous
+    !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
+    p(1:4) => x%a(::2,::2)
+    !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
+    p(1:100) => y(:,:)%b
+  end
+
+  subroutine s11
+    complex, target :: x(10,10)
+    complex, pointer :: p(:)
+    real, pointer :: q(:)
+    p(1:100) => x(:,:)
+    !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
+    q(1:100) => x(:,:)%re
+  end
+
 end
