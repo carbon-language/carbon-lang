@@ -188,18 +188,88 @@ subroutine s3()
 
   do concurrent (i = 1:10)
     ! Bad because deallocation of a polymorphic entity
-!ERROR: Deallocation of a polymorphic entity not allowed in DO CONCURRENT
+!ERROR: Deallocation of a polymorphic entity caused by a DEALLOCATE statement not allowed in DO CONCURRENT
     deallocate(polyVar)
 
     ! Bad, deallocation of an entity with a polymorphic component
-!ERROR: Deallocation of a polymorphic entity not allowed in DO CONCURRENT
+!ERROR: Deallocation of a polymorphic entity caused by a DEALLOCATE statement not allowed in DO CONCURRENT
     deallocate(polyComponentVar)
 
     ! Bad, deallocation of a pointer to an entity with a polymorphic component
-!ERROR: Deallocation of a polymorphic entity not allowed in DO CONCURRENT
+!ERROR: Deallocation of a polymorphic entity caused by a DEALLOCATE statement not allowed in DO CONCURRENT
     deallocate(pointerPolyComponentVar)
 
     ! Deallocation of a nonpolymorphic entity
     deallocate(nonPolyVar)
   end do
 end subroutine s3
+
+module m2
+  type :: impureFinal
+   contains
+    final :: impureSub
+  end type
+
+  type :: pureFinal
+   contains
+    final :: pureSub
+  end type
+
+ contains
+
+  impure subroutine impureSub(x)
+    type(impureFinal), intent(in) :: x
+  end subroutine
+
+  pure subroutine pureSub(x)
+    type(pureFinal), intent(in) :: x
+  end subroutine
+
+  subroutine s4()
+    type(impureFinal), allocatable :: ifVar, ifvar1
+    type(pureFinal), allocatable :: pfVar
+    allocate(ifVar)
+    allocate(ifVar1)
+    allocate(pfVar)
+
+    ! OK for an ordinary DO loop
+    do i = 1,10
+      if (i .eq. 1) deallocate(ifVar)
+    end do
+
+    ! OK to invoke a PURE FINAL procedure in a DO CONCURRENT
+    ! This case does not work currently because the compiler's test for
+    ! HasImpureFinal() in .../lib/semantics/tools.cc doesn't work correctly
+!    do concurrent (i = 1:10)
+!      if (i .eq. 1) deallocate(pfVar)
+!    end do
+
+    ! Error to invoke an IMPURE FINAL procedure in a DO CONCURRENT
+    do concurrent (i = 1:10)
+          !ERROR: Deallocation of an entity with an IMPURE FINAL procedure caused by a DEALLOCATE statement not allowed in DO CONCURRENT
+      if (i .eq. 1) deallocate(ifVar)
+    end do
+
+    do concurrent (i = 1:10)
+      if (i .eq. 1) then
+        block
+          type(impureFinal), allocatable :: ifVar
+          allocate(ifVar)
+          ! Error here because exiting this scope causes the finalization of 
+          !ifvar which causes the invocation of an IMPURE FINAL procedure
+          !ERROR: Deallocation of an entity with an IMPURE FINAL procedure caused by block exit not allowed in DO CONCURRENT
+        end block
+      end if
+    end do
+
+    do concurrent (i = 1:10)
+      if (i .eq. 1) then
+        ! Error here because the assignment statement causes the finalization 
+        ! of ifvar which causes the invocation of an IMPURE FINAL procedure
+!ERROR: Deallocation of an entity with an IMPURE FINAL procedure caused by assignment not allowed in DO CONCURRENT
+        ifvar = ifvar1
+      end if
+    end do
+  end subroutine s4
+
+end module m2

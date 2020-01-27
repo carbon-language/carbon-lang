@@ -95,14 +95,32 @@ public:
     return true;
   }
 
+  template<typename T> bool Pre(const parser::UnlabeledStatement<T> &stmt) {
+    currentStatementSourcePosition_ = stmt.source;
+    return true;
+  }
+
   // C1140 -- Can't deallocate a polymorphic entity in a DO CONCURRENT.
   // Deallocation can be caused by exiting a block that declares an allocatable
   // entity, assignment to an allocatable variable, or an actual DEALLOCATE
   // statement
   //
   // Note also that the deallocation of a derived type entity might cause the
-  // invocation of an IMPURE final subroutine.
+  // invocation of an IMPURE final subroutine. (C1139)
   //
+
+  // Only to be called for symbols with ObjectEntityDetails
+  static bool HasImpureFinal(const Symbol &symbol) {
+    if (const Symbol * root{GetAssociationRoot(symbol)}) {
+      CHECK(root->has<ObjectEntityDetails>());
+      if (const DeclTypeSpec * symType{root->GetType()}) {
+        if (const DerivedTypeSpec * derived{symType->AsDerived()}) {
+          return semantics::HasImpureFinal(*derived);
+        }
+      }
+    }
+    return false;
+  }
 
   // Predicate for deallocations caused by block exit and direct deallocation
   static bool DeallocateAll(const Symbol &) { return true; }
@@ -143,6 +161,21 @@ public:
     return false;
   }
 
+  void SayDeallocateWithImpureFinal(const Symbol &entity, const char *reason) {
+    context_.SayWithDecl(entity, currentStatementSourcePosition_,
+        "Deallocation of an entity with an IMPURE FINAL procedure"
+        " caused by %s not allowed in DO CONCURRENT"_err_en_US,
+        reason);
+  }
+
+  void SayDeallocateOfPolymorph(
+      parser::CharBlock location, const Symbol &entity, const char *reason) {
+    context_.SayWithDecl(entity, location,
+        "Deallocation of a polymorphic entity caused by %s"
+        " not allowed in DO CONCURRENT"_err_en_US,
+        reason);
+  }
+
   // Deallocation caused by block exit
   // Allocatable entities and all of their allocatable subcomponents will be
   // deallocated.  This test is different from the other two because it does
@@ -154,16 +187,16 @@ public:
     const Scope &blockScope{context_.FindScope(endBlockStmt.source)};
     const Scope &doScope{context_.FindScope(doConcurrentSourcePosition_)};
     if (DoesScopeContain(&doScope, blockScope)) {
+      const char *reason{"block exit"};
       for (auto &pair : blockScope) {
-        Symbol &entity{*pair.second};
+        const Symbol &entity{*pair.second};
         if (IsAllocatable(entity) && !entity.attrs().test(Attr::SAVE) &&
             MightDeallocatePolymorphic(entity, DeallocateAll)) {
-          context_.SayWithDecl(entity, endBlockStmt.source,
-              "Deallocation of a polymorphic entity caused by block"
-              " exit not allowed in DO CONCURRENT"_err_en_US);
+          SayDeallocateOfPolymorph(endBlockStmt.source, entity, reason);
         }
-        // TODO: Check for deallocation of a variable with an IMPURE FINAL
-        // subroutine
+        if (HasImpureFinal(entity)) {
+          SayDeallocateWithImpureFinal(entity, reason);
+        }
       }
     }
   }
@@ -173,12 +206,12 @@ public:
   void Post(const parser::AssignmentStmt &stmt) {
     const auto &variable{std::get<parser::Variable>(stmt.t)};
     if (const Symbol * entity{GetLastName(variable).symbol}) {
+      const char *reason{"assignment"};
       if (MightDeallocatePolymorphic(*entity, DeallocateNonCoarray)) {
-        context_.SayWithDecl(*entity, variable.GetSource(),
-            "Deallocation of a polymorphic entity caused by "
-            "assignment not allowed in DO CONCURRENT"_err_en_US);
-        // TODO: Check for deallocation of a variable with an IMPURE FINAL
-        // subroutine
+        SayDeallocateOfPolymorph(variable.GetSource(), *entity, reason);
+      }
+      if (HasImpureFinal(*entity)) {
+        SayDeallocateWithImpureFinal(*entity, reason);
       }
     }
   }
@@ -191,17 +224,18 @@ public:
         std::get<std::list<parser::AllocateObject>>(stmt.t)};
     for (const auto &allocateObject : allocateObjectList) {
       const parser::Name &name{GetLastName(allocateObject)};
+      const char *reason{"a DEALLOCATE statement"};
       if (name.symbol) {
         const Symbol &entity{*name.symbol};
         const DeclTypeSpec *entityType{entity.GetType()};
         if ((entityType && entityType->IsPolymorphic()) ||  // POINTER case
             MightDeallocatePolymorphic(entity, DeallocateAll)) {
-          context_.SayWithDecl(entity, currentStatementSourcePosition_,
-              "Deallocation of a polymorphic entity not allowed in DO"
-              " CONCURRENT"_err_en_US);
+          SayDeallocateOfPolymorph(
+              currentStatementSourcePosition_, entity, reason);
         }
-        // TODO: Check for deallocation of a variable with an IMPURE FINAL
-        // subroutine
+        if (HasImpureFinal(entity)) {
+          SayDeallocateWithImpureFinal(entity, reason);
+        }
       }
     }
   }
