@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "scope.h"
-#include "symbol.h"
-#include "type.h"
-#include "../parser/characters.h"
+#include "flang/semantics/scope.h"
+#include "flang/parser/characters.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/type.h"
 #include <algorithm>
 #include <memory>
 #include <sstream>

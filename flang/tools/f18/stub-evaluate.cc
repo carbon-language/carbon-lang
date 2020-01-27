@@ -11,7 +11,7 @@
 // libraries, as here, we need to stub out the dependences on the external
 // destructors, which will never actually be called.
 
-#include "../../lib/common/indirection.h"
+#include "flang/common/indirection.h"
 
 namespace Fortran::evaluate {
 struct GenericExprWrapper {

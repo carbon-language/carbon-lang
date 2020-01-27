@@ -9,8 +9,8 @@
 #ifndef FORTRAN_RUNTIME_TYPE_CODE_H_
 #define FORTRAN_RUNTIME_TYPE_CODE_H_
 
-#include "../include/flang/ISO_Fortran_binding.h"
-#include "../lib/common/Fortran.h"
+#include "flang/ISO_Fortran_binding.h"
+#include "flang/common/Fortran.h"
 
 namespace Fortran::runtime {
 

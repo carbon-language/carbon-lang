@@ -6,17 +6,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tools.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
-#include "type.h"
-#include "../common/Fortran.h"
-#include "../common/indirection.h"
-#include "../parser/dump-parse-tree.h"
-#include "../parser/message.h"
-#include "../parser/parse-tree.h"
-#include "../parser/tools.h"
+#include "flang/parser/tools.h"
+#include "flang/common/Fortran.h"
+#include "flang/common/indirection.h"
+#include "flang/parser/dump-parse-tree.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
+#include "flang/semantics/type.h"
 #include <algorithm>
 #include <set>
 #include <sstream>
@@ -83,7 +83,8 @@ Tristate IsDefinedAssignment(
     const auto *lhsDerived{evaluate::GetDerivedTypeSpec(lhsType)};
     const auto *rhsDerived{evaluate::GetDerivedTypeSpec(rhsType)};
     if (lhsDerived && rhsDerived && *lhsDerived == *rhsDerived) {
-      return Tristate::Maybe;  // TYPE(t) = TYPE(t) can be defined or intrinsic
+      return Tristate::Maybe;  // TYPE(t) = TYPE(t) can be defined or
+                               // intrinsic
     } else {
       return Tristate::Yes;
     }
@@ -1275,5 +1276,4 @@ void LabelEnforce::SayWithConstruct(SemanticsContext &context,
   context.Say(stmtLocation, message)
       .Attach(constructLocation, GetEnclosingConstructMsg());
 }
-
 }

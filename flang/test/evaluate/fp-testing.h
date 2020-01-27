@@ -1,7 +1,7 @@
 #ifndef FORTRAN_TEST_EVALUATE_FP_TESTING_H_
 #define FORTRAN_TEST_EVALUATE_FP_TESTING_H_
 
-#include "../../lib/evaluate/common.h"
+#include "flang/evaluate/common.h"
 #include <fenv.h>
 
 using Fortran::common::RoundingMode;

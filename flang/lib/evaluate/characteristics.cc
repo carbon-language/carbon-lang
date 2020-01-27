@@ -6,16 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "characteristics.h"
-#include "check-expression.h"
-#include "fold.h"
-#include "intrinsics.h"
-#include "tools.h"
-#include "type.h"
-#include "../common/indirection.h"
-#include "../parser/message.h"
-#include "../semantics/scope.h"
-#include "../semantics/symbol.h"
+#include "flang/evaluate/characteristics.h"
+#include "flang/common/indirection.h"
+#include "flang/evaluate/check-expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/intrinsics.h"
+#include "flang/evaluate/tools.h"
+#include "flang/evaluate/type.h"
+#include "flang/parser/message.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/symbol.h"
 #include <initializer_list>
 #include <ostream>
 

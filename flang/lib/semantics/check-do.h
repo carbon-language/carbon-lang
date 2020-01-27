@@ -9,8 +9,8 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_DO_H_
 #define FORTRAN_SEMANTICS_CHECK_DO_H_
 
-#include "semantics.h"
-#include "../common/idioms.h"
+#include "flang/common/idioms.h"
+#include "flang/semantics/semantics.h"
 
 namespace Fortran::parser {
 struct AssignmentStmt;

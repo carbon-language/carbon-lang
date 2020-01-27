@@ -9,8 +9,8 @@
 #ifndef FORTRAN_SEMANTICS_PROGRAM_TREE_H_
 #define FORTRAN_SEMANTICS_PROGRAM_TREE_H_
 
-#include "symbol.h"
-#include "../parser/parse-tree.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/symbol.h"
 #include <variant>
 
 // A ProgramTree represents a tree of program units and their contained

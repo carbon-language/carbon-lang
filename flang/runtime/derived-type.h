@@ -10,7 +10,7 @@
 #define FORTRAN_RUNTIME_DERIVED_TYPE_H_
 
 #include "type-code.h"
-#include "../include/flang/ISO_Fortran_binding.h"
+#include "flang/ISO_Fortran_binding.h"
 #include <cinttypes>
 #include <cstddef>
 

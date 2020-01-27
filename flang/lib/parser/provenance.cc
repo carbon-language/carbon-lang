@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "provenance.h"
-#include "../common/idioms.h"
+#include "flang/parser/provenance.h"
+#include "flang/common/idioms.h"
 #include <algorithm>
 #include <utility>
 

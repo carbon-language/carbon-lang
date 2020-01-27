@@ -7,10 +7,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "resolve-labels.h"
-#include "semantics.h"
-#include "../common/enum-set.h"
-#include "../common/template.h"
-#include "../parser/parse-tree-visitor.h"
+#include "flang/common/enum-set.h"
+#include "flang/common/template.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/semantics/semantics.h"
 #include <cctype>
 #include <cstdarg>
 #include <type_traits>

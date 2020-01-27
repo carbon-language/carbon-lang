@@ -7,17 +7,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "resolve-names-utils.h"
-#include "expression.h"
-#include "semantics.h"
-#include "tools.h"
-#include "../common/Fortran-features.h"
-#include "../common/idioms.h"
-#include "../common/indirection.h"
-#include "../evaluate/fold.h"
-#include "../evaluate/tools.h"
-#include "../evaluate/type.h"
-#include "../parser/char-block.h"
-#include "../parser/parse-tree.h"
+#include "flang/common/Fortran-features.h"
+#include "flang/common/idioms.h"
+#include "flang/common/indirection.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/tools.h"
+#include "flang/evaluate/type.h"
+#include "flang/parser/char-block.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/tools.h"
 #include <initializer_list>
 #include <ostream>
 #include <variant>

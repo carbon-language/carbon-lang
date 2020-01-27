@@ -16,11 +16,11 @@
 // fixed form character literals on truncated card images, file
 // inclusion, and driving the Fortran source preprocessor.
 
-#include "characters.h"
-#include "message.h"
-#include "provenance.h"
 #include "token-sequence.h"
-#include "../common/Fortran-features.h"
+#include "flang/common/Fortran-features.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/message.h"
+#include "flang/parser/provenance.h"
 #include <bitset>
 #include <optional>
 #include <string>

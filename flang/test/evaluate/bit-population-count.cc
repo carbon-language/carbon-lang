@@ -1,4 +1,4 @@
-#include "../../lib/common/bit-population-count.h"
+#include "flang/common/bit-population-count.h"
 #include "testing.h"
 
 using Fortran::common::BitPopulationCount;

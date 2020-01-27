@@ -11,7 +11,7 @@
 
 // Computes an integer power of a real or complex value.
 
-#include "common.h"
+#include "flang/evaluate/common.h"
 
 namespace Fortran::evaluate {
 

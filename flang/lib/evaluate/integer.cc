@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "integer.h"
+#include "flang/evaluate/integer.h"
 
 namespace Fortran::evaluate::value {
 

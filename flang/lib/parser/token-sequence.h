@@ -13,8 +13,8 @@
 // and a partitioning thereof into preprocessing tokens, along with their
 // associated provenances.
 
-#include "char-block.h"
-#include "provenance.h"
+#include "flang/parser/char-block.h"
+#include "flang/parser/provenance.h"
 #include <cstddef>
 #include <cstring>
 #include <ostream>

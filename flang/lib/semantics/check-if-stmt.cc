@@ -7,9 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-if-stmt.h"
-#include "tools.h"
-#include "../parser/message.h"
-#include "../parser/parse-tree.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/tools.h"
 
 namespace Fortran::semantics {
 

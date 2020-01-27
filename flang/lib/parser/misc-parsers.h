@@ -13,10 +13,10 @@
 #define FORTRAN_PARSER_MISC_PARSERS_H_
 
 #include "basic-parsers.h"
-#include "message.h"
-#include "parse-tree.h"
 #include "token-parsers.h"
 #include "type-parsers.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree.h"
 
 namespace Fortran::parser {
 

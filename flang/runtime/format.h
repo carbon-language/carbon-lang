@@ -12,7 +12,7 @@
 #define FORTRAN_RUNTIME_FORMAT_H_
 
 #include "terminator.h"
-#include "../lib/common/Fortran.h"
+#include "flang/common/Fortran.h"
 #include <cinttypes>
 #include <optional>
 

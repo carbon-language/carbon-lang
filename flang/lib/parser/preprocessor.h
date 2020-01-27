@@ -15,9 +15,9 @@
 // performed, so that special compiler command options &/or source file name
 // extensions for preprocessing will not be necessary.
 
-#include "char-block.h"
-#include "provenance.h"
 #include "token-sequence.h"
+#include "flang/parser/char-block.h"
+#include "flang/parser/provenance.h"
 #include <cstddef>
 #include <list>
 #include <stack>

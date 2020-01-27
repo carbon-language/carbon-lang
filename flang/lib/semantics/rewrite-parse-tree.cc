@@ -7,14 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "rewrite-parse-tree.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
-#include "tools.h"
-#include "../common/indirection.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/parse-tree.h"
-#include "../parser/tools.h"
+#include "flang/common/indirection.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/parser/tools.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
 #include <list>
 
 namespace Fortran::semantics {

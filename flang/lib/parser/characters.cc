@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "characters.h"
-#include "../common/idioms.h"
+#include "flang/parser/characters.h"
+#include "flang/common/idioms.h"
 #include <algorithm>
 #include <cstddef>
 #include <optional>

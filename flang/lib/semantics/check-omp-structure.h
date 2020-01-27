@@ -14,9 +14,9 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_OMP_STRUCTURE_H_
 #define FORTRAN_SEMANTICS_CHECK_OMP_STRUCTURE_H_
 
-#include "semantics.h"
-#include "../common/enum-set.h"
-#include "../parser/parse-tree.h"
+#include "flang/common/enum-set.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/semantics.h"
 
 namespace Fortran::semantics {
 

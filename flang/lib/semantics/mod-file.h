@@ -9,7 +9,7 @@
 #ifndef FORTRAN_SEMANTICS_MOD_FILE_H_
 #define FORTRAN_SEMANTICS_MOD_FILE_H_
 
-#include "attr.h"
+#include "flang/semantics/attr.h"
 #include <sstream>
 #include <string>
 

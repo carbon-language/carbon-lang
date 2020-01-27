@@ -17,7 +17,7 @@
 // hardware type maps to Fortran intrinsic type T. Then HostType<T> can be used
 // to safely refer to this hardware type.
 
-#include "type.h"
+#include "flang/evaluate/type.h"
 #include <cfenv>
 #include <complex>
 #include <cstdint>

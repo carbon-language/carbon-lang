@@ -9,14 +9,14 @@
 // Static declaration checking
 
 #include "check-declarations.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
-#include "tools.h"
-#include "type.h"
-#include "../evaluate/check-expression.h"
-#include "../evaluate/fold.h"
-#include "../evaluate/tools.h"
+#include "flang/evaluate/check-expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/tools.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
+#include "flang/semantics/type.h"
 #include <algorithm>
 
 namespace Fortran::semantics {

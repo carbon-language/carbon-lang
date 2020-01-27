@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "parse-tree.h"
-#include "user-state.h"
-#include "../common/idioms.h"
-#include "../common/indirection.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/common/idioms.h"
+#include "flang/common/indirection.h"
+#include "flang/parser/user-state.h"
 #include <algorithm>
 
 // So "delete Expr;" calls an external destructor for its typedExpr.

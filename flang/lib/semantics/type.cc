@@ -6,12 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type.h"
-#include "scope.h"
-#include "symbol.h"
-#include "tools.h"
-#include "../evaluate/fold.h"
-#include "../parser/characters.h"
+#include "flang/semantics/type.h"
+#include "flang/evaluate/fold.h"
+#include "flang/parser/characters.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
 #include <ostream>
 #include <sstream>
 

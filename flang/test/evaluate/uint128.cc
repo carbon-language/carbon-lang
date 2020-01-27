@@ -1,5 +1,5 @@
 #define AVOID_NATIVE_UINT128_T 1
-#include "../../lib/common/uint128.h"
+#include "flang/common/uint128.h"
 #include "testing.h"
 #include <cinttypes>
 #include <iostream>

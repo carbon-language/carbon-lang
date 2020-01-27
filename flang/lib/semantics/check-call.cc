@@ -8,14 +8,14 @@
 
 #include "check-call.h"
 #include "pointer-assignment.h"
-#include "scope.h"
-#include "tools.h"
-#include "../evaluate/characteristics.h"
-#include "../evaluate/check-expression.h"
-#include "../evaluate/shape.h"
-#include "../evaluate/tools.h"
-#include "../parser/characters.h"
-#include "../parser/message.h"
+#include "flang/evaluate/characteristics.h"
+#include "flang/evaluate/check-expression.h"
+#include "flang/evaluate/shape.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/message.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/tools.h"
 #include <map>
 #include <string>
 

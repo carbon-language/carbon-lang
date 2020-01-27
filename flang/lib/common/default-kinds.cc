@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "default-kinds.h"
-#include "idioms.h"
+#include "flang/common/default-kinds.h"
+#include "flang/common/idioms.h"
 
 namespace Fortran::common {
 

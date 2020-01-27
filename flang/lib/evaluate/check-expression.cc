@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "check-expression.h"
-#include "traverse.h"
-#include "type.h"
-#include "../semantics/symbol.h"
-#include "../semantics/tools.h"
+#include "flang/evaluate/check-expression.h"
+#include "flang/evaluate/traverse.h"
+#include "flang/evaluate/type.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
 
 namespace Fortran::evaluate {
 

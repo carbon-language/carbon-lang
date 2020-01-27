@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "canonicalize-do.h"
-#include "../parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree-visitor.h"
 
 namespace Fortran::parser {
 

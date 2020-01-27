@@ -8,14 +8,14 @@
 
 #include "check-allocate.h"
 #include "assignment.h"
-#include "attr.h"
-#include "expression.h"
-#include "tools.h"
-#include "type.h"
-#include "../evaluate/fold.h"
-#include "../evaluate/type.h"
-#include "../parser/parse-tree.h"
-#include "../parser/tools.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/type.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/parser/tools.h"
+#include "flang/semantics/attr.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/tools.h"
+#include "flang/semantics/type.h"
 
 namespace Fortran::semantics {
 

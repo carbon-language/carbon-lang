@@ -11,10 +11,10 @@
 
 // Utility functions and class for use in resolve-names.cc.
 
-#include "scope.h"
-#include "symbol.h"
-#include "type.h"
-#include "../parser/message.h"
+#include "flang/parser/message.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/type.h"
 #include <forward_list>
 
 namespace Fortran::parser {

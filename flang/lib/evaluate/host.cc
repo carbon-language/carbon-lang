@@ -8,7 +8,7 @@
 
 #include "host.h"
 
-#include "../common/idioms.h"
+#include "flang/common/idioms.h"
 #include <cerrno>
 #include <cfenv>
 

@@ -6,14 +6,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "variable.h"
-#include "fold.h"
-#include "tools.h"
-#include "../common/idioms.h"
-#include "../parser/char-block.h"
-#include "../parser/characters.h"
-#include "../parser/message.h"
-#include "../semantics/symbol.h"
+#include "flang/evaluate/variable.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/char-block.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/message.h"
+#include "flang/semantics/symbol.h"
 #include <ostream>
 #include <type_traits>
 

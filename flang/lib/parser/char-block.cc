@@ -6,7 +6,7 @@
 //
 //----------------------------------------------------------------------------//
 
-#include "char-block.h"
+#include "flang/parser/char-block.h"
 #include <ostream>
 
 namespace Fortran::parser {

@@ -22,14 +22,14 @@
 // This header defines the fundamental parser class templates and helper
 // template functions.  See parser-combinators.txt for documentation.
 
-#include "char-block.h"
-#include "message.h"
-#include "parse-state.h"
-#include "provenance.h"
-#include "user-state.h"
-#include "../common/Fortran-features.h"
-#include "../common/idioms.h"
-#include "../common/indirection.h"
+#include "flang/common/Fortran-features.h"
+#include "flang/common/idioms.h"
+#include "flang/common/indirection.h"
+#include "flang/parser/char-block.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-state.h"
+#include "flang/parser/provenance.h"
+#include "flang/parser/user-state.h"
 #include <cstring>
 #include <functional>
 #include <list>

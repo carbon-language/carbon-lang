@@ -20,7 +20,7 @@
 
 #include "derived-type.h"
 #include "type-code.h"
-#include "../include/flang/ISO_Fortran_binding.h"
+#include "flang/ISO_Fortran_binding.h"
 #include <cassert>
 #include <cinttypes>
 #include <cstddef>

@@ -9,13 +9,13 @@
 // Generates Fortran from the content of a parse tree, using the
 // traversal templates in parse-tree-visitor.h.
 
-#include "unparse.h"
-#include "characters.h"
-#include "parse-tree-visitor.h"
-#include "parse-tree.h"
-#include "../common/Fortran.h"
-#include "../common/idioms.h"
-#include "../common/indirection.h"
+#include "flang/parser/unparse.h"
+#include "flang/common/Fortran.h"
+#include "flang/common/idioms.h"
+#include "flang/common/indirection.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree.h"
 #include <algorithm>
 #include <cinttypes>
 #include <cstddef>

@@ -6,12 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "call.h"
-#include "characteristics.h"
-#include "expression.h"
-#include "tools.h"
-#include "../common/idioms.h"
-#include "../semantics/symbol.h"
+#include "flang/evaluate/call.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/characteristics.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/tools.h"
+#include "flang/semantics/symbol.h"
 
 namespace Fortran::evaluate {
 

@@ -1,4 +1,4 @@
-#include "../../lib/decimal/decimal.h"
+#include "flang/decimal/decimal.h"
 #include <cinttypes>
 #include <cstdio>
 #include <cstring>

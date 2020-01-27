@@ -14,7 +14,7 @@
 // flow of the parsers.  Not to be used in production.
 
 #include "basic-parsers.h"
-#include "parse-state.h"
+#include "flang/parser/parse-state.h"
 #include <cstddef>
 #include <optional>
 

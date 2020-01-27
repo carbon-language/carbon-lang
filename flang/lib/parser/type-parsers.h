@@ -9,8 +9,8 @@
 #ifndef FORTRAN_PARSER_TYPE_PARSERS_H_
 #define FORTRAN_PARSER_TYPE_PARSERS_H_
 
-#include "instrumented-parser.h"
-#include "parse-tree.h"
+#include "flang/parser/instrumented-parser.h"
+#include "flang/parser/parse-tree.h"
 #include <optional>
 
 namespace Fortran::parser {

@@ -8,20 +8,20 @@
 
 // Temporary Fortran front end driver main program for development scaffolding.
 
-#include "../../lib/common/Fortran-features.h"
-#include "../../lib/common/default-kinds.h"
-#include "../../lib/evaluate/expression.h"
-#include "../../lib/parser/characters.h"
-#include "../../lib/parser/dump-parse-tree.h"
-#include "../../lib/parser/message.h"
-#include "../../lib/parser/parse-tree-visitor.h"
-#include "../../lib/parser/parse-tree.h"
-#include "../../lib/parser/parsing.h"
-#include "../../lib/parser/provenance.h"
-#include "../../lib/parser/unparse.h"
-#include "../../lib/semantics/expression.h"
-#include "../../lib/semantics/semantics.h"
-#include "../../lib/semantics/unparse-with-symbols.h"
+#include "flang/common/Fortran-features.h"
+#include "flang/common/default-kinds.h"
+#include "flang/evaluate/expression.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/dump-parse-tree.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/parser/parsing.h"
+#include "flang/parser/provenance.h"
+#include "flang/parser/unparse.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/unparse-with-symbols.h"
 #include <cerrno>
 #include <cstdio>
 #include <cstring>

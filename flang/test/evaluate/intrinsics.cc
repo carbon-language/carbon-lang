@@ -1,9 +1,9 @@
-#include "../../lib/evaluate/intrinsics.h"
+#include "flang/evaluate/intrinsics.h"
 #include "testing.h"
-#include "../../lib/evaluate/common.h"
-#include "../../lib/evaluate/expression.h"
-#include "../../lib/evaluate/tools.h"
-#include "../../lib/parser/provenance.h"
+#include "flang/evaluate/common.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/provenance.h"
 #include <initializer_list>
 #include <iostream>
 #include <map>

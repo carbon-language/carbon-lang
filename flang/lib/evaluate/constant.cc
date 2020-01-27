@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "constant.h"
-#include "expression.h"
-#include "shape.h"
-#include "type.h"
+#include "flang/evaluate/constant.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/shape.h"
+#include "flang/evaluate/type.h"
 #include <string>
 
 namespace Fortran::evaluate {

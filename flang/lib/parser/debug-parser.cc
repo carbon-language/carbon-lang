@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "debug-parser.h"
-#include "user-state.h"
+#include "flang/parser/user-state.h"
 #include <ostream>
 #include <string>
 

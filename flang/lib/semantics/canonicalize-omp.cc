@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "canonicalize-omp.h"
-#include "../parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree-visitor.h"
 
 // After Loop Canonicalization, rewrite OpenMP parse tree to make OpenMP
 // Constructs more structured which provide explicit scopes for later

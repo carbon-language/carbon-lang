@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "instrumented-parser.h"
-#include "message.h"
-#include "provenance.h"
+#include "flang/parser/instrumented-parser.h"
+#include "flang/parser/message.h"
+#include "flang/parser/provenance.h"
 #include <map>
 #include <ostream>
 

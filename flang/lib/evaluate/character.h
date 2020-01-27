@@ -9,7 +9,7 @@
 #ifndef FORTRAN_EVALUATE_CHARACTER_H_
 #define FORTRAN_EVALUATE_CHARACTER_H_
 
-#include "type.h"
+#include "flang/evaluate/type.h"
 #include <string>
 
 // Provides implementations of intrinsic functions operating on character

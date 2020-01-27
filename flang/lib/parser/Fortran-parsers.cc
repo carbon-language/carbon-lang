@@ -33,11 +33,11 @@
 #include "basic-parsers.h"
 #include "expr-parsers.h"
 #include "misc-parsers.h"
-#include "parse-tree.h"
 #include "stmt-parser.h"
 #include "token-parsers.h"
 #include "type-parser-implementation.h"
-#include "user-state.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/parser/user-state.h"
 
 namespace Fortran::parser {
 

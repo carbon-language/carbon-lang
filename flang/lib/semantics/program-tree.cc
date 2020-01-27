@@ -7,9 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "program-tree.h"
-#include "scope.h"
-#include "../common/idioms.h"
-#include "../parser/char-block.h"
+#include "flang/common/idioms.h"
+#include "flang/parser/char-block.h"
+#include "flang/semantics/scope.h"
 
 namespace Fortran::semantics {
 

@@ -7,10 +7,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "big-radix-floating-point.h"
-#include "binary-floating-point.h"
-#include "decimal.h"
-#include "../common/bit-population-count.h"
-#include "../common/leading-zero-bit-count.h"
+#include "flang/common/bit-population-count.h"
+#include "flang/common/leading-zero-bit-count.h"
+#include "flang/decimal/binary-floating-point.h"
+#include "flang/decimal/decimal.h"
 #include <cinttypes>
 #include <cstring>
 #include <ctype.h>

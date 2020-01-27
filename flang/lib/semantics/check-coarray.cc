@@ -7,13 +7,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-coarray.h"
-#include "expression.h"
-#include "tools.h"
-#include "../common/indirection.h"
-#include "../evaluate/expression.h"
-#include "../parser/message.h"
-#include "../parser/parse-tree.h"
-#include "../parser/tools.h"
+#include "flang/common/indirection.h"
+#include "flang/evaluate/expression.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/parser/tools.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/tools.h"
 
 namespace Fortran::semantics {
 

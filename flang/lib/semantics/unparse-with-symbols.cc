@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "unparse-with-symbols.h"
-#include "symbol.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/parse-tree.h"
-#include "../parser/unparse.h"
+#include "flang/semantics/unparse-with-symbols.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/parser/unparse.h"
+#include "flang/semantics/symbol.h"
 #include <map>
 #include <ostream>
 #include <set>

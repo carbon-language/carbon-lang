@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "user-state.h"
-#include "parse-state.h"
+#include "flang/parser/user-state.h"
 #include "stmt-parser.h"
 #include "type-parsers.h"
+#include "flang/parser/parse-state.h"
 #include <optional>
 
 namespace Fortran::parser {

@@ -6,13 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression.h"
-#include "common.h"
+#include "flang/evaluate/expression.h"
 #include "int-power.h"
-#include "tools.h"
-#include "variable.h"
-#include "../common/idioms.h"
-#include "../parser/message.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/common.h"
+#include "flang/evaluate/tools.h"
+#include "flang/evaluate/variable.h"
+#include "flang/parser/message.h"
 #include <string>
 #include <type_traits>
 

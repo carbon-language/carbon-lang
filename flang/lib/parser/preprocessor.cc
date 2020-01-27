@@ -7,10 +7,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "preprocessor.h"
-#include "characters.h"
-#include "message.h"
 #include "prescan.h"
-#include "../common/idioms.h"
+#include "flang/common/idioms.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/message.h"
 #include <algorithm>
 #include <cinttypes>
 #include <cstddef>

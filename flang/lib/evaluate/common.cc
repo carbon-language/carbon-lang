@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common.h"
-#include "../common/idioms.h"
+#include "flang/evaluate/common.h"
+#include "flang/common/idioms.h"
 
 using namespace Fortran::parser::literals;
 

@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "token-sequence.h"
-#include "characters.h"
+#include "flang/parser/characters.h"
 
 namespace Fortran::parser {
 

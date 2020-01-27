@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "char-set.h"
+#include "flang/parser/char-set.h"
 
 namespace Fortran::parser {
 

@@ -9,7 +9,7 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_IF_STMT_H_
 #define FORTRAN_SEMANTICS_CHECK_IF_STMT_H_
 
-#include "semantics.h"
+#include "flang/semantics/semantics.h"
 
 namespace Fortran::parser {
 struct IfStmt;

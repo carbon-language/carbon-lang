@@ -9,7 +9,7 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_COARRAY_H_
 #define FORTRAN_SEMANTICS_CHECK_COARRAY_H_
 
-#include "semantics.h"
+#include "flang/semantics/semantics.h"
 #include <list>
 
 namespace Fortran::parser {

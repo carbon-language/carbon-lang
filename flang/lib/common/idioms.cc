@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "idioms.h"
+#include "flang/common/idioms.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>

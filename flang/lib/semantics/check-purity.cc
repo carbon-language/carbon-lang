@@ -7,8 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-purity.h"
-#include "tools.h"
-#include "../parser/parse-tree.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/tools.h"
 
 namespace Fortran::semantics {
 void PurityChecker::Enter(const parser::ExecutableConstruct &exec) {

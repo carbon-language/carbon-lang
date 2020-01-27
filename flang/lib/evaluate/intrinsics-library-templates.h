@@ -17,9 +17,9 @@
 // which version should be instantiated in a generic way.
 
 #include "host.h"
-#include "intrinsics-library.h"
-#include "type.h"
-#include "../common/template.h"
+#include "flang/common/template.h"
+#include "flang/evaluate/intrinsics-library.h"
+#include "flang/evaluate/type.h"
 
 #include <tuple>
 #include <type_traits>

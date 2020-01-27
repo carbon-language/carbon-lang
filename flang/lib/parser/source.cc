@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "source.h"
-#include "char-buffer.h"
-#include "../common/idioms.h"
+#include "flang/parser/source.h"
+#include "flang/common/idioms.h"
+#include "flang/parser/char-buffer.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstddef>

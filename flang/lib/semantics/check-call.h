@@ -11,7 +11,7 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_CALL_H_
 #define FORTRAN_SEMANTICS_CHECK_CALL_H_
 
-#include "../evaluate/call.h"
+#include "flang/evaluate/call.h"
 
 namespace Fortran::parser {
 class Messages;

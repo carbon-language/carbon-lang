@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tools.h"
-#include "characteristics.h"
-#include "traverse.h"
-#include "../common/idioms.h"
-#include "../parser/message.h"
+#include "flang/evaluate/tools.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/characteristics.h"
+#include "flang/evaluate/traverse.h"
+#include "flang/parser/message.h"
 #include <algorithm>
 #include <variant>
 

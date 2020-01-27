@@ -13,12 +13,12 @@
 // the prescanned character stream and recognize context-sensitive tokens.
 
 #include "basic-parsers.h"
-#include "char-set.h"
-#include "characters.h"
-#include "instrumented-parser.h"
-#include "provenance.h"
 #include "type-parsers.h"
-#include "../common/idioms.h"
+#include "flang/common/idioms.h"
+#include "flang/parser/char-set.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/instrumented-parser.h"
+#include "flang/parser/provenance.h"
 #include <cctype>
 #include <cstddef>
 #include <cstring>

@@ -18,7 +18,7 @@ IncludeCategories:
     Priority:        4
   - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
     Priority:        3
-  - Regex:           '^"\.\./'
+  - Regex:           '^"(flang|\.\.)/'
     Priority:        2
   - Regex:           '.*'
     Priority:        1

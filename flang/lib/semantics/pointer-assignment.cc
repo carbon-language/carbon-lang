@@ -7,18 +7,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "pointer-assignment.h"
-#include "expression.h"
-#include "symbol.h"
-#include "tools.h"
-#include "../common/idioms.h"
-#include "../common/restorer.h"
-#include "../evaluate/characteristics.h"
-#include "../evaluate/expression.h"
-#include "../evaluate/fold.h"
-#include "../evaluate/tools.h"
-#include "../parser/message.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/parse-tree.h"
+#include "flang/common/idioms.h"
+#include "flang/common/restorer.h"
+#include "flang/evaluate/characteristics.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
 #include <optional>
 #include <set>
 #include <string>

@@ -6,16 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "intrinsics.h"
-#include "common.h"
-#include "expression.h"
-#include "fold.h"
-#include "shape.h"
-#include "tools.h"
-#include "type.h"
-#include "../common/Fortran.h"
-#include "../common/enum-set.h"
-#include "../common/idioms.h"
+#include "flang/evaluate/intrinsics.h"
+#include "flang/common/Fortran.h"
+#include "flang/common/enum-set.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/common.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/shape.h"
+#include "flang/evaluate/tools.h"
+#include "flang/evaluate/type.h"
 #include <algorithm>
 #include <map>
 #include <ostream>

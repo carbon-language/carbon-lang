@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Fortran-features.h"
-#include "Fortran.h"
-#include "idioms.h"
+#include "flang/common/Fortran-features.h"
+#include "flang/common/Fortran.h"
+#include "flang/common/idioms.h"
 
 namespace Fortran::common {
 

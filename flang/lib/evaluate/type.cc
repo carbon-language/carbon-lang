@@ -6,16 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type.h"
-#include "expression.h"
-#include "fold.h"
-#include "../common/idioms.h"
-#include "../common/template.h"
-#include "../parser/characters.h"
-#include "../semantics/scope.h"
-#include "../semantics/symbol.h"
-#include "../semantics/tools.h"
-#include "../semantics/type.h"
+#include "flang/evaluate/type.h"
+#include "flang/common/idioms.h"
+#include "flang/common/template.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/parser/characters.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
+#include "flang/semantics/type.h"
 #include <algorithm>
 #include <optional>
 #include <sstream>

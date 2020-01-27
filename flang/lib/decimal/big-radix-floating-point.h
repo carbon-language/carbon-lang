@@ -21,12 +21,12 @@
 // for conversions between binary and decimal representations; it is not
 // a general-purpose facility.
 
-#include "binary-floating-point.h"
-#include "decimal.h"
-#include "../common/bit-population-count.h"
-#include "../common/leading-zero-bit-count.h"
-#include "../common/uint128.h"
-#include "../common/unsigned-const-division.h"
+#include "flang/common/bit-population-count.h"
+#include "flang/common/leading-zero-bit-count.h"
+#include "flang/common/uint128.h"
+#include "flang/common/unsigned-const-division.h"
+#include "flang/decimal/binary-floating-point.h"
+#include "flang/decimal/decimal.h"
 #include <cinttypes>
 #include <limits>
 #include <type_traits>

@@ -9,7 +9,7 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_ALLOCATE_H_
 #define FORTRAN_SEMANTICS_CHECK_ALLOCATE_H_
 
-#include "semantics.h"
+#include "flang/semantics/semantics.h"
 
 namespace Fortran::parser {
 struct AllocateStmt;

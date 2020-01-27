@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "real.h"
+#include "flang/evaluate/real.h"
 #include "int-power.h"
-#include "../common/idioms.h"
-#include "../decimal/decimal.h"
-#include "../parser/characters.h"
+#include "flang/common/idioms.h"
+#include "flang/decimal/decimal.h"
+#include "flang/parser/characters.h"
 #include <limits>
 
 namespace Fortran::evaluate::value {

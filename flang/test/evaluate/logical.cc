@@ -1,5 +1,5 @@
 #include "testing.h"
-#include "../../lib/evaluate/type.h"
+#include "flang/evaluate/type.h"
 #include <cstdio>
 
 template<int KIND> void testKind() {

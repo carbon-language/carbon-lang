@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "attr.h"
-#include "../common/idioms.h"
+#include "flang/semantics/attr.h"
+#include "flang/common/idioms.h"
 #include <ostream>
 #include <stddef.h>
 

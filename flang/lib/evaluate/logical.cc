@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "logical.h"
+#include "flang/evaluate/logical.h"
 
 namespace Fortran::evaluate::value {
 

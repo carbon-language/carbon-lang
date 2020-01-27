@@ -9,10 +9,10 @@
 #ifndef FORTRAN_SEMANTICS_ASSIGNMENT_H_
 #define FORTRAN_SEMANTICS_ASSIGNMENT_H_
 
-#include "semantics.h"
-#include "tools.h"
-#include "../common/indirection.h"
-#include "../evaluate/expression.h"
+#include "flang/common/indirection.h"
+#include "flang/evaluate/expression.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/tools.h"
 #include <string>
 
 namespace Fortran::parser {

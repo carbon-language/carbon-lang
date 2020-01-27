@@ -8,8 +8,8 @@
 
 #include "format.h"
 #include "io-stmt.h"
-#include "../lib/common/format.h"
-#include "../lib/decimal/decimal.h"
+#include "flang/common/format.h"
+#include "flang/decimal/decimal.h"
 #include <limits>
 
 namespace Fortran::runtime::io {

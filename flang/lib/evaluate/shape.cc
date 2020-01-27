@@ -6,16 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "shape.h"
-#include "characteristics.h"
-#include "fold.h"
-#include "intrinsics.h"
-#include "tools.h"
-#include "type.h"
-#include "../common/idioms.h"
-#include "../common/template.h"
-#include "../parser/message.h"
-#include "../semantics/symbol.h"
+#include "flang/evaluate/shape.h"
+#include "flang/common/idioms.h"
+#include "flang/common/template.h"
+#include "flang/evaluate/characteristics.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/intrinsics.h"
+#include "flang/evaluate/tools.h"
+#include "flang/evaluate/type.h"
+#include "flang/parser/message.h"
+#include "flang/semantics/symbol.h"
 #include <functional>
 
 using namespace std::placeholders;  // _1, _2, &c. for std::bind()

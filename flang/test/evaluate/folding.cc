@@ -1,11 +1,11 @@
 #include "testing.h"
-#include "../../lib/evaluate/call.h"
-#include "../../lib/evaluate/expression.h"
-#include "../../lib/evaluate/fold.h"
 #include "../../lib/evaluate/host.h"
 #include "../../lib/evaluate/intrinsics-library-templates.h"
-#include "../../lib/evaluate/intrinsics.h"
-#include "../../lib/evaluate/tools.h"
+#include "flang/evaluate/call.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/intrinsics.h"
+#include "flang/evaluate/tools.h"
 #include <tuple>
 
 using namespace Fortran::evaluate;

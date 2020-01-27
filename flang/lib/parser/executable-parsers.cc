@@ -9,14 +9,14 @@
 // Per-type parsers for executable statements
 
 #include "basic-parsers.h"
-#include "characters.h"
 #include "debug-parser.h"
 #include "expr-parsers.h"
 #include "misc-parsers.h"
-#include "parse-tree.h"
 #include "stmt-parser.h"
 #include "token-parsers.h"
 #include "type-parser-implementation.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/parse-tree.h"
 
 namespace Fortran::parser {
 

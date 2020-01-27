@@ -6,12 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "symbol.h"
-#include "scope.h"
-#include "semantics.h"
-#include "tools.h"
-#include "../common/idioms.h"
-#include "../evaluate/expression.h"
+#include "flang/semantics/symbol.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/expression.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/tools.h"
 #include <ostream>
 #include <string>
 

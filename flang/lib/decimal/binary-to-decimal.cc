@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "big-radix-floating-point.h"
-#include "../decimal/decimal.h"
+#include "flang/decimal/decimal.h"
 
 namespace Fortran::decimal {
 

@@ -7,10 +7,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-io.h"
-#include "expression.h"
-#include "tools.h"
-#include "../common/format.h"
-#include "../parser/tools.h"
+#include "flang/common/format.h"
+#include "flang/parser/tools.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/tools.h"
 #include <unordered_map>
 
 namespace Fortran::semantics {

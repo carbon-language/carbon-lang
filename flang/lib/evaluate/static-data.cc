@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "static-data.h"
-#include "../parser/characters.h"
+#include "flang/evaluate/static-data.h"
+#include "flang/parser/characters.h"
 
 namespace Fortran::evaluate {
 

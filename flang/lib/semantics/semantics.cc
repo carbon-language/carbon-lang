@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "semantics.h"
+#include "flang/semantics/semantics.h"
 #include "assignment.h"
 #include "canonicalize-do.h"
 #include "canonicalize-omp.h"
@@ -23,16 +23,16 @@
 #include "check-purity.h"
 #include "check-return.h"
 #include "check-stop.h"
-#include "expression.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
 #include "resolve-names.h"
 #include "rewrite-parse-tree.h"
-#include "scope.h"
-#include "symbol.h"
-#include "../common/default-kinds.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/tools.h"
+#include "flang/common/default-kinds.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/tools.h"
+#include "flang/semantics/expression.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/symbol.h"
 
 namespace Fortran::semantics {
 

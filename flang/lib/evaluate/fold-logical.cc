@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "check-expression.h"
 #include "fold-implementation.h"
+#include "flang/evaluate/check-expression.h"
 
 namespace Fortran::evaluate {
 

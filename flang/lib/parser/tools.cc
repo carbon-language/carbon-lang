@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tools.h"
+#include "flang/parser/tools.h"
 
 namespace Fortran::parser {
 

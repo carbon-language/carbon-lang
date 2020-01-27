@@ -8,13 +8,13 @@
 
 #include "mod-file.h"
 #include "resolve-names.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
-#include "tools.h"
-#include "../evaluate/tools.h"
-#include "../parser/message.h"
-#include "../parser/parsing.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parsing.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
 #include <algorithm>
 #include <cerrno>
 #include <fstream>

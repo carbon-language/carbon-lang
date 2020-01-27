@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "fold.h"
+#include "flang/evaluate/fold.h"
 #include "fold-implementation.h"
 
 namespace Fortran::evaluate {

@@ -7,7 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "transformational.h"
-#include "../lib/common/idioms.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/integer.h"
 #include <algorithm>
 #include <bitset>
 #include <cinttypes>

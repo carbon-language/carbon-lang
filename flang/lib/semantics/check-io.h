@@ -9,10 +9,10 @@
 #ifndef FORTRAN_SEMANTICS_CHECK_IO_H_
 #define FORTRAN_SEMANTICS_CHECK_IO_H_
 
-#include "semantics.h"
-#include "tools.h"
-#include "../common/enum-set.h"
-#include "../parser/parse-tree.h"
+#include "flang/common/enum-set.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/tools.h"
 
 namespace Fortran::semantics {
 

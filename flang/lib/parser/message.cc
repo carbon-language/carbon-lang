@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "message.h"
-#include "char-set.h"
-#include "../common/idioms.h"
+#include "flang/parser/message.h"
+#include "flang/common/idioms.h"
+#include "flang/parser/char-set.h"
 #include <algorithm>
 #include <cstdarg>
 #include <cstddef>

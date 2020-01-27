@@ -9,9 +9,9 @@
 #ifndef FORTRAN_SEMANTICS_POINTER_ASSIGNMENT_H_
 #define FORTRAN_SEMANTICS_POINTER_ASSIGNMENT_H_
 
-#include "type.h"
-#include "../evaluate/expression.h"
-#include "../parser/char-block.h"
+#include "flang/evaluate/expression.h"
+#include "flang/parser/char-block.h"
+#include "flang/semantics/type.h"
 #include <string>
 
 namespace Fortran::evaluate::characteristics {

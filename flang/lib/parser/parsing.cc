@@ -6,13 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "parsing.h"
-#include "message.h"
+#include "flang/parser/parsing.h"
 #include "preprocessor.h"
 #include "prescan.h"
-#include "provenance.h"
-#include "source.h"
 #include "type-parsers.h"
+#include "flang/parser/message.h"
+#include "flang/parser/provenance.h"
+#include "flang/parser/source.h"
 #include <sstream>
 
 namespace Fortran::parser {

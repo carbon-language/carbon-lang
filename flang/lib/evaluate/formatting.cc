@@ -6,14 +6,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "formatting.h"
-#include "call.h"
-#include "constant.h"
-#include "expression.h"
-#include "fold.h"
-#include "tools.h"
-#include "../parser/characters.h"
-#include "../semantics/symbol.h"
+#include "flang/evaluate/formatting.h"
+#include "flang/evaluate/call.h"
+#include "flang/evaluate/constant.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/characters.h"
+#include "flang/semantics/symbol.h"
 #include <sstream>
 
 namespace Fortran::evaluate {

@@ -1,9 +1,9 @@
-#include "../../lib/evaluate/expression.h"
+#include "flang/evaluate/expression.h"
 #include "testing.h"
-#include "../../lib/evaluate/fold.h"
-#include "../../lib/evaluate/intrinsics.h"
-#include "../../lib/evaluate/tools.h"
-#include "../../lib/parser/message.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/intrinsics.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/message.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>

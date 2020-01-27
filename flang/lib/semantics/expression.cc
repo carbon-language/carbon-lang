@@ -6,21 +6,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression.h"
+#include "flang/semantics/expression.h"
 #include "check-call.h"
 #include "pointer-assignment.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
-#include "tools.h"
-#include "../common/idioms.h"
-#include "../evaluate/common.h"
-#include "../evaluate/fold.h"
-#include "../evaluate/tools.h"
-#include "../parser/characters.h"
-#include "../parser/dump-parse-tree.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/parse-tree.h"
+#include "flang/common/idioms.h"
+#include "flang/evaluate/common.h"
+#include "flang/evaluate/fold.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/characters.h"
+#include "flang/parser/dump-parse-tree.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
 #include <algorithm>
 #include <functional>
 #include <optional>

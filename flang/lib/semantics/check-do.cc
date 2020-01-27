@@ -7,19 +7,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-do.h"
-#include "attr.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
-#include "tools.h"
-#include "type.h"
-#include "../common/template.h"
-#include "../evaluate/call.h"
-#include "../evaluate/expression.h"
-#include "../evaluate/tools.h"
-#include "../parser/message.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/tools.h"
+#include "flang/common/template.h"
+#include "flang/evaluate/call.h"
+#include "flang/evaluate/expression.h"
+#include "flang/evaluate/tools.h"
+#include "flang/parser/message.h"
+#include "flang/parser/parse-tree-visitor.h"
+#include "flang/parser/tools.h"
+#include "flang/semantics/attr.h"
+#include "flang/semantics/scope.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/symbol.h"
+#include "flang/semantics/tools.h"
+#include "flang/semantics/type.h"
 
 namespace Fortran::evaluate {
 using ActualArgumentRef = common::Reference<const ActualArgument>;

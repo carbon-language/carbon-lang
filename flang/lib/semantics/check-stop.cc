@@ -7,11 +7,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "check-stop.h"
-#include "semantics.h"
-#include "tools.h"
-#include "../common/Fortran.h"
-#include "../evaluate/expression.h"
-#include "../parser/parse-tree.h"
+#include "flang/common/Fortran.h"
+#include "flang/evaluate/expression.h"
+#include "flang/parser/parse-tree.h"
+#include "flang/semantics/semantics.h"
+#include "flang/semantics/tools.h"
 #include <optional>
 
 namespace Fortran::semantics {

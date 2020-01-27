@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Fortran.h"
+#include "flang/common/Fortran.h"
 
 namespace Fortran::common {
 
