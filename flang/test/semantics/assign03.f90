@@ -142,12 +142,22 @@ contains
     end type
     type(t), target :: x
     type(t), target :: y(10,10)
+    integer :: v(10)
     p(1:16) => x%a
+    p(1:8) => x%a(:,3:4)
     p(1:1) => x%b  ! We treat scalars as simply contiguous
+    p(1:1) => x%a(1,1)
+    p(1:1) => y(1,1)%a(1,1)
+    p(1:1) => y(:,1)%a(1,1)  ! Rank 1 RHS
     !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
     p(1:4) => x%a(::2,::2)
     !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
     p(1:100) => y(:,:)%b
+    !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
+    p(1:100) => y(:,:)%a(1,1)
+    !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
+    !ERROR: An array section with a vector subscript may not be a pointer target
+    p(1:4) => x%a(:,v)
   end
 
   subroutine s11
@@ -155,8 +165,31 @@ contains
     complex, pointer :: p(:)
     real, pointer :: q(:)
     p(1:100) => x(:,:)
+    q(1:10) => x(1,:)%im
     !ERROR: Pointer bounds remapping target must have rank 1 or be simply contiguous
     q(1:100) => x(:,:)%re
+  end
+
+  ! Check is_contiguous, which is usually the same as when pointer bounds
+  ! remapping is used. If it's not simply contiguous it's not constant so
+  ! an error is reported.
+  subroutine s12
+    integer, pointer :: p(:)
+    type :: t
+      integer :: a(4, 4)
+      integer :: b
+    end type
+    type(t), target :: x
+    type(t), target :: y(10,10)
+    integer :: v(10)
+    logical, parameter :: l1 = is_contiguous(x%a(:,:))
+    logical, parameter :: l2 = is_contiguous(y(1,1)%a(1,1))
+    !ERROR: Must be a constant value
+    logical, parameter :: l3 = is_contiguous(y(:,1)%a(1,1))
+    !ERROR: Must be a constant value
+    logical, parameter :: l4 = is_contiguous(x%a(:,v))
+    !ERROR: Must be a constant value
+    logical, parameter :: l5 = is_contiguous(y(v,1)%a(1,1))
   end
 
 end

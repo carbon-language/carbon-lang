@@ -277,11 +277,18 @@ public:
   }
 
   Result operator()(const ArrayRef &x) const {
-    return (x.base().IsSymbol() || x.base().Rank() == 0) &&
-        CheckSubscripts(x.subscript()) && (*this)(x.base());
+    const auto &symbol{x.GetLastSymbol()};
+    if (!(*this)(symbol)) {
+      return false;
+    } else if (auto rank{CheckSubscripts(x.subscript())}) {
+      // a(:)%b(1,1) is not contiguous; a(1)%b(:,:) is
+      return *rank > 0 || x.Rank() == 0;
+    } else {
+      return false;
+    }
   }
   Result operator()(const CoarrayRef &x) const {
-    return CheckSubscripts(x.subscript());
+    return CheckSubscripts(x.subscript()).has_value();
   }
   Result operator()(const Component &x) const {
     return x.base().Rank() == 0 && (*this)(x.GetLastSymbol());
@@ -304,24 +311,30 @@ public:
   }
 
 private:
-  static bool CheckSubscripts(const std::vector<Subscript> &subscript) {
+  // If the subscripts can possibly be on a simply-contiguous array reference,
+  // return the rank.
+  static std::optional<int> CheckSubscripts(
+      const std::vector<Subscript> &subscript) {
     bool anyTriplet{false};
+    int rank{0};
     for (auto j{subscript.size()}; j-- > 0;) {
       if (const auto *triplet{std::get_if<Triplet>(&subscript[j].u)}) {
         if (!triplet->IsStrideOne()) {
-          return false;
+          return std::nullopt;
         } else if (anyTriplet) {
           if (triplet->lower() || triplet->upper()) {
-            return false;  // all triplets before the last one must be just ":"
+            // all triplets before the last one must be just ":"
+            return std::nullopt;
           }
         } else {
           anyTriplet = true;
         }
+        ++rank;
       } else if (anyTriplet || subscript[j].Rank() > 0) {
-        return false;
+        return std::nullopt;
       }
     }
-    return true;
+    return rank;
   }
 
   const IntrinsicProcTable &table_;
