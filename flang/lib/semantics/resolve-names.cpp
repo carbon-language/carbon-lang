@@ -5980,7 +5980,6 @@ bool OmpAttributeVisitor::Pre(const parser::OpenMPSectionsConstruct &x) {
   case parser::OmpSectionsDirective::Directive::Sections:
     PushContext(beginDir.source, OmpDirective::SECTIONS);
     break;
-  default: break;
   }
   ClearDataSharingAttributeObjects();
   return true;
