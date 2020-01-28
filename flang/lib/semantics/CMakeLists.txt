@@ -7,38 +7,38 @@
 #===------------------------------------------------------------------------===#
 
 add_library(FortranSemantics
-  assignment.cc
-  attr.cc
-  canonicalize-do.cc
-  canonicalize-omp.cc
-  check-allocate.cc
-  check-arithmeticif.cc
-  check-call.cc
-  check-coarray.cc
-  check-deallocate.cc
-  check-declarations.cc
-  check-do.cc
-  check-if-stmt.cc
-  check-io.cc
-  check-nullify.cc
-  check-omp-structure.cc
-  check-purity.cc
-  check-return.cc
-  check-stop.cc
-  expression.cc
-  mod-file.cc
-  pointer-assignment.cc
-  program-tree.cc
-  resolve-labels.cc
-  resolve-names.cc
-  resolve-names-utils.cc
-  rewrite-parse-tree.cc
-  scope.cc
-  semantics.cc
-  symbol.cc
-  tools.cc
-  type.cc
-  unparse-with-symbols.cc
+  assignment.cpp
+  attr.cpp
+  canonicalize-do.cpp
+  canonicalize-omp.cpp
+  check-allocate.cpp
+  check-arithmeticif.cpp
+  check-call.cpp
+  check-coarray.cpp
+  check-deallocate.cpp
+  check-declarations.cpp
+  check-do.cpp
+  check-if-stmt.cpp
+  check-io.cpp
+  check-nullify.cpp
+  check-omp-structure.cpp
+  check-purity.cpp
+  check-return.cpp
+  check-stop.cpp
+  expression.cpp
+  mod-file.cpp
+  pointer-assignment.cpp
+  program-tree.cpp
+  resolve-labels.cpp
+  resolve-names.cpp
+  resolve-names-utils.cpp
+  rewrite-parse-tree.cpp
+  scope.cpp
+  semantics.cpp
+  symbol.cpp
+  tools.cpp
+  type.cpp
+  unparse-with-symbols.cpp
 )
 
 target_link_libraries(FortranSemantics

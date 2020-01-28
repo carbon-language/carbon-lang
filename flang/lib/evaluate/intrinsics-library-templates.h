@@ -13,7 +13,7 @@
 // function of the structures defined in intrinsics-library.h. It should only be
 // included if these member functions are used, else intrinsics-library.h is
 // sufficient. This is to avoid circular dependencies. The below implementation
-// cannot be defined in .cc file because it would be too cumbersome to decide
+// cannot be defined in .cpp file because it would be too cumbersome to decide
 // which version should be instantiated in a generic way.
 
 #include "host.h"

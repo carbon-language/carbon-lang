@@ -7,12 +7,12 @@
 #===------------------------------------------------------------------------===#
 
 add_library(FortranEvaluateTesting
-  testing.cc
-  fp-testing.cc
+  testing.cpp
+  fp-testing.cpp
 )
 
 add_executable(leading-zero-bit-count-test
-  leading-zero-bit-count.cc
+  leading-zero-bit-count.cpp
 )
 
 target_link_libraries(leading-zero-bit-count-test
@@ -20,7 +20,7 @@ target_link_libraries(leading-zero-bit-count-test
 )
 
 add_executable(bit-population-count-test
-  bit-population-count.cc
+  bit-population-count.cpp
 )
 
 target_link_libraries(bit-population-count-test
@@ -28,7 +28,7 @@ target_link_libraries(bit-population-count-test
 )
 
 add_executable(uint128-test
-  uint128.cc
+  uint128.cpp
 )
 
 target_link_libraries(uint128-test
@@ -41,7 +41,7 @@ add_test(Leadz leading-zero-bit-count-test)
 add_test(PopPar bit-population-count-test)
 
 add_executable(expression-test
-  expression.cc
+  expression.cpp
 )
 
 target_link_libraries(expression-test
@@ -52,7 +52,7 @@ target_link_libraries(expression-test
 )
 
 add_executable(integer-test
-  integer.cc
+  integer.cpp
 )
 
 target_link_libraries(integer-test
@@ -62,7 +62,7 @@ target_link_libraries(integer-test
 )
 
 add_executable(intrinsics-test
-  intrinsics.cc
+  intrinsics.cpp
 )
 
 target_link_libraries(intrinsics-test
@@ -75,7 +75,7 @@ target_link_libraries(intrinsics-test
 )
 
 add_executable(logical-test
-  logical.cc
+  logical.cpp
 )
 
 target_link_libraries(logical-test
@@ -88,9 +88,9 @@ target_link_libraries(logical-test
 # IEEE exception flags (different use of the word "exception")
 # in the actual hardware floating-point status register, so ensure that
 # C++ exceptions are enabled for this test.
-set_source_files_properties(real.cc PROPERTIES COMPILE_FLAGS -fexceptions)
+set_source_files_properties(real.cpp PROPERTIES COMPILE_FLAGS -fexceptions)
 add_executable(real-test
-  real.cc
+  real.cpp
 )
 
 target_link_libraries(real-test
@@ -102,7 +102,7 @@ target_link_libraries(real-test
 )
 
 add_executable(reshape-test
-  reshape.cc
+  reshape.cpp
 )
 
 target_link_libraries(reshape-test
@@ -113,7 +113,7 @@ target_link_libraries(reshape-test
 )
 
 add_executable(ISO-Fortran-binding-test
-  ISO-Fortran-binding.cc
+  ISO-Fortran-binding.cpp
 )
 
 target_link_libraries(ISO-Fortran-binding-test
@@ -124,7 +124,7 @@ target_link_libraries(ISO-Fortran-binding-test
 )
 
 add_executable(folding-test
-  folding.cc
+  folding.cpp
 )
 
 target_link_libraries(folding-test

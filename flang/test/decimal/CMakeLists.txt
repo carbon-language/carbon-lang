@@ -7,7 +7,7 @@
 #===------------------------------------------------------------------------===#
 
 add_executable(quick-sanity-test
-  quick-sanity-test.cc
+  quick-sanity-test.cpp
 )
 
 target_link_libraries(quick-sanity-test
@@ -15,7 +15,7 @@ target_link_libraries(quick-sanity-test
 )
 
 add_executable(thorough-test
-  thorough-test.cc
+  thorough-test.cpp
 )
 
 target_link_libraries(thorough-test

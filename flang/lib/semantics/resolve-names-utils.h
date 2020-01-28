@@ -9,7 +9,7 @@
 #ifndef FORTRAN_SEMANTICS_RESOLVE_NAMES_UTILS_H_
 #define FORTRAN_SEMANTICS_RESOLVE_NAMES_UTILS_H_
 
-// Utility functions and class for use in resolve-names.cc.
+// Utility functions and class for use in resolve-names.cpp.
 
 #include "flang/parser/message.h"
 #include "flang/semantics/scope.h"

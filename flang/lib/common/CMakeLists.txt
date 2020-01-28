@@ -7,10 +7,10 @@
 #===------------------------------------------------------------------------===#
 
 add_library(FortranCommon
-  Fortran.cc
-  Fortran-features.cc
-  default-kinds.cc
-  idioms.cc
+  Fortran.cpp
+  Fortran-features.cpp
+  default-kinds.cpp
+  idioms.cpp
 )
 
 install (TARGETS FortranCommon

@@ -7,8 +7,8 @@
 #===------------------------------------------------------------------------===#
 
 add_library(FortranDecimal
-  binary-to-decimal.cc
-  decimal-to-binary.cc
+  binary-to-decimal.cpp
+  decimal-to-binary.cpp
 )
 
 install (TARGETS FortranDecimal

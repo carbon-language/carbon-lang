@@ -10,8 +10,8 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
 
 add_executable(f18
-  f18.cc
-  dump.cc
+  f18.cpp
+  dump.cpp
 )
 
 target_link_libraries(f18
@@ -21,8 +21,8 @@ target_link_libraries(f18
 )
 
 add_executable(f18-parse-demo
-  f18-parse-demo.cc
-  stub-evaluate.cc
+  f18-parse-demo.cpp
+  stub-evaluate.cpp
 )
 
 target_link_libraries(f18-parse-demo

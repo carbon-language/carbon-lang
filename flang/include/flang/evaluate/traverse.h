@@ -25,7 +25,7 @@
 // - overrides for "Result operator()"
 //
 // Boilerplate classes also appear below to ease construction of visitors.
-// See CheckSpecificationExpr() in check-expression.cc for an example client.
+// See CheckSpecificationExpr() in check-expression.cpp for an example client.
 //
 // How this works:
 // - The operator() overloads in Traverse<> invoke the visitor's Default() for
