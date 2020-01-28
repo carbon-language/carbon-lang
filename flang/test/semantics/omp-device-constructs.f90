@@ -91,7 +91,7 @@ program main
   !$omp end teams
 
   !ERROR: At most one DEFAULT clause can appear on the TEAMS directive
-  !$omp teams default(shared) default(none)
+  !$omp teams default(shared) default(private)
   do i = 1, N
      a = 3.14
   enddo

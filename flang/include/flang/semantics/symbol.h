@@ -467,7 +467,7 @@ public:
       // OpenMP miscellaneous flags
       OmpCommonBlock, OmpReduction, OmpDeclareSimd, OmpDeclareTarget,
       OmpThreadprivate, OmpDeclareReduction, OmpFlushed, OmpCriticalLock,
-      OmpIfSpecified);
+      OmpIfSpecified, OmpNone);
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
   const Scope &owner() const { return *owner_; }

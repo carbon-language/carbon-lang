@@ -280,8 +280,8 @@ TYPE_PARSER(sourced(construct<OmpLoopDirective>(first(
         pure(OmpLoopDirective::Directive::TeamsDistributeSimd),
     "TEAMS DISTRIBUTE" >> pure(OmpLoopDirective::Directive::TeamsDistribute)))))
 
-TYPE_PARSER(construct<OmpBeginLoopDirective>(
-    sourced(Parser<OmpLoopDirective>{}), Parser<OmpClauseList>{}))
+TYPE_PARSER(sourced(construct<OmpBeginLoopDirective>(
+    sourced(Parser<OmpLoopDirective>{}), Parser<OmpClauseList>{})))
 
 // 2.14.1 construct-type-clause -> PARALLEL | SECTIONS | DO | TASKGROUP
 TYPE_PARSER(sourced(construct<OmpCancelType>(
@@ -345,8 +345,8 @@ TYPE_PARSER(construct<OmpBlockDirective>(
         "TEAMS" >> pure(OmpBlockDirective::Directive::Teams),
         "WORKSHARE" >> pure(OmpBlockDirective::Directive::Workshare))))
 
-TYPE_PARSER(construct<OmpBeginBlockDirective>(
-    sourced(Parser<OmpBlockDirective>{}), Parser<OmpClauseList>{}))
+TYPE_PARSER(sourced(construct<OmpBeginBlockDirective>(
+    sourced(Parser<OmpBlockDirective>{}), Parser<OmpClauseList>{})))
 
 TYPE_PARSER(construct<OmpReductionInitializerClause>(
     "INITIALIZER" >> parenthesized("OMP_PRIV =" >> expr)))
@@ -482,12 +482,12 @@ TYPE_PARSER(construct<OmpSectionsDirective>(
             pure(OmpSectionsDirective::Directive::ParallelSections))))
 
 // OMP BEGIN and END SECTIONS Directive
-TYPE_PARSER(construct<OmpBeginSectionsDirective>(
-    sourced(Parser<OmpSectionsDirective>{}), Parser<OmpClauseList>{}))
+TYPE_PARSER(sourced(construct<OmpBeginSectionsDirective>(
+    sourced(Parser<OmpSectionsDirective>{}), Parser<OmpClauseList>{})))
 TYPE_PARSER(
-    startOmpLine >> construct<OmpEndSectionsDirective>(
+    startOmpLine >> sourced(construct<OmpEndSectionsDirective>(
                         sourced("END"_tok >> Parser<OmpSectionsDirective>{}),
-                        Parser<OmpClauseList>{}))
+                        Parser<OmpClauseList>{})))
 
 // OMP SECTION-BLOCK
 TYPE_PARSER(maybe(startOmpLine >> "SECTION"_tok / endOmpLine) >>
@@ -512,15 +512,15 @@ TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
 
 // END OMP Block directives
 TYPE_PARSER(
-    startOmpLine >> construct<OmpEndBlockDirective>(
+    startOmpLine >> sourced(construct<OmpEndBlockDirective>(
                         sourced("END"_tok >> Parser<OmpBlockDirective>{}),
-                        Parser<OmpClauseList>{}))
+                        Parser<OmpClauseList>{})))
 
 // END OMP Loop directives
 TYPE_PARSER(
-    startOmpLine >> construct<OmpEndLoopDirective>(
+    startOmpLine >> sourced(construct<OmpEndLoopDirective>(
                         sourced("END"_tok >> Parser<OmpLoopDirective>{}),
-                        Parser<OmpClauseList>{}))
+                        Parser<OmpClauseList>{})))
 
 TYPE_PARSER(construct<OpenMPLoopConstruct>(
     Parser<OmpBeginLoopDirective>{} / endOmpLine))

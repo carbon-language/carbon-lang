@@ -244,7 +244,10 @@ Scope *Scope::FindScope(parser::CharBlock source) {
 }
 
 void Scope::AddSourceRange(const parser::CharBlock &source) {
-  sourceRange_.ExtendToCover(source);
+  for (auto *scope = this; !scope->IsGlobal();
+       scope = &scope->parent()) {
+    scope->sourceRange_.ExtendToCover(source);
+  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Scope &scope) {
