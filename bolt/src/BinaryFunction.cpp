@@ -1608,7 +1608,13 @@ bool BinaryFunction::postProcessIndirectBranches(
       JTLabels.emplace(Label);
     }
     for (const auto *Label : JTLabels) {
-      LastIndirectJumpBB->addSuccessor(getBasicBlockForLabel(Label));
+      auto *BB = getBasicBlockForLabel(Label);
+      // Ignore __builtin_unreachable()
+      if (!BB) {
+        assert(Label == getFunctionEndLabel() && "if no BB found, must be end");
+        continue;
+      }
+      LastIndirectJumpBB->addSuccessor(BB);
     }
   }
 
