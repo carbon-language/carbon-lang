@@ -1,4 +1,4 @@
-//===--- RewriteInstance.h - Interface for machine-level function ---------===//
+//===--- RewriteInstance.h - Instance of a rewriting process. -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

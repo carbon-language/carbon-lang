@@ -89,12 +89,13 @@ class BinarySection {
   }
   static StringRef getContents(SectionRef Section) {
     StringRef Contents;
-    if (ELFSectionRef(Section).getType() != ELF::SHT_NOBITS) {
-      if (auto EC = Section.getContents(Contents)) {
-        errs() << "BOLT-ERROR: cannot get section contents for "
-               << getName(Section) << ": " << EC.message() << ".\n";
-        exit(1);
-      }
+    if (Section.getObject()->isELF() && ELFSectionRef(Section).getType() == ELF::SHT_NOBITS)
+      return Contents;
+
+    if (auto EC = Section.getContents(Contents)) {
+      errs() << "BOLT-ERROR: cannot get section contents for "
+             << getName(Section) << ": " << EC.message() << ".\n";
+      exit(1);
     }
     return Contents;
   }
@@ -152,10 +153,12 @@ public:
       Address(Section.getAddress()),
       Size(Section.getSize()),
       Alignment(Section.getAlignment()),
-      ELFType(ELFSectionRef(Section).getType()),
-      ELFFlags(ELFSectionRef(Section).getFlags()),
       IsLocal(IsLocal || StringRef(Name).startswith(".local.")),
       OutputName(Name) {
+    if (Section.getObject()->isELF()) {
+      ELFType = ELFSectionRef(Section).getType();
+      ELFFlags = ELFSectionRef(Section).getFlags();
+    }
   }
 
   // TODO: pass Data as StringRef/ArrayRef? use StringRef::copy method.

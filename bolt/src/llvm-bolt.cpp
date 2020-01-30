@@ -15,6 +15,7 @@
 
 #include "DataAggregator.h"
 #include "DataReader.h"
+#include "MachORewriteInstance.h"
 #include "RewriteInstance.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/CommandLine.h"
@@ -106,7 +107,15 @@ PerfDataA("p",
   cl::aliasopt(PerfData),
   cl::cat(AggregatorCategory));
 
+cl::opt<bool>
+  PrintSections("print-sections",
+  cl::desc("print all registered sections"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 } // namespace opts
+
 static StringRef ToolName;
 
 static void report_error(StringRef Message, std::error_code EC) {
@@ -324,6 +333,9 @@ int main(int argc, char **argv) {
     if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
       RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv, ToolPath);
       RI.run();
+    } else if (auto *O = dyn_cast<MachOObjectFile>(&Binary)) {
+      MachORewriteInstance MachORI(O, *DR);
+      MachORI.run();
     } else {
       report_error(opts::InputFilename, object_error::invalid_file_type);
     }

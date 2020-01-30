@@ -92,12 +92,14 @@ add_llvm_tool(llvm-bolt
   ExecutableFileMemoryManager.cpp
   Heatmap.cpp
   JumpTable.cpp
+  MachORewriteInstance.cpp
   MCPlusBuilder.cpp
   ParallelUtilities.cpp
   ProfileReader.cpp
   ProfileWriter.cpp
   Relocation.cpp
   RewriteInstance.cpp
+  Utils.cpp
 
   DEPENDS
   intrinsics_gen

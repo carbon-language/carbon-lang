@@ -27,6 +27,7 @@
 #include "ProfileReader.h"
 #include "ProfileWriter.h"
 #include "Relocation.h"
+#include "Utils.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
@@ -292,12 +293,7 @@ PrintGlobals("print-globals",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-PrintSections("print-sections",
-  cl::desc("print all registered sections"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
+extern cl::opt<bool> PrintSections;
 
 static cl::opt<bool>
 PrintLoopInfo("print-loops",
@@ -539,38 +535,11 @@ const char RewriteInstance::TimerGroupDesc[] = "Rewrite passes";
 
 namespace llvm {
 namespace bolt {
+
 extern const char *BoltRevision;
 
-void report_error(StringRef Message, std::error_code EC) {
-  assert(EC);
-  errs() << "BOLT-ERROR: '" << Message << "': " << EC.message() << ".\n";
-  exit(1);
-}
-
-void report_error(StringRef Message, Error E) {
-  assert(E);
-  errs() << "BOLT-ERROR: '" << Message << "': " << toString(std::move(E))
-         << ".\n";
-  exit(1);
-}
-
-void check_error(std::error_code EC, StringRef Message) {
-  if (!EC)
-    return;
-  report_error(Message, EC);
-}
-
-void check_error(Error E, Twine Message) {
-  if (!E)
-    return;
-  handleAllErrors(std::move(E), [&](const llvm::ErrorInfoBase &EIB) {
-    llvm::errs() << "BOLT-ERROR: '" << Message << "': " << EIB.message()
-                 << '\n';
-    exit(1);
-  });
-}
-}
-}
+} // namespace bolt
+} // namespace llvm
 
 namespace {
 
