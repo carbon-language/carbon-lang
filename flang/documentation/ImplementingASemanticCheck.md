@@ -214,22 +214,21 @@ existing framework used in DO construct semantic checking that traversed an
 be able to use a similar framework to traverse an `evaluate::Expr`  node to
 find all of the `evaluate::ActualArgument` nodes.  
 
-Note that there are two distinct data types in the compiler called `Expr`.  One
-is in the `parser` namespace.  `parser::Expr` is defined in the file
+Note that the compiler has multiple types called `Expr`.  One is in the
+`parser` namespace.  `parser::Expr` is defined in the file
 `include/flang/parser/parse-tree.h`.  It represents a parsed expression that
 maps directly to the source code and has fields that specify any operators in
 the expression, the operands, and the source position of the expression.
 
-The second `Expr` type is in the `evaluate` namespace.   The `evaluate`
-namespace contains many types associated with semantic checking of expressions.
-`evaluate::Expr` is defined in the file `include/flang/evaluate/expression.h`.
-It represents an expression after it has undergone semantic checking and
-contains information that is only available after semantic analysis.  This
-information includes the Fortran type of the expression, whether it's a
-reference to a function, whether it's an actual argument, etc.  After an
-expression has undergone semantic analysis, the field `typedExpr` in the
-`parser::Expr` node is filled in with a pointer to the analyzed expression in
-`evaluate::Expr`.
+Additionally, in the namespace `evaluate`, there are `evaluate::Expr<T>`
+template classes defined in the file `include/flang/evaluate/expression.h`.
+These are parameterized over the various types of Fortran and constitute a
+suite of strongly-typed representations of valid Fortran expressions of type
+`T` that have been fully elaborated with conversion operations and subjected to
+constant folding.  After an expression has undergone semantic analysis, the
+field `typedExpr` in the `parser::Expr` node is filled in with a pointer that
+owns an instance of `evaluate::Expr<SomeType>`, the most general representation
+of an analyzed expression.
 
 All of the declarations associated with both FUNCTION and SUBROUTINE calls are
 in `include/flang/evaluate/call.h`.  An `evaluate::FunctionRef` inherits from
