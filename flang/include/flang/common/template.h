@@ -153,15 +153,12 @@ template<typename... Ts> struct VariantToTupleHelper<std::variant<Ts...>> {
 template<typename VARIANT>
 using VariantToTuple = typename VariantToTupleHelper<VARIANT>::type;
 
-template<typename A, typename B, typename... REST>
-struct AreTypesDistinctHelper {
+template<typename A, typename... REST> struct AreTypesDistinctHelper {
   static constexpr bool value() {
-    if constexpr (std::is_same_v<A, B>) {
-      return false;
-    }
     if constexpr (sizeof...(REST) > 0) {
-      return AreTypesDistinctHelper<A, REST...>::value() &&
-          AreTypesDistinctHelper<B, REST...>::value();
+      // extra () for clang-format
+      return ((... && !std::is_same_v<A, REST>)) &&
+          AreTypesDistinctHelper<REST...>::value();
     }
     return true;
   }
