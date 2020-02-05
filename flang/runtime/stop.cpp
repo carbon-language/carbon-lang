@@ -71,7 +71,7 @@ static void DescribeIEEESignaledExceptions() {
 
 [[noreturn]] void RTNAME(ProgramEndStatement)() {
   Fortran::runtime::io::IoErrorHandler handler{"END statement"};
-  Fortran::runtime::io::ExternalFile::CloseAll(handler);
+  Fortran::runtime::io::ExternalFileUnit::CloseAll(handler);
   std::exit(EXIT_SUCCESS);
 }
 }

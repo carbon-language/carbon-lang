@@ -9,16 +9,19 @@
 add_library(FortranRuntime
   ISO_Fortran_binding.cpp
   buffer.cpp
+  connection.cpp
   derived-type.cpp
   descriptor.cpp
   environment.cpp
   file.cpp
   format.cpp
+  internal-unit.cpp
   io-api.cpp
   io-error.cpp
   io-stmt.cpp
   main.cpp
   memory.cpp
+  numeric-output.cpp
   stop.cpp
   terminator.cpp
   tools.cpp

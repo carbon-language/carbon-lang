@@ -18,8 +18,9 @@ namespace Fortran::runtime {
 
 class Terminator;
 
-[[nodiscard]] void *AllocateMemoryOrCrash(Terminator &, std::size_t bytes);
-template<typename A>[[nodiscard]] A &AllocateOrCrash(Terminator &t) {
+[[nodiscard]] void *AllocateMemoryOrCrash(
+    const Terminator &, std::size_t bytes);
+template<typename A>[[nodiscard]] A &AllocateOrCrash(const Terminator &t) {
   return *reinterpret_cast<A *>(AllocateMemoryOrCrash(t, sizeof(A)));
 }
 void FreeMemory(void *);
@@ -33,7 +34,7 @@ template<typename A> void FreeMemoryAndNullify(A *&p) {
 
 template<typename A> struct New {
   template<typename... X>
-  [[nodiscard]] A &operator()(Terminator &terminator, X &&... x) {
+  [[nodiscard]] A &operator()(const Terminator &terminator, X &&... x) {
     return *new (AllocateMemoryOrCrash(terminator, sizeof(A)))
         A{std::forward<X>(x)...};
   }
@@ -47,7 +48,7 @@ template<typename A> using OwningPtr = std::unique_ptr<A, OwningPtrDeleter<A>>;
 
 template<typename A> struct Allocator {
   using value_type = A;
-  explicit Allocator(Terminator &t) : terminator{t} {}
+  explicit Allocator(const Terminator &t) : terminator{t} {}
   template<typename B>
   explicit constexpr Allocator(const Allocator<B> &that) noexcept
     : terminator{that.terminator} {}
@@ -58,7 +59,7 @@ template<typename A> struct Allocator {
         AllocateMemoryOrCrash(terminator, n * sizeof(A)));
   }
   constexpr void deallocate(A *p, std::size_t) { FreeMemory(p); }
-  Terminator &terminator;
+  const Terminator &terminator;
 };
 }
 

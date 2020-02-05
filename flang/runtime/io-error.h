@@ -18,9 +18,10 @@
 
 namespace Fortran::runtime::io {
 
-class IoErrorHandler : virtual public Terminator {
+class IoErrorHandler : public Terminator {
 public:
   using Terminator::Terminator;
+  explicit IoErrorHandler(const Terminator &that) : Terminator{that} {}
   void Begin(const char *sourceFileName, int sourceLine);
   void HasIoStat() { flags_ |= hasIoStat; }
   void HasErrLabel() { flags_ |= hasErr; }

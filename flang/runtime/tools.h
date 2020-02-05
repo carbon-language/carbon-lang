@@ -18,7 +18,8 @@ namespace Fortran::runtime {
 
 class Terminator;
 
-OwningPtr<char> SaveDefaultCharacter(const char *, std::size_t, Terminator &);
+OwningPtr<char> SaveDefaultCharacter(
+    const char *, std::size_t, const Terminator &);
 
 // For validating and recognizing default CHARACTER values in a
 // case-insensitive manner.  Returns the zero-based index into the

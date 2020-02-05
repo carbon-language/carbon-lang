@@ -125,6 +125,7 @@ public:
     raw_.base_addr = nullptr;
     raw_.f18Addendum = false;
   }
+  Descriptor(const Descriptor &);
 
   ~Descriptor();
 

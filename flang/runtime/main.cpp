@@ -33,7 +33,6 @@ void RTNAME(ProgramStart)(int argc, const char *argv[], const char *envp[]) {
   std::atexit(Fortran::runtime::NotifyOtherImagesOfNormalEnd);
   Fortran::runtime::executionEnvironment.Configure(argc, argv, envp);
   ConfigureFloatingPoint();
-  Fortran::runtime::Terminator terminator{"ProgramStart()"};
-  Fortran::runtime::io::ExternalFile::InitializePredefinedUnits(terminator);
+  Fortran::runtime::io::ExternalFileUnit::InitializePredefinedUnits();
 }
 }

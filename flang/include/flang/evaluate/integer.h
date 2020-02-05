@@ -49,7 +49,7 @@ namespace Fortran::evaluate::value {
 // Member functions that correspond to Fortran intrinsic functions are
 // named accordingly in ALL CAPS so that they can be referenced easily in
 // the language standard.
-template<int BITS, bool IS_LITTLE_ENDIAN = IsHostLittleEndian,
+template<int BITS, bool IS_LITTLE_ENDIAN = isHostLittleEndian,
     int PARTBITS = BITS <= 32 ? BITS : 32,
     typename PART = HostUnsignedInt<PARTBITS>,
     typename BIGPART = HostUnsignedInt<PARTBITS * 2>>

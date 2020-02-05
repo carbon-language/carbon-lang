@@ -12,7 +12,7 @@
 
 namespace Fortran::runtime {
 
-void *AllocateMemoryOrCrash(Terminator &terminator, std::size_t bytes) {
+void *AllocateMemoryOrCrash(const Terminator &terminator, std::size_t bytes) {
   if (void *p{std::malloc(bytes)}) {
     return p;
   }

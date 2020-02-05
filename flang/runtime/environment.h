@@ -9,7 +9,7 @@
 #ifndef FORTRAN_RUNTIME_ENVIRONMENT_H_
 #define FORTRAN_RUNTIME_ENVIRONMENT_H_
 
-#include "flang/common/Fortran.h"
+#include "flang/decimal/decimal.h"
 
 namespace Fortran::runtime {
 struct ExecutionEnvironment {
@@ -19,8 +19,9 @@ struct ExecutionEnvironment {
   const char **argv;
   const char **envp;
   int listDirectedOutputLineLengthLimit;
-  common::RoundingMode defaultOutputRoundingMode;
+  enum decimal::FortranRounding defaultOutputRoundingMode;
 };
 extern ExecutionEnvironment executionEnvironment;
 }
+
 #endif  // FORTRAN_RUNTIME_ENVIRONMENT_H_

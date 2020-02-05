@@ -10,8 +10,13 @@
 #include "flang/common/idioms.h"
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 
 namespace Fortran::runtime {
+
+Descriptor::Descriptor(const Descriptor &that) {
+  std::memcpy(this, &that, that.SizeInBytes());
+}
 
 Descriptor::~Descriptor() {
   if (raw_.attribute != CFI_attribute_pointer) {

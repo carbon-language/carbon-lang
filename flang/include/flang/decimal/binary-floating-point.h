@@ -12,6 +12,7 @@
 // Access and manipulate the fields of an IEEE-754 binary
 // floating-point value via a generalized template.
 
+#include "flang/common/real.h"
 #include "flang/common/uint128.h"
 #include <cinttypes>
 #include <climits>
@@ -20,34 +21,24 @@
 
 namespace Fortran::decimal {
 
-static constexpr int BitsForPrecision(int prec) {
-  switch (prec) {
-  case 8: return 16;
-  case 11: return 16;
-  case 24: return 32;
-  case 53: return 64;
-  case 64: return 80;
-  case 112: return 128;
-  default: return -1;
-  }
-}
+template<int BINARY_PRECISION>
+struct BinaryFloatingPointNumber
+  : public common::RealDetails<BINARY_PRECISION> {
 
-// LOG10(2.)*1E12
-static constexpr std::int64_t ScaledLogBaseTenOfTwo{301029995664};
+  using Details = common::RealDetails<BINARY_PRECISION>;
+  using Details::bits;
+  using Details::decimalPrecision;
+  using Details::decimalRange;
+  using Details::exponentBias;
+  using Details::exponentBits;
+  using Details::isImplicitMSB;
+  using Details::maxDecimalConversionDigits;
+  using Details::maxExponent;
+  using Details::significandBits;
 
-template<int PRECISION> struct BinaryFloatingPointNumber {
-  static constexpr int precision{PRECISION};
-  static constexpr int bits{BitsForPrecision(precision)};
   using RawType = common::HostUnsignedIntType<bits>;
   static_assert(CHAR_BIT * sizeof(RawType) >= bits);
-  static constexpr bool implicitMSB{precision != 64 /*x87*/};
-  static constexpr int significandBits{precision - implicitMSB};
-  static constexpr int exponentBits{bits - 1 - significandBits};
-  static constexpr int maxExponent{(1 << exponentBits) - 1};
-  static constexpr int exponentBias{maxExponent / 2};
   static constexpr RawType significandMask{(RawType{1} << significandBits) - 1};
-  static constexpr int RANGE{static_cast<int>(
-      (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
 
   constexpr BinaryFloatingPointNumber() {}  // zero
   constexpr BinaryFloatingPointNumber(
@@ -76,7 +67,7 @@ template<int PRECISION> struct BinaryFloatingPointNumber {
   constexpr RawType Significand() const { return raw & significandMask; }
   constexpr RawType Fraction() const {
     RawType sig{Significand()};
-    if (implicitMSB && BiasedExponent() > 0) {
+    if (isImplicitMSB && BiasedExponent() > 0) {
       sig |= RawType{1} << significandBits;
     }
     return sig;

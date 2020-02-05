@@ -91,7 +91,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
   TEST(nan.Compare(zero) == Relation::Unordered)(desc);
   TEST(nan.Compare(minusZero) == Relation::Unordered)(desc);
   TEST(nan.Compare(nan) == Relation::Unordered)(desc);
-  int significandBits{R::precision - R::implicitMSB};
+  int significandBits{R::binaryPrecision - R::isImplicitMSB};
   int exponentBits{R::bits - significandBits - 1};
   std::uint64_t maxExponent{(std::uint64_t{1} << exponentBits) - 1};
   MATCH(nan.Exponent(), maxExponent)(desc);

@@ -23,7 +23,7 @@ public:
   bool Try() { return pthread_mutex_trylock(&mutex_) != 0; }
   void Drop() { pthread_mutex_unlock(&mutex_); }
 
-  void CheckLocked(Terminator &terminator) {
+  void CheckLocked(const Terminator &terminator) {
     if (Try()) {
       Drop();
       terminator.Crash("Lock::CheckLocked() failed");

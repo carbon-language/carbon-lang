@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "environment.h"
+#include <cstdio>
 #include <cstdlib>
 #include <limits>
 
@@ -19,7 +20,8 @@ void ExecutionEnvironment::Configure(
   argv = av;
   envp = env;
   listDirectedOutputLineLengthLimit = 79;  // PGI default
-  defaultOutputRoundingMode = common::RoundingMode::TiesToEven;  // RP=RN
+  defaultOutputRoundingMode =
+      decimal::FortranRounding::RoundNearest;  // RP(==RN)
 
   if (auto *x{std::getenv("FORT_FMT_RECL")}) {
     char *end;

@@ -130,9 +130,9 @@ struct Rounding {
 static constexpr Rounding defaultRounding;
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-constexpr bool IsHostLittleEndian{false};
+constexpr bool isHostLittleEndian{false};
 #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-constexpr bool IsHostLittleEndian{true};
+constexpr bool isHostLittleEndian{true};
 #else
 #error host endianness is not known
 #endif

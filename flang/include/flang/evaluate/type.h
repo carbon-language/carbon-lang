@@ -268,7 +268,7 @@ public:
 template<>
 class Type<TypeCategory::Real, 10> : public TypeBase<TypeCategory::Real, 10> {
 public:
-  using Scalar = value::Real<value::Integer<80>, 64, false>;
+  using Scalar = value::Real<value::Integer<80>, 64>;
 };
 
 // REAL(KIND=16) is IEEE quad precision (128 bits)

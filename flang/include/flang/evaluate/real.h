@@ -12,6 +12,7 @@
 #include "formatting.h"
 #include "integer.h"
 #include "rounding-bits.h"
+#include "flang/common/real.h"
 #include "flang/evaluate/common.h"
 #include <cinttypes>
 #include <limits>
@@ -30,26 +31,25 @@ static constexpr std::int64_t ScaledLogBaseTenOfTwo{301029995664};
 // Models IEEE binary floating-point numbers (IEEE 754-2008,
 // ISO/IEC/IEEE 60559.2011).  The first argument to this
 // class template must be (or look like) an instance of Integer<>;
-// the second specifies the number of effective bits in the fraction;
-// the third, if true, indicates that the most significant position of the
-// fraction is an implicit bit whose value is assumed to be 1 in a finite
-// normal number.
-template<typename WORD, int PREC, bool IMPLICIT_MSB = true> class Real {
+// the second specifies the number of effective bits (binary precision)
+// in the fraction.
+template<typename WORD, int PREC>
+class Real : public common::RealDetails<PREC> {
 public:
   using Word = WORD;
-  static constexpr int bits{Word::bits};
-  static constexpr int precision{PREC};
-  using Fraction = Integer<precision>;  // all bits made explicit
-  static constexpr bool implicitMSB{IMPLICIT_MSB};
-  static constexpr int significandBits{precision - implicitMSB};
-  static constexpr int exponentBits{bits - significandBits - 1 /*sign*/};
-  static_assert(precision > 0);
-  static_assert(exponentBits > 1);
-  static_assert(exponentBits <= 16);
-  static constexpr int maxExponent{(1 << exponentBits) - 1};
-  static constexpr int exponentBias{maxExponent / 2};
+  static constexpr int binaryPrecision{PREC};
+  using Details = common::RealDetails<PREC>;
+  using Details::exponentBias;
+  using Details::exponentBits;
+  using Details::isImplicitMSB;
+  using Details::maxExponent;
+  using Details::significandBits;
 
-  template<typename W, int P, bool I> friend class Real;
+  static constexpr int bits{Word::bits};
+  static_assert(bits >= Details::bits);
+  using Fraction = Integer<binaryPrecision>;  // all bits made explicit
+
+  template<typename W, int P> friend class Real;
 
   constexpr Real() {}  // +0.0
   constexpr Real(const Real &) = default;
@@ -130,12 +130,13 @@ public:
 
   static constexpr Real EPSILON() {
     Real epsilon;
-    epsilon.Normalize(false, exponentBias - precision, Fraction::MASKL(1));
+    epsilon.Normalize(
+        false, exponentBias - binaryPrecision, Fraction::MASKL(1));
     return epsilon;
   }
   static constexpr Real HUGE() {
     Real huge;
-    huge.Normalize(false, maxExponent - 1, Fraction::MASKR(precision));
+    huge.Normalize(false, maxExponent - 1, Fraction::MASKR(binaryPrecision));
     return huge;
   }
   static constexpr Real TINY() {
@@ -144,11 +145,9 @@ public:
     return tiny;
   }
 
-  static constexpr int DIGITS{precision};
-  static constexpr int PRECISION{static_cast<int>(
-      (precision - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
-  static constexpr int RANGE{static_cast<int>(
-      (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
+  static constexpr int DIGITS{binaryPrecision};
+  static constexpr int PRECISION{Details::decimalPrecision};
+  static constexpr int RANGE{Details::decimalRange};
   static constexpr int MAXEXPONENT{maxExponent - 1 - exponentBias};
   static constexpr int MINEXPONENT{1 - exponentBias};
 
@@ -190,7 +189,7 @@ public:
     }
     ValueWithRealFlags<Real> result;
     int exponent{exponentBias + absN.bits - leadz - 1};
-    int bitsNeeded{absN.bits - (leadz + implicitMSB)};
+    int bitsNeeded{absN.bits - (leadz + isImplicitMSB)};
     int bitsLost{bitsNeeded - significandBits};
     if (bitsLost <= 0) {
       Fraction fraction{Fraction::ConvertUnsigned(absN).value};
@@ -224,7 +223,8 @@ public:
     result.flags.set(
         RealFlag::Overflow, exponent >= exponentBias + result.value.bits);
     result.flags |= intPart.flags;
-    int shift{exponent - exponentBias - precision + 1};  // positive -> left
+    int shift{
+        exponent - exponentBias - binaryPrecision + 1};  // positive -> left
     result.value =
         result.value.ConvertUnsigned(intPart.value.GetFraction().SHIFTR(-shift))
             .value.SHIFTL(shift);
@@ -252,7 +252,7 @@ public:
     }
     ValueWithRealFlags<Real> result;
     int exponent{exponentBias + x.UnbiasedExponent()};
-    int bitsLost{A::precision - precision};
+    int bitsLost{A::binaryPrecision - binaryPrecision};
     if (exponent < 1) {
       bitsLost += 1 - exponent;
       exponent = 1;
@@ -282,7 +282,7 @@ public:
   // Extracts the fraction; any implied bit is made explicit.
   constexpr Fraction GetFraction() const {
     Fraction result{Fraction::ConvertUnsigned(word_).value};
-    if constexpr (!implicitMSB) {
+    if constexpr (!isImplicitMSB) {
       return result;
     } else {
       int exponent{Exponent()};
@@ -366,7 +366,7 @@ extern template class Real<Integer<16>, 11>;  // IEEE half format
 extern template class Real<Integer<16>, 8>;  // the "other" half format
 extern template class Real<Integer<32>, 24>;  // IEEE single
 extern template class Real<Integer<64>, 53>;  // IEEE double
-extern template class Real<Integer<80>, 64, false>;  // 80387 extended precision
+extern template class Real<Integer<80>, 64>;  // 80387 extended precision
 extern template class Real<Integer<128>, 112>;  // IEEE quad
 // N.B. No "double-double" support.
 }

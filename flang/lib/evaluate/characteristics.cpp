@@ -121,35 +121,6 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
   }
 }
 
-#if 0  // pmk
-std::optional<TypeAndShape> TypeAndShape::Characterize(
-    const Expr<SomeType> &expr, FoldingContext &context) {
-  if (const auto *symbol{UnwrapWholeSymbolDataRef(expr)}) {
-    if (const auto *object{
-            symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
-      return Characterize(*object);
-    } else if (const auto *assoc{
-                   symbol->detailsIf<semantics::AssocEntityDetails>()}) {
-      return Characterize(*assoc, context);
-    }
-  }
-  if (auto type{expr.GetType()}) {
-    if (auto shape{GetShape(context, expr)}) {
-      TypeAndShape result{*type, std::move(*shape)};
-      if (type->category() == TypeCategory::Character) {
-        if (const auto *chExpr{UnwrapExpr<Expr<SomeCharacter>>(expr)}) {
-          if (auto length{chExpr->LEN()}) {
-            result.set_LEN(Expr<SomeInteger>{std::move(*length)});
-          }
-        }
-      }
-      return result;
-    }
-  }
-  return std::nullopt;
-}
-#endif  // pmk
-
 bool TypeAndShape::IsCompatibleWith(parser::ContextualMessages &messages,
     const TypeAndShape &that, const char *thisIs, const char *thatIs,
     bool isElemental) const {

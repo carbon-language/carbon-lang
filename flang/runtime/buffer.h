@@ -97,14 +97,13 @@ public:
     }
     dirty_ = true;
     frame_ = at - fileOffset_;
-    length_ = std::max(length_, static_cast<std::int64_t>(frame_ + bytes));
+    length_ = std::max<std::int64_t>(length_, frame_ + bytes);
   }
 
   void Flush(IoErrorHandler &handler) {
     if (dirty_) {
       while (length_ > 0) {
-        std::size_t chunk{std::min(static_cast<std::size_t>(length_),
-            static_cast<std::size_t>(size_ - start_))};
+        std::size_t chunk{std::min<std::size_t>(length_, size_ - start_)};
         std::size_t put{
             Store().Write(fileOffset_, buffer_ + start_, chunk, handler)};
         length_ -= put;
@@ -121,15 +120,14 @@ public:
 private:
   STORE &Store() { return static_cast<STORE &>(*this); }
 
-  void Reallocate(std::size_t bytes, Terminator &terminator) {
+  void Reallocate(std::size_t bytes, const Terminator &terminator) {
     if (bytes > size_) {
       char *old{buffer_};
       auto oldSize{size_};
       size_ = std::max(bytes, minBuffer);
       buffer_ =
           reinterpret_cast<char *>(AllocateMemoryOrCrash(terminator, size_));
-      auto chunk{
-          std::min(length_, static_cast<std::int64_t>(oldSize - start_))};
+      auto chunk{std::min<std::int64_t>(length_, oldSize - start_)};
       std::memcpy(buffer_, old + start_, chunk);
       start_ = 0;
       std::memcpy(buffer_ + chunk, old, length_ - chunk);
@@ -143,7 +141,7 @@ private:
     dirty_ = false;
   }
 
-  void DiscardLeadingBytes(std::size_t n, Terminator &terminator) {
+  void DiscardLeadingBytes(std::size_t n, const Terminator &terminator) {
     RUNTIME_CHECK(terminator, length_ >= n);
     length_ -= n;
     if (length_ == 0) {

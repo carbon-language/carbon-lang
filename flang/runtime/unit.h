@@ -6,13 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Fortran I/O units
+// Fortran external I/O units
 
 #ifndef FORTRAN_RUNTIME_IO_UNIT_H_
 #define FORTRAN_RUNTIME_IO_UNIT_H_
 
 #include "buffer.h"
-#include "descriptor.h"
+#include "connection.h"
 #include "file.h"
 #include "format.h"
 #include "io-error.h"
@@ -27,87 +27,57 @@
 
 namespace Fortran::runtime::io {
 
-enum class Access { Sequential, Direct, Stream };
-
-inline bool IsRecordFile(Access a) { return a != Access::Stream; }
-
-// These characteristics of a connection are immutable after being
-// established in an OPEN statement.
-struct ConnectionAttributes {
-  Access access{Access::Sequential};  // ACCESS='SEQUENTIAL', 'DIRECT', 'STREAM'
-  std::optional<std::int64_t> recordLength;  // RECL= when fixed-length
-  bool unformatted{false};  // FORM='UNFORMATTED'
-  bool isUTF8{false};  // ENCODING='UTF-8'
-  bool asynchronousAllowed{false};  // ASYNCHRONOUS='YES'
-};
-
-struct ConnectionState : public ConnectionAttributes {
-  // Positions in a record file (sequential or direct, but not stream)
-  std::int64_t recordOffsetInFile{0};
-  std::int64_t currentRecordNumber{1};  // 1 is first
-  std::int64_t positionInRecord{0};  // offset in current record
-  std::int64_t furthestPositionInRecord{0};  // max(positionInRecord)
-  std::optional<std::int64_t> leftTabLimit;  // offset in current record
-  // nextRecord value captured after ENDFILE/REWIND/BACKSPACE statement
-  // on a sequential access file
-  std::optional<std::int64_t> endfileRecordNumber;
-  // Mutable modes set at OPEN() that can be overridden in READ/WRITE & FORMAT
-  MutableModes modes;  // BLANK=, DECIMAL=, SIGN=, ROUND=, PAD=, DELIM=, kP
-};
-
-class InternalUnit : public ConnectionState, public IoErrorHandler {
+class ExternalFileUnit : public ConnectionState,
+                         public OpenFile,
+                         public FileFrame<ExternalFileUnit> {
 public:
-  InternalUnit(Descriptor &, const char *sourceFile, int sourceLine)
-    : IoErrorHandler{sourceFile, sourceLine} {
-// TODO pmk    descriptor_.Establish(...);
-    descriptor_.GetLowerBounds(at_);
-    recordLength = descriptor_.ElementBytes();
-    endfileRecordNumber = descriptor_.Elements();
-  }
-  ~InternalUnit() {
-    if (!doNotFree_) {
-      std::free(this);
-    }
-  }
+  explicit ExternalFileUnit(int unitNumber) : unitNumber_{unitNumber} {}
+  int unitNumber() const { return unitNumber_; }
 
-private:
-  bool doNotFree_{false};
-  Descriptor descriptor_;
-  SubscriptValue at_[maxRank];
-};
-
-class ExternalFile : public ConnectionState,  // TODO: privatize these
-                     public OpenFile,
-                     public FileFrame<ExternalFile> {
-public:
-  explicit ExternalFile(int unitNumber) : unitNumber_{unitNumber} {}
-  static ExternalFile *LookUp(int unit);
-  static ExternalFile &LookUpOrCrash(int unit, Terminator &);
-  static ExternalFile &Create(int unit, Terminator &);
-  static void InitializePredefinedUnits(Terminator &);
+  static ExternalFileUnit *LookUp(int unit);
+  static ExternalFileUnit &LookUpOrCrash(int unit, const Terminator &);
+  static ExternalFileUnit &LookUpOrCreate(int unit, bool *wasExtant = nullptr);
+  static int NewUnit();
+  static void InitializePredefinedUnits();
   static void CloseAll(IoErrorHandler &);
 
-  void CloseUnit(IoErrorHandler &);
+  void OpenUnit(OpenStatus, Position, OwningPtr<char> &&path,
+      std::size_t pathLength, IoErrorHandler &);
+  void CloseUnit(CloseStatus, IoErrorHandler &);
 
-  // TODO: accessors & mutators for many OPEN() specifiers
-  template<typename A, typename... X> A &BeginIoStatement(X&&... xs) {
-    // TODO: lock_.Take() here, and keep it until EndIoStatement()?
+  template<typename A, typename... X>
+  IoStatementState &BeginIoStatement(X &&... xs) {
+    // TODO: lock().Take() here, and keep it until EndIoStatement()?
     // Nested I/O from derived types wouldn't work, though.
-    return u_.emplace<A>(std::forward<X>(xs)...);
+    A &state{u_.emplace<A>(std::forward<X>(xs)...)};
+    if constexpr (!std::is_same_v<A, OpenStatementState>) {
+      state.mutableModes() = ConnectionState::modes;
+    }
+    io_.emplace(state);
+    return *io_;
   }
-  void EndIoStatement();
 
-  bool SetPositionInRecord(std::int64_t, IoErrorHandler &);
   bool Emit(const char *, std::size_t bytes, IoErrorHandler &);
   void SetLeftTabLimit();
-  bool NextOutputRecord(IoErrorHandler &);
+  bool AdvanceRecord(IoErrorHandler &);
   bool HandleAbsolutePosition(std::int64_t, IoErrorHandler &);
   bool HandleRelativePosition(std::int64_t, IoErrorHandler &);
+
+  void FlushIfTerminal(IoErrorHandler &);
+  void EndIoStatement();
+
 private:
+  bool SetPositionInRecord(std::int64_t, IoErrorHandler &);
+
   int unitNumber_{-1};
-  Lock lock_;
   bool isReading_{false};
-  std::variant<std::monostate, ExternalFormattedIoStatementState<false>> u_;
+  // When an I/O statement is in progress on this unit, holds its state.
+  std::variant<std::monostate, OpenStatementState, CloseStatementState,
+      ExternalFormattedIoStatementState<false>,
+      ExternalListIoStatementState<false>, UnformattedIoStatementState<false>>
+      u_;
+  // Points to the active alternative, if any, in u_, for use as a Cookie
+  std::optional<IoStatementState> io_;
 };
 
 }

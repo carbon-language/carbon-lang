@@ -9,7 +9,6 @@
 #include "file.h"
 #include "magic-numbers.h"
 #include "memory.h"
-#include "tools.h"
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -18,49 +17,22 @@
 
 namespace Fortran::runtime::io {
 
-void OpenFile::Open(const char *path, std::size_t pathLength,
-    const char *status, std::size_t statusLength, const char *action,
-    std::size_t actionLength, IoErrorHandler &handler) {
-  CriticalSection criticalSection{lock_};
-  RUNTIME_CHECK(handler, fd_ < 0);  // TODO handle re-openings
-  int flags{0};
-  static const char *actions[]{"READ", "WRITE", "READWRITE", nullptr};
-  switch (IdentifyValue(action, actionLength, actions)) {
-  case 0:
-    flags = O_RDONLY;
-    mayRead_ = true;
-    mayWrite_ = false;
-    break;
-  case 1:
-    flags = O_WRONLY;
-    mayRead_ = false;
-    mayWrite_ = true;
-    break;
-  case 2:
-    mayRead_ = true;
-    mayWrite_ = true;
-    flags = O_RDWR;
-    break;
-  default:
-    handler.Crash(
-        "Invalid ACTION='%.*s'", action, static_cast<int>(actionLength));
-  }
-  if (!status) {
-    status = "UNKNOWN", statusLength = 7;
-  }
-  static const char *statuses[]{
-      "OLD", "NEW", "SCRATCH", "REPLACE", "UNKNOWN", nullptr};
-  switch (IdentifyValue(status, statusLength, statuses)) {
-  case 0:  // STATUS='OLD'
-    if (!path && fd_ >= 0) {
-      // TODO: Update OpenFile in situ; can ACTION be changed?
+void OpenFile::set_path(OwningPtr<char> &&path, std::size_t bytes) {
+  path_ = std::move(path);
+  pathLength_ = bytes;
+}
+
+void OpenFile::Open(
+    OpenStatus status, Position position, IoErrorHandler &handler) {
+  int flags{mayRead_ ? mayWrite_ ? O_RDWR : O_RDONLY : O_WRONLY};
+  switch (status) {
+  case OpenStatus::Old:
+    if (fd_ >= 0) {
       return;
     }
     break;
-  case 1:  // STATUS='NEW'
-    flags |= O_CREAT | O_EXCL;
-    break;
-  case 2:  // STATUS='SCRATCH'
+  case OpenStatus::New: flags |= O_CREAT | O_EXCL; break;
+  case OpenStatus::Scratch:
     if (path_.get()) {
       handler.Crash("FILE= must not appear with STATUS='SCRATCH'");
       path_.reset();
@@ -74,27 +46,22 @@ void OpenFile::Open(const char *path, std::size_t pathLength,
       ::unlink(path);
     }
     return;
-  case 3:  // STATUS='REPLACE'
-    flags |= O_CREAT | O_TRUNC;
-    break;
-  case 4:  // STATUS='UNKNOWN'
+  case OpenStatus::Replace: flags |= O_CREAT | O_TRUNC; break;
+  case OpenStatus::Unknown:
     if (fd_ >= 0) {
       return;
     }
     flags |= O_CREAT;
     break;
-  default:
-    handler.Crash(
-        "Invalid STATUS='%.*s'", status, static_cast<int>(statusLength));
   }
   // If we reach this point, we're opening a new file
   if (fd_ >= 0) {
-    if (::close(fd_) != 0) {
+    if (fd_ <= 2) {
+      // don't actually close a standard file descriptor, we might need it
+    } else if (::close(fd_) != 0) {
       handler.SignalErrno();
     }
   }
-  path_ = SaveDefaultCharacter(path, pathLength, handler);
-  pathLength_ = pathLength;
   if (!path_.get()) {
     handler.Crash(
         "FILE= is required unless STATUS='OLD' and unit is connected");
@@ -105,6 +72,10 @@ void OpenFile::Open(const char *path, std::size_t pathLength,
   }
   pending_.reset();
   knownSize_.reset();
+  if (position == Position::Append && !RawSeekToEnd()) {
+    handler.SignalErrno();
+  }
+  isTerminal_ = ::isatty(fd_) == 1;
 }
 
 void OpenFile::Predefine(int fd) {
@@ -118,25 +89,18 @@ void OpenFile::Predefine(int fd) {
   pending_.reset();
 }
 
-void OpenFile::Close(
-    const char *status, std::size_t statusLength, IoErrorHandler &handler) {
+void OpenFile::Close(CloseStatus status, IoErrorHandler &handler) {
   CriticalSection criticalSection{lock_};
   CheckOpen(handler);
   pending_.reset();
   knownSize_.reset();
-  static const char *statuses[]{"KEEP", "DELETE", nullptr};
-  switch (IdentifyValue(status, statusLength, statuses)) {
-  case 0: break;
-  case 1:
+  switch (status) {
+  case CloseStatus::Keep: break;
+  case CloseStatus::Delete:
     if (path_.get()) {
       ::unlink(path_.get());
     }
     break;
-  default:
-    if (status) {
-      handler.Crash(
-          "Invalid STATUS='%.*s'", status, static_cast<int>(statusLength));
-    }
   }
   path_.reset();
   if (fd_ >= 0) {
@@ -319,7 +283,7 @@ void OpenFile::WaitAll(IoErrorHandler &handler) {
   }
 }
 
-void OpenFile::CheckOpen(Terminator &terminator) {
+void OpenFile::CheckOpen(const Terminator &terminator) {
   RUNTIME_CHECK(terminator, fd_ >= 0);
 }
 
@@ -337,13 +301,27 @@ bool OpenFile::Seek(FileOffset at, IoErrorHandler &handler) {
 
 bool OpenFile::RawSeek(FileOffset at) {
 #ifdef _LARGEFILE64_SOURCE
-  return ::lseek64(fd_, at, SEEK_SET) == 0;
+  return ::lseek64(fd_, at, SEEK_SET) == at;
 #else
-  return ::lseek(fd_, at, SEEK_SET) == 0;
+  return ::lseek(fd_, at, SEEK_SET) == at;
 #endif
 }
 
-int OpenFile::PendingResult(Terminator &terminator, int iostat) {
+bool OpenFile::RawSeekToEnd() {
+#ifdef _LARGEFILE64_SOURCE
+  std::int64_t at{::lseek64(fd_, 0, SEEK_END)};
+#else
+  std::int64_t at{::lseek(fd_, 0, SEEK_END)};
+#endif
+  if (at >= 0) {
+    knownSize_ = at;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+int OpenFile::PendingResult(const Terminator &terminator, int iostat) {
   int id{nextId_++};
   pending_.reset(&New<Pending>{}(terminator, id, iostat, std::move(pending_)));
   return id;

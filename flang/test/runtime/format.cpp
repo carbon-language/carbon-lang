@@ -1,37 +1,43 @@
 // Tests basic FORMAT string traversal
 
-#include "../runtime/format.h"
+#include "../runtime/format-implementation.h"
 #include "../runtime/terminator.h"
 #include <cstdarg>
 #include <cstring>
 #include <iostream>
-#include <list>
 #include <string>
+#include <vector>
 
 using namespace Fortran::runtime;
 using namespace Fortran::runtime::io;
 using namespace std::literals::string_literals;
 
 static int failures{0};
-using Results = std::list<std::string>;
+using Results = std::vector<std::string>;
 
-// Test harness context for format control
-struct TestFormatContext : virtual public Terminator, public FormatContext {
+// A test harness context for testing FormatControl
+class TestFormatContext : public Terminator {
+public:
+  using CharType = char;
   TestFormatContext() : Terminator{"format.cpp", 1} {}
   bool Emit(const char *, std::size_t);
   bool Emit(const char16_t *, std::size_t);
   bool Emit(const char32_t *, std::size_t);
-  bool HandleSlash(int = 1);
+  bool AdvanceRecord(int = 1);
   bool HandleRelativePosition(std::int64_t);
   bool HandleAbsolutePosition(std::int64_t);
   void Report(const DataEdit &);
   void Check(Results &);
   Results results;
+  MutableModes &mutableModes() { return mutableModes_; }
+
+private:
+  MutableModes mutableModes_;
 };
 
 // Override the runtime's Crash() for testing purposes
 [[noreturn]] void Fortran::runtime::Terminator::Crash(
-    const char *message, ...) {
+    const char *message, ...) const {
   std::va_list ap;
   va_start(ap, message);
   char buffer[1000];
@@ -54,7 +60,7 @@ bool TestFormatContext::Emit(const char32_t *, std::size_t) {
   return false;
 }
 
-bool TestFormatContext::HandleSlash(int n) {
+bool TestFormatContext::AdvanceRecord(int n) {
   while (n-- > 0) {
     results.emplace_back("/");
   }
@@ -115,12 +121,11 @@ void TestFormatContext::Check(Results &expect) {
 
 static void Test(int n, const char *format, Results &&expect, int repeat = 1) {
   TestFormatContext context;
-  FormatControl control{context, format, std::strlen(format)};
+  FormatControl<TestFormatContext> control{
+      context, format, std::strlen(format)};
   try {
     for (int j{0}; j < n; ++j) {
-      DataEdit edit;
-      control.GetNext(context, edit, repeat);
-      context.Report(edit);
+      context.Report(control.GetNextDataEdit(context, repeat));
     }
     control.FinishOutput(context);
   } catch (const std::string &crash) {

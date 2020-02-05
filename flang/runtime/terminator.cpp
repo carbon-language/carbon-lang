@@ -12,13 +12,14 @@
 
 namespace Fortran::runtime {
 
-[[noreturn]] void Terminator::Crash(const char *message, ...) {
+[[noreturn]] void Terminator::Crash(const char *message, ...) const {
   va_list ap;
   va_start(ap, message);
   CrashArgs(message, ap);
 }
 
-[[noreturn]] void Terminator::CrashArgs(const char *message, va_list &ap) {
+[[noreturn]] void Terminator::CrashArgs(
+    const char *message, va_list &ap) const {
   std::fputs("\nfatal Fortran runtime error", stderr);
   if (sourceFileName_) {
     std::fprintf(stderr, "(%s", sourceFileName_);
@@ -31,23 +32,19 @@ namespace Fortran::runtime {
   std::vfprintf(stderr, message, ap);
   fputc('\n', stderr);
   va_end(ap);
+  io::FlushOutputOnCrash(*this);
   NotifyOtherImagesOfErrorTermination();
   std::abort();
 }
 
 [[noreturn]] void Terminator::CheckFailed(
-    const char *predicate, const char *file, int line) {
+    const char *predicate, const char *file, int line) const {
   Crash("Internal error: RUNTIME_CHECK(%s) failed at %s(%d)", predicate, file,
       line);
 }
 
-void NotifyOtherImagesOfNormalEnd() {
-  // TODO
-}
-void NotifyOtherImagesOfFailImageStatement() {
-  // TODO
-}
-void NotifyOtherImagesOfErrorTermination() {
-  // TODO
-}
+// TODO: These will be defined in the coarray runtime library
+void NotifyOtherImagesOfNormalEnd() {}
+void NotifyOtherImagesOfFailImageStatement() {}
+void NotifyOtherImagesOfErrorTermination() {}
 }

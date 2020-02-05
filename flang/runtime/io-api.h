@@ -51,8 +51,7 @@ constexpr std::size_t RecommendedInternalIoScratchAreaBytes(
 }
 
 // Internal I/O to/from character arrays &/or non-default-kind character
-// requires a descriptor, which must remain unchanged until the I/O
-// statement is complete.
+// requires a descriptor, which is copied.
 Cookie IONAME(BeginInternalArrayListOutput)(const Descriptor &,
     void **scratchArea = nullptr, std::size_t scratchBytes = 0,
     const char *sourceFile = nullptr, int sourceLine = 0);
@@ -172,8 +171,8 @@ Cookie IONAME(BeginInquireIoLength)(
 //     }
 //   }
 //   if (EndIoStatement(cookie) == FORTRAN_RUTIME_IOSTAT_END) goto label666;
-void IONAME(EnableHandlers)(Cookie, bool HasIostat = false, bool HasErr = false,
-    bool HasEnd = false, bool HasEor = false);
+void IONAME(EnableHandlers)(Cookie, bool hasIoStat = false, bool hasErr = false,
+    bool hasEnd = false, bool hasEor = false);
 
 // Control list options.  These return false on a error that the
 // Begin...() call has specified will be handled by the caller.
@@ -253,12 +252,10 @@ bool IONAME(SetStatus)(Cookie, const char *, std::size_t);
 // SetFile() may pass a CHARACTER argument of non-default kind,
 // and such filenames are converted to UTF-8 before being
 // presented to the filesystem.
-bool IONAME(SetFile)(Cookie, const char *, std::size_t, int kind = 1);
+bool IONAME(SetFile)(Cookie, const char *, std::size_t chars, int kind = 1);
 
-// GetNewUnit() must not be called until after all Set...()
-// connection list specifiers have been called after
-// BeginOpenNewUnit().
-bool IONAME(GetNewUnit)(Cookie, int &, int kind = 4);  // NEWUNIT=
+// Acquires the runtime-created unit number for OPEN(NEWUNIT=)
+bool IONAME(GetNewUnit)(Cookie, int &, int kind = 4);
 
 // READ(SIZE=), after all input items
 bool IONAME(GetSize)(Cookie, std::int64_t, int kind = 8);

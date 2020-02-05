@@ -21,16 +21,17 @@ namespace Fortran::runtime {
 class Terminator {
 public:
   Terminator() {}
+  Terminator(const Terminator &) = default;
   explicit Terminator(const char *sourceFileName, int sourceLine = 0)
     : sourceFileName_{sourceFileName}, sourceLine_{sourceLine} {}
   void SetLocation(const char *sourceFileName = nullptr, int sourceLine = 0) {
     sourceFileName_ = sourceFileName;
     sourceLine_ = sourceLine;
   }
-  [[noreturn]] void Crash(const char *message, ...);
-  [[noreturn]] void CrashArgs(const char *message, va_list &);
+  [[noreturn]] void Crash(const char *message, ...) const;
+  [[noreturn]] void CrashArgs(const char *message, va_list &) const;
   [[noreturn]] void CheckFailed(
-      const char *predicate, const char *file, int line);
+      const char *predicate, const char *file, int line) const;
 
 private:
   const char *sourceFileName_{nullptr};
@@ -47,4 +48,9 @@ void NotifyOtherImagesOfNormalEnd();
 void NotifyOtherImagesOfFailImageStatement();
 void NotifyOtherImagesOfErrorTermination();
 }
+
+namespace Fortran::runtime::io {
+void FlushOutputOnCrash(const Terminator &);
+}
+
 #endif  // FORTRAN_RUNTIME_TERMINATOR_H_

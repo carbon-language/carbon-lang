@@ -12,7 +12,7 @@
 namespace Fortran::runtime {
 
 OwningPtr<char> SaveDefaultCharacter(
-    const char *s, std::size_t length, Terminator &terminator) {
+    const char *s, std::size_t length, const Terminator &terminator) {
   if (s) {
     auto *p{static_cast<char *>(AllocateMemoryOrCrash(terminator, length + 1))};
     std::memcpy(p, s, length);

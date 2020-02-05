@@ -25,7 +25,7 @@ BigRadixFloatingPointNumber<PREC, LOG10RADIX>::BigRadixFloatingPointNumber(
   }
   int twoPow{x.UnbiasedExponent()};
   twoPow -= x.bits - 1;
-  if (!x.implicitMSB) {
+  if (!x.isImplicitMSB) {
     ++twoPow;
   }
   int lshift{x.exponentBits};
@@ -317,7 +317,7 @@ void BigRadixFloatingPointNumber<PREC,
 }
 
 template<int PREC>
-ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size,
+ConversionToDecimalResult ConvertToDecimal(char *buffer, std::size_t size,
     enum DecimalConversionFlags flags, int digits,
     enum FortranRounding rounding, BinaryFloatingPointNumber<PREC> x) {
   if (x.IsNaN()) {
@@ -355,34 +355,34 @@ ConversionToDecimalResult ConvertToDecimal(char *buffer, size_t size,
   }
 }
 
-template ConversionToDecimalResult ConvertToDecimal<8>(char *, size_t,
+template ConversionToDecimalResult ConvertToDecimal<8>(char *, std::size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
     BinaryFloatingPointNumber<8>);
-template ConversionToDecimalResult ConvertToDecimal<11>(char *, size_t,
+template ConversionToDecimalResult ConvertToDecimal<11>(char *, std::size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
     BinaryFloatingPointNumber<11>);
-template ConversionToDecimalResult ConvertToDecimal<24>(char *, size_t,
+template ConversionToDecimalResult ConvertToDecimal<24>(char *, std::size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
     BinaryFloatingPointNumber<24>);
-template ConversionToDecimalResult ConvertToDecimal<53>(char *, size_t,
+template ConversionToDecimalResult ConvertToDecimal<53>(char *, std::size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
     BinaryFloatingPointNumber<53>);
-template ConversionToDecimalResult ConvertToDecimal<64>(char *, size_t,
+template ConversionToDecimalResult ConvertToDecimal<64>(char *, std::size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
     BinaryFloatingPointNumber<64>);
-template ConversionToDecimalResult ConvertToDecimal<112>(char *, size_t,
+template ConversionToDecimalResult ConvertToDecimal<112>(char *, std::size_t,
     enum DecimalConversionFlags, int, enum FortranRounding,
     BinaryFloatingPointNumber<112>);
 
 extern "C" {
-ConversionToDecimalResult ConvertFloatToDecimal(char *buffer, size_t size,
+ConversionToDecimalResult ConvertFloatToDecimal(char *buffer, std::size_t size,
     enum DecimalConversionFlags flags, int digits,
     enum FortranRounding rounding, float x) {
   return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits,
       rounding, Fortran::decimal::BinaryFloatingPointNumber<24>(x));
 }
 
-ConversionToDecimalResult ConvertDoubleToDecimal(char *buffer, size_t size,
+ConversionToDecimalResult ConvertDoubleToDecimal(char *buffer, std::size_t size,
     enum DecimalConversionFlags flags, int digits,
     enum FortranRounding rounding, double x) {
   return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits,
@@ -390,8 +390,8 @@ ConversionToDecimalResult ConvertDoubleToDecimal(char *buffer, size_t size,
 }
 
 #if __x86_64__
-ConversionToDecimalResult ConvertLongDoubleToDecimal(char *buffer, size_t size,
-    enum DecimalConversionFlags flags, int digits,
+ConversionToDecimalResult ConvertLongDoubleToDecimal(char *buffer,
+    std::size_t size, enum DecimalConversionFlags flags, int digits,
     enum FortranRounding rounding, long double x) {
   return Fortran::decimal::ConvertToDecimal(buffer, size, flags, digits,
       rounding, Fortran::decimal::BinaryFloatingPointNumber<64>(x));
