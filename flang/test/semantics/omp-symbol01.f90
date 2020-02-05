@@ -45,21 +45,21 @@ program mm
  !DEF: /mm/c (Implicit) ObjectEntity REAL(4)
  c = 2.0
 !$omp parallel do  private(a,t,/c/) shared(c)
- !DEF: /mm/i (Implicit) ObjectEntity INTEGER(4)
+ !DEF: /mm/Block1/i (OmpPrivate) HostAssoc INTEGER(4)
  do i=1,10
   !DEF: /mm/Block1/a (OmpPrivate) HostAssoc REAL(4)
   !REF: /mm/b
-  !REF: /mm/i
+  !REF: /mm/Block1/i
   a = a+b(i)
   !DEF: /mm/Block1/t (OmpPrivate) HostAssoc TYPE(myty)
   !REF: /md/myty/a
-  !REF: /mm/i
+  !REF: /mm/Block1/i
   t%a = i
   !DEF: /mm/Block1/y (OmpPrivate) HostAssoc REAL(4)
   y = 0.
   !DEF: /mm/Block1/x (OmpPrivate) HostAssoc REAL(4)
   !REF: /mm/Block1/a
-  !REF: /mm/i
+  !REF: /mm/Block1/i
   !REF: /mm/Block1/y
   x = a+i+y
   !REF: /mm/c

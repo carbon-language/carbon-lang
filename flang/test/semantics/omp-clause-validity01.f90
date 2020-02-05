@@ -43,7 +43,9 @@
   !ERROR: COLLAPSE clause is not allowed on the PARALLEL directive
   !$omp parallel collapse(2)
   do i = 1, N
-     a = 3.14
+     do j = 1, N
+        a = 3.14
+     enddo
   enddo
   !$omp end parallel
 
@@ -143,7 +145,7 @@
   enddo
 
   !ERROR: The parameter of the ORDERED clause must be greater than or equal to the parameter of the COLLAPSE clause
-  !$omp do collapse(num) ordered(1+2+3+4)
+  !$omp do collapse(num-14) ordered(1)
   do i = 1, N
      do j = 1, N
         do k = 1, N
@@ -309,7 +311,9 @@
   !ERROR: NOGROUP clause is not allowed on the DO SIMD directive
   !$omp do simd ordered(2) NOGROUP
   do i = 1, N
-     a = 3.14
+     do j = 1, N
+        a = 3.14
+     enddo
   enddo
   !$omp end parallel
 

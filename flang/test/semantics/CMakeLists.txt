@@ -229,6 +229,7 @@ set(SYMBOL_TESTS
   omp-symbol05.f90
   omp-symbol06.f90
   omp-symbol07.f90
+  omp-symbol08.f90
   kinds01.f90
   kinds03.f90
   procinterface01.f90

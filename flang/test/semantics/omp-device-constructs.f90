@@ -149,7 +149,11 @@ program main
   !ERROR: At most one COLLAPSE clause can appear on the DISTRIBUTE directive
   !$omp distribute collapse(2) collapse(3)
   do i = 1, N
-     a = 3.14
+     do j = 1, N
+        do k = 1, N
+           a = 3.14
+        enddo
+     enddo
   enddo
   !$omp end distribute
   !$omp end target

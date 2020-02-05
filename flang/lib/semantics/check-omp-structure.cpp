@@ -13,49 +13,6 @@
 
 namespace Fortran::semantics {
 
-static constexpr OmpDirectiveSet parallelSet{
-    OmpDirective::DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL,
-    OmpDirective::PARALLEL_DO, OmpDirective::PARALLEL_DO_SIMD,
-    OmpDirective::PARALLEL_SECTIONS, OmpDirective::PARALLEL_WORKSHARE,
-    OmpDirective::TARGET_PARALLEL, OmpDirective::TARGET_PARALLEL_DO,
-    OmpDirective::TARGET_PARALLEL_DO_SIMD,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
-static constexpr OmpDirectiveSet doSet{OmpDirective::DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL_DO,
-    OmpDirective::PARALLEL_DO_SIMD, OmpDirective::DO, OmpDirective::DO_SIMD,
-    OmpDirective::TARGET_PARALLEL_DO, OmpDirective::TARGET_PARALLEL_DO_SIMD,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
-static constexpr OmpDirectiveSet simdSet{
-    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::DISTRIBUTE_SIMD,
-    OmpDirective::PARALLEL_DO_SIMD, OmpDirective::DO_SIMD, OmpDirective::SIMD,
-    OmpDirective::TARGET_PARALLEL_DO_SIMD,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_SIMD, OmpDirective::TARGET_SIMD,
-    OmpDirective::TASKLOOP_SIMD,
-    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    OmpDirective::TEAMS_DISTRIBUTE_SIMD};
-static constexpr OmpDirectiveSet doSimdSet{
-    OmpDirective::DISTRIBUTE_PARALLEL_DO_SIMD, OmpDirective::PARALLEL_DO_SIMD,
-    OmpDirective::DO_SIMD, OmpDirective::TARGET_PARALLEL_DO_SIMD,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    OmpDirective::TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD};
-static constexpr OmpDirectiveSet taskloopSet{
-    OmpDirective::TASKLOOP, OmpDirective::TASKLOOP_SIMD};
-static constexpr OmpDirectiveSet targetSet{OmpDirective::TARGET,
-    OmpDirective::TARGET_PARALLEL, OmpDirective::TARGET_PARALLEL_DO,
-    OmpDirective::TARGET_PARALLEL_DO_SIMD, OmpDirective::TARGET_SIMD,
-    OmpDirective::TARGET_TEAMS, OmpDirective::TARGET_TEAMS_DISTRIBUTE,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD,
-    OmpDirective::TARGET_TEAMS_DISTRIBUTE_SIMD};
-
 std::string OmpStructureChecker::ContextDirectiveAsFortran() {
   auto dir{EnumToString(GetContext().directive)};
   std::replace(dir.begin(), dir.end(), '_', ' ');
