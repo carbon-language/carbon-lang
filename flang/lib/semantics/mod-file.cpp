@@ -915,10 +915,10 @@ void SubprogramSymbolCollector::DoType(const DeclTypeSpec *type) {
       if (const DerivedTypeSpec * extends{typeSymbol.GetParentTypeSpec()}) {
         DoSymbol(extends->name(), extends->typeSymbol());
       }
-      for (const auto pair : derived->parameters()) {
+      for (const auto &pair : derived->parameters()) {
         DoParamValue(pair.second);
       }
-      for (const auto pair : *typeSymbol.scope()) {
+      for (const auto &pair : *typeSymbol.scope()) {
         const Symbol &comp{*pair.second};
         DoSymbol(comp);
       }

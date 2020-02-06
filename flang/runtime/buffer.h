@@ -66,7 +66,6 @@ public:
         } else {
           // [cde........ab] -> [abcde........]
           auto n{start_ + length_ - size_};  // 3 for cde
-          auto gap{size_ - length_};  // 13 - 5 = 8
           RUNTIME_CHECK(handler, length_ >= n);
           std::memmove(buffer_ + n, buffer_ + start_, length_ - n);  // cdeab
           LeftShiftBufferCircularly(buffer_, length_, n);  // abcde

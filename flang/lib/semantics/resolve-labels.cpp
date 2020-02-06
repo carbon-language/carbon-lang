@@ -824,7 +824,7 @@ void CheckBranchesIntoDoBody(const SourceStmtList &branches,
     if (HasScope(branchTarget.proxyForScope)) {
       const auto &fromPosition{branch.parserCharBlock};
       const auto &toPosition{branchTarget.parserCharBlock};
-      for (const auto body : loopBodies) {
+      for (const auto &body : loopBodies) {
         if (!InBody(fromPosition, body) && InBody(toPosition, body)) {
           context.Say(fromPosition, "branch into loop body from outside"_en_US)
               .Attach(body.first, "the loop branched into"_en_US);

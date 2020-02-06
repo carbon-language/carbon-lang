@@ -4099,7 +4099,7 @@ void DeclarationVisitor::SetSaveAttr(Symbol &symbol) {
 // Check types of common block objects, now that they are known.
 void DeclarationVisitor::CheckCommonBlocks() {
   // check for empty common blocks
-  for (const auto pair : currScope().commonBlocks()) {
+  for (const auto &pair : currScope().commonBlocks()) {
     const auto &symbol{*pair.second};
     if (symbol.get<CommonBlockDetails>().objects().empty() &&
         symbol.attrs().test(Attr::BIND_C)) {
