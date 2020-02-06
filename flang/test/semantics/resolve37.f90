@@ -1,3 +1,5 @@
+! C701 The type-param-value for a kind type parameter shall be a constant
+! expression.  This constraint looks like a mistake in the standard.
 integer, parameter :: k = 8
 real, parameter :: l = 8.0
 integer :: n = 2

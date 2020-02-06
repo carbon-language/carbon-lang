@@ -26,12 +26,12 @@ subroutine C946(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   real(kind=8) srcx8, srcx8_array(10)
   class(WithParam(4, 2)) src_a_4_2
   type(WithParam(8, 2)) src_a_8_2
-  class(WithParam(4, :)) src_a_4_def
-  class(WithParam(8, :)) src_a_8_def
+  class(WithParam(4, :)), allocatable :: src_a_4_def
+  class(WithParam(8, :)), allocatable :: src_a_8_def
   type(WithParamExtent(4, 2, 8, 3)) src_b_4_2_8_3
-  class(WithParamExtent(4, :, 8, 3)) src_b_4_def_8_3
+  class(WithParamExtent(4, :, 8, 3)), allocatable :: src_b_4_def_8_3
   type(WithParamExtent(8, 2, 8, 3)) src_b_8_2_8_3
-  class(WithParamExtent(8, :, 8, 3)) src_b_8_def_8_3
+  class(WithParamExtent(8, :, 8, 3)), allocatable :: src_b_8_def_8_3
   type(WithParamExtent2(k1=4, l1=5, k2=5, l2=6, l3=8 )) src_c_4_5_5_6_8_8
   class(WithParamExtent2(k1=4, l1=2, k2=5, l2=6, k3=5, l3=8)) src_c_4_2_5_6_5_8
   class(WithParamExtent2(k2=5, l2=6, k3=5, l3=8)) src_c_1_2_5_6_5_8

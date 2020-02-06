@@ -34,7 +34,7 @@ subroutine C933_a(b1, ca3, ca4, cp3, cp3mold, cp4, cp7, cp8, bsrc)
   type(SomeType(1, l1=3)), pointer :: cp9, cp10(:)
 
   type(B(*)) b1
-  type(B(:)) b2
+  type(B(:)), allocatable :: b2
   type(B(5)) b3
 
   type(SomeType(4, *, 8)) bsrc

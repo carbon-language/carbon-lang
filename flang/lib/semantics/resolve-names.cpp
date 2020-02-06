@@ -720,7 +720,7 @@ public:
   void Post(const parser::DimensionStmt::Declaration &);
   void Post(const parser::CodimensionDecl &);
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
-  void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
+  void Post(const parser::TypeDeclarationStmt &);
   void Post(const parser::IntegerTypeSpec &);
   void Post(const parser::IntrinsicTypeSpec::Real &);
   void Post(const parser::IntrinsicTypeSpec::Complex &);
@@ -2889,6 +2889,29 @@ bool DeclarationVisitor::CheckAccessibleComponent(
   return false;
 }
 
+void DeclarationVisitor::Post(const parser::TypeDeclarationStmt &) {
+  if (!GetAttrs().HasAny({Attr::POINTER, Attr::ALLOCATABLE})) {  // C702
+    if (const auto *typeSpec{GetDeclTypeSpec()}) {
+      if (typeSpec->category() == DeclTypeSpec::Character) {
+        if (typeSpec->characterTypeSpec().length().isDeferred()) {
+          Say("The type parameter LEN cannot be deferred without"
+              " the POINTER or ALLOCATABLE attribute"_err_en_US);
+        }
+      } else if (const DerivedTypeSpec * derivedSpec{typeSpec->AsDerived()}) {
+        for (const auto &pair : derivedSpec->parameters()) {
+          if (pair.second.isDeferred()) {
+            Say(currStmtSource().value(),
+                "The value of type parameter '%s' cannot be deferred"
+                " without the POINTER or ALLOCATABLE attribute"_err_en_US,
+                pair.first);
+          }
+        }
+      }
+    }
+  }
+  EndDecl();
+}
+
 void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   DeclareObjectEntity(name, Attrs{});
@@ -3522,7 +3545,7 @@ bool DeclarationVisitor::Pre(const parser::DataComponentDefStmt &x) {
   // so POINTER & ALLOCATABLE enable forward references to derived types.
   Walk(std::get<std::list<parser::ComponentAttrSpec>>(x.t));
   set_allowForwardReferenceToDerivedType(
-      GetAttrs().test(Attr::POINTER) || GetAttrs().test(Attr::ALLOCATABLE));
+      GetAttrs().HasAny({Attr::POINTER, Attr::ALLOCATABLE}));
   Walk(std::get<parser::DeclarationTypeSpec>(x.t));
   set_allowForwardReferenceToDerivedType(false);
   Walk(std::get<std::list<parser::ComponentDecl>>(x.t));
