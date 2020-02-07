@@ -457,7 +457,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
         continue;
 
       if (FuncsFile)
-        *FuncsFile << Func->getOneName().data() << "\n";
+        *FuncsFile << Func->getOneName().str() << '\n';
 
       if (LinkSectionsFile) {
         const char *Indent = "";
@@ -471,7 +471,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
               continue;
             Name = Name.substr(0, SlashPos);
           }
-          *LinkSectionsFile << Indent << ".text." << Name.data() << "\n";
+          *LinkSectionsFile << Indent << ".text." << Name.str() << '\n';
           Indent = " ";
         }
       }
