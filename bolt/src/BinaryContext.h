@@ -719,10 +719,6 @@ public:
   /// Print the global symbol table.
   void printGlobalSymbols(raw_ostream& OS) const;
 
-  /// Get the raw bytes for a given function.
-  ErrorOr<ArrayRef<uint8_t>>
-  getFunctionData(const BinaryFunction &Function) const;
-
   /// Register information about the given \p Section so we can look up
   /// sections by address.
   BinarySection &registerSection(SectionRef Section);

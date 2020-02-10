@@ -752,7 +752,7 @@ bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
   if (BF.getSize() == BF.getMaxSize())
     return true;
 
-  auto FunctionData = getFunctionData(BF);
+  auto FunctionData = BF.getData();
   assert(FunctionData && "cannot get function as data");
 
   uint64_t Offset = BF.getSize();
@@ -1645,27 +1645,6 @@ void BinaryContext::printInstruction(raw_ostream &OS,
   }
 }
 
-ErrorOr<ArrayRef<uint8_t>>
-BinaryContext::getFunctionData(const BinaryFunction &Function) const {
-  auto &Section = Function.getSection();
-  assert(Section.containsRange(Function.getAddress(), Function.getMaxSize()) &&
-         "wrong section for function");
-
-  if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
-    return std::make_error_code(std::errc::bad_address);
-  }
-
-  StringRef SectionContents = Section.getContents();
-
-  assert(SectionContents.size() == Section.getSize() &&
-         "section size mismatch");
-
-  // Function offset from the section start.
-  auto FunctionOffset = Function.getAddress() - Section.getAddress();
-  auto *Bytes = reinterpret_cast<const uint8_t *>(SectionContents.data());
-  return ArrayRef<uint8_t>(Bytes + FunctionOffset, Function.getMaxSize());
-}
-
 ErrorOr<BinarySection&> BinaryContext::getSectionForAddress(uint64_t Address) {
   auto SI = AddressToSection.upper_bound(Address);
   if (SI != AddressToSection.begin()) {
@@ -1895,7 +1874,7 @@ void BinaryContext::exitWithBugReport(StringRef Message,
             "sensitive contents being shared in this dump.\n";
   errs() << "\nOffending function: " << Function.getPrintName() << "\n\n";
   ScopedPrinter SP(errs());
-  SP.printBinaryBlock("Function contents", *getFunctionData(Function));
+  SP.printBinaryBlock("Function contents", *Function.getData());
   errs() << "\n";
   Function.dump();
   errs() << "ERROR: " << Message;

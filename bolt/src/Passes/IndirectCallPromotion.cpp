@@ -464,7 +464,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   }
 
   if (BaseReg == BC.MRI->getProgramCounter()) {
-    auto FunctionData = BC.getFunctionData(Function);
+    auto FunctionData = Function.getData();
     const uint64_t Address = Function.getAddress() + DataOffset.get();
     MCInst OrigJmp;
     uint64_t Size;

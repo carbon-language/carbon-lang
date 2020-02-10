@@ -905,10 +905,32 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   return Result;
 }
 
-void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
+ErrorOr<ArrayRef<uint8_t>> BinaryFunction::getData() const {
+  auto &Section = getSection();
+  assert(Section.containsRange(getAddress(), getMaxSize()) &&
+         "wrong section for function");
+
+  if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
+    return std::make_error_code(std::errc::bad_address);
+  }
+
+  StringRef SectionContents = Section.getContents();
+
+  assert(SectionContents.size() == Section.getSize() &&
+         "section size mismatch");
+
+  // Function offset from the section start.
+  auto Offset = getAddress() - Section.getAddress();
+  auto *Bytes = reinterpret_cast<const uint8_t *>(SectionContents.data());
+  return ArrayRef<uint8_t>(Bytes + Offset, getMaxSize());
+}
+
+void BinaryFunction::disassemble() {
   NamedRegionTimer T("disassemble", "Disassemble function", "buildfuncs",
                      "Build Binary Functions", opts::TimeBuild);
-
+  ErrorOr<ArrayRef<uint8_t>> ErrorOrFunctionData = getData();
+  assert(ErrorOrFunctionData && "Function data is not available");
+  ArrayRef<uint8_t> FunctionData = *ErrorOrFunctionData;
   assert(FunctionData.size() == getMaxSize() &&
          "function size does not match raw data size");
 

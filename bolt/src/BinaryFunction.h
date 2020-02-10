@@ -775,6 +775,9 @@ public:
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
   }
 
+  /// Returns the raw binary encoding of this function.
+  ErrorOr<ArrayRef<uint8_t>> getData() const;
+
   BinaryFunction &updateState(BinaryFunction::State State) {
     CurrentState = State;
     return *this;
@@ -1962,13 +1965,11 @@ public:
   /// it is probably another function.
   bool isSymbolValidInScope(const SymbolRef &Symbol, uint64_t SymbolSize) const;
 
-  /// Disassemble function from raw data \p FunctionData.
+  /// Disassemble function from raw data.
   /// If successful, this function will populate the list of instructions
   /// for this function together with offsets from the function start
   /// in the input. It will also populate Labels with destinations for
   /// local branches, and TakenBranches with [from, to] info.
-  ///
-  /// \p FunctionData is the set bytes representing the function body.
   ///
   /// The Function should be properly initialized before this function
   /// is called. I.e. function address and size should be set.
@@ -1977,7 +1978,7 @@ public:
   /// state to State:Disassembled.
   ///
   /// Returns false if disassembly failed.
-  void disassemble(ArrayRef<uint8_t> FunctionData);
+  void disassemble();
 
   /// Check that entry points have an associated instruction at their
   /// offsets after disassembly.

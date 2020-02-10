@@ -2458,7 +2458,7 @@ void RewriteInstance::disassembleFunctions() {
       continue;
     }
 
-    auto FunctionData = BC->getFunctionData(Function);
+    auto FunctionData = Function.getData();
     if (!FunctionData) {
       // When could it happen?
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
@@ -2477,7 +2477,7 @@ void RewriteInstance::disassembleFunctions() {
       reinterpret_cast<const uint8_t*>(InputFile->getData().data());
     Function.setFileOffset(FunctionData->begin() - FileBegin);
 
-    Function.disassemble(*FunctionData);
+    Function.disassemble();
 
     if (!Function.isSimple() && BC->HasRelocations) {
       BC->exitWithBugReport("function cannot be properly disassembled. "
