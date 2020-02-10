@@ -495,7 +495,7 @@ void CheckHelper::CheckDerivedType(
   }
   if (const DeclTypeSpec * parent{FindParentTypeSpec(symbol)}) {
     const DerivedTypeSpec *parentDerived{parent->AsDerived()};
-    if (!IsExtensibleType(parentDerived)) {
+    if (!IsExtensibleType(parentDerived)) {  // C705
       messages_.Say("The parent type is not extensible"_err_en_US);
     }
     if (!symbol.attrs().test(Attr::ABSTRACT) && parentDerived &&

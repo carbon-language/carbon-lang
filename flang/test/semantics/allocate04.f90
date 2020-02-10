@@ -47,7 +47,7 @@ subroutine C933_b(n)
   allocate(p3%y)
   !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is of abstract type
   allocate(p4(2)%y)
-  !WRONG allocate(Base:: u1) !C703
+  !WRONG allocate(Base:: u1)
 
   ! No error expected
   allocate(real:: u1, u2(2))

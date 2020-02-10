@@ -343,6 +343,7 @@ protected:
   }
   KindExpr GetKindParamExpr(
       TypeCategory, const std::optional<parser::KindSelector> &);
+  void CheckForAbstractType(const Symbol &typeSymbol);
 
 private:
   State state_;
@@ -731,7 +732,9 @@ public:
   void Post(const parser::LengthSelector &);
   bool Pre(const parser::KindParam &);
   bool Pre(const parser::DeclarationTypeSpec::Type &);
+  void Post(const parser::DeclarationTypeSpec::Type &);
   bool Pre(const parser::DeclarationTypeSpec::Class &);
+  void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   void Post(const parser::DerivedTypeSpec &);
   bool Pre(const parser::DerivedTypeDef &);
@@ -1590,9 +1593,7 @@ void DeclTypeSpecVisitor::Post(const parser::TypeSpec &typeSpec) {
     case DeclTypeSpec::Character: typeSpec.declTypeSpec = spec; break;
     case DeclTypeSpec::TypeDerived:
       if (const DerivedTypeSpec * derived{spec->AsDerived()}) {
-        if (derived->typeSymbol().attrs().test(Attr::ABSTRACT)) {
-          Say("ABSTRACT derived type may not be used here"_err_en_US);
-        }
+        CheckForAbstractType(derived->typeSymbol());  // C703
         typeSpec.declTypeSpec = spec;
       }
       break;
@@ -1611,6 +1612,12 @@ void DeclTypeSpecVisitor::Post(
 }
 void DeclTypeSpecVisitor::MakeNumericType(TypeCategory category, int kind) {
   SetDeclTypeSpec(context().MakeNumericType(category, kind));
+}
+
+void DeclTypeSpecVisitor::CheckForAbstractType(const Symbol &typeSymbol) {
+  if (typeSymbol.attrs().test(Attr::ABSTRACT)) {
+    Say("ABSTRACT derived type may not be used here"_err_en_US);
+  }
 }
 
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::ClassStar &) {
@@ -3287,9 +3294,27 @@ bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Type &) {
   return true;
 }
 
+void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Type &type) {
+  const parser::Name &derivedName{std::get<parser::Name>(type.derived.t)};
+  if (const Symbol * derivedSymbol{derivedName.symbol}) {
+    CheckForAbstractType(*derivedSymbol);  // C706
+  }
+}
+
 bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Class &) {
   SetDeclTypeSpecCategory(DeclTypeSpec::Category::ClassDerived);
   return true;
+}
+
+void DeclarationVisitor::Post(
+    const parser::DeclarationTypeSpec::Class &parsedClass) {
+  const auto &typeName{std::get<parser::Name>(parsedClass.derived.t)};
+  if (auto spec{ResolveDerivedType(typeName)};
+      spec && !IsExtensibleType(&*spec)) {  // C705
+    SayWithDecl(typeName, *typeName.symbol,
+        "Non-extensible derived type '%s' may not be used with CLASS"
+        " keyword"_err_en_US);
+  }
 }
 
 bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
@@ -4501,7 +4526,7 @@ ParamValue DeclarationVisitor::GetParamValue(
     const parser::TypeParamValue &x, common::TypeParamAttr attr) {
   return std::visit(
       common::visitors{
-          [=](const parser::ScalarIntExpr &x) {
+          [=](const parser::ScalarIntExpr &x) {  // C704
             return ParamValue{EvaluateIntExpr(x), attr};
           },
           [=](const parser::Star &) { return ParamValue::Assumed(attr); },

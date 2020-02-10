@@ -1,8 +1,14 @@
 subroutine s1()
   ! C701 (R701) The type-param-value for a kind type parameter shall be a
   ! constant expression.
+  !
   ! C702 (R701) A colon shall not be used as a type-param-value except in the 
   ! declaration of an entity that has the POINTER or ALLOCATABLE attribute.
+  !
+  ! C704 (R703) In a declaration-type-spec, every type-param-value that is 
+  ! not a colon or an asterisk shall be a specification expression.
+  !   Section 10.1.11 defines specification expressions
+  !
   integer, parameter :: constVal = 1
   integer :: nonConstVal = 1
 !ERROR: Invalid specification expression: reference to local entity 'nonconstval'
@@ -19,6 +25,9 @@ subroutine s1()
   character(:) :: colonString2
   !OK because of the allocatable attribute
   character(:), allocatable :: colonString3
+
+!ERROR: Must have INTEGER type, but is REAL(4)
+  character(3.5) :: badParamValue
 
   type derived(typeKind, typeLen)
     integer, kind :: typeKind

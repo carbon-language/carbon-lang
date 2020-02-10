@@ -114,6 +114,7 @@ module m7
   end type
 contains
   subroutine s(x)
+    !ERROR: Non-extensible derived type 't' may not be used with CLASS keyword
     class(t) :: x
   end
 end

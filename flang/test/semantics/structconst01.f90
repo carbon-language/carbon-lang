@@ -3,6 +3,8 @@
 ! errors meant to be caught by expression semantic analysis, as well as
 ! acceptable use cases.
 ! Type parameters are used here to make the parses unambiguous.
+! C796 (R756) The derived-type-spec shall not specify an abstract type (7.5.7).
+!   This refers to a derived-type-spec used in a structure constructor
 
 module module1
   type :: type1(j)
@@ -29,7 +31,7 @@ module module1
     type(type2(0,0)), intent(in) :: x
   end subroutine type2arg
   subroutine abstractarg(x)
-    type(abstract(0)), intent(in) :: x
+    class(abstract(0)), intent(in) :: x
   end subroutine abstractarg
   subroutine errors
     call type1arg(type1(0)())
