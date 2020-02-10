@@ -41,8 +41,7 @@ public:
   FileOffset FrameAt() const { return fileOffset_ + frame_; }
   char *Frame() const { return buffer_ + start_ + frame_; }
   std::size_t FrameLength() const {
-    return std::min(
-        static_cast<std::size_t>(length_ - frame_), size_ - (start_ + frame_));
+    return std::min<std::size_t>(length_ - frame_, size_ - (start_ + frame_));
   }
 
   // Returns a short frame at a non-fatal EOF.  Can return a long frame as well.
