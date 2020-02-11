@@ -280,8 +280,7 @@ PrintCFG("print-cfg",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-PrintDisasm("print-disasm",
+cl::opt<bool> PrintDisasm("print-disasm",
   cl::desc("print function after disassembly"),
   cl::ZeroOrMore,
   cl::Hidden,

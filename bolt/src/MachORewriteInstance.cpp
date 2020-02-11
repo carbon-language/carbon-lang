@@ -19,6 +19,7 @@ namespace opts {
 
 using namespace llvm;
 extern cl::opt<bool> PrintSections;
+extern cl::opt<bool> PrintDisasm;
 
 } // namespace opts
 
@@ -57,8 +58,76 @@ void MachORewriteInstance::readSpecialSections() {
   }
 }
 
+void MachORewriteInstance::discoverFileObjects() {
+  std::vector<SymbolRef> FunctionSymbols;
+  for (const SymbolRef &S : InputFile->symbols()) {
+    SymbolRef::Type Type = cantFail(S.getType(), "cannot get symbol type");
+    if (Type == SymbolRef::ST_Function)
+      FunctionSymbols.push_back(S);
+  }
+  if (FunctionSymbols.empty())
+    return;
+  std::stable_sort(FunctionSymbols.begin(), FunctionSymbols.end(),
+                   [](const SymbolRef &LHS, const SymbolRef &RHS) {
+                     return LHS.getValue() < RHS.getValue();
+                   });
+  for (size_t Index = 0; Index < FunctionSymbols.size(); ++Index) {
+    const uint64_t Address = FunctionSymbols[Index].getValue();
+    auto Section = BC->getSectionForAddress(Address);
+    // TODO: It happens for some symbols (e.g. __mh_execute_header).
+    // Add proper logic to handle them correctly.
+    if (!Section) {
+      errs() << "BOLT-WARNING: no section found for address " << Address
+             << "\n";
+      continue;
+    }
+    StringRef SymbolName =
+        cantFail(FunctionSymbols[Index].getName(), "cannot get symbol name");
+    section_iterator S = cantFail(FunctionSymbols[Index].getSection());
+    uint64_t EndAddress = S->getAddress() + S->getSize();
+    if (Index + 1 < FunctionSymbols.size() &&
+        S == cantFail(FunctionSymbols[Index + 1].getSection()))
+      EndAddress = FunctionSymbols[Index + 1].getValue();
+    const uint64_t SymbolSize = EndAddress - Address;
+    // TODO: Add proper logic to handle nonunique names.
+    assert(BC->getBinaryFunctions().find(Address) ==
+           BC->getBinaryFunctions().end());
+    BC->createBinaryFunction(SymbolName.str(), *Section, Address, SymbolSize,
+                             /* IsSimple */ true);
+  }
+}
+
+void MachORewriteInstance::disassembleFunctions() {
+  for (auto &BFI : BC->getBinaryFunctions()) {
+    BinaryFunction &Function = BFI.second;
+    auto FunctionData = Function.getData();
+    if (!FunctionData) {
+      errs() << "BOLT-ERROR: corresponding section is non-executable or "
+             << "empty for function " << Function << '\n';
+      continue;
+    }
+
+    // Treat zero-sized functions as non-simple ones.
+    if (Function.getSize() == 0) {
+      Function.setSimple(false);
+      continue;
+    }
+
+    // Offset of the function in the file.
+    const auto *FileBegin =
+        reinterpret_cast<const uint8_t *>(InputFile->getData().data());
+    Function.setFileOffset(FunctionData->begin() - FileBegin);
+
+    Function.disassemble();
+    if (opts::PrintDisasm)
+      Function.print(outs(), "after disassembly", true);
+  }
+}
+
 void MachORewriteInstance::run() {
   readSpecialSections();
+  discoverFileObjects();
+  disassembleFunctions();
 }
 
 MachORewriteInstance::~MachORewriteInstance() {}

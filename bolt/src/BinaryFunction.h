@@ -648,6 +648,7 @@ private:
   BinaryFunction& operator=(const BinaryFunction &) = delete;
   BinaryFunction(const BinaryFunction &) = delete;
 
+  friend class MachORewriteInstance;
   friend class RewriteInstance;
   friend class BinaryContext;
 

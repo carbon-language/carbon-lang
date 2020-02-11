@@ -28,6 +28,8 @@ class MachORewriteInstance {
   std::unique_ptr<BinaryContext> BC;
 
   void readSpecialSections();
+  void discoverFileObjects();
+  void disassembleFunctions();
 
 public:
   MachORewriteInstance(object::MachOObjectFile *InputFile, DataReader &DR);
