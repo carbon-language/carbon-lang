@@ -423,6 +423,20 @@ index 14da5af0206..27b02437b98 100644
    /// Register any EH frame sections that have been loaded but not previously
    /// registered with the memory manager.  Note, RuntimeDyld is responsible
    /// for identifying the EH frame and calling the memory manager with the
+diff --git a/include/llvm/MC/MCAsmBackend.h b/include/llvm/MC/MCAsmBackend.h
+index a8a5850899e..d8fc72dcbaf 100644
+--- a/include/llvm/MC/MCAsmBackend.h
++++ b/include/llvm/MC/MCAsmBackend.h
+@@ -49,6 +49,9 @@ public:
+   MCAsmBackend &operator=(const MCAsmBackend &) = delete;
+   virtual ~MCAsmBackend();
+ 
++  virtual void alignBranchesBegin(MCObjectStreamer &OS, const MCInst &Inst) {}
++  virtual void alignBranchesEnd(MCObjectStreamer &OS, const MCInst &Inst) {}
++
+   /// lifetime management
+   virtual void reset() {}
+ 
 diff --git a/include/llvm/MC/MCAsmInfo.h b/include/llvm/MC/MCAsmInfo.h
 index c538c46fc07..7b168971a3d 100644
 --- a/include/llvm/MC/MCAsmInfo.h
@@ -446,6 +460,19 @@ index c538c46fc07..7b168971a3d 100644
    const char *getGlobalDirective() const { return GlobalDirective; }
  
    bool doesSetDirectiveSuppressReloc() const {
+diff --git a/include/llvm/MC/MCAssembler.h b/include/llvm/MC/MCAssembler.h
+index b91b0441402..385fad92c76 100644
+--- a/include/llvm/MC/MCAssembler.h
++++ b/include/llvm/MC/MCAssembler.h
+@@ -188,6 +188,8 @@ private:
+ 
+   bool relaxInstruction(MCAsmLayout &Layout, MCRelaxableFragment &IF);
+ 
++  bool relaxBoundaryAlign(MCAsmLayout &Layout, MCBoundaryAlignFragment &BF);
++
+   bool relaxPaddingFragment(MCAsmLayout &Layout, MCPaddingFragment &PF);
+ 
+   bool relaxLEB(MCAsmLayout &Layout, MCLEBFragment &IF);
 diff --git a/include/llvm/MC/MCContext.h b/include/llvm/MC/MCContext.h
 index c110ffd3a77..a29f32091ca 100644
 --- a/include/llvm/MC/MCContext.h
@@ -741,10 +768,18 @@ index fcbbe650d26..25847aa2946 100644
  };
  
 diff --git a/include/llvm/MC/MCFragment.h b/include/llvm/MC/MCFragment.h
-index 38c365538e3..dec295707e9 100644
+index 38c365538e3..685a8e1f8d7 100644
 --- a/include/llvm/MC/MCFragment.h
 +++ b/include/llvm/MC/MCFragment.h
-@@ -34,6 +34,7 @@ class MCFragment : public ilist_node_with_parent<MCFragment, MCSection> {
+@@ -17,6 +17,7 @@
+ #include "llvm/ADT/ilist_node.h"
+ #include "llvm/MC/MCFixup.h"
+ #include "llvm/MC/MCInst.h"
++#include "llvm/Support/Alignment.h"
+ #include "llvm/Support/Casting.h"
+ #include "llvm/Support/SMLoc.h"
+ #include <cstdint>
+@@ -34,6 +35,7 @@ class MCFragment : public ilist_node_with_parent<MCFragment, MCSection> {
  public:
    enum FragmentType : uint8_t {
      FT_Align,
@@ -752,7 +787,15 @@ index 38c365538e3..dec295707e9 100644
      FT_Data,
      FT_CompactEncodedInst,
      FT_Fill,
-@@ -325,6 +326,46 @@ public:
+@@ -42,6 +44,7 @@ public:
+     FT_Dwarf,
+     FT_DwarfFrame,
+     FT_LEB,
++    FT_BoundaryAlign,
+     FT_Padding,
+     FT_SymbolId,
+     FT_CVInlineLines,
+@@ -325,6 +328,46 @@ public:
    }
  };
  
@@ -799,6 +842,56 @@ index 38c365538e3..dec295707e9 100644
  /// Fragment for adding required padding.
  /// This fragment is always inserted before an instruction, and holds that
  /// instruction as context information (as well as a mask of kinds) for
+@@ -661,6 +704,49 @@ public:
+   }
+ };
+ 
++class MCBoundaryAlignFragment : public MCFragment {
++private:
++  /// The size of the MCBoundaryAlignFragment.
++  /// Note: The size is lazily set during relaxation, and is not meaningful
++  /// before that.
++  uint64_t Size = 0;
++  /// The alignment requirement of the branch to be aligned.
++  Align AlignBoundary;
++  /// Flag to indicate whether the branch is fused.
++  bool Fused : 1;
++  /// Flag to indicate whether NOPs should be emitted.
++  bool EmitNops : 1;
++
++public:
++  MCBoundaryAlignFragment(Align AlignBoundary, bool Fused = false,
++                          bool EmitNops = false, MCSection *Sec = nullptr)
++      : MCFragment(FT_BoundaryAlign, false, 0, Sec),
++        AlignBoundary(AlignBoundary), Fused(Fused), EmitNops(EmitNops) {}
++
++  /// \name Accessors
++  /// @{
++
++  Align getAlignment() const { return AlignBoundary; }
++
++  uint64_t getSize() const { return Size; }
++
++  bool canEmitNops() const { return EmitNops; }
++
++  bool isFused() const { return Fused; }
++
++  void setFused(bool Value) { Fused = Value; }
++
++  void setEmitNops(bool Value) { EmitNops = Value; }
++
++  void setSize(uint64_t Value) { Size = Value; }
++
++  /// @}
++  //
++
++  static bool classof(const MCFragment *F) {
++    return F->getKind() == MCFragment::FT_BoundaryAlign;
++  }
++};
+ } // end namespace llvm
+ 
+ #endif // LLVM_MC_MCFRAGMENT_H
 diff --git a/include/llvm/MC/MCInst.h b/include/llvm/MC/MCInst.h
 index db28fd0fd6d..fbe315b4bd0 100644
 --- a/include/llvm/MC/MCInst.h
@@ -1153,6 +1246,440 @@ index d49acf3a38a..5929a22e1f3 100644
    bool isSectionVirtual(DataRefImpl Sec) const override;
    bool isSectionBitcode(DataRefImpl Sec) const override;
    relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
+diff --git a/include/llvm/Support/Alignment.h b/include/llvm/Support/Alignment.h
+new file mode 100644
+index 00000000000..05cf82f0def
+--- /dev/null
++++ b/include/llvm/Support/Alignment.h
+@@ -0,0 +1,407 @@
++//===-- llvm/Support/Alignment.h - Useful alignment functions ---*- C++ -*-===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++//
++// This file contains types to represent alignments.
++// They are instrumented to guarantee some invariants are preserved and prevent
++// invalid manipulations.
++//
++// - Align represents an alignment in bytes, it is always set and always a valid
++// power of two, its minimum value is 1 which means no alignment requirements.
++//
++// - MaybeAlign is an optional type, it may be undefined or set. When it's set
++// you can get the underlying Align type by using the getValue() method.
++//
++//===----------------------------------------------------------------------===//
++
++#ifndef LLVM_SUPPORT_ALIGNMENT_H_
++#define LLVM_SUPPORT_ALIGNMENT_H_
++
++#include "llvm/ADT/Optional.h"
++#include "llvm/Support/Compiler.h"
++#include "llvm/Support/MathExtras.h"
++#include <cassert>
++#include <limits>
++
++namespace llvm {
++
++#define ALIGN_CHECK_ISPOSITIVE(decl)                                           \
++  assert(decl > 0 && (#decl " should be defined"))
++#define ALIGN_CHECK_ISSET(decl)                                                \
++  assert(decl.hasValue() && (#decl " should be defined"))
++
++/// This struct is a compact representation of a valid (non-zero power of two)
++/// alignment.
++/// It is suitable for use as static global constants.
++struct Align {
++private:
++  uint8_t ShiftValue = 0; /// The log2 of the required alignment.
++                          /// ShiftValue is less than 64 by construction.
++
++  friend struct MaybeAlign;
++  friend unsigned Log2(Align);
++  friend bool operator==(Align Lhs, Align Rhs);
++  friend bool operator!=(Align Lhs, Align Rhs);
++  friend bool operator<=(Align Lhs, Align Rhs);
++  friend bool operator>=(Align Lhs, Align Rhs);
++  friend bool operator<(Align Lhs, Align Rhs);
++  friend bool operator>(Align Lhs, Align Rhs);
++  friend unsigned encode(struct MaybeAlign A);
++  friend struct MaybeAlign decodeMaybeAlign(unsigned Value);
++
++  /// A trivial type to allow construction of constexpr Align.
++  /// This is currently needed to workaround a bug in GCC 5.3 which prevents
++  /// definition of constexpr assign operators.
++  /// https://stackoverflow.com/questions/46756288/explicitly-defaulted-function-cannot-be-declared-as-constexpr-because-the-implic
++  /// FIXME: Remove this, make all assign operators constexpr and introduce user
++  /// defined literals when we don't have to support GCC 5.3 anymore.
++  /// https://llvm.org/docs/GettingStarted.html#getting-a-modern-host-c-toolchain
++  struct LogValue {
++    uint8_t Log;
++  };
++
++public:
++  /// Default is byte-aligned.
++  constexpr Align() = default;
++  /// Do not perform checks in case of copy/move construct/assign, because the
++  /// checks have been performed when building `Other`.
++  constexpr Align(const Align &Other) = default;
++  constexpr Align(Align &&Other) = default;
++  Align &operator=(const Align &Other) = default;
++  Align &operator=(Align &&Other) = default;
++
++  explicit Align(uint64_t Value) {
++    assert(Value > 0 && "Value must not be 0");
++    assert(llvm::isPowerOf2_64(Value) && "Alignment is not a power of 2");
++    ShiftValue = Log2_64(Value);
++    assert(ShiftValue < 64 && "Broken invariant");
++  }
++
++  /// This is a hole in the type system and should not be abused.
++  /// Needed to interact with C for instance.
++  uint64_t value() const { return uint64_t(1) << ShiftValue; }
++
++  /// Returns a default constructed Align which corresponds to no alignment.
++  /// It was decided to deprecate Align::None because it's too close to
++  /// llvm::None which can be used to initialize `MaybeAlign`.
++  /// MaybeAlign = llvm::None means unspecified alignment,
++  /// Align = Align::None() means alignment of one byte.
++  LLVM_ATTRIBUTE_DEPRECATED(constexpr static const Align None(),
++                            "Use Align() or Align(1) instead") {
++    return Align();
++  }
++
++  /// Allow constructions of constexpr Align.
++  template <size_t kValue> constexpr static LogValue Constant() {
++    return LogValue{static_cast<uint8_t>(CTLog2<kValue>())};
++  }
++
++  /// Allow constructions of constexpr Align from types.
++  /// Compile time equivalent to Align(alignof(T)).
++  template <typename T> constexpr static LogValue Of() {
++    return Constant<std::alignment_of<T>::value>();
++  }
++
++  /// Constexpr constructor from LogValue type.
++  constexpr Align(LogValue CA) : ShiftValue(CA.Log) {}
++};
++
++/// Treats the value 0 as a 1, so Align is always at least 1.
++inline Align assumeAligned(uint64_t Value) {
++  return Value ? Align(Value) : Align();
++}
++
++/// This struct is a compact representation of a valid (power of two) or
++/// undefined (0) alignment.
++struct MaybeAlign : public llvm::Optional<Align> {
++private:
++  using UP = llvm::Optional<Align>;
++
++public:
++  /// Default is undefined.
++  MaybeAlign() = default;
++  /// Do not perform checks in case of copy/move construct/assign, because the
++  /// checks have been performed when building `Other`.
++  MaybeAlign(const MaybeAlign &Other) = default;
++  MaybeAlign &operator=(const MaybeAlign &Other) = default;
++  MaybeAlign(MaybeAlign &&Other) = default;
++  MaybeAlign &operator=(MaybeAlign &&Other) = default;
++
++  /// Use llvm::Optional<Align> constructor.
++  using UP::UP;
++
++  explicit MaybeAlign(uint64_t Value) {
++    assert((Value == 0 || llvm::isPowerOf2_64(Value)) &&
++           "Alignment is neither 0 nor a power of 2");
++    if (Value)
++      emplace(Value);
++  }
++
++  /// For convenience, returns a valid alignment or 1 if undefined.
++  Align valueOrOne() const { return hasValue() ? getValue() : Align(); }
++};
++
++/// Checks that SizeInBytes is a multiple of the alignment.
++inline bool isAligned(Align Lhs, uint64_t SizeInBytes) {
++  return SizeInBytes % Lhs.value() == 0;
++}
++
++/// Checks that SizeInBytes is a multiple of the alignment.
++/// Returns false if the alignment is undefined.
++inline bool isAligned(MaybeAlign Lhs, uint64_t SizeInBytes) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return SizeInBytes % (*Lhs).value() == 0;
++}
++
++/// Checks that Addr is a multiple of the alignment.
++inline bool isAddrAligned(Align Lhs, const void *Addr) {
++  return isAligned(Lhs, reinterpret_cast<uintptr_t>(Addr));
++}
++
++/// Returns a multiple of A needed to store `Size` bytes.
++inline uint64_t alignTo(uint64_t Size, Align A) {
++  const uint64_t value = A.value();
++  // The following line is equivalent to `(Size + value - 1) / value * value`.
++
++  // The division followed by a multiplication can be thought of as a right
++  // shift followed by a left shift which zeros out the extra bits produced in
++  // the bump; `~(value - 1)` is a mask where all those bits being zeroed out
++  // are just zero.
++
++  // Most compilers can generate this code but the pattern may be missed when
++  // multiple functions gets inlined.
++  return (Size + value - 1) & ~(value - 1);
++}
++
++/// Returns a multiple of A needed to store `Size` bytes.
++/// Returns `Size` if current alignment is undefined.
++inline uint64_t alignTo(uint64_t Size, MaybeAlign A) {
++  return A ? alignTo(Size, A.getValue()) : Size;
++}
++
++/// Aligns `Addr` to `Alignment` bytes, rounding up.
++inline uintptr_t alignAddr(const void *Addr, Align Alignment) {
++  uintptr_t ArithAddr = reinterpret_cast<uintptr_t>(Addr);
++  assert(static_cast<uintptr_t>(ArithAddr + Alignment.value() - 1) >=
++             ArithAddr &&
++         "Overflow");
++  return alignTo(ArithAddr, Alignment);
++}
++
++/// Returns the offset to the next integer (mod 2**64) that is greater than
++/// or equal to \p Value and is a multiple of \p Align.
++inline uint64_t offsetToAlignment(uint64_t Value, Align Alignment) {
++  return alignTo(Value, Alignment) - Value;
++}
++
++/// Returns the necessary adjustment for aligning `Addr` to `Alignment`
++/// bytes, rounding up.
++inline uint64_t offsetToAlignedAddr(const void *Addr, Align Alignment) {
++  return offsetToAlignment(reinterpret_cast<uintptr_t>(Addr), Alignment);
++}
++
++/// Returns the log2 of the alignment.
++inline unsigned Log2(Align A) { return A.ShiftValue; }
++
++/// Returns the log2 of the alignment.
++/// \pre A must be defined.
++inline unsigned Log2(MaybeAlign A) {
++  ALIGN_CHECK_ISSET(A);
++  return Log2(A.getValue());
++}
++
++/// Returns the alignment that satisfies both alignments.
++/// Same semantic as MinAlign.
++inline Align commonAlignment(Align A, Align B) { return std::min(A, B); }
++
++/// Returns the alignment that satisfies both alignments.
++/// Same semantic as MinAlign.
++inline Align commonAlignment(Align A, uint64_t Offset) {
++  return Align(MinAlign(A.value(), Offset));
++}
++
++/// Returns the alignment that satisfies both alignments.
++/// Same semantic as MinAlign.
++inline MaybeAlign commonAlignment(MaybeAlign A, MaybeAlign B) {
++  return A && B ? commonAlignment(*A, *B) : A ? A : B;
++}
++
++/// Returns the alignment that satisfies both alignments.
++/// Same semantic as MinAlign.
++inline MaybeAlign commonAlignment(MaybeAlign A, uint64_t Offset) {
++  return MaybeAlign(MinAlign((*A).value(), Offset));
++}
++
++/// Returns a representation of the alignment that encodes undefined as 0.
++inline unsigned encode(MaybeAlign A) { return A ? A->ShiftValue + 1 : 0; }
++
++/// Dual operation of the encode function above.
++inline MaybeAlign decodeMaybeAlign(unsigned Value) {
++  if (Value == 0)
++    return MaybeAlign();
++  Align Out;
++  Out.ShiftValue = Value - 1;
++  return Out;
++}
++
++/// Returns a representation of the alignment, the encoded value is positive by
++/// definition.
++inline unsigned encode(Align A) { return encode(MaybeAlign(A)); }
++
++/// Comparisons between Align and scalars. Rhs must be positive.
++inline bool operator==(Align Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return Lhs.value() == Rhs;
++}
++inline bool operator!=(Align Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return Lhs.value() != Rhs;
++}
++inline bool operator<=(Align Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return Lhs.value() <= Rhs;
++}
++inline bool operator>=(Align Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return Lhs.value() >= Rhs;
++}
++inline bool operator<(Align Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return Lhs.value() < Rhs;
++}
++inline bool operator>(Align Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return Lhs.value() > Rhs;
++}
++
++/// Comparisons between MaybeAlign and scalars.
++inline bool operator==(MaybeAlign Lhs, uint64_t Rhs) {
++  return Lhs ? (*Lhs).value() == Rhs : Rhs == 0;
++}
++inline bool operator!=(MaybeAlign Lhs, uint64_t Rhs) {
++  return Lhs ? (*Lhs).value() != Rhs : Rhs != 0;
++}
++inline bool operator<=(MaybeAlign Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return (*Lhs).value() <= Rhs;
++}
++inline bool operator>=(MaybeAlign Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return (*Lhs).value() >= Rhs;
++}
++inline bool operator<(MaybeAlign Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return (*Lhs).value() < Rhs;
++}
++inline bool operator>(MaybeAlign Lhs, uint64_t Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  ALIGN_CHECK_ISPOSITIVE(Rhs);
++  return (*Lhs).value() > Rhs;
++}
++
++/// Comparisons operators between Align.
++inline bool operator==(Align Lhs, Align Rhs) {
++  return Lhs.ShiftValue == Rhs.ShiftValue;
++}
++inline bool operator!=(Align Lhs, Align Rhs) {
++  return Lhs.ShiftValue != Rhs.ShiftValue;
++}
++inline bool operator<=(Align Lhs, Align Rhs) {
++  return Lhs.ShiftValue <= Rhs.ShiftValue;
++}
++inline bool operator>=(Align Lhs, Align Rhs) {
++  return Lhs.ShiftValue >= Rhs.ShiftValue;
++}
++inline bool operator<(Align Lhs, Align Rhs) {
++  return Lhs.ShiftValue < Rhs.ShiftValue;
++}
++inline bool operator>(Align Lhs, Align Rhs) {
++  return Lhs.ShiftValue > Rhs.ShiftValue;
++}
++
++/// Comparisons operators between Align and MaybeAlign.
++inline bool operator==(Align Lhs, MaybeAlign Rhs) {
++  ALIGN_CHECK_ISSET(Rhs);
++  return Lhs.value() == (*Rhs).value();
++}
++inline bool operator!=(Align Lhs, MaybeAlign Rhs) {
++  ALIGN_CHECK_ISSET(Rhs);
++  return Lhs.value() != (*Rhs).value();
++}
++inline bool operator<=(Align Lhs, MaybeAlign Rhs) {
++  ALIGN_CHECK_ISSET(Rhs);
++  return Lhs.value() <= (*Rhs).value();
++}
++inline bool operator>=(Align Lhs, MaybeAlign Rhs) {
++  ALIGN_CHECK_ISSET(Rhs);
++  return Lhs.value() >= (*Rhs).value();
++}
++inline bool operator<(Align Lhs, MaybeAlign Rhs) {
++  ALIGN_CHECK_ISSET(Rhs);
++  return Lhs.value() < (*Rhs).value();
++}
++inline bool operator>(Align Lhs, MaybeAlign Rhs) {
++  ALIGN_CHECK_ISSET(Rhs);
++  return Lhs.value() > (*Rhs).value();
++}
++
++/// Comparisons operators between MaybeAlign and Align.
++inline bool operator==(MaybeAlign Lhs, Align Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return Lhs && (*Lhs).value() == Rhs.value();
++}
++inline bool operator!=(MaybeAlign Lhs, Align Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return Lhs && (*Lhs).value() != Rhs.value();
++}
++inline bool operator<=(MaybeAlign Lhs, Align Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return Lhs && (*Lhs).value() <= Rhs.value();
++}
++inline bool operator>=(MaybeAlign Lhs, Align Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return Lhs && (*Lhs).value() >= Rhs.value();
++}
++inline bool operator<(MaybeAlign Lhs, Align Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return Lhs && (*Lhs).value() < Rhs.value();
++}
++inline bool operator>(MaybeAlign Lhs, Align Rhs) {
++  ALIGN_CHECK_ISSET(Lhs);
++  return Lhs && (*Lhs).value() > Rhs.value();
++}
++
++inline Align operator/(Align Lhs, uint64_t Divisor) {
++  assert(llvm::isPowerOf2_64(Divisor) &&
++         "Divisor must be positive and a power of 2");
++  assert(Lhs != 1 && "Can't halve byte alignment");
++  return Align(Lhs.value() / Divisor);
++}
++
++inline MaybeAlign operator/(MaybeAlign Lhs, uint64_t Divisor) {
++  assert(llvm::isPowerOf2_64(Divisor) &&
++         "Divisor must be positive and a power of 2");
++  return Lhs ? Lhs.getValue() / Divisor : MaybeAlign();
++}
++
++inline Align max(MaybeAlign Lhs, Align Rhs) {
++  return Lhs && *Lhs > Rhs ? *Lhs : Rhs;
++}
++
++inline Align max(Align Lhs, MaybeAlign Rhs) {
++  return Rhs && *Rhs > Lhs ? *Rhs : Lhs;
++}
++
++#undef ALIGN_CHECK_ISPOSITIVE
++#undef ALIGN_CHECK_ISSET
++
++} // namespace llvm
++
++#endif // LLVM_SUPPORT_ALIGNMENT_H_
+diff --git a/include/llvm/Support/MathExtras.h b/include/llvm/Support/MathExtras.h
+index a37a16784e2..b82f82544c0 100644
+--- a/include/llvm/Support/MathExtras.h
++++ b/include/llvm/Support/MathExtras.h
+@@ -516,6 +516,16 @@ inline unsigned countPopulation(T Value) {
+   return detail::PopulationCounter<T, sizeof(T)>::count(Value);
+ }
+ 
++/// Compile time Log2.
++/// Valid only for positive powers of two.
++template <size_t kValue> constexpr inline size_t CTLog2() {
++  static_assert(kValue > 0 && llvm::isPowerOf2_64(kValue),
++                "Value is not a valid power of 2");
++  return 1 + CTLog2<kValue / 2>();
++}
++
++template <> constexpr inline size_t CTLog2<1>() { return 0; }
++
+ /// Return the log base 2 of the specified value.
+ inline double Log2(double Value) {
+ #if defined(__ANDROID_API__) && __ANDROID_API__ < 18
 diff --git a/include/llvm/Support/ToolOutputFile.h b/include/llvm/Support/ToolOutputFile.h
 index 7fd5f20ee4e..2a47ef1bfdb 100644
 --- a/include/llvm/Support/ToolOutputFile.h
@@ -1702,11 +2229,33 @@ index 766a9b21cb1..a36c791c843 100644
    // Is the linker in an error state?
    bool hasError() { return HasError; }
  
+diff --git a/lib/MC/ELFObjectWriter.cpp b/lib/MC/ELFObjectWriter.cpp
+index 989d4bb4eb9..3efd8c4d362 100644
+--- a/lib/MC/ELFObjectWriter.cpp
++++ b/lib/MC/ELFObjectWriter.cpp
+@@ -804,6 +804,7 @@ void ELFObjectWriter::computeSymbolTable(
+       continue;
+ 
+     if (Symbol.isTemporary() && Symbol.isUndefined()) {
++      errs() << Symbol.getName() << '\n';
+       Ctx.reportError(SMLoc(), "Undefined temporary symbol");
+       continue;
+     }
 diff --git a/lib/MC/MCAssembler.cpp b/lib/MC/MCAssembler.cpp
-index a0f9a857e3c..be32963b705 100644
+index a0f9a857e3c..01a34eb13a7 100644
 --- a/lib/MC/MCAssembler.cpp
 +++ b/lib/MC/MCAssembler.cpp
-@@ -318,6 +318,34 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
+@@ -300,6 +300,9 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
+   case MCFragment::FT_Padding:
+     return cast<MCPaddingFragment>(F).getSize();
+ 
++  case MCFragment::FT_BoundaryAlign:
++    return cast<MCBoundaryAlignFragment>(F).getSize();
++
+   case MCFragment::FT_SymbolId:
+     return 4;
+ 
+@@ -318,6 +321,34 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
      return Size;
    }
  
@@ -1741,10 +2290,11 @@ index a0f9a857e3c..be32963b705 100644
    case MCFragment::FT_Org: {
      const MCOrgFragment &OF = cast<MCOrgFragment>(F);
      MCValue Value;
-@@ -525,6 +553,35 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
+@@ -525,7 +556,36 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
      break;
    }
  
+-  case MCFragment::FT_Data: 
 +  case MCFragment::FT_NeverAlign: {
 +    const MCNeverAlignFragment &NAF = cast<MCNeverAlignFragment>(F);
 +    assert(NAF.getValueSize() && "Invalid virtual align in concrete fragment!");
@@ -1774,10 +2324,25 @@ index a0f9a857e3c..be32963b705 100644
 +    break;
 +  }
 +
-   case MCFragment::FT_Data: 
++  case MCFragment::FT_Data:
      ++stats::EmittedDataFragments;
      OW->writeBytes(cast<MCDataFragment>(F).getContents());
-@@ -651,6 +708,11 @@ void MCAssembler::writeSectionData(const MCSection *Sec,
+     break;
+@@ -573,6 +633,13 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
+     break;
+   }
+ 
++  case MCFragment::FT_BoundaryAlign: {
++    if (!Asm.getBackend().writeNopData(FragmentSize, OW))
++      report_fatal_error("unable to write nop sequence of " +
++                         Twine(FragmentSize) + " bytes");
++    break;
++  }
++
+   case MCFragment::FT_SymbolId: {
+     const MCSymbolIdFragment &SF = cast<MCSymbolIdFragment>(F);
+     OW->write32(SF.getSymbol()->getIndex());
+@@ -651,6 +718,11 @@ void MCAssembler::writeSectionData(const MCSection *Sec,
                  cast<MCAlignFragment>(F).getValue() == 0) &&
                 "Invalid align in virtual section!");
          break;
@@ -1789,6 +2354,90 @@ index a0f9a857e3c..be32963b705 100644
        case MCFragment::FT_Fill:
          assert((cast<MCFillFragment>(F).getValue() == 0) &&
                 "Invalid fill in virtual section!");
+@@ -879,6 +951,72 @@ bool MCAssembler::relaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
+   return OldSize != LF.getContents().size();
+ }
+ 
++/// Check if the branch crosses the boundary.
++///
++/// \param StartAddr start address of the fused/unfused branch.
++/// \param Size size of the fused/unfused branch.
++/// \param BoundaryAlignment aligment requirement of the branch.
++/// \returns true if the branch cross the boundary.
++static bool mayCrossBoundary(uint64_t StartAddr, uint64_t Size,
++                             Align BoundaryAlignment) {
++  uint64_t EndAddr = StartAddr + Size;
++  return (StartAddr >> Log2(BoundaryAlignment)) !=
++         ((EndAddr - 1) >> Log2(BoundaryAlignment));
++}
++
++/// Check if the branch is against the boundary.
++///
++/// \param StartAddr start address of the fused/unfused branch.
++/// \param Size size of the fused/unfused branch.
++/// \param BoundaryAlignment aligment requirement of the branch.
++/// \returns true if the branch is against the boundary.
++static bool isAgainstBoundary(uint64_t StartAddr, uint64_t Size,
++                              Align BoundaryAlignment) {
++  uint64_t EndAddr = StartAddr + Size;
++  return (EndAddr & (BoundaryAlignment.value() - 1)) == 0;
++}
++
++/// Check if the branch needs padding.
++///
++/// \param StartAddr start address of the fused/unfused branch.
++/// \param Size size of the fused/unfused branch.
++/// \param BoundaryAlignment aligment requirement of the branch.
++/// \returns true if the branch needs padding.
++static bool needPadding(uint64_t StartAddr, uint64_t Size,
++                        Align BoundaryAlignment) {
++  return mayCrossBoundary(StartAddr, Size, BoundaryAlignment) ||
++         isAgainstBoundary(StartAddr, Size, BoundaryAlignment);
++}
++
++bool MCAssembler::relaxBoundaryAlign(MCAsmLayout &Layout,
++                                     MCBoundaryAlignFragment &BF) {
++  // The MCBoundaryAlignFragment that doesn't emit NOP should not be relaxed.
++  if (!BF.canEmitNops())
++    return false;
++
++  uint64_t AlignedOffset = Layout.getFragmentOffset(BF.getNextNode());
++  uint64_t AlignedSize = 0;
++  const MCFragment *F = BF.getNextNode();
++  // If the branch is unfused, it is emitted into one fragment, otherwise it is
++  // emitted into two fragments at most, the next MCBoundaryAlignFragment(if
++  // exists) also marks the end of the branch.
++  for (auto i = 0, N = BF.isFused() ? 2 : 1;
++       i != N && !isa<MCBoundaryAlignFragment>(F); ++i, F = F->getNextNode()) {
++    AlignedSize += computeFragmentSize(Layout, *F);
++  }
++  uint64_t OldSize = BF.getSize();
++  AlignedOffset -= OldSize;
++  Align BoundaryAlignment = BF.getAlignment();
++  uint64_t NewSize = needPadding(AlignedOffset, AlignedSize, BoundaryAlignment)
++                         ? offsetToAlignment(AlignedOffset, BoundaryAlignment)
++                         : 0U;
++  if (NewSize == OldSize)
++    return false;
++  BF.setSize(NewSize);
++  Layout.invalidateFragmentsFrom(&BF);
++  return true;
++}
++
+ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
+                                      MCDwarfLineAddrFragment &DF) {
+   MCContext &Context = Layout.getAssembler().getContext();
+@@ -960,6 +1098,10 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSection &Sec) {
+     case MCFragment::FT_Padding:
+       RelaxedFrag = relaxPaddingFragment(Layout, *cast<MCPaddingFragment>(I));
+       break;
++    case MCFragment::FT_BoundaryAlign:
++      RelaxedFrag =
++          relaxBoundaryAlign(Layout, *cast<MCBoundaryAlignFragment>(I));
++      break;
+     case MCFragment::FT_CVInlineLines:
+       RelaxedFrag =
+           relaxCVInlineLineTable(Layout, *cast<MCCVInlineLineTableFragment>(I));
 diff --git a/lib/MC/MCDwarf.cpp b/lib/MC/MCDwarf.cpp
 index 0e0ea965d14..49885269d06 100644
 --- a/lib/MC/MCDwarf.cpp
@@ -2158,7 +2807,7 @@ index 65fbe8e8428..4b32cd7c586 100644
 +  return cast<MCSymbolRefExpr>(this)->getSymbol();
 +}
 diff --git a/lib/MC/MCFragment.cpp b/lib/MC/MCFragment.cpp
-index 1aed50aaeb7..e740a0d304a 100644
+index 1aed50aaeb7..b1a093e82aa 100644
 --- a/lib/MC/MCFragment.cpp
 +++ b/lib/MC/MCFragment.cpp
 @@ -254,6 +254,9 @@ void MCFragment::destroy() {
@@ -2171,7 +2820,17 @@ index 1aed50aaeb7..e740a0d304a 100644
      case FT_Data:
        delete cast<MCDataFragment>(this);
        return;
-@@ -316,6 +319,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
+@@ -281,6 +284,9 @@ void MCFragment::destroy() {
+     case FT_Padding:
+       delete cast<MCPaddingFragment>(this);
+       return;
++    case FT_BoundaryAlign:
++      delete cast<MCBoundaryAlignFragment>(this);
++      return;
+     case FT_SymbolId:
+       delete cast<MCSymbolIdFragment>(this);
+       return;
+@@ -316,6 +322,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
    OS << "<";
    switch (getKind()) {
    case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
@@ -2179,7 +2838,15 @@ index 1aed50aaeb7..e740a0d304a 100644
    case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
    case MCFragment::FT_CompactEncodedInst:
      OS << "MCCompactEncodedInstFragment"; break;
-@@ -348,6 +352,15 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
+@@ -325,6 +332,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
+   case MCFragment::FT_Dwarf: OS << "MCDwarfFragment"; break;
+   case MCFragment::FT_DwarfFrame: OS << "MCDwarfCallFrameFragment"; break;
+   case MCFragment::FT_LEB:   OS << "MCLEBFragment"; break;
++  case MCFragment::FT_BoundaryAlign: OS<<"MCBoundaryAlignFragment"; break;
+   case MCFragment::FT_Padding: OS << "MCPaddingFragment"; break;
+   case MCFragment::FT_SymbolId:    OS << "MCSymbolIdFragment"; break;
+   case MCFragment::FT_CVInlineLines: OS << "MCCVInlineLineTableFragment"; break;
+@@ -348,6 +356,15 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
         << " MaxBytesToEmit:" << AF->getMaxBytesToEmit() << ">";
      break;
    }
@@ -2195,7 +2862,27 @@ index 1aed50aaeb7..e740a0d304a 100644
    case MCFragment::FT_Data:  {
      const MCDataFragment *DF = cast<MCDataFragment>(this);
      OS << "\n       ";
-@@ -480,7 +493,10 @@ LLVM_DUMP_METHOD void MCAssembler::dump() const{
+@@ -436,6 +453,19 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
+     OS << "\n       ";
+     break;
+   }
++  case MCFragment::FT_BoundaryAlign: {
++    const auto *BF = cast<MCBoundaryAlignFragment>(this);
++    if (BF->canEmitNops())
++      OS << " (can emit nops to align";
++    if (BF->isFused())
++      OS << " fused branch)";
++    else
++      OS << " unfused branch)";
++    OS << "\n       ";
++    OS << " BoundarySize:" << BF->getAlignment().value()
++       << " Size:" << BF->getSize();
++    break;
++  }
+   case MCFragment::FT_SymbolId: {
+     const MCSymbolIdFragment *F = cast<MCSymbolIdFragment>(this);
+     OS << "\n       ";
+@@ -480,7 +510,10 @@ LLVM_DUMP_METHOD void MCAssembler::dump() const{
      if (it != symbol_begin()) OS << ",\n           ";
      OS << "(";
      it->dump();
@@ -2222,9 +2909,21 @@ index 83da8ac1bae..820aa688e5f 100644
        Ctx->getELFSection(".tdata", ELF::SHT_PROGBITS,
                           ELF::SHF_ALLOC | ELF::SHF_TLS | ELF::SHF_WRITE);
 diff --git a/lib/MC/MCObjectStreamer.cpp b/lib/MC/MCObjectStreamer.cpp
-index 0a684588110..58199c97420 100644
+index 0a684588110..87dea6bfc28 100644
 --- a/lib/MC/MCObjectStreamer.cpp
 +++ b/lib/MC/MCObjectStreamer.cpp
+@@ -273,9 +273,9 @@ bool MCObjectStreamer::mayHaveInstructions(MCSection &Sec) const {
+ 
+ void MCObjectStreamer::EmitInstruction(const MCInst &Inst,
+                                        const MCSubtargetInfo &STI, bool) {
+-  getAssembler().getBackend().handleCodePaddingInstructionBegin(Inst);
++  getAssembler().getBackend().alignBranchesBegin(*this, Inst);
+   EmitInstructionImpl(Inst, STI);
+-  getAssembler().getBackend().handleCodePaddingInstructionEnd(Inst);
++  getAssembler().getBackend().alignBranchesEnd(*this, Inst);
+ }
+ 
+ void MCObjectStreamer::EmitInstructionImpl(const MCInst &Inst,
 @@ -494,6 +494,13 @@ void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
    cast<MCAlignFragment>(getCurrentFragment())->setEmitNops(true);
  }
@@ -2461,6 +3160,626 @@ index 44422a95f16..d60aa3fd198 100644
    // The repeat prefix if any
    uint8_t repeatPrefix;
  
+diff --git a/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp b/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp
+index eea94b2eb1d..0533ff2cfb8 100644
+--- a/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp
++++ b/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp
+@@ -7,6 +7,7 @@
+ //
+ //===----------------------------------------------------------------------===//
+ 
++#include "X86InstrInfo.h"
+ #include "MCTargetDesc/X86BaseInfo.h"
+ #include "MCTargetDesc/X86FixupKinds.h"
+ #include "llvm/ADT/StringSwitch.h"
+@@ -17,13 +18,18 @@
+ #include "llvm/MC/MCExpr.h"
+ #include "llvm/MC/MCFixupKindInfo.h"
+ #include "llvm/MC/MCInst.h"
++#include "llvm/MC/MCInstrInfo.h"
+ #include "llvm/MC/MCMachObjectWriter.h"
++#include "llvm/MC/MCObjectStreamer.h"
+ #include "llvm/MC/MCObjectWriter.h"
+ #include "llvm/MC/MCRegisterInfo.h"
+ #include "llvm/MC/MCSectionMachO.h"
+ #include "llvm/MC/MCSubtargetInfo.h"
++#include "llvm/Support/Alignment.h"
++#include "llvm/Support/CommandLine.h"
+ #include "llvm/Support/ErrorHandling.h"
+ #include "llvm/Support/raw_ostream.h"
++#include "llvm/Support/TargetRegistry.h"
+ using namespace llvm;
+ 
+ static unsigned getFixupKindLog2Size(unsigned Kind) {
+@@ -58,7 +64,81 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
+   }
+ }
+ 
++cl::opt<uint32_t> X86AlignBranchBoundary(
++    "x86-align-branch-boundary", cl::init(0),
++    cl::ZeroOrMore,
++    cl::desc(
++        "Control how the assembler should align branches with NOP. If the "
++        "boundary's size is not 0, it should be a power of 2 and no less "
++        "than 32. Branches will be aligned within the boundary of specified "
++        "size. -x86-align-branch-boundary=0 doesn't align branches."));
++
+ namespace {
++class X86AlignBranchKind {
++private:
++  uint8_t AlignBranchKind = 0;
++
++public:
++  enum Flag : uint8_t {
++    AlignBranchNone = 0,
++    AlignBranchFused = 1U << 0,
++    AlignBranchJcc = 1U << 1,
++    AlignBranchJmp = 1U << 2,
++    AlignBranchCall = 1U << 3,
++    AlignBranchRet = 1U << 4,
++    AlignBranchIndirect = 1U << 5
++  };
++
++  void operator=(const std::string &Val) {
++    if (Val.empty())
++      return;
++    SmallVector<StringRef, 6> BranchTypes;
++    StringRef(Val).split(BranchTypes, '+', -1, false);
++    for (auto BranchType : BranchTypes) {
++      if (BranchType == "fused")
++        addKind(AlignBranchFused);
++      else if (BranchType == "jcc")
++        addKind(AlignBranchJcc);
++      else if (BranchType == "jmp")
++        addKind(AlignBranchJmp);
++      else if (BranchType == "call")
++        addKind(AlignBranchCall);
++      else if (BranchType == "ret")
++        addKind(AlignBranchRet);
++      else if (BranchType == "indirect")
++        addKind(AlignBranchIndirect);
++      else {
++        report_fatal_error(
++            "'-x86-align-branch 'The branches's type is combination of jcc, "
++            "fused, jmp, call, ret, indirect.(plus separated)",
++            false);
++      }
++    }
++  }
++
++  operator uint8_t() const { return AlignBranchKind; }
++  void addKind(Flag Value) { AlignBranchKind |= Value; }
++};
++
++X86AlignBranchKind X86AlignBranchKindLoc;
++
++cl::opt<X86AlignBranchKind, true, cl::parser<std::string>> X86AlignBranch(
++    "x86-align-branch",
++    cl::desc("Specify types of branches to align (plus separated list of "
++             "types). The branches's type is combination of jcc, fused, "
++             "jmp, call, ret, indirect."),
++    cl::value_desc("jcc(conditional jump), fused(fused conditional jump), "
++                   "jmp(unconditional jump); call(call); ret(ret), "
++                   "indirect(indirect jump)."),
++    cl::location(X86AlignBranchKindLoc));
++
++cl::opt<bool> X86AlignBranchWithin32BBoundaries(
++    "x86-branches-within-32B-boundaries", cl::init(false),
++    cl::desc(
++        "Align selected instructions to mitigate negative performance impact "
++        "of Intel's micro code update for errata skx102.  May break "
++        "assumptions about labels corresponding to particular instructions, "
++        "and should be used with caution."));
+ 
+ class X86ELFObjectWriter : public MCELFObjectTargetWriter {
+ public:
+@@ -69,9 +149,43 @@ public:
+ 
+ class X86AsmBackend : public MCAsmBackend {
+   const MCSubtargetInfo &STI;
++  std::unique_ptr<const MCInstrInfo> MCII;
++  X86AlignBranchKind AlignBranchType;
++  Align AlignBoundary;
++
++  bool isFirstMacroFusibleInst(const MCInst &Inst) const;
++  bool isMacroFused(const MCInst &Cmp, const MCInst &Jcc) const;
++  bool isRIPRelative(const MCInst &MI) const;
++  bool hasVariantSymbol(const MCInst &MI) const;
++
++  bool needAlign(MCObjectStreamer &OS) const;
++  bool needAlignInst(const MCInst &Inst) const;
++  MCBoundaryAlignFragment *
++  getOrCreateBoundaryAlignFragment(MCObjectStreamer &OS) const;
++  MCInst PrevInst;
+ public:
+   X86AsmBackend(const Target &T, const MCSubtargetInfo &STI)
+-      : MCAsmBackend(), STI(STI) {}
++      : MCAsmBackend(), STI(STI),
++        MCII(T.createMCInstrInfo()) {
++    if (X86AlignBranchWithin32BBoundaries) {
++      // At the moment, this defaults to aligning fused branches, unconditional
++      // jumps, and (unfused) conditional jumps with nops.  Both the
++      // instructions aligned and the alignment method (nop vs prefix) may
++      // change in the future.
++      AlignBoundary = assumeAligned(32);;
++      AlignBranchType.addKind(X86AlignBranchKind::AlignBranchFused);
++      AlignBranchType.addKind(X86AlignBranchKind::AlignBranchJcc);
++      AlignBranchType.addKind(X86AlignBranchKind::AlignBranchJmp);
++    }
++    // Allow overriding defaults set by master flag
++    if (X86AlignBranchBoundary.getNumOccurrences())
++      AlignBoundary = assumeAligned(X86AlignBranchBoundary);
++    if (X86AlignBranch.getNumOccurrences())
++      AlignBranchType = X86AlignBranchKindLoc;
++  }
++
++  void alignBranchesBegin(MCObjectStreamer &OS, const MCInst &Inst) override;
++  void alignBranchesEnd(MCObjectStreamer &OS, const MCInst &Inst) override;
+ 
+   unsigned getNumFixupKinds() const override {
+     return X86::NumTargetFixupKinds;
+@@ -264,6 +378,185 @@ static unsigned getRelaxedOpcode(const MCInst &Inst, bool is16BitMode) {
+   return getRelaxedOpcodeBranch(Inst, is16BitMode);
+ }
+ 
++static X86::SecondMacroFusionInstKind
++classifySecondInstInMacroFusion(const MCInst &MI, const MCInstrInfo &MCII) {
++  return X86::classifySecondCondCodeInMacroFusion(MI.getOpcode());
++}
++
++/// Check if the instruction is valid as the first instruction in macro fusion.
++bool X86AsmBackend::isFirstMacroFusibleInst(const MCInst &Inst) const {
++  // An Intel instruction with RIP relative addressing is not macro fusible.
++  if (isRIPRelative(Inst))
++    return false;
++  X86::FirstMacroFusionInstKind FIK =
++      X86::classifyFirstOpcodeInMacroFusion(Inst.getOpcode());
++  return FIK != X86::FirstMacroFusionInstKind::Invalid;
++}
++
++/// Check if the two instructions are macro-fused.
++bool X86AsmBackend::isMacroFused(const MCInst &Cmp, const MCInst &Jcc) const {
++  const MCInstrDesc &InstDesc = MCII->get(Jcc.getOpcode());
++  if (!InstDesc.isConditionalBranch())
++    return false;
++  if (!isFirstMacroFusibleInst(Cmp))
++    return false;
++  const X86::FirstMacroFusionInstKind CmpKind =
++      X86::classifyFirstOpcodeInMacroFusion(Cmp.getOpcode());
++  const X86::SecondMacroFusionInstKind BranchKind =
++      classifySecondInstInMacroFusion(Jcc, *MCII);
++  return X86::isMacroFused(CmpKind, BranchKind);
++}
++
++/// Check if the instruction is RIP relative addressing.
++bool X86AsmBackend::isRIPRelative(const MCInst &MI) const {
++  unsigned Opcode = MI.getOpcode();
++  const MCInstrDesc &Desc = MCII->get(Opcode);
++  uint64_t TSFlags = Desc.TSFlags;
++  unsigned CurOp = X86II::getOperandBias(Desc);
++  int MemoryOperand = X86II::getMemoryOperandNo(TSFlags);
++  if (MemoryOperand >= 0) {
++    unsigned BaseRegNum = MemoryOperand + CurOp + X86::AddrBaseReg;
++    unsigned BaseReg = MI.getOperand(BaseRegNum).getReg();
++    if (BaseReg == X86::RIP)
++      return true;
++  }
++  return false;
++}
++
++/// Check if the instruction has variant symbol operand.
++bool X86AsmBackend::hasVariantSymbol(const MCInst &MI) const {
++
++  for (auto &Operand : MI) {
++    if (Operand.isExpr()) {
++      const MCExpr &Expr = *Operand.getExpr();
++      if (Expr.getKind() == MCExpr::SymbolRef &&
++          cast<MCSymbolRefExpr>(*Operand.getExpr()).getKind() !=
++              MCSymbolRefExpr::VK_None)
++        return true;
++    }
++  }
++  return false;
++}
++
++bool X86AsmBackend::needAlign(MCObjectStreamer &OS) const {
++  if (X86AlignBranchBoundary == 0 ||
++      AlignBranchType == X86AlignBranchKind::AlignBranchNone)
++    return false;
++
++  MCAssembler &Assembler = OS.getAssembler();
++  MCSection *Sec = OS.getCurrentSectionOnly();
++  // To be Done: Currently don't deal with Bundle cases.
++  if (Assembler.isBundlingEnabled() && Sec->isBundleLocked())
++    return false;
++
++  // Branches only need to be aligned in 32-bit or 64-bit mode.
++  if (!(STI.getFeatureBits()[X86::Mode64Bit] ||
++        STI.getFeatureBits()[X86::Mode32Bit]))
++    return false;
++
++  return true;
++}
++
++/// Check if the instruction operand needs to be aligned. Padding is disabled
++/// before intruction which may be rewritten by linker(e.g. TLSCALL).
++bool X86AsmBackend::needAlignInst(const MCInst &Inst) const {
++  // Linker may rewrite the instruction with variant symbol operand.
++  if (hasVariantSymbol(Inst))
++    return false;
++
++  const MCInstrDesc &InstDesc = MCII->get(Inst.getOpcode());
++  return (InstDesc.isConditionalBranch() &&
++          (AlignBranchType & X86AlignBranchKind::AlignBranchJcc)) ||
++         (InstDesc.isUnconditionalBranch() &&
++          (AlignBranchType & X86AlignBranchKind::AlignBranchJmp)) ||
++         (InstDesc.isCall() &&
++          (AlignBranchType & X86AlignBranchKind::AlignBranchCall)) ||
++         (InstDesc.isReturn() &&
++          (AlignBranchType & X86AlignBranchKind::AlignBranchRet)) ||
++         (InstDesc.isIndirectBranch() &&
++          (AlignBranchType & X86AlignBranchKind::AlignBranchIndirect));
++}
++
++static bool canReuseBoundaryAlignFragment(const MCBoundaryAlignFragment &F) {
++  // If a MCBoundaryAlignFragment has not been used to emit NOP,we can reuse it.
++  return !F.canEmitNops();
++}
++
++MCBoundaryAlignFragment *
++X86AsmBackend::getOrCreateBoundaryAlignFragment(MCObjectStreamer &OS) const {
++  auto *F = dyn_cast_or_null<MCBoundaryAlignFragment>(OS.getCurrentFragment());
++  if (!F || !canReuseBoundaryAlignFragment(*F)) {
++    F = new MCBoundaryAlignFragment(AlignBoundary);
++    OS.insert(F);
++  }
++  return F;
++}
++
++/// Insert MCBoundaryAlignFragment before instructions to align branches.
++void X86AsmBackend::alignBranchesBegin(MCObjectStreamer &OS,
++                                       const MCInst &Inst) {
++  if (!needAlign(OS))
++    return;
++
++  MCFragment *CF = OS.getCurrentFragment();
++  bool NeedAlignFused = AlignBranchType & X86AlignBranchKind::AlignBranchFused;
++  if (NeedAlignFused && isMacroFused(PrevInst, Inst) && CF) {
++    // Macro fusion actually happens and there is no other fragment inserted
++    // after the previous instruction. NOP can be emitted in PF to align fused
++    // jcc.
++    if (auto *PF =
++            dyn_cast_or_null<MCBoundaryAlignFragment>(CF->getPrevNode())) {
++      const_cast<MCBoundaryAlignFragment *>(PF)->setEmitNops(true);
++      const_cast<MCBoundaryAlignFragment *>(PF)->setFused(true);
++    }
++  } else if (needAlignInst(Inst)) {
++    // Note: When there is at least one fragment, such as MCAlignFragment,
++    // inserted after the previous instruction, e.g.
++    //
++    // \code
++    //   cmp %rax %rcx
++    //   .align 16
++    //   je .Label0
++    // \ endcode
++    //
++    // We will treat the JCC as a unfused branch although it may be fused
++    // with the CMP.
++    auto *F = getOrCreateBoundaryAlignFragment(OS);
++    F->setEmitNops(true);
++    F->setFused(false);
++  } else if (NeedAlignFused && isFirstMacroFusibleInst(Inst)) {
++    // We don't know if macro fusion happens until the reaching the next
++    // instruction, so a place holder is put here if necessary.
++    getOrCreateBoundaryAlignFragment(OS);
++  }
++
++  PrevInst = Inst;
++}
++
++/// Insert a MCBoundaryAlignFragment to mark the end of the branch to be aligned
++/// if necessary.
++void X86AsmBackend::alignBranchesEnd(MCObjectStreamer &OS, const MCInst &Inst) {
++  if (!needAlign(OS))
++    return;
++  // If the branch is emitted into a MCRelaxableFragment, we can determine the
++  // size of the branch easily in MCAssembler::relaxBoundaryAlign. When the
++  // branch is fused, the fused branch(macro fusion pair) must be emitted into
++  // two fragments. Or when the branch is unfused, the branch must be emitted
++  // into one fragment. The MCRelaxableFragment naturally marks the end of the
++  // fused or unfused branch.
++  // Otherwise, we need to insert a MCBoundaryAlignFragment to mark the end of
++  // the branch. This MCBoundaryAlignFragment may be reused to emit NOP to align
++  // other branch.
++  if (needAlignInst(Inst) && !isa<MCRelaxableFragment>(OS.getCurrentFragment()))
++    OS.insert(new MCBoundaryAlignFragment(AlignBoundary));
++
++  // Update the maximum alignment on the current section if necessary.
++  MCSection *Sec = OS.getCurrentSectionOnly();
++  if (AlignBoundary.value() > Sec->getAlignment())
++    Sec->setAlignment(AlignBoundary.value());
++}
++
++
+ bool X86AsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
+   // Branches can always be relaxed in either mode.
+   if (getRelaxedOpcodeBranch(Inst, false) != Inst.getOpcode())
+diff --git a/lib/Target/X86/MCTargetDesc/X86BaseInfo.h b/lib/Target/X86/MCTargetDesc/X86BaseInfo.h
+index 69e468168e7..c48d523ff03 100644
+--- a/lib/Target/X86/MCTargetDesc/X86BaseInfo.h
++++ b/lib/Target/X86/MCTargetDesc/X86BaseInfo.h
+@@ -64,6 +64,271 @@ namespace X86 {
+                         // it was already added
+     IP_HAS_NOTRACK = 64
+   };
++
++  // The classification for the first instruction in macro fusion.
++  enum class FirstMacroFusionInstKind {
++    // TEST
++    Test,
++    // CMP
++    Cmp,
++    // AND
++    And,
++    // ADD, SUB
++    AddSub,
++    // INC, DEC
++    IncDec,
++    // Not valid as a first macro fusion instruction
++    Invalid
++  };
++
++  enum class SecondMacroFusionInstKind {
++    // JA, JB and variants.
++    AB,
++    // JE, JL, JG and variants.
++    ELG,
++    // JS, JP, JO and variants
++    SPO,
++    // Not a fusible jump.
++    Invalid,
++  };
++
++  /// \returns the type of the first instruction in macro-fusion.
++  inline FirstMacroFusionInstKind
++  classifyFirstOpcodeInMacroFusion(unsigned Opcode) {
++    switch (Opcode) {
++    default:
++      return FirstMacroFusionInstKind::Invalid;
++    // TEST
++    case X86::TEST16i16:
++    case X86::TEST16mr:
++    case X86::TEST16ri:
++    case X86::TEST16rr:
++    case X86::TEST32i32:
++    case X86::TEST32mr:
++    case X86::TEST32ri:
++    case X86::TEST32rr:
++    case X86::TEST64i32:
++    case X86::TEST64mr:
++    case X86::TEST64ri32:
++    case X86::TEST64rr:
++    case X86::TEST8i8:
++    case X86::TEST8mr:
++    case X86::TEST8ri:
++    case X86::TEST8rr:
++      return FirstMacroFusionInstKind::Test;
++    case X86::AND16i16:
++    case X86::AND16ri:
++    case X86::AND16ri8:
++    case X86::AND16rm:
++    case X86::AND16rr:
++    case X86::AND16rr_REV:
++    case X86::AND32i32:
++    case X86::AND32ri:
++    case X86::AND32ri8:
++    case X86::AND32rm:
++    case X86::AND32rr:
++    case X86::AND32rr_REV:
++    case X86::AND64i32:
++    case X86::AND64ri32:
++    case X86::AND64ri8:
++    case X86::AND64rm:
++    case X86::AND64rr:
++    case X86::AND64rr_REV:
++    case X86::AND8i8:
++    case X86::AND8ri:
++    case X86::AND8ri8:
++    case X86::AND8rm:
++    case X86::AND8rr:
++    case X86::AND8rr_REV:
++      return FirstMacroFusionInstKind::And;
++    // CMP
++    case X86::CMP16i16:
++    case X86::CMP16mr:
++    case X86::CMP16ri:
++    case X86::CMP16ri8:
++    case X86::CMP16rm:
++    case X86::CMP16rr:
++    case X86::CMP16rr_REV:
++    case X86::CMP32i32:
++    case X86::CMP32mr:
++    case X86::CMP32ri:
++    case X86::CMP32ri8:
++    case X86::CMP32rm:
++    case X86::CMP32rr:
++    case X86::CMP32rr_REV:
++    case X86::CMP64i32:
++    case X86::CMP64mr:
++    case X86::CMP64ri32:
++    case X86::CMP64ri8:
++    case X86::CMP64rm:
++    case X86::CMP64rr:
++    case X86::CMP64rr_REV:
++    case X86::CMP8i8:
++    case X86::CMP8mr:
++    case X86::CMP8ri:
++    case X86::CMP8ri8:
++    case X86::CMP8rm:
++    case X86::CMP8rr:
++    case X86::CMP8rr_REV:
++      return FirstMacroFusionInstKind::Cmp;
++    // ADD
++    case X86::ADD16i16:
++    case X86::ADD16ri:
++    case X86::ADD16ri8:
++    case X86::ADD16rm:
++    case X86::ADD16rr:
++    case X86::ADD16rr_REV:
++    case X86::ADD32i32:
++    case X86::ADD32ri:
++    case X86::ADD32ri8:
++    case X86::ADD32rm:
++    case X86::ADD32rr:
++    case X86::ADD32rr_REV:
++    case X86::ADD64i32:
++    case X86::ADD64ri32:
++    case X86::ADD64ri8:
++    case X86::ADD64rm:
++    case X86::ADD64rr:
++    case X86::ADD64rr_REV:
++    case X86::ADD8i8:
++    case X86::ADD8ri:
++    case X86::ADD8ri8:
++    case X86::ADD8rm:
++    case X86::ADD8rr:
++    case X86::ADD8rr_REV:
++    // SUB
++    case X86::SUB16i16:
++    case X86::SUB16ri:
++    case X86::SUB16ri8:
++    case X86::SUB16rm:
++    case X86::SUB16rr:
++    case X86::SUB16rr_REV:
++    case X86::SUB32i32:
++    case X86::SUB32ri:
++    case X86::SUB32ri8:
++    case X86::SUB32rm:
++    case X86::SUB32rr:
++    case X86::SUB32rr_REV:
++    case X86::SUB64i32:
++    case X86::SUB64ri32:
++    case X86::SUB64ri8:
++    case X86::SUB64rm:
++    case X86::SUB64rr:
++    case X86::SUB64rr_REV:
++    case X86::SUB8i8:
++    case X86::SUB8ri:
++    case X86::SUB8ri8:
++    case X86::SUB8rm:
++    case X86::SUB8rr:
++    case X86::SUB8rr_REV:
++      return FirstMacroFusionInstKind::AddSub;
++    // INC
++    case X86::INC16r:
++    case X86::INC16r_alt:
++    case X86::INC32r:
++    case X86::INC32r_alt:
++    case X86::INC64r:
++    case X86::INC8r:
++    // DEC
++    case X86::DEC16r:
++    case X86::DEC16r_alt:
++    case X86::DEC32r:
++    case X86::DEC32r_alt:
++    case X86::DEC64r:
++    case X86::DEC8r:
++      return FirstMacroFusionInstKind::IncDec;
++    }
++  }
++
++  /// \returns the type of the second instruction in macro-fusion.
++  inline SecondMacroFusionInstKind
++  classifySecondCondCodeInMacroFusion(unsigned Opcode) {
++    switch (Opcode) {
++    default:
++      return SecondMacroFusionInstKind::Invalid;
++
++    case X86::JE_1:
++    case X86::JE_2:
++    case X86::JE_4:
++    case X86::JNE_1:
++    case X86::JNE_2:
++    case X86::JNE_4:
++
++    case X86::JL_1:
++    case X86::JL_2:
++    case X86::JL_4:
++    case X86::JGE_1:
++    case X86::JGE_2:
++    case X86::JGE_4:
++
++    case X86::JLE_1:
++    case X86::JLE_2:
++    case X86::JLE_4:
++    case X86::JG_1:
++    case X86::JG_2:
++    case X86::JG_4:
++      return SecondMacroFusionInstKind::ELG;
++
++    case X86::JB_1:
++    case X86::JB_2:
++    case X86::JB_4:
++    case X86::JAE_1:
++    case X86::JAE_2:
++    case X86::JAE_4:
++
++    case X86::JBE_1:
++    case X86::JBE_2:
++    case X86::JBE_4:
++    case X86::JA_1:
++    case X86::JA_2:
++    case X86::JA_4:
++      return SecondMacroFusionInstKind::AB;
++
++    case X86::JS_1:
++    case X86::JS_2:
++    case X86::JS_4:
++    case X86::JNS_1:
++    case X86::JNS_2:
++    case X86::JNS_4:
++
++    case X86::JP_1:
++    case X86::JP_2:
++    case X86::JP_4:
++    case X86::JNP_1:
++    case X86::JNP_2:
++    case X86::JNP_4:
++
++    case X86::JO_1:
++    case X86::JO_2:
++    case X86::JO_4:
++    case X86::JNO_1:
++    case X86::JNO_2:
++    case X86::JNO_4:
++      return SecondMacroFusionInstKind::SPO;
++    }
++  }
++
++  /// \param FirstKind kind of the first instruction in macro fusion.
++  /// \param SecondKind kind of the second instruction in macro fusion.
++  ///
++  /// \returns true if the two instruction can be macro fused.
++  inline bool isMacroFused(FirstMacroFusionInstKind FirstKind,
++                           SecondMacroFusionInstKind SecondKind) {
++    switch (FirstKind) {
++    case X86::FirstMacroFusionInstKind::Test:
++    case X86::FirstMacroFusionInstKind::And:
++      return true;
++    case X86::FirstMacroFusionInstKind::Cmp:
++    case X86::FirstMacroFusionInstKind::AddSub:
++      return SecondKind == X86::SecondMacroFusionInstKind::AB ||
++             SecondKind == X86::SecondMacroFusionInstKind::ELG;
++    case X86::FirstMacroFusionInstKind::IncDec:
++      return SecondKind == X86::SecondMacroFusionInstKind::ELG;
++    case X86::FirstMacroFusionInstKind::Invalid:
++      return false;
++    }
++    llvm_unreachable("unknown fusion type");
++  }
+ } // end namespace X86;
+ 
+ /// X86II - This namespace holds all of the target specific flags that
 diff --git a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp b/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
 index fa7c352a1b6..35d28c19fc2 100644
 --- a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp

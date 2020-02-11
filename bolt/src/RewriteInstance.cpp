@@ -81,6 +81,9 @@ using namespace llvm;
 using namespace object;
 using namespace bolt;
 
+extern cl::opt<uint32_t> X86AlignBranchBoundary;
+extern cl::opt<bool> X86AlignBranchWithin32BBoundaries;
+
 namespace opts {
 
 extern bool HeatmapMode;
@@ -431,6 +434,12 @@ WriteBoltInfoSection("bolt-info",
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOutputCategory));
+
+static cl::opt<bool>
+X86AlignBranchBoundaryHotOnly("x86-align-branch-boundary-hot-only",
+  cl::desc("only apply branch boundary alignment in hot code"),
+  cl::init(true),
+  cl::cat(BoltOptCategory));
 
 bool isHotTextMover(const BinaryFunction &Function) {
   for (auto &SectionName : opts::HotTextMoveSections) {
@@ -1765,6 +1774,18 @@ void RewriteInstance::adjustCommandLineOptions() {
     opts::AlignMacroOpFusion = MFT_NONE;
   }
 
+  if ((X86AlignBranchWithin32BBoundaries || X86AlignBranchBoundary != 0) &&
+      BC->isX86()) {
+    if (!BC->HasRelocations) {
+      errs() << "BOLT-ERROR: cannot apply mitigations for Intel JCC erratum in "
+                "non-relocation mode\n";
+      exit(1);
+    }
+    outs() << "BOLT-WARNING: using mitigation for Intel JCC erratum, layout "
+              "may take several minutes\n";
+    opts::AlignMacroOpFusion = MFT_NONE;
+  }
+
   if (opts::AlignMacroOpFusion != MFT_NONE &&
       !BC->HasRelocations) {
     outs() << "BOLT-INFO: disabling -align-macro-fusion in non-relocation "
@@ -3010,6 +3031,8 @@ void RewriteInstance::updateSDTMarkers() {
 
 void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
   auto emit = [&](const std::vector<BinaryFunction *> &Functions) {
+    const auto HasProfile = BC->NumProfiledFuncs > 0;
+    const uint32_t OriginalBranchBoundaryAlign = X86AlignBranchBoundary;
     for (auto *Function : Functions) {
       if (!BC->HasRelocations &&
           (!Function->isSimple() || !opts::shouldProcess(*Function)))
@@ -3020,10 +3043,19 @@ void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
                    << Function->getFunctionNumber() << '\n');
 
       bool Emitted{false};
+      // Turn off Intel JCC Erratum mitigation for cold code if requested
+      if (HasProfile && opts::X86AlignBranchBoundaryHotOnly &&
+          !Function->hasValidProfile())
+        X86AlignBranchBoundary = 0;
+
       Emitted |= emitFunction(*Streamer, *Function, /*EmitColdPart=*/false);
 
-      if (Function->isSplit())
+      if (Function->isSplit()) {
+        if (opts::X86AlignBranchBoundaryHotOnly)
+          X86AlignBranchBoundary = 0;
         Emitted |= emitFunction(*Streamer, *Function, /*EmitColdPart=*/true);
+      }
+      X86AlignBranchBoundary = OriginalBranchBoundaryAlign;
 
       if (Emitted)
         Function->setEmitted(/*KeepCFG=*/opts::PrintCacheMetrics);
