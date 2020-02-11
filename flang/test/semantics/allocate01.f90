@@ -16,7 +16,8 @@ module m
 
 contains
   function mfoo(x)
-    class(a_type) :: foo, x
+    class(a_type) :: x
+    class(a_type), allocatable :: foo
     foo = x
   end function
   subroutine mbar(x)

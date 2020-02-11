@@ -51,8 +51,8 @@ subroutine s1()
   end type
 
   ! This one's OK
-  class(extensible) :: y
+  class(extensible), allocatable :: y
 
   !ERROR: Non-extensible derived type 'inextensible' may not be used with CLASS keyword
-  class(inextensible) :: x
+  class(inextensible), allocatable :: x
 end subroutine s1

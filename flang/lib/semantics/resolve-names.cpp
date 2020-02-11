@@ -4314,12 +4314,8 @@ Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
   if (!PassesLocalityChecks(name, prev)) {
     return nullptr;
   }
-  name.symbol = nullptr;
-  Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
-  if (auto *type{prev.GetType()}) {
-    symbol.SetType(*type);
-    symbol.set(Symbol::Flag::Implicit, prev.test(Symbol::Flag::Implicit));
-  }
+  Symbol &symbol{MakeSymbol(name, HostAssocDetails{prev})};
+  name.symbol = &symbol;
   return &symbol;
 }
 

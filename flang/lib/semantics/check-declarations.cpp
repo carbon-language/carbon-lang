@@ -371,6 +371,14 @@ void CheckHelper::CheckObjectEntity(
       }
     }
   }
+  if (const DeclTypeSpec * type{details.type()}) {  // C708
+    if (type->IsPolymorphic() &&
+        !(IsAllocatableOrPointer(symbol) || symbol.IsDummy())) {
+      messages_.Say("CLASS entity '%s' must be a dummy argument or have "
+                    "ALLOCATABLE or POINTER attribute"_err_en_US,
+          symbol.name());
+    }
+  }
 }
 
 // The six different kinds of array-specs:
