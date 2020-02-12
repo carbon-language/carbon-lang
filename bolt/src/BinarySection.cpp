@@ -24,6 +24,10 @@ extern cl::opt<bool> PrintRelocations;
 extern cl::opt<bool> HotData;
 }
 
+bool BinarySection::isELF() const {
+  return BC.Ctx->getObjectFileInfo()->getTargetTriple().isOSBinFormatELF();
+}
+
 uint64_t
 BinarySection::hash(const BinaryData &BD,
                     std::map<const BinaryData *, uint64_t> &Cache) const {

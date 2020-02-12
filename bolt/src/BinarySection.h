@@ -230,17 +230,22 @@ public:
   ///
   /// Basic proprety access.
   ///
+  bool isELF() const;
   StringRef getName() const { return Name; }
   uint64_t getAddress() const { return Address; }
   uint64_t getEndAddress() const { return Address + Size; }
   uint64_t getSize() const { return Size; }
   uint64_t getAlignment() const { return Alignment; }
   bool isText() const {
-    return (ELFFlags & ELF::SHF_EXECINSTR);
+    if (isELF())
+      return (ELFFlags & ELF::SHF_EXECINSTR);
+    return getSectionRef().isText();
   }
   bool isData() const {
-    return (ELFType == ELF::SHT_PROGBITS &&
-            (ELFFlags & (ELF::SHF_ALLOC | ELF::SHF_WRITE)));
+    if (isELF())
+      return (ELFType == ELF::SHT_PROGBITS &&
+              (ELFFlags & (ELF::SHF_ALLOC | ELF::SHF_WRITE)));
+    return getSectionRef().isData();
   }
   bool isBSS() const {
     return (ELFType == ELF::SHT_NOBITS &&
