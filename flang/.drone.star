@@ -7,7 +7,7 @@ def clang(arch):
                 "name": "test",
                 "image": "ubuntu",
                 "commands": [
-                    "apt-get update && apt-get install -y clang-8 cmake ninja-build lld-8 llvm-dev libc++-8-dev libc++abi-8-dev",
+                    "apt-get update && apt-get install -y clang-8 cmake ninja-build lld-8 llvm-dev libc++-8-dev libc++abi-8-dev libz-dev",
                     "mkdir build && cd build",
                     'env CC=clang-8 CXX=clang++-8 CXXFLAGS="-UNDEBUG -stdlib=libc++" LDFLAGS="-fuse-ld=lld" cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..',
                     "ninja -j8",
@@ -27,7 +27,7 @@ def gcc(arch):
                     "name": "test",
                     "image": "gcc",
                     "commands": [
-			"apt-get update && apt-get install -y cmake ninja-build llvm-dev",
+			"apt-get update && apt-get install -y cmake ninja-build llvm-dev libz-dev",
                         "mkdir build && cd build",
                         'env CC=gcc CXX=g++ CXXFLAGS="-UNDEBUG" LDFLAGS="-fuse-ld=gold" cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..',
                         "ninja -j8",
