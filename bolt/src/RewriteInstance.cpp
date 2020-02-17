@@ -22,6 +22,7 @@
 #include "Exceptions.h"
 #include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
+#include "NameResolver.h"
 #include "ParallelUtilities.h"
 #include "Passes/ReorderFunctions.h"
 #include "ProfileReader.h"
@@ -1113,9 +1114,9 @@ void RewriteInstance::discoverFileObjects() {
         AltPrefix = Name + "/" + std::string(SFI->second);
       }
 
-      UniqueName = NR.uniquifySymbolName(Name);
+      UniqueName = NR.uniquify(Name);
       if (!AltPrefix.empty())
-        AlternativeName = NR.uniquifySymbolName(AltPrefix);
+        AlternativeName = NR.uniquify(AltPrefix);
     }
 
     uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
@@ -2304,9 +2305,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section,
           } else {
             if (StringRef(SymbolName).startswith(
                   BC->AsmInfo->getPrivateGlobalPrefix())) {
-              Name = NR.uniquifySymbolName("PG" + SymbolName);
+              Name = NR.uniquify("PG" + SymbolName);
             } else {
-              Name = NR.uniquifySymbolName(SymbolName);
+              Name = NR.uniquify(SymbolName);
             }
           }
           ReferencedSymbol = BC->registerNameAtAddress(Name,
