@@ -31,6 +31,7 @@ class MachORewriteInstance {
   void discoverFileObjects();
   void disassembleFunctions();
   void postProcessFunctions();
+  void runOptimizationPasses();
 
 public:
   MachORewriteInstance(object::MachOObjectFile *InputFile, DataReader &DR);

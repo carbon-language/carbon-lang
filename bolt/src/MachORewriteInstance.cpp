@@ -12,12 +12,16 @@
 #include "MachORewriteInstance.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "BinaryPassManager.h"
 #include "Utils.h"
 #include "llvm/Support/Timer.h"
 
 namespace opts {
 
 using namespace llvm;
+extern cl::opt<bool> NeverPrint;
+extern cl::opt<bool> PrintFinalized;
+extern cl::opt<bool> PrintReordered;
 extern cl::opt<bool> PrintSections;
 extern cl::opt<bool> PrintDisasm;
 extern cl::opt<bool> PrintCFG;
@@ -139,11 +143,22 @@ void MachORewriteInstance::postProcessFunctions() {
   }
 }
 
+void MachORewriteInstance::runOptimizationPasses() {
+  BinaryFunctionPassManager Manager(*BC);
+  Manager.registerPass(
+      llvm::make_unique<ReorderBasicBlocks>(opts::PrintReordered));
+  // This pass should always run last.*
+  Manager.registerPass(
+      llvm::make_unique<FinalizeFunctions>(opts::PrintFinalized));
+  Manager.runPasses();
+}
+
 void MachORewriteInstance::run() {
   readSpecialSections();
   discoverFileObjects();
   disassembleFunctions();
   postProcessFunctions();
+  runOptimizationPasses();
 }
 
 MachORewriteInstance::~MachORewriteInstance() {}

@@ -104,7 +104,7 @@ PrintFOP("print-fop",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintFinalized("print-finalized",
   cl::desc("print function after CFG is finalized"),
   cl::Hidden,
@@ -166,7 +166,7 @@ PrintPeepholes("print-peepholes",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintReordered("print-reordered",
   cl::desc("print functions after layout optimization"),
   cl::ZeroOrMore,
