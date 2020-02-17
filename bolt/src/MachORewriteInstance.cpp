@@ -20,7 +20,7 @@ namespace opts {
 using namespace llvm;
 extern cl::opt<bool> PrintSections;
 extern cl::opt<bool> PrintDisasm;
-
+extern cl::opt<bool> PrintCFG;
 } // namespace opts
 
 namespace llvm {
@@ -121,6 +121,21 @@ void MachORewriteInstance::disassembleFunctions() {
     Function.disassemble();
     if (opts::PrintDisasm)
       Function.print(outs(), "after disassembly", true);
+    if (!Function.buildCFG(/*AllocId*/0)) {
+      errs() << "BOLT-WARNING: failed to build CFG for the function "
+             << Function << "\n";
+    }
+  }
+}
+
+void MachORewriteInstance::postProcessFunctions() {
+  for (auto &BFI : BC->getBinaryFunctions()) {
+    BinaryFunction &Function = BFI.second;
+    if (Function.empty())
+      continue;
+    Function.postProcessCFG();
+    if (opts::PrintCFG)
+      Function.print(outs(), "after building cfg", true);
   }
 }
 
@@ -128,6 +143,7 @@ void MachORewriteInstance::run() {
   readSpecialSections();
   discoverFileObjects();
   disassembleFunctions();
+  postProcessFunctions();
 }
 
 MachORewriteInstance::~MachORewriteInstance() {}

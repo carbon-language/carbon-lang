@@ -30,6 +30,7 @@ class MachORewriteInstance {
   void readSpecialSections();
   void discoverFileObjects();
   void disassembleFunctions();
+  void postProcessFunctions();
 
 public:
   MachORewriteInstance(object::MachOObjectFile *InputFile, DataReader &DR);

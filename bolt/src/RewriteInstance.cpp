@@ -273,7 +273,7 @@ PrintAll("print-all",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintCFG("print-cfg",
   cl::desc("print functions after CFG construction"),
   cl::ZeroOrMore,
