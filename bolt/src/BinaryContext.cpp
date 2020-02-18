@@ -1696,8 +1696,7 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
                                                       unsigned ELFFlags,
                                                       uint8_t *Data,
                                                       uint64_t Size,
-                                                      unsigned Alignment,
-                                                      bool IsLocal) {
+                                                      unsigned Alignment) {
   auto NamedSections = getSectionByName(Name);
   if (NamedSections.begin() != NamedSections.end()) {
     assert(std::next(NamedSections.begin()) == NamedSections.end() &&
@@ -1706,7 +1705,7 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
 
     DEBUG(dbgs() << "BOLT-DEBUG: updating " << *Section << " -> ");
     const auto Flag = Section->isAllocatable();
-    Section->update(Data, Size, Alignment, ELFType, ELFFlags, IsLocal);
+    Section->update(Data, Size, Alignment, ELFType, ELFFlags);
     DEBUG(dbgs() << *Section << "\n");
     assert(Flag == Section->isAllocatable() &&
            "can't change section allocation status");
@@ -1714,7 +1713,7 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
   }
 
   return registerSection(new BinarySection(*this, Name, Data, Size, Alignment,
-                                           ELFType, ELFFlags, IsLocal));
+                                           ELFType, ELFFlags));
 }
 
 bool BinaryContext::deregisterSection(BinarySection &Section) {

@@ -3273,10 +3273,9 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
     auto &Section = BC->registerOrUpdateSection(BOLTSecPrefix + ".text",
                                                 ELF::SHT_PROGBITS,
                                                 Flags,
-                                                nullptr,
+                                                /*Data=*/nullptr,
                                                 NewTextSectionSize,
-                                                16,
-                                                true /*IsLocal*/);
+                                                16);
     Section.setOutputAddress(NewTextSectionStartAddress);
     Section.setFileOffset(
       getFileOffsetForAddress(NewTextSectionStartAddress));
@@ -3577,8 +3576,7 @@ void RewriteInstance::rewriteNoteSections() {
                                       Section.sh_addralign,
                                       BSec ? BSec->isReadOnly() : false,
                                       BSec ? BSec->getELFType()
-                                           : ELF::SHT_PROGBITS,
-                                      BSec ? BSec->isLocal() : false);
+                                           : ELF::SHT_PROGBITS);
     NewSection.setOutputAddress(0);
     NewSection.setFileOffset(NextAvailableOffset);
 
@@ -4634,8 +4632,9 @@ void RewriteInstance::rewriteFile() {
 
   // Write all non-local sections, i.e. those not emitted with the function.
   for (auto &Section : BC->allocatableSections()) {
-    if (!Section.isFinalized() || Section.isLocal())
+    if (!Section.isFinalized() || !Section.getOutputData())
       continue;
+
     if (opts::Verbosity >= 1) {
       outs() << "BOLT: writing new section " << Section.getName()
              << "\n data at 0x" << Twine::utohexstr(Section.getAllocAddress())
@@ -4765,8 +4764,7 @@ void RewriteInstance::writeEHFrameHeader() {
                                 EHFrameSection->getELFFlags(),
                                 EHFrameSection->getOutputData(),
                                 EHFrameSectionSize,
-                                EHFrameSection->getAlignment(),
-                                EHFrameSection->isLocal());
+                                EHFrameSection->getAlignment());
 
   BC->deregisterSection(*OldEHFrameSection);
 

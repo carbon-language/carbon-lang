@@ -499,8 +499,7 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
                                              /*IsText=*/false,
                                              /*IsAllocatable=*/true);
   BC.registerOrUpdateSection(".bolt.instr.counters", ELF::SHT_PROGBITS, Flags,
-                             nullptr, 0, 1,
-                             /*local=*/true);
+                             nullptr, 0, 1);
 
   BC.registerOrUpdateNoteSection(".bolt.instr.tables", nullptr,
                                   0,

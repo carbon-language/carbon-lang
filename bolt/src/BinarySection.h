@@ -46,7 +46,6 @@ class BinarySection {
   unsigned Alignment;         // alignment in bytes (must be > 0)
   unsigned ELFType;           // ELF section type
   unsigned ELFFlags;          // ELF section flags
-  bool IsLocal;               // Is this a local section?
 
   // Relocations associated with this section.  Relocation offsets are
   // wrt. to the original section address and size.
@@ -110,13 +109,11 @@ class BinarySection {
               uint64_t NewSize,
               unsigned NewAlignment,
               unsigned NewELFType,
-              unsigned NewELFFlags,
-              bool NewIsLocal) {
+              unsigned NewELFFlags) {
     assert(NewAlignment > 0 && "section alignment must be > 0");
     Alignment = NewAlignment;
     ELFType = NewELFType;
     ELFFlags = NewELFFlags;
-    IsLocal = NewIsLocal || StringRef(Name).startswith(".local.");
     OutputSize = NewSize;
     OutputContents = StringRef(reinterpret_cast<const char*>(NewData),
                                NewData ? NewSize : 0);
@@ -126,8 +123,7 @@ public:
   /// Copy a section.
   explicit BinarySection(BinaryContext &BC,
                          StringRef Name,
-                         const BinarySection &Section,
-                         bool IsLocal = false)
+                         const BinarySection &Section)
     : BC(BC),
       Name(Name),
       Section(Section.getSectionRef()),
@@ -137,15 +133,13 @@ public:
       Alignment(Section.getAlignment()),
       ELFType(Section.getELFType()),
       ELFFlags(Section.getELFFlags()),
-      IsLocal(IsLocal || StringRef(Name).startswith(".local.")),
       Relocations(Section.Relocations),
       PendingRelocations(Section.PendingRelocations),
       OutputName(Name) {
   }
 
   BinarySection(BinaryContext &BC,
-                SectionRef Section,
-                bool IsLocal = false)
+                SectionRef Section)
     : BC(BC),
       Name(getName(Section)),
       Section(Section),
@@ -153,7 +147,6 @@ public:
       Address(Section.getAddress()),
       Size(Section.getSize()),
       Alignment(Section.getAlignment()),
-      IsLocal(IsLocal || StringRef(Name).startswith(".local.")),
       OutputName(Name) {
     if (Section.getObject()->isELF()) {
       ELFType = ELFSectionRef(Section).getType();
@@ -168,8 +161,7 @@ public:
                 uint64_t Size,
                 unsigned Alignment,
                 unsigned ELFType,
-                unsigned ELFFlags,
-                bool IsLocal)
+                unsigned ELFFlags)
     : BC(BC),
       Name(Name),
       Contents(reinterpret_cast<const char*>(Data), Data ? Size : 0),
@@ -178,7 +170,6 @@ public:
       Alignment(Alignment),
       ELFType(ELFType),
       ELFFlags(ELFFlags),
-      IsLocal(IsLocal || Name.startswith(".local.")),
       IsFinalized(true),
       OutputName(Name),
       OutputSize(Size),
@@ -213,8 +204,7 @@ public:
             getData() == Other.getData() &&
             Alignment == Other.Alignment &&
             ELFType == Other.ELFType &&
-            ELFFlags == Other.ELFFlags &&
-            IsLocal == Other.IsLocal);
+            ELFFlags == Other.ELFFlags);
   }
 
   bool operator!=(const BinarySection &Other) const {
@@ -273,7 +263,6 @@ public:
   bool isAllocatable() const {
     return (ELFFlags & ELF::SHF_ALLOC) && !isTBSS();
   }
-  bool isLocal() const { return IsLocal; }
   bool isReordered() const { return IsReordered; }
   bool isAnonymous() const { return IsAnonymous; }
   unsigned getELFType() const { return ELFType; }

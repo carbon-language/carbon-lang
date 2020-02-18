@@ -735,22 +735,21 @@ public:
                                          unsigned ELFFlags,
                                          uint8_t *Data = nullptr,
                                          uint64_t Size = 0,
-                                         unsigned Alignment = 1,
-                                         bool IsLocal = false);
+                                         unsigned Alignment = 1);
 
   /// Register the information for the note (non-allocatable) section
   /// with the given /p Name.  If the section already exists, the
   /// information in the section will be updated with the new data.
-  BinarySection &registerOrUpdateNoteSection(StringRef Name,
-                                             uint8_t *Data = nullptr,
-                                             uint64_t Size = 0,
-                                             unsigned Alignment = 1,
-                                             bool IsReadOnly = true,
-                                             unsigned ELFType = ELF::SHT_PROGBITS,
-                                             bool IsLocal = false) {
+  BinarySection &
+  registerOrUpdateNoteSection(StringRef Name,
+                              uint8_t *Data = nullptr,
+                              uint64_t Size = 0,
+                              unsigned Alignment = 1,
+                              bool IsReadOnly = true,
+                              unsigned ELFType = ELF::SHT_PROGBITS) {
     return registerOrUpdateSection(Name, ELFType,
                                    BinarySection::getFlags(IsReadOnly),
-                                   Data, Size, Alignment, IsLocal);
+                                   Data, Size, Alignment);
   }
 
   /// Remove the given /p Section from the set of all sections.  Return

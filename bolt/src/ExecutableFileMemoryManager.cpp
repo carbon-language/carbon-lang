@@ -67,7 +67,7 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   assert(Section.isAllocatable() &&
          "verify that allocatable is marked as allocatable");
 
-  DEBUG(dbgs() << "BOLT: allocating " << (Section.isLocal() ? "local " : "")
+  DEBUG(dbgs() << "BOLT: allocating "
                << (IsCode ? "code" : (IsReadOnly ? "read-only data" : "data"))
                << " section : " << SectionName
                << " with size " << Size << ", alignment " << Alignment
