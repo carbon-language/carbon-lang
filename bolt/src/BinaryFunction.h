@@ -549,7 +549,7 @@ private:
 private:
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
-    Aliases.emplace_back(NewName);
+    Aliases.push_back(std::move(NewName));
   }
 
   /// Return label at a given \p Address in the function. If the label does
