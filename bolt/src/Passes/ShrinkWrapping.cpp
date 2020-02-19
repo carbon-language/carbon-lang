@@ -1065,6 +1065,13 @@ bool ShrinkWrapping::validatePushPopsMode(unsigned CSR, MCInst *BestPosSave,
       return false;
     }
   }
+  // Abort if one of the restores for this CSR is not a POP.
+  for (MCInst *Load : CSA.getRestoresByReg(CSR)) {
+    if (!BC.MIB->isPop(*Load)) {
+      DEBUG(dbgs() << "Reg " << CSR << " has a mismatching restore.\n");
+      return false;
+    }
+  }
 
   auto &SPT = Info.getStackPointerTracking();
   // Abort if we are inserting a push into an entry BB (offset -8) and this

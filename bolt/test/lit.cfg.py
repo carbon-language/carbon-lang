@@ -41,12 +41,21 @@ config.test_exec_root = os.path.join(config.bolt_obj_root, 'test')
 
 llvm_config.use_default_substitutions()
 
-tool_dirs = [config.llvm_tools_dir]
+config.substitutions.append(('%host_cc', config.host_cc))
+
+tool_dirs = [config.llvm_tools_dir,
+             config.test_source_root]
+
+linker_tool = llvm_config.use_llvm_tool('ld', required=True)
 tools = [
     ToolSubst('llvm-bolt', unresolved='fatal'),
+    ToolSubst('perf2bolt', unresolved='fatal'),
+    ToolSubst('yaml2obj', unresolved='fatal'),
+    ToolSubst('llvm-mc', unresolved='fatal'),
+    ToolSubst('linker', command=linker_tool, unresolved='fatal'),
+    ToolSubst('link_fdata', command=FindTool('link_fdata.sh'), unresolved='fatal'),
 ]
-llvm_config.add_tool_substitutions([], tool_dirs)
-llvm_config.with_environment('PATH', tool_dirs, append_path=True)
+llvm_config.add_tool_substitutions(tools, tool_dirs)
 
 # Propagate path to symbolizer for ASan/MSan.
 llvm_config.with_system_environment(

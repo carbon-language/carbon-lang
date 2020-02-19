@@ -334,15 +334,15 @@ public:
   void run() {
     derived().preflight();
 
-      // Initialize state for all points of the function
-      for (auto &BB : Func) {
-        auto &St = getOrCreateStateAt(BB);
-        St = derived().getStartingStateAtBB(BB);
-        for (auto &Inst : BB) {
-          auto &St = getOrCreateStateAt(Inst);
-          St = derived().getStartingStateAtPoint(Inst);
-        }
+    // Initialize state for all points of the function
+    for (auto &BB : Func) {
+      auto &St = getOrCreateStateAt(BB);
+      St = derived().getStartingStateAtBB(BB);
+      for (auto &Inst : BB) {
+        auto &St = getOrCreateStateAt(Inst);
+        St = derived().getStartingStateAtPoint(Inst);
       }
+    }
     assert(Func.begin() != Func.end() && "Unexpected empty function");
 
     std::queue<BinaryBasicBlock *> Worklist;
