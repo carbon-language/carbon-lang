@@ -160,6 +160,7 @@ BinaryContext::createBinaryContext(ObjectFile *File, DataReader &DR,
   switch (File->getArch()) {
   case llvm::Triple::x86_64:
     ArchName = "x86-64";
+    FeaturesStr = "+nopl";
     break;
   case llvm::Triple::aarch64:
     ArchName = "aarch64";
