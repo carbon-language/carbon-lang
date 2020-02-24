@@ -2759,7 +2759,7 @@ public:
   }
 
   void createLoadImmediate(MCInst &Inst, const MCPhysReg Dest,
-                           uint32_t Imm) const {
+                           uint32_t Imm) const override {
     Inst.setOpcode(X86::MOV64ri32);
     Inst.clear();
     Inst.addOperand(MCOperand::createReg(Dest));
