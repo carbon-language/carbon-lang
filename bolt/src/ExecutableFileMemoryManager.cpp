@@ -76,27 +76,6 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   return Ret;
 }
 
-/// Notifier for non-allocatable (note) section.
-uint8_t *ExecutableFileMemoryManager::recordNoteSection(
-    const uint8_t *Data,
-    uintptr_t Size,
-    unsigned Alignment,
-    unsigned SectionID,
-    StringRef SectionName) {
-  DEBUG(dbgs() << "BOLT: note section "
-               << SectionName
-               << " with size " << Size << ", alignment " << Alignment
-               << " at 0x"
-               << Twine::utohexstr(reinterpret_cast<uint64_t>(Data)) << '\n');
-  auto &Section = BC.registerOrUpdateNoteSection(SectionName,
-                                                 copyByteArray(Data, Size),
-                                                 Size,
-                                                 Alignment);
-  Section.setSectionID(SectionID);
-  assert(!Section.isAllocatable() && "note sections cannot be allocatable");
-  return Section.getOutputData();
-}
-
 bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
   DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
   ++ObjectsLoaded;

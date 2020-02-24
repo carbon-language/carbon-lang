@@ -87,10 +87,6 @@ public:
                            /*IsCode=*/false, IsReadOnly);
   }
 
-  uint8_t *recordNoteSection(const uint8_t *Data, uintptr_t Size,
-                             unsigned Alignment, unsigned SectionID,
-                             StringRef SectionName) override;
-
   bool allowStubAllocation() const override { return AllowStubs; }
 
   bool finalizeMemory(std::string *ErrMsg = nullptr) override;

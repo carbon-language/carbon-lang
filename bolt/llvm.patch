@@ -2030,7 +2030,7 @@ index 7ae38e6e053..f1fd34af238 100644
  }
  
 diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
-index 3d274b63a4f..cef29f4b41d 100644
+index 3d274b63a4f..978df0bd095 100644
 --- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
 +++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
 @@ -175,6 +175,12 @@ static Error getOffset(const SymbolRef &Sym, SectionRef Sec,
@@ -2057,22 +2057,7 @@ index 3d274b63a4f..cef29f4b41d 100644
    unsigned StubSize = getMaxStubSize();
    if (StubSize == 0) {
      return 0;
-@@ -795,9 +805,12 @@ RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
-     // to handle later processing (and by 'handle' I mean don't do anything
-     // with these sections).
-     Allocate = 0;
--    Addr = nullptr;
-+    Addr =
-+      MemMgr.recordNoteSection(reinterpret_cast<const uint8_t *>(data.data()),
-+                               DataSize, Alignment, SectionID, Name);
-     DEBUG(dbgs() << "emitSection SectionID: " << SectionID << " Name: " << Name
--                 << " obj addr: " << format("%p", data.data()) << " new addr: 0"
-+                 << " obj addr: " << format("%p", data.data())
-+                 << " new addr: " << format("%p", Addr)
-                  << " DataSize: " << DataSize << " StubBufSize: " << StubBufSize
-                  << " Allocate: " << Allocate << "\n");
-   }
-@@ -1064,7 +1077,7 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
+@@ -1064,7 +1074,7 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
        }
  
        // FIXME: Implement error handling that doesn't kill the host program!
@@ -2081,7 +2066,7 @@ index 3d274b63a4f..cef29f4b41d 100644
          report_fatal_error("Program used external function '" + Name +
                             "' which could not be resolved!");
  
-@@ -1215,6 +1228,11 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
+@@ -1215,6 +1225,11 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
    Dyld->mapSectionAddress(LocalAddress, TargetAddress);
  }
  
