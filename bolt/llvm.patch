@@ -3161,7 +3161,7 @@ index 44422a95f16..d60aa3fd198 100644
    uint8_t repeatPrefix;
  
 diff --git a/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp b/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp
-index eea94b2eb1d..0533ff2cfb8 100644
+index eea94b2eb1d..8f3aea5125d 100644
 --- a/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp
 +++ b/lib/Target/X86/MCTargetDesc/X86AsmBackend.cpp
 @@ -7,6 +7,7 @@
@@ -3203,6 +3203,14 @@ index eea94b2eb1d..0533ff2cfb8 100644
 +        "boundary's size is not 0, it should be a power of 2 and no less "
 +        "than 32. Branches will be aligned within the boundary of specified "
 +        "size. -x86-align-branch-boundary=0 doesn't align branches."));
++
++cl::opt<bool> X86AlignBranchWithin32BBoundaries(
++    "x86-branches-within-32B-boundaries", cl::init(false),
++    cl::desc(
++        "Align selected instructions to mitigate negative performance impact "
++        "of Intel's micro code update for errata skx102.  May break "
++        "assumptions about labels corresponding to particular instructions, "
++        "and should be used with caution."));
 +
  namespace {
 +class X86AlignBranchKind {
@@ -3262,14 +3270,6 @@ index eea94b2eb1d..0533ff2cfb8 100644
 +                   "jmp(unconditional jump); call(call); ret(ret), "
 +                   "indirect(indirect jump)."),
 +    cl::location(X86AlignBranchKindLoc));
-+
-+cl::opt<bool> X86AlignBranchWithin32BBoundaries(
-+    "x86-branches-within-32B-boundaries", cl::init(false),
-+    cl::desc(
-+        "Align selected instructions to mitigate negative performance impact "
-+        "of Intel's micro code update for errata skx102.  May break "
-+        "assumptions about labels corresponding to particular instructions, "
-+        "and should be used with caution."));
  
  class X86ELFObjectWriter : public MCELFObjectTargetWriter {
  public:
