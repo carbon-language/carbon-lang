@@ -22,7 +22,6 @@
 #include "Exceptions.h"
 #include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
-#include "NameResolver.h"
 #include "ParallelUtilities.h"
 #include "Passes/ReorderFunctions.h"
 #include "ProfileReader.h"
@@ -915,8 +914,6 @@ void RewriteInstance::run() {
 void RewriteInstance::discoverFileObjects() {
   NamedRegionTimer T("discoverFileObjects", "discover file objects",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  NameResolver NR;
-
   FileSymRefs.clear();
   BC->getBinaryFunctions().clear();
   BC->clearBinaryData();
@@ -1361,27 +1358,8 @@ void RewriteInstance::discoverFileObjects() {
     llvm_unreachable("Unknown marker");
   }
 
-  if (!BC->HasRelocations)
-    return;
-
   // Read all relocations now that we have binary functions mapped.
-  std::vector<SectionRef> RelocationSections;
-  for (const auto &Section : InputFile->sections()) {
-    if (Section.getRelocatedSection() != InputFile->section_end())
-      RelocationSections.push_back(Section);
-  }
-
-  // Sort relocation sections so that we process text section relocations last.
-  std::stable_sort(RelocationSections.begin(), RelocationSections.end(),
-                   [](const SectionRef &A, const SectionRef &B) {
-                     if (!A.getRelocatedSection()->isText() &&
-                         B.getRelocatedSection()->isText())
-                       return true;
-                     return false;
-                   });
-
-  for (const auto &Section : RelocationSections)
-    readRelocations(Section, NR);
+  processRelocations();
 }
 
 void RewriteInstance::disassemblePLT() {
@@ -1968,8 +1946,17 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   return true;
 }
 
-void RewriteInstance::readRelocations(const SectionRef &Section,
-                                      NameResolver &NR) {
+void RewriteInstance::processRelocations() {
+  if (!BC->HasRelocations)
+    return;
+
+  for (const auto &Section : InputFile->sections()) {
+    if (Section.getRelocatedSection() != InputFile->section_end())
+      readRelocations(Section);
+  }
+}
+
+void RewriteInstance::readRelocations(const SectionRef &Section) {
   StringRef SectionName;
   Section.getName(SectionName);
   DEBUG(dbgs() << "BOLT-DEBUG: reading relocations for section "

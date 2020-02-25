@@ -16,6 +16,7 @@
 
 #include "BinaryFunction.h"
 #include "ExecutableFileMemoryManager.h"
+#include "NameResolver.h"
 #include "Passes/Instrumentation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
@@ -101,8 +102,11 @@ private:
   /// Adjust supplied command-line options based on input data.
   void adjustCommandLineOptions();
 
+  /// Process input relocations.
+  void processRelocations();
+
   /// Read relocations from a given section.
-  void readRelocations(const object::SectionRef &Section, NameResolver &NR);
+  void readRelocations(const object::SectionRef &Section);
 
   /// Read information from debug sections.
   void readDebugInfo();
@@ -468,6 +472,8 @@ private:
   /// Number of processed to data relocations.  Used to implement the
   /// -max-relocations debugging option.
   uint64_t NumDataRelocations{0};
+
+  NameResolver NR;
 
   friend class RewriteInstanceDiff;
 };
