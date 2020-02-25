@@ -250,9 +250,6 @@ public:
   bool isTBSS() const {
     return isBSS() && isTLS();
   }
-  bool isNote() const { return ELFType == ELF::SHT_NOTE; }
-  bool isStrTab() const { return ELFType == ELF::SHT_STRTAB; }
-  bool isSymTab() const { return ELFType == ELF::SHT_SYMTAB; }
   bool isVirtual() const { return ELFType == ELF::SHT_NOBITS; }
   bool isRela() const { return ELFType == ELF::SHT_RELA; }
   bool isReadOnly() const {
