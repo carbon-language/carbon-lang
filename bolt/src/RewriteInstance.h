@@ -59,6 +59,37 @@ public:
   /// to fold identical functions.
   void compare(RewriteInstance &RI2);
 
+  /// Return binary context.
+  const BinaryContext &getBinaryContext() const {
+    return *BC;
+  }
+
+  /// Return total score of all functions for this instance.
+  uint64_t getTotalScore() const {
+    return BC->TotalScore;
+  }
+
+  /// Return the name of the input file.
+  Optional<StringRef> getInputFileName() const {
+    if (InputFile)
+      return InputFile->getFileName();
+    return NoneType();
+  }
+
+  /// Set the build-id string if we did not fail to parse the contents of the
+  /// ELF note section containing build-id information.
+  void parseBuildID();
+
+  /// The build-id is typically a stream of 20 bytes. Return these bytes in
+  /// printable hexadecimal form if they are available, or NoneType otherwise.
+  Optional<std::string> getPrintableBuildID() const;
+
+  /// Provide an access to the profile data aggregator.
+  const DataAggregator &getDataAggregator() const {
+    return DA;
+  }
+
+private:
   /// Populate array of binary functions and other objects of interest
   /// from meta data in the file.
   void discoverFileObjects();
@@ -141,7 +172,6 @@ public:
                     "findSymbol failed");
   }
 
-private:
   /// Emit a single function.
   bool emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                     bool EmitColdPart);
@@ -440,38 +470,6 @@ private:
   uint64_t NumDataRelocations{0};
 
   friend class RewriteInstanceDiff;
-
-public:
-
-  /// Return binary context.
-  const BinaryContext &getBinaryContext() const {
-    return *BC;
-  }
-
-  /// Return total score of all functions for this instance.
-  uint64_t getTotalScore() const {
-    return BC->TotalScore;
-  }
-
-  /// Return the name of the input file.
-  Optional<StringRef> getInputFileName() const {
-    if (InputFile)
-      return InputFile->getFileName();
-    return NoneType();
-  }
-
-  /// Set the build-id string if we did not fail to parse the contents of the
-  /// ELF note section containing build-id information.
-  void parseBuildID();
-
-  /// The build-id is typically a stream of 20 bytes. Return these bytes in
-  /// printable hexadecimal form if they are available, or NoneType otherwise.
-  Optional<std::string> getPrintableBuildID() const;
-
-  /// Provide an access to the profile data aggregator.
-  const DataAggregator &getDataAggregator() const {
-    return DA;
-  }
 };
 
 } // namespace bolt

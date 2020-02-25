@@ -639,11 +639,12 @@ void RewriteInstance::discoverStorage() {
   for (const auto &Section : InputFile->sections()) {
     StringRef SectionName;
     Section.getName(SectionName);
-    StringRef SectionContents;
-    Section.getContents(SectionContents);
     if (SectionName == ".text") {
       BC->OldTextSectionAddress = Section.getAddress();
       BC->OldTextSectionSize = Section.getSize();
+
+      StringRef SectionContents;
+      Section.getContents(SectionContents);
       BC->OldTextSectionOffset =
         SectionContents.data() - InputFile->getData().data();
     }
@@ -1808,6 +1809,12 @@ void RewriteInstance::adjustCommandLineOptions() {
     opts::HotTextMoveSections.addValue(".stub");
     opts::HotTextMoveSections.addValue(".mover");
     opts::HotTextMoveSections.addValue(".never_hugify");
+  }
+
+  if (opts::UseOldText && !BC->OldTextSectionAddress) {
+    errs() << "BOLT-WARNING: cannot use old .text as the section was not found"
+              "\n";
+    opts::UseOldText = false;
   }
 }
 
