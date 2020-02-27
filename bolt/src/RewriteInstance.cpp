@@ -3619,7 +3619,7 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
 // existing sections.
 template <typename ELFT>
 void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
-  using Elf_Shdr = typename ELFObjectFile<ELFT>::Elf_Shdr;
+  using ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr;
   auto &OS = Out->os();
   auto *Obj = File->getELFFile();
 
@@ -3634,7 +3634,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
 
   // Align starting address for section header table.
   auto SHTOffset = OS.tell();
-  SHTOffset = appendPadding(OS, SHTOffset, sizeof(Elf_Shdr));
+  SHTOffset = appendPadding(OS, SHTOffset, sizeof(ELFShdrTy));
 
   // Write all section header entries while patching section references.
   for (auto &Section : OutputSections) {
@@ -3662,9 +3662,335 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   OS.pwrite(reinterpret_cast<const char *>(&NewEhdr), sizeof(NewEhdr), 0);
 }
 
+template <typename ELFT,
+          typename ELFShdrTy,
+          typename WriteFuncTy,
+          typename StrTabFuncTy>
+void RewriteInstance::updateELFSymbolTable(
+    ELFObjectFile<ELFT> *File,
+    bool PatchExisting,
+    const ELFShdrTy &SymTabSection,
+    const std::vector<uint32_t> &NewSectionIndex,
+    WriteFuncTy Write,
+    StrTabFuncTy AddToStrTab) {
+  auto *Obj = File->getELFFile();
+  using ELFSymTy  = typename ELFObjectFile<ELFT>::Elf_Sym;
+
+  auto StringSection = cantFail(Obj->getStringTableForSymtab(SymTabSection));
+
+  unsigned NumHotTextSymsUpdated = 0;
+  unsigned NumHotDataSymsUpdated = 0;
+
+  std::map<const BinaryFunction *, uint64_t> IslandSizes;
+  auto getConstantIslandSize = [&IslandSizes](const BinaryFunction &BF) {
+    auto Itr = IslandSizes.find(&BF);
+    if (Itr != IslandSizes.end())
+      return Itr->second;
+    return IslandSizes[&BF] = BF.estimateConstantIslandSize();
+  };
+
+  // Symbols for the new symbol table.
+  std::vector<ELFSymTy> Symbols;
+
+  // Add extra symbols for the emitted function.
+  auto addExtraSymbols = [&](const BinaryFunction &Function,
+                             const ELFSymTy &FunctionSymbol) {
+    if (Function.isSplit()) {
+      auto NewColdSym = FunctionSymbol;
+      SmallVector<char, 256> Buf;
+      NewColdSym.st_name =
+          AddToStrTab(Twine(cantFail(FunctionSymbol.getName(StringSection)))
+                          .concat(".cold.0")
+                          .toStringRef(Buf));
+      NewColdSym.st_shndx = Function.getColdCodeSection()->getIndex();
+      NewColdSym.st_value = Function.cold().getAddress();
+      NewColdSym.st_size = Function.cold().getImageSize();
+      NewColdSym.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
+      Symbols.emplace_back(NewColdSym);
+    }
+    if (Function.hasConstantIsland()) {
+      auto DataMark = Function.getOutputDataAddress();
+      auto CISize = getConstantIslandSize(Function);
+      auto CodeMark = DataMark + CISize;
+      auto DataMarkSym = FunctionSymbol;
+      DataMarkSym.st_name = AddToStrTab("$d");
+      DataMarkSym.st_value = DataMark;
+      DataMarkSym.st_size = 0;
+      DataMarkSym.setType(ELF::STT_NOTYPE);
+      DataMarkSym.setBinding(ELF::STB_LOCAL);
+      auto CodeMarkSym = DataMarkSym;
+      CodeMarkSym.st_name = AddToStrTab("$x");
+      CodeMarkSym.st_value = CodeMark;
+      Symbols.emplace_back(DataMarkSym);
+      Symbols.emplace_back(CodeMarkSym);
+    }
+    if (Function.hasConstantIsland() && Function.isSplit()) {
+      auto DataMark = Function.getOutputColdDataAddress();
+      auto CISize = getConstantIslandSize(Function);
+      auto CodeMark = DataMark + CISize;
+      auto DataMarkSym = FunctionSymbol;
+      DataMarkSym.st_name = AddToStrTab("$d");
+      DataMarkSym.st_value = DataMark;
+      DataMarkSym.st_size = 0;
+      DataMarkSym.setType(ELF::STT_NOTYPE);
+      DataMarkSym.setBinding(ELF::STB_LOCAL);
+      auto CodeMarkSym = DataMarkSym;
+      CodeMarkSym.st_name = AddToStrTab("$x");
+      CodeMarkSym.st_value = CodeMark;
+      Symbols.emplace_back(DataMarkSym);
+      Symbols.emplace_back(CodeMarkSym);
+    }
+  };
+
+  // For regular (non-dynamic) symbol table, exclude symbols referring
+  // to non-allocatable sections.
+  auto shouldStrip = [&](const ELFSymTy &Symbol) {
+    if (Symbol.isAbsolute() || !Symbol.isDefined())
+      return false;
+
+    // If we cannot link the symbol to a section, leave it as is.
+    auto Section = Obj->getSection(Symbol.st_shndx);
+    if (!Section)
+      return false;
+
+    // Remove the section symbol iif the corresponding section was stripped.
+    if (Symbol.getType() == ELF::STT_SECTION) {
+      if (!NewSectionIndex[Symbol.st_shndx])
+        return true;
+      return false;
+    }
+
+    // Symbols in non-allocatable sections are typically remnants of relocations
+    // emitted under "-emit-relocs" linker option. Delete those as we delete
+    // relocations against non-allocatable sections.
+    if (!((*Section)->sh_flags & ELF::SHF_ALLOC))
+      return true;
+
+    return false;
+  };
+
+  for (const ELFSymTy &Symbol : cantFail(Obj->symbols(&SymTabSection))) {
+    // For regular (non-dynamic) symbol table strip unneeded symbols.
+    if (!PatchExisting && shouldStrip(Symbol))
+      continue;
+
+    const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value,
+                                                          /*Shallow=*/true);
+    // Ignore false function references, e.g. when the section address matches
+    // the address of the function.
+    if (Function && Symbol.getType() == ELF::STT_SECTION)
+      Function = nullptr;
+
+    // For non-dynamic symtab, make sure the symbol section matches that of
+    // the function. It can mismatch e.g. if the symbol is a section marker
+    // in which case we treat the symbol separately from the function.
+    // For dynamic symbol table, the section index could be wrong on the input,
+    // and its value is ignored by the runtime if it's different from
+    // SHN_UNDEF and SHN_ABS.
+    if (!PatchExisting && Function &&
+        Symbol.st_shndx != Function->getSection().getSectionRef().getIndex())
+      Function = nullptr;
+
+    // Create a new symbol based on the existing symbol.
+    auto NewSymbol = Symbol;
+
+    // If the symbol matched a function that was not emitted, leave the
+    // symbol unchanged.
+    if (Function && Function->isEmitted()) {
+      NewSymbol.st_value = Function->getOutputAddress();
+      NewSymbol.st_size = Function->getOutputSize();
+      NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
+
+      // Add new symbols to the symbol table if necessary.
+      if (!PatchExisting)
+        addExtraSymbols(*Function, NewSymbol);
+    } else if (!Function) {
+      // Check if the function symbol matches address inside a function, i.e.
+      // it marks a secondary entry point.
+      Function = (Symbol.getType() == ELF::STT_FUNC)
+        ? BC->getBinaryFunctionContainingAddress(Symbol.st_value,
+                                                 /*CheckPastEnd=*/false,
+                                                 /*UseMaxSize=*/true,
+                                                 /*Shallow=*/true)
+        : nullptr;
+
+      if (Function && Function->isEmitted()) {
+        const auto OutputAddress =
+          Function->translateInputToOutputAddress(Symbol.st_value);
+
+        NewSymbol.st_value = OutputAddress;
+        // Force secondary entry points to have zero size.
+        NewSymbol.st_size = 0;
+        NewSymbol.st_shndx = OutputAddress >= Function->cold().getAddress() &&
+                             OutputAddress < Function->cold().getImageSize()
+                                 ? Function->getColdCodeSection()->getIndex()
+                                 : Function->getCodeSection()->getIndex();
+      } else {
+        // Check if the symbol belongs to moved data object and update it.
+        BinaryData *BD = opts::ReorderData.empty()
+          ? nullptr
+          : BC->getBinaryDataAtAddress(Symbol.st_value);
+        if (BD && BD->isMoved() && !BD->isJumpTable()) {
+          assert((!BD->getSize() || !Symbol.st_size ||
+                  Symbol.st_size == BD->getSize()) &&
+                 "sizes must match");
+
+          auto &OutputSection = BD->getOutputSection();
+          assert(OutputSection.getIndex());
+          DEBUG(dbgs() << "BOLT-DEBUG: moving " << BD->getName() << " from "
+                       << *BC->getSectionNameForAddress(Symbol.st_value)
+                       << " (" << Symbol.st_shndx << ") to "
+                       << OutputSection.getName() << " ("
+                       << OutputSection.getIndex() << ")\n");
+          NewSymbol.st_shndx = OutputSection.getIndex();
+          NewSymbol.st_value = BD->getOutputAddress();
+        } else {
+          // Otherwise just update the section for the symbol.
+          if (Symbol.st_shndx < ELF::SHN_LORESERVE) {
+            NewSymbol.st_shndx = NewSectionIndex[Symbol.st_shndx];
+          }
+        }
+
+        // Detect local syms in the text section that we didn't update
+        // and that were preserved by the linker to support relocations against
+        // .text. Remove them from the symtab.
+        if (Symbol.getType() == ELF::STT_NOTYPE &&
+            Symbol.getBinding() == ELF::STB_LOCAL &&
+            Symbol.st_size == 0) {
+          if (BC->getBinaryFunctionContainingAddress(Symbol.st_value,
+                                                     /*CheckPastEnd=*/false,
+                                                     /*UseMaxSize=*/true,
+                                                     /*Shallow=*/true)) {
+            // Can only delete the symbol if not patching. Such symbols should
+            // not exist in the dynamic symbol table.
+            assert(!PatchExisting && "cannot delete symbol");
+            continue;
+          }
+        }
+      }
+    }
+
+    // Handle special symbols based on their name.
+    auto SymbolName = Symbol.getName(StringSection);
+    assert(SymbolName && "cannot get symbol name");
+
+    auto updateSymbolValue = [&](const StringRef Name, unsigned &IsUpdated) {
+      NewSymbol.st_value = getNewValueForSymbol(Name);
+      NewSymbol.st_shndx = ELF::SHN_ABS;
+      outs() << "BOLT-INFO: setting " << Name << " to 0x"
+             << Twine::utohexstr(NewSymbol.st_value) << '\n';
+      ++IsUpdated;
+      return true;
+    };
+
+    if (opts::HotText && (*SymbolName == "__hot_start" ||
+                          *SymbolName == "__hot_end"))
+      updateSymbolValue(*SymbolName, NumHotTextSymsUpdated);
+
+    if (opts::HotData && (*SymbolName == "__hot_data_start" ||
+                          *SymbolName == "__hot_data_end"))
+      updateSymbolValue(*SymbolName, NumHotDataSymsUpdated);
+
+    if (opts::UpdateEnd && *SymbolName == "_end") {
+      NewSymbol.st_value = getNewValueForSymbol(*SymbolName);
+      NewSymbol.st_shndx = ELF::SHN_ABS;
+      outs() << "BOLT-INFO: setting " << *SymbolName << " to 0x"
+             << Twine::utohexstr(NewSymbol.st_value) << '\n';
+    }
+
+    if (PatchExisting) {
+      Write((&Symbol - cantFail(Obj->symbols(&SymTabSection)).begin()) *
+                sizeof(ELFSymTy),
+            NewSymbol);
+    } else {
+      Symbols.emplace_back(NewSymbol);
+    }
+  }
+
+  if (PatchExisting) {
+    assert(Symbols.empty());
+    return;
+  }
+
+  // Add symbols of injected functions
+  for (BinaryFunction *Function : BC->getInjectedBinaryFunctions()) {
+    ELFSymTy NewSymbol;
+    NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
+    NewSymbol.st_value = Function->getOutputAddress();
+    NewSymbol.st_name = AddToStrTab(Function->getOneName());
+    NewSymbol.st_size = Function->getOutputSize();
+    NewSymbol.st_other = 0;
+    NewSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
+    Symbols.emplace_back(NewSymbol);
+
+    if (Function->isSplit()) {
+      auto NewColdSym = NewSymbol;
+      NewColdSym.setType(ELF::STT_NOTYPE);
+      SmallVector<char, 256> Buf;
+      NewColdSym.st_name = AddToStrTab(
+        Twine(Function->getPrintName()).concat(".cold.0").toStringRef(Buf));
+      NewColdSym.st_value = Function->cold().getAddress();
+      NewColdSym.st_size = Function->cold().getImageSize();
+      Symbols.emplace_back(NewColdSym);
+    }
+  }
+
+  assert((!NumHotTextSymsUpdated || NumHotTextSymsUpdated == 2) &&
+         "either none or both __hot_start/__hot_end symbols were expected");
+  assert((!NumHotDataSymsUpdated || NumHotDataSymsUpdated == 2) &&
+         "either none or both __hot_data_start/__hot_data_end symbols were "
+         "expected");
+
+  auto addSymbol = [&](const std::string &Name) {
+    ELFSymTy Symbol;
+    Symbol.st_value = getNewValueForSymbol(Name);
+    Symbol.st_shndx = ELF::SHN_ABS;
+    Symbol.st_name = AddToStrTab(Name);
+    Symbol.st_size = 0;
+    Symbol.st_other = 0;
+    Symbol.setBindingAndType(ELF::STB_WEAK, ELF::STT_NOTYPE);
+
+    outs() << "BOLT-INFO: setting " << Name << " to 0x"
+           << Twine::utohexstr(Symbol.st_value) << '\n';
+
+    Symbols.emplace_back(Symbol);
+  };
+
+  if (opts::HotText && !NumHotTextSymsUpdated) {
+    addSymbol("__hot_start");
+    addSymbol("__hot_end");
+  }
+
+  if (opts::HotData && !NumHotDataSymsUpdated) {
+    addSymbol("__hot_data_start");
+    addSymbol("__hot_data_end");
+  }
+
+  // Put local symbols at the beginning.
+  std::stable_sort(Symbols.begin(), Symbols.end(),
+                   [](const ELFSymTy &A, const ELFSymTy &B) {
+                     if (A.getBinding() == ELF::STB_LOCAL &&
+                         B.getBinding() != ELF::STB_LOCAL)
+                       return true;
+                     return false;
+                   });
+
+  for (const auto &Symbol : Symbols) {
+    Write(0, Symbol);
+  }
+}
+
 template <typename ELFT>
 void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   auto *Obj = File->getELFFile();
+  using ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr;
+  using ELFSymTy  = typename ELFObjectFile<ELFT>::Elf_Sym;
+
+  // Compute a preview of how section indices will change after rewriting, so
+  // we can properly update the symbol table based on new section indices.
+  std::vector<uint32_t> NewSectionIndex;
+  getOutputSections(File, NewSectionIndex);
+
   // Set pointer at the end of the output file, so we can pwrite old symbol
   // tables if we need to.
   uint64_t NextAvailableOffset = getFileOffsetForAddress(NextAvailableAddress);
@@ -3672,284 +3998,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
          "next available offset calculation failure");
   Out->os().seek(NextAvailableOffset);
 
-  using Elf_Shdr = typename ELFObjectFile<ELFT>::Elf_Shdr;
-  using Elf_Sym  = typename ELFObjectFile<ELFT>::Elf_Sym;
-
-  // Compute a preview of how section indices will change after rewriting, so
-  // we can properly update the symbol table based on new section indices.
-  std::vector<uint32_t> NewSectionIndex;
-  getOutputSections(File, NewSectionIndex);
-
-  auto updateSymbolTable =
-    [&](bool PatchExisting,
-        const Elf_Shdr *Section,
-        std::function<void(size_t, const Elf_Sym &)> Write,
-        std::function<size_t(StringRef)> AddToStrTab) {
-    auto StringSection = cantFail(Obj->getStringTableForSymtab(*Section));
-    unsigned IsHotTextUpdated = 0;
-    unsigned IsHotDataUpdated = 0;
-
-    std::vector<Elf_Sym> Symbols;
-
-    std::map<const BinaryFunction *, uint64_t> IslandSizes;
-    auto getConstantIslandSize = [&IslandSizes](const BinaryFunction *BF) {
-      auto Itr = IslandSizes.find(BF);
-      if (Itr != IslandSizes.end())
-        return Itr->second;
-      return IslandSizes[BF] = BF->estimateConstantIslandSize();
-    };
-
-    // Add symbols of injected functions
-    for (BinaryFunction *Function : BC->getInjectedBinaryFunctions()) {
-      Elf_Sym NewSymbol;
-      NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
-      NewSymbol.st_value = Function->getOutputAddress();
-      NewSymbol.st_name = AddToStrTab(Function->getOneName());
-      NewSymbol.st_size = Function->getOutputSize();
-      NewSymbol.st_other = 0;
-      NewSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
-      Symbols.emplace_back(NewSymbol);
-
-      if (Function->isSplit()) {
-        auto NewColdSym = NewSymbol;
-        NewColdSym.setType(ELF::STT_NOTYPE);
-        SmallVector<char, 256> Buf;
-        NewColdSym.st_name = AddToStrTab(
-            Twine(Function->getPrintName()).concat(".cold.0").toStringRef(Buf));
-        NewColdSym.st_value = Function->cold().getAddress();
-        NewColdSym.st_size = Function->cold().getImageSize();
-        Symbols.emplace_back(NewColdSym);
-      }
-    }
-
-    for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
-      auto NewSymbol = Symbol;
-
-      const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value,
-                                                            /*Shallow=*/true);
-
-      // Some section symbols may be mistakenly associated with the first
-      // function emitted in the section. Dismiss if it is a section symbol.
-      if (Function &&
-          !Function->getPLTSymbol() &&
-          NewSymbol.getType() != ELF::STT_SECTION) {
-        NewSymbol.st_value = Function->getOutputAddress();
-        NewSymbol.st_size = Function->getOutputSize();
-        NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
-        if (!PatchExisting && Function->isSplit()) {
-          auto NewColdSym = NewSymbol;
-          SmallVector<char, 256> Buf;
-          NewColdSym.st_name =
-              AddToStrTab(Twine(cantFail(Symbol.getName(StringSection)))
-                              .concat(".cold.0")
-                              .toStringRef(Buf));
-          NewColdSym.st_shndx = Function->getColdCodeSection()->getIndex();
-          NewColdSym.st_value = Function->cold().getAddress();
-          NewColdSym.st_size = Function->cold().getImageSize();
-          NewColdSym.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
-          Symbols.emplace_back(NewColdSym);
-        }
-        if (!PatchExisting && Function->hasConstantIsland()) {
-          auto DataMark = Function->getOutputDataAddress();
-          auto CISize = getConstantIslandSize(Function);
-          auto CodeMark = DataMark + CISize;
-          auto DataMarkSym = NewSymbol;
-          DataMarkSym.st_name = AddToStrTab("$d");
-          DataMarkSym.st_value = DataMark;
-          DataMarkSym.st_size = 0;
-          DataMarkSym.setType(ELF::STT_NOTYPE);
-          DataMarkSym.setBinding(ELF::STB_LOCAL);
-          auto CodeMarkSym = DataMarkSym;
-          CodeMarkSym.st_name = AddToStrTab("$x");
-          CodeMarkSym.st_value = CodeMark;
-          Symbols.emplace_back(DataMarkSym);
-          Symbols.emplace_back(CodeMarkSym);
-        }
-        if (!PatchExisting && Function->hasConstantIsland() &&
-            Function->isSplit()) {
-          auto DataMark = Function->getOutputColdDataAddress();
-          auto CISize = getConstantIslandSize(Function);
-          auto CodeMark = DataMark + CISize;
-          auto DataMarkSym = NewSymbol;
-          DataMarkSym.st_name = AddToStrTab("$d");
-          DataMarkSym.st_value = DataMark;
-          DataMarkSym.st_size = 0;
-          DataMarkSym.setType(ELF::STT_NOTYPE);
-          DataMarkSym.setBinding(ELF::STB_LOCAL);
-          auto CodeMarkSym = DataMarkSym;
-          CodeMarkSym.st_name = AddToStrTab("$x");
-          CodeMarkSym.st_value = CodeMark;
-          Symbols.emplace_back(DataMarkSym);
-          Symbols.emplace_back(CodeMarkSym);
-        }
-      } else {
-        uint32_t OldSectionIndex = NewSymbol.st_shndx;
-        // Check if the original section where this symbol links to is
-        // code that we may have reordered.
-        auto ExpectedSec = File->getELFFile()->getSection(Symbol.st_shndx);
-        bool IsCodeSym{false};
-        if (ExpectedSec) {
-          auto Section = *ExpectedSec;
-          IsCodeSym = (Section->sh_type == ELF::SHT_PROGBITS &&
-                       Section->sh_flags & ELF::SHF_ALLOC &&
-                       Section->sh_flags & ELF::SHF_EXECINSTR &&
-                       !(Section->sh_flags & ELF::SHF_WRITE));
-        } else {
-          consumeError(ExpectedSec.takeError());
-        }
-        // Try to fetch a containing function to check if this symbol is
-        // a secondary entry point of it
-        if (!Function && IsCodeSym && NewSymbol.getType() == ELF::STT_FUNC) {
-          Function =
-              BC->getBinaryFunctionContainingAddress(NewSymbol.st_value,
-                                                     /*CheckPastEnd=*/false,
-                                                     /*UseMaxSize=*/true,
-                                                     /*Shallow=*/true);
-        }
-        auto *BD = !Function ? BC->getBinaryDataAtAddress(NewSymbol.st_value)
-                             : nullptr;
-        auto Output =
-            Function && !Function->getPLTSymbol()
-                ? Function->translateInputToOutputAddress(NewSymbol.st_value)
-                : 0;
-
-        // Handle secondary entry points for this function
-        // (when Function->getAddress() != Symbol.st_value)
-        if (Output && NewSymbol.getType() != ELF::STT_SECTION) {
-          NewSymbol.st_value = Output;
-          // Force secondary entry points to have zero size
-          NewSymbol.st_size = 0;
-          NewSymbol.st_shndx = Output >= Function->cold().getAddress() &&
-                                       Output < Function->cold().getImageSize()
-                                   ? Function->getColdCodeSection()->getIndex()
-                                   : Function->getCodeSection()->getIndex();
-          OldSectionIndex = ELF::SHN_LORESERVE;
-        } else if (BD && BD->isMoved() && !BD->isJumpTable()) {
-          assert((!BD->getSize() || !NewSymbol.st_size ||
-                  NewSymbol.st_size == BD->getSize()) &&
-                 "sizes must match");
-
-          auto &OutputSection = BD->getOutputSection();
-
-          assert(OutputSection.getIndex());
-          DEBUG(dbgs() << "BOLT-DEBUG: moving " << BD->getName() << " from "
-                       << *BC->getSectionNameForAddress(NewSymbol.st_value)
-                       << " (" << NewSymbol.st_shndx << ") to "
-                       << OutputSection.getName() << " ("
-                       << OutputSection.getIndex() << ")\n");
-          OldSectionIndex = ELF::SHN_LORESERVE;
-          NewSymbol.st_shndx = OutputSection.getIndex();
-
-          // TODO: use getNewValueForSymbol()?
-          NewSymbol.st_value = BD->getOutputAddress();
-        }
-
-        if (OldSectionIndex < ELF::SHN_LORESERVE) {
-          NewSymbol.st_shndx = NewSectionIndex[OldSectionIndex];
-        }
-
-        // Detect local syms in the text section that we didn't update
-        // and were preserved by the linker to support relocations against
-        // .text (t15274167). Remove then from the symtab.
-        if (NewSymbol.getType() == ELF::STT_NOTYPE &&
-            NewSymbol.getBinding() == ELF::STB_LOCAL &&
-            NewSymbol.st_size == 0 &&
-            IsCodeSym) {
-          // This will cause the symbol to not be emitted if we are
-          // creating a new symtab from scratch instead of patching one.
-          if (!PatchExisting)
-            continue;
-          // If patching an existing symtab, patch this value to zero.
-          NewSymbol.st_value = 0;
-        }
-      }
-
-      auto SymbolName = Symbol.getName(StringSection);
-      assert(SymbolName && "cannot get symbol name");
-
-      auto updateSymbolValue = [&](const StringRef Name, unsigned &IsUpdated) {
-        NewSymbol.st_value = getNewValueForSymbol(Name);
-        NewSymbol.st_shndx = ELF::SHN_ABS;
-        outs() << "BOLT-INFO: setting " << Name << " to 0x"
-               << Twine::utohexstr(NewSymbol.st_value) << '\n';
-        ++IsUpdated;
-        return true;
-      };
-
-      if (opts::HotText && (*SymbolName == "__hot_start" ||
-                            *SymbolName == "__hot_end"))
-        updateSymbolValue(*SymbolName, IsHotTextUpdated);
-
-      if (opts::HotData && (*SymbolName == "__hot_data_start" ||
-                            *SymbolName == "__hot_data_end"))
-        updateSymbolValue(*SymbolName, IsHotDataUpdated);
-
-      if (opts::UpdateEnd && *SymbolName == "_end") {
-        NewSymbol.st_value = getNewValueForSymbol(*SymbolName);
-        NewSymbol.st_shndx = ELF::SHN_ABS;
-        outs() << "BOLT-INFO: setting " << *SymbolName << " to 0x"
-               << Twine::utohexstr(NewSymbol.st_value) << '\n';
-      }
-
-      if (PatchExisting) {
-        Write((&Symbol - cantFail(Obj->symbols(Section)).begin()) *
-                  sizeof(Elf_Sym),
-              NewSymbol);
-      } else {
-        Symbols.emplace_back(NewSymbol);
-      }
-    }
-
-    if (PatchExisting)
-      return;
-
-    assert((!IsHotTextUpdated || IsHotTextUpdated == 2) &&
-           "either none or both __hot_start/__hot_end symbols were expected");
-    assert((!IsHotDataUpdated || IsHotDataUpdated == 2) &&
-           "either none or both __hot_data_start/__hot_data_end symbols were "
-           "expected");
-
-    auto addSymbol = [&](const std::string &Name) {
-      Elf_Sym Symbol;
-      Symbol.st_value = getNewValueForSymbol(Name);
-      Symbol.st_shndx = ELF::SHN_ABS;
-      Symbol.st_name = AddToStrTab(Name);
-      Symbol.st_size = 0;
-      Symbol.st_other = 0;
-      Symbol.setBindingAndType(ELF::STB_WEAK, ELF::STT_NOTYPE);
-
-      outs() << "BOLT-INFO: setting " << Name << " to 0x"
-             << Twine::utohexstr(Symbol.st_value) << '\n';
-
-      Symbols.emplace_back(Symbol);
-    };
-
-    if (opts::HotText && !IsHotTextUpdated) {
-      addSymbol("__hot_start");
-      addSymbol("__hot_end");
-    }
-
-    if (opts::HotData && !IsHotDataUpdated) {
-      addSymbol("__hot_data_start");
-      addSymbol("__hot_data_end");
-    }
-
-    // Put local symbols at the beginning.
-    std::stable_sort(Symbols.begin(), Symbols.end(),
-                     [](const Elf_Sym &A, const Elf_Sym &B) {
-                       if (A.getBinding() == ELF::STB_LOCAL &&
-                           B.getBinding() != ELF::STB_LOCAL)
-                         return true;
-                       return false;
-                     });
-
-    for (const auto &Symbol : Symbols) {
-      Write(0, Symbol);
-    }
-  };
-
   // Update dynamic symbol table.
-  const Elf_Shdr *DynSymSection = nullptr;
+  const ELFShdrTy *DynSymSection = nullptr;
   for (const auto &Section : cantFail(Obj->sections())) {
     if (Section.sh_type == ELF::SHT_DYNSYM) {
       DynSymSection = &Section;
@@ -3957,17 +4007,20 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     }
   }
   assert(DynSymSection && "no dynamic symbol table found");
-  updateSymbolTable(/*patch existing table?*/ true,
-                    DynSymSection,
-                    [&](size_t Offset, const Elf_Sym &Sym) {
-                      Out->os().pwrite(reinterpret_cast<const char *>(&Sym),
-                                       sizeof(Elf_Sym),
-                                       DynSymSection->sh_offset + Offset);
-                    },
-                    [](StringRef) -> size_t { return 0; });
+  updateELFSymbolTable(
+      File,
+      /*PatchExisting=*/true,
+      *DynSymSection,
+      NewSectionIndex,
+      [&](size_t Offset, const ELFSymTy &Sym) {
+        Out->os().pwrite(reinterpret_cast<const char *>(&Sym),
+                         sizeof(ELFSymTy),
+                         DynSymSection->sh_offset + Offset);
+      },
+      [](StringRef) -> size_t { return 0; });
 
   // (re)create regular symbol table.
-  const Elf_Shdr *SymTabSection = nullptr;
+  const ELFShdrTy *SymTabSection = nullptr;
   for (const auto &Section : cantFail(Obj->sections())) {
     if (Section.sh_type == ELF::SHT_SYMTAB) {
       SymTabSection = &Section;
@@ -3979,7 +4032,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     return;
   }
 
-  const Elf_Shdr *StrTabSection =
+  const ELFShdrTy *StrTabSection =
       cantFail(Obj->getSection(SymTabSection->sh_link));
   std::string NewContents;
   std::string NewStrTab =
@@ -3988,20 +4041,23 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   auto StrSecName = cantFail(Obj->getSectionName(StrTabSection));
 
   NumLocalSymbols = 0;
-  updateSymbolTable(/*patch existing table?*/ false,
-                    SymTabSection,
-                    [&](size_t Offset, const Elf_Sym &Sym) {
-                      if (Sym.getBinding() == ELF::STB_LOCAL)
-                        ++NumLocalSymbols;
-                      NewContents.append(reinterpret_cast<const char *>(&Sym),
-                                         sizeof(Elf_Sym));
-                    },
-                    [&](StringRef Str) {
-                      size_t Idx = NewStrTab.size();
-                      NewStrTab.append(Str.data(), Str.size());
-                      NewStrTab.append(1, '\0');
-                      return Idx;
-                    });
+  updateELFSymbolTable(
+      File,
+      /*PatchExisting=*/false,
+      *SymTabSection,
+      NewSectionIndex,
+      [&](size_t Offset, const ELFSymTy &Sym) {
+        if (Sym.getBinding() == ELF::STB_LOCAL)
+          ++NumLocalSymbols;
+        NewContents.append(reinterpret_cast<const char *>(&Sym),
+                           sizeof(ELFSymTy));
+      },
+      [&](StringRef Str) {
+        size_t Idx = NewStrTab.size();
+        NewStrTab.append(Str.data(), Str.size());
+        NewStrTab.append(1, '\0');
+        return Idx;
+      });
 
   BC->registerOrUpdateNoteSection(SecName,
                                   copyByteArray(NewContents),

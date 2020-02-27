@@ -256,12 +256,28 @@ private:
   template <typename ELFShdrTy>
   bool shouldStrip(const ELFShdrTy &Section, StringRef SectionName);
 
+  /// Write ELF symbol table using \p Write and \p AddToStrTab functions
+  /// based on the input file symbol table passed in \p SymTabSection.
+  /// \p PatchExisting is set to true for dynamic symbol table since we
+  /// are updating it in-place with minimal modifications.
+  template <typename ELFT,
+            typename ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr,
+            typename WriteFuncTy,
+            typename StrTabFuncTy>
+  void updateELFSymbolTable(
+      ELFObjectFile<ELFT> *File,
+      bool PatchExisting,
+      const ELFShdrTy &SymTabSection,
+      const std::vector<uint32_t> &NewSectionIndex,
+      WriteFuncTy Write,
+      StrTabFuncTy AddToStrTab);
+
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
 
   /// Add a notes section containing the serialized BOLT Address Translation
   /// maps that can be used to enable sampling of the output binary for the
-  /// purposes of generating BOLT profile data for the input binary.
+  /// purpose of generating BOLT profile data for the input binary.
   void addBATSection();
 
   /// Loop over now emitted functions to write translation maps
