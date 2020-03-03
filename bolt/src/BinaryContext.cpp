@@ -888,7 +888,7 @@ BinaryContext::getBinaryDataContainingAddressImpl(uint64_t Address,
   auto NI = BinaryDataMap.lower_bound(Address);
   auto End = BinaryDataMap.end();
   if ((NI != End && Address == NI->first && !IncludeEnd) ||
-      (NI-- != BinaryDataMap.begin())) {
+      ((NI != BinaryDataMap.begin()) && (NI-- != BinaryDataMap.begin()))) {
     if (NI->second->containsAddress(Address) ||
         (IncludeEnd && NI->second->getEndAddress() == Address)) {
       while (BestFit &&
