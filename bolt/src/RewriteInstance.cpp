@@ -122,16 +122,6 @@ ForceToDataRelocations("force-data-relocations",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-// Note: enabling this is liable to make things break.
-static cl::opt<bool>
-AllowSectionRelocations("allow-section-relocations",
-  cl::desc("allow reordering of data referenced by section relocations "
-           "(experimental)"),
-  cl::init(false),
-  cl::Hidden,
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
 static cl::opt<bool>
 PrintCacheMetrics("print-cache-metrics",
   cl::desc("calculate and print various metrics for instruction cache"),
@@ -2235,21 +2225,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         Addend = 0;
       }
 
-      // If we are allowing section relocations, we assign relocations
-      // that are pointing to the end of a symbol to that symbol rather
-      // than the following symbol.
-      const auto IncludeEnd =
-        opts::AllowSectionRelocations && IsSectionRelocation;
-
-      if (auto *BD = BC->getBinaryDataContainingAddress(SymbolAddress,
-                                                        IncludeEnd)) {
-        assert(!IncludeEnd ||
-               (BD == BC->getBinaryDataContainingAddress(SymbolAddress) ||
-                !BC->getBinaryDataContainingAddress(SymbolAddress) ||
-                (IsSectionRelocation && BD->getEndAddress() ==
-                 BC->getBinaryDataContainingAddress(SymbolAddress)->
-                    getAddress())));
-
+      if (auto *BD = BC->getBinaryDataContainingAddress(SymbolAddress)) {
         // Note: this assertion is trying to check sanity of BinaryData objects
         // but AArch64 has inferred and incomplete object locations coming from
         // GOT/TLS or any other non-trivial relocation (that requires creation
@@ -2266,7 +2242,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                "BOLT symbol names of all non-section relocations must match "
                "up with symbol names referenced in the relocation");
 
-        if (!opts::AllowSectionRelocations && IsSectionRelocation) {
+        if (IsSectionRelocation) {
           BC->markAmbiguousRelocations(*BD, Address);
         }
 
@@ -2310,7 +2286,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                                                        SymbolFlags);
         }
 
-        if (!opts::AllowSectionRelocations && IsSectionRelocation) {
+        if (IsSectionRelocation) {
           auto *BD = BC->getBinaryDataByName(ReferencedSymbol->getName());
           BC->markAmbiguousRelocations(*BD, Address);
         }
