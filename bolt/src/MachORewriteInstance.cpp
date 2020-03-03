@@ -62,6 +62,38 @@ void MachORewriteInstance::readSpecialSections() {
   }
 }
 
+namespace {
+
+struct DataInCodeRegion {
+  explicit DataInCodeRegion(DiceRef D) {
+    D.getOffset(Offset);
+    D.getLength(Length);
+    D.getKind(Kind);
+  }
+
+  uint32_t Offset;
+  uint16_t Length;
+  uint16_t Kind;
+};
+
+std::vector<DataInCodeRegion> readDataInCode(const MachOObjectFile &O) {
+  const MachO::linkedit_data_command DataInCodeLC =
+      O.getDataInCodeLoadCommand();
+  const uint32_t NumberOfEntries =
+      DataInCodeLC.datasize / sizeof(MachO::data_in_code_entry);
+  std::vector<DataInCodeRegion> DataInCode;
+  DataInCode.reserve(NumberOfEntries);
+  for (auto I = O.begin_dices(), E = O.end_dices(); I != E; ++I)
+    DataInCode.emplace_back(*I);
+  std::stable_sort(DataInCode.begin(), DataInCode.end(),
+                   [](DataInCodeRegion LHS, DataInCodeRegion RHS) {
+                     return LHS.Offset < RHS.Offset;
+                   });
+  return DataInCode;
+}
+
+} // anonymous namespace
+
 void MachORewriteInstance::discoverFileObjects() {
   std::vector<SymbolRef> FunctionSymbols;
   for (const SymbolRef &S : InputFile->symbols()) {
@@ -99,11 +131,13 @@ void MachORewriteInstance::discoverFileObjects() {
     BC->createBinaryFunction(SymbolName.str(), *Section, Address, SymbolSize,
                              /* IsSimple */ true);
   }
-}
 
-void MachORewriteInstance::disassembleFunctions() {
+  const std::vector<DataInCodeRegion> DataInCode = readDataInCode(*InputFile);
+
   for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
+    Function.setMaxSize(Function.getSize());
+
     auto FunctionData = Function.getData();
     if (!FunctionData) {
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
@@ -122,10 +156,27 @@ void MachORewriteInstance::disassembleFunctions() {
         reinterpret_cast<const uint8_t *>(InputFile->getData().data());
     Function.setFileOffset(FunctionData->begin() - FileBegin);
 
+    // Treat functions which contain data in code as non-simple ones.
+    const auto It = std::lower_bound(
+        DataInCode.cbegin(), DataInCode.cend(), Function.getFileOffset(),
+        [](DataInCodeRegion D, uint64_t Offset) { return D.Offset < Offset; });
+    if (It != DataInCode.cend() &&
+        It->Offset + It->Length <=
+            Function.getFileOffset() + Function.getMaxSize())
+      Function.setSimple(false);
+  }
+}
+
+void MachORewriteInstance::disassembleFunctions() {
+  for (auto &BFI : BC->getBinaryFunctions()) {
+    BinaryFunction &Function = BFI.second;
+    if (!Function.isSimple())
+      continue;
+
     Function.disassemble();
     if (opts::PrintDisasm)
       Function.print(outs(), "after disassembly", true);
-    if (!Function.buildCFG(/*AllocId*/0)) {
+    if (!Function.buildCFG(/*AllocId*/ 0)) {
       errs() << "BOLT-WARNING: failed to build CFG for the function "
              << Function << "\n";
     }
