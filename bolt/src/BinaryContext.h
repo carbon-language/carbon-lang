@@ -271,8 +271,7 @@ public:
   /// the start address and size for each symbol).  Returns a pointer to
   /// the BinaryData for that symbol.  If no data is found, nullptr is returned.
   const BinaryData *getBinaryDataContainingAddressImpl(uint64_t Address,
-                                                       bool IncludeEnd,
-                                                       bool BestFit) const;
+                                                       bool IncludeEnd) const;
 
   /// Update the Parent fields in BinaryDatas after adding a new entry into
   /// \p BinaryDataMap.
@@ -620,18 +619,17 @@ public:
   /// Look up the symbol entry that contains the given \p Address (based on
   /// the start address and size for each symbol).  Returns a pointer to
   /// the BinaryData for that symbol.  If no data is found, nullptr is returned.
-  const BinaryData *getBinaryDataContainingAddress(uint64_t Address,
-                                                   bool IncludeEnd = false,
-                                                   bool BestFit = false) const {
-    return getBinaryDataContainingAddressImpl(Address, IncludeEnd, BestFit);
+  const BinaryData *
+  getBinaryDataContainingAddress(uint64_t Address,
+                                 bool IncludeEnd = false) const {
+    return getBinaryDataContainingAddressImpl(Address, IncludeEnd);
   }
 
   BinaryData *getBinaryDataContainingAddress(uint64_t Address,
-                                             bool IncludeEnd = false,
-                                             bool BestFit = false) {
-    return const_cast<BinaryData *>(getBinaryDataContainingAddressImpl(Address,
-                                                                       IncludeEnd,
-                                                                       BestFit));
+                                             bool IncludeEnd = false) {
+    return
+      const_cast<BinaryData *>(getBinaryDataContainingAddressImpl(Address,
+                                                                  IncludeEnd));
   }
 
   /// Return BinaryData for the given \p Name or nullptr if no
