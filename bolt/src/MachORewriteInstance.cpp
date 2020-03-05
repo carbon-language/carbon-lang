@@ -117,19 +117,34 @@ void MachORewriteInstance::discoverFileObjects() {
              << "\n";
       continue;
     }
-    StringRef SymbolName =
-        cantFail(FunctionSymbols[Index].getName(), "cannot get symbol name");
+
+    std::string SymbolName =
+        cantFail(FunctionSymbols[Index].getName(), "cannot get symbol name")
+            .str();
+    // Uniquify names of local symbols.
+    if (!(FunctionSymbols[Index].getFlags() & SymbolRef::SF_Global))
+      SymbolName = NR.uniquify(SymbolName);
+
     section_iterator S = cantFail(FunctionSymbols[Index].getSection());
     uint64_t EndAddress = S->getAddress() + S->getSize();
-    if (Index + 1 < FunctionSymbols.size() &&
-        S == cantFail(FunctionSymbols[Index + 1].getSection()))
-      EndAddress = FunctionSymbols[Index + 1].getValue();
+
+    size_t NFIndex = Index + 1;
+    // Skip aliases.
+    while (NFIndex < FunctionSymbols.size() &&
+           FunctionSymbols[NFIndex].getValue() == Address)
+      ++NFIndex;
+    if (NFIndex < FunctionSymbols.size() &&
+        S == cantFail(FunctionSymbols[NFIndex].getSection()))
+      EndAddress = FunctionSymbols[NFIndex].getValue();
+
     const uint64_t SymbolSize = EndAddress - Address;
-    // TODO: Add proper logic to handle nonunique names.
-    assert(BC->getBinaryFunctions().find(Address) ==
-           BC->getBinaryFunctions().end());
-    BC->createBinaryFunction(SymbolName.str(), *Section, Address, SymbolSize,
-                             /* IsSimple */ true);
+    const auto It = BC->getBinaryFunctions().find(Address);
+    if (It == BC->getBinaryFunctions().end())
+      BC->createBinaryFunction(std::move(SymbolName), *Section, Address,
+                               SymbolSize,
+                               /* IsSimple */ true);
+    else
+      It->second.addAlternativeName(std::move(SymbolName));
   }
 
   const std::vector<DataInCodeRegion> DataInCode = readDataInCode(*InputFile);
@@ -172,7 +187,6 @@ void MachORewriteInstance::disassembleFunctions() {
     BinaryFunction &Function = BFI.second;
     if (!Function.isSimple())
       continue;
-
     Function.disassemble();
     if (opts::PrintDisasm)
       Function.print(outs(), "after disassembly", true);

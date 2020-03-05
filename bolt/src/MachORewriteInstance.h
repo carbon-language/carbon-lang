@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_MACHO_REWRITE_INSTANCE_H
 #define LLVM_TOOLS_LLVM_BOLT_MACHO_REWRITE_INSTANCE_H
 
+#include "NameResolver.h"
 #include "llvm/Object/MachO.h"
 #include <memory>
 
@@ -26,6 +27,8 @@ class DataReader;
 class MachORewriteInstance {
   object::MachOObjectFile *InputFile;
   std::unique_ptr<BinaryContext> BC;
+
+  NameResolver NR;
 
   void readSpecialSections();
   void discoverFileObjects();
