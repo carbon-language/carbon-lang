@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryContext.h"
+#include "BinaryEmitter.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
 #include "ParallelUtilities.h"
@@ -402,8 +403,8 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
         /// a reference to its constant island. When emitting this function,
         /// we will also emit IslandIter->second's constants. This only
         /// happens in custom AArch64 assembly code.
-        BF.IslandDependency.insert(IslandIter->second);
-        BF.ProxyIslandSymbols[IslandSym] = IslandIter->second;
+        BF.Islands.Dependency.insert(IslandIter->second);
+        BF.Islands.ProxySymbols[IslandSym] = IslandIter->second;
         return std::make_pair(IslandSym, Addend);
       }
     }
@@ -1899,9 +1900,9 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
   std::unique_ptr<MCStreamer> Streamer(TheTarget->createMCObjectStreamer(
       *TheTriple, *LocalCtx, std::unique_ptr<MCAsmBackend>(MAB), VecOS,
       std::unique_ptr<MCCodeEmitter>(MCEInstance.MCE.release()), *STI,
-      /* RelaxAll */ false,
-      /* IncrementalLinkerCompatible */ false,
-      /* DWARFMustBeAtTheEnd */ false));
+      /*RelaxAll=*/false,
+      /*IncrementalLinkerCompatible=*/false,
+      /*DWARFMustBeAtTheEnd=*/false));
 
   Streamer->InitSections(false);
 
@@ -1915,7 +1916,8 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
 
   Streamer->SwitchSection(Section);
   Streamer->EmitLabel(StartLabel);
-  BF.emitBody(*Streamer, /*EmitColdPart = */false, /*EmitCodeOnly = */true);
+  emitFunctionBody(*Streamer, BF, /*EmitColdPart=*/false,
+                   /*EmitCodeOnly=*/true);
   Streamer->EmitLabel(EndLabel);
 
   if (BF.isSplit()) {
@@ -1927,7 +1929,8 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
 
     Streamer->SwitchSection(ColdSection);
     Streamer->EmitLabel(ColdStartLabel);
-    BF.emitBody(*Streamer, /*EmitColdPart = */true, /*EmitCodeOnly = */true);
+    emitFunctionBody(*Streamer, BF, /*EmitColdPart=*/true,
+                     /*EmitCodeOnly=*/true);
     Streamer->EmitLabel(ColdEndLabel);
   }
 

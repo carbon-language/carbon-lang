@@ -110,66 +110,6 @@ void JumpTable::updateOriginal() {
   }
 }
 
-uint64_t JumpTable::emit(MCStreamer *Streamer,
-                         MCSection *HotSection,
-                         MCSection *ColdSection) {
-  // Pre-process entries for aggressive splitting.
-  // Each label represents a separate switch table and gets its own count
-  // determining its destination.
-  std::map<MCSymbol *, uint64_t> LabelCounts;
-  if (opts::JumpTables > JTS_SPLIT && !Counts.empty()) {
-    MCSymbol *CurrentLabel = Labels[0];
-    uint64_t CurrentLabelCount = 0;
-    for (unsigned Index = 0; Index < Entries.size(); ++Index) {
-      auto LI = Labels.find(Index * EntrySize);
-      if (LI != Labels.end()) {
-        LabelCounts[CurrentLabel] = CurrentLabelCount;
-        CurrentLabel = LI->second;
-        CurrentLabelCount = 0;
-      }
-      CurrentLabelCount += Counts[Index].Count;
-    }
-    LabelCounts[CurrentLabel] = CurrentLabelCount;
-  } else {
-    Streamer->SwitchSection(Count > 0 ? HotSection : ColdSection);
-    Streamer->EmitValueToAlignment(EntrySize);
-  }
-  MCSymbol *LastLabel = nullptr;
-  uint64_t Offset = 0;
-  for (auto *Entry : Entries) {
-    auto LI = Labels.find(Offset);
-    if (LI != Labels.end()) {
-      DEBUG(dbgs() << "BOLT-DEBUG: emitting jump table "
-                   << LI->second->getName() << " (originally was at address 0x"
-                   << Twine::utohexstr(getAddress() + Offset)
-                   << (Offset ? "as part of larger jump table\n" : "\n"));
-      if (!LabelCounts.empty()) {
-        DEBUG(dbgs() << "BOLT-DEBUG: jump table count: "
-                     << LabelCounts[LI->second] << '\n');
-        if (LabelCounts[LI->second] > 0) {
-          Streamer->SwitchSection(HotSection);
-        } else {
-          Streamer->SwitchSection(ColdSection);
-        }
-        Streamer->EmitValueToAlignment(EntrySize);
-      }
-      Streamer->EmitLabel(LI->second);
-      LastLabel = LI->second;
-    }
-    if (Type == JTT_NORMAL) {
-      Streamer->EmitSymbolValue(Entry, OutputEntrySize);
-    } else { // JTT_PIC
-      auto JT = MCSymbolRefExpr::create(LastLabel, Streamer->getContext());
-      auto E = MCSymbolRefExpr::create(Entry, Streamer->getContext());
-      auto Value = MCBinaryExpr::createSub(E, JT, Streamer->getContext());
-      Streamer->EmitValue(Value, EntrySize);
-    }
-    Offset += EntrySize;
-  }
-
-  return Offset;
-}
-
 void JumpTable::print(raw_ostream &OS) const {
   uint64_t Offset = 0;
   if (Type == JTT_PIC)

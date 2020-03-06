@@ -369,64 +369,6 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
   }
 }
 
-void DWARFRewriter::updateDebugLineInfoForNonSimpleFunctions() {
-  for (auto &It : BC.getBinaryFunctions()) {
-    const auto &Function = It.second;
-
-    if (Function.isSimple())
-      continue;
-
-    auto ULT = Function.getDWARFUnitLineTable();
-    auto Unit = ULT.first;
-    auto LineTable = ULT.second;
-
-    if (!LineTable)
-      continue; // nothing to update for this function
-
-    std::vector<uint32_t> Results;
-    MCSectionELF *FunctionSection =
-        BC.Ctx->getELFSection(Function.getCodeSectionName(),
-                               ELF::SHT_PROGBITS,
-                               ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
-
-    uint64_t Address = It.first;
-    if (LineTable->lookupAddressRange(Address, Function.getMaxSize(),
-                                      Results)) {
-      auto &OutputLineTable =
-          BC.Ctx->getMCDwarfLineTable(Unit->getOffset()).getMCLineSections();
-      for (auto RowIndex : Results) {
-        const auto &Row = LineTable->Rows[RowIndex];
-        BC.Ctx->setCurrentDwarfLoc(
-            Row.File,
-            Row.Line,
-            Row.Column,
-            (DWARF2_FLAG_IS_STMT * Row.IsStmt) |
-            (DWARF2_FLAG_BASIC_BLOCK * Row.BasicBlock) |
-            (DWARF2_FLAG_PROLOGUE_END * Row.PrologueEnd) |
-            (DWARF2_FLAG_EPILOGUE_BEGIN * Row.EpilogueBegin),
-            Row.Isa,
-            Row.Discriminator,
-            Row.Address);
-        auto Loc = BC.Ctx->getCurrentDwarfLoc();
-        BC.Ctx->clearDwarfLocSeen();
-        OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
-                                     FunctionSection);
-      }
-      // Add an empty entry past the end of the function
-      // for end_sequence mark.
-      BC.Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0,
-                                  Address + Function.getMaxSize());
-      auto Loc = BC.Ctx->getCurrentDwarfLoc();
-      BC.Ctx->clearDwarfLocSeen();
-      OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
-                                   FunctionSection);
-    } else {
-      DEBUG(dbgs() << "BOLT-DEBUG: Function " << Function
-                   << " has no associated line number information.\n");
-    }
-  }
-}
-
 void DWARFRewriter::updateLineTableOffsets() {
   const auto *LineSection =
     BC.Ctx->getObjectFileInfo()->getDwarfLineSection();

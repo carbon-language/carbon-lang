@@ -12,6 +12,7 @@
 #include "RewriteInstance.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
+#include "BinaryEmitter.h"
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
 #include "BoltAddressTranslation.h"
@@ -30,10 +31,8 @@
 #include "Utils.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
-#include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
@@ -42,7 +41,6 @@
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
-#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -50,14 +48,11 @@
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataExtractor.h"
@@ -122,7 +117,7 @@ ForceToDataRelocations("force-data-relocations",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintCacheMetrics("print-cache-metrics",
   cl::desc("calculate and print various metrics for instruction cache"),
   cl::init(false),
@@ -144,14 +139,6 @@ AllowStripped("allow-stripped",
 static cl::opt<std::string>
 BoltProfile("b",
   cl::desc("<bolt profile>"),
-  cl::cat(BoltCategory));
-
-static cl::list<std::string>
-BreakFunctionNames("break-funcs",
-  cl::CommaSeparated,
-  cl::desc("list of functions to core dump on (debugging)"),
-  cl::value_desc("func1,func2,func3,..."),
-  cl::Hidden,
   cl::cat(BoltCategory));
 
 cl::opt<bool>
@@ -182,14 +169,6 @@ FunctionNamesFile("funcs-file",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::list<std::string>
-FunctionPadSpec("pad-funcs",
-  cl::CommaSeparated,
-  cl::desc("list of functions to pad with amount of bytes"),
-  cl::value_desc("func1:pad1,func2:pad2,func3:pad3,..."),
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
 cl::opt<bool>
 HotFunctionsAtEnd(
   "hot-functions-at-end",
@@ -198,7 +177,7 @@ HotFunctionsAtEnd(
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 HotText("hot-text",
   cl::desc("hot text symbols support (relocation mode)"),
   cl::ZeroOrMore,
@@ -220,7 +199,7 @@ HotData("hot-data",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 UpdateEnd("update-end",
   cl::desc("update the _end symbol to point to the end of all data sections"),
   cl::init(true),
@@ -231,14 +210,6 @@ static cl::opt<bool>
 KeepTmp("keep-tmp",
   cl::desc("preserve intermediate .o file"),
   cl::Hidden,
-  cl::cat(BoltCategory));
-
-static cl::opt<bool>
-MarkFuncs("mark-funcs",
-  cl::desc("mark function boundaries with break instruction to make "
-           "sure we accidentally don't cross them"),
-  cl::ReallyHidden,
-  cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
 static cl::opt<unsigned>
@@ -420,12 +391,6 @@ WriteBoltInfoSection("bolt-info",
   cl::Hidden,
   cl::cat(BoltOutputCategory));
 
-static cl::opt<bool>
-X86AlignBranchBoundaryHotOnly("x86-align-branch-boundary-hot-only",
-  cl::desc("only apply branch boundary alignment in hot code"),
-  cl::init(true),
-  cl::cat(BoltOptCategory));
-
 bool isHotTextMover(const BinaryFunction &Function) {
   for (auto &SectionName : opts::HotTextMoveSections) {
     if (Function.getOriginSectionName() == SectionName)
@@ -483,31 +448,6 @@ bool shouldProcess(const BinaryFunction &Function) {
   }
 
   return true;
-}
-
-size_t padFunction(const BinaryFunction &Function) {
-  static std::map<std::string, size_t> FunctionPadding;
-
-  if (FunctionPadding.empty() && !FunctionPadSpec.empty()) {
-    for (auto &Spec : FunctionPadSpec) {
-      auto N = Spec.find(':');
-      if (N == std::string::npos)
-        continue;
-      auto Name = Spec.substr(0, N);
-      auto Padding = std::stoull(Spec.substr(N+1));
-      FunctionPadding[Name] = Padding;
-    }
-  }
-
-  for (auto &FPI : FunctionPadding) {
-    auto Name = FPI.first;
-    auto Padding = FPI.second;
-    if (Function.hasNameRegex(Name)) {
-      return Padding;
-    }
-  }
-
-  return 0;
 }
 
 } // namespace opts
@@ -2591,117 +2531,6 @@ void RewriteInstance::runOptimizationPasses() {
   BinaryFunctionPassManager::runAllPasses(*BC);
 }
 
-// Helper function to emit the contents of a function via a MCStreamer object.
-bool RewriteInstance::emitFunction(MCStreamer &Streamer,
-                                   BinaryFunction &Function,
-                                   bool EmitColdPart) {
-  if (Function.size() == 0)
-    return false;
-
-  if (Function.getState() == BinaryFunction::State::Empty)
-    return false;
-
-  auto *Section =
-      BC->getCodeSection(EmitColdPart ? Function.getColdCodeSectionName()
-                                      : Function.getCodeSectionName());
-  Streamer.SwitchSection(Section);
-  Section->setHasInstructions(true);
-  BC->Ctx->addGenDwarfSection(Section);
-
-  if (BC->HasRelocations) {
-    Streamer.EmitCodeAlignment(BinaryFunction::MinAlign);
-    auto MaxAlignBytes = EmitColdPart
-      ? Function.getMaxColdAlignmentBytes()
-      : Function.getMaxAlignmentBytes();
-    if (MaxAlignBytes > 0)
-      Streamer.EmitCodeAlignment(Function.getAlignment(), MaxAlignBytes);
-  } else {
-    Streamer.EmitCodeAlignment(Function.getAlignment());
-  }
-
-  MCContext &Context = Streamer.getContext();
-  const MCAsmInfo *MAI = Context.getAsmInfo();
-
-  // Emit all symbols associated with the main function entry.
-  if (!EmitColdPart) {
-    for (auto *Symbol : Function.getSymbols()) {
-      Streamer.EmitSymbolAttribute(Symbol, MCSA_ELF_TypeFunction);
-      Streamer.EmitLabel(Symbol);
-    }
-  } else {
-    auto *Symbol = Function.getColdSymbol();
-    Streamer.EmitSymbolAttribute(Symbol, MCSA_ELF_TypeFunction);
-    Streamer.EmitLabel(Symbol);
-  }
-
-  // Emit CFI start
-  if (Function.hasCFI()) {
-    Streamer.EmitCFIStartProc(/*IsSimple=*/false);
-    if (Function.getPersonalityFunction() != nullptr) {
-      Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
-                                  Function.getPersonalityEncoding());
-    }
-    auto *LSDASymbol = EmitColdPart ? Function.getColdLSDASymbol()
-                                    : Function.getLSDASymbol();
-    if (LSDASymbol) {
-      Streamer.EmitCFILsda(LSDASymbol, BC->MOFI->getLSDAEncoding());
-    } else {
-      Streamer.EmitCFILsda(0, dwarf::DW_EH_PE_omit);
-    }
-    // Emit CFI instructions relative to the CIE
-    for (const auto &CFIInstr : Function.cie()) {
-      // Only write CIE CFI insns that LLVM will not already emit
-      const std::vector<MCCFIInstruction> &FrameInstrs =
-          MAI->getInitialFrameState();
-      if (std::find(FrameInstrs.begin(), FrameInstrs.end(), CFIInstr) ==
-          FrameInstrs.end())
-        Streamer.EmitCFIInstruction(CFIInstr);
-    }
-  }
-
-  assert((Function.empty() || !(*Function.begin()).isCold()) &&
-         "first basic block should never be cold");
-
-  // Emit UD2 at the beginning if requested by user.
-  if (!opts::BreakFunctionNames.empty()) {
-    for (auto &Name : opts::BreakFunctionNames) {
-      if (Function.hasNameRegex(Name)) {
-        Streamer.EmitIntValue(0x0B0F, 2); // UD2: 0F 0B
-        break;
-      }
-    }
-  }
-
-  // Emit code.
-  Function.emitBody(Streamer, EmitColdPart, /*EmitCodeOnly=*/false);
-
-  // Emit padding if requested.
-  if (auto Padding = opts::padFunction(Function)) {
-    DEBUG(dbgs() << "BOLT-DEBUG: padding function " << Function << " with "
-                 << Padding << " bytes\n");
-    Streamer.emitFill(Padding, MAI->getTextAlignFillValue());
-  }
-
-  if (opts::MarkFuncs) {
-    Streamer.EmitIntValue(MAI->getTrapFillValue(), 1);
-  }
-
-  // Emit CFI end
-  if (Function.hasCFI())
-    Streamer.EmitCFIEndProc();
-
-  Streamer.EmitLabel(EmitColdPart ? Function.getFunctionColdEndLabel()
-                                  : Function.getFunctionEndLabel());
-
-  // Exception handling info for the function.
-  Function.emitLSDA(&Streamer, EmitColdPart);
-
-  if (!EmitColdPart && opts::JumpTables > JTS_NONE)
-    Function.emitJumpTables(&Streamer);
-
-  return true;
-}
-
 namespace {
 
 template <typename T>
@@ -2742,29 +2571,17 @@ void RewriteInstance::emitAndLink() {
       /* IncrementalLinkerCompatible */ false,
       /* DWARFMustBeAtTheEnd */ false));
 
-  Streamer->InitSections(false);
-
-  BC->getTextSection()->setAlignment(BC->PageAlign);
-
-  emitFunctions(Streamer.get());
-  if (opts::Instrument) {
-    Instrumenter->emit(*BC, *Streamer.get());
-  }
-
-  if (!BC->HasRelocations && opts::UpdateDebugSections)
-    DebugInfoRewriter->updateDebugLineInfoForNonSimpleFunctions();
-
   // Make .eh_frame relocatable.
   if (EHFrameSection) {
     relocateEHFrameSection();
   }
 
-  emitDataSections(Streamer.get());
-
-  // Update _end if needed.
-  if (opts::UpdateEnd) {
-    Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("_end"));
+  // Emit contents outside of BinaryContext.
+  if (opts::Instrument) {
+    Instrumenter->emit(*BC, *Streamer.get());
   }
+
+  emitBinaryContext(*Streamer, *BC, OrgSecPrefix);
 
   Streamer->Finish();
 
@@ -2978,59 +2795,6 @@ void RewriteInstance::updateSDTMarkers() {
       continue;
     const auto NewAddress = F->translateInputToOutputAddress(OriginalAddress);
     SDTNotePatcher->addLE64Patch(SDTInfo.PCOffset, NewAddress);
-  }
-}
-
-void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
-  auto emit = [&](const std::vector<BinaryFunction *> &Functions) {
-    const auto HasProfile = BC->NumProfiledFuncs > 0;
-    const uint32_t OriginalBranchBoundaryAlign = X86AlignBranchBoundary;
-    for (auto *Function : Functions) {
-      if (!BC->HasRelocations &&
-          (!Function->isSimple() || !opts::shouldProcess(*Function)))
-        continue;
-
-      DEBUG(dbgs() << "BOLT: generating code for function \""
-                   << *Function << "\" : "
-                   << Function->getFunctionNumber() << '\n');
-
-      bool Emitted{false};
-      // Turn off Intel JCC Erratum mitigation for cold code if requested
-      if (HasProfile && opts::X86AlignBranchBoundaryHotOnly &&
-          !Function->hasValidProfile())
-        X86AlignBranchBoundary = 0;
-
-      Emitted |= emitFunction(*Streamer, *Function, /*EmitColdPart=*/false);
-
-      if (Function->isSplit()) {
-        if (opts::X86AlignBranchBoundaryHotOnly)
-          X86AlignBranchBoundary = 0;
-        Emitted |= emitFunction(*Streamer, *Function, /*EmitColdPart=*/true);
-      }
-      X86AlignBranchBoundary = OriginalBranchBoundaryAlign;
-
-      if (Emitted)
-        Function->setEmitted(/*KeepCFG=*/opts::PrintCacheMetrics);
-    }
-  };
-
-  // Mark the start of hot text.
-  if (opts::HotText) {
-    Streamer->SwitchSection(BC->getTextSection());
-    Streamer->EmitLabel(BC->getHotTextStartSymbol());
-  }
-
-  // Emit functions in sorted order.
-  std::vector<BinaryFunction *> SortedFunctions = BC->getSortedFunctions();
-  emit(SortedFunctions);
-
-  // Emit functions added by BOLT.
-  emit(BC->getInjectedBinaryFunctions());
-
-  // Mark the end of hot text.
-  if (opts::HotText) {
-    Streamer->SwitchSection(BC->getTextSection());
-    Streamer->EmitLabel(BC->getHotTextEndSymbol());
   }
 }
 
@@ -3355,19 +3119,6 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
 
   for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()) {
     InjectedFunction->updateOutputValues(Layout);
-  }
-}
-
-void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
-  for (const auto &Section : BC->sections()) {
-    if (!Section.hasRelocations() || !Section.hasSectionRef())
-      continue;
-
-    StringRef SectionName = Section.getName();
-    std::string EmitName = Section.isReordered()
-      ? std::string(Section.getOutputName())
-      : OrgSecPrefix + std::string(SectionName);
-    Section.emitAsData(*Streamer, EmitName);
   }
 }
 
@@ -3720,7 +3471,8 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
     if (!Section.isFinalized())
       continue;
 
-    if (Section.getName().startswith(OrgSecPrefix) || Section.isAnonymous()) {
+    if (Section.getName().startswith(OrgSecPrefix) ||
+        Section.isAnonymous()) {
       if (opts::Verbosity)
         outs() << "BOLT-INFO: not writing section header for section "
                << Section.getName() << '\n';

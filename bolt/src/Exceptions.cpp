@@ -54,28 +54,6 @@ PrintExceptions("print-exceptions",
 namespace llvm {
 namespace bolt {
 
-namespace {
-
-unsigned getEncodingSize(unsigned Encoding, BinaryContext &BC) {
-  switch (Encoding & 0x0f) {
-  default: llvm_unreachable("unknown encoding");
-  case dwarf::DW_EH_PE_absptr:
-  case dwarf::DW_EH_PE_signed:
-    return BC.AsmInfo->getCodePointerSize();
-  case dwarf::DW_EH_PE_udata2:
-  case dwarf::DW_EH_PE_sdata2:
-    return 2;
-  case dwarf::DW_EH_PE_udata4:
-  case dwarf::DW_EH_PE_sdata4:
-    return 4;
-  case dwarf::DW_EH_PE_udata8:
-  case dwarf::DW_EH_PE_sdata8:
-    return 8;
-  }
-}
-
-} // anonymous namespace
-
 // Read and dump the .gcc_exception_table section entry.
 //
 // .gcc_except_table section contains a set of Language-Specific Data Areas -
@@ -153,7 +131,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   uintptr_t TTypeEnd = 0;
   if (TTypeEncoding != DW_EH_PE_omit) {
     TTypeEnd = Data.getULEB128(&Offset);
-    TTypeEncodingSize = getEncodingSize(TTypeEncoding, BC);
+    TTypeEncodingSize = BC.getDWARFEncodingSize(TTypeEncoding);
   }
 
   if (opts::PrintExceptions) {
@@ -483,160 +461,6 @@ void BinaryFunction::updateEHRanges() {
                                          : getFunctionEndLabel();
     Sites->emplace_back(CallSite{StartRange, EndRange,
                                  PreviousEH.LP, PreviousEH.Action});
-  }
-}
-
-// The code is based on EHStreamer::emitExceptionTable().
-void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
-  const auto *Sites = EmitColdPart ? &ColdCallSites : &CallSites;
-  if (Sites->empty()) {
-    return;
-  }
-
-
-  // Calculate callsite table size. Size of each callsite entry is:
-  //
-  //  sizeof(start) + sizeof(length) + sizeof(LP) + sizeof(uleb128(action))
-  //
-  // or
-  //
-  //  sizeof(dwarf::DW_EH_PE_data4) * 3 + sizeof(uleb128(action))
-  uint64_t CallSiteTableLength = Sites->size() * 4 * 3;
-  for (const auto &CallSite : *Sites) {
-    CallSiteTableLength += getULEB128Size(CallSite.Action);
-  }
-
-  Streamer->SwitchSection(BC.MOFI->getLSDASection());
-
-  const auto TTypeEncoding = BC.MOFI->getTTypeEncoding();
-  const auto TTypeEncodingSize = getEncodingSize(TTypeEncoding, BC);
-  const auto TTypeAlignment = 4;
-
-  // Type tables have to be aligned at 4 bytes.
-  Streamer->EmitValueToAlignment(TTypeAlignment);
-
-  // Emit the LSDA label.
-  auto LSDASymbol = EmitColdPart ? getColdLSDASymbol() : getLSDASymbol();
-  assert(LSDASymbol && "no LSDA symbol set");
-  Streamer->EmitLabel(LSDASymbol);
-
-  // Corresponding FDE start.
-  const auto *StartSymbol = EmitColdPart ? getColdSymbol() : getSymbol();
-
-  // Emit the LSDA header.
-
-  // If LPStart is omitted, then the start of the FDE is used as a base for
-  // landing pad displacements. Then if a cold fragment starts with
-  // a landing pad, this means that the first landing pad offset will be 0.
-  // As a result, an exception handling runtime will ignore this landing pad,
-  // because zero offset denotes the absence of a landing pad.
-  // For this reason, we emit LPStart value of 0 and output an absolute value
-  // of the landing pad in the table.
-  //
-  // FIXME: this may break PIEs and DSOs where the base address is not 0.
-  Streamer->EmitIntValue(dwarf::DW_EH_PE_udata4, 1); // LPStart format
-  Streamer->EmitIntValue(0, 4);
-  auto emitLandingPad = [&](const MCSymbol *LPSymbol) {
-    if (!LPSymbol) {
-      Streamer->EmitIntValue(0, 4);
-      return;
-    }
-    Streamer->EmitSymbolValue(LPSymbol, 4);
-  };
-
-  Streamer->EmitIntValue(TTypeEncoding, 1);        // TType format
-
-  // See the comment in EHStreamer::emitExceptionTable() on to use
-  // uleb128 encoding (which can use variable number of bytes to encode the same
-  // value) to ensure type info table is properly aligned at 4 bytes without
-  // iteratively fixing sizes of the tables.
-  unsigned CallSiteTableLengthSize = getULEB128Size(CallSiteTableLength);
-  unsigned TTypeBaseOffset =
-    sizeof(int8_t) +                            // Call site format
-    CallSiteTableLengthSize +                   // Call site table length size
-    CallSiteTableLength +                       // Call site table length
-    LSDAActionTable.size() +                    // Actions table size
-    LSDATypeTable.size() * TTypeEncodingSize;   // Types table size
-  unsigned TTypeBaseOffsetSize = getULEB128Size(TTypeBaseOffset);
-  unsigned TotalSize =
-    sizeof(int8_t) +                            // LPStart format
-    sizeof(int8_t) +                            // TType format
-    TTypeBaseOffsetSize +                       // TType base offset size
-    TTypeBaseOffset;                            // TType base offset
-  unsigned SizeAlign = (4 - TotalSize) & 3;
-
-  // Account for any extra padding that will be added to the call site table
-  // length.
-  Streamer->EmitPaddedULEB128IntValue(TTypeBaseOffset,
-                                      TTypeBaseOffsetSize + SizeAlign);
-
-  // Emit the landing pad call site table. We use signed data4 since we can emit
-  // a landing pad in a different part of the split function that could appear
-  // earlier in the address space than LPStart.
-  Streamer->EmitIntValue(dwarf::DW_EH_PE_sdata4, 1);
-  Streamer->EmitULEB128IntValue(CallSiteTableLength);
-
-  for (const auto &CallSite : *Sites) {
-
-    const auto *BeginLabel = CallSite.Start;
-    const auto *EndLabel = CallSite.End;
-
-    assert(BeginLabel && "start EH label expected");
-    assert(EndLabel && "end EH label expected");
-
-    // Start of the range is emitted relative to the start of current
-    // function split part.
-    Streamer->emitAbsoluteSymbolDiff(BeginLabel, StartSymbol, 4);
-    Streamer->emitAbsoluteSymbolDiff(EndLabel, BeginLabel, 4);
-    emitLandingPad(CallSite.LP);
-    Streamer->EmitULEB128IntValue(CallSite.Action);
-  }
-
-  // Write out action, type, and type index tables at the end.
-  //
-  // For action and type index tables there's no need to change the original
-  // table format unless we are doing function splitting, in which case we can
-  // split and optimize the tables.
-  //
-  // For type table we (re-)encode the table using TTypeEncoding matching
-  // the current assembler mode.
-  for (auto const &Byte : LSDAActionTable) {
-    Streamer->EmitIntValue(Byte, 1);
-  }
-  assert(!(TTypeEncoding & dwarf::DW_EH_PE_indirect) &&
-         "indirect type info encoding is not supported yet");
-  for (int Index = LSDATypeTable.size() - 1; Index >= 0; --Index) {
-    // Note: the address could be an indirect one.
-    const auto TypeAddress = LSDATypeTable[Index];
-    switch (TTypeEncoding & 0x70) {
-    default:
-      llvm_unreachable("unsupported TTypeEncoding");
-    case 0:
-      Streamer->EmitIntValue(TypeAddress, TTypeEncodingSize);
-      break;
-    case dwarf::DW_EH_PE_pcrel: {
-      if (TypeAddress) {
-        const auto *TypeSymbol =
-          BC.getOrCreateGlobalSymbol(TypeAddress,
-                                     "TI",
-                                     TTypeEncodingSize,
-                                     TTypeAlignment);
-        auto *DotSymbol = BC.Ctx->createTempSymbol();
-        Streamer->EmitLabel(DotSymbol);
-        const auto *SubDotExpr = MCBinaryExpr::createSub(
-            MCSymbolRefExpr::create(TypeSymbol, *BC.Ctx),
-            MCSymbolRefExpr::create(DotSymbol, *BC.Ctx),
-            *BC.Ctx);
-        Streamer->EmitValue(SubDotExpr, TTypeEncodingSize);
-      } else {
-        Streamer->EmitIntValue(0, TTypeEncodingSize);
-      }
-      break;
-    }
-    }
-  }
-  for (auto const &Byte : LSDATypeIndexTable) {
-    Streamer->EmitIntValue(Byte, 1);
   }
 }
 

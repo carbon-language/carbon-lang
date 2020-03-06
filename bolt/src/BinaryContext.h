@@ -23,6 +23,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -255,6 +256,24 @@ public:
     if (JTI->second->getSize() == 0 && JTI->first == Address)
       return JTI->second;
     return nullptr;
+  }
+
+  unsigned getDWARFEncodingSize(unsigned Encoding) {
+    switch (Encoding & 0x0f) {
+    default: llvm_unreachable("unknown encoding");
+    case dwarf::DW_EH_PE_absptr:
+    case dwarf::DW_EH_PE_signed:
+      return AsmInfo->getCodePointerSize();
+    case dwarf::DW_EH_PE_udata2:
+    case dwarf::DW_EH_PE_sdata2:
+      return 2;
+    case dwarf::DW_EH_PE_udata4:
+    case dwarf::DW_EH_PE_sdata4:
+      return 4;
+    case dwarf::DW_EH_PE_udata8:
+    case dwarf::DW_EH_PE_sdata8:
+      return 8;
+    }
   }
 
   /// [MCSymbol] -> [BinaryFunction]
@@ -673,6 +692,11 @@ public:
     return Ctx->getELFSection(SectionName,
                               ELF::SHT_PROGBITS,
                               ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+  }
+
+  /// Return data section with a given name.
+  MCSection *getDataSection(StringRef SectionName) const {
+    return Ctx->getELFSection(SectionName, ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
   }
 
   /// \name Pre-assigned Section Names

@@ -76,6 +76,7 @@ add_llvm_tool(llvm-bolt
   BinaryBasicBlock.cpp
   BinaryContext.cpp
   BinaryData.cpp
+  BinaryEmitter.cpp
   BinaryFunction.cpp
   BinaryFunctionProfile.cpp
   BinaryPassManager.cpp

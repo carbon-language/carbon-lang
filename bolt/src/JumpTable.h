@@ -122,11 +122,6 @@ public:
   /// Update jump table at its original location.
   void updateOriginal();
 
-  /// Emit jump table data. Callee supplies sections for the data.
-  /// Return the number of total bytes emitted.
-  uint64_t emit(MCStreamer *Streamer, MCSection *HotSection,
-                MCSection *ColdSection);
-
   /// Print for debugging purposes.
   virtual void print(raw_ostream &OS) const override;
 };

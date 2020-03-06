@@ -134,10 +134,6 @@ public:
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
   void updateLineTableOffsets();
-
-  /// Updates debug line information for non-simple functions, which are not
-  /// rewritten.
-  void updateDebugLineInfoForNonSimpleFunctions();
 };
 
 } // namespace bolt

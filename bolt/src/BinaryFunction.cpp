@@ -63,26 +63,6 @@ extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<unsigned> Verbosity;
 
 cl::opt<bool>
-AlignBlocks("align-blocks",
-  cl::desc("align basic blocks"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<MacroFusionType>
-AlignMacroOpFusion("align-macro-fusion",
-  cl::desc("fix instruction alignment for macro-fusion (x86 relocation mode)"),
-  cl::init(MFT_HOT),
-  cl::values(clEnumValN(MFT_NONE, "none",
-               "do not insert alignment no-ops for macro-fusion"),
-             clEnumValN(MFT_HOT, "hot",
-               "only insert alignment no-ops on hot execution paths (default)"),
-             clEnumValN(MFT_ALL, "all",
-               "always align instructions to allow macro-fusion")),
-  cl::ZeroOrMore,
-  cl::cat(BoltRelocCategory));
-
-cl::opt<bool>
 CheckEncoding("check-encoding",
   cl::desc("perform verification of LLVM instruction encoding/decoding. "
            "Every instruction in the input is decoded and re-encoded. "
@@ -136,13 +116,6 @@ static cl::opt<bool>
 PrintDynoStatsOnly("print-dyno-stats-only",
   cl::desc("while printing functions output dyno-stats and skip instructions"),
   cl::init(false),
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
-static cl::opt<bool>
-PrintJumpTables("print-jump-tables",
-  cl::desc("print jump tables"),
-  cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
 
@@ -1003,9 +976,9 @@ void BinaryFunction::disassemble() {
     const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
 
     // Check for data inside code and ignore it
-    if (DataOffsets.find(Offset) != DataOffsets.end()) {
-      auto Iter = CodeOffsets.upper_bound(Offset);
-      if (Iter != CodeOffsets.end()) {
+    if (Islands.DataOffsets.find(Offset) != Islands.DataOffsets.end()) {
+      auto Iter = Islands.CodeOffsets.upper_bound(Offset);
+      if (Iter != Islands.CodeOffsets.end()) {
         Size = *Iter - Offset;
         continue;
       }
@@ -1022,8 +995,8 @@ void BinaryFunction::disassemble() {
       // can have 0-byte padding at the end.
       bool IsZeroPadding = true;
       uint64_t EndOfCode = getSize();
-      auto Iter = DataOffsets.upper_bound(Offset);
-      if (Iter != DataOffsets.end())
+      auto Iter = Islands.DataOffsets.upper_bound(Offset);
+      if (Iter != Islands.DataOffsets.end())
         EndOfCode = *Iter;
       for (auto I = Offset; I < EndOfCode; ++I) {
         if (FunctionData[I] != 0) {
@@ -2652,151 +2625,6 @@ uint64_t BinaryFunction::getEditDistance() const {
                                                  BasicBlocksLayout);
 }
 
-void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
-                              bool EmitCodeOnly) {
-  if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
-    duplicateConstantIslands();
-
-  // Track first emitted instruction with debug info.
-  bool FirstInstr = true;
-  for (auto BB : layout()) {
-    if (EmitColdPart != BB->isCold())
-      continue;
-
-    if ((opts::AlignBlocks || opts::PreserveBlocksAlignment)
-        && BB->getAlignment() > 1) {
-      Streamer.EmitCodeAlignment(BB->getAlignment(),
-                                 BB->getAlignmentMaxBytes());
-    }
-    Streamer.EmitLabel(BB->getLabel());
-
-    // Check if special alignment for macro-fusion is needed.
-    bool MayNeedMacroFusionAlignment =
-      (opts::AlignMacroOpFusion == MFT_ALL) ||
-      (opts::AlignMacroOpFusion == MFT_HOT &&
-       BB->getKnownExecutionCount());
-    BinaryBasicBlock::const_iterator MacroFusionPair;
-    if (MayNeedMacroFusionAlignment) {
-      MacroFusionPair = BB->getMacroOpFusionPair();
-      if (MacroFusionPair == BB->end())
-        MayNeedMacroFusionAlignment = false;
-    }
-
-    SMLoc LastLocSeen;
-    // Remember if the last instruction emitted was a prefix.
-    bool LastIsPrefix = false;
-    for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
-      auto &Instr = *I;
-
-      if (EmitCodeOnly && BC.MII->get(Instr.getOpcode()).isPseudo())
-        continue;
-
-      // Handle pseudo instructions.
-      if (BC.MIB->isEHLabel(Instr)) {
-        const auto *Label = BC.MIB->getTargetSymbol(Instr);
-        assert(Instr.getNumOperands() >= 1 && Label &&
-               "bad EH_LABEL instruction");
-        Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
-        continue;
-      }
-      if (BC.MIB->isCFI(Instr)) {
-        Streamer.EmitCFIInstruction(*getCFIFor(Instr));
-        continue;
-      }
-
-      // Handle macro-fusion alignment. If we emitted a prefix as
-      // the last instruction, we should've already emitted the associated
-      // alignment hint, so don't emit it twice.
-      if (MayNeedMacroFusionAlignment && !LastIsPrefix && I == MacroFusionPair){
-        // This assumes the second instruction in the macro-op pair will get
-        // assigned to its own MCRelaxableFragment. Since all JCC instructions
-        // are relaxable, we should be safe.
-        Streamer.EmitNeverAlignCodeAtEnd(/*Alignment to avoid=*/64);
-      }
-
-      if (!EmitCodeOnly && opts::UpdateDebugSections && UnitLineTable.first) {
-        LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen, FirstInstr);
-        FirstInstr = false;
-      }
-
-      // Prepare to tag this location with a label if we need to keep track of
-      // the location of calls/returns for BOLT address translation maps
-      if (!EmitCodeOnly && requiresAddressTranslation() &&
-          BC.MIB->hasAnnotation(Instr, "Offset")) {
-        const auto Offset = BC.MIB->getAnnotationAs<uint32_t>(Instr, "Offset");
-        MCSymbol *LocSym = BC.Ctx->createTempSymbol(/*CanBeUnnamed=*/true);
-        Streamer.EmitLabel(LocSym);
-        BB->getLocSyms().emplace_back(std::make_pair(Offset, LocSym));
-      }
-
-      Streamer.EmitInstruction(Instr, *BC.STI);
-      LastIsPrefix = BC.MIB->isPrefix(Instr);
-    }
-  }
-
-  if (!EmitCodeOnly)
-    emitConstantIslands(Streamer, EmitColdPart);
-}
-
-void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
-
-  // #14998851: Fix gold linker's '--emit-relocs'.
-  assert(false &&
-         "cannot emit raw body unless relocation accuracy is guaranteed");
-
-  assert(!isInjected() && "cannot emit raw body of injected function");
-
-  // Raw contents of the function.
-  StringRef SectionContents = InputSection->getContents();
-
-  // Raw contents of the function.
-  StringRef FunctionContents =
-      SectionContents.substr(getAddress() - InputSection->getAddress(),
-      getSize());
-
-  if (opts::Verbosity)
-    outs() << "BOLT-INFO: emitting function " << *this << " in raw ("
-           << getSize() << " bytes).\n";
-
-  // We split the function blob into smaller blocks and output relocations
-  // and/or labels between them.
-  uint64_t FunctionOffset = 0;
-  auto LI = Labels.begin();
-  auto RI = MoveRelocations.begin();
-  while (LI != Labels.end() ||
-         RI != MoveRelocations.end()) {
-    uint64_t NextLabelOffset = (LI == Labels.end() ? getSize() : LI->first);
-    uint64_t NextRelocationOffset =
-      (RI == MoveRelocations.end() ? getSize() : RI->first);
-    auto NextStop = std::min(NextLabelOffset, NextRelocationOffset);
-    assert(NextStop <= getSize() && "internal overflow error");
-    if (FunctionOffset < NextStop) {
-      Streamer->EmitBytes(
-          FunctionContents.slice(FunctionOffset, NextStop));
-      FunctionOffset = NextStop;
-    }
-    if (LI != Labels.end() && FunctionOffset == LI->first) {
-      Streamer->EmitLabel(LI->second);
-      DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << LI->second->getName()
-                   << " at offset 0x" << Twine::utohexstr(LI->first) << '\n');
-      ++LI;
-    }
-    if (RI != MoveRelocations.end() && FunctionOffset == RI->first) {
-      auto RelocationSize = RI->second.emit(Streamer);
-      DEBUG(dbgs() << "BOLT-DEBUG: emitted relocation for symbol "
-                   << RI->second.Symbol->getName() << " at offset 0x"
-                   << Twine::utohexstr(RI->first)
-                   << " with size " << RelocationSize << '\n');
-      FunctionOffset += RelocationSize;
-      ++RI;
-    }
-  }
-  assert(FunctionOffset <= getSize() && "overflow error");
-  if (FunctionOffset < getSize()) {
-    Streamer->EmitBytes(FunctionContents.substr(FunctionOffset));
-  }
-}
-
 void BinaryFunction::setTrapOnEntry() {
   clearList(Instructions);
   clearList(IgnoredBranches);
@@ -2809,133 +2637,6 @@ void BinaryFunction::setTrapOnEntry() {
   }
 
   TrapsOnEntry = true;
-}
-
-void BinaryFunction::emitConstantIslands(
-    MCStreamer &Streamer, bool EmitColdPart,
-    BinaryFunction *OnBehalfOf) {
-  if (DataOffsets.empty() && IslandDependency.empty())
-    return;
-
-  if (!OnBehalfOf) {
-    if (!EmitColdPart)
-      Streamer.EmitLabel(getFunctionConstantIslandLabel());
-    else
-      Streamer.EmitLabel(getFunctionColdConstantIslandLabel());
-  }
-
-  assert((!OnBehalfOf || IslandProxies[OnBehalfOf].size() > 0) &&
-         "spurious OnBehalfOf constant island emission");
-
-  assert(!isInjected() &&
-         "injected functions should not have constant islands");
-  // Raw contents of the function.
-  StringRef SectionContents = InputSection->getContents();
-
-  // Raw contents of the function.
-  StringRef FunctionContents =
-      SectionContents.substr(getAddress() - InputSection->getAddress(),
-                             getMaxSize());
-
-  if (opts::Verbosity && !OnBehalfOf)
-    outs() << "BOLT-INFO: emitting constant island for function " << *this
-           << "\n";
-
-  // We split the island into smaller blocks and output labels between them.
-  auto IS = IslandOffsets.begin();
-  for (auto DataIter = DataOffsets.begin(); DataIter != DataOffsets.end();
-       ++DataIter) {
-    uint64_t FunctionOffset = *DataIter;
-    uint64_t EndOffset = 0ULL;
-
-    // Determine size of this data chunk
-    auto NextData = std::next(DataIter);
-    auto CodeIter = CodeOffsets.lower_bound(*DataIter);
-    if (CodeIter == CodeOffsets.end() && NextData == DataOffsets.end()) {
-      EndOffset = getMaxSize();
-    } else if (CodeIter == CodeOffsets.end()) {
-      EndOffset = *NextData;
-    } else if (NextData == DataOffsets.end()) {
-      EndOffset = *CodeIter;
-    } else {
-      EndOffset = (*CodeIter > *NextData) ? *NextData : *CodeIter;
-    }
-
-    if (FunctionOffset == EndOffset)
-      continue;    // Size is zero, nothing to emit
-
-    // Emit labels, relocs and data
-    auto RI = MoveRelocations.lower_bound(FunctionOffset);
-    while ((IS != IslandOffsets.end() && IS->first < EndOffset) ||
-           (RI != MoveRelocations.end() && RI->first < EndOffset)) {
-      auto NextLabelOffset = IS == IslandOffsets.end() ? EndOffset : IS->first;
-      auto NextRelOffset = RI == MoveRelocations.end() ? EndOffset : RI->first;
-      auto NextStop = std::min(NextLabelOffset, NextRelOffset);
-      assert(NextStop <= EndOffset && "internal overflow error");
-      if (FunctionOffset < NextStop) {
-        Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, NextStop));
-        FunctionOffset = NextStop;
-      }
-      if (IS != IslandOffsets.end() && FunctionOffset == IS->first) {
-        // This is a slightly complex code to decide which label to emit. We
-        // have 4 cases to handle: regular symbol, cold symbol, regular or cold
-        // symbol being emitted on behalf of an external function.
-        if (!OnBehalfOf) {
-          if (!EmitColdPart) {
-            DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
-                         << IS->second->getName() << " at offset 0x"
-                         << Twine::utohexstr(IS->first) << '\n');
-            if (IS->second->isUndefined())
-              Streamer.EmitLabel(IS->second);
-            else
-              assert(hasName(IS->second->getName()));
-          } else if (ColdIslandSymbols.count(IS->second) != 0) {
-            DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
-                         << ColdIslandSymbols[IS->second]->getName() << '\n');
-            if (ColdIslandSymbols[IS->second]->isUndefined())
-              Streamer.EmitLabel(ColdIslandSymbols[IS->second]);
-          }
-        } else {
-          if (!EmitColdPart) {
-            if (MCSymbol *Sym = IslandProxies[OnBehalfOf][IS->second]) {
-              DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << Sym->getName()
-                           << '\n');
-              Streamer.EmitLabel(Sym);
-            }
-          } else if (MCSymbol *Sym =
-                         ColdIslandProxies[OnBehalfOf][IS->second]) {
-            DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << Sym->getName()
-                         << '\n');
-            Streamer.EmitLabel(Sym);
-          }
-        }
-        ++IS;
-      }
-      if (RI != MoveRelocations.end() && FunctionOffset == RI->first) {
-        auto RelocationSize = RI->second.emit(&Streamer);
-        DEBUG(dbgs() << "BOLT-DEBUG: emitted relocation for symbol "
-                     << RI->second.Symbol->getName() << " at offset 0x"
-                     << Twine::utohexstr(RI->first)
-                     << " with size " << RelocationSize << '\n');
-        FunctionOffset += RelocationSize;
-        ++RI;
-      }
-    }
-    assert(FunctionOffset <= EndOffset && "overflow error");
-    if (FunctionOffset < EndOffset) {
-      Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, EndOffset));
-    }
-  }
-  assert(IS == IslandOffsets.end() && "some symbols were not emitted!");
-
-  if (OnBehalfOf)
-    return;
-  // Now emit constant islands from other functions that we may have used in
-  // this function.
-  for (auto *ExternalFunc : IslandDependency) {
-    ExternalFunc->emitConstantIslands(Streamer, EmitColdPart, this);
-  }
-
 }
 
 void BinaryFunction::duplicateConstantIslands() {
@@ -2952,22 +2653,24 @@ void BinaryFunction::duplicateConstantIslands() {
         }
         auto *Symbol = BC.MIB->getTargetSymbol(Inst, OpNum);
         // Check if this is an island symbol
-        if (!IslandSymbols.count(Symbol) && !ProxyIslandSymbols.count(Symbol))
+        if (!Islands.Symbols.count(Symbol) &&
+            !Islands.ProxySymbols.count(Symbol))
           continue;
 
         // Create cold symbol, if missing
-        auto ISym = ColdIslandSymbols.find(Symbol);
+        auto ISym = Islands.ColdSymbols.find(Symbol);
         MCSymbol *ColdSymbol;
-        if (ISym != ColdIslandSymbols.end()) {
+        if (ISym != Islands.ColdSymbols.end()) {
           ColdSymbol = ISym->second;
         } else {
           ColdSymbol = BC.Ctx->getOrCreateSymbol(Symbol->getName() + ".cold");
-          ColdIslandSymbols[Symbol] = ColdSymbol;
+          Islands.ColdSymbols[Symbol] = ColdSymbol;
           // Check if this is a proxy island symbol and update owner proxy map
-          if (ProxyIslandSymbols.count(Symbol)) {
-            BinaryFunction *Owner = ProxyIslandSymbols[Symbol];
-            auto IProxiedSym = Owner->IslandProxies[this].find(Symbol);
-            Owner->ColdIslandProxies[this][IProxiedSym->second] = ColdSymbol;
+          if (Islands.ProxySymbols.count(Symbol)) {
+            BinaryFunction *Owner = Islands.ProxySymbols[Symbol];
+            auto IProxiedSym = Owner->Islands.Proxies[this].find(Symbol);
+            Owner->Islands.ColdProxies[this][IProxiedSym->second] =
+              ColdSymbol;
           }
         }
 
@@ -3891,63 +3594,6 @@ bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
   return true;
 }
 
-SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc,
-                                   bool FirstInstr) const {
-  auto *FunctionCU = UnitLineTable.first;
-  const auto *FunctionLineTable = UnitLineTable.second;
-  assert(FunctionCU && "cannot emit line info for function without CU");
-
-  auto RowReference = DebugLineTableRowRef::fromSMLoc(NewLoc);
-
-  // Check if no new line info needs to be emitted.
-  if (RowReference == DebugLineTableRowRef::NULL_ROW ||
-      NewLoc.getPointer() == PrevLoc.getPointer())
-    return PrevLoc;
-
-  unsigned CurrentFilenum = 0;
-  const auto *CurrentLineTable = FunctionLineTable;
-
-  // If the CU id from the current instruction location does not
-  // match the CU id from the current function, it means that we
-  // have come across some inlined code.  We must look up the CU
-  // for the instruction's original function and get the line table
-  // from that.
-  const auto FunctionUnitIndex = FunctionCU->getOffset();
-  const auto CurrentUnitIndex = RowReference.DwCompileUnitIndex;
-  if (CurrentUnitIndex != FunctionUnitIndex) {
-    CurrentLineTable = BC.DwCtx->getLineTableForUnit(
-        BC.DwCtx->getCompileUnitForOffset(CurrentUnitIndex));
-    // Add filename from the inlined function to the current CU.
-    CurrentFilenum =
-      BC.addDebugFilenameToUnit(FunctionUnitIndex, CurrentUnitIndex,
-        CurrentLineTable->Rows[RowReference.RowIndex - 1].File);
-  }
-
-  const auto &CurrentRow = CurrentLineTable->Rows[RowReference.RowIndex - 1];
-  if (!CurrentFilenum)
-    CurrentFilenum = CurrentRow.File;
-
-  unsigned Flags = (DWARF2_FLAG_IS_STMT * CurrentRow.IsStmt) |
-                   (DWARF2_FLAG_BASIC_BLOCK * CurrentRow.BasicBlock) |
-                   (DWARF2_FLAG_PROLOGUE_END * CurrentRow.PrologueEnd) |
-                   (DWARF2_FLAG_EPILOGUE_BEGIN * CurrentRow.EpilogueBegin);
-
-  // Always emit is_stmt at the beginning of function fragment.
-  if (FirstInstr)
-    Flags |= DWARF2_FLAG_IS_STMT;
-
-  BC.Ctx->setCurrentDwarfLoc(
-    CurrentFilenum,
-    CurrentRow.Line,
-    CurrentRow.Column,
-    Flags,
-    CurrentRow.Isa,
-    CurrentRow.Discriminator);
-  BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
-
-  return NewLoc;
-}
-
 void BinaryFunction::adjustExecutionCount(uint64_t Count) {
   if (getKnownExecutionCount() == 0 || Count == 0)
     return;
@@ -3971,47 +3617,6 @@ BinaryFunction::~BinaryFunction() {
   }
   for (auto BB : DeletedBasicBlocks) {
     delete BB;
-  }
-}
-
-void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
-  if (JumpTables.empty())
-    return;
-  if (opts::PrintJumpTables) {
-    outs() << "BOLT-INFO: jump tables for function " << *this << ":\n";
-  }
-  for (auto &JTI : JumpTables) {
-    auto &JT = *JTI.second;
-    if (opts::PrintJumpTables)
-      JT.print(outs());
-    if ((opts::JumpTables == JTS_BASIC || !isSimple()) && BC.HasRelocations) {
-      JT.updateOriginal();
-    } else {
-      MCSection *HotSection, *ColdSection;
-      if (opts::JumpTables == JTS_BASIC) {
-        std::string Name = ".local." + JT.Labels[0]->getName().str();
-        std::replace(Name.begin(), Name.end(), '/', '.');
-        auto &Section = BC.registerOrUpdateSection(Name,
-                                                   ELF::SHT_PROGBITS,
-                                                   ELF::SHF_ALLOC);
-        Section.setAnonymous(true);
-        JT.setOutputSection(Section);
-        HotSection = BC.Ctx->getELFSection(Name,
-                                           ELF::SHT_PROGBITS,
-                                           ELF::SHF_ALLOC);
-        ColdSection = HotSection;
-      } else {
-        if (isSimple()) {
-          HotSection = BC.MOFI->getReadOnlySection();
-          ColdSection = BC.MOFI->getReadOnlyColdSection();
-        } else {
-          HotSection = hasProfile() ? BC.MOFI->getReadOnlySection()
-                                    : BC.MOFI->getReadOnlyColdSection();
-          ColdSection = HotSection;
-        }
-      }
-      JT.emit(Streamer, HotSection, ColdSection);
-    }
   }
 }
 

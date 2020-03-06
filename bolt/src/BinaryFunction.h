@@ -135,6 +135,39 @@ public:
     PF_MEMEVENT = 4,     /// Profile has mem events.
   };
 
+  /// Struct for tracking exception handling ranges.
+  struct CallSite {
+    const MCSymbol *Start;
+    const MCSymbol *End;
+    const MCSymbol *LP;
+    uint64_t Action;
+  };
+
+  using IslandProxiesType =
+    std::map<BinaryFunction *, std::map<const MCSymbol *, MCSymbol *>>;
+
+  struct IslandInfo {
+    /// Temporary holder of offsets that are data markers (used in AArch)
+    /// It is possible to have data in code sections. To ease the identification
+    /// of data in code sections, the ABI requires the symbol table to have
+    /// symbols named "$d" identifying the start of data inside code and "$x"
+    /// identifying the end of a chunk of data inside code. DataOffsets contain
+    /// all offsets of $d symbols and CodeOffsets all offsets of $x symbols.
+    std::set<uint64_t> DataOffsets;
+    std::set<uint64_t> CodeOffsets;
+
+    /// Offsets in function that are data values in a constant island identified
+    /// after disassembling
+    std::map<uint64_t, MCSymbol *> Offsets;
+    SmallPtrSet<MCSymbol *, 4> Symbols;
+    std::map<const MCSymbol *, BinaryFunction *> ProxySymbols;
+    std::map<const MCSymbol *, MCSymbol *> ColdSymbols;
+    /// Keeps track of other functions we depend on because there is a reference
+    /// to the constant islands in them.
+    IslandProxiesType Proxies, ColdProxies;
+    std::set<BinaryFunction *> Dependency; // The other way around
+  };
+
   static constexpr uint64_t COUNT_NO_PROFILE =
     BinaryBasicBlock::COUNT_NO_PROFILE;
 
@@ -372,14 +405,6 @@ private:
   /// Temporary holder of offsets that are potentially entry points.
   std::unordered_set<uint64_t> EntryOffsets;
 
-  /// Temporary holder of offsets that are data markers (used in AArch)
-  /// It is possible to have data in code sections. To ease the identification
-  /// of data in code sections, the ABI requires the symbol table to have
-  /// symbols named "$d" identifying the start of data inside code and "$x"
-  /// identifying the end of a chunk of data inside code. DataOffsets contain
-  /// all offsets of $d symbols and CodeOffsets all offsets of $x symbols.
-  std::set<uint64_t> DataOffsets;
-  std::set<uint64_t> CodeOffsets;
   /// The address offset where we emitted the constant island, that is, the
   /// chunk of data in the function code area (AArch only)
   int64_t OutputDataOffset{0};
@@ -439,13 +464,7 @@ private:
   /// remember-restore CFI instructions when rewriting CFI.
   DenseMap<int32_t , SmallVector<int32_t, 4>> FrameRestoreEquivalents;
 
-  /// Exception handling ranges.
-  struct CallSite {
-    const MCSymbol *Start;
-    const MCSymbol *End;
-    const MCSymbol *LP;
-    uint64_t Action;
-  };
+  // For tracking exception handling ranges.
   std::vector<CallSite> CallSites;
   std::vector<CallSite> ColdCallSites;
 
@@ -475,12 +494,6 @@ private:
   /// <OriginalAddress> -> <JumpTable *>
   std::map<uint64_t, JumpTable *> JumpTables;
 
-  /// Iterate over all jump tables associated with this function.
-  iterator_range<std::map<uint64_t, JumpTable *>::const_iterator>
-  jumpTables() const {
-    return make_range(JumpTables.begin(), JumpTables.end());
-  }
-
   /// All jump table sites in the function before CFG is built.
   std::vector<std::pair<uint64_t, uint64_t>> JTSites;
 
@@ -488,19 +501,11 @@ private:
   std::map<uint64_t, Relocation> Relocations;
 
   /// Map of relocations used for moving the function body as it is.
-  std::map<uint64_t, Relocation> MoveRelocations;
+  using MoveRelocationsTy = std::map<uint64_t, Relocation>;
+  MoveRelocationsTy MoveRelocations;
 
-  /// Offsets in function that are data values in a constant island identified
-  /// after disassembling
-  std::map<uint64_t, MCSymbol *> IslandOffsets;
-  SmallPtrSet<MCSymbol *, 4> IslandSymbols;
-  std::map<const MCSymbol *, BinaryFunction *> ProxyIslandSymbols;
-  std::map<const MCSymbol *, MCSymbol *> ColdIslandSymbols;
-  /// Keeps track of other functions we depend on because there is a reference
-  /// to the constant islands in them.
-  std::map<BinaryFunction *, std::map<const MCSymbol *, MCSymbol *>>
-      IslandProxies, ColdIslandProxies;
-  std::set<BinaryFunction *> IslandDependency; // The other way around
+  /// Information on function constant islands.
+  IslandInfo Islands;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
@@ -561,12 +566,12 @@ private:
 
   /// Register an entry point at a given \p Offset into the function.
   void markDataAtOffset(uint64_t Offset) {
-    DataOffsets.emplace(Offset);
+    Islands.DataOffsets.emplace(Offset);
   }
 
   /// Register an entry point at a given \p Offset into the function.
   void markCodeAtOffset(uint64_t Offset) {
-    CodeOffsets.emplace(Offset);
+    Islands.CodeOffsets.emplace(Offset);
   }
 
   /// Register an entry point at a given \p Offset into the function.
@@ -636,14 +641,6 @@ private:
 
   DenseMap<const MCInst *, SmallVector<MCInst *, 4>>
   computeLocalUDChain(const MCInst *CurInstr);
-
-  /// Emit line number information corresponding to \p NewLoc. \p PrevLoc
-  /// provides a context for de-duplication of line number info.
-  /// \p FirstInstr indicates if \p NewLoc represents the first instruction
-  /// in a sequence, such as a function fragment.
-  ///
-  /// Return new current location which is either \p NewLoc or \p PrevLoc.
-  SMLoc emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc, bool FirstInstr) const;
 
   BinaryFunction& operator=(const BinaryFunction &) = delete;
   BinaryFunction(const BinaryFunction &) = delete;
@@ -774,6 +771,12 @@ public:
   }
   inline iterator_range<const_cfi_iterator> cie() const {
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
+  }
+
+  /// Iterate over all jump tables associated with this function.
+  iterator_range<std::map<uint64_t, JumpTable *>::const_iterator>
+  jumpTables() const {
+    return make_range(JumpTables.begin(), JumpTables.end());
   }
 
   /// Returns the raw binary encoding of this function.
@@ -1360,6 +1363,42 @@ public:
     return PersonalityEncoding;
   }
 
+  const std::vector<CallSite> &getCallSites() const {
+    return CallSites;
+  }
+
+  const std::vector<CallSite> &getColdCallSites() const {
+    return ColdCallSites;
+  }
+
+  const ArrayRef<uint8_t> getLSDAActionTable() const {
+    return LSDAActionTable;
+  }
+
+  const std::vector<uint64_t> &getLSDATypeTable() const {
+    return LSDATypeTable;
+  }
+
+  const ArrayRef<uint8_t> getLSDATypeIndexTable() const {
+    return LSDATypeIndexTable;
+  }
+
+  const MoveRelocationsTy &getMoveRelocations() const {
+    return MoveRelocations;
+  }
+
+  const LabelsMapType &getLabels() const {
+    return Labels;
+  }
+
+  IslandInfo &getIslandInfo() {
+    return Islands;
+  }
+
+  const IslandInfo &getIslandInfo() const {
+    return Islands;
+  }
+
   /// Return true if the function has CFI instructions
   bool hasCFI() const {
     return !FrameInstructions.empty() || !CIEFrameInstructions.empty();
@@ -1873,11 +1912,12 @@ public:
 
     // Internal bookkeeping
     const auto Offset = Address - getAddress();
-    assert((!IslandOffsets.count(Offset) || IslandOffsets[Offset] == Symbol) &&
+    assert((!Islands.Offsets.count(Offset) ||
+            Islands.Offsets[Offset] == Symbol) &&
            "Inconsistent island symbol management");
-    if (!IslandOffsets.count(Offset)) {
-      IslandOffsets[Offset] = Symbol;
-      IslandSymbols.insert(Symbol);
+    if (!Islands.Offsets.count(Offset)) {
+      Islands.Offsets[Offset] = Symbol;
+      Islands.Symbols.insert(Symbol);
     }
     return Symbol;
   }
@@ -1893,14 +1933,14 @@ public:
       return nullptr;
 
     MCSymbol *Proxy;
-    if (!IslandProxies[&Referrer].count(Symbol)) {
+    if (!Islands.Proxies[&Referrer].count(Symbol)) {
       Proxy =
           BC.Ctx->getOrCreateSymbol(Symbol->getName() +
                                     ".proxy.for." + Referrer.getPrintName());
-      IslandProxies[&Referrer][Symbol] = Proxy;
-      IslandProxies[&Referrer][Proxy] = Symbol;
+      Islands.Proxies[&Referrer][Symbol] = Proxy;
+      Islands.Proxies[&Referrer][Proxy] = Symbol;
     }
-    Proxy = IslandProxies[&Referrer][Symbol];
+    Proxy = Islands.Proxies[&Referrer][Symbol];
     return Proxy;
   }
 
@@ -1915,13 +1955,13 @@ public:
     if (Offset >= getMaxSize())
       return false;
 
-    auto DataIter = DataOffsets.upper_bound(Offset);
-    if (DataIter == DataOffsets.begin())
+    auto DataIter = Islands.DataOffsets.upper_bound(Offset);
+    if (DataIter == Islands.DataOffsets.begin())
       return false;
     DataIter = std::prev(DataIter);
 
-    auto CodeIter = CodeOffsets.upper_bound(Offset);
-    if (CodeIter == CodeOffsets.begin())
+    auto CodeIter = Islands.CodeOffsets.upper_bound(Offset);
+    if (CodeIter == Islands.CodeOffsets.begin())
       return true;
 
     return *std::prev(CodeIter) <= *DataIter;
@@ -1930,20 +1970,21 @@ public:
   uint64_t
   estimateConstantIslandSize(const BinaryFunction *OnBehalfOf = nullptr) const {
     uint64_t Size = 0;
-    for (auto DataIter = DataOffsets.begin(); DataIter != DataOffsets.end();
+    for (auto DataIter = Islands.DataOffsets.begin();
+         DataIter != Islands.DataOffsets.end();
          ++DataIter) {
       auto NextData = std::next(DataIter);
-      auto CodeIter = CodeOffsets.lower_bound(*DataIter);
-      if (CodeIter == CodeOffsets.end() &&
-          NextData == DataOffsets.end()) {
+      auto CodeIter = Islands.CodeOffsets.lower_bound(*DataIter);
+      if (CodeIter == Islands.CodeOffsets.end() &&
+          NextData == Islands.DataOffsets.end()) {
         Size += getMaxSize() - *DataIter;
         continue;
       }
 
       uint64_t NextMarker;
-      if (CodeIter == CodeOffsets.end())
+      if (CodeIter == Islands.CodeOffsets.end())
         NextMarker = *NextData;
-      else if (NextData == DataOffsets.end())
+      else if (NextData == Islands.DataOffsets.end())
         NextMarker = *CodeIter;
       else
         NextMarker = (*CodeIter > *NextData) ? *NextData : *CodeIter;
@@ -1952,14 +1993,14 @@ public:
     }
 
     if (!OnBehalfOf) {
-      for (auto *ExternalFunc : IslandDependency)
+      for (auto *ExternalFunc : Islands.Dependency)
         Size += ExternalFunc->estimateConstantIslandSize(this);
     }
     return Size;
   }
 
   bool hasConstantIsland() const {
-    return !DataOffsets.empty();
+    return !Islands.DataOffsets.empty();
   }
 
   /// Return true iff the symbol could be seen inside this function otherwise
@@ -2183,24 +2224,6 @@ public:
 
   /// Update exception handling ranges for the function.
   void updateEHRanges();
-
-  /// Emit exception handling ranges for the function.
-  void emitLSDA(MCStreamer *Streamer, bool EmitColdPart);
-
-  /// Emit jump tables for the function.
-  void emitJumpTables(MCStreamer *Streamer);
-
-  /// Emit function code. The caller is responsible for emitting function
-  /// symbol(s) and setting the section to emit the code to.
-  void emitBody(MCStreamer &Streamer, bool EmitColdPart,
-                bool EmitCodeOnly = false);
-
-  /// Emit function as a blob with relocations and labels for relocations.
-  void emitBodyRaw(MCStreamer *Streamer);
-
-  /// Helper for emitBody to write data inside a function (used for AArch64)
-  void emitConstantIslands(MCStreamer &Streamer, bool EmitColdPart,
-                           BinaryFunction *OnBehalfOf = nullptr);
 
   /// Traverse cold basic blocks and replace references to constants in islands
   /// with a proxy symbol for the duplicated constant island that is going to be

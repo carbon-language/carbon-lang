@@ -135,12 +135,6 @@ private:
   /// Link additional runtime code to support instrumentation.
   void linkRuntime();
 
-  /// Emit function code.
-  void emitFunctions(MCStreamer *Streamer);
-
-  /// Emit data sections that have code references in them.
-  void emitDataSections(MCStreamer *Streamer);
-
   /// Update debug and other auxiliary information in the file.
   void updateMetadata();
 
@@ -175,10 +169,6 @@ private:
     return cantFail(OLT->findSymbol(Name, false).getAddress(),
                     "findSymbol failed");
   }
-
-  /// Emit a single function.
-  bool emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
-                    bool EmitColdPart);
 
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
@@ -269,9 +259,9 @@ private:
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
 
-  /// Add a notes section containing the serialized BOLT Address Translation maps
-  /// that can be used to enable sampling of the output binary for the purposes
-  /// of generating BOLT profile data for the input binary.
+  /// Add a notes section containing the serialized BOLT Address Translation
+  /// maps that can be used to enable sampling of the output binary for the
+  /// purposes of generating BOLT profile data for the input binary.
   void addBATSection();
 
   /// Loop over now emitted functions to write translation maps
@@ -388,8 +378,6 @@ private:
   /// Extra linking
   uint64_t InstrumentationRuntimeFiniAddress{0};
   uint64_t InstrumentationRuntimeStartAddress{0};
-  const BinaryFunction *StartFunction{nullptr};
-  const BinaryFunction *FiniFunction{nullptr};
 
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
