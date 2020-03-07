@@ -2740,13 +2740,12 @@ void RewriteInstance::emitAndLink() {
   if (!BC->HasRelocations && opts::UpdateDebugSections)
     DebugInfoRewriter->updateDebugLineInfoForNonSimpleFunctions();
 
-  emitDataSections(Streamer.get());
-
-  // Relocate .eh_frame to .eh_frame_old.
+  // Make .eh_frame relocatable.
   if (EHFrameSection) {
     relocateEHFrameSection();
-    EHFrameSection->emitAsData(*Streamer, ".eh_frame_old");
   }
+
+  emitDataSections(Streamer.get());
 
   // Update _end if needed.
   if (opts::UpdateEnd) {
@@ -3256,8 +3255,8 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
   // These are the sections that we generate via MCStreamer.
   // The order is important.
   std::vector<std::string> Sections = {
-      ".eh_frame", ".eh_frame_old", ".gcc_except_table",
-      ".rodata",   ".rodata.cold",  ".bolt.instr.counters"};
+      ".eh_frame", OrgSecPrefix + ".eh_frame", ".gcc_except_table", ".rodata",
+      ".rodata.cold",  ".bolt.instr.counters"};
   for (auto &SectionName : Sections) {
     auto Section = BC->getUniqueSectionByName(SectionName);
     if (!Section || !Section->isAllocatable() || !Section->isFinalized())
@@ -3351,7 +3350,6 @@ void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
       continue;
 
     StringRef SectionName = Section.getName();
-    assert(SectionName != ".eh_frame" && "should not emit .eh_frame as data");
     std::string EmitName = Section.isReordered()
       ? std::string(Section.getOutputName())
       : OrgSecPrefix + std::string(SectionName);
@@ -4683,8 +4681,9 @@ void RewriteInstance::writeEHFrameHeader() {
                                       BC->AsmInfo->isLittleEndian(),
                                       BC->AsmInfo->getCodePointerSize()));
 
-  auto OldEHFrameSection = BC->getUniqueSectionByName(".eh_frame_old");
-  assert(OldEHFrameSection && "expected .eh_frame_old to be present");
+  auto OldEHFrameSection =
+    BC->getUniqueSectionByName(OrgSecPrefix + ".eh_frame");
+  assert(OldEHFrameSection && "expected original .eh_frame to be present");
   DWARFDebugFrame OldEHFrame(true, OldEHFrameSection->getOutputAddress());
   OldEHFrame.parse(DWARFDataExtractor(OldEHFrameSection->getOutputContents(),
                                       BC->AsmInfo->isLittleEndian(),
@@ -4722,7 +4721,7 @@ void RewriteInstance::writeEHFrameHeader() {
 
   NextAvailableAddress += EHFrameHdrSec.getOutputSize();
 
-  // Merge .eh_frame and .eh_frame_old so that gdb can locate all FDEs.
+  // Merge new .eh_frame with original so that gdb can locate all FDEs.
   const auto EHFrameSectionSize = (OldEHFrameSection->getOutputAddress() +
                                    OldEHFrameSection->getOutputSize() -
                                    EHFrameSection->getOutputAddress());
