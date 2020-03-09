@@ -603,7 +603,7 @@ void RewriteInstance::discoverStorage() {
     BC->HasFixedLoadAddress = false;
   }
 
-  EntryPoint = Obj->getHeader()->e_entry;
+  BC->StartFunctionAddress = Obj->getHeader()->e_entry;
 
   NextAvailableAddress = 0;
   uint64_t NextAvailableOffset = 0;
@@ -1694,6 +1694,9 @@ void RewriteInstance::readSpecialSections() {
   }
 
   parseSDTNotes();
+
+  // Read .dynamic/PT_DYNAMIC.
+  readELFDynamic();
 }
 
 void RewriteInstance::adjustCommandLineOptions() {
@@ -1702,9 +1705,23 @@ void RewriteInstance::adjustCommandLineOptions() {
               "supported\n";
   }
 
-  if (opts::Instrument && !BC->HasRelocations) {
-    errs() << "BOLT-ERROR: instrumentation requires relocations\n";
-    exit(1);
+  if (opts::Instrument) {
+    if (!BC->HasRelocations) {
+      errs() << "BOLT-ERROR: instrumentation requires relocations\n";
+      exit(1);
+    }
+    if (!BC->StartFunctionAddress) {
+      errs() << "BOLT-ERROR: instrumentation requires a known entry point of "
+                "the input binary\n";
+      exit(1);
+    }
+    if (!BC->FiniFunctionAddress) {
+      errs()
+          << "BOLT-ERROR: input binary lacks DT_FINI entry in the dynamic "
+             "section but instrumentation currently relies on patching "
+             "DT_FINI to write the profile\n";
+      exit(1);
+    }
   }
 
   if (opts::AlignMacroOpFusion != MFT_NONE && !BC->isX86()) {
@@ -2731,10 +2748,7 @@ void RewriteInstance::emitAndLink() {
 
   emitFunctions(Streamer.get());
   if (opts::Instrument) {
-    readELFDynamic();
-    assert(StartFunction && FiniFunction &&
-           "_start and DT_FINI functions must be set");
-    Instrumenter->emit(*BC, *Streamer.get(), *StartFunction, *FiniFunction);
+    Instrumenter->emit(*BC, *Streamer.get());
   }
 
   if (!BC->HasRelocations && opts::UpdateDebugSections)
@@ -4400,55 +4414,36 @@ void RewriteInstance::readELFDynamic(ELFObjectFile<ELFT> *File) {
   using Elf_Phdr = typename ELFFile<ELFT>::Elf_Phdr;
   using Elf_Dyn  = typename ELFFile<ELFT>::Elf_Dyn;
 
-  if (!opts::Instrument || !BC->HasRelocations)
-    return;
-
   // Locate DYNAMIC by looking through program headers.
   const Elf_Phdr *DynamicPhdr = 0;
   for (auto &Phdr : cantFail(Obj->program_headers())) {
     if (Phdr.p_type == ELF::PT_DYNAMIC) {
       DynamicPhdr = &Phdr;
-      assert(Phdr.p_memsz == Phdr.p_filesz && "dynamic sizes should match");
       break;
     }
   }
-  assert(DynamicPhdr && "missing dynamic in ELF binary");
 
-  // Go through all dynamic entries and patch functions addresses with
-  // new ones.
+  // Tools such as objcopy can strip the section contents but leave the header
+  // entry with zero file size.
+  if (!DynamicPhdr || !DynamicPhdr->p_filesz) {
+    errs() << "BOLT-ERROR: input binary is not a valid ELF executable as it "
+              "lacks a dynamic section or the section is empty\n";
+    exit(1);
+  }
+
+  assert(DynamicPhdr->p_memsz == DynamicPhdr->p_filesz &&
+        "dynamic section sizes should match");
+
+  // Go through all dynamic entries to locate entries of interest.
   const Elf_Dyn *DTB = cantFail(Obj->dynamic_table_begin(DynamicPhdr),
                                 "error accessing dynamic table");
   const Elf_Dyn *DTE = cantFail(Obj->dynamic_table_end(DynamicPhdr),
                                 "error accessing dynamic table");
-  bool FiniFound = false;
   for (auto *DE = DTB; DE != DTE; ++DE) {
     if (DE->getTag() != ELF::DT_FINI)
       continue;
-    const auto *Function = BC->getBinaryFunctionAtAddress(DE->getPtr());
-    if (!Function) {
-      errs() << "BOLT-ERROR: failed to locate fini function.\n";
-      exit(1);
-    }
-    FiniFunction = Function;
-    FiniFound = true;
+    BC->FiniFunctionAddress = DE->getPtr();
   }
-
-  if (!FiniFound) {
-    errs()
-        << "BOLT-ERROR: input binary lacks DT_INIT/FINI entry in the dynamic "
-           "section but instrumentation currently relies on patching "
-           "DT_FINI to write the profile.\n";
-    exit(1);
-  }
-
-  // Read start function
-  auto Ehdr = *Obj->getHeader();
-  const auto *Function = BC->getBinaryFunctionAtAddress(Ehdr.e_entry);
-  if (!Function) {
-    errs() << "BOLT-ERROR: failed to locate _start function.\n";
-    exit(1);
-  }
-  StartFunction = Function;
 }
 
 

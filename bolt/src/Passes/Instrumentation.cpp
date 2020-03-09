@@ -655,9 +655,20 @@ void Instrumentation::emitTablesAsELFNote(BinaryContext &BC) {
                                  /*IsReadOnly=*/true, ELF::SHT_NOTE);
 }
 
-void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer,
-                           const BinaryFunction &InitFunction,
-                           const BinaryFunction &FiniFunction) {
+void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
+  const auto *StartFunction =
+    BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
+  if (!StartFunction) {
+    errs() << "BOLT-ERROR: failed to locate function at binary start address\n";
+    exit(1);
+  }
+  const auto *FiniFunction =
+    BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress);
+  if (!FiniFunction) {
+    errs() << "BOLT-ERROR: failed to locate function at binary fini address\n";
+    exit(1);
+  }
+
   const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
                                              /*IsText=*/false,
                                              /*IsAllocatable=*/true);
@@ -739,12 +750,12 @@ void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer,
   Streamer.EmitLabel(InitPtr);
   Streamer.EmitSymbolAttribute(InitPtr,
                                MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(MCSymbolRefExpr::create(InitFunction.getSymbol(), *BC.Ctx),
-                     /*Size=*/8);
+  Streamer.EmitValue(
+      MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
   Streamer.EmitLabel(FiniPtr);
   Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(MCSymbolRefExpr::create(FiniFunction.getSymbol(), *BC.Ctx),
-                     /*Size=*/8);
+  Streamer.EmitValue(
+      MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
 
   uint32_t FuncDescSize = getFDSize();
   outs() << "BOLT-INSTRUMENTER: Number of indirect call site descriptors: "

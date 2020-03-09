@@ -469,6 +469,14 @@ public:
   uint64_t OldTextSectionOffset{0};
   uint64_t OldTextSectionSize{0};
 
+  /// Address of the code/function that is executed before any other code in
+  /// the binary.
+  Optional<uint64_t> StartFunctionAddress;
+
+  /// Address of the code/function that is going to be executed right before
+  /// the execution of the binary is completed.
+  Optional<uint64_t> FiniFunctionAddress;
+
   /// Page alignment used for code layout.
   uint64_t PageAlign{HugePageSize};
 

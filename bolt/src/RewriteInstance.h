@@ -235,8 +235,7 @@ private:
   /// Create the regular symbol table and patch dyn symbol tables.
   ELF_FUNCTION(patchELFSymTabs);
 
-  /// Read dynamic section/segment of ELF to allow us to link a runtime lib
-  /// later.
+  /// Read dynamic section/segment of ELF.
   ELF_FUNCTION(readELFDynamic);
 
   /// Patch dynamic section/segment of ELF.
@@ -394,9 +393,6 @@ private:
 
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
-
-  /// Entry point in the file (first instructions to be executed).
-  uint64_t EntryPoint{0};
 
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;

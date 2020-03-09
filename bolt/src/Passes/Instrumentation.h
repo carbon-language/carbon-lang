@@ -33,9 +33,7 @@ public:
   void runOnFunctions(BinaryContext &BC);
 
   /// Emit data structures that will be necessary during runtime (second step)
-  void emit(BinaryContext &BC, MCStreamer &Streamer,
-            const BinaryFunction &InitFunction,
-            const BinaryFunction &FiniFunction);
+  void emit(BinaryContext &BC, MCStreamer &Streamer);
 
   /// Create a non-allocatable ELF section with read-only tables necessary for
   /// writing the instrumented data profile during program finish. The runtime
