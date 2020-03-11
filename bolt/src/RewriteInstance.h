@@ -338,6 +338,16 @@ private:
   static constexpr uint64_t PLTSize = 16;
   static constexpr uint16_t PLTAlignment = 16;
 
+  /// String to be added before the original section name.
+  ///
+  /// When BOLT creates a new section with the same name as the one in the
+  /// input file, it may need to preserve the original section. This prefix
+  /// will be added to the name of the original section.
+  static StringRef getOrgSecPrefix() { return ".bolt.org"; }
+
+  /// Section name used for new code.
+  static StringRef getBOLTTextSectionName() { return ".bolt.text"; }
+
   /// An instance of the input binary we are processing, externally owned.
   llvm::object::ELFObjectFileBase *InputFile;
 
@@ -448,10 +458,6 @@ private:
 
   /// A rewrite of strtab
   std::string NewStrTab;
-
-  static const std::string OrgSecPrefix;
-
-  static const std::string BOLTSecPrefix;
 
   /// Number of processed to data relocations.  Used to implement the
   /// -max-relocations debugging option.

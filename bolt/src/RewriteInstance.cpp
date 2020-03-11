@@ -455,10 +455,6 @@ bool shouldProcess(const BinaryFunction &Function) {
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
 constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
 
-const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
-
-const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
-
 const char RewriteInstance::TimerGroupName[] = "rewrite";
 const char RewriteInstance::TimerGroupDesc[] = "Rewrite passes";
 
@@ -580,8 +576,8 @@ void RewriteInstance::discoverStorage() {
 
     if (!opts::HeatmapMode &&
         !(opts::AggregateOnly && BAT->enabledFor(InputFile)) &&
-        (SectionName.startswith(OrgSecPrefix) ||
-         SectionName.startswith(BOLTSecPrefix))) {
+        (SectionName.startswith(getOrgSecPrefix()) ||
+         SectionName == getBOLTTextSectionName())) {
       errs() << "BOLT-ERROR: input file was processed by BOLT. "
                 "Cannot re-optimize.\n";
       exit(1);
@@ -2581,7 +2577,7 @@ void RewriteInstance::emitAndLink() {
     Instrumenter->emit(*BC, *Streamer.get());
   }
 
-  emitBinaryContext(*Streamer, *BC, OrgSecPrefix);
+  emitBinaryContext(*Streamer, *BC, getOrgSecPrefix());
 
   Streamer->Finish();
 
@@ -3016,12 +3012,13 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
     const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/true,
                                                /*IsText=*/true,
                                                /*IsAllocatable=*/true);
-    auto &Section = BC->registerOrUpdateSection(BOLTSecPrefix + ".text",
-                                                ELF::SHT_PROGBITS,
-                                                Flags,
-                                                /*Data=*/nullptr,
-                                                NewTextSectionSize,
-                                                16);
+    auto &Section =
+      BC->registerOrUpdateSection(getBOLTTextSectionName(),
+                                  ELF::SHT_PROGBITS,
+                                  Flags,
+                                  /*Data=*/nullptr,
+                                  NewTextSectionSize,
+                                  16);
     Section.setOutputAddress(NewTextSectionStartAddress);
     Section.setFileOffset(
       getFileOffsetForAddress(NewTextSectionStartAddress));
@@ -3033,8 +3030,8 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
   // These are the sections that we generate via MCStreamer.
   // The order is important.
   std::vector<std::string> Sections = {
-      ".eh_frame", OrgSecPrefix + ".eh_frame", ".gcc_except_table", ".rodata",
-      ".rodata.cold",  ".bolt.instr.counters"};
+      ".eh_frame", Twine(getOrgSecPrefix(), ".eh_frame").str(),
+      ".gcc_except_table", ".rodata", ".rodata.cold",  ".bolt.instr.counters"};
   for (auto &SectionName : Sections) {
     auto Section = BC->getUniqueSectionByName(SectionName);
     if (!Section || !Section->isAllocatable() || !Section->isFinalized())
@@ -3062,7 +3059,7 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
 
     StringRef SectionName = Section.getName();
     auto OrgSection =
-      BC->getUniqueSectionByName(OrgSecPrefix + std::string(SectionName));
+      BC->getUniqueSectionByName((getOrgSecPrefix() + SectionName).str());
     if (!OrgSection ||
         !OrgSection->isAllocatable() ||
         !OrgSection->isFinalized())
@@ -3420,7 +3417,7 @@ std::string RewriteInstance::getOutputSectionName(const ELFObjType *Obj,
       cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
   if ((Section.sh_flags & ELF::SHF_ALLOC) && willOverwriteSection(SectionName))
-    return OrgSecPrefix + SectionName.str();
+    return (getOrgSecPrefix() + SectionName).str();
 
   return SectionName;
 }
@@ -3471,7 +3468,7 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
     if (!Section.isFinalized())
       continue;
 
-    if (Section.getName().startswith(OrgSecPrefix) ||
+    if (Section.getName().startswith(getOrgSecPrefix()) ||
         Section.isAnonymous()) {
       if (opts::Verbosity)
         outs() << "BOLT-INFO: not writing section header for section "
@@ -4429,7 +4426,7 @@ void RewriteInstance::writeEHFrameHeader() {
                                       BC->AsmInfo->getCodePointerSize()));
 
   auto OldEHFrameSection =
-    BC->getUniqueSectionByName(OrgSecPrefix + ".eh_frame");
+    BC->getUniqueSectionByName(Twine(getOrgSecPrefix(), ".eh_frame").str());
   assert(OldEHFrameSection && "expected original .eh_frame to be present");
   DWARFDebugFrame OldEHFrame(true, OldEHFrameSection->getOutputAddress());
   OldEHFrame.parse(DWARFDataExtractor(OldEHFrameSection->getOutputContents(),
