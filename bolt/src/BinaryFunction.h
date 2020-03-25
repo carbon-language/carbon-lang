@@ -2378,8 +2378,7 @@ public:
   ///
   /// \p BaseAddress is applied to all addresses in \pInputLL.
   DWARFDebugLoc::LocationList translateInputToOutputLocationList(
-      const DWARFDebugLoc::LocationList &InputLL,
-      BaseAddress BaseAddr) const;
+      DWARFDebugLoc::LocationList InputLL) const;
 
   /// Return true if the function is an AArch64 linker inserted veneer
   bool isAArch64Veneer() const;

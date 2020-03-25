@@ -3970,29 +3970,18 @@ std::set<BinaryData *> BinaryFunction::dataUses(bool OnlyHot) const {
 }
 
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
-      const DWARFDebugLoc::LocationList &InputLL,
-      BaseAddress BaseAddr) const {
-  uint64_t BAddr = BaseAddr.Address;
-  // If the function wasn't changed - there's nothing to update.
+    DWARFDebugLoc::LocationList InputLL) const {
+  // If the function hasn't changed - there's nothing to update.
   if (!isEmitted() && !BC.HasRelocations) {
-    if (!BAddr) {
-      return InputLL;
-    } else {
-      auto OutputLL = std::move(InputLL);
-      for (auto &Entry : OutputLL.Entries) {
-        Entry.Begin += BAddr;
-        Entry.End += BAddr;
-      }
-      return OutputLL;
-    }
+    return InputLL;
   }
 
   uint64_t PrevEndAddress = 0;
   SmallVectorImpl<char> *PrevLoc = nullptr;
   DWARFDebugLoc::LocationList OutputLL;
-  for (auto &Entry : InputLL.Entries) {
-    const auto Start = Entry.Begin + BAddr;
-    const auto End = Entry.End + BAddr;
+  for (const auto &Entry : InputLL.Entries) {
+    const auto Start = Entry.Begin;
+    const auto End = Entry.End;
     if (!containsAddress(Start)) {
       DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
                    << *this << " : [0x" << Twine::utohexstr(Start)

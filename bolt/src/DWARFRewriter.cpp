@@ -244,9 +244,10 @@ void DWARFRewriter::updateUnitDebugInfo(
               Value.getAsSectionOffset().getValue();
 
             uint32_t LLOff = LL.Offset;
-            auto OptLL =
-                DIE.getDwarfUnit()->getContext().getOneDebugLocList(&LLOff);
-            if (!OptLL || OptLL->Entries.empty()) {
+            auto InputLL =
+              DIE.getDwarfUnit()->getContext().getOneDebugLocList(
+                  &LLOff, DIE.getDwarfUnit()->getBaseAddress()->Address);
+            if (!InputLL || InputLL->Entries.empty()) {
               errs() << "BOLT-WARNING: empty location list detected at 0x"
                      << Twine::utohexstr(LLOff) << " for DIE at 0x"
                      << Twine::utohexstr(DIE.getOffset()) << " in CU at 0x"
@@ -255,7 +256,7 @@ void DWARFRewriter::updateUnitDebugInfo(
             } else {
               const auto OutputLL =
                   Function->translateInputToOutputLocationList(
-                      *OptLL, *DIE.getDwarfUnit()->getBaseAddress());
+                      std::move(*InputLL));
               DEBUG(if (OutputLL.Entries.empty()) {
                 dbgs() << "BOLT-DEBUG: location list translated to an empty "
                           "one at 0x"

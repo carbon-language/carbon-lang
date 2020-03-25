@@ -67,20 +67,21 @@ index 84b23398b8c..9ed1792f0c9 100644
    bool extract(DataExtractor Data, uint32_t* OffsetPtr);
    void dump(raw_ostream &OS) const;
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFContext.h b/include/llvm/DebugInfo/DWARF/DWARFContext.h
-index e842cf231e7..83b0dbe0676 100644
+index e842cf231e7..90eb7961649 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFContext.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFContext.h
-@@ -225,6 +225,9 @@ public:
+@@ -225,6 +225,10 @@ public:
    /// Get a pointer to the parsed DebugLoc object.
    const DWARFDebugLoc *getDebugLoc();
  
 +  /// Extract one location list corresponding in \p Offset
-+  Optional<DWARFDebugLoc::LocationList> getOneDebugLocList(uint32_t *Offset);
++  Optional<DWARFDebugLoc::LocationList>
++  getOneDebugLocList(uint32_t *Offset, uint64_t CUBaseAddress = 0);
 +
    /// Get a pointer to the parsed dwo abbreviations object.
    const DWARFDebugAbbrev *getDebugAbbrevDWO();
  
-@@ -280,6 +283,10 @@ public:
+@@ -280,6 +284,10 @@ public:
    /// given address where applicable.
    DIEsForAddress getDIEsForAddress(uint64_t Address);
  
@@ -91,7 +92,7 @@ index e842cf231e7..83b0dbe0676 100644
    DILineInfo getLineInfoForAddress(uint64_t Address,
        DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;
    DILineInfoTable getLineInfoForAddressRange(uint64_t Address, uint64_t Size,
-@@ -302,7 +309,7 @@ public:
+@@ -302,7 +310,7 @@ public:
    static std::unique_ptr<DWARFContext>
    create(const object::ObjectFile &Obj, const LoadedObjectInfo *L = nullptr,
           function_ref<ErrorPolicy(Error)> HandleError = defaultErrorHandler,
@@ -100,7 +101,7 @@ index e842cf231e7..83b0dbe0676 100644
  
    static std::unique_ptr<DWARFContext>
    create(const StringMap<std::unique_ptr<MemoryBuffer>> &Sections,
-@@ -313,7 +320,6 @@ public:
+@@ -313,7 +321,6 @@ public:
    /// have initialized the relevant target descriptions.
    Error loadRegisterInfo(const object::ObjectFile &Obj);
  
@@ -156,10 +157,10 @@ index ff1c7fb3838..2622a4e7eef 100644
  };
  
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h b/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
-index a6d319a9045..39674a9d499 100644
+index a6d319a9045..c099007c132 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
-@@ -68,6 +68,9 @@ public:
+@@ -68,8 +68,12 @@ public:
    /// Return the location list at the given offset or nullptr.
    LocationList const *getLocationListAtOffset(uint64_t Offset) const;
  
@@ -167,8 +168,12 @@ index a6d319a9045..39674a9d499 100644
 +  const LocationLists &getLocationLists() const { return Locations; }
 +
    Optional<LocationList> parseOneLocationList(DWARFDataExtractor Data,
-                                               uint32_t *Offset);
+-                                              uint32_t *Offset);
++                                              uint32_t *Offset,
++                                              uint64_t CUBaseAddress = 0);
  };
+ 
+ class DWARFDebugLocDWO {
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFDie.h b/include/llvm/DebugInfo/DWARF/DWARFDie.h
 index 39a3dd32c0f..84279875611 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFDie.h
@@ -1795,7 +1800,7 @@ index adada672af0..b3d68ed66af 100644
        if (Spec.isImplicitConst()) {
          FormValue.setSValue(Spec.getImplicitConstValue());
 diff --git a/lib/DebugInfo/DWARF/DWARFContext.cpp b/lib/DebugInfo/DWARF/DWARFContext.cpp
-index 3a974dddc4e..65bd4a69db8 100644
+index 3a974dddc4e..4ad1ecbc080 100644
 --- a/lib/DebugInfo/DWARF/DWARFContext.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFContext.cpp
 @@ -681,6 +681,15 @@ const DWARFDebugLoc *DWARFContext::getDebugLoc() {
@@ -1803,12 +1808,12 @@ index 3a974dddc4e..65bd4a69db8 100644
  }
  
 +Optional<DWARFDebugLoc::LocationList>
-+DWARFContext::getOneDebugLocList(uint32_t *Offset) {
++DWARFContext::getOneDebugLocList(uint32_t *Offset, uint64_t CUBaseAddress) {
 +  DWARFDebugLoc L;
 +  DWARFDataExtractor LocData(*DObj, DObj->getLocSection(), isLittleEndian(),
 +                             getCompileUnitAtIndex(0)->getAddressByteSize());
 +
-+  return L.parseOneLocationList(LocData, Offset);
++  return L.parseOneLocationList(LocData, Offset, CUBaseAddress);
 +}
 +
  const DWARFDebugLocDWO *DWARFContext::getDebugLocDWO() {
@@ -2009,6 +2014,109 @@ index b9dc2151e06..f3c7c81bb10 100644
  void DWARFDebugFrame::dump(raw_ostream &OS, const MCRegisterInfo *MRI,
                             Optional<uint64_t> Offset) const {
    if (Offset) {
+diff --git a/lib/DebugInfo/DWARF/DWARFDebugLoc.cpp b/lib/DebugInfo/DWARF/DWARFDebugLoc.cpp
+index 02d17b278b4..fe9a339be7a 100644
+--- a/lib/DebugInfo/DWARF/DWARFDebugLoc.cpp
++++ b/lib/DebugInfo/DWARF/DWARFDebugLoc.cpp
+@@ -82,47 +82,69 @@ void DWARFDebugLoc::dump(raw_ostream &OS, const MCRegisterInfo *MRI,
+ }
+ 
+ Optional<DWARFDebugLoc::LocationList>
+-DWARFDebugLoc::parseOneLocationList(DWARFDataExtractor Data, unsigned *Offset) {
++DWARFDebugLoc::parseOneLocationList(DWARFDataExtractor Data, unsigned *Offset,
++                                    uint64_t CUBaseAddress) {
+   LocationList LL;
+   LL.Offset = *Offset;
+ 
+   // 2.6.2 Location Lists
+-  // A location list entry consists of:
++  //
++  // Each entry in a location list is either a location list entry, a base
++  // address selection entry, or an end of list entry.
++
++  // The applicable base address of a location list entry is determined by the
++  // closest preceding base address selection entry (see below) in the same
++  // location list. If there is no such selection entry, then the applicable
++  // base address defaults to the base address of the compilation unit.
++  uint64_t BaseAddress = CUBaseAddress;
+   while (true) {
+-    Entry E;
+     if (!Data.isValidOffsetForDataOfSize(*Offset, 2 * Data.getAddressSize())) {
+       llvm::errs() << "Location list overflows the debug_loc section.\n";
+       return None;
+     }
+ 
+-    // 1. A beginning address offset. ...
+-    E.Begin = Data.getRelocatedAddress(Offset);
+-
+-    // 2. An ending address offset. ...
+-    E.End = Data.getRelocatedAddress(Offset);
+-
+-    // The end of any given location list is marked by an end of list entry,
+-    // which consists of a 0 for the beginning address offset and a 0 for the
+-    // ending address offset.
+-    if (E.Begin == 0 && E.End == 0)
++    const uint64_t Value0 = Data.getRelocatedAddress(Offset);
++    const uint64_t Value1 = Data.getRelocatedAddress(Offset);
++    if (Value0 == (Data.getAddressSize() == 4 ? -1U : -1ULL)) {
++      // A base address selection entry consists of:
++      // 1. The value of the largest representable address offset (for example,
++      //    0xffffffff when the size of an address is 32 bits).
++      // 2. An address, which defines the appropriate base address for use in
++      //    interpreting the beginning and ending address offsets of subsequent
++      //    entries of the location list.
++      BaseAddress = Value1;
++    } else if (Value0 == 0 && Value1 == 0) {
++      // The end of any given location list is marked by an end of list entry,
++      // which consists of a 0 for the beginning address offset and a 0 for the
++      // ending address offset.
+       return LL;
+-
+-    if (!Data.isValidOffsetForDataOfSize(*Offset, 2)) {
+-      llvm::errs() << "Location list overflows the debug_loc section.\n";
+-      return None;
++    } else {
++      // A location list entry consists of:
++      Entry E;
++
++      // 1. A beginning address offset. ...
++      E.Begin = Value0 + BaseAddress;
++
++      // 2. An ending address offset. ...
++      E.End = Value1 + BaseAddress;
++
++      if (!Data.isValidOffsetForDataOfSize(*Offset, 2)) {
++        llvm::errs() << "Location list overflows the debug_loc section.\n";
++        return None;
++      }
++
++      unsigned Bytes = Data.getU16(Offset);
++      if (!Data.isValidOffsetForDataOfSize(*Offset, Bytes)) {
++        llvm::errs() << "Location list overflows the debug_loc section.\n";
++        return None;
++      }
++      // A single location description describing the location of the object...
++      StringRef str = Data.getData().substr(*Offset, Bytes);
++      *Offset += Bytes;
++      E.Loc.reserve(str.size());
++      std::copy(str.begin(), str.end(), std::back_inserter(E.Loc));
++      LL.Entries.push_back(std::move(E));
+     }
+-
+-    unsigned Bytes = Data.getU16(Offset);
+-    if (!Data.isValidOffsetForDataOfSize(*Offset, Bytes)) {
+-      llvm::errs() << "Location list overflows the debug_loc section.\n";
+-      return None;
+-    }
+-    // A single location description describing the location of the object...
+-    StringRef str = Data.getData().substr(*Offset, Bytes);
+-    *Offset += Bytes;
+-    E.Loc.reserve(str.size());
+-    std::copy(str.begin(), str.end(), std::back_inserter(E.Loc));
+-    LL.Entries.push_back(std::move(E));
+   }
+ }
+ 
 diff --git a/lib/DebugInfo/DWARF/DWARFDie.cpp b/lib/DebugInfo/DWARF/DWARFDie.cpp
 index 7ae38e6e053..f1fd34af238 100644
 --- a/lib/DebugInfo/DWARF/DWARFDie.cpp
