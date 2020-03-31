@@ -289,6 +289,13 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
     ++BBI;
   }
 
+  // Compare exceptions action tables.
+  if (A.getLSDAActionTable() != B.getLSDAActionTable() ||
+      A.getLSDATypeTable() != B.getLSDATypeTable() ||
+      A.getLSDATypeIndexTable() != B.getLSDATypeIndexTable()) {
+    return false;
+  }
+
   return true;
 }
 
