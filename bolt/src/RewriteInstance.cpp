@@ -3695,13 +3695,27 @@ void RewriteInstance::updateELFSymbolTable(
   // Add extra symbols for the emitted function.
   auto addExtraSymbols = [&](const BinaryFunction &Function,
                              const ELFSymTy &FunctionSymbol) {
-    if (Function.isSplit()) {
+    if (Function.isFolded()) {
+      auto *ICFParent = Function.getFoldedIntoFunction();
+      while (ICFParent->isFolded())
+        ICFParent = ICFParent->getFoldedIntoFunction();
+      auto ICFSymbol = FunctionSymbol;
+      SmallVector<char, 256> Buf;
+      ICFSymbol.st_name =
+        AddToStrTab(Twine(cantFail(FunctionSymbol.getName(StringSection)))
+                        .concat(".icf.0")
+                        .toStringRef(Buf));
+      ICFSymbol.st_value = ICFParent->getOutputAddress();
+      ICFSymbol.st_size = ICFParent->getOutputSize();
+      Symbols.emplace_back(ICFSymbol);
+    }
+    if (Function.isSplit() && Function.cold().getAddress()) {
       auto NewColdSym = FunctionSymbol;
       SmallVector<char, 256> Buf;
       NewColdSym.st_name =
-          AddToStrTab(Twine(cantFail(FunctionSymbol.getName(StringSection)))
-                          .concat(".cold.0")
-                          .toStringRef(Buf));
+        AddToStrTab(Twine(cantFail(FunctionSymbol.getName(StringSection)))
+                        .concat(".cold.0")
+                        .toStringRef(Buf));
       NewColdSym.st_shndx = Function.getColdCodeSection()->getIndex();
       NewColdSym.st_value = Function.cold().getAddress();
       NewColdSym.st_size = Function.cold().getImageSize();

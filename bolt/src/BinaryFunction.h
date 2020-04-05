@@ -274,10 +274,6 @@ private:
   /// conditions.
   bool HasProfileAvailable{false};
 
-  /// Indicate if the function body was folded into another function. Used
-  /// for ICF optimization without relocations.
-  bool IsFolded{false};
-
   /// Execution halts whenever this function is entered.
   bool TrapsOnEntry{false};
 
@@ -308,6 +304,10 @@ private:
 
   /// Parent function for split function fragments.
   BinaryFunction *ParentFunction{nullptr};
+
+  /// Indicate if the function body was folded into another function.
+  /// Used by ICF optimization.
+  BinaryFunction *FoldedIntoFunction{nullptr};
 
   /// All fragments for a parent function.
   std::unordered_set<BinaryFunction *> Fragments;
@@ -1333,8 +1333,14 @@ public:
     return HasProfileAvailable;
   }
 
+  /// Return true if the body of the function was merged into another function.
   bool isFolded() const {
-    return IsFolded;
+    return FoldedIntoFunction != nullptr;
+  }
+
+  /// If this function was folded, return the function it was folded into.
+  BinaryFunction *getFoldedIntoFunction() const {
+    return FoldedIntoFunction;
   }
 
   /// Return true if the function uses jump tables.
@@ -1736,9 +1742,8 @@ public:
     return *this;
   }
 
-  BinaryFunction &setFolded(bool Folded = true) {
-    IsFolded = Folded;
-    return *this;
+  void setFolded(BinaryFunction *BF) {
+    FoldedIntoFunction = BF;
   }
 
   BinaryFunction &setPersonalityFunction(uint64_t Addr) {

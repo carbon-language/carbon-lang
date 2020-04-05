@@ -1113,10 +1113,12 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
             std::back_inserter(ParentBF.Aliases));
   ChildBF.Aliases.clear();
 
-  // Merge execution counts of ChildBF into those of ParentBF.
-  ChildBF.mergeProfileDataInto(ParentBF);
-
   if (HasRelocations) {
+    // Merge execution counts of ChildBF into those of ParentBF.
+    // Without relocations, we cannot reliably merge profiles as both functions
+    // continue to exist and either one can be executed.
+    ChildBF.mergeProfileDataInto(ParentBF);
+
     std::shared_lock<std::shared_timed_mutex> ReadBfsLock(BinaryFunctionsMutex,
                                                           std::defer_lock);
     std::unique_lock<std::shared_timed_mutex> WriteBfsLock(BinaryFunctionsMutex,
@@ -1141,7 +1143,7 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
     ChildBF.getSymbols().push_back(Ctx->getOrCreateSymbol(NewName));
     WriteCtxLock.unlock();
 
-    ChildBF.setFolded();
+    ChildBF.setFolded(&ParentBF);
   }
 }
 
@@ -2006,6 +2008,22 @@ BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
 
 BinaryFunction *
 BinaryContext::getBinaryFunctionAtAddress(uint64_t Address, bool Shallow) {
+  // First, try to find a function starting at the given address. If the
+  // function was folded, this will get us the original folded function if it
+  // wasn't removed from the list, e.g. in non-relocation mode.
+  auto BFI = BinaryFunctions.find(Address);
+  if (BFI != BinaryFunctions.end()) {
+    auto *BF = &BFI->second;
+    while (!Shallow && BF->getParentFunction() && !Shallow) {
+      BF = BF->getParentFunction();
+    }
+    return BF;
+  }
+
+  // We might have folded the function matching the object at the given
+  // address. In such case, we look for a function matching the symbol
+  // registered at the original address. The new function (the one that the
+  // original was folded into) will hold the symbol.
   if (const auto *BD = getBinaryDataAtAddress(Address)) {
     uint64_t EntryID{0};
     auto *BF = getFunctionForSymbol(BD->getSymbol(), &EntryID);
