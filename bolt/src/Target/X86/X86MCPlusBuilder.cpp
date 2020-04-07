@@ -3186,28 +3186,57 @@ public:
   createInstrumentedIndirectCall(const MCInst &CallInst, bool TailCall,
                                  MCSymbol *HandlerFuncAddr, int CallSiteID,
                                  MCContext *Ctx) const override {
-    std::vector<MCInst> Insts(6);
+    // Check if the target address expression used in the original indirect call
+    // uses the stack pointer, which we are going to clobber.
+    static BitVector SPAliases(getAliases(X86::RSP));
+    bool UsesSP{false};
+    // Skip defs.
+    for (unsigned I = Info->get(CallInst.getOpcode()).getNumDefs(),
+         E = MCPlus::getNumPrimeOperands(CallInst); I != E; ++I) {
+      const auto &Operand = CallInst.getOperand(I);
+      if (Operand.isReg() && SPAliases[Operand.getReg()]) {
+        UsesSP = true;
+        break;
+      }
+    }
+
+    std::vector<MCInst> Insts;
     MCPhysReg TempReg = getIntArgRegister(0);
     // Code sequence used to enter indirect call instrumentation helper:
     //   push %rdi
+    //   add $8, %rsp       ;; $rsp may be used in target, so fix it to prev val
     //   movq target, %rdi  ;; via convertIndirectCallTargetToLoad
+    //   sub $8, %rsp       ;; restore correct stack value
     //   push %rdi
     //   movq $CallSiteID, %rdi
     //   push %rdi
     //   callq/jmp *HandlerFuncAddr
-    createPushRegister(Insts[0], TempReg, 8);
-    Insts[1] = CallInst;
-    convertIndirectCallToLoad(Insts[1], TempReg);
-    createPushRegister(Insts[2], TempReg, 8);
-    createLoadImmediate(Insts[3], TempReg, CallSiteID);
-    createPushRegister(Insts[4], TempReg, 8);
-    createIndirectCall(Insts[5], HandlerFuncAddr, Ctx,
+    Insts.emplace_back();
+    createPushRegister(Insts.back(), TempReg, 8);
+    if (UsesSP) { // Only adjust SP if we really need to
+      Insts.emplace_back();
+      createStackPointerDecrement(Insts.back(), 8, /*NoFlagsClobber=*/false);
+    }
+    Insts.emplace_back(CallInst);
+    convertIndirectCallToLoad(Insts.back(), TempReg);
+    if (UsesSP) {
+      Insts.emplace_back();
+      createStackPointerIncrement(Insts.back(), 8, /*NoFlagsClobber=*/false);
+    }
+    Insts.emplace_back();
+    createPushRegister(Insts.back(), TempReg, 8);
+    Insts.emplace_back();
+    createLoadImmediate(Insts.back(), TempReg, CallSiteID);
+    Insts.emplace_back();
+    createPushRegister(Insts.back(), TempReg, 8);
+    Insts.emplace_back();
+    createIndirectCall(Insts.back(), HandlerFuncAddr, Ctx,
                        /*TailCall=*/TailCall);
     // Carry over metadata
     for (int I = MCPlus::getNumPrimeOperands(CallInst),
              E = CallInst.getNumOperands();
          I != E; ++I) {
-      Insts[5].addOperand(CallInst.getOperand(I));
+      Insts.back().addOperand(CallInst.getOperand(I));
     }
     return Insts;
   }

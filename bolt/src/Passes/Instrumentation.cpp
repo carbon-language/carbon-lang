@@ -276,6 +276,9 @@ bool Instrumentation::instrumentOneTarget(
 void Instrumentation::instrumentFunction(BinaryContext &BC,
                                          BinaryFunction &Function,
                                          MCPlusBuilder::AllocatorIdTy AllocId) {
+  if (Function.hasUnknownControlFlow())
+    return;
+
   SplitWorklistTy SplitWorklist;
   SplitInstrsTy SplitInstrs;
 
