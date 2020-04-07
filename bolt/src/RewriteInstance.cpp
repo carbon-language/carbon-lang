@@ -849,7 +849,7 @@ void RewriteInstance::discoverFileObjects() {
   StringRef  FileSymbolName;
   bool SeenFileName = false;
   struct SymbolRefHash {
-    std::size_t operator()(SymbolRef const &S) const {
+    size_t operator()(SymbolRef const &S) const {
       return std::hash<decltype(DataRefImpl::p)>{}(S.getRawDataRefImpl().p);
     }
   };

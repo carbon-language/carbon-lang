@@ -38,6 +38,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
@@ -349,7 +350,8 @@ private:
   /// is referenced by UnitLineTable.
   DWARFUnitLineTable UnitLineTable{nullptr, nullptr};
 
-  /// Last computed hash value.
+  /// Last computed hash value. Note that the value could be recomputed using
+  /// different parameters by every pass.
   mutable uint64_t Hash{0};
 
   /// For PLT functions it contains a symbol associated with a function
@@ -2243,13 +2245,25 @@ public:
   /// Convert function-level branch data into instruction annotations.
   void convertBranchData();
 
-  /// Returns a hash value for the function. To be used for ICF. Two congruent
-  /// functions (functions with different symbolic references but identical
-  /// otherwise) are required to have identical hashes.
+  /// Returns the last computed hash value of the function.
+  size_t getHash() const {
+    return Hash;
+  }
+
+  using OperandHashFuncTy =
+    function_ref<typename std::string(const MCOperand&)>;
+
+  /// Compute the hash value of the function based on its contents.
   ///
-  /// If \p UseDFS is set, then process blocks in DFS order that we recompute.
-  /// Otherwise use the existing layout order.
-  std::size_t hash(bool Recompute = true, bool UseDFS = false) const;
+  /// If \p UseDFS is set, process basic blocks in DFS order. Otherwise, use
+  /// the existing layout order.
+  ///
+  /// By default, instruction operands are ignored while calculating the hash.
+  /// The caller can change this via passing \p OperandHashFunc function.
+  /// The return result of this function will be mixed with internal hash.
+  size_t computeHash(bool UseDFS = false,
+                     OperandHashFuncTy OperandHashFunc =
+                       [](const MCOperand&) { return std::string(); }) const;
 
   /// Sets the associated .debug_info entry.
   void addSubprogramDIE(const DWARFDie DIE) {

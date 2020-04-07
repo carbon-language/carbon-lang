@@ -165,7 +165,7 @@ class RewriteInstanceDiff {
   // Structures for our 3 matching strategies: by name, by hash and by lto name,
   // from the strongest to the weakest bind between two functions
   StringMap<const BinaryFunction *> NameLookup;
-  DenseMap<std::size_t, const BinaryFunction *> HashLookup;
+  DenseMap<size_t, const BinaryFunction *> HashLookup;
   StringMap<const BinaryFunction *> LTONameLookup1;
   StringMap<const BinaryFunction *> LTONameLookup2;
 
@@ -223,7 +223,7 @@ class RewriteInstanceDiff {
         NameLookup[Name] = &Function;
       }
       if (opts::MatchByHash && Function.hasCFG())
-        HashLookup[Function.hash(true, true)] = &Function;
+        HashLookup[Function.computeHash(/*UseDFS=*/true)] = &Function;
       if (opts::IgnoreLTOSuffix && !LTOName.empty()) {
         if (!LTONameLookup1.count(LTOName))
           LTONameLookup1[LTOName] = &Function;
@@ -277,7 +277,7 @@ class RewriteInstanceDiff {
       }
       if (Match || !Function2.hasCFG())
         continue;
-      auto Iter = HashLookup.find(Function2.hash(true, true));
+      auto Iter = HashLookup.find(Function2.computeHash(/*UseDFS*/true));
       if (Iter != HashLookup.end()) {
         FuncMap.insert(std::make_pair<>(&Function2, Iter->second));
         Bin1MappedFuncs.insert(Iter->second);
@@ -568,7 +568,8 @@ class RewriteInstanceDiff {
     for (auto I = LargestDiffs.rbegin(), E = LargestDiffs.rend(); I != E; ++I) {
       const auto &MapEntry = I->second;
       if (opts::IgnoreUnchanged &&
-          MapEntry.second->hash(true, true) == MapEntry.first->hash(true, true))
+          MapEntry.second->computeHash(/*UseDFS=*/true) ==
+          MapEntry.first->computeHash(/*UseDFS=*/true))
         continue;
       const auto &Scores = ScoreMap[MapEntry.first];
       outs() << "Function " << MapEntry.first->getDemangledName();
@@ -580,8 +581,8 @@ class RewriteInstanceDiff {
              << "%\t(Difference: ";
       printColoredPercentage((Scores.second - Scores.first) * 100.0);
       outs() << ")";
-      if (MapEntry.second->hash(true, true) !=
-          MapEntry.first->hash(true, true)) {
+      if (MapEntry.second->computeHash(/*UseDFS=*/true) !=
+          MapEntry.first->computeHash(/*UseDFS=*/true)) {
         outs() << "\t[Functions have different contents]";
         if (opts::PrintDiffCFG) {
           outs() << "\n *** CFG for function in binary 1:\n";

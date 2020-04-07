@@ -147,8 +147,8 @@ bool isInstrEquivalentWith(const MCInst &InstA, const BinaryBasicBlock &BBA,
 /// Returns true if this function has identical code and CFG with
 /// the given function \p BF.
 ///
-/// If \p IgnoreSymbols is set to true, then symbolic operands are ignored
-/// during comparison.
+/// If \p IgnoreSymbols is set to true, then symbolic operands
+/// that reference functions are ignored during the comparison.
 ///
 /// If \p UseDFS is set to true, then compute DFS of each function and use
 /// is for CFG equivalency. Potentially it will help to catch more cases,
@@ -204,7 +204,7 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
       if (IgnoreSymbols) {
         Identical =
           isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB,
-                                [](const MCSymbol *A, const MCSymbol *B) {
+                                [&](const MCSymbol *A, const MCSymbol *B) {
                                   return true;
                                 });
       } else {
@@ -266,9 +266,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
           return equalJumpTables(*JumpTableA, *JumpTableB, A, B);
         };
 
-        Identical =
-          isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB,
-                                AreSymbolsIdentical);
+        Identical = isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB,
+                                          AreSymbolsIdentical);
       }
 
       if (!Identical) {
@@ -302,8 +301,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
 // This hash table is used to identify identical functions. It maps
 // a function to a bucket of functions identical to it.
 struct KeyHash {
-  std::size_t operator()(const BinaryFunction *F) const {
-    return F->hash(/*Recompute=*/false);
+  size_t operator()(const BinaryFunction *F) const {
+    return F->getHash();
   }
 };
 
@@ -331,6 +330,74 @@ typedef std::unordered_map<BinaryFunction *, std::vector<BinaryFunction *>,
                            KeyHash, KeyEqual>
     IdenticalBucketsMap;
 
+std::string hashInteger(uint64_t Value) {
+  std::string HashString;
+  if (Value == 0) {
+    HashString.push_back(0);
+  }
+  while (Value) {
+    uint8_t LSB = Value & 0xff;
+    HashString.push_back(LSB);
+    Value >>= 8;
+  }
+
+  return HashString;
+}
+
+std::string hashSymbol(BinaryContext &BC, const MCSymbol &Symbol) {
+  std::string HashString;
+
+  // Ignore function references.
+  if (BC.getFunctionForSymbol(&Symbol))
+    return HashString;
+
+  auto ErrorOrValue = BC.getSymbolValue(Symbol);
+  if (!ErrorOrValue)
+    return HashString;
+
+  // Ignore jump tables references.
+  if (BC.getJumpTableContainingAddress(*ErrorOrValue))
+    return HashString;
+
+  return HashString.append(hashInteger(*ErrorOrValue));
+}
+
+std::string hashExpr(BinaryContext &BC, const MCExpr &Expr) {
+  switch (Expr.getKind()) {
+  case MCExpr::Constant:
+    return hashInteger(cast<MCConstantExpr>(Expr).getValue());
+  case MCExpr::SymbolRef:
+    return hashSymbol(BC, cast<MCSymbolRefExpr>(Expr).getSymbol());
+  case MCExpr::Unary: {
+    const auto &UnaryExpr = cast<MCUnaryExpr>(Expr);
+    return hashInteger(UnaryExpr.getOpcode())
+        .append(hashExpr(BC, *UnaryExpr.getSubExpr()));
+  }
+  case MCExpr::Binary: {
+    const auto &BinaryExpr = cast<MCBinaryExpr>(Expr);
+    return hashExpr(BC, *BinaryExpr.getLHS())
+        .append(hashInteger(BinaryExpr.getOpcode()))
+        .append(hashExpr(BC, *BinaryExpr.getRHS()));
+  }
+  case MCExpr::Target:
+    return std::string();
+  }
+
+  llvm_unreachable("invalid expression kind");
+}
+
+std::string hashInstOperand(BinaryContext &BC, const MCOperand &Operand) {
+  if (Operand.isImm()) {
+    return hashInteger(Operand.getImm());
+  } else if (Operand.isReg()) {
+    return hashInteger(Operand.getReg());
+  } else if (Operand.isExpr()) {
+    return hashExpr(BC, *Operand.getExpr());
+  }
+
+  return std::string();
+}
+
 } // namespace
 
 namespace llvm {
@@ -354,7 +421,11 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
       BF.updateLayoutIndices();
 
       // Pre-compute hash before pushing into hashtable.
-      BF.hash(/*Recompute=*/true, opts::UseDFS);
+      // Hash instruction operands to minimize hash collisions.
+      BF.computeHash(opts::UseDFS,
+                     [&BC] (const MCOperand &Op) {
+                       return hashInstOperand(BC, Op);
+                     });
     };
 
     ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
@@ -394,7 +465,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
       ThPool = &ParallelUtilities::getThreadPool();
 
     // Fold identical functions within a single congruent bucket
-    auto procesSingleBucket = [&](std::set<BinaryFunction *> &Candidates) {
+    auto processSingleBucket = [&](std::set<BinaryFunction *> &Candidates) {
       Timer T("folding single congruent list", "folding single congruent list");
       DEBUG(T.startTimer());
 
@@ -453,9 +524,9 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         continue;
 
       if (opts::NoThreads)
-        procesSingleBucket(Bucket);
+        processSingleBucket(Bucket);
       else
-        ThPool->async(procesSingleBucket, std::ref(Bucket));
+        ThPool->async(processSingleBucket, std::ref(Bucket));
     }
 
     if (!opts::NoThreads)

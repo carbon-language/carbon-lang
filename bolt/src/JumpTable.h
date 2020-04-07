@@ -56,10 +56,10 @@ public:
   };
 
   /// Size of the entry used for storage.
-  std::size_t EntrySize;
+  size_t EntrySize;
 
   /// Size of the entry size we will write (we may use a more compact layout)
-  std::size_t OutputEntrySize;
+  size_t OutputEntrySize;
 
   /// The type of this jump table.
   JumpTableType Type;
@@ -91,7 +91,7 @@ private:
   /// Constructor should only be called by a BinaryContext.
   JumpTable(MCSymbol &Symbol,
             uint64_t Address,
-            std::size_t EntrySize,
+            size_t EntrySize,
             JumpTableType Type,
             LabelMapType &&Labels,
             BinaryFunction &BF,

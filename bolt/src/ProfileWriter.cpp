@@ -36,7 +36,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 
   YamlBF.Name = BF.getPrintName();
   YamlBF.Id = BF.getFunctionNumber();
-  YamlBF.Hash = BF.hash(true, true);
+  YamlBF.Hash = BF.computeHash(/*UseDFS=*/true);
   YamlBF.NumBasicBlocks = BF.size();
   YamlBF.ExecCount = BF.getKnownExecutionCount();
 

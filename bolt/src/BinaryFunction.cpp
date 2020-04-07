@@ -421,7 +421,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     }
   }
   if (hasCFG()) {
-    OS << "\n  Hash        : "   << Twine::utohexstr(hash());
+    OS << "\n  Hash        : "   << Twine::utohexstr(computeHash());
   }
   if (FrameInstructions.size()) {
     OS << "\n  CFI Instrs  : "   << FrameInstructions.size();
@@ -3197,20 +3197,18 @@ BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
   return DFS;
 }
 
-std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
+size_t BinaryFunction::computeHash(bool UseDFS,
+                                   OperandHashFuncTy OperandHashFunc) const {
   if (size() == 0)
     return 0;
 
   assert(hasCFG() && "function is expected to have CFG");
 
-  if (!Recompute)
-    return Hash;
-
   const auto &Order = UseDFS ? dfs() : BasicBlocksLayout;
 
-  // The hash is computed by creating a string of all the opcodes
-  // in the function and hashing that string with std::hash.
-  std::string Opcodes;
+  // The hash is computed by creating a string of all instruction opcodes and
+  // possibly their operands and then hashing that string with std::hash.
+  std::string HashString;
   for (const auto *BB : Order) {
     for (const auto &Inst : *BB) {
       unsigned Opcode = Inst.getOpcode();
@@ -3224,20 +3222,22 @@ std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
       if (BC.MIB->isUnconditionalBranch(Inst))
         continue;
 
-      if (Opcode == 0) {
-        Opcodes.push_back(0);
-        continue;
-      }
+      if (Opcode == 0)
+        HashString.push_back(0);
 
       while (Opcode) {
         uint8_t LSB = Opcode & 0xff;
-        Opcodes.push_back(LSB);
+        HashString.push_back(LSB);
         Opcode = Opcode >> 8;
+      }
+
+      for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
+        HashString.append(OperandHashFunc(Inst.getOperand(I)));
       }
     }
   }
 
-  return Hash = std::hash<std::string>{}(Opcodes);
+  return Hash = std::hash<std::string>{}(HashString);
 }
 
 void BinaryFunction::insertBasicBlocks(

@@ -72,7 +72,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
 
   BF.setExecutionCount(YamlBF.ExecCount);
 
-  if (!opts::IgnoreHash && YamlBF.Hash != BF.hash(true, true)) {
+  if (!opts::IgnoreHash && YamlBF.Hash != BF.computeHash(/*UseDFS=*/true)) {
     if (opts::Verbosity >= 1)
       errs() << "BOLT-WARNING: function hash mismatch\n";
     ProfileMatched = false;
@@ -269,7 +269,7 @@ ProfileReader::readProfile(const std::string &FileName,
     if (opts::IgnoreHash && Profile.NumBasicBlocks == BF.size())
       return true;
     if (!opts::IgnoreHash &&
-        Profile.Hash == static_cast<uint64_t>(BF.hash(/*Recompute = */false)))
+        Profile.Hash == static_cast<uint64_t>(BF.getHash()))
       return true;
     return false;
   };
@@ -282,7 +282,7 @@ ProfileReader::readProfile(const std::string &FileName,
 
     // Recompute hash once per function.
     if (!opts::IgnoreHash)
-      Function.hash(/*Recompute = */true, true);
+      Function.computeHash(/*UseDFS=*/true);
 
     for (auto FunctionName : Function.getNames()) {
       auto PI = ProfileNameToProfile.find(FunctionName);

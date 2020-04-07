@@ -30,7 +30,7 @@ extern cl::opt<unsigned> Verbosity;
 
 JumpTable::JumpTable(MCSymbol &Symbol,
                      uint64_t Address,
-                     std::size_t EntrySize,
+                     size_t EntrySize,
                      JumpTableType Type,
                      LabelMapType &&Labels,
                      BinaryFunction &BF,

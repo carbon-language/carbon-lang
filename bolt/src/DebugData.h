@@ -263,7 +263,7 @@ private:
   };
 
   struct AbbrevHash {
-    std::size_t operator()(const AbbrevAttrPatch &P) const {
+    size_t operator()(const AbbrevAttrPatch &P) const {
       return std::hash<uint64_t>()(((uint64_t)P.Abbrev << 16) + P.Attr);
     }
   };
