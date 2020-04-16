@@ -1479,6 +1479,7 @@ void RewriteInstance::relocateEHFrameSection() {
     if (DwarfType == dwarf::DW_EH_PE_omit)
       return;
 
+    // Only fix references that are relative to other locations.
     if (!(DwarfType & dwarf::DW_EH_PE_pcrel) &&
         !(DwarfType & dwarf::DW_EH_PE_textrel) &&
         !(DwarfType & dwarf::DW_EH_PE_funcrel) &&
@@ -1505,19 +1506,10 @@ void RewriteInstance::relocateEHFrameSection() {
       break;
     }
 
-    auto *BD = BC->getBinaryDataContainingAddress(Value);
-    auto *Symbol = BD ? BD->getSymbol() : nullptr;
-    auto Addend = BD ? Value - BD->getAddress() : 0;
-    if (!Symbol) {
-      DEBUG(dbgs() << "BOLT-DEBUG: creating symbol for DWARF reference at 0x"
-                   << Twine::utohexstr(Value) << '\n');
-      Symbol = BC->getOrCreateGlobalSymbol(Value, "FUNCat");
-    }
-
-    DEBUG(dbgs() << "BOLT-DEBUG: adding DWARF reference against symbol "
-                 << Symbol->getName() << '\n');
-
-    EHFrameSection->addRelocation(Offset, Symbol, RelType, Addend);
+    // Create a relocation against an absolute value since the goal is to
+    // preserve the contents of the section independent of the new values
+    // of referenced symbols.
+    EHFrameSection->addRelocation(Offset, nullptr, RelType, Value);
   };
 
   EHFrame.parse(DE, createReloc);

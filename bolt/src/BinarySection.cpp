@@ -96,8 +96,9 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
         SectionOffset = Relocation.Offset;
       }
       DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
-            << Relocation.Symbol->getName() << " at offset 0x"
-            << Twine::utohexstr(Relocation.Offset)
+            << (Relocation.Symbol ? Relocation.Symbol->getName()
+                                  : StringRef("<none>"))
+            << " at offset 0x" << Twine::utohexstr(Relocation.Offset)
             << " with size "
             << Relocation::getSizeForType(Relocation.Type) << '\n');
       auto RelocationSize = Relocation.emit(&Streamer);

@@ -53,7 +53,7 @@ class BinarySection {
   RelocationSetType Relocations;
 
   // Pending relocations for this section.  For the moment, just used by
-  // the .debug_info section.  TODO: it would be nice to get rid of this.
+  // the .debug_info section.
   RelocationSetType PendingRelocations;
 
   // Output info
@@ -336,7 +336,8 @@ public:
     if (!Pending) {
       Relocations.emplace(Relocation{Offset, Symbol, Type, Addend, Value});
     } else {
-      PendingRelocations.emplace(Relocation{Offset, Symbol, Type, Addend, Value});
+      PendingRelocations.emplace(
+          Relocation{Offset, Symbol, Type, Addend, Value});
     }
   }
 
