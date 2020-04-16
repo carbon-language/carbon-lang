@@ -3800,17 +3800,19 @@ void RewriteInstance::updateELFSymbolTable(
     // Create a new symbol based on the existing symbol.
     auto NewSymbol = Symbol;
 
-    // If the symbol matched a function that was not emitted, leave the
-    // symbol unchanged.
-    if (Function && Function->isEmitted()) {
-      NewSymbol.st_value = Function->getOutputAddress();
-      NewSymbol.st_size = Function->getOutputSize();
-      NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
+    if (Function) {
+      // If the symbol matched a function that was not emitted, leave the
+      // symbol unchanged.
+      if (Function->isEmitted()) {
+        NewSymbol.st_value = Function->getOutputAddress();
+        NewSymbol.st_size = Function->getOutputSize();
+        NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
+      }
 
       // Add new symbols to the symbol table if necessary.
       if (!PatchExisting)
         addExtraSymbols(*Function, NewSymbol);
-    } else if (!Function) {
+    } else {
       // Check if the function symbol matches address inside a function, i.e.
       // it marks a secondary entry point.
       Function = (Symbol.getType() == ELF::STT_FUNC)
