@@ -2569,9 +2569,15 @@ void RewriteInstance::emitAndLink() {
       /* IncrementalLinkerCompatible */ false,
       /* DWARFMustBeAtTheEnd */ false));
 
-  // Make .eh_frame relocatable.
   if (EHFrameSection) {
-    relocateEHFrameSection();
+    if (BC->HasRelocations) {
+      // The section is going to be regenerated from scratch.
+      // Empty the contents, but keep the section reference.
+      EHFrameSection->getContents().take_front(0);
+    } else {
+      // Make .eh_frame relocatable.
+      relocateEHFrameSection();
+    }
   }
 
   // Emit contents outside of BinaryContext.
@@ -4499,11 +4505,16 @@ void RewriteInstance::writeEHFrameHeader() {
                                       BC->AsmInfo->isLittleEndian(),
                                       BC->AsmInfo->getCodePointerSize()));
 
+  uint64_t OldEHFrameAddress{0};
+  StringRef OldEHFrameContents;
   auto OldEHFrameSection =
     BC->getUniqueSectionByName(Twine(getOrgSecPrefix(), ".eh_frame").str());
-  assert(OldEHFrameSection && "expected original .eh_frame to be present");
-  DWARFDebugFrame OldEHFrame(true, OldEHFrameSection->getOutputAddress());
-  OldEHFrame.parse(DWARFDataExtractor(OldEHFrameSection->getOutputContents(),
+  if (OldEHFrameSection) {
+    OldEHFrameAddress = OldEHFrameSection->getOutputAddress();
+    OldEHFrameContents = OldEHFrameSection->getOutputContents();
+  }
+  DWARFDebugFrame OldEHFrame(true, OldEHFrameAddress);
+  OldEHFrame.parse(DWARFDataExtractor(OldEHFrameContents,
                                       BC->AsmInfo->isLittleEndian(),
                                       BC->AsmInfo->getCodePointerSize()));
 
@@ -4540,19 +4551,19 @@ void RewriteInstance::writeEHFrameHeader() {
   NextAvailableAddress += EHFrameHdrSec.getOutputSize();
 
   // Merge new .eh_frame with original so that gdb can locate all FDEs.
-  const auto EHFrameSectionSize = (OldEHFrameSection->getOutputAddress() +
-                                   OldEHFrameSection->getOutputSize() -
-                                   EHFrameSection->getOutputAddress());
-
-  EHFrameSection =
-    BC->registerOrUpdateSection(".eh_frame",
-                                EHFrameSection->getELFType(),
-                                EHFrameSection->getELFFlags(),
-                                EHFrameSection->getOutputData(),
-                                EHFrameSectionSize,
-                                EHFrameSection->getAlignment());
-
-  BC->deregisterSection(*OldEHFrameSection);
+  if (OldEHFrameSection) {
+    const auto EHFrameSectionSize = (OldEHFrameSection->getOutputAddress() +
+                                     OldEHFrameSection->getOutputSize() -
+                                     EHFrameSection->getOutputAddress());
+    EHFrameSection =
+      BC->registerOrUpdateSection(".eh_frame",
+                                  EHFrameSection->getELFType(),
+                                  EHFrameSection->getELFFlags(),
+                                  EHFrameSection->getOutputData(),
+                                  EHFrameSectionSize,
+                                  EHFrameSection->getAlignment());
+    BC->deregisterSection(*OldEHFrameSection);
+  }
 
   DEBUG(dbgs() << "BOLT-DEBUG: size of .eh_frame after merge is "
                << EHFrameSection->getOutputSize() << '\n');
