@@ -32,6 +32,7 @@ extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltRelocCategory;
 
+extern cl::opt<unsigned> AlignText;
 extern cl::opt<bool> HotText;
 extern cl::opt<bool> Instrument;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
@@ -194,7 +195,7 @@ private:
 void BinaryEmitter::emitAll(StringRef OrgSecPrefix) {
   Streamer.InitSections(false);
 
-  BC.getTextSection()->setAlignment(BC.PageAlign);
+  BC.getTextSection()->setAlignment(opts::AlignText);
 
   emitFunctions();
 

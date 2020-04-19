@@ -96,6 +96,13 @@ extern cl::list<std::string> ReorderData;
 extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
 extern cl::opt<bool> TimeBuild;
 
+cl::opt<unsigned>
+AlignText("align-text",
+  cl::desc("alignment of .text section"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 cl::opt<bool>
 Instrument("instrument",
   cl::desc("instrument code to generate accurate profile data"),
@@ -1669,8 +1676,7 @@ void RewriteInstance::adjustCommandLineOptions() {
     opts::AlignMacroOpFusion = MFT_NONE;
   }
 
-  if (opts::AlignMacroOpFusion != MFT_NONE &&
-      !BC->HasRelocations) {
+  if (opts::AlignMacroOpFusion != MFT_NONE && !BC->HasRelocations) {
     outs() << "BOLT-INFO: disabling -align-macro-fusion in non-relocation "
               "mode\n";
     opts::AlignMacroOpFusion = MFT_NONE;
@@ -1728,6 +1734,10 @@ void RewriteInstance::adjustCommandLineOptions() {
     errs() << "BOLT-WARNING: cannot use old .text as the section was not found"
               "\n";
     opts::UseOldText = false;
+  }
+
+  if (!opts::AlignText.getNumOccurrences()) {
+    opts::AlignText = BC->PageAlign;
   }
 }
 
@@ -2865,12 +2875,12 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
 
       if (CodeSize <= BC->OldTextSectionSize) {
         outs() << "BOLT-INFO: using original .text for new code with 0x"
-               << Twine::utohexstr(BC->PageAlign) << " alignment\n";
+               << Twine::utohexstr(opts::AlignText) << " alignment\n";
         AllocationDone = true;
       } else {
         errs() << "BOLT-WARNING: original .text too small to fit the new code"
-               << " using 0x" << Twine::utohexstr(BC->PageAlign)
-               << " page alignment. " << CodeSize
+               << " using 0x" << Twine::utohexstr(opts::AlignText)
+               << " alignment. " << CodeSize
                << " bytes needed, have " << BC->OldTextSectionSize
                << " bytes available.\n";
         opts::UseOldText = false;
