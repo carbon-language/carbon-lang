@@ -125,10 +125,6 @@ private:
   /// CFI state at the entry to this basic block.
   int32_t CFIState{-1};
 
-  /// True if this basic block is (potentially) an external entry point into
-  /// the function.
-  bool IsEntryPoint{false};
-
   /// In cases where the parent function has been split, IsCold == true means
   /// this BB will be allocated outside its parent function.
   bool IsCold{false};
@@ -698,13 +694,9 @@ public:
   /// Apply a given \p Ratio to the profile information of this basic block.
   void adjustExecutionCount(double Ratio);
 
-  bool isEntryPoint() const {
-    return IsEntryPoint;
-  }
-
-  void setEntryPoint(bool Value = true) {
-    IsEntryPoint = Value;
-  }
+  /// Return true if the basic block is an entry point into the function
+  /// (either primary or secondary).
+  bool isEntryPoint() const;
 
   bool isValid() const {
     return IsValid;

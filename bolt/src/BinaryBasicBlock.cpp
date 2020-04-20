@@ -37,6 +37,10 @@ bool BinaryBasicBlock::hasCFG() const {
   return getParent()->hasCFG();
 }
 
+bool BinaryBasicBlock::isEntryPoint() const {
+  return getParent()->isEntryPoint(*this);
+}
+
 bool BinaryBasicBlock::hasInstructions() const {
   return getParent()->hasInstructions();
 }

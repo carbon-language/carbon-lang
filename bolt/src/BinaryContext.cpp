@@ -1016,7 +1016,8 @@ void BinaryContext::processInterproceduralReferences() {
       }
 
       if (ContainingFunction->getAddress() != Addr) {
-        ContainingFunction->addEntryPoint(Addr);
+        ContainingFunction->
+          addEntryPointAtOffset(Addr - ContainingFunction->getAddress());
         if (!HasRelocations) {
           if (opts::Verbosity >= 1) {
             errs() << "BOLT-WARNING: Function " << *ContainingFunction
@@ -1851,7 +1852,7 @@ BinaryFunction *BinaryContext::getFunctionForSymbol(const MCSymbol *Symbol,
 
   auto *BF = BFI->second;
   if (EntryDesc)
-    *EntryDesc = BF->getEntryForSymbol(Symbol);
+    *EntryDesc = BF->getEntryIDForSymbol(Symbol);
 
   return BF;
 }

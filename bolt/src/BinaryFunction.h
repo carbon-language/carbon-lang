@@ -244,6 +244,12 @@ private:
   /// Offsets of indirect branches with unknown destinations.
   std::set<uint64_t> UnknownIndirectBranchOffsets;
 
+  /// A set of local and global symbols corresponding to secondary entry points.
+  /// Each additional function entry point has a corresponding entry in the map.
+  /// The key is a local symbol corresponding to a basic block and the value
+  /// is a global symbol corresponding to an external entry point.
+  std::unordered_map<const MCSymbol *, MCSymbol *> SecondaryEntryPoints;
+
   /// False if the function is too complex to reconstruct its control
   /// flow graph.
   /// In relocation mode we still disassemble and re-assemble such functions.
@@ -266,9 +272,6 @@ private:
 
   /// True if the function uses DW_CFA_GNU_args_size CFIs.
   bool UsesGnuArgsSize{false};
-
-  /// True if the function has more than one entry point.
-  bool IsMultiEntry{false};
 
   /// True if the function might have a profile available externally.
   /// Used to check if processing of the function is required under certain
@@ -403,9 +406,6 @@ private:
 
   /// Synchronize branch instructions with CFG.
   void postProcessBranches();
-
-  /// Temporary holder of offsets that are potentially entry points.
-  std::unordered_set<uint64_t> EntryOffsets;
 
   /// The address offset where we emitted the constant island, that is, the
   /// chunk of data in the function code area (AArch only)
@@ -559,11 +559,13 @@ private:
     Aliases.push_back(std::move(NewName));
   }
 
-  /// Return label at a given \p Address in the function. If the label does
+  /// Return a label at a given \p Address in the function. If the label does
   /// not exist - create it. Assert if the \p Address does not belong to
   /// the function. If \p CreatePastEnd is true, then return the function
   /// end label when the \p Address points immediately past the last byte
   /// of the function.
+  /// NOTE: the function always returns a local (temp) symbol, even if there's
+  ///       a global symbol that corresponds to an entry at this address.
   MCSymbol *getOrCreateLocalLabel(uint64_t Address, bool CreatePastEnd = false);
 
   /// Register an entry point at a given \p Offset into the function.
@@ -576,13 +578,30 @@ private:
     Islands.CodeOffsets.emplace(Offset);
   }
 
-  /// Register an entry point at a given \p Offset into the function.
+  /// Register secondary entry point at a given \p Offset into the function.
+  /// Return global symbol for use by extern function references.
   MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
-    EntryOffsets.emplace(Offset);
-    IsMultiEntry = (Offset == 0 ? IsMultiEntry : true);
-    MCSymbol *Sym = getOrCreateLocalLabel(getAddress() + Offset);
-    BC.setSymbolToFunctionMap(Sym, this);
-    return Sym;
+    assert(Offset && "cannot add primary entry point");
+    assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
+
+    const uint64_t EntryPointAddress = getAddress() + Offset;
+    MCSymbol *LocalSymbol = getOrCreateLocalLabel(EntryPointAddress);
+
+    MCSymbol *EntrySymbol = getSecondaryEntryPointSymbol(LocalSymbol);
+    if (EntrySymbol)
+      return EntrySymbol;
+
+    if (auto *EntryBD = BC.getBinaryDataAtAddress(EntryPointAddress)) {
+      EntrySymbol = EntryBD->getSymbol();
+    } else {
+      EntrySymbol = BC.Ctx->getOrCreateSymbol(
+          "__ENTRY_0x" + Twine::utohexstr(Offset) + "_" + getOneName());
+    }
+    SecondaryEntryPoints[LocalSymbol] = EntrySymbol;
+
+    BC.setSymbolToFunctionMap(EntrySymbol, this);
+
+    return EntrySymbol;
   }
 
   /// Register an internal offset in a function referenced from outside.
@@ -596,19 +615,12 @@ private:
     return !ExternallyReferencedOffsets.empty();
   }
 
-  /// Update all \p From references in the code to refer to \p To. Used
-  /// in disassembled state only.
-  void updateReferences(const MCSymbol *From, const MCSymbol *To);
-
-  /// This is called in disassembled state.
-  void addEntryPoint(uint64_t Address);
-
   /// Return an entry ID corresponding to a symbol known to belong to
   /// the function.
   ///
   /// Prefer to use BinaryContext::getFunctionForSymbol(EntrySymbol, &ID)
   /// instead of calling this function directly.
-  uint64_t getEntryForSymbol(const MCSymbol *EntrySymbol) const;
+  uint64_t getEntryIDForSymbol(const MCSymbol *EntrySymbol) const;
 
   void setParentFunction(BinaryFunction *BF) {
     assert((!ParentFunction || ParentFunction == BF) &&
@@ -618,13 +630,6 @@ private:
 
   void addFragment(BinaryFunction *BF) {
     Fragments.insert(BF);
-  }
-
-  /// Return true if there is a registered entry point at a given offset
-  /// into the function.
-  bool hasEntryPointAtOffset(uint64_t Offset) {
-    assert(!EntryOffsets.empty() && "entry points uninitialized or destroyed");
-    return EntryOffsets.count(Offset);
   }
 
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
@@ -1113,9 +1118,35 @@ public:
   SymbolListTy &getSymbols() { return Symbols; }
   const SymbolListTy &getSymbols() const { return Symbols; }
 
+  /// If a local symbol \p BBLabel corresponds to a basic block that is a
+  /// secondary entry point into the function, then return a global symbol
+  /// that represents the secondary entry point. Otherwise return nullptr.
+  MCSymbol *getSecondaryEntryPointSymbol(const MCSymbol *BBLabel) const {
+    auto I = SecondaryEntryPoints.find(BBLabel);
+    if (I == SecondaryEntryPoints.end())
+      return nullptr;
+
+    return I->second;
+  }
+
+  /// If the basic block serves as a secondary entry point to the function,
+  /// return a global symbol representing the entry. Otherwise return nullptr.
+  MCSymbol *getSecondaryEntryPointSymbol(const BinaryBasicBlock &BB) const {
+    return getSecondaryEntryPointSymbol(BB.getLabel());
+  }
+
+  /// Return true if the basic block is an entry point into the function
+  /// (either primary or secondary).
+  bool isEntryPoint(const BinaryBasicBlock &BB) const {
+    if (&BB == BasicBlocks.front())
+      return true;
+    return getSecondaryEntryPointSymbol(BB);
+  }
+
+
   /// Return MC symbol corresponding to an enumerated entry for multiple-entry
   /// functions.
-  const MCSymbol *getSymbolForEntry(uint64_t EntryNum) const;
+  const MCSymbol *getSymbolForEntryID(uint64_t EntryNum) const;
 
   MCSymbol *getColdSymbol() {
     if (ColdSymbol)
@@ -1326,7 +1357,7 @@ public:
 
   /// Return true if the function has more than one entry point.
   bool isMultiEntry() const {
-    return IsMultiEntry;
+    return !SecondaryEntryPoints.empty();
   }
 
   /// Return true if the function might have a profile available externally,
@@ -1487,6 +1518,28 @@ public:
             std::is_sorted(begin(), end())));
 
     return BB;
+  }
+
+  /// Add basic block \BB as an entry point to the function. Return global
+  /// symbol associated with the entry.
+  MCSymbol *addEntryPoint(const BinaryBasicBlock &BB) {
+    assert(CurrentState == State::CFG);
+
+    if (&BB == BasicBlocks.front())
+      return getSymbol();
+
+    auto *EntrySymbol = getSecondaryEntryPointSymbol(BB);
+    if (EntrySymbol)
+      return EntrySymbol;
+
+    EntrySymbol =
+      BC.Ctx->getOrCreateSymbol("__ENTRY_" + BB.getLabel()->getName());
+
+    SecondaryEntryPoints[BB.getLabel()] = EntrySymbol;
+
+    BC.setSymbolToFunctionMap(EntrySymbol, this);
+
+    return EntrySymbol;
   }
 
   /// Mark all blocks that are unreachable from a root (entry point

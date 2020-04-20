@@ -5,5 +5,8 @@
 # RUN:    | FileCheck %s
 
 CHECK-NOT: BOLT-WARNING: CFG invalid in XYZ @ .LBB0
+
 CHECK: Binary Function "XYZ"
-CHECK: 0000000a:   jne     FUNCat0x4004e9
+
+CHECK: .Ltmp0 (1 instructions, align : 1)
+CHECK-NEXT: Secondary Entry Point: FUNCat0x4004e9

@@ -247,7 +247,7 @@ LongJmpPass::replaceTargetWithStub(BinaryBasicBlock &BB, MCInst &Inst,
       assert(TgtBB == nullptr);
       StubBB->setIsCold(BB.isCold());
       // Set as entry point because this block is valid but we have no preds
-      StubBB->setEntryPoint(true);
+      StubBB->getFunction()->addEntryPoint(*StubBB);
     }
   }
   BC.MIB->replaceBranchTarget(Inst, StubSymbol, BC.Ctx.get());

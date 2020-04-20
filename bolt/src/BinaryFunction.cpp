@@ -267,7 +267,7 @@ void BinaryFunction::markUnreachableBlocks() {
 
   // Add all entries and landing pads as roots.
   for (auto *BB : BasicBlocks) {
-    if (BB->isEntryPoint() || BB->isLandingPad()) {
+    if (isEntryPoint(*BB) || BB->isLandingPad()) {
       Stack.push(BB);
       BB->markValid(true);
       continue;
@@ -307,7 +307,7 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
     if (BB->isValid()) {
       NewLayout.push_back(BB);
     } else {
-      assert(!BB->isEntryPoint() && "all entry blocks must be valid");
+      assert(!isEntryPoint(*BB) && "all entry blocks must be valid");
       ++Count;
       Bytes += BC.computeCodeSize(BB->begin(), BB->end());
     }
@@ -396,7 +396,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  LSDA        : 0x" << Twine::utohexstr(getLSDAAddress())
      << "\n  IsSimple    : "   << IsSimple
-     << "\n  IsMultiEntry: "   << IsMultiEntry
+     << "\n  IsMultiEntry: "   << isMultiEntry()
      << "\n  IsSplit     : "   << isSplit()
      << "\n  BB Count    : "   << size();
 
@@ -425,6 +425,14 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   }
   if (hasCFG()) {
     OS << "\n  Hash        : "   << Twine::utohexstr(computeHash());
+  }
+  if (isMultiEntry()) {
+    OS << "\n  Secondary Entry Points : ";
+    auto Sep = "";
+    for (auto &KV : SecondaryEntryPoints) {
+      OS << Sep << KV.second->getName();
+      Sep = ", ";
+    }
   }
   if (FrameInstructions.size()) {
     OS << "\n  CFI Instrs  : "   << FrameInstructions.size();
@@ -465,8 +473,11 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
       // Print label if exists at this offset.
       auto LI = Labels.find(Offset);
-      if (LI != Labels.end())
+      if (LI != Labels.end()) {
+        if (const auto *EntrySymbol = getSecondaryEntryPointSymbol(LI->second))
+          OS << EntrySymbol->getName() << " (Entry Point):\n";
         OS << LI->second->getName() << ":\n";
+      }
 
       BC.printInstruction(OS, II.second, Offset, this);
     }
@@ -482,8 +493,12 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
        << BB->size() << " instructions, align : " << BB->getAlignment()
        << ")\n";
 
-    if (BB->isEntryPoint())
-      OS << "  Entry Point\n";
+    if (isEntryPoint(*BB)) {
+      if (auto *EntrySymbol = getSecondaryEntryPointSymbol(*BB))
+        OS << "  Secondary Entry Point: " << EntrySymbol->getName() << '\n';
+      else
+        OS << "  Entry Point\n";
+    }
 
     if (BB->isLandingPad())
       OS << "  Landing Pad\n";
@@ -849,36 +864,26 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
 MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
                                                 bool CreatePastEnd) {
-  // Check if there's already a registered label.
-  auto Offset = Address - getAddress();
+  const auto Offset = Address - getAddress();
 
   if ((Offset == getSize()) && CreatePastEnd)
     return getFunctionEndLabel();
-
-  // Check if there's a global symbol registered at given address.
-  // If so - reuse it since we want to keep the symbol value updated.
-  if (Offset != 0) {
-    if (auto *BD = BC.getBinaryDataAtAddress(Address)) {
-      Labels[Offset] = BD->getSymbol();
-      return BD->getSymbol();
-    }
-  }
 
   auto LI = Labels.find(Offset);
   if (LI != Labels.end())
     return LI->second;
 
   // For AArch64, check if this address is part of a constant island.
-  if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address)) {
-    return IslandSym;
+  if (BC.isAArch64()) {
+    if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address)) {
+      return IslandSym;
+    }
   }
-  MCSymbol *Result;
-  {
-    auto L = BC.scopeLock();
-    Result = BC.Ctx->createTempSymbol();
-  }
-  Labels[Offset] = Result;
-  return Result;
+
+  auto *Label = BC.Ctx->createTempSymbol();
+  Labels[Offset] = Label;
+
+  return Label;
 }
 
 ErrorOr<ArrayRef<uint8_t>> BinaryFunction::getData() const {
@@ -920,7 +925,6 @@ void BinaryFunction::disassemble() {
   // Insert a label at the beginning of the function. This will be our first
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
-  addEntryPointAtOffset(0);
 
   auto handlePCRelOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
@@ -1353,11 +1357,17 @@ void BinaryFunction::postProcessEntryPoints() {
   if (!isSimple())
     return;
 
-  for (auto Offset : EntryOffsets) {
+  for (auto &KV : Labels) {
+    auto *Label = KV.second;
+    if (!getSecondaryEntryPointSymbol(Label))
+      continue;
+
+    const auto Offset = KV.first;
+
     // If we are at Offset 0 and there is no instruction associated with it,
     // this means this is an empty function. Just ignore. If we find an
     // instruction at this offset, this entry point is valid.
-    if (getInstructionAtOffset(Offset) || !Offset) {
+    if (!Offset || getInstructionAtOffset(Offset)) {
       continue;
     }
 
@@ -1718,8 +1728,6 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
       PrevBB = InsertBB;
       InsertBB = addBasicBlock(LI->first, LI->second,
                                opts::PreserveBlocksAlignment && IsLastInstrNop);
-      if (hasEntryPointAtOffset(Offset))
-        InsertBB->setEntryPoint();
       if (PrevBB)
         updateOffset(LastInstrOffset);
     }
@@ -1933,7 +1941,6 @@ void BinaryFunction::postProcessCFG() {
 
   // The final cleanup of intermediate structures.
   clearList(IgnoredBranches);
-  clearList(EntryOffsets);
 
   // Remove "Offset" annotations, unless we need an address-translation table
   // later. This has no cost, since annotations are allocated by a bumpptr
@@ -1982,44 +1989,6 @@ void BinaryFunction::removeTagsFromProfile() {
       BI.Count = 0;
       BI.MispredictedCount = 0;
     }
-  }
-}
-
-void BinaryFunction::updateReferences(const MCSymbol *From, const MCSymbol *To) {
-  assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
-  assert(From && To && "invalid symbols");
-
-  for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
-    auto &Inst = I->second;
-    for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
-      const MCSymbol *S = BC.MIB->getTargetSymbol(Inst, I);
-      if (S == From)
-        BC.MIB->setOperandToSymbolRef(Inst, I, To, 0, &*BC.Ctx, 0);
-    }
-  }
-}
-
-void BinaryFunction::addEntryPoint(uint64_t Address) {
-  assert(containsAddress(Address) && "address does not belong to the function");
-  assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
-
-  const auto Offset = Address - getAddress();
-  DEBUG(dbgs() << "BOLT-INFO: adding external entry point to function " << *this
-               << " at offset 0x" << Twine::utohexstr(Offset) << '\n');
-
-  auto *EntryBD = BC.getBinaryDataAtAddress(Address);
-  auto *EntrySymbol = EntryBD ? EntryBD->getSymbol() : nullptr;
-  auto Iter = Labels.find(Offset);
-  const MCSymbol *OldSym = Iter != Labels.end() ? Iter->second : nullptr;
-  if (!EntrySymbol) {
-    EntrySymbol = getOrCreateLocalLabel(Address);
-  }
-  addEntryPointAtOffset(Offset);
-  Labels.emplace(Offset, EntrySymbol);
-
-  BC.setSymbolToFunctionMap(EntrySymbol, this);
-  if (OldSym != nullptr && EntrySymbol != OldSym) {
-    updateReferences(OldSym, EntrySymbol);
   }
 }
 
@@ -2633,10 +2602,17 @@ void BinaryFunction::setTrapOnEntry() {
   clearList(IgnoredBranches);
   clearList(TakenBranches);
 
-  for (const auto EntryOffset : EntryOffsets) {
+  auto addTrapAtOffset = [&](uint64_t Offset) {
     MCInst TrapInstr;
     BC.MIB->createTrap(TrapInstr);
-    addInstruction(EntryOffset, std::move(TrapInstr));
+    addInstruction(Offset, std::move(TrapInstr));
+  };
+
+  addTrapAtOffset(0);
+  for (auto &KV : getLabels()) {
+    if (getSecondaryEntryPointSymbol(KV.second)) {
+      addTrapAtOffset(KV.first);
+    }
   }
 
   TrapsOnEntry = true;
@@ -3093,8 +3069,8 @@ void BinaryFunction::postProcessBranches() {
   assert(validateCFG() && "invalid CFG");
 }
 
-const MCSymbol *BinaryFunction::getSymbolForEntry(uint64_t EntryNum) const {
-  if (EntryNum == 0)
+const MCSymbol *BinaryFunction::getSymbolForEntryID(uint64_t EntryID) const {
+  if (EntryID == 0)
     return getSymbol();
 
   if (!isMultiEntry())
@@ -3103,16 +3079,20 @@ const MCSymbol *BinaryFunction::getSymbolForEntry(uint64_t EntryNum) const {
   uint64_t NumEntries = 0;
   if (hasCFG()) {
     for (auto *BB : BasicBlocks) {
-      if (!BB->isEntryPoint())
+      auto *EntrySymbol = getSecondaryEntryPointSymbol(*BB);
+      if (!EntrySymbol)
         continue;
-      if (NumEntries == EntryNum)
-        return BB->getLabel();
+      if (NumEntries == EntryID)
+        return EntrySymbol;
       ++NumEntries;
     }
   } else {
     for (auto &KV : Labels) {
-      if (NumEntries == EntryNum)
-        return KV.second;
+      auto *EntrySymbol = getSecondaryEntryPointSymbol(KV.second);
+      if (!EntrySymbol)
+        continue;
+      if (NumEntries == EntryID)
+        return EntrySymbol;
       ++NumEntries;
     }
   }
@@ -3120,26 +3100,30 @@ const MCSymbol *BinaryFunction::getSymbolForEntry(uint64_t EntryNum) const {
   return nullptr;
 }
 
-uint64_t BinaryFunction::getEntryForSymbol(const MCSymbol *EntrySymbol) const {
+uint64_t BinaryFunction::getEntryIDForSymbol(const MCSymbol *Symbol) const {
   if (!isMultiEntry())
     return 0;
 
-  for (const auto *Symbol : getSymbols())
-    if (Symbol == EntrySymbol)
+  for (const auto *FunctionSymbol : getSymbols())
+    if (FunctionSymbol == Symbol)
       return 0;
 
   // Check all secondary entries available as either basic blocks or lables.
   uint64_t NumEntries = 0;
   for (const auto *BB : BasicBlocks) {
-    if (!BB->isEntryPoint())
+    auto *EntrySymbol = getSecondaryEntryPointSymbol(*BB);
+    if (!EntrySymbol)
       continue;
-    if (BB->getLabel() == EntrySymbol)
+    if (EntrySymbol == Symbol)
       return NumEntries;
     ++NumEntries;
   }
   NumEntries = 0;
   for (auto &KV : Labels) {
-    if (KV.second == EntrySymbol)
+    auto *EntrySymbol = getSecondaryEntryPointSymbol(KV.second);
+    if (!EntrySymbol)
+      continue;
+    if (EntrySymbol == Symbol)
       return NumEntries;
     ++NumEntries;
   }
@@ -3157,7 +3141,7 @@ BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
   // NB: we rely on the original order of entries to match.
   for (auto BBI = layout_rbegin(); BBI != layout_rend(); ++BBI) {
     auto *BB = *BBI;
-    if (BB->isEntryPoint())
+    if (isEntryPoint(*BB))
       Stack.push(BB);
     BB->setLayoutIndex(BinaryBasicBlock::InvalidIndex);
   }

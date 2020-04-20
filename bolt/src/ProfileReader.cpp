@@ -124,7 +124,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
       bool IsFunction = Callee ? true : false;
       const MCSymbol *CalleeSymbol = nullptr;
       if (IsFunction) {
-        CalleeSymbol = Callee->getSymbolForEntry(YamlCSI.EntryDiscriminator);
+        CalleeSymbol = Callee->getSymbolForEntryID(YamlCSI.EntryDiscriminator);
       }
       StringRef Name = CalleeSymbol ? CalleeSymbol->getName() : "<unknown>";
       BF.getAllCallSites().emplace_back(
