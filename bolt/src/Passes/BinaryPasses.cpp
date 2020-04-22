@@ -222,6 +222,14 @@ SctcMode("sctc-mode",
   cl::cat(BoltOptCategory));
 
 static cl::opt<unsigned>
+StaleThreshold("stale-threshold",
+    cl::desc(
+      "maximum percentage of stale functions to tolerate (default: 100)"),
+    cl::init(100),
+    cl::Hidden,
+    cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
 TSPThreshold("tsp-threshold",
   cl::desc("maximum number of hot basic blocks in a function for which to use "
            "a precise TSP solution while re-ordering basic blocks"),
@@ -1301,13 +1309,23 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
            << " non-simple function(s) have profile.\n";
   }
   if (NumStaleProfileFunctions) {
-    outs() << "BOLT-INFO: " << NumStaleProfileFunctions
-           << format(" (%.1f%% of all profiled)",
-                     NumStaleProfileFunctions /
-                                      (float) NumAllProfiledFunctions * 100.0f)
+    const float PctStale =
+      NumStaleProfileFunctions / (float) NumAllProfiledFunctions * 100.0f;
+    if (PctStale > opts::StaleThreshold) {
+      errs() << "BOLT-ERROR: ";
+    } else {
+      errs() << "BOLT-WARNING: ";
+    }
+    errs() << NumStaleProfileFunctions
+           << format(" (%.1f%% of all profiled)", PctStale)
            << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
            << " have invalid (possibly stale) profile."
               " Use -report-stale to see the list.\n";
+    if (PctStale > opts::StaleThreshold) {
+      errs() << "BOLT-ERROR: stale functions exceed specified threshold of "
+             << opts::StaleThreshold << "%. Exiting.\n";
+      exit(1);
+    }
   }
 
   // Profile is marked as 'Used' if it either matches a function name
