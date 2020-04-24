@@ -1258,7 +1258,7 @@ void PrintProfileStats::runOnFunctions(BinaryContext &BC) {
 
 void
 PrintProgramStats::runOnFunctions(BinaryContext &BC) {
-  uint64_t NumSimpleFunctions{0};
+  uint64_t NumRegularFunctions{0};
   uint64_t NumStaleProfileFunctions{0};
   uint64_t NumNonSimpleProfiledFunctions{0};
   uint64_t NumUnknownControlFlowFunctions{0};
@@ -1266,13 +1266,20 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
+
+    // Ignore PLT functions for stats.
+    if (Function.isPLTFunction())
+      continue;
+
+    ++NumRegularFunctions;
+
     if (!Function.isSimple()) {
-      if (Function.hasProfile() && !Function.isPLTFunction()) {
+      if (Function.hasProfile()) {
         ++NumNonSimpleProfiledFunctions;
       }
       continue;
     }
-    ++NumSimpleFunctions;
+
     if (Function.hasUnknownControlFlow()) {
       if (opts::PrintUnknownCFG) {
         Function.dump();
@@ -1281,8 +1288,10 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
       }
       ++NumUnknownControlFlowFunctions;
     }
+
     if (!Function.hasProfile())
       continue;
+
     if (Function.hasValidProfile()) {
       ProfiledFunctions.push_back(&Function);
     } else {
@@ -1298,15 +1307,15 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
 
   const auto NumAllProfiledFunctions =
                             ProfiledFunctions.size() + NumStaleProfileFunctions;
-  outs() << "BOLT-INFO: "
-         << NumAllProfiledFunctions
-         << " functions out of " << NumSimpleFunctions << " simple functions ("
+  outs() << "BOLT-INFO: " << NumAllProfiledFunctions
+         << " out of " << NumRegularFunctions << " functions in the binary ("
          << format("%.1f", NumAllProfiledFunctions /
-                                            (float) NumSimpleFunctions * 100.0f)
-         << "%) have non-empty execution profile.\n";
+                             (float) NumRegularFunctions * 100.0f)
+         << "%) have non-empty execution profile\n";
   if (NumNonSimpleProfiledFunctions) {
     outs() << "BOLT-INFO: " << NumNonSimpleProfiledFunctions
-           << " non-simple function(s) have profile.\n";
+           << " function" << (NumNonSimpleProfiledFunctions == 1 ? "" : "s")
+           << " with profile could not be optimized\n";
   }
   if (NumStaleProfileFunctions) {
     const float PctStale =
