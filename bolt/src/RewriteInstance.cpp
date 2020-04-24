@@ -1299,16 +1299,28 @@ void RewriteInstance::disassemblePLT() {
   // Used to analyze both the .plt section (most common) and the less common
   // .plt.got created by the BFD linker.
   auto analyzeOnePLTSection = [&](BinarySection &Section,
-                                  BinarySection *RelocsSection,
+                                  const BinarySection &RelocsSection,
                                   uint64_t RelocType, uint64_t EntrySize) {
     const auto PLTAddress = Section.getAddress();
     StringRef PLTContents = Section.getContents();
     ArrayRef<uint8_t> PLTData(
         reinterpret_cast<const uint8_t *>(PLTContents.data()),
         Section.getSize());
+    const auto PtrSize = BC->AsmInfo->getCodePointerSize();
 
-    for (uint64_t Offset = 0; Offset < Section.getSize();
-         Offset += EntrySize) {
+    // Runtime linker will put a value of an external symbol at the location
+    // referenced by the relocation. Map the address to the name of the symbol.
+    std::unordered_map<uint64_t, StringRef> RelAddrToNameMap;
+    for (const auto &Rel : RelocsSection.getSectionRef().relocations()) {
+      if (Rel.getType() != RelocType)
+        continue;
+      const auto SymbolIter = Rel.getSymbol();
+      assert(SymbolIter != InputFile->symbol_end() &&
+             "non-null symbol expected");
+      RelAddrToNameMap[Rel.getOffset()] = cantFail((*SymbolIter).getName());
+    }
+
+    for (uint64_t Offset = 0; Offset < Section.getSize(); Offset += EntrySize) {
       uint64_t InstrSize;
       MCInst Instruction;
       const uint64_t InstrAddr = PLTAddress + Offset;
@@ -1332,30 +1344,19 @@ void RewriteInstance::disassemblePLT() {
                << Twine::utohexstr(InstrAddr) << '\n';
         exit(1);
       }
+      
+      auto NI = RelAddrToNameMap.find(TargetAddress);
+      if (NI == RelAddrToNameMap.end())
+        continue;
 
-      // To get the name we have to read a relocation against the address.
-      if (RelocsSection) {
-        for (const auto &Rel : RelocsSection->getSectionRef().relocations()) {
-          if (Rel.getType() != RelocType)
-            continue;
-          if (Rel.getOffset() == TargetAddress) {
-            const auto SymbolIter = Rel.getSymbol();
-            assert(SymbolIter != InputFile->symbol_end() &&
-                   "non-null symbol expected");
-            const auto SymbolName = cantFail((*SymbolIter).getName());
-            std::string Name = SymbolName.str() + "@PLT";
-            const auto PtrSize = BC->AsmInfo->getCodePointerSize();
-            auto *BF = BC->createBinaryFunction(Name, Section, InstrAddr, 0,
-                                                /*IsSimple=*/false, EntrySize,
-                                                PLTAlignment);
-            auto TargetSymbol =
-                BC->registerNameAtAddress(SymbolName.str() + "@GOT",
-                                          TargetAddress, PtrSize, PLTAlignment);
-            BF->setPLTSymbol(TargetSymbol);
-            break;
-          }
-        }
-      }
+      StringRef SymbolName = NI->second;
+      auto *BF = BC->createBinaryFunction(SymbolName.str() + "@PLT", Section,
+                                          InstrAddr, 0, /*IsSimple=*/false,
+                                          EntrySize, PLTAlignment);
+      MCSymbol *TargetSymbol =
+          BC->registerNameAtAddress(SymbolName.str() + "@GOT",
+                                    TargetAddress, PtrSize, PLTAlignment);
+      BF->setPLTSymbol(TargetSymbol);
     }
   };
 
@@ -1365,16 +1366,17 @@ void RewriteInstance::disassemblePLT() {
     BC->createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection,
                              PLTSection->getAddress(), 0, false, PLTSize,
                              PLTAlignment);
-    analyzeOnePLTSection(*PLTSection,
-                         RelaPLTSection ? &*RelaPLTSection : nullptr,
-                         ELF::R_X86_64_JUMP_SLOT, PLTSize);
+    if (RelaPLTSection) {
+      analyzeOnePLTSection(*PLTSection, *RelaPLTSection,
+                           ELF::R_X86_64_JUMP_SLOT, PLTSize);
+    }
   }
 
   if (PLTGOTSection) {
-    analyzeOnePLTSection(*PLTGOTSection,
-                         RelaDynSection ? &*RelaDynSection : nullptr,
-                         ELF::R_X86_64_GLOB_DAT,
-                         /*Size=*/8);
+    if (RelaDynSection) {
+      analyzeOnePLTSection(*PLTGOTSection, *RelaDynSection,
+                           ELF::R_X86_64_GLOB_DAT, /*Size=*/8);
+    }
     // If we did not register any function at PLTGOT start, we may be missing
     // relocs. Add a function at the start to mark this section.
     if (BC->getBinaryFunctions().find(PLTGOTSection->getAddress()) ==
