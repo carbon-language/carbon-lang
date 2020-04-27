@@ -1129,9 +1129,6 @@ void RewriteInstance::discoverFileObjects() {
         PreviousFunction->
           addEntryPointAtOffset(Address - PreviousFunction->getAddress());
 
-        if (!BC->HasRelocations)
-          PreviousFunction->setSimple(false);
-
         // Remove the symbol from FileSymRefs so that we can skip it from
         // in the future.
         auto SI = FileSymRefs.find(Address);
@@ -1435,11 +1432,6 @@ void RewriteInstance::adjustFunctionBoundaries() {
       DEBUG(dbgs() << "BOLT-DEBUG: adding entry point to function " << Function
                    << " at offset 0x" << Twine::utohexstr(EntryOffset) << '\n');
       Function.addEntryPointAtOffset(EntryOffset);
-      // In non-relocation mode there's potentially an external undetectable
-      // reference to the entry point and hence we cannot move this entry
-      // point. Optimizing without moving could be difficult.
-      if (!BC->HasRelocations)
-        Function.setSimple(false);
 
       ++NextSymRefI;
     }

@@ -1018,14 +1018,6 @@ void BinaryContext::processInterproceduralReferences() {
       if (ContainingFunction->getAddress() != Addr) {
         ContainingFunction->
           addEntryPointAtOffset(Addr - ContainingFunction->getAddress());
-        if (!HasRelocations) {
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: Function " << *ContainingFunction
-                   << " has internal BBs that are target of a reference "
-                   << "located in another function. Skipping the function.\n";
-          }
-          ContainingFunction->setSimple(false);
-        }
       }
     } else if (Addr) {
       // Check if address falls in function padding space - this could be

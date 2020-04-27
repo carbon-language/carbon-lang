@@ -3069,6 +3069,63 @@ void BinaryFunction::postProcessBranches() {
   assert(validateCFG() && "invalid CFG");
 }
 
+MCSymbol *BinaryFunction::addEntryPointAtOffset(uint64_t Offset) {
+  assert(Offset && "cannot add primary entry point");
+  assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
+
+  const uint64_t EntryPointAddress = getAddress() + Offset;
+  MCSymbol *LocalSymbol = getOrCreateLocalLabel(EntryPointAddress);
+
+  MCSymbol *EntrySymbol = getSecondaryEntryPointSymbol(LocalSymbol);
+  if (EntrySymbol)
+    return EntrySymbol;
+
+  if (auto *EntryBD = BC.getBinaryDataAtAddress(EntryPointAddress)) {
+    EntrySymbol = EntryBD->getSymbol();
+  } else {
+    EntrySymbol = BC.Ctx->getOrCreateSymbol(
+        "__ENTRY_0x" + Twine::utohexstr(Offset) + "_" + getOneName());
+  }
+  SecondaryEntryPoints[LocalSymbol] = EntrySymbol;
+
+  BC.setSymbolToFunctionMap(EntrySymbol, this);
+
+  // In non-relocation mode there's potentially an external undetectable
+  // reference to the entry point and hence we cannot move this entry
+  // point. Optimizing without moving could be difficult.
+  if (!BC.HasRelocations) {
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: function " << *this
+             << " has an internal address that is a potential target of a "
+             << " reference from another function. Skipping the function.\n";
+    }
+    setSimple(false);
+  }
+
+  return EntrySymbol;
+}
+
+MCSymbol *BinaryFunction::addEntryPoint(const BinaryBasicBlock &BB) {
+  assert(CurrentState == State::CFG &&
+         "basic block can be added as an entry only in a function with CFG");
+
+  if (&BB == BasicBlocks.front())
+    return getSymbol();
+
+  auto *EntrySymbol = getSecondaryEntryPointSymbol(BB);
+  if (EntrySymbol)
+    return EntrySymbol;
+
+  EntrySymbol =
+    BC.Ctx->getOrCreateSymbol("__ENTRY_" + BB.getLabel()->getName());
+
+  SecondaryEntryPoints[BB.getLabel()] = EntrySymbol;
+
+  BC.setSymbolToFunctionMap(EntrySymbol, this);
+
+  return EntrySymbol;
+}
+
 const MCSymbol *BinaryFunction::getSymbolForEntryID(uint64_t EntryID) const {
   if (EntryID == 0)
     return getSymbol();

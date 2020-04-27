@@ -580,29 +580,7 @@ private:
 
   /// Register secondary entry point at a given \p Offset into the function.
   /// Return global symbol for use by extern function references.
-  MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
-    assert(Offset && "cannot add primary entry point");
-    assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
-
-    const uint64_t EntryPointAddress = getAddress() + Offset;
-    MCSymbol *LocalSymbol = getOrCreateLocalLabel(EntryPointAddress);
-
-    MCSymbol *EntrySymbol = getSecondaryEntryPointSymbol(LocalSymbol);
-    if (EntrySymbol)
-      return EntrySymbol;
-
-    if (auto *EntryBD = BC.getBinaryDataAtAddress(EntryPointAddress)) {
-      EntrySymbol = EntryBD->getSymbol();
-    } else {
-      EntrySymbol = BC.Ctx->getOrCreateSymbol(
-          "__ENTRY_0x" + Twine::utohexstr(Offset) + "_" + getOneName());
-    }
-    SecondaryEntryPoints[LocalSymbol] = EntrySymbol;
-
-    BC.setSymbolToFunctionMap(EntrySymbol, this);
-
-    return EntrySymbol;
-  }
+  MCSymbol *addEntryPointAtOffset(uint64_t Offset);
 
   /// Register an internal offset in a function referenced from outside.
   void registerReferencedOffset(uint64_t Offset) {
@@ -1522,25 +1500,7 @@ public:
 
   /// Add basic block \BB as an entry point to the function. Return global
   /// symbol associated with the entry.
-  MCSymbol *addEntryPoint(const BinaryBasicBlock &BB) {
-    assert(CurrentState == State::CFG);
-
-    if (&BB == BasicBlocks.front())
-      return getSymbol();
-
-    auto *EntrySymbol = getSecondaryEntryPointSymbol(BB);
-    if (EntrySymbol)
-      return EntrySymbol;
-
-    EntrySymbol =
-      BC.Ctx->getOrCreateSymbol("__ENTRY_" + BB.getLabel()->getName());
-
-    SecondaryEntryPoints[BB.getLabel()] = EntrySymbol;
-
-    BC.setSymbolToFunctionMap(EntrySymbol, this);
-
-    return EntrySymbol;
-  }
+  MCSymbol *addEntryPoint(const BinaryBasicBlock &BB);
 
   /// Mark all blocks that are unreachable from a root (entry point
   /// or landing pad) as invalid.
