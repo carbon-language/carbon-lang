@@ -433,9 +433,9 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
     }
   }
 
-  // In strict relocation mode, we have to catch jump table references outside
-  // of the basic block containing the indirect jump.
-  if (opts::StrictMode) {
+  // With relocations, catch jump table references outside of the basic block
+  // containing the indirect jump.
+  if (HasRelocations) {
     const auto MemType = analyzeMemoryAt(Address, BF);
     if (MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE && IsPCRel) {
       const MCSymbol *Symbol =
