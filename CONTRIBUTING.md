@@ -168,8 +168,8 @@ A license is required at the top of all documents and files.
 ## Google Docs
 
 Google Docs all use
-[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview). It puts the license at the top of every page
-if printed.
+[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
+It puts the license at the top of every page if printed.
 
 ## Markdown
 
