@@ -4,19 +4,6 @@ See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-For more information, see [our goals](docs/project/goals.md).
-
-# Carbon repository overview
-
-The Carbon Language project is an **_experiment_** to explore a possible,
-distant future for the C++ programming language.
-
-Carbon's main repositories are:
-
-*   carbon-lang - Carbon language specification and documentation.
-*   carbon-toolchain - Carbon language toolchain and reference implementation.
-*   carbon-proposals - An archive of reviewed Carbon language proposals.
-
 # Carbon language
 
 The Carbon Language project is an **_experiment_** to explore a possible,
@@ -44,9 +31,9 @@ systematically re-engineer C++ into a near optimal future state along the top
 six priorities, which nonetheless is still reachable through interoperability,
 tooling, automation, and incremental large-scale migration efforts.
 
-For more information, see docs/process/goals.md.
+For more information, see [our goals document](docs/project/goals.md).
 
-### What about other languages?
+## What about other languages?
 
 Other programming languages don't _currently_ address these needs effectively.
 They present interoperability, migration, and performance challenges that make
@@ -77,7 +64,7 @@ stack/ecosystem. However, there is no comparable option for C++ today:
 Carbon explores what it would look like to fill this gap and align it with the
 above priorities.
 
-### Project status
+## Project status
 
 **The project is just getting started.** Everything is at a very early stage. If
 you are hoping to see lots of concrete ideas and plans, you'll probably want to
@@ -107,7 +94,7 @@ languages, but about how to move today's C++ forward effectively. For example, a
 near optimal outcome would be to convince the C++ community to adopt this as its
 official path forward.
 
-### What will make Carbon a compelling future path for C++?
+## What will make Carbon a compelling future path for C++?
 
 We hope that eventually Carbon will provide **significant advantages compared to
 today's C++**. Areas where we think we can most dramatically improve C++ for
@@ -150,3 +137,11 @@ compatibility and interoperability with C++:
 the language as well as large-scale migration for users.** This is extremely
 expensive, and so the bar for Carbon to be a compelling direction for C++ is
 very high.
+
+## Repository structure overview
+
+Carbon's main repositories are:
+
+*   **carbon-lang** - Carbon language specification and documentation.
+*   **carbon-toolchain** - Carbon language toolchain and reference implementation.
+*   **carbon-proposals** - An archive of reviewed Carbon language proposals.
