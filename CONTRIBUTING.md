@@ -94,6 +94,18 @@ ownership and IP to formally transfer from Google to a Carbon-specific
 foundation or other neutral third-party. When that happens, the foundation will
 take ownership of providing a CLA.
 
+## Collaboration systems
+
+We use a few systems for collaboration which contributors should be aware of.
+Membership is currently invite-only.
+
+*   [GitHub](https://github.com/orgs/carbon-language): We use the
+    "carbon-language" organization for our repositories.
+
+*   [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
+    We use this shared drive for all of our Google Docs, particularly proposal
+    drafts.
+
 ## Contribution guidelines and standards
 
 All documents and pull requests must be consistent with the guidelines and
