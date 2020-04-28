@@ -85,7 +85,7 @@ accept your documents, comments and pull requests.
 
 **_NOTE_**: Only original content from you and other people who have signed the
 CLA can be accepted as Carbon contributions: this covers the GitHub repository,
-GitHub issues Google Docs, Discourse Forums and Discord Chat.
+GitHub issues, Google Docs, Discourse Forums, and Discord Chat.
 
 ### Future CLA plans
 
