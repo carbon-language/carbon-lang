@@ -40,28 +40,28 @@ The process is:
 
 1.  [Draft the proposal](#draft-the-proposal)
 
-    1.  [(optional) Discuss the idea early](#optional_discuss-the-idea-early)
+    1.  [(optional) Discuss the idea early](#optional-discuss-the-idea-early)
     2.  [Make a proposal](#make-a-proposal)
-    3.  [(optional) Elicit early, high-level feedback on the proposal](#optional_elicit-early_high_level-feedback-on-the-proposal)
+    3.  [(optional) Elicit early, high-level feedback on the proposal](#optional-elicit-early_high_level-feedback-on-the-proposal)
 
 2.  [Solicit and address proposal feedback](#solicit-and-address-proposal-feedback)
 
     1.  [Request comments](#request-comments)
     2.  [Community and reviewing team comments on proposal](#community-and-reviewing-team-comments-on-proposal)
-    3.  [(optional) Pause for a major revision](#optional_pause-for-a-major-revision)
+    3.  [(optional) Pause for a major revision](#optional-pause-for-a-major-revision)
     4.  [Request a review manager](#request-a-review-manager)
 
 3.  [Reviewing team makes a proposal decision](#reviewing-team-makes-a-proposal-decision)
 
     1.  [Prepare the document for a proposal decision](#prepare-the-document-for-a-proposal-decision)
     2.  [Ask the reviewing team for a proposal decision](#ask-the-reviewing-team-for-a-proposal-decision)
-    3.  [(optional) Use the meeting to make a proposal decision](#optional_use-the-meeting-to-make-a-proposal-decision)
+    3.  [(optional) Use the meeting to make a proposal decision](#optional-use-the-meeting-to-make-a-proposal-decision)
 
 4.  [Finalize the proposal decision](#finalize-the-proposal-decision)
 
     1.  [Publish the proposal decision](#publish-the-proposal-decision)
     2.  [Community comments on proposal decision](#community-comments-on-proposal-decision)
-    3.  [(optional) Rollback the decision](#optional_rollback-the-decision)
+    3.  [(optional) Rollback the decision](#optional-rollback-the-decision)
     4.  [Execute on proposal decision](#execute-on-proposal-decision)
 
 ## Coordination Tools
