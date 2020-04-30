@@ -1,6 +1,6 @@
 # Carbon: Groups
 
-These are groups used by the Carbon language, listed here for central tracking.
+These are groups used by the Carbon Language project, listed here for central tracking.
 
 We use a mix of:
 
