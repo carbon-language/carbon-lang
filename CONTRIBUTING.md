@@ -94,6 +94,18 @@ ownership and IP to formally transfer from Google to a Carbon-specific
 foundation or other neutral third-party. When that happens, the foundation will
 take ownership of providing a CLA.
 
+## Collaboration systems
+
+We use a few systems for collaboration which contributors should be aware of.
+Membership is currently invite-only.
+
+*   [GitHub](https://github.com/orgs/carbon-language): We use the
+    "carbon-language" organization for our repositories.
+
+*   [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
+    We use this shared drive for all of our Google Docs, particularly proposal
+    drafts.
+
 ## Contribution guidelines and standards
 
 All documents and pull requests must be consistent with the guidelines and
@@ -166,10 +178,9 @@ A license is required at the top of all documents and files.
 
 ## Google Docs
 
-Google Docs all use this template. It puts the license at the top of every page
-if printed.
-
-TODO: Add link for "this template".
+Google Docs all use
+[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
+It puts the license at the top of every page if printed.
 
 ## Markdown
 
@@ -183,7 +194,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 ```
 
-TODO: Add an example link when we have one.
+For example, see the top of
+[CONTRIBUTING.md](https://github.com/carbon-language/carbon-lang/raw/master/CONTRIBUTING.md)'s
+raw content.
 
 ## Other files
 
