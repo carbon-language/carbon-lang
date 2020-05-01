@@ -179,10 +179,9 @@ A license is required at the top of all documents and files.
 
 ## Google Docs
 
-Google Docs all use this template. It puts the license at the top of every page
-if printed.
-
-TODO: Add link for "this template".
+Google Docs all use
+[this template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
+It puts the license at the top of every page if printed.
 
 ## Markdown
 
@@ -196,7 +195,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 ```
 
-TODO: Add an example link when we have one.
+For example, see the top of
+[CONTRIBUTING.md](https://github.com/carbon-language/carbon-lang/raw/master/CONTRIBUTING.md)'s
+raw content.
 
 ## Other files
 
