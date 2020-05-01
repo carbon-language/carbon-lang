@@ -99,12 +99,12 @@ take ownership of providing a CLA.
 We use a few systems for collaboration which contributors should be aware of.
 Membership is currently invite-only.
 
-*   [GitHub](https://github.com/orgs/carbon-language): We use the
-    "carbon-language" organization for our repositories.
+- [GitHub](https://github.com/orgs/carbon-language): We use the
+  "carbon-language" organization for our repositories.
 
-*   [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
-    We use this shared drive for all of our Google Docs, particularly proposal
-    drafts.
+- [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
+  We use this shared drive for all of our Google Docs, particularly proposal
+  drafts.
 
 ## Contribution guidelines and standards
 
@@ -115,43 +115,42 @@ follow the Carbon documentation and coding styles.
 
 - For **both** documentation and code:
 
-     - When the Carbon team accepts new documentation or features, to Carbon, by
-       default they take on the maintenance burden. This means they'll weigh the
-       benefit of each contribution must be weighed against the cost of
-       maintaining it.
-     - The appropriate [style](#style) is applied.
-     - The [license](#license) is present in all contributions.
+  - When the Carbon team accepts new documentation or features, to Carbon, by
+    default they take on the maintenance burden. This means they'll weigh the
+    benefit of each contribution must be weighed against the cost of maintaining
+    it.
+  - The appropriate [style](#style) is applied.
+  - The [license](#license) is present in all contributions.
 
 - For documentation:
 
-     - All documentation is written for clarity and readability. Beyond fixing
-       spelling and grammar, this also means content is worded to be accessible
-       to a broad audience.
-     - Substantive changes to Carbon follow the
-       [evolution process](docs/project/evolution.md). Pull requests are only
-       sent after the documentation changes have been accepted by the reviewing
-       team.
-     - Typos or other minor fixes that don't change the meaning of a document do
-       not need formal review, and are often handled directly as a pull request.
+  - All documentation is written for clarity and readability. Beyond fixing
+    spelling and grammar, this also means content is worded to be accessible to
+    a broad audience.
+  - Substantive changes to Carbon follow the
+    [evolution process](docs/project/evolution.md). Pull requests are only sent
+    after the documentation changes have been accepted by the reviewing team.
+  - Typos or other minor fixes that don't change the meaning of a document do
+    not need formal review, and are often handled directly as a pull request.
 
 - For code:
 
-     - New features should have a documented design that has been approved
-       through the [evolution process](docs/project/evolution.md). This includes
-       modifications to pre-existing designs.
-     - Bug fixes and mechanical improvements don't need this.
-     - All new features include unit tests, as they help to (a) document and
-       validate concrete usage of the feature and its edge cases, and (b) guard
-       against future breaking changes to lower the maintenance cost.
-     - Bug fixes also generally include unit tests, because the presence of bugs
-       usually indicates insufficient test coverage.
-     - Unit tests must pass with the changes.
-     - If some tests fail for unrelated reasons, we wait until they're fixed (it
-       helps to contribute a fix!).
-     - Code changes are made with API compatibility and evolvability in mind.
-       Reviewers will comment on any API compatibility issues.
-     - Keep in mind that code contribution guidelines are incomplete while we
-       start work on Carbon, and may change later.
+  - New features should have a documented design that has been approved through
+    the [evolution process](docs/project/evolution.md). This includes
+    modifications to pre-existing designs.
+  - Bug fixes and mechanical improvements don't need this.
+  - All new features include unit tests, as they help to (a) document and
+    validate concrete usage of the feature and its edge cases, and (b) guard
+    against future breaking changes to lower the maintenance cost.
+  - Bug fixes also generally include unit tests, because the presence of bugs
+    usually indicates insufficient test coverage.
+  - Unit tests must pass with the changes.
+  - If some tests fail for unrelated reasons, we wait until they're fixed (it
+    helps to contribute a fix!).
+  - Code changes are made with API compatibility and evolvability in mind.
+    Reviewers will comment on any API compatibility issues.
+  - Keep in mind that code contribution guidelines are incomplete while we start
+    work on Carbon, and may change later.
 
 # Style
 
