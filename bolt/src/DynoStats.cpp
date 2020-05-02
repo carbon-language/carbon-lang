@@ -117,11 +117,6 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
   if (!BF.isSimple() || !BF.hasValidProfile())
     return Stats;
 
-  // If the function was folded in non-relocation mode we keep its profile
-  // for optimization. However, it should be excluded from the dyno stats.
-  if (BF.isFolded())
-    return Stats;
-
   // Update enumeration of basic blocks for correct detection of branch'
   // direction.
   BF.updateLayoutIndices();
