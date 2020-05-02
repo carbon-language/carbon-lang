@@ -32,7 +32,6 @@ extern cl::OptionCategory BoltRelocCategory;
 
 extern cl::opt<unsigned> AlignText;
 extern cl::opt<bool> HotText;
-extern cl::opt<bool> Instrument;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<bool> PreserveBlocksAlignment;
 extern cl::opt<bool> PrintCacheMetrics;

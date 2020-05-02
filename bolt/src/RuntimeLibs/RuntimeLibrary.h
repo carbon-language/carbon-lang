@@ -1,4 +1,4 @@
-//===--- RuntimeLibrary.h - The Runtime Library ---------------------------===//
+//===------------- RuntimeLibrary.h - The Runtime Library -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -35,6 +35,10 @@ public:
   /// Add custom sections added by the runtime libraries.
   virtual void
   addRuntimeLibSections(std::vector<std::string> &SecNames) const = 0;
+
+  /// Validity check and modify if necessary all the command line options
+  /// for this runtime library.
+  virtual void adjustCommandLineOptions(const BinaryContext &BC) const = 0;
 
   /// Emit data structures that will be necessary during runtime.
   virtual void emitBinary(BinaryContext &BC, MCStreamer &Streamer) = 0;

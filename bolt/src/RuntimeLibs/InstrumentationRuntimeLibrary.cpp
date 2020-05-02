@@ -1,4 +1,4 @@
-//===InstrumentationRuntimeLibrary.cpp - The Instrumentation Runtime Library =//
+//=  InstrumentationRuntimeLibrary.cpp - The Instrumentation Runtime Library =//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -31,9 +31,30 @@ cl::opt<bool>
 static cl::opt<std::string> RuntimeInstrumentationLib(
     "runtime-instrumentation-lib",
     cl::desc("specify file name of the runtime instrumentation library"),
-    cl::ZeroOrMore, cl::init("libbolt_rt.a"), cl::cat(BoltOptCategory));
+    cl::ZeroOrMore, cl::init("libbolt_rt_instr.a"), cl::cat(BoltOptCategory));
 
 } // namespace opts
+
+void InstrumentationRuntimeLibrary::adjustCommandLineOptions(
+    const BinaryContext &BC) const {
+  if (!BC.HasRelocations) {
+    errs() << "BOLT-ERROR: instrumentation runtime libraries require "
+              "relocations\n";
+    exit(1);
+  }
+  if (!BC.StartFunctionAddress) {
+    errs() << "BOLT-ERROR: instrumentation runtime libraries require a known "
+              "entry point of "
+              "the input binary\n";
+    exit(1);
+  }
+  if (!BC.FiniFunctionAddress) {
+    errs() << "BOLT-ERROR: input binary lacks DT_FINI entry in the dynamic "
+              "section but instrumentation currently relies on patching "
+              "DT_FINI to write the profile\n";
+    exit(1);
+  }
+}
 
 void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                                MCStreamer &Streamer) {

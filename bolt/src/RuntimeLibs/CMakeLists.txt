@@ -1,5 +1,6 @@
 add_llvm_library(LLVMBOLTRuntimeLibs
   RuntimeLibrary.cpp
+  HugifyRuntimeLibrary.cpp
   InstrumentationRuntimeLibrary.cpp
 
   DEPENDS

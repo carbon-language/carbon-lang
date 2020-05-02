@@ -26,6 +26,7 @@
 #include "ParallelUtilities.h"
 #include "Passes/ReorderFunctions.h"
 #include "Relocation.h"
+#include "RuntimeLibs/HugifyRuntimeLibrary.h"
 #include "Utils.h"
 #include "YAMLProfileReader.h"
 #include "YAMLProfileWriter.h"
@@ -91,6 +92,7 @@ extern cl::OptionCategory BoltOutputCategory;
 extern cl::OptionCategory AggregatorCategory;
 
 extern cl::opt<MacroFusionType> AlignMacroOpFusion;
+extern cl::opt<bool> Hugify;
 extern cl::opt<bool> Instrument;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::list<std::string> ReorderData;
@@ -174,11 +176,13 @@ HotFunctionsAtEnd(
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-cl::opt<bool>
-HotText("hot-text",
-  cl::desc("hot text symbols support (relocation mode)"),
-  cl::ZeroOrMore,
-  cl::cat(BoltCategory));
+cl::opt<bool> HotText(
+    "hot-text",
+    cl::desc(
+        "Generate hot text symbols. Apply this option to a precompiled binary "
+        "that manually calls into hugify, such that at runtime hugify call "
+        "will put hot code into 2M pages. This requires relocation."),
+    cl::ZeroOrMore, cl::cat(BoltCategory));
 
 static cl::list<std::string>
 HotTextMoveSections("hot-text-move-sections",
@@ -445,6 +449,9 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const int Argc,
       SHStrTab(StringTableBuilder::ELF) {
   if (opts::UpdateDebugSections) {
     DebugInfoRewriter = llvm::make_unique<DWARFRewriter>(*BC, SectionPatchers);
+  }
+  if (opts::Hugify) {
+    BC->setRuntimeLibrary(llvm::make_unique<HugifyRuntimeLibrary>());
   }
 }
 
@@ -1563,23 +1570,8 @@ void RewriteInstance::adjustCommandLineOptions() {
               "supported\n";
   }
 
-  if (opts::Instrument) {
-    if (!BC->HasRelocations) {
-      errs() << "BOLT-ERROR: instrumentation requires relocations\n";
-      exit(1);
-    }
-    if (!BC->StartFunctionAddress) {
-      errs() << "BOLT-ERROR: instrumentation requires a known entry point of "
-                "the input binary\n";
-      exit(1);
-    }
-    if (!BC->FiniFunctionAddress) {
-      errs()
-          << "BOLT-ERROR: input binary lacks DT_FINI entry in the dynamic "
-             "section but instrumentation currently relies on patching "
-             "DT_FINI to write the profile\n";
-      exit(1);
-    }
+  if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+    RtLibrary->adjustCommandLineOptions(*BC);
   }
 
   if (opts::AlignMacroOpFusion != MFT_NONE && !BC->isX86()) {
@@ -2961,7 +2953,10 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
   // The order is important.
   std::vector<std::string> Sections = {
       ".eh_frame", Twine(getOrgSecPrefix(), ".eh_frame").str(),
-      ".gcc_except_table", ".rodata", ".rodata.cold",  ".bolt.instr.counters"};
+      ".gcc_except_table", ".rodata", ".rodata.cold"};
+  if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+    RtLibrary->addRuntimeLibSections(Sections);
+  }
   for (auto &SectionName : Sections) {
     auto Section = BC->getUniqueSectionByName(SectionName);
     if (!Section || !Section->isAllocatable() || !Section->isFinalized())
@@ -3016,8 +3011,6 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
 }
 
 void RewriteInstance::mapExtraSections(orc::VModuleKey Key) {
-  assert(BC->HasRelocations && "Unsupported in non-relocation mode");
-
   for (auto &Section : BC->allocatableSections()) {
     if (Section.getOutputAddress() || !Section.hasValidSectionID())
       continue;
@@ -4133,7 +4126,9 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       }
       if (DE->getTag() == ELF::DT_FINI) {
         if (auto *RtLibrary = BC->getRuntimeLibrary()) {
-          NewDE.d_un.d_ptr = RtLibrary->getRuntimeFiniAddress();
+          if (auto Addr = RtLibrary->getRuntimeFiniAddress()) {
+            NewDE.d_un.d_ptr = Addr;
+          }
         }
       }
       break;

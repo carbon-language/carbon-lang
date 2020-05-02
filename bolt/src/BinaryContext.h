@@ -186,6 +186,9 @@ class BinaryContext {
   /// with size won't overflow
   uint32_t DuplicatedJumpTables{0x10000000};
 
+  /// The runtime library.
+  std::unique_ptr<RuntimeLibrary> RtLibrary;
+
 public:
   static std::unique_ptr<BinaryContext>
   createBinaryContext(ObjectFile *File, std::unique_ptr<DWARFContext> DwCtx);
@@ -547,9 +550,6 @@ public:
 
   /// Map SDT locations to SDT markers info
   std::unordered_map<uint64_t, SDTMarkerInfo> SDTMarkers;
-
-  /// The runtime library.
-  std::unique_ptr<RuntimeLibrary> RtLibrary;
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,

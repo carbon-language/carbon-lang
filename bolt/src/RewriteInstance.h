@@ -419,8 +419,6 @@ private:
 
   std::unique_ptr<BoltAddressTranslation> BAT;
 
-  std::unique_ptr<Instrumentation> Instrumenter;
-
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.
   SectionPatchersType SectionPatchers;

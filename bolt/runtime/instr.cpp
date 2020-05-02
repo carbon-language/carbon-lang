@@ -44,12 +44,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cstdint>
-
-#include "config.h"
-#ifdef HAVE_ELF_H
-#include <elf.h>
-#endif
+#include "common.h"
 
 // Enables a very verbose logging to stderr useful when debugging
 //#define ENABLE_DEBUG
@@ -100,252 +95,7 @@ extern void (*__bolt_trampoline_ind_tailcall)();
 extern void (*__bolt_instr_init_ptr)();
 extern void (*__bolt_instr_fini_ptr)();
 
-// Anonymous namespace covering everything but our library entry point
 namespace {
-
-// We use a stack-allocated buffer for string manipulation in many pieces of
-// this code, including the code that prints each line of the fdata file. This
-// buffer needs to accomodate large function names, but shouldn't be arbitrarily
-// large (dynamically allocated) for simplicity of our memory space usage.
-constexpr uint32_t BufSize = 10240;
-
-// Declare some syscall wrappers we use throughout this code to avoid linking
-// against system libc.
-uint64_t __open(const char *pathname, uint64_t flags, uint64_t mode) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $2, %%rax\n"
-          "syscall"
-          : "=a"(ret)
-          : "D"(pathname), "S"(flags), "d"(mode)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __write(uint64_t fd, const void *buf, uint64_t count) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $1, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(fd), "S"(buf), "d"(count)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __lseek(uint64_t fd, uint64_t pos, uint64_t whence) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $8, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(fd), "S"(pos), "d"(whence)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-int __close(uint64_t fd) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $3, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(fd)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-struct timespec {
-  uint64_t tv_sec; /* seconds */
-  uint64_t tv_nsec;  /* nanoseconds */
-};
-
-uint64_t __nanosleep(const timespec *req, timespec *rem) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $35, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(req), "S"(rem)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-int64_t __fork() {
-  uint64_t ret;
-  __asm__ __volatile__("movq $57, %%rax\n"
-                       "syscall\n"
-                       : "=a"(ret)
-                       :
-                       : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-void *__mmap(uint64_t addr, uint64_t size, uint64_t prot, uint64_t flags,
-             uint64_t fd, uint64_t offset) {
-  void *ret;
-  register uint64_t r8 asm("r8") = fd;
-  register uint64_t r9 asm("r9") = offset;
-  register uint64_t r10 asm("r10") = flags;
-  __asm__ __volatile__ (
-          "movq $9, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(addr), "S"(size), "d"(prot), "r"(r10), "r"(r8), "r"(r9)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __munmap(void *addr, uint64_t size) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $11, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(addr), "S"(size)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __getpid() {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $39, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          :
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __getppid() {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $110, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          :
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __exit(uint64_t code) {
-  uint64_t ret;
-  __asm__ __volatile__ (
-          "movq $231, %%rax\n"
-          "syscall\n"
-          : "=a"(ret)
-          : "D"(code)
-          : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-// Helper functions for writing strings to the .fdata file. We intentionally
-// avoid using libc names (lowercase memset) to make it clear it is our impl.
-
-/// Write number Num using Base to the buffer in OutBuf, returns a pointer to
-/// the end of the string.
-char *intToStr(char *OutBuf, uint64_t Num, uint32_t Base) {
-  const char *Chars = "0123456789abcdef";
-  char Buf[21];
-  char *Ptr = Buf;
-  while (Num) {
-    *Ptr++ = *(Chars + (Num % Base));
-    Num /= Base;
-  }
-  if (Ptr == Buf) {
-    *OutBuf++ = '0';
-    return OutBuf;
-  }
-  while (Ptr != Buf) {
-    *OutBuf++ = *--Ptr;
-  }
-  return OutBuf;
-}
-
-/// Copy Str to OutBuf, returns a pointer to the end of the copied string
-char *strCopy(char *OutBuf, const char *Str, int32_t Size = BufSize) {
-  while (*Str) {
-    *OutBuf++ = *Str++;
-    if (--Size <= 0)
-      return OutBuf;
-  }
-  return OutBuf;
-}
-
-void memSet(char *Buf, char C, uint32_t Size) {
-  for (int I = 0; I < Size; ++I)
-    *Buf++ = C;
-}
-
-uint32_t strLen(const char *Str) {
-  uint32_t Size = 0;
-  while (*Str++)
-    ++Size;
-  return Size;
-}
-
-void reportError(const char *Msg, uint64_t Size) {
-  __write(2, Msg, Size);
-  __exit(1);
-}
-
-void assert(bool Assertion, const char *Msg) {
-  if (Assertion)
-    return;
-  char Buf[BufSize];
-  char *Ptr = Buf;
-  Ptr = strCopy(Ptr, "Assertion failed: ");
-  Ptr = strCopy(Ptr, Msg, BufSize - 40);
-  Ptr = strCopy(Ptr, "\n");
-  reportError(Buf, Ptr - Buf);
-}
-
-void reportNumber(const char *Msg, uint64_t Num, uint32_t Base) {
-  char Buf[BufSize];
-  char *Ptr = Buf;
-  Ptr = strCopy(Ptr, Msg, BufSize - 23);
-  Ptr = intToStr(Ptr, Num, Base);
-  Ptr = strCopy(Ptr, "\n");
-  __write(2, Buf, Ptr - Buf);
-}
-
-void report(const char *Msg) {
-  __write(2, Msg, strLen(Msg));
-}
-
-/// 1B mutex accessed by lock xchg
-class Mutex {
-  volatile bool InUse{false};
-public:
-  bool acquire() {
-    bool Result = true;
-    asm volatile("lock; xchg %0, %1"
-                 : "+m"(InUse), "=r"(Result)
-                 :
-                 : "cc");
-    return !Result;
-  }
-  void release() {
-    InUse = false;
-  }
-};
-
-/// RAII wrapper for Mutex
-class Lock {
-  Mutex &M;
-public:
-  Lock(Mutex &M) : M(M) {
-    while (!M.acquire()) {}
-  }
-  ~Lock() {
-    M.release();
-  }
-};
-
-inline uint64_t alignTo(uint64_t Value, uint64_t Align) {
-  return (Value + Align - 1) / Align * Align;
-}
 
 /// A simple allocator that mmaps a fixed size region and manages this space
 /// in a stack fashion, meaning you always deallocate the last element that
@@ -359,6 +109,7 @@ class BumpPtrAllocator {
     uint64_t Magic;
     uint64_t AllocSize;
   };
+
 public:
   void *allocate(uintptr_t Size) {
     Lock L(M);
@@ -371,7 +122,7 @@ public:
       StackSize = 0;
     }
     Size = alignTo(Size + sizeof(EntryMetadata), 16);
-    uint8_t * AllocAddress = StackBase + StackSize + sizeof(EntryMetadata);
+    uint8_t *AllocAddress = StackBase + StackSize + sizeof(EntryMetadata);
     auto *M = reinterpret_cast<EntryMetadata *>(StackBase + StackSize);
     M->Magic = Magic;
     M->AllocSize = Size;
@@ -416,14 +167,10 @@ public:
   }
 
   /// Set mmap reservation size (only relevant before first allocation)
-  void setMaxSize(uint64_t Size) {
-    MaxSize = Size;
-  }
+  void setMaxSize(uint64_t Size) { MaxSize = Size; }
 
   /// Set mmap reservation privacy (only relevant before first allocation)
-  void setShared(bool S) {
-    Shared = S;
-  }
+  void setShared(bool S) { Shared = S; }
 
   void destroy() {
     if (StackBase == nullptr)
@@ -443,15 +190,12 @@ private:
 /// Used for allocating indirect call instrumentation counters. Initialized by
 /// __bolt_instr_setup, our initialization routine.
 BumpPtrAllocator GlobalAlloc;
-
 } // anonymous namespace
 
 // User-defined placement new operators. We only use those (as opposed to
 // overriding the regular operator new) so we can keep our allocator in the
 // stack instead of in a data section (global).
-void *operator new(uintptr_t Sz, BumpPtrAllocator &A) {
-  return A.allocate(Sz);
-}
+void *operator new(uintptr_t Sz, BumpPtrAllocator &A) { return A.allocate(Sz); }
 void *operator new(uintptr_t Sz, BumpPtrAllocator &A, char C) {
   auto *Ptr = reinterpret_cast<char *>(A.allocate(Sz));
   memSet(Ptr, C, Sz);
@@ -467,9 +211,7 @@ void *operator new[](uintptr_t Sz, BumpPtrAllocator &A, char C) {
 }
 // Only called during exception unwinding (useless). We must manually dealloc.
 // C++ language weirdness
-void operator delete(void *Ptr, BumpPtrAllocator &A) {
-  A.deallocate(Ptr);
-}
+void operator delete(void *Ptr, BumpPtrAllocator &A) { A.deallocate(Ptr); }
 
 namespace {
 
@@ -1540,7 +1282,6 @@ int openProfile() {
   }
   return FD;
 }
-
 } // anonymous namespace
 
 /// Reset all counters in case you want to start profiling a new phase of your
@@ -1672,40 +1413,6 @@ extern "C" void __bolt_instr_setup() {
 extern "C" void instrumentIndirectCall(uint64_t Target, uint64_t IndCallID) {
   GlobalIndCallCounters[IndCallID].incrementVal(Target, GlobalAlloc);
 }
-
-#define SAVE_ALL                                                               \
-  "push %%rax\n"                                                               \
-  "push %%rbx\n"                                                               \
-  "push %%rcx\n"                                                               \
-  "push %%rdx\n"                                                               \
-  "push %%rdi\n"                                                               \
-  "push %%rsi\n"                                                               \
-  "push %%rbp\n"                                                               \
-  "push %%r8\n"                                                                \
-  "push %%r9\n"                                                                \
-  "push %%r10\n"                                                               \
-  "push %%r11\n"                                                               \
-  "push %%r12\n"                                                               \
-  "push %%r13\n"                                                               \
-  "push %%r14\n"                                                               \
-  "push %%r15\n"
-
-#define RESTORE_ALL                                                            \
-  "pop %%r15\n"                                                                \
-  "pop %%r14\n"                                                                \
-  "pop %%r13\n"                                                                \
-  "pop %%r12\n"                                                                \
-  "pop %%r11\n"                                                                \
-  "pop %%r10\n"                                                                \
-  "pop %%r9\n"                                                                 \
-  "pop %%r8\n"                                                                 \
-  "pop %%rbp\n"                                                                \
-  "pop %%rsi\n"                                                                \
-  "pop %%rdi\n"                                                                \
-  "pop %%rdx\n"                                                                \
-  "pop %%rcx\n"                                                                \
-  "pop %%rbx\n"                                                                \
-  "pop %%rax\n"
 
 /// We receive as in-stack arguments the identifier of the indirect call site
 /// as well as the target address for the call
