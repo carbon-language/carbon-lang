@@ -22,7 +22,6 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<unsigned> Verbosity;
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 
@@ -256,7 +255,7 @@ void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
   for (auto &BFIt : BC.getBinaryFunctions()) {
     auto &Function = BFIt.second;
 
-    if (!Function.isSimple() || !opts::shouldProcess(Function))
+    if (!Function.isSimple() || Function.isIgnored())
       continue;
 
     if (Function.getKnownExecutionCount() == 0)

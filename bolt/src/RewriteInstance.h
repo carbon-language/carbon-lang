@@ -108,6 +108,9 @@ private:
   /// Read relocations from a given section.
   void readRelocations(const object::SectionRef &Section);
 
+  /// Mark functions that are not meant for processing as ignored.
+  void selectFunctionsToProcess();
+
   /// Read information from debug sections.
   void readDebugInfo();
 

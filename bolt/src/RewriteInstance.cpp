@@ -163,9 +163,9 @@ DumpEHFrame("dump-eh-frame",
   cl::cat(BoltCategory));
 
 static cl::list<std::string>
-FunctionNames("funcs",
+ForceFunctionNames("funcs",
   cl::CommaSeparated,
-  cl::desc("list of functions to optimize"),
+  cl::desc("limit optimizations to functions from the list"),
   cl::value_desc("func1,func2,func3,..."),
   cl::Hidden,
   cl::cat(BoltCategory));
@@ -221,7 +221,7 @@ KeepTmp("keep-tmp",
 
 static cl::opt<unsigned>
 MaxFunctions("max-funcs",
-  cl::desc("maximum number of functions to overwrite"),
+  cl::desc("maximum number of functions to process"),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
@@ -407,56 +407,6 @@ bool isHotTextMover(const BinaryFunction &Function) {
   return false;
 }
 
-// Check against lists of functions from options if we should
-// optimize the function with a given name.
-bool shouldProcess(const BinaryFunction &Function) {
-  if (opts::MaxFunctions &&
-      Function.getFunctionNumber() >= opts::MaxFunctions) {
-    if (Function.getFunctionNumber() == opts::MaxFunctions) {
-      outs() << "BOLT-INFO: processing ending on " << Function << "\n";
-    } else {
-      return false;
-    }
-  }
-
-  auto populateFunctionNames = [](cl::opt<std::string> &FunctionNamesFile,
-                                  cl::list<std::string> &FunctionNames) {
-    assert(!FunctionNamesFile.empty() && "unexpected empty file name");
-    std::ifstream FuncsFile(FunctionNamesFile, std::ios::in);
-    std::string FuncName;
-    while (std::getline(FuncsFile, FuncName)) {
-      FunctionNames.push_back(FuncName);
-    }
-    FunctionNamesFile = "";
-  };
-
-  if (!FunctionNamesFile.empty())
-    populateFunctionNames(FunctionNamesFile, FunctionNames);
-
-  if (!SkipFunctionNamesFile.empty())
-    populateFunctionNames(SkipFunctionNamesFile, SkipFunctionNames);
-
-  bool IsValid = true;
-  if (!FunctionNames.empty()) {
-    IsValid = false;
-    for (auto &Name : FunctionNames) {
-      if (Function.hasNameRegex(Name)) {
-        IsValid = true;
-        break;
-      }
-    }
-  }
-  if (!IsValid)
-    return false;
-
-  for (auto &Name : SkipFunctionNames) {
-    if (Function.hasNameRegex(Name))
-      return false;
-  }
-
-  return true;
-}
-
 } // namespace opts
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
@@ -506,9 +456,7 @@ RewriteInstance::~RewriteInstance() {}
 
 bool RewriteInstance::shouldDisassemble(const BinaryFunction &BF) const {
   // If we have to relocate the code we have to disassemble all functions.
-  if (!BF.getBinaryContext().HasRelocations && !opts::shouldProcess(BF)) {
-    DEBUG(dbgs() << "BOLT: skipping processing function " << BF
-                 << " per user request.\n");
+  if (!BF.getBinaryContext().HasRelocations && BF.isIgnored()) {
     return false;
   }
 
@@ -802,6 +750,8 @@ void RewriteInstance::run() {
 
   if (opts::NoThreads)
     PreProcessProfileThread.join();
+
+  selectFunctionsToProcess();
 
   readDebugInfo();
 
@@ -2278,6 +2228,69 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
   }
 }
 
+void RewriteInstance::selectFunctionsToProcess() {
+  // Extend the list of functions to process or skip from a file.
+  auto populateFunctionNames = [](cl::opt<std::string> &FunctionNamesFile,
+                                  cl::list<std::string> &FunctionNames) {
+    if (FunctionNamesFile.empty())
+      return;
+    std::ifstream FuncsFile(FunctionNamesFile, std::ios::in);
+    std::string FuncName;
+    while (std::getline(FuncsFile, FuncName)) {
+      FunctionNames.push_back(FuncName);
+    }
+  };
+  populateFunctionNames(opts::FunctionNamesFile, opts::ForceFunctionNames);
+  populateFunctionNames(opts::SkipFunctionNamesFile, opts::SkipFunctionNames);
+
+  if (!opts::ForceFunctionNames.empty() && !opts::SkipFunctionNames.empty()) {
+    errs() << "BOLT-ERROR: cannot select functions to process and skip at the "
+              "same time. Please use only one type of selection.\n";
+    exit(1);
+  }
+
+  uint64_t NumFunctionsToProcess{0};
+
+  auto shouldProcess = [&](const BinaryFunction &Function) {
+    if (opts::MaxFunctions && NumFunctionsToProcess > opts::MaxFunctions)
+      return false;
+
+    // If the list is not empty, only process functions from the list.
+    if (!opts::ForceFunctionNames.empty()) {
+      for (auto &Name : opts::ForceFunctionNames) {
+        if (Function.hasNameRegex(Name)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    for (auto &Name : opts::SkipFunctionNames) {
+      if (Function.hasNameRegex(Name)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  for (auto &BFI : BC->getBinaryFunctions()) {
+    auto &Function = BFI.second;
+
+    // Ignore PLT functions.
+    if (Function.isPLTFunction())
+      continue;
+
+    if (!shouldProcess(Function)) {
+      Function.IsIgnored = true;
+      DEBUG(dbgs() << "BOLT-INFO: skipping processing of function " << Function
+                   << " per user request\n");
+    } else {
+      ++NumFunctionsToProcess;
+    }
+  }
+}
+
 void RewriteInstance::readDebugInfo() {
   NamedRegionTimer T("readDebugInfo", "read debug info", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
@@ -2938,7 +2951,7 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
 
   for (auto &BFI : BC->getBinaryFunctions()) {
     auto &Function = BFI.second;
-    if (!Function.isSimple() || !opts::shouldProcess(Function))
+    if (!Function.isEmitted())
       continue;
 
     auto TooLarge = false;

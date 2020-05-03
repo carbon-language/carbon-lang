@@ -54,8 +54,6 @@ extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltRelocCategory;
 
-extern bool shouldProcess(const BinaryFunction &);
-
 extern cl::opt<bool> EnableBAT;
 extern cl::opt<bool> Instrument;
 extern cl::opt<bool> StrictMode;
@@ -144,6 +142,9 @@ TrapOnAVX512("trap-avx512",
   cl::cat(BoltCategory));
 
 bool shouldPrint(const BinaryFunction &Function) {
+  if (Function.isIgnored())
+    return false;
+
   if (PrintOnly.empty())
     return true;
 
@@ -370,8 +371,7 @@ void BinaryFunction::dump(bool PrintInstructions) const {
 
 void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
                            bool PrintInstructions) const {
-  // FIXME: remove after #15075512 is done.
-  if (!opts::shouldProcess(*this) || !opts::shouldPrint(*this))
+  if (!opts::shouldPrint(*this))
     return;
 
   StringRef SectionName =

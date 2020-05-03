@@ -26,8 +26,6 @@ extern cl::opt<uint32_t> X86AlignBranchBoundary;
 
 namespace opts {
 
-extern bool shouldProcess(const BinaryFunction &);
-
 extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltRelocCategory;
@@ -216,7 +214,7 @@ void BinaryEmitter::emitFunctions() {
     const uint32_t OriginalBranchBoundaryAlign = X86AlignBranchBoundary;
     for (auto *Function : Functions) {
       if (!BC.HasRelocations &&
-          (!Function->isSimple() || !opts::shouldProcess(*Function)))
+          (!Function->isSimple() || Function->isIgnored()))
         continue;
 
       DEBUG(dbgs() << "BOLT: generating code for function \""

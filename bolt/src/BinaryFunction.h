@@ -255,6 +255,9 @@ private:
   /// In relocation mode we still disassemble and re-assemble such functions.
   bool IsSimple{true};
 
+  /// Indication that the function should be ignored for optimization purposes.
+  bool IsIgnored{false};
+
   /// True if the function has an indirect branch with unknown destination.
   bool HasUnknownControlFlow{false};
 
@@ -1309,6 +1312,11 @@ public:
   /// Return true if the function could be correctly processed.
   bool isSimple() const {
     return IsSimple;
+  }
+
+  /// Return true if the function should be ignored for optimization purposes.
+  bool isIgnored() const {
+    return IsIgnored;
   }
 
   /// Return true if the function has instruction(s) with unknown control flow.

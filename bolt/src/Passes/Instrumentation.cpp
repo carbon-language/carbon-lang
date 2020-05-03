@@ -21,8 +21,6 @@ using namespace llvm;
 namespace opts {
 extern cl::OptionCategory BoltCategory;
 
-extern bool shouldProcess(const llvm::bolt::BinaryFunction &Function);
-
 cl::opt<std::string> InstrumentationFilename(
     "instrumentation-file",
     cl::desc("file name where instrumented profile will be saved"),
@@ -514,7 +512,7 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
       BC.Ctx->getOrCreateSymbol("__bolt_trampoline_ind_tailcall");
 
   ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
-    return (!BF.isSimple() || !opts::shouldProcess(BF) ||
+    return (!BF.isSimple() || BF.isIgnored() ||
             (opts::InstrumentHotOnly && !BF.getKnownExecutionCount()));
   };
 

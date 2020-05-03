@@ -24,7 +24,6 @@ extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<uint32_t> RandomSeed;
 
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
 extern size_t padFunction(const bolt::BinaryFunction &Function);
 
 cl::opt<bolt::ReorderFunctions::ReorderType>
@@ -315,7 +314,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
                      });
       std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
                        [&](const BinaryFunction *A, const BinaryFunction *B) {
-                         if (!opts::shouldProcess(*A))
+                         if (A->isIgnored())
                            return false;
                          const auto PadA = opts::padFunction(*A);
                          const auto PadB = opts::padFunction(*B);

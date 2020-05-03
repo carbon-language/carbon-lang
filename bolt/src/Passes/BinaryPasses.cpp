@@ -60,7 +60,6 @@ extern cl::opt<bolt::MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> EnableBAT;
 extern cl::opt<bool> UpdateDebugSections;
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
 extern bool isHotTextMover(const bolt::BinaryFunction &Function);
 
 enum DynoStatsSortOrder : char {
@@ -255,12 +254,11 @@ namespace bolt {
 bool BinaryFunctionPass::shouldOptimize(const BinaryFunction &BF) const {
   return BF.isSimple() &&
          BF.getState() == BinaryFunction::State::CFG &&
-         opts::shouldProcess(BF) &&
-         (BF.getSize() > 0);
+         !BF.isIgnored();
 }
 
 bool BinaryFunctionPass::shouldPrint(const BinaryFunction &BF) const {
-  return BF.isSimple() && opts::shouldProcess(BF);
+  return BF.isSimple() && !BF.isIgnored();
 }
 
 void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
@@ -502,7 +500,7 @@ void CheckLargeFunctions::runOnFunctions(BinaryContext &BC) {
 
 bool CheckLargeFunctions::shouldOptimize(const BinaryFunction &BF) const {
   // Unlike other passes, allow functions in non-CFG state.
-  return BF.isSimple() && opts::shouldProcess(BF) && BF.getSize();
+  return BF.isSimple() && !BF.isIgnored();
 }
 
 void LowerAnnotations::runOnFunctions(BinaryContext &BC) {

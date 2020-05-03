@@ -22,7 +22,6 @@ using namespace llvm;
 namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<bool> UpdateDebugSections;
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 static cl::opt<bool>
 AggressiveReAssign("use-aggr-reg-reassign",
@@ -392,7 +391,7 @@ void RegReAssign::runOnFunctions(BinaryContext &BC) {
   for (auto &I : BC.getBinaryFunctions()) {
     auto &Function = I.second;
 
-    if (!Function.isSimple() || !opts::shouldProcess(Function))
+    if (!Function.isSimple() || Function.isIgnored())
       continue;
 
     DEBUG(dbgs() << "====================================\n");

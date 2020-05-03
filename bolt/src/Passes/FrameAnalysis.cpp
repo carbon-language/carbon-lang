@@ -22,8 +22,6 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<unsigned> Verbosity;
 
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
-
 static cl::list<std::string>
     FrameOptFunctionNames("funcs-fop", cl::CommaSeparated,
                           cl::desc("list of functions to apply frame opts"),
@@ -535,8 +533,7 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
       CountDenominator += Count;
 
     // "shouldOptimize" for passes that run after finalize
-    if (!(I.second.isSimple() && I.second.hasCFG() &&
-          opts::shouldProcess(I.second) && (I.second.getSize() > 0)) ||
+    if (!(I.second.isSimple() && I.second.hasCFG() && !I.second.isIgnored()) ||
         !opts::shouldFrameOptimize(I.second)) {
       ++NumFunctionsNotOptimized;
       if (Count != BinaryFunction::COUNT_NO_PROFILE)

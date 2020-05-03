@@ -5,7 +5,6 @@
 using namespace llvm;
 
 namespace opts {
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 extern cl::opt<bolt::FrameOptimizationType> FrameOptimization;
 
@@ -42,16 +41,15 @@ bool isIndifferentToSP(const MCInst &Inst, const BinaryContext &BC) {
   return true;
 }
 
-bool shouldProc(BinaryFunction &Function) {
-  return Function.isSimple() && Function.hasCFG() &&
-         opts::shouldProcess(Function) && (Function.getSize() > 0);
+bool shouldProcess(const BinaryFunction &Function) {
+  return Function.isSimple() && Function.hasCFG() && !Function.isIgnored();
 }
 
 void runForAllWeCare(std::map<uint64_t, BinaryFunction> &BFs,
                      std::function<void(BinaryFunction &)> Task) {
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (shouldProc(Function))
+    if (shouldProcess(Function))
       Task(Function);
   }
 }

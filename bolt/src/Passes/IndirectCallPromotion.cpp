@@ -25,7 +25,6 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<unsigned> Verbosity;
-extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 cl::opt<IndirectCallPromotionType>
 IndirectCallPromotion("indirect-call-promotion",
@@ -1227,7 +1226,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
         bool DidPrintFunc = false;
         uint64_t Offset = 0;
 
-        if (!MemData || !Function.isSimple() || !opts::shouldProcess(Function))
+        if (!MemData || !Function.isSimple() || Function.isIgnored())
           continue;
 
         for (auto &BB : Function) {
@@ -1278,8 +1277,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
     for (auto &BFIt : BFs) {
       auto &Function = BFIt.second;
 
-      if (!Function.isSimple() ||
-          !opts::shouldProcess(Function) ||
+      if (!Function.isSimple() || Function.isIgnored() ||
           !Function.hasProfile())
         continue;
 
@@ -1341,9 +1339,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
   for (auto *FuncPtr : Functions) {
     auto &Function = *FuncPtr;
 
-    if (!Function.isSimple() ||
-        !opts::shouldProcess(Function) ||
-        !Function.hasProfile())
+    if (!Function.isSimple() || Function.isIgnored() || !Function.hasProfile())
       continue;
 
     const bool HasLayout = !Function.layout_empty();
