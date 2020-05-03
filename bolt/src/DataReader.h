@@ -32,6 +32,8 @@
 namespace llvm {
 namespace bolt {
 
+class BinaryFunction;
+
 struct LBREntry {
   uint64_t From;
   uint64_t To;
@@ -357,6 +359,11 @@ public:
   ///  1 BZ2_hbMakeCodeLengths 29c 1
   ///
   std::error_code parseInNoLBRMode();
+
+  /// Return true if the function \p BF may have a profile available.
+  /// The result is based on the name(s) of the function alone and the profile
+  /// match is not guaranteed.
+  bool mayHaveProfileData(const BinaryFunction &BF);
 
   /// Return branch data matching one of the names in \p FuncNames.
   FuncBranchData *

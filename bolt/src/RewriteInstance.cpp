@@ -219,6 +219,13 @@ KeepTmp("keep-tmp",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+Lite("lite",
+  cl::desc("skip processing of cold functions"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
 static cl::opt<unsigned>
 MaxFunctions("max-funcs",
   cl::desc("maximum number of functions to process"),
@@ -456,7 +463,7 @@ RewriteInstance::~RewriteInstance() {}
 
 bool RewriteInstance::shouldDisassemble(const BinaryFunction &BF) const {
   // If we have to relocate the code we have to disassemble all functions.
-  if (!BF.getBinaryContext().HasRelocations && BF.isIgnored()) {
+  if (!BC->HasRelocations && BF.isIgnored()) {
     return false;
   }
 
@@ -741,14 +748,11 @@ void RewriteInstance::run() {
   discoverFileObjects();
 
   std::thread PreProcessProfileThread([&]() {
-    if (!DA.started())
-      return;
-
     outs() << "BOLT-INFO: spawning thread to pre-process profile\n";
     preprocessProfileData();
   });
 
-  if (opts::NoThreads)
+  if (opts::NoThreads || opts::Lite)
     PreProcessProfileThread.join();
 
   selectFunctionsToProcess();
@@ -1683,6 +1687,14 @@ void RewriteInstance::adjustCommandLineOptions() {
   if (!opts::AlignText.getNumOccurrences()) {
     opts::AlignText = BC->PageAlign;
   }
+
+  if (!BC->HasRelocations && opts::Lite.getNumOccurrences() == 0) {
+    opts::Lite = true;
+  } else if (BC->HasRelocations && opts::Lite) {
+    errs() << "BOLT-WARNING: lite mode currently does not work with "
+              "relocations\n";
+    opts::Lite = false;
+  }
 }
 
 namespace {
@@ -2271,6 +2283,13 @@ void RewriteInstance::selectFunctionsToProcess() {
       }
     }
 
+    if (opts::Lite) {
+      if (!BC->DR.getAllFuncsData().empty() &&
+          !BC->DR.mayHaveProfileData(Function)) {
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -2303,61 +2322,62 @@ void RewriteInstance::readDebugInfo() {
 void RewriteInstance::preprocessProfileData() {
   NamedRegionTimer T("preprocessprofile", "pre-process profile data",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  if (BAT->enabledFor(InputFile)) {
-    outs() << "BOLT-INFO: profile collection done on a binary already "
-              "processed by BOLT\n";
-    DA.setBAT(&*BAT);
+  if (DA.started()) {
+    if (BAT->enabledFor(InputFile)) {
+      outs() << "BOLT-INFO: profile collection done on a binary already "
+                "processed by BOLT\n";
+      DA.setBAT(&*BAT);
+    }
+    DA.parseProfile(*BC.get());
+    return;
   }
-  DA.parseProfile(*BC.get());
+
+  // Preliminary match profile data to functions.
+  if (!BC->DR.getAllFuncsData().empty()) {
+    if (BC->DR.collectedInBoltedBinary()) {
+      outs() << "BOLT-INFO: profile collection done on a binary already "
+                "processed by BOLT\n";
+    }
+    for (auto &BFI : BC->getBinaryFunctions()) {
+      auto &Function = BFI.second;
+      if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
+        Function.MemData = MemData;
+        MemData->Used = true;
+      }
+      if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
+        Function.BranchData = FuncData;
+        Function.ExecutionCount = FuncData->ExecutionCount;
+        FuncData->Used = true;
+      }
+    }
+  }
 }
 
 void RewriteInstance::processProfileData() {
   NamedRegionTimer T("processprofile", "process profile data", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
-  auto &BinaryFunctions = BC->getBinaryFunctions();
+  if (!opts::BoltProfile.empty()) {
+    ProfileReader PR;
+    auto EC = PR.readProfile(opts::BoltProfile, BC->getBinaryFunctions());
+    check_error(EC, "cannot read profile");
+
+    return;
+  }
+
   if (DA.started()) {
     DA.processProfile(*BC.get());
 
-    for (auto &BFI : BinaryFunctions) {
+    for (auto &BFI : BC->getBinaryFunctions()) {
       auto &Function = BFI.second;
       Function.convertBranchData();
     }
-
     if (opts::AggregateOnly) {
       if (std::error_code EC = DA.writeAggregatedFile()) {
         check_error(EC, "cannot create output data file");
       }
     }
   } else {
-    if (!opts::BoltProfile.empty()) {
-      ProfileReader PR;
-      auto EC = PR.readProfile(opts::BoltProfile, BinaryFunctions);
-      check_error(EC, "cannot read profile");
-
-      return;
-    }
-
-    // Preliminary match profile data to functions.
-    if (!BC->DR.getAllFuncsData().empty()) {
-      if (BC->DR.collectedInBoltedBinary()) {
-        outs() << "BOLT-INFO: profile collection done on a binary already "
-                  "processed by BOLT\n";
-      }
-      for (auto &BFI : BinaryFunctions) {
-        auto &Function = BFI.second;
-        if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
-          Function.MemData = MemData;
-          MemData->Used = true;
-        }
-        if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
-          Function.BranchData = FuncData;
-          Function.ExecutionCount = FuncData->ExecutionCount;
-          FuncData->Used = true;
-        }
-      }
-    }
-
-    for (auto &BFI : BinaryFunctions) {
+    for (auto &BFI : BC->getBinaryFunctions()) {
       auto &Function = BFI.second;
       Function.readProfile();
     }
@@ -2375,17 +2395,11 @@ void RewriteInstance::disassembleFunctions() {
   for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
 
-    if (!shouldDisassemble(Function)) {
-      Function.setSimple(false);
-      continue;
-    }
-
     auto FunctionData = Function.getData();
     if (!FunctionData) {
-      // When could it happen?
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
              << "empty for function " << Function << '\n';
-      continue;
+      exit(1);
     }
 
     // Treat zero-sized functions as non-simple ones.
@@ -2398,6 +2412,14 @@ void RewriteInstance::disassembleFunctions() {
     const auto *FileBegin =
       reinterpret_cast<const uint8_t*>(InputFile->getData().data());
     Function.setFileOffset(FunctionData->begin() - FileBegin);
+
+    if (!shouldDisassemble(Function)) {
+      NamedRegionTimer T("scan", "scan functions", "buildfuncs",
+                         "Scan Binary Functions", opts::TimeBuild);
+      Function.scanExternalRefs();
+      Function.setSimple(false);
+      continue;
+    }
 
     Function.disassemble();
 

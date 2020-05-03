@@ -2050,6 +2050,17 @@ public:
   /// Returns false if disassembly failed.
   void disassemble();
 
+  /// Scan function for references to other functions.
+  void scanExternalRefs();
+
+  /// Return the size of a data object located at \p Offset in the function.
+  /// Return 0 if there is no data object at the \p Offset.
+  size_t getSizeOfDataInCodeAt(uint64_t Offset) const;
+
+  /// Verify that starting at \p Offset function contents are filled with
+  /// zero-value bytes.
+  bool isZeroPaddingAt(uint64_t Offset) const;
+
   /// Check that entry points have an associated instruction at their
   /// offsets after disassembly.
   void postProcessEntryPoints();

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "BinaryFunction.h"
 #include "DataReader.h"
 #include "llvm/Support/Debug.h"
 #include <map>
@@ -791,6 +792,34 @@ fetchMapEntriesRegex(
   return AllData;
 }
 
+}
+
+bool DataReader::mayHaveProfileData(const BinaryFunction &Function) {
+  if (Function.getBranchData() || Function.getMemData())
+    return true;
+
+  if (getFuncBranchData(Function.getNames()) || getFuncMemData(Function.getNames()))
+    return true;
+
+  const auto HasVolatileName = [&Function]() {
+    for (const auto Name : Function.getNames()) {
+      if (getLTOCommonName(Name))
+        return true;
+    }
+    return false;
+  }();
+  if (!HasVolatileName)
+    return false;
+
+  const auto AllBranchData = getFuncBranchDataRegex(Function.getNames());
+  if (!AllBranchData.empty())
+    return true;
+
+  const auto AllMemData = getFuncMemDataRegex(Function.getNames());
+  if (!AllMemData.empty())
+    return true;
+
+  return false;
 }
 
 FuncBranchData *

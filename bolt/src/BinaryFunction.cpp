@@ -906,11 +906,37 @@ ErrorOr<ArrayRef<uint8_t>> BinaryFunction::getData() const {
   return ArrayRef<uint8_t>(Bytes + Offset, getMaxSize());
 }
 
+size_t BinaryFunction::getSizeOfDataInCodeAt(uint64_t Offset) const {
+  if (Islands.DataOffsets.find(Offset) == Islands.DataOffsets.end())
+    return 0;
+
+  auto Iter = Islands.CodeOffsets.upper_bound(Offset);
+  if (Iter != Islands.CodeOffsets.end()) {
+    return *Iter - Offset;
+  }
+  return getSize() - Offset;
+}
+
+bool BinaryFunction::isZeroPaddingAt(uint64_t Offset) const {
+  ArrayRef<uint8_t> FunctionData = *getData();
+  uint64_t EndOfCode = getSize();
+  auto Iter = Islands.DataOffsets.upper_bound(Offset);
+  if (Iter != Islands.DataOffsets.end())
+    EndOfCode = *Iter;
+  for (auto I = Offset; I < EndOfCode; ++I) {
+    if (FunctionData[I] != 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void BinaryFunction::disassemble() {
   NamedRegionTimer T("disassemble", "Disassemble function", "buildfuncs",
                      "Build Binary Functions", opts::TimeBuild);
   ErrorOr<ArrayRef<uint8_t>> ErrorOrFunctionData = getData();
-  assert(ErrorOrFunctionData && "Function data is not available");
+  assert(ErrorOrFunctionData && "function data is not available");
   ArrayRef<uint8_t> FunctionData = *ErrorOrFunctionData;
   assert(FunctionData.size() == getMaxSize() &&
          "function size does not match raw data size");
@@ -983,13 +1009,9 @@ void BinaryFunction::disassemble() {
     const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
 
     // Check for data inside code and ignore it
-    if (Islands.DataOffsets.find(Offset) != Islands.DataOffsets.end()) {
-      auto Iter = Islands.CodeOffsets.upper_bound(Offset);
-      if (Iter != Islands.CodeOffsets.end()) {
-        Size = *Iter - Offset;
-        continue;
-      }
-      break;
+    if (const auto DataInCodeSize = getSizeOfDataInCodeAt(Offset)) {
+      Size = DataInCodeSize;
+      continue;
     }
 
     if (!BC.DisAsm->getInstruction(Instruction,
@@ -1000,32 +1022,21 @@ void BinaryFunction::disassemble() {
                                    nulls())) {
       // Functions with "soft" boundaries, e.g. coming from assembly source,
       // can have 0-byte padding at the end.
-      bool IsZeroPadding = true;
-      uint64_t EndOfCode = getSize();
-      auto Iter = Islands.DataOffsets.upper_bound(Offset);
-      if (Iter != Islands.DataOffsets.end())
-        EndOfCode = *Iter;
-      for (auto I = Offset; I < EndOfCode; ++I) {
-        if (FunctionData[I] != 0) {
-          IsZeroPadding = false;
-          break;
-        }
+      if (isZeroPaddingAt(Offset))
+        break;
+
+      errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
+             << Twine::utohexstr(Offset) << " (address 0x"
+             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
+             << *this << '\n';
+      // Some AVX-512 instructions could not be disassembled at all.
+      if (BC.HasRelocations && opts::TrapOnAVX512 && BC.isX86()) {
+        setTrapOnEntry();
+        BC.TrappedFunctions.push_back(this);
+      } else {
+        IsSimple = false;
       }
 
-      if (!IsZeroPadding) {
-        // Ignore this function. Skip to the next one in non-relocs mode.
-        errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
-               << Twine::utohexstr(Offset) << " (address 0x"
-               << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
-               << *this << '\n';
-        // Some AVX-512 instructions could not be disassembled at all.
-        if (BC.HasRelocations && opts::TrapOnAVX512 && BC.isX86()) {
-          setTrapOnEntry();
-          BC.TrappedFunctions.push_back(this);
-        } else {
-          IsSimple = false;
-        }
-      }
       break;
     }
 
@@ -1351,6 +1362,72 @@ add_instruction:
   clearList(Relocations);
 
   updateState(State::Disassembled);
+}
+
+void BinaryFunction::scanExternalRefs() {
+  if (isPLTFunction())
+    return;
+
+  ErrorOr<ArrayRef<uint8_t>> ErrorOrFunctionData = getData();
+  assert(ErrorOrFunctionData && "function data is not available");
+  ArrayRef<uint8_t> FunctionData = *ErrorOrFunctionData;
+  assert(FunctionData.size() == getMaxSize() &&
+         "function size does not match raw data size");
+
+  uint64_t Size = 0;  // instruction size
+  for (uint64_t Offset = 0; Offset < getSize(); Offset += Size) {
+    // Check for data inside code and ignore it
+    if (const auto DataInCodeSize = getSizeOfDataInCodeAt(Offset)) {
+      Size = DataInCodeSize;
+      continue;
+    }
+
+    const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
+    MCInst Instruction;
+    if (!BC.DisAsm->getInstruction(Instruction,
+                                   Size,
+                                   FunctionData.slice(Offset),
+                                   AbsoluteInstrAddr,
+                                   nulls(),
+                                   nulls())) {
+      if (opts::Verbosity >= 1 && !isZeroPaddingAt(Offset)) {
+        errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
+               << Twine::utohexstr(Offset) << " (address 0x"
+               << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
+               << *this << '\n';
+      }
+      break;
+    }
+
+    // Detect address reference by an instruction.
+    // Without relocations, we can only trust PC-relative address modes.
+    uint64_t TargetAddress{0};
+    if (BC.MIB->hasPCRelOperand(Instruction)) {
+      if (!BC.MIB->evaluateMemOperandTarget(Instruction, TargetAddress,
+                                            AbsoluteInstrAddr, Size)) {
+        continue;
+      }
+    } else if (BC.MIB->isCall(Instruction) || BC.MIB->isBranch(Instruction)) {
+      if (!BC.MIB->evaluateBranch(Instruction, AbsoluteInstrAddr, Size,
+                                  TargetAddress)) {
+        continue;
+      }
+    } else {
+      continue;
+    }
+
+    if (containsAddress(TargetAddress, /*UseMaxSize=*/true))
+      continue;
+
+    auto *TargetFunction = BC.getBinaryFunctionContainingAddress(TargetAddress);
+    if (!TargetFunction)
+      continue;
+
+    const uint64_t TargetOffset = TargetAddress - TargetFunction->getAddress();
+    if (TargetOffset && TargetFunction->isSimple()) {
+      TargetFunction->addEntryPointAtOffset(TargetOffset);
+    }
+  }
 }
 
 void BinaryFunction::postProcessEntryPoints() {
