@@ -1295,7 +1295,7 @@ void RewriteInstance::disassemblePLT() {
                << Twine::utohexstr(InstrAddr) << '\n';
         exit(1);
       }
-      
+
       auto NI = RelAddrToNameMap.find(TargetAddress);
       if (NI == RelAddrToNameMap.end())
         continue;
@@ -2762,6 +2762,14 @@ void RewriteInstance::linkRuntime() {
       auto ChildKey = ES->allocateVModule();
       auto ChildBuf =
           MemoryBuffer::getMemBuffer(cantFail(C.getMemoryBufferRef()));
+      auto ChildMagic = identify_magic(ChildBuf->getBuffer());
+      if (ChildMagic != file_magic::elf_relocatable &&
+          ChildMagic != file_magic::elf_shared_object) {
+        errs() << "BOLT-ERROR: unrecognized instrumentation library format "
+               << "inside the archiver: "
+               << LibPath << "\n";
+        exit(1);
+      }
       cantFail(OLT->addObject(ChildKey, std::move(ChildBuf)));
       cantFail(OLT->emitAndFinalize(ChildKey));
     }
