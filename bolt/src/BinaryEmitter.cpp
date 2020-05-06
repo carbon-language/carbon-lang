@@ -946,7 +946,7 @@ void BinaryEmitter::emitDebugLineInfoForNonSimpleFunctions() {
       // Add an empty entry past the end of the function
       // for end_sequence mark.
       BC.Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0,
-                                  Address + Function.getMaxSize());
+                                 Address + Function.getMaxSize());
       auto Loc = BC.Ctx->getCurrentDwarfLoc();
       BC.Ctx->clearDwarfLocSeen();
       OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
