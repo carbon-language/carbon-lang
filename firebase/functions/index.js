@@ -49,20 +49,34 @@ const validateFirebaseIdToken = async (req, res, next) => {
     auth: secret.payload.data.toString('utf8'),
   });
 
-  // Validate that the GitHub user is in carbon-language.
-  const { data: members } = await octokit.orgs.listMembers({
-    org: 'carbon-language',
-  });
+  // Translate the GitHub ID to a username.
   const wantId = req.user.firebase.identities["github.com"][0];
-  for (var i = 0; i < members.length; ++i) {
-    if (members[i].id == wantId) {
+  const { data: ghUser } = await octokit.users.list({
+    since: wantId - 1,
+    per_page: 1,
+  });
+  if (ghUser.length < 1 || ghUser[0].id != wantId) {
+    // An issue with the GitHub ID.
+    res.redirect(302, "/logout.html");
+  }
+  const username = ghUser[0].login;
+
+  // Validate that the GitHub user is in carbon-language.
+  try {
+    const { data: member } = await octokit.orgs.getMembership({
+      org: 'carbon-language',
+      username: username,
+    });
+    if (member && member.state == 'active' && member.user.id == wantId) {
       next();
       return;
     }
+    // No access, force logout.
+    res.redirect(302, "/logout.html");
+  } catch (err) {
+    // Not a member, force logout.
+    res.redirect(302, "/logout.html");
   }
-
-  // No access, force logout.
-  res.redirect(302, "/logout.html");
 };
 
 app.use(cors);
