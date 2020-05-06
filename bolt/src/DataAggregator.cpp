@@ -113,14 +113,14 @@ WriteAutoFDOData("autofdo",
 
 static cl::opt<bool>
 IgnoreInterruptLBR("ignore-interrupt-lbr",
-  cl::desc("Ignore kernel interrupt LBR that happens asynchronously"),
-  cl::init(false),
+  cl::desc("ignore kernel interrupt LBR that happens asynchronously"),
+  cl::init(true),
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
 
 static cl::opt<unsigned long long>
 FilterPID("pid",
-  cl::desc("Only use samples from process with specified PID"),
+  cl::desc("only use samples from process with specified PID"),
   cl::init(0),
   cl::Optional,
   cl::cat(AggregatorCategory));
