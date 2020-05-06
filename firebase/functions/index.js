@@ -8,9 +8,10 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
-const express = require('express');
 const cookieParser = require('cookie-parser')();
 const cors = require('cors')({origin: true});
+
+const express = require('express');
 const app = express();
 
 const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
