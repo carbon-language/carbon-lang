@@ -12,11 +12,11 @@ free to ask on our Discourse Forums or Discord Chat.
 
 Everyone contributing to Carbon is expected to:
 
-*   Read and follow the [Code of Conduct](CODE_OF_CONDUCT.md). We expect
-    everyone in our community to be welcoming, helpful, and respectful.
-*   Ensure you have signed the
-    [Contributor License Agreement (CLA)](https://cla.developers.google.com/).
-    We need this to cover some legal bases.
+- Read and follow the [Code of Conduct](CODE_OF_CONDUCT.md). We expect everyone
+  in our community to be welcoming, helpful, and respectful.
+- Ensure you have signed the
+  [Contributor License Agreement (CLA)](https://cla.developers.google.com/). We
+  need this to cover some legal bases.
 
 We also encourage anyone interested in contributing to check out all the
 information here in our contributing guide, especially the
@@ -71,13 +71,13 @@ can accept them, we need you to cover some legal bases.
 
 Please fill out either the individual or corporate CLA.
 
-*   If you are an individual contributing to spec discussions or writing
-    original source code and you're sure you own the intellectual property, then
-    you'll need to sign an
-    [individual CLA](https://code.google.com/legal/individual-cla-v1.0.html).
-*   If you work for a company that wants to allow you to contribute your work,
-    then you'll need to sign a
-    [corporate CLA](https://code.google.com/legal/corporate-cla-v1.0.html).
+- If you are an individual contributing to spec discussions or writing original
+  source code and you're sure you own the intellectual property, then you'll
+  need to sign an
+  [individual CLA](https://code.google.com/legal/individual-cla-v1.0.html).
+- If you work for a company that wants to allow you to contribute your work,
+  then you'll need to sign a
+  [corporate CLA](https://code.google.com/legal/corporate-cla-v1.0.html).
 
 Follow either of the two links above to access the appropriate CLA and
 instructions for how to sign and return it. Once we receive it, we'll be able to
@@ -99,12 +99,12 @@ take ownership of providing a CLA.
 We use a few systems for collaboration which contributors should be aware of.
 Membership is currently invite-only.
 
-*   [GitHub](https://github.com/orgs/carbon-language): We use the
-    "carbon-language" organization for our repositories.
+- [GitHub](https://github.com/orgs/carbon-language): We use the
+  "carbon-language" organization for our repositories.
 
-*   [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
-    We use this shared drive for all of our Google Docs, particularly proposal
-    drafts.
+- [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
+  We use this shared drive for all of our Google Docs, particularly proposal
+  drafts.
 
 ## Contribution guidelines and standards
 
@@ -113,46 +113,44 @@ follow the Carbon documentation and coding styles.
 
 ### Guidelines and philosophy for contributions
 
-*   For **both** documentation and code:
+- For **both** documentation and code:
 
-    *   When the Carbon team accepts new documentation or features, to Carbon,
-        by default they take on the maintenance burden. This means they'll weigh
-        the benefit of each contribution must be weighed against the cost of
-        maintaining it.
-    *   The appropriate [style](#style) is applied.
-    *   The [license](#license) is present in all contributions.
+  - When the Carbon team accepts new documentation or features, to Carbon, by
+    default they take on the maintenance burden. This means they'll weigh the
+    benefit of each contribution must be weighed against the cost of maintaining
+    it.
+  - The appropriate [style](#style) is applied.
+  - The [license](#license) is present in all contributions.
 
-*   For documentation:
+- For documentation:
 
-    *   All documentation is written for clarity and readability. Beyond fixing
-        spelling and grammar, this also means content is worded to be accessible
-        to a broad audience.
-    *   Substantive changes to Carbon follow the
-        [evolution process](docs/project/evolution.md). Pull requests are only
-        sent after the documentation changes have been accepted by the reviewing
-        team.
-    *   Typos or other minor fixes that don't change the meaning of a document
-        do not need formal review, and are often handled directly as a pull
-        request.
+  - All documentation is written for clarity and readability. Beyond fixing
+    spelling and grammar, this also means content is worded to be accessible to
+    a broad audience.
+  - Substantive changes to Carbon follow the
+    [evolution process](docs/project/evolution.md). Pull requests are only sent
+    after the documentation changes have been accepted by the reviewing team.
+  - Typos or other minor fixes that don't change the meaning of a document do
+    not need formal review, and are often handled directly as a pull request.
 
-*   For code:
+- For code:
 
-    *   New features should have a documented design that has been approved
-        through the [evolution process](docs/project/evolution.md). This
-        includes modifications to pre-existing designs.
-    *   Bug fixes and mechanical improvements don't need this.
-    *   All new features include unit tests, as they help to (a) document and
-        validate concrete usage of the feature and its edge cases, and (b) guard
-        against future breaking changes to lower the maintenance cost.
-    *   Bug fixes also generally include unit tests, because the presence of
-        bugs usually indicates insufficient test coverage.
-    *   Unit tests must pass with the changes.
-    *   If some tests fail for unrelated reasons, we wait until they're fixed
-        (it helps to contribute a fix!).
-    *   Code changes are made with API compatibility and evolvability in mind.
-        Reviewers will comment on any API compatibility issues.
-    *   Keep in mind that code contribution guidelines are incomplete while we
-        start work on Carbon, and may change later.
+  - New features should have a documented design that has been approved through
+    the [evolution process](docs/project/evolution.md). This includes
+    modifications to pre-existing designs.
+  - Bug fixes and mechanical improvements don't need this.
+  - All new features include unit tests, as they help to (a) document and
+    validate concrete usage of the feature and its edge cases, and (b) guard
+    against future breaking changes to lower the maintenance cost.
+  - Bug fixes also generally include unit tests, because the presence of bugs
+    usually indicates insufficient test coverage.
+  - Unit tests must pass with the changes.
+  - If some tests fail for unrelated reasons, we wait until they're fixed (it
+    helps to contribute a fix!).
+  - Code changes are made with API compatibility and evolvability in mind.
+    Reviewers will comment on any API compatibility issues.
+  - Keep in mind that code contribution guidelines are incomplete while we start
+    work on Carbon, and may change later.
 
 # Style
 
@@ -161,13 +159,13 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files additionally follow the
-[Google Markdown style guide](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md).
+Markdown files should additionally use [Prettier](https://prettier.io/) for
+formatting.
 
 Other style points to be aware of are:
 
-*   Always say "Discourse Forum" and "Discord Chat" to avoid confusion between
-    systems.
+- Always say "Discourse Forum" and "Discord Chat" to avoid confusion between
+  systems.
 
 ## Other files
 
