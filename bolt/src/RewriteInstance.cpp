@@ -137,6 +137,13 @@ OutputFilename("o",
   cl::Optional,
   cl::cat(BoltOutputCategory));
 
+cl::opt<std::string>
+BoltID("bolt-id",
+  cl::desc("add any string to tag this execution in the "
+           "output binary via bolt info section"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
 cl::opt<bool>
 AllowStripped("allow-stripped",
   cl::desc("allow processing of stripped binaries"),
