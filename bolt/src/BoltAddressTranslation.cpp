@@ -12,6 +12,7 @@
 #include "BinaryFunction.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/Support/DataExtractor.h"
+#include "llvm/Support/Errc.h"
 
 #define DEBUG_TYPE "bolt-bat"
 
@@ -219,16 +220,15 @@ uint64_t BoltAddressTranslation::translate(const BinaryFunction &Func,
 
 Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
 BoltAddressTranslation::getFallthroughsInTrace(
-    const BinaryFunction &Func,
-    const LBREntry &FirstLBR, const LBREntry &SecondLBR) const {
+    const BinaryFunction &Func, uint64_t From, uint64_t To) const {
   SmallVector<std::pair<uint64_t, uint64_t>, 16> Res;
 
   // Filter out trivial case
-  if (FirstLBR.To >= SecondLBR.From)
+  if (From >= To)
     return Res;
 
-  const auto From = FirstLBR.To - Func.getAddress();
-  const auto To = SecondLBR.From - Func.getAddress();
+  From -= Func.getAddress();
+  To -= Func.getAddress();
 
   auto Iter = Maps.find(Func.getAddress());
   if (Iter == Maps.end()) {

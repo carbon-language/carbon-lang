@@ -63,7 +63,6 @@ namespace bolt {
 
 class BinaryFunction;
 class BinaryBasicBlock;
-class DataReader;
 class ExecutableFileMemoryManager;
 
 enum class MemoryContentsType : char {
@@ -130,6 +129,12 @@ public:
 class BinaryContext {
   BinaryContext() = delete;
 
+  /// Name of the binary file the context originated from.
+  std::string Filename;
+
+  /// Unique build ID if available for the binary.
+  Optional<std::string> FileBuildID;
+
   /// Set of all sections.
   struct CompareSections {
     bool operator()(const BinarySection *A, const BinarySection *B) const {
@@ -180,8 +185,7 @@ class BinaryContext {
 
 public:
   static std::unique_ptr<BinaryContext>
-  createBinaryContext(ObjectFile *File, DataReader &DR,
-                      std::unique_ptr<DWARFContext> DwCtx);
+  createBinaryContext(ObjectFile *File, std::unique_ptr<DWARFContext> DwCtx);
 
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = StringMap<BinaryData *>;
@@ -205,6 +209,32 @@ public:
   /// Memory manager for sections and segments. Used to communicate with ORC
   /// among other things.
   std::shared_ptr<ExecutableFileMemoryManager> EFMM;
+
+  StringRef getFilename() const { return Filename; }
+  void setFilename(StringRef Name) { Filename = Name; }
+
+  Optional<StringRef> getFileBuildID() const {
+    if (FileBuildID) {
+      return StringRef(*FileBuildID);
+    }
+
+    return NoneType();
+  }
+  void setFileBuildID(StringRef ID) { FileBuildID = ID; }
+
+  bool hasSymbolsWithFileName() const {
+    return HasSymbolsWithFileName;
+  }
+  void setHasSymbolsWithFileName(bool Value) {
+    HasSymbolsWithFileName = true;
+  }
+
+  uint64_t getNumUnusedProfiledObjects() const {
+    return NumUnusedProfiledObjects;
+  }
+  void setNumUnusedProfiledObjects(uint64_t N) {
+    NumUnusedProfiledObjects = N;
+  }
 
   /// Return BinaryFunction containing a given \p Address or nullptr if
   /// no registered function has it.
@@ -318,10 +348,6 @@ public:
 
   /// Generate names based on data hashes for unknown symbols.
   void generateSymbolHashes();
-
-  /// Populate \p GlobalMemData.  This should be done after all symbol discovery
-  /// is complete, e.g. after building CFGs for all functions.
-  void assignMemData();
 
   /// Construct BinaryFunction object and add it to internal maps.
   BinaryFunction *createBinaryFunction(const std::string &Name,
@@ -454,19 +480,24 @@ public:
 
   std::unique_ptr<MCAsmBackend> MAB;
 
-  DataReader &DR;
-
   /// Indicates if relocations are available for usage.
   bool HasRelocations{false};
 
   /// Is the binary always loaded at a fixed address.
   bool HasFixedLoadAddress{true};
 
+  /// Indicates if any of local symbols used for functions or data objects
+  /// have an origin file name available.
+  bool HasSymbolsWithFileName{false};
+
   /// Sum of execution count of all functions
   uint64_t SumExecutionCount{0};
 
   /// Number of functions with profile information
   uint64_t NumProfiledFuncs{0};
+
+  /// Number of objects in profile whose profile was ignored.
+  uint64_t NumUnusedProfiledObjects{0};
 
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
@@ -522,8 +553,7 @@ public:
                 std::unique_ptr<const MCInstrAnalysis> MIA,
                 std::unique_ptr<MCPlusBuilder> MIB,
                 std::unique_ptr<const MCRegisterInfo> MRI,
-                std::unique_ptr<MCDisassembler> DisAsm,
-                DataReader &DR);
+                std::unique_ptr<MCDisassembler> DisAsm);
 
   ~BinaryContext();
 

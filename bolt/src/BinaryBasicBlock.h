@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: memory management for instructions.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_BASIC_BLOCK_H
@@ -958,6 +956,17 @@ public:
   /// Return true if the containing function is in a state with instructions.
   bool hasInstructions() const;
 
+  /// Return offset of the basic block from the function start.
+  uint32_t getOffset() const {
+    return InputRange.first;
+  }
+
+  /// Get the index of this basic block.
+  unsigned getIndex() const {
+    assert(isValid());
+    return Index;
+  }
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
@@ -978,20 +987,9 @@ private:
   /// will be removed. This only matters in awkward, redundant CFGs.
   void removePredecessor(BinaryBasicBlock *Pred, bool Multiple=true);
 
-  /// Return offset of the basic block from the function start.
-  uint32_t getOffset() const {
-    return InputRange.first;
-  }
-
   /// Set end offset of this basic block.
   void setEndOffset(uint32_t Offset) {
     InputRange.second = Offset;
-  }
-
-  /// Get the index of this basic block.
-  unsigned getIndex() const {
-    assert(isValid());
-    return Index;
   }
 
   /// Set the index of this basic block.

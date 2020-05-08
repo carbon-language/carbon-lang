@@ -84,8 +84,8 @@ public:
   /// Return NoneType if trace is invalid or the list of fall-throughs
   /// otherwise.
   Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
-  getFallthroughsInTrace(const BinaryFunction &Func, const LBREntry &FirstLBR,
-                         const LBREntry &SecondLBR) const;
+  getFallthroughsInTrace(const BinaryFunction &Func, uint64_t From,
+                         uint64_t To) const;
 
   /// If available, fetch the address of the hot part linked to the cold part
   /// at \p Address. Return 0 otherwise.

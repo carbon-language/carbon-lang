@@ -177,15 +177,63 @@ DataOrder ReorderData::baseOrder(BinaryContext &BC,
     auto *BD = Entry.second;
     if (!BD->isAtomic()) // skip sub-symbols
       continue;
-    const auto Total = std::accumulate(BD->memData().begin(),
-                                       BD->memData().end(),
-                                       0,
-                                       [](uint64_t Sum, const MemInfo& MI) {
-                                         return Sum + MI.Count;
-                                       });
-    Order.push_back(std::make_pair(BD, Total));
+    auto BDCI = BinaryDataCounts.find(BD);
+    uint64_t BDCount = BDCI == BinaryDataCounts.end() ? 0 : BDCI->second;
+    Order.push_back(std::make_pair(BD, BDCount));
   }
   return Order;
+}
+
+void ReorderData::assignMemData(BinaryContext &BC) {
+  // Map of sections (or heap/stack) to count/size.
+  StringMap<uint64_t> Counts;
+  StringMap<uint64_t> JumpTableCounts;
+  uint64_t TotalCount{0};
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    const auto &BF = BFI.second;
+    if (!BF.hasMemoryProfile())
+      continue;
+
+    for (const auto &BB : BF) {
+      for (const auto &Inst : BB) {
+        auto ErrorOrMemAccesssProfile =
+          BC.MIB->tryGetAnnotationAs<MemoryAccessProfile>(
+              Inst, "MemoryAccessProfile");
+        if (!ErrorOrMemAccesssProfile)
+          continue;
+
+        const auto &MemAccessProfile = ErrorOrMemAccesssProfile.get();
+        for (const auto &AccessInfo : MemAccessProfile.AddressAccessInfo) {
+          if (auto *BD = AccessInfo.MemoryObject) {
+            BinaryDataCounts[BD->getAtomicRoot()] += AccessInfo.Count;
+            Counts[BD->getSectionName()] += AccessInfo.Count;
+            if (BD->getAtomicRoot()->isJumpTable()) {
+              JumpTableCounts[BD->getSectionName()] += AccessInfo.Count;
+            }
+          } else {
+            Counts["Heap/stack"] += AccessInfo.Count;
+          }
+          TotalCount += AccessInfo.Count;
+        }
+      }
+    }
+  }
+
+  if (!Counts.empty()) {
+    outs() << "BOLT-INFO: Memory stats breakdown:\n";
+    for (auto &Entry : Counts) {
+      StringRef Section = Entry.first();
+      const auto Count = Entry.second;
+      outs() << "BOLT-INFO:   " << Section << " = " << Count
+             << format(" (%.1f%%)\n", 100.0*Count/TotalCount);
+      if (JumpTableCounts.count(Section) != 0) {
+        const auto JTCount = JumpTableCounts[Section];
+        outs() << "BOLT-INFO:     jump tables = " << JTCount
+               << format(" (%.1f%%)\n", 100.0*JTCount/Count);
+      }
+    }
+    outs() << "BOLT-INFO: Total memory events: " << TotalCount << "\n";
+  }
 }
 
 /// Only consider moving data that is used by the hottest functions with
@@ -198,10 +246,33 @@ std::pair<DataOrder, unsigned> ReorderData::sortedByFunc(
   std::map<BinaryData *, std::set<BinaryFunction *>> BDtoFunc;
   std::map<BinaryData *, uint64_t> BDtoFuncCount;
 
+  auto dataUses = [&BC](const BinaryFunction &BF, bool OnlyHot) {
+    std::set<BinaryData *> Uses;
+    for (const auto &BB : BF) {
+      if (OnlyHot && BB.isCold())
+        continue;
+
+      for (const auto &Inst : BB) {
+        auto ErrorOrMemAccesssProfile =
+          BC.MIB->tryGetAnnotationAs<MemoryAccessProfile>(
+              Inst, "MemoryAccessProfile");
+        if (!ErrorOrMemAccesssProfile)
+          continue;
+
+        const auto &MemAccessProfile = ErrorOrMemAccesssProfile.get();
+        for (const auto &AccessInfo : MemAccessProfile.AddressAccessInfo) {
+          if (AccessInfo.MemoryObject)
+            Uses.insert(AccessInfo.MemoryObject);
+        }
+      }
+    }
+    return Uses;
+  };
+
   for (auto &Entry : BFs) {
     auto &BF = Entry.second;
     if (BF.hasValidProfile()) {
-      for (auto *BD : BF.dataUses(true)) {
+      for (auto *BD : dataUses(BF, true)) {
         if (!BC.getFunctionForSymbol(BD->getSymbol())) {
           BDtoFunc[BD->getAtomicRoot()].insert(&BF);
           BDtoFuncCount[BD->getAtomicRoot()] += BF.getKnownExecutionCount();
@@ -397,6 +468,8 @@ void ReorderData::runOnFunctions(BinaryContext &BC) {
     return;
   }
 
+  assignMemData(BC);
+
   std::vector<BinarySection *> Sections;
 
   for (auto &SectionName : opts::ReorderData) {
@@ -410,7 +483,8 @@ void ReorderData::runOnFunctions(BinaryContext &BC) {
 
     auto Section = BC.getUniqueSectionByName(SectionName);
     if (!Section) {
-      outs() << "BOLT-WARNING: Section " << SectionName << " not found, skipping.\n";
+      outs() << "BOLT-WARNING: Section " << SectionName
+             << " not found, skipping.\n";
       continue;
     }
 

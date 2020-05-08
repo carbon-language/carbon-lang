@@ -14,6 +14,7 @@
 
 #include "BinaryPasses.h"
 #include "BinarySection.h"
+#include <unordered_map>
 
 namespace llvm {
 namespace bolt {
@@ -25,6 +26,10 @@ public:
 private:
   DataOrder baseOrder(BinaryContext &BC,
                       const BinarySection &Section) const;
+
+  std::unordered_map<BinaryData *, uint64_t> BinaryDataCounts;
+
+  void assignMemData(BinaryContext &BC);
 
   /// Sort symbols by memory profiling data execution count.  The output
   /// is a vector of [address,count] pairs.

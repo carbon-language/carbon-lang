@@ -12,10 +12,9 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_DATA_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_DATA_H
 
-#include "DataReader.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -54,24 +53,18 @@ protected:
   /// Alignment of this data.
   uint16_t Alignment{1};
 
+  bool IsMoveable{true};
+
   /// Symbol flags (same as llvm::SymbolRef::Flags)
   unsigned Flags{0};
 
   /// Output section for this data if it has been moved from the original
   /// section.
   BinarySection *OutputSection{nullptr};
+
   /// The offset of this symbol in the output section.  This is different
   /// from \p Address - Section.getAddress() when the data has been reordered.
   uint64_t OutputOffset{0};
-
-  /// Memory profiling data associated with this object.
-  std::vector<MemInfo> MemData;
-
-  bool IsMoveable{true};
-
-  void addMemData(const MemInfo &MI) {
-    MemData.push_back(MI);
-  }
 
   BinaryData *getRootData() {
     auto *BD = this;
@@ -107,10 +100,6 @@ public:
 
   iterator_range<std::vector<MCSymbol *>::const_iterator> symbols() const {
     return make_range(Symbols.begin(), Symbols.end());
-  }
-
-  iterator_range<std::vector<MemInfo>::const_iterator> memData() const {
-    return make_range(MemData.begin(), MemData.end());
   }
 
   StringRef getName() const { return getSymbol()->getName(); }
@@ -204,6 +193,50 @@ public:
 
 inline raw_ostream &operator<<(raw_ostream &OS, const BinaryData &BD) {
   BD.printBrief(OS);
+  return OS;
+}
+
+/// Address access info used for memory profiling.
+struct AddressAccess {
+  BinaryData *MemoryObject; /// Object accessed or nullptr
+  uint64_t Offset;          /// Offset within the object or absolute address
+  uint64_t Count;           /// Number of accesses
+  bool operator==(const AddressAccess &Other) const {
+    return MemoryObject == Other.MemoryObject &&
+           Offset == Other.Offset &&
+           Count == Other.Count;
+  }
+};
+
+/// Aggregated memory access info per instruction.
+struct MemoryAccessProfile {
+  uint64_t NextInstrOffset;
+  SmallVector<AddressAccess, 4> AddressAccessInfo;
+  bool operator==(const MemoryAccessProfile &Other) const {
+    return NextInstrOffset == Other.NextInstrOffset &&
+           AddressAccessInfo == Other.AddressAccessInfo;
+  }
+};
+
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const bolt::MemoryAccessProfile &MAP) {
+  std::string TempString;
+  raw_string_ostream SS(TempString);
+
+  const char *Sep = "\n        ";
+  uint64_t TotalCount = 0;
+  for (auto &AccessInfo : MAP.AddressAccessInfo) {
+    SS << Sep << "{ ";
+    if (AccessInfo.MemoryObject)
+      SS << AccessInfo.MemoryObject->getName() << " + ";
+    SS << "0x" << Twine::utohexstr(AccessInfo.Offset) << ": "
+       << AccessInfo.Count << " }";
+    Sep = ",\n        ";
+    TotalCount += AccessInfo.Count;
+  }
+  SS.flush();
+
+  OS << TotalCount << " total counts : " << TempString;
   return OS;
 }
 

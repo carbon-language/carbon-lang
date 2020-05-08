@@ -25,10 +25,10 @@
 #include "MCPlusBuilder.h"
 #include "ParallelUtilities.h"
 #include "Passes/ReorderFunctions.h"
-#include "ProfileReader.h"
-#include "ProfileWriter.h"
 #include "Relocation.h"
 #include "Utils.h"
+#include "YAMLProfileReader.h"
+#include "YAMLProfileWriter.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Magic.h"
@@ -148,11 +148,6 @@ cl::opt<bool>
 AllowStripped("allow-stripped",
   cl::desc("allow processing of stripped binaries"),
   cl::Hidden,
-  cl::cat(BoltCategory));
-
-static cl::opt<std::string>
-BoltProfile("b",
-  cl::desc("<bolt profile>"),
   cl::cat(BoltCategory));
 
 cl::opt<bool>
@@ -451,12 +446,11 @@ bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
 
 } // namespace
 
-RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
-                                 DataAggregator &DA, const int Argc,
+RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const int Argc,
                                  const char *const *Argv, StringRef ToolPath)
-    : InputFile(File), Argc(Argc), Argv(Argv), ToolPath(ToolPath), DA(DA),
+    : InputFile(File), Argc(Argc), Argv(Argv), ToolPath(ToolPath),
       BC(BinaryContext::createBinaryContext(
-          File, DR,
+          File,
           DWARFContext::create(*File, nullptr,
                                DWARFContext::defaultErrorHandler, "", false))),
       BAT(llvm::make_unique<BoltAddressTranslation>(*BC)),
@@ -468,20 +462,34 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
 
 RewriteInstance::~RewriteInstance() {}
 
+Error RewriteInstance::setProfile(StringRef Filename) {
+  if (!sys::fs::exists(Filename))
+    return errorCodeToError(make_error_code(errc::no_such_file_or_directory));
+
+  if (ProfileReader) {
+    // Already exists
+    return make_error<StringError>(
+        Twine("multiple profiles specified: ") + ProfileReader->getFilename() +
+        " and " + Filename, inconvertibleErrorCode());
+  }
+
+  // Spawn a profile reader based on file contents.
+  if (DataAggregator::checkPerfDataMagic(Filename)) {
+    ProfileReader = llvm::make_unique<DataAggregator>(Filename);
+  } else if (YAMLProfileReader::isYAML(Filename)) {
+    ProfileReader = llvm::make_unique<YAMLProfileReader>(Filename);
+  } else {
+    ProfileReader = llvm::make_unique<DataReader>(Filename);
+  }
+
+  return Error::success();
+}
+
 bool RewriteInstance::shouldDisassemble(const BinaryFunction &BF) const {
   // If we have to relocate the code we have to disassemble all functions.
   if (!BC->HasRelocations && BF.isIgnored()) {
     return false;
   }
-
-  // If we are running in profile conversion mode and there is no profile
-  // available for the function, we can skip the disassembly.
-  // However, in strict relocation mode we need to account for all
-  // functions. Also, when multi-threading is enabled, the profile may not be
-  // available yet, and we conservatively disassemble the function.
-  if (opts::AggregateOnly && opts::NoThreads && !opts::StrictMode &&
-      !BF.hasProfileAvailable())
-    return false;
 
   return true;
 }
@@ -754,31 +762,27 @@ void RewriteInstance::run() {
   adjustCommandLineOptions();
   discoverFileObjects();
 
-  std::thread PreProcessProfileThread([&]() {
-    outs() << "BOLT-INFO: spawning thread to pre-process profile\n";
+  // Skip disassembling if we have a translation table and we are running an
+  // aggregation job.
+  if (opts::AggregateOnly && BAT->enabledFor(InputFile)) {
     preprocessProfileData();
-  });
+    processProfileData();
+    return;
+  }
 
-  if (opts::NoThreads || opts::Lite)
-    PreProcessProfileThread.join();
+  preprocessProfileData();
 
   selectFunctionsToProcess();
 
   readDebugInfo();
 
-  // Skip disassembling if we have a translation table and we are running an
-  // aggregation job.
-  if (!opts::AggregateOnly || !BAT->enabledFor(InputFile)) {
-    disassembleFunctions();
-  }
+  disassembleFunctions();
 
-  if (PreProcessProfileThread.joinable())
-    PreProcessProfileThread.join();
+  processProfileDataPreCFG();
+
+  buildFunctionsCFG();
 
   processProfileData();
-
-  if (opts::AggregateOnly)
-    return;
 
   postProcessFunctions();
 
@@ -790,16 +794,6 @@ void RewriteInstance::run() {
   emitAndLink();
 
   updateMetadata();
-
-  if (opts::WriteBoltInfoSection)
-    addBoltInfoSection();
-
-  // Copy allocatable part of the input.
-  std::error_code EC;
-  Out = llvm::make_unique<ToolOutputFile>(opts::OutputFilename, EC,
-                                          sys::fs::F_None, 0777);
-  check_error(EC, "cannot create output executable file");
-  Out->os() << InputFile->getData().substr(0, FirstNonAllocatableOffset);
 
   // Rewrite allocatable contents and copy non-allocatable parts with mods.
   rewriteFile();
@@ -1213,14 +1207,7 @@ void RewriteInstance::discoverFileObjects() {
                              FDE->getAddressRange(), true);
   }
 
-  if (!SeenFileName && BC->DR.hasLocalsWithFileName() && !opts::AllowStripped) {
-    errs() << "BOLT-ERROR: input binary does not have local file symbols "
-              "but profile data includes function names with embedded file "
-              "names. It appears that the input binary was stripped while a "
-              "profiled binary was not. If you know what you are doing and "
-              "wish to proceed, use -allow-stripped option.\n";
-    exit(1);
-  }
+  BC->setHasSymbolsWithFileName(SeenFileName);
 
   // Now that all the functions were created - adjust their boundaries.
   adjustFunctionBoundaries();
@@ -1572,15 +1559,8 @@ void RewriteInstance::readSpecialSections() {
 
   // Parse build-id
   parseBuildID();
-
-  if (DA.started()) {
-    if (auto FileBuildID = getPrintableBuildID()) {
-      outs() << "BOLT-INFO: binary build-id is:     " << *FileBuildID << "\n";
-      DA.processFileBuildID(*FileBuildID);
-    } else {
-      errs() << "BOLT-WARNING: build-id will not be checked because we could "
-                "not read one from input binary\n";
-    }
+  if (auto FileBuildID = getPrintableBuildID()) {
+    BC->setFileBuildID(*FileBuildID);
   }
 
   parseSDTNotes();
@@ -1656,9 +1636,7 @@ void RewriteInstance::adjustCommandLineOptions() {
   }
 
   if (BC->isX86() && BC->HasRelocations &&
-      opts::AlignMacroOpFusion == MFT_HOT &&
-      !DA.started() && BC->DR.getAllFuncsData().empty() &&
-      opts::BoltProfile.empty()) {
+      opts::AlignMacroOpFusion == MFT_HOT && !ProfileReader) {
     outs() << "BOLT-INFO: enabling -align-macro-fusion=all since no profile "
               "was specified\n";
     opts::AlignMacroOpFusion = MFT_ALL;
@@ -2291,8 +2269,7 @@ void RewriteInstance::selectFunctionsToProcess() {
     }
 
     if (opts::Lite) {
-      if (!BC->DR.getAllFuncsData().empty() &&
-          !BC->DR.mayHaveProfileData(Function)) {
+      if (ProfileReader && !ProfileReader->mayHaveProfileData(Function)) {
         return false;
       }
     }
@@ -2327,72 +2304,67 @@ void RewriteInstance::readDebugInfo() {
 }
 
 void RewriteInstance::preprocessProfileData() {
+  if (!ProfileReader)
+    return;
+
   NamedRegionTimer T("preprocessprofile", "pre-process profile data",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  if (DA.started()) {
-    if (BAT->enabledFor(InputFile)) {
-      outs() << "BOLT-INFO: profile collection done on a binary already "
-                "processed by BOLT\n";
-      DA.setBAT(&*BAT);
-    }
-    DA.parseProfile(*BC.get());
-    return;
+
+  outs() << "BOLT-INFO: pre-processing profile using "
+         << ProfileReader->getReaderName() << '\n';
+
+  if (BAT->enabledFor(InputFile)) {
+    outs() << "BOLT-INFO: profile collection done on a binary already "
+              "processed by BOLT\n";
+    ProfileReader->setBAT(&*BAT);
   }
 
-  // Preliminary match profile data to functions.
-  if (!BC->DR.getAllFuncsData().empty()) {
-    if (BC->DR.collectedInBoltedBinary()) {
-      outs() << "BOLT-INFO: profile collection done on a binary already "
-                "processed by BOLT\n";
-    }
-    for (auto &BFI : BC->getBinaryFunctions()) {
-      auto &Function = BFI.second;
-      if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
-        Function.MemData = MemData;
-        MemData->Used = true;
-      }
-      if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
-        Function.BranchData = FuncData;
-        Function.ExecutionCount = FuncData->ExecutionCount;
-        FuncData->Used = true;
-      }
-    }
+  if (auto E = ProfileReader->preprocessProfile(*BC.get()))
+    report_error("cannot pre-process profile", std::move(E));
+
+  if (!BC->hasSymbolsWithFileName() &&
+      ProfileReader->hasLocalsWithFileName() &&
+      !opts::AllowStripped) {
+    errs() << "BOLT-ERROR: input binary does not have local file symbols "
+              "but profile data includes function names with embedded file "
+              "names. It appears that the input binary was stripped while a "
+              "profiled binary was not. If you know what you are doing and "
+              "wish to proceed, use -allow-stripped option.\n";
+    exit(1);
   }
 }
 
+void RewriteInstance::processProfileDataPreCFG() {
+  if (!ProfileReader)
+    return;
+
+  NamedRegionTimer T("processprofile-precfg", "process profile data pre-CFG",
+                     TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
+
+  if (auto E = ProfileReader->readProfilePreCFG(*BC.get()))
+    report_error("cannot read profile pre-CFG", std::move(E));
+}
+
 void RewriteInstance::processProfileData() {
+  if (!ProfileReader)
+    return;
+
   NamedRegionTimer T("processprofile", "process profile data", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
-  if (!opts::BoltProfile.empty()) {
-    ProfileReader PR;
-    auto EC = PR.readProfile(opts::BoltProfile, BC->getBinaryFunctions());
-    check_error(EC, "cannot read profile");
 
-    return;
-  }
-
-  if (DA.started()) {
-    DA.processProfile(*BC.get());
-
-    for (auto &BFI : BC->getBinaryFunctions()) {
-      auto &Function = BFI.second;
-      Function.convertBranchData();
-    }
-    if (opts::AggregateOnly) {
-      if (std::error_code EC = DA.writeAggregatedFile()) {
-        check_error(EC, "cannot create output data file");
-      }
-    }
-  } else {
-    for (auto &BFI : BC->getBinaryFunctions()) {
-      auto &Function = BFI.second;
-      Function.readProfile();
-    }
-  }
+  if (auto E = ProfileReader->readProfile(*BC.get()))
+    report_error("cannot read profile", std::move(E));
 
   if (!opts::SaveProfile.empty()) {
-    ProfileWriter PW(opts::SaveProfile);
+    YAMLProfileWriter PW(opts::SaveProfile);
     PW.writeProfile(*this);
+  }
+
+  // Release memory used by profile reader.
+  ProfileReader.reset();
+
+  if (opts::AggregateOnly) {
+    exit(0);
   }
 }
 
@@ -2489,36 +2461,35 @@ void RewriteInstance::disassembleFunctions() {
     if (Function.getLSDAAddress() != 0)
       Function.parseLSDA(getLSDAData(), getLSDAAddress());
 
-  } // Iterate over all functions
-
-  // Run buildCFG in parallel for all functions
-  {
-    NamedRegionTimer T("buildCFG", "buildCFG", "buildfuncs",
-                       "Build Binary Functions", opts::TimeBuild);
-
-    // Create annotation indices to allow lock-free execution
-    BC->MIB->getOrCreateAnnotationIndex("Offset");
-    BC->MIB->getOrCreateAnnotationIndex("JTIndexReg");
-
-    ParallelUtilities::WorkFuncWithAllocTy WorkFun =
-        [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
-          if (!BF.buildCFG(AllocId))
-            return;
-
-          if (opts::PrintAll)
-            BF.print(outs(), "while building cfg", true);
-        };
-
-    ParallelUtilities::PredicateTy SkipPredicate =
-        [&](const BinaryFunction &BF) {
-          return !shouldDisassemble(BF) || !BF.isSimple();
-        };
-
-    ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
-        *BC, ParallelUtilities::SchedulingPolicy::SP_INST_LINEAR, WorkFun,
-        SkipPredicate, "disassembleFunctions-buildCFG",
-        /*ForceSequential*/ opts::SequentialDisassembly || opts::PrintAll);
   }
+}
+
+void RewriteInstance::buildFunctionsCFG() {
+  NamedRegionTimer T("buildCFG", "buildCFG", "buildfuncs",
+                     "Build Binary Functions", opts::TimeBuild);
+
+  // Create annotation indices to allow lock-free execution
+  BC->MIB->getOrCreateAnnotationIndex("Offset");
+  BC->MIB->getOrCreateAnnotationIndex("JTIndexReg");
+
+  ParallelUtilities::WorkFuncWithAllocTy WorkFun =
+      [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
+        if (!BF.buildCFG(AllocId))
+          return;
+
+        if (opts::PrintAll)
+          BF.print(outs(), "while building cfg", true);
+      };
+
+  ParallelUtilities::PredicateTy SkipPredicate =
+      [&](const BinaryFunction &BF) {
+        return !shouldDisassemble(BF) || !BF.isSimple();
+      };
+
+  ParallelUtilities::runOnEachFunctionWithUniqueAllocId(
+      *BC, ParallelUtilities::SchedulingPolicy::SP_INST_LINEAR, WorkFun,
+      SkipPredicate, "disassembleFunctions-buildCFG",
+      /*ForceSequential*/ opts::SequentialDisassembly || opts::PrintAll);
 
   BC->postProcessSymbolTable();
 }
@@ -2820,12 +2791,15 @@ void RewriteInstance::linkRuntime() {
 void RewriteInstance::updateMetadata() {
   updateSDTMarkers();
 
-  if (!opts::UpdateDebugSections)
-    return;
+  if (opts::UpdateDebugSections) {
+    NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
+                       TimerGroupDesc, opts::TimeRewrite);
+    DebugInfoRewriter->updateDebugInfo();
+  }
 
-  NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
-                     TimerGroupDesc, opts::TimeRewrite);
-  DebugInfoRewriter->updateDebugInfo();
+  if (opts::WriteBoltInfoSection) {
+    addBoltInfoSection();
+  }
 }
 
 void RewriteInstance::updateSDTMarkers() {
@@ -4329,7 +4303,15 @@ uint64_t RewriteInstance::getNewFunctionAddress(uint64_t OldAddress) {
 }
 
 void RewriteInstance::rewriteFile() {
+  std::error_code EC;
+  Out = llvm::make_unique<ToolOutputFile>(opts::OutputFilename, EC,
+                                          sys::fs::F_None, 0777);
+  check_error(EC, "cannot create output executable file");
+
   auto &OS = Out->os();
+
+  // Copy allocatable part of the input.
+  OS << InputFile->getData().substr(0, FirstNonAllocatableOffset);
 
   // We obtain an asm-specific writer so that we can emit nops in an
   // architecture-specific way at the end of the function.

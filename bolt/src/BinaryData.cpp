@@ -49,7 +49,6 @@ void BinaryData::merge(const BinaryData *Other) {
   assert(OutputOffset == Other->OutputOffset);
   assert(OutputSection == Other->OutputSection);
   Symbols.insert(Symbols.end(), Other->Symbols.begin(), Other->Symbols.end());
-  MemData.insert(MemData.end(), Other->MemData.begin(), Other->MemData.end());
   Flags |= Other->Flags;
   if (!Size)
     Size = Other->Size;
@@ -139,12 +138,6 @@ void BinaryData::printBrief(raw_ostream &OS) const {
      << ":0x" << Twine::utohexstr(getEndAddress())
      << "/" << getSize() << "/" << getAlignment()
      << "/0x" << Twine::utohexstr(Flags);
-
-  if (opts::Verbosity > 1) {
-    for (auto &MI : memData()) {
-      OS << ", " << MI;
-    }
-  }
 
   OS << ")";
 }

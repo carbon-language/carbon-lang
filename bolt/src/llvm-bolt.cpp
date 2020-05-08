@@ -14,14 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "DataAggregator.h"
-#include "DataReader.h"
 #include "MachORewriteInstance.h"
 #include "RewriteInstance.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -61,16 +61,16 @@ extern cl::opt<std::string> OutputFilename;
 extern cl::opt<bool> AggregateOnly;
 extern cl::opt<bool> DiffOnly;
 
-static cl::opt<bool>
-DumpData("dump-data",
-  cl::desc("dump parsed bolt data and exit (debugging)"),
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
 static cl::opt<std::string>
 InputDataFilename("data",
   cl::desc("<data file>"),
   cl::Optional,
+  cl::cat(BoltCategory));
+
+static cl::alias
+BoltProfile("b",
+  cl::desc("alias for -data"),
+  cl::aliasopt(InputDataFilename),
   cl::cat(BoltCategory));
 
 static cl::opt<std::string>
@@ -103,7 +103,7 @@ PerfData("perfdata",
 
 static cl::alias
 PerfDataA("p",
-  cl::desc("Alias for -perfdata"),
+  cl::desc("alias for -perfdata"),
   cl::aliasopt(PerfData),
   cl::cat(AggregatorCategory));
 
@@ -289,39 +289,6 @@ int main(int argc, char **argv) {
   if (!sys::fs::exists(opts::InputFilename))
     report_error(opts::InputFilename, errc::no_such_file_or_directory);
 
-  std::unique_ptr<bolt::DataReader> DR(new DataReader(errs()));
-  std::unique_ptr<bolt::DataAggregator> DA(
-      new DataAggregator(errs(), opts::InputFilename));
-
-  if (opts::AggregateOnly) {
-    DA->setOutputFDataName(opts::OutputFilename);
-    if (opts::PerfData.empty()) {
-      errs() << ToolName << ": missing required -perfdata option.\n";
-      exit(1);
-    }
-  }
-  if (!opts::PerfData.empty()) {
-    if (!opts::AggregateOnly) {
-      errs() << ToolName
-        << ": WARNING: reading perf data directly is unsupported, please use "
-        "-aggregate-only or perf2bolt.\n!!! Proceed on your own risk. !!!\n";
-    }
-    DA->start(opts::PerfData);
-  } else if (!opts::InputDataFilename.empty()) {
-    if (!sys::fs::exists(opts::InputDataFilename))
-      report_error(opts::InputDataFilename, errc::no_such_file_or_directory);
-
-    auto ReaderOrErr =
-        bolt::DataReader::readPerfData(opts::InputDataFilename, errs());
-    if (std::error_code EC = ReaderOrErr.getError())
-      report_error(opts::InputDataFilename, EC);
-    DR.reset(ReaderOrErr.get().release());
-    if (opts::DumpData) {
-      DR->dump();
-      return EXIT_SUCCESS;
-    }
-  }
-
   // Attempt to open the binary.
   if (!opts::DiffOnly) {
     Expected<OwningBinary<Binary>> BinaryOrErr =
@@ -331,10 +298,28 @@ int main(int argc, char **argv) {
     Binary &Binary = *BinaryOrErr.get().getBinary();
 
     if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
-      RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv, ToolPath);
+      RewriteInstance RI(e, argc, argv, ToolPath);
+      if (!opts::PerfData.empty()) {
+        if (!opts::AggregateOnly) {
+          errs() << ToolName
+            << ": WARNING: reading perf data directly is unsupported, please use "
+            "-aggregate-only or perf2bolt.\n!!! Proceed on your own risk. !!!\n";
+        }
+        if (auto E = RI.setProfile(opts::PerfData))
+          report_error(opts::PerfData, std::move(E));
+      }
+      if (!opts::InputDataFilename.empty()) {
+        if (auto E = RI.setProfile(opts::InputDataFilename))
+          report_error(opts::InputDataFilename, std::move(E));
+      }
+      if (opts::AggregateOnly && opts::PerfData.empty()) {
+        errs() << ToolName << ": missing required -perfdata option.\n";
+        exit(1);
+      }
+
       RI.run();
     } else if (auto *O = dyn_cast<MachOObjectFile>(&Binary)) {
-      MachORewriteInstance MachORI(O, *DR);
+      MachORewriteInstance MachORI(O);
       MachORI.run();
     } else {
       report_error(opts::InputFilename, object_error::invalid_file_type);
@@ -344,16 +329,6 @@ int main(int argc, char **argv) {
   }
 
   // Bolt-diff
-  std::unique_ptr<bolt::DataReader> DR2(new DataReader(errs()));
-  if (!sys::fs::exists(opts::InputDataFilename2))
-    report_error(opts::InputDataFilename2, errc::no_such_file_or_directory);
-
-  auto ReaderOrErr2 =
-    bolt::DataReader::readPerfData(opts::InputDataFilename2, errs());
-  if (std::error_code EC = ReaderOrErr2.getError())
-    report_error(opts::InputDataFilename2, EC);
-  DR2.reset(ReaderOrErr2.get().release());
-
   Expected<OwningBinary<Binary>> BinaryOrErr1 =
       createBinary(opts::InputFilename);
   Expected<OwningBinary<Binary>> BinaryOrErr2 =
@@ -364,11 +339,14 @@ int main(int argc, char **argv) {
     report_error(opts::InputFilename2, std::move(E));
   Binary &Binary1 = *BinaryOrErr1.get().getBinary();
   Binary &Binary2 = *BinaryOrErr2.get().getBinary();
-
   if (auto *ELFObj1 = dyn_cast<ELFObjectFileBase>(&Binary1)) {
     if (auto *ELFObj2 = dyn_cast<ELFObjectFileBase>(&Binary2)) {
-      RewriteInstance RI1(ELFObj1, *DR.get(), *DA.get(), argc, argv, ToolPath);
-      RewriteInstance RI2(ELFObj2, *DR2.get(), *DA.get(), argc, argv, ToolPath);
+      RewriteInstance RI1(ELFObj1, argc, argv, ToolPath);
+      if (auto E = RI1.setProfile(opts::InputDataFilename))
+        report_error(opts::InputDataFilename, std::move(E));
+      RewriteInstance RI2(ELFObj2, argc, argv, ToolPath);
+      if (auto E = RI2.setProfile(opts::InputDataFilename2))
+        report_error(opts::InputDataFilename2, std::move(E));
       outs() << "BOLT-DIFF: *** Analyzing binary 1: " << opts::InputFilename
              << "\n";
       outs() << "BOLT-DIFF: *** Binary 1 fdata:     " << opts::InputDataFilename

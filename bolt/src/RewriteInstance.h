@@ -18,11 +18,13 @@
 #include "ExecutableFileMemoryManager.h"
 #include "NameResolver.h"
 #include "Passes/Instrumentation.h"
+#include "ProfileReaderBase.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/StringPool.h"
 #include <map>
 #include <set>
@@ -37,8 +39,6 @@ class BoltAddressTranslation;
 class BinaryContext;
 class CFIReaderWriter;
 class DWARFRewriter;
-class DataAggregator;
-class DataReader;
 class NameResolver;
 class RewriteInstanceDiff;
 
@@ -48,10 +48,13 @@ class RewriteInstanceDiff;
 /// events.
 class RewriteInstance {
 public:
-  RewriteInstance(llvm::object::ELFObjectFileBase *File, DataReader &DR,
-                  DataAggregator &DA, const int Argc, const char *const *Argv,
+  RewriteInstance(llvm::object::ELFObjectFileBase *File,
+                  const int Argc, const char *const *Argv,
                   StringRef ToolPath);
   ~RewriteInstance();
+
+  /// Assign profile from \p Filename to this instance.
+  Error setProfile(StringRef Filename);
 
   /// Run all the necessary steps to read, optimize and rewrite the binary.
   void run();
@@ -71,10 +74,9 @@ public:
   }
 
   /// Return the name of the input file.
-  Optional<StringRef> getInputFileName() const {
-    if (InputFile)
-      return InputFile->getFileName();
-    return NoneType();
+  StringRef getInputFilename() const {
+    assert(InputFile && "cannot have an instance without a file");
+    return InputFile->getFileName();
   }
 
   /// Set the build-id string if we did not fail to parse the contents of the
@@ -85,9 +87,9 @@ public:
   /// printable hexadecimal form if they are available, or NoneType otherwise.
   Optional<std::string> getPrintableBuildID() const;
 
-  /// Provide an access to the profile data aggregator.
-  const DataAggregator &getDataAggregator() const {
-    return DA;
+  /// If this instance uses a profile, return appropriate profile reader.
+  const ProfileReaderBase *getProfileReader() const {
+    return ProfileReader.get();
   }
 
 private:
@@ -117,13 +119,17 @@ private:
   /// Read profile data without having disassembled functions available.
   void preprocessProfileData();
 
-  /// Associate profile data with binary objects.
+  void processProfileDataPreCFG();
+
+  /// Associate profile data with functions and data objects.
   void processProfileData();
 
   /// Disassemble each function in the binary and associate it with a
   /// BinaryFunction object, preparing all information necessary for binary
   /// optimization.
   void disassembleFunctions();
+
+  void buildFunctionsCFG();
 
   void postProcessFunctions();
 
@@ -375,8 +381,7 @@ private:
   const char *const *Argv;
   StringRef ToolPath;
 
-  /// Holds our data aggregator in case user supplied a raw perf data file.
-  DataAggregator &DA;
+  std::unique_ptr<ProfileReaderBase> ProfileReader;
 
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;

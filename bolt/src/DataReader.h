@@ -15,6 +15,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 #define LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 
+#include "ProfileReaderBase.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
@@ -26,7 +27,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace llvm {
@@ -40,31 +41,11 @@ struct LBREntry {
   bool Mispred;
 };
 
-/// LTO-generated function names take a form:
-///
-///   <function_name>.lto_priv.<decimal_number>/...
-///     or
-///   <function_name>.constprop.<decimal_number>/...
-///
-/// they can also be:
-///
-///   <function_name>.lto_priv.<decimal_number1>.lto_priv.<decimal_number2>/...
-///
-/// The <decimal_number> is a global counter used for the whole program. As a
-/// result, a tiny change in a program may affect the naming of many LTO
-/// functions. For us this means that if we do a precise name matching, then
-/// a large set of functions could be left without a profile.
-///
-/// To solve this issue, we try to match a function to a regex profile:
-///
-///   <function_name>.(lto_priv|consprop).*
-///
-/// The name before an asterisk above represents a common LTO name for a family
-/// of functions. Later out of all matching profiles we pick the one with the
-/// best match.
-
-/// Return a common part of LTO name for a given \p Name.
-Optional<StringRef> getLTOCommonName(const StringRef Name);
+inline raw_ostream &operator<<(raw_ostream &OS, const LBREntry &LBR) {
+  OS << "0x" << Twine::utohexstr(LBR.From)
+     << " -> 0x" << Twine::utohexstr(LBR.To);
+  return OS;
+}
 
 struct Location {
   bool IsSymbol;
@@ -231,10 +212,6 @@ struct FuncMemData {
 
   DenseMap<uint64_t, DenseMap<Location, size_t>> EventIndex;
 
-  /// Find all the memory events originating at Offset.
-  iterator_range<ContainerTy::const_iterator> getMemInfoRange(
-    uint64_t Offset) const;
-
   /// Update \p Data with a memory event.  Events with the same
   /// \p Offset and \p Addr will be coalesced.
   void update(const Location &Offset, const Location &Addr);
@@ -291,23 +268,78 @@ struct FuncSampleData {
   void bumpCount(uint64_t Offset, uint64_t Count);
 };
 
-//===----------------------------------------------------------------------===//
-//
 /// DataReader Class
 ///
-class DataReader {
+class DataReader : public ProfileReaderBase {
 public:
-  explicit DataReader(raw_ostream &Diag) : Diag(Diag) {}
+  explicit DataReader(StringRef Filename)
+      : ProfileReaderBase(Filename),
+        Diag(errs()) {}
 
-  DataReader(std::unique_ptr<MemoryBuffer> MemBuf, raw_ostream &Diag)
-      : FileBuf(std::move(MemBuf)), Diag(Diag),
-        ParsingBuf(FileBuf->getBuffer()), Line(0), Col(0) {}
+  StringRef getReaderName() const override {
+    return "branch profile reader";
+  }
 
-  static ErrorOr<std::unique_ptr<DataReader>> readPerfData(StringRef Path,
-                                                           raw_ostream &Diag);
+  bool isTrustedSource() const override {
+    return false;
+  }
 
-  /// Mark all profile objects unused.
-  void reset();
+  virtual Error preprocessProfile(BinaryContext &BC) override;
+
+  virtual Error readProfilePreCFG(BinaryContext &BC) override;
+
+  virtual Error readProfile(BinaryContext &BC) override;
+
+  virtual bool hasLocalsWithFileName() const override;
+
+  virtual bool mayHaveProfileData(const BinaryFunction &BF) override;
+
+  /// Return all event names used to collect this profile
+  virtual StringSet<> getEventNames() const override {
+    return EventNames;
+  }
+
+protected:
+  /// Read profile information available for the function.
+  void readProfile(BinaryFunction &BF);
+
+  /// In functions with multiple entry points, the profile collection records
+  /// data for other entry points in a different function entry. This function
+  /// attempts to fetch extra profile data for each secondary entry point.
+  bool fetchProfileForOtherEntryPoints(BinaryFunction &BF);
+
+  /// Find the best matching profile for a function after the creation of basic
+  /// blocks.
+  void matchProfileData(BinaryFunction &BF);
+
+  /// Find the best matching memory data profile for a function before the
+  /// creation of basic blocks.
+  void matchProfileMemData(BinaryFunction &BF);
+
+  /// Check how closely \p BranchData matches the function \p BF.
+  /// Return accuracy (ranging from 0.0 to 1.0) of the matching.
+  float evaluateProfileData(BinaryFunction &BF,
+                            const FuncBranchData &BranchData) const;
+
+  /// If our profile data comes from sample addresses instead of LBR entries,
+  /// collect sample count for all addresses in this function address space,
+  /// aggregating them per basic block and assigning an execution count to each
+  /// basic block based on the number of samples recorded at those addresses.
+  /// The last step is to infer edge counts based on BB execution count. Note
+  /// this is the opposite of the LBR way, where we infer BB execution count
+  /// based on edge counts.
+  void readSampleData(BinaryFunction &BF);
+
+  /// Convert function-level branch data into instruction annotations.
+  void convertBranchData(BinaryFunction &BF) const;
+
+  /// Update function \p BF profile with a taken branch.
+  /// \p Count could be 0 if verification of the branch is required.
+  ///
+  /// Return true if the branch is valid, false otherwise.
+  bool recordBranch(BinaryFunction &BF,
+                    uint64_t From, uint64_t To, uint64_t Count = 1,
+                    uint64_t Mispreds = 0) const;
 
   /// Parses the input bolt data file into internal data structures. We expect
   /// the file format to follow the syntax below.
@@ -360,20 +392,16 @@ public:
   ///
   std::error_code parseInNoLBRMode();
 
-  /// Return true if the function \p BF may have a profile available.
-  /// The result is based on the name(s) of the function alone and the profile
-  /// match is not guaranteed.
-  bool mayHaveProfileData(const BinaryFunction &BF);
-
   /// Return branch data matching one of the names in \p FuncNames.
   FuncBranchData *
-  getFuncBranchData(const std::vector<StringRef> &FuncNames);
+  getBranchDataForNames(const std::vector<StringRef> &FuncNames);
 
   /// Return branch data matching one of the \p Symbols.
-  FuncBranchData *getFuncBranchData(const std::vector<MCSymbol *> &Symbols);
+  FuncBranchData *
+  getBranchDataForSymbols(const std::vector<MCSymbol *> &Symbols);
 
   /// Return mem data matching one of the names in \p FuncNames.
-  FuncMemData *getFuncMemData(const std::vector<StringRef> &FuncNames);
+  FuncMemData *getMemDataForNames(const std::vector<StringRef> &FuncNames);
 
   FuncSampleData *
   getFuncSampleData(const std::vector<StringRef> &FuncNames);
@@ -382,29 +410,49 @@ public:
   /// Internally use fuzzy matching to match special names like LTO-generated
   /// function names.
   std::vector<FuncBranchData *>
-  getFuncBranchDataRegex(const std::vector<StringRef> &FuncNames);
+  getBranchDataForNamesRegex(const std::vector<StringRef> &FuncNames);
 
   /// Return a vector of all FuncMemData matching the list of names.
   /// Internally use fuzzy matching to match special names like LTO-generated
   /// function names.
   std::vector<FuncMemData *>
-  getFuncMemDataRegex(const std::vector<StringRef> &FuncNames);
+  getMemDataForNamesRegex(const std::vector<StringRef> &FuncNames);
 
-  using FuncsToBranchesMapTy = StringMap<FuncBranchData>;
-  using FuncsToSamplesMapTy = StringMap<FuncSampleData>;
-  using FuncsToMemEventsMapTy = StringMap<FuncMemData>;
-
-  FuncsToBranchesMapTy &getAllFuncsBranchData() { return FuncsToBranches; }
-  FuncsToMemEventsMapTy &getAllFuncsMemData() { return FuncsToMemEvents; }
-  FuncsToSamplesMapTy &getAllFuncsSampleData() { return FuncsToSamples; }
-
-  const FuncsToBranchesMapTy &getAllFuncsData() const {
-    return FuncsToBranches;
+  /// Return branch data profile associated with function \p BF  or nullptr
+  /// if the function has no associated profile.
+  FuncBranchData *getBranchData(const BinaryFunction &BF) const {
+    auto FBDI = FuncsToBranches.find(&BF);
+    if (FBDI == FuncsToBranches.end())
+      return nullptr;
+    return FBDI->second;
   }
 
-  /// Return true if profile contains an entry for a local function
-  /// that has a non-empty associated file name.
-  bool hasLocalsWithFileName() const;
+  /// Updates branch profile data associated with function \p BF.
+  void setBranchData(const BinaryFunction &BF, FuncBranchData *FBD) {
+    FuncsToBranches[&BF] = FBD;
+  }
+
+  /// Return memory profile data associated with function \p BF, or nullptr
+  /// if the function has no associated profile.
+  FuncMemData *getMemData(const BinaryFunction &BF) const {
+    auto FMDI = FuncsToMemData.find(&BF);
+    if (FMDI == FuncsToMemData.end())
+      return nullptr;
+    return FMDI->second;
+  }
+
+  /// Updates the memory profile data associated with function \p BF.
+  void setMemData(const BinaryFunction &BF, FuncMemData *FMD) {
+    FuncsToMemData[&BF] = FMD;
+  }
+
+  using NamesToBranchesMapTy = StringMap<FuncBranchData>;
+  using NamesToSamplesMapTy = StringMap<FuncSampleData>;
+  using NamesToMemEventsMapTy = StringMap<FuncMemData>;
+  using FuncsToBranchesMapTy =
+    std::unordered_map<const BinaryFunction *, FuncBranchData *>;
+  using FuncsToMemDataMapTy =
+    std::unordered_map<const BinaryFunction *, FuncMemData *>;
 
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;
@@ -427,12 +475,11 @@ public:
     return false;
   }
 
-  /// Return all event names used to collect this profile
-  const StringSet<> &getEventNames() const {
-    return EventNames;
-  }
+  /// Open the file and parse the contents.
+  std::error_code parseInput();
 
-protected:
+  /// Build suffix map once the profile data is parsed.
+  void buildLTONameMaps();
 
   void reportError(StringRef ErrorMsg);
   bool expectAndConsumeFS();
@@ -456,18 +503,17 @@ protected:
   bool hasBranchData();
   bool hasMemData();
 
-  /// Build suffix map once the profile data is parsed.
-  void buildLTONameMaps();
-
   /// An in-memory copy of the input data file - owns strings used in reader.
   std::unique_ptr<MemoryBuffer> FileBuf;
   raw_ostream &Diag;
   StringRef ParsingBuf;
-  unsigned Line;
-  unsigned Col;
+  unsigned Line{0};
+  unsigned Col{0};
+  NamesToBranchesMapTy NamesToBranches;
+  NamesToSamplesMapTy NamesToSamples;
+  NamesToMemEventsMapTy NamesToMemEvents;
   FuncsToBranchesMapTy FuncsToBranches;
-  FuncsToSamplesMapTy FuncsToSamples;
-  FuncsToMemEventsMapTy FuncsToMemEvents;
+  FuncsToMemDataMapTy FuncsToMemData;
   bool NoLBRMode{false};
   bool BATMode{false};
   StringSet<> EventNames;
@@ -499,7 +545,6 @@ template<> struct DenseMapInfo<bolt::Location> {
            LHS.Offset == RHS.Offset;
   }
 };
-
 
 }
 

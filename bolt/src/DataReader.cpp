@@ -15,8 +15,28 @@
 
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "Passes/MCF.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include <map>
+
+#undef  DEBUG_TYPE
+#define DEBUG_TYPE "bolt-prof"
+
+using namespace llvm;
+
+namespace opts {
+
+extern cl::OptionCategory BoltCategory;
+extern llvm::cl::opt<unsigned> Verbosity;
+
+static cl::opt<bool>
+DumpData("dump-data",
+  cl::desc("dump parsed bolt data for debugging"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+} // namespace opts
 
 namespace llvm {
 namespace bolt {
@@ -33,6 +53,15 @@ Optional<StringRef> getLTOCommonName(const StringRef Name) {
 }
 
 namespace {
+
+/// Return true if the function name can change across compilations.
+bool hasVolatileName(const BinaryFunction &BF) {
+  for (const auto Name : BF.getNames()) {
+    if (getLTOCommonName(Name))
+      return true;
+  }
+  return false;
+}
 
 /// Return standard name of the function possibly renamed by BOLT.
 StringRef normalizeName(StringRef Name) {
@@ -226,22 +255,6 @@ void MemInfo::prettyPrint(raw_ostream &OS) const {
   OS << "(PC: " << Offset << ", M: " << Addr << ", C: " << Count << ")";
 }
 
-iterator_range<FuncMemData::ContainerTy::const_iterator>
-FuncMemData::getMemInfoRange(uint64_t Offset) const {
-  // Commented out because it can be expensive.
-  //assert(std::is_sorted(Data.begin(), Data.end()));
-  struct Compare {
-    bool operator()(const MemInfo &MI, const uint64_t Val) const {
-      return MI.Offset.Offset < Val;
-    }
-    bool operator()(const uint64_t Val, const MemInfo &MI) const {
-      return Val < MI.Offset.Offset;
-    }
-  };
-  auto Range = std::equal_range(Data.begin(), Data.end(), Offset, Compare());
-  return iterator_range<ContainerTy::const_iterator>(Range.first, Range.second);
-}
-
 void FuncMemData::update(const Location &Offset, const Location &Addr) {
   auto Iter = EventIndex[Offset.Offset].find(Addr);
   if (Iter == EventIndex[Offset.Offset].end()) {
@@ -252,33 +265,553 @@ void FuncMemData::update(const Location &Offset, const Location &Addr) {
   ++Data[Iter->second].Count;
 }
 
-void DataReader::reset() {
-  for (auto &Pair : getAllFuncsBranchData()) {
-    Pair.second.Used = false;
+Error DataReader::preprocessProfile(BinaryContext &BC) {
+  if (auto EC = parseInput()) {
+    return errorCodeToError(EC);
   }
-  for (auto &Pair : getAllFuncsMemData()) {
-    Pair.second.Used = false;
+
+  if (opts::DumpData) {
+    dump();
   }
+
+  if (collectedInBoltedBinary()) {
+    outs() << "BOLT-INFO: profile collection done on a binary already "
+              "processed by BOLT\n";
+  }
+
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    auto &Function = BFI.second;
+    if (auto *MemData = getMemDataForNames(Function.getNames())) {
+      setMemData(Function, MemData);
+      MemData->Used = true;
+    }
+    if (auto *FuncData = getBranchDataForNames(Function.getNames())) {
+      setBranchData(Function, FuncData);
+      Function.ExecutionCount = FuncData->ExecutionCount;
+      FuncData->Used = true;
+    }
+  }
+
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    auto &Function = BFI.second;
+    matchProfileMemData(Function);
+  }
+
+  return Error::success();
 }
 
-ErrorOr<std::unique_ptr<DataReader>>
-DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
-  auto MB = MemoryBuffer::getFileOrSTDIN(Path);
+Error DataReader::readProfilePreCFG(BinaryContext &BC) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    auto &Function = BFI.second;
+    FuncMemData *MemoryData = getMemData(Function);
+    if (!MemoryData)
+      continue;
+
+    for (auto &MI : MemoryData->Data) {
+      const uint64_t Offset = MI.Offset.Offset;
+      auto II = Function.Instructions.find(Offset);
+      if (II == Function.Instructions.end()) {
+        // Ignore bad instruction address.
+        continue;
+      }
+
+      auto &MemAccessProfile =
+        BC.MIB->getOrCreateAnnotationAs<MemoryAccessProfile>(
+            II->second, "MemoryAccessProfile");
+      BinaryData *BD{nullptr};
+      if (MI.Addr.IsSymbol) {
+        BD = BC.getBinaryDataByName(MI.Addr.Name);
+      }
+      MemAccessProfile.AddressAccessInfo.
+        push_back({BD, MI.Addr.Offset, MI.Count});
+      auto NextII = std::next(II);
+      if (NextII == Function.Instructions.end()) {
+        MemAccessProfile.NextInstrOffset = Function.getSize();
+      } else {
+        MemAccessProfile.NextInstrOffset = II->first;
+      }
+    }
+    Function.HasMemoryProfile = true;
+  }
+
+  return Error::success();
+}
+
+Error DataReader::readProfile(BinaryContext &BC) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    auto &Function = BFI.second;
+    readProfile(Function);
+  }
+
+  uint64_t NumUnused{0};
+  for (const auto &FuncData : NamesToBranches)
+    if (!FuncData.getValue().Used)
+      ++NumUnused;
+  BC.setNumUnusedProfiledObjects(NumUnused);
+
+  return Error::success();
+}
+
+std::error_code DataReader::parseInput() {
+  auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
   if (auto EC = MB.getError()) {
-    Diag << "cannot open " << Path << ": " << EC.message() << "\n";
+    Diag << "cannot open " << Filename << ": " << EC.message() << "\n";
     return EC;
   }
-  auto DR = llvm::make_unique<DataReader>(std::move(MB.get()), Diag);
-  if (auto EC = DR->parse()) {
+  FileBuf = std::move(MB.get());
+  ParsingBuf = FileBuf->getBuffer();
+  if (auto EC = parse()) {
     return EC;
   }
-  if (!DR->ParsingBuf.empty()) {
-    Diag << "WARNING: invalid profile data detected at line " << DR->Line
+  if (!ParsingBuf.empty()) {
+    Diag << "WARNING: invalid profile data detected at line " << Line
          << ". Possibly corrupted profile.\n";
   }
 
-  DR->buildLTONameMaps();
-  return std::move(DR);
+  buildLTONameMaps();
+
+  return std::error_code();
+}
+
+void DataReader::readProfile(BinaryFunction &BF) {
+  if (BF.empty())
+    return;
+
+  if (!hasLBR()) {
+    BF.ProfileFlags = BinaryFunction::PF_SAMPLE;
+    readSampleData(BF);
+    return;
+  }
+
+  BF.ProfileFlags = BinaryFunction::PF_LBR;
+
+  // Possibly assign/re-assign branch profile data.
+  matchProfileData(BF);
+
+  FuncBranchData *FBD = getBranchData(BF);
+  if (!FBD)
+    return;
+
+  // Assign basic block counts to function entry points. These only include
+  // counts for outside entries.
+  //
+  // There is a slight skew introduced here as branches originated from RETs
+  // may be accounted for in the execution count of an entry block if the last
+  // instruction in a predecessor fall-through block is a call. This situation
+  // should rarely happen because there are few multiple-entry functions.
+  for (const auto &BI : FBD->EntryData) {
+    BinaryBasicBlock *BB = BF.getBasicBlockAtOffset(BI.To.Offset);
+    if (BB && (BB->isEntryPoint() || BB->isLandingPad())) {
+      auto Count = BB->getExecutionCount();
+      if (Count == BinaryBasicBlock::COUNT_NO_PROFILE)
+        Count = 0;
+      BB->setExecutionCount(Count + BI.Branches);
+    }
+  }
+
+  uint64_t MismatchedBranches = 0;
+  for (const auto &BI : FBD->Data) {
+    if (BI.From.Name != BI.To.Name) {
+      continue;
+    }
+
+    if (!recordBranch(BF, BI.From.Offset, BI.To.Offset,
+                      BI.Branches, BI.Mispreds)) {
+      DEBUG(dbgs() << "bad branch : " << BI.From.Offset << " -> "
+                   << BI.To.Offset << '\n');
+      ++MismatchedBranches;
+    }
+  }
+
+  // Convert branch data into annotations.
+  convertBranchData(BF);
+}
+
+void DataReader::matchProfileData(BinaryFunction &BF) {
+  // This functionality is available for LBR-mode only
+  // TODO: Implement evaluateProfileData() for samples, checking whether
+  // sample addresses match instruction addresses in the function
+  if (!hasLBR())
+    return;
+
+  FuncBranchData *FBD = getBranchData(BF);
+  if (FBD) {
+    BF.ProfileMatchRatio = evaluateProfileData(BF, *FBD);
+    if (BF.ProfileMatchRatio == 1.0f) {
+      if (fetchProfileForOtherEntryPoints(BF)) {
+        BF.ProfileMatchRatio = evaluateProfileData(BF, *FBD);
+        BF.ExecutionCount = FBD->ExecutionCount;
+      }
+      return;
+    }
+  }
+
+  // Check if the function name can fluctuate between several compilations
+  // possibly triggered by minor unrelated code changes in the source code
+  // of the input binary.
+  if (!hasVolatileName(BF))
+    return;
+
+  // Check for a profile that matches with 100% confidence.
+  const auto AllBranchData = getBranchDataForNamesRegex(BF.getNames());
+  for (auto *NewBranchData : AllBranchData) {
+    // Prevent functions from sharing the same profile.
+    if (NewBranchData->Used)
+      continue;
+
+    if (evaluateProfileData(BF, *NewBranchData) != 1.0f)
+      continue;
+
+    if (FBD)
+      FBD->Used = false;
+
+    // Update function profile data with the new set.
+    setBranchData(BF, NewBranchData);
+    NewBranchData->Used = true;
+    BF.ExecutionCount = NewBranchData->ExecutionCount;
+    BF.ProfileMatchRatio = 1.0f;
+    break;
+  }
+}
+
+void DataReader::matchProfileMemData(BinaryFunction &BF) {
+  const auto AllMemData = getMemDataForNamesRegex(BF.getNames());
+  for (auto *NewMemData : AllMemData) {
+    // Prevent functions from sharing the same profile.
+    if (NewMemData->Used)
+      continue;
+
+    if (auto *MD = getMemData(BF))
+      MD->Used = false;
+
+    // Update function profile data with the new set.
+    setMemData(BF, NewMemData);
+    NewMemData->Used = true;
+    break;
+  }
+}
+
+bool DataReader::fetchProfileForOtherEntryPoints(BinaryFunction &BF) {
+  auto &BC = BF.getBinaryContext();
+
+  FuncBranchData *FBD = getBranchData(BF);
+  if (!FBD)
+    return false;
+
+  // Check if we are missing profiling data for secondary entry points
+  bool First{true};
+  bool Updated{false};
+  for (auto BB : BF.BasicBlocks) {
+    if (First) {
+      First = false;
+      continue;
+    }
+    if (BB->isEntryPoint()) {
+      uint64_t EntryAddress = BB->getOffset() + BF.getAddress();
+      // Look for branch data associated with this entry point
+      if (auto *BD = BC.getBinaryDataAtAddress(EntryAddress)) {
+        if (FuncBranchData *Data = getBranchDataForSymbols(BD->getSymbols())) {
+          FBD->appendFrom(*Data, BB->getOffset());
+          Data->Used = true;
+          Updated = true;
+        }
+      }
+    }
+  }
+
+  return Updated;
+}
+
+float DataReader::evaluateProfileData(BinaryFunction &BF,
+                                      const FuncBranchData &BranchData) const {
+  auto &BC = BF.getBinaryContext();
+
+  // Until we define a minimal profile, we consider an empty branch data to be
+  // a valid profile. It could happen to a function without branches when we
+  // still have an EntryData for the execution count.
+  if (BranchData.Data.empty()) {
+    return 1.0f;
+  }
+
+  uint64_t NumMatchedBranches = 0;
+  for (const auto &BI : BranchData.Data) {
+    bool IsValid = false;
+    if (BI.From.Name == BI.To.Name) {
+      // Try to record information with 0 count.
+      IsValid = recordBranch(BF, BI.From.Offset, BI.To.Offset, 0);
+    } else if (collectedInBoltedBinary()) {
+      // We can't check branch source for collections in bolted binaries because
+      // the source of the branch may be mapped to the first instruction in a BB
+      // instead of the original branch (which may not exist in the source bin).
+      IsValid = true;
+    } else {
+      // The branch has to originate from this function.
+      // Check for calls, tail calls, rets and indirect branches.
+      // When matching profiling info, we did not reach the stage
+      // when we identify tail calls, so they are still represented
+      // by regular branch instructions and we need isBranch() here.
+      auto *Instr = BF.getInstructionAtOffset(BI.From.Offset);
+      // If it's a prefix - skip it.
+      if (Instr && BC.MIB->isPrefix(*Instr))
+        Instr = BF.getInstructionAtOffset(BI.From.Offset + 1);
+      if (Instr &&
+          (BC.MIB->isCall(*Instr) ||
+           BC.MIB->isBranch(*Instr) ||
+           BC.MIB->isReturn(*Instr))) {
+        IsValid = true;
+      }
+    }
+
+    if (IsValid) {
+      ++NumMatchedBranches;
+      continue;
+    }
+
+    DEBUG(dbgs()
+        << "\tinvalid branch in " << BF << " : 0x"
+        << Twine::utohexstr(BI.From.Offset) << " -> ";
+        if (BI.From.Name == BI.To.Name)
+          dbgs() << "0x" << Twine::utohexstr(BI.To.Offset) << '\n';
+        else
+          dbgs() << "<outbounds>\n";
+    );
+  }
+
+  const auto MatchRatio = (float) NumMatchedBranches / BranchData.Data.size();
+  if (opts::Verbosity >= 2 && NumMatchedBranches < BranchData.Data.size()) {
+    errs() << "BOLT-WARNING: profile branches match only "
+           << format("%.1f%%", MatchRatio * 100.0f) << " ("
+           << NumMatchedBranches << '/' << BranchData.Data.size()
+           << ") for function " << BF << '\n';
+  }
+
+  return MatchRatio;
+}
+
+void DataReader::readSampleData(BinaryFunction &BF) {
+  auto SampleDataOrErr = getFuncSampleData(BF.getNames());
+  if (!SampleDataOrErr)
+    return;
+
+  // Basic samples mode territory (without LBR info)
+  // First step is to assign BB execution count based on samples from perf
+  BF.ProfileMatchRatio = 1.0f;
+  BF.removeTagsFromProfile();
+  bool NormalizeByInsnCount = usesEvent("cycles") || usesEvent("instructions");
+  bool NormalizeByCalls = usesEvent("branches");
+  static bool NagUser{true};
+  if (NagUser) {
+    outs()
+        << "BOLT-INFO: operating with basic samples profiling data (no LBR).\n";
+    if (NormalizeByInsnCount) {
+      outs() << "BOLT-INFO: normalizing samples by instruction count.\n";
+    } else if (NormalizeByCalls) {
+      outs() << "BOLT-INFO: normalizing samples by branches.\n";
+    }
+    NagUser = false;
+  }
+  uint64_t LastOffset = BF.getSize();
+  uint64_t TotalEntryCount{0};
+  for (auto I = BF.BasicBlockOffsets.rbegin(), E = BF.BasicBlockOffsets.rend();
+       I != E; ++I) {
+    uint64_t CurOffset = I->first;
+    // Always work with samples multiplied by 1000 to avoid losing them if we
+    // later need to normalize numbers
+    uint64_t NumSamples =
+        SampleDataOrErr->getSamples(CurOffset, LastOffset) * 1000;
+    if (NormalizeByInsnCount && I->second->getNumNonPseudos())
+      NumSamples /= I->second->getNumNonPseudos();
+    else if (NormalizeByCalls) {
+      uint32_t NumCalls = I->second->getNumCalls();
+      NumSamples /= NumCalls + 1;
+    }
+    I->second->setExecutionCount(NumSamples);
+    if (I->second->isEntryPoint())
+      TotalEntryCount += NumSamples;
+    LastOffset = CurOffset;
+  }
+
+  BF.ExecutionCount = TotalEntryCount;
+
+  estimateEdgeCounts(BF);
+}
+
+void DataReader::convertBranchData(BinaryFunction &BF) const {
+  auto &BC = BF.getBinaryContext();
+
+  if (BF.empty())
+    return;
+
+  FuncBranchData *FBD = getBranchData(BF);
+  if (!FBD)
+    return;
+
+  // Profile information for calls.
+  //
+  // There are 3 cases that we annotate differently:
+  //   1) Conditional tail calls that could be mispredicted.
+  //   2) Indirect calls to multiple destinations with mispredictions.
+  //      Before we validate CFG we have to handle indirect branches here too.
+  //   3) Regular direct calls. The count could be different from containing
+  //      basic block count. Keep this data in case we find it useful.
+  //
+  for (auto &BI : FBD->Data) {
+    // Ignore internal branches.
+    if (BI.To.IsSymbol && BI.To.Name == BI.From.Name && BI.To.Offset != 0)
+      continue;
+
+    auto *Instr = BF.getInstructionAtOffset(BI.From.Offset);
+    if (!Instr ||
+        (!BC.MIB->isCall(*Instr) && !BC.MIB->isIndirectBranch(*Instr)))
+      continue;
+
+    auto setOrUpdateAnnotation = [&](StringRef Name, uint64_t Count) {
+      if (opts::Verbosity >= 1 && BC.MIB->hasAnnotation(*Instr, Name)) {
+        errs() << "BOLT-WARNING: duplicate " << Name << " info for offset 0x"
+               << Twine::utohexstr(BI.From.Offset)
+               << " in function " << BF << '\n';
+      }
+      auto &Value = BC.MIB->getOrCreateAnnotationAs<uint64_t>(*Instr, Name);
+      Value += Count;
+    };
+
+    if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
+      IndirectCallSiteProfile &CSP =
+        BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
+            *Instr, "CallProfile");
+      MCSymbol *CalleeSymbol{nullptr};
+      if (BI.To.IsSymbol) {
+        if (auto *BD = BC.getBinaryDataByName(BI.To.Name)) {
+          CalleeSymbol = BD->getSymbol();
+        }
+      }
+      CSP.emplace_back(CalleeSymbol, BI.Branches, BI.Mispreds);
+    } else if (BC.MIB->getConditionalTailCall(*Instr)) {
+      setOrUpdateAnnotation("CTCTakenCount", BI.Branches);
+      setOrUpdateAnnotation("CTCMispredCount", BI.Mispreds);
+    } else {
+      setOrUpdateAnnotation("Count", BI.Branches);
+    }
+  }
+}
+
+bool DataReader::recordBranch(BinaryFunction &BF,
+                              uint64_t From, uint64_t To,
+                              uint64_t Count, uint64_t Mispreds) const {
+  auto &BC = BF.getBinaryContext();
+
+  auto *FromBB = BF.getBasicBlockContainingOffset(From);
+  auto *ToBB = BF.getBasicBlockContainingOffset(To);
+
+  if (!FromBB || !ToBB) {
+    DEBUG(dbgs() << "failed to get block for recorded branch\n");
+    return false;
+  }
+
+  // Could be bad LBR data; ignore the branch. In the case of data collected
+  // in binaries optimized by BOLT, a source BB may be mapped to two output
+  // BBs as a result of optimizations. In that case, a branch between these
+  // two will be recorded as a branch from A going to A in the source address
+  // space. Keep processing.
+  if (From == To) {
+    return true;
+  }
+
+  if (FromBB->succ_size() == 0) {
+    // Return from a tail call.
+    return true;
+  }
+
+  // Very rarely we will see ignored branches. Do a linear check.
+  for (auto &Branch : BF.IgnoredBranches) {
+    if (Branch == std::make_pair(static_cast<uint32_t>(From),
+                                 static_cast<uint32_t>(To)))
+      return true;
+  }
+
+  if (To != ToBB->getOffset()) {
+    // "To" could be referring to nop instructions in between 2 basic blocks.
+    // While building the CFG we make sure these nops are attributed to the
+    // previous basic block, thus we check if the destination belongs to the
+    // gap past the last instruction.
+    const auto *LastInstr = ToBB->getLastNonPseudoInstr();
+    if (LastInstr) {
+      const auto LastInstrOffset =
+        BC.MIB->getAnnotationWithDefault<uint32_t>(*LastInstr, "Offset");
+
+      // With old .fdata we are getting FT branches for "jcc,jmp" sequences.
+      if (To == LastInstrOffset && BC.MIB->isUnconditionalBranch(*LastInstr)) {
+        return true;
+      }
+
+      if (To <= LastInstrOffset) {
+        DEBUG(dbgs() << "branch recorded into the middle of the block" << " in "
+                     << BF << " : " << From << " -> " << To << '\n');
+        return false;
+      }
+    }
+
+    // The real destination is the layout successor of the detected ToBB.
+    if (ToBB == BF.BasicBlocksLayout.back())
+      return false;
+    auto *NextBB = BF.BasicBlocksLayout[ToBB->getIndex() + 1];
+    assert((NextBB && NextBB->getOffset() > ToBB->getOffset()) && "bad layout");
+    ToBB = NextBB;
+  }
+
+  // If there's no corresponding instruction for 'From', we have probably
+  // discarded it as a FT from __builtin_unreachable.
+  auto *FromInstruction = BF.getInstructionAtOffset(From);
+  if (!FromInstruction) {
+    // If the data was collected in a bolted binary, the From addresses may be
+    // translated to the first instruction of the source BB if BOLT inserted
+    // a new branch that did not exist in the source (we can't map it to the
+    // source instruction, so we map it to the first instr of source BB).
+    // We do not keep offsets for random instructions. So the check above will
+    // evaluate to true if the first instr is not a branch (call/jmp/ret/etc)
+    if (collectedInBoltedBinary()) {
+      if (FromBB->getInputOffset() != From) {
+        DEBUG(dbgs() << "offset " << From << " does not match a BB in " << BF
+                     << '\n');
+        return false;
+      }
+      FromInstruction = nullptr;
+    } else {
+      DEBUG(dbgs() << "no instruction for offset " << From << " in " << BF
+                   << '\n');
+      return false;
+    }
+  }
+
+  if (!FromBB->getSuccessor(ToBB->getLabel())) {
+    // Check if this is a recursive call or a return from a recursive call.
+    if (FromInstruction && ToBB->isEntryPoint() &&
+        (BC.MIB->isCall(*FromInstruction) ||
+         BC.MIB->isIndirectBranch(*FromInstruction))) {
+      // Execution count is already accounted for.
+      return true;
+    }
+    // For data collected in a bolted binary, we may have created two output BBs
+    // that map to one original block. Branches between these two blocks will
+    // appear here as one BB jumping to itself, even though it has no loop edges.
+    // Ignore these.
+    if (collectedInBoltedBinary() && FromBB == ToBB)
+      return true;
+
+    DEBUG(dbgs() << "invalid branch in " << BF << '\n'
+                 << Twine::utohexstr(From) << " -> "
+                 << Twine::utohexstr(To) << '\n');
+    return false;
+  }
+
+  auto &BI = FromBB->getBranchInfo(*ToBB);
+  BI.Count += Count;
+  // Only update mispredicted count if it the count was real.
+  if (Count) {
+    BI.MispredictedCount += Mispreds;
+  }
+
+  return true;
 }
 
 void DataReader::reportError(StringRef ErrorMsg) {
@@ -551,10 +1084,10 @@ bool DataReader::hasMemData() {
 
 std::error_code DataReader::parseInNoLBRMode() {
   auto GetOrCreateFuncEntry = [&](StringRef Name) {
-    auto I = FuncsToSamples.find(Name);
-    if (I == FuncsToSamples.end()) {
+    auto I = NamesToSamples.find(Name);
+    if (I == NamesToSamples.end()) {
       bool success;
-      std::tie(I, success) = FuncsToSamples.insert(std::make_pair(
+      std::tie(I, success) = NamesToSamples.insert(std::make_pair(
           Name, FuncSampleData(Name, FuncSampleData::ContainerTy())));
 
       assert(success && "unexpected result of insert");
@@ -563,10 +1096,10 @@ std::error_code DataReader::parseInNoLBRMode() {
   };
 
   auto GetOrCreateFuncMemEntry = [&](StringRef Name) {
-    auto I = FuncsToMemEvents.find(Name);
-    if (I == FuncsToMemEvents.end()) {
+    auto I = NamesToMemEvents.find(Name);
+    if (I == NamesToMemEvents.end()) {
       bool success;
-      std::tie(I, success) = FuncsToMemEvents.insert(
+      std::tie(I, success) = NamesToMemEvents.insert(
           std::make_pair(Name, FuncMemData(Name, FuncMemData::ContainerTy())));
       assert(success && "unexpected result of insert");
     }
@@ -603,12 +1136,12 @@ std::error_code DataReader::parseInNoLBRMode() {
     I->getValue().Data.emplace_back(std::move(MI));
   }
 
-  for (auto &FuncSamples : FuncsToSamples) {
+  for (auto &FuncSamples : NamesToSamples) {
     std::stable_sort(FuncSamples.second.Data.begin(),
                      FuncSamples.second.Data.end());
   }
 
-  for (auto &MemEvents : FuncsToMemEvents) {
+  for (auto &MemEvents : NamesToMemEvents) {
     std::stable_sort(MemEvents.second.Data.begin(),
                      MemEvents.second.Data.end());
   }
@@ -618,10 +1151,10 @@ std::error_code DataReader::parseInNoLBRMode() {
 
 std::error_code DataReader::parse() {
   auto GetOrCreateFuncEntry = [&](StringRef Name) {
-    auto I = FuncsToBranches.find(Name);
-    if (I == FuncsToBranches.end()) {
+    auto I = NamesToBranches.find(Name);
+    if (I == NamesToBranches.end()) {
       bool success;
-      std::tie(I, success) = FuncsToBranches.insert(
+      std::tie(I, success) = NamesToBranches.insert(
           std::make_pair(Name, FuncBranchData(Name,
                                               FuncBranchData::ContainerTy(),
                                               FuncBranchData::ContainerTy())));
@@ -631,10 +1164,10 @@ std::error_code DataReader::parse() {
   };
 
   auto GetOrCreateFuncMemEntry = [&](StringRef Name) {
-    auto I = FuncsToMemEvents.find(Name);
-    if (I == FuncsToMemEvents.end()) {
+    auto I = NamesToMemEvents.find(Name);
+    if (I == NamesToMemEvents.end()) {
       bool success;
-      std::tie(I, success) = FuncsToMemEvents.insert(
+      std::tie(I, success) = NamesToMemEvents.insert(
           std::make_pair(Name, FuncMemData(Name, FuncMemData::ContainerTy())));
       assert(success && "unexpected result of insert");
     }
@@ -707,12 +1240,12 @@ std::error_code DataReader::parse() {
     I->getValue().Data.emplace_back(std::move(MI));
   }
 
-  for (auto &FuncBranches : FuncsToBranches) {
+  for (auto &FuncBranches : NamesToBranches) {
     std::stable_sort(FuncBranches.second.Data.begin(),
                      FuncBranches.second.Data.end());
   }
 
-  for (auto &MemEvents : FuncsToMemEvents) {
+  for (auto &MemEvents : NamesToMemEvents) {
     std::stable_sort(MemEvents.second.Data.begin(),
                      MemEvents.second.Data.end());
   }
@@ -721,14 +1254,14 @@ std::error_code DataReader::parse() {
 }
 
 void DataReader::buildLTONameMaps() {
-  for (auto &FuncData : FuncsToBranches) {
+  for (auto &FuncData : NamesToBranches) {
     const auto FuncName = FuncData.getKey();
     const auto CommonName = getLTOCommonName(FuncName);
     if (CommonName)
       LTOCommonNameMap[*CommonName].push_back(&FuncData.getValue());
   }
 
-  for (auto &FuncData : FuncsToMemEvents) {
+  for (auto &FuncData : NamesToMemEvents) {
     const auto FuncName = FuncData.getKey();
     const auto CommonName = getLTOCommonName(FuncName);
     if (CommonName)
@@ -795,27 +1328,21 @@ fetchMapEntriesRegex(
 }
 
 bool DataReader::mayHaveProfileData(const BinaryFunction &Function) {
-  if (Function.getBranchData() || Function.getMemData())
+  if (getBranchData(Function) || getMemData(Function))
     return true;
 
-  if (getFuncBranchData(Function.getNames()) || getFuncMemData(Function.getNames()))
+  if (getBranchDataForNames(Function.getNames()) ||
+      getMemDataForNames(Function.getNames()))
     return true;
 
-  const auto HasVolatileName = [&Function]() {
-    for (const auto Name : Function.getNames()) {
-      if (getLTOCommonName(Name))
-        return true;
-    }
-    return false;
-  }();
-  if (!HasVolatileName)
+  if (!hasVolatileName(Function))
     return false;
 
-  const auto AllBranchData = getFuncBranchDataRegex(Function.getNames());
+  const auto AllBranchData = getBranchDataForNamesRegex(Function.getNames());
   if (!AllBranchData.empty())
     return true;
 
-  const auto AllMemData = getFuncMemDataRegex(Function.getNames());
+  const auto AllMemData = getMemDataForNamesRegex(Function.getNames());
   if (!AllMemData.empty())
     return true;
 
@@ -823,37 +1350,38 @@ bool DataReader::mayHaveProfileData(const BinaryFunction &Function) {
 }
 
 FuncBranchData *
-DataReader::getFuncBranchData(const std::vector<StringRef> &FuncNames) {
-  return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, FuncNames);
+DataReader::getBranchDataForNames(const std::vector<StringRef> &FuncNames) {
+  return fetchMapEntry<NamesToBranchesMapTy>(NamesToBranches, FuncNames);
 }
 
 FuncBranchData *
-DataReader::getFuncBranchData(const std::vector<MCSymbol *> &Symbols) {
-  return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, Symbols);
+DataReader::getBranchDataForSymbols(const std::vector<MCSymbol *> &Symbols) {
+  return fetchMapEntry<NamesToBranchesMapTy>(NamesToBranches, Symbols);
 }
 
 FuncMemData *
-DataReader::getFuncMemData(const std::vector<StringRef> &FuncNames) {
-  return fetchMapEntry<FuncsToMemEventsMapTy>(FuncsToMemEvents, FuncNames);
+DataReader::getMemDataForNames(const std::vector<StringRef> &FuncNames) {
+  return fetchMapEntry<NamesToMemEventsMapTy>(NamesToMemEvents, FuncNames);
 }
 
 FuncSampleData *
 DataReader::getFuncSampleData(const std::vector<StringRef> &FuncNames) {
-  return fetchMapEntry<FuncsToSamplesMapTy>(FuncsToSamples, FuncNames);
+  return fetchMapEntry<NamesToSamplesMapTy>(NamesToSamples, FuncNames);
 }
 
 std::vector<FuncBranchData *>
-DataReader::getFuncBranchDataRegex(const std::vector<StringRef> &FuncNames) {
-  return fetchMapEntriesRegex(FuncsToBranches, LTOCommonNameMap, FuncNames);
+DataReader::getBranchDataForNamesRegex(
+    const std::vector<StringRef> &FuncNames) {
+  return fetchMapEntriesRegex(NamesToBranches, LTOCommonNameMap, FuncNames);
 }
 
 std::vector<FuncMemData *>
-DataReader::getFuncMemDataRegex(const std::vector<StringRef> &FuncNames) {
-  return fetchMapEntriesRegex(FuncsToMemEvents, LTOCommonNameMemMap, FuncNames);
+DataReader::getMemDataForNamesRegex(const std::vector<StringRef> &FuncNames) {
+  return fetchMapEntriesRegex(NamesToMemEvents, LTOCommonNameMemMap, FuncNames);
 }
 
 bool DataReader::hasLocalsWithFileName() const {
-  for (const auto &Func : FuncsToBranches) {
+  for (const auto &Func : NamesToBranches) {
     const auto &FuncName = Func.getKey();
     if (FuncName.count('/') == 2 && FuncName[0] != '/')
       return true;
@@ -862,7 +1390,7 @@ bool DataReader::hasLocalsWithFileName() const {
 }
 
 void DataReader::dump() const {
-  for (const auto &Func : FuncsToBranches) {
+  for (const auto &Func : NamesToBranches) {
     Diag << Func.getKey() << " branches:\n";
     for (const auto &BI : Func.getValue().Data) {
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
@@ -879,7 +1407,7 @@ void DataReader::dump() const {
     StringRef Event = I->getKey();
     Diag << "Data was collected with event: " << Event << "\n";
   }
-  for (const auto &Func : FuncsToSamples) {
+  for (const auto &Func : NamesToSamples) {
     Diag << Func.getKey() << " samples:\n";
     for (const auto &SI : Func.getValue().Data) {
       Diag << SI.Loc.Name << " " << SI.Loc.Offset << " "
@@ -887,7 +1415,7 @@ void DataReader::dump() const {
     }
   }
 
-  for (const auto &Func : FuncsToMemEvents) {
+  for (const auto &Func : NamesToMemEvents) {
     Diag << "Memory events for " << Func.getValue().Name;
     Location LastOffset(0);
     for (auto &MI : Func.getValue().Data) {

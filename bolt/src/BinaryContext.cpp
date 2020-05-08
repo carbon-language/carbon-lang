@@ -12,7 +12,6 @@
 #include "BinaryContext.h"
 #include "BinaryEmitter.h"
 #include "BinaryFunction.h"
-#include "DataReader.h"
 #include "ParallelUtilities.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
@@ -88,8 +87,7 @@ BinaryContext::BinaryContext(std::unique_ptr<MCContext> Ctx,
                              std::unique_ptr<const MCInstrAnalysis> MIA,
                              std::unique_ptr<MCPlusBuilder> MIB,
                              std::unique_ptr<const MCRegisterInfo> MRI,
-                             std::unique_ptr<MCDisassembler> DisAsm,
-                             DataReader &DR)
+                             std::unique_ptr<MCDisassembler> DisAsm)
     : Ctx(std::move(Ctx)),
       DwCtx(std::move(DwCtx)),
       TheTriple(std::move(TheTriple)),
@@ -104,8 +102,7 @@ BinaryContext::BinaryContext(std::unique_ptr<MCContext> Ctx,
       MIA(std::move(MIA)),
       MIB(std::move(MIB)),
       MRI(std::move(MRI)),
-      DisAsm(std::move(DisAsm)),
-      DR(DR) {
+      DisAsm(std::move(DisAsm)) {
   Relocation::Arch = this->TheTriple->getArch();
   PageAlign = opts::NoHugePages ? RegularPageSize : HugePageSize;
 }
@@ -154,7 +151,7 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
 std::unique_ptr<BinaryContext>
-BinaryContext::createBinaryContext(ObjectFile *File, DataReader &DR,
+BinaryContext::createBinaryContext(ObjectFile *File,
                                    std::unique_ptr<DWARFContext> DwCtx) {
   StringRef ArchName = "";
   StringRef FeaturesStr = "";
@@ -266,7 +263,9 @@ BinaryContext::createBinaryContext(ObjectFile *File, DataReader &DR,
       std::move(Ctx), std::move(DwCtx), std::move(TheTriple), TheTarget,
       TripleName, std::move(MCE), std::move(MOFI), std::move(AsmInfo),
       std::move(MII), std::move(STI), std::move(InstructionPrinter),
-      std::move(MIA), std::move(MIB), std::move(MRI), std::move(DisAsm), DR);
+      std::move(MIA), std::move(MIB), std::move(MRI), std::move(DisAsm));
+
+  BC->setFilename(File->getFileName());
 
   return BC;
 }
@@ -1075,7 +1074,6 @@ void BinaryContext::postProcessSymbolTable() {
     }
   }
   assert(Valid);
-  assignMemData();
   generateSymbolHashes();
 }
 
@@ -1230,56 +1228,6 @@ void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
       P = P->getParent();
     }
     OS << *BD << "\n";
-  }
-}
-
-void BinaryContext::assignMemData() {
-  auto getAddress = [&](const MemInfo &MI) -> uint64_t {
-    if (!MI.Addr.IsSymbol)
-      return MI.Addr.Offset;
-
-    if (auto *BD = getBinaryDataByName(MI.Addr.Name))
-      return BD->getAddress() + MI.Addr.Offset;
-
-    return 0;
-  };
-
-  // Map of sections (or heap/stack) to count/size.
-  std::map<StringRef, uint64_t> Counts;
-  std::map<StringRef, uint64_t> JumpTableCounts;
-
-  uint64_t TotalCount = 0;
-  for (auto &Entry : DR.getAllFuncsMemData()) {
-    for (auto &MI : Entry.second.Data) {
-      const auto Addr = getAddress(MI);
-      auto *BD = getBinaryDataContainingAddress(Addr);
-      if (BD) {
-        BD->getAtomicRoot()->addMemData(MI);
-        Counts[BD->getSectionName()] += MI.Count;
-        if (BD->getAtomicRoot()->isJumpTable()) {
-          JumpTableCounts[BD->getSectionName()] += MI.Count;
-        }
-      } else {
-        Counts["Heap/stack"] += MI.Count;
-      }
-      TotalCount += MI.Count;
-    }
-  }
-
-  if (!Counts.empty()) {
-    outs() << "BOLT-INFO: Memory stats breakdown:\n";
-    for (auto &Entry : Counts) {
-      const auto Section = Entry.first;
-      const auto Count = Entry.second;
-      outs() << "BOLT-INFO:   " << Section << " = " << Count
-             << format(" (%.1f%%)\n", 100.0*Count/TotalCount);
-      if (JumpTableCounts.count(Section) != 0) {
-        const auto JTCount = JumpTableCounts[Section];
-        outs() << "BOLT-INFO:     jump tables = " << JTCount
-               << format(" (%.1f%%)\n", 100.0*JTCount/Count);
-      }
-    }
-    outs() << "BOLT-INFO: Total memory events: " << TotalCount << "\n";
   }
 }
 
@@ -1601,20 +1549,6 @@ void BinaryContext::printInstruction(raw_ostream &OS,
 
       if (Row.Column) {
         OS << ":" << Row.Column;
-      }
-    }
-  }
-
-  if ((opts::PrintMemData || PrintMemData) && Function) {
-    const auto *MD = Function->getMemData();
-    const auto MemDataOffset =
-      MIB->tryGetAnnotationAs<uint64_t>(Instruction, "MemDataOffset");
-    if (MD && MemDataOffset) {
-      bool DidPrint = false;
-      for (auto &MI : MD->getMemInfoRange(MemDataOffset.get())) {
-        OS << (DidPrint ? ", " : " # Loads: ");
-        OS << MI.Addr << "/" << MI.Count;
-        DidPrint = true;
       }
     }
   }

@@ -19,7 +19,6 @@
 #include "BinaryContext.h"
 #include "BinaryLoop.h"
 #include "BinarySection.h"
-#include "DataReader.h"
 #include "DebugData.h"
 #include "JumpTable.h"
 #include "MCPlus.h"
@@ -278,6 +277,8 @@ private:
   /// conditions.
   bool HasProfileAvailable{false};
 
+  bool HasMemoryProfile{false};
+
   /// Execution halts whenever this function is entered.
   bool TrapsOnEntry{false};
 
@@ -319,13 +320,7 @@ private:
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
-  /// Profile data for branches.
-  FuncBranchData *BranchData{nullptr};
-
-  /// Profile data for memory loads.
-  FuncMemData *MemData{nullptr};
-
-  /// Profile match ratio for BranchData.
+  /// Profile match ratio.
   float ProfileMatchRatio{0.0f};
 
   /// Indicates the type of profile the function is using.
@@ -553,7 +548,6 @@ private:
   using InputOffsetToAddressMapTy = std::unordered_map<uint64_t, uint64_t>;
   InputOffsetToAddressMapTy InputOffsetToAddressMap;
 
-private:
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
     Aliases.push_back(std::move(NewName));
@@ -633,6 +627,8 @@ private:
   friend class MachORewriteInstance;
   friend class RewriteInstance;
   friend class BinaryContext;
+  friend class DataReader;
+  friend class DataAggregator;
 
   /// Creation should be handled by RewriteInstance or BinaryContext
   BinaryFunction(const std::string &Name, BinarySection &Section,
@@ -1262,9 +1258,6 @@ public:
     //      Relocation{Offset, Symbol, RelType, Addend, Value};
   }
 
-  /// Get data used by this function.
-  std::set<BinaryData *> dataUses(bool OnlyHot) const;
-
   /// Return then name of the section this function originated from.
   StringRef getOriginSectionName() const {
     return getSection().getName();
@@ -1350,6 +1343,10 @@ public:
   /// but not yet populated into the function.
   bool hasProfileAvailable() const {
     return HasProfileAvailable;
+  }
+
+  bool hasMemoryProfile() const {
+    return HasMemoryProfile;
   }
 
   /// Return true if the body of the function was merged into another function.
@@ -2078,9 +2075,6 @@ public:
   /// State::CFG. Returns false if CFG cannot be built.
   bool buildCFG(MCPlusBuilder::AllocatorIdTy);
 
-  /// Read any kind of profile information available for the function.
-  void readProfile();
-
   /// Perform post-processing of the CFG.
   void postProcessCFG();
 
@@ -2098,57 +2092,6 @@ public:
   /// Return true upon successful processing, or false if the control flow
   /// cannot be statically evaluated for any given indirect branch.
   bool postProcessIndirectBranches(MCPlusBuilder::AllocatorIdTy AllocId);
-
-  /// In functions with multiple entry points, the profile collection records
-  /// data for other entry points in a different function entry. This function
-  /// attempts to fetch extra profile data for each secondary entry point.
-  bool fetchProfileForOtherEntryPoints();
-
-  /// Find the best matching profile for a function after the creation of basic
-  /// blocks.
-  void matchProfileData();
-
-  /// Find the best matching memory data profile for a function before the
-  /// creation of basic blocks.
-  void matchProfileMemData();
-
-  /// Check how closely the profile data matches the function and set
-  /// Return accuracy (ranging from 0.0 to 1.0) of matching.
-  float evaluateProfileData(const FuncBranchData &BranchData);
-
-  /// Return profile data associated with this function, or nullptr if the
-  /// function has no associated profile.
-  const FuncBranchData *getBranchData() const {
-    return BranchData;
-  }
-
-  /// Return profile data associated with this function, or nullptr if the
-  /// function has no associated profile.
-  FuncBranchData *getBranchData() {
-    return BranchData;
-  }
-
-  /// Return memory profile data associated with this function, or nullptr
-  /// if the function has no associated profile.
-  const FuncMemData *getMemData() const {
-    return MemData;
-  }
-
-  /// Return memory profile data associated with this function, or nullptr
-  /// if the function has no associated profile.
-  FuncMemData *getMemData() {
-    return MemData;
-  }
-
-  /// Updates profile data associated with this function
-  void setBranchData(FuncBranchData *Data) {
-    BranchData = Data;
-  }
-
-  /// Updates the memory profile data associated with this function
-  void setMemData(FuncMemData *Data) {
-    MemData = Data;
-  }
 
   /// Return all call site profile info for this function.
   IndirectCallSiteProfile &getAllCallSites() {
@@ -2177,15 +2120,6 @@ public:
 
   // Convert COUNT_NO_PROFILE to 0
   void removeTagsFromProfile();
-
-  /// If our profile data comes from sample addresses instead of LBR entries,
-  /// collect sample count for all addresses in this function address space,
-  /// aggregating them per basic block and assigning an execution count to each
-  /// basic block based on the number of samples recorded at those addresses.
-  /// The last step is to infer edge counts based on BB execution count. Note
-  /// this is the opposite of the LBR way, where we infer BB execution count
-  /// based on edge counts.
-  void readSampleData();
 
   /// Computes a function hotness score: the sum of the products of BB frequency
   /// and size.
@@ -2274,9 +2208,6 @@ public:
   /// isIdenticalWith.
   void mergeProfileDataInto(BinaryFunction &BF) const;
 
-  /// Convert function-level branch data into instruction annotations.
-  void convertBranchData();
-
   /// Returns the last computed hash value of the function.
   size_t getHash() const {
     return Hash;
@@ -2328,42 +2259,8 @@ public:
     return UnitLineTable;
   }
 
-  /// Update function execution profile with a recorded trace.
-  /// A trace is region of code executed between two LBR entries supplied in
-  /// execution order.
-  ///
-  /// Return true if the trace is valid, false otherwise.
-  bool recordTrace(
-      const LBREntry &First,
-      const LBREntry &Second,
-      uint64_t Count = 1,
-      SmallVector<std::pair<uint64_t, uint64_t>, 16> *Branches = nullptr);
-
-  /// Update function profile with a taken branch.
-  /// \p Count could be 0 if verification of the branch is required.
-  ///
-  /// Return true if the branch is valid, false otherwise.
-  bool recordBranch(uint64_t From, uint64_t To, uint64_t Count = 1,
-                    uint64_t Mispreds = 0);
-
-  /// Record external entry into the function.
-  ///
-  /// Return true if the entry is valid, false otherwise.
-  bool recordEntry(uint64_t To, bool Mispred, uint64_t Count = 1);
-
-  /// Record exit from a function via a call or return.
-  ///
-  /// Return true if the exit point is valid, false otherwise.
-  bool recordExit(uint64_t From, bool Mispred, uint64_t Count = 1);
-
   /// Finalize profile for the function.
   void postProcessProfile();
-
-  /// Return a vector of offsets corresponding to a trace in a function
-  /// (see recordTrace() above).
-  Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
-  getFallthroughsInTrace(const LBREntry &First, const LBREntry &Second,
-                         uint64_t Count = 1);
 
   /// Returns an estimate of the function's hot part after splitting.
   /// This is a very rough estimate, as with C++ exceptions there are
@@ -2503,13 +2400,6 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   case BinaryFunction::State::Emitted:      OS << "emitted";  break;
   }
 
-  return OS;
-}
-
-inline raw_ostream &operator<<(raw_ostream &OS,
-                               const LBREntry &LBR) {
-  OS << "0x" << Twine::utohexstr(LBR.From)
-     << " -> 0x" << Twine::utohexstr(LBR.To);
   return OS;
 }
 

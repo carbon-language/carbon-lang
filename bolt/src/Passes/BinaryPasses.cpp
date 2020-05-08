@@ -1335,29 +1335,9 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     }
   }
 
-  // Profile is marked as 'Used' if it either matches a function name
-  // exactly or if it 100% matches any of functions with matching common
-  // LTO names.
-  auto getUnusedObjects = [&]() -> Optional<std::vector<StringRef>> {
-    std::vector<StringRef> UnusedObjects;
-    for (const auto &Func : BC.DR.getAllFuncsData()) {
-      if (!Func.getValue().Used) {
-        UnusedObjects.emplace_back(Func.getKey());
-      }
-    }
-    if (UnusedObjects.empty())
-      return NoneType();
-    return UnusedObjects;
-  };
-
-  if (const auto UnusedObjects = getUnusedObjects()) {
-    outs() << "BOLT-INFO: profile for " << UnusedObjects->size()
+  if (const auto NumUnusedObjects = BC.getNumUnusedProfiledObjects()) {
+    outs() << "BOLT-INFO: profile for " << NumUnusedObjects
            << " objects was ignored\n";
-    if (opts::Verbosity >= 1) {
-      for (auto Name : *UnusedObjects) {
-        outs() << "  " << Name << '\n';
-      }
-    }
   }
 
   if (ProfiledFunctions.size() > 10) {

@@ -12,7 +12,6 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
-#include "DataReader.h"
 #include "DynoStats.h"
 #include "MCPlusBuilder.h"
 #include "llvm/ADT/edit_distance.h"
@@ -946,8 +945,6 @@ void BinaryFunction::disassemble() {
 
   DWARFUnitLineTable ULT = getDWARFUnitLineTable();
 
-  matchProfileMemData();
-
   // Insert a label at the beginning of the function. This will be our first
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
@@ -1350,10 +1347,6 @@ add_instruction:
     // Record offset of the instruction for profile matching.
     if (BC.keepOffsetForInstruction(Instruction)) {
       MIB->addAnnotation(Instruction, "Offset", static_cast<uint32_t>(Offset));
-    }
-
-    if (MemData && !emptyRange(MemData->getMemInfoRange(Offset))) {
-      MIB->addAnnotation(Instruction, "MemDataOffset", Offset);
     }
 
     addInstruction(Offset, std::move(Instruction));
@@ -4066,28 +4059,6 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
   } else {
     llvm_unreachable("invalid CFG state to use getInstructionAtOffset()");
   }
-}
-
-std::set<BinaryData *> BinaryFunction::dataUses(bool OnlyHot) const {
-  std::set<BinaryData *> Uses;
-  for (auto *BB : BasicBlocks) {
-    if (OnlyHot && BB->isCold())
-      continue;
-
-    for (const auto &Inst : *BB) {
-      if (auto Mem =
-            BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "MemDataOffset")) {
-        for (auto &MI : getMemData()->getMemInfoRange(Mem.get())) {
-          if (auto *BD = MI.Addr.IsSymbol
-                ? BC.getBinaryDataByName(MI.Addr.Name)
-                : BC.getBinaryDataContainingAddress(MI.Addr.Offset)) {
-            Uses.insert(BD);
-          }
-        }
-      }
-    }
-  }
-  return Uses;
 }
 
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(

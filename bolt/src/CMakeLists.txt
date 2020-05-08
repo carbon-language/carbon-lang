@@ -96,11 +96,12 @@ add_llvm_tool(llvm-bolt
   MachORewriteInstance.cpp
   MCPlusBuilder.cpp
   ParallelUtilities.cpp
-  ProfileReader.cpp
-  ProfileWriter.cpp
+  ProfileReaderBase.cpp
   Relocation.cpp
   RewriteInstance.cpp
   Utils.cpp
+  YAMLProfileReader.cpp
+  YAMLProfileWriter.cpp
 
   DEPENDS
   intrinsics_gen

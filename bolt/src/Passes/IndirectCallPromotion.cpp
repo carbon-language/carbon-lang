@@ -396,12 +396,11 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
    MCInst *&TargetFetchInst,
    const JumpTable *JT
 ) const {
-  const auto *MemData = Function.getMemData();
   JumpTableInfoType HotTargets;
 
   assert(JT && "Can't get jump table addrs for non-jump tables.");
 
-  if (!MemData || !opts::EliminateLoads)
+  if (!Function.hasMemoryProfile() || !opts::EliminateLoads)
     return JumpTableInfoType();
 
   MCInst *MemLocInstr;
@@ -442,14 +441,14 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
 
   ++TotalIndexBasedCandidates;
 
-  // Try to get value profiling data for the method load instruction.
-  auto DataOffset = BC.MIB->tryGetAnnotationAs<uint64_t>(*MemLocInstr,
-                                                         "MemDataOffset");
-
-  if (!DataOffset) {
+  auto ErrorOrMemAccesssProfile =
+    BC.MIB->tryGetAnnotationAs<MemoryAccessProfile>(*MemLocInstr,
+                                                    "MemoryAccessProfile");
+  if (!ErrorOrMemAccesssProfile) {
     DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP no memory profiling data found\n");
     return JumpTableInfoType();
   }
+  auto &MemAccessProfile = ErrorOrMemAccesssProfile.get();
 
   uint64_t ArrayStart;
   if (DispExpr) {
@@ -461,19 +460,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   }
 
   if (BaseReg == BC.MRI->getProgramCounter()) {
-    auto FunctionData = Function.getData();
-    const uint64_t Address = Function.getAddress() + DataOffset.get();
-    MCInst OrigJmp;
-    uint64_t Size;
-    assert(FunctionData);
-    auto Success = BC.DisAsm->getInstruction(OrigJmp,
-                                             Size,
-                                             *FunctionData,
-                                             Address,
-                                             nulls(),
-                                             nulls());
-    assert(Success && "Must be able to disassmble original jump instruction");
-    ArrayStart += Address + Size;
+    ArrayStart += Function.getAddress() + MemAccessProfile.NextInstrOffset;
   }
 
   // This is a map of [symbol] -> [count, index] and is used to combine indices
@@ -482,21 +469,24 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   std::map<MCSymbol *, std::pair<uint64_t, uint64_t>> HotTargetMap;
   const auto Range = JT->getEntriesForAddress(ArrayStart);
 
-  for (const auto &MI : MemData->getMemInfoRange(DataOffset.get())) {
+  for (const auto &AccessInfo : MemAccessProfile.AddressAccessInfo) {
     size_t Index;
-    if (!MI.Addr.Offset) // mem data occasionally includes nulls, ignore them
+    // Mem data occasionally includes nullprs, ignore them.
+    if (!AccessInfo.MemoryObject && !AccessInfo.Offset)
       continue;
 
-    if (MI.Addr.Offset % JT->EntrySize != 0) // ignore bogus data
+    if (AccessInfo.Offset % JT->EntrySize != 0) // ignore bogus data
       return JumpTableInfoType();
 
-    if (MI.Addr.IsSymbol) {
+    if (AccessInfo.MemoryObject) {
       // Deal with bad/stale data
-      if (!MI.Addr.Name.startswith("JUMP_TABLE/" + Function.getOneName().str()))
+      if (!AccessInfo.MemoryObject->getName().
+           startswith("JUMP_TABLE/" + Function.getOneName().str()))
         return JumpTableInfoType();
-      Index = (MI.Addr.Offset - (ArrayStart - JT->getAddress())) / JT->EntrySize;
+      Index =
+        (AccessInfo.Offset - (ArrayStart - JT->getAddress())) / JT->EntrySize;
     } else {
-      Index = (MI.Addr.Offset - ArrayStart) / JT->EntrySize;
+      Index = (AccessInfo.Offset - ArrayStart) / JT->EntrySize;
     }
 
     // If Index is out of range it probably means the memory profiling data is
@@ -521,16 +511,12 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
                    << " = (count=" << HT.first << ", index=" << HT.second
                    << ")\n";
           }
-          dbgs() << "BOLT-INFO: MemData:\n";
-          for (auto &MI : MemData->getMemInfoRange(DataOffset.get())) {
-            dbgs() << "BOLT-INFO: " << MI << "\n";
-          }
         });
       return JumpTableInfoType();
     }
 
     auto &HotTarget = HotTargetMap[JT->Entries[Index + Range.first]];
-    HotTarget.first += MI.Count;
+    HotTarget.first += AccessInfo.Count;
     HotTarget.second = Index;
   }
 
@@ -694,7 +680,6 @@ IndirectCallPromotion::maybeGetVtableSyms(
    MCInst &Inst,
    const SymTargetsType &SymTargets
 ) const {
-  const auto *MemData = Function.getMemData();
   std::vector<std::pair<MCSymbol *, uint64_t>> VtableSyms;
   std::vector<MCInst *> MethodFetchInsns;
   unsigned VtableReg, MethodReg;
@@ -703,7 +688,7 @@ IndirectCallPromotion::maybeGetVtableSyms(
   assert(!Function.getJumpTable(Inst) &&
          "Can't get vtable addrs for jump tables.");
 
-  if (!MemData || !opts::EliminateLoads)
+  if (!Function.hasMemoryProfile() || !opts::EliminateLoads)
     return MethodInfoType();
 
   MutableArrayRef<MCInst> Insts(&BB->front(), &Inst + 1);
@@ -713,9 +698,10 @@ IndirectCallPromotion::maybeGetVtableSyms(
                                         VtableReg,
                                         MethodReg,
                                         MethodOffset)) {
-    DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP unable to analyze method call in "
-                            << Function << " at @ " << (&Inst - &BB->front())
-                            << "\n");
+    DEBUG_VERBOSE(1,
+                  dbgs() << "BOLT-INFO: ICP unable to analyze method call in "
+                         << Function << " at @ " << (&Inst - &BB->front())
+                         << "\n");
     return MethodInfoType();
   }
 
@@ -734,25 +720,23 @@ IndirectCallPromotion::maybeGetVtableSyms(
   );
 
   // Try to get value profiling data for the method load instruction.
-  auto DataOffset = BC.MIB->tryGetAnnotationAs<uint64_t>(*MethodFetchInsns.back(),
-                                                         "MemDataOffset");
-
-  if (!DataOffset) {
-    DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP no memory profiling data found\n");
+  auto ErrorOrMemAccesssProfile =
+    BC.MIB->tryGetAnnotationAs<MemoryAccessProfile>(*MethodFetchInsns.back(),
+                                                    "MemoryAccessProfile");
+  if (!ErrorOrMemAccesssProfile) {
+    DEBUG_VERBOSE(1,
+                  dbgs() << "BOLT-INFO: ICP no memory profiling data found\n");
     return MethodInfoType();
   }
+  auto &MemAccessProfile = ErrorOrMemAccesssProfile.get();
 
   // Find the vtable that each method belongs to.
   std::map<const MCSymbol *, uint64_t> MethodToVtable;
 
-  for (auto &MI : MemData->getMemInfoRange(DataOffset.get())) {
-    uint64_t Address;
-
-    if (MI.Addr.IsSymbol) {
-      auto *BD = BC.getBinaryDataByName(MI.Addr.Name);
-      Address = BD ? BD->getAddress() + MI.Addr.Offset : 0;
-    } else {
-      Address = MI.Addr.Offset;
+  for (const auto &AccessInfo : MemAccessProfile.AddressAccessInfo) {
+    uint64_t Address = AccessInfo.Offset;
+    if (AccessInfo.MemoryObject) {
+      Address += AccessInfo.MemoryObject->getAddress();
     }
 
     // Ignore bogus data.
@@ -763,7 +747,7 @@ IndirectCallPromotion::maybeGetVtableSyms(
 
     DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP vtable = "
                             << Twine::utohexstr(VtableBase)
-                            << "+" << MethodOffset << "/" << MI.Count
+                            << "+" << MethodOffset << "/" << AccessInfo.Count
                             << "\n");
 
     if (auto MethodAddr = BC.getPointerAtAddress(Address)) {
@@ -1216,47 +1200,6 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
     CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC)));
     RA.reset(new RegAnalysis(BC, &BFs, &*CG));
   }
-
-  DEBUG_VERBOSE(2, {
-      for (auto &BFIt : BFs) {
-        auto &Function = BFIt.second;
-        const auto *MemData = Function.getMemData();
-        bool DidPrintFunc = false;
-        uint64_t Offset = 0;
-
-        if (!MemData || !Function.isSimple() || Function.isIgnored())
-          continue;
-
-        for (auto &BB : Function) {
-          bool PrintBB = false;
-          for (auto &Inst : BB) {
-            if (auto Mem =
-                  BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "MemDataOffset")) {
-              for (auto &MI : MemData->getMemInfoRange(Mem.get())) {
-                if (MI.Addr.IsSymbol) {
-                  PrintBB = true;
-                  break;
-                }
-                if (BC.getSectionForAddress(MI.Addr.Offset)) {
-                  PrintBB = true;
-                  break;
-                }
-              }
-            }
-          }
-          if (PrintBB && !DidPrintFunc) {
-            dbgs() << "\nNon-heap/stack memory data found in "
-                   << Function << ":\n";
-            DidPrintFunc = true;
-          }
-          Offset = BC.printInstructions(PrintBB ? dbgs() : nulls(),
-                                        BB.begin(),
-                                        BB.end(),
-                                        Offset,
-                                        &Function);
-        }
-      }
-    });
 
   // If icp-top-callsites is enabled, compute the total number of indirect
   // calls and then optimize the hottest callsites that contribute to that

@@ -33,11 +33,10 @@ namespace bolt {
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
-MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
-                                           DataReader &DR)
+MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile)
     : InputFile(InputFile),
       BC(BinaryContext::createBinaryContext(
-          InputFile, DR,
+          InputFile,
           DWARFContext::create(*InputFile, nullptr,
                                DWARFContext::defaultErrorHandler, "", false))) {
 }

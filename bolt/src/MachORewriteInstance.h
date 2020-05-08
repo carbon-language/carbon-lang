@@ -22,7 +22,6 @@ namespace llvm {
 namespace bolt {
 
 class BinaryContext;
-class DataReader;
 
 class MachORewriteInstance {
   object::MachOObjectFile *InputFile;
@@ -37,7 +36,7 @@ class MachORewriteInstance {
   void runOptimizationPasses();
 
 public:
-  MachORewriteInstance(object::MachOObjectFile *InputFile, DataReader &DR);
+  MachORewriteInstance(object::MachOObjectFile *InputFile);
   ~MachORewriteInstance();
 
   /// Run all the necessary steps to read, optimize and rewrite the binary.

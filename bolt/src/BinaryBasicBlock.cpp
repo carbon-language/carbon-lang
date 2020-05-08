@@ -18,6 +18,7 @@
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/Support/Errc.h"
 #include <limits>
 #include <string>
 
