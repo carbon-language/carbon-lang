@@ -85,9 +85,14 @@ app.use(cookieParser);
 app.use(validateFirebaseIdToken);
 
 app.get('*', (req, res) => {
+  // Remove the prefix /, and default to index.html.
+  var path = req.path.replace(/^(\/)/, "");
+  if (path === "") {
+    path = "index.html";
+  }
   // Serve the requested data from the carbon-lang bucket.
   const bucket = gcs.bucket("gs://www.carbon-lang.dev");
-  const stream = bucket.file(req.path.replace(/^(\/)/, "")).createReadStream();
+  const stream = bucket.file(path).createReadStream();
   //stream.on('error', function(err) { res.status(404).send(err.message); });
   stream.on('error', function(err) {
     console.log(err.message);
