@@ -99,12 +99,59 @@ take ownership of providing a CLA.
 We use a few systems for collaboration which contributors should be aware of.
 Membership is currently invite-only.
 
-- [GitHub](https://github.com/orgs/carbon-language): We use the
-  "carbon-language" organization for our repositories.
+Before using these systems, everyone must sign the CLA. They are all governed by
+the Code of Conduct.
 
-- [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
-  We use this shared drive for all of our Google Docs, particularly proposal
-  drafts.
+### GitHub
+
+We use the
+[carbon-language organization](https://github.com/orgs/carbon-language) for our
+repositories.
+
+**To join:**
+
+- Ask an admin to send an invite, providing your GitHub account.
+- Check your email to accept the invite, or try the standard
+  [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
+  if you don't see the email.
+
+### Discourse Forums
+
+We use our [Discourse Forums](https://forums.carbon-lang.dev) for long-form
+discussions.
+
+**To join:**
+
+- Go to [the forums](https://forums.carbon-lang.dev) and register your GitHub
+  account.
+     - You will be able to choose which GitHub email you want the forums to send
+       email to.
+- An admin will need to approve your registration.
+
+### Discord Chat
+
+We use [Discord Chat](https://discord.com/app) for short-form chats.
+
+**To join:**
+
+- Ask an admin for an invite link.
+     - Please do not re-share the invite links: they're our only way to restrict
+       access.
+- You will be prompted with the Code of Conduct. After reading it, click the
+  check mark reaction icon at the bottom.
+
+### Google Drive
+
+We use a
+[shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
+for all of our Google Docs, particularly proposal drafts.
+
+**To join:**
+
+- Ask an admin to invite you, providing your Google account email.
+- The admin will add you to the
+  [Google Group](https://groups.google.com/g/carbon-lang-contributors) used for
+  access.
 
 ## Contribution guidelines and standards
 
@@ -115,42 +162,43 @@ follow the Carbon documentation and coding styles.
 
 - For **both** documentation and code:
 
-  - When the Carbon team accepts new documentation or features, to Carbon, by
-    default they take on the maintenance burden. This means they'll weigh the
-    benefit of each contribution must be weighed against the cost of maintaining
-    it.
-  - The appropriate [style](#style) is applied.
-  - The [license](#license) is present in all contributions.
+     - When the Carbon team accepts new documentation or features, to Carbon, by
+       default they take on the maintenance burden. This means they'll weigh the
+       benefit of each contribution must be weighed against the cost of
+       maintaining it.
+     - The appropriate [style](#style) is applied.
+     - The [license](#license) is present in all contributions.
 
 - For documentation:
 
-  - All documentation is written for clarity and readability. Beyond fixing
-    spelling and grammar, this also means content is worded to be accessible to
-    a broad audience.
-  - Substantive changes to Carbon follow the
-    [evolution process](docs/project/evolution.md). Pull requests are only sent
-    after the documentation changes have been accepted by the reviewing team.
-  - Typos or other minor fixes that don't change the meaning of a document do
-    not need formal review, and are often handled directly as a pull request.
+     - All documentation is written for clarity and readability. Beyond fixing
+       spelling and grammar, this also means content is worded to be accessible
+       to a broad audience.
+     - Substantive changes to Carbon follow the
+       [evolution process](docs/project/evolution.md). Pull requests are only
+       sent after the documentation changes have been accepted by the reviewing
+       team.
+     - Typos or other minor fixes that don't change the meaning of a document do
+       not need formal review, and are often handled directly as a pull request.
 
 - For code:
 
-  - New features should have a documented design that has been approved through
-    the [evolution process](docs/project/evolution.md). This includes
-    modifications to pre-existing designs.
-  - Bug fixes and mechanical improvements don't need this.
-  - All new features include unit tests, as they help to (a) document and
-    validate concrete usage of the feature and its edge cases, and (b) guard
-    against future breaking changes to lower the maintenance cost.
-  - Bug fixes also generally include unit tests, because the presence of bugs
-    usually indicates insufficient test coverage.
-  - Unit tests must pass with the changes.
-  - If some tests fail for unrelated reasons, we wait until they're fixed (it
-    helps to contribute a fix!).
-  - Code changes are made with API compatibility and evolvability in mind.
-    Reviewers will comment on any API compatibility issues.
-  - Keep in mind that code contribution guidelines are incomplete while we start
-    work on Carbon, and may change later.
+     - New features should have a documented design that has been approved
+       through the [evolution process](docs/project/evolution.md). This includes
+       modifications to pre-existing designs.
+     - Bug fixes and mechanical improvements don't need this.
+     - All new features include unit tests, as they help to (a) document and
+       validate concrete usage of the feature and its edge cases, and (b) guard
+       against future breaking changes to lower the maintenance cost.
+     - Bug fixes also generally include unit tests, because the presence of bugs
+       usually indicates insufficient test coverage.
+     - Unit tests must pass with the changes.
+     - If some tests fail for unrelated reasons, we wait until they're fixed (it
+       helps to contribute a fix!).
+     - Code changes are made with API compatibility and evolvability in mind.
+       Reviewers will comment on any API compatibility issues.
+     - Keep in mind that code contribution guidelines are incomplete while we
+       start work on Carbon, and may change later.
 
 # Style
 
