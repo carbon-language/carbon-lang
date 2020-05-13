@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 1. Create a GitHub tracking issue in this repo using
    [the template](https://github.com/carbon-language/carbon-lang/issues/new?template=proposal.md).
-2. Prepare a pull request with the proposal, and add a link to it on the
+2. Name this file `/proposals/p####.md`, where `####` should be the issue
+   number.
+3. Prepare a pull request with the proposal, and add a link to it on the
    tracking issue.
-   - Although you may want to add more files to the pull request later, most
-     proposals will be very bare at this point.
-3. Delete this section.
+      - Although you may want to add more files to the pull request later, most
+        proposals will be very bare at this point.
+4. Delete this section.
 
 TODOs indicate where content should be updated for a proposal. See
 [Carbon Governance and Evolution](https://github.com/carbon-language/carbon-lang/blob/master/docs/project/evolution.md)
