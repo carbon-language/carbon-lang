@@ -56,15 +56,15 @@ Here are some possible decisions with their meanings:
 - **accepted**: Yes, we want this now.
 - **declined**: No, we don't think this is the right direction for Carbon.
 - **needs work**:
-  - We need more information or data before we can decide if this is the right
-    direction.
-  - We like the direction, but the proposal needs significant changes before
-    being accepted.
+     - We need more information or data before we can decide if this is the
+       right direction.
+     - We like the direction, but the proposal needs significant changes before
+       being accepted.
 - **deferred**:
-  - We like the direction, but it isn't our priority right now, so bring the
-    proposal back later.
-  - We aren't sure about the direction, but it isn't our priority right now, so
-    bring it back later.
+     - We like the direction, but it isn't our priority right now, so bring the
+       proposal back later.
+     - We aren't sure about the direction, but it isn't our priority right now,
+       so bring it back later.
 
 When a proposal has open questions, the formal decision must include a decision
 for each open question. That may include filing GitHub issues to revisit the
@@ -103,9 +103,9 @@ items, meetings will not be held.
 Agenda items (e.g., proposals) should be added at least one week in advance (or
 four working days, if longer), so that members have time to review items added
 to the agenda. Sub-items (e.g., proposal discussion points) should be added at
-least one day before the meeting; every open Google Doc comment is implicitly a
-sub-item. Please feel free to add items to the agenda and remove them later if
-the agenda item is resolved over other communication forums.
+least one day before the meeting; every open GitHub pull request comment is
+implicitly a sub-item. Please feel free to add items to the agenda and remove
+them later if the agenda item is resolved over other communication forums.
 
 Team members are expected to prepare for the meeting by ensuring they're
 familiar with the proposal and related discussion. The meeting will not include
