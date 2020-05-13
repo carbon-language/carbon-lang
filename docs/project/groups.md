@@ -18,7 +18,7 @@ We use a mix of:
 - [GitHub organization](https://github.com/orgs/carbon-language/people)
 - [Discourse Forums account](https://forums.carbon-lang.dev)
 - [Discord Chat access](https://discord.com/app)
-- [Google group](https://groups.google.com/g/carbon-lang-contributors)
+- [Google group](https://groups.google.com/g/carbon-lang-contributors):
   Grants Google Drive access.
 
 ## Team-specific access
@@ -35,7 +35,8 @@ Any team-specific access will typically be managed by a team owner or admin, whe
 
 For most purposes, the Core team should be contacted about conduct issues.
 
-- [Google group](https://groups.google.com/g/carbon-lang-conduct-team)
+- [Google group](https://groups.google.com/g/carbon-lang-conduct-team):
+  Primarily a contact list.
 
 ### Core team
 
@@ -48,4 +49,5 @@ For most purposes, the Core team should be contacted about conduct issues.
 - [GitHub team](https://github.com/orgs/carbon-language/teams/review-managers)
 - [Discourse Forums group](https://forums.carbon-lang.dev/g/review_managers)
 - Discord Chat role: review-managers
-- [Google group](https://groups.google.com/g/carbon-lang-review-managers)
+- [Google group](https://groups.google.com/g/carbon-lang-review-managers):
+  Grants Google Drive access.
