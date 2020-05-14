@@ -12,8 +12,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
    number.
 3. Prepare a pull request with the proposal, and add a link to it on the
    tracking issue.
-      - Although you may want to add more files to the pull request later, most
-        proposals will be very bare at this point.
+   - Although you may want to add more files to the pull request later, most
+     proposals will be very bare at this point.
 4. Delete this section.
 
 TODOs indicate where content should be updated for a proposal. See
