@@ -39,29 +39,29 @@ The process is:
 
 1. [Draft the proposal](#draft-the-proposal)
 
-      1. [(optional) Discuss the idea early](#optional-discuss-the-idea-early)
-      2. [Make a proposal](#make-a-proposal)
-      3. [(optional) Elicit early, high-level feedback on the proposal](#optional-elicit-early_high_level-feedback-on-the-proposal)
+   1. [(optional) Discuss the idea early](#optional-discuss-the-idea-early)
+   2. [Make a proposal](#make-a-proposal)
+   3. [(optional) Elicit early, high-level feedback on the proposal](#optional-elicit-early_high_level-feedback-on-the-proposal)
 
 2. [Solicit and address proposal feedback](#solicit-and-address-proposal-feedback)
 
-      1. [Request comments](#request-comments)
-      2. [Community and reviewing team comments on proposal](#community-and-reviewing-team-comments-on-proposal)
-      3. [(optional) Pause for a major revision](#optional-pause-for-a-major-revision)
-      4. [Request a review manager](#request-a-review-manager)
+   1. [Request comments](#request-comments)
+   2. [Community and reviewing team comments on proposal](#community-and-reviewing-team-comments-on-proposal)
+   3. [(optional) Pause for a major revision](#optional-pause-for-a-major-revision)
+   4. [Request a review manager](#request-a-review-manager)
 
 3. [Reviewing team makes a proposal decision](#reviewing-team-makes-a-proposal-decision)
 
-      1. [Prepare the document for a proposal decision](#prepare-the-document-for-a-proposal-decision)
-      2. [Ask the reviewing team for a proposal decision](#ask-the-reviewing-team-for-a-proposal-decision)
-      3. [(optional) Use the meeting to make a proposal decision](#optional-use-the-meeting-to-make-a-proposal-decision)
+   1. [Prepare the document for a proposal decision](#prepare-the-document-for-a-proposal-decision)
+   2. [Ask the reviewing team for a proposal decision](#ask-the-reviewing-team-for-a-proposal-decision)
+   3. [(optional) Use the meeting to make a proposal decision](#optional-use-the-meeting-to-make-a-proposal-decision)
 
 4. [Finalize the proposal decision](#finalize-the-proposal-decision)
 
-      1. [Publish the proposal decision](#publish-the-proposal-decision)
-      2. [Community comments on proposal decision](#community-comments-on-proposal-decision)
-      3. [(optional) Rollback the decision](#optional-rollback-the-decision)
-      4. [Execute on proposal decision](#execute-on-proposal-decision)
+   1. [Publish the proposal decision](#publish-the-proposal-decision)
+   2. [Community comments on proposal decision](#community-comments-on-proposal-decision)
+   3. [(optional) Rollback the decision](#optional-rollback-the-decision)
+   4. [Execute on proposal decision](#execute-on-proposal-decision)
 
 ## Coordination Tools
 
@@ -76,12 +76,11 @@ We use several tools to coordinate changes to Carbon:
 - **Discourse Forum** topics will be used for the early idea discussion, any
   deeper discussions, or more high-level and meta points.
 - **Discord Chat** can be used for quick and real-time chats and Q&A.
-     - If there are important technical points raised or addressed, they should
-       get summarized on a relevant Discourse Forum topic.
+  - If there are important technical points raised or addressed, they should get
+    summarized on a relevant Discourse Forum topic.
 - **Google Hangouts Meet** will be used for VC meetings, typically for
   decisions.
-     - Meetings should typically be summarized on a relevant Discourse Forum
-       topic.
+  - Meetings should typically be summarized on a relevant Discourse Forum topic.
 - **Google Calendar** will be used to track team meeting and vacation times.
 - **Google Docs** may be used for early draft proposals. This facilitates
   collaborative editing and easy commenting about wording issues.
@@ -302,12 +301,12 @@ request for the RFC.
 ##### Actions
 
 - **Author**:
-     - Write the proposal using
-       [the template](https://github.com/carbon-language/carbon-lang/blob/master/proposals/templates.md).
-          - The template has additional instructions under "TODO: Initial
-            proposal setup".
-          - Note that proposal and GitHub issue templates have the status set to
-            `WIP`.
+  - Write the proposal using
+    [the template](https://github.com/carbon-language/carbon-lang/blob/master/proposals/templates.md).
+    - The template has additional instructions under "TODO: Initial proposal
+      setup".
+    - Note that proposal and GitHub issue templates have the status set to
+      `WIP`.
 
 #### (optional) Elicit early, high-level feedback on the proposal
 
@@ -319,7 +318,7 @@ favor the forum topic (vs GitHub comments) for high-level discussion.
 
 - **Author**: Update (or create if needed) the `Evolution > Ideas` forum topic
   to advertise the proposal and elicit early, high-level feedback.
-     - Add the topic's link to the GitHub issue.
+  - Add the topic's link to the GitHub issue.
 - **Community**: Provide [constructive commentary](commenting_guidelines.md) for
   ideas when feedback is solicited.
 
@@ -338,11 +337,11 @@ discussion, as well as links to prior discussion topics.
 ##### Actions
 
 - **Author**:
-     - Set both the proposal status and GitHub issue status label to `RFC`.
-     - Create an `Evolution > RFCs` forum topic.
-          - Summarize the discussion points, along with a link to the pull
-            request and GitHub issue.
-          - Add the topic's link to the GitHub issue.
+  - Set both the proposal status and GitHub issue status label to `RFC`.
+  - Create an `Evolution > RFCs` forum topic.
+    - Summarize the discussion points, along with a link to the pull request and
+      GitHub issue.
+    - Add the topic's link to the GitHub issue.
 
 #### Community and reviewing team comments on proposal
 
@@ -365,8 +364,8 @@ also be added where the author isn't confident about the best approach.
 ##### Actions
 
 - **Author**:
-     - Update the pull request and/or comment in the topic to address feedback.
-     - Create GitHub issues for any open questions to be revisited later.
+  - Update the pull request and/or comment in the topic to address feedback.
+  - Create GitHub issues for any open questions to be revisited later.
 - **Reviewing team and community**: Provide
   [constructive commentary](commenting_guidelines.md) for proposals.
 
@@ -386,9 +385,9 @@ discussion points thus far (with links to those prior topics).
 ##### Actions
 
 - **Author**:
-     - Announce to the Discourse Forum topic that the proposal is undergoing
-       major revision.
-     - Set both the proposal status and GitHub issue status label to `WIP`.
+  - Announce to the Discourse Forum topic that the proposal is undergoing major
+    revision.
+  - Set both the proposal status and GitHub issue status label to `WIP`.
 - **Reviewing team and community**: Refrain from commenting until the author
   solicits feedback again.
 
@@ -411,15 +410,14 @@ the reviewing team will be asked to start making a decision after a day.
 ##### Actions
 
 - **Author**:
-     - Ensure all comments are resolved.
-     - Create a `Evolution > Review manager requests` topic asking for a review
-       manager, providing a link to the proposal's pull request and GitHub
-       issue.
-          - Add the topic's link to the GitHub issue.
+  - Ensure all comments are resolved.
+  - Create a `Evolution > Review manager requests` topic asking for a review
+    manager, providing a link to the proposal's pull request and GitHub issue.
+    - Add the topic's link to the GitHub issue.
 - **Review manager**:
-     - Ask reviewing team members to review the proposal when needed.
-     - Double-check that comment threads are addressed by the proposal.
-     - Update the `Evolution > RFCs` topic with a last call for comments.
+  - Ask reviewing team members to review the proposal when needed.
+  - Double-check that comment threads are addressed by the proposal.
+  - Update the `Evolution > RFCs` topic with a last call for comments.
 
 ### Reviewing team makes a proposal decision
 
@@ -449,17 +447,17 @@ discussion. Try to respond to the Discourse Forum topic promptly with:
 
 - A position (either affirming or objecting) is strongly preferred, although
   standing aside is allowed.
-     - Rationales for positions should be based on discussion on the proposal's
-       `Evolution > RFCs` topic, and providing links helps write the decision.
+  - Rationales for positions should be based on discussion on the proposal's
+    `Evolution > RFCs` topic, and providing links helps write the decision.
 - A request for more time to review materials, to make it clear the intent is to
   participate in the decision.
 - Discussion regarding positions or the decision itself.
-     - The reviewing team will participate in the proposal community comment
-       period, so that substantive feedback can be incorporated by the author
-       prior to requesting a decision.
+  - The reviewing team will participate in the proposal community comment
+    period, so that substantive feedback can be incorporated by the author prior
+    to requesting a decision.
 - A request to use the meeting for discussion.
-     - All topics for discussion will be captured either in the agenda or as a
-       comment on the pull request, to ensure they're ready for the meeting.
+  - All topics for discussion will be captured either in the agenda or as a
+    comment on the pull request, to ensure they're ready for the meeting.
 
 The review manager should monitor the forum topic for consensus. If a decision
 is made before the meeting, the item should be removed from the meeting agenda.
@@ -469,22 +467,21 @@ make decisions.
 ##### Actions
 
 - **Author**:
-     - Respond to comments.
+  - Respond to comments.
 - **Review manager:**
-     - Set both the proposal status and GitHub issue status label to
-       `needs decision`.
-     - Create an `Evolution > Proposal decisions` topic for pre-meeting
-       discussion.
-     - Tentatively add the decision to the meeting one week in advance (or four
-       working days, if longer), and use that meeting if necessary to reach
-       consensus.
-     - Monitor the topic for a consensus decision.
-          - If a consensus is reached, ensure there's enough information to
-            write a decision.
+  - Set both the proposal status and GitHub issue status label to
+    `needs decision`.
+  - Create an `Evolution > Proposal decisions` topic for pre-meeting discussion.
+  - Tentatively add the decision to the meeting one week in advance (or four
+    working days, if longer), and use that meeting if necessary to reach
+    consensus.
+  - Monitor the topic for a consensus decision.
+    - If a consensus is reached, ensure there's enough information to write a
+      decision.
 - **Every reviewing team member:**
-     - Review the proposal again and make comments if needed.
-     - Participate in reaching a consensus, or explicitly stand aside.
-     - Offer justifications towards a decision.
+  - Review the proposal again and make comments if needed.
+  - Participate in reaching a consensus, or explicitly stand aside.
+  - Offer justifications towards a decision.
 
 #### (optional) Use the meeting to make a proposal decision
 
@@ -503,13 +500,13 @@ it.
 - **Author**: (optional) Consider attending the meeting to better understand the
   proposal decision.
 - **Review manager**:
-     - Help identify a
-       [moderator and note taker](consensus_decision_making.md#roles) for the
-       meeting, possibly volunteering as note taker.
-     - Ensure the meeting provides enough information to write a decision.
+  - Help identify a
+    [moderator and note taker](consensus_decision_making.md#roles) for the
+    meeting, possibly volunteering as note taker.
+  - Ensure the meeting provides enough information to write a decision.
 - **Reviewing team**:
-     - Participate in reaching a consensus, or explicitly stand aside.
-     - Offer justifications towards a decision.
+  - Participate in reaching a consensus, or explicitly stand aside.
+  - Offer justifications towards a decision.
 
 ### Finalize the proposal decision
 
@@ -530,30 +527,29 @@ author again. It's not necessary to switch ownership back.
 ##### Actions
 
 - **Author**:
-     - If the proposal needs more changes:
-          - Set both the proposal status and GitHub issue status label to `WIP`.
-     - If the proposal is deferred or declined:
-          - Set both the proposal status and GitHub issue status label to
-            `<decision>`.
-          - Close the pull request, if appropriate.
-     - If the proposal is accepted:
-          - Set both the proposal status and GitHub issue status label to
-            `accepted`.
-          - When the proposal is approved by the reviewing team, commit it.
-               - Add a link to the committed version to the GitHub issue.
+  - If the proposal needs more changes:
+    - Set both the proposal status and GitHub issue status label to `WIP`.
+  - If the proposal is deferred or declined:
+    - Set both the proposal status and GitHub issue status label to
+      `<decision>`.
+    - Close the pull request, if appropriate.
+  - If the proposal is accepted:
+    - Set both the proposal status and GitHub issue status label to `accepted`.
+    - When the proposal is approved by the reviewing team, commit it.
+      - Add a link to the committed version to the GitHub issue.
 - **Review manager**:
-     - Write the
-       [formal decision](consensus_decision_making.md#formal-decision-content),
-       possibly with help from the reviewing team.
-          - Formal decisions are stored at `/proposals/p####-decision.md`.
-          - (optional): Create a GitHub issue for issues that should be
-            revisited in the future. Link to these from the main GitHub issue.
-     - Create an `Evolution > Announcements` forum topic with the decision and a
-       summary of the rationale.
-          - Add the topic's link to the GitHub issue.
+  - Write the
+    [formal decision](consensus_decision_making.md#formal-decision-content),
+    possibly with help from the reviewing team.
+    - Formal decisions are stored at `/proposals/p####-decision.md`.
+    - (optional): Create a GitHub issue for issues that should be revisited in
+      the future. Link to these from the main GitHub issue.
+  - Create an `Evolution > Announcements` forum topic with the decision and a
+    summary of the rationale.
+    - Add the topic's link to the GitHub issue.
 - **Reviewing team**:
-     - Approve the proposal.
-     - Help draft any rationale needed by the review manager for the decision.
+  - Approve the proposal.
+  - Help draft any rationale needed by the review manager for the decision.
 
 #### Community comments on proposal decision
 
@@ -602,7 +598,7 @@ should be exceptional.
 ##### Actions
 
 - **Author**:
-    - Roll back the committed proposal and any dependent changes.
+  - Roll back the committed proposal and any dependent changes.
 - **Reviewing team member**: State new, non-consensus position on
   `Evolution > Decisions` forum topic.
 - **Review manager**: Return to
@@ -630,11 +626,10 @@ revisit the decision.
 ##### Actions
 
 - **Review manager**:
-     - Commit the proposal decision.
-          - Add a link to the committed version to the GitHub issue.
-     - Update the `Evolution > Announcements` forum topic with the final
-       decision.
-     - Close the GitHub issue.
+  - Commit the proposal decision.
+    - Add a link to the committed version to the GitHub issue.
+  - Update the `Evolution > Announcements` forum topic with the final decision.
+  - Close the GitHub issue.
 - **Author**: Start making dependent changes to apply the proposal.
 
 ## Acknowledgements

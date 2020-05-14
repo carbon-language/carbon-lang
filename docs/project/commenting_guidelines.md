@@ -17,19 +17,18 @@ always try to keep feedback, even when critical, constructive and supportive.
   suggested action, and the expected result from that action. The more specific
   a comment is, the easier it will be for the proposal author to evaluate.
 
-     - Objections to specific phrasing should suggest alternative phrasing.
+  - Objections to specific phrasing should suggest alternative phrasing.
 
 - **Use Discourse Forums for long comments.** GitHub is good for
   short-to-moderate-sized comments. Discourse Forums is better for long,
   detailed comments, particularly where multiple parties may get involved in
   discussion.
 
-     - Use the forum topic created by the author, rather than creating a new
-       topic. It needs to be easy for authors and other reviewers to find
-       comments.
-     - If your comment represents a significant change to the doc, include a
-       list of pros and cons. Even if the author disagrees with the change, they
-       can use those to document the alternative.
+  - Use the forum topic created by the author, rather than creating a new topic.
+    It needs to be easy for authors and other reviewers to find comments.
+  - If your comment represents a significant change to the doc, include a list
+    of pros and cons. Even if the author disagrees with the change, they can use
+    those to document the alternative.
 
 - **Be supportive in your criticism.** The author may be receiving many
   comments, and we want to keep contributors motivated to respond.
