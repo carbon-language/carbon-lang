@@ -1,3 +1,8 @@
+# Part of the Carbon Language, under the Apache License v2.0 with LLVM
+# Exceptions.
+# See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 title: Carbon
 description: Carbon language
 url: "https://carbon-lang.dev"
@@ -10,8 +15,7 @@ exclude:
   - src/
 
 include:
-  - CODE_OF_CONDUCT.md
-  - CONTRIBUTING.md
+  - "*.md"
 
 plugins:
   # https://github.com/benbalter/jekyll-commonmark
