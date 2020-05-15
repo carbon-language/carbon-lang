@@ -1,5 +1,10 @@
+title: Carbon
+description: Carbon language
+url: "https://carbon-lang.dev"
+
 source: ../..
-destination: .site
+destination: ./.site
+markdown: CommonMark
 
 exclude:
   - src/
@@ -9,6 +14,8 @@ include:
   - CONTRIBUTING.md
 
 plugins:
+  # https://github.com/benbalter/jekyll-commonmark
+  - jekyll-commonmark
   # https://github.com/benbalter/jekyll-default-layout
   - jekyll-default-layout
   # https://github.com/benbalter/jekyll-optional-front-matter

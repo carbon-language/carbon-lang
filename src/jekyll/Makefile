@@ -3,7 +3,7 @@ all: site
 site:
 	bundle exec jekyll build
 
-server:
+run:
 	bundle exec jekyll server --watch
 
 #public: site publish
