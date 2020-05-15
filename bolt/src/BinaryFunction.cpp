@@ -3203,7 +3203,7 @@ MCSymbol *BinaryFunction::addEntryPoint(const BinaryBasicBlock &BB) {
   return EntrySymbol;
 }
 
-const MCSymbol *BinaryFunction::getSymbolForEntryID(uint64_t EntryID) const {
+MCSymbol *BinaryFunction::getSymbolForEntryID(uint64_t EntryID) {
   if (EntryID == 0)
     return getSymbol();
 

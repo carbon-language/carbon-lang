@@ -178,11 +178,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         const auto &ICSP =
           BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
         for (const auto &CSI : ICSP) {
-          if (!CSI.IsFunction)
-            continue;
-          if (auto *DstBD = BC.getBinaryDataByName(CSI.Name)) {
-            Counts.push_back(std::make_pair(DstBD->getSymbol(), CSI.Count));
-          }
+          if (CSI.Symbol)
+            Counts.push_back(std::make_pair(CSI.Symbol, CSI.Count));
         }
       } else {
         const auto Count = BB->getExecutionCount();
@@ -204,11 +201,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       for (const auto &CSI : Function->getAllCallSites()) {
         ++TotalCallsites;
 
-        if (!CSI.IsFunction)
-          continue;
-
-        auto *DstBD = BC.getBinaryDataByName(CSI.Name);
-        if (!DstBD)
+        if (!CSI.Symbol)
           continue;
 
         // The computed offset may exceed the hot part of the function; hence,
@@ -217,7 +210,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (Offset > Size)
           Offset = Size;
 
-        if (!recordCall(DstBD->getSymbol(), CSI.Count)) {
+        if (!recordCall(CSI.Symbol, CSI.Count)) {
           ++NotProcessed;
         }
       }

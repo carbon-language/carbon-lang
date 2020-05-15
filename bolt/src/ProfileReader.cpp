@@ -122,13 +122,12 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
       auto *Callee = YamlCSI.DestId < YamlProfileToFunction.size() ?
           YamlProfileToFunction[YamlCSI.DestId] : nullptr;
       bool IsFunction = Callee ? true : false;
-      const MCSymbol *CalleeSymbol = nullptr;
+      MCSymbol *CalleeSymbol = nullptr;
       if (IsFunction) {
         CalleeSymbol = Callee->getSymbolForEntryID(YamlCSI.EntryDiscriminator);
       }
-      StringRef Name = CalleeSymbol ? CalleeSymbol->getName() : "<unknown>";
       BF.getAllCallSites().emplace_back(
-          IsFunction, Name, YamlCSI.Count, YamlCSI.Mispreds, YamlCSI.Offset);
+          CalleeSymbol, YamlCSI.Count, YamlCSI.Mispreds, YamlCSI.Offset);
 
       if (YamlCSI.Offset >= BB.getOriginalSize()) {
         if (opts::Verbosity >= 2)
@@ -170,7 +169,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
         IndirectCallSiteProfile &CSP =
           BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
               *Instr, "CallProfile");
-        CSP.emplace_back(IsFunction, Name, YamlCSI.Count, YamlCSI.Mispreds);
+        CSP.emplace_back(CalleeSymbol, YamlCSI.Count, YamlCSI.Mispreds);
       } else if (BC.MIB->getConditionalTailCall(*Instr)) {
         setAnnotation("CTCTakenCount", YamlCSI.Count);
         setAnnotation("CTCMispredCount", YamlCSI.Mispreds);

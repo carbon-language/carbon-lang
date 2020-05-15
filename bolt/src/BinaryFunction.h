@@ -72,20 +72,17 @@ enum IndirectCallPromotionType : char {
 
 /// Information on a single indirect call to a particular callee.
 struct IndirectCallProfile {
-  bool IsFunction;
+  MCSymbol *Symbol;
   uint32_t Offset;
-  StringRef Name;
   uint64_t Count;
   uint64_t Mispreds;
 
-  IndirectCallProfile(bool IsFunction, StringRef Name, uint64_t Count,
+  IndirectCallProfile(MCSymbol *Symbol, uint64_t Count,
                       uint64_t Mispreds, uint32_t Offset = 0)
-    : IsFunction(IsFunction), Offset(Offset), Name(Name), Count(Count),
-      Mispreds(Mispreds) {}
+    : Symbol(Symbol), Offset(Offset), Count(Count), Mispreds(Mispreds) {}
 
   bool operator==(const IndirectCallProfile &Other) const {
-    return IsFunction == Other.IsFunction &&
-           Name == Other.Name &&
+    return Symbol == Other.Symbol &&
            Offset == Other.Offset;
   }
 };
@@ -102,8 +99,8 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   uint64_t TotalCount = 0;
   uint64_t TotalMispreds = 0;
   for (auto &CSP : ICSP) {
-    SS << Sep << "{ " << (CSP.IsFunction ? CSP.Name : "<unknown>") << ": "
-       << CSP.Count << " (" << CSP.Mispreds << " misses) }";
+    SS << Sep << "{ " << (CSP.Symbol ? CSP.Symbol->getName() : "<unknown>")
+       << ": " << CSP.Count << " (" << CSP.Mispreds << " misses) }";
     Sep = ",\n        ";
     TotalCount += CSP.Count;
     TotalMispreds += CSP.Mispreds;
@@ -1127,7 +1124,10 @@ public:
 
   /// Return MC symbol corresponding to an enumerated entry for multiple-entry
   /// functions.
-  const MCSymbol *getSymbolForEntryID(uint64_t EntryNum) const;
+  MCSymbol *getSymbolForEntryID(uint64_t EntryNum);
+  const MCSymbol *getSymbolForEntryID(uint64_t EntryNum) const {
+    return const_cast<BinaryFunction *>(this)->getSymbolForEntryID(EntryNum);
+  }
 
   MCSymbol *getColdSymbol() {
     if (ColdSymbol)

@@ -81,14 +81,10 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
         for (auto &CSP : ICSP.get()) {
           CSI.DestId = 0; // designated for unknown functions
           CSI.EntryDiscriminator = 0;
-          if (CSP.IsFunction) {
-            const auto *CalleeBD = BC.getBinaryDataByName(CSP.Name);
-            if (CalleeBD) {
-              const auto *Callee =
-                BC.getFunctionForSymbol(CalleeBD->getSymbol());
-              if (Callee) {
-                CSI.DestId = Callee->getFunctionNumber();
-              }
+          if (CSP.Symbol) {
+            const auto *Callee = BC.getFunctionForSymbol(CSP.Symbol);
+            if (Callee) {
+              CSI.DestId = Callee->getFunctionNumber();
             }
           }
           CSI.Count = CSP.Count;

@@ -540,8 +540,13 @@ void BinaryFunction::convertBranchData() {
       IndirectCallSiteProfile &CSP =
         BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
             *Instr, "CallProfile");
-      CSP.emplace_back(BI.To.IsSymbol, BI.To.Name, BI.Branches,
-                       BI.Mispreds);
+      MCSymbol *CalleeSymbol{nullptr};
+      if (BI.To.IsSymbol) {
+        if (auto *BD = BC.getBinaryDataByName(BI.To.Name)) {
+          CalleeSymbol = BD->getSymbol();
+        }
+      }
+      CSP.emplace_back(CalleeSymbol, BI.Branches, BI.Mispreds);
     } else if (BC.MIB->getConditionalTailCall(*Instr)) {
       setOrUpdateAnnotation("CTCTakenCount", BI.Branches);
       setOrUpdateAnnotation("CTCMispredCount", BI.Mispreds);

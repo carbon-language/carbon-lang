@@ -204,11 +204,9 @@ IndirectCallPromotion::Callsite::Callsite(BinaryFunction &BF,
     To(ICP.Offset),
     Mispreds(ICP.Mispreds),
     Branches(ICP.Count) {
-  if (ICP.IsFunction) {
-    if (auto *BD = BF.getBinaryContext().getBinaryDataByName(ICP.Name)) {
-      To.Sym = BD->getSymbol();
-      To.Addr = 0;
-    }
+  if (ICP.Symbol) {
+    To.Sym = ICP.Symbol;
+    To.Addr = 0;
   }
 }
 
@@ -1301,8 +1299,8 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
             for (const auto &BInfo : getCallTargets(BB, Inst)) {
               NumCalls += BInfo.Branches;
             }
-
-            IndirectCalls.push_back(std::make_tuple(NumCalls, &Inst, &Function));
+            IndirectCalls.push_back(
+                std::make_tuple(NumCalls, &Inst, &Function));
             TotalIndirectCalls += NumCalls;
           }
         }
