@@ -1,0 +1,19 @@
+source: ../..
+destination: .site
+
+exclude:
+  - src/
+
+include:
+  - CODE_OF_CONDUCT.md
+  - CONTRIBUTING.md
+
+plugins:
+  # https://github.com/benbalter/jekyll-default-layout
+  - jekyll-default-layout
+  # https://github.com/benbalter/jekyll-optional-front-matter
+  - jekyll-optional-front-matter
+  # https://github.com/benbalter/jekyll-readme-index
+  - jekyll-readme-index
+  # https://github.com/benbalter/jekyll-titles-from-headings
+  - jekyll-titles-from-headings
