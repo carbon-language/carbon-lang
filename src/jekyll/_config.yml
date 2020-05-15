@@ -15,5 +15,7 @@ plugins:
   - jekyll-optional-front-matter
   # https://github.com/benbalter/jekyll-readme-index
   - jekyll-readme-index
+  # https://github.com/benbalter/jekyll-relative-links
+  - jekyll-relative-links
   # https://github.com/benbalter/jekyll-titles-from-headings
   - jekyll-titles-from-headings
