@@ -254,7 +254,7 @@ Start by creating a markdown proposal covering (roughly in order):
   considered and rejected.
 
 We use a
-[template for proposals](https://github.com/carbon-language/carbon-lang/blob/master/proposals/templates.md).
+[template for proposals](https://github.com/carbon-language/carbon-lang/blob/master/proposals/template.md).
 Please use this to include structure and license information. Follow the
 instructions under "TODO: Initial proposal setup".
 
