@@ -22,7 +22,6 @@ for more details.
 
 # Carbon: TODO
 
-- **Authors:** TODO
 - **[Tracking issue](https://github.com/carbon-language/carbon-lang/issues/TODO)**
 - **Status:** RFC
 - **Created:** 2020-MM-DD (TODO)
