@@ -3,12 +3,13 @@
 # See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-title: Carbon
-description: Carbon language
-url: "https://carbon-lang.dev"
+repository: carbon-language/carbon-lang
+topnav_title: Carbon
+site_title: Carbon langauge
+url: "https://carbon-lang.dev/"
 
-source: ../..
-destination: ./.site
+source: ./theme
+destination: ./.gen-site
 markdown: CommonMark
 
 exclude:
@@ -16,6 +17,19 @@ exclude:
 
 include:
   - "*.md"
+
+feedback_disable: true
+
+sidebars:
+- sidebar
+
+defaults:
+  -
+    values:
+      layout: "page"
+      search: true
+      sidebar: sidebar
+      topnav: topnav
 
 plugins:
   # https://github.com/benbalter/jekyll-commonmark
