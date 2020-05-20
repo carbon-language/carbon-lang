@@ -220,3 +220,18 @@ conflicts with the conditions of the GPLv2, you may retroactively and
 prospectively choose to deem waived or otherwise exclude such Section(s) of
 the License, but only in their entirety and only with respect to the Combined
 Software.
+
+==============================================================================
+Copyrights and Licenses for Third Party Software Distributed with LLVM:
+==============================================================================
+The `carbon-lang` repository contains code written by third parties.  Such
+software will have its own LICENSE file in the directory where it appears.
+This file will describe the copyrights, license, and restrictions which apply
+to that code.
+
+The following pieces of software have additional or alternate copyrights,
+licenses, and/or restrictions:
+
+Program             Directory
+-------             ---------
+Jekyll Doc theme    src/jekyll/theme

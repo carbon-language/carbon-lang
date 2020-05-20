@@ -8,7 +8,7 @@ topnav_title: Carbon
 site_title: Carbon langauge
 url: "https://carbon-lang.dev/"
 
-source: ./theme
+source: ./site
 destination: ./.gen-site
 markdown: CommonMark
 
