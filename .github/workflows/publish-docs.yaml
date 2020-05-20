@@ -3,6 +3,7 @@ on:
   push:
     branches:
     - master
+    - jekyll-action
 
 jobs:
   build:
