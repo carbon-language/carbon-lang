@@ -99,12 +99,44 @@ take ownership of providing a CLA.
 We use a few systems for collaboration which contributors should be aware of.
 Membership is currently invite-only.
 
-- [GitHub](https://github.com/orgs/carbon-language): We use the
-  "carbon-language" organization for our repositories.
+Before using these systems, everyone must sign the CLA. They are all governed by
+the Code of Conduct.
 
-- [Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA):
-  We use this shared drive for all of our Google Docs, particularly proposal
-  drafts.
+- [The GitHub carbon-language organization](https://github.com/orgs/carbon-language)
+  is used for our repositories. **To join:**
+
+1.  Ask [an admin](docs/project/groups.md#admins) to send an invite, providing
+    your GitHub account.
+2.  Check your email to accept the invite, or try the standard
+    [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
+    if you don't see the email.
+
+- [Discourse Forums](https://forums.carbon-lang.dev) are used for long-form
+  discussions. **To join:**
+
+  1.  Go to [the forums](https://forums.carbon-lang.dev) and register your
+      GitHub account.
+      - You will be able to choose which GitHub email you want the forums to
+        send email to.
+  2.  [An admin](docs/project/groups.md#admins) will need to approve your
+      registration.
+
+- [Discord Chat](https://discord.com/app) is used for short-form chats. **To
+  join:**
+
+  1.  Ask [an admin](docs/project/groups.md#admins) for an invite link.
+      - Please do not re-share the invite links: they're our only way to
+        restrict access.
+  2.  You will be prompted with the Code of Conduct. After reading it, click the
+      check mark reaction icon at the bottom.
+
+- [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
+  is used for all of our Google Docs, particularly proposal drafts. **To join:**
+  1.  Ask [an admin](docs/project/groups.md#admins) to invite you, providing
+      your Google account email.
+  2.  The admin will add you to the
+      [Google Group](https://groups.google.com/g/carbon-lang-contributors) used
+      for access.
 
 ## Contribution guidelines and standards
 
