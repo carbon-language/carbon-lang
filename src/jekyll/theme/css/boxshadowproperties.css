@@ -1,0 +1,24 @@
+/* box-shadow fonts return errors with prince, so extracting here to put in web output only */
+
+#search-demo-container ul#results-container {
+    box-shadow: 2px 3px 2px #dedede;
+}
+
+
+hr.shaded {
+    box-shadow: inset 0 6px 6px -6px rgba(0,0,0,0.5);
+}
+
+.videoThumbs img {
+    box-shadow: 2px 2px 1px #f0f0f0;
+}
+
+.box {
+    box-shadow: 2px 2px 4px #dedede;
+}
+
+@media (max-width: 1200px) {
+    .navbar-collapse {
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+}

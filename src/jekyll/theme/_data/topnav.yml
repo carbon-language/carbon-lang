@@ -1,0 +1,19 @@
+# Topnav single links
+# if you want to list an external url, use external_url instead of url. the
+# theme will apply a different link base.
+topnav:
+  - title: Topnav
+    items:
+      - title: Forums
+        external_url: https://forums.carbon-lang.dev
+
+# Topnav dropdowns
+topnav_dropdowns:
+  - title: Topnav dropdowns
+    folders:
+      - title: GitHub
+        folderitems:
+          - title: Organization
+            external_url: https://github.com/carbon-language
+          - title: carbon-lang repo
+            external_url: https://github.com/carbon-language/carbon-lang
