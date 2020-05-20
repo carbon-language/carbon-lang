@@ -1,0 +1,12 @@
+# Part of the Carbon Language, under the Apache License v2.0 with LLVM
+# Exceptions.
+# See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+gem 'jekyll'
+gem 'jekyll-commonmark'
+gem 'jekyll-default-layout'
+gem 'jekyll-optional-front-matter'
+gem 'jekyll-readme-index'
+gem 'jekyll-relative-links'
+gem 'jekyll-titles-from-headings'

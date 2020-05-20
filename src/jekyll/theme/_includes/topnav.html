@@ -1,0 +1,81 @@
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-static-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="fa fa-home fa-lg navbar-brand" href="index.html">&nbsp;<span class="projectTitle"> {{site.topnav_title}}</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- toggle sidebar button -->
+                <li><a id="tg-sb-link" href="#"><i id="tg-sb-icon" class="fa fa-toggle-on"></i> Nav</a></li>
+                <!-- entries without drop-downs appear here -->
+
+{% assign topnav = site.data[page.topnav] %}
+{% assign topnav_dropdowns = site.data[page.topnav].topnav_dropdowns %}
+
+                {% for entry in topnav.topnav %}
+                {% for item in entry.items %}
+                {% if item.external_url %}
+                <li><a href="{{item.external_url}}" target="_blank" rel="noopener">{{item.title}}</a></li>
+                {% elsif page.url contains item.url %}
+                <li class="active"><a href="{{item.url | remove: "/"}}">{{item.title}}</a></li>
+                {% else %}
+                <li><a href="{{item.url | remove: "/"}}">{{item.title}}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% endfor %}
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                {% for entry in topnav_dropdowns %}
+                {% for folder in entry.folders %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ folder.title }}<b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        {% for folderitem in folder.folderitems %}
+                        {% if folderitem.external_url %}
+                        <li><a href="{{folderitem.external_url}}" target="_blank" rel="noopener">{{folderitem.title}}</a></li>
+                        {% elsif page.url contains folderitem.url %}
+                        <li class="dropdownActive"><a href="{{folderitem.url |  remove: "/"}}">{{folderitem.title}}</a></li>
+                        {% else %}
+                        <li><a href="{{folderitem.url | remove: "/"}}">{{folderitem.title}}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endfor %}
+                {% endfor %}
+                {% if site.feedback_disable == null or site.feedback_disable == false %}
+			{% include feedback.html %}
+		{% endif %}
+                <!--comment out this block if you want to hide search-->
+                <li>
+                    <!--start search-->
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="{{site.data.strings.search_placeholder_text}}">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="{{ "js/jekyll-search.js"}}" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: '{{ "search.json" }}',
+                                searchResultTemplate: '<li><a href="{url}" title="{{page.title | escape }}">{title}</a></li>',
+                    noResultsText: '{{site.data.strings.search_no_results_text}}',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search-->
+                </li>
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>

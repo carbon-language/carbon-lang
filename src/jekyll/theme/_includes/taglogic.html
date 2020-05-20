@@ -1,0 +1,32 @@
+<p>The following pages and posts are tagged with <button type="button" style="cursor: default" class="btn btn-default navbar-btn">{{page.tagName}}</button></p>
+<table><thead><tr><th>Title</th><th>Type</th><th>Excerpt</th></tr></thead>
+    <tbody>
+    {% assign thisTag = page.tagName %}
+  {% for page in site.pages %}
+    {% for tag in page.tags %}
+        {% if tag == thisTag %}
+
+        <tr><td><a href="{{ page.url | remove: "/" }}">{{page.title}}</a></td>
+            <td><span class="label label-default">Page</span></td>
+          <td>{% if page.summary %} {{ page.summary | strip_html | strip_newlines | truncate: 160 }} {% else %} {{ page.content | truncatewords: 50 | strip_html }} {% endif %}</td>
+        </tr>
+        {% endif %}
+     {% endfor %}
+   {% endfor %}
+
+        {% assign thisTag = page.tagName %}
+        {% for post in site.posts %}
+        {% for tag in post.tags %}
+        {% if tag == thisTag %}
+
+        <tr><td><a href="{{ post.url | remove: "/" }}">{{post.title}}</a></td>
+            <td><span class="label label-primary">Post</span></td>
+            <td>{% if post.summary %} {{ post.summary | strip_html | strip_newlines | truncate: 160 }} {% else %} {{ post.content | truncatewords: 50 | strip_html }} {% endif %}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+
+   </tbody>
+</table>
+

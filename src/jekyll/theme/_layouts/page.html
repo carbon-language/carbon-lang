@@ -1,0 +1,43 @@
+---
+layout: default
+---
+
+<div class="post-header">
+  <h1 class="post-title-main">{{ page.title }}</h1>
+</div>
+
+{% if page.simple_map == true %}
+
+<script>
+  $(document).ready(function () {
+    $(".box{{page.box_number}}").addClass("active");
+  });
+</script>
+
+{% include custom/{{page.map_name}}.html %} {% elsif page.complex_map == true %}
+
+<script>
+  $(document).ready(function () {
+    $(".modalButton{{page.box_number}}").addClass("active");
+  });
+</script>
+
+{% include custom/{{page.map_name}}.html %} {% endif %}
+
+<div class="post-content">
+  {% unless page.toc == false %} {% include toc.html %} {% endunless %} {% if
+  site.github_editme_path %}
+
+  <a
+    target="_blank"
+    rel="noopener"
+    href="https://github.com/{{site.github_editme_path}}{{page.path}}"
+    class="btn btn-default githubEditButton"
+    role="button"
+    ><i class="fa fa-github fa-lg"></i> Edit me</a
+  >
+
+  {% endif %} {{content}}
+</div>
+
+{{site.data.alerts.hr_shaded}} {% include footer.html %}
