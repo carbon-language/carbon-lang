@@ -105,10 +105,11 @@ the Code of Conduct.
 - [The GitHub carbon-language organization](https://github.com/orgs/carbon-language)
   is used for our repositories. **To join:**
 
-  1.  Ask an admin to send an invite, providing your GitHub account.
-  2.  Check your email to accept the invite, or try the standard
-      [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
-      if you don't see the email.
+1.  Ask [an admin](docs/projects/groups.md#admins) to send an invite, providing
+    your GitHub account.
+2.  Check your email to accept the invite, or try the standard
+    [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
+    if you don't see the email.
 
 - [Discourse Forums](https://forums.carbon-lang.dev) are used for long-form
   discussions. **To join:**
@@ -117,12 +118,13 @@ the Code of Conduct.
       GitHub account.
       - You will be able to choose which GitHub email you want the forums to
         send email to.
-  2.  An admin will need to approve your registration.
+  2.  [An admin](docs/projects/groups.md#admins) will need to approve your
+      registration.
 
 - [Discord Chat](https://discord.com/app) is used for short-form chats. **To
   join:**
 
-  1.  Ask an admin for an invite link.
+  1.  Ask [an admin](docs/projects/groups.md#admins) for an invite link.
       - Please do not re-share the invite links: they're our only way to
         restrict access.
   2.  You will be prompted with the Code of Conduct. After reading it, click the
@@ -130,7 +132,8 @@ the Code of Conduct.
 
 - [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
   is used for all of our Google Docs, particularly proposal drafts. **To join:**
-  1.  Ask an admin to invite you, providing your Google account email.
+  1.  Ask [an admin](docs/projects/groups.md#admins) to invite you, providing
+      your Google account email.
   2.  The admin will add you to the
       [Google Group](https://groups.google.com/g/carbon-lang-contributors) used
       for access.
