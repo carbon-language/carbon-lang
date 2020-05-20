@@ -6,9 +6,9 @@ tracking.
 We use a mix of:
 
 - Groups to assist contacting key contributors on appropriate systems:
-     - **GitHub teams**
-     - **Discourse Forums groups**
-     - **Discord Chat roles**
+  - **GitHub teams**
+  - **Discourse Forums groups**
+  - **Discord Chat roles**
 - **Google groups**, usually as Google Drive ACLs. We generally won't use these
   as contact lists, unless specifically mentioned. Please prefer Discourse
   Forums.
@@ -18,12 +18,13 @@ We use a mix of:
 - [GitHub organization](https://github.com/orgs/carbon-language/people)
 - [Discourse Forums account](https://forums.carbon-lang.dev)
 - [Discord Chat access](https://discord.com/app)
-- [Google group](https://groups.google.com/g/carbon-lang-contributors):
-  Grants Google Drive access.
+- [Google group](https://groups.google.com/g/carbon-lang-contributors): Grants
+  Google Drive access.
 
 ## Team-specific access
 
-Any team-specific access will typically be managed by a team owner or admin, when somebody joins the respective team.
+Any team-specific access will typically be managed by a team owner or admin,
+when somebody joins the respective team.
 
 ### Admins
 
