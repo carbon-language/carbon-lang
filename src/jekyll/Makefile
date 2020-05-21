@@ -5,11 +5,14 @@
 
 all: site
 
-site:
+# Indirection for the dot-dir.
+site: .gen-site
+
+.gen-site:
 	bundle exec jekyll build
 
 run:
 	bundle exec jekyll server --watch
 
 clean:
-	rm -rf .site
+	rm -rf .gen-site

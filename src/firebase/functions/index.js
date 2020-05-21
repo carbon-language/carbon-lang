@@ -11,6 +11,7 @@ admin.initializeApp();
 const cookieParser = require('cookie-parser')();
 const cors = require('cors')({origin: true});
 
+const path = require('path');
 const express = require('express');
 const app = express();
 
@@ -86,13 +87,14 @@ app.use(validateFirebaseIdToken);
 
 app.get('*', (req, res) => {
   // Remove the prefix /, and default to index.html.
-  var path = req.path.replace(/^(\/)/, "");
-  if (path === "") {
-    path = "index.html";
+  var file = req.path.replace(/^(\/)/, "");
+  if (file === "") {
+    file = "index.html";
   }
+  res.type(path.extname(file));
   // Serve the requested data from the carbon-lang bucket.
   const bucket = gcs.bucket("gs://www.carbon-lang.dev");
-  const stream = bucket.file(path).createReadStream();
+  const stream = bucket.file(file).createReadStream();
   //stream.on('error', function(err) { res.status(404).send(err.message); });
   stream.on('error', function(err) {
     console.log(err.message);
