@@ -91,6 +91,7 @@ extern cl::OptionCategory BoltOutputCategory;
 extern cl::OptionCategory AggregatorCategory;
 
 extern cl::opt<MacroFusionType> AlignMacroOpFusion;
+extern cl::opt<bool> Instrument;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::list<std::string> ReorderData;
 extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
@@ -102,19 +103,6 @@ AlignText("align-text",
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
-
-cl::opt<bool>
-Instrument("instrument",
-  cl::desc("instrument code to generate accurate profile data"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<std::string>
-RuntimeInstrumentationLib("runtime-instrumentation-lib",
-    cl::desc("specify file name of the runtime instrumentation library"),
-    cl::ZeroOrMore,
-    cl::init("libbolt_rt.a"),
-    cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 ForceToDataRelocations("force-data-relocations",
@@ -2529,10 +2517,6 @@ void RewriteInstance::postProcessFunctions() {
 void RewriteInstance::runOptimizationPasses() {
   NamedRegionTimer T("runOptimizationPasses", "run optimization passes",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  if (opts::Instrument) {
-    Instrumenter = llvm::make_unique<Instrumentation>();
-    Instrumenter->runOnFunctions(*BC);
-  }
   BinaryFunctionPassManager::runAllPasses(*BC);
 }
 
@@ -2585,11 +2569,6 @@ void RewriteInstance::emitAndLink() {
       // Make .eh_frame relocatable.
       relocateEHFrameSection();
     }
-  }
-
-  // Emit contents outside of BinaryContext.
-  if (opts::Instrument) {
-    Instrumenter->emit(*BC, *Streamer.get());
   }
 
   emitBinaryContext(*Streamer, *BC, getOrgSecPrefix());
@@ -2684,10 +2663,8 @@ void RewriteInstance::emitAndLink() {
   cantFail(OLT->addObject(K, std::move(ObjectMemBuffer)));
   cantFail(OLT->emitAndFinalize(K));
 
-  // Link instrumentation runtime library
-  if (opts::Instrument) {
-    linkRuntime();
-    Instrumenter->emitTablesAsELFNote(*BC);
+  if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+    RtLibrary->link(*BC, ToolPath, *ES, *OLT);
   }
 
   // Once the code is emitted, we can rename function sections to actual
@@ -2713,79 +2690,6 @@ void RewriteInstance::emitAndLink() {
 
   if (opts::KeepTmp)
     TempOut->keep();
-}
-
-void RewriteInstance::linkRuntime() {
-  OLT->setProcessAllSections(false);
-  std::string Dir = llvm::sys::path::parent_path(ToolPath);
-  SmallString<128> P(Dir);
-  P = llvm::sys::path::parent_path(Dir);
-  llvm::sys::path::append(P, "lib", opts::RuntimeInstrumentationLib);
-  std::string LibPath = P.str();
-  if (!llvm::sys::fs::exists(LibPath)) {
-    errs() << "BOLT-ERROR: instrumentation library not found: " << LibPath
-           << "\n";
-    exit(1);
-  }
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MaybeBuf =
-      MemoryBuffer::getFile(LibPath, -1, false);
-  check_error(MaybeBuf.getError(), LibPath);
-  std::unique_ptr<MemoryBuffer> B = std::move(MaybeBuf.get());
-  file_magic Magic = identify_magic(B->getBuffer());
-
-  if (Magic == file_magic::archive) {
-    Error Err = Error::success();
-    object::Archive Archive(B.get()->getMemBufferRef(), Err);
-    for (auto &C : Archive.children(Err)) {
-      auto ChildKey = ES->allocateVModule();
-      auto ChildBuf =
-          MemoryBuffer::getMemBuffer(cantFail(C.getMemoryBufferRef()));
-      auto ChildMagic = identify_magic(ChildBuf->getBuffer());
-      if (ChildMagic != file_magic::elf_relocatable &&
-          ChildMagic != file_magic::elf_shared_object) {
-        errs() << "BOLT-ERROR: unrecognized instrumentation library format "
-               << "inside the archiver: "
-               << LibPath << "\n";
-        exit(1);
-      }
-      cantFail(OLT->addObject(ChildKey, std::move(ChildBuf)));
-      cantFail(OLT->emitAndFinalize(ChildKey));
-    }
-    check_error(std::move(Err), B->getBufferIdentifier());
-  } else if (Magic == file_magic::elf_relocatable ||
-             Magic == file_magic::elf_shared_object) {
-    auto K2 = ES->allocateVModule();
-    cantFail(OLT->addObject(K2, std::move(B)));
-    cantFail(OLT->emitAndFinalize(K2));
-  } else {
-    errs() << "BOLT-ERROR: unrecognized instrumentation library format: "
-           << LibPath << "\n";
-    exit(1);
-  }
-  InstrumentationRuntimeFiniAddress =
-      cantFail(OLT->findSymbol("__bolt_instr_fini", false).getAddress());
-  if (!InstrumentationRuntimeFiniAddress) {
-    errs() << "BOLT-ERROR: instrumentation library does not define "
-              "__bolt_instr_fini: "
-           << LibPath << "\n";
-    exit(1);
-  }
-  InstrumentationRuntimeStartAddress =
-      cantFail(OLT->findSymbol("__bolt_instr_start", false).getAddress());
-  if (!InstrumentationRuntimeStartAddress) {
-    errs() << "BOLT-ERROR: instrumentation library does not define "
-              "__bolt_instr_start: "
-           << LibPath << "\n";
-    exit(1);
-  }
-  outs() << "BOLT-INFO: output linked against instrumentation runtime "
-            "library, lib entry point is 0x"
-         << Twine::utohexstr(InstrumentationRuntimeFiniAddress) << "\n";
-  outs() << "BOLT-INFO: clear procedure is 0x"
-         << Twine::utohexstr(
-                cantFail(OLT->findSymbol("__bolt_instr_clear_counters", false)
-                             .getAddress()))
-         << "\n";
 }
 
 void RewriteInstance::updateMetadata() {
@@ -3676,8 +3580,11 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   auto NewEhdr = *Obj->getHeader();
 
   if (BC->HasRelocations) {
-    NewEhdr.e_entry = opts::Instrument ? InstrumentationRuntimeStartAddress
-                                       : getNewFunctionAddress(NewEhdr.e_entry);
+    if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+      NewEhdr.e_entry = RtLibrary->getRuntimeStartAddress();
+    } else {
+      NewEhdr.e_entry = getNewFunctionAddress(NewEhdr.e_entry);
+    }
     assert(NewEhdr.e_entry && "cannot find new address for entry point");
   }
   NewEhdr.e_phoff = PHDRTableOffset;
@@ -4224,8 +4131,11 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
           NewDE.d_un.d_ptr = NewAddress;
         }
       }
-      if (opts::Instrument && DE->getTag() == ELF::DT_FINI)
-        NewDE.d_un.d_ptr = InstrumentationRuntimeFiniAddress;
+      if (DE->getTag() == ELF::DT_FINI) {
+        if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+          NewDE.d_un.d_ptr = RtLibrary->getRuntimeFiniAddress();
+        }
+      }
       break;
     case ELF::DT_FLAGS:
       if (BC->RequiresZNow) {

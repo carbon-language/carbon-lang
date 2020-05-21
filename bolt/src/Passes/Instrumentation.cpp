@@ -71,10 +71,10 @@ uint32_t Instrumentation::getFunctionNameIndex(const BinaryFunction &Function) {
   auto Iter = FuncToStringIdx.find(&Function);
   if (Iter != FuncToStringIdx.end())
     return Iter->second;
-  auto Idx = StringTable.size();
+  auto Idx = Summary->StringTable.size();
   FuncToStringIdx.emplace(std::make_pair(&Function, Idx));
-  StringTable.append(Function.getOneName());
-  StringTable.append(1, '\0');
+  Summary->StringTable.append(Function.getOneName());
+  Summary->StringTable.append(1, '\0');
   return Idx;
 }
 
@@ -95,7 +95,7 @@ bool Instrumentation::createCallDescription(FunctionDescription &FuncDesc,
   CD.Target = &ToFunction;
   CD.ToLoc.FuncString = getFunctionNameIndex(ToFunction);
   CD.ToLoc.Offset = To;
-  CD.Counter = ForceInstrumentation ? Counters.size() : 0xffffffff;
+  CD.Counter = ForceInstrumentation ? Summary->Counters.size() : 0xffffffff;
   if (ForceInstrumentation)
     ++DirectCallCounters;
   FuncDesc.Calls.emplace_back(CD);
@@ -107,7 +107,7 @@ void Instrumentation::createIndCallDescription(
   IndCallDescription ICD;
   ICD.FromLoc.FuncString = getFunctionNameIndex(FromFunction);
   ICD.FromLoc.Offset = From;
-  IndCallDescriptions.emplace_back(ICD);
+  Summary->IndCallDescriptions.emplace_back(ICD);
 }
 
 void Instrumentation::createIndCallTargetDescription(
@@ -116,7 +116,7 @@ void Instrumentation::createIndCallTargetDescription(
   ICD.ToLoc.FuncString = getFunctionNameIndex(ToFunction);
   ICD.ToLoc.Offset = To;
   ICD.Target = &ToFunction;
-  IndCallTargetDescriptions.emplace_back(ICD);
+  Summary->IndCallTargetDescriptions.emplace_back(ICD);
 }
 
 bool Instrumentation::createEdgeDescription(
@@ -137,7 +137,7 @@ bool Instrumentation::createEdgeDescription(
   ED.ToLoc.FuncString = getFunctionNameIndex(ToFunction);
   ED.ToLoc.Offset = To;
   ED.ToNode = ToNodeID;
-  ED.Counter = Instrumented ? Counters.size() : 0xffffffff;
+  ED.Counter = Instrumented ? Summary->Counters.size() : 0xffffffff;
   if (Instrumented)
     ++BranchCounters;
   FuncDesc.Edges.emplace_back(ED);
@@ -148,7 +148,7 @@ void Instrumentation::createLeafNodeDescription(FunctionDescription &FuncDesc,
                                                 uint32_t Node) {
   InstrumentedNode IN;
   IN.Node = Node;
-  IN.Counter = Counters.size();
+  IN.Counter = Summary->Counters.size();
   ++LeafNodeCounters;
   FuncDesc.LeafNodes.emplace_back(IN);
 }
@@ -158,7 +158,7 @@ Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   auto L = BC.scopeLock();
   MCSymbol *Label;
   Label = BC.Ctx->createTempSymbol("InstrEntry", true);
-  Counters.emplace_back(Label);
+  Summary->Counters.emplace_back(Label);
   std::vector<MCInst> CounterInstrs(5);
   // Don't clobber application red zone (ABI dependent)
   if (IsLeaf)
@@ -193,15 +193,16 @@ void Instrumentation::instrumentIndirectTarget(BinaryBasicBlock &BB,
                                                BinaryFunction &FromFunction,
                                                uint32_t From) {
   auto L = FromFunction.getBinaryContext().scopeLock();
-  const auto IndCallSiteID = IndCallDescriptions.size();
+  const auto IndCallSiteID = Summary->IndCallDescriptions.size();
   createIndCallDescription(FromFunction, From);
 
   BinaryContext &BC = FromFunction.getBinaryContext();
   bool IsTailCall = BC.MIB->isTailCall(*Iter);
   std::vector<MCInst> CounterInstrs = BC.MIB->createInstrumentedIndirectCall(
       *Iter, IsTailCall,
-      IsTailCall ? IndTailCallHandlerFunc : IndCallHandlerFunc, IndCallSiteID,
-      &*BC.Ctx);
+      IsTailCall ? Summary->IndTailCallHandlerFunc
+                 : Summary->IndCallHandlerFunc,
+      IndCallSiteID, &*BC.Ctx);
 
   Iter = BB.eraseInstruction(Iter);
   for (auto &NewInst : CounterInstrs) {
@@ -283,8 +284,8 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   FunctionDescription *FuncDesc = nullptr;
   {
     std::unique_lock<std::shared_timed_mutex> L(FDMutex);
-    FunctionDescriptions.emplace_back();
-    FuncDesc = &FunctionDescriptions.back();
+    Summary->FunctionDescriptions.emplace_back();
+    FuncDesc = &Summary->FunctionDescriptions.back();
   }
 
   FuncDesc->Function = &Function;
@@ -507,8 +508,9 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
                                   /*Alignment=*/1,
                                   /*IsReadOnly=*/true, ELF::SHT_NOTE);
 
-  IndCallHandlerFunc = BC.Ctx->getOrCreateSymbol("__bolt_trampoline_ind_call");
-  IndTailCallHandlerFunc =
+  Summary->IndCallHandlerFunc =
+      BC.Ctx->getOrCreateSymbol("__bolt_trampoline_ind_call");
+  Summary->IndTailCallHandlerFunc =
       BC.Ctx->getOrCreateSymbol("__bolt_trampoline_ind_tailcall");
 
   ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
@@ -526,6 +528,8 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
       SkipPredicate, "instrumentation", /* ForceSequential=*/true);
 
   createAuxiliaryFunctions(BC);
+
+  setupRuntimeLibrary(BC);
 }
 
 void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
@@ -545,247 +549,47 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
     return Func;
   };
 
-  InitialIndCallHandlerFunction =
+  Summary->InitialIndCallHandlerFunction =
       createSimpleFunction("__bolt_instr_default_ind_call_handler",
                            BC.MIB->createInstrumentedNoopIndCallHandler());
 
-  InitialIndTailCallHandlerFunction =
+  Summary->InitialIndTailCallHandlerFunction =
       createSimpleFunction("__bolt_instr_default_ind_tailcall_handler",
                            BC.MIB->createInstrumentedNoopIndTailCallHandler());
 }
 
-uint32_t Instrumentation::getFDSize() const {
-  uint32_t FuncDescSize = 0;
-  for (const auto &Func : FunctionDescriptions) {
-    FuncDescSize += 16 + Func.Edges.size() * sizeof(EdgeDescription) +
-                    Func.LeafNodes.size() * sizeof(InstrumentedNode) +
-                    Func.Calls.size() * sizeof(CallDescription) +
-                    Func.EntryNodes.size() * sizeof(EntryNode);
-  }
-  return FuncDescSize;
-}
+void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
+  auto FuncDescSize = Summary->getFDSize();
 
-void Instrumentation::emitTablesAsELFNote(BinaryContext &BC) {
-  std::string TablesStr;
-  raw_string_ostream OS(TablesStr);
-  // This is sync'ed with runtime/instr.cpp:readDescriptions()
-
-  auto getOutputAddress = [](const BinaryFunction &Func,
-                             uint64_t Offset) -> uint64_t {
-    return Offset == 0
-               ? Func.getOutputAddress()
-               : Func.translateInputToOutputAddress(Func.getAddress() + Offset);
-  };
-
-  // Indirect targets need to be sorted for fast lookup during runtime
-  std::sort(IndCallTargetDescriptions.begin(), IndCallTargetDescriptions.end(),
-            [&](const IndCallTargetDescription &A,
-                const IndCallTargetDescription &B) {
-              return getOutputAddress(*A.Target, A.ToLoc.Offset) <
-                     getOutputAddress(*B.Target, B.ToLoc.Offset);
-            });
-
-  // Start of the vector with descriptions (one CounterDescription for each
-  // counter), vector size is Counters.size() CounterDescription-sized elmts
-  const auto IDSize = IndCallDescriptions.size() * sizeof(IndCallDescription);
-  OS.write(reinterpret_cast<const char *>(&IDSize), 4);
-  for (const auto &Desc : IndCallDescriptions) {
-    OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.FuncString), 4);
-    OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.Offset), 4);
-  }
-  const auto ITDSize =
-      IndCallTargetDescriptions.size() * sizeof(IndCallTargetDescription);
-  OS.write(reinterpret_cast<const char *>(&ITDSize), 4);
-  for (const auto &Desc : IndCallTargetDescriptions) {
-    OS.write(reinterpret_cast<const char *>(&Desc.ToLoc.FuncString), 4);
-    OS.write(reinterpret_cast<const char *>(&Desc.ToLoc.Offset), 4);
-    uint64_t TargetFuncAddress =
-        getOutputAddress(*Desc.Target, Desc.ToLoc.Offset);
-    OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
-  }
-  const auto FDSize = getFDSize();
-  OS.write(reinterpret_cast<const char *>(&FDSize), 4);
-  for (const auto &Desc : FunctionDescriptions) {
-    const auto LeafNum = Desc.LeafNodes.size();
-    OS.write(reinterpret_cast<const char *>(&LeafNum), 4);
-    for (const auto &LeafNode : Desc.LeafNodes) {
-      OS.write(reinterpret_cast<const char *>(&LeafNode.Node), 4);
-      OS.write(reinterpret_cast<const char *>(&LeafNode.Counter), 4);
-    }
-    const auto EdgesNum = Desc.Edges.size();
-    OS.write(reinterpret_cast<const char *>(&EdgesNum), 4);
-    for (const auto &Edge : Desc.Edges) {
-      OS.write(reinterpret_cast<const char *>(&Edge.FromLoc.FuncString), 4);
-      OS.write(reinterpret_cast<const char *>(&Edge.FromLoc.Offset), 4);
-      OS.write(reinterpret_cast<const char *>(&Edge.FromNode), 4);
-      OS.write(reinterpret_cast<const char *>(&Edge.ToLoc.FuncString), 4);
-      OS.write(reinterpret_cast<const char *>(&Edge.ToLoc.Offset), 4);
-      OS.write(reinterpret_cast<const char *>(&Edge.ToNode), 4);
-      OS.write(reinterpret_cast<const char *>(&Edge.Counter), 4);
-    }
-    const auto CallsNum = Desc.Calls.size();
-    OS.write(reinterpret_cast<const char *>(&CallsNum), 4);
-    for (const auto &Call : Desc.Calls) {
-      OS.write(reinterpret_cast<const char *>(&Call.FromLoc.FuncString), 4);
-      OS.write(reinterpret_cast<const char *>(&Call.FromLoc.Offset), 4);
-      OS.write(reinterpret_cast<const char *>(&Call.FromNode), 4);
-      OS.write(reinterpret_cast<const char *>(&Call.ToLoc.FuncString), 4);
-      OS.write(reinterpret_cast<const char *>(&Call.ToLoc.Offset), 4);
-      OS.write(reinterpret_cast<const char *>(&Call.Counter), 4);
-      uint64_t TargetFuncAddress =
-        getOutputAddress(*Call.Target, Call.ToLoc.Offset);
-      OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
-    }
-    const auto EntryNum = Desc.EntryNodes.size();
-    OS.write(reinterpret_cast<const char *>(&EntryNum), 4);
-    for (const auto &EntryNode : Desc.EntryNodes) {
-      OS.write(reinterpret_cast<const char *>(&EntryNode.Node), 8);
-      uint64_t TargetFuncAddress =
-          getOutputAddress(*Desc.Function, EntryNode.Address);
-      OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
-    }
-  }
-  // Our string table lives immediately after descriptions vector
-  OS << StringTable;
-  OS.flush();
-  const auto BoltInfo = BinarySection::encodeELFNote(
-      "BOLT", TablesStr, BinarySection::NT_BOLT_INSTRUMENTATION_TABLES);
-  BC.registerOrUpdateNoteSection(".bolt.instr.tables", copyByteArray(BoltInfo),
-                                 BoltInfo.size(),
-                                 /*Alignment=*/1,
-                                 /*IsReadOnly=*/true, ELF::SHT_NOTE);
-}
-
-void Instrumentation::emit(BinaryContext &BC, MCStreamer &Streamer) {
-  const auto *StartFunction =
-    BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
-  if (!StartFunction) {
-    errs() << "BOLT-ERROR: failed to locate function at binary start address\n";
-    exit(1);
-  }
-  const auto *FiniFunction =
-    BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress);
-  if (!FiniFunction) {
-    errs() << "BOLT-ERROR: failed to locate function at binary fini address\n";
-    exit(1);
-  }
-
-  const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
-                                             /*IsText=*/false,
-                                             /*IsAllocatable=*/true);
-  auto *Section = BC.Ctx->getELFSection(".bolt.instr.counters",
-                                        ELF::SHT_PROGBITS,
-                                        Flags);
-
-  // All of the following symbols will be exported as globals to be used by the
-  // instrumentation runtime library to dump the instrumentation data to disk.
-  // Label marking start of the memory region containing instrumentation
-  // counters, total vector size is Counters.size() 8-byte counters
-  MCSymbol *Locs = BC.Ctx->getOrCreateSymbol("__bolt_instr_locations");
-  MCSymbol *NumLocs = BC.Ctx->getOrCreateSymbol("__bolt_num_counters");
-  MCSymbol *NumIndCalls =
-      BC.Ctx->getOrCreateSymbol("__bolt_instr_num_ind_calls");
-  MCSymbol *NumIndCallTargets =
-      BC.Ctx->getOrCreateSymbol("__bolt_instr_num_ind_targets");
-  MCSymbol *NumFuncs = BC.Ctx->getOrCreateSymbol("__bolt_instr_num_funcs");
-  /// File name where profile is going to written to after target binary
-  /// finishes a run
-  MCSymbol *FilenameSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_filename");
-  MCSymbol *UsePIDSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_use_pid");
-  MCSymbol *InitPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr");
-  MCSymbol *FiniPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr");
-  MCSymbol *SleepSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_sleep_time");
-
-  Section->setAlignment(BC.RegularPageSize);
-  Streamer.SwitchSection(Section);
-  Streamer.EmitLabel(Locs);
-  Streamer.EmitSymbolAttribute(Locs,
-                               MCSymbolAttr::MCSA_Global);
-  for (const auto &Label : Counters) {
-    Streamer.EmitLabel(Label);
-    Streamer.emitFill(8, 0);
-  }
-  const uint64_t Padding =
-      alignTo(8 * Counters.size(), BC.RegularPageSize) - 8 * Counters.size();
-  if (Padding)
-    Streamer.emitFill(Padding, 0);
-  Streamer.EmitLabel(SleepSym);
-  Streamer.EmitSymbolAttribute(SleepSym,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(opts::InstrumentationSleepTime, /*Size=*/4);
-  Streamer.EmitLabel(NumLocs);
-  Streamer.EmitSymbolAttribute(NumLocs,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(Counters.size(), /*Size=*/4);
-  Streamer.EmitLabel(IndCallHandlerFunc);
-  Streamer.EmitSymbolAttribute(IndCallHandlerFunc,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(MCSymbolRefExpr::create(
-                         InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx),
-                     /*Size=*/8);
-  Streamer.EmitLabel(IndTailCallHandlerFunc);
-  Streamer.EmitSymbolAttribute(IndTailCallHandlerFunc,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
-      MCSymbolRefExpr::create(InitialIndTailCallHandlerFunction->getSymbol(),
-                              *BC.Ctx),
-      /*Size=*/8);
-  Streamer.EmitLabel(NumIndCalls);
-  Streamer.EmitSymbolAttribute(NumIndCalls,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(IndCallDescriptions.size(), /*Size=*/4);
-  Streamer.EmitLabel(NumIndCallTargets);
-  Streamer.EmitSymbolAttribute(NumIndCallTargets,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(IndCallTargetDescriptions.size(), /*Size=*/4);
-  Streamer.EmitLabel(NumFuncs);
-  Streamer.EmitSymbolAttribute(NumFuncs,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(FunctionDescriptions.size(), /*Size=*/4);
-  Streamer.EmitLabel(FilenameSym);
-  Streamer.EmitBytes(opts::InstrumentationFilename);
-  Streamer.emitFill(1, 0);
-  Streamer.EmitLabel(UsePIDSym);
-  Streamer.EmitIntValue(opts::InstrumentationFileAppendPID ? 1 : 0, /*Size=*/1);
-
-  Streamer.EmitLabel(InitPtr);
-  Streamer.EmitSymbolAttribute(InitPtr,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
-      MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
-  Streamer.EmitLabel(FiniPtr);
-  Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
-      MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
-
-  uint32_t FuncDescSize = getFDSize();
   outs() << "BOLT-INSTRUMENTER: Number of indirect call site descriptors: "
-         << IndCallDescriptions.size() << "\n";
+         << Summary->IndCallDescriptions.size() << "\n";
   outs() << "BOLT-INSTRUMENTER: Number of indirect call target descriptors: "
-         << IndCallTargetDescriptions.size() << "\n";
+         << Summary->IndCallTargetDescriptions.size() << "\n";
   outs() << "BOLT-INSTRUMENTER: Number of function descriptors: "
-         << FunctionDescriptions.size() << "\n";
+         << Summary->FunctionDescriptions.size() << "\n";
   outs() << "BOLT-INSTRUMENTER: Number of branch counters: " << BranchCounters
          << "\n";
   outs() << "BOLT-INSTRUMENTER: Number of ST leaf node counters: "
          << LeafNodeCounters << "\n";
   outs() << "BOLT-INSTRUMENTER: Number of direct call counters: "
          << DirectCallCounters << "\n";
-  outs() << "BOLT-INSTRUMENTER: Total number of counters: " << Counters.size()
-         << "\n";
+  outs() << "BOLT-INSTRUMENTER: Total number of counters: "
+         << Summary->Counters.size() << "\n";
   outs() << "BOLT-INSTRUMENTER: Total size of counters: "
-         << (Counters.size() * 8) << " bytes (static alloc memory)\n";
+         << (Summary->Counters.size() * 8) << " bytes (static alloc memory)\n";
   outs() << "BOLT-INSTRUMENTER: Total size of string table emitted: "
-         << StringTable.size() << " bytes in file\n";
+         << Summary->StringTable.size() << " bytes in file\n";
   outs() << "BOLT-INSTRUMENTER: Total size of descriptors: "
          << (FuncDescSize +
-             IndCallDescriptions.size() * sizeof(IndCallDescription) +
-             IndCallTargetDescriptions.size() *
+             Summary->IndCallDescriptions.size() * sizeof(IndCallDescription) +
+             Summary->IndCallTargetDescriptions.size() *
                  sizeof(IndCallTargetDescription))
          << " bytes in file\n";
   outs() << "BOLT-INSTRUMENTER: Profile will be saved to file "
          << opts::InstrumentationFilename << "\n";
-}
 
+  BC.setRuntimeLibrary(
+      llvm::make_unique<InstrumentationRuntimeLibrary>(std::move(Summary)));
+}
 }
 }

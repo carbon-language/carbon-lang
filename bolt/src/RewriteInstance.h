@@ -409,10 +409,6 @@ private:
   uint64_t NewTextSegmentOffset{0};
   uint64_t NewTextSegmentSize{0};
 
-  /// Extra linking
-  uint64_t InstrumentationRuntimeFiniAddress{0};
-  uint64_t InstrumentationRuntimeStartAddress{0};
-
   /// Track next available address for new allocatable sections.
   uint64_t NextAvailableAddress{0};
 

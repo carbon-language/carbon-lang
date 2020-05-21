@@ -193,6 +193,10 @@ private:
 void BinaryEmitter::emitAll(StringRef OrgSecPrefix) {
   Streamer.InitSections(false);
 
+  if (auto *RtLibrary = BC.getRuntimeLibrary()) {
+    RtLibrary->emitBinary(BC, Streamer);
+  }
+
   BC.getTextSection()->setAlignment(opts::AlignText);
 
   emitFunctions();

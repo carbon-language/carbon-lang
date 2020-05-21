@@ -18,6 +18,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_INSTRUMENTATION_H
 
 #include "BinaryPasses.h"
+#include "RuntimeLibs/InstrumentationRuntimeLibrary.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -25,93 +26,18 @@
 namespace llvm {
 namespace bolt {
 
-class Instrumentation {
+class Instrumentation : public BinaryFunctionPass {
 public:
-  Instrumentation() {}
+  Instrumentation(const cl::opt<bool> &PrintPass)
+      : BinaryFunctionPass(PrintPass),
+        Summary(llvm::make_unique<InstrumentationSummary>()) {}
 
   /// Modifies all functions by inserting instrumentation code (first step)
-  void runOnFunctions(BinaryContext &BC);
+  void runOnFunctions(BinaryContext &BC) override;
 
-  /// Emit data structures that will be necessary during runtime (second step)
-  void emit(BinaryContext &BC, MCStreamer &Streamer);
-
-  /// Create a non-allocatable ELF section with read-only tables necessary for
-  /// writing the instrumented data profile during program finish. The runtime
-  /// library needs to open the program executable file and read this data from
-  /// disk, this is not loaded by the system.
-  void emitTablesAsELFNote(BinaryContext &BC);
+  const char *getName() const override { return "instrumentation"; }
 
 private:
-  // All structs here are part of the program metadata serialization format and
-  // consist of POD types or array of POD types that are trivially mapped from
-  // disk to memory. This provides the runtime library with a basic
-  // understanding of the program structure, so it can build a CFG for each
-  // function and deduce execution counts for edges that don't require explicit
-  // counters. It also provides function names and offsets used when writing the
-  // fdata file.
-
-  // Location information -- analoguous to the concept of the same name in fdata
-  // writing/reading. The difference is that the name is stored as an index to a
-  // string table written separately.
-  struct LocDescription {
-    uint32_t FuncString;
-    uint32_t Offset;
-  };
-
-  // Inter-function control flow transfer instrumentation
-  struct CallDescription {
-    LocDescription FromLoc;
-    uint32_t FromNode;  // Node refers to the CFG node index of the call site
-    LocDescription ToLoc;
-    uint32_t Counter;
-    const BinaryFunction *Target;
-  };
-
-  // Spans multiple counters during runtime - this is an indirect call site
-  struct IndCallDescription {
-    LocDescription FromLoc;
-  };
-
-  // This is an indirect call target (any entry point from any function). This
-  // is stored sorted in the binary for fast lookups during data writing.
-  struct IndCallTargetDescription {
-    LocDescription ToLoc;
-    const BinaryFunction *Target;
-  };
-
-  // Intra-function control flow transfer instrumentation
-  struct EdgeDescription {
-    LocDescription FromLoc;
-    uint32_t FromNode;
-    LocDescription ToLoc;
-    uint32_t ToNode;
-    uint32_t Counter;
-  };
-
-  // Basic block frequency (CFG node) instrumentation - only used for spanning
-  // tree leaf nodes.
-  struct InstrumentedNode {
-    uint32_t Node;
-    uint32_t Counter;
-  };
-
-  // Entry basic blocks for a function. We record their output addresses to
-  // check frequency of this address (via node number) against all tracked calls
-  // to this address and discover traffic coming from uninstrumented code.
-  struct EntryNode {
-    uint64_t Node;
-    uint64_t Address;
-  };
-
-  // Base struct organizing all metadata pertaining to a single function
-  struct FunctionDescription {
-    const BinaryFunction *Function;
-    std::vector<InstrumentedNode> LeafNodes;
-    std::vector<EdgeDescription> Edges;
-    DenseSet<std::pair<uint32_t, uint32_t>> EdgesSet;
-    std::vector<CallDescription> Calls;
-    std::vector<EntryNode> EntryNodes;
-  };
 
   void instrumentFunction(BinaryContext &BC, BinaryFunction &Function,
                           MCPlusBuilder::AllocatorIdTy = 0);
@@ -180,42 +106,24 @@ private:
 
   uint32_t getFDSize() const;
 
-  /// Stores function names, to be emitted to the runtime
-  std::string StringTable;
+  /// Create a runtime library, pass the BinData over, and register it
+  /// under \p BC.
+  void setupRuntimeLibrary(BinaryContext &BC);
 
   /// strtab indices in StringTable for each function name
   std::unordered_map<const BinaryFunction *, uint32_t> FuncToStringIdx;
 
-  /// Intra-function control flow and direct calls
-  std::vector<FunctionDescription> FunctionDescriptions;
   mutable std::shared_timed_mutex FDMutex;
 
-  /// Inter-function control flow via indirect calls
-  std::vector<IndCallDescription> IndCallDescriptions;
-  std::vector<IndCallTargetDescription> IndCallTargetDescriptions;
-
-  /// Identify all counters used in runtime while instrumentation is running
-  std::vector<MCSymbol *> Counters;
-
-  /// Our runtime indirect call instrumenter function
-  MCSymbol *IndCallHandlerFunc;
-  MCSymbol *IndTailCallHandlerFunc;
-
-  /// Our generated initial indirect call handler function that does nothing
-  /// except calling the indirect call target. The target program starts
-  /// using this no-op instrumentation function until our runtime library
-  /// setup runs and installs the correct handler. We need something before
-  /// our setup runs in case dyld starts running init code for other libs when
-  /// we did not have time to set up our indirect call counters yet.
-  BinaryFunction *InitialIndCallHandlerFunction;
-  BinaryFunction *InitialIndTailCallHandlerFunction;
+  /// The data generated during Instrumentation pass that needs to
+  /// be passed to the Instrument runtime library.
+  std::unique_ptr<InstrumentationSummary> Summary;
 
   /// Statistics on counters
   uint32_t DirectCallCounters{0};
   uint32_t BranchCounters{0};
   uint32_t LeafNodeCounters{0};
 };
-
 }
 }
 

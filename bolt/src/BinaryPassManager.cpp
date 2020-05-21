@@ -16,15 +16,16 @@
 #include "Passes/IdenticalCodeFolding.h"
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
-#include "Passes/LongJmp.h"
+#include "Passes/Instrumentation.h"
 #include "Passes/JTFootprintReduction.h"
+#include "Passes/LongJmp.h"
 #include "Passes/PLTCall.h"
 #include "Passes/RegReAssign.h"
-#include "Passes/ReorderFunctions.h"
 #include "Passes/ReorderData.h"
+#include "Passes/ReorderFunctions.h"
+#include "Passes/RetpolineInsertion.h"
 #include "Passes/SplitFunctions.h"
 #include "Passes/StokeInfo.h"
-#include "Passes/RetpolineInsertion.h"
 #include "Passes/ValidateInternalCalls.h"
 #include "Passes/VeneerElimination.h"
 #include "llvm/Support/Timer.h"
@@ -37,6 +38,8 @@ namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltCategory;
+
+extern cl::opt<bool> Instrument;
 
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> PrintAll;
@@ -377,6 +380,10 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   BinaryFunctionPassManager Manager(BC);
 
   const auto InitialDynoStats = getDynoStats(BC.getBinaryFunctions());
+
+  if (opts::Instrument) {
+    Manager.registerPass(llvm::make_unique<Instrumentation>(NeverPrint));
+  }
 
   // Here we manage dependencies/order manually, since passes are run in the
   // order they're registered.

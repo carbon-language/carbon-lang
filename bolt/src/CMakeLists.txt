@@ -1,5 +1,6 @@
 add_subdirectory(merge-fdata)
 add_subdirectory(Passes)
+add_subdirectory(RuntimeLibs)
 add_subdirectory(Target)
 
 # Get the current git revision for BOLT.
@@ -48,6 +49,7 @@ add_public_gen_version_target(GenBoltRevision)
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   BOLTPasses
+  BOLTRuntimeLibs
   CodeGen
   Core
   DebugInfoDWARF

@@ -19,10 +19,11 @@
 #include "DebugData.h"
 #include "JumpTable.h"
 #include "MCPlusBuilder.h"
-#include "llvm/ADT/iterator.h"
+#include "RuntimeLibs/RuntimeLibrary.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
@@ -43,8 +44,8 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 #include <functional>
 #include <map>
 #include <set>
@@ -236,6 +237,12 @@ public:
   }
   void setNumUnusedProfiledObjects(uint64_t N) {
     NumUnusedProfiledObjects = N;
+  }
+
+  RuntimeLibrary *getRuntimeLibrary() { return RtLibrary.get(); }
+  void setRuntimeLibrary(std::unique_ptr<RuntimeLibrary> Lib) {
+    assert(!RtLibrary && "Cannot set runtime library twice.");
+    RtLibrary = std::move(Lib);
   }
 
   /// Return BinaryFunction containing a given \p Address or nullptr if
@@ -540,6 +547,9 @@ public:
 
   /// Map SDT locations to SDT markers info
   std::unordered_map<uint64_t, SDTMarkerInfo> SDTMarkers;
+
+  /// The runtime library.
+  std::unique_ptr<RuntimeLibrary> RtLibrary;
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
