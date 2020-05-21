@@ -17,9 +17,15 @@ jobs:
         service_account_email: ${{ secrets.GCP_SA_EMAIL }}
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
+    - uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.6
     - run: gcloud info
-    - run: echo Add a setup step here
-    - run: echo add a build step here
+    - name: Install jekyll and dependencies
+      run: gem install bundler
+      working-directory: src/jekyll
+    - name: Build HTML pages
+      run: make site
+      working-directory: src/jekyll
     - name: Publish to www.carbon-lang.dev
-      run: |
-        gsutil cp -R docs/* gs://www.carbon-lang.dev/test-doc-root/
+      run: gsutil cp -R src/jekyll/.gen-site/* gs://www.carbon-lang.dev/
