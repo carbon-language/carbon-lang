@@ -1,0 +1,121 @@
+.summary {
+    color: #808080;
+    border-left: 5px solid #ED1951;
+    font-size:16px;
+}
+
+
+h3 {color: #ED1951; }
+h4 {color: #808080; }
+
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {
+    background-color: #248ec2;
+    color: white;
+}
+
+.nav > li.active > a {
+    background-color: #347DBE;
+}
+
+.nav > li > a:hover {
+    background-color: #248ec2;
+}
+
+div.navbar-collapse .dropdown-menu > li > a:hover {
+    background-color: #347DBE;
+}
+
+.nav li.thirdlevel > a {
+    background-color: #FAFAFA !important;
+    color: #248EC2;
+    font-weight: bold;
+}
+
+a[data-toggle="tooltip"] {
+    color: #649345;
+    font-style: italic;
+    cursor: default;
+}
+
+.navbar-inverse {
+    background-color: #347DBE;
+    border-color: #015CAE;
+}
+.navbar-inverse .navbar-nav>li>a, .navbar-inverse .navbar-brand {
+    color: white;
+}
+
+.navbar-inverse .navbar-nav>li>a:hover, a.fa.fa-home.fa-lg.navbar-brand:hover {
+     color: #f0f0f0;
+}
+
+a.navbar-brand:hover {
+  color: #f0f0f0;
+}
+
+.navbar-inverse .navbar-nav > .open > a, .navbar-inverse .navbar-nav > .open > a:hover, .navbar-inverse .navbar-nav > .open > a:focus {
+    color: #015CAE;
+}
+
+.navbar-inverse .navbar-nav > .open > a, .navbar-inverse .navbar-nav > .open > a:hover, .navbar-inverse .navbar-nav > .open > a:focus {
+    background-color: #015CAE;
+    color: #ffffff;
+}
+
+.navbar-inverse .navbar-collapse, .navbar-inverse .navbar-form {
+    border-color: #248ec2 !important;
+}
+
+.btn-primary {
+    color: #ffffff;
+    background-color: #347DBE;
+    border-color: #347DBE;
+}
+
+.navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:hover, .navbar-inverse .navbar-nav > .active > a:focus {
+    background-color: #347DBE;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.open .dropdown-toggle.btn-primary {
+    background-color: #248ec2;
+    border-color: #347DBE;
+}
+
+.printTitle {
+    color: #015CAE !important;
+}
+
+body.print h1 {color: #015CAE !important; font-size:28px !important;}
+body.print h2 {color: #595959 !important; font-size:20px !important;}
+body.print h3 {color: #E50E51 !important; font-size:14px !important;}
+body.print h4 {color: #679DCE !important; font-size:14px; font-style: italic !important;}
+
+.anchorjs-link:hover {
+    color: #216f9b;
+}
+
+div.sidebarTitle {
+    color: #015CAE;
+}
+
+li.sidebarTitle {
+  margin-top:20px;
+    font-weight:normal;
+    font-size:130%;
+    color: #ED1951;
+    margin-bottom:10px;
+    margin-left: 5px;
+
+}
+
+.navbar-inverse .navbar-toggle:focus, .navbar-inverse .navbar-toggle:hover {
+    background-color: #015CAE;
+}
+
+.navbar-inverse .navbar-toggle {
+    border-color: #015CAE;
+}

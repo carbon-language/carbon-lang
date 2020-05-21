@@ -220,3 +220,15 @@ conflicts with the conditions of the GPLv2, you may retroactively and
 prospectively choose to deem waived or otherwise exclude such Section(s) of
 the License, but only in their entirety and only with respect to the Combined
 Software.
+
+==============================================================================
+Software from third parties included in the Carbon language:
+==============================================================================
+The Carbon langauge contains third party software which is under different
+license terms. All such code will be identified clearly using at least one of
+two mechanisms:
+1) It will be in a separate directory tree with its own `LICENSE.txt` or
+   `LICENSE` file at the top containing the specific license and restrictions
+   which apply to that software, or
+2) It will contain specific license and restriction terms at the top of every
+   file.
