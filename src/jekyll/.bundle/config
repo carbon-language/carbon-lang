@@ -1,0 +1,3 @@
+---
+BUNDLE_RETRY: "4"
+BUNDLE_JOBS: "4"
