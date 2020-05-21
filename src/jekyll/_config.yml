@@ -1,0 +1,46 @@
+# Part of the Carbon Language, under the Apache License v2.0 with LLVM
+# Exceptions.
+# See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+repository: carbon-language/carbon-lang
+topnav_title: Carbon
+site_title: Carbon langauge
+url: "https://carbon-lang.dev/"
+
+source: ./site
+destination: ./.gen-site
+markdown: CommonMark
+
+exclude:
+  - src/
+
+include:
+  - "*.md"
+
+feedback_disable: true
+
+sidebars:
+- sidebar
+
+defaults:
+  -
+    values:
+      layout: "page"
+      search: true
+      sidebar: sidebar
+      topnav: topnav
+
+plugins:
+  # https://github.com/benbalter/jekyll-commonmark
+  - jekyll-commonmark
+  # https://github.com/benbalter/jekyll-default-layout
+  - jekyll-default-layout
+  # https://github.com/benbalter/jekyll-optional-front-matter
+  - jekyll-optional-front-matter
+  # https://github.com/benbalter/jekyll-readme-index
+  - jekyll-readme-index
+  # https://github.com/benbalter/jekyll-relative-links
+  - jekyll-relative-links
+  # https://github.com/benbalter/jekyll-titles-from-headings
+  - jekyll-titles-from-headings
