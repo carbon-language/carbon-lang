@@ -272,6 +272,7 @@ public:
     return reinterpret_cast<const uint8_t *>(getContents().data());
   }
   StringRef getContents() const { return Contents; }
+  void clearContents() { Contents = {}; }
   bool hasSectionRef() const { return Section != SectionRef(); }
   SectionRef getSectionRef() const { return Section; }
 

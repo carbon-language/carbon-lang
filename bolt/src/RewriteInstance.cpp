@@ -2580,7 +2580,7 @@ void RewriteInstance::emitAndLink() {
     if (BC->HasRelocations) {
       // The section is going to be regenerated from scratch.
       // Empty the contents, but keep the section reference.
-      EHFrameSection->getContents().take_front(0);
+      EHFrameSection->clearContents();
     } else {
       // Make .eh_frame relocatable.
       relocateEHFrameSection();
