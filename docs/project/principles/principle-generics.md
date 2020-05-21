@@ -6,9 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon principle: Generics
 
-- **[Tracking issue](https://github.com/carbon-language/carbon-lang/issues/TODO)**
-- **Status:** WIP
-- **Created:** 2019-01-07
+- **Created:** 2020-01-07
 
 **_PLEASE_ DO NOT SHARE OUTSIDE CARBON FORUMS**
 
