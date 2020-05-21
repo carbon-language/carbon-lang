@@ -21,8 +21,11 @@ jobs:
       with:
         ruby-version: 2.6
     - run: gcloud info
-    - name: Install jekyll and dependencies
+    - name: Install bundler
       run: gem install bundler
+      working-directory: src/jekyll
+    - name: Install jekyll and dependencies
+      run: bundle install --jobs 4 --retry 3
       working-directory: src/jekyll
     - name: Build HTML pages
       run: make site
