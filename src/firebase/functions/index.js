@@ -7,7 +7,9 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-admin.initializeApp();
+admin.initializeApp({
+  authDomain: "carbon-lang.dev",
+});
 const cookieParser = require('cookie-parser')();
 const cors = require('cors')({origin: true});
 

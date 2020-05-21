@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": "public",
+    "authDomain": "carbon-lang.dev",
     "rewrites": [
       {
         "source":"**/*",
