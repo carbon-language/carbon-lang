@@ -3,6 +3,8 @@
 # See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+source 'https://rubygems.org'
+
 gem 'jekyll'
 gem 'jekyll-commonmark'
 gem 'jekyll-default-layout'
