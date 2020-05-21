@@ -15,8 +15,9 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "llvm/Support/CommandLine.h"
-#include <queue>
 #include <functional>
+#include <queue>
+#include <random>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
@@ -720,8 +721,8 @@ void RandomClusterReorderAlgorithm::reorderBasicBlocks(
     if (!Clusters[I].empty())
       ClusterOrder.push_back(I);
 
-  std::srand(opts::RandomSeed);
-  std::random_shuffle(std::next(ClusterOrder.begin()), ClusterOrder.end());
+  std::shuffle(std::next(ClusterOrder.begin()), ClusterOrder.end(),
+               std::default_random_engine(opts::RandomSeed.getValue()));
 
   if (opts::PrintClusters) {
     errs() << "New cluster order: ";
