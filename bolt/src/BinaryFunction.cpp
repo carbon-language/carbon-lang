@@ -14,6 +14,7 @@
 #include "BinaryFunction.h"
 #include "DynoStats.h"
 #include "MCPlusBuilder.h"
+#include "NameShortener.h"
 #include "llvm/ADT/edit_distance.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringRef.h"
@@ -208,7 +209,26 @@ SMLoc findDebugLineInformationForInstructionAt(
   return SMLoc::getFromPointer(Ptr);
 }
 
+std::string buildSectionName(StringRef Prefix, StringRef Name,
+                             const BinaryContext &BC) {
+  if (BC.isELF())
+    return (Prefix + Name).str();
+  static NameShortener NS;
+  return (Prefix + Twine(NS.getID(Name))).str();
+}
+
 } // namespace
+
+std::string BinaryFunction::buildCodeSectionName(StringRef Name,
+                                                 const BinaryContext &BC) {
+  return buildSectionName(BC.isELF() ? ".local.text." : ".l.text.", Name, BC);
+}
+
+std::string BinaryFunction::buildColdCodeSectionName(StringRef Name,
+                                                     const BinaryContext &BC) {
+  return buildSectionName(BC.isELF() ? ".local.cold.text." : ".l.c.text.", Name,
+                          BC);
+}
 
 uint64_t BinaryFunction::Count = 0;
 

@@ -215,7 +215,7 @@ UpdateEnd("update-end",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 KeepTmp("keep-tmp",
   cl::desc("preserve intermediate .o file"),
   cl::Hidden,

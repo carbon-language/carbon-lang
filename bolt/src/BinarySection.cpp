@@ -25,7 +25,7 @@ extern cl::opt<bool> HotData;
 }
 
 bool BinarySection::isELF() const {
-  return BC.Ctx->getObjectFileInfo()->getTargetTriple().isOSBinFormatELF();
+  return BC.isELF();
 }
 
 uint64_t

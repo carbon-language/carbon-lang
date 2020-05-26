@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/BinaryFormat/MachO.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -37,6 +38,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
@@ -559,6 +561,10 @@ public:
 
   std::unique_ptr<MCObjectWriter> createObjectWriter(raw_pwrite_stream &OS);
 
+  bool isELF() const {
+    return TheTriple->isOSBinFormatELF();
+  }
+
   bool isAArch64() const {
     return TheTriple->getArch() == llvm::Triple::aarch64;
   }
@@ -719,9 +725,13 @@ public:
 
   /// Return code section with a given name.
   MCSection *getCodeSection(StringRef SectionName) const {
-    return Ctx->getELFSection(SectionName,
-                              ELF::SHT_PROGBITS,
-                              ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+    if (isELF())
+      return Ctx->getELFSection(SectionName, ELF::SHT_PROGBITS,
+                                ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+    else
+      return Ctx->getMachOSection("__TEXT", SectionName,
+                                  MachO::S_ATTR_PURE_INSTRUCTIONS,
+                                  SectionKind::getText());
   }
 
   /// Return data section with a given name.

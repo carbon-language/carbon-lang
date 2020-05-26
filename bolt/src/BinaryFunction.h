@@ -621,7 +621,7 @@ private:
   DenseMap<const MCInst *, SmallVector<MCInst *, 4>>
   computeLocalUDChain(const MCInst *CurInstr);
 
-  BinaryFunction& operator=(const BinaryFunction &) = delete;
+  BinaryFunction &operator=(const BinaryFunction &) = delete;
   BinaryFunction(const BinaryFunction &) = delete;
 
   friend class MachORewriteInstance;
@@ -630,23 +630,27 @@ private:
   friend class DataReader;
   friend class DataAggregator;
 
+  static std::string buildCodeSectionName(StringRef Name,
+                                          const BinaryContext &BC);
+  static std::string buildColdCodeSectionName(StringRef Name,
+                                              const BinaryContext &BC);
+
   /// Creation should be handled by RewriteInstance or BinaryContext
   BinaryFunction(const std::string &Name, BinarySection &Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC,
-                 bool IsSimple) :
-      InputSection(&Section), Address(Address),
-      Size(Size), BC(BC), IsSimple(IsSimple),
-      CodeSectionName(".local.text." + Name),
-      ColdCodeSectionName(".local.cold.text." + Name),
-      FunctionNumber(++Count) {
+                 bool IsSimple)
+      : InputSection(&Section), Address(Address), Size(Size), BC(BC),
+        IsSimple(IsSimple), CodeSectionName(buildCodeSectionName(Name, BC)),
+        ColdCodeSectionName(buildColdCodeSectionName(Name, BC)),
+        FunctionNumber(++Count) {
     Symbols.push_back(BC.Ctx->getOrCreateSymbol(Name));
   }
 
   /// This constructor is used to create an injected function
   BinaryFunction(const std::string &Name, BinaryContext &BC, bool IsSimple)
       : Address(0), Size(0), BC(BC), IsSimple(IsSimple),
-        CodeSectionName(".local.text." + Name),
-        ColdCodeSectionName(".local.cold.text." + Name),
+        CodeSectionName(buildCodeSectionName(Name, BC)),
+        ColdCodeSectionName(buildColdCodeSectionName(Name, BC)),
         FunctionNumber(++Count) {
     Symbols.push_back(BC.Ctx->getOrCreateSymbol(Name));
     IsInjected = true;
@@ -658,15 +662,15 @@ public:
   using iterator = pointee_iterator<BasicBlockListType::iterator>;
   using const_iterator = pointee_iterator<BasicBlockListType::const_iterator>;
   using reverse_iterator =
-    pointee_iterator<BasicBlockListType::reverse_iterator>;
+      pointee_iterator<BasicBlockListType::reverse_iterator>;
   using const_reverse_iterator =
-    pointee_iterator<BasicBlockListType::const_reverse_iterator>;
+      pointee_iterator<BasicBlockListType::const_reverse_iterator>;
 
   typedef BasicBlockOrderType::iterator order_iterator;
   typedef BasicBlockOrderType::const_iterator const_order_iterator;
   typedef BasicBlockOrderType::reverse_iterator reverse_order_iterator;
   typedef BasicBlockOrderType::const_reverse_iterator
-    const_reverse_order_iterator;
+      const_reverse_order_iterator;
 
   // CFG iterators.
   iterator                 begin()       { return BasicBlocks.begin(); }

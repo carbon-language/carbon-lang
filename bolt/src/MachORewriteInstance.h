@@ -29,14 +29,18 @@ class MachORewriteInstance {
 
   NameResolver NR;
 
+  static StringRef getOrgSecPrefix() { return ".bolt.org"; }
+
+  void adjustCommandLineOptions();
   void readSpecialSections();
   void discoverFileObjects();
   void disassembleFunctions();
   void postProcessFunctions();
   void runOptimizationPasses();
+  void emitAndLink();
 
 public:
-  MachORewriteInstance(object::MachOObjectFile *InputFile);
+  explicit MachORewriteInstance(object::MachOObjectFile *InputFile);
   ~MachORewriteInstance();
 
   /// Run all the necessary steps to read, optimize and rewrite the binary.

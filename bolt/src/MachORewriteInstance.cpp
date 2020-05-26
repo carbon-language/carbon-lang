@@ -11,15 +11,24 @@
 
 #include "MachORewriteInstance.h"
 #include "BinaryContext.h"
+#include "BinaryEmitter.h"
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
 #include "Utils.h"
+#include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/ToolOutputFile.h"
 
 namespace opts {
 
 using namespace llvm;
+extern cl::opt<unsigned> AlignText;
+extern cl::opt<bool> KeepTmp;
 extern cl::opt<bool> NeverPrint;
+extern cl::opt<std::string> OutputFilename;
 extern cl::opt<bool> PrintFinalized;
 extern cl::opt<bool> PrintReordered;
 extern cl::opt<bool> PrintSections;
@@ -30,16 +39,15 @@ extern cl::opt<bool> PrintCFG;
 namespace llvm {
 namespace bolt {
 
-#undef  DEBUG_TYPE
+#undef DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile)
     : InputFile(InputFile),
       BC(BinaryContext::createBinaryContext(
-          InputFile,
-          DWARFContext::create(*InputFile, nullptr,
-                               DWARFContext::defaultErrorHandler, "", false))) {
-}
+          InputFile, DWARFContext::create(*InputFile, nullptr,
+                                          DWARFContext::defaultErrorHandler, "",
+                                          false))) {}
 
 void MachORewriteInstance::readSpecialSections() {
   for (const auto &Section : InputFile->sections()) {
@@ -217,12 +225,53 @@ void MachORewriteInstance::runOptimizationPasses() {
   Manager.runPasses();
 }
 
+void MachORewriteInstance::emitAndLink() {
+  std::error_code EC;
+  std::unique_ptr<ToolOutputFile> TempOut = llvm::make_unique<ToolOutputFile>(
+      opts::OutputFilename + ".bolt.o", EC, sys::fs::F_None);
+  check_error(EC, "cannot create output object file");
+
+  if (opts::KeepTmp)
+    TempOut->keep();
+
+  std::unique_ptr<buffer_ostream> BOS =
+      make_unique<buffer_ostream>(TempOut->os());
+  raw_pwrite_stream *OS = BOS.get();
+
+  MCCodeEmitter *MCE =
+      BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
+  MCAsmBackend *MAB =
+      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
+  std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
+      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB), *OS,
+      std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
+      /* RelaxAll */ false,
+      /* IncrementalLinkerCompatible */ false,
+      /* DWARFMustBeAtTheEnd */ false));
+  emitBinaryContext(*Streamer, *BC, getOrgSecPrefix());
+  Streamer->Finish();
+
+  std::unique_ptr<MemoryBuffer> ObjectMemBuffer =
+      MemoryBuffer::getMemBuffer(BOS->str(), "in-memory object file", false);
+  std::unique_ptr<object::ObjectFile> Obj = cantFail(
+      object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef()),
+      "error creating in-memory object");
+  assert(Obj && "createObjectFile cannot return nullptr");
+}
+
+void MachORewriteInstance::adjustCommandLineOptions() {
+  if (!opts::AlignText.getNumOccurrences())
+    opts::AlignText = BC->PageAlign;
+}
+
 void MachORewriteInstance::run() {
+  adjustCommandLineOptions();
   readSpecialSections();
   discoverFileObjects();
   disassembleFunctions();
   postProcessFunctions();
   runOptimizationPasses();
+  emitAndLink();
 }
 
 MachORewriteInstance::~MachORewriteInstance() {}
