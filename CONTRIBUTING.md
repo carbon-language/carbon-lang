@@ -235,6 +235,81 @@ Every file type uses a variation on the same license text ("Apache-2.0 WITH
 LLVM-exception") with similar formatting. If you're not sure what text to use,
 please ask on Discourse Forums.
 
+# Use a linear pull-request GitHub worflow
+
+Carbon repositories follow three basic principles:
+
+- Linear history (through
+  [rebasing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#rebase-and-merge-your-pull-request-commits)
+  or
+  [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits)
+  rather than merge commits from branches or forks)
+- Commit small, incremental changes to optimize for review, continuous
+  integration, and bisection
+- Always use pull requests (rather than directly pushing to the main branch)
+
+These principles try to optimize for several different uses or activities with
+version control:
+
+- Continuous integration and bisection to identify failures and revert to green
+- Code review both at the time of commit and follow-up review after commit
+- Understanding how things evolve over time, which can manifest in different
+  ways
+  - When were things introduced?
+  - How does the main branch and project evolve over time?
+  - How was a bug or surprising thing introduced?
+
+
+## Always use pull requests rather than pushing directly
+
+We want to ensure that changes to Carbon are always reviewed, and the simplest
+way to do this is to consistently follow a pull request workflow. Even if the
+change seems trivial, still go through a pull request -- it'll likely be trivial
+to review.
+
+Always wait for someone else to review your pull request rather than just
+merging it, even if you have permission to do so. We have set up automation on
+GitHub to try to make the system automatically enforce this.
+
+## Small, incremental changes
+
+Developing in small, incremental changes improves code review time, continuous
+integration, and bisection. This applies both to the increments used for a pull
+request, and the incremental commits _within_ a single pull request. The
+guidance on how to sequence and/or squash commit chains comes down to a simple
+firm rule, and some guidelines.
+
+**First:** ensure that each commit in a proposed change build and pass any tests
+cleanly when you propose the change and when it lands. This will ensure
+bisection and continuous integration can effectively process them. This is often
+trivial because the pull request makes sense as a single commit and can be
+squashed without loss of incrementality.
+
+**Second:** without violating the first point, try to get each commit to be
+"just right": not too big, not too small. You don't want to separate a pattern
+of tightly related changes into separate commits when they're easier to review
+as a set or batch. And you don't want to bundle unrelated commits together.
+Typically you should try to keep commits within a pull request, and the pull
+request itself, as small as you can without breaking apart tightly coupled
+changes. However, listen to your code reviewer if they ask to change how the
+changes are arranged into commits.
+
+### Managing pull requests with multiple commits
+
+When a pull request is best landed as a series of self-contained commits, it may
+make sense to rewrite history by interactive or non-interactive rebasing. Be
+mindful of on-going code review in choosing when to do this. Rewriting history
+in this way can make it hard to track the resolution of comments. Typically,
+only do this as a cleanup step when the review has finished, or when it won't
+otherwise disrupt code review. Adding "addressing review comments" commits
+during the review, and then rebasing them away before the pull request is merged
+is an expected and healthy pattern.
+
+This isn't intended to be full or complete guidance on how to manage code
+reviews, just a basic indication of how to end up with a clean linear history on
+the main branch. TODO: Add an explicit link to more detailed guidance on
+managing pull request based code reviews when it is developed.
+
 # Acknowledgements
 
 Carbon's Contributing guidelines are based on
