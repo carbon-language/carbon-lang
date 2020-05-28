@@ -22,21 +22,39 @@ const { Octokit } = require('@octokit/rest');
 const {Storage} = require('@google-cloud/storage');
 const gcs = new Storage();
 
+app.post('/loginSession', (req, res) => {
+  // Get the ID token passed and the CSRF token.
+  const idToken = req.body.idToken.toString();
+  // Create a 14-day session (the limit).
+  const expiresIn = 14 * 24 * 60 * 60 * 1000;
+  admin.auth().createSessionCookie(idToken, {expiresIn})
+    .then((sessionCookie) => {
+      console.log("loginSession: Created session cookie");
+      const options = {maxAge: expiresIn, httpOnly: true, secure: true};
+      res.cookie('session', sessionCookie, options);
+      res.end(JSON.stringify({status: 'success'}));
+    }, error => {
+      console.log("loginSession: Rejecting due to: " + error);
+      res.redirect(302, "/logout.html");
+    });
+});
+
 // Checks for a session cookie. If present, the content will be added as
 // req.user.
 const validateFirebaseIdToken = async (req, res, next) => {
-  if (!req.cookies || !req.cookies.__session) {
+  if (!req.cookies || !req.cookies.session) {
     // Not logged in.
+    console.log("validateFirebaseIdToken: No cookie");
     res.redirect(302, "/login.html");
     return;
   }
 
-  // Validate the cookie, and get user info from it.
-  const idToken = req.cookies.__session;
   try {
-    req.user = await admin.auth().verifyIdToken(idToken);
+    req.user =
+      await admin.auth().verifySessionCookie(req.cookies.session, true);
   } catch (error) {
     // Invalid login, use logout to clear it.
+    console.log("validateFirebaseIdToken: Invalid session: " + error);
     res.redirect(302, "/logout.html");
     return;
   }
@@ -58,6 +76,7 @@ const validateFirebaseIdToken = async (req, res, next) => {
   });
   if (ghUser.length < 1 || ghUser[0].id != wantId) {
     // An issue with the GitHub ID.
+    console.log("validateFirebaseIdToken: GitHub ID issue: " + wantId);
     res.redirect(302, "/logout.html");
   }
   const username = ghUser[0].login;
@@ -70,12 +89,15 @@ const validateFirebaseIdToken = async (req, res, next) => {
     });
     if (member && member.state == 'active' && member.user.id == wantId) {
       next();
+      console.log("validateFirebaseIdToken: Accepted");
       return;
     }
     // No access, force logout.
+    console.log("validateFirebaseIdToken: Not an active member: " + wantId);
     res.redirect(302, "/logout.html");
   } catch (err) {
     // Not a member, force logout.
+    console.log("validateFirebaseIdToken: Not a member: " + wantId);
     res.redirect(302, "/logout.html");
   }
 };
