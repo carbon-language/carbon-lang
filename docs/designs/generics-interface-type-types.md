@@ -2128,15 +2128,10 @@ expressions are legal.
   Example showing the interaction between Dynamic pointer types and interface
   extension.
 
-      ```
-
+```
   fn F(A: a, B: b, ..., Addable(A, B):\$ T) requires (A,B) : Addable(A, B) {
   ((A, B) as T).DoTheAdd(x, y) }
-
 ```
-
-
-
 
 #### Associated types vs. interface parameters: ergonomics
 
