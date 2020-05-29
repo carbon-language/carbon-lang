@@ -545,7 +545,7 @@ fn TreeTraversal[Type:$ T, Tree(T):$ TreeType](
 TreeTraversal(&my_int_tree, Stack(Int), fn(Int: x) { Print(x); });
 ```
 
-##### [Carbon deep dive: interfaces as facet type-types (TODO)](#broken-links-footnote)<!-- T:Carbon deep dive: interfaces as facet type-types -->
+##### [Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-interface-type-types.md)
 
 This is JoshL@'s favorite proposal at this time, since it can express things
 like "list of implementations for an interface X for representation T", is
@@ -845,7 +845,7 @@ TODO
 
 ## Proposed programming model
 
-[Carbon deep dive: interfaces as facet type-types (TODO)](#broken-links-footnote)<!-- T:Carbon deep dive: interfaces as facet type-types -->
+[Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-interface-type-types.md)
 
 ### Calling templated code
 

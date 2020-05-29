@@ -13,8 +13,7 @@ Please see the
 and
 [Templates and generics: distinctions (TODO)](#broken-links-footnote)<!-- T:Templates and generics: distinctions -->
 docs for a description of generics in Carbon, specifically the goals and
-differences from templates. Additionally, the upcoming "Carbon Generic v2" doc
-has
+differences from templates. Additionally, the "Carbon Generic" doc has
 "[What are generics?](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#what-are-generics)"
 and
 "[Goals: Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#goals-generics)"
