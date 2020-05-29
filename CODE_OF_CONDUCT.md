@@ -1,10 +1,10 @@
+# Carbon: Code of conduct
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Code of conduct
 
 The Carbon community works to be welcoming and respectful, with a deep
 commitment to psychological safety, and we want to ensure that doesn’t change as
