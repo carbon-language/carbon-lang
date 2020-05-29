@@ -47,7 +47,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     };
 
     window.onload = function() {
-      document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "__session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       firebase.auth().signOut();
     };
   </script>
