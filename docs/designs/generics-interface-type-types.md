@@ -44,7 +44,7 @@ are function pointers, and an implementation of an interface as a value of that
 struct with actual function pointer values. So an implementation is a table of
 function pointers (one per function defined in the interface) that gets passed
 into a function as the type argument. For more on this, see
-[the model section](#model-1) below.
+[the model section](#model) below.
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
@@ -1809,9 +1809,6 @@ UseBoxed(y);
 UseBoxed(DontBox(Bar()));
 ```
 
-Whiteboard:
-[https://photos.app.goo.gl/TGpkFvmb9H1ZkAny6](https://photos.app.goo.gl/TGpkFvmb9H1ZkAny6)
-
 ## Implicit interface arguments [optional feature]
 
 (Right now I'm leaning against the extra complexity of this feature.)
@@ -2092,7 +2089,7 @@ These mechanisms need to have an underlying programming model that allows users
 to predict how to do these things, how to compose these things, and what
 expressions are legal.
 
-- See the [main "Model" section](#model-1), in addition to "Model" subsections
+- See the [main "Model" section](#model), in addition to "Model" subsections
   throughout the doc
 
 ## Notes:
