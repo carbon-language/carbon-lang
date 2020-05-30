@@ -1,10 +1,10 @@
+# Carbon: Contributing
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Contributing
 
 Thank you for your interest in contributing to Carbon! There are many ways to
 contribute, and we appreciate all of them. If you have questions, please feel
@@ -218,6 +218,8 @@ It puts the license at the top of every page if printed.
 Markdown files always have at the top:
 
 ```
+# DOC TITLE
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
