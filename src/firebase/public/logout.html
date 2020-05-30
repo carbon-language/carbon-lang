@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-Part of the Carbon Language, under the Apache License v2.0 with LLVM Exceptions.
-See /LICENSE for license information.
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 <html>
@@ -9,8 +9,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <title>Carbon: Access denied -- logging out</title>
   <script src="/__/firebase/7.14.0/firebase-app.js"></script>
   <script src="/__/firebase/7.14.0/firebase-auth.js"></script>
-  <script src="/__/firebase/init.js"></script>
   <script type="text/javascript">
+    // See https://carbon-lang.dev/__/firebase/init.js.
+    // We customize authDomain.
+    firebase.initializeApp({
+      "apiKey": "AIzaSyDyAAcQeReDNXVUd_ZdkSzYgqIDJe-kPK8",
+      "authDomain": "carbon-lang.dev",
+      "databaseURL": "https://carbon-language.firebaseio.com",
+      "messagingSenderId": "985662022432",
+      "projectId": "carbon-language",
+      "storageBucket": "carbon-language.appspot.com"
+    });
+
     function redirect() {
       // Re-clear the cookie, just in case.
       document.cookie = "__session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";

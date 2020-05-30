@@ -11,7 +11,7 @@ search: exclude
 "title": "{{ page.title | escape }}",
 "tags": "{{ page.tags }}",
 "keywords": "{{page.keywords}}",
-"url": "{{ page.url | remove: "/"}}",
+"url": "{{ page.url }}",
 "summary": "{{page.summary | strip }}"
 }
 {% unless forloop.last and site.posts.size < 1 %},{% endunless %}
@@ -24,7 +24,7 @@ search: exclude
 "title": "{{ post.title | escape }}",
 "tags": "{{ post.tags }}",
 "keywords": "{{post.keywords}}",
-"url": "{{ post.url | remove: "/" }}",
+"url": "{{ post.url }}",
 "summary": "{{post.summary | strip }}"
 }
 {% unless forloop.last %},{% endunless %}
