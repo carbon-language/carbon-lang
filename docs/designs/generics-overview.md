@@ -459,7 +459,7 @@ output pairs of the interface function with that facet type.
 Observations:
 
 - Rust models interfaces as type-types.
-- Rust has a special `&lt;Type as Interface>` syntax parallel to its
+- Rust has a special `<Type as Interface>` syntax parallel to its
   `(Value as Type)` syntax.
 - Rust has a special type constraint language for defining traits.
 - With facets, it is hard to say "this interface I1 has an associated type T

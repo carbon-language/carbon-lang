@@ -875,8 +875,8 @@ We want ways of accomplishing the following tasks:
 Stretch goals:
 
 - A way to define one or a few functions and get an implementation for an
-  interface that has more functions (like defining `&lt;`, `>`, `&lt;=`, `>=`,
-  `==`, and `!=` in terms of `&lt;=>`, or `++`, `--`, `+`, `-`, and `-=` from
+  interface that has more functions (like defining `<`, `>`, `<=`, `>=`,
+  `==`, and `!=` in terms of `<=>`, or `++`, `--`, `+`, `-`, and `-=` from
   `+=`). Possibly the "one or few functions" won't even be part of the
   interface.
 - Define an interface implementation algorithmically -- possibly via a function
@@ -890,7 +890,7 @@ Stretch goals:
   vs. bidirectional iterators. Similarly, a way to have specialization based on
   type information in a generic like you might do in a template function for
   performance but still would allow type checking. Example: In C++,
-  `std::vector&lt;T>::resize()` can use a more efficient algorithm if `T` has a
+  `std::vector<T>::resize()` can use a more efficient algorithm if `T` has a
   `noexcept` move constructor. Can this optimization be allowed from generic
   code since it does not affect the signature of `resize()`, and therefore type
   checking? In a non-release build, it would be semantically equivalent but

@@ -1,0 +1,50 @@
+<!--
+Part of the Carbon Language, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+# Carbon: Add initial version of "Carbon Generics"
+
+- **[Tracking issue](https://github.com/carbon-language/carbon-lang/issues/TODO)**
+- **Status:** WIP
+- **Created:** 2020-05-29
+
+**_PLEASE_ DO NOT SHARE OUTSIDE CARBON FORUMS**
+
+## Problem
+
+Generics are the preferred way of writing generic code in Carbon. This is a system
+to provide parameterized types and functions. It will perform more validation at
+the time the parameterized entity is defined using generics than with templates
+where some checking is delayed until the parameter used at the callsite is known.
+
+Generics are both a foundational piece of Carbon and tricky to do well, and so
+are the subject of a lot of our early focus.
+
+## Background
+
+See [PR #24 proposing generics principles](https://github.com/carbon-language/carbon-lang/pull/24).
+
+TODO: Links to generics systems in Swift, Rust, Java, etc., and templates in C++.
+
+## Proposal
+
+We propose a model for Carbon interfaces and generics based on treating interfaces
+as a type whose values are facet types.
+
+## Details
+
+The details of this proposal are in the file `docs/designs/generics-overview.md`,
+with the overall structure, as well as these files it refers to for individual
+pieces:
+
+- `docs/designs/generics-motivation.md`: motivating use cases
+- `docs/designs/generics-terminology.md`: terminology and problem statement
+- `docs/designs/generics-interface-type-types.md`: deep dive into interfaces as
+   facet type-type
+
+## Alternatives considered
+
+These are detailed in `docs/designs/generics-overview.md`, under
+[Programming model proposals](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#programming-model-proposals).
