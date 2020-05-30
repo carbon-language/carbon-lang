@@ -1,10 +1,10 @@
+# Carbon language
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon language
 
 The Carbon Language project is an **_experiment_** to explore a possible,
 distant future for the C++ programming language. It is designed around a

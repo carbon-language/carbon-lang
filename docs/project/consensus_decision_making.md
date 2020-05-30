@@ -1,10 +1,10 @@
+# Carbon: Consensus decision-making
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Consensus decision-making
 
 Carbon's teams will use a
 [blocking consensus decision-making process](https://en.wikipedia.org/wiki/Consensus_decision-making#Blocking)
