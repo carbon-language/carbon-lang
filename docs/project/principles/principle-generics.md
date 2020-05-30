@@ -138,6 +138,7 @@ language does?
 
 From newest to oldest (and most likely to be out of date):
 
+- [Carbon Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md)
 - [Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces -->
 - [Carbon generic -> template function calls (TODO)](#broken-links-footnote)<!-- T:Carbon generic -> template function calls -->
 - [Carbon closed function overloading proposal (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal -->
