@@ -68,9 +68,7 @@ In general we aim to make Carbon Generics into an alternative to templates for
 writing generic code, with improved software engineering properties at the
 expense of some restrictions. See
 [Carbon principle: Generics](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md)
-for a detailed discussion of goals.
-
-[Use cases are described in the previous version of this document (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics --><!-- A:#heading=h.213azxl7kca0 -->.
+for a detailed discussion of goals. Also see [motivational use cases](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-motivation.md).
 
 In this proposal we try and define a generics system that has these properties
 to allow migration from templates:
