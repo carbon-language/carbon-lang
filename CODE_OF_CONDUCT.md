@@ -1,10 +1,10 @@
+# Carbon: Code of conduct
+
 <!--
-Part of the Carbon Language, under the Apache License v2.0 with LLVM Exceptions.
-See /LICENSE for license information.
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Code of conduct
 
 The Carbon community works to be welcoming and respectful, with a deep
 commitment to psychological safety, and we want to ensure that doesn’t change as
@@ -107,13 +107,13 @@ spaces:
 If you have questions, please feel free to ask on our Discourse Forum, Discord
 Chat, or contact any member of the conduct team directly.
 
-# Conduct team
+## Conduct team
 
 At present, the [core team](docs/project/evolution.md#core-team) will serve as
 the conduct team. We expect to establish a dedicated conduct team if and when
 the project grows, along with more communication systems for reports.
 
-## Reporting conduct
+### Reporting conduct
 
 If you believe someone is violating the code of conduct, you can always report
 it to the conduct team by emailing all members of the conduct team. **All
@@ -137,7 +137,7 @@ event information will include detailed contact information for that event. In
 person reports will still be kept confidential exactly as above, but also feel
 free to (anonymously if needed) email the conduct team.
 
-## Filing a report
+### Filing a report
 
 Reports can be as formal or informal as needed for the situation at hand. If
 possible, please include as much information as you can. If you feel
@@ -153,7 +153,7 @@ comfortable, please consider including:
 - If you believe this incident is ongoing.
 - Any other information you believe we should have.
 
-## What happens after contacting the conduct team?
+### What happens after contacting the conduct team?
 
 You will receive a reply from the conduct team acknowledging receipt within 1
 business day (and we will aim to respond much quicker than that).
@@ -197,7 +197,7 @@ statement about the incident. If that’s the case, the identities of anyone
 involved will remain confidential unless instructed otherwise by those
 individuals.
 
-## Appealing
+### Appealing
 
 Only permanent resolutions (such as bans) or requests for public actions may be
 appealed. To appeal a decision of the conduct team, contact the
@@ -213,7 +213,7 @@ Code of Conduct, the conduct team itself, or the appropriateness of responses in
 general, but **please** refrain from mentioning specific facts about cases
 without the explicit permission of all parties involved.
 
-# Enforcement action guidelines
+## Enforcement action guidelines
 
 The conduct team, moderators, and event organizers have the right and
 responsibility to remove, edit, or reject comments, commits, code, wiki edits,
@@ -249,7 +249,7 @@ involved:
     - **Behavior:** Demonstrating a pattern of violation of the code of conduct.
     - **Action:** A permanent ban from use of Carbon's community spaces.
 
-# Acknowledgements
+## Acknowledgements
 
 This code is based on the
 [LLVM Code of Conduct](https://llvm.org/docs/CodeOfConduct.html), the

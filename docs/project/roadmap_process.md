@@ -1,10 +1,10 @@
+# Carbon: Roadmap process
+
 <!--
-Part of the Carbon Language, under the Apache License v2.0 with LLVM Exceptions.
-See /LICENSE for license information.
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Roadmap process
 
 Carbon has an annual roadmap to align and focus the work of the teams and
 community. Teams will need to defer work on Carbon that may be good and make
