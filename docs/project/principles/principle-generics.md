@@ -18,9 +18,8 @@ for performance,
 - Clearer and earlier error reporting.
 - Encapsulation of logic (with a template, the implementation is part of the
   interface).
-- Enable simple user control of whether to use dynamic dispatch or
-  specialization.
-- Provide generally better code generation (both code size and speed) in all
+- Enable simple user control of whether to use dynamic or static dispatch.
+- Provide better code generation (both code size and speed) in all
   cases.
 
 **Semantics:** A generic function will take some "generic arguments", which will
