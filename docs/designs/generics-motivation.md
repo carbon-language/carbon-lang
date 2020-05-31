@@ -23,7 +23,7 @@ The majority of motivating use cases are those underpinning the existing C++ tem
 *   [Policy-based design](https://en.wikipedia.org/wiki/Modern_C%2B%2B_Design#Policy-based_design) (need to be judicious, these are often misused)
 *   Configurable / parametric APIs such as the storage customized `std::chrono` APIs
 *   Compile-time polymorphism
-*   Parameterized numeric types (`std::complex&lt;T>`)
+*   Parameterized numeric types (`std::complex<T>`)
 *   MAYBE: Something like expression templates for compile-time code inlining / generation
 *   TODO: please add more that I'm forgetting
 
