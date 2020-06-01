@@ -15,11 +15,11 @@ carbon-language members should be able to access the site.
 
 See [Firebase CLI install instructions](https://firebase.google.com/docs/cli).
 
-## Testing Firebase changes
+## Testing changes
 
 Right now, the only way to test Firebase changes is to deploy a version. A
 staging site may be desirable, but has not been set up.
 
-## Pushing Firebase changes
+## Pushing changes
 
 Run `firebase deploy`.

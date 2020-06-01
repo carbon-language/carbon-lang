@@ -19,10 +19,10 @@ Important pieces are:
 
 See [Jekyll install instructions](https://jekyllrb.com/docs/installation/)
 
-## Testing Jekyll changes
+## Testing changes
 
 Run `make run` and go to `localhost:4000`.
 
-## Pushing Jekyll changes
+## Pushing changes
 
 Jekyll changes are autopushed by `/.github/workflows/publish-docs.yaml`.
