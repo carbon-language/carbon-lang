@@ -1,10 +1,10 @@
+# Carbon: Governance and Evolution
+
 <!--
-Part of the Carbon Language, under the Apache License v2.0 with LLVM Exceptions.
-See /LICENSE for license information.
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Governance and Evolution
 
 The Carbon project aims to provide consistent and clear governance and language
 evolution over time. We want to provide a reasonably broad representation for
