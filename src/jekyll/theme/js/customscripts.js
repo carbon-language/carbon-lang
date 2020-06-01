@@ -14,12 +14,13 @@ $( document ).ready(function() {
     $('[data-toggle="tooltip"]').tooltip({
         placement : 'top'
     });
+});
 
-    /**
-     * AnchorJS
-     */
+document.addEventListener("DOMContentLoaded", function(event) {
+    // AnchorJS
+    // Note that this needs to be run early, not on document.ready(), or jumps
+    // to the invented IDs will not work on page load.
     anchors.add('h2,h3,h4,h5');
-
 });
 
 // needed for nav tabs on pages. See Formatting > Nav tabs for more details.
