@@ -173,7 +173,14 @@ const serveContent = async (req, res) => {
     if (file === '') {
       file = 'index.html';
     }
-    res.type(path.extname(file));
+
+    // Use the extension to determine the MIME type.
+    var type = path.extname(file);
+    if (type == "") {
+      // Treat files with no extension (e.g. LICENSE) as plain text.
+      type = "text/plain"; 
+    }
+    res.type(type);
 
     // Check cache.
     var cacheHit = "hit";
