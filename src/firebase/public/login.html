@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   <title>Carbon: Login</title>
   <script src="/__/firebase/7.14.0/firebase-app.js"></script>
   <script src="/__/firebase/7.14.0/firebase-auth.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <script type="text/javascript">
     // See https://carbon-lang.dev/__/firebase/init.js.
     // We customize authDomain.
@@ -21,14 +22,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
       "storageBucket": "carbon-language.appspot.com"
     });
 
+    function postIdToken(idToken) {
+      // POST to session login endpoint.
+      return $.ajax({
+        type: "POST",
+        url: "/loginSession",
+        dataType: "json",
+        data: {idToken: idToken},
+        contentType: "application/x-www-form-urlencoded",
+      });
+    };
+
     function login() {
       var provider = new firebase.auth.GithubAuthProvider();
       firebase.auth().signInWithPopup(provider).then(function(result) {
         var user = result.user;
-        user.getIdToken(true).then(function(token) {
-          document.cookie = '__session=' + token + ';max-age=25920000';
-          window.location.href = window.location.href.replace(
-              "/login.html", "/index.html");
+        user.getIdToken(true).then(function(idToken) {
+          postIdToken(idToken).then(function(result) {
+            window.location.href = window.location.href.replace(
+                "/login.html", "/index.html");
+          });
         });
       });
     };

@@ -18,7 +18,8 @@
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "firebase-admin": "^8.10.0",
-    "firebase-functions": "^3.6.1"
+    "firebase-functions": "^3.6.2",
+    "js-cache": "^1.0.3"
   },
   "devDependencies": {
     "firebase-functions-test": "^0.2.0"
