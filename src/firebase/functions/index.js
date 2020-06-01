@@ -124,7 +124,7 @@ const loginSession = async (req, res) => {
 };
 
 // Checks for a session cookie.
-const validateSessionToken = async (req, res, next) => {
+const validateSessionCookie = async (req, res, next) => {
   const startTime = new Date();
   var result = 'unknown';
   try {
@@ -158,7 +158,7 @@ const validateSessionToken = async (req, res, next) => {
   } finally {
     const elapsed = new Date() - startTime;
     console.log(
-      `validateSessionToken at ${req.path}: ${result} (${elapsed}ms)`
+      `validateSessionCookie at ${req.path}: ${result} (${elapsed}ms)`
     );
   }
 };
@@ -206,7 +206,7 @@ const serveContent = async (req, res) => {
 app.use(cors);
 app.use(cookieParser);
 app.post('/loginSession', loginSession);
-app.use(validateSessionToken);
+app.use(validateSessionCookie);
 app.get('*', serveContent);
 
 exports.site = functions.https.onRequest(app);
