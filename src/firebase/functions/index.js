@@ -182,6 +182,12 @@ const serveContent = async (req, res) => {
     }
     res.type(type);
 
+    // Generally allow caching, particularly for css, js, images, etc, but not
+    // HTML.
+    if (type != ".html") {
+      res.set('Cache-Control', 'public, max-age=31557600');
+    }
+
     // Check cache.
     var cacheHit = "hit";
     var contents = contentCache.get(file);
