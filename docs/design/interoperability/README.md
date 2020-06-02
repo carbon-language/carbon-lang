@@ -13,8 +13,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Overview](#overview)
 - [Goals](#goals)
 - [Philosophy of interoperability layer](#philosophy-of-interoperability-layer)
-- [Interoperability Syntax Elements](#interoperability-syntax-elements)
+- [Interoperability syntax elements](#interoperability-syntax-elements)
 - [Details](#details)
+  - [Bridge code in Carbon files](#bridge-code-in-carbon-files)
   - [Name mapping](#name-mapping)
   - [Type mapping](#type-mapping)
     - [Primitive types](#primitive-types)
@@ -132,32 +133,35 @@ of Carbon/C++ interoperability. Our goal is that these expressivity constraints
 are wide enough to make the amount of bridge code sustainable and the overhead
 of wrappers manageable.
 
-## Interoperability Syntax Elements
+## Interoperability syntax elements
 
 > References: [Name mapping](name_mapping.md) and
 > [user defined types](user_defined_types.md).
 
-This document uses currently unique Carbon syntax elements to indicate
-interoperability requirements which have not received any discussion. These
-should be discussed further to determine appropriate syntax.
-
-The current text should be treated as placeholders; `$` is a deliberately bad
-character choice.
+Most C++ code will be automatically exposed to Carbon. However, special
+interoperability syntax elements will be required when exposing Carbon code to
+C++.
 
 Notable elements are:
 
 - `$extern("Cpp")`: Indicates that Carbon code should be exposed for C++.
   Similarly, `$extern("Swift")` might be used to indicate exposure for Swift at
   some point in the future.
-  - This should have `namespace` and `name` parameters, to allow for easy
-    migration of C++ APIs to Carbon.
-  - This should have a `parent` parameter, to allow for setting C++ parent
-    classes on externalized Carbon structs.
+  - `namespace` and `name` parameters are provided to override default choices,
+    particularly to assist migration of C++ APIs to Carbon.
+  - A `parent` parameter will be provided to set the C++ parent class on an
+    externalized Carbon struct. This is expected to be generally useful for
+    interoperability.
 - `import Cpp "<path>"`: Imports API calls from a C++-style #include path.
 
 We use the name `Cpp` because `import` needs a valid identifier.
 
 ## Details
+
+### Bridge code in Carbon files
+
+> TODO: We should allow writing bridge C++ code in Carbon files to ease
+> maintenance of compatibility layers. Syntax needs to be proposed.
 
 ### Name mapping
 
