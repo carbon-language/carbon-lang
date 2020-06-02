@@ -446,7 +446,9 @@ We must be able to move existing _large_ C++ codebases—some with hundreds of
 millions of lines of code and tens of thousands of active developers—onto
 Carbon. C++ developers must also successfully switch to Carbon development. Any
 migration of this scale will take years, will need to be incremental, and some
-libraries -- particularly third-party -- may remain in C and C++.
+libraries -- particularly third-party -- may remain in C and C++. It must be
+possible to migrate a C++ library to Carbon without simultaneously migrating all
+of the libraries it depends on or all of the libraries that depend on it.
 
 We believe incremental migrations require:
 
@@ -556,9 +558,8 @@ prevent us from understanding the programmer's intent. While we may be able to
 provide a minimally "correct" migration to very unfriendly code, mechanically
 reproducing exact C++ semantics even if bizarre, even this is not guaranteed and
 improving on it is not a goal. Migration support will prioritize code that
-adheres to reasonable C++ best practices: not relying on undefined behavior,
-reasonable test coverage that passes under sanitizers, and other basic code
-health.
+adheres to reasonable C++ best practices, such as avoiding undefined behavior,
+and having reasonable test coverage that passes under sanitizers.
 
 ### Principles
 
