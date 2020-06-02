@@ -18,7 +18,7 @@ repos:
   - repo: local
     hooks:
       - id: markdown-toc
-        name: Markdown ToC update
+        name: Update table of contents
         description: Runs https://github.com/jonschlinkert/markdown-toc
         entry: src/scripts/pre-commit-toc.js
         language: node
@@ -26,7 +26,7 @@ repos:
         files: .*\.md$
         exclude: ^src/jekyll/theme/
       - id: proposal-list
-        name: Proposal list update
+        name: Update list of proposals
         description: Updates the list of proposals in proposals/README.md
         entry: src/scripts/pre-commit-proposal-list.js
         language: node
