@@ -85,7 +85,7 @@ etc. In general, the PR-centric model was favored.
 ### Rationale for not requiring tracking issues
 
 There were several members who had no strong preference on this issue. The
-concensus was that until there is a compelling reason to require tracking
+consensus was that until there is a compelling reason to require tracking
 issues, the process is more light-weight without them.
 
 ### Rationale for not committing proposals that are declined or deferred
