@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Overview](#overview)
   - [Unqualified name lookup](#unqualified-name-lookup)
     - [Alternatives](#alternatives)
-  - [Name lookup common, standard types](#name-lookup-common-standard-types)
+  - [Name lookup for common, standard types](#name-lookup-for-common-standard-types)
   - [Shadowing](#shadowing)
   - [Alternatives](#alternatives-1)
 
