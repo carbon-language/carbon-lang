@@ -298,7 +298,7 @@ the GitHub squash-and-merge functionality to land things.
 
 #### Managing pull requests with multiple commits
 
-Sometimes, it will make sense to _land_ a sereies of separate commits for a
+Sometimes, it will make sense to _land_ a series of separate commits for a
 single pull request through rebasing. This can happen when there is important
 overarching context that should feed into the review, but the changes can be
 usefully decomposed when landing them. When following this model, each commit
