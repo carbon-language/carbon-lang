@@ -5,7 +5,7 @@ Proposal accepted on 2020-06-02
 Affirming:
 
 - [Chandler Carruth](https://github.com/chandlerc)
-- [Dmitri Gribenko](https://github.com/gribozavr)`
+- [Dmitri Gribenko](https://github.com/gribozavr)
 - [Geoff Romer](https://github.com/geoffromer)
 - [Josh Levenberg](https://github.com/josh11b)
 - [Matt Austern](https://github.com/austern)
