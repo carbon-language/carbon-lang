@@ -9,9 +9,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import os
+import shutil
 
 if __name__ == "__main__":
-  # Verify gh is installed.
+  # Verify git and gh are available.
+  git_bin = shutil.which('git')
+  if not git_bin:
+    sys.exit('Missing `git` CLI.')
+  gh_bin = shutil.which('gh')
+  if not gh_bin:
+    sys.exit('Missing `gh` CLI. https://github.com/cli/cli#installation')
+
   # Create a proposal branch.
   # Copy template.md to new.md.
   # Create a PR with WIP+proposal labels.
