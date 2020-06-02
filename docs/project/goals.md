@@ -17,11 +17,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Language goals and priorities](#language-goals-and-priorities)
   - [Goals in detail](#goals-in-detail)
     - [Performance-critical software](#performance-critical-software)
-    - [Both software and language evolution](#both-software-and-language-evolution)
+    - [Software and language evolution](#software-and-language-evolution)
     - [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
     - [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
     - [Fast and scalable development](#fast-and-scalable-development)
-    - [Current hardware architectures, OS platforms, and environments as they evolve](#current-hardware-architectures-os-platforms-and-environments-as-they-evolve)
+    - [Modern hardware architectures, OS platforms, and environments.](#modern-hardware-architectures-os-platforms-and-environments)
     - [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
   - [Non-goals](#non-goals)
     - [Stable language and library ABI](#stable-language-and-library-abi)
@@ -102,56 +102,53 @@ rule.
 Programming languages do not succeed in a vacuum. The Carbon project cannot
 merely _design_ a language in order to succeed, it must tackle the full
 ecosystem of tooling that makes programmers effective using the language. This
-includes not only a compiler and standard library, but also
-a broad range of other tools that enable programmers to be more effective,
-efficient, or productive. There are several key examples of key tools or
-ecosystem components that we have as concrete goals for the Carbon project.
+includes not only a compiler and standard library, but also a broad range of
+other tools that enable programmers to be more effective, efficient, or
+productive.
 
-**Reference implementation:** A working implementation is a key component of the
-language tools that the Carbon project will provide. This helps the language
-have a strong and consistent experience for users and a clear onboarding
-process. It also enables us to carefully consider implementation considerations
-throughout the design of the language. However, we do _not_ want this to be seen
-as a replacement for a formal specification at any point.
+**We will provide a reference implementation.** This helps the language have a
+strong and consistent experience for users and a clear onboarding process. It
+also enables us to carefully consider implementation considerations throughout
+the design of the language. However, we do _not_ want this to be seen as a
+replacement for a formal specification at any point.
 
-**Formal specification:** Fully specifying the language enables other
-implementations and allows us to clearly document the expected behavior of the
-reference implementation. We also want to include machine readable forms of this
-for many parts of the language, such as a grammar, to help enable widespread
-tooling to reuse a consistent basis and help us check invariants and properties
-of the language.
+**Carbon will have a formal specification.** Fully specifying the language
+enables other implementations and allows us to clearly document the expected
+behavior of the reference implementation. We also want to include machine
+readable forms of this for many parts of the language, such as a grammar, to
+help enable widespread tooling to reuse a consistent basis and help us check
+invariants and properties of the language.
 
-**Adoption tooling:** We want to provide a compelling suite of tools
+**Compelling adoption tooling.** We want to provide a compelling suite of tools
 out-of-the-box in order to encourage adoption of Carbon at scale where it can
 augment existing C++ codebases. For example, we expect a code translator will be
-important. We expect this to largely build on top of automation and tooling.
+important.
 
-**Upgrade migration tooling:** As Carbon evolves over time, we expect to provide
-tooling to help automate and scale migrating existing Carbon code to the new
-version. The goal is to enable more rapid evolution of the language without the
-churn tax and version skew becoming unsustainable.
+**Tooling for updating code when Carbon evolves.** As Carbon evolves over time,
+we expect to provide tooling to help automate and scale migrating existing
+Carbon code to the new version. The goal is to enable more rapid evolution of
+the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling:** We need programmers to be productive reading and writing
+**Developer tooling.** We need programmers to be productive reading and writing
 Carbon code. We expect to provide a broad suite of development oriented tools
 ranging from refactoring tools to [LSP](https://langserver.org/) implementations
 and editor integrations.
 
-**Library ecosystem:** We expect to also provide infrastructure to enable
-package management and other ecosystem needs. The goal is to support what the
-ecosystem needs, regardless of the exact form this ends up taking.
+**Infrastructure to enable package management and other library ecosystem
+support.** The goal is to support what the ecosystem needs, regardless of the
+exact form this ends up taking.
 
 ## Language goals and priorities
 
 We believe Carbon must support:
 
-1.  Performance-critical software
-2.  Both software and language evolution
-3.  Code that is easy to read, understand, and write
-4.  Practical safety guarantees and testing mechanisms
-5.  Fast and scalable development
-6.  Current hardware architectures, OS platforms, and environments as they
-    evolve
-7.  Interoperability with and migration from existing C++ code
+1.  Performance-critical software.
+2.  Software and language evolution.
+3.  Code that is easy to read, understand, and write.
+4.  Practical safety guarantees and testing mechanisms.
+5.  Fast and scalable development.
+6.  Modern hardware architectures, OS platforms, and environments.
+7.  Interoperability with and migration from existing C++ code.
 
 The first six of these represent our fundamental goals for the software we want
 to implement in Carbon. However, we cannot simply replace all of the existing
@@ -182,8 +179,8 @@ so on. In many cases, raw resource usage is not the biggest concern. Instead,
 algorithmic efficiency or business logic dominates these concerns. However,
 there exists software where its rate of resource consumption—its performance—is
 critical to its successful operation. Another way to think about when
-performance is critical: would a performance regression be considered a bug for
-users? Would it even be noticed?
+performance is critical: would a performance regression be considered a bug?
+Would it even be noticed?
 
 Our goal is to support software where its performance with respect to some set
 of resource constraints is critical to its successful operation. This
@@ -204,11 +201,11 @@ that performance, whether good or bad, is unsurprising to users of the Carbon
 language. Even pleasant surprises, when too frequent, can become a problem due
 to establishing brittle baseline performance that cannot be reliably sustained.
 
-**Leave no room for a lower level language.** Programmers should not need to leave
-the rules and structure of Carbon, whether to gain control over performance problems or
-to gain access to hardware facilities.
+**Leave no room for a lower level language.** Programmers should not need to
+leave the rules and structure of Carbon, whether to gain control over
+performance problems or to gain access to hardware facilities.
 
-#### Both software and language evolution
+#### Software and language evolution
 
 Titus Winters writes in "Non-Atomic Refactoring and Software Sustainability":
 
@@ -224,13 +221,12 @@ Titus Winters writes in "Non-Atomic Refactoring and Software Sustainability":
 > flexibility - allows updates to solve future instances we may not be able to
 > predict).
 
-From this definition of "software engineering" vs. "programming" we suggest that
-Carbon should prioritize being more of a "software engineering" language, and
-less of a "programming" language. We specifically are interested in dealing with
-the time-oriented aspects of software built in this language. We need to be
-prepared for substantive changes in priority over the next decade, on par with
-the changes experienced in the 2010s: 10x scaling of engineering organizations,
-mobile, cloud, diversification of platforms and architectures, and so on.
+Carbon will prioritize being a "software engineering" language, in the above
+sense. We specifically are interested in dealing with the time-oriented aspects
+of software built in this language. We need to be prepared for substantive
+changes in priority over the next decade, on par with the changes experienced in
+the 2010s: 10x scaling of engineering organizations, mobile, cloud,
+diversification of platforms and architectures, and so on.
 
 **Support maintaining and evolving software written in Carbon for decades.** The
 life expectancy of some software will be long and the software will not be
@@ -270,12 +266,12 @@ we list here, we feel it is important to state it, explain all of what we mean
 by it, and fit it into our prioritization scheme.
 
 Software, especially at scale and over time, already imposes a burden on
-engineers due to its complexity. Carbon should strive for simplicity to reduce
-the complexity burden on reading, understanding, and writing code. The behavior
-of code should be easily understood, especially by those unfamiliar with the
-software system. Consider engineers attempting to diagnose a serious outage
-under time pressure—every second spent trying to understand the _language_ is
-one not spent understanding the _problem_.
+engineers due to its inherent complexity. Carbon will strive to minimize that
+burden for reading, understanding, and writing code. The behavior of code should
+be easily understood, especially by those unfamiliar with the software system.
+Consider engineers attempting to diagnose a serious outage under time
+pressure—every second spent trying to understand the _language_ is one not spent
+understanding the _problem_.
 
 While the source code of our software may be read far more often by machines,
 humans are the most expensive readers and writers of software. As a consequence,
@@ -285,10 +281,10 @@ in that order.
 **Excellent ergonomics.** Human capabilities and limitations in the domains of
 perception, memory, reasoning, and decision-making affect interactions between
 humans and systems. Ergonomic language design takes human factors into account
-to increase productivity and comfort, and reduce errors and fatigue, making Carbon
-more suitable for humans to use. We can also say that ergonomic designs are
-accessible to humans. "Readability" is a related, but a more focused concept,
-connected to only the process of reading code. "Ergonomics" covers all
+to increase productivity and comfort, and reduce errors and fatigue, making
+Carbon more suitable for humans to use. We can also say that ergonomic designs
+are accessible to humans. "Readability" is a related, but a more focused
+concept, connected to only the process of reading code. "Ergonomics" covers all
 activities where humans interact with Carbon: reading, writing, designing,
 discussing, reviewing, and refactoring code, as well as learning and teaching
 Carbon. A few examples:
@@ -311,9 +307,9 @@ Carbon. A few examples:
   consistently avoid making mistakes for an extended amount of time.
 
 **Support tooling at every layer of the developer experience, including IDEs.**
-The design and implementation of Carbon should make it easy to create such tools and
-make them effective. Carbon should avoid syntax and textual structures that are
-difficult to recognize and mechanically change without losing meaning.
+The design and implementation of Carbon should make it easy to create such tools
+and make them effective. Carbon should avoid syntax and textual structures that
+are difficult to recognize and mechanically change without losing meaning.
 
 **Support software outside of the primary use cases well.** There are
 surprisingly high costs for engineers to switch languages. Even when the primary
@@ -334,17 +330,18 @@ differently, we will not always be able to prevent engineers from writing bad or
 unnecessarily complex code, and that is okay. We should instead focus on helping
 reduce the rate that this occurs accidentally, and enabling tooling and
 diagnostics that warn about dangerous or surprising patterns. The language
-should stay out of the business of legislating bad code patterns except where they
-interfere with detecting logic or performance errors.
+should stay out of the business of legislating bad code patterns except where
+they interfere with detecting logic or performance errors.
 
 **The behavior and semantics of code should be clearly and simply specified
-whenever possible.** Leaving behavior undefined in some cases for invalid,
-buggy, or non-portable code may be necessary but comes at a very high cost and
-should be avoided. Every case where behavior is left undefined should be clearly
-spelled out with a strong rationale for this tradeoff. The code patterns without
-defined behavior should be teachable and understandable by engineers. Finally,
-there must be mechanisms available to detect undefined behavior, at best
-statically, and at worst dynamically with high probability and at minimal cost.
+whenever possible.** Leaving behavior undefined for some cases of invalid,
+buggy, or non-portable code may be necessary, but it comes at a very high cost
+and should be avoided. Every case where behavior is left undefined should be
+clearly spelled out with a strong rationale for this tradeoff. The code patterns
+without defined behavior should be teachable and understandable by engineers.
+Finally, there must be mechanisms available to detect undefined behavior, at
+best statically, and at worst dynamically with high probability and at minimal
+cost.
 
 **Adhere to the principle of least surprise.** Defaults should match typical
 usage patterns. Implicit features should be unsurprising and expected, while
@@ -363,21 +360,18 @@ to understand.
 #### Practical safety guarantees and testing mechanisms
 
 Our goal is to add as much language-level safety and security to Carbon as
-possible when balanced against the pragmatic need for software performance,
-programmer ergonomics, continued support of existing/legacy Carbon code, and
-both migration from and interoperation with existing C and C++ code. This
-results in a hybrid strategy where we prove as much safety as we can, within
-these constraints, at compile time, and combine this with dynamic runtime
+possible, using a hybrid strategy to balance other goals. We will do as many
+safety checks as we can at compile time. We will also provide dynamic runtime
 checking and a strong testing methodology ranging from unit tests through
 integration and system tests all the way to coverage-directed fuzz testing. We
 have specific criteria that are important for this strategy to be successful:
 
-**Make unsafe or risky aspects of Carbon code explicit and
-syntactically visible.** This will allow the software to use the precise
-flexibility needed and to minimize its exposure, while still aiding the reader.
-It can also help the reader more by indicating the specific nature of risk faced
-by a given construct. More simply, safe things shouldn't look like unsafe things
-and unsafe things should be easily recognized when reading code.
+**Make unsafe or risky aspects of Carbon code explicit and syntactically
+visible.** This will allow the software to use the precise flexibility needed
+and to minimize its exposure, while still aiding the reader. It can also help
+the reader more by indicating the specific nature of risk faced by a given
+construct. More simply, safe things shouldn't look like unsafe things and unsafe
+things should be easily recognized when reading code.
 
 **Common patterns of unsafe or risky code must support static checking.**
 Waiting until a dynamic check is too late to prevent the most common errors. A
@@ -398,23 +392,19 @@ checking when desirable.
 
 #### Fast and scalable development
 
-Engineers interact with many tools when working in a language that need
-different levels of processing. IDEs and editor tools often use minimal parsing
-to give rapid feedback. Engineers will also iterate repeatedly on any compile
-error. Building, testing, and debugging complete the "edit, test, debug" cycle
-that is the critical path of software development iteration. Each step needs to
-be fast and scalable. Raw speed is essential for small projects and local
-development. Scalability is necessary to address the large software systems we
-currently use.
+Software development interation has a critical "edit, test, debug" cycle.
+Engineers will use IDEs, editors, compilers, and other tools that need different
+levels of parsing. For small projects, raw parsing speed is essential; for large
+software systems, scalability of parsing is also necessary.
 
-**Syntax should parse with bounded, small look-ahead.** Syntax that
-requires unbounded look-ahead or fully general backtracking adds significant
-complexity to parsing and makes it harder to provide high quality error
-messages. The result is both slower iteration and more iterations, a
-multiplicative negative impact on productivity. Humans aren't immune either and
-can be confused by constructs that appear to mean one thing but actually mean
-another. Instead, we should design for syntax that is fast to parse, with easy
-and reliable error messages.
+**Syntax should parse with bounded, small look-ahead.** Syntax that requires
+unbounded look-ahead or fully general backtracking adds significant complexity
+to parsing and makes it harder to provide high quality error messages. The
+result is both slower iteration and more iterations, a multiplicative negative
+impact on productivity. Humans aren't immune either; they can be confused by
+constructs that appear to mean one thing but actually mean another. Instead, we
+should design for syntax that is fast to parse, with easy and reliable error
+messages.
 
 **No semantic or contextual information used when parsing.** The more context,
 and especially the more _semantic_ context, required for merely parsing code,
@@ -427,11 +417,15 @@ to provide fast programmer iteration as the codebase scales up.
 We cannot assume coarse-grained compilation without blocking fundamental
 scalability options for build systems of large software.
 
-#### Current hardware architectures, OS platforms, and environments as they evolve
+#### Modern hardware architectures, OS platforms, and environments.
 
 Carbon must have strong support for all of the major, modern platforms, the
 hardware architectures they run on, and the environments in which their software
-runs. A non-exhaustive list of platforms we believe should be prioritized:
+runs. This can be expected to evolve over time as which platforms are major and
+modern changes.
+
+A non-exhaustive list of software platforms that we believe should be
+prioritized is:
 
 - Linux
 - Android
@@ -441,8 +435,8 @@ runs. A non-exhaustive list of platforms we believe should be prioritized:
 - WebAssembly
 - Bare metal
 
-Similarly, we should prioritize support for 64-bit little-endian hardware,
-including:
+Similarly, we should prioritize support for 64-bit little-endian hardware
+platforms, including:
 
 - x86-64
 - AArch64, also known as ARM 64-bit
@@ -473,55 +467,25 @@ give a non-exhaustive list of example, we should not prioritize support for:
 
 #### Interoperability with and migration from existing C++ code
 
-Active and widely used languages that might satisfy the use cases and goals of
-Carbon have one important challenge: they have not been designed specifically to
-enable migration from and interoperability with _today's_ C++. They don't build
-on top of C++'s _existing_ ecosystem. There are only a few significant examples
-of programming languages that center around incremental migration of large
-existing codebases. They are specifically designed to not require complete
-rewrites, new programming models, or building an entire new stack/ecosystem.
-However, there is no comparable option for C++ today:
+We want users with existing C++ codebases to easily start using Carbon, without
+starting from scratch. Adopting Carbon should not require complete rewrites, new
+programming models, or building an entire new stack/ecosystem. This means
+integrating into the existing C++ ecosystem by supporting incremental migration
+from C++ to Carbon, which in turn requires high-quality interoperability with
+existing C++ code.
 
-- JavaScript → TypeScript
-- Java → Kotlin
-- C++ → **???**
-
-Carbon explores what it would look like to fill this gap and align it with the
-above priorities. This requires addressing both interoperability and migration.
-These are deeply interconnected, but each also brings specific requirements for
-Carbon to be successful.
-
-We must be able to move existing _large_ C++ ecosystems—some with hundreds of
+We must be able to move existing _large_ C++ codebases—some with hundreds of
 millions of lines of code and tens of thousands of active developers—onto
-Carbon. Any migration of this scale will take years, will need to be
-incremental, and may have libraries -- particularly third-party -- that remain
-in C and C++ for decades longer. As part of this, C++ developers must be
-successful in switching to being Carbon developers.
+Carbon. C++ developers must also successfully switch to Carbon development. Any
+migration of this scale will take years, will need to be incremental, and some
+libraries -- particularly third-party -- may remain in C and C++.
 
-High _performance_ interoperability will be vital for performance-critical
-libraries to migrate to Carbon, avoiding atomic migrations including callers: it
-must be possible to rewrite a C++ library as Carbon without simultaneously
-rewriting all of the libraries it depends on or all of the libraries that depend
-on it. All migrations must be reasonably efficient and scalable, and so must be
-amenable to tooling and widely applicable. However, while a given piece code
-only needs to be migrated once, we expect interoperability to be invoked
-continuously to support migrated code and will thus remain important for most
-users.
+We believe incremental migrations require:
 
-We believe the following at least are necessary:
-
-**Support bi-directional interoperability with existing C++ code.** We need
-Carbon code to be able to call into C and C++ libraries with both reasonable API
-clarity and high performance. We will also need some ability to implement C++
-interfaces with business logic in Carbon, although this direction can tolerate
-slightly more constraints both in supported features and performance overhead.
-In all cases, the particular performance overhead imposed by moving between C++
-and Carbon will need to be easily exposed and understood by engineers.
-
-**Familiar to experienced C++ developers with a gentle learning curve.** We need
-a feasible plan for retraining a C++ workforce to become proficient in Carbon.
-If long and significant study is required to be minimally proficient, meaning
-able to read, superficially understand, and do limited debugging or
+**Familiarity for experienced C++ developers with a gentle learning curve.** We
+need a feasible plan for retraining a C++ workforce to become proficient in
+Carbon. If long and significant study is required to be minimally proficient,
+meaning able to read, superficially understand, and do limited debugging or
 modifications, then the inertia of C++ will inevitably win. Further, we need a
 gentle and easily traversed learning curve to basic productivity in order for
 the transition to not become a chore or otherwise unsustainable for teams and
@@ -531,16 +495,27 @@ individuals.
 architecture can naturally be written in C++, it should also be possible to
 write it naturally in Carbon.
 
-**Possible to mechanically source-to-source migrate large segments of
-large-scale idiomatic C++ code bases with high fidelity.** We will prioritize
-having very low, under 2%, human interaction to achieve high fidelity migration
-results. We do not require all C++ code to be migratable in this fashion, and
-the resulting Carbon may be non-idiomatic. We can add reasonable constraints
-here if those constraints are already well established best practices for C++
-development, including design patterns, testing coverage, or usage of
-sanitizers. Over many years, as Carbon evolves and codebases have had time to
-migrate, the results of the tooling may also drift further from idiomatic Carbon
-and have less desirable results.
+**Automated source-to-source migration of large segments of large-scale
+idiomatic C++ code bases with high fidelity.** We will prioritize having very
+low human interaction, under 2%, to achieve high fidelity migration results. We
+do not require all C++ code to be migratable in this fashion, and the resulting
+Carbon may be non-idiomatic. We can add reasonable constraints here if those
+constraints are already well established best practices for C++ development,
+including design patterns, testing coverage, or usage of sanitizers. Over many
+years, as Carbon evolves and codebases have had time to migrate, the results of
+the tooling may also drift further from idiomatic Carbon and have less desirable
+results.
+
+**Support for bi-directional interoperability with existing C++ code.** We need
+Carbon code to be able to call into C and C++ libraries with both reasonable API
+clarity and high performance. We will also need some ability to implement C++
+interfaces with business logic in Carbon, although this direction can tolerate
+slightly more constraints both in supported features and performance overhead.
+In all cases, the particular performance overhead imposed by moving between C++
+and Carbon will need to be easily exposed and understood by engineers. While a
+given piece code only needs to be migrated once, we expect interoperability to
+be invoked continuously to support migrated code and will thus remain important
+for most users.
 
 ### Non-goals
 
@@ -601,8 +576,8 @@ necessary. Compilation models and linking models should be designed to suit the
 needs of Carbon and its use cases, tools, and environments, not what happens to
 have been implemented thus far in compilers and linkers.
 
-A concrete example of this non-goal: it means platforms that cannot update their
-compiler and linker when updating the Carbon language are not supported.
+As a concreate example, Carbon will not support platforms that cannot update
+their compiler and linker alongside the language.
 
 #### Idiomatic migration of non-modern, non-idiomatic C++ code
 
@@ -612,10 +587,10 @@ great deal of C++ code that works merely by chance or has serious flaws that
 prevent us from understanding the programmer's intent. While we may be able to
 provide a minimally "correct" migration to very unfriendly code, mechanically
 reproducing exact C++ semantics even if bizarre, even this is not guaranteed and
-improving on it is not a goal. Our migration concerns are around code that is
-making every effort to adhere to reasonable C++ best practices. Not relying on
-undefined behavior, reasonable test coverage that passes under sanitizers, and
-other basic code health may be necessary to effectively migrate.
+improving on it is not a goal. Migration support will prioritize code that
+adheres to reasonable C++ best practices: not relying on undefined behavior,
+reasonable test coverage that passes under sanitizers, and other basic code
+health.
 
 ### Principles
 
