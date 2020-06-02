@@ -20,8 +20,8 @@ request:
 
 ## Proposal list
 
-<!-- This list is updated by src/scripts/pre-commit-proposal-list.js. -->
 <!-- proposals -->
+<!-- This list is updated by src/scripts/pre-commit-proposal-list.py. -->
 
 - [0074 - Change comment/decision timelines in proposal process](p0074.md)
   - [Decision](p0074-decision.md)

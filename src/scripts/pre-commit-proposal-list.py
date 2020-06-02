@@ -18,7 +18,8 @@ if __name__ == '__main__':
   print(proposal_dir)
 
   # Identify proposal titles in the file list.
-  proposals = []
+  proposals = ['<!-- This list is updated by '
+               'src/scripts/pre-commit-proposal-list.py. -->', '']
   error = False
   for file in os.listdir(proposal_dir):
     file_match = re.match(r'^p([0-9]{4})\.md$', file)
@@ -43,11 +44,15 @@ if __name__ == '__main__':
   readme_path = os.path.join(proposal_dir, 'README.md')
   with open(readme_path) as f:
     old_content = f.read()
-  proposals_re = re.compile(r'(.*<!-- proposals -->)(?:.*)(<!-- endproposals -->)', re.DOTALL | re.MULTILINE)
+  proposals_re = re.compile(
+      r'(.*<!-- proposals -->)(?:.*)(<!-- endproposals -->)',
+      re.DOTALL | re.MULTILINE)
   if not proposals_re.match(old_content):
-    print('ERROR: proposals/README.md is missing the <!-- proposals --> ... <!-- endproposals --> marker.')
+    print('ERROR: proposals/README.md is missing the '
+          '<!-- proposals --> ... <!-- endproposals --> marker.')
     sys.exit(1)
-  new_content = proposals_re.sub(r'\1\n\n%s\n\n\2' % '\n'.join(proposals), old_content)
+  new_content = proposals_re.sub(r'\1\n%s\n\n\2' % '\n'.join(proposals),
+                                 old_content)
   if old_content != new_content:
     print('Updating proposals/README.md')
     with open(readme_path, 'w') as f:
