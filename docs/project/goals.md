@@ -419,7 +419,8 @@ scalability options for build systems of large software.
 
 Carbon must have strong support for all of the major, modern OS platforms, the
 hardware architectures they run on, and the environments in which their software
-runs. Carbon must also continue supporting these over time, even as which ones are major or modern evolve and change over time.
+runs. Carbon must also continue supporting these over time, even as which ones
+are major or modern evolve and change over time.
 
 Carbon must be able to provide native support for various platforms and
 environments, rather than relying on compile-time indirections which may impair
