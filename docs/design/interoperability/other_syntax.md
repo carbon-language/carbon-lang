@@ -14,9 +14,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [C varargs](#c-varargs)
   - [C Inline functions](#c-inline-functions)
 - [Function pointers and functors](#function-pointers-and-functors)
-  - [C function pointers](#c-function-pointers)
-  - [Member function pointers](#member-function-pointers)
-  - [Functors](#functors)
 - [Typedefs](#typedefs)
 - [Macros](#macros)
 
@@ -55,17 +52,8 @@ because the caller is responsible for emitting a definition of the function:
 
 ## Function pointers and functors
 
-### C function pointers
-
-C function pointers are of the form: `RetVal (*)(Arg1, Arg2, ...)`.
-
-### Member function pointers
-
-TODO
-
-### Functors
-
-TODO
+> TODO: A design for C function pointers, member function pointers, and functors
+> should be added. This is an acknowledged gap in the current design.
 
 ## Typedefs
 

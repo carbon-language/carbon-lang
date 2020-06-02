@@ -90,7 +90,7 @@ enum(Byte) Direction {
 
 Carbon enums should be expected to translate to `enum class`.
 
-For example, given a C++ enum:
+For example, given a Carbon enum:
 
 ```carbon
 $extern("Cpp") enum Direction {

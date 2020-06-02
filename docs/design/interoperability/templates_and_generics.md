@@ -14,9 +14,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Using Carbon generics/templates with C++ types in Carbon code](#using-carbon-genericstemplates-with-c-types-in-carbon-code)
 - [Using Carbon templates from C++](#using-carbon-templates-from-c)
 - [Using Carbon generics from C++](#using-carbon-generics-from-c)
-  - [Require bridge code](#require-bridge-code)
 - [Alternatives](#alternatives)
-  - [Translate templates to other languages](#translate-templates-to-other-languages)
+  - [Require bridge code](#require-bridge-code)
+  - [Translate C++ template code to Carbon](#translate-c-template-code-to-carbon)
 
 <!-- tocstop -->
 
@@ -66,8 +66,9 @@ necessary, and may gate such a feature.
 
 ## Using Carbon generics from C++
 
-Using Carbon generics from C++ code will require bridge Carbon code that hides
-the generic. Note this could be wrapping the generic with a template.
+Carbon generics will require bridge code that hides the generic. This bridge
+code may be written using a Carbon template, changing compatibility constraints
+to match.
 
 For example, given the Carbon code:
 
@@ -84,10 +85,13 @@ CppType y;
 ::Carbon::TemplateAPI(&y);
 ```
 
+## Alternatives
+
 ### Require bridge code
 
-We could require bridge code that explicitly instantiates versions of the
-template for use with C++ types.
+Instead of using Clang extensions to support Carbon templates, we could require
+bridge code that explicitly instantiates versions of the template for use with
+C++ types.
 
 Pros:
 
@@ -98,12 +102,30 @@ Cons:
 - Requires extra code to use templates from C++, making it harder to migrate
   code to Carbon.
 
-## Alternatives
+### Translate C++ template code to Carbon
 
-### Translate templates to other languages
+Instead of requiring Carbon types be externed for use with C++ templates, we
+could instead translate the implementation of a C++ template to Carbon, then
+compile it as normal.
 
-Instead of hooking into the compiler to instantiate templates, we could instead
-translate the implementation of a template to the other language, then compile
-it as normal.
+This would rely on translation support being written for C/C++, and additionally
+that it support translating partial files.
 
-TODO: Flesh out alternative
+Pros:
+
+- Builds on existing plans to build a translation tool, creating more consistent
+  behavior.
+
+Cons:
+
+- Makes the translation tool a compilation dependency.
+  - Creates new feature requirements for the translation tool.
+- Limits compatibility to what the translation tool supports.
+  - C++ templates may be particularly likely to use edge-case language features.
+  - Translation errors may be difficult to catch.
+
+The use of
+$extern should be low cost, and the risks of relying on the
+translation tool could be high, and so we expect to use $extern.
+It will always be possible for a project to run the translation tool themselves
+if it is preferred by a code owner.

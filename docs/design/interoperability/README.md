@@ -22,6 +22,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Vocabulary types](#vocabulary-types)
   - [Enums](#enums)
   - [Templates and generics](#templates-and-generics)
+  - [Using C++ templates from Carbon](#using-c-templates-from-carbon)
+  - [Using Carbon templates from C++](#using-carbon-templates-from-c)
+  - [Using Carbon generics from C++](#using-carbon-generics-from-c)
   - [Functions and overload sets](#functions-and-overload-sets)
   - [Other syntax](#other-syntax)
   - [Migration examples](#migration-examples)
@@ -160,7 +163,7 @@ We use the name `Cpp` because `import` needs a valid identifier.
 
 > References: [Name mapping](name_mapping.md).
 >
-> TODO: Add a reference for incomplete types.
+> TODO: Add a reference for incomplete types when one is created.
 
 C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
 same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
@@ -227,7 +230,24 @@ struct Circle {
 };
 ```
 
-TODO: Mention interfaces in overview
+Carbon won't have inheritance in the same way that C++ provides inheritance. For
+compatibility, we provide the option of explicitly setting a parent for the
+externed version of a Carbon struct. This won't affect the Carbon
+implementation, and has
+[edge cases worth considering](user_defined_types.md#inheriting-from-c-types-with-carbon-structs)
+-- however, it may often assist in interoperability where C++ inheritance is
+required.
+
+For example, to declare a Carbon struct `Circle` which, when observed from C++,
+inherits from `Shape`:
+
+```carbon
+import Cpp "project/shape.h"
+
+$extern("Cpp", parent="Cpp.Shape") struct Circle {
+  fn GetArea() -> Float64 { ... };
+}
+```
 
 #### Vocabulary types
 
@@ -252,13 +272,71 @@ There are several cases of vocabulary types that are important to consider:
 
 > References: [Enums](enums.md).
 
-TODO: Write overview
+C++ enums will generally translate nautrally to Carbon, whether using `enum` or
+`enum class`. In the other direction, we expect Carbon enums to always use
+`enum class`.
+
+For example, here is a C++ and Carbon version of a `Direction` enum, both of
+which will be equivalent in either language:
+
+```cc
+enum class Direction {
+  East,
+  West,
+  North,
+  South,
+};
+```
+
+```carbon
+$extern("Cpp") enum Direction {
+  East = 0,
+  West = 1,
+  North = 2,
+  South = 3,
+}
+```
 
 ### Templates and generics
 
-> References: [Templates and generics](templates.md and generics).
+### Using C++ templates from Carbon
 
-TODO: Write overview
+> References: [Templates and generics](templates_and_generics.md).
+
+Simple C++ class templates are directly made available as Carbon templates. For
+example, ignoring allocators and their associated complexity, `std::vector<T>`
+in C++ would be available as `Cpp.std.vector(T)` in Carbon. More complex C++
+templates may need explicit bridge code.
+
+### Using Carbon templates from C++
+
+> References: [Templates and generics](templates_and_generics.md).
+
+Carbon templates should be usable from C++: we will add extensions to Clang in
+support of this.
+
+### Using Carbon generics from C++
+
+> References: [Templates and generics](templates_and_generics.md).
+
+Carbon generics will require bridge code that hides the generic. This bridge
+code may be written using a Carbon template, changing compatibility constraints
+to match.
+
+For example, given the Carbon code:
+
+```carbon
+fn GenericAPI[Foo:$ T](T*: x) { ... }
+
+fn TemplateAPI[Foo:$$ T](T* x) { GenericAPI(x); }
+```
+
+We could have C++ code that uses the template wrapper to use the generic:
+
+```cc
+CppType y;
+::Carbon::TemplateAPI(&y);
+```
 
 ### Functions and overload sets
 
