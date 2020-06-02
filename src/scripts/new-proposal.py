@@ -112,7 +112,7 @@ if __name__ == "__main__":
     _Run([git_bin, "checkout", "-b", branch, "master"])
     _Run([git_bin, "push", "-u", "origin", branch])
 
-    # Copy template.md to new.md.
+    # Copy template.md to a temp file.
     template_path = os.path.join(proposals_dir, "template.md")
     temp_path = os.path.join(proposals_dir, "new-proposal.tmp")
     shutil.copyfile(template_path, temp_path)
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         ]
     )
 
-    # Rename new.md to p####.md, and fill in PR information.
+    # Remove the temp file, create p####.md, and fill in PR information.
     os.remove(temp_path)
     final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
     content = _FillTemplate(template_path, title, pr_num)
