@@ -33,18 +33,6 @@ sequences to precisely match any conversions triggered by the Carbon pattern
 match -- instead this logic can be produced by explicitly generating all the
 necessary C++ overloads and managing conversion within them.
 
-There is a special complexity in the case of an open "overload" set. These are
-functions which allow other packages and modules to add new patterns in as an
-open extension point. This pattern poses two challenges. First, we will discover
-more functions extending the pattern in other modules in the future. Second, C++
-uses a wildly different model to accomplish similar functionality: argument
-dependent lookup of unqualified names. To support exposing these kinds of open
-extension points from Carbon to C++ we will need to carefully build C++ code to
-emulate the Carbon facility. However, because the C++ interfaces needed for this
-can be generated from the Carbon code, we can simply use a dedicated namespace
-which is re-opened as needed to extend an overload set, and hide this as an
-implementation detail.
-
 ### Carbon template functions and C++ overload sets
 
 Carbon template function cannot contribute patterns to a collection exposed as a
