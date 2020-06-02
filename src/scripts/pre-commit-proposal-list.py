@@ -26,7 +26,7 @@ if __name__ == "__main__":
         "",
     ]
     error = False
-    for file in os.listdir(proposal_dir):
+    for file in sorted(os.listdir(proposal_dir)):
         file_match = re.match(r"^p([0-9]{4})\.md$", file)
         if not file_match:
             continue
