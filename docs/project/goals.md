@@ -520,8 +520,8 @@ from serialization-based systems like
 approaches like
 [COM](https://docs.microsoft.com/en-us/windows/win32/com/com-objects-and-interfaces)
 or Swift's ["resilience"](https://swift.org/blog/library-evolution/) model. The
-specific approach should be designed specifically around the goals outlined
-above in order to fit the Carbon language.
+specific approach should be designed around the goals outlined above in order to
+fit the Carbon language.
 
 #### Backwards or forwards compatibility
 
@@ -569,7 +569,7 @@ and having reasonable test coverage that passes under sanitizers.
 ### Principles
 
 [Principles](principles/README.md) are provided to clarify these goals.
-Principles clarify, but do not supersede, goals and priorities.
+Principles do not supersede goals and priorities.
 
 ## Prioritization beyond goals
 
