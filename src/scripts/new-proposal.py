@@ -29,10 +29,27 @@ _PROMPT = """This will:
 Continue? (Y/n) """
 
 
+def _FillTemplate(template_path, title, pr_num):
+    """Fills out template TODO fields."""
+    with open(template_path) as template_file:
+        content = template_file.read()
+    content = re.sub(r"^# TODO\n", "# %s\n" % title, content)
+    content = re.sub(
+        r"(https://github.com/[^/]+/[^/]+/pull/)####",
+        r"\g<1>%d" % pr_num,
+        content,
+    )
+    content = re.sub(
+        r"## TODO(?:.|\n)*(## Problem)",
+        r"\1",
+        content
+    )
+    return content
+
 def _Run(argv, check=True):
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
-    print("\n+ Command running: %s" % cmd, file=sys.stderr)
+    print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
     p = subprocess.run(argv)
     if check and p.returncode != 0:
         sys.exit("ERROR: Command failed: %s" % cmd)
@@ -41,9 +58,10 @@ def _Run(argv, check=True):
 def _RunPRCreate(argv):
     """Runs a command and returns the PR#."""
     cmd = " ".join([shlex.quote(x) for x in argv])
-    print("\n+ Command running: %s" % cmd, file=sys.stderr)
+    print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
     p = subprocess.Popen(argv, stdout=subprocess.PIPE)
     out, _ = p.communicate()
+    out = out.decode("utf-8")
     print(out, end="")
     if p.returncode != 0:
         sys.exit("ERROR: Command failed: %s" % cmd)
@@ -76,28 +94,7 @@ if __name__ == "__main__":
     proposals_dir = os.path.realpath(
         os.path.join(os.path.dirname(__file__), "../../proposals")
     )
-    proposals_dir = "/Users/jperkins/dev/throwaway/proposals"
     os.chdir(proposals_dir)
-
-    template_path = os.path.join(proposals_dir, "template.md")
-    pr_num = 13
-    with open(template_path) as template_file:
-        content = template_file.read()
-    content = re.sub(r"^# TODO\n", "# %s" % title, content, re.MULTILINE)
-    content = re.sub(
-        r"(https://github.com/[^/]+/[^/]+/pull/)####",
-        r"\g<1>%d" % pr_num,
-        content,
-        re.MULTILINE,
-    )
-    content = re.sub(
-        r"## TODO(.|\n)*",
-        "## Problem",
-        content,
-        re.DOTALL | re.MULTILINE
-    )
-    print("---\n%s\n---" % content)
-    sys.exit(1)
 
     # Verify there are no uncommitted changes.
     p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
@@ -144,21 +141,7 @@ if __name__ == "__main__":
     # Rename new.md to p####.md, and fill in PR information.
     os.remove(temp_path)
     final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
-    with open(template_path) as template_file:
-        template = template_file.read()
-    content = re.sub(r"^# TODO$", template, "# %s" % title, re.MULTILINE)
-    content = re.sub(
-        r"(https://github.com/[^/]+/[^/]+/pull/)####",
-        template,
-        r"\1%d" % pr_num,
-        re.MULTILINE,
-    )
-    content = re.sub(
-        r"^## TODO.*\n## Problem",
-        template,
-        "## Problem",
-        re.DOTALL | re.MULTILINE,
-    )
+    content = _FillTemplate(template_path, title, pr_num)
     with open(final_path, "w") as final_file:
         final_file.write(content)
     _Run([git_bin, "add", temp_path, final_path])
@@ -169,4 +152,4 @@ if __name__ == "__main__":
     # Push the PR update.
     _Run([git_bin, "push"])
 
-    print("Created PR %d for %s." % (pr_num, title))
+    print("\nCreated PR %d for %s. Make changes to:\n  %s" % (pr_num, title, final_path))
