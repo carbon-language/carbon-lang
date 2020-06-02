@@ -43,9 +43,9 @@ use cases.
 
 A programming language is a tool, and different tools are good for different
 purposes. We think there is great value in priorities that differentiate Carbon
-from the plethora of programming languages, rather than following the crowd and
-regressing to the mean. Stating Carbon’s priorities clearly and explicitly helps
-the entire community effectively evaluate and use the language.
+from the plethora of programming languages. Stating Carbon’s priorities clearly
+and explicitly helps the entire community effectively evaluate and use the
+language.
 
 Carbon's language goals have historically been best addressed by C++, and there
 are large ecosystems and codebases written using C++ to these ends. We intend
@@ -94,8 +94,7 @@ have clear rationales for all of our technical designs and decisions.
 excluding or marginalizing members of the community. However, we expect to
 inevitably make choices that benefit some Carbon community members more than
 others. We will provide justification for these decisions, but achieving
-Carbon's goals -- including that of a healthy community -- will be the guiding
-rule.
+Carbon's goals—including that of a healthy community—will be the guiding rule.
 
 ### Language tools and ecosystem
 
@@ -121,8 +120,8 @@ invariants and properties of the language.
 
 **Compelling adoption tooling.** We want to provide a compelling suite of tools
 out-of-the-box in order to encourage adoption of Carbon at scale where it can
-augment existing C++ codebases. For example, we expect a code translator will be
-important.
+augment existing C++ codebases. For example, we expect a C++ -> Carbon code
+translator will be important.
 
 **Tooling for updating code when Carbon evolves.** As Carbon evolves over time,
 we expect to provide tooling to help automate and scale migrating existing
@@ -419,10 +418,15 @@ scalability options for build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
 
-Carbon must have strong support for all of the major, modern platforms, the
+Carbon must have strong support for all of the major, modern OS platforms, the
 hardware architectures they run on, and the environments in which their software
 runs. This can be expected to evolve over time as which platforms are major and
 modern changes.
+
+Carbon must be able to provide native support for various platforms and
+environments, rather than relying on compile-time indirections which may impair
+performance. This includes addressing SIMD versus SPMD, concurrency versus
+parallelism, and desktop versus mobile versus bare metal.
 
 Conversely, we do not need to prioritize support for historical platforms. To
 use a hockey metaphor, Carbon should not skate to where the puck is, much less
@@ -430,25 +434,25 @@ where the puck was twenty years ago. We have existing systems to support those
 platforms where necessary. Instead, Carbon should be forward-leaning in its
 platform support.
 
-For examples, please see the
-[metrics principle](principles/metrics.md#modern-os-platforms-hardware-architectures-and-environments).
+For examples, please see Carbon's
+[success critiera](principles/success_criteria.md#modern-os-platforms-hardware-architectures-and-environments).
 
 #### Interoperability with and migration from existing C++ code
 
-We want users with existing C++ codebases to easily start using Carbon, without
-starting from scratch. Adopting Carbon should not require complete rewrites, new
-programming models, or building an entire new stack/ecosystem. This means
-integrating into the existing C++ ecosystem by supporting incremental migration
-from C++ to Carbon, which in turn requires high-quality interoperability with
-existing C++ code.
+We want users working within existing C++ ecosystems to easily start using
+Carbon, without starting from scratch. Adopting Carbon should not require
+complete rewrites, new programming models, or building an entire new
+stack/ecosystem. This means integrating into the existing C++ ecosystem by
+supporting incremental migration from C++ to Carbon, which in turn requires
+high-quality interoperability with existing C++ code.
 
 We must be able to move existing _large_ C++ codebases—some with hundreds of
 millions of lines of code and tens of thousands of active developers—onto
 Carbon. C++ developers must also successfully switch to Carbon development. Any
 migration of this scale will take years, will need to be incremental, and some
-libraries -- particularly third-party -- may remain in C and C++. It must be
-possible to migrate a C++ library to Carbon without simultaneously migrating all
-of the libraries it depends on or all of the libraries that depend on it.
+libraries—particularly third-party—may remain in C and C++. It must be possible
+to migrate a C++ library to Carbon without simultaneously migrating all of the
+libraries it depends on or all of the libraries that depend on it.
 
 We believe incremental migrations require:
 
@@ -467,9 +471,9 @@ write it naturally in Carbon.
 
 **Automated source-to-source migration of large segments of large-scale
 idiomatic C++ code bases with high fidelity.** We will prioritize having very
-low human interaction, under 2%, to achieve high fidelity migration results. We
-do not require all C++ code to be migratable in this fashion, and the resulting
-Carbon may be non-idiomatic. We can add reasonable constraints here if those
+[low human interaction]() to achieve high fidelity migration results. We do not
+require all C++ code to be migratable in this fashion, and the resulting Carbon
+may be non-idiomatic. We can add reasonable constraints here if those
 constraints are already well established best practices for C++ development,
 including design patterns, testing coverage, or usage of sanitizers. Over many
 years, as Carbon evolves and codebases have had time to migrate, the results of
@@ -512,7 +516,8 @@ features to avoid coupling the high-level language to particular stabilized
 interfaces. There is a wide range of such facilities that should be explored,
 from serialization-based systems like
 [protobufs](https://developers.google.com/protocol-buffers) or
-[pickling in Python](https://docs.python.org/3/library/pickle.html), to
+[pickling in Python](https://docs.python.org/3/library/pickle.html), to other
+approaches like
 [COM](https://docs.microsoft.com/en-us/windows/win32/com/com-objects-and-interfaces)
 or Swift's ["resilience"](https://swift.org/blog/library-evolution/) model. The
 specific approach should be designed specifically around the goals outlined

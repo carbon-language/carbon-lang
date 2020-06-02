@@ -1,4 +1,4 @@
-# Principle: Metrics
+# Principle: Success criteria
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -25,9 +25,12 @@ Carbon's goals set a high-level path for where Carbon should head. However,
 given priorities, it's not always clear how specific features or details may end
 up being evaluated.
 
-In order to add some clarity to how we interpret Carbon's goals, we present
-these metrics to provide some key outcomes for each goal. These metrics should
-not be considered exhaustive; rather, they are representative of key issues.
+Carbon's success criteria are specific, measurable, key results that we expect
+to use to see how Carbon is doing against its goals. Success criteria will be
+considered as part of Carbon's [roadmap process](../roadmap_process.md), missing
+them will be considered significant, and extra scrutiny will be applied on
+proposals that would require diminishing them. These success criteria are not
+exhaustive, but they are a bar that we aim to _exceed_.
 
 ## Applications of these principles
 
@@ -73,6 +76,7 @@ Example historical platforms that we will not prioritize support for are:
 - Big- or mixed-endian, at least for computation; accessing encoded data remains
   useful.
 - Non-2's-complement integer formats.
-- Non-IEEE 754 binary floating point format and semantics for default single- and double-precision floating point types.
+- Non-IEEE 754 binary floating point format and semantics for default single-
+  and double-precision floating point types.
 - Source code in file systems that don’t support file extensions or nested
   directories.
