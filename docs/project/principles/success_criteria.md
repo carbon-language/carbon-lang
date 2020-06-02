@@ -69,8 +69,8 @@ We expect to prioritize 64-bit little endian hadware, including:
 We believe Carbon should strive to support some GPUs, other restricted
 computational hardware and environments, and embedded environments. While this
 should absolutely include future and emerging hardware and platforms, those
-shouldn't disproportionately shape the fundamental library and language design -
-they remain relatively new and narrow in user base at least initially.
+shouldn't disproportionately shape the fundamental library and language design
+while they remain relatively new and narrow in user base.
 
 #### Historical platforms
 
