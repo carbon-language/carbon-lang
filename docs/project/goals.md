@@ -594,16 +594,7 @@ health.
 
 ### Principles
 
-Some language goals will have widely-applicable, high-impact, and sometimes
-non-obvious corollaries. We collect concrete language design _principles_ as a
-way to document and clarify these. Principles clarify, but do not supersede,
-goals and priorities. Principles should be used as a tool in making decisions.
-
-A key difference between a principle and the design of a language feature is
-that a principle should inform multiple designs, whereas a feature's design is
-typically more focused on achieving a specific goal or set of goals.
-
-We expect the list of principles to grow over time.
+We have [principles](principles/README.md) that further clarify these goals.
 
 ## Prioritization beyond goals
 
