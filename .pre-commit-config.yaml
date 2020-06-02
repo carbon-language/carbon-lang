@@ -30,7 +30,7 @@ repos:
         description: Updates the list of proposals in proposals/README.md
         entry: src/scripts/pre-commit-proposal-list.js
         language: node
-        files: ^proposals/p.*\.md$
+        files: ^proposals/(README|p.*)\.md$
         pass_filenames: false
   # Prettier should be run late so that it can re-format any prior changes.
   - repo: https://github.com/prettier/prettier
