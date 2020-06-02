@@ -9,6 +9,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import os
+import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -26,48 +28,145 @@ _PROMPT = """This will:
 
 Continue? (Y/n) """
 
-def _Run(argv):
-  pass
+
+def _Run(argv, check=True):
+    """Runs a command."""
+    cmd = " ".join([shlex.quote(x) for x in argv])
+    print("\n+ Command running: %s" % cmd, file=sys.stderr)
+    p = subprocess.run(argv)
+    if check and p.returncode != 0:
+        sys.exit("ERROR: Command failed: %s" % cmd)
+
+
+def _RunPRCreate(argv):
+    """Runs a command and returns the PR#."""
+    cmd = " ".join([shlex.quote(x) for x in argv])
+    print("\n+ Command running: %s" % cmd, file=sys.stderr)
+    p = subprocess.Popen(argv, stdout=subprocess.PIPE)
+    out, _ = p.communicate()
+    print(out, end="")
+    if p.returncode != 0:
+        sys.exit("ERROR: Command failed: %s" % cmd)
+    match = re.search(
+        r"^https://github.com/[^/]+/[^/]+/pull/(\d+)$", out, re.MULTILINE
+    )
+    if not match:
+        sys.exit("ERROR: Failed to find PR# in output.")
+    return int(match[1])
+
 
 if __name__ == "__main__":
-  # Require an argument.
-  if len(sys.argv) != 2:
-    sys.exit(_USAGE)
-  title = sys.argv[1]
+    # Require an argument.
+    if len(sys.argv) != 2:
+        sys.exit(_USAGE)
+    title = sys.argv[1]
 
-  # Verify git and gh are available.
-  git_bin = shutil.which('git')
-  if not git_bin:
-    sys.exit('Missing `git` CLI.')
-  gh_bin = shutil.which('gh')
-  if not gh_bin:
-    sys.exit('Missing `gh` CLI. https://github.com/cli/cli#installation')
+    # Verify git and gh are available.
+    git_bin = shutil.which("git")
+    if not git_bin:
+        sys.exit("ERROR: Missing `git` CLI.")
+    gh_bin = shutil.which("gh")
+    if not gh_bin:
+        sys.exit("ERROR: Missing `gh` CLI.")
+    precommit_bin = shutil.which("pre-commit")
+    if not precommit_bin:
+        sys.exit("ERROR: Missing `precommit` CLI.")
 
-  # Ensure a good working directory.
-  proposals_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), '../../proposals'))
-  os.chdir(proposals_dir)
+    # Ensure a good working directory.
+    proposals_dir = os.path.realpath(
+        os.path.join(os.path.dirname(__file__), "../../proposals")
+    )
+    proposals_dir = "/Users/jperkins/dev/throwaway/proposals"
+    os.chdir(proposals_dir)
 
-  # Verify there are no uncommitted changes.
-  p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
-  if p.returncode != 0:
-    sys.exit('There are uncommitted changes in your git repo.')
+    template_path = os.path.join(proposals_dir, "template.md")
+    pr_num = 13
+    with open(template_path) as template_file:
+        content = template_file.read()
+    content = re.sub(r"^# TODO\n", "# %s" % title, content, re.MULTILINE)
+    content = re.sub(
+        r"(https://github.com/[^/]+/[^/]+/pull/)####",
+        r"\g<1>%d" % pr_num,
+        content,
+        re.MULTILINE,
+    )
+    content = re.sub(
+        r"## TODO(.|\n)*",
+        "## Problem",
+        content,
+        re.DOTALL | re.MULTILINE
+    )
+    print("---\n%s\n---" % content)
+    sys.exit(1)
 
-  # Only use the first 20 chars of the title for branch names.
-  branch = 'proposal-%s' % (title.lower().replace(' ', '-')[0:20])
+    # Verify there are no uncommitted changes.
+    p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
+    if p.returncode != 0:
+        sys.exit("ERROR: There are uncommitted changes in your git repo.")
 
-  # Prompt before proceeding.
-  response = "?"
-  while response not in ("y", "n", ""):
-    response = input(_PROMPT % (branch, title)).lower()
-  if response == "n":
-    sys.exit('Cancelled')
+    # Only use the first 20 chars of the title for branch names.
+    branch = "proposal-%s" % (title.lower().replace(" ", "-")[0:20])
 
-  # Create a proposal branch.
-  _Run([git_bin, 'branch', branch])
+    # Prompt before proceeding.
+    response = "?"
+    while response not in ("y", "n", ""):
+        response = input(_PROMPT % (branch, title)).lower()
+    if response == "n":
+        sys.exit("ERROR: Cancelled")
 
-  # Copy template.md to new.md.
+    # Create a proposal branch.
+    _Run([git_bin, "checkout", "-b", branch, "master"])
+    _Run([git_bin, "push", "-u", "origin", branch])
 
-  # Create a PR with WIP+proposal labels.
-  # Rename new.md to p####.md.
-  # Update p####.md with PR information.
-  # Push the PR update.
+    # Copy template.md to new.md.
+    template_path = os.path.join(proposals_dir, "template.md")
+    temp_path = os.path.join(proposals_dir, "new-proposal.tmp")
+    shutil.copyfile(template_path, temp_path)
+    _Run([git_bin, "add", temp_path])
+    _Run([git_bin, "commit", "-m", "Creating new proposal: %s" % title])
+
+    # Create a PR with WIP+proposal labels.
+    _Run([git_bin, "push"])
+    pr_num = _RunPRCreate(
+        [
+            gh_bin,
+            "pr",
+            "create",
+            "--label",
+            "WIP,proposal",
+            "--title",
+            title,
+            "--body",
+            "",
+        ]
+    )
+
+    # Rename new.md to p####.md, and fill in PR information.
+    os.remove(temp_path)
+    final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
+    with open(template_path) as template_file:
+        template = template_file.read()
+    content = re.sub(r"^# TODO$", template, "# %s" % title, re.MULTILINE)
+    content = re.sub(
+        r"(https://github.com/[^/]+/[^/]+/pull/)####",
+        template,
+        r"\1%d" % pr_num,
+        re.MULTILINE,
+    )
+    content = re.sub(
+        r"^## TODO.*\n## Problem",
+        template,
+        "## Problem",
+        re.DOTALL | re.MULTILINE,
+    )
+    with open(final_path, "w") as final_file:
+        final_file.write(content)
+    _Run([git_bin, "add", temp_path, final_path])
+    _Run([precommit_bin, "run"], check=False)  # Needs a ToC update.
+    _Run([git_bin, "add", final_path])
+    _Run([git_bin, "commit", "-m", "Filling out template with PR %d" % pr_num])
+
+    # Push the PR update.
+    _Run([git_bin, "push"])
+
+    print("Created PR %d for %s." % (pr_num, title))
