@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
     - [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
     - [Fast and scalable development](#fast-and-scalable-development)
-    - [Modern hardware architectures, OS platforms, and environments.](#modern-hardware-architectures-os-platforms-and-environments)
+    - [Modern hardware architectures, OS platforms, and environments](#modern-hardware-architectures-os-platforms-and-environments)
     - [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
   - [Non-goals](#non-goals)
     - [Stable language and library ABI](#stable-language-and-library-abi)
@@ -417,7 +417,7 @@ to provide fast programmer iteration as the codebase scales up.
 We cannot assume coarse-grained compilation without blocking fundamental
 scalability options for build systems of large software.
 
-#### Modern hardware architectures, OS platforms, and environments.
+#### Modern hardware architectures, OS platforms, and environments
 
 Carbon must have strong support for all of the major, modern platforms, the
 hardware architectures they run on, and the environments in which their software
