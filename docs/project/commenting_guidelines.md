@@ -1,10 +1,10 @@
+# Carbon: Commenting guidelines
+
 <!--
-Part of the Carbon Language, under the Apache License v2.0 with LLVM Exceptions.
-See /LICENSE for license information.
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Commenting guidelines
 
 These commenting guidelines are complementary to the
 [evolution process](evolution.md). The community comments on proposals when the
@@ -19,10 +19,10 @@ always try to keep feedback, even when critical, constructive and supportive.
 
   - Objections to specific phrasing should suggest alternative phrasing.
 
-- **Use Discourse Forums for long comments.** GitHub is good for
-  short-to-moderate-sized comments. Discourse Forums is better for long,
-  detailed comments, particularly where multiple parties may get involved in
-  discussion.
+- **Use Discourse Forums for long comments.** If a Google Doc comment would be
+  over two paragraphs, take it to the Discourse Forum topic. Doc comments are
+  good for quick, short feedback; detailed feedback is better shared on
+  Discourse Forums.
 
   - Use the forum topic created by the author, rather than creating a new topic.
     It needs to be easy for authors and other reviewers to find comments.
