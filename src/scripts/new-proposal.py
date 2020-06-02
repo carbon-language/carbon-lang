@@ -39,12 +39,9 @@ def _FillTemplate(template_path, title, pr_num):
         r"\g<1>%d" % pr_num,
         content,
     )
-    content = re.sub(
-        r"## TODO(?:.|\n)*(## Problem)",
-        r"\1",
-        content
-    )
+    content = re.sub(r"## TODO(?:.|\n)*(## Problem)", r"\1", content)
     return content
+
 
 def _Run(argv, check=True):
     """Runs a command."""
@@ -152,4 +149,7 @@ if __name__ == "__main__":
     # Push the PR update.
     _Run([git_bin, "push"])
 
-    print("\nCreated PR %d for %s. Make changes to:\n  %s" % (pr_num, title, final_path))
+    print(
+        "\nCreated PR %d for %s. Make changes to:\n  %s"
+        % (pr_num, title, final_path)
+    )
