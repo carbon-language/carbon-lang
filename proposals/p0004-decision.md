@@ -1,6 +1,6 @@
 # Decision for: Carbon: Change comment/decision timelines in proposal process
 
-Proposal accepted on 2020-20
+Proposal accepted on 2020-06-02
 
 Affirming:
 
