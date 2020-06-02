@@ -271,13 +271,13 @@ While this is perhaps the least unique among programming languages of the goals
 we list here, we feel it is important to state it, explain all of what we mean
 by it, and fit it into our prioritization scheme.
 
-Software, especially at scale and over time, already imposes a burden on
-developers due to its inherent complexity. Carbon will strive to minimize that
-burden for reading, understanding, and writing code. The behavior of code should
-be easily understood, especially by those unfamiliar with the software system.
-Consider developers attempting to diagnose a serious outage under time
-pressure—every second spent trying to understand the _language_ is one not spent
-understanding the _problem_.
+The inherent complexity of software burdens developers, especially at scale and
+over time. Carbon will strive to minimize that burden for reading,
+understanding, and writing code. The behavior of code should be easily
+understood, especially by those unfamiliar with the software system. Consider
+developers attempting to diagnose a serious outage under time pressure—every
+second spent trying to understand the _language_ is one not spent understanding
+the _problem_.
 
 While the source code of our software may be read far more often by machines,
 humans are the most expensive readers and writers of software. As a consequence,
