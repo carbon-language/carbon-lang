@@ -16,6 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [OS platforms](#os-platforms)
     - [Hardware architectures](#hardware-architectures)
     - [Historical platforms](#historical-platforms)
+  - [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
+    - [Migration tooling](#migration-tooling)
 
 <!-- tocstop -->
 
@@ -37,6 +39,9 @@ exhaustive, but they are a bar that we aim to _exceed_.
 > TODO: Add more metrics for various goals.
 
 ### Modern OS platforms, hardware architectures, and environments
+
+> References:
+> [goal](../goals.md#modern-os-platforms-hardware-architectures-and-environments)
 
 This should not be considered an exhaustive list of important platforms.
 
@@ -80,3 +85,25 @@ Example historical platforms that we will not prioritize support for are:
   and double-precision floating point types.
 - Source code in file systems that don’t support file extensions or nested
   directories.
+
+### Interoperability with and migration from existing C++ code
+
+> References:
+> [goal](../goals.md#interoperability-with-and-migration-from-existing-c-code)
+
+#### Migration tooling
+
+Migrations must be mostly automatic. To that end, given an arbitrary large
+codebase following best practices, we aim to have less than 2% of files require
+human interaction.
+
+This critera includes:
+
+- Addressing performance bugs unique to Carbon, introduced by migration tooling.
+- Converting complex code which migration tooling does not handle.
+
+This criteria does not include:
+
+- Cleaning up coding style to idiomatic Carbon.
+  - For example, heavy use of C++ preprocessor macros may result in expanded
+    code where there is no equivalent Carbon metaprogramming construct.

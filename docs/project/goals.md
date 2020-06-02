@@ -48,12 +48,12 @@ and explicitly helps the entire community effectively evaluate and use the
 language.
 
 Carbon's language goals have historically been best addressed by C++, and there
-are large ecosystems and codebases written using C++ to these ends. We intend
-Carbon to work with these existing C++ library ecosystems and codebases instead
-of starting from scratch. Further, Carbon's success depends on convincing C++
-developers to adopt Carbon, so the migration story is another key concern.
-High-performance, bidirectional interoperability will benefit both of these
-goals.
+are large ecosystems and codebases written using C++ to these ends. Carbon
+should be attractive and easy for C++ engineers to try out and incrementally
+adopt, even in individual libraries both using and used from C++ code. We expect
+this depends on having high-performance bidirectional interoperability with C++,
+excellent migration tooling, and an easy ramp-up for experienced C++ software
+engineers.
 
 ## Project goals
 
@@ -100,9 +100,9 @@ Carbon's goals—including that of a healthy community—will be the guiding rul
 
 Programming languages do not succeed in a vacuum. The Carbon project cannot
 merely _design_ a language in order to succeed, it must tackle the full
-ecosystem of tooling that makes programmers effective using the language. This
+ecosystem of tooling that makes engineers effective using the language. This
 includes not only a compiler and standard library, but also a broad range of
-other tools that enable programmers to be more effective, efficient, or
+other tools that enable engineers to be more effective, efficient, or
 productive.
 
 **We will provide a reference implementation.** This helps the language have a
@@ -128,7 +128,7 @@ we expect to provide tooling to help automate and scale migrating existing
 Carbon code to the new version. The goal is to enable more rapid evolution of
 the language without the churn tax and version skew becoming unsustainable.
 
-**Developer tooling.** We need programmers to be productive reading and writing
+**Developer tooling.** We need engineers to be productive reading and writing
 Carbon code. We expect to provide a broad suite of development oriented tools
 ranging from refactoring tools to [LSP](https://langserver.org/) implementations
 and editor integrations.
@@ -151,7 +151,7 @@ We believe Carbon must support:
 
 The first six of these represent our fundamental goals for the software we want
 to implement in Carbon. However, we cannot simply replace all of the existing
-C++ software and programmers. Carbon must be reachable from where we are, which
+C++ software and engineers. Carbon must be reachable from where we are, which
 motivates the seventh goal around interoperability and migration.
 
 These are expected to be largely independent goals. We cannot give up any one of
@@ -185,9 +185,9 @@ Our goal is to support software where its performance with respect to some set
 of resource constraints is critical to its successful operation. This
 overarching goal can be decomposed into a few specific aspects.
 
-**Provide the programmer control over every aspect of performance.** When faced
-with some performance problem, the programmer should always have tools within
-Carbon to address it. This does not mean that the programmer is necessarily
+**Provide the engineer control over every aspect of performance.** When faced
+with some performance problem, the engineer should always have tools within
+Carbon to address it. This does not mean that the engineer is necessarily
 concerned with ultimate performance at every moment, but in the most constrained
 scenarios they must be able to "open up the hood" without switching to another
 language.
@@ -305,10 +305,11 @@ Carbon. A few examples:
 - Ordinary tasks should not require extraordinary care, because humans cannot
   consistently avoid making mistakes for an extended amount of time.
 
-**Support tooling at every layer of the developer experience, including IDEs.**
-The design and implementation of Carbon should make it easy to create such tools
-and make them effective. Carbon should avoid syntax and textual structures that
-are difficult to recognize and mechanically change without losing meaning.
+**Support tooling at every layer of the engineering experience, including
+IDEs.** The design and implementation of Carbon should make it easy to create
+such tools and make them effective. Carbon should avoid syntax and textual
+structures that are difficult to recognize and mechanically change without
+losing meaning.
 
 **Support software outside of the primary use cases well.** There are
 surprisingly high costs for engineers to switch languages. Even when the primary
@@ -409,7 +410,7 @@ and especially the more _semantic_ context, required for merely parsing code,
 the fewer options available to improve the performance of tools and compilation.
 Cross-file context has an especially damaging effect on the potential
 distributed build graph options. Without these options, we will again be unable
-to provide fast programmer iteration as the codebase scales up.
+to provide fast engineer iteration as the codebase scales up.
 
 **Support separate compilation, including parallel and distributed strategies.**
 We cannot assume coarse-grained compilation without blocking fundamental
@@ -446,16 +447,16 @@ supporting incremental migration from C++ to Carbon, which in turn requires
 high-quality interoperability with existing C++ code.
 
 We must be able to move existing _large_ C++ codebases—some with hundreds of
-millions of lines of code and tens of thousands of active developers—onto
-Carbon. C++ developers must also successfully switch to Carbon development. Any
-migration of this scale will take years, will need to be incremental, and some
+millions of lines of code and tens of thousands of active engineers—onto Carbon.
+C++ engineers must also successfully switch to Carbon development. Any migration
+of this scale will take years, will need to be incremental, and some
 libraries—particularly third-party—may remain in C and C++. It must be possible
 to migrate a C++ library to Carbon without simultaneously migrating all of the
 libraries it depends on or all of the libraries that depend on it.
 
 We believe incremental migrations require:
 
-**Familiarity for experienced C++ developers with a gentle learning curve.** We
+**Familiarity for experienced C++ engineers with a gentle learning curve.** We
 need a feasible plan for retraining a C++ workforce to become proficient in
 Carbon. If long and significant study is required to be minimally proficient,
 meaning able to read, superficially understand, and do limited debugging or
@@ -470,14 +471,14 @@ write it naturally in Carbon.
 
 **Automated source-to-source migration of large segments of large-scale
 idiomatic C++ code bases with high fidelity.** We will prioritize having very
-[low human interaction]() to achieve high fidelity migration results. We do not
-require all C++ code to be migratable in this fashion, and the resulting Carbon
-may be non-idiomatic. We can add reasonable constraints here if those
-constraints are already well established best practices for C++ development,
-including design patterns, testing coverage, or usage of sanitizers. Over many
-years, as Carbon evolves and codebases have had time to migrate, the results of
-the tooling may also drift further from idiomatic Carbon and have less desirable
-results.
+[low human interaction](principles/success_criteria.md#migration-tooling) to
+achieve high fidelity migration results. We do not require all C++ code to be
+migratable in this fashion, and the resulting Carbon may be non-idiomatic. We
+can add reasonable constraints here if those constraints are already well
+established best practices for C++ development, including design patterns,
+testing coverage, or usage of sanitizers. Over many years, as Carbon evolves and
+codebases have had time to migrate, the results of the tooling may also drift
+further from idiomatic Carbon and have less desirable results.
 
 **Support for bi-directional interoperability with existing C++ code.** We need
 Carbon code to be able to call into C and C++ libraries with both reasonable API
@@ -508,7 +509,7 @@ our stated goals.
 
 This doesn't preclude having low-level language features or tools to create
 specific and curated stable ABIs, or even serializable protocols. Using any such
-facilities will also cause developers to explicitly state where they are relying
+facilities will also cause engineers to explicitly state where they are relying
 on ABI and isolating it in source from code which does not need that stability.
 However, these facilities would only expose a restricted set of language
 features to avoid coupling the high-level language to particular stabilized
@@ -558,7 +559,7 @@ their compiler and linker alongside the language.
 While large-scale, tool-assisted migration of C++ code to Carbon is an explicit
 goal, handling all C++ code with this is expressly not a goal. There is likely a
 great deal of C++ code that works merely by chance or has serious flaws that
-prevent us from understanding the programmer's intent. While we may be able to
+prevent us from understanding the engineer's intent. While we may be able to
 provide a minimally "correct" migration to very unfriendly code, mechanically
 reproducing exact C++ semantics even if bizarre, even this is not guaranteed and
 improving on it is not a goal. Migration support will prioritize code that
