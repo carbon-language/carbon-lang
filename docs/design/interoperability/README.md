@@ -234,9 +234,8 @@ Carbon won't have inheritance in the same way that C++ provides inheritance. For
 compatibility, we provide the option of explicitly setting a parent for the
 externed version of a Carbon struct. This won't affect the Carbon
 implementation, and has
-[edge cases worth considering](user_defined_types.md#inheriting-from-c-types-with-carbon-structs)
--- however, it may often assist in interoperability where C++ inheritance is
-required.
+[edge cases worth considering](user_defined_types.md#inheriting-from-c-types-with-carbon-structs)–however,
+it may often assist in interoperability where C++ inheritance is required.
 
 For example, to declare a Carbon struct `Circle` which, when observed from C++,
 inherits from `Shape`:
@@ -344,20 +343,18 @@ TODO: Re-examine this writing
 
 > References: [Functions and overload sets](functions_and_overload_sets.md).
 
-Mapping non-overloaded functions between Carbon and C++ is trivial - if the
-names are made available, they can be called. Because Carbon may use a different
-calling convention, it would need to either emit custom C++ annotations to
-coerce calls to use its calling convention directly, or emit wrapper calls that
-map in source code between the two. Even the latter is likely to be easily
-optimized away. The real difficulty is in mapping the types used on the function
-call, which we described in detail above.
+Non-overloaded functions may be trivially mapped between Carbon and C++. If the
+names are made available, then they can be called. Carbon may use a different
+calling convention, which may require wrappers or custom C++ annotations to
+match, but either is likely to be minor and optimized away.
 
-However, both Carbon and C++ support function overloading. This is a much more
-complex surface to translate between languages. Carbon's overloading is designed
-to be largely compatible with C++ so that this can be done reasonably well, but
-it isn't expected to be precisely identical. Carbon formalizes the idea of
-overload resolution into pattern matching. C++ already works in an extremely
-similar way although without the formalization.
+However, function overloading is supported in both languages, and presents a
+much more complex surface to translate. Carbon's overloading is designed to be
+largely compatible with C++ so that this can be done reasonably well, but it
+isn't expected to be precisely identical. Carbon formalizes the idea of overload
+resolution into pattern matching. C++ already works in an extremely similar way,
+although without the formalization. We expect to be able to mirror most function
+overloads between the two approaches.
 
 ### Other syntax
 
