@@ -14,6 +14,7 @@ contributions.
 <!-- toc -->
 
 - [pre-commit](#pre-commit)
+- [black](#black)
 - [codespell](#codespell)
 - [markdown-toc](#markdown-toc)
 - [Prettier](#prettier)
@@ -41,6 +42,14 @@ To set up pre-commit:
 
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
+
+## black
+
+> **pre-commit enabled**: If you're using pre-commit, it will run this.
+> Installing and running manually is optional, but may be helpful.
+
+We use [Black](https://github.com/psf/black) to format Python code. Although
+[Prettier](#prettier) is used for most languages, it doesn't support Python.
 
 ## codespell
 

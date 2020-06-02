@@ -30,7 +30,12 @@ repos:
         additional_dependencies: [markdown-toc]
         files: .*\.md$
         exclude: ^src/jekyll/theme/
-  # Prettier should be run late so that it can re-format any prior changes.
+  # Formatters should be run late so that they can re-format any prior changes.
+  - repo: https://github.com/psf/black
+    rev: stable
+    hooks:
+      - id: black
+        language_version: python3.6
   - repo: https://github.com/prettier/prettier
     rev: 2.0.5
     hooks:
