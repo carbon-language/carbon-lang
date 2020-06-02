@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-"""
+"""Updates the list of proposals in proposals/README.md."""
+
+__copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-Updates the list of proposals in proposals/README.md.
 """
 
 import os
