@@ -25,13 +25,6 @@ entries:
             url: /docs/project/commenting_guidelines.html
           - title: Roadmap process
             url: /docs/project/roadmap_process.html
-      - title: Accepted proposals
-        folderitems:
-          - title: Template
-            url: /proposals/template.md
-          - title: Decision template
-            url: /proposals/template-decision.md
-          - title: AUTO-INSERT PROPOSALS HERE
       - title: Misc
         folderitems:
           - title: Groups
