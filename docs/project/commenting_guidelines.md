@@ -20,7 +20,7 @@ always try to keep feedback, even when critical, constructive and supportive.
   - Objections to specific phrasing should suggest alternative phrasing.
 
 - **Prefer GitHub for comments.** When reviewing a proposal, we would like to
-  keep all discussion in one place: the GitHub pull request.
+  keep the discussion focused in one place: the GitHub pull request.
 
   - If your comment represents a significant change to the proposal, include a
     list of pros and cons. Even if the author disagrees with the change, they
