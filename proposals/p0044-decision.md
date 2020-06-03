@@ -26,11 +26,11 @@ Abstaining:
 
 ### Do we use a Google Docs-centric or GitHub Markdown-centric flow?
 
-**Decision:** GitHub Markdown-centric flow
+**Decision:** Use GitHub Markdown-centric flow.
 
 ### Where should proposals be stored in GitHub?
 
-**Decision:** Store proposals in the repository they affect
+**Decision:** Store proposals in the repository they affect.
 
 ### Should we push comments to focus on GitHub?
 
@@ -39,11 +39,11 @@ discussions in Discourse.
 
 ### Should there be a tracking issue?
 
-**Decision:** Don't require tracking issues
+**Decision:** Don't require tracking issues.
 
 ### Should declined/deferred proposals be committed?
 
-**Decision:** Do not commit declined/deferred proposals
+**Decision:** Do not commit declined/deferred proposals.
 
 ## Rationale
 
@@ -67,15 +67,15 @@ etc. In general, the PR-centric model was favored.
 
 - The GitHub markdown-centric flow makes the on-ramp as smooth as possible for
   external contributors.
-  - This positions the project to maximize the ease of engaging-with and gaining
+  - This positions the project to maximize the ease of engaging with and gaining
     contributions from the wider industry.
-- The final documents to be in markdown form, so it is best if contributors have
-  the option to stay in markdown for the whole process. This is significantly
-  less complex than something that converts between formats:
+- The final documents must be in markdown form, so it is best if contributors
+  have the option to stay in markdown for the whole process. This is
+  significantly less complex than something that converts between formats:
 
   - Less to learn
   - Fewer steps in the process
-  - No outdated versions in the old format left behind.
+  - No outdated versions in the old format left behind
 
 - The technical flow seems on balance better than the Google Docs-based
   workflow. The proposal does a really good job explaining pros and cons. In
@@ -107,8 +107,8 @@ issues, the process is more light-weight without them.
 - This keeps the proposal close to the repository, and therefore, the community,
   that it affects.
 - It facilitates autonomy of (future) review teams responsible for a particular
-  aspect of Carbon. (For example, a reference implementation team responsible
-  for the carbon-toolchain repository).
+  aspect of Carbon. For example, a reference implementation team responsible for
+  the carbon-toolchain repository.
 - It simplifies the common case and makes it easier to find how each repository
   evolves over time.
 
