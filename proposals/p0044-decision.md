@@ -34,7 +34,7 @@ Abstaining:
 
 ### Should we push comments to focus on GitHub?
 
-**Decision:** Push high-level comments to GitHub, rather than focussing these
+**Decision:** Push high-level comments to GitHub, rather than focusing these
 discussions in Discourse.
 
 ### Should there be a tracking issue?
@@ -122,4 +122,3 @@ GitHub:
         reduce the number of flows they need to learn/remember/tool for.
 -   We will get ecosystem benefits as this flow continues to be optimized by
     GitHub and those using it.
-
