@@ -63,6 +63,139 @@ review you typically want to leave the development history undisturbed until the
 end so that comments on any particular increment aren't lost. We typically use
 the GitHub squash-and-merge functionality to land things.
 
+### Stacking dependent pull requests
+
+Carbon uses pull requests in the normal, distributed GitHub model where you
+first fork the repository (typically into your own private GitHub fork), and
+then develop on feature branches in that fork. When a branch is ready for
+review, it is turned into a pull request against the main fork. This flow should
+always be where you start when contributing to Carbon and scales well even with
+many independent changes in flight.
+
+However, a common limitation to hit is when you want to create a _stack_ of
+_dependent_ but small and incremental changes and allow them to be reviewed in
+parallel. Each of these should be its own pull request to facilitate our desire
+for small and incremental changes and review. Unfortunately GitHub has very poor
+support for managing the _review_ of these stacked pull requests. Specifically,
+one pull request cannot normally serve as the _base_ for another pull request,
+so each pull request will include all of the commits and diffs of the preceding
+pull requests in the stack.
+
+We suggest a specific workflow to address this:
+
+1. Create your initial pull request exactly like normal from a branch of your
+   fork. Let's say you have a branch `feature-123` in your clone of your fork.
+   Push it to your fork as normal:
+
+   ```
+   > git checkout feature-123
+   > git push origin
+   ```
+
+   And create a pull request for it like normal:
+
+   ```
+   > gh pr create
+   ```
+
+   And let's imagine this creates a pull request `N` in the upstream repository.
+
+2. _If_ you end up needing to create a subsequent pull request based on the
+   first one, we need to create a _branch_ in the upstream repository that
+   tracks the first pull request and serves as the base for the subsequent pull
+   request. Assuming your fork `$USER/carbon-lang` is remote `origin` and
+   `carbon-language/carbon-lang` is remote `upstream` in your repository:
+
+   ```
+   > git checkout feature-123
+   > git push upstream HEAD:pull-N-feature-123
+   ```
+
+   This will require you to have access to create this branch in the upstream
+   repository. If you don't already have this access, feel free to ask someone
+   with access to do this step for you (they can). We'll try to make sure anyone
+   routinely developing a stack of pull requests has the access they need for
+   this (but don't worry, it doesn't impact the access to the main branch).
+
+3. Create your stacked branch on your fork like normal:
+
+   ```
+   > git checkout -b next-feature-456
+   > git commit -a -m 'Some initial work on the next feature.'
+   > git push origin
+   ```
+
+4. Now when you create a pull request, use the upstream branch tracking your
+   prior pull request as the base:
+
+   ```
+   > gh pr create --base pull-N-feature-123
+   ```
+
+   This creates a baseline for the new, stacked pull request that you have
+   manually synced to your prior pull request.
+
+5. Each time you update the original pull request by pushing more commits to the
+   `feature-123` branch on your `origin`, you'll want to re-push to the upstream
+   tracking branch as well:
+
+   ```
+   > git checkout feature-123
+   > git commit -a -m 'Address some code review feedback...'
+   > git push
+   > git push upstream HEAD:pull-N-feature-123
+   ```
+
+   Then _merge_ those changes into your subsequent pull request:
+
+   ```
+   > git checkout next-feature-456
+   > git merge feature-123
+   > git push
+   ```
+
+   The merge will prevent disrupting the history of `next-feature-456` where you
+   may have code review comments on specific commits, while still allowing the
+   pull request diff view to show the new delta after incorporating the new
+   baseline.
+
+6. Follow a similar process as in 5 above for merging updates from the main
+   branch of `upstream`:
+
+   ```
+   > git checkout master
+   > git pull --rebase upstream
+   > git push                                   # update your fork (optional)
+   > git checkout feature-123
+   > git merge master                           # merge w/o disrupting history
+   > git push                                   # push to first PR on fork
+   > git push upstream HEAD:pull-N-feature-123  # sync upstream tracking branch
+   > git checkout next-feature-456
+   > git merge feature-123                      # merge w/o disrupting history
+   > git push                                   # push to second PR on fork
+   ```
+
+7. When the first pull requset lands in the main upstream branch, delete the
+   upstream tracking branch for it:
+
+   ```
+   > git push upstream --delete pull-N-feature-123
+   ```
+
+   The second pull request should automatically switch its baseline to the
+   `master` branch of the upstream repository. Merge commits into your fork's
+   branch for the second pull request can now be done directly from your
+   `master` branch after pulling upstream.
+
+8. When landing the a stacked pull request, it will require actively rebasing or
+   squashing due to the complex merge history used while updating.
+
+9. If you want to split the two pull requests so they become independent, you
+   can explicitly edit the base branch of a pull request in the GitHub UI.
+   Alternatively you can simply delete the tracking branch as above. The result
+   will be two pull requests with an overlapping initial sequence of commits.
+   You can then restructure each one to make sense independently.
+
 ### Managing pull requests with multiple commits
 
 Sometimes, it will make sense to _land_ a series of separate commits for a
