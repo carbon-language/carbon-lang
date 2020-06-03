@@ -2,15 +2,17 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-all: site
+all: build
 
-# Indirection for the dot-dir.
-site: .gen-site
+.gen-sidebar.yml: sidebar.yml
+	./sidebar.sh
 
-.gen-site:
+.gen-site: site theme .gen-sidebar.yml
 	bundle exec jekyll build
 
-run:
+build: .gen-site
+
+run: site theme .gen-sidebar.yml
 	bundle exec jekyll server --watch
 
 clean:
