@@ -11,6 +11,7 @@ Jekyll is used to translate md documentation into html.
 Important pieces are:
 
 - `_config.yml`: the Jekyll config.
+- `sidebar.yml`: the template for the site's sidebar.
 - `site`: the combination of `theme` and Carbon pages used to build the actual
   site.
 - `theme`: resources from the Jekyll theme we use.

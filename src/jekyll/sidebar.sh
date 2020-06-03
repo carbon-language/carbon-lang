@@ -5,7 +5,7 @@ title() {
 }
 
 proposals() {
-  cd $(dirname "$0")/../../proposals
+  cd ../../proposals
   TITLE_PROMPT="        - title: "
   URL_PROMPT="          url: /proposals/"
   for f in $(ls p????.md); do
@@ -14,7 +14,7 @@ proposals() {
     echo -n "${TITLE_PROMPT}${TITLE}^${URL_PROMPT}${NAME}.html^";
 
     DECISION="${NAME}-decision.md"
-    if [ -e "${DECISION}" ]; then
+    if [ -e "../../proposals/${DECISION}" ]; then
       DECISION_TITLE=$(title "${DECISION}" "${TITLE}: Decision")
       echo -n "${TITLE_PROMPT}${DECISION_TITLE}^${URL_PROMPT}${NAME}-decision.html^";
     fi
