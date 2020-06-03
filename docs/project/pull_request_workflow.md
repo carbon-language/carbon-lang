@@ -28,16 +28,17 @@ version control:
   - How does the main branch and project evolve over time?
   - How was a bug or surprising thing introduced?
 
-## Always use pull requests rather than pushing directly
+## Always use pull requests (with review) rather than pushing directly
 
 We want to ensure that changes to Carbon are always reviewed, and the simplest
 way to do this is to consistently follow a pull request workflow. Even if the
 change seems trivial, still go through a pull request -- it'll likely be trivial
-to review.
+to review. Always wait for someone else to review your pull request rather than
+just merging it, even if you have permission to do so.
 
-Always wait for someone else to review your pull request rather than just
-merging it, even if you have permission to do so. We have set up automation on
-GitHub to require pull requests.
+We have set up automation on GitHub both to require pull requests and review
+before they are merged so that this doesn't require any effort from
+contributors.
 
 ## Small, incremental changes
 
