@@ -1,7 +1,7 @@
 #!/bin/bash -eux
 
 title() {
-  (grep "^#" "$1" || echo "${2}") | head -n1 | sed 's/^# //'
+  (grep -m1 "^# " "$1" || echo "${2}") | cut -c3-
 }
 
 proposals() {
