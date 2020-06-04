@@ -19,4 +19,4 @@ typically more focused on achieving a specific goal or set of goals. The
 principle can help acheive consistency across those multiple designs.
 
 Note that these principles seek to establish both the approaches the project
-wants to pursue as well as those we want to exclude.
+wants to pursue, as well as those we want to exclude.
