@@ -23,7 +23,10 @@ proposals() {
 
 PROPOSALS="$(proposals)"
 
-cat sidebar.yml | \
-  sed "s~^ *- title: AUTO-INSERT PROPOSALS HERE~${PROPOSALS}~" | \
-  tr '^' '\n' > \
-  .gen-sidebar.yml
+INSERT_PATTERN="^ *- title: AUTO-INSERT PROPOSALS HERE"
+# Print the lines of the input file until the insertion marker (but not including it).
+sed -n "/$INSERT_PATTERN/!p;//q" sidebar.yml > .gen-sidebar.yml
+# Print the proposals by scanning the files.
+proposals >> .gen-sidebar.yml
+# Print the lines of the input file after the insertion marker.
+sed -n "1,/$INSERT_PATTERN/!p" sidebar.yml >> .gen-sidebar.yml
