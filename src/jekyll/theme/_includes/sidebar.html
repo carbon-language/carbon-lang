@@ -64,10 +64,12 @@
         </ul>
       </li>
       {% endfor %} {% endfor %}
+      <!-- Add proposals to the proposals folder. -->
       {% if folder.title == "Accepted proposals" %}
         {% for proposal in site.pages %}
           {% assign path = proposal.url | split: "/" %}
           {% if path[1] == "proposals" %}
+          {% unless path[2] contains "template" %}
             {% assign active = "" %}
             {% if page.url == "proposal.url %}
               {% assign active = "active" %}
@@ -76,6 +78,7 @@
               <a title="{{proposal.title}}"
                  href="{{proposal.url}}">{{proposal.title}}</a>
             </li>
+          {% endunless %}
           {% endif %}
         {% endfor %}
       {% endif %}
