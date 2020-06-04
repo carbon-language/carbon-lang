@@ -1,4 +1,4 @@
-# Carbon: Consensus decision-making
+# Consensus decision-making
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
