@@ -4,15 +4,12 @@
 
 all: build
 
-.gen-sidebar.yml: sidebar.yml
-	./sidebar.sh
-
-.gen-site: site theme .gen-sidebar.yml
+.gen-site: site theme
 	bundle exec jekyll build
 
 build: .gen-site
 
-run: site theme .gen-sidebar.yml
+run: site theme
 	bundle exec jekyll server --watch
 
 clean:

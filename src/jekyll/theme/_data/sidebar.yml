@@ -26,8 +26,6 @@ entries:
           - title: Roadmap process
             url: /docs/project/roadmap_process.html
       - title: Accepted proposals
-        folderitems:
-          - title: AUTO-INSERT PROPOSALS HERE
       - title: Misc
         folderitems:
           - title: Groups

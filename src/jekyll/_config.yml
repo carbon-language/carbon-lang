@@ -27,7 +27,6 @@ defaults:
     values:
       layout: "page"
       search: true
-      sidebar: sidebar
       topnav: topnav
 
 plugins:
