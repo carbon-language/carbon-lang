@@ -27,7 +27,7 @@ jobs:
       run: bundle install --jobs 4 --retry 3
       working-directory: src/jekyll
     - name: Build HTML pages
-      run: make site
+      run: make build
       working-directory: src/jekyll
     - name: Publish to www.carbon-lang.dev
       run: gsutil cp -R src/jekyll/.gen-site/* gs://www.carbon-lang.dev/
