@@ -65,7 +65,7 @@
       </li>
       {% endfor %} {% endfor %}
       <!-- Add proposals to the proposals folder. -->
-      {% if folder.title == "Accepted proposals" %}
+      {% if folder.title == "Proposals" %}
         {% for proposal in site.pages %}
           {% assign path = proposal.url | split: "/" %}
           {% if path[1] == "proposals" %}
