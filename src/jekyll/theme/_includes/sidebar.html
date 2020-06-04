@@ -73,9 +73,8 @@
               {% assign active = "active" %}
             {% endif %}
             <li class="{{active}}">
-              <a title="{{proposal.title}}" href="{{proposal.url}}"
-                >{{proposal.title}}</a
-              >
+              <a title="{{proposal.title}}"
+                 href="{{proposal.url}}">{{proposal.title}}</a>
             </li>
           {% endif %}
         {% endfor %}
