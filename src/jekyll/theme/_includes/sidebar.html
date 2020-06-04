@@ -71,7 +71,7 @@
           {% if path[1] == "proposals" %}
           {% unless path[2] contains "template" %}
             {% assign active = "" %}
-            {% if page.url == "proposal.url %}
+            {% if page.url == proposal.url %}
               {% assign active = "active" %}
             {% endif %}
             <li class="{{active}}">
