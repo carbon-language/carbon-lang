@@ -1200,7 +1200,6 @@ h4.panel-title {
 }
 
 /** Hide the title because it's repeated above the TOC. */
-/** TODO: A right-hand-side TOC might be nice, eliminating the post title. */
 h1.post-title-main {
   display: block;
 }
