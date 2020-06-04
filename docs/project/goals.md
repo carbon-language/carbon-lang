@@ -275,6 +275,8 @@ Carbon. A few examples:
 - Explicitness must be balanced against conciseness, as verbosity and ceremony
   add cognitive overhead for the reader, while explicitness reduces the amount
   of outside context the reader must have or assume.
+- Common yet complex tasks, e.g., parallel code, should be well-supported in
+  ways that are easy to reason about.
 - Ordinary tasks should not require extraordinary care, because humans cannot
   consistently avoid making mistakes for an extended amount of time.
 
@@ -302,8 +304,9 @@ pattern may be critical for some rare user or some future use case. Put
 differently, we will not always be able to prevent engineers from writing bad or
 unnecessarily complex code, and that is okay. We should instead focus on helping
 reduce the rate that this occurs accidentally, and enabling tooling and
-diagnostics that warn about dangerous or surprising patterns. This takes the
-language out of the business of legislating these types of issues.
+diagnostics that warn about dangerous or surprising patterns. The language
+should stay out of the business of legislating bad code patterns except where it
+affects detecting logic or performance errors.
 
 **The behavior and semantics of code should be clearly and simply specified
 whenever possible.** Leaving behavior undefined in some cases for invalid,
