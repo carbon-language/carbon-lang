@@ -18,5 +18,5 @@ that a principle should inform multiple designs, whereas a feature's design is
 typically more focused on achieving a specific goal or set of goals. The
 principle can help acheive consistency across those multiple designs.
 
-Note that these principles seek to establish both what the project aims to
-achieve as well as approaches we want to exclude.
+Note that these principles seek to establish both the approaches the project
+wants to pursue as well as those we want to exclude.
