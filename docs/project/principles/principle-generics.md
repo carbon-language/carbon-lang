@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 **Goal:** Our goal for generics support in Carbon is to get most of the
 expressive benefits of C++ templates -- an abstraction mechanism that optimizes
 for performance,
-[the top priority for Carbon](https://docs.google.com/document/d/1MJvVIDXQrhIj6hZ7NwMDbDch9XLO2VaYrGq29E57meU/edit#heading=h.hntrglpoczk)
+[the top priority for Carbon](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#performance-critical-software)
 -- with fewer downsides. In particular:
 
 - Reduce build times, particularly when developing.
