@@ -11,8 +11,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Carbon libraries should be able to make new types that have all the same
 capabilities as builtin types, including the syntax for use. This allows:
 
-- By allowing new types to be developed in libraries, we allow the ecosystem to
-  evolve without requiring heavyweight modifications to the language itself. See
+- The ecosystem to evolve without requiring heavyweight modifications to the
+  language itself by allowing new types to be developed in libraries. See
   [Carbon Goals: Both software and language evolution](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#both-software-and-language-evolution).
 - A form of orthogonality which aids simplicity. See
   [Carbon Goals: Code that is simple and easy to read, understand, and write](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write).
@@ -41,8 +41,6 @@ etc. work. There should not be any operation that works on built-in types that
 can't be defined for library types.
 
 We will support inheriting from built-in types.
-
-TODO
 
 ## Proposals relevant to these principles
 
