@@ -385,8 +385,8 @@ discussion topic. The message will specify the final date for comments, which
 will be at least one week (or four working days, if longer) after
 the message is sent. If nothing significant arises during that period, the
 reviewing team will be asked to start making a decision the next day. Otherwise,
-the review manager can extend the comment period by sending another message to
-the RFC discussion topic.
+the review manager may extend the comment period by posting another message to
+the "Evolution > RFCs" topic.
 
 ##### Actions
 
