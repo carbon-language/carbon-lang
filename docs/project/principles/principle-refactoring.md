@@ -19,7 +19,7 @@ from
 - We should strive to have a uniform syntax that enables common refactorings
   without extensive rewriting.
 - Carbon should make it easy to automate refactoring, with standardized tooling.
-- Carbon should allow refactorings to be made incrementally if they could
+- Carbon should facilitate refactorings to be made incrementally if they could
   require global (cross-package) changes.
 
 ### Caveats
