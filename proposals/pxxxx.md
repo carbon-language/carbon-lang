@@ -1,0 +1,30 @@
+# Carbon: Add initial version of "Carbon principle: C++ Interoperability"
+
+<!--
+Part of the Carbon Language, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+**_PLEASE_ DO NOT SHARE OUTSIDE CARBON FORUMS**
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+## Table of contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Problem
+
+Interoperability with C++ is one of Carbon's
+[goals](https://github.com/carbon-language/carbon-lang/blob/master/docs/project/goals.md),
+but it can have many interpretations.There should be a document describing what
+kinds of tradeoffs the Carbon project is and isn't willing to make for the sake
+of interoperability.
+
+## Proposal
+
+We propose adding `docs/project/principles/principle-interoperability.md`.
+See that doc for details.
