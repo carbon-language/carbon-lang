@@ -380,9 +380,13 @@ The review manager is responsible for validating that the proposal is ready for
 the reviewing team to make a decision. They will ensure that at least a couple
 members of the reviewing team have reviewed the document before it leaves RFC.
 
-If the proposal is ready, the review manager will put out a last call for
-community comments on the main discussion topic. If nothing significant arises,
-the reviewing team will be asked to start making a decision after a day.
+The review manager will put out a last call for community comments on the RFC
+discussion topic. The message will specify the final date for comments, which
+will be at least 7 calendar days (or 4 working days, if longer) from the date
+the message is sent. If nothing significant arises during that period, the
+reviewing team will be asked to start making a decision the next day. Otherwise,
+the review manager can extend the comment period by sending another message to
+the RFC discussion topic.
 
 ##### Actions
 
