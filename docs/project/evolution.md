@@ -382,7 +382,7 @@ members of the reviewing team have reviewed the document before it leaves RFC.
 
 The review manager will put out a last call for community comments on the RFC
 discussion topic. The message will specify the final date for comments, which
-will be at least 7 calendar days (or 4 working days, if longer) from the date
+will be at least one week (or four working days, if longer) after
 the message is sent. If nothing significant arises during that period, the
 reviewing team will be asked to start making a decision the next day. Otherwise,
 the review manager can extend the comment period by sending another message to
