@@ -380,8 +380,7 @@ The review manager is responsible for validating that the proposal is ready for
 the reviewing team to make a decision. They will ensure that at least a couple
 members of the reviewing team have reviewed the document before it leaves RFC.
 
-The review manager will put out a last call for community comments on the RFC
-discussion topic. The message will specify the final date for comments, which
+The review manager will announce a planned end to the community comment period on the "Evolution > RFCs" topic. The message will specify the end date, which
 will be at least one week (or four working days, if longer) after
 the announcement. If nothing significant arises, the
 reviewing team will be asked to start making a decision as scheduled. Otherwise,
