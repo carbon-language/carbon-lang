@@ -1,10 +1,10 @@
+# Language Design Overview
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon Language Design Overview
 
 ## Context and disclaimer
 
@@ -55,33 +55,30 @@ form. Instead, metaprogramming facilities should be provided to more clearly,
 cleanly, and directly express the real and important use cases typically covered
 by such facilities in C++.
 
+> **Note**: The use of `6c` as a short file extension or top-level CLI (with
+> subcommands below it similar to `git` or `go`) has some drawbacks. There are
+> several other possible extensions / commands:
+>
+> - `cb`: This collides with several acronyms and may not be especially
+>   memorable as referring to Carbon.
+> - `c6`: This seems a weird incorrect ordering of the atomic number and has
+>   unfortunate (if very bizarre) slang associations (NSFW, use caution if
+>   searching, as with too much Internet slang).
+> - `carbon`: This is an obvious and unsurprising choice, but also quite long.
+>
+> This seems fairly easy for us to change as we go along, but we should at some
+> point do a formal proposal to gather other options and let the core team try
+> to find the set that they feel is close enough to be a bikeshed.
+
 Carbon supports C++-style line comments with `// ...`, but they are required to
-be the only non-whitespace on the line. Carbon also supports a nestable block
-comment syntax:
+be the only non-whitespace on the line. It will also have some block-comment
+syntax. The current direction is attempting to support nesting and have clean
+and unsurprising interactions with other lexical constructs, but is still under
+active discussions. All comments are treated as whitespace.
 
-```
-/*
-...
-  /*
-  ...
-  */
-...
-*/
-```
-
-While these use the block comment syntax of C and C++, they allow nesting much
-like with Swift. The opening (`/*`) and closing (`*/`) are required to be the
-first and last (respectively) thing on the line. Both of these comment styles
-are treated as whitespace.
-
-> **Note**: Both the requirement for line-comments to be the only thing on the
-> line, and the requirement for opening and closing markers of block comments to
-> be the first and last thing on a line are still active discussion points. The
-> goal is to simplify lexing and reduce comment antipatterns that decrease
-> readability or refactoring reliability.
-
-> **Note**: It isn't clear that block comments really pull their weight.
-
+> **Note**: The details here are being actively developed and still very much
+> subject to change.
+>
 > **TODO(zygoloid)**: Sync this with
 > [p0016](https://github.com/carbon-language/carbon-lang/pull/17) and link to
 > its docs when they land.
@@ -133,6 +130,48 @@ characters as well.
 > [p0016](https://github.com/carbon-language/carbon-lang/pull/17) and link to
 > its docs when they land.
 
+#### Naming conventions
+
+We would like to have widespread and consistent naming conventions across Carbon
+code to the extent possible. This is for the same core reason as naming
+conventions are provided in most major style guides. Even migrating existing C++
+code at-scale presents a significant opportunity to converge even more broadly
+and we're interested in pursuing this if viable.
+
+Our current proposed naming convention, which we at least are attempting to
+follow within Carbon documentation in order to keep code samples as consistent
+as possible:
+
+- `UpperCamelCase` for names of compile-time resolved constants, such that they
+  can participate in the type system and type checking of the program.
+- `lower_snake_case` for names of run-time resolved values.
+
+As an example, an integer that is a compile-time constant sufficient to use in
+the construction a compile-time array size might be named `N`, where an integer
+that is not available as part of the type system would be named `n`, even if it
+happened to be immutable or only take on a single value. Functions and most
+types will be in `UpperCamelCase`, but a type where only run-time type
+information queries are available would end up as `lower_snake_case`.
+
+We only use `UpperCamelCase` and `lower_snake_case` (skipping other variations
+on both snake-case and camel-case naming conventions) because these two have the
+most significant visual separation. For example, the value of adding
+`lowerCamelCase` for another set seems low given the small visual difference
+provided.
+
+The rationale for the specific division between the two isn't a huge or
+fundamental concept, but it stems from a convention in Ruby where constants are
+named with a leading capital letter. The idea is that it mirrors the English
+language capitalization of proper nouns: the name of a constant refers to a
+_specific_ value that is precisely resolved at compile time, not just to _some_
+value. For example, there are many different _shires_ in Britain, but Frodo
+comes from the _Shire_ -- a specific fictional region.
+
+> **Note**: We need some consist pattern while writing documentation, but the
+> specific one proposed here still needs to be fully considered.
+
+#### Aliasing of names
+
 Naming is one of the things that most often requires careful management over
 time -- things tend to get renamed and moved around. Carbon provides a fully
 general name aliasing facility to declare a new name as an alias for a value.
@@ -150,6 +189,8 @@ textually after this can refer to `MyInt` and it will transparently refer to
 > **Note**: the syntax here is not at all in a good state yet. We've considered
 > a few alternatives, but they all end up being confusing in some way. We need
 > to figure out a good and clean syntax that can be used here.
+
+#### Scopes and name lookup
 
 Names are always introduced into some scope which defines where they can be
 referenced. Many of these scopes are themselves named. Carbon has a special
@@ -194,24 +235,45 @@ that declares it in that scope.
 > **Note**: this implies that other names within your own package but not
 > declared within the file must be found via the package name. It isn't clear if
 > this is the desirable end state. We need to consider alternatives where names
-> from the same module or any module in the same package are made immediately
+> from the same library or any library in the same package are made immediately
 > visible within the package scope for unqualified name lookup.
 
 Carbon also disallows the use of shadowed unqualified names, but not the
-_declaration_ of shadowing names in different named scopes. Because all
-unqualified name lookup is locally controlled, shadowing isn't needed for
-robustness and is a long and painful source of bugs over time. Disallowing it
-provides simple, predictable rules for name lookup. However, it is important
-that adding names to the standard library or importing a new package (both of
-which bring new names into the current package's scope) doesn't force renaming
-interfaces that may have many users. To accomplish this, we allow code to
-declare shadowing names, but references to that name must be qualified. For
-package-scope names, this can be done with an explicit use of the current
+_declaration_ of shadowing names in different named scopes:
+
+Because all unqualified name lookup is locally controlled, shadowing isn't
+needed for robustness and is a long and painful source of bugs over time.
+Disallowing it provides simple, predictable rules for name lookup. However, it
+is important that adding names to the standard library or importing a new
+package (both of which bring new names into the current package's scope) doesn't
+force renaming interfaces that may have many users. To accomplish this, we allow
+code to declare shadowing names, but references to that name must be qualified.
+For package-scope names, this can be done with an explicit use of the current
 package name: `PackageName.ShadowingName`.
+
+```
+package Foo library MyLib;
+
+// Consider an exported function named `Shadow`.
+fn Shadow();
+
+// The package might want to import some other package named `Shadow`
+// as part of its implementation, but cannot rename its exported
+// `Shadow` function:
+import Shadow library OtherLib;
+
+// We can reference the imported library:
+alias ??? OtherLibType = Shadow.SomeType;
+
+// We can also reference the exported function and provide a new alias by
+// using our current package name as an explicitly qualified name.
+alias ??? NewShadowFunction = Foo.Shadow;
+```
 
 > **Note:** it may make sense to restrict this further to only allowing
 > shadowing for exported names as internal names should be trivially renamable,
 > and it is only needed when the source is already changing to add a new import.
+> Or we may want to completely revisit the rules around shadowing.
 
 For more details on all of this, see the later
 [section on name organization](#code-and-name-organization).
@@ -236,9 +298,11 @@ expressions in Carbon include the following constructs:
   - Unary negation: `-x`
   - Arithmetic binary: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
   - Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `1 <&lt; 3`, `8 >> 1`, `~7`
+    - Note that these are candidates for keywords instead of high-value
+      punctuation.
   - Relational: `2 == 2`, `3 != 4`, `5 &lt; 6`, `7 > 6`, `8 &lt;= 8`, `8 >= 8`
-  - No logical operators from C/C++ (`||` and `&&`) -- they have custom
-    semantics and are not just operators. We'll get to these later.
+  - No short-circuiting operators from C/C++ (`||`, `&&`, `?:`) -- they have
+    custom semantics and are not just operators. We'll get to these later.
   - See the draft
     [operator design](https://github.com/carbon-language/carbon-proposals/pull/5)
     for more details including precedence.
@@ -258,13 +322,16 @@ much like in C++. However, an important difference from C++ is that types are
 themselves modeled as values; specifically, compile-time constant values.
 However, in simple cases this doesn't make much difference.
 
-We'll cover more types as we go through the language, but the most basic types
+We'll cover more [types] as we go through the language, but the most basic types
 are the following:
 
 - `Int` - a signed 64-bit 2’s-complement integer
 - `Bool` - a boolean type that is either `True` or `False`.
 - `String` - a byte sequence suitable for storing UTF-8 encoded text (and by
   convention assumed to contain such text)
+
+The [primitive types] section outlines other fundamentals such as other sized
+integers, floating point numbers, unsigned integers, etc.
 
 ### Basic functions
 
@@ -291,6 +358,47 @@ std::int64_t Sum(std::int64_t a, std::int64_t b);
 auto Sum(std::int64_t a, std::int64_t b) -> std::int64_t;
 ```
 
+> **Note**: While we are currently keeping types first matching C++, there is
+> significant uncertainty around the right approach here. While adding the colon
+> improves the grammar by unambiguously marking the transition from type to a
+> declared identifier, in essentially every other language with a colon in a
+> similar position, the identifier is first and the type follows. However, that
+> ordering would be very _inconsistent_ with C++.
+>
+> One very important consideration here is the fundamental approach to type
+> inference. Languages which use the syntax `<identifier>: <type>` typically
+> allow completely omitting the colon and the type to signify inference. With
+> C++, inference is achieved with a placeholder keyword `auto`, and Carbon is
+> currently being consistent there as well with `auto: <identifier>`. For
+> languages which simply allow omission, this seems an intentional incentive to
+> encourage inference. On the other hand, there has been strong advocacy in the
+> C++ community to not overly rely on inference and to write the explicit type
+> whenever convenient. Being consistent with the _ordering_ of identifier and
+> type may ultimately be less important than being consistent with the
+> incentives and approach to type inference. What should be the default that we
+> teach? Teaching to avoid inference unless it specifically helps readability by
+> avoiding a confusing or unhelpfully complex type name, and incentivizing that
+> by requiring `auto` or another placeholder, may cause as much or more
+> inconsistency with languages that use `<identifier: <type>` as retaining the
+> C++ ordering.
+>
+> That said, all of this is largely unknown. It will require a significant
+> exploration of the trade-offs and consistency differences. It should also
+> factor in further development of pattern matching generally and whether that
+> has an influence on one or another approach. Last but not least, while this
+> may seem like something that people will get used to with time, it may be
+> worthwhile to do some user research to understand the likely reaction
+> distribution, strength of reaction, and any quantifiable impact these options
+> have on measured readability. We have only found one _very_ weak source of
+> research that focused on the _order_ question (rather than type inference vs.
+> explicit types or other questions in this space). That was a very limited PhD
+> student's study of Java programmers that seemed to indicate improved latency
+> for recalling the type of a given variable name with types on the left (as in
+> C++). However, those results are _far_ from conclusive.
+>
+> **TODO**: Get a useful link to this PhD research (a few of us got a copy from
+> the professor directly).
+
 Let's look at how some specific parts of this work. The function declaration is
 introduced with a keyword `fn` followed by the name of the function `Sum`. This
 declares that name in the surrounding scope and opens up a new scope for this
@@ -303,11 +411,11 @@ indicated with `-> Int`, where again `Int` is just an expression computing the
 desired type. The return type can be completely omitted in the case of functions
 which do not return a value.
 
-Calling functions requires a new expression: `Sum(1, 2)` for example. The first
-part, `Sum`, is an expression referring to the name of the function. The second
-part, `(1, 2)` is a parenthesized list of arguments to the function. The
-juxtaposition of one expression with parentheses forms the core of call
-expression, similar to a unary postfix operator.
+Calling functions involves a new form of expression: `Sum(1, 2)` for example.
+The first part, `Sum`, is an expression referring to the name of the function.
+The second part, `(1, 2)` is a parenthesized list of arguments to the function.
+The juxtaposition of one expression with parentheses forms the core of call
+expression, similar to a postfix operator.
 
 ### Blocks and statements
 
@@ -453,9 +561,12 @@ fn Run() -> Bool {
 }
 ```
 
-The `Print` function here simply writes to whatever is configured as output for
-the program when it is run, and we'll get into more details of I/O and
-controlling this later as part of the standard library.
+The `Print` function here is a hypothetical part of the standard library and
+simply writes to whatever is configured as output for the program when it is
+run. This isn't a concrete suggestion of what the I/O interfaces should look
+like, or which (if any) part of them should be automatically made available
+similar to the `Int` type. That needs to be fleshed out as part of the design of
+the standard I/O library for Carbon.
 
 ## Syntax and source code
 
@@ -485,7 +596,15 @@ controlling this later as part of the standard library.
 
 ### Conditionals
 
+> **TODO:** At least summarize `if` and `else` to cover basics. Especially
+> important to surface the idea of using basic conditionals as both expressions
+> and statements to avoid needing conditional operators.
+
 ### Looping
+
+> **TODO:** Looping is an especially interesting topic to explore as there are
+> lots of challenges posed by the C++ loop structure. Even C++ itself has been
+> seeing significant interest and pressure to improve its looping facilities.
 
 ## Types
 
@@ -514,7 +633,8 @@ names in the global scope.
 
 They in turn can be decomposed into the following categories:
 
-- A monotype `Void` that has only one possible value (empty).
+- A monotype `Void` (or possibly `()`, the empty tuple) that has only one
+  possible value (empty).
 - A boolean type `Bool` that has two possible values: `True` and `False`.
 - Integer types
 - Floating point types
@@ -530,7 +650,8 @@ unbounded natural numbers. Overflow in either direction is an error. Unsigned
 integer types provide modular arithmetic based on the bit width of the integer,
 again like C++. The default size for both is 64-bits: `Int` and `UInt`. Specific
 sizes are also available, for example: `Int8`, `Int16`, `Int32`, `Int128`,
-`UInt256`. Arbitrary powers of two above `8` are supported for both.
+`UInt256`. Arbitrary powers of two above `8` are supported for both (although
+perhaps we'll want to avoid _huge_ values for implementation simplicity).
 
 > **Note:** Open question around allowing special syntax for wrapping operations
 > (even on signed types) and/or requiring such syntax for wrapping operations on
@@ -592,6 +713,11 @@ fn Baz(Int: x, Int: y, Int: z) -> (Int, Int) {
 This code first reverses the tuple, and then extracts a slice using a half-open
 range of indices.
 
+> **Note:** we will likely want to restrict these indices to compile-time
+> constants. Without that, run-time indexing would need to suddenly switch to a
+> variant-style return type to handle heterogeneous tuples. This would both be
+> surprising and complex for little or no value.
+
 > **Note:** using multiple indices in this way is a bit questionable. If we end
 > up wanting to support multidimensional arrays / slices (a likely selling point
 > for the scientific world), a sequence of indices seems a likely desired
@@ -605,7 +731,10 @@ range of indices.
 > sequence? If it is a tuple of indices, maybe that solves the above issue, and
 > unlike function call indexing with multiple indices is different from indexing
 > with a tuple of indexes. Also, do we need syntax for a closed range (`...`
-> perhaps)?
+> perhaps, unclear if that ends up _aligned_ or in _conflict_ with other likely
+> uses of `...` in pattern matching)? All of these syntaxes are also very close
+> to `0.2`, is that similarity of syntax OK? Do we want to require the `..` to
+> be surrounded by whitespace to minimize that collision?
 
 A tuple of a single value is special and simply collapses to the single value.
 
@@ -619,12 +748,19 @@ A tuple of a single value is special and simply collapses to the single value.
 > it isn't clear what it means to access a nested tuple's first element from a
 > parenthesized expression: `((1, 2))[0]`.
 
-Notionally, we think of functions actually accepting a single value and
-transforming it to a single return value, but using tuples whenever the arity
-should be different from one. However, we write them as necessarily expanded
-with parentheses to have clear and distinct syntax and match both the common
-case (multiple parameters) and common convention in programming languages around
-function notation. `Int*` `Int*?` `Int[]`
+Generally, functions pattern match a single tuple value of the arguments (with
+some important questions above around single-value tuples) in order to bind
+their parameters. However, when _calling_ a function, we insist on using
+explicit parentheses to have clear and distinct syntax that matches common
+conventions in C++ as well as other programming languages around function
+notation.
+
+> **Note:** there are some interesting corner cases we need to expand on to
+> fully and more precisely talk about the exact semantic model of function calls
+> and their pattern match here, especially to handle variadic patterns and
+> forwarding of tuples as arguments. We are hoping for a purely type system
+> answer here without needing templates to be directly involved outside the type
+> system as happens in C++ variadics.
 
 ### Variants
 
@@ -668,6 +804,11 @@ struct AdvancedWidget {
   // Do a thing!
   fn DoSomething(AdvancedWidget: self, Int: x, Int: y);
 
+  // A nested type.
+  struct Subtype {
+    // ...
+  }
+
   private var Int: x;
   private var Int: y;
 }
@@ -690,6 +831,11 @@ constraints.
 > verbose. Unclear what is the best way to mitigate this, there are many
 > options. One is to have a special `Self` type.
 
+> **Note:** it may be interesting to consider separating the `self` syntax from
+> the rest of the parameter pattern as it doesn't seem necessary to inject all
+> of the special rules (covariance vs. contravariance, special pointer handling)
+> for `self` into the general pattern matching system.
+
 > **Note:** the default access control level (and the options for access
 > control) are a pretty large open question. Swift and C++ (especially w/
 > modules) provide a lot of options and a pretty wide space to explore here. if
@@ -699,11 +845,12 @@ constraints.
 > regions have some other advantages in terms of pulling the public interface
 > into a specific area of the type.
 
-The type itself is a global constant value. All name access is done with the `.`
-notation. Constant members (including member types and member functions which do
-not need an implicit object parameter) can be accessed via the global constant:
-`Widget.Subtype`. Other members and member functions needing an implicit object
-parameter (or "methods") must be accessed from an object of the type.
+The type itself is a compile-time constant value. All name access is done with
+the `.` notation. Constant members (including member types and member functions
+which do not need an implicit object parameter) can be accessed via that
+constant: `AdvancedWidget.Subtype`. Other members and member functions needing
+an implicit object parameter (or "methods") must be accessed from an object of
+the type.
 
 Some things in C++ are notably absent or orthogonally handled:
 
@@ -815,6 +962,10 @@ a local variable named `p` which is then returned.
 
 ### Pattern matching as function overload resolution
 
+> **TODO:** Need to flesh out specific details of how overload selection
+> leverages the pattern matching machinery, what (if any) restrictions are
+> imposed, etc.
+
 ## Type abstractions
 
 Carbon's type abstraction systems are centered around a core set of concepts:
@@ -828,93 +979,35 @@ abstraction.
 > **TODO:** Update all of this to match the generics proposal when we have a
 > draft published, and link to it.
 
-### Generics and type erasure
+> **TODO:** Add a minimal introduction to the ideas of parameterized types and
+> implicit/deduced function parameters and how it is these parameters that are
+> potentially generic or templated.
 
-While inheritance provides one form of abstraction over a type, it has
-significant problems due to high coupling and induced hierarchy. An alternative
-is to use type-erased generics as an abstraction system. This is possible in
-C++, but extremely cumbersome. The goal is to provide a simple collection of
-tools to handle these common cases that also can scale cleanly into more
-advanced abstractions such as raw templates.
+### Interfaces and generics
 
-A key aspect of generic code in Carbon is that it is not inherently instantiated
-or specialized. It _can_ be instantiated as an optimization, but that isn't
-fundamental and shouldn't be observable.
-
-#### Generic interfaces
-
-The first step in doing type erasure is to define a generic interface. This is
-what the generic code will be written against. Interfaces work much like a
-user-defined structure type, except that they may only consist of declarations.
-
-```
-interface Point {
-  var Int: x;
-  var Int: y;
-
-  fn Plot();
-}
-```
-
-Once you have an interface, you can code against this interface the same way you
-would against a specific type:
-
-```
-fn Render(Point: point) {
-  MoveTo(point.x, point.y);
-  point.Plot();
-}
-```
-
-However, this function can be called with arbitrary types that conform to the
-interface:
-
-```
-struct MyPoint {
-  var Int: x;
-  var Int: y;
-  var String: description;
-
-  fn Plot();
-  fn Plot(Int: size);
-}
-
-fn MyRender(MyPoint: point) {
-  Render(point);
-}
-```
-
-Behind the scenes, an `interface` in Carbon produces a template type by the same
-name. This type simply wraps the provided type and forwards to the same name /
-signature interfaces. Instantiating this with a type that doesn't provide the
-necessary interface is an error. This wrapper is then passed to the generic
-function along with a description of how to map from the generic interface to
-this specific implementation dynamically. The implementation of the generic
-function uses this mapping (much like a virtual table in C++ polymorphism) to
-abstractly access whatever implementation it receives.
+> **TODO:** Add a (very) high level summary of interfaces and generics.
 
 ### Templates
 
-Carbon templates, like C++ templates, provide an abstraction mechanism on the
-other extreme of coupling from inheritance-based polymorphism: zero coupling.
-They allow arbitrary duck-typing and compile-time parameterization of
-constructs. This is a powerful but also risky tool to use.
+Carbon templates follow the same fundamental paradigm as C++ templates: they are
+instantiated, resulting in late type checking, duck typing, and lazy binding.
+They both enable interoperability between Carbon and C++ and address some
+(hopefully limited) use cases where the type checking rigor imposed by generics
+isn't helpful.
 
-Because both types and functions are values in Carbon, templates are in essence
-an extremely convenient syntax for automatically producing compile-time
-functions to compute a parameterized type or function. In the case of template
-functions, they additionally provide convenient syntax for using a single call
-notation rather than having to explicitly call a meta function to compute the
-actual function.
+> **TODO:** Link these terms into the terminology document when available.
 
-#### Template types
+#### Types with template parameters
 
-For each kind of user-defined type, the type can be a template instead. These
-define type functions that compute the desired type from a set of parameters.
-For example:
+When parameterizing a user-defined type, the parameters can be marked as
+_template_ parameters. The resulting type-function will instantiate the
+parameterized definition with the provided arguments to produce a complete type
+when used. Note that only the parameters marked as having this _template_
+behavior are subject to full instantiation -- other parameters will be type
+checked and bound early to the extent possible. For example:
 
 ```
-template struct Stack(Type: T) {
+struct Stack(Type:$$ T) {
   var Array(T): storage;
 
   fn Push(T: value);
@@ -922,27 +1015,29 @@ template struct Stack(Type: T) {
 }
 ```
 
-This both defines a template type (`Stack`) and uses one (`Array`). Within the
-definition of the template type, its type parameter can be used in all of the
-places a normal type would be used. In effect, because this is a _template_, the
-parameter becomes a guaranteed compile time entity.
+This both defines a parameterized type (`Stack`) and uses one (`Array`). Within
+the definition of the type, the _template_ type parameter `T` can be used in all
+of the places a normal type would be used, and it will only by type checked on
+instantiation.
 
-#### Template functions
+#### Functions with template parameters
 
-To support template functions, Carbon provides more complex facilities that
-center around simplifying the use of template functions. Function calls are
-implemented as pattern matching, and when doing pattern matching, we can deduce
-types rather than passing them explicitly. We also want to avoid the overhead of
-having to write two calls, and so allow a single sequence of both compile-time
-and run-time parameters.
+Both implicit and explicit function parameters in Carbon can be marked as
+_template_ parameters. When called, the arguments to these parameters trigger
+instantiation of the function definition, fully type checking and resolving that
+definition after substituting in the provided (or computed if implicit)
+arguments. The runtime call then passes the remaining arguments to the resulting
+complete definition.
 
 ```
-template fn Convert[Type: T](T: source, Type: U) -> U {
+fn Convert[Type:$$ T](T: source, Type:$$ U) -> U {
   var U: converted = source;
   return converted;
 }
 
 fn Foo(Int: i) -> Float {
+  // Instantiates with the `T` implicit argument set to `Int` and the `U`
+  // explicit argument set to `Float`, then calls with the runtime value `i`.
   return Convert(i, Float);
 }
 ```
@@ -951,27 +1046,21 @@ Here we deduce one type parameter and explicitly pass another. It is not
 possible to explicitly pass a deduced type parameter, instead the call site
 should cast or convert the argument to control the deduction. The explicit type
 is passed after a runtime parameter. While this makes that type unavailable to
-the declaration of the runtime parameter, it still is a true type and available
-to use as a type even within the remaining parts of the template function
+the declaration of _that_ runtime parameter, it still is a _template_ parameter
+and available to use as a type even within the remaining parts of the function
 declaration.
-
-> **Note**: there is an important open question about how to distinguish between
-> a non-type parameter of a template function which is a normal runtime
-> parameter and one which must trigger instantiation and become available in the
-> function as a compile time constant. Currently, the most appealing technique
-> is an annotation of the parameter itself, but we still don't have a very
-> appealing suggestion for how to spell this annotation without making the
-> declaration excessively verbose. An alternative would be to give up on the
-> single-parameter sequence and require the template parameters to be separate
-> so the above becomes `template fn Convert[Type: T](Type: U)(T: source) -> U`
-> and the call becomes `Convert(Float)(i)`.
 
 #### Specialization
 
 An important feature of templates in C++ is the ability to customize how they
-end up specialized for specific types. Carbon also supports this for templates:
+end up specialized for specific types. Because template parameters (whether as
+type parameters or function parameters) are pattern matched, we expect to
+leverage pattern matching techniques to provide "better match" definitions that
+are selected analogously to specializations in C++ templates. When expressed
+through pattern matching, this may enable things beyond just template parameter
+specialization, but that is an area that we want to explore cautiously.
 
-> TODO: lots more work to flesh this out needs to be done...
+> **TODO:** lots more work to flesh this out needs to be done...
 
 #### Constraining templates with interfaces
 
