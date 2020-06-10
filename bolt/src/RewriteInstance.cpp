@@ -3633,6 +3633,7 @@ void RewriteInstance::updateELFSymbolTable(
                         .toStringRef(Buf));
       ICFSymbol.st_value = ICFParent->getOutputAddress();
       ICFSymbol.st_size = ICFParent->getOutputSize();
+      ICFSymbol.st_shndx = ICFParent->getCodeSection()->getIndex();
       Symbols.emplace_back(ICFSymbol);
     }
     if (Function.isSplit() && Function.cold().getAddress()) {
@@ -3735,12 +3736,14 @@ void RewriteInstance::updateELFSymbolTable(
     auto NewSymbol = Symbol;
 
     if (Function) {
-      // If the symbol matched a function that was not emitted, leave the
-      // symbol unchanged.
+      // If the symbol matched a function that was not emitted, update the
+      // corresponding section index but otherwise leave it unchanged.
       if (Function->isEmitted()) {
         NewSymbol.st_value = Function->getOutputAddress();
         NewSymbol.st_size = Function->getOutputSize();
         NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
+      } else if (Symbol.st_shndx < ELF::SHN_LORESERVE) {
+        NewSymbol.st_shndx = NewSectionIndex[Symbol.st_shndx];
       }
 
       // Add new symbols to the symbol table if necessary.
