@@ -1,8 +1,5 @@
-{% assign sidebar = site.data.sidebars[page.sidebar].entries %}
-
 <ul id="mysidebar" class="nav">
-  <li class="sidebarTitle">{{sidebar[0].product}} {{sidebar[0].version}}</li>
-  {% for entry in sidebar %} {% for folder in entry.folders %}
+  {% for entry in site.data.sidebar.entries %} {% for folder in entry.folders %}
   <li>
     <a title="{{folder.title}}" href="#">{{folder.title}}</a>
     <ul>
@@ -67,6 +64,24 @@
         </ul>
       </li>
       {% endfor %} {% endfor %}
+      <!-- Add proposals to the proposals folder. -->
+      {% if folder.title == "Proposals" %}
+        {% for proposal in site.pages %}
+          {% assign path = proposal.url | split: "/" %}
+          {% if path[1] == "proposals" %}
+          {% unless path[2] contains "template" %}
+            {% assign active = "" %}
+            {% if page.url == proposal.url %}
+              {% assign active = "active" %}
+            {% endif %}
+            <li class="{{active}}">
+              <a title="{{proposal.title}}"
+                 href="{{proposal.url}}">{{proposal.title}}</a>
+            </li>
+          {% endunless %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
     </ul>
   </li>
   {% endfor %} {% endfor %}

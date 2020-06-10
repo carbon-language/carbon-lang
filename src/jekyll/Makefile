@@ -1,17 +1,15 @@
-# Part of the Carbon Language, under the Apache License v2.0 with LLVM
-# Exceptions.
-# See /LICENSE for license information.
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-all: site
+all: build
 
-# Indirection for the dot-dir.
-site: .gen-site
-
-.gen-site:
+.gen-site: site theme
 	bundle exec jekyll build
 
-run:
+build: .gen-site
+
+run: site theme
 	bundle exec jekyll server --watch
 
 clean:

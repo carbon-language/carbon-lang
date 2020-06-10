@@ -1,10 +1,10 @@
+# Consensus decision-making
+
 <!--
-Part of the Carbon Language, under the Apache License v2.0 with LLVM Exceptions.
-See /LICENSE for license information.
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Consensus decision-making
 
 Carbon's teams will use a
 [blocking consensus decision-making process](https://en.wikipedia.org/wiki/Consensus_decision-making#Blocking)
@@ -103,9 +103,9 @@ items, meetings will not be held.
 Agenda items (e.g., proposals) should be added at least one week in advance (or
 four working days, if longer), so that members have time to review items added
 to the agenda. Sub-items (e.g., proposal discussion points) should be added at
-least one day before the meeting; every open Google Doc comment is implicitly a
-sub-item. Please feel free to add items to the agenda and remove them later if
-the agenda item is resolved over other communication forums.
+least one day before the meeting. Please feel free to add items to the agenda
+and remove them later if the agenda item is resolved over other communication
+forums.
 
 Team members are expected to prepare for the meeting by ensuring they're
 familiar with the proposal and related discussion. The meeting will not include
