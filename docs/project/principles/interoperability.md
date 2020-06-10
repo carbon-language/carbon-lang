@@ -22,11 +22,13 @@ possible, we have a choice of how much we reduce migration costs and how
 convenient we make the interoperability. To give examples from other languages:
 we want C++/Carbon interoperability to have fewer rough edges than C++/Java or
 C++/Rust, but it doesn't necessarily have to be as seamless as Java/Kotlin or
-Objective-C/Swift. Interoperability may sometimes be in tension with other
-goals, like performance, safety, and ergonomics. We're willing to sacrifice some
-level of interoperability convenience, even if C++ and Carbon code at the
-language boundary might sometimes have to be awkward and non-idiomatic, if it's
-important for achieving those goals.
+JavaScript/TypeScript.
+
+Interoperability may sometimes be in tension with other goals, like performance,
+safety, and ergonomics. We're willing to sacrifice some level of
+interoperability convenience, even if C++ and Carbon code at the language
+boundary might sometimes have to be awkward and non-idiomatic, if it's important
+for achieving those goals.
 
 ## Application of these principles
 
@@ -64,28 +66,26 @@ like performance, safety, and Carbon ergonomics.
 
 - Carbon doesn't need to have exactly the same set of primitive integer types as
   C++, so long as it's possible to know which Carbon type(s) a C++ integer type
-  maps to, given a target platform (including relevant compiler choices and
-  build flags).
+  maps to, given a target platform.
 
 - Carbon doesn't have to support C++ exceptions, still less throwing exceptions
   across the C++/Carbon boundary. Carbon could, for example, take the same
   approach that
-  [Swift does](https://github.com/apple/swift/blob/master/docs/CppInteroperabilityManifesto.md#implementation):
+  [Swift does](https://github.com/apple/swift/blob/master/docs/CppInteroperabilityManifesto.md#baseline-functionality-import-functions-as-non-throwing-terminate-on-uncaught-c-exceptions):
   if C++ code throws an exception that propagates into a Carbon stack frame, we
   terminate the program.
 
 - Carbon's design for object lifetime and aliasing will be made for the sake of
   performance and safety, even if that means conflicting with C++ rules. For
-  example, Carbon need not adopt C++ rules about lifetimes of temporaries (that
-  lifetimes of temporaries are extended to a full expression) and could adopt
-  stricter rules, even though that would require more care in using some C++
-  APIs from Carbon.
+  example, Carbon need not adopt C++ rules about lifetimes of temporaries and
+  could adopt stricter rules, even though that would require more care in using
+  some C++ APIs from Carbon.
 
   - As an example: a C++ program might pass the return value of `absl::StrCat`
-    to a function whose parameter is `std::string_view`, and C++ guarantees that
-    the temporary object's lifetime is long enough. If Carbon has different
-    lifetime rules, then it will be harder to use such a C++ function safely
-    from Carbon.
+    to a function whose parameter is `std::string_view`, which relies on C++
+    extending the lifetime of a temporary to a full expression. If Carbon has
+    different lifetime rules, then it will be harder to use such a C++ function
+    safely from Carbon.
 
 - It should be possible to use Carbon's parameterized types with concrete C++
   types. For example, there should be some way of putting C++ objects in Carbon
@@ -100,13 +100,15 @@ like performance, safety, and Carbon ergonomics.
 
 - Since C++ libraries and vocabulary types are frequently written in terms of
   templates, it should be possible to instantiate C++ templates with Carbon
-  types. We expect that complicated C++ metaprogramming libraries will need to
-  be rewritten by hand (the goal is to support the 95% case), but we shouldn't
-  require a full rewrite for clients of template code.
+  types.
 
-  - Is CRTP complicated enough to not support using it from Carbon? It is pretty
-    common, but supporting CRTP across C++/Carbon boundary requires us to
-    intertwine C++ and Carbon template instantiation.
+  - We expect that complicated C++ metaprogramming libraries will need to be
+    rewritten by hand, since the goal is to support the 95% case, but we
+    shouldn't require a full rewrite for clients of template code.
+
+  - Whether Carbon needs to support C++ libraries that are based on CRTP is an
+    open question. It's a common technique, but supporting it would require
+    tight intertwining between C++ and Carbon template instantiation.
 
 - C++ type traits should work correctly on Carbon types.
 
