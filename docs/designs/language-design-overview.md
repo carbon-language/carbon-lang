@@ -32,7 +32,7 @@ a reasonably consistent set of terminology and context as we begin fleshing out
 concrete (and well justified) designs for each part of the language. In some
 cases, it captures ideas that may be interesting to explore, but isn't meant to
 overly anchor on them. Any ideas here need to be fully explored and justified
-with a detailed analysis. The context of #1 (directly evloving C++, experience
+with a detailed analysis. The context of #1 (directly evolving C++, experience
 building Clang, and experience working on C++ codebases including Clang and LLVM
 themselves) is also important. It is both an important signal but also a bias.
 
@@ -204,7 +204,7 @@ namespace Foo {
   }
 }
 
-fn F(Foo.Bar.MyInt x);
+fn F(Foo.Bar.MyInt: x);
 ```
 
 Carbon packages are also namespaces so to get to an imported name from the
@@ -402,7 +402,7 @@ auto Sum(std::int64_t a, std::int64_t b) -> std::int64_t;
 Let's look at how some specific parts of this work. The function declaration is
 introduced with a keyword `fn` followed by the name of the function `Sum`. This
 declares that name in the surrounding scope and opens up a new scope for this
-function. We declare the parameter as `Int: a`. The `Int` part is an expression
+function. We declare the first parameter as `Int: a`. The `Int` part is an expression
 (here referring to a constant) that computes the type of the parameter. The `:`
 marks the end of the type expression and introduces the identifier for the
 parameter, `a`. The parameter names are introduced into the function's scope and
@@ -642,7 +642,7 @@ They in turn can be decomposed into the following categories:
   typically representing (UTF-8 encoded) text.
 
   > **Note:** The right model of a string view vs. an owning string is still
-  > very muchunsettled.
+  > very much unsettled.
 
 Integer types can be either signed or unsigned, much like in C++. Signed
 integers are represented using 2's complement and notionally modeled as
@@ -685,7 +685,7 @@ fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
 
 This function returns a tuple of two integers represented by the type
 `(Int, Int)`. The expression to return it uses a special tuple syntax to build a
-tuple within an expression: `(&lt;expression>, &lt;expression>)`. This is
+tuple within an expression: `(<expression>, <expression>)`. This is
 actually the same syntax in both cases. The return type is a tuple expression,
 and the first and second elements are expressions referring to the `Int` type.
 The only difference is the type of these expressions. Both are tuples, but one
