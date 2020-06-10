@@ -241,8 +241,8 @@ please ask on Discourse Forums.
 
 Carbon repositories all follow a common
 [pull-request workflow](docs/project/pull_request_workflow.md) for landing
-changes. It emphasizes small, incremental development and preserves a simple
-linear history in the default branch.
+changes. It is a trunk-based development model that emphasizes small,
+incremental changes and preserves a simple linear history.
 
 ## Acknowledgements
 

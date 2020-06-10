@@ -1,4 +1,4 @@
-# Linear pull-request GitHub workflow
+# Trunk-based pull-request GitHub workflow
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
