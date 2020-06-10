@@ -1198,3 +1198,11 @@ h4.panel-title {
         display:block !important;
     }
 }
+
+/** Hide the title because it's repeated above the TOC. */
+h1.post-title-main {
+  display: block;
+}
+h1 {
+  display: none;
+}
