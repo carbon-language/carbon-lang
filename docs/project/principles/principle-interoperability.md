@@ -9,8 +9,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Principle
 
 Our goal is not merely for Carbon to be a good language in general, but for it
-to be a good choice as the target of large-scale tool-assisted migration from
-C++ specifically. A large migration can never be atomic, so high-fidelity and
+to be specifically a good choice as the target of large-scale tool-assisted migration from
+C++. A large migration can never be atomic, so high-fidelity and
 high-performance interoperability between C++ and Carbon will have to be part of
 the migration strategy. It must be possible to rewrite a C++ library as Carbon
 without having to rewrite its dependencies or its clients, and a mixed
@@ -22,7 +22,7 @@ possible, we have a choice of how much we reduce migration costs and how
 convenient we make the interoperability. To give examples from other languages:
 we want C++/Carbon interoperability to have fewer rough edges than C++/Java or
 C++/Rust, but it doesn't necessarily have to be as seamless as
-Java/Kotlin or ObjC/ Swift. Interoperability may sometimes be in tension with
+Java/Kotlin or Objective-C/Swift. Interoperability may sometimes be in tension with
 other goals, like performance, safety, and ergonomics. We're willing to
 sacrifice some level of interoperability convenience, even if C++ and Carbon
 code at the language boundary might sometimes have to be awkward and
@@ -38,7 +38,7 @@ like performance, safety, and Carbon ergonomics.
   an opt-in basis. Possibly not all C++ types need be usable from Carbon, only
   ones tagged in some special way, but in any case crossing the language
   boundary should not require copying data to adhere to a different memory
-  layout. At an implementation level this might mean that a Carbon ABI has
+  layout. At an implementation level, this might mean that a Carbon ABI has
   multiple memory layout strategies, one of which is C++'s, just as a C++
   compiler today supports multiple calling conventions for the sake of
   interoperability with C and other languages.
