@@ -18,11 +18,7 @@ const updateTriageAccess = async () => {
   const org = 'carbon-language';
   const team = 'contributors-with-label-access';
   // Accounts in the org to skip mirroring.
-  const ignore = [
-    "CarbonLangInfra",
-    "google-admin",
-    "googlebot",
-  ];
+  const ignore = ['CarbonLangInfra', 'google-admin', 'googlebot'];
 
   // Set up the GitHub API.
   const { Octokit } = require('@octokit/rest');
@@ -62,8 +58,10 @@ const updateTriageAccess = async () => {
 
   // Copy members from the org to the team.
   for (const member in orgMembers) {
-    if (teamMembers.hasOwnProperty(member) ||
-        ignore.indexOf(orgMembers[member]) >= 0) {
+    if (
+      teamMembers.hasOwnProperty(member) ||
+      ignore.indexOf(orgMembers[member]) >= 0
+    ) {
       continue;
     }
     console.log(`Adding ${orgMembers[member]}`);
@@ -74,7 +72,7 @@ const updateTriageAccess = async () => {
     });
   }
 
-  console.log("Done!");
+  console.log('Done!');
 };
 
 updateTriageAccess();
