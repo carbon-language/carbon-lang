@@ -22,7 +22,7 @@ We use a mix of:
 ## All contributors
 
 - [GitHub organization](https://github.com/orgs/carbon-language/people)
-  - [Contributors with label access](https://github.com/orgs/carbon-language/teams/contributors-with-label-access):
+  - [Team: Contributors with label access](https://github.com/orgs/carbon-language/teams/contributors-with-label-access):
     Mirrors the GitHub organization for write access.
     [Manually updated](/src/scripts/update-label-access.js).
 - [Discourse Forums account](https://forums.carbon-lang.dev)
