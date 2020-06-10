@@ -1,4 +1,4 @@
-# Carbon principle: C++ Interoperability
+# Principle: C++ Interoperability
 
 <!--
 Part of the Carbon Language, under the Apache License v2.0 with LLVM
