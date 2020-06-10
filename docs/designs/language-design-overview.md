@@ -61,9 +61,9 @@ by such facilities in C++.
 >
 > - `cb`: This collides with several acronyms and may not be especially
 >   memorable as referring to Carbon.
-> - `c6`: This seems a weird incorrect ordering of the atomic number and has
->   unfortunate (if very bizarre) slang associations (NSFW, use caution if
->   searching, as with too much Internet slang).
+> - `c6`: This seems a weird incorrect ordering of the atomic number and has a
+>   bad (if _extremely_ obscure) Internet slang association (NSFW, use caution
+>   if searching, as with too much Internet slang).
 > - `carbon`: This is an obvious and unsurprising choice, but also quite long.
 >
 > This seems fairly easy for us to change as we go along, but we should at some
@@ -402,14 +402,14 @@ auto Sum(std::int64_t a, std::int64_t b) -> std::int64_t;
 Let's look at how some specific parts of this work. The function declaration is
 introduced with a keyword `fn` followed by the name of the function `Sum`. This
 declares that name in the surrounding scope and opens up a new scope for this
-function. We declare the first parameter as `Int: a`. The `Int` part is an expression
-(here referring to a constant) that computes the type of the parameter. The `:`
-marks the end of the type expression and introduces the identifier for the
-parameter, `a`. The parameter names are introduced into the function's scope and
-can be referenced immediately after they are introduced. The return type is
-indicated with `-> Int`, where again `Int` is just an expression computing the
-desired type. The return type can be completely omitted in the case of functions
-which do not return a value.
+function. We declare the first parameter as `Int: a`. The `Int` part is an
+expression (here referring to a constant) that computes the type of the
+parameter. The `:` marks the end of the type expression and introduces the
+identifier for the parameter, `a`. The parameter names are introduced into the
+function's scope and can be referenced immediately after they are introduced.
+The return type is indicated with `-> Int`, where again `Int` is just an
+expression computing the desired type. The return type can be completely omitted
+in the case of functions which do not return a value.
 
 Calling functions involves a new form of expression: `Sum(1, 2)` for example.
 The first part, `Sum`, is an expression referring to the name of the function.
@@ -685,11 +685,11 @@ fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
 
 This function returns a tuple of two integers represented by the type
 `(Int, Int)`. The expression to return it uses a special tuple syntax to build a
-tuple within an expression: `(<expression>, <expression>)`. This is
-actually the same syntax in both cases. The return type is a tuple expression,
-and the first and second elements are expressions referring to the `Int` type.
-The only difference is the type of these expressions. Both are tuples, but one
-is a tuple of types.
+tuple within an expression: `(<expression>, <expression>)`. This is actually the
+same syntax in both cases. The return type is a tuple expression, and the first
+and second elements are expressions referring to the `Int` type. The only
+difference is the type of these expressions. Both are tuples, but one is a tuple
+of types.
 
 Element access uses subscript syntax:
 
