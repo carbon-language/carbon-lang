@@ -9,7 +9,7 @@ Mirrors the carbon-language organization to the contributors-with-label-access
 team.
 
 Set GITHUB_AUTH_KEY in your environment to use this script. e.g.:
-  GITHUB_AUTH_KEY=abc123 node update-triage-access.js
+  GITHUB_AUTH_KEY=abc123 node update-label-access.js
 
 This team exists because we need a team to manage triage access to repos;
 GitHub doesn't allow the org to be set to triage access, only read/write.
