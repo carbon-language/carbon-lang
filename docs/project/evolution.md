@@ -1,4 +1,4 @@
-# Governance and Evolution
+# Governance and evolution
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -13,7 +13,7 @@ expertise. The governance also needs to remain scalable and effective. It is
 essential to be able to make even controversial decisions in a reasonable and
 bounded timeframe.
 
-## Governance Structure
+## Governance structure
 
 Our governance structure supports
 [consensus decision-making](consensus_decision_making.md):
@@ -29,10 +29,10 @@ Our governance structure supports
 
 ## Evolution process
 
-Any substantive change to Carbon (whether the language, project, infrastructure,
-or otherwise) must be made through a process designed to both engage with the
-broader community and come to reasonable decisions in a timely fashion. We have
-guidelines for
+Any substantive change to Carbon -- whether the language, project,
+infrastructure, or otherwise -- must be made through a process designed to both
+engage with the broader community and come to reasonable decisions in a timely
+fashion. We have guidelines for
 [when to follow the evolution process](#when-to-follow-the-evolution-process).
 
 The process is:
@@ -63,7 +63,7 @@ The process is:
     3.  [(optional) Rollback the decision](#optional-rollback-the-decision)
     4.  [Execute on proposal decision](#execute-on-proposal-decision)
 
-## Coordination Tools
+## Coordination tools
 
 We use several tools to coordinate changes to Carbon:
 
@@ -155,9 +155,9 @@ should typically bias towards maintaining the status quo and letting the
 proposal come back with more information rather than overriding it. It is
 expected to be relatively rare that the arbiters need to take on this role.
 
-Arbiters may make a decision with a majority (two-to-one) vote. If they cannot
-reach a majority vote, e.g. due to an arbiter being unavailable, the decision
-returns to the core team.
+Arbiters may make a decision when at least two agree. If no two can agree the
+decision returns to the core team. For example, if an arbiter is unavailable,
+there may be a tie.
 
 There should always be three arbiters.
 
@@ -199,14 +199,14 @@ adding, removing, or replacing members using the usual evolution processes.
 
 ### When to follow the evolution process
 
-Any substantive change to Carbon (whether the language, project, infrastructure,
-or otherwise) should follow the evolution process. The meaning of "substantive"
-is subjective, but will generally include:
+Any substantive change to Carbon -- whether the language, project,
+infrastructure, or otherwise -- should follow the evolution process. The meaning
+of "substantive" is subjective, but will generally include:
 
 - Any semantic or syntactic language change that isn't fixing a bug.
-- Major changes to project infrastructure (including additions and removals).
+- Major changes to project infrastructure, including additions and removals.
 - Changes to the process itself.
-- Rolling back a finalized decision (even if never executed).
+- Rolling back a finalized decision, even if never executed.
 
 Changes which generally will not require this process are:
 
@@ -275,7 +275,7 @@ Google Docs can especially help iterate on a propsal with multiple authors.
 
 This template includes things like license headers and standard formatting. If
 you already have a non-templated Doc, please create a new Doc using the template
-and copy content over (without original formatting).
+and copy content over, without original formatting.
 
 If you use Google Docs for drafting, be sure to still use a Markdown pull
 request for the RFC.
@@ -290,11 +290,11 @@ request for the RFC.
 
 Authors may continue to use the `Evolution > Ideas` forum topic to advertise the
 proposal and elicit early, high-level feedback. Community commenters should
-favor GitHub comments (vs forum topic replies).
+favor GitHub comments over forum topic replies.
 
 ##### Actions
 
-- **Author**: Update (or create if needed) the `Evolution > Ideas` forum topic
+- **Author**: Update, or create if needed, the `Evolution > Ideas` forum topic
   to advertise the proposal and elicit early, high-level feedback.
   - Add the topic's link to the GitHub pull request.
 - **Community**: Provide [constructive commentary](commenting_guidelines.md) for
@@ -305,9 +305,8 @@ favor GitHub comments (vs forum topic replies).
 #### Request comments
 
 Once authors feel the proposal is in good shape for wider evaluation from the
-relevant reviewing team (the core team, at present), they begin the more formal
-process of evaluation by creating an `Evolution > RFCs` forum topic for
-technical review of the proposal.
+reviewing team, they begin the more formal process of evaluation by creating an
+`Evolution > RFCs` forum topic for technical review of the proposal.
 
 The topic should start off with a brief summary of the proposal and any prior
 discussion, as well as links to prior discussion topics.
@@ -357,7 +356,7 @@ on the revision rather than sending more feedback.
 The author should treat this as going back to the draft phase. When a new
 revision is ready, the authors start a new
 [request for comments](#request-comments) with an updated summary of the
-discussion points thus far (with links to those prior topics).
+discussion points thus far. Links to prior topics should be included.
 
 ##### Actions
 
@@ -425,8 +424,8 @@ removed if a decision is made before the meeting.
 Team members should familiarize themselves with the proposal and related
 discussion. Try to respond to the Discourse Forum topic promptly with:
 
-- A position (either affirming or objecting) is strongly preferred, although
-  standing aside is allowed.
+- A position, either affirming or objecting, is strongly preferred. Standing
+  aside is allowed.
   - Rationales for positions should be based on discussion on the proposal's
     `Evolution > RFCs` topic, and providing links helps write the decision.
 - A request for more time to review materials, to make it clear the intent is to
@@ -493,11 +492,9 @@ it.
 
 Once a decision has been reached, the review manager will draft a
 [formal decision](consensus_decision_making.md#formal-decision-content) based on
-Discourse Forums discussion and (if relevant) the meeting notes. They should
-prepare a pull request with a PDF of the proposal for reference of what was
-approved. They will post the draft decision to the `Evolution > Announcements`
-forum within two working days. The post will start the proposal decision comment
-period.
+Discourse Forums discussion and, if provided, the meeting notes. They will post
+the draft decision to the `Evolution > Announcements` forum within two working
+days. The post will start the proposal decision comment period.
 
 If the proposal is accepted, the author may now commit it. If it is deferred or
 declined, the author may decide how to proceed based on whether they'd like to
@@ -511,15 +508,21 @@ continue working on it.
     possibly with help from the reviewing team.
     - (optional): Create a GitHub issue for issues that should be revisited in
       the future. Link to these from the GitHub pull request.
-  - Create an `Evolution > Announcements` forum topic with the decision and a
-    summary of the rationale.
-    - Add the topic's link to the GitHub pull request.
-  - If the proposal is accepted, approve the pull request for commit.
+  - If the proposal was accepted:
+    - Prepare a GitHub pull request with the decision.
+    - Create an `Evolution > Announcements` forum topic and link to the proposal
+      and decision pull requests.
+    - Add the topic's link to the proposal's pull request.
+    - Approve the proposal's pull request for commit.
+  - If the proposal was deferred or declined:
+    - Comment on the proposal's pull request with the decision.
+    - Create an `Evolution > Announcements` forum topic and link to the proposal
+      and decision comment.
 - **Author**:
   - If the proposal is accepted:
     - Replace the GitHub pull request's `needs decision` label with `accepted`.
     - Commit the approved pull request.
-  - If the proposal is declined or deferred, decide how best to proceed:
+  - If the proposal was deferred or declined, decide how best to proceed:
     - If iterating on the proposal, replace the GitHub pull request's
       `needs decision` label with `WIP`.
     - If retracting the proposal, close the pull request.
@@ -545,14 +548,14 @@ address are:
 - Have concerns or alternatives been effectively understood, acknowledged, and
   addressed to the extent possible?
 
-If the decision is to approve the change, the author may start making changes
+If the decision is to accept the proposal, the author may start making changes
 described in the proposal which are easy to roll back before the decision review
 ends. If the author starts making changes, they must agree to help roll back
 changes if the decision is rolled back. This does not mean that the decision is
 final; however, we prefer to maintain velocity and roll back when needed. The
 reviewing team may additionally decide that some changes _must_ wait until the
-decision review is complete, e.g. if members are concerned that rollback costs
-are non-obvious.
+decision review is complete; for example, if members are concerned that rollback
+costs are non-obvious.
 
 ##### Actions
 
@@ -575,20 +578,20 @@ should be exceptional.
 - **Author**: Roll back the committed proposal and any dependent changes.
 - **Reviewing team member**: State new, non-consensus position on
   `Evolution > Decisions` forum topic.
-- **Review manager**: Return to
-  [asking the reviewing team for a proposal decision](#ask-the-reviewing-team-for-a-proposal-decision).
+- **Review manager**:
+  - Update the `Evolution > Announcements` forum topic to reflect the rollback.
+  - Return to
+    [asking the reviewing team for a proposal decision](#ask-the-reviewing-team-for-a-proposal-decision).
 
 #### Execute on proposal decision
 
 When the comment period ends without objections from the reviewing team, the
-review manager should finalize the decision (approved, rejected, deferred,
-etc.). The review manager should commit the proposal PDF for archival purposes.
+review manager should finalize the decision: accepted, deferred, declined, etc.
 
-If the decision is to approve the change, the author may make the changes
+If the decision is to accept the proposal, the author may make the changes
 described in the proposal. There may still be review comments, but those should
-exclusively deal with the **document** (formatting, structure, links, etc.), and
-not the proposal. The issue should **not** be re-argued on the pull request or
-other code reviews.
+focus on the **document**: formatting, structure, links, etc. The proposal
+should **not** be re-argued on the decision review.
 
 That does not mean that all decisions are final! Everyone involved in a decision
 is human and we all make mistakes. However, once there is a clear decision,
@@ -600,9 +603,8 @@ revisit the decision.
 ##### Actions
 
 - **Review manager**:
-  - Commit the proposal decision.
-    - Add a link to the committed decision to the proposal's pull request.
   - Update the `Evolution > Announcements` forum topic with the final decision.
+  - If the proposal was accepted, commit the proposal decision.
 - **Author**: Start making dependent changes to apply the proposal.
 
 ## Acknowledgements
