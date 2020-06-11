@@ -1,7 +1,7 @@
-{% assign active = "" %}
-{% if page.url == include.url %}
-  {% assign active = "active" %}
-{% endif %}
+{%- assign active = "" -%}
+{%- if page.url == include.url -%}
+  {%- assign active = "active" -%}
+{%- endif -%}
 <li class="{{active}}">
   <a href="{{include.url}}">{{include.title}}</a>
 </li>
