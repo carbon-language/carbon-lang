@@ -94,7 +94,7 @@ you intend to end up on the `trunk` branch needs to follow the same fundamental
 rules as the pull request above: they should each build and pass tests when
 landed in order, and they should have well written, cohesive commit messages.
 
-Prior to landing the pull request, you will want to rebase it (interactively or
+Prior to landing the pull request, you are expected to rebase it (interactively or
 non-interactively) to produce this final commit sequence. This kind of rebase
 rewrites the history in Git, which can make it hard to track the resolution of
 code review comments. Typically, only do this as a cleanup step when the review
