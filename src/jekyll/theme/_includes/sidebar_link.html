@@ -1,7 +1,14 @@
+{%- comment -%}
+  Outputs one link for the sidebar.
+
+  url: The URL to link ot.
+  title: The title of the link.
+{%- endcomment -%}
+
 {%- assign active = "" -%}
 {%- if page.url == include.url -%}
-  {%- assign active = "active" -%}
+  {%- assign active = ' class="active"' -%}
 {%- endif -%}
-<li class="{{active}}">
+<li{{active}}>
   <a href="{{include.url}}">{{include.title}}</a>
 </li>
