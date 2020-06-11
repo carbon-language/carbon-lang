@@ -155,9 +155,9 @@ should typically bias towards maintaining the status quo and letting the
 proposal come back with more information rather than overriding it. It is
 expected to be relatively rare that the arbiters need to take on this role.
 
-Arbiters may make a decision when at least two agree. If no two can agree the
-decision returns to the core team. For example, if an arbiter is unavailable,
-there may be a tie.
+Arbiters may make a decision when at least two agree. If no two can agree, then
+the decision returns to the core team. For example, if an arbiter is
+unavailable, there may be a tie.
 
 There should always be three arbiters.
 
