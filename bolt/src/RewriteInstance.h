@@ -342,6 +342,9 @@ public:
   /// Return true if the section holds debug information.
   static bool isDebugSection(StringRef SectionName);
 
+  /// Return true if the section holds linux kernel symbol information.
+  static bool isKSymtabSection(StringRef SectionName);
+
   using SectionPatchersType =
       std::map<std::string, std::unique_ptr<BinaryPatcher>>;
 

@@ -84,6 +84,7 @@ extern cl::opt<bool> X86AlignBranchWithin32BBoundaries;
 namespace opts {
 
 extern bool HeatmapMode;
+extern bool LinuxKernelMode;
 
 extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltDiffCategory;
@@ -1153,6 +1154,13 @@ void RewriteInstance::discoverFileObjects() {
       BF->addAlternativeName(UniqueName);
     } else {
       auto Section = BC->getSectionForAddress(Address);
+      // Skip symbols from invalid sections
+      if (!Section) {
+        errs() << "BOLT-WARNING: " << UniqueName << " (0x"
+               << Twine::utohexstr(Address)
+               << ") does not have any section\n";
+        continue;
+      }
       assert(Section && "section for functions must be registered");
 
       // Skip symbols from zero-sized sections.
@@ -1489,7 +1497,16 @@ void RewriteInstance::readSpecialSections() {
                    << "\n");
       if (isDebugSection(SectionName))
         HasDebugInfo = true;
+      if (isKSymtabSection(SectionName))
+        opts::LinuxKernelMode = true;
     }
+  }
+
+  if (opts::LinuxKernelMode && !opts::HeatmapMode) {
+    errs() << "BOLT-ERROR: input binary seems like the vmlinux binary"
+           << " as it has linux kernel symbol information, for which we"
+           << " only support heatmap generation right now!!!\n";
+    exit(1);
   }
 
   if (HasDebugInfo && !opts::UpdateDebugSections && !opts::AggregateOnly) {
@@ -1560,8 +1577,10 @@ void RewriteInstance::readSpecialSections() {
 
   parseSDTNotes();
 
-  // Read .dynamic/PT_DYNAMIC.
-  readELFDynamic();
+  if (!opts::LinuxKernelMode) {
+    // Read .dynamic/PT_DYNAMIC.
+    readELFDynamic();
+  }
 }
 
 void RewriteInstance::adjustCommandLineOptions() {
@@ -4538,6 +4557,13 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
 
 bool RewriteInstance::isDebugSection(StringRef SectionName) {
   if (SectionName.startswith(".debug_") || SectionName == ".gdb_index")
+    return true;
+
+  return false;
+}
+
+bool RewriteInstance::isKSymtabSection(StringRef SectionName) {
+  if (SectionName.startswith("__ksymtab"))
     return true;
 
   return false;

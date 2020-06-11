@@ -42,6 +42,7 @@ namespace opts {
 
 extern cl::OptionCategory AggregatorCategory;
 extern bool HeatmapMode;
+extern bool LinuxKernelMode;
 extern cl::SubCommand HeatmapCommand;
 extern cl::opt<bool> AggregateOnly;
 extern cl::opt<std::string> OutputFilename;
@@ -84,6 +85,13 @@ static cl::opt<unsigned long long>
 HeatmapMaxAddress("max-address",
   cl::init(0xffffffff),
   cl::desc("maximum address considered valid for heatmap (default 4GB)"),
+  cl::Optional,
+  cl::sub(HeatmapCommand));
+
+static cl::opt<unsigned long long>
+HeatmapMinAddress("min-address",
+  cl::init(0x0),
+  cl::desc("minimum address considered valid for heatmap (default 0)"),
   cl::Optional,
   cl::sub(HeatmapCommand));
 
@@ -545,9 +553,26 @@ Error DataAggregator::preprocessProfile(BinaryContext &BC) {
     Line = 1;
   };
 
-  prepareToParse("mmap events", MMapEventsPPI);
-  if (parseMMapEvents()) {
-    errs() << "PERF2BOLT: failed to parse mmap events\n";
+  if (opts::LinuxKernelMode) {
+    // Current MMap parsing logic does not work with linux kernel.
+    // MMap entries for linux kernel uses PERF_RECORD_MMAP
+    // format instead of typical PERF_RECORD_MMAP2 format.
+    // Since linux kernel address mapping is absolute (same as
+    // in the ELF file), we avoid parsing MMap in linux kernel mode.
+    // While generating optimized linux kernel binary, we may need
+    // to parse MMap entries.
+
+    // In linux kernel mode, we analyze and optimize
+    // all linux kernel binary instructions, irrespective
+    // of whether they are due to system calls or due to
+    // interrupts. Therefore, we cannot ignore interrupt
+    // in Linux kernel mode.
+    opts::IgnoreInterruptLBR = false;
+  } else {
+    prepareToParse("mmap events", MMapEventsPPI);
+    if (parseMMapEvents()) {
+      errs() << "PERF2BOLT: failed to parse mmap events\n";
+    }
   }
 
   prepareToParse("task events", TaskEventsPPI);
@@ -1088,7 +1113,7 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
   if (std::error_code EC = PIDRes.getError())
     return EC;
   auto MMapInfoIter = BinaryMMapInfo.find(*PIDRes);
-  if (MMapInfoIter == BinaryMMapInfo.end()) {
+  if (!opts::LinuxKernelMode && MMapInfoIter == BinaryMMapInfo.end()) {
     consumeRestOfLine();
     return make_error_code(errc::no_such_process);
   }
@@ -1305,7 +1330,12 @@ std::error_code DataAggregator::printLBRHeatMap() {
   NamedRegionTimer T("parseBranch", "Parsing branch events", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
 
-  Heatmap HM(opts::HeatmapBlock, opts::HeatmapMaxAddress);
+  if (opts::LinuxKernelMode) {
+    opts::HeatmapMaxAddress = 0xffffffffffffffff;
+    opts::HeatmapMinAddress = KernelBaseAddr;
+  }
+  Heatmap HM(opts::HeatmapBlock, opts::HeatmapMinAddress,
+             opts::HeatmapMaxAddress);
   uint64_t NumTotalSamples{0};
 
   while (hasData()) {

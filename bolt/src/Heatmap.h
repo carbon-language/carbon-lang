@@ -22,6 +22,9 @@ class Heatmap {
   /// Number of bytes per entry in the heat map.
   size_t BucketSize;
 
+  /// Minimum address that is considered to be valid.
+  uint64_t MinAddress;
+
   /// Maximum address that is considered to be valid.
   uint64_t MaxAddress;
 
@@ -33,12 +36,13 @@ class Heatmap {
 
 public:
   explicit Heatmap(uint64_t BucketSize = 4096,
+                   uint64_t MinAddress = 0,
                    uint64_t MaxAddress = std::numeric_limits<uint64_t>::max())
-    : BucketSize(BucketSize), MaxAddress(MaxAddress)
+    : BucketSize(BucketSize), MinAddress(MinAddress), MaxAddress(MaxAddress)
   {};
 
   inline bool ignoreAddress(uint64_t Address) const {
-    return Address > MaxAddress;
+    return (Address > MaxAddress) || (Address < MinAddress);
   }
 
   /// Register a single sample at \p Address.
