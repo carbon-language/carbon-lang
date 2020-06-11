@@ -1,90 +1,109 @@
 <ul id="mysidebar" class="nav">
-  {% for entry in site.data.sidebar.entries %} {% for folder in entry.folders %}
   <li>
-    <a title="{{folder.title}}" href="#">{{folder.title}}</a>
+    <a href="#">Overview</a>
     <ul>
-      {% for folderitem in folder.folderitems %} {% if folderitem.external_url
-      %}
-      <li>
-        <a
-          title="{{folderitem.title}}"
-          href="{{folderitem.external_url}}"
-          target="_blank"
-          rel="noopener"
-          >{{folderitem.title}}</a
-        >
-      </li>
-      {% elsif page.url == folderitem.url %}
-      <li class="active">
-        <a title="{{folderitem.title}}" href="{{folderitem.url}}"
-          >{{folderitem.title}}</a
-        >
-      </li>
-      {% elsif folderitem.type == "empty" %}
-      <li>
-        <a title="{{folderitem.title}}" href="{{folderitem.url}}"
-          >{{folderitem.title}}</a
-        >
-      </li>
-
-      {% else %}
-      <li>
-        <a title="{{folderitem.title}}" href="{{folderitem.url}}"
-          >{{folderitem.title}}</a
-        >
-      </li>
-      {% endif %} {% for subfolders in folderitem.subfolders %}
-      <li class="subfolders">
-        <a title="{{subfolders.title}}" href="#">{{ subfolders.title }}</a>
-        <ul>
-          {% for subfolderitem in subfolders.subfolderitems %} {% if
-          subfolderitem.external_url %}
-          <li>
-            <a
-              title="{{subfolderitem.title}}"
-              href="{{subfolderitem.external_url}}"
-              target="_blank"
-              rel="noopener"
-              >{{subfolderitem.title}}</a
-            >
-          </li>
-          {% elsif page.url == subfolderitem.url %}
-          <li class="active">
-            <a title="{{subfolderitem.title}}" href="{{subfolderitem.url}}"
-              >{{subfolderitem.title}}</a
-            >
-          </li>
-          {% else %}
-          <li>
-            <a title="{{subfolderitem.title}}" href="{{subfolderitem.url}}"
-              >{{subfolderitem.title}}</a
-            >
-          </li>
-          {% endif %} {% endfor %}
-        </ul>
-      </li>
-      {% endfor %} {% endfor %}
-      <!-- Add proposals to the proposals folder. -->
-      {% if folder.title == "Proposals" %}
-        {% for proposal in site.pages %}
-          {% assign path = proposal.url | split: "/" %}
-          {% if path[1] == "proposals" %}
-          {% unless path[2] contains "template" %}
-            {% assign active = "" %}
-            {% if page.url == proposal.url %}
-              {% assign active = "active" %}
-            {% endif %}
-            <li class="{{active}}">
-              <a title="{{proposal.title}}"
-                 href="{{proposal.url}}">{{proposal.title}}</a>
-            </li>
-          {% endunless %}
-          {% endif %}
-        {% endfor %}
-      {% endif %}
+      {% include sidebar_link.html url="/" title="Carbon language" %}
+      <!-- Auto-index root-level files. --!>
+      {% for item in site.pages %}
+        {% assign path = item.url | split: "/" %}
+        {% if item.search == true and
+              path.size == 2 and
+              path.last contains ".html" and
+              path.last != "README.html" %}
+          {% include sidebar_link.html url=item.url title=item.title %}
+        {% endif %}
+      {% endfor %}
     </ul>
   </li>
-  {% endfor %} {% endfor %}
+
+  <!-- Auto-index docs folders. --!>
+  {% for folder in site.pages %}
+    {% unless folder.url contains ".html" %}
+      {% assign folderPath = folder.url | split: "/" %}
+      {% if folderPath.size == 3 and folderPath[1] == "docs" %}
+        <li>
+          <a href="#">{{folder.title}}</a>
+          <ul>
+            {% include sidebar_link.html url=folder.url title="About" %}
+            <!-- Auto-index folder files. --!>
+            {% for folderItem in site.pages %}
+              {% assign folderItemPath = folderItem.url | split: "/" %}
+              {% if folderItem.search == true and
+                    folderItemPath.size == 4 and
+                    folderItemPath[1] == folderPath[1] and
+                    folderItemPath[2] == folderPath[2] and
+                    folderItemPath.last contains ".html" and
+                    folderItemPath.last != "README.html" %}
+                {% include sidebar_link.html
+                           url=folderItem.url
+                           title=folderItem.title %}
+              {% endif %}
+            {% endfor %}
+            <!-- Auto-index sub-folders. --!>
+            {% for subFolder in site.pages %}
+              {% unless subFolder.url contains ".html" %}
+                {% assign subFolderPath = subFolder.url | split: "/" %}
+                {% if subFolderPath.size == 4 and
+                      subFolderPath[1] == folderPath[1] and
+                      subFolderPath[2] == folderPath[2] %}
+                  <li>
+                    <a href="#">{{subFolder.title}}</a>
+                    <ul>
+                      {% include sidebar_link.html
+                                 url=subFolder.url
+                                 title="About" %}
+                      <!-- Auto-index sub-folder files. --!>
+                      {% for subFolderItem in site.pages %}
+                        {% assign subFolderItemPath = subFolderItem.url |
+                                  split: "/" %}
+                        {% if subFolderItem.search == true and
+                              subFolderItemPath.size == 5 and
+                              subFolderItemPath[1] == subFolderPath[1] and
+                              subFolderItemPath[2] == subFolderPath[2] and
+                              subFolderItemPath[3] == subFolderPath[3] and
+                              subFolderItemPath.last contains ".html" and
+                              subFolderItemPath.last != "README.html" %}
+                          {% include sidebar_link.html
+                                     url=subFolderItem.url
+                                     title=subFolderItem.title %}
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  <li>
+                {% endif %}
+              {% endunless %}
+            {% endfor %}
+          </ul>
+        <li>
+      {% endif %}
+    {% endunless %}
+  {% endfor %}
+
+  <li>
+    <a href="#">Proposals</a>
+    <ul>
+      {% include sidebar_link.html url="/proposals/" title="About" %}
+      <!-- Auto-index proposals. --!>
+      {% for item in site.pages %}
+        {% assign itemPath = item.url | split: "/" %}
+        {% if item.search == true and
+              itemPath.size == 3 and
+              itemPath[1] == "proposals" and
+              itemPath.last contains ".html" and
+              itemPath.last != "README.html" %}
+          {% unless itemPath.last contains "template" %}
+            {% assign title = itemPath.last |
+                              remove: "p" |
+                              remove: "-decision" |
+                              remove: ".html" |
+                              append: ": " |
+                              append: item.title %}
+            {% include sidebar_link.html url=item.url title=title %}
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </li>
 </ul>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
