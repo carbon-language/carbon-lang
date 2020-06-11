@@ -1191,14 +1191,7 @@ h4.panel-title {
     }
 }
 
-/** Hide the title because it's repeated above the TOC. */
-h1.post-title-main {
-  display: block;
-}
-h1 {
-  display: none;
-}
-
+/** Use a three-column layout for pages. */
 .main-sidebar {
   float: left;
   height: 100%;
@@ -1214,3 +1207,12 @@ h1 {
   width: 30rem;
   height: 100%;
 }
+
+/** Hide the title because it's repeated above the TOC. */
+h1.post-title-main {
+  display: block;
+}
+h1 {
+  display: none;
+}
+
