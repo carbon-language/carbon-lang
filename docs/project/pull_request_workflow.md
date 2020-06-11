@@ -8,14 +8,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon repositories follow a few basic principles:
 
-- Development directly on the `trunk` branch and revert to green
-- Always use pull requests, rather than pushing directly
-- Changes should be small, incremental, and review-optimized
-- Linear history through
+- Development directly on the `trunk` branch and revert to green.
+- Always use pull requests, rather than pushing directly.
+- Changes should be small, incremental, and review-optimized.
+- Preserve linear history by
   [rebasing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#rebase-and-merge-your-pull-request-commits)
   or
   [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits),
-  rather than merge commits from branches or forks
+  pull requests rather than using unsquashed merge commits.
 
 These principles try to optimize for several different uses or activities with
 version control:
@@ -35,19 +35,20 @@ developed.
 
 ## Trunk based development
 
-We work in a simple [trunk-based
-development](https://trunkbaseddevelopment.com/) model. This means all
-development activity takes place on a single common `trunk` branch in the
-repository (our default branch). We focus on [small, incremental
-changes](#small_incremental_changes) rather than feature branches or the
-"scaled" variations of this workflow.
+We work in a simple
+[trunk-based development](https://trunkbaseddevelopment.com/) model. This means
+all development activity takes place on a single common `trunk` branch in the
+repository (our default branch). We focus on
+[small, incremental changes](#small_incremental_changes) rather than feature
+branches or the "scaled" variations of this workflow.
 
-The `trunk` branch should always stay green, and if we discover bugs or errors,
-we revert to green by default. Fixing forward is fine if that will be comparably
-fast and efficient. The goal isn't to dogmatically avoid fixing forward, but to
-prioritize getting back to green quickly. We hope to eventually tool this
-through automatic continuous-integration powered submit queues, but even those
-can fail and the principle remains.
+The `trunk` branch should always stay "green". That means that if tests fail or
+if we discover bugs or errors, we revert to a "green" state (where the failure
+or bug is no longer present) by default. Fixing forward is fine if that will be
+comparably fast and efficient. The goal isn't to dogmatically avoid fixing
+forward, but to prioritize getting back to green quickly. We hope to eventually
+tool this through automatic continuous-integration powered submit queues, but
+even those can fail and the principle remains.
 
 ## Always use pull requests (with review) rather than pushing directly
 
@@ -94,8 +95,8 @@ you intend to end up on the `trunk` branch needs to follow the same fundamental
 rules as the pull request above: they should each build and pass tests when
 landed in order, and they should have well written, cohesive commit messages.
 
-Prior to landing the pull request, you are expected to rebase it (interactively or
-non-interactively) to produce this final commit sequence. This kind of rebase
+Prior to landing the pull request, you are expected to rebase it (interactively
+or non-interactively) to produce this final commit sequence. This kind of rebase
 rewrites the history in Git, which can make it hard to track the resolution of
 code review comments. Typically, only do this as a cleanup step when the review
 has finished, or when it won't otherwise disrupt code review. Adding "addressing
