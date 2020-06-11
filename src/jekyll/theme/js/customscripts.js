@@ -11,7 +11,29 @@ $(document).ready(function () {
     headers: 'h2,h3,h4'
   });
 
-$( document ).ready(function() {
+  // This script says, if the height of the viewport is greater than 800px,
+  // then insert affix class, which makes the nav bar float in a fixed
+  // position as your scroll. If you have a lot of nav items, this height may
+  // not work for you.
+  var h = $(window).height();
+  if (h > 800) {
+    $('#mysidebar').attr('class', 'nav affix');
+  }
+  // Activate tooltips. Although this is a bootstrap js function, it must be
+  // activated this way in your theme.
+  $('[data-toggle="tooltip"]').tooltip({
+    placement: 'top'
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function (event) {
+  // If the markdown has its own TOC, hide it.
+  const content = document.getElementById('post-content');
+  if (content) {
+    for (var i = 0; i < content.children.length; ++i) {
+      // Scan for a TOC.
+      var child = content.children[i];
+      if (child.outerHTML != '<h2>Table of contents</h2>') continue;
 
       // Starting with the TOC header, elements until the next header.
       child.style.display = 'none';
