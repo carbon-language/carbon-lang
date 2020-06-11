@@ -92,6 +92,7 @@
               itemPath.last contains ".html" and
               itemPath.last != "README.html" %}
           {% unless itemPath.last contains "template" %}
+            <!-- Use the proposal number as a prefix. -->
             {% assign title = itemPath.last |
                               remove: "p" |
                               remove: "-decision" |
