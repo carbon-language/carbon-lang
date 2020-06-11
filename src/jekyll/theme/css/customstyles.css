@@ -249,7 +249,6 @@ div#toc ul {
     background-color: whitesmoke;
     padding: 5px;
     border-radius: 5px;
-    max-width: 300px;
     color: gray;
 }
 
@@ -263,7 +262,7 @@ div#toc ul li ul li::before {
 }
 
 div#toc >ul::before {
-    content: "Table of Contents";
+    content: "Table of contents";
     font-weight: 500;
     color: #555;
     text-align:center;

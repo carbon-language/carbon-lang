@@ -24,9 +24,9 @@ layout: default
 
 {% include custom/{{page.map_name}}.html %} {% endif %}
 
-<div class="post-content">
-  {% unless page.toc == false %} {% include toc.html %} {% endunless %} {% if
-  site.github_editme_path %}
+<div id="post-content" class="post-content">
+  <div id="toc"></div>
+  {% if site.github_editme_path %}
 
   <a
     target="_blank"
