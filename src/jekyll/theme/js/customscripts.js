@@ -11,14 +11,6 @@ $(document).ready(function () {
     headers: 'h2,h3,h4'
   });
 
-  // This script says, if the height of the viewport is greater than 800px,
-  // then insert affix class, which makes the nav bar float in a fixed
-  // position as your scroll. If you have a lot of nav items, this height may
-  // not work for you.
-  var h = $(window).height();
-  if (h > 800) {
-    $('#mysidebar').attr('class', 'nav affix');
-  }
   // Activate tooltips. Although this is a bootstrap js function, it must be
   // activated this way in your theme.
   $('[data-toggle="tooltip"]').tooltip({

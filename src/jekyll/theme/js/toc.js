@@ -15,7 +15,6 @@
     var headers = $(settings.headers).filter(function() {
       // get all headers with an ID
       var previousSiblingName = $(this).prev().attr( "name" );
-      console.log(this.textContent);
       if (this.textContent == "Table of contents") return false;
       if (!this.id && previousSiblingName) {
         this.id = $(this).attr( "id", previousSiblingName.replace(/\./g, "-") );

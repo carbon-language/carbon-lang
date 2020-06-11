@@ -851,23 +851,16 @@ span.soft {
     }
 }
 
-@media (max-width: 990px) {
-    #mysidebar {
+@media (max-width: 991px) {
+    ul#mysidebar {
         position: relative;
+        max-width: 100%;
     }
 }
 
-@media (min-width: 1000px) {
-
+@media (min-width: 992px) {
     ul#mysidebar {
         width: 225px;
-    }
-}
-
-@media (max-width: 900px) {
-
-    ul#mysidebar {
-        max-width: 100%;
     }
 }
 
@@ -1204,4 +1197,20 @@ h1.post-title-main {
 }
 h1 {
   display: none;
+}
+
+.main-sidebar {
+  float: left;
+  height: 100%;
+  width: 30rem;
+}
+.main-content {
+  float: left;
+  max-width: 960px;
+  width: 80%;
+}
+.main-toc {
+  float: left;
+  width: 30rem;
+  height: 100%;
 }
