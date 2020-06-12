@@ -36,22 +36,23 @@ These are non-exhaustive examples of design decisions where we are and are not
 willing to compromise on C++/Carbon interoperability for the sake of other goals
 like performance, safety, and Carbon ergonomics.
 
-- Concrete C++ types should be usable from Carbon, and vice versa, at least on
-  an opt-in basis. Possibly not all C++ types need be usable from Carbon, only
-  ones tagged in some special way, but in any case crossing the language
-  boundary should not require copying data to adhere to a different memory
-  layout. At an implementation level, this might mean that a Carbon ABI has
-  multiple memory layout strategies, one of which is C++'s, just as a C++
-  compiler today supports multiple calling conventions for the sake of
-  interoperability with C and other languages.
+- Concrete C++ types must be usable from Carbon, and vice versa; it shouldn't be
+  necessary to make a copy of an object when crossing the language boundary.
+  There may be some C++ types that can't be used in Carbon without extra effort,
+  but most C++ types should work in Carbon by default without requiring any
+  changes to the C++ code. In particular:
 
   - C++ classes with private member variables and virtual functions should work
-    in Carbon.
-  - C++ protocol buffers should work in Carbon.
+    in Carbon, even complicated types like
+    [protocol buffers](https://developers.google.com/protocol-buffers).
   - C++ vocabulary types like `std::string`, `std::vector`, `std::tuple`, and
     `absl::flat_hash_map` should work in Carbon.
+  - There needs to be a way for Carbon to export types that can be used from
+    C++, even types with complicated interfaces. It's acceptable if this is an
+    "opt-in" mechanism. At an implementation level, this might mean that a
+    Carbon ABI has multiple memory layout strategies, one of which is C++'s.
 
-- Many C++ libraries have an API where a client is expected to supply an object
+* Many C++ libraries have an API where a client is expected to supply an object
   that inherits from a specific abstract base class, so it should be possible
   for a Carbon struct to implement a C++ interface.
 
@@ -64,18 +65,18 @@ like performance, safety, and Carbon ergonomics.
     and it remains to be seen whether that can be done if Carbon doesn't have
     classes.
 
-- Carbon doesn't need to have exactly the same set of primitive integer types as
+* Carbon doesn't need to have exactly the same set of primitive integer types as
   C++, so long as it's possible to know which Carbon type(s) a C++ integer type
   maps to, given a target platform.
 
-- Carbon doesn't have to support C++ exceptions, still less throwing exceptions
+* Carbon doesn't have to support C++ exceptions, still less throwing exceptions
   across the C++/Carbon boundary. Carbon could, for example, take the same
   approach that
   [Swift does](https://github.com/apple/swift/blob/master/docs/CppInteroperabilityManifesto.md#baseline-functionality-import-functions-as-non-throwing-terminate-on-uncaught-c-exceptions):
   if C++ code throws an exception that propagates into a Carbon stack frame, we
   terminate the program.
 
-- Carbon's design for object lifetime and aliasing will be made for the sake of
+* Carbon's design for object lifetime and aliasing will be made for the sake of
   performance and safety, even if that means conflicting with C++ rules. For
   example, Carbon need not adopt C++ rules about lifetimes of temporaries and
   could adopt stricter rules, even though that would require more care in using
@@ -87,7 +88,7 @@ like performance, safety, and Carbon ergonomics.
     different lifetime rules, then it will be harder to use such a C++ function
     safely from Carbon.
 
-- It should be possible to use Carbon's parameterized types with concrete C++
+* It should be possible to use Carbon's parameterized types with concrete C++
   types. For example, there should be some way of putting C++ objects in Carbon
   containers like vectors or hash maps.
 
@@ -98,7 +99,7 @@ like performance, safety, and Carbon ergonomics.
     might imagine requiring some kind of wrapper or declaration, so long as it
     doesn't impose too much boilerplate or performance overhead.
 
-- Since C++ libraries and vocabulary types are frequently written in terms of
+* Since C++ libraries and vocabulary types are frequently written in terms of
   templates, it should be possible to instantiate C++ templates with Carbon
   types.
 
@@ -110,9 +111,9 @@ like performance, safety, and Carbon ergonomics.
     open question. It's a common technique, but supporting it would require
     tight intertwining between C++ and Carbon template instantiation.
 
-- C++ type traits should work correctly on Carbon types.
+* C++ type traits should work correctly on Carbon types.
 
-- Carbon code should be able to use C++ APIs that are defined in terms of
+* Carbon code should be able to use C++ APIs that are defined in terms of
   incomplete types.
   - However, Carbon code will not necessarily be able to define incomplete types
     with exactly the same look and feel as in C++. Carbon might satisfy these
