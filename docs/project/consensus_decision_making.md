@@ -1,4 +1,4 @@
-# Carbon: Consensus decision-making
+# Consensus decision-making
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -103,9 +103,9 @@ items, meetings will not be held.
 Agenda items (e.g., proposals) should be added at least one week in advance (or
 four working days, if longer), so that members have time to review items added
 to the agenda. Sub-items (e.g., proposal discussion points) should be added at
-least one day before the meeting; every open Google Doc comment is implicitly a
-sub-item. Please feel free to add items to the agenda and remove them later if
-the agenda item is resolved over other communication forums.
+least one day before the meeting. Please feel free to add items to the agenda
+and remove them later if the agenda item is resolved over other communication
+forums.
 
 Team members are expected to prepare for the meeting by ensuring they're
 familiar with the proposal and related discussion. The meeting will not include

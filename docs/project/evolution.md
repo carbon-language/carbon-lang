@@ -1,4 +1,4 @@
-# Carbon: Governance and Evolution
+# Governance and Evolution
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -67,21 +67,21 @@ The process is:
 
 We use several tools to coordinate changes to Carbon:
 
+- **GitHub pull requests** contain the proposals and related discussion.
+  Resolved proposals wil be committed with the associated decision. The pull
+  request's description should link all related Discourse Forum topics and other
+  references for easy browsing.
 - **Discourse Forum** topics will be used for the early idea discussion, any
   deeper discussions, or more high-level and meta points.
 - **Discord Chat** can be used for quick and real-time chats and Q&A.
   - If there are important technical points raised or addressed, they should get
     summarized on a relevant Discourse Forum topic.
-- **Google Docs** is used for writing and reviewing proposals. This facilitates
+- **Google Docs** may be used for early draft proposals. This facilitates
   collaborative editing and easy commenting about wording issues.
 - **Google Hangouts Meet** will be used for VC meetings, typically for
   decisions.
   - Meetings should typically be summarized on a relevant Discourse Forum topic.
 - **Google Calendar** will be used to track team meeting and vacation times.
-- **GitHub issues** track the proposal process and life cycle. These are only
-  used to track the process, and should not be used for discussion. All Google
-  Docs and Discourse Forum topics should be linked from the issue for easy
-  indexing.
 
 ## Governance structure
 
@@ -241,35 +241,20 @@ efficient.
 
 #### Make a proposal
 
-The first part of making a proposal is to write up a Google Doc explaining,
-roughly in the following order:
-
-- **Problem**: Information about the problem the proposal is trying to solve.
-- **Background**: Background on the problem and information needed to understand
-  the proposed solution.
-- **Proposal**: An overview of the solution.
-- **Details**: Details of how the proposed solution should be implemented.
-- **Alternatives**: Information about alternative solutions or details that were
-  considered and rejected.
-
-We use a
-[template for proposals](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview)
-to make it easier for readers to recognize the style and structure. If you
-already have a non-templated Doc, create a Doc using the template and copy
-content over (without the original formatting) so that things like the license
-header are present.
-
-Also create
-[the initial GitHub tracking issue](https://github.com/carbon-language/carbon-proposals/issues/new?template=proposal.md).
-Don't worry about whether the proposal will go anywhere; issues are cheap.
-GitHub issues are expected to be used as an index of different in-flight
-proposals, and may be helpful when trying to find others with similar ideas.
+We use a [template for proposals](/proposals/template.md) to make it easier for
+readers to recognize the style and structure. Follow the instructions under
+"TODO: Initial proposal setup".
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
 [Inverted Pyramid](<https://en.wikipedia.org/wiki/Inverted_pyramid_(journalism)>)
 or [BLUF](<https://en.wikipedia.org/wiki/BLUF_(communication)>) writing style to
 help readers rapidly skim the material.
+
+The proposal's pull request may include changes in the same repo. Please be
+thoughtful about how much effort you invest this way: it can help illustrate the
+intent of a proposal and avoid duplicating text in the proposal, but proposals
+may also need to be rewritten substantially or be deferred/declined.
 
 Where parts of a proposal may have several ways to address them, feel free to
 list options and mark them as "open questions". When describing an open
@@ -281,26 +266,37 @@ reviewing team.
 Where the proposal makes a decision between multiple options, move them to the
 "alternatives" section so that it's clear why a given choice was made.
 
+##### Drafting using Google Docs
+
+You may optionally use the
+[Google Docs template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview)
+for early proposal versions, which can be transferred to Markdown later. Using
+Google Docs can especially help iterate on a propsal with multiple authors.
+
+This template includes things like license headers and standard formatting. If
+you already have a non-templated Doc, please create a new Doc using the template
+and copy content over (without original formatting).
+
+If you use Google Docs for drafting, be sure to still use a Markdown pull
+request for the RFC.
+
 ##### Actions
 
 - **Author**:
-  - Write the proposal using
-    [the template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview).
-    - The template has additional items under "TODO: Initial proposal setup".
-    - Note that Google Doc and GitHub issue templates have the status set to
-      `WIP`.
+  - Write the proposal using [the template](/proposals/template.md).
+    - The template has additional actions under "TODO: Initial proposal setup".
 
 #### (optional) Elicit early, high-level feedback on the proposal
 
 Authors may continue to use the `Evolution > Ideas` forum topic to advertise the
 proposal and elicit early, high-level feedback. Community commenters should
-favor the forum topic (vs Doc comments) for high-level discussion.
+favor GitHub comments (vs forum topic replies).
 
 ##### Actions
 
 - **Author**: Update (or create if needed) the `Evolution > Ideas` forum topic
   to advertise the proposal and elicit early, high-level feedback.
-  - Add the topic's link to the GitHub issue.
+  - Add the topic's link to the GitHub pull request.
 - **Community**: Provide [constructive commentary](commenting_guidelines.md) for
   ideas when feedback is solicited.
 
@@ -310,8 +306,8 @@ favor the forum topic (vs Doc comments) for high-level discussion.
 
 Once authors feel the proposal is in good shape for wider evaluation from the
 relevant reviewing team (the core team, at present), they begin the more formal
-process of evaluation by creating an `Evolution > Proposal Reviews` forum topic
-for technical review of the proposal.
+process of evaluation by creating an `Evolution > RFCs` forum topic for
+technical review of the proposal.
 
 The topic should start off with a brief summary of the proposal and any prior
 discussion, as well as links to prior discussion topics.
@@ -319,16 +315,15 @@ discussion, as well as links to prior discussion topics.
 ##### Actions
 
 - **Author**:
-  - Set both the Google Doc status and GitHub issue status label to `RFC`.
-  - Create an `Evolution > RFC` forum topic.
-    - Summarize the discussion points, along with a link to the Google Doc and
-      GitHub issue.
-    - Add the topic's link to the GitHub issue.
+  - Replace the GitHub pull request's `WIP` label with `RFC`.
+  - Create an `Evolution > RFCs` forum topic.
+    - Summarize the discussion points, along with a link to the pull request.
+    - Add the topic's link to the pull request's description.
 
 #### Community and reviewing team comments on proposal
 
 Anyone in the community is welcome to
-[respond on an RFC](commenting_guidelines.md). The reviewing team is _expected_
+[comment on an RFC](commenting_guidelines.md). The reviewing team is _expected_
 to participate at least enough to provide any relevant feedback.
 
 Proposal authors should actively engage in the discussion and incorporate
@@ -346,7 +341,7 @@ also be added where the author isn't confident about the best approach.
 ##### Actions
 
 - **Author**:
-  - Update the Doc and/or comment in the topic to address feedback.
+  - Update the proposal and/or reply to comments to address feedback.
   - Create GitHub issues for any open questions to be revisited later.
 - **Reviewing team and community**: Provide
   [constructive commentary](commenting_guidelines.md) for proposals.
@@ -369,7 +364,7 @@ discussion points thus far (with links to those prior topics).
 - **Author**:
   - Announce to the Discourse Forum topic that the proposal is undergoing major
     revision.
-  - Set both the Google Doc status and GitHub issue status label to `WIP`.
+  - Replace the GitHub pull request's `RFC` label with `WIP`.
 - **Reviewing team and community**: Refrain from commenting until the author
   solicits feedback again.
 
@@ -385,43 +380,38 @@ The review manager is responsible for validating that the proposal is ready for
 the reviewing team to make a decision. They will ensure that at least a couple
 members of the reviewing team have reviewed the document before it leaves RFC.
 
-If the proposal is ready, the review manager will put out a last call for
-community comments on the main discussion topic. If nothing significant arises,
-the reviewing team will be asked to start making a decision after a day.
+The review manager will announce a planned end to the community comment period
+on the "Evolution > RFCs" topic. The message will specify the end date, which
+will be at least one week (or four working days, if longer) after the
+announcement. If nothing significant arises, the reviewing team will be asked to
+start making a decision as scheduled. Otherwise, the review manager may extend
+the comment period by posting another message to the "Evolution > RFCs" topic.
 
 ##### Actions
 
 - **Author**:
   - Ensure all comments are resolved.
   - Create a `Evolution > Review manager requests` topic asking for a review
-    manager, providing a link to the proposal's Doc and GitHub issue.
-    - Add the topic's link to the GitHub issue.
+    manager, providing a link to the proposal's GitHub pull request.
+    - Add the topic's link to the GitHub pull request.
 - **Review manager**:
   - Ask reviewing team members to review the proposal when needed.
   - Double-check that comment threads are addressed by the proposal.
-  - Update the `Evolution > RFC` topic with a last call for comments.
+  - Update the `Evolution > RFCs` topic with a last call for comments.
 
 ### Reviewing team makes a proposal decision
 
 #### Prepare the document for a proposal decision
 
 Going into a decision, it's expected that no more significant changes will be
-made. The review manager should ask the proposal author to transfer ownership of
-the proposal's Doc to the review manager. The review manager should then change
-all "edit" access to "comment".
-
-For the rest of the review, the review manager should reject all non-typo
-suggestions to the proposal. Although the author should continue to respond to
-reviewing team comments, if any significant changes need to be made, the
-decision should be cancelled and the proposal should be returned to the author
-for major revision.
+made. The proposal author should stop making any non-typo edits to the text. Any
+significant edit will be treated as a major revision, cancelling the decision
+request. The author should still respond to review comments, just without
+making/accepting edits.
 
 ##### Actions
 
-- **Author**:
-  [Transfer ownership](https://support.google.com/docs/answer/2494892) of the
-  proposal's Doc to the review manager.
-- **Review manager**: Change all edit access on the proposal to comment-only.
+- **Author**: Stop making changes to the proposal.
 
 #### Ask the reviewing team for a proposal decision
 
@@ -438,7 +428,7 @@ discussion. Try to respond to the Discourse Forum topic promptly with:
 - A position (either affirming or objecting) is strongly preferred, although
   standing aside is allowed.
   - Rationales for positions should be based on discussion on the proposal's
-    `Evolution > RFC` topic, and providing links helps write the decision.
+    `Evolution > RFCs` topic, and providing links helps write the decision.
 - A request for more time to review materials, to make it clear the intent is to
   participate in the decision.
 - Discussion regarding positions or the decision itself.
@@ -447,7 +437,7 @@ discussion. Try to respond to the Discourse Forum topic promptly with:
     to requesting a decision.
 - A request to use the meeting for discussion.
   - All topics for discussion will be captured either in the agenda or as a
-    comment on the Doc, to ensure they're ready for the meeting.
+    comment on the pull request, to ensure they're ready for the meeting.
 
 The review manager should monitor the forum topic for consensus. If a decision
 is made before the meeting, the item should be removed from the meeting agenda.
@@ -459,9 +449,7 @@ make decisions.
 - **Author**:
   - Respond to comments.
 - **Review manager:**
-  - Set both the Google Doc status and GitHub issue status label to
-    `needs decision`.
-    - In the Doc history, label the latest revision as `needs decision`
+  - Replace the GitHub pull request's `RFC` label with `needs decision`.
   - Create an `Evolution > Proposal decisions` topic for pre-meeting discussion.
   - Tentatively add the decision to the meeting one week in advance (or four
     working days, if longer), and use that meeting if necessary to reach
@@ -511,28 +499,30 @@ approved. They will post the draft decision to the `Evolution > Announcements`
 forum within two working days. The post will start the proposal decision comment
 period.
 
-In some cases, the proposal may end up going back to the author for additional
-changes. In these cases, the review manager should grant edit access to the
-author again. It's not necessary to switch ownership back.
+If the proposal is accepted, the author may now commit it. If it is deferred or
+declined, the author may decide how to proceed based on whether they'd like to
+continue working on it.
 
 ##### Actions
 
 - **Review manager**:
-  - If the proposal needs more changes:
-    - Grant the author edit access to the Doc again.
-    - Set both the Google Doc status and GitHub issue status label to `WIP`.
-  - If the proposal is done changing:
-    - Set both the Google Doc status and GitHub issue status label to
-      `<decision>`.
-  - In the Doc history, label the latest revision as `<decision>`.
   - Write the
     [formal decision](consensus_decision_making.md#formal-decision-content),
     possibly with help from the reviewing team.
     - (optional): Create a GitHub issue for issues that should be revisited in
-      the future. Link to these from the main GitHub issue.
+      the future. Link to these from the GitHub pull request.
   - Create an `Evolution > Announcements` forum topic with the decision and a
     summary of the rationale.
-    - Add the topic's link to the GitHub issue.
+    - Add the topic's link to the GitHub pull request.
+  - If the proposal is accepted, approve the pull request for commit.
+- **Author**:
+  - If the proposal is accepted:
+    - Replace the GitHub pull request's `needs decision` label with `accepted`.
+    - Commit the approved pull request.
+  - If the proposal is declined or deferred, decide how best to proceed:
+    - If iterating on the proposal, replace the GitHub pull request's
+      `needs decision` label with `WIP`.
+    - If retracting the proposal, close the pull request.
 - **Reviewing team**: Help draft any rationale needed by the review manager for
   the decision.
 
@@ -582,7 +572,7 @@ should be exceptional.
 
 ##### Actions
 
-- **Author**: Roll back any dependent changes.
+- **Author**: Roll back the committed proposal and any dependent changes.
 - **Reviewing team member**: State new, non-consensus position on
   `Evolution > Decisions` forum topic.
 - **Review manager**: Return to
@@ -610,11 +600,9 @@ revisit the decision.
 ##### Actions
 
 - **Review manager**:
-  - Commit the proposal PDF to the GitHub decision repository.
-    - Once committed, add a link to the PDF in the GitHub issue.
-  - Move the Doc to the archive folder.
+  - Commit the proposal decision.
+    - Add a link to the committed decision to the proposal's pull request.
   - Update the `Evolution > Announcements` forum topic with the final decision.
-  - Close the GitHub issue.
 - **Author**: Start making dependent changes to apply the proposal.
 
 ## Acknowledgements
