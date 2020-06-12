@@ -381,8 +381,8 @@ members of the reviewing team have reviewed the document before it leaves RFC.
 
 The review manager will announce a planned end to the community comment period
 on the "Evolution > RFCs" topic. The message will specify the end date, which
-will be at least one week or four working days, whichever is longer, after the
-announcement. If nothing significant arises, the reviewing team will be asked to
+will be at least one week or four working days after the announcement, whichever
+is later. If nothing significant arises, the reviewing team will be asked to
 start making a decision as scheduled. Otherwise, the review manager may extend
 the comment period by posting another message to the "Evolution > RFCs" topic.
 
