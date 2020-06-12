@@ -100,11 +100,12 @@ only hold meetings when decisions cannot be resolved before the meeting.
 An agenda will be maintained for upcoming meetings. If there are no agenda
 items, meetings will not be held.
 
-Agenda items, such as proposals, should be added at least one week or four working days in advance, whichever is longer, so that members have time to review items
-added to the agenda. Sub-items, such as proposal discussion points, should be
-added at least one day before the meeting. Please feel free to add items to the
-agenda and remove them later if the agenda item is resolved over other
-communication forums.
+Agenda items, such as proposals, should be added at least one week or four
+working days in advance, whichever is longer, so that members have time to
+review items added to the agenda. Sub-items, such as proposal discussion points,
+should be added at least one day before the meeting. Please feel free to add
+items to the agenda and remove them later if the agenda item is resolved over
+other communication forums.
 
 Team members are expected to prepare for the meeting by ensuring they're
 familiar with the proposal and related discussion. The meeting will not include
