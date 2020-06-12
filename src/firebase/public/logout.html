@@ -5,31 +5,33 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 <html>
-<head>
-  <title>Carbon: Access denied -- logging out</title>
-  <script src="/__/firebase/7.14.0/firebase-app.js"></script>
-  <script src="/__/firebase/7.14.0/firebase-auth.js"></script>
-  <script src="/static/firebase-init.js"></script>
-  <script type="text/javascript">
-    function redirect() {
-      // Re-clear the cookie, just in case.
-      document.cookie = "__session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      window.location.href = window.location.href.replace(
-          "/logout.html", "/login.html");
-    };
+  <head>
+    <title>Carbon: Access denied -- logging out</title>
+    <script src="/__/firebase/7.14.0/firebase-app.js"></script>
+    <script src="/__/firebase/7.14.0/firebase-auth.js"></script>
+    <script src="/static/firebase-init.js"></script>
+    <script type="text/javascript">
+      function redirect() {
+        // Re-clear the cookie, just in case.
+        document.cookie = '__session=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        window.location.href = window.location.href.replace(
+          '/logout.html',
+          '/login.html'
+        );
+      }
 
-    firebase.auth().onAuthStateChanged(function(user) {
-      // If there's no user, we can redirect.
-      if (!user) redirect();
-    });
+      firebase.auth().onAuthStateChanged(function (user) {
+        // If there's no user, we can redirect.
+        if (!user) redirect();
+      });
 
-    window.onload = function() {
-      document.cookie = "__session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      firebase.auth().signOut();
-    };
-  </script>
-</head>
-<body>
-Access denied -- logging out
-</body>
+      window.onload = function () {
+        document.cookie = '__session=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        firebase.auth().signOut();
+      };
+    </script>
+  </head>
+  <body>
+    Access denied -- logging out
+  </body>
 </html>
