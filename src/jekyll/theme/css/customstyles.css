@@ -249,7 +249,6 @@ div#toc ul {
     background-color: whitesmoke;
     padding: 5px;
     border-radius: 5px;
-    max-width: 300px;
     color: gray;
 }
 
@@ -263,7 +262,7 @@ div#toc ul li ul li::before {
 }
 
 div#toc >ul::before {
-    content: "Table of Contents";
+    content: "Table of contents";
     font-weight: 500;
     color: #555;
     text-align:center;
@@ -852,23 +851,16 @@ span.soft {
     }
 }
 
-@media (max-width: 990px) {
-    #mysidebar {
+@media (max-width: 991px) {
+    ul#mysidebar {
         position: relative;
+        max-width: 100%;
     }
 }
 
-@media (min-width: 1000px) {
-
+@media (min-width: 992px) {
     ul#mysidebar {
         width: 225px;
-    }
-}
-
-@media (max-width: 900px) {
-
-    ul#mysidebar {
-        max-width: 100%;
     }
 }
 
@@ -1199,6 +1191,23 @@ h4.panel-title {
     }
 }
 
+/** Use a three-column layout for pages. */
+.main-sidebar {
+  float: left;
+  height: 100%;
+  width: 30rem;
+}
+.main-content {
+  float: left;
+  max-width: 960px;
+  width: 80%;
+}
+.main-toc {
+  float: left;
+  width: 30rem;
+  height: 100%;
+}
+
 /** Hide the title because it's repeated above the TOC. */
 h1.post-title-main {
   display: block;
@@ -1206,3 +1215,4 @@ h1.post-title-main {
 h1 {
   display: none;
 }
+
