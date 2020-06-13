@@ -88,7 +88,7 @@ NeverPrint("never-print",
   cl::ReallyHidden,
   cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintAfterBranchFixup("print-after-branch-fixup",
   cl::desc("print function after fixing local branches"),
   cl::Hidden,

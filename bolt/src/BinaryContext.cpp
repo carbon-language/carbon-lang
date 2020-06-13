@@ -1628,8 +1628,10 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
     const auto Flag = Section->isAllocatable();
     Section->update(Data, Size, Alignment, ELFType, ELFFlags);
     DEBUG(dbgs() << *Section << "\n");
-    assert(Flag == Section->isAllocatable() &&
-           "can't change section allocation status");
+    // FIXME: Fix section flags/attributes for MachO.
+    if (isELF())
+      assert(Flag == Section->isAllocatable() &&
+             "can't change section allocation status");
     return *Section;
   }
 
