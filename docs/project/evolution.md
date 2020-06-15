@@ -381,8 +381,8 @@ members of the reviewing team have reviewed the document before it leaves RFC.
 
 The review manager will announce a planned end to the community comment period
 on the "Evolution > RFCs" topic. The message will specify the end date, which
-will be at least one week (or four working days, if longer) after the
-announcement. If nothing significant arises, the reviewing team will be asked to
+will be at least one week or four working days after the announcement, whichever
+is later. If nothing significant arises, the reviewing team will be asked to
 start making a decision as scheduled. Otherwise, the review manager may extend
 the comment period by posting another message to the "Evolution > RFCs" topic.
 
@@ -416,9 +416,9 @@ making/accepting edits.
 
 The review manager should ask the reviewing team for a decision by creating an
 `Evolution > Proposal decisions` forum topic asking for consensus. The proposal
-should also be added as a topic to the team's meeting agenda one week in advance
-(or four working days, if longer). The agenda item gives a deadline for a
-decision if no consensus can be reached on the Discourse Forum, and can be
+should also be added as a topic to the team's meeting agenda one week or four
+working days in advance, whichever is longer. The agenda item gives a deadline
+for a decision if no consensus can be reached on the Discourse Forum, and can be
 removed if a decision is made before the meeting.
 
 Team members should familiarize themselves with the proposal and related
