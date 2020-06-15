@@ -153,6 +153,8 @@ const char TimerGroupDesc[] = "Aggregator";
 
 }
 
+constexpr uint64_t DataAggregator::KernelBaseAddr;
+
 DataAggregator::~DataAggregator() {
   deleteTempFiles();
 }
